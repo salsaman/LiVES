@@ -1,0 +1,110 @@
+﻿LiVES clip format version 1.0
+
+Internal format of a clip
+
+
+An optional frame index, called frame_index, a sequence of integers, a positive number means that the frame points to an encoded frame within the file <clip_name>, a value of -1 indicates that the frame is in the corresponding image file.
+
+
+If frame_index is not present, and there are images, then all frames map to images. If there are no images then all frames map to frames in the <file_name>.
+
+
+Images: a sequence of jpeg or png*, numbered consecutively 00000001.jpg, 00000002.jpg, etc. for jpeg, and 00000001.png, 00000002.png, etc. for png.
+
+
+Audio: a raw pcm file, channels are interleaved if applicable. File name is just audio.
+
+
+header.lives file: a header file with the following contents:
+
+<header_version>
+integer: currently 100 for this version
+</header_version>
+
+<bpp>
+integer: number of bits per pixel (usually 24)
+</bpp>
+
+<frames>
+integer: number of frames in the clip
+</frames>
+
+<width>
+integer: image width in pixels
+</width>
+
+<height>
+integer: image height in pixels
+</height>
+
+<unique_id>
+int64 : a randomly assigned 64 bit integer, used to uniquely identify the clip
+</unique_id>
+
+<fps>
+double: frames per second, must be >0, may be omitted or 0 if frames is 0
+</fps>
+
+<pb_fps>
+(optional) double: playback frames per second (can be 0 or negative)
+</pb_fps>
+
+<audio_channels>
+integer: number of audio channels (0,1 or 2). 0 means no audio
+</audio_channels>
+
+<audio_rate>
+integer: audio rate (Hz). May be ommitted or 0 if audio_channels is 0
+</audio_rate>
+
+<pb_audio_rate>
+(optional) integer: audio rate (Hz) for playback - may be negative
+</pb_audio_rate>
+
+<audio_sample_size>
+integer: audio sample size in bits (16 or 8). May be ommitted or 0 if audio_channels is 0
+</audio_sample_size>
+
+<audio_signed>
+boolean: if audio is signed, value is "true", otherwise "false". May be ommitted if audio_channels is 0
+</audio_signed>
+
+<audio_endian>
+integer: 0 means little-endian, 1 means big-endian. May be ommitted if audio_sample_size is 8, or if audio_channels is 0
+</audio_endian>
+
+<clipname>
+string: freeform text, max 256 characters
+</clipname>
+
+<filename>
+(optional) string: original file name
+</filename>
+
+<title>
+(optional) string: freeform text, max 256 characters
+</title>
+
+<author>
+(optional) string: freeform text, max 256 characters
+</author>
+
+<comments;>
+(optional) string: freeform text, max 256 characters
+</comments>
+
+<keywords;>
+(optional) string: freeform text, max 1024 characters
+</keywords>
+
+
+
+
+
+Notes: the radix for double (decimal point) is "."
+
+No white space is allowed before <section> or </section>. They must start a new line. White space is allowed between one section and the next.
+
+Video values (frames, fps, bpp, width, height) are optional for audio only clips.
+
+Audio values (audio_*) are optional for video only clips.

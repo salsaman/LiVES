@@ -1,0 +1,60 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+enhance
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Enhance|Enhancing|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+# parameters Label|type|default|min|max|      (list)
+<params>
+</params>
+
+<param_window>
+</param_window>
+
+<properties>
+0x0001
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code (list)
+<pre>
+</pre>
+
+# loop code (list)
+<loop>
+system("$convert_command $in -enhance $out");
+</loop>
+
+# post loop code (list)
+<post>
+</post>
+
+<onchange>
+</onchange>

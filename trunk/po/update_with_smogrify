@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+
+$smogname=$ARGV[0];
+$outfile=$ARGV[1];
+$gui_name=$ARGV[2];
+
+unless (defined(open IN,"../$smogname")) {
+    print STDERR "  - Unable to read values from backend file, ../$smogname\n";
+    exit 2;
+}
+
+$fileposition = "#: /usr/bin/$smogname:0\n";
+
+while (<IN>) {
+    if ($_=~/(.*)(sig_error)(.*)/) {
+	    @temp=split("\"",$_);
+	    for ($i=1;$i<scalar(@temp);$i+=2) {
+		unless (@temp[$i] eq "") {
+		    @temp[$i]=~ s/\$GUI_NAME/$gui_name/g;
+		    $f = "msgid \"$temp[$i]\"";
+		    $g="\nmsgstr \"\"\n\n";
+		    unless (&exists($f)) {
+			$f.=$g;
+			print $fileposition;
+			print $f;
+		    }
+		}
+	    }
+	}
+}
+
+
+exit 0;
+
+
+
+
+
+
+#/////////////////
+
+sub exists {
+# stop duplicate entries. TODO - add the msgid after the original entry
+    my ($ex)=@_;
+    chomp($ex);
+    my $exi=`grep '$ex' $outfile`;
+    if ($exi eq "") {return 0;}
+    return 1;
+}
+

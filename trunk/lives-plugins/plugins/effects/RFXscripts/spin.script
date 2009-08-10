@@ -1,0 +1,83 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+spin
+</name>
+
+<version>
+2
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Spin|Spinning|2|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+rot|_Rotate Selection by|num0|360|-3600|3600|
+step|Step per _Frame|num0|0|-180|180|
+shrink|_Shrink rotated window to fit frame size|bool|0|
+bgcol|_Background Colour|colRGB24|0|0|0|
+</params>
+
+<param_window>
+layout|p0|"(degrees)"|
+layout|"or"|fill|
+layout|p1|"(degrees)"|
+layout|hseparator|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$cstring=&RGB24_to_string($p3_red,$p3_green,$p3_blue);
+$antialias="false";
+
+# this is for resize_frame
+$resize=0;
+$resize_ext=$input_ext=$out_ext;
+
+if (!$p1) {
+    if ($end>$start) {
+        $p1=$p0/($end-$start);
+	$p0=0;
+    }
+}
+else {
+    $p0=0;
+}
+</pre>
+
+<loop>
+system ("$convert_command -background $cstring $in -rotate $p0 $out");
+if ($p2==1) {
+    &resize_frame($name,$width,$height);
+}
+else {
+    &trim_center($name,$width,$height);
+}
+$p0+=$p1;
+</loop>
+
+<post>
+</post>
+
+<onchange>
+</onchange>

@@ -1,0 +1,77 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+transition_splice
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Splice|Splicing|1|2|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+splice|_Splice|num0|1|1|100000000|
+then|_then|num0|1|0|100000000|
+</params>
+
+<param_window>
+layout|p0|"frame(s) from clipboard, "|p1|"frame(s) from selection"|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$antialias=&rc_get("antialias");
+$resize_ext=$out_ext;
+$input_ext=".tmp";
+$lc=$p0;
+</pre>
+
+<loop>
+if ($lc>0) {
+ #time for a clipboard frame
+ `ln -s $in2 $name$input_ext`;
+ &resize_frame($name,$width,$height);
+ unlink "$name$input_ext";
+}
+else {
+ #time for an original frame
+ `cp $in $out`;
+}
+if (--$lc==-$p1) {
+ $lc=$p0;
+}
+</loop>
+
+<post>
+</post>
+
+<onchange>
+0|if ($p1>$end-$start+1-$p0) {$p1=$end-$start+1-$p0;}
+0|$p0_max=$end-$start+1;
+1|if ($p0>$end-$start+1-$p1) {$p0=$end-$start+1-$p1;}
+1|$p1_max=$end-$start;
+init|$p0_max=$end-$start+1;
+init|$p1_max=$end-$start;
+</onchange>

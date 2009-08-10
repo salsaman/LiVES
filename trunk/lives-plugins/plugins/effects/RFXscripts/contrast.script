@@ -1,0 +1,69 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+contrast
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Adjust contrast|Adjusting contrast of|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+inc|_Increase Contrast|bool|1|1|
+dec|_Decrease Contrast|bool|0|1|
+</params>
+
+<param_window>
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0000
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code
+<pre>
+</pre>
+
+# loop code
+<loop>
+if ($p0) {
+    system("$convert_command $in -contrast $out");
+}
+else {
+    system("$convert_command $in +contrast $out");
+}
+</loop>
+
+# post loop code
+<post>
+</post>
+
+<onchange>
+</onchange>

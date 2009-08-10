@@ -1,0 +1,79 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+blur
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Blur|Bluring|1|1|
+</description>
+
+# requirements
+<requires>
+convert
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+rstart|_Radius start|num0|10|0|100|
+sstart|_Sigma start|num0|4|1|100|
+rend|_Radius end|num0|10|0|100|
+send|_Sigma end|num0|4|1|100|
+</params>
+
+
+<param_window>
+layout|p1|p3|
+layout|p0|p2|
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0001
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code
+<pre>
+if ($end==$start) {
+    $radstep=0;
+    $sigstep=0;
+}
+else {
+    $radstep=($p2-$p0)/($end-$start);
+    $sigstep=($p3-$p1)/($end-$start);
+}
+</pre>
+
+# loop code
+<loop>
+system("$convert_command $in -blur $p0"."x$p1 $out");
+$p0+=$radstep;
+$p1+=$sigstep;
+</loop>
+
+# post loop code
+<post>
+</post>
+
+<onchange>
+</onchange>

@@ -1,0 +1,1358 @@
+Version 1.0 (22 July 2009)
+--------------------------
+Fixes for joystick/MIDI learner.
+Fixed crash after recording audio for selection.
+Fixed crash after deleting then replacing audio.
+Fix breakage in encoding a selection.
+Mt GUI and theme refinements.
+Initial translation to Hebrew (thanks Lielf).
+Updated translations to Brazilian Portuguese, Italian, Czech, Japanese and Slovak.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Version 1.0-pre2 (7 July 2009)
+------------------------------
+Fix Tools/Resize (regression).
+Fix crash when clicking anchor in multitrack (regression).
+Allow opening of dv files > 2GB.
+Fix for a/v sync problem in large dv files.
+Add preference to create symlinks only in /tmp (required for dynebolic).
+Fix encoding error in mencoder_encoder (regression).
+Fix layout memory estimation error (was causing crash in mt undo/redo).
+New theme (crayons) for 1.0
+Suppress error when no theme is selected (regression)
+Complete fix for non-C locale encoding.
+Initial translation to Slovak (thanks Milboy).
+Updated Japanese, German, Spanish, Russian, Czech, and Italian translations.
+
+
+	
+
+
+	
+
+
+	
+
+Version 1.0-pre1 (15 June 2009)
+-------------------------------
+Fix resampling bug (regression).
+Fix some problems with inserting selections in mt, and with inserting audio 
+after playback.
+Fix potential crash in multitrack playback.
+Fixed numerous layout loading bugs.
+Trim frames/add border should resize to the border size.
+Play back at correct speed when switching between files (regression) (relnote).
+Allow mixing of background and foreground generators.
+Allow setting of generator target fps.
+More robust gtk+ startup.
+Splash screen.
+Many minor fixes and updates.
+Initial translation to Simplified Chinese (thanks Yinghua Wang)
+Updated translations to Italian, Japanese and Polish.
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+Version 0.9.9.9 (1 Jun 2009)
+----------------------------
+Implement realtime mixing of audio in multitrack mode.
+Fix rendering of frames on layers >0 (regression).
+Correct various bugs with realtime audio recording/rendering.
+Fix incorrect reporting of affected layout frames.
+Add initial Russian translation (thanks to Andrey Staravoitov and Xen).
+Much improved Italian translation (thanks to Guybrush88).
+
+	
+
+	
+
+
+
+
+
+
+
+
+
+
+Version 0.9.9.8 (30 Apr 2009)
+-----------------------------
+Fix track visibility when on video track > 0 (regression).
+Right click in separate window will save frame (regression).
+Improved usability of audio_transition.
+Fix crash in text parameters (regression).
+Improved handling of jack startup problems.
+Fix mt time selection with mouse mode select.	
+Implement several new OMC commands for the background clip.
+Audio fade in/out can now be applied to the selection.
+Remove redundant "bgcolour" preference.
+Add initial Turkish translation (thanks to "gamer").
+
+
+
+
+
+
+
+
+
+
+
+
+Version 0.9.9.7 (27 March 2009)
+-------------------------------
+Fix MIDI device autodetection.
+Fix "force single monitor" bug.
+Correct audio synch when encoding a selection (regression).
+Small cleanups in OSC and event_list code.
+Add OMC command "/clip/encode_as".
+Created LiVES batch processing tool (/tools/batchproc).
+Add "livetext" effect/generator.
+When recording, record changes made in the realtime fx window, and via OSC.
+Do not reinitialise effects when entering rte mapping window (regression).
+Ensure all libweed files are LGPL 3 or higher.
+Add OMC command "/clip/retrigger".
+Implement real time textmode.
+More accurate recording with generators.
+Initial Polish translation (thanks to jeremiPL).
+Minor GUI cleanups.
+
+
+
+
+
+
+
+
+
+
+
+Version 0.9.9.6 (6 Feb 2009)
+---------------------------
+Implement external control of VJ features (e.g with MIDI or joystick).
+Fix single image preview (regression).
+Keyboard support for some alternate keyboards.
+Fix rendered generators (regression).
+Fix slow opening for ogg/theora files with no audio.
+Fix crash with ogg/theora files with odd height.
+Initial Spanish translation (thanks Emilio Gomez Fernandez)
+Initial Italian translation (thanks nitrofurano)
+
+	
+
+
+
+
+
+
+
+
+
+Version 0.9.9.5 (16 December 2008)
+----------------------------------
+Improved multi-head support. 
+Allow stretching of fullscreen playback across multiple monitors.
+Fix dataloss bug in frame calculator (regression).
+Allow setting of width, height and fps at encode time.
+Add more OMC commands.
+Silence debugging output from dv_decoder.
+
+
+	
+
+
+
+
+
+
+
+
+Version 0.9.9.4 (3 December 2008)
+---------------------------------
+Implement instant opening for dv and ogg/theora.
+Fix ogg theora encoder (regression).
+Fixes for shrink/expand and shift_vertical effects (thanks to Brian S. Julin)
+Fix various issues for ubuntu.
+Fix saving/loading of realtime fx defaults (regression).
+Fix textfun effect for 16 bit charsets (regression).
+Correct fix for sox version 14+ (regression).
+Support auto-deinterlacing for some file types (dv).
+Fix locale support for the multi_encoder, mjpegtools_encoder and RFX effects (needs testing).
+Advise user when more multitrack backup space is required.
+Do not reposition cursor on multitrack insert if playback is paused.
+Improvements to the dv/hdv grab window.
+Various small bugfixes.
+
+	
+
+
+
+
+
+
+
+Version 0.9.9.3 (30 september 2008)
+-----------------------------------
+Fix noisy output in the jack audio player.
+Multitrack "insert gap" should insert gap in audio tracks.
+Fix possible crash in multitrack audio playback.
+Fix creation of test RFX scripts (regression).
+Utilities should not show "generate to clipboard..."
+Update title after changing clip speed.
+Initial parameter values should never be ignored.
+Optimise "textfun" effect even more.
+
+
+
+
+
+
+Version 0.9.9.2 (17 september 2008)
+-----------------------------------
+Fixes for older versions of sox.
+Fix bug in aspect ratio calculation.
+Add flv and flv-youtube formats to ffmpeg_encoder.
+Add support for unclamped YUV.
+Improvements to audio rendering.
+Implement (basic) multitrack audio rendering in the multitrack editor.
+GUI consistency fixes.
+Small fixes for dynebolic 2 compatibility.
+Show custom effects menu entries again (regression).
+Add simple audio mixer in multitrack mode.
+
+
+
+
+
+Version 0.9.9.1 (15 july 2008)
+------------------------------
+Optimized realtime effects using glib slice allocator.
+Fixed 0Hz wav audio loading problem (regression).
+Added internal support for many more colourspaces.
+Stop "undo cut" and "undo delete audio" hanging. (regression).
+Fixed crash when "Resize all Frames" is cancelled.
+Much improved rendering quality.
+Implemented LiVES to LiVES streaming.
+Complete fix for empty string translation problem.
+Fixed parameter change loops in some RFX plugins.
+Show audio volume again in multitrack (regression)
+Added "preview quality" setting to preferences.
+Freeze video playback plugin interface for 1.0
+Added advanced playback plugin settings in Preferences.
+Updated Resize, Trim Frames and Rotate tools.
+Added (rendered) effects "colour replace", "sepia" and "skip ahead".
+Binary plugins are now installed in libdir (allows for multi-architectures).
+Made Weed into libweed.
+Updated French translation (thanks to Nicolas Chauvet (kwizart)).
+Updated Portuguese translation (thanks to pixel and Marcio Monteiro).
+GUI polish, and various minor bugfixes.
+
+
+
+
+Version 0.9.8.12 (16/05/08)
+---------------------------
+Fix last-minute regression in Edit/Copy.
+
+	
+
+
+Version 0.9.8.11 (13/05/08)
+---------------------------
+Fix setting of parameters in multitrack window (regression).
+Fix a crash when jack fails to start/dies.
+Fix checkerboard merge (regression).
+Add OSC notify events.
+Various small fixes/ code cleanups.
+
+
+	
+Version 0.9.8.10 (02/04/08)
+--------------------------
+Fixes for mplayer audio player.
+Improved backend process handling.
+Fix possible crash after playback.
+Fix crash/critical when progress dialog goes over 100%.
+Fix regressions in the merge dialog.
+Fixes/simplification for the latest frei0r builds.
+Various small fixes/code cleanups.
+Enable realtime plugin support for BSD/IRIX (needs testing).
+
+
+
+
+
+Version 0.9.8.9 (10/03/08)
+-------------------------
+Fix progress bar percentage done (regression).
+Fix clip encoding (regression).
+Cancel more fully during file encoding.
+
+
+
+
+
+
+
+Version 0.9.8.8 (05/03/08)
+-------------------------
+Allow for more intelligent encoder plugins (with user setable
+parameters).
+Implement non-realtime (rendered) generators.
+Fix regressions in file open preview.
+Fix possible buffer overflow in utils.c
+Fix some bugs with custom effects/utilities.
+Allow selection of audio id for dvd import.
+Give option of deinterlacing on open/preview.
+Fix some bugs with opening remote streams.
+Fix broken translation in the "please wait" dialog.
+Improved preview in the file selector.
+Fix .lv2 (project) import.
+Move yuvmpeg stream import to Advanced menu.
+Show longer previews for vcd/dvd import.
+Remove deprecated functions from ldvgrab.c
+Populate the of_desc field of prefs->encoder struct.
+Fix max string length bug in RFX builder tool.
+Fix bug when inserting audio in multitrack at certain non-integer framerates.
+Make compatible with sox 14+
+
+
+
+	
+
+
+
+
+
+
+
+Version 0.9.8.7 (27/12/07)
+-------------------------
+Allow user to pick audio player on first startup.
+Added filter flag IS_POINT_EFFECT (to allow for future multithreading).
+Added new "font" (diamond) to textfun effect.
+Speed up counting of frames after opening a file.
+Implemented multitrack gap insertion.
+Added Hungarian translation (thanks Lisovszki Sándor)
+Makefile fixes for various distros.
+	
+
+
+
+
+
+
+
+Version 0.9.8.6 (13/07/07)
+--------------------------
+Fix file error record->multitrack->render.
+Fix crash when set is opened and clips are not recovered.
+Fix set locking.
+Fix crash when rendering with recorded audio events.
+Enable multiple file selection for "Open file/directory".
+Fix several audio rendering errors.
+Fix multi image opening (again...).
+Fix undo/redo filter_map change.
+Fix occasional hang during render preview.
+Add "record audio" to recording defaults.
+Fix previewing of rendered effects (regression).
+Fix/improve "shrink/expand" effect expansion phase.
+Compatibility with sox version >= 13.
+Show progress bar when opening a file.
+Correctly create directories for test and custom effects. 
+Speed up frame resizing using gdk.
+Fix restore of older backup files on 64 bit systems.
+Allow (multiple) record start/record stop during playback.
+Add osc commands /record/start and /record/stop.
+Compositor scaling is now relative to the output channel.
+Fix for parallel compilation.
+Add new realtime effect "videowall".
+
+
+
+
+
+
+
+
+Version 0.9.8.5 (30/05/07)
+--------------------------
+Fix crash when "clear realtime effects" or "load default keymap" is
+clicked in the realtime effects window (regression).
+Fix selection end when timeline is zoomed.
+Add option "change video speed to fit time".
+Add "VJ/Reset frames and frame rates".
+Add "reset current framerate" key (ctrl-enter).
+Support for opening images containing multiple frames (e.g. animated gif).
+Fix crash when recording/rendering a generator with no clips open.
+Add startup option "-aplayer".
+Fix yuv4mpeg stream out palette (regression) and fps.
+Fix shrink/expand and tunnel effects (regression).
+Mend broken behaviour of "compositor"
+Scale preview image correctly in multitrack.
+Add desktop menu entries
+Show preview in multitrack.
+Many small fixes.
+Fix some broken effects (shrink/expand, tunnel, transition_bwthresh).
+
+
+
+
+
+
+
+
+
+Version 0.9.8.4 (26/03/07)
+--------------------------
+Fix random crash in multitrack playback.
+Fix compilation with --disable-osc (regression)
+Faster resampling when inserting multiple times from the clipboard into
+the same target clip.
+Add RFX special widget "framedraw|singlepoint"
+Fix crash in "compositor" effect (regression)
+Fix visual interpolation of floats in the mt window.	
+Add "targetted zoom" realtime effect.
+Make it more obvious when the user can draw on the frame preview.
+GUI improvements for the multitrack window.
+Updated Czech translation (thanks to Martin Svoboda).
+Correct Czech language code to "cs" instead of "cz" (thanks to Martin Svoboda).
+Add multitrack "expanded" view.
+Add time scrollbar in multitrack.
+Add multitrack options "follow playback" and "center on cursor".
+Improved checks when setting a target encoder.
+Show a warning before viewing a very large event list.
+
+
+
+
+
+Version 0.9.8.3 (15/03/07)
+--------------------------
+Code cleanup.
+Add many startup options and help text.
+Simplify LiVES OSC startup.
+Updates to videojack sender/receiver.
+Fix threading problem when saving a set.
+Optimise some realtime effects.
+Configuration fixes.
+Add "slide over" realtime transition.
+OSC improvements.
+Show pointers on all tracks during playback.
+Fix erroneous deletion of filter maps when loading layouts.
+Allow "mark" (using "m" key) during playback in multitrack mode.
+Multitrack stability fixes.
+Fix bug where layouts could not be loaded after a crash recovery.
+Allow playback from any position in the multitrack timeline.
+Implement rewind in multitrack.
+Fix crash when converting palette for frames with width not divisible by 4.	
+
+
+	
+	
+
+
+Version 0.9.8.2 (19/12/06)
+--------------------------
+Fix broken "header_version" in clip headers (backported to 0.9.8 on
+19/12/06)
+Fix broken downsampling of video and reloading (backported to 0.9.8 on
+19/12/06).
+
+Add experimental 3gp encoding support in ffmpeg_encoder (needs testing).
+Check for memory errors when quantising.
+Update Czech and Portuguese translations.
+
+
+
+
+Version 0.9.8 (16/12/06)
+------------------------
+Added effect "bumpmap".
+Fix crash in "textfun" effect.
+Fix "alien_overlay" (again).
+Compilation updates for IRIX platform.
+Updates for video jack.
+Fix crash when stopping a generator with no files loaded (regression).
+Set more reasonable defaults for generator framerates.
+Fix snap to overlap with mouse mode select.
+Fixes for encoder/format selection boxes.
+Fully updated Czech translation (thanks to Martin Svobodicz).
+
+	
+
+Version 0.9.8-test1
+-------------------
+Add "plasma" generator.
+Fix crash when editing effects by double clicking.
+Faster startup, set loading and set saving.
+Allow optional saving/loading of width, height and audio values when saving/loading a layout.
+Allow adjustment of width, height and audio values in mt.
+Audio volume and pan effect in mt.
+Show audio volume parameters in mt.
+Fix reverse audio playback in multitrack (regression).
+Fix audio resampling signed/unsigned bug (regression).
+Faster audio rendering in multitrack.
+Add Fade audio in/out feature for clips in clip editor.
+Option to render only audio or only video.
+Finalise Weed audio spec. version 1.0
+Finalise Weed event spec. version 1.0
+Code cleanup.
+Add optional support for liboil.
+More accurate opening of file selections (remove workarounds for buggy
+older versions of mplayer).
+Fixed alien overlay effect (regression).
+Improve realtime generator performance.
+Only set parameter node values for parameters which are changed.
+Add volume slider when using jack audio player.
+Improve menubar transport buttons.
+Record audio to new clip.
+Record new audio for selection.
+Option to grab audio when recording external window.
+Set maximum record time and framerate when recording external window.
+Add new fonts to textfun effect.
+Update Weed effects spec to 1.1.
+Finalise LiVES clip header specification 1.0.
+
+
+	
+
+	
+
+Version 0.9.8-pre2 (19/11/06)
+-----------------------------
+Fix compilation errors when compiling without jack.
+Show a warning message when compiling without jack.
+Update to jack >= 1.0
+Show/hide audio track(s) from View menu.
+Show/hide context box from View menu.
+Add multitrack menu option Edit|Ignore selection limits when inserting audio.
+Fix crash in interpolation of boolean parameters.
+Fixes for jack audio pause/unpause.
+Fix crash if Preferences are opened with no clip loaded.
+Fix compilation on OSX/Darwin.
+Adjust audio block start/end points and velocity.
+
+
+
+
+
+
+Version 0.9.8-pre1 (29/10/06)
+-----------------------------
+Add audio track and audio preferences to multitrack window.
+Fix a layout save/load bug.
+Fix trim_frame/add border (so it adds a border again)
+Allow recording of audio events.
+Fix undo cut after speed-changed audio has been deleted.
+
+
+
+
+
+
+
+
+Version 0.9.7 (29/09/06)
+------------------------
+Multitrack effect fixes.
+Show effects at frame
+Edit effect
+Delete effect
+Allow deletion of parameter change at time 0.
+Reorder effects
+Adjust region using spinbuttons
+Further file loading improvements.
+Fix memory errors affecting some systems (gdk-pixbuf hack).
+Copy selection -> timecode and vice-versa.
+
+
+
+
+
+
+
+Version 0.9.7-pre2 (05/09/06)
+----------------------------
+Make switching audio players easier.
+Fix a few crash bugs.
+Multitrack improvements:
+ Dragging a clip to before start will insert it at time 0.
+ Shift-left-arrow and shift-right-arrow move left and right 1 frame
+ Zoom in/zoom out keys added.
+ Jump to boundary now uses 2 keys (ctrl-j, ctrl-l)
+ Implement "auto preview" option for effects
+ Add "help" menu option
+Implement autoreload clip set, and autoreload layout
+Fix for exporting projects which are not (yet) in a set.
+Keep disk cleaner (remove empty sets).
+
+
+
+
+
+Version 0.9.7-pre1 (29/08/06)
+----------------------------
+Fix for appending clips to an existing set
+Add realtime deinterlace filter
+Fix some bugs with setting filter parameters in multitrack
+Add "apply effect to region" in multitrack
+Add support for applying transitions in multitrack
+Add support for loading files with "strange" audio values
+Improved file opening
+Add support for compositors in multitrack
+Add multirect special widget
+
+
+
+
+Version 0.9.6 (21/07/06)
+------------------------
+Add drag'n'drop in the multitrack window.
+Prompt to save layout on multitrack exit.
+Double click on clip opens it in clip editor
+Add multi-level "undo"/"redo" in multitrack window.
+Multitrack preferences : prompt for encoder or use a default
+Multitrack preferences : memory for undo/redo
+Multitrack preferences : return to clip editor after rendering
+Move block, split block
+Toggle for "Move effects with blocks"
+
+Prompt to save clip set on exit
+Move load_set, add close all clips
+
+Export/Import Project
+Add lives-dvgrab
+If jack is present on first startup, it will be set as default audio player
+
+Mouse mode: select
+Remove all gaps in selection
+Remove first gap in selection
+Snap on/off
+Select to end time
+Select from zero time
+
+Fix regression with saving/loading effect defaults.
+Add "auto" audio listener for libvisual plugins.
+
+
+
+
+Version 0.9.6-pre4 (11/06/06)
+----------------------------
+Further improvements to image opening
+Fix hang when switching audio player to jack if jack is not started
+Code cleanup
+Multitrack improvements (apply effect to selected block; save layout;
+load layout; set parameter nodes in effects)
+Add multi_blends realtime transition pack.
+Prevent spurious double messages from being shown in the message area.
+Rationalise clip headers and sets.
+Implement set locking while set in use.
+Add crash recovery feature.
+Optimise "delete all audio".
+Allow recording of effect parameter changes.
+Provide interpolation of effect parameter changes for rendering and
+playback.
+Show time estimates on most operations.
+Pre-encode bugfixes.
+Prompt for encoder settings when saving a clip.
+
+
+
+
+
+Version 0.9.6-pre3 (26/03/06)
+-----------------------------
+Begin moving up to gtk+-2.4
+Add colourkey and vertigo realtime effects
+Add initial jack audio support
+Fix resampling problem (mono/stereo)
+Updates to encoder plugins (thanks Marco !)
+Fix image opening regression
+Fix gcc-4 crash with colour parameters 
+Allow longer "filenames" for streams
+
+
+
+
+Version 0.9.6-pre2 (28/02/06)
+-----------------------------
+Bugfix opening video with no audio (regression)
+Bugfix opening when LiVES is running in the background (mplayer issue)
+Bugfix opening preview hanging at end (regression)
+Add "layout_blends" realtime effect.
+Improve RFX layout (add more sliders).
+Suggest frame size and fps depending on target encoder when going into
+multitrack mode.
+
+
+
+
+Version 0.9.6-pre1 (16/02/06)
+----------------------------
+Allow setting and saving of parameter defaults for realtime effects.
+Allow setting of default sizes for generators
+Add package files for redhat and debian (thanks to contributors !)
+Throttle CPU usage during playback
+Add "Jack integration" tab in preferences
+Some fixes for gcc 4.
+Allow up to 64 "virtual" real time effect keys
+Updates to RFX spec and RFX builder to better integrate with realtime effects
+Fix for buggy opening of mono clips (finally)
+Support more colorspace conversions, fix some palette conversion errors
+Add colour correction filter
+Preview when applying rendered effects
+
+
+
+Version 0.9.5 (30/12/05)
+-------------
+Switched from livido to Weed effects/events framework
+Fixed crash in error dialog
+Added support for Frei0r effects
+Added effect/clip-switch recording to default record mode.
+Compiler fixes for AMD64.
+Added support for automatic palette conversion/resizing.
+Fixes for recording/rendering from generators.
+Added Portuguese translation (thanks to VJ pixel).
+
+
+
+Version 0.9.5-pre6 (09/12/05)
+------------------
+Add initial multitrack window.
+Add jack transport support.
+Experimental video jack support.
+Changed timing format again, now internal format is int64_t, in 100ths
+of a microsecond.
+Added -fPIC to compile options for livido-plugins (for AMD64 and PPC)
+Fix to mencoder_encoder (improves quality for mjpeg encoding).
+Fix to transcode encoder (update to transcode 1.0.1)
+Fix to qtutils encoder (add undocumented -l)
+Fixed crash in text_overlay and other effects.
+
+
+
+
+Version 0.9.5-pre5 (23/09/05)
+------------------
+Add in "mplayer -identify" fix (was accidentally omitted in last release).
+Fix 2 more stability bugs for VJ mode.
+Add more realtime effects.
+Fix DISTDIR for Makefile.am for icons and RFXScripts.
+Show progress when resampling/reordering.
+Use "long" for timing, instead of "long double".
+Improve realtime recording.
+Updates to multi_encoder/subencoders (thanks Marco).
+Made realtime effects and clip switches recordable.
+Added "event_list" to LiVES.
+Created internal architecture for multi-track rendering.
+
+
+
+
+
+
+Version 0.9.5-pre4
+------------------
+Added Japanese translation (thanks to Jun Iio).
+Fixed fullscreen mode when there are no playback plugins.
+Removed support for gtk+2.0, now only gtk+2.2+ supported.
+Added real time effects window, fixed some livido init/deinit bugs.
+Bring livido support up to April 2005 spec.
+Fixed audio resampling bug when LiVES does an auto resample before saving.
+Updated frame rates in mjpegtools encoder to use ratio fps.
+Output from "mplayer -identify" changed. Fix smogrify to support new
+output format.
+Begin work to bring livido support up to June 2005 spec.
+Add support for colourspace rgb32.
+Begin porting effecTV effects to Livido.
+Fix bug: when all frames are deleted, and then this is undone, restore
+the old frame size.
+Fix regression: undo_delete should put back deleted audio.
+Wrote new realtime effect: textfun.
+Added a "Files/cleanup diskspace" menu option.
+
+
+
+Version 0.9.5-pre3
+------------------
+Updated encoders, python versions >=2.3.4 now supported. (Marco)
+Add noisify effect (Marco)
+Fix "export custom RFX" (salsaman)
+Added string_list type to RFX.
+
+
+
+
+Version 0.9.5-pre2.2 (released 26/03/05)
+----------------------------------------
+Add pdf_encoder to CVS (ommited by accident)
+Layout fix for trim frames/add border
+Build fixes for packagers
+Fix bug in smogrify when upgrading from 0.9.1
+
+
+
+
+
+
+Version 0.9.5-pre2 (released 25/03/05)
+--------------------------------------
+Run RFX post-loop code on a cancel/keep.
+Fixed "open new audio" and "append audio" (regression).
+Add avi_encoder which was accidentally omitted.
+Theora aspect ratio fix (thanks Marco).
+Add text_overlay and transition_checkerboard RFX effects.
+Add libvisual_020 wrapper for libvisual 0.2.0. Fixes most libvisual memory leaks, adds gforce randomisation, 
+and adds a new visual (corona).
+Fix and improve encodedv_encoder plugin.
+Add more audio rates to the multi_encoder (Marco).
+Fix hang at end of opening preview.
+Allow direct opening of .mod and .xm audio files (with mplayer compile options).
+Put parameter windows in a scrolled window.
+Put i18n translations back in Preferences (regression).
+Add pdf_encoder.
+
+
+
+
+Version 0.9.5-pre1 (released 23/01/05)
+--------------------------------------
+Fix locale language regression (thanks to Insomniak for help testing)
+Update to build system to allow build from non-source dir (thanks to
+Mike Castle)
+Remove all dependencies on mplayer (patch for debian)
+Misc build fixes.
+Support for RFX string parameters
+Added 7 new RFX rendered effects: photo/still, posterize, brightness_change, hue_change, saturation_change, 
+pixilate and modulate.
+Updates to encoders (thanks Marco) - support for Snow, h264 and xvid.
+Fixes for easier compilation/running on *BSD (thanks to gunnut and NicM).
+LC_NUMERIC fix for plugins.
+
+
+
+
+
+Version 0.9.1 (released 07/12/04)
+--------------------------------
+Encoder updates, many fixes.
+
+
+
+
+Version 0.9.1-pre7 (Salsaman, help from Marco de la Cruz, the libvisual team, and j^ at v2v)
+--------------------------------------------------------
+Finished livido generator handling - integrated with libvisual plugins
+Bug fixes/improvements for encoder plugins.
+- Aspect ratio is now correctly calculated.
+- Audio codec is updated when the output format changes.
+- updates to multi encoder; added support for encoding to theora, MNG, 
+   animated gif and dirac formats (Marco)
+- made livido default system for realtime effects
+- fix bug where audio codec of "none" would crash LiVES
+- added initial OSC/OMC support (configure --enable-OSC)
+- livido updates
+- fixes for ppc
+- fixes for gentoo
+- updated build system (make install now works, SDL and mjpegtools autodetected
+  all plugins built from source where possible)
+
+
+
+
+
+Version 0.9.1-pre6 (Salsaman)
+-----------------------------
+Keyboard fixes for some window managers.
+Improved livido support, added libvisual hooks (still in development).
+
+
+
+
+
+Version 0.9.1-pre5 (Salsaman, with help from nelburg)
+------------------
+Improved performance of SDL playback plugin.
+Added yuv4mpeg streaming playback plugin.
+Added support for yuv420 input and mixing.
+Check encoder restrictions before prompting for file save name.
+Fixed a bug with audio codec not being remembered.
+Project save directory bug is now fixed.
+
+
+
+
+
+Version 0.9.1-pre4 (Salsaman, Laurent Lalanne, Ales Zemene, and Marco de la Cruz)
+------------------
+Fixed locale support in LiVES, initial support for fr_FR (French) translation was 
+added. Thanks to Laurent Lalanne, lead French translator.
+
+A new theme, camera, was added - also contributed by Laurent Lalanne.
+
+Czech language support was added, thanks to Ales Zemene.
+
+Some minor RFX fixes - active widget is remembered between calls to effects.
+Fixed some build errors in build-lives-rfx-plugin
+Made the init trigger a "heavyweight" trigger, i.e. it can call subroutines in 
+smogrify. Fixed error handling in pre/loop/post/init_trigger and documented same.
+
+Fixed various trigger problems in RFX builder. Added move up/down for parameter 
+window hints.
+
+Some changes were made to handle non-Perl encoder plugins. Added support for the 
+multi_encoder (contributed by Marco). LiVES can now encode to ogg/mp4 and Matroska mp4.
+
+Many minor fixes in RFX scripts.
+
+Added RFX rendered transitions.
+
+
+
+Version 0.9.1-pre3 (salsaman)
+------------------
+Implemented the new RFX (rendered effect plugins) system:
+Made a command line routine (build-plugin) which can build rendered
+effect plugins from scripts.
+Converted all LiVES rendered effects and some tools to plugins. Optimised the
+rendered effects, and fixed a few minor glitches in them.
+Added new effects : deinterlace, blur, spread, adjust contrast,
+despeckle, emboss, remove subtitles (thanks Marco; requires python2.3)
+
+Added frame calculator and the kruler custom plugin.
+
+Small optimisation for image directory loading.
+Split encoding/effects tabs in Preferences. Added a new pref
+'antialias'.
+Removed 'effects command' from preferences and ~/.lives as it is no
+longer necessary.
+
+Internally: added new lives_rendered_effect_t and lives_param_t
+structures. Created functions to generate parameter windows from a
+lives_rendered_effect_t and g_list's of window hints and triggers.
+
+Started implementing the new 'Advanced' menu.
+Made the effects/tools/advanced|run test rfx menu entry be dynamically
+generated.
+
+Created RFX builder window (still some rough edges...)
+
+Fixed some file close ommisions (oops) !
+
+
+
+
+Version 0.9.1-pre1 (salsaman)
+------------------
+Added preliminary support for LiViDO effect plugins. (See:
+      http://livido.dyne.org/codedoc/index.html). LiVES will fully support this 
+      new architecture.
+Add initial support for rendered effect plugins and plugin generation from script-
+      (still in progress).
+Added 'Decoding' tab in Preferences.
+Use internal key polling function during playback. No more crazy cursor keys in 
+other applications :-) Removed 'disable fast key repeat' pref.
+Important fix in smogrify to ensure that images are all opened in RGB24 format.
+Change tooltips for play buttons, they should now change from 'Play All' to 
+'Preview' appropriately.
+Allow cancel after recording external window.
+Do not show error dialogs in 'capture' mode.
+Fixed a hang when 'capture external window' gets no images (regression).
+Removed dependency on jpeg (thanks for the testing Marco !). Allow png to be used 
+instead.
+Fixed a bug where fixed horizontal shift would not wrap.
+Don't show 'resize' menu option if 'convert' is not present.
+Allow undo of 'Load new audio'.
+Remove all dependencies on 'mogrify'; use 'convert' everywhere instead.
+Changed the mplayer interface code so that mplayer player works again. If anyone 
+from mplayer ever reads this, please can you stop changing your $%*@#$!@ -mf 
+format !! Thanks :-)
+Only check encoder audio restrictions if we are encoding with audio.
+Add an mjpegtools encoder for encoding to mpeg.
+Add extra encoding restrictions for mpeg encoding (aspect ratio, pixel block 
+size).
+Calculate best combination of aspect and block size for encoding.
+Add button on menu bar for 'Show Play Window'
+Hitting return in most spinbuttons should now activate 'OK'.
+
+
+2004-01-26  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (SUBDIRS): Add intl,
+	(ACLOCAL_AMFLAGS): New variable.
+	(EXTRA_DIST): Add config.rpath.
+	* configure.in (AC_OUTPUT): Add intl/Makefile,
+
+
+0.9.0-pre1
+----------
+Fix case where audio playback speed is changed, then rate is resampled.
+Fixed some other bugs to do with resampling the clipboard audio.
+Add 'Info | Show messages' menu option.
+Make the default focus be on the slider when play window is opened.
+Allow 'Escape' key to cancel effects/etc.
+Show 'Mono' in GUI for mono sound (regression).
+When the key realtime effect is a transition, and the transition is on, and LiVES is playing,
+next_clip (ctrl-page-down), previous_clip (ctrl-page-up) and store_clip (Fn key) 
+will change the background (blend_file) instead of foreground (current_file).
+If a set is loaded, it will be preserved on a segfault.
+'Trim audio to play start' now works in audio only files, thus giving a crude wav file trimmer.
+Fixed bug with backup/restore of audio only clips.
+Stop playback when 'Quit' is activated (was causing problems in fs mode).
+Add support for swf encoding, including audio rate restrictions.
+Allow preview for 'append audio'.
+Made some small fixes so the code compiles under gcc 2.9.x again.
+Set frame size to 0x0 when all frames are deleted.
+Changed the menu entry 'Trim Audio' to 'Trim/Pad Audio' to make its function clearer.
+Fixed a problem where padding with silence could sometimes end mid-sample.
+Optimised directory loading a little.
+Fixed a streaming problem by allowing 'do not send bandwidth' in open location.
+Fix use of 'enough' when opening an image directory.
+Fixed code to compile with gcc 2.9.x (thanks Clay).
+
+
+
+
+
+
+
+Version 0.8.5
+------------------
+Improved playback performance, particularly when playing in a separate window.
+Fixed occasional hangs with the 'enough' and 'preview' buttons when loading.
+Re-enabled backspace key for start/end selectors.
+Implemented first playback plugin (SDL).
+Allow multiple realtime effects, and rendering of realtime effects.
+Changed wording on menu toggles to make them clearer (hopefully).
+Added play buttons on the main menu.
+Show selection length and time in the GUI.
+Split interface.c into interface.c and gui.c
+Switch back to previous clip when open/restore/capture is cancelled.
+Put frame preview in play window.
+Check that file exists after saving.
+Allow performance recording when 'loop continuous' is on.
+Allow 'none' theme to be selected again (regression).
+Added 'delete selected audio','delete all audio' and 'insert silence' menu options.
+Added support for resampling variable fps--->fixed fps.
+Turned 'shrink' effect into 'shrink/expand'
+Improved performance of 'random zoom'
+Added 'colour filter' effect.
+Give a warning and clean up if backup runs out of disk space.
+Trim bottom blank row from captured windows.
+Show length of selection in main window.
+Show previews for images in the fileselector.
+Correct some memory errors in rgb2uyvy conversion.
+Make backup/restore more efficient
+Improve trim frames dialog (part 1)
+Make new framedraw widget (framedraw.c)
+Clear up some disk space issues.
+Add basic support for grabbing from firewire (using dvgrab)
+Make 'cancel' more robust.
+Allow realtime effects to grab keyboard 'k'
+Fix some GUI glitches
+Use a glist index in menu order for switching/closing clips.
+Change 'loop video to fit audio' to '(auto)loop video to fit audio' and make the 
+default setting on.
+Added 'debug mode' for encoder plugins.
+
+
+
+Version 0.8.1
+-------------
+Fixed cancel in insert
+Fixed record (was playing at double speed)
+Made some fixes for receiving audio streams.
+Rewrote some buggy code for switching to/from separate window.
+Fixed a bug in the resampling code.
+Allow recording with ping-pong loops on.
+
+
+Version 0.8.0
+-------------
+Fixed an image loading bug in the back end.
+Made sure that the play pointer is always redrawn after play.
+Made selection with mouse a little more accurate.
+Fixed 'jumble' effect so it only jumbles frames in the selection.
+Allow cancel during copy to clipboard.
+Added a new tool: 'trim frame size'.
+Made a fix for gnome so that the 'processing' window has a border.
+Made non-fatal startup errors be non-fatal again.
+Fixed a crash when merging a still image with a clip.
+Fixed a regression where undo after a merge would not always undo frames.
+Fixed a bug where fps changes could be wrong when recording a selection.
+Implemented clip switching (ctrl-pageup, ctrl-pagedn) and freeze (ctrl-backspace)
+Added save_vj_set and load_vj_set
+Added the 'shrink', 'shift' effects.
+Added some nice real-time effects (accessed by ctrl-1 ctrl-2 etc,).
+Improved directory loading so it loads in alpha order.
+Added realtime effects : nervous, alien, noise, negate, posterize
+Use default fps when opening a single frame.
+Allow antialiasing on/off via a .lives pref.
+
+
+
+
+
+
+Version 0.7.5
+-------------
+Improved playback for faster frame rates.
+Video and audio can now be previewed during open.
+Quantisation of frames has been made smoother - recording looks much better now.
+Added ability to switch to another clip whilst opening.
+Fixed a bug where backups would only save to selection end (backported to 0.7.1-2)
+Fixed an audio bug when opening files with mplayer as the audio player.
+Allow recording of performances even in clips with no audio.
+Freeze smogrify API (in progress).
+Fixed a problem with merge (frame-in-frame).
+Added new effects 'jumble frames' and 'tunnel'.
+Video length is now calculated properly after fps changes are recorded.
+Eliminated extremely long backup/restore times for larger files.
+Fixed an overflow issue in the player code.
+Added a basic timeline.
+Option to maintain aspect when opening directories of images.
+Added a preference to disable fast key repeat on playback.
+Fixed 'export audio' so that it doesn't append silence at the end.
+Added an option 'trim audio from beginning to play start'
+Made encoders be plugins.
+Added a 'continuous loop' option.
+Fixed external window so it _really_ doesn't crash.
+Made some updates to work with mplayer1.0pre1
+
+
+
+
+
+
+
+
+Version 0.7.1
+-------------
+Implemented encoding with ffmpeg - 4 new output formats, including divx !
+Added three new options to the audio menu 'export selected audio', 'append audio' 
+and 'trim audio to selection'.
+Cut/copy/insert/delete/paste now all work with sound as well as video.
+Improved visibility of the playback cursors.
+Added a function to resample video at a new framerate.
+Added a function to resample audio at new rate/channels/sample size.
+Audio is now auto-resampled between clips.
+Added a preference to auto-resample video between clips ("insert_resample").
+Fixed a bug where frames merged before a selection would sometimes 'jump'.
+File size is now updated properly after backup/restore.
+Subdirectories no longer prevent image directories from loading.
+Fixed a freeze when the temp. directory does not end in '/'.
+Added preview when opening file selection. Improved the responsiveness of file 
+preview.
+Audio files can now be loaded without video.
+Added 'sticky' mode for playing in a separate window.
+Improved 'colorize' effect and 'dream' effect.
+Improved stability and performance.
+LiVES should now respect 'configure --prefix' when looking for themes, etc.
+
+
+
+
+
+Version 0.6.5
+-------------------
+Mainly a bugfix and stability release.
+Fixed some menu bugs. Underscores in recent files are now handled correctly.
+Fixed the crash in audio preview.
+Fixed the problem with file names getting lost after saving.
+Fixed a bug in loading of WAV files.
+Fixed a bug with selection start and end after merge.
+Fixed some minor audio issues for Save Selection
+
+One new feature: midi synch - if this is checked, then a midi start
+will be sent when playback starts, and a midi stop when playback
+stops. By default, /dev/midi is used, this can be changed by editing
+the files '/usr/bin/midistart' and '/usr/bin/midistop'
+
+
+
+
+
+
+Version 0.6.0
+-------------
+Added lossless backup/restore function.
+Implemented basic events and recording of performances.
+Reordering of frames is now possible after recording.
+Made preview frame invisible again on blank background (regression).
+Allow video to play backwards (using ctrl-down during playback).
+Added a 'reverse direction' key, (ctrl-space during playback).
+Fixed the bugs in external capture. It no longer crashes !
+Fixed a bug to do with file extensions becoming corrupted.
+Optimised the player code, playback is now much smoother.
+Allow transparent to white; fixed frame-in-frame transparency.
+Fixed some bugs to do with merging, and undoing pre-inserted frames.
+Tidied up the undo/redo system - it should now work properly now even after switching clips.
+Allow use of 'themes' to change the look of the app (3 builtin themes are available).
+Added xmms random play feature. Added 'Recent Files' to the Files menu.
+Many improvements to the GUI; numerous other stability and performance fixes.
+
+
+
+
+
+
+
+Version 0.5.5
+-------------
+Merge now supports two types of variable transparency.
+Added support for opening file selections, and opening remote locations.
+Added previews on file open operations.
+It is now possible to save individual frames to disk (right click on the frame).
+A possible bug with blank file save names was fixed.
+Updated the colorize effect to work with the latest imagemagick (5.5.4)
+Added an option to load files without sound.
+Numerous small fixes/cleanups.
+
+
+
+
+
+
+
+Version 0.5.0
+-------------
+Added basic merge function.
+Allow single images or directories of images to be opened.
+(Just open an image or a directory as you would a video file.)
+Fixed a bug where the config file would not be updated for users 
+of older versions. Ooops...
+Fixed a bug to prevent a crash with video streams.
+Added flip and wave effects.
+
+
+
+
+
+
+Version 0.4.5
+-------------
+The internal player can now play in a separate window.
+Mouse pointer is hidden in the playback window.
+Improved selection menu.
+Timer bars are now clickable/draggable.
+Audio tracks can be loaded from CD (requires cdda2wav).
+Ctrl keys during pb.
+LiVES can now capture the output of (almost) any other window.
+
+
+
+
+
+
+
+Version 0.4.0
+-------------
+Added (experimental) internal player.
+New features of the internal player include:
+- more accurate A/V sync
+- variable speed playback
+- tracking of playback position
+- instant switch to fullscreen/double
+- looping of selections
+- smooth looping, even in fullscreen mode
+
+Added 'normalize' effect
+Many minor bugfixes
+
+
+
+
+
+Version 0.3.5
+-------------
+Play video double size.
+Implemented preferences.
+Added solarize function, improved rotation and colorization.
+Improved 'insert' to allow multiple insertion/insert to end of audio.
+Added 'random zoom' effect.
+Save without sound.
+Allow pause/preview during effect processing.
+Added basic timer bars.
+Allowed LiVES to handle more types of video.
+Upgrade to mogrify 5.4.8 (older versions should still work).
+
+
+
+
+Version 0.3.0
+-------------
+Upgraded to use mplayer 0.9.0rc1
+Implemented cut/delete/close/paste functions.
+Show clipboard info/play clipboard.
+Fixed some bugs with spin buttons.
+Fixed a regression where video without sound would not stop properly.
+Added 'resize' function, and autoresize of inserted frames.
+Prevent flicker during playback.
+Fixed a problem with saving audio.
+Added 'strobe' effect (via 'negate')
+Added 'change playback speed' option.
+
+
+
+Version 0.2.5
+-------------
+Vastly improved audio/visual sync.
+Allowed multiple files to be opened.
+Implemented copy/insert.
+Added experimental 'black background' option.
+Auto detection of sound players.
+Turned off debugging output.
+Numerous small bug fixes.
+
+
+Version 0.2
+-----------
+Fix major A/V sync error.
+Show an error dialog when save fails.
+Show preview in main window.
+Added Help|About.
+Fixed scrolling in info area.
+Implemented cancel during file load.
+Added 'undo'/'redo' functions.
+Improved load speed.
+
+
+Version 0.1.5
+-------------
+Added basic audio sync
+Fixed memory leaks
+Implemented progress bars
+Made smogrify run in background mode, allowed lives-exe to run in bg
+Added first frame and last frame controls.
+Added file info window.
+Change main window title when file is loaded.
+
+
+
+Version 0.1
+-----------
+First public release

@@ -1,0 +1,26 @@
+Source: lives
+Section: graphics
+Priority: optional
+Maintainer: Ubuntu MOTU Developers <motu@lists.ubuntu.com>
+Build-Depends: debhelper (>= 5), autotools-dev, gettext, pkg-config, libgtk2.0-dev
+Standards-Version: 3.7.3
+
+Package: lives
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Video Editing System a Free is an open source video editor *and* a VJ tool
+ LiVES mixes realtime video performance and non-linear editing in one application. It will
+ let you start editing and making video right away, without having to worry about formats,
+ frame sizes, or framerates. It is a very flexible tool which can be used by both VJ's and
+ video editors - mix and switch clips from the keyboard, trim and edit your clips, and bring
+ them together using the multitrack timeline. You can even record your performance in real
+ time, and then edit it further or render it straight away as a new clip!
+ .
+ For the more technically minded, the application can be controlled remotely or scripted for
+ use as a video server. And it supports all of the latest free standards.
+ .
+ LiVES is good enough to be used as a VJ tool for professional performances, and as a video
+ editor is capable of creating dazzling clips in a wide variety of formats. For a full list
+ of the features of LiVES, look at its homepage at:
+ .
+ <http://lives.sourceforge.net/index.php>

@@ -1,0 +1,1205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <title>smogrify</title>
+</head>
+<body style="background-image: url(about:blank);">
+<h1>Smogrify</h1>
+<br>
+Note: this document is currently being updated. The intention is to
+freeze the smogrify interface from 0.7.5 (the next release) onwards.
+After that, commands will only be added. The current development
+version is <a
+ href="http://www.xs4all.nl/%7Esalsaman/lives/current/smogrify">here</a>.<br>
+<br>
+<br>
+<br>
+<br>
+LiVES is written as a client/server architecture. Smogrify (super
+mogrify) is the command line client for LiVES. It runs
+mostly in background mode.<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<h2>Details</h2>
+The following is a list of all the general purpose commands in
+smogrify. Below that are some examples of how to use smogrify.<br>
+<br>
+<br>
+<table cellpadding="2" cellspacing="2" border="1"
+ style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;">Command<br>
+      </td>
+      <td style="vertical-align: top;">Parameters<br>
+      </td>
+      <td style="vertical-align: top;">Blocking/non blocking<br>
+      </td>
+      <td style="vertical-align: top;">Notes<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">key: <span
+ style="color: rgb(0, 0, 153);">int,</span> <span
+ style="color: rgb(255, 0, 0);">float,</span> <span
+ style="color: rgb(0, 153, 0);">string,</span> <span
+ style="color: rgb(255, 102, 0);">boolean </span><br>
+      </td>
+      <td style="vertical-align: top;">Unless indicated otherwise, for
+non-blocking operations,<br>
+you must wait for the file <br>
+      <span style="font-style: italic;">/tempdir/handle/.status<br>
+      </span>to be created.<br>
+      <br>
+This file is delimeted by "|". When the operation is finished, the
+first field will either be "completed" or "error".<br>
+      <br>
+Some operations return a progress count in this file, so you <span
+ style="font-weight: bold;">must</span> also check that the file starts
+with 'completed|' or 'error|' .<br>
+      <br>
+      </td>
+      <td style="vertical-align: top;">Items in {} are optional
+parameters.<br>
+      <br>
+Unless specifed otherwise, all functions return 0 on success, 1 on
+failure.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;" colspan="4"><br>
+      <br>
+      <br>
+      <h3>Utility Functions</h3>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">report</span><br>
+      </td>
+      <td style="vertical-align: top; color: rgb(0, 153, 0);">homedir<br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Reports temp
+directory and other details to file <span style="font-style: italic;">/tmp/.smogrify</span>.
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">Should be called first</span> </span>before
+any
+other directives since it also initialises the .lives file. Homedir
+should be the directory where the .lives file is to be stored (normally
+the user's home directory).<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">get_tempdir</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">id</span><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Writes the value of LiVES'
+temporary directory to the file <span style="font-style: italic;">/tmp/.smogrify.id</span><br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">set_pref</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">key</span><br>
+      <span style="color: rgb(0, 153, 0);">value</span><br
+ style="color: rgb(0, 153, 0);">
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Sets the preference identified
+by &lt;<span style="color: rgb(0, 153, 0);">key</span>&gt;&lt;/<span
+ style="color: rgb(0, 153, 0);">key</span>&gt; to the <span
+ style="color: rgb(0, 153, 0);">value</span>. Keys may not contain
+spaces, but values may.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">get_pref</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">key</span> <br>
+{<span style="color: rgb(0, 153, 0);">id1</span> <span
+ style="color: rgb(0, 153, 0);">id2</span>}</td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Writes the value associated with
+      <span style="color: rgb(0, 153, 0);">key</span> to the file <span
+ style="font-style: italic;">/tempdir/.smogval.id1.id2</span>. If id1
+and id2 are not
+specified, uid and gid are used.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">get_pref_default</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">key</span> <br>
+{<span style="color: rgb(0, 153, 0);">id1</span> <span
+ style="color: rgb(0, 153, 0);">id2</span>}</td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Like <span
+ style="font-weight: bold;">get_pref</span>, but returns a default
+value.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">set_pref_if_not_set</span><br>
+      <br>
+      <br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">key</span> <span
+ style="color: rgb(0, 153, 0);">value</span></td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Like <span
+ style="font-weight: bold;">set_pref</span>, but will only set a value
+if the key does not exist already. A similar function is used
+extensively in <span style="font-weight: bold;">report</span> to
+create the config file.<br>
+      <br>
+(From 0.7.5 onwards)<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">list_plugins</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">id<br>
+directory</span><br>
+      <br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Lists plugins (files) in <span
+ style="color: rgb(0, 153, 0);">directory<br>
+      </span>Data is returned in the file <span
+ style="font-style: italic;">/tempdir/.smogplugin.id</span>, using the
+format: N|plugin1_name|plugin2_name...|pluginN_name<br>
+      <br>
+      <span style="color: rgb(0, 153, 0);"></span>(From 0.7.5 onwards)<span
+ style="color: rgb(0, 153, 0);"><br>
+      </span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">key_rpt_fast</span><br>
+      </td>
+      <td style="vertical-align: top;">-<br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Set keyboard repeat rate to 25
+and the delay to 1.<br>
+Does not return any info file.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">key_rpt_slow</span><br>
+      </td>
+      <td style="vertical-align: top;">-<br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Reset keyboard repeat rate.<br>
+Does not return any info file.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">get_window_id</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle</span></td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Prompts the user to click on a
+window, then returns: <span style="color: rgb(0, 0, 153);">window_id</span>,
+      <span style="color: rgb(0, 0, 153);">height</span>, <span
+ style="color: rgb(0, 0, 153);">width</span> and colour depth (<span
+ style="color: rgb(0, 0, 153);">bpp</span>).<br>
+Information is returned in the file: <span style="font-style: italic;">/tempdir/handle/.status</span>,
+and is delimeted by "|"<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">version</span><br>
+      </td>
+      <td style="vertical-align: top;">-<br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Prints the version to stdout.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">cleanup</span><br>
+      </td>
+      <td style="vertical-align: top;">-<br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Removes old temporary files.
+Should never be called whilst there are copies of lives-exe running.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;" colspan="4"><br>
+      <br>
+      <br>
+      <h3>File Operations</h3>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">new</span><br>
+      </td>
+      <td style="vertical-align: top;">-<br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+(<span style="color: rgb(0, 153, 0);">id</span>)<br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Create handle for new
+file.&nbsp; On success : returns <span style="color: rgb(0, 0, 153);">n_handle</span>*256,
+on failure, returns 0<span style="font-style: italic;">.<br>
+      <br>
+      </span>Info file is created as <span style="font-style: italic;">/tempdir/.info.n_handle.</span>
+This file contains <span style="color: rgb(0, 153, 0);">handle</span>,
+which is used as a key
+in all
+other functions below.<br>
+      <br>
+      <br>
+From 0.7.5 onwards, the syntax will be changing. <span
+ style="font-weight: bold;">New</span> will take a parameter 'id', and
+will return the new handle in /tempdir/.info.id<br>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">get_details</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename</span><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Returns:&nbsp; <br>
+$<span style="color: rgb(0, 153, 0);">handle</span>,$<span
+ style="color: rgb(0, 0, 153);">count</span>,$<span
+ style="color: rgb(0, 102, 0);">type</span>,$<span
+ style="color: rgb(0, 0, 153);">hsize</span>,$<span
+ style="color: rgb(0, 0, 153);">vsize</span>,$<span
+ style="color: rgb(0, 0, 153);">bpp</span>,$<span
+ style="color: rgb(255, 0, 0);">fps</span>,$<span
+ style="color: rgb(0, 0, 153);">f_size</span>,$<span
+ style="color: rgb(0, 0, 153);">arate</span>,<br>
+$<span style="color: rgb(0, 0, 153);">achans</span>,$<span
+ style="color: rgb(0, 0, 153);">asamps</span>,$<span
+ style="color: rgb(255, 102, 0);">signed</span>,$<span
+ style="color: rgb(255, 102, 0);">endian</span>,$<span
+ style="color: rgb(0, 0, 153);">af_size<br>
+      <br>
+      </span>Information is returned in the file: <span
+ style="font-style: italic;">/tempdir/handle/.status</span>,
+and is delimeted by "|"<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">open</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename<br>
+      <span style="color: rgb(255, 102, 0);">with_sound</span></span> <span
+ style="color: rgb(255, 0, 0);">{start_time}<br>
+      <span style="color: rgb(0, 0, 153);">{frames</span></span><span
+ style="color: rgb(0, 0, 153);">}</span><span
+ style="color: rgb(255, 0, 0);"><br>
+      </span></td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">If the <span
+ style="color: rgb(255, 0, 0);">start_time</span> and <span
+ style="color: rgb(0, 0, 153);">frames</span> parameters are omitted,
+the entire file will be opened. If only the <span
+ style="color: rgb(0, 0, 153);">frames</span> parameter is omitted,
+file will be opened to the end.<br>
+      <br>
+Returns:&nbsp;
+$<span style="color: rgb(0, 153, 0);">handle</span>,$<span
+ style="color: rgb(0, 0, 153);">count</span>,$<span
+ style="color: rgb(0, 102, 0);">type</span>,$<span
+ style="color: rgb(0, 0, 153);">hsize</span>,$<span
+ style="color: rgb(0, 0, 153);">vsize</span>,$<span
+ style="color: rgb(0, 0, 153);">bpp</span>,$<span
+ style="color: rgb(255, 0, 0);">fps</span>,$<span
+ style="color: rgb(0, 0, 153);">f_size</span>,$<span
+ style="color: rgb(0, 0, 153);">arate</span>,<br>
+$<span style="color: rgb(0, 0, 153);">achans</span>,$<span
+ style="color: rgb(0, 0, 153);">asamps</span>,$<span
+ style="color: rgb(255, 102, 0);">signed</span>,$<span
+ style="color: rgb(255, 102, 0);">endian</span>,$<span
+ style="color: rgb(0, 0, 153);">af_size</span><br>
+      <br>
+Information is returned in the file: <span style="font-style: italic;">/tempdir/handle/.status</span>,
+and is delimeted by "|"<br>
+      <br>
+Filename can be a video file, a URL, or a directory.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">open_image</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename</span><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Image will be resized to the
+default height and width. </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">save</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      <span style="color: rgb(255, 0, 0);">fps</span><br
+ style="color: rgb(255, 0, 0);">
+filename</span><br>
+      <span style="color: rgb(0, 0, 153);">start</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">rate</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">chans</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">samps</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(255, 102, 0);">signed</span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Output type can be changed using
+rc_set, e.g.<br>
+smogrify rc_set("encoder","ffmpeg")<br>
+smogrify rc_set("output_type","divx")<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"> <span
+ style="font-weight: bold;">backup</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);"><span style="color: rgb(255, 102, 0);">with_sound</span></span><span
+ style="color: rgb(0, 0, 153);"><br>
+start</span><br style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end</span><br>
+      <span style="color: rgb(0, 153, 0);">filename</span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 0, 153);">Start</span> and <span
+ style="color: rgb(0, 0, 153);">end</span> are currently not
+fully implemented.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">restore</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename</span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Opens backup <span
+ style="font-style: italic;">filename</span>. A handle should be
+obtained first with <span style="font-weight: bold;">new</span>.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">restore_details</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename</span><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Should be called immediately
+after <span style="font-weight: bold;">restore</span>. Returns <span
+ style="color: rgb(0, 0, 153);">backup
+file size</span>, <span style="color: rgb(0, 0, 153);">audio file size</span>,
+and <span style="color: rgb(0, 0, 153);">number of frames</span>.<br>
+      <br>
+Information is returned in the file: <span style="font-style: italic;">/tempdir/handle/.status</span>,
+and is delimeted by "|"<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">close</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle</span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Should be called on all handles
+obtained with <span style="font-weight: bold;">new</span>.<br>
+Does not return any info file.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;" colspan="4"><br>
+      <br>
+      <br>
+      <h3>Frame Operations</h3>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">cut</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">start</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end<br>
+      </span><span style="color: rgb(0, 153, 0);"><span
+ style="color: rgb(255, 102, 0);">cut_audio<br>
+      </span></span><span style="color: rgb(255, 0, 0);"><span
+ style="color: rgb(0, 0, 153);">frames</span></span><br>
+      <span style="color: rgb(0, 0, 153);">rate</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">chans</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">samps</span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 0, 153);">Frames</span> is the total frames in
+the clip before cutting.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">insert</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">where</span><br>
+      <span style="color: rgb(0, 0, 153);">start</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end<br>
+      </span><span style="color: rgb(0, 153, 0);">from_handle</span><br>
+      <span style="color: rgb(0, 153, 0);"><span
+ style="color: rgb(255, 102, 0);">with_audio<br>
+      </span></span><span style="color: rgb(255, 0, 0);"><span
+ style="color: rgb(0, 0, 153);">frames<br>
+width<br>
+height<br>
+      </span></span><span style="color: rgb(0, 0, 153);">rate</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">chans</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">samps<br>
+{times}<br>
+      </span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 0, 153);">Where</span> is the insertion point
+(frames are always inserted after this, so it can be 0). From frames is
+the number of frames in <span style="color: rgb(0, 153, 0);">handle</span>).
+Times is an optional paramter, if it is omitted, it defaults to 1.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">reverse</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">start</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end</span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Reverses the order of frames in <span
+ style="color: rgb(0, 153, 0);">handle</span>. Audio is unaffected.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">reorder</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(255, 102, 0);">{endian}</span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(255, 102, 0);">Endian</span> is an optional
+parameter (0=big endian, 1=little-endian).<br>
+If this is omitted, the endianness of the backend is used.<br>
+Requires an <span style="font-style: italic;">event.frames</span>
+file. Refer to the backup document.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">deorder</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">start</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end<br>
+      </span><span style="color: rgb(255, 0, 0);"><span
+ style="color: rgb(0, 0, 153);">frames</span></span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Undo a <span
+ style="font-weight: bold;">reorder</span> operation. <span
+ style="color: rgb(0, 0, 153);">Frames</span> should be the number of
+frames in the clip <span style="text-decoration: underline;">before</span>
+it was reordered.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">undo</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">start</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end</span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Undoes the last <span
+ style="font-style: italic;">effect</span>. See below for effect
+commands.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">redo</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">start</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end</span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Redoes the last <span
+ style="font-style: italic;">effect</span>. See below for effect
+commands. </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">undo_cut</span><br>
+      </td>
+      <td style="vertical-align: top;">See notes -&gt;<br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Undoes a cut operation. The
+parameters are as for insert; however the <span
+ style="color: rgb(0, 102, 0);">from_handle</span> should be set to the
+value of <span style="color: rgb(0, 102, 0);">handle</span>, and <span
+ style="color: rgb(0, 0, 153);">start</span> and <span
+ style="color: rgb(0, 0, 153);">end</span> should be set to the section
+which was cut. <span style="color: rgb(0, 0, 153);">Frames</span>
+should be the current frame count.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">save_frame</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">frame</span><span
+ style="color: rgb(0, 153, 0);"><br>
+filename</span> </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Image type is auto-detected from
+the file extension.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">fill_and_redo_frames</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">start</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">end<br>
+{pre-cut}<br>
+      </span><span style="color: rgb(0, 0, 153);"></span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Removes gaps in frames and makes
+sure they begin with frame 1.<br>
+      <span style="color: rgb(0, 0, 153);">Pre-cut</span> is an
+optional paramter. If set, frames up to and including <span
+ style="color: rgb(0, 0, 153);">pre-cut</span> (before reordering) will
+be cut from the beginning.<br>
+      <br>
+      <br>
+Useful after operations where there may be gaps in frames (e.g. after
+capture).<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">merge_frames</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;" colspan="4"><br>
+      <br>
+      <h3>Audio Operations</h3>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">mp3open</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename</span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Opens an mp3. Audio is opened as
+44100, stereo, 16 bit signed.<br>
+After this function completes,<span style="font-weight: bold;">
+commit_audio</span> or <span style="font-weight: bold;">cancel_audio</span>
+should be called.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">oggopen</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename</span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Opens an ogg. Audio is opened as
+44100, stereo, 16 bit signed.<br>
+After this function completes, <span style="font-weight: bold;">commit_audio</span>
+or <span style="font-weight: bold;">cancel_audio</span> should be
+called. </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">wavopen</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename</span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Opens a wav. Audio is opened as
+44100, stereo, 16 bit signed.<br>
+After this function completes, <span style="font-weight: bold;">commit_audio</span>
+or <span style="font-weight: bold;">cancel_audio</span> should be
+called. </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">cdopen</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span><span style="color: rgb(0, 0, 153);">track</span><span
+ style="color: rgb(0, 153, 0);"><br>
+      </span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">Opens a cd track. Audio is
+opened as 44100, stereo, 16 bit signed.<br>
+After this function completes, <span style="font-weight: bold;">commit_audio</span>
+or <span style="font-weight: bold;">cancel_audio</span> should be
+called.<br>
+      <br>
+CD device should be set first with <span style="font-weight: bold;">set_pref</span>
+      <span style="font-style: italic;">cdplay_device</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">audioopen</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+filename</span> </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;">From 0.7.5 onwards. Autodetect
+audio type and open it.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">commit_audio</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span> </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Commits the result of an audio
+operation.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">cancel_audio</span></td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle<br>
+      </span> </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Cancels the result of an audio
+operation.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">undo_audio</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 153, 0);">handle</span> </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;">Undoes the last audio change.
+Will not work if the preference <span style="font-style: italic;">conserve_space</span>
+is set to 'true'.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">export_audio</span><br>
+      </td>
+      <td style="vertical-align: top;"><span
+ style="color: rgb(0, 0, 153);"></span><span
+ style="color: rgb(255, 0, 0);">start_time<br>
+      </span><span style="color: rgb(255, 0, 0);">end_time</span><br>
+      <span style="color: rgb(0, 0, 153);">rate</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">chans</span><br
+ style="color: rgb(0, 0, 153);">
+      <span style="color: rgb(0, 0, 153);">samps<br>
+      </span><span style="color: rgb(255, 102, 0);">signed</span><br>
+      <span style="color: rgb(0, 0, 153);">new rate<br>
+      </span><span style="color: rgb(0, 153, 0);">filename</span><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">append_audio</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">trim_audio</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">resample_audio</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">xmmsplay</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">xmmsstop</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">xmmsrandom</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;" colspan="4"><br>
+      <br>
+      <h3>Playback Operations</h3>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">play</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">play_preview</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">fs_preview</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">stop</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;" colspan="4"><br>
+      <br>
+      <h3>Effects<br>
+      </h3>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">charcoal</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">colorize</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">cycle</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">edge</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">flip</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">flop</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">monochrome</span><span
+ style="font-weight: bold;"></span><span style="font-style: italic;"></span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">negate</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">randomzoom</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">resize</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">rotate</span><span
+ style="font-weight: bold;"></span><span style="font-style: italic;"></span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">solarize</span></td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">spin</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">swirl</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">wave</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">cancel</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">pause</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">resume</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">B<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">keep</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">NB<br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+<br>
+<br>
+<h2>Example of use:</h2>
+To load in the file foo.avi, replace the audio with music.ogg, and then
+save the first 1000 frames:<br>
+<br>
+<span style="font-weight: bold;">smogrify report /home/<span
+ style="font-style: italic;">user</span></span><br
+ style="font-weight: bold;">
+<span style="font-weight: bold;">smogrify get_tempdir myvalue</span><br>
+<br>
+-----&gt; store the contents of <span style="font-style: italic;">/tmp/.smogrify.myvalue</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+----&gt; this is the tempdir<br>
+-----&gt; delete <span style="font-style: italic;">/tmp/smogrify.myvalue</span><br>
+<br>
+<span style="font-weight: bold;">smogrify new myvalue</span><br>
+<br>
+----&gt; get <span style="font-style: italic;">handle</span> from
+<span style="font-style: italic;">/tempdir/smogrify.info.myvalue</span><br>
+----&gt; delete <span style="font-style: italic;">/tmp/smogrify.info.myvalue</span><br>
+<br>
+---&gt; open the file with no sound:<br>
+<br>
+<span style="font-weight: bold;">smogrify open </span><span
+ style="font-style: italic; font-weight: bold;">handle</span><span
+ style="font-weight: bold;"> "foo.avi"
+0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><br>
+<br>
+----&gt; get field 8 (fps) from <span style="font-style: italic;">/tempdir/handle/.status</span><br>
+----&gt; delete <span style="font-style: italic;">/tempdir/handle/.status</span><br>
+<br>
+<span style="font-weight: bold;">smogrify audioopen </span><span
+ style="font-style: italic; font-weight: bold;">handle</span><span
+ style="font-weight: bold;"> "music.ogg"</span><br>
+<br>
+----&gt; this is a non-blocking operation, so wait for <span
+ style="font-style: italic;">/tempdir/handle/.status</span> to be
+created, check it starts with 'completed|' or 'error|'<br>
+----&gt; delete <span style="font-style: italic;">/tempdir/handle/.status</span><br>
+<br>
+<span style="font-weight: bold;">smogrify commit_audio </span><span
+ style="font-style: italic; font-weight: bold;">handle<br>
+<br>
+</span>set the encoder and output type (optional):<br>
+<br>
+<span style="font-weight: bold;">smogrify set_pref("encoder","ffmpeg")</span><br
+ style="font-weight: bold;">
+<span style="font-weight: bold;">smogrify set_pref("output_type","divx")</span><br
+ style="font-weight: bold;">
+<br>
+<span style="font-style: italic; font-weight: bold;"></span><span
+ style="font-weight: bold;">smogrify save </span><span
+ style="font-style: italic; font-weight: bold;">handle</span><span
+ style="font-weight: bold;"> </span><span
+ style="font-style: italic; font-weight: bold;">fps</span><span
+ style="font-weight: bold;"> "bar.avi" 1 1000 44100 2 16 1</span><br>
+<br>
+----&gt; this is a non-blocking operation, so wait for <span
+ style="font-style: italic;">/tempdir/handle/.status</span> to be
+created, check it starts with 'completed|' or 'error|'<br>
+<br>
+<span style="font-weight: bold;">smogrify close </span><span
+ style="font-style: italic; font-weight: bold;">handle</span><br>
+<br>
+&nbsp;<br>
+<br>
+<br>
+<br>
+<br>
+</body>
+</html>

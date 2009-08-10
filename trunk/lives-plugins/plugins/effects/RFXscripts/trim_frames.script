@@ -1,0 +1,135 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+trim_frames
+</name>
+
+<version>
+4
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Trim frames/Add border|Trimming|1|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+xstart|_X Start|num0|0|0|10000|
+ystart|_Y Start|num0|0|0|10000|
+xend|_X End|num0|0|0|10000|
+yend|_Y End|num0|0|0|10000|
+kc|Keep _Centered|bool|0|
+w|_Width|num0|0|0|10000|
+h|_Height|num0|0|0|10000|
+bord|Add _Border|bool|0|
+offsx|_Offset X|num0|0|0|10000|
+offsy|_Offset Y|num0|0|0|10000|
+bordc|Border _Colour|colRGB24|0|0|0|
+</params>
+
+<param_window>
+layout|p0|p1|
+layout|p2|p3|
+layout|p4|
+special|framedraw|rectdemask|0|1|2|3|
+layout|hseparator|
+layout|p7|p5|p6|
+layout|"Offset of frame within border"|p8|p9|
+special|aspect|5|6|
+</param_window>
+
+<properties>
+0x0002
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$antialias=&rc_get("antialias");
+$resize_ext=$out_ext;
+$xwidth=$nwidth=$p2-$p0+1;
+$xheight=$nheight=$p3-$p1+1;
+if ($nwidth<1||$nwidth>$width) {
+   &sig_error("New width is invalid.");
+}
+if ($nheight<1||$nheight>$height) {
+   &sig_error("New height is invalid.");
+}
+
+if ($p7) {
+    $cstring1=&RGB24_to_string($p10_red,$p10_green,$p10_blue);
+    system("$convert_command -size $p5!x$p6! xc:$cstring1 blank$img_ext");
+    $nwidth=$p5;
+    $nheight=$p6;
+}
+</pre>
+
+<loop>
+&trim_frame($name,$width,$height,$p0,$p1,$nwidth,$nheight);
+if ($p7) {	
+    system("$composite_command -compose plus -dissolve 100 -geometry $xwidth!x$xheight!+$p8!+$p9! $out -size $p5!x$p6! blank$img_ext $out");
+}
+</loop>
+
+<post>
+if (-f "blank$img_ext") {
+    unlink ("blank$img_ext");
+}
+</post>
+
+<onchange>
+init|$p0_max=$p2_max=$width-1;
+init|$p1_max=$p3_max=$height-1;
+init|$p5=$width;$p6=$height;
+0|$p8_max=$p5-$p2+$p0-1;
+0|if ($p4) {$p2=$width-1-$p0;$p8=int(($p5-$p0_max)/2.+$p0);}
+0|if ($p0>$p2) {$p2=$p0;}
+0|if ($p5==$width&&!$p4) {$p8=$p0;}
+0|$p5_min=$p2-$p0+1;
+1|$p9_max=$p6-$p3+$p1-1;
+1|if ($p4) {$p3=$height-1-$p1;$p9=int(($p6-$p1_max)/2.+$p1);}
+1|if ($p1>$p3) {$p3=$p1;}
+1|$p6_min=$p3-$p1+1;
+1|if ($p6==$height&&!$p4) {$p9=$p1;}
+2|$p8_max=$p5-$p2+$p0-1;
+2|if ($p4) {$p0=$width-1-$p2;$p8=int(($p5-$p0_max)/2.+$p0);}
+2|if ($p2<$p0) {$p0=$p2;}
+2|$p5_min=$p2-$p0+1;
+3|$p9_max=$p6-$p3+$p1-1;
+3|if ($p4) {$p1=$height-1-$p3;$p9=int(($p6-$p1_max)/2.+$p1);}
+3|if ($p3<$p1) {$p1=$p3;}
+3|$p6_min=$p3-$p1+1;
+5|$p8_max=$p5-$p2+$p0-1;
+5|if ($p4) {$p8=int(($p5-$p0_max)/2.+$p0);}
+5|$p7=1;
+6|$p9_max=$p6-$p3+$p1-1;
+6|if ($p4) {$p9=int(($p6-$p1_max)/2.+$p1);}
+6|$p7=1;
+4|if ($p4) {
+4| if ($p0<=$width/2) {
+4|     $p2=$width-1-$p0;
+4|    }
+4|  else {
+4|    $p0=$width-1-$p2;
+4|  }
+4| if ($p1<=$height/2) {
+4|    $p3=$height-1-$p1;
+4| }
+4|  else {
+4|    $p1=$height-1-$p3;
+4|  }
+4|}
+</onchange>

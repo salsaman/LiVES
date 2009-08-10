@@ -1,0 +1,65 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+swirl
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Swirl|Swirling|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+sstart|Swirl _start|num0|1|-1000|1000|
+sstep|Swirl s_tep|num0|1|-100|100|
+</params>
+
+<param_window>
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0001
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code
+<pre>
+</pre>
+
+# loop code
+<loop>
+system("$convert_command $in -swirl $p0 $out");
+$p0+=$p1;
+</loop>
+
+# post loop code
+<post>
+</post>
+
+<onchange>
+</onchange>

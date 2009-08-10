@@ -1,0 +1,174 @@
+#!/usr/bin/perl
+
+# (c) G. Finch (salsaman)
+
+# released under the GNU GPL 3 or later
+# see file COPYING or www.gnu.org for details
+
+
+
+
+
+#######################################################################
+# LiVES encodedv plugin v2.1
+
+# version 1.0 original - salsaman
+# version 2.0 fix it so it works again ! - salsaman.
+# version 2.1 increase quality settings, restrict audio rates.
+# version 2.11 add package name libdv-bin
+
+#######################################################################
+
+if (!defined($standalone)) {
+    my $smogrify=`which smogrify`;
+    chomp($smogrify);
+    require $smogrify;
+}
+else {
+    $command=$ARGV[0];
+}
+
+
+#######################################################################
+
+
+if ($command eq "version") {
+    print "encodedv encoder plugin v2.11\n";
+    exit 0;
+}
+
+
+if ($command eq "init") {
+    # perform any initialisation needed
+    # On error, print error message and exit 1
+    # otherwise exit 0
+
+    if (&location("encodedv") eq "") {
+	print "Encodedv was not found. Please install libdv2-apps or libdv-bin and try again.";
+	exit 1;
+    }
+    
+    # end init code
+    print "initialised\n";
+    exit 0;
+}
+
+
+
+if ($command eq "get_capabilities") {
+    # return capabilities - this is a bitmap field
+    # bit 0 - takes extra parameters (using RFX request)
+    # bit 1 - unused
+    # bit 2 - can encode png
+    # bit 3 - not pure perl
+    print "0\n";
+    exit 0;
+}
+
+
+
+if ($command eq "get_formats") {
+   # for each format: -
+   # return format_name|display_name|audio_types|restrictions|extension|
+
+   # audio types are: 0 - cannot encode audio, 1 - can encode using
+    #  mp3, 2 - can encode using pcm, 3 - can encode using pcm and mp3
+    
+    print "dv_ntsc_med|dv (NTSC) medium quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|\n"; # NTSC
+    print "dv_pal_med|dv (PAL) medium quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|\n"; # PAL
+    print "dv_ntsc_medhi|dv (NTSC) medium/high quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|\n"; # NTSC
+    print "dv_pal_medhi|dv (PAL) medium/high quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|\n"; # PAL
+    print "dv_ntsc_hi|dv (NTSC) high quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|\n"; # NTSC
+    print "dv_pal_hi|dv (PAL) high quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|\n"; # PAL
+
+    exit 0;
+}
+
+
+
+if ($command eq "encode") {
+    # encode 
+    $encoder_command="encodedv";
+
+    chdir $curtmpdir;
+
+    $to_ext=".ppm";
+
+    $passes=1;
+
+    if ($otype eq "dv_ntsc_medhi"||$otype eq "dv_pal_medhi") {
+	$passes=2;
+    }
+    elsif ($otype eq "dv_ntsc_hi"||$otype eq "dv_pal_hi") {
+	$passes=3;
+    }
+
+
+    for ($i=$start;$i<=$end;$i++) {
+	$name=&mkname($i);
+	$name2=&mkname($i-1);
+	`$convert_command $name$img_ext $name2$to_ext`;
+    }
+
+    if (-f $audiofile) {
+	$syscom="$encoder_command -s 0 -e ".($end-$start)." -p $passes %08d$to_ext -a wav $audiofile > \"$nfile\"";
+    }
+    else {
+	$syscom=$encoder_command . " -s 0 -e ".($end-$start)." -p $passes %08d$to_ext > \"$nfile\"";
+    }
+
+    if (defined($DEBUG_ENCODERS)) {
+	print STDERR "Debug: Encodedv command is $syscom\n";
+    }
+
+    system($syscom);
+
+    # required
+    &sig_complete;
+    exit 0;
+}
+
+
+if ($command eq "clear") {
+    # this is called after "encode"
+    # note that encoding could have been stopped at any time
+
+    $to_ext=".ppm";
+
+    for ($i=$start;$i<=$end;$i++) {
+	$name=&mkname($i-1);
+	if (-f "$name$to_ext") {
+	    unlink "$name$to_ext";
+	}
+    }
+    &sig_complete;
+    exit 0;
+}
+
+
+if ($command eq "finalise") {
+    # do any finalising code
+
+    # ...
+
+    # end finalising code
+    print "finalised\n";
+    exit 0;
+}
+
+
+###### subroutines #######
+
+
+
+
+sub get_format_request {
+    # return the code for how we would like audio and video delivered
+    # this is a bitmap field composed of:
+    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
+    # bit 1 - unset=all audio; set=clipped audio
+    # bit 2 - unset=all frames; set=frames for selection only
+
+    return 7; # clipped wav, clipped frames
+}
+

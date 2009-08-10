@@ -1,0 +1,70 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+colour_replace
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Colour replace|Replacing colours in|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+# parameters Label|type|default|min|max|      (list)
+<params>
+source|_Source Colour|colRGB24|0|0|0|
+destc|_Target Colour|colRGB24|255|255|255|
+</params>
+
+<param_window>
+layout|"Replace"|
+layout|p0|
+layout|"with"|
+layout|p1|
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0000
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code (list)
+<pre>
+    $cstring1=&RGB24_to_string($p0_red,$p0_green,$p0_blue);
+    $cstring2=&RGB24_to_string($p1_red,$p1_green,$p1_blue);
+</pre>
+
+# loop code (list)
+<loop>
+`$convert_command $in -fill $cstring2 -opaque $cstring1 $out`;
+</loop>
+
+# post loop code (list)
+<post>
+</post>
+
+<onchange>
+</onchange>

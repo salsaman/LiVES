@@ -1,0 +1,577 @@
+#!/usr/bin/env python
+
+
+import locale
+locale.setlocale(locale.LC_NUMERIC,"")
+
+
+"""
+multi_encoder
+
+LiVES plugin which uses the following encoding programs:
+
+mpeg_encoder.py
+ogm_encoder.py
+mkv_encoder.py
+avi_encoder.py
+dirac_encoder.py
+theora_encoder.py
+mng_encoder.py
+gif_encoder.py
+
+See each *.py encoder for complete list of requirements
+(you can type e.g. mpeg_encoder.py -C)
+
+Copyright (C) 2004-2006 Marco De la Cruz (marco@reimeika.ca)
+It's a trivial program, but might as well GPL it, so see:
+http://www.gnu.org/copyleft/gpl.html for license.
+
+See my vids at http://amv.reimeika.ca !
+"""
+
+version = '0.2.11'
+mpeg = 'mpeg_encoder.py'
+ogm = 'ogm_encoder.py'
+mkv = 'mkv_encoder.py'
+ogg = 'theora_encoder.py'
+avi = 'avi_encoder.py'
+drc = 'dirac_encoder.py'
+mng = 'mng_encoder.py'
+gif = 'gif_encoder.py'
+
+usage = \
+      """
+multi_encoder -h
+multi_encoder [directive [args]]
+      """
+
+help = \
+     """
+SUMMARY (ver. %s):
+
+LiVES plugin which calls one of the following programs:
+
+mpeg_encoder.py
+ogm_encoder.py
+mkv_encoder.py
+theora_encoder.py
+avi_encoder.py
+dirac_encoder.py
+mng_encoder.py
+gif_encoder.py
+
+in order to generate movies in one of the following formats:
+
+MPEG-1/MP2/MPG (various aspect ratios/frame rates)
+DIVX 4:5/VORBIS/OGM (various aspect ratios/frame rates)
+XVID/VORBIS/OGM (various aspect ratios/frame rates)
+DIVX 4:5/VORBIS/MKV (various aspect ratios/frame rates)
+H.264/VORBIS/MKV (various aspect ratios/frame rates)
+XVID/VORBIS/MKV (various aspect ratios/frame rates)
+THEORA/VORBIS/OGG (various aspect ratios/frame rates)
+XVID/MP3/AVI (various aspect ratios/frame rates)
+SNOW/MP3/AVI (various aspect ratios/frame rates)
+H.264/MP3/AVI (various aspect ratios/frame rates)
+DIRAC/---/DRC (various aspect ratios/frame rates, no sound)
+VCD/SVCD/DVD (NTSC and PAL video)
+MNG (no sound)
+Animated GIF (no sound)
+
+The *.py encoder programs are either part of your LiVES
+ditribution and/or available from:
+
+http://lives.reimeika.ca/lives_guide.html
+
+OPTIONS:
+
+-h          for help.
+
+-v          be verbose.
+
+-V          shows the version number.
+
+directive   one of the following LiVES directives:
+
+            version
+            init
+            get_capabilities
+            get_formats
+            finalise
+            get_format_request
+            encode
+            clear
+
+            See the LiVES documentation for details:
+            http://www.xs4all.nl/~salsaman/lives/docs.html
+     """ % version
+
+# This is the directory where all temp files will be stored.
+# It will reside within the LiVES temp directory (where the
+# images and the audio files are located), so it's up to
+# LiVES to make sure it always calls this plugin in the right
+# location! I use this short name because mp2enc corrupts the
+# filename if the length of the "/path/file.mp2" string is over
+# 80 characters long. This should be fixed in a future version
+# of MJPEGtools (> 1.6.2).
+TEMPDIR = './metd'
+
+def run(command):
+    """
+    Run a shell command
+    """
+
+    if verbose:
+        print 'Running: \n' + command + '\n=== ... ==='
+    os.system(command)
+
+
+def which(command):
+    """
+    Finds (or not) a command a la "which"
+    """
+
+    command_found = False
+
+    if command[0] == '/':
+        if os.path.isfile(command) and \
+               os.access(command, os.X_OK):
+            command_found = True
+            abs_command = command
+    else:
+        path = os.environ.get('PATH', '').split(os.pathsep)
+        for dir in path:
+            abs_command = os.path.join(dir, command)
+            if os.path.isfile(abs_command) and \
+               os.access(abs_command, os.X_OK):
+                command_found = True
+                break
+
+    if not command_found:
+        abs_command = ''
+
+    return abs_command
+
+
+def is_installed(prog):
+    """
+    See whether "prog" is installed with all dependencies
+    """
+
+    wprog = which(prog)
+
+    if wprog == '':
+        if verbose:
+            print prog + ': command not found'
+        found = 0
+    else:
+        if verbose:
+            print wprog + ': found'
+        found  = 1
+
+    if found:
+	if hassubproc:	
+		p = subprocess.Popen([prog, '-C'],stdout=subprocess.PIPE)
+		std_out_err=p.stdout
+
+	else:
+        	(std_in, std_out_err) = os.popen4(prog  + ' -C')
+        	std_in.close()
+	
+
+        if 'command not found' in std_out_err.read():
+            if verbose:
+                print prog + ': missing dependencies'
+            found = 0
+
+    return found
+
+def clear():
+    """
+    Clean up temp dirs and files.
+    """
+
+    if verbose: print 'Deleting ' + tempdir
+
+    shutil.rmtree(tempdir, True)
+
+    for link in glob.glob('./temporary_symlink*'):
+        try:
+            if verbose: print 'Deleting ' + link
+            os.remove(link)
+        except:
+            if verbose: print 'Tried deleting ' + link
+            pass
+    for bmp in glob.glob('./TMPBMP*.bmp'):
+        try:
+            if verbose: print 'Deleting ' + bmp
+            os.remove(link)
+        except:
+            if verbose: print 'Tried deleting ' + bmp
+            pass
+    if os.path.exists('./divx2pass.log'):
+        os.remove('./divx2pass.log')
+    if os.path.exists('./xvid-twopass.stats'):
+        os.remove('./xvid-twopass.stats')
+    if os.path.exists('./TMP_x264pass.log'):
+        os.remove('./TMP_x264pass.log')
+    if os.path.exists('./TMP_YUVstream.yuv'):
+        os.remove('./TMP_YUVstream.yuv')
+
+if __name__ == '__main__':
+
+    import os
+    import sys
+    import getopt
+    import shutil
+    import glob
+
+    hassubproc = False
+    try:
+    	import subprocess
+    	hassubproc = True
+    except ImportError:
+    	pass
+
+    tempdir = os.path.abspath(TEMPDIR)
+
+    try:
+        if sys.version_info[0:3] < (2, 3, 0):
+            raise SystemExit
+    except:
+        print 'You need Python 2.3.0 or greater to run me!'
+        raise SystemExit
+
+    try:
+        (opts, args) = getopt.getopt(sys.argv[1:], \
+                                         'hvV')
+    except:
+        print "Something's wrong. Try the '-h' flag."
+        raise SystemExit
+
+    opts = dict(opts)
+
+    if not opts and not args:
+        print usage
+        raise SystemExit
+
+    if '-h' in opts:
+        print usage + help
+        raise SystemExit
+
+    if '-V' in opts:
+        print 'multi_encoder version ' + version
+        raise SystemExit
+
+    if '-v' in opts:
+        verbose = True
+    else:
+        verbose = False
+
+    if len(args) < 1:
+        print 'You must specify a directive.'
+        raise SystemExit
+
+    dir = args[0]
+
+    if dir not in ['version', 'init', \
+                   'get_capabilities', 'get_formats', 'finalise', \
+                   'get_format_request', 'encode', 'clear']:
+        print 'Directive "' + dir + '" not recognized.'
+        raise SystemExit
+    elif verbose:
+        print 'Directive "' + dir + '" chosen.'
+
+
+    if dir == 'version':
+        print version
+        raise SystemExit
+
+    if dir == 'init':
+        installed = is_installed(mpeg) + is_installed(ogm) + \
+                    is_installed(mkv) + is_installed(ogg) + \
+                    is_installed(drc) + is_installed(gif) + \
+                    is_installed(mng) + is_installed(avi)
+        if installed < 1:
+            print 'No encoders found!'
+            raise SystemExit, 1
+        print 'initialised'
+        raise SystemExit
+
+    if dir == 'get_capabilities':
+       # Can encode png (4) + not pure perl (8)
+       print '12'
+       raise SystemExit
+
+    if dir == 'get_formats':
+
+       # define AUDIO_CODEC_MP3 0
+       # define AUDIO_CODEC_PCM 1
+       # define AUDIO_CODEC_MP2 2
+       # define AUDIO_CODEC_VORBIS 3
+       # define AUDIO_CODEC_AC3 4
+       # define AUDIO_CODEC_MAX 31
+
+       fps = 'fps=24000:1001;24;25;30000:1001;30;50;60000:1001;60'
+       ntscfps = 'fps=30000:1001'
+       palfps = 'fps=25'
+       ar = 'aspect=1:1;4:3;16:9;2.21:1'
+       hb = 'hblock=16'
+       vb = 'vblock=16'
+       sr = 'arate=32000;44100;48000'
+       if is_installed(mpeg):
+           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (fps, ar, hb, vb, sr)
+           print 'qlo-mpeg|Fast, very low Quality MPG (MPEG-1/MP2)' + specs
+           print 'lo-mpeg|Low Quality MPG (MPEG-1/MP2)' + specs
+           print 'ml-mpeg|Medium-Low Quality MPG (MPEG-1/MP2)' + specs
+           print 'mh-mpeg|Medium-High Quality MPG (MPEG-1/MP2)'+ specs
+           print 'hi-mpeg|High Quality MPG (MPEG-1/MP2)' + specs
+           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (ntscfps, ar, hb, vb, sr)
+           print 'vcd-mpeg|VCD-compatible MPG (NTSC)' + specs
+           print 'svcd-mpeg|SVCD-compatible MPG (NTSC)' + specs
+           # For DVD the encoder will resample the sound rate to 48000
+           print 'dvd-mpeg|DVD-compatible MPG (NTSC)' + specs
+           specs = '|2|%s,%s,%s,%s,%s|mpg|' % (ntscfps, ar, hb, vb, sr)
+           print 'sdvd-mpeg|Strictly DVD-compatible MPG (NTSC)' + specs
+           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (palfps, ar, hb, vb, sr)
+           print 'pvcd-mpeg|VCD-compatible MPG (PAL)' + specs
+           specs = '|2|%s,%s,%s,%s,%s|mpg|' % (palfps, ar, hb, vb, sr)
+           print 'psvcd-mpeg|SVCD-compatible MPG (PAL)' + specs
+           # For DVD the encoder will resample the sound rate to 48000
+           print 'pdvd-mpeg|DVD-compatible MPG (PAL)' + specs
+           print 'spdvd-mpeg|Strictly DVD-compatible MPG (PAL)' + specs
+       sr = 'arate=8000;11025;12000;16000;22050;24000;32000;44100;48000'
+       if is_installed(ogm):
+           specs = '|8|%s,%s,%s,%s|ogm|' % (ar, hb, vb, sr)
+           print 'lo_d-ogm|Low Quality OGM (DIVX 4:5/VORBIS)' + specs
+           print 'ml_d-ogm|Medium-Low Quality OGM (DIVX 4:5/VORBIS)' + specs
+           print 'mh_d-ogm|Medium-High Quality OGM (DIVX 4:5/VORBIS)' + specs
+           print 'hi_d-ogm|High Quality OGM (DIVX 4:5/VORBIS)' + specs
+           print 'lo_x-ogm|Low Quality OGM (XVID/VORBIS)' + specs
+           print 'ml_x-ogm|Medium-Low Quality OGM (XVID/VORBIS)' + specs
+           print 'mh_x-ogm|Medium-High Quality OGM (XVID/VORBIS)' + specs
+           print 'hi_x-ogm|High Quality OGM (XVID/VORBIS)' + specs
+       if is_installed(mkv):
+           specs = '|8|%s,%s,%s,%s|mkv|' % (ar, hb, vb, sr)
+           print 'lo_d-mkv|Low Quality MKV (DIVX 4:5/VORBIS)' + specs
+           print 'ml_d-mkv|Medium-Low Quality MKV (DIVX 4:5/VORBIS)' + specs
+           print 'mh_d-mkv|Medium-High Quality MKV (DIVX 4:5/VORBIS)' + specs
+           print 'hi_d-mkv|High Quality MKV (DIVX 4:5/VORBIS)' + specs
+           print 'lo_x-mkv|Low Quality MKV (XVID/VORBIS)' + specs
+           print 'ml_x-mkv|Medium-Low Quality MKV (XVID/VORBIS)' + specs
+           print 'mh_x-mkv|Medium-High Quality MKV (XVID/VORBIS)' + specs
+           print 'hi_x-mkv|High Quality MKV (XVID/VORBIS)' + specs
+           print 'lo_h-mkv|Low Quality MKV (H.264/VORBIS)' + specs
+           print 'ml_h-mkv|Medium-Low Quality MKV (H.264/VORBIS)' + specs
+           print 'mh_h-mkv|Medium-High Quality MKV (H.264/VORBIS)' + specs
+           print 'hi_h-mkv|High Quality MKV (H.264/VORBIS)' + specs
+       if is_installed(avi):
+           specs = '|1|%s,%s,%s,%s|avi|' % (ar, hb, vb, sr)
+           print 'lo_s-avi|EXP Low Quality AVI (SNOW/MP3)' + specs
+           print 'ml_s-avi|EXP Medium-Low Quality AVI (SNOW/MP3)' + specs
+           print 'mh_s-avi|EXP Medium-High Quality AVI (SNOW/MP3)' + specs
+           print 'hi_s-avi|EXP High Quality AVI (SNOW/MP3)' + specs
+           print 'lo_h-avi|EXP Low Quality AVI (H.264/MP3)' + specs
+           print 'ml_h-avi|EXP Medium-Low Quality AVI (H.264/MP3)' + specs
+           print 'mh_h-avi|EXP Medium-High Quality AVI (H.264/MP3)' + specs
+           print 'hi_h-avi|EXP High Quality AVI (H.264/MP3)' + specs
+           print 'lo_x-avi|Low Quality AVI (XVID/MP3)' + specs
+           print 'ml_x-avi|Medium-Low Quality AVI (XVID/MP3)' + specs
+           print 'mh_x-avi|Medium-High Quality AVI (XVID/MP3)' + specs
+           print 'hi_x-avi|High Quality AVI (XVID/MP3)' + specs
+       if is_installed(ogg):
+           specs = '|8|%s,%s,%s,%s|ogg|' % (ar, hb, vb, sr)
+           print 'lo-theora|Low Quality OGG (THEORA/VORBIS)' + specs
+           print 'ml-theora|Medium-Low Quality OGG (THEORA/VORBIS)' + specs
+           print 'mh-theora|Medium-High Quality OGG (THEORA/VORBIS)' + specs
+           print 'hi-theora|High Quality OGG (THEORA/VORBIS)' + specs
+       # EXPERIMENTAL. Also, drc doesn't support sound yet (needs wrapper).
+       if is_installed(drc):
+           specs = '|0|%s,%s,%s,%s|drc|' % (ar, hb, vb, sr)
+           print 'lo-dirac|EXP Low Quality DRC (DIRAC/NONE)' + specs
+           print 'ml-dirac|EXP Medium-Low Quality DRC (DIRAC/NONE)' + specs
+           print 'mh-dirac|EXP Medium-High Quality DRC (DIRAC/NONE)' + specs
+           print 'hi-dirac|EXP High Quality DRC (DIRAC/NONE)' + specs
+       if is_installed(mng):
+           specs = '|0|none|mng|'
+           print 'hi-mng|MNG (MNG/NONE) format' + specs
+       if is_installed(gif):
+           specs = '|0|none|gif|'
+           print 'hi-gif|Animated GIF (GIF/NONE) format' + specs
+       raise SystemExit
+
+    if dir == 'get_format_request':
+       # wav (1) + clipped audio (2) + selected frames (4)
+       print '7'
+       raise SystemExit
+
+    if dir == 'encode':
+
+        fps = args[1]
+        outfile = args[2]
+        outfile = '"' + outfile + '"'
+        start = args[3]
+        end = args[4]
+        ext = args[5]
+        vformat = args[6]
+        aformat = args[7]
+        hsize = args[8]
+        vsize = args[9]
+        debug = args[10]
+
+        if debug == '1':
+            verbose = True
+        
+        fpst = 0.0005
+        if abs(24000.0/1001.0 - locale.atof(fps)) < fpst: fpsc = '1'
+        elif abs(24 - locale.atof(fps)) < fpst: fpsc = '2'
+        elif abs(25 - locale.atof(fps)) < fpst: fpsc = '3'
+        elif abs(30000.0/1001.0 - locale.atof(fps)) < fpst: fpsc = '4'
+        elif abs(30 - locale.atof(fps)) < fpst: fpsc = '5'
+        elif abs(50 - locale.atof(fps)) < fpst: fpsc = '6'
+        elif abs(60000.0/1001.0 - locale.atof(fps)) < fpst: fpsc = '7'
+        elif abs(60 - locale.atof(fps)) < fpst: fpsc = '8'
+        else: fpsc = fps
+
+        aspect = locale.atof(hsize)/locale.atof(vsize)
+        if 0 <= aspect <= 1.16:
+            # 1:1 = 1
+            arc = '1'
+        elif 1.16 < aspect <= 1.55:
+            # 4:3 ~ 1.33
+            arc = '2'
+        elif 1.55 < aspect <= 1.99:
+            # 16:9 ~ 1.77
+            arc = '3'
+        elif 1.99 < aspect:
+            # 2.21:1
+            arc = '4'
+        else:
+            print 'Unable to determine the aspect ratio, got: %s' % aspect
+            raise SystemExit
+
+        (type, prog) = vformat.split('-')
+
+        if verbose:
+            quiet = '-v'
+            tonull = ''
+        else:
+            quiet = '-q'
+            tonull = '2> /dev/null'
+
+        encode_command = ' '.join([prog + '_encoder.py', '-o', \
+                                   outfile, '-w', tempdir, '-a', arc, \
+                                   '-f', fpsc, quiet, '-t', \
+                                   type, '-s ./audiodump.wav', \
+                                   start, end, tonull])
+
+        message = """
+        I got the following arguments:
+
+        multi_encoder version = %s
+        fps = %s
+        outfile = %s
+        start = %s
+        end = %s
+        ext = %s
+        vformat = %s
+        aformat = %s
+        hsize = %s
+        vsize = %s
+
+        I will use the following:
+
+        fpsc = %s
+        aspect = %s
+        arc = %s
+        type = %s
+        prog = %s
+        tempdir = %s
+
+        I will run the following command:
+        %s
+
+        """ % (version, fps, outfile, start, end, ext, vformat, aformat, hsize, vsize, \
+               fpsc, aspect, arc, type, prog, tempdir, encode_command)
+
+        if verbose:
+            print message
+
+        # Uncomment to debug
+        # output = open('/tmp/multi_encoder_debug.log', 'w')
+        # output.write(message)
+        # output.close()
+        
+        os.system(encode_command)
+        clear()
+        raise SystemExit
+
+    if dir == 'clear':
+        clear()
+        raise SystemExit
+
+    if dir == 'finalise':
+        print 'finalised'
+        raise SystemExit
+
+"""
+CHANGELOG:
+
+21 Jul 2004 : 0.0.3 : added more directives.
+                      redefined on fps values.
+                      added this changelog :).
+28 Jul 2004 : 0.0.4 : implemented 'encode' and 'clear' directives.
+29 Jul 2004 : 0.0.5 : remove 'divx2pass.log' if present.
+                      dies quietly now when cancelled from LiVES.
+02 Aug 2004 : 0.0.6 : added default extension to 'get_formats'.
+                      changed 'format' to 'vformat' for clarity.
+                      added support for 'debug' argument.
+27 Sep 2004 : 0.0.7 : added 'theora_encoder' and 'dirac_encoder'
+                      (the latter HIGHLY EXPERIMENTAL).
+                      no longer needs all encoders to work, it
+                      will look for and offer the available
+                      formats.
+04 Oct 2004 : 0.0.8 : uses the frame dimensions to guess aspect
+                      ratio.
+13 Oct 2004 : 0.0.9 : fix naming of Ogg Theora (j@v2v.cc).
+                      Ogg Theora file extension is now .ogg.
+                      made vblock=16 (may need to be tweaked).
+26 Oct 2004 : 0.1.0 : can use arbitrary frame rate for Ogg Theora.
+28 Oct 2004 : 0.1.1 : added support for mng_encoder.py.
+                      can use arbitrary frame rate for ogm/mkv/dirac.
+28 Oct 2004 : 0.1.2 : added PAL support.
+29 Oct 2004 : 0.1.3 : added support for gif_encoder.py.
+02 Nov 2004 : 0.1.4 : added xvid.
+                      made descriptions clearer.
+08 Nov 2004 : 0.1.5 : rm xvid-twopass.stats if present.
+                      check if gif/mng encoders are installed.
+21 Nov 2004 : 0.1.6 : check encoder dependencies.
+26 Nov 2004 : 0.1.7 : set audio code to '0' and sr to 'none'
+                      if the format does not support sound
+                      (needs LiVES 0.9.1 or greater).
+29 Nov 2004 : 0.1.8 : set the right encoding flags to drc/gif/mng.
+                      GIF -> Animated GIF for clarity.
+02 Dec 2004 : 0.1.9 : eliminated "anyfps = 'none'", I don't think
+                      it's needed.
+                      fps now checked to 8 decimal places.
+                      eliminated some redundancy in the docs.
+05 Dec 2004 : 0.2.0 : remove unnecessary audio sampling restrictions.
+                      fps difference threshold can be controlled
+                      through "fpst" variable.
+06 Dec 2004 : 0.2.1 : set fpst to 0.0005.
+03 Jan 2005 : 0.2.2 : added avi_encoder.py.
+04 Jan 2005 : 0.2.3 : added h.264 options.
+24 Feb 2005 : 0.2.4 : expanded allowed audio sample rates.
+21 Mar 2005 : 0.2.5 : use env python (hopefully >= 2.3)
+26 Mar 2005 : 0.2.6 : added support for qlo-mpeg.
+28 Jun 2005 : 0.2.7 : added CHANGELOG entry for 0.2.6.
+                      added support for sdvd-mpeg and spdvd-mpeg.
+13 Mar 2006 : 0.2.8 : added h.264/vorbis/mkv.
+                      fixed URL.
+02 Jul 2007 : 0.2.9 : make sure that file names have quotes around them.
+
+
+Nov 2008 : 0.2.10 : salsaman - add locale support (fixes radix problem)
+
+Jun 2009 : 0.2.11 : salsaman - replace deprecated os.popen
+
+"""

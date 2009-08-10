@@ -1,0 +1,434 @@
+= Technical Specification =
+
+Weed Events 1.0 final version.
+
+CHANGELOG
+28/04/2006
+Changed "owner" to "owners" for FILTER_INIT event (allow multiple
+track owners for a filter)
+Added optional "audio_state" leaf to FRAME event.
+
+02/06/2006
+Amended "audio_state" to "audio_seek".
+
+22/06/2006
+Remove "owners"
+
+04/09/2006
+Update audio details for FRAME events. Add "ignore" leaf for
+PARAM_CHANGE events.
+
+22/11/2006
+Add optional leaves to event_list
+
+11/12/2006
+Change plantptr to voidptr (plantptr only to be used for sub-plants).
+Added "weed_event_api_version" leaf to EVENT_LIST plant.
+Added definitions section.
+
+12/09/2008
+Added "audio_volume_tracks" and "audio_volume_values". API unchanged
+since optional.
+
+
+(C) Gabriel "Salsaman" Finch 2005 - 2008
+
+== WEED_EVENT_API_VERSION ==
+This is defined as 100 for this version of the specification. This
+number will be increased for future revisions of the spec. if a
+function or a symbol is changed or added.
+
+
+== PLANT TYPES ==
+This document describes the different 'plant types' in the weed events system, and their mandatory
+and optional 'leaves'.
+
+
+== PLANT TYPE EVENT_LIST ==
+
+Event lists contain events which are linked as a singly or doubly
+linked list. Events may be held in an event list.
+Some kinds of plugins (timeline plugins) can take an event_list input
+and produce an event_list output.
+
+Event lists can also be serialised and passed between applications.
+
+Unlike some systems where event lists (or Edit Decision Lists) are
+forced to be held per-track/channel, Weed allows both this mode, and/or use of a global
+event list for all tracks/channels.
+
+
+ * "type" == WEED_PLANT_EVENT_LIST
+
+'''Mandatory leaves''':[[BR]]
+ 
+ * "weed_event_api_version" : WEED_SEED_INT : API version of this
+   spec. (currently 100).
+
+ * "fps" : WEED_SEED_DOUBLE : framerate of timeline; all events in the
+   timeline MUST be quantised to this rate. An "fps" of 0 indicates
+   variable framerate.
+
+ * "first" : WEED_SEED_VOIDPTR : pointer to the first EVENT in
+   the EVENT_LIST
+
+'''Optional leaves''': [[BR]]
+
+ * "last" : WEED_SEED_VOIDPTR : pointer to the last EVENT in
+   the EVENT_LIST
+
+ * "width" : WEED_SEED_INT : frame width in pixels (must be >0)
+
+ * "height" : WEED_SEED_INT : frame height in pixels (must be >0)
+
+ * "audio_channels" : WEED_SEED_INT : number of audio channels. 0
+   to force no audio. Must be >=0
+
+ * "audio_rate" : WEED_SEED_INT : audio rate in Hz, must be >0 if "audio_channels" > 0
+
+ * "audio_sample_size" : WEED_SEED_INT : audio sample size in bits per
+   sample (e.g. 8 or 16), must be >0 if "audio_channels" > 0
+
+ * "audio_signed" : WEED_SEED_BOOLEAN : WEED_TRUE means signed,
+   WEED_FALSE, unsigned
+
+ * "audio_endian" : WEED_SEED_INT : 0 == little endian, 1 == big
+   endian, other values are invalid
+
+ * "audio_volume_tracks" : WEED_SEED_INT : an array that maps "audio_volume_values" to tracks. Track
+   numbers < 0 are floating (backing) audio tracks. If there are fewer
+   values in "audio_volume_values" than in "audio_volume_tracks", then
+   the tracks without corresponding values are assumed to be "ganged"
+   to the last track with a corresponding value (i.e they are locked
+   to the same value).
+
+* "audio_volume_values" : WEED_SEED_DOUBLE : array of coarse control
+  (0.0 - 1.0) volume values for tracks. Mapping to tracks is done
+  through "audio_volume_tracks"
+ 
+
+
+
+
+== PLANT TYPE EVENT ==
+
+ * "type" == WEED_PLANT_EVENT
+
+'''Mandatory leaves''':[[BR]]
+
+ * "hint"	  : WEED_SEED_INT : hint denoting the event type [see
+   below, Event Hints]
+
+ * "timecode"	  : WEED_SEED_INT64 : the timecode of the event
+
+It is recommended that timecodes be in ascending order, and that events (at least frames) are quantised to the event_list framerate. However, there may exist occasions when this is not possible, so it should not be assumed...
+
+
+ * "next"	  : WEED_SEED_VOIDPTR : pointer to the next event in
+   the event list. Circular references are not allowed. The "next"
+   leaf of the "last" event in an event list MUST be NULL. Timecode of
+   event pointed to MUST be >= this.timecode. Value is ignored for serialisation.
+
+'''Optional leaves''': [[BR]]
+
+ * "previous"	  : WEED_SEED_VOIDPTR : pointer to the previous event in
+   the event list. Circular references are not allowed. If it exists, the "previous"
+   leaf of the "first" event in an event list MUST be NULL. "previous"
+   and "next" MUST form a doubly linked list, i.e there must be a symmetry. Timecode of
+   event pointed to MUST be <= this.timecode. Value is ignored for serialisation.
+
+
+== Order of events at one timecode ==
+
+It is strongly suggested that the order and number of events at each timecode
+should be:
+
+ * 0 or more filter init events
+ * 0 or more parameter change events
+ * 0 or 1 filter map events
+ * 0 or more parameter change events
+ * 1 FRAME event [either a blank frame or a real frame]
+ * 0 or more filter deinit events
+ * 0 or 1 filter map events
+
+ * Marker events can exist anywhere in the event_list.
+
+== EVENT HINTS ==
+
+The "hint" is a mandatory WEED_SEED_INT leaf of every event; the defined values are:
+
+ * WEED_EVENT_HINT_FRAME
+ * WEED_EVENT_HINT_FILTER_INIT
+ * WEED_EVENT_HINT_FILTER_DEINIT
+ * WEED_EVENT_HINT_FILTER_MAP
+ * WEED_EVENT_HINT_PARAM_CHANGE
+ * WEED_EVENT_HINT_MARKER
+
+Depending on the "hint" parameter seed type additional leaves are:
+
+=== WEED_EVENT_HINT_FRAME ===
+A FRAME event can contain video and/or audio.
+
+The video part of a FRAME represents a stack of clip/frame pairs. Number of elements for "clips" and "frames" MUST be equal.
+
+Mandatory leaves for all frames:
+
+ * "clips" : WEED_SEED_INT : array of clips (clip number >=1)  [clip <=0 means no frame/blank frame at that position]
+ * "frames" : WEED_SEED_INT : array of frames (frame number >=1) [frame <=0 means a blank frame at that position]
+
+ "clips"==-1, "frames"==0 is strongly suggested for a blank frame.
+
+
+Mandatory leaves for frames with audio:
+
+The audio part of a FRAME can be represented by an array of 4 numbers:
+track_number, clip_number, seek_time, velocity. Number of elements for "audio_clips" and "audio_frames" MUST be
+equal.
+
+ * "audio_clips" : WEED_SEED_INT : array of audio clips as pairs:
+		 track_number, clip_number. Track number can be used to link the
+		 audio track visually and functionally with a video track (e.g. 0 =
+		 linked to first video track, <0 = "floating" audio track). 
+		 Clip number is the clip number where the audio is taken from. Clip
+		 number <=0 means ignore the value. This is useful
+		 if leaves cannot be deleted. To create an ignore event, e.g. use values
+		 "-1,-1,0.,0." for "audio_clips" and "audio_seek".
+
+ * "audio_seeks" : WEED_SEED_DOUBLE : an array of double pairs, giving audio
+		   seek times in seconds (the player should quantise
+		   this to the nearest sample), followed by velocity
+		   (velocity 1. == normal play, 0.5 == half speed, -1.
+		   == play backwards, etc). Number of elements MUST match number of
+		   elements in "audio_clips", and the elements
+		   correspond in order pair-by-pair. Seek values must be >=0. 
+
+		   If clip number is <=0 in "audio_clips" - ignore, the corresponding "audio_seeks" pair
+		   is ignored. 
+
+		   A velocity of "0." with clip number >0 will switch
+		   audio off for that track, e.g. "-1,1,0.,0."
+		   switches off audio on track -1.
+
+		   The seek value may be < 0., this is to allow a
+		   small adjustment to synch audio with the video
+		   frame.
+
+
+   There is no volume or pan setting: audio samples can be mixed using a filter (see the WEED AUDIO
+   extension); this may require audio rendering.
+
+   Audio continues playing at the specified velocity until the audio
+   is marked off (clip_number <= 0), or the end of the audio file is
+   reached, i.e. values are sparse: only "on", "off", "seek" and "velocity" changes need to
+   be recorded.
+
+Audio and video frames should be combined where possible. I.e. there
+should only be one frame event at a particular timecode.
+
+
+
+=== WEED_EVENT_HINT_FILTER_INIT ===
+    This event is used to init a filter instance.
+
+ * "filter" : WEED_SEED_STRING :the HASHNAME of a Weed filter [See the main Weed
+     spec. for a definition of the Hashname]
+
+
+     The following two leaves are used to construct a FILTER_INSTANCE
+     from a FILTER_INIT event [see the Weed Spec.]
+
+ * "in_count" : WEED_SEED_INT : array describing the number (count)
+     of instances of each in channel template; 0 means disabled, 1 means enabled,
+     >1 can be used where repeated channels are allowed : optional if
+     "filter" has no in channels, otherwise number of
+     elements and order must match filter "in_channel_templates"
+
+ * "out_count" : WEED_SEED_INT : array describing the number
+     (count) of instances of each out channel template; 0 means disabled, 1 means enabled,
+     >1 can be used where repeated channels are allowed : optional if
+     "filter" has no out channel templates, otherwise number of
+     elements and order must match filter "out_channel_templates"
+
+
+
+ * "in_tracks" : WEED_SEED_INT : array of tracks [matches subsequent
+     FRAME events to effect in_channels], starts at 0 for video : optional if
+     "filter" has no in channels : [an in_track of -1 represents a
+     separated audio track - see the WEED audio extension]
+
+ * "out_tracks" : WEED_SEED_INT : array of tracks [matches subsequent
+     FRAME events to effect out_channels], starts at 0 for video : optional if
+     "filter" has no out channels : [an out track of -1 represents a
+     separated audio track - see the WEED audio extension]
+
+
+
+Mandatory leaves for serialisation/deserialisation
+
+ * "event_id" : WEED_SEED_VOIDPTR : for serialisation and backup of
+   event lists, the "event_id" MUST be used to hold the (void *) value
+   of the original event. This can later be used to reconstruct the
+   original event list. Used to locate "init_event" in FILTER_MAP,
+   FILTER_DEINIT and PARAM_CHANGE events after
+   serialisation/deserialisation of event_list. 
+
+
+=== WEED_EVENT_HINT_FILTER_DEINIT ===
+    This event deinits a filter instance.
+
+ * "init_event" : WEED_SEED_VOIDPTR : refers to a FILTER_INIT with "timecode" <= this
+   event's timecode.
+
+
+=== WEED_EVENT_HINT_FILTER_MAP ===
+   This event type defines the order in which filters are applied to any
+   subsequent FRAME events.
+
+ * "init_events" : WEED_SEED_VOIDPTR : an array which refers to FILTER_INITs with "timecode" <= this
+   event's timecode. The associated FILTER_DEINITs must have
+   "timecode" >= this event's timecode.
+
+
+=== WEED_EVENT_HINT_PARAM_CHANGE ===
+    Parameters are assumed to be smoothly interpolated from one value
+    to the next. In order to implement an instantaneous change, the
+    filter should either do its own interpolation, or the old value
+    should be duplicated at the timecode before the instantaneous change. 
+
+
+ * "init_event" : WEED_SEED_VOIDPTR : refers to a FILTER_INIT with "timecode" <= this
+   event's timecode. The referenced "init_event" must be before this
+   event in the event_list. The associated FILTER_DEINIT must have
+   "timecode" >= this event's timecode, and must occur after the
+   PARAM_CHANGE in the event_list.
+
+ * "index" : WEED_SEED_INT : 0 based index of in_parameter numbers
+ * "value" : WEED_SEED_* : "value" of the in_parameter at "timecode"
+
+
+Optional leaves
+
+
+ * "ignore" : array of WEED_SEED_BOOLEAN : for interpolation of in parameters with
+	      multiple elements in "value", "ignore" can be used to block "value"
+	      elements which are to be ignored at that timecode (i.e
+	      they are just "filler" values in the array). Thus, if
+	      present, the number of elements in "ignore" should be = the number of elements in
+	      "value" at the timecode (for COLOR parameters,
+	      the number of elements in "value" is divided by 3
+	      or 4 depending on "colorspace" - see the Weed Filter specification). A setting of WEED_TRUE indicates the
+	      corresponding element in "value" should *not* be considered an
+	      interpolation point (i.e. it is just a "filler"
+	      element). A missing element in "ignore" is considered to be
+	      WEED_FALSE. Extra elements in "ignore" are ignored.
+
+
+=== WEED_EVENT_HINT_MARKER ===
+
+This is a host specfic marker event. Leaves can vary from host to
+host. Markers which are not recognised should be removed from the event_list.
+
+
+
+
+
+
+
+Addendum:
+== Serialising of event_lists ==
+
+Event_lists may be serialised for transfer between applications. The
+process is:
+
+ * add "event_id" leaves to all filter_init events
+ * serialise first the event_list plant, then the event plants in order of ascending timecode
+
+The serialisation format of each plant shall be as follows:
+
+(uint32_t) number_of_properties
+
+then for each property:
+
+(uint32_t) name_len | (char *) property_name | (uint32_t) atom_type |
+(uint32_t) num_elems |
+where name_len == strlen(property_name)
+property_name is ASCII, not NUL-terminated
+then for each element:
+
+(uint32_t) byte_size | (void *) value
+[strings are utf-8, not NUL terminated]
+
+| is shown for clarity only and is not written to the output.
+Byte order is little-endian.
+
+Note: the "type" leaf should be serialised first, in order to assist
+reconstruction of the deserialised plant.
+
+
+
+Addendum:
+== Timeline plugins ==
+
+Timeline plugins are similar to regular Weed (pixel) plugins, except
+that:
+
+They do not have CHANNEL_TEMPLATES.
+
+They have an extra leaf in the FILTER_CLASS, "is_timeline", seed type WEED_SEED_BOOLEAN,
+which must be set to WEED_TRUE.
+
+The host will create a FILTER_INSTANCE with no "in_channels" or
+"out_channels", instead using "in_event_list" and
+"out_event_list". Host should pass a pointer to its currently active event_list (or
+NULL if none is active) in the "in_event_list".
+
+Timeline plugins may either: append an event to the "in_event_list",
+and return it in the "out_event_list", or create a new event_list, and
+return it in the "out_event_list". Events MUST be appended in such a
+way that the event "timecodes" in the event list are in ascending
+order.
+
+The host should add an extra leaf to the HOST_INFO:
+"host_clip_get_frame_count", a voidptr to a host function:
+
+int host_clip_get_frame_count(int clip_number);
+
+If the plugin calls this function, the host should return either
+number of frames in the clip, or 0. 0 should be
+returned if either: the requested clip is not usable (does not exist, or, the
+requested clip is not "random-access", e.g. it is a stream.)
+
+
+== definitions ==
+The weed-events.h header currently contains the following definitions:
+
+#define WEED_EVENT_API_VERSION 100
+#define WEED_EVENT_API_VERSION_100
+
+
+
+Summary:
+
+== EVENT_HINTS ==
+
+ * WEED_EVENT_HINT_FRAME
+ * WEED_EVENT_HINT_FILTER_INIT
+ * WEED_EVENT_HINT_FILTER_DEINIT
+ * WEED_EVENT_HINT_FILTER_MAP
+ * WEED_EVENT_HINT_PARAM_CHANGE
+ * WEED_EVENT_HINT_MARKER
+
+
+== FILTER_INSTANCE leaves ==
+
+Optional leaves 
+
+ * "is_timeline" : WEED_SEED_BOOLEAN : a setting of WEED_TRUE
+   indicates that the filter is a timeline filter.
+
+== HOST_INFO leaves ==
+
+"host_clip_get_framecount" : WEED_SEED_VOIDPTR: pointer to function of
+template int host_clip_get_frame_count(int clip_number); : host must
+supply this if it wants to use timeline plugins
+

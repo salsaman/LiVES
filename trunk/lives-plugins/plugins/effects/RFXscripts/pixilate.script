@@ -1,0 +1,56 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+pixilate
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Pixilate|Pixilating|1|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+bwidth|Block _width|num0|4|1|1000000|
+bheight|Block _height|num0|4|1|1000000|
+</params>
+
+<param_window>
+layout|p0|fill|p1|fill|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+</pre>
+
+<loop>
+system("$convert_command $in -scale ".int($width/$p0+.5)."!x".int($height/$p1+.5)."! -scale $width!x$height! $out");
+</loop>
+
+<post>
+</post>
+
+<onchange>
+init|$p0_max=$width; $p1_max=$height;
+</onchange>

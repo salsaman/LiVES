@@ -1,0 +1,57 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+gamma_change
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman & Marco|
+</author>
+
+<description>
+Gamma change|Changing gamma of|1|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+gstart|Gamma _start|num2|1.0|-10.0|10.0|
+gend|Gamma _end|num2|1.0|-10.0|10.0|
+</params>
+
+<param_window>
+</param_window>
+
+<properties>
+0x0001
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$step=($p1-$p0)/($end-$start+1);
+</pre>
+
+<loop>
+system("$convert_command $in -gamma $p0 $out");
+$p0+=$step;
+</loop>
+
+<post>
+</post>
+
+<onchange>
+</onchange>
+

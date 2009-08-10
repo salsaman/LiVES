@@ -1,0 +1,1598 @@
+= Technical Specification =
+
+Weed 3.0
+
+
+API Version Changes
+-------------------
+100 - first release
+110 - added WEED_PARAMETER_ELEMENT_PER_CHANNEL
+120 - added WEED_YUV_CLAMPING and WEED_YUV_SUBSPACE
+
+
+Changelog:
+21/04/06 salsaman.
+Added notes about WEED_PLANT_UNKNOWN, clarified "max_repeats" for
+filters, clarified number of elements in parameter_template
+"default". Removed "TODO" from refs. to Weed EVENTS spec. Version number unchanged.
+
+14/08/06 salsaman
+Allow channels based on templates with "max_repeats" to be disabled at
+any time, even if the template is not marked "optional". Version
+number unchanged.
+
+20/08/06 salsaman
+Small change to description of "max_repeats". Number of channels may
+only be _reduced_ after init(); and only by setting "disabled" to WEED_TRUE. Version
+number unchanged.
+
+22/08/06 salsaman
+Added "new_default" leaf for parameter templates which have the
+WEED_PARAMETER_VARIABLE_ELEMENTS flag set. Version number unchanged.
+
+24/08/06 salsaman
+Added "ignore" leaf for parameters for use in interpolation where the
+"value" contains a list. Version number unchanged. Removed
+WEED_PLANT_UNKNOWN since it is not part of the API.
+
+24/09/06 salsaman
+Corrected/clarified some parts of the text. API unchanged.
+
+30/10/06 salsaman
+Add host-only function weed_leaf_delete(). Since it is host only, API
+version is unchanged.
+
+11/12/06 salsaman
+Added WEED_CHANNEL_FOLLOWS_OUTPUT and
+WEED_PARAMETER_ELEMENT_PER_CHANNEL. Updated spec to 1.1 and API
+version to 110.
+
+13/12/06 salsaman
+Add optional "target_fps" to filter_instance, change it from an array to a
+single value. API version unchanged.
+
+25/07/07 salsaman
+Add filter flag WEED_FILTER_HINT_IS_POINT_EFFECT. API version unchanged.
+
+27/03/08 salsaman
+Corrected some typos and clarified about passing function pointers.
+
+07/06/08 salsaman
+Updated to libweed. Spec is now at version 3.0. Moved text around to split into Weed and
+Weed Effects.
+
+14/06/08 salsaman
+Add YUV_clamping, YUV_subspace. Remove "h_shift" and "v_shift". Allow
+generators to set channel sizes, but they should attempt to use the
+host set size. Clarified some points. API version was updated to 120.
+
+03/11/08 salsaman
+Removed requirement that weed plugin file extensions be .wo, since this was discovered to be non-portable.
+
+
+
+(C) Gabriel "Salsaman" Finch 2005 - 2009
+
+With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
+Tori, and Oyvind "Pippin" Kolas.
+
+Weed is an object system developed for video/audio processing. Weed
+currently has modules for video/audio effects (weed-effects), and for
+timeline style events (weed-events).
+
+
+== WEED_API_VERSION ==
+
+This is defined as 120 for this version of the specification. This
+number will be increased for future revisions of the spec. if a
+function or a symbol is changed or added.
+
+
+== WEED PLANTS ==
+
+A ''plant'' in Weed is a set of one or more ''leaves''.
+
+Each plant has one mandatory leaf with a key "type", and depending
+upon the value of this leaf, the plant has other mandatory and optional leaves.
+
+For this API, the value of the plant leaf "type" MAY be one of:
+
+  * WEED_PLANT_HOST_INFO          : Information about host and core functions
+  * WEED_PLANT_PLUGIN_INFO        : Information about plugin and list of filter classes it includes
+  * WEED_PLANT_FILTER_CLASS       : Descriptive information about single filter class
+  * WEED_PLANT_CHANNEL_TEMPLATE   : Information about what kinds of channels filter accepts
+  * WEED_PLANT_PARAMETER_TEMPLATE : Information about what kinds of parameters filter has
+  * WEED_PLANT_FILTER_INSTANCE    : All data about an instance
+  * WEED_PLANT_CHANNEL            : Instantiation of a channel
+  * WEED_PLANT_PARAMETER          : Instantiation of a parameter
+
+  * WEED_PLANT_GUI                : Used for GUI hints for the
+                                    filter_classes and parameter_templates.
+
+  * WEED_PLANT_EVENT              : plant used for events (described
+                                            in the Weed EVENTS extension
+  * WEED_PLANT_EVENT_LIST         : plant used for event lists (described
+                                            in the Weed EVENTS extension
+
+"type" is a single valued leaf with seed_type WEED_SEED_INT (See
+below: seed_types).
+
+The "type" is passed as a parameter in the weed_plant_new() function.
+This function returns a pointer to newly allocated plant with the "type" leaf set
+to the plant_type.
+
+Plant types >=512 are reserved for custom use.
+
+== LEAVES ==
+
+As mentioned above, each "plant" is simply a set of one or more "leaves".
+
+Each leaf has:
+ * a ''key'' (which is a non-NULL string - (const char *) ASCII encoded)
+ * a ''value'' (0 or more elements)
+ * ''number of elements'' (>=0) contained in the value field.
+ * a ''seed_type''
+ * a bitmap ''flags'' field
+
+== SEED TYPES ==
+
+The "seed type" denotes the type of the value field in a leaf. Weed offers the following '''fundamental''' types (number <64):[[BR]]
+
+ * WEED_SEED_INT     : signed int32_t
+ * WEED_SEED_DOUBLE  : corresponds to C type "double"
+ * WEED_SEED_BOOLEAN : signed int32_t, constrained to take values WEED_FALSE or WEED_TRUE 
+ * WEED_SEED_STRING  : array of char
+ * WEED_SEED_INT64   : 64bit signed integer, used for sub-microsecond timecodes
+
+'''Note''': STRINGS are all utf-8 encoded in Weed, except leaf Keys, which are ASCII encoded.
+
+'''Pointer''' types (number>=64 and <512):
+
+ * WEED_SEED_VOIDPTR     : corresponds to C void * type
+ * WEED_SEED_PLANTPTR    : weed_plant_t * : a pointer to another weed
+   plant [Note: - we could use a void * and cast it, but sometimes it
+    is clearer when we are referring to a leaf which is iself a plant.]
+
+Types >=512 are reserved for custom use. Custom seeds MUST be pointer seeds.
+
+== LEAF RESTRICTIONS ==
+
+The "type" leaf of a plant is automatically set READONLY for the plugin in weed_plant_new().
+See below: leaf flags. The "type" leaf should not be changed by the host.
+
+== GETTING/SETTING LEAF VALUES ==
+
+
+On calling weed_leaf_set(), the host/plugin programmer does not need to worry about allocating and freeing memory for the data to store. The model (or more precisely the Mediation layer) will take care of that for you. If you store an object the model will make a copy and store that. Later, when you set a new value in this leaf, the model will automatically weed_free() the old value and make a copy of the new value and store the copy. 
+
+The exception to this is any seed type of type PTR. If you allocate a
+chunk of data or a complex structure only the pointer value is stored
+(!). The model does not know anything about the content of the data
+your pointer refers to so it will not make a copy. Instead, you need
+to allocate and free the memory yourself in this case. In other words,
+pointer types are "store by reference".
+
+The plugin and host programmer can both retrieve and set values by Key.
+
+On weed_leaf_get(), Weed will copy the data stored in the leaf, except for pointer types. For pointer types only the reference to the memory block is copied.
+
+== WEED CORE FUNCTIONS ==
+
+ * weed_init(int api_version, weed_malloc_f weed_malloc_function,
+   weed_free_f weed_free_function, weed_memset_f weed_memset_function,
+   weed_memcpy_f weed_memcpy_function)
+
+   : The host must call weed_init()
+     before using any other weed functions. The host passes in the
+     highest API version it supports. The function will set function
+     pointers to the correct API versions of the core functions. The
+     host also passes in its malloc, free, memset and memcpy
+     functions. These are for use by the host - different versions of
+     these may be passed to a plugin (see below, host_info). If a NULL
+     is passed instead, then a standard function: malloc, free, memset
+     or memcpy will be used.
+
+ * weed_plant_t *weed_plant_new (int plant_type)
+
+ * char **weed_plant_list_leaves (weed_plant_t *plant) // returns NULL terminated char * array of leaves
+
+ * int weed_leaf_set_caller (weed_plant_t *plant, const char *key,
+      int seed_type, int num_elems, void *value,  int caller) // returns a weed error
+
+   This is an internal function.
+
+   In HOST_INFO, host passes plugin pointers to:
+   int weed_leaf_set_plugin (weed_plant_t *plant, const char *key,
+      int seed_type, int num_elems, void *value) // returns a weed error
+   This calls the above function with caller set to WEED_CALLER_PLUGIN
+
+   The host should use its own version: weed_leaf_set(). This calls
+   the setter function with WEED_CALLER_HOST. This is all
+   set up in weed_init().
+
+
+ * int weed_leaf_get (weed_plant_t *plant, const char *key, int idx, void *value) // returns a weed error 
+
+ * int weed_leaf_num_elements (weed_plant_t *plant, const char *key)
+
+ * size_t weed_leaf_element_size (weed_plant_t *plant, const char *key, int idx) // returns byte size of element
+
+ * int weed_leaf_seed_type(weed_plant_t *plant, const char *key)
+
+ * int weed_leaf_get_flags(weed_plant_t *plant, const char *key);
+
+The host needs to implement the following functions itself:
+
+ * void *weed_malloc_f (size_t size)
+ * void weed_free_f (void *ptr)
+ * void *weed_memset_f (void *s, int c, size_t n)
+ * void *weed_memcpy_f (void *dest, const void *src, size_t n)
+
+These four function prototypes are fixed across all API versions. This is
+due to linker limitations with the weed-utils library. However, the
+host may pass a different version of these functions with the same
+type to a plugin. This may be useful for memory profiling a particular plugin.
+
+The host has access to additional functions which are not passed to the plugin
+in the HOST_INFO plant:
+
+ * void weed_plant_free (weed_plant_t *plant) // only used by host
+
+ * int weed_leaf_set_flags(weed_plant_t *plant, const char *key, int flags);
+   See Leaf Flags below.
+
+ * int weed_leaf_delete (weed_plant_t *plant, const char *key); //
+   only used by host
+
+'''Notes''':[[BR]]
+weed_plant_new() will set the "type" leaf to the plant_type, and will
+set it READONLY for the plugin.
+
+weed_leaf_set() will create the leaf if the leaf does not exist.
+
+weed_leaf_set() will return WEED_ERROR_LEAF_READONLY, depending on
+the leaf flags and the function caller.
+
+weed_leaf_set() will return an error WEED_ERROR_WRONG_SEED_TYPE if you try to change the seed_type of a leaf.
+
+Function pointers should not passed via
+weed_leaf_set()/weed_leaf_get(), since for some architectures it is
+not possible to convert between a function pointer and a void
+pointer. Instead, create the function pointer as a variable, and then
+pass a pointer to the variable. Of course the variable must not go out
+of scope - i.e. it must be statically defined.
+
+For weed_leaf_set(), num_elems can be 0 and value can then be
+NULL. In this way, just the seed_type of a leaf can be set, without
+setting an explicit value.
+
+weed_leaf_get() will return WEED_ERROR_NOSUCH_LEAF if a leaf does not exist. In this way the existence of a leaf can be determined. To assist with this, weed_leaf_get() can be called with a NULL void * value. The function will then not attempt to copy the value, but will return either WEED_ERROR_NOSUCH_LEAF, or WEED_NO_ERROR depending on whether the leaf exists or not.
+
+weed_leaf_set_flags() will return
+WEED_ERROR_NOSUCH_LEAF if the leaf does not exist.
+
+weed_leaf_delete() will return WEED_ERROR_LEAF_READONLY if the leaf is
+readonly for the host. It will return WEED_ERROR_NOSUCH_LEAF if the
+host tries to delete a non-existent leaf, or the "type" leaf.
+
+The return values of weed_leaf_num_elements(),
+weed_leaf_element_size(), weed_leaf_get_flags(), and weed_leaf_seed_type() are all undefined if the leaf/element does not exist.
+
+The void * for weed_leaf_set() and weed_leaf_get() is a (void *) typecast to/from an *array* of the appropriate type:
+e.g. for WEED_SEED_INT it is an int *. The number of elements in the array MUST match num_elems in weed_leaf_set().
+
+The weed_function_t is a pointer to a function, which may be cast
+to/from a pointer to any function type.
+
+Functions weed_malloc_f(), weed_free_f(),
+weed_memset_f(), weed_memcpy_f() have exactly the same
+semantics as malloc, free(), memset() and memcpy() from libc. Their
+purpose is to allow a host to provide a plugin with the
+application-specific memory managment. 
+Plugins MUST NOT use malloc, free and memset, but have to use weed counterparts. 
+
+== WEED ERRORS ==
+
+Weed defines some core error codes, which may be returned by the core functions:
+
+ *  WEED_NO_ERROR[[BR]]
+    return code means no problem
+
+ *  WEED_ERROR_MEMORY_ALLOCATION[[BR]]
+    memory allocation has failed
+
+ *  WEED_ERROR_LEAF_READONLY[[BR]]
+    plugin/host tried to set readonly leaf; returned from
+    weed_leaf_set_*() and weed_leaf_delete()
+
+ *  WEED_ERROR_NOSUCH_ELEMENT[[BR]]
+    plugin/host tried to read value of an invalid element number in a leaf; returned from weed_leaf_get()
+
+ *  WEED_ERROR_NOSUCH_LEAF[[BR]]
+    leaf does not exist for the specified plant; returned from
+    weed_leaf_get() and weed_leaf_delete()
+
+ *  WEED_ERROR_WRONG_SEED_TYPE[[BR]]
+    once the seed_type of a leaf is set, you cannot change
+    it. weed_leaf_set_*() will return this error if
+    you attempt such a thing, and the value of the leaf will not be amended.
+
+== WEED UTILITY FUNCTIONS ==
+
+To make life easier for host and plugin writers, there exists a Weed
+utility library, which wraps some of the core functions in simpler
+variants. This is documented in the Weed Utility Library spec. (TODO).
+
+== COMPILING A HOST WITH WEED ==
+
+A host wishing to use Weed should be linked with libweed, and #include
+<weed/weed.h> and <weed/weed-host.h>
+
+If the host makes use of the Weed Utility Library, it should also be *statically*
+linked with libweed-utils, and #include <weed/weed-utils.h>
+
+Static linking is required, because the plugins may also link against
+this library, and they have their own versions of the core functions.
+
+If the host wishes to use Weed effects, it should #include
+<weed/weed-effects.h>.
+
+If the host wishes to use Weed events, it should #include
+<weed/weed-events.h>.
+
+Compiling a plugin with Weed is dealt with below.
+
+
+== Pre-processor symbols ==
+The weed header uses the following pre-processor symbols:
+
+==== HAVE_WEED_PLANT_T ====
+
+The reference implementation provides default (simplest)
+implementations of a Weed plant. This can be overriden at compile time using:
+{{{
+#define HAVE_WEED_PLANT_T
+}}}
+before
+{{{
+#include <weed/weed.h>
+}}}
+
+This need only be done in the host.
+In this way a host can provide its own defintion of a Weed plant, and
+provide its own implementation of the core functions, whilst still making
+use of the rest of the header file.
+
+==== Caller types ====
+A caller type is passed into weed_leaf_set_caller(). The plugin is
+provided with a pointer to a wrapper function which sets the caller to
+WEED_CALLER_PLUGIN.
+
+The host is provided with a wrapper function which sets the caller to
+WEED_CALLER_HOST.
+
+ * WEED_CALLER_HOST
+
+ * WEED_CALLER_PLUGIN
+
+This is handled internally by the Weed library.
+
+==== Leaf flags ====
+
+ * WEED_LEAF_PLUGIN_READONLY
+   The leaf is readonly for the plugin. weed_leaf_set_caller
+   uses this flag and the WEED_CALLER to allow/disallow value changes.
+   This MUST only be used where indicated in this specification. It
+   does not prevent changes to the value by the host.
+
+ * WEED_LEAF_HOST_READONLY
+   The leaf is readonly for the host. weed_leaf_set_caller
+   uses this flag and the WEED_CALLER to allow/disallow value changes.
+   The host may set this flag to prevent accidental changes to
+   leaf values. It does not prevent changes to the value by the plugin.
+
+Flag bits >=30 are reserved for custom flags.
+
+==== Other symbols ====
+
+WEED_TRUE is #defined as 1 in the header.
+
+WEED_FALSE is #defined as 0 in the header.
+
+WEED_API_VERSION is #defined as 120 in the header.
+
+WEED_API_VERSION_100 is also #defined in the header.
+WEED_API_VERSION_110 is also #defined in the header.
+WEED_API_VERSION_120 is also #defined in the header.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+== WEED EFFECTS EXAMPLE ==
+
+Since the main purpose of Weed is for video effects, a description is
+included here, as an example of how Weed can be used.
+
+There is also a Weed Audio Extension, and a Weed Events Extension,
+which are documented separately.
+
+== COMPILING A PLUGIN WITH WEED ==
+
+An effects plugin wishing to use Weed simply needs to #include <weed/weed.h>,
+<weed/weed-effects.h> and <weed/weed-plugin.h>
+
+These plugins MUST be linked with their own symbols and functions. If using
+gcc, this is done with the flag -Wl,-Bsymbolic.
+
+If the plugin makes use of the Weed Utility Library, it should be *statically*
+linked with libweed-utils, and #include <weed/weed-utils.h>
+
+If the plugin wishes to use the Weed Plugin Utility Library, it should
+be *statically* linked with libweed-plugin-utils and #include
+<weed/weed-plugin-utils.h>.
+
+Static linking is required because the plugins are provided their own
+versions of the core functions. Shared linking would make the plugins
+use the host's version of the functions.
+
+Plugins should NOT be linked directly with libweed, since the core
+functions are passed from the host, depending on the API version
+agreed by host and plugin. In this way, provided the plugin does not
+use any core functions directly (i.e. by making use of the utility
+libraries), the plugin is guaranteed to be compatible with any future
+version of the Weed library.
+
+== PLANT TYPES ==
+
+We now describe the various plant types for weed effects, and their mandatory
+and optional leaves.
+
+== PLANT TYPE HOST_INFO ==
+
+ * "type" == WEED_PLANT_HOST_INFO
+
+'''Mandatory leaves''':[[BR]]
+ 
+ * "api_version" : WEED_SEED_INT : weed api version selected by host,
+   will be one of the api versions passed by the plugin in the
+   bootstrap function [see below]
+ * "weed_leaf_get_func" : WEED_SEED_VOIDPTR : function pointer to weed_leaf_get function; versions should match "api_version"
+
+ etc for all functions (except weed_property_set_flags,
+ weed_plant_free, and weed_leaf_delete)
+
+'''Optional leaves''': [[BR]]
+
+ * "host_name" : WEED_SEED_STRING : host name
+ * "host_version" : WEED_SEED_STRING : host version
+
+
+== PLANT TYPE PLUGIN_INFO ==
+
+The plugin_info plant is returned from the plugin setup function weed_setup(), to tell the host what
+filter classes are available in that plugin. After receiving this plant, the host should
+set all leaves in it READONLY for the plugin and should not change any leaf
+values itself.
+
+ * "type" == WEED_PLANT_PLUGIN_INFO
+
+'''Mandatory leaves''':[[BR]]
+
+ * "host_info"	  : WEED_SEED_PLANTPTR : pointer to the HOST_INFO
+   plant returned from the host in weed_bootstrap()
+
+ * "filters"	  : WEED_SEED_PLANTPTR : array of pointers to the filters in the plugin
+ * "version"	  : WEED_SEED_INT : plugin package version
+
+
+'''Optional leaves''':[[BR]]
+
+ * "maintainer"	  : WEED_SEED_STRING : maintainer of plugin package
+ * "url"	  : WEED_SEED_STRING : URL of plugin package
+
+== PLANT TYPE FILTER_CLASS ==
+
+Plant type filter_class is used to describe all properties of a single
+filter in a plugin. It is created by the plugin in weed_setup() and
+then added to the plugin_info plant. All leaves in this plant should be set READONLY for
+the plugin after weed_setup(), and should not be altered by the host.
+
+"type" == WEED_PLANT_FILTER_CLASS
+
+'''Mandatory leaves''':[[BR]]
+
+ * "name"         : WEED_SEED_STRING : the filter name; must be unique in the plugin, 
+ * "author"       : WEED_SEED_STRING : the filter author(s)
+ * "version"      : WEED_SEED_INT : filter version
+ * "process_func" : WEED_SEED_VOIDPTR : pointer to a process_func()
+ * "plugin_info"  : WEED_SEED_PLANTPTR : pointer to the PLUGIN_INFO plant containing this FILTER_CLASS
+
+'''Optional leaves''': [[BR]]
+
+ * "flags"        : WEED_SEED_INT : bitmap of filter flags
+ * "init_func"    : WEED_SEED_VOIDPTR : pointer to an init_func() 
+                    (can also be NULL)
+ * "deinit_func"  : WEED_SEED_VOIDPTR : pointer to a deinit_func()
+                    (can also be NULL)
+ * "in_channel_templates"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of inp channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
+ * "out_channel_templates"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
+ * "in_parameter_templates"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE
+ * "out_parameter_templates" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE
+
+ * "description"  : WEED_SEED_STRING : filter description
+ * "url"          : WEED_SEED_STRING : filter URL
+ * "license"      : WEED_SEED_STRING : license of filter
+ * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of
+                                       the target fps rate(s) for the
+                                       host to run the plugin. 
+				       Host should set "fps" for the
+				       instance in this case.
+
+ * "gui" : WEED_SEED_PLANTPTR : pointer to a plant
+           type GUI [see below - GUI plants]. The host should not change this value, or any of the
+           leaves inside it. The plugin may create it and set leaves
+           it in weed_setup().
+
+ * Every plugin can store internal data in leaves inside the
+   filter_class  plant, and host MUST NOT change their values. Those internal leaves MUST have keys prefixed with "plugin_"
+
+== PLANT TYPE FILTER_INSTANCE ==
+
+Plant type filter_instance is created by the host, and used to hold all data that are related to
+a single instance of the filter. Mandatory leaves SHOULD be set
+READONLY for the plugin by the host after weed_setup(), and should
+not be altered by the host. 
+Optional leaves created by the host MAY be set READONLY for the plugin.
+
+The host examines a filter_class and prepares a filter_instance from
+it. After this the host can pass the filter_instance into the filter's
+init_func() [if the plugin has one] to prepare to use it.
+
+
+"type" == WEED_PLANT_FILTER_INSTANCE
+
+'''Mandatory leaves''':[[BR]]
+ * "filter_class"   : WEED_SEED_PLANTPTR : Pointer to a filter_class plant
+ that this filter instance is based on. MUST be one of the filters
+ returned in the plugin's plugin_info plant.
+
+
+The following are mandatory only if there are corresponding templates
+in the filter class:
+
+ * "in_channels"    : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in channels, '''type''' of the referenced plants MUST be WEED_PLANT_CHANNEL
+ * "out_channels"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channels , '''type''' of the referenced plants MUST be WEED_PLANT_CHANNEL
+ * "in_parameters"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameters, '''type''' of the referenced plants MUST be WEED_PLANT_PARAMETER
+ * "out_parameters" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameters, '''type''' of the referenced plants MUST be WEED_PLANT_PARAMETER
+
+
+
+
+
+The following is mandatory if the plugin sets "target_fps" for either
+filter_class or filter_instance:
+
+ * "fps" : the current target fps of the host running the instance
+   (i.e frequency at which it attempts to call process_func() ).
+
+Other optional leaves:
+
+ * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of
+                                       the target fps rate(s) for the
+                                       host to run the instance.
+				       Host should set "fps" for the
+                                       instance in this case. Host may
+                                       optionally 
+                                       set this READONLY_PLUGIN after
+                                       the plugin has set it, or may
+                                       ignore it.
+
+ * Every plugin can store internal data in leaves
+ inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys
+ prefixed with "plugin_". The plugin is responsible for weed_free()ing
+ any memory buffers in the deinit_func.
+
+== PLANT TYPE CHANNEL_TEMPLATE ==
+
+Plant type channel template is used as a description of a single
+channel (input or output) a filter can handle. All leaves SHOULD
+be set READONLY for the plugin after weed_setup(), and should not
+be altered by the host.
+
+ * "type" == WEED_PLANT_CHANNEL_TEMPLATE
+
+'''Mandatory leaves for all channels''': [[BR]]
+
+ * "name" : WEED_SEED_STRING  : name of the channel, MUST be unique across all channels in the filter class
+
+'''Mandatory leaves for channels with video''': [[BR]]
+
+ * "palette_list" : WEED_SEED_INT   : the plugin sets this to an
+ array of allowed palettes for the channel. Its order is plugin's
+ preference for a palette. If this leaf is missing, the channel
+ only supports audio.
+
+'''Mandatory leaves for channels with audio''': [[BR]]
+
+ See the weed AUDIO extension.
+
+'''Optional leaves for all channel types''': [[BR]]
+
+ * "flags" : WEED_SEED_INT : bitmap of channel_flags that plugin sets
+
+ * "description"  : WEED_SEED_STRING : description of this channel
+
+ * "optional"     : WEED_SEED_BOOLEAN : the plugin may set this to
+                    WEED_TRUE for channels that can be left out at initialization time. If
+                    the host decides not to use the channel, it must set "disabled" to
+                    WEED_TRUE for the channel. The host must reinit
+                    the instance if a channel is enabled or disabled after init_func().
+
+ * "max_repeats" : WEED_SEED_INT : maximum number of channels that
+      the host can create from this template. A value of 0 indicates
+      any number (limitless). If not present, "max_repeats" is assumed to be 1.
+      If the channel_template is marked "optional", then the minimum number of this
+      channel_template is 0, otherwise it is 1.
+
+      If "max_repeats" is present, the number of repeats may be changed
+      [reduced] after init() and between processing calls without the need to re-initialise the
+      plugin. In all other cases, a change in the number of channels requires
+      the plugin to be re-initialised. 
+      The number of channels may only be altered [reduced] by setting
+      "disabled" to WEED_TRUE for one or more channels created from
+      this template. This is allowed even if the template is not marked "optional".
+
+ * Every filter can have its internal data stored in leaves
+ inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys
+ prefixed with "plugin_"
+
+
+'''Optional leaves for channels with video''': [[BR]]
+
+ * "width" : WEED_SEED_INT    : If set, frame width in pixels that a
+   plugin can handle. If it is set, host is forbidden to set the width
+   in channel instance to anything else. For YUV packed type palettes, the
+   width is in macropixels (e.g for WEED_PALETTE_UYVY888, it is the
+   width in UYVY macropixels). For planar YUV palettes, it is measured
+   in the Y plane.
+
+ * "height" : WEED_SEED_INT   : If set, frame height in pixels that a plugin can handle. If it is set, host is forbidden to set the height in channel instance to anything else 
+
+ * "hstep" : WEED_SEED_INT : If set, the host must set the channel width to a multiple of this (in pixels). Should be avoided if possible for performance reasons.
+
+ * "vstep" : WEED_SEED_INT : If set, the host must set the channel height to a multiple of this (in pixels). Should be avoided if possible for performance reasons.
+
+ * "maxwidth" : WEED_SEED_INT : If set, the host must set the channel width <= maxwidth (in pixels)
+
+ * "maxheight" : WEED_SEED_INT : If set, the host must set the channel height <= maxheight (in pixels)
+
+ * "alignment" : WEED_SEED_INT : If set, each element in "pixel_data" will be aligned
+                             to this many bytes boundary. Must be a
+                             power of 2, and a multiple of
+                             sizeof (void *). Eg. if set to 16, the
+                             address of each element (plane) in "pixel_data" will
+                             be divisible by 16. Should be avoided if possible for performance reasons.
+
+ * "YUV_sampling"     : WEED_SEED_INT : Sampling type for YUV
+                                        palettes, defined
+                                        below. Default is mpeg if not set.
+
+ * "YUV_clamping"     : WEED_SEED_INT : Clamping type for YUV
+                                        palettes, defined below -
+                                        Host should only use unclamped
+                                        if plugin prefers it. Default
+                                        is clamped, if not set.
+
+ * "YUV_subspace"     : WEED_SEED_INT : Subspace (Y'CbCr digital, Y'UV
+                                        analog or BT.709) type for YUV
+                                        palettes, defined below -
+					Host should use Y'CbCr unless
+                                        plugin prefers
+                                        otherwise. Default is Y'CbCr
+                                        if not set.
+
+
+'''Optional leaves for channels with audio''': [[BR]]
+
+ See the weed AUDIO extension.
+
+
+== PLANT TYPE CHANNEL ==
+
+Plant type channel is used as a fixation of channel plants that the
+host sets and plugin reads to know what it is getting. All leaves
+SHOULD be set readonly for the plugin by the host.
+
+
+Channels MUST be added in the order of channel_templates, bearing in
+mind the template leaves "optional" and "max_repeats". After
+initialisation, channels MUST NOT be added or removed without reinitialising the plugin.
+
+ * "type" == WEED_PLANT_CHANNEL
+
+'''Mandatory leaves for all channel plants''': [[BR]]
+ * "template" : WEED_SEED_PLANTPTR : Pointer to a channel
+ template plant this channel instance is based on.
+
+'''Mandatory leaves for channel plants with video''': [[BR]]
+ * "timecode" : WEED_SEED_INT64 : video frame time in ticks (1/100 of a microsecond) for this channel
+ * "width" : WEED_SEED_INT    : The chosen frame width in pixels. For
+  YUV packed type palettes, the width is in macropixels (e.g for
+  WEED_PALETTE_UYVY888, it is the width in UYVY macropixels). For
+  planar YUV palettes, it is measured in the Y plane.
+ * "height" : WEED_SEED_INT   : The chosen height in pixels
+ * "current_palette" : WEED_SEED_INT: The chosen palette, which must be one of the palettes contained in "palette_list" of a channel template
+ * "pixel_data" : WEED_SEED_VOIDPTR    : array of n pointers to
+ the image pixel data. Depending on the value of "current_palette",  there is 1 element for packed palettes, >1 elements for planar palettes
+ * "rowstrides" : WEED_SEED_INT     : array carrying the row width of EACH PLANE in bytes (include padding). Number of elements
+ must match with number of elements in "pixel_data".
+
+'''Mandatory leaves for channel plants with audio''': [[BR]]
+
+ See the weed AUDIO extension.
+
+'''Optional leaves for all channel plants''': [[BR]]
+ * "disabled"     : WEED_SEED_BOOLEAN : the host MAY set this to
+                    WEED_TRUE before calling init_func() if the corresponding channel template
+                    has "optional" leaf set to true. Host MUST NOT change this without
+                    reinitialising the instance. The one exception is if
+		    the channel is based on a template which has
+		    "max_repeats" set, in which case a channel from
+		    that template may be disabled at any time between
+		    processing calls.
+
+ * Every filter can have its internal data stored in leaves
+ inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys
+ prefixed with "plugin_". The plugin is responsible for weed_free()ing
+ any memory buffers in the deinit_func.
+
+'''Optional leaves for channel plants with video''': [[BR]]
+
+ * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio
+                                               of the pixel of the image (pixel aspect ratio different than 1.0
+                                               means pixels are non-square) [set by host]
+
+If the plugin sets any of these in the channel_template, and the host is using a YUV
+"current_palette", host should try to match plugin preference where
+possible, and process video accordingly:
+
+ * "YUV_sampling"     : WEED_SEED_INT : Preferred sampling type for YUV
+                                        palettes, host should try to
+                                        match if plugin set it in template
+
+ * "YUV_clamping"     : WEED_SEED_INT : Preferred clamping type for YUV
+                                        palettes, host should try to
+                                        match if plugin set it in template
+
+ * "YUV_subspace"     : WEED_SEED_INT : Preferred YUV Subspace (Y'CbCr digital or Y'UV
+                                        analog) type for YUV
+                                        palettes, host should try to
+                                        match if plugin set it in template
+
+
+'''Optional leaves for channel plants with audio''': [[BR]]
+
+ See the weed AUDIO extension.
+
+
+
+== PLANT TYPE PARAMETER_TEMPLATE ==
+
+Plant type parameter_template is used as a description of a single
+parameter (input or output) filter can handle. All leaves SHOULD be set readonly for the plugin by the host after
+weed_setup(). Host should only change the "default" value to a valid
+value for the parameter. The host should not change any other leaves.
+
+'''Mandatory leaves''': [[BR]]
+ * "name" : WEED_SEED_STRING  : name of the parameter, MUST be unique across the in_parameters/out_parameters
+
+ * "default" : default value(s) of the parameter : usually must contain at
+               least one element, but may have 0 elements for parameters which have
+               the WEED_PARAMETER_VARIABLE_ELEMENTS flag set. [0 elements means the leaf
+	       exists but has no value, since the SEED_TYPE must be known.]
+
+ * "new_default" : required only for in parameters which have the flag WEED_PARAMETER_VARIABLE_ELEMENTS set. It tells the host the default value of
+                   new elements which may be added. It should have 1
+                   value, except for COLOR parameters which may
+                   additionally have 3 or 4 values depending on the "colorspace".
+
+ * "hint" : WEED_SEED_INT : subdivides parameters into different kinds
+ [see below]
+
+'''Optional leaves''':[[BR]]
+ * "flags"            : WEED_SEED_INT : bitmap of parameter flags
+
+ * "description"      : WEED_SEED_STRING : parameter description
+
+ * "interpolate_func" : WEED_SEED_VOIDPTR : see below, Plugin Functions.
+
+ * "gui" : WEED_SEED_PLANTPTR : each parameter_template can have a
+ "gui" leaf. This leaf points to a plant of type
+ GUI. Within the GUI plant can be addition leaves to assist the host
+ to display this particular parameter. The plugin can create it, and
+ set leaf values in it in weed_setup() and/or in init_func().
+
+ * Every filter can have internal data stored in leaves
+ inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_". The plugin is responsible for weed_free()ing
+ any memory buffers in the deinit_func.
+
+
+==== PARAMETER HINTS ====
+
+The "hint" is a mandatory WEED_SEED_INT leaf of every parameter; the defined values are:
+
+ * WEED_HINT_INTEGER
+ * WEED_HINT_FLOAT
+ * WEED_HINT_TEXT
+ * WEED_HINT_SWITCH
+ * WEED_HINT_COLOR
+
+Depending on the "hint" parameter seed type additional leaves are:
+
+ * WEED_HINT_INTEGER
+"value" and "default" are constrained by min and max: min <= value <= max
+The "default" leaf can only be of seed type WEED_SEED_INT. "default"
+may have any number of elements.
+
+ * "min" : WEED_SEED_INT : minimal value of the parameter, MANDATORY
+ * "max" : WEED_SEED_INT : maximal value of the parameter, MANDATORY
+ * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should wrap when going below min or above max, OPTIONAL
+ * "transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this
+ parameter is a transition, (i.e. at min the effect is fully "off", at
+ max it is fully "on") OPTIONAL
+
+ * WEED_HINT_FLOAT
+"value" and "default" are constrained by min and max: min <= value <= max
+The "default" leaf can only be of seed type
+WEED_SEED_DOUBLE. "default" may have any number of elements.
+
+Additional leaves that hint causes:
+ * "min" : WEED_SEED_DOUBLE : minimal value of the parameter, MANDATORY
+ * "max" : WEED_SEED_DOUBLE : maximal value of the parameter, MANDATORY
+ * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value"
+ should be wrapped when going below min or above max, OPTIONAL
+ * "transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this
+ parameter is a transition, (i.e. at min the effect is fully "off", at
+ max it is fully "on") OPTIONAL
+
+
+ * WEED_HINT_TEXT
+Hint text means a string, which can be used for passing strings.
+The "default" leaf can only be of seed type
+WEED_SEED_STRING. "default" may have any number of elements.
+
+ * WEED_HINT_SWITCH 
+Hint switch can be used for passing yes/no choices.
+The "default" leaf can only be of seed type
+WEED_SEED_BOOLEAN. "default" may have any number of elements. It may
+only take values WEED_TRUE and WEED_FALSE.
+
+Additional leaves that hint causes:
+ * "group" : WEED_SEED_INT : for all in_parameters with the same
+ non-zero group, only one of those parameters may be set to
+ WEED_TRUE. For parameters in a group: the default may only have a
+ single value, and WEED_PARAMETER_VARIABLE_ELEMENTS may not be set. 
+
+ 
+ * WEED_HINT_COLOR
+Hint color can be used for passing colors. Colors are represented as a
+list of elements of type WEED_SEED_DOUBLE or WEED_SEED_INT. Depending on the
+"default", host knows the seed type of "value".
+
+Additional leaves that hint causes:
+ * "min" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: minimal value of the parameter, MANDATORY
+ * "max" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: maximal value of the parameter, MANDATORY
+ * "colorspace" : WEED_SEED_INT : colorspace (see below), MANDATORY
+
+==== Number of elements in the leaves ====
+The "default" leaf must contain at least one value UNLESS the plugin sets the parameter flag
+WEED_PARAMETER_VARIABLE_ELEMENTS (see below); then the "default" may
+take any number (0 or more) of elements,  [0 elements means the leaf
+exists but has no value, since the SEED_TYPE must be known.] and
+"new_default" must be set.
+
+The number of elements in "value" MUST match the number of elements in
+"default" UNLESS the plugin sets the parameter flag
+WEED_PARAMETER_VARIABLE_ELEMENTS (see below); then the "value" may
+take any number (0 or more) of elements.[0 elements means the leaf
+exists but has no value, since the SEED_TYPE must be known.] and
+"new_default" must be set.
+
+The only exception is for "COLOR" parameters; there the number of
+elements in "default" and "value" MUST always be a multiple of 3 or 4
+(depending on the "colorspace").
+
+The number of elements in each of "min" and "max" can be either 1, or equal to
+the number of elements in "default". If the plugin sets the flag
+WEED_PARAMETER_VARIABLE_ELEMENTS for the parameter, then the number of elements in each of "min" and "max" may only
+be 1.
+
+Note:
+
+There is a further exception for "COLOR" parameters; there the number of
+elements in "min" and "max" may be:
+
+1 (each element uses the same min and/or max)
+n (where n is 3 or 4 depending on colorkey)
+N (where N is a multiple of 3 or 4, matching the number of elements in "default").
+
+The last option is not valid if the parameter has the flag bit
+WEED_PARAMETER_VARIABLE_ELEMENTS set.
+
+
+== PLANT TYPE PARAMETER ==
+
+Input parameter leaves should only be changed by the host, and
+output parameter leaves only by the plugin. Parameters MUST match
+one to one with parameter templates (same order, same number).
+
+'''Mandatory leaves''': [[BR]]
+ * "template" : WEED_SEED_PLANTPTR : pointer to the parameter template
+
+ * "value" : seed type of the value MUST match the type of "default"
+	     leaf of the parent_template. Lists/arrays can be implemented by
+	     setting multiple elements in "default" (fixed list length), 
+	     or by setting the parameter flag bit WEED_PARAMETER_VARIABLE_ELEMENTS
+	     (variable list length)
+
+'''Optional leaves''':[[BR]]
+ * "timecode" : WEED_SEED_INT64 : time in ticks (1/100 of a
+				  microsecond) used in "interpolate_func"; or for out parameters, the
+				  timecode when the "value" was last set.
+
+ * "ignore" : array of WEED_SEED_BOOLEAN : for interpolation of in parameters with
+	      multiple elements in "value", "ignore" can be used to block "value"
+	      elements which are to be ignored at that timecode. Thus, if
+	      present, the number of elements in "ignore" should match the number of elements in
+	      "value" at the timecode (except for COLOR parameters,
+	      where the number of elements in "ignore" is divided by 3
+	      or 4 depending on "colorspace"). A setting of WEED_TRUE indicates the
+	      corresponding element in "value" should *not* be considered an
+	      interpolation point (i.e. it is just a "filler" element).
+
+ * Every filter can have its internal data stored in leaves
+ inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys
+ prefixed with "plugin_". The plugin is responsible for weed_free()ing
+ any memory buffers in the deinit_func.
+
+== PLANT_TYPE_GUI ==
+
+This plant type has differing properties depending on whether it is
+referenced from (i.e. contained in) filter_instance or from a parameter_template.
+
+==== filter_class GUI ====
+Plugin may set any of these leaves in weed_setup(). After this they should be set READONLY for the plugin.
+
+'''Mandatory leaves''': [[BR]]
+ * "layout_scheme" : WEED_SEED_STRING : string defining the layout
+ scheme used in the rest of the plant
+
+'''Optional leaves''': [[BR]]
+
+ * "icon"         : WEED_SEED_STRING : name of the associated icon (if
+                                       any) in the icons subdirectory [see below - Plugin locations/format]
+
+ * other optional leaves depend on the "layout_scheme" used
+
+ * Every filter can have its internal data stored in leaves
+ inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys
+ prefixed with "plugin_". The plugin is responsible for weed_free()ing
+ any memory buffers in the deinit_func.
+
+
+==== parameter_template GUI ====
+Plugin may set and change these leaves in weed_setup() and/or in
+init_func(). At all other times they should
+be set READONLY for the plugin. If the filter is re-inited
+(e.g. because a flagged parameter value was changed, or because a
+channel size or palette was changed), then the
+READONLY_PLUGIN flag should be cleared by the host before calling init_func(), then set again afterwards.
+An exception to this is "display_value", which can be set by the
+plugin whenever "display_func" (if defined) is called.
+
+All of these leaves indicate optional functionality for the
+host. For example, the plugin should not rely on setting "maxchars" to
+ensure a string is constrained to certain length, neither should it
+rely on setting "copy_value_to" to force the host to set indentical
+"values" for two parameters.
+
+
+'''Optional leaves''': [[BR]]
+ * "label" : WEED_SEED_STRING : label for display
+
+ * "use_mnemonic" : WEED_SEED_BOOLEAN : WEED_TRUE indicates whether "label" uses
+    underscore as mnemonic
+
+ * "choices" : WEED_SEED_STRING : n values for a choice: only valid
+   for INT parameters, the "value" element(s) indicate the selected
+   element(s); "min" and "max" must constrain "value" to valid choices;
+   0 indicates first element in "choices". A value of -1 (if
+   allowed) indicates "no selection". For non-INT parameters, this
+   leaf will be ignored. If "choices" is present, then "wrap" and
+   "step_size" may be ignored by the host.
+
+ * "decimals" : WEED_SEED_INT : number of decimals for a FLOAT or
+   COLOR (FLOAT) hint. For other hints this will be ignored.
+
+ * "step_size" : seed type matches type of "default" : step value for
+   INTEGER, FLOAT and COLOR type parameters : used for spin buttons, etc.
+
+ * "maxchars" : WEED_SEED_INT : max display length in (utf-8) chars for a
+   STRING hint. For other hints, this will be ignored. A value < 1 should
+   also be ignored.
+
+ * "display_func" : WEED_SEED_VOIDPTR : pointer to a function that returns a value
+   for display. See below, Plugin Functions. This can be disabled by
+   setting it to NULL.
+
+ * "display_value" : WEED_SEED_STRING : Value to be displayed by the
+   host. The plugin should only set this leaf if and when "display_func" is
+   called by the host. See below, Plugin Functions.
+
+ * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter
+   may be hidden by the host.
+
+ * "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1
+   means second, etc.)
+   of another in_parameter : if the "value" of this parameter is changed, then the
+   "value" of the parameter pointed to may be
+   set to the same value. Both parameters MUST have the same HINT and
+   number of elements in "default", otherwise this will be ignored. Only
+   valid for in_parameters. If more than one parameter points to the
+   same in_parameter, the behaviour is undefined. NOTE: this is not
+   strictly GUI functionality. Even GUI-less hosts might want to implement
+   this ! This can be disabled by setting it to a value < 0, or by
+   setting it to point to itself.
+
+ * Every filter can have its internal data stored in leaves
+ inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys
+ prefixed with "plugin_". The plugin is responsible for weed_free()ing
+ any memory buffers in the deinit_func().
+
+
+== PLUGIN FUNCTIONS ==
+
+The only fixed function name the plugin MUST implement is weed_setup() function pointer, all other information is passed through respective plants (classes, functions, etc...)
+
+==== weed_setup ====
+
+{{{
+    weed_plant_t *weed_setup(weed_bootstrap_f weed_bootstrap)
+}}}
+
+The host calls this first in a plugin, and passes in a pointer to a
+function, weed_bootstrap, which must be called first by the plugin.
+
+The typedef of weed_bootstrap_f is:
+{{{
+    weed_plant_t *weed_bootstrap_func (default_getter_f *value, int num_versions, int *plugin_versions)
+}}}
+
+The plugin must call this, passing in a pointer to a (newly
+weed_malloc()ed) default_getter_f, an int
+"number of Weed api versions supported" and an int array of those
+versions.
+
+If the host does not support any of the plugin's api versions, it will
+return NULL. In this case the plugin should return NULL from the
+weed_setup() function, so that the host can unload it.
+
+Otherwise, the host will set value to point to a default getter
+function in the host of the form:
+
+{{{
+   int default_getter(weed_plant_t *plant, const char *key, int idx, weed_function_t value)
+}}}
+
+The plugin should call default_getter to get all of its API functions from the
+host_info plant. It can also retrieve the "api_version" leaf (using the
+retrieved weed_leaf_get() ) to find
+out which of its API version the host assigned it. 
+
+Normally a plugin would use a utility library which would take care of
+calling the bootstrap function and getting its API functions.
+
+
+
+The weed_setup() function returns a PLUGIN_INFO plant that
+specifies what is the content of this plugin - 
+which filter classes it has, who is the maintainer, etc.
+
+The Plugin implements weed_setup() in following way: the PLUGIN INFO plant is first created by using weed_plant_new(). 
+The individual filters are then created and added to the "filters"
+leaf in the PLUGIN INFO plant.
+If no filters can be created (because of memory or other problems or
+version mismatches), the function should return NULL.
+
+The returned plant MUST have '''type''' WEED_PLANT_PLUGIN_INFO.
+
+==== init_func ====
+This is an optional function in Weed.
+
+
+{{{
+    int init_func(weed_plant_t *filter_instance)
+}}}
+
+The host calls this and passes in the desired filter_instance.
+The filter plant instance passed to the init_func MUST have been
+correctly setup to match the filter class it relates to, 
+this means that all the mandatory leaves of input and output channels and of input parameters MUST be set.
+The function returns a weed error code (see below).
+
+The init_func() function allows the plugin to create any internal
+memory structures it needs; the plugin can store internal data as
+leaves that have keys prefixed with "plugin_" in the filter_instance 
+(see the definition of filter instance plant). The plugin can also (re)set
+the "gui" settings for parameter_templates (see below).
+
+==== process_func ====
+This is a mandatory function in Weed.
+
+{{{
+    int process_func(weed_plant_t *filter_instance, long timestamp)
+}}}
+
+Host calls this for each processing cycle; the plugin can do its frame
+processing here. The function returns a weed error code (see
+below). Timestamp is the presentation time in ticks (1/100 of a microsecond) (can be e.g. time since playback start). The function returns a weed error code (see below). 
+
+
+
+==== deinit_func ====
+This is an optional function in Weed.
+
+
+{{{
+    int deinit_func(weed_plant_t *filter_instance)
+}}}
+
+The host will call this to allow the plugin to free() any internal
+memory. Following this the host may free() the filter_instance
+plant. The plugin does not need to free any plants or leaves; the host should take care of this.
+
+==== weed_desetup ====
+This is an optional function in Weed.
+
+{{{
+    void weed_desetup(void);
+}}}
+
+If the plugin has this function, the host should call it before
+unloading the plugin. This is to allow the plugin to reset any
+hardware, etc.
+
+==== display_func ====
+This is an optional function in Weed.
+
+{{{
+    void display_func(weed_plant_t *parameter);
+}}}
+
+For the given parameter, the plugin should examine its "value", get
+its "template" leaf, get the "gui" leaf from this, and finally, set the
+"display_value" in the "gui". The "display_value" should be of
+seed_type WEED_SEED_STRING.  This "display_value" should be displayed
+by the host instead of the normal parameter "value". 
+"display_func" is an optional leaf of a parameter_template "gui". 
+The host MUST ensure that "display_value" is writable by the plugin
+before calling display_func(), and should set it readonly for the
+plugin afterwards.
+
+==== interpolate_func ====
+This is an optional function in Weed.
+
+{{{
+    int interpolate_func(weed_param_t **in_params, weed_param_t *out_param);
+}}}
+
+The function takes a NULL terminated array of parameters for a single
+parameter_template, with "timecode","value" and possibly "ignore" 
+leaves, and returns a best guess for the "value" of out_param. The
+in_params array MUST be in ascending "timecode" order. The "timecode"
+leaf of out_param MUST be set. All the parameter values in_params and
+out_param reference the same parameter_template. Interpolate_func is
+an optional leaf of that parameter_template.
+
+The value returned is actually a boolean. A return value of WEED_TRUE
+means the "value" set in out_param is exact. A return value of
+WEED_FALSE means that the "value" in out_param is a guess. In the
+latter case, the host can recall the function with more elements in
+in_params to get a more accurate result.
+
+== HOST FUNCTIONS ==
+
+The host provides just one mandatory function to the plugins:
+weed_bootstrap (see above for its definition).
+
+The bootstrap function takes a list of Weed api versions supported by the
+plugin, sets a getter function, and returns a host_info plant, or NULL
+if none of the plugin api versions are supported.
+
+The plugin can use the getter function to get the leaves of the host
+info plant.
+
+The HOST_INFO plant can also have other optional leaves to provide
+more information about the host, and optional functions.
+
+
+== OUTLINE WEED PROCESS FLOW OVERVIEW ==
+
+ * Host calls weed_init()
+ * Host loads plugin (dlopen)
+ * Host calls the weed_setup() function in the plugin.
+ * plugin calls weed_bootstrap and host checks api_versions supported by
+   the plugin. If it finds a version which it can use it sets this in
+   HOST_INFO and returns the HOST_INFO to the plugin, otherwise it must return NULL to the plugin.
+ * plugin uses default_getter to get the leaves of the HOST_INFO plant.
+   In weed_setup(), for each filter class, the plugin creates and
+   initializes a plant of type WEED_PLANT_FILTER_CLASS and adds it
+   to the "filters" leaf of the returned PLUGIN_INFO plant. 
+
+ * Host creates a FILTER_INSTANCE: Host examines the in_channel and out_channel plants, and sets the "disabled" flag for any optional channels it does not wish to use. It also checks "palette_list", selects a palette it would like to start using on that channel and sets the chosen value in the "current_palette" leaf. It also sets the sizes ("width" and "height" leaves) if the plugin left them as zero. All input parameters have to have values set at this point. This means host now has a plant that it will instantiate.
+
+ * Host calls init_func() [if it exists] from the filter info plant, passing a pointer to a FILTER_INSTANCE it would like to instantiate.
+ * Plugin now knows the channel sizes, palettes and which channels are in use. The plugin may now weed_malloc() internal data.
+
+ * Host may now change parameter values (respecting "max" and "min" leaves) and it after that it may call process_func() in the plugin, passing in the initialised FILTER_INSTANCE. 
+ * When the host has finished with the FILTER_INSTANCE, or if it needs
+   to re-initialise it, the host must call deinit_func() in the plugin
+ [if the plugin has one], passing in a pointer to the FILTER_INSTANCE. The plugin MUST now weed_free() any internally allocated data.
+
+ * Host can now weed_plant_free() the FILTER_INSTANCE, or it can reuse the FILTER_INSTANCE by calling init_func() once more.
+
+== Plugin locations ==
+
+The list of directories to be searched can be set in the environment
+variable WEED_PLUGIN_PATH; directories in WEED_PLUGIN_PATH should be separated by
+colons (:) the indicated directory and one level of subdirectories
+should be searched for each entry. The directories should be searched
+in order, first to last, and any effects with duplicate Hashnames may
+be ignored. [See hashnames, below].
+
+Icons for each filter may be placed in an icons subdirectory. E.g: if
+WEED_PLUGIN_PATH is set to /usr/lib/weed, then
+/usr/lib/weed/<app>/icons/ would contain icons for plugins in /usr/lib/weed/<app>/
+
+Data files for each filter may be placed in a data subdirectory. E.g:
+/usr/lib/weed/<app>/data/ would contain data files for plugins in /usr/lib/weed/<app>/
+
+Note: There is no need for API versioning of the weed directories themselves, as the
+weed_bootstrap system takes care of different Weed API versions.
+
+
+== Weed Hashnames ==
+
+The hashname of a Weed filter is the simple concatenation of: plugin
+name, filter name, author and filter version.
+
+
+== WEED FLAGS AND TYPES ==
+
+==== Weed parameter hints ====
+
+ * WEED_HINT_UNSPECIFIED
+   Parameter is of an unknown type. Plugins should never use this
+   directly, it is intended only for wrapper plugins which may need to
+   convert unknown parameter types. These parameter types may or may not
+   have "min" and "max". They will have at least "name" and "default" leaves.
+
+ * WEED_HINT_INT
+
+ * WEED_HINT_FLOAT
+
+ * WEED_HINT_TEXT
+
+ * WEED_HINT_SWITCH
+
+ * WEED_HINT_COLOR
+
+Parameter hints >=1024 are reserved for custom parameters.
+
+==== Weed colorspaces ====
+
+ * WEED_COLORSPACE_RGB
+
+ * WEED_COLORSPACE_RGBA
+
+ * WEED_COLORSPACE_HSV
+
+Colorspaces >=1024 are reserved for custom color spaces.
+
+==== Weed palette types ====
+
+Palettes are all unsigned in Weed.
+
+Some palettes have aliases; these are shown on the same line.
+
+'''Special Palettes'''
+Palette number 0
+{{{
+WEED_PALETTE_END
+may be used in setup_func() in an int *palettes, denotes the end of the palette list; "palette_list" property
+}}}
+
+'''RGB Palettes'''
+Palette numbers >0 and <512
+{{{
+WEED_PALETTE_RGB888         WEED_PALETTE_RGB24
+WEED_PALETTE_BGR888         WEED_PALETTE_BGR24
+WEED_PALETTE_RGBA8888       WEED_PALETTE_RGBA32
+WEED_PALETTE_BGRA8888       WEED_PALETTE_BGRA32
+WEED_PALETTE_ARGB8888       WEED_PALETTE_ARGB32
+WEED_PALETTE_RGBFLOAT       
+WEED_PALETTE_RGBAFLOAT      
+
+}}}
+'''YUV Palettes'''
+Palette numbers >=512 and <1024
+
+Ranges are 16-235 for Y, 16 - 240 for U and V, unless
+WEED_YUV_CLAMPING_UNCLAMPED is set in "YUV_clamping" for
+channel/channel_template.
+
+Palette is Y'CbCr digital, unless WEED_YUV_SUBSPACE_YUV or WEED_YUV_SUBSPACE_BT709 is set in
+"YUV_subspace" for channel/channel_template.
+
+{{{
+WEED_PALETTE_YUV422P           WEED_PALETTE_YV16
+[Official name 'YV16', 8 bit Y plane followed by 8
+   bit 2x1 subsampled U and V planes. Planar.]
+
+
+WEED_PALETTE_YUV420P           WEED_PALETTE_YV12
+[8 bit Y plane followed by 8 bit 2x2 subsampled U and V planes. Planar.
+   (Official name YV12)]
+
+WEED_PALETTE_YVU420P           WEED_PALETTE_I420         WEED_PALETTE_IYUV
+[Same as YUV420P , but U and V are swapped. Planar.
+      (Official name IYUV)]
+
+WEED_PALETTE_YUV444P
+[unofficial. 8 bit Y plane followed by 8 bit U and V planes, no
+   subsampling. Planar.]
+
+WEED_PALETTE_YUVA4444P
+[Unofficial, like YUV444P but with Alpha. Planar.]
+
+WEED_PALETTE_UYVY8888         WEED_PALETTE_UYVY
+[YUV 4:2:2 (Y sample at every pixel, U and V sampled at every second
+   pixel horizontally on each line). A macropixel contains 2 pixels in 1
+   u_int32. Packed. If the "YUV_subspace" is set to bt709, this
+   becomes HDYC.]
+
+WEED_PALETTE_YUYV8888         WEED_PALETTE_YUYV          WEED_PALETTE_YUY2
+[Like UYVY but with different component ordering within the
+   u_int32 macropixel. Packed. Also known as YUY2]
+
+WEED_PALETTE_YUV411                   WEED_PALETTE_IYU1
+[IEEE 1394 Digital Camera 1.04 spec. Is packed YUV format
+with a 6 pixel macroblock structure containing 4 pixels.
+Ordering is U2 Y0 Y1 V2 Y2 Y3. Uses same bandwith as YUV420P
+Used for SMPTE DV NTSC / DVCPRO PAL (???)]
+Also known as IYU1.
+
+}}}
+
+WEED_PALETTE_YUV888                   WEED_PALETTE_IYU2
+Packed YUV palette, no subsampling. Also known as IYU2
+
+WEED_PALETTE_YUVA8888
+Packed YUV palette with alpha channel. No subsampling.
+
+
+'''Alpha Palettes'''
+Palette numbers >=1024 and <2048
+
+Alpha palettes are generally used as mask channels.
+
+{{{
+WEED_PALETTE_A1
+WEED_PALETTE_A8
+WEED_PALETTE_AFLOAT
+}}}
+Palette numbers >=2048 are reserved for custom palettes.
+
+==== Filter flags ====
+
+ *  WEED_FILTER_NON_REALTIME[[BR]]
+    non-realtime filter: the filter is too slow to use in realtime processing.
+    Generally, filters which take more than about 0.1 second to process
+    a frame are considered non-realtime.
+
+ *  WEED_FILTER_IS_CONVERTER[[BR]]
+    This flag bit should be set if the plugin does not alter the image
+    pixels except for resizing or palette conversion between in
+    channel and out channel(s). It should only be set for the
+    following types of plugins: plugins which only resize the in frame
+    to out frame(s); plugins which only convert the palette from in
+    frame to out frame(s), plugins which simply duplicate the in frame
+    to out frame(s), and for plugins which handle only audio, where the
+    plugin only alters the audio volume [see the Weed Audio
+    Extension].
+
+    It is used to assist with categorisation of the
+    plugin type. To be useful, such filters may also want to use the
+    *_CAN_VARY channel flags below.
+
+ * WEED_FILTER_HINT_STATELESS[[BR]]
+   This is optional, if the filter is stateless (i.e. not dependant on
+   past calls to process_func() ) then this this flag
+   bit can be set. Used for compatibility with other plugin architectures.
+
+
+ * WEED_FILTER_HINT_IS_POINT_EFFECT[[BR]]
+   This is optional; if there is a direct one-to-one mapping between pixels in the
+   in channel(s) and pixels in the out channel(s), then this flag bit can be
+   set, to allow parallel processing of the pixel_data on multithreaded systems.
+
+Flag bits >=30 are reserved for custom flags.
+
+==== Channel template flags ====
+
+ *  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE[[BR]]
+    host must reinit the plugin before calling process_func() if the
+    channel size (height, width or rowstrides) is changed. Note that
+    changing the palette can sometimes affect the width and rowstrides
+    - if the change is only due to this, the host need not reinit
+    (unless WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE is set of course).
+
+ *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE[[BR]]
+    host must reinit the plugin before calling process_func() if the channel palette is changed
+
+ *  WEED_CHANNEL_CAN_DO_INPLACE[[BR]]
+    If this flag bit is set, the filter can do inplace operations.
+    Hosts can select this mode by setting "pixel_data" of this out channel
+    equal to the "pixel_data" of the corresponding (same number; not counting "disabled" channels) 
+    in channel. The flag bit is only valid for OUT channels. 
+
+ *  WEED_CHANNEL_SIZE_CAN_VARY[[BR]]
+    In Weed, all channels are assumed to have the same size (width and height)
+    as the first non-disabled in_channel (or first non-disabled
+    out_channel for filters that have no in channels). If this flag
+    bit is set, then the host can set this channel to a different
+    size. For fixed size channels, it is not necessary to set this.
+    Plugins should not resize unless it is unavoidable, or they have
+    a "high-performance" resize routine. Otherwise resizing should be
+    left to the host.
+
+ *  WEED_CHANNEL_PALETTE_CAN_VARY[[BR]]
+    In Weed, all channels are assumed to have the same "current_palette"
+    as the first non-disabled in_channel (or first non-disabled
+    out_channel for filters that have no in channels). If this flag
+    bit is set, then the host can set this channel to a different
+    allowed palette. Plugins should not perform palette conversions
+    unless it is unavoidable, and they have a "high-performance" palette
+    conversion routine. Otherwise palette conversion should be left to
+    the host.
+
+ * WEED_CHANNEL_FOLLOWS_OUTPUT[[BR]] - API version 110 and higher
+   This flag bit denotes that the (single) input channel should receive
+   frames only after all other filter processing. For example, a
+   subtitle filter might use this flag to indicate that subtitles
+   should be overlaid on top of any other filter output.
+
+
+Flag bits >=30 are reserved for custom flags.
+
+==== Parameter template flags ====
+
+ * WEED_PARAMETER_REINIT_ON_VALUE_CHANGE[[BR]]
+   host must reinit the plugin if the parameter "value" is
+   changed. This is to allow the plugin to alter the "gui" settings
+   for the parameters and for the instance. The host must temporarily
+   allow the plugin read/write access to the "gui" plants during the init.
+
+
+ * WEED_PARAMETER_VARIABLE_ELEMENTS[[BR]]
+   plugin can set this to inform the host that the number of elements in
+   the parameter "value" leaf can vary. If not set, then the number of
+   elements in "value" is fixed; it must always match the number of elements in
+   "default".
+
+   If this is set, then the plugin may only use one element
+   in each of "min" and "max" for the parameter, except for COLOR
+   parameters which may use 3 or 4 depending on the "colorspace".
+
+   Note also that 0 is a valid number of elements. [0 elements means the leaf
+   exists but has no value, since the SEED_TYPE must be known.]
+
+   If this is set for an in parameter, the plugin MUST also set the "new_default" leaf for
+   the parameter.
+
+ * WEED_PARAMETER_ELEMENT_PER_CHANNEL[[BR]] - API version 110 and higher
+   This flag bit indicates that each element in the parameter "value"
+   corresponds to one input channel. If a
+   channel template has "max_repeats" set to other than 1, then
+   WEED_PARAMETER_VARIABLE_ELEMENTS is also assumed to be set for the
+   parameter, and so the "new_default" leaf must also be set [see above].
+   Valid for input parameter templates only.
+
+
+Flag bits >=30 are reserved for custom flags.
+
+==== YUV sampling types ====
+
+Where chroma subsampling is used, chroma values are assumed to be centered between luma samples, unless
+specified otherwise.
+
+ * WEED_YUV_SAMPLING_DEFAULT : Default subsampling. May be used for YUV888 or YUVA8888 (optional).
+
+ * WEED_YUV_SAMPLING_MPEG  : Same as JPEG, but Chroma samples are
+   horizontally aligned. There is notion of fields. [This is the
+   default, equal to WEED_YUV_SAMPLING_DEFAULT] (YUV 4:2:0) (like yuvy-yuvy)
+
+ * WEED_YUV_SAMPLING_JPEG   : Chroma is sampled at half the horizontal
+   and half the vertical frequency. (YUV 4:2:0). Chroma samples are
+   alternated horizontally between luma samples (like yuyv-yuyv)
+
+ * WEED_YUV_SAMPLING_DVPAL  : Subsampling per field, chroma samples
+   are located above and below luma samples, and CB and CR samples are located on alternate lines (YUV 4:2:0) 
+
+ * WEED_YUV_SAMPLING_DVNTSC  : Chroma is sampled at a reduced
+   horizontal frequency but is aligned horizontally with luma samples
+   (YUV 4:2:2 / YUV 4:1:1) [same as mpeg ?]
+
+Sampling types >=1024 are reserved for custom samplings.
+
+
+==== YUV clamping ====
+
+ * WEED_YUV_CLAMPING_CLAMPED :: the default if not present (clamped to 16-235,
+   16-240, 16-240) [like mpeg]
+
+ * WEED_YUV_CLAMPING_UNCLAMPED :: Y, U and V are unclamped (0 - 255 range
+   for each) [used in e.g. in jpeg]
+
+clamping types >=512 are reserved for custom clampings.
+
+==== YUV subspace ====
+
+ * WEED_YUV_SUBSPACE_YCBCR :: Y'CbCr colorspace. The default if not present 
+
+ * WEED_YUV_SUBSPACE_YUV :: YUV analog uses slightly different
+   conversion factors than CbCr digital (Wr=0.299, Wb=0.114)
+
+ * WEED_YUV_SUBSPACE_BT709 :: BT.709 high definition uses slightly different
+   conversion factors than CbCr digital (Wr=0.2125, Wb=0.0721)
+
+subspace types >=512 are reserved for custom subspaces.
+
+==== Filter errors ====
+
+ *  WEED_ERROR_TOO_MANY_INSTANCES[[BR]]
+    can't create: plugin allows only limited number of filter instances, returned from init_func()
+
+ *  WEED_ERROR_HARDWARE[[BR]]
+    there was a hardware error using the filter; returned
+    from init_func() or from process_func(). If returned from
+    process_func(), the filter should be deinited/reinited.
+
+ *  WEED_ERROR_INIT_ERROR[[BR]]
+    other unspecified error during initialisation
+
+ *  WEED_ERROR_PLUGIN_INVALID[[BR]]
+    one or more of the filter_classes is no longer valid. The filter
+    instance should be deinitialised and not reused; returned from process_func().
+
+
+Error numbers >=1024 are reserved for custom errors.
+

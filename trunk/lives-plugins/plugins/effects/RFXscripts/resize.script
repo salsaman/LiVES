@@ -1,0 +1,73 @@
+LiVES rendered effect plugin script
+------------------------------------
+This is a tool, as it MAY_RESIZE
+
+<define>
+|1.7
+</define>
+
+<name>
+resize
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Resize All Frames|Resizing|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+width|_Width|num0|0|0|10000|2|
+height|_Height|num0|0|0|10000|2|
+</params>
+
+<param_window>
+layout|"New frame size"|
+layout|fill|p0|" X "|p1|fill|
+special|aspect|0|1|
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+# 0x0002 == may resize all to $nwidth x $nheight
+<properties>
+0x0002
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code
+<pre>
+$antialias=&rc_get("antialias");
+$resize_ext=$out_ext;
+$nwidth=$p0;
+$nheight=$p1;
+</pre>
+
+# loop code
+<loop>
+&resize_frame($name,$nwidth,$nheight);
+</loop>
+
+# post loop code
+<post>
+</post>
+
+<onchange>
+</onchange>

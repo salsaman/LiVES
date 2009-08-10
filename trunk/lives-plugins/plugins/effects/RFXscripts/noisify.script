@@ -1,0 +1,129 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+noisify
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Marco De la Cruz|
+</author>
+
+<description>
+Noisify|Adjusting noise on|1|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+add|Add noise|bool|1|1|
+red|Reduce noise|bool|0|1|
+xx||bool|0|2|
+every|every|num0|1|1|10000|
+type|Noise type|string_list|0|Impulse|Uniform|Gaussian|Multiplicative|Laplacian|Poisson|
+radius|Reduction radius|num0|1|1|10000|
+yy||bool|0|0|
+every2|every|num0|1|1|10000|
+zz||bool|1|2|
+const|Constant noise level|num0|1|1|50|
+</params>
+
+<param_window>
+layout|p0|fill|p4|
+layout|p8|p9|
+layout|p2|"Increase noise"|p3|"frame(s)"|
+layout|hseparator|
+layout|p1|fill|p5|
+layout|p6|"Decrease noise"|p7|"frame(s)"|
+</param_window>
+
+<properties>
+0x0001
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$noise="noise";
+if ($p0) {
+   $pre="+";
+
+   if ($p4==0) {
+    $ntype="Impulse";
+   }
+   elsif ($p4==1) {
+    $ntype="Uniform";
+   }
+   elsif ($p4==2) {
+    $ntype="Gaussian";
+   }
+   elsif ($p4==3) {
+    $ntype="Multiplicative";
+   }
+   elsif ($p4==4) {
+    $ntype="Laplacian";
+   }
+   elsif ($p4==5) {
+    $ntype="Poisson";
+   }
+}
+elsif ($p1) {
+   $pre="-";
+   $ntype="$p5";
+}
+$param=" $pre$noise $ntype ";
+$nstep=1;
+$fstep=1;
+if ($p2) {
+   $nadd="$p3";
+}
+elsif ($p6) {
+   $nadd="$p6";
+}
+else {
+   $nadd=1;
+}
+if ($p8) {
+   $cnl="$p9";
+}
+else {
+   $cnl=1;
+}
+</pre>
+
+<loop>
+if ($p2||$p6) {
+   if ($nstep==$fstep) {
+      if ($nstep <= 50) {
+         $totnoise=$param x $nstep;
+      }
+      else {
+          $totnoise=$param x 50;
+      }
+      $nstep+=$nadd;
+   }
+}
+else {
+   $totnoise=$param x $cnl;
+}
+`$convert_command $in $totnoise $out`;
+$fstep++;
+</loop>
+
+<post>
+</post>
+
+<onchange>
+init|$p8=1;
+</onchange>

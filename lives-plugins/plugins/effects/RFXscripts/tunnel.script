@@ -1,0 +1,101 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+tunnel
+</name>
+
+<version>
+2
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Tunnel|Tunneling|1|1|
+</description>
+
+# requirements (list)
+<requires>
+composite
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+diffmax|_Diffmax|num0|10|1|100|
+rand|_Randomness|num0|5|0|100
+fade|_Fade level|num0|90|0|100
+</params>
+
+<param_window>
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0000
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code (list)
+<pre>
+$diff=0;
+
+# all for merge
+$oheight=$height;
+$owidth=$width;
+$x=int($width/8)+1;
+$y=int($height/8)+1;
+$width-=$x*2;
+$height-=$y*2;
+$pc_start=$p2; # fade amount
+</pre>
+
+# loop code (list)
+<loop>
+# merge frame from diff frames ago at 90%
+$from=&mkname(int($frame-$diff));
+if (-f "$from$out_ext") {
+    $fromimg="$from$out_ext";
+}
+else {
+    if (-f "$from$img_ext") {
+        $fromimg="$from$img_ext";
+    }
+    else {
+        # must make sure we have an input image
+        $fromimg=$in;
+    }
+}
+$toimg=$out;
+
+`$composite_command -compose plus -dissolve $pc_start -geometry $width!x$height!+$x!+$y! $fromimg -size $owidth!x$oheight! $in $out >/dev/null 2>&1`;
+
+# make the diff grow at the beginning and shrink at the end
+$diff+=(rand ($p1*2+1))-$p1+1;
+
+if ($diff<1) {
+    $diff+=$p1/2+1;
+}
+if ($frame-$diff<$start||$diff+$frame>$end||$diff>$p0) {
+    $diff-=$p1/2+1;
+}
+</loop>
+
+# post loop code (list)
+<post>
+</post>
+
+<onchange>
+</onchange>

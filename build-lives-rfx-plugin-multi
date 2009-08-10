@@ -1,0 +1,167 @@
+#!/usr/bin/perl
+
+
+# build-lives-rfx-plugin-multi - Copyright G. Finch (salsaman) 2005
+# Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
+
+
+#########################################################
+
+my ($dir_extra)="/lives/plugins/effects/";
+my ($home_dir_extra)="/.lives-dir/plugins/effects/";
+my ($builder)="build-lives-rfx-plugin";
+my ($type)="builtin"; # default
+
+#########################################################
+
+my ($scripts_dir);
+my ($exec_dir);
+my ($builder_location);
+
+if (defined $ARGV[0]) {
+    $type=$ARGV[0];
+}
+
+if (defined $ARGV[1]) {
+    $scripts_dir=$ARGV[1];
+}
+
+if (defined $ARGV[2]) {
+    $exec_dir=$ARGV[2];
+}
+
+if (defined $ARGV[3]) {
+    $build_bindir=$ARGV[3];
+}
+
+if (!defined($scripts_dir)) {
+#get <tempdir>
+    `smogrify get_tempdir rfx_builder`;
+    open IN,"< /tmp/.smogrify.rfx_builder";
+    read IN,$tmpdir,512;
+    close IN;
+    unlink "/tmp/.smogrify.rfx_builder";
+    
+    if ($tmpdir eq "") {
+	$tmpdir="/tmp";
+    }
+    
+    
+# check we have the plugin builder
+    `smogrify get_location $builder rfx builder`;
+    open IN,"< $tmpdir/.smogval.rfx.builder";
+    read IN,$builder_location,512;
+    close IN;
+    unlink "$tmpdir/.smogval.rfx.builder";
+    
+    if ($builder_location eq "") {
+	print "Unable to locate $builder. Exiting.\n";
+	exit 3;
+    }
+    
+    
+    if ($type eq "builtin") {
+# get the prefix_dir from ~/.lives
+	`smogrify get_pref prefix_dir rfx builder`;
+	open IN,"< $tmpdir/.smogval.rfx.builder";
+	read IN,$dir,512;
+	close IN;
+	unlink "$tmpdir/.smogval.rfx.builder";
+	chomp($dir);
+	$scripts_dir="$dir/share";
+	$exec_dir="$dir/lib";  # guessing
+   }
+    else {
+	$scripts_dir=$ENV{"HOME"};
+	chomp($scripts_dir);
+	$exec_dir=$scripts_dir;
+    }
+}
+
+
+
+if ($type eq "builtin") {
+    $scripts_dir.=$dir_extra;
+    $indir=$scripts_dir."RFXscripts/";
+    unlink <$indir/*~>;
+    $exec_dir.=$dir_extra;
+    $outdir=$exec_dir."rendered/";
+}
+elsif ($type eq "custom") {
+    $scripts_dir.=$home_dir_extra;
+    $indir=$scripts_dir."RFXscripts/custom/";
+    unlink <$indir/*~>;
+    $exec_dir.=$home_dir_extra;
+    $outdir=$exec_dir."rendered/custom/";
+}
+elsif ($type eq "test") {
+    $scripts_dir.=$home_dir_extra;
+    $indir=$scripts_dir."RFXscripts/test/";
+    unlink <$indir/*~>;
+    $exec_dir.=$home_dir_extra;
+    $outdir=$exec_dir."rendered/test/";
+}
+elsif ($type eq "builtinx") {
+    $indir=$scripts_dir;
+    $outdir=$exec_dir;
+    print "got $scripts_dir $exec_dir\n";
+    unlink <$indir/*~>;
+}
+
+else {
+    print "error: unknown RFX type\n";
+    exit 1;
+}
+
+print "Deleting scripted plugins from $outdir\n";
+&remove_scripted_plugins($outdir);
+
+print "Building all in $indir\n";
+
+
+`/bin/mkdir -p $outdir`;
+
+opendir DIR,$indir;
+while ($plugin=readdir(DIR)) {
+    unless ($plugin =~ /^\./) {
+	print "building $indir$plugin \n";
+	if (defined $build_bindir) {
+	    system("$build_bindir/build-lives-rfx-plugin $indir$plugin $outdir");
+	}
+	else {
+	    system("build-lives-rfx-plugin $indir$plugin $outdir");
+	}
+    }
+}
+close DIR;
+
+exit 0;
+
+######################################################################
+
+sub remove_scripted_plugins {
+    # remove only plugins with properties&0x8000, and "broken" plugins
+    my ($outdir)=@_;
+    my ($file);
+    opendir DIR,$outdir;
+    while ($file=readdir(DIR)) {
+	unless ($file =~ /^\./) {
+	    if (-x "$outdir$file") {
+		my ($fx_caps)=`$outdir$file get_capabilities`;
+		if ($fx_caps&0x8000||$fx_caps eq "") {
+		    unlink "$outdir$file";
+		}
+	    }
+	}
+    }
+    closedir DIR;
+}
+
+
+sub location {
+    # return the location of an executable
+    my ($command)=@_;
+    my ($location)=`which $command 2>/dev/null`;
+    chomp($location);
+    $location;
+}

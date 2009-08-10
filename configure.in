@@ -1,0 +1,441 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.57)
+
+ifdef([m4_pattern_allow],
+      [m4_pattern_allow([^AC_.*])])
+
+dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
+AC_INIT(LiVES,1.0.0,http://www.sourceforge.net/tracker/?group_id=64341&atid=507139)
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+
+
+AC_CONFIG_SRCDIR([Makefile.am])
+AM_INIT_AUTOMAKE([dist-bzip2])
+
+AM_MAINTAINER_MODE
+AC_PREFIX_DEFAULT(/usr)
+
+AC_GNU_SOURCE
+AC_ISC_POSIX
+AC_PROG_INSTALL
+AC_PROG_CC
+
+AC_CONFIG_MACRO_DIR([m4])
+
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+AM_PROG_CC_STDC
+AM_PROG_CC_C_O
+AC_HEADER_STDC
+AC_C_BIGENDIAN
+AC_C_CONST
+AC_C_INLINE
+AC_SYS_LARGEFILE
+
+AM_PROG_AS
+
+AC_CHECK_FILE(lives-plugins/Makefile.am,,[
+echo "LiVES plugins were not found. Please make sure you have checked them out."
+echo
+echo
+exit
+])
+
+IS_DARWIN="false"
+IS_IRIX="false"
+IS_LINUX_GNU="false"
+
+case "{$target_os}" in
+ *darwin*)
+   IS_DARWIN="true"
+  ;;
+ *irix*)
+   IS_IRIX="true"
+  ;;
+ *linux-gnu*)
+   IS_LINUX_GNU="true"
+  ;;
+ *)
+  ;;
+esac
+
+AM_CONDITIONAL(IS_DARWIN,$IS_DARWIN)
+AM_CONDITIONAL(IS_IRIX,$IS_IRIX)
+AM_CONDITIONAL(IS_LINUX_GNU,$IS_LINUX_GNU)
+
+GETTEXT_PACKAGE=lives
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [gtp])
+
+AC_DEFINE_UNQUOTED(LOCALEDIR, "${datadir}/locale", [Name of gettext locale directory])
+
+AC_DEFINE_UNQUOTED(PREFIX, "${prefix}", [prefix])
+AC_DEFINE_UNQUOTED(LiVES_VERSION, "${VERSION}", [])
+
+dnl Add the languages which your application supports here.
+ALL_LINGUAS="fr cs ja nl_NL de_DE pt pt_BR hu es it pl tr ru zh_CN sk he"
+AM_GNU_GETTEXT
+AM_GNU_GETTEXT_VERSION(0.12.1)
+
+
+dnl Use -Wall if we have gcc.
+changequote(,)dnl
+if test "x$GCC" = "xyes"; then
+  case " $CFLAGS " in
+  *[\ \	]-Wall[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wall" ;;
+  esac
+fi
+changequote([,])dnl
+
+
+dnl Check of -ldl
+AC_CHECK_LIB(dl,open)
+AM_CONDITIONAL(HAVE_LIBdl,$HAVE_LIBdl)
+
+dnl Check for posix_memalign
+AC_CHECK_FUNCS(posix_memalign)
+
+
+AC_PATH_PROGS(PERL, perl perl5)
+
+# Check for pkg-config
+AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+if test $PKG_CONFIG = no; then
+   AC_MSG_ERROR([Cannot find pkg-config, make sure it is installed and in your PATH])
+fi
+
+
+dnl OSC
+HAVE_OSC=true
+AC_ARG_ENABLE(OSC,
+[  --disable-OSC            Disable OSC support.],
+[
+AC_DEFINE_UNQUOTED(DISABLE_OSC,1, [OSC])
+HAVE_OSC=false
+]
+)
+AM_CONDITIONAL(ENABLE_OSC,$HAVE_OSC)
+
+
+
+dnl js_header
+AC_CHECK_HEADERS(linux/joystick.h, HAVE_JS_HEADER=true, HAVE_JS_HEADER=false)
+
+
+HAVE_JACK=false
+HAVE_JACK_TRANSPORT=false
+
+AC_ARG_ENABLE( jack, [  --disable-jack     Disable jack support.] , disable_jack=yes)
+AC_ARG_ENABLE( jack-transport, [  --disable-jack-transport     Disable jack transport support.] , disable_jack_transport=yes)
+
+if test "x$disable_jack" != "xyes" ; then
+
+dnl check for jack
+
+dnl PKG_CHECK_MODULES(JACK, [jack >= 0.100.0], HAVE_JACK=true, HAVE_JACK=false)
+
+AC_CHECK_LIB(jack,jack_get_client_name)
+if test "x$ac_cv_lib_jack_jack_get_client_name" = "xyes"; then
+AC_CHECK_HEADERS(jack/jack.h, HAVE_JACK=true, HAVE_JACK=false)
+
+if test "$HAVE_JACK" != "false"; then
+if test "x$disable_jack_transport" != "xyes" ; then
+
+dnl check for jack-transport
+AC_CHECK_HEADERS(jack/transport.h, HAVE_JACK_TRANSPORT=true, HAVE_JACK_TRANSPORT=false)
+
+fi
+fi
+fi
+else
+echo not checking for jack
+fi
+
+dnl check for jack-video
+HAVE_JACK_VIDEO=false
+AC_ARG_ENABLE(vjack,
+[  --enable-vjack            Enable video jack integration. Experimental. ],
+[
+AC_DEFINE_UNQUOTED(ENABLE_VJACK,1, [vjack])
+HAVE_JACK_VIDEO=true
+]
+)
+AM_CONDITIONAL(ENABLE_JACK,$HAVE_JACK)
+AM_CONDITIONAL(ENABLE_JACK_TRANSPORT,$HAVE_JACK_TRANSPORT)
+AM_CONDITIONAL(ENABLE_VJACK,$HAVE_JACK_VIDEO)
+
+
+PKG_CHECK_MODULES(GTK,gtk+-2.0 >= 2.4.0)
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GTK_LIBS)
+
+PKG_CHECK_EXISTS([gtk+-2.0 >= 2.10.0],[HAVE_GTK_VERSION210=true],[HAVE_GTK_VERSION210=false])
+
+GTK_LIBS_NODYNAMIC=`echo "$GTK_LIBS" | sed 's/-Wl,--export-dynamic//g'`
+AC_SUBST(GTK_LIBS_NODYNAMIC)
+
+PKG_CHECK_EXISTS([glib-2.0 >= 2.10.0],[HAVE_GLIB_VERSION210=true],[HAVE_GLIB_VERSION210=false])
+PKG_CHECK_EXISTS([glib-2.0 >= 2.4.0],[HAVE_GLIB_VERSION24=true],[HAVE_GLIB_VERSION24=false])
+
+
+DISABLE_GLSLICE=true
+AC_ARG_ENABLE( glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (not recommended).] , disable_glslice=yes)
+if test "x$disable_glslice" != "xyes" ; then
+DISABLE_GLSLICE=false
+if test "x$HAVE_GLIB_VERSION24" = "xfalse"; then
+echo "***********************************************"
+echo "LiVES requires glib-2.0 version 2.4.0 or higher"
+echo "version 2.10.0 or higher is strongly recommended"
+echo "***********************************************"
+else
+if test "x$HAVE_GLIB_VERSION210" = "xfalse"; then
+echo "***********************************************"
+echo "LiVES runs best with glib-2.0 version 2.10.0 or higher"
+echo "however, it can be compiled with the current version of glib-2.0"
+echo "provided you use the configure option --disable-glib-slice-allocator"
+echo "***********************************************"
+fi
+fi
+
+PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.10.0)
+else
+PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.4.0)
+fi
+
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
+
+
+AM_CONDITIONAL(DISABLE_GLSLICE,$DISABLE_GLSLICE)
+
+HAVE_SDL=false
+FORCE_SDL=false
+TRY_SDL=true
+
+AC_ARG_ENABLE( sdl, [  --enable-sdl             Enable SDL playback plugin support without checking for it.] , force_sdl=yes)
+
+
+AC_ARG_ENABLE(sdl,
+[  --disable-sdl            Disable SDL support.],
+[
+AC_DEFINE_UNQUOTED(disable_sdl,1, [sdl])
+TRY_SDL=false
+]
+)
+
+if test "x$force_sdl" != "xyes" ; then
+if test "$TRY_SDL" != "false" ; then
+
+dnl check for SDL
+
+ ifdef([m4_pattern_allow],
+      [m4_pattern_allow([^AM_PATH_SDL])])
+
+
+ ifdef([$AM_PATH_SDL"],
+
+ [AM_PATH_SDL([1.2],[
+        HAVE_SDL=true
+        SDL_LIBS=`$SDL_CONFIG --libs`
+	SDL_CFLAGS=`$SDL_CONFIG --cflags`]
+ ,[AC_MSG_WARN([*** Unable to find SDL ***])])],
+
+[
+
+#if AM_PATH_SDL fails, try pkg-config
+PKG_CHECK_MODULES(SDL,sdl >= 1.2,HAVE_SDL=true,HAVE_SDL=false)
+
+
+if test "$HAVE_SDL" != "true"; then
+echo
+echo "*******************************************************************"
+echo You are compiling LiVES without \(optional\) SDL support.
+echo It is recommended that you install the libSDL development  
+echo package and run autoconf again before compiling LiVES.
+echo "*******************************************************************"
+echo
+fi
+
+])
+
+
+ AC_SUBST(SDL_LIBS)
+ AC_SUBST(SDL_CFLAGS)
+
+fi
+
+else FORCE_SDL=true
+SDL_PREFIX=${with-sdl-prefix}
+AC_SUBST(SDL_PREFIX)
+fi
+
+AM_CONDITIONAL(HAVE_SDL,$HAVE_SDL)
+AM_CONDITIONAL(FORCE_SDL,$FORCE_SDL)
+
+HAVE_MJPEGTOOLS=false
+AC_ARG_ENABLE( mjpegtools, [  --disable-mjpegtools    Disable mjpegtools (yuv4mpeg) support.] , disable_mjpegtools=yes)
+if test "x$disable_mjpegtools" != "xyes" ; then
+
+dnl check for mjpegtools
+PKG_CHECK_MODULES(MJPEGTOOLS,mjpegtools >= 1.6.2,HAVE_MJPEGTOOLS=true,HAVE_MJPEGTOOLS=false)
+AC_SUBST(MJPEGTOOLS_CFLAGS)
+AC_SUBST(MJPEGTOOLS_LIBS)
+fi
+
+AM_CONDITIONAL(HAVE_MJPEGTOOLS,$HAVE_MJPEGTOOLS)
+
+
+HAVE_LIBDV=false
+dnl check for libdv
+PKG_CHECK_MODULES(LIBDV,libdv,HAVE_LIBDV=true,HAVE_LIBDV=false)
+AC_SUBST(LIBDV_CFLAGS)
+AC_SUBST(LIBDV_LIBS)
+
+AM_CONDITIONAL(HAVE_LIBDV,$HAVE_LIBDV)
+
+
+HAVE_OGG=false
+dnl check for ogg
+PKG_CHECK_MODULES(OGG,ogg,HAVE_OGG=true,HAVE_OGG=false)
+AC_SUBST(OGG_CFLAGS)
+AC_SUBST(OGG_LIBS)
+
+AM_CONDITIONAL(HAVE_OGG,$HAVE_OGG)
+
+
+HAVE_THEORA=false
+dnl check for libtheora
+PKG_CHECK_MODULES(THEORA,theora,HAVE_THEORA=true,HAVE_THEORA=false)
+AC_SUBST(THEORA_CFLAGS)
+AC_SUBST(THEORA_LIBS)
+
+AM_CONDITIONAL(HAVE_THEORA,$HAVE_THEORA)
+
+
+HAVE_VORBIS=false
+dnl check for libvorbis
+PKG_CHECK_MODULES(VORBIS,vorbis,HAVE_VORBIS=true,HAVE_VORBIS=false)
+AC_SUBST(VORBIS_CFLAGS)
+AC_SUBST(VORBIS_LIBS)
+
+AM_CONDITIONAL(HAVE_VORBIS,$HAVE_VORBIS)
+
+
+HAVE_VISUAL=false
+AC_ARG_ENABLE( libvisual, [  --disable-libvisual     Disable libvisual support.] , disable_libvisual=yes)
+if test "x$disable_libvisual" != "xyes" ; then
+
+dnl check for libvisual
+PKG_CHECK_MODULES(VISUAL,libvisual-0.4 >= 0.4.0,HAVE_VISUAL=true,HAVE_VISUAL=false)
+if test "x$HAVE_VISUAL" = "xfalse"; then
+PKG_CHECK_MODULES(VISUAL,libvisual = 0.2.0,HAVE_VISUAL=true,HAVE_VISUAL=false)
+fi
+AC_SUBST(VISUAL_CFLAGS)
+AC_SUBST(VISUAL_LIBS)
+fi
+
+AM_CONDITIONAL(HAVE_VISUAL,$HAVE_VISUAL)
+
+
+
+HAVE_LIBOIL=false
+AC_ARG_ENABLE( liboil, [  --disable-liboil     Disable liboil support.] , disable_liboil=yes)
+if test "x$disable_liboil" != "xyes" ; then
+
+dnl check for liboil
+PKG_CHECK_MODULES(OIL,liboil-0.3 >= 0.3.9,HAVE_LIBOIL=true,HAVE_LIBOIL=false)
+AC_SUBST(OIL_CFLAGS)
+AC_SUBST(OIL_LIBS)
+fi
+
+AM_CONDITIONAL(HAVE_LIBOIL,$HAVE_LIBOIL)
+AM_CONDITIONAL(ENABLE_LIBOIL,$HAVE_LIBOIL)
+
+
+
+HAVE_FREI0R=false
+AC_ARG_ENABLE( frei0r, [  --disable-frei0r     Disable frei0r support.] , disable_frei0r=yes)
+if test "x$disable_freior" != "xyes" ; then
+
+dnl check for frei0r
+AC_CHECK_HEADERS(frei0r.h, HAVE_FREI0R=true, HAVE_FREI0R=false)
+AM_CONDITIONAL(HAVE_FREI0R,$HAVE_FREI0R)
+fi
+
+
+HAVE_LDVGRAB=false
+
+AC_ARG_ENABLE( ldvgrab, [  --disable-ldvgrab     Disable LiVES-dvgrab.] , disable_ldvgrab=yes)
+if test "x$disable_ldvgrab" != "xyes" ; then
+
+dnl check for ldvgrab requirements
+AC_CHECK_HEADERS(libraw1394/raw1394.h, HAVE_RAW1394=true, HAVE_RAW1394=false)
+if $HAVE_RAW1394  ; then
+AC_CHECK_HEADERS(libavc1394/avc1394.h, HAVE_AVC1394=true, HAVE_AVC1394=false)
+if $HAVE_AVC1394 ; then
+AC_CHECK_HEADERS(libavc1394/rom1394.h, HAVE_ROM1394=true, HAVE_ROM1394=false)
+if $HAVE_ROM1394 ; then
+HAVE_LDVGRAB=true
+
+fi
+fi
+fi
+fi
+AM_CONDITIONAL(ENABLE_LDVGRAB,$HAVE_LDVGRAB)
+
+# find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in
+AC_OUTPUT([ 
+libOSC/Makefile
+libOSC/client/Makefile
+libOSC/sendOSC/Makefile
+po/Makefile.in
+Makefile
+intl/Makefile
+m4/Makefile
+libweed/Makefile
+src/Makefile
+lives-plugins/Makefile
+lives-plugins/plugins/effects/RFXscripts/Makefile
+lives-plugins/plugins/effects/Makefile
+lives-plugins/plugins/encoders/Makefile
+lives-plugins/plugins/decoders/Makefile
+lives-plugins/plugins/Makefile
+lives-plugins/plugins/playback/video/Makefile
+lives-plugins/plugins/playback/Makefile
+lives-plugins/icons/Makefile
+lives-plugins/themes/cutting_room/Makefile
+lives-plugins/themes/pinks/Makefile
+lives-plugins/themes/camera/Makefile
+lives-plugins/themes/editor/Makefile
+lives-plugins/themes/crayons/Makefile
+lives-plugins/themes/crayons-bright/Makefile
+lives-plugins/themes/Makefile
+lives-plugins/weed-plugins/Makefile
+lives-plugins/weed-plugins/gdk/Makefile
+lives-plugins/marcos-encoders/Makefile
+])
+
+
+if test "$HAVE_JACK" != "true"; then
+echo
+echo "*******************************************************************"
+echo You are compiling LiVES without jack \(>= 0.100.0\) support.
+echo It is recommended that you install/upgrade libjack, libjack-devel 
+echo and jackd before compiling LiVES.
+echo
+echo For more details, see: http://jackaudio.org
+echo
+echo "*******************************************************************"
+echo
+fi
+
+if test "x$HAVE_GTK_VERSION210" = "xfalse"; then
+echo "*******************************************************************"
+echo "LiVES will compile with your current version of gtk+-2.0"
+echo "however your strongly advised to upgrade to at least version"
+echo "2.10.0 of gtk+-2.0 to ensure problem free running of LiVES"
+echo "*******************************************************************"
+echo
+fi

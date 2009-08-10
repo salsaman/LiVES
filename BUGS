@@ -1,0 +1,14 @@
+Known bugs
+----------
+Starting playback with an audio only clip and starting and stopping various 
+generators can sometimes lead to a crash.
+
+- Will be fixed before 1.0
+
+
+
+
+
+
+
+

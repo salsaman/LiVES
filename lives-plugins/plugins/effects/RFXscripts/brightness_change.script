@@ -1,0 +1,57 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+brightness_change
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Brightness change|Changing brightness of|1|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+start|Brightness _start|num0|100|0|10000|
+end|Brightness _end|num0|100|0|10000|
+</params>
+
+<param_window>
+</param_window>
+
+<properties>
+0x0001
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$step=($p1-$p0)/($end-$start+1);
+</pre>
+
+<loop>
+system("$convert_command $in -modulate $p0,100,100 $out");
+$p0+=$step;
+</loop>
+
+<post>
+</post>
+
+<onchange>
+</onchange>
+

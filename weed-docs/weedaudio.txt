@@ -1,0 +1,126 @@
+= Technical Specification =
+
+Weed Audio Extension 1.1 final version.
+
+
+(C) Gabriel "Salsaman" Finch 2005 - 2008
+
+Version 1.1 - added "is_volume_master" to assist with host automation
+of audio
+
+
+
+The Weed Audio Extension adds audio capabilities to the standard
+WEED_PLANT_CHANNEL_TEMPLATE and WEED_PLANT_CHANNEL.
+
+
+
+== WEED_PLANT_CHANNEL_TEMPLATE ==
+
+For audio channels, the "palette_list" leaf should be
+ommited. The host should not set a "current_palette" or pass video
+data in such a channel.
+
+For example, this can be used to process a backing audio track.
+
+
+
+For channels which support audio, the following leaf must be defined
+in the template:
+
+Mandatory leaves:
+
+"is_audio" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, then this
+channel is audio.
+
+
+Optional leaves:
+the plugin may define these to force them for the host, or it may
+leave them undefined.
+
+"audio_data_length" : WEED_SEED_INT : maximum length of audio_data in
+samples
+
+"audio_interleaf" : WEED_SEED_BOOLEAN : if WEED_TRUE, then audio
+channels should be interleaved
+
+"audio_channels" : WEED_SEED_INT : number of audio channels in the
+audio_data : must be >=1 (mono), 2==stereo, etc.
+
+"audio_rate" : WEED_SEED_INT : the audio sample rate in Hz. 
+
+
+
+
+
+
+== WEED_PLANT_CHANNEL ==
+
+
+
+Mandatory leaves for CHANNELS with audio:
+
+"audio_data" : WEED_SEED_VOIDPTR : stores a pointer to 32 bit signed float data for
+	       audio buffer. Values within the buffer are in the range -1.0 <=
+	       value <= 1.0. [can be NULL if the host has no audio to pass].
+
+"audio_data_length" : WEED_SEED_INT : length of audio_data in samples
+                                      [can be 0 if the host has no audio to pass]
+
+"audio_interleaf" : WEED_SEED_BOOLEAN : if WEED_TRUE, then audio
+channels are interleaved
+
+"audio_channels" : WEED_SEED_INT : number of audio channels in the
+audio_data : must be >=1 (mono), 2==stereo, etc.
+
+"audio_rate" : WEED_SEED_INT : the audio sample rate in Hz. 
+
+
+
+
+Notes:
+
+In the case that the host has no audio at all for a channel, it can
+set "audio_data" to NULL, and leave all other audio leaves
+undefined.
+
+If the host sets the values "audio_channels", "audio_rate", or
+"audio_interleaf" itself, then the values for all channels MUST be
+set the same.
+
+"audio_channels", "audio_rate", and "audio_interleaf" MUST not be
+changed without a re-init of the plugin.
+
+
+
+
+
+
+
+== WEED_PLANT_PARAMETER_TEMPLATE ==
+
+"is_volume_master" : WEED_SEED_BOOLEAN : for volume-only effects, there are a couple of things
+that must be done. First the filter template flag bit
+WEED_FILTER_IS_CONVERTER must be set. Second, exactly one of the
+parameter templates must be marked by setting the leaf "is_volume_master" to WEED_TRUE.
+This is to allow host automation.
+
+Such a parameter must be a float, and must *linearly* adjust the volume for all audio
+sub-channels (in the sense of "left" and "right" sub-channels) between 0.0 (no volume) and 1.0 (no amplification). The
+maximum may optionally go beyond 1.0 (for an amplifier/pre-amp). It
+could also be thought of as the "gain" control.
+
+This flag can be combined with the flag WEED_PARAMETER_ELEMENT_PER_CHANNEL
+in the case of repeating Weed audio channels (see "max_repeats" in the channel
+template description of the main Weed spec). This would create some
+kind of audio mixer in the host.
+
+
+Summary
+
+== HOST_INFO leaves ==
+
+"host_audio_player" : WEED_SEED_STRING : name of the host audio
+player. Examples are "jack", "sox", "mplayer".
+
+

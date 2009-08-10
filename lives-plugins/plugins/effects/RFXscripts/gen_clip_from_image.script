@@ -1,0 +1,80 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+gen_clip_from_image
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Generate clip from image|Generating clip from image|1|0|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+width|_Width|num0|640|1|10000|
+height|_Height|num0|480|1|10000|
+nframes|_Number of frames|num0|100|1|100000|
+test|_Image File|string||80|
+fps|_Frames per second|num3|25.000|1.000|200.000|
+nsize|Use _Natural image size|bool|0|
+</params>
+
+<param_window>
+layout|p0|p1|
+layout|p5|
+layout|p2|p4|
+special|fileread|3|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$end=$p2;
+
+if ($p5) {
+	$imresact="none";
+	&get_image_size($p3);
+	$nwidth=$hsize;$nheight=$vsize;
+} else {
+	$nwidth=$p0;
+	$nheight=$p1;
+}
+
+$fps=$p4;
+</pre>
+
+<loop>
+if ($p5) {
+	`$convert_command "$p3" $out`;
+} else {
+	`$convert_command "$p3" -resize $p0!x$p1! $out`;
+}
+</loop>
+
+<post>
+</post>
+
+<onchange>
+init|if ($width>0) {$p0=$width}; if ($height>0) {$p1=$height};
+</onchange>
+

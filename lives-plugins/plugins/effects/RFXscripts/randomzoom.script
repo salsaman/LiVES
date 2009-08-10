@@ -1,0 +1,95 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+randomzoom
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Random zoom|Random zooming|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+max|_Max zoom x 10|num0|40|1|100|
+</params>
+
+<param_window>
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0001
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code (list)
+<pre>
+$zoom=-1;
+$depth=1;
+$antialias="false";
+$resize_ext=$out_ext;
+</pre>
+
+# loop code (list)
+<loop>
+#zoom out at end
+if ($end-$frame+1<=$depth) {
+    $zoom=-1;
+}
+	    
+#zoom out
+if ($zoom<0) {
+    if ($depth>=0) {
+        $depth--;
+        if ($depth<=0) {
+            #pick a new centre
+            $c_x=int(rand $width);
+            $c_y=int(rand $height);
+            $zoom=int(rand $p0)+1;
+        }
+    }
+}
+	    
+#zoom in
+if ($zoom>0) {
+    $depth++;
+    $zoom--;
+    if ($zoom==0) {
+        $zoom=-1;
+    }
+}
+	    
+$scale=1.+$depth/10.;
+&zoom_frame($name,$c_x,$c_y,$width,$height,$scale);
+</loop>
+
+# post loop code (list)
+<post>
+</post>
+
+<onchange>
+</onchange>

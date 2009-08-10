@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=LiVES 
+Comment=Video Editor/VJ tool
+Categories=AudioVideo;AudioVideoEditing;
+Exec=lives
+Icon=lives
+Type=Application

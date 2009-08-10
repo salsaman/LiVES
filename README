@@ -1,0 +1,221 @@
+LiVES
+-----
+LiVES is a Video Editing System
+-     -    -     -       -
+
+
+Original author: salsaman (salsaman@xs4all.nl)
+
+
+Released under the GNU PUBLIC LICENSE, version 3 or later.
+See file COPYING in this directory for licensing details
+
+
+You should read these installation instructions thoroughly before installing 
+LiVES.
+
+
+
+Requirements
+-------------------
+Linux 2.x or BSD or openMosix or IRIX or OSX/Darwin (other UNIX untested)
+
+
+mplayer 0.90rc1+ compiled with jpeg support
+ImageMagick 5
+perl 5+
+gtk+ 2.10+
+libjpeg62
+gdk-pixbuf-loaders
+
+sox (highly recommended)
+transcode (recommended)
+mencoder (highly recommended)
+libmjpeg-tools (recommended)
+
+xmms (optional)
+cdda2wav (optional)
+
+
+
+
+Installation (CVS)
+------------------
+
+See the LiVES website: http://lives.sourceforge.net/index.php?do=cvs
+
+
+
+
+
+Installation (binary versions)
+_________________
+See the LiVES website:
+http://lives.sourceforge.net/index.php?do=downloads
+for more information.
+
+
+
+
+
+Installing from source (Dev/pre/CVS versions)
+---------------------------------------------
+If you got LiVES as a tar.gz or tar.bz2, at a terminal prompt, enter the following:
+
+
+          bzip2 -d LiVES-1.0.0.tar.bz2
+or,
+          gzip -d LiVES-1.0.0.tar.gz
+
+depending on which version you have. Then:
+
+
+          tar xvf LIVES-1.0.0.tar
+
+          cd lives-1.0.0
+
+
+
+for CVS checkouts, this is not necessary, just do: cd lives
+(unless you are already in the lives directory.)
+
+for CVS checkouts, you will need to run: ./autogen.sh
+before continuing.
+
+
+
+
+now type:
+	./configure
+
+check the output of configure very carefully, following any advice it provides, and making any adjustments you may wish - such as installing optional libraries.
+
+If you are happy with the output from configure, then compile the source with:
+
+	make
+
+
+again, check the output for any warnings or errors.
+
+
+Assuming everything went OK, you can now install the application with:
+
+	make install
+
+(you probably need to do this as root - on some systems you would become root using "su", on other systems you would run
+
+	sudo make install
+
+)
+
+
+Finally, you should make sure your system can find the new libraries installed by LiVES:
+
+
+	ldconfig
+
+(or as root -
+
+	sudo ldconfig
+
+}
+
+
+
+
+You can then run lives either from a menu, or by typing in a terminal:
+
+
+        lives
+
+
+
+Relocating:
+-----------
+The default location for everything is inside /usr; so executables go in /usr/bin, themes and scripts in /usr/share/lives/, and libraries and compiled plugins in /usr/lib.
+
+
+  When installing from source, you can change this with:
+        ./configure --prefix=/some/other/dir
+
+
+  You can also install in a non-default directory with:
+	make install DESTDIR=/some/other/dir
+
+
+
+However, if you do relocate, and this is not a fresh install, you will need to edit your .lives file in your home directory and adjust <prefix_dir> and <lib_dir> so that they point to the correct locations for scripts and plugins.
+
+
+
+Other configuration options
+---------------------------
+
+For a complete list of configure options, type:
+
+	./configure --help
+
+
+
+
+Troubleshooting
+---------------
+Make sure you have themes and icons, and plugins installed as above.
+If they are moved from their installed location, make sure you edit <prefix_dir> and <lib_dir>
+in ~/.lives
+
+In case of any problems, check your ~/.lives file and make sure everything is 
+pointing to the right locations.
+
+Make sure there is plenty of space available in the temporary directory
+(default is /tmp/livestmp).
+It is advisable to change the temp directory from Tools|Preferences|Directory.
+
+Make sure you have a working copy of mplayer installed, and that it is 
+compiled with jpeg support.
+
+If you are having problems encoding, make sure you have everything you need 
+installed. The plugins are just interfaces, and you need to have the binaries 
+installed also. Some of the encoder formats have other dependencies, you may need to check online.
+
+
+Problems opening files
+----------------------
+If you have problems opening a particular video file, try to preview
+it first in the 'open file' dialogue. If you cannot preview it, it means mplayer is not 
+compiled to open it. You may need to recompile mplayer for your system
+with extra libraries.
+
+Note that current versions of LiVES no longer require mplayer to open some file types. For example dv format can be opened with libdv and the dv_decoder plugin. Ogg/theora can be opened with libogg and libtheora.
+
+
+
+If you are having problems opening video, edit /usr/bin/smogrify, and near the top put:
+$DEBUG_OPEN=1;
+you will then see the mplayer open command on the console, which can
+be cut and pasted into a terminal window.
+
+Finally, if you are still having problems, join the lives-video
+mailing list and you can ask your question there !
+
+
+Implemented functions - technical
+---------------------------------
+Visit the LiVES website (http://lives.sourceforge.net/index.php?do=features).
+
+
+Notes
+-----
+The 'load audio' function supports .wav, .mp3 (mpg123 required), mod, xm and
+.ogg (ogg123 required).
+
+
+
+
+
+KNOWN BUGS
+----------
+
+
+See the file BUGS.
+

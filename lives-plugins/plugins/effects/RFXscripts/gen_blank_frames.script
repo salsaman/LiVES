@@ -1,0 +1,60 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+gen_blank_frames
+</name>
+
+<version>
+2
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Generate blank frames|Generating blank frames|1|0|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+width|_Width|num0|640|1|10000|
+height|_Height|num0|480|1|10000|
+nframes|_Number of frames|num0|100|1|100000|
+</params>
+
+<param_window>
+layout|p0||p1|
+layout|p2|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$end=$p2;
+</pre>
+
+<loop>
+`$convert_command -size $p0!x$p1! xc:black $out`;
+$nwidth=$p0;$nheight=$p1;
+</loop>
+
+<post>
+</post>
+
+<onchange>
+init|if ($width>0) {$p0=$width}; if ($height>0) {$p1=$height};
+</onchange>

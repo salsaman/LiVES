@@ -1,0 +1,387 @@
+// preferences.h
+// LiVES (lives-exe)
+// (c) G. Finch 2004 - 2009
+// released under the GNU GPL 3 or later
+// see file ../COPYING or www.gnu.org for licensing details
+
+#ifndef _HAS_PREFS_H
+#define _HAS_PREFS_H
+
+
+
+typedef struct {
+  gchar bgcolour[256];
+  gboolean stop_screensaver;
+  gboolean open_maximised;
+  gchar theme[64];  // the theme name
+
+  gshort pb_quality;
+#define PB_QUALITY_LOW 1
+#define PB_QUALITY_MED 2  // default
+#define PB_QUALITY_HIGH 3
+
+  _encoder encoder; // from main.h
+
+  gshort audio_player;
+#define AUD_PLAYER_SOX 1
+#define AUD_PLAYER_MPLAYER 2
+#define AUD_PLAYER_JACK 3
+
+  // frame quantisation type
+  gshort q_type;
+#define Q_FILL 1
+#define Q_SMOOTH 1
+
+  gchar tmpdir[256];
+
+  // TODO - also use cur_vid_load_dir, etc.
+  gchar def_vid_load_dir[256];
+  gchar def_vid_save_dir[256];
+  gchar def_audio_dir[256];
+  gchar def_image_dir[256];
+  gchar def_proj_dir[256];
+
+  gchar prefix_dir[256];
+  gchar lib_dir[256];
+  gchar image_ext[16];
+
+  guint warning_mask;
+  // if these bits are set, we do not show the warning
+#define WARN_MASK_FPS (1<<0)
+#define WARN_MASK_FSIZE (1<<1)
+#define WARN_MASK_SAVE_QUALITY (1<<2)
+#define WARN_MASK_SAVE_SET (1<<3)
+#define WARN_MASK_NO_MPLAYER (1<<4)
+#define WARN_MASK_RENDERED_FX (1<<5)
+#define WARN_MASK_NO_ENCODERS (1<<6)
+#define WARN_MASK_LAYOUT_MISSING_CLIPS (1<<7)
+#define WARN_MASK_LAYOUT_CLOSE_FILE (1<<8)
+#define WARN_MASK_LAYOUT_DELETE_FRAMES (1<<9)
+
+  /* next two are off by default (on a fresh install) */
+#define WARN_MASK_LAYOUT_SHIFT_FRAMES (1<<10)
+#define WARN_MASK_LAYOUT_ALTER_FRAMES (1<<11)
+
+#define WARN_MASK_DUPLICATE_SET (1<<12)
+
+#define WARN_MASK_DISCARD_LAYOUT (1<<13)
+#define WARN_MASK_DISCARD_SET (1<<14)
+#define WARN_MASK_AFTER_DVGRAB (1<<15)
+
+#define WARN_MASK_MT_ACHANS (1<<16)
+
+#define WARN_MASK_LAYOUT_DELETE_AUDIO (1<<17)
+  
+  /* next two are off by default (on a fresh install) */
+#define WARN_MASK_LAYOUT_SHIFT_AUDIO (1<<18)
+#define WARN_MASK_LAYOUT_ALTER_AUDIO (1<<19)
+
+#define WARN_MASK_MT_NO_JACK (1<<20)
+
+#define WARN_MASK_OPEN_YUV4M (1<<21)
+
+#define WARN_MASK_MT_BACKUP_SPACE (1<<22)
+
+  gchar effect_command[256];
+  gchar video_open_command[256];
+  gchar audio_play_command[256];
+  gchar cdplay_device[256];
+  gdouble default_fps;
+  gint bar_height;
+  gboolean pause_effect_during_preview;
+  gboolean open_decorated;
+  int sleep_time;
+  gboolean pause_during_pb;
+  gboolean fileselmax;
+  gboolean show_recent;
+  gint warn_file_size;
+  gboolean pause_xmms;
+  gboolean midisynch;
+  gint dl_bandwidth;
+  gboolean conserve_space;
+  gboolean ins_resample;
+  gboolean show_tool;
+  gshort sepwin_type;
+  gboolean show_player_stats;
+  gboolean show_framecount;
+  gboolean loop_recording;
+  gboolean discard_tv;
+  gboolean save_directories;
+  gboolean safer_preview;
+  guint rec_opts;
+#define REC_FRAMES (1<<0)
+#define REC_FPS (1<<1)
+#define REC_EFFECTS (1<<2)
+#define REC_CLIPS (1<<3)
+#define REC_AUDIO (1<<4)
+  
+  gboolean debug_encoders;
+  gboolean no_bandwidth;
+  gboolean osc_udp_started;
+  guint osc_udp_port;
+
+  gboolean omc_noisy;
+
+  gshort firsttime;
+  const gchar *wm; //window manager name
+  gint ocp; // open_compression_percent : get/set in prefs
+
+  // whether the 'blend_file' (second file in a transition) is fg or bg
+  gboolean antialias;
+
+  gboolean ignore_tiny_fps_diffs;
+
+  gshort rte_keys_virtual;
+
+  guint jack_opts;
+#define JACK_OPTS_TRANSPORT_CLIENT (1<<0)
+#define JACK_OPTS_TRANSPORT_MASTER (1<<1)
+#define JACK_OPTS_START_TSERVER (1<<2)
+#define JACK_OPTS_NOPLAY_WHEN_PAUSED (1<<3)
+#define JACK_OPTS_START_ASERVER (1<<4)
+
+  gchar jack_tserver[256];
+  gchar jack_aserver[256];
+
+  gchar *fxdefsfile;
+  gchar *fxsizesfile;
+  gchar *vppdefaultsfile;
+
+  GList *acodec_list;
+  gint acodec_list_to_format[AUDIO_CODEC_NONE];
+
+  guint audio_opts;
+#define AUDIO_OPTS_FOLLOW_CLIPS (1<<0)
+#define AUDIO_OPTS_FOLLOW_FPS (1<<1)
+
+  gboolean event_window_show_frame_events;
+  gboolean crash_recovery; // TRUE==maintain mainw->recovery file
+
+  gboolean show_rdet; // show render details (frame size, encoder type) before saving to file
+
+  gboolean move_effects;
+
+  gint mt_undo_buf;
+  gboolean mt_enter_prompt;
+
+  gint mt_def_width;
+  gint mt_def_height;
+  gdouble mt_def_fps;
+
+  gint mt_def_arate;
+  gint mt_def_achans;
+  gint mt_def_asamps;
+  gint mt_def_signed_endian;
+
+  gboolean mt_exit_render;
+  gboolean render_prompt;
+
+  gboolean mt_pertrack_audio;
+  gint mt_backaudio;
+
+  gboolean ar_clipset;
+  gboolean ar_layout;
+
+  gchar ar_clipset_name[128];
+  gchar ar_layout_name[128];
+
+  gboolean rec_desktop_audio;
+
+  gboolean show_gui;
+  gboolean osc_start;
+
+  gboolean collate_images;
+
+  gint virt_height; // n screens vert.
+
+  gboolean concat_images;
+
+  gboolean render_audio;
+
+  gboolean instant_open;
+  gboolean auto_deint;
+
+  gint gui_monitor;
+  gint play_monitor;
+
+  gboolean force_single_monitor;
+
+  gint midi_check_rate;
+  gint midi_rpt;
+
+#define OMC_DEV_MIDI 1<<0
+#define OMC_DEV_JS 1<<1
+  guint omc_dev_opts;
+
+  gchar omc_js_fname[256];
+  gchar omc_midi_fname[256];
+  
+
+  gint num_rtaudiobufs;
+
+  gboolean safe_symlinks;
+
+} _prefs;
+
+
+
+// prefs window
+typedef struct {
+  gulong encoder_ofmt_fn;
+  gulong encoder_name_fn;
+  GtkWidget *prefs_dialog;
+  GtkWidget *prefs_notebook;
+  GtkWidget *cancelbutton;
+  GtkWidget *stop_screensaver_check;
+  GtkWidget *open_maximised_check;
+  GtkWidget *show_tool;
+  GtkWidget *fs_max_check;
+  GtkWidget *recent_check;
+  GtkWidget *video_open_entry;
+  GtkWidget *audio_command_entry;
+  GtkWidget *vid_load_dir_entry;
+  GtkWidget *vid_save_dir_entry;
+  GtkWidget *audio_dir_entry;
+  GtkWidget *image_dir_entry;
+  GtkWidget *proj_dir_entry;
+  GtkWidget *tmpdir_entry;
+  GtkWidget *cdplay_entry;
+  GtkWidget *spinbutton_def_fps;
+  GtkWidget *ofmt_combo;
+  GtkWidget *audp_combo;
+  GtkWidget *rframes;
+  GtkWidget *rfps;
+  GtkWidget *rclips;
+  GtkWidget *reffects;
+  GtkWidget *raudio;
+  GtkWidget *rdesk_audio;
+  GtkWidget *encoder_combo;
+  GtkWidget *debug_encoders;
+  GtkWidget *checkbutton_antialias;
+  GtkWidget *checkbutton_warn_fps;
+  GtkWidget *checkbutton_warn_mplayer;
+  GtkWidget *checkbutton_warn_save_set;
+  GtkWidget *checkbutton_warn_dup_set;
+  GtkWidget *checkbutton_warn_rendered_fx;
+  GtkWidget *checkbutton_warn_encoders;
+  GtkWidget *checkbutton_warn_layout_clips;
+  GtkWidget *checkbutton_warn_layout_close;
+  GtkWidget *checkbutton_warn_layout_delete;
+  GtkWidget *checkbutton_warn_layout_alter;
+  GtkWidget *checkbutton_warn_layout_shift;
+  GtkWidget *checkbutton_warn_layout_adel;
+  GtkWidget *checkbutton_warn_layout_aalt;
+  GtkWidget *checkbutton_warn_layout_ashift;
+  GtkWidget *checkbutton_warn_discard_layout;
+  GtkWidget *checkbutton_warn_save_quality;
+  GtkWidget *checkbutton_warn_after_dvgrab;
+  GtkWidget *checkbutton_show_stats;
+  GtkWidget *check_xmms_pause;
+  GtkWidget *checkbutton_warn_fsize;
+  GtkWidget *checkbutton_warn_mt_achans;
+  GtkWidget *checkbutton_warn_mt_no_jack;
+  GtkWidget *checkbutton_warn_yuv4m_open;
+  GtkWidget *checkbutton_warn_mt_backup_space;
+  GtkWidget *spinbutton_warn_fsize;
+  GtkWidget *spinbutton_bwidth;
+  GtkWidget *theme_combo;
+  GtkWidget *check_midi;
+  GtkWidget *rb_aq_high;
+  GtkWidget *rb_aq_low;
+  GtkWidget *ins_speed;
+  GtkWidget *jpeg;
+  GtkWidget *mt_enter_prompt;
+  GtkWidget *spinbutton_ocp;
+  GtkWidget *acodec_combo;
+  GtkWidget *acodec_entry;
+  GtkWidget *spinbutton_osc_udp;
+  GtkWidget *spinbutton_rte_keys;
+  GtkWidget *enable_OSC;
+  GtkWidget *enable_OSC_start;
+  GtkWidget *jack_tserver_entry;
+  GtkWidget *jack_aserver_entry;
+  GtkWidget *checkbutton_jack_master;
+  GtkWidget *checkbutton_jack_client;
+  GtkWidget *checkbutton_jack_pwp;
+  GtkWidget *checkbutton_start_tjack;
+  GtkWidget *checkbutton_start_ajack;
+  GtkWidget *checkbutton_afollow;
+  GtkWidget *checkbutton_aclips;
+  GtkWidget *spinbutton_mt_def_width;
+  GtkWidget *spinbutton_mt_def_height;
+  GtkWidget *spinbutton_mt_def_fps;
+  GtkWidget *spinbutton_mt_undo_buf;
+  GtkWidget *spinbutton_gmoni;
+  GtkWidget *spinbutton_pmoni;
+  GtkWidget *checkbutton_mt_exit_render;
+  GtkWidget *pertrack_checkbutton;
+  GtkWidget *backaudio_checkbutton;
+  GtkWidget *checkbutton_render_prompt;
+  GtkWidget *checkbutton_instant_open;
+  GtkWidget *checkbutton_auto_deint;
+  GtkWidget *checkbutton_concat_images;
+  GtkWidget *forcesmon;
+  GtkWidget *pbq_entry;
+  GList *pbq_list;
+  gchar *audp_name;
+  gulong audp_entry_func;
+  GtkWidget *checkbutton_omc_js;
+  GtkWidget *checkbutton_omc_midi;
+  GtkWidget *omc_js_entry;
+  GtkWidget *omc_midi_entry;
+  GtkWidget *spinbutton_midicr;
+  GtkWidget *spinbutton_midirpt;
+} _prefsw;
+
+
+
+typedef struct {  // startup overrides from commandline
+  gboolean ign_clipset;
+  gboolean ign_osc;
+  gboolean ign_jackopts;
+  gboolean ign_aplayer;
+} _ign_opts;
+
+
+typedef struct {
+  gchar tmpdir[256];
+  gchar theme[64];
+  gchar vpp_name[64]; // new video playback plugin
+  gint vpp_fixed_fps_numer;
+  gint vpp_fixed_fps_denom;
+  gdouble vpp_fixed_fpsd;
+  int vpp_palette;
+  int vpp_YUV_clamping;
+  gint vpp_fwidth;
+  gint vpp_fheight;
+  gint vpp_argc;
+  gchar **vpp_argv;
+
+  _encoder encoder;
+  gboolean show_recent;
+  gboolean show_tool;
+  gboolean osc_start;
+  guint jack_opts;
+} _future_prefs;
+
+_prefs *prefs;
+_future_prefs *future_prefs;
+_prefsw *prefsw;
+
+
+void set_acodec_list_from_allowed (_prefsw *, render_details *);
+void  rdet_acodec_changed (GtkEntry *acodec_entry, gpointer user_data);
+
+_prefsw* create_prefs_dialog (void);
+
+gboolean on_prefs_delete_event (GtkWidget *, GdkEvent *, gpointer prefsw);
+
+void on_preferences_activate (GtkMenuItem *, gpointer);
+
+void on_prefs_ok_clicked (GtkButton *, gpointer);
+
+void on_prefs_cancel_clicked (GtkButton *, gpointer);
+
+void set_vpp(gboolean set_in_prefs);
+
+#endif

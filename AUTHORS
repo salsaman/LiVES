@@ -1,0 +1,45 @@
+G. Finch <salsaman> (original code)
+
+
+with thanks to Marco de la Cruz for the wonderful multi_encoder and plugins
+
+Adrian Frischauf (code cleanup for gcc 2.xx)
+and Victor Soroka (first rpm spec)
+
+Niels Elburg for help with colourspace conversion and OSC
+
+J at v2v dot cc for help with the build system
+
+Linux Fund for supporting early livido development and the 1.0 fundraising 
+drive
+
+and the translators:
+
+Laurant Lallane, Herr Molner, Nicolas Chauvet, Pierre Slamich (French)
+Ales Zimene, Martin Svoboda, Jakob Zacek, Roman Hornik (Czech)
+Jun Iio (Japanese)
+Estudio Livre / pixel and Kemel Zaidan (Portuguese-Brazilian)
+Ferdinand (Dutch)
+Christopher Korn, Herbert U. Hübner, Sean Hewitt, milan, Tschaka. (German)
+Lisovszki Sándor (Hungarian)
+Guybrush88, mschinca, nitrofurano (Italian)
+Bruno, Emilio Gomez Fernandez, Javier Di Mauro, Luciano A. Ferrer, airbrushrocky, karlinux, nitrofurano, timbar, alexsp92, Visitor Q, sprop. (Spanish)
+Andrey Starovoitov, xen. (Russian)
+Gamer (Turkish)
+Yinghua Wang (Simplified Chinese)
+Milboy (Slovenian)
+
+& others.
+
+
+the packagers; particularly:
+Joao Pinto & Christoph Korn (getdeb.net), Scott Barninger, Lu Zero (gentoo), Christian Marillat (debian-multimedai.org)
+
+
+
+Rita de Cassia Gomes, 1.0 artwork.
+
+
+
+
++ many others who have reported bugs, donated patches, and assisted with testing and supported LiVES generally.

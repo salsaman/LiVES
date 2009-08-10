@@ -1,0 +1,463 @@
+#!/usr/bin/perl
+
+#######################################################################
+# LiVES mjpegtools plugin v0.96
+
+# Released under the GPL 3 or later
+
+# Author: Gabriel Finch (salsaman@xs4all.nl)
+
+#0.1 first version 21/04/04
+#0.2 allow encoding of files without audio
+#0.3 correct rate code
+#0.4 refine default encoding commands, add png2yuv (salsaman)
+#0.5 add defaults for vcd/svcd/dvd (salsaman)
+#0.6 fix video buffer sizes (salsaman)
+#0.7 add norm for yuvscaler, fix vcd/svcd/dvd
+#0.8 added more detailed frame size/fps restrictions (requires LiVES 0.9.0-pre2+)
+#    added aspect ratio calculations and letterboxing (salsaman)
+#0.81 added some fixes for svcd (thanks Joe)
+#0.9 tested by several users, changed the -b and -n parameters in jpeg/png2yuv
+#0.91 fixed with $zeroframe (salsaman)
+#0.92 removed erroneous $zeroframe fix, fixed some typos in calc_aspect
+#     updated SVCD format (salsaman)
+#0.93 removed pal/ntsc switch, adjusted framerates (thanks Marco !)
+#0.94 add support for mono encoding - not sure if it works in mp2enc !
+#0.95 audio format is mp2, not pcm - doh !
+#0.96 add custom mpeg2
+#0.97 handling for "," radix (needs testing) 
+
+# TODO:
+# check all formats for aspect ratios, block sizes and frame rates
+# adjust default quality settings for mpeg2 to find a good size/quality balance
+
+#######################################################################
+
+if (!defined($standalone)) {
+    my $smogrify=`which smogrify`;
+    chomp($smogrify);
+    require $smogrify;
+}
+else {
+    $command=$ARGV[0];
+}
+
+
+#######################################################################
+$tmpvid="tmpvid.m1v";
+$tmpaud="tmpaud.mpa";
+
+if ($command eq "version") {
+    print "mjpegtools encoder plugin v0.97\n";
+    exit 0;
+}
+
+
+if ($command eq "init") {
+    # perform any initialisation needed
+    # On error, print error message and exit 1
+    # otherwise exit 0
+    if ($img_ext eq "png") {
+	if (&location("png2yuv") eq "") {
+	    print "png2yuv was not found. Please install it and try again.";
+	    exit 1;
+	}
+    }
+    else {
+	if (&location("jpeg2yuv") eq "") {
+	    print "jpeg2yuv was not found. Please install it and try again.";
+	    exit 1;
+	}
+    }
+    if (&location("mpeg2enc") eq "") {
+	print "mpeg2enc was not found. Please install it and try again.";
+	exit 1;
+    }
+    if (&location("mp2enc") eq "") {
+	print "mp2enc was not found. Please install it and try again.";
+	exit 1;
+    }
+    if (&location("mplex") eq "") {
+	print "mplex was not found. Please install it and try again.";
+	exit 1;
+    }
+    if (&location("yuvscaler") eq "") {
+	print "yuvscaler was not found. Please install it and try again.";
+	exit 1;
+    }
+    
+    # end init code
+    print "initialised\n";
+    exit 0;
+}
+
+
+
+
+if ($command eq "get_capabilities") {
+    # return capabilities - this is a bitmap field
+    # bit 0 - takes extra parameters (using RFX request)
+    # bit 1 - unused
+    # bit 2 - can encode png
+    # bit 3 - not pure perl
+    print "5\n";
+    exit 0;
+}
+
+
+
+if ($command eq "get_formats") {
+    # for each format: -
+    # return format_name|display_name|audio_types|restrictions|extension|
+    
+    # audio types are: 0 - cannot encode audio, 1 - can encode using
+    #  mp3, 2 - can encode using pcm, 3 - can encode using pcm and mp3
+    
+    #mpeg 2
+    print "mpeg2|mpeg2 high quality|4|arate=32000;44100;48000,fps=24000:1001;24;25;30000:1001;30;50;60000:1001;60,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+
+    # mpeg1 may be wrong, aspect (and maybe fps) comes from PAL/NTSC - TODO
+    # needs testing
+    print "mpeg1|mpeg1|4|arate=32000;44100;48000,fps=24000:1001;24;25;30000:1001;30;50;60000:1001;60,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=8|mpg|\n";
+
+    #vcd
+    print "vcd_pal|vcd (PAL)|4|arate=32000;44100;48000,fps=25,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+    print "vcd_ntsc|vcd (NTSC)|4|arate=32000;44100;48000,fps=30000:10001,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+
+    #svcd
+    print "svcd_pal|svcd (PAL)|4|arate=32000;44100;48000,fps=25,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+    print "svcd_ntsc|svcd (NTSC)|4|arate=32000;44100;48000,fps=30000:1001,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+
+    # dvd
+    print "dvd_pal|dvd (PAL)|4|arate=32000;44100;48000,fps=25,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+    print "dvd_ntsc|dvd (NTSC)|4|arate=32000;44100;48000,fps=30000:1001,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+    
+    # custom
+    print "custom2|custom mpeg2|4|arate=32000;44100;48000,fps=24000:1001;24;25;30000:1001;30;50;60000:1001;60,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+
+   exit 0;
+}
+
+
+
+if ($command eq "get_rfx") {
+
+    if ($otype eq "custom2") {
+	# mandatory section
+	print "<define>\n";
+	print "|1.7\n";
+	print "</define>\n";
+	
+	# mandatory section
+	print "<language_code>\n";
+	print "0xF0\n";
+	print "</language_code>\n";
+	
+	# optional section
+	print "<params>\n";
+	print "vbitrate|_Video bitrate|num0|3800|1152|4096\n";
+	print "abitrate|_Audio bitrate|num0|224|128|256\n";
+	print "cbr|Use _Constant Bitrate|bool|0|0\n";
+	print "quantisation|_Quantisation (only for Variable bitrate)|num0|8|1|31\n";
+	print "vbuff|Video _buffer (Kb)|num0|2048|46|4096\n";
+	print "msearch|Motion search _radius|num0|24|16|32\n";
+	print "hfhand|_High frequency handling|string_list|1|reduce|normal|keep\n";
+	print "</params>\n";
+	
+	# optional section
+	print "<param_window>\n";
+	print "layout|p0|p1|\n";
+	print "</param_window>\n";
+	
+	# optional section
+	print "<onchange>\n";
+	print "</onchange>\n";
+	
+    }
+
+}
+
+
+
+if ($command eq "encode") {
+    # encode 
+
+    # for yuvscaler
+    if ($otype eq "vcd_ntsc"||$otype eq "svcd_ntsc" ||$otype eq "dvd_ntsc") {
+	$norm="-n n";
+    }
+    else {
+	$norm="-n p";
+    }
+
+    &calc_rate_code;
+    &calc_aspect;
+
+    # video buffer size - fixed for VCD/SVCD
+    $vid_buffer=1000;
+
+    # TODO - add kVDC
+
+    $msr=16;
+    $hf="";
+    $vbs="";
+
+    if ($otype eq "mpeg2") {
+	$format=3; #mpeg2
+	# dvd quality
+	$dvid_bitrate=3800; # dvd
+	$daud_bitrate=224;
+	$quality="-q 1";
+	$aspectr="-a $aspect";
+	$vbr=1; # use vbr
+    }
+    elsif ($otype eq "mpeg1") {
+	$format=0;
+	$dvid_bitrate=1152; #vcd
+	$daud_bitrate=128;
+	$vid_buffer=500;
+	$aspectr="";
+	$vbr=1; # use vbr
+    }
+    elsif ($otype eq "vcd_pal"||$otype eq "vcd_ntsc") {
+	$format=1;
+	$daud_bitrate=128;
+	$dvid_bitrate=1152;
+	$vid_buffer=46;
+	$aspectr="-a $aspect";
+	$vbr=0; # no vbr
+    }
+    elsif ($otype eq "svcd_pal"||$otype eq "svcd_ntsc") {
+	$format=4;
+	$daud_bitrate=192;
+	$dvid_bitrate=2750; #svcd
+	$vid_buffer=230;
+	$vbr=0; # no vbr, but it does set q
+	$quality="-q 1";
+    }
+    elsif ($otype eq "dvd_pal"||$otype eq "dvd_ntsc") {
+	$format=8;
+	$daud_bitrate=224;
+	$aspectr="-a $aspect";
+	$vbr=0; # no vbr
+    }
+    elsif ($otype eq "custom2") {
+	$format=3;
+	$dvid_bitrate=$ARGV[13];
+	$daud_bitrate=$ARGV[14];
+	$vbr=!$ARGV[15];
+	if ($vbr>0) {
+	    $quality="-q $ARGV[16]";
+	}
+	$vid_buffer=$ARGV[17];
+	$msr=$ARGV[18];
+	if ($ARGV[19]==0) {
+	    $hf="-N";
+	}
+	elsif ($ARGV[19]==2) {
+	    $hf="-H";
+	}
+    }
+
+    if (!defined($vid_bitrate)) {
+	# allow overide of default video bitrate
+	$vid_bitrate=$dvid_bitrate;
+    }
+
+    if (!defined($aud_bitrate)) {
+	# allow overide of default audio bitrate
+	$aud_bitrate=$daud_bitrate;
+    }
+
+    # calc non-video bitrate for video stream
+    $nvbitrate=$vid_bitrate;
+    if (-f $audiofile) {
+	$nvbitrate+=$aud_bitrate;
+    }
+    $nvbitrate=int(($nvbitrate/100.+$aud_bitrate+5.)/5.)*5;
+
+    $err=">/dev/null 2>&1";
+    if (defined($DEBUG_ENCODERS)) {
+	$err="1>&2";
+    }
+
+    if ($vbr==1) {
+	# use vbr
+	$mplex_vbr="-V";
+	$quality="";
+	$vbs="--cbr";
+    }
+
+    if ($img_ext eq ".png") {
+	# needs testing
+	$syscom="png2yuv -b ".$start." -n ".($end-$start+1)." -I p -f $fps -L 0 -j %08d.png";
+    }
+    else {
+	$syscom="jpeg2yuv -b ".$start." -n ".($end-$start+1)." -I p -f $fps -L 0 -j %08d.jpg";
+    }
+
+    # use letterbox depending on $aspect
+    if ($otype eq "vcd_pal"||$otype eq "vcd_ntsc") {
+	if ($aspect>2) {
+	    $syscom .="| yuvscaler -M WIDE2VCD -O VCD $norm| mpeg2enc -f 1 -F $rate_code -r 16 -o $tmpvid";
+	}
+	else {
+	    $syscom .="| yuvscaler -O VCD $norm| mpeg2enc -f 1 -F $rate_code -r 16 -o $tmpvid";
+	}
+    }
+    elsif ($otype eq "svcd_pal"||$otype eq "svcd_ntsc") {
+	if ($aspect>2) {
+	    $syscom .="| yuvscaler -M WIDE2STD -O SVCD $norm";
+	}
+	else {
+	    $syscom .="| yuvscaler -O SVCD $norm";
+	}
+	$syscom .="| mpeg2enc -F $rate_code -f 4 $quality -I 0 -V $vid_buffer -o $tmpvid $err";
+    }
+    elsif ($otype eq "dvd_pal"||$otype eq "dvd_ntsc") {
+	$syscom .="| mpeg2enc -f 8 -o $tmpvid $err";
+    }
+    elsif ($otype eq "custom2") {
+	$syscom .="| mpeg2enc -f $format -F $rate_code $quality $vbs $hf -b $vid_bitrate -B $nvbitrate -V $vid_buffer -r $msr -o $tmpvid $err";
+    }
+    else {
+	$syscom .="| mpeg2enc -F $rate_code $norm -f $format $quality -b $vid_bitrate -B $nvbitrate -V $vid_buffer -4 1 -2 1 -g 6 -G 18 -r 24 -o $tmpvid $err";
+    }
+
+    if (defined($DEBUG_ENCODERS)) {
+	print STDERR "Encoder: video command was $syscom\n";
+    }
+
+    system($syscom);
+
+    unless ($audiofile eq "") {
+	if ($achans==1) {
+	    $mono="-m";
+	    $aud_bitrate/=2;
+	}
+	else {
+	    $mono="";
+	}
+	$syscom="mp2enc $mono -b $aud_bitrate -r $arate -o tmpaud.mpa < $audiofile $err";
+	if (defined($DEBUG_ENCODERS)) {
+	    print STDERR "Encoder: audio command was $syscom\n";
+	}
+	system($syscom);
+
+	$syscom="mplex -b $vid_buffer $mplex_vbr -f $format -o \"$nfile\" $tmpvid $tmpaud $err";
+	if (defined($DEBUG_ENCODERS)) {
+	    print STDERR "Encoder: mplex command was $syscom\n";
+	}
+	system($syscom);
+    }
+    else {
+	# no audio
+	$syscom="mplex -f $format -o \"$nfile\" $tmpvid $err";
+	if (defined($DEBUG_ENCODERS)) {
+	    print STDERR "Encoder: mplex command was $syscom\n";
+	}
+	system($syscom);
+    }
+
+    # required
+    &sig_complete;
+    exit 0;
+}
+
+
+if ($command eq "clear") {
+    # this is called after "encode"
+    # note that encoding could have been stopped at any time
+    if (-f $tmpvid) {
+	unlink $tmpvid;
+    }
+    if (-f $tmpaud) {
+	unlink $tmpaud;
+    }
+    &sig_complete;
+    exit 0;
+}
+
+
+if ($command eq "finalise") {
+    # do any finalising code
+
+    # ...
+
+    # end finalising code
+    print "finalised\n";
+    exit 0;
+}
+
+
+###### subroutines #######
+
+
+
+
+sub get_format_request {
+    # return the code for how we would like audio and video delivered
+    # this is a bitmap field composed of:
+    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
+    # bit 1 - unset=all audio; set=clipped audio
+    # bit 2 - unset=all frames; set=frames for selection only
+
+    return 3; # clipped pcm wav, all frames
+}
+
+
+
+######### specific to this encoder ###############
+sub calc_rate_code {
+    $rate_code=0; # test
+    if ($fps==23.976||$fps==23,976) {
+	# PAL
+	$rate_code=1;
+    }
+    elsif ($fps==24) {
+	$rate_code=2;
+    }
+    elsif ($fps==25) {
+	$rate_code=3;
+    }
+    elsif ($fps==29.97||$fps==29,97) {
+	# NTSC
+	$rate_code=4;
+    }
+    elsif ($fps==30) {
+	$rate_code=5;
+    }
+    elsif ($fps==50) {
+	$rate_code=6;
+    }
+    elsif ($fps==60) {
+	$rate_code=8;
+    }
+}
+
+sub calc_aspect {
+# from manpage:
+#        1 - 1  - 1:1 display
+#        2 - 2  - 4:3 display
+#        3 - 3  - 16:9 display
+#        4 - 4  - 2.21:1 display
+
+    $delta=($hsize-$vsize)*($hsize-$vsize);
+    $aspect=1;
+    $cdelta=($hsize-$vsize*4/3)*($hsize-$vsize*4/3);
+    if ($cdelta<$delta) {
+	$delta=$cdelta;
+	$aspect=2;
+    }
+    $cdelta=($hsize-$vsize*16/9)*($hsize-$vsize*16/9);
+    if ($cdelta<$delta) {
+	$delta=$cdelta;
+	$aspect=3;
+    }
+
+    $cdelta=($hsize-$vsize*2.21)*($hsize-$vsize*2.21);
+    if ($cdelta<$delta) {
+	$delta=$cdelta;
+	$aspect=4;
+    }
+}

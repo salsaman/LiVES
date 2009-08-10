@@ -1,0 +1,94 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+photo_still
+</name>
+
+<version>
+2
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Photo/still|Photo/still|1|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+flash|_Flash for|num0|6|0|100|
+hold|_Hold for|num0|100|1|10000|
+fcol|Flash _colour|colRGB24|255|255|255|
+bw|_Black and white camera|bool|1|
+</params>
+
+<param_window>
+layout|p0|"frames"|fill|
+layout|p2|
+layout|p1|"frames"|fill|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+#make flash frame
+$cstring=&RGB24_to_string($p2_red,$p2_green,$p2_blue);
+`$convert_command -size $width!x$height! xc:$cstring flash$img_ext`;
+
+$has_store=0;
+
+#bit of a cheat for faster finishing
+$end=$start+$p0+$p1-1;
+</pre>
+
+<loop>
+$i=$frame-$start;
+
+if ($p1&&!$has_store) {
+	$has_store=1;
+	if ($p3) {
+		system("$convert_command $in -modulate 100,0,100 store$img_ext");
+	}
+	else {
+		`cp $in store$img_ext`;
+	}
+}
+
+#################
+
+if ($i<$p0) {
+ # replace frame with flash frame
+	`cp flash$img_ext $out`;
+}
+elsif ($i<$p0+$p1) {
+	# replace with stored frame
+	`cp store$img_ext $out`;
+}
+else {
+	`cp $in $out`;
+}
+</loop>
+
+<post>
+unlink <"store$img_ext" "flash$img_ext">;
+</post>
+
+<onchange>
+init|$p0_max=$length-1;$p1=$p1_max=$length-$p0;if ($p1_max<$p1_min) {$p1=$p1_max=$p1_min;}
+0|$p1_max=$length-$p0;
+</onchange>

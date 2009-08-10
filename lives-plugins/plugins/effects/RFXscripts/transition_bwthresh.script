@@ -1,0 +1,120 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+transition_bwthresh
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+B/W Threshold|B/W thresholding|1|2|
+</description>
+
+<requires>
+convert
+composite
+</requires>
+
+<params>
+thresh|Thres_hold|num0|8000|0|65535|
+btrans|_Black is transparent|bool|1|1|
+wtrans|_White is transparent|bool|0|1|
+cover|Clipboard _over selection|bool|1|2|
+cunder|Clipboard _under selection|bool|0|2|
+width|_Width|num0|0|0|10000|
+height|_Height|num0|0|0|10000|
+cx|Centre _X|num0|0|0|10000|
+cy|Centre _Y|num0|0|0|10000|
+finf|Frame _in frame position of top frame...|bool|0|
+</params>
+
+<param_window>
+layout|p0|"(0 = no transparency, 65535 = all transparent)"|
+layout|p1|p2|
+layout|hseparator|
+layout|p9|
+layout|p5|p6|
+layout|p7|p8|
+layout|hseparator|
+layout|$p3|$p4|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$rwidth=$width;
+$rheight=$height;
+$xoff=$yoff=0;
+
+if ($p9) {
+ $rwidth=$p5;
+ $rheight=$p6;
+ $xoff=$p7-int($rwidth/2.+.5);
+ $yoff=$p8-int($rheight/2.+.5);
+}
+
+</pre>
+
+<loop>
+if ($p3) {
+                # transparent over
+        	system("$convert_command +antialias $in2 -scale $rwidth!x$rheight! resize.png");
+                if (!$p2) {
+                    system("$convert_command resize.png -threshold $p0 -monochrome mask.png");
+                }
+                else {
+                    system("$convert_command resize.png -threshold ".(65535-$p0)." -negate -monochrome mask.png");
+                }
+                system("$composite_command -compose over -geometry $rwidth!x$rheight! resize.png -geometry +$xoff!+$yoff! -size $width!x$height! $in mask.png $frame.tmp");
+        }
+        else {
+        	#transparent under
+                if ($antialias eq "false") {
+                    system("$convert_command +antialias $in2 -scale $width!x$height! resize.png");
+                }
+                else {
+                    system("$convert_command $in2 -resize $width!x$height! resize.png");
+                }
+                system("$convert_command $in -resize $rwidth!x$rheight! resize2.png");
+                if (!$p2) {
+                    system("$convert_command -threshold ".($p0)." resize2.png -monochrome mask.png");
+                }
+                else {
+                    system("$convert_command -threshold ".(65535-$p0)." -negate resize2.png -monochrome mask.png");
+                }
+        	system("$composite_command -compose over -geometry $rwidth!x$rheight! resize2.png -geometry +$xoff!+$yoff! -size $width!x$height! resize.png mask.png $frame.tmp");
+        }
+        
+        system("$convert_command +matte $frame.tmp $out");
+        unlink "$frame.tmp";
+</loop>
+
+<post>
+unlink <mask.png blank.png output.png resize.png resize2.png>;
+</post>
+
+<onchange>
+init|$p5=$width2; $p5_max=$width;
+init|$p6=$height2; $p6_max=$height;
+init|$p7=int($width/2+.5);
+init|$p8=int($height/2+.5);
+5|$p7_max=$width-1-int($p5/2+.5);$p7_min=int($p5/2+.5);
+6|$p8_max=$height-1-int($p6/2+.5);$p8_min=int($p6/2+.5);
+9|if ($p9) {$p7_max=$width-1-int($p5/2+.5);$p7_min=int($p5/2+.5);$p8_max=$height-1-int($p6/2+.5);$p8_min=int($p6/2+.5);}
+</onchange>

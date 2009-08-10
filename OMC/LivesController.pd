@@ -1,0 +1,200 @@
+#N canvas 103 27 815 736 10;
+#X obj 34 116 s OSClives;
+#X obj 334 595 s OSClives;
+#X msg 33 96 send /clip/select \$1;
+#X obj 33 61 hradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 3;
+#X obj 404 450 s OSClives;
+#X obj 407 408 i;
+#X floatatom 405 372 5 0 0 0 - - -;
+#X msg 406 428 send /video/set/fps \$1;
+#X obj 403 350 s OSClives;
+#X obj 407 305 i;
+#X floatatom 407 287 5 0 0 0 - - -;
+#X msg 404 327 send /clip/goto \$1;
+#X text 465 306 frame number;
+#X obj 560 120 s OSClives;
+#X obj 564 42 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 1 1
+;
+#X obj 109 438 s OSClives;
+#X msg 109 400 send /effect_key/enable \$1;
+#X msg 111 419 send /effect_key/disable \$1;
+#X floatatom 42 79 5 0 0 0 - - -;
+#X obj 38 205 s OSClives;
+#X floatatom 39 167 5 0 0 0 - - -;
+#X msg 37 183 send /lives/swap \$1;
+#N canvas 0 22 506 415 OSC 1;
+#X obj 81 281 sendOSC;
+#X msg 104 204 connect 192.168.0.148 9999;
+#X msg 50 161 send /lives/quit;
+#X obj 46 331 print OSCin;
+#X obj 46 310 dumpOSC 7777;
+#X msg 84 70 send /clip/count;
+#X msg 171 225 disconnect;
+#X msg 114 45 send /effect_key/count;
+#X obj 80 257 r OSClives;
+#X msg 99 114 send /app/open_status_socket 192.168.0.143 7777;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 4 0 3 0;
+#X connect 5 0 0 0;
+#X connect 6 0 0 0;
+#X connect 7 0 0 0;
+#X connect 8 0 0 0;
+#X connect 9 0 0 0;
+#X restore 32 34 pd OSC stuff;
+#X text 305 231 comment;
+#X text 8 134 have to load clips manually;
+#X text 35 224 swap the front and back clips;
+#X text 217 13 each effect key has certain modes;
+#X obj 266 206 r km;
+#X obj 299 224 s OSClives;
+#X msg 298 205 send /effect_key/set/mode \$1 \$2;
+#X obj 105 382 route 0 1;
+#X obj 106 323 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 0
+1;
+#X obj 126 323 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 1
+1;
+#X obj 144 324 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 0
+1;
+#X obj 164 323 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 0
+1;
+#X obj 182 321 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 0
+1;
+#X obj 199 322 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 0
+1;
+#X obj 107 344 funnel 10;
+#X obj 219 323 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 0
+1;
+#X obj 241 322 tgl 15 0 empty empty empty 0 -6 0 8 -262144 -1 -1 0
+1;
+#X msg 107 362 \$2 \$1;
+#X msg 77 323 1;
+#X text 108 306 1;
+#X text 182 302 5;
+#X text 241 302 8;
+#X text 58 293 the 9 number keys have effects;
+#X obj 63 588 s OSClives;
+#X msg 62 567 send /clip/set/start \$1;
+#X floatatom 62 549 5 0 0 0 - - -;
+#X obj 62 648 s OSClives;
+#X floatatom 62 608 5 0 0 0 - - -;
+#X msg 61 627 send /clip/set/end \$1;
+#X obj 64 688 s OSClives;
+#X msg 62 667 send /clip/play_selection;
+#X obj 489 559 s OSClives;
+#X msg 489 541 send /video/freeze;
+#X text 579 557 FPS to zero;
+#X obj 490 596 s OSClives;
+#X msg 490 578 send /video/slower;
+#X obj 489 633 s OSClives;
+#X msg 489 615 send /video/faster;
+#X text 459 404 up to about 80 \, then audio breaks;
+#X text 476 389 do not make 0!;
+#X obj 406 388 moses 1;
+#X text 56 518 start and end points of selection;
+#X text 57 530 in currently selected clip;
+#X msg 353 578 send /video/stop;
+#X msg 334 541 send /video/reverse;
+#X msg 353 559 send /video/play;
+#X text 143 687 not implemented;
+#X obj 563 61 sel 0 1;
+#X msg 562 99 send /output/fullscreen/disable;
+#X msg 563 80 send /output/fullscreen/enable;
+#X text 583 39 FULL SCREEN;
+#X obj 209 33 cnv 15 320 125 empty empty empty 20 12 0 14 -211001 -66577
+0;
+#X obj 501 37 vradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 4;
+#X msg 502 161 8 \$1;
+#X obj 502 181 s km;
+#X obj 460 38 vradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 4;
+#X obj 461 182 s km;
+#X obj 421 37 vradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 0;
+#X obj 422 181 s km;
+#X obj 380 38 vradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 5;
+#X obj 381 182 s km;
+#X obj 341 38 vradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 2;
+#X obj 340 182 s km;
+#X obj 298 39 vradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 1;
+#X obj 299 183 s km;
+#X obj 259 38 vradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 1;
+#X obj 260 182 s km;
+#X obj 217 39 vradio 15 1 0 8 empty empty empty 0 -6 0 8 -262144 -1
+-1 0;
+#X obj 219 183 s km;
+#X msg 219 163 1 \$1;
+#X msg 260 162 2 \$1;
+#X msg 299 163 3 \$1;
+#X msg 340 162 4 \$1;
+#X msg 381 162 5 \$1;
+#X msg 419 162 6 \$1;
+#X msg 461 162 7 \$1;
+#X text 51 317 all off;
+#X connect 2 0 0 0;
+#X connect 3 0 2 0;
+#X connect 3 0 18 0;
+#X connect 5 0 7 0;
+#X connect 6 0 63 0;
+#X connect 7 0 4 0;
+#X connect 9 0 11 0;
+#X connect 10 0 9 0;
+#X connect 11 0 8 0;
+#X connect 14 0 70 0;
+#X connect 16 0 15 0;
+#X connect 17 0 15 0;
+#X connect 20 0 21 0;
+#X connect 21 0 19 0;
+#X connect 27 0 29 0;
+#X connect 29 0 28 0;
+#X connect 30 0 17 0;
+#X connect 30 1 16 0;
+#X connect 31 0 37 1;
+#X connect 32 0 37 2;
+#X connect 33 0 37 3;
+#X connect 34 0 37 4;
+#X connect 35 0 37 5;
+#X connect 36 0 37 6;
+#X connect 37 0 40 0;
+#X connect 38 0 37 7;
+#X connect 39 0 37 8;
+#X connect 40 0 30 0;
+#X connect 41 0 37 0;
+#X connect 47 0 46 0;
+#X connect 48 0 47 0;
+#X connect 50 0 51 0;
+#X connect 51 0 49 0;
+#X connect 53 0 52 0;
+#X connect 55 0 54 0;
+#X connect 58 0 57 0;
+#X connect 60 0 59 0;
+#X connect 63 1 5 0;
+#X connect 66 0 1 0;
+#X connect 67 0 1 0;
+#X connect 68 0 1 0;
+#X connect 70 0 71 0;
+#X connect 70 1 72 0;
+#X connect 71 0 13 0;
+#X connect 72 0 13 0;
+#X connect 75 0 76 0;
+#X connect 76 0 77 0;
+#X connect 78 0 98 0;
+#X connect 80 0 97 0;
+#X connect 82 0 96 0;
+#X connect 84 0 95 0;
+#X connect 86 0 94 0;
+#X connect 88 0 93 0;
+#X connect 90 0 92 0;
+#X connect 92 0 91 0;
+#X connect 93 0 89 0;
+#X connect 94 0 87 0;
+#X connect 95 0 85 0;
+#X connect 96 0 83 0;
+#X connect 97 0 81 0;
+#X connect 98 0 79 0;

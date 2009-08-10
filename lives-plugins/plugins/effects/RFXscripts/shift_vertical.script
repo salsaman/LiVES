@@ -1,0 +1,76 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+shift_vertical
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Shift vertically|Vertical shifting|1|1|
+</description>
+
+<requires>
+convert
+composite
+</requires>
+
+<params>
+sval|_Start Value|num0|0|-10000|10000|
+step|Step per _Frame|num2|0.00|-1000.00|1000.00|1|
+wrap|_Wrap Around|bool|0|
+bgcol|_Background Colour|colRGB24|0|0|0|
+</params>
+
+<param_window>
+layout|p0|"(pixels)"|
+layout|p1|"(pixels)"|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+unless ($p2==1) {
+    # make a background frame
+    $cstring=&RGB24_to_string($p3_red,$p3_green,$p3_blue);
+    system("$convert_command -size $width!x$height! xc:$cstring blank$img_ext");
+}
+</pre>
+
+<loop>
+if ($p0>=0) {
+    $p0="+".$p0;
+}
+if ($p2==1) {
+    system("$convert_command $in -roll +0$p0 $out");
+}
+else {
+    # composite translated original on blank
+    system("$composite_command -compose plus -dissolve 100 -geometry $width!x$height! $in -geometry +0!$p0! blank$img_ext $out");
+}
+$p0+=$p1;
+</loop>
+
+<post>
+unlink "blank$img_ext";
+</post>
+
+<onchange>
+init|$p0_min=-$width+1;$p0_max=$width-1;$p1_min=-$height+1;$p1_max=$height-1;
+</onchange>

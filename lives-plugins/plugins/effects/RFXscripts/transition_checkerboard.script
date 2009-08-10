@@ -1,0 +1,90 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+transition_checkerboard
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Checkerboard|Checkerboarding|1|2|
+</description>
+
+<requires>
+convert
+composite
+</requires>
+
+<params>
+hseg|_Horizontal segments|num0|2|1|1000000|
+vseg|_Vertical segments|num0|2|1|1000000|
+tl|_Top left is clipboard|bool|0|
+</params>
+
+<param_window>
+layout|p0|fill|
+layout|p1|fill|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+#make a transparent frame the size of the output image
+`$convert_command -size $width!x$height! xc:transparent -matte mask.png`;
+
+# draw rectangles on it
+$bwidth=int($width/$p0+.5);
+$bheight=int($height/$p1+.5);
+
+$x=0;
+$idraw=$p2;
+
+# draw our opaque areas
+while ($x<$width) {
+	$x1=$x+$bwidth;
+	$y=0;
+	$draw=$idraw;
+	$idraw=!$idraw;
+	while ($y<$height) {
+		$y1=$y+$bheight;
+		if ($draw) {
+			`$convert_command mask.png -fill white -draw 'rectangle $x,$y $x1,$y1' mask.png`;
+		}
+		$draw=!$draw;
+		$y=$y1+1;
+	}
+	$x=$x1+1;
+}
+</pre>
+
+<loop>
+`$composite_command -compose plus -dissolve 100 -resize $width!x$height! $in2 $in mask.png $out.png`;
+`$convert_command $out.png $out$img_ext`;
+rename "$out$img_ext","$out";
+unlink "$out.png";
+</loop>
+
+<post>
+unlink <mask.png>;
+</post>
+
+<onchange>
+init|$p0_max=$width;
+init|$p1_max=$height;
+</onchange>

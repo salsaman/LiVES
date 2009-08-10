@@ -1,0 +1,80 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+wave
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Wave|Waving|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+wmax|_Wavemax|num0|100|0|1000|
+bgcol|_Background Colour|colRGB24|0|0|0|
+</params>
+
+<param_window>
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0000
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code (list)
+<pre>
+$amp=1;
+$wavemin=50;
+$wavestep=-1;
+$ampstep=1;
+$wave=$p0;
+$cstring=&RGB24_to_string($p1_red,$p1_green,$p1_blue);
+</pre>
+
+# loop code (list)
+<loop>
+system("$convert_command -background $cstring $in -wave $amp" . "x$wave -crop $width"."x$height $out");
+$amp+=$ampstep;
+$wave+=$wavestep;
+if ($wave>=$p0) {
+    $wave=$p0;
+    $wavestep=-$wavestep;
+    }
+elsif ($wave<$wavemin) {
+    $wave=$wavemin;
+    $wavestep=-$wavestep;
+}
+</loop>
+
+# post loop code (list)
+<post>
+</post>
+
+<onchange>
+</onchange>

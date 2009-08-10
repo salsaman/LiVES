@@ -1,0 +1,87 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+skip_forwards
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Skip forward|Applying forward skip to|1|1|
+</description>
+
+# requirements (list)
+<requires>
+composite
+</requires>
+
+
+<params>
+skipahead|_Skip ahead|num0|10|1|100|
+fadestart|_Fade start|num0|50|0|100
+fadeend|Fade _end|num0|50|0|100
+</params>
+
+<param_window>
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0000
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code (list)
+<pre>
+$diff=$p0;
+$pc_start=$p1; # fade amount
+$pc_step=($p2-$p1)/$p0;
+</pre>
+
+# loop code (list)
+<loop>
+if (($frame+$diff>$end)||$diff==0) {
+  `cp $in $out`;
+}
+else {
+     $from=&mkname(int($frame+$diff));
+     if (-f "$from$img_ext") {
+    	     $fromimg="$from$img_ext";
+    	   `$composite_command -compose plus -dissolve $pc_start $fromimg -size $width!x$height! $in $out >/dev/null 2>&1`;
+	   }
+	   else {
+     	   	`cp $in $out`;
+     		}
+}
+$diff--;
+$pc_start+=$pc_step;
+if ($diff<0) {
+   $diff=$p0;
+   $pc_start=$p1;
+}
+
+</loop>
+
+# post loop code (list)
+<post>
+</post>
+
+<onchange>
+</onchange>

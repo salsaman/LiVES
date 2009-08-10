@@ -1,0 +1,117 @@
+#!/usr/bin/perl
+
+# rfxgettest - Copyright G. Finch (salsaman) 2005
+# Released under the GPL 3 or higher - see file COPYING or www.gnu.org for details
+
+
+
+
+
+exit 0 unless ( $] >= 5.005_03 || $] <= 5.005 );
+
+#undef $/;
+
+use File::Basename;
+
+$prefix=$ARGV[0];
+shift (@ARGV);
+$outfile=$ARGV[0];
+shift (@ARGV);
+
+while (!($ARGV[0] eq "")) {
+    $file = $ARGV[0];
+    $file =~ s/\.\.\///;
+    $basename = basename($file);
+    my $plugin_name=(&rc_read("name",$file))[0];
+    my $description=(&rc_read("description",$file))[0];
+    my @params=&rc_read("params",$file);
+    
+    my $define=(&rc_read("define",$file))[0];
+    my $delim=substr($define,0,1);
+    if ($delim =~ /[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]/) {
+       $delim="\\".$delim;
+    }
+
+    $e = "msgid \"$plugin_name\"";
+    $fileposition = "#: $prefix/share/lives/plugins/effects/rendered/$basename:0\n";
+    unless (&exists($e)) {
+      $e.="\nmsgstr \"\"\n";
+      push @{$entry{$e}}, $fileposition;              
+    }
+
+    @temp=split(/$delim/, $description);
+    $e = "msgid \"$temp[0]\"";
+    unless (&exists($e)) {
+	$e.="\nmsgstr \"\"\n";
+	push @{$entry{$e}}, $fileposition;              
+    }
+
+    $e = "msgid \"$temp[1]\"";
+    unless (&exists($e)) {
+	$e.="\nmsgstr \"\"\n";
+	push @{$entry{$e}}, $fileposition;              
+    }
+
+    foreach (@params) {
+	unless ($_ eq "") {
+	    @temp=split(/$delim/);
+	    $e = "msgid \"$temp[1]\"";
+	    unless (&exists($e)) {
+		$e.="\nmsgstr \"\"\n";
+		push @{$entry{$e}}, $fileposition;              
+	    }
+	}
+    }
+    shift (@ARGV);
+}
+
+foreach $e (sort keys %entry) {
+    if ($e=~/layout/ or $e=~/hseparator/) {} else {
+    print @{$entry{$e}};
+    print $e;
+    print "\n";
+    }
+}
+
+
+
+#////////////////////////////////////////////////////
+
+sub exists {
+# stop duplicate entries. TODO - add the msgid after the original entry
+    my ($ex)=@_;
+    chomp($ex);
+    my $exi=`grep '$ex' $outfile`;
+    if ($exi eq "") {return 0;}
+    return 1;
+}
+
+
+sub rc_read {
+    # return an array value from our .rc file
+    my ($key,$rcfile)=@_;
+    my $string="";
+    my (@result,$part);
+
+    unless (defined(open IN,"$rcfile")) {
+	print STDERR "  - Unable to read values from script file, $rcfile\n";
+	exit 2;
+    }
+    $part=0;
+    while (<IN>) {
+	if ($_=~ /(.*)(<\/$key>)/) {
+	    return @result;
+	}
+	if ($part==1||$_=~ /(<$key>)(.*)/) {
+	    if ($part==1) {
+		chomp($_);
+		$string=$_;
+		@result=(@result,$string);
+	    }
+	    else {
+		$part=1;
+	    }
+	}
+    }
+    return @result;
+}

@@ -1,0 +1,203 @@
+Welcome to LiVES, the open source video editor for Linux.
+
+
+FAQ
+---
+ Does LiVES require a working copy of mplayer ?
+It is no longer a requirement to run LiVES, but without it you will not be able to open any movie clips* or see previews if the file open dialog.
+
+* that is no longer quite the case. dv files can now be opened without player, provided lives is compiled with libdv support. ogg/theora files can be opened without mplayer if LiVES is compiled with libogg and libtheora support.
+
+
+
+
+ LiVES complains "Unable to open either video or audio". What is the problem ?
+Most likely your problem is in your mplayer setup. First, can you preview/play the file in mplayer ?
+If not then you probably need to add extra libraries to mplayer.
+
+If you can play them in mplayer, then you can try to debug the open command. To do this you can edit the file "smogrify" 
+(usually installed by LiVES in /usr/bin). After the
+
+#!/usr/bin/perl
+
+put:
+
+$DEBUG_OPEN=1;
+
+now start lives from a terminal/console and look on the terminal window for the open command. By copying and 
+pasting this command into another window, you may be able to determine the problem.
+
+
+
+ Will LiVES affect my original clips ?
+No, LiVES makes a copy of each source material when you open it. The
+only way you can damage your original material is by saving over it,
+but LiVES will warn you if you try to do this.
+
+* this is no longer always true. For files which are opened instantly (dv or ogg/theora), the original file is required until all frames have been chenged or copied.
+
+
+
+ How do I set the encoder in LiVES ?
+The encoder plugin and output format can be set in Tools/Preferences/Encoding. 
+Depending on the encoder/format selected, you may need to install additional libraries or programs. You will also be prompted when Encoding a clip.
+
+
+ How do I change the temporary directory in LiVES ?
+The first time you start LiVES, you should change its temporary directory to a 
+partition with plenty of free space (approximately 5 times the size of all the 
+video files you want to have open at one time).
+To do this, go to Tools in the menu bar, and click on Preferences. Go to the 
+directory tab and change the temporary directory setting and click Apply, then 
+OK. LiVES will then exit and you will have to restart it. You should check in 
+Preferences afterwards that the directory has been updated.
+
+
+ Which operations in LiVES involve loss of video quality ?
+Saving, resizing, merging, and applying some effects. Cut and paste do not. 
+Neither do backup, restore, resample or reorder (though reorder/resample may lose whole frames).
+
+ Can I run several copies of LiVES at once ?
+Yes, you can have multiple copies of the LiVES open, and you can edit video in each without interferance. However, a particular Set can only be opened in one copy of LiVES at a time.
+
+
+ What are the default directories in Preferences for ?
+The default directories are the directories LiVES will first look in after you restart. After that, LiVES 
+should remember the last directory you used and default to that instead.
+
+
+ Why are sound and video synchronisation sometimes poor in LiVES ?
+This is fixed now if you make use of the "jack" audio player in LiVES.
+
+
+ What is the difference between 'Backup' and 'Encode' ?
+Backup will save all of the current clip without loss of quality. You can later restore this backup and continue working exactly where you left off. See the LiVES manual for more information.
+
+
+ What does record do ?
+Record will record a performance, currently this includes frame changes, fps 
+changes, realtime effects, clip switches and audio changes. You can change what is
+recorded using Preferences/Recording. See the manual for more details.
+
+
+ Why is LiVES sometimes very slow ?
+We are doing everything we can to optimise your experience, maybe you need a faster computer ;-)
+
+
+ How can I contribute to the LiVES project ?
+You can join the LiVES mailing list at 
+http://groups.yahoo.com/group/lives-video.
+
+Donations (of any kind) are also very welcome.
+
+You can contact the author at: salsaman@xs4all.nl
+ 
+
+
+
+How Do I ?
+----------
+
+ Clean up temporary files that LiVES leaves behind ?
+LiVES should (in theory at least), clean up all its files when it exits, even if it crashes. However sometimes, LiVES can be shutdown abruptly and leave files 
+lying around. To clean these up, you can use the menu option:
+Files/Clean up Temporary Files. You should only do this with a single
+copy of LiVES running. This will leave all your sets intact on the
+disk. To remove all sets as well, you can type:
+
+smogrify cleanup
+
+from the command line. You should only do this when there are no
+copies of LiVES running.
+
+
+
+ Use the multitrack window ?
+There are two ways. You can either load some clips and then press
+ctl-m, or you can record events and then view them in the multitrack
+window. For more information, see the LiVES manual.
+
+
+
+ Load a directory of images ?
+Click on File|Open, then in the file selector, then double click on a directory. 
+Make sure the filename is blank, and click on OK.
+All image files in that directory will be opened, and made into a movie with the 
+default fps. Images should be loaded in numerical order. The frame size is always 
+obtained from the first image in the directory.
+
+
+
+ Create a looping video ?
+Select the whole clip. Then select Edit|Copy. Now select Tools|Reverse Clipboard. Finally, select Edit|Insert and insert the reversed clip.
+You can also switch on 'loop video to fit audio' in the Play menu. Then your video will keep looping until the audio ends.
+
+LiVES also has a ping-pong loop mode. This is activated by pressing 'g', or 
+via the play menu.
+
+
+ Save a looped video ?
+If you switch on 'loop video to fit audio', your video file will keep looping until the audio ends. However, if you Save the file, you will only save one loop, 
+and thus the audio will be cut short.
+If you want to save the video as you see it, first Select All, and then Copy. With the copy in the clipboard, select 'Insert' and check the 'Insert to fit audio" 
+box. Extra frames will then be inserted to make your video as long as the audio track.
+
+
+
+ Easily merge one scene into the next (when scenes are one after the other in the same clip) ?
+
+To fade out:
+Select the last few frames of the first scene (just up to the scene change), then click on 'lock selection width' in the edit menu.
+Now cut the selected frames, then click on 'merge' and 'align ends'. The values will be set automatically to merge the two scenes. Just click 'OK'.
+
+To fade in:
+Select the first few frames of the second scene (just after the scene change), then click on 'lock selection width' in the edit menu.
+Now cut the selected frames. Then, with the selection width locked, click just to the left of the current selection, so that the previous section is selected.
+
+Then click on 'merge' and 'align starts'. The values will be set automatically to merge the two scenes. Just click 'OK'.
+
+
+But remember, by merging the frames, you have shortened the video. To bring it back in synch with the audio, you will have to *insert* a similar number of frames 
+just before or after the merge.
+
+
+
+
+
+ Save a single frame ?
+When a frame is in either the 'first frame' or 'last frame' windows, clicking on the frame will prompt you for a file name.
+If you enter a file name with an extension, e.g "frame.png", LiVES will try to save it using the specified file type (png in this case).
+If you do not use a file extension, LiVES will add the default of ".jpg" and save it as a jpeg file.
+
+
+
+
+ Capture an external window ?
+Click on Tools, and the Capture External Window option. You will be
+prompted for the framerate and a maximum record time. After making
+your selection, click OK. Now prepare the target window, click on OK, and click on the target to select it.
+
+Now go to Play and click the Record option. You can record some
+frames, and then when you are done, press stop or 'q'. LiVES will try
+to record at your selected fps, but how quickly frames are actually
+grabbed depends on the speed of your machine, graphics card, etc.
+
+Once you are finished, LiVES will clean up the video by inserting any
+skipped frames.
+
+You can also record audio at the same time. To do this, go to
+Tools/Preferences/Recording, and check the button "Record audio when
+an external window is captured." This option is only available if you
+are using the jack audio player.
+
+
+ Blend in real time ?
+Load in two or more clips. Use ctrl-8 (by default) to switch on the blend effect, then ctrl-up 
+or ctrl-down to switch clips. You can vary the blend amount by pressing
+"k" and then using ctrl-up and 
+ctrl-down. You can also render this by using the menu option Effects|Apply Realtime Effects.
+
+
+
+
+

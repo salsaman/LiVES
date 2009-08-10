@@ -1,0 +1,3206 @@
+// saveplay.c
+// LiVES (lives-exe)
+// (c) G. Finch 2003
+// released under the GNU GPL 3 or later
+// see file ../COPYING or www.gnu.org for licensing details
+
+#include "../libweed/weed.h"
+#include "../libweed/weed-host.h"
+
+#include <unistd.h>
+#include <stdlib.h>
+
+#include <string.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include "main.h"
+#include "callbacks.h"
+#include "support.h"
+#include "resample.h"
+#include "effects-weed.h"
+#include "audio.h"
+#include "htmsocket.h"
+#include "cvirtual.h"
+
+void save_clip_values(gint which) {
+  gint asigned;
+  gint endian;
+  gchar *lives_header;
+
+  if (which==0||which==mainw->scrap_file) return;
+
+  asigned=!(mainw->files[which]->signed_endian&AFORM_UNSIGNED);
+  endian=mainw->files[which]->signed_endian&AFORM_BIG_ENDIAN;
+  lives_header=g_strdup_printf("%s/%s/header.lives",prefs->tmpdir,mainw->files[which]->handle);
+
+  mainw->clip_header=fopen(lives_header,"w");
+  g_free(lives_header);
+
+  mainw->files[which]->header_version=LIVES_CLIP_HEADER_VERSION;
+
+  save_clip_value(which,CLIP_DETAILS_HEADER_VERSION,&mainw->files[which]->header_version);
+  save_clip_value(which,CLIP_DETAILS_BPP,&mainw->files[which]->bpp);
+  save_clip_value(which,CLIP_DETAILS_FPS,&mainw->files[which]->fps);
+  save_clip_value(which,CLIP_DETAILS_PB_FPS,&mainw->files[which]->pb_fps);
+  save_clip_value(which,CLIP_DETAILS_WIDTH,&mainw->files[which]->hsize);
+  save_clip_value(which,CLIP_DETAILS_HEIGHT,&mainw->files[which]->vsize);
+  save_clip_value(which,CLIP_DETAILS_UNIQUE_ID,&mainw->files[which]->unique_id);
+  save_clip_value(which,CLIP_DETAILS_ARATE,&mainw->files[which]->arps);
+  save_clip_value(which,CLIP_DETAILS_PB_ARATE,&mainw->files[which]->arate);
+  save_clip_value(which,CLIP_DETAILS_ACHANS,&mainw->files[which]->achans);
+  save_clip_value(which,CLIP_DETAILS_ASIGNED,&asigned);
+  save_clip_value(which,CLIP_DETAILS_AENDIAN,&endian);
+  save_clip_value(which,CLIP_DETAILS_ASAMPS,&mainw->files[which]->asampsize);
+  save_clip_value(which,CLIP_DETAILS_FRAMES,&mainw->files[which]->frames);
+  save_clip_value(which,CLIP_DETAILS_TITLE,mainw->files[which]->title);
+  save_clip_value(which,CLIP_DETAILS_AUTHOR,mainw->files[which]->author);
+  save_clip_value(which,CLIP_DETAILS_COMMENT,mainw->files[which]->comment);
+  save_clip_value(which,CLIP_DETAILS_PB_FRAMENO,&mainw->files[which]->frameno);
+  save_clip_value(which,CLIP_DETAILS_CLIPNAME,&mainw->files[which]->name);
+  save_clip_value(which,CLIP_DETAILS_FILENAME,&mainw->files[which]->file_name);
+  save_clip_value(which,CLIP_DETAILS_KEYWORDS,mainw->files[which]->keywords);
+
+  fclose(mainw->clip_header);
+  mainw->clip_header=NULL;
+
+}
+
+
+void
+read_file_details(const gchar *file_name, gboolean is_audio) {
+  // get preliminary details
+
+  // is_audio set to TRUE prevents us from checking for images, and deleting the (existing) first frame
+  // therefore it is IMPORTANT to set it when loading new audio for an existing clip !
+
+  FILE *infofile;
+  gchar *com=g_strdup_printf("smogrify get_details %s \"%s\" %d %d",cfile->handle,file_name,mainw->opening_loc,is_audio);
+
+  unlink(cfile->info_file);
+  dummyvar=system(com);
+  g_free(com);
+
+  if (mainw->opening_loc) do_progress_dialog(TRUE,FALSE,_ ("Examining file header"));
+  else {
+    clear_mainw_msg();
+    
+    while (!(infofile=fopen(cfile->info_file,"r"))) {
+      g_usleep(prefs->sleep_time);
+    }
+    
+    dummychar=fgets(mainw->msg,512,infofile);
+    fclose(infofile);
+  }
+}
+
+gchar *get_deinterlace_string(void) {
+  if (mainw->open_deint) return "-vf pp=ci";
+  else return "";
+}
+
+
+void 
+deduce_file(gchar *file_name, gdouble start, gint end) {
+  // this is a utility function to deduce whether we are dealing with a file, 
+  // a selection, a backup, or a location
+  gchar short_file_name[256];
+  mainw->img_concat_clip=-1;
+
+  if (g_strrstr(file_name,"://")!=NULL&&strncmp (file_name,"dvd://",6)) {
+    mainw->opening_loc=TRUE;
+    open_file(file_name);
+    mainw->opening_loc=FALSE;
+  }
+  else {
+    g_snprintf(short_file_name,256,"%s",file_name);
+    if (!(strcmp(file_name+strlen(file_name)-4,".lv1"))) {
+      restore_file(file_name);
+    }
+    else {
+      open_file_sel(file_name,start,end);
+    }
+  }
+}
+
+
+void open_file (const gchar *file_name) {
+  // this function should be called to open a whole file
+  open_file_sel(file_name,0.,0);
+}
+
+void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
+  gchar *com;
+  gint withsound=1;
+  gint old_file=mainw->current_file;
+  gint new_file=old_file;
+  gchar *fname=g_strdup(file_name),*msgstr;
+  gint achans,arate,arps,asampsize;
+  gint current_file;
+  gchar msg[256],loc[256];
+  gchar *tmp=NULL;
+  const lives_clip_data_t *cdata;
+
+  if (old_file==-1||!cfile->opening) {
+    new_file=mainw->first_free_file;
+
+    if (!get_new_handle(new_file,fname)) {
+      g_free(fname);
+      return;
+    }
+    g_free(fname);
+    
+    if (frames==0) {
+      com=g_strdup_printf(_ ("Opening %s"),file_name);
+    }
+    else {
+      com=g_strdup_printf(_ ("Opening %s start time %.2f sec. frames %d"),file_name,start,frames);
+    }
+    d_print(com);
+    g_free(com);
+    
+    if (!mainw->save_with_sound) {
+      d_print(_ (" without sound"));
+      withsound=0;
+    }
+    
+    mainw->noswitch=TRUE;
+    mainw->current_file=new_file;
+
+    if (prefs->instant_open) {
+      cdata=get_decoder_plugin(cfile);
+      if (cfile->ext_src!=NULL) {
+	cfile->opening=TRUE;
+	cfile->clip_type=CLIP_TYPE_FILE;
+	
+	get_mime_type(cfile->type,40,cdata);
+	
+	cfile->hsize=cdata->width*weed_palette_get_pixels_per_macropixel(((_decoder_plugin *)(cfile->ext_src))->current_palette);
+	cfile->vsize=cdata->height;
+	cfile->frames=cdata->nframes;
+	
+	if (frames>0&&cfile->frames>frames) cfile->frames=frames;
+	
+	cfile->arate=cfile->arps=cdata->arate;
+	cfile->achans=cdata->achans;
+	cfile->asampsize=cdata->asamps;
+	
+	if (cfile->achans>0&&(((_decoder_plugin *)(cfile->ext_src))->rip_audio)!=NULL&&withsound==1) {
+	  // call rip_audio() in the decoder plugin
+	  gchar *afile=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
+	  msgstr=g_strdup_printf(_("Opening audio for %s"),file_name);
+
+	  mainw->cancelled=CANCEL_NONE;
+	  do_threaded_dialog(msgstr,FALSE);
+	  g_free(msgstr);
+	  (((_decoder_plugin *)(cfile->ext_src))->rip_audio)((tmp=(char *)g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),afile,(cfile->fps*start+.5),frames);
+	  end_threaded_dialog();
+	  g_free(afile);
+	}
+	else {
+	  cfile->arate=0.;
+	  cfile->achans=cfile->asampsize=0;
+	}
+	cfile->fps=cfile->pb_fps=cdata->fps;
+	d_print("\n");
+	
+	if (cfile->achans==0&&capable->has_mplayer&&withsound==1) {
+
+	  // check if we have audio
+	  
+	  read_file_details(file_name,FALSE);
+	  unlink (cfile->info_file);
+	  sync();
+	  
+	  add_file_info (cfile->handle,TRUE);
+
+	  if (cfile->achans>0) {
+	    // plugin returned no audio, try with mplayer
+	    if (mainw->file_open_params==NULL) mainw->file_open_params=g_strdup("");
+	    com=g_strdup_printf("smogrify open %s \"%s\" %d %.2f %d \"%s\"",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),-1,start,frames,mainw->file_open_params);
+	    unlink (cfile->info_file);
+	    dummyvar=system(com);
+	    g_free(com);
+	    g_free(tmp);
+	    tmp=NULL;
+	    
+	    msgstr=g_strdup_printf(_("Opening audio"),file_name);
+	    if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
+	      // user cancelled or switched to another clip
+	      
+	      g_free(msgstr);
+	      
+	      mainw->opening_frames=-1;
+	      
+	      if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
+		mainw->cancelled=CANCEL_NONE;
+		return;
+	      }
+	      
+	      // cancelled
+	      // clean up our temp files
+	      com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
+	      dummyvar=system(com);
+	      g_free(com);
+	      g_free (mainw->file_open_params);
+	      mainw->file_open_params=NULL;
+	      close_current_file(old_file);
+	      return;
+	    }
+	    if (mainw->error==0) add_file_info (cfile->handle,TRUE);
+	    mainw->error=0;
+	    g_free(msgstr);
+	  }
+	}
+      }
+
+      if (tmp!=NULL) g_free(tmp);
+      tmp=NULL;
+    }
+
+    
+    if (cfile->ext_src!=NULL) {
+      create_frame_index(mainw->current_file,TRUE,cfile->fps*(start==0?0:start-1),frames==0?cfile->frames:frames);
+      if (mainw->open_deint) cfile->deinterlace=TRUE;
+    }
+
+    else {
+      // get the file size, etc. (frames is just a guess here)
+      read_file_details(file_name,FALSE);
+      unlink (cfile->info_file);
+      sync();
+      
+      // we must set this before calling add_file_info
+      cfile->opening=TRUE;
+      mainw->opening_frames=-1;
+      add_file_info (cfile->handle,FALSE);
+      if (frames>0&&cfile->frames>frames) cfile->end=cfile->undo_end=cfile->frames=frames;
+      
+      // be careful, here we switch from mainw->opening_loc to cfile->opening_loc
+      if (mainw->opening_loc) {
+	cfile->opening_loc=TRUE;
+	mainw->opening_loc=FALSE;
+      }
+    
+      if (cfile->f_size>prefs->warn_file_size*1000000.&&mainw->is_ready&&frames==0) {
+	gchar *warn=g_strdup_printf(_ ("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%.2fMB)\n\nAre you sure you wish to continue ?"),cfile->f_size/1000000.);
+	if (!do_warning_dialog_with_check(warn,WARN_MASK_FSIZE)) {
+	  g_free(warn);
+	  close_current_file(old_file);
+	  mainw->noswitch=FALSE;
+	  return;
+	}
+	g_free(warn);
+	d_print(_ (" - please be patient."));
+      }
+      
+      d_print("\n");
+#if defined DEBUG
+      g_print("open_file: dpd in\n");
+#endif
+    }
+
+    // set undo_start and undo_end for preview
+    cfile->undo_start=1;
+    cfile->undo_end=cfile->frames;
+
+    if (cfile->achans>0) {
+      cfile->opening_audio=TRUE;
+    }
+
+    // these will get reset as we have no audio file yet, so preserve them
+    achans=cfile->achans;
+    arate=cfile->arate;
+    arps=cfile->arps;
+    asampsize=cfile->asampsize;
+    cfile->old_frames=cfile->frames;
+    cfile->frames=0;
+
+    // we need this FALSE here, otherwise we will switch straight back here...
+    cfile->opening=FALSE;
+
+    // force a resize
+    current_file=mainw->current_file;
+
+    if (mainw->playing_file>-1) {
+      do_quick_switch (current_file);
+    }
+    else {
+      switch_to_file((mainw->current_file=old_file),current_file);
+    }
+
+    cfile->opening=TRUE;
+    cfile->achans=achans;
+    cfile->arate=arate;
+    cfile->arps=arps;
+    cfile->asampsize=asampsize;
+    cfile->frames=cfile->old_frames;
+
+    if (cfile->frames<=0) {
+      cfile->undo_end=cfile->frames=123456789;
+    }
+    if (cfile->hsize*cfile->vsize==0) {
+      cfile->frames=0;
+    }
+
+    get_play_times();
+
+    add_to_winmenu();
+    set_main_title(cfile->file_name,0);
+
+    if (cfile->ext_src==NULL) {
+      if (mainw->file_open_params==NULL) mainw->file_open_params=g_strdup("");
+
+      tmp=g_strconcat(mainw->file_open_params,get_deinterlace_string(),NULL);
+      g_free(mainw->file_open_params);
+      mainw->file_open_params=tmp;
+      
+      com=g_strdup_printf("smogrify open %s \"%s\" %d %.2f %d \"%s\"",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),withsound,start,frames,mainw->file_open_params);
+      unlink (cfile->info_file);
+      dummyvar=system(com);
+      g_free(com);
+      g_free(tmp);
+      mainw->noswitch=FALSE;
+      
+      if (mainw->toy_type==LIVES_TOY_TV) {
+	// for LiVES TV we do an auto-preview
+	mainw->play_start=cfile->start=cfile->undo_start;
+	mainw->play_end=cfile->end=cfile->undo_end;
+	mainw->preview=TRUE;
+	do {
+	  desensitize();
+	  procw_desensitize();
+	  on_playsel_activate (NULL, NULL);
+	} while (mainw->cancelled==CANCEL_KEEP_LOOPING);
+	mainw->preview=FALSE;
+	on_toy_activate(NULL,LIVES_TOY_NONE);
+	g_free (mainw->file_open_params);
+	mainw->file_open_params=NULL;
+	mainw->cancelled=CANCEL_NONE;
+	return;
+      }
+    }
+    // 'entry point' when we switch back
+    
+    // spin until loading is complete
+    // afterwards, mainw->msg will contain file details
+    cfile->progress_start=cfile->progress_end=0;
+    
+    // (also check for cancel)
+    msgstr=g_strdup_printf(_("Opening %s"),file_name);
+    
+    if (cfile->ext_src==NULL&&mainw->toy_type!=LIVES_TOY_TV) {
+      if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
+	// user cancelled or switched to another clip
+	
+	g_free(msgstr);
+	
+	mainw->opening_frames=-1;
+	
+	if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
+	  mainw->cancelled=CANCEL_NONE;
+	  return;
+	}
+	
+	// cancelled
+	// clean up our temp files
+	com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
+	dummyvar=system(com);
+	g_free(com);
+	g_free (mainw->file_open_params);
+	mainw->file_open_params=NULL;
+	close_current_file(old_file);
+	return;
+      }
+    }
+    g_free(msgstr);
+  }
+
+  if (cfile->ext_src!=NULL&&cfile->achans>0) {
+    gchar *afile=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
+    gchar *ofile=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle);
+    rename(afile,ofile);
+    g_free(afile);
+    g_free(ofile);
+  }
+
+  cfile->opening=cfile->opening_audio=FALSE;
+  mainw->opening_frames=-1;
+
+#if defined DEBUG
+  g_print("Out of dpd\n");
+#endif
+
+  // mainw->error is TRUE if we could not open the file
+  if (mainw->error) {
+    do_blocking_error_dialog(mainw->msg);
+    d_print_failed();
+    close_current_file(old_file);
+    g_free (mainw->file_open_params);
+    mainw->file_open_params=NULL;
+    return;
+  }
+
+  if (cfile->opening_loc) {
+    cfile->changed=TRUE;
+    cfile->opening_loc=FALSE;
+  }
+
+  // now file should be loaded...get full details
+  cfile->is_loaded=TRUE;
+  if (cfile->ext_src==NULL) add_file_info(cfile->handle,FALSE);
+  else {
+    add_file_info(NULL,FALSE);
+    cfile->f_size=sget_file_size((gchar *)file_name);
+  }
+
+  if (cfile->frames<=0) {
+    if (cfile->afilesize==0l) {
+      // we got neither video nor audio...
+      g_snprintf (msg,256,"%s",_ ("\n\nLiVES was unable to extract either video or audio.\nPlease check the terminal window for more details.\n"));
+      get_location ("mplayer",loc,256);
+      if (!capable->has_mplayer) {
+	g_strappend (msg,256,_ ("\n\nYou may need to install mplayer to open this file.\n"));
+      }
+      else if (strcmp (prefs->video_open_command,loc)) {
+	g_strappend (msg,256,_ ("\n\nPlease check the setting of Video open command in\nTools|Preferences|Decoding\n"));
+      }
+
+      do_error_dialog(msg);
+      d_print_failed();
+      close_current_file(old_file);
+      g_free (mainw->file_open_params);
+      mainw->file_open_params=NULL;
+      return;
+    }
+    cfile->frames=0;
+  }
+
+  current_file=mainw->current_file;
+
+#ifdef ENABLE_OSC
+    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
+#endif
+
+  if (prefs->show_recent) {
+    add_to_recent(file_name,start,frames,mainw->file_open_params);
+  }
+  g_free (mainw->file_open_params);
+  mainw->file_open_params=NULL;
+
+  if (!strcmp(cfile->type,"Frames")||!strcmp(cfile->type,"jpeg")||!strcmp(cfile->type,"png")||!strcmp(cfile->type,"Audio")) {
+    cfile->is_untitled=TRUE;
+    gtk_widget_set_sensitive(mainw->save,FALSE);
+  }
+
+  if (cfile->frames==1&&(!strcmp(cfile->type,"jpeg")||!strcmp(cfile->type,"png"))) {
+    if (mainw->img_concat_clip==-1) mainw->img_concat_clip=mainw->current_file;
+    else if (prefs->concat_images) {
+      // insert this image into our image clip, close this file
+
+      com=g_strdup_printf("smogrify insert %s %d 1 1 %s 0 %d %d %d",mainw->files[mainw->img_concat_clip]->handle,mainw->files[mainw->img_concat_clip]->frames,cfile->handle,mainw->files[mainw->img_concat_clip]->frames,mainw->files[mainw->img_concat_clip]->hsize,mainw->files[mainw->img_concat_clip]->vsize);
+
+      dummyvar=system(com);
+      g_free(com);
+      close_current_file(mainw->img_concat_clip);
+      cfile->frames++;
+      cfile->end++;
+
+      g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
+      gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+      g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
+      
+      
+      g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
+      gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+      g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
+
+      return;
+    }
+  }
+
+  // set new style file details
+  save_clip_values(current_file);
+
+  if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
+  mainw->noswitch=FALSE;
+
+  // update widgets
+  switch_to_file((mainw->current_file=0),current_file);
+
+}
+
+
+
+void
+get_handle_from_info_file(gint index) {
+  // called from get_new_handle to get the 'real' file handle
+  // because until we know the handle we can't use the normal info file yet
+  FILE *infofile;
+
+  clear_mainw_msg();
+
+  while (!(infofile=fopen(mainw->first_info_file,"r"))) {
+    g_usleep(prefs->sleep_time);
+  }
+
+  dummychar=fgets(mainw->msg,512,infofile);
+  fclose(infofile);
+  unlink(mainw->first_info_file);
+
+  if (mainw->files[index]==NULL) {
+    mainw->files[index]=(file *)(g_malloc(sizeof(file)));
+    mainw->files[index]->clip_type=CLIP_TYPE_DISK; // the default
+  }
+  g_snprintf(mainw->files[index]->handle,256,"%s",mainw->msg);
+}
+
+
+
+void save_file (gboolean existing, gchar *n_file_name) {
+  // if existing is TRUE, we are saving under the existing file_name
+  gint arate;
+  gchar *mesg,*bit;
+  gchar *com;
+  gchar *full_file_name=NULL;
+  gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
+  gboolean not_cancelled;
+
+  gint current_file=mainw->current_file;
+  gdouble aud_start=0,aud_end=0;
+  gchar *fps_string;
+
+  gchar *extra_params=g_strdup("");
+
+  gint startframe=1;
+
+  gboolean safe_symlinks=prefs->safe_symlinks;
+
+
+  // new handling for save selection:
+  // symlink images 1 - n to the encoded frames
+  // symlinks are now created in /tmp (for dynebolic)
+  // then encode the symlinked frames
+
+  if (!existing) {
+    // prompt for encoder type/output format
+    if (prefs->show_rdet) {
+      gboolean debug;
+      gint response;
+      rdet=create_render_details(1); // WARNING !! - rdet is global in events.h
+      response=gtk_dialog_run(GTK_DIALOG(rdet->dialog));
+      debug=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rdet->debug_checkbutton));
+      gtk_widget_hide (rdet->dialog);
+      
+      if (debug!=prefs->debug_encoders) set_boolean_pref("debug_encoders",(prefs->debug_encoders=debug));
+
+      if (response==GTK_RESPONSE_CANCEL) {
+	gtk_widget_destroy (rdet->dialog);
+	g_free(rdet->encoder_name);
+	g_free(rdet);
+	rdet=NULL;
+	if (resaudw!=NULL) g_free(resaudw);
+	resaudw=NULL;
+	return;
+      }
+    }
+  }
+
+  // get file extension
+  check_encoder_restrictions (TRUE,FALSE);
+
+  //append default extension (if necessary)
+  if (!strlen (prefs->encoder.of_def_ext)) {
+    // encoder adds its own extension
+    if (strrchr(n_file_name,'.')!=NULL) {
+      memset (strrchr (n_file_name,'.'),0,1);
+    }
+  }
+  else {
+    if (mainw->fx1_bool&&(strlen(n_file_name)<=strlen(prefs->encoder.of_def_ext)||strncmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext)-1,".",1)||strcmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext),prefs->encoder.of_def_ext))) {
+      full_file_name=g_strconcat(n_file_name,".",prefs->encoder.of_def_ext,NULL);
+    }
+  }
+
+  if (full_file_name==NULL) {
+    full_file_name=g_strdup (n_file_name);
+  }
+
+  if (!existing) {
+    if (!check_file(full_file_name,TRUE)) return;
+    cfile->orig_file_name=FALSE;
+    if (!strlen (cfile->comment)) {
+      g_snprintf (cfile->comment,251,"Created with LiVES");
+    }
+    if (!do_comments_dialog()) {
+	g_free(full_file_name);
+	if (rdet!=NULL) {
+	  gtk_widget_destroy (rdet->dialog);
+	  g_free(rdet->encoder_name);
+	  g_free(rdet);
+	  rdet=NULL;
+	  if (resaudw!=NULL) g_free(resaudw);
+	  resaudw=NULL;
+	}
+	return;
+    }
+  }
+  else if (!mainw->osc_auto&&cfile->orig_file_name) {
+    gchar *warn=g_strdup(_ ("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
+    if (!do_warning_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
+	g_free(warn);
+	g_free(full_file_name);
+	if (rdet!=NULL) {
+	  gtk_widget_destroy (rdet->dialog);
+	  g_free(rdet->encoder_name);
+	  g_free(rdet);
+	  if (resaudw!=NULL) g_free(resaudw);
+	  resaudw=NULL;
+	  rdet=NULL;
+	}
+	return;
+    }
+    g_free(warn);
+  }
+
+  if (!mainw->save_all&&!safe_symlinks) {
+    // we are saving a selection - make symlinks in tempdir
+    gint new_file;
+
+    if ((new_file=mainw->first_free_file)==-1) {
+      too_many_files();
+      if (rdet!=NULL) {
+	gtk_widget_destroy (rdet->dialog);
+	g_free(rdet->encoder_name);
+	g_free(rdet);
+	rdet=NULL;
+	if (resaudw!=NULL) g_free(resaudw);
+	resaudw=NULL;
+      }
+      return;
+    }
+
+    // create new clip
+    if (!get_new_handle(new_file,g_strdup (_ ("selection")))) {
+      if (rdet!=NULL) {
+	g_free(rdet->encoder_name);
+	g_free(rdet);
+	rdet=NULL;
+	if (resaudw!=NULL) g_free(resaudw);
+	resaudw=NULL;
+      }
+      return;
+    }
+
+    if (cfile->clip_type==CLIP_TYPE_FILE) {
+      mainw->cancelled=CANCEL_NONE;
+      do_threaded_dialog(_("Pulling frames from clip"),TRUE);
+      virtual_to_images(mainw->current_file,cfile->start,cfile->end);
+      end_threaded_dialog();
+      
+      if (mainw->cancelled!=CANCEL_NONE) {
+	mainw->cancelled=CANCEL_USER;
+	if (rdet!=NULL) {
+	  gtk_widget_destroy (rdet->dialog);
+	  g_free(rdet->encoder_name);
+	  g_free(rdet);
+	  rdet=NULL;
+	  if (resaudw!=NULL) g_free(resaudw);
+	  resaudw=NULL;
+	}
+	return;
+      }
+    }
+
+    mainw->current_file=new_file;
+    cfile->hsize=mainw->files[current_file]->hsize;
+    cfile->vsize=mainw->files[current_file]->vsize;
+    cfile->progress_start=cfile->start=1;
+    cfile->progress_end=cfile->frames=cfile->end=mainw->files[current_file]->end-mainw->files[current_file]->start+1;
+    cfile->fps=mainw->files[current_file]->fps;
+    cfile->arps=mainw->files[current_file]->arps;
+    cfile->arate=mainw->files[current_file]->arate;
+    cfile->achans=mainw->files[current_file]->achans;
+    cfile->asampsize=mainw->files[current_file]->asampsize;
+
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %s",cfile->handle,mainw->files[current_file]->start,mainw->files[current_file]->end,mainw->files[current_file]->handle);
+
+    unlink(cfile->info_file);
+    dummyvar=system(com);
+    g_free(com);
+
+    if (!(do_progress_dialog(TRUE,TRUE,_ ("Linking selection")))) {
+      dummyvar=system (g_strdup_printf("smogrify close %s",cfile->handle));
+      g_free (cfile);
+      cfile=NULL;
+      if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
+      mainw->current_file=current_file;
+      sensitize();
+      d_print_cancelled();
+      if (rdet!=NULL) {
+	gtk_widget_destroy (rdet->dialog);
+	g_free(rdet->encoder_name);
+	g_free(rdet);
+	rdet=NULL;
+	if (resaudw!=NULL) g_free(resaudw);
+	resaudw=NULL;
+      }
+      return;
+    }
+  }
+
+  if (rdet!=NULL) rdet->is_encoding=TRUE;
+
+  if (!check_encoder_restrictions(FALSE,FALSE)) {
+    if (!mainw->save_all&&!safe_symlinks) {
+      dummyvar=system ((com=g_strdup_printf("smogrify close %s",cfile->handle)));
+      g_free(com);
+      g_free (cfile);
+      cfile=NULL;
+      if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
+      switch_to_file (mainw->current_file,current_file);
+    }
+    else if (!mainw->save_all&&safe_symlinks) {
+      com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
+      dummyvar=system (com);
+      g_free (com);
+    }
+    d_print_cancelled();
+    if (rdet!=NULL) {
+      gtk_widget_destroy (rdet->dialog);
+      g_free(rdet->encoder_name);
+      g_free(rdet);
+      rdet=NULL;
+      if (resaudw!=NULL) g_free(resaudw);
+      resaudw=NULL;
+    }
+    return;
+  }
+
+  if (rdet!=NULL) {
+    gtk_widget_destroy (rdet->dialog);
+    g_free(rdet->encoder_name);
+    g_free(rdet);
+    rdet=NULL;
+    if (resaudw!=NULL) g_free(resaudw);
+    resaudw=NULL;
+  }
+
+
+  if (!mainw->save_all&&safe_symlinks) {
+    // we are saving a selection - make symlinks in /tmp
+
+    startframe=-1;
+
+    if (cfile->clip_type==CLIP_TYPE_FILE) {
+      mainw->cancelled=CANCEL_NONE;
+      do_threaded_dialog(_("Pulling frames from clip"),TRUE);
+      virtual_to_images(mainw->current_file,cfile->start,cfile->end);
+      end_threaded_dialog();
+      
+      if (mainw->cancelled!=CANCEL_NONE) {
+	mainw->cancelled=CANCEL_USER;
+	if (rdet!=NULL) {
+	  gtk_widget_destroy (rdet->dialog);
+	  g_free(rdet->encoder_name);
+	  g_free(rdet);
+	  rdet=NULL;
+	  if (resaudw!=NULL) g_free(resaudw);
+	  resaudw=NULL;
+	}
+	return;
+      }
+    }
+
+    com=g_strdup_printf ("smogrify link_frames %s %d %d",cfile->handle,cfile->start,cfile->end);
+
+    unlink(cfile->info_file);
+    dummyvar=system(com);
+    g_free(com);
+
+    if (!(do_progress_dialog(TRUE,TRUE,_ ("Linking selection")))) {
+      com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
+      dummyvar=system (com);
+      g_free (com);
+      sensitize();
+      d_print_cancelled();
+      if (rdet!=NULL) {
+	gtk_widget_destroy (rdet->dialog);
+	g_free(rdet->encoder_name);
+	g_free(rdet);
+	rdet=NULL;
+	if (resaudw!=NULL) g_free(resaudw);
+	resaudw=NULL;
+      }
+      return;
+    }
+  }
+
+
+  if (mainw->save_all) {
+    if (cfile->clip_type==CLIP_TYPE_FILE) {
+      mainw->cancelled=CANCEL_NONE;
+      do_threaded_dialog(_("Pulling frames from clip"),TRUE);
+      virtual_to_images(mainw->current_file,1,cfile->frames);
+      end_threaded_dialog();
+      
+      if (mainw->cancelled!=CANCEL_NONE) {
+	mainw->cancelled=CANCEL_USER;
+	return;
+      }
+    }
+  }
+
+
+  if (cfile->arate*cfile->achans) {
+    if (!mainw->save_all) {
+      aud_start=calc_time_from_frame (current_file,mainw->files[current_file]->start)*mainw->files[current_file]->arps/mainw->files[current_file]->arate;
+      aud_end=calc_time_from_frame (current_file,mainw->files[current_file]->end+1)*mainw->files[current_file]->arps/mainw->files[current_file]->arate;
+    }
+    else {
+      aud_start=calc_time_from_frame (mainw->current_file,1)*cfile->arps/cfile->arate;
+      aud_end=calc_time_from_frame (mainw->current_file,cfile->frames+1)*cfile->arps/cfile->arate;
+    }
+  }
+  arate=cfile->arate;
+
+  if (!mainw->save_with_sound||prefs->encoder.of_allowed_acodecs==0) {
+    bit=g_strdup(_ (" (with no sound)\n"));
+    arate=0;
+  }
+  else {
+    bit=g_strdup("\n");
+  }
+
+  if (!mainw->save_all) {
+    mesg=g_strdup_printf(_ ("Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."),mainw->files[current_file]->start,mainw->files[current_file]->end,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
+  } // end selection
+  else {
+    mesg=g_strdup_printf(_ ("Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."),cfile->frames,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
+  }
+  g_free (bit);
+  
+  if (!cfile->ratio_fps) {
+    fps_string=g_strdup_printf ("%.3f",cfile->fps);
+  }
+  else {
+    fps_string=g_strdup_printf ("%.8f",cfile->fps);
+  }
+
+
+  // get extra parameters for saving
+  if (prefs->encoder.capabilities&HAS_RFX) {
+    if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
+      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,full_file_name,1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+    }
+    else {
+      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,full_file_name,1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+    }
+    extra_params=plugin_run_param_window(com,NULL,NULL);
+    g_free(com);
+
+    if (extra_params==NULL) {
+      if (!mainw->save_all&&safe_symlinks) {
+	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
+	dummyvar=system (com);
+	g_free (com);
+      }
+      gtk_widget_destroy(fx_dialog[1]);
+      g_free(mesg);
+      g_free(fps_string);
+      d_print_cancelled();
+      return;
+    }
+  }
+
+  mainw->no_switch_dprint=TRUE;
+  d_print (mesg);
+  mainw->no_switch_dprint=FALSE;
+  g_free (mesg);
+
+  if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
+    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,full_file_name,startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+  }
+  else {
+    // for native plugins we go via the plugin
+    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,full_file_name,startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+  }
+  g_free (fps_string);
+
+  g_free(extra_params);
+
+  unlink(cfile->info_file);
+  save_file_comments();
+  dummyvar=system(com);
+  g_free(com);
+
+  not_cancelled=do_progress_dialog(TRUE,TRUE,_ ("Saving [can take a long time]"));
+  mesg=g_strdup (mainw->msg);
+
+  if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
+    com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,1,cfile->frames,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name);
+  }
+  else {
+    com=g_strdup_printf("%s%s%s/%s plugin_clear %s %d %d \"\" %s \"\"",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,1,cfile->frames,PLUGIN_ENCODERS);
+  }
+
+  dummyvar=system(com);
+  g_free(com);
+
+  if (not_cancelled) {
+    if (mainw->error) {
+      do_error_dialog(mesg);
+      g_free (mesg);
+      mainw->no_switch_dprint=TRUE;
+      d_print(_ ("error.\n"));
+      mainw->no_switch_dprint=FALSE;
+      g_free(full_file_name);
+      if (!mainw->save_all&&!safe_symlinks) {
+	dummyvar=system ((com=g_strdup_printf("smogrify close %s",cfile->handle)));
+	g_free(com);
+	g_free (cfile);
+	cfile=NULL;
+	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
+	switch_to_file (mainw->current_file,current_file);
+      }
+      else if (!mainw->save_all&&safe_symlinks) {
+	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
+	dummyvar=system (com);
+	g_free (com);
+      }
+      return;
+    }
+    g_free (mesg);
+    
+    if (!g_file_test (full_file_name, G_FILE_TEST_EXISTS)) {
+      do_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
+      mainw->no_switch_dprint=TRUE;
+      d_print_failed();
+      mainw->no_switch_dprint=FALSE;
+      g_free(full_file_name);
+      if (!mainw->save_all&&!safe_symlinks) {
+	dummyvar=system ((com=g_strdup_printf("smogrify close %s",cfile->handle)));
+	g_free(com);
+	g_free (cfile);
+	cfile=NULL;
+	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
+	switch_to_file (mainw->current_file,current_file);
+      }
+      else if (!mainw->save_all&&safe_symlinks) {
+	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
+	dummyvar=system (com);
+	g_free (com);
+      }
+      return;
+    }
+
+    if (mainw->save_all) {
+      //g_snprintf(cfile->file_name,255,"%s",full_file_name);
+      cfile->changed=FALSE;
+
+      // save was successful
+      cfile->f_size=sget_file_size (full_file_name);
+
+      if (cfile->is_untitled) {
+	cfile->is_untitled=FALSE;
+	gtk_widget_set_sensitive(mainw->save,TRUE);
+      }
+      if (!cfile->was_renamed) {
+	set_menu_text(cfile->menuentry,full_file_name,FALSE);
+	g_snprintf(cfile->name,255,"%s",full_file_name);
+      }
+      set_main_title(cfile->name,0);
+      add_to_recent (full_file_name,0.,0,NULL);
+    }
+    else {
+      if (!safe_symlinks) {
+	dummyvar=system ((com=g_strdup_printf("smogrify close %s",cfile->handle)));
+	g_free(com);
+	g_free (cfile);
+	cfile=NULL;
+	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
+	switch_to_file (mainw->current_file,current_file);
+      }
+      else {
+	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
+	dummyvar=system (com);
+	g_free (com);
+      }
+    }
+  }
+
+  if (not_cancelled) {
+    mainw->no_switch_dprint=TRUE;
+    d_print_done();
+    mainw->no_switch_dprint=FALSE;
+#ifdef ENABLE_OSC
+    lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,(mesg=g_strdup_printf("encode %d \"%s\"",mainw->current_file,full_file_name)));
+    g_free(mesg);
+#endif
+
+  }
+  g_free(full_file_name);
+
+}
+
+
+
+void play_file (void) {
+  // play the current clip from 'mainw->play_start' to 'mainw->play_end'
+  gint arate;
+  gchar *com;
+  gchar *com2=g_strdup (" ");
+  gchar *com4=g_strdup (" ");
+  gchar *com3=g_strdup (" ");
+  gchar *stopcom=NULL;
+  gchar *msg;
+
+  unsigned int wid;
+  gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
+  gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
+
+  gboolean oloop=mainw->loop;
+  gint current_file=mainw->current_file;
+  gint audio_end=0;
+
+  gint loop=0;
+  gboolean mute;
+
+  gboolean is_new_file=FALSE;
+
+  gint gen_file=-1;
+
+  GClosure *freeze_closure;
+  gshort audio_player=prefs->audio_player;
+
+#ifdef ENABLE_JACK
+  jack_message_t jack_message;
+  if (!mainw->preview&&!mainw->foreign) jack_pb_start();
+#endif
+
+  weed_plant_t *pb_start_event=NULL;
+  gboolean exact_preview=FALSE;
+  gboolean has_audio_buffers=FALSE;
+
+  gchar *tmpfilename=NULL;
+
+
+  if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
+  mainw->ext_playback=FALSE;
+  mainw->deltaticks=0;
+
+  mainw->rec_aclip=-1;
+
+  if (mainw->pre_src_file==-2) mainw->pre_src_file=mainw->current_file;
+
+  // enable the freeze button
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_BackSpace, GDK_CONTROL_MASK, 0, (freeze_closure=g_cclosure_new (G_CALLBACK (freeze_callback),NULL,NULL)));
+
+  if (mainw->multitrack!=NULL) {
+    mainw->event_list=mainw->multitrack->event_list;
+    pb_start_event=mainw->multitrack->pb_start_event;
+    exact_preview=mainw->multitrack->exact_preview;
+  }
+
+  if (mainw->record) {
+    if (mainw->preview) {
+      mainw->record=FALSE;
+      d_print (_ ("recording aborted by preview.\n"));
+    }
+    else if (mainw->current_file==0) {
+      mainw->record=FALSE;
+      d_print (_ ("recording aborted by clipboard playback.\n"));
+    }
+    else {
+      d_print(_ ("Recording performance..."));
+      mainw->clip_switched=FALSE;
+      // TODO
+      if (mainw->current_file>0&&(cfile->undo_action==UNDO_RESAMPLE||cfile->undo_action==UNDO_REORDER||cfile->undo_action==UNDO_RENDER)) {
+	gtk_widget_set_sensitive (mainw->undo,FALSE);
+	gtk_widget_set_sensitive (mainw->redo,FALSE);
+	cfile->undoable=cfile->redoable=FALSE;
+      }
+    }
+  }
+  // set performance at right place
+  else if (mainw->event_list!=NULL) cfile->next_event=get_first_event(mainw->event_list);
+
+  // note, here our start is in frames, in save_file it is in seconds !
+  // TODO - check if we can change it to seconds here too
+
+  mainw->audio_start=mainw->audio_end=0;
+
+  if (mainw->event_list!=NULL) {
+    // play performance data
+    if (event_list_get_end_secs (mainw->event_list)>cfile->frames/cfile->fps&&!mainw->playing_sel) {
+      mainw->audio_end=(event_list_get_end_secs (mainw->event_list)*cfile->fps+1.)*cfile->arate/cfile->arps;
+    }
+  }
+  
+  if (mainw->audio_end==0) {
+    mainw->audio_start=(calc_time_from_frame(mainw->current_file,mainw->play_start)*cfile->fps+1.)*cfile->arate/cfile->arps;
+    mainw->audio_end=(calc_time_from_frame(mainw->current_file,mainw->play_end)*cfile->fps+1.)*cfile->arate/cfile->arps;
+    if (!mainw->playing_sel) {
+      mainw->audio_end=0;
+    }
+  }
+
+  find_when_to_stop();
+
+  if (!cfile->opening_audio&&!mainw->loop) {
+    // if we are opening audio or looping we just play to the end of audio,
+    // otherwise...
+    audio_end=mainw->audio_end;
+  }
+
+  if (prefs->stop_screensaver) {
+    g_free (com2);
+    com2=g_strdup ("xset s off 2>/dev/null; xset -dpms 2>/dev/null; gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null;");
+  }
+  if (prefs->pause_xmms&&cfile->achans>0&&!mainw->mute) {
+    g_free (com3);
+    com3=g_strdup ("xmms -u;");
+  }
+  if (!mainw->foreign&&prefs->midisynch&&!mainw->preview) {
+    g_free (com4);
+    com4=g_strdup  ("midistart");
+  }
+  com=g_strconcat (com2,com3,com4,NULL);
+  if (strlen (com)) {
+    dummyvar=system (com);
+  }
+  g_free (com); g_free (com2); g_free (com3); g_free (com4);
+  com4=g_strdup (" ");
+  com3=NULL;
+  com2=NULL;
+  com=NULL;
+
+  if (mainw->multitrack==NULL) {
+    if (!mainw->preview) {
+      gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Play"));
+    }
+    else {
+      gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Preview"));
+    }
+    
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(gtk_frame_get_label_widget(GTK_FRAME(mainw->playframe)), GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    
+    // blank the background if asked to
+    if ((mainw->faded||(mainw->fs&&!mainw->sep_win))&&(cfile->frames>0||mainw->foreign)) {
+      fade_background();
+    }
+
+    if ((!mainw->sep_win||(!mainw->faded&&(prefs->sepwin_type!=1)))&&(cfile->frames>0||mainw->foreign)) {
+      // show the frame in the main window
+      gtk_widget_show(mainw->playframe);
+    }
+  }
+
+  if (mainw->multitrack==NULL) {
+    // plug the plug into the playframe socket if we need to
+    add_to_playframe();
+  }
+  
+  arate=cfile->arate;
+
+  mute=mainw->mute;
+
+  if (prefs->audio_player!=AUD_PLAYER_JACK) {
+    if (cfile->achans==0||mainw->is_rendering) mainw->mute=TRUE;
+    if (mainw->mute&&!cfile->opening_only_audio) arate=arate?-arate:-1;
+  }
+
+  if (mainw->sep_win) {
+    wid=0;
+  }
+  else {
+    wid=(unsigned int)mainw->xwin;
+  }
+  
+  cfile->frameno=mainw->play_start;
+  cfile->pb_fps=cfile->fps;
+  if (mainw->reverse_pb) {
+    cfile->pb_fps=-cfile->pb_fps;
+    cfile->frameno=mainw->play_end;
+  }
+  mainw->reverse_pb=FALSE;
+
+  cfile->play_paused=FALSE;
+  mainw->period=U_SEC/cfile->pb_fps;
+
+
+  if (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]==NULL) mainw->blend_file=-1;
+
+  if (mainw->num_tr_applied>0&&!mainw->preview&&mainw->blend_file>-1) {
+    // reset frame counter for blend_file
+    mainw->files[mainw->blend_file]->frameno=0;
+  }
+
+  gtk_widget_set_sensitive(mainw->m_stopbutton,TRUE);
+  mainw->playing_file=mainw->current_file;
+
+  if (!mainw->preview||!cfile->opening) {
+    desensitize();
+  }
+
+  if (mainw->record) {
+    if (mainw->event_list!=NULL) event_list_free (mainw->event_list);
+    mainw->event_list=add_filter_init_events(NULL,0);
+  }
+
+  if (mainw->double_size&&mainw->multitrack==NULL) {
+    gtk_widget_hide(mainw->scrolledwindow);
+  }
+
+  gtk_widget_set_sensitive (mainw->stop, TRUE);
+
+  if (mainw->multitrack==NULL) gtk_widget_set_sensitive (mainw->m_playbutton, FALSE);
+  else mt_swap_play_pause(mainw->multitrack,TRUE);
+
+  gtk_widget_set_sensitive (mainw->m_playselbutton, FALSE);
+  gtk_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
+  gtk_widget_set_sensitive (mainw->m_mutebutton, prefs->audio_player==AUD_PLAYER_JACK);
+
+  gtk_widget_set_sensitive (mainw->m_loopbutton, (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK)&&mainw->current_file>0);
+  gtk_widget_set_sensitive (mainw->loop_continue, (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK)&&mainw->current_file>0);
+
+  if (cfile->frames==0&&mainw->multitrack==NULL) {
+    if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
+      gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+    }
+  }
+  else {
+    if (mainw->sep_win) {
+      // create a separate window for the internal player if requested
+      if (prefs->sepwin_type==0) {
+	// needed
+	block_expose();
+	make_play_window();
+	unblock_expose();
+      }
+      else {
+	if (mainw->multitrack==NULL) {
+	  if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
+	    gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	  }
+	}
+
+	if (mainw->multitrack==NULL||mainw->fs) {
+	  resize_play_window();
+	}
+
+	// needed
+	if (mainw->multitrack==NULL) {
+	  block_expose();
+	  mainw->noswitch=TRUE;
+	  while (g_main_context_iteration (NULL,FALSE));
+	  mainw->noswitch=FALSE;
+	  unblock_expose();
+	}
+      }
+    }
+
+    if (mainw->play_window!=NULL) {
+      hide_cursor (mainw->play_window->window);
+      gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+    }
+  
+    if (!mainw->foreign&&!mainw->sep_win) {
+      hide_cursor(mainw->playarea->window);
+    }
+    
+    // pwidth and pheight are playback width and height
+    if (!mainw->sep_win&&!mainw->foreign) {
+      do {
+	mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
+	mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
+	if (mainw->pwidth*mainw->pheight==0) {
+	  gtk_widget_queue_draw (mainw->playframe);
+	  mainw->noswitch=TRUE;
+	  while (g_main_context_iteration (NULL, FALSE));
+	  mainw->noswitch=FALSE;
+	}
+      } while (mainw->pwidth*mainw->pheight==0);
+      // double size
+      if (mainw->double_size) {
+	frame_size_update();
+      }
+    }
+
+    if (mainw->vpp!=NULL&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {
+      // fixed o/p size for stream
+      if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
+	mainw->vpp->fwidth=cfile->hsize;
+	mainw->vpp->fheight=cfile->vsize;
+      }
+      mainw->pwidth=mainw->vpp->fwidth;
+      mainw->pheight=mainw->vpp->fheight;
+    }
+    
+    mainw->fixed_height=mainw->eventbox->allocation.height+mainw->menubar->allocation.height;
+    if (prefs->show_tool) mainw->fixed_height-=mainw->tb_hbox->allocation.height+4;
+
+    if (mainw->fs&&!mainw->sep_win&&cfile->frames>0) {
+      fullscreen_internal();
+    }
+
+  }
+
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+    
+  mainw->last_blend_file=-1;
+
+  // show the framebar
+  if (mainw->multitrack==NULL&&(prefs->show_framecount&&(!mainw->fs||(prefs->gui_monitor!=prefs->play_monitor&&mainw->sep_win!=0))&&((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening))) {
+    gtk_widget_show(mainw->framebar);
+  }
+
+  cfile->play_paused=FALSE;
+  mainw->actual_frame=0;
+
+  if (!mainw->foreign) {
+    if (audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+      if (mainw->jackd!=NULL) {
+	mainw->jackd->is_paused=FALSE;
+	mainw->jackd->mute=mainw->mute;
+	if (mainw->loop_cont&&!mainw->preview) {
+	  if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) mainw->jackd->loop=JACK_LOOP_PINGPONG;
+	  else mainw->jackd->loop=JACK_LOOP_FORWARD;
+	}
+	else mainw->jackd->loop=JACK_LOOP_NONE;
+	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&(cfile->laudio_time>0.||cfile->opening||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&g_file_test((tmpfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle)),G_FILE_TEST_EXISTS)))) {
+	  if (tmpfilename!=NULL) g_free(tmpfilename);
+	  mainw->jackd->num_input_channels=cfile->achans;
+	  mainw->jackd->bytes_per_channel=cfile->asampsize/8;
+	  mainw->jackd->sample_in_rate=cfile->arate;
+	  mainw->jackd->usigned=!asigned;
+	  mainw->jackd->seek_end=cfile->afilesize;
+	  if (cfile->opening) mainw->jackd->is_opening=TRUE;
+	  else mainw->jackd->is_opening=FALSE;
+	  
+	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd->reverse_endian=TRUE;
+	  else mainw->jackd->reverse_endian=FALSE;
+	  while (jack_get_msgq(mainw->jackd)!=NULL);
+	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&(mainw->event_list==NULL||(mainw->preview&&mainw->is_processing))) {
+	    // tell jack server to open audio file and start playing it
+	    jack_message.command=JACK_CMD_FILE_OPEN;
+	    jack_message.data=g_strdup_printf("%d",mainw->current_file);
+	    jack_message.next=NULL;
+	    mainw->jackd->msgq=&jack_message;
+	    audio_seek_frame(mainw->jackd,mainw->play_start);
+	    mainw->jackd->in_use=TRUE;
+	    mainw->rec_aclip=mainw->current_file;
+	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
+	    mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+	  }
+	}
+      }
+#endif
+    }
+    else if (cfile->achans>0) {
+      if (mainw->loop_cont) {
+	// tell audio to loop forever
+	loop=-1;
+      }
+
+      unlink (g_strdup_printf ("%s/%s/.stoploop",prefs->tmpdir,cfile->handle));
+    
+      if (cfile->achans>0||(!cfile->is_loaded&&!mainw->is_generating)) {
+	if (loop) {
+	  g_free (com4);
+	  com4=g_strdup_printf ("touch %s/%s/.stoploop 2>/dev/null;",prefs->tmpdir,cfile->handle);
+	}
+	
+	if (cfile->achans>0) {
+	  com2=g_strdup_printf("smogrify stop_audio %s",cfile->handle);
+	}
+    
+	stopcom=g_strconcat (com4,com2,NULL);
+      }
+
+      if (!mainw->preview&&!mainw->is_rendering) weed_reinit_all();
+
+      // PLAY
+      g_snprintf(cfile->info_file,256,"%s/%s/.status.play",prefs->tmpdir,cfile->handle);
+      if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);
+
+      if (cfile->clip_type==CLIP_TYPE_DISK&&cfile->opening) {
+	  com=g_strdup_printf("smogrify play_opening_preview %s %.3f %d %d %d %d %d %u %d %d %d %d %d %d",cfile->handle,cfile->fps,mainw->audio_start,audio_end,mainw->fs,0,wid,mainw->pwidth,mainw->pheight,arate,cfile->achans,cfile->asampsize,asigned,aendian);
+      }
+      else {
+	com=g_strdup_printf("smogrify play %s %.3f %d %d %d %d %u %d %d %d %d %d %d %d",cfile->handle,cfile->fps,mainw->audio_start,audio_end,mainw->fs,loop,wid,mainw->pwidth,mainw->pheight,arate,cfile->achans,cfile->asampsize,asigned,aendian);
+      }
+      if (mainw->multitrack==NULL&&com!=NULL) dummyvar=system(com);
+    }
+  }
+
+  g_free (com4);
+
+  if (mainw->foreign||weed_playback_gen_start()) {
+
+#ifdef ENABLE_OSC
+    lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED,"");
+#endif
+
+    mainw->kb_timer=gtk_timeout_add (KEY_RPT_INTERVAL,&plugin_poll_keyboard,NULL);
+
+#ifdef ENABLE_JACK
+
+    if (mainw->event_list!=NULL&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!(mainw->preview&&mainw->is_processing)) {
+      // if playing an event list, we switch to audio memory buffer mode
+      if (mainw->multitrack!=NULL) init_audio_buffers(cfile->achans,cfile->arate,exact_preview);
+      else init_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
+      has_audio_buffers=TRUE;
+    }
+
+#endif    
+
+    //play until stopped or a stream finishes
+    do {
+      mainw->cancelled=CANCEL_NONE;
+
+      if (mainw->event_list!=NULL) {
+	if (pb_start_event==NULL) pb_start_event=get_first_frame_event(mainw->event_list);
+
+	if (has_audio_buffers) {
+
+#ifdef ENABLE_JACK
+
+	  int i;
+	  mainw->write_abuf=0;
+	  
+	  // fill our audio buffers now
+	  // this will also get our effects state
+	  fill_abuffer_from(mainw->jackd->abufs[0],mainw->event_list,pb_start_event,exact_preview);
+	  for (i=1;i<prefs->num_rtaudiobufs;i++) {
+	    fill_abuffer_from(mainw->jackd->abufs[i],mainw->event_list,NULL,FALSE);
+	  }
+	  
+	  pthread_mutex_lock(&mainw->abuf_mutex);
+	  mainw->jackd->read_abuf=0;
+	  pthread_mutex_unlock(&mainw->abuf_mutex);
+
+	  mainw->jackd->in_use=TRUE;
+#endif
+	}
+
+      }
+
+      if (mainw->multitrack==NULL||mainw->multitrack->pb_start_event==NULL) {
+	do_progress_dialog(FALSE,FALSE,NULL);
+
+#ifdef ENABLE_JACK
+	if (mainw->jackd!=NULL) {
+	  // must do this before deinit fx
+	  pthread_mutex_lock(&mainw->abuf_mutex);
+	  mainw->jackd->read_abuf=-1;
+	  pthread_mutex_unlock(&mainw->abuf_mutex);
+	}
+#endif
+
+      }
+      else {
+	// play from middle of mt timeline
+	cfile->next_event=mainw->multitrack->pb_start_event;
+
+	if (!has_audio_buffers) {
+	  // get just effects state
+	  get_audio_and_effects_state_at(mainw->multitrack->event_list,mainw->multitrack->pb_start_event,FALSE,mainw->multitrack->exact_preview);
+	}
+
+	do_progress_dialog(FALSE,FALSE,NULL);
+
+#ifdef ENABLE_JACK
+	if (mainw->jackd!=NULL) {
+	  // must do this before deinit fx
+	  pthread_mutex_lock(&mainw->abuf_mutex);
+	  mainw->jackd->read_abuf=-1;
+	  pthread_mutex_unlock(&mainw->abuf_mutex);
+	}
+#endif
+
+	deinit_render_effects();
+
+	cfile->next_event=NULL;
+	mainw->multitrack->pb_start_event=mainw->multitrack->pb_loop_event;
+      }
+    } while (mainw->multitrack!=NULL&&mainw->loop_cont&&(mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));
+    mainw->osc_block=TRUE;
+    gtk_timeout_remove (mainw->kb_timer);
+    mainw->rte_textparm=NULL;
+    mainw->playing_file=-1;
+  }
+    
+  // play completed
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd!=NULL) {
+
+    if (has_audio_buffers) {
+      free_audio_buffers();
+    }
+
+    if (mainw->foreign&&mainw->jackd_read!=NULL) rec_audio_end();
+
+    if (!mainw->preview&&!mainw->foreign) jack_pb_stop();
+
+    // tell jack server to close audio file
+    if (mainw->jackd->fd>0) {
+      while (jack_get_msgq(mainw->jackd)!=NULL);
+      jack_message.command=JACK_CMD_FILE_CLOSE;
+      jack_message.data=NULL;
+      jack_message.next=NULL;
+      mainw->jackd->msgq=&jack_message;
+    }
+    if (mainw->record&&(prefs->rec_opts&REC_AUDIO)) {
+      weed_plant_t *event=get_last_frame_event(mainw->event_list);
+      insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
+    }
+  }
+  else {
+#endif
+    if (audio_player!=AUD_PLAYER_JACK&&stopcom!=NULL) {
+      // kill sound(if still playing)
+      dummyvar=system(stopcom);
+      g_free (stopcom);
+    }
+#ifdef ENABLE_JACK
+  }
+#endif
+
+  if (com!=NULL) g_free(com);
+  mainw->actual_frame=0;
+
+#ifdef ENABLE_OSC
+    lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED,"");
+#endif
+
+  // PLAY FINISHED...
+  if (prefs->stop_screensaver) dummyvar=system("xset s on 2>/dev/null; xset +dpms 2>/dev/null; gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null;");
+  if (prefs->pause_xmms&&cfile->achans>0&&!mainw->mute) dummyvar=system("xmms -u");
+  if (!mainw->foreign&&prefs->midisynch) dummyvar=system ("midistop");
+
+  if (mainw->ext_playback) {
+    if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+    mainw->stream_ticks=-1;
+    mainw->ext_playback=FALSE;
+    mainw->ext_keyboard=FALSE;
+  }
+  // we could have started by playing a generator, which could've been closed
+  if (mainw->files[current_file]==NULL) current_file=mainw->current_file;
+
+  if (audio_player!=AUD_PLAYER_JACK) {
+    // wait for audio_ended...
+    if (cfile->achans>0&&com2!=NULL) {
+      wait_for_stop(com2);
+    }
+    if (com2!=NULL) g_free(com2);
+  }
+
+  if (mainw->current_file>-1) g_snprintf(cfile->info_file,256,"%s/%s/.status",prefs->tmpdir,cfile->handle);
+
+  if (mainw->foreign) {
+    // recording from external window capture
+
+    mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
+    mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
+
+    cfile->hsize=mainw->pwidth;
+    cfile->vsize=mainw->pheight;
+
+    g_object_ref(GTK_SOCKET(mainw->playarea)->plug_window);
+    gdk_window_reparent(GTK_SOCKET(mainw->playarea)->plug_window,NULL,0,0);
+
+    XMapWindow (GDK_WINDOW_XDISPLAY (GTK_SOCKET(mainw->playarea)->plug_window),
+		  GDK_WINDOW_XID (GTK_SOCKET(mainw->playarea)->plug_window));
+
+    // TODO - figure out how to add back to toplevel windows...
+
+    while (g_main_context_iteration(NULL,FALSE));
+
+    return;
+  }
+
+  gtk_widget_hide(mainw->playarea);
+
+  // unblank the background
+  if ((mainw->faded||mainw->fs)&&mainw->multitrack==NULL) {
+    unfade_background();
+  }
+
+  // resize out of double size
+  if ((mainw->double_size&&!mainw->fs)&&mainw->multitrack==NULL) {
+    resize(1);
+    if (palette->style&STYLE_1) {
+      gtk_widget_show(mainw->sep_image);
+    }
+    gtk_widget_show(mainw->scrolledwindow);
+  }
+
+  // switch out of full screen mode
+  if (mainw->fs&&mainw->multitrack==NULL) {
+    gtk_widget_show(mainw->frame1);
+    gtk_widget_show(mainw->frame2);
+    gtk_widget_show(mainw->eventbox3);
+    gtk_widget_show(mainw->eventbox4);
+    gtk_widget_show(mainw->sep_image);
+    gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Preview"));
+    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
+    resize(1);
+    gtk_widget_show(mainw->t_bckground);
+    gtk_widget_show(mainw->t_double);
+  }
+
+  if (mainw->eventbox->allocation.height+mainw->menubar->allocation.height>mainw->scr_height-2) {
+    // the screen grew too much...remaximise it
+    gtk_window_unmaximize (GTK_WINDOW(mainw->LiVES));
+    mainw->noswitch=TRUE;
+    while (g_main_context_iteration(NULL,FALSE));
+    mainw->noswitch=FALSE;
+    gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
+  }
+  
+  if (mainw->multitrack==NULL) {
+    gtk_widget_hide(mainw->playframe);
+    gtk_widget_show(mainw->frame1);
+    gtk_widget_show(mainw->frame2);
+    gtk_widget_show(mainw->eventbox3);
+    gtk_widget_show(mainw->eventbox4);
+    disable_record();
+    
+    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
+  }
+
+  mainw->loop=oloop;
+  if (prefs->audio_player!=AUD_PLAYER_JACK) mainw->mute=mute;
+
+  if (!mainw->preview||!cfile->opening) {
+    sensitize();
+  }
+  if (mainw->current_file>-1&&cfile->opening) {
+    gtk_widget_set_sensitive (mainw->mute_audio, cfile->achans>0);
+    gtk_widget_set_sensitive (mainw->loop_continue, TRUE);
+    gtk_widget_set_sensitive (mainw->loop_video, cfile->achans>0&&cfile->frames>0);
+  }
+
+  if (mainw->cancelled!=CANCEL_USER_PAUSED) {
+    gtk_widget_set_sensitive (mainw->stop, FALSE);
+    gtk_widget_set_sensitive (mainw->m_stopbutton, FALSE);
+  }
+
+  if (mainw->multitrack==NULL) {
+    // update screen for internal players
+    gtk_widget_hide(mainw->framebar);
+    gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),"");
+    gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),NULL);
+  }
+
+  // kill the separate play window
+  if (mainw->play_window!=NULL) {
+    gtk_window_unfullscreen(GTK_WINDOW(mainw->play_window));
+    if (prefs->sepwin_type==0) {
+      kill_play_window();
+    }
+    else {
+      // or resize it back to single size
+      if (!GTK_WIDGET_VISIBLE (mainw->play_window)) {
+	block_expose();
+	mainw->noswitch=TRUE;
+	while (g_main_context_iteration (NULL,FALSE));
+	mainw->noswitch=FALSE;
+	unblock_expose();
+      }
+      if (mainw->current_file>-1&&cfile->is_loaded&&cfile->frames>0&&!mainw->is_rendering&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+	if (mainw->preview_box==NULL) {
+	  // create the preview in the sepwin
+	  make_preview_box();
+	}
+	if (mainw->current_file!=current_file) {
+	  // now we have to guess how to center the play window
+	  mainw->opwx=mainw->opwy=-1;
+	  mainw->preview_frame=0;
+	}
+	if (mainw->multitrack==NULL) {
+	  load_preview_image(FALSE);
+	  if (mainw->preview_box->parent==NULL) {
+	    // and add it to the play window, and force a WM redraw
+	    gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	  }
+	}
+      }
+      if (mainw->play_window!=NULL) {
+	if (mainw->multitrack==NULL) {
+	  mainw->playing_file=-2;
+	  resize_play_window();
+	  // needed - block expose events to main window when we resize sepwin
+	  if (cfile->is_loaded&&cfile->frames>0&&cfile->clip_type==CLIP_TYPE_DISK&&!mainw->is_rendering) {
+	    block_expose();
+	    mainw->noswitch=TRUE;
+	    while (g_main_context_iteration (NULL,FALSE));
+	    gtk_widget_queue_draw (mainw->preview_box);
+	    gtk_widget_queue_resize (mainw->preview_box);
+	    while (g_main_context_iteration (NULL,FALSE));
+	    mainw->noswitch=FALSE;
+	    unblock_expose();
+	  }
+	  else {
+	    // opening preview - put the blank frame back in...
+	    // force signal unblocked
+	    g_signal_handlers_block_matched(mainw->play_window,G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED,0,0,0,(gpointer)expose_play_window,NULL);
+	    g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
+	    mainw->pw_exp_is_blocked=FALSE;
+	    gtk_widget_queue_draw (mainw->play_window);
+	    gtk_widget_queue_resize (mainw->play_window);
+	    block_expose();
+	    mainw->noswitch=TRUE;
+	    while (g_main_context_iteration (NULL,FALSE));
+	    mainw->noswitch=FALSE;
+	    unblock_expose();
+	  }
+	  mainw->playing_file=-1;
+
+	  gtk_widget_queue_draw (mainw->LiVES);
+	  mainw->noswitch=TRUE;
+	  while (g_main_context_iteration (NULL,FALSE));
+	  mainw->noswitch=FALSE;
+	}
+	if (mainw->play_window!=NULL) {
+	  gtk_window_present (GTK_WINDOW (mainw->play_window));
+	  gdk_window_raise(mainw->play_window->window);
+	  unhide_cursor (mainw->play_window->window);
+	}
+      }
+    }
+
+    // free the last frame image
+    if (mainw->frame_layer!=NULL) {
+      weed_layer_free(mainw->frame_layer);
+      mainw->frame_layer=NULL;
+    }
+  }
+  
+  if (mainw->current_file>-1) cfile->play_paused=FALSE;
+  if (mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR) {
+    gint xcurrent_file=mainw->current_file;
+    weed_bg_generator_end (mainw->files[mainw->blend_file]->ext_src);
+    mainw->current_file=xcurrent_file;
+  }
+
+  mainw->filter_map=NULL;
+
+  mainw->record_paused=mainw->record_starting=FALSE;
+  
+  // disable the freeze key
+  gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), freeze_closure);
+  
+  if (mainw->multitrack==NULL) gtk_widget_show(mainw->scrolledwindow);
+
+  if (mainw->current_file>-1) {
+    if (mainw->toy_type==TOY_RANDOM_FRAMES&&!cfile->opening) {
+      load_start_image (cfile->start);
+      load_end_image (cfile->end);
+    }
+  }
+  if (prefs->show_player_stats) {
+    if (mainw->fps_measure>0.) {
+      msg=g_strdup_printf (_ ("Average FPS was %.4f\n"),mainw->fps_measure);
+      d_print (msg);
+      g_free (msg);
+    }
+  }
+  if (mainw->size_warn) {
+    do_error_dialog (_ ("\n\nSome frames in this clip are wrongly sized.\nYou should click on Tools--->Resize All\nand resize all frames to the current size.\n"));
+    mainw->size_warn=FALSE;
+  }
+  mainw->is_processing=mainw->preview;
+
+  // TODO - ????
+  if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_DISK&&cfile->frames==0&&mainw->record_perf) {
+    g_signal_handler_block(mainw->record_perf,mainw->record_perf_func);
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
+    g_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
+  }
+
+  // TODO - can this be done earlier ?
+  if (mainw->cancelled==CANCEL_APP_QUIT) on_quit_activate (NULL,NULL);
+
+  // end record performance
+
+  if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
+    gen_file=mainw->current_file;
+  }
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd!=NULL&&mainw->jackd->in_use) {
+    while (jack_get_msgq(mainw->jackd)!=NULL);
+    mainw->jackd->in_use=FALSE;
+  }
+#endif
+
+  if (mainw->record) is_new_file=deal_with_render_choice(TRUE);
+
+  if (gen_file>-1&&mainw->current_file!=gen_file&&mainw->files[gen_file]!=NULL&&mainw->files[gen_file]->clip_type==CLIP_TYPE_GENERATOR&&cfile->clip_type!=CLIP_TYPE_GENERATOR) {
+    current_file=mainw->pre_src_file=mainw->current_file;
+    mainw->current_file=gen_file;
+  }
+
+  if (!mainw->preview&&mainw->current_file>-1) {
+    if ((!is_new_file&&mainw->current_file!=current_file)||cfile->clip_type==CLIP_TYPE_GENERATOR) {
+      mainw->osc_block=TRUE;
+      if (mainw->current_file>0&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
+	weed_generator_end (cfile->ext_src);
+      }
+      if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
+      if (mainw->files[current_file]!=NULL) switch_to_file (mainw->current_file,current_file);
+      else if (mainw->pre_src_file!=-1) switch_to_file (mainw->current_file,mainw->pre_src_file);
+    }
+    else {
+      if (mainw->multitrack==NULL) get_play_times();
+    }
+  }
+
+  if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
+
+  reset_clip_menu();
+
+}
+  
+
+gboolean
+get_temp_handle(gint index, gboolean create) {
+  // we can call this to get a temp handle for returning info from the backend
+  // this function is also called from get_new_handle to create a permanent handle
+  // for an opened file
+
+  // if a temp handle is required, pass in index as mainw->first_free_file, and
+  // call 'smogrify close cfile->handle' on it after use, then restore mainw->current_file
+
+  // returns FALSE if we couldn't write to tempdir
+
+  // WARNING: this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
+
+
+  gchar *com;
+  gint ret;
+  gboolean is_unique;
+
+  if (index==-1) {
+    too_many_files();
+    return FALSE;
+  }
+
+  do {
+    is_unique=TRUE;
+
+    com=g_strdup_printf("smogrify new %d",getpid());
+    ret=system(com);
+    g_free(com);
+    
+    if (ret) {
+      tempdir_warning();
+      return FALSE;
+    }
+    
+    mainw->current_file=index;
+    
+    //get handle from info file, we will also malloc a new "file" struct here
+    get_handle_from_info_file(index);
+
+    if (strlen(mainw->set_name)>0) {
+      gchar *setclipdir=g_strdup_printf("%s/%s/clips/%s",prefs->tmpdir,mainw->set_name,cfile->handle);
+      if (g_file_test(setclipdir,G_FILE_TEST_IS_DIR)) is_unique=FALSE;
+      g_free(setclipdir);
+    }
+  } while (!is_unique);
+
+  if (create) create_cfile();
+  return TRUE;
+}
+
+
+
+void 
+create_cfile(void) {
+  // any cfile (clip) initialisation goes in here
+  cfile->menuentry=NULL;
+  cfile->start=cfile->end=0;
+  cfile->frames=0;
+  g_snprintf(cfile->type,40,"%s",_ ("Unknown"));
+  cfile->f_size=0l;
+  cfile->achans=0;
+  cfile->arate=0;
+  cfile->arps=0;
+  cfile->afilesize=0l;
+  cfile->asampsize=0;
+  cfile->undoable=FALSE;
+  cfile->redoable=FALSE;
+  cfile->changed=FALSE;
+  cfile->bpp=24;
+  cfile->hsize=cfile->vsize=0;
+  cfile->fps=cfile->pb_fps=prefs->default_fps;
+  cfile->events[0]=NULL;
+  cfile->insert_start=cfile->insert_end=0;
+  cfile->is_untitled=TRUE;
+  cfile->was_renamed=FALSE;
+  cfile->undo_action=UNDO_NONE;
+  cfile->opening_audio=cfile->opening=cfile->opening_only_audio=FALSE;
+  cfile->pointer_time=0.;
+  cfile->restoring=cfile->opening_loc=cfile->nopreview=cfile->is_loaded=FALSE;
+  cfile->video_time=cfile->total_time=cfile->laudio_time=cfile->raudio_time=0.;
+  cfile->freeze_fps=0.;
+  cfile->frameno=cfile->last_frameno=0;
+  cfile->proc_ptr=NULL;
+  cfile->progress_start=cfile->progress_end=0;
+  cfile->play_paused=cfile->nokeep=FALSE;
+  cfile->undo_start=cfile->undo_end=0;
+  cfile->rowstride=0; // unknown
+  cfile->ext_src=NULL;
+  cfile->clip_type=CLIP_TYPE_DISK;
+  cfile->ratio_fps=FALSE;
+  cfile->aseek_pos=0;
+  cfile->unique_id=(gint64)random();
+  cfile->layout_map=NULL;
+  cfile->frame_index=cfile->frame_index_back=NULL;
+  cfile->fx_frame_pump=0;
+  //cfile->nbfi=0;
+  //cfile->nffi=0;
+
+  cfile->deinterlace=FALSE;
+
+  cfile->play_paused=FALSE;
+  cfile->header_version=LIVES_CLIP_HEADER_VERSION;
+
+  cfile->event_list=cfile->event_list_back=NULL;
+  cfile->next_event=NULL;
+
+  memset(cfile->name,0,1);
+  memset(cfile->mime_type,0,1);
+  memset(cfile->file_name,0,1);
+
+  memset (cfile->comment,0,1);
+  memset (cfile->author,0,1);
+  memset (cfile->title,0,1);
+  memset (cfile->keywords,0,1);
+
+  cfile->signed_endian=AFORM_UNKNOWN;
+  g_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
+  g_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
+
+  g_snprintf(cfile->info_file,256,"%s/%s/.status",prefs->tmpdir,cfile->handle);
+
+  // remember to set cfile->is_loaded=TRUE !!!!!!!!!!
+}
+
+
+gboolean
+get_new_handle (gint index, gchar *name) {
+  // here is where we first initialize for the clipboard
+  // and for paste_as_new, and restore
+  // pass in name as NULL or "" and it will be set with an untitled number
+
+  // this function *does not* change mainw->current_file, or add to the menu
+  // or update mainw->clips_available
+  gchar *xname;
+
+  gint current_file=mainw->current_file;
+  if (!get_temp_handle(index,TRUE)) return FALSE;
+
+  // note : don't need to update first_free_file for the clipboard 
+  if (index!=0) {
+    get_next_free_file();
+  }
+
+  if (name==NULL||!strlen(name)) {
+    cfile->is_untitled=TRUE;
+    xname=g_strdup_printf(_ ("Untitled%d"),mainw->untitled_number++);
+  }
+  else xname=g_strdup(name);
+
+  g_snprintf(cfile->file_name,256,"%s",xname);
+  g_snprintf(cfile->name,256,"%s",xname);
+  mainw->current_file=current_file;
+
+  g_free(xname);
+  return TRUE;
+}
+
+
+
+void add_file_info(const gchar *check_handle, gboolean aud_only) {
+  // file information has been retrieved, set struct cfile with details
+  // contained in mainw->msg. We do this twice, once before opening the file, once again after.
+  // The first time, frames and afilesize may not be correct.
+  gint pieces;
+  gchar *mesg,*mesg1;
+  gchar **array;
+  gchar *test_fps_string1;
+  gchar *test_fps_string2;
+
+  if (check_handle!=NULL) {
+    array=g_strsplit(mainw->msg,"|",-1);
+    
+    // sanity check handle against status file
+    // (this should never happen...)
+    
+    if (strcmp(check_handle,array[1])) {
+      g_printerr("Handle!=statusfile ! Bailing !\n");
+      g_signal_emit_by_name(mainw->LiVES,"delete_event");
+    }
+    
+    if (!aud_only) {
+      cfile->frames=atoi(array[2]);
+      g_snprintf(cfile->type,40,"%s",array[3]);
+      cfile->hsize=atoi(array[4]);
+      cfile->vsize=atoi(array[5]);
+      cfile->bpp=atoi(array[6]);
+      cfile->pb_fps=cfile->fps=g_strtod(array[7],NULL);
+      
+      cfile->f_size=strtol(array[8],NULL,10);
+    }
+
+    cfile->arps=cfile->arate=atoi(array[9]);
+    cfile->achans=atoi(array[10]);
+    cfile->asampsize=atoi(array[11]);
+    cfile->signed_endian=get_signed_endian(atoi (array[12]), atoi (array[13]));
+    cfile->afilesize=strtol(array[14],NULL,10);
+    
+    pieces=get_token_count (mainw->msg,'|');
+    
+    if (pieces>14&&array[15]!=NULL) {
+      g_snprintf (cfile->title,256,"%s",g_strchomp (g_strchug ((array[15]))));
+    }
+    if (pieces>15&&array[16]!=NULL) {
+      g_snprintf (cfile->author,256,"%s",g_strchomp (g_strchug ((array[16]))));
+    }
+    if (pieces>16&&array[17]!=NULL) {
+      g_snprintf (cfile->comment,256,"%s",g_strchomp (g_strchug ((array[17]))));
+    }
+    
+    g_strfreev(array);
+  }
+
+  if (aud_only) return;
+
+  test_fps_string1=g_strdup_printf ("%.3f00000",cfile->fps);
+  test_fps_string2=g_strdup_printf ("%.8f",cfile->fps);
+
+  if (strcmp (test_fps_string1,test_fps_string2)) {
+    cfile->ratio_fps=TRUE;
+  }
+  else {
+    cfile->ratio_fps=FALSE;
+  }
+  g_free (test_fps_string1);
+  g_free (test_fps_string2);
+
+  if (!mainw->save_with_sound) {
+    cfile->arps=cfile->arate=cfile->achans=cfile->asampsize=0;
+    cfile->afilesize=0l;
+  }
+
+  if (cfile->frames<=0) {
+    if (cfile->afilesize==0l&&cfile->is_loaded) {
+      // we got no video or audio...
+      return;
+    }
+    cfile->start=cfile->end=cfile->undo_start=cfile->undo_end=0;
+  }
+  else {
+  // start with all selected
+    cfile->start=1;
+    cfile->end=cfile->frames;
+    cfile->undo_start=cfile->start;
+    cfile->undo_end=cfile->end;
+  }
+
+  cfile->orig_file_name=TRUE;
+  cfile->is_untitled=FALSE;
+
+  // some files give us silly frame rates, even single frames...
+  // fps of 1000. is used for some streams (i.e. play each frame as it is received)
+  if (cfile->fps==0.||cfile->fps==1000.||(cfile->frames<2&&cfile->is_loaded)) {
+    if (!(cfile->afilesize*cfile->asampsize*cfile->arate*cfile->achans)||cfile->frames<2) {
+      if (cfile->frames!=1) {
+      mesg=g_strdup_printf(_ ("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \nDefault can be set in Tools | Preferences | Misc.\n"),prefs->default_fps);
+      d_print(mesg);
+      g_free(mesg);
+      }
+      cfile->pb_fps=cfile->fps=prefs->default_fps;
+    }
+    else {
+      cfile->laudio_time=cfile->raudio_time=cfile->afilesize/cfile->asampsize*8./cfile->arate/cfile->achans;
+      cfile->pb_fps=cfile->fps=1.*(gint)(cfile->frames/cfile->laudio_time);
+      if (cfile->fps>FPS_MAX||cfile->fps<1.) {
+	cfile->pb_fps=cfile->fps=prefs->default_fps;
+      }
+      mesg=g_strdup_printf(_ ("Playback speed was adjusted to %.3f frames per second to fit audio.\n"),cfile->fps);
+      d_print(mesg);
+      g_free(mesg);
+    }
+  }
+  if (cfile->opening) return;
+
+  if (cfile->bpp==256) {
+    mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->fps);
+  }
+  else {
+    cfile->bpp=24; // assume RGB24
+    mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
+  }
+    
+  if (cfile->achans==0) {
+    mesg=g_strdup_printf (_ ("%s none\n"),mesg1);
+  }
+  else {
+    mesg=g_strdup_printf(_ ("%s %d Hz %d channel(s) %d bps\n"),mesg1,cfile->arate,cfile->achans,cfile->asampsize);
+  }
+  d_print(mesg);
+  g_free(mesg1);
+  g_free(mesg);
+
+  // get the comments
+  if (strlen (cfile->comment)) {
+    mesg=g_strdup_printf(_ (" - Comment: %s\n"),cfile->comment);
+    d_print(mesg);
+    g_free(mesg);
+  }
+}
+
+
+void 
+save_file_comments (void) {
+  // save the comments etc for smogrify
+  int comment_fd;
+  gchar *comment_file=g_strdup_printf ("%s/%s/.comment",prefs->tmpdir,cfile->handle);
+  unlink (comment_file);
+  comment_fd=creat(comment_file,S_IRUSR|S_IWUSR);
+  dummyvar=write(comment_fd,cfile->title,strlen (cfile->title));
+  dummyvar=write(comment_fd,"||%",3);
+  dummyvar=write(comment_fd,cfile->author,strlen (cfile->author));
+  dummyvar=write(comment_fd,"||%",3);
+  dummyvar=write(comment_fd,cfile->comment,strlen (cfile->comment));
+  close (comment_fd);
+  g_free (comment_file);
+}
+
+
+
+
+
+void
+wait_for_stop (const gchar *stop_command) {
+  FILE *infofile;
+
+# define SECOND_STOP_TIME 0.1
+# define STOP_GIVE_UP_TIME 1.0
+
+  gdouble time_waited=0.;
+  gboolean sent_second_stop=FALSE;
+  
+  // send another stop if necessary
+  mainw->noswitch=TRUE;
+  while (!(infofile=fopen(cfile->info_file,"r"))) {
+    while (g_main_context_iteration(NULL,FALSE));
+    g_usleep(prefs->sleep_time);
+    time_waited+=1000000./prefs->sleep_time;
+    if (time_waited>SECOND_STOP_TIME&&!sent_second_stop) {
+      dummyvar=system(stop_command);
+      sent_second_stop=TRUE;
+    }
+    
+    if (time_waited>STOP_GIVE_UP_TIME) {
+      // give up waiting, but send a last try...
+      dummyvar=system(stop_command);
+      break;
+    }
+  }
+  mainw->noswitch=FALSE;
+  if (infofile) fclose (infofile);
+}
+
+
+gboolean
+save_frame(gint frame, const gchar *file_name) {
+  gint result;
+  gchar *com,*tmp;
+  gchar full_file_name[256];
+
+  if (strrchr(file_name,'.')==NULL) {
+    g_snprintf(full_file_name,255,"%s.%s",file_name,prefs->image_ext);
+   }
+  else {
+    g_snprintf(full_file_name,255,"%s",file_name);
+  }
+
+  if (!check_file(full_file_name,TRUE)) return FALSE;
+
+  com=g_strdup_printf(_ ("Saving frame %d as %s..."),frame,full_file_name);
+  d_print(com);
+  g_free(com);
+
+  if (cfile->clip_type==CLIP_TYPE_FILE) {
+    virtual_to_images(mainw->current_file,frame,frame);
+  }
+
+  com=g_strdup_printf("smogrify save_frame %s %d \"%s\"",cfile->handle,frame,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)));
+  result=system(com);
+  g_free(com);
+  g_free(tmp);
+
+  if (result==256) {
+    d_print(_ ("failed (permission denied)\n"));
+    return FALSE;
+  }
+  if (result==0) {
+    d_print_done();
+    return TRUE;
+  }
+  // some other error condition
+  return FALSE;
+}
+
+
+void
+backup_file(const gchar *file_name) {
+  gchar *com,*tmp;
+  gchar title[256];
+  gchar **array;
+  gchar full_file_name[256];
+  gint withsound=1;
+  gboolean with_perf=FALSE;
+  gint backup_start,backup_end;
+
+  if (strrchr(file_name,'.')==NULL) {
+    g_snprintf(full_file_name,255,"%s.lv1",file_name);
+   }
+  else {
+    g_snprintf(full_file_name,255,"%s",file_name);
+  }
+
+  // check if file exists
+  if (!check_file(full_file_name,TRUE)) return;
+
+  if (mainw->save_all) {
+    backup_start=1;
+    backup_end=cfile->frames;
+    if (backup_end<backup_start) {
+      backup_start=backup_end;
+    }
+  }
+  else {
+    backup_start=cfile->start;
+    backup_end=cfile->end;
+  }
+
+  // create header files
+  write_headers(cfile); // for pre LiVES 0.9.6
+  save_clip_values(mainw->current_file); // new style (0.9.6+)
+
+  //...and backup
+  get_menu_text(cfile->menuentry,title);
+  com=g_strdup_printf(_ ("Backing up %s to %s"),title,full_file_name);
+  d_print(com);
+  g_free(com);
+
+  if (!mainw->save_with_sound) {
+    d_print(_ (" without sound"));
+    withsound=0;
+  }
+
+  d_print("...");
+  cfile->progress_start=1;
+  cfile->progress_end=cfile->frames;
+
+  if (cfile->clip_type==CLIP_TYPE_FILE) {
+    mainw->cancelled=CANCEL_NONE;
+    do_threaded_dialog(_("Pulling frames from clip"),TRUE);
+    virtual_to_images(mainw->current_file,1,cfile->frames);
+    end_threaded_dialog();
+
+    if (mainw->cancelled!=CANCEL_NONE) {
+      sensitize();
+      mainw->cancelled=CANCEL_USER;
+      cfile->nopreview=FALSE;
+      d_print_cancelled();
+      return;
+    }
+  }
+
+  com=g_strdup_printf("smogrify backup %s %d %d %d \"%s\"",cfile->handle,withsound,backup_start,backup_end,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)));
+  unlink (cfile->info_file);
+  cfile->nopreview=TRUE;
+  dummyvar=system(com);
+  g_free(tmp);
+
+  if (!(do_progress_dialog(TRUE,TRUE,_ ("Backing up")))||mainw->error) {
+    if (mainw->error) {
+      d_print_failed();
+    }
+
+    // cancelled - clear up files
+    cfile->nopreview=FALSE;
+    g_free (com);
+
+    // using restore details in the 'wrong' way here...it will also clear files
+    com=g_strdup_printf("smogrify restore_details %s",cfile->handle);
+    unlink (cfile->info_file);
+    dummyvar=system(com);
+    // auto-d
+    g_free(com);
+
+    save_clip_values(mainw->current_file);
+
+    return;
+  }
+
+  cfile->nopreview=FALSE;
+  g_free(com);
+
+  if (mainw->error) {
+    do_error_dialog(mainw->msg);
+    d_print_failed();
+    return;
+  }
+
+  if (with_perf) {
+    d_print(_ ("performance data was backed up..."));
+  }
+
+  array=g_strsplit(mainw->msg,"|",3);
+  cfile->f_size=strtol(array[1],NULL,10);
+  g_strfreev(array);
+
+  g_snprintf(cfile->file_name,255,"%s",full_file_name);
+  if (!cfile->was_renamed) {
+    g_snprintf(cfile->name,255,"%s",full_file_name);
+    set_main_title(cfile->name,0);
+    set_menu_text(cfile->menuentry,full_file_name,FALSE);
+  }
+  add_to_recent (full_file_name,0.,0,NULL);
+
+  cfile->changed=FALSE;
+  // set is_untitled to stop users from saving with a .lv1 extension
+  cfile->is_untitled=TRUE;
+  gtk_widget_set_sensitive(mainw->save,FALSE);
+  d_print_done();
+}
+
+
+void 
+write_headers (file *file) {
+  int header_fd;
+  gchar *hdrfile;
+
+  // save the file details
+  hdrfile=g_strdup_printf("%s/%s/header",prefs->tmpdir,file->handle);
+  header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
+
+  dummyvar=write(header_fd,&cfile->bpp,sizint);
+  dummyvar=write(header_fd,&cfile->fps,sizdbl);
+  dummyvar=write(header_fd,&cfile->hsize,sizint);
+  dummyvar=write(header_fd,&cfile->vsize,sizint);
+  dummyvar=write(header_fd,&cfile->arps,sizint);
+  dummyvar=write(header_fd,&cfile->signed_endian,sizint);
+  dummyvar=write(header_fd,&cfile->arate,sizint);
+  dummyvar=write(header_fd,&cfile->unique_id,8);
+  dummyvar=write(header_fd,&cfile->achans,sizint);
+  dummyvar=write(header_fd,&cfile->asampsize,sizint);
+
+  dummyvar=write(header_fd,LiVES_VERSION,strlen(LiVES_VERSION));
+  close(header_fd);
+  g_free(hdrfile);
+
+  // more file details (since version 0.7.5)
+  hdrfile=g_strdup_printf("%s/%s/header2",prefs->tmpdir,file->handle);
+  header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
+  dummyvar=write(header_fd,&file->frames,sizint);
+  dummyvar=write(header_fd,&file->title,256);
+  dummyvar=write(header_fd,&file->author,256);
+  dummyvar=write(header_fd,&file->comment,256);
+  close(header_fd);
+  g_free(hdrfile);
+}
+
+
+gboolean read_headers(const gchar *file_name) {
+  // file_name is only used to get the file size on the disk
+  FILE *infofile;
+  gchar buff[1024];
+  gint pieces;
+  gchar **array;
+  gchar *com,*tmp;
+  int header_fd;
+  gchar version[32];
+  gint header_size;
+  gint version_hash;
+
+  size_t sizhead=8*sizint+sizdbl+8;
+
+  gchar *old_hdrfile=g_strdup_printf("%s/%s/header",prefs->tmpdir,cfile->handle);
+  gchar *lives_header=g_strdup_printf("%s/%s/header.lives",prefs->tmpdir,cfile->handle);
+
+  time_t old_time=0,new_time=0;
+  struct stat mystat;
+
+  // TODO - remove this some time before 2038...
+  if (!stat(old_hdrfile,&mystat)) old_time=mystat.st_mtime;
+  if (!stat(lives_header,&mystat)) new_time=mystat.st_mtime;
+  ///////////////
+
+  if (old_time<new_time) {
+    if (get_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames,0)) {
+      gint asigned,aendian;
+      gchar *tmp;
+
+      // use new style header (LiVES 0.9.6+)
+      g_free(old_hdrfile);
+
+      // clean up and get file sizes
+      com=g_strdup_printf("smogrify restore_details %s \"%s\" %d",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
+	
+      dummyvar=system(com);
+      g_free(com);
+      g_free(tmp);
+     
+      while (!(infofile=fopen(cfile->info_file,"r"))) {
+	g_usleep(prefs->sleep_time);
+      }
+    
+      dummychar=fgets(buff,1024,infofile);
+      fclose(infofile);
+      
+      pieces=get_token_count (buff,'|');
+
+      if (pieces>2) {
+	pthread_mutex_lock(&mainw->gtk_mutex);
+	array=g_strsplit(buff,"|",pieces);
+	
+	cfile->f_size=strtol(array[1],NULL,10);
+	cfile->afilesize=strtol(array[2],NULL,10);
+	g_strfreev(array);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
+      }
+
+      cache_file_contents(lives_header);
+      g_free(lives_header);
+
+      get_clip_value(mainw->current_file,CLIP_DETAILS_HEADER_VERSION,&cfile->header_version,16);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_BPP,&cfile->bpp,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_FPS,&cfile->fps,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_PB_FPS,&cfile->pb_fps,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_PB_FRAMENO,&cfile->pb_fps,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian,0);
+      cfile->signed_endian=asigned+aendian;
+      get_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans,0);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize,0);
+ 
+      get_clip_value(mainw->current_file,CLIP_DETAILS_TITLE,cfile->title,256);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_AUTHOR,cfile->author,256);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_COMMENT,cfile->comment,256);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_KEYWORDS,cfile->comment,1024);
+      get_clip_value(mainw->current_file,CLIP_DETAILS_FILENAME,cfile->file_name,256);
+
+      return TRUE;
+    }
+  }
+
+  // old style headers (pre 0.9.6)
+  g_free(lives_header);
+  memset (version,0,32);
+  memset (buff,0,1024);
+  
+  header_fd=open(old_hdrfile,O_RDONLY);
+  header_size=get_file_size(header_fd);
+  
+  if (header_size<sizhead) {
+    g_free(old_hdrfile);
+    return FALSE;
+  }
+  else {
+    dummyvar=read(header_fd,&cfile->bpp,sizint);
+    dummyvar=read(header_fd,&cfile->fps,sizdbl);
+    dummyvar=read(header_fd,&cfile->hsize,sizint);
+    dummyvar=read(header_fd,&cfile->vsize,sizint);
+    dummyvar=read(header_fd,&cfile->arps,sizint);
+    dummyvar=read(header_fd,&cfile->signed_endian,sizint);
+    dummyvar=read(header_fd,&cfile->arate,sizint);
+    dummyvar=read(header_fd,&cfile->unique_id,8);
+    dummyvar=read(header_fd,&cfile->achans,sizint);
+    dummyvar=read(header_fd,&cfile->asampsize,sizint);
+
+    if (header_size>sizhead) {
+      if (header_size-sizhead>31) {
+	dummyvar=read(header_fd,&version,31);
+	version[31]='\0';
+      }
+      else {
+	dummyvar=read(header_fd,&version,header_size-sizhead);
+	version[header_size-sizhead]='\0';
+      }
+    }
+  }
+  close(header_fd);
+  g_free(old_hdrfile);
+  
+  // handle version changes
+  version_hash=verhash(version);
+  if (version_hash<7001) {
+    cfile->arps=cfile->arate;
+    cfile->signed_endian=mainw->endian;
+  }
+  
+  com=g_strdup_printf("smogrify restore_details %s \"%s\" %d",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
+  dummyvar=system(com);
+  g_free(com);
+  g_free(tmp);
+
+  while (!(infofile=fopen(cfile->info_file,"r"))) {
+    g_usleep(prefs->sleep_time);
+  }
+  
+  dummychar=fgets(buff,1024,infofile);
+  fclose(infofile);
+  
+  pieces=get_token_count (buff,'|');
+  array=g_strsplit(buff,"|",pieces);
+  cfile->f_size=strtol(array[1],NULL,10);
+  cfile->afilesize=strtol(array[2],NULL,10);
+  cfile->frames=atoi(array[3]);
+
+  cfile->bpp=24;
+  
+  if (pieces>4&&array[4]!=NULL) {
+    g_snprintf (cfile->title,256,"%s",g_strchomp (g_strchug ((array[4]))));
+  }
+  if (pieces>5&&array[5]!=NULL) {
+    g_snprintf (cfile->author,256,"%s",g_strchomp (g_strchug ((array[5]))));
+  }
+  if (pieces>6&&array[6]!=NULL) {
+    g_snprintf (cfile->comment,256,"%s",g_strchomp (g_strchug ((array[6]))));
+  }
+  
+  g_strfreev(array);
+  return TRUE;
+}
+
+
+void open_set_file (gchar *set_name, gint clipnum) {
+  gchar name[256];
+  gboolean needs_update=FALSE;
+
+  if (mainw->current_file<1) return;
+
+  memset (name,0,256);
+
+  if (mainw->cached_list!=NULL) {
+    // LiVES 0.9.6+
+    get_clip_value(mainw->current_file,CLIP_DETAILS_PB_FPS,&cfile->pb_fps,0);
+    get_clip_value(mainw->current_file,CLIP_DETAILS_PB_FRAMENO,&cfile->frameno,0);
+    get_clip_value(mainw->current_file,CLIP_DETAILS_CLIPNAME,name,256);
+    get_clip_value(mainw->current_file,CLIP_DETAILS_UNIQUE_ID,&cfile->unique_id,0);
+  }
+  else {
+    // pre 0.9.6
+    size_t nlen;
+    int set_fd;
+    int pb_fps;
+    gchar *setfile=g_strdup_printf("%s/%s/set.%s",prefs->tmpdir,cfile->handle,set_name);
+
+    if ((set_fd=open(setfile,O_RDONLY))>0) {
+      // get perf_start
+      if ((nlen=read(set_fd,&pb_fps,sizint))) {
+	cfile->pb_fps=pb_fps/1000.;
+	dummyvar=read(set_fd,&cfile->frameno,sizint);
+	nlen=read(set_fd,name,256);
+      }
+      close (set_fd);
+    }
+    g_free (setfile);
+    needs_update=TRUE;
+  }
+
+  if (strlen(name)==0) {
+    g_snprintf (name,256,"set_clip %.3d",clipnum);
+  }
+  if (strlen(mainw->set_name)&&strcmp (name+strlen (name)-1,")")) {
+    g_snprintf (cfile->name,256,"%s (%s)",name,set_name);
+  }
+  else {
+    g_snprintf (cfile->name,256,"%s",name);
+  }
+
+  if (needs_update) {
+    save_clip_values(mainw->current_file);
+  }
+}
+
+
+
+void
+restore_file(const gchar *file_name) {
+  gchar *com=g_strdup("dummy");
+  gchar *mesg,*mesg1;
+  gboolean is_OK=TRUE;
+  gchar *fname=g_strdup(file_name);
+
+  gint old_file=mainw->current_file,current_file;
+  gint new_file=mainw->first_free_file;
+  gboolean not_cancelled;
+
+  // create a new file
+  if (!get_new_handle(new_file,fname)) {
+    return;
+  }
+  
+  mesg=g_strdup_printf(_ ("Restoring %s..."),file_name);
+  d_print(mesg);
+  g_free(mesg);
+  
+  mainw->current_file=new_file;
+  
+  cfile->hsize=mainw->def_width;
+  cfile->vsize=mainw->def_height;
+  
+  switch_to_file((mainw->current_file=old_file),new_file);
+  set_main_title(cfile->file_name,0);
+  
+  com=g_strdup_printf("smogrify restore %s \"%s\"",cfile->handle,file_name);
+  dummyvar=system(com);
+  g_free(com);
+  unlink (cfile->info_file);
+  
+  cfile->restoring=TRUE;
+  not_cancelled=do_progress_dialog(TRUE,TRUE,_ ("Restoring"));
+  cfile->restoring=FALSE;
+
+  if (mainw->error||!not_cancelled) {
+    if (mainw->error) {
+      do_blocking_error_dialog (mainw->msg);
+    }
+    close_current_file(old_file);
+    return;
+  }
+  
+  // call function to return rest of file details
+  //fsize, afilesize and frames
+  is_OK=read_headers(file_name);
+
+  if (mainw->cached_list!=NULL) {
+    g_list_free_strings(mainw->cached_list);
+    g_list_free(mainw->cached_list);
+    mainw->cached_list=NULL;
+  }
+
+  if (!is_OK) {
+    mesg=g_strdup_printf(_ ("\n\nThe file %s is corrupt.\nLiVES was unable to restore it.\n"),file_name);
+    do_blocking_error_dialog(mesg);
+    g_free(mesg);
+    
+    d_print_failed();
+    close_current_file(old_file);
+    return;
+  }
+  if (!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
+  
+  // add entry to window menu
+  // TODO - do this earlier and allow switching during restore
+  add_to_winmenu();
+
+  if (prefs->show_recent) {
+    add_to_recent(file_name,0.,0,NULL);
+  }
+
+  if (cfile->frames>0) {
+    cfile->start=1;
+  }
+  else {
+    cfile->start=0;
+  }
+  cfile->end=cfile->frames;
+  cfile->arps=cfile->arate;
+  cfile->pb_fps=cfile->fps;
+  cfile->opening=FALSE;
+  cfile->proc_ptr=NULL;
+
+  cfile->changed=FALSE;
+
+  g_snprintf(cfile->type,40,"Frames");
+  mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
+
+  if (cfile->afilesize==0l) {
+    cfile->achans=0;
+    mesg=g_strdup_printf (_ ("%s none\n"),mesg1);
+  }
+  else {
+    mesg=g_strdup_printf(_ ("%s %d Hz %d channel(s) %d bps\n"),mesg1,cfile->arate,cfile->achans,cfile->asampsize);
+  }
+  d_print(mesg);
+  g_free(mesg);
+  g_free(mesg1);
+
+  cfile->is_loaded=TRUE;
+  current_file=mainw->current_file;
+
+  save_clip_values(current_file);
+  if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
+
+  switch_to_file((mainw->current_file=old_file),current_file);
+
+#ifdef ENABLE_OSC
+    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
+#endif
+
+}
+
+
+gint save_event_frames(void) {
+  // when doing a resample, we save a list of frames for the back end to do
+  // a reorder
+
+  // here we also update the frame_index for clips of type CLIP_TYPE_FILE
+
+
+  int header_fd,i=0;
+  gchar *hdrfile=g_strdup_printf("%s/%s/event.frames",prefs->tmpdir,cfile->handle);
+  gint perf_start,perf_end;
+  
+  gint nevents;
+
+  if (cfile->event_list==NULL) {
+    unlink (hdrfile);
+    return -1;
+  }
+  
+  perf_start=(gint)(cfile->fps*event_list_get_start_secs (cfile->event_list))+1;
+  perf_end=perf_start+(nevents=count_events (cfile->event_list,FALSE))-1;
+  
+  event_list_to_block (cfile->event_list,nevents);
+
+  if (cfile->frame_index!=NULL) {
+    gint xframes=cfile->frames;
+
+    if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
+    cfile->frame_index_back=cfile->frame_index;
+    cfile->frame_index=NULL;
+
+    create_frame_index(mainw->current_file,FALSE,0,nevents);
+
+    for (i=0;i<nevents;i++) {
+      cfile->frame_index[i]=cfile->frame_index_back[(cfile->events[0]+i)->value-1];
+    }
+
+    cfile->frames=nevents;
+    if (!check_if_non_virtual(cfile)) save_frame_index(mainw->current_file);
+    cfile->frames=xframes;
+  }
+
+  header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
+  dummyvar=write(header_fd,&perf_start,sizint);
+  
+  if (!(cfile->events[0]==NULL)) {
+    for (i=0;i<=perf_end-perf_start;i++) {
+      dummyvar=write(header_fd,&((cfile->events[0]+i)->value),sizint);
+    }
+    g_free (cfile->events[0]);
+    cfile->events[0]=NULL;
+  }
+  
+  close(header_fd);
+  g_free(hdrfile);
+  return i;
+}
+
+
+
+/////////////////////////////////////////////////
+/// scrap file
+///  the scrap file is used during recording to dump any streamed (non-disk) clips to
+/// during render/preview we load frames from the scrap file, but only as necessary
+
+
+gboolean open_scrap_file (void) {
+  // create a virtual clip
+  gint current_file=mainw->current_file;
+  gint new_file=mainw->first_free_file;
+
+  if (!get_temp_handle (new_file,TRUE)) return FALSE;
+  get_next_free_file();
+
+  mainw->scrap_file=mainw->current_file=new_file;
+
+  g_snprintf(cfile->type,40,"scrap");
+  cfile->frames=0;
+
+  mainw->current_file=current_file;
+  return TRUE;
+}
+
+
+
+gint save_to_scrap_file (GdkPixbuf *pixbuf) {
+  // returns frame number
+  // TODO - handle errors, like out of disk space...
+
+  GError *error=NULL;
+  gchar *oname=g_strdup_printf ("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,mainw->files[mainw->scrap_file]->frames+1,prefs->image_ext);
+
+  if (!strcmp (prefs->image_ext,"jpg")) {
+    gdk_pixbuf_save (pixbuf, oname, "jpeg", &error,"quality", "100", NULL);
+  }
+  else if (!strcmp (prefs->image_ext,"png")) {
+    gdk_pixbuf_save (pixbuf, oname, "png", &error, NULL);
+  }
+  else {
+    //gdk_pixbuf_save_to_callback(...);
+  }
+  if (error==NULL) {
+    int fd=open(oname,O_NOATIME|O_RDONLY);
+    fsync(fd); // try to sync file access, to make saving smoother
+    close(fd);
+    mainw->files[mainw->scrap_file]->frames++;
+  }
+  g_free(oname);
+  return mainw->files[mainw->scrap_file]->frames;
+
+}
+
+
+
+void close_scrap_file (void) {
+  gint current_file=mainw->current_file;
+
+  if (mainw->scrap_file==-1) return;
+
+  mainw->current_file=mainw->scrap_file;
+  close_current_file(current_file);
+
+  mainw->scrap_file=-1;
+}
+
+
+
+void recover_layout_map(numclips) {
+  // load layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
+  GList *mlist,*lmap_node,*lmap_node_next,*lmap_entry_list,*lmap_entry_list_next;
+  layout_map *lmap_entry;
+  gchar **array;
+  
+  if ((mlist=load_layout_map())!=NULL) {
+    int i;
+    // assign layout map to clips
+    for (i=1;i<=numclips;i++) {
+      lmap_node=mlist;
+      while (lmap_node!=NULL) {
+	lmap_node_next=lmap_node->next;
+	lmap_entry=lmap_node->data;
+	if (!strcmp(mainw->files[i]->handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
+	  
+	  // got a match, assign list to layout_map and delete this node
+	  lmap_entry_list=lmap_entry->list;
+	  while (lmap_entry_list!=NULL) {
+	    lmap_entry_list_next=lmap_entry_list->next;
+	    array=g_strsplit(lmap_entry_list->data,"|",-1);
+	    if (!g_file_test(array[0],G_FILE_TEST_EXISTS)) {
+	      // layout file has been deleted, remove this entry
+	      if (lmap_entry_list->prev!=NULL) lmap_entry_list->prev->next=lmap_entry_list_next;
+	      else lmap_entry->list=lmap_node_next;
+	      if (lmap_entry_list_next!=NULL) lmap_entry_list_next->prev=lmap_entry_list->prev;
+	      lmap_entry_list->prev=lmap_entry_list->next=NULL;
+	      g_list_free(lmap_entry_list);
+	    }
+	    g_strfreev(array);
+	    lmap_entry_list=lmap_entry_list_next;
+	  }
+	  mainw->files[i]->layout_map=lmap_entry->list;
+	  g_free(lmap_entry->handle);
+	  g_free(lmap_entry->name);
+	  if (lmap_node->prev!=NULL) lmap_node->prev->next=lmap_node_next;
+	  else mlist=lmap_node_next;
+	  if (lmap_node_next!=NULL) lmap_node_next->prev=lmap_node->prev;
+	  lmap_node->prev=lmap_node->next=NULL;
+	  g_list_free(lmap_node);
+	}
+	lmap_node=lmap_node_next;
+      }
+    }
+  }
+}
+
+
+
+
+
+
+static void recover_files(gchar *recovery_file, gboolean auto_recover) {
+  gchar buff[256];
+  gchar *clipdir;
+  gint new_file,clipnum=0;
+  FILE *rfile;
+  gboolean last_was_normal_file=FALSE;
+  gchar *com;
+  const lives_clip_data_t *cdata=NULL;
+
+  splash_end();
+
+  if (!auto_recover) {
+    if (!do_warning_dialog(_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
+      unlink(recovery_file);
+      return;
+    }
+  }
+
+  rfile=fopen(recovery_file,"r");
+
+  do_threaded_dialog(_("Recovering files"),FALSE);
+
+  // mutex lock
+  pthread_mutex_lock(&mainw->gtk_mutex);
+  d_print(_("recovering files..."));
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+  // mutex unlock
+
+  while (1) {
+
+    if (mainw->cached_list!=NULL) {
+      g_list_free_strings(mainw->cached_list);
+      g_list_free(mainw->cached_list);
+      mainw->cached_list=NULL;
+    }
+
+    if (fgets(buff,256,rfile)==NULL) {
+      gint current_file=mainw->current_file;
+      pthread_mutex_lock(&mainw->gtk_mutex);
+      d_print_done();
+      if (last_was_normal_file) {
+	switch_to_file((mainw->current_file=0),current_file);
+      }
+      reset_clip_menu();
+      pthread_mutex_unlock(&mainw->gtk_mutex);
+      // mutex unlock
+      break;
+    }
+
+    memset(buff+strlen(buff)-strlen("\n"),0,1);
+    if (!strcmp(buff+strlen(buff)-1,"*")) {
+  
+      // set to be opened
+      memset(buff+strlen(buff)-2,0,1);
+      last_was_normal_file=FALSE;
+      g_snprintf(mainw->set_name,256,"%s",buff);
+      if (!is_legal_set_name(mainw->set_name,TRUE)) continue;
+      if (!on_load_set_ok(NULL,GINT_TO_POINTER(TRUE))) {
+	fclose(rfile);
+	com=g_strdup_printf("/bin/rm -f %s/recovery.* >/dev/null 2>&1",prefs->tmpdir);
+	dummyvar=system(com);
+	rewrite_recovery_file(-1);
+	g_free(com);
+	end_threaded_dialog();
+	return;
+      }
+    }
+    else {
+      // load single file
+      clipdir=g_strdup_printf("%s/%s",prefs->tmpdir,buff);
+      if (!g_file_test(clipdir,G_FILE_TEST_IS_DIR)) {
+	g_free(clipdir);
+	continue;
+      }
+      g_free(clipdir);
+      if ((new_file=mainw->first_free_file)==-1) {
+	fclose(rfile);
+	com=g_strdup_printf("/bin/rm -f %s/recovery.* >/dev/null 2>&1",prefs->tmpdir);
+	dummyvar=system(com);
+	rewrite_recovery_file(-1);
+	g_free(com);
+	end_threaded_dialog();
+	too_many_files();
+	return;
+      }
+      if (strstr(buff,"/clips/")) {
+	gchar **array=g_strsplit(buff,"/clips/",-1);
+	mainw->was_set=TRUE;
+	g_snprintf(mainw->set_name,256,"%s",array[0]);
+	g_strfreev(array);
+      }
+      last_was_normal_file=TRUE;
+      mainw->current_file=new_file;
+      cfile=(file *)(g_malloc(sizeof(file)));
+      g_snprintf(cfile->handle,256,"%s",buff);
+      cfile->clip_type=CLIP_TYPE_DISK; // the default
+
+      //create a new cfile and fill in the details
+      create_cfile();
+
+      // get file details
+      read_headers(".");
+
+      if (mainw->current_file<1) continue;
+
+      if (load_frame_index(mainw->current_file)) {
+	gboolean next=FALSE;
+	while (1) {
+	  if ((cdata=get_decoder_plugin(cfile))==NULL) {
+	    if (mainw->error) {
+	      pthread_mutex_lock(&mainw->gtk_mutex);
+	      if (do_original_lost_warning(cfile->file_name)) {
+		
+		// TODO ** - show layout errors
+		
+		pthread_mutex_unlock(&mainw->gtk_mutex);
+		continue;
+	      }
+	    }
+	    else {
+	      pthread_mutex_lock(&mainw->gtk_mutex);
+	      do_no_decoder_error(cfile->file_name);
+	    }
+	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	    
+	    next=TRUE;
+	  }
+	  break;
+	}
+	if (next) {
+	  g_free(cfile);
+	  mainw->first_free_file=mainw->current_file;
+	  continue;
+	}
+	cfile->clip_type=CLIP_TYPE_FILE;
+	get_mime_type(cfile->type,40,cdata);
+      }
+
+      if (cfile->ext_src!=NULL) {
+	if (!check_clip_integrity(cfile,cdata)) {
+	  g_free(cfile);
+	  mainw->first_free_file=mainw->current_file;
+	  continue;
+	}
+      }
+      else {
+	if (!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
+      }
+    }
+
+    // read the plaback fps, play frame, and name
+    open_set_file (mainw->set_name,++clipnum);
+
+    if (mainw->cached_list!=NULL) {
+      g_list_free_strings(mainw->cached_list);
+      g_list_free(mainw->cached_list);
+      mainw->cached_list=NULL;
+    }
+    
+    if (mainw->current_file<1) continue;
+
+    get_total_time (cfile);
+    if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
+    
+    // add to clip menu
+    // mutex lock
+    pthread_mutex_lock(&mainw->gtk_mutex);
+    add_to_winmenu();
+    get_next_free_file();
+    cfile->start=cfile->frames>0?1:0;
+    cfile->end=cfile->frames;
+    cfile->is_loaded=TRUE;
+    unlink (cfile->info_file);
+    set_main_title(cfile->name,0);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+    
+#ifdef ENABLE_OSC
+    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
+#endif
+    // mutex unlock
+  }
+
+  end_threaded_dialog();
+
+  fclose(rfile);
+  com=g_strdup_printf("/bin/rm -f %s/recovery.* >/dev/null 2>&1",prefs->tmpdir);
+  dummyvar=system(com);
+  rewrite_recovery_file(-1);
+  g_free(com);
+  if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
+
+}
+
+
+
+
+
+void add_to_recovery_file (gchar *handle) {
+  gchar *com=g_strdup_printf("/bin/echo \"%s\" >> %s",handle,mainw->recovery_file);
+  dummyvar=system(com);
+}
+
+
+
+void rewrite_recovery_file(gint closed_file) {
+  int i;
+  gchar *recovery_entry;
+  int recovery_fd;
+  size_t size;
+
+  recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
+
+  for (i=1;i<=MAX_FILES;i++) {
+    if ((closed_file<0||i!=closed_file)&&mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK&&i!=mainw->scrap_file&&mainw->files[i]->is_loaded) {
+      recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
+      dummyvar=write(recovery_fd,recovery_entry,strlen(recovery_entry));
+      g_free(recovery_entry);
+    }
+  }
+  size=get_file_size(recovery_fd);
+  close(recovery_fd);
+  if (size==0) unlink(mainw->recovery_file);
+}
+
+
+gboolean check_for_recovery_files (gboolean auto_recover) {
+  gboolean retval=FALSE;
+
+  if (g_file_test(mainw->recovery_file,G_FILE_TEST_EXISTS)) {
+    recover_files(mainw->recovery_file,auto_recover);
+    retval=TRUE;
+  }
+  else {
+    size_t bytes;
+    int info_fd;
+    gchar *recovery_file;
+    gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
+    gchar *com=g_strdup_printf("smogrify get_recovery_file %d %d %s> %s",getuid(),getgid(),capable->myname,info_file);
+
+    unlink(info_file);
+    dummyvar=system(com);
+    g_free(com);
+
+    info_fd=open(info_file,O_RDONLY);
+    if (info_fd>-1) {
+      if ((bytes=read(info_fd,mainw->msg,256))>0) {
+	memset(mainw->msg+bytes,0,1);
+	recover_files((recovery_file=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->msg)),auto_recover);
+	unlink(recovery_file);
+	g_free(recovery_file);
+	rewrite_recovery_file(-1);
+	retval=TRUE;
+      }
+      close(info_fd);
+    }
+    unlink(info_file);
+    g_free(info_file);
+  }
+  return retval;
+}
+

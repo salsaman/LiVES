@@ -1,0 +1,160 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+shrink_expand
+</name>
+
+<version>
+1.1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Shrink/Expand|Shrinking/Expanding|2|1|
+</description>
+
+<requires>
+convert
+composite
+</requires>
+
+<params>
+fframe|_First frame|num2|100.00|0.00|1000.00|
+ffinal|Fina_l frame|num2|100.00|0.00|1000.00|
+xcen|_X Center|num0|-100000|0|100000|
+ycen|_Y Center|num0|-100000|0|100000|
+top|_Top|bool|0|1|
+left|L_eft|bool|0|1|
+middle|_Middle|bool|1|1|
+right|_Right|bool|0|1|
+bottom|_Bottom|bool|0|1|
+other|_Other Center|bool|0|1|
+bgcol|_Background Colour|colRGB24|0|0|0|
+</params>
+
+<param_window>
+layout|fill|p0|"% of normal"|fill4|
+layout|fill|p1|"% of normal"|fill4|
+layout|hseparator|
+layout|"Shrink/expand from..."|fill|
+layout|fill|p4|fill|
+layout|fill|p5|p6|p7|fill|
+layout|fill|p8|fill|
+layout|hseparator|
+layout|p9|fill|p2|p3|fill|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$cstring=&RGB24_to_string($p10_red,$p10_green,$p10_blue);
+
+# for zoom_frame
+$antialias=&rc_get("antialias");
+
+# this is for resize_frame
+$resize_ext=".mgk2";
+
+$factor=$width;
+if ($height>$width) {
+    $factor=$height;
+}
+$rscale=$p0/100.;
+$rstep=($p1-$p0)/($end-$start)/100.;
+
+# make a background frame
+system("$convert_command -size $width!x$height! xc:$cstring blank$img_ext");
+
+
+if ($p4) {
+    $center_x=int($width/2);
+    $center_y=0;
+}
+elsif ($p5) {
+    $center_x=0;
+    $center_y=int($height/2);
+}
+elsif ($p6) {
+    $center_x=int($width/2);
+    $center_y=int($height/2);
+}
+elsif ($p7) {
+    $center_x=$width;
+    $center_y=int($height/2);
+}
+elsif ($p8) {
+    $center_x=int($width/2);
+    $center_y=$height;
+}
+else {
+    $center_x=$p2;
+    $center_y=$p3;
+}
+</pre>
+
+<loop>
+if ($rscale<1.) {
+    #shrink the frame
+    $hsize=int($width*$rscale);
+    $vsize=int($height*$rscale);
+    if ($hsize>1&&$vsize>1) {
+	$x=int($center_x-$hsize/2);
+	$y=int($center_y-$vsize/2);
+
+	if ($x+$hsize>$width) {
+            $x=$width-$hsize;
+	}
+	if ($y+$vsize>$height) {
+	    $y=$height-$vsize;
+	}
+	if ($y<0) {
+	    $y=0;
+	}
+	if ($x<0) {
+	    $x=0;
+	}
+
+	&resize_frame($name,$hsize,$vsize);
+
+        # composite does not recognise -antialias
+        system("$composite_command -compose plus -dissolve 100 -geometry +$x!+$y! $name$resize_ext blank$img_ext $out >/dev/null 2>&1");
+	unlink "$name$resize_ext";
+    }
+    else {
+        `cp blank$img_ext $out`;
+    }
+}
+else {
+    if ($rscale>1.) {
+       $resize_ext=$out_ext;
+       &zoom_frame($name,$center_x,$center_y,$width,$height,$rscale);
+    }
+    else {
+        `cp $in $out`;
+    }
+}
+$rscale+=$rstep;
+</loop>
+
+<post>
+unlink "blank$img_ext";
+</post>
+
+<onchange>
+init|$p2_max=$width;$p2=$width/2;$p3_max=$height;$p3=$height/2;
+2|$p9=1;
+3|$p9=1;
+</onchange>

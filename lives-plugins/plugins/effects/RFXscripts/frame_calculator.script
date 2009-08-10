@@ -1,0 +1,77 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+frame_calculator
+</name>
+
+<version>
+2
+</version>
+
+<author>
+Salsaman
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+# min_frames<0 ==  no processing
+<description>
+Frame Calculator|fc|-1|0|
+</description>
+
+# requirements (list)
+<requires>
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+calc0|_Calculate|bool|0|1|
+calc1|_Calculate|bool|0|1|
+calc2|_Calculate|bool|1|1|
+frames|_Frames|num0|0|0|1000000|
+fps|Frames _per second (FPS)|num3|0|0|1000000|
+time|_Time (seconds)|num2|0|0|1000000|
+</params>
+
+<param_window>
+layout|p0|fill|p3|
+layout|p1|fill|p4|
+layout|p2|fill|p5|
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0002
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code (list)
+<pre>
+</pre>
+
+# loop code (list)
+<loop>
+</loop>
+
+# post loop code (list)
+<post>
+</post>
+
+
+<onchange>
+0|if ($p0) {$p3=$p4*$p5;} elsif ($p1&&$p5>0.) {$p4=int($p3/$p5*1000.+.5)/1000.;} elsif ($p4>0.) {$p5=int($p3/$p4*100.+.5)/100.;}
+1|if ($p0) {$p3=$p4*$p5;} elsif ($p1&&$p5>0.) {$p4=int($p3/$p5*1000.+.5)/1000.;} elsif ($p4>0.) {$p5=int($p3/$p4*100.+.5)/100.;}
+2|if ($p0) {$p3=$p4*$p5;} elsif ($p1&&$p5>0.) {$p4=int($p3/$p5*1000.+.5)/1000.;} elsif ($p4>0.) {$p5=int($p3/$p4*100.+.5)/100.;}
+3|if ($p1&&$p5>0.) {$p4=int($p3/$p5*1000.+.5)/1000.;} elsif ($p4>0.) {$p5=int($p3/$p4*100.+.5)/100.;}
+4|if ($p0) {$p3=$p4*$p5;} elsif ($p4>0.) {$p5=int($p3/$p4*100.+.5)/100.;}
+5|if ($p0) {$p3=$p4*$p5;} elsif ($p1&&$p5>0.) {$p4=int($p3/$p5*1000.+.5)/1000.;}
+</onchange>

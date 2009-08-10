@@ -1,0 +1,47 @@
+/* WEED is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 3 of the License, or (at your option) any later version.
+
+   Weed is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with this source code; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+
+   Weed events is developed by:
+
+   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
+
+*/
+
+#ifndef __WEED_EVENTS_H__
+#define __WEED_EVENTS_H__
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+#define WEED_EVENT_API_VERSION 100
+#define WEED_EVENT_API_VERSION_100
+
+#define WEED_PLANT_EVENT 256
+#define WEED_PLANT_EVENT_LIST 257
+
+#define WEED_EVENT_HINT_FRAME 1
+#define WEED_EVENT_HINT_FILTER_INIT 2
+#define WEED_EVENT_HINT_FILTER_DEINIT 3
+#define WEED_EVENT_HINT_FILTER_MAP 4
+#define WEED_EVENT_HINT_PARAM_CHANGE 5
+#define WEED_EVENT_HINT_MARKER 6
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif // #ifndef __WEED_EVENTS_H_

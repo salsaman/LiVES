@@ -1,0 +1,120 @@
+LiVES rendered effect plugin script
+------------------------------------
+<define>
+|1.7
+</define>
+
+<name>
+colorize
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Colorize|Colorizing|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+
+<params>
+scol|_Start Colour|colRGB24|255|255|255|
+ecol|_End Colour|colRGB24|0|0|0|
+rcol|_Random colour each frame|bool|0|
+start|S_tart %|num0|50|0|100|
+end|E_nd %|num0|50|0|100|
+link|_Link start and end colours|bool|0|
+</params>
+
+
+<param_window>
+layout|p0|
+layout|p5|
+layout|p1|
+layout|p2|
+layout|hseparator|
+layout|p3|fill|
+layout|p4|fill|
+</param_window>
+
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+# 0x0002 == may resize all frames to $nwidth x $nheight
+# 0x8000 == reserved
+<properties>
+0x0000
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code
+<pre>
+if ($end==$start) {
+    $pcstep=0;
+}
+else {
+    $pcstep=($p4-$p3)/($end-$start);
+}
+$length=$end-$start+1;
+$cstep_red=($p1_red-$p0_red)/$length;
+$cstep_green=($p1_green-$p0_green)/$length;
+$cstep_blue=($p1_blue-$p0_blue)/$length;
+$cver_new=(&get_convert_version_hash>=5005004);
+</pre>
+
+# loop code
+<loop>
+if ($p2) {
+    $p0_red=int(rand 256);
+    $p0_green=int(rand 256);
+    $p0_blue=int(rand 256);
+}
+$cstring=&RGB24_to_string($p0_red,$p0_green,$p0_blue);
+$pcstring="$p3/$p3/$p3";
+
+# a bit nasty as the syntax changed
+if ($cver_new) {
+    system("$convert_command $in -fill $cstring -colorize $pcstring $out >/dev/null 2>&1");
+}
+else {
+    system("mogrify -colorspace RGB -type truecolor -pen $cstring -colorize $pcstring $in $out >/dev/null 2>&1");
+}
+
+#builder will handle wrapping
+$p0_red+=$cstep_red;
+$p0_green+=$cstep_green;
+$p0_blue+=$cstep_blue;
+
+$p3+=$pcstep;
+if ($p3>100.) {
+    $p3=100;
+}
+elsif ($p3<0.) {
+    $p3=0;
+}
+</loop>
+
+# post loop code
+<post>
+</post>
+
+
+<onchange>
+0|if ($p5) {$p1_red=$p0_red;$p1_green=$p0_green;$p1_blue=$p0_blue;}
+1|if ($p5) {$p0_red=$p1_red;$p0_green=$p1_green;$p0_blue=$p1_blue;}
+5|if ($p5) {$p1_red=$p0_red;$p1_green=$p0_green;$p1_blue=$p0_blue;}
+</onchange>

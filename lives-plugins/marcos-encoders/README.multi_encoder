@@ -1,0 +1,92 @@
+multi_encoder plugin (http://lives.reimeika.ca)
+
+multi_encoder is a LiVES plugin which calls the following
+auxiliary encoders:
+
+dirac_encoder.py       DIRAC/---/DRC
+gif_encoder.py         GIF/---/GIF
+mkv_encoder.py         DIVX 4:5,XVID/VORBIS/MKV
+mng_encoder.py         MNG/---/MNG
+mpeg_encoder.py        MPEG-1/MP2/MPG
+ogm_encoder.py         DIVX 4:5,XVID,H.264/VORBIS/OGM
+avi_encoder.py         XVID,SNOW,H.264/MP3/AVI
+theora_encoder.py      THEORA/VORBIS/OGG
+
+The multi_encoder usually ships with LiVES and is located in
+the $LIVES/share/lives/plugins/encoders directory. At least
+one of the auxiliary encoders must be present in your $PATH
+for the multi_encoder to work, and Python 2.3 or greater installed.
+Furthermore, each encoder has its own set of dependencies. At
+minimum you will need:
+
+   http://www.imagemagick.org/
+   http://www.mplayerhq.hu/
+
+To fully use multi_encoder you will also need:
+
+dirac_encoder.py  -- http://dirac.sourceforge.net/
+mkv_encoder.py    -- http://www.vorbis.com/
+                     http://ffmpeg.sourceforge.net/index.php
+                     http://www.xvid.org/
+                     http://www.bunkus.org/videotools/mkvtoolnix/
+                     http://www.videolan.org/x264.html
+ogm_encoder.py    -- as mkv_encoder.py but with
+                     http://www.bunkus.org/videotools/ogmtools/
+mpeg_encoder.py   -- http://mjpeg.sourceforge.net/
+theora_encoder.py -- http://www.theora.org/
+                     (make sure "encoder_example" is in your PATH,
+                     it is not installed automatically after compiling).
+                     For playback see:
+                     http://amv.reimeika.ca/tov.html
+avi_encoder.py    -- http://www.xvid.org/
+                     http://www.videolan.org/x264.html
+                     http://lame.sourceforge.net/
+
+Depending on your needs I recommend the following:
+
+   For "play anywhere" convenience   : mpeg_encoder.py using MPEG-1
+   For creating "Debian free" videos : theora_encoder.py
+   For absolute best quality/size    : mkv_encoder.py using h.264
+
+You can check whether the required dependency is installed
+by running:
+
+   xxx_encoder.py -C
+
+where "xxx" represents any one of the encoders. Note that
+this test is not very thorough, and will check OK if the main
+dependency is present (say, mencoder) even if the appropriate
+libs are missing (e.g. xvidcore). If the above fails because
+Python is not found change the first line of the encoder scripts
+
+#!/usr/bin/env python
+
+to point to the correct executable.
+
+All encoders can be called from LiVES via the multi_encoder
+plugin. However, they can also be called directly on a LiVES
+.lv1 file. This can be useful to take advantage of many extra
+features they offer. To see their full usage type:
+
+   xxx_encoder.py -h
+
+As a quick example, copy a LiVES file (say, test.lv1) into an
+empty directory and run:
+
+   mpeg_encoder.py -o test.mpg -L test.lv1
+
+to see the encoder at work. For more verbose output use the "-v"
+flag.
+
+Main Author:
+multi_encoder and all auxiliary encoders are
+copyright (C) 2004-2006 Marco De la Cruz (marco@reimeika.ca)
+and are released under the GPL license. See
+http://www.gnu.org/copyleft/gpl.html for details.
+
+Contributors:
+(j@v2v.cc)
+Gabriel Finch a.k.a Salsaman (salsaman@xs4all.nl)
+
+.......................................................................
+See my vids at http://amv.reimeika.ca !

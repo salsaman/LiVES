@@ -1,0 +1,5 @@
+LiVES logo icons in various resolutions that can be used to integrate
+LiVES in the GNOME/KDE menu are stored in ../redhat under the name
+LiVES__logo_??.png.
+An example of a .desktop menu file entry for KDE is also included.
+

@@ -1,0 +1,570 @@
+Quick example:
+
+sh: sendOSC -h localhost 9999
+
+/video/play
+/clip/select 2
+/effect_key/enable 8
+/effect_key/enable 3
+/clip/select 1
+/effect_key/disable 8
+/video/play/reverse
+/video/fps/set 10
+/video/stop
+/lives/quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+reeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+
+
+-------------------------
+
+OSC in LiVES. 
+
+LiVES now implements a standard version of Open Sound Control (http://www.opensoundcontrol.org)
+which is being extended to OMC (Open Media Control) by members of Piksel.
+
+LiVES currently supports libOSC and sendOSC from here:
+
+http://www.cnmat.berkeley.edu/OpenSoundControl/index.html
+
+LiVES is now compiled with OSC support by default. There are several
+ways to activate it:
+
+start up LiVES with, e.g.: lives -oscstart 9999
+
+this will start up LiVES with OSC enabled on port 9999.
+
+Or, start up LiVES normally and go to Tools/Preferences/Streaming. Here
+you can ask LiVES to open a UDP port (default 9999, this can be changed). You can also ask LiVES to open an 
+OSC port every time it starts up (doing this can be a security risk, please check your firewall settings 
+first !)
+
+You can then send commands using sendOSC. The autolives.pl script shows a sample implementation of it.
+If using the default port (9999) you can just type: autolives.pl, for other ports, use 
+autolives.pl localhost <port> where <port> is the UDP port number in Preferences.
+You can also run autolives.pl from another host using autolives.pl <host> <port>
+
+Note that there is a default latency of up to 40ms for OSC commands to be processed in LiVES.
+Depending on what the application is doing, commands could be processed slower than that.
+
+
+
+INCOMING MESSAGES
+-----------------
+This is actually implemented now using the keyboard timer, so there is a default maximum latency of 40 ms.
+
+Currently timecodes are ignored.
+
+Floats are now supported, but be aware that pd (pure data) will
+sometimes send a float as an int (for example (float)1.0 is sent as (int)1).
+
+
+
+
+
+
+
+
+=============================================================================
+Current implemented commands:
+
+bool means 0 (off, false) or 1 (on, true)
+
+commands preceded by an "X" have not yet been implemented
+
+
+X/register,<int port> 
+/lives/open_status_socket,<int port>
+X/register,<string host>,<int port> 
+/lives/open_status_socket,<string host>,<int port>
+
+X/notify,<bitmap mask>,<string host>,<int port> 
+/lives/open_notify_socket,<string host>,<int port>
+
+
+X/quit 
+/lives/quit 
+/app/quit
+
+X/ping 
+/lives/ping 
+/app/ping
+
+/record/enable
+/record/disable
+X/record/toggle
+X/record/set,<bool state>
+X/record/get
+
+/video/play
+/video/play/forwards
+/video/play/backwards
+/video/freeze/toggle
+X/video/freeze/set,<bool state>
+X/video/freeze/get
+/video/stop
+
+/effect_key/count
+
+/effect_key/map,<int key>,<int mode>,<string fxhash>
+/effect_key/map/clear
+/effect_key/reset
+/effect_key/enable,<int key>
+/effect_key/disable,<int key>
+/effect_key/toggle,<int key>
+X/effect_key/set,<int key>,<bool state>
+X/effect_key/get,<int key>
+
+/effect_key/parameter/value/set,<int key>,<int param>,<variable values>
+X/effect_key/parameter/value/get,<int key>,<int param>
+/effect_key/mode/set,<int key>,<int mode>
+/effect_key/mode/get,<int key>
+/effect_key/mode/next,<int key>
+/effect_key/mode/previous,<int key>
+/effect_key/name/get,<int key>,<int mode>
+/effect_key/maxmode/get,<int key>
+/effect_key/usermode/get,<int key>
+
+/clip/count
+
+/clip/foreground/select               x/clip/select,<int clip>
+/clip/foreground/set,<int clip>
+/clip/foreground/get
+/clip/foreground/next
+/clip/foreground/previous
+/clip/foreground/frame/set,<int frame>     x/clip/goto,<int frame>
+X/clip/foreground/frame/get
+
+/clip/foreground/fps/reverse x/video/play/reverse
+/clip/foreground/fps/faster x/video/play/faster
+/clip/foreground/fps/slower x/video/play/slower
+/clip/foreground/fps/reset                                             x/video/play/reset
+/clip/foreground/fps/set,<fps> x/video/fps/set,<fps> :: fps can be float or int; float is returned
+/clip/foreground/fps/ratio/set,<fps_ratio> x/video/fps/ratio/set,<fps> :: fps_ratio is a float (1.0 = full fwd,
+0.5 = half fwd, -0.5 = half backward, etc) 
+
+X/clip/foreground/fps/get /video/fps/get
+X/clip/foreground/fps/ratio/get /video/fps/ratio/get
+
+/clip/foreground/background/swap
+
+/clip/background/set,<int clip>
+/clip/background/get
+/clip/background/next
+/clip/background/previous
+/clip/background/frame/set,<int frame>
+X/clip/background/frame/get
+
+/clip/background/fps/reverse
+/clip/background/fps/faster
+/clip/background/fps/slower
+/clip/background/fps/reset
+/clip/background/fps/set,<fps>
+X/clip/background/fps/get
+/clip/background/fps/ratio/set,<fps_ratio>
+X/clip/background/fps/ratio/get
+
+/clip/is_valid/get,<int clip>
+/clip/select_all,<int clip> :: if clip is omitted, current foreground clip is assumed
+/clip/start/set,<int clip>,<int frame>
+X/clip/start/get,<int clip>
+/clip/end/set,<int clip>,<int frame>
+X/clip/end/get,<int clip>
+/clip/open/file,<string filename>
+
+/output/fullscreen/enable
+/output/fullscreen/disable
+X/output/fullscreen/toggle
+X/output/fullscreen/set,<bool state>
+X/output/fullscreen/get
+
+/output/fps/set,<float fps>  :: display framerate (if not set, equal
+to foreground fps)
+
+X/output/fps/get
+
+/output/nodrop/enable
+/output/nodrop/disable
+X/output/nodrop/set,<bool state>
+X/output/nodrop/get
+
+/clipset/load,<string clipsetname>
+/clipset/save,<string clipsetname>
+
+
+
+
+
+Brief explanantion of some commands:
+
+
+
+
+Variables are shown as <variable> in angle brackets,
+
+
+
+/register,<int port_number> [ni]
+/register,<string host>,<int port_number> :: [ni]
+/lives/open_status_socket,<int port_number>
+/lives/open_status_socket,<string host>,<int port_number>
+
+command lives to open a status socket to (string)host on UDP port (int)port_number
+
+
+
+If host is omitted, "localhost" is assumed. If port is omitted then replies are sent to the originating port/host.
+
+
+LiVES will respond with:
+"/omc/lives" on the status socket (not yet implemented)
+
+
+/notify,<bitmap_mask><host>,<port_number> :: [ni]
+/lives/open_notify_socket,<string host>,<int port>
+
+command lives to open a notify socket to (string)host on UDP port (int)port_number
+
+The notify socket will send various message numbers and strings. See
+the file osc_notify.h for details.
+
+If host is omitted, "localhost" is assumed.
+
+/quit    :: [ni]
+/lives/quit 
+/app/quit
+
+causes LiVES to shut down, any open set will be preserved
+
+
+/ping :: [ni]
+/lives/ping 
+/app/ping
+
+
+returns the string "pong" on the status socket
+
+
+
+/clip/open/file,<file_name>
+causes LiVES to open/import file_name as a new clip
+
+
+/clipset/save,"set_name"
+/clipset/load,"set_name"
+
+Load and save clipsets
+
+
+/video/play :: begin playback (video and audio)
+/video/stop :: stop playback (video and audio)
+
+
+/video/fps/set,<float fps> :: set playback fps of current clip (fps can be float or int), returns current (float) value
+/clip/foreground/fps/set,<fps> ::  synonym
+
+
+/video/play/forwards :: force video play in forwards direction
+/video/play/backwards :: force video play in backwards direction
+
+
+/video/play/reverse :: reverse video direction (does nothing if not playing)
+
+/video/play/faster ::
+/clip/foreground/fps/faster
+/video/play/slower :: speed up and slow down video
+/clip/foreground/fps/slower
+
+/clip/background/fps/faster
+/clip/background/fps/slower :: speed up and slow down background video
+
+
+
+/video/play/reset :: play forwards at normal speed
+/clip/foreground/fps/reset
+
+/clip/background/fps/reset :: reset background frame rate
+
+
+
+/video/freeze/toggle :: toggle freeze. Changing the fps will trigger playback.
+
+
+/clip/select,<int clip_index> :: switch clips to <clip_number>
+/clip/foreground/select,<int clip_index>
+/clip/foreground/set,<int clip_number>
+
+switch to (int)clip_number. 
+
+If clip does not exist, no switching will occur.
+Clip numbers start at 1 and go up, sometimes there may be gaps.
+"Set" uses absolute clip numbers. "Select" uses an index of valid clip numbers with no gaps.
+
+
+/clip/background/select,<int clip_index>
+/clip/background/set,<int clip_number>
+
+switch background to (int)clip_number. 
+
+If clip does not exist, no switching will occur.
+Clip numbers start at 1 and go up, sometimes there may be gaps.
+"Set" uses absolute clip numbers. "Select" uses an index of valid clip numbers with no gaps.
+
+Only works if a transition is active.
+
+
+
+
+/clip/foreground/next
+/clip/foreground/previous :: switch to next or previous clip
+
+/clip/background/next
+/clip/background/previous :: switch background to next or previous clip
+
+
+
+/clip/foreground/frame/set,<int frame> ::
+/clip/goto,<int frame>
+jump to frame in current clip. Only works if LiVES is playing
+
+/clip/select_all ::
+select all frames in current clip
+
+
+/clip/background/frame/set,<int frame> ::
+jump to frame in background clip. Only works if LiVES is playing and a 
+transition is active
+
+
+
+
+
+/clip/frames/get,<clip>  ::
+return number of frames in (int) clip on status socket
+if ,clip is omitted, the current clip is used
+if -1 is returned, the clip is not valid [ni]
+
+/clip/start/get,<start>,<clip>  ::
+return selection start in (int) clip on status socket
+if ,clip is omitted, the current clip is used
+if -1 is returned, the clip is probably not valid [ni]
+
+/clip/end/get,<end>,<clip>  ::
+return selection end in (int) clip on status socket
+if ,clip is omitted, the current clip is used
+if -1 is returned, the clip is probably not valid [ni]
+
+/clip/play_selection ::
+play just the current selection of the current clip
+beware of clip switching [ni]
+
+/clip/is_valid/get,<clip>  ::
+return 1 if (int)clip is a valid clip, 0 otherwise
+[LiVES NOTE: clips can be closed asynchronously by the user or
+automatically at any time]
+
+
+/effect_key/count ::
+return the number of keys which can be bound to real time effects
+
+
+/effect_key/enable,<effect_key_number> ::
+
+switch on realtime effect number (int)effect_key_number for the foreground frame.
+effects start at 1 in LiVES. If the effect number is invalid nothing will happen but an error code will be 
+returned on the status socket. In LiVES, real time effects are mapped from effect_keys.
+
+
+/effect_key/disable,<effect_key_number> ::
+Switch off realtime effect key.
+
+[LiVES NOTE: some effects will auto-disable themselves: after a cetain time, when playback ends, or when a clip is switched.]
+
+
+/effect_key/toggle,<effect_key_number> :: toggle effect key - so if an
+effect is disabled it becomes enabled, and vice-versa
+
+
+
+/effect_key/reset ::
+reset all effect keys [LiVES NOTE : generators/sources in the foreground are not stopped]
+
+/effect_key/maxmode/get,<effect_key>  :: return number of modes for (int)effect_key. returns 0 for invalid keys
+
+/effect_key/maxmode/get,<effect_key>  :: return number of modes for (int)effect_key. returns 0 for invalid keys
+
+/effect_key/usermode/get,<effect_key>  :: return number of bound modes for (int)effect_key. returns 0 if nothing is bound or key is invalid
+
+
+/effect_key/mode/set,<effect_key><mode> :: set current mode for (int)effect_key. modes start at 1
+                                     a mode of zero means invalid key
+
+/effect_key/mode/next,<effect key>  :: cycle to next bound effect for (int)effect_key
+
+/effect_key/mode/previous,<effect key>  :: cycle to previous bound effect for (int)effect_key
+
+
+/effect_key/mode/get,<effect_key><mode> :: get current mode for (int)effect_key. modes start at 1
+                                     a mode of zero means invalid key
+
+
+/effect_key/name/get,<effect_key>,<mode> :: return name of realtime effect bound to (int)key,(int)mode
+                                        :: returns empty string if invalid
+
+/output/fullscreen/enable  :: switch to fullscreen/separate window, activate any playback plugins
+/output/fullscreen/disable :: switch to in-gui playback, deactivate any playback plugins
+
+
+/output/fps/get  ::
+/output/fps/set,<fps>  :: set/get display fps to float fps
+/output/nodrop/enable :: disallow frame dropping (can cause a/v sync problems)
+/output/nodrop/disable :: allow frame dropping (better a/v sync)
+
+
+/effect_key/map/clear :: clear mapping of all effects from all keys
+
+/effect_key/map,<key_number>,<hashname> :: map effect to next free
+mode on key <key_number> - hashname is a concatenation of
+package,author,filter (and optionally version)
+
+
+/effect_key/parameter/value/set,<key_number>,<parameter_number>,<value(s)>
+:: set <value(s)> for <parameter_number> on key <key_number>
+
+
+
+/record/enable :: start recording performance (or if not playing,
+prepare to record)
+
+/record/disable :: stop recording performance (or if not playing, cancel recording)
+
+
+
+
+
+
+
+
+Planned for future implementation:
+
+
+
+
+
+
+
+OPEN_FILE_SELECTION FILENAME START_TIME NUMBER_OF_FRAMES ::
+--------------------------------------------------------
+Opens an audio or video file. Set START and NUMBER_OF_FRAMES to 0 to load a whole file/directory. Sets the status for this clip to WAIT, until loading is complete.
+
+
+
+RESTORE_BACKUP BACKUP_FILE_NAME  ::
+------------------------
+Restore a LiVES (.lv1) backup file. LiVES cannot currently play or switch clips whilst restoring. Sets the status to HOLD.
+
+
+
+
+CLOSE_CURRENT_CLIP ::
+------------------
+
+
+
+SET_LOOP_CONTINUOUS (BOOLEAN)
+
+
+
+SET_LOOP_PING_PONG (BOOLEAN)::
+-------------
+
+
+SET_SELECTION_START FRAME
+
+
+SET_SELECTION_END FRAME
+
+
+GET_SELECTION_START
+
+
+GET_SELECTION_END
+
+
+PLAY_SELECTION :: play from selection_start to selection_end
+
+PLAY_PREVIEW :: preview an effect with a long render time
+
+USE_LAYER :: Tell LiVES to use LAYER (INT)LAYER if you support layers.
+USE_STREAM :: A synonym for USE_LAYER
+
+RENDER_EFFECT... :: send frames to LiVES for effects with long processing times.
+                 By sending such frames to LiVES you can continue playing while 
+		 LiVES performs the render.
+
+
+SAVE_START_FRAME FILENAME
+
+SAVE_END_FRAME FILENAME
+
+
+SAVE_CLIP FILENAME
+
+
+BACKUP_CLIP FILENAME.LV1
+
+
+COPY_SELECTION
+
+INSERT_SELECTION TIMES
+
+REVERSE_CLIPBOARD
+
+PASTE_AS_NEW
+
+DELETE_SELECTION
+
+LOAD_AUDIO
+
+LOAD_CD_TRACK TRACK
+
+
+RELOAD_SET SETNAME
+
+
+DOUBLESIZE ON|OFF
+
+
+RESIZE_ALL :: sets STATUS to HOLD.
+
+CANCEL  :: If the status is HOLD or WAIT, you can send a CANCEL. You should keep checking until the status is READY. 
+
+
+ENOUGH :: If the status is HOLD or WAIT you can send an ENOUGH message. You should keep checking until the status is READY. The exception is for RESTORE_BACKUP messages, which will ignore ENOUGH requests.
+
+
+
+
+
+
+/lives/toy/MAD_FRAMES ON|OFF  ::  mad frames toy
+
+
+
+		      

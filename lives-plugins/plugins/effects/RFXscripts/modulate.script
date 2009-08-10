@@ -1,0 +1,69 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+modulate
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Modulate (BSH)|Modulating|1|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+bstart|Brightness start|num0|100|0|10000|
+bend|Brightness end|num0|100|0|10000|
+sstart|Saturation start|num0|100|0|10000|
+send|Saturation end|num0|100|0|10000|
+hstart|Hue start|num0|100|0|10000|
+hend|Hue end|num0|100|0|10000|
+</params>
+
+<param_window>
+layout|p0|fill|p1|fill|
+layout|p2|fill|p3|fill|
+layout|p4|fill|p5|fill|
+layout|p6|fill|p7|fill|
+</param_window>
+
+<properties>
+0x0001
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$step1=($p1-$p0)/($end-$start+1);
+$step2=($p3-$p2)/($end-$start+1);
+$step3=($p5-$p4)/($end-$start+1);
+</pre>
+
+<loop>
+system("$convert_command $in -modulate $p1,$p3,$p5 $out");
+
+$p0+=$step1;
+$p2+=$step2;
+$p4+=$step3;
+</loop>
+
+<post>
+</post>
+
+<onchange>
+</onchange>

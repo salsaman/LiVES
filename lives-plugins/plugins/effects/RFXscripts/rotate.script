@@ -1,0 +1,103 @@
+LiVES rendered effect plugin script
+------------------------------------
+This is a tool, as it MAY_RESIZE
+
+<define>
+|1.7
+</define>
+
+<name>
+rotate
+</name>
+
+<version>
+2
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+Rotate Clip|Rotating|1|1|
+</description>
+
+# requirements (list)
+<requires>
+convert
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+cw|90 degrees _Clockwise    |bool|1|1|
+acw|90 degrees _Anticlockwise|bool|0|1|
+180|180 _degrees             |bool|0|1|
+deg|_degrees|num0|0|-180|180|
+other|_Other|bool|0|1|
+bgcol|_Background Colour|colRGB24|0|0|0|
+</params>
+
+<param_window>
+layout|p0|"(Changes frame size)"
+layout|p1|"(Changes frame size)"
+layout|p2|
+layout|p4|p3|"(May change frame size)"
+layout|hseparator|
+layout|p5|
+layout|"To maintain original frame size, use the "spin" effect."
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+# 0x0002 == may resize all to $nwidth x $nheight
+<properties>
+0x0002
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code
+<pre>
+$cstring=&RGB24_to_string($p5_red,$p5_green,$p5_blue);
+$antialias=&rc_get("antialias");
+
+if ($p0) {
+    $deg=90;
+    $nheight=$width;
+    $nwidth=$height;
+}
+elsif ($p1) {
+    $deg=-90;
+    $nheight=$width;
+    $nwidth=$height;
+}
+elsif ($p2) {
+    $deg=180;
+}
+else {
+    $deg=$p3;
+}
+</pre>
+
+# loop code
+<loop>
+system ("$convert_command $in -background $cstring -rotate $deg $out");
+if ($p4) {
+   $imresact="none";
+   &get_image_size($out);
+   $nwidth=$hsize;
+   $nheight=$vsize;
+}
+</loop>
+
+# post loop code
+<post>
+</post>
+
+<onchange>
+3|$p4=1;
+</onchange>

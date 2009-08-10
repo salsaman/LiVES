@@ -1,0 +1,85 @@
+/* WEED is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 3 of the License, or (at your option) any later version.
+
+   Weed is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with this source code; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+
+   Weed is developed by:
+
+   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
+
+   mainly based on LiViDO, which is developed by:
+
+
+   Niels Elburg - http://veejay.sf.net
+
+   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
+
+   Denis "Jaromil" Rojo - http://freej.dyne.org
+
+   Tom Schouten - http://zwizwa.fartit.com
+
+   Andraz Tori - http://cvs.cinelerra.org
+
+   reviewed with suggestions and contributions from:
+
+   Silvano "Kysucix" Galliani - http://freej.dyne.org
+
+   Kentaro Fukuchi - http://megaui.net/fukuchi
+
+   Jun Iio - http://www.malib.net
+
+   Carlo Prelz - http://www2.fluido.as:8080/
+
+*/
+
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2007 */
+
+#ifndef __WEED_PLUGIN_UTILS_H__
+#define __WEED_PLUGIN_UTILS_H__
+
+#ifndef __WEED_H__
+#include <weed/weed.h>
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+  weed_plant_t *weed_plugin_info_init (weed_bootstrap_f weed_boot, int num_versions, int *api_versions);
+  int weed_get_api_version(weed_plant_t *plugin_info);
+  weed_plant_t *weed_channel_template_init (char *name, int flags, int *palettes);
+  weed_plant_t *weed_audio_channel_template_init (char *name, int flags);
+  weed_plant_t *weed_filter_class_init (char *name, char *author, int version, int flags, weed_init_f init_func, weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls, weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls);
+  void weed_plugin_info_add_filter_class (weed_plant_t *plugin_info, weed_plant_t *filter_class);
+  weed_plant_t *weed_parameter_template_get_gui (weed_plant_t *paramt);
+  weed_plant_t *weed_filter_class_get_gui (weed_plant_t *filter);
+  
+  weed_plant_t *weed_integer_init (char *name, char *label, int def, int min, int max);
+  weed_plant_t *weed_string_list_init (char *name, char *label, int def, char **list);
+  weed_plant_t *weed_switch_init (char *name, char *label, int def);
+  weed_plant_t *weed_radio_init (char *name, char *label, int def, int group);
+  weed_plant_t *weed_float_init (char *name, char *label, double def, double min, double max);
+  weed_plant_t *weed_text_init (char *name, char *label, char *def);
+  weed_plant_t *weed_colRGBi_init (char *name, char *label, int red, int green, int blue);
+  weed_plant_t *weed_colRGBd_init (char *name, char *label, double red, double green, double blue);
+
+  weed_plant_t **weed_clone_plants (weed_plant_t **plants);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif // #ifndef __WEED_PLUGIN_UTILS_H__
+
+

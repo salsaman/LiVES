@@ -1,4 +1,22 @@
-Version 1.0 (22 July 2009)
+Version 1.1.0
+-------------
+Updated config.guess and autogen.sh
+ACX_PTHREAD config.
+Fix crash when loop continuous is pressed with no file loaded. *
+Fix MIDI/js device load/save for 64 bits. *
+
+
+* fixes backported to 1.0.1
+
+
+
+	
+
+
+
+
+
+Version 1.0.0 (22 July 2009)
 --------------------------
 Fixes for joystick/MIDI learner.
 Fixed crash after recording audio for selection.
@@ -7,10 +25,6 @@ Fix breakage in encoding a selection.
 Mt GUI and theme refinements.
 Initial translation to Hebrew (thanks Lielf).
 Updated translations to Brazilian Portuguese, Italian, Czech, Japanese and Slovak.
-
-
-
-
 
 
 

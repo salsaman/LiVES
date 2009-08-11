@@ -5151,7 +5151,7 @@ on_loop_video_activate                (GtkMenuItem     *menuitem,
 {
   mainw->loop=!mainw->loop;
   gtk_widget_set_sensitive (mainw->playclip, mainw->playing_file==-1&&clipboard!=NULL);
-  find_when_to_stop();
+  if (mainw->current_file>-1) find_when_to_stop();
 }
 
 void

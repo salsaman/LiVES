@@ -56,6 +56,12 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   offsy=weed_get_double_value(in_params[2],"value",&error)*height;
   weed_free(in_params);
 
+  if (scale<1.) scale=1.;
+  if (offsx<0.) offsx=0.;
+  if (offsx>1.) offsx=1.;
+  if (offsy<0.) offsy=0.;
+  if (offsy>1.) offsy=1.;
+
   for (y=0;y<height;y++) {
     dy=(int)(offsy+(y-offsy)/scale);
     sy=dy*irowstride;

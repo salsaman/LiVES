@@ -2031,7 +2031,7 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mnode=(lives_omc_match_node_t *)slist->data;
     srchlen=strlen(mnode->srch);
 
-    dummyvar=write(fd,&srchlen,sizeof(size_t));
+    dummyvar=write(fd,&srchlen,sizint);
     dummyvar=write(fd,mnode->srch,srchlen);
 
     dummyvar=write(fd,&mnode->macro,sizint);

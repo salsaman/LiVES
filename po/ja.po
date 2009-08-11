@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-22 17:19-0300\n"
+"POT-Creation-Date: 2009-08-11 20:54-0300\n"
 "PO-Revision-Date: 2009-06-15 07:36+0000\n"
 "Last-Translator: Jun iio <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -592,7 +592,7 @@ msgstr ""
 "これが指定されていると、フレームがインポートされたときにはデインタレースされ"
 "ます。"
 
-#: src/interface.c:183 src/callbacks.c:6465 src/gui.c:2742 src/gui.c:3279
+#: src/interface.c:183 src/callbacks.c:6467 src/gui.c:2742 src/gui.c:3279
 #: src/saveplay.c:1187 src/saveplay.c:1654 src/dialogs.c:572 src/dialogs.c:573
 #: src/dialogs.c:643 src/dialogs.c:644 src/framedraw.c:191
 msgid "Preview"
@@ -628,7 +628,7 @@ msgstr ""
 "\n"
 "後でイフェクトを停止させること(ctrl-0)を忘れずに !"
 
-#: src/interface.c:291 src/callbacks.c:6277 src/dialogs.c:1340
+#: src/interface.c:291 src/callbacks.c:6279 src/dialogs.c:1340
 msgid ""
 "\n"
 "Please Wait"
@@ -1197,7 +1197,7 @@ msgstr "セットの削除"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "セット %s はディスクから完全に削除されました。\n"
 
-#: src/callbacks.c:1011 src/callbacks.c:8074
+#: src/callbacks.c:1011 src/callbacks.c:8076
 msgid "Insert Silence"
 msgstr "無音部分の挿入"
 
@@ -1304,7 +1304,7 @@ msgstr ""
 "う。\n"
 "続けても構いませんか?\n"
 
-#: src/callbacks.c:1801 src/callbacks.c:8045
+#: src/callbacks.c:1801 src/callbacks.c:8047
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -1387,8 +1387,8 @@ msgstr ""
 "削除によってマルチトラックレイアウトからフレームが失われます。\n"
 "続けても構いませんか?\n"
 
-#: src/callbacks.c:2212 src/callbacks.c:7512 src/callbacks.c:7684
-#: src/callbacks.c:7722
+#: src/callbacks.c:2212 src/callbacks.c:7514 src/callbacks.c:7686
+#: src/callbacks.c:7724
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -1408,7 +1408,7 @@ msgstr ""
 "消去することによってフレームはマルチトラックレイアウト中で移動します。\n"
 "続けますか?\n"
 
-#: src/callbacks.c:2228 src/callbacks.c:7714
+#: src/callbacks.c:2228 src/callbacks.c:7716
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -1635,18 +1635,18 @@ msgstr "音声%s, タイプ%sを開きます..."
 msgid "Opening audio"
 msgstr "音声を開きます"
 
-#: src/callbacks.c:4247 src/callbacks.c:4277 src/callbacks.c:5543
-#: src/callbacks.c:5579 src/callbacks.c:7452
+#: src/callbacks.c:4247 src/callbacks.c:4277 src/callbacks.c:5545
+#: src/callbacks.c:5581 src/callbacks.c:7454
 msgid "Cancelling"
 msgstr "キャンセルします"
 
-#: src/callbacks.c:4297 src/callbacks.c:5596
+#: src/callbacks.c:4297 src/callbacks.c:5598
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr "新しい音声: %d Hz %d チャンネル %d bps\n"
 
-#: src/callbacks.c:4303 src/callbacks.c:5589 src/callbacks.c:7469
-#: src/callbacks.c:7970
+#: src/callbacks.c:4303 src/callbacks.c:5591 src/callbacks.c:7471
+#: src/callbacks.c:7972
 msgid "Committing audio"
 msgstr "音声を収容します"
 
@@ -1699,82 +1699,82 @@ msgstr "連続ループをオフ (o)"
 msgid "Switch continuous looping on (o)"
 msgstr "連続ループをオン (o)"
 
-#: src/callbacks.c:5229
+#: src/callbacks.c:5231
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "音声ボリューム (%.2f)"
 
-#: src/callbacks.c:5268 src/callbacks.c:5269 src/gui.c:3181
+#: src/callbacks.c:5270 src/callbacks.c:5271 src/gui.c:3181
 msgid "Unmute the audio (z)"
 msgstr "音声をミュートしない (z)"
 
-#: src/callbacks.c:5280 src/callbacks.c:5281 src/gui.c:1557 src/gui.c:3180
+#: src/callbacks.c:5282 src/callbacks.c:5283 src/gui.c:1557 src/gui.c:3180
 msgid "Mute the audio (z)"
 msgstr "音声ミュート (z)"
 
-#: src/callbacks.c:5436
+#: src/callbacks.c:5438
 msgid "Reversing clipboard..."
 msgstr "クリップボードを反転します..."
 
-#: src/callbacks.c:5445
+#: src/callbacks.c:5447
 msgid "Reversing clipboard"
 msgstr "クリップボードを反転"
 
-#: src/callbacks.c:5462 src/callbacks.c:5630
+#: src/callbacks.c:5464 src/callbacks.c:5632
 msgid "Select Audio File"
 msgstr "音声ファイルの選択"
 
-#: src/callbacks.c:5478
+#: src/callbacks.c:5480
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "ツール|属性|その他、にCD再生デバイスを設定して下さい。\n"
 
-#: src/callbacks.c:5513
+#: src/callbacks.c:5515
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "CDトラック%dから%sを開きます..."
 
-#: src/callbacks.c:5518
+#: src/callbacks.c:5520
 #, c-format
 msgid "CD track %d"
 msgstr "CDトラック%d"
 
-#: src/callbacks.c:5538
+#: src/callbacks.c:5540
 msgid "Opening CD track..."
 msgstr "CDトラックを開く..."
 
-#: src/callbacks.c:5576
+#: src/callbacks.c:5578
 msgid "Error loading CD track\n"
 msgstr "CDトラックのロードエラー\n"
 
-#: src/callbacks.c:5681
+#: src/callbacks.c:5683
 msgid "Selecting tracks"
 msgstr "トラックの選択"
 
-#: src/callbacks.c:5733
+#: src/callbacks.c:5735
 msgid "layout errors"
 msgstr "レイアウトエラー"
 
-#: src/callbacks.c:5739
+#: src/callbacks.c:5741
 msgid "Close _Window"
 msgstr "ウィンドウを閉じる"
 
-#: src/callbacks.c:5750
+#: src/callbacks.c:5752
 msgid "Clear _Errors"
 msgstr "エラーを消去"
 
-#: src/callbacks.c:5761
+#: src/callbacks.c:5763
 msgid "_Delete affected layouts"
 msgstr "レイアウトを消去"
 
-#: src/callbacks.c:6259
+#: src/callbacks.c:6261
 msgid "Resume"
 msgstr "再開"
 
-#: src/callbacks.c:6261
+#: src/callbacks.c:6263
 msgid "Keep"
 msgstr "維持"
 
-#: src/callbacks.c:6262
+#: src/callbacks.c:6264
 msgid ""
 "\n"
 "Paused\n"
@@ -1786,28 +1786,28 @@ msgstr ""
 "(現状を保つには「維持」をクリック)\n"
 "(処理を続ける場合は「再開」をクリック)"
 
-#: src/callbacks.c:6264
+#: src/callbacks.c:6266
 msgid "paused..."
 msgstr "ポーズします..."
 
-#: src/callbacks.c:6275
+#: src/callbacks.c:6277
 msgid "Pause"
 msgstr "ポーズ"
 
-#: src/callbacks.c:6276
+#: src/callbacks.c:6278
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: src/callbacks.c:6278
+#: src/callbacks.c:6280
 msgid "resumed..."
 msgstr "再開..."
 
-#: src/callbacks.c:6786
+#: src/callbacks.c:6788
 #, c-format
 msgid "Save Frame as %s..."
 msgstr "%sとしてフレームを保存..."
 
-#: src/callbacks.c:7083
+#: src/callbacks.c:7085
 msgid ""
 "\n"
 "\n"
@@ -1819,7 +1819,7 @@ msgstr ""
 "この機能を利用するには xwininfo をインストールしなければなりません。\n"
 "\n"
 
-#: src/callbacks.c:7139 src/callbacks.c:7916
+#: src/callbacks.c:7141 src/callbacks.c:7918
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -1827,7 +1827,7 @@ msgstr ""
 "\n"
 "レコードタイムは0より大きくなければなりません。\n"
 
-#: src/callbacks.c:7145
+#: src/callbacks.c:7147
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -1841,11 +1841,11 @@ msgstr ""
 "キャンセルするには'Cancel'をクリックして下さい。\n"
 "\n"
 
-#: src/callbacks.c:7147
+#: src/callbacks.c:7149
 msgid "External window was released.\n"
 msgstr "外部ウィンドウを開放しました。\n"
 
-#: src/callbacks.c:7160
+#: src/callbacks.c:7162
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording.\n"
@@ -1853,7 +1853,7 @@ msgstr ""
 "キャプチャするウィンドウをクリックして下さい。\n"
 "'q'キーの押下で記録を停止します。\n"
 
-#: src/callbacks.c:7180
+#: src/callbacks.c:7182
 #, c-format
 msgid ""
 "\n"
@@ -1869,19 +1869,19 @@ msgstr ""
 "'q'キーで終了。\n"
 "(標準設定の%.3fフレーム毎秒を使います)\n"
 
-#: src/callbacks.c:7198
+#: src/callbacks.c:7200
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "ごめん。LiVESはこのウィンドウをキャプチャできませんでした。\n"
 
-#: src/callbacks.c:7315
+#: src/callbacks.c:7317
 msgid "Export Selected Audio as..."
 msgstr "選択した音声をエクスポート..."
 
-#: src/callbacks.c:7318
+#: src/callbacks.c:7320
 msgid "Export Audio as..."
 msgstr "音声をエクスポート..."
 
-#: src/callbacks.c:7357
+#: src/callbacks.c:7359
 msgid ""
 "\n"
 "\n"
@@ -1895,81 +1895,81 @@ msgstr ""
 "新しい速度でエクスポートするには'OK'をクリック。元の速度でエクスポートするに"
 "は'キャンセル'をクリックして下さい。\n"
 
-#: src/callbacks.c:7363
+#: src/callbacks.c:7365
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "%dから%dまでの音声フレームを%sとしてエクスポート..."
 
-#: src/callbacks.c:7368
+#: src/callbacks.c:7370
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "音声を%sとしてエクスポート..."
 
-#: src/callbacks.c:7379
+#: src/callbacks.c:7381
 msgid "Exporting audio"
 msgstr "音声をエクスポートします"
 
-#: src/callbacks.c:7405
+#: src/callbacks.c:7407
 msgid "Append Audio File..."
 msgstr "音声ファイルの追加..."
 
-#: src/callbacks.c:7440
+#: src/callbacks.c:7442
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "音声ファイル%sを追加します..."
 
-#: src/callbacks.c:7446
+#: src/callbacks.c:7448
 msgid "Appending audio"
 msgstr "音声を追加します"
 
-#: src/callbacks.c:7485
+#: src/callbacks.c:7487
 msgid "Append Audio"
 msgstr "音声の追加"
 
-#: src/callbacks.c:7526
+#: src/callbacks.c:7528
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "音声を%.2fから%.2f秒までトリミングします..."
 
-#: src/callbacks.c:7533
+#: src/callbacks.c:7535
 msgid "Trimming/Padding audio"
 msgstr "音声をトリミング/パディングします"
 
-#: src/callbacks.c:7537
+#: src/callbacks.c:7539
 msgid "Trim/Pad Audio"
 msgstr "音声のトリミング"
 
-#: src/callbacks.c:7605
+#: src/callbacks.c:7607
 msgid "Fading audio in"
 msgstr "音声をフェードイン"
 
-#: src/callbacks.c:7606
+#: src/callbacks.c:7608
 msgid "Fade audio in"
 msgstr "音声をフェードイン"
 
-#: src/callbacks.c:7611
+#: src/callbacks.c:7613
 msgid "Fading audio out"
 msgstr "音声をフェードアウト"
 
-#: src/callbacks.c:7612
+#: src/callbacks.c:7614
 msgid "Fade audio out"
 msgstr "音声をフェードアウト"
 
-#: src/callbacks.c:7627
+#: src/callbacks.c:7629
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s が %.1f 秒オーバー..."
 
-#: src/callbacks.c:7629
+#: src/callbacks.c:7631
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s は %.2f秒から%.2f秒まで..."
 
-#: src/callbacks.c:7636
+#: src/callbacks.c:7638
 msgid "Fading audio..."
 msgstr "音声のフェード..."
 
-#: src/callbacks.c:7699
+#: src/callbacks.c:7701
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -1979,37 +1979,37 @@ msgstr ""
 "全音声を削除すると、このファイルを閉じます。\n"
 "構いませんか ?"
 
-#: src/callbacks.c:7702
+#: src/callbacks.c:7704
 msgid "Deleting all audio..."
 msgstr "全音声の削除..."
 
-#: src/callbacks.c:7708
+#: src/callbacks.c:7710
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "音声を%.2fから%.2f秒まで削除します..."
 
-#: src/callbacks.c:7756
+#: src/callbacks.c:7758
 msgid "Deleting Audio"
 msgstr "音声を削除します"
 
-#: src/callbacks.c:7759
+#: src/callbacks.c:7761
 msgid "Delete Audio"
 msgstr "音声の削除"
 
-#: src/callbacks.c:7996
+#: src/callbacks.c:7998
 msgid "Record new audio"
 msgstr "新しい音声の記録"
 
-#: src/callbacks.c:8059
+#: src/callbacks.c:8061
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "%.2fから%.2f秒まで無音部分を挿入します..."
 
-#: src/callbacks.c:8071
+#: src/callbacks.c:8073
 msgid "Inserting Silence"
 msgstr "無音部分を挿入します"
 
-#: src/callbacks.c:8141
+#: src/callbacks.c:8143
 #, c-format
 msgid ""
 "\n"

@@ -650,7 +650,7 @@ static void jack_error_func(const char *desc) {
 
 
 // wait 5 seconds to startup
-#define JACK_START_WAIT 5000000000
+#define JACK_START_WAIT 5000000
 
 
 // create a new client and connect it to jack, connect the ports
@@ -662,7 +662,7 @@ int jack_open_device(jack_driver_t *jackd) {
   int i;
   
   struct timeval otv;
-  long ntime=0,stime;
+  int64_t ntime=0,stime;
 
   /* zero out the buffer pointer and the size of the buffer */
   jackd->sound_buffer=NULL;
@@ -681,7 +681,7 @@ int jack_open_device(jack_driver_t *jackd) {
     g_usleep(prefs->sleep_time);
 
     gettimeofday(&otv, NULL);
-    ntime=otv.tv_sec*1000000000+otv.tv_usec-stime;
+    ntime=(otv.tv_sec*1000000000+otv.tv_usec-stime)>>10;
   }
 
 

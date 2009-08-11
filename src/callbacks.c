@@ -5194,7 +5194,9 @@ on_loop_cont_activate                (GtkMenuItem     *menuitem,
   gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->m_loopbutton),loop_img);
 
   gtk_widget_set_sensitive (mainw->playclip, !(clipboard==NULL));
-  find_when_to_stop();
+  if (mainw->current_file>-1) find_when_to_stop();
+  else mainw->whentostop=NEVER_STOP;
+
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK) {
     if (mainw->jackd!=NULL&&(mainw->loop_cont||mainw->whentostop==NEVER_STOP)) {

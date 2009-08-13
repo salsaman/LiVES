@@ -1449,7 +1449,7 @@ void play_file (void) {
     lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED,"");
 #endif
 
-    mainw->kb_timer=gtk_timeout_add (KEY_RPT_INTERVAL,&plugin_poll_keyboard,NULL);
+    mainw->kb_timer=gtk_timeout_add (KEY_RPT_INTERVAL/prefs->osc_inv_latency,&plugin_poll_keyboard,NULL);
 
 #ifdef ENABLE_JACK
 

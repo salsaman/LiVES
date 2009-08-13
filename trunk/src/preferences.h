@@ -221,6 +221,8 @@ typedef struct {
 
   gboolean safe_symlinks;
 
+  gint osc_inv_latency; // osc ticks per keyboard tick
+
 } _prefs;
 
 

@@ -734,8 +734,13 @@ static void lives_init(_ign_opts *ign_opts) {
     
     prefs->render_audio=TRUE;
 
+    prefs->osc_inv_latency=10;
+
     prefs->midi_check_rate=get_int_pref("midi_check_rate");
     if (prefs->midi_check_rate==0) prefs->midi_check_rate=DEF_MIDI_CHECK_RATE;
+
+    prefs->midi_check_rate/=prefs->osc_inv_latency;
+    if (prefs->midi_check_rate<1) prefs->midi_check_rate=1;
 
     prefs->midi_rpt=get_int_pref("midi_rpt");
     if (prefs->midi_rpt==0) prefs->midi_rpt=DEF_MIDI_RPT;
@@ -769,6 +774,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->num_rtaudiobufs=4;
 
     prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and othe live CDs
+
 
     //////////////////////////////////////////////////////////////////
 

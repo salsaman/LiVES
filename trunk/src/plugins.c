@@ -1547,8 +1547,6 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	height=oheight;
       }
 
-      g_print("resample to %d x %d\n",width,height);
-
       if (!auto_resample_resize (width,height,best_fps,best_fps_num,best_fps_denom,best_arate)) {
 	mainw->fx1_bool=ofx1_bool;
 	return FALSE;

@@ -1,6 +1,6 @@
 // saveplay.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003
+// (c) G. Finch 2003 - 2009
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 

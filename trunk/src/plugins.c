@@ -1212,7 +1212,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
   gint pieces,numtok;
   gboolean calc_aspect=FALSE;
   gchar aspect_buffer[512];
-  gint hblock=1,vblock=1;
+  gint hblock=2,vblock=2;
   int i,r;
   GList *ofmt_all=NULL;
   gboolean sizer=FALSE;
@@ -1248,7 +1248,6 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
     width=mainw->osc_enc_width;
     height=mainw->osc_enc_height;
   }
-
 
   // TODO - allow lists for size
   g_snprintf (prefs->encoder.of_restrict,5,"none");
@@ -1464,25 +1463,15 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
     // we calculate this last, after getting hblock and vblock sizes
     gchar **array3;
     gdouble allowed_aspect;
-    gint xheight,xwidth;
-
-    // encoders don't seem to like odd frame sizes
-    if (hblock==1) hblock++;
-    if (vblock==1) vblock++;
+    gint xwidth=width;
+    gint xheight=height;
 
     numtok=get_token_count (aspect_buffer,';');
     array2=g_strsplit(aspect_buffer,";",numtok);
     
-    // TODO ** - this part needs rechecking !!
-
-    // xwidth and xheight are current width and height
-    xwidth=width;
-    xheight=height;
-
-    //height=width=0;
-
     // see if we can get a width:height which is nearer an aspect than 
-    // xwidth:xheight
+    // current width:height
+
     for (i=0;i<numtok;i++) {
       array3=g_strsplit(array2[i],":",2);
       allowed_aspect=g_strtod(array3[0],NULL)/g_strtod(array3[1],NULL);
@@ -1491,8 +1480,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
     }
     g_strfreev(array2);
 
-    // allow override if xwidth and xheight are integer multiples of blocks
-    if (((xwidth*1.)/(hblock*1.))==(int)((xwidth*1.)/(hblock*1.))&&((xheight*1.)/(vblock*1.))==(int)((xheight*1.)/(vblock*1.))) allow_aspect_override=TRUE;
+    // allow override if current width and height are integer multiples of blocks
+    if (owidth%hblock==0&&oheight%vblock==0) allow_aspect_override=TRUE;
 
     // end recheck
 
@@ -1557,6 +1546,9 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	width=owidth;
 	height=oheight;
       }
+
+      g_print("resample to %d x %d\n",width,height);
+
       if (!auto_resample_resize (width,height,best_fps,best_fps_num,best_fps_denom,best_arate)) {
 	mainw->fx1_bool=ofx1_bool;
 	return FALSE;

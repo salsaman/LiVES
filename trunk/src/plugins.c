@@ -1310,6 +1310,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
   pieces=get_token_count (prefs->encoder.of_restrict,',');
   checks=g_strsplit(prefs->encoder.of_restrict,",",pieces);
 
+
   for (r=0;r<pieces;r++) {
     // check each restriction in turn
 
@@ -1507,7 +1508,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	}
       }
     }
-    
+
     if (rdet!=NULL&&!rdet->is_encoding) {
       rdet->arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
       rdet->achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));

@@ -571,7 +571,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
   gboolean not_cancelled;
 
   gint current_file=mainw->current_file;
-  gdouble aud_start=0,aud_end=0;
+  gdouble aud_start=0.,aud_end=0.;
   gchar *fps_string;
 
   gchar *extra_params=g_strdup("");
@@ -667,6 +667,18 @@ void save_file (gboolean existing, gchar *n_file_name) {
     g_free(warn);
   }
 
+  if (cfile->arate*cfile->achans) {
+    if (!mainw->save_all) {
+      aud_start=calc_time_from_frame (current_file,mainw->files[current_file]->start)*mainw->files[current_file]->arps/mainw->files[current_file]->arate;
+      aud_end=calc_time_from_frame (current_file,mainw->files[current_file]->end+1)*mainw->files[current_file]->arps/mainw->files[current_file]->arate;
+    }
+    else {
+      aud_start=calc_time_from_frame (mainw->current_file,1)*cfile->arps/cfile->arate;
+      aud_end=calc_time_from_frame (mainw->current_file,cfile->frames+1)*cfile->arps/cfile->arate;
+    }
+  }
+
+
   if (!mainw->save_all&&!safe_symlinks) {
     // we are saving a selection - make symlinks in tempdir
     gint new_file;
@@ -727,7 +739,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     cfile->achans=mainw->files[current_file]->achans;
     cfile->asampsize=mainw->files[current_file]->asampsize;
 
-    com=g_strdup_printf ("smogrify link_frames %s %d %d %s",cfile->handle,mainw->files[current_file]->start,mainw->files[current_file]->end,mainw->files[current_file]->handle);
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %s",cfile->handle,mainw->files[current_file]->start,mainw->files[current_file]->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize,mainw->files[current_file]->handle);
 
     unlink(cfile->info_file);
     dummyvar=system(com);
@@ -751,6 +763,9 @@ void save_file (gboolean existing, gchar *n_file_name) {
       }
       return;
     }
+
+    aud_start=calc_time_from_frame (mainw->current_file,1)*cfile->arps/cfile->arate;
+    aud_end=calc_time_from_frame (mainw->current_file,cfile->frames+1)*cfile->arps/cfile->arate;
   }
 
   if (rdet!=NULL) rdet->is_encoding=TRUE;
@@ -816,7 +831,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       }
     }
 
-    com=g_strdup_printf ("smogrify link_frames %s %d %d",cfile->handle,cfile->start,cfile->end);
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d",cfile->handle,cfile->start,cfile->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize);
 
     unlink(cfile->info_file);
     dummyvar=system(com);
@@ -838,6 +853,9 @@ void save_file (gboolean existing, gchar *n_file_name) {
       }
       return;
     }
+
+    aud_start=calc_time_from_frame (mainw->current_file,1)*cfile->arps/cfile->arate;
+    aud_end=calc_time_from_frame (mainw->current_file,cfile->frames+1)*cfile->arps/cfile->arate;
   }
 
 
@@ -855,17 +873,6 @@ void save_file (gboolean existing, gchar *n_file_name) {
     }
   }
 
-
-  if (cfile->arate*cfile->achans) {
-    if (!mainw->save_all) {
-      aud_start=calc_time_from_frame (current_file,mainw->files[current_file]->start)*mainw->files[current_file]->arps/mainw->files[current_file]->arate;
-      aud_end=calc_time_from_frame (current_file,mainw->files[current_file]->end+1)*mainw->files[current_file]->arps/mainw->files[current_file]->arate;
-    }
-    else {
-      aud_start=calc_time_from_frame (mainw->current_file,1)*cfile->arps/cfile->arate;
-      aud_end=calc_time_from_frame (mainw->current_file,cfile->frames+1)*cfile->arps/cfile->arate;
-    }
-  }
   arate=cfile->arate;
 
   if (!mainw->save_with_sound||prefs->encoder.of_allowed_acodecs==0) {
@@ -921,6 +928,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
   d_print (mesg);
   mainw->no_switch_dprint=FALSE;
   g_free (mesg);
+
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
     com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,full_file_name,startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);

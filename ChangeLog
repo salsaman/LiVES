@@ -7,7 +7,7 @@ Fix crash when loop continuous is pressed with no file loaded. *
 Fix MIDI/js device load/save for 64 bits. *
 Fix oversized constants in jack connection timeout. *
 Encoder pixel block size bugfix. * 
-	
+Fix broken audio in encode selection. *	
 
 * fixes backported to 1.0.1
 

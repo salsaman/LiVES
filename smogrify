@@ -1503,7 +1503,6 @@ if (defined($ARGV[0])) {
 
 		$areq=&get_form_request($plugin);
 
-
 		#prepare audio stream if requested
 		if (-f "$curtmpdir/audio" && $arate>0) {
 		    $origaudio=$audiofile=$audio_in="$curtmpdir/audio";
@@ -1565,15 +1564,17 @@ if (defined($ARGV[0])) {
 				system ("/bin/ln $curtmpdir/$from$img_ext $linksdir$name$img_ext");
 			    }
 			}
+			if (-f $audiofile) {
+			    my $xaudiofile=(split(/\//,$audiofile))[-1];
+			    if (! -f "$linksdir$xaudiofile") {
+				system("/bin/ln $audiofile $linksdir$xaudiofile");
+			    }
+			}
 			$is_linked=1;
 		    }
 		}
 		
 		if ($is_linked==1) {
-		    if (-f $audiofile) {
-			my $xaudiofile=(split(/\//,$audiofile))[-1];
-			system("/bin/ln $audiofile $linksdir$xaudiofile");
-		    }
 		    chdir $linksdir;
 		}
 
@@ -1632,14 +1633,20 @@ if (defined($ARGV[0])) {
 	unlink "$curtmpdir/pause";
 	    chdir $curtmpdir;
 
-	    my $start=$ARGV[2];
-	    my $end=$ARGV[3];
+	    $start=$ARGV[2];
+	    $end=$ARGV[3];
+	
+	    $astart=$ARGV[4];
+	    $aend=$ARGV[5];
 
-	    my $from_handle=$ARGV[4];
+	    $arate=$ARGV[6];
+	    $achans=$ARGV[7];
+	    $asamps=$ARGV[8];
+
+	    $from_handle=$ARGV[9];
 
 	    my $i;
 	    my $audiofile="audio";
-
 
 	    if ($from_handle eq "") {
 		#create symlinks in /tmp for dynebolic
@@ -1654,8 +1661,37 @@ if (defined($ARGV[0])) {
 	    }
 	    else {
 		$linksdir=$curtmpdir;
-		$curtmpdir="$tmpdir/$from_handle/";
+		$handle=$from_handle;
+		$curtmpdir="$tmpdir/$handle/";
 	    }
+
+	
+	# copy a slice of the audio file into our links dir
+	# this allows us to resample it
+	# and also aligns the start of audio with new frame 1
+
+	unless ($aend==0.) {
+
+	    my $ocurtmpdir=$curtmpdir;
+	    my $ofrom_handle=$from_handle;
+	    my $ostart=$start;
+	    my $oend=$end;
+
+	    $start=$astart;
+	    $end=$aend;
+	    $where=0.;
+	    $from_handle=$handle;
+	    $curtmpdir=$linksdir;
+
+	    &insert_audio;
+	
+	    $curtmpdir=$ocurtmpdir;
+	    $from_handle=$ofrom_handle;
+	    $start=$ostart;
+	    $end=$oend;
+
+	  }
+
 
 	    for ($i=1;$i<=($end-$start+1);$i++) {
 		$name=&mkname($i);
@@ -1673,7 +1709,7 @@ if (defined($ARGV[0])) {
 
 	    &sig_complete;
 	    exit 0;
-	}
+    }
 
 
 	if ($command eq "resize_all") {
@@ -3738,7 +3774,6 @@ sub insert_audio {
 
     #if $arate<0, we will insert silence
 
-
     if ($achans==0) {
 	return;
     }
@@ -3804,7 +3839,6 @@ sub insert_audio {
     &append_silence($wpos);
 
 ####################################################
-
     my ($nepos)=$epos;
     my ($nspos)=$spos;
     my ($nwpos)=$wpos;

@@ -76,11 +76,15 @@ depending on which version you have. Then:
 
 
 
-for CVS checkouts, this is not necessary, just do: cd lives
-(unless you are already in the lives directory.)
+For subversion checkouts, the above is not necessary, just do: cd <dir>
+(where <dir> is the directory where the code was downloded to.)
 
-for CVS checkouts, you will need to run: ./autogen.sh
-before continuing.
+For subversion checkouts, you will need to run:
+./autogen.sh
+before continuing. Note the "." before the "/" - this is important. If this fails for any reason, try:
+./autogen.sh --verbose
+which should give a clue as to what went wrong.
+
 
 
 

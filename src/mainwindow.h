@@ -10,6 +10,10 @@
 
 #include <pthread.h>
 
+#ifdef ALSA_MIDI
+#include <alsa/asoundlib.h>
+#endif
+
 // hardware related prefs
 
 // fraction of a second quantisation for event timing; these two must match, and must be multiples of 10>=1000000 !
@@ -856,6 +860,9 @@ typedef struct {
   // external control inputs
   gboolean ext_cntl[MAX_EXT_CNTL];
 
+  #ifdef ALSA_MIDI
+  snd_seq_t *seq_handle;
+  #endif
 
   weed_plant_t *rte_textparm; // send keyboard input to this paramter (usually NULL)
 

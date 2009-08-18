@@ -65,13 +65,11 @@ plugin_poll_keyboard (gpointer data) {
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
   if (mainw->ext_cntl[EXT_CNTL_JS]) {
-    for (i=0;i<100;i++) {
-      gchar *string=js_mangle();
-      if (string!=NULL) {
-	omc_process_string(OMC_JS,string,FALSE);
-	g_free(string);
-	string=NULL;
-      }
+    gchar *string=js_mangle();
+    if (string!=NULL) {
+      omc_process_string(OMC_JS,string,FALSE);
+      g_free(string);
+      string=NULL;
     }
   }
 #endif

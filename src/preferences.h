@@ -223,6 +223,10 @@ typedef struct {
 
   gint osc_inv_latency; // osc ticks per keyboard tick
 
+#ifdef ALSA_MIDI
+  gboolean use_alsa_midi;
+#endif
+
 } _prefs;
 
 

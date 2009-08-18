@@ -61,11 +61,20 @@ oil_CFLAGS =  @OIL_CFLAGS@ -DENABLE_OIL=1
 endif
 
 
+if HAVE_ALSA
+alsa_LDADD = @ALSA_LIBS@
+alsa_CFLAGS = @ALSA_CFLAGS@ -DALSA_MIDI=1
+endif
+
+
+
 if DISABLE_GLSLICE
 libweed_slice_LDADD = ../libweed/libweed.la
 else
 libweed_slice_LDADD = ../libweed/libweed_slice.la
 endif
+
+
 
 lives_exe_SOURCES = \
 	main.c\
@@ -102,9 +111,9 @@ lives_exe_SOURCES = \
 	$(jack_SOURCES) \
 	$(ldvgrab_SOURCES)
 
-lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) $(oil_LDADD) -lpthread $(libweed_slice_LDADD) ../libweed/libweed-utils.la
+lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) $(oil_LDADD) $(alsa_LDADD) -lpthread $(libweed_slice_LDADD) ../libweed/libweed-utils.la
 
 lives_exe_LDFLAGS = -O3
-AM_CFLAGS = -O3 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) $(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(osc_CFLAGS) -DLIVES_LIBDIR=\""$(libdir)"\"
+AM_CFLAGS = -O3 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) $(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) -DLIVES_LIBDIR=\""$(libdir)"\"
 
 

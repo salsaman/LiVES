@@ -325,6 +325,15 @@ AC_SUBST(VORBIS_LIBS)
 AM_CONDITIONAL(HAVE_VORBIS,$HAVE_VORBIS)
 
 
+HAVE_ALSA=false
+dnl check for libasound
+PKG_CHECK_MODULES(ALSA,alsa,HAVE_ALSA=true,HAVE_ALSA=false)
+AC_SUBST(ALSA_CFLAGS)
+AC_SUBST(ALSA_LIBS)
+
+AM_CONDITIONAL(HAVE_ALSA,$HAVE_ALSA)
+
+
 HAVE_VISUAL=false
 AC_ARG_ENABLE( libvisual, [  --disable-libvisual     Disable libvisual support.] , disable_libvisual=yes)
 if test "x$disable_libvisual" != "xyes" ; then

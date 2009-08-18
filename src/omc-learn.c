@@ -291,12 +291,43 @@ gchar *midi_fname;
 }
 
 
-
 gboolean midi_open(void) {
+
+#ifdef ALSA_MIDI
+  int port_in_id;
+  mainw->seq_handle=NULL;
+#endif
+
   gchar *msg;
 
   if (!(prefs->omc_dev_opts&OMC_DEV_MIDI)) return TRUE;
 
+#ifdef ALSA_MIDI
+  if (prefs->use_alsa_midi) {
+
+    d_print(_("Creating ALSA seq port..."));
+
+    // ORL Ouverture d'un port ALSA
+    if (snd_seq_open(&mainw->seq_handle, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0) {
+      d_print_failed();
+      return FALSE;
+    }
+    
+    snd_seq_set_client_name(mainw->seq_handle, "LiVES");
+    if ((port_in_id = snd_seq_create_simple_port(mainw->seq_handle, "LiVES",
+						 SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
+						 SND_SEQ_PORT_TYPE_APPLICATION)) < 0) {
+      
+      d_print_failed();
+      return FALSE;
+    }
+    
+    d_print_done();
+  }
+  else {
+
+#endif
+  
   if (prefs->omc_midi_fname!=NULL) {
     midi_fd = open(prefs->omc_midi_fname, O_RDONLY|O_NONBLOCK);
     if (midi_fd < 0) return FALSE;
@@ -309,11 +340,15 @@ gboolean midi_open(void) {
   }
   if (prefs->omc_midi_fname==NULL) return FALSE;
 
-  mainw->ext_cntl[EXT_CNTL_MIDI]=TRUE;
-
   msg=g_strdup_printf(_("Responding to MIDI events from %s\n"),prefs->omc_midi_fname);
   d_print(msg);
   g_free(msg);
+
+#ifdef ALSA_MIDI
+  }
+#endif
+
+  mainw->ext_cntl[EXT_CNTL_MIDI]=TRUE;
 
   return TRUE;
 }
@@ -322,8 +357,21 @@ gboolean midi_open(void) {
 
 void midi_close(void) {
   if (mainw->ext_cntl[EXT_CNTL_MIDI]) {
-    g_print("closed\n");
+
+#ifdef ALSA_MIDI
+    if (mainw->seq_handle!=NULL) {
+      // close
+    }
+    else {
+
+#endif
+
     close (midi_fd);
+
+#ifdef ALSA_MIDI
+    }
+#endif
+
     mainw->ext_cntl[EXT_CNTL_MIDI]=FALSE;
   }
 }
@@ -346,9 +394,10 @@ static int get_midi_len(int msgtype) {
 static gint midi_msg_type(gchar *string) {
   gint type=atoi(string);
 
-  if ((type&0XF0)==0X80) return OMC_MIDI_NOTE;
-  if ((type&0XF0)==0x90) return OMC_MIDI_NOTE_OFF;
+  if ((type&0XF0)==0X90) return OMC_MIDI_NOTE;
+  if ((type&0XF0)==0x80) return OMC_MIDI_NOTE_OFF;
   if ((type&0XF0)==0xB0) return OMC_MIDI_CONTROLLER;
+  if ((type&0XF0)==0xC0) return OMC_MIDI_PGM_CHANGE;
   if ((type&0XF0)==0xE0) return OMC_MIDI_PITCH_BEND;
 
 
@@ -368,13 +417,69 @@ static gint midi_msg_type(gchar *string) {
 
 
 gchar *midi_mangle(void) {
-  // get js event and process it
+  // get MIDI event and process it
+  gchar *string=NULL;
+
   ssize_t bytes,tot=0,allowed=prefs->midi_rpt;
   unsigned char midbuf[4],xbuf[4];
   gint target=1,mtype=0,idx;
   gboolean got_target=FALSE;
+  gchar *str;
 
-  gchar *string,*str;
+#ifdef ALSA_MIDI
+  int npfd;
+  struct pollfd *pfd;
+  snd_seq_event_t *ev;
+  int typeNumber;
+
+  if (mainw->seq_handle!=NULL) {
+
+    npfd = snd_seq_poll_descriptors_count(mainw->seq_handle, POLLIN);
+    pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
+    snd_seq_poll_descriptors(mainw->seq_handle, pfd, npfd, POLLIN);
+    
+    if (poll(pfd, npfd, 0) > 0) {
+      
+      do {
+	snd_seq_event_input(mainw->seq_handle, &ev);
+	switch (ev->type) {
+	case SND_SEQ_EVENT_CONTROLLER:   
+	  typeNumber=176;
+	  string=g_strdup_printf("%d %d %d %d\n",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
+	  
+	  break;
+	  /*              case SND_SEQ_EVENT_PITCHBEND:
+			  typeNumber=224;
+			  fprintf(stderr, "Pitchbender event on Channel %2d: %5d   \n", 
+			  ev->data.control.channel, ev->data.control.value);
+			  fprintf(stderr,"Essai String: %d %d %d %d\n",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
+			  break;  */
+	case SND_SEQ_EVENT_NOTEON:
+	  typeNumber=144;
+	  string=g_strdup_printf("%d %d %d %d\n",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.velocity);
+	  
+	  break;        
+	case SND_SEQ_EVENT_NOTEOFF:       
+	  typeNumber=128;
+	  string=g_strdup_printf("%d %d %d\n",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note);
+	  
+	  break;        
+	case SND_SEQ_EVENT_PGMCHANGE:       
+	  typeNumber=192;
+	  string=g_strdup_printf("%d %d %d %d\n",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.control.param, ev->data.control.value);
+	  
+	  break;        
+	  
+	}
+	snd_seq_free_event(ev);
+	
+      } while (snd_seq_event_input_pending(mainw->seq_handle, 0) > 0);
+      
+    }
+  }
+  else {
+
+#endif
 
   if (midi_fd==-1) return NULL;
 
@@ -411,14 +516,18 @@ gchar *midi_mangle(void) {
   else if (target==3) string=g_strdup_printf("%u %u %u %u",midbuf[0],idx,midbuf[1],midbuf[2]);
   else string=g_strdup_printf("%u %u %u %u %u",midbuf[0],idx,midbuf[1],midbuf[2],midbuf[3]);
 
+
+#ifdef ALSA_MIDI
+    }
+#endif
+
   //g_print("got %s\n",string);
 
   return string;
 }
 
 
-#endif //OMC_MIDI
-
+#endif //OMC_MIDI_IMPL
 
 
 

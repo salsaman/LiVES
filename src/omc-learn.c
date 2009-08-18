@@ -294,7 +294,6 @@ gchar *midi_fname;
 gboolean midi_open(void) {
 
 #ifdef ALSA_MIDI
-  int port_in_id;
   mainw->seq_handle=NULL;
 #endif
 
@@ -314,9 +313,9 @@ gboolean midi_open(void) {
     }
     
     snd_seq_set_client_name(mainw->seq_handle, "LiVES");
-    if ((port_in_id = snd_seq_create_simple_port(mainw->seq_handle, "LiVES",
-						 SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
-						 SND_SEQ_PORT_TYPE_APPLICATION|SND_SEQ_PORT_TYPE_PORT|SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
+    if ((mainw->alsa_midi_port = snd_seq_create_simple_port(mainw->seq_handle, "LiVES",
+							    SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
+							    SND_SEQ_PORT_TYPE_APPLICATION|SND_SEQ_PORT_TYPE_PORT|SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
       
       d_print_failed();
       return FALSE;
@@ -361,10 +360,8 @@ void midi_close(void) {
 #ifdef ALSA_MIDI
     if (mainw->seq_handle!=NULL) {
       // close
-
-      // snd_seq_delete_simple_port(mainw->seq_handle,port)
-      // snd_seq_close(mainw->seq_handle);
-
+      snd_seq_delete_simple_port(mainw->seq_handle,mainw->alsa_midi_port);
+      snd_seq_close(mainw->seq_handle);
     }
     else {
 

@@ -110,6 +110,7 @@ typedef struct {
 #define OMC_MIDI_NOTE_OFF 130
 #define OMC_MIDI_CONTROLLER 131
 #define OMC_MIDI_PITCH_BEND 132
+#define OMC_MIDI_PGM_CHANGE 133
 
 // start learning MIDI inputs
 void on_midi_learn_activate (GtkMenuItem *, gpointer);

@@ -60,9 +60,8 @@ gboolean fade_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpoi
 #define KEY_RPT_INTERVAL 40
 
 
-/* default MIDI checks per keyboard cycle (i.e. normally x checks per 40 ms) */
-/* this should be just over 1000, but some keyboards send spurious sysex, which slows down the playback */
-/* can be over-ridden anyway in prefs */
+/* default MIDI checks per keyboard cycle (i.e. normally x checks per 4 ms) */
+/* can be over-ridden in prefs */
 
 #define DEF_MIDI_CHECK_RATE 10
 

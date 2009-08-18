@@ -293,10 +293,6 @@ gchar *midi_fname;
 
 gboolean midi_open(void) {
 
-#ifdef ALSA_MIDI
-  mainw->seq_handle=NULL;
-#endif
-
   gchar *msg;
 
   if (!(prefs->omc_dev_opts&OMC_DEV_MIDI)) return TRUE;
@@ -362,6 +358,7 @@ void midi_close(void) {
       // close
       snd_seq_delete_simple_port(mainw->seq_handle,mainw->alsa_midi_port);
       snd_seq_close(mainw->seq_handle);
+      mainw->seq_handle=NULL;
     }
     else {
 

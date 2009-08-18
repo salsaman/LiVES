@@ -777,6 +777,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #ifdef ALSA_MIDI
     prefs->use_alsa_midi=FALSE;
+    mainw->seq_handle=NULL;
 #endif
 
     //////////////////////////////////////////////////////////////////

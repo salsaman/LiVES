@@ -308,7 +308,7 @@ gboolean midi_open(void) {
     d_print(_("Creating ALSA seq port..."));
 
     // ORL Ouverture d'un port ALSA
-    if (snd_seq_open(&mainw->seq_handle, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0) {
+    if (snd_seq_open(&mainw->seq_handle, "default", SND_SEQ_OPEN_INPUT, SND_SEQ_NONBLOCK) < 0) {
       d_print_failed();
       return FALSE;
     }
@@ -316,7 +316,7 @@ gboolean midi_open(void) {
     snd_seq_set_client_name(mainw->seq_handle, "LiVES");
     if ((port_in_id = snd_seq_create_simple_port(mainw->seq_handle, "LiVES",
 						 SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
-						 SND_SEQ_PORT_TYPE_APPLICATION)) < 0) {
+						 SND_SEQ_PORT_TYPE_APPLICATION|SND_SEQ_PORT_TYPE_PORT|SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
       
       d_print_failed();
       return FALSE;
@@ -361,6 +361,10 @@ void midi_close(void) {
 #ifdef ALSA_MIDI
     if (mainw->seq_handle!=NULL) {
       // close
+
+      // snd_seq_delete_simple_port(mainw->seq_handle,port)
+      // snd_seq_close(mainw->seq_handle);
+
     }
     else {
 
@@ -434,18 +438,28 @@ gchar *midi_mangle(void) {
 
   if (mainw->seq_handle!=NULL) {
 
+    // returns number of poll descriptors
     npfd = snd_seq_poll_descriptors_count(mainw->seq_handle, POLLIN);
-    pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
+
+    if (npfd<1) return NULL;
+
+    pfd = (struct pollfd *)g_malloc(npfd * sizeof(struct pollfd));
+
+    // fill our poll descriptors
     snd_seq_poll_descriptors(mainw->seq_handle, pfd, npfd, POLLIN);
     
     if (poll(pfd, npfd, 0) > 0) {
       
       do {
-	snd_seq_event_input(mainw->seq_handle, &ev);
+
+	if (snd_seq_event_input(mainw->seq_handle, &ev)<0) {
+	  break; // an error occured reading from the port
+	}
+
 	switch (ev->type) {
 	case SND_SEQ_EVENT_CONTROLLER:   
 	  typeNumber=176;
-	  string=g_strdup_printf("%d %d %d %d\n",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
+	  string=g_strdup_printf("%d %d %u %d\n",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
 	  
 	  break;
 	  /*              case SND_SEQ_EVENT_PITCHBEND:
@@ -461,7 +475,7 @@ gchar *midi_mangle(void) {
 	  break;        
 	case SND_SEQ_EVENT_NOTEOFF:       
 	  typeNumber=128;
-	  string=g_strdup_printf("%d %d %d\n",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note);
+	  string=g_strdup_printf("%d %d %d %d\n",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.off_velocity);
 	  
 	  break;        
 	case SND_SEQ_EVENT_PGMCHANGE:       
@@ -476,6 +490,9 @@ gchar *midi_mangle(void) {
       } while (snd_seq_event_input_pending(mainw->seq_handle, 0) > 0);
       
     }
+    
+    g_free(pfd);
+
   }
   else {
 

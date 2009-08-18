@@ -862,6 +862,7 @@ typedef struct {
 
   #ifdef ALSA_MIDI
   snd_seq_t *seq_handle;
+  int alsa_midi_port;
   #endif
 
   weed_plant_t *rte_textparm; // send keyboard input to this paramter (usually NULL)

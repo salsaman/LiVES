@@ -2149,7 +2149,7 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int i;
   gchar *msg;
 
-  if (!(fd=open(save_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))) {
+  if ((fd=open(save_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))<0) {
     msg=g_strdup_printf (_("\n\nUnable to open file\n%s\nError code %d\n"),save_file,errno);
     do_blocking_error_dialog (msg);
     g_free (msg);
@@ -2234,7 +2234,7 @@ static void do_midi_version_error(gchar *fname) {
 
 
 void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gchar *load_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
+  gchar *load_file=NULL;
   int fd;
   size_t bytes,srchlen;
   lives_omc_match_node_t *mnode;
@@ -2249,7 +2249,10 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *tmp;
 #endif 
 
-  if (!(fd=open(load_file,O_RDONLY))) {
+  if (user_data==NULL) load_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
+  else load_file=g_strdup(user_data);
+
+  if ((fd=open(load_file,O_RDONLY))<0) {
     msg=g_strdup_printf (_("\n\nUnable to open file\n%s\nError code %d\n"),load_file,errno);
     do_blocking_error_dialog (msg);
     g_free (msg);
@@ -2257,6 +2260,8 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     d_print_failed();
     return;
   }
+
+  g_print("fd is %d\n",fd);
 
   msg=g_strdup_printf(_("Loading device mapping from file %s..."),load_file);
   d_print(msg);
@@ -2275,6 +2280,8 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
+  g_print("ts is %s\n",tstring);
+  
   if (strncmp(tstring,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING))) {
     do_midi_version_error(load_file);
     g_free (load_file);

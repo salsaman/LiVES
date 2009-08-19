@@ -1420,10 +1420,11 @@ void print_opthelp(void) {
   g_printerr("%s",_("-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"));
 #ifdef ENABLE_JACK
   g_printerr("%s",_(", sox or jack\n"));
-  g_printerr("%s",_("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client, 2 = jack transport master, 4 = start jack transport server, 8 = pause audio when video paused, 16 = start jack audio server] "));
+  g_printerr("%s",_("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client, 2 = jack transport master, 4 = start jack transport server, 8 = pause audio when video paused, 16 = start jack audio server] \n"));
 #else
   g_printerr("%s",_("or sox\n"));
 #endif
+  g_printerr("%s",_("-devicemap <mapname>          : autoload devicemap\n"));
 
   g_printerr("%s","\n");
 }
@@ -1674,6 +1675,7 @@ int main (int argc, char *argv[]) {
 	{"aplayer", 1, 0, 0},
 	{"set", 1, 0, 0},
 	{"noset", 0, 0, 0},
+        {"devicemap", 1, 0, 0},
 	{"recover", 0, 0, 0},
 	{"norecover", 0, 0, 0},
 	{"nogui", 0, 0, 0},
@@ -1718,6 +1720,12 @@ int main (int argc, char *argv[]) {
 	  ign_opts.ign_clipset=TRUE;
 	  continue;
 	}
+        if (!strcmp(charopt,"devicemap")&&optarg!=NULL) {
+        // ORL
+          // force devicemap loading
+          on_midi_load_activate(NULL, optarg);
+          continue;
+        }
 	if (!strcmp(charopt,"aplayer")) {
 	  gchar buff[256];
 	  gboolean apl_valid=FALSE;

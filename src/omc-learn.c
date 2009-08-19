@@ -383,6 +383,7 @@ static int get_midi_len(int msgtype) {
   case OMC_MIDI_PITCH_BEND:
     return 3;
   case OMC_MIDI_NOTE_OFF:
+  case OMC_MIDI_PGM_CHANGE:
     return 2;
   }
   return 0;
@@ -453,7 +454,7 @@ gchar *midi_mangle(void) {
 	switch (ev->type) {
 	case SND_SEQ_EVENT_CONTROLLER:   
 	  typeNumber=176;
-	  string=g_strdup_printf("%d %d %u %d\n",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
+	  string=g_strdup_printf("%d %d %u %d",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
 	  
 	  break;
 	  /*              case SND_SEQ_EVENT_PITCHBEND:
@@ -464,17 +465,17 @@ gchar *midi_mangle(void) {
 			  break;  */
 	case SND_SEQ_EVENT_NOTEON:
 	  typeNumber=144;
-	  string=g_strdup_printf("%d %d %d %d\n",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.velocity);
+	  string=g_strdup_printf("%d %d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.velocity);
 	  
 	  break;        
 	case SND_SEQ_EVENT_NOTEOFF:       
 	  typeNumber=128;
-	  string=g_strdup_printf("%d %d %d %d\n",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.off_velocity);
+	  string=g_strdup_printf("%d %d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.off_velocity);
 	  
 	  break;        
 	case SND_SEQ_EVENT_PGMCHANGE:       
 	  typeNumber=192;
-	  string=g_strdup_printf("%d %d %d %d\n",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.control.param, ev->data.control.value);
+	  string=g_strdup_printf("%d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.control.param);
 	  
 	  break;        
 	  
@@ -572,6 +573,7 @@ static gchar *omc_learn_get_pname(gint type, gint idx) {
   switch (type) {
   case OMC_MIDI_CONTROLLER:
   case OMC_MIDI_PITCH_BEND:
+  case OMC_MIDI_PGM_CHANGE:
     return g_strdup(_("data"));
   case OMC_MIDI_NOTE:
     if (idx==1) return (_("velocity"));
@@ -1015,7 +1017,11 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
      break;
    case OMC_MIDI_PITCH_BEND:
      chan=js_index(string);
-     labelt=g_strdup_printf(_("MIDI ch %d pitch bend"),chan,detail);
+     labelt=g_strdup_printf(_("MIDI ch %d pitch bend value %d"),chan,detail);
+     break;
+   case OMC_MIDI_PGM_CHANGE:
+     chan=js_index(string);
+     labelt=g_strdup_printf(_("MIDI ch %d pgm change value %d"),chan,detail);
      break;
    case OMC_JS_BUTTON:
      labelt=g_strdup_printf(_("Joystick button %d"),detail);
@@ -1526,6 +1532,7 @@ static int get_nfixed(gint type, gchar *string) {
   case OMC_MIDI_NOTE:
   case OMC_MIDI_NOTE_OFF:
   case OMC_MIDI_PITCH_BEND:
+  case OMC_MIDI_PGM_CHANGE:
     nfixed=2; // type, channel
     break;
 #endif
@@ -1790,6 +1797,21 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
   case OMC_MIDI_CONTROLLER:
     // display controller and allow it to be matched
     // then request min
+    
+    mnode=omc_match_sig(OMC_MIDI,idx,string);
+    //g_print("autoscale !\n");
+    
+    if (mnode==NULL||mnode->macro==-1) {
+      mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,nfixed);
+      mnode->max[0]=127;
+      mnode->min[0]=0;
+      idx=midi_index(string);
+      omclearn_match_control(mnode,str_type,idx,string,nfixed);
+      return mnode;
+    }
+    break;
+  case OMC_MIDI_PGM_CHANGE:
+    // display controller and allow it to be matched
     
     mnode=omc_match_sig(OMC_MIDI,idx,string);
     //g_print("autoscale !\n");

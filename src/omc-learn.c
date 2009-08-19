@@ -2261,8 +2261,6 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
-  g_print("fd is %d\n",fd);
-
   msg=g_strdup_printf(_("Loading device mapping from file %s..."),load_file);
   d_print(msg);
   g_free(msg);
@@ -2280,8 +2278,6 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
-  g_print("ts is %s\n",tstring);
-  
   if (strncmp(tstring,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING))) {
     do_midi_version_error(load_file);
     g_free (load_file);

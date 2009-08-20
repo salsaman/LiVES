@@ -60,11 +60,11 @@ gboolean fade_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpoi
 #define KEY_RPT_INTERVAL 40
 
 
-/* default MIDI checks per keyboard cycle (i.e. normally x checks per 4 ms) */
+/* default MIDI checks per keyboard cycle (i.e. normally x checks per 4 ms - raw MIDI only) */
 /* can be over-ridden in prefs */
 
-#define DEF_MIDI_CHECK_RATE 10
+#define DEF_MIDI_CHECK_RATE 1000
 
 
-/* allowed non-reads between reads */
+/* allowed non-reads between reads (raw MIDI only) */
 #define DEF_MIDI_RPT 1000

@@ -426,24 +426,28 @@ gchar *midi_mangle(void) {
   gchar *str;
 
 #ifdef ALSA_MIDI
-  int npfd;
-  struct pollfd *pfd;
+  int npfd=0;
+  struct pollfd *pfd=NULL;
   snd_seq_event_t *ev;
   int typeNumber;
+  gboolean hasmore=FALSE;
 
   if (mainw->seq_handle!=NULL) {
 
-    // returns number of poll descriptors
-    npfd = snd_seq_poll_descriptors_count(mainw->seq_handle, POLLIN);
+    if (snd_seq_event_input_pending(mainw->seq_handle, 0)==0) {
+      // returns number of poll descriptors
+      npfd = snd_seq_poll_descriptors_count(mainw->seq_handle, POLLIN);
+      
+      if (npfd<1) return NULL;
+      
+      pfd = (struct pollfd *)g_malloc(npfd * sizeof(struct pollfd));
+      
+      // fill our poll descriptors
+      snd_seq_poll_descriptors(mainw->seq_handle, pfd, npfd, POLLIN);
+    }
+    else hasmore=TRUE; // events remaining from the last call to this function
 
-    if (npfd<1) return NULL;
-
-    pfd = (struct pollfd *)g_malloc(npfd * sizeof(struct pollfd));
-
-    // fill our poll descriptors
-    snd_seq_poll_descriptors(mainw->seq_handle, pfd, npfd, POLLIN);
-    
-    if (poll(pfd, npfd, 0) > 0) {
+    if (hasmore || poll(pfd, npfd, 0) > 0) {
       
       do {
 
@@ -482,7 +486,7 @@ gchar *midi_mangle(void) {
 	}
 	snd_seq_free_event(ev);
 	
-      } while (snd_seq_event_input_pending(mainw->seq_handle, 0) > 0);
+      } while (snd_seq_event_input_pending(mainw->seq_handle, 0) > 0 && string==NULL);
       
     }
     

@@ -1212,6 +1212,7 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *mt_enter_defs;
   GtkObject *spinbutton_ocp_adj;
   GtkWidget *advbutton;
+  GtkWidget *raw_midi_button;
 
   GtkWidget *label;
   GtkWidget *combo;
@@ -1234,6 +1235,7 @@ _prefsw *create_prefs_dialog (void) {
   GSList *jpeg_png = NULL;
   GSList *mt_enter_prompt = NULL;
   GSList *rb_group2 = NULL;
+  GSList *alsa_midi_group = NULL;
 
   // drop down lists
   GList *themes = NULL;
@@ -2989,6 +2991,28 @@ _prefsw *create_prefs_dialog (void) {
    
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_omc_midi), prefs->omc_dev_opts&OMC_DEV_MIDI);
 
+
+   hbox = gtk_hbox_new (FALSE, 0);
+   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 20);
+
+#ifdef ALSA_MIDI
+   gtk_widget_show (hbox);
+#endif
+
+   prefsw->alsa_midi = gtk_radio_button_new_with_mnemonic (NULL, _("Use _ALSA MIDI (recommended)"));
+   gtk_widget_show (prefsw->alsa_midi);
+   gtk_box_pack_start (GTK_BOX (hbox), prefsw->alsa_midi, TRUE, TRUE, 20);
+
+   gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->alsa_midi), alsa_midi_group);
+   alsa_midi_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->alsa_midi));
+
+   raw_midi_button = gtk_radio_button_new_with_mnemonic (alsa_midi_group, _("Use _raw MIDI"));
+   gtk_widget_show (raw_midi_button);
+   gtk_box_pack_start (GTK_BOX (hbox), raw_midi_button, TRUE, TRUE, 20);
+
+   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (raw_midi_button),!prefs->use_alsa_midi);
+
+
    hbox = gtk_hbox_new (FALSE, 0);
    gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
    gtk_widget_show (hbox);
@@ -3052,19 +3076,15 @@ _prefsw *create_prefs_dialog (void) {
    
 
 
-   hbox = gtk_hbox_new (FALSE,0);
-   gtk_widget_show (hbox);
-   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
-   
    label = gtk_label_new_with_mnemonic (_("MIDI repeat"));
    gtk_widget_show (label);
-   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
    
    spinbutton_adj = gtk_adjustment_new (prefs->midi_rpt, 1, 10000, 100, 1000, 0);
    
    prefsw->spinbutton_midirpt = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 100, 0);
    gtk_widget_show (prefsw->spinbutton_midirpt);
-   gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_midirpt, FALSE, TRUE, 0);
+   gtk_box_pack_end (GTK_BOX (hbox), prefsw->spinbutton_midirpt, FALSE, TRUE, 0);
+   gtk_box_pack_end (GTK_BOX (hbox), label, FALSE, FALSE, 10);
    gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_midirpt);
    gtk_tooltips_set_tip (mainw->tooltips, prefsw->spinbutton_midirpt, _("Number of non-reads allowed between succesive reads."), NULL);
    

@@ -37,8 +37,14 @@ plugin_poll_keyboard (gpointer data) {
   // (e.g fullscreen video playback plugins)
   // it will be asked to send keycodes via pl_key_function
 
-  // TODO ** - check all of this
+  // as of LiVES 1.1.0, this is now called 10 times faster to provide lower latency for
+  // OSC and external controllers
 
+
+#ifdef OMC_MIDI_IMPL
+  gint midi_check_rate;
+  gboolean gotone;
+#endif
 
   if (osc_loop_count++>=prefs->osc_inv_latency-1) {
     osc_loop_count=0;
@@ -51,17 +57,20 @@ plugin_poll_keyboard (gpointer data) {
     if (cached_key) gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key,cached_mod);
   }
 
-  // if we have OSC we will poll it here, as we seem to only be able to run 1 gtk_timeout at a time
+  // if we have OSC we will poll it here, as we seem to only be able to run 1 gtk_timeout 
+  // at a time
 #ifdef ENABLE_OSC
   if (prefs->osc_udp_started) lives_osc_poll(NULL);
 #endif
 
+  // check jack transport state
 #ifdef ENABLE_JACK
 #ifdef ENABLE_JACK_TRANSPORT
   if (!mainw->is_processing) lives_jack_poll(NULL);
 #endif
 #endif
 
+  // check for external controller events
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
   if (mainw->ext_cntl[EXT_CNTL_JS]) {
@@ -72,23 +81,29 @@ plugin_poll_keyboard (gpointer data) {
       string=NULL;
     }
   }
-#endif
+#endif // OMC_JS_IMPL
 
 #ifdef OMC_MIDI_IMPL
+  midi_check_rate=prefs->midi_check_rate;
+  if (prefs->use_alsa_midi) midi_check_rate=1; // because we loop for events in midi_mangle()
 
   if (mainw->ext_cntl[EXT_CNTL_MIDI]) {
-    for (i=0;i<prefs->midi_check_rate;i++) {
-      gchar *string=midi_mangle();
-      if (string!=NULL) {
-	omc_process_string(OMC_MIDI,string,FALSE);
-	g_free(string);
-	string=NULL;
+    do {
+      gotone=FALSE;
+      for (i=0;i<midi_check_rate;i++) {
+	gchar *string=midi_mangle();
+	if (string!=NULL) {
+	  omc_process_string(OMC_MIDI,string,FALSE);
+	  g_free(string);
+	  string=NULL;
+	  if (prefs->use_alsa_midi) gotone=TRUE;
+	}
       }
-    }
+    } while (gotone);
   }
-#endif
+#endif // OMC_MIDI_IMPL
 
-#endif
+#endif // ENABLE_OSC
   return TRUE;
 }
 

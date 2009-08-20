@@ -337,6 +337,7 @@ typedef struct {
   GtkWidget *omc_midi_entry;
   GtkWidget *spinbutton_midicr;
   GtkWidget *spinbutton_midirpt;
+  GtkWidget *alsa_midi;
 } _prefsw;
 
 

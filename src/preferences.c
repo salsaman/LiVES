@@ -375,6 +375,11 @@ apply_prefs(gboolean skip_warn) {
   const gchar *omc_midi_fname=gtk_entry_get_text(GTK_ENTRY(prefsw->omc_midi_entry));
   gint midicr=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midicr));
   gint midirpt=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midirpt));
+
+#ifdef ALSA_MIDI
+  gboolean use_alsa_midi=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->alsa_midi));
+#endif
+
 #endif
 #endif
 
@@ -385,6 +390,9 @@ apply_prefs(gboolean skip_warn) {
 
   unsigned char *new_undo_buf;
   GList *ulist;
+
+  gboolean needs_midi_restart=FALSE;
+  gboolean set_omc_dev_opts=FALSE;
 
   g_free(resaudw);
   resaudw=NULL;
@@ -829,7 +837,7 @@ apply_prefs(gboolean skip_warn) {
       prefs->omc_dev_opts^=OMC_DEV_JS;
       js_close();
     }
-    set_int_pref("omc_dev_opts",prefs->omc_dev_opts);
+    set_omc_dev_opts=TRUE;
   }
 #endif
 
@@ -853,16 +861,38 @@ apply_prefs(gboolean skip_warn) {
   if (omc_midi_enable!=((prefs->omc_dev_opts&OMC_DEV_MIDI)/OMC_DEV_MIDI)) {
     if (omc_midi_enable) {
       prefs->omc_dev_opts|=OMC_DEV_MIDI;
-      midi_open();
+      needs_midi_restart=TRUE;
     }
     else {
       prefs->omc_dev_opts^=OMC_DEV_MIDI;
       midi_close();
     }
-    set_int_pref("omc_dev_opts",prefs->omc_dev_opts);
+    set_omc_dev_opts=TRUE;
   }
 
+#ifdef ALSA_MIDI
+  if (use_alsa_midi==((prefs->omc_dev_opts&OMC_DEV_FORCE_RAW_MIDI)/OMC_DEV_FORCE_RAW_MIDI)) {
+    if (!needs_midi_restart) {
+      needs_midi_restart=(mainw->ext_cntl[EXT_CNTL_MIDI]);
+      if (needs_midi_restart) midi_close();
+    }
+
+    if (!use_alsa_midi) {
+      prefs->omc_dev_opts|=OMC_DEV_FORCE_RAW_MIDI;
+      prefs->use_alsa_midi=TRUE;
+    }
+    else {
+      prefs->omc_dev_opts^=OMC_DEV_FORCE_RAW_MIDI;
+      prefs->use_alsa_midi=FALSE;
+    }
+    set_omc_dev_opts=TRUE;
+  }
 #endif
+
+  if (needs_midi_restart) midi_open();
+
+#endif
+  if (set_omc_dev_opts) set_int_pref("omc_dev_opts",prefs->omc_dev_opts);
 #endif
 
   if (mt_enter_prompt!=prefs->mt_enter_prompt) {
@@ -1115,7 +1145,17 @@ static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 }
 
 
+static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) {
+  _prefsw *xprefsw;
 
+  if (user_data!=NULL) xprefsw=(_prefsw *)user_data;
+  else xprefsw=prefsw;
+
+  gtk_widget_set_sensitive(xprefsw->button_midid,!gtk_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(xprefsw->omc_midi_entry,!gtk_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(xprefsw->spinbutton_midicr,!gtk_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(xprefsw->spinbutton_midirpt,!gtk_toggle_button_get_active(tbutton));
+}
 
 
 _prefsw *create_prefs_dialog (void) {
@@ -1224,7 +1264,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *vbox2;
 #else
 #ifdef OMC_MIDI_IMPL
-  GtkWidget *buttond;
   GtkWidget *vbox2;
 #endif
 #endif
@@ -3002,13 +3041,16 @@ _prefsw *create_prefs_dialog (void) {
    prefsw->alsa_midi = gtk_radio_button_new_with_mnemonic (NULL, _("Use _ALSA MIDI (recommended)"));
    gtk_widget_show (prefsw->alsa_midi);
    gtk_box_pack_start (GTK_BOX (hbox), prefsw->alsa_midi, TRUE, TRUE, 20);
+   gtk_tooltips_set_tip (mainw->tooltips, prefsw->alsa_midi, (_("Create an ALSA MIDI port which other MIDI devices can be connected to")), NULL);
 
    gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->alsa_midi), alsa_midi_group);
    alsa_midi_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->alsa_midi));
 
+
    raw_midi_button = gtk_radio_button_new_with_mnemonic (alsa_midi_group, _("Use _raw MIDI"));
    gtk_widget_show (raw_midi_button);
    gtk_box_pack_start (GTK_BOX (hbox), raw_midi_button, TRUE, TRUE, 20);
+   gtk_tooltips_set_tip (mainw->tooltips, raw_midi_button, (_("Read directly from the MIDI device")), NULL);
 
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (raw_midi_button),!prefs->use_alsa_midi);
 
@@ -3036,12 +3078,12 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show (vbox2);
    add_fill_to_box (GTK_BOX (vbox2));
 
-   buttond = gtk_file_chooser_button_new(_("LiVES: Choose MIDI device"),GTK_FILE_CHOOSER_ACTION_OPEN);
-   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),LIVES_DEVICE_DIR);
-   gtk_box_pack_start(GTK_BOX(vbox2),buttond,TRUE,FALSE,0);
-   gtk_widget_show (buttond);
+   prefsw->button_midid = gtk_file_chooser_button_new(_("LiVES: Choose MIDI device"),GTK_FILE_CHOOSER_ACTION_OPEN);
+   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(prefsw->button_midid),LIVES_DEVICE_DIR);
+   gtk_box_pack_start(GTK_BOX(vbox2),prefsw->button_midid,TRUE,FALSE,0);
+   gtk_widget_show (prefsw->button_midid);
    add_fill_to_box (GTK_BOX (vbox2));
-   gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
+   gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(prefsw->button_midid),16);
 
    g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)prefsw->omc_midi_entry);
    
@@ -3087,6 +3129,17 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_end (GTK_BOX (hbox), label, FALSE, FALSE, 10);
    gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_midirpt);
    gtk_tooltips_set_tip (mainw->tooltips, prefsw->spinbutton_midirpt, _("Number of non-reads allowed between succesive reads."), NULL);
+
+
+
+#ifdef ALSA_MIDI
+   g_signal_connect (GTK_OBJECT (prefsw->alsa_midi), "toggled",
+		     G_CALLBACK (on_alsa_midi_toggled),
+		     NULL);
+
+   on_alsa_midi_toggled(GTK_TOGGLE_BUTTON(prefsw->alsa_midi),prefsw);
+#endif
+
    
 #endif
 #endif
@@ -3095,9 +3148,6 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show (label);
    gtk_notebook_set_tab_label (GTK_NOTEBOOK (prefsw->prefs_notebook), gtk_notebook_get_nth_page (GTK_NOTEBOOK (prefsw->prefs_notebook), pageno++), label);
    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-
-
-
 
 
    // end

@@ -211,6 +211,7 @@ typedef struct {
 
 #define OMC_DEV_MIDI 1<<0
 #define OMC_DEV_JS 1<<1
+#define OMC_DEV_FORCE_RAW_MIDI 1<<2
   guint omc_dev_opts;
 
   gchar omc_js_fname[256];
@@ -338,6 +339,7 @@ typedef struct {
   GtkWidget *spinbutton_midicr;
   GtkWidget *spinbutton_midirpt;
   GtkWidget *alsa_midi;
+  GtkWidget *button_midid;
 } _prefsw;
 
 

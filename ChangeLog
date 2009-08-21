@@ -12,8 +12,9 @@ Fix oversized constants in jack connection timeout. *
 Encoder pixel block size bugfix. * 
 Fix broken audio in encode selection. *	
 Fix some file open checks in omc-learn.c *
+Updated translations for Brazilian Portuguese, German, Hebrew, Italian, Portuguese and Spanish. *
 	
-* fixes backported to 1.0.1
+* backported to 1.0.1
 
 
 

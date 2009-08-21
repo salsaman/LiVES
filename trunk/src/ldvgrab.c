@@ -119,7 +119,7 @@ s_cam *camready (void) {
 
   if (!cam->handle) {
     if (!errno) {
-      do_error_dialog(_("\nraw1394 device not compatable!\n"));
+      do_error_dialog(_("\nraw1394 device not compatible!\n"));
     } else {
       d_print(_("Couldn't get 1394 handle"));
       do_error_dialog(_("\nIs ieee1394, driver, and raw1394 loaded?\n"));

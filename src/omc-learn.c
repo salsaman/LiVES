@@ -625,8 +625,13 @@ static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_
   GtkTreeIter iter;
   GtkTreeModel *tmodel;
 
-  gchar **array=g_strsplit(path_string,":",2);
-  gint row=atoi(array[1]);
+  gchar **array;
+  gint row;
+
+  if (get_token_count(path_string,':')<2) return;
+
+  array=g_strsplit(path_string,":",2);
+  row=atoi(array[1]);
 
   g_strfreev(array);
 

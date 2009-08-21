@@ -130,7 +130,7 @@ extern "C"
 
 /* Filter flags */
 #define WEED_FILTER_NON_REALTIME    (1<<0)
-#define WEED_FILTER_IS_CONVERTOR    (1<<1)
+#define WEED_FILTER_IS_CONVERTER    (1<<1)
 #define WEED_FILTER_HINT_IS_STATELESS (1<<2)
 #define WEED_FILTER_HINT_IS_POINT_EFFECT (1<<3)
 

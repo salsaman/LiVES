@@ -979,7 +979,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     }
   }
 
-  // extras for convertors
+  // extras for converters
   if (internal&&weed_instance_is_resizer(rfx->source)) {
     has_param=add_sizes(GTK_BOX(param_vbox),FALSE,rfx);
   }

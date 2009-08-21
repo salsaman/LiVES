@@ -150,7 +150,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
     weed_plant_t *out_chantmpls[]={weed_audio_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE),NULL};
     weed_plant_t *in_params[]={weed_float_init("volume","_Volume",1.0,0.0,1.0),weed_float_init("pan","_Pan",0.,-1.,1.),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("audio volume and pan","salsaman",1,WEED_FILTER_IS_CONVERTOR,&avol_init,&avol_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("audio volume and pan","salsaman",1,WEED_FILTER_IS_CONVERTER,&avol_init,&avol_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
 
     weed_set_int_value(in_chantmpls[0],"max_repeats",0); // set optional repeats of this channel
 

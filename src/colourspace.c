@@ -138,7 +138,7 @@ static guchar cavgc[256][256];
 static guchar cavgu[256][256];
 static int avg_inited = 0;
 
-// clamping and subspace convertors
+// clamping and subspace converters
 
 // generic
 static guchar *Y_to_Y;

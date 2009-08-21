@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-21 06:34-0300\n"
+"POT-Creation-Date: 2009-08-21 15:28-0300\n"
 "PO-Revision-Date: 2009-03-23 13:59+0000\n"
 "Last-Translator: lisovszki <lisovszki@gmail.com>\n"
 "Language-Team: hungarian <mypclinuxos.com>\n"
@@ -4160,12 +4160,13 @@ msgid "Splitters"
 msgstr "Osztók"
 
 #: src/effects-weed.c:231
-msgid "convertor"
+msgid "converter"
 msgstr ""
 
 #: src/effects-weed.c:232
-msgid "Convertors"
-msgstr ""
+#, fuzzy
+msgid "Converters"
+msgstr "Generátorok"
 
 #: src/effects-weed.c:237
 msgid "audio/video transition"

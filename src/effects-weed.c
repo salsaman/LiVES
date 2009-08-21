@@ -169,7 +169,7 @@ static int weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_ch
   int filter_flags,error;
   if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"template",&error);
   filter_flags=weed_get_int_value(filt,"flags",&error);
-  if (filter_flags&WEED_FILTER_IS_CONVERTOR) return 8;
+  if (filter_flags&WEED_FILTER_IS_CONVERTER) return 8;
   if (in_channels==0&&out_channels>0) return 1; // generator
   if (out_channels>1) return 7; // splitter : use optional non-alpha out_channels
   if (in_channels>2&&out_channels==1) return 5; // compositor : use optional non-alpha in_channels
@@ -228,8 +228,8 @@ gchar *weed_category_to_text(int cat, gboolean plural) {
     if (!plural) return (g_strdup(_("splitter")));
     else return (g_strdup(_("Splitters")));
   case 8:
-    if (!plural) return (g_strdup(_("convertor")));
-    else return (g_strdup(_("Convertors")));
+    if (!plural) return (g_strdup(_("converter")));
+    else return (g_strdup(_("Converters")));
 
 
     // subcategories
@@ -431,7 +431,7 @@ weed_plant_t *get_mandatory_channel (weed_plant_t *filter, gint which, gboolean 
 gboolean weed_filter_is_resizer(weed_plant_t *filt) {
   int error;
   int filter_flags=weed_get_int_value(filt,"flags",&error);
-  if (filter_flags&WEED_FILTER_IS_CONVERTOR) {
+  if (filter_flags&WEED_FILTER_IS_CONVERTER) {
     weed_plant_t *first_out=get_mandatory_channel(filt,0,FALSE);
     if (first_out!=NULL) {
       int tmpl_flags=weed_get_int_value(first_out,"flags",&error);
@@ -1903,7 +1903,7 @@ gint weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtr
   else flags=weed_get_int_value(filter,"flags",&error);
 
   // apply visibility mask to volume values
-  if (vis!=NULL&&(flags&WEED_FILTER_IS_CONVERTOR)) {
+  if (vis!=NULL&&(flags&WEED_FILTER_IS_CONVERTER)) {
     int vmaster=get_master_vol_param(filter);
     if (vmaster!=-1) {
       weed_plant_t **in_params=weed_get_plantptr_array(instance,"in_parameters",&error);
@@ -2407,7 +2407,7 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
     weed_add_plant_flags(gui,WEED_LEAF_READONLY_PLUGIN);
   }
 
-  if (flags&WEED_FILTER_IS_CONVERTOR) {
+  if (flags&WEED_FILTER_IS_CONVERTER) {
     if (is_audio) {
       weed_set_boolean_value(filter,"host_menu_hide",WEED_TRUE);
       if (enabled_in_channels(filter,TRUE)>=1000000) {

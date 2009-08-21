@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-21 06:34-0300\n"
+"POT-Creation-Date: 2009-08-21 15:28-0300\n"
 "PO-Revision-Date: 2009-06-08 12:19+0000\n"
 "Last-Translator: Yinghua Wang <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -3660,11 +3660,11 @@ msgid "Splitters"
 msgstr ""
 
 #: src/effects-weed.c:231
-msgid "convertor"
+msgid "converter"
 msgstr ""
 
 #: src/effects-weed.c:232
-msgid "Convertors"
+msgid "Converters"
 msgstr ""
 
 #: src/effects-weed.c:237

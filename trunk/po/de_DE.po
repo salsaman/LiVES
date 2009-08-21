@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-21 06:34-0300\n"
+"POT-Creation-Date: 2009-08-21 15:28-0300\n"
 "PO-Revision-Date: 2009-07-02 19:56+0000\n"
 "Last-Translator: Tschaka <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -3905,11 +3905,11 @@ msgid "Splitters"
 msgstr ""
 
 #: src/effects-weed.c:231
-msgid "convertor"
+msgid "converter"
 msgstr ""
 
 #: src/effects-weed.c:232
-msgid "Convertors"
+msgid "Converters"
 msgstr ""
 
 #: src/effects-weed.c:237

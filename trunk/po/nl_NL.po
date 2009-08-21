@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES 0.9.5cvs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-21 06:34-0300\n"
+"POT-Creation-Date: 2009-08-21 15:28-0300\n"
 "PO-Revision-Date: 2008-12-27 17:02+0000\n"
 "Last-Translator: ferdinand <Unknown>\n"
 "Language-Team: \n"
@@ -3740,11 +3740,11 @@ msgid "Splitters"
 msgstr ""
 
 #: src/effects-weed.c:231
-msgid "convertor"
+msgid "converter"
 msgstr ""
 
 #: src/effects-weed.c:232
-msgid "Convertors"
+msgid "Converters"
 msgstr ""
 
 #: src/effects-weed.c:237

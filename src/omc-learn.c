@@ -625,15 +625,21 @@ static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_
   GtkTreeIter iter;
   GtkTreeModel *tmodel;
 
-  gchar **array;
   gint row;
 
-  if (get_token_count(path_string,':')<2) return;
+  gint *indices;
 
-  array=g_strsplit(path_string,":",2);
-  row=atoi(array[1]);
+  GtkTreePath *tpath=gtk_tree_path_new_from_string(path_string);
 
-  g_strfreev(array);
+  if (gtk_tree_path_get_depth(tpath)!=2) {
+    gtk_tree_path_free(tpath);
+    return;
+  }
+
+  indices=gtk_tree_path_get_indices(tpath);
+  row=indices[1];
+
+  gtk_tree_path_free(tpath);
 
   if (row>(omacro.nparams-mnode->nvars)) {
     // text, so dont alter

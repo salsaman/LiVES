@@ -1,8 +1,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-21 15:28-0300\n"
+"Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
+"group_id=64341&atid=507139\n"
+"POT-Creation-Date: 2009-08-24 11:30-0300\n"
 "PO-Revision-Date: 2009-07-02 19:56+0000\n"
 "Last-Translator: Tschaka <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -4106,7 +4107,7 @@ msgstr ""
 msgid "Set as default"
 msgstr ""
 
-#: src/paramwindow.c:834 src/rte_window.c:1110 src/omc-learn.c:1304
+#: src/paramwindow.c:834 src/rte_window.c:1110 src/omc-learn.c:1310
 msgid "Close _window"
 msgstr ""
 
@@ -7453,8 +7454,8 @@ msgstr ""
 msgid "note"
 msgstr ""
 
-#: src/omc-learn.c:587 src/omc-learn.c:743 src/omc-learn.c:1069
-#: src/omc-learn.c:1505
+#: src/omc-learn.c:587 src/omc-learn.c:749 src/omc-learn.c:1075
+#: src/omc-learn.c:1511
 msgid "value"
 msgstr ""
 
@@ -7462,244 +7463,244 @@ msgstr ""
 msgid "state"
 msgstr ""
 
-#: src/omc-learn.c:685
+#: src/omc-learn.c:691
 msgid "Params."
 msgstr ""
 
-#: src/omc-learn.c:700
+#: src/omc-learn.c:706
 msgid "variable"
 msgstr ""
 
-#: src/omc-learn.c:964
+#: src/omc-learn.c:970
 msgid "Vars."
 msgstr ""
 
-#: src/omc-learn.c:1017
+#: src/omc-learn.c:1023
 #, c-format
 msgid "MIDI ch %d note on"
 msgstr ""
 
-#: src/omc-learn.c:1021
+#: src/omc-learn.c:1027
 #, c-format
 msgid "MIDI ch %d note off"
 msgstr ""
 
-#: src/omc-learn.c:1025
+#: src/omc-learn.c:1031
 #, c-format
 msgid "MIDI ch %d controller %d"
 msgstr ""
 
-#: src/omc-learn.c:1029
+#: src/omc-learn.c:1035
 #, c-format
 msgid "MIDI ch %d pitch bend value %d"
 msgstr ""
 
-#: src/omc-learn.c:1033
+#: src/omc-learn.c:1039
 #, c-format
 msgid "MIDI ch %d pgm change value %d"
 msgstr ""
 
-#: src/omc-learn.c:1036
+#: src/omc-learn.c:1042
 #, c-format
 msgid "Joystick button %d"
 msgstr ""
 
-#: src/omc-learn.c:1039
+#: src/omc-learn.c:1045
 #, c-format
 msgid "Joystick axis %d"
 msgstr ""
 
-#: src/omc-learn.c:1077
+#: src/omc-learn.c:1083
 msgid "x"
 msgstr ""
 
-#: src/omc-learn.c:1085
+#: src/omc-learn.c:1091
 msgid "range"
 msgstr ""
 
-#: src/omc-learn.c:1105
+#: src/omc-learn.c:1111
 msgid "+ offset1"
 msgstr ""
 
-#: src/omc-learn.c:1123
+#: src/omc-learn.c:1129
 msgid "* scale"
 msgstr ""
 
-#: src/omc-learn.c:1141
+#: src/omc-learn.c:1147
 msgid "+ offset2"
 msgstr ""
 
-#: src/omc-learn.c:1263
+#: src/omc-learn.c:1269
 msgid "LiVES: OMC learner"
 msgstr ""
 
-#: src/omc-learn.c:1294
+#: src/omc-learn.c:1300
 msgid "Clear _unmatched"
 msgstr ""
 
-#: src/omc-learn.c:1345
+#: src/omc-learn.c:1351
 msgid "Start video playback"
 msgstr ""
 
-#: src/omc-learn.c:1348
+#: src/omc-learn.c:1354
 msgid "Stop video playback"
 msgstr ""
 
-#: src/omc-learn.c:1352
+#: src/omc-learn.c:1358
 msgid "Clip select <clipnum>"
 msgstr ""
 
-#: src/omc-learn.c:1353
+#: src/omc-learn.c:1359
 msgid "Switch foreground clip to the nth valid clip"
 msgstr ""
 
-#: src/omc-learn.c:1357
+#: src/omc-learn.c:1363
 msgid "Play forwards"
 msgstr ""
 
-#: src/omc-learn.c:1358
+#: src/omc-learn.c:1364
 msgid "Play video in a forwards direction"
 msgstr ""
 
-#: src/omc-learn.c:1361
+#: src/omc-learn.c:1367
 msgid "Play backwards"
 msgstr ""
 
-#: src/omc-learn.c:1362
+#: src/omc-learn.c:1368
 msgid "Play video in a backwards direction"
 msgstr ""
 
-#: src/omc-learn.c:1365
+#: src/omc-learn.c:1371
 msgid "Reverse playback direction"
 msgstr ""
 
-#: src/omc-learn.c:1366
+#: src/omc-learn.c:1372
 msgid "Reverse direction of video playback"
 msgstr ""
 
-#: src/omc-learn.c:1369
+#: src/omc-learn.c:1375
 msgid "Play video faster"
 msgstr ""
 
-#: src/omc-learn.c:1370
+#: src/omc-learn.c:1376
 msgid "Play video at a slightly faster rate"
 msgstr ""
 
-#: src/omc-learn.c:1373
+#: src/omc-learn.c:1379
 msgid "Play video slower"
 msgstr ""
 
-#: src/omc-learn.c:1374
+#: src/omc-learn.c:1380
 msgid "Play video at a slightly slower rate"
 msgstr ""
 
-#: src/omc-learn.c:1377
+#: src/omc-learn.c:1383
 msgid "Toggle video freeze"
 msgstr ""
 
-#: src/omc-learn.c:1378
+#: src/omc-learn.c:1384
 msgid "Freeze video, or if already frozen, unfreeze it"
 msgstr ""
 
-#: src/omc-learn.c:1381
+#: src/omc-learn.c:1387
 msgid "Set video framerate to <fps>"
 msgstr ""
 
-#: src/omc-learn.c:1382
+#: src/omc-learn.c:1388
 msgid "Set framerate of foreground clip to <float fps>"
 msgstr ""
 
-#: src/omc-learn.c:1386
+#: src/omc-learn.c:1392
 msgid "Start recording"
 msgstr ""
 
-#: src/omc-learn.c:1389
+#: src/omc-learn.c:1395
 msgid "Stop recording"
 msgstr ""
 
-#: src/omc-learn.c:1392
+#: src/omc-learn.c:1398
 msgid "Toggle recording state"
 msgstr ""
 
-#: src/omc-learn.c:1395
+#: src/omc-learn.c:1401
 msgid "Swap foreground and background clips"
 msgstr ""
 
-#: src/omc-learn.c:1397
+#: src/omc-learn.c:1403
 msgid "Reset effect keys"
 msgstr ""
 
-#: src/omc-learn.c:1398
+#: src/omc-learn.c:1404
 msgid "Switch all effects off."
 msgstr ""
 
-#: src/omc-learn.c:1401
+#: src/omc-learn.c:1407
 msgid "Enable effect key <key>"
 msgstr ""
 
-#: src/omc-learn.c:1405
+#: src/omc-learn.c:1411
 msgid "Disable effect key <key>"
 msgstr ""
 
-#: src/omc-learn.c:1409
+#: src/omc-learn.c:1415
 msgid "Toggle effect key <key>"
 msgstr ""
 
-#: src/omc-learn.c:1413
+#: src/omc-learn.c:1419
 msgid "Set parameter value <key> <pnum> = <value>"
 msgstr ""
 
-#: src/omc-learn.c:1414
+#: src/omc-learn.c:1420
 msgid "Set <value> of pth (numerical) parameter for effect key <key>."
 msgstr ""
 
-#: src/omc-learn.c:1418
+#: src/omc-learn.c:1424
 msgid "Switch foreground to next clip"
 msgstr ""
 
-#: src/omc-learn.c:1421
+#: src/omc-learn.c:1427
 msgid "Switch foreground to previous clip"
 msgstr ""
 
-#: src/omc-learn.c:1424
+#: src/omc-learn.c:1430
 msgid "Set video framerate to ratio <fps_ratio>"
 msgstr ""
 
-#: src/omc-learn.c:1425
+#: src/omc-learn.c:1431
 msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
 msgstr ""
 
-#: src/omc-learn.c:1429
+#: src/omc-learn.c:1435
 msgid "Retrigger clip <clipnum>"
 msgstr ""
 
-#: src/omc-learn.c:1430
+#: src/omc-learn.c:1436
 msgid ""
 "Switch foreground clip to the nth valid clip, and reset the frame number"
 msgstr ""
 
-#: src/omc-learn.c:1456 src/omc-learn.c:1519
+#: src/omc-learn.c:1462 src/omc-learn.c:1525
 msgid "clipnum"
 msgstr ""
 
-#: src/omc-learn.c:1464
+#: src/omc-learn.c:1470
 msgid "fps"
 msgstr ""
 
-#: src/omc-learn.c:1471 src/omc-learn.c:1477 src/omc-learn.c:1483
-#: src/omc-learn.c:1490
+#: src/omc-learn.c:1477 src/omc-learn.c:1483 src/omc-learn.c:1489
+#: src/omc-learn.c:1496
 msgid "key"
 msgstr ""
 
-#: src/omc-learn.c:1497
+#: src/omc-learn.c:1503
 msgid "pnum"
 msgstr ""
 
-#: src/omc-learn.c:1512
+#: src/omc-learn.c:1518
 msgid "fps_ratio"
 msgstr ""
 
-#: src/omc-learn.c:1613
+#: src/omc-learn.c:1619
 msgid ""
 "\n"
 "\n"
@@ -7707,7 +7708,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/omc-learn.c:1616
+#: src/omc-learn.c:1622
 msgid ""
 "\n"
 "\n"
@@ -7715,7 +7716,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/omc-learn.c:1619
+#: src/omc-learn.c:1625
 msgid ""
 "\n"
 "\n"
@@ -7723,7 +7724,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/omc-learn.c:2162 src/omc-learn.c:2265
+#: src/omc-learn.c:2168 src/omc-learn.c:2271
 #, c-format
 msgid ""
 "\n"
@@ -7733,12 +7734,12 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/omc-learn.c:2170
+#: src/omc-learn.c:2176
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr ""
 
-#: src/omc-learn.c:2229
+#: src/omc-learn.c:2235
 #, c-format
 msgid ""
 "\n"
@@ -7747,7 +7748,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2236
+#: src/omc-learn.c:2242
 #, c-format
 msgid ""
 "\n"
@@ -7756,7 +7757,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2273
+#: src/omc-learn.c:2279
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr ""

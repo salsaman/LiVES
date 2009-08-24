@@ -78,7 +78,8 @@ AC_DEFINE_UNQUOTED(LiVES_VERSION, "${VERSION}", [])
 dnl Add the languages which your application supports here.
 ALL_LINGUAS="fr cs ja nl_NL de_DE pt pt_BR hu es it pl tr ru zh_CN sk he"
 AM_GNU_GETTEXT
-AM_GNU_GETTEXT_VERSION(0.12.1)
+AM_GNU_GETTEXT_VERSION(0.17)
+
 
 
 dnl Use -Wall if we have gcc.

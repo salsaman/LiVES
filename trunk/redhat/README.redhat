@@ -1,6 +1,0 @@
-As user root copy the files LiVES-0.9.5-1.spec and build-lives to your
-rpm SPECS directory. The files LiVES_logo_??.png and LiVES.desktop
-should be copied to your rpm SOURCE directory.
-For native redhat installations such directories are in
-/usr/src/redhat, Mandriva has them in /usr/src/mandrake, others installations might
-have them elsewhere under /usr/src or /usr/local/src.

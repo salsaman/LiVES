@@ -19,7 +19,6 @@ doc_DATA = lives-plugins/marcos-encoders/README.multi_encoder AUTHORS BUGS Chang
 
 EXTRA_DIST = \
 	configure \
-	autogen.sh \
 	build-lives-rfx-plugin* \
 	smogrify \
 	midi* \

@@ -580,13 +580,13 @@ static gchar *omc_learn_get_pname(gint type, gint idx) {
   case OMC_MIDI_PGM_CHANGE:
     return g_strdup(_("data"));
   case OMC_MIDI_NOTE:
-    if (idx==1) return (_("velocity"));
+    if (idx==1) return g_strdup(_("velocity"));
   case OMC_MIDI_NOTE_OFF:
     return g_strdup(_("note"));
   case OMC_JS_AXIS:
     return g_strdup(_("value"));
   default:
-    return (_("state"));
+    return g_strdup(_("state"));
   }
 }
 

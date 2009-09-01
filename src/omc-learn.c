@@ -461,12 +461,11 @@ gchar *midi_mangle(void) {
 	  string=g_strdup_printf("%d %d %u %d",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
 	  
 	  break;
-	  /*              case SND_SEQ_EVENT_PITCHBEND:
-			  typeNumber=224;
-			  fprintf(stderr, "Pitchbender event on Channel %2d: %5d   \n", 
-			  ev->data.control.channel, ev->data.control.value);
-			  fprintf(stderr,"Essai String: %d %d %d %d\n",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
-			  break;  */
+	case SND_SEQ_EVENT_PITCHBEND:
+	  typeNumber=224;
+	  string=g_strdup_printf("%d %d %d",typeNumber+ev->data.control.channel,ev->data.control.channel, ev->data.control.value);
+	  break;
+
 	case SND_SEQ_EVENT_NOTEON:
 	  typeNumber=144;
 	  string=g_strdup_printf("%d %d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.velocity);
@@ -479,7 +478,7 @@ gchar *midi_mangle(void) {
 	  break;        
 	case SND_SEQ_EVENT_PGMCHANGE:       
 	  typeNumber=192;
-	  string=g_strdup_printf("%d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.control.param);
+	  string=g_strdup_printf("%d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.control.value);
 	  
 	  break;        
 	  
@@ -580,8 +579,8 @@ static gchar *omc_learn_get_pname(gint type, gint idx) {
   case OMC_MIDI_PGM_CHANGE:
     return g_strdup(_("data"));
   case OMC_MIDI_NOTE:
-    if (idx==1) return g_strdup(_("velocity"));
   case OMC_MIDI_NOTE_OFF:
+    if (idx==1) return g_strdup(_("velocity"));
     return g_strdup(_("note"));
   case OMC_JS_AXIS:
     return g_strdup(_("value"));
@@ -597,9 +596,6 @@ static gint omc_learn_get_pvalue(gint type, gint idx, gchar *string) {
   gint res;
 
   switch (type) {
-  case OMC_MIDI_PITCH_BEND:
-    res=(atoi(array[3+idx])<<7)+atoi(array[2+idx]);
-    break;
   case OMC_MIDI_CONTROLLER:
     res=atoi(array[3+idx]);
     break;
@@ -970,7 +966,6 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
    gtk_tree_store_set (mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Vars.")), -1);
 
    for (i=0;i<mnode->nvars;i++) {
-
      gtk_tree_store_append (mnode->gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
        
      if (oldval!=NULL) {
@@ -991,16 +986,16 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
      if (type>0) {
        vname=omc_learn_get_pname(type,i);
        val=omc_learn_get_pvalue(type,i,string);
+
        valstr=g_strdup_printf("%d",val);
        if (!mnode->matchp[i]) {
 	 mnode->matchi[i]=val;
        }
      }
      else {
-       type=-type;
-       vname=omc_learn_get_pname(type,i);
+       vname=omc_learn_get_pname(-type,i);
        if (mnode->matchp[i]) valstr=g_strdup_printf("%d",mnode->matchi[i]);
-       else valstr=g_strdup("-");
+       else valstr=g_strdup("0");
      }
 
      gtk_tree_store_set (mnode->gtkstore, &iter2, TITLE_COLUMN, vname, VALUE_COLUMN, valstr, FILTER_COLUMN, mnode->matchp[i], RANGE_COLUMN, strval, OFFS1_COLUMN, strval2, SCALE_COLUMN, strval3, OFFS2_COLUMN, strval4, -1);
@@ -1032,11 +1027,11 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
      break;
    case OMC_MIDI_PITCH_BEND:
      chan=js_index(string);
-     labelt=g_strdup_printf(_("MIDI ch %d pitch bend value %d"),chan,detail);
+     labelt=g_strdup_printf(_("MIDI ch %d pitch bend"),chan,detail);
      break;
    case OMC_MIDI_PGM_CHANGE:
      chan=js_index(string);
-     labelt=g_strdup_printf(_("MIDI ch %d pgm change value %d"),chan,detail);
+     labelt=g_strdup_printf(_("MIDI ch %d pgm change"),chan);
      break;
    case OMC_JS_BUTTON:
      labelt=g_strdup_printf(_("Joystick button %d"),detail);
@@ -1045,7 +1040,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
      labelt=g_strdup_printf(_("Joystick axis %d"),detail);
      break;
    }
-   
+
    label = gtk_label_new (labelt);
    gtk_widget_show (label);
    
@@ -1059,10 +1054,10 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
    gtk_table_attach (GTK_TABLE (table), label, 0, 1, tbl_currow, tbl_currow+1,
 		     (GtkAttachOptions) (0),
 		     (GtkAttachOptions) (0), 0, 0);
-  
+
    // properties
    gtk_widget_modify_base(mnode->treev1, GTK_STATE_NORMAL, &palette->menu_and_bars);
-  
+
    renderer = gtk_cell_renderer_text_new ();
    column = gtk_tree_view_column_new_with_attributes (NULL,
 						      renderer,
@@ -1104,7 +1099,6 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 
    g_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
-
 
 
 
@@ -1212,6 +1206,8 @@ static void show_existing(void) {
     }
 #endif
     g_strfreev(array);
+
+    g_print("here %d %d\n",type,idx);
 
     omc_learner_add_row(-type,idx,mnode,srch);
     g_free(srch);
@@ -1594,10 +1590,11 @@ static lives_omc_match_node_t *omc_match_sig(gint type, gint index, gchar *sig) 
 
   while (nlist!=NULL) {
     cnode=(lives_omc_match_node_t *)nlist->data;
-    //g_print("cf %s and %s\n",cnode->srch,srch);
+    g_print("cf %s and %s\n",cnode->srch,srch);
     if (!strncmp(cnode->srch,srch,strlen(cnode->srch))) {
       // got a possible match
       // now check the data
+      g_print("match !\n");
       if (match_filtered_params(cnode,sig,nfixed)) {
 	g_free(srch);
 	return cnode;
@@ -1849,8 +1846,8 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
     
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,-2);
-      mnode->max[0]=16384;
-      mnode->min[0]=0;
+      mnode->max[0]=8192;
+      mnode->min[0]=-8192;
       omclearn_match_control(mnode,str_type,idx,string,nfixed);
       return mnode;
     }

@@ -336,6 +336,44 @@ static gboolean pre_init(void) {
 
   mainw->cursor=NULL;
 
+  for (i=0;i<MAX_EXT_CNTL;i++) mainw->ext_cntl[i]=FALSE;
+
+  prefs->omc_dev_opts=get_int_pref("omc_dev_opts");
+
+  get_pref("omc_js_fname",prefs->omc_js_fname,256);
+
+#ifdef ENABLE_OSC
+#ifdef OMC_JS_IMPL
+  if (strlen(prefs->omc_js_fname)==0) {
+    gchar *tmp=get_js_filename();
+    if (tmp!=NULL) {
+      g_snprintf(prefs->omc_js_fname,256,"%s",tmp);
+      }
+  }
+#endif
+#endif
+  
+  get_pref("omc_midi_fname",prefs->omc_midi_fname,256);
+#ifdef ENABLE_OSC
+#ifdef OMC_MIDI_IMPL
+  if (strlen(prefs->omc_midi_fname)==0) {
+    gchar *tmp=get_midi_filename();
+    if (tmp!=NULL) {
+      g_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
+    }
+  }
+#endif
+#endif
+
+#ifdef ALSA_MIDI
+    prefs->use_alsa_midi=TRUE;
+    mainw->seq_handle=NULL;
+
+    if (prefs->omc_dev_opts&OMC_DEV_FORCE_RAW_MIDI) prefs->use_alsa_midi=FALSE;
+
+#endif
+
+
   if (!strcasecmp(prefs->theme,"none")) return FALSE;
   return TRUE;
 
@@ -650,10 +688,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->reverse_pb=FALSE;
 
-  for (i=0;i<MAX_EXT_CNTL;i++) {
-    mainw->ext_cntl[i]=FALSE;
-  }
-
   mainw->osc_auto=FALSE;
   mainw->osc_enc_width=mainw->osc_enc_height=0;
 
@@ -744,44 +778,10 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->midi_rpt=get_int_pref("midi_rpt");
     if (prefs->midi_rpt==0) prefs->midi_rpt=DEF_MIDI_RPT;
 
-    prefs->omc_dev_opts=get_int_pref("omc_dev_opts");
-
-    get_pref("omc_js_fname",prefs->omc_js_fname,256);
-#ifdef ENABLE_OSC
-#ifdef OMC_JS_IMPL
-    if (strlen(prefs->omc_js_fname)==0) {
-      gchar *tmp=get_js_filename();
-      if (tmp!=NULL) {
-	g_snprintf(prefs->omc_js_fname,256,"%s",tmp);
-      }
-    }
-#endif
-#endif
-
-    get_pref("omc_midi_fname",prefs->omc_midi_fname,256);
-#ifdef ENABLE_OSC
-#ifdef OMC_MIDI_IMPL
-    if (strlen(prefs->omc_midi_fname)==0) {
-      gchar *tmp=get_midi_filename();
-      if (tmp!=NULL) {
-	g_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
-      }
-    }
-#endif
-#endif
-
     prefs->num_rtaudiobufs=4;
 
     prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and othe live CDs
 
-
-#ifdef ALSA_MIDI
-    prefs->use_alsa_midi=TRUE;
-    mainw->seq_handle=NULL;
-
-    if (prefs->omc_dev_opts&OMC_DEV_FORCE_RAW_MIDI) prefs->use_alsa_midi=FALSE;
-
-#endif
 
     //////////////////////////////////////////////////////////////////
 
@@ -1724,7 +1724,6 @@ int main (int argc, char *argv[]) {
 	  continue;
 	}
         if (!strcmp(charopt,"devicemap")&&optarg!=NULL) {
-        // ORL
           // force devicemap loading
           on_midi_load_activate(NULL, optarg);
           continue;

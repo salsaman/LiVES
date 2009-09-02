@@ -721,8 +721,10 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row) {
 
   mnode->treev2 = gtk_tree_view_new_with_model (GTK_TREE_MODEL (mnode->gtkstore2));
 
-  gtk_widget_modify_base(mnode->treev2, GTK_STATE_NORMAL, &palette->menu_and_bars);
-  
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_base(mnode->treev2, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
   renderer = gtk_cell_renderer_text_new ();
   column = gtk_tree_view_column_new_with_attributes (NULL,
 						     renderer,
@@ -776,8 +778,14 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
   mnode->fvali=(gint *)g_malloc(omc_macro.nparams*sizint);
   mnode->fvald=(gdouble *)g_malloc(omc_macro.nparams*sizdbl);
 
+  if (lps>mps) lps=mps;
+
   for (i=mps;i>=0;i--) {
-    if (lps<0) {
+    if (mnode->matchp[lps]) lps++; // variable is filtered for
+  }
+
+  for (i=mps;i>=0;i--) {
+    if (lps<0||lps>=mnode->nvars) {
       mnode->map[i]=-1;
       if (omc_macro.ptypes[i]==OMC_PARAM_INT) mnode->fvali[i]=omc_macro.vali[i];
       else mnode->fvald[i]=omc_macro.vald[i];
@@ -830,7 +838,6 @@ static void on_omc_combo_entry_changed (GtkEntry *macro_entry, gpointer ptr) {
     if (!strcmp(macro_text,omc_macros[i].macro_text)) break;
   }
 
-
   if (i>0) {
     mnode->macro=i;
     omc_learn_link_params(mnode);
@@ -843,14 +850,21 @@ static void on_omc_combo_entry_changed (GtkEntry *macro_entry, gpointer ptr) {
 
 static void cell_toggled_callback (GtkCellRendererToggle *toggle, gchar *path_string, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
-  gchar **array;
   gint row;
 
-  if (get_token_count(path_string,':')<2) return;
-  
-  array=g_strsplit(path_string,":",2);
-  row=atoi(array[1]);
-  g_strfreev(array);
+  gint *indices;
+
+  GtkTreePath *tpath=gtk_tree_path_new_from_string(path_string);
+
+  if (gtk_tree_path_get_depth(tpath)!=2) {
+    gtk_tree_path_free(tpath);
+    return;
+  }
+
+  indices=gtk_tree_path_get_indices(tpath);
+  row=indices[1];
+
+  gtk_tree_path_free(tpath);
 
   gtk_cell_renderer_toggle_set_active(toggle,!(gtk_cell_renderer_toggle_get_active(toggle)));
 
@@ -871,10 +885,21 @@ static void cell_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_s
   GtkTreeIter iter;
   GtkTreeModel *tmodel;
 
-  gchar **array=g_strsplit(path_string,":",2);
-  gint row=atoi(array[1]);
+  gint row;
 
-  g_strfreev(array);
+  gint *indices;
+
+  GtkTreePath *tpath=gtk_tree_path_new_from_string(path_string);
+
+  if (gtk_tree_path_get_depth(tpath)!=2) {
+    gtk_tree_path_free(tpath);
+    return;
+  }
+
+  indices=gtk_tree_path_get_indices(tpath);
+  row=indices[1];
+
+  gtk_tree_path_free(tpath);
 
   tmodel=gtk_tree_view_get_model (GTK_TREE_VIEW(mnode->treev1));
   gtk_tree_model_get_iter_from_string(tmodel,&iter,path_string);
@@ -995,7 +1020,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
      else {
        vname=omc_learn_get_pname(-type,i);
        if (mnode->matchp[i]) valstr=g_strdup_printf("%d",mnode->matchi[i]);
-       else valstr=g_strdup("0");
+       else valstr=g_strdup("-");
      }
 
      gtk_tree_store_set (mnode->gtkstore, &iter2, TITLE_COLUMN, vname, VALUE_COLUMN, valstr, FILTER_COLUMN, mnode->matchp[i], RANGE_COLUMN, strval, OFFS1_COLUMN, strval2, SCALE_COLUMN, strval3, OFFS2_COLUMN, strval4, -1);
@@ -1056,7 +1081,9 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 		     (GtkAttachOptions) (0), 0, 0);
 
    // properties
-   gtk_widget_modify_base(mnode->treev1, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_base(mnode->treev1, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
 
    renderer = gtk_cell_renderer_text_new ();
    column = gtk_tree_view_column_new_with_attributes (NULL,
@@ -1207,8 +1234,6 @@ static void show_existing(void) {
 #endif
     g_strfreev(array);
 
-    g_print("here %d %d\n",type,idx);
-
     omc_learner_add_row(-type,idx,mnode,srch);
     g_free(srch);
 
@@ -1261,7 +1286,10 @@ GtkWidget *create_omclearn_dialog(void) {
   
   omclearn_dialog = gtk_dialog_new ();
   
-  gtk_widget_modify_bg(omclearn_dialog, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(omclearn_dialog, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
   gtk_window_set_title (GTK_WINDOW (omclearn_dialog), _("LiVES: OMC learner"));
   gtk_window_add_accel_group (GTK_WINDOW (omclearn_dialog), mainw->accel_group);
   top_vbox=GTK_DIALOG(omclearn_dialog)->vbox;
@@ -1590,11 +1618,10 @@ static lives_omc_match_node_t *omc_match_sig(gint type, gint index, gchar *sig) 
 
   while (nlist!=NULL) {
     cnode=(lives_omc_match_node_t *)nlist->data;
-    g_print("cf %s and %s\n",cnode->srch,srch);
+    //g_print("cf %s and %s\n",cnode->srch,srch);
     if (!strncmp(cnode->srch,srch,strlen(cnode->srch))) {
       // got a possible match
       // now check the data
-      g_print("match !\n");
       if (match_filtered_params(cnode,sig,nfixed)) {
 	g_free(srch);
 	return cnode;
@@ -1682,9 +1709,6 @@ static lives_omc_match_node_t *lives_omc_match_node_new(gint str_type, gint inde
     g_free(tmp);
   }
   else srch_str=g_strdup(string);
-
-  //g_print("astoring %d:%s\n",str_type,string);
-  //g_print("storing %s\n",srch_str);
 
   mnode->srch=srch_str;
   mnode->macro=-1;
@@ -1845,7 +1869,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
     //g_print("autoscale !\n");
     
     if (mnode==NULL||mnode->macro==-1) {
-      mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,-2);
+      mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,nfixed);
       mnode->max[0]=8192;
       mnode->min[0]=-8192;
       omclearn_match_control(mnode,str_type,idx,string,nfixed);
@@ -2456,6 +2480,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   close (fd);
   d_print_done();
+
 
 #ifdef OMC_MIDI_IMPL
   if (!mainw->ext_cntl[EXT_CNTL_MIDI]) midi_open();

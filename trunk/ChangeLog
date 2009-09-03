@@ -3,6 +3,7 @@ Version 1.1.0
 Fix crash when loop continuous is pressed with no file loaded. *
 Fix MIDI/js device load/save for 64 bits. *
 Reduce external control latency to 4 ms.
+Fix possible crash in MIDI/js learner. *
 Add alsa-midi support. (thanks ORL)
 Fix MIDI note on/note off (were swapped).
 Add startup option -devicemap. (thanks ORL)

@@ -619,7 +619,6 @@ static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_
   gdouble vald;
 
   GtkTreeIter iter;
-  GtkTreeModel *tmodel;
 
   gint row;
 
@@ -635,6 +634,8 @@ static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_
   indices=gtk_tree_path_get_indices(tpath);
   row=indices[1];
 
+  gtk_tree_model_get_iter(GTK_TREE_MODEL(mnode->gtkstore2),&iter,tpath);
+
   gtk_tree_path_free(tpath);
 
   if (row>(omacro.nparams-mnode->nvars)) {
@@ -642,9 +643,6 @@ static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_
     return;
   }
 
-  tmodel=gtk_tree_view_get_model (GTK_TREE_VIEW(mnode->treev2));
-  gtk_tree_model_get_iter_from_string(tmodel,&iter,path_string);
-  
   switch (omacro.ptypes[row]) {
   case OMC_PARAM_INT:
     vali=atoi(new_text);
@@ -856,6 +854,8 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, gchar *path_st
 
   GtkTreePath *tpath=gtk_tree_path_new_from_string(path_string);
 
+  GtkTreeIter iter;
+
   if (gtk_tree_path_get_depth(tpath)!=2) {
     gtk_tree_path_free(tpath);
     return;
@@ -864,11 +864,15 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, gchar *path_st
   indices=gtk_tree_path_get_indices(tpath);
   row=indices[1];
 
+  gtk_tree_model_get_iter(GTK_TREE_MODEL(mnode->gtkstore),&iter,tpath);
+
   gtk_tree_path_free(tpath);
 
-  gtk_cell_renderer_toggle_set_active(toggle,!(gtk_cell_renderer_toggle_get_active(toggle)));
 
   mnode->matchp[row]=!(mnode->matchp[row]);
+
+  gtk_tree_store_set(mnode->gtkstore,&iter,FILTER_COLUMN,mnode->matchp[row],-1);
+
 
 }
 
@@ -883,7 +887,6 @@ static void cell_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_s
   gdouble vald;
 
   GtkTreeIter iter;
-  GtkTreeModel *tmodel;
 
   gint row;
 
@@ -899,10 +902,9 @@ static void cell_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_s
   indices=gtk_tree_path_get_indices(tpath);
   row=indices[1];
 
-  gtk_tree_path_free(tpath);
+  gtk_tree_model_get_iter(GTK_TREE_MODEL(mnode->gtkstore),&iter,tpath);
 
-  tmodel=gtk_tree_view_get_model (GTK_TREE_VIEW(mnode->treev1));
-  gtk_tree_model_get_iter_from_string(tmodel,&iter,path_string);
+  gtk_tree_path_free(tpath);
 
   switch (col) {
   case OFFS1_COLUMN:
@@ -1104,6 +1106,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
    renderer = gtk_cell_renderer_toggle_new ();
    column = gtk_tree_view_column_new_with_attributes (_("x"),
 						      renderer,
+						      "active", FILTER_COLUMN,
 						      NULL);
    gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev1), column);
 

@@ -100,6 +100,38 @@ typedef struct {
 
 
 
+typedef struct {
+  GtkWidget *dialog;
+  GtkWidget *clear_button;
+  GtkWidget *del_all_button;
+
+  gint tbl_rows;
+  gint tbl_currow;
+  GtkWidget *table;
+  GtkWidget *top_vbox;
+} omclearn_w;
+
+
+
+enum {
+  TITLE_COLUMN,
+  VALUE_COLUMN,
+  FILTER_COLUMN,
+  RANGE_COLUMN,
+  OFFS1_COLUMN,
+  SCALE_COLUMN,
+  OFFS2_COLUMN,
+  NUM_COLUMNS
+};
+ 
+
+enum {
+  TITLE2_COLUMN,
+  VALUE2_COLUMN,
+  NUM2_COLUMNS
+};
+
+
 #define OMC_JS 1
 #define OMC_JS_AXIS 2
 #define OMC_JS_BUTTON 3
@@ -116,7 +148,9 @@ typedef struct {
 void on_midi_learn_activate (GtkMenuItem *, gpointer);
 
 // process a string (i.e. convert to an OSC message and pass to OSC subsys)
-void omc_process_string(gint supertype, gchar *string, gboolean learn);
+// only need to set omclw if learn is TRUE
+void omc_process_string(gint supertype, gchar *string, gboolean learn, omclearn_w *omclw);
+
 
 
 #define OMC_FILE_VSTRING "LiVES OMC map version 1.0"

@@ -59,37 +59,6 @@ static lives_omc_macro_t omc_macros[N_OMC_MACROS];
 static GSList *omc_node_list;
 static gboolean omc_macros_inited=FALSE;
 
-static gint tbl_rows;
-static gint tbl_currow;
-
-static GtkWidget *omclearn_dialog;
-static GtkWidget *table;
-static GtkWidget *top_vbox;
-
-
-///////////////////////////
-
-
-enum {
-  TITLE_COLUMN,
-  VALUE_COLUMN,
-  FILTER_COLUMN,
-  RANGE_COLUMN,
-  OFFS1_COLUMN,
-  SCALE_COLUMN,
-  OFFS2_COLUMN,
-  NUM_COLUMNS
-};
- 
-
-enum {
-  TITLE2_COLUMN,
-  VALUE2_COLUMN,
-  NUM2_COLUMNS
-};
-
-
-
 //////////////////////////////////////////////////////////////
 
 
@@ -117,7 +86,7 @@ static void omc_match_node_free(lives_omc_match_node_t *mnode) {
 
 
 
-static void remove_unused_nodes(void) {
+static void remove_all_nodes(gboolean every, omclearn_w *omclw) {
   lives_omc_match_node_t *mnode;
   GSList *slist_last=NULL,*slist_next;
   GSList *slist=omc_node_list;
@@ -127,7 +96,7 @@ static void remove_unused_nodes(void) {
     
     mnode=(lives_omc_match_node_t *)slist->data;
     
-    if (mnode->macro==-1) {
+    if (every||mnode->macro==-1) {
       if (slist_last!=NULL) slist_last->next=slist->next;
       else omc_node_list=slist->next;
       omc_match_node_free(mnode);
@@ -135,6 +104,10 @@ static void remove_unused_nodes(void) {
     else slist_last=slist;
     slist=slist_next;
   }
+
+  gtk_widget_set_sensitive(omclw->clear_button,FALSE);
+  if (slist==NULL) gtk_widget_set_sensitive(omclw->del_all_button,FALSE);
+
 }
 
 
@@ -660,7 +633,7 @@ static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_
 
 
 
-static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row) {
+static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row, omclearn_w *omclw) {
   lives_omc_macro_t macro=omc_macros[mnode->macro];
 
   GtkCellRenderer *renderer;
@@ -755,7 +728,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row) {
 
   gtk_widget_show (mnode->treev2);
   
-  gtk_table_attach (GTK_TABLE (table), mnode->treev2, 3, 4, row, row+1,
+  gtk_table_attach (GTK_TABLE (omclw->table), mnode->treev2, 3, 4, row, row+1,
 		    (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		    (GtkAttachOptions) (0), 0, 0);
   
@@ -813,6 +786,7 @@ static void on_omc_combo_entry_changed (GtkEntry *macro_entry, gpointer ptr) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)ptr;
 
   gint row=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(macro_entry),"row"));
+  omclearn_w *omclw=(omclearn_w *)g_object_get_data(G_OBJECT(macro_entry),"omclw");
 
   if (mnode->treev2!=NULL) {
     // remove old mapping
@@ -839,7 +813,7 @@ static void on_omc_combo_entry_changed (GtkEntry *macro_entry, gpointer ptr) {
   if (i>0) {
     mnode->macro=i;
     omc_learn_link_params(mnode);
-    omc_macro_row_add_params(mnode,row);
+    omc_macro_row_add_params(mnode,row,omclw);
   }
 }
 
@@ -932,7 +906,7 @@ static void cell_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_s
 
 
 
-static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row) {
+static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row, omclearn_w *omclw) {
   GList *macro_list=NULL;
   int i;
   gulong omc_combo_fn;
@@ -960,13 +934,14 @@ static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row
   }
 
   g_object_set_data(G_OBJECT((GTK_COMBO(combo))->entry),"row",GINT_TO_POINTER(row));
+  g_object_set_data(G_OBJECT((GTK_COMBO(combo))->entry),"omclw",(gpointer)omclw);
 
   return combo;
 }
 
 
 
-static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *mnode, gchar *string) {
+static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *mnode, gchar *string, omclearn_w *omclw) {
    GtkWidget *label,*combo;
    GtkCellRenderer *renderer;
    GtkTreeViewColumn *column;
@@ -984,8 +959,8 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 
    gint chan;
 
-   tbl_rows++;
-   gtk_table_resize(GTK_TABLE(table),tbl_rows,6);
+   omclw->tbl_rows++;
+   gtk_table_resize(GTK_TABLE(omclw->table),omclw->tbl_rows,6);
 			
    mnode->gtkstore = gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -1077,8 +1052,8 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 
    if (labelt!=NULL) g_free(labelt);
      
-   tbl_currow++;
-   gtk_table_attach (GTK_TABLE (table), label, 0, 1, tbl_currow, tbl_currow+1,
+   omclw->tbl_currow++;
+   gtk_table_attach (GTK_TABLE (omclw->table), label, 0, 1, omclw->tbl_currow, omclw->tbl_currow+1,
 		     (GtkAttachOptions) (0),
 		     (GtkAttachOptions) (0), 0, 0);
 
@@ -1176,17 +1151,21 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 
    gtk_widget_show (mnode->treev1);
   
-   gtk_table_attach (GTK_TABLE (table), mnode->treev1, 1, 2, tbl_currow, tbl_currow+1,
+   gtk_table_attach (GTK_TABLE (omclw->table), mnode->treev1, 1, 2, omclw->tbl_currow, omclw->tbl_currow+1,
 		     (GtkAttachOptions) (0),
 		     (GtkAttachOptions) (0), 0, 0);
 
-   combo=create_omc_macro_combo(mnode,tbl_currow);
+   combo=create_omc_macro_combo(mnode,omclw->tbl_currow,omclw);
 
    gtk_widget_show (combo);
   
-   gtk_table_attach (GTK_TABLE (table), combo, 2, 3, tbl_currow, tbl_currow+1,
+   gtk_table_attach (GTK_TABLE (omclw->table), combo, 2, 3, omclw->tbl_currow, omclw->tbl_currow+1,
 		     (GtkAttachOptions) 0,
 		     (GtkAttachOptions) (0), 0, 0);
+
+
+  if (mnode->macro==-1) gtk_widget_set_sensitive(omclw->clear_button,TRUE);
+  gtk_widget_set_sensitive(omclw->del_all_button,TRUE);
 
 }
    
@@ -1199,7 +1178,7 @@ static void killit(GtkWidget *widget, gpointer user_data) {
 }
 
 
-static void show_existing(void) {
+static void show_existing(omclearn_w *omclw) {
   GSList *slist=omc_node_list;
   lives_omc_match_node_t *mnode;
   gint type,supertype;
@@ -1237,10 +1216,10 @@ static void show_existing(void) {
 #endif
     g_strfreev(array);
 
-    omc_learner_add_row(-type,idx,mnode,srch);
+    omc_learner_add_row(-type,idx,mnode,srch,omclw);
     g_free(srch);
 
-    omc_macro_row_add_params(mnode,tbl_currow);
+    omc_macro_row_add_params(mnode,omclw->tbl_currow,omclw);
 
     slist=slist->next;
   }
@@ -1249,14 +1228,29 @@ static void show_existing(void) {
 
 
 static void clear_unmatched (GtkButton *button, gpointer user_data) {
+  omclearn_w *omclw=(omclearn_w *)user_data;
 
   // destroy everything in table
   
-  gtk_container_foreach(GTK_CONTAINER(table),killit,NULL);
+  gtk_container_foreach(GTK_CONTAINER(omclw->table),killit,NULL);
 
-  remove_unused_nodes();
+  remove_all_nodes(FALSE,omclw);
 
-  show_existing();
+  show_existing(omclw);
+
+}
+
+
+static void del_all (GtkButton *button, gpointer user_data) {
+  omclearn_w *omclw=(omclearn_w *)user_data;
+
+  if (!do_warning_dialog(_("\nClick OK to delete all entries\n"))) return;
+
+  // destroy everything in table
+  
+  gtk_container_foreach(GTK_CONTAINER(omclw->table),killit,NULL);
+
+  remove_all_nodes(TRUE,omclw);
 
 }
 
@@ -1268,16 +1262,17 @@ static void close_learner_dialog (GtkButton *button, gpointer user_data) {
 
 
 
-GtkWidget *create_omclearn_dialog(void) {
+static omclearn_w *create_omclearn_dialog(void) {
   GtkWidget *ok_button;
-  GtkWidget *clear_button;
   GtkWidget *hbuttonbox;
   GtkWidget *scrolledwindow;
   gint winsize_h,scr_width=mainw->scr_width;
   gint winsize_v,scr_height=mainw->scr_height;
   
-  tbl_rows=4;
-  tbl_currow=-1;
+  omclearn_w *omclw=(omclearn_w *)g_malloc(sizeof(omclearn_w));
+
+  omclw->tbl_rows=4;
+  omclw->tbl_currow=-1;
 
   if (prefs->gui_monitor!=0) {
     scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
@@ -1287,27 +1282,27 @@ GtkWidget *create_omclearn_dialog(void) {
   winsize_h=scr_width-100;
   winsize_v=scr_height-100;
   
-  omclearn_dialog = gtk_dialog_new ();
+  omclw->dialog = gtk_dialog_new ();
   
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(omclearn_dialog, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    gtk_widget_modify_bg(omclw->dialog, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  gtk_window_set_title (GTK_WINDOW (omclearn_dialog), _("LiVES: OMC learner"));
-  gtk_window_add_accel_group (GTK_WINDOW (omclearn_dialog), mainw->accel_group);
-  top_vbox=GTK_DIALOG(omclearn_dialog)->vbox;
+  gtk_window_set_title (GTK_WINDOW (omclw->dialog), _("LiVES: OMC learner"));
+  gtk_window_add_accel_group (GTK_WINDOW (omclw->dialog), mainw->accel_group);
+  omclw->top_vbox=GTK_DIALOG(omclw->dialog)->vbox;
 
-  table = gtk_table_new (tbl_rows, 4, FALSE);
-  gtk_widget_show (table);
+  omclw->table = gtk_table_new (omclw->tbl_rows, 4, FALSE);
+  gtk_widget_show (omclw->table);
 
-  gtk_table_set_col_spacings(GTK_TABLE(table),20);
+  gtk_table_set_col_spacings(GTK_TABLE(omclw->table),20);
 
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow);
-  gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
   
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), table);
+  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), omclw->table);
   gtk_widget_set_size_request (scrolledwindow, winsize_h, winsize_v);
   
   if (palette->style&STYLE_1) {
@@ -1319,20 +1314,33 @@ GtkWidget *create_omclearn_dialog(void) {
   hbuttonbox = gtk_hbutton_box_new ();
   gtk_widget_show (hbuttonbox);
   
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (omclw->top_vbox), hbuttonbox, TRUE, TRUE, 0);
   
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
   
-  clear_button = gtk_button_new_with_mnemonic (_("Clear _unmatched"));
-  gtk_widget_show (clear_button);
-  gtk_container_add (GTK_CONTAINER (hbuttonbox), clear_button);
+  omclw->clear_button = gtk_button_new_with_mnemonic (_("Clear _unmatched"));
+  gtk_widget_show (omclw->clear_button);
+  gtk_container_add (GTK_CONTAINER (hbuttonbox), omclw->clear_button);
   
-  GTK_WIDGET_SET_FLAGS (clear_button, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
 
-  g_signal_connect (GTK_OBJECT (clear_button), "clicked",
+  g_signal_connect (GTK_OBJECT (omclw->clear_button), "clicked",
 		    G_CALLBACK (clear_unmatched),
-		    NULL);
+		    (gpointer)omclw);
+
+  gtk_widget_set_sensitive(omclw->clear_button,FALSE);
+
+  omclw->del_all_button = gtk_button_new_with_mnemonic (_("_Delete all"));
+  gtk_widget_show (omclw->del_all_button);
+  gtk_container_add (GTK_CONTAINER (hbuttonbox), omclw->del_all_button);
+  
+
+  g_signal_connect (GTK_OBJECT (omclw->del_all_button), "clicked",
+		    G_CALLBACK (del_all),
+		    (gpointer)omclw);
+
+  gtk_widget_set_sensitive(omclw->del_all_button,FALSE);
+
 
   ok_button = gtk_button_new_with_mnemonic (_("Close _window"));
   gtk_widget_show (ok_button);
@@ -1346,17 +1354,17 @@ GtkWidget *create_omclearn_dialog(void) {
 		    NULL);
   
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-omclearn_dialog->allocation.width)/2;
-    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-omclearn_dialog->allocation.height)/2;
-    gtk_window_set_screen(GTK_WINDOW(omclearn_dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
-    gtk_window_move(GTK_WINDOW(omclearn_dialog),xcen,ycen);
+    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-omclw->dialog->allocation.width)/2;
+    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-omclw->dialog->allocation.height)/2;
+    gtk_window_set_screen(GTK_WINDOW(omclw->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
+    gtk_window_move(GTK_WINDOW(omclw->dialog),xcen,ycen);
   }
   
   if (prefs->open_maximised) {
-    gtk_window_maximize (GTK_WINDOW(omclearn_dialog));
+    gtk_window_maximize (GTK_WINDOW(omclw->dialog));
   }
   
-  return omclearn_dialog;
+  return omclw;
 }
 
 
@@ -1788,7 +1796,7 @@ static gint *omclearn_get_values(gchar *string, gint nfixed) {
 
 
 
-void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint index, gchar *string, gint nfixed) {
+void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint index, gchar *string, gint nfixed, omclearn_w *omclw) {
 
   if (nfixed==-1) {
     // already there : allow user to update
@@ -1802,7 +1810,7 @@ void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint 
   // add descriptive text on left
   // add combo box on right
 
-  omc_learner_add_row(str_type,index,mnode,string);
+  omc_learner_add_row(str_type,index,mnode,string,omclw);
 
 
 }
@@ -1811,7 +1819,7 @@ void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint 
 
 
 
-lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
+lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx, omclearn_w *omclw) {
   // here we come with a string, which must be a sequence of integers
   // separated by single spaces
 
@@ -1845,7 +1853,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
       mnode->max[0]=127;
       mnode->min[0]=0;
       idx=midi_index(string);
-      omclearn_match_control(mnode,str_type,idx,string,nfixed);
+      omclearn_match_control(mnode,str_type,idx,string,nfixed,omclw);
       return mnode;
     }
     break;
@@ -1860,7 +1868,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
       mnode->max[0]=127;
       mnode->min[0]=0;
       idx=midi_index(string);
-      omclearn_match_control(mnode,str_type,idx,string,nfixed);
+      omclearn_match_control(mnode,str_type,idx,string,nfixed,omclw);
       return mnode;
     }
     break;
@@ -1875,7 +1883,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
       mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,nfixed);
       mnode->max[0]=8192;
       mnode->min[0]=-8192;
-      omclearn_match_control(mnode,str_type,idx,string,nfixed);
+      omclearn_match_control(mnode,str_type,idx,string,nfixed,omclw);
       return mnode;
     }
     break;
@@ -1893,7 +1901,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
       mnode->max[1]=127;
       mnode->min[1]=0;
 
-      omclearn_match_control(mnode,str_type,idx,string,nfixed);
+      omclearn_match_control(mnode,str_type,idx,string,nfixed,omclw);
 
       return mnode;
     }
@@ -1910,7 +1918,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
       mnode->min[0]=-128;
       mnode->max[0]=128;
 
-      omclearn_match_control(mnode,str_type,idx,string,nfixed);
+      omclearn_match_control(mnode,str_type,idx,string,nfixed,omclw);
       return mnode;
     }
     break;
@@ -1921,7 +1929,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
      
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(str_type,idx,string,nfixed);
-      omclearn_match_control(mnode,str_type,idx,string,nfixed);
+      omclearn_match_control(mnode,str_type,idx,string,nfixed,omclw);
       return mnode;
     }
     break;
@@ -1939,7 +1947,9 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx) {
 
 
 
-void omc_process_string(gint supertype, gchar *string, gboolean learn) {
+void omc_process_string(gint supertype, gchar *string, gboolean learn, omclearn_w *omclw) {
+  // only need to set omclw if learn is TRUE
+
   int type=0,idx=-1;
   lives_omc_match_node_t *mnode;
 
@@ -1962,7 +1972,7 @@ void omc_process_string(gint supertype, gchar *string, gboolean learn) {
   if (type>0) {
     if (learn) {
       // pass to learner
-      mnode=omc_learn(string,type,idx);
+      mnode=omc_learn(string,type,idx,omclw);
       if (mnode!=NULL) omc_node_list=g_slist_append(omc_node_list,mnode);
     }
     else {
@@ -1979,7 +1989,7 @@ void omc_process_string(gint supertype, gchar *string, gboolean learn) {
 
 
 void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *omclearn_dialog=create_omclearn_dialog();
+  omclearn_w *omclw=create_omclearn_dialog();
   gchar *string=NULL;
 
   if (!omc_macros_inited) {
@@ -1996,11 +2006,11 @@ void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (!mainw->ext_cntl[EXT_CNTL_JS]) js_open();
 #endif
 
-  gtk_widget_show(omclearn_dialog);
+  gtk_widget_show(omclw->dialog);
 
   mainw->cancelled=CANCEL_NONE;
 
-  show_existing();
+  show_existing(omclw);
 
   // read controls and notes
   while (mainw->cancelled==CANCEL_NONE) {
@@ -2009,7 +2019,7 @@ void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #ifdef OMC_JS_IMPL
     if (mainw->ext_cntl[EXT_CNTL_JS]) string=js_mangle();
     if (string!=NULL) {
-      omc_process_string(OMC_JS,string,TRUE);
+      omc_process_string(OMC_JS,string,TRUE,omclw);
       g_free(string);
       string=NULL;
     }
@@ -2019,7 +2029,7 @@ void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #ifdef OMC_MIDI_IMPL
       if (mainw->ext_cntl[EXT_CNTL_MIDI]) string=midi_mangle();
       if (string!=NULL) {
-	omc_process_string(OMC_MIDI,string,TRUE);
+	omc_process_string(OMC_MIDI,string,TRUE,omclw);
 	g_free(string);
 	string=NULL;
       }
@@ -2034,12 +2044,13 @@ void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
     while (g_main_context_iteration(NULL,FALSE));
   }
 
+  remove_all_nodes(FALSE,omclw);
 
-  gtk_widget_destroy(omclearn_dialog);
-
-  remove_unused_nodes();
+  gtk_widget_destroy(omclw->dialog);
 
   mainw->cancelled=CANCEL_NONE;
+
+  g_free(omclw);
 
 }
 

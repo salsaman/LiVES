@@ -76,7 +76,7 @@ plugin_poll_keyboard (gpointer data) {
   if (mainw->ext_cntl[EXT_CNTL_JS]) {
     gchar *string=js_mangle();
     if (string!=NULL) {
-      omc_process_string(OMC_JS,string,FALSE);
+      omc_process_string(OMC_JS,string,FALSE,NULL);
       g_free(string);
       string=NULL;
     }
@@ -93,7 +93,7 @@ plugin_poll_keyboard (gpointer data) {
       for (i=0;i<midi_check_rate;i++) {
 	gchar *string=midi_mangle();
 	if (string!=NULL) {
-	  omc_process_string(OMC_MIDI,string,FALSE);
+	  omc_process_string(OMC_MIDI,string,FALSE,NULL);
 	  g_free(string);
 	  string=NULL;
 	  if (prefs->use_alsa_midi) gotone=TRUE;

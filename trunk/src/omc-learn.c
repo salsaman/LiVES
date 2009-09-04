@@ -824,6 +824,8 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, gchar *path_st
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
   gint row;
 
+  gchar *txt;
+
   gint *indices;
 
   GtkTreePath *tpath=gtk_tree_path_new_from_string(path_string);
@@ -842,6 +844,14 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, gchar *path_st
 
   gtk_tree_path_free(tpath);
 
+  gtk_tree_model_get(GTK_TREE_MODEL(mnode->gtkstore),&iter,VALUE_COLUMN,&txt,-1);
+
+  if (!strcmp(txt,"-")) {
+    g_free(txt);
+    return;
+  }
+
+  g_free(txt);
 
   mnode->matchp[row]=!(mnode->matchp[row]);
 

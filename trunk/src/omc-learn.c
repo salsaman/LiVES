@@ -462,7 +462,7 @@ gchar *midi_mangle(void) {
       
     }
     
-    g_free(pfd);
+    if (pfd!=NULL) g_free(pfd);
 
   }
   else {

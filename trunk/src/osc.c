@@ -184,7 +184,7 @@ void lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, O
 
   if (mainw->current_file<0||(mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) return;
 
-  mainw->blend_file_step=-mainw->blend_file_step;
+  mainw->files[mainw->blend_file]->pb_fps=-mainw->files[mainw->blend_file]->pb_fps;
 
 }
 
@@ -367,10 +367,6 @@ void lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, 
     lives_osc_parse_float_argument(vargs,&fps);
   }
 
-  if (fps<0.) {
-    fps=-fps;
-    mainw->blend_file_step=-mainw->blend_file_step;
-  }
   mainw->files[mainw->blend_file]->pb_fps=mainw->files[mainw->blend_file]->fps*(gdouble)fps;
 
 }

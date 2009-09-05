@@ -1485,7 +1485,7 @@ static void init_omc_macros(void) {
   omc_macros[23].macro_text=g_strdup(_("Cycle to next mode for effect key <key>"));
   omc_macros[23].nparams=1;
 
-  omc_macros[24].msg=g_strdup("/effect_key/mode/prev");
+  omc_macros[24].msg=g_strdup("/effect_key/mode/previous");
   omc_macros[24].macro_text=g_strdup(_("Cycle to previous mode for effect key <key>"));
   omc_macros[24].nparams=1;
 

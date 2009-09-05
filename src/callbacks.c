@@ -3046,7 +3046,6 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 	mainw->osc_block=FALSE;
       }
       mainw->blend_file=i;
-      mainw->blend_file_step=mainw->files[i]->pb_fps<0?-1:1;
       mainw->whentostop=NEVER_STOP;
     }
     return TRUE;
@@ -3105,7 +3104,6 @@ gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 	mainw->osc_block=FALSE;
       }
       mainw->blend_file=i;
-      mainw->blend_file_step=mainw->files[i]->pb_fps<0?-1:1;
       mainw->whentostop=NEVER_STOP;
     }
     return TRUE;
@@ -7046,7 +7044,6 @@ gboolean storeclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
       if (mainw->playing_file>0) {
 	if (mainw->num_tr_applied>0) {
 	  mainw->blend_file=mainw->clipstore[clip];
-	  mainw->blend_file_step=mainw->files[mainw->blend_file]->pb_fps<0?-1:1;
 	}
 	else do_quick_switch (mainw->clipstore[clip]);
       }

@@ -109,8 +109,6 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   else {
     if (mainw->num_tr_applied>0&&mainw->blend_file>0&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_GENERATOR) {
       mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->start-1;
-      // sigh, start off forwards i suppose...:-)
-      mainw->blend_file_step=1;
     }
   }
   mainw->effects_paused=FALSE;
@@ -608,6 +606,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   static gdouble blend_add_frames;
   int oframeno;
   static weed_timecode_t blend_tc;
+  gint blend_file_step;
 
   if (mainw->blend_file==-1||mainw->files[mainw->blend_file]==NULL) return NULL;
   blend_file=mainw->files[mainw->blend_file];
@@ -617,40 +616,44 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
     oframeno=blend_file->frameno;
     blend_add_frames=0.;
   }
-  else blend_add_frames+=(gdouble)((tc-blend_tc)/U_SEC)*blend_file->pb_fps;
+  else blend_add_frames+=(gdouble)((tc-blend_tc)/U_SEC)*ABS(blend_file->pb_fps);
 
   blend_tc=tc;
 
   oframeno=blend_file->frameno;
 
-  blend_file->frameno+=(int)(blend_add_frames*mainw->blend_file_step+.5);
-    
-  blend_add_frames-=(gdouble)((blend_file->frameno-oframeno)*mainw->blend_file_step);
+  blend_file_step=blend_file->pb_fps>0?1:-1;
+
+  blend_file->frameno+=(int)(blend_add_frames+.5)*blend_file_step;
+
+  blend_add_frames-=(gdouble)((blend_file->frameno-oframeno)*blend_file_step);
 
   if (blend_file->frameno>blend_file->end) {
+    blend_add_frames-=blend_file->frameno-blend_file->end;
+    if (blend_add_frames<0.) blend_add_frames=0.;
     if (mainw->ping_pong) {
-      blend_file->frameno=blend_file->end;
-      mainw->blend_file_step=-1;
-      blend_add_frames=-blend_add_frames;
+      blend_file->frameno=blend_file->end-(int)blend_add_frames;
+      blend_file->pb_fps=-ABS(blend_file->pb_fps);
     }
     else {
-      blend_file->frameno=blend_file->start;
-      mainw->blend_file_step=1;
-      blend_add_frames=0.;
+      blend_file->frameno=blend_file->start+(int)blend_add_frames;
+      blend_file->pb_fps=ABS(blend_file->pb_fps);
     }
+    blend_add_frames-=(int)blend_add_frames;
     oframeno=blend_file->frameno;
   }
   else if (blend_file->frameno<blend_file->start) {
+    blend_add_frames-=blend_file->start-blend_file->frameno;
+    if (blend_add_frames<0.) blend_add_frames=0.;
     if (mainw->ping_pong) {
-      blend_file->frameno=blend_file->start;
-      mainw->blend_file_step=1;
-      blend_add_frames=-blend_add_frames;
+      blend_file->frameno=blend_file->start+(int)blend_add_frames;
+      blend_file->pb_fps=ABS(blend_file->pb_fps);
     }
     else {
-      blend_file->frameno=blend_file->end;
-      mainw->blend_file_step=-1;
-      blend_add_frames=0.;
+      blend_file->frameno=blend_file->end-(int)blend_add_frames;
+      blend_file->pb_fps=-ABS(blend_file->pb_fps);
     }
+    blend_add_frames-=(int)blend_add_frames;
     oframeno=blend_file->frameno;
   }
 
@@ -775,14 +778,13 @@ gboolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
 
 gboolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   gint old_file=mainw->current_file;
-  gint blend_step=mainw->blend_file_step;
 
   if (mainw->playing_file<0||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||mainw->blend_file==mainw->current_file||mainw->files[mainw->blend_file]==NULL||mainw->preview||mainw->noswitch) {
     return TRUE;
   }
-  mainw->blend_file_step=cfile->pb_fps>0?1:-1;
+
   do_quick_switch (mainw->blend_file);
-  if ((cfile->pb_fps>0&&blend_step<0)||(cfile->pb_fps<0&&blend_step>0)) cfile->pb_fps*=-1;
+
   mainw->blend_file=old_file;
 
   rte_swap_fg_bg();

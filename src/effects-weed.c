@@ -3344,7 +3344,6 @@ gboolean weed_init_effect(int hotkey) {
     mainw->num_tr_applied++; // increase trans count
     if (mainw->num_tr_applied==1&&!is_modeswitch) {
       mainw->blend_file=mainw->current_file;
-      mainw->blend_file_step=(mainw->current_file>-1&&cfile->pb_fps<0)?-1:1;
     }
   }
   else if (inc_count==0) {

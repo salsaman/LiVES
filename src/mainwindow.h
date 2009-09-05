@@ -279,7 +279,6 @@ typedef struct {
   
   gint blend_file;
   gint last_blend_file;
-  gint blend_file_step;
 
   gint scrap_file; // we throw odd sized frames here when recording in real time; used if a source is a generator or stream
 

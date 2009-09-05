@@ -918,6 +918,7 @@ void lives_osc_cb_rte_nextmode(void *context, int arglen, const void *vargs, OSC
 
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
   lives_osc_parse_int_argument(vargs,&effect_key);
+  g_print("set mode for %d\n",effect_key);
   if (effect_key<1||effect_key>FX_MAX) return;
   if (!mainw->osc_block) rte_key_setmode (effect_key,-1);
 

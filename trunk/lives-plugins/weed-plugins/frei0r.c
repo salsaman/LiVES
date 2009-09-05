@@ -261,10 +261,11 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     snprintf(homedir,256,"%s",getenv("HOME"));
     snprintf (vdir3,256,"%s/frei0r-1/",homedir);
 
+
     while (vdirval<6) {
       // step through each of our frei0r dirs
       if (vdirval==0) {
-	curvdir=opendir(vdir1);
+	curvdir=opendir(vdir3);
 	if (curvdir==NULL) vdirval=2;
 	else vdirval=1;
       }
@@ -278,7 +279,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
       if (vdirval==4) {
 	if (curvdir!=NULL) closedir(curvdir);
-	curvdir=opendir(vdir3);
+	curvdir=opendir(vdir1);
 	if (curvdir==NULL) {
 	  vdirval=6;
 	  continue;

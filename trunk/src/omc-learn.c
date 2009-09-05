@@ -1481,6 +1481,17 @@ static void init_omc_macros(void) {
   omc_macros[22].info_text=g_strdup(_("Switch foreground clip to the nth valid clip, and reset the frame number"));
   omc_macros[22].nparams=1;
 
+  omc_macros[23].msg=g_strdup("/effect_key/mode/next");
+  omc_macros[23].macro_text=g_strdup(_("Cycle to next mode for effect key <key>"));
+  omc_macros[23].nparams=1;
+
+  omc_macros[24].msg=g_strdup("/effect_key/mode/prev");
+  omc_macros[24].macro_text=g_strdup(_("Cycle to previous mode for effect key <key>"));
+  omc_macros[24].nparams=1;
+
+
+
+
 
   for (i=0;i<N_OMC_MACROS;i++) {
     if (omc_macros[i].msg!=NULL) {
@@ -1568,6 +1579,20 @@ static void init_omc_macros(void) {
   omc_macros[22].mini[0]=omc_macros[22].vali[0]=1;
   omc_macros[22].maxi[0]=100000;
   omc_macros[22].pname[0]=g_strdup(_("clipnum")); // translators - short form of "clip number"
+
+  // key
+  omc_macros[23].ptypes[0]=OMC_PARAM_INT;
+  omc_macros[23].mini[0]=1;
+  omc_macros[23].vali[0]=1;
+  omc_macros[23].maxi[0]=prefs->rte_keys_virtual;
+  omc_macros[23].pname[0]=g_strdup(_("key")); // translators - as in keyboard key
+
+  // key
+  omc_macros[24].ptypes[0]=OMC_PARAM_INT;
+  omc_macros[24].mini[0]=1;
+  omc_macros[24].vali[0]=1;
+  omc_macros[24].maxi[0]=prefs->rte_keys_virtual;
+  omc_macros[24].pname[0]=g_strdup(_("key")); // translators - as in keyboard key
 
 }
 

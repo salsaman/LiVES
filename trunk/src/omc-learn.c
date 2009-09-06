@@ -1930,7 +1930,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx, omclea
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,nfixed);
 
-      mnode->max[0]=255;
+      mnode->max[0]=127;
       mnode->min[0]=0;
 
       mnode->max[1]=127;

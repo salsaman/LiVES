@@ -2137,8 +2137,8 @@ static void write_fx_tag(gchar *string, int nfixed, lives_omc_match_node_t *mnod
 	    }
 	    oval1--;
 	  }
-	  weed_free(ptmpls);
 	}
+	weed_free(ptmpls);
       }
       else {
 	if (omacro->ptypes[i]==OMC_PARAM_INT) {

@@ -1657,30 +1657,33 @@ static gboolean match_filtered_params(lives_omc_match_node_t *mnode, gchar *sig,
 
 static lives_omc_match_node_t *omc_match_sig(gint type, gint index, gchar *sig) {
   GSList *nlist=omc_node_list;
-  gchar *srch;
+  gchar *srch,*cnodex;
   lives_omc_match_node_t *cnode;
   int nfixed;
 
   if (type==OMC_MIDI) {
-    if (index==-1) srch=g_strdup_printf("%d %s",type,sig);
-    else srch=g_strdup_printf("%d %d %s",type,index,sig);
+    if (index==-1) srch=g_strdup_printf("%d %s ",type,sig);
+    else srch=g_strdup_printf("%d %d %s ",type,index,sig);
   }
-  else srch=g_strdup(sig);
+  else srch=g_strdup_printf("%s ",sig);
 
   nfixed=get_nfixed(type,sig);
 
   while (nlist!=NULL) {
     cnode=(lives_omc_match_node_t *)nlist->data;
+    cnodex=g_strdup_printf("%s ",cnode->srch);
     //g_print("cf %s and %s\n",cnode->srch,srch);
-    if (!strncmp(cnode->srch,srch,strlen(cnode->srch))) {
+    if (!strncmp(cnodex,srch,strlen(cnodex))) {
       // got a possible match
       // now check the data
       if (match_filtered_params(cnode,sig,nfixed)) {
 	g_free(srch);
+	g_free(cnodex);
 	return cnode;
       }
     }
     nlist=nlist->next;
+    g_free(cnodex);
   }
   g_free(srch);
   return NULL;

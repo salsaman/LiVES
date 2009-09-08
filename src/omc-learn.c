@@ -745,6 +745,10 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
   int lps=mnode->nvars-1;
   int i;
   
+  if (mnode->map!=NULL) g_free(mnode->map);
+  if (mnode->fvali!=NULL) g_free(mnode->fvali);
+  if (mnode->fvald!=NULL) g_free(mnode->fvald);
+
   mnode->map=(gint *)g_malloc(omc_macro.nparams*sizint);
   mnode->fvali=(gint *)g_malloc(omc_macro.nparams*sizint);
   mnode->fvald=(gdouble *)g_malloc(omc_macro.nparams*sizdbl);
@@ -757,11 +761,13 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
   for (i=mps;i>=0;i--) {
     if (lps<0||lps>=mnode->nvars) {
+      g_print("fixed !\n");
       mnode->map[i]=-1;
       if (omc_macro.ptypes[i]==OMC_PARAM_INT) mnode->fvali[i]=omc_macro.vali[i];
       else mnode->fvald[i]=omc_macro.vald[i];
     }
     else {
+      g_print("varied !\n");
       if (!mnode->matchp[lps]) mnode->map[i]=lps;
       else i++;
     }
@@ -857,6 +863,7 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, gchar *path_st
 
   gtk_tree_store_set(mnode->gtkstore,&iter,FILTER_COLUMN,mnode->matchp[row],-1);
 
+  omc_learn_link_params(mnode);
 
 }
 

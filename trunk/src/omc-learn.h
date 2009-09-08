@@ -38,6 +38,7 @@ void midi_close(void);
 /* parameter types */
 #define OMC_PARAM_INT 1
 #define OMC_PARAM_DOUBLE 2
+#define OMC_PARAM_SPECIAL 128 // can be int or double, depending on effect type
 
 typedef struct {
   gchar *msg;   // OSC message

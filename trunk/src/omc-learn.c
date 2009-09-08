@@ -1560,7 +1560,7 @@ static void init_omc_macros(void) {
 
   // value (this will get special handling)
   // type conversion and auto offset/scaling will be done
-  omc_macros[18].ptypes[2]=OMC_PARAM_DOUBLE;
+  omc_macros[18].ptypes[2]=OMC_PARAM_SPECIAL;
   omc_macros[18].mind[2]=0.;
   omc_macros[18].maxd[2]=0.;
   omc_macros[18].vald[2]=0.;
@@ -2092,6 +2092,81 @@ void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
+
+static void write_fx_tag(gchar *string, int nfixed, lives_omc_match_node_t *mnode, lives_omc_macro_t *omacro, gchar *typetags) {
+  // get typetag for a filter parameter
+
+  int i,j,k;
+  int *vals=omclearn_get_values(string,nfixed);
+  int oval0=1,oval1=0;
+
+  for (i=0;i<omacro->nparams;i++) {
+    // get fixed val or map from
+    j=mnode->map[i];
+
+    if (j>-1) {
+      if (i==2) {
+	// auto scale for fx param
+	int error,ntmpls,hint,flags;
+	gint mode=rte_key_getmode(oval0);
+	weed_plant_t *filter;
+	weed_plant_t **ptmpls;
+	weed_plant_t *ptmpl;
+	
+	if (mode==-1) return;
+	
+	filter=rte_keymode_get_filter(oval0,mode);
+	
+	ntmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
+
+	ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+	for (k=0;k<ntmpls;k++) {
+	  ptmpl=ptmpls[k];
+	  hint=weed_get_int_value(ptmpl,"hint",&error);
+	  flags=weed_get_int_value(ptmpl,"flags",&error);
+	  if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
+	    if (oval1==0) {
+	      if (hint==WEED_HINT_INTEGER) {
+		// **int
+		g_strappend(typetags,OSC_MAX_TYPETAGS,"i");
+	      }
+	      else {
+		// float
+		g_strappend(typetags,OSC_MAX_TYPETAGS,"f");
+	      }
+	    }
+	    oval1--;
+	  }
+	  weed_free(ptmpls);
+	}
+      }
+      else {
+	if (omacro->ptypes[i]==OMC_PARAM_INT) {
+	  int oval=myround((double)(vals[j]+mnode->offs0[j])*mnode->scale[j])+mnode->offs1[j];
+	  if (i==0) oval0=oval;
+	  if (i==1) oval1=oval;
+	}
+      }
+    }
+    else {
+      if (omacro->ptypes[i]==OMC_PARAM_INT) {
+	if (i==0) oval0=mnode->fvali[i];
+	if (i==1) oval1=mnode->fvali[i];
+      }
+    }
+  }
+  g_free(vals);
+}
+
+
+
+
+
+
+
+
+
+
 OSCbuf *omc_learner_decode(gint type, gint idx, gchar *string) {
   gint macro,nfixed;
   lives_omc_match_node_t *mnode;
@@ -2118,17 +2193,21 @@ OSCbuf *omc_learner_decode(gint type, gint idx, gchar *string) {
 
   OSC_resetBuffer(&obuf);
 
-  g_snprintf(typetags,64,",");
+  g_snprintf(typetags,OSC_MAX_TYPETAGS,",");
+
+  nfixed=get_token_count(string,' ')-mnode->nvars;
 
   // get typetags
   for (i=0;i<omacro.nparams;i++) {
+    if (omacro.ptypes[i]==OMC_PARAM_SPECIAL) {
+      write_fx_tag(string,nfixed,mnode,&omacro,typetags);
+    }
     if (omacro.ptypes[i]==OMC_PARAM_INT) g_strappend(typetags,OSC_MAX_TYPETAGS,"i");
     else g_strappend(typetags,OSC_MAX_TYPETAGS,"f");
   }
 
   OSC_writeAddressAndTypes(&obuf,omacro.msg,typetags);
 
-  nfixed=get_token_count(string,' ')-mnode->nvars;
 
   if (omacro.nparams>0) {
 
@@ -2177,7 +2256,6 @@ OSCbuf *omc_learner_decode(gint type, gint idx, gchar *string) {
 		  double maxf=weed_get_double_value(ptmpl,"max",&error);
 
 		  double oval=(double)(vals[j]-omin)/(double)(omax-omin)*(maxf-minf)+minf;
-
 		  OSC_writeFloatArg(&obuf,(float)oval);
 		} // end float
 	      }

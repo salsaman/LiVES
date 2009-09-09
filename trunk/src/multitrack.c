@@ -1842,9 +1842,12 @@ void mt_show_current_frame(lives_mt *mt) {
 	gtk_widget_queue_draw(mt->play_box);
       }
     }
-    if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) gdk_pixbuf_unref(mt->sepwin_pixbuf);
+    if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) {
+      gdk_pixbuf_unref(mt->sepwin_pixbuf);
+      mt->sepwin_pixbuf=NULL;
+    }
     if (mt->framedraw==NULL) mt->sepwin_pixbuf=pixbuf;
-    else mt->sepwin_pixbuf=gdk_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+    else if (mainw->imframe!=NULL) mt->sepwin_pixbuf=gdk_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
   }
   else {
     // no frame - show blank

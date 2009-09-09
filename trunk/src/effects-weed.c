@@ -932,7 +932,7 @@ void weed_reinit_all(void) {
   int i;
   weed_plant_t *instance;
 
-  for (i=0;i<prefs->rte_keys_virtual;i++) {
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     if (rte_key_valid(i)) {
       if (mainw->rte&(GU641<<i)) {
 	mainw->osc_block=TRUE;
@@ -2057,7 +2057,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   // free playback: we will have here only one or two layers, and no filter_map.
   // Effects are applied in key order, in tracks are 0 and 1, out track is 0
   else {
-    for (i=0;i<prefs->rte_keys_virtual;i++) {
+    for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
       if (rte_key_valid(i)) {
 	if (mainw->rte&(GU641<<i)) {
 	  mainw->osc_block=TRUE;
@@ -3570,7 +3570,7 @@ void weed_deinit_all(void) {
     mainw->last_grabable_effect=-1;
   }
 
-  for (i=0;i<FX_KEYS_PHYSICAL&&rte_key_valid (i)&&i<num_weed_filters;i++) {
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL&&rte_key_valid (i)&&i<num_weed_filters;i++) {
     if (mainw->playing_file==-1&&rte_window!=NULL) rtew_set_keych(i,FALSE);
     if ((mainw->rte&(GU641<<i))) {
       if ((idx=key_to_instance[i][key_modes[i]])!=-1&&weed_instances[idx]!=NULL) {
@@ -4397,8 +4397,7 @@ gchar *rte_keymode_get_type (gint key, gint mode) {
   gint idx,inst_idx;
 
   key--;
-
-  if (key<0||key>FX_KEYS_PHYSICAL||mode<0||mode>=MAX_MODES_PER_KEY) return type;
+  if (!rte_keymode_valid(key+1,mode)) return g_strdup("");
 
   if ((idx=key_to_fx[key][mode])==-1) return type;
   if ((filter=weed_filters[idx])==NULL) return type;
@@ -4493,12 +4492,13 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
 /////////////////////////////////////////////////////////////////////////////
 
 gboolean rte_key_valid (int hotkey) {
-  if (hotkey<0||hotkey>FX_KEYS_MAX) return FALSE;
+  if (hotkey<0||hotkey>=FX_KEYS_MAX_VIRTUAL) return FALSE;
   if (key_to_fx[hotkey][key_modes[hotkey]]==-1) return FALSE;
   return TRUE;
 }
 
 gboolean rte_keymode_valid (gint key, gint mode) {
+  if (key<1||key>FX_KEYS_MAX_VIRTUAL||mode<0||mode>=MAX_MODES_PER_KEY) return FALSE;
   if (key_to_fx[--key][mode]==-1) return FALSE;
   return TRUE;
 }
@@ -4563,8 +4563,7 @@ gchar *weed_filter_get_name(gint idx) {
 gchar *rte_keymode_get_filter_name (gint key, gint mode) {
   // return value should be g_free'd after use
   key--;
-
-  if (key<0||key>FX_KEYS_PHYSICAL||mode<0||mode>=MAX_MODES_PER_KEY) return g_strdup("");
+  if (!rte_keymode_valid(key+1,mode)) return g_strdup("");
   return (weed_filter_get_name(key_to_fx[key][mode]));
 }
 

@@ -52,8 +52,8 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
   scale=weed_get_double_value(in_params[0],"value",&error);
-  offsx=weed_get_double_value(in_params[1],"value",&error)*width;
-  offsy=weed_get_double_value(in_params[2],"value",&error)*height;
+  offsx=weed_get_double_value(in_params[1],"value",&error);
+  offsy=weed_get_double_value(in_params[2],"value",&error);
   weed_free(in_params);
 
   if (scale<1.) scale=1.;
@@ -62,13 +62,16 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   if (offsy<0.) offsy=0.;
   if (offsy>1.) offsy=1.;
 
+  offsx*=width;
+  offsy*=height;
+
   for (y=0;y<height;y++) {
-    dy=(int)(offsy+(y-offsy)/scale);
+    dy=(int)((double)y-offsy)/scale+offsy;
     sy=dy*irowstride;
     dr=y*orowstride;
 
     for (x=0;x<width;x++) {
-      dx=(int)(offsx+(x-offsx)/scale);
+      dx=(int)((double)x-offsx)/scale+offsx;
       weed_memcpy(dst+dr+x*3,src+sy+dx*3,3);
     }
   }

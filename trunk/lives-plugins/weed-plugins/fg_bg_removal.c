@@ -213,6 +213,9 @@ int common_process (int type, weed_plant_t *inst, weed_timecode_t timestamp) {
 	  break;
 	  //
 	case 2:
+	  // blue glow
+	  dest[j]=dest[j+1]=(uint8_t)((fastrand(sdata)&0xff00)>>8);                                                 //R&G
+	  dest[j+2]=(uint8_t)255;  //B
 	  break;
 	case 0:
 	  // make moving things black
@@ -221,11 +224,6 @@ int common_process (int type, weed_plant_t *inst, weed_timecode_t timestamp) {
 	}
       }
       else {
-	// blue glow
-	if (type==2) {
-	  dest[j]=dest[j+1]=(uint8_t)((fastrand(sdata)&0xff00)>>8);                                                 //R&G
-	  dest[j+2]=(uint8_t)255;  //B
-	}
 	if (!inplace) weed_memcpy(&dest[j],&src[j],3);
       }}
     dest+=orowstride;

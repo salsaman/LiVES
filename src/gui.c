@@ -202,7 +202,7 @@ create_LiVES (void)
     load_theme();
   }
 
-  if (!(mainw->imframe==NULL)) {
+  if (mainw->imframe!=NULL) {
     gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->imframe);
     gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->imframe);
   }

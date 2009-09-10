@@ -4,7 +4,7 @@
    Released under the Lesser Gnu Public License (LGPL) 3 or later
    See www.gnu.org for details
 
- (c) 2005 - 2007, Salsaman
+ (c) 2005 - 2009, Salsaman
 */
 
 
@@ -320,7 +320,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  curdir=opendir(dir3);
 	  if (curdir==NULL) {
 	    vdirval=6;
-	    continue;
+	    break;
 	  }
 	}
 	

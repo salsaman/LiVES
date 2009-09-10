@@ -2425,6 +2425,12 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (user_data==NULL) load_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
   else load_file=g_strdup(user_data);
 
+  if (load_file==NULL) return;
+
+  msg=g_strdup_printf(_("Loading device mapping from file %s..."),load_file);
+  d_print(msg);
+  g_free(msg);
+
   if ((fd=open(load_file,O_RDONLY))<0) {
     msg=g_strdup_printf (_("\n\nUnable to open file\n%s\nError code %d\n"),load_file,errno);
     do_blocking_error_dialog (msg);
@@ -2433,10 +2439,6 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     d_print_failed();
     return;
   }
-
-  msg=g_strdup_printf(_("Loading device mapping from file %s..."),load_file);
-  d_print(msg);
-  g_free(msg);
 
   if (!omc_macros_inited) {
     init_omc_macros();

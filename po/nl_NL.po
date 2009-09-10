@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES 0.9.5cvs\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-09-09 19:07-0300\n"
+"POT-Creation-Date: 2009-09-10 19:17-0300\n"
 "PO-Revision-Date: 2009-08-03 13:23+0000\n"
 "Last-Translator: Rene Hasekamp <Unknown>\n"
 "Language-Team: \n"
@@ -7573,7 +7573,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/omc-learn.c:2326 src/omc-learn.c:2429
+#: src/omc-learn.c:2326 src/omc-learn.c:2435
 #, c-format
 msgid ""
 "\n"
@@ -7606,7 +7606,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2437
+#: src/omc-learn.c:2430
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr ""

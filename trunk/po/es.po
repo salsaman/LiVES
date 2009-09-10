@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-09-09 19:07-0300\n"
+"POT-Creation-Date: 2009-09-10 19:17-0300\n"
 "PO-Revision-Date: 2009-09-08 04:50+0000\n"
 "Last-Translator: Dante Díaz <dante@ubuntu-pe.org>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -7768,7 +7768,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/omc-learn.c:2326 src/omc-learn.c:2429
+#: src/omc-learn.c:2326 src/omc-learn.c:2435
 #, c-format
 msgid ""
 "\n"
@@ -7801,7 +7801,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2437
+#: src/omc-learn.c:2430
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr ""

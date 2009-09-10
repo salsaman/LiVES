@@ -4,7 +4,7 @@ LiVES is a Video Editing System
 -     -    -     -       -
 
 
-Original author: salsaman (salsaman@xs4all.nl)
+Original author: salsaman (salsaman@xs4all.nl) and others (see file AUTHORS)
 
 
 Released under the GNU PUBLIC LICENSE, version 3 or later.
@@ -39,10 +39,10 @@ cdda2wav (optional)
 
 
 
-Installation (CVS)
-------------------
+Installation (subversion)
+-------------------------
 
-See the LiVES website: http://lives.sourceforge.net/index.php?do=cvs
+See the LiVES website: http://lives.sourceforge.net/index.php?do=code
 
 
 
@@ -58,21 +58,21 @@ for more information.
 
 
 
-Installing from source (Dev/pre/CVS versions)
----------------------------------------------
+Installing from source (Dev/pre/subversion versions)
+----------------------------------------------------
 If you got LiVES as a tar.gz or tar.bz2, at a terminal prompt, enter the following:
 
 
-          bzip2 -d LiVES-1.0.0.tar.bz2
+          bzip2 -d LiVES-1.1.1.tar.bz2
 or,
-          gzip -d LiVES-1.0.0.tar.gz
+          gzip -d LiVES-1.1.1.tar.gz
 
 depending on which version you have. Then:
 
 
-          tar xvf LIVES-1.0.0.tar
+          tar xvf LIVES-1.1.1.tar
 
-          cd lives-1.0.0
+          cd lives-1.1.1
 
 
 

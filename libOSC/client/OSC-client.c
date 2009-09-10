@@ -382,6 +382,7 @@ int OSC_writeFloatArgs(OSCbuf *buf, int numFloats, float *args) {
 
 int OSC_writeIntArg(OSCbuf *buf, int4byte arg) {
     CheckOverflow(buf, 4);
+
     if (CheckTypeTag(buf, 'i')) return 9;
 
     *((int4byte *) buf->bufptr) = htonl(arg);

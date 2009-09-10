@@ -1,5 +1,5 @@
-Version 1.1.1
--------------
+Version 1.1.1 (9th Sept 2009)
+-----------------------------
 Fix crash when loop continuous is pressed with no file loaded. *
 Fix MIDI/js device load/save for 64 bits. *
 Reduce external control latency to 4 ms.
@@ -8,16 +8,19 @@ Add alsa-midi support. (thanks ORL)
 Fix MIDI note on/note off (were swapped).
 Allow cycling of effect key mode via MIDI/js.
 Add startup option -devicemap. (thanks ORL)
+Fix controller matching bug in MIDI/js learner. *
 Fix oversized constants in jack connection timeout. *
 Fix occasional freeze in background clip. *
 Encoder pixel block size bugfix. * 
 Fix broken audio in encode selection. *	
 Fix some file open checks in omc-learn.c *
+Correctly show effect keys > 10 in effect mapper. *
 Updated config.guess and autogen.sh
 ACX_PTHREAD config.
 Updated gettext to 0.17
 Remove ancient debian and redhat files.
-Updated translations for Brazilian Portuguese, German, Hebrew, Italian, Portuguese and Spanish.
+Initial translation to en_GB (thanks Harry Rickards and Helen McCall).
+Updated translations for Brazilian Portuguese, Dutch, Hungarian, German, Hebrew, Italian, Portuguese and Spanish.
 	
 * backported to 1.0.1 (stable branch)
 

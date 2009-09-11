@@ -3468,9 +3468,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	pthread_mutex_lock(&mainw->gtk_mutex);
 	reset_clip_menu();
 	gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
 	// mutex unlock
 	msg=g_strdup_printf (_ ("%d clips were recovered from set (%s).\n"),clipnum,mainw->set_name);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 	recover_layout_map(clipnum);
 
 #ifdef ENABLE_OSC

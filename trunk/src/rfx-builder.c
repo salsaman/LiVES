@@ -3843,9 +3843,13 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   com=g_strdup_printf("smogrify build_rfx_plugins builtinx %s%s%s %s%s%s %s/bin",prefs->prefix_dir,PLUGIN_SCRIPTS_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,prefs->prefix_dir);
   dummyvar=system(com);
   g_free(com);
+  pthread_mutex_lock(&mainw->gtk_mutex);
   d_print (_ ("custom...")); 
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   dummyvar=system("smogrify build_rfx_plugins custom");
+  pthread_mutex_lock(&mainw->gtk_mutex);
   d_print (_("test...")); 
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   dummyvar=system("smogrify build_rfx_plugins test");
 
   pthread_mutex_lock(&mainw->gtk_mutex);
@@ -4542,12 +4546,13 @@ void add_rfx_effects(void) {
   rfx_list_length=rfx_builtin_list_length+rfx_custom_list_length+rfx_test_list_length;
     
   rendered_fx=(lives_rfx_t *)g_malloc ((rfx_list_length+1)*sizeof(lives_rfx_t));
-  pthread_mutex_unlock(&mainw->gtk_mutex);
   
   // use rfx[0] as "Apply realtime fx"
   rendered_fx[0].name=g_strdup("realtime_fx");
   rendered_fx[0].menu_text=g_strdup (_("_Apply Real Time Effects to Selection"));
   rendered_fx[0].action_desc=g_strdup ("Applying Current Real Time Effects to");
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+
   rendered_fx[0].props=0;
   rendered_fx[0].num_params=0;
   rendered_fx[0].num_in_channels=1;

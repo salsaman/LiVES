@@ -3460,8 +3460,10 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       }
 
       if (clipnum==0) {
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\n"),mainw->set_name);
 	memset (mainw->set_name,0,1);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
       else {
 	// mutex lock

@@ -1,5 +1,7 @@
 Version 1.1.2
 -------------
+Increase gtk+ level to gtk+ 2.12 or higher.
+Update "about" dialog.
 Fix startup crash when loading frei0r plugins. *
 Fix strange error message when cancelling "load device map". *
 

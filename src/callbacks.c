@@ -3864,13 +3864,57 @@ switch_clip_activate                    (GtkMenuItem     *menuitem,
 }
 
 
+
 void
 on_about_activate                     (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) 2002-2008\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@xs4all.nl\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION);
+
+#ifdef HAVE_GTK_NICE_VERSION
+  gchar *license = g_strdup(_(
+        "This program is free software; you can redistribute it and/or modify\n"
+        "it under the terms of the GNU General Public License as published by\n"
+        "the Free Software Foundation; either version 3 of the License, or\n"
+        "(at your option) any later version.\n"
+        "\n"
+        "This program is distributed in the hope that it will be useful,\n"
+        "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+        "GNU General Public License for more details.\n"
+        "\n"
+        "You should have received a copy of the GNU General Public License\n"
+        "along with this program; if not, write to the Free Software\n"
+        "Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"));
+
+  gchar *comments= g_strdup(_("A video editor and VJ program."));
+
+  gtk_about_dialog_set_url_hook (activate_url, NULL, NULL);
+  gtk_about_dialog_set_email_hook (activate_url, NULL, NULL);
+
+  gtk_show_about_dialog (NULL,
+			 //        "logo", logo,
+			 "name", "LiVES",
+			 "version", LiVES_VERSION,
+			 "comments",comments,
+			 "copyright", "(C) 2002-2009 salsaman <salsaman@xs4all.nl> and others",
+			 "website", "http://lives.sourceforge.net",
+			 //			 "authors", authors,
+			 "license", license,
+			 NULL);
+
+
+  g_free(comments);
+  g_free(license);
+
+#else
+
+  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) 2002-2009\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@xs4all.nl\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION);
   do_error_dialog(mesg);
   g_free(mesg);
+
+#endif
+
+
   
 }
 

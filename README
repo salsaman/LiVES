@@ -24,7 +24,7 @@ Linux 2.x or BSD or openMosix or IRIX or OSX/Darwin (other UNIX untested)
 mplayer 0.90rc1+ compiled with jpeg support
 ImageMagick 5
 perl 5+
-gtk+ 2.10+
+gtk+ 2.12+
 libjpeg62
 gdk-pixbuf-loaders
 

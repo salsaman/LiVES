@@ -4788,11 +4788,13 @@ gint rte_switch_keymode (gint key, gint mode, const gchar *hashname) {
   gboolean osc_block;
   gboolean has_gen=FALSE,has_non_gen=FALSE;
 
+  gint test=(mode==0?1:0);
+
   // effect not found
   if (id==-1) return -1;
 
-  if (key_to_fx[key][0]!=-1) {
-    if (enabled_in_channels(weed_filters[key_to_fx[key][0]],FALSE)==0) has_gen=TRUE;
+  if (key_to_fx[key][test]!=-1) {
+    if (enabled_in_channels(weed_filters[key_to_fx[key][test]],FALSE)==0) has_gen=TRUE;
     else has_non_gen=TRUE;
   }
 

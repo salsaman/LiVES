@@ -4479,20 +4479,16 @@ void add_rfx_effects(void) {
   }
   gtk_widget_show(mainw->run_test_rfx_menu);
 
-
-
   // custom effects menu subentries
   if (mainw->custom_effects_menu!=NULL) {
     gtk_widget_destroy(mainw->custom_effects_menu);
   }
-
 
   mainw->custom_effects_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_effects_submenu), mainw->custom_effects_menu);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mainw->custom_effects_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
-
 
 
   // custom tools
@@ -4506,7 +4502,6 @@ void add_rfx_effects(void) {
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
-
 
 
   // scan rendered effect directories
@@ -4554,6 +4549,10 @@ void add_rfx_effects(void) {
     gchar *tmp;
 
     for (plugin_idx=0;plugin_idx<rfx_list_length;plugin_idx++) {
+      pthread_mutex_unlock(&mainw->gtk_mutex);
+      sched_yield();
+      pthread_mutex_lock(&mainw->gtk_mutex);
+
       if (plugin_idx==rfx_builtin_list_length) {
 	g_free(type);
 	type=g_strdup_printf(PLUGIN_RENDERED_EFFECTS_CUSTOM);

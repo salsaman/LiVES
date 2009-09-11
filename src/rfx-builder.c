@@ -4630,8 +4630,8 @@ void add_rfx_effects(void) {
       }
       memset(def+1,0,1);
       
+      pthread_mutex_lock(&mainw->gtk_mutex);
       if ((description=plugin_request_common (type,plugin_name,"get_description",def,TRUE))!=NULL&&(props=plugin_request_common (type,plugin_name,"get_capabilities",def,FALSE))!=NULL&&g_list_length(description)>3) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
 	rfx=&rendered_fx[rfx_slot_count++];
 	rfx->name=g_strdup(plugin_name);
 	memcpy(rfx->delim,def,2);
@@ -4648,9 +4648,7 @@ void add_rfx_effects(void) {
 	rfx->extra=NULL;
 	rfx->is_template=FALSE;
 	if (!check_rfx_for_lives (rfx)) rfx_slot_count--;
-	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
-      pthread_mutex_lock(&mainw->gtk_mutex);
       g_free(plugin_name);
       if (props!=NULL) {
 	g_list_free_strings (props);

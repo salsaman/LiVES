@@ -4584,6 +4584,11 @@ void add_rfx_effects(void) {
 #endif
       continue;
       }
+
+      pthread_mutex_unlock(&mainw->gtk_mutex);
+      sched_yield();
+      pthread_mutex_lock(&mainw->gtk_mutex);
+
       def=g_strdup(g_list_nth_data(define,0));
       g_list_free_strings(define);
       g_list_free(define);

@@ -4603,13 +4603,14 @@ void add_rfx_effects(void) {
 #ifdef DEBUG_RENDER_FX
       g_print("Checking plugin %s\n",plugin_name);
 #endif
+      pthread_mutex_lock(&mainw->gtk_mutex);
       if ((define=plugin_request_by_line(type,plugin_name,"get_define"))==NULL) {
 #ifdef DEBUG_RENDER_FX
       g_print("No get_define in %s\n",plugin_name);
 #endif
+      pthread_mutex_unlock(&mainw->gtk_mutex);
       continue;
       }
-      pthread_mutex_lock(&mainw->gtk_mutex);
       def=g_strdup(g_list_nth_data(define,0));
       g_list_free_strings(define);
       g_list_free(define);

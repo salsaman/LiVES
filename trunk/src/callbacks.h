@@ -567,10 +567,15 @@ on_recaudsel_activate (GtkMenuItem     *menuitem,
 void
 on_recaudclip_ok_clicked                      (GtkButton *button,
 					       gpointer user_data);
-
+#ifdef HAVE_GTK_NICE_VERSION
+void
+on_volume_slider_value_changed           (GtkScaleButton   *sbutton,
+					  gpointer user_data);
+#else
 void
 on_volume_slider_value_changed           (GtkRange   *slider,
 					  gpointer user_data);
+#endif
 
 void
 on_fade_audio_activate (GtkMenuItem     *menuitem,

@@ -5265,15 +5265,28 @@ on_ping_pong_activate                (GtkMenuItem     *menuitem,
 }
 
 
+#ifdef HAVE_GTK_NICE_VERSION
+void
+on_volume_slider_value_changed           (GtkScaleButton   *sbutton,
+					  gpointer user_data) {
+  gchar *ttip;
+  mainw->volume=gtk_scale_button_get_value(sbutton);
+
+#else
 void
 on_volume_slider_value_changed           (GtkRange   *slider,
 					  gpointer user_data) {
   gchar *ttip;
   mainw->volume=(GTK_ADJUSTMENT(slider->adjustment))->value;
+
+
+#endif
   ttip=g_strdup_printf(_("Audio volume (%.2f)"),mainw->volume);
   gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->vol_toolitem),mainw->tooltips,_(ttip),"");
   g_free(ttip);
 }
+
+
 
 void
 on_mute_button_activate                (GtkMenuItem     *menuitem,

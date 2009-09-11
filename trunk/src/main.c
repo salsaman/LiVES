@@ -373,6 +373,7 @@ static gboolean pre_init(void) {
 
 #endif
 
+  mainw->volume=1.f;
 
   if (!strcasecmp(prefs->theme,"none")) return FALSE;
   return TRUE;
@@ -642,8 +643,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->clip_header=NULL;
 
   mainw->new_blend_file=-1;
-
-  mainw->volume=1.f;
 
 #ifdef ENABLE_JACK
   mainw->jackd=mainw->jackd_read=NULL;

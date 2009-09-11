@@ -4430,17 +4430,16 @@ void add_rfx_effects(void) {
 
   int i,plugin_idx,rfx_slot_count=1;
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
+
   // exterminate...all...menuentries....
   // TODO - account for case where we only have apply_realtime (i.e add 1 to builtin count)
   if (mainw->num_rendered_effects_builtin) {
     for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) {
       if (mainw->rendered_fx[i].menuitem!=NULL) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
 	gtk_widget_destroy(mainw->rendered_fx[i].menuitem);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
     }
-    pthread_mutex_lock(&mainw->gtk_mutex);
     gtk_container_remove (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_submenu);
     gtk_container_remove (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
     gtk_container_remove (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
@@ -4448,17 +4447,13 @@ void add_rfx_effects(void) {
     gtk_widget_destroy (mainw->custom_utilities_separator);
     gtk_widget_queue_draw(mainw->effects_menu);
     while (g_main_context_iteration(NULL,FALSE));
-    pthread_mutex_unlock(&mainw->gtk_mutex);
 
     rfx_free_all();
   }
   else {
     if (mainw->rendered_fx!=NULL&&mainw->rendered_fx[0].menuitem!=NULL) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
       gtk_widget_destroy(mainw->rendered_fx[0].menuitem);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
-    pthread_mutex_lock(&mainw->gtk_mutex);
     if (mainw->rte_separator!=NULL) {
       gtk_widget_destroy (mainw->rte_separator);
       mainw->rte_separator=NULL;
@@ -4468,69 +4463,53 @@ void add_rfx_effects(void) {
     }
     gtk_widget_queue_draw(mainw->effects_menu);
     while (g_main_context_iteration(NULL,FALSE));
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
   mainw->num_rendered_effects_builtin=mainw->num_rendered_effects_custom=mainw->num_rendered_effects_test=0;
 
   // the advanced menu entry
   if (mainw->run_test_rfx_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
     gtk_widget_destroy(mainw->run_test_rfx_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
   mainw->run_test_rfx_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mainw->run_test_rfx_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show(mainw->run_test_rfx_menu);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
 
 
 
   // custom effects menu subentries
   if (mainw->custom_effects_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
     gtk_widget_destroy(mainw->custom_effects_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
 
   mainw->custom_effects_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_effects_submenu), mainw->custom_effects_menu);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mainw->custom_effects_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
-  pthread_mutex_unlock(&mainw->gtk_mutex);
 
 
 
   // custom tools
   if (mainw->custom_tools_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
     gtk_widget_destroy(mainw->custom_tools_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
 
   mainw->custom_tools_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_tools_submenu), mainw->custom_tools_menu);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
-  pthread_mutex_unlock(&mainw->gtk_mutex);
-
-
 
 
 
   // scan rendered effect directories
-  pthread_mutex_lock(&mainw->gtk_mutex);
   rfx_custom_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_CUSTOM,FALSE,NULL,NULL);
   rfx_custom_list_length=g_list_length(rfx_custom_list);
 
@@ -4551,7 +4530,6 @@ void add_rfx_effects(void) {
   rendered_fx[0].name=g_strdup("realtime_fx");
   rendered_fx[0].menu_text=g_strdup (_("_Apply Real Time Effects to Selection"));
   rendered_fx[0].action_desc=g_strdup ("Applying Current Real Time Effects to");
-  pthread_mutex_unlock(&mainw->gtk_mutex);
 
   rendered_fx[0].props=0;
   rendered_fx[0].num_params=0;
@@ -4576,7 +4554,6 @@ void add_rfx_effects(void) {
     gchar *tmp;
 
     for (plugin_idx=0;plugin_idx<rfx_list_length;plugin_idx++) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
       if (plugin_idx==rfx_builtin_list_length) {
 	g_free(type);
 	type=g_strdup_printf(PLUGIN_RENDERED_EFFECTS_CUSTOM);
@@ -4593,7 +4570,6 @@ void add_rfx_effects(void) {
       }
       
       plugin_name=g_strdup(g_list_nth_data(rfx_list,plugin_idx-offset));
-      pthread_mutex_unlock(&mainw->gtk_mutex);
 
       if (mainw->splash_window!=NULL) {
 	splash_msg((tmp=g_strdup_printf(_("Loading rendered effect %s..."),plugin_name)),.2);
@@ -4603,18 +4579,15 @@ void add_rfx_effects(void) {
 #ifdef DEBUG_RENDER_FX
       g_print("Checking plugin %s\n",plugin_name);
 #endif
-      pthread_mutex_lock(&mainw->gtk_mutex);
       if ((define=plugin_request_by_line(type,plugin_name,"get_define"))==NULL) {
 #ifdef DEBUG_RENDER_FX
       g_print("No get_define in %s\n",plugin_name);
 #endif
-      pthread_mutex_unlock(&mainw->gtk_mutex);
       continue;
       }
       def=g_strdup(g_list_nth_data(define,0));
       g_list_free_strings(define);
       g_list_free(define);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
       if (strlen(def)<2) {
 #ifdef DEBUG_RENDER_FX
 	g_print("Invalid get_define in %s\n",plugin_name);
@@ -4631,7 +4604,6 @@ void add_rfx_effects(void) {
       }
       memset(def+1,0,1);
       
-      pthread_mutex_lock(&mainw->gtk_mutex);
       if ((description=plugin_request_common (type,plugin_name,"get_description",def,TRUE))!=NULL&&(props=plugin_request_common (type,plugin_name,"get_capabilities",def,FALSE))!=NULL&&g_list_length(description)>3) {
 	rfx=&rendered_fx[rfx_slot_count++];
 	rfx->name=g_strdup(plugin_name);
@@ -4662,10 +4634,8 @@ void add_rfx_effects(void) {
 	description=NULL;
       }
       g_free(def);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 
-    pthread_mutex_lock(&mainw->gtk_mutex);
     if (rfx_builtin_list!=NULL) {
       g_list_free_strings (rfx_builtin_list);
       g_list_free (rfx_builtin_list);
@@ -4679,12 +4649,10 @@ void add_rfx_effects(void) {
       g_list_free (rfx_test_list);
     }
     g_free(type);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
   rfx_slot_count--;
     
-  pthread_mutex_lock(&mainw->gtk_mutex);
   // sort menu text by alpha order (apart from [0])
   sort_rfx_array (rendered_fx,rfx_slot_count);
   g_free (rendered_fx);
@@ -4717,7 +4685,6 @@ void add_rfx_effects(void) {
   gtk_widget_set_sensitive (mainw->custom_effects_separator, FALSE);
   
   gtk_container_add (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_separator);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
     
   // now we need to add to the effects menu and set a callback
   for (rfx=&mainw->rendered_fx[(plugin_idx=1)];plugin_idx<=rfx_slot_count;rfx=&mainw->rendered_fx[++plugin_idx]) {
@@ -4739,7 +4706,6 @@ void add_rfx_effects(void) {
       }
       
     if (!(rfx->props&RFX_PROPS_MAY_RESIZE)&&rfx->min_frames>=0&&rfx->num_in_channels==1) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
       // add resizing effects to tools menu later
       g_snprintf (txt,61,"_%s",_(rfx->menu_text));
       if (rfx->num_params) g_strappend (txt,64,"...");
@@ -4780,7 +4746,6 @@ void add_rfx_effects(void) {
       if (rfx->min_frames>=0) gtk_widget_set_sensitive(menuitem,FALSE);
       rfx->menuitem=menuitem;
     }
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
 
@@ -4799,19 +4764,14 @@ void add_rfx_effects(void) {
 
   // tools
   if (mainw->utilities_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
     gtk_widget_destroy(mainw->utilities_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
   if (mainw->gens_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
     gtk_widget_destroy(mainw->gens_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
   mainw->utilities_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->utilities_submenu), mainw->utilities_menu);
   if (palette->style&STYLE_1) {
@@ -4867,13 +4827,10 @@ void add_rfx_effects(void) {
   gtk_container_add (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
 
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
-
   mainw->resize_menuitem=NULL;
 
   if (rfx_slot_count) {
     for (rfx=&mainw->rendered_fx[(plugin_idx=1)];plugin_idx<=rfx_slot_count;rfx=&mainw->rendered_fx[++plugin_idx]) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
       if ((rfx->props&RFX_PROPS_MAY_RESIZE&&rfx->num_in_channels==1)||rfx->min_frames<0) {
 	// add resizing effects to tools menu
 
@@ -4966,12 +4923,10 @@ void add_rfx_effects(void) {
 			    (gpointer)rfx);
 	}
       }
-      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
   }
 
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
   if (has_custom_tools||has_custom_utilities) {
     gtk_widget_show(mainw->custom_tools_separator);
     gtk_widget_show(mainw->custom_tools_menu);

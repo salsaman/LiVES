@@ -1714,7 +1714,14 @@ check_dir_access (gchar *dir) {
 
 
 
-
+void activate_url (GtkAboutDialog *about,
+		   const gchar    *link,
+		   gpointer        data) {
+  gchar *com = getenv("BROWSER");
+  com = g_strdup_printf("%s '%s' &", com ? com : "gnome-open", link);
+  dummyvar=system(com);
+  g_free(com);
+}
 
 
 glong

@@ -697,6 +697,7 @@ glong get_file_size(int fd);
 glong sget_file_size(gchar *name);
 gboolean ensure_isdir(gchar *fname);
 gchar *ensure_extension(gchar *fname, gchar *ext);
+void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data);
 
 inline gdouble calc_time_from_frame (gint clip, gint frame);
 inline gint calc_frame_from_time (gint filenum, gdouble time);  // nearest frame start

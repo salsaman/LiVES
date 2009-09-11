@@ -174,12 +174,12 @@ PKG_CHECK_MODULES(GTK,gtk+-2.0 >= 2.4.0)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
 
-PKG_CHECK_EXISTS([gtk+-2.0 >= 2.10.0],[HAVE_GTK_VERSION210=true],[HAVE_GTK_VERSION210=false])
+PKG_CHECK_EXISTS([gtk+-2.0 >= 2.12.0],[HAVE_GTK_VERSION212=true],[HAVE_GTK_VERSION212=false])
 
 GTK_LIBS_NODYNAMIC=`echo "$GTK_LIBS" | sed 's/-Wl,--export-dynamic//g'`
 AC_SUBST(GTK_LIBS_NODYNAMIC)
 
-PKG_CHECK_EXISTS([glib-2.0 >= 2.10.0],[HAVE_GLIB_VERSION210=true],[HAVE_GLIB_VERSION210=false])
+PKG_CHECK_EXISTS([glib-2.0 >= 2.12.0],[HAVE_GLIB_VERSION212=true],[HAVE_GLIB_VERSION212=false])
 PKG_CHECK_EXISTS([glib-2.0 >= 2.4.0],[HAVE_GLIB_VERSION24=true],[HAVE_GLIB_VERSION24=false])
 
 
@@ -193,16 +193,16 @@ echo "LiVES requires glib-2.0 version 2.4.0 or higher"
 echo "version 2.10.0 or higher is strongly recommended"
 echo "***********************************************"
 else
-if test "x$HAVE_GLIB_VERSION210" = "xfalse"; then
+if test "x$HAVE_GLIB_VERSION212" = "xfalse"; then
 echo "***********************************************"
-echo "LiVES runs best with glib-2.0 version 2.10.0 or higher"
+echo "LiVES runs best with glib-2.0 version 2.12.0 or higher"
 echo "however, it can be compiled with the current version of glib-2.0"
 echo "provided you use the configure option --disable-glib-slice-allocator"
 echo "***********************************************"
 fi
 fi
 
-PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.10.0)
+PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.12.0)
 else
 PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.4.0)
 fi
@@ -210,6 +210,7 @@ fi
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
+AM_CONDITIONAL(HAVE_GTK_VERSION212,$HAVE_GTK_VERSION212)
 
 AM_CONDITIONAL(DISABLE_GLSLICE,$DISABLE_GLSLICE)
 

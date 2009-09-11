@@ -4503,10 +4503,12 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),5);
   gtk_widget_unref(mainw->m_mutebutton);
 
+#ifndef HAVE_GTK_NICE_VERSION
   gtk_widget_ref(mainw->vol_label);
   gtk_container_remove(GTK_CONTAINER(mainw->vol_label->parent),mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),6);
   gtk_widget_unref(mainw->vol_label);
+#endif
 
   gtk_widget_ref(mainw->vol_toolitem);
   gtk_container_remove(GTK_CONTAINER(mainw->vol_toolitem->parent),mainw->vol_toolitem);
@@ -5495,10 +5497,14 @@ gboolean multitrack_delete (lives_mt *mt) {
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),6);
   gtk_widget_unref(mainw->m_mutebutton);
 
+#ifndef HAVE_GTK_NICE_VERSION
+
   gtk_widget_ref(mainw->vol_label);
   gtk_container_remove(GTK_CONTAINER(mainw->vol_label->parent),mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
   gtk_widget_unref(mainw->vol_label);
+
+#endif
 
   gtk_widget_ref(mainw->vol_toolitem);
   gtk_container_remove(GTK_CONTAINER(mainw->vol_toolitem->parent),mainw->vol_toolitem);

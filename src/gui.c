@@ -1571,21 +1571,29 @@ create_LiVES (void)
 
   spinbutton_adj = gtk_adjustment_new (1., 0., 1., 0.01, 0.1, 0.);
 
-  mainw->volume_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
-  gtk_scale_set_draw_value(GTK_SCALE(mainw->volume_scale),FALSE);
-  gtk_widget_show(mainw->volume_scale);
-
   mainw->vol_label=GTK_WIDGET(gtk_tool_item_new());
   label=gtk_label_new(_("Volume"));
   gtk_container_add(GTK_CONTAINER(mainw->vol_label),label);
+
+#ifdef HAVE_GTK_NICE_VERSION
+  mainw->volume_scale=gtk_volume_button_new();
+  gtk_scale_button_set_value(GTK_SCALE_BUTTON(mainw->volume_scale),mainw->volume);
+#else
+  mainw->volume_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
+  gtk_scale_set_draw_value(GTK_SCALE(mainw->volume_scale),FALSE);
   if (capable->smog_version_correct) {
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
   }
+#endif
+
+  gtk_widget_show(mainw->volume_scale);
+  gtk_widget_show(mainw->vol_label);
 
   mainw->vol_toolitem=GTK_WIDGET(gtk_tool_item_new());
   gtk_tool_item_set_homogeneous(GTK_TOOL_ITEM(mainw->vol_toolitem),FALSE);
   gtk_tool_item_set_expand(GTK_TOOL_ITEM(mainw->vol_toolitem),TRUE);
   if (prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd) gtk_widget_show(mainw->vol_toolitem);
+
   gtk_container_add(GTK_CONTAINER(mainw->vol_toolitem),mainw->volume_scale);
   if (capable->smog_version_correct) {
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_toolitem),-1);

@@ -261,7 +261,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     snprintf(homedir,256,"%s",getenv("HOME"));
     snprintf (vdir3,256,"%s/frei0r-1/",homedir);
 
-
     while (vdirval<6) {
       // step through each of our frei0r dirs
       if (vdirval==0) {
@@ -304,6 +303,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  break;
 	}
 
+	if (!strncmp(vdirent->d_name,"..",strlen(vdirent->d_name))) continue;
+
 	snprintf(vendor_name,256,"%s",vdirent->d_name);
 
 	if (vdirval==1) {
@@ -318,21 +319,22 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	else if (vdirval==5) {
 	  if (curdir!=NULL) closedir(curdir);
 	  curdir=opendir(dir3);
-	  if (curdir==NULL) {
-	    vdirval=6;
-	    break;
-	  }
+	  if (curdir==NULL) continue;
 	}
 	
 	finished=0;
-	
+
 	while (!finished) {
 	  // step through our plugins
 	  dirent=readdir(curdir);
+
+
 	  if (dirent==NULL) {
 	    finished=1;
 	    continue;
 	  }
+
+	  if (!strncmp(dirent->d_name,"..",strlen(dirent->d_name))) continue;
 	  
 	  snprintf(plugin_name,256,"%s",dirent->d_name);
 

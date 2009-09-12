@@ -308,7 +308,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	snprintf(vendor_name,256,"%s",vdirent->d_name);
 
 	if (vdirval==1) {
-	  curdir=opendir(dir1);
+	  curdir=opendir(dir3);
 	  if (curdir==NULL) continue;
 	}
 	else if (vdirval==3) {
@@ -318,16 +318,15 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	}
 	else if (vdirval==5) {
 	  if (curdir!=NULL) closedir(curdir);
-	  curdir=opendir(dir3);
+	  curdir=opendir(dir1);
 	  if (curdir==NULL) continue;
 	}
-	
+
 	finished=0;
 
 	while (!finished) {
 	  // step through our plugins
 	  dirent=readdir(curdir);
-
 
 	  if (dirent==NULL) {
 	    finished=1;
@@ -341,22 +340,22 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  snprintf(plug1,512,"%s/%s",dir1,plugin_name);
 	  snprintf(plug2,512,"%s/%s",dir2,plugin_name);
 	  snprintf(plug3,512,"%s/%s",dir3,plugin_name);
-	  
+
 	  handle=dlopen(plug3,RTLD_NOW);
-	  if ((handle!=NULL&&(vdirval<5))||(handle==NULL&&vdirval==5)) {
+	  if ((handle!=NULL&&(vdirval>1))||(handle==NULL&&vdirval==1)) {
 	    if (handle!=NULL) dlclose(handle);
 	    continue;
 	  }
 	  
-	  if (vdirval<5) {
+	  if (vdirval>1) {
 	    handle=dlopen(plug2,RTLD_NOW);
-	    if ((handle!=NULL&&(vdirval<3))||(handle==NULL&&vdirval==3)) {
+	    if ((handle!=NULL&&(vdirval>3))||(handle==NULL&&vdirval==3)) {
 	      if (handle!=NULL) dlclose(handle);
 	      continue;
 	    }
 	  }
 	  
-	  if (vdirval==1) {
+	  if (vdirval==5) {
 	    handle=dlopen(plug1,RTLD_NOW);
 	    if (handle==NULL) continue;
 	  }

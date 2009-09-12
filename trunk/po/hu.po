@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-09-11 23:32-0300\n"
+"POT-Creation-Date: 2009-09-12 03:23-0300\n"
 "PO-Revision-Date: 2009-09-02 13:29+0000\n"
 "Last-Translator: Csiszi <Unknown>\n"
 "Language-Team: hungarian <mypclinuxos.com>\n"
@@ -8709,8 +8709,9 @@ msgid "Generate blank frames"
 msgstr "Üres képkockák"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generate clip from image"
-msgstr ""
+msgstr "Képkockák képeinek törlése"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -8718,8 +8719,9 @@ msgid "Generate coloured frames"
 msgstr "_Véletlenszerű szín minden képkockánál"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generate title frames"
-msgstr ""
+msgstr "Képkockák újrarendezése"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -9456,12 +9458,14 @@ msgid "gen_blank_frames"
 msgstr "üres _képkockák"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "gen_clip_from_image"
-msgstr ""
+msgstr "Képkockák képeinek törlése"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "gen_coloured_frames"
-msgstr ""
+msgstr "_Véletlenszerű szín minden képkockánál"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -9542,8 +9546,9 @@ msgid "shrink_expand"
 msgstr "kiterjesztés_kisinyítés"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "skip_forwards"
-msgstr ""
+msgstr "Ugrás előre (ctrl-jobb)"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "solarize"

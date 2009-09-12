@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES 0.9.5cvs\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-09-11 23:32-0300\n"
+"POT-Creation-Date: 2009-09-12 03:23-0300\n"
 "PO-Revision-Date: 2009-08-03 13:23+0000\n"
 "Last-Translator: Rene Hasekamp <Unknown>\n"
 "Language-Team: \n"
@@ -7710,8 +7710,9 @@ msgid "Blur"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "Bluring"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Border _Colour"
@@ -7788,8 +7789,9 @@ msgid "Colorize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorizing"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Colour cycle"
@@ -7865,8 +7867,9 @@ msgid "Embossing"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "Enhance"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
@@ -7879,8 +7882,9 @@ msgid "Fade _end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Fade"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
@@ -8056,8 +8060,9 @@ msgid "Normalize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "Normalizing"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Number of _frames"
@@ -8080,8 +8085,9 @@ msgid "Pixilating"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "Posterize"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -8174,32 +8180,36 @@ msgid "Solarize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarizing"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "Spinning"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "Splice"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splicing"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spreading"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Step _Value"
@@ -8220,8 +8230,9 @@ msgid "Swirl s_tep"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -8265,8 +8276,9 @@ msgid "Vertical shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "Wave"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #, fuzzy
@@ -8644,8 +8656,9 @@ msgid "emboss"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "enhance"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
@@ -8724,8 +8737,9 @@ msgid "pixilate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "posterize"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -8776,8 +8790,9 @@ msgid "spread"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "swirl"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
@@ -8812,12 +8827,18 @@ msgid "wave"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "Unable to open output file !"
 msgstr ""
+"LiVES niet in staat dit 'image' te 'capturen'\n"
+"\n"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES could not write to $nfile."
 msgstr ""
+"LiVES niet in staat dit 'image' te 'capturen'\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Unable to locate the program $rfx_builder_multi"

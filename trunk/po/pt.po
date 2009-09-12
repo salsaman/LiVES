@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-09-11 23:32-0300\n"
+"POT-Creation-Date: 2009-09-12 03:23-0300\n"
 "PO-Revision-Date: 2009-08-27 18:58+0000\n"
 "Last-Translator: Diogo Lavareda <diogolavareda9@hotmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -9038,12 +9038,14 @@ msgid "Solarizing"
 msgstr "Colorindo"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "Spin"
-msgstr ""
+msgstr "Colorindo"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "Spinning"
-msgstr ""
+msgstr "Colorindo"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
@@ -9056,8 +9058,9 @@ msgid "Splicing"
 msgstr "Colorindo"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spread"
-msgstr ""
+msgstr "Parar de grava_r"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -9646,12 +9649,14 @@ msgid "spin"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "spread"
-msgstr ""
+msgstr "Parar de grava_r"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "swirl"
-msgstr ""
+msgstr "Passo do swirl [_T]"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"

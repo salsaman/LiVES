@@ -1,5 +1,5 @@
-Version 1.1.2
--------------
+Version 1.1.2 (12th September 2009)
+-----------------------------------
 Fix startup crash when loading frei0r plugins. *
 Fix hang/crash in rfx builder rebuild. *
 Increase gtk+ level to gtk+ 2.12 or higher.

@@ -1,5 +1,7 @@
 Version 1.1.3
 -------------
+Increase gtk+ level to gtk+ 2.14 or higher.
+Improve the help menu.
 Undoing load new audio should restore original audio. *
 Fix build error for BSD. *
 

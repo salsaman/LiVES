@@ -74,7 +74,7 @@ else
 libweed_slice_LDADD = ../libweed/libweed_slice.la
 endif
 
-if HAVE_GTK_VERSION212
+if HAVE_GTK_VERSION214
 gtk_def=-DHAVE_GTK_NICE_VERSION
 endif
 

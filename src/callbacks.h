@@ -173,6 +173,30 @@ on_about_activate                     (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+show_manual_activate                     (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+email_author_activate                     (GtkMenuItem     *menuitem,
+					   gpointer         user_data);
+
+void
+donate_activate                     (GtkMenuItem     *menuitem,
+					   gpointer         user_data);
+
+void
+report_bug_activate                     (GtkMenuItem     *menuitem,
+					   gpointer         user_data);
+
+void
+suggest_feature_activate                     (GtkMenuItem     *menuitem,
+					      gpointer         user_data);
+
+void
+help_translate_activate                     (GtkMenuItem     *menuitem,
+					   gpointer         user_data);
+
+void
 on_ok_button1_clicked                  (GtkButton       *button,
                                         gpointer         user_data);
 

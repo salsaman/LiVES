@@ -1714,13 +1714,35 @@ check_dir_access (gchar *dir) {
 
 
 
-void activate_url (GtkAboutDialog *about,
-		   const gchar    *link,
-		   gpointer        data) {
+void activate_url_inner(const gchar *link) {
+#ifdef HAVE_GTK_NICE_VERSION
+  GError *err=NULL;
+  gtk_show_uri(NULL,link,GDK_CURRENT_TIME,&err);
+#else
   gchar *com = getenv("BROWSER");
   com = g_strdup_printf("%s '%s' &", com ? com : "gnome-open", link);
   dummyvar=system(com);
   g_free(com);
+#endif
+}
+
+
+void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data) {
+  activate_url_inner(link);
+}
+
+
+void show_manual_section (const gchar *lang, const gchar *section) {
+  gchar *tmp=NULL,*tmp2=NULL;
+  const gchar *link;
+
+  link=g_strdup_printf("%s%s%s%s",LIVES_MANUAL_URL,(lang==NULL?"":(tmp2=g_strdup_printf("//%s//",lang))),LIVES_MANUAL_FILENAME,(section==NULL?"":(tmp=g_strdup_printf("#%s",section))));
+
+  activate_url_inner(link);
+
+  if (tmp!=NULL) g_free(tmp);
+  if (tmp2!=NULL) g_free(tmp2);
+
 }
 
 

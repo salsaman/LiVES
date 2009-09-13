@@ -987,6 +987,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   gchar msg[256];
   gint current_file=mainw->current_file;
   gint switch_file=current_file;
+  gint asigned,aendian;
 
   gtk_widget_set_sensitive (mainw->undo, FALSE);
   gtk_widget_set_sensitive (mainw->redo, TRUE);
@@ -1070,8 +1071,8 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
     }
     if (reset_achans>0) {
-      int asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
-      int aendian=cfile->signed_endian&AFORM_BIG_ENDIAN;
+      asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
+      aendian=cfile->signed_endian&AFORM_BIG_ENDIAN;
       cfile->achans=reset_achans;
       save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans);
       save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps);
@@ -1211,7 +1212,6 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   }
 
   if ((cfile->undo_action==UNDO_AUDIO_RESAMPLE)||(cfile->undo_action==UNDO_ATOMIC_RESAMPLE_RESIZE&&cfile->arate!=cfile->undo1_int)) {
-    gint asigned,aendian;
 
     cfile->arate+=cfile->undo1_int;
     cfile->undo1_int=cfile->arate-cfile->undo1_int;
@@ -1246,8 +1246,29 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   }
     
   if (cfile->undo_action==UNDO_NEW_AUDIO) {
-    cfile->undo1_dbl=cfile->undo2_dbl=0.;
-    on_del_audio_activate(NULL,GINT_TO_POINTER(1));
+    com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
+    dummyvar=system(com);
+    g_free(com);
+    do_auto_dialog(_("Restoring audio..."),0);
+    
+    cfile->achans=cfile->undo_achans;
+    cfile->arate=cfile->undo_arate;
+    cfile->arps=cfile->undo_arps;
+    cfile->asampsize=cfile->undo_asampsize;
+    cfile->signed_endian=cfile->undo_signed_endian;
+    
+    reget_afilesize(mainw->current_file);
+    
+    asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
+    aendian=cfile->signed_endian&AFORM_BIG_ENDIAN;
+    
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
+    
   }
 
 
@@ -4197,10 +4218,6 @@ on_ok_button4_clicked                  (GtkButton       *button,
   gchar *a_type;
   gchar *com,*mesg;
   gchar **array;
-  gint orate;
-  gint ochans;
-  gint osamps;
-  guint osigned_endian;
   gint oundo_start;
   gint oundo_end;
   gint israw=1;
@@ -4225,10 +4242,12 @@ on_ok_button4_clicked                  (GtkButton       *button,
 
   mainw->noswitch=TRUE;
 
-  orate=cfile->arate;
-  ochans=cfile->achans;
-  osamps=cfile->asampsize;
-  osigned_endian=cfile->signed_endian;
+  cfile->undo_arate=cfile->arate;
+  cfile->undo_achans=cfile->achans;
+  cfile->undo_asampsize=cfile->asampsize;
+  cfile->undo_signed_endian=cfile->signed_endian;
+  cfile->undo_arps=cfile->arps;
+
   oundo_start=cfile->undo_start;
   oundo_end=cfile->undo_end;
 
@@ -4261,11 +4280,14 @@ on_ok_button4_clicked                  (GtkButton       *button,
   }
   else {
     // TODO !!! - need some way to identify audio without invoking mplayer
-    cfile->arate=DEFAULT_AUDIO_RATE;
+    cfile->arate=cfile->arps=DEFAULT_AUDIO_RATE;
     cfile->achans=DEFAULT_AUDIO_CHANS;
     cfile->asampsize=DEFAULT_AUDIO_SAMPS;
     cfile->signed_endian=mainw->endian;
   }
+
+  if (cfile->undo_arate>0) cfile->arps=cfile->undo_arps/cfile->undo_arate*cfile->arate;
+  else cfile->arps=cfile->arate;
 
   mesg=g_strdup_printf(_ ("Opening audio %s, type %s..."),file_name,a_type);
   d_print(mesg);
@@ -4291,10 +4313,11 @@ on_ok_button4_clicked                  (GtkButton       *button,
     do_auto_dialog(_("Cancelling"),0);
     g_free(com);
     cfile->opening_audio=cfile->opening=cfile->opening_only_audio=FALSE;
-    cfile->arate=orate;
-    cfile->achans=ochans;
-    cfile->asampsize=osamps;
-    cfile->signed_endian=osigned_endian;
+    cfile->arate=cfile->undo_arate;
+    cfile->achans=cfile->undo_achans;
+    cfile->asampsize=cfile->undo_asampsize;
+    cfile->signed_endian=cfile->undo_signed_endian;
+    cfile->arps=cfile->undo_arps;
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     sensitize();
@@ -4320,10 +4343,11 @@ on_ok_button4_clicked                  (GtkButton       *button,
     dummyvar=system(com);
     do_auto_dialog(_("Cancelling"),0);
     g_free(com);
-    cfile->arate=orate;
-    cfile->achans=ochans;
-    cfile->asampsize=osamps;
-    cfile->signed_endian=osigned_endian;
+    cfile->arate=cfile->undo_arate;
+    cfile->achans=cfile->undo_achans;
+    cfile->asampsize=cfile->undo_asampsize;
+    cfile->signed_endian=cfile->undo_signed_endian;
+    cfile->arps=cfile->undo_arps;
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     sensitize();
@@ -4333,7 +4357,6 @@ on_ok_button4_clicked                  (GtkButton       *button,
     return;
   }
 
-  cfile->arps=cfile->arate;
   cfile->changed=TRUE;
   cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*cfile->asampsize/8);
   d_print_done();
@@ -4363,8 +4386,6 @@ on_ok_button4_clicked                  (GtkButton       *button,
   save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize);
   save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
   save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
-
-  cfile->undo_achans=ochans;
 
   switch_to_file (mainw->current_file,mainw->current_file);
 
@@ -5565,9 +5586,28 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   gboolean was_new=FALSE;
   gint new_file=mainw->first_free_file;
   gint asigned,endian;
+  gboolean has_lmap_error=FALSE;
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   while(g_main_context_iteration(NULL,FALSE));
+
+  if (mainw->current_file>-1) {
+    if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&cfile->layout_map!=NULL) {
+      if (layout_audio_is_affected(mainw->current_file,0.)) {
+	if (!do_warning_dialog(_("\nLoading new audio may cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n."))) return;
+	add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+	has_lmap_error=TRUE;
+      }
+    }
+    
+    if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&cfile->layout_map!=NULL&&layout_audio_is_affected(mainw->current_file,0.)) {
+      if (!do_layout_alter_audio_warning()) {
+	return;
+      }
+      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+      has_lmap_error=TRUE;
+    }
+  }
 
   mesg=g_strdup_printf(_ ("Opening CD track %d from %s..."),(int)mainw->fx1_val,prefs->cdplay_device);
   d_print(mesg);
@@ -5587,6 +5627,15 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     cfile->hsize=DEFAULT_FRAME_HSIZE;
     cfile->vsize=DEFAULT_FRAME_VSIZE;
   }
+  else {
+    mainw->noswitch=TRUE;
+
+    cfile->undo_arate=cfile->arate;
+    cfile->undo_achans=cfile->achans;
+    cfile->undo_asampsize=cfile->asampsize;
+    cfile->undo_signed_endian=cfile->signed_endian;
+    cfile->undo_arps=cfile->arps;
+  }
 
   com=g_strdup_printf("smogrify cdopen %s %d",cfile->handle,(int)mainw->fx1_val);
 
@@ -5597,10 +5646,25 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   if (!(do_progress_dialog(TRUE,TRUE,_ ("Opening CD track...")))) {
     gtk_widget_queue_draw(mainw->LiVES);
     while (g_main_context_iteration(NULL,FALSE));
-    com=g_strdup_printf("smogrify cancel_audio %s",cfile->handle);
-    dummyvar=system(com);
-    do_auto_dialog(_("Cancelling"),0);
-    g_free(com);
+
+    if (!was_new) {
+      com=g_strdup_printf("smogrify cancel_audio %s",cfile->handle);
+      dummyvar=system(com);
+      do_auto_dialog(_("Cancelling"),0);
+      g_free(com);
+
+      cfile->arate=cfile->undo_arate;
+      cfile->achans=cfile->undo_achans;
+      cfile->asampsize=cfile->undo_asampsize;
+      cfile->signed_endian=cfile->undo_signed_endian;
+      cfile->arps=cfile->undo_arps;
+      
+      sensitize();
+      reget_afilesize(mainw->current_file);
+      get_play_times();
+    }
+
+    mainw->noswitch=FALSE;
     if (was_new) close_current_file(0);
     return;
   }
@@ -5609,34 +5673,65 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   while (g_main_context_iteration(NULL,FALSE));
 
   if (mainw->error) {
+    d_print(_ ("Error loading CD track\n"));
+
+    gtk_widget_queue_draw(mainw->LiVES);
+    while (g_main_context_iteration(NULL,FALSE));
+
+    if (!was_new) {
+      com=g_strdup_printf("smogrify cancel_audio %s",cfile->handle);
+      dummyvar=system(com);
+      do_auto_dialog(_("Cancelling"),0);
+      g_free(com);
+
+      cfile->arate=cfile->undo_arate;
+      cfile->achans=cfile->undo_achans;
+      cfile->asampsize=cfile->undo_asampsize;
+      cfile->signed_endian=cfile->undo_signed_endian;
+      cfile->arps=cfile->undo_arps;
+      
+      sensitize();
+      reget_afilesize(mainw->current_file);
+      get_play_times();
+    }
+
+    mainw->noswitch=FALSE;
     if (was_new) close_current_file(0);
-    do_error_dialog(mainw->msg);
     return;
   }
 
   array=g_strsplit(mainw->msg,"|",5);
-  cfile->arps=cfile->arate=atoi(array[1]);
+  cfile->arate=atoi(array[1]);
   cfile->achans=atoi(array[2]);
   cfile->asampsize=atoi(array[3]);
   cfile->afilesize=strtol(array[4],NULL,10);
   g_strfreev(array);
 
+  if (!was_new&&cfile->undo_arate>0) cfile->arps=cfile->undo_arps/cfile->undo_arate*cfile->arate;
+  else cfile->arps=cfile->arate;
+
   asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   endian=cfile->signed_endian&AFORM_BIG_ENDIAN;
 
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps);
-  save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans);
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
-  save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&endian);
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize);
-
   if (cfile->afilesize==0l) {
     d_print(_ ("Error loading CD track\n"));
-    com=g_strdup_printf("smogrify cancel_audio %s",cfile->handle);
-    dummyvar=system(com);
-    do_auto_dialog(_("Cancelling"),0);
-    g_free(com);
+  
+    if (!was_new) {
+      com=g_strdup_printf("smogrify cancel_audio %s",cfile->handle);
+      dummyvar=system(com);
+      do_auto_dialog(_("Cancelling"),0);
+      g_free(com);
+
+      cfile->achans=cfile->undo_achans;
+      cfile->arate=cfile->undo_arate;
+      cfile->arps=cfile->undo_arps;
+      cfile->asampsize=cfile->undo_asampsize;
+      cfile->signed_endian=cfile->undo_signed_endian;
+
+      reget_afilesize(mainw->current_file);
+    }
+
+    mainw->noswitch=FALSE;
     if (was_new) close_current_file(0);
     return;
   }
@@ -5648,6 +5743,13 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   do_auto_dialog(_("Committing audio"),0);
   g_free(com);
 
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps);
+  save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans);
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
+  save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&endian);
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize);
+
   reget_afilesize(mainw->current_file);
   get_play_times();
   cfile->changed=TRUE;
@@ -5655,8 +5757,16 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   mesg=g_strdup_printf(_ ("New audio: %d Hz %d channel(s) %d bps\n"),cfile->arate,cfile->achans,cfile->asampsize);
   d_print(mesg);
   g_free(mesg);
+  
+  if (!was_new) {
+    if (!prefs->conserve_space) {
+      cfile->undo_action=UNDO_NEW_AUDIO;
+      set_undoable (_("New Audio"),TRUE);
+    }
+  }
 
   gtk_widget_set_sensitive(mainw->loop_video,TRUE);
+  mainw->noswitch=FALSE;
 
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");

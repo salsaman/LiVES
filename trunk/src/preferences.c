@@ -1145,6 +1145,7 @@ static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 }
 
 
+#ifdef ALSA_MIDI
 static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   _prefsw *xprefsw;
 
@@ -1156,7 +1157,7 @@ static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) 
   gtk_widget_set_sensitive(xprefsw->spinbutton_midicr,!gtk_toggle_button_get_active(tbutton));
   gtk_widget_set_sensitive(xprefsw->spinbutton_midirpt,!gtk_toggle_button_get_active(tbutton));
 }
-
+#endif
 
 _prefsw *create_prefs_dialog (void) {
   GtkWidget *dialog_vbox8;
@@ -3052,8 +3053,9 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_start (GTK_BOX (hbox), raw_midi_button, TRUE, TRUE, 20);
    gtk_tooltips_set_tip (mainw->tooltips, raw_midi_button, (_("Read directly from the MIDI device")), NULL);
 
+#ifdef ALSA_MIDI
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (raw_midi_button),!prefs->use_alsa_midi);
-
+#endif
 
    hbox = gtk_hbox_new (FALSE, 0);
    gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);

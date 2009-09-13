@@ -114,11 +114,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <liboil/liboil.h>
 #endif
 
-// workaround for Linux kernels older than 2.6.8
-#ifndef O_NOATIME
-#define O_NOATIME       01000000
-#endif
-
 
 // this struct is used only when physically resampling frames on the disk
 // we create an array of these and write them to the disk
@@ -849,5 +844,12 @@ char *dummychar;
 #define LIVES_TOY_TV 2
 #define LIVES_TOY_AUTOLIVES 2
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
+
+
+// workaround for Linux kernels older than 2.6.8
+#ifndef O_NOATIME
+#define O_NOATIME       01000000
+#endif
+
 
 #endif // #ifndef HAS_MAIN_H

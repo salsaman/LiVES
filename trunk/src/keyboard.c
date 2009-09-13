@@ -85,8 +85,9 @@ plugin_poll_keyboard (gpointer data) {
 
 #ifdef OMC_MIDI_IMPL
   midi_check_rate=prefs->midi_check_rate;
+#ifdef ALSA_MIDI
   if (prefs->use_alsa_midi) midi_check_rate=1; // because we loop for events in midi_mangle()
-
+#endif
   if (mainw->ext_cntl[EXT_CNTL_MIDI]) {
     do {
       gotone=FALSE;
@@ -96,7 +97,9 @@ plugin_poll_keyboard (gpointer data) {
 	  omc_process_string(OMC_MIDI,string,FALSE,NULL);
 	  g_free(string);
 	  string=NULL;
+#ifdef ALSA_MIDI
 	  if (prefs->use_alsa_midi) gotone=TRUE;
+#endif
 	}
       }
     } while (gotone);

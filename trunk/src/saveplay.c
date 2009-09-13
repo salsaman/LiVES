@@ -2874,7 +2874,14 @@ gint save_to_scrap_file (GdkPixbuf *pixbuf) {
     //gdk_pixbuf_save_to_callback(...);
   }
   if (error==NULL) {
-    int fd=open(oname,O_NOATIME|O_RDONLY);
+    int fd;
+    int flags=O_RDONLY;
+
+#ifdef O_NOATIME
+    flags|=O_NOATIME;
+#endif
+
+    fd=open(oname,flags);
     fsync(fd); // try to sync file access, to make saving smoother
     close(fd);
     mainw->files[mainw->scrap_file]->frames++;

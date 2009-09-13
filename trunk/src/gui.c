@@ -136,6 +136,12 @@ create_LiVES (void)
   GtkObject *spinbutton_start_adj;
   GtkObject *spinbutton_end_adj;
   GtkWidget *about;
+  GtkWidget *show_manual;
+  GtkWidget *email_author;
+  GtkWidget *donate;
+  GtkWidget *report_bug;
+  GtkWidget *suggest_feature;
+  GtkWidget *help_translate;
   GtkWidget *vbox4;
   GtkWidget *pf_label;
   GtkWidget *label15;
@@ -1471,6 +1477,40 @@ create_LiVES (void)
     gtk_widget_modify_bg(menuitem14_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
+  show_manual = gtk_menu_item_new_with_mnemonic (_("_Manual (opens in browser)"));
+  gtk_widget_show (show_manual);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), show_manual);
+
+  separator27 = gtk_menu_item_new ();
+  gtk_widget_show (separator27);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), separator27);
+  gtk_widget_set_sensitive (separator27, FALSE);
+
+  donate = gtk_menu_item_new_with_mnemonic (_("_Donate to the project !"));
+  gtk_widget_show (donate);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), donate);
+
+  email_author = gtk_menu_item_new_with_mnemonic (_("_Email the author"));
+  gtk_widget_show (email_author);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), email_author);
+
+  report_bug = gtk_menu_item_new_with_mnemonic (_("Report a _bug"));
+  gtk_widget_show (report_bug);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), report_bug);
+
+  suggest_feature = gtk_menu_item_new_with_mnemonic (_("Suggest a _feature"));
+  gtk_widget_show (suggest_feature);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), suggest_feature);
+
+  help_translate = gtk_menu_item_new_with_mnemonic (_("Help with _translating"));
+  gtk_widget_show (help_translate);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), help_translate);
+
+  separator27 = gtk_menu_item_new ();
+  gtk_widget_show (separator27);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), separator27);
+  gtk_widget_set_sensitive (separator27, FALSE);
+
   about = gtk_menu_item_new_with_mnemonic (_("_About"));
   gtk_widget_show (about);
   gtk_container_add (GTK_CONTAINER (menuitem14_menu), about);
@@ -1578,6 +1618,7 @@ create_LiVES (void)
 #ifdef HAVE_GTK_NICE_VERSION
   mainw->volume_scale=gtk_volume_button_new();
   gtk_scale_button_set_value(GTK_SCALE_BUTTON(mainw->volume_scale),mainw->volume);
+  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_HORIZONTAL); // TODO - change for GTK+ 2.16
 #else
   mainw->volume_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mainw->volume_scale),FALSE);
@@ -2500,6 +2541,31 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (about), "activate",
 		    G_CALLBACK (on_about_activate),
 		    NULL);
+
+  g_signal_connect (GTK_OBJECT (show_manual), "activate",
+		    G_CALLBACK (show_manual_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (email_author), "activate",
+		    G_CALLBACK (email_author_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (donate), "activate",
+		    G_CALLBACK (donate_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (report_bug), "activate",
+		    G_CALLBACK (report_bug_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (suggest_feature), "activate",
+		    G_CALLBACK (suggest_feature_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (help_translate), "activate",
+		    G_CALLBACK (help_translate_activate),
+		    NULL);
+
   mainw->spin_start_func=g_signal_connect_after (GTK_OBJECT (mainw->spinbutton_start), "value_changed",
 						 G_CALLBACK (on_spinbutton_start_value_changed),
 						 NULL);

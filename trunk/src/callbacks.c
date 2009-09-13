@@ -3943,6 +3943,55 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 
 
 
+void
+show_manual_activate                     (GtkMenuItem     *menuitem,
+					  gpointer         user_data)
+{
+  show_manual_section(NULL,NULL);
+}
+
+
+
+void
+email_author_activate                     (GtkMenuItem     *menuitem,
+					  gpointer         user_data)
+{
+  activate_url_inner(LIVES_AUTHOR_EMAIL);
+}
+
+
+void
+report_bug_activate                     (GtkMenuItem     *menuitem,
+					  gpointer         user_data)
+{
+  activate_url_inner(LIVES_BUG_URL);
+}
+
+
+void
+suggest_feature_activate                     (GtkMenuItem     *menuitem,
+					      gpointer         user_data)
+{
+  activate_url_inner(LIVES_FEATURE_URL);
+}
+
+
+void
+help_translate_activate                     (GtkMenuItem     *menuitem,
+					      gpointer         user_data)
+{
+  activate_url_inner(LIVES_TRANSLATE_URL);
+}
+
+
+
+void
+donate_activate                     (GtkMenuItem     *menuitem,
+				     gpointer         user_data)
+{
+  const gchar *link=g_strdup_printf("%s%s",LIVES_DONATE_URL,user_data==NULL?"":(gchar *)user_data);
+  activate_url_inner(link);
+}
 
 
 

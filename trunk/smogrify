@@ -5000,14 +5000,14 @@ sub weed {
     while ($file=readdir(DIR)) {
 	unless ($file =~ /^\./) {
 	    if (-d "$tmpdir/$file") {
-		if (-d "$tmpdir/$file/clips/" || -d "$tmpdir/$file/layouts") {
-		    # TODO - prune subdirs of clips
+		if (&is_non_empty_dir("$tmpdir/$file/clips") || &is_non_empty_dir("$tmpdir/$file/layouts")) {
 		    # new style sets, for now only check /clips subdir
 		    unless (!defined($new_temp)||$new_temp eq "") {
 			system("/bin/mv $file $new_temp/");
 		    }
 		}
 		else {
+		    print "check $file\n";
 		    $in_set=0;
 		    find (\&fndset,"$tmpdir/$file/");
 		    if (!$in_set) {
@@ -5034,6 +5034,7 @@ sub weed {
 	    }
 	}
     }
+
     closedir DIR;
 
     `/bin/rm -f .* 2>/dev/null`;
@@ -5088,4 +5089,21 @@ sub clear_symlinks {
 
     # remove dir + any empty parents
     system("/bin/rmdir -p $linksdir 2>/dev/null");
+}
+
+
+sub is_non_empty_dir {
+    my $dirname=shift;
+    my $xfile;
+
+    opendir TDIR,$dirname;
+    while ($xfile=readdir(TDIR)) {
+	unless ($xfile =~ /^\./) {
+	    closedir TDIR;
+	    return 1;
+	}
+    }
+    
+    closedir TDIR;
+    return 0;
 }

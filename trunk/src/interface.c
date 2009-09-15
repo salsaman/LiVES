@@ -1576,8 +1576,11 @@ _entryw* create_rename_dialog (gint type) {
   GtkWidget *dialog_action_area13;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
+  GtkWidget *set_combo;
 
   _entryw *renamew=(_entryw*)(g_malloc(sizeof(_entryw)));
+
+  renamew->setlist=NULL;
 
   renamew->dialog = gtk_dialog_new ();
 
@@ -1643,13 +1646,24 @@ _entryw* create_rename_dialog (gint type) {
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  renamew->entry = gtk_entry_new_with_max_length (128);
-  if (type==2&&strlen (mainw->set_name)) {
-    gtk_entry_set_text (GTK_ENTRY (renamew->entry),mainw->set_name);
+
+  if (type==3) {
+    set_combo=gtk_combo_new();
+    renamew->setlist=get_set_list(prefs->tmpdir);
+    combo_set_popdown_strings(GTK_COMBO(set_combo),renamew->setlist);
+    renamew->entry=(GTK_COMBO(set_combo))->entry;
+    gtk_widget_show (set_combo);
+    gtk_box_pack_start (GTK_BOX (hbox19), set_combo, TRUE, TRUE, 0);
+  }
+  else {
+    renamew->entry = gtk_entry_new_with_max_length (128);
+    if (type==2&&strlen (mainw->set_name)) {
+      gtk_entry_set_text (GTK_ENTRY (renamew->entry),mainw->set_name);
+    }
+    gtk_widget_show (renamew->entry);
+    gtk_box_pack_start (GTK_BOX (hbox19), renamew->entry, TRUE, TRUE, 0);
   }
 
-  gtk_widget_show (renamew->entry);
-  gtk_box_pack_start (GTK_BOX (hbox19), renamew->entry, TRUE, TRUE, 0);
   gtk_entry_set_activates_default (GTK_ENTRY (renamew->entry), TRUE);
 
   dialog_action_area13 = GTK_DIALOG (renamew->dialog)->action_area;

@@ -3682,7 +3682,7 @@ on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   // show a progress dialog, not cancellable
   do_progress_dialog(TRUE,FALSE,_("Clearing disk space"));
-
+  
   array=g_strsplit(mainw->msg,"|",2);
   bytes=atoi(array[1]);
   g_strfreev(array);

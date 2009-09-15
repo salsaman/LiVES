@@ -750,6 +750,7 @@ gchar *g_strappend (gchar *string, gint len, const gchar *new);
 void find_when_to_stop (void);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 
+GList *get_set_list(const gchar *dir);
 void combo_set_popdown_strings (GtkCombo *combo, GList *list);
 
 gchar *subst (gchar *string, gchar *from, gchar *to);

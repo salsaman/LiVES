@@ -45,6 +45,7 @@ typedef struct {
   GtkWidget *dialog;
   GtkWidget *entry;
   GtkWidget *warn_checkbutton;
+  GList *setlist;
 } _entryw;
 
 _entryw* create_rename_dialog (gint type);

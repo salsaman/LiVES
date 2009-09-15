@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2484,6 +2485,59 @@ void save_clip_value(int which, int what, void *val) {
   
   return;
 }
+
+
+
+GList *get_set_list(const gchar *dir) {
+  // get list of sets in top level dir
+  GList *setlist=NULL;
+  DIR *tldir,*subdir;
+  struct dirent *tdirent,*subdirent;
+  gchar *subdirname;
+
+  if (dir==NULL) return NULL;
+
+  tldir=opendir(dir);
+
+  if (tldir==NULL) return NULL;
+
+  while (1) {
+    tdirent=readdir(tldir);
+
+    if (tdirent==NULL) {
+      closedir(tldir);
+      return setlist;
+    }
+    
+    if (!strncmp(tdirent->d_name,"..",strlen(tdirent->d_name))) continue;
+
+    subdirname=g_strdup_printf("%s/%s",dir,tdirent->d_name);
+
+    subdir=opendir(subdirname);
+
+    if (subdir==NULL) {
+      g_free(subdirname);
+      continue;
+    }
+
+    while (1) {
+      subdirent=readdir(subdir);
+
+      if (subdirent==NULL) {
+	break;
+      }
+
+      if (!strcmp(subdirent->d_name,"order")) {
+	setlist=g_list_append(setlist,g_strdup(tdirent->d_name));
+	break;
+      }
+    }
+    g_free(subdirname);
+    closedir(subdir);
+  }
+}
+
+
 
 
 gboolean check_for_ratio_fps (gdouble fps) {

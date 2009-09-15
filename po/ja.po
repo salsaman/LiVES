@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-09-13 19:24-0300\n"
+"POT-Creation-Date: 2009-09-15 13:10-0300\n"
 "PO-Revision-Date: 2009-06-15 07:36+0000\n"
 "Last-Translator: Jun iio <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -547,12 +547,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "ファイル「%s」を閉じました\n"
 
-#: src/main.c:3483 src/gui.c:501 src/utils.c:1999 src/utils.c:2025
+#: src/main.c:3483 src/gui.c:501 src/utils.c:2000 src/utils.c:2026
 #: src/saveplay.c:2001 src/multitrack.c:2732 src/multitrack.c:3568
 msgid "_Undo"
 msgstr "アンドゥ(_U)"
 
-#: src/main.c:3484 src/gui.c:514 src/utils.c:2000 src/utils.c:2026
+#: src/main.c:3484 src/gui.c:514 src/utils.c:2001 src/utils.c:2027
 #: src/saveplay.c:2002 src/multitrack.c:2753 src/multitrack.c:3587
 msgid "_Redo"
 msgstr "リドゥ(_R)"
@@ -722,7 +722,7 @@ msgstr "設定を維持"
 msgid "Use _recommended settings"
 msgstr "推奨される設定を使用"
 
-#: src/interface.c:854 src/interface.c:2584 src/dialogs.c:106
+#: src/interface.c:854 src/interface.c:2598 src/dialogs.c:106
 msgid ""
 "Do _not show this warning any more\n"
 "(can be turned back on from Preferences/Warnings)"
@@ -814,7 +814,7 @@ msgstr "バンド幅情報を送らない"
 msgid "Try this setting if you are having problems getting a stream"
 msgstr "ストリームの取得に問題がある場合はこの設定を試して下さい"
 
-#: src/interface.c:1601
+#: src/interface.c:1604
 msgid ""
 "You need to enter a name for the current clip set.\n"
 "This will allow you reload the layout with the same clips later.\n"
@@ -826,7 +826,7 @@ msgstr ""
 "使いたい名前を入力してください。\n"
 "なお終了しようとするときに、LiVESは再度クリップセットの保存を促します。\n"
 
-#: src/interface.c:1611
+#: src/interface.c:1614
 msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
@@ -835,148 +835,148 @@ msgstr ""
 "ばなりません。\n"
 "またそれはプロジェクト名としても利用されます。\n"
 
-#: src/interface.c:1625
+#: src/interface.c:1628
 msgid "LiVES: - Rename Clip"
 msgstr "LiVES: - クリップの名称変更"
 
-#: src/interface.c:1628
+#: src/interface.c:1631
 msgid "LiVES: - Enter Set Name"
 msgstr "LiVES: - セット名の入力"
 
-#: src/interface.c:1632
+#: src/interface.c:1635
 msgid "New name "
 msgstr "新しい名前 "
 
-#: src/interface.c:1635
+#: src/interface.c:1638
 msgid "Set name "
 msgstr "セットの名前 "
 
-#: src/interface.c:1740
+#: src/interface.c:1754
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- CDトラックのロード"
 
-#: src/interface.c:1743
+#: src/interface.c:1757
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LiVES:- DVDタイトル/チャプターの選択"
 
-#: src/interface.c:1746
+#: src/interface.c:1760
 msgid "LiVES:- Select VCD Title"
 msgstr "LiVES:- VCDタイトルの選択"
 
-#: src/interface.c:1749
+#: src/interface.c:1763
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- 表示するトラックの最大値変更"
 
-#: src/interface.c:1777
+#: src/interface.c:1791
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "(%sから)ロードするトラック"
 
-#: src/interface.c:1780
+#: src/interface.c:1794
 msgid "DVD Title"
 msgstr "DVDタイトル"
 
-#: src/interface.c:1783
+#: src/interface.c:1797
 msgid "VCD Title"
 msgstr "VCDタイトル"
 
-#: src/interface.c:1786
+#: src/interface.c:1800
 msgid "Maximum number of tracks to display"
 msgstr "表示するトラック数の最大値"
 
-#: src/interface.c:1818
+#: src/interface.c:1832
 msgid "Chapter  "
 msgstr "チャプター  "
 
-#: src/interface.c:1838
+#: src/interface.c:1852
 msgid "Audio ID  "
 msgstr "オーディオ ID  "
 
-#: src/interface.c:1940
+#: src/interface.c:1954
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- オーディオのフェードイン"
 
-#: src/interface.c:1943
+#: src/interface.c:1957
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- オーディオのフェードアウト"
 
-#: src/interface.c:1966
+#: src/interface.c:1980
 msgid "Fade in over  "
 msgstr "フェードイン  "
 
-#: src/interface.c:1967
+#: src/interface.c:1981
 msgid "first"
 msgstr "先"
 
-#: src/interface.c:1970
+#: src/interface.c:1984
 msgid "Fade out over  "
 msgstr "フェードアウト  "
 
-#: src/interface.c:1971
+#: src/interface.c:1985
 msgid "last"
 msgstr "最後"
 
-#: src/interface.c:2008
+#: src/interface.c:2022
 msgid "seconds."
 msgstr "秒"
 
-#: src/interface.c:2033
+#: src/interface.c:2047
 msgid "selection."
 msgstr "選択"
 
-#: src/interface.c:2099
+#: src/interface.c:2113
 msgid "LiVES: - Play Random Music"
 msgstr "LiVES: - 音楽のランダム再生"
 
-#: src/interface.c:2124
+#: src/interface.c:2138
 msgid "Number of Tracks Requested:    "
 msgstr "要求するトラックの数:    "
 
-#: src/interface.c:2147
+#: src/interface.c:2161
 msgid "Directory:"
 msgstr "ディレクトリ:"
 
-#: src/interface.c:2173
+#: src/interface.c:2187
 msgid "Include subdirectories"
 msgstr "サブディレクトリを含む"
 
-#: src/interface.c:2201
+#: src/interface.c:2215
 msgid "Minimum File Size (MB)         "
 msgstr "最小ファイルサイズ (MB)         "
 
-#: src/interface.c:2221
+#: src/interface.c:2235
 msgid "Maximum File Size (MB)        "
 msgstr "最大ファイルサイズ (MB)        "
 
-#: src/interface.c:2279
+#: src/interface.c:2293
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - ファイルコメント (オプション)"
 
-#: src/interface.c:2297
+#: src/interface.c:2311
 msgid "Title/Name : "
 msgstr "タイトル/名前 : "
 
-#: src/interface.c:2308
+#: src/interface.c:2322
 msgid "Author/Artist : "
 msgstr "作者/アーティスト : "
 
-#: src/interface.c:2319
+#: src/interface.c:2333
 msgid "Comments : "
 msgstr "コメント : "
 
-#: src/interface.c:2390
+#: src/interface.c:2404
 msgid "LiVES: choose a directory"
 msgstr "LiVES: ディレクトリの選択"
 
-#: src/interface.c:2393
+#: src/interface.c:2407
 msgid "LiVES: choose a file"
 msgstr "LiVES: ファイルの選択"
 
-#: src/interface.c:2484
+#: src/interface.c:2498
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES: - キャンセル/破棄/保存"
 
-#: src/interface.c:2501
+#: src/interface.c:2515
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -986,7 +986,7 @@ msgstr ""
 "現在のレイアウトは保存されていません。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2504
+#: src/interface.c:2518
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -996,7 +996,7 @@ msgstr ""
 "現在のレイアウトは最後の保存から変更されています。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2508
+#: src/interface.c:2522
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1006,7 +1006,7 @@ msgstr ""
 "現在のクリップセットを保存することができます。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2509
+#: src/interface.c:2523
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1014,7 +1014,7 @@ msgstr ""
 "現在のクリップセットは保存されていません。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2512
+#: src/interface.c:2526
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1022,39 +1022,39 @@ msgstr ""
 "現在のレイアウトは保存されていません。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2531
+#: src/interface.c:2545
 msgid "Clip set _name"
 msgstr "クリップセット名"
 
-#: src/interface.c:2545
+#: src/interface.c:2559
 msgid "_Auto reload next time"
 msgstr "次回、自動でリロードする"
 
-#: src/interface.c:2626 src/interface.c:2637
+#: src/interface.c:2640 src/interface.c:2651
 msgid "_Wipe layout"
 msgstr "ワイプレイアウト"
 
-#: src/interface.c:2627
+#: src/interface.c:2641
 msgid "_Ignore changes"
 msgstr "変更を無視"
 
-#: src/interface.c:2628
+#: src/interface.c:2642
 msgid "_Delete clip set"
 msgstr "クリップセットを削除"
 
-#: src/interface.c:2629
+#: src/interface.c:2643
 msgid "_Delete layout"
 msgstr "レイアウトを削除"
 
-#: src/interface.c:2635
+#: src/interface.c:2649
 msgid "_Save layout"
 msgstr "レイアウトを保存"
 
-#: src/interface.c:2636
+#: src/interface.c:2650
 msgid "_Save clip set"
 msgstr "クリップセットを保存"
 
-#: src/interface.c:2661
+#: src/interface.c:2675
 #, c-format
 msgid ""
 "Before starting LiVES, you need to choose an audio player.\n"
@@ -1067,15 +1067,15 @@ msgstr ""
 "もしjackとLiVESを動作させられないときは、代わりに %s を試して再起動して下さ"
 "い。\n"
 
-#: src/interface.c:2664
+#: src/interface.c:2678
 msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: - オーディオプレイヤーを選んで下さい。fairu"
 
-#: src/interface.c:2676
+#: src/interface.c:2690
 msgid "Use _jack audio player"
 msgstr "_jackオーディオプレイヤーを使う。"
 
-#: src/interface.c:2682
+#: src/interface.c:2696
 #, c-format
 msgid "Use _%s audio player"
 msgstr "_%s オーディオプレイヤーを使う。"
@@ -2888,11 +2888,11 @@ msgstr "Cacher la Fenêtre de Lecture"
 msgid "Show Play Window"
 msgstr "再生ウィンドウの表示"
 
-#: src/utils.c:161
+#: src/utils.c:162
 msgid "Clearing the clipboard"
 msgstr "クリップボードを消去します"
 
-#: src/utils.c:184
+#: src/utils.c:185
 #, c-format
 msgid ""
 "\n"
@@ -2903,7 +2903,7 @@ msgstr ""
 "==============================\n"
 "クリップ「%s」へ変更しました\n"
 
-#: src/utils.c:188
+#: src/utils.c:189
 msgid ""
 "\n"
 "==============================\n"
@@ -2913,7 +2913,7 @@ msgstr ""
 "==============================\n"
 "空のクリップへ変更しました\n"
 
-#: src/utils.c:219
+#: src/utils.c:220
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
@@ -2922,7 +2922,7 @@ msgstr ""
 "セット名は %s から %s に変更されました。それに伴いレイアウトがアップデートさ"
 "れています。\n"
 
-#: src/utils.c:225
+#: src/utils.c:226
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
@@ -2931,7 +2931,7 @@ msgstr ""
 "クリップ %s はこのセットに見当たりません。\n"
 "次のレイアウトに必要です。\n"
 
-#: src/utils.c:229
+#: src/utils.c:230
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
@@ -2940,7 +2940,7 @@ msgstr ""
 "クリップ %s は既に閉じています。\n"
 "次のレイアウトに必要です。\n"
 
-#: src/utils.c:234
+#: src/utils.c:235
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
@@ -2949,7 +2949,7 @@ msgstr ""
 "クリップ %s からフレームが移動しました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:239
+#: src/utils.c:240
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
@@ -2958,7 +2958,7 @@ msgstr ""
 "クリップ %s からフレームが消去されました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:244
+#: src/utils.c:245
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
@@ -2967,7 +2967,7 @@ msgstr ""
 "クリップ %s から音声が消去されました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:249
+#: src/utils.c:250
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
@@ -2976,7 +2976,7 @@ msgstr ""
 "クリップ %s で音声が移動しました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:254
+#: src/utils.c:255
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
@@ -2985,7 +2985,7 @@ msgstr ""
 "クリップ %s で音声が変更されました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:259
+#: src/utils.c:260
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
@@ -2994,7 +2994,7 @@ msgstr ""
 "クリップ %s でフレームが変更されました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:387
+#: src/utils.c:388
 #, c-format
 msgid ""
 "Set %s\n"
@@ -3004,7 +3004,7 @@ msgstr ""
 "他のLiVESプログラムで使用されており、\n"
 "セット %s を開けません。\n"
 
-#: src/utils.c:393
+#: src/utils.c:394
 #, c-format
 msgid ""
 "\n"
@@ -3015,7 +3015,7 @@ msgstr ""
 "このセット %s は他のLiVESプログラムで使用されています。\n"
 "他のセット名を選んで下さい。\n"
 
-#: src/utils.c:417
+#: src/utils.c:418
 msgid ""
 "\n"
 "Set names may not be blank.\n"
@@ -3023,7 +3023,7 @@ msgstr ""
 "\n"
 "セット名が空白ではいけません。\n"
 
-#: src/utils.c:421
+#: src/utils.c:422
 #, c-format
 msgid ""
 "\n"
@@ -3032,7 +3032,7 @@ msgstr ""
 "\n"
 "セット名に空白もしくは %s 文字を含んではいけません。\n"
 
-#: src/utils.c:433
+#: src/utils.c:434
 #, c-format
 msgid ""
 "\n"
@@ -3043,68 +3043,68 @@ msgstr ""
 "セット %s は既に存在します。\n"
 "他のセット名を選んで下さい。\n"
 
-#: src/utils.c:646
+#: src/utils.c:647
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "レイアウト %s を削除\n"
 
-#: src/utils.c:992
+#: src/utils.c:993
 msgid "Video [opening...]"
 msgstr "ビデオ [開く...]"
 
-#: src/utils.c:996
+#: src/utils.c:997
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "ビデオ [%.2f 秒]"
 
-#: src/utils.c:1000
+#: src/utils.c:1001
 msgid "(Undefined)"
 msgstr "(未定義)"
 
-#: src/utils.c:1003
+#: src/utils.c:1004
 msgid "(No video)"
 msgstr "(ビデオなし)"
 
-#: src/utils.c:1010
+#: src/utils.c:1011
 msgid "(No audio)"
 msgstr "(音声なし)"
 
-#: src/utils.c:1015
+#: src/utils.c:1016
 msgid "Mono  [opening...]"
 msgstr "モノラル [開く...]"
 
-#: src/utils.c:1018
+#: src/utils.c:1019
 msgid "Left Audio [opening...]"
 msgstr "左音声 [開く...]"
 
-#: src/utils.c:1023
+#: src/utils.c:1024
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "モノラル [%.2f 秒]"
 
-#: src/utils.c:1026
+#: src/utils.c:1027
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "左音声 [%.2f 秒]"
 
-#: src/utils.c:1034
+#: src/utils.c:1035
 msgid "Right Audio [opening...]"
 msgstr "右音声 [開く...]"
 
-#: src/utils.c:1037
+#: src/utils.c:1038
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "右音声 [%.2f 秒]"
 
-#: src/utils.c:1368
+#: src/utils.c:1369
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVESはクリップがロードされている間にmplayerを起動できませんでした。"
 
-#: src/utils.c:1509
+#: src/utils.c:1510
 msgid "Cleaning up clip"
 msgstr "クリップを消去します"
 
-#: src/utils.c:1650
+#: src/utils.c:1651
 #, c-format
 msgid ""
 "\n"
@@ -3119,7 +3119,7 @@ msgstr ""
 "\n"
 "上書きしますか ?\n"
 
-#: src/utils.c:1667
+#: src/utils.c:1668
 #, c-format
 msgid ""
 "\n"
@@ -3132,25 +3132,25 @@ msgstr ""
 "\n"
 "ファイルパーミッションを確認して、もう一度、試して下さい。"
 
-#: src/utils.c:1992 src/utils.c:2018 src/multitrack.c:2725
+#: src/utils.c:1993 src/utils.c:2019 src/multitrack.c:2725
 #, c-format
 msgid "_Undo %s"
 msgstr "%sをアンドゥ(_U)"
 
-#: src/utils.c:1993 src/utils.c:2019 src/multitrack.c:2747
+#: src/utils.c:1994 src/utils.c:2020 src/multitrack.c:2747
 #, c-format
 msgid "_Redo %s"
 msgstr "%sをリドゥ(_R)"
 
-#: src/utils.c:2044
+#: src/utils.c:2045
 msgid "-------------Selection------------"
 msgstr "------------- 選択範囲 ------------"
 
-#: src/utils.c:2049
+#: src/utils.c:2050
 msgid " sec ] ----------Selection---------- [ "
 msgstr " 秒 ] ---------- 選択範囲 ---------- [ "
 
-#: src/utils.c:2049
+#: src/utils.c:2050
 msgid " frames ] ----------"
 msgstr " フレーム ] ----------"
 

@@ -206,6 +206,7 @@ struct _mt {
   GtkWidget *quit;
   GtkWidget *fx_params_label;
   GtkWidget *amixer_button;
+  GtkWidget *view_sel_events;
 
   GdkCursor *cursor;
 
@@ -561,6 +562,7 @@ void on_add_video_track_activate (GtkMenuItem *, gpointer mt);
 void multitrack_insert (GtkMenuItem *, gpointer mt);
 void multitrack_audio_insert (GtkMenuItem *, gpointer mt);
 void multitrack_view_events (GtkMenuItem *, gpointer mt);
+void multitrack_view_sel_events (GtkMenuItem *, gpointer mt);
 void on_render_activate (GtkMenuItem *, gpointer mt);
 void on_prerender_aud_activate (GtkMenuItem *, gpointer mt);
 void on_jumpnext_activate (GtkMenuItem *, gpointer mt);

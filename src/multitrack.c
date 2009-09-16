@@ -4426,6 +4426,10 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->view_events);
   gtk_widget_set_sensitive (mt->view_events, FALSE);
 
+  mt->view_sel_events = gtk_image_menu_item_new_with_mnemonic (_("_Event Window (selected time only)"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->view_sel_events);
+  gtk_widget_set_sensitive (mt->view_sel_events, FALSE);
+
   show_frame_events = gtk_check_menu_item_new_with_mnemonic (_("_Show FRAME events"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), show_frame_events);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(show_frame_events),prefs->event_window_show_frame_events);
@@ -4539,6 +4543,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 		    (gpointer)mt);
   g_signal_connect (GTK_OBJECT (mt->view_events), "activate",
 		    G_CALLBACK (multitrack_view_events),
+		    (gpointer)mt);
+  g_signal_connect (GTK_OBJECT (mt->view_sel_events), "activate",
+		    G_CALLBACK (multitrack_view_sel_events),
 		    (gpointer)mt);
   g_signal_connect (GTK_OBJECT (mt->clear_marks), "activate",
 		    G_CALLBACK (multitrack_clear_marks),
@@ -8465,6 +8472,7 @@ static void mouse_select_start(GtkWidget *widget, lives_mt *mt) {
   gint min_x;
 
   gtk_widget_set_sensitive(mt->mm_menuitem,FALSE);
+  gtk_widget_set_sensitive(mt->view_sel_events,FALSE);
   
   gdk_window_get_pointer(GDK_WINDOW (mt->timeline->window), &mt->sel_x, &mt->sel_y, NULL);
   timesecs=get_time_from_x(mt,mt->sel_x);
@@ -11342,6 +11350,7 @@ void mt_desensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->audio_insert,FALSE);
   gtk_widget_set_sensitive (mt->playall,FALSE);
   gtk_widget_set_sensitive (mt->view_events,FALSE);
+  gtk_widget_set_sensitive (mt->view_sel_events,FALSE);
   gtk_widget_set_sensitive (mt->render, FALSE);
   gtk_widget_set_sensitive (mt->prerender_aud, FALSE);
   gtk_widget_set_sensitive (mt->delblock, FALSE);
@@ -11379,6 +11388,7 @@ void mt_sensitise (lives_mt *mt) {
   if (mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
     gtk_widget_set_sensitive (mt->playall,TRUE);
     gtk_widget_set_sensitive (mt->view_events,TRUE);
+    gtk_widget_set_sensitive (mt->view_sel_events,mt->region_start!=mt->region_end);
     gtk_widget_set_sensitive (mt->render, TRUE);
     if (mt->avol_init_event!=NULL&&mt->opts.pertrack_audio&&cfile->achans>0) gtk_widget_set_sensitive (mt->prerender_aud, TRUE);
     gtk_widget_set_sensitive (mt->save_event_list, TRUE);
@@ -11386,6 +11396,7 @@ void mt_sensitise (lives_mt *mt) {
   else {
     gtk_widget_set_sensitive (mt->playall,FALSE);
     gtk_widget_set_sensitive (mt->view_events,FALSE);
+    gtk_widget_set_sensitive (mt->view_sel_events,FALSE);
     gtk_widget_set_sensitive (mt->render,FALSE);
     gtk_widget_set_sensitive (mt->save_event_list,FALSE);
   }
@@ -12092,11 +12103,26 @@ void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t o
 void multitrack_view_events (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   GtkWidget *elist_dialog;
-  if ((prefs->event_window_show_frame_events&&count_events(mt->event_list,TRUE)>1000)||(!prefs->event_window_show_frame_events&&((count_events(mt->event_list,TRUE)-count_events(mt->event_list,FALSE))>1000))) if (!do_event_list_warning(mt)) return;
-  elist_dialog=create_event_list_dialog(mt->event_list);
+  if ((prefs->event_window_show_frame_events&&count_events(mt->event_list,TRUE,0,0)>1000)||(!prefs->event_window_show_frame_events&&((count_events(mt->event_list,TRUE,0,0)-count_events(mt->event_list,FALSE,0,0))>1000))) if (!do_event_list_warning(mt)) return;
+  elist_dialog=create_event_list_dialog(mt->event_list,0,0);
   gtk_dialog_run(GTK_DIALOG(elist_dialog));
   gtk_widget_destroy(elist_dialog);
 }
+
+
+void multitrack_view_sel_events (GtkMenuItem *menuitem, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  GtkWidget *elist_dialog;
+
+  weed_timecode_t tc_start=q_gint64(mt->region_start*U_SECL,mt->fps);
+  weed_timecode_t tc_end=q_gint64(mt->region_end*U_SECL,mt->fps);
+
+  if ((prefs->event_window_show_frame_events&&count_events(mt->event_list,TRUE,tc_start,tc_end)>1000)||(!prefs->event_window_show_frame_events&&((count_events(mt->event_list,TRUE,tc_start,tc_end)-count_events(mt->event_list,FALSE,tc_start,tc_end))>1000))) if (!do_event_list_warning(mt)) return;
+  elist_dialog=create_event_list_dialog(mt->event_list,tc_start,tc_end);
+  gtk_dialog_run(GTK_DIALOG(elist_dialog));
+  gtk_widget_destroy(elist_dialog);
+}
+
 
 ////////////////////////////////////////////////////////
 // region functions
@@ -12481,6 +12507,7 @@ void get_region_overlap(lives_mt *mt) {
   if (event==NULL) mt->region_end=0.;
   mt->region_end=get_event_timecode(event)/U_SEC+1./mt->fps;
 
+  gtk_widget_set_sensitive(mt->view_sel_events,mt->region_start!=mt->region_end);
 
 }
 
@@ -12531,6 +12558,7 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
 
   if (mt->region_start==mt->region_end&&eventbox==mt->timeline_reg) {
     mt->region_start=mt->region_end=0;
+    gtk_widget_set_sensitive(mt->view_sel_events,FALSE);
     g_signal_handler_block(mt->spinbutton_start,mt->spin_start_func);
     g_signal_handler_block(mt->spinbutton_end,mt->spin_end_func);
     gtk_spin_button_set_range (GTK_SPIN_BUTTON (mt->spinbutton_start),0.,mt->end_secs);
@@ -12565,6 +12593,7 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
 	gtk_widget_set_sensitive (mt->fx_region, FALSE);
       }
       gtk_widget_set_sensitive (mt->ins_gap_cur, TRUE);
+      gtk_widget_set_sensitive(mt->view_sel_events,TRUE);
     }
     else {
       gtk_widget_set_sensitive (mt->fx_region, FALSE);
@@ -12627,6 +12656,7 @@ on_timeline_press (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
   pos=get_time_from_x(mt,x);
   if (widget==mt->timeline_reg) {
     mt->region_start=mt->region_end=mt->region_init=pos;
+    gtk_widget_set_sensitive(mt->view_sel_events,FALSE);
     mt->region_updating=TRUE;
   }
 
@@ -12636,7 +12666,6 @@ on_timeline_press (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
   }
 
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) mouse_select_start(widget,mt);
-
 
   return TRUE;
 }

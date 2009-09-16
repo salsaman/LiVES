@@ -1570,6 +1570,13 @@ create_location_dialog (void)
 
 
 _entryw* create_rename_dialog (gint type) {
+  // type 1 = rename clip in menu
+  // type 2 = save clip set
+  // type 3 = reload clip set
+  // type 4 = save clip set from mt
+  // type 5 = save clip set for project export
+
+
   GtkWidget *dialog_vbox13;
   GtkWidget *hbox19;
   GtkWidget *label;
@@ -1593,7 +1600,7 @@ _entryw* create_rename_dialog (gint type) {
     gtk_widget_modify_bg (renamew->dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_default_size (GTK_WINDOW (renamew->dialog), 300, 200);
+  gtk_window_set_default_size (GTK_WINDOW (renamew->dialog), 500, 200);
 
   gtk_container_set_border_width (GTK_CONTAINER (renamew->dialog), 10);
 

@@ -2274,7 +2274,7 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
   else {
     time_start=get_event_timecode (get_first_event(cfile->event_list));
     perf_start=(gint)(cfile->fps*(gdouble)time_start/U_SEC)+1;
-    perf_end=perf_start+count_events (cfile->event_list,FALSE)-1;
+    perf_end=perf_start+count_events (cfile->event_list,FALSE,0,0)-1;
   }
   com=g_strdup_printf("smogrify deorder %s %d %d %d %d",cfile->handle,perf_start,perf_end,old_frames,leave_bak);
 

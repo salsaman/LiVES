@@ -3374,7 +3374,7 @@ gboolean start_render_effect_events (weed_plant_t *event_list) {
   mainw->progress_fn (TRUE);
 
   cfile->progress_start=1;
-  cfile->progress_end=count_events (event_list,FALSE);
+  cfile->progress_end=count_events (event_list,FALSE,0,0);
 
   cfile->pb_fps=1000000.;
 
@@ -3424,15 +3424,17 @@ gboolean start_render_effect_events (weed_plant_t *event_list) {
 
 
 
-gint count_events (weed_plant_t *event_list, gboolean all_events) {
+gint count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc) {
   weed_plant_t *event;
+  weed_timecode_t tc;
   gint i=0;
 
   if (event_list==NULL) return 0;
   event=get_first_event(event_list);
 
   while (event!=NULL) {
-    if (all_events||get_event_hint(event)==WEED_EVENT_HINT_FRAME) i++;
+    tc=get_event_timecode(event);
+    if ((all_events||(get_event_hint(event)==WEED_EVENT_HINT_FRAME&&!weed_plant_has_leaf(event,"audio_clips")))&&(end_tc==0||(tc>=start_tc&&tc<end_tc))) i++;
     event=get_next_event(event);
   }
   return i;
@@ -3702,7 +3704,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
   g_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
 
-  if (count_events(mainw->event_list,FALSE)==0) {
+  if (count_events(mainw->event_list,FALSE,0,0)==0) {
     event_list_free(mainw->event_list);
     mainw->event_list=NULL;
   }
@@ -3782,11 +3784,11 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       else render_choice=RENDER_CHOICE_PREVIEW;
       break;
     case RENDER_CHOICE_EVENT_LIST:
-      if (count_events(mainw->event_list,prefs->event_window_show_frame_events)>1000) if (!do_event_list_warning(NULL)) {
+      if (count_events(mainw->event_list,prefs->event_window_show_frame_events,0,0)>1000) if (!do_event_list_warning(NULL)) {
 	render_choice=RENDER_CHOICE_PREVIEW;
 	break;
       }
-      elist_dialog=create_event_list_dialog(mainw->event_list);
+      elist_dialog=create_event_list_dialog(mainw->event_list,0,0);
       gtk_dialog_run(GTK_DIALOG(elist_dialog));
       gtk_widget_destroy(elist_dialog);
       render_choice=RENDER_CHOICE_PREVIEW;
@@ -3965,9 +3967,8 @@ enum {
 
 
 
-GtkWidget *create_event_list_dialog (weed_plant_t *event_list) {
+GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc) {
   // TODO - some event properties should be editable, e.g. parameter values
-  // TODO - show event list for only part of timeline
 
  GtkTreeStore *gtkstore;
  GtkTreeIter iter1,iter2,iter3;
@@ -4003,12 +4004,10 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list) {
 
  gint rows,currow=0;
 
- // TODO - get count including audio frames
- if (prefs->event_window_show_frame_events) rows=count_events(event_list,TRUE);
- else rows=count_events(event_list,TRUE)-count_events(event_list,FALSE);
+ if (prefs->event_window_show_frame_events) rows=count_events(event_list,TRUE,start_tc,end_tc);
+ else rows=count_events(event_list,TRUE,start_tc,end_tc)-count_events(event_list,FALSE,start_tc,end_tc);
 
  event=get_first_event(event_list);
-
 
  if (prefs->gui_monitor!=0) {
    scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
@@ -4030,6 +4029,16 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list) {
  gtk_widget_show (table);
 
  while (event!=NULL) {
+   tc=get_event_timecode (event);
+
+   if (end_tc>0) {
+     if (tc<start_tc) {
+       event=get_next_event(event);
+       continue;
+     }
+     if (tc>=end_tc) break;
+   }
+
    if ((prefs->event_window_show_frame_events||!WEED_EVENT_IS_FRAME(event))||weed_plant_has_leaf(event,"audio_clips")) {
      if (!prefs->event_window_show_frame_events&&WEED_EVENT_IS_FRAME(event)) {
        // TODO - opts should be all frames, only audio frames, no frames
@@ -4169,7 +4178,6 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list) {
      g_free(final);
 
      // timecode
-     tc=get_event_timecode (event);
      tc_secs=tc/U_SECL;
      tc-=tc_secs*U_SECL;
      if (capable->cpu_bits==32) text=g_strdup_printf(("Timecode=%lld.%lld"),tc_secs,tc);

@@ -2779,7 +2779,6 @@ gint save_event_frames(void) {
 
   // here we also update the frame_index for clips of type CLIP_TYPE_FILE
 
-
   int header_fd,i=0;
   gchar *hdrfile=g_strdup_printf("%s/%s/event.frames",prefs->tmpdir,cfile->handle);
   gint perf_start,perf_end;
@@ -2792,7 +2791,7 @@ gint save_event_frames(void) {
   }
   
   perf_start=(gint)(cfile->fps*event_list_get_start_secs (cfile->event_list))+1;
-  perf_end=perf_start+(nevents=count_events (cfile->event_list,FALSE))-1;
+  perf_end=perf_start+(nevents=count_events (cfile->event_list,FALSE,0,0))-1;
   
   event_list_to_block (cfile->event_list,nevents);
 

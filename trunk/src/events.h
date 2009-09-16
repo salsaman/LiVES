@@ -33,7 +33,7 @@ void event_list_add_track (weed_plant_t *event_list, gint layer);
 void event_list_free (weed_plant_t *event_list);
 void event_list_replace_events (weed_plant_t *event_list, weed_plant_t *new_event_list); //replace events in event_list with events in new_event_list
 weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event_list); // called during quantisation 
-gint count_events (weed_plant_t *event_list, gboolean all_events); // if all_events is FALSE we only count FRAME events
+gint count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc); // if all_events is FALSE we only count FRAME events
 
 gboolean event_list_to_block (weed_plant_t *event_list, gint num_events);
 gdouble event_list_get_end_secs (weed_plant_t *event_list);
@@ -123,7 +123,7 @@ gboolean deal_with_render_choice (gboolean add_deinit);
 #define RENDER_CHOICE_MULTITRACK 4
 #define RENDER_CHOICE_EVENT_LIST 5
 
-GtkWidget *create_event_list_dialog (weed_plant_t *event_list);
+GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc);
 render_details *create_render_details (gint type);
 
 ////////////////////////////////////////////////////////////////

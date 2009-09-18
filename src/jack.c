@@ -298,7 +298,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  if ((shrink_factor=(gfloat)in_frames/(gfloat)jackFramesAvailable)<0.f) {
 	    // reverse playback
 	    if ((jackd->seek_pos-=in_bytes)<0) {
-	      if (jackd->loop==JACK_LOOP_NONE) {
+	      if (jackd->loop==AUDIO_LOOP_NONE) {
 		if (*jackd->whentostop==STOP_ON_AUD_END) {
 		  *jackd->cancelled=CANCEL_AUD_END;
 		}
@@ -308,7 +308,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 		mainw->rec_aseek=(gdouble)jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
 	      }
 	      else {
-		if (jackd->loop==JACK_LOOP_PINGPONG) {
+		if (jackd->loop==AUDIO_LOOP_PINGPONG) {
 		  jackd->sample_in_rate=-jackd->sample_in_rate;
 		  shrink_factor=-shrink_factor;
 		  jackd->seek_pos=0;
@@ -329,7 +329,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 		*jackd->cancelled=CANCEL_AUD_END;
 	      }
 	      else {
-		if (jackd->loop==JACK_LOOP_PINGPONG) {
+		if (jackd->loop==AUDIO_LOOP_PINGPONG) {
 		  jackd->sample_in_rate=-jackd->sample_in_rate;
 		  jackd->seek_pos-=in_bytes;
 		}
@@ -356,7 +356,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 		    }
 		    else {
 		      loop_restart=TRUE;
-		      if (jackd->loop==JACK_LOOP_PINGPONG) {
+		      if (jackd->loop==AUDIO_LOOP_PINGPONG) {
 			jackd->sample_in_rate=-jackd->sample_in_rate;
 			lseek(jackd->fd,(jackd->seek_pos-=in_bytes),SEEK_SET);
 			mainw->rec_aclip=jackd->playing_file;
@@ -364,7 +364,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 			mainw->rec_aseek=(gdouble)jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
 		      }
 		      else {
-			if (jackd->loop!=JACK_LOOP_NONE) {
+			if (jackd->loop!=AUDIO_LOOP_NONE) {
 			  seek=0;
 			  lseek(jackd->fd,(jackd->seek_pos=seek),SEEK_SET);
 			  mainw->rec_aclip=jackd->playing_file;

@@ -1346,6 +1346,34 @@ gboolean switch_aud_to_jack(void) {
 
 
 
+gboolean switch_aud_to_pulse(void) {
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->is_ready) {
+    lives_pulse_init();
+    if (mainw->pulsed==NULL) {
+      pulse_audio_init();
+      //jack_audio_read_init();
+      mainw->pulsed=pulse_get_driver(TRUE);
+      mainw->pulsed->whentostop=&mainw->whentostop;
+      mainw->pulsed->cancelled=&mainw->cancelled;
+      mainw->pulsed->in_use=FALSE;
+      pulse_driver_activate(mainw->pulsed);
+    }
+    gtk_widget_show(mainw->vol_toolitem);
+    gtk_widget_show(mainw->vol_label);
+    gtk_widget_show (mainw->recaudio_submenu);
+  }
+
+  prefs->audio_player=AUD_PLAYER_PULSE;
+  set_pref("audio_player","pulse");
+  return TRUE;
+
+#endif
+  return FALSE;
+}
+
+
+
 void switch_aud_to_sox(void) {
   prefs->audio_player=AUD_PLAYER_SOX;
   get_pref_default("sox_command",prefs->audio_play_command,256);

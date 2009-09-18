@@ -3498,8 +3498,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
 	// mutex unlock
 	msg=g_strdup_printf (_ ("%d clips were recovered from set (%s).\n"),clipnum,mainw->set_name);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
 	recover_layout_map(clipnum);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 
 #ifdef ENABLE_OSC
 	lives_osc_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED,mainw->set_name);
@@ -5319,10 +5319,10 @@ on_loop_cont_activate                (GtkMenuItem     *menuitem,
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK) {
     if (mainw->jackd!=NULL&&(mainw->loop_cont||mainw->whentostop==NEVER_STOP)) {
-      if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop=JACK_LOOP_PINGPONG;
-      else mainw->jackd->loop=JACK_LOOP_FORWARD;
+      if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+      else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
     }
-    else if (mainw->jackd!=NULL) mainw->jackd->loop=JACK_LOOP_NONE;
+    else if (mainw->jackd!=NULL) mainw->jackd->loop=AUDIO_LOOP_NONE;
   }
 #endif
 }
@@ -5334,9 +5334,9 @@ on_ping_pong_activate                (GtkMenuItem     *menuitem,
 {
   mainw->ping_pong=!mainw->ping_pong;
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->loop!=JACK_LOOP_NONE) {
-    if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop=JACK_LOOP_PINGPONG;
-    else mainw->jackd->loop=JACK_LOOP_FORWARD;
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->loop!=AUDIO_LOOP_NONE) {
+    if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+    else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
   }
 #endif
 }
@@ -6767,14 +6767,25 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 
   mainw->period=U_SEC/cfile->pb_fps;
 
+  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file) {
-    mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps;
-    mainw->rec_aclip=mainw->current_file;
-    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
-  }
+    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file) {
+      mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps;
+      mainw->rec_aclip=mainw->current_file;
+      mainw->rec_avel=cfile->pb_fps/cfile->fps;
+      mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+    }
 #endif
+
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file) {
+      mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps;
+      mainw->rec_aclip=mainw->current_file;
+      mainw->rec_avel=cfile->pb_fps/cfile->fps;
+      mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+    }
+#endif
+  }
 
   if (cfile->play_paused) {
     cfile->freeze_fps=new_fps;

@@ -413,6 +413,7 @@ typedef struct {
   gboolean has_cdda2wav;
   gboolean has_midistartstop;
   gboolean has_jackd;
+  gboolean has_pulse_audio;
   gboolean has_xwininfo;
 
   // home directory - default location for config file
@@ -696,6 +697,7 @@ void switch_to_int_player(void);
 void switch_to_mplayer(void);
 void switch_aud_to_sox(void);
 gboolean switch_aud_to_jack(void);
+gboolean switch_aud_to_pulse(void);
 void switch_aud_to_mplayer(void);
 void prepare_to_play_foreign(void);
 gboolean after_foreign_play(void);

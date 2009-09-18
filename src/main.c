@@ -287,6 +287,8 @@ static gboolean pre_init(void) {
     prefs->audio_player=AUD_PLAYER_MPLAYER;
   if (!strcmp(buff,"jack"))
     prefs->audio_player=AUD_PLAYER_JACK;
+  if (!strcmp(buff,"pulse"))
+    prefs->audio_player=AUD_PLAYER_PULSE;
   
 #ifdef ENABLE_JACK
   if (prefs->firsttime&&capable->has_jackd) {
@@ -294,8 +296,6 @@ static gboolean pre_init(void) {
     set_pref("audio_player","jack");
   }
 #endif
-
-  //prefs->audio_player=AUD_PLAYER_PULSE;
 
   prefs->gui_monitor=0;
   prefs->play_monitor=0;
@@ -987,8 +987,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
       load_default_keymap();
 
-#ifdef ENABLE_JACK
       prefs->audio_opts=get_int_pref("audio_opts");
+#ifdef ENABLE_JACK
       g_snprintf(prefs->jack_aserver,256,"%s/.jackdrc",capable->home_dir);
       g_snprintf(prefs->jack_tserver,256,"%s/.jackdrc",capable->home_dir);
 
@@ -1062,6 +1062,10 @@ static void lives_init(_ign_opts *ign_opts) {
 	  pulse_audio_init();
 	  // pulse_audio_read_init();
 	  mainw->pulsed=pulse_get_driver(TRUE);
+	  
+	  mainw->pulsed->whentostop=&mainw->whentostop;
+	  mainw->pulsed->cancelled=&mainw->cancelled;
+	  mainw->pulsed->in_use=FALSE;
 	}
 #endif
 
@@ -1104,6 +1108,8 @@ void do_start_messages(void) {
   else d_print(_ ("cdda2wav...NOT DETECTED..."));
   if (capable->has_jackd) d_print(_ ("jackd...detected..."));
   else d_print(_ ("jackd...NOT DETECTED..."));
+  if (capable->has_pulse_audio) d_print(_ ("pulse audio...detected..."));
+  else d_print(_ ("pulse audio...NOT DETECTED..."));
   if (capable->has_python) d_print(_ ("python...detected..."));
   else d_print(_ ("python...NOT DETECTED..."));
   if (capable->has_dvgrab) d_print(_ ("dvgrab...detected..."));
@@ -1280,6 +1286,7 @@ capability *get_capabilities (void) {
   capable->has_dvgrab=FALSE;
   capable->has_cdda2wav=FALSE;
   capable->has_jackd=FALSE;
+  capable->has_pulse_audio=FALSE;
   capable->has_xwininfo=FALSE;
   capable->has_midistartstop=FALSE;
   capable->has_encoder_plugins=FALSE;
@@ -1393,6 +1400,9 @@ capability *get_capabilities (void) {
   get_location("jackd",string,256);
   if (strlen(string)) capable->has_jackd=TRUE;
 
+  get_location("pulseaudio",string,256);
+  if (strlen(string)) capable->has_pulse_audio=TRUE;
+
   get_location("python",string,256);
   if (strlen(string)) capable->has_python=TRUE;
 
@@ -1436,11 +1446,14 @@ void print_opthelp(void) {
   g_printerr("%s",_("-nooscstart      : do not start OSC listener\n"));
 #endif
   g_printerr("%s",_("-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"));
+#ifdef HAVE_PULSE_AUDIO
+  g_printerr("%s",_(", pulse"));  // translators - pulse audio
+#endif
 #ifdef ENABLE_JACK
   g_printerr("%s",_(", sox or jack\n"));
   g_printerr("%s",_("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client, 2 = jack transport master, 4 = start jack transport server, 8 = pause audio when video paused, 16 = start jack audio server] \n"));
 #else
-  g_printerr("%s",_("or sox\n"));
+  g_printerr("%s",_(" or sox\n"));
 #endif
   g_printerr("%s",_("-devicemap <mapname>          : autoload devicemap\n"));
 
@@ -1760,6 +1773,12 @@ int main (int argc, char *argv[]) {
 	  if (!strcmp(buff,"jack")) {
 #ifdef ENABLE_JACK
 	    switch_aud_to_jack();
+	    apl_valid=TRUE;
+#endif
+	  }
+	  if (!strcmp(buff,"pulse")) {
+#ifdef HAVE_PULSE_AUDIO
+	    switch_aud_to_pulse();
 	    apl_valid=TRUE;
 #endif
 	  }
@@ -3834,8 +3853,8 @@ void do_quick_switch (gint new_file) {
 	if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd->reverse_endian=TRUE;
 	else mainw->jackd->reverse_endian=FALSE;
 
-        if (mainw->ping_pong) mainw->jackd->loop=JACK_LOOP_PINGPONG;
-        else mainw->jackd->loop=JACK_LOOP_FORWARD;
+        if (mainw->ping_pong) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+        else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
 
 	// tell jack server to open audio file and start playing it
 

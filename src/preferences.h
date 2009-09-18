@@ -26,6 +26,7 @@ typedef struct {
 #define AUD_PLAYER_SOX 1
 #define AUD_PLAYER_MPLAYER 2
 #define AUD_PLAYER_JACK 3
+#define AUD_PLAYER_PULSE 4
 
   // frame quantisation type
   gshort q_type;

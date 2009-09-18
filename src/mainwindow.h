@@ -14,6 +14,10 @@
 #include <alsa/asoundlib.h>
 #endif
 
+#ifdef HAVE_PULSE_AUDIO
+#include "pulse.h"
+#endif
+
 // hardware related prefs
 
 // fraction of a second quantisation for event timing; these two must match, and must be multiples of 10>=1000000 !
@@ -770,6 +774,10 @@ typedef struct {
   jack_driver_t *jackd_read; // jack audio recorder device
 #endif
 
+#ifdef HAVE_PULSE_AUDIO
+  pulse_driver_t *pulsed; // pulse audio playback device
+  pulse_driver_t *pulsed_read; // pulse audio recorder device
+#endif
 
   // layouts
   GtkTextBuffer *layout_textbuffer; // stores layout errors

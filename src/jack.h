@@ -9,6 +9,9 @@
 
 #ifdef ENABLE_JACK
 
+
+
+
 /////////////////////////////////////////////////////////////////
 // Transport
 #include <jack/jack.h>
@@ -27,6 +30,7 @@ void jack_pb_stop (void); /* pause playback transport master */
 ////////////////////////////////////////////////////////////////////////////
 // Audio
 
+#include "audio.h"
 
 #define JACK_MAX_OUTPUT_PORTS 10
 #define JACK_MAX_INPUT_PORTS 10
@@ -41,17 +45,6 @@ typedef struct {
 typedef jack_nframes_t nframes_t;
 
 
-#define JACK_CMD_PROCESSED 0
-#define JACK_CMD_FILE_OPEN 1
-#define JACK_CMD_FILE_CLOSE 2
-#define JACK_CMD_FILE_SEEK 3
-
-/* message passing structure */
-typedef struct _jack_message_t {
-  gint command;
-  gchar *data;
-  struct _jack_message_t *next;
-} jack_message_t;
 
 // let's hope these are well above the standard jack transport states...
 #define JackTClosed 1024
@@ -97,7 +90,7 @@ typedef struct {
   gboolean          in_use;                        /* true if this device is currently in use */
   gboolean mute;
 
-  volatile jack_message_t   *msgq;          /* linked list of messages we are sending to the callback process */
+  volatile aserver_message_t   *msgq;          /* linked list of messages we are sending to the callback process */
 
   int fd;                  /* if >0 we are playing from a file */
   gboolean is_opening; // TRUE if file is opening (audiodump.pcm)
@@ -128,25 +121,7 @@ typedef struct {
 
   gint playing_file;
 
-  /* next are not used yet */
-#ifdef JACK_BUFF
-  guchar *in_buf1;
-  guchar *in_buf2;
-
-  off_t in_buf1_start; // input buffer 1 start offset in file
-  off_t in_buf2_start; // input buffer 2 start offset in file
-
-  gulong in_buf1_size; // total size of buffer 1
-  gulong in_buf2_size; // total size of buffer 2
-
-  gulong in_buf1_used; // used bytes in buffer 1
-  gulong in_buf2_used; // used bytes in buffer 2
-
-  gint current_buffer; // 1 or 2 
-#endif
-
   volatile float jack_pulse[1024];
-
 
   lives_audio_buf_t **abufs;
   volatile gint read_abuf;
@@ -165,22 +140,22 @@ jack_driver_t *jack_get_driver(gint dev_idx, gboolean is_output); // get driver
 int jack_audio_init(void); // init jack for host output
 int jack_audio_read_init(void); // init jack for host input
 
-int jack_open_device(jack_driver_t *jackd); // open device for host output
-int jack_open_device_read(jack_driver_t *jackd); // open device for host input
+int jack_open_device(jack_driver_t *); // open device for host output
+int jack_open_device_read(jack_driver_t *); // open device for host input
 
-int jack_driver_activate (jack_driver_t *jackd); // activate for host playback
-int jack_read_driver_activate (jack_driver_t *jackd); // activate for host recording
+int jack_driver_activate (jack_driver_t *); // activate for host playback
+int jack_read_driver_activate (jack_driver_t *); // activate for host recording
 
-void jack_close_device(jack_driver_t* jackd, gboolean close_client);
+void jack_close_device(jack_driver_t*, gboolean close_client);
 
 
 // utils
-volatile jack_message_t *jack_get_msgq(jack_driver_t *jackd); // pull last msg from msgq, or return NULL
-gint64 lives_jack_get_time(jack_driver_t *jackd); // get time from jack, in 10^-8 seconds
-void audio_seek_frame (jack_driver_t *jackd, gint frame); // seek to (video) frame
-long audio_seek_bytes (jack_driver_t *jackd, long bytes); // seek to byte position
+volatile aserver_message_t *jack_get_msgq(jack_driver_t *); // pull last msg from msgq, or return NULL
+gint64 lives_jack_get_time(jack_driver_t *); // get time from jack, in 10^-8 seconds
+void jack_audio_seek_frame (jack_driver_t *, gint frame); // seek to (video) frame
+long jack_audio_seek_bytes (jack_driver_t *, long bytes); // seek to byte position
 
-void get_rec_avals(jack_driver_t *jackd);
+void jack_get_rec_avals(jack_driver_t *);
 
 #endif
 

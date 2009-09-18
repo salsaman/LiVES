@@ -352,10 +352,10 @@ gboolean process_one (gboolean visible) {
 #ifdef ENABLE_JACK
 	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!mainw->is_rendering) {
 	  if (mainw->jackd->sample_in_rate<0) {
-	    audio_seek_frame(mainw->jackd,cfile->end);
+	    jack_audio_seek_frame(mainw->jackd,cfile->end);
 	  }
 	  else {
-	    audio_seek_frame(mainw->jackd,cfile->frameno);
+	    jack_audio_seek_frame(mainw->jackd,cfile->frameno);
 	  }
 	}
 #endif
@@ -392,7 +392,7 @@ gboolean process_one (gboolean visible) {
 		audio_frameno=cfile->frameno;
 	      }
 	      else audio_frameno=first_frame;
-	      audio_seek_frame(mainw->jackd,audio_frameno);
+	      jack_audio_seek_frame(mainw->jackd,audio_frameno);
 	    }
 #endif
 	  }
@@ -596,7 +596,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   
 #ifdef ENABLE_JACK
   if (!mainw->foreign&&!visible) {
-    if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) audio_seek_frame(mainw->jackd,mainw->play_start);
+    if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
   }
 #endif
   // mainw->origticks is our base for quantising (and is constant for each playback session)

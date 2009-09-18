@@ -4,6 +4,7 @@ Increase gtk+ level to gtk+ 2.14 or higher.
 Improve the help menu.
 Make disk cleanup more vigorous.
 Show list of sets in File -> Reload clip set.
+Show event list for selected time only.
 Undoing load new audio should restore original audio. *
 Fix build error for BSD. *
 

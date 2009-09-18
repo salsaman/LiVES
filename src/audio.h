@@ -31,6 +31,26 @@
 #define XSAMPLES 128000
 
 
+/////////////////////////
+// asynch msging
+
+
+#define ASERVER_CMD_PROCESSED 0
+#define ASERVER_CMD_FILE_OPEN 1
+#define ASERVER_CMD_FILE_CLOSE 2
+#define ASERVER_CMD_FILE_SEEK 3
+
+/* message passing structure */
+typedef struct _aserver_message_t {
+  gint command;
+  gchar *data;
+  struct _aserver_message_t *next;
+} aserver_message_t;
+
+
+////////////////////////////
+
+
 
 
 

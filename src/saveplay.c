@@ -1086,7 +1086,7 @@ void play_file (void) {
   gshort audio_player=prefs->audio_player;
 
 #ifdef ENABLE_JACK
-  jack_message_t jack_message;
+  aserver_message_t jack_message;
   if (!mainw->preview&&!mainw->foreign) jack_pb_start();
 #endif
 
@@ -1398,11 +1398,11 @@ void play_file (void) {
 	  while (jack_get_msgq(mainw->jackd)!=NULL);
 	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&(mainw->event_list==NULL||(mainw->preview&&mainw->is_processing))) {
 	    // tell jack server to open audio file and start playing it
-	    jack_message.command=JACK_CMD_FILE_OPEN;
+	    jack_message.command=ASERVER_CMD_FILE_OPEN;
 	    jack_message.data=g_strdup_printf("%d",mainw->current_file);
 	    jack_message.next=NULL;
 	    mainw->jackd->msgq=&jack_message;
-	    audio_seek_frame(mainw->jackd,mainw->play_start);
+	    jack_audio_seek_frame(mainw->jackd,mainw->play_start);
 	    mainw->jackd->in_use=TRUE;
 	    mainw->rec_aclip=mainw->current_file;
 	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
@@ -1562,7 +1562,7 @@ void play_file (void) {
     // tell jack server to close audio file
     if (mainw->jackd->fd>0) {
       while (jack_get_msgq(mainw->jackd)!=NULL);
-      jack_message.command=JACK_CMD_FILE_CLOSE;
+      jack_message.command=ASERVER_CMD_FILE_CLOSE;
       jack_message.data=NULL;
       jack_message.next=NULL;
       mainw->jackd->msgq=&jack_message;

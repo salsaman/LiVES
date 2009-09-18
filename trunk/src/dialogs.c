@@ -278,10 +278,11 @@ gboolean process_one (gboolean visible) {
   gint first_frame,last_frame;
   gint oframeno=0;
 
+  gboolean normal_time;
+
 #ifdef ENABLE_JACK
   gdouble audio_stretch;
   guint64 audio_ticks=0.;
-  gboolean normal_time;
 #endif
 
   if (!visible) {
@@ -290,18 +291,29 @@ gboolean process_one (gboolean visible) {
       do_quick_switch(mainw->new_clip);
       mainw->new_clip=-1;
     }
+
+    normal_time=TRUE;
     
 #ifdef ENABLE_JACK
-    normal_time=TRUE;
     if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&!mainw->is_rendering&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
       mainw->currticks=lives_jack_get_time(mainw->jackd);
       if (mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback)) normal_time=TRUE;
       else normal_time=FALSE;
     }
-    if (normal_time) {
 #endif
+
+#ifdef HAVE_PULSE_AUDIO
+    if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&!mainw->is_rendering&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
+      mainw->currticks=lives_pulse_get_time(mainw->pulsed,FALSE);
+      if (mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback)) normal_time=TRUE;
+      else normal_time=FALSE;
+    }
+#endif
+
+    if (normal_time) {
       gettimeofday(&tv, NULL);
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+
 #ifdef ENABLE_JACK
       if ((mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.))&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>mainw->origticks)) {
 	// fps is synched to external source, so we adjust the audio rate to fit
@@ -311,8 +323,22 @@ gboolean process_one (gboolean visible) {
 	  else mainw->jackd->sample_in_rate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
 	}
       }
-    }
 #endif
+
+
+
+#ifdef HAVE_PULSE_AUDIO
+      if ((mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.))&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>mainw->origticks)) {
+	// fps is synched to external source, so we adjust the audio rate to fit
+	audio_ticks=mainw->currticks;
+	if ((audio_stretch=(mainw->currticks-mainw->origticks)/(audio_ticks-mainw->origticks))<2.) {
+	  if (!cfile->play_paused) mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
+	  else mainw->pulsed->in_arate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
+	}
+      }
+#endif
+
+    }
     if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL&&(tc=mainw->currticks-mainw->origticks)>=event_start)) {
       cfile->next_event=process_events (cfile->next_event,mainw->currticks-mainw->origticks);
 

@@ -1090,6 +1090,10 @@ void play_file (void) {
   if (!mainw->preview&&!mainw->foreign) jack_pb_start();
 #endif
 
+#ifdef HAVE_PULSE_AUDIO
+  aserver_message_t pulse_message;
+#endif
+
   weed_plant_t *pb_start_event=NULL;
   gboolean exact_preview=FALSE;
   gboolean has_audio_buffers=FALSE;
@@ -1379,10 +1383,10 @@ void play_file (void) {
 	mainw->jackd->is_paused=FALSE;
 	mainw->jackd->mute=mainw->mute;
 	if (mainw->loop_cont&&!mainw->preview) {
-	  if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) mainw->jackd->loop=JACK_LOOP_PINGPONG;
-	  else mainw->jackd->loop=JACK_LOOP_FORWARD;
+	  if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+	  else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
 	}
-	else mainw->jackd->loop=JACK_LOOP_NONE;
+	else mainw->jackd->loop=AUDIO_LOOP_NONE;
 	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&(cfile->laudio_time>0.||cfile->opening||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&g_file_test((tmpfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle)),G_FILE_TEST_EXISTS)))) {
 	  if (tmpfilename!=NULL) g_free(tmpfilename);
 	  mainw->jackd->num_input_channels=cfile->achans;
@@ -1404,6 +1408,45 @@ void play_file (void) {
 	    mainw->jackd->msgq=&jack_message;
 	    jack_audio_seek_frame(mainw->jackd,mainw->play_start);
 	    mainw->jackd->in_use=TRUE;
+	    mainw->rec_aclip=mainw->current_file;
+	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
+	    mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+	  }
+	}
+      }
+#endif
+    }
+    else if (audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+      if (mainw->pulsed!=NULL) {
+	mainw->pulsed->is_paused=FALSE;
+	mainw->pulsed->mute=mainw->mute;
+	if (mainw->loop_cont&&!mainw->preview) {
+	  if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
+	  else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
+	}
+	else mainw->pulsed->loop=AUDIO_LOOP_NONE;
+	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&(cfile->laudio_time>0.||cfile->opening||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&g_file_test((tmpfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle)),G_FILE_TEST_EXISTS)))) {
+	  if (tmpfilename!=NULL) g_free(tmpfilename);
+	  mainw->pulsed->in_achans=cfile->achans;
+	  mainw->pulsed->in_asamps=cfile->asampsize;
+	  mainw->pulsed->in_arate=cfile->arate;
+	  mainw->pulsed->usigned=!asigned;
+	  mainw->pulsed->seek_end=cfile->afilesize;
+	  if (cfile->opening) mainw->pulsed->is_opening=TRUE;
+	  else mainw->pulsed->is_opening=FALSE;
+	  
+	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed->reverse_endian=TRUE;
+	  else mainw->pulsed->reverse_endian=FALSE;
+	  while (pulse_get_msgq(mainw->pulsed)!=NULL);
+	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&(mainw->event_list==NULL||(mainw->preview&&mainw->is_processing))) {
+	    // tell pulse server to open audio file and start playing it
+	    pulse_message.command=ASERVER_CMD_FILE_OPEN;
+	    pulse_message.data=g_strdup_printf("%d",mainw->current_file);
+	    pulse_message.next=NULL;
+	    mainw->pulsed->msgq=&pulse_message;
+	    pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+	    mainw->pulsed->in_use=TRUE;
 	    mainw->rec_aclip=mainw->current_file;
 	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	    mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));

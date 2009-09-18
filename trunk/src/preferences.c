@@ -786,8 +786,8 @@ apply_prefs(gboolean skip_warn) {
     prefs->audio_opts=audio_opts;
     set_int_pref("audio_opts",audio_opts);
     if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->loop_cont) {
-      if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop=JACK_LOOP_PINGPONG;
-      else mainw->jackd->loop=JACK_LOOP_FORWARD;
+      if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+      else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
     }
   }
 #endif

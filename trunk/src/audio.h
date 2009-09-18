@@ -50,7 +50,11 @@ typedef struct _aserver_message_t {
 
 ////////////////////////////
 
-
+typedef enum lives_audio_loop {
+  AUDIO_LOOP_NONE,
+  AUDIO_LOOP_FORWARD,
+  AUDIO_LOOP_PINGPONG
+} lives_audio_loop_t;
 
 
 

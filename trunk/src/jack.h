@@ -63,7 +63,7 @@ typedef struct {
 
   gulong    buffer_size;                   /* number of bytes in the buffer allocated for processing data in process_audio() */
 
-  gchar*    sound_buffer;
+  guchar* sound_buffer; // transformed data
 
   gulong    num_calls;                     /* count of process_audio() calls */
   gulong    chunk_size;
@@ -77,11 +77,7 @@ typedef struct {
   gulong    jack_port_flags;               /* flags to be passed to jack when opening the output ports */
 
   audio_buffer_t*    aPlayPtr;                      /* pointer to the current audio file */
-  gint loop;
-
-#define JACK_LOOP_NONE 0
-#define JACK_LOOP_FORWARD 1
-#define JACK_LOOP_PINGPONG 2
+  lives_audio_loop_t loop;
 
   jack_transport_state_t state;
 

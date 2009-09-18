@@ -195,8 +195,11 @@ typedef struct {                // corresponds to one clip in the GUI
   gint arps; // audio sample rate
   guint signed_endian; // bitfield
 
+  #define AFORM_SIGNED 0
+  #define AFORM_LITTLE_ENDIAN 0
+
   #define AFORM_UNSIGNED 1
-  #define AFORM_BIG_ENDIAN 2
+  #define AFORM_BIG_ENDIAN (1<<1)
   #define AFORM_UNKNOWN 65536
 
   gint arate; // audio playback rate

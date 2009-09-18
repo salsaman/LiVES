@@ -11,7 +11,6 @@
 #ifdef ENABLE_JACK
 #include "callbacks.h"
 #include "support.h"
-#include "audio.h"
 
 #define afile mainw->files[jackd->playing_file]
 
@@ -148,7 +147,7 @@ static float set_pulse(float *buf, size_t bufsz, int step) {
 }
 
 
-void get_rec_avals(jack_driver_t *jackd) {
+void jack_get_rec_avals(jack_driver_t *jackd) {
   mainw->rec_aseek=jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
   mainw->rec_aclip=jackd->playing_file;
   mainw->rec_avel=afile->pb_fps/afile->fps;
@@ -161,7 +160,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   jack_driver_t* jackd = (jack_driver_t*)arg;
   jack_position_t pos;
   register int i;
-  jack_message_t *msg;
+  aserver_message_t *msg;
   long seek,xseek;
   int new_file;
   gchar *filename;
@@ -174,10 +173,10 @@ static int audio_process (nframes_t nframes, void *arg) {
   if (!mainw->is_ready||jackd==NULL||(mainw->playing_file==-1&&jackd->is_silent&&jackd->msgq==NULL)) return 0;
 
   /* process one message */
-  if((msg=(jack_message_t *)jackd->msgq)!=NULL) {
+  if((msg=(aserver_message_t *)jackd->msgq)!=NULL) {
 
     switch (msg->command) {
-    case JACK_CMD_FILE_OPEN:
+    case ASERVER_CMD_FILE_OPEN:
       new_file=atoi(msg->data);
       if (jackd->playing_file!=new_file) {
 	if (jackd->is_opening) filename=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,mainw->files[new_file]->handle);
@@ -197,7 +196,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	g_free(filename);
       }
       break;
-    case JACK_CMD_FILE_CLOSE:
+    case ASERVER_CMD_FILE_CLOSE:
       if (jackd->fd>0) close(jackd->fd);
       jackd->fd=0;
       if (jackd->aPlayPtr->data!=NULL) g_free(jackd->aPlayPtr->data);
@@ -205,7 +204,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       jackd->aPlayPtr->size=0;
       jackd->playing_file=-1;
       break;
-    case JACK_CMD_FILE_SEEK:
+    case ASERVER_CMD_FILE_SEEK:
       if (jackd->fd<1) break;
       xseek=seek=atol(msg->data);
       if (seek<0.) xseek=0.;
@@ -214,14 +213,14 @@ static int audio_process (nframes_t nframes, void *arg) {
       }
       jackd->seek_pos=seek;
       gettimeofday(&tv, NULL);
-      jackd->audio_ticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SECL/1000000;
+      jackd->audio_ticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
       jackd->frames_written=0;
       break;
     default:
       msg->data=NULL;
     }
     if (msg->data!=NULL) g_free(msg->data);
-    msg->command=JACK_CMD_PROCESSED;
+    msg->command=ASERVER_CMD_PROCESSED;
     jackd->msgq = NULL;    /* take this message off of the queue */
 
     return 0;
@@ -264,7 +263,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       if (!jackd->is_paused) jackd->frames_written+=nframes;
       if (jackd->seek_pos<0.&&jackd->playing_file>-1&&afile!=NULL) {
 	jackd->seek_pos+=nframes*afile->achans*afile->asampsize/8;
-	if (jackd->seek_pos>=0) audio_seek_bytes(jackd,jackd->seek_pos);
+	if (jackd->seek_pos>=0) jack_audio_seek_bytes(jackd,jackd->seek_pos);
       }
       return 0;
     }
@@ -403,7 +402,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  if (!jackd->is_paused) jackd->frames_written+=nframes;
 	  if (jackd->seek_pos<0.&&jackd->playing_file>-1&&afile!=NULL) {
 	    jackd->seek_pos+=nframes*afile->achans*afile->asampsize/8;
-	    if (jackd->seek_pos>=0) audio_seek_bytes(jackd,jackd->seek_pos);
+	    if (jackd->seek_pos>=0) jack_audio_seek_bytes(jackd,jackd->seek_pos);
 	  }
 	  return 0;
 	}
@@ -594,7 +593,7 @@ void jack_shutdown(void* arg) {
   mainw->jackd=jack_get_driver(0,TRUE);
   mainw->jackd->msgq=NULL;
 
-  if (mainw->jackd->playing_file!=-1&&afile!=NULL) audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos); // at least re-seek to the right place
+  if (mainw->jackd->playing_file!=-1&&afile!=NULL) jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos); // at least re-seek to the right place
 }
 
 /* Return the difference between two timeval structures in terms of milliseconds */
@@ -1082,6 +1081,7 @@ static void jack_reset_dev(gint dev_idx, gboolean is_output) {
 
 
 int jack_audio_init(void) {
+  // initialise variables
   int i,j;
   jack_driver_t *jackd;
 
@@ -1145,7 +1145,7 @@ int jack_audio_read_init(void) {
 }
 
 
-volatile jack_message_t *jack_get_msgq(jack_driver_t *jackd) {
+volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
   // force update - "volatile" doesn't seem to work...
   gchar *tmp=g_strdup_printf("%p %d",jackd->msgq,jackd->jackd_died);
   g_free(tmp);
@@ -1154,48 +1154,49 @@ volatile jack_message_t *jack_get_msgq(jack_driver_t *jackd) {
 }
 
 gint64 lives_jack_get_time(jack_driver_t *jackd) {
-  volatile jack_message_t *msg=jackd->msgq;
-  if (msg!=NULL&&msg->command==JACK_CMD_FILE_SEEK) while (jack_get_msgq(jackd)!=NULL); // wait for seek
+  volatile aserver_message_t *msg=jackd->msgq;
+  if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (jack_get_msgq(jackd)!=NULL); // wait for seek
   if (jackd->is_output) return jackd->audio_ticks+(gint64)(((gdouble)jackd->frames_written/(gdouble)jackd->sample_out_rate)*U_SEC);
   return jackd->audio_ticks+(gint64)(((gdouble)jackd->frames_written/(gdouble)jackd->sample_in_rate)*U_SEC);
 }
 
 
-static jack_message_t jack_message;
+static aserver_message_t jack_message;
 
-void audio_seek_frame (jack_driver_t *jackd, gint frame) {
+void jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
   // seek to frame "frame" in current file
-  volatile jack_message_t *jmsg;
+  volatile aserver_message_t *jmsg;
   if (frame<1) frame=1;
   long seekstart;
   do {
     jmsg=jack_get_msgq(jackd);
-  } while ((jmsg!=NULL)&&jmsg->command!=JACK_CMD_FILE_SEEK);
+  } while ((jmsg!=NULL)&&jmsg->command!=ASERVER_CMD_FILE_SEEK);
   if (jackd->playing_file==-1) return;
   if (frame>afile->frames) frame=afile->frames;
   seekstart=(long)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
-  afile->aseek_pos=audio_seek_bytes(jackd,seekstart);
+  afile->aseek_pos=jack_audio_seek_bytes(jackd,seekstart);
 }
 
 
-long audio_seek_bytes (jack_driver_t *jackd, long bytes) {
+long jack_audio_seek_bytes (jack_driver_t *jackd, long bytes) {
   // seek to relative "secs" in current file
-  volatile jack_message_t *jmsg;
+  volatile aserver_message_t *jmsg;
   long seekstart;
   do {
     jmsg=jack_get_msgq(jackd);
-  } while ((jmsg!=NULL)&&jmsg->command!=JACK_CMD_FILE_SEEK);
+  } while ((jmsg!=NULL)&&jmsg->command!=ASERVER_CMD_FILE_SEEK);
   if (jackd->playing_file==-1) return 0;
   seekstart=((long)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8);
 
   if (seekstart<0) seekstart=0;
   if (seekstart>afile->afilesize) seekstart=afile->afilesize;
-  jack_message.command=JACK_CMD_FILE_SEEK;
+  jack_message.command=ASERVER_CMD_FILE_SEEK;
   jack_message.next=NULL;
   jack_message.data=g_strdup_printf("%ld",seekstart);
   jackd->msgq=&jack_message;
   return seekstart;
 }
 
+#undef afile
 
 #endif

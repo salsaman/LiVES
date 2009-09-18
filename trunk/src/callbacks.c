@@ -26,6 +26,7 @@
 #include "audio.h"
 #include "cvirtual.h"
 
+
 static gchar file_name[32768];
 
 
@@ -68,6 +69,10 @@ lives_exit (void) {
     }
     
     if (!mainw->only_close) {
+#ifdef HAVE_PULSE_AUDIO
+      if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read,FALSE);
+      if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed,TRUE);
+#endif
 #ifdef ENABLE_JACK
       lives_jack_end();
       if (mainw->jackd!=NULL) {
@@ -2637,7 +2642,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
       mainw->record_starting=TRUE;
 #ifdef ENABLE_JACK
       if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->rec_opts&REC_AUDIO)&&mainw->jackd!=NULL) {
-	get_rec_avals(mainw->jackd);
+	jack_get_rec_avals(mainw->jackd);
       }
 #endif
       return;
@@ -5424,7 +5429,7 @@ on_mute_activate                (GtkMenuItem     *menuitem,
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->playing_file>-1&&mainw->jackd!=NULL) {
     mainw->jackd->mute=mainw->mute;
     if (mainw->jackd->playing_file==mainw->current_file&&cfile->achans>0&&!mainw->is_rendering) {
-      audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos);
+      jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos);
       mainw->jackd->in_use=TRUE;
     }
   }
@@ -6420,6 +6425,11 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
       jack_driver_activate(mainw->jackd);
     }
 #endif
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed!=NULL) {
+      pulse_driver_activate(mainw->pulsed);
+    }
+#endif
   }
   return FALSE;
 }
@@ -7154,7 +7164,7 @@ on_back_pressed (GtkButton *button,
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file&&cfile->achans>0) {
-    audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos-(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
+    jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos-(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -7175,7 +7185,7 @@ on_forward_pressed (GtkButton *button,
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file&&cfile->achans>0) {
-    audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos+(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
+    jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos+(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);

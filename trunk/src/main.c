@@ -295,6 +295,8 @@ static gboolean pre_init(void) {
   }
 #endif
 
+  //prefs->audio_player=AUD_PLAYER_PULSE;
+
   prefs->gui_monitor=0;
   prefs->play_monitor=0;
 
@@ -1008,19 +1010,21 @@ static void lives_init(_ign_opts *ign_opts) {
 	  g_free(com);
 	}
       }
+#endif
 
-      if (capable->has_jackd&&(capable->has_sox||capable->has_mplayer)) {
+      if (capable->has_jackd&&(capable->has_sox||capable->has_mplayer)) { // TODO
 	if (prefs->firsttime) {
 	  splash_end();
 	  do_audio_choice_dialog();
 	}
 
+#ifdef ENABLE_JACK
 	if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER) {
 	  // start jack transport polling
 	  splash_msg(_("Starting jack audio server..."),.8);
 	  lives_jack_init();
 	}
-	
+
 	if (prefs->audio_player==AUD_PLAYER_JACK) {
 	  jack_audio_init();
 	  jack_audio_read_init();
@@ -1049,6 +1053,18 @@ static void lives_init(_ign_opts *ign_opts) {
 	}
       }
 #endif
+
+
+#ifdef HAVE_PULSE_AUDIO
+	if (prefs->audio_player==AUD_PLAYER_PULSE) {
+	  splash_msg(_("Starting pulse audio server..."),.8);
+	  lives_pulse_init();
+	  pulse_audio_init();
+	  // pulse_audio_read_init();
+	  mainw->pulsed=pulse_get_driver(TRUE);
+	}
+#endif
+
     }
 
     // toolbar buttons
@@ -2025,8 +2041,8 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->fade_aud_in, FALSE);
   gtk_widget_set_sensitive (mainw->fade_aud_out, FALSE);
   gtk_widget_set_sensitive (mainw->ins_silence, FALSE);
-  gtk_widget_set_sensitive (mainw->loop_video, (prefs->audio_player==AUD_PLAYER_JACK));
-  if (prefs->audio_player!=AUD_PLAYER_JACK) gtk_widget_set_sensitive (mainw->mute_audio, FALSE);
+  gtk_widget_set_sensitive (mainw->loop_video, (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE));
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) gtk_widget_set_sensitive (mainw->mute_audio, FALSE);
   gtk_widget_set_sensitive (mainw->load_audio, FALSE);
   gtk_widget_set_sensitive (mainw->save_selection, FALSE);
   gtk_widget_set_sensitive (mainw->close, FALSE);
@@ -2644,7 +2660,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	  frame=mainw->actual_frame;
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->jackd!=NULL&&cfile->achans>0) {
-	    audio_seek_frame(mainw->jackd,frame);
+	    jack_audio_seek_frame(mainw->jackd,frame);
 	    mainw->rec_aclip=mainw->current_file;
 	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	    mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -2696,7 +2712,7 @@ void load_frame_image(gint frame, gint last_frame) {
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&prefs->rec_opts&REC_AUDIO&&mainw->rec_aclip!=-1) {
 	    // get current seek postion
-	    get_rec_avals(mainw->jackd);
+	    jack_get_rec_avals(mainw->jackd);
 	  }
 #endif
 	  mainw->record=TRUE;
@@ -3787,10 +3803,10 @@ void do_quick_switch (gint new_file) {
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering) {
 #ifdef ENABLE_JACK
   if (mainw->jackd!=NULL) {
-      jack_message_t jack_message;
+      aserver_message_t jack_message;
       while (jack_get_msgq(mainw->jackd)!=NULL);
       if (mainw->jackd->fd>0) {
-	  jack_message.command=JACK_CMD_FILE_CLOSE;
+	  jack_message.command=ASERVER_CMD_FILE_CLOSE;
           jack_message.data=NULL;
 	  jack_message.next=NULL;
 	  mainw->jackd->msgq=&jack_message;
@@ -3823,14 +3839,14 @@ void do_quick_switch (gint new_file) {
 
 	// tell jack server to open audio file and start playing it
 
-	jack_message.command=JACK_CMD_FILE_OPEN;
+	jack_message.command=ASERVER_CMD_FILE_OPEN;
 	jack_message.next=NULL;
 	if (mainw->files[new_file]->opening) {
           mainw->jackd->is_opening=TRUE;
         }
         jack_message.data=g_strdup_printf("%d",new_file);
         mainw->jackd->msgq=&jack_message;
-        mainw->files[new_file]->aseek_pos=audio_seek_bytes(mainw->jackd,mainw->files[new_file]->aseek_pos);
+        mainw->files[new_file]->aseek_pos=jack_audio_seek_bytes(mainw->jackd,mainw->files[new_file]->aseek_pos);
         mainw->jackd->in_use=TRUE;
 
      if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {

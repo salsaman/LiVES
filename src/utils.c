@@ -882,12 +882,12 @@ get_play_times(void) {
     if (cfile->achans>0&&cfile->is_loaded) {
       if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(mainw->event_list==NULL||!mainw->preview)) {
 #ifdef ENABLE_JACK
-	if (mainw->jackd!=NULL) {
+	if (mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
 	  offset=allocwidth*((gdouble)mainw->jackd->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8)/cfile->total_time;
 	}
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	if (mainw->pulsed!=NULL) {
+	if (mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) {
 	  offset=allocwidth*((gdouble)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8)/cfile->total_time;
 	}
 #endif

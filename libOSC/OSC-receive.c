@@ -35,15 +35,15 @@ The OpenSound Control WWW page is
   Adapted from OSC-addressability.c (and seriously cleaned up!)
 
 */
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <unistd.h>
-    #include <errno.h>
-    #include <string.h>
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <libOSC/OSC-common.h>
 #include <libOSC/OSC-timetag.h>
 #include <libOSC/OSC-address-space.h>
@@ -54,8 +54,9 @@ The OpenSound Control WWW page is
 #include <libOSC/OSC-drop.h>
 #include <libOSC/OSC-dispatch.h>
 #include <libOSC/NetworkUDP.h>
-#if defined(DEBUG_INTERNAL) || defined(DEBUG) || defined(DEBUG_PACKET_MEM) || defined(DEBUG_QD_MEM) || defined(DEBUG_8BYTE_ALIGN) || defined(SUSPECT_QD_PROB)
-#include <stdio.h>
+
+#ifdef(__sun)
+#include <sys/filio.h>
 #endif
 
 

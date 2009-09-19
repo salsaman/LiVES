@@ -1,6 +1,6 @@
 // cvirtual.h
 // LiVES
-// (c) G. Finch 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2008 - 2009 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -23,4 +23,4 @@ gboolean check_if_non_virtual(file *sfile);
 
 void restore_frame_index_back (gint sfileno);
 
-inline gint count_virtual_frames(int *findex, int size);
+LIVES_INLINE gint count_virtual_frames(int *findex, int size);

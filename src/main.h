@@ -125,6 +125,11 @@ POSSIBILITY OF SUCH DAMAGES.
 #endif
 
 
+#ifndef(__sun)
+#define LIVES_INLINE inline
+#endif
+
+
 // this struct is used only when physically resampling frames on the disk
 // we create an array of these and write them to the disk
 typedef struct {
@@ -655,12 +660,12 @@ void splash_msg(const gchar *msg, gdouble pct);
 void setenv(const char *name, const char *val, int _xx);
 #endif
 
-inline float LEFloat_to_BEFloat(float f);
+LIVES_INLINE float LEFloat_to_BEFloat(float f);
 int lives_10pow(int pow);
 int get_approx_ln(guint val);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
-inline gint myround(gdouble n);
+LIVES_INLINE gint myround(gdouble n);
 void get_dirname(gchar *filename);
 void get_basename(gchar *filename);
 void get_filename(gchar *filename);
@@ -711,10 +716,10 @@ void activate_url_inner(const gchar *link);
 void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data);
 void show_manual_section (const gchar *lang, const gchar *section);
 
-inline gdouble calc_time_from_frame (gint clip, gint frame);
-inline gint calc_frame_from_time (gint filenum, gdouble time);  // nearest frame start
-inline gint calc_frame_from_time2 (gint filenum, gdouble time); // nearest frame end
-inline gint calc_frame_from_time3 (gint filenum, gdouble time); // nearest frame mid
+LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame);
+LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time);  // nearest frame start
+LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time); // nearest frame end
+LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time); // nearest frame mid
 
 gboolean check_for_ratio_fps (gdouble fps);
 gdouble get_ratio_fps(gchar *string);

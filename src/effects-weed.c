@@ -378,6 +378,9 @@ void update_host_info (weed_plant_t *inst) {
   case AUD_PLAYER_JACK:
     weed_set_string_value(hinfo,"host_audio_player","jack");
     break;
+  case AUD_PLAYER_PULSE:
+    weed_set_string_value(hinfo,"host_audio_player","pulseaudio");
+    break;
   }
 }
 

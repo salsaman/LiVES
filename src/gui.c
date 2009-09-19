@@ -1017,7 +1017,7 @@ create_LiVES (void)
   gtk_widget_show (mainw->load_cdtrack);
 
   mainw->recaudio_submenu = gtk_menu_item_new_with_mnemonic (_("Record E_xternal Audio..."));
-  if (prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd) gtk_widget_show (mainw->recaudio_submenu);
+  if ((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio)) gtk_widget_show (mainw->recaudio_submenu);
   gtk_container_add (GTK_CONTAINER (audio_menu), mainw->recaudio_submenu);
 
   submenu_menu=gtk_menu_new();
@@ -1633,7 +1633,7 @@ create_LiVES (void)
   mainw->vol_toolitem=GTK_WIDGET(gtk_tool_item_new());
   gtk_tool_item_set_homogeneous(GTK_TOOL_ITEM(mainw->vol_toolitem),FALSE);
   gtk_tool_item_set_expand(GTK_TOOL_ITEM(mainw->vol_toolitem),TRUE);
-  if (prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd) gtk_widget_show(mainw->vol_toolitem);
+  if ((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio)) gtk_widget_show(mainw->vol_toolitem);
 
   gtk_container_add(GTK_CONTAINER(mainw->vol_toolitem),mainw->volume_scale);
   if (capable->smog_version_correct) {
@@ -2771,7 +2771,7 @@ fade_background(void) {
       gtk_widget_remove_accelerator (mainw->sepwin, mainw->accel_group, GDK_s, 0);
       gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_s, 0, 0, (sepwin_closure=g_cclosure_new (G_CALLBACK (sepwin_callback),NULL,NULL)));
 
-      if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK) {
+      if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) {
 	gtk_widget_remove_accelerator (mainw->loop_video, mainw->accel_group, GDK_l, 0);
 	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_l, 0, 0, (loop_closure=g_cclosure_new (G_CALLBACK (loop_callback),NULL,NULL)));
 	
@@ -2895,7 +2895,7 @@ unfade_background(void) {
 				GDK_g, 0,
 				GTK_ACCEL_VISIBLE);
 
-    if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK) {
+    if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) {
       gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), loop_closure);
       gtk_widget_add_accelerator (mainw->loop_video, "activate", mainw->accel_group,
 				  GDK_l, 0,

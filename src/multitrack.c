@@ -6831,7 +6831,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     multi->opts.pertrack_audio=FALSE;
   }
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK) {
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
     gtk_widget_hide(mainw->vol_toolitem);
     gtk_widget_hide(mainw->vol_label);
   }

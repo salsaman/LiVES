@@ -772,11 +772,19 @@ typedef struct {
 #ifdef ENABLE_JACK
   jack_driver_t *jackd; // jack audio playback device
   jack_driver_t *jackd_read; // jack audio recorder device
+#define RT_AUDIO
+#else
+  void *jackd;  // dummy
+  void *jackd_read; // dummy
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
   pulse_driver_t *pulsed; // pulse audio playback device
   pulse_driver_t *pulsed_read; // pulse audio recorder device
+#define RT_AUDIO
+#else
+  void *pulsed;
+  void *pulsed_read;
 #endif
 
   // layouts

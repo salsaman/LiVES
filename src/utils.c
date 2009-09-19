@@ -781,9 +781,9 @@ get_play_times(void) {
   }
   if (cfile->achans>0) {
     if (mainw->playing_file>-1) {
-      offset_left=((mainw->playing_sel&&prefs->audio_player==AUD_PLAYER_JACK)?cfile->start-1.:mainw->audio_start-1.)/cfile->fps/cfile->total_time*allocwidth;
+      offset_left=((mainw->playing_sel&&(prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?cfile->start-1.:mainw->audio_start-1.)/cfile->fps/cfile->total_time*allocwidth;
       if (mainw->audio_end) {
-	offset_right=((prefs->audio_player==AUD_PLAYER_JACK)?cfile->end:mainw->audio_end)/cfile->fps/cfile->total_time*allocwidth;
+	offset_right=(((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?cfile->end:mainw->audio_end)/cfile->fps/cfile->total_time*allocwidth;
       }
       else {
 	offset_right=allocwidth*cfile->laudio_time/cfile->total_time;
@@ -880,10 +880,15 @@ get_play_times(void) {
       }
     }
     if (cfile->achans>0&&cfile->is_loaded) {
-      if (prefs->audio_player==AUD_PLAYER_JACK&&(mainw->event_list==NULL||!mainw->preview)) {
+      if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(mainw->event_list==NULL||!mainw->preview)) {
 #ifdef ENABLE_JACK
 	if (mainw->jackd!=NULL) {
 	  offset=allocwidth*((gdouble)mainw->jackd->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8)/cfile->total_time;
+	}
+#endif
+#ifdef HAVE_PULSE_AUDIO
+	if (mainw->pulsed!=NULL) {
+	  offset=allocwidth*((gdouble)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8)/cfile->total_time;
 	}
 #endif
       }
@@ -1352,7 +1357,7 @@ gboolean switch_aud_to_pulse(void) {
     lives_pulse_init();
     if (mainw->pulsed==NULL) {
       pulse_audio_init();
-      //jack_audio_read_init();
+      //pulse_audio_read_init();
       mainw->pulsed=pulse_get_driver(TRUE);
       mainw->pulsed->whentostop=&mainw->whentostop;
       mainw->pulsed->cancelled=&mainw->cancelled;
@@ -1430,8 +1435,11 @@ prepare_to_play_foreign(void) {
     cfile->achans=mainw->rec_achans;
     cfile->asampsize=mainw->rec_asamps;
     cfile->signed_endian=mainw->rec_signed_endian;
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read==NULL) rec_audio_to_clip(mainw->current_file,TRUE);
+#endif
 #ifdef ENABLE_JACK
-    if (mainw->rec_achans>0&&mainw->jackd_read==NULL) rec_audio_to_clip(mainw->current_file,TRUE);
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) rec_audio_to_clip(mainw->current_file,TRUE);
 #endif
   }
 

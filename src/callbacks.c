@@ -50,7 +50,7 @@ lives_exit (void) {
 	mainw->stream_ticks=-1;
       }
       
-      if (prefs->audio_player!=AUD_PLAYER_JACK) {
+      if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
 	com=g_strdup_printf ("touch %s/%s/.stoploop 2>/dev/null",prefs->tmpdir,mainw->files[mainw->playing_file]->handle);
 	dummyvar=system(com);
 	g_free (com);
@@ -70,8 +70,8 @@ lives_exit (void) {
     
     if (!mainw->only_close) {
 #ifdef HAVE_PULSE_AUDIO
-      if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read,FALSE);
       if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed,TRUE);
+      if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read,FALSE);
 #endif
 #ifdef ENABLE_JACK
       lives_jack_end();
@@ -473,6 +473,13 @@ on_stop_clicked (GtkMenuItem     *menuitem,
     return;
   }
 #endif
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL) {
+    mainw->cancelled=CANCEL_KEEP;
+    return;
+  }
+#endif
+
   com=g_strdup_printf("smogrify stopsubsubs %s 2>/dev/null",cfile->handle);
   dummyvar=system(com);
   g_free(com);
@@ -2640,21 +2647,27 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
     if (!mainw->record||mainw->record_paused) {
       mainw->record_starting=TRUE;
+      if (prefs->rec_opts&REC_AUDIO) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->rec_opts&REC_AUDIO)&&mainw->jackd!=NULL) {
-	jack_get_rec_avals(mainw->jackd);
-      }
+	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+	  jack_get_rec_avals(mainw->jackd);
+	}
 #endif
+#ifdef HAS_PULSE_AUDIO
+	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+	  pulse_get_rec_avals(mainw->pulsed);
+	}
+#endif	
+      }
       return;
     }
-
     // end record during playback
-
+      
     if (mainw->event_list!=NULL) {
       // switch audio off at previous frame event
 
-#ifdef ENABLE_JACK
-      if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->rec_opts&REC_AUDIO)) {
+#ifdef RT_AUDIO
+      if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->rec_opts&REC_AUDIO)) {
 	weed_plant_t *last_frame=get_last_frame_event(mainw->event_list);
 	insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
       }
@@ -2776,8 +2789,8 @@ void on_audp_entry_changed (GtkWidget *audp_entry, gpointer ptr) {
     return;
   }
 
-#ifdef ENABLE_JACK
-  if (!strncmp(audp,"jack",4)) {
+#ifdef RT_AUDIO
+  if (!strncmp(audp,"jack",4)||!strncmp(audp,"pulse",5)) {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
     gtk_widget_set_sensitive(prefsw->checkbutton_aclips,TRUE);
@@ -4115,6 +4128,9 @@ on_fs_preview_clicked                  (GtkButton       *button,
     if (prefs->audio_player==AUD_PLAYER_JACK) {
       file_open_params=g_strdup_printf("%s %s -ao jack",mainw->file_open_params!=NULL?mainw->file_open_params:"",get_deinterlace_string());
     }
+    else if (prefs->audio_player==AUD_PLAYER_PULSE) {
+      file_open_params=g_strdup_printf("%s %s -ao pulse",mainw->file_open_params!=NULL?mainw->file_open_params:"",get_deinterlace_string());
+    }
     else {
       file_open_params=g_strdup_printf("%s %s",mainw->file_open_params!=NULL?mainw->file_open_params:"",get_deinterlace_string());
     }
@@ -5325,6 +5341,16 @@ on_loop_cont_activate                (GtkMenuItem     *menuitem,
     else if (mainw->jackd!=NULL) mainw->jackd->loop=AUDIO_LOOP_NONE;
   }
 #endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE) {
+    if (mainw->pulsed!=NULL&&(mainw->loop_cont||mainw->whentostop==NEVER_STOP)) {
+      if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
+      else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
+    }
+    else if (mainw->pulsed!=NULL) mainw->pulsed->loop=AUDIO_LOOP_NONE;
+  }
+#endif
+
 }
 
 
@@ -5337,6 +5363,12 @@ on_ping_pong_activate                (GtkMenuItem     *menuitem,
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->loop!=AUDIO_LOOP_NONE) {
     if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
     else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->loop!=AUDIO_LOOP_NONE) {
+    if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
+    else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
   }
 #endif
 }
@@ -5431,6 +5463,15 @@ on_mute_activate                (GtkMenuItem     *menuitem,
     if (mainw->jackd->playing_file==mainw->current_file&&cfile->achans>0&&!mainw->is_rendering) {
       jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos);
       mainw->jackd->in_use=TRUE;
+    }
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->playing_file>-1&&mainw->pulsed!=NULL) {
+    mainw->pulsed->mute=mainw->mute;
+    if (mainw->pulsed->playing_file==mainw->current_file&&cfile->achans>0&&!mainw->is_rendering) {
+      pulse_audio_seek_bytes(mainw->pulsed,mainw->pulsed->seek_pos);
+      mainw->pulsed->in_use=TRUE;
     }
   }
 #endif
@@ -6491,8 +6532,8 @@ on_effects_paused                     (GtkButton       *button,
       }
       d_print(_ ("paused..."));
     }
-#ifdef ENABLE_JACK
-    if (mainw->jackd!=NULL&&mainw->jackd_read!=NULL) gtk_widget_hide(cfile->proc_ptr->stop_button);
+#ifdef RT_AUDIO
+    if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) gtk_widget_hide(cfile->proc_ptr->stop_button);
 #endif
   } else {
     gettimeofday(&tv, NULL);
@@ -6505,14 +6546,14 @@ on_effects_paused                     (GtkButton       *button,
       gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
       d_print(_ ("resumed..."));
     }
-#ifdef ENABLE_JACK
-    if (mainw->jackd!=NULL&&mainw->jackd_read!=NULL) gtk_widget_show(cfile->proc_ptr->stop_button);
+#ifdef RT_AUDIO
+    if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) gtk_widget_show(cfile->proc_ptr->stop_button);
 #endif
   }
 
   if (!mainw->internal_messaging
-#ifdef ENABLE_JACK
-      &&!(mainw->jackd!=NULL&&mainw->jackd_read!=NULL)
+#ifdef RT_AUDIO
+      &&!((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL))
 #endif
       ) {
     dummyvar=system(com);
@@ -7181,6 +7222,14 @@ on_back_pressed (GtkButton *button,
     mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
   }
 #endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file&&cfile->achans>0) {
+    pulse_audio_seek_bytes(mainw->pulsed,mainw->pulsed->seek_pos-(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
+    mainw->rec_aclip=mainw->current_file;
+    mainw->rec_avel=cfile->pb_fps/cfile->fps;
+    mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+  }
+#endif
 }
 
 void
@@ -7200,6 +7249,14 @@ on_forward_pressed (GtkButton *button,
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file&&cfile->achans>0) {
+    pulse_audio_seek_bytes(mainw->pulsed,mainw->pulsed->seek_pos+(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
+    mainw->rec_aclip=mainw->current_file;
+    mainw->rec_avel=cfile->pb_fps/cfile->fps;
+    mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
   }
 #endif
 }
@@ -7239,8 +7296,16 @@ gboolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkM
       mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps;
     }
     mainw->jackd->is_paused=cfile->play_paused;
-    if (cfile->play_paused) jack_pb_stop();
-    else jack_pb_start();
+  }
+  if (cfile->play_paused) jack_pb_stop();
+  else jack_pb_start();
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+    if (!cfile->play_paused&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file) {
+      mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps;
+    }
+    mainw->pulsed->is_paused=cfile->play_paused;
   }
 #endif
   
@@ -7327,7 +7392,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     return;
   }
 
-  if (prefs->rec_desktop_audio&&prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd) {
+  if (prefs->rec_desktop_audio&&((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
     resaudw=create_resaudw(8,NULL,NULL);
   }
   else {
@@ -7339,7 +7404,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     return;
   }
   
-  if (prefs->rec_desktop_audio&&prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd) {
+  if (prefs->rec_desktop_audio&&((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
     mainw->rec_arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
     mainw->rec_achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
     mainw->rec_asamps=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
@@ -7368,7 +7433,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   if (resaudw!=NULL) g_free(resaudw);
   resaudw=NULL;
   
-  if (prefs->rec_desktop_audio&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->rec_arate<=0&&capable->has_jackd) {
+  if (prefs->rec_desktop_audio&&mainw->rec_arate<=0&&((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
     do_audrate_error_dialog();
     return;
   }
@@ -7591,7 +7656,7 @@ on_ok_export_audio_clicked                      (GtkButton *button,
   if (!check_file(file_name,TRUE)) return;
 
   // warn if arps!=arate
-  if ((prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_JACK)&&cfile->arate!=cfile->arps) {
+  if ((prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&cfile->arate!=cfile->arps) {
     if (do_warning_dialog(_ ("\n\nThe audio playback speed has been altered for this clip.\nClick 'OK' to export at the new speed, or 'Cancel' to export at the original rate.\n"))) {
       nrate=cfile->arate;
     }
@@ -8037,7 +8102,7 @@ void
 on_recaudclip_activate (GtkMenuItem     *menuitem,
 			gpointer         user_data) {
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK) {
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
     do_nojack_rec_error();
     return;
   }
@@ -8057,7 +8122,7 @@ void
 on_recaudsel_activate (GtkMenuItem     *menuitem,
 			gpointer         user_data) {
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK) {
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
     do_nojack_rec_error();
     return;
   }
@@ -8097,7 +8162,7 @@ void
 on_recaudclip_ok_clicked                      (GtkButton *button,
 					       gpointer user_data)
 {
-#ifdef ENABLE_JACK
+#ifdef RT_AUDIO
   int asigned=1,aendian=1;
   gint old_file=mainw->current_file,new_file;
   gint type=GPOINTER_TO_INT(user_data);

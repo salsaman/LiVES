@@ -1,6 +1,6 @@
 // resample.h
 // LiVES
-// (c) G. Finch 2004 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -34,8 +34,8 @@ typedef struct __resaudw {
 
 _resaudw *resaudw;
 
-inline weed_timecode_t q_gint64(weed_timecode_t in, double fps);
-inline weed_timecode_t q_dbl (gdouble in, gdouble fps);
+LIVES_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps);
+LIVES_INLINE weed_timecode_t q_dbl (gdouble in, gdouble fps);
 
 
 weed_plant_t *quantise_events (weed_plant_t *in_list, gdouble new_fps, gboolean allow_gap); // quantise frame events for a single clip

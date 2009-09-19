@@ -1,6 +1,6 @@
 // resample.c
 // LiVES
-// (c) G. Finch 2004 - 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -26,19 +26,19 @@ static gboolean reorder_leave_back=FALSE;
 
 
 
-inline weed_timecode_t q_gint64 (weed_timecode_t in, gdouble fps) {
+LIVES_INLINE weed_timecode_t q_gint64 (weed_timecode_t in, gdouble fps) {
   if (in>0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   if (in<0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
-inline weed_timecode_t q_dbl (gdouble in, gdouble fps) {
+LIVES_INLINE weed_timecode_t q_dbl (gdouble in, gdouble fps) {
   if (in>0) return ((weed_timecode_t)((long double)in*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   if (in<0) return ((weed_timecode_t)((long double)in*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
-inline gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps) {
+LIVES_INLINE gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps) {
   gint res_frames;
   return ((res_frames=(gint)((gdouble)in_frames/orig_fps*resampled_fps+.49999))<1)?1:res_frames;
 }

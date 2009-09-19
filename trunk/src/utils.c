@@ -32,23 +32,23 @@ void lives_free_with_check(gpointer ptr) {
   free(ptr);
 }
 
-inline gint myround(gdouble n) {
+LIVES_INLINE gint myround(gdouble n) {
   return (n>=0.)?(gint)(n + 0.5):(gint)(n - 0.5);
 }
 
-inline void 
+LIVES_INLINE void 
 clear_mainw_msg (void) {
   memset (mainw->msg,0,512);
 }
 
 
-inline int lives_10pow(int pow) {
+LIVES_INLINE int lives_10pow(int pow) {
   register int i,res=1;
   for (i=0;i<pow;i++) res*=10;
   return res;
 }
 
-inline int get_approx_ln(guint val) {
+LIVES_INLINE int get_approx_ln(guint val) {
   int i;
   guint tval=1;
 
@@ -61,7 +61,7 @@ inline int get_approx_ln(guint val) {
 
 
 
-inline gchar *
+LIVES_INLINE gchar *
 g_strappend (gchar *string, gint len, const gchar *new) {
   gchar *tmp=g_strconcat (string,new,NULL);
   g_snprintf(string,len,"%s",tmp);
@@ -84,13 +84,13 @@ void setenv(const char *name, const char *val, int _xx) {
 }
 #endif
 
-inline gdouble calc_time_from_frame (gint clip, gint frame) {
+LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame) {
   return (frame-1.)/mainw->files[clip]->fps;
 }
 
 
 
-inline gint calc_frame_from_time (gint filenum, gdouble time) {
+LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time) {
   // return the nearest frame for a given time
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
@@ -98,7 +98,7 @@ inline gint calc_frame_from_time (gint filenum, gdouble time) {
   return (frame<mainw->files[filenum]->frames)?frame:mainw->files[filenum]->frames;
 }
 
-inline gint calc_frame_from_time2 (gint filenum, gdouble time) {
+LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time) {
   // return the nearest frame for a given time
   // allow max (frames+1)
   int frame=0;
@@ -107,7 +107,7 @@ inline gint calc_frame_from_time2 (gint filenum, gdouble time) {
   return (frame<mainw->files[filenum]->frames+1)?frame:mainw->files[filenum]->frames+1;
 }
 
-inline gint calc_frame_from_time3 (gint filenum, gdouble time) {
+LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
   // return the nearest frame for a given time
   // allow max (frames+1)
   int frame=0;
@@ -118,7 +118,7 @@ inline gint calc_frame_from_time3 (gint filenum, gdouble time) {
 
 
 /* convert to/from a big endian 32 bit float for internal use */
-inline float LEFloat_to_BEFloat(float f) {
+LIVES_INLINE float LEFloat_to_BEFloat(float f) {
   char *b=(char *)(&f);
   if (G_BYTE_ORDER==G_LITTLE_ENDIAN) {
     float fl;
@@ -1310,7 +1310,7 @@ unhide_cursor(GdkWindow *window) {
 
 
 
-inline void toggle_button_toggle (GtkToggleButton *tbutton) {
+LIVES_INLINE void toggle_button_toggle (GtkToggleButton *tbutton) {
   if (gtk_toggle_button_get_active(tbutton)) gtk_toggle_button_set_active(tbutton,FALSE);
   else gtk_toggle_button_set_active(tbutton,FALSE);
 }
@@ -1707,7 +1707,7 @@ get_menu_text_long(GtkWidget *menuitem, gchar *text) {
 }
 
 
-inline gboolean int_array_contains_value(int *array, int num_elems, int value) {
+LIVES_INLINE gboolean int_array_contains_value(int *array, int num_elems, int value) {
   int i;
   for (i=0;i<num_elems;i++) {
     if (array[i]==value) return TRUE;
@@ -2171,7 +2171,7 @@ set_sel_label (GtkWidget *sel_label) {
 
 
 
-inline void g_list_free_strings(GList *slist) {
+LIVES_INLINE void g_list_free_strings(GList *slist) {
   GList *list=slist;
   if (list==NULL) return;
   while (list!=NULL) {
@@ -2833,7 +2833,7 @@ gint get_hex_digit (gchar *c) {
 
 static guint32 fastrand_val;
 
-inline guint32 fastrand(void)
+LIVES_INLINE guint32 fastrand(void)
 {
 #define rand_a 1073741789L
 #define rand_c 32749L

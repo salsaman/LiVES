@@ -1,6 +1,6 @@
 // cvirtual.c
 // LiVES
-// (c) G. Finch 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2008 - 2009 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -19,7 +19,7 @@
 
 
 
-inline gint count_virtual_frames(int *findex, int size) {
+LIVES_INLINE gint count_virtual_frames(int *findex, int size) {
   register int i;
   gint count=0;
   for (i=0;i<size;i++) if (findex[i]!=-1) count++;

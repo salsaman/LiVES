@@ -37,6 +37,7 @@ void jack_pb_stop (void); /* pause playback transport master */
 
 #define ERR_PORT_NOT_FOUND 10
 
+
 typedef struct {
   guchar* data;                 /* pointer to the audio data */
   size_t  size;                /* number of bytes pointed to by data */

@@ -275,12 +275,12 @@ void cancel_process(gboolean visible) {
 
 gboolean process_one (gboolean visible) {
   gint64 tc;
-  gint first_frame,last_frame;
+  guint first_frame=0,last_frame=INT_MAX;
   gint oframeno=0;
 
   gboolean normal_time;
 
-#ifdef ENABLE_JACK
+#ifdef RT_AUDIO
   gdouble audio_stretch;
   guint64 audio_ticks=0.;
 #endif
@@ -304,7 +304,7 @@ gboolean process_one (gboolean visible) {
 
 #ifdef HAVE_PULSE_AUDIO
     if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&!mainw->is_rendering&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
-      mainw->currticks=lives_pulse_get_time(mainw->pulsed,FALSE);
+      mainw->currticks=lives_pulse_get_time(mainw->pulsed);
       if (mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback)) normal_time=TRUE;
       else normal_time=FALSE;
     }
@@ -343,9 +343,15 @@ gboolean process_one (gboolean visible) {
       cfile->next_event=process_events (cfile->next_event,mainw->currticks-mainw->origticks);
 
 #ifdef ENABLE_JACK
-      if (mainw->abufs_to_fill>0) {
+      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->abufs_to_fill>0) {
 	mainw->jackd->abufs[mainw->write_abuf]->samples_filled=0;
 	fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
+      }
+#endif
+#ifdef HAS_PULSE_AUDIO
+      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->abufs_to_fill>0) {
+	mainw->pulsedd->abufs[mainw->write_abuf]->samples_filled=0;
+	fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
       }
 #endif
 
@@ -373,15 +379,25 @@ gboolean process_one (gboolean visible) {
       else {
 	oframeno=(cfile->frameno=last_frame)+1;
       }
-      if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&mainw->playing_sel&&!mainw->is_rendering) {
+      if (!mainw->foreign&&cfile->achans>0&&mainw->playing_sel&&!mainw->is_rendering) {
 	// audio seek to start
 #ifdef ENABLE_JACK
-	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!mainw->is_rendering) {
+	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 	  if (mainw->jackd->sample_in_rate<0) {
 	    jack_audio_seek_frame(mainw->jackd,cfile->end);
 	  }
 	  else {
 	    jack_audio_seek_frame(mainw->jackd,cfile->frameno);
+	  }
+	}
+#endif
+#ifdef ENABLE_PULSE
+	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+	  if (mainw->pulsed->in_arate<0) {
+	    pulse_audio_seek_frame(mainw->pulsed,cfile->end);
+	  }
+	  else {
+	    pulse_audio_seek_frame(mainw->pulsed,cfile->frameno);
 	  }
 	}
 #endif
@@ -405,7 +421,7 @@ gboolean process_one (gboolean visible) {
 	}
 	mainw->deltaticks=0;
 	mainw->startticks=mainw->currticks-(cfile->frameno-oframeno)*mainw->period;
-	if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&mainw->playing_sel) {
+	if (!mainw->foreign&&(prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&cfile->achans>0&&mainw->playing_sel) {
 	  if (!mainw->loop_cont&&mainw->whentostop==STOP_ON_AUD_END) {
 	    mainw->cancelled=CANCEL_AUD_END;
 	  }
@@ -419,6 +435,16 @@ gboolean process_one (gboolean visible) {
 	      }
 	      else audio_frameno=first_frame;
 	      jack_audio_seek_frame(mainw->jackd,audio_frameno);
+	    }
+#endif
+#ifdef ENABLE_PULSE
+	    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!mainw->is_rendering) {
+	      gint audio_frameno;
+	      if (mainw->ping_pong&&(cfile->pb_fps<0.||mainw->scratch!=SCRATCH_NONE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
+		audio_frameno=cfile->frameno;
+	      }
+	      else audio_frameno=first_frame;
+	      pulse_audio_seek_frame(mainw->pulsed,audio_frameno);
 	    }
 #endif
 	  }
@@ -444,8 +470,14 @@ gboolean process_one (gboolean visible) {
 
 #ifdef ENABLE_JACK
       // request for another audio buffer - used only during mt playback
-      if (mainw->abufs_to_fill>0) {
+      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->abufs_to_fill>0) {
 	fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
+      }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+      // request for another audio buffer - used only during mt playback
+      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->abufs_to_fill>0) {
+	fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
       }
 #endif
 
@@ -620,11 +652,15 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   // [IMPORTANT] we subtract this from every calculation to make the numbers smaller
   mainw->startsecs=tv.tv_sec;
   
-#ifdef ENABLE_JACK
   if (!mainw->foreign&&!visible) {
+#ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
-  }
 #endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+#endif
+  }
+
   // mainw->origticks is our base for quantising (and is constant for each playback session)
   mainw->origticks=mainw->firstticks=mainw->startticks=tv.tv_usec*U_SEC_RATIO;
   last_open_check_ticks=mainw->origticks;
@@ -635,12 +671,12 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   // from the mainw->progress_fn function
 
   do {
-    while (!mainw->internal_messaging&&((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||prefs->audio_player==AUD_PLAYER_JACK))||!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
+    while (!mainw->internal_messaging&&((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))||!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
 
       // just pulse the progress bar
       if (!process_one(visible)) return FALSE;
-      if (prefs->audio_player==AUD_PLAYER_JACK) sched_yield();
-      if (!mainw->foreign&&(visible||(!mainw->mute&&prefs->audio_player!=AUD_PLAYER_JACK))) {
+      if (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) sched_yield();
+      if (!mainw->foreign&&(visible||(!mainw->mute&&prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE))) {
 	g_usleep(prefs->sleep_time);
       }
     }
@@ -1263,7 +1299,7 @@ void do_mt_no_audchan_error(lives_mt *mt) {
 }
 
 void do_mt_no_jack_error(lives_mt *mt, gint warn_mask) {
-  do_error_dialog_with_check_transient(_("Multitrack audio preview is only available with the jack audio player.\nYou can set this in Tools|Preferences|Playback."),FALSE,warn_mask,GTK_WINDOW(mt->window));
+  do_error_dialog_with_check_transient(_("Multitrack audio preview is only available with the\n\"jack\" or \"pulse audio\" audio player.\nYou can set this in Tools|Preferences|Playback."),FALSE,warn_mask,GTK_WINDOW(mt->window));
 }
 
 gboolean do_mt_rect_prompt(lives_mt *mt) {
@@ -1285,7 +1321,7 @@ void do_dvgrab_error(void) {
 
 
 void do_nojack_rec_error(void) {
- do_error_dialog(_ ("\n\nAudio recording can only be done using the jack audio player.\nYou may need to select this in Tools/Preferences/Playback.\n"));
+ do_error_dialog(_ ("\n\nAudio recording can only be done using either\nthe \"jack\" or the \"pulse audio\" audio player.\nYou may need to select one of these in Tools/Preferences/Playback.\n"));
 }
 
 void do_vpp_palette_error (void) {

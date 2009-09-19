@@ -12,6 +12,10 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
+#if defined(__sun)
+#include <sys/filio.h>
+#endif
+
 #include "main.h"
 #include "support.h"
 

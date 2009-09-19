@@ -1260,8 +1260,8 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *eventbox;
 
 #ifdef ENABLE_OSC
-#ifdef OMC_JS_IMPL
   GtkWidget *buttond;
+#ifdef OMC_JS_IMPL
   GtkWidget *vbox2;
 #else
 #ifdef OMC_MIDI_IMPL

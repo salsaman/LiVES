@@ -28,7 +28,13 @@
 #define OIL_MEMCPY_MAX_BYTES 1024 // this can be tuned to provide optimal performance
 
 #ifdef ENABLE_OIL
-inline void *w_memcpy  (void *dest, const void *src, size_t n) {n<=OIL_MEMCPY_MAX_BYTES?oil_memcpy(dest,src,n):memcpy(dest,src,n); return dest;}
+inline void *w_memcpy  (void *dest, const void *src, size_t n) {
+  if (n>=32&&n<=OIL_MEMCPY_MAX_BYTES) {
+    oil_memcpy(dest,src,n);
+    return dest;
+  }
+  return memcpy(dest,src,n);
+}
 #else
 inline void *w_memcpy  (void *dest, const void *src, size_t n) {return memcpy(dest,src,n);}
 #endif

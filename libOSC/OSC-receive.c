@@ -55,7 +55,7 @@ The OpenSound Control WWW page is
 #include <libOSC/OSC-dispatch.h>
 #include <libOSC/NetworkUDP.h>
 
-#ifdef(__sun)
+#ifdef IS_SOLARIS
 #include <sys/filio.h>
 #endif
 

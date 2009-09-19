@@ -46,6 +46,7 @@ exit
 
 IS_DARWIN="false"
 IS_IRIX="false"
+IS_SOLARIS="false"
 IS_LINUX_GNU="false"
 
 case "{$target_os}" in
@@ -58,6 +59,9 @@ case "{$target_os}" in
  *linux-gnu*)
    IS_LINUX_GNU="true"
   ;;
+ *solaris*)
+   IS_SOLARIS="true"
+  ;;
  *)
   ;;
 esac
@@ -65,6 +69,7 @@ esac
 AM_CONDITIONAL(IS_DARWIN,$IS_DARWIN)
 AM_CONDITIONAL(IS_IRIX,$IS_IRIX)
 AM_CONDITIONAL(IS_LINUX_GNU,$IS_LINUX_GNU)
+AM_CONDITIONAL(IS_SOLARIS,$IS_SOLARIS)
 
 GETTEXT_PACKAGE=lives
 AC_SUBST(GETTEXT_PACKAGE)

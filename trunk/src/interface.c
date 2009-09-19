@@ -287,8 +287,8 @@ process * create_processing (const gchar *text) {
   if (mainw->internal_messaging&&mainw->rte!=0) {
     procw->label2 = gtk_label_new (_("\n\nPlease Wait\n\nRemember to switch off effects (ctrl-0) afterwards !"));
   }
-#ifdef ENABLE_JACK
-  else if (mainw->jackd_read==NULL) procw->label2 = gtk_label_new (_("\nPlease Wait"));
+#ifdef RT_AUDIO
+  else if (mainw->jackd_read==NULL&&mainw->pulsed_read==NULL) procw->label2 = gtk_label_new (_("\nPlease Wait"));
 #endif
   else procw->label2 = gtk_label_new ("");
   gtk_widget_show (procw->label2);
@@ -332,6 +332,9 @@ process * create_processing (const gchar *text) {
     if ((cfile->opening&&(cfile->frames>0||cfile->opening_loc))
 #ifdef ENABLE_JACK
 	||mainw->jackd_read!=NULL
+#endif
+#ifdef HAVE_PULSE_AUDIO
+	||mainw->pulsed_re4ad!=NULL
 #endif
 	) {
       // the "enough" button for opening

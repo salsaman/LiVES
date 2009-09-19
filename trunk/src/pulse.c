@@ -408,9 +408,9 @@ static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
 
 
 /*
-static int audio_read (nframes_t nframes, void *arg) {
-  // read nframes from jack buffer, and then write to mainw->aud_rec_fd
-  jack_driver_t* pulsed = (jack_driver_t*)arg;
+static int pulse_audio_read (nframes_t nframes, void *arg) {
+  // read nframes from pulse buffer, and then write to mainw->aud_rec_fd
+  pulse_driver_t* pulsed = (pulse_driver_t*)arg;
   void *holding_buff;
   float *in_buffer[pulsed->num_input_channels];
   float out_scale=(float)pulsed->in_arate/(float)afile->arate;

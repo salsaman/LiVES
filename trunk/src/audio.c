@@ -296,7 +296,110 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
 	  return samples_out;
 	}
 	if (xchan>=abuf->achans) xchan=0; 
-	obuf[j][offs+i]=abuf->buf[xchan][ioffs+src_offset_i]*vol;
+	obuf[j][offs+i]=abuf->data.floatbuf[xchan][ioffs+src_offset_i]*vol;
+	pthread_mutex_unlock(&mainw->abuf_mutex);
+	xchan++;
+      }
+      src_offset_i=(int)(src_offset_f+=scale);
+      samps++;
+      samples_out++;
+    }
+    
+    src_offset_i=(int)(src_offset_f+=scale);
+    abuf->start_sample=ioffs+src_offset_i;
+    nsamps-=samps;
+    offs+=samps;
+
+    if (nsamps>0) {
+      // buffer was filled, move on to next buffer
+
+      pthread_mutex_lock(&mainw->abuf_mutex);
+      // request main thread to fill another buffer
+      mainw->abufs_to_fill++;
+
+      if (mainw->jackd->read_abuf<0) {
+	// playback ended while we were processing
+	pthread_mutex_unlock(&mainw->abuf_mutex);
+	return samples_out;
+      }
+
+      mainw->jackd->read_abuf++;
+
+      if (mainw->jackd->read_abuf>=prefs->num_rtaudiobufs) mainw->jackd->read_abuf=0;
+
+      abuf=mainw->jackd->abufs[mainw->jackd->read_abuf];
+      
+      pthread_mutex_unlock(&mainw->abuf_mutex);
+    }
+
+  }
+#endif
+
+  return samples_out;
+}
+
+
+
+
+long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate) {
+
+  int samples_out=0;
+
+#ifdef HAVE_PULSE_AUDIO
+
+  int samps=0,nsampsx=nsamps*nchans;
+
+  lives_audio_buf_t *abuf;
+  int in_arate;
+  register size_t offs=0,ioffs,xchan;
+
+  register float src_offset_f=0.f;
+  register int src_offset_i=0;
+
+  register int i,j;
+
+  register double scale;
+
+  pthread_mutex_lock(&mainw->abuf_mutex);
+  if (mainw->pulsed->read_abuf==-1) {
+    pthread_mutex_unlock(&mainw->abuf_mutex);
+    return 0;
+  }
+  abuf=mainw->pulsed->abufs[mainw->pulsed->read_abuf];
+  in_arate=abuf->arate;
+  pthread_mutex_unlock(&mainw->abuf_mutex);
+  scale=(double)in_arate/(double)out_arate;
+
+  while (nsamps>0) {
+    pthread_mutex_lock(&mainw->abuf_mutex);
+    if (mainw->pulsed->read_abuf==-1) {
+      pthread_mutex_unlock(&mainw->abuf_mutex);
+      return 0;
+    }
+
+    ioffs=abuf->start_sample;
+    pthread_mutex_unlock(&mainw->abuf_mutex);
+    samps=0;
+
+    src_offset_i=0;
+    src_offset_f=0.;
+
+    for (i=0;i<nsampsx;i+=nchans) {
+      // process each sample
+
+      if (ioffs+src_offset_i>=abuf->samples_filled) {
+	// current buffer is full
+	break;
+      }
+      xchan=0;
+      for (j=0;j<nchans;j++) {
+	pthread_mutex_lock(&mainw->abuf_mutex);
+	if (mainw->pulsed->read_abuf<0) {
+	  pthread_mutex_unlock(&mainw->abuf_mutex);
+	  return samples_out;
+	}
+	if (xchan>=abuf->achans) xchan=0; 
+	obuf[offs+i+j]=abuf->data.int16buf[ioffs+src_offset_i*nchans+j];
 	pthread_mutex_unlock(&mainw->abuf_mutex);
 	xchan++;
       }
@@ -345,7 +448,21 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
 /// copy a memory chunk into an audio buffer, applying overall volume control
 
 
-static size_t chunk_to_abuf(lives_audio_buf_t *abuf, float **float_buffer, int nsamps, double vol) {
+static size_t chunk_to_float_abuf(lives_audio_buf_t *abuf, float **float_buffer, int nsamps) {
+  int chans=abuf->achans;
+  register size_t offs=abuf->samples_filled;
+  register int i;
+
+  for (i=0;i<chans;i++) {
+    w_memcpy(&(abuf->data.floatbuf[i][offs]),float_buffer[i],nsamps*sizeof(float));
+  }
+  return (size_t)nsamps;
+}
+
+
+// for pulse audio we use int16, and let it apply the volume
+
+static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer, int nsamps) {
   int frames_out=0;
   int chans=abuf->achans;
   register size_t offs=abuf->samples_filled;
@@ -353,10 +470,10 @@ static size_t chunk_to_abuf(lives_audio_buf_t *abuf, float **float_buffer, int n
 
   while (frames_out<nsamps) {
     for (i=0;i<chans;i++) {
-      abuf->buf[i][offs]=vol*float_buffer[i][frames_out];
+      abuf->data.int16buf[offs+i]=(short)((float_buffer[i][frames_out]-.5)*2*SAMPLE_MAX_16BIT);
     }
     frames_out++;
-    offs++;
+    offs+=chans;
   }
   return (size_t)frames_out;
 }
@@ -585,7 +702,12 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     else {
       for (i=0;i<out_achans;i++) {
 	for (j=obuf->samples_filled;j<obuf->samples_filled+tsamples;j++) {
-	  obuf->buf[i][j]=0.;
+	  if (prefs->audio_player==AUD_PLAYER_JACK) {
+	    obuf->data.floatbuf[i][j]=0.;
+	  }
+	  else {
+	    obuf->data.int16buf[j*out_achans+i]=0;
+	  }
 	}
       }
       obuf->samples_filled+=tsamples;
@@ -712,7 +834,12 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 	sync();
       }
       else {
-	frames_out=chunk_to_abuf(obuf,chunk_float_buffer,blocksize,opvol);
+	if (prefs->audio_player==AUD_PLAYER_JACK) {
+	  frames_out=chunk_to_float_abuf(obuf,chunk_float_buffer,blocksize);
+	}
+	else {
+	  frames_out=chunk_to_int16_abuf(obuf,chunk_float_buffer,blocksize);
+	}
 	obuf->samples_filled+=frames_out;
       }
 
@@ -1178,9 +1305,9 @@ void init_jack_audio_buffers (gint achans, gint arate, gboolean exact) {
     mainw->jackd->abufs[i]->achans=achans;
     mainw->jackd->abufs[i]->arate=arate;
     mainw->jackd->abufs[i]->sample_space=XSAMPLES;
-    mainw->jackd->abufs[i]->buf=g_malloc(achans*sizeof(float *));
+    mainw->jackd->abufs[i]->data.floatbuf=g_malloc(achans*sizeof(float *));
     for (chan=0;chan<achans;chan++) {
-      mainw->jackd->abufs[i]->buf[chan]=g_malloc(XSAMPLES*sizeof(float));
+      mainw->jackd->abufs[i]->data.floatbuf[chan]=g_malloc(XSAMPLES*sizeof(float));
     }
   }
 #endif
@@ -1190,7 +1317,7 @@ void init_jack_audio_buffers (gint achans, gint arate, gboolean exact) {
 void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact) {
 #ifdef HAVE_PULSE_AUDIO
 
-  int i,chan;
+  int i;
 
   mainw->pulsed->abufs=(lives_audio_buf_t **)g_malloc(prefs->num_rtaudiobufs*sizeof(lives_audio_buf_t *));
   
@@ -1200,10 +1327,7 @@ void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact) {
     mainw->pulsed->abufs[i]->achans=achans;
     mainw->pulsed->abufs[i]->arate=arate;
     mainw->pulsed->abufs[i]->sample_space=XSAMPLES;
-    mainw->pulsed->abufs[i]->buf=g_malloc(achans*sizeof(float *));
-    for (chan=0;chan<achans;chan++) {
-      mainw->pulsed->abufs[i]->buf[chan]=g_malloc(XSAMPLES*sizeof(float));
-    }
+    mainw->pulsed->abufs[i]->data.int16buf=g_malloc(XSAMPLES*sizeof(short));
   }
 #endif
 }
@@ -1222,9 +1346,9 @@ void free_jack_audio_buffers(void) {
   for (i=0;i<prefs->num_rtaudiobufs;i++) {
     if (mainw->jackd->abufs[i]!=NULL) {
       for (chan=0;chan<mainw->jackd->abufs[i]->achans;chan++) {
-	g_free(mainw->jackd->abufs[i]->buf[chan]);
+	g_free(mainw->jackd->abufs[i]->data.floatbuf[chan]);
       }
-      g_free(mainw->jackd->abufs[i]->buf);
+      g_free(mainw->jackd->abufs[i]->data.floatbuf);
       g_free(mainw->jackd->abufs[i]);
     }
   }
@@ -1235,7 +1359,7 @@ void free_jack_audio_buffers(void) {
 void free_pulse_audio_buffers(void) {
 #ifdef HAVE_PULSE_AUDIO
 
-  int i,chan;
+  int i;
 
   if (mainw->pulsed==NULL) return;
 
@@ -1243,10 +1367,7 @@ void free_pulse_audio_buffers(void) {
 
   for (i=0;i<prefs->num_rtaudiobufs;i++) {
     if (mainw->pulsed->abufs[i]!=NULL) {
-      for (chan=0;chan<mainw->pulsed->abufs[i]->achans;chan++) {
-	g_free(mainw->pulsed->abufs[i]->buf[chan]);
-      }
-      g_free(mainw->pulsed->abufs[i]->buf);
+      g_free(mainw->pulsed->abufs[i]->data.int16buf);
       g_free(mainw->pulsed->abufs[i]);
     }
   }

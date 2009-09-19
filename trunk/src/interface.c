@@ -2549,7 +2549,7 @@ create_cds_dialog (gint type, gint warn_mask_number) {
     
     cdsw->entry = gtk_entry_new_with_max_length (128);
     if (strlen (mainw->set_name)) {
-      gtk_entry_set_text (GTK_ENTRY (cdsw->entry),g_strdup(mainw->set_name));
+      gtk_entry_set_text (GTK_ENTRY (cdsw->entry),mainw->set_name);
     }
     
     label=gtk_label_new_with_mnemonic (_("Clip set _name"));

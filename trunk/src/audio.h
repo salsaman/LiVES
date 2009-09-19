@@ -72,6 +72,8 @@ long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps,
 
 long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol);
 
+long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate);
+
 long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf);
 
 void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv); // fade in/fade out

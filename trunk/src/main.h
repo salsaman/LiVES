@@ -165,6 +165,12 @@ typedef struct {
 // see weed event spec. for more info
 
 
+typedef union {
+  float **floatbuf; // float data - for jack
+  short *int16buf; // 16 bit int - for pulse audio
+} adata;
+
+
 typedef struct {
 
   int achans;
@@ -174,7 +180,7 @@ typedef struct {
 
   volatile size_t start_sample;  // current read posn
 
-  float **buf;
+  adata data;
 
   volatile size_t samples_filled; // number of samples filled (usable)
   size_t sample_space; // total space

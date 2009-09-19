@@ -71,6 +71,8 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
 static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // PULSE AUDIO calls this periodically to get the next audio buffer
 
+  static float old_volume=-1.;
+
   pulse_driver_t* pulsed = (pulse_driver_t*)arg;
 
   gulong nframes=nbytes/pulsed->out_achans/(pulsed->out_asamps>>3);
@@ -346,12 +348,15 @@ static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
 #ifdef DEBUG_PULSE
     g_printerr("pulseFramesAvailable == %ld\n", pulseFramesAvailable);
 #endif
-   }
+      }
   
   // playback from memory or file
 
-  pavol=pa_sw_volume_from_linear(mainw->volume);
-  pa_cvolume_set(&myvol,pulsed->out_achans,pavol);
+  if (mainw->volume!=old_volume) {
+	pavol=pa_sw_volume_from_linear(mainw->volume);
+	pa_cvolume_set(&myvol,pulsed->out_achans,pavol);
+	old_volume=pavol;
+  }
 
   pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&myvol,NULL,NULL);
   
@@ -370,7 +375,9 @@ static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
     }
     else {
       if (pulsed->read_abuf>-1&&!pulsed->mute) {
-	//sample_move_abuf_float(out_buffer,pulsed->out_achans,nframes,pulsed->out_arate,vol);
+	buffer=g_malloc(xbytes);
+	sample_move_abuf_int16((short *)buffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
+	pa_stream_write(pulsed->pstream,buffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
       }
       else {
 	sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
@@ -460,8 +467,8 @@ void pulse_close_client(pulse_driver_t *pdriver, gboolean shutdown) {
   pa_stream_disconnect(pdriver->pstream);
 
   if (shutdown) {
-    pa_context_disconnect(pdriver->con);
     pa_threaded_mainloop_stop(pdriver->mloop);
+    pa_context_disconnect(pdriver->con);
     pa_threaded_mainloop_free(pdriver->mloop);
   }
 }

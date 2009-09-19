@@ -763,7 +763,7 @@ inline void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, 
 
 
 #ifdef ENABLE_JACK
-void rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
+void jack_rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
   // open audio file for writing
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
@@ -791,17 +791,67 @@ void rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
   // show countdown/stop dialog
   d_print(_("Recording audio..."));
   do_auto_dialog(_("Recording audio"),1);
-  rec_audio_end();
+  jack_rec_audio_end();
 }
 
 
 
-void rec_audio_end(void) {
+void jack_rec_audio_end(void) {
   // recording ended
 
   // stop recording
   jack_close_device(mainw->jackd_read,TRUE);
   mainw->jackd_read=NULL;
+
+  // close file
+  close(mainw->aud_rec_fd);
+  mainw->cancel_type=CANCEL_KILL;
+}
+
+#endif
+
+
+
+
+#ifdef HAVE_PULSE_AUDIO
+void pulse_rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
+  // open audio file for writing
+  file *outfile=mainw->files[fileno];
+  gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
+  gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
+
+  mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+  g_free(outfilename);
+
+  mainw->pulsed_read=pulse_get_driver(FALSE);
+  mainw->pulsed_read->playing_file=fileno;
+  mainw->pulsed_read->frames_written=0;
+
+  if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed_read->reverse_endian=TRUE;
+  else mainw->pulsed_read->reverse_endian=FALSE;
+
+  // start pulse recording
+  pulse_driver_activate(mainw->pulsed_read);
+
+  // in grab window mode, just return, we will call rec_audio_end on playback end
+  if (is_window_grab) return;
+
+  mainw->cancelled=CANCEL_NONE;
+  mainw->cancel_type=CANCEL_SOFT;
+  // show countdown/stop dialog
+  d_print(_("Recording audio..."));
+  do_auto_dialog(_("Recording audio"),1);
+  pulse_rec_audio_end();
+}
+
+
+
+void pulse_rec_audio_end(void) {
+  // recording ended
+
+  // stop recording
+  pulse_close_client(mainw->pulsed_read,FALSE);
+  mainw->pulsed_read=NULL;
 
   // close file
   close(mainw->aud_rec_fd);
@@ -1115,7 +1165,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
 
 
-void init_audio_buffers (gint achans, gint arate, gboolean exact) {
+void init_jack_audio_buffers (gint achans, gint arate, gboolean exact) {
 #ifdef ENABLE_JACK
 
   int i,chan;
@@ -1137,8 +1187,30 @@ void init_audio_buffers (gint achans, gint arate, gboolean exact) {
 }
 
 
+void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact) {
+#ifdef HAVE_PULSE_AUDIO
 
-void free_audio_buffers(void) {
+  int i,chan;
+
+  mainw->pulsed->abufs=(lives_audio_buf_t **)g_malloc(prefs->num_rtaudiobufs*sizeof(lives_audio_buf_t *));
+  
+  for (i=0;i<prefs->num_rtaudiobufs;i++) {
+    mainw->pulsed->abufs[i]=(lives_audio_buf_t *)g_malloc(sizeof(lives_audio_buf_t));
+    
+    mainw->pulsed->abufs[i]->achans=achans;
+    mainw->pulsed->abufs[i]->arate=arate;
+    mainw->pulsed->abufs[i]->sample_space=XSAMPLES;
+    mainw->pulsed->abufs[i]->buf=g_malloc(achans*sizeof(float *));
+    for (chan=0;chan<achans;chan++) {
+      mainw->pulsed->abufs[i]->buf[chan]=g_malloc(XSAMPLES*sizeof(float));
+    }
+  }
+#endif
+}
+
+
+
+void free_jack_audio_buffers(void) {
 #ifdef ENABLE_JACK
 
   int i,chan;
@@ -1154,6 +1226,28 @@ void free_audio_buffers(void) {
       }
       g_free(mainw->jackd->abufs[i]->buf);
       g_free(mainw->jackd->abufs[i]);
+    }
+  }
+#endif
+}
+
+
+void free_pulse_audio_buffers(void) {
+#ifdef HAVE_PULSE_AUDIO
+
+  int i,chan;
+
+  if (mainw->pulsed==NULL) return;
+
+  if (mainw->pulsed->abufs==NULL) return;
+
+  for (i=0;i<prefs->num_rtaudiobufs;i++) {
+    if (mainw->pulsed->abufs[i]!=NULL) {
+      for (chan=0;chan<mainw->pulsed->abufs[i]->achans;chan++) {
+	g_free(mainw->pulsed->abufs[i]->buf[chan]);
+      }
+      g_free(mainw->pulsed->abufs[i]->buf);
+      g_free(mainw->pulsed->abufs[i]);
     }
   }
 #endif

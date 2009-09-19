@@ -8250,7 +8250,17 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
   }
 
   mainw->suppress_dprint=TRUE;
-  rec_audio_to_clip(mainw->current_file,FALSE);
+  
+#ifdef ENABLE_JACK
+  if (prefs->audio_player==AUD_PLAYER_JACK) {
+    jack_rec_audio_to_clip(mainw->current_file,FALSE);
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE) {
+    pulse_rec_audio_to_clip(mainw->current_file,FALSE);
+  }
+#endif
 
   if (mainw->cancelled==CANCEL_USER) {
     mainw->cancelled=CANCEL_NONE;

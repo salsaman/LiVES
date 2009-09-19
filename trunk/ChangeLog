@@ -6,6 +6,7 @@ Improve the help menu.
 Make disk cleanup more vigorous.
 Show list of sets in File -> Reload clip set.
 Show event list for selected time only.
+Fixes for building on solaris (thanks Milan Jurik).
 Undoing load new audio should restore original audio. *
 Fix build error for BSD. *
 Initial translation to Finnish (thanks Jussi Aalto and Mika Filpus).

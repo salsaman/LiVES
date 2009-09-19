@@ -124,8 +124,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <liboil/liboil.h>
 #endif
 
-
-#ifndef(__sun)
+#ifndef IS_SOLARIS
 #define LIVES_INLINE inline
 #endif
 

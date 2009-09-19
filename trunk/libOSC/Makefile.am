@@ -9,6 +9,9 @@ ALL_LIB_OPTS = -export-dynamic
 
 noinst_LTLIBRARIES = $(OSC_LIB_FILE)
 
+if IS_SOLARIS
+solaris_CFLAGS=-DIS_SOLARIS=1
+endif
 
 libOSC_la_CFLAGS = $(DEBUG_CFLAGS)
 
@@ -33,3 +36,4 @@ endif
 
 libOSC_la_LDFLAGS = $(ALL_LIB_OPTS) -DDYNAMIC -O2 -Wall -rdynamic
 
+AM_CFLAGS = $(solaris_CFLAGS)

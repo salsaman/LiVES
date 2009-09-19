@@ -1505,16 +1505,16 @@ void play_file (void) {
 #ifdef ENABLE_JACK
     if (mainw->event_list!=NULL&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!(mainw->preview&&mainw->is_processing)) {
       // if playing an event list, we switch to audio memory buffer mode
-      if (mainw->multitrack!=NULL) init_audio_buffers(cfile->achans,cfile->arate,exact_preview);
-      else init_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
+      if (mainw->multitrack!=NULL) init_jack_audio_buffers(cfile->achans,cfile->arate,exact_preview);
+      else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
       has_audio_buffers=TRUE;
     }
 #endif    
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->event_list!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!(mainw->preview&&mainw->is_processing)) {
       // if playing an event list, we switch to audio memory buffer mode
-      if (mainw->multitrack!=NULL) init_audio_buffers(cfile->achans,cfile->arate,exact_preview);
-      else init_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
+      if (mainw->multitrack!=NULL) init_pulse_audio_buffers(cfile->achans,cfile->arate,exact_preview);
+      else init_pulse_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
       has_audio_buffers=TRUE;
     }
 #endif    
@@ -1637,10 +1637,10 @@ void play_file (void) {
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 
     if (has_audio_buffers) {
-      free_audio_buffers();
+      free_jack_audio_buffers();
     }
 
-    if (mainw->foreign&&mainw->jackd_read!=NULL) rec_audio_end();
+    if (mainw->foreign&&mainw->jackd_read!=NULL) jack_rec_audio_end();
 
     if (!mainw->preview&&!mainw->foreign) jack_pb_stop();
 
@@ -1663,10 +1663,10 @@ void play_file (void) {
   if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
 
     if (has_audio_buffers) {
-      free_audio_buffers();
+      free_pulse_audio_buffers();
     }
 
-    if (mainw->foreign&&mainw->pulsed_read!=NULL) rec_audio_end();
+    if (mainw->foreign&&mainw->pulsed_read!=NULL) pulse_rec_audio_end();
 
     // tell pulse client to close audio file
     if (mainw->pulsed->fd>0) {

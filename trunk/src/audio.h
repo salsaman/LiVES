@@ -77,8 +77,13 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv); // fade in/fade out
 
 #ifdef ENABLE_JACK
-void rec_audio_to_clip(gint fileno, gboolean is_window_grab);  // record from external source to clip
-void rec_audio_end(void);
+void jack_rec_audio_to_clip(gint fileno, gboolean is_window_grab);  // record from external source to clip
+void jack_rec_audio_end(void);
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+void pulse_rec_audio_to_clip(gint fileno, gboolean is_window_grab);  // record from external source to clip
+void pulse_rec_audio_end(void);
 #endif
 
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, gboolean exact);
@@ -86,7 +91,10 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, gboolean get_audstate, gboolean exact);
 
 
-void init_audio_buffers (gint achans, gint arate, gboolean exact);
-void free_audio_buffers(void);
+void init_jack_audio_buffers (gint achans, gint arate, gboolean exact);
+void free_jack_audio_buffers(void);
+
+void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact);
+void free_pulse_audio_buffers(void);
 
 #endif

@@ -1341,6 +1341,18 @@ gboolean switch_aud_to_jack(void) {
     gtk_widget_show (mainw->recaudio_submenu);
   }
 
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed_read!=NULL) {
+    pulse_close_client(mainw->pulsed_read,FALSE);
+    mainw->pulsed_read=NULL;
+  }
+
+  if (mainw->pulsed!=NULL) {
+    pulse_close_client(mainw->pulsed,TRUE);
+    mainw->pulsed=NULL;
+  }
+#endif
+
   prefs->audio_player=AUD_PLAYER_JACK;
   set_pref("audio_player","jack");
   return TRUE;
@@ -1369,9 +1381,21 @@ gboolean switch_aud_to_pulse(void) {
     gtk_widget_show (mainw->recaudio_submenu);
   }
 
+  if (mainw->jackd_read!=NULL) {
+    jack_close_device(mainw->jackd_read,TRUE);
+    mainw->jackd_read=NULL;
+  }
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd!=NULL) {
+    jack_close_device(mainw->jackd,TRUE);
+    mainw->jackd=NULL;
+  }
+
   prefs->audio_player=AUD_PLAYER_PULSE;
   set_pref("audio_player","pulse");
   return TRUE;
+#endif
 
 #endif
   return FALSE;
@@ -1389,6 +1413,31 @@ void switch_aud_to_sox(void) {
     gtk_widget_hide(mainw->vol_label);
     gtk_widget_hide (mainw->recaudio_submenu);
   }
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd_read!=NULL) {
+    jack_close_device(mainw->jackd_read,TRUE);
+    mainw->jackd_read=NULL;
+  }
+
+  if (mainw->jackd!=NULL) {
+    jack_close_device(mainw->jackd,TRUE);
+    mainw->jackd=NULL;
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed_read!=NULL) {
+    pulse_close_client(mainw->pulsed_read,FALSE);
+    mainw->pulsed_read=NULL;
+  }
+
+  if (mainw->pulsed!=NULL) {
+    pulse_close_client(mainw->pulsed,TRUE);
+    mainw->pulsed=NULL;
+  }
+#endif
+
 }
 
 
@@ -1414,6 +1463,31 @@ switch_aud_to_mplayer(void) {
     gtk_widget_hide(mainw->vol_label);
     gtk_widget_hide (mainw->recaudio_submenu);
   }
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd_read!=NULL) {
+    jack_close_device(mainw->jackd_read,TRUE);
+    mainw->jackd_read=NULL;
+  }
+
+  if (mainw->jackd!=NULL) {
+    jack_close_device(mainw->jackd,TRUE);
+    mainw->jackd=NULL;
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed_read!=NULL) {
+    pulse_close_client(mainw->pulsed_read,FALSE);
+    mainw->pulsed_read=NULL;
+  }
+
+  if (mainw->pulsed!=NULL) {
+    pulse_close_client(mainw->pulsed,TRUE);
+    mainw->pulsed=NULL;
+  }
+#endif
+
 }
 
 
@@ -1436,10 +1510,10 @@ prepare_to_play_foreign(void) {
     cfile->asampsize=mainw->rec_asamps;
     cfile->signed_endian=mainw->rec_signed_endian;
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read==NULL) rec_audio_to_clip(mainw->current_file,TRUE);
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read==NULL) pulse_rec_audio_to_clip(mainw->current_file,TRUE);
 #endif
 #ifdef ENABLE_JACK
-    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) rec_audio_to_clip(mainw->current_file,TRUE);
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) jack_rec_audio_to_clip(mainw->current_file,TRUE);
 #endif
   }
 

@@ -334,7 +334,7 @@ process * create_processing (const gchar *text) {
 	||mainw->jackd_read!=NULL
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	||mainw->pulsed_re4ad!=NULL
+	||mainw->pulsed_read!=NULL
 #endif
 	) {
       // the "enough" button for opening

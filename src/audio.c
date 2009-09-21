@@ -628,7 +628,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   }
   else {
-111111111111111111
+
     if (mainw->event_list!=NULL) cfile->aseek_pos=fromtime[0];
 
     tc_end-=tc_start;

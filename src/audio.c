@@ -305,7 +305,6 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
       samples_out++;
     }
     
-    src_offset_i=(int)(src_offset_f+=scale);
     abuf->start_sample=ioffs+src_offset_i;
     nsamps-=samps;
     offs+=samps;
@@ -389,7 +388,7 @@ long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate)
       // process each sample
 
       if (ioffs+src_offset_i>=abuf->samples_filled) {
-	// current buffer is full
+	// current buffer is drained
 	break;
       }
       xchan=0;
@@ -410,13 +409,12 @@ long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate)
       samples_out++;
     }
     
-    src_offset_i=(int)(src_offset_f+=scale);
     abuf->start_sample=ioffs+src_offset_i;
     nsamps-=samps;
     offs+=samps*nchans;
 
     if (nsamps>0) {
-      // buffer was filled, move on to next buffer
+      // buffer was drained, move on to next buffer
 
       pthread_mutex_lock(&mainw->abuf_mutex);
       // request main thread to fill another buffer
@@ -467,7 +465,7 @@ static size_t chunk_to_float_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer, int nsamps) {
   int frames_out=0;
   int chans=abuf->achans;
-  register size_t offs=abuf->samples_filled;
+  register size_t offs=abuf->samples_filled*chans;
   register int i;
 
   while (frames_out<nsamps) {

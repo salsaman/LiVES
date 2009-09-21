@@ -143,7 +143,7 @@ on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   if (!update) {
     for (i=1;i<=prefs->rte_keys_virtual;i++) {
       for (j=0;j<modes;j++) {
-	if (rte_keymode_valid(i,j)) {
+	if (rte_keymode_valid(i,j,TRUE)) {
 	  fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j))),kfile);
 	}
       }
@@ -486,7 +486,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   ////////////////////////
 
-  if (!rte_keymode_valid(key+1,mode)) return;
+  if (!rte_keymode_valid(key+1,mode,TRUE)) return;
 
   plugin_name=rte_keymode_get_plugin_name(key+1,mode);
   filter=rte_keymode_get_filter(key+1,mode);
@@ -615,7 +615,7 @@ void check_clear_all_button (void) {
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
     for (j=modes-1;j>=0;j--) {
-      if (rte_keymode_valid(i+1,j)) hasone=TRUE;
+      if (rte_keymode_valid(i+1,j,TRUE)) hasone=TRUE;
     }
   }
 
@@ -652,7 +652,7 @@ on_clear_clicked (GtkButton *button, gpointer user_data) {
   gtk_entry_set_text (GTK_ENTRY(combo_entries[idx]),g_strdup(""));
   type_label_set_text(key,i);
 
-  if (!rte_keymode_valid(key+1,0)) rtew_set_keych(key,FALSE);
+  if (!rte_keymode_valid(key+1,0,TRUE)) rtew_set_keych(key,FALSE);
 
   check_clear_all_button();
 
@@ -758,9 +758,9 @@ fx_changed (GtkItem *item, gpointer user_data) {
     return;
   }
 
-  if (!rte_keymode_valid(key+1,mode)) {
+  if (!rte_keymode_valid(key+1,mode,TRUE)) {
     for (i=mode-1;i>=0;i--) {
-      if (rte_keymode_valid(key+1,i)) {
+      if (rte_keymode_valid(key+1,i,TRUE)) {
 	mode=i+1;
 	i=-1;
       }

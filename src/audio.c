@@ -257,6 +257,8 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
 
   register double scale;
 
+  size_t curval;
+
   pthread_mutex_lock(&mainw->abuf_mutex);
   if (mainw->jackd->read_abuf==-1) {
     pthread_mutex_unlock(&mainw->abuf_mutex);
@@ -284,7 +286,7 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
     for (i=0;i<nsamps;i++) {
       // process each sample
 
-      if (ioffs+src_offset_i>=abuf->samples_filled) {
+      if ((curval=ioffs+src_offset_i)>=abuf->samples_filled) {
 	// current buffer is full
 	break;
       }
@@ -296,7 +298,7 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
 	  return samples_out;
 	}
 	if (xchan>=abuf->achans) xchan=0; 
-	obuf[j][offs+i]=abuf->data.floatbuf[xchan][ioffs+src_offset_i]*vol;
+	obuf[j][offs+i]=abuf->data.floatbuf[xchan][curval]*vol;
 	pthread_mutex_unlock(&mainw->abuf_mutex);
 	xchan++;
       }
@@ -358,12 +360,14 @@ long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate)
   register int i,j;
 
   register double scale;
+  size_t curval;
 
   pthread_mutex_lock(&mainw->abuf_mutex);
   if (mainw->pulsed->read_abuf==-1) {
     pthread_mutex_unlock(&mainw->abuf_mutex);
     return 0;
   }
+
   abuf=mainw->pulsed->abufs[mainw->pulsed->read_abuf];
   in_arate=abuf->arate;
   pthread_mutex_unlock(&mainw->abuf_mutex);
@@ -387,11 +391,12 @@ long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate)
     for (i=0;i<nsampsx;i+=nchans) {
       // process each sample
 
-      if (ioffs+src_offset_i>=abuf->samples_filled) {
+      if ((curval=ioffs+src_offset_i)>=abuf->samples_filled) {
 	// current buffer is drained
 	break;
       }
       xchan=0;
+      curval*=abuf->achans;
       for (j=0;j<nchans;j++) {
 	pthread_mutex_lock(&mainw->abuf_mutex);
 	if (mainw->pulsed->read_abuf<0) {
@@ -399,19 +404,17 @@ long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate)
 	  return samps;
 	}
 	if (xchan>=abuf->achans) xchan=0;
-
-	obuf[offs+i+j]=abuf->data.int16buf[(ioffs+src_offset_i)*abuf->achans+xchan];
+	obuf[(offs++)]=abuf->data.int16buf[curval+xchan];
 	pthread_mutex_unlock(&mainw->abuf_mutex);
 	xchan++;
       }
       src_offset_i=(int)(src_offset_f+=scale);
       samps++;
-      samples_out++;
     }
     
     abuf->start_sample=ioffs+src_offset_i;
     nsamps-=samps;
-    offs+=samps*nchans;
+    samples_out+=samps;
 
     if (nsamps>0) {
       // buffer was drained, move on to next buffer

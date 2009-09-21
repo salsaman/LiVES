@@ -1343,13 +1343,14 @@ gboolean switch_aud_to_jack(void) {
 
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed_read!=NULL) {
-    pulse_close_client(mainw->pulsed_read,FALSE);
+    pulse_close_client(mainw->pulsed_read);
     mainw->pulsed_read=NULL;
   }
 
   if (mainw->pulsed!=NULL) {
-    pulse_close_client(mainw->pulsed,TRUE);
+    pulse_close_client(mainw->pulsed);
     mainw->pulsed=NULL;
+    pulse_shutdown();
   }
 #endif
 
@@ -1428,13 +1429,14 @@ void switch_aud_to_sox(void) {
 
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed_read!=NULL) {
-    pulse_close_client(mainw->pulsed_read,FALSE);
+    pulse_close_client(mainw->pulsed_read);
     mainw->pulsed_read=NULL;
   }
 
   if (mainw->pulsed!=NULL) {
-    pulse_close_client(mainw->pulsed,TRUE);
+    pulse_close_client(mainw->pulsed);
     mainw->pulsed=NULL;
+    pulse_shutdown();
   }
 #endif
 
@@ -1478,13 +1480,14 @@ switch_aud_to_mplayer(void) {
 
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed_read!=NULL) {
-    pulse_close_client(mainw->pulsed_read,FALSE);
+    pulse_close_client(mainw->pulsed_read);
     mainw->pulsed_read=NULL;
   }
 
   if (mainw->pulsed!=NULL) {
-    pulse_close_client(mainw->pulsed,TRUE);
+    pulse_close_client(mainw->pulsed);
     mainw->pulsed=NULL;
+    pulse_shutdown();
   }
 #endif
 

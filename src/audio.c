@@ -780,6 +780,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (zavel<0.) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
     
       bytes_read=read(in_fd[track],in_buff,tbytes);
+      //g_print("read %ld bytes\n",bytes_read);
 
       if (zavel<0.) seekstart[track]-=tbytes;
 
@@ -822,7 +823,6 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 	gdouble *vis=get_track_visibility_at_tc(mainw->multitrack->event_list,nfiles,mainw->multitrack->opts.back_audio_tracks,tc,&shortcut,mainw->multitrack->opts.audio_bleedthru);
 	
 	// locate the master volume parameter, and multiply all values by vis[track]
-
 	weed_apply_audio_effects(mainw->filter_map,chunk_float_buffer,mainw->multitrack->opts.back_audio_tracks,out_achans,blocksize,out_arate,tc,vis);
 	
 	g_free(vis);

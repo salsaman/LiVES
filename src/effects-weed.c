@@ -942,7 +942,7 @@ void weed_reinit_all(void) {
   weed_plant_t *instance;
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
-    if (rte_key_valid(i)) {
+    if (rte_key_valid(i+1,TRUE)) {
       if (mainw->rte&(GU641<<i)) {
 	mainw->osc_block=TRUE;
 	if (key_to_instance[i][key_modes[i]]==-1) continue;
@@ -1781,10 +1781,11 @@ gint weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtr
 
   // check instance exists, and interpolate parameters
   if (weed_plant_has_leaf(init_event,"host_tag")) {
+
     gchar *keystr=weed_get_string_value(init_event,"host_tag",&error);
     int key=atoi(keystr);
     weed_free(keystr);
-    if (rte_key_valid (key)) {
+    if (rte_key_valid (key+1,FALSE)) {
       if (key_to_instance[key][key_modes[key]]==-1) return FILTER_ERROR_INVALID_INSTANCE;
       instance=weed_instances[key_to_instance[key][key_modes[key]]];
       if (instance==NULL) return FILTER_ERROR_INVALID_INSTANCE;
@@ -2019,7 +2020,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	keystr=weed_get_string_value(init_event,"host_tag",&error);
 	key=atoi(keystr);
 	weed_free(keystr);
-	if (rte_key_valid (key)) {
+	if (rte_key_valid (key+1,FALSE)) {
 	  if (key_to_instance[key][key_modes[key]]==-1) continue;
 	  instance=weed_instances[key_to_instance[key][key_modes[key]]];
 	  if (instance==NULL) continue;
@@ -2067,7 +2068,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   // Effects are applied in key order, in tracks are 0 and 1, out track is 0
   else {
     for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
-      if (rte_key_valid(i)) {
+      if (rte_key_valid(i+1,TRUE)) {
 	if (mainw->rte&(GU641<<i)) {
 	  mainw->osc_block=TRUE;
 	  if (key_to_instance[i][key_modes[i]]==-1) continue;
@@ -3310,7 +3311,7 @@ gboolean weed_init_effect(int hotkey) {
     fg_modeswitch=TRUE;
   }
 
-  if (!rte_key_valid (hotkey)) {
+  if (!rte_key_valid (hotkey+1,FALSE)) {
     return FALSE;
   }
 
@@ -3579,7 +3580,7 @@ void weed_deinit_all(void) {
     mainw->last_grabable_effect=-1;
   }
 
-  for (i=0;i<FX_KEYS_MAX_VIRTUAL&&rte_key_valid (i)&&i<num_weed_filters;i++) {
+  for (i=0;rte_key_valid (i+1,TRUE);i++) {
     if (mainw->playing_file==-1&&rte_window!=NULL) rtew_set_keych(i,FALSE);
     if ((mainw->rte&(GU641<<i))) {
       if ((idx=key_to_instance[i][key_modes[i]])!=-1&&weed_instances[idx]!=NULL) {
@@ -4406,7 +4407,7 @@ gchar *rte_keymode_get_type (gint key, gint mode) {
   gint idx,inst_idx;
 
   key--;
-  if (!rte_keymode_valid(key+1,mode)) return g_strdup("");
+  if (!rte_keymode_valid(key+1,mode,TRUE)) return g_strdup("");
 
   if ((idx=key_to_fx[key][mode])==-1) return type;
   if ((filter=weed_filters[idx])==NULL) return type;
@@ -4500,14 +4501,15 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
 
 /////////////////////////////////////////////////////////////////////////////
 
-gboolean rte_key_valid (int hotkey) {
-  if (hotkey<0||hotkey>=FX_KEYS_MAX_VIRTUAL) return FALSE;
-  if (key_to_fx[hotkey][key_modes[hotkey]]==-1) return FALSE;
+gboolean rte_key_valid (int key, gboolean is_userkey) {
+  key--;
+  if (key<0||(is_userkey&&key>=FX_KEYS_MAX_VIRTUAL)||key>=FX_KEYS_MAX) return FALSE;
+  if (key_to_fx[key][key_modes[key]]==-1) return FALSE;
   return TRUE;
 }
 
-gboolean rte_keymode_valid (gint key, gint mode) {
-  if (key<1||key>FX_KEYS_MAX_VIRTUAL||mode<0||mode>=MAX_MODES_PER_KEY) return FALSE;
+gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey) {
+  if (key<1||(is_userkey&&key>FX_KEYS_MAX_VIRTUAL)||key>FX_KEYS_MAX||mode<0||mode>=MAX_MODES_PER_KEY) return FALSE;
   if (key_to_fx[--key][mode]==-1) return FALSE;
   return TRUE;
 }
@@ -4535,7 +4537,7 @@ weed_plant_t *rte_keymode_get_instance(gint key, gint mode) {
   weed_plant_t *inst;
 
   key--;
-  if (!rte_keymode_valid(key+1,mode)) return NULL;
+  if (!rte_keymode_valid(key+1,mode,FALSE)) return NULL;
   mainw->osc_block=TRUE;
   if (key_to_instance[key][mode]==-1) {
     mainw->osc_block=FALSE;
@@ -4549,7 +4551,7 @@ weed_plant_t *rte_keymode_get_instance(gint key, gint mode) {
 
 weed_plant_t *rte_keymode_get_filter(gint key, gint mode) {
   key--;
-  if (!rte_keymode_valid(key+1,mode)) return NULL;
+  if (!rte_keymode_valid(key+1,mode,FALSE)) return NULL;
   return weed_filters[key_to_fx[key][mode]];
 }
 
@@ -4572,7 +4574,7 @@ gchar *weed_filter_get_name(gint idx) {
 gchar *rte_keymode_get_filter_name (gint key, gint mode) {
   // return value should be g_free'd after use
   key--;
-  if (!rte_keymode_valid(key+1,mode)) return g_strdup("");
+  if (!rte_keymode_valid(key+1,mode,TRUE)) return g_strdup("");
   return (weed_filter_get_name(key_to_fx[key][mode]));
 }
 
@@ -4585,7 +4587,7 @@ gchar *rte_keymode_get_plugin_name(gint key, gint mode) {
   gchar *retval;
 
   key--;
-  if (!rte_keymode_valid(key+1,mode)) return g_strdup("");
+  if (!rte_keymode_valid(key+1,mode,TRUE)) return g_strdup("");
 
   filter=weed_filters[key_to_fx[key][mode]];
   plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);

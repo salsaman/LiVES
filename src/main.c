@@ -1000,8 +1000,13 @@ static void lives_init(_ign_opts *ign_opts) {
 #ifndef IS_DARWIN
 	  com=g_strdup_printf("echo \"%s -Z -d alsa\">%s",jackd_loc,prefs->jack_aserver);
 #else
+#ifdef IS_SOLARIS
+	  // use OSS on Darwin
+	  com=g_strdup_printf("echo \"%s -Z -d oss\">%s",jackd_loc,prefs->jack_aserver);
+#else
 	  // use coreaudio on Darwin
 	  com=g_strdup_printf("echo \"%s -Z -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
+#endif
 #endif
 	  dummyvar=system(com);
 	  g_free(com);

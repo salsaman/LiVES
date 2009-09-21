@@ -92,7 +92,8 @@ void restore_weed_instances(void);
 // "key" here starts at 1, "mode" starts at 0
 // TODO*** - use 1 based key for consistency
 
-gboolean rte_keymode_valid (gint key, gint mode); // returns TRUE if a filter_class is bound to key/mode
+gboolean rte_key_valid (gint key, gboolean is_userkey); // returns TRUE if there is a filter bound to active mode of hotkey
+gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey); // returns TRUE if a filter_class is bound to key/mode
 gint rte_keymode_get_filter_idx(gint key, gint mode); // returns filter_class index of key/mode (or -1 if no filter bound)
 gchar *rte_keymode_get_filter_name (gint key, gint mode); // returns name of filter_class bound to key/mode (or "")
 gchar *rte_keymode_get_plugin_name(gint key, gint mode); // returns name of plugin package containing filter_class (or "")
@@ -120,7 +121,6 @@ gint rte_get_numfilters(void);
 
 
 // "hotkey" here starts at 0
-gboolean rte_key_valid (gint hotkey); // returns TRUE if there is a filter bound to active mode of hotkey
 int weed_add_effectkey_by_idx (gint hotkey, int idx); // see description
 
 // returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator

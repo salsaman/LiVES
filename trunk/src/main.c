@@ -1132,7 +1132,7 @@ void do_start_messages(void) {
 #ifdef ENABLE_JACK
   d_print(_("Compiled with jack support, good !\n"));
 #endif
-#ifdef HAS_PULSE_AUDIO
+#ifdef HAVE_PULSE_AUDIO
   d_print(_("Compiled with pulse audio support, wonderful !\n"));
 #endif
 #endif

@@ -70,8 +70,9 @@ lives_exit (void) {
     
     if (!mainw->only_close) {
 #ifdef HAVE_PULSE_AUDIO
-      if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed,TRUE);
-      if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read,FALSE);
+      if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
+      if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read);
+      pulse_shutdown();
 #endif
 #ifdef ENABLE_JACK
       lives_jack_end();
@@ -2653,7 +2654,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	  jack_get_rec_avals(mainw->jackd);
 	}
 #endif
-#ifdef HAS_PULSE_AUDIO
+#ifdef HAVE_PULSE_AUDIO
 	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
 	  pulse_get_rec_avals(mainw->pulsed);
 	}

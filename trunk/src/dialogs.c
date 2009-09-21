@@ -348,9 +348,9 @@ gboolean process_one (gboolean visible) {
 	fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
       }
 #endif
-#ifdef HAS_PULSE_AUDIO
+#ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->abufs_to_fill>0) {
-	mainw->pulsedd->abufs[mainw->write_abuf]->samples_filled=0;
+	mainw->pulsed->abufs[mainw->write_abuf]->samples_filled=0;
 	fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
       }
 #endif

@@ -98,6 +98,8 @@ typedef struct {
 
 
 
+// TODO - rationalise names
+
 void lives_pulse_init (void); // init server, mainloop and context
 
 int pulse_audio_init(void);  // init driver vars.
@@ -106,15 +108,24 @@ int pulse_audio_read_init(void); // ditto
 pulse_driver_t *pulse_get_driver(gboolean is_output); // get driver refs
 
 int pulse_driver_activate(pulse_driver_t *); // connect to server
-void pulse_close_client(pulse_driver_t *, gboolean shutdown); //
+void pulse_close_client(pulse_driver_t *); // 
+
+void pulse_shutdown(void); // shudown server, mainloop, context
+
+
 
 
 // utils
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); // pull last msg from msgq, or return NULL
 
-gint64 lives_pulse_get_time(pulse_driver_t *); // get time from pa, in 10^-8 seconds
-void pulse_audio_seek_frame (pulse_driver_t *, gint frame); // seek to (video) frame
 long pulse_audio_seek_bytes (pulse_driver_t *, long bytes); // seek to byte position
+
+gint64 lives_pulse_get_time(pulse_driver_t *); // get time from pa, in 10^-8 seconds
+
+
+//////////////////////
+
+void pulse_audio_seek_frame (pulse_driver_t *, gint frame); // seek to (video) frame
 
 void pulse_get_rec_avals(pulse_driver_t *);
 

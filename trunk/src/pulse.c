@@ -17,8 +17,8 @@
 static pulse_driver_t pulsed;
 static pulse_driver_t pulsed_reader;
 
-static pa_threaded_mainloop *pa_mloop;
-static pa_context *pcon;
+static pa_threaded_mainloop *pa_mloop=NULL;
+static pa_context *pcon=NULL;
 
 static guint pulse_server_rate=0;
 
@@ -37,6 +37,7 @@ static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *user
 
 void lives_pulse_init (void) {
   // startup pulse audio server
+  if (pa_mloop!=NULL) return;
   pa_mloop=pa_threaded_mainloop_new();
   pcon=pa_context_new(pa_threaded_mainloop_get_api(pa_mloop),"LiVES");
   pa_context_connect(pcon,NULL,0,NULL);
@@ -456,21 +457,22 @@ static int pulse_audio_read (nframes_t nframes, void *arg) {
 */
 
 
-void pulse_shutdown(void* arg) {
+void pulse_shutdown(void) {
+  if (pa_mloop!=NULL) pa_threaded_mainloop_stop(pa_mloop);
+  if (pcon!=NULL) pa_context_disconnect(pcon);
+  if (pa_mloop!=NULL) pa_threaded_mainloop_free(pa_mloop);
 
-
+  pcon=NULL;
+  pa_mloop=NULL;
 }
 
 
-void pulse_close_client(pulse_driver_t *pdriver, gboolean shutdown) {
-  pa_proplist_free(pdriver->pa_props);
-  pa_stream_disconnect(pdriver->pstream);
 
-  if (shutdown) {
-    pa_threaded_mainloop_stop(pdriver->mloop);
-    pa_context_disconnect(pdriver->con);
-    pa_threaded_mainloop_free(pdriver->mloop);
-  }
+void pulse_close_client(pulse_driver_t *pdriver) {
+  if (pdriver->pa_props!=NULL) pa_proplist_free(pdriver->pa_props);
+  if (pdriver->pstream!=NULL) pa_stream_disconnect(pdriver->pstream);
+  pdriver->pa_props=NULL;
+  pdriver->pstream=NULL;
 }
 
 
@@ -504,7 +506,8 @@ int pulse_audio_init(void) {
   pulsed.is_output=TRUE;
   pulsed.read_abuf=-1;
   pulsed.is_paused=FALSE;
-
+  pulsed.pstream=NULL;
+  pulsed.pa_props=NULL;
   return 0;
 }
 
@@ -531,10 +534,15 @@ int pulse_audio_read_init(void) {
   pulsed_reader.mute=FALSE;
   pulsed_reader.is_output=FALSE;
   pulsed_reader.is_paused=FALSE;
+  pulsed_reader.pstream=NULL;
+  pulsed_reader.pa_props=NULL;
 
   return 0;
 }
 
+
+// wait 5 seconds to startup
+#define PULSE_START_WAIT 5000000
 
 
 int pulse_driver_activate(pulse_driver_t *pdriver) {
@@ -547,6 +555,11 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_buffer_attr pa_battr;
 
   pa_operation *pa_op;
+
+  struct timeval otv;
+  int64_t ntime=0,stime;
+
+
 
   pdriver->pa_props=pa_proplist_new();
 
@@ -577,10 +590,28 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
   pdriver->state=pa_context_get_state(pdriver->con);
 
-  while (pdriver->state!=PA_CONTEXT_READY) {
+  gettimeofday(&otv, NULL);
+  stime=otv.tv_sec*1000000000+otv.tv_usec;
+
+  while (pdriver->state!=PA_CONTEXT_READY&&ntime<PULSE_START_WAIT) {
     g_usleep(prefs->sleep_time);
     sched_yield();
     pdriver->state=pa_context_get_state(pdriver->con);
+    gettimeofday(&otv, NULL);
+    ntime=(otv.tv_sec*1000000000+otv.tv_usec-stime)>>10;
+  }
+
+  if (ntime>=PULSE_START_WAIT) {
+    g_printerr("%s",_("\nUnable to connect to pulse audio server\n"));
+    if (capable->has_sox) {
+      do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\n"));
+      switch_aud_to_sox();
+    }
+    else {
+      do_error_dialog(_("\nUnable to connect to pulse audio server.\n"));
+      lives_exit();
+    }
+    return 1;
   }
 
   pa_op=pa_context_get_server_info(pdriver->con,pulse_server_cb,NULL);
@@ -612,6 +643,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
   return 0;
 }
+
+
+///////////////////////////////////////////////////////////////
 
 
 pulse_driver_t *pulse_get_driver(gboolean is_output) {

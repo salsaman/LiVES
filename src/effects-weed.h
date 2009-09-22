@@ -89,8 +89,7 @@ void restore_weed_instances(void);
 
 
 //////////////////////////////////////////////////////////
-// "key" here starts at 1, "mode" starts at 0
-// TODO*** - use 1 based key for consistency
+// "WARNING !! key" here starts at 1, "mode" starts at 0
 
 gboolean rte_key_valid (gint key, gboolean is_userkey); // returns TRUE if there is a filter bound to active mode of hotkey
 gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey); // returns TRUE if a filter_class is bound to key/mode
@@ -104,11 +103,17 @@ weed_plant_t *rte_keymode_get_filter(gint key, gint mode); // returns filter_cla
 gboolean weed_delete_effectkey (gint key, gint mode); // unbinds a filter_class from a key/mode
 int weed_add_effectkey (gint key, const gchar *hashname, gboolean fullname); // bind a filter_class to key/mode using its hashname
 
+int weed_add_effectkey_by_idx (gint key, int idx); // see description
 
 int rte_key_getmode (gint key); // returns current active mode for a key (or -1)
 int rte_key_getmaxmode(gint key); // returns highest mode which is set
 
 gboolean rte_key_setmode (gint key, gint newmode); // set mode for a given key; if key==0 then the active key is used
+
+// returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
+gint rte_switch_keymode (gint key, gint mode, const gchar *hashname);
+
+
 
 
 /////////////////////////////////////////////////////////////
@@ -118,13 +123,6 @@ GList *weed_get_all_names (gshort list_type);
 gint rte_get_numfilters(void);
 
 /////////////////////////////////////////////////////////
-
-
-// "hotkey" here starts at 0
-int weed_add_effectkey_by_idx (gint hotkey, int idx); // see description
-
-// returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
-gint rte_switch_keymode (gint hotkey, gint mode, const gchar *hashname);
 
 
 

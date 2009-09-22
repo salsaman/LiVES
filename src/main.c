@@ -1065,7 +1065,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	  splash_msg(_("Starting pulse audio server..."),.8);
 	  lives_pulse_init();
 	  pulse_audio_init();
-	  // pulse_audio_read_init();
+	  pulse_audio_read_init();
 	  mainw->pulsed=pulse_get_driver(TRUE);
 	  mainw->pulsed->whentostop=&mainw->whentostop;
 	  mainw->pulsed->cancelled=&mainw->cancelled;

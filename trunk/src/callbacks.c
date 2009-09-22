@@ -8236,8 +8236,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 
   mainw->effects_paused=FALSE;
 
-  if (type==1&&mainw->files[old_file]->achans==0) {
-    // record to clip, clip has no audio currently, so we back up old values and set new values
+  if (type==1) {
     oachans=mainw->files[old_file]->achans;
     oarate=mainw->files[old_file]->arate;
     oarps=mainw->files[old_file]->arps;
@@ -8266,7 +8265,6 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
   if (mainw->cancelled==CANCEL_USER) {
     mainw->cancelled=CANCEL_NONE;
     if (type==1) {
-      // clip had no original audio, so restore old values
       mainw->files[old_file]->arps=oarps;
       mainw->files[old_file]->arate=oarate;
       mainw->files[old_file]->achans=oachans;

@@ -428,7 +428,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	/* 16 bit input samples */
 	/* resample as we go */
 	else {
-	  sample_move_d16_d16((short*)jackd->sound_buffer + ((nframes - jackFramesAvailable) * jackd->bytes_per_channel * jackd->num_output_channels) / sizeof(short), (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, jackd->num_output_channels, jackd->num_input_channels, jackd->reverse_endian);
+	  sample_move_d16_d16((short*)jackd->sound_buffer + ((nframes - jackFramesAvailable) * jackd->bytes_per_channel * jackd->num_output_channels) / sizeof(short), (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, jackd->num_output_channels, jackd->num_input_channels, jackd->reverse_endian, FALSE);
 	}
 	
 	jackd->frames_written+=numFramesToWrite;

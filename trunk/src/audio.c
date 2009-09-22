@@ -77,7 +77,7 @@ void sample_move_d8_d16(short *dst, unsigned char *src,
 
 /* convert from any number of source channels to any number of destination channels */
 void sample_move_d16_d16(short *dst, short *src,
-			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian) {
+			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_endian, gboolean swap_sign) {
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
@@ -95,10 +95,10 @@ void sample_move_d16_d16(short *dst, short *src,
   // take care of (rounding errors ?)
   src_end=src+tbytes/sizeof(short)-nSrcChannels;
 
-  while(nsamples--) {
+  while (nsamples--) {
 
 
-    if ((nSrcCount = nSrcChannels)==(nDstCount = nDstChannels)&&!swap_endian) {
+    if ((nSrcCount = nSrcChannels)==(nDstCount = nDstChannels)&&!swap_endian&&!swap_sign) {
       // same number of channels
 
       ptr=src+src_offset_i;
@@ -116,7 +116,7 @@ void sample_move_d16_d16(short *dst, short *src,
       ccount=0;
 
       /* loop until all of our destination channels are filled */
-      while(nDstCount) {
+      while (nDstCount) {
 	nSrcCount--;
 	nDstCount--;
 	
@@ -129,9 +129,9 @@ void sample_move_d16_d16(short *dst, short *src,
 	}
 
 	/* copy the data over */
-	if (!swap_endian) *(dst++) = *ptr;
+	if (!swap_endian) *(dst++) = swap_sign?(uint16_t)(*ptr+SAMPLE_MAX_16BITI):*ptr;
 	else {
-	  *(dst++)=(((*ptr)&0x00FF)<<8)+((*ptr)>>8);
+	  *(dst++)=swap_sign?(uint16_t)(((((*ptr)&0x00FF)<<8)+((*ptr)>>8))+SAMPLE_MAX_16BITI):(((*ptr)&0x00FF)<<8)+((*ptr)>>8);
 	}
 
 	ccount++;
@@ -148,6 +148,68 @@ void sample_move_d16_d16(short *dst, short *src,
     src_offset_i=(int)(src_offset_f+=scale)*nSrcChannels;
   }
 }
+
+
+/* convert from any number of source channels to any number of destination channels - 8 bit output */
+void sample_move_d16_d8(uint8_t *dst, short *src,
+			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_endian, gboolean swap_sign) {
+  register int nSrcCount, nDstCount;
+  register float src_offset_f=0.f;
+  register int src_offset_i=0;
+  register int ccount=0;
+  short *ptr;
+  short *src_end;
+
+  if(!nSrcChannels) return;
+
+  if (scale<0.f) {
+    src_offset_f=((float)(nsamples)*(-scale)-1.f);
+    src_offset_i=(int)src_offset_f*nSrcChannels;
+  }
+
+  // take care of (rounding errors ?)
+  src_end=src+tbytes/sizeof(short)-nSrcChannels;
+
+  while (nsamples--) {
+    nSrcCount = nSrcChannels;
+    nDstCount = nDstChannels;
+
+    ccount=0;
+    
+    /* loop until all of our destination channels are filled */
+    while(nDstCount) {
+      nSrcCount--;
+      nDstCount--;
+      
+      ptr=src+ccount+src_offset_i;
+      if (scale<0.f) {
+	ptr=ptr>src?ptr:src;
+      }
+      else {
+	ptr=ptr<src_end?ptr:src_end;
+      }
+      
+      /* copy the data over */
+      if (!swap_endian) *(dst++) = swap_sign?(uint8_t)(((int8_t)(*ptr>>8))+128):(int8_t)(*ptr>>8);
+	else {
+	  *(dst++)=swap_sign?(uint8_t)(((int8_t)(*ptr&0x00FF))+128):(int8_t)(*ptr&0x00FF);
+	}
+
+	ccount++;
+	
+	/* if we ran out of source channels but not destination channels */
+	/* then start the src channels back where we were */
+	if(!nSrcCount && nDstCount) {
+	  ccount=0;
+	  nSrcCount = nSrcChannels;
+	}
+      }
+
+    /* advance the the position */
+    src_offset_i=(int)(src_offset_f+=scale)*nSrcChannels;
+  }
+}
+
 
 /* convert from 16 bit to floating point */
 /* channels to a buffer that will hold a single channel stream */
@@ -793,7 +855,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 	sample_move_d8_d16 (holding_buff,(guchar *)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track]);
       }
       else {
-	sample_move_d16_d16(holding_buff,(short*)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track],in_reverse_endian[track]);
+	sample_move_d16_d16(holding_buff,(short*)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track],in_reverse_endian[track],FALSE);
       }
 
       g_free(in_buff);
@@ -1354,7 +1416,7 @@ void free_jack_audio_buffers(void) {
       }
       g_free(mainw->jackd->abufs[i]->data.floatbuf);
       g_free(mainw->jackd->abufs[i]);
-    }
+   }
   }
 #endif
 }

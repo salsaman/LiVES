@@ -20,6 +20,8 @@ static pulse_driver_t pulsed_reader;
 static pa_threaded_mainloop *pa_mloop=NULL;
 static pa_context *pcon=NULL;
 
+static pa_cvolume out_vol;
+
 static guint pulse_server_rate=0;
 
 extern gint weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, long nsamps, gdouble arate, weed_timecode_t tc, double *vis);
@@ -69,7 +71,7 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
 }
 
 
-static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
+static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // PULSE AUDIO calls this periodically to get the next audio buffer
 
   static float old_volume=-1.;
@@ -92,7 +94,6 @@ static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
 
   size_t offs=0;
 
-  pa_cvolume myvol;
   pa_volume_t pavol;
 
   if (xbytes>nbytes) xbytes=nbytes;
@@ -339,7 +340,7 @@ static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
 	sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans);
       }
       else {
-	sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian);
+	sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian,FALSE);
       }
     }
 
@@ -354,13 +355,12 @@ static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // playback from memory or file
 
   if (mainw->volume!=old_volume) {
-	pavol=pa_sw_volume_from_linear(mainw->volume);
-	pa_cvolume_set(&myvol,pulsed->out_achans,pavol);
-	old_volume=pavol;
+    pavol=pa_sw_volume_from_linear(mainw->volume);
+    pa_cvolume_set(&out_vol,pulsed->out_achans,pavol);
+    pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&out_vol,NULL,NULL);
+    old_volume=pavol;
   }
 
-  pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&myvol,NULL,NULL);
-  
   while (nbytes>0) {
     if (nbytes<xbytes) xbytes=nbytes;
       
@@ -415,30 +415,35 @@ static void pulse_audio_process (pa_stream *pstream, size_t nbytes, void *arg) {
 
 
 
-/*
-static int pulse_audio_read (nframes_t nframes, void *arg) {
+static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // read nframes from pulse buffer, and then write to mainw->aud_rec_fd
   pulse_driver_t* pulsed = (pulse_driver_t*)arg;
   void *holding_buff;
-  float *in_buffer[pulsed->num_input_channels];
   float out_scale=(float)pulsed->in_arate/(float)afile->arate;
-  int out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
-  int i;
-  long frames_out;
+  size_t frames_out;
+  void *data;
+  size_t rbytes;
 
-  if (mainw->effects_paused) return 0; // pause during record
+  int swap_sign=afile->signed_endian&AFORM_UNSIGNED;
 
-  holding_buff=malloc(nframes*afile->achans*afile->asampsize/8);
+  if (mainw->effects_paused) return; // pause during record
 
-  if (nframes != pulsed->chunk_size) pulsed->chunk_size = nframes;
+  pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
+  frames_out=(rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans)/out_scale;
 
-  for (i=0;i<pulsed->num_input_channels;i++) {
-    in_buffer[i] = (float *) jack_port_get_buffer(pulsed->input_port[i], nframes);
+  holding_buff=malloc(frames_out*afile->achans*(afile->asampsize>>3));
+
+  if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
+
+  if (afile->asampsize==16) {
+    sample_move_d16_d16((short *)holding_buff,(short*)data,frames_out,rbytes,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
   }
-
-  frames_out=sample_move_float_int((void *)holding_buff,in_buffer,nframes,out_scale,afile->achans,afile->asampsize,out_unsigned,pulsed->reverse_endian,1.);
-
-  pulsed->frames_written+=nframes;
+  else {
+    sample_move_d16_d8((uint8_t *)holding_buff,(short*)data,frames_out,rbytes,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
+  }
+    
+  pa_stream_drop(pulsed->pstream);
+  pulsed->frames_written+=frames_out;
 
   if (mainw->rec_samples>0) {
     if (frames_out>mainw->rec_samples) frames_out=mainw->rec_samples;
@@ -451,10 +456,7 @@ static int pulse_audio_read (nframes_t nframes, void *arg) {
 
   if (mainw->rec_samples==0&&mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_KEEP; // we wrote the required #
 
-  return 0;
 }
-
-*/
 
 
 void pulse_shutdown(void) {
@@ -469,8 +471,10 @@ void pulse_shutdown(void) {
 
 
 void pulse_close_client(pulse_driver_t *pdriver) {
-  if (pdriver->pa_props!=NULL) pa_proplist_free(pdriver->pa_props);
+  pa_threaded_mainloop_lock(pa_mloop);
   if (pdriver->pstream!=NULL) pa_stream_disconnect(pdriver->pstream);
+  pa_threaded_mainloop_unlock(pa_mloop);
+  if (pdriver->pa_props!=NULL) pa_proplist_free(pdriver->pa_props);
   pdriver->pa_props=NULL;
   pdriver->pstream=NULL;
 }
@@ -529,8 +533,8 @@ int pulse_audio_read_init(void) {
   pulsed_reader.chunk_size=0;
   pulsed_reader.pulsed_died=FALSE;
   gettimeofday(&pulsed_reader.last_reconnect_attempt, 0);
-  pulsed_reader.out_achans=2;
-  pulsed_reader.out_asamps=16;
+  pulsed_reader.in_achans=2;
+  pulsed_reader.in_asamps=16;
   pulsed_reader.mute=FALSE;
   pulsed_reader.is_output=FALSE;
   pulsed_reader.is_paused=FALSE;
@@ -559,7 +563,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   struct timeval otv;
   int64_t ntime=0,stime;
 
-
+  pa_volume_t pavol;
 
   pdriver->pa_props=pa_proplist_new();
 
@@ -584,7 +588,12 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   else pdriver->out_endian=AFORM_LITTLE_ENDIAN;
 
   pa_battr.maxlength=(uint32_t)-1;
-  pa_battr.tlength=2048;
+  if (pdriver->is_output) {
+    pa_battr.tlength=2048;
+  }
+  else {
+    pa_battr.tlength=65536;
+  }
   pa_battr.prebuf=(uint32_t)-1;
   pa_battr.minreq=(uint32_t)-1;
 
@@ -614,29 +623,37 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     return 1;
   }
 
-  pa_op=pa_context_get_server_info(pdriver->con,pulse_server_cb,NULL);
-
-  while (pa_operation_get_state(pa_op)!=PA_OPERATION_DONE) {
-    g_usleep(prefs->sleep_time);
+  if (pulse_server_rate==0) {
+    pa_op=pa_context_get_server_info(pdriver->con,pulse_server_cb,NULL);
+    
+    while (pa_operation_get_state(pa_op)!=PA_OPERATION_DONE) {
+      g_usleep(prefs->sleep_time);
+    }
   }
 
-  pa_spec.rate=pdriver->out_arate=pulse_server_rate;
+  pa_spec.rate=pdriver->out_arate=pdriver->in_arate=pulse_server_rate;
 
   pdriver->pstream=pa_stream_new_with_proplist(pdriver->con,pa_clientname,&pa_spec,&pa_map,pdriver->pa_props);
 
+  if (pdriver->is_output) {
+
+    pavol=pa_sw_volume_from_linear(mainw->volume);
+    pa_cvolume_set(&out_vol,pdriver->out_achans,pavol);
+
 #ifdef PA_STREAM_START_UNMUTED
-    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY|PA_STREAM_INTERPOLATE_TIMING,NULL,NULL);
+    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY,&out_vol,NULL);
 #else
-    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,PA_STREAM_ADJUST_LATENCY|PA_STREAM_INTERPOLATE_TIMING,NULL,NULL);
+    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,PA_STREAM_ADJUST_LATENCY,&out_vol,NULL);
 #endif
 
-  if (pdriver->is_output) {
     // set write callback
-    pa_stream_set_write_callback(pdriver->pstream,pulse_audio_process,pdriver);
+    pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process,pdriver);
   }
   else {
-    // set write callback
-    //pa_stream_set_read_callback(pstream,pulse_audio_process,pdriver);
+    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,PA_STREAM_ADJUST_LATENCY);
+
+    // set read callback
+    pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);
   }
 
   g_free(mypid);

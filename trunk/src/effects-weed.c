@@ -4755,7 +4755,7 @@ gboolean rte_key_setmode (gint key, gint newmode) {
 }
 
 
-int weed_add_effectkey_by_idx (gint hotkey, int idx) {
+int weed_add_effectkey_by_idx (gint key, int idx) {
   // we will add a filter_class at the next free slot for key, and return the slot number
   // if idx is -1 (probably meaning the filter was not found), we return -1
   // if all slots are full, we return -3
@@ -4768,14 +4768,16 @@ int weed_add_effectkey_by_idx (gint hotkey, int idx) {
 
   if (idx==-1) return -1;
 
+  key--;
+
   for (i=0;i<MAX_MODES_PER_KEY;i++) {
-    if (key_to_fx[hotkey][i]!=-1) {
-      if (enabled_in_channels(weed_filters[key_to_fx[hotkey][i]],FALSE)==0) has_gen=TRUE;
+    if (key_to_fx[key][i]!=-1) {
+      if (enabled_in_channels(weed_filters[key_to_fx[key][i]],FALSE)==0) has_gen=TRUE;
       else has_non_gen=TRUE;
     }
     else {
       if ((enabled_in_channels(weed_filters[idx],FALSE)==0&&has_non_gen)||(enabled_in_channels(weed_filters[idx],FALSE)>0&&has_gen)) return -2;
-      key_to_fx[hotkey][i]=idx;
+      key_to_fx[key][i]=idx;
       return i;
     }
   }

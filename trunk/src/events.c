@@ -2863,7 +2863,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
     idx=weed_get_idx_for_hashname (filter_name,TRUE);
     weed_free (filter_name);
     if (idx!=-1) {
-      weed_add_effectkey_by_idx (key,idx);
+      weed_add_effectkey_by_idx (key+1,idx);
       key_string=g_strdup_printf ("%d",key);
       weed_set_string_value (next_event,"host_tag",key_string);
       g_free (key_string);
@@ -3230,7 +3230,7 @@ gint render_events (gboolean reset) {
       // for now, assume we can find hashname
       idx=weed_get_idx_for_hashname (filter_name,TRUE);
       weed_free (filter_name);
-      weed_add_effectkey_by_idx (key,idx);
+      weed_add_effectkey_by_idx (key+1,idx);
       key_string=g_strdup_printf ("%d",key);
       weed_set_string_value (event,"host_tag",key_string);
       g_free (key_string);

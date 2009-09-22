@@ -145,7 +145,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       pulsed->seek_pos=seek;
       gettimeofday(&tv, NULL);
       pulsed->audio_ticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
-      pulsed->frames_written=0;
+      pulsed->frames_written=-nframes;
       break;
     default:
       msg->data=NULL;
@@ -429,7 +429,8 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   if (mainw->effects_paused) return; // pause during record
 
   pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
-  frames_out=(rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans)/out_scale;
+
+  frames_out=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
 
   holding_buff=malloc(frames_out*afile->achans*(afile->asampsize>>3));
 
@@ -454,7 +455,9 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   free(holding_buff);
 
-  if (mainw->rec_samples==0&&mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_KEEP; // we wrote the required #
+  if (mainw->rec_samples==0&&mainw->cancelled==CANCEL_NONE) {
+    mainw->cancelled=CANCEL_KEEP; // we wrote the required #
+  }
 
 }
 
@@ -472,6 +475,8 @@ void pulse_shutdown(void) {
 
 void pulse_close_client(pulse_driver_t *pdriver) {
   pa_threaded_mainloop_lock(pa_mloop);
+  pa_stream_set_write_callback(pdriver->pstream,NULL,NULL);
+  pa_stream_set_read_callback(pdriver->pstream,NULL,NULL);
   if (pdriver->pstream!=NULL) pa_stream_disconnect(pdriver->pstream);
   pa_threaded_mainloop_unlock(pa_mloop);
   if (pdriver->pa_props!=NULL) pa_proplist_free(pdriver->pa_props);

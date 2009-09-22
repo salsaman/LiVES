@@ -214,7 +214,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       jackd->seek_pos=seek;
       gettimeofday(&tv, NULL);
       jackd->audio_ticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
-      jackd->frames_written=0;
+      jackd->frames_written=-nframes;
       break;
     default:
       msg->data=NULL;
@@ -514,7 +514,9 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   if (mainw->effects_paused) return 0; // pause during record
 
-  holding_buff=malloc(nframes*afile->achans*afile->asampsize/8);
+  frames_out=(long)((gdouble)nframes/out_scale+.5);
+
+  holding_buff=malloc(frames_out*afile->achans*afile->asampsize/8);
 
   if (nframes != jackd->chunk_size) jackd->chunk_size = nframes;
 

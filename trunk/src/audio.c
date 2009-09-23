@@ -97,7 +97,6 @@ void sample_move_d16_d16(short *dst, short *src,
 
   while (nsamples--) {
 
-
     if ((nSrcCount = nSrcChannels)==(nDstCount = nDstChannels)&&!swap_endian&&!swap_sign) {
       // same number of channels
 
@@ -665,8 +664,6 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   if (out_achans==0) return 0l;
 
-  //#define DEBUG_ARENDER
-
   if (to_file>-1) {
     // prepare outfile stuff
     outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
@@ -730,7 +727,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
     if ((!in_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(in_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) in_reverse_endian[track]=TRUE;
     else in_reverse_endian[track]=FALSE;
-    
+
     seekstart[track]=(off64_t)(fromtime[track]*in_arate[track])*in_achans[track]*in_asamps[track];
     seekstart[track]=((off64_t)(seekstart[track]/in_achans[track]/(in_asamps[track])))*in_achans[track]*in_asamps[track];
     

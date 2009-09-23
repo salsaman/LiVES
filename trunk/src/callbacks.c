@@ -8290,6 +8290,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
       dummyvar=system(com);
       g_free(com);
     }
+
     render_audio_segment(1,&(mainw->current_file),old_file,&vel,&aud_start,ins_pt,ins_pt+(aud_end-aud_start)*U_SECL,&vol,vol,vol,NULL);
     end_threaded_dialog();
     close_current_file(old_file);

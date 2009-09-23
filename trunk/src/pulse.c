@@ -24,9 +24,11 @@ static pa_cvolume out_vol;
 
 static guint pulse_server_rate=0;
 
-extern gint weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, long nsamps, gdouble arate, weed_timecode_t tc, double *vis);
+#define PULSE_READ_BYTES 65536
 
+static guchar prbuf[PULSE_READ_BYTES];
 
+static size_t prb=0;
 
 ///////////////////////////////////////////////////////////////////
 
@@ -426,9 +428,28 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   int swap_sign=afile->signed_endian&AFORM_UNSIGNED;
 
+  short *gbuf;
+
   if (mainw->effects_paused) return; // pause during record
 
   pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
+
+  if (prb+rbytes<PULSE_READ_BYTES) {
+    // buffer until we have enough
+    w_memcpy(&prbuf[prb],data,rbytes);
+    prb+=rbytes;
+    pa_stream_drop(pulsed->pstream);
+    return;
+  }
+
+  gbuf=g_malloc(prb+rbytes);
+  w_memcpy(gbuf,prbuf,prb);
+  w_memcpy(gbuf+prb/sizeof(short),data,rbytes);
+  pa_stream_drop(pulsed->pstream);
+
+  rbytes+=prb;
+
+  prb=0;
 
   frames_out=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
 
@@ -437,14 +458,15 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
 
   if (afile->asampsize==16) {
-    sample_move_d16_d16((short *)holding_buff,(short*)data,frames_out,rbytes,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
+    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,rbytes,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
   }
   else {
-    sample_move_d16_d8((uint8_t *)holding_buff,(short*)data,frames_out,rbytes,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
+    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,rbytes,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
   }
     
-  pa_stream_drop(pulsed->pstream);
   pulsed->frames_written+=frames_out;
+
+  g_free(gbuf);
 
   if (mainw->rec_samples>0) {
     if (frames_out>mainw->rec_samples) frames_out=mainw->rec_samples;
@@ -595,12 +617,13 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_battr.maxlength=(uint32_t)-1;
   if (pdriver->is_output) {
     pa_battr.tlength=2048;
+    pa_battr.minreq=(uint32_t)-1;
   }
   else {
     pa_battr.tlength=65536;
+    pa_battr.minreq=65536;
   }
   pa_battr.prebuf=(uint32_t)-1;
-  pa_battr.minreq=(uint32_t)-1;
 
   pdriver->state=pa_context_get_state(pdriver->con);
 
@@ -651,11 +674,22 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,PA_STREAM_ADJUST_LATENCY,&out_vol,NULL);
 #endif
 
+    while (pa_stream_get_state(pdriver->pstream)!=PA_STREAM_READY) {
+      g_usleep(prefs->sleep_time);
+    }
+
     // set write callback
     pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process,pdriver);
+
   }
   else {
-    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,PA_STREAM_ADJUST_LATENCY);
+    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,0);
+
+    prb=0;
+
+    while (pa_stream_get_state(pdriver->pstream)!=PA_STREAM_READY) {
+      g_usleep(prefs->sleep_time);
+    }
 
     // set read callback
     pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);

@@ -189,11 +189,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
       }
       
       /* copy the data over */
-      if (!swap_endian) *(dst++) = swap_sign?(uint8_t)(((int8_t)(*ptr>>8))+128):(int8_t)(*ptr>>8);
-	else {
-	  *(dst++)=swap_sign?(uint8_t)(((int8_t)(*ptr&0x00FF))+128):(int8_t)(*ptr&0x00FF);
-	}
-
+      *(dst++) = swap_sign?(uint8_t)(((int8_t)(*ptr>>8))+128):(int8_t)(*ptr>>8);
 	ccount++;
 	
 	/* if we ran out of source channels but not destination channels */
@@ -1019,6 +1015,8 @@ void pulse_rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
 
   if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed_read->reverse_endian=TRUE;
   else mainw->pulsed_read->reverse_endian=FALSE;
+
+  g_print("rev end is %d\n",mainw->pulsed_read->reverse_endian);
 
   // start pulse recording
   pulse_driver_activate(mainw->pulsed_read);

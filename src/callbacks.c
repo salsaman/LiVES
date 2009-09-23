@@ -8204,6 +8204,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))) {
     aendian=0;
   }
+
   cfile->signed_endian=get_signed_endian(asigned,aendian);
   gtk_widget_destroy (resaudw->dialog);
   while (g_main_context_iteration(NULL,FALSE));

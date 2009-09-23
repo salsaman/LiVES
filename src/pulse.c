@@ -147,7 +147,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       pulsed->seek_pos=seek;
       gettimeofday(&tv, NULL);
       pulsed->audio_ticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
-      pulsed->frames_written=-nframes;
+      pulsed->frames_written=0;
       break;
     default:
       msg->data=NULL;
@@ -424,7 +424,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   float out_scale=(float)pulsed->in_arate/(float)afile->arate;
   size_t frames_out;
   void *data;
-  size_t rbytes;
+  size_t rbytes,bytes_out;
 
   int swap_sign=afile->signed_endian&AFORM_UNSIGNED;
 
@@ -434,39 +434,39 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
 
-  if (prb+rbytes<PULSE_READ_BYTES) {
+  prb+=rbytes;
+
+  frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
+  
+  if (prb<PULSE_READ_BYTES&&frames_out<mainw->rec_samples) {
     // buffer until we have enough
-    w_memcpy(&prbuf[prb],data,rbytes);
-    prb+=rbytes;
+    w_memcpy(&prbuf[prb-rbytes],data,rbytes);
     pa_stream_drop(pulsed->pstream);
     return;
   }
 
-  gbuf=g_malloc(prb+rbytes);
-  w_memcpy(gbuf,prbuf,prb);
-  w_memcpy(gbuf+prb/sizeof(short),data,rbytes);
+  gbuf=g_malloc(prb);
+  w_memcpy(gbuf,prbuf,prb-rbytes);
+  w_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
   pa_stream_drop(pulsed->pstream);
 
-  rbytes+=prb;
+  bytes_out=frames_out*afile->achans*(afile->asampsize>>3);
 
-  prb=0;
-
-  frames_out=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
-
-  holding_buff=malloc(frames_out*afile->achans*(afile->asampsize>>3));
+  holding_buff=malloc(bytes_out);
 
   if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
 
   if (afile->asampsize==16) {
-    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,rbytes,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
+    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
   }
   else {
-    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,rbytes,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
+    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,pulsed->in_achans,(gboolean)swap_sign);
   }
     
   pulsed->frames_written+=frames_out;
 
   g_free(gbuf);
+  prb=0;
 
   if (mainw->rec_samples>0) {
     if (frames_out>mainw->rec_samples) frames_out=mainw->rec_samples;
@@ -723,9 +723,12 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
 
 gint64 lives_pulse_get_time(pulse_driver_t *pulsed) {
   volatile aserver_message_t *msg=pulsed->msgq;
+  gdouble frames_written;
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (pulse_get_msgq(pulsed)!=NULL); // wait for seek
-  if (pulsed->is_output) return pulsed->audio_ticks+(gint64)(((gdouble)pulsed->frames_written/(gdouble)pulsed->out_arate)*U_SEC);
-  return pulsed->audio_ticks+(gint64)(((gdouble)pulsed->frames_written/(gdouble)pulsed->in_arate)*U_SEC);
+  frames_written=pulsed->frames_written;
+  if (frames_written<0.) frames_written=0.;
+  if (pulsed->is_output) return pulsed->audio_ticks+(gint64)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
+  return pulsed->audio_ticks+(gint64)(frames_written/(gdouble)pulsed->in_arate*U_SEC);
 
 }
 

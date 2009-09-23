@@ -14,8 +14,6 @@
 
 #define afile mainw->files[jackd->playing_file]
 
-extern gint weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, long nsamps, gdouble arate, weed_timecode_t tc, double *vis);
-
 static jack_client_t *jack_transport_client;
 
 int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *pos, void *arg) {

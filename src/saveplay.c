@@ -3161,14 +3161,19 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	return;
       }
       if (strstr(buff,"/clips/")) {
-	gchar **array=g_strsplit(buff,"/clips/",-1);
+	gchar **array;
+	pthread_mutex_lock(&mainw->gtk_mutex);
+	array=g_strsplit(buff,"/clips/",-1);
 	mainw->was_set=TRUE;
 	g_snprintf(mainw->set_name,256,"%s",array[0]);
 	g_strfreev(array);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
       last_was_normal_file=TRUE;
       mainw->current_file=new_file;
+      pthread_mutex_lock(&mainw->gtk_mutex);
       cfile=(file *)(g_malloc(sizeof(file)));
+      pthread_mutex_unlock(&mainw->gtk_mutex);
       g_snprintf(cfile->handle,256,"%s",buff);
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
@@ -3229,8 +3234,10 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
     open_set_file (mainw->set_name,++clipnum);
 
     if (mainw->cached_list!=NULL) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
       mainw->cached_list=NULL;
     }
     

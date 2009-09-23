@@ -1191,9 +1191,8 @@ void get_total_time (file *file) {
     file->total_time=file->video_time=file->frames/file->fps;
   }
 
-
   if (file->asampsize*file->arate*file->achans) {
-    file->laudio_time=file->afilesize/file->asampsize*8./file->arate/file->achans;
+    file->laudio_time=(gdouble)(file->afilesize/(file->asampsize>>3)/file->achans)/(gdouble)file->arate;
     if (file->achans>1) {
       file->raudio_time=file->laudio_time;
     }

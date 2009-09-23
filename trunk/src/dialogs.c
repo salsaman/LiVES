@@ -391,7 +391,7 @@ gboolean process_one (gboolean visible) {
 	  }
 	}
 #endif
-#ifdef ENABLE_PULSE
+#ifdef HAVE_PULSE_AUDIO
 	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
 	  if (mainw->pulsed->in_arate<0) {
 	    pulse_audio_seek_frame(mainw->pulsed,cfile->end);
@@ -410,6 +410,7 @@ gboolean process_one (gboolean visible) {
 	mainw->cancelled=CANCEL_VID_END;
       }
       else {
+
 	// loop forwards
 	if (mainw->playing_sel) mainw->play_start=cfile->start;
 	if (mainw->ping_pong&&(cfile->pb_fps>0.||mainw->scratch!=SCRATCH_NONE)) {
@@ -437,7 +438,7 @@ gboolean process_one (gboolean visible) {
 	      jack_audio_seek_frame(mainw->jackd,audio_frameno);
 	    }
 #endif
-#ifdef ENABLE_PULSE
+#ifdef HAVE_PULSE_AUDIO
 	    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!mainw->is_rendering) {
 	      gint audio_frameno;
 	      if (mainw->ping_pong&&(cfile->pb_fps<0.||mainw->scratch!=SCRATCH_NONE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {

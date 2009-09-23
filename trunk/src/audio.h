@@ -67,7 +67,7 @@ void sample_move_d16_d16(short *dst, short *src,
 			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_endian, gboolean swap_sign);
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
-			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_endian, gboolean swap_sign);
+			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_sign);
 
 void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsigned long src_skip, int is_unsigned, float vol);
 

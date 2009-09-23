@@ -212,7 +212,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       jackd->seek_pos=seek;
       gettimeofday(&tv, NULL);
       jackd->audio_ticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
-      jackd->frames_written=-nframes;
+      jackd->frames_written=0;
       break;
     default:
       msg->data=NULL;
@@ -1155,9 +1155,11 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
 
 gint64 lives_jack_get_time(jack_driver_t *jackd) {
   volatile aserver_message_t *msg=jackd->msgq;
+  gdouble frames_written=jackd->frames_written;
+  if (frames_written<0.) frames_written=0.;
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (jack_get_msgq(jackd)!=NULL); // wait for seek
-  if (jackd->is_output) return jackd->audio_ticks+(gint64)(((gdouble)jackd->frames_written/(gdouble)jackd->sample_out_rate)*U_SEC);
-  return jackd->audio_ticks+(gint64)(((gdouble)jackd->frames_written/(gdouble)jackd->sample_in_rate)*U_SEC);
+  if (jackd->is_output) return jackd->audio_ticks+(gint64)(frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
+  return jackd->audio_ticks+(gint64)(frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
 }
 
 

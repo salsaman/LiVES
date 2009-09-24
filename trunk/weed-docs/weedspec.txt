@@ -1313,7 +1313,11 @@ Parameter hints >=1024 are reserved for custom parameters.
 
  * WEED_COLORSPACE_RGBA
 
- * WEED_COLORSPACE_HSV
+ * WEED_COLORSPACE_HSV [deprecated]
+
+WEED_COLORSPACE_HSV is deprecated and should not be used in newly written code.
+It will be removed in the next API update.
+
 
 Colorspaces >=1024 are reserved for custom color spaces.
 

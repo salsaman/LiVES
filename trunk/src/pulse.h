@@ -100,7 +100,7 @@ typedef struct {
 
 // TODO - rationalise names
 
-void lives_pulse_init (void); // init server, mainloop and context
+gboolean lives_pulse_init (short startup_phase); // init server, mainloop and context
 
 int pulse_audio_init(void);  // init driver vars.
 int pulse_audio_read_init(void); // ditto
@@ -112,6 +112,7 @@ void pulse_close_client(pulse_driver_t *); //
 
 void pulse_shutdown(void); // shudown server, mainloop, context
 
+void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data);
 
 
 

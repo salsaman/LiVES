@@ -8465,18 +8465,10 @@ void on_lerrors_delete_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_init_aplayer_toggled(void) {
-  if (prefs->audio_player==AUD_PLAYER_JACK) {
-    if (capable->has_sox) {
-      switch_aud_to_sox();
-    }
-    else {
-      switch_aud_to_mplayer();
-    }
-    future_prefs->jack_opts=0;
-  }
-  else {
-    future_prefs->jack_opts=prefs->jack_opts;
-    switch_aud_to_jack();
-  }
+void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_data) {
+  gint audp=GPOINTER_TO_INT(user_data);
+
+  if (!gtk_toggle_button_get_active(tbutton)) return;
+
+  prefs->audio_player=audp;
 }

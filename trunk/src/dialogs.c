@@ -1250,7 +1250,7 @@ void do_jack_noopen_warn(void) {
 
 
 void do_jack_noopen_warn2(void) {
-  do_blocking_error_dialog(_("\nAlternately, you can restart LiVES and select \"sox\" as the audio player\n"));
+  do_blocking_error_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
 }
 
 

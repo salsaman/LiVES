@@ -235,11 +235,6 @@ static gboolean pre_init(void) {
   cache_file_contents(rcfile);
   g_free(rcfile);
 
-  if (get_boolean_pref("jack_testing")) {
-    prefs->firsttime=TRUE;
-    set_boolean_pref("jack_testing",FALSE);
-  }
-
   get_pref("gui_theme",prefs->theme,64);
   if (!strlen(prefs->theme)) {
     g_snprintf(prefs->theme,64,"none");
@@ -290,10 +285,24 @@ static gboolean pre_init(void) {
   if (!strcmp(buff,"pulse"))
     prefs->audio_player=AUD_PLAYER_PULSE;
   
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->startup_phase==1&&capable->has_pulse_audio) {
+    prefs->audio_player=AUD_PLAYER_PULSE;
+    set_pref("audio_player","pulse");
+  }
+  else {
+#endif
+  
+
+
 #ifdef ENABLE_JACK
-  if (prefs->firsttime&&capable->has_jackd) {
-    prefs->audio_player=AUD_PLAYER_JACK;
-    set_pref("audio_player","jack");
+    if (prefs->startup_phase==1&&capable->has_jackd) {
+      prefs->audio_player=AUD_PLAYER_JACK;
+      set_pref("audio_player","jack");
+    }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
   }
 #endif
 
@@ -875,7 +884,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	g_list_free (encoders);
       }
       
-      if (prefs->firsttime&&capable->has_encoder_plugins&&capable->has_python) {
+      if (prefs->startup_phase==1&&capable->has_encoder_plugins&&capable->has_python) {
 	g_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
 	set_pref("encoder",prefs->encoder.name);
       }
@@ -992,35 +1001,17 @@ static void lives_init(_ign_opts *ign_opts) {
       g_snprintf(prefs->jack_aserver,256,"%s/.jackdrc",capable->home_dir);
       g_snprintf(prefs->jack_tserver,256,"%s/.jackdrc",capable->home_dir);
 
-      if (!g_file_test(prefs->jack_aserver,G_FILE_TEST_EXISTS)) {
-	gchar *com;
-	gchar jackd_loc[512];
-	get_location("jackd",jackd_loc,512);
-	if (strlen(jackd_loc)) {
-#ifndef IS_DARWIN
-	  com=g_strdup_printf("echo \"%s -Z -d alsa\">%s",jackd_loc,prefs->jack_aserver);
-#else
-#ifdef IS_SOLARIS
-	  // use OSS on Darwin
-	  com=g_strdup_printf("echo \"%s -Z -d oss\">%s",jackd_loc,prefs->jack_aserver);
-#else
-	  // use coreaudio on Darwin
-	  com=g_strdup_printf("echo \"%s -Z -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
-#endif
-#endif
-	  dummyvar=system(com);
-	  g_free(com);
-	  com=g_strdup_printf("/bin/chmod o+x %s",prefs->jack_aserver);
-	  dummyvar=system(com);
-	  g_free(com);
-	}
-      }
 #endif
 
       if (((capable->has_jackd||capable->has_pulse_audio)&&(capable->has_sox||capable->has_mplayer))||(capable->has_jackd&&capable->has_pulse_audio)) {
-	if (prefs->firsttime) {
+	if (prefs->startup_phase>0&&prefs->startup_phase<3) {
 	  splash_end();
-	  do_audio_choice_dialog();
+	  if (!do_audio_choice_dialog(prefs->startup_phase)) {
+	    lives_exit();
+	  }
+	  if (prefs->audio_player==AUD_PLAYER_JACK) prefs->jack_opts=JACK_OPTS_START_ASERVER;
+	  prefs->jack_opts=0;
+	  set_int_pref("jack_opts",prefs->jack_opts);
 	}
 
 #ifdef ENABLE_JACK
@@ -1037,13 +1028,14 @@ static void lives_init(_ign_opts *ign_opts) {
 	  if (mainw->jackd!=NULL) {
 	    if (jack_open_device(mainw->jackd)) mainw->jackd=NULL;
 
-	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||mainw->jackd==NULL)&&!prefs->firsttime) {
+	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||mainw->jackd==NULL)&&prefs->startup_phase==0) {
 	      g_printerr("%s",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with: lives -aplayer sox\n\n"));
 	    }
 
 	    if (mainw->jackd==NULL) {
-	      if (prefs->firsttime) {
-		set_boolean_pref("jack_testing",TRUE);
+	      if (prefs->startup_phase>0&&prefs->startup_phase<3) {
+		prefs->startup_phase=2;
+		set_int_pref("startup_phase",2);
 		do_jack_noopen_warn();
 		do_jack_noopen_warn2();
 	      }
@@ -1063,16 +1055,30 @@ static void lives_init(_ign_opts *ign_opts) {
 #ifdef HAVE_PULSE_AUDIO
 	if (prefs->audio_player==AUD_PLAYER_PULSE) {
 	  splash_msg(_("Starting pulse audio server..."),.8);
-	  lives_pulse_init();
+
+	  if (!lives_pulse_init(prefs->startup_phase)) {
+	    if (prefs->startup_phase>0&&prefs->startup_phase<3) {
+	      prefs->startup_phase=2;
+	      set_int_pref("startup_phase",2);
+	    }
+	    lives_exit();
+	  }
+
 	  pulse_audio_init();
 	  pulse_audio_read_init();
 	  mainw->pulsed=pulse_get_driver(TRUE);
+
 	  mainw->pulsed->whentostop=&mainw->whentostop;
 	  mainw->pulsed->cancelled=&mainw->cancelled;
 	  mainw->pulsed->in_use=FALSE;
 	}
 #endif
 
+    }
+
+    if (prefs->startup_phase!=0) {
+      set_int_pref("startup_phase",100); // tell backend to delete this
+      prefs->startup_phase=100;
     }
 
     // toolbar buttons
@@ -1372,7 +1378,7 @@ capability *get_capabilities (void) {
   g_snprintf(prefs->tmpdir,256,"%s",array[1]);
   g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
 
-  prefs->firsttime=(gboolean)atoi (array[2]);
+  prefs->startup_phase=atoi (array[2]);
 
   if (numtok>3&&strlen (array[3])) {
     g_snprintf(capable->startup_msg,256,"%s\n\n",array[3]);
@@ -1491,7 +1497,7 @@ static gboolean lives_startup(gpointer data) {
   if (capable->smog_version_correct) {
     if (theme_expected&&palette->style==STYLE_PLAIN&&!mainw->foreign) {
       // non-fatal errors
-      if (!prefs->firsttime) {
+      if (prefs->startup_phase==0) {
 	gchar *err=g_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"),prefs->prefix_dir,THEME_DIR);
 	startup_message_nonfatal (g_strdup (err));
 	g_free(err);
@@ -1560,7 +1566,7 @@ static gboolean lives_startup(gpointer data) {
 		      startup_message_nonfatal (_ ("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"));
 		    }
 		    if (!capable->has_encoder_plugins) {
-		      if (!prefs->firsttime) {
+		      if (prefs->startup_phase==0) {
 			gchar *err=g_strdup_printf(_ ("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in ~/.lives\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
 			startup_message_nonfatal_dismissable (err,WARN_MASK_NO_ENCODERS);
 			g_free(err);
@@ -1618,13 +1624,14 @@ static gboolean lives_startup(gpointer data) {
 
   if (!prefs->show_gui) gtk_widget_hide(mainw->LiVES);
 
-  if (prefs->firsttime==1) {
-    do_firstever_dialog();
+  if (prefs->startup_phase==100) {
+    if (upgrade_error) {
+      do_upgrade_error_dialog();
+    }
+    else {
+      do_firstever_dialog();
+    }
   }
-  else if (prefs->firsttime==2&&upgrade_error) {
-    do_upgrade_error_dialog();
-  }
-  
 
   if (strlen (start_file)) {
     splash_end();

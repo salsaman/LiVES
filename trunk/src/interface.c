@@ -2671,18 +2671,71 @@ create_cds_dialog (gint type, gint warn_mask_number) {
 
 
 
-void do_audio_choice_dialog(void) {
-  GtkWidget *dialog,*dialog_vbox,*radiobutton1,*radiobutton2,*label;
-  GtkWidget *okbutton1;
+gboolean do_audio_choice_dialog(short startup_phase) {
+  GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*label;
+  GtkWidget *okbutton,*cancelbutton;
   GSList *radiobutton_group = NULL;
-  gchar *txt,*c2;
+  gchar *txt0,*txt1,*txt2,*txt3,*txt4,*txt5,*txt6,*txt7,*msg;
+
+  gint response;
 
   // TODO - make toplevel window so we can present it
 
-  if (capable->has_sox) c2=g_strdup("sox");
-  else c2=g_strdup("mplayer");
+  if (startup_phase==2) {
+    txt0=g_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
+  }
+  else txt0=g_strdup("WELCOME TO LiVES !\n\n");
 
-  txt=g_strdup_printf(_("Before starting LiVES, you need to choose an audio player.\nJack is recommended, but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack, you can restart and try with %s instead.\n"),c2);
+  txt1=g_strdup(_("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
+
+#ifndef HAVE_PULSE_AUDIO
+  txt2=g_strdup(_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
+#else
+  if (!capable->has_pulse_audio) {
+    txt2=g_strdup(_(", but you do not have pulse audio installed on your system.\n You are advised to install pulse audio first before running LiVES.\n\n"));
+  }
+  else txt2=g_strdup(".\n\n");
+#endif
+
+  txt3=g_strdup(_("JACK audio is recommended for pro users"));
+
+#ifndef ENABLE_JACK
+  txt4=g_strdup(_(", but this version of LiVES was not compiled with jack audio support.\n\n"));
+#else
+  if (!capable->has_jackd) {
+    txt4=g_strdup(_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
+  }
+  else {
+    txt4=g_strdup(_(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack, you can restart and try with another audio player instead.\n\n"));
+  }
+#endif
+
+  txt5=g_strdup(_("SOX may be used if neither of the preceding players work, "));
+
+  if (capable->has_sox) {
+    txt6=g_strdup(_("but some audio features will be disabled.\n\n"));
+  }
+  else {
+    txt6=g_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
+  }
+
+  if (capable->has_mplayer) {
+    txt7=g_strdup(_("The MPLAYER audio player is only recommended for testing purposes.\n\n"));
+  }
+  else {
+    txt7=g_strdup("");
+  }
+
+  msg=g_strdup_printf("%s%s%s%s%s%s%s%s",txt0,txt1,txt2,txt3,txt4,txt5,txt6,txt7);
+
+  g_free(txt0);
+  g_free(txt1);
+  g_free(txt2);
+  g_free(txt3);
+  g_free(txt4);
+  g_free(txt5);
+  g_free(txt6);
+  g_free(txt7);
 
   dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Choose an audio player"));
@@ -2693,44 +2746,78 @@ void do_audio_choice_dialog(void) {
 
   dialog_vbox = GTK_DIALOG (dialog)->vbox;
   
-  label=gtk_label_new(txt);
+  label=gtk_label_new(msg);
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
+  g_free(msg);
 
+
+  radiobutton0 = gtk_radio_button_new_with_mnemonic (NULL, _("Use _pulse audio player"));
+
+#ifdef HAVE_PULSE_AUDIO
+  gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton0);
+
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
+  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
+#endif
 
   radiobutton1 = gtk_radio_button_new_with_mnemonic (NULL, _("Use _jack audio player"));
+#ifdef ENABLE_JACK
   gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton1);
 
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton_group);
   radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
+#endif
 
-  txt=g_strdup_printf(_("Use _%s audio player"),c2);
+  radiobutton2 = gtk_radio_button_new_with_mnemonic (NULL, _("Use _sox audio player"));
+  if (capable->has_sox) {
+    gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton2);
 
-  radiobutton2 = gtk_radio_button_new_with_mnemonic (NULL, txt);
-  gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton2);
+    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton2), radiobutton_group);
 
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton2), radiobutton_group);
+  }
 
-  g_free(c2);
+  radiobutton3 = gtk_radio_button_new_with_mnemonic (NULL, _("Use _mplayer audio player"));
+  if (capable->has_mplayer) {
+    gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton3);
+
+    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton3), radiobutton_group);
+
+  }
+
+  g_signal_connect (GTK_OBJECT (radiobutton0), "toggled",
+                      G_CALLBACK (on_init_aplayer_toggled),
+                      GINT_TO_POINTER(AUD_PLAYER_PULSE));
 
   g_signal_connect (GTK_OBJECT (radiobutton1), "toggled",
                       G_CALLBACK (on_init_aplayer_toggled),
-                      NULL);
+                      GINT_TO_POINTER(AUD_PLAYER_JACK));
 
-  okbutton1 = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton1);
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton1, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton1, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_widget_grab_default(okbutton1);
-  gtk_widget_grab_focus(okbutton1);
+  g_signal_connect (GTK_OBJECT (radiobutton2), "toggled",
+                      G_CALLBACK (on_init_aplayer_toggled),
+                      GINT_TO_POINTER(AUD_PLAYER_SOX));
+
+  g_signal_connect (GTK_OBJECT (radiobutton3), "toggled",
+                      G_CALLBACK (on_init_aplayer_toggled),
+                      GINT_TO_POINTER(AUD_PLAYER_MPLAYER));
+
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  gtk_widget_grab_default(okbutton);
+  gtk_widget_grab_focus(okbutton);
 
   gtk_widget_show_all(dialog);
 
-  gtk_dialog_run(GTK_DIALOG(dialog));
+  response=gtk_dialog_run(GTK_DIALOG(dialog));
 
-  gtk_widget_destroy(dialog);
-  gtk_main_iteration();
+  gtk_widget_hide(dialog);  // destroying this makes gtk+ crash...
 
-  if (prefs->audio_player==AUD_PLAYER_SOX) {
+  if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
     gtk_widget_hide(mainw->vol_toolitem);
     gtk_widget_hide(mainw->vol_label);
     gtk_widget_hide (mainw->recaudio_submenu);
@@ -2738,10 +2825,7 @@ void do_audio_choice_dialog(void) {
 
   while (g_main_context_iteration(NULL,FALSE));
 
-  prefs->jack_opts=future_prefs->jack_opts;
-
-  set_int_pref("jack_opts",prefs->jack_opts);
-
+  return (response==GTK_RESPONSE_OK);
 }
 
 

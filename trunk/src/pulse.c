@@ -24,7 +24,7 @@ static pa_cvolume out_vol;
 
 static guint pulse_server_rate=0;
 
-#define PULSE_READ_BYTES 65536
+#define PULSE_READ_BYTES 48000
 
 static guchar prbuf[PULSE_READ_BYTES];
 
@@ -37,16 +37,69 @@ static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *user
   pulse_server_rate=info->sample_spec.rate;
 }
 
+// wait 5 seconds to startup
+#define PULSE_START_WAIT 5000000
 
 
-void lives_pulse_init (void) {
+gboolean lives_pulse_init (short startup_phase) {
   // startup pulse audio server
-  if (pa_mloop!=NULL) return;
+  gchar *msg,*msg2;
+
+  struct timeval otv;
+  int64_t ntime=0,stime;
+
+  pa_context_state_t pa_state;
+
+  if (pa_mloop!=NULL) return TRUE;
+
   pa_mloop=pa_threaded_mainloop_new();
   pcon=pa_context_new(pa_threaded_mainloop_get_api(pa_mloop),"LiVES");
   pa_context_connect(pcon,NULL,0,NULL);
   pa_threaded_mainloop_start(pa_mloop);
 
+  pa_state=pa_context_get_state(pcon);
+
+  gettimeofday(&otv, NULL);
+  stime=otv.tv_sec*1000000000+otv.tv_usec;
+
+  while (pa_state!=PA_CONTEXT_READY&&ntime<PULSE_START_WAIT) {
+    g_usleep(prefs->sleep_time);
+    sched_yield();
+    pa_state=pa_context_get_state(pcon);
+    gettimeofday(&otv, NULL);
+    ntime=(otv.tv_sec*1000000000+otv.tv_usec-stime)>>10;
+  }
+
+  if (ntime>=PULSE_START_WAIT) {
+    pa_context_unref(pcon);
+    pcon=NULL;
+    pulse_shutdown();
+
+    g_printerr("%s",_("\nUnable to connect to pulse audio server\n"));
+    if (startup_phase==0&&capable->has_sox) {
+      do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"));
+      switch_aud_to_sox();
+    }
+    else if (startup_phase==0&&capable->has_mplayer) {
+      do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to mplayer audio player.\nYou can change this in Preferences/Playback.\n"));
+      switch_aud_to_mplayer();
+    }
+    else {
+      msg=g_strdup(_("\nUnable to connect to pulse audio server.\n"));
+      if (startup_phase<1) {
+	do_error_dialog(msg);
+      }
+      else {
+	msg2=g_strdup_printf("%s%s",msg,_("LiVES will exit and you can choose another audio player.\n"));
+	do_error_dialog(msg2);
+	g_free(msg2);
+      }
+      g_free(msg);
+    }
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 
@@ -417,38 +470,22 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
 
 
-static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *arg) {
-  // read nframes from pulse buffer, and then write to mainw->aud_rec_fd
-  pulse_driver_t* pulsed = (pulse_driver_t*)arg;
+void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
+  short *gbuf;
+  size_t bytes_out,frames_out;
   void *holding_buff;
   float out_scale=(float)pulsed->in_arate/(float)afile->arate;
-  size_t frames_out;
-  void *data;
-  size_t rbytes,bytes_out;
 
   int swap_sign=afile->signed_endian&AFORM_UNSIGNED;
 
-  short *gbuf;
+  if (prb==0) return;
 
-  if (mainw->effects_paused) return; // pause during record
+  gbuf=(short *)g_malloc(prb);
 
-  pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
-
-  prb+=rbytes;
+  w_memcpy(gbuf,prbuf,prb-rbytes);
+  if (rbytes>0) w_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
 
   frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
-  
-  if (prb<PULSE_READ_BYTES&&frames_out<mainw->rec_samples) {
-    // buffer until we have enough
-    w_memcpy(&prbuf[prb-rbytes],data,rbytes);
-    pa_stream_drop(pulsed->pstream);
-    return;
-  }
-
-  gbuf=g_malloc(prb);
-  w_memcpy(gbuf,prbuf,prb-rbytes);
-  w_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
-  pa_stream_drop(pulsed->pstream);
 
   bytes_out=frames_out*afile->achans*(afile->asampsize>>3);
 
@@ -475,7 +512,38 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   dummyvar=write (mainw->aud_rec_fd,holding_buff,frames_out*(afile->asampsize/8)*afile->achans);
 
-  free(holding_buff);
+  g_free(holding_buff);
+
+}
+
+
+
+static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *arg) {
+  // read nframes from pulse buffer, and then write to mainw->aud_rec_fd
+  pulse_driver_t* pulsed = (pulse_driver_t*)arg;
+  float out_scale=(float)pulsed->in_arate/(float)afile->arate;
+  size_t frames_out;
+  void *data;
+  size_t rbytes;
+
+  if (mainw->effects_paused) return; // pause during record
+
+  pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
+
+  prb+=rbytes;
+
+  frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
+  
+  if (prb<PULSE_READ_BYTES&&frames_out<mainw->rec_samples) {
+    // buffer until we have enough
+    w_memcpy(&prbuf[prb-rbytes],data,rbytes);
+    pa_stream_drop(pulsed->pstream);
+    return;
+  }
+
+  pulse_flush_read_data(pulsed,rbytes,data);
+
+  pa_stream_drop(pulsed->pstream);
 
   if (mainw->rec_samples==0&&mainw->cancelled==CANCEL_NONE) {
     mainw->cancelled=CANCEL_KEEP; // we wrote the required #
@@ -486,7 +554,10 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
 void pulse_shutdown(void) {
   if (pa_mloop!=NULL) pa_threaded_mainloop_stop(pa_mloop);
-  if (pcon!=NULL) pa_context_disconnect(pcon);
+  if (pcon!=NULL) {
+    pa_context_disconnect(pcon);
+    pa_context_unref(pcon);
+  }
   if (pa_mloop!=NULL) pa_threaded_mainloop_free(pa_mloop);
 
   pcon=NULL;
@@ -572,9 +643,6 @@ int pulse_audio_read_init(void) {
 }
 
 
-// wait 5 seconds to startup
-#define PULSE_START_WAIT 5000000
-
 
 int pulse_driver_activate(pulse_driver_t *pdriver) {
 // create a new client and connect it to pulse server
@@ -586,9 +654,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_buffer_attr pa_battr;
 
   pa_operation *pa_op;
-
-  struct timeval otv;
-  int64_t ntime=0,stime;
 
   pa_volume_t pavol;
 
@@ -615,41 +680,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   else pdriver->out_endian=AFORM_LITTLE_ENDIAN;
 
   pa_battr.maxlength=(uint32_t)-1;
-  if (pdriver->is_output) {
-    pa_battr.tlength=2048;
-    pa_battr.minreq=(uint32_t)-1;
-  }
-  else {
-    pa_battr.tlength=65536;
-    pa_battr.minreq=65536;
-  }
+  pa_battr.minreq=(uint32_t)-1;
+  pa_battr.tlength=2048;
   pa_battr.prebuf=(uint32_t)-1;
-
-  pdriver->state=pa_context_get_state(pdriver->con);
-
-  gettimeofday(&otv, NULL);
-  stime=otv.tv_sec*1000000000+otv.tv_usec;
-
-  while (pdriver->state!=PA_CONTEXT_READY&&ntime<PULSE_START_WAIT) {
-    g_usleep(prefs->sleep_time);
-    sched_yield();
-    pdriver->state=pa_context_get_state(pdriver->con);
-    gettimeofday(&otv, NULL);
-    ntime=(otv.tv_sec*1000000000+otv.tv_usec-stime)>>10;
-  }
-
-  if (ntime>=PULSE_START_WAIT) {
-    g_printerr("%s",_("\nUnable to connect to pulse audio server\n"));
-    if (capable->has_sox) {
-      do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\n"));
-      switch_aud_to_sox();
-    }
-    else {
-      do_error_dialog(_("\nUnable to connect to pulse audio server.\n"));
-      lives_exit();
-    }
-    return 1;
-  }
 
   if (pulse_server_rate==0) {
     pa_op=pa_context_get_server_info(pdriver->con,pulse_server_cb,NULL);

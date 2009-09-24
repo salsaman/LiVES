@@ -104,6 +104,7 @@ int avol_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     dst=odst;
     nsamps=orig_nsamps=weed_get_int_value(in_channels[i],"audio_data_length",&error);
     src=weed_get_voidptr_value(in_channels[i],"audio_data",&error);
+
     inter=weed_get_boolean_value(in_channels[i],"audio_interleaf",&error);
 
     chans=weed_get_int_value(in_channels[i],"audio_channels",&error);

@@ -34,6 +34,31 @@ void lives_jack_init (void) {
   if ((prefs->jack_opts&JACK_OPTS_START_TSERVER)||(prefs->jack_opts&JACK_OPTS_START_ASERVER)) {
     unsetenv ("JACK_NO_START_SERVER");
     setenv ("JACK_START_SERVER","1",0);
+
+    if (!g_file_test(prefs->jack_aserver,G_FILE_TEST_EXISTS)) {
+      gchar *com;
+      gchar jackd_loc[512];
+      get_location("jackd",jackd_loc,512);
+      if (strlen(jackd_loc)) {
+#ifndef IS_DARWIN
+	com=g_strdup_printf("echo \"%s -Z -d alsa\">%s",jackd_loc,prefs->jack_aserver);
+#else
+#ifdef IS_SOLARIS
+	// use OSS on Darwin
+	com=g_strdup_printf("echo \"%s -Z -d oss\">%s",jackd_loc,prefs->jack_aserver);
+#else
+	// use coreaudio on Darwin
+	com=g_strdup_printf("echo \"%s -Z -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
+#endif
+#endif
+	dummyvar=system(com);
+	g_free(com);
+	com=g_strdup_printf("/bin/chmod o+x %s",prefs->jack_aserver);
+	dummyvar=system(com);
+	g_free(com);
+      }
+    }
+
   }
   else {
     unsetenv ("JACK_START_SERVER");
@@ -41,12 +66,8 @@ void lives_jack_init (void) {
     options|=JackNoStartServer;
   }
 
-  if (prefs->firsttime) set_boolean_pref("jack_testing",TRUE);
-
   // startup the server
   jack_transport_client=jack_client_open (jt_client, options, &status, server_name);
-
-  if (prefs->firsttime) set_boolean_pref("jack_testing",FALSE);
 
 #ifdef ENABLE_JACK_TRANSPORT
   if (jack_transport_client!=NULL) jack_set_sync_callback (jack_transport_client, lives_start_ready_callback, NULL);
@@ -834,8 +855,6 @@ int jack_driver_activate (jack_driver_t *jackd) {
   const char** ports;
   gboolean failed=FALSE;
 
-  if (prefs->firsttime) set_boolean_pref("jack_testing",TRUE);
-
   /* tell the JACK server that we are ready to roll */
   if (jack_activate(jackd->client)) {
     //ERR( "cannot activate client\n");
@@ -932,8 +951,6 @@ int jack_driver_activate (jack_driver_t *jackd) {
   jackd->is_paused=FALSE;
 
   d_print(_("Started jack audio subsystem.\n"));
-
-  if (prefs->firsttime) set_boolean_pref("jack_testing",FALSE);
 
   return 0;
 }

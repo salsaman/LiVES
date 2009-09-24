@@ -22,7 +22,7 @@ GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, g
 
 void widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deinterlace, gint preview_type);  // for fileselector preview
 
-void do_audio_choice_dialog(void);
+gboolean do_audio_choice_dialog(short startup_phase);
 
 typedef struct _fileinfo {
   GtkWidget *info_window;

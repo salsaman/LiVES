@@ -780,4 +780,4 @@ void on_lerrors_close_clicked (GtkButton *, gpointer);
 void on_lerrors_clear_clicked (GtkButton *, gpointer);
 void on_lerrors_delete_clicked (GtkButton *, gpointer);
 
-void on_init_aplayer_toggled(void);
+void on_init_aplayer_toggled (GtkToggleButton *, gpointer new_player);

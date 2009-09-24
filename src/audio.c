@@ -151,7 +151,7 @@ void sample_move_d16_d16(short *dst, short *src,
 
 /* convert from any number of source channels to any number of destination channels - 8 bit output */
 void sample_move_d16_d8(uint8_t *dst, short *src,
-			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_endian, gboolean swap_sign) {
+			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_sign) {
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
@@ -886,6 +886,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (to_file>-1) {
 	// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
 	frames_out=sample_move_float_int((void *)finish_buff,chunk_float_buffer,blocksize,1.,out_achans,out_asamps*8,out_unsigned,out_reverse_endian,opvol);
+	g_print("size is now %ld\n",get_file_size(out_fd));
 	dummyvar=write (out_fd,finish_buff,frames_out*out_asamps*out_achans);
 #ifdef DEBUG_ARENDER
 	g_print(".");
@@ -1016,8 +1017,6 @@ void pulse_rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
   if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed_read->reverse_endian=TRUE;
   else mainw->pulsed_read->reverse_endian=FALSE;
 
-  g_print("rev end is %d\n",mainw->pulsed_read->reverse_endian);
-
   // start pulse recording
   pulse_driver_activate(mainw->pulsed_read);
 
@@ -1039,6 +1038,9 @@ void pulse_rec_audio_end(void) {
 
   // stop recording
   pulse_close_client(mainw->pulsed_read);
+
+  pulse_flush_read_data(mainw->pulsed_read,0,NULL);
+
   mainw->pulsed_read=NULL;
 
   // close file

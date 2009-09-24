@@ -1320,7 +1320,7 @@ LIVES_INLINE void toggle_button_toggle (GtkToggleButton *tbutton) {
 gboolean switch_aud_to_jack(void) {
 #ifdef ENABLE_JACK
   if (mainw->is_ready) {
-    if (prefs->jack_opts&JACK_OPTS_START_ASERVER) lives_jack_init();
+    lives_jack_init();
     if (mainw->jackd==NULL) {
       jack_audio_init();
       jack_audio_read_init();
@@ -1338,25 +1338,24 @@ gboolean switch_aud_to_jack(void) {
     gtk_widget_show(mainw->vol_toolitem);
     gtk_widget_show(mainw->vol_label);
     gtk_widget_show (mainw->recaudio_submenu);
-  }
 
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read!=NULL) {
-    pulse_close_client(mainw->pulsed_read);
-    mainw->pulsed_read=NULL;
-  }
-
-  if (mainw->pulsed!=NULL) {
-    pulse_close_client(mainw->pulsed);
-    mainw->pulsed=NULL;
-    pulse_shutdown();
-  }
+    if (mainw->pulsed_read!=NULL) {
+      pulse_close_client(mainw->pulsed_read);
+      mainw->pulsed_read=NULL;
+    }
+    
+    if (mainw->pulsed!=NULL) {
+      pulse_close_client(mainw->pulsed);
+      mainw->pulsed=NULL;
+      pulse_shutdown();
+    }
 #endif
-
-  prefs->audio_player=AUD_PLAYER_JACK;
-  set_pref("audio_player","jack");
-  return TRUE;
-
+    
+    prefs->audio_player=AUD_PLAYER_JACK;
+    set_pref("audio_player","jack");
+    return TRUE;
+  }
 #endif
   return FALSE;
 }
@@ -1365,37 +1364,40 @@ gboolean switch_aud_to_jack(void) {
 
 gboolean switch_aud_to_pulse(void) {
 #ifdef HAVE_PULSE_AUDIO
+  gboolean retval;
+
   if (mainw->is_ready) {
-    lives_pulse_init();
-    if (mainw->pulsed==NULL) {
-      pulse_audio_init();
-      //pulse_audio_read_init();
-      mainw->pulsed=pulse_get_driver(TRUE);
-      mainw->pulsed->whentostop=&mainw->whentostop;
-      mainw->pulsed->cancelled=&mainw->cancelled;
-      mainw->pulsed->in_use=FALSE;
-      pulse_driver_activate(mainw->pulsed);
+    if ((retval=lives_pulse_init(-1))) {
+      if (mainw->pulsed==NULL) {
+	pulse_audio_init();
+	//pulse_audio_read_init();
+	mainw->pulsed=pulse_get_driver(TRUE);
+	mainw->pulsed->whentostop=&mainw->whentostop;
+	mainw->pulsed->cancelled=&mainw->cancelled;
+	mainw->pulsed->in_use=FALSE;
+	pulse_driver_activate(mainw->pulsed);
+      }
+      gtk_widget_show(mainw->vol_toolitem);
+      gtk_widget_show(mainw->vol_label);
+      gtk_widget_show (mainw->recaudio_submenu);
+
+      prefs->audio_player=AUD_PLAYER_PULSE;
+      set_pref("audio_player","pulse");
     }
-    gtk_widget_show(mainw->vol_toolitem);
-    gtk_widget_show(mainw->vol_label);
-    gtk_widget_show (mainw->recaudio_submenu);
-  }
-
-  if (mainw->jackd_read!=NULL) {
-    jack_close_device(mainw->jackd_read,TRUE);
-    mainw->jackd_read=NULL;
-  }
-
+    
 #ifdef ENABLE_JACK
-  if (mainw->jackd!=NULL) {
-    jack_close_device(mainw->jackd,TRUE);
-    mainw->jackd=NULL;
-  }
+    if (mainw->jackd_read!=NULL) {
+      jack_close_device(mainw->jackd_read,TRUE);
+      mainw->jackd_read=NULL;
+    }
 
-  prefs->audio_player=AUD_PLAYER_PULSE;
-  set_pref("audio_player","pulse");
-  return TRUE;
+    if (mainw->jackd!=NULL) {
+      jack_close_device(mainw->jackd,TRUE);
+      mainw->jackd=NULL;
+    }
 #endif
+    return retval;
+  }
 
 #endif
   return FALSE;

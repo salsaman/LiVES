@@ -404,20 +404,10 @@ apply_prefs(gboolean skip_warn) {
 
   g_snprintf (tmpdir,256,"%s",gtk_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)));
 
-  g_snprintf(audio_player,256,"mplayer");
-  if (strcmp (audp,"mplayer")) {
-#ifdef ENABLE_JACK
-    if (strcmp(audp,"sox")) {
-      g_snprintf(audio_player,256,"jack");
-    }
-    else {
-#endif
-      g_snprintf(audio_player,256,"sox");
-    }
-#ifdef ENABLE_JACK
-  }
-#endif
-
+  if (!strncmp(audp,"mplayer",7)) g_snprintf(audio_player,256,"mplayer");
+  else if (!strncmp(audp,"jack",4)) g_snprintf(audio_player,256,"jack");
+  else if (!strncmp(audp,"sox",3)) g_snprintf(audio_player,256,"sox");
+  else if (!strncmp(audp,"pulse audio",11)) g_snprintf(audio_player,256,"pulse");
   
   if (rec_opts!=prefs->rec_opts) {
     prefs->rec_opts=rec_opts;
@@ -776,12 +766,7 @@ apply_prefs(gboolean skip_warn) {
   }
 #endif
 
-#ifdef ENABLE_JACK
-  if (future_prefs->jack_opts!=jack_opts) {
-    set_int_pref("jack_opts",jack_opts);
-    future_prefs->jack_opts=prefs->jack_opts=jack_opts;
-  }
-
+#ifdef RT_AUDIO
   if (prefs->audio_opts!=audio_opts) {
     prefs->audio_opts=audio_opts;
     set_int_pref("audio_opts",audio_opts);
@@ -790,12 +775,12 @@ apply_prefs(gboolean skip_warn) {
       else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
     }
   }
-#endif
 
   if (rec_desk_audio!=prefs->rec_desktop_audio) {
     prefs->rec_desktop_audio=rec_desk_audio;
     set_boolean_pref("rec_desktop_audio",rec_desk_audio);
   }
+#endif
 
   if (prefs->audio_player==AUD_PLAYER_JACK&&!capable->has_jackd) {
     do_error_dialog(_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"));
@@ -811,7 +796,7 @@ apply_prefs(gboolean skip_warn) {
     }
     
     // switch to jack
-    if (!(strcmp(audio_player,"jack"))&&prefs->audio_player!=AUD_PLAYER_JACK) {
+    else if (!(strcmp(audio_player,"jack"))&&prefs->audio_player!=AUD_PLAYER_JACK) {
       // may fail
       if (!switch_aud_to_jack()) do_jack_noopen_warn();
     }
@@ -820,7 +805,26 @@ apply_prefs(gboolean skip_warn) {
     else if (!(strcmp (audio_player,"mplayer"))&&prefs->audio_player!=AUD_PLAYER_MPLAYER) {
       switch_aud_to_mplayer();
     }
+
+    // switch to pulse audio
+    else if (!(strcmp (audio_player,"pulse"))&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+      if (!capable->has_pulse_audio) {
+	do_error_dialog(_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"));
+      }
+      else switch_aud_to_pulse();
+    }
+
+
   }
+
+#ifdef ENABLE_JACK
+  if (future_prefs->jack_opts!=jack_opts) {
+    set_int_pref("jack_opts",jack_opts);
+    future_prefs->jack_opts=prefs->jack_opts=jack_opts;
+  }
+#endif
+
+
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
@@ -1295,6 +1299,8 @@ _prefsw *create_prefs_dialog (void) {
   gboolean pfsm;
 
   gchar *theme;
+
+  gboolean has_ap_rec=FALSE;
 
   _prefsw *prefsw=(_prefsw*)(g_malloc(sizeof(_prefsw)));
 
@@ -1895,45 +1901,73 @@ _prefsw *create_prefs_dialog (void) {
 
   label35 = gtk_label_new_with_mnemonic (_("_Player"));
   gtk_widget_show (label35);
-  gtk_box_pack_start (GTK_BOX (hbox10), label35, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox10), label35, FALSE, FALSE, 20);
   gtk_label_set_justify (GTK_LABEL (label35), GTK_JUSTIFY_LEFT);
 
-#ifdef ENABLE_JACK
-  audp = g_list_append (audp, g_strdup_printf("jack (%s)",mainw->recommended_string));
-  audp = g_list_append (audp, g_strdup("sox"));
-#else
-  audp = g_list_append (audp, g_strdup_printf("sox (%s)",mainw->recommended_string));
+
+#ifdef HAVE_PULSE_AUDIO
+  audp = g_list_append (audp, g_strdup_printf("pulse audio (%s)",mainw->recommended_string));
+  has_ap_rec=TRUE;
 #endif
-  audp = g_list_append (audp, g_strdup("mplayer"));
+
+#ifdef ENABLE_JACK
+  if (!has_ap_rec) audp = g_list_append (audp, g_strdup_printf("jack (%s)",mainw->recommended_string));
+  else audp = g_list_append (audp, g_strdup_printf("jack"));
+  has_ap_rec=TRUE;
+#endif
+
+  if (capable->has_sox) {
+    if (has_ap_rec) audp = g_list_append (audp, g_strdup("sox"));
+    else audp = g_list_append (audp, g_strdup_printf("sox (%s)",mainw->recommended_string));
+  }
+
+  if (capable->has_mplayer) {
+    audp = g_list_append (audp, g_strdup("mplayer"));
+  }
 
   prefsw->audp_combo = gtk_combo_new ();
   combo_set_popdown_strings (GTK_COMBO (prefsw->audp_combo), audp);
-  gtk_box_pack_start (GTK_BOX (hbox10), prefsw->audp_combo, FALSE, FALSE, 20);
+  gtk_box_pack_start (GTK_BOX (hbox10), prefsw->audp_combo, TRUE, TRUE, 20);
   gtk_widget_show(prefsw->audp_combo);
 
   gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(prefsw->audp_combo))->entry),FALSE);
 
+  has_ap_rec=FALSE;
+
+  add_fill_to_box(GTK_BOX(hbox10));
+
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE) {
+    prefsw->audp_name=g_strdup_printf("pulse audio (%s)",mainw->recommended_string);
+  }
+  has_ap_rec=TRUE;
+#endif
+
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK) {
-    prefsw->audp_name=g_strdup_printf("jack (%s)",mainw->recommended_string);
+    if (!has_ap_rec)
+      prefsw->audp_name=g_strdup_printf("jack (%s)",mainw->recommended_string);
+    else prefsw->audp_name=g_strdup_printf("jack");
   }
-  else if (prefs->audio_player==AUD_PLAYER_SOX) {
-    prefsw->audp_name=g_strdup("sox");
-  }
-#else
-  if (prefs->audio_player==AUD_PLAYER_JACK) {
-    prefsw->audp_name=g_strdup_printf("jack (%s)",mainw->disabled_string);
-  }
-  else if (prefs->audio_player==AUD_PLAYER_SOX) {
-    prefsw->audp_name=g_strdup_printf("sox (%s)",mainw->recommended_string);
-  }
+  has_ap_rec=TRUE;
 #endif
-  else {
+
+  if (prefs->audio_player==AUD_PLAYER_SOX) {
+    if (!has_ap_rec) prefsw->audp_name=g_strdup_printf("sox (%s)",mainw->recommended_string);
+    else prefsw->audp_name=g_strdup_printf("sox");
+  }
+
+  if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
     prefsw->audp_name=g_strdup(_ ("mplayer"));
   }
 
   gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->audp_combo))->entry),prefsw->audp_name);
+
+  hbox10 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox10);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox10, TRUE, TRUE, 6);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox10), 10);
 
   label36 = gtk_label_new_with_mnemonic (_("Audio play _command"));
   gtk_widget_show (label36);
@@ -1945,8 +1979,10 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (prefsw->audio_command_entry);
   gtk_box_pack_start (GTK_BOX (hbox10), prefsw->audio_command_entry, TRUE, TRUE, 0);
 
+  add_fill_to_box(GTK_BOX(hbox10));
+
   // get from prefs
-  if (prefs->audio_player!=AUD_PLAYER_JACK) gtk_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) gtk_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
   else {
     gtk_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),(_("- internal -")));
     gtk_widget_set_sensitive(prefsw->audio_command_entry,FALSE);
@@ -1962,13 +1998,13 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (prefsw->checkbutton_afollow);
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_afollow, FALSE, FALSE, 10);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_afollow),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)?TRUE:FALSE);
-  gtk_widget_set_sensitive(prefsw->checkbutton_afollow,prefs->audio_player==AUD_PLAYER_JACK);
+  gtk_widget_set_sensitive(prefsw->checkbutton_afollow,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
 
   prefsw->checkbutton_aclips = gtk_check_button_new_with_mnemonic (_ ("Audio follows _clip switches"));
   gtk_widget_show (prefsw->checkbutton_aclips);
   gtk_box_pack_end (GTK_BOX (hbox), prefsw->checkbutton_aclips, FALSE, FALSE, 10);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_aclips),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)?TRUE:FALSE);
-  gtk_widget_set_sensitive(prefsw->checkbutton_aclips,prefs->audio_player==AUD_PLAYER_JACK);
+  gtk_widget_set_sensitive(prefsw->checkbutton_aclips,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
 
   label32 = gtk_label_new (_("AUDIO"));
   gtk_widget_show (label32);
@@ -1987,11 +2023,11 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_add (GTK_CONTAINER (prefsw->prefs_notebook), vbox12);
   gtk_container_set_border_width (GTK_CONTAINER (vbox12), 20);
 
-  prefsw->rdesk_audio = gtk_check_button_new_with_mnemonic (_("Record audio when capturing an e_xternal window\n (requires jack audio)"));
+  prefsw->rdesk_audio = gtk_check_button_new_with_mnemonic (_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"));
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->rdesk_audio), 18);
   gtk_widget_show (prefsw->rdesk_audio);
 
-#ifndef ENABLE_JACK
+#ifndef RT_AUDIO
   gtk_widget_set_sensitive (prefsw->rdesk_audio,FALSE);
 #endif
 
@@ -2061,7 +2097,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (vbox12), hbox, TRUE, TRUE, 6);
   gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
 
-  prefsw->raudio = gtk_check_button_new_with_mnemonic (_("_Audio (requires jack audio player)"));
+  prefsw->raudio = gtk_check_button_new_with_mnemonic (_("_Audio (requires jack or pulse audio player)"));
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->raudio), 18);
   gtk_widget_show (prefsw->raudio);
 
@@ -2070,7 +2106,7 @@ _prefsw *create_prefs_dialog (void) {
 
   if (mainw->playing_file>0&&mainw->record) gtk_widget_set_sensitive (prefsw->raudio,FALSE);
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK) gtk_widget_set_sensitive (prefsw->raudio,FALSE);
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) gtk_widget_set_sensitive (prefsw->raudio,FALSE);
 
 
   label = gtk_label_new (_("Recording"));
@@ -2588,7 +2624,7 @@ _prefsw *create_prefs_dialog (void) {
    
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mt_achans), !(prefs->warning_mask&WARN_MASK_MT_ACHANS));
 
-   prefsw->checkbutton_warn_mt_no_jack = gtk_check_button_new_with_mnemonic (_("Warn if multitrack has audio channels, and your audio player is not \"jack\"."));
+   prefsw->checkbutton_warn_mt_no_jack = gtk_check_button_new_with_mnemonic (_("Warn if multitrack has audio channels, and your audio player is not \"jack\" or \"pulse audio\"."));
    gtk_widget_show (prefsw->checkbutton_warn_mt_no_jack);
    gtk_box_pack_start (GTK_BOX (vbox18), prefsw->checkbutton_warn_mt_no_jack, FALSE, TRUE, 0);
    

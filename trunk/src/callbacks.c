@@ -2792,18 +2792,22 @@ void on_audp_entry_changed (GtkWidget *audp_entry, gpointer ptr) {
 
 #ifdef RT_AUDIO
   if (!strncmp(audp,"jack",4)||!strncmp(audp,"pulse",5)) {
-    gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
     gtk_widget_set_sensitive(prefsw->checkbutton_aclips,TRUE);
     gtk_widget_set_sensitive(prefsw->checkbutton_afollow,TRUE);
     gtk_widget_set_sensitive(prefsw->raudio,TRUE);
   }
   else {
-    gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,FALSE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),FALSE);
     gtk_widget_set_sensitive(prefsw->checkbutton_aclips,FALSE);
     gtk_widget_set_sensitive(prefsw->checkbutton_afollow,FALSE);
     gtk_widget_set_sensitive(prefsw->raudio,FALSE);
+  }
+  if (!strncmp(audp,"jack",4)) {
+    gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
+  }
+  else {
+    gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),FALSE);
   }
 #endif
   g_free(prefsw->audp_name);

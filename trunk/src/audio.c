@@ -886,7 +886,6 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (to_file>-1) {
 	// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
 	frames_out=sample_move_float_int((void *)finish_buff,chunk_float_buffer,blocksize,1.,out_achans,out_asamps*8,out_unsigned,out_reverse_endian,opvol);
-	g_print("size is now %ld\n",get_file_size(out_fd));
 	dummyvar=write (out_fd,finish_buff,frames_out*out_asamps*out_achans);
 #ifdef DEBUG_ARENDER
 	g_print(".");

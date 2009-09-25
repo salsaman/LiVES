@@ -1370,7 +1370,7 @@ gboolean switch_aud_to_pulse(void) {
     if ((retval=lives_pulse_init(-1))) {
       if (mainw->pulsed==NULL) {
 	pulse_audio_init();
-	//pulse_audio_read_init();
+	pulse_audio_read_init();
 	mainw->pulsed=pulse_get_driver(TRUE);
 	mainw->pulsed->whentostop=&mainw->whentostop;
 	mainw->pulsed->cancelled=&mainw->cancelled;

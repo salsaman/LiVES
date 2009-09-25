@@ -1014,6 +1014,11 @@ static void lives_init(_ign_opts *ign_opts) {
 	  set_int_pref("jack_opts",prefs->jack_opts);
 	}
 
+	if (prefs->startup_phase==1) {
+	  prefs->startup_phase=2;
+	  set_int_pref("startup_phase",2);
+	}
+
 #ifdef ENABLE_JACK
 	if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER) {
 	  // start jack transport polling
@@ -1033,9 +1038,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	    }
 
 	    if (mainw->jackd==NULL) {
-	      if (prefs->startup_phase>0&&prefs->startup_phase<3) {
-		prefs->startup_phase=2;
-		set_int_pref("startup_phase",2);
+	      if (prefs->startup_phase==2) {
 		do_jack_noopen_warn();
 		do_jack_noopen_warn2();
 	      }
@@ -1057,11 +1060,9 @@ static void lives_init(_ign_opts *ign_opts) {
 	  splash_msg(_("Starting pulse audio server..."),.8);
 
 	  if (!lives_pulse_init(prefs->startup_phase)) {
-	    if (prefs->startup_phase>0&&prefs->startup_phase<3) {
-	      prefs->startup_phase=2;
-	      set_int_pref("startup_phase",2);
+	    if (prefs->startup_phase==2) {
+	      lives_exit();
 	    }
-	    lives_exit();
 	  }
 
 	  pulse_audio_init();

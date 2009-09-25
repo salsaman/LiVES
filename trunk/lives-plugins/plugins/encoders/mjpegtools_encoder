@@ -26,6 +26,7 @@
 #0.95 audio format is mp2, not pcm - doh !
 #0.96 add custom mpeg2
 #0.97 handling for "," radix (needs testing) 
+#0.98 checked handling for "," radix (thanks Doug)
 
 # TODO:
 # check all formats for aspect ratios, block sizes and frame rates
@@ -410,7 +411,7 @@ sub get_format_request {
 ######### specific to this encoder ###############
 sub calc_rate_code {
     $rate_code=0; # test
-    if ($fps==23.976||$fps==23,976) {
+    if ($fps eq "23.976"||$fps eq "23,976") {
 	# PAL
 	$rate_code=1;
     }
@@ -420,7 +421,7 @@ sub calc_rate_code {
     elsif ($fps==25) {
 	$rate_code=3;
     }
-    elsif ($fps==29.97||$fps==29,97) {
+    elsif ($fps eq "29.97"||$fps eq "29,97") {
 	# NTSC
 	$rate_code=4;
     }

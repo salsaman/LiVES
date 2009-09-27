@@ -5968,7 +5968,6 @@ void init_tracks (lives_mt *mt, gboolean set_min_max) {
 		  add_block_start_point (audio_draw,tc,renumbered_clips[aclips[i+1]],aseeks[i]*U_SEC,event,TRUE);
 		}
 	      }
-	      break;
 	    }
 	  }
 	  weed_free(aclips);
@@ -5987,6 +5986,7 @@ void init_tracks (lives_mt *mt, gboolean set_min_max) {
 	  slist=mt->audio_draws;
 	  for (j=0;j<g_list_length(mt->audio_draws);j++) {
 	    if (cfile->achans>0&&avels[j]!=0.) add_block_end_point (slist->data,event);
+
 	    slist=slist->next;
 	  }
 	}
@@ -11724,8 +11724,8 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
   file *sfile=mainw->files[mt->file_selected];
   gdouble secs=GTK_RULER (mt->timeline)->position;
   GtkWidget *eventbox=mt->audio_draws->data;
-  weed_timecode_t ins_start=(sfile->start-1.)/sfile->fps*U_SEC;
-  weed_timecode_t ins_end=(gdouble)sfile->end/sfile->fps*U_SEC;
+  weed_timecode_t ins_start=q_gint64((sfile->start-1.)/sfile->fps*U_SEC,mt->fps);
+  weed_timecode_t ins_end=q_gint64((gdouble)sfile->end/sfile->fps*U_SEC,mt->fps);
   gboolean did_backup=mt->did_backup;
   track_rect *block;
   gchar *text,*tmp;
@@ -11738,11 +11738,24 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
     mt->context_time=-1.;
   }
 
-  if (sfile->frames==0||mt->opts.ign_ins_sel||ins_end>q_gint64(sfile->laudio_time*U_SEC,mt->fps)) {
+  if (sfile->frames==0||mt->opts.ign_ins_sel) {
     ins_start=0;
     ins_end=q_gint64(sfile->laudio_time*U_SEC,mt->fps);
   }
+  else {
+    if (ins_end>q_gint64((gdouble)(sfile->frames-.5)/sfile->fps*U_SEC,mt->fps)) {
+      q_gint64(((gdouble)sfile->end-.5)/sfile->fps*U_SEC,mt->fps);
+    }
+  }
 
+  if (ins_start>q_gint64(sfile->laudio_time*U_SEC,mt->fps)) {
+    return;
+  }
+
+  if (ins_end>q_gint64(sfile->laudio_time*U_SEC,mt->fps)) {
+    ins_end=q_gint64(sfile->laudio_time*U_SEC,mt->fps);
+  }
+  
   if (!did_backup) mt_backup(mt,MT_UNDO_INSERT_AUDIO_BLOCK,NULL);
 
   if (mt->insert_start!=-1) {

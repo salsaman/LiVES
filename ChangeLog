@@ -1,11 +1,13 @@
-Version 1.1.3
--------------
+Version 1.1.3 (27th September 2009)
+----------------------------------
 Increase gtk+ level to gtk+ 2.14 or higher.
-Add support for pulse audio (in progress).
+Add support for pulse audio.
 Improve the help menu.
 Make disk cleanup more vigorous.
 Show list of sets in File -> Reload clip set.
 Show event list for selected time only.
+Fix a bug relating to reloading of multitrack audio tracks. *
+Fix radix issue in mjpegtools encoder (thanks Doug). *
 Fix multitrack audio mixer (regression). *
 Fixes for building on solaris (thanks Milan Jurik).
 Undoing load new audio should restore original audio. *

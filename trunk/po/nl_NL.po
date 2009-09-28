@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES 0.9.5cvs\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-09-25 11:53-0300\n"
+"POT-Creation-Date: 2009-09-27 21:18-0300\n"
 "PO-Revision-Date: 2009-08-03 13:23+0000\n"
 "Last-Translator: Rene Hasekamp <Unknown>\n"
 "Language-Team: \n"
@@ -7154,17 +7154,17 @@ msgid ""
 " (variable)"
 msgstr ""
 
-#: src/multitrack.c:10653 src/multitrack.c:13154 src/multitrack.c:13166
+#: src/multitrack.c:10653 src/multitrack.c:13167 src/multitrack.c:13179
 #, c-format
 msgid "track %s"
 msgstr ""
 
-#: src/multitrack.c:10658 src/multitrack.c:13159
+#: src/multitrack.c:10658 src/multitrack.c:13172
 #, c-format
 msgid "tracks %s and %s"
 msgstr ""
 
-#: src/multitrack.c:10664 src/multitrack.c:13169
+#: src/multitrack.c:10664 src/multitrack.c:13182
 msgid "selected tracks"
 msgstr ""
 
@@ -7203,127 +7203,127 @@ msgstr ""
 msgid "to make a mark on the timeline"
 msgstr ""
 
-#: src/multitrack.c:11782
+#: src/multitrack.c:11795
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:12026
+#: src/multitrack.c:12039
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:12519
+#: src/multitrack.c:12532
 #, c-format
 msgid "Time region %.3f to %.3f selected.\n"
 msgstr ""
 
-#: src/multitrack.c:12523
+#: src/multitrack.c:12536
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
 msgstr ""
 
-#: src/multitrack.c:12525
+#: src/multitrack.c:12538
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr ""
 
-#: src/multitrack.c:12533
+#: src/multitrack.c:12546
 msgid "Single click on an effect to select it.\n"
 msgstr ""
 
-#: src/multitrack.c:12534
+#: src/multitrack.c:12547
 msgid "Double click on an effect to edit it.\n"
 msgstr ""
 
-#: src/multitrack.c:12535
+#: src/multitrack.c:12548
 msgid "Right click on an effect for context menu.\n"
 msgstr ""
 
-#: src/multitrack.c:12537
+#: src/multitrack.c:12550
 msgid ""
 "\n"
 "Effect order can be changed at FILTER MAPS:"
 msgstr ""
 
-#: src/multitrack.c:12538
+#: src/multitrack.c:12551
 msgid "- select an effect, then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:12539
+#: src/multitrack.c:12552
 msgid "or INSERT AFTER buttons to move it."
 msgstr ""
 
-#: src/multitrack.c:12574
+#: src/multitrack.c:12587
 msgid "You can click and drag below the timeline\n"
 msgstr ""
 
-#: src/multitrack.c:12575
+#: src/multitrack.c:12588
 msgid "to select a time region.\n"
 msgstr ""
 
-#: src/multitrack.c:12772 src/multitrack.c:12785
+#: src/multitrack.c:12785 src/multitrack.c:12798
 msgid "Click on another effect,\n"
 msgstr ""
 
-#: src/multitrack.c:12773 src/multitrack.c:12786
+#: src/multitrack.c:12786 src/multitrack.c:12799
 msgid "and the selected one will be inserted\n"
 msgstr ""
 
-#: src/multitrack.c:12774
+#: src/multitrack.c:12787
 msgid "after it.\n"
 msgstr ""
 
-#: src/multitrack.c:12787
+#: src/multitrack.c:12800
 msgid "before it.\n"
 msgstr ""
 
-#: src/multitrack.c:12993
+#: src/multitrack.c:13006
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13175
+#: src/multitrack.c:13188
 msgid "audio"
 msgstr ""
 
-#: src/multitrack.c:13177
+#: src/multitrack.c:13190
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13672 src/multitrack.c:15154
+#: src/multitrack.c:13685 src/multitrack.c:15167
 msgid "_Autoreload each time"
 msgstr ""
 
-#: src/multitrack.c:13735
+#: src/multitrack.c:13748
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr ""
 
-#: src/multitrack.c:15070
+#: src/multitrack.c:15083
 msgid "clips and frames"
 msgstr ""
 
-#: src/multitrack.c:15074
+#: src/multitrack.c:15087
 msgid "clips"
 msgstr ""
 
-#: src/multitrack.c:15077
+#: src/multitrack.c:15090
 msgid "frames"
 msgstr ""
 
-#: src/multitrack.c:15087
+#: src/multitrack.c:15100
 msgid ""
 "\n"
 "Auto reload layout.\n"
 msgstr ""
 
-#: src/multitrack.c:15090
+#: src/multitrack.c:15103
 #, c-format
 msgid ""
 "%s\n"
@@ -7331,64 +7331,64 @@ msgid ""
 "Therefore it could not be loaded properly.\n"
 msgstr ""
 
-#: src/multitrack.c:15204
+#: src/multitrack.c:15217
 #, c-format
 msgid ""
 "\n"
 "Unable to load layout file %s\n"
 msgstr ""
 
-#: src/multitrack.c:15211
+#: src/multitrack.c:15224
 #, c-format
 msgid "Loading layout from %s..."
 msgstr ""
 
-#: src/multitrack.c:15228
+#: src/multitrack.c:15241
 #, c-format
 msgid "Got %d events...processing..."
 msgstr ""
 
-#: src/multitrack.c:15238
+#: src/multitrack.c:15251
 msgid "Checking and rebuilding event list"
 msgstr ""
 
-#: src/multitrack.c:15259
+#: src/multitrack.c:15272
 #, c-format
 msgid "%d errors detected.\n"
 msgstr ""
 
-#: src/multitrack.c:15304
+#: src/multitrack.c:15317
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:15976
+#: src/multitrack.c:15989
 msgid "LiVES: Multitrack audio mixer"
 msgstr ""
 
-#: src/multitrack.c:16013
+#: src/multitrack.c:16026
 msgid "_Reset values"
 msgstr ""
 
-#: src/multitrack.c:16017
+#: src/multitrack.c:16030
 msgid "_Close mixer"
 msgstr ""
 
-#: src/multitrack.c:16073
+#: src/multitrack.c:16086
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:16079
+#: src/multitrack.c:16092
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:16110
+#: src/multitrack.c:16123
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:16116
+#: src/multitrack.c:16129
 msgid "Adjust all layer audio values to the same value"
 msgstr ""
 
@@ -7842,8 +7842,9 @@ msgid "Block _width"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "Blur"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -7921,8 +7922,9 @@ msgid "Clipboard _under selection"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorize"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -7934,16 +7936,18 @@ msgid "Colour cycle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycling"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "Colour filter"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filtering"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "Colour replace"
@@ -7978,8 +7982,9 @@ msgid "Dream"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "Dreamifying"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8014,8 +8019,9 @@ msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "Fade _end"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
@@ -8168,8 +8174,9 @@ msgid "Modulate (BSH)"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulating"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
@@ -8192,8 +8199,9 @@ msgid "Noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "Normalize"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
@@ -8312,8 +8320,9 @@ msgid "Skip forward"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarize"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
@@ -8321,8 +8330,9 @@ msgid "Solarizing"
 msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "Spin"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
@@ -8330,8 +8340,9 @@ msgid "Spinning"
 msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splice"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
@@ -8339,8 +8350,9 @@ msgid "Splicing"
 msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spread"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -8362,8 +8374,9 @@ msgid "Swirl _start"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl s_tep"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -8572,8 +8585,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Point size"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "_Radius end"
@@ -8632,8 +8646,9 @@ msgid "_Source Colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "_Splice"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8681,8 +8696,9 @@ msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "_Wavemax"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -8752,8 +8768,9 @@ msgid "charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "colorize"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "colour_filter"
@@ -8861,8 +8878,9 @@ msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "normalize"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
@@ -8914,16 +8932,18 @@ msgid "skip_forwards"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "solarize"
-msgstr ""
+msgstr "Grootte aanpassen"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "spread"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -8959,8 +8979,9 @@ msgid "tunnel"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "wave"
-msgstr ""
+msgstr "waarschuwing"
 
 #: /usr/bin/smogrify:0
 #, fuzzy

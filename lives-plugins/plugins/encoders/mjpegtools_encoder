@@ -27,6 +27,7 @@
 #0.96 add custom mpeg2
 #0.97 handling for "," radix (needs testing) 
 #0.98 checked handling for "," radix (thanks Doug)
+#0.99 Allow selection of aspect ratio for custom2 format (Doug).
 
 # TODO:
 # check all formats for aspect ratios, block sizes and frame rates
@@ -49,7 +50,7 @@ $tmpvid="tmpvid.m1v";
 $tmpaud="tmpaud.mpa";
 
 if ($command eq "version") {
-    print "mjpegtools encoder plugin v0.97\n";
+    print "mjpegtools encoder plugin v0.99\n";
     exit 0;
 }
 
@@ -163,6 +164,7 @@ if ($command eq "get_rfx") {
 	print "vbuff|Video _buffer (Kb)|num0|2048|46|4096\n";
 	print "msearch|Motion search _radius|num0|24|16|32\n";
 	print "hfhand|_High frequency handling|string_list|1|reduce|normal|keep\n";
+	print "forceaspect|_Force aspect|string_list|0|No|1:1|4:3|16:9|2.21:1\n";
 	print "</params>\n";
 	
 	# optional section
@@ -258,6 +260,14 @@ if ($command eq "encode") {
 	elsif ($ARGV[19]==2) {
 	    $hf="-H";
 	}
+	$nforceaspect=$ARGV[20];
+	if($nforceaspect>0){
+	    $makeforceaspect="-a $nforceaspect";
+	}
+	else{
+	    $makeforceaspect="";
+	}
+	
     }
 
     if (!defined($vid_bitrate)) {
@@ -319,7 +329,7 @@ if ($command eq "encode") {
 	$syscom .="| mpeg2enc -f 8 -o $tmpvid $err";
     }
     elsif ($otype eq "custom2") {
-	$syscom .="| mpeg2enc -f $format -F $rate_code $quality $vbs $hf -b $vid_bitrate -B $nvbitrate -V $vid_buffer -r $msr -o $tmpvid $err";
+	$syscom .="| mpeg2enc -f $format -F $rate_code $makeforceaspect $quality $vbs $hf -b $vid_bitrate -B $nvbitrate -V $vid_buffer -r $msr -o $tmpvid $err";
     }
     else {
 	$syscom .="| mpeg2enc -F $rate_code $norm -f $format $quality -b $vid_bitrate -B $nvbitrate -V $vid_buffer -4 1 -2 1 -g 6 -G 18 -r 24 -o $tmpvid $err";

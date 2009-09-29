@@ -1007,7 +1007,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     }
 
     if (mainw->save_all) {
-      //g_snprintf(cfile->file_name,255,"%s",full_file_name);
+      g_snprintf(cfile->save_file_name,255,"%s",full_file_name);
       cfile->changed=FALSE;
 
       // save was successful
@@ -2095,8 +2095,7 @@ create_cfile(void) {
   cfile->layout_map=NULL;
   cfile->frame_index=cfile->frame_index_back=NULL;
   cfile->fx_frame_pump=0;
-  //cfile->nbfi=0;
-  //cfile->nffi=0;
+  
 
   cfile->deinterlace=FALSE;
 
@@ -2109,6 +2108,7 @@ create_cfile(void) {
   memset(cfile->name,0,1);
   memset(cfile->mime_type,0,1);
   memset(cfile->file_name,0,1);
+  memset(cfile->save_file_name,0,1);
 
   memset (cfile->comment,0,1);
   memset (cfile->author,0,1);

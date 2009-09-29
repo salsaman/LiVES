@@ -792,6 +792,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and othe live CDs
 
+    prefs->mouse_scroll_clips=get_boolean_pref("mouse_scroll_clips");
 
     //////////////////////////////////////////////////////////////////
 

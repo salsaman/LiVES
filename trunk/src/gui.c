@@ -229,6 +229,7 @@ create_LiVES (void)
   //gtk_drag_dest_set (mainw->LiVES,GTK_DEST_DEFAULT_HIGHLIGHT|GTK_DEST_DEFAULT_DROP,&targ,1,GDK_ACTION_PRIVATE);
   //gtk_drag_dest_set_target_list (mainw->LiVES,targlist);
 
+
   if (capable->smog_version_correct) gtk_window_set_decorated(GTK_WINDOW(mainw->LiVES),prefs->open_decorated);
 
   if (palette->style==STYLE_PLAIN) {
@@ -1757,6 +1758,12 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->eventbox), vbox4);
   gtk_widget_modify_bg (mainw->eventbox, GTK_STATE_NORMAL, &palette->normal_back);
 
+  gtk_widget_set_events (mainw->eventbox, GDK_SCROLL_MASK);
+
+  g_signal_connect (GTK_OBJECT (mainw->eventbox), "scroll_event",
+                      G_CALLBACK (on_mouse_scroll),
+                      NULL);
+
   mainw->framebar = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (mainw->framebar);
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->framebar, FALSE, FALSE, 0);
@@ -1978,7 +1985,7 @@ create_LiVES (void)
 
   mainw->eventbox5 = gtk_event_box_new ();
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->eventbox5, FALSE, FALSE, 0);
-  gtk_widget_set_events (mainw->eventbox5, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+
   gtk_widget_modify_bg (mainw->eventbox5, GTK_STATE_NORMAL, &palette->normal_back);
 
   mainw->hruler = gtk_hruler_new();

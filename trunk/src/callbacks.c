@@ -499,7 +499,7 @@ on_save_activate                      (GtkMenuItem     *menuitem,
   while (g_main_context_iteration(NULL,FALSE));
   mainw->save_all=TRUE;
   mainw->fx1_bool=FALSE;
-  save_file(TRUE,cfile->file_name);
+  save_file(TRUE,cfile->save_file_name);
 }
 
 

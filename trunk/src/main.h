@@ -241,9 +241,10 @@ typedef struct {                // corresponds to one clip in the GUI
   glong f_size;
   glong afilesize;
   gint old_frames; // for deordering, etc.
-  gchar file_name[256];
+  gchar file_name[256]; // input file
   gchar info_file[256];
   gchar name[256];  // the display name
+  gchar save_file_name[256];
   gchar type[40];
   gint start;
   gint end;

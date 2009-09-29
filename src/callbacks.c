@@ -3060,7 +3060,9 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
   gint type=0;
 
   // prev clip
-  // if the effect is a transition, this will change the background clip
+  // type = 0 : if the effect is a transition, this will change the background clip
+  // type = 1 fg only
+  // type = 2 bg only 
 
   if (mainw->current_file<1||mainw->preview||(mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return TRUE;
 
@@ -6847,7 +6849,26 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 }
 
 
+gboolean
+on_mouse_scroll           (GtkWidget       *widget,
+			   GdkEventScroll  *event,
+			   gpointer         user_data) {
+  guint kstate;
+  guint type=1;
 
+  if (!prefs->mouse_scroll_clips) return FALSE;
+
+  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))) return FALSE;
+
+  kstate=event->state;
+
+  if (kstate==GDK_SHIFT_MASK) type=2; // bg
+  else if (kstate==GDK_CONTROL_MASK) type=0; // fg or bg
+
+  if (event->direction==GDK_SCROLL_UP) prevclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(type));
+  else if (event->direction==GDK_SCROLL_DOWN) nextclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(type));
+  return FALSE;
+}
 
 
 

@@ -416,6 +416,11 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 				 gpointer         user_data);
 
 gboolean
+on_mouse_scroll           (GtkWidget       *widget,
+			   GdkEventScroll  *event,
+			   gpointer         user_data);
+
+gboolean
 on_mouse_sel_update           (GtkWidget       *widget,
 			       GdkEventMotion  *event,
 			       gpointer         user_data);

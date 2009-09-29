@@ -218,6 +218,7 @@ typedef struct {
   gchar omc_js_fname[256];
   gchar omc_midi_fname[256];
   
+  gboolean mouse_scroll_clips;
 
   gint num_rtaudiobufs;
 
@@ -243,6 +244,7 @@ typedef struct {
   GtkWidget *stop_screensaver_check;
   GtkWidget *open_maximised_check;
   GtkWidget *show_tool;
+  GtkWidget *mouse_scroll;
   GtkWidget *fs_max_check;
   GtkWidget *recent_check;
   GtkWidget *video_open_entry;

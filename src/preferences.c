@@ -314,6 +314,7 @@ apply_prefs(gboolean skip_warn) {
   gboolean debug_encoders=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->debug_encoders));
   gboolean ext_jpeg=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->jpeg));
   gboolean show_tool=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->show_tool));
+  gboolean mouse_scroll=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mouse_scroll));
   gint fsize_to_warn=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
   gint dl_bwidth=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_bwidth));
   gint ocp=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_ocp));
@@ -440,6 +441,11 @@ apply_prefs(gboolean skip_warn) {
   if (show_tool!=(future_prefs->show_tool)) {
     future_prefs->show_tool=prefs->show_tool=show_tool;
     set_boolean_pref("show_toolbar",show_tool);
+  }
+
+  if (mouse_scroll!=(prefs->mouse_scroll_clips)) {
+    prefs->mouse_scroll_clips=mouse_scroll;
+    set_boolean_pref("mouse_scroll_clips",mouse_scroll);
   }
 
 
@@ -1552,13 +1558,24 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->open_maximised_check), prefs->open_maximised);
 
 
-
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox7), hbox, TRUE, TRUE, 0);
 
   prefsw->show_tool = gtk_check_button_new_with_mnemonic (_("Show toolbar when background is blanked"));
   gtk_widget_show (prefsw->show_tool);
-  gtk_box_pack_start (GTK_BOX (vbox7), prefsw->show_tool, TRUE, TRUE, 0);
+
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->show_tool, TRUE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->show_tool), 22);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->show_tool), future_prefs->show_tool);
+
+
+  prefsw->mouse_scroll = gtk_check_button_new_with_mnemonic (_("Allow mouse wheel to switch clips"));
+  gtk_widget_show (prefsw->mouse_scroll);
+
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->mouse_scroll, TRUE, TRUE, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->mouse_scroll), 22);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->mouse_scroll), prefs->mouse_scroll_clips);
 
 
   // multihead support

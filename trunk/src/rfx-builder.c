@@ -4407,7 +4407,6 @@ GList *get_script_list (gshort status) {
 
 void add_rfx_effects(void) {
   // scan render plugin directories, create a rfx array, and add each to the appropriate menu area
-  // returns length of added effect array
   GList *rfx_builtin_list=NULL;
   GList *rfx_custom_list=NULL;
   GList *rfx_test_list=NULL;

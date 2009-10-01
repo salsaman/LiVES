@@ -104,7 +104,6 @@ elsif ($type eq "test") {
 elsif ($type eq "builtinx") {
     $indir=$scripts_dir;
     $outdir=$exec_dir;
-    print "got $scripts_dir $exec_dir\n";
     unlink <$indir/*~>;
 }
 

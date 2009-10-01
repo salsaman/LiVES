@@ -4444,6 +4444,10 @@ void add_rfx_effects(void) {
     gtk_container_remove (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_submenu);
     gtk_container_remove (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
     gtk_container_remove (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
+    if (mainw->rte_separator!=NULL) {
+      gtk_widget_destroy (mainw->rte_separator);
+      mainw->rte_separator=NULL;
+    }
     gtk_widget_destroy (mainw->custom_effects_separator);
     gtk_widget_destroy (mainw->custom_utilities_separator);
     gtk_widget_queue_draw(mainw->effects_menu);

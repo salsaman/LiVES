@@ -752,14 +752,15 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "get_recovery_file") {
-	    #find first non-in-use recovery file for given uid, gid
+	    #find first non-in-use recovery file for given uid, gid and filepart
 	    my $uid=$ARGV[1];
 	    my $gid=$ARGV[2];
 	    my $exename=$ARGV[3];
+	    my $filepart=$ARGV[4];
             opendir DIR,"$tmpdir";
 
 	    while (my $file=readdir(DIR)) {
-		if ($file=~/^recovery\.$uid\.$gid\.(.*)/) {
+		if ($file=~/^$filepart\.$uid\.$gid\.(.*)/) {
 		    if (-z $file) {
 			unlink $file;
 		    }
@@ -767,13 +768,15 @@ if (defined($ARGV[0])) {
 			my $exe=`readlink -n /proc/$1/exe`;
 			my $short_exe=&my_basename($exe);
 			unless ($short_exe eq $exename) {
-			    print $file;
+			    $output=(split /\./,$file)[-1];
+			    print $output;
 			    closedir DIR;
 			    exit 0;
 			}
 		    }
 		}
 	    }
+	    print 0;
             closedir DIR;
 	    exit 0;
 	}
@@ -5039,7 +5042,7 @@ sub weed {
 	    }
 	    else {
 		unless (!defined($new_temp)||$new_temp eq "") {
-		    if ($file =~ /^recovery/) {
+		    if ($file =~ /^recovery/ || $file =~ /^layout/) {
 			system("/bin/mv $file $new_temp/");
 		    }
 		}

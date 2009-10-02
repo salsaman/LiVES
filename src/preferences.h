@@ -180,6 +180,8 @@ typedef struct {
   gboolean mt_pertrack_audio;
   gint mt_backaudio;
 
+  gint mt_auto_back;
+
   gboolean ar_clipset;
   gboolean ar_layout;
 

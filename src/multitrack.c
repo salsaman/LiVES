@@ -55,6 +55,134 @@ static int afd;
 
 static gint dclick_time=0;
 
+
+///////////////////////////////////////////////////////////////////
+
+
+void remove_mt_autoback(lives_mt *mt) {
+  gchar *com=g_strdup_printf("/bin/rm -f %s/layout.%d.%d.%d >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid(),getpid());
+  dummyvar=system(com);
+  g_free(com);
+}
+
+
+
+static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, gboolean save_all_vals, unsigned char **mem) {
+  weed_plant_t *event=get_first_event(event_list);
+
+  if (save_all_vals) {
+    weed_set_int_value(event_list,"width",cfile->hsize);
+    weed_set_int_value(event_list,"height",cfile->vsize);
+    weed_set_int_value(event_list,"audio_channels",cfile->achans);
+    weed_set_int_value(event_list,"audio_rate",cfile->arate);
+    weed_set_int_value(event_list,"audio_sample_size",cfile->asampsize);
+    if (cfile->signed_endian&AFORM_UNSIGNED) weed_set_boolean_value(event_list,"audio_signed",WEED_FALSE);
+    else weed_set_boolean_value(event_list,"audio_signed",WEED_TRUE);
+    if (cfile->signed_endian&AFORM_BIG_ENDIAN) weed_set_int_value(event_list,"audio_endian",1);
+    else weed_set_int_value(event_list,"audio_endian",0);
+
+    if (mt!=NULL&&mt->audio_vols!=NULL&&mt->audio_draws!=NULL) {
+      int i;
+      gint natracks=g_list_length(mt->audio_draws);
+      int *atracks=g_malloc(natracks*sizint);
+      gdouble *avols;
+      gint navols;
+      for (i=0;i<natracks;i++) {
+	atracks[i]=i-mt->opts.back_audio_tracks;
+      }
+      weed_set_int_array(event_list,"audio_volume_tracks",natracks,atracks);
+      g_free(atracks);
+
+      if (mt->opts.gang_audio) navols=1+mt->opts.back_audio_tracks;
+      else navols=natracks;
+
+      avols=g_malloc(navols*sizeof(double));
+      for (i=0;i<navols;i++) {
+	avols[i]=(gdouble)GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols,i))/1000000.;
+      }
+      weed_set_double_array(event_list,"audio_volume_values",navols,avols);
+      g_free(avols);
+    }
+  }
+
+  if (!save_all_vals) {
+    weed_leaf_delete(event_list,"width");
+    weed_leaf_delete(event_list,"height");
+    weed_leaf_delete(event_list,"audio_channels");
+    weed_leaf_delete(event_list,"audio_rate");
+    weed_leaf_delete(event_list,"audio_sample_size");
+    weed_leaf_delete(event_list,"audio_signed");
+    weed_leaf_delete(event_list,"audio_endian");
+    weed_leaf_delete(event_list,"audio_volume_tracks");
+    weed_leaf_delete(event_list,"audio_volume_values");
+  }
+
+  weed_plant_serialise(fd,event_list,mem);
+  while (event!=NULL) {
+    if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_voidptr_value(event,"event_id",(void *)event);
+    weed_plant_serialise(fd,event,mem);
+    event=get_next_event(event);
+  }
+}
+
+
+
+static void save_mt_autoback(lives_mt *mt) {
+  int fd;
+  gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+
+  fd=creat(asave_file,S_IRUSR|S_IWUSR);
+  save_event_list_inner(mt,fd,mt->event_list,mt->save_all_vals,NULL);
+  close(fd);
+
+  g_free(asave_file);
+}
+
+
+
+static gboolean mt_auto_backup(gpointer user_data) {
+  // can't use any gtk+ functions here, because of gtk+
+  // threading problems
+
+  struct timeval otv;
+  int64_t stime,diff;
+
+  lives_mt *mt=(lives_mt *)user_data;
+
+  if (!mt->auto_changed||mt->event_list==NULL) {
+    mt->idlefunc=0;
+    return FALSE;
+  }
+
+  gettimeofday(&otv, NULL);
+  stime=otv.tv_sec;
+
+  if (mt->auto_back_time==0) mt->auto_back_time=stime;
+  else {
+    diff=stime-mt->auto_back_time;
+    if (diff>prefs->mt_auto_back) {
+      save_mt_autoback(mt);
+      mt->auto_changed=FALSE;
+      mt->auto_back_time=stime;
+    }
+  }
+
+  return TRUE;
+}
+
+
+static guint mt_idle_add(lives_mt *mt) {
+  if (prefs->mt_auto_back<0) return 0;
+
+  if (prefs->mt_auto_back==0) {
+    mt_auto_backup(mt);
+    return 0;
+  }
+
+  return g_idle_add_full(G_PRIORITY_LOW,mt_auto_backup,mt,NULL);
+}
+
+
 GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
   GdkPixbuf *thumbnail,*pixbuf;
   GError *error=NULL;
@@ -976,7 +1104,6 @@ void scroll_tracks (lives_mt *mt) {
 
   if (mt->timeline_table!=NULL) {
     gtk_widget_destroy(mt->timeline_table);
-    //while (g_main_context_iteration(NULL,FALSE));
   }
 
   mt->timeline_table = gtk_table_new (mt->max_disp_vtracks, 40, TRUE);
@@ -1460,7 +1587,9 @@ gboolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer u
   GTK_ADJUSTMENT(mt->vadjustment)->page_size=max_disp_vtracks>mt->num_video_tracks?(gdouble)mt->num_video_tracks:(gdouble)max_disp_vtracks;
 
   scroll_tracks(mt);
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   while (g_main_context_iteration(NULL,FALSE));
+  if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
   track_select(mt);
   return FALSE;
 }
@@ -1742,7 +1871,9 @@ void mt_show_current_frame(lives_mt *mt) {
 
     mainw->xwin=0;
 
+    if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
     while (g_main_context_iteration(NULL,FALSE));
+    if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
     add_to_playframe();
   }
 
@@ -2802,67 +2933,6 @@ gboolean make_backup_space (lives_mt *mt, size_t space_needed) {
 }
 
 
-static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, gshort save_all_vals, unsigned char **mem) {
-  weed_plant_t *event=get_first_event(event_list);
-
-  if (save_all_vals) { // must keep the TRUE here (since save all vals can take 3 values)
-    weed_set_int_value(event_list,"width",cfile->hsize);
-    weed_set_int_value(event_list,"height",cfile->vsize);
-    weed_set_int_value(event_list,"audio_channels",cfile->achans);
-    weed_set_int_value(event_list,"audio_rate",cfile->arate);
-    weed_set_int_value(event_list,"audio_sample_size",cfile->asampsize);
-    if (cfile->signed_endian&AFORM_UNSIGNED) weed_set_boolean_value(event_list,"audio_signed",WEED_FALSE);
-    else weed_set_boolean_value(event_list,"audio_signed",WEED_TRUE);
-    if (cfile->signed_endian&AFORM_BIG_ENDIAN) weed_set_int_value(event_list,"audio_endian",1);
-    else weed_set_int_value(event_list,"audio_endian",0);
-
-    if (mt!=NULL&&mt->audio_vols!=NULL&&mt->audio_draws!=NULL) {
-      int i;
-      gint natracks=g_list_length(mt->audio_draws);
-      int *atracks=g_malloc(natracks*sizint);
-      gdouble *avols;
-      gint navols;
-      for (i=0;i<natracks;i++) {
-	atracks[i]=i-mt->opts.back_audio_tracks;
-      }
-      weed_set_int_array(event_list,"audio_volume_tracks",natracks,atracks);
-      g_free(atracks);
-
-      if (mt->opts.gang_audio) navols=1+mt->opts.back_audio_tracks;
-      else navols=natracks;
-
-      avols=g_malloc(navols*sizeof(double));
-      for (i=0;i<navols;i++) {
-	avols[i]=(gdouble)GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols,i))/1000000.;
-      }
-      weed_set_double_array(event_list,"audio_volume_values",navols,avols);
-      g_free(avols);
-    }
-  }
-
-  if (!save_all_vals) {
-    weed_leaf_delete(event_list,"width");
-    weed_leaf_delete(event_list,"height");
-    weed_leaf_delete(event_list,"audio_channels");
-    weed_leaf_delete(event_list,"audio_rate");
-    weed_leaf_delete(event_list,"audio_sample_size");
-    weed_leaf_delete(event_list,"audio_signed");
-    weed_leaf_delete(event_list,"audio_endian");
-    weed_leaf_delete(event_list,"audio_volume_tracks");
-    weed_leaf_delete(event_list,"audio_volume_values");
-  }
-
-  weed_plant_serialise(fd,event_list,mem);
-  while (event!=NULL) {
-    if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_voidptr_value(event,"event_id",(void *)event);
-    weed_plant_serialise(fd,event,mem);
-    event=get_next_event(event);
-  }
-}
-
-
-
-
 void mt_backup(lives_mt *mt, gint undo_type, gpointer data) {
   // backup an operation in the undo/redo list
 
@@ -2874,7 +2944,7 @@ void mt_backup(lives_mt *mt, gint undo_type, gpointer data) {
 
   mt->did_backup=TRUE;
 
-  mt->changed=TRUE;
+  mt->changed=mt->auto_changed=TRUE;
 
   if (mt->undo_mem==NULL) return;
 
@@ -2930,7 +3000,7 @@ void mt_backup(lives_mt *mt, gint undo_type, gpointer data) {
     }
     undo->data_len=space_needed;
     memblock=(unsigned char *)(mt->undo_mem+mt->undo_buffer_used+sizeof(mt_undo));
-    save_event_list_inner(NULL,0,mt->event_list,MT_PRESERVE_VALS,&memblock);
+    save_event_list_inner(NULL,0,mt->event_list,TRUE,&memblock);
     remove_markers(mt->event_list);
     break;
   }
@@ -3043,6 +3113,11 @@ static void apply_avol_filter(lives_mt *mt) {
     weed_plant_t *old_mt_init=mt->init_event;
     gboolean did_backup=mt->did_backup;
 
+    if (mt->idlefunc>0) {
+      g_source_remove(mt->idlefunc);
+      mt->idlefunc=0;
+    }
+
     mt->region_start=0.;
     mt->region_end=(get_event_timecode(new_end_event)+U_SEC/mt->fps)/U_SEC;
     if (mt->selected_tracks!=NULL) {
@@ -3075,6 +3150,9 @@ static void apply_avol_filter(lives_mt *mt) {
 	redraw_eventbox(mt,g_list_nth_data(mt->audio_draws,i));
       }
     }
+
+    if (!did_backup&&prefs->mt_auto_back>0) mt->idlefunc=mt_idle_add(mt);
+
     return;
   }
 
@@ -3124,6 +3202,8 @@ static void set_audio_filter_channel_values(lives_mt *mt) {
     }
   }
   
+  mt->changed=mt->auto_changed=TRUE;
+
   weed_reinit_effect(inst);
   polymorph(mt,POLY_EFFECT);
 
@@ -3267,6 +3347,9 @@ void mt_quit_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (!check_for_layout_del(mt,TRUE)) return;
 
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+  mt->idlefunc=0;
+
   on_quit_activate(menuitem,NULL);
 }
 
@@ -3332,6 +3415,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->is_ready=FALSE;
   mt->tl_marks=NULL;
   
+  mt->idlefunc=0; // idle function for auto backup
+  mt->auto_back_time=0;
+
   if (prefs->gui_monitor==0) scr_width=mainw->scr_width;
   else scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
 
@@ -3355,6 +3441,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   if (event_list==NULL) mt->changed=FALSE;
   else mt->changed=TRUE;
+
+  mt->auto_changed=mt->changed;
 
   mt->was_undo_redo=FALSE;
 
@@ -5423,6 +5511,10 @@ gboolean multitrack_delete (lives_mt *mt) {
 
   mt->no_expose=TRUE;
 
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+  mt->idlefunc=0;
+  remove_mt_autoback(mt);
+
   mainw->multi_opts.set=TRUE;
   mainw->multi_opts.move_effects=mt->opts.move_effects;
   mainw->multi_opts.fx_auto_preview=mt->opts.fx_auto_preview;
@@ -6725,7 +6817,6 @@ void init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 }
 
 
-
 gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list) {
   //returns TRUE if we go into mt mode
   gint orig_file;
@@ -6893,6 +6984,8 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   multi->is_ready=TRUE;
   mt_show_current_frame(multi);
 
+  multi->idlefunc=mt_idle_add(multi);
+
   return TRUE;
 }
 
@@ -6945,6 +7038,11 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, gdouble timesecs
   GtkWidget *eventbox,*oeventbox;
   gint clip,current_track=-1;
   gboolean did_backup=mt->did_backup;
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
 
   if (!did_backup) {
     if (old_track==-1) mt_backup(mt,MT_UNDO_MOVE_AUDIO_BLOCK,NULL);
@@ -7054,6 +7152,9 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, gdouble timesecs
     weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
     get_track_index(mt,tc);
   }
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+
   return block;
 }
 
@@ -8057,7 +8158,11 @@ void polymorph (lives_mt *mt, gshort poly) {
     mt->apply_fx_button=NULL;
     gtk_widget_set_sensitive(mt->fx_edit,FALSE);
     gtk_widget_set_sensitive(mt->fx_delete,FALSE);
-    if (poly==POLY_EFFECT) while (g_main_context_iteration(NULL,FALSE));
+    if (poly==POLY_EFFECT) {
+      if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+      while (g_main_context_iteration(NULL,FALSE));
+      if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
+    }
     else {
       mt->init_event=NULL;
       mt_show_current_frame(mt);
@@ -8111,7 +8216,9 @@ void polymorph (lives_mt *mt, gshort poly) {
       width=cfile->hsize;
       height=cfile->vsize;
 
+      if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
       while (g_main_context_iteration(NULL,FALSE)); // force poly_box to be shown so we know the width
+      if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
 
       if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
       if (height>mt->poly_box->allocation.height-(block->ordered?mainw->spinbutton_start->allocation.height:0)) height=mt->poly_box->allocation.height-(block->ordered?mainw->spinbutton_start->allocation.height:0);
@@ -8799,7 +8906,12 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       gdk_display_get_pointer(mt->display,&screen,&abs_x,&abs_y,NULL);
 #if GLIB_CHECK_VERSION(2,8,0)
       gdk_display_warp_pointer(mt->display,screen,abs_x+mt->hotspot_x,abs_y+mt->hotspot_y-height/2);
+
+      if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
       while (g_main_context_iteration(NULL,FALSE));
+      if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
+
+
 #endif
     }
 
@@ -9420,7 +9532,9 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
 
   if (poly_state!=POLY_EFFECT) {
     polymorph(mt,POLY_NONE);
+    if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
     while (g_main_context_iteration(NULL,FALSE));
+    if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
     polymorph(mt,poly_state);
 
   }
@@ -9457,6 +9571,11 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, gboole
   GList *track_sel;
   gboolean audio_done=FALSE;
   weed_timecode_t offset=0;
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
 
   if (!did_backup) mt_backup(mt,MT_UNDO_REMOVE_GAPS,NULL);
 
@@ -9523,6 +9642,8 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, gboole
     tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
     get_track_index(mt,tc);
   }
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
 }
 
@@ -10041,6 +10162,11 @@ void on_insgap_sel_activate (GtkMenuItem     *menuitem,
   gboolean did_backup=mt->did_backup;
   gchar *msg;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (!did_backup) mt_backup(mt,MT_UNDO_INSERT_GAP,NULL);
 
   while (slist!=NULL) {
@@ -10059,6 +10185,9 @@ void on_insgap_sel_activate (GtkMenuItem     *menuitem,
 
   d_print(msg);
   g_free(msg);
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -10068,6 +10197,11 @@ void on_insgap_cur_activate (GtkMenuItem     *menuitem,
   lives_mt *mt=(lives_mt *)user_data;
   gboolean did_backup=mt->did_backup;
   gchar *msg,*tname;
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
 
   if (!did_backup) mt_backup(mt,MT_UNDO_INSERT_GAP,NULL);
 
@@ -10086,6 +10220,8 @@ void on_insgap_cur_activate (GtkMenuItem     *menuitem,
 
   d_print(msg);
   g_free(msg);
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
 }
 
@@ -10120,6 +10256,11 @@ multitrack_undo            (GtkMenuItem     *menuitem,
 
   if (mt->undo_mem==NULL) return;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   mt->was_undo_redo=TRUE;
   mt->ptr_time=GTK_RULER(mt->timeline)->position;
 
@@ -10131,6 +10272,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
       if ((space_needed=estimate_space(mt,last_undo->action))>space_avail) {
 	if (!make_backup_space(mt,space_needed)||mt->undos==NULL) {
 	  remove_markers(mt->event_list);
+	  mt->idlefunc=mt_idle_add(mt);
 	  do_mt_undo_buf_error();
 	  return;
 	}
@@ -10141,7 +10283,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
       
       memblock=(unsigned char *)(new_redo)+sizeof(mt_undo);
       new_redo->data_len=space_needed;
-      save_event_list_inner(NULL,0,mt->event_list,MT_PRESERVE_VALS,&memblock);
+      save_event_list_inner(NULL,0,mt->event_list,TRUE,&memblock);
       mt->undo_buffer_used+=space_needed;
       mt->undos=g_list_append(mt->undos,new_redo);
       mt->undo_offset++;
@@ -10275,6 +10417,8 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     polymorph(mt,POLY_FX_LIST);
   }
   if (mt->poly_state!=POLY_EFFECT) mt_show_current_frame(mt);
+
+  mt->idlefunc=mt_idle_add(mt);
 }
 
 
@@ -10302,6 +10446,11 @@ multitrack_redo            (GtkMenuItem     *menuitem,
   gint avol_fx;
 
   if (mt->undo_mem==NULL) return;
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
 
   if (mt->block_selected!=NULL) block_is_selected=TRUE; // TODO *** - need to set track and time 
 
@@ -10438,6 +10587,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
   g_free(utxt);
   g_free(msg);
 
+  mt->idlefunc=mt_idle_add(mt);
 }
 
 
@@ -10516,6 +10666,15 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   weed_timecode_t end_tc=get_event_timecode(end_event);
   gboolean did_backup=mt->did_backup;
 
+  gchar *crashme=NULL;
+  g_free(crashme);
+  memcpy(crashme,0,100);
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (!did_backup&&mt->current_fx!=mt->avol_fx) mt_backup(mt,MT_UNDO_APPLY_FILTER,NULL);
 
   // set track_index (for special widgets)
@@ -10574,6 +10733,8 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   polymorph(mt,POLY_EFFECT);
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
   
+  mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -10719,6 +10880,11 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (mt->is_rendering) return;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   fhash=weed_get_string_value(mt->selected_init_event,"filter",&error);
   mt->current_fx=weed_get_idx_for_hashname(fhash,TRUE);
   weed_free(fhash);
@@ -10732,6 +10898,9 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   else if (mt->poly_state==POLY_FX_LIST) polymorph(mt,POLY_FX_LIST);
   mt_show_current_frame(mt);
   mt->did_backup=did_backup;
+
+  mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -10824,6 +10993,11 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *com,*tmp;
   gboolean had_audio=FALSE;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (menuitem==NULL) {
     mt->pr_audio=TRUE;
     had_audio=mt->has_audio_file;
@@ -10857,6 +11031,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       d_print_done();
       gtk_widget_set_sensitive(mt->render_vid,TRUE);
       gtk_widget_set_sensitive(mt->render_aud,TRUE);
+      mt->idlefunc=mt_idle_add(mt);
       return;
     }
 
@@ -10887,6 +11062,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (!get_new_handle(mainw->current_file,NULL)) {
       mainw->current_file=orig_file;
       if (!multitrack_end(menuitem,user_data)) switch_to_file ((mainw->current_file=0),current_file);
+      mt->idlefunc=mt_idle_add(mt);
       return;
     }
 
@@ -10912,7 +11088,9 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt->render_file=mainw->current_file;
     
     init_clips(mt,orig_file,TRUE);
+    if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
     while (g_main_context_iteration(NULL,FALSE));
+    if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
     clip_select(mt,TRUE);
   }
   else {
@@ -10938,6 +11116,9 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gtk_widget_set_sensitive(mt->render_vid,TRUE);
   gtk_widget_set_sensitive(mt->render_aud,TRUE);
   mt_sensitise(mt);
+
+  mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -11053,6 +11234,11 @@ void on_split_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (mt->putative_block==NULL) return;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (mt->context_time!=-1.) {
     timesecs=mt->context_time;
     mt->context_time=-1.;
@@ -11064,6 +11250,9 @@ void on_split_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   split_block(mt,mt->putative_block,tc,mt->current_track,FALSE);
   mt->did_backup=did_backup;
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -11079,6 +11268,11 @@ void on_split_curr_activate (GtkMenuItem *menuitem, gpointer user_data) {
   GtkWidget *eventbox;
   track_rect *block;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (!did_backup) mt_backup(mt,MT_UNDO_SPLIT,NULL);
 
   tc=q_gint64(timesecs*U_SEC,mt->fps);
@@ -11093,6 +11287,9 @@ void on_split_curr_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   split_block(mt,block,tc,mt->current_track,FALSE);
   mt->did_backup=did_backup;
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -11110,6 +11307,11 @@ void on_split_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (mt->selected_tracks==NULL) return;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (!did_backup) mt_backup(mt,MT_UNDO_SPLIT_MULTI,NULL);
 
   tc=q_gint64(timesecs*U_SEC,mt->fps);
@@ -11122,6 +11324,8 @@ void on_split_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
     selt=selt->next;
   }
   mt->did_backup=did_backup;
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
 }
 
@@ -11140,6 +11344,11 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gboolean did_backup=mt->did_backup;
 
   if (mt->is_rendering) return;
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
 
   mt->context_time=-1.;
 
@@ -11263,6 +11472,8 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
   redraw_eventbox(mt,eventbox);
 
   if (!mt->moving_block) mt_show_current_frame(mt);
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
 }
 
@@ -11496,6 +11707,11 @@ void multitrack_playall (lives_mt *mt) {
 
   if (mainw->current_file<1) return;
   
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   audio_needs_prerender=GTK_WIDGET_SENSITIVE(mt->prerender_aud);
 
   mt_desensitise(mt);
@@ -11630,6 +11846,9 @@ void multitrack_playall (lives_mt *mt) {
   if (!mt->is_rendering) mt_sensitise(mt);
   if (!audio_needs_prerender) gtk_widget_set_sensitive(mt->prerender_aud,FALSE);
   mainw->filter_map=filter_map;
+
+  mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -11650,6 +11869,11 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   if (sfile->frames==0) return;
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
 
   if (mt->context_time!=-1.) {
     secs=mt->context_time;
@@ -11716,6 +11940,8 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
   mt_tl_move(mt,0.);
   mt_show_current_frame(mt);
 
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -11732,6 +11958,11 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
   gshort dir;
 
   if (mt->current_track!=-1||sfile->achans==0) return;
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
 
   if (mt->context_time!=-1.) {
     secs=mt->context_time;
@@ -11820,6 +12051,9 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
     weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
     get_track_index(mt,tc);
   }
+
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+
 }
 
  
@@ -13014,6 +13248,9 @@ void on_del_node_clicked  (GtkWidget *button, gpointer user_data) {
     if (mainw->play_window!=NULL) mt_show_current_frame(mt); // show full preview in play window
   }
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
+
+  mt->changed=mt->auto_changed=TRUE;
+
 }
 
 
@@ -13115,6 +13352,10 @@ void on_set_pvals_clicked  (GtkWidget *button, gpointer user_data) {
   gboolean was_changed=FALSE;
   gchar *tmp,*tmp2;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
 
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
 
@@ -13155,7 +13396,10 @@ void on_set_pvals_clicked  (GtkWidget *button, gpointer user_data) {
     at_event=get_frame_event_at(mt->event_list,tc,mt->init_event,TRUE);
     insert_param_change_event_at(mt->event_list,at_event,pchange);
   }
-  if (!was_changed) return;
+  if (!was_changed) {
+    mt->idlefunc=mt_idle_add(mt);
+    return;
+  }
 
   filter_name=weed_filter_get_name(mt->current_fx);
   tracks=weed_get_int_array(mt->init_event,"in_tracks",&error);
@@ -13208,6 +13452,10 @@ void on_set_pvals_clicked  (GtkWidget *button, gpointer user_data) {
     show_preview(mt,tc);  // show fx preview in gui
     if (mainw->play_window!=NULL) mt_show_current_frame(mt); // show full preview in play window
   }
+
+  mt->changed=mt->auto_changed=TRUE;
+  mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -13651,6 +13899,11 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (strlen(mainw->set_name)>0) {
     weed_set_string_value(mt->event_list,"needs_set",mainw->set_name);
   }
@@ -13665,12 +13918,15 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	gtk_widget_destroy(renamew->dialog);
 	g_free(renamew);
 	mainw->cancelled=CANCEL_USER;
+	mt->idlefunc=mt_idle_add(mt);
 	return;
       }
       g_snprintf(new_set_name,256,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
+      if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
       while (g_main_context_iteration(NULL,FALSE));
+      if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
     } while (!is_legal_set_name(new_set_name,FALSE));
     g_snprintf(mainw->set_name,256,"%s",new_set_name);
   }
@@ -13730,6 +13986,9 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->was_set=was_set;
     if (!was_set) memset(mainw->set_name,0,1);
     mainw->cancelled=CANCEL_USER;
+
+    mt->idlefunc=mt_idle_add(mt);
+
     return;
   }
 
@@ -13769,6 +14028,9 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_free(esave_dir);
   if (layout_map!=NULL) g_free(layout_map);
   if (layout_map_audio!=NULL) g_free(layout_map_audio);
+
+  mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -15148,8 +15410,14 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   dummyvar=system (com);
   g_free (com);
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (!g_file_test(eload_dir,G_FILE_TEST_IS_DIR)) {
     g_free(eload_dir);
+    mt->idlefunc=mt_idle_add(mt);
     return NULL;
   }
 
@@ -15245,7 +15513,9 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   mt->changed=FALSE;
 
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   while (g_main_context_iteration(NULL,FALSE));
+  if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
 
   // event list loaded, now we set the pointers for filter_map (init_events), param_change (init_events and param chains), filter_deinit (init_events)
   do_threaded_dialog(_("Checking and rebuilding event list"),FALSE);
@@ -15276,7 +15546,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     if (!mt->layout_prompt||do_mt_rect_prompt(mt)) {
       // resave with corrections/updates
       fd=creat(eload_file,S_IRUSR|S_IWUSR);
-      save_event_list_inner(NULL,fd,event_list,MT_PRESERVE_VALS,NULL);
+      save_event_list_inner(NULL,fd,event_list,TRUE,NULL);
       close(fd);
     }
   }
@@ -15336,7 +15606,14 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   set_audio_filter_channel_values(mt);
 
   if (free_eload_file) g_free(eload_file);
+
+  if (prefs->mt_auto_back>0) {
+    mt->auto_back_time=0;
+    mt->idlefunc=mt_idle_add(mt);
+  }
+
   return (event_list);
+
 }
 
 
@@ -15366,6 +15643,7 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gint resp=2;
   gchar *msg;
 
+
   if (strlen(mt->layout_name)>0) {
     cdsw=create_cds_dialog(2,0);
   }
@@ -15382,6 +15660,13 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     GList *layout_map=NULL;
     gchar *lmap_file;
     if (!do_warning_dialog_with_check_transient("\nLayout will be deleted from the disk.\nAre you sure ?\n",0,GTK_WINDOW(mt->window))) return;
+    
+    if (mt->idlefunc>0) {
+      g_source_remove(mt->idlefunc);
+      mt->idlefunc=0;
+    }
+    
+    
     lmap_file=g_strdup_printf("tmpdir/%s/layouts/%s",mainw->set_name,mt->layout_name);
     layout_map=g_list_append(layout_map,lmap_file);
     remove_layout_files(layout_map);
@@ -15392,6 +15677,12 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
       prefs->ar_layout=FALSE;
     }
   }
+
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   if (resp==2&&strlen(mt->layout_name)==0) {
     // save
     on_save_event_list_activate(NULL,mt);
@@ -15450,6 +15741,9 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   memset(mt->layout_name,0,1);
 
   mt_show_current_frame(mt);
+
+  mt->idlefunc=mt_idle_add(mt);
+
 }
 
 
@@ -15502,9 +15796,17 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (!check_for_layout_del(mt,FALSE)) return;
 
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
   new_event_list=load_event_list(mt,NULL);
 
-  if (new_event_list==NULL) return;
+  if (new_event_list==NULL) {
+    mt->idlefunc=mt_idle_add(mt);
+    return;
+  }
 
   if (mt->event_list!=NULL) event_list_free(mt->event_list);
 
@@ -15540,6 +15842,8 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   remove_markers(mt->event_list);
   mt_sensitise(mt);
   mt_show_current_frame(mt);
+
+  mt->idlefunc=mt_idle_add(mt);
 }
 
 
@@ -15571,7 +15875,7 @@ void migrate_layouts (gchar *old_set_name, gchar *new_set_name) {
 	  // save the event_list with the same name
 	  unlink(map->data);
 	  fd=creat(map->data,S_IRUSR|S_IWUSR);
-	  save_event_list_inner(NULL,fd,event_list,MT_PRESERVE_VALS,NULL);
+	  save_event_list_inner(NULL,fd,event_list,TRUE,NULL);
 	  event_list_free(event_list);
 	}
 	close(fd);

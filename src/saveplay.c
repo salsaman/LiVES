@@ -3134,7 +3134,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (!is_legal_set_name(mainw->set_name,TRUE)) continue;
       if (!on_load_set_ok(NULL,GINT_TO_POINTER(TRUE))) {
 	fclose(rfile);
-	com=g_strdup_printf("/bin/rm -f %s/recovery.* >/dev/null 2>&1",prefs->tmpdir);
+	com=g_strdup_printf("/bin/rm -f %s/recovery.%d.%d.* >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid());
 	dummyvar=system(com);
 	rewrite_recovery_file(-1);
 	g_free(com);
@@ -3152,7 +3152,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       g_free(clipdir);
       if ((new_file=mainw->first_free_file)==-1) {
 	fclose(rfile);
-	com=g_strdup_printf("/bin/rm -f %s/recovery.* >/dev/null 2>&1",prefs->tmpdir);
+	com=g_strdup_printf("/bin/rm -f %s/recovery.%d.%d.* >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid());
 	dummyvar=system(com);
 	rewrite_recovery_file(-1);
 	g_free(com);
@@ -3267,7 +3267,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
   end_threaded_dialog();
 
   fclose(rfile);
-  com=g_strdup_printf("/bin/rm -f %s/recovery.* >/dev/null 2>&1",prefs->tmpdir);
+  com=g_strdup_printf("/bin/rm -f %s/recovery.%d.%d.* >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid());
   dummyvar=system(com);
   rewrite_recovery_file(-1);
   g_free(com);
@@ -3309,6 +3309,8 @@ void rewrite_recovery_file(gint closed_file) {
 
 gboolean check_for_recovery_files (gboolean auto_recover) {
   gboolean retval=FALSE;
+  gchar *recovery_file,*com;
+  guint recpid;
 
   if (g_file_test(mainw->recovery_file,G_FILE_TEST_EXISTS)) {
     recover_files(mainw->recovery_file,auto_recover);
@@ -3317,9 +3319,8 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   else {
     size_t bytes;
     int info_fd;
-    gchar *recovery_file;
     gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
-    gchar *com=g_strdup_printf("smogrify get_recovery_file %d %d %s> %s",getuid(),getgid(),capable->myname,info_file);
+    gchar *com=g_strdup_printf("smogrify get_recovery_file %d %d %s recovery> %s",getuid(),getgid(),capable->myname,info_file);
 
     unlink(info_file);
     dummyvar=system(com);
@@ -3329,17 +3330,33 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
     if (info_fd>-1) {
       if ((bytes=read(info_fd,mainw->msg,256))>0) {
 	memset(mainw->msg+bytes,0,1);
-	recover_files((recovery_file=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->msg)),auto_recover);
-	unlink(recovery_file);
-	g_free(recovery_file);
-	rewrite_recovery_file(-1);
-	retval=TRUE;
+	if ((recpid=atoi(mainw->msg))>0) {
+	  recover_files((recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid)),auto_recover);
+	  unlink(recovery_file);
+	  g_free(recovery_file);
+	  rewrite_recovery_file(-1);
+	  retval=TRUE;
+	}
       }
       close(info_fd);
     }
     unlink(info_file);
     g_free(info_file);
   }
+
+  // check for layout recovery file
+  recovery_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
+  if (g_file_test (recovery_file, G_FILE_TEST_EXISTS)) {
+    com=g_strdup_printf("/bin/mv %s %s/.layout.%d.%d.%d",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
+    dummyvar=system(com);
+    g_free(com);
+    com=g_strdup_printf("/bin/rm -f %s/layout.%d.%d.*",prefs->tmpdir,getuid(),getgid());
+    dummyvar=system(com);
+    g_free(com);
+    do_layout_recover_dialog();
+  }
+  g_free(recovery_file);
+
   return retval;
 }
 

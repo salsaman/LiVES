@@ -1050,6 +1050,9 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (audio_menu), mainw->fade_aud_out);
   gtk_widget_show (mainw->fade_aud_out);
 
+  gtk_widget_set_sensitive (mainw->fade_aud_in, FALSE);
+  gtk_widget_set_sensitive (mainw->fade_aud_out, FALSE);
+
   separator9 = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (audio_menu), separator9);
   gtk_widget_set_sensitive (separator9, FALSE);

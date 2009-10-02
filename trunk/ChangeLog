@@ -2,8 +2,9 @@ Version 1.1.4
 -------------
 Allow mouse scroll to switch clips.
 Allow selection of aspect ratio for custom mjpegtools format. (Thanks Doug).
+Do not remove recovery files for other users. *
 Set correct filename in "File -> Save..." (regression). *
-
+Fade audio in/out should not be active with no file loaded. *
 
 
 	

@@ -556,6 +556,7 @@ gboolean do_original_lost_warning(gchar *fname);
 void do_no_decoder_error(gchar *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
+void do_layout_recover_dialog(void);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *text, gboolean has_cancel);

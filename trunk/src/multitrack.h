@@ -1,6 +1,6 @@
 // multitrack.h
 // LiVES
-// (c) G. Finch 2005 - 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2005 - 2009 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -349,7 +349,10 @@ struct _mt {
   gboolean undoable;
   gboolean redoable;
 
-  gboolean changed;
+  gboolean changed; // changed since last saved
+  gboolean auto_changed; // changed since last auto-saved
+
+  int64_t auto_back_time;
 
   // stuff to do with framedraw "special" widgets
   gint inwidth;
@@ -388,8 +391,6 @@ struct _mt {
   gboolean layout_set_properties;
   gboolean save_all_vals;
   gboolean ignore_load_vals;
-
-#define MT_PRESERVE_VALS 2
 
   gdouble user_fps;
   gint user_width;
@@ -438,6 +439,7 @@ struct _mt {
 
   gboolean has_audio_file;
 
+  guint idlefunc;
 };  // lives_mt
 
 
@@ -724,6 +726,10 @@ gboolean layout_frame_is_affected(gint clipno, gint frame);
 gboolean layout_audio_is_affected(gint clipno, gdouble time);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
+
+
+// auto backup
+void remove_mt_autoback(lives_mt *mt);
 
 
 // internal functions

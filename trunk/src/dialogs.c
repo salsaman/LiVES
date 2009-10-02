@@ -1352,6 +1352,11 @@ void do_rmem_max_error (gint size) {
 }
 
 
+void do_layout_recover_dialog(void) {
+  g_print("Would ask for layout recovery.\n");
+}
+
+
 static void dth2_inner (void *arg, gboolean has_cancel) {
   GtkWidget *dialog_vbox1;
   GtkWidget *vbox2;
@@ -1443,9 +1448,11 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     while (g_main_context_iteration(NULL,FALSE));
 
     pthread_mutex_unlock(&mainw->gtk_mutex);
-    sched_yield();
-    g_usleep(prefs->sleep_time);
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    do {
+      if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) break;
+      sched_yield();
+      g_usleep(prefs->sleep_time);
+    } while (pthread_mutex_trylock(&mainw->gtk_mutex));
   }
 
   gtk_widget_destroy(procw->processing);
@@ -1523,7 +1530,9 @@ void do_threaded_dialog(gchar *text, gboolean has_cancel) {
 void end_threaded_dialog(void) {
   if (mainw->threaded_dialog) {
     mainw->threaded_dialog=FALSE;
+    pthread_mutex_lock(&mainw->gtk_mutex);
     pthread_join(dthread,NULL);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
     if (thread_text!=NULL) g_free(thread_text);
     mainw->cancel_type=CANCEL_KILL;
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);

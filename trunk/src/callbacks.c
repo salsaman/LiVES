@@ -43,6 +43,10 @@ lives_exit (void) {
     int i;
     gchar *com;
 
+    if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+    }
+
     if (mainw->playing_file>-1) {
       gtk_timeout_remove (mainw->kb_timer);
       if (mainw->ext_playback) {
@@ -963,6 +967,8 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     
     if (mainw->multitrack->event_list!=NULL) event_list_free(mainw->multitrack->event_list);
     
+    remove_mt_autoback(mainw->multitrack);
+
   }
 
 

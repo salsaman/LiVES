@@ -889,6 +889,8 @@ typedef struct {
   GtkWidget *splash_label;
   GtkWidget *splash_progress;
 
+  gboolean recoverable_layout;
+
   gboolean soft_debug; // for testing
 
 

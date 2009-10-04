@@ -2831,5 +2831,53 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
 
 
+void do_layout_recover_dialog(void) {
+  GtkWidget *label;
+  GtkWidget *dialog_vbox;
+  GtkWidget *okbutton;
+  GtkWidget *cancelbutton;
 
+  GtkWidget *mdialog=gtk_dialog_new ();
+
+  gtk_window_set_title (GTK_WINDOW (mdialog), _("LiVES: recover layout ?"));
+  gtk_window_set_position (GTK_WINDOW (mdialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_default_size (GTK_WINDOW (mdialog), 450, 200);
+  gtk_window_set_transient_for(GTK_WINDOW(mdialog),GTK_WINDOW(mainw->LiVES));
+
+  if (palette->style&STYLE_1) {
+    gtk_dialog_set_has_separator(GTK_DIALOG(mdialog),FALSE);
+    gtk_widget_modify_bg(mdialog, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  dialog_vbox = GTK_DIALOG (mdialog)->vbox;
+  
+  label = gtk_label_new (_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"));
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
+
+  if (mainw!=NULL&&palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
+
+
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (mdialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_FOCUS);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (mdialog), okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  gtk_widget_grab_default(okbutton);
+  gtk_widget_grab_focus(okbutton);
+
+  g_signal_connect (cancelbutton, "clicked",G_CALLBACK (on_cancel_button1_clicked),NULL);
+
+  g_signal_connect (okbutton, "clicked",G_CALLBACK (recover_layout),NULL);
+
+  gtk_widget_show_all(mdialog);
+
+}
 

@@ -183,6 +183,14 @@ static guint mt_idle_add(lives_mt *mt) {
 }
 
 
+void recover_layout(GtkButton *button, gpointer user_data) {
+  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  while (g_main_context_iteration (NULL,FALSE));
+  if (!on_multitrack_activate(NULL,NULL)) multitrack_delete(mainw->multitrack);
+  mainw->recoverable_layout=FALSE;
+}
+
+
 GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
   GdkPixbuf *thumbnail,*pixbuf;
   GError *error=NULL;
@@ -5362,7 +5370,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->timeline_table=NULL;
   mt->timeline_eb=NULL;
 
-  if (prefs->ar_layout&&mt->event_list==NULL) {
+  if (prefs->ar_layout&&mt->event_list==NULL&&!mainw->recoverable_layout) {
     gchar *eload_file=g_strdup_printf("%s/%s/layouts/%s",prefs->tmpdir,mainw->set_name,prefs->ar_layout_name);
     mt->auto_reloading=TRUE;
     mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
@@ -5378,6 +5386,22 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
       memset(prefs->ar_layout_name,0,1);
       init_tracks (mt,TRUE);
       mainw->unordered_blocks=FALSE;
+    }
+  }
+  else if (mainw->recoverable_layout) {
+    gchar *eload_file=g_strdup_printf("%s.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+    mt->auto_reloading=TRUE;
+    mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
+    mt->auto_reloading=FALSE;
+    g_free(eload_file);
+    if (mt->event_list!=NULL) {
+      init_tracks(mt,TRUE);
+      remove_markers(mt->event_list);
+    }
+    else {
+      mainw->multitrack=mt;
+      mt->fps=prefs->mt_def_fps;
+      return mt;
     }
   }
   else {
@@ -5659,8 +5683,7 @@ gboolean multitrack_delete (lives_mt *mt) {
 
   if (new_file!=-1) {
     switch_to_file ((mainw->current_file=0),mt->file_selected);
-
-  }
+ }
   g_free (mt);
 
   reset_clip_menu();
@@ -6831,7 +6854,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
   mainw->frame_layer=NULL;
 
-
   if (prefs->mt_enter_prompt) {
     rdet=create_render_details(3);  // WARNING !! - rdet is global in events.h
     rdet->enc_changed=FALSE;
@@ -6894,7 +6916,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   // if we have an existing event list, we will quantise it to the selected fps
   if (event_list!=NULL) {
     weed_plant_t *qevent_list=quantise_events(event_list,cfile->fps,FALSE);
-    if (qevent_list==NULL) return TRUE; // memory error
+    if (qevent_list==NULL) return FALSE; // memory error
     event_list_replace_events(event_list,qevent_list);
     weed_set_double_value(event_list,"fps",cfile->fps);
     event_list_rectify(NULL,event_list,FALSE);
@@ -6904,6 +6926,12 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   if (mainw->sep_win) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sepwin),!mainw->sep_win);
 
   multi=multitrack(event_list,orig_file,cfile->fps);
+
+  if (mainw->recoverable_layout&&multi->event_list==NULL) {
+    multi->clip_selected=orig_file-1;
+    multi->file_selected=orig_file;
+    return FALSE;
+  }
 
   if (prefs->show_gui) {
     gtk_widget_show_all (multi->window);
@@ -10665,10 +10693,6 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   weed_timecode_t start_tc=get_event_timecode(start_event);
   weed_timecode_t end_tc=get_event_timecode(end_event);
   gboolean did_backup=mt->did_backup;
-
-  gchar *crashme=NULL;
-  g_free(crashme);
-  memcpy(crashme,0,100);
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);

@@ -709,6 +709,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->abufs_to_fill=0;
 
+  mainw->recoverable_layout=FALSE;
+
   mainw->soft_debug=FALSE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -794,7 +796,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->mouse_scroll_clips=get_boolean_pref("mouse_scroll_clips");
 
-    prefs->mt_auto_back=20;
+    prefs->mt_auto_back=-1;
 
     //////////////////////////////////////////////////////////////////
 
@@ -1664,8 +1666,9 @@ static gboolean lives_startup(gpointer data) {
   if (prefs->osc_start) prefs->osc_udp_started=lives_osc_init(prefs->osc_udp_port);
 #endif
 
-
   splash_end();
+
+  if (mainw->recoverable_layout) do_layout_recover_dialog();
 
   return FALSE;
 }

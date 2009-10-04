@@ -796,7 +796,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->mouse_scroll_clips=get_boolean_pref("mouse_scroll_clips");
 
-    prefs->mt_auto_back=-1;
+    prefs->mt_auto_back=0;
 
     //////////////////////////////////////////////////////////////////
 

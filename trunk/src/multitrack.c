@@ -158,9 +158,9 @@ static gboolean mt_auto_backup(gpointer user_data) {
   stime=otv.tv_sec;
 
   if (mt->auto_back_time==0) mt->auto_back_time=stime;
-  else {
+  if(mt->auto_back_time<stime||prefs->mt_auto_back==0) {
     diff=stime-mt->auto_back_time;
-    if (diff>prefs->mt_auto_back) {
+    if (diff>=prefs->mt_auto_back) {
       save_mt_autoback(mt);
       mt->auto_changed=FALSE;
       mt->auto_back_time=stime;
@@ -3159,7 +3159,7 @@ static void apply_avol_filter(lives_mt *mt) {
       }
     }
 
-    if (!did_backup&&prefs->mt_auto_back>0) mt->idlefunc=mt_idle_add(mt);
+    if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
     return;
   }
@@ -5827,7 +5827,6 @@ void init_tracks (lives_mt *mt, gboolean set_min_max) {
   }
 
   g_list_free(tlist);
-
 
   if (mt->timeline_table==NULL) {
     label=gtk_label_new (_("Timeline (seconds)"));
@@ -15521,7 +15520,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   if ((event_list=load_event_list_inner(mt,fd,TRUE,&num_events,NULL,NULL))==NULL) {
     close(fd);
-    mt_sensitise(mt);
+    if (mt->is_ready) mt_sensitise(mt);
     g_free(eload_dir);
     return NULL;
   }
@@ -15588,7 +15587,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     gtk_widget_show(mt->view_audio);
   }
 
-  mt_sensitise(mt);
+  if (mt->is_ready) mt_sensitise(mt);
 
   if (mt->avol_fx==-1&&mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate!=-1) {
     // user (or system) has delegated an audio volume filter from the candidates
@@ -15631,10 +15630,8 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   if (free_eload_file) g_free(eload_file);
 
-  if (prefs->mt_auto_back>0) {
-    mt->auto_back_time=0;
-    mt->idlefunc=mt_idle_add(mt);
-  }
+  mt->auto_back_time=0;
+  mt->idlefunc=mt_idle_add(mt);
 
   return (event_list);
 

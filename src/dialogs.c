@@ -1352,10 +1352,6 @@ void do_rmem_max_error (gint size) {
 }
 
 
-void do_layout_recover_dialog(void) {
-  g_print("Would ask for layout recovery.\n");
-}
-
 
 static void dth2_inner (void *arg, gboolean has_cancel) {
   GtkWidget *dialog_vbox1;

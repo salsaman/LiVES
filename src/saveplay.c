@@ -3081,7 +3081,6 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
   gint new_file,clipnum=0;
   FILE *rfile;
   gboolean last_was_normal_file=FALSE;
-  gchar *com;
   const lives_clip_data_t *cdata=NULL;
 
   splash_end();
@@ -3134,10 +3133,6 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (!is_legal_set_name(mainw->set_name,TRUE)) continue;
       if (!on_load_set_ok(NULL,GINT_TO_POINTER(TRUE))) {
 	fclose(rfile);
-	com=g_strdup_printf("/bin/rm -f %s/recovery.%d.%d.* >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid());
-	dummyvar=system(com);
-	rewrite_recovery_file(-1);
-	g_free(com);
 	end_threaded_dialog();
 	return;
       }
@@ -3152,10 +3147,6 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       g_free(clipdir);
       if ((new_file=mainw->first_free_file)==-1) {
 	fclose(rfile);
-	com=g_strdup_printf("/bin/rm -f %s/recovery.%d.%d.* >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid());
-	dummyvar=system(com);
-	rewrite_recovery_file(-1);
-	g_free(com);
 	end_threaded_dialog();
 	too_many_files();
 	return;
@@ -3267,10 +3258,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
   end_threaded_dialog();
 
   fclose(rfile);
-  com=g_strdup_printf("/bin/rm -f %s/recovery.%d.%d.* >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid());
-  dummyvar=system(com);
-  rewrite_recovery_file(-1);
-  g_free(com);
+
   if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
 
 }
@@ -3309,8 +3297,9 @@ void rewrite_recovery_file(gint closed_file) {
 
 gboolean check_for_recovery_files (gboolean auto_recover) {
   gboolean retval=FALSE;
-  gchar *recovery_file,*com;
+  gchar *recovery_file;
   guint recpid;
+  gchar *com;
 
   if (g_file_test(mainw->recovery_file,G_FILE_TEST_EXISTS)) {
     recover_files(mainw->recovery_file,auto_recover);
@@ -3334,8 +3323,17 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
 	  recover_files((recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid)),auto_recover);
 	  unlink(recovery_file);
 	  g_free(recovery_file);
-	  rewrite_recovery_file(-1);
 	  retval=TRUE;
+
+	  // check for layout recovery file
+	  recovery_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
+	  if (g_file_test (recovery_file, G_FILE_TEST_EXISTS)) {
+	    com=g_strdup_printf("/bin/mv %s %s/.layout.%d.%d.%d",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
+	    dummyvar=system(com);
+	    g_free(com);
+	    mainw->recoverable_layout=TRUE;
+	  }
+	  g_free(recovery_file);
 	}
       }
       close(info_fd);
@@ -3344,18 +3342,15 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
     g_free(info_file);
   }
 
-  // check for layout recovery file
-  recovery_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
-  if (g_file_test (recovery_file, G_FILE_TEST_EXISTS)) {
-    com=g_strdup_printf("/bin/mv %s %s/.layout.%d.%d.%d",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
-    dummyvar=system(com);
-    g_free(com);
-    com=g_strdup_printf("/bin/rm -f %s/layout.%d.%d.*",prefs->tmpdir,getuid(),getgid());
-    dummyvar=system(com);
-    g_free(com);
-    do_layout_recover_dialog();
-  }
-  g_free(recovery_file);
+  com=g_strdup_printf("/bin/rm -f %s/recovery.%d.%d.* >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid());
+  dummyvar=system(com);
+  g_free(com);
+
+  rewrite_recovery_file(-1);
+
+  com=g_strdup_printf("/bin/rm -f %s/layout.%d.%d.*",prefs->tmpdir,getuid(),getgid());
+  dummyvar=system(com);
+  g_free(com);
 
   return retval;
 }

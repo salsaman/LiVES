@@ -13,7 +13,7 @@ if IS_SOLARIS
 solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
-libOSC_la_CFLAGS = $(DEBUG_CFLAGS)
+libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS)
 
 if ENABLE_OSC
 libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\
@@ -36,4 +36,3 @@ endif
 
 libOSC_la_LDFLAGS = $(ALL_LIB_OPTS) -DDYNAMIC -O2 -Wall -rdynamic
 
-AM_CFLAGS = $(solaris_CFLAGS)

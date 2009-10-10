@@ -966,9 +966,9 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     g_list_free(mainw->multitrack->tl_marks);
     
     if (mainw->multitrack->event_list!=NULL) event_list_free(mainw->multitrack->event_list);
-    
-    remove_mt_autoback(mainw->multitrack);
 
+    recover_layout_cancelled(NULL,NULL);
+    
   }
 
 

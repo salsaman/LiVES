@@ -59,13 +59,6 @@ static gint dclick_time=0;
 ///////////////////////////////////////////////////////////////////
 
 
-void remove_mt_autoback(lives_mt *mt) {
-  gchar *com=g_strdup_printf("/bin/rm -f %s/layout.%d.%d.%d >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid(),getpid());
-  dummyvar=system(com);
-  g_free(com);
-}
-
-
 
 static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, gboolean save_all_vals, unsigned char **mem) {
   weed_plant_t *event=get_first_event(event_list);
@@ -132,7 +125,9 @@ static void save_mt_autoback(lives_mt *mt) {
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
 
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
+  add_markers(mt,mt->event_list);
   save_event_list_inner(mt,fd,mt->event_list,mt->save_all_vals,NULL);
+  remove_markers(mt->event_list);
   close(fd);
 
   g_free(asave_file);
@@ -182,6 +177,23 @@ static guint mt_idle_add(lives_mt *mt) {
   return g_idle_add_full(G_PRIORITY_LOW,mt_auto_backup,mt,NULL);
 }
 
+
+void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
+  gchar *eload_file=g_strdup_printf("%s.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  if (button!=NULL) {
+    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+    mainw->recoverable_layout=FALSE;
+  }
+
+  unlink(eload_file);
+  g_free(eload_file);
+  
+  eload_file=g_strdup_printf("%slayout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  unlink(eload_file);
+  g_free(eload_file);
+
+
+}
 
 void recover_layout(GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -5393,8 +5405,10 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
     mt->auto_reloading=TRUE;
     mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
     mt->auto_reloading=FALSE;
+    unlink(eload_file);
     g_free(eload_file);
     if (mt->event_list!=NULL) {
+      save_mt_autoback(mt);
       init_tracks(mt,TRUE);
       remove_markers(mt->event_list);
     }
@@ -5537,7 +5551,6 @@ gboolean multitrack_delete (lives_mt *mt) {
 
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   mt->idlefunc=0;
-  remove_mt_autoback(mt);
 
   mainw->multi_opts.set=TRUE;
   mainw->multi_opts.move_effects=mt->opts.move_effects;
@@ -5700,6 +5713,8 @@ gboolean multitrack_delete (lives_mt *mt) {
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
 
   gtk_widget_grab_focus(mainw->textview1);
+
+  recover_layout_cancelled(NULL,NULL);
 
   return TRUE;
 }
@@ -14052,6 +14067,9 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (layout_map!=NULL) g_free(layout_map);
   if (layout_map_audio!=NULL) g_free(layout_map_audio);
 
+  recover_layout_cancelled(NULL,NULL);
+  mt->auto_changed=FALSE;
+
   mt->idlefunc=mt_idle_add(mt);
 
 }
@@ -15534,7 +15552,8 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   g_free(msg);
   g_free(eload_dir);
 
-  mt->changed=FALSE;
+  mt->changed=mainw->recoverable_layout;
+  mt->auto_changed=FALSE;
 
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   while (g_main_context_iteration(NULL,FALSE));
@@ -15603,8 +15622,10 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   add_aparam_menuitems(mt);
 
   if (event_list!=NULL) {
-    g_snprintf(mt->layout_name,256,"%s",eload_file);
-    get_basename(mt->layout_name);
+    if (!mainw->recoverable_layout) {
+      g_snprintf(mt->layout_name,256,"%s",eload_file);
+      get_basename(mt->layout_name);
+    }
 
     if (mt->layout_set_properties) msg=mt_set_vals_string();
     else msg=g_strdup_printf(_("Multitrack fps set to %.3f\n"),cfile->fps);
@@ -15823,6 +15844,8 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   new_event_list=load_event_list(mt,NULL);
+
+  recover_layout_cancelled(NULL,NULL);
 
   if (new_event_list==NULL) {
     mt->idlefunc=mt_idle_add(mt);

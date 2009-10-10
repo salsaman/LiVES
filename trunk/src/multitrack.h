@@ -729,8 +729,8 @@ void remove_markers(weed_plant_t *event_list);
 
 
 // auto backup
-void remove_mt_autoback(lives_mt *mt);
 void recover_layout(GtkButton *, gpointer);
+void recover_layout_cancelled(GtkButton *, gpointer user_data);
 
 
 // internal functions

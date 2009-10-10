@@ -2873,7 +2873,7 @@ void do_layout_recover_dialog(void) {
   gtk_widget_grab_default(okbutton);
   gtk_widget_grab_focus(okbutton);
 
-  g_signal_connect (cancelbutton, "clicked",G_CALLBACK (on_cancel_button1_clicked),NULL);
+  g_signal_connect (cancelbutton, "clicked",G_CALLBACK (recover_layout_cancelled),NULL);
 
   g_signal_connect (okbutton, "clicked",G_CALLBACK (recover_layout),NULL);
 

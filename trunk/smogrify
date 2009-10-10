@@ -281,6 +281,7 @@ if (defined($ARGV[0])) {
 	&rc_set_if_not_set("mt_def_signed_endian",2*!&get_endian);
 	&rc_set_if_not_set("mt_backaudio","1");
 	&rc_set_if_not_set("mt_pertrack_audio","true");
+	&rc_set_if_not_set("mt_auto_back",30);
 
 	&rc_set_if_not_set("ar_clipset","");
 	&rc_set_if_not_set("ar_layout","");
@@ -777,6 +778,29 @@ if (defined($ARGV[0])) {
 		}
 	    }
 	    print 0;
+            closedir DIR;
+	    exit 0;
+	}
+
+
+	if ($command eq "clean_recovery_files") {
+	    #remove non-in-use recovery/layout files for given uid, gid
+	    my $uid=$ARGV[1];
+	    my $gid=$ARGV[2];
+	    my $exename=$ARGV[3];
+            opendir DIR,"$tmpdir";
+
+	    chdir $tmpdir;
+
+	    while (my $file=readdir(DIR)) {
+		if ($file=~/^recovery\.$uid\.$gid\.(.*)/ ||$file=~/^layout\.$uid\.$gid\.(.*)/) {
+		    my $exe=`readlink -n /proc/$1/exe`;
+		    my $short_exe=&my_basename($exe);
+		    unless ($short_exe eq $exename) {
+			`/bin/rm -f $file 2>/dev/null`;
+		    }
+		}
+	    }
             closedir DIR;
 	    exit 0;
 	}

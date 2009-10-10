@@ -3,6 +3,7 @@ Version 1.1.4
 Auto backup of multitrack layouts (in progress).
 Allow mouse scroll to switch clips.
 Allow selection of aspect ratio for custom mjpegtools format. (Thanks Doug).
+Fix for solaris patch.
 Fix a crash when autoreloading layouts. *
 Do not remove recovery files for other users. *
 Set correct filename in "File -> Save..." (regression). *

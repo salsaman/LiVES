@@ -3342,15 +3342,12 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
     g_free(info_file);
   }
 
-  com=g_strdup_printf("/bin/rm -f %s/recovery.%d.%d.* >/dev/null 2>&1",prefs->tmpdir,getuid(),getgid());
+  com=g_strdup_printf("smogrify clean_recovery_files %d %d %s",getuid(),getgid(),capable->myname);
+
   dummyvar=system(com);
   g_free(com);
 
   rewrite_recovery_file(-1);
-
-  com=g_strdup_printf("/bin/rm -f %s/layout.%d.%d.*",prefs->tmpdir,getuid(),getgid());
-  dummyvar=system(com);
-  g_free(com);
 
   return retval;
 }

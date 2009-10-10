@@ -340,6 +340,10 @@ apply_prefs(gboolean skip_warn) {
   gboolean mt_pertrack_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->pertrack_checkbutton));
   gboolean mt_backaudio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->backaudio_checkbutton));
 
+  gboolean mt_autoback_always=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_always));
+  gboolean mt_autoback_never=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_never));
+  gint mt_autoback_time=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time));
+
   gint gui_monitor=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   gint play_monitor=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   gboolean forcesmon=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->forcesmon));
@@ -998,6 +1002,14 @@ apply_prefs(gboolean skip_warn) {
     }
   }
 
+  if (mt_autoback_always) mt_autoback_time=0;
+  else if (mt_autoback_never) mt_autoback_time=-1;
+
+  if (mt_autoback_time!=prefs->mt_auto_back) {
+    prefs->mt_auto_back=mt_autoback_time;
+    set_int_pref("mt_auto_back",mt_autoback_time);
+  }
+
   return needs_restart;
 }
 
@@ -1155,6 +1167,16 @@ static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 }
 
 
+static void on_mtbackevery_toggled (GtkToggleButton *tbutton, gpointer user_data) {
+  _prefsw *xprefsw;
+
+  if (user_data!=NULL) xprefsw=(_prefsw *)user_data;
+  else xprefsw=prefsw;
+
+  gtk_widget_set_sensitive(xprefsw->spinbutton_mt_ab_time,gtk_toggle_button_get_active(tbutton));
+
+}
+
 #ifdef ALSA_MIDI
 static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   _prefsw *xprefsw;
@@ -1286,6 +1308,7 @@ _prefsw *create_prefs_dialog (void) {
   GSList *mt_enter_prompt = NULL;
   GSList *rb_group2 = NULL;
   GSList *alsa_midi_group = NULL;
+  GSList *autoback_group = NULL;
 
   // drop down lists
   GList *themes = NULL;
@@ -1358,7 +1381,7 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->mt_enter_prompt = gtk_radio_button_new_with_mnemonic (NULL, _("_Prompt me for width, height, fps and audio settings"));
   gtk_widget_show (prefsw->mt_enter_prompt);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->mt_enter_prompt), 18);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->mt_enter_prompt), 8);
   gtk_box_pack_start (GTK_BOX (vbox77), prefsw->mt_enter_prompt, FALSE, FALSE, 0);
 
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->mt_enter_prompt), mt_enter_prompt);
@@ -1366,7 +1389,7 @@ _prefsw *create_prefs_dialog (void) {
 
   mt_enter_defs = gtk_radio_button_new_with_mnemonic (mt_enter_prompt, _("_Always use the following values:"));
   gtk_widget_show (mt_enter_defs);
-  gtk_container_set_border_width (GTK_CONTAINER (mt_enter_defs), 18);
+  gtk_container_set_border_width (GTK_CONTAINER (mt_enter_defs), 8);
   gtk_box_pack_start (GTK_BOX (vbox77), mt_enter_defs, FALSE, FALSE, 0);
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mt_enter_defs),!prefs->mt_enter_prompt);
@@ -1374,7 +1397,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->checkbutton_render_prompt = gtk_check_button_new_with_mnemonic (_("Use these same _values for rendering a new clip"));
   gtk_widget_show (prefsw->checkbutton_render_prompt);
   gtk_box_pack_start (GTK_BOX (vbox77), prefsw->checkbutton_render_prompt, FALSE, FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->checkbutton_render_prompt), 22);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->checkbutton_render_prompt), 12);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_render_prompt), !prefs->render_prompt);
 
   frame = gtk_frame_new (NULL);
@@ -1504,6 +1527,74 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (vbox77), prefsw->checkbutton_mt_exit_render, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->checkbutton_mt_exit_render), 22);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
+
+
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox77), hbox, TRUE, FALSE, 0);
+
+  label = gtk_label_new (_("Auto backup layouts"));
+  gtk_widget_show (label);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
+
+
+  prefsw->mt_autoback_every = gtk_radio_button_new_with_mnemonic (NULL, _("_Every"));
+  gtk_widget_show (prefsw->mt_autoback_every);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->mt_autoback_every), 8);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->mt_autoback_every, FALSE, FALSE, 0);
+
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_every), autoback_group);
+  autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_every));
+
+
+  spinbutton_adj = gtk_adjustment_new (30, 10, 1800, 1, 10, 0);
+  prefsw->spinbutton_mt_ab_time = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
+  gtk_widget_show (prefsw->spinbutton_mt_ab_time);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_ab_time, FALSE, TRUE, 0);
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_mt_ab_time);
+
+
+  label = gtk_label_new_with_mnemonic (_("seconds"));
+  gtk_widget_show (label);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 10);
+
+  add_fill_to_box(GTK_BOX(hbox));
+
+
+  prefsw->mt_autoback_always = gtk_radio_button_new_with_mnemonic (NULL, _("After every change"));
+  gtk_widget_show (prefsw->mt_autoback_always);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->mt_autoback_always), 18);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->mt_autoback_always, FALSE, FALSE, 0);
+
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_always), autoback_group);
+  autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_always));
+
+
+  prefsw->mt_autoback_never = gtk_radio_button_new_with_mnemonic (NULL, _("Never"));
+  gtk_widget_show (prefsw->mt_autoback_never);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->mt_autoback_never), 18);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->mt_autoback_never, FALSE, FALSE, 0);
+
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_never), autoback_group);
+  autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_never));
+
+  g_signal_connect (GTK_OBJECT (prefsw->mt_autoback_every), "toggled",
+		    G_CALLBACK (on_mtbackevery_toggled),
+		    prefsw);
+
+  if (prefs->mt_auto_back==0) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_always),TRUE);
+  }
+  else if (prefs->mt_auto_back==-1) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_never),TRUE);
+  }
+  else {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_every),TRUE);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time),prefs->mt_auto_back);
+  }
 
   pref_multitrack = gtk_label_new (_("Multitrack/Render"));
   gtk_widget_show (pref_multitrack);

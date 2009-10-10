@@ -323,6 +323,10 @@ typedef struct {
   GtkWidget *spinbutton_mt_def_height;
   GtkWidget *spinbutton_mt_def_fps;
   GtkWidget *spinbutton_mt_undo_buf;
+  GtkWidget *spinbutton_mt_ab_time;
+  GtkWidget *mt_autoback_every;
+  GtkWidget *mt_autoback_always;
+  GtkWidget *mt_autoback_never;
   GtkWidget *spinbutton_gmoni;
   GtkWidget *spinbutton_pmoni;
   GtkWidget *checkbutton_mt_exit_render;

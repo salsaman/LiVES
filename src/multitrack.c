@@ -3632,11 +3632,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->save_vals = gtk_check_menu_item_new_with_mnemonic (_("_Retain width, height and audio values in saved layouts"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->save_vals);
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->save_vals),FALSE);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->save_vals),mt->save_all_vals);
 
   mt->load_vals = gtk_check_menu_item_new_with_mnemonic (_("_Ignore width, height and audio values from loaded layouts"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->load_vals);
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->load_vals),FALSE);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->load_vals),mt->ignore_load_vals);
 
   separator = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);

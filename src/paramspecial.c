@@ -271,12 +271,19 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
   slist=fileread;
   while (slist!=NULL) {
     if (num==GPOINTER_TO_INT(slist->data)) {
+      GList *clist;
+      gint epos;
 
       box=(GTK_WIDGET(param->widgets[0])->parent);
+
+      clist=gtk_container_get_children(GTK_CONTAINER(box));
+      epos=g_list_index(clist,param->widgets[0]);
+      g_list_free(clist);
 
       buttond = gtk_file_chooser_button_new(_("LiVES: Select file"),GTK_FILE_CHOOSER_ACTION_OPEN);
       gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());
       gtk_box_pack_start(GTK_BOX(box),buttond,FALSE,FALSE,10);
+      gtk_box_reorder_child(GTK_BOX(box),buttond,epos); // insert after label, before textbox
 
       g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)param->widgets[0]);
     }

@@ -179,6 +179,7 @@ typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num
 
   /* plugin only functions */
 typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
+typedef void (*weed_desetup_f)(void);
 typedef int (*weed_init_f) (weed_plant_t *filter_instance);
 typedef int (*weed_process_f) (weed_plant_t *filter_instance, weed_timecode_t timestamp);
 typedef int (*weed_deinit_f) (weed_plant_t *filter_instance);

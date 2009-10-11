@@ -1564,7 +1564,7 @@ _prefsw *create_prefs_dialog (void) {
   add_fill_to_box(GTK_BOX(hbox));
 
 
-  prefsw->mt_autoback_always = gtk_radio_button_new_with_mnemonic (NULL, _("After every change"));
+  prefsw->mt_autoback_always = gtk_radio_button_new_with_mnemonic (NULL, _("After every _change"));
   gtk_widget_show (prefsw->mt_autoback_always);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->mt_autoback_always), 18);
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->mt_autoback_always, FALSE, FALSE, 0);
@@ -1573,7 +1573,7 @@ _prefsw *create_prefs_dialog (void) {
   autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_always));
 
 
-  prefsw->mt_autoback_never = gtk_radio_button_new_with_mnemonic (NULL, _("Never"));
+  prefsw->mt_autoback_never = gtk_radio_button_new_with_mnemonic (NULL, _("_Never"));
   gtk_widget_show (prefsw->mt_autoback_never);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->mt_autoback_never), 18);
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->mt_autoback_never, FALSE, FALSE, 0);

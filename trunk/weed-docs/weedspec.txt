@@ -822,7 +822,7 @@ value for the parameter. The host should not change any other leaves.
 
  * "gui" : WEED_SEED_PLANTPTR : each parameter_template can have a
  "gui" leaf. This leaf points to a plant of type
- GUI. Within the GUI plant can be addition leaves to assist the host
+ GUI. Within the GUI plant can be additional leaves to assist the host
  to display this particular parameter. The plugin can create it, and
  set leaf values in it in weed_setup() and/or in init_func().
 

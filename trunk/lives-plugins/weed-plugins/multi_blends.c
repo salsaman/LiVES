@@ -289,7 +289,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("blend_screen","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&screen_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),in_params1,NULL);
+    filter_class=weed_filter_class_init("blend_screen","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&screen_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     filter_class=weed_filter_class_init("blend_darken","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&darken_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);

@@ -124,7 +124,7 @@ static inline void weed_data_free(weed_data_t **data, int num_elems, int seed_ty
     if (!weed_seed_is_ptr(seed_type)||(seed_type==WEED_SEED_STRING&&data[i]->value!=NULL)) weed_free(data[i]->value);
     weed_free(data[i]);
   }
-  weed_free(data);
+  if (data!=NULL) weed_free(data);
 }
 
 static inline weed_data_t **weed_data_new(int seed_type, int num_elems, void *value) {

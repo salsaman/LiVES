@@ -180,13 +180,10 @@ lives_exit (void) {
 	cfile->event_list=cfile->event_list_back=NULL;
 
 	if (cfile->layout_map!=NULL) {
-	  GList *map=cfile->layout_map;
-	  while (map!=NULL) {
-	    if (map->data!=NULL) g_free(map->data);
-	    map=map->next;
-	  }
+	  g_list_free_strings(cfile->layout_map);
 	  g_list_free(cfile->layout_map);
 	}
+
 	cfile->layout_map=NULL;
 
 	pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -227,6 +224,11 @@ lives_exit (void) {
       kill_play_window();
       pthread_mutex_unlock(&mainw->gtk_mutex);
     }
+  }
+
+  if (mainw->current_layouts_map!=NULL) {
+    g_list_free_strings(mainw->current_layouts_map);
+    g_list_free(mainw->current_layouts_map);
   }
 
   if (capable->smog_version_correct) {
@@ -3585,8 +3587,10 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (prefs->crash_recovery&&!added_recovery) {
       gchar *recovery_entry=g_strdup_printf("%s/*",mainw->set_name);
+      pthread_mutex_lock(&mainw->gtk_mutex);
       add_to_recovery_file(recovery_entry);
       g_free(recovery_entry);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
       added_recovery=TRUE;
     }
 
@@ -3594,10 +3598,14 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       // newer style (0.9.6+)
       gchar *clipdir=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->msg);
       if (!g_file_test(clipdir,G_FILE_TEST_IS_DIR)) {
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	g_free(clipdir);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 	continue;
       }
+      pthread_mutex_lock(&mainw->gtk_mutex);
       g_free(clipdir);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
       if ((new_file=mainw->first_free_file)==-1) {
 	end_threaded_dialog();
 	too_many_files();
@@ -3609,9 +3617,11 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
       // lock the set
+      pthread_mutex_lock(&mainw->gtk_mutex);
       com=g_strdup_printf("/bin/touch %s/%s/lock.%d",prefs->tmpdir,mainw->set_name,getpid());
       dummyvar=system(com);
       g_free(com);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 
     //create a new cfile and fill in the details
@@ -3646,7 +3656,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	break;
       }
       if (next) {
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	g_free(cfile);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 	mainw->first_free_file=mainw->current_file;
 	continue;
       }
@@ -3656,7 +3668,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (cfile->ext_src!=NULL) {
       if (!check_clip_integrity(cfile,cdata)) {
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	g_free(cfile);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 	mainw->first_free_file=mainw->current_file;
 	continue;
       }
@@ -3671,8 +3685,10 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     open_set_file (mainw->set_name,++clipnum);
 
     if (mainw->cached_list!=NULL) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
       mainw->cached_list=NULL;
     }
 

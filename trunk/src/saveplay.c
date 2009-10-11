@@ -3058,6 +3058,7 @@ void recover_layout_map(numclips) {
 	  mainw->files[i]->layout_map=lmap_entry->list;
 	  g_free(lmap_entry->handle);
 	  g_free(lmap_entry->name);
+	  g_free(lmap_entry);
 	  if (lmap_node->prev!=NULL) lmap_node->prev->next=lmap_node_next;
 	  else mlist=lmap_node_next;
 	  if (lmap_node_next!=NULL) lmap_node_next->prev=lmap_node->prev;
@@ -3067,8 +3068,21 @@ void recover_layout_map(numclips) {
 	lmap_node=lmap_node_next;
       }
     }
-    g_list_free_strings(mlist);
-    g_list_free(mlist);
+  
+    lmap_node=mlist;
+    while (lmap_node!=NULL) {
+      lmap_entry=lmap_node->data;
+      if (lmap_entry->name!=NULL) g_free(lmap_entry->name);
+      if (lmap_entry->handle!=NULL) g_free(lmap_entry->handle);
+      if (lmap_entry->list!=NULL) {
+	g_list_free_strings(lmap_entry->list);
+	g_list_free(lmap_entry->list);
+      }
+      g_free(lmap_node);
+      lmap_node=lmap_node->next;
+    }
+    if (mlist!=NULL) g_list_free(mlist);
+
   }
 }
 
@@ -3272,6 +3286,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 void add_to_recovery_file (gchar *handle) {
   gchar *com=g_strdup_printf("/bin/echo \"%s\" >> %s",handle,mainw->recovery_file);
   dummyvar=system(com);
+  g_free(com);
 }
 
 

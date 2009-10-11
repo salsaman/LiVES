@@ -87,15 +87,19 @@ static GList *get_plugin_result (gchar *command, gchar *delim, gboolean allow_bl
   }
   
   if (!count) {
+    pthread_mutex_lock(&mainw->gtk_mutex);
     g_printerr (_("Plugin timed out on message %s\n"),command);
     g_free (outfile);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
     return list;
   }
   
   bytes=read (outfile_fd,&buffer,65535);
   close (outfile_fd);
   unlink (outfile);
+  pthread_mutex_lock(&mainw->gtk_mutex);
   g_free (outfile);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   memset (buffer+bytes,0,1);
 
 #ifdef DEBUG_PLUGINS
@@ -108,7 +112,6 @@ static GList *get_plugin_result (gchar *command, gchar *delim, gboolean allow_bl
     return list;
   }
   
-  //pthread_mutex_lock(&mainw->gtk_mutex);
   pieces=get_token_count (buffer,delim[0]);
   array=g_strsplit(buffer,delim,pieces);
   for (i=0;i<pieces;i++) {
@@ -119,8 +122,9 @@ static GList *get_plugin_result (gchar *command, gchar *delim, gboolean allow_bl
       }
     }
   }
+  pthread_mutex_lock(&mainw->gtk_mutex);
   g_strfreev (array);
-  //pthread_mutex_unlock(&mainw->gtk_mutex);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   return list;
 }
 
@@ -173,7 +177,9 @@ plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const
   else com=g_strdup (request);
   list_plugins=FALSE;
   reslist=get_plugin_result (com,delim,allow_blanks);
+  pthread_mutex_lock(&mainw->gtk_mutex);
   g_free(com);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   return reslist;
 }
 
@@ -216,7 +222,9 @@ GList *get_plugin_list (gchar *plugin_type, gboolean allow_nonex, gchar *plugdir
   }
   list_plugins=TRUE;
   pluglist=get_plugin_result (com,"|",FALSE);
+  pthread_mutex_lock(&mainw->gtk_mutex);
   g_free(com);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   return pluglist;
 }
 

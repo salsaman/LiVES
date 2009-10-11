@@ -437,45 +437,48 @@ int weed_leaf_copy (weed_plant_t *dst, char *keyt, weed_plant_t *src, char *keyf
 
   int seed_type=weed_leaf_seed_type(src,keyf),i,error;
 
-  switch (seed_type) {
-  case WEED_SEED_INT:
-    datai=weed_get_int_array(src,keyf,&error);
-    error=weed_set_int_array(dst,keyt,num,datai);
-    weed_free(datai);
-    break;
-  case WEED_SEED_INT64:
-    datai6=weed_get_int64_array(src,keyf,&error);
-    error=weed_set_int64_array(dst,keyt,num,datai6);
-    weed_free(datai6);
-    break;
-  case WEED_SEED_BOOLEAN:
-    datai=weed_get_boolean_array(src,keyf,&error);
-    error=weed_set_boolean_array(dst,keyt,num,datai);
-    weed_free(datai);
-    break;
-  case WEED_SEED_DOUBLE:
-    datad=weed_get_double_array(src,keyf,&error);
-    error=weed_set_double_array(dst,keyt,num,datad);
-    weed_free(datad);
-    break;
-  case WEED_SEED_VOIDPTR:
-    datav=weed_get_voidptr_array(src,keyf,&error);
-    error=weed_set_voidptr_array(dst,keyt,num,datav);
-    weed_free(datav);
-    break;
-  case WEED_SEED_PLANTPTR:
-    datap=weed_get_plantptr_array(src,keyf,&error);
-    error=weed_set_plantptr_array(dst,keyt,num,datap);
-    weed_free(datap);
-    break;
-  case WEED_SEED_STRING:
-    datac=weed_get_string_array(src,keyf,&error);
-    error=weed_set_string_array(dst,keyt,num,datac);
-    for (i=0;i<num;i++) {
-      weed_free(datac[i]);
+  if (num==0) weed_leaf_set(dst,keyt,seed_type,1,NULL);
+  else {
+    switch (seed_type) {
+    case WEED_SEED_INT:
+      datai=weed_get_int_array(src,keyf,&error);
+      error=weed_set_int_array(dst,keyt,num,datai);
+      weed_free(datai);
+      break;
+    case WEED_SEED_INT64:
+      datai6=weed_get_int64_array(src,keyf,&error);
+      error=weed_set_int64_array(dst,keyt,num,datai6);
+      weed_free(datai6);
+      break;
+    case WEED_SEED_BOOLEAN:
+      datai=weed_get_boolean_array(src,keyf,&error);
+      error=weed_set_boolean_array(dst,keyt,num,datai);
+      weed_free(datai);
+      break;
+    case WEED_SEED_DOUBLE:
+      datad=weed_get_double_array(src,keyf,&error);
+      error=weed_set_double_array(dst,keyt,num,datad);
+      weed_free(datad);
+      break;
+    case WEED_SEED_VOIDPTR:
+      datav=weed_get_voidptr_array(src,keyf,&error);
+      error=weed_set_voidptr_array(dst,keyt,num,datav);
+      weed_free(datav);
+      break;
+    case WEED_SEED_PLANTPTR:
+      datap=weed_get_plantptr_array(src,keyf,&error);
+      error=weed_set_plantptr_array(dst,keyt,num,datap);
+      weed_free(datap);
+      break;
+    case WEED_SEED_STRING:
+      datac=weed_get_string_array(src,keyf,&error);
+      error=weed_set_string_array(dst,keyt,num,datac);
+      for (i=0;i<num;i++) {
+	weed_free(datac[i]);
+      }
+      weed_free(datac);
+      break;
     }
-    weed_free(datac);
-    break;
   }
   return error;
 }

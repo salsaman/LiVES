@@ -2891,26 +2891,114 @@ void weed_load_all (void) {
 }
 
 
+void weed_filter_free(weed_plant_t *filter) {
+  int nitems,error,i;
+  weed_plant_t **plants;
+
+  // free in_channel_templates
+  if (weed_plant_has_leaf(filter,"in_channel_templates")) {
+    nitems=weed_leaf_num_elements(filter,"in_channel_templates");
+    if (nitems>0) {
+      plants=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+      pthread_mutex_lock(&mainw->gtk_mutex);
+      for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
+      weed_free(plants);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
+    }
+  }
+
+
+  // free out_channel_templates
+  if (weed_plant_has_leaf(filter,"out_channel_templates")) {
+    nitems=weed_leaf_num_elements(filter,"out_channel_templates");
+    if (nitems>0) {
+      plants=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+      pthread_mutex_lock(&mainw->gtk_mutex);
+      for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
+      weed_free(plants);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
+    }
+  }
+
+  // free in_param_templates
+  if (weed_plant_has_leaf(filter,"in_parameter_templates")) {
+    nitems=weed_leaf_num_elements(filter,"in_parameter_templates");
+    if (nitems>0) {
+      plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+      pthread_mutex_lock(&mainw->gtk_mutex);
+      for (i=0;i<nitems;i++) {
+	if (weed_plant_has_leaf(plants[i],"gui")) weed_plant_free(weed_get_plantptr_value(plants[i],"gui",&error));
+	weed_plant_free(plants[i]);
+      }
+      weed_free(plants);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
+    }
+  }
+
+
+  // free out_param_templates
+  if (weed_plant_has_leaf(filter,"out_parameter_templates")) {
+    nitems=weed_leaf_num_elements(filter,"out_parameter_templates");
+    if (nitems>0) {
+      plants=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
+      pthread_mutex_lock(&mainw->gtk_mutex);
+      for (i=0;i<nitems;i++) {
+	if (weed_plant_has_leaf(plants[i],"gui")) weed_plant_free(weed_get_plantptr_value(plants[i],"gui",&error));
+	weed_plant_free(plants[i]);
+      }
+      weed_free(plants);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
+    }
+  }
+
+
+  // free gui
+  pthread_mutex_lock(&mainw->gtk_mutex);
+  if (weed_plant_has_leaf(filter,"gui")) weed_plant_free(weed_get_plantptr_value(filter,"gui",&error));
+
+
+  // free filter
+  weed_plant_free(filter);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+}
+
 
 void weed_unload_all(void) {
   int i,error;
   weed_plant_t *filter,*plugin_info;
   void *handle;
+  weed_desetup_f desetup_fn;
+  GList *pinfo=NULL;
 
   mainw->num_tr_applied=0;
   weed_deinit_all();
   for (i=0;i<num_weed_filters;i++) {
     filter=weed_filters[i];
     plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
+
+    if (g_list_index(pinfo,plugin_info)==-1) pinfo=g_list_append(pinfo,plugin_info);
+
     handle=weed_get_voidptr_value(plugin_info,"handle",&error);
+
     if (handle!=NULL) {
+      if ((desetup_fn=dlsym (handle,"weed_desetup"))!=NULL) {
+	// call weed_desetup()
+	(*desetup_fn)();
+      }
+
       dlclose(handle);
       handle=NULL;
       weed_set_voidptr_value(plugin_info,"handle",handle);
     }
-    // call weed_desetup()
-    //weed_filter_free(filter); // etc...
+    weed_filter_free(filter);
   }
+
+  while (pinfo!=NULL) {
+    weed_plant_free((weed_plant_t *)pinfo->data);
+    pinfo=pinfo->next;
+  }
+
+  if (pinfo!=NULL) g_list_free(pinfo);
 
   for (i=0;i<MAX_WEED_FILTERS;i++) {
     if (hashnames[i]!=NULL) g_free(hashnames[i]);

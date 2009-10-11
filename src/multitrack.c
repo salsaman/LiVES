@@ -620,7 +620,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
   GdkPixbuf *bgimage;
   track_rect *sblock=NULL;
 
-  if (mt->no_expose) return FALSE;
+  if (mt->no_expose) return TRUE;
 
   gdk_region_get_clipbox(reg,&rect);
   startx=rect.x;
@@ -3427,7 +3427,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   GtkObject *spinbutton_adj;
   gint num_filters;
   int i;
-  gchar *cname,*tname;
+  gchar *cname,*tname,*msg;
 
   gint scr_width;
 
@@ -4782,7 +4782,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->insa_menuitem = gtk_menu_item_new_with_label ("");
 
   // must do this here to set cfile->hsize, cfile->vsize; and we must have created aparam_submenu and insa_submenu
-  set_values_from_defs(mt,!prefs->mt_enter_prompt);
+  msg=set_values_from_defs(mt,!prefs->mt_enter_prompt);
+  if (msg!=NULL) g_free(msg);
 
   hbox = gtk_hbox_new (FALSE, 10);
   gtk_box_pack_start (GTK_BOX (mt->top_vbox), hbox, FALSE, FALSE, 2);
@@ -6260,6 +6261,7 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
     gtk_widget_ref(eventbox);
     pname=g_strdup_printf("achan%d",i);
     g_object_set_data(G_OBJECT(audio_draw),pname,eventbox);
+    g_free(pname);
     g_object_set_data(G_OBJECT(eventbox),"owner",audio_draw);
     g_object_set_data (G_OBJECT(eventbox), "hidden", GINT_TO_POINTER(0));
   }
@@ -12163,6 +12165,8 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
   while (((direction==DIRECTION_POSITIVE&&(offset_start=q_gint64(last_tc-start_tc+offset_start_tc,mt->fps))<offset_end)||(direction==DIRECTION_NEGATIVE&&(offset_start=q_gint64(last_tc+offset_start_tc-start_tc,mt->fps))>=offset_end))) {
 
     numframes=0;
+    clips=rep_clips=NULL;
+    frames=rep_frames=NULL;
     
     if ((event=get_frame_event_at (mt->event_list,last_tc,shortcut1,TRUE))!=NULL) {
       // TODO - memcheck
@@ -12196,8 +12200,8 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
 	    shortcut1=get_prev_frame_event(shortcut1);
 	  }
 	}
-	g_free(clips);
-	g_free(frames);
+	if (clips!=NULL) weed_free(clips);
+	if (frames!=NULL) weed_free(frames);
 	break; // do not allow overwriting in this mode
       }
       rep_clips=clips;
@@ -12206,6 +12210,10 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
 
     if (sfile->event_list!=NULL) event=get_frame_event_at(sfile->event_list,offset_start,shortcut2,TRUE);
     if (sfile->event_list!=NULL&&event==NULL) {
+      if (rep_clips!=clips&&rep_clips!=NULL) g_free(rep_clips);
+      if (rep_frames!=frames&&rep_frames!=NULL) g_free(rep_frames);
+      if (clips!=NULL) weed_free(clips);
+      if (frames!=NULL) weed_free(frames);
       break; // insert finished: ran out of frames in resampled clip
     }
     last_offset=offset_start;
@@ -12221,8 +12229,8 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
     // TODO - memcheck
     event_list=insert_frame_event_at (mt->event_list,last_tc,numframes,rep_clips,rep_frames,&shortcut1);
 
-    if (rep_clips!=clips) g_free(rep_clips);
-    if (rep_frames!=frames) g_free(rep_frames);
+    if (rep_clips!=clips&&rep_clips!=NULL) g_free(rep_clips);
+    if (rep_frames!=frames&&rep_frames!=NULL) g_free(rep_frames);
 
     if (isfirst) {
       // TODO - memcheck
@@ -12259,11 +12267,9 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
       }
     }
 
-    g_free(clips);
-    g_free(frames);
+    if (clips!=NULL) weed_free(clips);
+    if (frames!=NULL) weed_free(frames);
     
-    clips=rep_clips=NULL;
-    frames=rep_frames=NULL;
     if (direction==DIRECTION_POSITIVE) last_tc+=tl;
     else {
       if (last_tc<tl) break;
@@ -12589,7 +12595,7 @@ gint mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
   gint startx,width;
   gint hidden;
 
-  if (mt->no_expose) return FALSE;
+  if (mt->no_expose) return TRUE;
 
   gdk_region_get_clipbox(reg,&rect);
   startx=rect.x;
@@ -12637,7 +12643,7 @@ gint mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
   gint startx,width;
   gint hidden;
 
-  if (mt->no_expose) return FALSE;
+  if (mt->no_expose) return TRUE;
 
   gdk_region_get_clipbox(reg,&rect);
   startx=rect.x;

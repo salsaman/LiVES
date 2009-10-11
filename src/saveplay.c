@@ -3067,6 +3067,8 @@ void recover_layout_map(numclips) {
 	lmap_node=lmap_node_next;
       }
     }
+    g_list_free_strings(mlist);
+    g_list_free(mlist);
   }
 }
 

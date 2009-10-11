@@ -567,7 +567,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		weed_set_int_value(pgui,"decimals",2);
 		break;
 	      case F0R_PARAM_COLOR:
-		in_params[wnum]=weed_colRGBd_init((char *)pinfo.name,label,0,0,0);
+		in_params[wnum]=weed_colRGBd_init((char *)pinfo.name,label,0.,0.,0.);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		if (num_weed_params>f0rinfo.num_params) sprintf(rfx_strings[pnum],"layout|p%d|",wnum);
 		break;

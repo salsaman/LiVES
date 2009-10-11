@@ -2844,6 +2844,7 @@ void weed_load_all (void) {
       plugin_name=g_list_nth_data(weed_plugin_list,plugin_idx);
       plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
       load_weed_plugin(plugin_name,plugin_path);
+      g_free(g_list_nth_data(weed_plugin_list,plugin_idx));
       weed_plugin_list=g_list_delete_link(weed_plugin_list,g_list_nth(weed_plugin_list,plugin_idx));
       plugin_idx--;
       listlen--;
@@ -2877,7 +2878,7 @@ void weed_load_all (void) {
       g_free(subdir_path);
     }
     if (weed_plugin_list!=NULL) {
-      //g_list_free_strings(weed_plugin_list);
+      g_list_free_strings(weed_plugin_list);
       g_list_free(weed_plugin_list);
     }
   }

@@ -2760,20 +2760,23 @@ gchar *subst (gchar *string, gchar *from, gchar *to) {
   gchar *search,*lastsearch;
   gchar *ret=g_strdup(""),*ret2;
 
-  search=lastsearch=string;
+  search=g_strdup(string);
+  lastsearch=g_strdup(string);
 
   while (search!=NULL) {
+    g_free(search);
     if ((search=strstr (lastsearch,from))==NULL) {
       ret2=g_strconcat (ret,lastsearch,NULL);
       g_free(ret);
+      g_free(lastsearch);
       ret=ret2;
     }
     else {
-      memset (search,0,1);
       ret2=g_strconcat (ret,lastsearch,to,NULL);
       g_free(ret);
+      g_free(lastsearch);
+      lastsearch=g_strdup(search+strlen (from));
       ret=ret2;
-      lastsearch=search+strlen (from);
     }
   }
   return ret;

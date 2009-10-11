@@ -110,7 +110,7 @@ on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
   int i,j;
   FILE *kfile;
-  gchar *msg;
+  gchar *msg,*tmp;
   GList *list=NULL;
   gboolean update=FALSE;
 
@@ -119,13 +119,15 @@ on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   if (button!=NULL) {
     if (!do_warning_dialog_with_check_transient((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,GTK_WINDOW(rte_window))) return FALSE;
 
-    d_print (g_strdup_printf(_("Saving keymap to %s\n"),keymap_file));
+    d_print ((tmp=g_strdup_printf(_("Saving keymap to %s\n"),keymap_file)));
+    g_free(tmp);
   }
   else {
     update=TRUE;
     list=(GList *)user_data;
     if (list==NULL) return FALSE;
-    d_print (g_strdup_printf(_("\nUpdating keymap file %s..."),keymap_file));
+    d_print ((tmp=g_strdup_printf(_("\nUpdating keymap file %s..."),keymap_file)));
+    g_free(tmp);
   }
 
   if (!(kfile=fopen(keymap_file,"w"))) {
@@ -305,7 +307,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
   int i;
   FILE *kfile;
-  gchar *msg;
+  gchar *msg,*tmp;
   gint key,mode;
   gchar buff[65536];
   size_t linelen;
@@ -364,7 +366,8 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     line=(gchar *)g_list_nth_data(list,i);
     
     if (get_token_count(line,'|')<2) {
-      d_print(g_strdup_printf(_("Invalid line %d in %s\n"),i,keymap_file));
+      d_print((tmp=g_strdup_printf(_("Invalid line %d in %s\n"),i,keymap_file)));
+      g_free(tmp);
       continue;
     }
 
@@ -402,13 +405,15 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
 
     if (key<1||key>prefs->rte_keys_virtual) {
-      d_print(g_strdup_printf(_("Invalid key %d in %s\n"),key,keymap_file));
+      d_print((tmp=g_strdup_printf(_("Invalid key %d in %s\n"),key,keymap_file)));
+      g_free(tmp);
       notfound=TRUE;
       continue;
     }
 
     if (strncmp(hashname,"Weed",4)||strlen(hashname)<5) {
-      d_print(g_strdup_printf(_("Invalid effect %s in %s\n"),hashname,keymap_file));
+      d_print((tmp=g_strdup_printf(_("Invalid effect %s in %s\n"),hashname,keymap_file)));
+      g_free(tmp);
       notfound=TRUE;
       continue;
     }
@@ -421,11 +426,13 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       continue;
     }
     if (mode==-2){
-      d_print(g_strdup_printf(_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key));
+      d_print((tmp=g_strdup_printf(_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
+      g_free(tmp);
       continue;
     }
     if (mode==-3){
-      d_print(g_strdup_printf(_("Too many effects bound to key %d.\n"),key));
+      d_print((tmp=g_strdup_printf(_("Too many effects bound to key %d.\n"),key)));
+      g_free(tmp);
       continue;
     }
     else if (rte_window!=NULL) {
@@ -749,6 +756,7 @@ fx_changed (GtkItem *item, gpointer user_data) {
   gchar *hashname1=g_strdup(g_object_get_data(G_OBJECT(item),"hashname"));
   gchar *hashname2=g_strdup(g_object_get_data(G_OBJECT(combo_entries[key_mode]),"hashname"));
   gint error;
+  gchar *tmp;
 
   int i;
 
@@ -775,7 +783,10 @@ fx_changed (GtkItem *item, gpointer user_data) {
 
     // this gets called twice, unfortunately...may be a bug in gtk+
     if (error==-2) do_mix_error();
-    if (error==-1) d_print(g_strdup_printf(_("LiVES could not locate the effect %s.\n"),rte_keymode_get_filter_name(key+1,mode)));
+    if (error==-1) {
+      d_print((tmp=g_strdup_printf(_("LiVES could not locate the effect %s.\n"),rte_keymode_get_filter_name(key+1,mode))));
+      g_free(tmp);
+    }
     g_free(hashname1);
     g_free(hashname2);
     return;
@@ -1339,7 +1350,7 @@ void load_default_keymap(void) {
   // called on startup
   gchar *keymap_file=g_strdup_printf("%s/%sdefault.keymap",capable->home_dir,LIVES_CONFIG_DIR);
   gchar *keymap_template=g_strdup_printf("%s%sdefault.keymap",prefs->prefix_dir,DATA_DIR);
-  gchar *com;
+  gchar *com,*tmp;
 
   if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
     com=g_strdup_printf("/bin/cp %s %s",keymap_template,keymap_file);
@@ -1348,7 +1359,8 @@ void load_default_keymap(void) {
   }
   if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
     // give up
-    d_print(g_strdup_printf(_("Unable to create default keymap file: %s\nPlease make sure your home directory is writable.\n"),keymap_file));
+    d_print((tmp=g_strdup_printf(_("Unable to create default keymap file: %s\nPlease make sure your home directory is writable.\n"),keymap_file)));
+    g_free(tmp);
     g_free(keymap_file);
     g_free(keymap_template);
     return;

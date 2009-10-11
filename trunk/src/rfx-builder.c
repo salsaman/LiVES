@@ -3199,6 +3199,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   gchar *new_name;
   gchar *buf;
   gchar *msg;
+  gchar *tmp,*tmp2;
 
   if (rfxbuilder->mode!=RFXBUILDER_MODE_EDIT) {
     if (!(new_name=prompt_for_script_name (script_name,RFX_STATUS_TEST))) return FALSE;
@@ -3380,7 +3381,9 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
     case LIVES_PARAM_STRING:
       fputs ("string",sfile);
       fputs(rfxbuilder->field_delim,sfile);
-      fputs (U82L (subst (rfxbuilder->params[i].def,"\n","\\n")),sfile);
+      fputs ((tmp=U82L (tmp2=subst (rfxbuilder->params[i].def,"\n","\\n"))),sfile);
+      g_free(tmp);
+      g_free(tmp2);
       fputs(rfxbuilder->field_delim,sfile);
       buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].max);
       fputs (buf,sfile);
@@ -3396,7 +3399,9 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 	g_free (buf);
 	fputs(rfxbuilder->field_delim,sfile);
 	for (j=0;j<g_list_length (rfxbuilder->params[i].list);j++) {
-	  fputs (U82L (subst (g_list_nth_data (rfxbuilder->params[i].list,j),"\n","\\n")),sfile);
+	  fputs ((tmp=U82L (tmp2=subst (g_list_nth_data (rfxbuilder->params[i].list,j),"\n","\\n"))),sfile);
+	  g_free(tmp);
+	  g_free(tmp2);
 	  fputs(rfxbuilder->field_delim,sfile);
 	}
       }
@@ -3643,7 +3648,8 @@ gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, gchar *script_fil
       }
       else if (!strcmp (type,"string")) {
 	rfxbuilder->params[i].type=LIVES_PARAM_STRING;
-	rfxbuilder->params[i].def=subst (L2U8(array[3]),"\\n","\n");
+	rfxbuilder->params[i].def=subst ((tmp=L2U8(array[3])),"\\n","\n");
+	g_free(tmp);
 	if (len>4) rfxbuilder->params[i].max=(gdouble)atoi(array[4]);
 	else rfxbuilder->params[i].max=1024; // TODO
       }

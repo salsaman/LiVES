@@ -999,7 +999,9 @@ static void lives_init(_ign_opts *ign_opts) {
       // replace any multi choice effects with their delegates
       replace_with_delegates();
 
+      pthread_mutex_lock(&mainw->gtk_mutex);
       load_default_keymap();
+      pthread_mutex_unlock(&mainw->gtk_mutex);
 
       prefs->audio_opts=get_int_pref("audio_opts");
 #ifdef ENABLE_JACK

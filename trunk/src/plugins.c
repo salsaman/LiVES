@@ -120,6 +120,7 @@ static GList *get_plugin_result (gchar *command, gchar *delim, gboolean allow_bl
       if (strlen (buf)||allow_blanks) {
 	list=g_list_append (list, buf);
       }
+      else g_free(buf);
     }
   }
   pthread_mutex_lock(&mainw->gtk_mutex);
@@ -196,7 +197,7 @@ GList *get_plugin_list (gchar *plugin_type, gboolean allow_nonex, gchar *plugdir
 
   // TODO - use numbers for plugin_type ?
 
-  gchar *com;
+  gchar *com,*tmp;
   GList *pluglist;
 
   gchar *ext=(filter_ext==NULL)?"":filter_ext;
@@ -209,10 +210,12 @@ GList *get_plugin_list (gchar *plugin_type, gboolean allow_nonex, gchar *plugdir
     com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s/%s%s\" \"%s\"",allow_nonex,capable->home_dir,LIVES_CONFIG_DIR,plugin_type,ext);
   }
   else if (!strcmp(plugin_type,PLUGIN_EFFECTS_WEED)) {
-    com=g_strdup_printf ("smogrify list_plugins 1 1 \"%s\" \"%s\"",g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL),ext);
+    com=g_strdup_printf ("smogrify list_plugins 1 1 \"%s\" \"%s\"",(tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
+    g_free(tmp);
   }
   else if (!strcmp(plugin_type,PLUGIN_DECODERS)) {
-    com=g_strdup_printf ("smogrify list_plugins 1 0 \"%s\" \"%s\"",g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL),ext);
+    com=g_strdup_printf ("smogrify list_plugins 1 0 \"%s\" \"%s\"",(tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
+    g_free(tmp);
   }
   else if (!strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS)) {
     com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s%s%s\" \"%s\"",allow_nonex,prefs->prefix_dir,PLUGIN_SCRIPTS_DIR,plugin_type,ext);
@@ -395,6 +398,13 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
 
   dummyvar=read(fd,&(mainw->vpp->extra_argc),sizint);
   
+  if (vpp->extra_argv!=NULL) {
+    for (i=0;vpp->extra_argv[i]!=NULL;i++) {
+      g_free(vpp->extra_argv[i]);
+    }
+    g_free(vpp->extra_argv);
+  }
+
   mainw->vpp->extra_argv=g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
 
   for (i=0;i<mainw->vpp->extra_argc;i++) {
@@ -625,6 +635,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
     else {
       future_prefs->vpp_argv=vpp->extra_argv;
       vpp->extra_argv=NULL;
+      vpp->extra_argc=0;
     }
   }
   on_vppa_cancel_clicked(button,user_data);
@@ -2040,16 +2051,18 @@ GList *array_to_string_list (gchar **array, gint offset, gint len) {
   // build a GList from an array.
   int i;
 
-  gchar *string;
+  gchar *string,*tmp;
   GList *slist=NULL;
 
   for (i=offset+1;i<len;i++) {
-    string=subst (L2U8(array[i]),"\\n","\n");
+    string=subst ((tmp=L2U8(array[i])),"\\n","\n");
+    g_free(tmp);
 
     // omit a last empty string
     if (i<len-1||strlen (string)) {
       slist=g_list_append (slist, string);
     }
+    else g_free(string);
   }
 
   return slist;
@@ -2140,7 +2153,10 @@ void rfx_free(lives_rfx_t *rfx) {
     if (rfx->params[i].value!=NULL) g_free(rfx->params[i].value);
     if (rfx->params[i].label!=NULL) g_free(rfx->params[i].label);
     if (rfx->params[i].desc!=NULL) g_free(rfx->params[i].desc);
-    if (rfx->params[i].list!=NULL) g_list_free(rfx->params[i].list);
+    if (rfx->params[i].list!=NULL) {
+      g_list_free_strings(rfx->params[i].list);
+      g_list_free(rfx->params[i].list);
+    }
   }
   if (rfx->params!=NULL) {
     g_free(rfx->params);

@@ -2445,6 +2445,8 @@ gchar **param_marshall_to_argv (lives_rfx_t *rfx) {
   int i;
   lives_colRGB24_t rgb;
   gchar **argv=(gchar **)g_malloc((rfx->num_params+1)*(sizeof(gchar *)));
+
+  gchar *tmp;
  
   for (i=0;i<rfx->num_params;i++) {
     switch (rfx->params[i].type) {
@@ -2455,7 +2457,8 @@ gchar **param_marshall_to_argv (lives_rfx_t *rfx) {
 
     case LIVES_PARAM_STRING:
       // escape strings
-      argv[i]=g_strdup_printf ("%s",U82L (rfx->params[i].value));
+      argv[i]=g_strdup_printf ("%s",(tmp=U82L (rfx->params[i].value)));
+      g_free(tmp);
       break;
 
     case LIVES_PARAM_STRING_LIST:
@@ -2496,6 +2499,8 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
   lives_colRGB24_t rgb;
   int i;
  
+  gchar *tmp,*tmp2;
+
   for (i=0;i<rfx->num_params;i++) {
     switch (rfx->params[i].type) {
     case LIVES_PARAM_COLRGB24:
@@ -2512,7 +2517,9 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
 
     case LIVES_PARAM_STRING:
       // escape strings
-      new_return=g_strdup_printf ("%s \"%s\"",old_return,U82L (subst (rfx->params[i].value,"\"","\\\"")));
+      new_return=g_strdup_printf ("%s \"%s\"",old_return,(tmp=U82L (tmp2=subst (rfx->params[i].value,"\"","\\\""))));
+      g_free(tmp);
+      g_free(tmp2);
       g_free (old_return);
       old_return=new_return;
       break;
@@ -2599,7 +2606,10 @@ gchar *reconstruct_string (GList *plist, gint start, gint *offs) {
   gboolean lastword=FALSE;
   gchar *ret=g_strdup (""),*ret2;
 
+  gchar *tmp;
+
   word=L2U8 (g_list_nth_data (plist,start));
+
   if (word==NULL||!strlen (word)||word[0]!='\"') {
     if (word!=NULL) g_free (word);
     return 0;
@@ -2615,7 +2625,8 @@ gchar *reconstruct_string (GList *plist, gint start, gint *offs) {
       }
     }
 
-    ret2=g_strconcat (ret,subst (word,"\\\"","\"")," ",NULL);
+    ret2=g_strconcat (ret,(tmp=subst (word,"\\\"","\""))," ",NULL);
+    g_free(tmp);
     if (ret2!=ret) g_free (ret);
     ret=ret2;
 
@@ -2658,14 +2669,16 @@ void param_demarshall (lives_rfx_t *rfx, GList *plist, gboolean with_min_max, gb
 GList *argv_to_marshalled_list (lives_rfx_t *rfx, gint argc, gchar **argv) {
   int i;
   GList *plist=NULL;
-  gchar *tmp;
+  gchar *tmp,*tmp2,*tmp3;
 
   if (argc==0) return plist;
 
   for (i=0;i<=argc&&argv[i]!=NULL;i++) {
     if (rfx->params[i].type==LIVES_PARAM_STRING) {
-      tmp=g_strdup_printf ("\"%s\"",U82L (subst (argv[i],"\"","\\\"")));
+      tmp=g_strdup_printf ("\"%s\"",(tmp2=U82L (tmp3=subst (argv[i],"\"","\\\""))));
       plist=g_list_append(plist,tmp);
+      g_free(tmp2);
+      g_free(tmp3);
     }
     else {
       plist=g_list_append(plist,g_strdup(argv[i]));
@@ -2908,6 +2921,7 @@ void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
   double red_mind,green_mind,blue_mind;
   int index,numvals;
   gchar *pattern;
+  gchar *tmp,*tmp2;
     
   if (weed_plant_has_leaf(inst,"in_parameters")) num_params=weed_leaf_num_elements(inst,"in_parameters");
   if (num_params==0) return;
@@ -2996,7 +3010,9 @@ void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
 	valss=weed_get_string_array(in_param,"value",&error);
 	vals=valss[index];
 
-	list=g_list_append(list,g_strdup_printf ("\"%s\"",U82L (subst (vals,"\"","\\\""))));
+	list=g_list_append(list,g_strdup_printf ("\"%s\"",(tmp=U82L (tmp2=subst (vals,"\"","\\\"")))));
+	g_free(tmp);
+	g_free(tmp2);
 	set_param_from_list(list,&rfx->params[i],0,FALSE,TRUE);
 	for (i=0;i<numvals;i++) {
 	  weed_free(valss[i]);

@@ -467,9 +467,9 @@ and optional leaves.
  * "api_version" : WEED_SEED_INT : weed api version selected by host,
    will be one of the api versions passed by the plugin in the
    bootstrap function [see below]
- * "weed_leaf_get_func" : WEED_SEED_VOIDPTR : function pointer to weed_leaf_get function; versions should match "api_version"
+ * "weed_leaf_get_func" : WEED_SEED_VOIDPTR : pointer to function pointer to weed_leaf_get function; versions should match "api_version"
 
- etc for all functions (except weed_property_set_flags,
+ etc for all functions (except weed_leaf_set_flags,
  weed_plant_free, and weed_leaf_delete)
 
 '''Optional leaves''': [[BR]]
@@ -1038,7 +1038,7 @@ rely on setting "copy_value_to" to force the host to set indentical
    STRING hint. For other hints, this will be ignored. A value < 1 should
    also be ignored.
 
- * "display_func" : WEED_SEED_VOIDPTR : pointer to a function that returns a value
+ * "display_func" : WEED_SEED_VOIDPTR : pointer to a function pointer that returns a value
    for display. See below, Plugin Functions. This can be disabled by
    setting it to NULL.
 

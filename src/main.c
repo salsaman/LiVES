@@ -3479,15 +3479,11 @@ void close_current_file(gint file_to_switch_to) {
       if (cfile->event_list_back!=NULL) event_list_free (cfile->event_list_back);
       if (cfile->event_list!=NULL) event_list_free (cfile->event_list);
 
-    }
-
-    if (cfile->layout_map!=NULL) {
-      GList *map=cfile->layout_map;
-      while (map!=NULL) {
-        if (map->data!=NULL) g_free(map->data);
-        map=map->next;
+      if (cfile->layout_map!=NULL) {
+	g_list_free_strings(cfile->layout_map);
+	g_list_free(cfile->layout_map);
       }
-      g_list_free(cfile->layout_map);
+
     }
 
     g_free(cfile);

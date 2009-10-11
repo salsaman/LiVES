@@ -4,6 +4,10 @@ Auto backup of multitrack layouts (in progress).
 Allow mouse scroll to switch clips.
 Allow selection of aspect ratio for custom mjpegtools format. (Thanks Doug).
 Fix for solaris patch.
+Better memory cleanup on exit.
+Call weed_desetup() when unloading weed plugins.
+libweed: add missing weed_deinit_f to weed.h *
+libweed: fix for free and copy 0 length data *
 Fix a crash when autoreloading layouts. *
 Do not remove recovery files for other users. *
 Set correct filename in "File -> Save..." (regression). *

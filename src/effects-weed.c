@@ -2893,7 +2893,24 @@ void weed_load_all (void) {
 
 void weed_filter_free(weed_plant_t *filter) {
   int nitems,error,i;
-  weed_plant_t **plants;
+  weed_plant_t **plants,*gui;
+  void *func;
+
+  if (weed_plant_has_leaf(filter,"init_func")) {
+    func=weed_get_voidptr_value(filter,"init_func",&error);
+    if (func!=NULL) weed_free(func);
+  }
+
+  if (weed_plant_has_leaf(filter,"deinit_func")) {
+    func=weed_get_voidptr_value(filter,"deinit_func",&error);
+    if (func!=NULL) weed_free(func);
+  }
+
+  if (weed_plant_has_leaf(filter,"process_func")) {
+    func=weed_get_voidptr_value(filter,"process_func",&error);
+    if (func!=NULL) weed_free(func);
+  }
+
 
   // free in_channel_templates
   if (weed_plant_has_leaf(filter,"in_channel_templates")) {
@@ -2927,7 +2944,18 @@ void weed_filter_free(weed_plant_t *filter) {
       plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
       pthread_mutex_lock(&mainw->gtk_mutex);
       for (i=0;i<nitems;i++) {
-	if (weed_plant_has_leaf(plants[i],"gui")) weed_plant_free(weed_get_plantptr_value(plants[i],"gui",&error));
+	if (weed_plant_has_leaf(plants[i],"gui")) {
+	  gui=(weed_get_plantptr_value(plants[i],"gui",&error));
+	  if (weed_plant_has_leaf(gui,"display_func")) {
+	    func=weed_get_voidptr_value(gui,"display_func",&error);
+	    if (func!=NULL) weed_free(func);
+	  }
+	  weed_plant_free(gui);
+	}
+	if (weed_plant_has_leaf(filter,"interpolate_func")) {
+	  func=weed_get_voidptr_value(filter,"interpolate_func",&error);
+	  if (func!=NULL) weed_free(func);
+	}
 	weed_plant_free(plants[i]);
       }
       weed_free(plants);

@@ -454,55 +454,58 @@ static void _weed_clone_leaf (weed_plant_t *from, char *key, weed_plant_t *to) {
 
   int seed_type=weed_leaf_seed_type(from,key);
 
-  switch (seed_type) {
-  case WEED_SEED_INT:
-    datai=(int *)weed_malloc(num*sizeof(int));
-    for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datai[i]);
-    weed_leaf_set(to,key,WEED_SEED_INT,num,datai);
-    weed_free(datai);
-    break;
-  case WEED_SEED_INT64:
-    datai6=(int64_t *)weed_malloc(num*sizeof(int64_t));
-    for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datai6[i]);
-    weed_leaf_set(to,key,WEED_SEED_INT64,num,datai6);
-    weed_free(datai6);
-    break;
-  case WEED_SEED_BOOLEAN:
-    datai=(int *)weed_malloc(num*sizeof(int));
-    for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datai[i]);
-    weed_leaf_set(to,key,WEED_SEED_BOOLEAN,num,datai);
-    weed_free(datai);
-    break;
-  case WEED_SEED_DOUBLE:
-    datad=(double *)weed_malloc(num*sizeof(double));
-    for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datad[i]);
-    weed_leaf_set(to,key,WEED_SEED_DOUBLE,num,datad);
-    weed_free(datad);
-    break;
-  case WEED_SEED_VOIDPTR:
-    datav=(void **)weed_malloc(num*sizeof(void *));
-    for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datav[i]);
-    weed_leaf_set(to,key,WEED_SEED_VOIDPTR,num,datav);
-    weed_free(datav);
-    break;
-  case WEED_SEED_PLANTPTR:
-    datap=(weed_plant_t **)weed_malloc(num*sizeof(weed_plant_t *));
-    for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datap[i]);
-    weed_leaf_set(to,key,WEED_SEED_PLANTPTR,num,datap);
-    weed_free(datap);
-    break;
-  case WEED_SEED_STRING:
-    datac=(char **)weed_malloc(num*sizeof(char *));
-    for (i=0;i<num;i++) {
-      stlen=weed_leaf_element_size(from,key,i);
-      datac[i]=(char *)weed_malloc(stlen+1);
-      weed_leaf_get(from,key,i,&datac[i]);
-      weed_memset(datac[i]+stlen,0,1);
+  if (num==0) weed_leaf_set(to,key,seed_type,1,NULL);
+  else {
+    switch (seed_type) {
+    case WEED_SEED_INT:
+      datai=(int *)weed_malloc(num*sizeof(int));
+      for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datai[i]);
+      weed_leaf_set(to,key,WEED_SEED_INT,num,datai);
+      weed_free(datai);
+      break;
+    case WEED_SEED_INT64:
+      datai6=(int64_t *)weed_malloc(num*sizeof(int64_t));
+      for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datai6[i]);
+      weed_leaf_set(to,key,WEED_SEED_INT64,num,datai6);
+      weed_free(datai6);
+      break;
+    case WEED_SEED_BOOLEAN:
+      datai=(int *)weed_malloc(num*sizeof(int));
+      for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datai[i]);
+      weed_leaf_set(to,key,WEED_SEED_BOOLEAN,num,datai);
+      weed_free(datai);
+      break;
+    case WEED_SEED_DOUBLE:
+      datad=(double *)weed_malloc(num*sizeof(double));
+      for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datad[i]);
+      weed_leaf_set(to,key,WEED_SEED_DOUBLE,num,datad);
+      weed_free(datad);
+      break;
+    case WEED_SEED_VOIDPTR:
+      datav=(void **)weed_malloc(num*sizeof(void *));
+      for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datav[i]);
+      weed_leaf_set(to,key,WEED_SEED_VOIDPTR,num,datav);
+      weed_free(datav);
+      break;
+    case WEED_SEED_PLANTPTR:
+      datap=(weed_plant_t **)weed_malloc(num*sizeof(weed_plant_t *));
+      for (i=0;i<num;i++) weed_leaf_get(from,key,i,&datap[i]);
+      weed_leaf_set(to,key,WEED_SEED_PLANTPTR,num,datap);
+      weed_free(datap);
+      break;
+    case WEED_SEED_STRING:
+      datac=(char **)weed_malloc(num*sizeof(char *));
+      for (i=0;i<num;i++) {
+	stlen=weed_leaf_element_size(from,key,i);
+	datac[i]=(char *)weed_malloc(stlen+1);
+	weed_leaf_get(from,key,i,&datac[i]);
+	weed_memset(datac[i]+stlen,0,1);
+      }
+      weed_leaf_set(to,key,WEED_SEED_STRING,num,datac);
+      for (i=0;i<num;i++) weed_free(datac[i]);
+      weed_free(datac);
+      break;
     }
-    weed_leaf_set(to,key,WEED_SEED_STRING,num,datac);
-    for (i=0;i<num;i++) weed_free(datac[i]);
-    weed_free(datac);
-    break;
   }
 }
 

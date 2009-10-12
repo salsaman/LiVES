@@ -347,24 +347,24 @@ create_LiVES (void)
 
   // since we are still initialising, we need to check if we can read prefs
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
-    get_pref("recent1",buff,32768);
+    get_pref_utf8("recent1",buff,32768);
   }
   mainw->recent1 = gtk_menu_item_new_with_label (buff);
   if (strlen (buff)) gtk_widget_show (mainw->recent1);
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
-    get_pref("recent2",buff,32768);
+    get_pref_utf8("recent2",buff,32768);
   }
   mainw->recent2 = gtk_menu_item_new_with_label (buff);
   if (strlen (buff)) gtk_widget_show (mainw->recent2);
 
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
-    get_pref("recent3",buff,32768);
+    get_pref_utf8("recent3",buff,32768);
   }
   mainw->recent3 = gtk_menu_item_new_with_label (buff);
   if (strlen (buff)) gtk_widget_show (mainw->recent3);
 
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
-    get_pref("recent4",buff,32768);
+    get_pref_utf8("recent4",buff,32768);
   }
   mainw->recent4 = gtk_menu_item_new_with_label (buff);
   if (strlen (buff)) gtk_widget_show (mainw->recent4);

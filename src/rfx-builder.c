@@ -4014,21 +4014,23 @@ on_export_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gshort status=(gshort)GPOINTER_TO_INT (user_data);
   gchar *script_name=prompt_for_script_name (NULL,status);
   GtkWidget *fileselection;
+  gchar *tmp;
   
   if (script_name==NULL) return;  // user cancelled
 
   fileselection = create_fileselection (_ ("Export Script to..."),0,script_name);
   
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_export_rfx_ok),(gpointer)script_name);
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (script_name,-1,NULL,NULL,NULL));
+  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), (tmp=g_filename_from_utf8 (script_name,-1,NULL,NULL,NULL)));
+  g_free(tmp);
   gtk_widget_show (fileselection);
 }
 
 
 void on_export_rfx_ok (GtkButton *button, gchar *script_name) {
-  gchar *filename=g_strdup (g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  gchar *filename=g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL);
   gchar *rfx_script_from;
-  gchar *com,*msg;
+  gchar *com,*msg,*tmp,*tmp2;
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 
   rfx_script_from=g_strdup_printf ("%s/%s%s/%s",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,script_name);
@@ -4036,9 +4038,11 @@ void on_export_rfx_ok (GtkButton *button, gchar *script_name) {
   msg=g_strdup_printf(_ ("Copying %s to %s..."),rfx_script_from,filename);
   d_print(msg);
   g_free(msg);
-  com=g_strdup_printf("/bin/cp %s %s",g_filename_from_utf8 (rfx_script_from,-1,NULL,NULL,NULL),g_filename_from_utf8 (filename,-1,NULL,NULL,NULL));
+  com=g_strdup_printf("/bin/cp %s %s",(tmp=g_filename_from_utf8 (rfx_script_from,-1,NULL,NULL,NULL)),(tmp2=g_filename_from_utf8 (filename,-1,NULL,NULL,NULL)));
   if (system(com)) d_print_failed();
   else d_print_done();
+  g_free(tmp);
+  g_free(tmp2);
   g_free(com);
   g_free(rfx_script_from);
   g_free(filename);
@@ -4048,9 +4052,9 @@ void on_export_rfx_ok (GtkButton *button, gchar *script_name) {
 
 void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
   gshort status=(gshort)GPOINTER_TO_INT (user_data);
-  gchar *filename=g_strdup (g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  gchar *filename=g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL);
   gchar *rfx_script_to,*rfx_dir_to;
-  gchar *com,*msg;
+  gchar *com,*msg,*tmp,*tmp2;
   gchar basename[256];
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -4061,13 +4065,15 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
   switch (status) {
   case RFX_STATUS_TEST :
     rfx_dir_to=g_strdup_printf ("%s/%s%s/",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS);
-    dummyvar=system (g_strdup_printf ("/bin/mkdir -p \"%s\"",rfx_dir_to));
+    dummyvar=system (g_strdup_printf ("/bin/mkdir -p \"%s\"",(tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL))));
+    g_free(tmp);
     rfx_script_to=g_strdup_printf ("%s%s",rfx_dir_to,basename);
     g_free (rfx_dir_to);
     break;
   case RFX_STATUS_CUSTOM :
     rfx_dir_to=g_strdup_printf ("%s/%s%s/",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS);
-    dummyvar=system (g_strdup_printf ("/bin/mkdir -p \"%s\"",rfx_dir_to));
+    dummyvar=system (g_strdup_printf ("/bin/mkdir -p \"%s\"",(tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL))));
+    g_free(tmp);
     rfx_script_to=g_strdup_printf ("%s%s",rfx_dir_to,basename);
     g_free (rfx_dir_to);
     break;
@@ -4088,7 +4094,9 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
   msg=g_strdup_printf(_ ("Copying %s to %s..."),filename,rfx_script_to);
   d_print(msg);
   g_free(msg);
-  com=g_strdup_printf("/bin/cp %s %s",filename,rfx_script_to);
+  com=g_strdup_printf("/bin/cp %s %s",(tmp=g_filename_from_utf8(filename,-1,NULL,NULL,NULL)),(tmp2=g_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
+  g_free(tmp);
+  g_free(tmp2);
   if (system(com)) d_print_failed();
   else {
     d_print_done();
@@ -4325,11 +4333,13 @@ gchar *prompt_for_script_name(gchar *sname, gshort status) {
 	}
 	else {
 	  gint ret;
+	  gchar *tmp;
 
 	  from_name=g_strdup(gtk_entry_get_text (GTK_ENTRY (script_combo_entry)));
 	  rfx_script_from=g_strdup_printf ("%s/%s/%s",capable->home_dir,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,from_name);
 	  rfx_script_to=g_strdup_printf ("%s/%s/%s",capable->home_dir,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,name);
-	  d_print (g_strdup_printf (_ ("Renaming RFX test script %s to %s..."),from_name,name));
+	  d_print ((tmp=g_strdup_printf (_ ("Renaming RFX test script %s to %s..."),from_name,name)));
+	  g_free(tmp);
 	  g_free (from_name);
 
 	  if ((ret=rename (rfx_script_from,rfx_script_to))) {

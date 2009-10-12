@@ -3616,6 +3616,7 @@ gboolean render_to_clip (gboolean new_clip) {
     }
     mainw->event_list=NULL;
     if (new_clip) {
+      gchar *tmp;
       cfile->start=1;
       cfile->end=cfile->frames;
       set_undoable (NULL,FALSE);
@@ -3624,7 +3625,8 @@ gboolean render_to_clip (gboolean new_clip) {
       save_clip_values(current_file);
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
       switch_to_file ((mainw->current_file=0),current_file);
-      d_print (g_strdup_printf (_ ("rendered %d frames to new clip.\n"),cfile->frames));
+      d_print ((tmp=g_strdup_printf (_ ("rendered %d frames to new clip.\n"),cfile->frames)));
+      g_free(tmp);
       mainw->pre_src_file=mainw->current_file; // if a generator started playback, we will switch back to this file after
 #ifdef ENABLE_OSC
       lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");

@@ -77,7 +77,8 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
   // therefore it is IMPORTANT to set it when loading new audio for an existing clip !
 
   FILE *infofile;
-  gchar *com=g_strdup_printf("smogrify get_details %s \"%s\" %d %d",cfile->handle,file_name,mainw->opening_loc,is_audio);
+  gchar *tmp,*com=g_strdup_printf("smogrify get_details %s \"%s\" %d %d",cfile->handle,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),mainw->opening_loc,is_audio);
+  g_free(tmp);
 
   unlink(cfile->info_file);
   dummyvar=system(com);
@@ -564,7 +565,7 @@ get_handle_from_info_file(gint index) {
 void save_file (gboolean existing, gchar *n_file_name) {
   // if existing is TRUE, we are saving under the existing file_name
   gint arate;
-  gchar *mesg,*bit;
+  gchar *mesg,*bit,*tmp;
   gchar *com;
   gchar *full_file_name=NULL;
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
@@ -902,10 +903,12 @@ void save_file (gboolean existing, gchar *n_file_name) {
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,full_file_name,1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+      g_free(tmp);
     }
     else {
-      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,full_file_name,1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+      g_free(tmp);
     }
     extra_params=plugin_run_param_window(com,NULL,NULL);
     g_free(com);
@@ -931,11 +934,13 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,full_file_name,startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+    g_free(tmp);
   }
   else {
     // for native plugins we go via the plugin
-    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,full_file_name,startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+    g_free(tmp);
   }
   g_free (fps_string);
 
@@ -984,7 +989,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
     }
     g_free (mesg);
     
-    if (!g_file_test (full_file_name, G_FILE_TEST_EXISTS)) {
+    if (!g_file_test ((tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), G_FILE_TEST_EXISTS)) {
+      g_free(tmp);
       do_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
       mainw->no_switch_dprint=TRUE;
       d_print_failed();
@@ -1005,6 +1011,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       }
       return;
     }
+    g_free(tmp);
 
     if (mainw->save_all) {
       g_snprintf(cfile->save_file_name,255,"%s",full_file_name);
@@ -1046,7 +1053,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
     d_print_done();
     mainw->no_switch_dprint=FALSE;
 #ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,(mesg=g_strdup_printf("encode %d \"%s\"",mainw->current_file,full_file_name)));
+    lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,(mesg=g_strdup_printf("encode %d \"%s\"",mainw->current_file,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)))));
+    g_free(tmp);
     g_free(mesg);
 #endif
 
@@ -2777,7 +2785,7 @@ void open_set_file (gchar *set_name, gint clipnum) {
 void
 restore_file(const gchar *file_name) {
   gchar *com=g_strdup("dummy");
-  gchar *mesg,*mesg1;
+  gchar *mesg,*mesg1,*tmp;
   gboolean is_OK=TRUE;
   gchar *fname=g_strdup(file_name);
 
@@ -2802,8 +2810,9 @@ restore_file(const gchar *file_name) {
   switch_to_file((mainw->current_file=old_file),new_file);
   set_main_title(cfile->file_name,0);
   
-  com=g_strdup_printf("smogrify restore %s \"%s\"",cfile->handle,file_name);
+  com=g_strdup_printf("smogrify restore %s \"%s\"",cfile->handle,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
   dummyvar=system(com);
+  g_free(tmp);
   g_free(com);
   unlink (cfile->info_file);
   

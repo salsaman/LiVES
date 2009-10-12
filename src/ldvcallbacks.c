@@ -94,7 +94,9 @@ void on_cameject_clicked (GtkButton *button, gpointer user_data) {
 void on_camfile_clicked (GtkFileChooser *ch, gpointer entry) {
   gchar *dir=gtk_file_chooser_get_current_folder(ch);
   if (access(dir,W_OK)) {
-    gtk_file_chooser_set_current_folder(ch,g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(entry)),-1,NULL,NULL,NULL));
+    gchar *tmp;
+    gtk_file_chooser_set_current_folder(ch,(tmp=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(entry)),-1,NULL,NULL,NULL)));
+    g_free(tmp);
     return;
   }
   if (dvgrabw->dirname!=NULL) g_free(dvgrabw->dirname);

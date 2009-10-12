@@ -33,17 +33,21 @@ typedef struct {
 #define Q_FILL 1
 #define Q_SMOOTH 1
 
-  gchar tmpdir[256];
+  gchar tmpdir[256];  // kept in locale encoding
 
   // TODO - also use cur_vid_load_dir, etc.
+  // utf8 encoding
   gchar def_vid_load_dir[256];
   gchar def_vid_save_dir[256];
   gchar def_audio_dir[256];
   gchar def_image_dir[256];
   gchar def_proj_dir[256];
 
+  // locale encoding
   gchar prefix_dir[256];
   gchar lib_dir[256];
+
+
   gchar image_ext[16];
 
   guint warning_mask;
@@ -86,7 +90,7 @@ typedef struct {
   gchar effect_command[256];
   gchar video_open_command[256];
   gchar audio_play_command[256];
-  gchar cdplay_device[256];
+  gchar cdplay_device[256];  // locale encoding
   gdouble default_fps;
   gint bar_height;
   gboolean pause_effect_during_preview;
@@ -185,8 +189,8 @@ typedef struct {
   gboolean ar_clipset;
   gboolean ar_layout;
 
-  gchar ar_clipset_name[128];
-  gchar ar_layout_name[128];
+  gchar ar_clipset_name[128]; // utf8 (not converted)
+  gchar ar_layout_name[128];  // utf8 (not converted)
 
   gboolean rec_desktop_audio;
 
@@ -217,8 +221,8 @@ typedef struct {
 #define OMC_DEV_FORCE_RAW_MIDI 1<<2
   guint omc_dev_opts;
 
-  gchar omc_js_fname[256];
-  gchar omc_midi_fname[256];
+  gchar omc_js_fname[256];  // utf8
+  gchar omc_midi_fname[256]; // utf8
   
   gboolean mouse_scroll_clips;
 

@@ -24,6 +24,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   GtkWidget *hseparator;
   GtkWidget *direntry;
 
+  gchar *tmp;
+
   struct _dvgrabw * dvgrabw=(struct _dvgrabw *)g_malloc(sizeof(struct _dvgrabw));
 
   dvgrabw->filename=NULL;
@@ -55,7 +57,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
 
   direntry=gtk_entry_new();
   gtk_box_pack_start(GTK_BOX(hbox),direntry,TRUE,TRUE,0);
-  gtk_entry_set_text(GTK_ENTRY(direntry),g_filename_to_utf8(g_get_current_dir(),-1,NULL,NULL,NULL));
+  gtk_entry_set_text(GTK_ENTRY(direntry),(tmp=g_filename_to_utf8(g_get_current_dir(),-1,NULL,NULL,NULL)));
+  g_free(tmp);
   gtk_entry_set_editable(GTK_ENTRY(direntry),FALSE);
 
   buttond = gtk_file_chooser_button_new("Save directory",GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);

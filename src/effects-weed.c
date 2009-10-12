@@ -3502,8 +3502,9 @@ gboolean weed_init_effect(int hotkey) {
       init_func=init_func_ptr_ptr[0];
       if (init_func!=NULL&&(error=(*init_func)(new_instance))!=WEED_NO_ERROR) {
 	gint weed_error;
-	gchar *filter_name=weed_get_string_value(filter,"name",&weed_error);
-	d_print (g_strdup_printf (_ ("Failed to start instance %s, error code %d\n"),filter_name,error));
+	gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
+	d_print ((tmp=g_strdup_printf (_ ("Failed to start instance %s, error code %d\n"),filter_name,error)));
+	g_free(tmp);
 	weed_free(filter_name);
 	weed_free_instance(new_instance);
 	weed_instances[key_to_instance[hotkey][key_modes[hotkey]]]=NULL;
@@ -3535,8 +3536,9 @@ gboolean weed_init_effect(int hotkey) {
     // TODO - be more descriptive with error
     if (!weed_generator_start(new_instance)) {
       int weed_error;
-      gchar *filter_name=weed_get_string_value(filter,"name",&weed_error);
-      d_print (g_strdup_printf (_ ("Unable to start generator %s\n"),filter_name));
+      gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
+      d_print ((tmp=g_strdup_printf (_ ("Unable to start generator %s\n"),filter_name)));
+      g_free(tmp);
       weed_free(filter_name);
       if (mainw->num_tr_applied&&mainw->current_file>-1) {
 	bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
@@ -4031,9 +4033,11 @@ gboolean weed_playback_gen_start (void) {
       }
       if (error!=WEED_NO_ERROR) {
 	if (inst!=NULL) {
+	  gchar *tmp;
 	  filter=weed_get_plantptr_value(inst,"filter_class",&weed_error);
 	  filter_name=weed_get_string_value(filter,"name",&weed_error);
-	  d_print (g_strdup_printf (_ ("Failed to start generator %s\n"),filter_name));
+	  d_print ((tmp=g_strdup_printf (_ ("Failed to start generator %s\n"),filter_name)));
+	  g_free(tmp);
 	  weed_free(filter_name);
 	  weed_call_deinit_func(inst);
 	  weed_free_instance(inst);
@@ -4097,9 +4101,11 @@ gboolean weed_playback_gen_start (void) {
       
       if (error!=WEED_NO_ERROR) {
 	if (inst!=NULL) {
+	  gchar *tmp;
 	  filter=weed_get_plantptr_value(inst,"filter_class",&weed_error);
 	  filter_name=weed_get_string_value(filter,"name",&weed_error);
-	  d_print (g_strdup_printf (_ ("Failed to start generator %s, error %d\n"),filter_name,error));
+	  d_print ((tmp=g_strdup_printf (_ ("Failed to start generator %s, error %d\n"),filter_name,error)));
+	  g_free(tmp);
 	  weed_free(filter_name);
 	  weed_call_deinit_func(inst);
 	  weed_free_instance(inst);

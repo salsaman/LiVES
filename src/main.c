@@ -351,7 +351,7 @@ static gboolean pre_init(void) {
 
   prefs->omc_dev_opts=get_int_pref("omc_dev_opts");
 
-  get_pref("omc_js_fname",prefs->omc_js_fname,256);
+  get_pref_utf8("omc_js_fname",prefs->omc_js_fname,256);
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
@@ -364,7 +364,7 @@ static gboolean pre_init(void) {
 #endif
 #endif
   
-  get_pref("omc_midi_fname",prefs->omc_midi_fname,256);
+  get_pref_utf8("omc_midi_fname",prefs->omc_midi_fname,256);
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
   if (strlen(prefs->omc_midi_fname)==0) {
@@ -943,20 +943,20 @@ static void lives_init(_ign_opts *ign_opts) {
 	}
       }
 
-      get_pref("vid_load_dir",prefs->def_vid_load_dir,256);
+      get_pref_utf8("vid_load_dir",prefs->def_vid_load_dir,256);
       g_snprintf(mainw->vid_load_dir,256,"%s",prefs->def_vid_load_dir);
       
-      get_pref("vid_save_dir",prefs->def_vid_save_dir,256);
+      get_pref_utf8("vid_save_dir",prefs->def_vid_save_dir,256);
       g_snprintf(mainw->vid_save_dir,256,"%s",prefs->def_vid_save_dir);
       
-      get_pref("audio_dir",prefs->def_audio_dir,256);
+      get_pref_utf8("audio_dir",prefs->def_audio_dir,256);
       g_snprintf(mainw->audio_dir,256,"%s",prefs->def_audio_dir);
       g_snprintf(mainw->xmms_dir,256,"%s",mainw->audio_dir);
       
-      get_pref("image_dir",prefs->def_image_dir,256);
+      get_pref_utf8("image_dir",prefs->def_image_dir,256);
       g_snprintf(mainw->image_dir,256,"%s",prefs->def_image_dir);
       
-      get_pref("proj_dir",prefs->def_proj_dir,256);
+      get_pref_utf8("proj_dir",prefs->def_proj_dir,256);
       g_snprintf(mainw->proj_load_dir,256,"%s",prefs->def_proj_dir);
       g_snprintf(mainw->proj_save_dir,256,"%s",prefs->def_proj_dir);
       
@@ -1489,6 +1489,7 @@ void print_opthelp(void) {
 
 static gboolean lives_startup(gpointer data) {
   gboolean got_files=FALSE;
+  gchar *tmp;
 
   if (!mainw->foreign) {
     splash_init();
@@ -1506,7 +1507,8 @@ static gboolean lives_startup(gpointer data) {
     if (theme_expected&&palette->style==STYLE_PLAIN&&!mainw->foreign) {
       // non-fatal errors
       if (prefs->startup_phase==0) {
-	gchar *err=g_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"),prefs->prefix_dir,THEME_DIR);
+	gchar *err=g_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"),(tmp=g_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR);
+	g_free(tmp);
 	startup_message_nonfatal (g_strdup (err));
 	g_free(err);
 	g_snprintf(prefs->theme,64,"none");
@@ -1531,19 +1533,22 @@ static gboolean lives_startup(gpointer data) {
       }
       else {
 	if (!capable->can_read_from_config) {
-	  gchar *err=g_strdup_printf(_ ("\nLiVES was unable to read from its configuration file\n%s/.lives\n\nPlease check the file permissions for this file and try again.\n"),capable->home_dir);
+	  gchar *err=g_strdup_printf(_ ("\nLiVES was unable to read from its configuration file\n%s/.lives\n\nPlease check the file permissions for this file and try again.\n"),(tmp=g_filename_to_utf8(capable->home_dir,-1,NULL,NULL,NULL)));
+	  g_free(tmp);
 	  startup_message_fatal(err);
 	  g_free(err);
 	}
 	else {
 	  if (!capable->can_write_to_config) {
-	    gchar *err=g_strdup_printf(_ ("\nLiVES was unable to write to its configuration file\n%s/.lives\n\nPlease check the file permissions for this file and directory\nand try again.\n"),capable->home_dir);
+	    gchar *err=g_strdup_printf(_ ("\nLiVES was unable to write to its configuration file\n%s/.lives\n\nPlease check the file permissions for this file and directory\nand try again.\n"),(tmp=g_filename_to_utf8(capable->home_dir,-1,NULL,NULL,NULL)));
+	    g_free(tmp);
 	    startup_message_fatal(err);
 	    g_free(err);
 	  }
 	  else {
 	    if (!capable->can_write_to_tempdir) {
-	      gchar *err=g_strdup_printf(_ ("\nLiVES was unable to use the temporary directory\n%s\n\nPlease check the <tempdir> setting in \n%s/.lives\nand try again.\n"),prefs->tmpdir,capable->home_dir);
+	      gchar *err=g_strdup_printf(_ ("\nLiVES was unable to use the temporary directory\n%s\n\nPlease check the <tempdir> setting in \n%s/.lives\nand try again.\n"),prefs->tmpdir,(tmp=g_filename_to_utf8(capable->home_dir,-1,NULL,NULL,NULL)));
+	      g_free(tmp);
 	      startup_message_fatal(err);
 	      g_free(err);
 	    }
@@ -3442,9 +3447,10 @@ void close_current_file(gint file_to_switch_to) {
   //update the bar text
   if (mainw->current_file>-1) {
     int i;
-    
+    gchar *tmp;
     if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&mainw->multitrack==NULL) {
-      d_print (g_strdup_printf(_ ("Closed file %s\n"),cfile->file_name));
+      d_print ((tmp=g_strdup_printf(_ ("Closed file %s\n"),cfile->file_name)));
+      g_free(tmp);
 #ifdef ENABLE_OSC
       lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED,"");
 #endif

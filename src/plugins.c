@@ -1841,7 +1841,9 @@ void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata) {
 gboolean check_rfx_for_lives (lives_rfx_t *rfx) {
   // check that an RFX is suitable for loading (cf. check_for_lives in effects-weed.c)
   if (rfx->num_in_channels==2&&rfx->props&RFX_PROPS_MAY_RESIZE) {
-    d_print (g_strdup_printf (_ ("Failed to load %s, transitions may not resize.\n"),rfx->name));
+    gchar *tmp;
+    d_print ((tmp=g_strdup_printf (_ ("Failed to load %s, transitions may not resize.\n"),rfx->name)));
+    g_free(tmp);
     return FALSE;
   }
   return TRUE;

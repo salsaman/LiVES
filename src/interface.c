@@ -2401,6 +2401,8 @@ create_comments_dialog (void)
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, GtkWidget *extra_widget) {
   // new style file chooser
 
+  // in/out values are in utf8 encoding
+
   GList *children;
 
   GtkWidget *chooser;
@@ -2409,6 +2411,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   int i;
   GtkResponseType response;
   gchar *title;
+  gchar *tmp;
 
   if (act==GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
     title=g_strdup(_("LiVES: choose a directory"));
@@ -2432,8 +2435,11 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   g_free(title);
 
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(chooser),TRUE);
-  if (dir!=NULL) gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(chooser),dir);
-  if (dir!=NULL) gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(chooser),dir,NULL);
+  if (dir!=NULL) {
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(chooser),(tmp=g_filename_from_utf8(dir,-1,NULL,NULL,NULL)));
+    gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(chooser),tmp,NULL);
+    g_free(tmp);
+  }
 #if GLIB_CHECK_VERSION(2,8,0)
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(chooser),TRUE);
 #endif
@@ -2471,7 +2477,8 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
     return NULL;
   }
 
-  filename=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser));
+  filename=g_filename_to_utf8((tmp=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
+  g_free(tmp);
 
   gtk_widget_destroy(chooser);
 

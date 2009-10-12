@@ -82,6 +82,19 @@ get_pref(const gchar *key, gchar *val, gint maxlen) {
 
 
 
+void get_pref_utf8(const gchar *key, gchar *val, gint maxlen) {
+  // get a pref in locale encoding, then convert it to utf8
+  gchar *tmp;
+  get_pref(key,val,maxlen);
+  tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL);
+  g_snprintf(val,maxlen,"%s",tmp);
+  g_free(tmp);
+}
+
+
+
+
+
 void
 get_pref_default(const gchar *key, gchar *val, gint maxlen) {
   FILE *valfile;
@@ -265,7 +278,6 @@ apply_prefs(gboolean skip_warn) {
   const gchar *def_audio_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->audio_dir_entry));
   const gchar *def_image_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->image_dir_entry));
   const gchar *def_proj_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->proj_dir_entry));
-  const gchar *cdplay_device=gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry));
   gchar tmpdir[256];
   const gchar *theme=gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(prefsw->theme_combo))->entry));
   const gchar *audp=gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(prefsw->audp_combo))->entry));
@@ -399,6 +411,10 @@ apply_prefs(gboolean skip_warn) {
   gboolean needs_midi_restart=FALSE;
   gboolean set_omc_dev_opts=FALSE;
 
+  gchar *tmp;
+
+  const gchar *cdplay_device=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
+
   g_free(resaudw);
   resaudw=NULL;
 
@@ -407,7 +423,7 @@ apply_prefs(gboolean skip_warn) {
   if (idx==listlen) future_prefs->encoder.audio_codec=0;
   else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
 
-  g_snprintf (tmpdir,256,"%s",gtk_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)));
+  g_snprintf (tmpdir,256,"%s",g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)),-1,NULL,NULL,NULL));
 
   if (!strncmp(audp,"mplayer",7)) g_snprintf(audio_player,256,"mplayer");
   else if (!strncmp(audp,"jack",4)) g_snprintf(audio_player,256,"jack");
@@ -464,7 +480,9 @@ apply_prefs(gboolean skip_warn) {
     if (strcmp(prefs->tmpdir,tmpdir)||strcmp (future_prefs->tmpdir,tmpdir)) {
       gchar *msg;
       if (!check_dir_access (tmpdir)) {
-	msg=g_strdup_printf (_ ("Unable to create or write to the new temporary directory.\nYou may need to create it as the root user first, e.g:\n\nmkdir %s; chmod 777 %s\n\nThe directory will not be changed now.\n"),tmpdir,tmpdir);
+	tmp=g_filename_to_utf8(tmpdir,-1,NULL,NULL,NULL);
+	msg=g_strdup_printf (_ ("Unable to create or write to the new temporary directory.\nYou may need to create it as the root user first, e.g:\n\nmkdir %s; chmod 777 %s\n\nThe directory will not be changed now.\n"),tmp,tmp);
+	g_free(tmp);
 	do_blocking_error_dialog (msg);
       }
       else {
@@ -1318,7 +1336,7 @@ _prefsw *create_prefs_dialog (void) {
   GList *encoders = NULL;
   GList *vid_playback_plugins = NULL;
   
-  gchar **array;
+  gchar **array,*tmp;
 
   int i;
 
@@ -2512,7 +2530,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_tooltips_set_tip (mainw->tooltips, prefsw->tmpdir_entry, _("LiVES working directory."), NULL);
 
    // get from prefs
-   gtk_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry),future_prefs->tmpdir);
+   gtk_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry),(tmp=g_filename_to_utf8(future_prefs->tmpdir,-1,NULL,NULL,NULL)));
    
    dirbutton1 = gtk_button_new ();
    gtk_widget_show (dirbutton1);
@@ -2846,7 +2864,8 @@ _prefsw *create_prefs_dialog (void) {
    }
    
    // get from prefs
-   gtk_entry_set_text(GTK_ENTRY(prefsw->cdplay_entry),prefs->cdplay_device);
+   gtk_entry_set_text(GTK_ENTRY(prefsw->cdplay_entry),(tmp=g_filename_to_utf8(prefs->cdplay_device,-1,NULL,NULL,NULL)));
+   g_free(tmp);
    
    gtk_tooltips_set_tip (mainw->tooltips, prefsw->cdplay_entry, _("LiVES can load audio tracks from this CD"), NULL);
    

@@ -427,7 +427,7 @@ typedef struct {
   gboolean has_pulse_audio;
   gboolean has_xwininfo;
 
-  // home directory - default location for config file
+  // home directory - default location for config file - locale encoding
   gchar home_dir[256];
 
   // used for returning startup messages from the backend
@@ -681,6 +681,7 @@ void init_clipboard(void);
 void cache_file_contents(gchar *filename);
 gchar *get_val_from_cached_list(const gchar *key, size_t maxlen);
 void get_pref(const gchar *key, gchar *val, gint maxlen);
+void get_pref_utf8(const gchar *key, gchar *val, gint maxlen);
 void get_pref_default(const gchar *key, gchar *val, gint maxlen);
 gboolean get_boolean_pref(const gchar *key);
 gdouble get_double_pref(const gchar *key);

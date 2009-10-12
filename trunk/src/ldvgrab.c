@@ -197,21 +197,25 @@ void cameject (s_cam *cam) {
 gchar *find_free_camfile(gint format) {
   gchar *filename=g_strdup(gtk_entry_get_text(GTK_ENTRY(dvgrabw->filent)));
   int i;
-  gchar *fname,*tmp=NULL;
+  gchar *fname,*tmp=NULL,*tmp2,*tmp3;
 
   if (format==CAM_FORMAT_HDV) {
     for (i=1;i<10000;i++) {
       fname=g_strdup_printf("%s%04d.mpg",filename,i);
-      if (!g_file_test((tmp=g_strdup_printf("%s/%s",g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL),g_filename_from_utf8(fname,-1,NULL,NULL,NULL))),G_FILE_TEST_EXISTS)) break;
+      if (!g_file_test((tmp=g_strdup_printf("%s/%s",(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)))),G_FILE_TEST_EXISTS)) break;
       g_free(tmp);
+      g_free(tmp2);
+      g_free(tmp3);
       tmp=NULL;
     }
   }
   else {
     for (i=1;i<1000;i++) {
       fname=g_strdup_printf("%s%03d.dv",filename,i);
-      if (!g_file_test((tmp=g_strdup_printf("%s/%s",g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL),g_filename_from_utf8(fname,-1,NULL,NULL,NULL))),G_FILE_TEST_EXISTS)) break;
+      if (!g_file_test((tmp=g_strdup_printf("%s/%s",(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)))),G_FILE_TEST_EXISTS)) break;
       g_free(tmp);
+      g_free(tmp2);
+      g_free(tmp3);
       tmp=NULL;
     }
   }
@@ -230,14 +234,16 @@ gboolean rec(s_cam *cam) {
 
   unsigned char fmt;
   unsigned short dbs_fn_qpc_sph;
-  gchar *tmp;
+  gchar *tmp,*tmp2,*tmp3;
   int outfile;
 
   if (cam->format==CAM_FORMAT_DV) {
     // dv format
-    gchar *com=g_strdup_printf("dvgrab --format raw %s/%s >/dev/null 2>&1 &",g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL),g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL));
+    gchar *com=g_strdup_printf("dvgrab --format raw %s/%s >/dev/null 2>&1 &",(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
     dummyvar=system (com);
     g_free(com);
+    g_free(tmp2);
+    g_free(tmp3);
     return TRUE;
   }
 
@@ -247,8 +253,10 @@ gboolean rec(s_cam *cam) {
   raw1394_poll.fd = raw1394_get_fd(cam->rec_handle);
   raw1394_poll.events = POLLIN;
 
-  outfile=open((tmp=g_strdup_printf("%s/%s",g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL),g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL))),O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
+  outfile=open((tmp=g_strdup_printf("%s/%s",(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)))),O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
   g_free(tmp);
+  g_free(tmp2);
+  g_free(tmp3);
 
   if (!outfile) return FALSE;
 

@@ -1758,23 +1758,26 @@ check_file(const gchar *file_name, gboolean check_existing) {
   int check;
   gboolean exists=FALSE;
   gchar *msg;
+  // file_name should be in utf8
+  gchar *lfile_name=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL);
 
   // check if file exists
-  if (g_file_test (file_name, G_FILE_TEST_EXISTS)) {
+  if (g_file_test (lfile_name, G_FILE_TEST_EXISTS)) {
     if (check_existing) {
       msg=g_strdup_printf (_ ("\n%s\nalready exists.\n\nOverwrite ?\n"),file_name);
       if (!do_warning_dialog(msg)) {
 	g_free (msg);
+	g_free(lfile_name);
 	return FALSE;
       }
       g_free (msg);
     }
-    check=open(file_name,O_RDWR);
+    check=open(lfile_name,O_RDWR);
     exists=TRUE;
   }
   // if not, check if we can write to it
   else {
-    check=open(file_name,O_CREAT|O_EXCL|O_RDWR,S_IRUSR|S_IWUSR);
+    check=open(lfile_name,O_CREAT|O_EXCL|O_RDWR,S_IRUSR|S_IWUSR);
   }
 
   if (check<0) {
@@ -1782,15 +1785,18 @@ check_file(const gchar *file_name, gboolean check_existing) {
       g_snprintf(mainw->msg,512,_ ("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
       do_error_dialog(mainw->msg);
     }
+    g_free(lfile_name);
     return FALSE;
   }
   if (check) {
     close(check);
     if (!exists) {
-      unlink (file_name);
+      unlink (lfile_name);
     }
+    g_free(lfile_name);
     return TRUE;
   }
+  g_free(lfile_name);
   return FALSE;
 }
 
@@ -1799,6 +1805,9 @@ gboolean
 check_dir_access (gchar *dir) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
+
+  // dir is in locale encoding
+
   gboolean exists=g_file_test (dir, G_FILE_TEST_EXISTS);
   gchar *com;
   gchar *testfile;
@@ -1967,7 +1976,7 @@ gint lives_list_index (GList *list, const gchar *data) {
 void 
 add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *extra_params) {
   gchar buff[256];
-  gchar *file;
+  gchar *file,*tmp;
 
   if (frames>0) {
     if (extra_params==NULL||(strlen(extra_params)==0)) file=g_strdup_printf ("%s|%.2f|%d",filename,start,frames);
@@ -1988,41 +1997,50 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
 	// not in list, or at pos 4
 	get_menu_text(mainw->recent3,buff);
 	set_menu_text(mainw->recent4,buff,FALSE);
-	set_pref("recent4",buff);
-	
+	set_pref("recent4",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	g_free(tmp);
+
 	get_menu_text(mainw->recent2,buff);
 	set_menu_text(mainw->recent3,buff,FALSE);
-	set_pref("recent3",buff);
-	
+	set_pref("recent3",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	g_free(tmp);
+
 	get_menu_text(mainw->recent1,buff);
 	set_menu_text(mainw->recent2,buff,FALSE);
-	set_pref("recent2",buff);
+	set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	g_free(tmp);
 	
 	set_menu_text(mainw->recent1,file,FALSE);
-	set_pref("recent1",file);
+	set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+	g_free(tmp);
       }
       else {
 	// #3 in list
 	get_menu_text(mainw->recent2,buff);
 	set_menu_text(mainw->recent3,buff,FALSE);
-	set_pref("recent3",buff);
+	set_pref("recent3",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	g_free(tmp);
 	
 	get_menu_text(mainw->recent1,buff);
 	set_menu_text(mainw->recent2,buff,FALSE);
-	set_pref("recent2",buff);
-	
+	set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	g_free(tmp);
+
 	set_menu_text(mainw->recent1,file,FALSE);
-	set_pref("recent1",filename);
+	set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+	g_free(tmp);
       }
     }
     else {
       // #2 in list
       get_menu_text(mainw->recent1,buff);
       set_menu_text(mainw->recent2,buff,FALSE);
-      set_pref("recent2",buff);
+      set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+      g_free(tmp);
 	
       set_menu_text(mainw->recent1,file,FALSE);
-      set_pref("recent1",filename);
+      set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+      g_free(tmp);
     }
   }
   else {
@@ -2258,6 +2276,7 @@ gboolean get_clip_value(int which, int what, void *retval, size_t maxlen) {
   gchar *key;
   time_t old_time=0,new_time=0;
   struct stat mystat;
+  gchar *tmp;
 
   if (mainw->cached_list==NULL) {
     
@@ -2458,9 +2477,12 @@ gboolean get_clip_value(int which, int what, void *retval, size_t maxlen) {
   case CLIP_DETAILS_AUTHOR:
   case CLIP_DETAILS_COMMENT:
   case CLIP_DETAILS_CLIPNAME:
-  case CLIP_DETAILS_FILENAME:
   case CLIP_DETAILS_KEYWORDS:
     g_snprintf(retval,maxlen,"%s",val);
+    break;
+  case CLIP_DETAILS_FILENAME:
+    g_snprintf((tmp=g_filename_to_utf8(retval,-1,NULL,NULL,NULL)),maxlen,"%s",val);
+    g_free(tmp);
     break;
   }
   g_free(val);
@@ -2566,7 +2588,7 @@ void save_clip_value(int which, int what, void *val) {
     break;
   case CLIP_DETAILS_FILENAME:
     key=g_strdup("filename");
-    myval=g_strdup(val);
+    myval=g_filename_from_utf8(val,-1,NULL,NULL,NULL);
     break;
   case CLIP_DETAILS_HEADER_VERSION:
     key=g_strdup("header_version");

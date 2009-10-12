@@ -277,11 +277,14 @@ return_true                  (GtkWidget       *widget,
 void on_fileread_clicked (GtkFileChooser *fch, gpointer user_data) {
   GtkWidget *tentry=GTK_WIDGET(user_data);
   gchar *text=gtk_file_chooser_get_filename(fch);
+  gchar *tmp;
 
   if (text==NULL) return;
 
-  if (GTK_IS_ENTRY(tentry)) gtk_entry_set_text(GTK_ENTRY(tentry),text);
-  else gtk_text_buffer_set_text (GTK_TEXT_BUFFER(tentry), text, -1);
+  if (GTK_IS_ENTRY(tentry)) gtk_entry_set_text(GTK_ENTRY(tentry),(tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)));
+  else gtk_text_buffer_set_text (GTK_TEXT_BUFFER(tentry), (tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)), -1);
+  g_free(tmp);
+  g_free(text);
 
 }
 
@@ -342,7 +345,7 @@ on_open_activate                      (GtkMenuItem     *menuitem,
   fileselection = create_fileselection (_ ("Select File"),1,NULL);
 
   if (strlen(mainw->vid_load_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->vid_load_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection),mainw->vid_load_dir);
   }
 
   gtk_file_selection_set_select_multiple(GTK_FILE_SELECTION(fileselection),TRUE);
@@ -362,7 +365,7 @@ on_open_sel_activate                      (GtkMenuItem     *menuitem,
   fileselection = create_fileselection (_ ("Select File"),1,NULL);
 
   if (strlen(mainw->vid_load_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->vid_load_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection),mainw->vid_load_dir);
   } 
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_open_sel_ok_button_clicked),NULL);
   gtk_widget_show (fileselection);
@@ -548,7 +551,7 @@ on_save_as_activate (GtkMenuItem *menuitem, gpointer user_data) {
   fileselection = create_fileselection (_ ("Select File"),3,NULL);
 
   if (strlen(mainw->vid_save_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->vid_save_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->vid_save_dir);
   }
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_button3_clicked),NULL);
   gtk_widget_show (fileselection);
@@ -565,7 +568,7 @@ on_save_selection_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   fileselection = create_fileselection ("Select File",3,NULL);
   if (strlen(mainw->vid_save_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->vid_save_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->vid_save_dir);
   }
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_button3_clicked),NULL);
   gtk_widget_show (fileselection);
@@ -754,7 +757,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
   gchar *def_file;
   gchar *proj_file;
   gchar *msg;
-  gchar *com;
+  gchar *com,*tmp;
 
   if (strlen(mainw->set_name)==0) {
     gint response;
@@ -791,7 +794,8 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
 
   if (proj_file==NULL) return;
 
-  unlink(proj_file);
+  unlink((tmp=g_filename_from_utf8(proj_file,-1,NULL,NULL,NULL)));
+  g_free(tmp);
 
   if (!check_file(proj_file,TRUE)) return;
 
@@ -820,9 +824,9 @@ on_restore_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   fileselection = create_fileselection (_ ("Restore .lv1 file"),0,NULL);
   if (strlen(mainw->proj_load_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->proj_load_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->proj_load_dir);
   }
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 ("*.lv1",-1,NULL,NULL,NULL));
+  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), "*.lv1");
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_restore_ok_clicked),NULL);
   gtk_widget_show (fileselection);
 }
@@ -837,9 +841,9 @@ on_backup_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   fileselection = create_fileselection (_ ("Backup as .lv1 file"),0,NULL);
   if (strlen(mainw->proj_save_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->proj_save_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->proj_save_dir);
   }
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 ("*.lv1",-1,NULL,NULL,NULL));
+  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), "*.lv1");
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_backup_ok_clicked),NULL);
   gtk_widget_show (fileselection);
 
@@ -850,7 +854,9 @@ void
 on_backup_ok_clicked                  (GtkButton       *button,
 				       gpointer         user_data)
 {
-  g_snprintf(file_name,256,"%s",g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  gchar *tmp;
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+  g_free(tmp);
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 
   gtk_widget_queue_draw(mainw->LiVES);
@@ -867,7 +873,9 @@ void
 on_restore_ok_clicked                  (GtkButton       *button,
                                         gpointer         user_data)
 {
-  g_snprintf(file_name,256,"%s",g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  gchar *tmp;
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+  g_free(tmp);
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 
   gtk_widget_queue_draw(mainw->LiVES);
@@ -4107,7 +4115,9 @@ on_fs_preview_clicked                  (GtkButton       *button,
   }
   else {
     // open file
-    g_snprintf(file_name,256,"%s",g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+    gchar *tmp;
+    g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+    g_free(tmp);
   }
 
   info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,getpid());
@@ -4115,13 +4125,15 @@ on_fs_preview_clicked                  (GtkButton       *button,
 
   if (preview_type==1) {
     gchar **array;
+    gchar *tmp;
  
     preview_frames=500;
 
     clear_mainw_msg();
     
     // make thumb from any image file
-    com=g_strdup_printf("smogrify make_thumb thm%d %d %d \"%s\"",pid,DEFAULT_FRAME_HSIZE,DEFAULT_FRAME_VSIZE,file_name);
+    com=g_strdup_printf("smogrify make_thumb thm%d %d %d \"%s\"",pid,DEFAULT_FRAME_HSIZE,DEFAULT_FRAME_VSIZE,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
+    g_free(tmp);
     dummyvar=system(com);
     g_free(com);
  
@@ -4140,7 +4152,8 @@ on_fs_preview_clicked                  (GtkButton       *button,
       // draw image
       GError *error=NULL;
       gchar *thumb=g_strdup_printf("%s/thm%d/%08d.%s",prefs->tmpdir,pid,1,prefs->image_ext);
-      GdkPixbuf *pixbuf=gdk_pixbuf_new_from_file(thumb,&error);
+      GdkPixbuf *pixbuf=gdk_pixbuf_new_from_file((tmp=g_filename_from_utf8(thumb,-1,NULL,NULL,NULL)),&error);
+      g_free(tmp);
 
       if (error==NULL) {
 	gint fwidth=GTK_WIDGET(mainw->fs_playarea)->allocation.width;
@@ -4237,11 +4250,13 @@ on_ok_button1_clicked                  (GtkButton       *button,
   GtkWidget *filesel;
   gchar **fnames;
   int i=0;
+  gchar *tmp;
 
   // open a file
 
-  g_snprintf(file_name,256,"%s",g_filename_from_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION((filesel=gtk_widget_get_toplevel(GTK_WIDGET(button))))),-1,NULL,NULL,NULL));
-
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION((filesel=gtk_widget_get_toplevel(GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));
+  g_free(tmp);
+				 
   end_fs_preview();
 
   g_snprintf(mainw->vid_load_dir,256,"%s",file_name);
@@ -4255,7 +4270,8 @@ on_ok_button1_clicked                  (GtkButton       *button,
   while (g_main_context_iteration(NULL,FALSE));
 
   if (prefs->save_directories) {
-    set_pref ("vid_load_dir",mainw->vid_load_dir);
+    set_pref ("vid_load_dir",(tmp=g_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
+    g_free(tmp);
   }
 
   mainw->cancelled=CANCEL_NONE;
@@ -4264,7 +4280,7 @@ on_ok_button1_clicked                  (GtkButton       *button,
   mainw->img_concat_clip=-1;
 
   while (fnames[i]!=NULL&&mainw->cancelled==CANCEL_NONE) {
-    g_snprintf(file_name,256,"%s",g_filename_from_utf8 (fnames[i],-1,NULL,NULL,NULL));
+    g_snprintf(file_name,256,"%s",fnames[i]);
     open_file(file_name);
     i++;
   }
@@ -4279,8 +4295,11 @@ void
 ok_save_frame                  (GtkButton       *button,
 				gpointer         frame)
 {
+  gchar *tmp;
+
   // save start frame
-  g_snprintf(file_name,256,"%s",g_filename_from_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+  g_free(tmp);
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 
@@ -4292,7 +4311,8 @@ ok_save_frame                  (GtkButton       *button,
   g_snprintf(mainw->image_dir,256,"%s",file_name);
   get_dirname(mainw->image_dir);
   if (prefs->save_directories) {
-    set_pref ("image_dir",mainw->image_dir);
+    set_pref ("image_dir",(tmp=g_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
+    g_free(tmp);
   }
 }
 
@@ -4302,7 +4322,9 @@ void
 on_open_sel_ok_button_clicked                  (GtkButton       *button,
 						gpointer         user_data)
 {
-  g_snprintf(file_name,256,"%s",g_filename_from_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  gchar *tmp;
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+  g_free(tmp);
 
   g_snprintf(mainw->vid_load_dir,256,"%s",file_name);
   get_dirname(mainw->vid_load_dir);
@@ -4311,7 +4333,8 @@ on_open_sel_ok_button_clicked                  (GtkButton       *button,
   gtk_widget_queue_draw(mainw->LiVES);
   while (g_main_context_iteration(NULL,FALSE));
   if (prefs->save_directories) {
-    set_pref ("vid_load_dir",mainw->vid_load_dir);
+    set_pref ("vid_load_dir",(tmp=g_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
+    g_free(tmp);
   }
   open_sel_range_activate();
 }
@@ -4350,7 +4373,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
 {
   // open audio file
   gchar *a_type;
-  gchar *com,*mesg;
+  gchar *com,*mesg,*tmp;
   gchar **array;
   gint oundo_start;
   gint oundo_end;
@@ -4385,7 +4408,8 @@ on_ok_button4_clicked                  (GtkButton       *button,
   oundo_start=cfile->undo_start;
   oundo_end=cfile->undo_end;
 
-  g_snprintf(file_name,256,"%s",g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),1,NULL,NULL,NULL)));
+  g_free(tmp);
   g_snprintf(mainw->audio_dir,256,"%s",file_name);
   get_dirname(mainw->audio_dir);
   end_fs_preview();
@@ -4394,7 +4418,10 @@ on_ok_button4_clicked                  (GtkButton       *button,
 
   a_type=file_name+strlen(file_name)-3;
 
-  if (!g_ascii_strncasecmp(a_type,".it",3)||!g_ascii_strncasecmp(a_type,"mp3",3)||!g_ascii_strncasecmp(a_type,"ogg",3)||!g_ascii_strncasecmp(a_type,"wav",3)||!g_ascii_strncasecmp(a_type,"mod",3)||!g_ascii_strncasecmp(a_type,".xm",3)) com=g_strdup_printf("smogrify audioopen %s \"%s\"",cfile->handle,file_name);
+  if (!g_ascii_strncasecmp(a_type,".it",3)||!g_ascii_strncasecmp(a_type,"mp3",3)||!g_ascii_strncasecmp(a_type,"ogg",3)||!g_ascii_strncasecmp(a_type,"wav",3)||!g_ascii_strncasecmp(a_type,"mod",3)||!g_ascii_strncasecmp(a_type,".xm",3)) {
+    com=g_strdup_printf("smogrify audioopen %s \"%s\"",cfile->handle,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
+    g_free(tmp);
+  }
   else {
     do_audio_import_error();
     mainw->noswitch=FALSE;
@@ -4709,13 +4736,16 @@ on_ok_button3_clicked                  (GtkButton       *button,
                                         gpointer         user_data)
 {   // save as
   gchar n_file_name[256];
+  gchar *tmp;
 
-  g_snprintf(n_file_name,256,"%s",g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  g_snprintf(n_file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+  g_free(tmp);
   g_snprintf(mainw->vid_save_dir,256,"%s",n_file_name);
   get_dirname(mainw->vid_save_dir);
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   if (prefs->save_directories) {
-    set_pref ("vid_save_dir",mainw->vid_save_dir);
+    set_pref ("vid_save_dir",(tmp=g_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
+    g_free(tmp);
   }
   save_file(FALSE,n_file_name);
 }
@@ -5700,7 +5730,7 @@ on_load_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   fileselection = create_fileselection (_ ("Select Audio File"),2,NULL);
   if (strlen(mainw->audio_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->audio_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
   }
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_button4_clicked),NULL);
   gtk_widget_show (fileselection);
@@ -5957,7 +5987,7 @@ on_xmms_play_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   fileselection = create_fileselection (_ ("Select Audio File"),2,NULL);
   g_signal_connect(GTK_FILE_SELECTION(fileselection)->ok_button, "clicked", G_CALLBACK (on_xmms_ok_clicked),NULL);
-  gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->audio_dir,-1,NULL,NULL,NULL));
+  gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
   gtk_widget_show (fileselection);
 }
 
@@ -5984,7 +6014,7 @@ void on_xmms_ok_clicked                (GtkButton     *button,
 void on_xmms_ran_ok_clicked                (GtkButton     *button,
 					gpointer         user_data)
 {
-  gchar *com;
+  gchar *com,*tmp;
   gint curr_file=mainw->current_file;
   // we need to do some extra work, because we could be called whilst an effect is processing
 
@@ -5997,7 +6027,8 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
     return;
   }
 
-  com=g_strdup_printf("smogrify xmmsrandom %s %d %d %d %d \"%s\"",cfile->handle,gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->numtracks)),gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(xranw->subdir_check)),gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->minsize)),gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->maxsize)),g_filename_from_utf8 (dir,-1,NULL,NULL,NULL));
+  com=g_strdup_printf("smogrify xmmsrandom %s %d %d %d %d \"%s\"",cfile->handle,gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->numtracks)),gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(xranw->subdir_check)),gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->minsize)),gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->maxsize)),(tmp=g_filename_from_utf8 (dir,-1,NULL,NULL,NULL)));
+  g_free(tmp);
   g_free(dir);
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -7172,9 +7203,9 @@ frame_context (GtkWidget *widget, GdkEventButton  *event, gpointer which) {
   fileselection = create_fileselection (compl_str,0,NULL);
 
   if (strlen(mainw->image_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->image_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->image_dir);
   }
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (compl,-1,NULL,NULL,NULL));
+  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), compl);
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (ok_save_frame),GINT_TO_POINTER (frame));
   gtk_widget_show (fileselection);
 
@@ -7705,9 +7736,9 @@ on_export_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   if (strlen(mainw->audio_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->audio_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
   }
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 ("*.wav",-1,NULL,NULL,NULL));
+  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), "*.wav");
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_export_audio_clicked),user_data);
   gtk_widget_show (fileselection);
 }
@@ -7717,12 +7748,12 @@ void
 on_ok_export_audio_clicked                      (GtkButton *button,
 						 gpointer user_data)
 {
-  gchar *com;
+  gchar *com,*tmp;
   gint nrate=cfile->arps;
   gdouble start,end;
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
 
-  gchar *filename=g_strdup (g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  gchar *filename=g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL);
 
   if (strrchr(filename,'.')==NULL) {
     g_snprintf(file_name,256,"%s.wav",filename);
@@ -7758,7 +7789,8 @@ on_ok_export_audio_clicked                      (GtkButton *button,
 
   d_print (mainw->msg);
   
-  com=g_strdup_printf ("smogrify export_audio %s %.8f %.8f %d %d %d %d %d \"%s\"",cfile->handle,start,end,cfile->arps,cfile->achans,cfile->asampsize,asigned,nrate,g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL));
+  com=g_strdup_printf ("smogrify export_audio %s %.8f %.8f %d %d %d %d %d \"%s\"",cfile->handle,start,end,cfile->arps,cfile->achans,cfile->asampsize,asigned,nrate,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)));
+  g_free(tmp);
  
   unlink (cfile->info_file);
   dummyvar=system (com);
@@ -7790,7 +7822,7 @@ on_append_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   fileselection = create_fileselection (_ ("Append Audio File..."),2,NULL);
   if (strlen(mainw->audio_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), g_filename_from_utf8 (mainw->audio_dir,-1,NULL,NULL,NULL));
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
   }
   g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_append_audio_clicked),NULL);
   gtk_widget_show (fileselection);
@@ -7803,12 +7835,13 @@ void
 on_ok_append_audio_clicked                      (GtkButton *button,
 						 GtkEntry *entry)
 {
-  gchar *com;
+  gchar *com,*tmp;
   gchar *a_type;
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
 
-  g_snprintf(file_name,256,"%s",g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL));
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+  g_free(tmp);
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 
@@ -7817,7 +7850,10 @@ on_ok_append_audio_clicked                      (GtkButton *button,
   
   a_type=file_name+strlen(file_name)-3;
 
-  if (!g_ascii_strncasecmp(a_type,".it",2)||!g_ascii_strncasecmp(a_type,"mp3",3)||!g_ascii_strncasecmp(a_type,"ogg",3)||!g_ascii_strncasecmp(a_type,"wav",3)||!g_ascii_strncasecmp(a_type,"mod",3)||!g_ascii_strncasecmp(a_type,"xm",2)) com=g_strdup_printf ("smogrify append_audio %s %s %d %d %d %d %d \"%s\"",cfile->handle,a_type,cfile->arate,cfile->achans,cfile->asampsize,asigned,aendian,g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL));
+  if (!g_ascii_strncasecmp(a_type,".it",2)||!g_ascii_strncasecmp(a_type,"mp3",3)||!g_ascii_strncasecmp(a_type,"ogg",3)||!g_ascii_strncasecmp(a_type,"wav",3)||!g_ascii_strncasecmp(a_type,"mod",3)||!g_ascii_strncasecmp(a_type,"xm",2)) {
+    com=g_strdup_printf ("smogrify append_audio %s %s %d %d %d %d %d \"%s\"",cfile->handle,a_type,cfile->arate,cfile->achans,cfile->asampsize,asigned,aendian,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)));
+    g_free(tmp);
+  }
   else {
     do_audio_import_error();
     return;

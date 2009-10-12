@@ -920,11 +920,12 @@ too_many_files(void) {
 
 void
 tempdir_warning (void) {
-    gchar *com=g_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),prefs->tmpdir);
-    if (mainw!=NULL&&mainw->is_ready) {
-      do_error_dialog(com);
-    }
-    g_free(com);
+  gchar *tmp,*com=g_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),(tmp=g_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
+  g_free(tmp);
+  if (mainw!=NULL&&mainw->is_ready) {
+    do_error_dialog(com);
+  }
+  g_free(com);
 }
 
 
@@ -1476,12 +1477,12 @@ static void *dth2_with_cancel (void *arg) {
 
 
 static void *splash_prog (void *arg) {
-
- while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(mainw->splash_progress));
-    while (g_main_context_iteration(NULL,FALSE));
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+  while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER) {
+    if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
+      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(mainw->splash_progress));
+      while (g_main_context_iteration(NULL,FALSE));
+      pthread_mutex_unlock(&mainw->gtk_mutex);
+    }
     sched_yield();
     g_usleep(prefs->sleep_time);
   }
@@ -1526,7 +1527,11 @@ void do_threaded_dialog(gchar *text, gboolean has_cancel) {
 void end_threaded_dialog(void) {
   if (mainw->threaded_dialog) {
     mainw->threaded_dialog=FALSE;
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    while (pthread_mutex_trylock(&mainw->gtk_mutex)) {
+      // wait to get lock
+      sched_yield();
+      g_usleep(prefs->sleep_time);
+    }
     pthread_join(dthread,NULL);
     pthread_mutex_unlock(&mainw->gtk_mutex);
     if (thread_text!=NULL) g_free(thread_text);

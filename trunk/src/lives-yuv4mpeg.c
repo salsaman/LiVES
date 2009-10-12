@@ -44,7 +44,9 @@ gboolean lives_yuv_stream_start_read (lives_yuv4m_t * yuv4mpeg, gchar *filename)
   i = y4m_read_stream_header (yuv4mpeg->fd, &(yuv4mpeg->streaminfo));
 
   if (i != Y4M_OK) {
-    d_print (g_strdup_printf ("yuv4mpeg: %s\n", y4m_strerr (i)));
+    gchar *tmp;
+    d_print ((tmp=g_strdup_printf ("yuv4mpeg: %s\n", y4m_strerr (i))));
+    g_free(tmp);
     return FALSE;
   }
 

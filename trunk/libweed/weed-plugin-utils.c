@@ -454,7 +454,7 @@ static void _weed_clone_leaf (weed_plant_t *from, char *key, weed_plant_t *to) {
 
   int seed_type=weed_leaf_seed_type(from,key);
 
-  if (num==0) weed_leaf_set(to,key,seed_type,1,NULL);
+  if (num==0) weed_leaf_set(to,key,seed_type,0,NULL);
   else {
     switch (seed_type) {
     case WEED_SEED_INT:

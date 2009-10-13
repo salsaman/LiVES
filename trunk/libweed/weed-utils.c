@@ -437,7 +437,7 @@ int weed_leaf_copy (weed_plant_t *dst, char *keyt, weed_plant_t *src, char *keyf
 
   int seed_type=weed_leaf_seed_type(src,keyf),i,error;
 
-  if (num==0) weed_leaf_set(dst,keyt,seed_type,1,NULL);
+  if (num==0) weed_leaf_set(dst,keyt,seed_type,0,NULL);
   else {
     switch (seed_type) {
     case WEED_SEED_INT:

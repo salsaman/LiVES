@@ -354,6 +354,7 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
 
   case 100:
   case 110:
+  case 120:
   default:
     weed_leaf_get=_weed_leaf_get;
     weed_leaf_delete=_weed_leaf_delete;

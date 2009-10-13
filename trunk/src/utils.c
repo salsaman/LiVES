@@ -2481,7 +2481,7 @@ gboolean get_clip_value(int which, int what, void *retval, size_t maxlen) {
     g_snprintf(retval,maxlen,"%s",val);
     break;
   case CLIP_DETAILS_FILENAME:
-    g_snprintf((tmp=g_filename_to_utf8(retval,-1,NULL,NULL,NULL)),maxlen,"%s",val);
+    g_snprintf(retval,maxlen,"%s",(tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL)));
     g_free(tmp);
     break;
   }

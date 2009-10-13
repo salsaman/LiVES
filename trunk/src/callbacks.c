@@ -4408,7 +4408,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
   oundo_start=cfile->undo_start;
   oundo_end=cfile->undo_end;
 
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),1,NULL,NULL,NULL)));
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
   g_free(tmp);
   g_snprintf(mainw->audio_dir,256,"%s",file_name);
   get_dirname(mainw->audio_dir);

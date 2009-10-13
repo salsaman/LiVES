@@ -89,7 +89,7 @@ static void make_font_tables(void) {
 
   for (k=0;k<NFONTMAPS;k++) {
     len=strcspn(font_maps[k],"|");
-    font_tables[k].fontname=malloc(len+1);
+    font_tables[k].fontname=weed_malloc(len+1);
     weed_memcpy(font_tables[k].fontname,font_maps[k],len);
     weed_memset(font_tables[k].fontname+len,0,1);
     font_maps[k]+=len+1;
@@ -98,8 +98,7 @@ static void make_font_tables(void) {
     font_maps[k]+=len+1;
     nglyphs=strlen(font_maps[k])/4/font_tables[k].width;
     font_tables[k].nglyphs=++nglyphs;
-    // we can use malloc here since we are called from setup
-    font_tables[k].fonttable=malloc(32*nglyphs);
+    font_tables[k].fonttable=weed_malloc(32*nglyphs);
 
     for (i=0;i<nglyphs*16;i+=16) {
       for (j=0;j<16;j++) {
@@ -377,3 +376,11 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 
 
+void weed_desetup(void) {
+  int k;
+  for (k=0;k<NFONTMAPS;k++) {
+    weed_free(font_tables[k].fontname);
+    weed_free(font_tables[k].fonttable);
+  }
+
+}

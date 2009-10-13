@@ -70,6 +70,9 @@ host set size. Clarified some points. API version was updated to 120.
 Removed requirement that weed plugin file extensions be .wo, since this was discovered to be non-portable.
 
 
+11/10/09 salsaman
+Correct a typo, and try to further clarify about function passing.
+
 
 (C) Gabriel "Salsaman" Finch 2005 - 2009
 
@@ -255,12 +258,21 @@ the leaf flags and the function caller.
 
 weed_leaf_set() will return an error WEED_ERROR_WRONG_SEED_TYPE if you try to change the seed_type of a leaf.
 
-Function pointers should not passed via
+
+Function pointers
+-----------------
+Function pointers should not passed directly via
 weed_leaf_set()/weed_leaf_get(), since for some architectures it is
 not possible to convert between a function pointer and a void
-pointer. Instead, create the function pointer as a variable, and then
-pass a pointer to the variable. Of course the variable must not go out
-of scope - i.e. it must be statically defined.
+pointer. Instead, create a function pointer as a variable, allocating memory 
+for it, set it equal to the function pointer in question, and then pass the 
+address of the variable. Similarly, when retrieving the value of a function, 
+the void * returned should be cast to a pointer-to-function-pointer, and then 
+dereferenced to get the actual function pointer. Do not try to pass the address 
+of a function-pointer directly, since functions may be assigned on the heap.
+Generally this can be ignored if the utility functions are used.
+
+
 
 For weed_leaf_set(), num_elems can be 0 and value can then be
 NULL. In this way, just the seed_type of a leaf can be set, without
@@ -515,15 +527,15 @@ the plugin after weed_setup(), and should not be altered by the host.
  * "name"         : WEED_SEED_STRING : the filter name; must be unique in the plugin, 
  * "author"       : WEED_SEED_STRING : the filter author(s)
  * "version"      : WEED_SEED_INT : filter version
- * "process_func" : WEED_SEED_VOIDPTR : pointer to a process_func()
+ * "process_func" : WEED_SEED_VOIDPTR : pointer to a process_func() pointer
  * "plugin_info"  : WEED_SEED_PLANTPTR : pointer to the PLUGIN_INFO plant containing this FILTER_CLASS
 
 '''Optional leaves''': [[BR]]
 
  * "flags"        : WEED_SEED_INT : bitmap of filter flags
- * "init_func"    : WEED_SEED_VOIDPTR : pointer to an init_func() 
+ * "init_func"    : WEED_SEED_VOIDPTR : pointer to an init_func() pointer
                     (can also be NULL)
- * "deinit_func"  : WEED_SEED_VOIDPTR : pointer to a deinit_func()
+ * "deinit_func"  : WEED_SEED_VOIDPTR : pointer to a deinit_func() pointer
                     (can also be NULL)
  * "in_channel_templates"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of inp channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
  * "out_channel_templates"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
@@ -818,7 +830,8 @@ value for the parameter. The host should not change any other leaves.
 
  * "description"      : WEED_SEED_STRING : parameter description
 
- * "interpolate_func" : WEED_SEED_VOIDPTR : see below, Plugin Functions.
+ * "interpolate_func" : WEED_SEED_VOIDPTR : pointer to interpolate_func pointer.
+   		      	 See below, Plugin Functions.
 
  * "gui" : WEED_SEED_PLANTPTR : each parameter_template can have a
  "gui" leaf. This leaf points to a plant of type
@@ -1038,7 +1051,8 @@ rely on setting "copy_value_to" to force the host to set indentical
    STRING hint. For other hints, this will be ignored. A value < 1 should
    also be ignored.
 
- * "display_func" : WEED_SEED_VOIDPTR : pointer to a function pointer that returns a value
+ * "display_func" : WEED_SEED_VOIDPTR : pointer to a function pointer that 
+   returns a value
    for display. See below, Plugin Functions. This can be disabled by
    setting it to NULL.
 

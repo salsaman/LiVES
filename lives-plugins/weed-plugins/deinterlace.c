@@ -278,6 +278,15 @@ int deinterlace_process (weed_plant_t *inst, weed_timecode_t tc) {
 	weed_free(res2);
 	weed_free(res4);
 	weed_free(res6);
+	if (palette==WEED_PALETTE_YUV444P||palette==WEED_PALETTE_YUVA4444P) {
+	  weed_free(res2_u);
+	  weed_free(res4_u);
+	  weed_free(res6_u);
+
+	  weed_free(res2_v);
+	  weed_free(res4_v);
+	  weed_free(res6_v);
+	}
       }
     }
     dst+=orowstride2;

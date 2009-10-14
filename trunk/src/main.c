@@ -3349,9 +3349,11 @@ void load_frame_image(gint frame, gint last_frame) {
   // record external window
   if (mainw->record_foreign) {
     GError *gerror=NULL;
+    gchar *tmp;
 
-    if (mainw->rec_vid_frames==-1) gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),g_strdup_printf("%9d",frame));
-    else gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames));
+    if (mainw->rec_vid_frames==-1) gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
+    else gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
+    g_free(tmp);
 
     if ((pixbuf=gdk_pixbuf_get_from_drawable (NULL,GDK_DRAWABLE(mainw->foreign_map),mainw->foreign_cmap,0,0,0,0,mainw->playarea->allocation.width,mainw->playarea->allocation.height))!=NULL) {
       gchar fname[256];

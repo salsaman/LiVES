@@ -4703,7 +4703,7 @@ render_details *create_render_details (gint type) {
   }
   else {
     g_signal_handler_block(GTK_COMBO(rdet->ofmt_combo)->entry,rdet->encoder_ofmt_fn);
-    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),g_strdup(prefs->encoder.of_name));
+    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),prefs->encoder.of_name);
     g_signal_handler_unblock(GTK_COMBO(rdet->ofmt_combo)->entry,rdet->encoder_ofmt_fn);
 
     check_encoder_restrictions(TRUE,FALSE);

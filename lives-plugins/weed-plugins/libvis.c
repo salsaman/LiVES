@@ -245,6 +245,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 }
 
 
+void weed_desetup(void) {
+  visual_quit();
+}
+
+
+
+
 ///////////// callback so host can supply its own audio sammples //////////
 
 static int libvis_host_audio_callback (VisInput *input, VisAudio *audio, void *user_data) {

@@ -5716,7 +5716,6 @@ gboolean multitrack_delete (lives_mt *mt) {
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
 
   if (transfer_focus) gtk_window_present(GTK_WINDOW(mainw->LiVES));
-  //  gtk_widget_grab_focus(mainw->textview1);
 
   recover_layout_cancelled(NULL,NULL);
 

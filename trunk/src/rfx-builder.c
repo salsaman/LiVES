@@ -4834,8 +4834,8 @@ void add_rfx_effects(void) {
       }
       if (rfx->min_frames>=0) gtk_widget_set_sensitive(menuitem,FALSE);
       rfx->menuitem=menuitem;
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
-    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
 

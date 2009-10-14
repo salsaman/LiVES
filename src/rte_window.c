@@ -92,7 +92,7 @@ gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
     for (j=modes-1;j>=0;j--) {
       weed_delete_effectkey (i+1,j);
       if (rte_window!=NULL) {
-	gtk_entry_set_text (GTK_ENTRY(combo_entries[i*modes+j]),g_strdup(""));
+	gtk_entry_set_text (GTK_ENTRY(combo_entries[i*modes+j]),"");
 	type_label_set_text(i,j);
       }
     }
@@ -436,7 +436,8 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       continue;
     }
     else if (rte_window!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY(combo_entries[(key-1)*modes+mode]),rte_keymode_get_filter_name(key,mode));
+      gtk_entry_set_text (GTK_ENTRY(combo_entries[(key-1)*modes+mode]),(tmp=rte_keymode_get_filter_name(key,mode)));
+      g_free(tmp);
       type_label_set_text(key-1,mode);
     }
   }
@@ -656,7 +657,7 @@ on_clear_clicked (GtkButton *button, gpointer user_data) {
     type_label_set_text(key,i);
   }
   idx++;
-  gtk_entry_set_text (GTK_ENTRY(combo_entries[idx]),g_strdup(""));
+  gtk_entry_set_text (GTK_ENTRY(combo_entries[idx]),"");
   type_label_set_text(key,i);
 
   if (!rte_keymode_valid(key+1,0,TRUE)) rtew_set_keych(key,FALSE);
@@ -779,7 +780,8 @@ fx_changed (GtkItem *item, gpointer user_data) {
   gtk_widget_grab_focus (combo_entries[key_mode]);
 
   if ((error=rte_switch_keymode (key+1, mode, hashname1))<0) {
-    gtk_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),rte_keymode_get_filter_name(key+1,mode));
+    gtk_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),(tmp=rte_keymode_get_filter_name(key+1,mode)));
+    g_free(tmp);
 
     // this gets called twice, unfortunately...may be a bug in gtk+
     if (error==-2) do_mix_error();
@@ -836,6 +838,8 @@ GtkWidget * create_rte_window (void) {
 
   GList *list;
   GtkWidget *item;
+
+  gchar *tmp;
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -1054,7 +1058,8 @@ GtkWidget * create_rte_window (void) {
 	fx_idx++;
       }
 
-      gtk_entry_set_text (GTK_ENTRY (combo_entries[idx]),rte_keymode_get_filter_name(i+1,j));
+      gtk_entry_set_text (GTK_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
+      g_free(tmp);
       gtk_entry_set_editable (GTK_ENTRY (combo_entries[idx]), FALSE);
 
       hbox = gtk_hbox_new (FALSE, 12);

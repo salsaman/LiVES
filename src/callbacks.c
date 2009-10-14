@@ -7671,13 +7671,13 @@ on_encoder_ofmt_changed (GtkEntry *fmt_entry, gpointer user_data) {
 	if (!strcmp(array[1],new_fmt)) {
 	  if (prefsw!=NULL) {
 	    g_signal_handler_block(GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),prefsw->encoder_ofmt_fn);
-	    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),g_strdup(array[0]));
+	    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),array[0]);
 	    gtk_widget_queue_draw (GTK_COMBO(prefsw->ofmt_combo)->entry);
 	    g_signal_handler_unblock(GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),prefsw->encoder_ofmt_fn);
 	  }
 	  if (rdet!=NULL) {
 	    g_signal_handler_block(GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),rdet->encoder_ofmt_fn);
-	    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),g_strdup(array[0]));
+	    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),array[0]);
 	    gtk_widget_queue_draw (GTK_COMBO(rdet->ofmt_combo)->entry);
 	    g_signal_handler_unblock(GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),rdet->encoder_ofmt_fn);
 	  }

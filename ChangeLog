@@ -1,10 +1,12 @@
 Version 1.1.4
 -------------
-Auto backup of multitrack layouts (in progress).
+Auto backup of multitrack layouts.
 Allow mouse scroll to switch clips.
 Allow selection of aspect ratio for custom mjpegtools format. (Thanks Doug).
 Fix for solaris patch.
-Better memory cleanup on exit.
+Fade audio out was skipping last frame in selection. *
+Fix several small memory leaks. *
+Improved handling of locale filenames.
 Call weed_desetup() when unloading weed plugins.
 libweed: add missing weed_deinit_f to weed.h *
 libweed: fix for free and copy 0 length data *

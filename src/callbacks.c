@@ -8016,8 +8016,8 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
     }
   }
   else {
-    cfile->undo2_dbl=startt=(cfile->start-1.)/cfile->fps;
-    cfile->undo1_dbl=endt=(cfile->end-1.)/cfile->fps;
+    cfile->undo2_dbl=startt=((gdouble)cfile->start-1.)/cfile->fps;
+    cfile->undo1_dbl=endt=(gdouble)cfile->end/cfile->fps;
   }
   
  

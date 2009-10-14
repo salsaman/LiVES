@@ -5543,6 +5543,7 @@ gboolean multitrack_delete (lives_mt *mt) {
   // free lives_mt struct
   int i;
   gint new_file=-1;
+  gboolean transfer_focus=FALSE;
 
   mainw->cancelled=CANCEL_NONE;
 
@@ -5583,6 +5584,7 @@ gboolean multitrack_delete (lives_mt *mt) {
   gtk_widget_reparent (mainw->scrolledwindow,mainw->message_box);
 
   if (prefs->show_gui) {
+    if (gtk_window_has_toplevel_focus(GTK_WINDOW(mt->window))) transfer_focus=TRUE;
     gtk_widget_show (mainw->LiVES);
   }
 
@@ -5713,7 +5715,8 @@ gboolean multitrack_delete (lives_mt *mt) {
   mainw->is_rendering=FALSE;
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
 
-  gtk_widget_grab_focus(mainw->textview1);
+  if (transfer_focus) gtk_window_present(GTK_WINDOW(mainw->LiVES));
+  //  gtk_widget_grab_focus(mainw->textview1);
 
   recover_layout_cancelled(NULL,NULL);
 
@@ -6860,6 +6863,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   //returns TRUE if we go into mt mode
   gint orig_file;
   gboolean response;
+  gboolean transfer_focus=FALSE;
 
   lives_mt *multi;
 
@@ -6901,6 +6905,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     ptaud=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rdet->pertrack_checkbutton));
     btaud=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rdet->backaudio_checkbutton));
 
+    if (gtk_window_has_toplevel_focus(GTK_WINDOW(rdet->dialog))) transfer_focus=TRUE;
     gtk_widget_destroy (rdet->dialog); 
     
     if (response==GTK_RESPONSE_CANCEL) {
@@ -6950,6 +6955,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (prefs->show_gui) {
+    if (gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))) transfer_focus=TRUE;
     gtk_widget_show_all (multi->window);
     gtk_widget_hide (mainw->LiVES);
     gtk_widget_hide(multi->preview_button);
@@ -7027,6 +7033,8 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
 
   multi->is_ready=TRUE;
   mt_show_current_frame(multi);
+
+  if (transfer_focus) gtk_window_present(GTK_WINDOW(multi->window));
 
   multi->idlefunc=mt_idle_add(multi);
 

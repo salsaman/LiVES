@@ -739,6 +739,10 @@ static void add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
   mt->fx_params_label=gtk_label_new(ltext);
   g_free(ltext);
 
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(mt->fx_params_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
   gtk_box_pack_start (GTK_BOX (mt->fx_box), mt->fx_params_label, FALSE, FALSE, 0);
 
   make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);

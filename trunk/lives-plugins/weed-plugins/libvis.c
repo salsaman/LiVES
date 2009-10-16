@@ -240,6 +240,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       weed_plugin_info_add_filter_class (plugin_info,filter_class);
     }
     weed_set_int_value(plugin_info,"version",package_version);
+    weed_plant_free(out_chantmpls[0]);
   }
   return plugin_info;
 }

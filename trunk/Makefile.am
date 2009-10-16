@@ -33,6 +33,7 @@ EXTRA_DIST = \
 	po/update_with_smogrify \
 	default.keymap \
 	COPYING \
+	INSTALL \
 	menu-entries/LiVES.desktop \
 	menu-entries/lives.xpm \
 	$(doc_DATA)

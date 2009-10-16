@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-16 12:30-0300\n"
+"POT-Creation-Date: 2009-10-16 12:56-0300\n"
 "PO-Revision-Date: 2009-07-29 20:15+0000\n"
 "Last-Translator: Lukas Bögelein <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -8166,8 +8166,9 @@ msgid "Colorizing"
 msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycle"
-msgstr ""
+msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -8175,8 +8176,9 @@ msgid "Colour cycling"
 msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filter"
-msgstr ""
+msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
@@ -8184,16 +8186,18 @@ msgid "Colour filtering"
 msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Colour replace"
-msgstr ""
+msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Cycle _Step"
-msgstr ""
+msgstr "Werte zu_rück setzen"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
@@ -8232,12 +8236,14 @@ msgid "E_nd %"
 msgstr "_Änderung %s rückgängig machen"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "Edge detect"
-msgstr ""
+msgstr "Prüfe"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "Edge detecting"
-msgstr ""
+msgstr "Prüfe"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
@@ -8332,8 +8338,9 @@ msgid "Gamma _end"
 msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _start"
-msgstr ""
+msgstr "Werte zu_rück setzen"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -8394,8 +8401,9 @@ msgid "Hue _end"
 msgstr "Bilder"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _start"
-msgstr ""
+msgstr "Werte zu_rück setzen"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -8408,8 +8416,9 @@ msgid "Hue end"
 msgstr "Bilder"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue start"
-msgstr ""
+msgstr "Werte zu_rück setzen"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumble"
@@ -8420,8 +8429,9 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Keep _Centered"
-msgstr ""
+msgstr "_Stumm schalten"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -8433,8 +8443,9 @@ msgid "Making monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "stelle Zustand wieder her"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -8548,12 +8559,14 @@ msgid "S_tart %"
 msgstr "Werte zu_rück setzen"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _end"
-msgstr ""
+msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
@@ -8561,12 +8574,14 @@ msgid "Saturation change"
 msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation end"
-msgstr ""
+msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation start"
-msgstr ""
+msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 #, fuzzy
@@ -8815,8 +8830,9 @@ msgid "_Frames"
 msgstr "Bilder"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "_Zeige Bildzähler"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
@@ -8832,8 +8848,9 @@ msgid "_Increase Contrast"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "_Levels"
-msgstr ""
+msgstr "_Erzeugen"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8896,14 +8913,16 @@ msgid "_Radius end"
 msgstr "Bilder"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius start"
-msgstr ""
+msgstr "Werte zu_rück setzen"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#, fuzzy
 msgid "_Radius"
-msgstr ""
+msgstr "Bilder"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8930,8 +8949,9 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma end"
-msgstr ""
+msgstr "Werte zu_rück setzen"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -9027,8 +9047,9 @@ msgid "_Wrap Around"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_X Center"
-msgstr ""
+msgstr "_Stumm schalten"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
@@ -9045,8 +9066,9 @@ msgid "_X offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Y Center"
-msgstr ""
+msgstr "_Stumm schalten"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
@@ -9096,12 +9118,14 @@ msgid "colorize"
 msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "colour_filter"
-msgstr ""
+msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "Tonstille einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -9122,8 +9146,9 @@ msgid "despeckle"
 msgstr "Lösche"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "dream"
-msgstr ""
+msgstr "Beende _Aufnahme"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
@@ -9140,8 +9165,9 @@ msgid "enhance"
 msgstr "Abbrechen"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "every"
-msgstr ""
+msgstr "_Erzeugen"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -9248,12 +9274,14 @@ msgid "rotate"
 msgstr "Gesamtzeit"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "saturation_change"
-msgstr ""
+msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "sepia"
-msgstr ""
+msgstr "Beende _Aufnahme"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "shift_horizontal"
@@ -9268,8 +9296,9 @@ msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "skip_forwards"
-msgstr ""
+msgstr "_Anhalten"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
@@ -9292,8 +9321,9 @@ msgid "swirl"
 msgstr "Warnung"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "textover"
-msgstr ""
+msgstr "_Erzeugen"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "transition_bwthresh"
@@ -9304,8 +9334,9 @@ msgid "transition_checkerboard"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "transition_fade2"
-msgstr ""
+msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "transition_splice"

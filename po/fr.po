@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-16 12:30-0300\n"
+"POT-Creation-Date: 2009-10-16 12:56-0300\n"
 "PO-Revision-Date: 2009-05-03 14:13+0000\n"
 "Last-Translator: Pierre Slamich <pierre.slamich@gmail.com>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -9074,8 +9074,9 @@ msgid "_Increase Contrast"
 msgstr "_Augmente le Contraste"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "_Levels"
-msgstr ""
+msgstr "_Inverser"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9370,8 +9371,9 @@ msgid "enhance"
 msgstr "Amélioration"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "every"
-msgstr ""
+msgstr "_Inverser"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -9531,8 +9533,9 @@ msgid "swirl"
 msgstr "Applique les remous"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "textover"
-msgstr ""
+msgstr "_Inverser"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy

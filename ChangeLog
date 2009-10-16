@@ -1,5 +1,5 @@
-Version 1.1.4
--------------
+Version 1.1.4 (15th October 2009)
+---------------------------------
 Auto backup of multitrack layouts.
 Allow mouse scroll to switch clips.
 Allow selection of aspect ratio for custom mjpegtools format. (Thanks Doug).
@@ -15,7 +15,7 @@ Fix a crash when autoreloading layouts. *
 Do not remove recovery files for other users. *
 Set correct filename in "File -> Save..." (regression). *
 Fade audio in/out should not be active with no file loaded. *
-
+Updated translations to Finnish, German, Hungarian, Italian, Slovak, and Spanish.
 
 	
 

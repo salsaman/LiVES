@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-16 12:30-0300\n"
+"POT-Creation-Date: 2009-10-16 12:56-0300\n"
 "PO-Revision-Date: 2009-04-05 08:57+0000\n"
 "Last-Translator: gamer <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -7897,8 +7897,9 @@ msgid "Checkerboard"
 msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "Checkerboarding"
-msgstr ""
+msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
@@ -8591,8 +8592,9 @@ msgid "_Increase Contrast"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "_Levels"
-msgstr ""
+msgstr "Yapıştırılıyor"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8893,8 +8895,9 @@ msgid "enhance"
 msgstr "İptal"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "every"
-msgstr ""
+msgstr "Yapıştırılıyor"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -9044,8 +9047,9 @@ msgid "swirl"
 msgstr "Yineleniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "textover"
-msgstr ""
+msgstr "Yapıştırılıyor"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy

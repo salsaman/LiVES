@@ -5,16 +5,16 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: hu\n"
-"Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
+"Report-Msgid-Bugs-To: "
+"http://www.sourceforge.net/tracker/?group_id=64341&atid=507139\n"
 "POT-Creation-Date: 2009-10-13 18:00-0300\n"
-"PO-Revision-Date: 2009-09-02 13:29+0000\n"
-"Last-Translator: Csiszi <Unknown>\n"
+"PO-Revision-Date: 2009-10-11 11:39+0000\n"
+"Last-Translator: Németh Gábor II. <Unknown>\n"
 "Language-Team: hungarian <mypclinuxos.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2009-09-09 20:32+0000\n"
+"X-Launchpad-Export-Date: 2009-10-16 14:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:82
@@ -113,9 +113,8 @@ msgstr ""
 "\n"
 
 #: src/main.c:1067
-#, fuzzy
 msgid "Starting pulse audio server..."
-msgstr "Jack audió szerver indítása..."
+msgstr ""
 
 #: src/main.c:1114
 msgid "Checking optional dependencies:"
@@ -178,14 +177,12 @@ msgid "jackd...NOT DETECTED..."
 msgstr "jackd...NEM TALÁLOM..."
 
 #: src/main.c:1129
-#, fuzzy
 msgid "pulse audio...detected..."
-msgstr "mplayer...megtalálva..."
+msgstr ""
 
 #: src/main.c:1130
-#, fuzzy
 msgid "pulse audio...NOT DETECTED..."
-msgstr "mplayer...NEM TALÁLOM..."
+msgstr ""
 
 #: src/main.c:1131
 msgid "python...detected..."
@@ -233,24 +230,19 @@ msgid "Temp directory is %s\n"
 msgstr "A Temp könyvtár: %s\n"
 
 #: src/main.c:1149
-#, fuzzy
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
-"FIGYELMEZTETÉS - A LiVES ezen verziója jack támogatás nélkül lett "
-"öszeállítva.\n"
-"A legtöbb hang tulajdonság érvénytelen lesz.\n"
 
 #: src/main.c:1152
 msgid "Compiled with jack support, good !\n"
 msgstr "Jack támogatással összeállítva, jóó !\n"
 
 #: src/main.c:1155
-#, fuzzy
 msgid "Compiled with pulse audio support, wonderful !\n"
-msgstr "Jack támogatással összeállítva, jóó !\n"
+msgstr ""
 
 #: src/main.c:1159
 #, c-format
@@ -296,7 +288,8 @@ msgstr "-set<setname>    :automatikusan betölti a klipp beállításait\n"
 
 #: src/main.c:1464
 msgid "-noset           : do not load any set on startup\n"
-msgstr "-noset           : ne töltsön be semmiféle beállítást az indításnál\n"
+msgstr ""
+"-noset           : ne töltsön be semmiféle beállítást az indításnál\n"
 
 #: src/main.c:1465
 msgid "-norecover       : force no-loading of crash recovery\n"
@@ -344,9 +337,8 @@ msgstr ""
 "hang szünetelése mikor a videó szünetel, 16 = jack hang szerver indítása] \n"
 
 #: src/main.c:1480
-#, fuzzy
 msgid " or sox\n"
-msgstr "vagy sox\n"
+msgstr ""
 
 #: src/main.c:1482
 msgid "-devicemap <mapname>          : autoload devicemap\n"
@@ -1088,6 +1080,8 @@ msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
 msgstr ""
+"A LiVES-NAK NEM SIKERÜLT MEGNYITNI A KIVÁLASZTOT AUDIO LEJÁTSZÓT!\n"
+"\n"
 
 #: src/interface.c:2696
 msgid ""
@@ -1097,14 +1091,10 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:2699
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
-"FIGYELMEZTETÉS - A LiVES ezen verziója jack támogatás nélkül lett "
-"öszeállítva.\n"
-"A legtöbb hang tulajdonság érvénytelen lesz.\n"
 
 #: src/interface.c:2702
 msgid ""
@@ -1118,14 +1108,10 @@ msgid "JACK audio is recommended for pro users"
 msgstr ""
 
 #: src/interface.c:2710
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
-"FIGYELMEZTETÉS - A LiVES ezen verziója jack támogatás nélkül lett "
-"öszeállítva.\n"
-"A legtöbb hang tulajdonság érvénytelen lesz.\n"
 
 #: src/interface.c:2713
 msgid ""
@@ -1135,17 +1121,12 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:2716
-#, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
 "If LiVES will not start with jack, you can restart and try with another "
 "audio player instead.\n"
 "\n"
 msgstr ""
-"A LiVES indítása elött ki kell választanod egy zenelejátszót.\n"
-"Jack az ajánlott, de a LiVES más rendszrrel is elindul.\n"
-"Ha a LiVES nem indul el a jack-kel, akkor indítsd újra, és próbáld meg a %s-"
-"t helyette.\n"
 
 #: src/interface.c:2720
 msgid "SOX may be used if neither of the preceding players work, "
@@ -1175,28 +1156,24 @@ msgid "LiVES: - Choose an audio player"
 msgstr "Választás: zene játékos"
 
 #: src/interface.c:2761
-#, fuzzy
 msgid "Use _pulse audio player"
-msgstr "Használd a _%s zene lejátszót"
+msgstr ""
 
 #: src/interface.c:2770
 msgid "Use _jack audio player"
 msgstr "Használat bubi zene játékos"
 
 #: src/interface.c:2778
-#, fuzzy
 msgid "Use _sox audio player"
-msgstr "Használd a _%s zene lejátszót"
+msgstr ""
 
 #: src/interface.c:2786
-#, fuzzy
 msgid "Use _mplayer audio player"
-msgstr "Használat bubi zene játékos"
+msgstr ""
 
 #: src/interface.c:2849
-#, fuzzy
 msgid "LiVES: recover layout ?"
-msgstr "LiVES: válassz egy fájlt"
+msgstr ""
 
 #: src/interface.c:2861
 msgid ""
@@ -1617,8 +1594,8 @@ msgstr ""
 #: src/callbacks.c:3246
 #, c-format
 msgid ""
-"Saving the set will cause copies of all loaded clips to remain on the disk%"
-"s.\n"
+"Saving the set will cause copies of all loaded clips to remain on the "
+"disk%s.\n"
 "\n"
 "Please press 'Cancel' if that is not what you want.\n"
 msgstr ""
@@ -1731,7 +1708,7 @@ msgid "A video editor and VJ program."
 msgstr ""
 
 #: src/callbacks.c:4024
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES Version %s\n"
 "(c) G. Finch (salsaman) 2002-2009\n"
@@ -1743,15 +1720,6 @@ msgid ""
 "salsaman@xs4all.nl\n"
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
-"LiVES %s Verzió\n"
-"(c) G. Finch (salsaman) 2002-2008\n"
-"\n"
-"GPL 3 vagy később alól kiadva(http://www.gnu.org/licenses/gpl.txt)\n"
-"LiVES-ra nincs garancia kiállítva.\n"
-"\n"
-"Kapcsolat a szerzővel:\n"
-"salsaman@xs4all.nl\n"
-"Honlap: http://lives.sourceforge.net"
 
 #: src/callbacks.c:4191
 msgid ""
@@ -2822,11 +2790,11 @@ msgstr ""
 
 #: src/gui.c:1497
 msgid "_Email the author"
-msgstr ""
+msgstr "_Levél a fejlesztőnek"
 
 #: src/gui.c:1501
 msgid "Report a _bug"
-msgstr ""
+msgstr "Hiba bejelentése"
 
 #: src/gui.c:1505
 msgid "Suggest a _feature"
@@ -2834,7 +2802,7 @@ msgstr ""
 
 #: src/gui.c:1509
 msgid "Help with _translating"
-msgstr ""
+msgstr "Segíts fordítani"
 
 #: src/gui.c:1518 src/multitrack.c:4565
 msgid "_About"
@@ -2935,8 +2903,8 @@ msgstr "Indulás folyamatban...\n"
 #: src/gui.c:2699
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
-"    Nyomj 'q'-t a felvétel leállításához.  NE TAKARD EL A LEJÁTSZÓ "
-"ABLAKOT!   "
+"    Nyomj 'q'-t a felvétel leállításához.  NE TAKARD EL A LEJÁTSZÓ ABLAKOT!  "
+" "
 
 #: src/gui.c:3066
 msgid "Frame number to preview"
@@ -4190,14 +4158,11 @@ msgstr ""
 "A jelenlegi kimenetnek van hangja, ezért a csatornák száma nem lehet 0.\n"
 
 #: src/dialogs.c:1304
-#, fuzzy
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
-"A multitrack hang előnézet csak a jack zene lejátszóval lehetséges.\n"
-"Beállíthatod ezt az Eszközök|Beállítások|Lejátszás menüben."
 
 #: src/dialogs.c:1308
 msgid ""
@@ -4239,7 +4204,6 @@ msgstr ""
 "Telepítened kell a 'dvgab'-et a funkció használatához.\n"
 
 #: src/dialogs.c:1326
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -4247,8 +4211,6 @@ msgid ""
 "the \"jack\" or the \"pulse audio\" audio player.\n"
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
-"A multitrack hang előnézet csak a jack zene lejátszóval lehetséges.\n"
-"Beállíthatod ezt az Eszközök|Beállítások|Lejátszás menüben."
 
 #: src/dialogs.c:1330
 msgid "Video playback plugin failed to initialise palette !\n"
@@ -5705,17 +5667,12 @@ msgstr ""
 "A zene lejátszó váltás újraindítást igényel\n"
 
 #: src/preferences.c:840
-#, fuzzy
 msgid ""
 "\n"
 "Unable to switch audio players to pulse audio\n"
 "pulseaudio must be installed first.\n"
 "See http://www.pulseaudio.org\n"
 msgstr ""
-"\n"
-"Nem lehet a zene lejátszót a jackre váltani - először telepítened kell a "
-"jack-et.\n"
-"Lásd http://jackaudio.org\n"
 
 #: src/preferences.c:1112
 msgid "PCM (highest quality; largest files)"
@@ -5771,31 +5728,24 @@ msgid "_Exit multitrack mode after rendering"
 msgstr "_Kilépés a multitrack módból a megjelenítés után"
 
 #: src/preferences.c:1555
-#, fuzzy
 msgid "Auto backup layouts"
 msgstr ""
-"\n"
-"Kimenet automatikus újratöltése.\n"
 
 #: src/preferences.c:1561
-#, fuzzy
 msgid "_Every"
-msgstr "minden"
+msgstr ""
 
 #: src/preferences.c:1577
-#, fuzzy
 msgid "seconds"
-msgstr "másodperc"
+msgstr ""
 
 #: src/preferences.c:1585
-#, fuzzy
 msgid "After every _change"
-msgstr "Effekt utasítás változás"
+msgstr ""
 
 #: src/preferences.c:1594
-#, fuzzy
 msgid "_Never"
-msgstr "minden"
+msgstr ""
 
 #: src/preferences.c:1617
 msgid "Multitrack/Render"
@@ -5974,13 +5924,10 @@ msgid "Playback"
 msgstr "Lejátszás"
 
 #: src/preferences.c:2152
-#, fuzzy
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
 msgstr ""
-"Hang rögzítése, amikor egy b_első ablakot feszel fel\n"
-" (jack hangot igényel)"
 
 #: src/preferences.c:2167
 msgid "      What to record when 'r' is pressed   "
@@ -6003,9 +5950,8 @@ msgid "_Clip switches"
 msgstr ""
 
 #: src/preferences.c:2226
-#, fuzzy
 msgid "_Audio (requires jack or pulse audio player)"
-msgstr "_Hang (jack zene lejátszó szükséges)"
+msgstr ""
 
 #: src/preferences.c:2238
 msgid "Recording"
@@ -6172,7 +6118,8 @@ msgstr "Figyelmeztess, ha egy klippet használó kimenetet készülök törölni
 
 #: src/preferences.c:2711
 msgid "Warn if frames used in a layout are about to be shifted."
-msgstr "Figyelmeztess, ha egy képkockákat használó kimenetről akarok váltani."
+msgstr ""
+"Figyelmeztess, ha egy képkockákat használó kimenetről akarok váltani."
 
 #: src/preferences.c:2717
 msgid "Warn if frames used in a layout are about to be altered."
@@ -6189,7 +6136,8 @@ msgstr "Figyelmeztess, ha egy hangot használó kimenetről akarok váltani."
 
 #: src/preferences.c:2735
 msgid "Warn if audio used in a layout is about to be altered."
-msgstr "Figyelmeztess, ha egy hangot használó kimenetet akarok megváltoztatni."
+msgstr ""
+"Figyelmeztess, ha egy hangot használó kimenetet akarok megváltoztatni."
 
 #: src/preferences.c:2741
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
@@ -6205,13 +6153,10 @@ msgstr ""
 "be van töltve."
 
 #: src/preferences.c:2753
-#, fuzzy
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
 msgstr ""
-"Figyelmeztess, ha a multitracknek vannak hang csatornái, viszont a zene "
-"lejátszó az nem a \"jack\"."
 
 #: src/preferences.c:2760
 msgid "Show info message after importing from firewire device."
@@ -6463,12 +6408,16 @@ msgid ""
 msgstr ""
 
 #: src/preferences.c:3427
-msgid "Theme changes will not take effect until the next time you start LiVES."
-msgstr "A téma változások csak a LiVES következő indításakor lépnek érvénybe."
+msgid ""
+"Theme changes will not take effect until the next time you start LiVES."
+msgstr ""
+"A téma változások csak a LiVES következő indításakor lépnek érvénybe."
 
 #: src/preferences.c:3430
-msgid "Jack options will not take effect until the next time you start LiVES."
-msgstr "A jack beállítások csak a LiVES következő indításakor lépnek érvénybe."
+msgid ""
+"Jack options will not take effect until the next time you start LiVES."
+msgstr ""
+"A jack beállítások csak a LiVES következő indításakor lépnek érvénybe."
 
 #: src/osc.c:832 src/lives-yuv4mpeg.c:179
 #, c-format
@@ -6482,7 +6431,8 @@ msgstr "Nem tudom azonosítani az OSC küldőt\n"
 #: src/osc.c:1618
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
-msgstr "FIGYELMEZTETÉS: Nem tudom elindítani az OSC szervert a %d UDP porton\n"
+msgstr ""
+"FIGYELMEZTETÉS: Nem tudom elindítani az OSC szervert a %d UDP porton\n"
 
 #: src/osc.c:1623
 #, c-format
@@ -6769,7 +6719,8 @@ msgstr "Sebesség Módosítása"
 
 #: src/resample.c:2167
 #, c-format
-msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
+msgid ""
+"Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr ""
 "A lejátszás sebességének megváltoztatása %.3f fps-re, a hangot pedig %d Hz-"
 "re.\n"
@@ -6979,8 +6930,8 @@ msgstr "Érvénytelen %s effekt a %s-ben\n"
 #: src/rte_window.c:429
 #, c-format
 msgid ""
-"This version of LiVES cannot mix generators/non-generators on the same key (%"
-"d) !\n"
+"This version of LiVES cannot mix generators/non-generators on the same key "
+"(%d) !\n"
 msgstr ""
 "A LiVES ezen verziója nem tudja mixelni a generátorokat/nem generátorokat "
 "ugyanazzal a billentyűvel (%d) !\n"
@@ -8630,14 +8581,12 @@ msgid "Applying charcoal to"
 msgstr "Rajzszén alkalmazása ..."
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Applying forward skip to"
-msgstr "Rajzszén alkalmazása ..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "Applying sepia to"
-msgstr "Rajzszén alkalmazása ..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "B/W Threshold"
@@ -8648,9 +8597,8 @@ msgid "B/W thresholding"
 msgstr "Fekete/Fehér küszöbölés"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "Vaku _szín"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blank frames"
@@ -8677,9 +8625,8 @@ msgid "Bluring"
 msgstr "Elmosás"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "_Szín vég"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Brightness _end"
@@ -8772,9 +8719,8 @@ msgid "Colour filtering"
 msgstr "Színes szűrés"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "Színes"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
@@ -8871,14 +8817,12 @@ msgid "Frame Calculator"
 msgstr "Keret Számoló"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "Vaku _szín"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _height"
-msgstr "Blokk _magasság"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Frame _in frame position of clipboard..."
@@ -8889,9 +8833,8 @@ msgid "Frame _in frame position of top frame..."
 msgstr "Keret _a keretben pozíció a felső képkockától..."
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _width"
-msgstr "Képkocka mérete"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
@@ -8910,44 +8853,36 @@ msgid "Gamma change"
 msgstr "Gamma változtatás"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "Üres képkockák"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "Képkockák képeinek törlése"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "_Véletlenszerű szín minden képkockánál"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "Képkockák újrarendezése"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generating blank frames"
-msgstr "Képkockák újrarendezése"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generating clip from image"
-msgstr "Képkockák képeinek törlése"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generating coloured frames"
-msgstr "_Véletlenszerű szín minden képkockánál"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generating title frames"
-msgstr "Képkockák újrarendezése"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -9034,14 +8969,14 @@ msgid "Normalizing"
 msgstr "Normalizálás"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Number of _frames"
-msgstr "    Megnyitott képkockák száma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
 msgstr "Szöveg takarás a -on, -en"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
 msgstr "Fénykép/állókép"
@@ -9079,9 +9014,8 @@ msgid "Reduction radius"
 msgstr "Sugár csökkentése"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Replacing colours in"
-msgstr "Vágólap hang újramintázása"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "Resize All Frames"
@@ -9121,9 +9055,8 @@ msgid "Saturation start"
 msgstr "Telítettség kezdet"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "Sepia"
-msgstr "Forgás"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Shift horizontally"
@@ -9142,9 +9075,8 @@ msgid "Shrinking/Expanding"
 msgstr "Kicsinyítés/Kibővítés"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Skip forward"
-msgstr "Ugrás előre (ctrl-jobb)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Solarize"
@@ -9229,9 +9161,8 @@ msgid "Tunneling"
 msgstr "Készítem :)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Use _Natural image size"
-msgstr "_antialiasing használata az átméretezés alatt"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Vertical flipping"
@@ -9255,14 +9186,12 @@ msgstr "Máris góré :)"
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "_Background Colour"
-msgstr "_Szín vég"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Background colour"
-msgstr "_Üres Háttér"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -9276,6 +9205,8 @@ msgstr "_A fekete transzparens"
 msgid "_Bottom"
 msgstr "_Lent"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Calculate"
 msgstr "_Számítás"
@@ -9326,14 +9257,12 @@ msgid "_Flash for"
 msgstr "_Vaku..."
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Font"
-msgstr "_Nincs"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Frames per second"
-msgstr "_Másodpercenkénti Képkockák (FPS) "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Frames"
@@ -9348,9 +9277,8 @@ msgid "_Horizontal segments"
 msgstr "_Vízszintes szegmens"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Image File"
-msgstr "_Fájl"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -9374,9 +9302,8 @@ msgid "_Middle"
 msgstr "_Középpont"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "_Midtone"
-msgstr "_Középpont"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Negate"
@@ -9385,9 +9312,8 @@ msgstr "_Közömbösítés"
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Number of frames"
-msgstr "    Megnyitott képkockák száma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -9455,18 +9381,16 @@ msgid "_Sigma start"
 msgstr "_Sigma kezdet"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "_Kihagyás"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
 msgstr "_Kihagyás"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "_Színes indítás"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_Splice"
@@ -9493,9 +9417,8 @@ msgid "_Stroke colour"
 msgstr "_Szín símitása"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "_Színes indítás"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9598,9 +9521,8 @@ msgid "colour_filter"
 msgstr "szín _szűrő"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "szín _szűrő"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -9635,6 +9557,7 @@ msgid "enhance"
 msgstr "erősít"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
 msgstr "minden"
 
@@ -9659,24 +9582,20 @@ msgid "gamma_change"
 msgstr "gamma_változtatás"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "üres _képkockák"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "gen_clip_from_image"
-msgstr "Képkockák képeinek törlése"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "_Véletlenszerű szín minden képkockánál"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "gen_text"
-msgstr "él_deketálás"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
@@ -9735,9 +9654,8 @@ msgid "saturation_change"
 msgstr "telítettség_változtatás"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "sepia"
-msgstr "forgás"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "shift_horizontal"
@@ -9752,9 +9670,8 @@ msgid "shrink_expand"
 msgstr "kiterjesztés_kisinyítés"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "Ugrás előre (ctrl-jobb)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "solarize"
@@ -9880,14 +9797,64 @@ msgstr "$bővítőmodul_név nem sikerült:"
 msgid "$error"
 msgstr "$hiba"
 
+#~ msgid ""
+#~ "WARNING - this version of LiVES was compiled without jack support.\n"
+#~ "Many audio features will be unavalaible.\n"
+#~ msgstr ""
+#~ "FIGYELMEZTETÉS - A LiVES ezen verziója jack támogatás nélkül lett "
+#~ "öszeállítva.\n"
+#~ "A legtöbb hang tulajdonság érvénytelen lesz.\n"
+
+#~ msgid "or sox\n"
+#~ msgstr "vagy sox\n"
+
 #~ msgid "Starting GUI...\n"
 #~ msgstr "Grafikus felület indítása...\n"
 
+#, c-format
 #~ msgid "autoloading set %s..."
 #~ msgstr "%s beállítás betöltése..."
+
+#, c-format
+#~ msgid ""
+#~ "Before starting LiVES, you need to choose an audio player.\n"
+#~ "Jack is recommended, but may prevent LiVES from starting on some systems.\n"
+#~ "If LiVES will not start with jack, you can restart and try with %s instead.\n"
+#~ msgstr ""
+#~ "A LiVES indítása elött ki kell választanod egy zenelejátszót.\n"
+#~ "Jack az ajánlott, de a LiVES más rendszrrel is elindul.\n"
+#~ "Ha a LiVES nem indul el a jack-kel, akkor indítsd újra, és próbáld meg a %s-"
+#~ "t helyette.\n"
+
+#, c-format
+#~ msgid "Use _%s audio player"
+#~ msgstr "Használd a _%s zene lejátszót"
+
+#~ msgid ""
+#~ "Multitrack audio preview is only available with the jack audio player.\n"
+#~ "You can set this in Tools|Preferences|Playback."
+#~ msgstr ""
+#~ "A multitrack hang előnézet csak a jack zene lejátszóval lehetséges.\n"
+#~ "Beállíthatod ezt az Eszközök|Beállítások|Lejátszás menüben."
+
+#~ msgid ""
+#~ "Record audio when capturing an e_xternal window\n"
+#~ " (requires jack audio)"
+#~ msgstr ""
+#~ "Hang rögzítése, amikor egy b_első ablakot feszel fel\n"
+#~ " (jack hangot igényel)"
 
 #~ msgid "_Real time effects (requires rendering)"
 #~ msgstr "_Valós idő effekt"
 
 #~ msgid "_Clip switches (requires rendering)"
 #~ msgstr "_Klip kapcsolók"
+
+#~ msgid "_Audio (requires jack audio player)"
+#~ msgstr "_Hang (jack zene lejátszó szükséges)"
+
+#~ msgid ""
+#~ "Warn if multitrack has audio channels, and your audio player is not \"jack\"."
+#~ msgstr ""
+#~ "Figyelmeztess, ha a multitracknek vannak hang csatornái, viszont a zene "
+#~ "lejátszó az nem a \"jack\"."

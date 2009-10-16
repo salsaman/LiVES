@@ -4,6 +4,7 @@ Auto backup of multitrack layouts.
 Allow mouse scroll to switch clips.
 Allow selection of aspect ratio for custom mjpegtools format. (Thanks Doug).
 Fix for solaris patch.
+Transfer focus between clip editor and multitrack.
 Fade audio out was skipping last frame in selection. *
 Fix several small memory leaks. *
 Improved handling of locale filenames.

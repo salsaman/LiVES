@@ -204,11 +204,12 @@ int libvis_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+  int count=0;
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
   if (plugin_info!=NULL) {
     int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_END};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
+    weed_plant_t *out_chantmpls[2];
     char *name=NULL;
     char fullname[256];
     weed_plant_t *filter_class;
@@ -228,29 +229,23 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     }
 
     in_params[1]=NULL;
+    out_chantmpls[1]=NULL;
 
     while ((name=(char *)visual_actor_get_next_by_name_nogl (name))!=NULL) {
       snprintf(fullname,256,"libvisual: %s",name);
       in_params[0]=weed_string_list_init("listener","Audio _listener",5,listeners);
       weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-
-      filter_class=weed_filter_class_init(fullname,"Team libvisual",1,0,&libvis_init,&libvis_process,&libvis_deinit,NULL,weed_clone_plants(out_chantmpls),in_params,NULL);
+      out_chantmpls[0]=weed_channel_template_init("out channel 0",0,palette_list);
+      filter_class=weed_filter_class_init(fullname,"Team libvisual",1,0,&libvis_init,&libvis_process,&libvis_deinit,NULL,out_chantmpls,in_params,NULL);
       weed_set_double_value(filter_class,"target_fps",50.); // set reasonable default fps
 
       weed_plugin_info_add_filter_class (plugin_info,filter_class);
     }
     weed_set_int_value(plugin_info,"version",package_version);
-    weed_plant_free(out_chantmpls[0]);
+    //weed_plant_free(out_chantmpls[0]);
   }
   return plugin_info;
 }
-
-
-void weed_desetup(void) {
-  visual_quit();
-}
-
-
 
 
 ///////////// callback so host can supply its own audio sammples //////////

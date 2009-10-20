@@ -712,6 +712,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->recoverable_layout=FALSE;
 
   mainw->soft_debug=FALSE;
+
+  mainw->iochan=NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -1315,6 +1318,7 @@ capability *get_capabilities (void) {
   capable->has_midistartstop=FALSE;
   capable->has_encoder_plugins=FALSE;
   capable->has_python=FALSE;
+  capable->has_stderr=TRUE;
 
   safer_bfile=g_strdup_printf("%s.%d.%d",BOOTSTRAP_NAME,getuid(),getgid());
   unlink (safer_bfile);
@@ -1624,6 +1628,7 @@ static gboolean lives_startup(gpointer data) {
 #ifdef NOTTY
   if (!mainw->foreign) {
     close (2);
+    capable->has_stderr=FALSE;
   }
 #endif
 

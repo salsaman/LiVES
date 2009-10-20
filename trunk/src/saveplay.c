@@ -581,6 +581,12 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
   gboolean safe_symlinks=prefs->safe_symlinks;
 
+  gchar *redir=g_strdup("");
+  int new_stderr=-1;
+
+  GError *gerr=NULL;
+
+  gchar *new_stderr_name=NULL;
 
   // new handling for save selection:
   // symlink images 1 - n to the encoded frames
@@ -598,6 +604,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       gtk_widget_hide (rdet->dialog);
       
       if (debug!=prefs->debug_encoders) set_boolean_pref("debug_encoders",(prefs->debug_encoders=debug));
+      prefs->debug_encoders=debug;
 
       if (response==GTK_RESPONSE_CANCEL) {
 	gtk_widget_destroy (rdet->dialog);
@@ -933,13 +940,36 @@ void save_file (gboolean existing, gchar *n_file_name) {
   g_free (mesg);
 
 
+  if (prefs->debug_encoders) {
+
+    // debug mode
+
+    // open a file for stderr
+
+    new_stderr_name=g_strdup_printf("%s%s/.debug_out",prefs->tmpdir,cfile->handle);
+
+    new_stderr=open(new_stderr_name,O_CREAT|O_RDWR|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
+
+    redir=g_strdup_printf(" 2>%s",new_stderr_name);
+
+    mainw->iochan=g_io_channel_unix_new(new_stderr);
+    g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
+    g_io_channel_set_buffer_size(mainw->iochan,0);
+    g_io_channel_set_flags(mainw->iochan,G_IO_FLAG_NONBLOCK,&gerr);
+    if (gerr!=NULL) g_error_free(gerr);
+    gerr=NULL;
+
+    mainw->optextview=create_output_textview();
+
+  }
+
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s%s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
     g_free(tmp);
   }
   else {
     // for native plugins we go via the plugin
-    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
     g_free(tmp);
   }
   g_free (fps_string);
@@ -953,6 +983,21 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
   not_cancelled=do_progress_dialog(TRUE,TRUE,_ ("Saving [can take a long time]"));
   mesg=g_strdup (mainw->msg);
+
+  if (mainw->iochan!=NULL) {
+    fsync(new_stderr);
+
+    pump_io_chan(mainw->iochan);
+
+    g_io_channel_shutdown(mainw->iochan,FALSE,&gerr);
+    if (gerr!=NULL) g_error_free(gerr);
+    mainw->iochan=NULL;
+    close(new_stderr);
+    g_object_unref(mainw->optextview);
+    unlink(new_stderr_name);
+    g_free(new_stderr_name);
+    g_free(redir);
+  }
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
     com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,1,cfile->frames,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name);
@@ -991,6 +1036,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     
     if (!g_file_test ((tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), G_FILE_TEST_EXISTS)) {
       g_free(tmp);
+
       do_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
       mainw->no_switch_dprint=TRUE;
       d_print_failed();

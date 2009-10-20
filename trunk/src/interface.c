@@ -230,6 +230,30 @@ widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deint, g
 
 
 
+static gboolean procdets_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer user_data) {
+  GtkWidget *arrow=(GtkWidget *)user_data;
+  gboolean expanded=!(g_object_get_data(G_OBJECT(arrow),"expanded"));
+  GtkWidget *ahbox=gtk_widget_get_parent(arrow);
+
+  gtk_widget_destroy(arrow);
+
+  arrow = gtk_arrow_new (expanded?GTK_ARROW_DOWN:GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
+  gtk_container_add (GTK_CONTAINER (ahbox), arrow);
+  gtk_widget_show(arrow);
+
+  g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
+		    G_CALLBACK (procdets_pressed),
+		    arrow);
+  
+  g_object_set_data(G_OBJECT(arrow),"expanded",GINT_TO_POINTER(expanded));
+
+  if (expanded) gtk_widget_show(cfile->proc_ptr->scrolledwindow);
+  else gtk_widget_hide(cfile->proc_ptr->scrolledwindow);
+
+  return FALSE;
+}
+
+
 
 process * create_processing (const gchar *text) {
 
@@ -239,6 +263,11 @@ process * create_processing (const gchar *text) {
   GtkWidget *dialog_action_area1;
   process *procw=(process*)(g_malloc(sizeof(process)));
   gchar tmp_label[256];
+
+  GtkWidget *hbox;
+  GtkWidget *ahbox;
+  GtkWidget *label;
+  GtkWidget *details_arrow;
 
   procw->processing = gtk_dialog_new ();
   gtk_container_set_border_width (GTK_CONTAINER (procw->processing), 10);
@@ -310,6 +339,43 @@ process * create_processing (const gchar *text) {
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(procw->label3, GTK_STATE_NORMAL, &palette->normal_fore);
   }
+
+
+  if (mainw->iochan!=NULL) {
+    // add "show details" arrow
+    hbox = gtk_hbox_new (FALSE, 0);
+
+    gtk_box_pack_start (GTK_BOX (vbox3), hbox, FALSE, FALSE, 0);
+
+    ahbox=gtk_event_box_new();
+    gtk_box_pack_start (GTK_BOX (hbox), ahbox, FALSE, FALSE, 10);
+
+    details_arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
+    gtk_container_add (GTK_CONTAINER (ahbox), details_arrow);
+
+    g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
+		      G_CALLBACK (procdets_pressed),
+		      details_arrow);
+
+    g_object_set_data(G_OBJECT(details_arrow),"expanded",GINT_TO_POINTER(FALSE));
+
+    label=gtk_label_new_with_mnemonic (_ ("Show _details"));
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),ahbox);
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(details_arrow, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg(ahbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+
+    gtk_widget_show_all(hbox);
+
+    procw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+    gtk_box_pack_start (GTK_BOX (vbox3), procw->scrolledwindow, TRUE, TRUE, 0);
+    gtk_container_add (GTK_CONTAINER (procw->scrolledwindow), (GtkWidget *)mainw->optextview);
+  }
+
 
   dialog_action_area1 = GTK_DIALOG (procw->processing)->action_area;
   gtk_widget_show (dialog_action_area1);
@@ -899,7 +965,6 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   // general text window
   GtkWidget *dialog_vbox20;
   GtkWidget *scrolledwindow3;
-  GtkWidget *textview2;
   GtkWidget *dialog_action_area20;
   GtkWidget *okbutton17;
   gchar *mytitle=g_strdup(title);
@@ -926,22 +991,22 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   gtk_widget_show (scrolledwindow3);
   gtk_box_pack_start (GTK_BOX (dialog_vbox20), scrolledwindow3, TRUE, TRUE, 0);
 
-  if (textbuffer!=NULL) textview2 = gtk_text_view_new_with_buffer(textbuffer);
-  else textview2 = gtk_text_view_new ();
-  gtk_widget_show (textview2);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow3), textview2);
+  if (textbuffer!=NULL) textwindow->textview = gtk_text_view_new_with_buffer(textbuffer);
+  else textwindow->textview = gtk_text_view_new ();
+  gtk_widget_show (textwindow->textview);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow3), textwindow->textview);
 
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview2), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview2), GTK_WRAP_WORD);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview2), FALSE);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (textwindow->textview), FALSE);
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textwindow->textview), GTK_WRAP_WORD);
+  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textwindow->textview), FALSE);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_base(textview2, GTK_STATE_NORMAL, &palette->info_base);
-    gtk_widget_modify_text(textview2, GTK_STATE_NORMAL, &palette->info_text);
+    gtk_widget_modify_base(textwindow->textview, GTK_STATE_NORMAL, &palette->info_base);
+    gtk_widget_modify_text(textwindow->textview, GTK_STATE_NORMAL, &palette->info_text);
   }
 
   if (mytext!=NULL) {
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview2)), mytext, -1);
+    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (textwindow->textview)), mytext, -1);
 
     dialog_action_area20 = GTK_DIALOG (textwindow->dialog)->action_area;
     gtk_widget_show (dialog_action_area20);
@@ -2886,5 +2951,16 @@ void do_layout_recover_dialog(void) {
 
   gtk_widget_show_all(mdialog);
 
+}
+
+
+
+
+GtkTextView *create_output_textview(void) {
+  GtkWidget *textview=gtk_text_view_new();
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+  g_object_ref(textview);
+  gtk_widget_show(textview);
+  return (GtkTextView *)textview;
 }
 

@@ -244,6 +244,36 @@ do_memory_error_dialog (void) {
   do_error_dialog (_ ("\n\nLiVES was unable to perform this operation due to unsufficient memory.\nPlease try closing some other applications first.\n"));
 }
 
+
+
+
+
+void pump_io_chan(GIOChannel *iochan) {
+  // pump data from stdout to textbuffer
+  gchar *str_return;
+  gsize retlen;
+  GError *gerr=NULL;
+
+  GtkTextIter iter;
+  GtkTextMark *mark;
+  GtkTextBuffer *optextbuf=gtk_text_view_get_buffer(mainw->optextview);
+
+  g_io_channel_read_to_end(iochan,&str_return,&retlen,&gerr);
+
+  if (gerr!=NULL) g_error_free(gerr);
+
+  if (retlen>0) {
+    gtk_text_buffer_get_end_iter(optextbuf,&iter);
+    gtk_text_buffer_insert(optextbuf,&iter,str_return,retlen);
+    mark=gtk_text_buffer_create_mark(optextbuf,NULL,&iter,FALSE);
+    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW (mainw->optextview),mark);
+    gtk_text_buffer_delete_mark (optextbuf,mark);
+  }
+
+}
+
+
+
 void cancel_process(gboolean visible) {
   if (prefs->show_player_stats&&!visible&&mainw->fps_measure>0.) {
     // statistics
@@ -676,10 +706,12 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
       // just pulse the progress bar
       if (!process_one(visible)) return FALSE;
-      if (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) sched_yield();
-      if (!mainw->foreign&&(visible||(!mainw->mute&&prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE))) {
-	g_usleep(prefs->sleep_time);
+
+      if (mainw->iochan!=NULL&&progress_count==0) {
+	// pump data from stdout to textbuffer
+	pump_io_chan(mainw->iochan);
       }
+
     }
     if (!mainw->internal_messaging) {
       if ((infofile=fopen(cfile->info_file,"r"))) {
@@ -736,6 +768,12 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	else cfile->proc_ptr->frames_done=atoi(mainw->msg);
       }
       if (!process_one(visible)) return FALSE;
+
+      if (mainw->iochan!=NULL&&progress_count==0) {
+	// pump data from stdout to textbuffer
+	pump_io_chan(mainw->iochan);
+      }
+
       g_usleep(prefs->sleep_time);
     }
     else finished=TRUE;

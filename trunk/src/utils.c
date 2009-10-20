@@ -1228,6 +1228,10 @@ find_when_to_stop (void) {
   else mainw->whentostop=STOP_ON_VID_END; // tada...
 }
 
+
+#define ASPECT_ALLOWANCE 0.005
+
+
 void 
 minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height) {
   // we will use trigonometry to calculate the smallest difference between a given
@@ -1237,12 +1241,14 @@ minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vs
   gint ch=height[0];
 
   gint real_width,real_height;
-  gint delta,current_delta=(hsize-cw)*(hsize-cw)+(vsize-ch)*(vsize-ch);
+  gulong delta,current_delta;
 
   // minimise d[(x-x1)^2 + (y-y1)^2]/d[x1], to get approximate values
   gint calc_width=(gint)((vsize+aspect*hsize)*aspect/(aspect*aspect+1.));
 
   int i;
+
+  current_delta=(hsize-cw)*(hsize-cw)+(vsize-ch)*(vsize-ch);
 
 #ifdef DEBUG_ASPECT
   g_printerr ("aspect %.8f : width %d height %d is best fit\n",aspect,calc_width,(gint)(calc_width/aspect));
@@ -1252,6 +1258,24 @@ minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vs
     real_width=(gint)(calc_width/hblock+i)*hblock;
     real_height=(gint)(real_width/aspect/vblock+.5)*vblock;
     delta=(hsize-real_width)*(hsize-real_width)+(vsize-real_height)*(vsize-real_height);
+
+
+    if (real_width%hblock!=0||real_height%vblock!=0||ABS((gdouble)real_width/(gdouble)real_height-aspect)>ASPECT_ALLOWANCE) {
+      // encoders can be fussy, so we need to fit both aspect ratio and blocksize      
+      while (1) {
+	real_width=((int)(real_width/hblock)+1)*hblock;
+	real_height=(int)((gdouble)real_width/aspect+.5);
+	
+	if (real_height%vblock==0) break;
+	
+	real_height=((int)(real_height/vblock)+1)*vblock;
+	real_width=(int)((gdouble)real_height*aspect+.5);
+	
+	if (real_width%hblock==0) break;
+	
+      }
+    }
+
 #ifdef DEBUG_ASPECT
     g_printerr ("block quantise to %d x %d\n",real_width,real_height);
 #endif

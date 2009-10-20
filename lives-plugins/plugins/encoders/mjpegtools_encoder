@@ -28,6 +28,7 @@
 #0.97 handling for "," radix (needs testing) 
 #0.98 checked handling for "," radix (thanks Doug)
 #0.99 Allow selection of aspect ratio for custom2 format (Doug).
+#1.0 use --no-constraints, optimise for multi-cpus (salsaman)
 
 # TODO:
 # check all formats for aspect ratios, block sizes and frame rates
@@ -50,7 +51,7 @@ $tmpvid="tmpvid.m1v";
 $tmpaud="tmpaud.mpa";
 
 if ($command eq "version") {
-    print "mjpegtools encoder plugin v0.99\n";
+    print "mjpegtools encoder plugin v1.0\n";
     exit 0;
 }
 
@@ -120,7 +121,7 @@ if ($command eq "get_formats") {
 
     # mpeg1 may be wrong, aspect (and maybe fps) comes from PAL/NTSC - TODO
     # needs testing
-    print "mpeg1|mpeg1|4|arate=32000;44100;48000,fps=24000:1001;24;25;30000:1001;30;50;60000:1001;60,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=8|mpg|\n";
+    print "mpeg1|mpeg1|4|arate=32000;44100;48000,fps=24000:1001;24;25;30000:1001;30;50;60000:1001;60,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
 
     #vcd
     print "vcd_pal|vcd (PAL)|4|arate=32000;44100;48000,fps=25,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
@@ -195,6 +196,8 @@ if ($command eq "encode") {
 
     &calc_rate_code;
     &calc_aspect;
+
+    $ncpus=&get_num_procs;
 
     # video buffer size - fixed for VCD/SVCD
     $vid_buffer=1000;
@@ -323,16 +326,16 @@ if ($command eq "encode") {
 	else {
 	    $syscom .="| yuvscaler -O SVCD $norm";
 	}
-	$syscom .="| mpeg2enc -F $rate_code -f 4 $quality -I 0 -V $vid_buffer -o $tmpvid $err";
+	$syscom .="| mpeg2enc -M $ncpus -F $rate_code -f 4 $quality -I 0 -V $vid_buffer -o $tmpvid $err";
     }
     elsif ($otype eq "dvd_pal"||$otype eq "dvd_ntsc") {
-	$syscom .="| mpeg2enc -f 8 -o $tmpvid $err";
+	$syscom .="| mpeg2enc -M $ncpus -f 8 -o $tmpvid $err";
     }
     elsif ($otype eq "custom2") {
-	$syscom .="| mpeg2enc -f $format -F $rate_code $makeforceaspect $quality $vbs $hf -b $vid_bitrate -B $nvbitrate -V $vid_buffer -r $msr -o $tmpvid $err";
+	$syscom .="| mpeg2enc -M $ncpus --no-constraints -f $format -F $rate_code $makeforceaspect $quality $vbs $hf -b $vid_bitrate -B $nvbitrate -V $vid_buffer -r $msr -o $tmpvid $err";
     }
     else {
-	$syscom .="| mpeg2enc -F $rate_code $norm -f $format $quality -b $vid_bitrate -B $nvbitrate -V $vid_buffer -4 1 -2 1 -g 6 -G 18 -r 24 -o $tmpvid $err";
+	$syscom .="| mpeg2enc -M $ncpus --no-constraints -F $rate_code $norm -f $format $quality -b $vid_bitrate -B $nvbitrate -V $vid_buffer -4 1 -2 1 -g 6 -G 18 -r 24 -o $tmpvid $err";
     }
 
     if (defined($DEBUG_ENCODERS)) {
@@ -474,4 +477,14 @@ sub calc_aspect {
 	$delta=$cdelta;
 	$aspect=4;
     }
+}
+
+
+
+sub get_num_procs {
+    my $result=`cat /proc/cpuinfo|grep processor`;
+
+    $result=(split (/\n/,$result))[-1];
+    $result=(split (/: /,$result))[1];
+    return ++$result;
 }

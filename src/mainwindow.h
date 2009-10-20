@@ -893,6 +893,8 @@ typedef struct {
 
   gboolean soft_debug; // for testing
 
+  GIOChannel *iochan;
+  GtkTextView *optextview;
 
 } mainwindow;
 

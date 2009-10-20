@@ -1,3 +1,26 @@
+Version 1.1.5
+-------------
+New aspect/blocksize algorithm for better encoding.
+Pipe encoder debugging info to textbuffer.
+Add multi core support for mjpegtools_encoder.
+Fix libvisual startup crash (regression) *
+
+
+	
+
+
+
+
+
+
+
+
+*fixes backported to 1.0.5
+
+	
+
+
+
 Version 1.1.4 (15th October 2009)
 ---------------------------------
 Auto backup of multitrack layouts.

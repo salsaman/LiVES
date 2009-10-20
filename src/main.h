@@ -146,6 +146,7 @@ typedef struct {
   GtkWidget *pause_button;
   GtkWidget *preview_button;
   GtkWidget *cancel_button;
+  GtkWidget *scrolledwindow;
   guint frames_done;
 } process;
 
@@ -443,6 +444,8 @@ typedef struct {
   gchar *myname_full;
   gchar *myname;
 
+  gboolean has_stderr;
+
 } capability;
 
 
@@ -499,6 +502,7 @@ void resize_play_window (void);
 void kill_play_window (void);
 void make_preview_box (void);
 void add_to_playframe (void);
+GtkTextView *create_output_textview(void);
 
 // dialogs.c
 gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar *text);
@@ -562,6 +566,7 @@ void do_threaded_dialog(gchar *text, gboolean has_cancel);
 void end_threaded_dialog(void);
 void response_ok (GtkButton *button, gpointer user_data);
 void response_cancel (GtkButton *button, gpointer user_data);
+void pump_io_chan(GIOChannel *iochan);
 
 void do_splash_progress(void);
 

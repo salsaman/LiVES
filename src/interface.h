@@ -90,6 +90,7 @@ typedef struct {
   GtkWidget *dialog;
   GtkWidget *clear_button;
   GtkWidget *delete_button;
+  GtkWidget *textview;
 } text_window;
 
 text_window* create_text_window (const gchar *title_part, const gchar *text, GtkTextBuffer *);

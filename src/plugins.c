@@ -1486,6 +1486,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
     gint xwidth=width;
     gint xheight=height;
 
+    width=height=1000000;
+
     numtok=get_token_count (aspect_buffer,';');
     array2=g_strsplit(aspect_buffer,";",numtok);
     

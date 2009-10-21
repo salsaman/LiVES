@@ -560,6 +560,7 @@ gboolean do_original_lost_warning(gchar *fname);
 void do_no_decoder_error(gchar *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
+void do_file_perm_error(gchar *file_name);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *text, gboolean has_cancel);
@@ -795,6 +796,13 @@ void lives_set_cursor_style(gint cstyle, GdkWindow *window);
 #define LIVES_CURSOR_BLOCK 1
 #define LIVES_CURSOR_AUDIO_BLOCK 2
 #define LIVES_CURSOR_BUSY 3
+
+
+
+gchar *text_view_get_text(GtkTextView *textview);
+void text_view_set_text(GtkTextView *textview, const gchar *text);
+
+
 
 // effects.c
 void invalidate_pixel_buffers (void); // TODO - exterminate !

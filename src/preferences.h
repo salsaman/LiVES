@@ -120,7 +120,6 @@ typedef struct {
 #define REC_CLIPS (1<<3)
 #define REC_AUDIO (1<<4)
   
-  gboolean debug_encoders;
   gboolean no_bandwidth;
   gboolean osc_udp_started;
   guint osc_udp_port;
@@ -272,7 +271,6 @@ typedef struct {
   GtkWidget *raudio;
   GtkWidget *rdesk_audio;
   GtkWidget *encoder_combo;
-  GtkWidget *debug_encoders;
   GtkWidget *checkbutton_antialias;
   GtkWidget *checkbutton_warn_fps;
   GtkWidget *checkbutton_warn_mplayer;

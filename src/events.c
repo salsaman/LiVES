@@ -4410,6 +4410,7 @@ render_details *create_render_details (gint type) {
   rdet->dialog = gtk_dialog_new ();
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(rdet->dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    if (type==1) gtk_dialog_set_has_separator(GTK_DIALOG(rdet->dialog),FALSE);
   }
 
   if (type==3||type==4) gtk_window_set_title (GTK_WINDOW (rdet->dialog), _("LiVES: Multitrack details"));
@@ -4712,30 +4713,6 @@ render_details *create_render_details (gint type) {
     
     gtk_window_set_default_size (GTK_WINDOW (rdet->dialog), 300, 400);
     
-    rdet->debug_checkbutton = gtk_check_button_new ();
-    gtk_tooltips_set_tip (mainw->tooltips, rdet->debug_checkbutton, _("Show debugging output on the terminal"), NULL);
-    eventbox=gtk_event_box_new();
-    gtk_tooltips_copy(eventbox,rdet->debug_checkbutton);
-    label=gtk_label_new_with_mnemonic (_("_Debug Mode"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),rdet->debug_checkbutton);
-
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      rdet->debug_checkbutton);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
-    hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), rdet->debug_checkbutton, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (rdet->debug_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rdet->debug_checkbutton),prefs->debug_encoders);
   }
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");

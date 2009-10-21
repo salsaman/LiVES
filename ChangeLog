@@ -1,9 +1,10 @@
 Version 1.1.5
 -------------
-New aspect/blocksize algorithm for better encoding.
-Pipe encoder debugging info to textbuffer.
+New aspect/blocksize algorithm for more succesful encoding.
+Show encoder debugging info within the application.
 Add multi core support for mjpegtools_encoder.
 Fix libvisual startup crash (regression) *
+Plug some minor memory leaks. *
 
 
 	

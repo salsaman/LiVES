@@ -1291,6 +1291,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	  prefs->encoder.of_allowed_acodecs=atoi (array[2]);
 	  g_list_free_strings (ofmt_all);
 	  g_list_free (ofmt_all);
+	  g_strfreev(array);
 	  break;
 	}
 	g_strfreev(array);
@@ -2786,107 +2787,108 @@ gchar *plugin_run_param_window(gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_
   // if the user closes the window with Cancel, NULL is returned instead
 
 
-    FILE *sfile;
-    lives_rfx_t *rfx=(lives_rfx_t *)g_malloc(sizeof(lives_rfx_t));
-    gchar *string;
-    gchar *rfx_scrapname=g_strdup_printf("rfx.%d",getpid());
-    gchar *rfxfile=g_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
-    int res;
-    gchar *com;
-    gchar *res_string=NULL;
-    gchar buff[32];
+  FILE *sfile;
+  lives_rfx_t *rfx=(lives_rfx_t *)g_malloc(sizeof(lives_rfx_t));
+  gchar *string;
+  gchar *rfx_scrapname=g_strdup_printf("rfx.%d",getpid());
+  gchar *rfxfile=g_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
+  int res;
+  gchar *com;
+  gchar *res_string=NULL;
+  gchar buff[32];
 
-    string=g_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);
-    sfile=fopen(rfxfile,"w");
-    fputs(string,sfile);
-    fclose(sfile);
-    g_free(string);
+  string=g_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);
+  sfile=fopen(rfxfile,"w");
+  fputs(string,sfile);
+  fclose(sfile);
+  g_free(string);
 
-    com=g_strdup_printf("%s >>%s",get_com,rfxfile);
+  com=g_strdup_printf("%s >>%s",get_com,rfxfile);
+  dummyvar=system(com);
+  g_free(com);
+
+  // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
+    
+  com=g_strdup_printf("%s %s %s >/dev/null",RFX_BUILDER,rfxfile,prefs->tmpdir);
+  res=system(com);
+  g_free(com);
+    
+  unlink(rfxfile);
+  g_free(rfxfile);
+
+  if (res==0) {
+    // the script compiled correctly
+
+    // now we pop up the parameter window, get the values of our parameters, and marshall them as extra_params
+      
+    // first create a lives_rfx_t from the scrap
+    rfx->name=g_strdup(rfx_scrapname);
+    rfx->action_desc=rfx->extra=NULL;
+    rfx->status=RFX_STATUS_SCRAP;
+
+    rfx->num_in_channels=0;
+    rfx->min_frames=-1;
+
+    // get the delimiter
+    rfxfile=g_strdup_printf("%ssmdef.%d",prefs->tmpdir,getpid());
+    com=g_strdup_printf("%s%s get_define > %s",prefs->tmpdir,rfx_scrapname,rfxfile);
     dummyvar=system(com);
     g_free(com);
 
-    // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
-    
-    com=g_strdup_printf("%s %s %s >/dev/null",RFX_BUILDER,rfxfile,prefs->tmpdir);
-    res=system(com);
-    g_free(com);
-    
+    sfile=fopen(rfxfile,"r");
+    dummychar=fgets(buff,32,sfile);
+    fclose(sfile);
+
     unlink(rfxfile);
     g_free(rfxfile);
 
-    if (res==0) {
-      // the script compiled correctly
+    g_snprintf(rfx->delim,2,"%s",buff);
 
-      // now we pop up the parameter window, get the values of our parameters, and marshall them as extra_params
+    rfx->menu_text=(vbox==NULL?g_strdup_printf(_("%s advanced settings"),prefs->encoder.of_desc):g_strdup(""));
+    rfx->is_template=FALSE;
       
-      // first create a lives_rfx_t from the scrap
-      rfx->name=g_strdup(rfx_scrapname);
-      rfx->action_desc=rfx->extra=NULL;
-      rfx->status=RFX_STATUS_SCRAP;
+    render_fx_get_params(rfx,rfx_scrapname,RFX_STATUS_SCRAP);
 
-      rfx->num_in_channels=0;
-      rfx->min_frames=-1;
+    // now we build our window and get param values
+    if (vbox==NULL) {
+      on_render_fx_pre_activate(NULL,rfx);
 
-      // get the delimiter
-      rfxfile=g_strdup_printf("%ssmdef.%d",prefs->tmpdir,getpid());
-      com=g_strdup_printf("%s%s get_define > %s",prefs->tmpdir,rfx_scrapname,rfxfile);
-      dummyvar=system(com);
-      g_free(com);
-
-      sfile=fopen(rfxfile,"r");
-      dummychar=fgets(buff,32,sfile);
-      fclose(sfile);
-
-      unlink(rfxfile);
-      g_free(rfxfile);
-
-      g_snprintf(rfx->delim,2,"%s",buff);
-
-      rfx->menu_text=(vbox==NULL?g_strdup_printf(_("%s advanced settings"),prefs->encoder.of_desc):g_strdup(""));
-      rfx->is_template=FALSE;
+      gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
+      gtk_window_set_modal (GTK_WINDOW (fx_dialog[1]), TRUE);
       
-      render_fx_get_params(rfx,rfx_scrapname,RFX_STATUS_SCRAP);
-
-      // now we build our window and get param values
-      if (vbox==NULL) {
-	on_render_fx_pre_activate(NULL,rfx);
-
-	gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
-	gtk_window_set_modal (GTK_WINDOW (fx_dialog[1]), TRUE);
-      
-	if (gtk_dialog_run(GTK_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {
-	  // marshall our params for passing to the plugin
-	  res_string=param_marshall(rfx,FALSE);
-	}
-      }
-      else {
-	make_param_box(vbox,rfx);
-      }
-      
-      rfxfile=g_strdup_printf ("%s/%s",prefs->tmpdir,rfx_scrapname);
-      unlink(rfxfile);
-      g_free(rfx_scrapname);
-      g_free(rfxfile);
-
-      if (ret_rfx!=NULL) {
-	*ret_rfx=rfx;
-      }
-      else {
-	rfx_free(rfx);
-	g_free(rfx);
+      if (gtk_dialog_run(GTK_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {
+	// marshall our params for passing to the plugin
+	res_string=param_marshall(rfx,FALSE);
       }
     }
     else {
-      if (ret_rfx!=NULL) {
-	*ret_rfx=NULL;
-	if (rfx!=NULL) {
-	  g_free(rfx);
-	}
-      }
-      else {
-	res_string=g_strdup("");
-      }
+      make_param_box(vbox,rfx);
     }
-    return res_string;
+      
+    rfxfile=g_strdup_printf ("%s/%s",prefs->tmpdir,rfx_scrapname);
+    unlink(rfxfile);
+    g_free(rfxfile);
+
+    if (ret_rfx!=NULL) {
+      *ret_rfx=rfx;
+    }
+    else {
+      rfx_free(rfx);
+      g_free(rfx);
+    }
+  }
+  else {
+    if (ret_rfx!=NULL) {
+      *ret_rfx=NULL;
+    }
+    else {
+      res_string=g_strdup("");
+    }
+    if (rfx!=NULL) {
+      g_free(rfx);
+    }
+  }
+
+  g_free(rfx_scrapname);
+  return res_string;
 }

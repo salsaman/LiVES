@@ -28,7 +28,7 @@
 extern void multitrack_preview_clicked  (GtkButton *, gpointer user_data);
 extern void mt_change_disp_tracks_ok (GtkButton *, gpointer user_data);
 
-
+static gulong arrow_id; // works around a known bug in gobject
 
 
 void add_suffix_check(GtkBox *box) {
@@ -230,21 +230,28 @@ widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deint, g
 
 
 
-static gboolean procdets_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer user_data) {
+static gboolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpointer user_data) {
   GtkWidget *arrow=(GtkWidget *)user_data;
   gboolean expanded=!(g_object_get_data(G_OBJECT(arrow),"expanded"));
-  GtkWidget *ahbox=gtk_widget_get_parent(arrow);
 
   gtk_widget_destroy(arrow);
 
+  if (g_signal_handler_is_connected (ahbox, arrow_id)) {
+    g_signal_handler_disconnect (ahbox, arrow_id);
+  }
+
   arrow = gtk_arrow_new (expanded?GTK_ARROW_DOWN:GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(arrow, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  arrow_id=g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
+			     G_CALLBACK (procdets_pressed),
+			     arrow);
+
   gtk_container_add (GTK_CONTAINER (ahbox), arrow);
   gtk_widget_show(arrow);
 
-  g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
-		    G_CALLBACK (procdets_pressed),
-		    arrow);
-  
   g_object_set_data(G_OBJECT(arrow),"expanded",GINT_TO_POINTER(expanded));
 
   if (expanded) gtk_widget_show(cfile->proc_ptr->scrolledwindow);
@@ -353,9 +360,9 @@ process * create_processing (const gchar *text) {
     details_arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
     gtk_container_add (GTK_CONTAINER (ahbox), details_arrow);
 
-    g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
-		      G_CALLBACK (procdets_pressed),
-		      details_arrow);
+    arrow_id=g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
+			       G_CALLBACK (procdets_pressed),
+			       details_arrow);
 
     g_object_set_data(G_OBJECT(details_arrow),"expanded",GINT_TO_POINTER(FALSE));
 
@@ -875,6 +882,7 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
   GtkWidget *info_text;
   GtkWidget *dialog_action_area3;
   GtkWidget *info_ok_button;
+  GtkWidget *details_button;
   GtkWidget *checkbutton;
   GtkWidget *label;
   GtkWidget *hbox;
@@ -944,13 +952,27 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
   dialog_action_area3 = GTK_DIALOG (dialog3)->action_area;
   gtk_widget_show (dialog_action_area3);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area3), GTK_BUTTONBOX_END);
+
+
+  if (mainw->iochan!=NULL) {
+    details_button = gtk_button_new_with_mnemonic(_("Show _Details"));
+    gtk_widget_show (details_button);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog3), details_button, GTK_RESPONSE_YES);
+    g_signal_connect (GTK_OBJECT (details_button), "clicked",
+		      G_CALLBACK (on_details_button_clicked),
+		      NULL);
+  }
   
   info_ok_button = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (info_ok_button);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog3), info_ok_button, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (info_ok_button, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_widget_grab_focus (info_ok_button);
-  gtk_widget_grab_default (info_ok_button);
+
+
+  if (mainw->iochan==NULL) {
+    GTK_WIDGET_SET_FLAGS (info_ok_button, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    gtk_widget_grab_focus (info_ok_button);
+    gtk_widget_grab_default (info_ok_button);
+  }
 
   g_signal_connect (GTK_OBJECT (info_ok_button), "clicked",
 		    G_CALLBACK (on_info_ok_button_clicked2),
@@ -963,17 +985,21 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
 
 text_window *create_text_window (const gchar *title, const gchar *text, GtkTextBuffer *textbuffer) {
   // general text window
-  GtkWidget *dialog_vbox20;
-  GtkWidget *scrolledwindow3;
-  GtkWidget *dialog_action_area20;
-  GtkWidget *okbutton17;
+  GtkWidget *dialog_vbox;
+  GtkWidget *scrolledwindow;
+  GtkWidget *dialog_action_area;
+  GtkWidget *okbutton;
   gchar *mytitle=g_strdup(title);
-  gchar *mytext=g_strdup(text);
+  gchar *mytext=NULL;
+  gchar *tmp;
+
+  if (text!=NULL) mytext=g_strdup(text);
 
   textwindow=g_malloc(sizeof(text_window));
 
   textwindow->dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (textwindow->dialog), g_strconcat ("LiVES: - ",mytitle,NULL));
+  gtk_window_set_title (GTK_WINDOW (textwindow->dialog), (tmp=g_strconcat ("LiVES: - ",mytitle,NULL)));
+  g_free(tmp);
   gtk_window_set_position (GTK_WINDOW (textwindow->dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (textwindow->dialog), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (textwindow->dialog), 600, 400);
@@ -984,20 +1010,26 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     gtk_dialog_set_has_separator(GTK_DIALOG(textwindow->dialog),FALSE);
   }
 
-  dialog_vbox20 = GTK_DIALOG (textwindow->dialog)->vbox;
-  gtk_widget_show (dialog_vbox20);
+  dialog_vbox = GTK_DIALOG (textwindow->dialog)->vbox;
+  gtk_widget_show (dialog_vbox);
 
-  scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_show (scrolledwindow3);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox20), scrolledwindow3, TRUE, TRUE, 0);
+  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  gtk_widget_show (scrolledwindow);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
+  
+  if (mainw->iochan!=NULL) {
+    textwindow->textview=GTK_WIDGET(mainw->optextview);
+  }
+  else {
+    if (textbuffer!=NULL) textwindow->textview = gtk_text_view_new_with_buffer(textbuffer);
+    else textwindow->textview = gtk_text_view_new ();
+    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textwindow->textview), GTK_WRAP_WORD);
+  }
 
-  if (textbuffer!=NULL) textwindow->textview = gtk_text_view_new_with_buffer(textbuffer);
-  else textwindow->textview = gtk_text_view_new ();
   gtk_widget_show (textwindow->textview);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow3), textwindow->textview);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow), textwindow->textview);
 
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textwindow->textview), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textwindow->textview), GTK_WRAP_WORD);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textwindow->textview), FALSE);
 
   if (palette->style&STYLE_1) {
@@ -1007,25 +1039,39 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
   if (mytext!=NULL) {
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (textwindow->textview)), mytext, -1);
+  }
 
-    dialog_action_area20 = GTK_DIALOG (textwindow->dialog)->action_area;
-    gtk_widget_show (dialog_action_area20);
-    gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area20), GTK_BUTTONBOX_END);
-    
-    okbutton17 = gtk_button_new_with_mnemonic (_("_Close Window"));
-    gtk_widget_show (okbutton17);
-    gtk_widget_set_size_request (okbutton17, 586, 78);
-    gtk_container_set_border_width (GTK_CONTAINER (okbutton17), 12);
+  if (mytext!=NULL||mainw->iochan!=NULL) {
+    dialog_action_area = GTK_DIALOG (textwindow->dialog)->action_area;
+    gtk_widget_show (dialog_action_area);
+    gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
-    gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton17, GTK_RESPONSE_OK);
-    GTK_WIDGET_SET_FLAGS (okbutton17, GTK_CAN_DEFAULT);
-    gtk_widget_grab_default (okbutton17);
+    okbutton = gtk_button_new_with_mnemonic (_("_Close Window"));
+    gtk_widget_show (okbutton);
+
+    if (mainw->iochan!=NULL) {
+      GtkWidget *savebutton = gtk_button_new_with_mnemonic (_("_Save to file"));
+      gtk_widget_show (savebutton);
+      gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), savebutton, GTK_RESPONSE_YES);
     
-    g_signal_connect (GTK_OBJECT (okbutton17), "clicked",
+      g_signal_connect (GTK_OBJECT (savebutton), "clicked",
+			G_CALLBACK (on_save_textview_clicked),
+			mainw->optextview);
+    }
+    else {
+      gtk_widget_set_size_request (okbutton, 586, 78);
+      GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+      gtk_widget_grab_default (okbutton);
+      gtk_widget_grab_focus (okbutton);
+      gtk_container_set_border_width (GTK_CONTAINER (okbutton), 12);
+    }
+
+    gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
+    
+    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_cancel_button1_clicked),
 		      textwindow);
     
-    gtk_widget_grab_focus (okbutton17);
   }
 
   if (mytitle!=NULL) g_free(mytitle);
@@ -2961,6 +3007,6 @@ GtkTextView *create_output_textview(void) {
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
   g_object_ref(textview);
   gtk_widget_show(textview);
-  return (GtkTextView *)textview;
+  return GTK_TEXT_VIEW(textview);
 }
 

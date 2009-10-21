@@ -581,12 +581,17 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
   gboolean safe_symlinks=prefs->safe_symlinks;
 
-  gchar *redir=g_strdup("");
+  gchar *redir=g_strdup("1>&2 2>/dev/null");
   int new_stderr=-1;
 
   GError *gerr=NULL;
 
   gchar *new_stderr_name=NULL;
+
+  gboolean output_exists=FALSE;
+
+  struct stat filestat;
+  time_t file_mtime=0;
 
   // new handling for save selection:
   // symlink images 1 - n to the encoded frames
@@ -596,16 +601,11 @@ void save_file (gboolean existing, gchar *n_file_name) {
   if (!existing) {
     // prompt for encoder type/output format
     if (prefs->show_rdet) {
-      gboolean debug;
       gint response;
       rdet=create_render_details(1); // WARNING !! - rdet is global in events.h
       response=gtk_dialog_run(GTK_DIALOG(rdet->dialog));
-      debug=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rdet->debug_checkbutton));
       gtk_widget_hide (rdet->dialog);
       
-      if (debug!=prefs->debug_encoders) set_boolean_pref("debug_encoders",(prefs->debug_encoders=debug));
-      prefs->debug_encoders=debug;
-
       if (response==GTK_RESPONSE_CANCEL) {
 	gtk_widget_destroy (rdet->dialog);
 	g_free(rdet->encoder_name);
@@ -613,6 +613,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	rdet=NULL;
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
+	g_free(extra_params);
 	return;
       }
     }
@@ -639,7 +640,19 @@ void save_file (gboolean existing, gchar *n_file_name) {
   }
 
   if (!existing) {
-    if (!check_file(full_file_name,TRUE)) return;
+    if (!check_file(full_file_name,TRUE)) {
+      g_free(full_file_name);
+      if (rdet!=NULL) {
+	gtk_widget_destroy (rdet->dialog);
+	g_free(rdet->encoder_name);
+	g_free(rdet);
+	rdet=NULL;
+	if (resaudw!=NULL) g_free(resaudw);
+	resaudw=NULL;
+      }
+      g_free(extra_params);
+      return;
+    }
     cfile->orig_file_name=FALSE;
     if (!strlen (cfile->comment)) {
       g_snprintf (cfile->comment,251,"Created with LiVES");
@@ -654,6 +667,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	  if (resaudw!=NULL) g_free(resaudw);
 	  resaudw=NULL;
 	}
+	g_free(extra_params);
 	return;
     }
   }
@@ -670,6 +684,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	  resaudw=NULL;
 	  rdet=NULL;
 	}
+	g_free(extra_params);
 	return;
     }
     g_free(warn);
@@ -701,6 +716,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
       }
+      g_free(extra_params);
       return;
     }
 
@@ -732,6 +748,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	  if (resaudw!=NULL) g_free(resaudw);
 	  resaudw=NULL;
 	}
+	g_free(extra_params);
 	return;
       }
     }
@@ -769,6 +786,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
       }
+      g_free(extra_params);
       return;
     }
 
@@ -801,6 +819,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       if (resaudw!=NULL) g_free(resaudw);
       resaudw=NULL;
     }
+    g_free(extra_params);
     return;
   }
 
@@ -835,6 +854,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	  if (resaudw!=NULL) g_free(resaudw);
 	  resaudw=NULL;
 	}
+	g_free(extra_params);
 	return;
       }
     }
@@ -859,6 +879,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
       }
+      g_free(extra_params);
       return;
     }
 
@@ -876,6 +897,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       
       if (mainw->cancelled!=CANCEL_NONE) {
 	mainw->cancelled=CANCEL_USER;
+	g_free(extra_params);
 	return;
       }
     }
@@ -910,13 +932,14 @@ void save_file (gboolean existing, gchar *n_file_name) {
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end);
       g_free(tmp);
     }
     else {
-      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params);
+      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end);
       g_free(tmp);
     }
+    g_free(extra_params);
     extra_params=plugin_run_param_window(com,NULL,NULL);
     g_free(com);
 
@@ -940,17 +963,14 @@ void save_file (gboolean existing, gchar *n_file_name) {
   g_free (mesg);
 
 
-  if (prefs->debug_encoders) {
-
-    // debug mode
-
+  if (prefs->show_gui) {
     // open a file for stderr
 
     new_stderr_name=g_strdup_printf("%s%s/.debug_out",prefs->tmpdir,cfile->handle);
 
     new_stderr=open(new_stderr_name,O_CREAT|O_RDWR|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
-
-    redir=g_strdup_printf(" 2>%s",new_stderr_name);
+    g_free(redir);
+    redir=g_strdup_printf("1>&2 2>%s",new_stderr_name);
 
     mainw->iochan=g_io_channel_unix_new(new_stderr);
     g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
@@ -962,6 +982,16 @@ void save_file (gboolean existing, gchar *n_file_name) {
     mainw->optextview=create_output_textview();
 
   }
+  else {
+    g_free(redir);
+    redir=g_strdup("1>&2");
+  }
+
+  if (g_file_test ((tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), G_FILE_TEST_EXISTS)) {
+    stat(tmp,&filestat);
+    file_mtime=filestat.st_mtime;
+  }
+  g_free(tmp);
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
     com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s%s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
@@ -990,10 +1020,10 @@ void save_file (gboolean existing, gchar *n_file_name) {
     pump_io_chan(mainw->iochan);
 
     g_io_channel_shutdown(mainw->iochan,FALSE,&gerr);
+    g_io_channel_unref(mainw->iochan);
+
     if (gerr!=NULL) g_error_free(gerr);
-    mainw->iochan=NULL;
     close(new_stderr);
-    g_object_unref(mainw->optextview);
     unlink(new_stderr_name);
     g_free(new_stderr_name);
     g_free(redir);
@@ -1011,8 +1041,6 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
   if (not_cancelled) {
     if (mainw->error) {
-      do_error_dialog(mesg);
-      g_free (mesg);
       mainw->no_switch_dprint=TRUE;
       d_print(_ ("error.\n"));
       mainw->no_switch_dprint=FALSE;
@@ -1030,14 +1058,27 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	dummyvar=system (com);
 	g_free (com);
       }
+
+      do_blocking_error_dialog(mesg);
+      g_free (mesg);
+
+      if (mainw->iochan!=NULL) {
+	mainw->iochan=NULL;
+	g_object_unref(mainw->optextview);
+      }
+
       return;
     }
     g_free (mesg);
-    
-    if (!g_file_test ((tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), G_FILE_TEST_EXISTS)) {
+
+
+    if (g_file_test ((tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), G_FILE_TEST_EXISTS)) {
+      stat((tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),&filestat);
+      if (filestat.st_size>0) output_exists=TRUE;
+    }
+    if (!output_exists||file_mtime==filestat.st_mtime) {
       g_free(tmp);
 
-      do_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
       mainw->no_switch_dprint=TRUE;
       d_print_failed();
       mainw->no_switch_dprint=FALSE;
@@ -1055,6 +1096,14 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	dummyvar=system (com);
 	g_free (com);
       }
+
+      do_blocking_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
+
+      if (mainw->iochan!=NULL) {
+	mainw->iochan=NULL;
+	g_object_unref(mainw->optextview);
+      }
+
       return;
     }
     g_free(tmp);
@@ -1092,6 +1141,22 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	g_free (com);
       }
     }
+  }
+
+  if (mainw->iochan!=NULL) {
+    gchar *logfile=g_strdup_printf("%sencoder_log_%d_%d.txt",prefs->tmpdir,getuid(),getgid());
+    int logfd;
+
+    // save the logfile in tempdir
+    if ((logfd=creat(logfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))!=-1) {
+      gchar *btext=text_view_get_text(mainw->optextview);
+      dummyvar=write(logfd,btext,strlen(btext));
+      g_free(btext);
+      close (logfd);
+    }
+    g_free(logfile);
+    g_object_unref(mainw->optextview);
+    mainw->iochan=NULL;
   }
 
   if (not_cancelled) {
@@ -2435,7 +2500,8 @@ save_frame(gint frame, const gchar *file_name) {
   g_free(tmp);
 
   if (result==256) {
-    d_print(_ ("failed (permission denied)\n"));
+    d_print_file_error_failed();
+    do_file_perm_error(full_file_name);
     return FALSE;
   }
   if (result==0) {

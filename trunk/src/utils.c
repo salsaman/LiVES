@@ -1806,8 +1806,7 @@ check_file(const gchar *file_name, gboolean check_existing) {
 
   if (check<0) {
     if (errno==EACCES&&mainw!=NULL&&mainw->is_ready) {
-      g_snprintf(mainw->msg,512,_ ("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
-      do_error_dialog(mainw->msg);
+      do_file_perm_error(lfile_name);
     }
     g_free(lfile_name);
     return FALSE;
@@ -2951,3 +2950,19 @@ void gtk_tooltips_copy(GtkWidget *dest, GtkWidget *source) {
   gtk_tooltips_set_tip (td->tooltips, dest, td->tip_text, td->tip_private);
 }
 
+
+
+gchar *text_view_get_text(GtkTextView *textview) {
+  GtkTextIter siter,eiter;
+  GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
+  gtk_text_buffer_get_start_iter(textbuf,&siter);
+  gtk_text_buffer_get_end_iter(textbuf,&eiter);
+
+  return gtk_text_buffer_get_text(textbuf,&siter,&eiter,TRUE);
+}
+
+
+void text_view_set_text(GtkTextView *textview, const gchar *text) {
+  GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
+  gtk_text_buffer_set_text(textbuf,text,-1);
+}

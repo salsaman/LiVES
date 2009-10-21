@@ -250,7 +250,7 @@ do_memory_error_dialog (void) {
 
 void pump_io_chan(GIOChannel *iochan) {
   // pump data from stdout to textbuffer
-  gchar *str_return;
+  gchar *str_return=NULL;
   gsize retlen;
   GError *gerr=NULL;
 
@@ -269,6 +269,7 @@ void pump_io_chan(GIOChannel *iochan) {
     gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW (mainw->optextview),mark);
     gtk_text_buffer_delete_mark (optextbuf,mark);
   }
+  if (str_return!=NULL) g_free(str_return);
 
 }
 
@@ -796,9 +797,15 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       accelerators_swapped=FALSE;
     }
     if (cfile->proc_ptr!=NULL) {
+      const gchar *btext=NULL;
+      if (mainw->iochan!=NULL) btext=text_view_get_text(mainw->optextview); 
       gtk_widget_destroy(cfile->proc_ptr->processing);
       g_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
+      if (btext!=NULL) {
+	text_view_set_text(mainw->optextview,btext);
+	g_free((gchar *)btext);
+      }
     }
     mainw->is_processing=FALSE;
     if (!(cfile->menuentry==NULL)) {
@@ -1642,4 +1649,10 @@ inline void d_print_done(void) {
 
 inline void d_print_file_error_failed(void) {
   d_print(_("error in file. Failed.\n"));
+}
+
+
+void do_file_perm_error(gchar *file_name) {
+  gchar *msg=g_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
+  do_error_dialog(msg);
 }

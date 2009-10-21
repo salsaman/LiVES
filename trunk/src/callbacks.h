@@ -230,6 +230,9 @@ void
 on_open_sel_ok_button_clicked                  (GtkButton       *button,
                                         gpointer         user_data);
 
+
+void on_save_textview_clicked (GtkButton *button, gpointer user_data);
+
 void
 on_cancel_button1_clicked              (GtkButton       *button,
                                         gpointer         user_data);
@@ -302,6 +305,10 @@ on_info_ok_button_clicked            (GtkButton       *button,
 
 void
 on_info_ok_button_clicked2            (GtkButton       *button,
+				      gpointer         user_data);
+
+void
+on_details_button_clicked            (GtkButton       *button,
 				      gpointer         user_data);
 
 

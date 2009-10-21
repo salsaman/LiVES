@@ -898,8 +898,6 @@ static void lives_init(_ign_opts *ign_opts) {
       }
       else get_pref("encoder",prefs->encoder.name,51);
 
-      prefs->debug_encoders=get_boolean_pref("debug_encoders");
-      
       get_pref("output_type",prefs->encoder.of_name,51);
       
       future_prefs->encoder.audio_codec=prefs->encoder.audio_codec=get_int_pref("encoder_acodec");

@@ -88,7 +88,6 @@ typedef struct {
   GtkWidget *spinbutton_width;
   GtkWidget *spinbutton_height;
   GtkWidget *spinbutton_fps;
-  GtkWidget *debug_checkbutton;
   GtkWidget *pertrack_checkbutton;
   GtkWidget *backaudio_checkbutton;
   gulong encoder_name_fn;

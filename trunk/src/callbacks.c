@@ -4583,6 +4583,46 @@ end_fs_preview(void) {
 }
 
 
+void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
+  GtkTextView *textview=(GtkTextView *)user_data;
+  gchar *filt[]={"*.txt",NULL};
+  int fd;
+  gchar *btext;
+  gchar *save_file;
+
+  gtk_widget_hide(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  while (g_main_context_iteration (NULL,FALSE));
+
+  save_file=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL);
+
+  if (save_file==NULL) {
+    gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+    return;
+  }
+
+  if ((fd=creat(save_file,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))==-1) {
+    gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+    do_file_perm_error(save_file);
+    g_free(save_file);
+    return;
+  }
+
+  g_free(save_file);
+
+  btext=text_view_get_text(textview);
+  
+  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  while (g_main_context_iteration (NULL,FALSE));
+
+  dummyvar=write(fd,btext,strlen(btext));
+  g_free(btext);
+  
+  close (fd);
+}
+
+
+
+
 void on_cancel_button1_clicked (GtkButton *button, gpointer user_data) {
   // generic cancel callback
   end_fs_preview();
@@ -4753,9 +4793,23 @@ on_ok_button3_clicked                  (GtkButton       *button,
 
 void
 on_info_ok_button_clicked2            (GtkButton       *button,
-				      gpointer         user_data)
+				       gpointer         user_data)
 {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+}
+
+
+void
+on_details_button_clicked            (GtkButton       *button,
+				      gpointer         user_data)
+{
+  text_window *textwindow;
+
+  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+
+  g_object_ref(mainw->optextview);
+  textwindow=create_text_window(_("LiVES: - Encoder debug output"),NULL,NULL);
+  gtk_widget_show_all(textwindow->dialog);
 }
 
 

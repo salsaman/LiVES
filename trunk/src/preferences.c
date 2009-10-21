@@ -323,7 +323,6 @@ apply_prefs(gboolean skip_warn) {
   gboolean concat_images=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_concat_images));
   gboolean ins_speed=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->ins_speed));
   gboolean show_player_stats=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_show_stats));
-  gboolean debug_encoders=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->debug_encoders));
   gboolean ext_jpeg=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->jpeg));
   gboolean show_tool=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->show_tool));
   gboolean mouse_scroll=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mouse_scroll));
@@ -633,11 +632,6 @@ apply_prefs(gboolean skip_warn) {
     set_pref("encoder",prefs->encoder.name);
     g_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
     prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;
-  }
-
-  // debug encoder
-  if (prefs->debug_encoders!=debug_encoders) {
-    set_boolean_pref("debug_encoders",(prefs->debug_encoders=debug_encoders));
   }
 
   // output format
@@ -1252,7 +1246,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *hbox101;
   GtkWidget *label37;
   GtkWidget *hseparator8;
-  GtkWidget *hbox15;
   GtkWidget *hbox115;
   GtkWidget *label56;
   GtkWidget *label94;
@@ -2262,16 +2255,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->encoder_combo = gtk_combo_new ();
   gtk_box_pack_start (GTK_BOX (hbox11), prefsw->encoder_combo, FALSE, FALSE, 0);
 
-  prefsw->debug_encoders = gtk_check_button_new_with_mnemonic (_("_Debug Mode"));
-  gtk_widget_show (prefsw->debug_encoders);
-
-  hbox15 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox15);
-
-  gtk_box_pack_start (GTK_BOX (vbox12), hbox15, TRUE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox15), prefsw->debug_encoders, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->debug_encoders),prefs->debug_encoders);
-
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
     if ((encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL))==NULL) {
@@ -2283,9 +2266,6 @@ _prefsw *create_prefs_dialog (void) {
       g_list_free_strings (encoders);
       g_list_free (encoders);
     }
-  }
-  else {
-    gtk_widget_set_sensitive (prefsw->debug_encoders,FALSE);
   }
 
   gtk_widget_show(prefsw->encoder_combo);

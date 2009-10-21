@@ -4961,7 +4961,7 @@ sub version_check_and_upgrade {
 	if ($version_hash<9006) {
 	    &rc_delete("osc_opts");
 	}
-	if ($version_hash<1001005) {
+	if ($version_hash<10001005) {
 	    &rc_delete("debug_encoders");
 	}
 	unless ($old_version eq $version) {

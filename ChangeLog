@@ -5,7 +5,7 @@ Show encoder debugging info within the application.
 Add multi core support for mjpegtools_encoder.
 Fix libvisual startup crash (regression) *
 Plug some minor memory leaks. *
-
+Fixes for Darwin compilation. *
 
 	
 

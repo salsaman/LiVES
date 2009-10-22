@@ -99,6 +99,14 @@ POSSIBILITY OF SUCH DAMAGES.
 #define LIVES_FEATURE_URL "http://sourceforge.net/tracker/?group_id=64341&atid=507142"
 #define LIVES_TRANSLATE_URL "https://translations.launchpad.net/lives/trunk"
 
+#ifdef IS_DARWIN
+#ifndef off64_t
+#define off64_t off_t
+#endif
+#ifndef lseek64
+#define lseek64 lseek
+#endif
+#endif
 
 // insert methods
 #define AFTER_END 1

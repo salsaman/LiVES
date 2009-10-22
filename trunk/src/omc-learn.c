@@ -20,10 +20,6 @@
 #include <linux/joystick.h>
 #endif
 
-#ifdef OMC_MIDI_IMPL
-#include <sys/soundcard.h>
-#endif
-
 #include <errno.h>
 
 // learn and match with an external control

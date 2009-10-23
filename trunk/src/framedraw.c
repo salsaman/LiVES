@@ -422,7 +422,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   int max_frame=0,tot_frames=0;
   gint current_file=mainw->current_file;
   weed_timecode_t tc;
-  gchar *img_ext;
+  const gchar *img_ext;
 
   if (mainw->framedraw_frame==0) mainw->framedraw_frame=1;
 
@@ -474,10 +474,10 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   }
 
   if (rfx->num_in_channels>0) {
-    img_ext=g_strdup("pre");
+    img_ext="pre";
   }
   else {
-    img_ext=g_strdup(prefs->image_ext);
+    img_ext=prefs->image_ext;
   }
 
   tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;

@@ -413,7 +413,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     pavol=pa_sw_volume_from_linear(mainw->volume);
     pa_cvolume_set(&out_vol,pulsed->out_achans,pavol);
     pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&out_vol,NULL,NULL);
-    old_volume=pavol;
+    old_volume=mainw->volume;
   }
 
   while (nbytes>0) {
@@ -427,7 +427,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	offs+=xbytes;
 	needs_free=TRUE;
       }
-      pa_stream_write(pulsed->pstream,buffer,xbytes,needs_free?pulse_buff_free:NULL,0,PA_SEEK_RELATIVE);
+      pa_stream_write(pulsed->pstream,buffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
     }
     else {
       if (pulsed->read_abuf>-1&&!pulsed->mute) {

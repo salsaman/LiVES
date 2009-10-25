@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-25 01:45-0300\n"
+"POT-Creation-Date: 2009-10-25 13:29-0300\n"
 "PO-Revision-Date: 2009-09-18 09:37+0000\n"
 "Last-Translator: lielf <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -525,37 +525,37 @@ msgstr ""
 msgid "Autoloading set %s..."
 msgstr "מתבצעת טעינה אוטומטית של האוסף %s..."
 
-#: src/main.c:1825
+#: src/main.c:1834
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "נגן שמע בלתי תקין %s\n"
 
-#: src/main.c:1897
+#: src/main.c:1906
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s <ללא שם%d> %dx%d : %d שקופיות %d bpp %.3f שקופיות לשנייה"
 
-#: src/main.c:1901
+#: src/main.c:1910
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s <%s> %dx%d : ??? שקופיות ??? bpp %.3f שקופיות לשנייה"
 
-#: src/main.c:1904
+#: src/main.c:1913
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s <%s> %dx%d : %d שקופיות %d bpp %.3f שקופיות לשנייה"
 
-#: src/main.c:1910
+#: src/main.c:1919
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s <ללא קובץ>"
 
-#: src/main.c:3027 src/main.c:3028 src/gui.c:1859 src/gui.c:2823
+#: src/main.c:3036 src/main.c:3037 src/gui.c:1859 src/gui.c:2823
 #: src/saveplay.c:1315
 msgid "Play"
 msgstr "נגן"
 
-#: src/main.c:3380
+#: src/main.c:3389
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -563,35 +563,35 @@ msgstr ""
 "ל־LiVES לא הית אפשרות ללכוד תמונה זו\n"
 "\n"
 
-#: src/main.c:3457
+#: src/main.c:3466
 #, c-format
 msgid "Closed file %s\n"
 msgstr "הקובץ %s נסגר\n"
 
-#: src/main.c:3573 src/gui.c:502 src/utils.c:2155 src/utils.c:2181
+#: src/main.c:3582 src/gui.c:502 src/utils.c:2155 src/utils.c:2181
 #: src/saveplay.c:2238 src/multitrack.c:2887 src/multitrack.c:3680
 msgid "_Undo"
 msgstr "_ביטול"
 
-#: src/main.c:3574 src/gui.c:515 src/utils.c:2156 src/utils.c:2182
+#: src/main.c:3583 src/gui.c:515 src/utils.c:2156 src/utils.c:2182
 #: src/saveplay.c:2239 src/multitrack.c:2908 src/multitrack.c:3699
 msgid "_Redo"
 msgstr "ב_צע שוב"
 
-#: src/main.c:3598 src/interface.c:624 src/gui.c:2015 src/preferences.c:1423
+#: src/main.c:3607 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
 #: src/resample.c:1699
 msgid "Video"
 msgstr "וידאו"
 
-#: src/main.c:3599 src/interface.c:643 src/gui.c:2034
+#: src/main.c:3608 src/interface.c:647 src/gui.c:2034
 msgid "Left Audio"
 msgstr "ערוץ שמע שמאלי"
 
-#: src/main.c:3600 src/gui.c:2052
+#: src/main.c:3609 src/gui.c:2052
 msgid "Right Audio"
 msgstr "ערוץ שמע ימני"
 
-#: src/main.c:3640
+#: src/main.c:3649
 msgid ""
 "\n"
 "\n"
@@ -634,11 +634,11 @@ msgstr "יש ללחוץ כאן כדי _להציג כל קטע שמע שנבחר"
 msgid "Click here to _Preview the video"
 msgstr "יש ללחוץ כאן כדי _להציג את הוידאו"
 
-#: src/interface.c:288 src/dialogs.c:1420
+#: src/interface.c:289 src/dialogs.c:1420
 msgid "LiVES: - Processing..."
 msgstr "LiVES: - בתהליכי עיבוד..."
 
-#: src/interface.c:324
+#: src/interface.c:325
 msgid ""
 "\n"
 "\n"
@@ -652,7 +652,7 @@ msgstr ""
 "\n"
 "נא לזכור לכבות את האפקטים (Ctrl-0) לאחר מכן !"
 
-#: src/interface.c:327 src/callbacks.c:6695 src/dialogs.c:1450
+#: src/interface.c:328 src/callbacks.c:6695 src/dialogs.c:1450
 msgid ""
 "\n"
 "Please Wait"
@@ -660,92 +660,92 @@ msgstr ""
 "\n"
 "נא להמתין"
 
-#: src/interface.c:369
+#: src/interface.c:372
 #, fuzzy
-msgid "Show _details"
+msgid "Show details"
 msgstr "הצגת _הודעות"
 
-#: src/interface.c:391
+#: src/interface.c:395
 msgid "_Enough"
 msgstr "_מספיק"
 
-#: src/interface.c:392 src/framedraw.c:249
+#: src/interface.c:396 src/framedraw.c:249
 msgid "_Preview"
 msgstr "_תצוגה מקדימה"
 
-#: src/interface.c:393
+#: src/interface.c:397
 msgid "Pau_se"
 msgstr "השהי_ה"
 
-#: src/interface.c:420
+#: src/interface.c:424
 msgid "_Cancel"
 msgstr "_ביטול"
 
-#: src/interface.c:568
+#: src/interface.c:572
 msgid "Format"
 msgstr "מבנה"
 
-#: src/interface.c:577
+#: src/interface.c:581
 msgid "Frame size"
 msgstr "גודל השקופית"
 
-#: src/interface.c:586
+#: src/interface.c:590
 msgid "File size"
 msgstr "גודל הקובץ"
 
-#: src/interface.c:587
+#: src/interface.c:591
 msgid "Byte size"
 msgstr "גודל הבית"
 
-#: src/interface.c:596 src/interface.c:669 src/interface.c:719
+#: src/interface.c:600 src/interface.c:673 src/interface.c:723
 msgid "Total time"
 msgstr "זמן כולל"
 
-#: src/interface.c:605
+#: src/interface.c:609
 msgid "FPS"
 msgstr "שקופיות לשנייה"
 
-#: src/interface.c:614
+#: src/interface.c:618
 msgid "Frames"
 msgstr "שקופיות"
 
-#: src/interface.c:615
+#: src/interface.c:619
 msgid "Events"
 msgstr "אירועים"
 
-#: src/interface.c:646 src/resample.c:1655
+#: src/interface.c:650 src/resample.c:1655
 msgid "Audio"
 msgstr "שמע"
 
-#: src/interface.c:687 src/interface.c:737
+#: src/interface.c:691 src/interface.c:741
 msgid "Rate/size"
 msgstr "קצב/גודל"
 
-#: src/interface.c:746
+#: src/interface.c:750
 msgid "Right audio"
 msgstr "ערוץ שמע ימני"
 
-#: src/interface.c:804
+#: src/interface.c:808
 msgid "LiVES: - Encoding options"
 msgstr "LiVES : - אפשרויות קידוד"
 
-#: src/interface.c:828
+#: src/interface.c:832
 msgid "<------------- (Check the box to resize as suggested)"
 msgstr "-------------> (יש לבדוק את התיבה לשינוי גודל כמוצע)"
 
-#: src/interface.c:829
+#: src/interface.c:833
 msgid "<------------- (Check the box to use the size recommendation)"
 msgstr "-------------> (יש לבדוק את התיבה לשימוש בגודל המומלץ)"
 
-#: src/interface.c:860
+#: src/interface.c:864
 msgid "Keep _my settings"
 msgstr "ש_מירת ההגדרות האישיות"
 
-#: src/interface.c:861
+#: src/interface.c:865
 msgid "Use _recommended settings"
 msgstr "שימוש בהגדרות מ_ומלצות"
 
-#: src/interface.c:931 src/interface.c:2726 src/dialogs.c:106
+#: src/interface.c:935 src/interface.c:2730 src/dialogs.c:106
 msgid ""
 "Do _not show this warning any more\n"
 "(can be turned back on from Preferences/Warnings)"
@@ -753,72 +753,72 @@ msgstr ""
 "אין להציג אזהרה זאת עוד\n"
 "(ניתן להפעיל שוב תחת העדפות/אזהרות)"
 
-#: src/interface.c:958
+#: src/interface.c:962
 #, fuzzy
 msgid "Show _Details"
 msgstr "הצגת _הודעות"
 
-#: src/interface.c:1049
+#: src/interface.c:1053
 msgid "_Close Window"
 msgstr "_סגירת החלון"
 
-#: src/interface.c:1053
+#: src/interface.c:1057
 msgid "_Save to file"
 msgstr ""
 
-#: src/interface.c:1168
+#: src/interface.c:1172
 msgid "LiVES: - Insert"
 msgstr "LiVES: - הוספה"
 
-#: src/interface.c:1187
+#: src/interface.c:1191
 msgid "_Number of times to insert"
 msgstr "_מספר הפעמים להוספה"
 
-#: src/interface.c:1208
+#: src/interface.c:1212
 msgid "_Insert to fit audio"
 msgstr "הוס_פה להתאמת הצליל"
 
-#: src/interface.c:1252
+#: src/interface.c:1256
 msgid "Insert _before selection"
 msgstr "הוספה _לפני הבחירה"
 
-#: src/interface.c:1257
+#: src/interface.c:1261
 msgid "Insert clipboard before selected frames"
 msgstr "הוספת תוכן לוח הגזירים לפני השקופיות הנבחרות"
 
-#: src/interface.c:1289
+#: src/interface.c:1293
 msgid "Insert _after selection"
 msgstr "הוספה ל_אחר הבחירה"
 
-#: src/interface.c:1294
+#: src/interface.c:1298
 msgid "Insert clipboard after selected frames"
 msgstr "הוספת תוכן לוח הגזירים לאחר השקופיות הנבחרות"
 
-#: src/interface.c:1325
+#: src/interface.c:1329
 msgid "Insert _with sound"
 msgstr "הוספה עם _צליל"
 
-#: src/interface.c:1359
+#: src/interface.c:1363
 msgid "Insert with_out sound"
 msgstr "הוספה ל_לא צליל"
 
-#: src/interface.c:1462
+#: src/interface.c:1466
 msgid "LiVES: - Open Selection"
 msgstr "LiVES: - פתיחת הבחירה"
 
-#: src/interface.c:1486
+#: src/interface.c:1490
 msgid "    Selection start time (sec)"
 msgstr "    זמן התחלת הקטע הנבחר (שניות)"
 
-#: src/interface.c:1496
+#: src/interface.c:1500
 msgid "    Number of frames to open"
 msgstr "    מספר שקופיות לפתיחה"
 
-#: src/interface.c:1591
+#: src/interface.c:1595
 msgid "LiVES: - Open Location"
 msgstr "LiVES: - פתיחת מיקום"
 
-#: src/interface.c:1596
+#: src/interface.c:1600
 msgid ""
 "\n"
 "\n"
@@ -833,19 +833,19 @@ msgstr ""
 "בנוסף, יש לוודא כי רוחב הפס העצמי הוגדר תחת העדפות|מדיה זורמת\n"
 "\n"
 
-#: src/interface.c:1608
+#: src/interface.c:1612
 msgid "URL : "
 msgstr "כתובת אינטרנט : "
 
-#: src/interface.c:1624
+#: src/interface.c:1628
 msgid "Do not send bandwidth information"
 msgstr "אין לשלוח מידע אודות רוחב הפס"
 
-#: src/interface.c:1625
+#: src/interface.c:1629
 msgid "Try this setting if you are having problems getting a stream"
 msgstr "ניתן לנסות הגדרה זו אם צצות בעיות בקבלת תזרים מדיה."
 
-#: src/interface.c:1725
+#: src/interface.c:1729
 msgid ""
 "You need to enter a name for the current clip set.\n"
 "This will allow you reload the layout with the same clips later.\n"
@@ -857,7 +857,7 @@ msgstr ""
 "יש להזין את השם המבוקש עבור האוסף.\n"
 "ב־LiVES תופיע תזכורת לשמירת אוסף הקטעים עם כל נסיון ליציאה.\n"
 
-#: src/interface.c:1735
+#: src/interface.c:1739
 msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
@@ -865,148 +865,148 @@ msgstr ""
 "על מנת לייצא מיזם זה, יש להזין שם עבור אוסף קטעים זה.\n"
 "השם ישמש כמו כן כשם המיזם.\n"
 
-#: src/interface.c:1749
+#: src/interface.c:1753
 msgid "LiVES: - Rename Clip"
 msgstr "LiVES: -שינוי שם של קטע"
 
-#: src/interface.c:1752
+#: src/interface.c:1756
 msgid "LiVES: - Enter Set Name"
 msgstr "LiVES: - הזנת שם לאוסף"
 
-#: src/interface.c:1756
+#: src/interface.c:1760
 msgid "New name "
 msgstr "שם חדש "
 
-#: src/interface.c:1759
+#: src/interface.c:1763
 msgid "Set name "
 msgstr "שם האוסף "
 
-#: src/interface.c:1875
+#: src/interface.c:1879
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- טעינת רצועה מהתקליטור"
 
-#: src/interface.c:1878
+#: src/interface.c:1882
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LiVES:- בחירת פרק/קטע מ־DVD"
 
-#: src/interface.c:1881
+#: src/interface.c:1885
 msgid "LiVES:- Select VCD Title"
 msgstr "LiVES:- בחירת קטע מ־VCD"
 
-#: src/interface.c:1884
+#: src/interface.c:1888
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- שינוי מספר הרצועות הגלויות המירבי"
 
-#: src/interface.c:1912
+#: src/interface.c:1916
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "רצועה לטעינה (מ־%s)"
 
-#: src/interface.c:1915
+#: src/interface.c:1919
 msgid "DVD Title"
 msgstr "כותרת ה־DVD"
 
-#: src/interface.c:1918
+#: src/interface.c:1922
 msgid "VCD Title"
 msgstr "כותרת ה־VCD"
 
-#: src/interface.c:1921
+#: src/interface.c:1925
 msgid "Maximum number of tracks to display"
 msgstr "מספר מירבי של רצועות לתצוגה"
 
-#: src/interface.c:1953
+#: src/interface.c:1957
 msgid "Chapter  "
 msgstr "פרק  "
 
-#: src/interface.c:1973
+#: src/interface.c:1977
 msgid "Audio ID  "
 msgstr "מזהה השמע  "
 
-#: src/interface.c:2075
+#: src/interface.c:2079
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- החלת אפקט עמעום פנימה על שמע"
 
-#: src/interface.c:2078
+#: src/interface.c:2082
 msgid "LiVES:- Fade Audio Out"
 msgstr "החלת אפקט עמעום עד להשתקה על שמע"
 
-#: src/interface.c:2101
+#: src/interface.c:2105
 msgid "Fade in over  "
 msgstr "החל אפקט עמעום פנימה מעבר  "
 
-#: src/interface.c:2102
+#: src/interface.c:2106
 msgid "first"
 msgstr "ראשון"
 
-#: src/interface.c:2105
+#: src/interface.c:2109
 msgid "Fade out over  "
 msgstr "החל אפקט עמעום עד להשתקה מעבר  "
 
-#: src/interface.c:2106
+#: src/interface.c:2110
 msgid "last"
 msgstr "אחרון"
 
-#: src/interface.c:2143
+#: src/interface.c:2147
 msgid "seconds."
 msgstr "שניות."
 
-#: src/interface.c:2168
+#: src/interface.c:2172
 msgid "selection."
 msgstr "בחירה."
 
-#: src/interface.c:2234
+#: src/interface.c:2238
 msgid "LiVES: - Play Random Music"
 msgstr "LiVES: - נגינת מוזיקה אקראית"
 
-#: src/interface.c:2259
+#: src/interface.c:2263
 msgid "Number of Tracks Requested:    "
 msgstr "מספר הרצועות המבוקש:    "
 
-#: src/interface.c:2282
+#: src/interface.c:2286
 msgid "Directory:"
 msgstr "תיקייה:"
 
-#: src/interface.c:2308
+#: src/interface.c:2312
 msgid "Include subdirectories"
 msgstr "הכללת תת־תיקיות"
 
-#: src/interface.c:2336
+#: src/interface.c:2340
 msgid "Minimum File Size (MB)         "
 msgstr "גודל הקובץ המזערי (מ\"ב)         "
 
-#: src/interface.c:2356
+#: src/interface.c:2360
 msgid "Maximum File Size (MB)        "
 msgstr "גודל הקובץ המירבי (מ\"ב)        "
 
-#: src/interface.c:2414
+#: src/interface.c:2418
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - הערות קובץ (רשות)"
 
-#: src/interface.c:2432
+#: src/interface.c:2436
 msgid "Title/Name : "
 msgstr "כותרת/שם : "
 
-#: src/interface.c:2443
+#: src/interface.c:2447
 msgid "Author/Artist : "
 msgstr "יוצר/אמן : "
 
-#: src/interface.c:2454
+#: src/interface.c:2458
 msgid "Comments : "
 msgstr "הערות : "
 
-#: src/interface.c:2528
+#: src/interface.c:2532
 msgid "LiVES: choose a directory"
 msgstr "LiVES: בחירת תיקייה"
 
-#: src/interface.c:2531
+#: src/interface.c:2535
 msgid "LiVES: choose a file"
 msgstr "LiVES: בחירת קובץ"
 
-#: src/interface.c:2626
+#: src/interface.c:2630
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES: - ביטול/התעלמות/שמירה"
 
-#: src/interface.c:2643
+#: src/interface.c:2647
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1016,7 +1016,7 @@ msgstr ""
 "הפריסה הנוכחית לא נשמרה.\n"
 "איזו פעולה יש לבצע?\n"
 
-#: src/interface.c:2646
+#: src/interface.c:2650
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1026,7 +1026,7 @@ msgstr ""
 "הפריסה הנוכחית שונתה מאז שנשמרה לאחרונה.\n"
 "איזו פעולה יש לבצע?\n"
 
-#: src/interface.c:2650
+#: src/interface.c:2654
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1036,7 +1036,7 @@ msgstr ""
 "ניתן לשמור את אוסף הקטעים הנוכחי.\n"
 "איזו פעולה יש לבצע?\n"
 
-#: src/interface.c:2651
+#: src/interface.c:2655
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1044,7 +1044,7 @@ msgstr ""
 "אוסף הקטעים הנוכחי לא נשמר.\n"
 "איזו פעולה יש לבצע ?\n"
 
-#: src/interface.c:2654
+#: src/interface.c:2658
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1052,82 +1052,82 @@ msgstr ""
 "הפריסה הנוכחית לא נשמרה.\n"
 "איזור פעולה יש לבצע ?\n"
 
-#: src/interface.c:2673
+#: src/interface.c:2677
 msgid "Clip set _name"
 msgstr "_שם אוסף הקטעים"
 
-#: src/interface.c:2687
+#: src/interface.c:2691
 msgid "_Auto reload next time"
 msgstr "_טעינה אוטומטית בפעם הבאה"
 
-#: src/interface.c:2768 src/interface.c:2779
+#: src/interface.c:2772 src/interface.c:2783
 msgid "_Wipe layout"
 msgstr "_מחיקת פריסה"
 
-#: src/interface.c:2769
+#: src/interface.c:2773
 msgid "_Ignore changes"
 msgstr "ה_תעלמות מהשינויים"
 
-#: src/interface.c:2770
+#: src/interface.c:2774
 msgid "_Delete clip set"
 msgstr "_מחיקת אוסף הקטעים"
 
-#: src/interface.c:2771
+#: src/interface.c:2775
 msgid "_Delete layout"
 msgstr "_מחיקת פריסה"
 
-#: src/interface.c:2777
+#: src/interface.c:2781
 msgid "_Save layout"
 msgstr "שמירת _פריסה"
 
-#: src/interface.c:2778
+#: src/interface.c:2782
 msgid "_Save clip set"
 msgstr "שמירת אוסף ה_קטעים"
 
-#: src/interface.c:2803
+#: src/interface.c:2807
 msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2807
+#: src/interface.c:2811
 msgid ""
 "Before starting LiVES, you need to choose an audio player.\n"
 "\n"
 "PULSE AUDIO is recommended for most users"
 msgstr ""
 
-#: src/interface.c:2810
+#: src/interface.c:2814
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2813
+#: src/interface.c:2817
 msgid ""
 ", but you do not have pulse audio installed on your system.\n"
 " You are advised to install pulse audio first before running LiVES.\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2818
+#: src/interface.c:2822
 msgid "JACK audio is recommended for pro users"
 msgstr ""
 
-#: src/interface.c:2821
+#: src/interface.c:2825
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2824
+#: src/interface.c:2828
 msgid ""
 ", but you do not have jackd installed. You may wish to install jackd first "
 "before running LiVES.\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2827
+#: src/interface.c:2831
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
 "If LiVES will not start with jack, you can restart and try with another "
@@ -1135,55 +1135,55 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/interface.c:2831
+#: src/interface.c:2835
 msgid "SOX may be used if neither of the preceding players work, "
 msgstr ""
 
-#: src/interface.c:2834
+#: src/interface.c:2838
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2837
+#: src/interface.c:2841
 msgid ""
 "but you do not have sox installed.\n"
 "You are advised to install it before running LiVES.\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2841
+#: src/interface.c:2845
 msgid ""
 "The MPLAYER audio player is only recommended for testing purposes.\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2859
+#: src/interface.c:2863
 msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: - בחירת נגן שמע"
 
-#: src/interface.c:2872
+#: src/interface.c:2876
 msgid "Use _pulse audio player"
 msgstr ""
 
-#: src/interface.c:2881
+#: src/interface.c:2885
 msgid "Use _jack audio player"
 msgstr "שימוש בנגן השמע _jack"
 
-#: src/interface.c:2889
+#: src/interface.c:2893
 msgid "Use _sox audio player"
 msgstr ""
 
-#: src/interface.c:2897
+#: src/interface.c:2901
 msgid "Use _mplayer audio player"
 msgstr ""
 
-#: src/interface.c:2960
+#: src/interface.c:2964
 #, fuzzy
 msgid "LiVES: recover layout ?"
 msgstr "LiVES: בחירת קובץ"
 
-#: src/interface.c:2972
+#: src/interface.c:2976
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"

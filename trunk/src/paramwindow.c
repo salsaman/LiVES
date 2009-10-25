@@ -2528,7 +2528,6 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
       break;
 
     case LIVES_PARAM_STRING_LIST:
-      // escape strings
       new_return=g_strdup_printf ("%s %d",old_return,get_int_param(rfx->params[i].value));
       g_free (old_return);
       old_return=new_return;

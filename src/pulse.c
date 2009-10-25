@@ -410,9 +410,11 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
   // playback from memory or file
 
   if (mainw->volume!=old_volume) {
+    pa_operation *pa_op;
     pavol=pa_sw_volume_from_linear(mainw->volume);
     pa_cvolume_set(&out_vol,pulsed->out_achans,pavol);
-    pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&out_vol,NULL,NULL);
+    pa_op=pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&out_vol,NULL,NULL);
+    pa_operation_unref(pa_op);
     old_volume=mainw->volume;
   }
 
@@ -690,7 +692,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     while (pa_operation_get_state(pa_op)!=PA_OPERATION_DONE) {
       g_usleep(prefs->sleep_time);
     }
+    pa_operation_unref(pa_op);
   }
+
 
   pa_spec.rate=pdriver->out_arate=pdriver->in_arate=pulse_server_rate;
 

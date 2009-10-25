@@ -2815,10 +2815,12 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
 
 void do_onchange (GObject *object, lives_rfx_t *rfx) {
   gint which=GPOINTER_TO_INT (g_object_get_data (object,"param_number"));
-  gchar *com;
+  gchar *com,*tmp;
   GList *retvals;
   gint width=0,height=0;
   gchar *plugdir;
+
+  const gchar *handle="";
 
   if (rfx->status==RFX_STATUS_WEED) return;
 
@@ -2841,9 +2843,12 @@ void do_onchange (GObject *object, lives_rfx_t *rfx) {
     if (mainw->current_file>0) {
       width=cfile->hsize;
       height=cfile->vsize;
+      handle=cfile->handle;
     }
-    com=g_strdup_printf ("smogrify fxinit_%s \"%s\" %d %d %s",rfx->name,plugdir,width,height,param_marshall (rfx,TRUE));
+
+    com=g_strdup_printf ("smogrify fxinit_%s \"%s\" \"%s\" %d %d %s",rfx->name,handle,plugdir,width,height,(tmp=param_marshall (rfx,TRUE)));
     retvals=plugin_request_by_space (NULL,NULL,com);
+    g_free(tmp);
     g_free(plugdir);
   }
   else {

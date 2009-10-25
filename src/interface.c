@@ -233,6 +233,7 @@ widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deint, g
 static gboolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpointer user_data) {
   GtkWidget *arrow=(GtkWidget *)user_data;
   gboolean expanded=!(g_object_get_data(G_OBJECT(arrow),"expanded"));
+  GtkWidget *hbox=gtk_widget_get_parent(GTK_WIDGET(arrow));
 
   gtk_widget_destroy(arrow);
 
@@ -249,7 +250,7 @@ static gboolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpoin
 			     G_CALLBACK (procdets_pressed),
 			     arrow);
 
-  gtk_container_add (GTK_CONTAINER (ahbox), arrow);
+  gtk_box_pack_end (GTK_BOX (hbox), arrow, FALSE, FALSE, 10);
   gtk_widget_show(arrow);
 
   g_object_set_data(G_OBJECT(arrow),"expanded",GINT_TO_POINTER(expanded));
@@ -350,15 +351,17 @@ process * create_processing (const gchar *text) {
 
   if (mainw->iochan!=NULL) {
     // add "show details" arrow
-    hbox = gtk_hbox_new (FALSE, 0);
-
-    gtk_box_pack_start (GTK_BOX (vbox3), hbox, FALSE, FALSE, 0);
 
     ahbox=gtk_event_box_new();
-    gtk_box_pack_start (GTK_BOX (hbox), ahbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox3), ahbox, FALSE, FALSE, 10);
+
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_container_add (GTK_CONTAINER (ahbox), hbox);
+
+    label=gtk_label_new("");
+    gtk_box_pack_end (GTK_BOX (hbox), label, TRUE, TRUE, 10);
 
     details_arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
-    gtk_container_add (GTK_CONTAINER (ahbox), details_arrow);
 
     arrow_id=g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
 			       G_CALLBACK (procdets_pressed),
@@ -366,9 +369,9 @@ process * create_processing (const gchar *text) {
 
     g_object_set_data(G_OBJECT(details_arrow),"expanded",GINT_TO_POINTER(FALSE));
 
-    label=gtk_label_new_with_mnemonic (_ ("Show _details"));
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),ahbox);
+    label=gtk_label_new (_ ("Show details"));
+    gtk_box_pack_end (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    gtk_box_pack_end (GTK_BOX (hbox), details_arrow, FALSE, FALSE, 10);
 
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -376,9 +379,10 @@ process * create_processing (const gchar *text) {
       gtk_widget_modify_bg(ahbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
 
-    gtk_widget_show_all(hbox);
+    gtk_widget_show_all(ahbox);
 
     procw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+    gtk_widget_set_size_request (procw->scrolledwindow, PROG_LABEL_WIDTH, 200);
     gtk_box_pack_start (GTK_BOX (vbox3), procw->scrolledwindow, TRUE, TRUE, 0);
     gtk_container_add (GTK_CONTAINER (procw->scrolledwindow), (GtkWidget *)mainw->optextview);
   }

@@ -2802,26 +2802,22 @@ get_token_count (gchar *string, int delim) {
 
 gchar *subst (gchar *string, gchar *from, gchar *to) {
   // return a string with all occurrences of from replaced with to
-  gchar *search,*lastsearch;
-  gchar *ret=g_strdup(""),*ret2;
+  // return value should be freed after use
+  gchar *ret=g_strdup(string),*first;
+  gchar *search=ret,*search2;
 
-  search=g_strdup(string);
-  lastsearch=g_strdup(string);
-
-  while (search!=NULL) {
-    g_free(search);
-    if ((search=strstr (lastsearch,from))==NULL) {
-      ret2=g_strconcat (ret,lastsearch,NULL);
-      g_free(ret);
-      g_free(lastsearch);
-      ret=ret2;
+  while (1) {
+    if ((search2=strstr (search,from))==NULL) {
+      break;
     }
     else {
-      ret2=g_strconcat (ret,lastsearch,to,NULL);
+      first=g_strndup(ret,search2-ret);
+      search=g_strdup(search2+strlen(from));
       g_free(ret);
-      g_free(lastsearch);
-      lastsearch=g_strdup(search+strlen (from));
-      ret=ret2;
+      ret=g_strconcat (first,to,search,NULL);
+      g_free(search);
+      search=ret+strlen(first)+strlen(to);
+      g_free(first);
     }
   }
   return ret;

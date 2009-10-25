@@ -2517,9 +2517,15 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
 
     case LIVES_PARAM_STRING:
       // escape strings
-      new_return=g_strdup_printf ("%s \"%s\"",old_return,(tmp=U82L (tmp2=subst (rfx->params[i].value,"\"","\\\""))));
-      g_free(tmp);
-      g_free(tmp2);
+      if (strstr(rfx->params[i].value,"\\\"")!=NULL) {
+	do_error_dialog(_("Invalid string\n"));
+	new_return=g_strdup_printf("%s \"\"",old_return);
+      }
+      else {
+	new_return=g_strdup_printf ("%s \"%s\"",old_return,(tmp=U82L (tmp2=subst (rfx->params[i].value,"\"","\\\\\\\""))));
+	g_free(tmp);
+	g_free(tmp2);
+      }
       g_free (old_return);
       old_return=new_return;
       break;

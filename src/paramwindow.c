@@ -2499,7 +2499,7 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
   lives_colRGB24_t rgb;
   int i;
  
-  gchar *tmp,*tmp2;
+  gchar *tmp,*mysubst,*mysubst2;
 
   for (i=0;i<rfx->num_params;i++) {
     switch (rfx->params[i].type) {
@@ -2516,16 +2516,13 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
       break;
 
     case LIVES_PARAM_STRING:
-      // escape strings
-      if (strstr(rfx->params[i].value,"\\\"")!=NULL) {
-	do_error_dialog(_("Invalid string\n"));
-	new_return=g_strdup_printf("%s \"\"",old_return);
-      }
-      else {
-	new_return=g_strdup_printf ("%s \"%s\"",old_return,(tmp=U82L (tmp2=subst (rfx->params[i].value,"\"","\\\\\\\""))));
-	g_free(tmp);
-	g_free(tmp2);
-      }
+      // we need to doubly escape strings 
+      mysubst=subst(rfx->params[i].value,"\\","\\\\\\\\");
+      mysubst2=subst(mysubst,"\"","\\\\\\\"");
+      new_return=g_strdup_printf ("%s \"%s\"",old_return,(tmp=U82L (mysubst2)));
+      g_free(tmp);
+      g_free(mysubst);
+      g_free(mysubst2);
       g_free (old_return);
       old_return=new_return;
       break;

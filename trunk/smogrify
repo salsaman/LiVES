@@ -875,13 +875,17 @@ if (defined($ARGV[0])) {
 	if (substr($command,0,7) eq "fxinit_") {
 	    # call onchange_init
 	    $command=substr($command,7);
-	    $dir=$ARGV[1];
+	    $handle=$ARGV[1];
 
-            $width=$ARGV[2];
-            $height=$ARGV[3];
+	    $dir=$ARGV[2];
+
+            $width=$ARGV[3];
+            $height=$ARGV[4];
 
 	    $plugin_name="$dir/$command";
-	    shift; shift; shift;
+	    shift; shift; shift; shift;
+
+	    $curtmpdir="$tmpdir/$handle";
 
 	    $ARGV[0]="onchange_init";
 	    require("$plugin_name");

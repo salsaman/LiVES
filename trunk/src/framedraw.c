@@ -481,7 +481,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   }
 
   tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
-  pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,img_ext,tc,(gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
+  pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,(gchar *)img_ext,tc,(gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
 
   gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->framedraw_image), pixbuf);
   gtk_widget_queue_draw (mainw->framedraw_image);

@@ -1687,6 +1687,8 @@ static gboolean lives_startup(gpointer data) {
 
 int main (int argc, char *argv[]) {
   gchar *myname;
+  ssize_t mynsize;
+  gchar fbuff[512];
 
   ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_jackopts=ign_opts.ign_aplayer=FALSE;
 
@@ -1718,11 +1720,18 @@ int main (int argc, char *argv[]) {
   mainw->foreign=FALSE;
   memset (start_file,0,1);
 
-  capable->myname_full=g_strdup(argv[0]);
-  if ((myname=strrchr(argv[0],'/'))==NULL) capable->myname=g_strdup(argv[0]);
+  capable->myname_full=g_find_program_in_path(argv[0]);
+
+  if ((mynsize=readlink(capable->myname_full,fbuff,511))!=-1) {
+    memset(fbuff+mynsize,0,1);
+    g_free(capable->myname_full);
+    capable->myname_full=g_strdup(fbuff);
+  }
+
+  if ((myname=strrchr(capable->myname_full,'/'))==NULL) capable->myname=g_strdup(capable->myname_full);
   else capable->myname=g_strdup(++myname);
 
-  g_set_application_name("LiVES");
+   g_set_application_name("LiVES");
 
   // format is:
   // lives [opts] [filename [start_time] [frames]]

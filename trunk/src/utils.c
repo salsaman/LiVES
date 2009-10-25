@@ -2804,15 +2804,15 @@ gchar *subst (gchar *string, gchar *from, gchar *to) {
   // return a string with all occurrences of from replaced with to
   // return value should be freed after use
   gchar *ret=g_strdup(string),*first;
-  gchar *search=ret,*search2;
+  gchar *search=ret;
 
   while (1) {
-    if ((search2=strstr (search,from))==NULL) {
+    if ((search=strstr (search,from))==NULL) {
       break;
     }
     else {
-      first=g_strndup(ret,search2-ret);
-      search=g_strdup(search2+strlen(from));
+      first=g_strndup(ret,search-ret);
+      search=g_strdup(search+strlen(from));
       g_free(ret);
       ret=g_strconcat (first,to,search,NULL);
       g_free(search);

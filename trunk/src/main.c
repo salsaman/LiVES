@@ -3454,6 +3454,7 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_set_sensitive (mainw->toy_random_frames, TRUE);
     gtk_widget_set_sensitive (mainw->vj_load_set, !mainw->was_set);
     gtk_widget_set_sensitive (mainw->clear_ds, TRUE);
+    gtk_widget_set_sensitive (mainw->gens_submenu, TRUE);
 #ifdef HAVE_YUV4MPEG
     gtk_widget_set_sensitive (mainw->open_yuv4m, TRUE);
 #endif

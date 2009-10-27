@@ -486,7 +486,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->framedraw_image), pixbuf);
   gtk_widget_queue_draw (mainw->framedraw_image);
   mainw->current_file=current_file;
-  gdk_pixbuf_unref(pixbuf);
+  if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }

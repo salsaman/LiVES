@@ -1018,7 +1018,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	    lives_exit();
 	  }
 	  if (prefs->audio_player==AUD_PLAYER_JACK) prefs->jack_opts=JACK_OPTS_START_ASERVER;
-	  prefs->jack_opts=0;
+	  else prefs->jack_opts=0;
 	  set_int_pref("jack_opts",prefs->jack_opts);
 	}
 

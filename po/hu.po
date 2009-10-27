@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-27 00:31-0300\n"
+"POT-Creation-Date: 2009-10-27 09:40-0300\n"
 "PO-Revision-Date: 2009-10-11 11:39+0000\n"
 "Last-Translator: Németh Gábor II. <Unknown>\n"
 "Language-Team: hungarian <mypclinuxos.com>\n"
@@ -91,7 +91,7 @@ msgstr "A valósidejű effektek betöltése..."
 msgid "Starting jack audio server..."
 msgstr "Jack audió szerver indítása..."
 
-#: src/main.c:1045
+#: src/main.c:1065
 msgid ""
 "\n"
 "\n"
@@ -112,103 +112,103 @@ msgstr ""
 "alternatívaként, próbáld elindítani a programot így: lives -aplayer sox\n"
 "\n"
 
-#: src/main.c:1068
+#: src/main.c:1088
 msgid "Starting pulse audio server..."
 msgstr ""
 
-#: src/main.c:1115
+#: src/main.c:1135
 msgid "Checking optional dependencies:"
 msgstr "Ajánlott függőségek ellenőrzése"
 
-#: src/main.c:1116
+#: src/main.c:1136
 msgid "mplayer...detected..."
 msgstr "mplayer...megtalálva..."
 
-#: src/main.c:1117
+#: src/main.c:1137
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer...NEM TALÁLOM..."
 
-#: src/main.c:1118
+#: src/main.c:1138
 msgid "convert...detected..."
 msgstr "convert...megtalálva..."
 
-#: src/main.c:1119
+#: src/main.c:1139
 msgid "convert...NOT DETECTED..."
 msgstr "convert...NEM TALÁLOM..."
 
-#: src/main.c:1120
+#: src/main.c:1140
 msgid "composite...detected..."
 msgstr "composite...megtalálva..."
 
-#: src/main.c:1121
+#: src/main.c:1141
 msgid "composite...NOT DETECTED..."
 msgstr "composite...NEM TALÁLOM..."
 
-#: src/main.c:1122
+#: src/main.c:1142
 msgid "sox...detected\n"
 msgstr "sox...megtalálva\n"
 
-#: src/main.c:1123
+#: src/main.c:1143
 msgid "sox...NOT DETECTED\n"
 msgstr "sox...NEM TALÁLOM\n"
 
-#: src/main.c:1124
+#: src/main.c:1144
 msgid "xmms...detected..."
 msgstr "xmms...megtalálva..."
 
-#: src/main.c:1125
+#: src/main.c:1145
 msgid "xmms...NOT DETECTED..."
 msgstr "xmms...NEM TALÁLOM..."
 
-#: src/main.c:1126
+#: src/main.c:1146
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...megtalálva..."
 
-#: src/main.c:1127
+#: src/main.c:1147
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...NEM TALÁLOM..."
 
-#: src/main.c:1128
+#: src/main.c:1148
 msgid "jackd...detected..."
 msgstr "jackd...megtalálva..."
 
-#: src/main.c:1129
+#: src/main.c:1149
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd...NEM TALÁLOM..."
 
-#: src/main.c:1130
+#: src/main.c:1150
 msgid "pulse audio...detected..."
 msgstr ""
 
-#: src/main.c:1131
+#: src/main.c:1151
 msgid "pulse audio...NOT DETECTED..."
 msgstr ""
 
-#: src/main.c:1132
+#: src/main.c:1152
 msgid "python...detected..."
 msgstr "python...megtalálva..."
 
-#: src/main.c:1133
+#: src/main.c:1153
 msgid "python...NOT DETECTED..."
 msgstr "python...NEM TALÁLOM..."
 
-#: src/main.c:1134
+#: src/main.c:1154
 msgid "dvgrab...detected..."
 msgstr "dvgrab...detected..."
 
-#: src/main.c:1135
+#: src/main.c:1155
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab...NEM TALÁLOM..."
 
-#: src/main.c:1136
+#: src/main.c:1156
 msgid "xwininfo...detected..."
 msgstr "xwininfo...megtalálva..."
 
-#: src/main.c:1137
+#: src/main.c:1157
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo...NEM TALÁLOM..."
 
-#: src/main.c:1140
+#: src/main.c:1160
 #, c-format
 msgid ""
 "\n"
@@ -219,32 +219,32 @@ msgstr ""
 "\n"
 "Az ablakkezelő jelenti: \"%s\"; "
 
-#: src/main.c:1143
+#: src/main.c:1163
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "monitorok száma: %d\n"
 
-#: src/main.c:1146
+#: src/main.c:1166
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "A Temp könyvtár: %s\n"
 
-#: src/main.c:1150
+#: src/main.c:1170
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
 
-#: src/main.c:1153
+#: src/main.c:1173
 msgid "Compiled with jack support, good !\n"
 msgstr "Jack támogatással összeállítva, jóó !\n"
 
-#: src/main.c:1156
+#: src/main.c:1176
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr ""
 
-#: src/main.c:1160
+#: src/main.c:1180
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -253,7 +253,7 @@ msgstr ""
 "Légy üdvözölve a LiVES %s verziójában.\n"
 "\n"
 
-#: src/main.c:1458
+#: src/main.c:1478
 #, c-format
 msgid ""
 "\n"
@@ -262,70 +262,70 @@ msgstr ""
 "\n"
 "Az indító szintax: %s [opts] [fájlnév [eleje] [képkockák]]\n"
 
-#: src/main.c:1459
+#: src/main.c:1479
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr "Ahol: a fájlnév a média, vagy a biztonsági mentés fájl neve.\n"
 
-#: src/main.c:1460
+#: src/main.c:1480
 msgid "start_time : filename start time in seconds\n"
 msgstr "eleje : a fájlnév eleje másodpercben\n"
 
-#: src/main.c:1461
+#: src/main.c:1481
 msgid "frames : maximum number of frames to open\n"
 msgstr "képkockák : a maximálisan megnyitott képkockák száma\n"
 
-#: src/main.c:1463
+#: src/main.c:1483
 msgid "opts can be:\n"
 msgstr "opts lehet:\n"
 
-#: src/main.c:1464
+#: src/main.c:1484
 msgid "-help            : show this help text and exit\n"
 msgstr "-help             : mutasd ezt a súgó szöveget, majd lépj ki\n"
 
-#: src/main.c:1465
+#: src/main.c:1485
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr "-set<setname>    :automatikusan betölti a klipp beállításait\n"
 
-#: src/main.c:1466
+#: src/main.c:1486
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset           : ne töltsön be semmiféle beállítást az indításnál\n"
 
-#: src/main.c:1467
+#: src/main.c:1487
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover       : nem töltsön be sérült helyreállítást\n"
 
-#: src/main.c:1468
+#: src/main.c:1488
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover         : sérült visszaállítás betöltése\n"
 
-#: src/main.c:1469
+#: src/main.c:1489
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui           : ne legyen grafikus felület\n"
 
-#: src/main.c:1471
+#: src/main.c:1491
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <port> : OSC hallgató indítása az UDP porton <port>\n"
 
-#: src/main.c:1472
+#: src/main.c:1492
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart      : ne indítsd el az OSC hallgatót\n"
 
-#: src/main.c:1474
+#: src/main.c:1494
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
 "-aplayer <ap>     : indítás a kiválasztott zene lejátszóval <ap> lehet az "
 "mplayer"
 
-#: src/main.c:1476
+#: src/main.c:1496
 msgid ", pulse"
 msgstr ""
 
-#: src/main.c:1479
+#: src/main.c:1499
 msgid ", sox or jack\n"
 msgstr ", sox vagy jack\n"
 
-#: src/main.c:1480
+#: src/main.c:1500
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
@@ -335,19 +335,19 @@ msgstr ""
 "kliens, 2 = jack átvitel master, 4 = jack átviteli szerver indítása, 8 = "
 "hang szünetelése mikor a videó szünetel, 16 = jack hang szerver indítása] \n"
 
-#: src/main.c:1482
+#: src/main.c:1502
 msgid " or sox\n"
 msgstr ""
 
-#: src/main.c:1484
+#: src/main.c:1504
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr "-devicemap <mapneve> : automatikusan betölti a ezköztérképet\n"
 
-#: src/main.c:1501 src/gui.c:950
+#: src/main.c:1521 src/gui.c:950
 msgid "Starting GUI..."
 msgstr "Grafikus felhasználói felület indítása..."
 
-#: src/main.c:1512
+#: src/main.c:1532
 #, c-format
 msgid ""
 "\n"
@@ -364,7 +364,7 @@ msgstr ""
 "%s/%s.\n"
 "(Talán meg kellen változtatnod a <prefix_dir> értékét a ~/.lives fájlban)\n"
 
-#: src/main.c:1528
+#: src/main.c:1548
 msgid ""
 "\n"
 "LiVES was unable to write a small file to /tmp\n"
@@ -375,7 +375,7 @@ msgstr ""
 "Kérlek ellenőrizd az írási jogosultságaidat a /tmp könyvtárhoz, és próbáld "
 "újra.\n"
 
-#: src/main.c:1532
+#: src/main.c:1552
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -389,7 +389,7 @@ msgstr ""
 "Kérlek olvasd el a README fájlt, hogy mi érkezik ezzel a csomaggal,\n"
 "mielött fiuttatnád a LiVES-t.\n"
 
-#: src/main.c:1538
+#: src/main.c:1558
 #, c-format
 msgid ""
 "\n"
@@ -404,7 +404,7 @@ msgstr ""
 "\n"
 "Kérlek ellenőrizd a fájl jogosultságait, majd próbáld újra.\n"
 
-#: src/main.c:1545
+#: src/main.c:1565
 #, c-format
 msgid ""
 "\n"
@@ -421,7 +421,7 @@ msgstr ""
 "Kérlek ellenőrizd a fájl jogosultságait ennek a fájlnak\n"
 "és könyvtárnak, majd próbáld újra.\n"
 
-#: src/main.c:1552
+#: src/main.c:1572
 #, c-format
 msgid ""
 "\n"
@@ -440,7 +440,7 @@ msgstr ""
 "%s/.lives-ban,\n"
 "majd próbáld újra.\n"
 
-#: src/main.c:1559
+#: src/main.c:1579
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -458,7 +458,7 @@ msgstr ""
 "\n"
 "Köszönöm.\n"
 
-#: src/main.c:1563
+#: src/main.c:1583
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -468,7 +468,7 @@ msgstr ""
 "LiVES-nak szüksége van az 'mplayer' vagy a 'sox' valamelyikére. Kérlek "
 "telepíts egyet ezek közül, majd próbáld újra.\n"
 
-#: src/main.c:1572
+#: src/main.c:1592
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
@@ -478,7 +478,7 @@ msgstr ""
 "A LiVES nem találja az 'mplayert'. Ha azt szeretnéd, hogy jobban működjön a "
 "LiVES akkor telepítsd fel.\n"
 
-#: src/main.c:1575
+#: src/main.c:1595
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -488,7 +488,7 @@ msgstr ""
 "A LiVES nem találja a 'convert'-et. Fel kell telepítened a convert-et és az "
 "image-magick-et, ha szeretnéd használni a renderelési effekteket.\n"
 
-#: src/main.c:1578
+#: src/main.c:1598
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -498,7 +498,7 @@ msgstr ""
 "A LiVES nem találja a 'composite'-ot. Fel kell telepítened az image-magic-"
 "kal együtt, ha szeretnéd használni az egyesítés funkciót.\n"
 
-#: src/main.c:1581
+#: src/main.c:1601
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -508,7 +508,7 @@ msgstr ""
 "A LiVES nem találja a 'sox'-ot. Néhány hand tulajdonság nem fog működni. "
 "Telepítsd fel a 'sox'-ot.\n"
 
-#: src/main.c:1585
+#: src/main.c:1605
 #, c-format
 msgid ""
 "\n"
@@ -525,42 +525,42 @@ msgstr ""
 "Nem tudsz mjad menteni nélküle.\n"
 "A <lib_dir> értékét a ~./lives-ban megkellene változtatni\n"
 
-#: src/main.c:1663
+#: src/main.c:1683
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Az Automataindítás %s"
 
-#: src/main.c:1834
+#: src/main.c:1854
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Érvénytelen zene lejátszó %s\n"
 
-#: src/main.c:1906
+#: src/main.c:1926
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Névtelen%d> %dx%d : %d képkockák %d bpp %.3f fps"
 
-#: src/main.c:1910
+#: src/main.c:1930
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? képkocka ??? bpp %.3f fps"
 
-#: src/main.c:1913
+#: src/main.c:1933
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d képkocka %d bpp %.3f fps"
 
-#: src/main.c:1919
+#: src/main.c:1939
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <No File>"
 
-#: src/main.c:3036 src/main.c:3037 src/gui.c:1859 src/gui.c:2823
+#: src/main.c:3056 src/main.c:3057 src/gui.c:1859 src/gui.c:2823
 #: src/saveplay.c:1315
 msgid "Play"
 msgstr "Lejátszás"
 
-#: src/main.c:3389
+#: src/main.c:3409
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -568,35 +568,35 @@ msgstr ""
 "LiVES nem tudja rögzíteni ezt a képet\n"
 "\n"
 
-#: src/main.c:3467
+#: src/main.c:3487
 #, c-format
 msgid "Closed file %s\n"
 msgstr "%s fájl bezárva\n"
 
-#: src/main.c:3583 src/gui.c:502 src/utils.c:2155 src/utils.c:2181
+#: src/main.c:3603 src/gui.c:502 src/utils.c:2155 src/utils.c:2181
 #: src/saveplay.c:2238 src/multitrack.c:2887 src/multitrack.c:3680
 msgid "_Undo"
 msgstr "_Visszavonás"
 
-#: src/main.c:3584 src/gui.c:515 src/utils.c:2156 src/utils.c:2182
+#: src/main.c:3604 src/gui.c:515 src/utils.c:2156 src/utils.c:2182
 #: src/saveplay.c:2239 src/multitrack.c:2908 src/multitrack.c:3699
 msgid "_Redo"
 msgstr "Új_ra"
 
-#: src/main.c:3608 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
+#: src/main.c:3628 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
 #: src/resample.c:1699
 msgid "Video"
 msgstr "Videó"
 
-#: src/main.c:3609 src/interface.c:647 src/gui.c:2034
+#: src/main.c:3629 src/interface.c:647 src/gui.c:2034
 msgid "Left Audio"
 msgstr "Bal Hang"
 
-#: src/main.c:3610 src/gui.c:2052
+#: src/main.c:3630 src/gui.c:2052
 msgid "Right Audio"
 msgstr "Jobb Hang"
 
-#: src/main.c:3650
+#: src/main.c:3670
 msgid ""
 "\n"
 "\n"

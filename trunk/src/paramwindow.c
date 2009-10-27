@@ -2519,9 +2519,13 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
       // we need to doubly escape strings 
       mysubst=subst(rfx->params[i].value,"\\","\\\\\\\\");
       mysubst2=subst(mysubst,"\"","\\\\\\\"");
+      g_free(mysubst);
+      mysubst=subst(mysubst2,"`","\\`");
+      g_free(mysubst2);
+      mysubst2=subst(mysubst,"'","\\`");
+      g_free(mysubst);
       new_return=g_strdup_printf ("%s \"%s\"",old_return,(tmp=U82L (mysubst2)));
       g_free(tmp);
-      g_free(mysubst);
       g_free(mysubst2);
       g_free (old_return);
       old_return=new_return;

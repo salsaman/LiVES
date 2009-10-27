@@ -4911,7 +4911,7 @@ int weed_add_effectkey_by_idx (gint key, int idx) {
 int weed_add_effectkey (gint key, const gchar *hashname, gboolean fullname) {
   // add a filter_class by hashname to an effect_key
   int idx=weed_get_idx_for_hashname(hashname,fullname);
-  return weed_add_effectkey_by_idx (--key,idx);
+  return weed_add_effectkey_by_idx (key,idx);
 }
 
 

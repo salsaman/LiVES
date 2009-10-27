@@ -1031,6 +1031,26 @@ static void lives_init(_ign_opts *ign_opts) {
 	if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER) {
 	  // start jack transport polling
 	  splash_msg(_("Starting jack audio server..."),.8);
+
+	  if (!g_file_test(prefs->jack_aserver,G_FILE_TEST_EXISTS)) {
+	    gchar *com;
+	    gchar jackd_loc[512];
+	    get_location("jackd",jackd_loc,512);
+	    if (strlen(jackd_loc)) {
+#ifndef IS_DARWIN
+	      com=g_strdup_printf("echo \"%s -Z -d alsa\">%s",jackd_loc,prefs->jack_aserver);
+#else
+	      // use coreaudio on Darwin
+	      com=g_strdup_printf("echo \"%s -Z -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
+#endif
+	      dummyvar=system(com);
+	      g_free(com);
+	      com=g_strdup_printf("/bin/chmod o+x %s",prefs->jack_aserver);
+	      dummyvar=system(com);
+	      g_free(com);
+	    }
+	  }
+
 	  lives_jack_init();
 	}
 

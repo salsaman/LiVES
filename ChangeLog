@@ -13,8 +13,8 @@ Add multi core support for mjpegtools_encoder.
 Always show Tools->Generators submenu. *
 Plug some minor memory leaks. *
 Fixes for Darwin compilation. *
+Updates for Finnish, German and Spanish translations.
 
-	
 
 
 

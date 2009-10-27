@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-25 13:29-0300\n"
+"POT-Creation-Date: 2009-10-27 00:31-0300\n"
 "PO-Revision-Date: 2009-09-27 16:12+0000\n"
 "Last-Translator: aks-id <aks-id@yandex.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -566,35 +566,35 @@ msgstr ""
 "LiVES не смогла загрузить это изображение\n"
 "\n"
 
-#: src/main.c:3466
+#: src/main.c:3467
 #, c-format
 msgid "Closed file %s\n"
 msgstr ""
 
-#: src/main.c:3582 src/gui.c:502 src/utils.c:2155 src/utils.c:2181
+#: src/main.c:3583 src/gui.c:502 src/utils.c:2155 src/utils.c:2181
 #: src/saveplay.c:2238 src/multitrack.c:2887 src/multitrack.c:3680
 msgid "_Undo"
 msgstr "_Отменить"
 
-#: src/main.c:3583 src/gui.c:515 src/utils.c:2156 src/utils.c:2182
+#: src/main.c:3584 src/gui.c:515 src/utils.c:2156 src/utils.c:2182
 #: src/saveplay.c:2239 src/multitrack.c:2908 src/multitrack.c:3699
 msgid "_Redo"
 msgstr "_Вернуть"
 
-#: src/main.c:3607 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
+#: src/main.c:3608 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
 #: src/resample.c:1699
 msgid "Video"
 msgstr "Видео"
 
-#: src/main.c:3608 src/interface.c:647 src/gui.c:2034
+#: src/main.c:3609 src/interface.c:647 src/gui.c:2034
 msgid "Left Audio"
 msgstr "Левый звуковой канал"
 
-#: src/main.c:3609 src/gui.c:2052
+#: src/main.c:3610 src/gui.c:2052
 msgid "Right Audio"
 msgstr "Правый звуковой канал"
 
-#: src/main.c:3649
+#: src/main.c:3650
 msgid ""
 "\n"
 "\n"
@@ -3876,52 +3876,52 @@ msgid ""
 "Please check the file permissions and try again."
 msgstr ""
 
-#: src/effects.c:126
+#: src/effects.c:127
 #, c-format
 msgid "%s all frames..."
 msgstr ""
 
-#: src/effects.c:131
+#: src/effects.c:132
 #, c-format
 msgid "%s clipboard into frames %d to %d..."
 msgstr ""
 
-#: src/effects.c:137
+#: src/effects.c:138
 #, c-format
 msgid "%s to clipboard..."
 msgstr ""
 
-#: src/effects.c:141
+#: src/effects.c:142
 #, c-format
 msgid "%s to new clip..."
 msgstr ""
 
-#: src/effects.c:146
+#: src/effects.c:147
 #, c-format
 msgid "%s frames %d to %d..."
 msgstr ""
 
-#: src/effects.c:172
+#: src/effects.c:173
 #, c-format
 msgid "%s clipboard with selection"
 msgstr ""
 
-#: src/effects.c:177
+#: src/effects.c:178
 #, c-format
 msgid "%s to clipboard"
 msgstr ""
 
-#: src/effects.c:181
+#: src/effects.c:182
 #, c-format
 msgid "%s to new clip"
 msgstr ""
 
-#: src/effects.c:186
+#: src/effects.c:187
 #, c-format
 msgid "%s frames %d to %d"
 msgstr ""
 
-#: src/effects.c:326
+#: src/effects.c:327
 msgid ""
 "\n"
 "No frames were generated.\n"

@@ -2,10 +2,14 @@ Version 1.1.5
 -------------
 Fix libvisual startup crash (regression) *
 Fix memory leak in pulse audio player.
+Fix memory leak in rendered effect preview. *
+Fix handling of characters " and \ in string parameters. *
 Fix set locking with symlinked executable. *
+Fix rt effect to key mapping (regression).
 New aspect/blocksize algorithm for more succesful encoding.
 Show encoder debugging info within the application.
 Add multi core support for mjpegtools_encoder.
+Always show Tools->Generators submenu. *
 Plug some minor memory leaks. *
 Fixes for Darwin compilation. *
 

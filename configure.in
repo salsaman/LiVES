@@ -447,7 +447,7 @@ lives-plugins/marcos-encoders/Makefile
 if test "$HAVE_JACK" != "true"; then
 echo
 echo "*******************************************************************"
-echo You are compiling LiVES without jack \(>= 0.100.0\) support.
+echo You are compiling LiVES without jack \(\>= 0.100.0\) support.
 echo It is recommended that you install/upgrade libjack-devel 
 echo before compiling LiVES.
 echo
@@ -460,7 +460,7 @@ fi
 if test "$HAVE_PULSE_AUDIO" != "true"; then
 echo
 echo "*******************************************************************"
-echo You are compiling LiVES without pulse audio \(>= 0.9.14\) support.
+echo You are compiling LiVES without pulse audio \(\>= 0.9.14\) support.
 echo It is recommended that you install/upgrade libpulse-devel 
 echo before compiling LiVES.
 echo

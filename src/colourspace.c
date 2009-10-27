@@ -1202,14 +1202,13 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
   int iwidth;
   guchar *end=rgbdata+(rowstride*vsize);
   register int i;
-  guchar in_alpha,*u_alpha;
+  guchar in_alpha=255,*u_alpha;
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (in_has_alpha) ipsize=4;
-  else in_alpha=255;
 
   if (out_has_alpha) opsize=4;
   else u_alpha=NULL;
@@ -1233,7 +1232,7 @@ static void convert_rgb_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
   int iwidth;
   guchar *end=rgbdata+(rowstride*vsize);
   register int i;
-  guchar in_alpha,*a=NULL;
+  guchar in_alpha=255,*a=NULL;
 
   guchar *y,*u,*v;
 
@@ -1242,7 +1241,6 @@ static void convert_rgb_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (in_has_alpha) ipsize=4;
-  else in_alpha=255;
 
   hsize=(hsize>>1)<<1;
   iwidth=hsize*ipsize;
@@ -1270,14 +1268,13 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
   int iwidth;
   guchar *end=rgbdata+(rowstride*vsize);
   register int i;
-  guchar in_alpha,*u_alpha;
+  guchar in_alpha=255,*u_alpha;
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (in_has_alpha) ipsize=4;
-  else in_alpha=255;
 
   if (out_has_alpha) opsize=4;
   else u_alpha=NULL;
@@ -1301,7 +1298,7 @@ static void convert_bgr_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
   int iwidth;
   guchar *end=rgbdata+(rowstride*vsize);
   register int i;
-  guchar in_alpha,*a=NULL;
+  guchar in_alpha=255,*a=NULL;
 
   guchar *y,*u,*v;
 
@@ -1310,7 +1307,6 @@ static void convert_bgr_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (in_has_alpha) ipsize=4;
-  else in_alpha=255;
 
   hsize=(hsize>>1)<<1;
   iwidth=hsize*ipsize;

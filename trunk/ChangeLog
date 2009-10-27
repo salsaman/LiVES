@@ -6,6 +6,7 @@ Fix memory leak in rendered effect preview. *
 Fix handling of characters " and \ in string parameters. *
 Fix set locking with symlinked executable. *
 Fix rt effect to key mapping (regression).
+Fix jack startup for new users.
 New aspect/blocksize algorithm for more succesful encoding.
 Show encoder debugging info within the application.
 Add multi core support for mjpegtools_encoder.

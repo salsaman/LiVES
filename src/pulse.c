@@ -104,9 +104,11 @@ gboolean lives_pulse_init (short startup_phase) {
 
 
 void pulse_get_rec_avals(pulse_driver_t *pulsed) {
-  mainw->rec_aseek=pulsed->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
   mainw->rec_aclip=pulsed->playing_file;
-  mainw->rec_avel=afile->pb_fps/afile->fps;
+  if (mainw->rec_aclip!=-1) {
+    mainw->rec_aseek=pulsed->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+    mainw->rec_avel=afile->pb_fps/afile->fps;
+  }
 }
 
 
@@ -612,6 +614,7 @@ int pulse_audio_init(void) {
   pulsed.is_paused=FALSE;
   pulsed.pstream=NULL;
   pulsed.pa_props=NULL;
+  pulsed.playing_file=-1;
   return 0;
 }
 

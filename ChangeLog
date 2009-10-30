@@ -1,3 +1,20 @@
+Version 1.1.6
+-------------
+Fix crash when recording with audio is activated during silent clip. *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Version 1.1.5 (27 Oct 2009)
 ---------------------------
 Fix libvisual startup crash (regression) *

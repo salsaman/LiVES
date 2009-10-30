@@ -14,6 +14,14 @@ extern "C"
 
 #include <inttypes.h>
 
+
+#ifdef IS_DARWIN
+#ifndef lseek64
+#define lseek64 lseek
+#endif
+#endif
+
+
 typedef int boolean;
 #define TRUE 1
 #define FALSE 0

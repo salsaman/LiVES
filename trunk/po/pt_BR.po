@@ -2825,7 +2825,7 @@ msgstr "Ajuda [_H]"
 
 #: src/gui.c:1484
 msgid "_Manual (opens in browser)"
-msgstr "_Manual (abre no borwser)"
+msgstr "_Manual (abre no browser)"
 
 #: src/gui.c:1493
 msgid "_Donate to the project !"

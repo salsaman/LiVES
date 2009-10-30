@@ -167,9 +167,11 @@ static float set_pulse(float *buf, size_t bufsz, int step) {
 
 
 void jack_get_rec_avals(jack_driver_t *jackd) {
-  mainw->rec_aseek=jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
   mainw->rec_aclip=jackd->playing_file;
-  mainw->rec_avel=afile->pb_fps/afile->fps;
+  if (mainw->rec_aclip!=-1) {
+    mainw->rec_aseek=jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+    mainw->rec_avel=afile->pb_fps/afile->fps;
+  }
 }
 
 
@@ -1126,6 +1128,7 @@ int jack_audio_init(void) {
     jackd->out_chans_available=0;
     jackd->is_output=TRUE;
     jackd->read_abuf=-1;
+    jackd->playing_file=-1;
   }
   return 0;
 }

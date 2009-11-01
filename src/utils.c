@@ -1375,11 +1375,10 @@ gboolean switch_aud_to_jack(void) {
       pulse_shutdown();
     }
 #endif
-    
-    prefs->audio_player=AUD_PLAYER_JACK;
-    set_pref("audio_player","jack");
-    return TRUE;
   }
+  prefs->audio_player=AUD_PLAYER_JACK;
+  set_pref("audio_player","jack");
+  return TRUE;
 #endif
   return FALSE;
 }

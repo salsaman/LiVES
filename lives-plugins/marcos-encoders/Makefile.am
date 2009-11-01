@@ -12,6 +12,6 @@ ogm_encoder.py \
 theora_encoder.py
 
 install-data-hook:
-	chmod +x $(DESTDIR)$(marcosencodersdir)/*.py
+	for encoder in $(marcosencoders_DATA) ; do chmod a+rx $(DESTDIR)$(marcosencodersdir)/$${encoder} ; done
 
 EXTRA_DIST = $(marcosencoders_DATA) README.multi_encoder

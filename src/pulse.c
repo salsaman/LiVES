@@ -130,9 +130,7 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
 
 static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // PULSE AUDIO calls this periodically to get the next audio buffer
-
   static float old_volume=-1.;
-
   pulse_driver_t* pulsed = (pulse_driver_t*)arg;
 
   gulong nframes=nbytes/pulsed->out_achans/(pulsed->out_asamps>>3);
@@ -652,6 +650,7 @@ int pulse_audio_read_init(void) {
 
 
 
+
 int pulse_driver_activate(pulse_driver_t *pdriver) {
 // create a new client and connect it to pulse server
   gchar *pa_clientname="LiVES_audio_out";
@@ -711,6 +710,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pavol=pa_sw_volume_from_linear(mainw->volume);
     pa_cvolume_set(&out_vol,pdriver->out_achans,pavol);
 
+    // set write callback
+    pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process,pdriver);
+
 #ifdef PA_STREAM_START_UNMUTED
     pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY,&out_vol,NULL);
 #else
@@ -720,11 +722,11 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     while (pa_stream_get_state(pdriver->pstream)!=PA_STREAM_READY) {
       g_usleep(prefs->sleep_time);
     }
-
-    // set write callback
-    pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process,pdriver);
   }
   else {
+    // set read callback
+    pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);
+
     pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,0);
 
     prb=0;
@@ -733,8 +735,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
       g_usleep(prefs->sleep_time);
     }
 
-    // set read callback
-    pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);
   }
 
   g_free(mypid);

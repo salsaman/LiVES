@@ -49,6 +49,7 @@ fxpluginslib_LTLIBRARIES = alien_overlay.la \
 	livetext.la \
 	mirrors.la \
 	multi_blends.la \
+	multi_transitions.la \
 	negate.la \
 	noise.la \
 	onedTV.la \

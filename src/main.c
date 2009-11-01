@@ -1038,10 +1038,10 @@ static void lives_init(_ign_opts *ign_opts) {
 	    get_location("jackd",jackd_loc,512);
 	    if (strlen(jackd_loc)) {
 #ifndef IS_DARWIN
-	      com=g_strdup_printf("echo \"%s -Z -d alsa\">%s",jackd_loc,prefs->jack_aserver);
+	      com=g_strdup_printf("echo \"%s -Z -d alsa -s\">%s",jackd_loc,prefs->jack_aserver);
 #else
 	      // use coreaudio on Darwin
-	      com=g_strdup_printf("echo \"%s -Z -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
+	      com=g_strdup_printf("echo \"%s -Z -d coreaudio -s\">%s",jackd_loc,prefs->jack_aserver);
 #endif
 	      dummyvar=system(com);
 	      g_free(com);
@@ -1085,7 +1085,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #ifdef HAVE_PULSE_AUDIO
 	if (prefs->audio_player==AUD_PLAYER_PULSE) {
-	  g_print("pt ab\n");
 	  splash_msg(_("Starting pulse audio server..."),.8);
 
 	  if (!lives_pulse_init(prefs->startup_phase)) {

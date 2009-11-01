@@ -90,7 +90,7 @@ int haip_deinit(weed_plant_t *inst) {
 
 inline int calc_luma(unsigned char *pt) {
   // return luma 0<=x<=256
-  return 0.21*(float)*pt+0.587*(float)*(++pt)+0.114*(float)*(++pt);
+  return 0.21*(float)pt[0]+0.587*(float)pt[1]+0.114*(float)pt[2];
 }
 
 

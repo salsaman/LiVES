@@ -31,7 +31,8 @@ static inline uint32_t fastrand(void)
 #define rand_a 1073741789L
 #define rand_c 32749L
 
-  return (fastrand_val=((fastrand_val*=rand_a) + rand_c));
+  fastrand_val=fastrand_val*rand_a + rand_c;
+  return fastrand_val;
 }
 
 

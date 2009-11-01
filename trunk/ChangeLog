@@ -1,6 +1,10 @@
 Version 1.1.6
 -------------
-Fix crash when recording with audio is activated during silent clip. *
+Fix hang in pulse audio player (regression).
+Fix warnings from gcc 4.4 *
+Fix crash when recording with audio gets activated during silent clip. *
+Fix compilation with ENABLE_JACK undefined. (thanks Holgero). *
+Add new realtime transitions: iris rectangle, iris circle, 4 way split, dissolve.
 
 
 
@@ -11,6 +15,7 @@ Fix crash when recording with audio is activated during silent clip. *
 
 
 
+* fixes backported to 1.0.6
 
 
 

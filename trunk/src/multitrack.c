@@ -6246,7 +6246,7 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
   gtk_widget_ref(arrow);
 
   if (palette->style&STYLE_1) {
-    if (!palette->style&STYLE_3) {
+    if (!(palette->style&STYLE_3)) {
       gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_back);
       gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_back);
     }
@@ -6425,7 +6425,7 @@ void add_video_track (lives_mt *mt, gboolean behind) {
   gtk_widget_ref(label);
 
   if (palette->style&STYLE_1) {
-    if (!palette->style&STYLE_3) {
+    if (!(palette->style&STYLE_3)) {
       gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_back);
       gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_back);
     }

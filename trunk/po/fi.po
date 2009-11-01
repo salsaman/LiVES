@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-27 12:28-0300\n"
+"POT-Creation-Date: 2009-11-01 04:45-0300\n"
 "PO-Revision-Date: 2009-10-26 17:27+0000\n"
 "Last-Translator: Jussi Aalto <jta_lnx@dnainternet.net>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -7604,23 +7604,23 @@ msgstr ""
 msgid "JACK server started\n"
 msgstr "JACK-palvelin käynnistetty\n"
 
-#: src/jack.c:711 src/jack.c:792
+#: src/jack.c:713 src/jack.c:794
 msgid "Unable to connect to JACK server\n"
 msgstr ""
 
-#: src/jack.c:953
+#: src/jack.c:955
 msgid "Started jack audio subsystem.\n"
 msgstr ""
 
-#: src/jack.c:1059
+#: src/jack.c:1061
 msgid "Started jack audio reader.\n"
 msgstr ""
 
-#: src/colourspace.c:774
+#: src/colourspace.c:788
 msgid "unclamped"
 msgstr ""
 
-#: src/colourspace.c:775
+#: src/colourspace.c:789
 msgid "clamped"
 msgstr ""
 
@@ -8149,8 +8149,9 @@ msgid "Clipboard _under selection"
 msgstr "_Yhdistä leikepöydän sisältö valintaan..."
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorize"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -8158,32 +8159,38 @@ msgid "Colorizing"
 msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycle"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycling"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filter"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filtering"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Colour replace"
-msgstr ""
+msgstr "Luo värillisiä kuvia"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Cycle _Step"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
@@ -8204,12 +8211,14 @@ msgid "Despeckling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "Dream"
-msgstr ""
+msgstr "Kumotaan"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "Dreamifying"
-msgstr ""
+msgstr "Kumotaan"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8218,12 +8227,14 @@ msgid "E_nd %"
 msgstr "Kum_oa %s"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "Edge detect"
-msgstr ""
+msgstr "_Teksti"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "Edge detecting"
-msgstr ""
+msgstr "_Teksti"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
@@ -8308,12 +8319,14 @@ msgid "Frames _per second (FPS)"
 msgstr "Kuvaa _sekunnissa (FPS)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _end"
-msgstr ""
+msgstr "_Hylkää muutokset"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _start"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -8361,12 +8374,14 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _end"
-msgstr ""
+msgstr "Kuvia"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _start"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -8374,12 +8389,14 @@ msgid "Hue change"
 msgstr "_Hylkää muutokset"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "Kuvia"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue start"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumble"
@@ -8390,8 +8407,9 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Keep _Centered"
-msgstr ""
+msgstr "_Vaimenna ääni"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -8403,8 +8421,9 @@ msgid "Making monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "Kierrä leikettä"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -8434,8 +8453,9 @@ msgid "Noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "Normalize"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
@@ -8455,12 +8475,14 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "Kierrä leikettä"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilating"
-msgstr ""
+msgstr "Kierrä leikettä"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -8513,28 +8535,34 @@ msgid "S_tart %"
 msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _end"
-msgstr ""
+msgstr "vaihtuma"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "vaihtuma"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation change"
-msgstr ""
+msgstr "vaihtuma"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation end"
-msgstr ""
+msgstr "vaihtuma"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation start"
-msgstr ""
+msgstr "vaihtuma"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "Sepia"
-msgstr ""
+msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Shift horizontally"
@@ -8553,12 +8581,14 @@ msgid "Shrinking/Expanding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "Skip forward"
-msgstr ""
+msgstr "_Pysäytä"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarize"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
@@ -8566,8 +8596,9 @@ msgid "Solarizing"
 msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "Spin"
-msgstr ""
+msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
@@ -8575,8 +8606,9 @@ msgid "Spinning"
 msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splice"
-msgstr ""
+msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
@@ -8584,8 +8616,9 @@ msgid "Splicing"
 msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spread"
-msgstr ""
+msgstr "Kumotaan"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -8605,12 +8638,14 @@ msgid "Step per _Frame"
 msgstr "    Kuv_a"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl _start"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl s_tep"
-msgstr ""
+msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -8698,8 +8733,9 @@ msgid "_Calculate"
 msgstr "_Laske"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "_Cycle Start"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -8724,13 +8760,15 @@ msgstr "Vain _lopetuskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "_Fade level"
-msgstr ""
+msgstr "Kuvia"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Fade start"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -8760,8 +8798,9 @@ msgid "_Frames"
 msgstr "_Kuvia"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "T_äyttöväri"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
@@ -8821,8 +8860,9 @@ msgid "_Offset Y"
 msgstr "_X-sijainti"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Other Center"
-msgstr ""
+msgstr "_Vaimenna ääni"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
@@ -8835,18 +8875,21 @@ msgid "_Point size"
 msgstr "Ki_rjasinkoko"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius end"
-msgstr ""
+msgstr "Kuvia"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius start"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#, fuzzy
 msgid "_Radius"
-msgstr ""
+msgstr "Kuvia"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8874,12 +8917,14 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma end"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma start"
-msgstr ""
+msgstr "Vain _aloituskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
@@ -8897,8 +8942,9 @@ msgid "_Source Colour"
 msgstr "Reunuksen _väri"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "_Splice"
-msgstr ""
+msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8966,8 +9012,9 @@ msgid "_Wrap Around"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_X Center"
-msgstr ""
+msgstr "_Vaimenna ääni"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
@@ -8984,8 +9031,9 @@ msgid "_X offset"
 msgstr "_X-sijainti"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Y Center"
-msgstr ""
+msgstr "_Vaimenna ääni"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
@@ -9030,12 +9078,14 @@ msgid "charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "colorize"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "colour_filter"
-msgstr ""
+msgstr "Luo värillisiä kuvia"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
@@ -9061,8 +9111,9 @@ msgid "despeckle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "dream"
-msgstr ""
+msgstr "Kumotaan"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
@@ -9136,8 +9187,9 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "modulate"
-msgstr ""
+msgstr "Kierrä leikettä"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
@@ -9153,16 +9205,18 @@ msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "normalize"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "Kierrä leikettä"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -9189,8 +9243,9 @@ msgid "saturation_change"
 msgstr "vaihtuma"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "sepia"
-msgstr ""
+msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "shift_horizontal"
@@ -9205,20 +9260,24 @@ msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "skip_forwards"
-msgstr ""
+msgstr "_Pysäytä"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "solarize"
-msgstr ""
+msgstr "Koon muutos"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "spin"
-msgstr ""
+msgstr "varoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "spread"
-msgstr ""
+msgstr "Kumotaan"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy

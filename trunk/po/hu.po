@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-27 12:28-0300\n"
+"POT-Creation-Date: 2009-11-01 04:45-0300\n"
 "PO-Revision-Date: 2009-10-11 11:39+0000\n"
 "Last-Translator: Németh Gábor II. <Unknown>\n"
 "Language-Team: hungarian <mypclinuxos.com>\n"
@@ -8174,23 +8174,23 @@ msgstr ""
 msgid "JACK server started\n"
 msgstr "Jack szerver elindítva\n"
 
-#: src/jack.c:711 src/jack.c:792
+#: src/jack.c:713 src/jack.c:794
 msgid "Unable to connect to JACK server\n"
 msgstr "Nem tudok csatlakozni a JACK szerverre\n"
 
-#: src/jack.c:953
+#: src/jack.c:955
 msgid "Started jack audio subsystem.\n"
 msgstr "Jack hang alrendszer elindítva.\n"
 
-#: src/jack.c:1059
+#: src/jack.c:1061
 msgid "Started jack audio reader.\n"
 msgstr "Jack hang olvasó elindítva.\n"
 
-#: src/colourspace.c:774
+#: src/colourspace.c:788
 msgid "unclamped"
 msgstr ""
 
-#: src/colourspace.c:775
+#: src/colourspace.c:789
 msgid "clamped"
 msgstr ""
 

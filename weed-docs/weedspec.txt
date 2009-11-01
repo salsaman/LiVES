@@ -73,6 +73,9 @@ Removed requirement that weed plugin file extensions be .wo, since this was disc
 11/10/09 salsaman
 Correct a typo, and try to further clarify about function passing.
 
+31/10/09 salsaman
+Correct WEED_FILTER_HINT_STATELESS -> WEED_FILTER_HINT_IS_STATELESS
+
 
 (C) Gabriel "Salsaman" Finch 2005 - 2009
 
@@ -1451,7 +1454,7 @@ Palette numbers >=2048 are reserved for custom palettes.
     plugin type. To be useful, such filters may also want to use the
     *_CAN_VARY channel flags below.
 
- * WEED_FILTER_HINT_STATELESS[[BR]]
+ * WEED_FILTER_HINT_IS_STATELESS[[BR]]
    This is optional, if the filter is stateless (i.e. not dependant on
    past calls to process_func() ) then this this flag
    bit can be set. Used for compatibility with other plugin architectures.

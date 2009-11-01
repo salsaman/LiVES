@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-27 12:28-0300\n"
+"POT-Creation-Date: 2009-11-01 04:45-0300\n"
 "PO-Revision-Date: 2009-10-11 20:42+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -8221,23 +8221,23 @@ msgstr "Nastavte všetky hladiny hodnôt zvuku na rovnakú hodnotu"
 msgid "JACK server started\n"
 msgstr "JACK server spustený\n"
 
-#: src/jack.c:711 src/jack.c:792
+#: src/jack.c:713 src/jack.c:794
 msgid "Unable to connect to JACK server\n"
 msgstr "Nepodarilo sa pripojiť na JACK server\n"
 
-#: src/jack.c:953
+#: src/jack.c:955
 msgid "Started jack audio subsystem.\n"
 msgstr "Spustený podsystém jack audio.\n"
 
-#: src/jack.c:1059
+#: src/jack.c:1061
 msgid "Started jack audio reader.\n"
 msgstr "Spustená čítačka jack audio.\n"
 
-#: src/colourspace.c:774
+#: src/colourspace.c:788
 msgid "unclamped"
 msgstr "nevnorený"
 
-#: src/colourspace.c:775
+#: src/colourspace.c:789
 msgid "clamped"
 msgstr "vnorený"
 

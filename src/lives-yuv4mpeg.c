@@ -190,7 +190,7 @@ on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->play_end=INT_MAX;
     // temp kludge, symlink audiodump.pcm to wav file, then pretend we are playing
     // an opening preview . Doesn't work with fifo.
-    system ((tmp=g_strdup_printf ("/bin/ln -s %s/audiodump.pcm %s/%s/audiodump.pcm",prefs->tmpdir,prefs->tmpdir,cfile->handle)));
+    dummyvar=system ((tmp=g_strdup_printf ("/bin/ln -s %s/audiodump.pcm %s/%s/audiodump.pcm",prefs->tmpdir,prefs->tmpdir,cfile->handle)));
     g_free(tmp);
     play_file();
     mainw->noswitch=FALSE;

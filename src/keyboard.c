@@ -54,7 +54,9 @@ plugin_poll_keyboard (gpointer data) {
     }
     
     // we also auto-repeat our cached keys
-    if (cached_key) gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key,cached_mod);
+    if (cached_key) {
+      gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key,cached_mod);
+    }
   }
 
   // if we have OSC we will poll it here, as we seem to only be able to run 1 gtk_timeout 

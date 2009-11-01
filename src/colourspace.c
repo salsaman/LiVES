@@ -339,9 +339,11 @@ static void init_average(void) {
   int x,y;
   for (x=0;x<256;x++) {
     for (y=0;y<256;y++) {
-      if ((c=(((a=(short)(x-128)+(b=(short)(y-128)))-((a*b)>>8)+128)))>240) c=240;
+      a=(short)(x-128);
+      b=(short)(y-128);
+      if ((c=(a+b-((a*b)>>8)+128))>240) c=240;
       cavgc[x][y]=(guchar)(c>16?c:16);
-      if ((c=(((a=(short)(x-128)+(b=(short)(y-128)))-((a*b)>>8)+128)))>255) c=255;
+      if ((c=(a+b-((a*b)>>8)+128))>255) c=255;
       cavgu[x][y]=(guchar)(c>0?c:0);
     }
   }
@@ -505,9 +507,15 @@ static inline void rgb2uyvy (guchar r0, guchar g0, guchar b0, guchar r1, guchar 
   uyvy->y0=a<min_Y?min_Y:a;
   if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) a=max_Y;
   uyvy->y1=a<min_Y?min_Y:a;
-  if ((c=(((a=((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS)-128)+(b=((Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS)-128))-((a*b)>>8))+128)>max_UV) c=max_UV;
+
+  a=((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS)-128;
+  b=((Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS)-128;
+  if ((c=a+b-((a*b)>>8)+128)>max_UV) c=max_UV;
   uyvy->v0=c<min_UV?min_UV:c;
-  if ((c=(((a=((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS)-128)+(b=((Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS)-128))-((a*b)>>8))+128)>max_UV) c=max_UV;
+
+  a=((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS)-128;
+  b=((Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS)-128;
+  if ((c=a+b-((a*b)>>8)+128)>max_UV) c=max_UV;
   uyvy->u0=c<min_UV?min_UV:c;
 }
 
@@ -517,9 +525,15 @@ static inline void rgb2yuyv (guchar r0, guchar g0, guchar b0, guchar r1, guchar 
   yuyv->y0=a<min_Y?min_Y:a;
   if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) a=max_Y;
   yuyv->y1=a<min_Y?min_Y:a;
-  if ((c=(((a=((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS)-128)+(b=((Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS)-128))-((a*b)>>8))+128)>max_UV) c=max_UV;
+
+  a=((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS)-128;
+  b=((Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS)-128;
+  if ((c=a+b-((a*b)>>8)+128)>max_UV) c=max_UV;
   yuyv->v0=c<min_UV?min_UV:c;
-  if ((c=(((a=((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS)-128)+(b=((Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS)-128))-((a*b)>>8))+128)>max_UV) c=max_UV;
+
+  a=((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS)-128;
+  b=((Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS)-128;
+  if ((c=a+b-((a*b)>>8)+128)>max_UV) c=max_UV;
   yuyv->u0=c<min_UV?min_UV:c;
 }
 

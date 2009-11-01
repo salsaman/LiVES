@@ -420,18 +420,21 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     old_volume=mainw->volume;
   }
 
+
   while (nbytes>0) {
     if (nbytes<xbytes) xbytes=nbytes;
-      
+    
     if (!from_memory) {
-      if (xbytes/pulsed->out_achans/(pulsed->out_asamps>>3)<=numFramesToWrite&&offs==0) buffer=pulsed->sound_buffer;
+      if (xbytes/pulsed->out_achans/(pulsed->out_asamps>>3)<=numFramesToWrite&&offs==0) {
+	buffer=pulsed->sound_buffer;
+      }
       else {
 	buffer=g_malloc(xbytes);
 	w_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
 	offs+=xbytes;
 	needs_free=TRUE;
       }
-      pa_stream_write(pulsed->pstream,buffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
+      pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:pulse_buff_free,0,PA_SEEK_RELATIVE);
     }
     else {
       if (pulsed->read_abuf>-1&&!pulsed->mute) {
@@ -720,7 +723,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     // set write callback
     pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process,pdriver);
-
   }
   else {
     pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,0);

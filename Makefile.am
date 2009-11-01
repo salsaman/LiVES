@@ -94,6 +94,8 @@ uninstall-local:
 
 dist-hook:
 	$(top_srcdir)/po/update_with_plugins.sh dist $(PACKAGE) $(prefix)
+	rm -rf $(distdir)/po/*.gmo
+	rm -rf $(distdir)/*~
 
 DISTCLEANFILES = intltool-extract intltool-merge intltool-update po/POTFILES_PLUGINS
 

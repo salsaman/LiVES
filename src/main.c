@@ -1079,8 +1079,8 @@ static void lives_init(_ign_opts *ign_opts) {
 	    mainw->jackd->play_when_stopped=(prefs->jack_opts&JACK_OPTS_NOPLAY_WHEN_PAUSED)?FALSE:TRUE;
 	  }
 	}
-      }
 #endif
+      }
 
 
 #ifdef HAVE_PULSE_AUDIO

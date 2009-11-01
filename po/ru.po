@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-10-27 12:28-0300\n"
+"POT-Creation-Date: 2009-11-01 04:45-0300\n"
 "PO-Revision-Date: 2009-09-27 16:12+0000\n"
 "Last-Translator: aks-id <aks-id@yandex.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -7503,23 +7503,23 @@ msgstr ""
 msgid "JACK server started\n"
 msgstr ""
 
-#: src/jack.c:711 src/jack.c:792
+#: src/jack.c:713 src/jack.c:794
 msgid "Unable to connect to JACK server\n"
 msgstr ""
 
-#: src/jack.c:953
+#: src/jack.c:955
 msgid "Started jack audio subsystem.\n"
 msgstr ""
 
-#: src/jack.c:1059
+#: src/jack.c:1061
 msgid "Started jack audio reader.\n"
 msgstr ""
 
-#: src/colourspace.c:774
+#: src/colourspace.c:788
 msgid "unclamped"
 msgstr ""
 
-#: src/colourspace.c:775
+#: src/colourspace.c:789
 msgid "clamped"
 msgstr ""
 
@@ -8020,12 +8020,14 @@ msgid "Charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "Checkerboard"
-msgstr ""
+msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "Checkerboarding"
-msgstr ""
+msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
@@ -8704,8 +8706,9 @@ msgid "_Frames"
 msgstr "Кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "_Сохранить макет"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
@@ -9178,12 +9181,14 @@ msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "transition_bwthresh"
-msgstr ""
+msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "transition_checkerboard"
-msgstr ""
+msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
@@ -9191,8 +9196,9 @@ msgid "transition_fade2"
 msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "transition_splice"
-msgstr ""
+msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy

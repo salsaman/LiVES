@@ -121,7 +121,7 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
 
   float bf,bfneg;
 
-  int xx,yy,ihwidth,ihheight=height>>1;
+  int xx=0,yy=0,ihwidth,ihheight=height>>1;
 
   float maxradsq=0.,xxf,yyf;
 
@@ -140,7 +140,11 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
   bf=weed_get_double_value(in_param,"value",&error);
   bfneg=1.f-bf;
 
-  if (type==2) sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
+  if (type==3) sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
+  else if (type==2) {
+    xx=(int)(hheight*bf+.5)*irowstride1;
+    yy=(int)(hwidth/(float)psize*bf+.5)*psize;
+  }
 
   for (;src1<end;src1+=irowstride1) {
     for (j=0;j<width;j+=psize) {
@@ -181,11 +185,20 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
 	}
 	else weed_memcpy(&dst[j],&src2[j],psize);
 	break;
-
       case 2:
+	// four way split
+	if (abs(i-hheight)/hheight<bf||abs(j-hwidth)/hwidth<bf||bf==1.f) {
+	  weed_memcpy(&dst[j],&src2[j],psize);
+	}
+	else {
+	  weed_memcpy(&dst[j],&src1[j+(j>ihwidth?-yy:yy)+(i>ihheight?-xx:xx)],psize);
+	}
+	break;
+      case 3:
 	// dissolve
 	if (sdata->mask[(i*width+j)/psize]<bf) weed_memcpy(&dst[j],&src2[j],psize);
 	else if (!inplace) weed_memcpy(&dst[j],&src1[j],psize);
+	break;
       }
 
     }
@@ -206,8 +219,12 @@ int irisc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(1,inst,timestamp);
 }
 
-int dissolve_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int fourw_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(2,inst,timestamp);
+}
+
+int dissolve_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+  return common_process(3,inst,timestamp);
 }
 
 
@@ -230,7 +247,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
 
-    weed_set_int_value(in_chantmpls[0],"flags",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
+    weed_set_int_value(out_chantmpls[0],"flags",0);
+
+    filter_class=weed_filter_class_init("4 way split","salsaman",1,WEED_FILTER_HINT_IS_STATELESS,NULL,fourw_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
+    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+
+
+    weed_set_int_value(out_chantmpls[0],"flags",WEED_CHANNEL_CAN_DO_INPLACE|WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
     
     filter_class=weed_filter_class_init("dissolve","salsaman",1,WEED_FILTER_HINT_IS_STATELESS,dissolve_init,dissolve_process,dissolve_deinit,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);

@@ -689,7 +689,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_battr.maxlength=(uint32_t)-1;
   pa_battr.minreq=(uint32_t)-1;
   pa_battr.tlength=2048;
-  pa_battr.prebuf=(uint32_t)-1;
+  pa_battr.prebuf=0;
 
   if (pulse_server_rate==0) {
     pa_op=pa_context_get_server_info(pdriver->con,pulse_server_cb,NULL);

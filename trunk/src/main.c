@@ -1085,6 +1085,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #ifdef HAVE_PULSE_AUDIO
 	if (prefs->audio_player==AUD_PLAYER_PULSE) {
+	  g_print("pt ab\n");
 	  splash_msg(_("Starting pulse audio server..."),.8);
 
 	  if (!lives_pulse_init(prefs->startup_phase)) {
@@ -1840,13 +1841,15 @@ int main (int argc, char *argv[]) {
 	  }
 	  if (!strcmp(buff,"jack")) {
 #ifdef ENABLE_JACK
-	    switch_aud_to_jack();
+	    prefs->audio_player=AUD_PLAYER_JACK;
+	    set_pref("audio_player","jack");
 	    apl_valid=TRUE;
 #endif
 	  }
 	  if (!strcmp(buff,"pulse")) {
 #ifdef HAVE_PULSE_AUDIO
-	    switch_aud_to_pulse();
+	    prefs->audio_player=AUD_PLAYER_PULSE;
+	    set_pref("audio_player","pulse");
 	    apl_valid=TRUE;
 #endif
 	  }

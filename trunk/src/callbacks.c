@@ -7275,7 +7275,7 @@ void
 on_slower_pressed (GtkButton *button,
 		   gpointer user_data)
 {
-  gdouble change,new_fps;
+  gdouble change=1.,new_fps;
 
   gint type=0;
 
@@ -7284,6 +7284,7 @@ on_slower_pressed (GtkButton *button,
   if (user_data!=NULL) {
     type=GPOINTER_TO_INT(user_data);
     if (type==2) sfile=mainw->files[mainw->blend_file];
+    change=0.1;
   }
 
   if (mainw->playing_file==-1||mainw->internal_messaging) return;
@@ -7298,9 +7299,9 @@ on_slower_pressed (GtkButton *button,
   if (mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_FPS)) return;
   if (sfile->next_event!=NULL) return;
 
-#define PB_CHANGE_RATE .2
+#define PB_CHANGE_RATE .005
 
-  change=PB_CHANGE_RATE*sfile->pb_fps/10.;
+  change*=PB_CHANGE_RATE*sfile->pb_fps;
 
   if (sfile->pb_fps==0.) return;
   if (sfile->pb_fps>0.) {
@@ -7323,7 +7324,7 @@ void
 on_faster_pressed (GtkButton *button,
 		   gpointer user_data)
 {
-  gdouble change;
+  gdouble change=1.;
   gint type=0;
 
   file *sfile=cfile;
@@ -7331,6 +7332,7 @@ on_faster_pressed (GtkButton *button,
   if (user_data!=NULL) {
     type=GPOINTER_TO_INT(user_data);
     if (type==2) sfile=mainw->files[mainw->blend_file];
+    change=0.1;
   }
 
   if (mainw->playing_file==-1||mainw->internal_messaging) return;
@@ -7349,7 +7351,7 @@ on_faster_pressed (GtkButton *button,
   if (mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_FPS)) return;
   if (sfile->next_event!=NULL) return;
 
-  change=PB_CHANGE_RATE*(sfile->pb_fps==0.?1.:sfile->pb_fps)/10.;
+  change=PB_CHANGE_RATE*(sfile->pb_fps==0.?1.:sfile->pb_fps);
 
   if (sfile->pb_fps>=0.) {
     if (sfile->pb_fps==FPS_MAX) return;
@@ -7370,7 +7372,7 @@ on_faster_pressed (GtkButton *button,
 
 
 //TODO - make pref
-#define CHANGE_SPEED (cfile->pb_fps/KEY_RPT_INTERVAL*4.)
+#define CHANGE_SPEED (cfile->pb_fps*(gdouble)KEY_RPT_INTERVAL/100.)
 void
 on_back_pressed (GtkButton *button,
 		   gpointer user_data)
@@ -7379,7 +7381,7 @@ on_back_pressed (GtkButton *button,
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
 
-  mainw->deltaticks-=(gint64)(CHANGE_SPEED*mainw->period);
+  mainw->deltaticks-=(gint64)(CHANGE_SPEED*3*mainw->period);
   mainw->scratch=SCRATCH_BACK;
 
 #ifdef ENABLE_JACK
@@ -7408,7 +7410,7 @@ on_forward_pressed (GtkButton *button,
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
 
-  mainw->deltaticks+=(gint64)(CHANGE_SPEED/2.*mainw->period);
+  mainw->deltaticks+=(gint64)(CHANGE_SPEED*mainw->period);
   mainw->scratch=SCRATCH_FWD;
 
 #ifdef ENABLE_JACK

@@ -15,16 +15,6 @@ WEED_SO_VERSION = 0:1:0
 
 LIBS =
 
-if IS_DARWIN
-extra_ldflags = 
-
-extra_cflags = 
-else
-extra_ldflags = -fPIC -DPIC
-
-extra_cflags = -fPIC -DPIC
-endif
-
 lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la libweed-plugin-utils.la
 
 libweed_la_SOURCES = weed.c
@@ -41,21 +31,21 @@ libweedincludedir = $(includedir)/weed
 
 libweed_ladir = $(libdir)/weed
 
-libweed_la_CFLAGS = -O3 $(extra_cflags)
+libweed_la_CFLAGS = -O3
 
-libweed_la_LDFLAGS = -O3 $(extra_ldflags) -version-info $(WEED_SO_VERSION)
+libweed_la_LDFLAGS = -O3 -version-info $(WEED_SO_VERSION)
 
-libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ -O3 $(extra_cflags)
+libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ -O3
 
-libweed_slice_la_LDFLAGS = -O3 @GLIB_LIBS@ $(extra_ldflags) -version-info $(WEED_SO_VERSION)
+libweed_slice_la_LDFLAGS = -O3 @GLIB_LIBS@ -version-info $(WEED_SO_VERSION)
 
-libweed_utils_la_CFLAGS = -O3 $(extra_cflags)
+libweed_utils_la_CFLAGS = -O3
 
-libweed_utils_la_LDFLAGS = -O3 $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static
+libweed_utils_la_LDFLAGS = -O3 -version-info $(WEED_SO_VERSION) -static
 
-libweed_plugin_utils_la_CFLAGS = -O3 $(extra_cflags)
+libweed_plugin_utils_la_CFLAGS = -O3
 
-libweed_plugin_utils_la_LDFLAGS = -O3 $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static
+libweed_plugin_utils_la_LDFLAGS = -O3 -version-info $(WEED_SO_VERSION) -static
 
 
 

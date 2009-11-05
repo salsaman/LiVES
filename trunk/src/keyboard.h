@@ -56,8 +56,7 @@ gboolean sepwin_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gp
 gboolean fade_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
 
-// key rpt (millisecs) for kb rpt, should be << FPS_MAX
-#define KEY_RPT_INTERVAL 40
+#define KEY_RPT_INTERVAL 4
 
 
 /* default MIDI checks per keyboard cycle (i.e. normally x checks per 4 ms - raw MIDI only) */

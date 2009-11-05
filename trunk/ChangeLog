@@ -1,5 +1,6 @@
 Version 1.1.6
 -------------
+Make keyboard more responsive in fs mode.
 Fix hang/crash in pulse audio player with pa 0.9.19.
 Fix -aplayer startup opts (regression).
 Fix warnings from gcc 4.4 *

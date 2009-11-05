@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-11-01 04:45-0300\n"
+"POT-Creation-Date: 2009-11-04 12:26-0300\n"
 "PO-Revision-Date: 2009-10-01 22:17+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -534,37 +534,37 @@ msgstr ""
 msgid "Autoloading set %s..."
 msgstr "Autocaricamento del set %s in corso..."
 
-#: src/main.c:1854
+#: src/main.c:1856
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Lettore audio %s non valido\n"
 
-#: src/main.c:1926
+#: src/main.c:1928
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Senza titolo%d> %dx%d : %d frame %d bpp %.3f fps"
 
-#: src/main.c:1930
+#: src/main.c:1932
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? frame ??? bpp %.3f fps"
 
-#: src/main.c:1933
+#: src/main.c:1935
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d frame %d bpp %.3f fps"
 
-#: src/main.c:1939
+#: src/main.c:1941
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Nessun File>"
 
-#: src/main.c:3056 src/main.c:3057 src/gui.c:1859 src/gui.c:2823
+#: src/main.c:3058 src/main.c:3059 src/gui.c:1859 src/gui.c:2823
 #: src/saveplay.c:1315
 msgid "Play"
 msgstr "Riproduci"
 
-#: src/main.c:3409
+#: src/main.c:3411
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -572,35 +572,35 @@ msgstr ""
 "LiVES non è stato in grado di catturare questa immagine\n"
 "\n"
 
-#: src/main.c:3487
+#: src/main.c:3489
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Chiuso il file %s\n"
 
-#: src/main.c:3603 src/gui.c:502 src/utils.c:2155 src/utils.c:2181
+#: src/main.c:3605 src/gui.c:502 src/utils.c:2154 src/utils.c:2180
 #: src/saveplay.c:2238 src/multitrack.c:2887 src/multitrack.c:3680
 msgid "_Undo"
 msgstr "_Annulla"
 
-#: src/main.c:3604 src/gui.c:515 src/utils.c:2156 src/utils.c:2182
+#: src/main.c:3606 src/gui.c:515 src/utils.c:2155 src/utils.c:2181
 #: src/saveplay.c:2239 src/multitrack.c:2908 src/multitrack.c:3699
 msgid "_Redo"
 msgstr "_Ripeti"
 
-#: src/main.c:3628 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
+#: src/main.c:3630 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
 #: src/resample.c:1699
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:3629 src/interface.c:647 src/gui.c:2034
+#: src/main.c:3631 src/interface.c:647 src/gui.c:2034
 msgid "Left Audio"
 msgstr "Audio Sinistro"
 
-#: src/main.c:3630 src/gui.c:2052
+#: src/main.c:3632 src/gui.c:2052
 msgid "Right Audio"
 msgstr "Audio Destro"
 
-#: src/main.c:3670
+#: src/main.c:3672
 msgid ""
 "\n"
 "\n"
@@ -3260,15 +3260,15 @@ msgstr "Audio Destro [apertura in corso...]"
 msgid "Right Audio [%.2f sec]"
 msgstr "Audio Destro [%.2f secondi]"
 
-#: src/utils.c:1478
+#: src/utils.c:1477
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVES non può passare a mplayer mentre i clip si stanno caricando."
 
-#: src/utils.c:1648
+#: src/utils.c:1647
 msgid "Cleaning up clip"
 msgstr "Pulizia del clip in corso"
 
-#: src/utils.c:1791
+#: src/utils.c:1790
 #, c-format
 msgid ""
 "\n"
@@ -3283,25 +3283,25 @@ msgstr ""
 "\n"
 "Sovrascrivere ?\n"
 
-#: src/utils.c:2148 src/utils.c:2174 src/multitrack.c:2880
+#: src/utils.c:2147 src/utils.c:2173 src/multitrack.c:2880
 #, c-format
 msgid "_Undo %s"
 msgstr "_Annulla %s"
 
-#: src/utils.c:2149 src/utils.c:2175 src/multitrack.c:2902
+#: src/utils.c:2148 src/utils.c:2174 src/multitrack.c:2902
 #, c-format
 msgid "_Redo %s"
 msgstr "_Rifai %s"
 
-#: src/utils.c:2200
+#: src/utils.c:2199
 msgid "-------------Selection------------"
 msgstr "-------------Selezione------------"
 
-#: src/utils.c:2205
+#: src/utils.c:2204
 msgid " sec ] ----------Selection---------- [ "
 msgstr " secondi ] ----------Selezione---------- [ "
 
-#: src/utils.c:2205
+#: src/utils.c:2204
 msgid " frames ] ----------"
 msgstr " frame ] ----------"
 

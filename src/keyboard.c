@@ -29,8 +29,8 @@ key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data) {
 
 gboolean 
 plugin_poll_keyboard (gpointer data) {
-  static gint osc_loop_count=0;
-
+  static int last_kb_time=0,current_kb_time;
+  static int loop_count=0;
   int i;
   // this is a function which should be called periodically during playback.
   // If a video playback plugin has control of the keyboard 
@@ -46,18 +46,20 @@ plugin_poll_keyboard (gpointer data) {
   gboolean gotone;
 #endif
 
-  if (osc_loop_count++>=prefs->osc_inv_latency-1) {
-    osc_loop_count=0;
-    if (mainw->ext_keyboard) {
-      //let plugin call pl_key_function itself, with any keycodes it has received
-      if (mainw->vpp->send_keycodes!=NULL) (*mainw->vpp->send_keycodes)(pl_key_function);
-    }
-    
-    // we also auto-repeat our cached keys
-    if (cached_key) {
-      gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key,cached_mod);
-    }
+  if (mainw->ext_keyboard) {
+    //let plugin call pl_key_function itself, with any keycodes it has received
+    if (mainw->vpp->send_keycodes!=NULL) (*mainw->vpp->send_keycodes)(pl_key_function);
   }
+  
+  current_kb_time=mainw->currticks*(1000/U_SEC_RATIO);
+
+  // we also auto-repeat our cached keys
+  if (cached_key&&current_kb_time-last_kb_time>KEY_RPT_INTERVAL*10) {
+    last_kb_time=current_kb_time;
+    loop_count=0;
+    gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key,cached_mod);
+  }
+
 
   // if we have OSC we will poll it here, as we seem to only be able to run 1 gtk_timeout 
   // at a time

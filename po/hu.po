@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-11-01 04:45-0300\n"
+"POT-Creation-Date: 2009-11-04 12:26-0300\n"
 "PO-Revision-Date: 2009-10-11 11:39+0000\n"
 "Last-Translator: Németh Gábor II. <Unknown>\n"
 "Language-Team: hungarian <mypclinuxos.com>\n"
@@ -530,37 +530,37 @@ msgstr ""
 msgid "Autoloading set %s..."
 msgstr "Az Automataindítás %s"
 
-#: src/main.c:1854
+#: src/main.c:1856
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Érvénytelen zene lejátszó %s\n"
 
-#: src/main.c:1926
+#: src/main.c:1928
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Névtelen%d> %dx%d : %d képkockák %d bpp %.3f fps"
 
-#: src/main.c:1930
+#: src/main.c:1932
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? képkocka ??? bpp %.3f fps"
 
-#: src/main.c:1933
+#: src/main.c:1935
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d képkocka %d bpp %.3f fps"
 
-#: src/main.c:1939
+#: src/main.c:1941
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <No File>"
 
-#: src/main.c:3056 src/main.c:3057 src/gui.c:1859 src/gui.c:2823
+#: src/main.c:3058 src/main.c:3059 src/gui.c:1859 src/gui.c:2823
 #: src/saveplay.c:1315
 msgid "Play"
 msgstr "Lejátszás"
 
-#: src/main.c:3409
+#: src/main.c:3411
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -568,35 +568,35 @@ msgstr ""
 "LiVES nem tudja rögzíteni ezt a képet\n"
 "\n"
 
-#: src/main.c:3487
+#: src/main.c:3489
 #, c-format
 msgid "Closed file %s\n"
 msgstr "%s fájl bezárva\n"
 
-#: src/main.c:3603 src/gui.c:502 src/utils.c:2155 src/utils.c:2181
+#: src/main.c:3605 src/gui.c:502 src/utils.c:2154 src/utils.c:2180
 #: src/saveplay.c:2238 src/multitrack.c:2887 src/multitrack.c:3680
 msgid "_Undo"
 msgstr "_Visszavonás"
 
-#: src/main.c:3604 src/gui.c:515 src/utils.c:2156 src/utils.c:2182
+#: src/main.c:3606 src/gui.c:515 src/utils.c:2155 src/utils.c:2181
 #: src/saveplay.c:2239 src/multitrack.c:2908 src/multitrack.c:3699
 msgid "_Redo"
 msgstr "Új_ra"
 
-#: src/main.c:3628 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
+#: src/main.c:3630 src/interface.c:628 src/gui.c:2015 src/preferences.c:1423
 #: src/resample.c:1699
 msgid "Video"
 msgstr "Videó"
 
-#: src/main.c:3629 src/interface.c:647 src/gui.c:2034
+#: src/main.c:3631 src/interface.c:647 src/gui.c:2034
 msgid "Left Audio"
 msgstr "Bal Hang"
 
-#: src/main.c:3630 src/gui.c:2052
+#: src/main.c:3632 src/gui.c:2052
 msgid "Right Audio"
 msgstr "Jobb Hang"
 
-#: src/main.c:3670
+#: src/main.c:3672
 msgid ""
 "\n"
 "\n"
@@ -3206,16 +3206,16 @@ msgstr "Jobb Hang [megnyitás...]"
 msgid "Right Audio [%.2f sec]"
 msgstr "Jobb Hang [%.2f másodperc]"
 
-#: src/utils.c:1478
+#: src/utils.c:1477
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr ""
 "LiVES nem képes átváltani az mplayerre, amíg a klippek be vannak töltve."
 
-#: src/utils.c:1648
+#: src/utils.c:1647
 msgid "Cleaning up clip"
 msgstr "klip kipucolása"
 
-#: src/utils.c:1791
+#: src/utils.c:1790
 #, c-format
 msgid ""
 "\n"
@@ -3230,25 +3230,25 @@ msgstr ""
 "\n"
 "Felülírod?\n"
 
-#: src/utils.c:2148 src/utils.c:2174 src/multitrack.c:2880
+#: src/utils.c:2147 src/utils.c:2173 src/multitrack.c:2880
 #, c-format
 msgid "_Undo %s"
 msgstr "_%s visszavonása"
 
-#: src/utils.c:2149 src/utils.c:2175 src/multitrack.c:2902
+#: src/utils.c:2148 src/utils.c:2174 src/multitrack.c:2902
 #, c-format
 msgid "_Redo %s"
 msgstr "\"%s\" új_ra"
 
-#: src/utils.c:2200
+#: src/utils.c:2199
 msgid "-------------Selection------------"
 msgstr "-------------Kijelölés-------------"
 
-#: src/utils.c:2205
+#: src/utils.c:2204
 msgid " sec ] ----------Selection---------- [ "
 msgstr " mp ] ----------Kijelölés----------- [ "
 
-#: src/utils.c:2205
+#: src/utils.c:2204
 msgid " frames ] ----------"
 msgstr " képkockák ] ----------"
 

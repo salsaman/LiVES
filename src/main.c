@@ -783,8 +783,6 @@ static void lives_init(_ign_opts *ign_opts) {
     
     prefs->render_audio=TRUE;
 
-    prefs->osc_inv_latency=10;
-
     prefs->midi_check_rate=get_int_pref("midi_check_rate");
     if (prefs->midi_check_rate==0) prefs->midi_check_rate=DEF_MIDI_CHECK_RATE;
 

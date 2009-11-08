@@ -1405,9 +1405,20 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   GtkWidget *vbox3;
   process *procw=(process*)(g_malloc(sizeof(process)));
   gchar tmp_label[256];
+  gboolean pthread_islocked=TRUE;
 
   // mutex lock
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  do {
+    if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
+      pthread_islocked=FALSE;
+      break;
+    }
+    sched_yield();
+    g_usleep(prefs->sleep_time);
+  } while (pthread_mutex_trylock(&mainw->gtk_mutex));
+
+  if (!pthread_islocked) return; // parent process finished already
+
   procw->processing = gtk_dialog_new ();
   gtk_container_set_border_width (GTK_CONTAINER (procw->processing), 10);
   gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
@@ -1475,9 +1486,19 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
   while (!mainw->is_ready) {
     pthread_mutex_unlock(&mainw->gtk_mutex);
-    sched_yield();
-    g_usleep(prefs->sleep_time);
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    pthread_islocked=FALSE;
+    do {
+      if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) break;
+      sched_yield();
+      g_usleep(prefs->sleep_time);
+    } while (pthread_mutex_trylock(&mainw->gtk_mutex));
+    pthread_islocked=TRUE;
+  }
+
+  if (!pthread_islocked) {
+    gtk_widget_destroy(procw->processing);
+    g_free(procw);
+    return;
   }
 
   while (g_main_context_iteration(NULL,FALSE));
@@ -1490,16 +1511,18 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     while (g_main_context_iteration(NULL,FALSE));
 
     pthread_mutex_unlock(&mainw->gtk_mutex);
+    pthread_islocked=FALSE;
     do {
       if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) break;
       sched_yield();
       g_usleep(prefs->sleep_time);
     } while (pthread_mutex_trylock(&mainw->gtk_mutex));
+    pthread_islocked=TRUE;
   }
 
   gtk_widget_destroy(procw->processing);
   while (g_main_context_iteration(NULL,FALSE));
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  if (pthread_islocked) pthread_mutex_unlock(&mainw->gtk_mutex);
 
   g_free(procw);
 }

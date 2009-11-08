@@ -207,6 +207,13 @@ struct _mt {
   GtkWidget *fx_params_label;
   GtkWidget *amixer_button;
   GtkWidget *view_sel_events;
+  GtkWidget *adjust_start_end;
+  GtkWidget *in_eventbox;
+  GtkWidget *out_eventbox;
+  GtkWidget *start_in_label;
+  GtkWidget *end_out_label;
+  GtkObject *spinbutton_in_adj;
+  GtkObject *spinbutton_out_adj;
 
   GdkCursor *cursor;
 
@@ -440,6 +447,9 @@ struct _mt {
   gboolean has_audio_file;
 
   guint idlefunc;
+
+  GList *clip_labels;
+
 };  // lives_mt
 
 
@@ -558,10 +568,12 @@ void multitrack_end_cb (GtkMenuItem *, gpointer mt);
 void delete_block_cb (GtkMenuItem *, gpointer mt);
 void selblock_cb (GtkMenuItem *, gpointer mt);
 void list_fx_here_cb (GtkMenuItem *, gpointer mt);
+void edit_start_end_cb (GtkMenuItem *menuitem, gpointer user_data);
 
 //// menuitem callbacks
 void on_add_video_track_activate (GtkMenuItem *, gpointer mt);
 void multitrack_insert (GtkMenuItem *, gpointer mt);
+void multitrack_adj_start_end (GtkMenuItem *, gpointer mt);
 void multitrack_audio_insert (GtkMenuItem *, gpointer mt);
 void multitrack_view_events (GtkMenuItem *, gpointer mt);
 void multitrack_view_sel_events (GtkMenuItem *, gpointer mt);

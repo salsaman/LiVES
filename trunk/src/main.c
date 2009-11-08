@@ -57,6 +57,7 @@ static gboolean upgrade_error=FALSE;
 static gchar start_file[256];
 static gdouble start=0.;
 static gint end=0;
+static gboolean debug_crashes=FALSE;
 
 static gboolean theme_expected;
 
@@ -79,15 +80,21 @@ void catch_sigint(int signum) {
       if (signum==0||signum==SIGINT||signum==SIGSEGV) {
 	if (signum==SIGSEGV) {
 	  signal (SIGSEGV, SIG_DFL);
-	  g_printerr("%s",_("\nUnfortunately LiVES crashed.\nPlease report this bug at http://www.sourceforge.net/projects/lives/\nThanks.\nRecovery should be possible if you restart LiVES.\n"));
-	  g_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, the LiVES version (" LiVES_VERSION ")\n"));
-	  g_printerr("%s",_("and if possible obtain a backtrace using gdb.\n\n\n\n"));
+	  g_printerr("%s",_("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\nThanks. Recovery should be possible if you restart LiVES.\n"));
+	  g_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version (" LiVES_VERSION ")\n"));
+
+	  if (capable->has_gdb) {
+	    if (debug_crashes) g_printerr("%s",_("and any information shown below:\n\n"));
+	    else g_printerr("%s","Please try running LiVES with the -debug option to collect more information.\n\n");
+	  }
+	  else {
+	    g_printerr("%s",_("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
+	  }
 	  mainw->leave_recovery=TRUE;
 	}
-	//#define DEBUG_CRASHES
-#ifdef DEBUG_CRASHES
-	g_on_error_query(NULL);
-#endif
+	if (debug_crashes) {
+	  g_on_error_stack_trace(capable->myname_full);
+	}
 
 	if (mainw->was_set) {
 	  g_printerr ("%s",_("Preserving set.\n"));
@@ -1329,6 +1336,7 @@ capability *get_capabilities (void) {
   capable->has_dvgrab=FALSE;
   capable->has_cdda2wav=FALSE;
   capable->has_jackd=FALSE;
+  capable->has_gdb=FALSE;
   capable->has_pulse_audio=FALSE;
   capable->has_xwininfo=FALSE;
   capable->has_midistartstop=FALSE;
@@ -1444,6 +1452,9 @@ capability *get_capabilities (void) {
   get_location("jackd",string,256);
   if (strlen(string)) capable->has_jackd=TRUE;
 
+  get_location("gdb",string,256);
+  if (strlen(string)) capable->has_gdb=TRUE;
+
   get_location("pulseaudio",string,256);
   if (strlen(string)) capable->has_pulse_audio=TRUE;
 
@@ -1500,6 +1511,7 @@ void print_opthelp(void) {
   g_printerr("%s",_(" or sox\n"));
 #endif
   g_printerr("%s",_("-devicemap <mapname>          : autoload devicemap\n"));
+  g_printerr("%s",_("-debug            : try to debug crashes (requires 'gdb' installed)\n"));
 
   g_printerr("%s","\n");
 }
@@ -1776,6 +1788,7 @@ int main (int argc, char *argv[]) {
 	{"recover", 0, 0, 0},
 	{"norecover", 0, 0, 0},
 	{"nogui", 0, 0, 0},
+	{"debug", 0, 0, 0},
 #ifdef ENABLE_OSC
 	{"oscstart", 1, 0, 0},
 	{"nooscstart", 0, 0, 0},
@@ -1796,6 +1809,11 @@ int main (int argc, char *argv[]) {
 	if (!strcmp(charopt,"norecover")) {
 	  // auto no-recovery
 	  no_recover=TRUE;
+	  continue;
+	}
+	if (!strcmp(charopt,"debug")) {
+	  // debug crashes
+	  debug_crashes=TRUE;
 	  continue;
 	}
 	if (!strcmp(charopt,"recover")) {

@@ -916,6 +916,8 @@ void mt_memory_free(void) {
   
   if (mainw->multitrack->event_list!=NULL) event_list_free(mainw->multitrack->event_list);
   
+  if (mainw->multitrack->undo_mem!=NULL) g_free(mainw->multitrack->undo_mem);
+
   recover_layout_cancelled(NULL,NULL);
 
   pthread_mutex_unlock(&mainw->gtk_mutex);

@@ -435,6 +435,7 @@ typedef struct {
   gboolean has_jackd;
   gboolean has_pulse_audio;
   gboolean has_xwininfo;
+  gboolean has_gdb;
 
   // home directory - default location for config file - locale encoding
   gchar home_dir[256];

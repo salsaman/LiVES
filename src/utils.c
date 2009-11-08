@@ -717,7 +717,6 @@ get_play_times(void) {
 
   if (mainw->playing_file==-1) {
     get_total_time (cfile);
-    //set_main_title (cfile->name,0);
   }
 
   if (!mainw->is_ready) return;

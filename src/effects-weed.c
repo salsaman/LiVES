@@ -267,8 +267,8 @@ gchar *weed_category_to_text(int cat, gboolean plural) {
 
 ////////////////////////////////////////////////////////////////////////
 
-#define MAX_WEED_FILTERS FX_KEYS_MAX
-#define MAX_WEED_INSTANCES FX_KEYS_MAX
+#define MAX_WEED_FILTERS 65536
+#define MAX_WEED_INSTANCES 65536
 
 #define MAX_MODES_PER_KEY 8
 
@@ -2885,7 +2885,7 @@ void weed_load_all (void) {
   g_strfreev(dirs);
   g_free(weed_plugin_path);
 
-  msg=g_strdup_printf(_ ("Succesfully loaded %d Weed filters\n"),num_weed_filters);
+  msg=g_strdup_printf(_ ("Successfully loaded %d Weed filters\n"),num_weed_filters);
   d_print(msg);
   g_free(msg);
 

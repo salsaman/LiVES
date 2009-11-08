@@ -1137,6 +1137,8 @@ void scroll_tracks (lives_mt *mt) {
   gtk_table_set_row_spacings (GTK_TABLE(mt->timeline_table),5);
   gtk_table_set_col_spacings (GTK_TABLE(mt->timeline_table),0);
 
+  if (mt->opts.back_audio_tracks>0&&mt->audio_draws==NULL) mt->opts.back_audio_tracks=0;
+
   if (cfile->achans>0&&mt->opts.back_audio_tracks>0) {
     // show our float audio
     if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
@@ -1628,6 +1630,7 @@ void multitrack_view_clips (GtkMenuItem *menuitem, gpointer user_data) {
 
 void multitrack_view_in_out (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (mt->block_selected==NULL) return;
   polymorph (mt,POLY_IN_OUT);
 }
 
@@ -1773,7 +1776,8 @@ void clip_select (lives_mt *mt, gboolean scroll) {
       gint value=(adj=GTK_RANGE(GTK_SCROLLED_WINDOW(mt->clip_scroll)->hscrollbar)->adjustment)->upper*mt->clip_selected/len;
       if (scroll) gtk_adjustment_clamp_page(adj,value-adj->page_size/2,value+adj->page_size/2);
       gtk_widget_set_state(clipbox->widget,GTK_STATE_SELECTED);
-      mt->file_selected=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(clipbox->widget),"file"));
+      mt->file_selected=i+1;
+      gtk_widget_set_sensitive (mt->adjust_start_end, mainw->files[mt->file_selected]->frames>0);
       if (mt->current_track>-1) {
 	gtk_widget_set_sensitive (mt->insert, mainw->files[mt->file_selected]->frames>0);
 	gtk_widget_set_sensitive (mt->audio_insert, FALSE);
@@ -3470,6 +3474,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->was_undo_redo=FALSE;
 
+  mt->clip_labels=NULL;
+
   if (mainw->multi_opts.set) {
     mt->opts.move_effects=mainw->multi_opts.move_effects;
     mt->opts.fx_auto_preview=mainw->multi_opts.fx_auto_preview;
@@ -3730,6 +3736,15 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   separator = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
   gtk_widget_set_sensitive (separator, FALSE);
+
+  mt->adjust_start_end = gtk_image_menu_item_new_with_mnemonic (_("_Adjust selected clip start/end points"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->adjust_start_end);
+
+  gtk_widget_add_accelerator (mt->adjust_start_end, "activate", mt->accel_group,
+                              GDK_x, GDK_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
+  gtk_widget_set_sensitive (mt->adjust_start_end, FALSE);
+
 
   mt->insert = gtk_image_menu_item_new_with_mnemonic (_("_Insert selected clip"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->insert);
@@ -4653,6 +4668,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   g_signal_connect (GTK_OBJECT (mt->audio_insert), "activate",
 		    G_CALLBACK (multitrack_audio_insert),
 		    (gpointer)mt);
+  g_signal_connect (GTK_OBJECT (mt->adjust_start_end), "activate",
+		    G_CALLBACK (multitrack_adj_start_end),
+		    (gpointer)mt);
   g_signal_connect (GTK_OBJECT (mt->view_events), "activate",
 		    G_CALLBACK (multitrack_view_events),
 		    (gpointer)mt);
@@ -5042,9 +5060,6 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 		    (gpointer)mt);
 
 
-
-
-
   // prepare polymorph box
   mt->poly_box = gtk_vbox_new (FALSE, 0);
   gtk_paned_pack1 (GTK_PANED (mt->hpaned), mt->poly_box, TRUE, FALSE);
@@ -5138,8 +5153,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   vbox = gtk_vbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
 
-  spinbutton_adj = gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
-  mt->spinbutton_in = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1./mt->fps, 2);
+  mt->spinbutton_in_adj = gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
+  mt->spinbutton_in = gtk_spin_button_new (GTK_ADJUSTMENT (mt->spinbutton_in_adj), 1./mt->fps, 2);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_in),TRUE);
   mt->in_image=gtk_image_new();
   gtk_box_pack_start(GTK_BOX(vbox),mt->in_image,FALSE,TRUE,0);
@@ -5150,28 +5165,31 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->checkbutton_start_anchored = gtk_check_button_new ();
   gtk_tooltips_set_tip (mainw->tooltips, mt->checkbutton_start_anchored, _("Anchor the start point to the timeline"), NULL);
-  eventbox=gtk_event_box_new();
-  gtk_tooltips_copy(eventbox,mt->checkbutton_start_anchored);
+  mt->in_eventbox=gtk_event_box_new();
+  gtk_tooltips_copy(mt->in_eventbox,mt->checkbutton_start_anchored);
   label=gtk_label_new_with_mnemonic (_("Anchor _start"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),mt->checkbutton_start_anchored);
 
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+  g_signal_connect (GTK_OBJECT (mt->in_eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    mt->checkbutton_start_anchored);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    gtk_widget_modify_fg(mt->in_eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (palette->style&STYLE_3) gtk_widget_modify_bg(mt->in_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else gtk_widget_modify_bg(mt->in_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (mt->in_hbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (mt->in_hbox), mt->in_eventbox, FALSE, FALSE, 10);
 
-  gtk_box_pack_start (GTK_BOX (hbox), mt->checkbutton_start_anchored, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+
+  hbox = gtk_hbox_new (FALSE, 0);
+
+  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
+  gtk_box_pack_start(GTK_BOX(hbox),mt->checkbutton_start_anchored,TRUE,FALSE,10);
+
+  gtk_container_add (GTK_CONTAINER (mt->in_eventbox), hbox);
   GTK_WIDGET_SET_FLAGS (mt->checkbutton_start_anchored, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   
   mt->spin_in_func=g_signal_connect_after (GTK_OBJECT (mt->spinbutton_in), "value_changed",
@@ -5183,10 +5201,17 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 					    mt);
 
 
+  mt->start_in_label=gtk_label_new(_("Start frame"));
+  gtk_box_pack_start (GTK_BOX (mt->in_hbox), mt->start_in_label, FALSE, FALSE, 10);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(mt->start_in_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
   vbox = gtk_vbox_new (FALSE, 0);
   gtk_box_pack_end(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
-  spinbutton_adj = gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
-  mt->spinbutton_out = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1./mt->fps, 2);
+  mt->spinbutton_out_adj = gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
+  mt->spinbutton_out = gtk_spin_button_new (GTK_ADJUSTMENT (mt->spinbutton_out_adj), 1./mt->fps, 2);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_out),TRUE);
   mt->out_image=gtk_image_new();
   gtk_box_pack_start(GTK_BOX(vbox),mt->out_image,FALSE,TRUE,0);
@@ -5197,28 +5222,31 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->checkbutton_end_anchored = gtk_check_button_new ();
   gtk_tooltips_set_tip (mainw->tooltips, mt->checkbutton_end_anchored, _("Anchor the end point to the timeline"), NULL);
-  eventbox=gtk_event_box_new();
-  gtk_tooltips_copy(eventbox,mt->checkbutton_end_anchored);
+  mt->out_eventbox=gtk_event_box_new();
+  gtk_tooltips_copy(mt->out_eventbox,mt->checkbutton_end_anchored);
   label=gtk_label_new_with_mnemonic (_("Anchor _end"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),mt->checkbutton_end_anchored);
 
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+  g_signal_connect (GTK_OBJECT (mt->out_eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    mt->checkbutton_end_anchored);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    gtk_widget_modify_fg(mt->out_eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (palette->style&STYLE_3) gtk_widget_modify_bg(mt->out_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else gtk_widget_modify_bg(mt->out_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (mt->out_hbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (mt->out_hbox), mt->out_eventbox, FALSE, FALSE, 10);
 
-  gtk_box_pack_start (GTK_BOX (hbox), mt->checkbutton_end_anchored, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+  hbox = gtk_hbox_new (FALSE, 0);
+
+  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
+  gtk_box_pack_start(GTK_BOX(hbox),mt->checkbutton_end_anchored,TRUE,FALSE,10);
+
+  gtk_container_add (GTK_CONTAINER (mt->out_eventbox), hbox);
+
   GTK_WIDGET_SET_FLAGS (mt->checkbutton_end_anchored, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
 
   mt->spin_out_func=g_signal_connect_after (GTK_OBJECT (mt->spinbutton_out), "value_changed",
@@ -5228,6 +5256,13 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->check_end_func=g_signal_connect_after (GTK_OBJECT (mt->checkbutton_end_anchored), "toggled",
 					     G_CALLBACK (out_anchor_toggled),
 					     mt);
+
+  mt->end_out_label=gtk_label_new(_("End frame"));
+  gtk_box_pack_start (GTK_BOX (mt->out_hbox), mt->end_out_label, FALSE, FALSE, 10);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(mt->end_out_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
 
   gtk_widget_show_all(mt->in_out_box);
 
@@ -5244,6 +5279,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   }
 
   mt->context_box = gtk_vbox_new (FALSE, 10);
+
   gtk_paned_pack2 (GTK_PANED (mt->hpaned), mt->context_box, TRUE, TRUE);
 
   if (palette->style&STYLE_1) {
@@ -5584,12 +5620,15 @@ gboolean multitrack_delete (lives_mt *mt) {
 
   if (mt->cursor!=NULL) gdk_cursor_unref(mt->cursor);
 
+  if (mt->clip_labels!=NULL) g_list_free(mt->clip_labels);
+
   gtk_widget_show(mainw->scrolledwindow);
   gtk_widget_reparent (mainw->scrolledwindow,mainw->message_box);
 
   if (prefs->show_gui) {
     if (gtk_window_has_toplevel_focus(GTK_WINDOW(mt->window))) transfer_focus=TRUE;
     gtk_widget_show (mainw->LiVES);
+    unblock_expose();
   }
 
   gtk_widget_hide(mt->window);
@@ -5710,7 +5749,9 @@ gboolean multitrack_delete (lives_mt *mt) {
 
   for (i=1;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL) {
-      if (mainw->files[i]->event_list!=NULL) event_list_free(mainw->files[i]->event_list);
+      if (mainw->files[i]->event_list!=NULL) {
+	event_list_free(mainw->files[i]->event_list);
+      }
       mainw->files[i]->event_list=NULL;
     }
   }
@@ -6601,6 +6642,36 @@ fx_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data)
 
 
 
+static void do_clip_context (lives_mt *mt, GdkEventButton *event, file *sfile) {
+  // pop up a context menu when clip is right clicked on
+
+  // unfinished...
+
+  GtkWidget *edit_start_end;
+  GtkWidget *menu=gtk_menu_new();
+
+  if (sfile->frames<1) return;
+
+  gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected clip"));
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+  edit_start_end = gtk_menu_item_new_with_mnemonic (_("_Adjust start and end points"));
+  g_signal_connect (GTK_OBJECT (edit_start_end), "activate",
+		    G_CALLBACK (edit_start_end_cb),
+		    (gpointer)mt);
+
+  gtk_container_add (GTK_CONTAINER (menu), edit_start_end);
+
+  gtk_widget_show_all (menu);
+  gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, event->time);
+
+
+}
+
+
 
 static gboolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data) {
 
@@ -6618,17 +6689,24 @@ static gboolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, g
     return TRUE;
   }
 
+  // note, "clip" is zero based, we need to add 1 to get the lives file number
   mt->clip_selected=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox),"clip"));
   clip_select(mt,FALSE);
+
+  ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
+  file=mt->clip_selected+1;
+  sfile=mainw->files[file];
+
+  if (event->button==3) {
+    do_clip_context(mt,event,sfile);
+    return FALSE;
+  }
 
   // change cursor to block
   if (mt->video_draws==NULL&&mt->audio_draws==NULL) {
     return FALSE;
   }
   else {
-    ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
-    file=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"file"));
-    sfile=mainw->files[file];
     if (sfile->frames>0) {
       if (!mt->opts.ign_ins_sel) {
 	width=(sfile->end-sfile->start+1.)/sfile->fps;
@@ -6761,6 +6839,29 @@ on_clipbox_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data
 }
 
 
+static void set_clip_labels_variable(lives_mt *mt, gint i) {
+  gchar *tmp;
+  GtkLabel *label1,*label2;
+  file *sfile=mainw->files[i+1];
+
+  if (mt->clip_labels==NULL) return;
+
+  i*=2;
+
+  label1=g_list_nth_data(mt->clip_labels,i);
+  label2=g_list_nth_data(mt->clip_labels,++i);
+
+  gtk_label_set_text(label1,(tmp=g_strdup_printf (_("  %d to %d selected  "),sfile->start,sfile->end)));
+  g_free(tmp);
+
+  gtk_label_set_text(label2,(tmp=g_strdup_printf (_("%.2f sec."),(sfile->end-sfile->start+1.)/sfile->fps)));
+  g_free(tmp);
+
+
+}
+
+
+
 void init_clips (lives_mt *mt, gint orig_file, gboolean add) {
   GtkWidget *thumb_image=NULL;
   GtkWidget *vbox, *label;
@@ -6798,7 +6899,7 @@ void init_clips (lives_mt *mt, gint orig_file, gboolean add) {
       g_signal_connect (GTK_OBJECT(eventbox), "enter-notify-event",G_CALLBACK (on_clipbox_enter),(gpointer)mt);
       g_object_set_data(G_OBJECT(eventbox),"clip",GINT_TO_POINTER(i-1)); // clip number to hightlight
       vbox = gtk_vbox_new (FALSE, 10);
-      g_object_set_data (G_OBJECT(eventbox),"file",GINT_TO_POINTER(i)); // LiVES mainw->files[] number 
+
       thumb_image=gtk_image_new();
       gtk_image_set_from_pixbuf(GTK_IMAGE(thumb_image),thumbnail);
       if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
@@ -6825,16 +6926,23 @@ void init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
 	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
-	label=gtk_label_new ((tmp=g_strdup_printf (_("  %d to %d selected  "),mainw->files[i]->start,mainw->files[i]->end)));
-	g_free(tmp);
+
+	label=gtk_label_new ("");
+	mt->clip_labels=g_list_append(mt->clip_labels,label);
+
 	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
 	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
-	label=gtk_label_new ((tmp=g_strdup_printf (_("%.2f sec."),(mainw->files[i]->end-mainw->files[i]->start+1.)/mainw->files[i]->fps)));
-	g_free(tmp);
+
+	label=gtk_label_new ("");
+	mt->clip_labels=g_list_append(mt->clip_labels,label);
+
 	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
 	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
+
+	set_clip_labels_variable(mt,i-1);
+
       }
       else {
 	label=gtk_label_new (g_strdup (_("audio only")));
@@ -6921,6 +7029,8 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     }
   }
 
+  if (prefs->show_gui) while (g_main_context_iteration(NULL,FALSE));
+
   // create new file for rendering to
   renumber_clips();
   orig_file=mainw->current_file;
@@ -6949,11 +7059,14 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   // force out of sep win mode - otherwise we get display problems
   if (mainw->sep_win) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sepwin),!mainw->sep_win);
 
+  if (prefs->show_gui) block_expose();
+  
   multi=multitrack(event_list,orig_file,cfile->fps);
 
   if (mainw->recoverable_layout&&multi->event_list==NULL) {
     multi->clip_selected=orig_file-1;
     multi->file_selected=orig_file;
+    if (prefs->show_gui) unblock_expose();
     return FALSE;
   }
 
@@ -7276,7 +7389,6 @@ void add_context_label (lives_mt *mt, gchar *text) {
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  //gtk_widget_set_size_request(label,mainw->scr_width-mt->play_window_width-gtk_paned_get_position(GTK_PANED(mt->hpaned)),-1);
   gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
   gtk_widget_show (label);
@@ -7360,33 +7472,56 @@ static void set_in_out_spin_ranges(lives_mt *mt, weed_timecode_t start_tc, weed_
 static void update_in_image(lives_mt *mt) {
   GdkPixbuf *pixbuf,*thumb;
   track_rect *block=mt->block_selected;
-  gint track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
-  gint filenum=get_frame_event_clip(block->start_event,track);
-  gint frame_start=calc_frame_from_time(filenum,block->offset_start/U_SEC);
+  gint track;
+  gint filenum;
+  gint frame_start;
   gint width=cfile->hsize;
   gint height=cfile->vsize;
 
+  if (block!=NULL) {
+    track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+    filenum=get_frame_event_clip(block->start_event,track);
+    frame_start=calc_frame_from_time(filenum,block->offset_start/U_SEC);
+  }
+  else {
+    filenum=mt->file_selected;
+    frame_start=mainw->files[filenum]->start;
+  }
+
   if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
-  if (height>mt->poly_box->allocation.height-(block->ordered?mt->spinbutton_in->allocation.height:0)) height=mt->poly_box->allocation.height-(block->ordered?mt->spinbutton_in->allocation.height:0);
+  if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_in->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_in->allocation.height:0);
   thumb=make_thumb(filenum,width,height,frame_start);
   if ((pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(mt->in_image)))!=NULL) gdk_pixbuf_unref(pixbuf);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
+  gdk_pixbuf_unref(thumb);
 }
+
 
 static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
   GdkPixbuf *pixbuf,*thumb;
   track_rect *block=mt->block_selected;
-  gint track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
-  gint filenum=get_frame_event_clip(block->start_event,track);
-  gint frame_end=calc_frame_from_time(filenum,end_tc/U_SEC-1./mt->fps);
+  gint track;
+  gint filenum;
+  gint frame_end;
   gint width=cfile->hsize;
   gint height=cfile->vsize;
   
+  if (block!=NULL) {
+    track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+    filenum=get_frame_event_clip(block->start_event,track);
+    frame_end=calc_frame_from_time(filenum,end_tc/U_SEC-1./mt->fps);
+  }
+  else {
+    filenum=mt->file_selected;
+    frame_end=mainw->files[filenum]->end;
+  }
+
   if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
-  if (height>mt->poly_box->allocation.height-(block->ordered?mt->spinbutton_out->allocation.height:0)) height=mt->poly_box->allocation.height-(block->ordered?mt->spinbutton_out->allocation.height:0);
+  if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_out->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_out->allocation.height:0);
   thumb=make_thumb(filenum,width,height,frame_end);
   if ((pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(mt->out_image)))!=NULL) gdk_pixbuf_unref(pixbuf);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
+  gdk_pixbuf_unref(thumb);
 }
 
 
@@ -7405,10 +7540,10 @@ void
 in_out_start_changed (GtkWidget *widget, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected,*ablock=NULL;
-  gdouble new_start=gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  weed_plant_t *event=block->start_event;
-  weed_timecode_t new_start_tc,orig_start_tc=block->offset_start,offset_end,tl_start;
-  gint track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+  gdouble new_start;
+  weed_plant_t *event;
+  weed_timecode_t new_start_tc,orig_start_tc,offset_end,tl_start;
+  gint track;
   gint filenum;
   weed_plant_t *start_event=NULL,*event_next;
   gboolean was_moved;
@@ -7419,6 +7554,21 @@ in_out_start_changed (GtkWidget *widget, gpointer user_data) {
 
   gboolean start_anchored;
 
+  if (block==NULL) {
+    file *sfile=mainw->files[mt->file_selected];
+    sfile->start=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+    set_clip_labels_variable(mt,mt->clip_selected);
+    update_in_image(mt);
+
+    if (sfile->end<sfile->start) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_out),(gdouble)sfile->start);
+    return;
+  }
+
+  new_start=gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+
+  event=block->start_event;
+  orig_start_tc=block->offset_start;
+  track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
   new_start_tc=q_dbl(new_start,mt->fps);
 
   if (new_start_tc==orig_start_tc||!block->ordered) {
@@ -7613,10 +7763,10 @@ in_out_end_changed (GtkWidget *widget, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected,*ablock=NULL;
   gdouble new_end=gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  gdouble start_val=block->offset_start/U_SEC;
+  gdouble start_val;
   weed_timecode_t offset_end,orig_end_tc;
-  weed_plant_t *event=block->end_event,*prevevent;
-  gint track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+  weed_plant_t *event,*prevevent;
+  gint track;
   gint filenum;
   weed_timecode_t new_end_tc,tl_end;
   weed_plant_t *start_event,*event_next,*init_event,*new_end_event;
@@ -7627,6 +7777,20 @@ in_out_end_changed (GtkWidget *widget, gpointer user_data) {
   double aseek,avel=1.;
 
   gboolean end_anchored;
+
+  if (block==NULL) {
+    file *sfile=mainw->files[mt->file_selected];
+    sfile->end=(int)new_end;
+    set_clip_labels_variable(mt,mt->clip_selected);
+    update_out_image(mt,0);
+
+    if (sfile->end<sfile->start) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_in),(gdouble)sfile->end);
+    return;
+  }
+
+  start_val=block->offset_start/U_SEC;
+  event=block->end_event;
+  track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
 
   tl_end=get_event_timecode(event);
 
@@ -8144,7 +8308,7 @@ void polymorph (lives_mt *mt, gshort poly) {
   gint frame_start,frame_end=0;
   int filenum;
   track_rect *block=mt->block_selected;
-  weed_timecode_t offset_end;
+  weed_timecode_t offset_end=0;
   weed_plant_t *filter,*deinit_event;
   weed_timecode_t tc;
   gdouble fx_start_time,fx_end_time;
@@ -8172,8 +8336,6 @@ void polymorph (lives_mt *mt, gshort poly) {
   gboolean start_anchored,end_anchored;
 
   if (poly==mt->poly_state&&poly!=POLY_EFFECT&&poly!=POLY_FX_LIST) return;
-
-  if (poly==POLY_IN_OUT&&block==NULL) return;
 
   switch (mt->poly_state) {
   case (POLY_CLIPS) :
@@ -8239,7 +8401,7 @@ void polymorph (lives_mt *mt, gshort poly) {
   switch (poly) {
   case (POLY_IN_OUT) :
     mt->init_event=NULL;
-    if (block->ordered) {
+    if (block==NULL||block->ordered) {
       gtk_widget_show(mt->in_hbox);
       gtk_widget_show(mt->out_hbox);
     }
@@ -8248,23 +8410,44 @@ void polymorph (lives_mt *mt, gshort poly) {
       gtk_widget_hide(mt->out_hbox);
     }
 
-    track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+    if (block!=NULL) {
+      track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
 
-    offset_end=block->offset_start+(weed_timecode_t)((gdouble)(track>=0)*U_SEC/mt->fps)+((get_event_timecode(block->end_event)-get_event_timecode(block->start_event))*ABS(avel));
+      offset_end=block->offset_start+(weed_timecode_t)((gdouble)(track>=0)*U_SEC/mt->fps)+((get_event_timecode(block->end_event)-get_event_timecode(block->start_event))*ABS(avel));
 
-    start_anchored=block->start_anchored;
-    end_anchored=block->end_anchored;
+      start_anchored=block->start_anchored;
+      end_anchored=block->end_anchored;
+    }
+    else {
+      track=0;
+
+      start_anchored=end_anchored=FALSE;
+
+      filenum=mt->file_selected;
+
+      frame_start=mainw->files[filenum]->start;
+      frame_end=mainw->files[filenum]->end;
+
+    }
 
     if (track>-1) {
       GtkWidget *oeventbox;
-      secs=GTK_RULER(mt->timeline)->position;
-      if (mt->context_time!=-1.) secs=mt->context_time;
-      if (is_audio_eventbox(mt,block->eventbox)&&(oeventbox=g_object_get_data(G_OBJECT(block->eventbox),"owner"))!=NULL) {
-	// if moving an audio block we move the associated video block first
-	block=get_block_from_time(oeventbox,secs,mt);
+
+      if (block!=NULL) {
+	secs=GTK_RULER(mt->timeline)->position;
+	if (mt->context_time!=-1.) secs=mt->context_time;
+	if (is_audio_eventbox(mt,block->eventbox)&&(oeventbox=g_object_get_data(G_OBJECT(block->eventbox),"owner"))!=NULL) {
+	  // if moving an audio block we move the associated video block first
+	  block=get_block_from_time(oeventbox,secs,mt);
+	}
+	filenum=get_frame_event_clip(block->start_event,track);
+	
+	frame_start=calc_frame_from_time(filenum,block->offset_start/U_SEC);
+	frame_end=calc_frame_from_time(filenum,offset_end/U_SEC-1./mt->fps);
+
       }
+
       gtk_container_set_border_width (GTK_CONTAINER (mt->poly_box), 0);
-      filenum=get_frame_event_clip(block->start_event,track);
       gtk_widget_hide(mt->avel_box);
       gtk_widget_show(mt->in_image);
       gtk_widget_show(mt->out_image);
@@ -8276,11 +8459,8 @@ void polymorph (lives_mt *mt, gshort poly) {
       if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
 
       if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
-      if (height>mt->poly_box->allocation.height-(block->ordered?mainw->spinbutton_start->allocation.height:0)) height=mt->poly_box->allocation.height-(block->ordered?mainw->spinbutton_start->allocation.height:0);
+      if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0);
       
-      frame_start=calc_frame_from_time(filenum,block->offset_start/U_SEC);
-      frame_end=calc_frame_from_time(filenum,offset_end/U_SEC-1./mt->fps);
-
       if (mainw->playing_file==filenum) {
 	mainw->files[filenum]->event_list=mt->event_list;
       }
@@ -8303,8 +8483,14 @@ void polymorph (lives_mt *mt, gshort poly) {
 
     if (avel>0.) {
       g_signal_handler_block (mt->spinbutton_in,mt->spin_in_func);
-      gtk_spin_button_set_range(GTK_SPIN_BUTTON(mt->spinbutton_in),0., offset_end/U_SEC-1./mt->fps);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_in),block->offset_start/U_SEC);
+      if (block!=NULL) {
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(mt->spinbutton_in),0., offset_end/U_SEC-1./mt->fps);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_in),block->offset_start/U_SEC);
+      }
+      else {
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(mt->spinbutton_in),1., mainw->files[filenum]->frames);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_in),mainw->files[filenum]->start);
+      }
       g_signal_handler_unblock (mt->spinbutton_in,mt->spin_in_func);
       g_signal_handler_block (mt->checkbutton_start_anchored,mt->check_start_func);
       g_signal_handler_block (mt->checkbutton_avel_reverse,mt->check_avel_rev_func);
@@ -8339,17 +8525,52 @@ void polymorph (lives_mt *mt, gshort poly) {
     }
     else out_end_range=q_gint64(mainw->files[filenum]->laudio_time*U_SEC,mt->fps)/U_SEC;
 
+    g_signal_handler_block (mt->spinbutton_in,mt->spin_in_func);
+    g_signal_handler_block (mt->spinbutton_out,mt->spin_out_func);
+
+    if (block==NULL) {
+      gtk_widget_hide(mt->checkbutton_start_anchored);
+      gtk_widget_hide(mt->checkbutton_end_anchored);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_in),0);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_out),0);
+      gtk_adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_in_adj),mainw->files[filenum]->start,1.,mainw->files[filenum]->frames,1.,100.,0.);
+      gtk_adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_out_adj),mainw->files[filenum]->end,1.,mainw->files[filenum]->frames,1.,100.,0.);
+      gtk_widget_hide(mt->in_eventbox);
+      gtk_widget_hide(mt->out_eventbox);
+      gtk_widget_show(mt->start_in_label);
+      gtk_widget_show(mt->end_out_label);
+    }
+    else {
+      gtk_widget_show(mt->checkbutton_start_anchored);
+      gtk_widget_show(mt->checkbutton_end_anchored);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_in),2);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_out),2);
+      gtk_adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_in_adj),0.,0.,0.,1./mt->fps,1.,0.);
+      gtk_adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_out_adj),0.,0.,0.,1./mt->fps,1.,0.);
+      gtk_widget_show(mt->in_eventbox);
+      gtk_widget_show(mt->out_eventbox);
+      gtk_widget_hide(mt->start_in_label);
+      gtk_widget_hide(mt->end_out_label);
+    }
+
+    g_signal_handler_unblock (mt->spinbutton_in,mt->spin_in_func);
+    g_signal_handler_unblock (mt->spinbutton_out,mt->spin_out_func);
+
     if (avel>0.) {
-      g_signal_handler_block (mt->spinbutton_out,mt->spin_out_func);
-      gtk_spin_button_set_range(GTK_SPIN_BUTTON(mt->spinbutton_out), block->offset_start/U_SEC+1./mt->fps, out_end_range);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_out),offset_end/U_SEC);
-      g_signal_handler_unblock (mt->spinbutton_out,mt->spin_out_func);
+      if (block!=NULL) {
+	g_signal_handler_block (mt->spinbutton_out,mt->spin_out_func);
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(mt->spinbutton_out), block->offset_start/U_SEC+1./mt->fps, out_end_range);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_out),offset_end/U_SEC);
+	g_signal_handler_unblock (mt->spinbutton_out,mt->spin_out_func);
+	if (!block->start_anchored||!block->end_anchored) {
+	  gtk_widget_set_sensitive(mt->spinbutton_avel,TRUE);
+	  gtk_widget_set_sensitive(mt->avel_scale,TRUE);
+	}
+      }
       gtk_widget_set_sensitive(mt->spinbutton_in,TRUE);
       gtk_widget_set_sensitive(mt->spinbutton_out,TRUE);
-      if (!block->start_anchored||!block->end_anchored) {
-	gtk_widget_set_sensitive(mt->spinbutton_avel,TRUE);
-	gtk_widget_set_sensitive(mt->avel_scale,TRUE);
-      }
+
+      gtk_widget_grab_focus(mt->spinbutton_in);
     }
     else {
       g_signal_handler_block (mt->spinbutton_in,mt->spin_in_func);
@@ -8367,7 +8588,8 @@ void polymorph (lives_mt *mt, gshort poly) {
     g_signal_handler_unblock (mt->checkbutton_end_anchored,mt->check_end_func);
     gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->in_out_box,TRUE,TRUE,0);
 
-    if (mainw->playing_file>-1) mt_desensitise(mt);
+
+    if (block==NULL&&mainw->playing_file>-1) mt_desensitise(mt);
     else mt_sensitise (mt);
 
     break;
@@ -8970,7 +9192,7 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
 #endif
     }
 
-    if (got_track&&!mt->is_rendering&&mt->putative_block!=NULL&&mainw->playing_file==-1&&event->button==1) {
+    if (got_track&&!mt->is_rendering&&mt->putative_block!=NULL&&mainw->playing_file==-1&&event->button==1&&event->time!=dclick_time) {
       weed_timecode_t start_tc;
       mt_desensitise(mt);
 
@@ -9063,21 +9285,25 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
   }
   else {
     if (event->type!=GDK_BUTTON_PRESS) {
+      // this is a double-click
       dclick_time=gdk_event_get_time((GdkEvent *)event);
       select_block(mt);
       mt->putative_block=NULL;
     }
     else {
       // single click, TODO - locate the frame for the track in event_list
+
       if (mainw->playing_file==-1) {
 	mt->fm_edit_event=NULL;
 	mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
       }
 
-      // for some reason, calling mt_tl_move causes any double click to be triggered and then return here
-      // however, this is quite useful as we can skip the next bit
+      // for a double click, gdk normally sends 2 single click events, 
+      // followed by a double click
 
-      // N.B. for a double click, gdk normally sends 2 single click events, followed by a double click
+      // calling mt_tl_move causes any double click to be triggered during
+      // the second single click and then we return here 
+      // however, this is quite useful as we can skip the next bit
 
       if (event->time!=dclick_time) {
 	show_track_info(mt,eventbox,track,timesecs);
@@ -9089,8 +9315,6 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	    clip_select(mt,TRUE);
 	  }
 
-	  //polymorph (mt,POLY_CLIPS);
-	  
 	  if (event->button!=3&&!mt->is_rendering) {
 	    gdouble start_secs,end_secs;
 	    
@@ -9350,6 +9574,12 @@ void insert_here_cb (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   multitrack_insert(NULL,user_data);
+}
+
+void edit_start_end_cb (GtkMenuItem *menuitem, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  if (mt->is_rendering) return;
+  multitrack_adj_start_end(NULL,user_data);
 }
 
 void insert_audio_here_cb (GtkMenuItem *menuitem, gpointer user_data) {
@@ -11901,6 +12131,18 @@ void multitrack_playall (lives_mt *mt) {
   mt->idlefunc=mt_idle_add(mt);
 
 }
+
+
+
+
+
+void multitrack_adj_start_end (GtkMenuItem *menuitem, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  unselect_all(mt);
+  polymorph (mt,POLY_IN_OUT);
+}
+
+
 
 
 

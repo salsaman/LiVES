@@ -3388,7 +3388,6 @@ sub get_file_info {
 	unless ($id_vid_form eq "") {
 	    # this could probably be done better using regexp...
 	    $type=$id_vid_form;
-
 	    if (! -f $file_ident) {return;};
 	    $asamps=`grep AUDIO: $file_ident 2>/dev/null`;
 	    $asamps=(split(" ",$asamps))[5];
@@ -3527,7 +3526,8 @@ sub get_file_info {
    }
 
 
-    if (($hsize*$vsize==0||$count eq "")&&!($type eq "Audio")) {
+    if ($hsize*$vsize==0||$count eq "") {
+	# test even if mplayer thinks it is audio (at least some png files are misread)
 	$name=&mkname(1);
 	unless (-f "$curtmpdir/$name") {
 	    # see if it is image(s)

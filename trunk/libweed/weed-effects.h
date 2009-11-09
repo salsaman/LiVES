@@ -56,11 +56,12 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-  /* API version * 120 */
-#define WEED_API_VERSION 120
+  /* API version * 130 */
+#define WEED_API_VERSION 130
 #define WEED_API_VERSION_100
 #define WEED_API_VERSION_110
 #define WEED_API_VERSION_120
+#define WEED_API_VERSION_130
 
   /* plant types */
 #define WEED_PLANT_PLUGIN_INFO 1
@@ -136,6 +137,10 @@ extern "C"
 
 /* Channel flags */
 #define WEED_CHANNEL_REINIT_ON_SIZE_CHANGE    (1<<0)
+
+/* API version 130 */
+#define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    (1<<6)
+
 #define WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE (1<<1)
 #define WEED_CHANNEL_CAN_DO_INPLACE           (1<<2)
 #define WEED_CHANNEL_SIZE_CAN_VARY            (1<<3)

@@ -115,7 +115,7 @@ weed_memset_f weedmemset;
 
 
 weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_versions, int *plugin_versions) {
-  int host_api_versions_supported[]={100,110,120}; // must be ordered in ascending order
+  int host_api_versions_supported[]={100,110,120,130}; // must be ordered in ascending order
   int host_api_version;
   weed_plant_t *host_info=weed_plant_new(WEED_PLANT_HOST_INFO);
 
@@ -140,6 +140,7 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
   case 100:
   case 110:
   case 120:
+  case 130:
     value[0]=wlg; // bootstrap weed_get_get (the plugin's default_getter)
 
     weed_set_int_value(host_info,"api_version",host_api_version);
@@ -1308,7 +1309,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
     rowstrides_changed=rowstrides_differ(numplanes,rowstrides,nchr,channel_rows);
     weed_free(channel_rows);
 
-    if ((rowstrides_changed||(incwidth!=width)||(incheight!=height))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)) needs_reinit=TRUE;
+    if (((rowstrides_changed&&(channel_flags&WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))||(((incwidth!=width)||(incheight!=height))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)))) needs_reinit=TRUE;
   
     weed_set_int64_value(channel,"timecode",tc);
     pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
@@ -1457,7 +1458,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
       
     width=weed_get_int_value(channel,"width",&error);
     height=weed_get_int_value(channel,"height",&error);
-    if ((rowstrides_changed||((outwidth!=width)||(outheight!=height)))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)) needs_reinit=TRUE;
+    if (((rowstrides_changed&&(channel_flags&WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))||((((outwidth!=width)||(outheight!=height)))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)))) needs_reinit=TRUE;
   }
 
   if (needs_reinit) if ((retval=weed_reinit_effect(inst))==FILTER_ERROR_COULD_NOT_REINIT) {

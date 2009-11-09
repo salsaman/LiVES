@@ -8,7 +8,7 @@ API Version Changes
 100 - first release
 110 - added WEED_PARAMETER_ELEMENT_PER_CHANNEL
 120 - added WEED_YUV_CLAMPING and WEED_YUV_SUBSPACE
-
+130 - added WEED_CHANNEL_RESIZE_ON_ROWSTRIDES_CHANGE
 
 Changelog:
 21/04/06 salsaman.
@@ -76,6 +76,10 @@ Correct a typo, and try to further clarify about function passing.
 31/10/09 salsaman
 Correct WEED_FILTER_HINT_STATELESS -> WEED_FILTER_HINT_IS_STATELESS
 
+9/11/09
+Added WEED_CHANNEL_RESIZE_ON_ROWSTRIDES_CHANGED
+API Version to 130
+
 
 (C) Gabriel "Salsaman" Finch 2005 - 2009
 
@@ -89,7 +93,7 @@ timeline style events (weed-events).
 
 == WEED_API_VERSION ==
 
-This is defined as 120 for this version of the specification. This
+This is defined as 130 for this version of the specification. This
 number will be increased for future revisions of the spec. if a
 function or a symbol is changed or added.
 
@@ -414,11 +418,12 @@ WEED_TRUE is #defined as 1 in the header.
 
 WEED_FALSE is #defined as 0 in the header.
 
-WEED_API_VERSION is #defined as 120 in the header.
+WEED_API_VERSION is #defined as 130 in the header.
 
 WEED_API_VERSION_100 is also #defined in the header.
 WEED_API_VERSION_110 is also #defined in the header.
 WEED_API_VERSION_120 is also #defined in the header.
+WEED_API_VERSION_130 is also #defined in the header.
 
 
 
@@ -1471,10 +1476,12 @@ Flag bits >=30 are reserved for custom flags.
 
  *  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE[[BR]]
     host must reinit the plugin before calling process_func() if the
-    channel size (height, width or rowstrides) is changed. Note that
-    changing the palette can sometimes affect the width and rowstrides
-    - if the change is only due to this, the host need not reinit
-    (unless WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE is set of course).
+    channel size (height or width in (macro)pixels) is changed.
+
+ *  WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE[[BR]]
+    host must reinit the plugin before calling process_func() if the
+    any of the rowstrides are changed. Note that	 
+    changing the palette can sometimes affect the rowstrides. [API 130 and higher].
 
  *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE[[BR]]
     host must reinit the plugin before calling process_func() if the channel palette is changed
@@ -1486,7 +1493,8 @@ Flag bits >=30 are reserved for custom flags.
     in channel. The flag bit is only valid for OUT channels. 
 
  *  WEED_CHANNEL_SIZE_CAN_VARY[[BR]]
-    In Weed, all channels are assumed to have the same size (width and height)
+    In Weed, all channels are assumed to have the same size (width and height,
+    but not necessarily rowstrides)
     as the first non-disabled in_channel (or first non-disabled
     out_channel for filters that have no in channels). If this flag
     bit is set, then the host can set this channel to a different

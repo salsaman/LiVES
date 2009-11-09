@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-11-08 11:51-0300\n"
+"POT-Creation-Date: 2009-11-09 18:13-0300\n"
 "PO-Revision-Date: 2009-06-08 12:19+0000\n"
 "Last-Translator: Yinghua Wang <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -3781,159 +3781,159 @@ msgid ""
 "No frames were generated.\n"
 msgstr ""
 
-#: src/effects-weed.c:216
+#: src/effects-weed.c:217
 msgid "generator"
 msgstr ""
 
-#: src/effects-weed.c:217
+#: src/effects-weed.c:218
 msgid "Generators"
 msgstr ""
 
-#: src/effects-weed.c:219
+#: src/effects-weed.c:220
 msgid "transition"
 msgstr ""
 
-#: src/effects-weed.c:220
+#: src/effects-weed.c:221
 msgid "Transitions"
 msgstr ""
 
-#: src/effects-weed.c:222
+#: src/effects-weed.c:223
 msgid "effect"
 msgstr ""
 
-#: src/effects-weed.c:223 src/preferences.c:2374
+#: src/effects-weed.c:224 src/preferences.c:2374
 msgid "Effects"
 msgstr ""
 
-#: src/effects-weed.c:225
+#: src/effects-weed.c:226
 msgid "utility"
 msgstr ""
 
-#: src/effects-weed.c:226
+#: src/effects-weed.c:227
 msgid "Utilities"
 msgstr ""
 
-#: src/effects-weed.c:228
+#: src/effects-weed.c:229
 msgid "compositor"
 msgstr ""
 
-#: src/effects-weed.c:229
+#: src/effects-weed.c:230
 msgid "Compositors"
 msgstr ""
 
-#: src/effects-weed.c:231
+#: src/effects-weed.c:232
 msgid "tap"
 msgstr ""
 
-#: src/effects-weed.c:232
+#: src/effects-weed.c:233
 msgid "Taps"
 msgstr ""
 
-#: src/effects-weed.c:234
+#: src/effects-weed.c:235
 msgid "splitter"
 msgstr ""
 
-#: src/effects-weed.c:235
+#: src/effects-weed.c:236
 msgid "Splitters"
 msgstr ""
 
-#: src/effects-weed.c:237
+#: src/effects-weed.c:238
 msgid "converter"
 msgstr ""
 
-#: src/effects-weed.c:238
+#: src/effects-weed.c:239
 msgid "Converters"
 msgstr ""
 
-#: src/effects-weed.c:243
+#: src/effects-weed.c:244
 msgid "audio/video transition"
 msgstr ""
 
-#: src/effects-weed.c:244
+#: src/effects-weed.c:245
 msgid "Audio/Video Transitions"
 msgstr ""
 
-#: src/effects-weed.c:246
+#: src/effects-weed.c:247
 msgid "video only transition"
 msgstr ""
 
-#: src/effects-weed.c:247
+#: src/effects-weed.c:248
 msgid "Video only Transitions"
 msgstr ""
 
-#: src/effects-weed.c:249
+#: src/effects-weed.c:250
 msgid "audio only transition"
 msgstr ""
 
-#: src/effects-weed.c:250
+#: src/effects-weed.c:251
 msgid "Audio only Transitions"
 msgstr ""
 
-#: src/effects-weed.c:252
+#: src/effects-weed.c:253
 msgid "audio mixer"
 msgstr ""
 
-#: src/effects-weed.c:253
+#: src/effects-weed.c:254
 msgid "Audio Mixers"
 msgstr ""
 
-#: src/effects-weed.c:255
+#: src/effects-weed.c:256
 msgid "audio filter"
 msgstr ""
 
-#: src/effects-weed.c:256
+#: src/effects-weed.c:257
 msgid "Audio Filters"
 msgstr ""
 
-#: src/effects-weed.c:258
+#: src/effects-weed.c:259
 msgid "audio volume controller"
 msgstr ""
 
-#: src/effects-weed.c:259
+#: src/effects-weed.c:260
 msgid "Audio Volume Controllers"
 msgstr ""
 
-#: src/effects-weed.c:263 src/plugins.c:1817
+#: src/effects-weed.c:264 src/plugins.c:1817
 msgid "unknown"
 msgstr ""
 
-#: src/effects-weed.c:2680
+#: src/effects-weed.c:2681
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:2761
+#: src/effects-weed.c:2762
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:2888
+#: src/effects-weed.c:2889
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:3436
+#: src/effects-weed.c:3437
 msgid "Warning - no more effect slots left !\n"
 msgstr ""
 
-#: src/effects-weed.c:3506
+#: src/effects-weed.c:3507
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:3540
+#: src/effects-weed.c:3541
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4039
+#: src/effects-weed.c:4040
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4107
+#: src/effects-weed.c:4108
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""

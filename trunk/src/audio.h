@@ -1,6 +1,6 @@
 // audio.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2006
+// (c) G. Finch 2005 - 2009
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -46,6 +46,12 @@ typedef struct _aserver_message_t {
   gchar *data;
   struct _aserver_message_t *next;
 } aserver_message_t;
+
+
+typedef struct {
+  guchar* data;
+  size_t  size;
+} audio_buffer_t;
 
 
 ////////////////////////////

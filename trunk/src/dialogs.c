@@ -912,6 +912,7 @@ void do_auto_dialog (const gchar *text, gint type) {
     }
   }
   
+
   if (type==0) {
     dummychar=fgets(mainw->msg,512,infofile);
     fclose(infofile);

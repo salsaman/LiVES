@@ -6000,6 +6000,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
 
   int owidth=weed_get_int_value(layer,"width",&error);
   int oheight=weed_get_int_value(layer,"height",&error);
+  guchar *pd;
 
   if (owidth==width&&oheight==height) return; // no resize needed
 
@@ -6027,7 +6028,6 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
   case WEED_PALETTE_BGRA32:
   case WEED_PALETTE_YUVA8888:
     pixbuf=layer_to_pixbuf(layer);
-    guchar *pd=gdk_pixbuf_get_pixels(pixbuf);
     new_pixbuf=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
     pd=gdk_pixbuf_get_pixels(new_pixbuf);
     if (new_pixbuf!=NULL) {

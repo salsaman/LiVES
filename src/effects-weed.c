@@ -2080,7 +2080,9 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  }
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 	  if (filter_error==FILTER_INFO_REINITED) close_pwindow(i,key_modes[i],TRUE); // redraw our paramwindow
-	  //if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
+#ifdef DEBUG_RTE
+	  if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
+#endif
 	}
       }
     }

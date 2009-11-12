@@ -365,10 +365,13 @@ apply_prefs(gboolean skip_warn) {
   gboolean jack_master=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
   gboolean jack_client=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
   gboolean jack_pwp=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
-  gboolean jack_follow_fps=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_afollow));
-  gboolean jack_follow_clips=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_aclips));
-  guint audio_opts=(AUDIO_OPTS_FOLLOW_FPS*jack_follow_fps+AUDIO_OPTS_FOLLOW_CLIPS*jack_follow_clips);
   guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+JACK_OPTS_NOPLAY_WHEN_PAUSED*!jack_pwp);
+#endif
+
+#ifdef RT_AUDIO
+  gboolean audio_follow_fps=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_afollow));
+  gboolean audio_follow_clips=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_aclips));
+  guint audio_opts=(AUDIO_OPTS_FOLLOW_FPS*audio_follow_fps+AUDIO_OPTS_FOLLOW_CLIPS*audio_follow_clips);
 #endif
 
 #ifdef ENABLE_OSC
@@ -792,10 +795,21 @@ apply_prefs(gboolean skip_warn) {
   if (prefs->audio_opts!=audio_opts) {
     prefs->audio_opts=audio_opts;
     set_int_pref("audio_opts",audio_opts);
+
+#ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->loop_cont) {
       if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
       else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
     }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->loop_cont) {
+      if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
+      else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
+    }
+#endif
+
   }
 
   if (rec_desk_audio!=prefs->rec_desktop_audio) {

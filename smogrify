@@ -3526,7 +3526,7 @@ sub get_file_info {
    }
 
 
-    if ($hsize*$vsize==0||$count eq "") {
+    if (($hsize*$vsize==0||$count eq "")&&!$is_audio) {
 	# test even if mplayer thinks it is audio (at least some png files are misread)
 	$name=&mkname(1);
 	unless (-f "$curtmpdir/$name") {

@@ -8,7 +8,7 @@ Fix audio channel mismatch when reloading mt auto backup.
 Allow setting of start and end frames for clips in the mt window.
 Fix warnings from gcc 4.4 *
 Fix crash when recording with audio gets activated during silent clip. *
-Fix compilation with ENABLE_JACK undefined. (thanks Holgero). *
+Fix compilation with ENABLE_JACK undefined. (thanks Holgero and others). *
 Add new realtime transitions: iris rectangle, iris circle, 4 way split, dissolve.
 Add -debug startup option to help analyse crash situations.
 	

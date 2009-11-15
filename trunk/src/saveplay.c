@@ -994,12 +994,12 @@ void save_file (gboolean existing, gchar *n_file_name) {
   g_free(tmp);
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s%s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
+    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
     g_free(tmp);
   }
   else {
     // for native plugins we go via the plugin
-    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
+    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
     g_free(tmp);
   }
   g_free (fps_string);
@@ -1575,12 +1575,14 @@ void play_file (void) {
 #endif
     }
     else if (cfile->achans>0) {
+      gchar *tmp;
       if (mainw->loop_cont) {
 	// tell audio to loop forever
 	loop=-1;
       }
 
-      unlink (g_strdup_printf ("%s/%s/.stoploop",prefs->tmpdir,cfile->handle));
+      unlink ((tmp=g_strdup_printf ("%s/%s/.stoploop",prefs->tmpdir,cfile->handle)));
+      g_free(tmp);
     
       if (cfile->achans>0||(!cfile->is_loaded&&!mainw->is_generating)) {
 	if (loop) {

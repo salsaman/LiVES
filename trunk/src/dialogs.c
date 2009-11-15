@@ -1418,7 +1418,10 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     g_usleep(prefs->sleep_time);
   } while (pthread_mutex_trylock(&mainw->gtk_mutex));
 
-  if (!pthread_islocked) return; // parent process finished already
+  if (!pthread_islocked) {
+    g_free(procw);
+    return; // parent process finished already
+  }
 
   procw->processing = gtk_dialog_new ();
   gtk_container_set_border_width (GTK_CONTAINER (procw->processing), 10);

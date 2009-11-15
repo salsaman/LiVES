@@ -415,7 +415,7 @@ apply_prefs(gboolean skip_warn) {
 
   gchar *tmp;
 
-  const gchar *cdplay_device=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
+  gchar *cdplay_device=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
   g_free(resaudw);
   resaudw=NULL;
@@ -425,7 +425,8 @@ apply_prefs(gboolean skip_warn) {
   if (idx==listlen) future_prefs->encoder.audio_codec=0;
   else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
 
-  g_snprintf (tmpdir,256,"%s",g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)),-1,NULL,NULL,NULL));
+  g_snprintf (tmpdir,256,"%s",(tmp=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)),-1,NULL,NULL,NULL)));
+  g_free(tmp);
 
   if (!strncmp(audp,"mplayer",7)) g_snprintf(audio_player,256,"mplayer");
   else if (!strncmp(audp,"jack",4)) g_snprintf(audio_player,256,"jack");
@@ -683,6 +684,8 @@ apply_prefs(gboolean skip_warn) {
     g_snprintf(prefs->cdplay_device,256,"%s",cdplay_device);
     set_pref("cdplay_device",prefs->cdplay_device);
   }
+
+  g_free(cdplay_device);
 
   // default video load directory
   if (strcmp(prefs->def_vid_load_dir,def_vid_load_dir)) {
@@ -3461,6 +3464,8 @@ on_prefs_cancel_clicked                   (GtkButton       *button,
   if (prefsw->pbq_list!=NULL) g_list_free(prefsw->pbq_list);
   prefsw->pbq_list=NULL;
 
+  g_free(prefsw->audp_name);
+
   on_cancel_button1_clicked(button,prefsw);
 
   prefsw=NULL;
@@ -3478,6 +3483,7 @@ on_prefs_delete_event                  (GtkWidget       *widget,
     g_list_free (prefs->acodec_list);
   }
   prefs->acodec_list=NULL;
+  g_free(prefsw->audp_name);
   on_cancel_button1_clicked(GTK_BUTTON (((_prefsw *)user_data)->cancelbutton),user_data);
   prefsw=NULL;
   return FALSE;

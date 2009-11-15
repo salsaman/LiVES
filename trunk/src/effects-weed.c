@@ -1458,7 +1458,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
       
     width=weed_get_int_value(channel,"width",&error);
     height=weed_get_int_value(channel,"height",&error);
-    if (((rowstrides_changed&&(channel_flags&WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))||((((outwidth!=width)||(outheight!=height)))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)))) needs_reinit=TRUE;
+    if ((rowstrides_changed&&(channel_flags&WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))||(((outwidth!=width)||(outheight!=height))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))) needs_reinit=TRUE;
   }
 
   if (needs_reinit) if ((retval=weed_reinit_effect(inst))==FILTER_ERROR_COULD_NOT_REINIT) {
@@ -3000,7 +3000,7 @@ void weed_unload_all(void) {
   weed_plant_t *filter,*plugin_info;
   void *handle;
   weed_desetup_f desetup_fn;
-  GList *pinfo=NULL;
+  GList *pinfo=NULL,*xpinfo;
 
   mainw->num_tr_applied=0;
   weed_deinit_all();
@@ -3008,7 +3008,7 @@ void weed_unload_all(void) {
     filter=weed_filters[i];
     plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
 
-    if (g_list_index(pinfo,plugin_info)==-1) pinfo=g_list_append(pinfo,plugin_info);
+    if (pinfo==NULL||g_list_index(pinfo,plugin_info)==-1) pinfo=g_list_append(pinfo,plugin_info);
 
     handle=weed_get_voidptr_value(plugin_info,"handle",&error);
 
@@ -3025,12 +3025,14 @@ void weed_unload_all(void) {
     weed_filter_free(filter);
   }
 
+  xpinfo=pinfo;
+
   while (pinfo!=NULL) {
     weed_plant_free((weed_plant_t *)pinfo->data);
     pinfo=pinfo->next;
   }
 
-  if (pinfo!=NULL) g_list_free(pinfo);
+  if (xpinfo!=NULL) g_list_free(xpinfo);
 
   for (i=0;i<MAX_WEED_FILTERS;i++) {
     if (hashnames[i]!=NULL) g_free(hashnames[i]);

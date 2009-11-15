@@ -3,20 +3,19 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-11-15 00:24-0300\n"
-"PO-Revision-Date: 2009-10-17 20:51+0000\n"
-"Last-Translator: Tony.K <Unknown>\n"
+"POT-Creation-Date: 2009-11-15 18:44-0300\n"
+"PO-Revision-Date: 2009-11-12 07:14+0000\n"
+"Last-Translator: MixCool <lars.thoms@mixcool.de>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2009-10-27 12:52+0000\n"
+"X-Launchpad-Export-Date: 2009-11-15 19:52+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 "X-Poedit-Country: GERMANY\n"
 "X-Poedit-Language: German\n"
 
 #: src/main.c:83
-#, fuzzy
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
@@ -24,24 +23,14 @@ msgid ""
 "group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
-"\n"
-"Leider ist ein Fehler aufgetreten.\n"
-"Bitte melden Sie ihn an http://www.sourceforge.net/projects/lives/\n"
-"Danke.\n"
-"Ihre Sitzung sollte wiederhergestellt werden, wenn Sie LiVES neu starten.\n"
 
 #: src/main.c:84
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "When reporting crashes, please include details of your operating system, "
 "distribution, and the LiVES version ("
 msgstr ""
-"\n"
-"\n"
-"Wenn Sie einen Fehler melden, liefern Sie bitte auch Informationen über Ihr "
-"Betriebssystem, die Distribution, die von Ihnen benutzte LiVES-Version ("
 
 #: src/main.c:87
 msgid ""
@@ -288,7 +277,7 @@ msgstr "-help: Zeige nur diesen Hilfetext an\n"
 
 #: src/main.c:1494
 msgid "-set <setname>   : autoload clip set setname\n"
-msgstr ""
+msgstr "-set <setname> : automatisches Laden des Clips mit Setzen des Namen\n"
 
 #: src/main.c:1495
 msgid "-noset           : do not load any set on startup\n"
@@ -335,6 +324,10 @@ msgid ""
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
+"-jackopts <opts> : opts ist ein Bitmap von den Jack Startoptionen [1 = Jack "
+"Übertragungsclient, 2 = Jack Übertragungsmaster, 4 = Starte Jack "
+"Übertragungsserver, 8 = stoppe Audio gleichzeitig mit Video, 16 = starte "
+"Jack Audioserver] \n"
 
 #: src/main.c:1511
 msgid " or sox\n"
@@ -342,7 +335,7 @@ msgstr " oder SoX\n"
 
 #: src/main.c:1513
 msgid "-devicemap <mapname>          : autoload devicemap\n"
-msgstr ""
+msgstr "-devicemap <mapname> : lade automatisch die Geräteliste\n"
 
 #: src/main.c:1514
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
@@ -535,7 +528,7 @@ msgstr ""
 #: src/main.c:1693
 #, c-format
 msgid "Autoloading set %s..."
-msgstr ""
+msgstr "Automatisches Laden von %s..."
 
 #: src/main.c:1872
 #, c-format
@@ -611,6 +604,12 @@ msgid ""
 "mplayer.\n"
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
+"\n"
+"\n"
+"LiVES kann nicht zwischen den Clips wechseln, solange ein Clip geöffnet wird "
+"und der Audioplayer \"mplayer\" ausgewählt ist.\n"
+"Bitte passen Sie die Wiedergabeoptionen in den Einstellungen an und "
+"versuchen Sie es erneut.\n"
 
 #: src/interface.c:39
 msgid "Let LiVES set the _file extension"
@@ -729,7 +728,7 @@ msgstr "Ton"
 
 #: src/interface.c:691 src/interface.c:741
 msgid "Rate/size"
-msgstr ""
+msgstr "Rate/Größe"
 
 #: src/interface.c:750
 msgid "Right audio"
@@ -785,7 +784,7 @@ msgstr "LiVES: - Einfügen"
 
 #: src/interface.c:1191
 msgid "_Number of times to insert"
-msgstr ""
+msgstr "_Anzahl der einzufügenden Zeiten"
 
 #: src/interface.c:1212
 msgid "_Insert to fit audio"
@@ -955,7 +954,7 @@ msgstr "Eiblenden über  "
 
 #: src/interface.c:2106
 msgid "first"
-msgstr ""
+msgstr "Erste(r)"
 
 #: src/interface.c:2109
 msgid "Fade out over  "
@@ -963,7 +962,7 @@ msgstr "Ausblenden über  "
 
 #: src/interface.c:2110
 msgid "last"
-msgstr ""
+msgstr "letzter"
 
 #: src/interface.c:2147
 msgid "seconds."
@@ -1242,7 +1241,7 @@ msgstr ""
 #: src/callbacks.c:118
 #, c-format
 msgid "Saving as set %s..."
-msgstr ""
+msgstr "Speichern als %s..."
 
 #: src/callbacks.c:345 src/callbacks.c:365 src/callbacks.c:551
 msgid "Select File"
@@ -1302,6 +1301,16 @@ msgid ""
 "then File|Close/Save all Clips and provide a new set name or discard it.\n"
 "Once you have done this, you will be able to import the new project.\n"
 msgstr ""
+"\n"
+"Das Set %s existiert bereits.\n"
+"Um das Projekt zu importieren, müssen Sie das vorhandene Set umbenennen oder "
+"löschen.\n"
+"Dazu wählen Sie Datei|Set neu laden und den Namen\n"
+"%s\n"
+"aus und erstellen Sie dann einen neuen Namen via Datei|Alle Clips speichern "
+"oder verwerfen Sie das Set.\n"
+"Nachdem Sie das einmal durchgeführt haben, wird es Ihnen möglich sein das "
+"neue Projekt zu importieren.\n"
 
 #: src/callbacks.c:712
 #, c-format
@@ -1364,11 +1373,11 @@ msgstr "Rückgängig"
 
 #: src/callbacks.c:1172 src/callbacks.c:1317
 msgid "Restoring audio..."
-msgstr ""
+msgstr "Audio Wiederherstellung..."
 
 #: src/callbacks.c:1182
 msgid "Clearing frame images"
-msgstr ""
+msgstr "Bereinigung der Framebilder"
 
 #: src/callbacks.c:1235
 msgid "Undoing audio"
@@ -6726,9 +6735,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:2650
-#, fuzzy
 msgid "LiVES: Selected clip"
-msgstr "LiVES: - Farbauswahl"
+msgstr ""
 
 #: src/multitrack.c:2656
 msgid "_Adjust start and end points"
@@ -7189,9 +7197,8 @@ msgid "Anchor _start"
 msgstr ""
 
 #: src/multitrack.c:5465
-#, fuzzy
 msgid "Start frame"
-msgstr "Nur _Anfangsbild"
+msgstr ""
 
 #: src/multitrack.c:5502
 msgid "Anchor the end point to the timeline"
@@ -7202,9 +7209,8 @@ msgid "Anchor _end"
 msgstr ""
 
 #: src/multitrack.c:5538
-#, fuzzy
 msgid "End frame"
-msgstr "Nur _Endbild"
+msgstr ""
 
 #: src/multitrack.c:5686
 msgid "Scroll"
@@ -8132,9 +8138,8 @@ msgid "Block _height"
 msgstr "Größe des Frames"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "Größe des Frames"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -8207,14 +8212,12 @@ msgid "Charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboard"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboarding"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
@@ -8227,9 +8230,8 @@ msgid "Clipboard _under selection"
 msgstr "Am _Ende der Auswahl einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorize"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -8237,38 +8239,32 @@ msgid "Colorizing"
 msgstr "Zwischenspeicher einfügen"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
@@ -8291,9 +8287,8 @@ msgid "Despeckling"
 msgstr "Lösche"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dream"
-msgstr "Beende _Aufnahme"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
@@ -8307,14 +8302,12 @@ msgid "E_nd %"
 msgstr "_Änderung %s rückgängig machen"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "Edge detect"
-msgstr "Prüfe"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "Edge detecting"
-msgstr "Prüfe"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
@@ -8399,19 +8392,16 @@ msgid "Frame _width"
 msgstr "Größe des Frames"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "Sekunden."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -8426,7 +8416,7 @@ msgstr "Tonstille einfügen"
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "Generate clip from image"
-msgstr "Lade Clips aus dem Set %s"
+msgstr "Bereinigung der Framebilder"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -8446,7 +8436,7 @@ msgstr "Tonstille einfügen"
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "Generating clip from image"
-msgstr "Lade Clips aus dem Set %s"
+msgstr "Bereinigung der Framebilder"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -8467,14 +8457,12 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "Bilder"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _start"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -8482,14 +8470,12 @@ msgid "Hue change"
 msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "Bilder"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumble"
@@ -8500,9 +8486,8 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Keep _Centered"
-msgstr "_Stumm schalten"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -8514,9 +8499,8 @@ msgid "Making monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "stelle Zustand wieder her"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -8546,9 +8530,8 @@ msgid "Noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "Normalize"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
@@ -8631,34 +8614,28 @@ msgid "S_tart %"
 msgstr "Werte zu_rück setzen"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "Sepia"
-msgstr "Beende _Aufnahme"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Shift horizontally"
@@ -8677,14 +8654,12 @@ msgid "Shrinking/Expanding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Skip forward"
-msgstr "_Anhalten"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarize"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
@@ -8702,9 +8677,8 @@ msgid "Spinning"
 msgstr "Warnung"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splice"
-msgstr "Warnung"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
@@ -8734,14 +8708,12 @@ msgid "Step per _Frame"
 msgstr "    _Bild"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl s_tep"
-msgstr "Warnung"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -8829,14 +8801,12 @@ msgid "_Bottom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Calculate"
-msgstr "_Zeige Bildzähler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "_Cycle Start"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Decrease Contrast"
@@ -8860,15 +8830,13 @@ msgstr "Nur _Endbild"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "Bilder"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -8882,9 +8850,8 @@ msgid "_First frame"
 msgstr "Erstes Bild"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "_Zeige Bildzähler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -8902,9 +8869,8 @@ msgid "_Frames"
 msgstr "Bilder"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "_Zeige Bildzähler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
@@ -8963,9 +8929,8 @@ msgid "_Offset Y"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Other Center"
-msgstr "_Stumm schalten"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
@@ -8979,27 +8944,23 @@ msgid "_Point size"
 msgstr "Größe der Datei"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "Bilder"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius start"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "_Radius"
-msgstr "Bilder"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_Random colour each frame"
-msgstr "Tonstille einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9020,14 +8981,12 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma start"
-msgstr "Werte zu_rück setzen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
@@ -9045,9 +9004,8 @@ msgid "_Source Colour"
 msgstr "_Zeige Bildzähler"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "_Splice"
-msgstr "Warnung"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9104,9 +9062,8 @@ msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "_Wavemax"
-msgstr "Warnungen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -9118,9 +9075,8 @@ msgid "_Wrap Around"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_X Center"
-msgstr "_Stumm schalten"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
@@ -9137,9 +9093,8 @@ msgid "_X offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Y Center"
-msgstr "_Stumm schalten"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
@@ -9184,19 +9139,16 @@ msgid "charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Tonstille einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -9217,14 +9169,12 @@ msgid "despeckle"
 msgstr "Lösche"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "dream"
-msgstr "Beende _Aufnahme"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "edge_detect"
-msgstr "Prüfe"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "emboss"
@@ -9254,14 +9204,12 @@ msgid "flop"
 msgstr "_Filmabschnitt"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "frame_calculator"
-msgstr "_Zeige Bildzähler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -9271,12 +9219,11 @@ msgstr "_Schlechte Bilder"
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "gen_clip_from_image"
-msgstr "Lade Clips aus dem Set %s"
+msgstr "Bereinigung der Framebilder"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "Tonstille einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -9293,9 +9240,8 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "stelle Zustand wieder her"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
@@ -9311,9 +9257,8 @@ msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
@@ -9344,14 +9289,12 @@ msgid "rotate"
 msgstr "Gesamtzeit"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "sepia"
-msgstr "Beende _Aufnahme"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "shift_horizontal"
@@ -9366,19 +9309,16 @@ msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "_Anhalten"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "Zwischenspeicher einfügen"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "spin"
-msgstr "Beende _Aufnahme"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -9395,24 +9335,20 @@ msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "transition_checkerboard"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "transition_fade2"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "Änderungen _ignorieren"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
@@ -9425,9 +9361,8 @@ msgid "tunnel"
 msgstr "Abbruch"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "wave"
-msgstr "Warnungen"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 #, fuzzy
@@ -9522,18 +9457,6 @@ msgstr "$plugin_name fehlgeschlagen:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#~ msgid ""
-#~ "and if possible obtain a backtrace using gdb.\n"
-#~ "\n"
-#~ "\n"
-#~ "\n"
-#~ msgstr ""
-#~ "und, falls möglich, versuchen Sie die Ablaufverfolgung mit GDB "
-#~ "einzusehen.\n"
-#~ "\n"
-#~ "\n"
-#~ "\n"
 
 #~ msgid "Starting GUI...\n"
 #~ msgstr "Starte graphische Anwenderführung...\n"

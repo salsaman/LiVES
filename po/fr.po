@@ -10,14 +10,14 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-11-15 00:24-0300\n"
-"PO-Revision-Date: 2009-05-03 14:13+0000\n"
-"Last-Translator: Pierre Slamich <pierre.slamich@gmail.com>\n"
+"POT-Creation-Date: 2009-11-15 18:44-0300\n"
+"PO-Revision-Date: 2009-10-31 23:42+0000\n"
+"Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2009-07-07 15:52+0000\n"
+"X-Launchpad-Export-Date: 2009-11-15 19:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 "X-Poedit-Country: FRANCE\n"
 "X-Poedit-Language: French\n"
@@ -58,15 +58,15 @@ msgstr "Marque positionnée.\n"
 
 #: src/main.c:422
 msgid "Resizing"
-msgstr "Redimensionnement"
+msgstr "Recadrage"
 
 #: src/main.c:429
 msgid "_Resize All Frames"
-msgstr ""
+msgstr "_Recadre Toutes Les Images"
 
 #: src/main.c:671
 msgid "Any"
-msgstr "N'importe"
+msgstr "Tous"
 
 #: src/main.c:672
 msgid "None"
@@ -78,15 +78,15 @@ msgstr "recommandé"
 
 #: src/main.c:674
 msgid "disabled !"
-msgstr "Désactivé !"
+msgstr "désactivé !"
 
 #: src/main.c:1002
 msgid "Loading realtime effect plugins..."
-msgstr ""
+msgstr "Chargement des plugins d'effets en temps réel"
 
 #: src/main.c:1038
 msgid "Starting jack audio server..."
-msgstr ""
+msgstr "Démarrage du serveur audio jack..."
 
 #: src/main.c:1070
 msgid ""
@@ -102,11 +102,11 @@ msgstr ""
 
 #: src/main.c:1093
 msgid "Starting pulse audio server..."
-msgstr ""
+msgstr "Initialisation du serveur audio pulse..."
 
 #: src/main.c:1140
 msgid "Checking optional dependencies:"
-msgstr ""
+msgstr "Verification des dépendances optionnelles:"
 
 #: src/main.c:1141
 msgid "mplayer...detected..."
@@ -165,22 +165,20 @@ msgid "jackd...NOT DETECTED..."
 msgstr "jackd...NON DÉTECTÉ..."
 
 #: src/main.c:1155
-#, fuzzy
 msgid "pulse audio...detected..."
-msgstr "mplayer....détecté..."
+msgstr "pulse audio...détecté..."
 
 #: src/main.c:1156
-#, fuzzy
 msgid "pulse audio...NOT DETECTED..."
-msgstr "mplayer...NON DÉTECTÉ..."
+msgstr "pulse audio...NON DÉTECTÉ..."
 
 #: src/main.c:1157
 msgid "python...detected..."
-msgstr "python ... a été trouvé."
+msgstr "python...détecté..."
 
 #: src/main.c:1158
 msgid "python...NOT DETECTED..."
-msgstr "python ... n'a pas été trouvé."
+msgstr "python...NON DÉTECTÉ..."
 
 #: src/main.c:1159
 msgid "dvgrab...detected..."
@@ -192,11 +190,11 @@ msgstr "dvgrab...NON DÉTECTÉ..."
 
 #: src/main.c:1161
 msgid "xwininfo...detected..."
-msgstr "xwininfo ... a été trouvé."
+msgstr "xwininfo...détecté..."
 
 #: src/main.c:1162
 msgid "xwininfo...NOT DETECTED..."
-msgstr "xwininfo ... n'a pas été trouvé"
+msgstr "xwininfo...NON DÉTECTÉ..."
 
 #: src/main.c:1165
 #, c-format
@@ -220,24 +218,19 @@ msgid "Temp directory is %s\n"
 msgstr "Le dossier temporaire est %s\n"
 
 #: src/main.c:1175
-#, fuzzy
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
-"ATTENTION - Cette version de LiVES a été compilé sans le support du serveur "
-"jack.\n"
-"La plupart des fonctions audios seront indisponibles.\n"
 
 #: src/main.c:1178
 msgid "Compiled with jack support, good !\n"
-msgstr "Compilé avec support de jack, bien !\n"
+msgstr "Compilé avec le support de jack, bien !\n"
 
 #: src/main.c:1181
-#, fuzzy
 msgid "Compiled with pulse audio support, wonderful !\n"
-msgstr "Compilé avec support de jack, bien !\n"
+msgstr ""
 
 #: src/main.c:1185
 #, c-format
@@ -307,14 +300,16 @@ msgstr ""
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
+"-aplayer <ap> : demarre le programme avec le lecteur audio sélectionné. <ap> "
+"peut être remplacé par mplayer"
 
 #: src/main.c:1505
 msgid ", pulse"
-msgstr ""
+msgstr ", pulse"
 
 #: src/main.c:1508
 msgid ", sox or jack\n"
-msgstr ", sox or jack\n"
+msgstr ", sox ou jack\n"
 
 #: src/main.c:1509
 msgid ""
@@ -324,9 +319,8 @@ msgid ""
 msgstr ""
 
 #: src/main.c:1511
-#, fuzzy
 msgid " or sox\n"
-msgstr "ou sox\n"
+msgstr ""
 
 #: src/main.c:1513
 msgid "-devicemap <mapname>          : autoload devicemap\n"
@@ -666,9 +660,8 @@ msgstr ""
 "Patientez SVP"
 
 #: src/interface.c:372
-#, fuzzy
 msgid "Show details"
-msgstr "Afficher Messages"
+msgstr ""
 
 #: src/interface.c:395
 msgid "_Enough"
@@ -757,9 +750,8 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:962
-#, fuzzy
 msgid "Show _Details"
-msgstr "Afficher Messages"
+msgstr ""
 
 #: src/interface.c:1053
 msgid "_Close Window"
@@ -1096,14 +1088,10 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:2814
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
-"ATTENTION - Cette version de LiVES a été compilé sans le support du serveur "
-"jack.\n"
-"La plupart des fonctions audios seront indisponibles.\n"
 
 #: src/interface.c:2817
 msgid ""
@@ -1117,14 +1105,10 @@ msgid "JACK audio is recommended for pro users"
 msgstr ""
 
 #: src/interface.c:2825
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
-"ATTENTION - Cette version de LiVES a été compilé sans le support du serveur "
-"jack.\n"
-"La plupart des fonctions audios seront indisponibles.\n"
 
 #: src/interface.c:2828
 msgid ""
@@ -1134,18 +1118,12 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:2831
-#, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
 "If LiVES will not start with jack, you can restart and try with another "
 "audio player instead.\n"
 "\n"
 msgstr ""
-"Avant de démarrer LiVES, vous devez choisir un lecteur audio.\n"
-"Jack est recommandé, mais peut empécher LiVES de démarrer sur certains "
-"systèmes.\n"
-"Si LiVES ne démarre pas avec jack, vous pouvez rédémarrer et essayer avec %"
-"s.\n"
 
 #: src/interface.c:2835
 msgid "SOX may be used if neither of the preceding players work, "
@@ -1175,28 +1153,24 @@ msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: - choisir un lecteur audio"
 
 #: src/interface.c:2876
-#, fuzzy
 msgid "Use _pulse audio player"
-msgstr "Utiliser le lecteur audio _%s"
+msgstr ""
 
 #: src/interface.c:2885
 msgid "Use _jack audio player"
 msgstr "Utiliser le lecteur audio jack"
 
 #: src/interface.c:2893
-#, fuzzy
 msgid "Use _sox audio player"
-msgstr "Utiliser le lecteur audio _%s"
+msgstr ""
 
 #: src/interface.c:2901
-#, fuzzy
 msgid "Use _mplayer audio player"
-msgstr "Utiliser le lecteur audio jack"
+msgstr ""
 
 #: src/interface.c:2964
-#, fuzzy
 msgid "LiVES: recover layout ?"
-msgstr "LiVES: choisir un fichier"
+msgstr ""
 
 #: src/interface.c:2976
 msgid ""
@@ -1680,7 +1654,7 @@ msgid "A video editor and VJ program."
 msgstr ""
 
 #: src/callbacks.c:4026
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES Version %s\n"
 "(c) G. Finch (salsaman) 2002-2009\n"
@@ -1692,16 +1666,6 @@ msgid ""
 "salsaman@xs4all.nl\n"
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
-"LiVES Version %s\n"
-"(c) G. Finch (salsaman) 2002-2008\n"
-"\n"
-"Distribué sous license GPL 3 ou suivante (http://www.gnu.org/licenses/gpl."
-"txt)\n"
-"LiVES est distribué SANS GARANTI\n"
-"\n"
-"Contacter l'auteur:\n"
-"salsaman@xs4all.nl\n"
-"Homepage: http://lives.sourceforge.net"
 
 #: src/callbacks.c:4193
 msgid ""
@@ -1755,9 +1719,8 @@ msgid "%d frames are enough !\n"
 msgstr "%d images sont en trop !\n"
 
 #: src/callbacks.c:4813
-#, fuzzy
 msgid "LiVES: - Encoder debug output"
-msgstr "LiVES: - Options d'encodage"
+msgstr ""
 
 #: src/callbacks.c:4848 src/gui.c:1708
 msgid "Fullscreen playback (f)"
@@ -3985,15 +3948,11 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:1350
-#, fuzzy
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
-"La prévisualisation audio multipiste est seulement disponible avec le "
-"lecteur audio jack.\n"
-"Vous pouvez configurer celui-ci dans Outils/Préférences/Lecture."
 
 #: src/dialogs.c:1354
 msgid ""
@@ -4028,7 +3987,6 @@ msgstr ""
 "Vous devez installer 'dvgrab' pour utiliser cette fonction.\n"
 
 #: src/dialogs.c:1372
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -4036,9 +3994,6 @@ msgid ""
 "the \"jack\" or the \"pulse audio\" audio player.\n"
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
-"La prévisualisation audio multipiste est seulement disponible avec le "
-"lecteur audio jack.\n"
-"Vous pouvez configurer celui-ci dans Outils/Préférences/Lecture."
 
 #: src/dialogs.c:1376
 msgid "Video playback plugin failed to initialise palette !\n"
@@ -4198,14 +4153,12 @@ msgid "Splitters"
 msgstr "Séparateurs"
 
 #: src/effects-weed.c:238
-#, fuzzy
 msgid "converter"
-msgstr "Converteur"
+msgstr ""
 
 #: src/effects-weed.c:239
-#, fuzzy
 msgid "Converters"
-msgstr "Converteurs"
+msgstr ""
 
 #: src/effects-weed.c:244
 msgid "audio/video transition"
@@ -4274,9 +4227,9 @@ msgstr ""
 "L'erreur était: %s\n"
 
 #: src/effects-weed.c:2891
-#, fuzzy, c-format
+#, c-format
 msgid "Successfully loaded %d Weed filters\n"
-msgstr "Chargement réussi de %d filtres Weed\n"
+msgstr ""
 
 #: src/effects-weed.c:3441
 msgid "Warning - no more effect slots left !\n"
@@ -5584,19 +5537,16 @@ msgid "_Every"
 msgstr ""
 
 #: src/preferences.c:1587
-#, fuzzy
 msgid "seconds"
-msgstr "secondes."
+msgstr ""
 
 #: src/preferences.c:1595
-#, fuzzy
 msgid "After every _change"
-msgstr "Changement de l'ordre des effets"
+msgstr ""
 
 #: src/preferences.c:1604
-#, fuzzy
 msgid "_Never"
-msgstr "_Inverser"
+msgstr ""
 
 #: src/preferences.c:1627
 msgid "Multitrack/Render"
@@ -6166,9 +6116,8 @@ msgid "_MIDI events"
 msgstr ""
 
 #: src/preferences.c:3202
-#, fuzzy
 msgid "Use _ALSA MIDI (recommended)"
-msgstr "Utilisé les paramètres recommandés"
+msgstr ""
 
 #: src/preferences.c:3205
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
@@ -6954,14 +6903,12 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:2650
-#, fuzzy
 msgid "LiVES: Selected clip"
-msgstr "LiVES:- Effet Sélectionné"
+msgstr ""
 
 #: src/multitrack.c:2656
-#, fuzzy
 msgid "_Adjust start and end points"
-msgstr "Relier couleurs du début et de la fin"
+msgstr ""
 
 #: src/multitrack.c:2849
 msgid "Audio mixer (ctrl-m)"
@@ -7138,9 +7085,8 @@ msgid "_CLIP EDITOR"
 msgstr "Éditeur de clip"
 
 #: src/multitrack.c:3984
-#, fuzzy
 msgid "_Adjust selected clip start/end points"
-msgstr "Insérer l'audio du clip sélectionné"
+msgstr ""
 
 #: src/multitrack.c:3993
 msgid "_Insert selected clip"
@@ -7419,9 +7365,8 @@ msgid "Anchor _start"
 msgstr ""
 
 #: src/multitrack.c:5465
-#, fuzzy
 msgid "Start frame"
-msgstr "Première Image seulement"
+msgstr ""
 
 #: src/multitrack.c:5502
 msgid "Anchor the end point to the timeline"
@@ -7432,9 +7377,8 @@ msgid "Anchor _end"
 msgstr ""
 
 #: src/multitrack.c:5538
-#, fuzzy
 msgid "End frame"
-msgstr "%d images"
+msgstr ""
 
 #: src/multitrack.c:5686
 msgid "Scroll"
@@ -8066,9 +8010,8 @@ msgid "Clear _unmatched"
 msgstr ""
 
 #: src/omc-learn.c:1346
-#, fuzzy
 msgid "_Delete all"
-msgstr "Effacer"
+msgstr ""
 
 #: src/omc-learn.c:1399
 msgid "Start video playback"
@@ -8960,9 +8903,8 @@ msgid "Swirling"
 msgstr "Applique les remous"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "Text Overlay"
-msgstr "_Inverser"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
@@ -9081,9 +9023,8 @@ msgid "_First frame"
 msgstr "Première image"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "Couleur de Fin"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -9101,9 +9042,8 @@ msgid "_Frames"
 msgstr "Images"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "Couleur de Fin"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
@@ -9120,9 +9060,8 @@ msgid "_Increase Contrast"
 msgstr "_Augmente le Contraste"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "_Levels"
-msgstr "_Inverser"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9417,9 +9356,8 @@ msgid "enhance"
 msgstr "Amélioration"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "every"
-msgstr "_Inverser"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -9534,9 +9472,8 @@ msgid "saturation_change"
 msgstr "Transition d'entrée"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "sepia"
-msgstr "Retournerment"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
@@ -9579,9 +9516,8 @@ msgid "swirl"
 msgstr "Applique les remous"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "textover"
-msgstr "_Inverser"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
@@ -9695,14 +9631,52 @@ msgstr "$plugin_name échec:"
 msgid "$error"
 msgstr "erreur.\n"
 
-#~ msgid "failed (permission denied)\n"
-#~ msgstr "échoué (non autorisé)\n"
-
-#~ msgid "_Debug Mode"
-#~ msgstr "Mode _Débogage"
+#~ msgid "or sox\n"
+#~ msgstr "ou sox\n"
 
 #~ msgid "Starting GUI...\n"
 #~ msgstr "Démarrage de l'interface...\n"
 
 #~ msgid "autoloading set %s..."
 #~ msgstr "chargement automatique de %s..."
+
+#~ msgid ""
+#~ "Before starting LiVES, you need to choose an audio player.\n"
+#~ "Jack is recommended, but may prevent LiVES from starting on some "
+#~ "systems.\n"
+#~ "If LiVES will not start with jack, you can restart and try with %s "
+#~ "instead.\n"
+#~ msgstr ""
+#~ "Avant de démarrer LiVES, vous devez choisir un lecteur audio.\n"
+#~ "Jack est recommandé, mais peut empécher LiVES de démarrer sur certains "
+#~ "systèmes.\n"
+#~ "Si LiVES ne démarre pas avec jack, vous pouvez rédémarrer et essayer avec "
+#~ "%s.\n"
+
+#~ msgid "Use _%s audio player"
+#~ msgstr "Utiliser le lecteur audio _%s"
+
+#~ msgid "failed (permission denied)\n"
+#~ msgstr "échoué (non autorisé)\n"
+
+#~ msgid ""
+#~ "Multitrack audio preview is only available with the jack audio player.\n"
+#~ "You can set this in Tools|Preferences|Playback."
+#~ msgstr ""
+#~ "La prévisualisation audio multipiste est seulement disponible avec le "
+#~ "lecteur audio jack.\n"
+#~ "Vous pouvez configurer celui-ci dans Outils/Préférences/Lecture."
+
+#~ msgid "Succesfully loaded %d Weed filters\n"
+#~ msgstr "Chargement réussi de %d filtres Weed\n"
+
+#~ msgid "_Debug Mode"
+#~ msgstr "Mode _Débogage"
+
+#~ msgid ""
+#~ "WARNING - this version of LiVES was compiled without jack support.\n"
+#~ "Many audio features will be unavalaible.\n"
+#~ msgstr ""
+#~ "ATTENTION - Cette version de LiVES a été compilé sans le support du "
+#~ "serveur jack.\n"
+#~ "La plupart des fonctions audios seront indisponibles.\n"

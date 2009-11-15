@@ -1,5 +1,5 @@
-Version 1.1.6
--------------
+Version 1.1.6 (15 Nov 2009)
+---------------------------
 Make keyboard more responsive in fs mode.
 Fix hang/crash in pulse audio player with pa 0.9.19.
 Fix -aplayer startup opts (regression).
@@ -11,6 +11,7 @@ Fix crash when recording with audio gets activated during silent clip. *
 Fix compilation with ENABLE_JACK undefined. (thanks Holgero and others). *
 Add new realtime transitions: iris rectangle, iris circle, 4 way split, dissolve.
 Add -debug startup option to help analyse crash situations.
+Updated translations for Finnish, French, German, Hungarian, Italian and Spanish.
 	
 
 

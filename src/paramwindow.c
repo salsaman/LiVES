@@ -2598,6 +2598,7 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
     new_return=g_strdup (old_return);
   }
   g_free (old_return);
+
   return new_return;
 }
 

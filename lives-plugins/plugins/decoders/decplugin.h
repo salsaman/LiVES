@@ -19,6 +19,9 @@ extern "C"
 #ifndef lseek64
 #define lseek64 lseek
 #endif
+#ifndef off64_t
+#define off64_t off_t
+#endif
 #endif
 
 

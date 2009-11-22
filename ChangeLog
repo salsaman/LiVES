@@ -1,6 +1,7 @@
 Version 1.1.7
 -------------
-
+Minor compilation update for OSX. *
+Fix very rare crash condition. *
 
 
 
@@ -9,8 +10,10 @@ Version 1.1.7
 
 	
 
+	
 
 
+* = backported to 1.0.7
 
 
 

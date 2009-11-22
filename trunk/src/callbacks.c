@@ -4952,8 +4952,10 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
 	  // non-sticky
 	  kill_play_window();
 	  make_play_window();
-	  hide_cursor(mainw->play_window->window);
-	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+	  if (mainw->play_window!=NULL) {
+	    hide_cursor(mainw->play_window->window);
+	    gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+	  }
 	}
 	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)) {
 	  while (g_main_context_iteration (NULL,FALSE));

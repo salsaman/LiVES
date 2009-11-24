@@ -1,5 +1,6 @@
 Version 1.1.7
 -------------
+Set encoder output format correctly on first startup. *
 Minor compilation update for OSX. *
 Fix very rare crash condition. *
 

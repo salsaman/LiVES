@@ -897,13 +897,56 @@ static void lives_init(_ign_opts *ign_opts) {
 	g_list_free (encoders);
       }
       
-      if (prefs->startup_phase==1&&capable->has_encoder_plugins&&capable->has_python) {
-	g_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
-	set_pref("encoder",prefs->encoder.name);
-      }
-      else get_pref("encoder",prefs->encoder.name,51);
+      memset(prefs->encoder.of_name,0,1);
 
-      get_pref("output_type",prefs->encoder.of_name,51);
+      if (prefs->startup_phase==1&&capable->has_encoder_plugins&&capable->has_python) {
+	GList *ofmt_all=NULL;
+	gchar **array;
+	g_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
+
+	// need to change the output format
+
+	if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
+	  
+	  set_pref("encoder",prefs->encoder.name);
+
+	  for (i=0;i<g_list_length(ofmt_all);i++) {
+	    if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
+	      array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
+
+	      if (!strcmp(array[0],"hi-theora")) {
+		g_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+		g_strfreev (array);
+		break;
+	      }
+	      if (!strcmp(array[0],"hi-mpeg")) {
+		g_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+	      }
+	      else if (!strcmp(array[0],"hi_h-mkv")&&strcmp(prefs->encoder.of_name,"hi-mpeg")) {
+		g_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+	      }
+	      else if (!strcmp(array[0],"hi_h-avi")&&strcmp(prefs->encoder.of_name,"hi-mpeg")&&strcmp(prefs->encoder.of_name,"hi_h-mkv")) {
+		g_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+	      }
+	      else if (!strlen(prefs->encoder.of_name)) {
+		g_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+	      }
+
+	      g_strfreev (array);
+	    }
+	  }
+
+	  set_pref("output_type",prefs->encoder.of_name);
+
+	  g_list_free_strings (ofmt_all);
+	  g_list_free (ofmt_all);
+	}
+      }
+
+      if (!strlen(prefs->encoder.of_name)) {
+	get_pref("encoder",prefs->encoder.name,51);
+	get_pref("output_type",prefs->encoder.of_name,51);	
+      }
       
       future_prefs->encoder.audio_codec=prefs->encoder.audio_codec=get_int_pref("encoder_acodec");
       prefs->encoder.capabilities=0;

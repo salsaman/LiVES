@@ -30,6 +30,7 @@ INCLUDES = \
 	$(osc_INCLUDES) \
 	@MJPEGTOOLS_CFLAGS@ \
 	@GTK_CFLAGS@ \
+	@XI_CFLAGS@ \
 	$(darwin_INCLUDES)
 
 
@@ -126,7 +127,7 @@ lives_exe_SOURCES = \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES)
 
-lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) $(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_slice_LDADD) ../libweed/libweed-utils.la
+lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @XI_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) $(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_slice_LDADD) ../libweed/libweed-utils.la
 
 lives_exe_LDFLAGS = -O3
 AM_CFLAGS = -O3 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) $(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(pulse_CFLAGS)  -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)

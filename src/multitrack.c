@@ -11092,6 +11092,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   insert_filter_map_event_at(mt->event_list,end_event,event,FALSE);
 
   mt->did_backup=did_backup;
+  if (mt->event_list!=NULL) gtk_widget_set_sensitive (mt->clear_event_list, TRUE);
 
   if (mt->current_fx==mt->avol_fx) return;
 

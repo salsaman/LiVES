@@ -1010,11 +1010,13 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
   int *layer_rows=NULL,*channel_rows;
   gint retval=FILTER_NO_ERROR;
   int *mand;
-  int maxinwidth=0,maxinheight=0;
+  int maxinwidth=4,maxinheight=4;
   int oclamping,iclamping;
 
   int num_ctmpl,num_inc;
   weed_plant_t **in_ctmpls;
+
+  gboolean def_disabled=FALSE;
 
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) return FILTER_ERROR_NO_IN_CHANNELS;
@@ -1393,42 +1395,50 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
 	weed_free(palettes);
       }
     }
-    if (!inplace) {
-      if (def_channel==NULL) def_channel=get_enabled_channel(inst,0,FALSE);
-      // try to match palettes with first enabled in channel
-      palette=weed_get_int_value(def_channel,"current_palette",&error);
-      
-      if (palette!=outpalette) {
-	// palette change needed; try to change channel palette
-	int num_palettes=weed_leaf_num_elements(chantmpl,"palette_list");
-	int *palettes=weed_get_int_array(chantmpl,"palette_list",&error);
-	if (check_weed_palette_list(palettes,num_palettes,palette)==palette) {
-	  weed_set_int_value(channel,"current_palette",palette);
-	  if (channel_flags&WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) needs_reinit=TRUE;
+
+    if (def_channel==NULL) def_channel=get_enabled_channel(inst,0,FALSE);
+
+    if (weed_get_boolean_value(def_channel,"temp_disabled",&error)==WEED_TRUE) def_disabled=TRUE; 
+
+    if (!inplace||def_disabled) {
+
+      if (!def_disabled) {
+	// try to match palettes with first enabled in channel
+	palette=weed_get_int_value(def_channel,"current_palette",&error);
+	
+	if (palette!=outpalette) {
+	  // palette change needed; try to change channel palette
+	  int num_palettes=weed_leaf_num_elements(chantmpl,"palette_list");
+	  int *palettes=weed_get_int_array(chantmpl,"palette_list",&error);
+	  if (check_weed_palette_list(palettes,num_palettes,palette)==palette) {
+	    weed_set_int_value(channel,"current_palette",palette);
+	    if (channel_flags&WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) needs_reinit=TRUE;
+	  }
+	  else {
+	    weed_free(in_tracks);
+	    weed_free(out_tracks);
+	    weed_free(in_channels);
+	    weed_free(out_channels);
+	    weed_free(channel_rows);
+	    return FILTER_ERROR_INVALID_PALETTE_SETTINGS; // plugin author messed up...
+	  }
+	  weed_free(palettes);
 	}
-	else {
-	  weed_free(in_tracks);
-	  weed_free(out_tracks);
-	  weed_free(in_channels);
-	  weed_free(out_channels);
-	  weed_free(channel_rows);
-	  return FILTER_ERROR_INVALID_PALETTE_SETTINGS; // plugin author messed up...
+	
+	if (weed_plant_has_leaf(def_channel,"YUV_clamping")) {
+	  oclamping=(weed_get_int_value(def_channel,"YUV_clamping",&error));
+	  weed_set_int_value(channel,"YUV_clamping",oclamping);
 	}
-	weed_free(palettes);
+	else weed_leaf_delete(channel,"YUV_clamping");
+	
+	if (weed_plant_has_leaf(def_channel,"YUV_sampling")) weed_set_int_value(channel,"YUV_sampling",weed_get_int_value(def_channel,"YUV_sampling",&error));
+	else weed_leaf_delete(channel,"YUV_sampling");
+	
+	if (weed_plant_has_leaf(def_channel,"YUV_subspace")) weed_set_int_value(channel,"YUV_subspace",weed_get_int_value(def_channel,"YUV_subspace",&error));
+	else weed_leaf_delete(channel,"YUV_subspace");
       }
 
-      if (weed_plant_has_leaf(def_channel,"YUV_clamping")) {
-	oclamping=(weed_get_int_value(def_channel,"YUV_clamping",&error));
-	weed_set_int_value(channel,"YUV_clamping",oclamping);
-      }
-      else weed_leaf_delete(channel,"YUV_clamping");
-      
-      if (weed_plant_has_leaf(def_channel,"YUV_sampling")) weed_set_int_value(channel,"YUV_sampling",weed_get_int_value(def_channel,"YUV_sampling",&error));
-      else weed_leaf_delete(channel,"YUV_sampling");
-      
-      if (weed_plant_has_leaf(def_channel,"YUV_subspace")) weed_set_int_value(channel,"YUV_subspace",weed_get_int_value(def_channel,"YUV_subspace",&error));
-      else weed_leaf_delete(channel,"YUV_subspace");
-      
+
       palette=weed_get_int_value(channel,"current_palette",&error);
 
       set_channel_size(channel,opwidth/weed_palette_get_pixels_per_macropixel(palette),opheight,1,NULL);

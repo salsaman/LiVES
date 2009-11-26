@@ -869,6 +869,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 
   int track_index=mt->track_index;
 
+  int chindx;
   gboolean retval=FALSE;
 
   mt->track_index=-1;
@@ -879,7 +880,9 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
   numtracks=weed_leaf_num_elements(event,"clips");
   clips=weed_get_int_array(event,"clips",&error);
 
-  if (mt->current_track<numtracks&&clips[mt->current_track]<1&&(mt->current_rfx==NULL||mt->init_event==NULL||mt->current_rfx->source==NULL||!is_audio_channel_in(mt->current_rfx->source,track_to_channel(mt->init_event,mt->current_track)))) {
+  chindx=track_to_channel(mt->init_event,mt->current_track);
+
+  if (mt->current_track<numtracks&&clips[mt->current_track]<1&&(mt->current_rfx==NULL||mt->init_event==NULL||mt->current_rfx->source==NULL||chindx==-1||!is_audio_channel_in(mt->current_rfx->source,chindx))) {
     if (track_index!=-1&&mt->fx_box!=NULL) {
       gtk_widget_ref(mt->node_scale);
       gtk_widget_ref(mt->node_spinbutton);
@@ -1760,7 +1763,7 @@ void clip_select (lives_mt *mt, gboolean scroll) {
   mt->file_selected=-1;
 
   if (list==NULL) return;
-  if (mt->poly_state==POLY_FX_LIST) {
+  if (mt->poly_state==POLY_FX_LIST&&mt->event_list!=NULL) {
     if (!mt->was_undo_redo) {
       polymorph(mt,POLY_FX_LIST);
     }

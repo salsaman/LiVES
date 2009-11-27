@@ -1357,6 +1357,7 @@ void load_default_keymap(void) {
   gchar *keymap_template=g_strdup_printf("%s%sdefault.keymap",prefs->prefix_dir,DATA_DIR);
   gchar *com,*tmp;
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
   if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
     com=g_strdup_printf("/bin/cp %s %s",keymap_template,keymap_file);
     dummyvar=system(com);
@@ -1368,9 +1369,11 @@ void load_default_keymap(void) {
     g_free(tmp);
     g_free(keymap_file);
     g_free(keymap_template);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
     return;
   }
   on_load_keymap_clicked(NULL,NULL);
   g_free(keymap_file);
   g_free(keymap_template);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 }

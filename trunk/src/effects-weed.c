@@ -2789,7 +2789,7 @@ void weed_load_all (void) {
 
   GList *weed_plugin_list,*weed_plugin_sublist;
 
-  gchar *lives_weed_plugin_path=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN),*weed_plugin_path,*weed_p_path;
+  gchar *lives_weed_plugin_path,*weed_plugin_path,*weed_p_path;
   gchar *subdir_path,*subdir_name,*plugin_path,*plugin_name;
   gint numdirs;
   gchar **dirs;
@@ -2801,9 +2801,13 @@ void weed_load_all (void) {
 
   num_weed_filters=0;
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
+  lives_weed_plugin_path=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN);
+
 #ifdef DEBUG_WEED
   g_printerr("In weed init\n");
 #endif
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 
   // danger Will Robinson !
   fg_gen_to_start=fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
@@ -2831,6 +2835,7 @@ void weed_load_all (void) {
     hashnames[i]=NULL;
   }
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
   weed_p_path=getenv("WEED_PLUGIN_PATH");
   if (weed_p_path==NULL) weed_p_path=g_strdup("");
   weed_plugin_path=g_strdup(weed_p_path);
@@ -2847,6 +2852,8 @@ void weed_load_all (void) {
   // first we parse the weed_plugin_path
   numdirs=get_token_count(weed_plugin_path,':');
   dirs=g_strsplit(weed_plugin_path,":",-1);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+
   for (i=0;i<numdirs;i++) {
     // get list of all files
     weed_plugin_list=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,dirs[i],"so");
@@ -2854,6 +2861,7 @@ void weed_load_all (void) {
     
     // parse twice, first we get the plugins, then 1 level of subdirs
     for (plugin_idx=0;plugin_idx<listlen;plugin_idx++) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       plugin_name=g_list_nth_data(weed_plugin_list,plugin_idx);
       plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
       load_weed_plugin(plugin_name,plugin_path);
@@ -2862,16 +2870,19 @@ void weed_load_all (void) {
       plugin_idx--;
       listlen--;
       g_free(plugin_path);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
 
     }
     
     // get 1 level of subdirs
     for (subdir_idx=0;subdir_idx<listlen;subdir_idx++) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       subdir_name=g_list_nth_data(weed_plugin_list,subdir_idx);
       subdir_path=g_strdup_printf("%s/%s",dirs[i],subdir_name);
       if (!g_file_test(subdir_path, G_FILE_TEST_IS_DIR)||!strcmp(subdir_name,"icons")||!strcmp(subdir_name,"data")) {
 	g_free(subdir_name);
 	g_free(subdir_path);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 	continue;
       }
       g_free(subdir_name);
@@ -2889,18 +2900,23 @@ void weed_load_all (void) {
 	g_list_free(weed_plugin_sublist);
       }
       g_free(subdir_path);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
     if (weed_plugin_list!=NULL) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       g_list_free_strings(weed_plugin_list);
       g_list_free(weed_plugin_list);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
   }
+  pthread_mutex_lock(&mainw->gtk_mutex);
   g_strfreev(dirs);
   g_free(weed_plugin_path);
 
   msg=g_strdup_printf(_ ("Successfully loaded %d Weed filters\n"),num_weed_filters);
   d_print(msg);
   g_free(msg);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 
 }
 

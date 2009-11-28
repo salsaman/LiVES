@@ -1,8 +1,10 @@
 Version 1.1.7
 -------------
 Set encoder output format correctly on first startup. *
-Minor compilation update for OSX. *
-Fix very rare crash condition. *
+Fix problems when mt compositor/transition has 0 input frames. *
+Add sox to startup button group.
+Minor compilation updates for OSX and others. *
+Fix some very rare crash conditions. *
 
 
 

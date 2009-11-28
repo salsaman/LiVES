@@ -2895,6 +2895,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
     gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton2);
 
     gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton2), radiobutton_group);
+    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton2));
 
   }
 
@@ -2903,6 +2904,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
     gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton3);
 
     gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton3), radiobutton_group);
+    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton3));
 
   }
 

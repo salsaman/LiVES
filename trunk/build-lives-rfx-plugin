@@ -307,7 +307,7 @@ unless ($is_batch_gen) {
 
 
 	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
-	print OUT "            \$convert_cmd \$in2 \$clipboard\$name2\$img_ext\n";
+	print OUT "            system(\"\$convert_cmd \$in2 \$clipboard\$name2\$img_ext\");\n";
 	print OUT "            \$in2=\"\$clipboard/\$name2\$img_ext\";\n";
 	print OUT "        }\n";
 

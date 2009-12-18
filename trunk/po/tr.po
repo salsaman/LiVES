@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-12-17 23:46-0300\n"
+"POT-Creation-Date: 2009-12-18 10:52-0300\n"
 "PO-Revision-Date: 2009-04-05 08:57+0000\n"
 "Last-Translator: gamer <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -1274,8 +1274,9 @@ msgstr ""
 
 #: src/callbacks.c:1792
 msgid ""
-"This operation requires resizing of frames. Please install 'convert' from "
-"the Image-magick package, and then restart LiVES.\n"
+"This operation requires resizing or converting of frames.\n"
+"Please install 'convert' from the Image-magick package, and then restart "
+"LiVES.\n"
 msgstr ""
 
 #: src/callbacks.c:1809

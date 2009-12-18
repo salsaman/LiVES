@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-12-17 23:46-0300\n"
+"POT-Creation-Date: 2009-12-18 10:52-0300\n"
 "PO-Revision-Date: 2009-11-12 07:14+0000\n"
 "Last-Translator: MixCool <lars.thoms@mixcool.de>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -1425,9 +1425,11 @@ msgid "Pasted %d frames to new clip.\n"
 msgstr "%d Frames in den neuen Clip eingefügt.\n"
 
 #: src/callbacks.c:1792
+#, fuzzy
 msgid ""
-"This operation requires resizing of frames. Please install 'convert' from "
-"the Image-magick package, and then restart LiVES.\n"
+"This operation requires resizing or converting of frames.\n"
+"Please install 'convert' from the Image-magick package, and then restart "
+"LiVES.\n"
 msgstr ""
 "Dieser Vorgang benötigt die Skalierung der Frames. Bitte installieren sie "
 "'convert' aus dem Image-Magick Paket und starten sie LiVES neu.\n"
@@ -8551,8 +8553,9 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Keep _Centered"
-msgstr ""
+msgstr "_Stumm schalten"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -9453,8 +9456,9 @@ msgid "transition_checkerboard"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "transition_fade2"
-msgstr ""
+msgstr "Änderungen _ignorieren"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "transition_splice"

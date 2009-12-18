@@ -1785,11 +1785,11 @@ on_insert_activate                    (GtkButton     *button,
 
   gint orig_frames=cfile->frames;
 
-  // don't ask smogrify to resize if frames are the same size
-  if ((cfile->hsize==clipboard->hsize && cfile->vsize==clipboard->vsize)||orig_frames==0) hsize=vsize=0;
+  // don't ask smogrify to resize if frames are the same size and type
+  if (((cfile->hsize==clipboard->hsize && cfile->vsize==clipboard->vsize)||orig_frames==0)&&(cfile->img_type==clipboard->img_type)) hsize=vsize=0;
   else {
     if (!capable->has_convert) {
-      do_error_dialog(_ ("This operation requires resizing of frames. Please install 'convert' from the Image-magick package, and then restart LiVES.\n"));
+      do_error_dialog(_ ("This operation requires resizing or converting of frames.\nPlease install 'convert' from the Image-magick package, and then restart LiVES.\n"));
       mainw->error=TRUE;
       if (button!=NULL) {
 	gtk_widget_destroy(insertw->insert_dialog);

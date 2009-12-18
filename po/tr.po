@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-11-24 12:42-0300\n"
+"POT-Creation-Date: 2009-12-17 23:46-0300\n"
 "PO-Revision-Date: 2009-04-05 08:57+0000\n"
 "Last-Translator: gamer <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -86,15 +86,15 @@ msgstr "tavsiye"
 msgid "disabled !"
 msgstr "Engelli!"
 
-#: src/main.c:1056
+#: src/main.c:1045
 msgid "Loading realtime effect plugins..."
 msgstr ""
 
-#: src/main.c:1092
+#: src/main.c:1081
 msgid "Starting jack audio server..."
 msgstr ""
 
-#: src/main.c:1124
+#: src/main.c:1113
 msgid ""
 "\n"
 "\n"
@@ -106,105 +106,105 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/main.c:1147
+#: src/main.c:1136
 msgid "Starting pulse audio server..."
 msgstr ""
 
-#: src/main.c:1194
+#: src/main.c:1183
 msgid "Checking optional dependencies:"
 msgstr "Isteğe bağlı bağımlılıkları denetleme:"
 
-#: src/main.c:1195
+#: src/main.c:1184
 msgid "mplayer...detected..."
 msgstr "mplayer ... bulundu ..."
 
-#: src/main.c:1196
+#: src/main.c:1185
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer ... BULUNAMADI ..."
 
-#: src/main.c:1197
+#: src/main.c:1186
 msgid "convert...detected..."
 msgstr "convert...bulundu..."
 
-#: src/main.c:1198
+#: src/main.c:1187
 msgid "convert...NOT DETECTED..."
 msgstr "convert...BULUNAMADI..."
 
-#: src/main.c:1199
+#: src/main.c:1188
 msgid "composite...detected..."
 msgstr "composite ... bulundu ..."
 
-#: src/main.c:1200
+#: src/main.c:1189
 msgid "composite...NOT DETECTED..."
 msgstr "composite ... BULUNAMADI ..."
 
-#: src/main.c:1201
+#: src/main.c:1190
 msgid "sox...detected\n"
 msgstr "sox...bulundu\n"
 
-#: src/main.c:1202
+#: src/main.c:1191
 msgid "sox...NOT DETECTED\n"
 msgstr "sox...BULUNAMADI\n"
 
-#: src/main.c:1203
+#: src/main.c:1192
 msgid "xmms...detected..."
 msgstr "xmms...bulundu..."
 
-#: src/main.c:1204
+#: src/main.c:1193
 msgid "xmms...NOT DETECTED..."
 msgstr "xmms...BULUNAMADI..."
 
-#: src/main.c:1205
+#: src/main.c:1194
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...bulundu..."
 
-#: src/main.c:1206
+#: src/main.c:1195
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...BULUNAMADI..."
 
-#: src/main.c:1207
+#: src/main.c:1196
 msgid "jackd...detected..."
 msgstr "jackd...bulundu..."
 
-#: src/main.c:1208
+#: src/main.c:1197
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd...BULUNAMADI..."
 
-#: src/main.c:1209
+#: src/main.c:1198
 #, fuzzy
 msgid "pulse audio...detected..."
 msgstr "mplayer ... bulundu ..."
 
-#: src/main.c:1210
+#: src/main.c:1199
 #, fuzzy
 msgid "pulse audio...NOT DETECTED..."
 msgstr "mplayer ... BULUNAMADI ..."
 
-#: src/main.c:1211
+#: src/main.c:1200
 msgid "python...detected..."
 msgstr "python...bulundu..."
 
-#: src/main.c:1212
+#: src/main.c:1201
 msgid "python...NOT DETECTED..."
 msgstr "python...BULUNAMADI..."
 
-#: src/main.c:1213
+#: src/main.c:1202
 msgid "dvgrab...detected..."
 msgstr "dvgrab...bulundu..."
 
-#: src/main.c:1214
+#: src/main.c:1203
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab...BULUNAMADI..."
 
-#: src/main.c:1215
+#: src/main.c:1204
 msgid "xwininfo...detected..."
 msgstr "xwininfo...bulundu..."
 
-#: src/main.c:1216
+#: src/main.c:1205
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo...BULUNAMADI..."
 
-#: src/main.c:1219
+#: src/main.c:1208
 #, c-format
 msgid ""
 "\n"
@@ -215,17 +215,17 @@ msgstr ""
 "\n"
 "Pencere yöneticisi raporları olarak \"%s\"; "
 
-#: src/main.c:1222
+#: src/main.c:1211
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "bulunan monitor sayısı : %d\n"
 
-#: src/main.c:1225
+#: src/main.c:1214
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Geçici dizin:% s\n"
 
-#: src/main.c:1229
+#: src/main.c:1218
 #, fuzzy
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
@@ -235,16 +235,16 @@ msgstr ""
 "UYARI - LIVES bu sürümü jack desteği olmadan derlendi.\n"
 "Pek çok ses özellikleri kullanılamaz olacak\n"
 
-#: src/main.c:1232
+#: src/main.c:1221
 msgid "Compiled with jack support, good !\n"
 msgstr "Jack desteği ile derlendi, iyi!\n"
 
-#: src/main.c:1235
+#: src/main.c:1224
 #, fuzzy
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Jack desteği ile derlendi, iyi!\n"
 
-#: src/main.c:1239
+#: src/main.c:1228
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -253,7 +253,7 @@ msgstr ""
 "Hoşgeldiniz LIVES sürüm % s.\n"
 "\n"
 
-#: src/main.c:1541
+#: src/main.c:1530
 #, c-format
 msgid ""
 "\n"
@@ -262,92 +262,92 @@ msgstr ""
 "\n"
 "Başlangıç yazım şekli: % s [opts] [dosyaadı [başlangıç zamanı] [kare]]\n"
 
-#: src/main.c:1542
+#: src/main.c:1531
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
 
-#: src/main.c:1543
+#: src/main.c:1532
 msgid "start_time : filename start time in seconds\n"
 msgstr ""
 
-#: src/main.c:1544
+#: src/main.c:1533
 msgid "frames : maximum number of frames to open\n"
 msgstr "Çerçeveler: en çok sayıda çerçeve açmak için\n"
 
-#: src/main.c:1546
+#: src/main.c:1535
 msgid "opts can be:\n"
 msgstr "opts olabilir:\n"
 
-#: src/main.c:1547
+#: src/main.c:1536
 msgid "-help            : show this help text and exit\n"
 msgstr "-help: Bu yardım metnini ve çıkışı gösterir\n"
 
-#: src/main.c:1548
+#: src/main.c:1537
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr ""
 
-#: src/main.c:1549
+#: src/main.c:1538
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset : Başlangıçta herhangi bir ayar yükleme\n"
 
-#: src/main.c:1550
+#: src/main.c:1539
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover : çökmesi durumunda zorla yükleme\n"
 
-#: src/main.c:1551
+#: src/main.c:1540
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover : çökmesi durumunda zorla yükle\n"
 
-#: src/main.c:1552
+#: src/main.c:1541
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui :arayüzü gösterme\n"
 
-#: src/main.c:1554
+#: src/main.c:1543
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr ""
 
-#: src/main.c:1555
+#: src/main.c:1544
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr ""
 
-#: src/main.c:1557
+#: src/main.c:1546
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
 
-#: src/main.c:1559
+#: src/main.c:1548
 msgid ", pulse"
 msgstr ""
 
-#: src/main.c:1562
+#: src/main.c:1551
 msgid ", sox or jack\n"
 msgstr "sox veya jack\n"
 
-#: src/main.c:1563
+#: src/main.c:1552
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
 
-#: src/main.c:1565
+#: src/main.c:1554
 #, fuzzy
 msgid " or sox\n"
 msgstr "veya sox\n"
 
-#: src/main.c:1567
+#: src/main.c:1556
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
 
-#: src/main.c:1568
+#: src/main.c:1557
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 
-#: src/main.c:1585 src/gui.c:950
+#: src/main.c:1574 src/gui.c:950
 msgid "Starting GUI..."
 msgstr ""
 
-#: src/main.c:1596
+#: src/main.c:1585
 #, c-format
 msgid ""
 "\n"
@@ -358,14 +358,14 @@ msgid ""
 "(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"
 msgstr ""
 
-#: src/main.c:1612
+#: src/main.c:1601
 msgid ""
 "\n"
 "LiVES was unable to write a small file to /tmp\n"
 "Please make sure you have write access to /tmp and try again.\n"
 msgstr ""
 
-#: src/main.c:1616
+#: src/main.c:1605
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -374,7 +374,7 @@ msgid ""
 "before running LiVES.\n"
 msgstr ""
 
-#: src/main.c:1622
+#: src/main.c:1611
 #, c-format
 msgid ""
 "\n"
@@ -384,7 +384,7 @@ msgid ""
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
 
-#: src/main.c:1629
+#: src/main.c:1618
 #, c-format
 msgid ""
 "\n"
@@ -395,7 +395,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:1636
+#: src/main.c:1625
 #, c-format
 msgid ""
 "\n"
@@ -407,7 +407,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:1643
+#: src/main.c:1632
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -418,42 +418,42 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 
-#: src/main.c:1647
+#: src/main.c:1636
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/main.c:1656
+#: src/main.c:1645
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
 "LiVES more fully.\n"
 msgstr ""
 
-#: src/main.c:1659
+#: src/main.c:1648
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
 
-#: src/main.c:1662
+#: src/main.c:1651
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
 
-#: src/main.c:1665
+#: src/main.c:1654
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
 
-#: src/main.c:1669
+#: src/main.c:1658
 #, c-format
 msgid ""
 "\n"
@@ -464,76 +464,76 @@ msgid ""
 "You may need to change the value of <lib_dir> in ~/.lives\n"
 msgstr ""
 
-#: src/main.c:1747
+#: src/main.c:1737
 #, c-format
 msgid "Autoloading set %s..."
 msgstr ""
 
-#: src/main.c:1926
+#: src/main.c:1916
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Geçersiz ses çalar % s\n"
 
-#: src/main.c:1998
+#: src/main.c:1988
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2002
+#: src/main.c:1992
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2005
+#: src/main.c:1995
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2011
+#: src/main.c:2001
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr ""
 
-#: src/main.c:3128 src/main.c:3129 src/gui.c:1859 src/gui.c:2823
-#: src/saveplay.c:1315
+#: src/main.c:3131 src/main.c:3132 src/gui.c:1859 src/gui.c:2823
+#: src/saveplay.c:1317
 msgid "Play"
 msgstr "Oynat"
 
-#: src/main.c:3481
+#: src/main.c:3488
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/main.c:3559
+#: src/main.c:3566
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Dosya kapandı %s\n"
 
-#: src/main.c:3675 src/gui.c:502 src/utils.c:2153 src/utils.c:2179
-#: src/saveplay.c:2240 src/multitrack.c:3135 src/multitrack.c:3930
+#: src/main.c:3682 src/gui.c:502 src/utils.c:2153 src/utils.c:2179
+#: src/saveplay.c:2244 src/multitrack.c:3138 src/multitrack.c:3933
 msgid "_Undo"
 msgstr "_Geri Al"
 
-#: src/main.c:3676 src/gui.c:515 src/utils.c:2154 src/utils.c:2180
-#: src/saveplay.c:2241 src/multitrack.c:3156 src/multitrack.c:3949
+#: src/main.c:3683 src/gui.c:515 src/utils.c:2154 src/utils.c:2180
+#: src/saveplay.c:2245 src/multitrack.c:3159 src/multitrack.c:3952
 msgid "_Redo"
 msgstr "_Yinele"
 
-#: src/main.c:3700 src/interface.c:628 src/gui.c:2015 src/preferences.c:1440
+#: src/main.c:3707 src/interface.c:628 src/gui.c:2015 src/preferences.c:1440
 #: src/resample.c:1699
 msgid "Video"
 msgstr "Vidyo"
 
-#: src/main.c:3701 src/interface.c:647 src/gui.c:2034
+#: src/main.c:3708 src/interface.c:647 src/gui.c:2034
 msgid "Left Audio"
 msgstr "Sol Ses"
 
-#: src/main.c:3702 src/gui.c:2052
+#: src/main.c:3709 src/gui.c:2052
 msgid "Right Audio"
 msgstr "Sağ ses"
 
-#: src/main.c:3742
+#: src/main.c:3749
 msgid ""
 "\n"
 "\n"
@@ -554,9 +554,9 @@ msgstr "Deinterlace uygula"
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
-#: src/interface.c:183 src/callbacks.c:6887 src/gui.c:2826 src/gui.c:3363
-#: src/saveplay.c:1318 src/saveplay.c:1895 src/dialogs.c:662 src/dialogs.c:663
-#: src/dialogs.c:739 src/dialogs.c:740 src/framedraw.c:191
+#: src/interface.c:183 src/callbacks.c:6904 src/gui.c:2826 src/gui.c:3363
+#: src/saveplay.c:1320 src/saveplay.c:1897 src/dialogs.c:666 src/dialogs.c:667
+#: src/dialogs.c:747 src/dialogs.c:748 src/framedraw.c:191
 msgid "Preview"
 msgstr "Önizleme"
 
@@ -572,7 +572,7 @@ msgstr ""
 msgid "Click here to _Preview the video"
 msgstr ""
 
-#: src/interface.c:289 src/dialogs.c:1435
+#: src/interface.c:289 src/dialogs.c:1443
 msgid "LiVES: - Processing..."
 msgstr "LIVES - İşleme ..."
 
@@ -588,7 +588,7 @@ msgstr ""
 "\n"
 "Lütfen Bekleyin"
 
-#: src/interface.c:328 src/callbacks.c:6699 src/dialogs.c:1465
+#: src/interface.c:328 src/callbacks.c:6716 src/dialogs.c:1473
 msgid ""
 "\n"
 "Please Wait"
@@ -1093,17 +1093,17 @@ msgstr "Ses çalar jack kullanıyor"
 msgid "Use _sox audio player"
 msgstr "Ses çalar jack kullanıyor"
 
-#: src/interface.c:2901
+#: src/interface.c:2902
 #, fuzzy
 msgid "Use _mplayer audio player"
 msgstr "Ses çalar jack kullanıyor"
 
-#: src/interface.c:2964
+#: src/interface.c:2966
 #, fuzzy
 msgid "LiVES: recover layout ?"
 msgstr "LIVES: bir dosya seçin"
 
-#: src/interface.c:2976
+#: src/interface.c:2978
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
@@ -1211,7 +1211,7 @@ msgstr ""
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr ""
 
-#: src/callbacks.c:1077 src/callbacks.c:8566
+#: src/callbacks.c:1077 src/callbacks.c:8583
 msgid "Insert Silence"
 msgstr "Sessiz ekle"
 
@@ -1231,59 +1231,54 @@ msgstr "Çerçeve resimler siliniyor"
 msgid "Undoing audio"
 msgstr "Ses geri alınıyor"
 
-#: src/callbacks.c:1362 src/resample.c:590
-#, c-format
-msgid "Length of video is now %d frames.\n"
-msgstr ""
-
-#: src/callbacks.c:1388
+#: src/callbacks.c:1376
 #, c-format
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr ""
 
-#: src/callbacks.c:1391 src/resample.c:593 src/resample.c:2320
+#: src/callbacks.c:1379 src/resample.c:593 src/resample.c:2319
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr ""
 
-#: src/callbacks.c:1530 src/callbacks.c:1544
+#: src/callbacks.c:1518 src/callbacks.c:1532
 msgid "Redoing"
 msgstr "Yineleniyor"
 
-#: src/callbacks.c:1585
+#: src/callbacks.c:1573
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1599 src/saveplay.c:737 src/saveplay.c:843
-#: src/saveplay.c:894 src/saveplay.c:2571
+#: src/callbacks.c:1587 src/saveplay.c:739 src/saveplay.c:845
+#: src/saveplay.c:896 src/saveplay.c:2575
 msgid "Pulling frames from clip"
 msgstr "Klipten çerçeveler alınıyor"
 
-#: src/callbacks.c:1622
+#: src/callbacks.c:1613
 msgid "Copying to the clipboard"
 msgstr "Panoya kopyalanıyor"
 
-#: src/callbacks.c:1683
+#: src/callbacks.c:1674
 msgid "Cut"
 msgstr "Kes"
 
-#: src/callbacks.c:1723
+#: src/callbacks.c:1714
 msgid "Pasting"
 msgstr "Yapıştırılıyor"
 
-#: src/callbacks.c:1740
+#: src/callbacks.c:1731
 #, c-format
 msgid "Pasted %d frames to new clip.\n"
 msgstr ""
 
-#: src/callbacks.c:1801
+#: src/callbacks.c:1792
 msgid ""
 "This operation requires resizing of frames. Please install 'convert' from "
 "the Image-magick package, and then restart LiVES.\n"
 msgstr ""
 
-#: src/callbacks.c:1818
+#: src/callbacks.c:1809
 msgid ""
 "\n"
 "\n"
@@ -1292,31 +1287,31 @@ msgid ""
 "the 'Trim Audio' function from the Audio menu."
 msgstr ""
 
-#: src/callbacks.c:1838
+#: src/callbacks.c:1829
 msgid ""
 "LiVES cannot insert because the audio rates do not match.\n"
 "Please install 'sox', and try again."
 msgstr ""
 
-#: src/callbacks.c:1856
+#: src/callbacks.c:1847
 msgid ""
 "\n"
 "Insertion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:1887 src/callbacks.c:8537
+#: src/callbacks.c:1878 src/callbacks.c:8554
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:1959 src/callbacks.c:1973
+#: src/callbacks.c:1950 src/callbacks.c:1964
 msgid "Resampling clipboard audio"
 msgstr ""
 
-#: src/callbacks.c:1983
+#: src/callbacks.c:1974
 msgid ""
 "\n"
 "\n"
@@ -1324,7 +1319,7 @@ msgid ""
 "Clipboard audio has been erased.\n"
 msgstr ""
 
-#: src/callbacks.c:1996
+#: src/callbacks.c:1987
 msgid ""
 "\n"
 "\n"
@@ -1333,86 +1328,86 @@ msgid ""
 "using unchanged audio ?\n"
 msgstr ""
 
-#: src/callbacks.c:2037 src/callbacks.c:2165
+#: src/callbacks.c:2028 src/callbacks.c:2156
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:2048 src/callbacks.c:2099 src/callbacks.c:2176
+#: src/callbacks.c:2039 src/callbacks.c:2090 src/callbacks.c:2167
 msgid "Inserting"
 msgstr "Ekleniyor"
 
-#: src/callbacks.c:2075
+#: src/callbacks.c:2066
 #, c-format
 msgid "Inserting %d times from the clipboard%s..."
 msgstr ""
 
-#: src/callbacks.c:2080
+#: src/callbacks.c:2071
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr ""
 
-#: src/callbacks.c:2227
+#: src/callbacks.c:2218
 msgid "Insert"
 msgstr "Ekle"
 
-#: src/callbacks.c:2282
+#: src/callbacks.c:2273
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
 "Are you sure ?"
 msgstr ""
 
-#: src/callbacks.c:2290
+#: src/callbacks.c:2281
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2298 src/callbacks.c:7994 src/callbacks.c:8166
-#: src/callbacks.c:8204
+#: src/callbacks.c:2289 src/callbacks.c:8011 src/callbacks.c:8183
+#: src/callbacks.c:8221
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2306
+#: src/callbacks.c:2297
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2314 src/callbacks.c:8196
+#: src/callbacks.c:2305 src/callbacks.c:8213
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2347
+#: src/callbacks.c:2338
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr ""
 
-#: src/callbacks.c:2360
+#: src/callbacks.c:2351
 msgid "Deleting"
 msgstr "Siliniyor"
 
-#: src/callbacks.c:2435
+#: src/callbacks.c:2426
 msgid "Delete"
 msgstr "Sil"
 
-#: src/callbacks.c:2452
+#: src/callbacks.c:2443
 msgid ""
 "\n"
 "\n"
 "Selection is locked.\n"
 msgstr ""
 
-#: src/callbacks.c:2749
+#: src/callbacks.c:2740
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -1420,11 +1415,11 @@ msgid ""
 "play.)\n"
 msgstr ""
 
-#: src/callbacks.c:2754
+#: src/callbacks.c:2745
 msgid "Record cancelled.\n"
 msgstr ""
 
-#: src/callbacks.c:2907
+#: src/callbacks.c:2898
 #, c-format
 msgid ""
 "\n"
@@ -1433,7 +1428,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/callbacks.c:2910
+#: src/callbacks.c:2901
 #, c-format
 msgid ""
 "\n"
@@ -1442,7 +1437,7 @@ msgid ""
 "The plugin may be broken or not installed correctly."
 msgstr ""
 
-#: src/callbacks.c:3248
+#: src/callbacks.c:3240
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk%"
@@ -1451,27 +1446,27 @@ msgid ""
 "Please press 'Cancel' if that is not what you want.\n"
 msgstr ""
 
-#: src/callbacks.c:3308
+#: src/callbacks.c:3300
 #, c-format
 msgid "Saving set %s"
 msgstr ""
 
-#: src/callbacks.c:3505
+#: src/callbacks.c:3498
 #, c-format
 msgid "Loading clips from set %s"
 msgstr ""
 
-#: src/callbacks.c:3563
+#: src/callbacks.c:3556
 #, c-format
 msgid "No clips were recovered for set (%s).\n"
 msgstr ""
 
-#: src/callbacks.c:3573
+#: src/callbacks.c:3566
 #, c-format
 msgid "%d clips were recovered from set (%s).\n"
 msgstr ""
 
-#: src/callbacks.c:3747
+#: src/callbacks.c:3742
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -1479,25 +1474,33 @@ msgid ""
 "Click OK to proceed.\n"
 msgstr ""
 
-#: src/callbacks.c:3749
+#: src/callbacks.c:3744
 msgid "Cleaning up disk space..."
 msgstr "Disk alanı temizleniyor..."
 
-#: src/callbacks.c:3776
+#: src/callbacks.c:3771
 msgid "Clearing disk space"
 msgstr ""
 
-#: src/callbacks.c:3806
+#: src/callbacks.c:3801
 #, c-format
 msgid "%d MB of disk space was recovered.\n"
 msgstr ""
 
-#: src/callbacks.c:3827
+#: src/callbacks.c:3822
 msgid "Resetting frame rates and frame values..."
 msgstr ""
 
-#: src/callbacks.c:3880 src/callbacks.c:3899 src/callbacks.c:3913
-#: src/callbacks.c:3927
+#: src/callbacks.c:3866
+#, c-format
+msgid ""
+"\n"
+"External: %s\n"
+"Internal: %s (%d bpp)\n"
+msgstr ""
+
+#: src/callbacks.c:3877 src/callbacks.c:3896 src/callbacks.c:3910
+#: src/callbacks.c:3944
 msgid ""
 "\n"
 "  Opening..."
@@ -1505,21 +1508,28 @@ msgstr ""
 "\n"
 "  Açılıyor..."
 
-#: src/callbacks.c:3887
+#: src/callbacks.c:3884
 #, c-format
 msgid ""
 "\n"
 "(%d virtual)"
 msgstr ""
 
-#: src/callbacks.c:3890
+#: src/callbacks.c:3887
 #, c-format
 msgid ""
 "\n"
 "(%d decoded)"
 msgstr ""
 
-#: src/callbacks.c:3907
+#: src/callbacks.c:3899 src/callbacks.c:3913 src/callbacks.c:3947
+#, c-format
+msgid ""
+"\n"
+"  %.2f sec."
+msgstr ""
+
+#: src/callbacks.c:3904
 msgid ""
 "\n"
 "  Unknown"
@@ -1527,7 +1537,31 @@ msgstr ""
 "\n"
 "  Bilinmiyor"
 
-#: src/callbacks.c:3990
+#: src/callbacks.c:3917 src/callbacks.c:3931
+msgid "unsigned"
+msgstr ""
+
+#: src/callbacks.c:3918 src/callbacks.c:3932
+#, fuzzy
+msgid "signed"
+msgstr "Yineleniyor"
+
+#: src/callbacks.c:3920 src/callbacks.c:3934
+msgid "big-endian"
+msgstr ""
+
+#: src/callbacks.c:3921 src/callbacks.c:3935
+msgid "little-endian"
+msgstr ""
+
+#: src/callbacks.c:3923 src/callbacks.c:3937
+#, c-format
+msgid ""
+"  %d Hz %d bit\n"
+"%s %s"
+msgstr ""
+
+#: src/callbacks.c:4007
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -1544,11 +1578,11 @@ msgid ""
 "Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
 msgstr ""
 
-#: src/callbacks.c:4004
+#: src/callbacks.c:4021
 msgid "A video editor and VJ program."
 msgstr ""
 
-#: src/callbacks.c:4026
+#: src/callbacks.c:4043
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -1562,14 +1596,14 @@ msgid ""
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
 
-#: src/callbacks.c:4193
+#: src/callbacks.c:4210
 msgid ""
 "\n"
 "\n"
 "You need to install mplayer to be able to preview this file.\n"
 msgstr ""
 
-#: src/callbacks.c:4388 src/callbacks.c:5844
+#: src/callbacks.c:4405 src/callbacks.c:5861
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -1577,160 +1611,160 @@ msgid ""
 "."
 msgstr ""
 
-#: src/callbacks.c:4455
+#: src/callbacks.c:4472
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr ""
 
-#: src/callbacks.c:4471 src/saveplay.c:230
+#: src/callbacks.c:4488 src/saveplay.c:232
 msgid "Opening audio"
 msgstr "Ses açılıyor"
 
-#: src/callbacks.c:4476 src/callbacks.c:4507 src/callbacks.c:5900
-#: src/callbacks.c:5931 src/callbacks.c:5969 src/callbacks.c:7934
+#: src/callbacks.c:4493 src/callbacks.c:4524 src/callbacks.c:5917
+#: src/callbacks.c:5948 src/callbacks.c:5986 src/callbacks.c:7951
 msgid "Cancelling"
 msgstr "İptal ediliyor"
 
-#: src/callbacks.c:4527 src/callbacks.c:6004
+#: src/callbacks.c:4544 src/callbacks.c:6021
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/callbacks.c:4533 src/callbacks.c:5990 src/callbacks.c:7951
-#: src/callbacks.c:8461
+#: src/callbacks.c:4550 src/callbacks.c:6007 src/callbacks.c:7968
+#: src/callbacks.c:8478
 msgid "Committing audio"
 msgstr ""
 
-#: src/callbacks.c:4540 src/callbacks.c:6011
+#: src/callbacks.c:4557 src/callbacks.c:6028
 msgid "New Audio"
 msgstr "Yeni ses"
 
-#: src/callbacks.c:4727
+#: src/callbacks.c:4744
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr ""
 
-#: src/callbacks.c:4813
+#: src/callbacks.c:4830
 #, fuzzy
 msgid "LiVES: - Encoder debug output"
 msgstr "LIVES - Kodlama seçenekleri"
 
-#: src/callbacks.c:4848 src/gui.c:1708
+#: src/callbacks.c:4865 src/gui.c:1708
 msgid "Fullscreen playback (f)"
 msgstr ""
 
-#: src/callbacks.c:4850
+#: src/callbacks.c:4867
 msgid "Fullscreen playback off (f)"
 msgstr ""
 
-#: src/callbacks.c:5044 src/gui.c:1695
+#: src/callbacks.c:5061 src/gui.c:1695
 msgid "Double size (d)"
 msgstr ""
 
-#: src/callbacks.c:5049
+#: src/callbacks.c:5066
 msgid "Single size (d)"
 msgstr ""
 
-#: src/callbacks.c:5161 src/callbacks.c:5162
+#: src/callbacks.c:5178 src/callbacks.c:5179
 msgid "Hide the play window (s)"
 msgstr ""
 
-#: src/callbacks.c:5171 src/gui.c:1543
+#: src/callbacks.c:5188 src/gui.c:1543
 msgid "Show the play window (s)"
 msgstr ""
 
-#: src/callbacks.c:5172 src/gui.c:1686
+#: src/callbacks.c:5189 src/gui.c:1686
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:5376 src/gui.c:3345
+#: src/callbacks.c:5393 src/gui.c:3345
 msgid "LiVES: - Play Window"
 msgstr ""
 
-#: src/callbacks.c:5470
+#: src/callbacks.c:5487
 msgid "Switch continuous looping off (o)"
 msgstr ""
 
-#: src/callbacks.c:5477 src/gui.c:1590
+#: src/callbacks.c:5494 src/gui.c:1590
 msgid "Switch continuous looping on (o)"
 msgstr ""
 
-#: src/callbacks.c:5545
+#: src/callbacks.c:5562
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr ""
 
-#: src/callbacks.c:5586 src/callbacks.c:5587 src/gui.c:3265
+#: src/callbacks.c:5603 src/callbacks.c:5604 src/gui.c:3265
 msgid "Unmute the audio (z)"
 msgstr ""
 
-#: src/callbacks.c:5598 src/callbacks.c:5599 src/gui.c:1601 src/gui.c:3264
+#: src/callbacks.c:5615 src/callbacks.c:5616 src/gui.c:1601 src/gui.c:3264
 msgid "Mute the audio (z)"
 msgstr ""
 
-#: src/callbacks.c:5763
+#: src/callbacks.c:5780
 msgid "Reversing clipboard..."
 msgstr ""
 
-#: src/callbacks.c:5772
+#: src/callbacks.c:5789
 msgid "Reversing clipboard"
 msgstr ""
 
-#: src/callbacks.c:5789 src/callbacks.c:6046
+#: src/callbacks.c:5806 src/callbacks.c:6063
 msgid "Select Audio File"
 msgstr "Ses dosyasını seçin"
 
-#: src/callbacks.c:5805
+#: src/callbacks.c:5822
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 
-#: src/callbacks.c:5859
+#: src/callbacks.c:5876
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr ""
 
-#: src/callbacks.c:5864
+#: src/callbacks.c:5881
 #, c-format
 msgid "CD track %d"
 msgstr ""
 
-#: src/callbacks.c:5893
+#: src/callbacks.c:5910
 msgid "Opening CD track..."
 msgstr ""
 
-#: src/callbacks.c:5923 src/callbacks.c:5964
+#: src/callbacks.c:5940 src/callbacks.c:5981
 msgid "Error loading CD track\n"
 msgstr ""
 
-#: src/callbacks.c:6098
+#: src/callbacks.c:6115
 msgid "Selecting tracks"
 msgstr "Parça seçilmesi"
 
-#: src/callbacks.c:6150
+#: src/callbacks.c:6167
 msgid "layout errors"
 msgstr "Düzen hataları"
 
-#: src/callbacks.c:6156
+#: src/callbacks.c:6173
 msgid "Close _Window"
 msgstr "Pencere Kapat"
 
-#: src/callbacks.c:6167
+#: src/callbacks.c:6184
 msgid "Clear _Errors"
 msgstr "Hataları sil"
 
-#: src/callbacks.c:6178
+#: src/callbacks.c:6195
 msgid "_Delete affected layouts"
 msgstr "Etkilenen düzenleri sil"
 
-#: src/callbacks.c:6681
+#: src/callbacks.c:6698
 msgid "Resume"
 msgstr "Devam Et"
 
-#: src/callbacks.c:6683
+#: src/callbacks.c:6700
 msgid "Keep"
 msgstr "Koru"
 
-#: src/callbacks.c:6684
+#: src/callbacks.c:6701
 msgid ""
 "\n"
 "Paused\n"
@@ -1738,28 +1772,28 @@ msgid ""
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:6686
+#: src/callbacks.c:6703
 msgid "paused..."
 msgstr ""
 
-#: src/callbacks.c:6697
+#: src/callbacks.c:6714
 msgid "Pause"
 msgstr "Durdur"
 
-#: src/callbacks.c:6698
+#: src/callbacks.c:6715
 msgid "Cancel"
 msgstr "İptal"
 
-#: src/callbacks.c:6700
+#: src/callbacks.c:6717
 msgid "resumed..."
 msgstr ""
 
-#: src/callbacks.c:7238
+#: src/callbacks.c:7255
 #, c-format
 msgid "Save Frame as %s..."
 msgstr ""
 
-#: src/callbacks.c:7560
+#: src/callbacks.c:7577
 msgid ""
 "\n"
 "\n"
@@ -1767,13 +1801,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:7616 src/callbacks.c:8399
+#: src/callbacks.c:7633 src/callbacks.c:8416
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
 msgstr ""
 
-#: src/callbacks.c:7622
+#: src/callbacks.c:7639
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -1782,17 +1816,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:7624
+#: src/callbacks.c:7641
 msgid "External window was released.\n"
 msgstr ""
 
-#: src/callbacks.c:7637
+#: src/callbacks.c:7654
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording.\n"
 msgstr ""
 
-#: src/callbacks.c:7657
+#: src/callbacks.c:7674
 #, c-format
 msgid ""
 "\n"
@@ -1802,19 +1836,19 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:7675
+#: src/callbacks.c:7692
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 
-#: src/callbacks.c:7792
+#: src/callbacks.c:7809
 msgid "Export Selected Audio as..."
 msgstr ""
 
-#: src/callbacks.c:7795
+#: src/callbacks.c:7812
 msgid "Export Audio as..."
 msgstr ""
 
-#: src/callbacks.c:7834
+#: src/callbacks.c:7851
 msgid ""
 "\n"
 "\n"
@@ -1823,118 +1857,118 @@ msgid ""
 "rate.\n"
 msgstr ""
 
-#: src/callbacks.c:7840
+#: src/callbacks.c:7857
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr ""
 
-#: src/callbacks.c:7845
+#: src/callbacks.c:7862
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr ""
 
-#: src/callbacks.c:7857
+#: src/callbacks.c:7874
 msgid "Exporting audio"
 msgstr ""
 
-#: src/callbacks.c:7883
+#: src/callbacks.c:7900
 msgid "Append Audio File..."
 msgstr ""
 
-#: src/callbacks.c:7922
+#: src/callbacks.c:7939
 #, c-format
 msgid "Appending audio file %s..."
 msgstr ""
 
-#: src/callbacks.c:7928
+#: src/callbacks.c:7945
 msgid "Appending audio"
 msgstr ""
 
-#: src/callbacks.c:7967
+#: src/callbacks.c:7984
 msgid "Append Audio"
 msgstr ""
 
-#: src/callbacks.c:8008
+#: src/callbacks.c:8025
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8015
+#: src/callbacks.c:8032
 msgid "Trimming/Padding audio"
 msgstr ""
 
-#: src/callbacks.c:8019
+#: src/callbacks.c:8036
 msgid "Trim/Pad Audio"
 msgstr ""
 
-#: src/callbacks.c:8087
+#: src/callbacks.c:8104
 msgid "Fading audio in"
 msgstr ""
 
-#: src/callbacks.c:8088
+#: src/callbacks.c:8105
 msgid "Fade audio in"
 msgstr ""
 
-#: src/callbacks.c:8093
+#: src/callbacks.c:8110
 msgid "Fading audio out"
 msgstr ""
 
-#: src/callbacks.c:8094
+#: src/callbacks.c:8111
 msgid "Fade audio out"
 msgstr ""
 
-#: src/callbacks.c:8109
+#: src/callbacks.c:8126
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8111
+#: src/callbacks.c:8128
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8118
+#: src/callbacks.c:8135
 msgid "Fading audio..."
 msgstr ""
 
-#: src/callbacks.c:8181
+#: src/callbacks.c:8198
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
 "Are you sure ?"
 msgstr ""
 
-#: src/callbacks.c:8184
+#: src/callbacks.c:8201
 msgid "Deleting all audio..."
 msgstr ""
 
-#: src/callbacks.c:8190
+#: src/callbacks.c:8207
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8238
+#: src/callbacks.c:8255
 msgid "Deleting Audio"
 msgstr ""
 
-#: src/callbacks.c:8241
+#: src/callbacks.c:8258
 msgid "Delete Audio"
 msgstr ""
 
-#: src/callbacks.c:8488
+#: src/callbacks.c:8505
 msgid "Record new audio"
 msgstr ""
 
-#: src/callbacks.c:8551
+#: src/callbacks.c:8568
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8563
+#: src/callbacks.c:8580
 msgid "Inserting Silence"
 msgstr ""
 
-#: src/callbacks.c:8633
+#: src/callbacks.c:8650
 #, c-format
 msgid ""
 "\n"
@@ -2011,7 +2045,7 @@ msgstr ""
 msgid "Merge done.\n"
 msgstr ""
 
-#: src/gui.c:267 src/multitrack.c:3871
+#: src/gui.c:267 src/multitrack.c:3874
 msgid "_File"
 msgstr ""
 
@@ -2103,7 +2137,7 @@ msgstr ""
 msgid "Clean _up Diskspace"
 msgstr ""
 
-#: src/gui.c:491 src/multitrack.c:3920
+#: src/gui.c:491 src/multitrack.c:3923
 msgid "_Edit"
 msgstr ""
 
@@ -2179,7 +2213,7 @@ msgstr ""
 msgid "_Lock Selection Width"
 msgstr ""
 
-#: src/gui.c:693 src/multitrack.c:4056
+#: src/gui.c:693 src/multitrack.c:4059
 msgid "_Play"
 msgstr ""
 
@@ -2195,15 +2229,15 @@ msgstr ""
 msgid "Play _Clipboard"
 msgstr ""
 
-#: src/gui.c:741 src/multitrack.c:4085
+#: src/gui.c:741 src/multitrack.c:4088
 msgid "_Stop"
 msgstr ""
 
-#: src/gui.c:754 src/multitrack.c:4095
+#: src/gui.c:754 src/multitrack.c:4098
 msgid "Re_wind"
 msgstr ""
 
-#: src/gui.c:784 src/multitrack.c:4110
+#: src/gui.c:784 src/multitrack.c:4113
 msgid "_Full Screen"
 msgstr ""
 
@@ -2211,7 +2245,7 @@ msgstr ""
 msgid "_Double Size"
 msgstr ""
 
-#: src/gui.c:801 src/multitrack.c:4117
+#: src/gui.c:801 src/multitrack.c:4120
 msgid "Play in _Separate Window"
 msgstr ""
 
@@ -2223,7 +2257,7 @@ msgstr ""
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr ""
 
-#: src/gui.c:826 src/multitrack.c:4125
+#: src/gui.c:826 src/multitrack.c:4128
 msgid "L_oop Continuously"
 msgstr ""
 
@@ -2231,11 +2265,11 @@ msgstr ""
 msgid "Pin_g Pong Loops"
 msgstr ""
 
-#: src/gui.c:843 src/multitrack.c:4133
+#: src/gui.c:843 src/multitrack.c:4136
 msgid "_Mute"
 msgstr ""
 
-#: src/gui.c:857 src/multitrack.c:4146
+#: src/gui.c:857 src/multitrack.c:4149
 msgid "Separate Window 'S_ticky' Mode"
 msgstr ""
 
@@ -2243,7 +2277,7 @@ msgstr ""
 msgid "S_how Frame Counter"
 msgstr ""
 
-#: src/gui.c:875 src/multitrack.c:4161
+#: src/gui.c:875 src/multitrack.c:4164
 msgid "Effect_s"
 msgstr ""
 
@@ -2259,7 +2293,7 @@ msgstr ""
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr ""
 
-#: src/gui.c:896 src/multitrack.c:4598
+#: src/gui.c:896 src/multitrack.c:4601
 msgid "_Tools"
 msgstr ""
 
@@ -2307,7 +2341,7 @@ msgstr ""
 msgid "Capture _External Window... "
 msgstr ""
 
-#: src/gui.c:977 src/multitrack.c:4608
+#: src/gui.c:977 src/multitrack.c:4611
 msgid "_Preferences..."
 msgstr ""
 
@@ -2423,7 +2457,7 @@ msgstr ""
 msgid "Show _Clipboard Info"
 msgstr ""
 
-#: src/gui.c:1199 src/multitrack.c:4789
+#: src/gui.c:1199 src/multitrack.c:4792
 msgid "Show _Messages"
 msgstr ""
 
@@ -2431,7 +2465,7 @@ msgstr ""
 msgid "Show _Layout Errors"
 msgstr ""
 
-#: src/gui.c:1208 src/multitrack.c:4693
+#: src/gui.c:1208 src/multitrack.c:4696
 msgid "_Clips"
 msgstr ""
 
@@ -2575,7 +2609,7 @@ msgstr ""
 msgid "_LiVES TV (broadband)"
 msgstr ""
 
-#: src/gui.c:1473 src/multitrack.c:4809
+#: src/gui.c:1473 src/multitrack.c:4812
 msgid "_Help"
 msgstr ""
 
@@ -2603,7 +2637,7 @@ msgstr ""
 msgid "Help with _translating"
 msgstr ""
 
-#: src/gui.c:1518 src/multitrack.c:4828
+#: src/gui.c:1518 src/multitrack.c:4831
 msgid "_About"
 msgstr ""
 
@@ -2611,7 +2645,7 @@ msgstr ""
 msgid "Rewind to start (w)"
 msgstr ""
 
-#: src/gui.c:1557 src/multitrack.c:12056
+#: src/gui.c:1557 src/multitrack.c:12060
 msgid "Play all (p)"
 msgstr ""
 
@@ -2741,8 +2775,8 @@ msgstr ""
 msgid "Rewind"
 msgstr ""
 
-#: src/gui.c:3223 src/dialogs.c:285 src/dialogs.c:287 src/dialogs.c:792
-#: src/dialogs.c:794
+#: src/gui.c:3223 src/dialogs.c:285 src/dialogs.c:287 src/dialogs.c:800
+#: src/dialogs.c:802
 msgid "Play all"
 msgstr ""
 
@@ -2964,12 +2998,12 @@ msgid ""
 "Overwrite ?\n"
 msgstr ""
 
-#: src/utils.c:2146 src/utils.c:2172 src/multitrack.c:3128
+#: src/utils.c:2146 src/utils.c:2172 src/multitrack.c:3131
 #, c-format
 msgid "_Undo %s"
 msgstr ""
 
-#: src/utils.c:2147 src/utils.c:2173 src/multitrack.c:3150
+#: src/utils.c:2147 src/utils.c:2173 src/multitrack.c:3153
 #, c-format
 msgid "_Redo %s"
 msgstr ""
@@ -2990,7 +3024,7 @@ msgstr ""
 msgid "Examining file header"
 msgstr ""
 
-#: src/saveplay.c:157 src/saveplay.c:393
+#: src/saveplay.c:157 src/saveplay.c:395
 #, c-format
 msgid "Opening %s"
 msgstr ""
@@ -3000,16 +3034,16 @@ msgstr ""
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:166 src/saveplay.c:2561
+#: src/saveplay.c:166 src/saveplay.c:2565
 msgid " without sound"
 msgstr ""
 
-#: src/saveplay.c:194
+#: src/saveplay.c:196
 #, c-format
 msgid "Opening audio for %s"
 msgstr ""
 
-#: src/saveplay.c:289
+#: src/saveplay.c:291
 #, c-format
 msgid ""
 "\n"
@@ -3021,11 +3055,11 @@ msgid ""
 "Are you sure you wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:297
+#: src/saveplay.c:299
 msgid " - please be patient."
 msgstr ""
 
-#: src/saveplay.c:463
+#: src/saveplay.c:465
 msgid ""
 "\n"
 "\n"
@@ -3033,14 +3067,14 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/saveplay.c:466
+#: src/saveplay.c:468
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer to open this file.\n"
 msgstr ""
 
-#: src/saveplay.c:469
+#: src/saveplay.c:471
 msgid ""
 "\n"
 "\n"
@@ -3048,7 +3082,7 @@ msgid ""
 "Tools|Preferences|Decoding\n"
 msgstr ""
 
-#: src/saveplay.c:675
+#: src/saveplay.c:677
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3056,61 +3090,61 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:724
+#: src/saveplay.c:726
 msgid "selection"
 msgstr ""
 
-#: src/saveplay.c:773 src/saveplay.c:868
+#: src/saveplay.c:775 src/saveplay.c:870
 msgid "Linking selection"
 msgstr ""
 
-#: src/saveplay.c:909
+#: src/saveplay.c:911
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:917
+#: src/saveplay.c:919
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:920
+#: src/saveplay.c:922
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1014
+#: src/saveplay.c:1016
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1045
+#: src/saveplay.c:1047
 msgid "error.\n"
 msgstr ""
 
-#: src/saveplay.c:1100
+#: src/saveplay.c:1102
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1243
+#: src/saveplay.c:1245
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1247
+#: src/saveplay.c:1249
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1250
+#: src/saveplay.c:1252
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:2054
+#: src/saveplay.c:2056
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:2060
+#: src/saveplay.c:2062
 msgid ""
 "\n"
 "\n"
@@ -3119,16 +3153,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2182
+#: src/saveplay.c:2184
 msgid "Unknown"
 msgstr ""
 
-#: src/saveplay.c:2269
+#: src/saveplay.c:2273
 #, c-format
 msgid "Untitled%d"
 msgstr ""
 
-#: src/saveplay.c:2378
+#: src/saveplay.c:2382
 #, c-format
 msgid ""
 "\n"
@@ -3136,68 +3170,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2390
+#: src/saveplay.c:2394
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2398
+#: src/saveplay.c:2402
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2402 src/saveplay.c:2989
+#: src/saveplay.c:2406 src/saveplay.c:2999
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2406 src/saveplay.c:2993
+#: src/saveplay.c:2410 src/saveplay.c:3003
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2409 src/saveplay.c:2996
+#: src/saveplay.c:2413 src/saveplay.c:3006
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2417
+#: src/saveplay.c:2421
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2491
+#: src/saveplay.c:2495
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2556
+#: src/saveplay.c:2560
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2590
+#: src/saveplay.c:2594
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:2621
+#: src/saveplay.c:2625
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:2915
+#: src/saveplay.c:2925
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:2934
+#: src/saveplay.c:2944
 msgid "Restoring"
 msgstr ""
 
-#: src/saveplay.c:2956
+#: src/saveplay.c:2966
 #, c-format
 msgid ""
 "\n"
@@ -3206,18 +3240,18 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3228
+#: src/saveplay.c:3238
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:3236
+#: src/saveplay.c:3246
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:3240
+#: src/saveplay.c:3250
 msgid "recovering files..."
 msgstr ""
 
@@ -3262,14 +3296,14 @@ msgid ""
 "%d%% done. Time remaining: %u sec\n"
 msgstr ""
 
-#: src/dialogs.c:907
+#: src/dialogs.c:915
 #, c-format
 msgid ""
 "\n"
 "Time remaining: %d sec"
 msgstr ""
 
-#: src/dialogs.c:962
+#: src/dialogs.c:970
 #, c-format
 msgid ""
 "\n"
@@ -3277,7 +3311,7 @@ msgid ""
 "Please close a file and then try again."
 msgstr ""
 
-#: src/dialogs.c:969
+#: src/dialogs.c:977
 #, c-format
 msgid ""
 "LiVES was unable to write to its temporary directory.\n"
@@ -3289,14 +3323,14 @@ msgid ""
 "Please make sure you can write to this directory."
 msgstr ""
 
-#: src/dialogs.c:980
+#: src/dialogs.c:988
 msgid ""
 "Audio resampling is required for this format.\n"
 "Please install 'sox'\n"
 "Or switch to another encoder format in Tools | Preferences | Encoding\n"
 msgstr ""
 
-#: src/dialogs.c:985
+#: src/dialogs.c:993
 msgid ""
 "\n"
 "\n"
@@ -3304,13 +3338,13 @@ msgid ""
 "Please set the audio codec in Tools|Preferences|Encoding\n"
 msgstr ""
 
-#: src/dialogs.c:990
+#: src/dialogs.c:998
 msgid ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 msgstr ""
 
-#: src/dialogs.c:997 src/dialogs.c:1073
+#: src/dialogs.c:1005 src/dialogs.c:1081
 #, c-format
 msgid ""
 "\n"
@@ -3318,67 +3352,67 @@ msgid ""
 "Due to restrictions in the %s format\n"
 msgstr ""
 
-#: src/dialogs.c:1014
+#: src/dialogs.c:1022
 msgid ""
 "LiVES recommends the following settings:\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:1018
+#: src/dialogs.c:1026
 #, c-format
 msgid "Use an audio rate of %d Hz\n"
 msgstr ""
 
-#: src/dialogs.c:1024
+#: src/dialogs.c:1032
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:1028
+#: src/dialogs.c:1036
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:1033 src/dialogs.c:1129
+#: src/dialogs.c:1041 src/dialogs.c:1137
 #, c-format
 msgid "Set video size to %d x %d pixels\n"
 msgstr ""
 
-#: src/dialogs.c:1041 src/dialogs.c:1128
+#: src/dialogs.c:1049 src/dialogs.c:1136
 msgid ""
 "\n"
 "You may wish to:\n"
 msgstr ""
 
-#: src/dialogs.c:1044 src/dialogs.c:1120
+#: src/dialogs.c:1052 src/dialogs.c:1128
 #, c-format
 msgid "resize video to %d x %d pixels\n"
 msgstr ""
 
-#: src/dialogs.c:1049
+#: src/dialogs.c:1057
 msgid "disable audio, since the target encoder cannot encode audio\n"
 msgstr ""
 
-#: src/dialogs.c:1105
+#: src/dialogs.c:1113
 msgid "LiVES must:\n"
-msgstr ""
-
-#: src/dialogs.c:1108
-#, c-format
-msgid "resample audio to %d Hz\n"
-msgstr ""
-
-#: src/dialogs.c:1112
-#, c-format
-msgid "resample video to %.3f frames per second\n"
 msgstr ""
 
 #: src/dialogs.c:1116
 #, c-format
+msgid "resample audio to %d Hz\n"
+msgstr ""
+
+#: src/dialogs.c:1120
+#, c-format
+msgid "resample video to %.3f frames per second\n"
+msgstr ""
+
+#: src/dialogs.c:1124
+#, c-format
 msgid "resample video to %d:%d frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:1135
+#: src/dialogs.c:1143
 msgid ""
 "\n"
 "You will be able to undo these changes afterwards.\n"
@@ -3387,14 +3421,14 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:1138
+#: src/dialogs.c:1146
 msgid ""
 "\n"
 "Changes applied to the selection will not be permanent.\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:1158
+#: src/dialogs.c:1166
 msgid ""
 "\n"
 "\n"
@@ -3403,7 +3437,7 @@ msgid ""
 "Try recording for just a selection of the file."
 msgstr ""
 
-#: src/dialogs.c:1166
+#: src/dialogs.c:1174
 msgid ""
 "The playback speed (fps), or the audio rate\n"
 " of the clipboard does not match\n"
@@ -3414,7 +3448,7 @@ msgid ""
 "Please press Cancel to abort the insert, or OK to continue."
 msgstr ""
 
-#: src/dialogs.c:1174
+#: src/dialogs.c:1182
 msgid ""
 "When opening a yuvmpeg stream, you should first create a fifo file and then "
 "write yuv4mpeg frames to it.\n"
@@ -3423,11 +3457,11 @@ msgid ""
 "click Cancel."
 msgstr ""
 
-#: src/dialogs.c:1198
+#: src/dialogs.c:1206
 msgid "Show Keys"
 msgstr ""
 
-#: src/dialogs.c:1199
+#: src/dialogs.c:1207
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -3469,11 +3503,11 @@ msgid ""
 "g                             ping pong loops\n"
 msgstr ""
 
-#: src/dialogs.c:1207
+#: src/dialogs.c:1215
 msgid "Multitrack Keys"
 msgstr ""
 
-#: src/dialogs.c:1208
+#: src/dialogs.c:1216
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "\n"
@@ -3495,11 +3529,11 @@ msgid ""
 "For other keys, see the menus.\n"
 msgstr ""
 
-#: src/dialogs.c:1224
+#: src/dialogs.c:1232
 msgid "Message History"
 msgstr ""
 
-#: src/dialogs.c:1238
+#: src/dialogs.c:1246
 msgid ""
 "\n"
 "\n"
@@ -3510,13 +3544,13 @@ msgid ""
 "Have fun !\n"
 msgstr ""
 
-#: src/dialogs.c:1244
+#: src/dialogs.c:1252
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your ~/.lives file"
 msgstr ""
 
-#: src/dialogs.c:1249
+#: src/dialogs.c:1257
 #, c-format
 msgid ""
 "\n"
@@ -3527,18 +3561,18 @@ msgid ""
 "or change the value of <lib_dir> in ~/.lives\n"
 msgstr ""
 
-#: src/dialogs.c:1255
+#: src/dialogs.c:1263
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
 " (Filenames must end in .mp3, .ogg, .wav, .mod, .xm or .it)"
 msgstr ""
 
-#: src/dialogs.c:1256
+#: src/dialogs.c:1264
 msgid "failed (unknown type)\n"
 msgstr ""
 
-#: src/dialogs.c:1261
+#: src/dialogs.c:1269
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
@@ -3546,7 +3580,7 @@ msgid ""
 "(They will not be usable without the set).\n"
 msgstr ""
 
-#: src/dialogs.c:1266
+#: src/dialogs.c:1274
 #, c-format
 msgid ""
 "\n"
@@ -3555,7 +3589,7 @@ msgid ""
 "Click Cancel to pick a new name.\n"
 msgstr ""
 
-#: src/dialogs.c:1273
+#: src/dialogs.c:1281
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -3563,7 +3597,7 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:1277
+#: src/dialogs.c:1285
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -3571,7 +3605,7 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:1281
+#: src/dialogs.c:1289
 #, c-format
 msgid ""
 "\n"
@@ -3583,7 +3617,7 @@ msgid ""
 "Otherwise click cancel to skip loading this file.\n"
 msgstr ""
 
-#: src/dialogs.c:1288
+#: src/dialogs.c:1296
 #, c-format
 msgid ""
 "\n"
@@ -3593,7 +3627,7 @@ msgid ""
 "The clip could not be loaded.\n"
 msgstr ""
 
-#: src/dialogs.c:1295
+#: src/dialogs.c:1303
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -3601,13 +3635,13 @@ msgid ""
 "and also that the soundcard is not in use by another program.\n"
 msgstr ""
 
-#: src/dialogs.c:1300
+#: src/dialogs.c:1308
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
 msgstr ""
 
-#: src/dialogs.c:1305
+#: src/dialogs.c:1313
 #, c-format
 msgid ""
 "\n"
@@ -3617,7 +3651,7 @@ msgid ""
 "It is recommended to increase it to at least %d MB"
 msgstr ""
 
-#: src/dialogs.c:1311
+#: src/dialogs.c:1319
 #, c-format
 msgid ""
 "\n"
@@ -3626,7 +3660,7 @@ msgid ""
 "Click OK to delete them, Cancel to leave them on the disk.\n"
 msgstr ""
 
-#: src/dialogs.c:1318
+#: src/dialogs.c:1326
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -3634,7 +3668,7 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:1322
+#: src/dialogs.c:1330
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -3642,57 +3676,57 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:1326
+#: src/dialogs.c:1334
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
 msgstr ""
 
-#: src/dialogs.c:1328
+#: src/dialogs.c:1336
 msgid "or enter a smaller value.\n"
 msgstr ""
 
-#: src/dialogs.c:1330
+#: src/dialogs.c:1338
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr ""
 
-#: src/dialogs.c:1331
+#: src/dialogs.c:1339
 msgid "Try closing some other applications\n"
 msgstr ""
 
-#: src/dialogs.c:1342
+#: src/dialogs.c:1350
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
 msgstr ""
 
-#: src/dialogs.c:1346
+#: src/dialogs.c:1354
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr ""
 
-#: src/dialogs.c:1350
+#: src/dialogs.c:1358
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
 
-#: src/dialogs.c:1354
+#: src/dialogs.c:1362
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
 "Should I try to repair the disk copy of the layout ?\n"
 msgstr ""
 
-#: src/dialogs.c:1358
+#: src/dialogs.c:1366
 msgid ""
 "\n"
 "\n"
 "Audio rate must be greater than 0.\n"
 msgstr ""
 
-#: src/dialogs.c:1362
+#: src/dialogs.c:1370
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -3700,14 +3734,14 @@ msgid ""
 "Are you sure you wish to view it ?\n"
 msgstr ""
 
-#: src/dialogs.c:1367
+#: src/dialogs.c:1375
 msgid ""
 "\n"
 "\n"
 "You must install 'dvgrab' to use this function.\n"
 msgstr ""
 
-#: src/dialogs.c:1372
+#: src/dialogs.c:1380
 msgid ""
 "\n"
 "\n"
@@ -3716,19 +3750,19 @@ msgid ""
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
 
-#: src/dialogs.c:1376
+#: src/dialogs.c:1384
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:1380
+#: src/dialogs.c:1388
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:1385
+#: src/dialogs.c:1393
 msgid "Unable to set framerate of video plugin\n"
 msgstr ""
 
-#: src/dialogs.c:1396
+#: src/dialogs.c:1404
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -3737,29 +3771,37 @@ msgid ""
 "echo %d > /proc/sys/net/core/rmem_max\n"
 msgstr ""
 
-#: src/dialogs.c:1660
+#: src/dialogs.c:1668
 msgid "cancelled.\n"
 msgstr ""
 
-#: src/dialogs.c:1667
+#: src/dialogs.c:1675
 msgid "failed.\n"
 msgstr ""
 
-#: src/dialogs.c:1674
+#: src/dialogs.c:1682
 msgid "done.\n"
 msgstr ""
 
-#: src/dialogs.c:1678
+#: src/dialogs.c:1686
 msgid "error in file. Failed.\n"
 msgstr ""
 
-#: src/dialogs.c:1683
+#: src/dialogs.c:1691
 #, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file:\n"
 "%s\n"
 "Please check the file permissions and try again."
+msgstr ""
+
+#: src/dialogs.c:1699
+#, c-format
+msgid ""
+"\n"
+"The %s cannot encode clips with image type %s.\n"
+"Please select another encoder from the list.\n"
 msgstr ""
 
 #: src/effects.c:127
@@ -3929,43 +3971,43 @@ msgstr ""
 msgid "unknown"
 msgstr ""
 
-#: src/effects-weed.c:2683
+#: src/effects-weed.c:2696
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:2764
+#: src/effects-weed.c:2777
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:2891
+#: src/effects-weed.c:2919
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:3441
+#: src/effects-weed.c:3470
 msgid "Warning - no more effect slots left !\n"
 msgstr ""
 
-#: src/effects-weed.c:3511
+#: src/effects-weed.c:3540
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:3545
+#: src/effects-weed.c:3574
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4044
+#: src/effects-weed.c:4073
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4112
+#: src/effects-weed.c:4141
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
@@ -5807,6 +5849,11 @@ msgstr ""
 msgid "Resample/Resize"
 msgstr ""
 
+#: src/resample.c:590
+#, c-format
+msgid "Length of video is now %d frames.\n"
+msgstr ""
+
 #: src/resample.c:650
 msgid ""
 "\n"
@@ -6053,7 +6100,7 @@ msgstr ""
 msgid "Resampling video"
 msgstr ""
 
-#: src/resample.c:2226 src/resample.c:2314
+#: src/resample.c:2226 src/resample.c:2313
 msgid "Resampling clipboard video"
 msgstr ""
 
@@ -6072,7 +6119,7 @@ msgstr ""
 msgid "Deordering frames"
 msgstr ""
 
-#: src/resample.c:2331
+#: src/resample.c:2330
 msgid "resampling error..."
 msgstr ""
 
@@ -6328,7 +6375,7 @@ msgstr ""
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:1367
+#: src/rte_window.c:1368
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"
@@ -6409,721 +6456,721 @@ msgstr ""
 msgid "_Prev node"
 msgstr ""
 
-#: src/multitrack.c:1062 src/multitrack.c:2498
+#: src/multitrack.c:1065 src/multitrack.c:2501
 #, c-format
 msgid "Current track: %s (layer %d)\n"
 msgstr ""
 
-#: src/multitrack.c:1064 src/multitrack.c:2499
+#: src/multitrack.c:1067 src/multitrack.c:2502
 msgid "Current track: Backing audio\n"
-msgstr ""
-
-#: src/multitrack.c:1065
-#, c-format
-msgid "Current track: Layer %d audio\n"
 msgstr ""
 
 #: src/multitrack.c:1068
 #, c-format
+msgid "Current track: Layer %d audio\n"
+msgstr ""
+
+#: src/multitrack.c:1071
+#, c-format
 msgid "%.2f sec.\n"
 msgstr ""
 
-#: src/multitrack.c:1073 src/multitrack.c:2502
+#: src/multitrack.c:1076 src/multitrack.c:2505
 #, c-format
 msgid "Source: %s"
 msgstr ""
 
-#: src/multitrack.c:1076 src/multitrack.c:2503
+#: src/multitrack.c:1079 src/multitrack.c:2506
 msgid "Right click for context menu.\n"
 msgstr ""
 
-#: src/multitrack.c:1078
+#: src/multitrack.c:1081
 msgid "Double click on a block to select it.\n"
 msgstr ""
 
-#: src/multitrack.c:2501
+#: src/multitrack.c:2504
 #, c-format
 msgid "%.2f sec. to %.2f sec.\n"
 msgstr ""
 
-#: src/multitrack.c:2504
+#: src/multitrack.c:2507
 msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
 msgstr ""
 
-#: src/multitrack.c:2650
+#: src/multitrack.c:2653
 #, fuzzy
 msgid "LiVES: Selected clip"
 msgstr "LIVES: - VCD Başlığı Seçiniz"
 
-#: src/multitrack.c:2656
+#: src/multitrack.c:2659
 msgid "_Adjust start and end points"
 msgstr ""
 
-#: src/multitrack.c:2849
+#: src/multitrack.c:2852
 msgid "Audio mixer (ctrl-m)"
 msgstr ""
 
-#: src/multitrack.c:2877
+#: src/multitrack.c:2880
 msgid "Show frame preview"
 msgstr ""
 
-#: src/multitrack.c:2887
+#: src/multitrack.c:2890
 msgid "Auto preview"
 msgstr ""
 
-#: src/multitrack.c:2959
+#: src/multitrack.c:2962
 msgid "Single click on timeline to select a frame.\n"
 msgstr ""
 
-#: src/multitrack.c:2960
+#: src/multitrack.c:2963
 msgid "Double click on timeline to select a block.\n"
 msgstr ""
 
-#: src/multitrack.c:2961
+#: src/multitrack.c:2964
 msgid "Clips can be dragged onto the timeline.\n"
 msgstr ""
 
-#: src/multitrack.c:2963
+#: src/multitrack.c:2966
 msgid "Mouse mode is: Move\n"
 msgstr ""
 
-#: src/multitrack.c:2964
+#: src/multitrack.c:2967
 msgid "clips can be moved around.\n"
 msgstr ""
 
-#: src/multitrack.c:2969
+#: src/multitrack.c:2972
 msgid "Mouse mode is: Select.\n"
 msgstr ""
 
-#: src/multitrack.c:2970
+#: src/multitrack.c:2973
 msgid "Drag with mouse on timeline\n"
 msgstr ""
 
-#: src/multitrack.c:2971
+#: src/multitrack.c:2974
 msgid "to select tracks and time.\n"
 msgstr ""
 
-#: src/multitrack.c:2981
+#: src/multitrack.c:2984
 msgid "_Snap mode: On"
 msgstr ""
 
-#: src/multitrack.c:2985
+#: src/multitrack.c:2988
 msgid "_Snap mode: Off"
 msgstr ""
 
-#: src/multitrack.c:3010 src/multitrack.c:5187
+#: src/multitrack.c:3013 src/multitrack.c:5190
 msgid "Insert with audio"
 msgstr ""
 
-#: src/multitrack.c:3014 src/multitrack.c:5195
+#: src/multitrack.c:3017 src/multitrack.c:5198
 msgid "Insert without audio"
 msgstr ""
 
-#: src/multitrack.c:3040
+#: src/multitrack.c:3043
 msgid "_Mouse mode: Move"
 msgstr ""
 
-#: src/multitrack.c:3044
+#: src/multitrack.c:3047
 msgid "_Mouse mode: Select"
 msgstr ""
 
-#: src/multitrack.c:3083
+#: src/multitrack.c:3086
 msgid "Close gaps"
 msgstr ""
 
-#: src/multitrack.c:3085
+#: src/multitrack.c:3088
 msgid "Move block"
 msgstr ""
 
-#: src/multitrack.c:3087
+#: src/multitrack.c:3090
 msgid "Move audio block"
 msgstr ""
 
-#: src/multitrack.c:3089
+#: src/multitrack.c:3092
 msgid "Delete block"
 msgstr ""
 
-#: src/multitrack.c:3091
+#: src/multitrack.c:3094
 msgid "Delete audio block"
 msgstr ""
 
-#: src/multitrack.c:3093
+#: src/multitrack.c:3096
 msgid "Split tracks"
 msgstr ""
 
-#: src/multitrack.c:3095
+#: src/multitrack.c:3098
 msgid "Split block"
 msgstr ""
 
-#: src/multitrack.c:3098
+#: src/multitrack.c:3101
 #, c-format
 msgid "Apply %s"
 msgstr ""
 
-#: src/multitrack.c:3103
+#: src/multitrack.c:3106
 #, c-format
 msgid "Delete %s"
 msgstr ""
 
-#: src/multitrack.c:3107
+#: src/multitrack.c:3110
 msgid "Insert block"
 msgstr ""
 
-#: src/multitrack.c:3109
+#: src/multitrack.c:3112
 msgid "Insert gap"
 msgstr ""
 
-#: src/multitrack.c:3111
+#: src/multitrack.c:3114
 msgid "Insert audio block"
 msgstr ""
 
-#: src/multitrack.c:3113
+#: src/multitrack.c:3116
 msgid "Effect order change"
 msgstr ""
 
-#: src/multitrack.c:3489
+#: src/multitrack.c:3492
 msgid "unsigned "
 msgstr ""
 
-#: src/multitrack.c:3490
+#: src/multitrack.c:3493
 msgid "signed "
 msgstr ""
 
-#: src/multitrack.c:3492
+#: src/multitrack.c:3495
 msgid "big endian"
 msgstr ""
 
-#: src/multitrack.c:3493
+#: src/multitrack.c:3496
 msgid "little endian"
 msgstr ""
 
-#: src/multitrack.c:3495
+#: src/multitrack.c:3498
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
 "audio rate %d, audio sample size %d, %s.\n"
 msgstr ""
 
-#: src/multitrack.c:3629
+#: src/multitrack.c:3632
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr ""
 
-#: src/multitrack.c:3881
+#: src/multitrack.c:3884
 msgid "_Save layout as..."
 msgstr ""
 
-#: src/multitrack.c:3885
+#: src/multitrack.c:3888
 msgid "_Load layout..."
 msgstr ""
 
-#: src/multitrack.c:3888
+#: src/multitrack.c:3891
 msgid "_Wipe/Delete layout..."
 msgstr ""
 
-#: src/multitrack.c:3899
+#: src/multitrack.c:3902
 msgid "_Retain width, height and audio values in saved layouts"
 msgstr ""
 
-#: src/multitrack.c:3903
+#: src/multitrack.c:3906
 msgid "_Ignore width, height and audio values from loaded layouts"
 msgstr ""
 
-#: src/multitrack.c:3972
+#: src/multitrack.c:3975
 msgid "_CLIP EDITOR"
 msgstr ""
 
-#: src/multitrack.c:3984
+#: src/multitrack.c:3987
 msgid "_Adjust selected clip start/end points"
 msgstr ""
 
-#: src/multitrack.c:3993
+#: src/multitrack.c:3996
 msgid "_Insert selected clip"
 msgstr ""
 
-#: src/multitrack.c:4002
+#: src/multitrack.c:4005
 msgid "_Insert selected clip audio"
 msgstr ""
 
-#: src/multitrack.c:4011
+#: src/multitrack.c:4014
 msgid "_Delete selected block"
 msgstr ""
 
-#: src/multitrack.c:4020
+#: src/multitrack.c:4023
 msgid "_Jump to previous block boundary"
 msgstr ""
 
-#: src/multitrack.c:4029
+#: src/multitrack.c:4032
 msgid "_Jump to next block boundary"
 msgstr ""
 
-#: src/multitrack.c:4042
+#: src/multitrack.c:4045
 msgid "Clear _marks from timeline"
 msgstr ""
 
-#: src/multitrack.c:4050
+#: src/multitrack.c:4053
 msgid "Ignore selection limits when inserting"
 msgstr ""
 
-#: src/multitrack.c:4066 src/multitrack.c:12055
+#: src/multitrack.c:4069 src/multitrack.c:12059
 msgid "_Play from Timeline Position"
 msgstr ""
 
-#: src/multitrack.c:4171
+#: src/multitrack.c:4174
 msgid "_Move effects with blocks"
 msgstr ""
 
-#: src/multitrack.c:4183
+#: src/multitrack.c:4186
 msgid "View/_Edit selected effect"
 msgstr ""
 
-#: src/multitrack.c:4187
+#: src/multitrack.c:4190
 msgid "_Delete selected effect"
 msgstr ""
 
-#: src/multitrack.c:4195
+#: src/multitrack.c:4198
 msgid "Apply effect to _block..."
 msgstr ""
 
-#: src/multitrack.c:4206
+#: src/multitrack.c:4209
 msgid "Apply effect to _region..."
 msgstr ""
 
-#: src/multitrack.c:4372
+#: src/multitrack.c:4375
 msgid "_Tracks"
 msgstr ""
 
-#: src/multitrack.c:4382
+#: src/multitrack.c:4385
 msgid "Make _Backing Audio current track"
 msgstr ""
 
-#: src/multitrack.c:4393
+#: src/multitrack.c:4396
 msgid "Add Video Track at _Rear"
 msgstr ""
 
-#: src/multitrack.c:4401
+#: src/multitrack.c:4404
 msgid "Add Video Track at _Front"
 msgstr ""
 
-#: src/multitrack.c:4414
+#: src/multitrack.c:4417
 msgid "_Split current track at cursor"
 msgstr ""
 
-#: src/multitrack.c:4426
+#: src/multitrack.c:4429
 msgid "_Split selected video tracks"
 msgstr ""
 
-#: src/multitrack.c:4439
+#: src/multitrack.c:4442
 msgid "Insert gap in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4447
+#: src/multitrack.c:4450
 msgid "Insert gap in current track/selected time"
 msgstr ""
 
-#: src/multitrack.c:4459
+#: src/multitrack.c:4462
 msgid "Close all _gaps in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4470
+#: src/multitrack.c:4473
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4485
+#: src/multitrack.c:4488
 msgid "Se_lection"
 msgstr ""
 
-#: src/multitrack.c:4495
+#: src/multitrack.c:4498
 msgid "_Snap to overlap"
 msgstr ""
 
-#: src/multitrack.c:4508
+#: src/multitrack.c:4511
 msgid "_Select Current Track"
 msgstr ""
 
-#: src/multitrack.c:4515
+#: src/multitrack.c:4518
 msgid "Select _all video tracks"
 msgstr ""
 
-#: src/multitrack.c:4522
+#: src/multitrack.c:4525
 msgid "Select _no video tracks"
 msgstr ""
 
-#: src/multitrack.c:4529
+#: src/multitrack.c:4532
 msgid "Select all _time"
 msgstr ""
 
-#: src/multitrack.c:4540
+#: src/multitrack.c:4543
 msgid "Select from _zero time"
 msgstr ""
 
-#: src/multitrack.c:4547
+#: src/multitrack.c:4550
 msgid "Select to _end time"
 msgstr ""
 
-#: src/multitrack.c:4554
+#: src/multitrack.c:4557
 msgid "_Copy..."
 msgstr ""
 
-#: src/multitrack.c:4564
+#: src/multitrack.c:4567
 msgid "_Timecode to region start"
 msgstr ""
 
-#: src/multitrack.c:4571
+#: src/multitrack.c:4574
 msgid "_Timecode to region end"
 msgstr ""
 
-#: src/multitrack.c:4578
+#: src/multitrack.c:4581
 msgid "_Region start to timecode"
 msgstr ""
 
-#: src/multitrack.c:4585
+#: src/multitrack.c:4588
 msgid "_Region end to timecode"
 msgstr ""
 
-#: src/multitrack.c:4623
+#: src/multitrack.c:4626
 msgid "_Change width, height and audio values..."
 msgstr ""
 
-#: src/multitrack.c:4634
+#: src/multitrack.c:4637
 msgid "_Render"
 msgstr ""
 
-#: src/multitrack.c:4644
+#: src/multitrack.c:4647
 msgid "_Render all to new clip"
 msgstr ""
 
-#: src/multitrack.c:4659
+#: src/multitrack.c:4662
 msgid "Render _video"
 msgstr ""
 
-#: src/multitrack.c:4664
+#: src/multitrack.c:4667
 msgid "Render _audio"
 msgstr ""
 
-#: src/multitrack.c:4673
+#: src/multitrack.c:4676
 msgid "_Pre-render audio"
 msgstr ""
 
-#: src/multitrack.c:4682
+#: src/multitrack.c:4685
 msgid "_View"
 msgstr ""
 
-#: src/multitrack.c:4700
+#: src/multitrack.c:4703
 msgid "Block _In/out points"
 msgstr ""
 
-#: src/multitrack.c:4709
+#: src/multitrack.c:4712
 msgid "_Effects at current"
 msgstr ""
 
-#: src/multitrack.c:4720
+#: src/multitrack.c:4723
 msgid "Show backing _audio track"
 msgstr ""
 
-#: src/multitrack.c:4724
+#: src/multitrack.c:4727
 msgid "Compact view"
 msgstr ""
 
-#: src/multitrack.c:4732
+#: src/multitrack.c:4735
 msgid "Maximum tracks to display..."
 msgstr ""
 
-#: src/multitrack.c:4739
+#: src/multitrack.c:4742
 msgid "Scroll to follow playback"
 msgstr ""
 
-#: src/multitrack.c:4743
+#: src/multitrack.c:4746
 msgid "_Center on cursor"
 msgstr ""
 
-#: src/multitrack.c:4750
+#: src/multitrack.c:4753
 msgid "_Zoom in"
 msgstr ""
 
-#: src/multitrack.c:4761
+#: src/multitrack.c:4764
 msgid "_Zoom out"
 msgstr ""
 
-#: src/multitrack.c:4772
+#: src/multitrack.c:4775
 msgid "Audio parameters"
 msgstr ""
 
-#: src/multitrack.c:4786
+#: src/multitrack.c:4789
 msgid "Multitrack _details"
 msgstr ""
 
-#: src/multitrack.c:4796
+#: src/multitrack.c:4799
 msgid "_Event Window"
 msgstr ""
 
-#: src/multitrack.c:4800
+#: src/multitrack.c:4803
 msgid "_Event Window (selected time only)"
 msgstr ""
 
-#: src/multitrack.c:4804
+#: src/multitrack.c:4807
 msgid "_Show FRAME events"
 msgstr ""
 
-#: src/multitrack.c:4820
+#: src/multitrack.c:4823
 msgid "_Show multitrack keys"
 msgstr ""
 
-#: src/multitrack.c:5057
+#: src/multitrack.c:5060
 msgid "Timecode"
 msgstr ""
 
-#: src/multitrack.c:5110
+#: src/multitrack.c:5113
 msgid "Mouse mode: _Move"
 msgstr ""
 
-#: src/multitrack.c:5118
+#: src/multitrack.c:5121
 msgid "Mouse mode: _Select"
 msgstr ""
 
-#: src/multitrack.c:5149
+#: src/multitrack.c:5152
 msgid "Snap Mode: O_ff"
 msgstr ""
 
-#: src/multitrack.c:5157
+#: src/multitrack.c:5160
 msgid "Snap mode: O_n"
 msgstr ""
 
-#: src/multitrack.c:5225
+#: src/multitrack.c:5228
 msgid "Compact View (d)"
 msgstr ""
 
-#: src/multitrack.c:5232
+#: src/multitrack.c:5235
 msgid "Expanded View (d)"
 msgstr ""
 
-#: src/multitrack.c:5344
+#: src/multitrack.c:5347
 msgid "_Reverse playback  "
 msgstr ""
 
-#: src/multitrack.c:5371
+#: src/multitrack.c:5374
 msgid "_Velocity  "
 msgstr ""
 
-#: src/multitrack.c:5428
+#: src/multitrack.c:5431
 msgid "Anchor the start point to the timeline"
 msgstr ""
 
-#: src/multitrack.c:5431
+#: src/multitrack.c:5434
 msgid "Anchor _start"
 msgstr ""
 
-#: src/multitrack.c:5465
+#: src/multitrack.c:5468
 #, fuzzy
 msgid "Start frame"
 msgstr "Çerçeveler"
 
-#: src/multitrack.c:5502
+#: src/multitrack.c:5505
 msgid "Anchor the end point to the timeline"
 msgstr ""
 
-#: src/multitrack.c:5505
+#: src/multitrack.c:5508
 msgid "Anchor _end"
 msgstr ""
 
-#: src/multitrack.c:5538
+#: src/multitrack.c:5541
 #, fuzzy
 msgid "End frame"
 msgstr "Çerçeve resimler siliniyor"
 
-#: src/multitrack.c:5686
+#: src/multitrack.c:5689
 msgid "Scroll"
 msgstr ""
 
-#: src/multitrack.c:6042
+#: src/multitrack.c:6045
 msgid ""
 "\n"
 "==============================\n"
 "Switched to Clip Edit mode\n"
 msgstr ""
 
-#: src/multitrack.c:6176
+#: src/multitrack.c:6179
 msgid "Timeline (seconds)"
 msgstr ""
 
-#: src/multitrack.c:6558
+#: src/multitrack.c:6561
 msgid " Backing audio"
 msgstr ""
 
-#: src/multitrack.c:6561
+#: src/multitrack.c:6564
 #, c-format
 msgid " Layer %d audio"
 msgstr ""
 
-#: src/multitrack.c:6584 src/multitrack.c:6716
+#: src/multitrack.c:6587 src/multitrack.c:6719
 #, c-format
 msgid "Layer %d audio"
 msgstr ""
 
-#: src/multitrack.c:6680
+#: src/multitrack.c:6683
 #, c-format
 msgid "Video %d"
 msgstr ""
 
-#: src/multitrack.c:6708 src/multitrack.c:6746
+#: src/multitrack.c:6711 src/multitrack.c:6749
 #, c-format
 msgid "%s (layer %d)"
 msgstr ""
 
-#: src/multitrack.c:6717
+#: src/multitrack.c:6720
 #, c-format
 msgid " %s"
 msgstr ""
 
-#: src/multitrack.c:6826
+#: src/multitrack.c:6829
 msgid "LiVES: Selected effect"
 msgstr ""
 
-#: src/multitrack.c:6833
+#: src/multitrack.c:6836
 msgid "_View/Edit this effect"
 msgstr ""
 
-#: src/multitrack.c:6836
+#: src/multitrack.c:6839
 msgid "_View this effect"
 msgstr ""
 
-#: src/multitrack.c:6844
+#: src/multitrack.c:6847
 msgid "_Delete this effect"
 msgstr ""
 
-#: src/multitrack.c:6939
+#: src/multitrack.c:6942
 #, c-format
 msgid "  %d to %d selected  "
 msgstr ""
 
-#: src/multitrack.c:6942 src/multitrack.c:7037
+#: src/multitrack.c:6945 src/multitrack.c:7040
 #, c-format
 msgid "%.2f sec."
 msgstr ""
 
-#: src/multitrack.c:7009
+#: src/multitrack.c:7012
 #, c-format
 msgid "%d frames"
 msgstr ""
 
-#: src/multitrack.c:7033
+#: src/multitrack.c:7036
 msgid "audio only"
 msgstr ""
 
-#: src/multitrack.c:7215
+#: src/multitrack.c:7218
 msgid ""
 "\n"
 "==============================\n"
 "Switched to Multitrack mode\n"
 msgstr ""
 
-#: src/multitrack.c:8712
+#: src/multitrack.c:8715
 msgid "Drag the time slider to where you want\n"
 msgstr ""
 
-#: src/multitrack.c:8713
+#: src/multitrack.c:8716
 msgid "to set effect parameters\n"
 msgstr ""
 
-#: src/multitrack.c:8714
+#: src/multitrack.c:8717
 msgid "Set parameters, and then click \"Apply\"\n"
 msgstr ""
 
-#: src/multitrack.c:8716
+#: src/multitrack.c:8719
 msgid "You can preview by clicking on\n"
 msgstr ""
 
-#: src/multitrack.c:8717
+#: src/multitrack.c:8720
 msgid "\"Show Frame Preview\" below.\n"
 msgstr ""
 
-#: src/multitrack.c:8808
+#: src/multitrack.c:8811
 #, c-format
 msgid "%s output"
 msgstr ""
 
-#: src/multitrack.c:8814
+#: src/multitrack.c:8817
 #, c-format
 msgid "layer %d"
 msgstr ""
 
-#: src/multitrack.c:8816
+#: src/multitrack.c:8819
 msgid "audio track"
 msgstr ""
 
-#: src/multitrack.c:8817
+#: src/multitrack.c:8820
 #, c-format
 msgid "%s to %s"
 msgstr ""
 
-#: src/multitrack.c:8865
+#: src/multitrack.c:8868
 msgid "No effects here"
 msgstr ""
 
-#: src/multitrack.c:8873
+#: src/multitrack.c:8876
 msgid "_Prev filter map"
 msgstr ""
 
-#: src/multitrack.c:8883
+#: src/multitrack.c:8886
 msgid "Insert _before"
 msgstr ""
 
-#: src/multitrack.c:8891
+#: src/multitrack.c:8894
 msgid "Insert _after"
 msgstr ""
 
-#: src/multitrack.c:8904
+#: src/multitrack.c:8907
 msgid "_Next filter map"
 msgstr ""
 
-#: src/multitrack.c:9073
+#: src/multitrack.c:9076
 msgid "LiVES: Selected block/frame"
 msgstr ""
 
-#: src/multitrack.c:9079
+#: src/multitrack.c:9082
 msgid "_Delete this block"
 msgstr ""
 
-#: src/multitrack.c:9088
+#: src/multitrack.c:9091
 msgid "_Split block here"
 msgstr ""
 
-#: src/multitrack.c:9096
+#: src/multitrack.c:9099
 msgid "List _effects here"
 msgstr ""
 
-#: src/multitrack.c:9105 src/multitrack.c:9172
+#: src/multitrack.c:9108 src/multitrack.c:9175
 #, c-format
 msgid "_Adjust %s"
 msgstr ""
 
-#: src/multitrack.c:9119
+#: src/multitrack.c:9122
 msgid "_Select this block"
 msgstr ""
 
-#: src/multitrack.c:9145
+#: src/multitrack.c:9148
 msgid "LiVES: Selected frame"
 msgstr ""
 
-#: src/multitrack.c:9153
+#: src/multitrack.c:9156
 msgid "_Insert here"
 msgstr ""
 
-#: src/multitrack.c:9159
+#: src/multitrack.c:9162
 msgid "_Insert audio here"
 msgstr ""
 
-#: src/multitrack.c:10040
+#: src/multitrack.c:10043
 msgid "invalid event list. Failed.\n"
 msgstr ""
 
-#: src/multitrack.c:10045
+#: src/multitrack.c:10048
 msgid "event list has invalid fps. Failed.\n"
 msgstr ""
 
-#: src/multitrack.c:10054
+#: src/multitrack.c:10057
 #, c-format
 msgid ""
 "\n"
@@ -7133,7 +7180,7 @@ msgid ""
 "then load in the new set from the File menu.\n"
 msgstr ""
 
-#: src/multitrack.c:10098
+#: src/multitrack.c:10101
 #, c-format
 msgid ""
 "\n"
@@ -7141,206 +7188,206 @@ msgid ""
 "It cannot be loaded.\n"
 msgstr ""
 
-#: src/multitrack.c:10553
+#: src/multitrack.c:10556
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:10587
+#: src/multitrack.c:10590
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:10772
+#: src/multitrack.c:10775
 #, c-format
 msgid "Undid %s\n"
 msgstr ""
 
-#: src/multitrack.c:10954
+#: src/multitrack.c:10957
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:10977
+#: src/multitrack.c:10980
 msgid "Multitrack details"
 msgstr ""
 
-#: src/multitrack.c:10989
+#: src/multitrack.c:10992
 msgid ""
 "\n"
 " (variable)"
 msgstr ""
 
-#: src/multitrack.c:11179 src/multitrack.c:13804 src/multitrack.c:13816
+#: src/multitrack.c:11183 src/multitrack.c:13808 src/multitrack.c:13820
 #, c-format
 msgid "track %s"
 msgstr ""
 
-#: src/multitrack.c:11184 src/multitrack.c:13809
+#: src/multitrack.c:11188 src/multitrack.c:13813
 #, c-format
 msgid "tracks %s and %s"
 msgstr ""
 
-#: src/multitrack.c:11190 src/multitrack.c:13819
+#: src/multitrack.c:11194 src/multitrack.c:13823
 msgid "selected tracks"
 msgstr ""
 
-#: src/multitrack.c:11194
+#: src/multitrack.c:11198
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:11222
+#: src/multitrack.c:11226
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:11411
+#: src/multitrack.c:11415
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr ""
 
-#: src/multitrack.c:11473
+#: src/multitrack.c:11477
 msgid "Cleaning up..."
 msgstr ""
 
-#: src/multitrack.c:12048
+#: src/multitrack.c:12052
 msgid "_Pause"
 msgstr ""
 
-#: src/multitrack.c:12049
+#: src/multitrack.c:12053
 msgid "Pause (p)"
 msgstr ""
 
-#: src/multitrack.c:12100
+#: src/multitrack.c:12104
 msgid "Press 'm' during playback"
 msgstr ""
 
-#: src/multitrack.c:12101
+#: src/multitrack.c:12105
 msgid "to make a mark on the timeline"
 msgstr ""
 
-#: src/multitrack.c:12415
+#: src/multitrack.c:12419
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:12666
+#: src/multitrack.c:12670
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13159
+#: src/multitrack.c:13163
 #, c-format
 msgid "Time region %.3f to %.3f selected.\n"
 msgstr ""
 
-#: src/multitrack.c:13163
+#: src/multitrack.c:13167
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
 msgstr ""
 
-#: src/multitrack.c:13165
+#: src/multitrack.c:13169
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr ""
 
-#: src/multitrack.c:13173
+#: src/multitrack.c:13177
 msgid "Single click on an effect to select it.\n"
 msgstr ""
 
-#: src/multitrack.c:13174
+#: src/multitrack.c:13178
 msgid "Double click on an effect to edit it.\n"
 msgstr ""
 
-#: src/multitrack.c:13175
+#: src/multitrack.c:13179
 msgid "Right click on an effect for context menu.\n"
 msgstr ""
 
-#: src/multitrack.c:13177
+#: src/multitrack.c:13181
 msgid ""
 "\n"
 "Effect order can be changed at FILTER MAPS:"
 msgstr ""
 
-#: src/multitrack.c:13178
+#: src/multitrack.c:13182
 msgid "- select an effect, then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:13179
+#: src/multitrack.c:13183
 msgid "or INSERT AFTER buttons to move it."
 msgstr ""
 
-#: src/multitrack.c:13214
+#: src/multitrack.c:13218
 msgid "You can click and drag below the timeline\n"
 msgstr ""
 
-#: src/multitrack.c:13215
+#: src/multitrack.c:13219
 msgid "to select a time region.\n"
 msgstr ""
 
-#: src/multitrack.c:13412 src/multitrack.c:13425
+#: src/multitrack.c:13416 src/multitrack.c:13429
 msgid "Click on another effect,\n"
 msgstr ""
 
-#: src/multitrack.c:13413 src/multitrack.c:13426
+#: src/multitrack.c:13417 src/multitrack.c:13430
 msgid "and the selected one will be inserted\n"
 msgstr ""
 
-#: src/multitrack.c:13414
+#: src/multitrack.c:13418
 msgid "after it.\n"
 msgstr ""
 
-#: src/multitrack.c:13427
+#: src/multitrack.c:13431
 msgid "before it.\n"
 msgstr ""
 
-#: src/multitrack.c:13633
+#: src/multitrack.c:13637
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13825
+#: src/multitrack.c:13829
 msgid "audio"
 msgstr ""
 
-#: src/multitrack.c:13827
+#: src/multitrack.c:13831
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14334 src/multitrack.c:15831
+#: src/multitrack.c:14338 src/multitrack.c:15835
 msgid "_Autoreload each time"
 msgstr ""
 
-#: src/multitrack.c:14400
+#: src/multitrack.c:14404
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr ""
 
-#: src/multitrack.c:15741
+#: src/multitrack.c:15745
 msgid "clips and frames"
 msgstr ""
 
-#: src/multitrack.c:15745
+#: src/multitrack.c:15749
 msgid "clips"
 msgstr ""
 
-#: src/multitrack.c:15748
+#: src/multitrack.c:15752
 msgid "frames"
 msgstr ""
 
-#: src/multitrack.c:15758
+#: src/multitrack.c:15762
 msgid ""
 "\n"
 "Auto reload layout.\n"
 msgstr ""
 
-#: src/multitrack.c:15761
+#: src/multitrack.c:15765
 #, c-format
 msgid ""
 "%s\n"
@@ -7348,64 +7395,64 @@ msgid ""
 "Therefore it could not be loaded properly.\n"
 msgstr ""
 
-#: src/multitrack.c:15881
+#: src/multitrack.c:15885
 #, c-format
 msgid ""
 "\n"
 "Unable to load layout file %s\n"
 msgstr ""
 
-#: src/multitrack.c:15888
+#: src/multitrack.c:15892
 #, c-format
 msgid "Loading layout from %s..."
 msgstr ""
 
-#: src/multitrack.c:15905
+#: src/multitrack.c:15909
 #, c-format
 msgid "Got %d events...processing..."
 msgstr ""
 
-#: src/multitrack.c:15918
+#: src/multitrack.c:15922
 msgid "Checking and rebuilding event list"
 msgstr ""
 
-#: src/multitrack.c:15939
+#: src/multitrack.c:15943
 #, c-format
 msgid "%d errors detected.\n"
 msgstr ""
 
-#: src/multitrack.c:15986
+#: src/multitrack.c:15990
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:16692
+#: src/multitrack.c:16696
 msgid "LiVES: Multitrack audio mixer"
 msgstr ""
 
-#: src/multitrack.c:16729
+#: src/multitrack.c:16733
 msgid "_Reset values"
 msgstr ""
 
-#: src/multitrack.c:16733
+#: src/multitrack.c:16737
 msgid "_Close mixer"
 msgstr ""
 
-#: src/multitrack.c:16789
+#: src/multitrack.c:16793
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:16795
+#: src/multitrack.c:16799
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:16826
+#: src/multitrack.c:16830
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:16832
+#: src/multitrack.c:16836
 msgid "Adjust all layer audio values to the same value"
 msgstr ""
 

@@ -7,7 +7,9 @@
 #ifndef _HAS_LIVES_AUDIO_H
 #define _HAS_LIVES_AUDIO_H
 
-#define SAMPLE_MAX_16BIT  32767.0f
+#define SAMPLE_MAX_16BIT_P  32767.0f
+#define SAMPLE_MAX_16BIT  SAMPLE_MAX_16BIT_P
+#define SAMPLE_MAX_16BIT_N  32768.0f
 #define SAMPLE_MAX_16BITI  32767
 
 // defaults for when not specifed

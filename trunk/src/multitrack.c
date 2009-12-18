@@ -3689,7 +3689,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   lives_mt *mt=(lives_mt *)g_malloc(sizeof(lives_mt));
   mt->is_ready=FALSE;
   mt->tl_marks=NULL;
-  
+
   mt->idlefunc=0; // idle function for auto backup
   mt->auto_back_time=0;
 
@@ -7092,7 +7092,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
       xse=AFORM_UNSIGNED;;
     }
-    else cfile->signed_endian=0;
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))) {
       xse|=AFORM_BIG_ENDIAN;
     }

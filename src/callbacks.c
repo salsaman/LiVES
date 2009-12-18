@@ -7651,7 +7651,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   com=g_strdup_printf("smogrify get_window_id %s",cfile->handle);
   dummyvar=system(com);
-  do_progress_dialog(TRUE,FALSE,_ ("Click on a Window to Capture it\nPress 'q' to stop recording.\n"));
+  do_progress_dialog(TRUE,FALSE,_ ("Click on a Window to Capture it\nPress 'q' to stop recording"));
   g_free(com);
 
   array=g_strsplit(mainw->msg,"|",5);

@@ -210,27 +210,31 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 /* channels to a buffer that will hold a single channel stream */
 /* src_skip is in terms of 16bit samples */
 void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsigned long src_skip, int is_unsigned, float vol) {
-  register float svol;
-  float val;
+  register float svolp,svoln;
 
 #ifdef ENABLE_OIL
+  float val;
   double x;
   double y=0.f;
+#else
+  register float val;
 #endif
 
   if (vol==0.) vol=0.0000001f;
-  svol=SAMPLE_MAX_16BIT/vol;
+  svolp=SAMPLE_MAX_16BIT_P/vol;
+  svoln=SAMPLE_MAX_16BIT_N/vol;
 
 #ifdef ENABLE_OIL
-  x=1./svol;
+  x=1./svoln;
 #endif
 
   while (nsamples--) {
+
     if (!is_unsigned) {
 #ifdef ENABLE_OIL
       oil_scaleconv_f32_s16(&val,src,1,&y,&x);
 #else
-      if ((val = (float)((*src) / svol))>1.0f) val=1.0f;
+      if ((val = (float)((*src) / (*src>0?svolp:svoln) ))>1.0f) val=1.0f;
       else if (val<-1.0f) val=-1.0f;
 #endif
     }
@@ -238,7 +242,8 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
 #ifdef ENABLE_OIL
       oil_scaleconv_f32_u16(&val,(unsigned short *)src,1,&y,&x);
 #else
-      if ((val=((float)((unsigned short)(*src)) / SAMPLE_MAX_16BIT - 1.0f)*vol)>1.0f) val=1.0f;
+      valss=(unsigned short)*src-SAMPLE_MAX_16BITI;
+      if ((val = (float)((valss) / (valss>0?svolp:svoln) ))>1.0f) val=1.0f;
       else if (val<-1.0f) val=-1.0f;
 #endif
     }
@@ -253,11 +258,9 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
 long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, int swap_endian, float vol) {
   // convert float samples back to int
   long frames_out=0l;
-  short val;
-  unsigned short valu=0;
   register int i;
   register int offs=0,coffs=0;
-  register float coffs_f=0.f;
+  register float coffs_f=0.f,valf;
   short *hbuffs=(short *)holding_buff;
   unsigned short *hbuffu=(unsigned short *)holding_buff;
   unsigned char *hbuffc=(guchar *)holding_buff;
@@ -265,6 +268,11 @@ long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps,
 #ifdef ENABLE_OIL
   double x=1./vol;
   double y=0.f;
+  short val;
+  unsigned short valu=0;
+#else
+  register short val;
+  register unsigned short valu=0;
 #endif
 
   while ((nsamps-coffs)>0) {
@@ -274,10 +282,9 @@ long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps,
       if (usigned) oil_scaleconv_u16_f32(&valu,float_buffer[i]+coffs,1,&y,&x);
       else oil_scaleconv_s16_f32(&val,float_buffer[i]+coffs,1,&y,&x);
 #else
-      val=(short)(*(float_buffer[i]+coffs)*vol*SAMPLE_MAX_16BIT);
-      if (usigned) {
-	valu=val+SAMPLE_MAX_16BITI;
-      }
+      valf=*(float_buffer[i]+coffs);
+      val=(short)(valf*vol*(valf>0.?SAMPLE_MAX_16BIT_P:SAMPLE_MAX_16BIT_N));
+      if (usigned) valu=val+SAMPLE_MAX_16BITI;
 #endif
       if (asamps==16) {
 	if (!swap_endian) {
@@ -545,10 +552,12 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
   int chans=abuf->achans;
   register size_t offs=abuf->samples_filled*chans;
   register int i;
+  register float valf;
 
   while (frames_out<nsamps) {
     for (i=0;i<chans;i++) {
-      abuf->data.int16buf[offs+i]=(short)(float_buffer[i][frames_out]*SAMPLE_MAX_16BIT);
+      valf=float_buffer[i][frames_out];
+      abuf->data.int16buf[offs+i]=(short)(valf*(valf>0.?SAMPLE_MAX_16BIT_P:SAMPLE_MAX_16BIT_N));
     }
     frames_out++;
     offs+=chans;

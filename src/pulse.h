@@ -18,6 +18,8 @@
 
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
+#define LIVES_PA_BUFF_MAXLEN 65536
+#define LIVES_PA_BUFF_TARGET 2048
 
 typedef struct {
   pa_threaded_mainloop *mloop;

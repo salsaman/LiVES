@@ -221,6 +221,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     glong in_frames=0;
     gulong in_bytes=0;
     gfloat shrink_factor=1.f;
+    int swap_sign;
 
 #ifdef DEBUG_PULSE
     g_printerr("playing... pulseFramesAvailable = %ld\n", pulseFramesAvailable);
@@ -384,7 +385,9 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     g_printerr("nframes == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nframes, pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
 #endif
     
-    if (pulsed->in_asamps==pulsed->out_asamps&&shrink_factor==1.&&pulsed->in_achans==pulsed->out_achans&&!pulsed->reverse_endian) {
+    swap_sign=afile->signed_endian&AFORM_UNSIGNED;
+
+    if (pulsed->in_asamps==pulsed->out_asamps&&shrink_factor==1.&&pulsed->in_achans==pulsed->out_achans&&!pulsed->reverse_endian&&!swap_sign) {
       // no transformation needed
       pulsed->sound_buffer=buffer;
     }
@@ -395,7 +398,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans);
       }
       else {
-	sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian,FALSE);
+	sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian, (gboolean)swap_sign);
       }
     }
 
@@ -686,9 +689,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   if (G_BYTE_ORDER==G_BIG_ENDIAN) pdriver->out_endian=AFORM_BIG_ENDIAN;
   else pdriver->out_endian=AFORM_LITTLE_ENDIAN;
 
-  pa_battr.maxlength=(uint32_t)-1;
+  pa_battr.maxlength=LIVES_PA_BUFF_MAXLEN;
   pa_battr.minreq=(uint32_t)-1;
-  pa_battr.tlength=2048;
+  pa_battr.tlength=LIVES_PA_BUFF_TARGET;
   pa_battr.prebuf=0;
 
   if (pulse_server_rate==0) {

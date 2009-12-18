@@ -81,6 +81,7 @@ typedef struct {
   gdouble fps;
   gboolean ratio_fps;
   GtkWidget *dialog;
+  GtkWidget *okbutton;
   GtkWidget *encoder_combo;
   GtkWidget *ofmt_combo;
   GtkWidget *acodec_combo;

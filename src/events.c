@@ -3101,7 +3101,9 @@ gint render_events (gboolean reset) {
 	if (layer!=NULL) {
 	  layer_palette=weed_layer_get_palette(layer);
 	  
-	  if (layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+	  if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+	  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
+
 	  resize_layer(layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
 	  pixbuf=layer_to_pixbuf(layer);
 	  weed_plant_free(layer);
@@ -3195,14 +3197,14 @@ gint render_events (gboolean reset) {
 
 	if (prefs->ocp==-1) prefs->ocp=get_int_pref ("open_compression_percent");
 
-	if (!strcmp (prefs->image_ext,"jpg")) {
+	if (cfile->img_type==IMG_TYPE_JPEG) {
 	  gchar *qstr=g_strdup_printf("%d",(100-prefs->ocp));
 	  if (cfile->old_frames==0) g_snprintf(oname,256,"%s/%s/%08d.jpg",prefs->tmpdir,cfile->handle,out_frame);
 
 	  gdk_pixbuf_save (pixbuf, oname, "jpeg", &error,"quality", qstr, NULL);
 	  g_free(qstr);
 	}
-	else if (!strcmp (prefs->image_ext,"png")) {
+	else if (cfile->img_type==IMG_TYPE_PNG) {
 	  gchar *cstr=g_strdup_printf("%d",(gint)((gdouble)(prefs->ocp+5.)/10.));
 	  if (cfile->old_frames==0) g_snprintf(oname,256,"%s/%s/%08d.png",prefs->tmpdir,cfile->handle,out_frame);
 	  gdk_pixbuf_save (pixbuf, oname, "png", &error, "compression", cstr, NULL);
@@ -3337,7 +3339,7 @@ gint render_events (gboolean reset) {
 
     if (cfile->old_frames==0) cfile->undo_start=cfile->undo_end=0;
     if (mainw->multitrack==NULL||!mainw->multitrack->pr_audio) {
-      com=g_strdup_printf ("smogrify mv_mgk %s %d %d",cfile->handle,cfile->undo_start,cfile->undo_end);
+      com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->undo_start,cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
       dummyvar=system (com);
       g_free (com);
       mainw->is_rendering=mainw->internal_messaging=FALSE;
@@ -3577,7 +3579,7 @@ gboolean render_to_clip (gboolean new_clip) {
       cfile->signed_endian=prefs->mt_def_signed_endian;
     }
     
-    cfile->bpp=24;
+    cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
     cfile->is_loaded=TRUE;
   }
   else if (mainw->multitrack==NULL) {
@@ -4365,7 +4367,6 @@ render_details *create_render_details (gint type) {
   GtkWidget *eventbox;
   GtkWidget *frame;
   GtkObject *spinbutton_adj;
-  GtkWidget *okbutton;
   GtkWidget *cancelbutton;
   GtkWidget *alabel;
   GtkWidget *hsep;
@@ -4376,6 +4377,8 @@ render_details *create_render_details (gint type) {
   GList *ofmt=NULL;
   int i;
   gchar **array;
+
+  gboolean needs_new_encoder=FALSE;
 
   if (type==1) specified=TRUE;
 
@@ -4593,7 +4596,21 @@ render_details *create_render_details (gint type) {
   
   
   if (capable->has_encoder_plugins) encoders=get_plugin_list (PLUGIN_ENCODERS,FALSE,NULL,NULL);
-  encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
+  
+  if (!specified) encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
+  else {
+    GList *encs=encoders=filter_encoders_by_img_ext(encoders,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+    needs_new_encoder=TRUE;
+    while (encs!=NULL) {
+      if (!strcmp(encs->data,prefs->encoder.name)) {
+	needs_new_encoder=FALSE;
+	break;
+      }
+      encs=encs->next;
+    }
+
+  }
+
   hsep = gtk_hseparator_new ();
   label= gtk_label_new ("");
   if (!specified) {
@@ -4719,10 +4736,11 @@ render_details *create_render_details (gint type) {
   gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_FOCUS);
 
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_widget_grab_default (okbutton);
+  rdet->okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (rdet->okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  gtk_widget_grab_default (rdet->okbutton);
+
 
   gtk_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
 			      GDK_Escape, 0, 0);
@@ -4731,6 +4749,12 @@ render_details *create_render_details (gint type) {
 
   if (type==4) gtk_widget_hide(resaudw->aud_hbox);
   
+  if (needs_new_encoder) {
+    gtk_widget_set_sensitive(rdet->okbutton,FALSE);
+    while (g_main_context_iteration(NULL,FALSE)); // force showing of transient window
+    do_encoder_img_ftm_error(rdet);
+  }
+
   g_signal_connect_after (G_OBJECT (GTK_COMBO(rdet->acodec_combo)->entry), "changed", G_CALLBACK (rdet_acodec_changed), rdet);
 
   return rdet;

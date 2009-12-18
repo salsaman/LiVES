@@ -78,10 +78,10 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
     if (rfx->num_in_channels==2) {
       // transition has a few extra bits
-      pdefault=g_strdup_printf ("%s %d %d %d %d %d %d \"%s/%s\"",cfile->handle,rfx->status,cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,clipboard->start,prefs->tmpdir,clipboard->handle);
+      pdefault=g_strdup_printf ("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->start,prefs->tmpdir,clipboard->handle);
     }
     else {
-      pdefault=g_strdup_printf ("%s %d %d %d %d %d",cfile->handle,rfx->status,cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize);
+      pdefault=g_strdup_printf ("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     }
     // and append params
     if (is_preview) {
@@ -249,7 +249,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	  cfile->fps=cfile->pb_fps=strtod(array[3],NULL);
 	  if (cfile->fps==0.) cfile->fps=cfile->pb_fps=prefs->default_fps;
 	  cfile->end=cfile->frames=atoi(array[4]);
-	  cfile->bpp=24;
+	  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
 	}
 	g_strfreev(array);
       }
@@ -277,7 +277,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
-    gchar *com=g_strdup_printf("smogrify mv_pre %s %d %d",cfile->handle,cfile->progress_start,cfile->progress_end);
+    gchar *com=g_strdup_printf("smogrify mv_pre %s %d %d %s",cfile->handle,cfile->progress_start,cfile->progress_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     dummyvar=system(com);
     g_free(com);
     mainw->keep_pre=FALSE;
@@ -428,24 +428,27 @@ gint realfx_progress (gboolean reset) {
 
   frameticks=(i-cfile->start+1.)/cfile->fps*U_SECL;
 
-  if (!pull_frame(layer,prefs->image_ext,frameticks)) {
+  if (!pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",frameticks)) {
     g_snprintf (mainw->msg,256,"error|missing image %d",i);
     return 1;
   }
 
   layer=on_rte_apply (layer, 0, 0, (weed_timecode_t)frameticks);
   layer_palette=weed_get_int_value(layer,"current_palette",&weed_error);
-  if (layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+
+  if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
+
   if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
   pixbuf=layer_to_pixbuf(layer);
   weed_plant_free(layer);
 
   g_snprintf(oname,256,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
 
-  if (!strcmp (prefs->image_ext,"jpg")) {
+  if (cfile->img_type==IMG_TYPE_JPEG) {
     gdk_pixbuf_save (pixbuf, oname, "jpeg", &error,"quality", "100", NULL);
   }
-  else if (!strcmp (prefs->image_ext,"png")) {
+  else if (cfile->img_type==IMG_TYPE_PNG) {
     gdk_pixbuf_save (pixbuf, oname, "png", &error, NULL);
   }
   else {
@@ -459,7 +462,7 @@ gint realfx_progress (gboolean reset) {
   }
 
   if (++i>cfile->end) {
-    com=g_strdup_printf ("smogrify mv_mgk %s %d %d",cfile->handle,cfile->start,cfile->end);
+    com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->start,cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     dummyvar=system (com);
     g_free (com);
     mainw->internal_messaging=FALSE;
@@ -662,7 +665,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   layer=weed_plant_new(WEED_PLANT_CHANNEL);
   weed_set_int_value(layer,"clip",mainw->blend_file);
   weed_set_int_value(layer,"frame",blend_file->frameno);
-  if (!pull_frame(layer,prefs->image_ext,tc)) {
+  if (!pull_frame(layer,mainw->files[mainw->blend_file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
     weed_plant_free(layer);
     layer=NULL;
   }

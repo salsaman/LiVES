@@ -25,6 +25,7 @@ Changes
 - Added "batch generator" flag bit + explanation of generators.
 - Describe how width and height are passed back to host.
 - Add "special|fileread"
+- Added note about differing input image types
 
 TODO: 	- change rectdemask to use proportion, to match other framedraws
 	- split into RFX layout and RFX plugin components
@@ -579,6 +580,12 @@ If no processing is to be done on a pass, then the input frame should be
 copied to the output frame.
 
 An exception to this is if the plugin has no in channels, and set the "batch generator" flag bit. In this case, the loop code will be run *only once*, and the generator should create an alpha-numeric sequence of image files. If the plugin is a generator, and this flag bit is not set, the plugin should generate frame $out, and it should be of the correct type (e.g. jpeg if $out ends in .jpg) and all frames must be of the same width and height.
+
+One further exception - if two or more input frames are to be merged into one output frame, the 
+input frames may be of different types (for example, a png image and a jpeg image may be merged 
+into a single png image). In this case, all input images should be converted to the first input 
+image type before merging. The resulting output image should also be of the same type.
+
 
 
 If the plugin sets the may-resize bit, or is a non-batch-mode generator, the width and height of the frames should be passed back to the host.

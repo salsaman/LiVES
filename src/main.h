@@ -322,8 +322,6 @@ typedef struct {                // corresponds to one clip in the GUI
 #define UNDO_RESIZABLE 2
 #define UNDO_MERGE 3
 
-  // reorder - deprecated
-#define UNDO_REORDER 4
 
 #define UNDO_RESAMPLE 5
 #define UNDO_TRIM_AUDIO 6
@@ -409,6 +407,12 @@ typedef struct {                // corresponds to one clip in the GUI
 
 
   gboolean deinterlace;
+
+
+#define IMG_TYPE_JPEG (1<<1)
+#define IMG_TYPE_PNG (1<<2)
+
+  guint img_type;
 
   // TODO - change to lives_clip_t
 } file;
@@ -570,6 +574,7 @@ void do_no_decoder_error(gchar *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
 void do_file_perm_error(gchar *file_name);
+void do_encoder_img_ftm_error(render_details *rdet);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *text, gboolean has_cancel);
@@ -643,9 +648,9 @@ void load_start_image(gint frame);
 void load_end_image(gint frame);
 void load_preview_image(gboolean update_always);
 
-gboolean pull_frame(weed_plant_t *layer, gchar *image_ext, weed_timecode_t tc);
-gboolean pull_frame_at_size (weed_plant_t *layer, gchar *image_ext, weed_timecode_t tc, int width, int height, int target_palette);
-GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, gchar *image_ext, weed_timecode_t tc, gint width, gint height, GdkInterpType interp);
+gboolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
+gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, int target_palette);
+GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, gint width, gint height, GdkInterpType interp);
 
 void load_frame_image(gint frame, gint last_frame);
 void sensitize(void);

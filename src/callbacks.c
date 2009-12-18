@@ -1097,11 +1097,11 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 	reset_achans=cfile->undo_achans;
 	com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
       }
-      else com=g_strdup_printf("smogrify insert %s %.8f 0. %.8f %s 2 0 0 0 0 %d %d %d -1",cfile->handle,cfile->undo1_dbl,cfile->undo2_dbl-cfile->undo1_dbl, cfile->handle, cfile->arps, cfile->achans, cfile->asampsize);
+      else com=g_strdup_printf("smogrify insert %s %s %.8f 0. %.8f %s 2 0 0 0 0 %d %d %d -1",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->undo1_dbl,cfile->undo2_dbl-cfile->undo1_dbl, cfile->handle, cfile->arps, cfile->achans, cfile->asampsize);
     }
     else {
       cfile->undo1_boolean&=mainw->ccpd_with_sound;
-      com=g_strdup_printf("smogrify insert %s %d %d %d %s %d %d 0 0 %.3f %d %d %d -1",cfile->handle,cfile->undo_start-1,cfile->undo_start,cfile->undo_end,cfile->handle, cfile->undo1_boolean, cfile->frames, cfile->fps, cfile->arps, cfile->achans, cfile->asampsize);
+      com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d 0 0 %.3f %d %d %d -1",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->undo_start-1,cfile->undo_start,cfile->undo_end,cfile->handle, cfile->undo1_boolean, cfile->frames, cfile->fps, cfile->arps, cfile->achans, cfile->asampsize);
 
       if (cfile->clip_type==CLIP_TYPE_FILE) {
 	restore_frame_index_back(mainw->current_file);
@@ -1154,7 +1154,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   if (cfile->undo_action==UNDO_RESIZABLE||cfile->undo_action==UNDO_RENDER||cfile->undo_action==UNDO_EFFECT||cfile->undo_action==UNDO_MERGE||(cfile->undo_action==UNDO_ATOMIC_RESAMPLE_RESIZE&&(cfile->frames!=cfile->old_frames||cfile->hsize!=cfile->ohsize||cfile->vsize!=cfile->ovsize||cfile->fps!=cfile->undo1_dbl))) {
     gchar *audfile;
 
-    com=g_strdup_printf("smogrify undo %s %d %d",cfile->handle,cfile->undo_start,cfile->undo_end);
+    com=g_strdup_printf("smogrify undo %s %d %d %s",cfile->handle,cfile->undo_start,cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     unlink(cfile->info_file);
     dummyvar=system(com);
     // show a progress dialog, not cancellable
@@ -1354,20 +1354,8 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     cfile->redoable=FALSE;
   }
 
-  if (cfile->undo_action==UNDO_REORDER) {
-
-    // deorder the frames 
-    cfile->frames=deorder_frames(cfile->old_frames,mainw->current_file==0&&!prefs->conserve_space);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
-    com=g_strdup_printf(_ ("Length of video is now %d frames.\n"),cfile->frames);
+  if (menuitem!=NULL) {
     d_print_done();
-    d_print(com);
-    g_free(com);
-  }
-  else {
-    if (menuitem!=NULL) {
-      d_print_done();
-    }
   }
 
   if (cfile->undo_action==UNDO_RESAMPLE) {
@@ -1535,7 +1523,7 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
-  com=g_strdup_printf("smogrify redo %s %d %d",cfile->handle,cfile->undo_start,cfile->undo_end);
+  com=g_strdup_printf("smogrify redo %s %d %d %s",cfile->handle,cfile->undo_start,cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
   unlink(cfile->info_file);
   dummyvar=system(com);
   cfile->progress_start=cfile->undo_start;
@@ -1609,7 +1597,10 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
 
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
-  com=g_strdup_printf("smogrify insert %s 0 %d %d %s %d 0 0 0 %.3f %d %d %d",clipboard->handle,start,end,cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
+
+  clipboard->img_type=cfile->img_type;
+
+  com=g_strdup_printf("smogrify insert %s %s 0 %d %d %s %d 0 0 0 %.3f %d %d %d",clipboard->handle,clipboard->img_type==IMG_TYPE_JPEG?"jpg":"png",start,end,cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
 
   // we need to set this to look at the right info_file
   mainw->current_file=0;
@@ -1716,7 +1707,7 @@ on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
 
-  com=g_strdup_printf("smogrify insert %s 0 1 %d %s %d 0 0 0 %.3f %d %d %d",cfile->handle, clipboard->frames, clipboard->handle, mainw->ccpd_with_sound, clipboard->fps, clipboard->arate, clipboard->achans, clipboard->asampsize);
+  com=g_strdup_printf("smogrify insert %s %s 0 1 %d %s %d 0 0 0 %.3f %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->frames, clipboard->handle, mainw->ccpd_with_sound, clipboard->fps, clipboard->arate, clipboard->achans, clipboard->asampsize);
   
   dummyvar=system(com);
   // show a progress dialog, not cancellable
@@ -2038,7 +2029,7 @@ on_insert_activate                    (GtkButton     *button,
     d_print(msg);
     g_free(msg);
 
-    com=g_strdup_printf("smogrify insert %s %d %d %d %s %d %d %d %d",cfile->handle, where, clipboard->frames-remainder_frames+1, clipboard->frames, clipboard->handle, 0, cfile->frames, hsize, vsize);
+    com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, clipboard->frames-remainder_frames+1, clipboard->frames, clipboard->handle, 0, cfile->frames, hsize, vsize);
     
     cfile->progress_start=1;
     cfile->progress_end=remainder_frames;
@@ -2086,7 +2077,7 @@ on_insert_activate                    (GtkButton     *button,
   // this should indicate to the back end to leave our
   // backup frames alone
 
-  com=g_strdup_printf("smogrify insert %s %d %d %d %s %d %d %d %d %.3f %d %d %d %d",cfile->handle, where, cb_start*leave_backup, cb_end, clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, cfile->achans, cfile->asampsize, (int)times_to_insert);
+  com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d %d %d %.3f %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",where, cb_start*leave_backup, cb_end, clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, cfile->achans, cfile->asampsize, (int)times_to_insert);
 
   cfile->progress_start=1;
   cfile->progress_end=(cb_end-cb_start+1)*(int)times_to_insert+cfile->frames-where;
@@ -2102,7 +2093,7 @@ on_insert_activate                    (GtkButton     *button,
 
     cfile->nopreview=FALSE;
     // clean up moved/inserted frames
-    com=g_strdup_printf ("smogrify undo_insert %s %d %d %d",cfile->handle,where+1,where+(cb_end-cb_start+1)*(int)times_to_insert,cfile->frames);
+    com=g_strdup_printf ("smogrify undo_insert %s %d %d %d %s",cfile->handle,where+1,where+(cb_end-cb_start+1)*(int)times_to_insert,cfile->frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     dummyvar=system (com);
     g_free(com);
 
@@ -2166,7 +2157,7 @@ on_insert_activate                    (GtkButton     *button,
     d_print(msg);
     g_free(msg);
 
-    com=g_strdup_printf("smogrify insert %s %d %d %d %s %d %d %d %d",cfile->handle,where, 1, remainder_frames, clipboard->handle, 0, cfile->frames, hsize, vsize);
+    com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, 1, remainder_frames, clipboard->handle, 0, cfile->frames, hsize, vsize);
     
     cfile->progress_start=1;
     cfile->progress_end=remainder_frames;
@@ -2349,7 +2340,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
     g_free(com);
   }
 
-  com=g_strdup_printf("smogrify cut %s %d %d %d %d %.3f %d %d %d",cfile->handle,cfile->start,cfile->end, mainw->ccpd_with_sound, cfile->frames, cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
+  com=g_strdup_printf("smogrify cut %s %d %d %d %d %s %.3f %d %d %d",cfile->handle,cfile->start,cfile->end, mainw->ccpd_with_sound, cfile->frames, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
 
   cfile->progress_start=cfile->start;
   cfile->progress_end=cfile->frames;
@@ -2997,6 +2988,7 @@ on_encoder_entry_changed (GtkEntry *encoder_entry, gpointer ptr) {
       }
       rdet->enc_changed=TRUE;
       rdet->encoder_name=g_strdup(prefs->encoder.name);
+      gtk_widget_set_sensitive(rdet->okbutton,TRUE);
     }
     if (prefsw!=NULL) {
       gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),array[1]);
@@ -3480,6 +3472,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   gchar set_name[128];
   gboolean skip_threaded_dialog=(gboolean)GPOINTER_TO_INT(user_data);
   const lives_clip_data_t *cdata=NULL;
+  guint img_type;
 
   // mutex lock
   pthread_mutex_lock(&mainw->gtk_mutex);
@@ -3636,6 +3629,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     //create a new cfile and fill in the details
     create_cfile();
+    img_type=cfile->img_type;
 
     // get file details
     read_headers(".");
@@ -3645,6 +3639,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (load_frame_index(mainw->current_file)) {
       gboolean next=FALSE;
+      cfile->img_type=img_type; // ignore value from read_headers
       while (1) {
 	pthread_mutex_lock(&mainw->gtk_mutex);
 	if ((cdata=get_decoder_plugin(cfile))==NULL) {
@@ -3856,6 +3851,8 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
 {
   char buff[512];
   fileinfo *filew;
+
+  gchar *sigs,*ends;
   
   if (mainw->current_file==-1) return;
 
@@ -3866,7 +3863,7 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
   
   if (cfile->frames>0) {
     // type
-    g_snprintf(buff,512,"\n  %s",cfile->type);
+    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp)\n"),cfile->type,cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png",cfile->bpp);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview24)),buff, -1);
     // fps
     g_snprintf(buff,512,"\n  %.3f%s",cfile->fps,cfile->ratio_fps?"...":"");
@@ -3899,7 +3896,7 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
       g_snprintf(buff,512,"%s",_ ("\n  Opening..."));
     }
     else {
-      g_snprintf(buff,512,"\n  %.2f sec",cfile->video_time);
+      g_snprintf(buff,512,_("\n  %.2f sec."),cfile->video_time);
     }
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview28)),buff, -1);
     // file size
@@ -3913,21 +3910,41 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
       g_snprintf(buff,512,"%s",_ ("\n  Opening..."));
     }
     else {
-      g_snprintf(buff,512,"\n  %.2f sec",cfile->laudio_time);
+      g_snprintf(buff,512,_("\n  %.2f sec."),cfile->laudio_time);
     }
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_ltime)),buff, -1);
-    g_snprintf(buff,512,"\n  %d Hz %d bit",cfile->arate,cfile->asampsize);
+
+    if (cfile->signed_endian&AFORM_UNSIGNED) sigs=g_strdup(_("unsigned"));
+    else sigs=g_strdup(_("signed"));
+
+    if (cfile->signed_endian&AFORM_BIG_ENDIAN) ends=g_strdup(_("big-endian"));
+    else ends=g_strdup(_("little-endian"));
+
+    g_snprintf(buff,512,_("  %d Hz %d bit\n%s %s"),cfile->arate,cfile->asampsize,sigs,ends);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_lrate)),buff, -1);
+
+    g_free(sigs);
+    g_free(ends);
   }
   
   if (cfile->achans>1) {
-    g_snprintf(buff,512,"\n  %d Hz %d bit",cfile->arate,cfile->asampsize);
+    if (cfile->signed_endian&AFORM_UNSIGNED) sigs=g_strdup(_("unsigned"));
+    else sigs=g_strdup(_("signed"));
+
+    if (cfile->signed_endian&AFORM_BIG_ENDIAN) ends=g_strdup(_("big-endian"));
+    else ends=g_strdup(_("little-endian"));
+
+    g_snprintf(buff,512,_("  %d Hz %d bit\n%s %s"),cfile->arate,cfile->asampsize,sigs,ends);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_rrate)),buff, -1);
+
+    g_free(sigs);
+    g_free(ends);
+    
     if (cfile->opening) {
       g_snprintf(buff,512,"%s",_ ("\n  Opening..."));
     }
     else {
-      g_snprintf(buff,512,"\n  %.2f sec",cfile->raudio_time);
+      g_snprintf(buff,512,_("\n  %.2f sec."),cfile->raudio_time);
     }
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_rtime)),buff, -1);
   }
@@ -4134,7 +4151,7 @@ on_fs_preview_clicked                  (GtkButton       *button,
     clear_mainw_msg();
     
     // make thumb from any image file
-    com=g_strdup_printf("smogrify make_thumb thm%d %d %d \"%s\"",pid,DEFAULT_FRAME_HSIZE,DEFAULT_FRAME_VSIZE,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
+    com=g_strdup_printf("smogrify make_thumb thm%d %d %d %s \"%s\"",pid,DEFAULT_FRAME_HSIZE,DEFAULT_FRAME_VSIZE,prefs->image_ext,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     g_free(tmp);
     dummyvar=system(com);
     g_free(com);
@@ -4734,17 +4751,17 @@ on_button3_clicked                     (GtkButton       *button,
 	com=g_strdup_printf("smogrify resume %s",cfile->handle);
 	dummyvar=system(com);
 	g_free(com);
-	if (!mainw->keep_pre) com=g_strdup_printf("smogrify mv_mgk %s %d %d",cfile->handle,cfile->start,keep_frames-1);
+	if (!mainw->keep_pre) com=g_strdup_printf("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	else {
-	  com=g_strdup_printf("smogrify mv_pre %s %d %d &",cfile->handle,cfile->start,keep_frames-1);
+	  com=g_strdup_printf("smogrify mv_pre %s %d %d %s &",cfile->handle,cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  mainw->keep_pre=FALSE;
 	}
       }
       else {
 	mainw->internal_messaging=FALSE;
-	if (!mainw->keep_pre) com=g_strdup_printf ("smogrify mv_mgk %s %d %d",cfile->handle,cfile->start,keep_frames);
+	if (!mainw->keep_pre) com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->start,keep_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	else {
-	  com=g_strdup_printf("smogrify mv_pre %s %d %d &",cfile->handle,cfile->start,keep_frames);
+	  com=g_strdup_printf("smogrify mv_pre %s %d %d %s &",cfile->handle,cfile->start,keep_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  mainw->keep_pre=FALSE;
 	}
       }
@@ -5761,7 +5778,7 @@ on_rev_clipboard_activate                (GtkMenuItem     *menuitem,
   mainw->current_file=0;
 
   d_print(_ ("Reversing clipboard..."));
-  com=g_strdup_printf("smogrify reverse %s %d %d",clipboard->handle,1,clipboard->frames);
+  com=g_strdup_printf("smogrify reverse %s %d %d %s",clipboard->handle,1,clipboard->frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 
   unlink(cfile->info_file);
   dummyvar=system(com);
@@ -7659,7 +7676,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   g_free (msg);
 
   // start another copy of LiVES and wait for it to return values
-  com=g_strdup_printf("%s -capture %d %u %d %d %d %d %.4f %d %d %d %d",capable->myname_full,getpid(),mainw->foreign_id,mainw->foreign_width,mainw->foreign_height,mainw->foreign_bpp,mainw->rec_vid_frames,mainw->rec_fps,mainw->rec_arate,mainw->rec_asamps,mainw->rec_achans,mainw->rec_signed_endian);
+  com=g_strdup_printf("%s -capture %d %u %d %d %s %d %d %.4f %d %d %d %d",capable->myname_full,getpid(),mainw->foreign_id,mainw->foreign_width,mainw->foreign_height,prefs->image_ext,mainw->foreign_bpp,mainw->rec_vid_frames,mainw->rec_fps,mainw->rec_arate,mainw->rec_asamps,mainw->rec_achans,mainw->rec_signed_endian);
 
   // force the dialog to disappear
   while (g_main_context_iteration(NULL,FALSE));
@@ -8556,7 +8573,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
   cfile->undo1_dbl=start*=(gdouble)cfile->arate/(gdouble)cfile->arps;
   cfile->undo2_dbl=end*=(gdouble)cfile->arate/(gdouble)cfile->arps;
 
-  com=g_strdup_printf("smogrify insert %s %.8f 0. %.8f %s 2 0 0 0 0 %d %d %d -1",cfile->handle, start, end-start, cfile->handle, -cfile->arps, cfile->achans, cfile->asampsize);
+  com=g_strdup_printf("smogrify insert %s %s %.8f 0. %.8f %s 2 0 0 0 0 %d %d %d -1",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", start, end-start, cfile->handle, -cfile->arps, cfile->achans, cfile->asampsize);
 
   unlink (cfile->info_file);
   dummyvar=system (com);

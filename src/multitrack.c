@@ -217,7 +217,7 @@ GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
 
   if (mainw->files[file]->frames>0) {
     weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
-    thumbnail=pull_gdk_pixbuf_at_size(file,frame,prefs->image_ext,tc,width,height,GDK_INTERP_HYPER);
+    thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,GDK_INTERP_HYPER);
   }
   else {
     buf=g_strdup_printf("%s%s/audio.png",prefs->prefix_dir,ICON_DIR);
@@ -7129,7 +7129,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     return FALSE; // show dialog again
   }
 
-  cfile->bpp=24;
+  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
   cfile->changed=TRUE;
   cfile->is_loaded=TRUE;
   
@@ -11448,7 +11448,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     cfile->achans=achans;
     cfile->signed_endian=signed_endian;
     
-    cfile->bpp=24;
+    cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
     cfile->changed=TRUE;
     cfile->is_loaded=TRUE;
     

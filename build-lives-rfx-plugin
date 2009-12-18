@@ -273,10 +273,20 @@ unless ($is_batch_gen) {
     print OUT "\n################# loop through frames #################\n";
 	if ($in_channels==2) {
 	    print OUT "    \$frame2=\$start2;\n";
+	    print OUT "    unless (defined(\$img_ext2)) {\n";
+	    print OUT "        \$img_ext2=\$img_ext;\n";
+	    print OUT "    }\n";
+
+	    print OUT "    if (!(\$img_ext2 eq \$img_ext) && &location(\"convert\") eq \"\") {\n";
+	    print OUT "         &sig_error(\"'convert' is required to merge differing image types.\",\"Please install imagemagick and try again.\");\n";
+	    print OUT "         exit 1;\n";
+	    print OUT "    }\n";
+
 	}
+
     print OUT "    for (\$frame=\$start;\$frame<=\$end;\$frame++) {\n";
     print OUT "	# sig progress will update the progress bar from \$start->\$end\n";
-	print OUT "	\$name=&mkname(\$frame);\n";
+    print OUT "	\$name=&mkname(\$frame);\n";
 
     unless ($in_channels==0) {
 	print OUT "	\$in=\"\$name\$img_ext\";\n";
@@ -284,13 +294,24 @@ unless ($is_batch_gen) {
     
     if ($in_channels==2) {
 	print OUT "        \$name2=&mkname(\$frame2);\n";
-	print OUT "        \$in2=\"\$clipboard/\$name2\$img_ext\";\n";
+
+	print OUT "        \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
+
+
 	print OUT "        unless (-f \$in2) {\n";
 	print OUT "            # end of clipboard reached, loop back to start\n";
-	    print OUT "            \$frame2=\$start2;\n";
+	print OUT "            \$frame2=\$start2;\n";
 	print OUT "            \$name2=&mkname(\$frame2);\n";
-	print OUT "            \$in2=\"\$clipboard/\$name2\$img_ext\";\n";
+	print OUT "            \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
 	print OUT "	}\n";
+
+
+	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
+	print OUT "            \$convert_cmd \$in2 \$clipboard\$name2\$img_ext\n";
+	print OUT "            \$in2=\"\$clipboard/\$name2\$img_ext\";\n";
+	print OUT "        }\n";
+
+
     }
 
 
@@ -312,6 +333,11 @@ print OUT "\n###################################################################
 
 unless ($is_batch_gen) {
     if ($in_channels==2) {
+
+	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
+	print OUT "            unlink \$in2;\n";
+	print OUT "        }\n";
+
 	print OUT "        \$frame2++;\n";
     }
     

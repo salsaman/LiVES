@@ -262,21 +262,39 @@ long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps,
   unsigned short *hbuffu=(unsigned short *)holding_buff;
   unsigned char *hbuffc=(guchar *)holding_buff;
 
+#ifdef ENABLE_OIL
+  double x=1./vol;
+  double y=0.f;
+#endif
+
   while ((nsamps-coffs)>0) {
     frames_out++;
     for (i=0;i<chans;i++) {
+#ifdef ENABLE_OIL
+      if (usigned) oil_scaleconv_u16_f32(&valu,float_buffer[i]+coffs,1,&y,&x);
+      else oil_scaleconv_s16_f32(&val,float_buffer[i]+coffs,1,&y,&x);
+#else
       val=(short)(*(float_buffer[i]+coffs)*vol*SAMPLE_MAX_16BIT);
       if (usigned) {
 	valu=val+SAMPLE_MAX_16BITI;
       }
+#endif
       if (asamps==16) {
 	if (!swap_endian) {
 	  if (usigned) *(hbuffu+offs)=(float)valu*vol;
 	  else *(hbuffs+offs)=(float)val*vol;
 	}
 	else {
-	  *(hbuffc+offs)=(float)(val&0x00FF)*vol;
-	  *(hbuffc+(++offs))=(float)((val&0xFF00)>>8)*vol;
+	  if (usigned) {
+	    valu*=vol;
+	    *(hbuffc+offs)=valu&0x00FF;
+	    *(hbuffc+(++offs))=(valu&0xFF00)>>8;
+	  }
+	  else {
+	    val*=vol;
+	    *(hbuffc+offs)=val&0x00FF;
+	    *(hbuffc+(++offs))=(val&0xFF00)>>8;
+	  }
 	}
       }
       else {

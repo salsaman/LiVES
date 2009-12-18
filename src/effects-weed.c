@@ -1012,7 +1012,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
   int *mand;
   int maxinwidth=4,maxinheight=4;
   int oclamping,iclamping;
-
+  int clip;
   int num_ctmpl,num_inc;
   weed_plant_t **in_ctmpls;
 
@@ -1142,7 +1142,8 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
     layer=layers[in_tracks[i]];
     if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
       // pull_frame will set pixel_data,width,height,current_palette and rowstrides
-      if (!pull_frame(layer,prefs->image_ext,tc)) return FILTER_ERROR_MISSING_FRAME;
+      clip=weed_get_int_value(layer,"clip",&error);
+      if (!pull_frame(layer,mainw->files[clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) return FILTER_ERROR_MISSING_FRAME;
     }
     // use comparative widths - in RGB(A) pixels
     palette=weed_get_int_value(layer,"current_palette",&error);
@@ -2065,6 +2066,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   weed_plant_t *instance,*layer;
   int filter_error;
   int output=-1;
+  int clip;
   void *pdata;
   gboolean got_pdata=TRUE;
 
@@ -2124,10 +2126,11 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   }
 
   layer=layers[output];
+  clip=weed_get_int_value(layer,"clip",&error);
 
   // frame is pulled uneffected here. TODO: Try to pull at target output palette
-  if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) if (!pull_frame_at_size(layer,prefs->image_ext,tc,opwidth,opheight,WEED_PALETTE_END)) {
-      weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+  if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) if (!pull_frame_at_size(layer,mainw->files[clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,opwidth,opheight,WEED_PALETTE_END)) {
+      weed_set_int_value(layer,"current_palette",mainw->files[clip]->img_type==IMG_TYPE_JPEG?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
       weed_set_int_value(layer,"width",opwidth);
       weed_set_int_value(layer,"height",opheight);
       create_empty_pixel_data(layer);

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-12-17 23:46-0300\n"
+"POT-Creation-Date: 2009-12-18 10:52-0300\n"
 "PO-Revision-Date: 2009-11-03 06:11+0000\n"
 "Last-Translator: Edgardo Fredz <medeshago@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -1393,9 +1393,11 @@ msgid "Pasted %d frames to new clip.\n"
 msgstr "Pegados %d fotogramas al nuevo clip.\n"
 
 #: src/callbacks.c:1792
+#, fuzzy
 msgid ""
-"This operation requires resizing of frames. Please install 'convert' from "
-"the Image-magick package, and then restart LiVES.\n"
+"This operation requires resizing or converting of frames.\n"
+"Please install 'convert' from the Image-magick package, and then restart "
+"LiVES.\n"
 msgstr ""
 "Esta operación requiere cambiar el tamaño de los fotogramas. Por favor "
 "instala el paquete de software Image-magic para poder 'convertir', y luego "
@@ -8275,8 +8277,9 @@ msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Cycle _Step"
-msgstr ""
+msgstr "_Guardar disposiciones"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
@@ -8507,8 +8510,9 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Keep _Centered"
-msgstr ""
+msgstr "_Silenciar"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "L_eft"
@@ -9382,8 +9386,9 @@ msgid "transition_checkerboard"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "transition_fade2"
-msgstr ""
+msgstr "_Ignorar cambios"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "transition_splice"

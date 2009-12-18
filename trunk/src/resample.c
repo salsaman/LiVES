@@ -88,7 +88,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	    cfile->fx_frame_pump=1;
 	  }
 
-	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d",cfile->handle,cfile->frames,width,height);
+	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  
 	  cfile->progress_start=1;
 	  cfile->progress_end=cfile->frames;
@@ -232,7 +232,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  cfile->fx_frame_pump=1;
 	}
 
-	com=g_strdup_printf ("smogrify resize_all %s %d %d %d",cfile->handle,cfile->frames,width,height);
+	com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	
 	cfile->progress_start=1;
 	cfile->progress_end=cfile->frames;
@@ -2195,8 +2195,8 @@ reorder_frames(void) {
   gchar **array;
   gchar *com;
 
-  if (reorder_width*reorder_height==0) com=g_strdup_printf("smogrify reorder %s %d 0 0 %d %d",cfile->handle,!mainw->endian,reorder_leave_back,cfile->frames);
-  else com=g_strdup_printf("smogrify reorder %s %d %d %d 0 %d",cfile->handle,!mainw->endian,reorder_width,reorder_height,cfile->frames);
+  if (reorder_width*reorder_height==0) com=g_strdup_printf("smogrify reorder %s %s %d 0 0 %d %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,reorder_leave_back,cfile->frames);
+  else com=g_strdup_printf("smogrify reorder %s %s %d %d %d 0 %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,reorder_width,reorder_height,cfile->frames);
   cfile->frames=0;
 
   cfile->progress_start=1;
@@ -2276,13 +2276,12 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
     perf_start=(gint)(cfile->fps*(gdouble)time_start/U_SEC)+1;
     perf_end=perf_start+count_events (cfile->event_list,FALSE,0,0)-1;
   }
-  com=g_strdup_printf("smogrify deorder %s %d %d %d %d",cfile->handle,perf_start,perf_end,old_frames,leave_bak);
+  com=g_strdup_printf("smogrify deorder %s %d %d %d %s %d",cfile->handle,perf_start,cfile->frames,perf_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",leave_bak);
 
   unlink(cfile->info_file);
   dummyvar=system(com);
   do_progress_dialog(TRUE,FALSE,_ ("Deordering frames"));
   g_free(com);
-
 
   if (cfile->frame_index_back!=NULL) {
     restore_frame_index_back(mainw->current_file);
@@ -2305,7 +2304,7 @@ gboolean resample_clipboard(gdouble new_fps) {
     
     // we already resampled to this fps
     mainw->current_file=0;
-    com=g_strdup_printf("smogrify redo %s %d %d",cfile->handle,1,cfile->old_frames);
+    com=g_strdup_printf("smogrify redo %s %d %d %s",cfile->handle,1,cfile->old_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     unlink(cfile->info_file);
     dummyvar=system(com);
     cfile->progress_start=1;

@@ -77,7 +77,7 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
   // therefore it is IMPORTANT to set it when loading new audio for an existing clip !
 
   FILE *infofile;
-  gchar *tmp,*com=g_strdup_printf("smogrify get_details %s \"%s\" %d %d",cfile->handle,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),mainw->opening_loc,is_audio);
+  gchar *tmp,*com=g_strdup_printf("smogrify get_details %s \"%s\" %s %d %d",cfile->handle,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",mainw->opening_loc,is_audio);
   g_free(tmp);
 
   unlink(cfile->info_file);
@@ -170,6 +170,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     mainw->noswitch=TRUE;
     mainw->current_file=new_file;
 
+    if (!strcmp(prefs->image_ext,"png")) cfile->img_type=IMG_TYPE_PNG;
+
     if (prefs->instant_open) {
       cdata=get_decoder_plugin(cfile);
       if (cfile->ext_src!=NULL) {
@@ -220,7 +222,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  if (cfile->achans>0) {
 	    // plugin returned no audio, try with mplayer
 	    if (mainw->file_open_params==NULL) mainw->file_open_params=g_strdup("");
-	    com=g_strdup_printf("smogrify open %s \"%s\" %d %.2f %d \"%s\"",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),-1,start,frames,mainw->file_open_params);
+	    com=g_strdup_printf("smogrify open %s \"%s\" %d %s %.2f %d \"%s\"",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),-1,prefs->image_ext,start,frames,mainw->file_open_params);
 	    unlink (cfile->info_file);
 	    dummyvar=system(com);
 	    g_free(com);
@@ -358,7 +360,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       g_free(mainw->file_open_params);
       mainw->file_open_params=tmp;
       
-      com=g_strdup_printf("smogrify open %s \"%s\" %d %.2f %d \"%s\"",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),withsound,start,frames,mainw->file_open_params);
+      com=g_strdup_printf("smogrify open %s \"%s\" %d %s %.2f %d \"%s\"",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),withsound,prefs->image_ext,start,frames,mainw->file_open_params);
       unlink (cfile->info_file);
       dummyvar=system(com);
       g_free(com);
@@ -501,7 +503,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     else if (prefs->concat_images) {
       // insert this image into our image clip, close this file
 
-      com=g_strdup_printf("smogrify insert %s %d 1 1 %s 0 %d %d %d",mainw->files[mainw->img_concat_clip]->handle,mainw->files[mainw->img_concat_clip]->frames,cfile->handle,mainw->files[mainw->img_concat_clip]->frames,mainw->files[mainw->img_concat_clip]->hsize,mainw->files[mainw->img_concat_clip]->vsize);
+      com=g_strdup_printf("smogrify insert %s %s %d 1 1 %s 0 %d %d %d",mainw->files[mainw->img_concat_clip]->handle,mainw->files[mainw->img_concat_clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",mainw->files[mainw->img_concat_clip]->frames,cfile->handle,mainw->files[mainw->img_concat_clip]->frames,mainw->files[mainw->img_concat_clip]->hsize,mainw->files[mainw->img_concat_clip]->vsize);
 
       dummyvar=system(com);
       g_free(com);
@@ -1250,7 +1252,7 @@ void play_file (void) {
       d_print(_ ("Recording performance..."));
       mainw->clip_switched=FALSE;
       // TODO
-      if (mainw->current_file>0&&(cfile->undo_action==UNDO_RESAMPLE||cfile->undo_action==UNDO_REORDER||cfile->undo_action==UNDO_RENDER)) {
+      if (mainw->current_file>0&&(cfile->undo_action==UNDO_RESAMPLE||cfile->undo_action==UNDO_RENDER)) {
 	gtk_widget_set_sensitive (mainw->undo,FALSE);
 	gtk_widget_set_sensitive (mainw->redo,FALSE);
 	cfile->undoable=cfile->redoable=FALSE;
@@ -2189,7 +2191,6 @@ create_cfile(void) {
   cfile->undoable=FALSE;
   cfile->redoable=FALSE;
   cfile->changed=FALSE;
-  cfile->bpp=24;
   cfile->hsize=cfile->vsize=0;
   cfile->fps=cfile->pb_fps=prefs->default_fps;
   cfile->events[0]=NULL;
@@ -2216,8 +2217,11 @@ create_cfile(void) {
   cfile->layout_map=NULL;
   cfile->frame_index=cfile->frame_index_back=NULL;
   cfile->fx_frame_pump=0;
-  
 
+  if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
+  else cfile->img_type=IMG_TYPE_PNG;
+
+  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
   cfile->deinterlace=FALSE;
 
   cfile->play_paused=FALSE;
@@ -2398,7 +2402,7 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
     mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->fps);
   }
   else {
-    cfile->bpp=24; // assume RGB24
+    if (cfile->bpp!=32) cfile->bpp=24; // assume RGB24  *** TODO - check
     mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
   }
     
@@ -2726,12 +2730,14 @@ gboolean read_headers(const gchar *file_name) {
       
       pieces=get_token_count (buff,'|');
 
-      if (pieces>2) {
+      if (pieces>3) {
 	pthread_mutex_lock(&mainw->gtk_mutex);
 	array=g_strsplit(buff,"|",pieces);
 	
 	cfile->f_size=strtol(array[1],NULL,10);
 	cfile->afilesize=strtol(array[2],NULL,10);
+	if (!strcmp(array[3],"jpg")) cfile->img_type=IMG_TYPE_JPEG;
+	else cfile->img_type=IMG_TYPE_PNG;
 	g_strfreev(array);
 	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
@@ -2825,17 +2831,21 @@ gboolean read_headers(const gchar *file_name) {
   array=g_strsplit(buff,"|",pieces);
   cfile->f_size=strtol(array[1],NULL,10);
   cfile->afilesize=strtol(array[2],NULL,10);
-  cfile->frames=atoi(array[3]);
 
-  cfile->bpp=24;
+  if (!strcmp(array[3],"jpg")) cfile->img_type=IMG_TYPE_JPEG;
+  else cfile->img_type=IMG_TYPE_PNG;
+
+  cfile->frames=atoi(array[4]);
+
+  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
   
-  if (pieces>4&&array[4]!=NULL) {
+  if (pieces>4&&array[5]!=NULL) {
     g_snprintf (cfile->title,256,"%s",g_strchomp (g_strchug ((array[4]))));
   }
-  if (pieces>5&&array[5]!=NULL) {
+  if (pieces>5&&array[6]!=NULL) {
     g_snprintf (cfile->author,256,"%s",g_strchomp (g_strchug ((array[5]))));
   }
-  if (pieces>6&&array[6]!=NULL) {
+  if (pieces>6&&array[7]!=NULL) {
     g_snprintf (cfile->comment,256,"%s",g_strchomp (g_strchug ((array[6]))));
   }
   

@@ -110,6 +110,8 @@ void del_frame_index(file *sfile) {
 
 
 gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
+  int i;
+
   // check that cdata values match with sfile values
   // also check sfile->frame_index to make sure all frames are present
 
@@ -117,6 +119,18 @@ gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
   // return FALSE if we find any omissions/inconsistencies
 
   // TODO ***
+
+
+  // also check the image type
+  for (i=0;i<sfile->frames;i++) {
+    if (sfile->frame_index[i]==-1) {
+      gchar *frame=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i+1);
+      if (g_file_test(frame,G_FILE_TEST_EXISTS)) sfile->img_type=IMG_TYPE_PNG;
+      else sfile->img_type=IMG_TYPE_JPEG;
+      g_free(frame);
+      break;
+    }
+  }
 
   return TRUE;
 
@@ -164,16 +178,16 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe) {
 
       while (g_main_context_iteration(NULL,FALSE));
     
-      pixbuf=pull_gdk_pixbuf_at_size(sfileno,i,NULL,q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
+      pixbuf=pull_gdk_pixbuf_at_size(sfileno,i,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png",q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
       
-      if (!strcmp (prefs->image_ext,"jpg")) {
+      if (sfile->img_type==IMG_TYPE_JPEG) {
 	gchar *qstr=g_strdup_printf("%d",(100-prefs->ocp));
 	oname=g_strdup_printf("%s/%s/%08d.jpg",prefs->tmpdir,sfile->handle,i);
 	gdk_pixbuf_save (pixbuf, oname, "jpeg", &error,"quality", qstr, NULL);
 	g_free(qstr);
 	g_free(oname);
       }
-      else if (!strcmp (prefs->image_ext,"png")) {
+      else if (sfile->img_type==IMG_TYPE_PNG) {
 	gchar *cstr=g_strdup_printf("%d",(gint)((gdouble)(prefs->ocp+5.)/10.));
 	oname=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i);
 	gdk_pixbuf_save (pixbuf, oname, "png", &error, "compression", "cstr", NULL);
@@ -310,10 +324,10 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
     pthread_mutex_unlock(&mainw->gtk_mutex);
 
     if ((i<sfile->frames&&sfile->frame_index[i]!=-1)||i>=sfile->frames) {
-      if (!strcmp (prefs->image_ext,"jpg")) {
+      if (sfile->img_type==IMG_TYPE_JPEG) {
 	iname=g_strdup_printf("%s/%s/%08d.jpg",prefs->tmpdir,sfile->handle,i);
       }
-      else if (!strcmp (prefs->image_ext,"png")) {
+      else if (sfile->img_type==IMG_TYPE_PNG) {
 	iname=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i);
       }
       //      else {

@@ -586,8 +586,12 @@ gboolean process_one (gboolean visible) {
 
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0&&cfile->progress_start+frames_done>=cfile->fx_frame_pump) {
-      virtual_to_images(mainw->current_file,cfile->fx_frame_pump,cfile->fx_frame_pump+FX_FRAME_PUMP_VAL);
-      cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
+      gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
+      if (vend>cfile->progress_end) vend=cfile->progress_end;
+      if (vend>cfile->fx_frame_pump) {
+	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend);
+	cfile->fx_frame_pump=vend;
+      }
       progress_count=PROG_LOOP_VAL;
     }
 
@@ -667,8 +671,12 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0) {
-      virtual_to_images(mainw->current_file,cfile->fx_frame_pump,cfile->fx_frame_pump+FX_FRAME_PUMP_VAL);
-      cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
+      gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
+      if (vend>cfile->progress_end) vend=cfile->progress_end;
+      if (vend>cfile->fx_frame_pump) {
+	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend);
+	cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
+      }
     }
 
   }
@@ -1682,4 +1690,15 @@ inline void d_print_file_error_failed(void) {
 void do_file_perm_error(gchar *file_name) {
   gchar *msg=g_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
   do_error_dialog(msg);
+  g_free(msg);
+}
+
+
+
+void do_encoder_img_ftm_error(render_details *rdet) {
+  gchar *msg=g_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),prefs->encoder.name,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+
+  do_error_dialog_with_check_transient(msg,TRUE,0,GTK_WINDOW(rdet->dialog));
+
+  g_free(msg);
 }

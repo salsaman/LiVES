@@ -430,7 +430,9 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     // pull some frames to get started
-    virtual_to_images(mainw->current_file,mainw->framedraw_frame,mainw->framedraw_frame+FX_FRAME_PUMP_VAL);
+    gint vend=mainw->framedraw_frame+FX_FRAME_PUMP_VAL;
+    if (vend>cfile->end) vend=cfile->end;
+    virtual_to_images(mainw->current_file,mainw->framedraw_frame,vend);
   }
 
   clear_mainw_msg();
@@ -477,7 +479,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     img_ext="pre";
   }
   else {
-    img_ext=prefs->image_ext;
+    img_ext=cfile->img_type==IMG_TYPE_JPEG?"jpg":"png";
   }
 
   tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
@@ -526,8 +528,9 @@ load_framedraw_image(GdkPixbuf *pixbuf) {
   if (mainw->multitrack==NULL&&mainw->framedraw_frame==0) return;
 
   if (pixbuf==NULL) {
+    const gchar *img_ext=cfile->img_type==IMG_TYPE_JPEG?"jpg":"png";
     tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
-    pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,prefs->image_ext,tc,(gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
+    pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,img_ext,tc,(gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
     needs_free=TRUE;
   }
 

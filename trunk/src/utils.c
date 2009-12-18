@@ -445,7 +445,7 @@ gboolean is_legal_set_name(gchar *set_name, gboolean allow_dupes) {
 
 gboolean check_frame_count(gint idx) {
   // check number of frames is correct
-  gchar *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,prefs->image_ext);
+  gchar *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
 
   if (!g_file_test(frame,G_FILE_TEST_EXISTS)) {
     // not enough frames
@@ -454,7 +454,7 @@ gboolean check_frame_count(gint idx) {
   }
   g_free(frame);
 
-  frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,prefs->image_ext);
+  frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
   if (g_file_test(frame,G_FILE_TEST_EXISTS)) {
     // too many frames
     g_free(frame);
@@ -472,7 +472,7 @@ void get_frame_count(gint idx) {
   gint info_fd;
   size_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("smogrify count_frames %s >%s",mainw->files[idx]->handle,info_file);
+  gchar *com=g_strdup_printf("smogrify count_frames %s %s >%s",mainw->files[idx]->handle,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);
   dummyvar=system(com);
   g_free(com);
   
@@ -1639,7 +1639,7 @@ after_foreign_play(void) {
 
 	g_snprintf(file_name,256,"%s/%s/",prefs->tmpdir,cfile->handle);
 	
-	com=g_strdup_printf("smogrify fill_and_redo_frames %s %d %d %d %d %.4f %d %d %d",cfile->handle,1,cfile->frames,mainw->foreign_width,mainw->foreign_height,cfile->fps,cfile->arate,cfile->achans,cfile->asampsize);
+	com=g_strdup_printf("smogrify fill_and_redo_frames %s %d %d %d %d %s %.4f %d %d %d",cfile->handle,1,cfile->frames,mainw->foreign_width,mainw->foreign_height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,cfile->achans,cfile->asampsize);
 	unlink(cfile->info_file);
 	dummyvar=system(com);
 	cfile->nopreview=TRUE;
@@ -1648,7 +1648,7 @@ after_foreign_play(void) {
 	  new_frames=atoi(array[1]);
 	  cfile->hsize=atoi(array[2]);
 	  cfile->vsize=atoi(array[3]);
-	  cfile->bpp=24;
+	  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
 	  g_strfreev(array);
 	  
 	  if (new_frames>0) {

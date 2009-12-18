@@ -34,7 +34,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 $background=1;
 $version="1.1.7-svn";
 #$dyneversion="LIVES-20091209";
-$img_ext=".jpg"; # can be .jpg or .png
+
 
 ###################################################################
 
@@ -504,6 +504,8 @@ if (defined($ARGV[0])) {
 	    &sig_error("Unable to open output file !","$GUI_NAME could not write to $nfile.");
 	}
 
+	$img_ext=&get_img_ext($curtmpdir,$frame);
+
 	system("$convert_command $curtmpdir/$name$img_ext \"$nfile\" >/dev/null 2>&1");
 	exit 0;
     }
@@ -523,6 +525,8 @@ if (defined($ARGV[0])) {
 	unlink <*.tar>;
 	unlink <event.*>;
 	unlink "extended";
+
+	$img_type="jpg";
 
 	unless (-f "header.lives") {
 	    
@@ -545,6 +549,7 @@ if (defined($ARGV[0])) {
 	    if (! -f "header2") {
 		unless ($nfile eq "") {
 		    unlink <event.*>;
+		    $img_ext=&get_img_ext($curtmpdir);
 		    $frames=&count_frames;
 		}
 	    }
@@ -562,7 +567,13 @@ if (defined($ARGV[0])) {
 	    
 	}
 
-	&sig_complete($fsize,$afsize,$frames,"$title","$author","$comment");
+	$name=&mkname(1);
+
+	if (-f "$name.png") {
+	    $img_type="png";
+	}
+
+	&sig_complete($fsize,$afsize,$img_type,$frames,"$title","$author","$comment");
 	exit 0;
     }
 
@@ -636,7 +647,8 @@ if (defined($ARGV[0])) {
 	    $statusfile="$curtmpdir/.status";
 	    $dwidth=$ARGV[2];
 	    $dheight=$ARGV[3];
-	    $file=$ARGV[4];
+	    $img_ext=".".$ARGV[4];
+	    $file=$ARGV[5];
 
 	    if (! -d "$curtmpdir") {
 		mkdir ("$curtmpdir",0700);
@@ -652,9 +664,9 @@ if (defined($ARGV[0])) {
 	    }
 
 	    chdir $curtmpdir;
+
 	    $name=&mkname(1);
-
-
+	    
 	    if ($antialias eq "false") {
 		system("$convert_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
 	    }
@@ -896,6 +908,7 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "count_frames") {
+	    $img_ext=".".$ARGV[2];
 	    print &count_frames;
 	    exit 0;
 	}
@@ -921,6 +934,7 @@ if (defined($ARGV[0])) {
 	    unlink "$curtmpdir/pause";
 	    $start=$ARGV[2];
 	    $end=$ARGV[3];
+	    $img_ext=".".$ARGV[4];
 	    &mv_pre;
 	    &sig_complete;
 	    exit 0;
@@ -1183,15 +1197,19 @@ if (defined($ARGV[0])) {
 
 	$withsound=$ARGV[3];
 
-	if (defined($ARGV[4]) && $ARGV[4] > 0) {
-	    $ss=" -ss $ARGV[4] ";
+	if (defined($ARGV[4])) {
+	    $img_ext=".".$ARGV[4];
+	}
+		
+	if (defined($ARGV[5]) && $ARGV[5] > 0) {
+	    $ss=" -ss $ARGV[5] ";
 	}
 	$frames="";
-	if (defined($ARGV[5]) && $ARGV[5] > 0 ) {
-	    $ARGV[5]++;  # cf below, we remove 1st frame
-	    $frames=" -frames $ARGV[5] ";
+	if (defined($ARGV[6]) && $ARGV[6] > 0 ) {
+	    $ARGV[6]++;  # cf below, we remove 1st frame
+	    $frames=" -frames $ARGV[6] ";
 	}
-	$extra_params=$ARGV[6];
+	$extra_params=$ARGV[7];
 	$band="";
 	if ($extra_params eq "nobandwidth") {
 	    $extra_params="";
@@ -1208,7 +1226,7 @@ if (defined($ARGV[0])) {
 	}
 	$compression=&rc_get("open_compression_percent");
 	if ($compression eq "") {
-	    $compression=25;
+	    $compression=15;
 	}
 
 	chdir $curtmpdir;
@@ -1260,7 +1278,7 @@ if (defined($ARGV[0])) {
 		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo jpeg:quality=$quality -fps 100000 $ss $frames -noframedrop -ao null \"$file\" $extra_params </dev/null";
 		}
 		else {
-		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression -fps 100000 $ss $frames -noframedrop -ao null \"$file\" $extra_params </dev/null";
+		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression:alpha -fps 100000 $ss $frames -noframedrop -ao null \"$file\" $extra_params </dev/null";
 		}
 	    }
 	    elsif ($withsound eq "1") {
@@ -1269,7 +1287,7 @@ if (defined($ARGV[0])) {
 		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo jpeg:quality=$quality $ss -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
 		}
 		else {
-		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression $ss -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
+		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression:alpha $ss -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
 		}
             }
             else {
@@ -1336,7 +1354,11 @@ if (defined($ARGV[0])) {
             $af_size = -s $audio_out; 
 	}
 
-	if ($count==0||$type eq "Frames" ||$type eq "jpeg"||$type eq "png"||$type eq "Audio") {
+	if ($type eq "png") {
+	    $bpp=32;
+	}
+
+	if ($count==0||$type eq "jpeg"||$type eq "png"||$type eq "Audio") {
 	    # we could have audio or images
 	    if (-f $audio_out) {
 		# just in case...
@@ -1346,6 +1368,7 @@ if (defined($ARGV[0])) {
 		#curtmpdir can be removed by cancel
 		exit 1;
 	    }
+
 	    if ($af_size>0||$count>0) {
 		&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
 		exit 0;
@@ -1411,11 +1434,13 @@ if (defined($ARGV[0])) {
 	$file=$ARGV[2];
 	$only_first=1;
 
-	if (defined($ARGV[3])) {
-	    $is_remote=$ARGV[3];
-	}
+	$img_ext=".".$ARGV[3];
+
 	if (defined($ARGV[4])) {
-	    $is_audio=$ARGV[4];
+	    $is_remote=$ARGV[4];
+	}
+	if (defined($ARGV[5])) {
+	    $is_audio=$ARGV[5];
 	}
 	&get_file_info;
 	&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
@@ -1527,6 +1552,7 @@ if (defined($ARGV[0])) {
 		$aud_end=($end*1.)/($fps*1.);
 	    }
 
+	    $img_ext=&get_img_ext($curtmpdir,$start);
 
 	    # get image size ($hsize x $vsize)
 	    $imresact="none";
@@ -1728,6 +1754,7 @@ if (defined($ARGV[0])) {
 
 	  }
 
+	$img_ext=&get_img_ext($curtmpdir,$start);
 
 	    for ($i=1;$i<=($end-$start+1);$i++) {
 		$name=&mkname($i);
@@ -1755,7 +1782,8 @@ if (defined($ARGV[0])) {
 
 	    my $width=$ARGV[3];
 	    my $height=$ARGV[4];
-	    
+
+	    $img_ext=".".$ARGV[5];
 
 	    $resize_ext=".mgk";
 
@@ -1794,6 +1822,8 @@ if (defined($ARGV[0])) {
 
 	unlink <*.tar>;
 	system ("tar -cf header.tar $audio header* extended* event.* 2>/dev/null");
+
+	$img_ext=&get_img_ext($curtmpdir,$start);
 
 	if ($start>0) {
 	    # we have to add frames 100 at a time, otherwise tar complains about 'too many parameters'
@@ -1876,25 +1906,28 @@ if (defined($ARGV[0])) {
 
     if ($command eq "reorder") {
 	unlink "$curtmpdir/pause";
-	if (!defined($ARGV[2])) {
+
+	$img_ext=".".$ARGV[2];
+
+	if (!defined($ARGV[3])) {
 	    $endian=&get_endian;
 	}
 	else {
-	    $endian=$ARGV[2];
-	}
-	if (defined $ARGV[3]) {
-	    $newwidth=$ARGV[3];
+	    $endian=$ARGV[3];
 	}
 	if (defined $ARGV[4]) {
-	    $newheight=$ARGV[4];
+	    $newwidth=$ARGV[4];
 	}
 	if (defined $ARGV[5]) {
-	    if ($ARGV[5]==1) {
+	    $newheight=$ARGV[5];
+	}
+	if (defined $ARGV[6]) {
+	    if ($ARGV[6]==1) {
 		$leave_bak=1;
 	    }
 	}
-	if (defined $ARGV[6]) {
-	    $old_end=$ARGV[6];
+	if (defined $ARGV[7]) {
+	    $old_end=$ARGV[7];
 	}
 
 	$newframe=-1;
@@ -1971,8 +2004,9 @@ if (defined($ARGV[0])) {
 	$start=$ARGV[2];
 	$end=$ARGV[3];
 	$frames=$ARGV[4];
-	if (defined $ARGV[5]) {
-	    $leave_bak=$ARGV[5];
+	$img_ext=".".$ARGV[5];
+	if (defined $ARGV[6]) {
+	    $leave_bak=$ARGV[6];
 	}
 	else {
 	    $leave_bak=0;
@@ -1990,11 +2024,10 @@ if (defined($ARGV[0])) {
 	for ($i=$frames+1;$i<=$oend;$i++) {
 	    $name=&mkname($i);
 	    if (!$leave_bak) {
-		unlink "$name$img_ext";
+		unlink "$curtmpdir/$name$img_ext";
 	    }
 	    else {
 		rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk";
-		
 	    }
 	}
 	if (!$leave_bak) {
@@ -2013,13 +2046,14 @@ if (defined($ARGV[0])) {
 	$end=$ARGV[3];
 	$cut_audio=$ARGV[4];
 	$frames=$ARGV[5];
+	$img_ext=".".$ARGV[6];
 	&cut($start,$end);
 
 	if ($cut_audio) {
-	    $fps=$ARGV[6];
-	    $arate=$ARGV[7];
-	    $achans=$ARGV[8];
-	    $asamps=$ARGV[9];
+	    $fps=$ARGV[7];
+	    $arate=$ARGV[8];
+	    $achans=$ARGV[9];
+	    $asamps=$ARGV[10];
 	    if ($arate*$asamps*$achans) {
 		$start=($start-1)/$fps;
 		$end=$end/$fps;
@@ -2053,6 +2087,7 @@ if (defined($ARGV[0])) {
 	unlink "$curtmpdir/pause";
 	$start=$ARGV[2];
 	$end=$ARGV[3];
+	$img_ext=".".$ARGV[4];
 	&reverse;
 	&sig_complete;
 	exit 0;
@@ -2064,6 +2099,7 @@ if (defined($ARGV[0])) {
 
 	$start=$ARGV[2];
 	$end=$ARGV[3];
+	$img_ext=".".$ARGV[4];
 	&undo;
 	&sig_complete;
 	exit 0;
@@ -2075,6 +2111,7 @@ if (defined($ARGV[0])) {
 
 	$start=$ARGV[2];
 	$end=$ARGV[3];
+	$img_ext=".".$ARGV[4];
 
 	&mv_mgk(1);
 	&sig_complete;
@@ -2101,6 +2138,7 @@ if (defined($ARGV[0])) {
 	    unlink "$curtmpdir/pause";
 	    $start=$ARGV[2];
 	    $end=$ARGV[3];
+	    $img_ext=".".$ARGV[4];
 	    &mv_mgk;
 	    &sig_complete;
 	    exit 0;
@@ -2341,11 +2379,12 @@ if (defined($ARGV[0])) {
 	$end=$ARGV[3];
 	$width=$ARGV[4];
 	$height=$ARGV[5];
+	$img_ext=".".$ARGV[6];
 	$has_audio=0;
-	$fps=$ARGV[6];
-	$arate=$ARGV[7];
-	$achans=$ARGV[8];
-	$asamps=$ARGV[9];
+	$fps=$ARGV[7];
+	$arate=$ARGV[8];
+	$achans=$ARGV[9];
+	$asamps=$ARGV[10];
 	if ($achans>0) {
 	    $has_audio=1;
 	}
@@ -2580,22 +2619,22 @@ if (defined($ARGV[0])) {
     if ($command eq "insert") {
 	# with_audio == 2 means undo delete audio
 	unlink "$curtmpdir/pause";
-
-	$where=$ARGV[2];
-	$start=$ARGV[3];
-	$end=$ARGV[4];
-	$from_handle=$ARGV[5];
-	$with_audio=$ARGV[6];
-	$num_frames=$ARGV[7];
-	$width=$ARGV[8];
-	$height=$ARGV[9];
+	$img_ext=".".$ARGV[2];
+	$where=$ARGV[3];
+	$start=$ARGV[4];
+	$end=$ARGV[5];
+	$from_handle=$ARGV[6];
+	$with_audio=$ARGV[7];
+	$num_frames=$ARGV[8];
+	$width=$ARGV[9];
+	$height=$ARGV[10];
 	$times=1;
 	$undo_cut=0;
 
 	chdir $curtmpdir;
 
-	if (defined ($ARGV[14])) {
-	    $times=$ARGV[14];
+	if (defined ($ARGV[15])) {
+	    $times=$ARGV[15];
 	    if ($times<0) {
 		# this indicates undoing a previous cut
 		$times=-$times;
@@ -2615,6 +2654,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($with_audio<2) {
+	    $img_ext2=&get_img_ext("$tmpdir/$from_handle",$start);
 	    &insert;
 	}
 	else {
@@ -2622,10 +2662,10 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($with_audio) {
-	    $fps=$ARGV[10];
-	    $arate=$ARGV[11];
-	    $achans=$ARGV[12];
-	    $asamps=$ARGV[13];
+	    $fps=$ARGV[11];
+	    $arate=$ARGV[12];
+	    $achans=$ARGV[13];
+	    $asamps=$ARGV[14];
 
 	    if ($undo_cut==0) {
 		$end/=$fps;
@@ -2658,6 +2698,7 @@ if (defined($ARGV[0])) {
 	    $start=$ARGV[2];
 	    $end=$ARGV[3];
 	    $frames=$ARGV[4];
+	    $img_ext=".".$ARGV[5];
 
 	    # move extra frames back to end
 	    `sync;sync;sync`;
@@ -2690,6 +2731,10 @@ if (defined($ARGV[0])) {
 	    $end=$ARGV[4];
 	    $nwidth=$width=$ARGV[5];
 	    $nheight=$height=$ARGV[6];
+
+	    $img_ext=".".$ARGV[7];
+	    splice(@ARGV,7,1);
+	    
 	    # call render plugins in plugins/effects/rendered/$command
 	    $lib_dir=&rc_get("lib_dir");
 
@@ -2708,14 +2753,18 @@ if (defined($ARGV[0])) {
 	    }
 	    $fx_desc=`$plugin_name get_description`;
 	    $num_in_channels=(split(/\|/,$fx_desc))[3];
-	    if ($num_in_channels==2) {
-		# transitions get some extra params
-		$start2=$ARGV[7];
-		$clipboard=$ARGV[8];
+	    
+	    if ($num_in_channels==0) {
+		# generators get the out_extension
+		$out_ext=$img_ext;
 	    }
 
-	    if ($num_in_channels==0) {
-		$out_ext=$img_ext;
+	    if ($num_in_channels==2) {
+		# transitions get some extra params
+		$img_ext2=".".$ARGV[7];
+		splice(@ARGV,7,1);
+		$start2=$ARGV[7];
+		$clipboard=$ARGV[8];
 	    }
 
 	    $fps=0;
@@ -2726,11 +2775,12 @@ if (defined($ARGV[0])) {
 		# we are so nice :-), we set: 
 		# $handle,$curtmpdir,$img_ext,$start,$end,$width,$height
 		# and for transitions $where, $chandle
-		# remove fxrender $handle $status start end width height
+		# remove fxrender $handle $status start end width height (start2 clipboard)
 		shift; shift; shift; shift; shift; shift;
 		if ($num_in_channels==2) {
 		    shift; shift;
 		}
+
 		$ARGV[0]="process";
 		if ($status>1) {
 		    $error="";
@@ -2760,7 +2810,18 @@ if (defined($ARGV[0])) {
 		# other (non-perl) language
 		shift; shift; shift; #remove "fxrender_.." and $handle $status
 		my ($res_file)="$curtmpdir/.rfx_result";
-		my ($err)=system "$plugin_name process \"$curtmpdir\" $img_ext $out_ext @ARGV > $res_file";
+
+		my $err;
+
+		if ($num_in_channels==2) {
+		    $err=system "$plugin_name process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > $res_file";
+		}
+		elsif ($num_in_channels==1) {
+		    $err=system "$plugin_name process \"$curtmpdir\" $img_ext $out_ext @ARGV > $res_file";
+		}
+		else {
+		    $err=system "$plugin_name process \"$curtmpdir\" $out_ext @ARGV > $res_file";
+		}
 		if (!$err) {
 		    if (defined(open IN,"< $res_file")) {
 			read IN,$size,128;
@@ -2905,6 +2966,31 @@ sub is_writeable {
     }
     return $ret;
 }
+
+
+sub get_img_ext {
+    my $ckdir=shift;
+    my $imgno=shift;
+
+    if ($imgno eq "") {
+	$imgno=1;
+    }
+
+    my $tfile=&mkname($imgno);
+
+    if (-f "$ckdir/$tfile.png") {
+	return ".png";
+    }
+
+    unless(-f "$ckdir/$tfile.jpg") {
+	print STDERR "Warning ! command $command needs to set image type !! Please report this as a bug.\n";
+	print STDERR "details: $ckdir/$tfile.jpg not found\n";
+    }
+
+    return ".jpg";
+}
+    
+
 
 
 sub mv_mgk {
@@ -3109,15 +3195,34 @@ sub insert {
 		system("/bin/cp $fromdir/$from.bak $curtmpdir/$to$img_ext 2>/dev/null");
 	    }
 	    else {
-		while (! -f "$fromdir/$from$img_ext") {
-		    print STDERR "waiting on image $fromdir/$from$img_ext\n";
+		while (! -f "$fromdir/$from$img_ext2") {
+		    print STDERR "waiting on image $fromdir/$from$img_ext2\n";
 		    sleep 1;
 		    `sync`;
 		}
-		system("/bin/cp $fromdir/$from$img_ext $curtmpdir/$to$img_ext");
+		if ($img_ext2 eq $img_ext) {
+		    system("/bin/cp $fromdir/$from$img_ext $curtmpdir/$to$img_ext");
+		}
+		else {
+		    if (!defined($antialias)) {
+			$antialias="false";
+		    }
+
+		    if ($img_ext2 eq ".jpg" && $img_ext eq ".png") {
+			$convert_command.=" -alpha On";
+		    }
+
+		    if ($antialias eq "false") {
+			system("$convert_command +antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
+		    }
+		    else {
+			system("$convert_command -size $width"."x$height $name$input_ext -resize $width!x$height! $name$resize_ext >/dev/null 2>&1");
+		    }
+
+		}
 	    }
 	    
-	    if ($height && $width && !($fromdir eq $curtmpdir)) {
+	    if ($height && $width && !($fromdir eq $curtmpdir) && ($img_ext eq $img_ext2)) {
 		&resize_frame($to,$width,$height);
 	    }
 	    &sig_progress(int($num_frames-$where+$j++-$start+1));
@@ -4576,22 +4681,7 @@ sub sig_complete_audio {
     print OUT $status;
     close OUT;
 
-    unless ($img_ext eq ".mgk"||$opening_preview==1) {
-	unlink $pidfile;
-    }
-}
-
-sub sig_complete_video {
-    return if (! -d $curtmpdir);
-    my($status)="video_ended|";
-    #foreach (@_) {
-	#$status.=$_."|";
-    #}
-
-    open OUT,"> $statusfile.play";
-    print OUT $status;
-    close OUT;
-    unless ($img_ext eq ".mgk") {
+    unless ($opening_preview==1) {
 	unlink $pidfile;
     }
 }

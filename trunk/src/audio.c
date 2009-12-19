@@ -21,7 +21,7 @@ inline void sample_silence_dS (float *dst, unsigned long nsamples) {
 
 
 void sample_move_d8_d16(short *dst, unsigned char *src,
-			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels) {
+			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
@@ -57,7 +57,9 @@ void sample_move_d8_d16(short *dst, unsigned char *src,
 	ptr=ptr<src_end?ptr:src_end;
       }
       
-      *(dst++) = *(ptr)<<8; /* copy the data over */
+      if (!swap_sign) *(dst++) = *(ptr)<<8;
+      else if (swap_sign==SWAP_U_TO_S) *(dst++)=((short)(*(ptr))-128)<<8;
+      else *((unsigned short *)(dst++))=((short)(*(ptr))+128)<<8;
       ccount++;
 
       /* if we ran out of source channels but not destination channels */
@@ -77,7 +79,7 @@ void sample_move_d8_d16(short *dst, unsigned char *src,
 
 /* convert from any number of source channels to any number of destination channels */
 void sample_move_d16_d16(short *dst, short *src,
-			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_endian, gboolean swap_sign) {
+			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) {
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
@@ -128,9 +130,20 @@ void sample_move_d16_d16(short *dst, short *src,
 	}
 
 	/* copy the data over */
-	if (!swap_endian) *(dst++) = swap_sign?(uint16_t)(*ptr+SAMPLE_MAX_16BITI):*ptr;
+	if (!swap_endian) {
+	  if (!swap_sign) *(dst++) = *ptr;
+	  else if (swap_sign==SWAP_S_TO_U) *((uint16_t *)dst++) = (uint16_t)(*ptr+SAMPLE_MAX_16BITI);
+	  else *(dst++)=*ptr-SAMPLE_MAX_16BITI;
+	}
+	else if (swap_endian==SWAP_X_TO_L) {
+	  if (!swap_sign) *(dst++)=(((*ptr)&0x00FF)<<8)+((*ptr)>>8);
+	  else if (swap_sign==SWAP_S_TO_U) *((uint16_t *)dst++)=(uint16_t)(((*ptr&0x00FF)<<8)+(*ptr>>8)+SAMPLE_MAX_16BITI);
+	  else *(dst++)=((*ptr&0x00FF)<<8)+(*ptr>>8)-SAMPLE_MAX_16BITI;
+	}
 	else {
-	  *(dst++)=swap_sign?(uint16_t)(((((*ptr)&0x00FF)<<8)+((*ptr)>>8))+SAMPLE_MAX_16BITI):(((*ptr)&0x00FF)<<8)+((*ptr)>>8);
+	  if (!swap_sign) *(dst++)=(((*ptr)&0x00FF)<<8)+((*ptr)>>8);
+	  else if (swap_sign==SWAP_S_TO_U) *((uint16_t *)dst++)=(uint16_t)(((((uint16_t)(*ptr+SAMPLE_MAX_16BITI))&0x00FF)<<8)+(((uint16_t)(*ptr+SAMPLE_MAX_16BITI))>>8));
+	  else *(dst++)=((((int16_t)(*ptr-SAMPLE_MAX_16BITI))&0x00FF)<<8)+(((int16_t)(*ptr-SAMPLE_MAX_16BITI))>>8);
 	}
 
 	ccount++;
@@ -151,7 +164,7 @@ void sample_move_d16_d16(short *dst, short *src,
 
 /* convert from any number of source channels to any number of destination channels - 8 bit output */
 void sample_move_d16_d8(uint8_t *dst, short *src,
-			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_sign) {
+			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
@@ -189,17 +202,19 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
       }
       
       /* copy the data over */
-      *(dst++) = swap_sign?(uint8_t)(((int8_t)(*ptr>>8))+128):(int8_t)(*ptr>>8);
-	ccount++;
-	
-	/* if we ran out of source channels but not destination channels */
-	/* then start the src channels back where we were */
-	if(!nSrcCount && nDstCount) {
-	  ccount=0;
-	  nSrcCount = nSrcChannels;
-	}
-      }
+      if (!swap_sign) *(dst++) = (*ptr>>8);
+      else if (swap_sign==SWAP_S_TO_U) *(dst++) = (uint8_t)((int8_t)(*ptr>>8)+128);
+      else *((int8_t *)dst++) = (int8_t)((uint8_t)(*ptr>>8)-128);
+      ccount++;
 
+      /* if we ran out of source channels but not destination channels */
+      /* then start the src channels back where we were */
+      if(!nSrcCount && nDstCount) {
+	ccount=0;
+	  nSrcCount = nSrcChannels;
+      }
+    }
+    
     /* advance the the position */
     src_offset_i=(int)(src_offset_f+=scale)*nSrcChannels;
   }
@@ -214,10 +229,11 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
 
 #ifdef ENABLE_OIL
   float val;
-  double x;
+  double xn,xp,xa;
   double y=0.f;
 #else
   register float val;
+  register short valss;
 #endif
 
   if (vol==0.) vol=0.0000001f;
@@ -225,14 +241,16 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
   svoln=SAMPLE_MAX_16BIT_N/vol;
 
 #ifdef ENABLE_OIL
-  x=1./svoln;
+  xp=1./svolp;
+  xn=1./svoln;
+  xa=2.*vol/(SAMPLE_MAX_16BIT_P+SAMPLE_MAX_16BIT_N);
 #endif
 
   while (nsamples--) {
 
     if (!is_unsigned) {
 #ifdef ENABLE_OIL
-      oil_scaleconv_f32_s16(&val,src,1,&y,&x);
+      oil_scaleconv_f32_s16(&val,src,1,&y,val>0?&xp:&xn);
 #else
       if ((val = (float)((*src) / (*src>0?svolp:svoln) ))>1.0f) val=1.0f;
       else if (val<-1.0f) val=-1.0f;
@@ -240,7 +258,8 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
     }
     else {
 #ifdef ENABLE_OIL
-      oil_scaleconv_f32_u16(&val,(unsigned short *)src,1,&y,&x);
+      oil_scaleconv_f32_u16(&val,(unsigned short *)src,1,&y,&xa);
+      val-=vol;
 #else
       valss=(unsigned short)*src-SAMPLE_MAX_16BITI;
       if ((val = (float)((valss) / (valss>0?svolp:svoln) ))>1.0f) val=1.0f;
@@ -255,58 +274,57 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
 
 
 
-long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, int swap_endian, float vol) {
+long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol) {
   // convert float samples back to int
   long frames_out=0l;
   register int i;
   register int offs=0,coffs=0;
-  register float coffs_f=0.f,valf;
+  register float coffs_f=0.f;
   short *hbuffs=(short *)holding_buff;
   unsigned short *hbuffu=(unsigned short *)holding_buff;
   unsigned char *hbuffc=(guchar *)holding_buff;
 
 #ifdef ENABLE_OIL
-  double x=1./vol;
+  double x=(SAMPLE_MAX_16BIT_N+SAMPLE_MAX_16BIT_P)/2.;
   double y=0.f;
   short val;
   unsigned short valu=0;
 #else
   register short val;
   register unsigned short valu=0;
+  register float valf;
 #endif
 
   while ((nsamps-coffs)>0) {
     frames_out++;
     for (i=0;i<chans;i++) {
 #ifdef ENABLE_OIL
-      if (usigned) oil_scaleconv_u16_f32(&valu,float_buffer[i]+coffs,1,&y,&x);
-      else oil_scaleconv_s16_f32(&val,float_buffer[i]+coffs,1,&y,&x);
+      oil_scaleconv_s16_f32(&val,float_buffer[i]+coffs,1,&y,&x);
 #else
       valf=*(float_buffer[i]+coffs);
-      val=(short)(valf*vol*(valf>0.?SAMPLE_MAX_16BIT_P:SAMPLE_MAX_16BIT_N));
-      if (usigned) valu=val+SAMPLE_MAX_16BITI;
+      val=(short)(valf*(valf>0.?SAMPLE_MAX_16BIT_P:SAMPLE_MAX_16BIT_N));
 #endif
+      if (usigned) valu=(val+SAMPLE_MAX_16BITI)*vol;
+      val*=vol;
+
       if (asamps==16) {
 	if (!swap_endian) {
-	  if (usigned) *(hbuffu+offs)=(float)valu*vol;
-	  else *(hbuffs+offs)=(float)val*vol;
+	  if (usigned) *(hbuffu+offs)=valu;
+	  else *(hbuffs+offs)=val;
 	}
 	else {
 	  if (usigned) {
-	    valu*=vol;
 	    *(hbuffc+offs)=valu&0x00FF;
 	    *(hbuffc+(++offs))=(valu&0xFF00)>>8;
 	  }
 	  else {
-	    val*=vol;
 	    *(hbuffc+offs)=val&0x00FF;
 	    *(hbuffc+(++offs))=(val&0xFF00)>>8;
 	  }
 	}
       }
       else {
-	if (usigned) *(hbuffc+offs)=(guchar)((float)(valu>>8)*vol);
-	else *(hbuffc+offs)=(guchar)((float)val/256.*vol);
+	*(hbuffc+offs)=(guchar)((float)val/256.);
       }
       offs++;
     }
@@ -872,10 +890,10 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
       // convert to float
       if (in_asamps[track]==1) {
-	sample_move_d8_d16 (holding_buff,(guchar *)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track]);
+	sample_move_d8_d16 (holding_buff,(guchar *)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track],0);
       }
       else {
-	sample_move_d16_d16(holding_buff,(short*)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track],in_reverse_endian[track],FALSE);
+	sample_move_d16_d16(holding_buff,(short*)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track],in_reverse_endian[track]?SWAP_X_TO_L:0,0);
       }
 
       g_free(in_buff);

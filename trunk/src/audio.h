@@ -8,9 +8,17 @@
 #define _HAS_LIVES_AUDIO_H
 
 #define SAMPLE_MAX_16BIT_P  32767.0f
-#define SAMPLE_MAX_16BIT  SAMPLE_MAX_16BIT_P
 #define SAMPLE_MAX_16BIT_N  32768.0f
-#define SAMPLE_MAX_16BITI  32767
+#define SAMPLE_MAX_16BITI  32768
+
+//sign swapping
+#define SWAP_U_TO_S 1
+#define SWAP_S_TO_U 2
+
+//endian swapping
+#define SWAP_X_TO_L 1
+#define SWAP_L_TO_X 2
+
 
 // defaults for when not specifed
 # define DEFAULT_AUDIO_RATE 44100
@@ -69,17 +77,17 @@ typedef enum lives_audio_loop {
 void sample_silence_dS (float *dst, unsigned long nsamples);
 
 void sample_move_d8_d16(short *dst, guchar *src,
-			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels);
+			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 
 void sample_move_d16_d16(short *dst, short *src,
-			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_endian, gboolean swap_sign);
+			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign);
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
-			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, gboolean swap_sign);
+			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 
 void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsigned long src_skip, int is_unsigned, float vol);
 
-long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, int swap_endian, float vol); // returns frames output
+long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol); // returns frames output
 
 long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol);
 

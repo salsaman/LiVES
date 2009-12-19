@@ -395,10 +395,10 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       pulsed->sound_buffer=g_malloc0(pulsed->chunk_size);
 
       if (pulsed->in_asamps==8) {
-	sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans);
+	sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, swap_sign?SWAP_U_TO_S:0);
       }
       else {
-	sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian, (gboolean)swap_sign);
+	sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian?SWAP_X_TO_L:0, swap_sign?SWAP_U_TO_S:0);
       }
     }
 
@@ -502,10 +502,10 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
   if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
 
   if (afile->asampsize==16) {
-    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian,(gboolean)swap_sign);
+    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,pulsed->in_achans,pulsed->reverse_endian?SWAP_L_TO_X:0,swap_sign?SWAP_S_TO_U:0);
   }
   else {
-    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,pulsed->in_achans,(gboolean)swap_sign);
+    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,pulsed->in_achans,swap_sign?SWAP_S_TO_U:0);
   }
     
   pulsed->frames_written+=frames_out;

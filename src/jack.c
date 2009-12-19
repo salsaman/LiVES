@@ -444,12 +444,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 	/* convert from 8 bit to 16 bit and mono to stereo if necessary */
 	/* resample as we go */
 	if(jackd->bytes_per_channel==1) {
-	  sample_move_d8_d16 ((short *)(jackd->sound_buffer + (nframes-jackFramesAvailable) / sizeof(short)),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, jackd->num_output_channels, jackd->num_input_channels);
+	  sample_move_d8_d16 ((short *)(jackd->sound_buffer + (nframes-jackFramesAvailable) / sizeof(short)),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, jackd->num_output_channels, jackd->num_input_channels,0);
 	}
 	/* 16 bit input samples */
 	/* resample as we go */
 	else {
-	  sample_move_d16_d16((short*)jackd->sound_buffer + ((nframes - jackFramesAvailable) * jackd->bytes_per_channel * jackd->num_output_channels) / sizeof(short), (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, jackd->num_output_channels, jackd->num_input_channels, jackd->reverse_endian, FALSE);
+	  sample_move_d16_d16((short*)jackd->sound_buffer + ((nframes - jackFramesAvailable) * jackd->bytes_per_channel * jackd->num_output_channels) / sizeof(short), (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, jackd->num_output_channels, jackd->num_input_channels, jackd->reverse_endian?SWAP_X_TO_L:0, 0);
 	}
 	
 	jackd->frames_written+=numFramesToWrite;

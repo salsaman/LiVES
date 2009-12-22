@@ -1859,7 +1859,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->jpeg), jpeg_png);
   jpeg_png = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->jpeg));
 
-  png = gtk_radio_button_new_with_mnemonic (jpeg_png, _("_png (experimental, requires editing of smogrify)"));
+  png = gtk_radio_button_new_with_mnemonic (jpeg_png, _("_png"));
   gtk_widget_show (png);
   gtk_container_set_border_width (GTK_CONTAINER (png), 18);
   gtk_box_pack_start (GTK_BOX (hbox115), png, FALSE, FALSE, 0);

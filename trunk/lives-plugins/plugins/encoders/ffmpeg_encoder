@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# (c) G. Finch (salsaman)
+# (c) G. Finch (salsaman) 2009
 
 # released under the GNU GPL 3 or later
 # see file COPYING or www.gnu.org for details
@@ -11,6 +11,7 @@
 # v 2.1 - add experimental 3gp support
 # v 2.2 - format changed in ffmpeg from image to image2, update
 # v 2.3 add youtube and flv formats
+# v 2.4 allow encoding of .png images
 
 #######################################################################
 
@@ -25,7 +26,7 @@ else {
 
 
 if ($command eq "version") {
-    print "ffmpeg encoder plugin v2.3\n";
+    print "ffmpeg encoder plugin v2.4\n";
     exit 0;
 }
 
@@ -55,7 +56,7 @@ if ($command eq "get_capabilities") {
     # bit 1 - unused
     # bit 2 - can encode png
     # bit 3 - not pure perl
-    print "1\n";
+    print "5\n";
     exit 0;
 }
 

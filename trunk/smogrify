@@ -704,6 +704,8 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if ($type eq "encoders") {
+		$img_ext=&get_img_ext($curtmpdir,$start);
+
 		if (-f "audio.origbak") {
 		    unlink "audio";
 		    rename "audio.origbak","audio";
@@ -722,7 +724,7 @@ if (defined($ARGV[0])) {
 		return 1;
 	    }
 	    else {
-		system("$plugin clear $start $end");
+		system("$plugin clear $start $end $img_ext");
 		&sig_complete;
 		exit 0;
 	    }
@@ -1321,6 +1323,7 @@ if (defined($ARGV[0])) {
 	    $vsize=(split /x/,$size)[1];
 	    $bpp=$info[3];
 	    chomp($bpp);
+	    
 	    $fps=(split / /,$info[4])[0];
 	    
 	    $arate=$info2[1];
@@ -1354,7 +1357,7 @@ if (defined($ARGV[0])) {
             $af_size = -s $audio_out; 
 	}
 
-	if ($type eq "png") {
+	if ($img_ext eq ".png" || $type eq "png") {
 	    $bpp=32;
 	}
 
@@ -1482,19 +1485,20 @@ if (defined($ARGV[0])) {
 
 	
 	if ($command eq "save") {
-	    unlink "$curtmpdir/pause";
-	    chdir $curtmpdir;
 	    $get_rfx=0;
 
 	    if ($handle eq "get_rfx") {
 		$get_rfx=1;
 		shift(@ARGV);
 		$handle=$ARGV[1];
-	    }
-	    else {
-		unlink "audiodump.wav";
+
+		$curtmpdir="$tmpdir/$handle";
+		$statusfile=$curtmpdir."/.status";
+		$pidfile=$curtmpdir."/.pid";
 	    }
 
+	    unlink "$curtmpdir/pause";
+	    chdir $curtmpdir;
 
 	    $plugin=$ARGV[2];
 
@@ -1568,6 +1572,8 @@ if (defined($ARGV[0])) {
 	    $audiofile="";
 
 	    if ($get_rfx==0) {
+
+		unlink "audiodump.wav";
 
 		$areq=&get_form_request($plugin);
 
@@ -2767,6 +2773,10 @@ if (defined($ARGV[0])) {
 		$clipboard=$ARGV[8];
 	    }
 
+	    if ($img_ext eq ".png") {
+		$convert_command.=" -alpha On";
+	    }
+
 	    $fps=0;
 
 	    $fx_caps=`$plugin_name get_capabilities`;
@@ -3160,6 +3170,8 @@ sub insert {
     my ($nwhere)=$where;
     my ($nfromdir)=$fromdir;
 
+    my $conv_command=$convert_command;
+
     if (!defined($times)) {
 	$times=1;
     }
@@ -3209,14 +3221,14 @@ sub insert {
 		    }
 
 		    if ($img_ext2 eq ".jpg" && $img_ext eq ".png") {
-			$convert_command.=" -alpha On";
+			$conv_command.=" -alpha On";
 		    }
 
 		    if ($antialias eq "false") {
-			system("$convert_command +antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
+			system("$conv_command +antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
 		    }
 		    else {
-			system("$convert_command -size $width"."x$height $name$input_ext -resize $width!x$height! $name$resize_ext >/dev/null 2>&1");
+			system("$conv_command -size $width"."x$height $name$input_ext -resize $width!x$height! $name$resize_ext >/dev/null 2>&1");
 		    }
 
 		}
@@ -4237,6 +4249,8 @@ sub open_single_image {
     $name=&mkname($i);
     my $nframes=0;
 
+    my $conv_cmd=$convert_command;
+
     if (!defined($file_ext)) {
 	$file_ext=&get_ext($file);
     }
@@ -4254,11 +4268,15 @@ sub open_single_image {
 
     `sync;sync;sync`;
 
+    if ($img_ext eq ".png") {
+	$conv_command.=" -alpha On";
+    }
+
     if ($antialias eq "false") {
-	system("$convert_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
+	system("$conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
     }
     else {
-	system("$convert_command \"$file\" -resize $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext >/dev/null 2>&1");
+	system("$conv_command \"$file\" -resize $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext >/dev/null 2>&1");
     }
 
     #convert gives multiple frames for e.g. animated gif
@@ -4372,11 +4390,17 @@ sub fill_and_redo_frames {
     $hsize=$vsize=$bpp=0;
     $oldnext=-1;
 
+    my $conv_command=$convert_command;
+
     $missing=0;
     $lastframe=0;
     $imresact="none";
 
     chdir $curtmpdir;
+
+    if ($img_ext eq ".png") {
+	$conv_command.=" -alpha On";
+    }
     
     for ($i=$start;$i+$pre_cut_frames+$missing<=$end;$i++) {
 	$name=&mkname($i);
@@ -4393,7 +4417,7 @@ sub fill_and_redo_frames {
 
 		# clip the bottom row
 		unless ($next==$oldnext) {
-		    system("$convert_command -crop $width" . "!x" . $height . "! $nextname$img_ext $nextname.mgk >/dev/null 2>&1");
+		    system("$conv_command -crop $width" . "!x" . $height . "! $nextname$img_ext $nextname.mgk >/dev/null 2>&1");
 		    unlink "$nextname$img_ext";
 		    rename "$nextname.mgk","$nextname$img_ext";
 		    $oldnext=$next;

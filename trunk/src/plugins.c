@@ -1248,7 +1248,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 
   gint best_fps_num=0,best_fps_denom=0;
   gdouble fps;
-  gint arate,achans,asampsize;
+  gint arate,achans,asampsize,asigned=0;
 
   if (rdet==NULL) {
     width=owidth=cfile->hsize;
@@ -1417,6 +1417,29 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       continue;
     }
 
+
+
+    if (!strncmp (checks[r],"asigned=",8)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
+      array=g_strsplit(checks[r],"=",2);
+      if (!strcmp(array[1],"signed")) {
+	asigned=1;
+      }
+
+      if (!strcmp(array[1],"unsigned")) {
+	asigned=2;
+      }
+
+      g_strfreev(array);
+      
+      if (asigned!=0&&!capable->has_sox) {
+	do_encoder_sox_error();
+	g_strfreev(checks);
+	return FALSE;
+      }
+      continue;
+    }
+
+
     if (!strncmp (checks[r],"arate=",6)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
       // we only perform this test if we are encoding with audio
       // find next highest allowed rate from list,
@@ -1515,7 +1538,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 
   if (sizer) allow_aspect_override=FALSE;
 
-  if (((width!=owidth||height!=oheight)&&width*height>0)||(best_fps_delta>0.)||(best_arate_delta>0&&best_arate>0)||best_arate<0) {
+  if (((width!=owidth||height!=oheight)&&width*height>0)||(best_fps_delta>0.)||(best_arate_delta>0&&best_arate>0)||best_arate<0||asigned!=0) {
     gboolean ofx1_bool=mainw->fx1_bool;
     mainw->fx1_bool=FALSE;
     if ((width!=owidth||height!=oheight)&&width*height>0) {
@@ -1535,14 +1558,20 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       rdet->arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
       rdet->achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
       rdet->asamps=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+      rdet->aendian=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))?AFORM_UNSIGNED:AFORM_SIGNED;
 
-      if (width!=rdet->width||height!=rdet->height||best_fps_delta!=0.||best_arate!=rdet->arate) {
-	if (rdet_suggest_values(width,height,best_fps,best_fps_num,best_fps_denom,best_arate,allow_aspect_override,(best_fps_delta==0.))) {
+      if (width!=rdet->width||height!=rdet->height||best_fps_delta!=0.||best_arate!=rdet->arate||((asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED))) {
+      
+	if (rdet_suggest_values(width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,allow_aspect_override,(best_fps_delta==0.))) {
 	  gchar *arate_string;
 	  rdet->width=width;
 	  rdet->height=height;
 	  if (best_arate!=-1) rdet->arate=best_arate;
 	  else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton),FALSE);
+
+	  if (asigned==1) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_signed),TRUE);
+	  else if (asigned==2) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned),TRUE);
+
 	  if (best_fps_delta>0.) {
 	    if (best_fps_denom>0) {
 	      rdet->fps=(best_fps_num*1.)/(best_fps_denom*1.);
@@ -1564,13 +1593,13 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       return FALSE;
     }
 
-    if (mainw->osc_auto||do_encoder_restrict_dialog (width,height,best_fps,best_fps_num,best_fps_denom,best_arate,allow_aspect_override)) {
+    if (mainw->osc_auto||do_encoder_restrict_dialog (width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,allow_aspect_override)) {
       if (!mainw->fx1_bool&&mainw->osc_enc_width==0) {
 	width=owidth;
 	height=oheight;
       }
 
-      if (!auto_resample_resize (width,height,best_fps,best_fps_num,best_fps_denom,best_arate)) {
+      if (!auto_resample_resize (width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned)) {
 	mainw->fx1_bool=ofx1_bool;
 	return FALSE;
       }

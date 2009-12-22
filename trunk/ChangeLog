@@ -5,7 +5,7 @@ Fix problems when mt compositor/transition has 0 input frames. *
 Add sox to startup button group.
 Allow use of png for internal image format.
 Optimise frame pump for virtual clips/rendered effects.
-Fix some minor audio conversion inaccuracies.
+Fix some audio conversion inaccuracies.
 Resample/undo resample was leaving extra frames in clip. *
 Minor compilation updates for OSX and others. *
 Fix some very rare crash conditions. *

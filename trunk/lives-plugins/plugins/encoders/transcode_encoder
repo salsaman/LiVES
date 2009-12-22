@@ -8,7 +8,6 @@
 
 #######################################################################
 # LiVES transcode plugin v1.5
-
 #######################################################################
 
 if (!defined($standalone)) {
@@ -28,9 +27,10 @@ else {
 # 1.3 - add debug code $DEBUG_ENCODERS for monitoring
 # 1.4 changed pref audio_encode_quality to encoder_acodec
 # 1.5 updated to transcode 1.0.1
+# 1.6 allow encoding of png; update --use_rgb to -V rgb
 
 if ($command eq "version") {
-    print "transcode encoder plugin v1.5\n";
+    print "transcode encoder plugin v1.6\n";
     exit 0;
 }
 
@@ -58,7 +58,7 @@ if ($command eq "get_capabilities") {
     # bit 1 - unused
     # bit 2 - can encode png
     # bit 3 - not pure perl
-    print "0\n";
+    print "4\n";
     exit 0;
 }
 
@@ -157,30 +157,30 @@ if ($command eq "encode") {
 	if (-f $audiofile) {
 	    if (&rc_get("encoder_acodec")==1) {
 		#pcm encoding
-		$syscom="$encoder_command -i list -x imlist,raw --use_rgb -p $audiofile -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x1 -z -k --avi_comments comments $err";
+		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x1 -z -k --avi_comments comments $err";
 	    }
 	    else {
 		# mp3 encoding
-		$syscom="$encoder_command -i list -x imlist,raw --use_rgb -p $audiofile -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x55 -z -k --avi_comments comments $err";
+		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x55 -z -k --avi_comments comments $err";
 	    }
 	}
 	else {
-	    $syscom="$encoder_command -i list -x imlist,null --use_rgb -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x1 -z -k --avi_comments comments $err";
+	    $syscom="$encoder_command -i list -V rgb24 -x imlist,null -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x1 -z -k --avi_comments comments $err";
 	}
     }
     else {
 	if (-f $audiofile) {
 	    if (&rc_get("encoder_acodec")==1) {
 		#pcm encoding
-		$syscom="$encoder_command -i list -x imlist,raw --use_rgb -p $audiofile -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x1 -z -k --avi_comments comments $err";
+		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x1 -z -k --avi_comments comments $err";
 	    }
 	    else {
 		# mp3 encoding
-		$syscom="$encoder_command -i list -x imlist,raw --use_rgb -p $audiofile -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x55 -z -k --avi_comments comments $err";
+		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x55 -z -k --avi_comments comments $err";
 	    }
 	}
 	else {
-	    $syscom="$encoder_command -i list -x imlist,null --use_rgb -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x1 -z -k --avi_comments comments $err";
+	    $syscom="$encoder_command -i list -x imlist,null -g $hsize"."x$vsize -V rgb24 -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x1 -z -k --avi_comments comments $err";
 	}
     }
     

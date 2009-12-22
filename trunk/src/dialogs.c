@@ -1001,7 +1001,7 @@ void do_layout_scrap_file_error(GtkWindow *window) {
 
 
 
-gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gboolean anr, gboolean ignore_fps) {
+gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean anr, gboolean ignore_fps) {
   gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
   gchar *msg2=g_strdup ("");
   gchar *msg3=g_strdup ("");
@@ -1017,13 +1017,20 @@ gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num
 
   GtkWidget *prep_dialog;
 
-  if ((fps>0.&&fps!=rdet->fps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=rdet->fps)||(!anr&&(rdet->width!=width||rdet->height!=height)&&height*width>0)||(arate!=rdet->arate&&arate>0)) {
+  if ((asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)||(fps>0.&&fps!=rdet->fps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=rdet->fps)||(!anr&&(rdet->width!=width||rdet->height!=height)&&height*width>0)||(arate!=rdet->arate&&arate>0)) {
     g_free (msg2);
     msg2=g_strdup (_ ("LiVES recommends the following settings:\n\n"));
-    if (arate>0&&arate!=rdet->arate) {
+    if ((asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)||(arate>0&&arate!=rdet->arate)) {
+      gchar *sstring;
+
+      if (asigned==1&&rdet->aendian==AFORM_UNSIGNED) sstring=g_strdup(_(", signed"));
+      else if (asigned==2&&rdet->aendian==AFORM_SIGNED) sstring=g_strdup(_(", unsigned"));
+      else sstring=g_strdup("");
+
       ochange=TRUE;
       g_free (msg3);
-      msg3=g_strdup_printf (_ ("Use an audio rate of %d Hz\n"),arate);
+      msg3=g_strdup_printf (_ ("Use an audio rate of %d Hz%s\n"),arate,sstring);
+      g_free(sstring);
     }
     if (!ignore_fps) {
       ochange=TRUE;
@@ -1077,7 +1084,7 @@ gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num
 
 
 gboolean 
-do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gboolean anr) {
+do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean anr) {
   gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
   gchar *msg2=g_strdup ("");
   gchar *msg3=g_strdup ("");
@@ -1108,12 +1115,19 @@ do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, 
   }
 
 
-  if ((arate>0&&arate!=carate)||(fps>0.&&fps!=cfps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=cfps)||(!anr&&(chsize!=width||cvsize!=height)&&height*width>0)) {
+  if (asigned!=0||(arate>0&&arate!=carate)||(fps>0.&&fps!=cfps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=cfps)||(!anr&&(chsize!=width||cvsize!=height)&&height*width>0)) {
     g_free (msg2);
     msg2=g_strdup (_ ("LiVES must:\n"));
-    if (arate>0&&arate!=carate) {
+    if (asigned!=0||(arate>0&&arate!=carate)) {
+      gchar *sstring;
+      if (asigned==1) sstring=g_strdup(_(", signed"));
+      else if (asigned==2) sstring=g_strdup(_(", unsigned"));
+      else sstring=g_strdup("");
+
       g_free (msg3);
-      msg3=g_strdup_printf (_ ("resample audio to %d Hz\n"),arate);
+      msg3=g_strdup_printf (_ ("resample audio to %d Hz%s\n"),arate,sstring);
+      g_free(sstring);
+
     }
     if (fps>0&&fps!=cfps) {
       g_free (msg4);

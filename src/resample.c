@@ -45,7 +45,7 @@ LIVES_INLINE gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdou
 
 /////////////////////////////////////////////////////
 
-gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate) {
+gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, gint asigned) {
   // do a block atomic: resample audio, then resample video/resize or joint resample/resize
 
   gchar *com,*msg=NULL;
@@ -57,11 +57,15 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
   reorder_leave_back=FALSE;
 
-  if (arate>0&&arate!=cfile->arate) {
+  if (asigned!=0||(arate>0&&arate!=cfile->arate)) {
     cfile->undo1_int=arate;
     cfile->undo2_int=cfile->achans;
     cfile->undo3_int=cfile->asampsize;
     cfile->undo1_uint=cfile->signed_endian;
+
+    if (asigned==1&&(cfile->signed_endian&AFORM_UNSIGNED)==AFORM_UNSIGNED) cfile->undo1_uint^=AFORM_UNSIGNED;
+    else if (asigned==2&&(cfile->signed_endian&AFORM_UNSIGNED)!=AFORM_UNSIGNED) cfile->undo1_uint|=AFORM_UNSIGNED;
+
     on_resaudio_ok_clicked (NULL,NULL);
     if (mainw->error) return FALSE;
     audio_resampled=TRUE;
@@ -721,6 +725,8 @@ on_resaudio_ok_clicked                      (GtkButton *button,
   save_clip_values(mainw->current_file);
 
   switch_to_file(mainw->current_file,mainw->current_file);
+
+  d_print("");  // force printing of switch message
 
   msg=g_strdup_printf (_ ("Audio was resampled to %d Hz, %d channels, %d bit"),arate,achans,asampsize);
   d_print (msg);

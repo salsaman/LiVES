@@ -1696,7 +1696,6 @@ on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
   cfile->frames=clipboard->frames;
   cfile->hsize=clipboard->hsize;
   cfile->vsize=clipboard->vsize;
-  cfile->bpp=clipboard->bpp;
   cfile->pb_fps=cfile->fps=clipboard->fps;
   cfile->ratio_fps=clipboard->ratio_fps;
   cfile->progress_start=cfile->start=cfile->frames>0?1:0;

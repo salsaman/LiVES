@@ -9,6 +9,7 @@
 # LiVES pdf plugin v1.0
 
 # version 1.0 original - salsaman
+# version 1.1 - add support for png, correct requires error text
 
 #######################################################################
 
@@ -26,7 +27,7 @@ else {
 
 
 if ($command eq "version") {
-    print "pdfv encoder plugin v1.0\n";
+    print "pdf encoder plugin v1.1\n";
     exit 0;
 }
 
@@ -37,11 +38,11 @@ if ($command eq "init") {
     # otherwise exit 0
 
     if (&location("convert") eq "") {
-	print "Convert was not found. Please install libdv2-apps and try again.";
+	print "Convert was not found. Please install imagemagick and try again.";
 	exit 1;
     }
     if (&location("gs") eq "") {
-	print "Ghostscript was not found. Please install libdv2-apps and try again.";
+	print "Ghostscript was not found. Please install ghostscript and try again.";
 	exit 1;
     }
     
@@ -58,7 +59,7 @@ if ($command eq "get_capabilities") {
     # bit 1 - unused
     # bit 2 - can encode png
     # bit 3 - not pure perl
-    print "0\n";
+    print "4\n";
     exit 0;
 }
 

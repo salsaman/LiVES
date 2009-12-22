@@ -57,7 +57,7 @@ _resaudw* create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 void on_change_speed_activate (GtkMenuItem *, gpointer);
 void on_change_speed_ok_clicked (GtkButton *, gpointer);
 
-gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate);
+gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, gint asigned);
 gint reorder_frames(void);
 gint deorder_frames(gint old_framecount, gboolean leave_bak); // leave bak is a special mode for the clipboard
 

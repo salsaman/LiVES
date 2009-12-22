@@ -16,6 +16,7 @@
 # version 2.0 fix it so it works again ! - salsaman.
 # version 2.1 increase quality settings, restrict audio rates.
 # version 2.11 add package name libdv-bin
+# version 2.12 allow png encoding; add check for "convert"
 
 #######################################################################
 
@@ -33,7 +34,7 @@ else {
 
 
 if ($command eq "version") {
-    print "encodedv encoder plugin v2.11\n";
+    print "encodedv encoder plugin v2.12\n";
     exit 0;
 }
 
@@ -45,6 +46,11 @@ if ($command eq "init") {
 
     if (&location("encodedv") eq "") {
 	print "Encodedv was not found. Please install libdv2-apps or libdv-bin and try again.";
+	exit 1;
+    }
+
+    if (&location("convert") eq "") {
+	print "convert was not found. Please install imagemagick and try again.";
 	exit 1;
     }
     
@@ -61,7 +67,7 @@ if ($command eq "get_capabilities") {
     # bit 1 - unused
     # bit 2 - can encode png
     # bit 3 - not pure perl
-    print "0\n";
+    print "4\n";
     exit 0;
 }
 
@@ -107,7 +113,7 @@ if ($command eq "encode") {
     for ($i=$start;$i<=$end;$i++) {
 	$name=&mkname($i);
 	$name2=&mkname($i-1);
-	`$convert_command $name$img_ext $name2$to_ext`;
+	`convert $name$img_ext $name2$to_ext`;
     }
 
     if (-f $audiofile) {

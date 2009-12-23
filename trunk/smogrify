@@ -244,7 +244,7 @@ if (defined($ARGV[0])) {
 	&rc_set_if_not_set("encoder",$encoder);
 	&rc_set_if_not_set("output_type","mjpeg");
 	&rc_set_if_not_set("audio_effect","none");
-	&rc_set_if_not_set("default_image_format","jpeg");
+	&rc_set_if_not_set("default_image_format","png");
 	&rc_set_if_not_set("default_fps",25);
 	&rc_set_if_not_set("vid_load_dir","$home");
 	&rc_set_if_not_set("vid_save_dir","$home");

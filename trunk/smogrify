@@ -3188,6 +3188,8 @@ sub insert {
 	$conv_command.=" -alpha On";
     }
 
+    my $quick_copy=-1;
+
     if (!defined($times)) {
 	$times=1;
     }
@@ -3233,14 +3235,33 @@ sub insert {
 		    `sync`;
 		}
 
+		if ($quick_copy==-1) {
+		    $quick_copy=0;
+		    if ($img_ext eq $img_ext2) {
+			if ($height*$width==0) {
+			    $quick_copy=1;
+			}
+			else {
+			    $imresact="none";
+			    &get_image_size("$fromdir/$from$img_ext2");
+			    if ($hsize==$width&&$vsize==$height) {
+				$quick_copy=1;
+			    }
+			}
+		    }
+		}
 
-		if ($antialias eq "false") {
-		    system("$conv_command +antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
+		if ($quick_copy==1) {
+		    system("/bin/cp $fromdir/$from$img_ext2 $curtmpdir/$to$img_ext >/dev/null 2>&1");
 		}
 		else {
-		    system("$conv_command -antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
+		    if ($antialias eq "false") {
+			system("$conv_command +antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
+		    }
+		    else {
+			system("$conv_command -antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
+		    }
 		}
-
 		
 	    }
 	    

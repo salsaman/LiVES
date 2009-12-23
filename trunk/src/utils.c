@@ -877,6 +877,8 @@ get_play_times(void) {
 			 allocheight-prefs->bar_height);
 	}
       }
+      GTK_RULER (mainw->hruler)->position=offset*cfile->total_time/allocwidth;
+      gtk_widget_queue_draw (mainw->hruler);
     }
     if (cfile->achans>0&&cfile->is_loaded) {
       if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(mainw->event_list==NULL||!mainw->preview)) {
@@ -958,9 +960,11 @@ get_play_times(void) {
 	  }
 	}
       }
+      if (cfile->frames==0) {
+	GTK_RULER (mainw->hruler)->position=offset*cfile->total_time/allocwidth;
+	gtk_widget_queue_draw (mainw->hruler);
+      }
     }
-    GTK_RULER (mainw->hruler)->position=offset*cfile->total_time/allocwidth;
-    gtk_widget_queue_draw (mainw->hruler);
   }
   
   if (mainw->playing_file==-1||(mainw->switch_during_pb&&!mainw->faded)) {

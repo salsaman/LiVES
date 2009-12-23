@@ -1639,7 +1639,7 @@ after_foreign_play(void) {
 
 	g_snprintf(file_name,256,"%s/%s/",prefs->tmpdir,cfile->handle);
 	
-	com=g_strdup_printf("smogrify fill_and_redo_frames %s %d %d %d %d %s %.4f %d %d %d",cfile->handle,1,cfile->frames,mainw->foreign_width,mainw->foreign_height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,cfile->achans,cfile->asampsize);
+	com=g_strdup_printf("smogrify fill_and_redo_frames %s %d %d %d %d %s %.4f %d %d %d %d %d",cfile->handle,1,cfile->frames,mainw->foreign_width,mainw->foreign_height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
 	unlink(cfile->info_file);
 	dummyvar=system(com);
 	cfile->nopreview=TRUE;

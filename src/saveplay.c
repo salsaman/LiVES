@@ -766,7 +766,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     cfile->achans=mainw->files[current_file]->achans;
     cfile->asampsize=mainw->files[current_file]->asampsize;
 
-    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %s",cfile->handle,mainw->files[current_file]->start,mainw->files[current_file]->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize,mainw->files[current_file]->handle);
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d %s",cfile->handle,mainw->files[current_file]->start,mainw->files[current_file]->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN),mainw->files[current_file]->handle);
 
     unlink(cfile->info_file);
     dummyvar=system(com);
@@ -861,7 +861,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       }
     }
 
-    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d",cfile->handle,cfile->start,cfile->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize);
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d",cfile->handle,cfile->start,cfile->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
 
     unlink(cfile->info_file);
     dummyvar=system(com);

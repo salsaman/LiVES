@@ -3172,6 +3172,10 @@ sub insert {
 
     my $conv_command=$convert_command;
 
+    if ($img_ext2 eq ".jpg" && $img_ext eq ".png") {
+	$conv_command.=" -alpha On";
+    }
+
     if (!defined($times)) {
 	$times=1;
     }
@@ -3196,6 +3200,10 @@ sub insert {
 
     $resize_ext=$img_ext;
 
+    if (!defined($antialias)) {
+	$antialias="false";
+    }
+
     #move from $from_handle
     $j=$start;
     while ($times_inserted<$times) {
@@ -3212,31 +3220,18 @@ sub insert {
 		    sleep 1;
 		    `sync`;
 		}
-		if ($img_ext2 eq $img_ext) {
-		    system("/bin/cp $fromdir/$from$img_ext $curtmpdir/$to$img_ext");
+
+
+		if ($antialias eq "false") {
+		    system("$conv_command +antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
 		}
 		else {
-		    if (!defined($antialias)) {
-			$antialias="false";
-		    }
-
-		    if ($img_ext2 eq ".jpg" && $img_ext eq ".png") {
-			$conv_command.=" -alpha On";
-		    }
-
-		    if ($antialias eq "false") {
-			system("$conv_command +antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
-		    }
-		    else {
-			system("$conv_command -size $width"."x$height $name$input_ext -resize $width!x$height! $name$resize_ext >/dev/null 2>&1");
-		    }
-
+		    system("$conv_command -antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
 		}
+
+		
 	    }
 	    
-	    if ($height && $width && !($fromdir eq $curtmpdir) && ($img_ext eq $img_ext2)) {
-		&resize_frame($to,$width,$height);
-	    }
 	    &sig_progress(int($num_frames-$where+$j++-$start+1));
 	}
 

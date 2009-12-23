@@ -589,19 +589,35 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 
 //#define DEBUG_ARENDER
 
-static void pad_with_silence(int out_fd, off64_t oins_size, long ins_size) {
-  // fill to ins_pt with zeros
+static void pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int asamps, int aunsigned, gboolean big_endian) {
+  // fill to ins_pt with zeros (or 0x80.. for unsigned)
   guchar *zero_buff;
   size_t sblocksize=SILENCE_BLOCK_SIZE;
   gint sbytes=ins_size-oins_size;
-  int i;
+  register int i;
 
 #ifdef DEBUG_ARENDER
   g_print("sbytes is %d\n",sbytes);
 #endif
   if (sbytes>0) {
     lseek64(out_fd,oins_size,SEEK_SET);
-    zero_buff=g_malloc0(SILENCE_BLOCK_SIZE);
+    if (!aunsigned) zero_buff=g_malloc0(SILENCE_BLOCK_SIZE);
+    else {
+      zero_buff=g_malloc(SILENCE_BLOCK_SIZE);
+      if (asamps==1) memset(zero_buff,0x80,SILENCE_BLOCK_SIZE);
+      else {
+	for (i=0;i<SILENCE_BLOCK_SIZE;i+=2) {
+	  if (big_endian) {
+	    memset(zero_buff+i,0x80,1);
+	    memset(zero_buff+i+1,0x00,1);
+	  }
+	  else {
+	    memset(zero_buff+i,0x00,1);
+	    memset(zero_buff+i+1,0x80,1);
+	  }
+	}
+      }
+    }
     for (i=0;i<sbytes;i+=SILENCE_BLOCK_SIZE) {
       if (sbytes-i<SILENCE_BLOCK_SIZE) sblocksize=sbytes-i;
       dummyvar=write (out_fd,zero_buff,sblocksize);
@@ -723,7 +739,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     else out_reverse_endian=FALSE;
     
     // fill to ins_pt with zeros
-    pad_with_silence(out_fd,cur_size,ins_size);
+    pad_with_silence(out_fd,cur_size,ins_size,out_asamps,out_unsigned,out_bendian);
     sync();
 
 
@@ -798,7 +814,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       ins_pt=tc_end/U_SEC;
       ins_pt*=out_achans*out_arate*out_asamps;
       ins_size=((long)(ins_pt/out_achans/out_asamps)+.5)*out_achans*out_asamps;
-      pad_with_silence(out_fd,oins_size,ins_size);
+      pad_with_silence(out_fd,oins_size,ins_size,out_asamps,out_unsigned,out_bendian);
       sync();
       close (out_fd);
     }

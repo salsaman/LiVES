@@ -5836,16 +5836,7 @@ void delete_audio_track(lives_mt *mt, GtkWidget *eventbox, gboolean full) {
 
   if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"))) {
     xeventbox=g_object_get_data(G_OBJECT(eventbox),"achan0");
-    if ((bgimg=g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
-      gdk_pixbuf_unref(bgimg);
-    }
-    
-    if ((st_image=g_object_get_data(G_OBJECT(xeventbox),"backup_image"))!=NULL) {
-      g_object_unref(st_image);
-    }
-    gtk_widget_destroy(xeventbox);
-    if (cfile->achans>1) {
-      xeventbox=g_object_get_data(G_OBJECT(eventbox),"achan0");
+    if (xeventbox!=NULL) {
       if ((bgimg=g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
 	gdk_pixbuf_unref(bgimg);
       }
@@ -5853,7 +5844,20 @@ void delete_audio_track(lives_mt *mt, GtkWidget *eventbox, gboolean full) {
       if ((st_image=g_object_get_data(G_OBJECT(xeventbox),"backup_image"))!=NULL) {
 	g_object_unref(st_image);
       }
-      gtk_widget_destroy(eventbox);
+      gtk_widget_destroy(xeventbox);
+    }
+    if (cfile->achans>1) {
+      xeventbox=g_object_get_data(G_OBJECT(eventbox),"achan1");
+      if (xeventbox!=NULL) {
+	if ((bgimg=g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
+	  gdk_pixbuf_unref(bgimg);
+	}
+	
+	if ((st_image=g_object_get_data(G_OBJECT(xeventbox),"backup_image"))!=NULL) {
+	  g_object_unref(st_image);
+	}
+	gtk_widget_destroy(xeventbox);
+      }
     }
   }
   g_free(g_object_get_data(G_OBJECT(eventbox),"track_name"));

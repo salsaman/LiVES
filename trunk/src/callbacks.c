@@ -1193,12 +1193,31 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (cfile->undo_action==UNDO_ATOMIC_RESAMPLE_RESIZE&&(cfile->frames!=cfile->old_frames||cfile->hsize!=cfile->ohsize||cfile->vsize!=cfile->ovsize)) {
+
+    if (cfile->frames>cfile->old_frames) {
+      com=g_strdup_printf("smogrify cut %s %d %d %d %d %s %.3f %d %d %d",cfile->handle,cfile->old_frames+1, cfile->frames, FALSE, cfile->frames, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
+
+      cfile->progress_start=cfile->old_frames+1;
+      cfile->progress_end=cfile->frames;
+
+      unlink(cfile->info_file);
+      dummyvar=system(com);
+      // show a progress dialog, not cancellable
+      do_progress_dialog(TRUE,FALSE,_ ("Deleting excess frames"));
+      g_free(com);
+      
+      if (cfile->clip_type==CLIP_TYPE_FILE) {
+	delete_frames_from_virtual (mainw->current_file, cfile->old_frames+1, cfile->frames);
+      }
+    }
+
     cfile->frames=cfile->old_frames;
     cfile->hsize=cfile->ohsize;
     cfile->vsize=cfile->ovsize;
     save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
     save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
     cfile->fps=cfile->undo1_dbl;
+
     save_clip_value(mainw->current_file,CLIP_DETAILS_FPS,&cfile->fps);
     save_clip_value(mainw->current_file,CLIP_DETAILS_PB_FPS,&cfile->fps);
     cfile->redoable=FALSE;

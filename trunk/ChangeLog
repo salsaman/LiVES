@@ -6,6 +6,7 @@ Add sox to startup button group.
 Allow use of png for internal image format.
 Optimise frame pump for virtual clips/rendered effects.
 Fix some audio conversion inaccuracies.
+Update all encoders to current versions of externals.
 Resample/undo resample was leaving extra frames in clip. *
 Minor compilation updates for OSX and others. *
 Fix some very rare crash conditions. *

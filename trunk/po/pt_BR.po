@@ -3,20 +3,19 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-12-27 11:20-0300\n"
-"PO-Revision-Date: 2009-09-24 19:42+0000\n"
-"Last-Translator: Antonio Fernandes C. Neto <fernandes@pelivre.org>\n"
+"POT-Creation-Date: 2009-12-27 14:33-0300\n"
+"PO-Revision-Date: 2009-12-25 23:08+0000\n"
+"Last-Translator: Wille <wille@riseup.net>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2009-09-25 12:12+0000\n"
+"X-Launchpad-Export-Date: 2009-12-27 15:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 "X-Poedit-Language: Portuguese\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
 #: src/main.c:83
-#, fuzzy
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
@@ -24,14 +23,8 @@ msgid ""
 "group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
-"\n"
-"Infelizmente o LiVES travou.\n"
-"Por favor reporte o bug em http://www.sourceforge.net/projects/lives/\n"
-"Obrigado!\n"
-"Reinicie o LiVES para o trabalho ser recuperado.\n"
 
 #: src/main.c:84
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -40,14 +33,16 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Quando reportando crashes, por favor inclua o sistema operacional, "
-"distribuição, e versão do LiVES ("
+"Ao reportar travamentos, por favor informe qual o seu sistema operacional, "
+"distribuição e a versão do LiVES ("
 
 #: src/main.c:87
 msgid ""
 "and any information shown below:\n"
 "\n"
 msgstr ""
+"e toda informação mostrada abaixo:\n"
+"\n"
 
 #: src/main.c:91
 msgid ""
@@ -55,6 +50,9 @@ msgid ""
 "information.\n"
 "\n"
 msgstr ""
+"Por favor, instale o gdb e então rode o LiVES com a opção -debug para que "
+"seja coletada mais informações.\n"
+"\n"
 
 #: src/main.c:100
 msgid "Preserving set.\n"
@@ -74,7 +72,7 @@ msgstr "Qualquer"
 
 #: src/main.c:672
 msgid "None"
-msgstr "None"
+msgstr "Nenhum"
 
 #: src/main.c:673
 msgid "recommended"
@@ -114,7 +112,7 @@ msgstr ""
 
 #: src/main.c:1136
 msgid "Starting pulse audio server..."
-msgstr ""
+msgstr "Iniciando o servidor pulse audio..."
 
 #: src/main.c:1183
 msgid "Checking optional dependencies:"
@@ -328,7 +326,7 @@ msgstr ""
 
 #: src/main.c:1548
 msgid ", pulse"
-msgstr ""
+msgstr ", pulse"
 
 #: src/main.c:1551
 msgid ", sox or jack\n"
@@ -681,9 +679,8 @@ msgstr ""
 "Por favor aguarde"
 
 #: src/interface.c:372
-#, fuzzy
 msgid "Show details"
-msgstr "Mostrar _Mensagens"
+msgstr "Exibir Detalhes"
 
 #: src/interface.c:395
 msgid "_Enough"
@@ -774,9 +771,8 @@ msgstr ""
 "(pode ser ligado novamente em Preferências/Avisos)"
 
 #: src/interface.c:962
-#, fuzzy
 msgid "Show _Details"
-msgstr "Mostrar _Mensagens"
+msgstr "Exibir _Detalhes"
 
 #: src/interface.c:1053
 msgid "_Close Window"
@@ -784,7 +780,7 @@ msgstr "Fechar janela [_C]"
 
 #: src/interface.c:1057
 msgid "_Save to file"
-msgstr ""
+msgstr "_Salvar para arquivo"
 
 #: src/interface.c:1172
 msgid "LiVES: - Insert"
@@ -1116,12 +1112,17 @@ msgid ""
 "\n"
 "PULSE AUDIO is recommended for most users"
 msgstr ""
+"Antes de iniciar o LiVES, você precisa escolher um player de áudio.\n"
+"\n"
+"O PULSE AUDIO é o mais recomendável para a maior parte dos usuários."
 
 #: src/interface.c:2814
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
+", porém esta versão do LiVES não foi compilada com suporte ao pulse audio.\n"
+"\n"
 
 #: src/interface.c:2817
 msgid ""
@@ -1129,16 +1130,21 @@ msgid ""
 " You are advised to install pulse audio first before running LiVES.\n"
 "\n"
 msgstr ""
+", porém você não tem o pulse audio instalado em seu sistema.\n"
+" É aconselhável instalar o pulse audio primeiro antes de iniciar o LiVES.\n"
+"\n"
 
 #: src/interface.c:2822
 msgid "JACK audio is recommended for pro users"
-msgstr ""
+msgstr "JACK audio é recomendável para usuários avançados"
 
 #: src/interface.c:2825
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
+", porém esta versão do LiVES não foi compilada com suporte ao Jack.\n"
+"\n"
 
 #: src/interface.c:2828
 msgid ""
@@ -1146,6 +1152,9 @@ msgid ""
 "before running LiVES.\n"
 "\n"
 msgstr ""
+", porém você não tem o jackd instalado. Você pode querer instalar o jackd "
+"antes de iniciar o LiVES.\n"
+"\n"
 
 #: src/interface.c:2831
 msgid ""
@@ -1157,13 +1166,15 @@ msgstr ""
 
 #: src/interface.c:2835
 msgid "SOX may be used if neither of the preceding players work, "
-msgstr ""
+msgstr "O SOX pode ser utilizado se nenhum dos outros players funcionarem, "
 
 #: src/interface.c:2838
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
 msgstr ""
+"porém alguns recursos de áudio serão desabilitados\n"
+"\n"
 
 #: src/interface.c:2841
 msgid ""
@@ -1171,12 +1182,17 @@ msgid ""
 "You are advised to install it before running LiVES.\n"
 "\n"
 msgstr ""
+"entretanto você não tem o SOX instalado.\n"
+"É aconselhável instalá-lo antes de iniciar o LiVES.\n"
+"\n"
 
 #: src/interface.c:2845
 msgid ""
 "The MPLAYER audio player is only recommended for testing purposes.\n"
 "\n"
 msgstr ""
+"O MPLAYER é recomendável apenas para testes.\n"
+"\n"
 
 #: src/interface.c:2863
 msgid "LiVES: - Choose an audio player"
@@ -1199,9 +1215,8 @@ msgid "Use _mplayer audio player"
 msgstr ""
 
 #: src/interface.c:2966
-#, fuzzy
 msgid "LiVES: recover layout ?"
-msgstr "LiVES: escolha um arquivo"
+msgstr ""
 
 #: src/interface.c:2978
 msgid ""
@@ -1400,14 +1415,14 @@ msgid "Pasted %d frames to new clip.\n"
 msgstr "Copiados %d frames para um novo clipe.\n"
 
 #: src/callbacks.c:1810
-#, fuzzy
 msgid ""
 "This operation requires resizing or converting of frames.\n"
 "Please install 'convert' from the Image-magick package, and then restart "
 "LiVES.\n"
 msgstr ""
-"Esta operação requer redimensionamento de frames. Por favor instale "
-"'convert' do pacote ImageMagick, e reinicie o LiVES.\n"
+"Esta operação requer redimensionamento ou conversão de frames.\n"
+"Por favor instale o software 'convert', o qual está presente no pacote Image-"
+"magick, e então reinicie o LiVES.\n"
 
 #: src/callbacks.c:1827
 msgid ""
@@ -1718,11 +1733,11 @@ msgstr ""
 "(%d decodificado)"
 
 #: src/callbacks.c:3917 src/callbacks.c:3931 src/callbacks.c:3965
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "  %.2f sec."
-msgstr "%.2f seg."
+msgstr ""
 
 #: src/callbacks.c:3922
 msgid ""
@@ -1733,24 +1748,20 @@ msgstr ""
 "  Desconhecido"
 
 #: src/callbacks.c:3935 src/callbacks.c:3949
-#, fuzzy
 msgid "unsigned"
-msgstr "não-assinalado "
+msgstr ""
 
 #: src/callbacks.c:3936 src/callbacks.c:3950
-#, fuzzy
 msgid "signed"
-msgstr "assinalado "
+msgstr ""
 
 #: src/callbacks.c:3938 src/callbacks.c:3952
-#, fuzzy
 msgid "big-endian"
-msgstr ", big-endian"
+msgstr ""
 
 #: src/callbacks.c:3939 src/callbacks.c:3953
-#, fuzzy
 msgid "little-endian"
-msgstr ", little-endian"
+msgstr ""
 
 #: src/callbacks.c:3941 src/callbacks.c:3955
 #, c-format
@@ -1865,9 +1876,8 @@ msgid "%d frames are enough !\n"
 msgstr "%d frames são suficientes!\n"
 
 #: src/callbacks.c:4848
-#, fuzzy
 msgid "LiVES: - Encoder debug output"
-msgstr "LiVES: - Opções de codificação"
+msgstr ""
 
 #: src/callbacks.c:4883 src/gui.c:1708
 msgid "Fullscreen playback (f)"
@@ -2058,13 +2068,10 @@ msgid "External window was released.\n"
 msgstr "A janela externa foi solta.\n"
 
 #: src/callbacks.c:7672
-#, fuzzy
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
-"Clique em uma janela para capturá-la\n"
-"Aperte 'q' para parar de gravar.\n"
 
 #: src/callbacks.c:7692
 #, c-format
@@ -2889,7 +2896,7 @@ msgstr "_Email do autor"
 
 #: src/gui.c:1501
 msgid "Report a _bug"
-msgstr ""
+msgstr "Reportar um _bug"
 
 #: src/gui.c:1505
 msgid "Suggest a _feature"
@@ -3761,9 +3768,9 @@ msgid ", unsigned"
 msgstr ", não-assinalado"
 
 #: src/dialogs.c:1032
-#, fuzzy, c-format
+#, c-format
 msgid "Use an audio rate of %d Hz%s\n"
-msgstr "Usar taxa de áudio de %d Hz\n"
+msgstr ""
 
 #: src/dialogs.c:1039
 #, c-format
@@ -3803,9 +3810,9 @@ msgid "LiVES must:\n"
 msgstr "LiVES deve:\n"
 
 #: src/dialogs.c:1128
-#, fuzzy, c-format
+#, c-format
 msgid "resample audio to %d Hz%s\n"
-msgstr "resamplear áudio para %d Hz\n"
+msgstr ""
 
 #: src/dialogs.c:1134
 #, c-format
@@ -4331,6 +4338,12 @@ msgid ""
 "the \"jack\" or the \"pulse audio\" audio player.\n"
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
+"\n"
+"\n"
+"A gravação de áudio só pode ser feito usando\n"
+"os tocadores \"jack\" ou o \"pulse audio\".\n"
+"Você pode precisar selecionar um desses em Ferramentas/Preferências/"
+"Reprodução.\n"
 
 #: src/dialogs.c:1398
 msgid "Video playback plugin failed to initialise palette !\n"
@@ -4578,9 +4591,9 @@ msgstr ""
 "Erro: %s\n"
 
 #: src/effects-weed.c:2919
-#, fuzzy, c-format
+#, c-format
 msgid "Successfully loaded %d Weed filters\n"
-msgstr "%d filtros Weed carregados com sucesso\n"
+msgstr ""
 
 #: src/effects-weed.c:3470
 msgid "Warning - no more effect slots left !\n"
@@ -5924,31 +5937,24 @@ msgid "_Exit multitrack mode after rendering"
 msgstr "Sair do modo multipista depois d_e renderizar"
 
 #: src/preferences.c:1565
-#, fuzzy
 msgid "Auto backup layouts"
 msgstr ""
-"\n"
-"Auto recarregar layout.\n"
 
 #: src/preferences.c:1571
-#, fuzzy
 msgid "_Every"
-msgstr "cada"
+msgstr ""
 
 #: src/preferences.c:1587
-#, fuzzy
 msgid "seconds"
-msgstr "segundos."
+msgstr "segundos"
 
 #: src/preferences.c:1595
-#, fuzzy
 msgid "After every _change"
-msgstr "Mudança da ordem de efeitos"
+msgstr ""
 
 #: src/preferences.c:1604
-#, fuzzy
 msgid "_Never"
-msgstr "cada"
+msgstr "_Nunca"
 
 #: src/preferences.c:1627
 msgid "Multitrack/Render"
@@ -6033,9 +6039,8 @@ msgid "_jpeg"
 msgstr "_jpeg"
 
 #: src/preferences.c:1862
-#, fuzzy
 msgid "_png"
-msgstr "_jpeg"
+msgstr "_png"
 
 #: src/preferences.c:1874
 msgid "Use instant opening when possible"
@@ -7401,14 +7406,12 @@ msgstr ""
 "para selecionar um frame.\n"
 
 #: src/multitrack.c:2653
-#, fuzzy
 msgid "LiVES: Selected clip"
-msgstr "LiVES: Efeito selecionado"
+msgstr ""
 
 #: src/multitrack.c:2659
-#, fuzzy
 msgid "_Adjust start and end points"
-msgstr "_Ligar cor inicial e final"
+msgstr ""
 
 #: src/multitrack.c:2852
 msgid "Audio mixer (ctrl-m)"
@@ -7587,9 +7590,8 @@ msgid "_CLIP EDITOR"
 msgstr "EDITOR DE _CLIPES"
 
 #: src/multitrack.c:3987
-#, fuzzy
 msgid "_Adjust selected clip start/end points"
-msgstr "_Inserir áudio do clipe selecionado"
+msgstr ""
 
 #: src/multitrack.c:3996
 msgid "_Insert selected clip"
@@ -7868,9 +7870,8 @@ msgid "Anchor _start"
 msgstr "Ancorar início [_S]"
 
 #: src/multitrack.c:5468
-#, fuzzy
 msgid "Start frame"
-msgstr "Apena_s Frame Inicial"
+msgstr "Quadro inicial"
 
 #: src/multitrack.c:5505
 msgid "Anchor the end point to the timeline"
@@ -7881,9 +7882,8 @@ msgid "Anchor _end"
 msgstr "Ancorar final [_E]"
 
 #: src/multitrack.c:5541
-#, fuzzy
 msgid "End frame"
-msgstr "%d frames"
+msgstr "Quadro final"
 
 #: src/multitrack.c:5689
 msgid "Scroll"
@@ -8511,7 +8511,7 @@ msgstr "extensão"
 
 #: src/omc-learn.c:1123
 msgid "+ offset1"
-msgstr ""
+msgstr "+ offset1"
 
 #: src/omc-learn.c:1141
 msgid "* scale"
@@ -8519,7 +8519,7 @@ msgstr "* escala"
 
 #: src/omc-learn.c:1159
 msgid "+ offset2"
-msgstr ""
+msgstr "+ offset2"
 
 #: src/omc-learn.c:1260
 msgid ""
@@ -8539,7 +8539,7 @@ msgstr "Limpar _não-coincidentes"
 
 #: src/omc-learn.c:1346
 msgid "_Delete all"
-msgstr ""
+msgstr "_Excluir tudo"
 
 #: src/omc-learn.c:1399
 msgid "Start video playback"
@@ -8709,11 +8709,11 @@ msgstr "chave"
 
 #: src/omc-learn.c:1562
 msgid "pnum"
-msgstr ""
+msgstr "pnum"
 
 #: src/omc-learn.c:1577
 msgid "fps_ratio"
-msgstr ""
+msgstr "fps_ratio"
 
 #: src/omc-learn.c:1695
 msgid ""
@@ -9352,14 +9352,12 @@ msgid "Spinning"
 msgstr "Aplicando \"girar\""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splice"
-msgstr "Divisores"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splicing"
-msgstr "Aplicando \"girar\""
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
@@ -9559,9 +9557,8 @@ msgid "_Middle"
 msgstr "_Meio"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "_Midtone"
-msgstr "_Meio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Negate"
@@ -9651,9 +9648,8 @@ msgid "_Source Colour"
 msgstr "Cor Original [_S]"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "_Splice"
-msgstr "Divisores"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9701,9 +9697,8 @@ msgid "_Vertical segments"
 msgstr "Segmentos _verticais"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "_Wavemax"
-msgstr "Onda"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -9781,9 +9776,8 @@ msgid "colour_filter"
 msgstr "filtro de cores"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Substituir cores"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -9798,9 +9792,8 @@ msgid "deinterlace"
 msgstr "desinterlaçar"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "despeckle"
-msgstr "Tirar manchas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "dream"
@@ -9843,29 +9836,24 @@ msgid "gamma_change"
 msgstr "mudanças_de_gamma"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "limpar_frames"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "gen_clip_from_image"
-msgstr "Gerar clipe a partir de imagem"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "Gerar frames coloridos"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "gen_text"
-msgstr "detecção_de_bordas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "hue_change"
-msgstr "Mudanças de hue"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
@@ -9936,37 +9924,32 @@ msgid "shrink_expand"
 msgstr "redimensionar"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "Avançar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "solarize"
 msgstr "solarizar"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "spin"
-msgstr "Girar"
+msgstr "btrt"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "spread"
-msgstr "Espalhar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "Espiral"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
 msgstr "texto"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "transição"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "transition_checkerboard"
@@ -9977,9 +9960,8 @@ msgid "transition_fade2"
 msgstr "transição_fade2"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "transição"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "trim_frames"
@@ -10071,8 +10053,29 @@ msgstr "$plugin_name falhou:"
 msgid "$error"
 msgstr "$error"
 
-#~ msgid "_png (experimental, requires editing of smogrify)"
-#~ msgstr "_png (experimental, requer a edição de smogrify)"
+#~ msgid ""
+#~ "\n"
+#~ "Unfortunately LiVES crashed.\n"
+#~ "Please report this bug at http://www.sourceforge.net/projects/lives/\n"
+#~ "Thanks.\n"
+#~ "Recovery should be possible if you restart LiVES.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Infelizmente o LiVES travou.\n"
+#~ "Por favor reporte o bug em http://www.sourceforge.net/projects/lives/\n"
+#~ "Obrigado!\n"
+#~ "Reinicie o LiVES para o trabalho ser recuperado.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "\n"
+#~ "When reporting crashes, please include details of your operating system, "
+#~ "distribution, the LiVES version ("
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "Quando reportando crashes, por favor inclua o sistema operacional, "
+#~ "distribuição, e versão do LiVES ("
 
 #~ msgid ""
 #~ "and if possible obtain a backtrace using gdb.\n"
@@ -10084,12 +10087,6 @@ msgstr "$error"
 #~ "\n"
 #~ "\n"
 #~ "\n"
-
-#~ msgid "failed (permission denied)\n"
-#~ msgstr "falha (permissão negada)\n"
-
-#~ msgid "_Debug Mode"
-#~ msgstr "Modo _Debug"
 
 #~ msgid ""
 #~ "WARNING - this version of LiVES was compiled without jack support.\n"
@@ -10123,6 +10120,29 @@ msgstr "$error"
 #~ msgstr "Usar o reprodutor de áudio _%s"
 
 #~ msgid ""
+#~ "This operation requires resizing of frames. Please install 'convert' from "
+#~ "the Image-magick package, and then restart LiVES.\n"
+#~ msgstr ""
+#~ "Esta operação requer redimensionamento de frames. Por favor instale "
+#~ "'convert' do pacote ImageMagick, e reinicie o LiVES.\n"
+
+#~ msgid ""
+#~ "Click on a Window to Capture it\n"
+#~ "Press 'q' to stop recording.\n"
+#~ msgstr ""
+#~ "Clique em uma janela para capturá-la\n"
+#~ "Aperte 'q' para parar de gravar.\n"
+
+#~ msgid "failed (permission denied)\n"
+#~ msgstr "falha (permissão negada)\n"
+
+#~ msgid "Use an audio rate of %d Hz\n"
+#~ msgstr "Usar taxa de áudio de %d Hz\n"
+
+#~ msgid "resample audio to %d Hz\n"
+#~ msgstr "resamplear áudio para %d Hz\n"
+
+#~ msgid ""
 #~ "Multitrack audio preview is only available with the jack audio player.\n"
 #~ "You can set this in Tools|Preferences|Playback."
 #~ msgstr ""
@@ -10147,8 +10167,14 @@ msgstr "$error"
 #~ msgid "Convertors"
 #~ msgstr "Conversores"
 
+#~ msgid "Succesfully loaded %d Weed filters\n"
+#~ msgstr "%d filtros Weed carregados com sucesso\n"
+
 #~ msgid "Background colour (for Blank Background)"
 #~ msgstr "Cor de fundo (para fundo branco)"
+
+#~ msgid "_png (experimental, requires editing of smogrify)"
+#~ msgstr "_png (experimental, requer a edição de smogrify)"
 
 #~ msgid ""
 #~ "Record audio when capturing an e_xternal window\n"
@@ -10165,6 +10191,9 @@ msgstr "$error"
 
 #~ msgid "_Audio (requires jack audio player)"
 #~ msgstr "_Audio (requer o tocador de áudio JACK)"
+
+#~ msgid "_Debug Mode"
+#~ msgstr "Modo _Debug"
 
 #~ msgid ""
 #~ "Warn if multitrack has audio channels, and your audio player is not \"jack"

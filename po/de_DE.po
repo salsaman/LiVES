@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-12-23 13:43-0300\n"
+"POT-Creation-Date: 2009-12-27 11:20-0300\n"
 "PO-Revision-Date: 2009-11-12 07:14+0000\n"
 "Last-Translator: MixCool <lars.thoms@mixcool.de>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -573,12 +573,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "Datei %s geschloßen\n"
 
-#: src/main.c:3682 src/gui.c:502 src/utils.c:2153 src/utils.c:2179
+#: src/main.c:3682 src/gui.c:502 src/utils.c:2157 src/utils.c:2183
 #: src/saveplay.c:2244 src/multitrack.c:3138 src/multitrack.c:3933
 msgid "_Undo"
 msgstr "_Rückgängig machen"
 
-#: src/main.c:3683 src/gui.c:515 src/utils.c:2154 src/utils.c:2180
+#: src/main.c:3683 src/gui.c:515 src/utils.c:2158 src/utils.c:2184
 #: src/saveplay.c:2245 src/multitrack.c:3159 src/multitrack.c:3952
 msgid "_Redo"
 msgstr "_Wiederholen"
@@ -3188,65 +3188,65 @@ msgstr ""
 msgid "Removing layout %s\n"
 msgstr ""
 
-#: src/utils.c:997
+#: src/utils.c:1001
 msgid "Video [opening...]"
 msgstr "Film [öffnen...]"
 
-#: src/utils.c:1001
+#: src/utils.c:1005
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Film [%.2f Sek]"
 
-#: src/utils.c:1005
+#: src/utils.c:1009
 msgid "(Undefined)"
 msgstr "(nicht festgelegt)"
 
-#: src/utils.c:1008
+#: src/utils.c:1012
 msgid "(No video)"
 msgstr "(kein Film)"
 
-#: src/utils.c:1015
+#: src/utils.c:1019
 msgid "(No audio)"
 msgstr "(kein Ton)"
 
-#: src/utils.c:1020
+#: src/utils.c:1024
 msgid "Mono  [opening...]"
 msgstr "Mono [öffnen...]"
 
-#: src/utils.c:1023
+#: src/utils.c:1027
 msgid "Left Audio [opening...]"
 msgstr "Linker Tonkanal [öffnen...]"
 
-#: src/utils.c:1028
+#: src/utils.c:1032
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Mono [%.2f Sek]"
 
-#: src/utils.c:1031
+#: src/utils.c:1035
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Linker Tonkanal [%.2f Sek]"
 
-#: src/utils.c:1039
+#: src/utils.c:1043
 msgid "Right Audio [opening...]"
 msgstr "Rechter Tonkanal [öffnen...]"
 
-#: src/utils.c:1042
+#: src/utils.c:1046
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Rechter Tonkanal [%.2f Sek]"
 
-#: src/utils.c:1476
+#: src/utils.c:1480
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr ""
 "LiVES kann nicht zum Programm mplayer wechseln während ein Filmausschnitt "
 "geladen wird."
 
-#: src/utils.c:1646
+#: src/utils.c:1650
 msgid "Cleaning up clip"
 msgstr "Bereinige Filmausschnitt"
 
-#: src/utils.c:1789
+#: src/utils.c:1793
 #, c-format
 msgid ""
 "\n"
@@ -3261,25 +3261,25 @@ msgstr ""
 "\n"
 "Überschreiben?\n"
 
-#: src/utils.c:2146 src/utils.c:2172 src/multitrack.c:3131
+#: src/utils.c:2150 src/utils.c:2176 src/multitrack.c:3131
 #, c-format
 msgid "_Undo %s"
 msgstr "_Änderung %s rückgängig machen"
 
-#: src/utils.c:2147 src/utils.c:2173 src/multitrack.c:3153
+#: src/utils.c:2151 src/utils.c:2177 src/multitrack.c:3153
 #, c-format
 msgid "_Redo %s"
 msgstr "%s _erneuern"
 
-#: src/utils.c:2198
+#: src/utils.c:2202
 msgid "-------------Selection------------"
 msgstr "-------------Auswahl------------"
 
-#: src/utils.c:2203
+#: src/utils.c:2207
 msgid " sec ] ----------Selection---------- [ "
 msgstr " Sek ] ----------Auswahl---------- [ "
 
-#: src/utils.c:2203
+#: src/utils.c:2207
 msgid " frames ] ----------"
 msgstr " Bilder ] ----------"
 

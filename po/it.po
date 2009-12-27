@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-12-27 11:20-0300\n"
-"PO-Revision-Date: 2009-11-10 18:01+0000\n"
+"POT-Creation-Date: 2009-12-27 14:33-0300\n"
+"PO-Revision-Date: 2009-12-26 09:24+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2009-11-15 20:00+0000\n"
+"X-Launchpad-Export-Date: 2009-12-27 16:32+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:83
@@ -625,8 +625,7 @@ msgstr ""
 "\n"
 "LiVES non può scambiare i clip durante l'apertura se il lettore audio è "
 "impostato su mplayer.\n"
-"Per piacere aggiusta le opzioni di riproduzione in Preferenze e prova "
-"ancora.\n"
+"Per piacere regola le opzioni di riproduzione in Preferenze e prova ancora.\n"
 
 #: src/interface.c:39
 msgid "Let LiVES set the _file extension"
@@ -1388,12 +1387,12 @@ msgstr "Audio in ripristino ..."
 
 #: src/callbacks.c:1182
 msgid "Clearing frame images"
-msgstr "Pulizia delle immagini dei frame in corso"
+msgstr "Pulizia delle immagini dei fotogrammi in corso"
 
 #: src/callbacks.c:1206
 #, fuzzy
 msgid "Deleting excess frames"
-msgstr "Disordinamento dei frame in corso"
+msgstr "Disordinamento dei fotogrammi in corso"
 
 #: src/callbacks.c:1254
 msgid "Undoing audio"
@@ -1402,12 +1401,14 @@ msgstr "Annullamento dell'audio in corso"
 #: src/callbacks.c:1395
 #, c-format
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
-msgstr "La lunghezza del video è adesso di %d frame a %.3f frame al secondo.\n"
+msgstr ""
+"La lunghezza del video è adesso di %d fotogrammi a %.3f fotogrammi al "
+"secondo.\n"
 
 #: src/callbacks.c:1398 src/resample.c:597 src/resample.c:2325
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
-msgstr "Gli appunti sono stati ricampionati a %d frame.\n"
+msgstr "Gli appunti sono stati ricampionati a %d fotogrammi.\n"
 
 #: src/callbacks.c:1537 src/callbacks.c:1551
 msgid "Redoing"
@@ -1416,7 +1417,7 @@ msgstr "Rifacimento in corso"
 #: src/callbacks.c:1592
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
-msgstr "Copia dei frame da %d a %d%s dagli appunti in corso..."
+msgstr "Copia dei fotogrammi da %d a %d%s dagli appunti in corso..."
 
 #: src/callbacks.c:1606 src/saveplay.c:739 src/saveplay.c:845
 #: src/saveplay.c:896 src/saveplay.c:2575
@@ -1438,17 +1439,18 @@ msgstr "Incollamento in corso"
 #: src/callbacks.c:1749
 #, c-format
 msgid "Pasted %d frames to new clip.\n"
-msgstr "Incollati %d fotogrammi al nuovo clip.\n"
+msgstr "Incollati %d fotogrammi nel nuovo clip.\n"
 
 #: src/callbacks.c:1810
-#, fuzzy
 msgid ""
 "This operation requires resizing or converting of frames.\n"
 "Please install 'convert' from the Image-magick package, and then restart "
 "LiVES.\n"
 msgstr ""
-"Questa operazione richiede il ridimensionamento dei frame. Per piacere "
-"installa 'convert' dal pacchetto Image-magick, e poi riavvia LiVES.\n"
+"Questa operazione richiede il ridimensionamento o la conversione di "
+"fotogrammi.\n"
+"Per piacere installa 'convert' dal pacchetto Image-magick, e poi riavvia "
+"LiVES.\n"
 
 #: src/callbacks.c:1827
 msgid ""
@@ -1461,7 +1463,7 @@ msgstr ""
 "\n"
 "\n"
 "Il video è più lungo dell'audio.\n"
-"Prova a selezionare tutti i frame, e poi usa \n"
+"Prova a selezionare tutti i fotogrammi, e poi usa \n"
 "la funzione 'Taglia Audio' dal menu Audio."
 
 #: src/callbacks.c:1847
@@ -1479,7 +1481,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 "\n"
-"L'inserzione causerà lo spostamento dei frame in alcuni layout multi-"
+"L'inserzione causerà lo spostamento dei fotogrammi in alcuni layout multi-"
 "traccia.\n"
 "Sei sicuro di voler continuare ?\n"
 
@@ -1527,7 +1529,7 @@ msgstr ""
 #: src/callbacks.c:2046 src/callbacks.c:2174
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
-msgstr "Inserimento di %d%s frame dagli appunti in corso..."
+msgstr "Inserimento di %d%s fotogrammi dagli appunti in corso..."
 
 #: src/callbacks.c:2057 src/callbacks.c:2108 src/callbacks.c:2185
 msgid "Inserting"
@@ -1541,7 +1543,7 @@ msgstr "Inserendo %d volte dagli appunti%s..."
 #: src/callbacks.c:2089
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
-msgstr "Inserimento di %d frame dagli appunti%s in corso..."
+msgstr "Inserimento di %d fotogrammi dagli appunti%s in corso..."
 
 #: src/callbacks.c:2236
 msgid "Insert"
@@ -1554,7 +1556,7 @@ msgid ""
 "Are you sure ?"
 msgstr ""
 "\n"
-"Eliminare tutti i frame chiuderà questo file.\n"
+"Eliminare tutti i fotogrammi chiuderà questo file.\n"
 "Sei sicuro ?"
 
 #: src/callbacks.c:2299
@@ -1564,7 +1566,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 "\n"
-"L'eliminazione causerà dei frame mancanti in alcuni layout multitraccia.\n"
+"L'eliminazione causerà dei fotogrammi mancanti in alcuni layout multi-"
+"traccia.\n"
 "Sei sicuro di voler continuare?\n"
 
 #: src/callbacks.c:2307 src/callbacks.c:8029 src/callbacks.c:8201
@@ -1585,8 +1588,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 "\n"
-"L'eliminazione causerà lo scorrimento dei frame in alcuni layout "
-"multitraccia.\n"
+"L'eliminazione causerà lo scorrimento dei fotogrammi in alcuni layout multi-"
+"traccia.\n"
 "Sei sicuro di voler continuare ?\n"
 
 #: src/callbacks.c:2323 src/callbacks.c:8231
@@ -1603,7 +1606,7 @@ msgstr ""
 #: src/callbacks.c:2356
 #, c-format
 msgid "Deleting frames %d to %d%s..."
-msgstr "Eliminazione dei frame da %d a %d%s in corso..."
+msgstr "Eliminazione dei fotogrammi da %d a %d%s in corso..."
 
 #: src/callbacks.c:2369
 msgid "Deleting"
@@ -1723,7 +1726,7 @@ msgstr "Sono stati recuperati %d MB di spazio sul disco.\n"
 
 #: src/callbacks.c:3840
 msgid "Resetting frame rates and frame values..."
-msgstr "Resettando i rapporti dei frame e i valori dei frame..."
+msgstr "Resettando i rapporti e i valori dei fotogrammi..."
 
 #: src/callbacks.c:3884
 #, c-format
@@ -1732,6 +1735,9 @@ msgid ""
 "External: %s\n"
 "Internal: %s (%d bpp)\n"
 msgstr ""
+"\n"
+"Esterno: %s\n"
+"Interno: %s (%d bpp)\n"
 
 #: src/callbacks.c:3895 src/callbacks.c:3914 src/callbacks.c:3928
 #: src/callbacks.c:3962
@@ -1761,11 +1767,13 @@ msgstr ""
 "(%d decodificato)"
 
 #: src/callbacks.c:3917 src/callbacks.c:3931 src/callbacks.c:3965
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "  %.2f sec."
-msgstr "%.2f secondi."
+msgstr ""
+"\n"
+"  %.2f sec."
 
 #: src/callbacks.c:3922
 msgid ""
@@ -1776,24 +1784,20 @@ msgstr ""
 "  Sconosciuto"
 
 #: src/callbacks.c:3935 src/callbacks.c:3949
-#, fuzzy
 msgid "unsigned"
-msgstr "non firmato "
+msgstr "non firmato"
 
 #: src/callbacks.c:3936 src/callbacks.c:3950
-#, fuzzy
 msgid "signed"
-msgstr "firmato "
+msgstr "firmato"
 
 #: src/callbacks.c:3938 src/callbacks.c:3952
-#, fuzzy
 msgid "big-endian"
-msgstr ", grande-endian"
+msgstr "big-endian"
 
 #: src/callbacks.c:3939 src/callbacks.c:3953
-#, fuzzy
 msgid "little-endian"
-msgstr ", piccolo-endian"
+msgstr "little-endian"
 
 #: src/callbacks.c:3941 src/callbacks.c:3955
 #, c-format
@@ -1801,6 +1805,8 @@ msgid ""
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
+"  %d Hz %d bit\n"
+"%s %s"
 
 #: src/callbacks.c:4025
 msgid ""
@@ -1916,7 +1922,7 @@ msgstr "Nuovo Audio"
 #: src/callbacks.c:4762
 #, c-format
 msgid "%d frames are enough !\n"
-msgstr "%d frame sono sufficienti !\n"
+msgstr "%d fotogrammi sono sufficienti !\n"
 
 #: src/callbacks.c:4848
 msgid "LiVES: - Encoder debug output"
@@ -2070,7 +2076,7 @@ msgstr "ripreso..."
 #: src/callbacks.c:7273
 #, c-format
 msgid "Save Frame as %s..."
-msgstr "Salva Frame come %s..."
+msgstr "Salva Fotogramma come %s..."
 
 #: src/callbacks.c:7595
 msgid ""
@@ -2111,13 +2117,12 @@ msgid "External window was released.\n"
 msgstr "La finestra esterna è stata rilasciata.\n"
 
 #: src/callbacks.c:7672
-#, fuzzy
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
-"Clicca una Finestra per Catturarla\n"
-"Premi 'q' per interrompere la registrazione.\n"
+"Clicca su una finestra per catturarla\n"
+"Premi 'q' per interrompere la registrazione"
 
 #: src/callbacks.c:7692
 #, c-format
@@ -2133,7 +2138,7 @@ msgstr ""
 "ridimensionare*\n"
 "\n"
 "Interrompi o 'q' per finire.\n"
-"(Verranno usati in maniera predefinita %.3f al secondo.)\n"
+"(Verranno usati in maniera predefinita %.3f fotogrammi al secondo.)\n"
 
 #: src/callbacks.c:7710
 msgid "LiVES was unable to capture this window. Sorry.\n"
@@ -2164,7 +2169,7 @@ msgstr ""
 #: src/callbacks.c:7875
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
-msgstr "Esportazione dei frame audio da %d a %d come %s in corso..."
+msgstr "Esportazione dei fotogrammi audio da %d a %d come %s in corso..."
 
 #: src/callbacks.c:7880
 #, c-format
@@ -2296,13 +2301,15 @@ msgstr "LiVES: - Unisci"
 #: src/merge.c:110
 #, c-format
 msgid "Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"
-msgstr "Unisci Appunti [ %d Frame ] Con Selezione [ %d Frame ]"
+msgstr "Unisci Appunti [ %d Fotogrammi ] Con Selezione [ %d Fotogrammi ]"
 
 #: src/merge.c:115
 #, c-format
 msgid ""
 "Merge Clipboard [ %d Frames (resampled) ]       With Selection [ %d Frames ]"
-msgstr "Unisci Appunti [ %d Frame (ricampionati) ] Con Selezione [ %d Frame ]"
+msgstr ""
+"Unisci Appunti [ %d Fotogrammi (ricampionati) ] Con Selezione [ %d "
+"Fotogrammi ]"
 
 #: src/merge.c:140
 msgid "Align _Starts"
@@ -2314,7 +2321,7 @@ msgstr "Allinea _Finali"
 
 #: src/merge.c:191
 msgid "What to do with extra clipboard frames -"
-msgstr "Cosa fare con frame appunti extra -"
+msgstr "Cosa fare con fotogrammi appunti extra -"
 
 #: src/merge.c:200
 msgid "_Insert Frames"
@@ -2343,12 +2350,12 @@ msgstr "Fusione degli appunti con la selezione in corso..."
 #: src/merge.c:491
 #, c-format
 msgid "inserting %d extra frame(s) before merge\n"
-msgstr "inserimento di %d frame extra prima della fusione in corso\n"
+msgstr "inserimento di %d fotogrammi extra prima della fusione in corso\n"
 
 #: src/merge.c:598
 #, c-format
 msgid "now inserting %d extra frame(s)\n"
-msgstr "inserendo adesso %d frame extra\n"
+msgstr "inserendo adesso %d fotogrammi extra\n"
 
 #: src/merge.c:614
 msgid "Merge done.\n"
@@ -3574,7 +3581,7 @@ msgstr ""
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
-"La velocità di riproduzione è stata impostata a %.3f fotogrammi al secondo "
+"La velocità di riproduzione è stata regolata a %.3f fotogrammi al secondo "
 "per adattarsi all'audio.\n"
 
 #: src/saveplay.c:2402
@@ -3818,9 +3825,9 @@ msgid ", unsigned"
 msgstr ", non firmato"
 
 #: src/dialogs.c:1032
-#, fuzzy, c-format
+#, c-format
 msgid "Use an audio rate of %d Hz%s\n"
-msgstr "Usa un rapporto audio di %d Hz\n"
+msgstr "Utilizza un valore audio di %d Hz%s\n"
 
 #: src/dialogs.c:1039
 #, c-format
@@ -3861,9 +3868,9 @@ msgid "LiVES must:\n"
 msgstr "LiVES deve:\n"
 
 #: src/dialogs.c:1128
-#, fuzzy, c-format
+#, c-format
 msgid "resample audio to %d Hz%s\n"
-msgstr "ricampiona audio a %d Hz\n"
+msgstr "ricampiona audio a %d Hz%s\n"
 
 #: src/dialogs.c:1134
 #, c-format
@@ -4110,7 +4117,7 @@ msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your ~/.lives file"
 msgstr ""
-"Dopo l'aggiornamento/installazione, dovresti aver bisogno di aggiustare "
+"Dopo l'aggiornamento/installazione, dovresti aver bisogno di regolare "
 "l'impostazione <prefix_dir> nel tuo file ~/.lives"
 
 #: src/dialogs.c:1271
@@ -4331,7 +4338,7 @@ msgid ""
 msgstr ""
 "La multi-traccia è impostata a 0 canali audio, ma questo layout contiene "
 "dell'audio.\n"
-"Dovresti aggiustare le impostazioni audio dal menu Strumenti.\n"
+"Dovresti regolare le impostazioni audio dal menu Strumenti.\n"
 
 #: src/dialogs.c:1368
 msgid ""
@@ -4378,9 +4385,9 @@ msgid ""
 "Are you sure you wish to view it ?\n"
 msgstr ""
 "\n"
-"La lista degli eventi sarà molto larga\n"
-"e può richiedere molto tempo mostrarla.\n"
-"Sei sicuro di volerla vedere ?\n"
+"L'elenco degli eventi sarà molto lungo\n"
+"e può richiedere molto tempo mostrarlo.\n"
+"Sei sicuro di volerlo vedere ?\n"
 
 #: src/dialogs.c:1389
 msgid ""
@@ -4472,6 +4479,9 @@ msgid ""
 "The %s cannot encode clips with image type %s.\n"
 "Please select another encoder from the list.\n"
 msgstr ""
+"\n"
+"Il %s non può codificare clip con il tipo di immagine %s.\n"
+"Per piacere seleziona un altro codificatore dall'elenco.\n"
 
 #: src/effects.c:127
 #, c-format
@@ -5304,7 +5314,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Alcuni trigger sono stati aggiustati.\n"
+"Alcuni trigger sono stati regolati.\n"
 "Per piacere controlla il codice trigger.\n"
 
 #: src/rfx-builder.c:1851
@@ -5351,7 +5361,7 @@ msgstr "_Tipo:         "
 
 #: src/rfx-builder.c:1969
 msgid "Parameter type (select from list)."
-msgstr "Tipo del parametro (seleziona dalla lista)."
+msgstr "Tipo del parametro (seleziona dall'elenco)."
 
 #: src/rfx-builder.c:2000
 msgid "Decimal _places: "
@@ -6122,9 +6132,8 @@ msgid "_jpeg"
 msgstr "_jpeg"
 
 #: src/preferences.c:1862
-#, fuzzy
 msgid "_png"
-msgstr "_jpeg"
+msgstr "_png"
 
 #: src/preferences.c:1874
 msgid "Use instant opening when possible"
@@ -6689,6 +6698,8 @@ msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
 msgstr ""
+"Numero di controlli MIDI per battuta di tastiera. L'aumento di questo può "
+"migliorare la risposta MIDI, ma può rallentare la riproduzione."
 
 #: src/preferences.c:3278
 msgid "(Warning: setting this value too high can slow down playback.)"
@@ -6817,7 +6828,7 @@ msgstr "Ricampionando il video a %.8f fotogrammi al secondo..."
 #: src/resample.c:912
 #, c-format
 msgid "Resampling video at %.3f frames per second..."
-msgstr "Ricampionando il video a %.3f frame al secondo..."
+msgstr "Ricampionando il video a %.3f fotogrammi al secondo..."
 
 #: src/resample.c:943
 msgid "Reordering error !\n"
@@ -6905,7 +6916,7 @@ msgstr "Nuovo"
 
 #: src/resample.c:1691
 msgid "_Frames Per Second "
-msgstr "_Frame Al Secondo "
+msgstr "_Fotogrammi Al Secondo "
 
 #: src/resample.c:1732
 msgid "Record for maximum:  "
@@ -6951,10 +6962,10 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"La velocità di riproduzione attuale è %.3f frame al secondo.\n"
+"La velocità di riproduzione attuale è %.3f fotogrammi al secondo.\n"
 "\n"
 "Per piacere inserisci la velocità di riproduzione desiderata\n"
-"in _frame al secondo"
+"in _fotogrammi al secondo"
 
 #: src/resample.c:1950
 #, c-format
@@ -6968,10 +6979,10 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"La velocità attuale di riproduzione è di %.3f frame al secondo.\n"
+"La velocità attuale di riproduzione è di %.3f fotogrammi al secondo.\n"
 "\n"
 "Per piacere inserisci il valore _ricampionato\n"
-"in frame al secondo"
+"in fotogrammi al secondo"
 
 #: src/resample.c:1976
 msgid "OR enter the desired clip length in _seconds"
@@ -6988,7 +6999,7 @@ msgid ""
 "Are you sure you wish to change the speed ?\n"
 msgstr ""
 "\n"
-"Velocizzare il clip causerà dei frame mancanti in alcuni layout multi-"
+"Velocizzare il clip causerà dei fotogrammi mancanti in alcuni layout multi-"
 "traccia.\n"
 "Sei sicuro di voler cambiare la velocità ?\n"
 
@@ -7010,8 +7021,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 "\n"
-"Cambiare la velocità causerà lo spostamento da parte dei frame di alcuni "
-"layout multi-traccia.\n"
+"Cambiare la velocità causerà lo spostamento da parte dei fotogrammi di "
+"alcuni layout multi-traccia.\n"
 "Sei sicuro di voler continuare ?\n"
 
 #: src/resample.c:2136
@@ -7033,13 +7044,13 @@ msgstr "Cambiamento Della Velocità"
 #, c-format
 msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr ""
-"Cambiata la velocità di riproduzione in %.3f frame al secondo e l'audio in %"
-"d Hz.\n"
+"Cambiata la velocità di riproduzione in %.3f fotogrammi al secondo e l'audio "
+"in %d Hz.\n"
 
 #: src/resample.c:2176
 #, c-format
 msgid "Changed playback speed to %.3f frames per second.\n"
-msgstr "Cambiata la velocità di riproduzione in %.3f frame al secondo.\n"
+msgstr "Cambiata la velocità di riproduzione in %.3f fotogrammi al secondo.\n"
 
 #: src/resample.c:2225
 msgid "Resampling video"
@@ -7051,7 +7062,7 @@ msgstr "Ricampionando il video degli appunti"
 
 #: src/resample.c:2237
 msgid "Reordering frames"
-msgstr "Riordinamento frame in corso"
+msgstr "Riordinamento fotogrammi in corso"
 
 #: src/resample.c:2246
 msgid ""
@@ -7061,11 +7072,11 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"LiVES non è stato in grado di riordinare i frame."
+"LiVES non è stato in grado di riordinare i fotogrammi."
 
 #: src/resample.c:2289
 msgid "Deordering frames"
-msgstr "Disordinamento dei frame in corso"
+msgstr "Disordinamento dei fotogrammi in corso"
 
 #: src/resample.c:2336
 msgid "resampling error..."
@@ -7402,8 +7413,8 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Non è stato possibile aprire il flusso, il valore dei frame non corrisponde "
-"al valore fissato.\n"
+"Non è stato possibile aprire il flusso, il valore dei fotogrammi non "
+"corrisponde al valore fissato.\n"
 
 #: src/lives-yuv4mpeg.c:166
 #, c-format
@@ -7438,7 +7449,8 @@ msgid ""
 "Unable to set display framerate to %.3f fps.\n"
 "\n"
 msgstr ""
-"Non è stato possibile mostrare il rapporto dei frame a %.3f fps.\n"
+"Non è stato possibile impostare il rapporto dei fotogrammi di "
+"visualizzazione a %.3f fps.\n"
 "\n"
 
 #: src/lives-yuv4mpeg.c:231
@@ -7508,7 +7520,7 @@ msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
 msgstr ""
-"Singolo click sulla linea del tempo\n"
+"Click singolo sulla linea del tempo\n"
 "per selezionare un fotogramma.\n"
 
 #: src/multitrack.c:2653
@@ -7517,7 +7529,7 @@ msgstr "LiVES: Clip selezionato"
 
 #: src/multitrack.c:2659
 msgid "_Adjust start and end points"
-msgstr ""
+msgstr "_Regola i punti di inizio e di fine"
 
 #: src/multitrack.c:2852
 msgid "Audio mixer (ctrl-m)"
@@ -7525,7 +7537,7 @@ msgstr "Mixer audio (ctrl-m)"
 
 #: src/multitrack.c:2880
 msgid "Show frame preview"
-msgstr "Mostra anteprima frame"
+msgstr "Mostra anteprima dei fotogrammi"
 
 #: src/multitrack.c:2890
 msgid "Auto preview"
@@ -7533,7 +7545,8 @@ msgstr "Anteprima automatica"
 
 #: src/multitrack.c:2962
 msgid "Single click on timeline to select a frame.\n"
-msgstr "Clicca una volta sulla linea del tempo per selezionare un frame.\n"
+msgstr ""
+"Clicca una volta sulla linea del tempo per selezionare un fotogramma.\n"
 
 #: src/multitrack.c:2963
 msgid "Double click on timeline to select a block.\n"
@@ -7663,6 +7676,8 @@ msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
 "audio rate %d, audio sample size %d, %s.\n"
 msgstr ""
+"Valori multi-traccia impostati a %.3f fps, dimensione del fotogramma %d x %"
+"d, canali audio %d, tasso audio %d, dimensione audio di esempio %d, %s.\n"
 
 #: src/multitrack.c:3632
 #, c-format
@@ -7695,7 +7710,7 @@ msgstr "EDITOR _CLIP"
 
 #: src/multitrack.c:3987
 msgid "_Adjust selected clip start/end points"
-msgstr ""
+msgstr "_Regola i punti del clip selezionato di inizio/fine"
 
 #: src/multitrack.c:3996
 msgid "_Insert selected clip"
@@ -7975,7 +7990,7 @@ msgstr "_Inizio ancora"
 
 #: src/multitrack.c:5468
 msgid "Start frame"
-msgstr "Frame iniziale"
+msgstr "Fotogramma iniziale"
 
 #: src/multitrack.c:5505
 msgid "Anchor the end point to the timeline"
@@ -8065,7 +8080,7 @@ msgstr "%.2f secondi."
 #: src/multitrack.c:7016
 #, c-format
 msgid "%d frames"
-msgstr "%d frame"
+msgstr "%d fotogrammi"
 
 #: src/multitrack.c:7040
 msgid "audio only"
@@ -8099,7 +8114,7 @@ msgstr "Puoi visualizzare l'anteprima cliccando su\n"
 
 #: src/multitrack.c:8724
 msgid "\"Show Frame Preview\" below.\n"
-msgstr "\"Mostra Anteprima Frame\" qua sotto.\n"
+msgstr "\"Mostra Anteprima Dei Fotogrammi\" qua sotto.\n"
 
 #: src/multitrack.c:8815
 #, c-format
@@ -8142,7 +8157,7 @@ msgstr "Mappa dei filtri _successiva"
 
 #: src/multitrack.c:9080
 msgid "LiVES: Selected block/frame"
-msgstr "LiVES: Blocco/frame selezionato"
+msgstr "LiVES: Blocco/fotogramma selezionato"
 
 #: src/multitrack.c:9086
 msgid "_Delete this block"
@@ -8167,7 +8182,7 @@ msgstr "_Seleziona questo blocco"
 
 #: src/multitrack.c:9152
 msgid "LiVES: Selected frame"
-msgstr "LiVES: Frame selezionato"
+msgstr "LiVES: Fotogramma selezionato"
 
 #: src/multitrack.c:9160
 msgid "_Insert here"
@@ -8179,11 +8194,11 @@ msgstr "In_serisci audio qui"
 
 #: src/multitrack.c:10047
 msgid "invalid event list. Failed.\n"
-msgstr "lista di eventi non valida. Fallito.\n"
+msgstr "elenco di eventi non valido. Fallito.\n"
 
 #: src/multitrack.c:10052
 msgid "event list has invalid fps. Failed.\n"
-msgstr "la lista degli eventi ha degli fps non validi. Fallito.\n"
+msgstr "l'elenco degli eventi ha degli fps non validi. Fallito.\n"
 
 #: src/multitrack.c:10061
 #, c-format
@@ -8194,6 +8209,11 @@ msgid ""
 "close the current set,\n"
 "then load in the new set from the File menu.\n"
 msgstr ""
+"\n"
+"Questo layout impone l'insieme \"% s\"\n"
+"Per caricarlo devi tornare all'Editor Clip, \n"
+"chiudere il set corrente,\n"
+"quindi caricare nel nuovo set dal menù File.\n"
 
 #: src/multitrack.c:10105
 #, c-format
@@ -8265,7 +8285,7 @@ msgstr "Aggiunto l'effetto %s alla traccia %s da %.4f a %.4f\n"
 #: src/multitrack.c:11419
 #, c-format
 msgid "rendered %d frames to new clip.\n"
-msgstr "renderizzati %d frame nel nuovo clip.\n"
+msgstr "renderizzati %d fotogrammi nel nuovo clip.\n"
 
 #: src/multitrack.c:11481
 msgid "Cleaning up..."
@@ -8301,8 +8321,8 @@ msgstr ""
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
-"Frame inseriti da %d a %d dal clip %s nella traccia %s dal tempo da %.4f a "
-"%.4f\n"
+"Fotogrammi inseriti da %d a %d dal clip %s nella traccia %s dal tempo da "
+"%.4f a %.4f\n"
 
 #: src/multitrack.c:13167
 #, c-format
@@ -8401,7 +8421,7 @@ msgstr "Salvato il layout in %s\n"
 
 #: src/multitrack.c:15749
 msgid "clips and frames"
-msgstr "clip e frame"
+msgstr "clip e fotogrammi"
 
 #: src/multitrack.c:15753
 msgid "clips"
@@ -8409,7 +8429,7 @@ msgstr "clip"
 
 #: src/multitrack.c:15756
 msgid "frames"
-msgstr "frame"
+msgstr "fotogrammi"
 
 #: src/multitrack.c:15766
 msgid ""
@@ -8451,7 +8471,7 @@ msgstr "Ottenuti %d eventi...processo in corso..."
 
 #: src/multitrack.c:15926
 msgid "Checking and rebuilding event list"
-msgstr "Controllando e ricostruendo la lista degli eventi"
+msgstr "Controllando e ricostruendo l'elenco degli eventi"
 
 #: src/multitrack.c:15947
 #, c-format
@@ -8486,6 +8506,8 @@ msgstr ""
 #: src/multitrack.c:16803
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
+"Regola i valori dell'audio di sostegno e di livello in modo che la loro "
+"somma sia pari a 1.0"
 
 #: src/multitrack.c:16834
 msgid "_Gang layer audio"
@@ -8493,7 +8515,7 @@ msgstr "_Riunisci audio livello"
 
 #: src/multitrack.c:16840
 msgid "Adjust all layer audio values to the same value"
-msgstr "Aggiusta tutti i valori audio del layer allo stesso valore"
+msgstr "Regola tutti i valori audio del layer allo stesso valore"
 
 #: src/jack.c:81
 msgid "JACK server started\n"
@@ -8707,11 +8729,11 @@ msgstr "Congela video, o se è già congelato, scongelalo"
 
 #: src/omc-learn.c:1435
 msgid "Set video framerate to <fps>"
-msgstr "Imposta il rapporto dei frame del video a <fps>"
+msgstr "Imposta il rapporto dei fotogrammi del video a <fps>"
 
 #: src/omc-learn.c:1436
 msgid "Set framerate of foreground clip to <float fps>"
-msgstr "Imposta il valore dei frame del clip in primo piano a <float fps>"
+msgstr "Imposta il valore dei fotogrammi del clip in primo piano a <float fps>"
 
 #: src/omc-learn.c:1440
 msgid "Start recording"
@@ -8768,32 +8790,32 @@ msgstr "Scambia primo piano nel clip precedente"
 
 #: src/omc-learn.c:1478
 msgid "Set video framerate to ratio <fps_ratio>"
-msgstr "Imposta il valore dei frame del video al rapporto <fps_ratio>"
+msgstr "Imposta il valore dei fotogrammi del video al rapporto <fps_ratio>"
 
 #: src/omc-learn.c:1479
 msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
 msgstr ""
-"Imposta il rapporto del valore dei frame del clip in primo piano a <float "
-"fps_ratio>"
+"Imposta il rapporto del valore dei fotogrammi del clip in primo piano a "
+"<float fps_ratio>"
 
 #: src/omc-learn.c:1483
 msgid "Retrigger clip <clipnum>"
-msgstr ""
+msgstr "Reinnesca il clip <clipnum>"
 
 #: src/omc-learn.c:1484
 msgid ""
 "Switch foreground clip to the nth valid clip, and reset the frame number"
 msgstr ""
 "Scambia il clip in primo piano con il n° clip valido, e azzera il numero di "
-"frame"
+"fotogrammi"
 
 #: src/omc-learn.c:1488
 msgid "Cycle to next mode for effect key <key>"
-msgstr ""
+msgstr "Salta il ciclo alla modalità successiva per il tasto di effetto <key>"
 
 #: src/omc-learn.c:1492
 msgid "Cycle to previous mode for effect key <key>"
-msgstr ""
+msgstr "Salta il ciclo alla modalità precedente per il tasto di effetto <key>"
 
 #: src/omc-learn.c:1521 src/omc-learn.c:1584
 msgid "clipnum"
@@ -8933,7 +8955,7 @@ msgstr "Regolando il contrasto di"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Adjusting noise on"
-msgstr "Aggiustando il rumore su"
+msgstr "Regolando il rumore su"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -8961,7 +8983,7 @@ msgstr "_Colore Vuoto"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blank frames"
-msgstr "Frame vuoti"
+msgstr "Fotogrammi vuoti"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blanking"
@@ -9157,7 +9179,7 @@ msgstr "Dissolvenza in corso"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Fina_l frame"
-msgstr "Frame fina_le"
+msgstr "Fotogramma fina_le"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Flash _colour"
@@ -9173,31 +9195,31 @@ msgstr "Specchia orizzontalmente"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frame Calculator"
-msgstr "Calcolatore Frame"
+msgstr "Calcolatore Dei Fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "Frame _Colour"
-msgstr "_Colore Frame"
+msgstr "_Colore Fotogramma"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _height"
-msgstr "_Altezza frame"
+msgstr "_Altezza fotogramma"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Frame _in frame position of clipboard..."
-msgstr "Frame _nella posizione frame degli appunti..."
+msgstr "Fotogramma _nella posizione fotogramma degli appunti..."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Frame _in frame position of top frame..."
-msgstr "Frame _nella posizione frame del frame in cima..."
+msgstr "Fotogramma _nella posizione fotogramma del fotogramma in cima..."
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _width"
-msgstr "_Larghezza frame"
+msgstr "_Larghezza fotogramma"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
-msgstr "Frame _al secondo (FPS)"
+msgstr "Fotogrammi _al secondo (FPS)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma _end"
@@ -9213,7 +9235,7 @@ msgstr "Cambiamento gamma"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "Generate blank frames"
-msgstr "Genera frame vuoti"
+msgstr "Genera fotogrammi vuoti"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Generate clip from image"
@@ -9221,15 +9243,15 @@ msgstr "Genera clip da immagine"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "Generate coloured frames"
-msgstr "Genera frame colorati"
+msgstr "Genera fotogrammi colorati"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Generate title frames"
-msgstr "Genera frame titolo"
+msgstr "Genera fotogrammi titolo"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "Generating blank frames"
-msgstr "Generazione frame vuoti in corso"
+msgstr "Generazione fotogrammi vuoti in corso"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Generating clip from image"
@@ -9237,11 +9259,11 @@ msgstr "Generazione clip da immagine in corso"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "Generating coloured frames"
-msgstr "Generazione frame colorati in corso"
+msgstr "Generazione fotogrammi colorati in corso"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Generating title frames"
-msgstr "Generazione frame titolo in corso"
+msgstr "Generazione fotogrammi titolo in corso"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -9329,7 +9351,7 @@ msgstr "Normalizzando"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Number of _frames"
-msgstr "Numero di _frame"
+msgstr "Numero di _fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -9377,7 +9399,7 @@ msgstr "Rimpiazzando i colori in"
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "Resize All Frames"
-msgstr "Ridimensiona Tutti I Frame"
+msgstr "Ridimensiona Tutti I Fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotate Clip"
@@ -9476,7 +9498,7 @@ msgstr "_Valore Cadenza"
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "Step per _Frame"
-msgstr "Cadenza a _Frame"
+msgstr "Cadenza per _Fotogramma"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl _start"
@@ -9504,7 +9526,7 @@ msgstr "So_glia"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trim frames/Add border"
-msgstr "Riduci frame/Aggiungi bordo"
+msgstr "Riduci fotogrammi/Aggiungi bordo"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trimming"
@@ -9606,7 +9628,7 @@ msgstr "_Riempi colore"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_First frame"
-msgstr "_Primo frame"
+msgstr "_Primo fotogramma"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Flash for"
@@ -9618,11 +9640,11 @@ msgstr "_Carattere"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Frames per second"
-msgstr "_Frame al secondo"
+msgstr "_Fotogrammi al secondo"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Frames"
-msgstr "_Frame"
+msgstr "_Fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Hold for"
@@ -9669,7 +9691,7 @@ msgstr "_Rendi negativo"
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Number of frames"
-msgstr "_Numero di frame"
+msgstr "_Numero di fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -9709,7 +9731,7 @@ msgstr "Raggi_o"
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
-msgstr "Colora _casualmente ogni frame"
+msgstr "Colora _casualmente ogni fotogramma"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9726,7 +9748,8 @@ msgstr "_Ruota Selezione di"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
-msgstr "_Restringi finestra ruotata per adattarla alla dimensione del frame"
+msgstr ""
+"_Restringi finestra ruotata per adattarla alla dimensione del fotogramma"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "_Sigma end"
@@ -9854,7 +9877,7 @@ msgstr "_poi"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "blank_frames"
-msgstr "frame_vuoti"
+msgstr "fotogrammi_vuoti"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
@@ -9930,7 +9953,7 @@ msgstr "specchia"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "frame_calculator"
-msgstr "calcolatore_frame"
+msgstr "calcolatore_fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "gamma_change"
@@ -9938,7 +9961,7 @@ msgstr "cambiamento_gamma"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "gen_blank_frames"
-msgstr "genera_frame_vuoti"
+msgstr "genera_fotogrammi_vuoti"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "gen_clip_from_image"
@@ -9946,7 +9969,7 @@ msgstr "genera_clip_da_immagine"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "gen_coloured_frames"
-msgstr "genera_frame_colorati"
+msgstr "genera_fotogrammi_colorati"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
@@ -10066,7 +10089,7 @@ msgstr "transizione_dividi"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "trim_frames"
-msgstr "riduci_frame"
+msgstr "riduci_fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"
@@ -10153,9 +10176,6 @@ msgstr "Fallito $nome_plugin:"
 msgid "$error"
 msgstr "$errore"
 
-#~ msgid "_png (experimental, requires editing of smogrify)"
-#~ msgstr "_png (sperimentale, richiede la modifica di smogrify)"
-
 #~ msgid ""
 #~ "WARNING - this version of LiVES was compiled without jack support.\n"
 #~ "Many audio features will be unavalaible.\n"
@@ -10169,6 +10189,13 @@ msgstr "$errore"
 
 #~ msgid "Use _%s audio player"
 #~ msgstr "Utilizza lettore audio _%s"
+
+#~ msgid ""
+#~ "Click on a Window to Capture it\n"
+#~ "Press 'q' to stop recording.\n"
+#~ msgstr ""
+#~ "Clicca una Finestra per Catturarla\n"
+#~ "Premi 'q' per interrompere la registrazione.\n"
 
 #~ msgid "failed (permission denied)\n"
 #~ msgstr "fallito (permesso negato)\n"
@@ -10187,6 +10214,9 @@ msgstr "$errore"
 #~ "Jack è raccomandato, ma può prevenire l'avvio di LiVES su alcuni "
 #~ "sistemi.\n"
 #~ "Se LiVES non parte con jack, puoi riavviare e provare invece con %s.\n"
+
+#~ msgid "Use an audio rate of %d Hz\n"
+#~ msgstr "Usa un rapporto audio di %d Hz\n"
 
 #~ msgid "convertor"
 #~ msgstr "convertitore"
@@ -10223,6 +10253,9 @@ msgstr "$errore"
 #~ "La registrazione di audio può essere fatta solamente con il lettore audio "
 #~ "jack.\n"
 #~ "Puoi selezionare questo in Strumenti/Preferenze/Riproduzione.\n"
+
+#~ msgid "_png (experimental, requires editing of smogrify)"
+#~ msgstr "_png (sperimentale, richiede la modifica di smogrify)"
 
 #~ msgid ""
 #~ "Warn if multitrack has audio channels, and your audio player is not \"jack"
@@ -10272,6 +10305,9 @@ msgstr "$errore"
 #~ msgstr ""
 #~ "Registra l'audio durante la cattura di una finestra es_terna\n"
 #~ " (richiede audio jack)"
+
+#~ msgid "resample audio to %d Hz\n"
+#~ msgstr "ricampiona audio a %d Hz\n"
 
 #~ msgid ""
 #~ "\n"

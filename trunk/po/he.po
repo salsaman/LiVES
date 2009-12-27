@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-12-23 13:43-0300\n"
+"POT-Creation-Date: 2009-12-27 11:20-0300\n"
 "PO-Revision-Date: 2009-09-18 09:37+0000\n"
 "Last-Translator: lielf <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -575,12 +575,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "הקובץ %s נסגר\n"
 
-#: src/main.c:3682 src/gui.c:502 src/utils.c:2153 src/utils.c:2179
+#: src/main.c:3682 src/gui.c:502 src/utils.c:2157 src/utils.c:2183
 #: src/saveplay.c:2244 src/multitrack.c:3138 src/multitrack.c:3933
 msgid "_Undo"
 msgstr "_ביטול"
 
-#: src/main.c:3683 src/gui.c:515 src/utils.c:2154 src/utils.c:2180
+#: src/main.c:3683 src/gui.c:515 src/utils.c:2158 src/utils.c:2184
 #: src/saveplay.c:2245 src/multitrack.c:3159 src/multitrack.c:3952
 msgid "_Redo"
 msgstr "ב_צע שוב"
@@ -3206,63 +3206,63 @@ msgstr ""
 msgid "Removing layout %s\n"
 msgstr "מסיר פריסה %s\n"
 
-#: src/utils.c:997
+#: src/utils.c:1001
 msgid "Video [opening...]"
 msgstr "וידאו [פותח...]"
 
-#: src/utils.c:1001
+#: src/utils.c:1005
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "וידאו[%.2f שניות]"
 
-#: src/utils.c:1005
+#: src/utils.c:1009
 msgid "(Undefined)"
 msgstr "(לא מוגדר)"
 
-#: src/utils.c:1008
+#: src/utils.c:1012
 msgid "(No video)"
 msgstr "(אין וידאו)"
 
-#: src/utils.c:1015
+#: src/utils.c:1019
 msgid "(No audio)"
 msgstr "(אין שמע)"
 
-#: src/utils.c:1020
+#: src/utils.c:1024
 msgid "Mono  [opening...]"
 msgstr "ערוץ אחד [פותח...]"
 
-#: src/utils.c:1023
+#: src/utils.c:1027
 msgid "Left Audio [opening...]"
 msgstr "ערוץ שמאלי [פותח...]"
 
-#: src/utils.c:1028
+#: src/utils.c:1032
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "ערוץ אחד [%.2f שניות]"
 
-#: src/utils.c:1031
+#: src/utils.c:1035
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "ערוץ שמאלי [%.2f שניות]"
 
-#: src/utils.c:1039
+#: src/utils.c:1043
 msgid "Right Audio [opening...]"
 msgstr "ערוץ ימני [פותח...]"
 
-#: src/utils.c:1042
+#: src/utils.c:1046
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "ערוץ ימני [%.2f שניות]"
 
-#: src/utils.c:1476
+#: src/utils.c:1480
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "אין אפשרות לשנות ל־mplayer כל עוד הקטעים בתהליך טעינה."
 
-#: src/utils.c:1646
+#: src/utils.c:1650
 msgid "Cleaning up clip"
 msgstr "מנקה קטע"
 
-#: src/utils.c:1789
+#: src/utils.c:1793
 #, c-format
 msgid ""
 "\n"
@@ -3277,25 +3277,25 @@ msgstr ""
 "\n"
 "לשכתבו ?\n"
 
-#: src/utils.c:2146 src/utils.c:2172 src/multitrack.c:3131
+#: src/utils.c:2150 src/utils.c:2176 src/multitrack.c:3131
 #, c-format
 msgid "_Undo %s"
 msgstr "_ביטול %s"
 
-#: src/utils.c:2147 src/utils.c:2173 src/multitrack.c:3153
+#: src/utils.c:2151 src/utils.c:2177 src/multitrack.c:3153
 #, c-format
 msgid "_Redo %s"
 msgstr "_ביצוע מחדש %s"
 
-#: src/utils.c:2198
+#: src/utils.c:2202
 msgid "-------------Selection------------"
 msgstr "------------בחירה----------"
 
-#: src/utils.c:2203
+#: src/utils.c:2207
 msgid " sec ] ----------Selection---------- [ "
 msgstr " שניות [ --------בחירה--------] "
 
-#: src/utils.c:2203
+#: src/utils.c:2207
 msgid " frames ] ----------"
 msgstr " שקופיות ] --------"
 

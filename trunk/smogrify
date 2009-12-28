@@ -1582,6 +1582,7 @@ if (defined($ARGV[0])) {
 
 		#prepare audio stream if requested
 		if (-f "$curtmpdir/audio" && $arate>0) {
+
 		    $origaudio=$audiofile=$audio_in="$curtmpdir/audio";
 		    if ($areq&1||$aud_start!=0.) {
 			
@@ -3816,11 +3817,7 @@ sub convert_audio_to_wav {
 		$nsigned=$asigned;
 	    }
 	}
-
-	if (!defined($nendian)) {
-	    $nendian=$aendian;
-	}
-	system("sox -t .raw -r $arate $asigned -$sasamps -c $achans $aendian $audio_in -t .wav -r $nrate -c $nchans $nsigned -$nasamps $nendian $curtmpdir/audiodump.wav >/dev/null 2>&1");
+	system("sox -t .raw -r $arate $asigned -$sasamps -c $achans $audio_in -t .wav -r $nrate -c $nchans $nsigned -$nasamps $curtmpdir/audiodump.wav >/dev/null 2>&1");
     }
 
     `sync;sync;sync`;

@@ -1,5 +1,5 @@
-Version 1.1.7
--------------
+Version 1.1.7 (27 Dec 2009)
+---------------------------
 Set encoder output format correctly on first startup. *
 Fix problems when mt compositor/transition has 0 input frames. *
 Add sox to startup button group.

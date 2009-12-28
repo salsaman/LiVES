@@ -63,16 +63,16 @@ Installing from source (Dev/pre/subversion versions)
 If you got LiVES as a tar.gz or tar.bz2, at a terminal prompt, enter the following:
 
 
-          bzip2 -d LiVES-1.1.6.tar.bz2
+          bzip2 -d LiVES-1.1.7.tar.bz2
 or,
-          gzip -d LiVES-1.1.6.tar.gz
+          gzip -d LiVES-1.1.7.tar.gz
 
 depending on which version you have. Then:
 
 
-          tar xvf LIVES-1.1.6.tar
+          tar xvf LIVES-1.1.7.tar
 
-          cd lives-1.1.6
+          cd lives-1.1.7
 
 
 

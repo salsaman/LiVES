@@ -1018,6 +1018,8 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
 
   gboolean def_disabled=FALSE;
 
+  gint lcount=0;
+
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) return FILTER_ERROR_NO_IN_CHANNELS;
 
@@ -1063,6 +1065,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
     }
   }
 
+  while (layers[lcount++]!=NULL);
 
   for (i=0;i<num_in_tracks;i++) {
     if (in_tracks[i]<0) {
@@ -1074,8 +1077,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
     }
     channel=in_channels[i];
     weed_set_boolean_value(channel,"temp_disabled",WEED_FALSE);
-    layer=layers[in_tracks[i]];
-    if (layer==NULL) {
+    if (in_tracks[i]>=lcount) {
       for (j=i;j<num_in_tracks;j++) {
 	channel=in_channels[j];
 	chantmpl=weed_get_plantptr_value(channel,"template",&error);
@@ -1090,6 +1092,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
       }
       break;
     }
+    layer=layers[in_tracks[i]];
     if (weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
       frame=weed_get_int_value(layer,"frame",&error);
       if (frame==0) {

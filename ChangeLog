@@ -1,3 +1,19 @@
+Version 1.1.8
+-------------
+Fix regression with encoding with audio.
+Fix minor multitrack compositor issue.
+
+
+
+
+
+
+
+
+
+
+
+
 Version 1.1.7 (27 Dec 2009)
 ---------------------------
 Set encoder output format correctly on first startup. *

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2009-12-27 19:25-0300\n"
+"POT-Creation-Date: 2009-12-28 21:43-0300\n"
 "PO-Revision-Date: 2009-12-25 23:08+0000\n"
 "Last-Translator: Wille <wille@riseup.net>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -4576,12 +4576,12 @@ msgstr "Controles do Volume de Áudio"
 msgid "unknown"
 msgstr "desconhecido"
 
-#: src/effects-weed.c:2696
+#: src/effects-weed.c:2699
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Erro: plugin %s não tem a função weed_setup().\n"
 
-#: src/effects-weed.c:2777
+#: src/effects-weed.c:2780
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -4590,31 +4590,31 @@ msgstr ""
 "Info: Impossível carregar plugin %s\n"
 "Erro: %s\n"
 
-#: src/effects-weed.c:2919
+#: src/effects-weed.c:2922
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:3470
+#: src/effects-weed.c:3473
 msgid "Warning - no more effect slots left !\n"
 msgstr "Aviso - sem mais slots de efeito sobrando!\n"
 
-#: src/effects-weed.c:3540
+#: src/effects-weed.c:3543
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Falha ao iniciar instância %s, erro %d\n"
 
-#: src/effects-weed.c:3574
+#: src/effects-weed.c:3577
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Impossível iniciar gerador %s\n"
 
-#: src/effects-weed.c:4073
+#: src/effects-weed.c:4076
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Falha ao iniciar gerador %s\n"
 
-#: src/effects-weed.c:4141
+#: src/effects-weed.c:4144
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Falha ao iniciar gerador %s, erro %d\n"

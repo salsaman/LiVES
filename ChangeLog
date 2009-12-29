@@ -1,10 +1,10 @@
 Version 1.1.8
 -------------
 Fix regression with encoding with audio.
-Fix minor multitrack compositor issue.
+Fix minor multitrack compositor issue. *
 
 
-
+* Backported to 1.0.8
 
 
 

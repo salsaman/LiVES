@@ -48,15 +48,14 @@ LIVES_INLINE int lives_10pow(int pow) {
   return res;
 }
 
-LIVES_INLINE int get_approx_ln(guint val) {
-  int i;
-  guint tval=1;
-
-  for (i=0;i<16;i++) {
-    if (tval>=val) return ++i;
-    tval<<=1;
-  }
-  return i;
+LIVES_INLINE int get_approx_ln(guint x) {
+  x |= (x >> 1);
+  x |= (x >> 2);
+  x |= (x >> 4);
+  x |= (x >> 8);
+  x |= (x >> 16);
+  x++;
+  return x>>1;
 }
 
 

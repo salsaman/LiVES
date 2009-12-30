@@ -3181,7 +3181,6 @@ gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 
   // next clip
   // if the effect is a transition, this will change the background clip
-
   if (mainw->current_file<1||mainw->preview||(mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return TRUE;
 
   if (user_data!=NULL) type=GPOINTER_TO_INT(user_data);

@@ -62,6 +62,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <string.h>
 #include <signal.h>
 
+// disable this for compilers which don't support it
+#define HAS_SIGNED_RIGHT_SHIFT
+
 // don't change this unless the backend is changed as well
 // i.e. $GUI_BOOTSTRAP_FILE in smogrify
 #define BOOTSTRAP_NAME "/tmp/.smogrify"

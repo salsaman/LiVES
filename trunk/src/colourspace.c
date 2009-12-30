@@ -60,7 +60,11 @@ lives_free_buffer (guchar *pixels, gpointer data)
 
 inline G_GNUC_CONST guchar CLAMP0255(gint32 a)
 {
+#ifdef HAS_SIGNED_RIGHT_SHIFT
+  return (a&((~a)>>31))&0xFF; // use signed right shift
+#else
   return a>255?255:(a<0)?0:a;
+#endif
 }
 
 /* precomputed tables */

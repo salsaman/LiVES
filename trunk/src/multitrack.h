@@ -212,6 +212,8 @@ struct _mt {
   GtkWidget *out_eventbox;
   GtkWidget *start_in_label;
   GtkWidget *end_out_label;
+  GtkWidget *context_frame;
+  GtkWidget *nb;
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
 
@@ -445,6 +447,8 @@ struct _mt {
   gboolean aud_track_selected;
 
   gboolean has_audio_file;
+
+  gboolean tl_mouse;
 
   guint idlefunc;
 

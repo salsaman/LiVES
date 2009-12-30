@@ -214,6 +214,11 @@ struct _mt {
   GtkWidget *end_out_label;
   GtkWidget *context_frame;
   GtkWidget *nb;
+  GtkWidget *nb_label;
+
+#define NB_ERROR_SEL 1
+
+
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
 

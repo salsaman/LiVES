@@ -2445,6 +2445,7 @@ weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_
   int i,error;
   weed_plant_t **ctmpl;
   int my_in_tracks=0;
+  gchar *tmp;
 
   if (event_list==NULL) {
     event_list=weed_plant_new(WEED_PLANT_EVENT_LIST);
@@ -2460,7 +2461,8 @@ weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_
   // TODO - error check
   weed_set_int64_value (event,"timecode",tc);
   weed_set_int_value (event,"hint",WEED_EVENT_HINT_FILTER_INIT);
-  weed_set_string_value (event,"filter",make_weed_hashname (filter_idx));
+  weed_set_string_value (event,"filter",(tmp=make_weed_hashname (filter_idx)));
+  g_free(tmp);
 
   //////////////////////////////////////////////////////////////////////////////////
 
@@ -4059,7 +4061,10 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
      propnames=weed_plant_list_leaves (event);
    
      for (i=0;propnames[i]!=NULL;i++) {
-       if (!strcmp(propnames[i],"type")||!strcmp(propnames[i],"hint")||!strcmp(propnames[i],"timecode")) continue;
+       if (!strcmp(propnames[i],"type")||!strcmp(propnames[i],"hint")||!strcmp(propnames[i],"timecode")) {
+	 weed_free(propnames[i]);
+	 continue;
+       }
        gtk_tree_store_append (gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
        
        if (oldval!=NULL) {
@@ -4689,6 +4694,7 @@ render_details *create_render_details (gint type) {
   }
 
   combo_set_popdown_strings (GTK_COMBO (rdet->ofmt_combo), ofmt);
+  g_list_free_strings(ofmt);
   g_list_free(ofmt);
   
   gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(rdet->ofmt_combo))->entry),FALSE);

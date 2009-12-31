@@ -218,6 +218,8 @@ struct _mt {
 
 #define NB_ERROR_SEL 1
 #define NB_ERROR_NOEFFECT 2
+#define NB_ERROR_NOTRANS 3
+#define NB_ERROR_NOCOMP 4
 
 
   GtkObject *spinbutton_in_adj;
@@ -286,9 +288,11 @@ struct _mt {
 #define POLY_NONE 0
 #define POLY_CLIPS 1
 #define POLY_IN_OUT 2
-#define POLY_EFFECT 3
-#define POLY_FX_LIST 4
-
+#define POLY_PARAMS 3
+#define POLY_FX_STACK 4
+#define POLY_EFFECTS 5
+#define POLY_TRANS 6
+#define POLY_COMP 7
 
   gshort insert_mode;
 #define INSERT_MODE_NORMAL 1  // the default

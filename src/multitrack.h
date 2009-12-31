@@ -217,6 +217,7 @@ struct _mt {
   GtkWidget *nb_label;
 
 #define NB_ERROR_SEL 1
+#define NB_ERROR_NOEFFECT 2
 
 
   GtkObject *spinbutton_in_adj;
@@ -329,7 +330,7 @@ struct _mt {
   gchar layout_name[256];
 
   // cursor warping for mouse move mode
-  gint hotspot_x;
+  gdouble hotspot_x;
   gint hotspot_y;
 
   gboolean moving_block; // moving block flag

@@ -2500,9 +2500,15 @@ static void notebook_error(GtkNotebook *nb, guint page, gint err, lives_mt *mt) 
   switch(err) {
   case NB_ERROR_SEL:
     mt->nb_label=gtk_label_new(_("\n\nPlease select a block\nin the timeline by\ndouble clicking on it.\n"));
-    gtk_container_add(GTK_CONTAINER(gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page)),mt->nb_label);
-    gtk_widget_show(mt->nb_label);
+    break;
+  case NB_ERROR_NOEFFECT:
+    mt->nb_label=gtk_label_new(_("\n\nNo effect selected.\n"));
+    break;
   }
+
+  gtk_label_set_justify (GTK_LABEL (mt->nb_label), GTK_JUSTIFY_CENTER);
+  gtk_container_add(GTK_CONTAINER(gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page)),mt->nb_label);
+  gtk_widget_show(mt->nb_label);
   gtk_widget_modify_fg(mt->nb_label, GTK_STATE_NORMAL, &palette->normal_fore);
 }
 
@@ -2521,7 +2527,7 @@ static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint page, g
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
   case 1:
-    if (mt->block_selected==NULL) {
+    if (mt->block_selected==NULL&&mt->poly_state!=POLY_IN_OUT) {
       notebook_error(GTK_NOTEBOOK(nb),page,NB_ERROR_SEL,mt);
       return FALSE;
     }
@@ -2531,6 +2537,13 @@ static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint page, g
   case 2:
     if (mt->poly_state!=POLY_FX_LIST) polymorph(mt,POLY_FX_LIST);
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    break;
+  case 6:
+    if (mt->poly_state==POLY_EFFECT) gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    else {
+      notebook_error(GTK_NOTEBOOK(nb),page,NB_ERROR_NOEFFECT,mt);
+      return FALSE;
+    }
     break;
   }
   return FALSE;
@@ -5320,7 +5333,6 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->play_blank = gtk_image_new_from_pixbuf (mainw->imframe);
   frame = gtk_frame_new (_("Preview"));
-  gtk_widget_set_size_request (frame, mt->play_window_width, mt->play_window_height);
   gtk_box_pack_start (GTK_BOX (mt->hbox), frame, FALSE, FALSE, 0);
   mt->fd_frame=frame;
 
@@ -5408,11 +5420,43 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
 
 
-  label=gtk_label_new (_("Effects stack"));
+  label=gtk_label_new (_("FX stack"));
   hbox = gtk_hbox_new (FALSE, 0);
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 2), label);
+  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+
+
+  label=gtk_label_new (_("Filters"));
+  hbox = gtk_hbox_new (FALSE, 0);
+
+  gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 3), label);
+  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+
+
+  label=gtk_label_new (_("Transitions"));
+  hbox = gtk_hbox_new (FALSE, 0);
+
+  gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 4), label);
+  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+
+
+  label=gtk_label_new (_("Compositors"));
+  hbox = gtk_hbox_new (FALSE, 0);
+
+  gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 5), label);
+  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+
+
+  label=gtk_label_new (_("Params"));
+  hbox = gtk_hbox_new (FALSE, 0);
+
+  gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 6), label);
   gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
@@ -7679,7 +7723,7 @@ static void update_in_image(lives_mt *mt) {
   }
 
   if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
-  if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_in->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_in->allocation.height:0);
+  if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_in->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->in_hbox->allocation.height:0);
   thumb=make_thumb(filenum,width,height,frame_start);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
   if (thumb!=NULL) gdk_pixbuf_unref(thumb);
@@ -7706,7 +7750,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
   }
 
   if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
-  if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_out->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_out->allocation.height:0);
+  if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_out->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->out_hbox->allocation.height:0);
   thumb=make_thumb(filenum,width,height,frame_end);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
   if (thumb!=NULL) gdk_pixbuf_unref(thumb);
@@ -8782,6 +8826,7 @@ void polymorph (lives_mt *mt, gshort poly) {
     if (mt->is_ready) mouse_mode_context(mt);
     break;
   case (POLY_EFFECT):
+    gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),6);
     filter=get_weed_filter(mt->current_fx);
     mt->current_rfx=weed_to_rfx(filter,FALSE);
 
@@ -9317,12 +9362,13 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
   int i;
   gint old_track=mt->current_track;
   gboolean got_track=FALSE;
+  weed_timecode_t tc;
 
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
 
   gdk_window_get_pointer(GDK_WINDOW (eventbox->window), &x, &y, NULL);
-  if (x<0) x=0;
   timesecs=get_time_from_x(mt,x);
+  tc=timesecs*U_SECL;
 
   window=gdk_display_get_window_at_pointer (mt->display,&win_x,&win_y);
   
@@ -9384,13 +9430,11 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
 
       start_tc=get_event_timecode(mt->putative_block->start_event);
       
-      if ((track!=mt->current_track||q_gint64(timesecs*U_SEC,mt->fps)!=q_gint64(start_tc,mt->fps))&&((old_track<0&&track<0)||(old_track>=0&&track>=0))) {
+      if ((track!=mt->current_track||(tc-start_tc>(U_SEC/mt->fps*4))||(start_tc-tc>(U_SEC/mt->fps*4))||tc<=0)&&((old_track<0&&track<0)||(old_track>=0&&track>=0))) {
 	move_block(mt,mt->putative_block,timesecs,old_track,track);
       }
     }
 
-    gdk_window_get_pointer(GDK_WINDOW (eventbox->window), &x, NULL, NULL);
-    timesecs=get_time_from_x(mt,x);
     mt_tl_move(mt,timesecs-GTK_RULER(mt->timeline)->position);
   }
   
@@ -9524,8 +9568,9 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	    width=(width/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth);
 	    if (width>ebwidth) width=ebwidth;
 	    if (width<2) width=2;
-	    mt->hotspot_x=x-(ebwidth*(start_secs-mt->tl_min)/(mt->tl_max-mt->tl_min)-.5);
+	    mt->hotspot_x=x-.5-(ebwidth*(start_secs-mt->tl_min)/(mt->tl_max-mt->tl_min));
 	    mt->hotspot_y=y;
+	    //if (mt->hotspot_x>x) mt->hotspot_x=x;
 	    gdk_display_get_pointer(mt->display,&screen,&abs_x,&abs_y,NULL);
 #if GLIB_CHECK_VERSION(2,8,0)
 	    gdk_display_warp_pointer(mt->display,screen,abs_x-mt->hotspot_x,abs_y-y+height/2);

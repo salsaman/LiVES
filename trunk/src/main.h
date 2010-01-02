@@ -813,6 +813,7 @@ void lives_set_cursor_style(gint cstyle, GdkWindow *window);
 #define LIVES_CURSOR_BLOCK 1
 #define LIVES_CURSOR_AUDIO_BLOCK 2
 #define LIVES_CURSOR_BUSY 3
+#define LIVES_CURSOR_FX_BLOCK 4
 
 
 

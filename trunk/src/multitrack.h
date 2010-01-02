@@ -31,6 +31,10 @@
 #define MT_CTX_WIDTH 320
 #define MT_CTX_HEIGHT 240
 
+#define FX_BLOCK_WIDTH 80
+#define FX_BLOCK_HEIGHT 20
+
+
 #define TIMECODE_LENGTH 14 // length of timecode text entry, must be >12
 
 #define DEF_TIME 120 // default seconds when there is no event_list
@@ -445,6 +449,8 @@ struct _mt {
   /* current size of playback/preview area */
   gint play_window_width;
   gint play_window_height;
+
+  gint selected_filter; // filter selected in poly window tab
 
   gboolean redraw_block; // block drawing of playback cursor during track redraws
 

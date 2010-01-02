@@ -45,6 +45,7 @@ static gdouble lfps[MAX_FILES+1]; // table of layout fps
 static void **pchain; // param chain for currently being edited filter
 
 static GdkColor audcol;
+static GdkColor fxcol;
 
 static gint xachans,xarate,xasamps,xse;
 static gboolean ptaud;
@@ -557,6 +558,21 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 	cpixels[0]=audcol.red;
 	cpixels[1]=audcol.green;
 	cpixels[2]=audcol.blue;
+	cpixels[3]=0xFF;
+	cpixels+=4;
+      }
+      cpixels+=(trow-width*4);
+    }
+    break;
+  case LIVES_CURSOR_FX_BLOCK:
+    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
+    trow=gdk_pixbuf_get_rowstride(pixbuf);
+    cpixels=gdk_pixbuf_get_pixels(pixbuf);
+    for (j=0;j<height;j++) {
+      for (k=0;k<width;k++) {
+	cpixels[0]=fxcol.red;
+	cpixels[1]=fxcol.green;
+	cpixels[2]=fxcol.blue;
 	cpixels[3]=0xFF;
 	cpixels+=4;
       }
@@ -2494,61 +2510,6 @@ gboolean mt_trup (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierT
 
 
 
-
-static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
-  GtkWidget *xeventbox,*vbox,*label;
-  gchar *txt;
-  gint nfilts=rte_get_numfilters();
-  int i;
-
-
-  for (i=0;i<nfilts;i++) {
-    weed_plant_t *filter=get_weed_filter(i);
-    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
-
-      if (enabled_in_channels(filter,TRUE)==ninchans&&enabled_out_channels(filter,FALSE)==1) {
-	txt=weed_filter_get_name(i);
-
-	xeventbox=gtk_event_box_new();
-	g_object_set_data(G_OBJECT(xeventbox),"fidx",GINT_TO_POINTER(i));
-
-	gtk_widget_set_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
-	if (palette->style&STYLE_1) {
-	  if (palette->style&STYLE_3) {
-	    gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->normal_back);
-	    gtk_widget_modify_bg(xeventbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-	  }
-	  else {
-	    gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
-	    gtk_widget_modify_bg(xeventbox, GTK_STATE_SELECTED, &palette->normal_back);
-	  }
-	}
-
-	vbox=gtk_vbox_new(FALSE,0);
-
-	gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
-	gtk_container_add (GTK_CONTAINER (xeventbox), vbox);
-	label=gtk_label_new(txt);
-	g_free(txt);
-	
-	if (palette->style&STYLE_1) {
-	  gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->info_text);
-	  gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	}
-	gtk_container_set_border_width (GTK_CONTAINER (xeventbox), 5);
-	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (box), xeventbox, FALSE, FALSE, 0);
-	
-	/*	g_signal_connect (GTK_OBJECT (xeventbox), "button_press_event",
-			  G_CALLBACK (filter_ebox_pressed),
-			  (gpointer)mt);*/
-      }
-    }
-  }
-}
-
-
-
 static void notebook_error(GtkNotebook *nb, guint page, gint err, lives_mt *mt) {
   if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
 
@@ -2560,10 +2521,10 @@ static void notebook_error(GtkNotebook *nb, guint page, gint err, lives_mt *mt) 
     mt->nb_label=gtk_label_new(_("\n\nNo effect selected.\n"));
     break;
   case NB_ERROR_NOTRANS:
-    mt->nb_label=gtk_label_new(_("\n\nYou must select two video tracks\nand a time region\nto apply transitions."));
+    mt->nb_label=gtk_label_new(_("\n\nYou must select two video tracks\nand a time region\nto apply transitions.\n"));
     break;
   case NB_ERROR_NOCOMP:
-    mt->nb_label=gtk_label_new(_("\n\nYou must select at least one video track\nand a time region\nto apply compositors."));
+    mt->nb_label=gtk_label_new(_("\n\nYou must select at least one video track\nand a time region\nto apply compositors.\n"));
     break;
   }
 
@@ -2636,6 +2597,7 @@ static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint page, g
 
 
 
+
 static void select_block (lives_mt *mt) {
   track_rect *block=mt->putative_block;
   gint track;
@@ -2679,6 +2641,213 @@ static void select_block (lives_mt *mt) {
 
 
 }
+
+
+static gboolean
+on_drag_filter_end           (GtkWidget       *widget,
+			      GdkEventButton  *event,
+			      gpointer         user_data) {
+  GdkWindow *window;
+  GtkWidget *eventbox;
+  GtkWidget *labelbox;
+  GtkWidget *ahbox;
+  GtkWidget *menuitem;
+  lives_mt *mt=(lives_mt *)user_data;
+  int win_x,win_y;
+  int i;
+  gint tchan=0;
+  gdouble timesecs;
+
+  if (mt->cursor_style!=LIVES_CURSOR_FX_BLOCK) {
+    mt->selected_filter=-1;
+    return FALSE;
+  }
+
+  set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
+
+  if (mt->is_rendering||mainw->playing_file>-1||mt->selected_filter==-1) {
+    mt->selected_filter=-1;
+    return FALSE;
+  }
+
+  window=gdk_display_get_window_at_pointer (mt->display,&win_x,&win_y);
+
+  if (cfile->achans>0&&mt->opts.back_audio_tracks>0&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
+    labelbox=g_object_get_data(G_OBJECT(mt->audio_draws->data),"labelbox");
+    ahbox=g_object_get_data(G_OBJECT(mt->audio_draws->data),"ahbox");
+  
+    if (GTK_WIDGET(mt->audio_draws->data)->window==window||labelbox->window==window||ahbox->window==window) {
+      if (labelbox->window==window||ahbox->window==window) timesecs=0.;
+      else {
+	gdk_window_get_pointer(GDK_WINDOW (mt->timeline->window), &mt->sel_x, &mt->sel_y, NULL);
+	timesecs=get_time_from_x(mt,mt->sel_x);
+      }
+      tchan=-1;
+      eventbox=mt->audio_draws->data;
+    }
+  }
+
+  if (tchan==0) {
+    tchan=-1;
+    for (i=0;i<g_list_length(mt->video_draws);i++) {
+      eventbox=g_list_nth_data(mt->video_draws,i);
+      if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))!=0) continue;
+      labelbox=g_object_get_data(G_OBJECT(eventbox),"labelbox");
+      ahbox=g_object_get_data(G_OBJECT(eventbox),"ahbox");
+      if (eventbox->window==window||labelbox->window==window||ahbox->window==window) {
+	if (labelbox->window==window||ahbox->window==window) timesecs=0.;
+	else {
+	  gdk_window_get_pointer(GDK_WINDOW (mt->timeline->window), &mt->sel_x, &mt->sel_y, NULL);
+	  timesecs=get_time_from_x(mt,mt->sel_x);
+	}
+	tchan=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+	break;
+      }
+    }
+    if (tchan==-1) {
+      mt->selected_filter=-1;
+      return FALSE;
+    }
+  }
+
+  mt->current_fx=mt->selected_filter;
+  mt->selected_filter=-1;
+
+  // create dummy menuitem
+  menuitem=gtk_menu_item_new();
+  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(mt->current_fx));
+
+  switch (enabled_in_channels(get_weed_filter(mt->current_fx),TRUE)) {
+  case 1:
+    // filter - either we drop on a region or on a block
+    if (g_list_length(mt->selected_tracks)==1&&mt->region_start!=mt->region_end) {
+      // apply to region
+      mt_add_region_effect(GTK_MENU_ITEM(menuitem),mt);
+    }
+    else {
+      track_rect *block;
+      if (tchan==-1) {
+	gtk_widget_destroy(menuitem);
+	return FALSE;
+      }
+      block=get_block_from_time(eventbox,timesecs,mt);
+      mt->putative_block=block;
+      select_block(mt);
+      // apply to block
+      mt_add_block_effect(GTK_MENU_ITEM(menuitem),mt);
+    }
+    break;
+  case 2:
+    // transition
+    if (g_list_length(mt->selected_tracks)==2&&mt->region_start!=mt->region_end) {
+      // apply to region
+      mt_add_region_effect(GTK_MENU_ITEM(menuitem),mt);
+    }
+    break;
+  case 1000000:
+    // compositor
+    if (mt->selected_tracks!=NULL&&mt->region_start!=mt->region_end) {
+      // apply to region
+      mt_add_region_effect(NULL,mt);
+    }
+  }
+
+  gtk_widget_destroy(menuitem);
+  return FALSE;
+}
+
+
+
+static gboolean
+filter_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+
+  if (mt->is_rendering) return FALSE;
+
+  mt->selected_filter=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"fxid"));
+
+  if (event->type!=GDK_BUTTON_PRESS) {
+    // double click
+    return FALSE;
+  }
+
+  if (mainw->playing_file==-1) {
+    // change cursor to mini block
+    if (mt->video_draws==NULL&&mt->audio_draws==NULL) {
+      return FALSE;
+    }
+    else {
+      set_cursor_style(mt,LIVES_CURSOR_FX_BLOCK,FX_BLOCK_WIDTH,FX_BLOCK_HEIGHT,0,0,FX_BLOCK_HEIGHT/2);
+      mt->hotspot_x=mt->hotspot_y=0;
+    }
+  }
+
+  return FALSE;
+}
+
+
+
+
+
+
+
+
+static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
+  GtkWidget *xeventbox,*vbox,*label;
+  gchar *txt;
+  gint nfilts=rte_get_numfilters();
+  int i;
+
+
+  for (i=0;i<nfilts;i++) {
+    weed_plant_t *filter=get_weed_filter(i);
+    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
+
+      if (enabled_in_channels(filter,TRUE)==ninchans&&enabled_out_channels(filter,FALSE)==1) {
+	txt=weed_filter_get_name(i);
+
+	xeventbox=gtk_event_box_new();
+	g_object_set_data(G_OBJECT(xeventbox),"fxid",GINT_TO_POINTER(i));
+
+	gtk_widget_set_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+	if (palette->style&STYLE_1) {
+	  if (palette->style&STYLE_3) {
+	    gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->normal_back);
+	    gtk_widget_modify_bg(xeventbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	  }
+	  else {
+	    gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+	    gtk_widget_modify_bg(xeventbox, GTK_STATE_SELECTED, &palette->normal_back);
+	  }
+	}
+
+	vbox=gtk_vbox_new(FALSE,0);
+
+	gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
+	gtk_container_add (GTK_CONTAINER (xeventbox), vbox);
+	label=gtk_label_new(txt);
+	g_free(txt);
+	
+	if (palette->style&STYLE_1) {
+	  gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->info_text);
+	  gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
+	}
+	gtk_container_set_border_width (GTK_CONTAINER (xeventbox), 5);
+	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), xeventbox, FALSE, FALSE, 0);
+	
+	g_signal_connect (GTK_OBJECT (xeventbox), "button_press_event",
+			  G_CALLBACK (filter_ebox_pressed),
+			  (gpointer)mt);
+	g_signal_connect (GTK_OBJECT (xeventbox), "button_release_event",
+			  G_CALLBACK (on_drag_filter_end),
+			  (gpointer)mt);
+      }
+    }
+  }
+}
+
+
 
 
 gboolean mt_selblock (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
@@ -3861,6 +4030,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   audcol.blue=audcol.red=16384;
   audcol.green=65535;
 
+  fxcol.red=65535;
+  fxcol.green=fxcol.blue=0;
+
   mt->undo_mem=g_try_malloc(prefs->mt_undo_buf*1024*1024);
   if (mt->undo_mem==NULL) {
     do_mt_undo_mem_error();
@@ -3986,6 +4158,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->has_audio_file=FALSE;
 
   mt->fx_params_label=NULL;
+
+  mt->selected_filter=-1;
 
   if (mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate!=-1) {
     // user (or system) has delegated an audio volume filter from the candidates
@@ -11500,7 +11674,7 @@ void mt_add_block_effect (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *tmp;
 
   selected_track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->block_selected->eventbox),"layer_number"));
-  mt->current_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
+  if (menuitem!=NULL) mt->current_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
 
   mt->last_fx_type=MT_LAST_FX_BLOCK;
   add_effect_inner(mt,1,&selected_track,1,&selected_track,start_event,end_event);

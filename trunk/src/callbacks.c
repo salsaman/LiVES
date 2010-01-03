@@ -6685,6 +6685,12 @@ expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
   if (mainw->multitrack!=NULL&&mainw->multitrack->sepwin_pixbuf!=NULL) {
     g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
     block_expose();
+    if (rect.width>gdk_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
+      rect.width=gdk_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
+    }
+    if (rect.height>gdk_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
+      rect.height=gdk_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
+    }
     gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf),rect.x,rect.y,rect.x,rect.y,rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
     unblock_expose();
     g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);

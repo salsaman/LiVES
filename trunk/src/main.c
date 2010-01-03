@@ -1788,7 +1788,6 @@ int main (int argc, char *argv[]) {
   putenv ("LC_NUMERIC=C");
 
   gtk_init (&argc, &argv);
-
   theme_expected=pre_init();
 
   mainw->foreign=FALSE;

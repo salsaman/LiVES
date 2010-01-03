@@ -1867,6 +1867,7 @@ static void redraw_all_event_boxes(lives_mt *mt) {
 void set_timeline_end_secs (lives_mt *mt, gdouble secs) {
 
   mt->end_secs=secs;
+
   gtk_ruler_set_range (GTK_RULER (mt->timeline), mt->tl_min, mt->tl_max, mt->tl_min, mt->end_secs+1./mt->fps);
   gtk_widget_queue_draw (mt->timeline);
   gtk_widget_queue_draw (mt->timeline_table);
@@ -2423,6 +2424,7 @@ static void mt_zoom (lives_mt *mt, gdouble scale) {
     mt->tl_max-=mt->tl_min;
     mt->tl_min=0.;
   }
+
   if (mt->tl_max>mt->end_secs) mt->end_secs=mt->tl_max;
 
   mt->tl_min=q_gint64(mt->tl_min*U_SEC,mt->fps)/U_SEC;
@@ -3966,6 +3968,85 @@ static void set_mt_title (lives_mt *mt) {
 }
 
 
+static gboolean timecode_string_validate(GtkEntry *entry, lives_mt *mt) {
+  const gchar *etext=gtk_entry_get_text(entry);
+  gchar **array;
+  gint hrs,mins;
+  gdouble secs;
+  gdouble tl_range,pos;
+
+  if (get_token_count((gchar *)etext,':')!=3) return FALSE;
+
+  array=g_strsplit(etext,":",3);
+
+  if (get_token_count(array[2],'.')!=2) {
+    g_strfreev(array);
+    return FALSE;
+  }
+
+  hrs=atoi(array[0]);
+  mins=atoi(array[1]);
+  if (mins>59) mins=59;
+  secs=g_strtod(array[2],NULL);
+
+  g_strfreev(array);
+
+  secs=secs+mins*60.+hrs*3600.;
+
+  if (secs>mt->end_secs){
+    tl_range=mt->tl_max-mt->tl_min;
+    set_timeline_end_secs(mt,secs);
+
+    mt->tl_min=secs-tl_range/2;
+    mt->tl_max=secs+tl_range/2;
+
+    if (mt->tl_max>mt->end_secs) {
+      mt->tl_min-=(mt->tl_max-mt->end_secs);
+      mt->tl_max=mt->end_secs;
+    }
+
+  }
+  
+  pos=GTK_RULER (mt->timeline)->position;
+
+  pos=q_dbl(pos,mt->fps)/U_SEC;
+  if (pos<0.) pos=0.;
+
+  mt_tl_move(mt,secs-pos);
+
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+  while (g_main_context_iteration(NULL,FALSE));
+  if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
+
+  pos=GTK_RULER (mt->timeline)->position;
+
+  pos=q_dbl(pos,mt->fps)/U_SEC;
+  if (pos<0.) pos=0.;
+
+  time_to_string(mt,pos,TIMECODE_LENGTH);
+
+  return TRUE;
+}
+
+
+
+
+
+static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  gdouble pos;
+
+  if (!timecode_string_validate(GTK_ENTRY(entry),mt)) {
+    pos=GTK_RULER (mt->timeline)->position;
+    pos=q_dbl(pos,mt->fps)/U_SEC;
+    if (pos<0.) pos=0.;
+    time_to_string(mt,pos,TIMECODE_LENGTH);
+  }
+
+}
+
+
+
 
 lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   GtkWidget *hseparator;
@@ -5407,12 +5488,13 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->timecode=gtk_entry_new();
   time_to_string (mt,0.,TIMECODE_LENGTH);
-  gtk_editable_set_editable (GTK_EDITABLE(mt->timecode),FALSE);
   gtk_entry_set_max_length(GTK_ENTRY (mt->timecode),TIMECODE_LENGTH);
   gtk_entry_set_width_chars (GTK_ENTRY (mt->timecode),TIMECODE_LENGTH);
-  GTK_WIDGET_UNSET_FLAGS (mt->timecode, GTK_CAN_FOCUS);
   gtk_box_pack_start (GTK_BOX (hbox), mt->timecode, FALSE, FALSE, 0);
 
+  gtk_widget_add_events(mt->timecode,GDK_FOCUS_CHANGE_MASK);
+
+  mt->tc_func=g_signal_connect_after (G_OBJECT (mt->timecode),"focus_out_event", G_CALLBACK (after_timecode_changed), (gpointer) mt);
 
   menubar = gtk_menu_bar_new ();
 
@@ -6882,6 +6964,7 @@ void init_tracks (lives_mt *mt, gboolean set_min_max) {
     mt->tl_min=0.;
     mt->tl_max=mt->end_secs;
   }
+
   set_timeline_end_secs(mt,mt->end_secs);
 
   if (!mt->was_undo_redo) {

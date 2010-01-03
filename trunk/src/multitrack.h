@@ -270,6 +270,8 @@ struct _mt {
 
   gulong seltrack_func;
 
+  gulong tc_func;
+
   weed_plant_t *event_list;
 
   weed_plant_t *init_event;   // current editable values

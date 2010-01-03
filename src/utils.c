@@ -90,7 +90,7 @@ LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame) {
 
 
 LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time) {
-  // return the nearest frame for a given time
+  // return the nearest frame (rounded) for a given time, max is cfile->frames
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
   frame=(gint)(time*mainw->files[filenum]->fps+1.49999);
@@ -98,7 +98,7 @@ LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time) {
 }
 
 LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time) {
-  // return the nearest frame for a given time
+  // return the nearest frame (rounded) for a given time
   // allow max (frames+1)
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
@@ -107,7 +107,7 @@ LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time) {
 }
 
 LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
-  // return the nearest frame for a given time
+  // return the nearest frame (floor) for a given time
   // allow max (frames+1)
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
@@ -131,6 +131,33 @@ LIVES_INLINE float LEFloat_to_BEFloat(float f) {
   }
   return f;
 }
+
+
+void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
+  // calculate maxspect (maximum size which maintains aspect ratio)
+  // of cwidth, cheight - given restrictions rwidth * rheight
+
+  gdouble aspect;
+
+  if (*cwidth<=0||*cheight<=0||rwidth<=0||rheight<=0) return;
+
+  aspect=(gdouble)*cwidth/(gdouble)*cheight;
+
+  if ((gdouble)rheight*aspect<=rwidth) {
+    // bound by rheight
+    *cheight=rheight;
+    *cwidth=((gdouble)rheight*aspect+.5);
+    if (*cwidth>rwidth) *cwidth-=1;
+  }
+  else {
+    // bound by rwidth
+    *cwidth=rwidth;
+    *cheight=((gdouble)rwidth/aspect+.5);
+    if (*cheight>rheight) *cheight-=1;
+  }
+}
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////

@@ -753,6 +753,7 @@ LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time); // nearest
 
 gboolean check_for_ratio_fps (gdouble fps);
 gdouble get_ratio_fps(gchar *string);
+void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight);
 
 gchar *remove_trailing_zeroes(gdouble val);
 void toggle_button_toggle (GtkToggleButton *tbutton);

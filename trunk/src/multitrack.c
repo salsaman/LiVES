@@ -5827,7 +5827,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   }
 
   mt->in_hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(vbox),mt->in_hbox,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),mt->in_hbox,TRUE,FALSE,0);
   gtk_box_pack_start(GTK_BOX(mt->in_hbox),mt->spinbutton_in,FALSE,FALSE,0);
 
   mt->checkbutton_start_anchored = gtk_check_button_new ();
@@ -5900,7 +5900,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   }
 
   mt->out_hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(vbox),mt->out_hbox,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),mt->out_hbox,TRUE,FALSE,0);
 
   gtk_box_pack_start(GTK_BOX(mt->out_hbox),mt->spinbutton_out,FALSE,FALSE,0);
 
@@ -7993,8 +7993,8 @@ static void update_in_image(lives_mt *mt) {
     frame_start=mainw->files[filenum]->start;
   }
 
-  if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
-  if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_in->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->in_hbox->allocation.height:0);
+  calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
+
   thumb=make_thumb(filenum,width,height,frame_start);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
   if (thumb!=NULL) gdk_pixbuf_unref(thumb);
@@ -8020,8 +8020,8 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
     frame_end=mainw->files[filenum]->end;
   }
 
-  if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
-  if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->spinbutton_out->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mt->out_hbox->allocation.height:0);
+  calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
+
   thumb=make_thumb(filenum,width,height,frame_end);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
   if (thumb!=NULL) gdk_pixbuf_unref(thumb);
@@ -8809,7 +8809,7 @@ out_anchor_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
 
 void polymorph (lives_mt *mt, gshort poly) {
   GdkPixbuf *thumb;
-  gint width=0,height=0,track;
+  gint track;
   gint frame_start,frame_end=0;
   int filenum;
   track_rect *block=mt->block_selected;
@@ -8836,12 +8836,29 @@ void polymorph (lives_mt *mt, gshort poly) {
   weed_plant_t *prev_fm_event,*next_fm_event,*shortcut;
   gint fxcount=0;
   gint nins=1;
-  gdouble out_end_range;
-  gdouble avel=1.;
+
+  gint width=cfile->hsize;
+  gint height=cfile->vsize;
+  
+  static gint xxwidth,xxheight;
 
   gboolean start_anchored,end_anchored;
 
+  gdouble out_end_range;
+  gdouble avel=1.;
+
   if (poly==mt->poly_state&&poly!=POLY_PARAMS&&poly!=POLY_FX_STACK) return;
+
+  if (mt->poly_box->allocation.width>1&&mt->poly_box->allocation.height>1) {
+    calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
+    
+    xxwidth=width;
+    xxheight=height;
+  }
+  else {
+    width=xxwidth;
+    height=xxheight;
+  }
 
   switch (mt->poly_state) {
   case (POLY_CLIPS) :
@@ -8852,6 +8869,7 @@ void polymorph (lives_mt *mt, gshort poly) {
     g_signal_handler_block (mt->spinbutton_out,mt->spin_out_func);
     if (mt->in_out_box->parent!=NULL) gtk_container_remove (GTK_CONTAINER(mt->poly_box),mt->in_out_box);
     if (mt->avel_box->parent!=NULL) gtk_container_remove (GTK_CONTAINER(mt->poly_box),mt->avel_box);
+
     break;
   case (POLY_PARAMS) :
     mt->framedraw=NULL;
@@ -8913,6 +8931,7 @@ void polymorph (lives_mt *mt, gshort poly) {
 
   switch (poly) {
   case (POLY_IN_OUT) :
+    gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),1);
 
     mt->init_event=NULL;
     if (block==NULL||block->ordered) {
@@ -8964,13 +8983,7 @@ void polymorph (lives_mt *mt, gshort poly) {
       gtk_widget_hide(mt->avel_box);
       gtk_widget_show(mt->in_image);
       gtk_widget_show(mt->out_image);
-      width=cfile->hsize;
-      height=cfile->vsize;
 
-      if (width>mt->poly_box->allocation.width/2-IN_OUT_SEP) width=mt->poly_box->allocation.width/2-IN_OUT_SEP;
-
-      if (height>mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0)) height=mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0);
-      
       if (mainw->playing_file==filenum) {
 	mainw->files[filenum]->event_list=mt->event_list;
       }
@@ -9091,7 +9104,6 @@ void polymorph (lives_mt *mt, gshort poly) {
     if (block==NULL&&mainw->playing_file>-1) mt_desensitise(mt);
     else mt_sensitise (mt);
 
-    gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),1);
     break;
   case (POLY_CLIPS) :
     gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),0);
@@ -9664,7 +9676,7 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
   int i;
   gint old_track=mt->current_track;
   gboolean got_track=FALSE;
-  weed_timecode_t tc;
+  weed_timecode_t tc,tcpp;
 
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
 
@@ -9731,8 +9743,12 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       mt_desensitise(mt);
 
       start_tc=get_event_timecode(mt->putative_block->start_event);
-      
-      if ((track!=mt->current_track||(tc-start_tc>(U_SEC/mt->fps*4))||(start_tc-tc>(U_SEC/mt->fps*4))||tc<=0)&&((old_track<0&&track<0)||(old_track>=0&&track>=0))) {
+
+      // timecodes per pixel
+      tcpp=U_SEC*((mt->tl_max-mt->tl_min)/(gdouble)GTK_WIDGET(g_list_nth_data(mt->video_draws,0))->allocation.width);
+
+      // need to move at least 1.5 pixels, or to another track
+      if ((track!=mt->current_track||(tc-start_tc>(tcpp*3/2))||(start_tc-tc>(tcpp*3/2)))&&((old_track<0&&track<0)||(old_track>=0&&track>=0))) {
 	move_block(mt,mt->putative_block,timesecs,old_track,track);
       }
     }
@@ -9870,7 +9886,8 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	    width=(width/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth);
 	    if (width>ebwidth) width=ebwidth;
 	    if (width<2) width=2;
-	    mt->hotspot_x=x-.5-(ebwidth*(start_secs-mt->tl_min)/(mt->tl_max-mt->tl_min));
+
+	    mt->hotspot_x=x-(int)((ebwidth*((gdouble)start_secs-mt->tl_min)/(mt->tl_max-mt->tl_min))+.5);
 	    mt->hotspot_y=y;
 	    //if (mt->hotspot_x>x) mt->hotspot_x=x;
 	    gdk_display_get_pointer(mt->display,&screen,&abs_x,&abs_y,NULL);

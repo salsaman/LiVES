@@ -722,6 +722,12 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->iochan=NULL;
 
+
+  mainw->stored_event_list=NULL;
+  mainw->stored_event_list_changed=FALSE;
+  mainw->stored_layout_save_all_vals=TRUE;
+
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());

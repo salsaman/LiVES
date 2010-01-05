@@ -219,7 +219,11 @@ typedef struct {
 #define CANCEL_KILL 0  // normal - kill background processes working on current clip
 #define CANCEL_SOFT 1 // just cancel in GUI (for keep, etc)
 
-  weed_plant_t *event_list;
+  weed_plant_t *event_list; // current event_list, for recording
+  weed_plant_t *stored_event_list; // stored mt -> clip editor
+  gboolean stored_event_list_changed;
+  gboolean stored_layout_save_all_vals;
+  gchar stored_layout_name[256];
 
   gshort endian;
 

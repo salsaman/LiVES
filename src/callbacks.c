@@ -43,6 +43,11 @@ lives_exit (void) {
     int i;
     gchar *com;
 
+    if (mainw->stored_event_list!=NULL) {
+      event_list_free(mainw->stored_event_list);
+      mainw->stored_event_list=NULL;
+    }
+
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
       g_source_remove(mainw->multitrack->idlefunc);
     }
@@ -781,6 +786,11 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
     g_snprintf(mainw->set_name,256,"%s",new_set_name);
   }
 
+  if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
+    if (!check_for_layout_del(NULL,FALSE)) return;
+    mainw->stored_event_list_changed=FALSE;
+  }
+
   if (!mainw->was_set) {
     mainw->no_exit=TRUE;
     on_save_set_activate(NULL,mainw->set_name);
@@ -942,6 +952,11 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   if (mainw->playing_file>-1) {
     mainw->cancelled=CANCEL_APP_QUIT;
     return;
+  }
+
+  if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
+    if (!check_for_layout_del(NULL,FALSE)) return;
+    mainw->stored_event_list_changed=FALSE;
   }
 
   if (real_clips_available()>0) {
@@ -3250,6 +3265,11 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   gchar *msg,*extra;
 
   gboolean got_new_handle=FALSE;
+
+  if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
+    if (!check_for_layout_del(NULL,FALSE)) return;
+    mainw->stored_event_list_changed=FALSE;
+  }
 
   if (!mainw->no_exit&&!mainw->only_close) extra=g_strdup(", and LiVES will exit");
   else extra=g_strdup("");

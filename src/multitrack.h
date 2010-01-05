@@ -573,7 +573,7 @@ void init_clips (lives_mt *, gint orig_file, gboolean add); // init clip window 
 
 // delete functions
 gboolean on_mt_delete_event (GtkWidget *, GdkEvent *, gpointer mt);
-gboolean multitrack_delete (lives_mt *); // free the lives_mt struct
+gboolean multitrack_delete (lives_mt *, gboolean save); // free the lives_mt struct
 gboolean multitrack_end (GtkMenuItem *, gpointer mt);
 
 // morph the poly window
@@ -752,7 +752,7 @@ void mt_fixup_events(lives_mt *mt, weed_plant_t *old_event, weed_plant_t *new_ev
 weed_plant_t *load_event_list(lives_mt *, gchar *eload_file);
 
 
-// layout maps
+// layouts and layout maps
 GList *load_layout_map(void);
 void save_layout_map (int *lmap, double *lmap_audio, gchar *file, gchar *dir);
 void migrate_layouts (gchar *old_set_name, gchar *new_set_name);
@@ -760,6 +760,7 @@ gboolean layout_frame_is_affected(gint clipno, gint frame);
 gboolean layout_audio_is_affected(gint clipno, gdouble time);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
+gboolean check_for_layout_del (lives_mt *mt, gboolean exiting);
 
 
 // auto backup
@@ -775,7 +776,7 @@ void mouse_select_end(GtkWidget *widget, lives_mt *mt);
 void mt_change_disp_tracks_ok (GtkButton *, gpointer user_data);
 void mt_swap_play_pause (lives_mt *mt, gboolean put_pause);
 void amixer_show (GtkButton *button, gpointer user_data);
-
+gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs);
 
 /* default to warn about */
 #define LMAP_ERROR_MISSING_CLIP 1

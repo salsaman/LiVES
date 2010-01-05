@@ -111,6 +111,8 @@ static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list
     weed_leaf_delete(event_list,"audio_volume_values");
   }
 
+  if (mem==NULL&&fd<0) return;
+
   weed_plant_serialise(fd,event_list,mem);
   while (event!=NULL) {
     if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_voidptr_value(event,"event_id",(void *)event);
@@ -199,7 +201,7 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
 void recover_layout(GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   while (g_main_context_iteration (NULL,FALSE));
-  if (!on_multitrack_activate(NULL,NULL)) multitrack_delete(mainw->multitrack);
+  if (!on_multitrack_activate(NULL,NULL)) multitrack_delete(mainw->multitrack,TRUE);
   mainw->recoverable_layout=FALSE;
 }
 
@@ -3016,7 +3018,7 @@ static gboolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, g
   if (event->type!=GDK_BUTTON_PRESS&&!mt->is_rendering) {
     set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
     // double click, open up in clip editor
-    multitrack_delete(mt);
+    multitrack_delete(mt,FALSE);
     return TRUE;
   }
 
@@ -3847,9 +3849,166 @@ static void set_mt_play_sizes(lives_mt *mt, gint width, gint height) {
   }
 }
 
+static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_errors, gint *num_events, unsigned char **mem, unsigned char *mem_end) {
+  weed_plant_t *event,*eventprev=NULL;
+  weed_plant_t *event_list;
+  int error;
+  gdouble fps;
+  gchar *msg;
+
+  if (fd>0||mem!=NULL) event_list=weed_plant_deserialise(fd,mem);
+  else event_list=mainw->stored_event_list;
+
+  mt->layout_set_properties=FALSE;
+
+  if (event_list==NULL||!WEED_PLANT_IS_EVENT_LIST(event_list)) {
+    if (show_errors) d_print(_("invalid event list. Failed.\n"));
+    return NULL;
+  }
+
+  if (show_errors&&(!weed_plant_has_leaf(event_list,"fps")||(fps=weed_get_double_value(event_list,"fps",&error))<1.||fps>FPS_MAX)) {
+    d_print(_("event list has invalid fps. Failed.\n"));
+    return NULL;
+  }
+  
+  if (weed_plant_has_leaf(event_list,"needs_set")) {
+    if (show_errors) {
+      gchar *set_needed=weed_get_string_value(event_list,"needs_set",&error);
+      gchar *err;
+      if (!mainw->was_set||strcmp(set_needed,mainw->set_name)) {
+	err=g_strdup_printf(_("\nThis layout requires the set \"%s\"\nIn order to load it you must return to the Clip Editor, \nclose the current set,\nthen load in the new set from the File menu.\n"),set_needed);
+	d_print(err);
+	do_error_dialog_with_check_transient(err,TRUE,0,GTK_WINDOW(mt->window));
+	g_free(err);
+	weed_free(set_needed);
+	return NULL;
+      }
+      weed_free(set_needed);
+    }
+  }
+  else if (!show_errors&&mem==NULL) return NULL; // no change needed
+
+  if (mainw->stored_event_list==NULL) {
+    msg=set_values_from_defs(mt,FALSE);
+    if (msg!=NULL) {
+      mt->layout_set_properties=TRUE;
+      g_free(msg);
+    }
+
+    mt->fps=cfile->fps=cfile->pb_fps;
+    cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
+  }
+
+  if (event_list==mainw->stored_event_list||!mt->ignore_load_vals) {
+    // check for optional leaves
+    if (weed_plant_has_leaf(event_list,"width")) {
+      gint width=weed_get_int_value(event_list,"width",&error);
+      if (width>0) {
+	cfile->hsize=width;
+	mt->layout_set_properties=TRUE;
+      }
+    }
+    
+    if (weed_plant_has_leaf(event_list,"height")) {
+      gint height=weed_get_int_value(event_list,"height",&error);
+      if (height>0) {
+	cfile->vsize=height;
+	mt->layout_set_properties=TRUE;
+      }
+    }
+    
+    if (weed_plant_has_leaf(event_list,"audio_channels")) {
+      gint achans=weed_get_int_value(event_list,"audio_channels",&error);
+
+      if (achans>=0) {
+	if (achans>2) {
+	  gchar *err=g_strdup_printf(_("\nThis has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"),achans);
+	  d_print(err);
+	  do_error_dialog_with_check_transient(err,TRUE,0,GTK_WINDOW(mt->window));
+	  g_free(err);
+	  return NULL;
+	}
+	cfile->achans=achans;
+	mt->layout_set_properties=TRUE;
+      }
+    }
+    
+    if (weed_plant_has_leaf(event_list,"audio_rate")) {
+      gint arate=weed_get_int_value(event_list,"audio_rate",&error);
+      if (arate>0) {
+	cfile->arate=cfile->arps=arate;
+	mt->layout_set_properties=TRUE;
+      }
+    }
+    
+    if (weed_plant_has_leaf(event_list,"audio_sample_size")) {
+      gint asamps=weed_get_int_value(event_list,"audio_sample_size",&error);
+      if (asamps==8||asamps==16) {
+	cfile->asampsize=asamps;
+	mt->layout_set_properties=TRUE;
+      }
+      else if (cfile->achans>0) g_printerr("Layout has invalid sample size %d\n",asamps);
+    }
+    
+    if (weed_plant_has_leaf(event_list,"audio_signed")) {
+      gint asigned=weed_get_boolean_value(event_list,"audio_signed",&error);
+      if (asigned==WEED_TRUE) {
+	if (cfile->signed_endian&AFORM_UNSIGNED) cfile->signed_endian^=AFORM_UNSIGNED;
+      }
+      else {
+	if (!(cfile->signed_endian&AFORM_UNSIGNED)) cfile->signed_endian|=AFORM_UNSIGNED;
+      }
+      mt->layout_set_properties=TRUE;
+    }
+    
+    if (weed_plant_has_leaf(event_list,"audio_endian")) {
+      gint aendian=weed_get_int_value(event_list,"audio_endian",&error);
+      if (aendian==0) {
+	if (cfile->signed_endian&AFORM_BIG_ENDIAN) cfile->signed_endian^=AFORM_BIG_ENDIAN;
+      }
+      else {
+	if (!(cfile->signed_endian&AFORM_BIG_ENDIAN)) cfile->signed_endian|=AFORM_BIG_ENDIAN;
+      }
+      mt->layout_set_properties=TRUE;
+    }
+  }
+
+  if (event_list==mainw->stored_event_list) return event_list;
+
+  if (weed_plant_has_leaf(event_list,"first")) weed_leaf_delete(event_list,"first");
+  if (weed_plant_has_leaf(event_list,"last")) weed_leaf_delete(event_list,"last");
+
+  weed_set_voidptr_value(event_list,"first",NULL);
+  weed_set_voidptr_value(event_list,"last",NULL);
+
+  do {
+    if (mem!=NULL&&(*mem)>=mem_end) break;
+    event=weed_plant_deserialise(fd,mem);
+    if (event!=NULL) {
+      if (weed_plant_has_leaf(event,"previous")) weed_leaf_delete(event,"previous");
+      if (weed_plant_has_leaf(event,"next")) weed_leaf_delete(event,"next");
+      if (eventprev!=NULL) weed_set_voidptr_value(eventprev,"next",event);
+      weed_set_voidptr_value(event,"previous",eventprev);
+      weed_set_voidptr_value(event,"next",NULL);
+
+      if (get_first_event(event_list)==NULL) {
+	weed_set_voidptr_value(event_list,"first",event);
+      }
+      weed_set_voidptr_value(event_list,"last",event);
+      weed_add_plant_flags(event,WEED_LEAF_READONLY_PLUGIN);
+      eventprev=event;
+      if (num_events!=NULL) (*num_events)++;
+    }
+  } while (event!=NULL);
+
+  weed_add_plant_flags(event_list,WEED_LEAF_READONLY_PLUGIN);
+  return event_list;
+}
 
 
-static gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs) {
+
+
+gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs) {
   // set various multitrack state flags from either defaults or user preferences
 
   gchar *retval=NULL;
@@ -3860,23 +4019,28 @@ static gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs) {
   gint asamps=cfile->asampsize;
   gint ase=cfile->signed_endian;
 
-  if (!from_prefs) {
-    cfile->hsize=mt->user_width;
-    cfile->vsize=mt->user_height;
-    cfile->pb_fps=cfile->fps=mt->fps=mt->user_fps;
-    cfile->arps=cfile->arate=mt->user_arate;
-    cfile->achans=mt->user_achans;
-    cfile->asampsize=mt->user_asamps;
-    cfile->signed_endian=mt->user_signed_endian;
+  if (mainw->stored_event_list!=NULL) {
+    load_event_list_inner(mt,-1,TRUE,NULL,NULL,NULL);
   }
   else {
-    mt->user_width=cfile->hsize=prefs->mt_def_width;
-    mt->user_height=cfile->vsize=prefs->mt_def_height;
-    mt->user_fps=cfile->pb_fps=cfile->fps=mt->fps=prefs->mt_def_fps;
-    mt->user_arate=cfile->arate=cfile->arps=prefs->mt_def_arate;
-    mt->user_achans=cfile->achans=prefs->mt_def_achans;
-    mt->user_asamps=cfile->asampsize=prefs->mt_def_asamps;
-    mt->user_signed_endian=cfile->signed_endian=prefs->mt_def_signed_endian;
+    if (!from_prefs) {
+      cfile->hsize=mt->user_width;
+      cfile->vsize=mt->user_height;
+      cfile->pb_fps=cfile->fps=mt->fps=mt->user_fps;
+      cfile->arps=cfile->arate=mt->user_arate;
+      cfile->achans=mt->user_achans;
+      cfile->asampsize=mt->user_asamps;
+      cfile->signed_endian=mt->user_signed_endian;
+    }
+    else {
+      mt->user_width=cfile->hsize=prefs->mt_def_width;
+      mt->user_height=cfile->vsize=prefs->mt_def_height;
+      mt->user_fps=cfile->pb_fps=cfile->fps=mt->fps=prefs->mt_def_fps;
+      mt->user_arate=cfile->arate=cfile->arps=prefs->mt_def_arate;
+      mt->user_achans=cfile->achans=prefs->mt_def_achans;
+      mt->user_asamps=cfile->asampsize=prefs->mt_def_asamps;
+      mt->user_signed_endian=cfile->signed_endian=prefs->mt_def_signed_endian;
+    }
   }
   cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
 
@@ -3898,11 +4062,13 @@ static gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs) {
   return retval;
 }
 
-static gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
 
-  if (mt->event_list==NULL||get_first_event(mt->event_list)==NULL) return TRUE;
+gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
+  // save or wipe event_list
 
-  if (mt->changed&&!(prefs->warning_mask&WARN_MASK_DISCARD_LAYOUT)) {
+  if ((mt==NULL||mt->event_list==NULL||get_first_event(mt->event_list)==NULL)&&(mainw->stored_event_list==NULL||get_first_event(mainw->stored_event_list)==NULL)) return TRUE;
+
+  if (((mt!=NULL&&mt->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed))&&!(prefs->warning_mask&WARN_MASK_DISCARD_LAYOUT)) {
     gint type=3*(!exiting);
     _entryw *cdsw=create_cds_dialog(type,WARN_MASK_DISCARD_LAYOUT);
     gint resp=gtk_dialog_run(GTK_DIALOG(cdsw->dialog));
@@ -3916,7 +4082,9 @@ static gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
 	return FALSE;
       }
     }
-    if (prefs->ar_layout&&strlen(mt->layout_name)>0) {
+    if (resp==1) recover_layout_cancelled(NULL,NULL);
+
+    if (prefs->ar_layout&&(mt!=NULL&&strlen(mt->layout_name)>0)) {
       prefs->ar_layout=TRUE;
       set_pref("ar_layout",mt->layout_name);
       g_snprintf(prefs->ar_layout_name,128,"%s",mt->layout_name);
@@ -6354,7 +6522,7 @@ void delete_audio_track(lives_mt *mt, GtkWidget *eventbox, gboolean full) {
 
 
 
-gboolean multitrack_delete (lives_mt *mt) {
+gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   // free lives_mt struct
   int i;
   gint new_file=-1;
@@ -6362,7 +6530,18 @@ gboolean multitrack_delete (lives_mt *mt) {
 
   mainw->cancelled=CANCEL_NONE;
 
-  if (!check_for_layout_del(mt,TRUE)) return FALSE;
+  if (save_layout||mainw->scrap_file!=-1) {
+    if (!check_for_layout_del(mt,TRUE)) return FALSE;
+  }
+  else {
+    save_event_list_inner(mt,-1,mt->event_list,TRUE,NULL); // set width, height, fps etc.
+    add_markers(mt,mt->event_list);
+    mainw->stored_event_list=mt->event_list;
+    mt->event_list=NULL;
+    mainw->stored_event_list_changed=mt->changed;
+    mainw->stored_layout_save_all_vals=mt->save_all_vals;
+    memcpy(mainw->stored_layout_name,mt->layout_name,(strlen(mt->layout_name)+1));
+  }
 
   mt->no_expose=TRUE;
 
@@ -6537,7 +6716,7 @@ gboolean multitrack_delete (lives_mt *mt) {
 
   if (transfer_focus) gtk_window_present(GTK_WINDOW(mainw->LiVES));
 
-  recover_layout_cancelled(NULL,NULL);
+  //recover_layout_cancelled(NULL,NULL);
 
   return TRUE;
 }
@@ -6546,7 +6725,7 @@ gboolean multitrack_delete (lives_mt *mt) {
 
 gboolean
 on_mt_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-  multitrack_delete((lives_mt *)user_data);
+  multitrack_delete((lives_mt *)user_data,TRUE);
   return FALSE;
 }
 
@@ -7570,7 +7749,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
   mainw->frame_layer=NULL;
 
-  if (prefs->mt_enter_prompt) {
+  if (prefs->mt_enter_prompt&&mainw->stored_event_list==NULL) {
     rdet=create_render_details(3);  // WARNING !! - rdet is global in events.h
     rdet->enc_changed=FALSE;
     do {
@@ -7645,8 +7824,21 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   if (mainw->sep_win) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sepwin),!mainw->sep_win);
 
   if (prefs->show_gui) block_expose();
+
+  if (mainw->stored_event_list!=NULL) event_list=mainw->stored_event_list;
   
   multi=multitrack(event_list,orig_file,cfile->fps);
+
+  if (mainw->stored_event_list!=NULL) {
+    mainw->stored_event_list=NULL;
+    if (multi->event_list==NULL) {
+      multi->clip_selected=orig_file-1;
+      multi->file_selected=orig_file;
+      if (prefs->show_gui) unblock_expose();
+      return FALSE;
+    }
+    remove_markers(multi->event_list);
+  }
 
   if (mainw->recoverable_layout&&multi->event_list==NULL) {
     multi->clip_selected=orig_file-1;
@@ -10199,7 +10391,7 @@ void animate_multitrack (lives_mt *mt) {
 
 gboolean multitrack_end (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  return multitrack_delete (mt);
+  return multitrack_delete (mt,FALSE);
 }
 
 
@@ -10580,156 +10772,6 @@ void remove_gaps (GtkMenuItem *menuitem, gpointer user_data) {
   remove_gaps_inner(menuitem,user_data,FALSE);
 }
 
-
-
-static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_errors, gint *num_events, unsigned char **mem, unsigned char *mem_end) {
-  weed_plant_t *event,*eventprev=NULL;
-  int error;
-  weed_plant_t *event_list=weed_plant_deserialise(fd,mem);
-  gdouble fps;
-  gchar *msg;
-
-  mt->layout_set_properties=FALSE;
-
-  if (event_list==NULL||!WEED_PLANT_IS_EVENT_LIST(event_list)) {
-    if (show_errors) d_print(_("invalid event list. Failed.\n"));
-    return NULL;
-  }
-
-  if (show_errors&&(!weed_plant_has_leaf(event_list,"fps")||(fps=weed_get_double_value(event_list,"fps",&error))<1.||fps>FPS_MAX)) {
-    d_print(_("event list has invalid fps. Failed.\n"));
-    return NULL;
-  }
-  
-  if (weed_plant_has_leaf(event_list,"needs_set")) {
-    if (show_errors) {
-      gchar *set_needed=weed_get_string_value(event_list,"needs_set",&error);
-      gchar *err;
-      if (!mainw->was_set||strcmp(set_needed,mainw->set_name)) {
-	err=g_strdup_printf(_("\nThis layout requires the set \"%s\"\nIn order to load it you must return to the Clip Editor, \nclose the current set,\nthen load in the new set from the File menu.\n"),set_needed);
-	d_print(err);
-	do_error_dialog_with_check_transient(err,TRUE,0,GTK_WINDOW(mt->window));
-	g_free(err);
-	weed_free(set_needed);
-	return NULL;
-      }
-      weed_free(set_needed);
-    }
-  }
-  else if (!show_errors&&mem==NULL) return NULL; // no change needed
-
-  msg=set_values_from_defs(mt,FALSE);
-  if (msg!=NULL) {
-    mt->layout_set_properties=TRUE;
-    g_free(msg);
-  }
-
-  mt->fps=cfile->fps=cfile->pb_fps;
-  cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
-
-  if (!mt->ignore_load_vals) {
-    // check for optional leaves
-    if (weed_plant_has_leaf(event_list,"width")) {
-      gint width=weed_get_int_value(event_list,"width",&error);
-      if (width>0) {
-	cfile->hsize=width;
-	mt->layout_set_properties=TRUE;
-      }
-    }
-    
-    if (weed_plant_has_leaf(event_list,"height")) {
-      gint height=weed_get_int_value(event_list,"height",&error);
-      if (height>0) {
-	cfile->vsize=height;
-	mt->layout_set_properties=TRUE;
-      }
-    }
-    
-    if (weed_plant_has_leaf(event_list,"audio_channels")) {
-      gint achans=weed_get_int_value(event_list,"audio_channels",&error);
-
-      if (achans>=0) {
-	if (achans>2) {
-	  gchar *err=g_strdup_printf(_("\nThis has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"),achans);
-	  d_print(err);
-	  do_error_dialog_with_check_transient(err,TRUE,0,GTK_WINDOW(mt->window));
-	  g_free(err);
-	  return NULL;
-	}
-	cfile->achans=achans;
-	mt->layout_set_properties=TRUE;
-      }
-    }
-    
-    if (weed_plant_has_leaf(event_list,"audio_rate")) {
-      gint arate=weed_get_int_value(event_list,"audio_rate",&error);
-      if (arate>0) {
-	cfile->arate=cfile->arps=arate;
-	mt->layout_set_properties=TRUE;
-      }
-    }
-    
-    if (weed_plant_has_leaf(event_list,"audio_sample_size")) {
-      gint asamps=weed_get_int_value(event_list,"audio_sample_size",&error);
-      if (asamps==8||asamps==16) {
-	cfile->asampsize=asamps;
-	mt->layout_set_properties=TRUE;
-      }
-      else if (cfile->achans>0) g_printerr("Layout has invalid sample size %d\n",asamps);
-    }
-    
-    if (weed_plant_has_leaf(event_list,"audio_signed")) {
-      gint asigned=weed_get_boolean_value(event_list,"audio_signed",&error);
-      if (asigned==WEED_TRUE) {
-	if (cfile->signed_endian&AFORM_UNSIGNED) cfile->signed_endian^=AFORM_UNSIGNED;
-      }
-      else {
-	if (!(cfile->signed_endian&AFORM_UNSIGNED)) cfile->signed_endian|=AFORM_UNSIGNED;
-      }
-      mt->layout_set_properties=TRUE;
-    }
-    
-    if (weed_plant_has_leaf(event_list,"audio_endian")) {
-      gint aendian=weed_get_int_value(event_list,"audio_endian",&error);
-      if (aendian==0) {
-	if (cfile->signed_endian&AFORM_BIG_ENDIAN) cfile->signed_endian^=AFORM_BIG_ENDIAN;
-      }
-      else {
-	if (!(cfile->signed_endian&AFORM_BIG_ENDIAN)) cfile->signed_endian|=AFORM_BIG_ENDIAN;
-      }
-      mt->layout_set_properties=TRUE;
-    }
-  }
-
-  if (weed_plant_has_leaf(event_list,"first")) weed_leaf_delete(event_list,"first");
-  if (weed_plant_has_leaf(event_list,"last")) weed_leaf_delete(event_list,"last");
-
-  weed_set_voidptr_value(event_list,"first",NULL);
-  weed_set_voidptr_value(event_list,"last",NULL);
-
-  do {
-    if (mem!=NULL&&(*mem)>=mem_end) break;
-    event=weed_plant_deserialise(fd,mem);
-    if (event!=NULL) {
-      if (weed_plant_has_leaf(event,"previous")) weed_leaf_delete(event,"previous");
-      if (weed_plant_has_leaf(event,"next")) weed_leaf_delete(event,"next");
-      if (eventprev!=NULL) weed_set_voidptr_value(eventprev,"next",event);
-      weed_set_voidptr_value(event,"previous",eventprev);
-      weed_set_voidptr_value(event,"next",NULL);
-
-      if (get_first_event(event_list)==NULL) {
-	weed_set_voidptr_value(event_list,"first",event);
-      }
-      weed_set_voidptr_value(event_list,"last",event);
-      weed_add_plant_flags(event,WEED_LEAF_READONLY_PLUGIN);
-      eventprev=event;
-      if (num_events!=NULL) (*num_events)++;
-    }
-  } while (event!=NULL);
-
-  weed_add_plant_flags(event_list,WEED_LEAF_READONLY_PLUGIN);
-  return event_list;
-}
 
 
 static void split_block(lives_mt *mt, track_rect *block, weed_timecode_t tc, gint track, gboolean no_recurse) {
@@ -11978,9 +12020,6 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
     reset_clip_menu();
 
-    if (prefs->mt_exit_render) {
-      if (multitrack_end(menuitem,user_data)) return;
-    }
 
     orig_file=mainw->current_file;
     mainw->current_file=mainw->first_free_file;
@@ -12013,6 +12052,10 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     
     mt->render_file=mainw->current_file;
     
+    if (prefs->mt_exit_render) {
+      if (multitrack_end(menuitem,user_data)) return;
+    }
+
     init_clips(mt,orig_file,TRUE);
     if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
     while (g_main_context_iteration(NULL,FALSE));
@@ -14850,10 +14893,24 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   GtkWidget *label;
   GtkWidget *hbox;
   gboolean orig_ar_layout=prefs->ar_layout,ar_layout;
+  gboolean save_all_vals;
+  weed_plant_t *event_list;
+  gchar *layout_name;
+
+  if (mt==NULL) {
+    event_list=mainw->stored_event_list;
+    layout_name=mainw->stored_layout_name;
+    save_all_vals=mainw->stored_layout_save_all_vals;
+  }
+  else {
+    event_list=mt->event_list;
+    layout_name=mt->layout_name;
+    save_all_vals=mt->save_all_vals;
+  }
 
   // update layout map
-  layout_map=update_layout_map(mt->event_list);
-  layout_map_audio=update_layout_map_audio(mt->event_list);
+  layout_map=update_layout_map(event_list);
+  layout_map_audio=update_layout_map_audio(event_list);
 
   if (mainw->scrap_file!=-1&&layout_map[mainw->scrap_file]!=0) {
     // can't save if we have generated frames
@@ -14864,13 +14921,13 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
-  if (mt->idlefunc>0) {
+  if (mt!=NULL&&mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
   }
 
   if (strlen(mainw->set_name)>0) {
-    weed_set_string_value(mt->event_list,"needs_set",mainw->set_name);
+    weed_set_string_value(event_list,"needs_set",mainw->set_name);
   }
   else {
     gchar new_set_name[256];
@@ -14883,15 +14940,15 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	gtk_widget_destroy(renamew->dialog);
 	g_free(renamew);
 	mainw->cancelled=CANCEL_USER;
-	mt->idlefunc=mt_idle_add(mt);
+	if (mt!=NULL) mt->idlefunc=mt_idle_add(mt);
 	return;
       }
       g_snprintf(new_set_name,256,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
-      if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+      if (mt!=NULL&&mt->idlefunc>0) g_source_remove(mt->idlefunc);
       while (g_main_context_iteration(NULL,FALSE));
-      if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
+      if (mt!=NULL&&mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
     } while (!is_legal_set_name(new_set_name,FALSE));
     g_snprintf(mainw->set_name,256,"%s",new_set_name);
   }
@@ -14927,8 +14984,8 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_signal_connect (GTK_OBJECT (ar_checkbutton), "toggled",
 		    G_CALLBACK (on_autoreload_toggled),
 		    GINT_TO_POINTER(2));
-  if (!strlen(mt->layout_name)) esave_file=choose_file(esave_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
-  else esave_file=choose_file(esave_dir,mt->layout_name,filt,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
+  if (!strlen(layout_name)) esave_file=choose_file(esave_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
+  else esave_file=choose_file(esave_dir,layout_name,filt,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
 
   ar_layout=prefs->ar_layout;
   prefs->ar_layout=orig_ar_layout;
@@ -14952,21 +15009,21 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (!was_set) memset(mainw->set_name,0,1);
     mainw->cancelled=CANCEL_USER;
 
-    mt->idlefunc=mt_idle_add(mt);
+    if (mt!=NULL) mt->idlefunc=mt_idle_add(mt);
 
     return;
   }
 
   esave_file=ensure_extension(esave_file,".lay");
 
-  g_snprintf(mt->layout_name,256,"%s",esave_file);
-  get_basename(mt->layout_name);
+  g_snprintf(layout_name,256,"%s",esave_file);
+  get_basename(layout_name);
 
-  add_markers(mt,mt->event_list);
+  if (mt!=NULL) add_markers(mt,mt->event_list);
 
   fd=creat(esave_file,S_IRUSR|S_IWUSR);
 
-  save_event_list_inner(mt,fd,mt->event_list,mt->save_all_vals,NULL);
+  save_event_list_inner(mt,fd,event_list,save_all_vals,NULL);
 
   close(fd);
   msg=g_strdup_printf(_("Saved layout to %s\n"),esave_file);
@@ -14976,7 +15033,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // save layout map
   save_layout_map(layout_map,layout_map_audio,esave_file,esave_dir);
 
-  mt->changed=FALSE;
+  if (mt!=NULL) mt->changed=FALSE;
 
   if (!ar_layout) {
     prefs->ar_layout=FALSE;
@@ -14985,8 +15042,8 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else {
     prefs->ar_layout=TRUE;
-    set_pref("ar_layout",mt->layout_name);
-    g_snprintf(prefs->ar_layout_name,128,"%s",mt->layout_name);
+    set_pref("ar_layout",layout_name);
+    g_snprintf(prefs->ar_layout_name,128,"%s",layout_name);
   }
 
   g_free(esave_file);
@@ -14995,10 +15052,11 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (layout_map_audio!=NULL) g_free(layout_map_audio);
 
   recover_layout_cancelled(NULL,NULL);
-  mt->auto_changed=FALSE;
 
-  mt->idlefunc=mt_idle_add(mt);
-
+  if (mt!=NULL) {
+    mt->auto_changed=FALSE;
+    mt->idlefunc=mt_idle_add(mt);
+  }
 }
 
 

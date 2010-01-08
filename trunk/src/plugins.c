@@ -1786,11 +1786,12 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
   g_free(plugname);
 
   dplug->handle=dlopen(nplugname,RTLD_LAZY);
+  g_free(nplugname);
+
   if (dplug->handle==NULL) {
     gchar *msg=g_strdup_printf (_("\n\nFailed to open decoder plugin %s\nError was %s\n"),plname,dlerror());
     d_print(msg);
     g_free (msg);
-    g_free(nplugname);
     g_free(dplug);
     return NULL;
   }
@@ -1813,7 +1814,6 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
     d_print(msg);
     g_free (msg);
     close_decoder_plugin(0,dplug);
-    g_free(nplugname);
     g_free(dplug);
     return NULL;
   }

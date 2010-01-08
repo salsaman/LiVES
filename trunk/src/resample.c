@@ -555,7 +555,7 @@ static void on_reorder_activate (void) {
     if (!do_layout_alter_frames_warning()) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
   }
 
@@ -668,7 +668,7 @@ on_resaudio_ok_clicked                      (GtkButton *button,
     if (!do_layout_alter_audio_warning()) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
   }
 
@@ -2110,7 +2110,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
     gint new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
     if (layout_frame_is_affected(mainw->current_file,new_frames)) {
       if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing frames in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) return;
-      add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,new_frames,0.);
+      add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,new_frames,0.,new_frames<cfile->stored_layout_frame);
       has_lmap_error=TRUE;
     }
   }
@@ -2119,7 +2119,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
     gint new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
     if (layout_audio_is_affected(mainw->current_file,(new_frames-1.)/cfile->fps)) {
       if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing audio in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) return;
-      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(new_frames-1.)/cfile->fps);
+      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(new_frames-1.)/cfile->fps,(new_frames-1.)/cfile->fps<cfile->stored_layout_audio);
       has_lmap_error=TRUE;
     }
   }
@@ -2128,7 +2128,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
     if (!do_warning_dialog(_("\nChanging the speed will cause frames to shift some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
   }
 
@@ -2136,7 +2136,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
     if (!do_warning_dialog(_("\nChanging the speed will cause audio to shift some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
   }
 
@@ -2144,7 +2144,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
     if (!do_layout_alter_frames_warning()) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
   }
 
@@ -2152,7 +2152,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
     if (!do_layout_alter_audio_warning()) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
   }
 

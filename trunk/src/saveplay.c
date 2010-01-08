@@ -2217,6 +2217,9 @@ create_cfile(void) {
   cfile->layout_map=NULL;
   cfile->frame_index=cfile->frame_index_back=NULL;
   cfile->fx_frame_pump=0;
+  cfile->stored_layout_frame=0;
+  cfile->stored_layout_audio=0.;
+  cfile->stored_layout_fps=0.;
 
   if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;

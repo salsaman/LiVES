@@ -208,7 +208,7 @@ on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     if (!do_layout_alter_frames_warning()) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
   }
 
@@ -699,7 +699,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
       if (!do_layout_alter_frames_warning()) {
 	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+      add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
       has_lmap_error=TRUE;
     }
   }

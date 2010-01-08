@@ -3702,6 +3702,8 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
 
   gboolean new_clip=FALSE;
 
+  int i;
+
   // record end
   mainw->record=FALSE;
   mainw->record_paused=FALSE;
@@ -3782,6 +3784,16 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       mainw->is_rendering=FALSE;
       break;
     case RENDER_CHOICE_MULTITRACK:
+      if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
+	if (!check_for_layout_del(NULL,FALSE)) {
+	  render_choice=RENDER_CHOICE_PREVIEW;
+	  break;
+	}
+      }
+      if (mainw->stored_event_list!=NULL) {
+	recover_layout_cancelled(NULL,NULL);
+	stored_event_list_free_all();
+      }
       mainw->unordered_blocks=TRUE;
       if (on_multitrack_activate (NULL, (gpointer)mainw->event_list)) {
 	mainw->event_list=NULL;

@@ -1,10 +1,11 @@
 Version 1.1.9
 -------------
 GUI updates for multitrack mode.
-Drag and drop effects in multitrack mode.
+Implement drag and drop effects in multitrack mode.
 Allow continuous mouse movement on multitrack timeline.
 Allow timecode to be edited in multitrack mode.
 Switching to->from multitrack mode maintains the layout in memory.
+Fix image loading (regression).
 Fix some minor memory leaks.
 
 	

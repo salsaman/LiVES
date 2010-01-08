@@ -692,74 +692,88 @@ gchar *repl_tmpdir(gchar *entry, gboolean fwd) {
 void remove_layout_files(GList *map) {
   gchar *com,*msg;
   gchar *fname,*fdir;
-  GList *lmap,*lmap_next,*cmap,*cmap_next;
+  GList *lmap,*lmap_next,*cmap,*cmap_next,*map_next;
   size_t maplen;
   int i;
+  gboolean is_current;
 
   while (map!=NULL) {
+    map_next=map->next;
     if (map->data!=NULL) {
-      maplen=strlen(map->data);
-
-      // remove from mainw->current_layouts_map
-      cmap=mainw->current_layouts_map;
-      while (cmap!=NULL) {
-	cmap_next=cmap->next;
-	if (!strcmp((gchar *)cmap->data,(gchar *)map->data)) {
-	  mainw->current_layouts_map=g_list_remove_link(mainw->current_layouts_map,cmap);
-	  break;
+      if (!strcmp(map->data,mainw->cl_string)) {
+	is_current=TRUE;
+	fname=g_strdup(mainw->cl_string);
+      }
+      else {
+	is_current=FALSE;
+	maplen=strlen(map->data);
+	
+	// remove from mainw->current_layouts_map
+	cmap=mainw->current_layouts_map;
+	while (cmap!=NULL) {
+	  cmap_next=cmap->next;
+	  if (!strcmp((gchar *)cmap->data,(gchar *)map->data)) {
+	    mainw->current_layouts_map=g_list_remove_link(mainw->current_layouts_map,cmap);
+	    break;
+	  }
+	  cmap=cmap_next;
 	}
-	cmap=cmap_next;
+	fname=repl_tmpdir(map->data,FALSE);
       }
 
-      fname=repl_tmpdir(map->data,FALSE);
       msg=g_strdup_printf(_("Removing layout %s\n"),fname);
       d_print(msg);
       g_free(msg);
-      
-      com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",fname);
-      dummyvar=system(com);
-      g_free(com);
-      
-      if (!strncmp(fname,prefs->tmpdir,strlen(prefs->tmpdir))) {
-	// is in tmpdir, safe to remove parents
-	com=g_strdup_printf("touch %s/noremove >/dev/null 2>&1",prefs->tmpdir);
-	dummyvar=system(com);
-	g_free(com);
-	
-	fdir=g_path_get_dirname (fname);
-	com=g_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
-	dummyvar=system(com);
-	g_free(com);
-	g_free(fdir);
-	
-	com=g_strdup_printf("/bin/rm %s/noremove 2>/dev/null",prefs->tmpdir);
-	dummyvar=system(com);
-	g_free(com);
-      }
 
-      // remove from mainw->files[]->layout_map
-      for (i=1;i<=MAX_FILES;i++) {
-	if (mainw->files[i]!=NULL) {
-	  if (mainw->files[i]->layout_map!=NULL) {
-	    lmap=mainw->files[i]->layout_map;
-	    while (lmap!=NULL) {
-	      lmap_next=lmap->next;
-	      if (!strncmp(lmap->data,map->data,maplen)) {
-		// remove matching entry
-		if (lmap->prev!=NULL) lmap->prev->next=lmap_next;
-		else mainw->files[i]->layout_map=lmap_next;
-		if (lmap->next!=NULL) lmap_next->prev=lmap->prev;
-		lmap->next=lmap->prev=NULL;
-		g_free(lmap->data);
-		g_list_free(lmap);
+      if (!is_current) {
+	com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",fname);
+	dummyvar=system(com);
+	g_free(com);
+	
+	if (!strncmp(fname,prefs->tmpdir,strlen(prefs->tmpdir))) {
+	  // is in tmpdir, safe to remove parents
+	  com=g_strdup_printf("touch %s/noremove >/dev/null 2>&1",prefs->tmpdir);
+	  dummyvar=system(com);
+	  g_free(com);
+	  
+	  fdir=g_path_get_dirname (fname);
+	  com=g_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
+	  dummyvar=system(com);
+	  g_free(com);
+	  g_free(fdir);
+	  
+	  com=g_strdup_printf("/bin/rm %s/noremove 2>/dev/null",prefs->tmpdir);
+	  dummyvar=system(com);
+	  g_free(com);
+	}
+	
+	// remove from mainw->files[]->layout_map
+	for (i=1;i<=MAX_FILES;i++) {
+	  if (mainw->files[i]!=NULL) {
+	    if (mainw->files[i]->layout_map!=NULL) {
+	      lmap=mainw->files[i]->layout_map;
+	      while (lmap!=NULL) {
+		lmap_next=lmap->next;
+		if (!strncmp(lmap->data,map->data,maplen)) {
+		  // remove matching entry
+		  if (lmap->prev!=NULL) lmap->prev->next=lmap_next;
+		  else mainw->files[i]->layout_map=lmap_next;
+		  if (lmap->next!=NULL) lmap_next->prev=lmap->prev;
+		  lmap->next=lmap->prev=NULL;
+		  g_free(lmap->data);
+		  g_list_free(lmap);
+		}
+		lmap=lmap_next;
 	      }
-	      lmap=lmap_next;
 	    }
 	  }
 	}
       }
+      else {
+	stored_event_list_free_all();
+      }
     }
-    map=map->next;
+    map=map_next;
   }
 
   // save updated layout.map

@@ -417,6 +417,10 @@ typedef struct {                // corresponds to one clip in the GUI
 
   guint img_type;
 
+  gint stored_layout_frame;
+  gdouble stored_layout_audio;
+  gdouble stored_layout_fps;
+
   // TODO - change to lives_clip_t
 } file;
 
@@ -758,7 +762,7 @@ void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight);
 gchar *remove_trailing_zeroes(gdouble val);
 void toggle_button_toggle (GtkToggleButton *tbutton);
 void remove_layout_files(GList *lmap);
-gboolean add_lmap_error(int lerror, gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime);
+gboolean add_lmap_error(int lerror, gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current);
 void clear_lmap_errors(void);
 gboolean prompt_remove_layout_files(void);
 gboolean is_legal_set_name(gchar *set_name, gboolean allow_dupes);

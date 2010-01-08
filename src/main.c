@@ -672,6 +672,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->none_string=g_strdup(_("None"));  // note to translators - text saying "None", for playback plugin name
   mainw->recommended_string=g_strdup(_("recommended"));  // note to translators - text saying "recommended", for playback plugin name
   mainw->disabled_string=g_strdup(_("disabled !"));  // note to translators - text saying "disabled", for playback plugin name
+  mainw->cl_string=g_strdup(_("**The current layout**"));  // note to translators - text saying "**The current layout**", to warn users that the current layout is affected
 
   mainw->opening_frames=-1;
 
@@ -727,6 +728,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->stored_event_list_changed=FALSE;
   mainw->stored_layout_save_all_vals=TRUE;
 
+  mainw->affected_layout_marks=NULL;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 

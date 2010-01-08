@@ -761,6 +761,7 @@ gboolean layout_audio_is_affected(gint clipno, gdouble time);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
 gboolean check_for_layout_del (lives_mt *mt, gboolean exiting);
+void stored_event_list_free_all(void);
 
 
 // auto backup

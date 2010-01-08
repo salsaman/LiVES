@@ -796,6 +796,10 @@ typedef struct {
   GList *affected_layouts_map; // map of layouts with errors
   GList *current_layouts_map; // map of all layouts for set
 
+  // list of pairs of marks in affected_layouts_map, text between them should be deleted when 
+  // stored_layout is deleted
+  GList *affected_layout_marks;
+
   gchar *recovery_file;  // the filename of our recover file
   gboolean leave_recovery;
 
@@ -840,6 +844,7 @@ typedef struct {
   gchar *none_string;  // localised text saying "None", for playback plugin name, etc.
   gchar *recommended_string;  // localised text saying "recommended", for encoder and output format
   gchar *disabled_string;  // localised text saying "disabled !", for playback plugin name, etc.
+  gchar *cl_string; // localised text saying "*The current layout*", for layout warnings
 
   gint opening_frames; // count of frames so far opened, updated after preview (currently)
 

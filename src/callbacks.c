@@ -256,6 +256,7 @@ lives_exit (void) {
   g_free(mainw->none_string);
   g_free(mainw->disabled_string);
   g_free(mainw->recommended_string);
+  g_free(mainw->cl_string);
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
 
@@ -588,7 +589,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
   gchar title[256];
   gboolean lmap_errors=FALSE;
 
-  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_CLOSE_FILE)&&cfile->layout_map!=NULL) {
+  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_CLOSE_FILE)&&(cfile->layout_map!=NULL||cfile->stored_layout_frame>0||cfile->stored_layout_audio>0.)) {
     get_menu_text(cfile->menuentry,title);
     if (strlen(title)>128) g_snprintf(title,32,"%s",(_("This file")));
     warn=g_strdup_printf(_ ("\n%s\nis used in some multitrack layouts.\n\nReally close it ?"),title);
@@ -597,7 +598,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
       return;
     }
     g_free(warn);
-    add_lmap_error(LMAP_ERROR_CLOSE_FILE,cfile->name,cfile->layout_map,0,0,0.);
+    add_lmap_error(LMAP_ERROR_CLOSE_FILE,cfile->name,cfile->layout_map,0,0,0.,cfile->stored_layout_frame>0||cfile->stored_layout_audio>0.);
     lmap_errors=TRUE;
   }
   else {
@@ -1885,7 +1886,7 @@ on_insert_activate                    (GtkButton     *button,
 	mainw->error=TRUE;
 	return;
       }
-      add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,insert_start,0.);
+      add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,insert_start,0.,cfile->stored_layout_frame>=insert_start);
       has_lmap_error=TRUE;
     }
     else {
@@ -1893,7 +1894,7 @@ on_insert_activate                    (GtkButton     *button,
 	if (!do_layout_alter_frames_warning()) {
 	  return;
 	}
-	add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+	add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
 	has_lmap_error=TRUE;
       }
     }
@@ -1916,7 +1917,7 @@ on_insert_activate                    (GtkButton     *button,
 	mainw->error=TRUE;
 	return;
       }
-      add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(insert_start-1.)/cfile->fps);
+      add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(insert_start-1.)/cfile->fps,(insert_start-1.)/cfile->fps<cfile->stored_layout_audio);
       has_lmap_error=TRUE;
     }
     else {
@@ -1924,7 +1925,7 @@ on_insert_activate                    (GtkButton     *button,
 	if (!do_layout_alter_audio_warning()) {
 	  return;
 	}
-	add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+	add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
 	has_lmap_error=TRUE;
       }
     }
@@ -2312,7 +2313,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_FRAMES)&&cfile->layout_map!=NULL) {
       if (layout_frame_is_affected(mainw->current_file,cfile->end-frames_cut)) {
 	if (!do_warning_dialog(_("\nDeletion will cause missing frames in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-	add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,cfile->end-frames_cut,0.);
+	add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,cfile->end-frames_cut,0.,cfile->stored_layout_frame>=(cfile->end-frames_cut));
 	has_lmap_error=TRUE;
       }
     }
@@ -2320,7 +2321,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
     if (mainw->ccpd_with_sound&&!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&cfile->layout_map!=NULL) {
       if (layout_audio_is_affected(mainw->current_file,(cfile->end-frames_cut)/cfile->fps)) {
 	if (!do_warning_dialog(_("\nDeletion will cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-	add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(cfile->end-frames_cut-1.)/cfile->fps);
+	add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(cfile->end-frames_cut-1.)/cfile->fps,(cfile->end-frames_cut-1.)/cfile->fps<cfile->stored_layout_audio);
 	has_lmap_error=TRUE;
       }
     }
@@ -2328,7 +2329,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
     if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_FRAMES)&&cfile->layout_map!=NULL) {
       if (layout_frame_is_affected(mainw->current_file,cfile->start)) {
 	if (!do_warning_dialog(_("\nDeletion will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-	add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,cfile->start,0.);
+	add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,cfile->start,0.,cfile->start<=cfile->stored_layout_frame);
 	has_lmap_error=TRUE;
       }
     }
@@ -2336,7 +2337,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
     if (mainw->ccpd_with_sound&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)&&cfile->layout_map!=NULL) {
       if (layout_audio_is_affected(mainw->current_file,(cfile->start-1.)/cfile->fps)) {
 	if (!do_warning_dialog(_("\nDeletion will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-	add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(cfile->start-1.)/cfile->fps);
+	add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(cfile->start-1.)/cfile->fps,FALSE);
 	has_lmap_error=TRUE;
       }
     }
@@ -2345,7 +2346,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
       if (!do_layout_alter_frames_warning()) {
 	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+      add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
       has_lmap_error=TRUE;
     }
 
@@ -2353,7 +2354,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
       if (!do_layout_alter_audio_warning()) {
 	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
       has_lmap_error=TRUE;
     }
   }
@@ -3268,7 +3269,6 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
     if (!check_for_layout_del(NULL,FALSE)) return;
-    mainw->stored_event_list_changed=FALSE;
   }
 
   if (!mainw->no_exit&&!mainw->only_close) extra=g_strdup(", and LiVES will exit");
@@ -3304,7 +3304,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   gtk_widget_queue_draw (mainw->LiVES);
   while (g_main_context_iteration (NULL,FALSE));
-  
+
   g_snprintf(mainw->set_name,256,"%s",new_set_name);
 
   if (strcmp(mainw->set_name,old_set)) {
@@ -3464,7 +3464,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   }
 
   if (mainw->current_layouts_map!=NULL&&strcmp(old_set,mainw->set_name)) {
-    add_lmap_error(LMAP_INFO_SETNAME_CHANGED,old_set,mainw->set_name,0,0,0.);
+    add_lmap_error(LMAP_INFO_SETNAME_CHANGED,old_set,mainw->set_name,0,0,0.,FALSE);
     popup_lmap_errors(NULL,NULL);
   }
 
@@ -4440,7 +4440,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&cfile->layout_map!=NULL) {
     if (layout_audio_is_affected(mainw->current_file,0.)) {
       if (!do_warning_dialog(_("\nLoading new audio may cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n."))) return;
-      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
       has_lmap_error=TRUE;
     }
   }
@@ -4449,7 +4449,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
     if (!do_layout_alter_audio_warning()) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
     has_lmap_error=TRUE;
   }
 
@@ -5896,7 +5896,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&cfile->layout_map!=NULL) {
       if (layout_audio_is_affected(mainw->current_file,0.)) {
 	if (!do_warning_dialog(_("\nLoading new audio may cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n."))) return;
-	add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+	add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
 	has_lmap_error=TRUE;
       }
     }
@@ -5905,7 +5905,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
       if (!do_layout_alter_audio_warning()) {
 	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
       has_lmap_error=TRUE;
     }
   }
@@ -7937,7 +7937,7 @@ on_append_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (!do_layout_alter_audio_warning()) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
   }
 
   fileselection = create_fileselection (_ ("Append Audio File..."),2,NULL);
@@ -8052,7 +8052,7 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&cfile->layout_map!=NULL) {
     if (layout_audio_is_affected(mainw->current_file,0.)&&!layout_audio_is_affected(mainw->current_file,end)) {
       if (!do_warning_dialog(_("\nDeletion will cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,end);
+      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,end,FALSE);
       has_lmap_error=TRUE;
     }
   }
@@ -8061,7 +8061,7 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
     if (!do_layout_alter_audio_warning()) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
     has_lmap_error=TRUE;
   }
 
@@ -8161,7 +8161,7 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
 	g_free(utxt);
 	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,startt);
+      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,startt,FALSE);
       has_lmap_error=TRUE;
     }
 
@@ -8224,7 +8224,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
       if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&cfile->layout_map!=NULL) {
 	if (layout_audio_is_affected(mainw->current_file,0.)) {
 	  if (!do_warning_dialog(_("\nDeletion will cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-	  add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+	  add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
 	  has_lmap_error=TRUE;
 	}
       }
@@ -8233,7 +8233,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 	if (!do_layout_alter_audio_warning()) {
 	  return;
 	}
-	add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+	add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
 	has_lmap_error=TRUE;
       }
 
@@ -8254,7 +8254,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
       if (!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)&&cfile->layout_map!=NULL) {
 	if (layout_audio_is_affected(mainw->current_file,0.)&&!layout_audio_is_affected(mainw->current_file,start)) {
 	  if (!do_warning_dialog(_("\nDeletion will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-	  add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,end);
+	  add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,end,FALSE);
 	  has_lmap_error=TRUE;
 	}
       }
@@ -8262,7 +8262,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
       if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&cfile->layout_map!=NULL) {
 	if (layout_audio_is_affected(mainw->current_file,start)) {
 	  if (!do_warning_dialog(_("\nDeletion will cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-	  add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,end);
+	  add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,end,FALSE);
 	  has_lmap_error=TRUE;
 	}
       }
@@ -8271,7 +8271,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 	if (!do_layout_alter_audio_warning()) {
 	  return;
 	}
-	add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+	add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
 	has_lmap_error=TRUE;
       }
 
@@ -8372,7 +8372,7 @@ on_recaudsel_activate (GtkMenuItem     *menuitem,
       has_lmap_error_recsel=FALSE;
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(cfile->start-1.)/cfile->fps);
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(cfile->start-1.)/cfile->fps,FALSE);
     has_lmap_error_recsel=TRUE;
   }
 
@@ -8595,7 +8595,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)&&cfile->layout_map!=NULL) {
       if (layout_audio_is_affected(mainw->current_file,0.)&&!layout_audio_is_affected(mainw->current_file,start)) {
 	if (!do_warning_dialog(_("\nInsertion will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) return;
-	add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,end);
+	add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,end,FALSE);
 	has_lmap_error=TRUE;
       }
     }
@@ -8604,7 +8604,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
       if (!do_layout_alter_audio_warning()) {
 	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.);
+      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,FALSE);
       has_lmap_error=TRUE;
     }
 

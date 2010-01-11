@@ -551,12 +551,18 @@ static void on_reorder_activate (void) {
   gchar *msg;
   gboolean has_lmap_error=FALSE;
 
-  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&cfile->layout_map!=NULL&&layout_frame_is_affected(mainw->current_file,1)) {
+  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
+    g_list_free_strings(mainw->xlays);
+    g_list_free(mainw->xlays);
+    mainw->xlays=NULL;
   }
 
   cfile->old_frames=cfile->frames;
@@ -664,12 +670,18 @@ on_resaudio_ok_clicked                      (GtkButton *button,
     aendian=!(cfile->undo1_uint&AFORM_BIG_ENDIAN);
   }
 
-  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&cfile->layout_map!=NULL&&layout_audio_is_affected(mainw->current_file,0.)) {
+  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))) {
     if (!do_layout_alter_audio_warning()) {
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
+    g_list_free_strings(mainw->xlays);
+    g_list_free(mainw->xlays);
+    mainw->xlays=NULL;
   }
 
   // store old values for undo/redo
@@ -2106,54 +2118,94 @@ on_change_speed_ok_clicked                (GtkButton *button,
     if (mainw->fx1_val>FPS_MAX) mainw->fx1_val=FPS_MAX;
   }
 
-  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_FRAMES)&&mainw->fx1_val>cfile->fps&&cfile->layout_map!=NULL) {
+  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_FRAMES)&&mainw->fx1_val>cfile->fps) {
     gint new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
-    if (layout_frame_is_affected(mainw->current_file,new_frames)) {
-      if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing frames in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) return;
-      add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,new_frames,0.,new_frames<cfile->stored_layout_frame);
+    if ((mainw->xlays=layout_frame_is_affected(mainw->current_file,new_frames))!=NULL) {
+      if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing frames in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
+	g_list_free_strings(mainw->xlays);
+	g_list_free(mainw->xlays);
+	mainw->xlays=NULL;
+	return;
+      }
+      add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,new_frames,0.,new_frames<=count_resampled_frames(cfile->stored_layout_frame,cfile->stored_layout_fps,cfile->fps));
       has_lmap_error=TRUE;
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
     }
   }
 
-  if (mainw->fx1_bool&&!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&mainw->fx1_val>cfile->fps&&cfile->layout_map!=NULL) {
+  if (mainw->fx1_bool&&!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&mainw->fx1_val>cfile->fps) {
     gint new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
-    if (layout_audio_is_affected(mainw->current_file,(new_frames-1.)/cfile->fps)) {
-      if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing audio in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) return;
+    if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,(new_frames-1.)/cfile->fps))!=NULL) {
+      if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing audio in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
+	g_list_free_strings(mainw->xlays);
+	g_list_free(mainw->xlays);
+	mainw->xlays=NULL;
+	return;
+      }
       add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(new_frames-1.)/cfile->fps,(new_frames-1.)/cfile->fps<cfile->stored_layout_audio);
       has_lmap_error=TRUE;
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
     }
   }
 
-  if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_FRAMES)&&cfile->layout_map!=NULL&&layout_frame_is_affected(mainw->current_file,1)) {
+  if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_warning_dialog(_("\nChanging the speed will cause frames to shift some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
+    g_list_free_strings(mainw->xlays);
+    g_list_free(mainw->xlays);
+    mainw->xlays=NULL;
   }
 
-  if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)&&cfile->layout_map!=NULL&&layout_audio_is_affected(mainw->current_file,0.)) {
+  if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_warning_dialog(_("\nChanging the speed will cause audio to shift some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
+    g_list_free_strings(mainw->xlays);
+    g_list_free(mainw->xlays);
+    mainw->xlays=NULL;
   }
 
-  if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&cfile->layout_map!=NULL&&layout_frame_is_affected(mainw->current_file,1)) {
+  if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
+    g_list_free_strings(mainw->xlays);
+    g_list_free(mainw->xlays);
+    mainw->xlays=NULL;
   }
 
-  if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&cfile->layout_map!=NULL&&layout_audio_is_affected(mainw->current_file,0.)) {
+  if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
+    g_list_free_strings(mainw->xlays);
+    g_list_free(mainw->xlays);
+    mainw->xlays=NULL;
   }
 
   if (button==NULL) {

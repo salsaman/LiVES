@@ -2673,6 +2673,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
     if (gui!=NULL) {
       if (weed_plant_has_leaf(gui,"label")) {
 	string=weed_get_string_value(gui,"label",&error);
+	g_free(rpar[i].label);
 	rpar[i].label=g_strdup(string);
 	weed_free(string);
       }

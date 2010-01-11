@@ -2655,7 +2655,13 @@ create_cds_dialog (gint type, gint warn_mask_number) {
     else label = gtk_label_new (_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
   }
   else if (type==2||type==3) {
-    label = gtk_label_new (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
+    if ((mainw->multitrack!=NULL&&mainw->multitrack->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed)) {
+      label = gtk_label_new (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
+    }
+    else {
+      label = gtk_label_new (_("The current layout has not been changed since it was last saved.\nWhat would you like to do ?\n"));
+    }
+
   }
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
@@ -2766,7 +2772,7 @@ create_cds_dialog (gint type, gint warn_mask_number) {
 
   discardbutton = gtk_button_new_from_stock ("gtk-delete");
   gtk_widget_show (discardbutton);
-  gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), discardbutton, 1);
+  gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
   gtk_button_set_use_stock(GTK_BUTTON(discardbutton),FALSE);
   gtk_button_set_use_underline(GTK_BUTTON(discardbutton),TRUE);
   if ((type==0&&strlen(mainw->multitrack->layout_name)==0)||type==3) gtk_button_set_label(GTK_BUTTON(discardbutton),_("_Wipe layout"));
@@ -2781,7 +2787,7 @@ create_cds_dialog (gint type, gint warn_mask_number) {
   if (type==0||type==3) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Save layout"));
   else if (type==1) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Save clip set"));
   else if (type==2) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Wipe layout"));
-  gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), savebutton, 2);
+  gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), savebutton, 2-(type==2));
   GTK_WIDGET_SET_FLAGS (savebutton, GTK_CAN_DEFAULT);
   if (type==1||type==2)gtk_widget_grab_default(savebutton);
 

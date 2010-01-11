@@ -62,6 +62,45 @@ static int progress_count;
 
 #define PROG_LOOP_VAL 100
 
+
+
+
+
+static void add_xlays_widget(GtkBox *box) {
+  // add widget to preview affected layouts
+
+  GtkWidget *expander=gtk_expander_new_with_mnemonic(_("Show affected _layouts"));
+  GtkWidget *scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  GtkWidget *textview=gtk_text_view_new();
+  GtkWidget *label;
+  GList *xlist=mainw->xlays;
+  GtkTextBuffer *textbuffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
+  
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+  gtk_container_add (GTK_CONTAINER (expander), textview);
+
+  if (palette->style&STYLE_1) {
+    label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_text(textview, GTK_STATE_NORMAL, &palette->info_text);
+    gtk_widget_modify_base(textview, GTK_STATE_NORMAL, &palette->info_base);
+  }
+
+  gtk_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
+  
+  while (xlist!=NULL) {
+    gtk_text_buffer_insert_at_cursor(textbuffer,(const gchar *)xlist->data,strlen(xlist->data));
+    gtk_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
+    xlist=xlist->next;
+  }
+
+  gtk_box_pack_start (box, expander, FALSE, FALSE, 10);
+  gtk_widget_show_all(expander);
+}
+
+
+
+
 //Warning dialog
 GtkWidget*
 create_warn_dialog (gint warn_mask_number) {
@@ -129,6 +168,10 @@ create_warn_dialog (gint warn_mask_number) {
     g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
                       G_CALLBACK (on_warn_mask_toggled),
                       GINT_TO_POINTER(warn_mask_number));
+  }
+
+  if (mainw->xlays!=NULL) {
+    add_xlays_widget(GTK_BOX(dialog_vbox2));
   }
 
   dialog_action_area2 = GTK_DIALOG (dialog2)->action_area;

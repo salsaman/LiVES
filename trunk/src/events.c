@@ -3702,8 +3702,6 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
 
   gboolean new_clip=FALSE;
 
-  int i;
-
   // record end
   mainw->record=FALSE;
   mainw->record_paused=FALSE;

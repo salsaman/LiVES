@@ -204,12 +204,18 @@ void
 on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   gboolean has_lmap_error=FALSE;
 
-  if (menuitem!=NULL&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&cfile->layout_map!=NULL&&rfx->num_in_channels>0) {
+  if (menuitem!=NULL&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&rfx->num_in_channels>0&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
+    g_list_free_strings(mainw->xlays);
+    g_list_free(mainw->xlays);
+    mainw->xlays=NULL;
   }
 
   // do onchange|init
@@ -695,12 +701,18 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   gboolean has_param;
 
   if (rfx->num_in_channels>0) {
-    if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&cfile->layout_map!=NULL&&rfx->num_in_channels>0) {
+    if (menuitem!=NULL&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
       if (!do_layout_alter_frames_warning()) {
+	g_list_free_strings(mainw->xlays);
+	g_list_free(mainw->xlays);
+	mainw->xlays=NULL;
 	return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
       has_lmap_error=TRUE;
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
     }
   }
 

@@ -800,6 +800,9 @@ typedef struct {
   // stored_layout is deleted
   GList *affected_layout_marks;
 
+  // immediately (to be) affected layout maps
+  GList *xlays;
+
   gchar *recovery_file;  // the filename of our recover file
   gboolean leave_recovery;
 

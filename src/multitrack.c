@@ -15704,6 +15704,7 @@ static void add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gc
   g_free(aclips);
   g_free(aseeks);
 
+  g_list_free_strings(atrack_list);
   g_list_free(atrack_list);
   atrack_list=NULL;
 }
@@ -17085,35 +17086,38 @@ void migrate_layouts (gchar *old_set_name, gchar *new_set_name) {
 
 
 
-gboolean layout_frame_is_affected(gint clipno, gint frame) {
+GList *layout_frame_is_affected(gint clipno, gint frame) {
+  // return list of names of layouts which are affected, or NULL
+  // list and list->data should be freed after use
+
   gchar **array;
   GList *lmap=mainw->files[clipno]->layout_map;
   gdouble orig_fps;
   gint resampled_frame;
 
+  if (mainw->stored_event_list!=NULL) {
+    // see if it affects the current layout
+    resampled_frame=count_resampled_frames(mainw->files[clipno]->stored_layout_frame,mainw->files[clipno]->stored_layout_fps,mainw->files[clipno]->fps);
+    if (frame<=resampled_frame) mainw->xlays=g_list_append_unique(mainw->xlays,mainw->cl_string);
+  }
+
   while (lmap!=NULL) {
     array=g_strsplit(lmap->data,"|",-1);
     orig_fps=strtod(array[3],NULL);
-    resampled_frame=count_resampled_frames(frame,orig_fps,mainw->files[clipno]->fps);
-    if (resampled_frame<=atoi(array[2])) {
-      g_strfreev(array);
-      return TRUE;
+    resampled_frame=count_resampled_frames(atoi(array[2]),orig_fps,mainw->files[clipno]->fps);
+    if (frame<=resampled_frame) {
+      mainw->xlays=g_list_append_unique(mainw->xlays,array[0]);
     }
     g_strfreev(array);
     lmap=lmap->next;
   }
 
-  if (mainw->stored_event_list!=NULL) {
-    // see if it affects the current layout
-    resampled_frame=count_resampled_frames(frame,mainw->files[clipno]->stored_layout_fps,mainw->files[clipno]->fps);
-    if (resampled_frame<=mainw->files[clipno]->stored_layout_frame) return TRUE;
-  }
-
-  return FALSE;
+  return mainw->xlays;
 }
 
 
-gboolean layout_audio_is_affected(gint clipno, gdouble time) {
+
+GList *layout_audio_is_affected(gint clipno, gdouble time) {
   gchar **array;
   GList *lmap=mainw->files[clipno]->layout_map;
   gdouble max_time;
@@ -17121,26 +17125,23 @@ gboolean layout_audio_is_affected(gint clipno, gdouble time) {
   // adjust time depending on if we have stretched audio
   time*=mainw->files[clipno]->arps/mainw->files[clipno]->arate;
 
+  if (mainw->stored_event_list!=NULL) {
+    // see if it affects the current layout
+    if (mainw->files[clipno]->stored_layout_audio>0.&&time<=mainw->files[clipno]->stored_layout_audio) mainw->xlays=g_list_append_unique(mainw->xlays,mainw->cl_string);
+  }
+
   while (lmap!=NULL) {
     if (get_token_count(lmap->data,'|')<5) continue;
     array=g_strsplit(lmap->data,"|",-1);
-    //max_time=strtod(array[4],NULL)/strtod(array[5],NULL);   // ????!
     max_time=strtod(array[4],NULL);
     if (max_time>0.&&time<=max_time) {
-      g_strfreev(array);
-      return TRUE;
+      mainw->xlays=g_list_append_unique(mainw->xlays,array[0]);
     }
     g_strfreev(array);
     lmap=lmap->next;
   }
 
-  if (mainw->stored_event_list!=NULL) {
-    // see if it affects the current layout
-    if (time<=mainw->files[clipno]->stored_layout_audio) return TRUE;
-  }
-
-
-  return FALSE;
+  return mainw->xlays;
 }
 
 

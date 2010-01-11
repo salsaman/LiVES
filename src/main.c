@@ -730,6 +730,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->affected_layout_marks=NULL;
 
+  mainw->xlays=NULL;
+
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());

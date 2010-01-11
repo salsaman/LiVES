@@ -69,6 +69,13 @@ g_strappend (gchar *string, gint len, const gchar *new) {
 }
 
 
+LIVES_INLINE GList *g_list_append_unique(GList *xlist, gchar *add) {
+  if (g_list_find_custom(xlist,add,(GCompareFunc)strcmp)==NULL) return g_list_append(xlist,g_strdup(add));
+  return xlist;
+}
+
+
+
 #ifdef IS_IRIX
 void setenv(const char *name, const char *val, int _xx) {
   int len  = strlen(name) + strlen(val) + 2;

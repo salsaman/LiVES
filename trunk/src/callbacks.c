@@ -6303,13 +6303,20 @@ void on_xmms_stop_audio_activate                (GtkMenuItem     *menuitem,
 
 void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   // popup layout map errors dialog
-  GtkWidget *dialog_action_area;
+  GtkWidget *dialog_action_area,*vbox;
   GtkWidget *button;
-  text_window *textwindow=create_text_window(_("layout errors"),NULL,mainw->layout_textbuffer);
+  text_window *textwindow;
+
+  if (prefs->warning_mask&WARN_MASK_LAYOUT_POPUP) return;
+
+  textwindow=create_text_window(_("layout errors"),NULL,mainw->layout_textbuffer);
 
   dialog_action_area = GTK_DIALOG (textwindow->dialog)->action_area;
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
+
+  vbox = GTK_DIALOG (textwindow->dialog)->vbox;
+  add_warn_check(GTK_BOX(vbox),WARN_MASK_LAYOUT_POPUP);
 
   button = gtk_button_new_with_mnemonic (_("Close _Window"));
   gtk_widget_show (button);
@@ -8533,7 +8540,7 @@ on_recaudsel_activate (GtkMenuItem     *menuitem,
   }
 
   has_lmap_error_recsel=FALSE;
-  if ((prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.)!=NULL) {
+  if ((prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
       has_lmap_error_recsel=FALSE;
       g_list_free_strings(mainw->xlays);

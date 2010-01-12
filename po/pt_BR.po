@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-01-12 17:23-0300\n"
+"POT-Creation-Date: 2010-01-12 20:25-0300\n"
 "PO-Revision-Date: 2009-12-25 23:08+0000\n"
 "Last-Translator: Wille <wille@riseup.net>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -767,7 +767,7 @@ msgstr "Mantenha _minhas configurações"
 msgid "Use _recommended settings"
 msgstr "Usar configurações _recomendadas"
 
-#: src/interface.c:935 src/interface.c:2736 src/dialogs.c:108
+#: src/interface.c:935 src/dialogs.c:108
 msgid ""
 "Do _not show this warning any more\n"
 "(can be turned back on from Preferences/Warnings)"
@@ -1082,45 +1082,63 @@ msgstr ""
 "O layout atual não foi salvo.\n"
 "O que quer fazer?\n"
 
-#: src/interface.c:2683
+#: src/interface.c:2667
+#, fuzzy
+msgid ""
+"The current layout contains generated frames and cannot be retained.\n"
+"You may wish to render it before exiting multitrack mode.\n"
+msgstr ""
+"Este layout inclui frames gerados.\n"
+"Ele nãopode ser salvo, renderize como clipe primeiro.\n"
+
+#: src/interface.c:2670
+#, fuzzy
+msgid ""
+"The current layout contains generated frames and cannot be retained.\n"
+"What do you wish to do ?"
+msgstr ""
+"O layout atual não foi salvo.\n"
+"O que quer fazer?\n"
+
+#: src/interface.c:2691
 msgid "Clip set _name"
 msgstr "_Nome do set"
 
-#: src/interface.c:2697
+#: src/interface.c:2705
 msgid "_Auto reload next time"
 msgstr "Auto recarregar da próxima vez"
 
-#: src/interface.c:2778 src/interface.c:2789
+#: src/interface.c:2761 src/interface.c:2772
 msgid "_Wipe layout"
 msgstr "Apagar layout [_W]"
 
-#: src/interface.c:2779
+#: src/interface.c:2762
 msgid "_Ignore changes"
 msgstr "_Ignorar mudanças"
 
-#: src/interface.c:2780
+#: src/interface.c:2763
 msgid "_Delete clip set"
 msgstr "_Deletar set"
 
-#: src/interface.c:2781
+#: src/interface.c:2764
 msgid "_Delete layout"
 msgstr "_Deletar layout"
 
-#: src/interface.c:2787
+#: src/interface.c:2770
 msgid "_Save layout"
 msgstr "_Salvar layout"
 
-#: src/interface.c:2788
+#: src/interface.c:2771
 msgid "_Save clip set"
 msgstr "_Salvar set"
 
-#: src/interface.c:2813
+#: src/interface.c:2796
 msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:2817
+#: src/interface.c:2800
 msgid ""
 "Before starting LiVES, you need to choose an audio player.\n"
 "\n"
@@ -1130,7 +1148,7 @@ msgstr ""
 "\n"
 "O PULSE AUDIO é o mais recomendável para a maior parte dos usuários."
 
-#: src/interface.c:2820
+#: src/interface.c:2803
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
@@ -1138,7 +1156,7 @@ msgstr ""
 ", porém esta versão do LiVES não foi compilada com suporte ao pulse audio.\n"
 "\n"
 
-#: src/interface.c:2823
+#: src/interface.c:2806
 msgid ""
 ", but you do not have pulse audio installed on your system.\n"
 " You are advised to install pulse audio first before running LiVES.\n"
@@ -1148,11 +1166,11 @@ msgstr ""
 " É aconselhável instalar o pulse audio primeiro antes de iniciar o LiVES.\n"
 "\n"
 
-#: src/interface.c:2828
+#: src/interface.c:2811
 msgid "JACK audio is recommended for pro users"
 msgstr "JACK audio é recomendável para usuários avançados"
 
-#: src/interface.c:2831
+#: src/interface.c:2814
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
@@ -1160,7 +1178,7 @@ msgstr ""
 ", porém esta versão do LiVES não foi compilada com suporte ao Jack.\n"
 "\n"
 
-#: src/interface.c:2834
+#: src/interface.c:2817
 msgid ""
 ", but you do not have jackd installed. You may wish to install jackd first "
 "before running LiVES.\n"
@@ -1170,7 +1188,7 @@ msgstr ""
 "antes de iniciar o LiVES.\n"
 "\n"
 
-#: src/interface.c:2837
+#: src/interface.c:2820
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
 "If LiVES will not start with jack, you can restart and try with another "
@@ -1178,11 +1196,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/interface.c:2841
+#: src/interface.c:2824
 msgid "SOX may be used if neither of the preceding players work, "
 msgstr "O SOX pode ser utilizado se nenhum dos outros players funcionarem, "
 
-#: src/interface.c:2844
+#: src/interface.c:2827
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
@@ -1190,7 +1208,7 @@ msgstr ""
 "porém alguns recursos de áudio serão desabilitados\n"
 "\n"
 
-#: src/interface.c:2847
+#: src/interface.c:2830
 msgid ""
 "but you do not have sox installed.\n"
 "You are advised to install it before running LiVES.\n"
@@ -1200,7 +1218,7 @@ msgstr ""
 "É aconselhável instalá-lo antes de iniciar o LiVES.\n"
 "\n"
 
-#: src/interface.c:2851
+#: src/interface.c:2834
 msgid ""
 "The MPLAYER audio player is only recommended for testing purposes.\n"
 "\n"
@@ -1208,31 +1226,31 @@ msgstr ""
 "O MPLAYER é recomendável apenas para testes.\n"
 "\n"
 
-#: src/interface.c:2869
+#: src/interface.c:2852
 msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: escolha um reprodutor de áudio"
 
-#: src/interface.c:2882
+#: src/interface.c:2865
 msgid "Use _pulse audio player"
 msgstr ""
 
-#: src/interface.c:2891
+#: src/interface.c:2874
 msgid "Use _jack audio player"
 msgstr "Usar o reprodutor de áudio _jack"
 
-#: src/interface.c:2899
+#: src/interface.c:2882
 msgid "Use _sox audio player"
 msgstr ""
 
-#: src/interface.c:2908
+#: src/interface.c:2891
 msgid "Use _mplayer audio player"
 msgstr ""
 
-#: src/interface.c:2972
+#: src/interface.c:2955
 msgid "LiVES: recover layout ?"
 msgstr ""
 
-#: src/interface.c:2984
+#: src/interface.c:2967
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"

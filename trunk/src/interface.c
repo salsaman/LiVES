@@ -2661,8 +2661,16 @@ create_cds_dialog (gint type, gint warn_mask_number) {
     else {
       label = gtk_label_new (_("The current layout has not been changed since it was last saved.\nWhat would you like to do ?\n"));
     }
-
   }
+  else if (type==4) {
+    if (mainw->multitrack!=NULL&&mainw->multitrack->changed) {
+      label = gtk_label_new (_("The current layout contains generated frames and cannot be retained.\nYou may wish to render it before exiting multitrack mode.\n"));
+    }
+    else {
+      label = gtk_label_new (_("The current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
+    }
+  }
+
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
@@ -2730,34 +2738,9 @@ create_cds_dialog (gint type, gint warn_mask_number) {
 		      G_CALLBACK (on_autoreload_toggled),
 		      GINT_TO_POINTER(type));
   }
+
   if (warn_mask_number>0) {
-    // TODO -make fn
-    cdsw->warn_checkbutton = gtk_check_button_new ();
-    label=gtk_label_new_with_mnemonic (_("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),cdsw->warn_checkbutton);
-    eventbox=gtk_event_box_new();
-    gtk_container_add (GTK_CONTAINER (eventbox), label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      cdsw->warn_checkbutton);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-    if (palette->style&STYLE_1&&mainw!=NULL) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), cdsw->warn_checkbutton, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    gtk_widget_show_all (hbox);
-    GTK_WIDGET_SET_FLAGS (cdsw->warn_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-    g_signal_connect (GTK_OBJECT (cdsw->warn_checkbutton), "toggled",
-                      G_CALLBACK (on_warn_mask_toggled),
-                      GINT_TO_POINTER(warn_mask_number));
-    if (checkbutton!=NULL) g_object_set_data(G_OBJECT(checkbutton),"auto",(gpointer)checkbutton);
-    if ((type==0&&prefs->ar_layout)||(type==1&&prefs->ar_clipset)) {
-      gtk_widget_set_sensitive(cdsw->warn_checkbutton,FALSE);
-    }
+    add_warn_check(GTK_BOX(dialog_vbox),warn_mask_number);
   }
 
   dialog_action_area = GTK_DIALOG (cdsw->dialog)->action_area;
@@ -2775,7 +2758,7 @@ create_cds_dialog (gint type, gint warn_mask_number) {
   gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
   gtk_button_set_use_stock(GTK_BUTTON(discardbutton),FALSE);
   gtk_button_set_use_underline(GTK_BUTTON(discardbutton),TRUE);
-  if ((type==0&&strlen(mainw->multitrack->layout_name)==0)||type==3) gtk_button_set_label(GTK_BUTTON(discardbutton),_("_Wipe layout"));
+  if ((type==0&&strlen(mainw->multitrack->layout_name)==0)||type==3||type==4) gtk_button_set_label(GTK_BUTTON(discardbutton),_("_Wipe layout"));
   else if (type==0) gtk_button_set_label(GTK_BUTTON(discardbutton),_("_Ignore changes"));
   else if (type==1) gtk_button_set_label(GTK_BUTTON(discardbutton),_("_Delete clip set"));
   else if (type==2) gtk_button_set_label(GTK_BUTTON(discardbutton),_("_Delete layout"));
@@ -2787,7 +2770,7 @@ create_cds_dialog (gint type, gint warn_mask_number) {
   if (type==0||type==3) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Save layout"));
   else if (type==1) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Save clip set"));
   else if (type==2) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Wipe layout"));
-  gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), savebutton, 2-(type==2));
+  if (type!=4) gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), savebutton, 2-(type==2));
   GTK_WIDGET_SET_FLAGS (savebutton, GTK_CAN_DEFAULT);
   if (type==1||type==2)gtk_widget_grab_default(savebutton);
 

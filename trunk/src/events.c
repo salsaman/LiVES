@@ -2063,10 +2063,7 @@ GtkWidget *events_rec_dialog (void) {
 
 
   hbox = gtk_hbox_new (FALSE, 0);
-
-  if (mainw->scrap_file==-1) {
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
-  }
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
   radiobutton = gtk_radio_button_new (NULL);
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton), radiobutton_group);

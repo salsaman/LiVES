@@ -4127,7 +4127,7 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
   if ((mt==NULL||mt->event_list==NULL||get_first_event(mt->event_list)==NULL)&&(mainw->stored_event_list==NULL||get_first_event(mainw->stored_event_list)==NULL)) return TRUE;
 
   if (((mt!=NULL&&mt->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed))) {
-    gint type=3*(!exiting);
+    gint type=mainw->scrap_file==-1?3*(!exiting):4;
     _entryw *cdsw=create_cds_dialog(type,0);
     gint resp=gtk_dialog_run(GTK_DIALOG(cdsw->dialog));
     gtk_widget_destroy(cdsw->dialog);
@@ -6719,7 +6719,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   mt->idlefunc=0;
 
-  if (save_layout) {
+  if (save_layout||(mt->changed&&mainw->scrap_file!=-1)) {
     if (!check_for_layout_del(mt,TRUE)) {
       mt->idlefunc=mt_idle_add(mt);
       return FALSE;

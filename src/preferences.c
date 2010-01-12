@@ -440,7 +440,7 @@ apply_prefs(gboolean skip_warn) {
   }
 
 
-  warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_save_quality*WARN_MASK_SAVE_QUALITY+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*WARN_MASK_NO_ENCODERS+!warn_layout_missing_clips*WARN_MASK_LAYOUT_MISSING_CLIPS+!warn_duplicate_set*WARN_MASK_DUPLICATE_SET+!warn_layout_close*WARN_MASK_LAYOUT_CLOSE_FILE+!warn_layout_delete*WARN_MASK_LAYOUT_DELETE_FRAMES+!warn_layout_shift*WARN_MASK_LAYOUT_SHIFT_FRAMES+!warn_layout_alter*WARN_MASK_LAYOUT_ALTER_FRAMES+!warn_discard_layout*WARN_MASK_DISCARD_LAYOUT+!warn_after_dvgrab*WARN_MASK_AFTER_DVGRAB+!warn_mt_achans*WARN_MASK_MT_ACHANS+!warn_mt_no_jack*WARN_MASK_MT_NO_JACK+!warn_layout_adel*WARN_MASK_LAYOUT_DELETE_AUDIO+!warn_layout_ashift*WARN_MASK_LAYOUT_SHIFT_AUDIO+!warn_layout_aalt*WARN_MASK_LAYOUT_ALTER_AUDIO+!warn_layout_popup*WARN_MASK_LAYOUT_POPUP+!warn_yuv4m_open*WARN_MASK_OPEN_YUV4M+!warn_mt_backup_space*WARN_MASK_MT_BACKUP_SPACE;
+  warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_save_quality*WARN_MASK_SAVE_QUALITY+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*WARN_MASK_NO_ENCODERS+!warn_layout_missing_clips*WARN_MASK_LAYOUT_MISSING_CLIPS+!warn_duplicate_set*WARN_MASK_DUPLICATE_SET+!warn_layout_close*WARN_MASK_LAYOUT_CLOSE_FILE+!warn_layout_delete*WARN_MASK_LAYOUT_DELETE_FRAMES+!warn_layout_shift*WARN_MASK_LAYOUT_SHIFT_FRAMES+!warn_layout_alter*WARN_MASK_LAYOUT_ALTER_FRAMES+!warn_discard_layout*WARN_MASK_EXIT_MT+!warn_after_dvgrab*WARN_MASK_AFTER_DVGRAB+!warn_mt_achans*WARN_MASK_MT_ACHANS+!warn_mt_no_jack*WARN_MASK_MT_NO_JACK+!warn_layout_adel*WARN_MASK_LAYOUT_DELETE_AUDIO+!warn_layout_ashift*WARN_MASK_LAYOUT_SHIFT_AUDIO+!warn_layout_aalt*WARN_MASK_LAYOUT_ALTER_AUDIO+!warn_layout_popup*WARN_MASK_LAYOUT_POPUP+!warn_yuv4m_open*WARN_MASK_OPEN_YUV4M+!warn_mt_backup_space*WARN_MASK_MT_BACKUP_SPACE;
 
   if (warn_mask!=prefs->warning_mask) {
     prefs->warning_mask=warn_mask;
@@ -2745,7 +2745,7 @@ _prefsw *create_prefs_dialog (void) {
    prefsw->checkbutton_warn_discard_layout = gtk_check_button_new_with_mnemonic (_("Warn if the layout has not been saved when leaving multitrack mode."));
    gtk_widget_show (prefsw->checkbutton_warn_discard_layout);
    gtk_box_pack_start (GTK_BOX (vbox18), prefsw->checkbutton_warn_discard_layout, FALSE, TRUE, 0);
-   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_discard_layout), !(prefs->warning_mask&WARN_MASK_DISCARD_LAYOUT));
+   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_discard_layout), !(prefs->warning_mask&WARN_MASK_EXIT_MT));
 
    prefsw->checkbutton_warn_mt_achans = gtk_check_button_new_with_mnemonic (_("Warn if multitrack has no audio channels, and a layout with audio is loaded."));
    gtk_widget_show (prefsw->checkbutton_warn_mt_achans);

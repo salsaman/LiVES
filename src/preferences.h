@@ -69,7 +69,7 @@ typedef struct {
 
 #define WARN_MASK_DUPLICATE_SET (1<<12)
 
-#define WARN_MASK_DISCARD_LAYOUT (1<<13)
+#define WARN_MASK_EXIT_MT (1<<13)
 #define WARN_MASK_DISCARD_SET (1<<14)
 #define WARN_MASK_AFTER_DVGRAB (1<<15)
 

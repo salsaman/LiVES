@@ -87,6 +87,9 @@ typedef struct {
 
 #define WARN_MASK_MT_BACKUP_SPACE (1<<22)
 
+#define WARN_MASK_LAYOUT_POPUP (1<<23)
+
+
   gchar effect_command[256];
   gchar video_open_command[256];
   gchar audio_play_command[256];
@@ -284,6 +287,7 @@ typedef struct {
   GtkWidget *checkbutton_warn_layout_adel;
   GtkWidget *checkbutton_warn_layout_aalt;
   GtkWidget *checkbutton_warn_layout_ashift;
+  GtkWidget *checkbutton_warn_layout_popup;
   GtkWidget *checkbutton_warn_discard_layout;
   GtkWidget *checkbutton_warn_save_quality;
   GtkWidget *checkbutton_warn_after_dvgrab;

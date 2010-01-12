@@ -533,6 +533,7 @@ void do_error_dialog(const gchar *text);
 void do_error_dialog_with_check(const gchar *text, gint warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
 void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking,gint warn_mask_number, GtkWindow *transient);
+void add_warn_check (GtkBox *box, gint warn_mask_number);
 void do_memory_error_dialog (void);
 void too_many_files(void);
 void tempdir_warning (void);

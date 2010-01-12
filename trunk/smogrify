@@ -255,7 +255,7 @@ if (defined($ARGV[0])) {
 	&rc_set_if_not_set("stop_screensaver","true");
 	&rc_set_if_not_set("open_maximised","true");
 	&rc_set_if_not_set("show_recent_files","true");
-	&rc_set_if_not_set("lives_warning_mask",789504); # bits 19,18,11 and 10
+	&rc_set_if_not_set("lives_warning_mask",797696); # bits 19,18,13,11 and 10
 	&rc_set_if_not_set("dl_bandwidth_K",64);
 	&rc_set_if_not_set("show_player_stats","false");
 	&rc_set_if_not_set("show_toolbar","true");
@@ -5136,6 +5136,11 @@ sub version_check_and_upgrade {
 	}
 	if ($version_hash<10001005) {
 	    &rc_delete("debug_encoders");
+	}
+	if ($version_hash<10002000) {
+	    my $wmask=&rc_get("lives_warning_mask");
+	    $wmask|=8192;
+	    &rc_set("lives_warning_mask",$wmask);
 	}
 	unless ($old_version eq $version) {
 	    $current_keymap=`grep \"keymap file version 4\" $lives_home_dir$default_keymap 2>/dev/null`;

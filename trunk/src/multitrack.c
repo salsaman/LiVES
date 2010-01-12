@@ -203,7 +203,7 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
 void recover_layout(GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   while (g_main_context_iteration (NULL,FALSE));
-  if (!on_multitrack_activate(NULL,NULL)) multitrack_delete(mainw->multitrack,TRUE);
+  if (!on_multitrack_activate(NULL,NULL)) multitrack_delete(mainw->multitrack,FALSE);
   mainw->recoverable_layout=FALSE;
 }
 
@@ -3021,7 +3021,7 @@ static gboolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, g
   if (event->type!=GDK_BUTTON_PRESS&&!mt->is_rendering) {
     set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
     // double click, open up in clip editor
-    multitrack_delete(mt,FALSE);
+    multitrack_delete(mt,!(prefs->warning_mask&WARN_MASK_EXIT_MT));
     return TRUE;
   }
 
@@ -4126,9 +4126,9 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
 
   if ((mt==NULL||mt->event_list==NULL||get_first_event(mt->event_list)==NULL)&&(mainw->stored_event_list==NULL||get_first_event(mainw->stored_event_list)==NULL)) return TRUE;
 
-  if (((mt!=NULL&&mt->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed))&&!(prefs->warning_mask&WARN_MASK_DISCARD_LAYOUT)) {
+  if (((mt!=NULL&&mt->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed))) {
     gint type=3*(!exiting);
-    _entryw *cdsw=create_cds_dialog(type,WARN_MASK_DISCARD_LAYOUT);
+    _entryw *cdsw=create_cds_dialog(type,0);
     gint resp=gtk_dialog_run(GTK_DIALOG(cdsw->dialog));
     gtk_widget_destroy(cdsw->dialog);
     g_free(cdsw);
@@ -6719,7 +6719,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   mt->idlefunc=0;
 
-  if (save_layout||mainw->scrap_file!=-1) {
+  if (save_layout) {
     if (!check_for_layout_del(mt,TRUE)) {
       mt->idlefunc=mt_idle_add(mt);
       return FALSE;
@@ -6933,7 +6933,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
 gboolean
 on_mt_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-  multitrack_delete((lives_mt *)user_data,TRUE);
+  multitrack_delete((lives_mt *)user_data,!(prefs->warning_mask&WARN_MASK_EXIT_MT));
   return FALSE;
 }
 
@@ -10603,7 +10603,7 @@ void animate_multitrack (lives_mt *mt) {
 
 gboolean multitrack_end (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  return multitrack_delete (mt,FALSE);
+  return multitrack_delete (mt,!(prefs->warning_mask&WARN_MASK_EXIT_MT)||menuitem==NULL);
 }
 
 
@@ -12238,7 +12238,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     
     if (!get_new_handle(mainw->current_file,NULL)) {
       mainw->current_file=orig_file;
-      if (!multitrack_end(menuitem,user_data)) switch_to_file ((mainw->current_file=0),current_file);
+      if (!multitrack_end(NULL,user_data)) switch_to_file ((mainw->current_file=0),current_file);
       mt->idlefunc=mt_idle_add(mt);
       return;
     }
@@ -12305,7 +12305,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void on_prerender_aud_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  on_render_activate(NULL,user_data);
+  on_render_activate(menuitem,user_data);
   mainw->is_rendering=mainw->internal_messaging=mt->is_rendering=FALSE;
   mt_sensitise(mt);
   gtk_widget_set_sensitive (mt->prerender_aud, FALSE);

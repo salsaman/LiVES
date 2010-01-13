@@ -972,7 +972,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 
   if (real_clips_available()>0) {
     gchar *set_name;
-    _entryw *cdsw=create_cds_dialog(1,0);
+    _entryw *cdsw=create_cds_dialog(1);
     gint resp;
     had_clips=TRUE;
     do {

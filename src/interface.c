@@ -2607,8 +2607,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
 
 
 //cancel/discard/save dialog
-_entryw*
-create_cds_dialog (gint type, gint warn_mask_number) {
+_entryw* create_cds_dialog (gint type) {
   GtkWidget *dialog_vbox;
   GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;
@@ -2667,7 +2666,7 @@ create_cds_dialog (gint type, gint warn_mask_number) {
       label = gtk_label_new (_("The current layout contains generated frames and cannot be retained.\nYou may wish to render it before exiting multitrack mode.\n"));
     }
     else {
-      label = gtk_label_new (_("The current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
+      label = gtk_label_new (_("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
     }
   }
 
@@ -2739,8 +2738,8 @@ create_cds_dialog (gint type, gint warn_mask_number) {
 		      GINT_TO_POINTER(type));
   }
 
-  if (warn_mask_number>0) {
-    add_warn_check(GTK_BOX(dialog_vbox),warn_mask_number);
+  if (type==0&&!(prefs->warning_mask&WARN_MASK_EXIT_MT)) {
+    add_warn_check(GTK_BOX(dialog_vbox),WARN_MASK_EXIT_MT);
   }
 
   dialog_action_area = GTK_DIALOG (cdsw->dialog)->action_area;

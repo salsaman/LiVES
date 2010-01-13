@@ -52,7 +52,7 @@ typedef struct {
 
 _entryw* create_rename_dialog (gint type);
 _entryw* create_location_dialog (void);
-_entryw* create_cds_dialog (gint type, gint warn_mask_number);
+_entryw* create_cds_dialog (gint type);
 
 typedef struct __insertw {
   GtkWidget *insert_dialog;

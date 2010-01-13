@@ -3634,7 +3634,6 @@ gboolean render_to_clip (gboolean new_clip) {
 #endif
     }
     else save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
-    close_scrap_file();
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
@@ -3764,6 +3763,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
 	}
       }
       if (!render_to_clip (TRUE)) render_choice=RENDER_CHOICE_PREVIEW;
+      else close_scrap_file();
       prefs->mt_def_width=dw;
       prefs->mt_def_height=dh;
       prefs->mt_def_fps=df;
@@ -3776,6 +3776,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       break;
     case RENDER_CHOICE_SAME_CLIP:
       if (!render_to_clip (FALSE)) render_choice=RENDER_CHOICE_PREVIEW;
+      else close_scrap_file();
       mainw->is_rendering=FALSE;
       break;
     case RENDER_CHOICE_MULTITRACK:

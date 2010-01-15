@@ -3034,6 +3034,7 @@ void weed_unload_all(void) {
   weed_desetup_f desetup_fn;
   GList *pinfo=NULL,*xpinfo;
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
   mainw->num_tr_applied=0;
   weed_deinit_all();
   for (i=0;i<num_weed_filters;i++) {
@@ -3069,6 +3070,7 @@ void weed_unload_all(void) {
   for (i=0;i<MAX_WEED_FILTERS;i++) {
     if (hashnames[i]!=NULL) g_free(hashnames[i]);
   }
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 
 }
 

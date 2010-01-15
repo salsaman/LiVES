@@ -1115,18 +1115,7 @@ void add_to_winmenu(void) {
   mainw->clips_available++;
   mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
   cfile->old_frames=cfile->frames;
-  test_fps_string1=g_strdup_printf ("%.3f00000",cfile->fps);
-  test_fps_string2=g_strdup_printf ("%.8f",cfile->fps);
-
-  if (strcmp (test_fps_string1,test_fps_string2)) {
-    // got a ratio
-    cfile->ratio_fps=TRUE;
-  }
-  else {
-    cfile->ratio_fps=FALSE;
-  }
-  g_free (test_fps_string1);
-  g_free (test_fps_string2);
+  cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
 
 }
 

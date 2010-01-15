@@ -508,7 +508,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
   guchar *cpixels,*tpixels;
   int i,j,k;
   GdkPixbuf *thumbnail=NULL;
-  gint twidth=0,twidth3,trow;
+  gint twidth=0,twidth3,twidth4,trow;
   file *sfile=mainw->files[clip];
 
   int frame_start;
@@ -548,17 +548,28 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 	  if (thumbnail!=NULL) {
 	    trow=gdk_pixbuf_get_rowstride(thumbnail);
 	    twidth=gdk_pixbuf_get_width(thumbnail);
-	    twidth3=twidth*3;
 	    cpixels=gdk_pixbuf_get_pixels(pixbuf)+(i*4);
 	    tpixels=gdk_pixbuf_get_pixels(thumbnail);
-	    for (j=0;j<height;j++) {
-	      for (k=0;k<twidth3;k+=3) {
-		memcpy(cpixels,&tpixels[k],3);
-		memset(cpixels+3,0xFF,1);
-		cpixels+=4;
+
+	    if (!gdk_pixbuf_get_has_alpha(thumbnail)) {
+	      twidth3=twidth*3;
+	      for (j=0;j<height;j++) {
+		for (k=0;k<twidth3;k+=3) {
+		  memcpy(cpixels,&tpixels[k],3);
+		  memset(cpixels+3,0xFF,1);
+		  cpixels+=4;
+		}
+		tpixels+=trow;
+		cpixels+=(width-twidth)<<2;
 	      }
-	      tpixels+=trow;
-	      cpixels+=(width-twidth)<<2;
+	    }
+	    else {
+	      twidth4=twidth*4;
+	      for (j=0;j<height;j++) {
+		memcpy(cpixels,tpixels,twidth4);
+		tpixels+=trow;
+		cpixels+=width<<2;
+	      }
 	    }
 	    gdk_pixbuf_unref(thumbnail);
 	  }
@@ -6937,7 +6948,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   while (g_main_context_iteration(NULL,FALSE));
   reset_clip_menu();
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
-
 
   return TRUE;
 }

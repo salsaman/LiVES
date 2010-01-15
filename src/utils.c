@@ -1861,6 +1861,7 @@ reset_clip_menu (void) {
       }
       if (mainw->files[i]->menuentry!=NULL) {
 	gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[i]->menuentry), active_image);
+	gtk_widget_queue_draw(mainw->files[i]->menuentry);
       }
     }
   }

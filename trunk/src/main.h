@@ -137,6 +137,8 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #ifndef IS_SOLARIS
 #define LIVES_INLINE inline
+#else
+#define LIVES_INLINE
 #endif
 
 
@@ -417,7 +419,9 @@ typedef struct {                // corresponds to one clip in the GUI
 
   guint img_type;
 
+  // layout map for the current layout
   gint stored_layout_frame;
+  gint stored_layout_idx;
   gdouble stored_layout_audio;
   gdouble stored_layout_fps;
 

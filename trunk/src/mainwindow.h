@@ -225,6 +225,11 @@ typedef struct {
   gboolean stored_layout_save_all_vals;
   gchar stored_layout_name[256];
 
+  GList *stored_layout_undos;
+  size_t sl_undo_buffer_used;
+  unsigned char *sl_undo_mem;
+  gint sl_undo_offset;
+
   gshort endian;
 
   gint pwidth; // playback width in RGB pixels

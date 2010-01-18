@@ -365,8 +365,8 @@ struct _mt {
   GList *undos;
   size_t undo_buffer_used;
   unsigned char *undo_mem;
-  gboolean did_backup;
   gint undo_offset;
+  gboolean did_backup;
 
   gchar undo_text[32];
   gchar redo_text[32];
@@ -762,6 +762,7 @@ void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
 gboolean check_for_layout_del (lives_mt *mt, gboolean exiting);
 void stored_event_list_free_all(void);
+void stored_event_list_free_undos(void);
 
 
 // auto backup

@@ -3056,6 +3056,8 @@ void weed_unload_all(void) {
       weed_set_voidptr_value(plugin_info,"handle",handle);
     }
     weed_filter_free(filter);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+    pthread_mutex_lock(&mainw->gtk_mutex);
   }
 
   xpinfo=pinfo;

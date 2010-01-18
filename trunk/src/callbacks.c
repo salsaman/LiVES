@@ -623,6 +623,12 @@ on_close_activate                      (GtkMenuItem     *menuitem,
       g_free(warn);
     }
   }
+
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+
   close_current_file(0);
 
   if (lmap_errors) popup_lmap_errors(NULL,NULL);
@@ -2317,6 +2323,11 @@ on_insert_activate                    (GtkButton     *button,
 
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+
 }
 
 
@@ -2539,6 +2550,10 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
 
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
 }
 
 
@@ -8216,6 +8231,12 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
   cfile->changed=TRUE;
   d_print_done();
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
+
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+
 }
 
 
@@ -8489,6 +8510,13 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
     d_print_done();
   }
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
+
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+
+
 }
 
 
@@ -8734,6 +8762,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
     has_lmap_error_recsel=FALSE;
     popup_lmap_errors(NULL,NULL);
   }
+
 #endif
 }
 
@@ -8831,6 +8860,13 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
   sensitize();
   d_print_done();
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
+
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+
+
 }
 
 

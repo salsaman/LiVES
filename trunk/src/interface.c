@@ -1090,8 +1090,6 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 void add_to_winmenu(void) {
   // TODO - change to add_to_clipmenu, move to gui.c
   GtkWidget *active_image;
-  gchar *test_fps_string1;
-  gchar *test_fps_string2;
   gchar *tmp;
 
   cfile->menuentry = gtk_image_menu_item_new_with_label((tmp=g_path_get_basename(cfile->name)));

@@ -1786,27 +1786,38 @@ static void rerenumber_clips(gchar *lfile) {
   renumbered_clips[0]=0;
   
   for (i=1;i<=MAX_FILES&&mainw->files[i]!=NULL;i++) {
-    renumbered_clips[i]=i;
+    renumbered_clips[i]=0;
     if (mainw->files[i]!=NULL) lfps[i]=mainw->files[i]->fps;
     else lfps[i]=cfile->fps;
   }
 
-  for (i=1;i<=MAX_FILES&&mainw->files[i]!=NULL;i++) {
-    lmap=mainw->files[i]->layout_map;
-    while (lmap!=NULL) {
-      if (!strncmp(lmap->data,lfile,strlen(lfile))) {
-	array=g_strsplit(lmap->data,"|",-1);
-	rnc=atoi(array[1]);
-
-	renumbered_clips[rnc]=i;
-
-	lfps[i]=strtod(array[3],NULL);
-	g_strfreev(array);
+  if (lfile!=NULL) {
+    for (i=1;i<=MAX_FILES&&mainw->files[i]!=NULL;i++) {
+      lmap=mainw->files[i]->layout_map;
+      while (lmap!=NULL) {
+	if (!strncmp(lmap->data,lfile,strlen(lfile))) {
+	  array=g_strsplit(lmap->data,"|",-1);
+	  rnc=atoi(array[1]);
+	  
+	  renumbered_clips[rnc]=i;
+	  
+	  lfps[i]=strtod(array[3],NULL);
+	  g_strfreev(array);
+	}
+	lmap=lmap->next;
       }
-      lmap=lmap->next;
     }
   }
-
+  else {
+    // current event_list
+    for (i=1;i<=MAX_FILES&&mainw->files[i]!=NULL;i++) {
+      if (mainw->files[i]->stored_layout_idx!=-1) {
+	renumbered_clips[mainw->files[i]->stored_layout_idx]=i;
+      }
+      lfps[i]=mainw->files[i]->stored_layout_fps;
+    }
+  }
+  
 }
 
 
@@ -4098,6 +4109,18 @@ gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs) {
 }
 
 
+
+void stored_event_list_free_undos(void) {
+  if (mainw->stored_layout_undos!=NULL) g_list_free(mainw->stored_layout_undos);
+  mainw->stored_layout_undos=NULL;
+  if (mainw->sl_undo_mem!=NULL) g_free(mainw->sl_undo_mem);
+  mainw->sl_undo_mem=NULL;
+  mainw->sl_undo_buffer_used=0;
+  mainw->sl_undo_offset=0;
+}
+
+
+
 void stored_event_list_free_all(void) {
   int i;
 
@@ -4106,6 +4129,8 @@ void stored_event_list_free_all(void) {
       mainw->files[i]->stored_layout_frame=0;
       mainw->files[i]->stored_layout_audio=0.;
       mainw->files[i]->stored_layout_fps=0.;
+      mainw->files[i]->stored_layout_idx=-1;
+      stored_event_list_free_undos();
     }
   }
 
@@ -4376,13 +4401,21 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   fxcol.red=65535;
   fxcol.green=fxcol.blue=0;
 
-  mt->undo_mem=g_try_malloc(prefs->mt_undo_buf*1024*1024);
-  if (mt->undo_mem==NULL) {
-    do_mt_undo_mem_error();
+  if (mainw->sl_undo_mem==NULL) {
+    mt->undo_mem=g_try_malloc(prefs->mt_undo_buf*1024*1024);
+    if (mt->undo_mem==NULL) {
+      do_mt_undo_mem_error();
+    }
+    mt->undo_buffer_used=0;
+    mt->undos=NULL;
+    mt->undo_offset=0;
   }
-  mt->undo_buffer_used=0;
-  mt->undos=NULL;
-  mt->undo_offset=0;
+  else {
+    mt->undo_mem=mainw->sl_undo_mem;
+    mt->undo_buffer_used=mainw->sl_undo_buffer_used;
+    mt->undos=mainw->stored_layout_undos;
+    mt->undo_offset=mainw->sl_undo_offset;
+  }
 
   mt->apply_fx_button=NULL;
 
@@ -4632,7 +4665,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mt->undo), image);
 
-  mt_set_undoable(mt,MT_UNDO_NONE,NULL,FALSE);
+  if (mt->undo_offset==g_list_length(mt->undos)) mt_set_undoable(mt,MT_UNDO_NONE,NULL,FALSE);
+  else {
+    mt_undo *undo=(mt_undo *)(g_list_nth_data(mt->undos,g_list_length(mt->undos)-mt->undo_offset-1));
+    mt_set_undoable(mt,undo->action,undo->extra,TRUE);
+  }
 
   g_signal_connect (GTK_OBJECT (mt->undo), "activate",
 		    G_CALLBACK (multitrack_undo),
@@ -6758,7 +6795,14 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
       mainw->stored_layout_save_all_vals=mt->save_all_vals;
       memcpy(mainw->stored_layout_name,mt->layout_name,(strlen(mt->layout_name)+1));
       
+      mainw->stored_layout_undos=mt->undos;
+      mainw->sl_undo_mem=mt->undo_mem;
+      mainw->sl_undo_buffer_used=mt->undo_buffer_used;
+      mainw->sl_undo_offset=mt->undo_offset;
       
+      mt->undos=NULL;
+      mt->undo_mem=NULL;
+
       // update layout maps (kind of) with the stored_event_list
       
       layout_map=update_layout_map(mainw->stored_event_list);
@@ -6769,6 +6813,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 	  mainw->files[i]->stored_layout_frame=layout_map[i];
 	  mainw->files[i]->stored_layout_audio=layout_map_audio[i];
 	  mainw->files[i]->stored_layout_fps=mainw->files[i]->fps;
+	  mainw->files[i]->stored_layout_idx=i;
 	}
       }
 
@@ -6793,6 +6838,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   if (mt->poly_state==POLY_PARAMS) polymorph(mt,POLY_CLIPS);
 
   if (mt->undo_mem!=NULL) g_free(mt->undo_mem);
+  if (mt->undos!=NULL) g_list_free(mt->undos);
 
   if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
 
@@ -8047,8 +8093,17 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   force_pertrack_audio=FALSE;
   force_backing_tracks=0;
 
-  if (mainw->stored_event_list!=NULL) event_list=mainw->stored_event_list;
+  if (mainw->stored_event_list!=NULL) {
+    event_list=mainw->stored_event_list;
+    rerenumber_clips(NULL);
+  }
   
+
+  if (prefs->show_gui) {
+    // must check this before event_list_rectify, since it can throw error dialogs
+    if (gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))) transfer_focus=TRUE;
+  }
+
   // if we have an existing event list, we will quantise it to the selected fps
   if (event_list!=NULL) {
     weed_plant_t *qevent_list=quantise_events(event_list,cfile->fps,FALSE);
@@ -8084,7 +8139,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (prefs->show_gui) {
-    if (gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))) transfer_focus=TRUE;
     gtk_widget_show_all (multi->window);
     gtk_widget_hide (mainw->LiVES);
     gtk_widget_hide(multi->preview_button);

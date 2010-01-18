@@ -608,6 +608,11 @@ static void on_reorder_activate (void) {
 
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+
 
 }
 
@@ -761,6 +766,12 @@ on_resaudio_ok_clicked                      (GtkButton *button,
   }
   d_print ("\n");
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
+
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+
 }
 
 
@@ -2239,6 +2250,12 @@ on_change_speed_ok_clicked                (GtkButton *button,
   switch_to_file(mainw->current_file,mainw->current_file);
 
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
+
+  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+
 }
 
 

@@ -1,6 +1,6 @@
 // dialogs.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2009
+// (c) G. Finch 2003 - 2010
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 

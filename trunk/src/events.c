@@ -1,6 +1,6 @@
 // events.c
 // LiVES
-// (c) G. Finch 2005 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2005 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -3788,7 +3788,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       }
       if (mainw->stored_event_list!=NULL) {
 	recover_layout_cancelled(NULL,NULL);
-	stored_event_list_free_all();
+	stored_event_list_free_all(TRUE);
       }
       mainw->unordered_blocks=TRUE;
       if (on_multitrack_activate (NULL, (gpointer)mainw->event_list)) {

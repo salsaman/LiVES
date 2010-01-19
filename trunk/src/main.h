@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl) 2003 - 2009
+// (c) G. Finch (salsaman@xs4all.nl) 2003 - 2010
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify

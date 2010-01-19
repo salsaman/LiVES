@@ -226,6 +226,9 @@ struct _mt {
 #define NB_ERROR_NOCOMP 4
 
 
+  GtkWidget *open_menu;
+
+
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
 
@@ -590,7 +593,7 @@ void multitrack_end_cb (GtkMenuItem *, gpointer mt);
 void delete_block_cb (GtkMenuItem *, gpointer mt);
 void selblock_cb (GtkMenuItem *, gpointer mt);
 void list_fx_here_cb (GtkMenuItem *, gpointer mt);
-void edit_start_end_cb (GtkMenuItem *menuitem, gpointer user_data);
+void edit_start_end_cb (GtkMenuItem *, gpointer mt);
 
 //// menuitem callbacks
 void on_add_video_track_activate (GtkMenuItem *, gpointer mt);
@@ -761,7 +764,7 @@ GList *layout_audio_is_affected(gint clipno, gdouble time);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
 gboolean check_for_layout_del (lives_mt *mt, gboolean exiting);
-void stored_event_list_free_all(void);
+void stored_event_list_free_all(gboolean wiped);
 void stored_event_list_free_undos(void);
 
 

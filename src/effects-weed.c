@@ -1,6 +1,6 @@
 // effects-weed.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2009 (salsaman@xs4all.nl)
+// (c) G. Finch 2005 - 2010 (salsaman@xs4all.nl)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -3051,7 +3051,9 @@ void weed_unload_all(void) {
 	(*desetup_fn)();
       }
 
+      pthread_mutex_unlock(&mainw->gtk_mutex);
       dlclose(handle);
+      pthread_mutex_lock(&mainw->gtk_mutex);
       handle=NULL;
       weed_set_voidptr_value(plugin_info,"handle",handle);
     }

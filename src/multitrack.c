@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2005 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -3019,7 +3019,7 @@ static void do_clip_context (lives_mt *mt, GdkEventButton *event, file *sfile) {
 
   // unfinished...
 
-  GtkWidget *edit_start_end;
+  GtkWidget *edit_start_end,*edit_clipedit;
   GtkWidget *menu=gtk_menu_new();
 
   if (sfile->frames<1) return;
@@ -3036,6 +3036,13 @@ static void do_clip_context (lives_mt *mt, GdkEventButton *event, file *sfile) {
 		    (gpointer)mt);
 
   gtk_container_add (GTK_CONTAINER (menu), edit_start_end);
+
+  edit_clipedit = gtk_menu_item_new_with_mnemonic (_("_Edit/encode in clip editor"));
+  g_signal_connect (GTK_OBJECT (edit_clipedit), "activate",
+		    G_CALLBACK (multitrack_end_cb),
+		    (gpointer)mt);
+
+  gtk_container_add (GTK_CONTAINER (menu), edit_clipedit);
 
   gtk_widget_show_all (menu);
   gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, event->time);
@@ -4121,7 +4128,7 @@ void stored_event_list_free_undos(void) {
 
 
 
-void stored_event_list_free_all(void) {
+void stored_event_list_free_all(gboolean wiped) {
   int i;
 
   for (i=0;i<MAX_FILES;i++) {
@@ -4130,43 +4137,45 @@ void stored_event_list_free_all(void) {
       mainw->files[i]->stored_layout_audio=0.;
       mainw->files[i]->stored_layout_fps=0.;
       mainw->files[i]->stored_layout_idx=-1;
-      stored_event_list_free_undos();
     }
   }
+
+  stored_event_list_free_undos();
 
   if (mainw->stored_event_list!=NULL) event_list_free(mainw->stored_event_list);
   mainw->stored_event_list=NULL;
 
-  // remove from affected layouts map
-  if (mainw->affected_layouts_map!=NULL) {
-    GList *found=g_list_find_custom(mainw->affected_layouts_map,mainw->cl_string,(GCompareFunc)strcmp);
-    if (found!=NULL) {
-      g_free(found->data);
-      mainw->affected_layouts_map=g_list_delete_link(mainw->affected_layouts_map,found);
+  if (wiped) {
+    // remove from affected layouts map
+    if (mainw->affected_layouts_map!=NULL) {
+      GList *found=g_list_find_custom(mainw->affected_layouts_map,mainw->cl_string,(GCompareFunc)strcmp);
+      if (found!=NULL) {
+	g_free(found->data);
+	mainw->affected_layouts_map=g_list_delete_link(mainw->affected_layouts_map,found);
+      }
     }
-  }
-
-  // remove some text
-
-  if (mainw->layout_textbuffer!=NULL) {
-    GtkTextIter iter1,iter2;
-    GList *markmap=mainw->affected_layout_marks;
-    while (markmap!=NULL) {
-      gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter1,(GtkTextMark *)markmap->data);
-      gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter2,(GtkTextMark *)markmap->next->data);
-      gtk_text_buffer_delete(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter1,&iter2);
-
-      gtk_text_buffer_delete_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),(GtkTextMark *)markmap->data);
-      gtk_text_buffer_delete_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),(GtkTextMark *)markmap->next->data);
-      markmap=markmap->next->next;
+    
+    // remove some text
+    
+    if (mainw->layout_textbuffer!=NULL) {
+      GtkTextIter iter1,iter2;
+      GList *markmap=mainw->affected_layout_marks;
+      while (markmap!=NULL) {
+	gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter1,(GtkTextMark *)markmap->data);
+	gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter2,(GtkTextMark *)markmap->next->data);
+	gtk_text_buffer_delete(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter1,&iter2);
+	
+	gtk_text_buffer_delete_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),(GtkTextMark *)markmap->data);
+	gtk_text_buffer_delete_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),(GtkTextMark *)markmap->next->data);
+	markmap=markmap->next->next;
+      }
     }
+    
+    if (mainw->affected_layout_marks!=NULL) g_list_free(mainw->affected_layout_marks);
+    mainw->affected_layout_marks=NULL;
+
+    mainw->stored_event_list_changed=FALSE;
   }
-
-  if (mainw->affected_layout_marks!=NULL) g_list_free(mainw->affected_layout_marks);
-  mainw->affected_layout_marks=NULL;
-
-  mainw->stored_event_list_changed=FALSE;
-
 }
 
 
@@ -4207,7 +4216,7 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
   }
 
   if (mainw->stored_event_list!=NULL) {
-    stored_event_list_free_all();
+    stored_event_list_free_all(TRUE);
   }
   else if (mt->event_list!=NULL) {
     event_list_free(mt->event_list);
@@ -4343,6 +4352,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   GtkWidget *menuitem;
   GtkWidget *menuitemsep;
   GtkWidget *menuitem_menu;
+  GtkWidget *menuitem_menu2;
   GtkWidget *selcopy_menu;
   GtkWidget *image;
   GtkWidget *separator;
@@ -4592,7 +4602,6 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
 
   // File
-
   menuitem = gtk_menu_item_new_with_mnemonic (_ ("_File"));
   gtk_container_add (GTK_CONTAINER (menubar), menuitem);
   
@@ -4602,6 +4611,37 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
+
+
+
+
+  mt->open_menu = gtk_menu_item_new_with_mnemonic (_("_Open..."));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->open_menu);
+
+  menuitem_menu2 = gtk_menu_new ();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->open_menu), menuitem_menu2);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(menuitem_menu2, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+  menuitem = gtk_menu_item_new_with_mnemonic (_("_Open File/Directory"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu2), menuitem);
+
+  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		    G_CALLBACK (on_open_activate),
+		    NULL);
+
+
+
+
+
+
+
+
+  separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
 
   mt->save_event_list = gtk_image_menu_item_new_with_mnemonic (_("_Save layout as..."));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->save_event_list);
@@ -7918,14 +7958,17 @@ void init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 
   mt->clip_selected=-1;
 
-  if (add) {
-    i=orig_file;
-  }
+  if (add) i=orig_file;
 
   for (;(!add&&(i<MAX_FILES))||(add&&(i==orig_file));i++) {
     if (mainw->files[i]!=NULL&&i!=mainw->scrap_file&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&i!=mainw->current_file) {
       if (i==orig_file||(mt->clip_selected==-1&&i==mainw->pre_src_file)) {
-	mt->clip_selected=mt_clip_from_file(mt,i);
+	if (!add) mt->clip_selected=mt_clip_from_file(mt,i);
+	else {
+	  mt->file_selected=i;
+	  mt->clip_selected=count;
+	  renumbered_clips[i]=i;
+	}
       }
       // make a small thumbnail, add it to the clips box
       thumbnail=make_thumb(i,width,height,mainw->files[i]->start);
@@ -8122,6 +8165,9 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
 
   if (mainw->stored_event_list!=NULL) {
     mainw->stored_event_list=NULL;
+    mainw->stored_layout_undos=NULL;
+    mainw->sl_undo_mem=NULL;
+    stored_event_list_free_all(FALSE);
     if (multi->event_list==NULL) {
       multi->clip_selected=mt_clip_from_file(multi,orig_file);
       multi->file_selected=orig_file;
@@ -10689,6 +10735,8 @@ gboolean multitrack_end (GtkMenuItem *menuitem, gpointer user_data) {
 
 // callbacks for future adding to osc.c
 void multitrack_end_cb (GtkMenuItem *menuitem, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  if (mt->is_rendering) return;
   multitrack_end(menuitem,user_data);
 }
 
@@ -17205,6 +17253,8 @@ GList *layout_audio_is_affected(gint clipno, gdouble time) {
   gchar **array;
   GList *lmap=mainw->files[clipno]->layout_map;
   gdouble max_time;
+
+  if (mainw->files[clipno]->arate==0) return mainw->xlays;
 
   // adjust time depending on if we have stretched audio
   time*=mainw->files[clipno]->arps/mainw->files[clipno]->arate;

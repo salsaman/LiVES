@@ -1,6 +1,6 @@
 // saveplay.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2009
+// (c) G. Finch 2003 - 2010
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -532,9 +532,14 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
   mainw->noswitch=FALSE;
 
-  // update widgets
-  switch_to_file((mainw->current_file=0),current_file);
-
+  if (mainw->multitrack==NULL) {
+    // update widgets
+    switch_to_file((mainw->current_file=0),current_file);
+  }
+  else {
+    mainw->current_file=mainw->multitrack->render_file;
+    init_clips(mainw->multitrack,current_file,TRUE);
+  }
 }
 
 

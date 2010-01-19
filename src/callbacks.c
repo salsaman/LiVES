@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -342,7 +342,7 @@ on_filesel_complex_ok_clicked                  (GtkButton       *button,
 
 void
 on_open_activate                      (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
+				       gpointer         user_data)
 {
   GtkWidget *fileselection;
 
@@ -4156,7 +4156,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 			 "name", "LiVES",
 			 "version", LiVES_VERSION,
 			 "comments",comments,
-			 "copyright", "(C) 2002-2009 salsaman <salsaman@xs4all.nl> and others",
+			 "copyright", "(C) 2002-2010 salsaman <salsaman@xs4all.nl> and others",
 			 "website", "http://lives.sourceforge.net",
 			 //			 "authors", authors,
 			 "license", license,
@@ -4168,7 +4168,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 
 #else
 
-  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) 2002-2009\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@xs4all.nl\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION);
+  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) 2002-2010\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@xs4all.nl\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION);
   do_error_dialog(mesg);
   g_free(mesg);
 
@@ -6946,9 +6946,9 @@ on_preview_clicked                     (GtkButton       *button,
 	mainw->toy_type=TOY_NONE;
 	gtk_widget_set_sensitive(mainw->toys,FALSE);
       }
-      if (prefs->show_gui) gtk_widget_show (mainw->LiVES);
+      if (mainw->multitrack==NULL&&prefs->show_gui) gtk_widget_show (mainw->LiVES);
 
-      if (!cfile->is_loaded) {
+      if (mainw->multitrack==NULL&&!cfile->is_loaded) {
 	if (mainw->play_window!=NULL) {
 	  g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
 	  mainw->pw_exp_is_blocked=TRUE;
@@ -7022,7 +7022,7 @@ on_preview_clicked                     (GtkButton       *button,
    
     if (cfile->opening||cfile->opening_only_audio) {
       gtk_widget_hide (cfile->proc_ptr->processing);
-      if (!cfile->opening_audio) {
+      if (mainw->multitrack==NULL&&!cfile->opening_audio) {
 	load_start_image (0);
 	load_end_image (0);
       }

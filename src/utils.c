@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -238,7 +238,7 @@ void d_print(const gchar *text) {
 gboolean add_lmap_error(int lerror, gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current) {
   // potentially add a layout map error to the layout textbuffer
   GtkTextIter end_iter;
-  gchar *text;
+  gchar *text,*name2;
   gchar **array;
   GList *lmap;
   gdouble orig_fps;
@@ -253,8 +253,11 @@ gboolean add_lmap_error(int lerror, gchar *name, gpointer user_data, gint clipno
 
   switch (lerror) {
   case LMAP_INFO_SETNAME_CHANGED:
-    text=g_strdup_printf(_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),name,(gchar *)user_data);
+    if (strlen(name)==0) name2=g_strdup(_("(blank)"));
+    else name2=g_strdup(name);
+    text=g_strdup_printf(_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),name2,(gchar *)user_data);
     gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    g_free(name2);
     g_free(text);
     break;
   case LMAP_ERROR_MISSING_CLIP:
@@ -777,7 +780,7 @@ void remove_layout_files(GList *map) {
 	}
       }
       else {
-	stored_event_list_free_all();
+	stored_event_list_free_all(TRUE);
       }
     }
     map=map_next;

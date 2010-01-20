@@ -4395,6 +4395,10 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   GtkWidget *submenu;
   GtkWidget *time_snap;
   GtkWidget *recent_submenu;
+  GtkWidget *vcd_dvd_submenu;
+  GtkWidget *vcd_dvd_menu;
+  GtkWidget *device_menu;
+  GtkWidget *device_submenu;
   GtkWidget *submenu_menu;
   GtkWidget *submenu_menu2;
   GtkWidget *submenu_menu3;
@@ -4662,6 +4666,74 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 		    G_CALLBACK (on_open_sel_activate),
 		    NULL);
 
+  if (capable->has_mplayer) {
+    menuitem = gtk_menu_item_new_with_mnemonic (_("Open _Location/Stream..."));
+    gtk_container_add (GTK_CONTAINER (menuitem_menu2), menuitem);
+    
+    g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		      G_CALLBACK (on_open_loc_activate),
+		      NULL);
+    
+    
+    
+#ifdef ENABLE_DVD_GRAB
+    vcd_dvd_menu = gtk_menu_item_new_with_mnemonic (_("Import Selection from _dvd/vcd..."));
+    gtk_container_add (GTK_CONTAINER (menuitem_menu2), vcd_dvd_menu);
+    vcd_dvd_submenu=gtk_menu_new();
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (vcd_dvd_menu), vcd_dvd_submenu);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_bg(vcd_dvd_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    }
+    
+    
+    menuitem = gtk_menu_item_new_with_mnemonic (_("Import Selection from _dvd"));
+    gtk_container_add (GTK_CONTAINER (vcd_dvd_submenu), menuitem);
+    
+    g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		      G_CALLBACK (on_open_vcd_activate),
+		      GINT_TO_POINTER (1));
+    
+    
+# endif
+    
+    menuitem = gtk_menu_item_new_with_mnemonic (_("Import Selection from _vcd"));
+    
+#ifdef ENABLE_DVD_GRAB
+    gtk_container_add (GTK_CONTAINER (vcd_dvd_submenu), menuitem);
+#else
+    gtk_container_add (GTK_CONTAINER (menuitem_menu2), menuitem);
+#endif
+    
+    g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		      G_CALLBACK (on_open_vcd_activate),
+		      GINT_TO_POINTER (2));
+
+  }
+
+
+  device_menu = gtk_menu_item_new_with_mnemonic (_("_Import from Device"));
+#ifdef HAVE_LDVGRAB
+  gtk_container_add (GTK_CONTAINER (menuitem_menu2), device_menu);
+#endif
+  device_submenu=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (device_menu), device_submenu);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(device_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+  menuitem = gtk_menu_item_new_with_mnemonic (_("Import from _Firewire Device (dv)"));
+  gtk_container_add (GTK_CONTAINER (device_submenu), menuitem);
+
+  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		    G_CALLBACK (on_open_fw_activate),
+		    GINT_TO_POINTER(CAM_FORMAT_DV));
+
+  menuitem = gtk_menu_item_new_with_mnemonic (_("Import from _Firewire Device (hdv)"));
+  gtk_container_add (GTK_CONTAINER (device_submenu), menuitem);
+
+  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		    G_CALLBACK (on_open_fw_activate),
+		    GINT_TO_POINTER(CAM_FORMAT_HDV));
 
 
 

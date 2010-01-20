@@ -540,6 +540,12 @@ on_location_select                   (GtkButton       *button,
   else mainw->file_open_params=g_strdup ("sendbandwidth");
   mainw->img_concat_clip=-1;
   open_file(file_name);
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mt_idle_add(mainw->multitrack);
+  }
+
 }
 
 

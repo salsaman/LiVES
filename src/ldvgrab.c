@@ -318,6 +318,15 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else cam->rec_handle=NULL;
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
+
   dvgrabw = create_camwindow (cam,type);
   dvgrabw->cursor=NULL;
   cam->format=type;

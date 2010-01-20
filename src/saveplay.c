@@ -69,7 +69,7 @@ void save_clip_values(gint which) {
 }
 
 
-void
+gboolean
 read_file_details(const gchar *file_name, gboolean is_audio) {
   // get preliminary details
 
@@ -84,7 +84,7 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
   dummyvar=system(com);
   g_free(com);
 
-  if (mainw->opening_loc) do_progress_dialog(TRUE,FALSE,_ ("Examining file header"));
+  if (mainw->opening_loc) return do_progress_dialog(TRUE,TRUE,_ ("Examining file header"));
   else {
     clear_mainw_msg();
     
@@ -95,6 +95,7 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
     dummychar=fgets(mainw->msg,512,infofile);
     fclose(infofile);
   }
+  return TRUE;
 }
 
 gchar *get_deinterlace_string(void) {
@@ -223,7 +224,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	if (cfile->achans==0&&capable->has_mplayer&&withsound==1) {
 
 	  // check if we have audio
-	  
 	  read_file_details(file_name,FALSE);
 	  unlink (cfile->info_file);
 	  sync();
@@ -287,7 +287,16 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
     else {
       // get the file size, etc. (frames is just a guess here)
-      read_file_details(file_name,FALSE);
+      if (!read_file_details(file_name,FALSE)) {
+	// user cancelled
+	close_current_file(old_file);
+	mainw->noswitch=FALSE;
+	if (mainw->multitrack!=NULL) {
+	  mainw->multitrack->pb_start_event=mt_pb_start_event;
+	  mainw->multitrack->has_audio_file=mt_has_audio_file;
+	}
+	return;
+      }
       unlink (cfile->info_file);
       sync();
       

@@ -121,5 +121,11 @@ void on_camquit_clicked (GtkButton *button, gpointer user_data) {
   if (dvgrabw->filename!=NULL) g_free(dvgrabw->filename);
   if (dvgrabw->dirname!=NULL) g_free(dvgrabw->dirname);
   if (cam->grabbed_clips) do_error_dialog_with_check(_("\nClips grabbed from the device can now be loaded with File|Open File/Directory.\n"),WARN_MASK_AFTER_DVGRAB);
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mt_idle_add(mainw->multitrack);
+  }
+
 }
 

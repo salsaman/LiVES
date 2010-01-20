@@ -85,7 +85,8 @@ create_fileselection (const gchar *title, gint preview_type, gpointer free_on_ca
   gtk_window_set_position (GTK_WINDOW (fileselection), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (fileselection), TRUE);
 
-  gtk_window_set_transient_for(GTK_WINDOW(fileselection),GTK_WINDOW(mainw->LiVES));
+  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fileselection),GTK_WINDOW(mainw->LiVES));
+  else gtk_window_set_transient_for(GTK_WINDOW(fileselection),GTK_WINDOW(mainw->multitrack->window));
 
   if (prefs->gui_monitor!=0) {
    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-fileselection->allocation.width)/2;
@@ -287,7 +288,8 @@ process * create_processing (const gchar *text) {
     gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
   }
   gtk_window_set_title (GTK_WINDOW (procw->processing), _("LiVES: - Processing..."));
-  gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
+  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
+  else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
 
   dialog_vbox1 = GTK_DIALOG (procw->processing)->vbox;

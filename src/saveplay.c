@@ -140,9 +140,12 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   gchar *fname=g_strdup(file_name),*msgstr;
   gint achans,arate,arps,asampsize;
   gint current_file;
+  gboolean mt_has_audio_file=TRUE;
   gchar msg[256],loc[256];
   gchar *tmp=NULL;
   const lives_clip_data_t *cdata;
+
+  weed_plant_t *mt_pb_start_event=NULL;
 
   if (old_file==-1||!cfile->opening) {
     new_file=mainw->first_free_file;
@@ -169,6 +172,14 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     
     mainw->noswitch=TRUE;
     mainw->current_file=new_file;
+
+    if (mainw->multitrack!=NULL) {
+      // set up for opening preview
+      mt_pb_start_event=mainw->multitrack->pb_start_event;
+      mt_has_audio_file=mainw->multitrack->has_audio_file;
+      mainw->multitrack->pb_start_event=NULL;
+      mainw->multitrack->has_audio_file=TRUE;
+    }
 
     if (!strcmp(prefs->image_ext,"png")) cfile->img_type=IMG_TYPE_PNG;
 
@@ -237,6 +248,11 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	      
 	      mainw->opening_frames=-1;
 	      
+	      if (mainw->multitrack!=NULL) {
+		mainw->multitrack->pb_start_event=mt_pb_start_event;
+		mainw->multitrack->has_audio_file=mt_has_audio_file;
+	      }
+
 	      if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
 		mainw->cancelled=CANCEL_NONE;
 		return;
@@ -293,6 +309,10 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  g_free(warn);
 	  close_current_file(old_file);
 	  mainw->noswitch=FALSE;
+	  if (mainw->multitrack!=NULL) {
+	    mainw->multitrack->pb_start_event=mt_pb_start_event;
+	    mainw->multitrack->has_audio_file=mt_has_audio_file;
+	  }
 	  return;
 	}
 	g_free(warn);
@@ -436,6 +456,11 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   g_print("Out of dpd\n");
 #endif
 
+  if (mainw->multitrack!=NULL) {
+    mainw->multitrack->pb_start_event=mt_pb_start_event;
+    mainw->multitrack->has_audio_file=mt_has_audio_file;
+  }
+
   // mainw->error is TRUE if we could not open the file
   if (mainw->error) {
     do_blocking_error_dialog(mainw->msg);
@@ -538,7 +563,9 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   }
   else {
     mainw->current_file=mainw->multitrack->render_file;
-    init_clips(mainw->multitrack,current_file,TRUE);
+    mt_init_clips(mainw->multitrack,current_file,TRUE);
+    while (g_main_context_iteration(NULL,FALSE));
+    mt_clip_select(mainw->multitrack,TRUE);
   }
 }
 
@@ -1213,7 +1240,6 @@ void play_file (void) {
 
 #ifdef ENABLE_JACK
   aserver_message_t jack_message;
-  if (!mainw->preview&&!mainw->foreign) jack_pb_start();
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
@@ -1226,6 +1252,10 @@ void play_file (void) {
 
   gchar *tmpfilename=NULL;
 
+
+#ifdef ENABLE_JACK
+  if (!mainw->preview&&!mainw->foreign) jack_pb_start();
+#endif
 
   if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
   mainw->ext_playback=FALSE;
@@ -1399,7 +1429,7 @@ void play_file (void) {
   gtk_widget_set_sensitive (mainw->stop, TRUE);
 
   if (mainw->multitrack==NULL) gtk_widget_set_sensitive (mainw->m_playbutton, FALSE);
-  else mt_swap_play_pause(mainw->multitrack,TRUE);
+  else if (!cfile->opening) mt_swap_play_pause(mainw->multitrack,TRUE);
 
   gtk_widget_set_sensitive (mainw->m_playselbutton, FALSE);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
@@ -1565,7 +1595,7 @@ void play_file (void) {
 	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed->reverse_endian=TRUE;
 	  else mainw->pulsed->reverse_endian=FALSE;
 	  while (pulse_get_msgq(mainw->pulsed)!=NULL);
-	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&(mainw->event_list==NULL||(mainw->preview&&mainw->is_processing))) {
+	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering||cfile->opening)&&(mainw->event_list==NULL||(mainw->preview&&mainw->is_processing))) {
 	    // tell pulse server to open audio file and start playing it
 	    pulse_message.command=ASERVER_CMD_FILE_OPEN;
 	    pulse_message.data=g_strdup_printf("%d",mainw->current_file);
@@ -2105,13 +2135,13 @@ void play_file (void) {
     mainw->current_file=gen_file;
   }
 
-  if (!mainw->preview&&mainw->current_file>-1) {
+  if (!mainw->preview&&mainw->current_file>-1&&mainw->multitrack==NULL) {
     if ((!is_new_file&&mainw->current_file!=current_file)||cfile->clip_type==CLIP_TYPE_GENERATOR) {
       mainw->osc_block=TRUE;
       if (mainw->current_file>0&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
 	weed_generator_end (cfile->ext_src);
       }
-      if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
+      mainw->osc_block=FALSE;
       if (mainw->files[current_file]!=NULL) switch_to_file (mainw->current_file,current_file);
       else if (mainw->pre_src_file!=-1) switch_to_file (mainw->current_file,mainw->pre_src_file);
     }
@@ -2121,6 +2151,7 @@ void play_file (void) {
   }
 
   if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
+  else mainw->pre_src_file=-1;
 
   reset_clip_menu();
 

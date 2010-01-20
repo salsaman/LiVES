@@ -3798,7 +3798,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       else render_choice=RENDER_CHOICE_PREVIEW;
       break;
     case RENDER_CHOICE_EVENT_LIST:
-      if (count_events(mainw->event_list,prefs->event_window_show_frame_events,0,0)>1000) if (!do_event_list_warning(NULL)) {
+      if (count_events(mainw->event_list,prefs->event_window_show_frame_events,0,0)>1000) if (!do_event_list_warning()) {
 	render_choice=RENDER_CHOICE_PREVIEW;
 	break;
       }

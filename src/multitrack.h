@@ -227,6 +227,11 @@ struct _mt {
 
 
   GtkWidget *open_menu;
+  GtkWidget *recent_menu;
+  GtkWidget *recent1;
+  GtkWidget *recent2;
+  GtkWidget *recent3;
+  GtkWidget *recent4;
 
 
   GtkObject *spinbutton_in_adj;
@@ -571,8 +576,8 @@ typedef struct {
 // setup functions
 gboolean on_multitrack_activate (GtkMenuItem *, weed_plant_t *); // widget callback to create the multitrack window
 lives_mt *multitrack (weed_plant_t *, gint orig_file, gdouble fps); // create and return lives_mt struct
-void init_tracks (lives_mt *, gboolean set_min_max);  // add basic tracks, or set tracks from an event_list
-void init_clips (lives_mt *, gint orig_file, gboolean add); // init clip window (or add a new clip)
+void mt_init_tracks (lives_mt *, gboolean set_min_max);  // add basic tracks, or set tracks from an event_list
+void mt_init_clips (lives_mt *, gint orig_file, gboolean add); // init clip window (or add a new clip)
 
 // delete functions
 gboolean on_mt_delete_event (GtkWidget *, GdkEvent *, gpointer mt);
@@ -653,14 +658,14 @@ GtkWidget *add_audio_track (lives_mt *, gint trackno, gboolean behind);
 void add_video_track_behind (GtkMenuItem *, gpointer mt);
 void add_video_track_front (GtkMenuItem *, gpointer mt);
 void delete_video_track(lives_mt *, gint layer, gboolean full);
-void delete_audio_track(lives_mt *mt, GtkWidget *eventbox, gboolean full);
-void delete_audio_tracks(lives_mt *mt, GList *list, gboolean full);
+void delete_audio_track(lives_mt *, GtkWidget *eventbox, gboolean full);
+void delete_audio_tracks(lives_mt *, GList *list, gboolean full);
 void remove_gaps (GtkMenuItem *, gpointer mt);
 void remove_first_gaps (GtkMenuItem *, gpointer mt);
 void on_insgap_sel_activate (GtkMenuItem *, gpointer mt);
 void on_insgap_cur_activate (GtkMenuItem *, gpointer mt);
 void on_split_activate (GtkMenuItem *, gpointer mt);
-void scroll_tracks (lives_mt *mt);
+void scroll_tracks (lives_mt *);
 gboolean track_arrow_pressed (GtkWidget *ahbox, GdkEventButton *, gpointer mt);
 
 // track mouse movement
@@ -690,7 +695,7 @@ void avel_reverse_toggled (GtkToggleButton *, gpointer mt);
 void avel_spin_changed (GtkSpinButton *, gpointer mt);
 
 // timeline functions
-void mt_tl_move(lives_mt *mt, gdouble pos_rel);
+void mt_tl_move(lives_mt *, gdouble pos_rel);
 void set_timeline_end_secs (lives_mt *, gdouble secs);
 gboolean on_timeline_press (GtkWidget *, GdkEventButton *, gpointer mt);
 gboolean on_timeline_release (GtkWidget *, GdkEventButton *, gpointer mt);
@@ -712,13 +717,17 @@ void clear_context (lives_mt *);
 void add_context_label (lives_mt *, gchar *text);
 void mouse_mode_context(lives_mt *);
 void do_sel_context (lives_mt *);
-void do_fx_list_context (lives_mt *mt, gint fxcount);
+void do_fx_list_context (lives_mt *, gint fxcount);
 
 // playback / animation
-void multitrack_playall (lives_mt *mt);
+void multitrack_playall (lives_mt *);
 void animate_multitrack (lives_mt *);
 void unpaint_line(lives_mt *, GtkWidget *eventbox);
 void unpaint_lines(lives_mt *);
+
+void mt_prepare_for_playback(lives_mt *);
+void mt_post_playback(lives_mt *);
+
 
 // effect node controls
 void on_next_node_clicked  (GtkWidget *, gpointer mt);
@@ -730,8 +739,8 @@ void on_frame_preview_clicked (GtkButton *, gpointer mt);
 void show_preview (lives_mt *, weed_timecode_t tc);
 
 // filter list controls
-weed_plant_t *get_prev_fm (lives_mt *mt, gint current_track, weed_plant_t *frame);
-weed_plant_t *get_next_fm (lives_mt *mt, gint current_track, weed_plant_t *frame);
+weed_plant_t *get_prev_fm (lives_mt *, gint current_track, weed_plant_t *frame);
+weed_plant_t *get_next_fm (lives_mt *, gint current_track, weed_plant_t *frame);
 
 void on_prev_fm_clicked  (GtkWidget *button, gpointer user_data);
 void on_next_fm_clicked  (GtkWidget *button, gpointer user_data);
@@ -742,7 +751,7 @@ void on_fx_insa_clicked  (GtkWidget *button, gpointer user_data);
 guint event_list_get_byte_size(weed_plant_t *event_list, int *num_events);  // returns bytes and sets num_events
 gboolean event_list_rectify(lives_mt *, weed_plant_t *event_list, gboolean check_clips);
 gboolean make_backup_space (lives_mt *, size_t space_needed);
-void activate_mt_preview(lives_mt *mt); // sensitize Show Preview and Apply buttons
+void activate_mt_preview(lives_mt *); // sensitize Show Preview and Apply buttons
 void **mt_get_pchain(void);
 
 // event_list utilities
@@ -769,19 +778,23 @@ void stored_event_list_free_undos(void);
 
 
 // auto backup
+guint mt_idle_add(lives_mt *);
 void recover_layout(GtkButton *, gpointer);
 void recover_layout_cancelled(GtkButton *, gpointer user_data);
 
 
 // internal functions
-void mouse_select_end(GtkWidget *widget, lives_mt *mt);
+void mouse_select_end(GtkWidget *widget, lives_mt *);
 
 
 // misc
 void mt_change_disp_tracks_ok (GtkButton *, gpointer user_data);
-void mt_swap_play_pause (lives_mt *mt, gboolean put_pause);
-void amixer_show (GtkButton *button, gpointer user_data);
-gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs);
+void mt_swap_play_pause (lives_mt *, gboolean put_pause);
+void amixer_show (GtkButton *, gpointer user_data);
+gchar *set_values_from_defs(lives_mt *, gboolean from_prefs);
+
+void mt_clip_select (lives_mt *, gboolean scroll);
+
 
 /* default to warn about */
 #define LMAP_ERROR_MISSING_CLIP 1

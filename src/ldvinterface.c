@@ -40,7 +40,9 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(dvgrabw->window, GTK_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->LiVES));
+
+  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->LiVES));
+  else gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->multitrack->window));
 
 
   vbox=gtk_vbox_new(FALSE,10);

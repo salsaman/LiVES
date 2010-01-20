@@ -2028,7 +2028,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->merge,(clipboard!=NULL&&cfile->frames>0));
   gtk_widget_set_sensitive (mainw->delete, mainw->current_file>0&&cfile->frames>0);
   gtk_widget_set_sensitive (mainw->playall, mainw->current_file>0);
-  if (mainw->multitrack==NULL) gtk_widget_set_sensitive (mainw->m_playbutton, mainw->current_file>0);
+  if (mainw->multitrack==NULL||cfile->opening) gtk_widget_set_sensitive (mainw->m_playbutton, mainw->current_file>0);
   else mt_swap_play_pause(mainw->multitrack,FALSE);
   gtk_widget_set_sensitive (mainw->m_playselbutton, mainw->current_file>0&&cfile->frames>0);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, mainw->current_file>0&&cfile->pointer_time>0.);
@@ -3070,7 +3070,6 @@ void load_frame_image(gint frame, gint last_frame) {
       }
       else {
 	// normal playback in the clip editor, or applying a non-realtime effect
-
 	if (!mainw->preview||g_file_test(fname_next,G_FILE_TEST_EXISTS)) {
 	  mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
@@ -3107,13 +3106,13 @@ void load_frame_image(gint frame, gint last_frame) {
 	  return;
 	}
 	
-	if (mainw->frame_layer==NULL&&(!mainw->preview||mainw->multitrack!=NULL)) {
+	if (mainw->frame_layer==NULL&&(!mainw->preview||(mainw->multitrack!=NULL&&!cfile->opening))) {
 	  mainw->noswitch=noswitch;
 	  if (framecount!=NULL) g_free(framecount);
 	  return;
 	}
-	
-	if (mainw->preview&&mainw->frame_layer==NULL&&mainw->event_list==NULL) {
+
+	if (mainw->preview&&mainw->frame_layer==NULL&&(mainw->event_list==NULL||cfile->opening)) {
 	  FILE *fd;
 	  // non-realtime effect preview
 	  // check effect to see if it finished yet
@@ -3184,7 +3183,7 @@ void load_frame_image(gint frame, gint last_frame) {
     // Finally we may want to end up with another GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL and we are in full screen mode).
     // We also need a GdkPixbuf if we are saving to the scrap_file (for now).
 
-    if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))) {
+    if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
       if ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&(weed_get_int_value(mainw->frame_layer,"width",&weed_error)*weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize) {
 	if ((mainw->rte!=0||mainw->is_rendering)&&mainw->current_file!=mainw->scrap_file) {
 	  mainw->frame_layer=on_rte_apply (mainw->frame_layer, opwidth, opheight, (weed_timecode_t)(mainw->currticks-mainw->origticks));
@@ -3279,7 +3278,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	mainw->noswitch=noswitch;
 
 	if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&mainw->current_file!=mainw->scrap_file) get_play_times();
-	if (mainw->multitrack!=NULL) animate_multitrack(mainw->multitrack);
+	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 	if (framecount!=NULL) g_free(framecount);
 
 	return;
@@ -3383,7 +3382,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	mainw->noswitch=noswitch;
 
 	if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&mainw->current_file!=mainw->scrap_file) get_play_times();
-	if (mainw->multitrack!=NULL) animate_multitrack(mainw->multitrack);
+	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 	if (framecount!=NULL) g_free(framecount);
 
 	return;
@@ -3439,7 +3438,7 @@ void load_frame_image(gint frame, gint last_frame) {
     }
     else gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),pixbuf);
 
-    if (mainw->multitrack!=NULL) animate_multitrack(mainw->multitrack);
+    if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 
     else if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&mainw->current_file!=mainw->scrap_file) get_play_times();
     

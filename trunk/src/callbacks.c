@@ -29,7 +29,6 @@
 
 static gchar file_name[32768];
 
-
 gboolean
 on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
   on_quit_activate(NULL,NULL);
@@ -346,6 +345,16 @@ on_open_activate                      (GtkMenuItem     *menuitem,
 {
   GtkWidget *fileselection;
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+    gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
+    gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
+  }
+
   while (g_main_context_iteration(NULL,FALSE));
 
   fileselection = create_fileselection (_ ("Select File"),1,NULL);
@@ -366,6 +375,16 @@ on_open_sel_activate                      (GtkMenuItem     *menuitem,
 {
   GtkWidget *fileselection;
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+    gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
+    gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
+  }
+
   while (g_main_context_iteration(NULL,FALSE));
 
   fileselection = create_fileselection (_ ("Select File"),1,NULL);
@@ -383,6 +402,16 @@ on_open_vcd_activate                      (GtkMenuItem     *menuitem,
 {
   GtkWidget *vcdtrack_dialog;
   
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+    gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
+    gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
+  }
+
   mainw->fx1_val=1;
   mainw->fx2_val=1;
   mainw->fx3_val=128;
@@ -395,6 +424,16 @@ void
 on_open_loc_activate                      (GtkMenuItem     *menuitem,
 					   gpointer         user_data)
 {
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+    gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
+    gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
+  }
+
   locw=create_location_dialog();
   gtk_widget_show(locw->dialog);
 
@@ -437,16 +476,23 @@ on_recent_activate                      (GtkMenuItem     *menuitem,
 
   gchar file[32768];
   gdouble start=0.;
-  gint end=0;
+  gint end=0,pno;
   gchar *pref;
+
+  pno=GPOINTER_TO_INT(user_data);
+
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
 
   while (g_main_context_iteration (NULL,FALSE)); // hide menu popdown
 
-  if (menuitem==GTK_MENU_ITEM(mainw->recent1)) pref=g_strdup("recent1");
-  else if (menuitem==GTK_MENU_ITEM(mainw->recent2)) pref=g_strdup("recent2");
-  else if (menuitem==GTK_MENU_ITEM(mainw->recent3)) pref=g_strdup("recent3");
-  else if (menuitem==GTK_MENU_ITEM(mainw->recent4)) pref=g_strdup("recent4");
-  else return;
+  pref=g_strdup_printf("recent%d",pno);
 
   get_pref(pref,file,32768);
 
@@ -467,6 +513,13 @@ on_recent_activate                      (GtkMenuItem     *menuitem,
     g_strfreev (array);
   }
   deduce_file(file,start,end);
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mt_idle_add(mainw->multitrack);
+  }
+  
+
 }
 
 
@@ -2916,6 +2969,7 @@ on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   mainw->cancelled=CANCEL_USER;
   mainw->jack_can_stop=mainw->jack_can_start=FALSE;
+
 }
 
 
@@ -3836,6 +3890,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     cfile->start=cfile->frames>0?1:0;
     cfile->end=cfile->frames;
     cfile->is_loaded=TRUE;
+    cfile->changed=TRUE;
     unlink (cfile->info_file);
     set_main_title(cfile->name,0);
     pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -4435,6 +4490,12 @@ on_ok_button1_clicked                  (GtkButton       *button,
   mainw->opening_multi=FALSE;
 
   g_strfreev(fnames);
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mt_idle_add(mainw->multitrack);
+  }
+
 }
 
 
@@ -4497,6 +4558,12 @@ on_opensel_range_ok_clicked                  (GtkButton       *button,
   mainw->fs_playarea=NULL;
   mainw->img_concat_clip=-1;
   open_file_sel(file_name,mainw->fx1_val,(gint)mainw->fx2_val);
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mt_idle_add(mainw->multitrack);
+  }
+
 
 }
 
@@ -4797,9 +4864,15 @@ void on_cancel_button1_clicked (GtkButton *button, gpointer user_data) {
 
   mainw->fs_playarea=NULL;
 
-  if (mainw->current_file>0) {
-    if (!cfile->opening) {
-      get_play_times();
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mt_idle_add(mainw->multitrack);
+  }
+  else {
+    if (mainw->current_file>0) {
+      if (!cfile->opening) {
+	get_play_times();
+      }
     }
   }
 }
@@ -4820,6 +4893,12 @@ on_cancel_opensel_clicked              (GtkButton       *button,
   end_fs_preview();
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   mainw->fs_playarea=NULL;
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mt_idle_add(mainw->multitrack);
+  }
+
 }
 
 
@@ -6962,17 +7041,12 @@ on_preview_clicked                     (GtkButton       *button,
     resume_after=FALSE;
 
     if (mainw->multitrack!=NULL) {
-      if (mainw->play_window==NULL) {
-	mainw->must_resize=TRUE;
-	mainw->pwidth=mainw->multitrack->play_width;
-	mainw->pheight=mainw->multitrack->play_height;
-      }
-      else {
-	mainw->pwidth=cfile->hsize;
-	mainw->pheight=cfile->vsize;
+      mt_prepare_for_playback(mainw->multitrack);
+      if (cfile->opening) {
+	gtk_widget_set_sensitive(mainw->multitrack->playall,FALSE);
+	gtk_widget_set_sensitive (mainw->m_playbutton, FALSE);
       }
     }
-
 
     if (user_data!=NULL) {
       // called from multitrack
@@ -7129,6 +7203,12 @@ on_preview_clicked                     (GtkButton       *button,
   mainw->timeout_ticks+=mainw->currticks;
   mainw->filter_map=filter_map;
 
+  if (mainw->multitrack!=NULL) {
+    current_file=mainw->current_file;
+    mainw->current_file=mainw->multitrack->render_file;
+    mt_post_playback(mainw->multitrack);
+    mainw->current_file=current_file;
+  }
 }
 
 

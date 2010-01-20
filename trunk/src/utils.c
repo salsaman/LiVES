@@ -2105,7 +2105,6 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
     else file=g_strdup_printf ("%s\n%s",filename,extra_params);
   }
 
-
   get_menu_text(mainw->recent1,buff);
   if (strcmp(file,buff)) {
     get_menu_text(mainw->recent2,buff);
@@ -2115,20 +2114,24 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
 	// not in list, or at pos 4
 	get_menu_text(mainw->recent3,buff);
 	set_menu_text(mainw->recent4,buff,FALSE);
+	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent4,buff,FALSE);
 	set_pref("recent4",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
 	g_free(tmp);
 
 	get_menu_text(mainw->recent2,buff);
 	set_menu_text(mainw->recent3,buff,FALSE);
+	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
 	set_pref("recent3",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
 	g_free(tmp);
 
 	get_menu_text(mainw->recent1,buff);
 	set_menu_text(mainw->recent2,buff,FALSE);
+	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
 	set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
 	g_free(tmp);
 	
 	set_menu_text(mainw->recent1,file,FALSE);
+	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
 	set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
 	g_free(tmp);
       }
@@ -2136,15 +2139,18 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
 	// #3 in list
 	get_menu_text(mainw->recent2,buff);
 	set_menu_text(mainw->recent3,buff,FALSE);
+	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
 	set_pref("recent3",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
 	g_free(tmp);
 	
 	get_menu_text(mainw->recent1,buff);
 	set_menu_text(mainw->recent2,buff,FALSE);
+	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
 	set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
 	g_free(tmp);
 
 	set_menu_text(mainw->recent1,file,FALSE);
+	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
 	set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
 	g_free(tmp);
       }
@@ -2153,10 +2159,12 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
       // #2 in list
       get_menu_text(mainw->recent1,buff);
       set_menu_text(mainw->recent2,buff,FALSE);
+      if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
       set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
       g_free(tmp);
 	
       set_menu_text(mainw->recent1,file,FALSE);
+      if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
       set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
       g_free(tmp);
     }

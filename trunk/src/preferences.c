@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2009
+// (c) G. Finch 2004 - 2010
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1368,7 +1368,8 @@ _prefsw *create_prefs_dialog (void) {
   gtk_window_set_position (GTK_WINDOW (prefsw->prefs_dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (prefsw->prefs_dialog), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (prefsw->prefs_dialog), 660, 440);
-  gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
+  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
+  else gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
 
   gtk_widget_modify_bg(prefsw->prefs_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_widget_modify_fg(prefsw->prefs_dialog, GTK_STATE_NORMAL, &palette->normal_fore);

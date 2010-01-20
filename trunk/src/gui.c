@@ -2229,16 +2229,16 @@ create_LiVES (void)
 		    NULL);
   g_signal_connect (GTK_OBJECT (mainw->recent1), "activate",
                       G_CALLBACK (on_recent_activate),
-		    NULL);
+		    GINT_TO_POINTER(1));
   g_signal_connect (GTK_OBJECT (mainw->recent2), "activate",
                       G_CALLBACK (on_recent_activate),
-		    NULL);
+		    GINT_TO_POINTER(2));
   g_signal_connect (GTK_OBJECT (mainw->recent3), "activate",
                       G_CALLBACK (on_recent_activate),
-		    NULL);
+		    GINT_TO_POINTER(3));
   g_signal_connect (GTK_OBJECT (mainw->recent4), "activate",
                       G_CALLBACK (on_recent_activate),
-		    NULL);
+		    GINT_TO_POINTER(4));
   g_signal_connect (GTK_OBJECT (mainw->save), "activate",
                       G_CALLBACK (on_save_activate),
 		    NULL);

@@ -210,7 +210,8 @@ do_warning_dialog(const gchar *text) {
 
 
 gboolean do_warning_dialog_with_check (const gchar *text, gint warn_mask_number) {
-  return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->LiVES));
+  if (mainw->multitrack==NULL) return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->LiVES));
+  return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
 }
 
 
@@ -244,20 +245,23 @@ do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number,
 void 
 do_error_dialog(const gchar *text) {
   // show error/info box
-  do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
+  if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
+  do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
 }
 
 void 
 do_error_dialog_with_check(const gchar *text, gint warn_mask_number) {
   // show error/info box
-  do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->LiVES));
+  if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->LiVES));
+  do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
 }
 
 
 void 
 do_blocking_error_dialog(const gchar *text) {
   // show error/info box - blocks until OK is pressed
-  do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->LiVES));
+  if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->LiVES));
+  do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->multitrack->window));
 }
 
 
@@ -1043,8 +1047,8 @@ void do_encoder_acodec_error (void) {
 }
 
 
-void do_layout_scrap_file_error(GtkWindow *window) {
-  do_error_dialog_with_check_transient(_("This layout includes generated frames.\nIt cannot be saved, you must render it to a clip first.\n"),TRUE,0,window);
+void do_layout_scrap_file_error(void) {
+  do_blocking_error_dialog(_("This layout includes generated frames.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
 
 
@@ -1409,28 +1413,28 @@ void do_mt_set_mem_error(gboolean has_mt, gboolean trans) {
 }
 
 
-void do_mt_audchan_error(lives_mt *mt, gint warn_mask) {
-  do_error_dialog_with_check_transient(_("Multitrack is set to 0 audio channels, but this layout has audio.\nYou should adjust the audio settings from the Tools menu.\n"),FALSE,warn_mask,GTK_WINDOW(mt->window));
+void do_mt_audchan_error(gint warn_mask) {
+  do_error_dialog_with_check(_("Multitrack is set to 0 audio channels, but this layout has audio.\nYou should adjust the audio settings from the Tools menu.\n"),warn_mask);
 }
 
-void do_mt_no_audchan_error(lives_mt *mt) {
-  do_error_dialog_with_check_transient(_("The current layout has audio, so audio channels may not be set to zero.\n"),FALSE,0,GTK_WINDOW(mt->window));
+void do_mt_no_audchan_error(void) {
+  do_error_dialog(_("The current layout has audio, so audio channels may not be set to zero.\n"));
 }
 
-void do_mt_no_jack_error(lives_mt *mt, gint warn_mask) {
-  do_error_dialog_with_check_transient(_("Multitrack audio preview is only available with the\n\"jack\" or \"pulse audio\" audio player.\nYou can set this in Tools|Preferences|Playback."),FALSE,warn_mask,GTK_WINDOW(mt->window));
+void do_mt_no_jack_error(gint warn_mask) {
+  do_error_dialog_with_check(_("Multitrack audio preview is only available with the\n\"jack\" or \"pulse audio\" audio player.\nYou can set this in Tools|Preferences|Playback."),warn_mask);
 }
 
-gboolean do_mt_rect_prompt(lives_mt *mt) {
-  return do_warning_dialog_with_check_transient(_("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\nShould I try to repair the disk copy of the layout ?\n"),0,GTK_WINDOW(mt->window));
+gboolean do_mt_rect_prompt(void) {
+  return do_warning_dialog(_("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\nShould I try to repair the disk copy of the layout ?\n"));
 }
 
 void do_audrate_error_dialog(void) {
   do_error_dialog(_ ("\n\nAudio rate must be greater than 0.\n"));
 }
 
-gboolean do_event_list_warning(lives_mt *mt) {
-  return do_warning_dialog_with_check_transient(_("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"),0,mt!=NULL?GTK_WINDOW(mt->window):GTK_WINDOW(mainw->LiVES));
+gboolean do_event_list_warning(void) {
+  return do_warning_dialog(_("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
 }
 
 
@@ -1504,7 +1508,8 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   
   if (mainw->is_ready) gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_window_set_title (GTK_WINDOW (procw->processing), _("LiVES: - Processing..."));
-  gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
+  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
+  else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (procw->processing), TRUE);
 
@@ -1681,7 +1686,8 @@ void end_threaded_dialog(void) {
     mainw->cancel_type=CANCEL_KILL;
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   }
-  gtk_widget_queue_draw(mainw->LiVES);
+  if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
+  else gtk_widget_queue_draw(mainw->multitrack->window);
 }
 
 

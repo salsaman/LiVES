@@ -3231,9 +3231,8 @@ void recover_layout_map(numclips) {
 	      if (lmap_entry_list->prev!=NULL) lmap_entry_list->prev->next=lmap_entry_list_next;
 	      else lmap_entry->list=lmap_node_next;
 	      if (lmap_entry_list_next!=NULL) lmap_entry_list_next->prev=lmap_entry_list->prev;
-	      lmap_entry_list->prev=lmap_entry_list->next=NULL;
-	      g_list_free_strings(lmap_entry_list);
-	      g_list_free(lmap_entry_list);
+	      g_free(lmap_entry_list->data);
+	      g_free(lmap_entry_list);
 	    }
 	    g_strfreev(array);
 	    lmap_entry_list=lmap_entry_list_next;
@@ -3245,7 +3244,7 @@ void recover_layout_map(numclips) {
 	  if (lmap_node->prev!=NULL) lmap_node->prev->next=lmap_node_next;
 	  else mlist=lmap_node_next;
 	  if (lmap_node_next!=NULL) lmap_node_next->prev=lmap_node->prev;
-	  g_free(lmap_node);
+	  //g_free(lmap_node);   // i don't know why, but this causes a segfault
 	}
 	lmap_node=lmap_node_next;
       }
@@ -3253,7 +3252,6 @@ void recover_layout_map(numclips) {
   
     lmap_node=mlist;
     while (lmap_node!=NULL) {
-      lmap_node_next=lmap_node->next;
       lmap_entry=lmap_node->data;
       if (lmap_entry->name!=NULL) g_free(lmap_entry->name);
       if (lmap_entry->handle!=NULL) g_free(lmap_entry->handle);
@@ -3261,7 +3259,7 @@ void recover_layout_map(numclips) {
 	g_list_free_strings(lmap_entry->list);
 	g_list_free(lmap_entry->list);
       }
-      lmap_node=lmap_node_next;
+      lmap_node=lmap_node->next;
     }
     if (mlist!=NULL) g_list_free(mlist);
 

@@ -2073,6 +2073,7 @@ create_event_space(gint length) {
 
 gint lives_list_index (GList *list, const gchar *data) {
   // find data in list, GTK's version is broken
+  // well, actually not broken - but we need to use strcmp
 
   int i;
   gint len;

@@ -1810,7 +1810,7 @@ static void rerenumber_clips(gchar *lfile) {
 	  rnc=atoi(array[1]);
 	  
 	  renumbered_clips[rnc]=i;
-	  
+
 	  lfps[i]=strtod(array[3],NULL);
 	  g_strfreev(array);
 	}
@@ -6706,7 +6706,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->timeline_eb=NULL;
 
   if (prefs->ar_layout&&mt->event_list==NULL&&!mainw->recoverable_layout) {
-    gchar *eload_file=g_strdup_printf("%s/%s/layouts/%s",prefs->tmpdir,mainw->set_name,prefs->ar_layout_name);
+    gchar *tmp=g_strdup_printf("%s/%s/layouts/%s",prefs->tmpdir,mainw->set_name,prefs->ar_layout_name);
+    gchar *eload_file=subst(tmp,"//","/");
+    g_free(tmp);
     mt->auto_reloading=TRUE;
     mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
     mt->auto_reloading=FALSE;
@@ -6724,7 +6726,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
     }
   }
   else if (mainw->recoverable_layout) {
-    gchar *eload_file=g_strdup_printf("%s.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+    gchar *tmp=g_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+    gchar *eload_file=subst(tmp,"//","/");
+    g_free(tmp);
     mt->auto_reloading=TRUE;
     mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
     mt->auto_reloading=FALSE;
@@ -15111,9 +15115,7 @@ GList *load_layout_map(void) {
       lmap_entry->list=g_list_append(lmap_entry->list,g_strdup(string));
       array=g_strsplit(string,"|",-1);
       g_free(string);
-      if (!g_list_find(mainw->current_layouts_map,array[0])) {
-	mainw->current_layouts_map=g_list_append(mainw->current_layouts_map,g_strdup(array[0]));
-      }
+      mainw->current_layouts_map=g_list_append_unique(mainw->current_layouts_map,array[0]);
       g_strfreev(array);
       g_free(entry);
     }
@@ -16248,9 +16250,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list, gboolean che
 				  // TODO ** inform user
 				  if (mt!=NULL&&mt->opts.back_audio_tracks==0) {
 				    mt->opts.back_audio_tracks=1;
+				    ebuf=rec_error_add(ebuf,"Adding backing audio",-1,tc);
 				  }
 				  else force_backing_tracks=1;
-				  ebuf=rec_error_add(ebuf,"Adding backing audio",-1,tc);
 				}
 			      }
 			      weed_free(trax);
@@ -16676,18 +16678,18 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list, gboolean che
 		    mt->opts.pertrack_audio=TRUE;
 		    // enable audio transitions
 		    gtk_widget_set_sensitive(mt->fx_region_2a,TRUE);
+		    ebuf=rec_error_add(ebuf,"Adding pertrack audio",-1,tc);
 		  }
 		  else force_pertrack_audio=TRUE;
 		  // TODO ** inform user
-		  ebuf=rec_error_add(ebuf,"Adding pertrack audio",-1,tc);
 		}
 		if (aclip_index[i]==-1) {
 		  if (mt!=NULL&&mt->opts.back_audio_tracks==0) {
 		    mt->opts.back_audio_tracks=1;
+		    ebuf=rec_error_add(ebuf,"Adding backing audio",-1,tc);
 		  }
 		  else force_backing_tracks=1;
 		  // TODO ** inform user
-		  ebuf=rec_error_add(ebuf,"Adding backing audio",-1,tc);
 		}
 	      }
 	      if (j==0) {
@@ -17136,11 +17138,13 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   _entryw *cdsw;
   gint resp=2;
+  gboolean rev_resp=FALSE;
   gchar *msg;
 
 
   if (strlen(mt->layout_name)>0) {
     cdsw=create_cds_dialog(2);
+    rev_resp=TRUE;
   }
   else {
     cdsw=create_cds_dialog(3);
@@ -17150,7 +17154,7 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_free(cdsw);
 
   if (resp==0) return; // cancel
-  if (resp==1&&strlen(mt->layout_name)>0) {
+  if (((resp==1&&!rev_resp)||(resp==2&&rev_resp))&&strlen(mt->layout_name)>0) {
     // delete from disk
     GList *layout_map=NULL;
     gchar *lmap_file;
@@ -17178,7 +17182,7 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt->idlefunc=0;
   }
 
-  if (resp==2&&strlen(mt->layout_name)==0) {
+  if (((resp==1&&!rev_resp)||(resp==2&&rev_resp))&&strlen(mt->layout_name)==0) {
     // save
     on_save_event_list_activate(NULL,mt);
   }

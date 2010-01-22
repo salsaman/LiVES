@@ -728,6 +728,7 @@ void save_future_prefs(void);
 void set_menu_text(GtkWidget *menu, const gchar *text, gboolean use_mnemonic);
 void get_menu_text(GtkWidget *menu, gchar *text);
 void get_menu_text_long(GtkWidget *menuitem, gchar *text);
+gint get_box_child_index (GtkBox *box, GtkWidget *tchild);
 void reset_clip_menu (void);
 void get_play_times(void);
 void get_total_time (file *file);

@@ -780,7 +780,21 @@ void remove_layout_files(GList *map) {
 	}
       }
       else {
-	stored_event_list_free_all(TRUE);
+	if (mainw->stored_event_list!=NULL) {
+	  stored_event_list_free_all(TRUE);
+	}
+	else if (mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL) {
+      
+	  prefs->ar_layout=FALSE;
+	  set_pref("ar_layout","");
+	  memset(prefs->ar_layout_name,0,1);
+	  
+	  event_list_free(mainw->multitrack->event_list);
+	  mainw->multitrack->event_list=NULL;
+
+	  mt_clear_timeline(mainw->multitrack);
+
+	}
       }
     }
     map=map_next;
@@ -3066,3 +3080,20 @@ void text_view_set_text(GtkTextView *textview, const gchar *text) {
   GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
   gtk_text_buffer_set_text(textbuf,text,-1);
 }
+
+
+gint get_box_child_index (GtkBox *box, GtkWidget *tchild) {
+  GList *list=box->children;
+  GtkBoxChild *child;
+  int i=0;
+
+  while (list!=NULL) {
+    child=list->data;
+    if (child->widget==tchild) return i;
+    list=list->next;
+    i++;
+  }
+  return -1;
+}
+
+

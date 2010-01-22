@@ -3556,7 +3556,7 @@ void close_current_file(gint file_to_switch_to) {
   if (mainw->current_file>-1) {
     int i;
     gchar *tmp;
-    if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&mainw->multitrack==NULL) {
+    if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&(mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
       d_print ((tmp=g_strdup_printf(_ ("Closed file %s\n"),cfile->file_name)));
       g_free(tmp);
 #ifdef ENABLE_OSC
@@ -3605,6 +3605,10 @@ void close_current_file(gint file_to_switch_to) {
     g_free(cfile);
     cfile=NULL;
 
+    if (mainw->multitrack!=NULL) {
+      mt_delete_clips(mainw->multitrack,mainw->current_file);
+    }
+
     if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
 
     if (!mainw->only_close) {
@@ -3614,6 +3618,12 @@ void close_current_file(gint file_to_switch_to) {
 	  d_print("");
 	}
 	else do_quick_switch(file_to_switch_to);
+
+	if (mainw->multitrack!=NULL) {
+	  mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+	  mt_clip_select(mainw->multitrack,TRUE);
+	}
+
 	return;
       }
     }
@@ -3633,6 +3643,12 @@ void close_current_file(gint file_to_switch_to) {
 	}
 	else do_quick_switch(index);
 	if (need_new_blend_file) mainw->blend_file=mainw->current_file;
+
+	if (mainw->multitrack!=NULL) {
+	  mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+	  mt_clip_select(mainw->multitrack,TRUE);
+	}
+
 	return;
       }
       if (mainw->clips_available>0) {
@@ -3644,6 +3660,12 @@ void close_current_file(gint file_to_switch_to) {
 	    }
 	    else do_quick_switch(index);
 	    if (need_new_blend_file) mainw->blend_file=mainw->current_file;
+
+	    if (mainw->multitrack!=NULL) {
+	      mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+	      mt_clip_select(mainw->multitrack,TRUE);
+	    }
+
 	    return;
 	  }
 	}
@@ -3655,6 +3677,12 @@ void close_current_file(gint file_to_switch_to) {
 	    }
 	    else do_quick_switch(index);
 	    if (need_new_blend_file) mainw->blend_file=mainw->current_file;
+
+	    if (mainw->multitrack!=NULL) {
+	      mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+	      mt_clip_select(mainw->multitrack,TRUE);
+	    }
+
 	    return;
 	  }
 	}
@@ -3719,6 +3747,11 @@ void close_current_file(gint file_to_switch_to) {
   if (!mainw->only_close) {
     gtk_widget_queue_draw (mainw->LiVES);
     if (mainw->playing_file==-1) d_print("");
+
+    if (mainw->multitrack!=NULL) {
+      mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+      mt_clip_select(mainw->multitrack,TRUE);
+    }
   }
 }
 

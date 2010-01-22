@@ -577,7 +577,7 @@ typedef struct {
 gboolean on_multitrack_activate (GtkMenuItem *, weed_plant_t *); // widget callback to create the multitrack window
 lives_mt *multitrack (weed_plant_t *, gint orig_file, gdouble fps); // create and return lives_mt struct
 void mt_init_tracks (lives_mt *, gboolean set_min_max);  // add basic tracks, or set tracks from an event_list
-void mt_init_clips (lives_mt *, gint orig_file, gboolean add); // init clip window (or add a new clip)
+
 
 // delete functions
 gboolean on_mt_delete_event (GtkWidget *, GdkEvent *, gpointer mt);
@@ -599,6 +599,7 @@ void delete_block_cb (GtkMenuItem *, gpointer mt);
 void selblock_cb (GtkMenuItem *, gpointer mt);
 void list_fx_here_cb (GtkMenuItem *, gpointer mt);
 void edit_start_end_cb (GtkMenuItem *, gpointer mt);
+void close_clip_cb (GtkMenuItem *, gpointer mt);
 
 //// menuitem callbacks
 void on_add_video_track_activate (GtkMenuItem *, gpointer mt);
@@ -711,6 +712,8 @@ void re_to_tc (GtkMenuItem *, gpointer mt);
 gboolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
 void multitrack_clear_marks (GtkMenuItem *, gpointer mt);
 void mt_show_current_frame(lives_mt *);  // preview th current frame (non-effects mode)
+void mt_clear_timeline(lives_mt *mt);
+
 
 // context box text
 void clear_context (lives_mt *);
@@ -749,10 +752,12 @@ void on_fx_insa_clicked  (GtkWidget *button, gpointer user_data);
 
 // utils
 guint event_list_get_byte_size(weed_plant_t *event_list, int *num_events);  // returns bytes and sets num_events
-gboolean event_list_rectify(lives_mt *, weed_plant_t *event_list, gboolean check_clips);
+gboolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
 gboolean make_backup_space (lives_mt *, size_t space_needed);
 void activate_mt_preview(lives_mt *); // sensitize Show Preview and Apply buttons
 void **mt_get_pchain(void);
+void event_list_free_undos(lives_mt *);
+gboolean used_in_current_layout(lives_mt *, gint file);
 
 // event_list utilities
 gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack); // ctrack can be -1 to compare all events, else we cf for ctrack
@@ -793,8 +798,11 @@ void mt_swap_play_pause (lives_mt *, gboolean put_pause);
 void amixer_show (GtkButton *, gpointer user_data);
 gchar *set_values_from_defs(lives_mt *, gboolean from_prefs);
 
-void mt_clip_select (lives_mt *, gboolean scroll);
 
+// clip boxes
+void mt_clip_select (lives_mt *, gboolean scroll);
+void mt_delete_clips(lives_mt *mt, gint file);
+void mt_init_clips (lives_mt *, gint orig_file, gboolean add);
 
 /* default to warn about */
 #define LMAP_ERROR_MISSING_CLIP 1

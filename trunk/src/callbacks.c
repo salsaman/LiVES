@@ -644,30 +644,60 @@ void
 on_close_activate                      (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  gchar *warn;
+  gchar *warn,*extra;
   gchar title[256];
-  gboolean lmap_errors=FALSE;
+  gboolean lmap_errors=FALSE,acurrent=FALSE,only_current=FALSE;
+
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+    mainw->current_file=mainw->multitrack->file_selected;
+  }
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_CLOSE_FILE)) {
     mainw->xlays=layout_frame_is_affected(mainw->current_file,1);
     mainw->xlays=layout_audio_is_affected(mainw->current_file,0.);
+
+    acurrent=used_in_current_layout(mainw->multitrack,mainw->current_file);
+    if (acurrent) {
+      if (mainw->xlays==NULL) only_current=TRUE;
+      mainw->xlays=g_list_append_unique(mainw->xlays,mainw->cl_string);
+    }
+
     if (mainw->xlays!=NULL) {
       get_menu_text(cfile->menuentry,title);
       if (strlen(title)>128) g_snprintf(title,32,"%s",(_("This file")));
-      warn=g_strdup_printf(_ ("\n%s\nis used in some multitrack layouts.\n\nReally close it ?"),title);
+      if (acurrent) extra=g_strdup(_(",\n - including the current layout - "));
+      else extra=g_strdup("");
+      if (!only_current) warn=g_strdup_printf(_ ("\n%s\nis used in some multitrack layouts%s.\n\nReally close it ?"),title,extra);
+      else warn=g_strdup_printf(_ ("\n%s\nis used in the current layout.\n\nReally close it ?"),title);
+      g_free(extra);
       if (!do_warning_dialog(warn)) {
 	g_free(warn);
-	g_list_free_strings(mainw->xlays);
-	g_list_free(mainw->xlays);
-	mainw->xlays=NULL;
+	if (mainw->xlays!=NULL) {
+	  g_list_free_strings(mainw->xlays);
+	  g_list_free(mainw->xlays);
+	  mainw->xlays=NULL;
+	}
+
+	if (mainw->multitrack!=NULL) {
+	  mainw->current_file=mainw->multitrack->render_file;
+	  mt_sensitise(mainw->multitrack);
+	  mt_idle_add(mainw->multitrack);
+	}
 	return;
       }
       g_free(warn);
-      add_lmap_error(LMAP_ERROR_CLOSE_FILE,cfile->name,cfile->layout_map,0,1,0.,cfile->stored_layout_frame>0||cfile->stored_layout_audio>0.);
+      add_lmap_error(LMAP_ERROR_CLOSE_FILE,cfile->name,cfile->layout_map,0,1,0.,acurrent);
       lmap_errors=TRUE;
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      if (mainw->xlays!=NULL) {
+	g_list_free_strings(mainw->xlays);
+	g_list_free(mainw->xlays);
+	mainw->xlays=NULL;
+      }
     }
   }
   else {
@@ -677,6 +707,13 @@ on_close_activate                      (GtkMenuItem     *menuitem,
       warn=g_strdup_printf(_ ("\n%s\nhas not been saved or backed up.\n\nReally close it ?"),title);
       if (!do_warning_dialog(warn)) {
 	g_free(warn);
+
+	if (mainw->multitrack!=NULL) {
+	  mainw->current_file=mainw->multitrack->render_file;
+	  mt_sensitise(mainw->multitrack);
+	  mt_idle_add(mainw->multitrack);
+	}
+
 	return;
       }
       g_free(warn);
@@ -688,9 +725,18 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     stored_event_list_free_undos();
   }
 
+  if (mainw->multitrack!=NULL) {
+    event_list_free_undos(mainw->multitrack);
+  }
+
   close_current_file(0);
 
-  if (lmap_errors) popup_lmap_errors(NULL,NULL);
+  if (mainw->multitrack!=NULL) {
+    mainw->current_file=mainw->multitrack->render_file;
+    if (mainw->multitrack->event_list!=NULL) only_current=FALSE;
+  }
+
+  if (lmap_errors&&!only_current) popup_lmap_errors(NULL,NULL);
 
   if (mainw->current_file==-1&&strlen(mainw->set_name)>0) {
     gchar *lfiles;
@@ -733,6 +779,11 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     }
     memset(mainw->set_name,0,1);
     mainw->was_set=FALSE;
+  }
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mt_idle_add(mainw->multitrack);
   }
 
 }
@@ -8992,6 +9043,15 @@ on_ins_silence_details_clicked                      (GtkButton *button,
 
 void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
   gboolean close=GPOINTER_TO_INT(user_data);
+
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
   clear_lmap_errors();
   save_layout_map(NULL,NULL,NULL,NULL);
   if (close) on_cancel_button1_clicked(button,textwindow);
@@ -8999,6 +9059,11 @@ void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_queue_draw(gtk_widget_get_toplevel(GTK_WIDGET(button)));
     gtk_widget_set_sensitive(textwindow->clear_button,FALSE);
     gtk_widget_set_sensitive(textwindow->delete_button,FALSE);
+
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mt_idle_add(mainw->multitrack);
+    }
   }
 }
 
@@ -9007,8 +9072,20 @@ void on_lerrors_delete_clicked (GtkButton *button, gpointer user_data) {
   gint num_maps=g_list_length(mainw->affected_layouts_map);
   gchar *msg=g_strdup_printf(_("\nDelete %d layout(s)...are you sure ?\n"),num_maps);
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
   if (!do_warning_dialog(msg)) {
     g_free(msg);
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mt_idle_add(mainw->multitrack);
+    }
     return;
   }
 

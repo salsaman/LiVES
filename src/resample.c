@@ -1,6 +1,6 @@
 // resample.c
 // LiVES
-// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1110,7 +1110,10 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     }
     gtk_window_set_position (GTK_WINDOW (resaudw->dialog), GTK_WIN_POS_CENTER);
     gtk_window_set_modal (GTK_WINDOW (resaudw->dialog), TRUE);
-    gtk_window_set_transient_for(GTK_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
+
+    if (prefs->show_gui) {
+      gtk_window_set_transient_for(GTK_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
+    }
 
     dialog_vbox = GTK_DIALOG (resaudw->dialog)->vbox;
     gtk_widget_show (dialog_vbox);
@@ -1954,7 +1957,10 @@ create_new_pb_speed (gshort type)
   gtk_window_set_position (GTK_WINDOW (new_pb_speed), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (new_pb_speed), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (new_pb_speed), 300, 200);
-  gtk_window_set_transient_for(GTK_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
+
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
+  }
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(new_pb_speed, GTK_STATE_NORMAL, &palette->normal_back);

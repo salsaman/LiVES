@@ -41,9 +41,10 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
     gtk_widget_modify_bg(dvgrabw->window, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->LiVES));
-  else gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->multitrack->window));
-
+  if (!prefs->show_gui) {
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->multitrack->window));
+  }
 
   vbox=gtk_vbox_new(FALSE,10);
   gtk_container_add (GTK_CONTAINER (dvgrabw->window), vbox);

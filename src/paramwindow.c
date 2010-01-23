@@ -1,6 +1,6 @@
 // paramwindow.c
 // LiVES
-// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -778,8 +778,10 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   if (menuitem!=NULL) {
     // activated from the menu for a rendered effect
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[n]),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[n]),GTK_WINDOW(mainw->multitrack->window));
+    if (!prefs->show_gui) {
+      if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[n]),GTK_WINDOW(mainw->LiVES));
+      else gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[n]),GTK_WINDOW(mainw->multitrack->window));
+    }
     gtk_window_set_modal (GTK_WINDOW (fx_dialog[n]), TRUE);
   }
 

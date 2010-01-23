@@ -7064,6 +7064,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   gboolean transfer_focus=FALSE;
   int *layout_map;
   double *layout_map_audio;
+  gchar *tmp;
 
   mainw->cancelled=CANCEL_NONE;
 
@@ -7285,6 +7286,11 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   while (g_main_context_iteration(NULL,FALSE));
   reset_clip_menu();
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
+
+#ifdef ENABLE_OSC
+  lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_CE)));
+  g_free(tmp);
+#endif
 
   return TRUE;
 }
@@ -8442,6 +8448,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   gint orig_file;
   gboolean response;
   gboolean transfer_focus=FALSE;
+  gchar *tmp;
 
   lives_mt *multi;
 
@@ -8452,7 +8459,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
   mainw->frame_layer=NULL;
 
-  if (prefs->mt_enter_prompt&&mainw->stored_event_list==NULL) {
+  if (prefs->mt_enter_prompt&&mainw->stored_event_list==NULL&&prefs->show_gui) {
     rdet=create_render_details(3);  // WARNING !! - rdet is global in events.h
     rdet->enc_changed=FALSE;
     do {
@@ -8522,7 +8529,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     rerenumber_clips(NULL);
   }
   
-
   if (prefs->show_gui) {
     // must check this before event_list_rectify, since it can throw error dialogs
     if (gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))) transfer_focus=TRUE;
@@ -8648,6 +8654,11 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   mt_show_current_frame(multi);
 
   if (transfer_focus) gtk_window_present(GTK_WINDOW(multi->window));
+
+#ifdef ENABLE_OSC
+  lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_MT)));
+  g_free(tmp);
+#endif
 
   if (multi->idlefunc==0) multi->idlefunc=mt_idle_add(multi);
 
@@ -12584,6 +12595,8 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (!did_backup) mt_backup(mt,MT_UNDO_DELETE_FILTER,NULL);
 
   remove_filter_from_event_list(mt->event_list,mt->selected_init_event);
+  remove_end_blank_frames(mt->event_list);
+  
   mt->selected_init_event=NULL;
   mt->current_fx=-1;
   if (mt->poly_state==POLY_PARAMS) polymorph(mt,POLY_CLIPS);

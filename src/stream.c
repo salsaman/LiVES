@@ -1,6 +1,6 @@
 // stream.c
 // LiVES
-// (c) G. Finch 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2008 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1106,7 +1106,9 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   pandhw->dialog = gtk_dialog_new ();
 
   gtk_window_set_position (GTK_WINDOW (pandhw->dialog), GTK_WIN_POS_CENTER);
-  gtk_window_set_transient_for(GTK_WINDOW(pandhw->dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(pandhw->dialog),GTK_WINDOW(mainw->LiVES));
+  }
   gtk_window_set_modal (GTK_WINDOW (pandhw->dialog), TRUE);
 
   if (palette->style&STYLE_1) {

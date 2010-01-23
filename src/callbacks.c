@@ -518,7 +518,6 @@ on_recent_activate                      (GtkMenuItem     *menuitem,
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
-  
 
 }
 

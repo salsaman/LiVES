@@ -85,16 +85,23 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
   g_free(com);
 
   if (mainw->opening_loc) return do_progress_dialog(TRUE,TRUE,_ ("Examining file header"));
-  else {
-    clear_mainw_msg();
-    
-    while (!(infofile=fopen(cfile->info_file,"r"))) {
-      g_usleep(prefs->sleep_time);
-    }
-    
-    dummychar=fgets(mainw->msg,512,infofile);
-    fclose(infofile);
+
+  pthread_mutex_lock(&mainw->gtk_mutex);
+  clear_mainw_msg();
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+  
+  while (!(infofile=fopen(cfile->info_file,"r"))) {
+    while (g_main_context_iteration (NULL,FALSE));
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+    g_usleep(prefs->sleep_time);
+    pthread_mutex_lock(&mainw->gtk_mutex);
   }
+  
+  dummychar=fgets(mainw->msg,512,infofile);
+  fclose(infofile);
+
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   return TRUE;
 }
 
@@ -377,7 +384,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       cfile->frames=0;
     }
 
-    get_play_times();
+    if (mainw->multitrack==NULL) get_play_times();
 
     add_to_winmenu();
     set_main_title(cfile->file_name,0);
@@ -571,6 +578,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     switch_to_file((mainw->current_file=0),current_file);
   }
   else {
+    reget_afilesize (mainw->current_file);
+    get_total_time(cfile);
     mainw->current_file=mainw->multitrack->render_file;
     mt_init_clips(mainw->multitrack,current_file,TRUE);
     while (g_main_context_iteration(NULL,FALSE));
@@ -2155,7 +2164,7 @@ void play_file (void) {
       else if (mainw->pre_src_file!=-1) switch_to_file (mainw->current_file,mainw->pre_src_file);
     }
     else {
-      if (mainw->multitrack==NULL) get_play_times();
+      get_play_times();
     }
   }
 

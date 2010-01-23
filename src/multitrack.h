@@ -233,6 +233,8 @@ struct _mt {
   GtkWidget *recent3;
   GtkWidget *recent4;
 
+  GtkWidget *time_scrollbar;
+  GtkWidget *show_layout_errors;
 
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
@@ -240,7 +242,6 @@ struct _mt {
   GdkCursor *cursor;
 
   GtkObject *hadjustment;
-  GtkWidget *time_scrollbar;
 
   GList *audio_draws; // list of audio boxes, 0 == backing audio, 1 == track 0 audio, etc.
 
@@ -771,15 +772,20 @@ weed_plant_t *load_event_list(lives_mt *, gchar *eload_file);
 
 // layouts and layout maps
 GList *load_layout_map(void);
-void save_layout_map (int *lmap, double *lmap_audio, gchar *file, gchar *dir);
-void migrate_layouts (gchar *old_set_name, gchar *new_set_name);
-GList *layout_frame_is_affected(gint clipno, gint frame);
-GList *layout_audio_is_affected(gint clipno, gdouble time);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
-gboolean check_for_layout_del (lives_mt *mt, gboolean exiting);
+void save_layout_map (int *lmap, double *lmap_audio, gchar *file, gchar *dir);
+
+void migrate_layouts (gchar *old_set_name, gchar *new_set_name);
+
+GList *layout_frame_is_affected(gint clipno, gint frame);
+GList *layout_audio_is_affected(gint clipno, gdouble time);
+
+gboolean check_for_layout_del (lives_mt *, gboolean exiting);
+
 void stored_event_list_free_all(gboolean wiped);
 void stored_event_list_free_undos(void);
+void remove_current_from_affected_layouts(lives_mt *);
 
 
 // auto backup
@@ -801,7 +807,7 @@ gchar *set_values_from_defs(lives_mt *, gboolean from_prefs);
 
 // clip boxes
 void mt_clip_select (lives_mt *, gboolean scroll);
-void mt_delete_clips(lives_mt *mt, gint file);
+void mt_delete_clips(lives_mt *, gint file);
 void mt_init_clips (lives_mt *, gint orig_file, gboolean add);
 
 /* default to warn about */

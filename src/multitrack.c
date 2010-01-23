@@ -141,16 +141,171 @@ static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list
 }
 
 
+static GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
+  GdkPixbuf *thumbnail,*pixbuf;
+  GError *error=NULL;
+  gchar *buf;
+
+  if (file<1) {
+    g_printerr("Warning - make thumb for file %d\n",file);
+    return NULL;
+  }
+
+  if (width<2||height<2) return NULL;
+
+  if (mainw->files[file]->frames>0) {
+    weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
+    thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,GDK_INTERP_HYPER);
+  }
+  else {
+    buf=g_strdup_printf("%s%s/audio.png",prefs->prefix_dir,ICON_DIR);
+    pixbuf=gdk_pixbuf_new_from_file_at_scale(buf,width,height,FALSE,&error);
+    // ...at_scale is inaccurate !
+    
+    g_free(buf);
+    if (error!=NULL||pixbuf==NULL) {
+      g_error_free(error);
+      return NULL;
+    }
+    
+    if (gdk_pixbuf_get_width(pixbuf)!=width||gdk_pixbuf_get_height(pixbuf)!=height) {
+      // ...at_scale is inaccurate
+      thumbnail=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
+      gdk_pixbuf_unref(pixbuf);
+    }
+    else thumbnail=pixbuf;
+  }
+
+  return thumbnail;
+}
+
+
+static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height, gint clip, gint hsx, gint hsy) {
+  GdkPixbuf *pixbuf=NULL;
+  guchar *cpixels,*tpixels;
+  int i,j,k;
+  GdkPixbuf *thumbnail=NULL;
+  gint twidth=0,twidth3,twidth4,trow;
+  file *sfile=mainw->files[clip];
+
+  int frame_start;
+  gdouble frames_width;
+
+  unsigned int cwidth,cheight;
+
+  if (mt->cursor!=NULL) gdk_cursor_unref(mt->cursor);
+  mt->cursor=NULL;
+
+  gdk_display_get_maximal_cursor_size(gdk_screen_get_display(gtk_widget_get_screen(mt->window)),&cwidth,&cheight);
+  if (width>cwidth) width=cwidth;
+
+  mt->cursor_style=cstyle;
+  switch(cstyle) {
+  case LIVES_CURSOR_NORMAL:
+    gdk_window_set_cursor (mt->window->window, NULL);
+    return;
+  case LIVES_CURSOR_BUSY:
+    mt->cursor=gdk_cursor_new(GDK_WATCH);
+    gdk_window_set_cursor (mt->window->window, mt->cursor);
+    return;
+  case LIVES_CURSOR_BLOCK:
+    if (sfile!=NULL&&sfile->frames>0) {
+      frame_start=mt->opts.ign_ins_sel?1:sfile->start;
+      frames_width=(gdouble)(mt->opts.ign_ins_sel?sfile->frames:sfile->end-sfile->start+1.);
+
+      pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
+
+      for (i=0;i<width;i+=BLOCK_THUMB_WIDTH) {
+	// create a small thumb
+	twidth=BLOCK_THUMB_WIDTH;
+	if ((i+twidth)>width) twidth=width-i;
+	if (twidth>=2) {
+	  thumbnail=make_thumb(clip,twidth,height,frame_start+(gint)((gdouble)i/(gdouble)width*frames_width));
+	  // render it in the eventbox
+	  if (thumbnail!=NULL) {
+	    trow=gdk_pixbuf_get_rowstride(thumbnail);
+	    twidth=gdk_pixbuf_get_width(thumbnail);
+	    cpixels=gdk_pixbuf_get_pixels(pixbuf)+(i*4);
+	    tpixels=gdk_pixbuf_get_pixels(thumbnail);
+
+	    if (!gdk_pixbuf_get_has_alpha(thumbnail)) {
+	      twidth3=twidth*3;
+	      for (j=0;j<height;j++) {
+		for (k=0;k<twidth3;k+=3) {
+		  memcpy(cpixels,&tpixels[k],3);
+		  memset(cpixels+3,0xFF,1);
+		  cpixels+=4;
+		}
+		tpixels+=trow;
+		cpixels+=(width-twidth)<<2;
+	      }
+	    }
+	    else {
+	      twidth4=twidth*4;
+	      for (j=0;j<height;j++) {
+		memcpy(cpixels,tpixels,twidth4);
+		tpixels+=trow;
+		cpixels+=width<<2;
+	      }
+	    }
+	    gdk_pixbuf_unref(thumbnail);
+	  }
+	}
+      }
+      break;
+    }
+    // fallthrough
+  case LIVES_CURSOR_AUDIO_BLOCK:
+    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
+    trow=gdk_pixbuf_get_rowstride(pixbuf);
+    cpixels=gdk_pixbuf_get_pixels(pixbuf);
+    for (j=0;j<height;j++) {
+      for (k=0;k<width;k++) {
+	cpixels[0]=audcol.red;
+	cpixels[1]=audcol.green;
+	cpixels[2]=audcol.blue;
+	cpixels[3]=0xFF;
+	cpixels+=4;
+      }
+      cpixels+=(trow-width*4);
+    }
+    break;
+  case LIVES_CURSOR_FX_BLOCK:
+    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
+    trow=gdk_pixbuf_get_rowstride(pixbuf);
+    cpixels=gdk_pixbuf_get_pixels(pixbuf);
+    for (j=0;j<height;j++) {
+      for (k=0;k<width;k++) {
+	cpixels[0]=fxcol.red;
+	cpixels[1]=fxcol.green;
+	cpixels[2]=fxcol.blue;
+	cpixels[3]=0xFF;
+	cpixels+=4;
+      }
+      cpixels+=(trow-width*4);
+    }
+    break;
+  }
+
+  mt->cursor = gdk_cursor_new_from_pixbuf (gdk_display_get_default(), pixbuf, hsx, hsy);
+  gdk_window_set_cursor (mt->window->window, mt->cursor);
+  gdk_pixbuf_unref (pixbuf);
+
+}
+
+
 
 static void save_mt_autoback(lives_mt *mt) {
   int fd;
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
 
+  set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   add_markers(mt,mt->event_list);
   save_event_list_inner(mt,fd,mt->event_list,mt->save_all_vals,NULL);
   remove_markers(mt->event_list);
   close(fd);
+  set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
 
   g_free(asave_file);
 }
@@ -166,7 +321,7 @@ static gboolean mt_auto_backup(gpointer user_data) {
 
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (!mt->auto_changed||mt->event_list==NULL) {
+  if (!mt->auto_changed||mt->event_list==NULL||mt->idlefunc==0) {
     return FALSE;
   }
 
@@ -225,44 +380,6 @@ void recover_layout(GtkButton *button, gpointer user_data) {
   mainw->recoverable_layout=FALSE;
 }
 
-
-GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
-  GdkPixbuf *thumbnail,*pixbuf;
-  GError *error=NULL;
-  gchar *buf;
-
-  if (file<1) {
-    g_printerr("Warning - make thumb for file %d\n",file);
-    return NULL;
-  }
-
-  if (width<2||height<2) return NULL;
-
-  if (mainw->files[file]->frames>0) {
-    weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
-    thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,GDK_INTERP_HYPER);
-  }
-  else {
-    buf=g_strdup_printf("%s%s/audio.png",prefs->prefix_dir,ICON_DIR);
-    pixbuf=gdk_pixbuf_new_from_file_at_scale(buf,width,height,FALSE,&error);
-    // ...at_scale is inaccurate !
-    
-    g_free(buf);
-    if (error!=NULL||pixbuf==NULL) {
-      g_error_free(error);
-      return NULL;
-    }
-    
-    if (gdk_pixbuf_get_width(pixbuf)!=width||gdk_pixbuf_get_height(pixbuf)!=height) {
-      // ...at_scale is inaccurate
-      thumbnail=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
-      gdk_pixbuf_unref(pixbuf);
-    }
-    else thumbnail=pixbuf;
-  }
-
-  return thumbnail;
-}
 
 
 void **mt_get_pchain(void) {
@@ -510,118 +627,6 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
 }
 
 
-static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height, gint clip, gint hsx, gint hsy) {
-  GdkPixbuf *pixbuf=NULL;
-  guchar *cpixels,*tpixels;
-  int i,j,k;
-  GdkPixbuf *thumbnail=NULL;
-  gint twidth=0,twidth3,twidth4,trow;
-  file *sfile=mainw->files[clip];
-
-  int frame_start;
-  gdouble frames_width;
-
-  unsigned int cwidth,cheight;
-
-  if (mt->cursor!=NULL) gdk_cursor_unref(mt->cursor);
-  mt->cursor=NULL;
-
-  gdk_display_get_maximal_cursor_size(gdk_screen_get_display(gtk_widget_get_screen(mt->window)),&cwidth,&cheight);
-  if (width>cwidth) width=cwidth;
-
-  mt->cursor_style=cstyle;
-  switch(cstyle) {
-  case LIVES_CURSOR_NORMAL:
-    gdk_window_set_cursor (mt->window->window, NULL);
-    return;
-  case LIVES_CURSOR_BUSY:
-    mt->cursor=gdk_cursor_new(GDK_WATCH);
-    gdk_window_set_cursor (mt->window->window, mt->cursor);
-    return;
-  case LIVES_CURSOR_BLOCK:
-    if (sfile!=NULL&&sfile->frames>0) {
-      frame_start=mt->opts.ign_ins_sel?1:sfile->start;
-      frames_width=(gdouble)(mt->opts.ign_ins_sel?sfile->frames:sfile->end-sfile->start+1.);
-
-      pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-
-      for (i=0;i<width;i+=BLOCK_THUMB_WIDTH) {
-	// create a small thumb
-	twidth=BLOCK_THUMB_WIDTH;
-	if ((i+twidth)>width) twidth=width-i;
-	if (twidth>=2) {
-	  thumbnail=make_thumb(clip,twidth,height,frame_start+(gint)((gdouble)i/(gdouble)width*frames_width));
-	  // render it in the eventbox
-	  if (thumbnail!=NULL) {
-	    trow=gdk_pixbuf_get_rowstride(thumbnail);
-	    twidth=gdk_pixbuf_get_width(thumbnail);
-	    cpixels=gdk_pixbuf_get_pixels(pixbuf)+(i*4);
-	    tpixels=gdk_pixbuf_get_pixels(thumbnail);
-
-	    if (!gdk_pixbuf_get_has_alpha(thumbnail)) {
-	      twidth3=twidth*3;
-	      for (j=0;j<height;j++) {
-		for (k=0;k<twidth3;k+=3) {
-		  memcpy(cpixels,&tpixels[k],3);
-		  memset(cpixels+3,0xFF,1);
-		  cpixels+=4;
-		}
-		tpixels+=trow;
-		cpixels+=(width-twidth)<<2;
-	      }
-	    }
-	    else {
-	      twidth4=twidth*4;
-	      for (j=0;j<height;j++) {
-		memcpy(cpixels,tpixels,twidth4);
-		tpixels+=trow;
-		cpixels+=width<<2;
-	      }
-	    }
-	    gdk_pixbuf_unref(thumbnail);
-	  }
-	}
-      }
-      break;
-    }
-    // fallthrough
-  case LIVES_CURSOR_AUDIO_BLOCK:
-    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-    trow=gdk_pixbuf_get_rowstride(pixbuf);
-    cpixels=gdk_pixbuf_get_pixels(pixbuf);
-    for (j=0;j<height;j++) {
-      for (k=0;k<width;k++) {
-	cpixels[0]=audcol.red;
-	cpixels[1]=audcol.green;
-	cpixels[2]=audcol.blue;
-	cpixels[3]=0xFF;
-	cpixels+=4;
-      }
-      cpixels+=(trow-width*4);
-    }
-    break;
-  case LIVES_CURSOR_FX_BLOCK:
-    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-    trow=gdk_pixbuf_get_rowstride(pixbuf);
-    cpixels=gdk_pixbuf_get_pixels(pixbuf);
-    for (j=0;j<height;j++) {
-      for (k=0;k<width;k++) {
-	cpixels[0]=fxcol.red;
-	cpixels[1]=fxcol.green;
-	cpixels[2]=fxcol.blue;
-	cpixels[3]=0xFF;
-	cpixels+=4;
-      }
-      cpixels+=(trow-width*4);
-    }
-    break;
-  }
-
-  mt->cursor = gdk_cursor_new_from_pixbuf (gdk_display_get_default(), pixbuf, hsx, hsy);
-  gdk_window_set_cursor (mt->window->window, mt->cursor);
-  gdk_pixbuf_unref (pixbuf);
-
-}
 
 static void redraw_eventbox(lives_mt *mt, GtkWidget *eventbox) {
   GdkPixbuf *bgimg;
@@ -3060,20 +3065,21 @@ static void do_clip_context (lives_mt *mt, GdkEventButton *event, file *sfile) {
   GtkWidget *edit_start_end,*edit_clipedit,*close_clip;
   GtkWidget *menu=gtk_menu_new();
 
-  if (sfile->frames<1) return;
-
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected clip"));
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  edit_start_end = gtk_menu_item_new_with_mnemonic (_("_Adjust start and end points"));
-  g_signal_connect (GTK_OBJECT (edit_start_end), "activate",
-		    G_CALLBACK (edit_start_end_cb),
-		    (gpointer)mt);
+  if (sfile->frames>0) {
+    edit_start_end = gtk_menu_item_new_with_mnemonic (_("_Adjust start and end points"));
+    g_signal_connect (GTK_OBJECT (edit_start_end), "activate",
+		      G_CALLBACK (edit_start_end_cb),
+		      (gpointer)mt);
+    
+    gtk_container_add (GTK_CONTAINER (menu), edit_start_end);
 
-  gtk_container_add (GTK_CONTAINER (menu), edit_start_end);
+  }
 
   edit_clipedit = gtk_menu_item_new_with_mnemonic (_("_Edit/encode in clip editor"));
   g_signal_connect (GTK_OBJECT (edit_clipedit), "activate",
@@ -4185,7 +4191,7 @@ void stored_event_list_free_undos(void) {
 
 
 
-static void remove_current_from_affected_layouts(void) {
+void remove_current_from_affected_layouts(lives_mt *mt) {
   // remove from affected layouts map
   if (mainw->affected_layouts_map!=NULL) {
     GList *found=g_list_find_custom(mainw->affected_layouts_map,mainw->cl_string,(GCompareFunc)strcmp);
@@ -4194,6 +4200,26 @@ static void remove_current_from_affected_layouts(void) {
       mainw->affected_layouts_map=g_list_delete_link(mainw->affected_layouts_map,found);
     }
   }
+  
+  if (mainw->affected_layouts_map==NULL) {
+    gtk_widget_set_sensitive (mainw->show_layout_errors, FALSE);
+    if (mt!=NULL) gtk_widget_set_sensitive (mt->show_layout_errors, FALSE);
+  }
+
+  recover_layout_cancelled(NULL,NULL);
+
+  if (mt!=NULL) {
+    if (mt->event_list!=NULL) {
+      event_list_free(mt->event_list);
+      mt->event_list=NULL;
+    }
+    
+    mt_clear_timeline(mt);
+  }
+
+  prefs->ar_layout=FALSE;
+  set_pref("ar_layout","");
+  memset(prefs->ar_layout_name,0,1);
   
   // remove some text
   
@@ -4209,6 +4235,7 @@ static void remove_current_from_affected_layouts(void) {
       gtk_text_buffer_delete_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),(GtkTextMark *)markmap->next->data);
       markmap=markmap->next->next;
     }
+    mainw->affected_layout_marks=NULL;
   }
 }
 
@@ -4238,11 +4265,7 @@ void stored_event_list_free_all(gboolean wiped) {
   mainw->stored_event_list=NULL;
 
   if (wiped) {
-    remove_current_from_affected_layouts();
-    
-    if (mainw->affected_layout_marks!=NULL) g_list_free(mainw->affected_layout_marks);
-    mainw->affected_layout_marks=NULL;
-
+    remove_current_from_affected_layouts(NULL);
     mainw->stored_event_list_changed=FALSE;
   }
 }
@@ -5780,6 +5803,12 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   show_messages = gtk_image_menu_item_new_with_mnemonic (_("Show _Messages"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), show_messages);
 
+
+  mt->show_layout_errors = gtk_image_menu_item_new_with_mnemonic (_("Show _Layout Errors"));
+  gtk_widget_show (mt->show_layout_errors);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->show_layout_errors);
+  gtk_widget_set_sensitive (mt->show_layout_errors, mainw->affected_layouts_map!=NULL);
+
   separator = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
   gtk_widget_set_sensitive (separator, FALSE);
@@ -5918,6 +5947,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   g_signal_connect (GTK_OBJECT (view_mt_details), "activate",
 		    G_CALLBACK (multitrack_view_details),
 		    (gpointer)mt);
+  g_signal_connect (GTK_OBJECT (mt->show_layout_errors), "activate",
+		    G_CALLBACK (popup_lmap_errors),
+		    NULL);
   g_signal_connect (GTK_OBJECT (mt->view_clips), "activate",
 		    G_CALLBACK (multitrack_view_clips),
 		    (gpointer)mt);
@@ -8295,20 +8327,8 @@ void mt_delete_clips(lives_mt *mt, gint file) {
 
     if (!event_list_rectify(mt,mt->event_list)||get_first_event(mt->event_list)==NULL) {
       // delete the current layout
-      remove_current_from_affected_layouts();
-      
-      recover_layout_cancelled(NULL,NULL);
-      
-      prefs->ar_layout=FALSE;
-      set_pref("ar_layout","");
-      memset(prefs->ar_layout_name,0,1);
-      
-      if (mt->event_list!=NULL) {
-	event_list_free(mt->event_list);
-	mt->event_list=NULL;
-      }
       mainw->current_file=mt->render_file;
-      mt_clear_timeline(mt);
+      remove_current_from_affected_layouts(mt);
       mainw->current_file=current_file;
     }
     else {
@@ -8422,10 +8442,13 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
 	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
+	mt->clip_labels=g_list_append(mt->clip_labels,label);
+
 	label=gtk_label_new (g_strdup_printf (_("%.2f sec."),mainw->files[i]->laudio_time));
 	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
 	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
+	mt->clip_labels=g_list_append(mt->clip_labels,label);
       }
       
       count++;

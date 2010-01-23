@@ -1,12 +1,12 @@
 // interface.h
 // LiVES
-// (c) G. Finch 2003 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
 
 #define DEFAULT_FRAME_HSIZE 320
-#define DEFAULT_FRAME_VSIZE 240
+#define DEFAULT_FRAME_VSIZE 200
 
 #define PROG_LABEL_WIDTH 540
 

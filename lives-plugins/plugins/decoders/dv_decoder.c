@@ -92,7 +92,7 @@ static boolean attach_stream(char *URI) {
 
   char *ext=rindex(URI,'.');
 
-  if (strncmp(ext,".dv",3)) return FALSE;
+  if (ext==NULL||strncmp(ext,".dv",3)) return FALSE;
 
   if (!(priv.fd=open(URI,O_RDONLY))) {
     fprintf(stderr, "dv_decoder: unable to open %s\n",URI);

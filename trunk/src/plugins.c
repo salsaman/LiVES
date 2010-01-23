@@ -694,7 +694,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   if (prefsw!=NULL) gtk_widget_hide (prefsw->prefs_dialog);
 
   gtk_window_set_position (GTK_WINDOW (vppa->dialog), GTK_WIN_POS_CENTER);
-  gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
+  if (!prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
+  }
   gtk_window_set_modal (GTK_WINDOW (vppa->dialog), TRUE);
 
   if (palette->style&STYLE_1) {
@@ -2883,7 +2885,9 @@ gchar *plugin_run_param_window(gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_
     if (vbox==NULL) {
       on_render_fx_pre_activate(NULL,rfx);
 
-      gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
+      if (prefs->show_gui) {
+	gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
+      }
       gtk_window_set_modal (GTK_WINDOW (fx_dialog[1]), TRUE);
       
       if (gtk_dialog_run(GTK_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {

@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003
+// (c) G. Finch 2003 - 2010
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -94,7 +94,9 @@ void create_merge_dialog (void) {
     gtk_widget_modify_bg (merge_opts->merge_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_transient_for(GTK_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
+  if (!prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
+  }
 
   dialog_vbox = GTK_DIALOG (merge_opts->merge_dialog)->vbox;
   gtk_widget_show (dialog_vbox);

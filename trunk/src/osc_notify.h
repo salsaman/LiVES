@@ -37,5 +37,6 @@
 #define LIVES_OSC_NOTIFY_FAILED 1024
 #define LIVES_OSC_NOTIFY_CANCELLED 2048
 
+#define LIVES_OSC_NOTIFY_MODE_CHANGED 4096 //mode changed to clip editor or to multitrack
 
 #endif

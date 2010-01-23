@@ -210,8 +210,12 @@ do_warning_dialog(const gchar *text) {
 
 
 gboolean do_warning_dialog_with_check (const gchar *text, gint warn_mask_number) {
-  if (mainw->multitrack==NULL) return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->LiVES));
-  return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
+  if (!prefs->show_gui) {
+    return do_warning_dialog_with_check_transient(text,warn_mask_number,NULL);
+  } else {
+    if (mainw->multitrack==NULL) return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->LiVES));
+    return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
+  }
 }
 
 
@@ -229,7 +233,7 @@ do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number,
 
   mytext=g_strdup(text); // trans
   warning=create_warn_dialog(warn_mask_number);
-  gtk_window_set_transient_for(GTK_WINDOW(warning),transient);
+  if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(warning),transient);
   gtk_label_set_text(GTK_LABEL(mainw->warning_label),mytext);
   if (mytext!=NULL) g_free(mytext);
 
@@ -245,23 +249,36 @@ do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number,
 void 
 do_error_dialog(const gchar *text) {
   // show error/info box
-  if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
-  do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
+  if (!prefs->show_gui) {
+    do_error_dialog_with_check_transient(text,FALSE,0,NULL);
+  } else {
+    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
+    do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
+  }
 }
+
 
 void 
 do_error_dialog_with_check(const gchar *text, gint warn_mask_number) {
   // show error/info box
-  if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->LiVES));
-  do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
+  if (!prefs->show_gui) {
+    do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,NULL);
+  } else {
+    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->LiVES));
+    do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
+  }
 }
 
 
 void 
 do_blocking_error_dialog(const gchar *text) {
   // show error/info box - blocks until OK is pressed
-  if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->LiVES));
-  do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->multitrack->window));
+  if (!prefs->show_gui) {
+    do_error_dialog_with_check_transient(text,TRUE,0,NULL);
+  } else {
+    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->LiVES));
+    do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->multitrack->window));
+  }
 }
 
 
@@ -275,7 +292,7 @@ do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking, gi
   mytext=g_strdup(text);
   err_box=create_dialog3(mytext,is_blocking,warn_mask_number);
   if (mytext!=NULL) g_free(mytext);
-  gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
+  if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
   gtk_widget_show(err_box);
   gtk_window_present (GTK_WINDOW (err_box));
   gdk_window_raise (err_box->window);

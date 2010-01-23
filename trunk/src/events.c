@@ -1949,7 +1949,7 @@ GtkWidget *events_rec_dialog (void) {
     gtk_widget_modify_bg (e_rec_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_transient_for(GTK_WINDOW(e_rec_dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) gtk_window_set_transient_for(GTK_WINDOW(e_rec_dialog),GTK_WINDOW(mainw->LiVES));
   gtk_window_set_modal (GTK_WINDOW (e_rec_dialog), TRUE);
 
   dialog_vbox = GTK_DIALOG (e_rec_dialog)->vbox;
@@ -4435,7 +4435,7 @@ render_details *create_render_details (gint type) {
 
   gtk_container_set_border_width (GTK_CONTAINER (rdet->dialog), 10);
   gtk_window_set_default_size (GTK_WINDOW (rdet->dialog), 300, 200);
-  gtk_window_set_transient_for(GTK_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) gtk_window_set_transient_for(GTK_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
   gtk_window_set_modal (GTK_WINDOW (rdet->dialog), TRUE);
   rdet_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (rdet->dialog), rdet_accel_group);

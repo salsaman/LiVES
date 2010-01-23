@@ -359,6 +359,7 @@ apply_prefs(gboolean skip_warn) {
   gint gui_monitor=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   gint play_monitor=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   gboolean forcesmon=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->forcesmon));
+  gboolean startup_ce=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rb_startup_ce));
 
 #ifdef ENABLE_JACK
   gboolean jack_tstart=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_tjack));
@@ -584,9 +585,11 @@ apply_prefs(gboolean skip_warn) {
     set_boolean_pref("show_recent_files",show_recent);
     if (prefs->show_recent) {
       gtk_widget_show (mainw->recent_menu);
+      if (mainw->multitrack!=NULL) gtk_widget_show(mainw->multitrack->recent_menu);
     }
     else {
       gtk_widget_hide (mainw->recent_menu);
+      if (mainw->multitrack!=NULL) gtk_widget_hide(mainw->multitrack->recent_menu);
     }
   }
 
@@ -1040,6 +1043,15 @@ apply_prefs(gboolean skip_warn) {
     set_int_pref("mt_auto_back",mt_autoback_time);
   }
 
+  if (startup_ce&&future_prefs->startup_interface!=STARTUP_CE) {
+    future_prefs->startup_interface=STARTUP_CE;
+    set_int_pref("startup_interface",STARTUP_CE);
+  }
+  else if (!startup_ce&&future_prefs->startup_interface!=STARTUP_MT) {
+    future_prefs->startup_interface=STARTUP_MT;
+    set_int_pref("startup_interface",STARTUP_MT);
+  }
+
   return needs_restart;
 }
 
@@ -1338,6 +1350,7 @@ _prefsw *create_prefs_dialog (void) {
   GSList *rb_group2 = NULL;
   GSList *alsa_midi_group = NULL;
   GSList *autoback_group = NULL;
+  GSList *st_interface_group = NULL;
 
   // drop down lists
   GList *themes = NULL;
@@ -1368,8 +1381,11 @@ _prefsw *create_prefs_dialog (void) {
   gtk_window_set_position (GTK_WINDOW (prefsw->prefs_dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (prefsw->prefs_dialog), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (prefsw->prefs_dialog), 660, 440);
-  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
-  else gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
+
+  if (prefs->show_gui) {
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
+  }
 
   gtk_widget_modify_bg(prefsw->prefs_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_widget_modify_fg(prefsw->prefs_dialog, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1393,7 +1409,7 @@ _prefsw *create_prefs_dialog (void) {
 
   vbox77 = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vbox77);
-  gtk_container_set_border_width (GTK_CONTAINER (vbox77), 20);
+  gtk_container_set_border_width (GTK_CONTAINER (vbox77), 10);
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
@@ -1697,6 +1713,47 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->mouse_scroll, TRUE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->mouse_scroll), 22);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->mouse_scroll), prefs->mouse_scroll_clips);
+
+
+
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox7), hbox, TRUE, FALSE, 0);
+
+  label = gtk_label_new (_("Startup mode:"));
+  gtk_widget_show (label);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
+
+  add_fill_to_box(GTK_BOX(hbox));
+
+  prefsw->rb_startup_ce = gtk_radio_button_new_with_mnemonic (NULL, _("_Clip editor"));
+  gtk_widget_show (prefsw->rb_startup_ce);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->rb_startup_ce), 8);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->rb_startup_ce, FALSE, FALSE, 0);
+
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->rb_startup_ce), st_interface_group);
+  st_interface_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->rb_startup_ce));
+
+  add_fill_to_box(GTK_BOX(hbox));
+
+  prefsw->rb_startup_mt = gtk_radio_button_new_with_mnemonic (NULL, _("_Multitrack mode"));
+  gtk_widget_show (prefsw->rb_startup_mt);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->rb_startup_mt), 8);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->rb_startup_mt, FALSE, FALSE, 0);
+
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (prefsw->rb_startup_mt), st_interface_group);
+  st_interface_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->rb_startup_mt));
+
+
+  if (future_prefs->startup_interface==STARTUP_MT) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->rb_startup_mt),TRUE);
+  }
+  else {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->rb_startup_ce),TRUE);
+  }
+
 
 
   // multihead support

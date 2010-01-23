@@ -236,6 +236,12 @@ typedef struct {
   gboolean use_alsa_midi;
 #endif
 
+  gint startup_interface;
+
+#define STARTUP_CE 0
+#define STARTUP_MT 1
+
+
 } _prefs;
 
 
@@ -302,8 +308,6 @@ typedef struct {
   GtkWidget *spinbutton_bwidth;
   GtkWidget *theme_combo;
   GtkWidget *check_midi;
-  GtkWidget *rb_aq_high;
-  GtkWidget *rb_aq_low;
   GtkWidget *ins_speed;
   GtkWidget *jpeg;
   GtkWidget *mt_enter_prompt;
@@ -353,6 +357,8 @@ typedef struct {
   GtkWidget *spinbutton_midirpt;
   GtkWidget *alsa_midi;
   GtkWidget *button_midid;
+  GtkWidget *rb_startup_ce;
+  GtkWidget *rb_startup_mt;
 } _prefsw;
 
 
@@ -362,6 +368,7 @@ typedef struct {  // startup overrides from commandline
   gboolean ign_osc;
   gboolean ign_jackopts;
   gboolean ign_aplayer;
+  gboolean ign_stmode;
 } _ign_opts;
 
 
@@ -383,6 +390,7 @@ typedef struct {
   gboolean show_recent;
   gboolean show_tool;
   gboolean osc_start;
+  gint startup_interface;
   guint jack_opts;
 } _future_prefs;
 

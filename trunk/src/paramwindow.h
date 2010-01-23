@@ -1,6 +1,6 @@
 // paramwindow.h
 // LiVES
-// (c) G. Finch 2004 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for licensing details
 

@@ -597,8 +597,13 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->osc_udp_started=FALSE;
     prefs->osc_udp_port=0;
 #ifdef ENABLE_OSC
-    prefs->osc_udp_port=get_int_pref ("osc_port");
-    future_prefs->osc_start=prefs->osc_start=get_boolean_pref("osc_start");
+    if (!mainw->foreign) {
+      prefs->osc_udp_port=get_int_pref ("osc_port");
+      future_prefs->osc_start=prefs->osc_start=get_boolean_pref("osc_start");
+    }
+    else {
+      future_prefs->osc_start=prefs->osc_start=FALSE;
+    }
 #endif
   }
 
@@ -806,21 +811,11 @@ static void lives_init(_ign_opts *ign_opts) {
     
     prefs->render_audio=TRUE;
 
-    prefs->midi_check_rate=get_int_pref("midi_check_rate");
-    if (prefs->midi_check_rate==0) prefs->midi_check_rate=DEF_MIDI_CHECK_RATE;
-
-    if (prefs->midi_check_rate<1) prefs->midi_check_rate=1;
-
-    prefs->midi_rpt=get_int_pref("midi_rpt");
-    if (prefs->midi_rpt==0) prefs->midi_rpt=DEF_MIDI_RPT;
-
     prefs->num_rtaudiobufs=4;
 
     prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and othe live CDs
 
-    prefs->mouse_scroll_clips=get_boolean_pref("mouse_scroll_clips");
-
-    prefs->mt_auto_back=get_int_pref("mt_auto_back");
+    prefs->startup_interface=future_prefs->startup_interface=STARTUP_CE;
 
     //////////////////////////////////////////////////////////////////
 
@@ -832,6 +827,18 @@ static void lives_init(_ign_opts *ign_opts) {
       fastsrand(tv.tv_sec);
 
       srandom(tv.tv_sec);
+
+      prefs->midi_check_rate=get_int_pref("midi_check_rate");
+      if (prefs->midi_check_rate==0) prefs->midi_check_rate=DEF_MIDI_CHECK_RATE;
+      
+      if (prefs->midi_check_rate<1) prefs->midi_check_rate=1;
+      
+      prefs->midi_rpt=get_int_pref("midi_rpt");
+      if (prefs->midi_rpt==0) prefs->midi_rpt=DEF_MIDI_RPT;
+
+      prefs->mouse_scroll_clips=get_boolean_pref("mouse_scroll_clips");
+      
+      prefs->mt_auto_back=get_int_pref("mt_auto_back");
 
       get_pref ("vid_playback_plugin",buff,256);
       if (strlen (buff)&&strcmp (buff,"(null)")&&strcmp(buff,"none")) {
@@ -905,6 +912,11 @@ static void lives_init(_ign_opts *ign_opts) {
       else prefs->ar_layout=FALSE;
 
       prefs->rec_desktop_audio=get_boolean_pref("rec_desktop_audio");
+
+      future_prefs->startup_interface=get_int_pref("startup_interface");
+      if (!ign_opts->ign_stmode) {
+	prefs->startup_interface=future_prefs->startup_interface;
+      }
 
       // scan for encoder plugins
       if ((encoders=get_plugin_list (PLUGIN_ENCODERS,FALSE,NULL,NULL))!=NULL) {
@@ -1535,6 +1547,8 @@ void print_opthelp(void) {
   g_printerr("%s",_("-norecover       : force no-loading of crash recovery\n"));
   g_printerr("%s",_("-recover         : force loading of crash recovery\n"));
   g_printerr("%s",_("-nogui           : do not show the gui\n"));
+  g_printerr("%s",_("-startup-ce      : start in clip editor mode\n"));
+  g_printerr("%s",_("-startup-mt      : start in multitrack mode\n"));
 #ifdef ENABLE_OSC
   g_printerr("%s",_("-oscstart <port> : start OSC listener on UDP port <port>\n"));
   g_printerr("%s",_("-nooscstart      : do not start OSC listener\n"));
@@ -1556,6 +1570,15 @@ void print_opthelp(void) {
 }
 
 
+
+static gboolean mt_startup(gpointer data) {
+  if (!on_multitrack_activate(NULL,NULL)) {
+    if (prefs->show_gui) {
+      gtk_widget_show(mainw->LiVES);
+    }
+  }
+  return FALSE;
+}
 
 
 static gboolean lives_startup(gpointer data) {
@@ -1661,9 +1684,18 @@ static gboolean lives_startup(gpointer data) {
 		    }
 		  }
 		    
-		  if (prefs->show_gui) gtk_widget_show (mainw->LiVES);
-		}}}}}}}}
-  
+		  if (prefs->startup_interface!=STARTUP_MT) {
+		    if (prefs->show_gui) {
+		      gtk_widget_show (mainw->LiVES);
+		    }
+#ifdef ENABLE_OSC
+		    lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_MT)));
+		    g_free(tmp);
+#endif
+		  }
+		  else g_idle_add(mt_startup,NULL);
+		  }}}}}}}}
+
   else {
   // capture mode
     mainw->foreign_key=atoi(zargv[2]);
@@ -1760,7 +1792,7 @@ int main (int argc, char *argv[]) {
   ssize_t mynsize;
   gchar fbuff[512];
 
-  ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_jackopts=ign_opts.ign_aplayer=FALSE;
+  ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_jackopts=ign_opts.ign_aplayer=ign_opts.ign_stmode=FALSE;
 
 #ifdef ENABLE_OIL
   oil_init();
@@ -1827,6 +1859,8 @@ int main (int argc, char *argv[]) {
 	{"recover", 0, 0, 0},
 	{"norecover", 0, 0, 0},
 	{"nogui", 0, 0, 0},
+	{"startup-ce", 0, 0, 0},
+	{"startup-mt", 0, 0, 0},
 	{"debug", 0, 0, 0},
 #ifdef ENABLE_OSC
 	{"oscstart", 1, 0, 0},
@@ -1940,6 +1974,19 @@ int main (int argc, char *argv[]) {
 	  continue;
 	}
 #endif
+	if (!strcmp(charopt,"startup-ce")) {
+	  // force start in clip editor mode
+	  prefs->startup_interface=STARTUP_CE;
+	  ign_opts.ign_stmode=TRUE;
+	  continue;
+	}
+	if (!strcmp(charopt,"startup-mt")) {
+	  // force start in multitrack mode
+	  prefs->startup_interface=STARTUP_MT;
+	  ign_opts.ign_stmode=TRUE;
+	  continue;
+	}
+
       }
       if (optind<argc) {
 	// remaining opts are filename [start_time] [end_frame]

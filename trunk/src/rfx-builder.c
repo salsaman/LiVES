@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -133,7 +133,9 @@ rfx_build_window_t *make_rfx_build_window (gchar *script_name, gshort status) {
   }
   gtk_window_set_position (GTK_WINDOW (rfxbuilder->dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (rfxbuilder->dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
+  }
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(rfxbuilder->dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(rfxbuilder->dialog),FALSE);
@@ -708,7 +710,9 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  }
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -1135,7 +1139,9 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
+  }
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -1855,7 +1861,9 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   }
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  }
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -2566,7 +2574,9 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   }
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  }
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -2835,7 +2845,9 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   }
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  }
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -2943,7 +2955,9 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  }
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -4189,7 +4203,9 @@ gchar *prompt_for_script_name(gchar *sname, gshort status) {
   dialog = gtk_dialog_new ();
 
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) {
+    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+  }
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 
   if (palette->style&STYLE_1) {

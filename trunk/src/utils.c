@@ -3040,7 +3040,10 @@ void set_fg_colour(gint red, gint green, gint blue) {
   col.red=red*255;
   col.green=green*255;
   col.blue=blue*255;
-  if (mainw->general_gc==NULL) mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(mainw->LiVES->window));
+  if (mainw->general_gc==NULL) {
+    if (mainw->multitrack==NULL) mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(mainw->LiVES->window));
+    else mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(mainw->multitrack->window->window));
+  }
   gdk_gc_set_rgb_fg_color(mainw->general_gc,&col);
 }
 

@@ -2046,10 +2046,9 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->show_file_info, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->show_file_comments, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->full_screen, TRUE);
-  gtk_widget_set_sensitive (mainw->mt_menu, mainw->current_file>0);
+  gtk_widget_set_sensitive (mainw->mt_menu, TRUE);
   gtk_widget_set_sensitive (mainw->export_proj, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->import_proj, mainw->current_file==-1);
-  gtk_widget_set_sensitive (mainw->mt_menu, TRUE);
 
   if (!mainw->foreign) {
     for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) if (mainw->rendered_fx[i].menuitem!=NULL) gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,mainw->current_file>0&&cfile->frames>0);
@@ -2174,7 +2173,7 @@ void desensitize(void) {
   if (!mainw->foreign) {
     for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].min_frames>=0) gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
   }
-  gtk_widget_set_sensitive (mainw->mt_menu, FALSE);
+
   gtk_widget_set_sensitive (mainw->export_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->recaudio_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->append_audio, FALSE);
@@ -2201,7 +2200,6 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
   gtk_widget_set_sensitive (mainw->export_proj, FALSE);
   gtk_widget_set_sensitive (mainw->import_proj, FALSE);
-  gtk_widget_set_sensitive (mainw->mt_menu, FALSE);
   gtk_widget_set_sensitive(mainw->recaudio_sel,FALSE);
 
   if (mainw->current_file>=0&&(mainw->playing_file==-1||mainw->foreign)) {
@@ -2265,6 +2263,7 @@ procw_desensitize(void) {
   gtk_widget_set_sensitive (mainw->delaudio_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->load_cdtrack, FALSE);
   gtk_widget_set_sensitive (mainw->open_lives2lives, FALSE);
+  gtk_widget_set_sensitive (mainw->mt_menu, FALSE);
 
   if (mainw->current_file>0&&cfile->nopreview) {
     gtk_widget_set_sensitive (mainw->m_playbutton, FALSE);
@@ -2684,8 +2683,9 @@ static void get_max_opsize(int *opwidth, int *opheight) {
     else {
       if (!mainw->fs||mainw->play_window==NULL||mainw->ext_playback) {
 	if (mainw->play_window==NULL) {
-	  *opwidth=mainw->multitrack->play_width;
-	  *opheight=mainw->multitrack->play_height;
+	  *opwidth=mainw->files[mainw->multitrack->render_file]->hsize;
+	  *opheight=mainw->files[mainw->multitrack->render_file]->vsize;
+	  calc_maxspect(mainw->multitrack->play_width,mainw->multitrack->play_height,opwidth,opheight);
 	}
 	else {
 	  *opwidth=cfile->hsize;
@@ -3290,8 +3290,9 @@ void load_frame_image(gint frame, gint last_frame) {
 	if (mainw->multitrack!=NULL) {
 	  if (!mainw->fs||mainw->play_window==NULL) {
 	    if (mainw->play_window==NULL) {
-	      mainw->pwidth=mainw->multitrack->play_width;
-	      mainw->pheight=mainw->multitrack->play_height;
+	      mainw->pwidth=mainw->files[mainw->multitrack->render_file]->hsize;
+	      mainw->pheight=mainw->files[mainw->multitrack->render_file]->vsize;
+	      calc_maxspect(mainw->multitrack->play_width,mainw->multitrack->play_height,&mainw->pwidth,&mainw->pheight);
 	    }
 	    else {
 	      mainw->pwidth=cfile->hsize;

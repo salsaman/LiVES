@@ -124,7 +124,7 @@ void on_camquit_clicked (GtkButton *button, gpointer user_data) {
 
   if (mainw->multitrack!=NULL) {
     mt_sensitise(mainw->multitrack);
-    mt_idle_add(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
 
 }

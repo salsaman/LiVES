@@ -796,6 +796,7 @@ void remove_layout_files(GList *map) {
 
 	}
       }
+      g_free(fname);
     }
     map=map_next;
   }
@@ -2869,7 +2870,7 @@ gchar *remove_trailing_zeroes(gdouble val) {
 gint real_clips_available(void) {
   int i,count=0;
   for (i=1;i<MAX_FILES;i++) {
-    if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)) count++;
+    if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&i!=mainw->scrap_file&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) count++;
   }
   return count;
 }

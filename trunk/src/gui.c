@@ -533,7 +533,6 @@ create_LiVES (void)
   mainw->mt_menu = gtk_image_menu_item_new_with_mnemonic (_("_MULTITRACK mode"));
   gtk_widget_show (mainw->mt_menu);
   gtk_container_add (GTK_CONTAINER (menuitem12_menu), mainw->mt_menu);
-  gtk_widget_set_sensitive (mainw->mt_menu, FALSE);
 
   separator3 = gtk_menu_item_new ();
   gtk_widget_show (separator3);

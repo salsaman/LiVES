@@ -3480,7 +3480,7 @@ void rewrite_recovery_file(gint closed_file) {
   recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
 
   for (i=1;i<=MAX_FILES;i++) {
-    if ((closed_file<0||i!=closed_file)&&mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK&&i!=mainw->scrap_file&&mainw->files[i]->is_loaded) {
+    if ((closed_file<0||i!=closed_file)&&mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK&&i!=mainw->scrap_file&&mainw->files[i]->is_loaded&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
       recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
       dummyvar=write(recovery_fd,recovery_entry,strlen(recovery_entry));
       g_free(recovery_entry);

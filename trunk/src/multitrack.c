@@ -926,7 +926,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
   int num_in_tracks;
   int *clips,*in_tracks,numtracks;
   weed_plant_t *event=get_frame_event_at(mt->event_list,tc,NULL,TRUE);
-  int opwidth=mt->play_width,opheight=mt->play_height;
+  int opwidth,opheight;
 
   int track_index=mt->track_index;
 
@@ -937,6 +937,11 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
   mt->inwidth=mt->inheight=0;
 
   if (event==NULL) return retval;
+
+
+  opwidth=cfile->hsize;
+  opheight=cfile->vsize;
+  calc_maxspect(mt->play_width,mt->play_height,&opwidth,&opheight);
 
   numtracks=weed_leaf_num_elements(event,"clips");
   clips=weed_get_int_array(event,"clips",&error);
@@ -1059,6 +1064,7 @@ static void track_select (lives_mt *mt) {
 	if (mt->is_ready) pos=GTK_RULER (mt->timeline)->position;
 	else pos=0.;
 	gtk_widget_set_sensitive (mt->insert, mt->file_selected>0&&mainw->files[mt->file_selected]->frames>0);
+	gtk_widget_set_sensitive (mt->adjust_start_end, mt->file_selected>0);
 	gtk_widget_set_sensitive (mt->audio_insert, FALSE);
 	if (mt->poly_state==POLY_FX_STACK) polymorph(mt,POLY_FX_STACK);
       }
@@ -2049,22 +2055,23 @@ void mt_show_current_frame(lives_mt *mt) {
     }
   }
 
-  mt->outwidth=mt->play_width;
-  mt->outheight=mt->play_height;
+  mt->outwidth=cfile->hsize;
+  mt->outheight=cfile->vsize;
+  calc_maxspect(mt->play_width,mt->play_height,&mt->outwidth,&mt->outheight);
 
   if (mainw->frame_layer!=NULL) {
     int fx_layer_palette;
     GdkPixbuf *pixbuf;
     int weed_error;
 
-    mainw->pwidth=mt->play_width;
-    mainw->pheight=mt->play_height;
+    mainw->pwidth=mt->outwidth;
+    mainw->pheight=mt->outheight;
 
     fx_layer_palette=weed_get_int_value(mainw->frame_layer,"current_palette",&weed_error);
     if (fx_layer_palette!=WEED_PALETTE_RGB24) convert_layer_palette(mainw->frame_layer,WEED_PALETTE_RGB24,0);
 
     if (mainw->play_window==NULL||(mt->poly_state==POLY_PARAMS&&mt->framedraw!=NULL)) {
-      if ((mt->play_width!=(weed_get_int_value(mainw->frame_layer,"width",&weed_error))||mt->play_height!=weed_get_int_value(mainw->frame_layer,"height",&weed_error))) resize_layer(mainw->frame_layer,mt->play_width,mt->play_height,GDK_INTERP_HYPER);
+      if ((mt->outwidth!=(weed_get_int_value(mainw->frame_layer,"width",&weed_error))||mt->outheight!=weed_get_int_value(mainw->frame_layer,"height",&weed_error))) resize_layer(mainw->frame_layer,mt->outwidth,mt->outheight,GDK_INTERP_HYPER);
     }
     else resize_layer(mainw->frame_layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
 
@@ -3296,7 +3303,6 @@ void mt_init_start_end_spins(lives_mt *mt) {
   mt->sel_label = gtk_label_new(NULL);
 
   mt->preview_button=gtk_button_new_with_label(_("Show frame preview"));
-  gtk_box_pack_start (GTK_BOX (hbox), mt->preview_button, FALSE, FALSE, 10);
 
   g_signal_connect (GTK_OBJECT (mt->preview_button), "clicked",
 		    G_CALLBACK (on_frame_preview_clicked),
@@ -3307,7 +3313,6 @@ void mt_init_start_end_spins(lives_mt *mt) {
   eventbox=gtk_event_box_new();
   label=gtk_label_new (_("Auto preview"));
 
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    mt->fx_auto_prev);
@@ -3320,7 +3325,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   }
   
   mt->fx_auto_prev_box = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), mt->fx_auto_prev_box, FALSE, FALSE, 10);
+  //gtk_box_pack_start (GTK_BOX (hbox), mt->fx_auto_prev_box, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (mt->fx_auto_prev_box), mt->fx_auto_prev, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (mt->fx_auto_prev_box), eventbox, FALSE, FALSE, 10);
   
@@ -7258,7 +7263,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   mainw->multitrack=NULL;
 
-  switch_to_file ((mainw->current_file=0),mt->file_selected);
+  if (mt->file_selected!=-1) switch_to_file ((mainw->current_file=0),mt->file_selected);
 
   g_free (mt);
 
@@ -9874,11 +9879,6 @@ void polymorph (lives_mt *mt, gshort poly) {
 
     if (mt->mt_frame_preview) {
       // put blank back in preview window
-      gtk_widget_hide(mt->preview_button);
-      gtk_widget_hide(mt->fx_auto_prev_box);
-      gtk_widget_show(mt->sel_label);
-      gtk_widget_show(mt->l_sel_arrow);
-      gtk_widget_show(mt->r_sel_arrow);
       gtk_widget_ref (mainw->playarea);
       gtk_widget_modify_bg (mt->fd_frame, GTK_STATE_NORMAL, &palette->normal_back);
     }
@@ -10127,25 +10127,13 @@ void polymorph (lives_mt *mt, gshort poly) {
     add_mt_param_box(mt,FALSE);
 
     if (mainw->playing_file<0) {
-      if (mt->current_fx!=mt->avol_fx) { // TODO - skip this for any audio only effect
-	// prepare internal play window for previews
-	gtk_widget_hide(mt->sel_label);
-	gtk_widget_hide(mt->l_sel_arrow);
-	gtk_widget_hide(mt->r_sel_arrow);
-	gtk_widget_show(mt->preview_button);
-	gtk_widget_show(mt->fx_auto_prev_box);
-      }
       if (mt->current_track>=0) show_preview(mt,q_gint64(tc+gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC,mt->fps));
       on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
     }
     clear_context(mt);
-    add_context_label(mt,_("Drag the time slider to where you want\n"));
-    add_context_label(mt,_("to set effect parameters\n"));
-    add_context_label(mt,_("Set parameters, and then click \"Apply\"\n"));
-    if (mt->current_track>=0) {
-      add_context_label(mt,_("You can preview by clicking on\n"));
-      add_context_label(mt,_("\"Show Frame Preview\" below.\n"));
-    }
+    add_context_label(mt,_("Drag the time slider to where you\n"));
+    add_context_label(mt,_("want to set effect parameters\n"));
+    add_context_label(mt,_("Set parameters, then click \"Apply\"\n"));
     break;
   case POLY_FX_STACK:
     gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),2);
@@ -10746,10 +10734,14 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       // need to move at least 1.5 pixels, or to another track
       if ((track!=mt->current_track||(tc-start_tc>(tcpp*3/2))||(start_tc-tc>(tcpp*3/2)))&&((old_track<0&&track<0)||(old_track>=0&&track>=0))) {
 	move_block(mt,mt->putative_block,timesecs,old_track,track);
+
+	gdk_window_get_pointer(GDK_WINDOW (eventbox->window), &x, &y, NULL);
+	timesecs=get_time_from_x(mt,x);
+
+	mt_tl_move(mt,timesecs-GTK_RULER(mt->timeline)->position);
       }
     }
 
-    mt_tl_move(mt,timesecs-GTK_RULER(mt->timeline)->position);
   }
   
   if (mainw->playing_file==-1) mt_sensitise(mt);
@@ -13430,12 +13422,6 @@ void mt_prepare_for_playback(lives_mt *mt) {
 
   if (mt->mt_frame_preview) {
     // put blank back in preview window
-    gtk_widget_hide(mt->preview_button);
-    gtk_widget_hide(mt->fx_auto_prev_box);
-    gtk_widget_show(mt->sel_label);
-    gtk_widget_show(mt->l_sel_arrow);
-    gtk_widget_show(mt->r_sel_arrow);
-
     if (mt->framedraw!=NULL) gtk_widget_modify_bg (mt->fd_frame, GTK_STATE_NORMAL, &palette->normal_back);
     
   }
@@ -13453,8 +13439,9 @@ void mt_prepare_for_playback(lives_mt *mt) {
   mainw->must_resize=TRUE;
 
   if (mainw->play_window==NULL) {
-    mainw->pwidth=mainw->multitrack->play_width;
-    mainw->pheight=mainw->multitrack->play_height;
+    mainw->pwidth=cfile->hsize;
+    mainw->pheight=cfile->vsize;
+    calc_maxspect(mt->play_width,mt->play_height,&mainw->pwidth,&mainw->pheight);
   }
   else {
     mainw->pwidth=cfile->hsize;
@@ -13490,13 +13477,6 @@ void mt_post_playback(lives_mt *mt) {
 
   if (!mt->is_rendering) {
     if (mt->poly_state==POLY_PARAMS) {
-      // prepare internal play window for previews
-      gtk_widget_hide(mt->sel_label);
-      gtk_widget_hide(mt->l_sel_arrow);
-      gtk_widget_hide(mt->r_sel_arrow);
-      gtk_widget_show(mt->preview_button);
-      gtk_widget_show(mt->fx_auto_prev_box);
-
       if (mt->init_event!=NULL) {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),(GTK_RULER(mt->timeline)->position-get_event_timecode(mt->init_event)/U_SEC));
 	gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);

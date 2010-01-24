@@ -236,6 +236,11 @@ struct _mt {
   GtkWidget *time_scrollbar;
   GtkWidget *show_layout_errors;
 
+  GtkWidget *load_set;
+  GtkWidget *save_set;
+
+  GtkWidget *close;
+
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
 

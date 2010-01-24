@@ -710,7 +710,10 @@ static int open_ogg(void) {
   data_start=0;
 
   /* Set up the first track */
-  if (!setup_track(data_start)) return 0;
+  if (!setup_track(data_start)) {
+    ogg_sync_clear(&opriv.oy);
+    return 0;
+  }
 
   if (astream!=NULL) {
     ogg_stream_reset(&astream->priv->os);
@@ -766,7 +769,10 @@ static boolean attach_stream(char *URI) {
   opriv.page_valid=0;
 
   /* get ogg info */
-  if (!open_ogg()) return FALSE;
+  if (!open_ogg()) {
+    close(opriv.fd);
+    return FALSE;
+  }
 
   /* Initialize theora structures */
   theora_info_init(&tpriv.ti);

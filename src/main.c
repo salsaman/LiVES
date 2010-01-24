@@ -3740,6 +3740,8 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_set_sensitive (mainw->export_proj, FALSE);
     gtk_widget_set_sensitive (mainw->import_proj, FALSE);
 
+    if (mainw->multitrack!=NULL) gtk_widget_set_sensitive (mainw->multitrack->load_set,TRUE);
+
     // can't use set_undoable, as we don't have a cfile
     set_menu_text(mainw->undo,_ ("_Undo"),TRUE);
     set_menu_text(mainw->redo,_ ("_Redo"),TRUE);

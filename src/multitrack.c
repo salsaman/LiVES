@@ -464,12 +464,12 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
   case BLOCK_UNSELECTED:
     track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
     if (BLOCK_DRAW_TYPE==BLOCK_DRAW_SIMPLE) {
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, 0, offset_start, eventbox->allocation.height);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_end, eventbox->allocation.height, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, 0, offset_end, eventbox->allocation.height);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, eventbox->allocation.height, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, 0, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_start, eventbox->allocation.height);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_end, eventbox->allocation.height, offset_end, 0);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, eventbox->allocation.height);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, eventbox->allocation.height, offset_end, 0);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 0);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
     }
     else {
       if ((cfile->achans==0||!is_audio_eventbox(mt,eventbox))&&track>-1) {
@@ -502,10 +502,10 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	set_fg_colour(audcol.red>>8,audcol.green>>8,audcol.blue>>8);
 	gdk_draw_rectangle (GDK_DRAWABLE(eventbox->window), mainw->general_gc, TRUE, offset_start, 0, offset_end-offset_start, eventbox->allocation.height-1);
       }
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, 0, offset_start, eventbox->allocation.height-1);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_end, eventbox->allocation.height-1, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, 0, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_start, eventbox->allocation.height-1);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_end, eventbox->allocation.height-1, offset_end, 0);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 0);
+      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
       if (mainw->playing_file>-1) unpaint_lines(mt);
       mt->redraw_block=TRUE; // stop drawing cursor during playback
       if (mainw->playing_file>-1&&mainw->cancelled==CANCEL_NONE) process_one(FALSE);
@@ -513,13 +513,13 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
     }
     break;
   case BLOCK_SELECTED:
-    gdk_draw_rectangle (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->bg_gc[0], TRUE, offset_start, 0, offset_end-offset_start, eventbox->allocation.height-1);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, 0, offset_start, eventbox->allocation.height-1);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_end, eventbox->allocation.height-1, offset_end, 0);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, 0, offset_end, eventbox->allocation.height-1);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, eventbox->allocation.height-1, offset_end, 0);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, 0, offset_end, 0);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset_start, eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
+    gdk_draw_rectangle (GDK_DRAWABLE(eventbox->window), mt->window->style->bg_gc[0], TRUE, offset_start, 0, offset_end-offset_start, eventbox->allocation.height-1);
+    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_start, eventbox->allocation.height-1);
+    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_end, eventbox->allocation.height-1, offset_end, 0);
+    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, eventbox->allocation.height-1);
+    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, eventbox->allocation.height-1, offset_end, 0);
+    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 0);
+    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
     break;
   }
   if (mainw->playing_file>-1) unpaint_lines(mt);
@@ -617,7 +617,7 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
       default:
 	continue;
       }
-      gdk_draw_point(GDK_DRAWABLE(eventbox->window),mainw->LiVES->style->fg_gc[0],i,(1.-ratio)*eventbox->allocation.height);
+      gdk_draw_point(GDK_DRAWABLE(eventbox->window),mt->window->style->fg_gc[0],i,(1.-ratio)*eventbox->allocation.height);
       plist=plist->next;
     }
   }
@@ -4315,9 +4315,11 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
   if (mainw->stored_event_list!=NULL) {
     stored_event_list_free_all(TRUE);
   }
-  else if (mt->event_list!=NULL) {
+  else if (mt!=NULL&&mt->event_list!=NULL) {
     event_list_free(mt->event_list);
+    event_list_free_undos(mt);
     mt->event_list=NULL;
+    mt_clear_timeline(mt);
   }
 
   return TRUE;
@@ -4818,14 +4820,14 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
 
 
-  menuitem = gtk_menu_item_new_with_mnemonic (_("_Close the selected clip"));
-  gtk_container_add (GTK_CONTAINER (menuitem_menu), menuitem);
+  mt->close = gtk_menu_item_new_with_mnemonic (_("_Close the selected clip"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->close);
   
-  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+  g_signal_connect (GTK_OBJECT (mt->close), "activate",
 		    G_CALLBACK (on_close_activate),
 		    NULL);
 
-
+  gtk_widget_set_sensitive(mt->close,FALSE);
 
   mt->recent_menu = gtk_menu_item_new_with_mnemonic (_("_Recent Files..."));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->recent_menu);
@@ -4882,8 +4884,26 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 		    GINT_TO_POINTER(4));
 
 
+  separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
 
+  mt->load_set = gtk_menu_item_new_with_mnemonic (_("_Reload Clip Set..."));
+  gtk_widget_show (mt->load_set);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->load_set);
 
+  g_signal_connect (GTK_OBJECT (mt->load_set), "activate",
+		    G_CALLBACK (on_load_set_activate),
+		    NULL);
+
+  mt->save_set = gtk_menu_item_new_with_mnemonic (_("Close/Sa_ve All Clips"));
+  gtk_widget_show (mt->save_set);
+  gtk_widget_set_sensitive (mt->save_set, FALSE);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->save_set);
+
+  g_signal_connect (GTK_OBJECT (mt->save_set), "activate",
+                      G_CALLBACK (on_quit_activate),
+                      GINT_TO_POINTER(1));
 
   separator = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
@@ -7961,8 +7981,6 @@ void add_video_track (lives_mt *mt, gboolean behind) {
     if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"expanded"))) max_disp_vtracks-=cfile->achans;
   }
 
-  mt_desensitise(mt);
-
   mt->num_video_tracks++;
 
   checkbutton = gtk_check_button_new ();
@@ -8066,20 +8084,22 @@ void add_video_track (lives_mt *mt, gboolean behind) {
   if (!behind) scroll_track_on_screen(0,mt);
   else scroll_track_on_screen(mt->num_video_tracks-1,mt);
 
-  mt_sensitise(mt);
-
   gtk_widget_queue_draw (mt->vpaned);
 
 }
 
 void add_video_track_behind (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (menuitem!=NULL) mt_desensitise(mt);
   add_video_track (mt,TRUE);
+  if (menuitem!=NULL) mt_sensitise(mt);
 }
 
 void add_video_track_front (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (menuitem!=NULL) mt_desensitise(mt);
   add_video_track (mt,FALSE);
+  if (menuitem!=NULL) mt_sensitise(mt);
 }
 
 
@@ -8350,6 +8370,10 @@ void mt_delete_clips(lives_mt *mt, gint file) {
       mainw->current_file=current_file;
     }
   }
+  if (mainw->current_file==-1) {
+    gtk_widget_set_sensitive (mt->adjust_start_end, FALSE);
+  }
+
 }
 
 
@@ -10522,7 +10546,7 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
   if (start_x<0) start_x=0;
   if (start_y<0) start_y=0;
 
-  gdk_draw_rectangle (GDK_DRAWABLE(mt->tl_eventbox->window), mainw->LiVES->style->black_gc, TRUE, start_x, start_y, width, height);
+  gdk_draw_rectangle (GDK_DRAWABLE(mt->tl_eventbox->window), mt->window->style->black_gc, TRUE, start_x, start_y, width, height);
 
   for (i=0;i<mt->num_video_tracks;i++) {
     xeventbox=g_list_nth_data(mt->video_draws,i);
@@ -10542,14 +10566,14 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
       offs_y_end=xheight;
       if (start_y<rel_y+xheight) {
 	offs_y_start=start_y-rel_y;
-	gdk_draw_line (xeventbox->window, mainw->LiVES->style->black_gc, start_x-rel_x, offs_y_start, start_x+width-rel_x-1, offs_y_start);
+	gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_start, start_x+width-rel_x-1, offs_y_start);
       }
       if (start_y+height<rel_y+xheight) {
 	offs_y_end=start_y-rel_y+height;
-	gdk_draw_line (xeventbox->window, mainw->LiVES->style->black_gc, start_x-rel_x, offs_y_end, start_x+width-rel_x-1, offs_y_end);
+	gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_end, start_x+width-rel_x-1, offs_y_end);
       }
-      gdk_draw_line (xeventbox->window, mainw->LiVES->style->black_gc, start_x-rel_x, offs_y_start, start_x-rel_x, offs_y_end);
-      gdk_draw_line (xeventbox->window, mainw->LiVES->style->black_gc, start_x+width-rel_x-1, offs_y_start, start_x+width-rel_x-1, offs_y_end);
+      gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_start, start_x-rel_x, offs_y_end);
+      gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x+width-rel_x-1, offs_y_start, start_x+width-rel_x-1, offs_y_end);
 
       if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
@@ -11012,7 +11036,7 @@ void unpaint_line(lives_mt *mt, GtkWidget *eventbox) {
     ocurrtime=(bth+btl)/U_SEC;
     xoffset=(ocurrtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth;
     if (xoffset>=0&&xoffset<ebwidth) {
-      gdk_draw_image(GDK_DRAWABLE(eventbox->window),mainw->LiVES->style->black_gc, st_image, 0, 0, xoffset, 1, xoffset, eventbox->allocation.height-2);
+      gdk_draw_image(GDK_DRAWABLE(eventbox->window),mt->window->style->black_gc, st_image, 0, 0, xoffset, 1, xoffset, eventbox->allocation.height-2);
     }
     g_object_unref(st_image);
     g_object_set_data(G_OBJECT(eventbox),"backup_image",NULL);
@@ -11103,7 +11127,7 @@ void animate_multitrack (lives_mt *mt) {
 	g_object_set_data(G_OBJECT(eventbox),"backup_image",st_image);
 	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
 	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-	gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
+	gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
       }
     }
     if (expanded) {
@@ -11120,7 +11144,7 @@ void animate_multitrack (lives_mt *mt) {
 	    g_object_set_data(G_OBJECT(aeventbox),"backup_image",st_image);
 	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_h",GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
 	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_l",GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-	    gdk_draw_line (GDK_DRAWABLE(aeventbox->window), mainw->LiVES->style->black_gc, offset, 1, offset, aeventbox->allocation.height-2);
+	    gdk_draw_line (GDK_DRAWABLE(aeventbox->window), mt->window->style->black_gc, offset, 1, offset, aeventbox->allocation.height-2);
 	  }
 	}
       }
@@ -11136,7 +11160,7 @@ void animate_multitrack (lives_mt *mt) {
 	  g_object_set_data(G_OBJECT(eventbox),"backup_image",st_image);
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-	  gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
+	  gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
 	}
       }
       // expanded right audio
@@ -11152,7 +11176,7 @@ void animate_multitrack (lives_mt *mt) {
 	  g_object_set_data(G_OBJECT(eventbox),"backup_image",st_image);
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-	  gdk_draw_line (GDK_DRAWABLE(eventbox->window), mainw->LiVES->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
+	  gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
 	}
       }
     }
@@ -12017,6 +12041,8 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     mt->idlefunc=0;
   }
 
+  mt_desensitise(mt);
+
   mt->was_undo_redo=TRUE;
   mt->ptr_time=GTK_RULER(mt->timeline)->position;
 
@@ -12030,6 +12056,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
 	  remove_markers(mt->event_list);
 	  mt->idlefunc=mt_idle_add(mt);
 	  do_mt_undo_buf_error();
+	  mt_sensitise(mt);
 	  return;
 	}
       }
@@ -12173,6 +12200,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     polymorph(mt,POLY_FX_STACK);
   }
   if (mt->poly_state!=POLY_PARAMS) mt_show_current_frame(mt);
+  mt_sensitise(mt);
 
   mt->idlefunc=mt_idle_add(mt);
 }
@@ -12207,6 +12235,8 @@ multitrack_redo            (GtkMenuItem     *menuitem,
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
   }
+
+  mt_desensitise(mt);
 
   if (mt->block_selected!=NULL) block_is_selected=TRUE; // TODO *** - need to set track and time 
 
@@ -12343,6 +12373,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
   g_free(utxt);
   g_free(msg);
 
+  mt_sensitise(mt);
   mt->idlefunc=mt_idle_add(mt);
 }
 
@@ -13346,6 +13377,10 @@ void mt_desensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->quit,FALSE);
   gtk_widget_set_sensitive (mt->amixer_button,FALSE);
   gtk_widget_set_sensitive (mt->open_menu,FALSE);
+  gtk_widget_set_sensitive (mt->recent_menu,FALSE);
+  gtk_widget_set_sensitive (mt->load_set,FALSE);
+  gtk_widget_set_sensitive (mt->save_set,FALSE);
+  gtk_widget_set_sensitive (mt->close,FALSE);
 
   if (mt->poly_state==POLY_IN_OUT) {
     val=gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->spinbutton_in));
@@ -13384,6 +13419,9 @@ void mt_sensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->add_vid_front,TRUE);
   gtk_widget_set_sensitive (mt->quit,TRUE);
   gtk_widget_set_sensitive (mt->open_menu,TRUE);
+  gtk_widget_set_sensitive (mt->recent_menu,TRUE);
+
+  gtk_widget_set_sensitive (mt->load_set,!mainw->was_set);
 
   if (mt->undoable) gtk_widget_set_sensitive (mt->undo, TRUE);
   if (mt->redoable) gtk_widget_set_sensitive (mt->redo, TRUE);
@@ -13401,6 +13439,9 @@ void mt_sensitise (lives_mt *mt) {
   if (mt->file_selected>-1) {
     if (mainw->files[mt->file_selected]->frames>0) gtk_widget_set_sensitive (mt->insert,TRUE);
     if (mainw->files[mt->file_selected]->achans>0&&mainw->files[mt->file_selected]->laudio_time>0.) gtk_widget_set_sensitive (mt->audio_insert,TRUE);
+    gtk_widget_set_sensitive (mt->save_set,TRUE);
+    gtk_widget_set_sensitive (mt->close,TRUE);
+    gtk_widget_set_sensitive (mt->adjust_start_end, TRUE);
   }
 
   if (mt->video_draws!=NULL&&mt->current_track>-1) eventbox=g_list_nth_data (mt->video_draws,mt->current_track);
@@ -14200,7 +14241,7 @@ void draw_region (lives_mt *mt) {
     gtk_widget_set_sensitive(mt->re_to_tc,TRUE);
   }
 
-  gdk_draw_rectangle (GDK_DRAWABLE(mt->timeline_reg->window), mainw->LiVES->style->black_gc, TRUE, (start-mt->tl_min)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min), 0, (end-start)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min),mt->timeline_reg->allocation.height-2);
+  gdk_draw_rectangle (GDK_DRAWABLE(mt->timeline_reg->window), mt->window->style->black_gc, TRUE, (start-mt->tl_min)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min), 0, (end-start)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min),mt->timeline_reg->allocation.height-2);
 }
 
 gint expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *event, gpointer user_data) {
@@ -14323,10 +14364,10 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
     seek=get_audio_frame_seek(block->start_event,track);
     vel=get_audio_frame_vel(block->start_event,track);
 
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->LiVES->style->fg_gc[0],offset_start,0,offset_start,ebox->allocation.height);
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->LiVES->style->fg_gc[0],offset_start,0,offset_end,0);
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->LiVES->style->fg_gc[0],offset_end,0,offset_end,ebox->allocation.height);
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->LiVES->style->fg_gc[0],offset_end,ebox->allocation.height-1,offset_start,ebox->allocation.height-1);
+    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_start,0,offset_start,ebox->allocation.height);
+    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_start,0,offset_end,0);
+    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_end,0,offset_end,ebox->allocation.height);
+    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_end,ebox->allocation.height-1,offset_start,ebox->allocation.height-1);
 
     set_fg_colour(128,128,128); // mid grey
     for (i=offset_start;i<=offset_end;i++) {
@@ -17471,16 +17512,13 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     on_save_event_list_activate(NULL,mt);
   }
   // wipe
+
+  recover_layout_cancelled(NULL,NULL);
   
   event_list_free(mt->event_list);
   mt->event_list=NULL;
-  recover_layout_cancelled(NULL,NULL);
-  mt->undo_buffer_used=0;
-  mt->undo_offset=0;
-  g_list_free(mt->undos);
-  mt->undos=NULL;
-  mt_set_undoable(mt,MT_UNDO_NONE,NULL,FALSE);
-  mt_set_redoable(mt,MT_UNDO_NONE,NULL,FALSE);
+
+  event_list_free_undos(mt);
 
   mt_clear_timeline(mt);
 

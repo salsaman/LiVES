@@ -5219,7 +5219,6 @@ sub weed {
 		    }
 		}
 		else {
-		    print "check $file\n";
 		    $in_set=0;
 		    find (\&fndset,"$tmpdir/$file/");
 		    if (!$in_set) {

@@ -2045,6 +2045,8 @@ void sensitize(void) {
   // READY MODE
   int i;
 
+  if (mainw->multitrack!=NULL) return;
+
   gtk_widget_set_sensitive (mainw->open, TRUE);
   gtk_widget_set_sensitive (mainw->open_sel, TRUE);
   gtk_widget_set_sensitive (mainw->open_vcd_menu, TRUE);
@@ -2182,6 +2184,9 @@ void sensitize(void) {
 void desensitize(void) {
   // desensitize the main window when we are playing/processing a clip
   int i;
+
+  if (mainw->multitrack!=NULL) return;
+
   //gtk_widget_set_sensitive (mainw->open, mainw->playing_file>-1);
   gtk_widget_set_sensitive (mainw->open, FALSE);
   gtk_widget_set_sensitive (mainw->open_sel, FALSE);
@@ -2256,6 +2261,10 @@ void desensitize(void) {
 void 
 procw_desensitize(void) {
   // switch on/off a few extra widgets in the processing dialog
+
+  if (mainw->multitrack!=NULL) return;
+
+
   if (mainw->current_file>0&&(cfile->menuentry!=NULL||cfile->opening)&&!mainw->preview) {
     // an effect etc,
     gtk_widget_set_sensitive (mainw->loop_video, cfile->achans>0&&cfile->frames>0);

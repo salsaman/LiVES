@@ -190,7 +190,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe) {
       else if (sfile->img_type==IMG_TYPE_PNG) {
 	gchar *cstr=g_strdup_printf("%d",(gint)((gdouble)(prefs->ocp+5.)/10.));
 	oname=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i);
-	gdk_pixbuf_save (pixbuf, oname, "png", &error, "compression", "cstr", NULL);
+	gdk_pixbuf_save (pixbuf, oname, "png", &error, "compression", cstr, NULL);
 	g_free(cstr);
 	g_free(oname);
       }
@@ -198,7 +198,11 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe) {
 	//gdk_pixbuf_save_to_callback(...);
       }
 
-      if (error!=NULL) g_printerr("err was %s\n",error->message);
+      if (error!=NULL) {
+	g_printerr("err was %s\n",error->message);
+	g_error_free(error);
+	error=NULL;
+      }
 
       if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
       pixbuf=NULL;

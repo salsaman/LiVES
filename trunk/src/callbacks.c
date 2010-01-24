@@ -4055,6 +4055,14 @@ on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
   for (i=0;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
       markerfile=g_strdup_printf("%s/%s/set.",prefs->tmpdir,mainw->files[i]->handle);
@@ -4104,6 +4112,11 @@ on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
   mainw->current_file=current_file;
   sensitize();
   d_print_done();
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
 
   do_error_dialog(g_strdup_printf(_("%d MB of disk space was recovered.\n"),bytes));
 

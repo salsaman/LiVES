@@ -4929,6 +4929,18 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
   gtk_widget_set_sensitive (separator, FALSE);
 
+  mt->clear_ds = gtk_menu_item_new_with_mnemonic (_("Clean _up Diskspace"));
+  gtk_widget_show (mt->clear_ds);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->clear_ds);
+
+  g_signal_connect (GTK_OBJECT (mt->clear_ds), "activate",
+                      G_CALLBACK (on_cleardisk_activate),
+                      NULL);
+
+  separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
+
   mt->save_vals = gtk_check_menu_item_new_with_mnemonic (_("_Retain width, height and audio values in saved layouts"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->save_vals);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->save_vals),mt->save_all_vals);

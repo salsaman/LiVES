@@ -4437,7 +4437,7 @@ render_details *create_render_details (gint type) {
 
   gtk_container_set_border_width (GTK_CONTAINER (rdet->dialog), 10);
   gtk_window_set_default_size (GTK_WINDOW (rdet->dialog), 300, 200);
-  if (prefs->show_gui) gtk_window_set_transient_for(GTK_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui&&mainw->is_ready) gtk_window_set_transient_for(GTK_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
   gtk_window_set_modal (GTK_WINDOW (rdet->dialog), TRUE);
   rdet_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (rdet->dialog), rdet_accel_group);
@@ -4749,7 +4749,9 @@ render_details *create_render_details (gint type) {
   }
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
+    gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  }
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_FOCUS);
 
   rdet->okbutton = gtk_button_new_from_stock ("gtk-ok");

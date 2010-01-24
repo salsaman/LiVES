@@ -3117,6 +3117,8 @@ static gboolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, g
   gint file;
   lives_mt *mt=(lives_mt *)user_data;
 
+  if (!mt->is_ready) return FALSE;
+
   if (event->type!=GDK_BUTTON_PRESS&&!mt->is_rendering) {
     set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
     // double click, open up in clip editor
@@ -7172,6 +7174,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   }
 
   mt->no_expose=TRUE;
+  mt->is_ready=FALSE;
 
   mainw->multi_opts.set=TRUE;
   mainw->multi_opts.move_effects=mt->opts.move_effects;
@@ -7350,7 +7353,10 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   while (g_main_context_iteration(NULL,FALSE));
 
-  if (mt->file_selected!=-1) switch_to_file ((mainw->current_file=0),mt->file_selected);
+  if (mt->file_selected!=-1) {
+    switch_to_file ((mainw->current_file=0),mt->file_selected);
+
+  }
 
 #ifdef ENABLE_OSC
   lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_CE)));

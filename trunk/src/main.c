@@ -2318,6 +2318,7 @@ void load_start_image(gint frame) {
   weed_plant_t *layer;
   weed_timecode_t tc;
 
+  if (mainw->multitrack!=NULL) return;
 
   if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     if (!(mainw->imframe==NULL)) {
@@ -2353,6 +2354,8 @@ void load_end_image(gint frame) {
   GdkPixbuf *end_pixbuf=NULL;
   weed_plant_t *layer;
   weed_timecode_t tc;
+
+  if (mainw->multitrack!=NULL) return;
 
   if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     if (!(mainw->imframe==NULL)) {
@@ -3543,6 +3546,7 @@ void close_current_file(gint file_to_switch_to) {
   // close the current file, and free the file struct and all sub storage
   gchar *com;
   gint index=-1;
+  gint old_file=mainw->current_file;
   GList *list_index;
   gboolean need_new_blend_file=FALSE;
 
@@ -3645,7 +3649,7 @@ void close_current_file(gint file_to_switch_to) {
     g_free(cfile);
     cfile=NULL;
 
-    if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack!=NULL&&mainw->current_file!=mainw->multitrack->render_file) {
       mt_delete_clips(mainw->multitrack,mainw->current_file);
     }
 
@@ -3659,7 +3663,7 @@ void close_current_file(gint file_to_switch_to) {
 	}
 	else do_quick_switch(file_to_switch_to);
 
-	if (mainw->multitrack!=NULL) {
+	if (mainw->multitrack!=NULL&&old_file!=mainw->multitrack->render_file) {
 	  mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
 	  mt_clip_select(mainw->multitrack,TRUE);
 	}

@@ -3723,7 +3723,14 @@ on_load_set_activate            (GtkMenuItem     *menuitem,
 				 gpointer         user_data)
 {
   // get set name (use a modified rename window)
-  // TODO - create a set browser
+
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
 
   renamew=create_rename_dialog(3);
   gtk_widget_show(renamew->dialog);
@@ -3846,12 +3853,19 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       pthread_mutex_lock(&mainw->gtk_mutex);
       d_print (msg);
       g_free (msg);
-      if (mainw->is_ready) {
-	if (clipnum>0&&mainw->current_file>0) {
-	  load_start_image (cfile->start);
-	  load_end_image (cfile->end);
+      if (mainw->multitrack==NULL) {
+	if (mainw->is_ready) {
+	  if (clipnum>0&&mainw->current_file>0) {
+	    load_start_image (cfile->start);
+	    load_end_image (cfile->end);
+	  }
+	  while (g_main_context_iteration(NULL,FALSE));
 	}
-	while (g_main_context_iteration(NULL,FALSE));
+      }
+      else {
+	mainw->current_file=mainw->multitrack->render_file;
+	mt_sensitise(mainw->multitrack);
+	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
       pthread_mutex_unlock(&mainw->gtk_mutex);
       return TRUE;
@@ -3883,6 +3897,13 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       if ((new_file=mainw->first_free_file)==-1) {
 	end_threaded_dialog();
 	too_many_files();
+
+	if (mainw->multitrack!=NULL) {
+	  mainw->current_file=mainw->multitrack->render_file;
+	  mt_sensitise(mainw->multitrack);
+	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+	}
+
 	return FALSE;
       }
       mainw->current_file=new_file;
@@ -3982,6 +4003,14 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     cfile->changed=TRUE;
     unlink (cfile->info_file);
     set_main_title(cfile->name,0);
+
+    if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) {
+      mainw->current_file=mainw->multitrack->render_file;
+      mt_init_clips(mainw->multitrack,new_file,TRUE);
+      while (g_main_context_iteration(NULL,FALSE));
+      mt_clip_select(mainw->multitrack,TRUE);
+    }
+
     pthread_mutex_unlock(&mainw->gtk_mutex);
     // mutex unlock
 
@@ -3995,6 +4024,12 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   pthread_mutex_lock(&mainw->gtk_mutex);
   reset_clip_menu();
   pthread_mutex_unlock(&mainw->gtk_mutex);
+
+  if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) {
+    mainw->current_file=mainw->multitrack->render_file;
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
 
   return TRUE;
 }
@@ -6975,6 +7010,7 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
       }
 #endif
     }
+    resize(1);
   }
   return FALSE;
 }

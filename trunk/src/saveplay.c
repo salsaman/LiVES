@@ -3290,9 +3290,22 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 
   splash_end();
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
   if (!auto_recover) {
     if (!do_warning_dialog(_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       unlink(recovery_file);
+
+      if (mainw->multitrack!=NULL) {
+	mt_sensitise(mainw->multitrack);
+      }
+
       return;
     }
   }
@@ -3319,7 +3332,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       gint current_file=mainw->current_file;
       pthread_mutex_lock(&mainw->gtk_mutex);
       d_print_done();
-      if (last_was_normal_file) {
+      if (last_was_normal_file&&mainw->multitrack==NULL) {
 	switch_to_file((mainw->current_file=0),current_file);
       }
       reset_clip_menu();
@@ -3339,6 +3352,12 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (!on_load_set_ok(NULL,GINT_TO_POINTER(TRUE))) {
 	fclose(rfile);
 	end_threaded_dialog();
+
+	if (mainw->multitrack!=NULL) {
+	  mainw->current_file=mainw->multitrack->render_file;
+	  mt_sensitise(mainw->multitrack);
+	}
+
 	return;
       }
     }
@@ -3354,6 +3373,13 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	fclose(rfile);
 	end_threaded_dialog();
 	too_many_files();
+
+	if (mainw->multitrack!=NULL) {
+	  mainw->current_file=mainw->multitrack->render_file;
+	  mt_sensitise(mainw->multitrack);
+	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+	}
+
 	return;
       }
       if (strstr(buff,"/clips/")) {
@@ -3452,6 +3478,17 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
     cfile->is_loaded=TRUE;
     unlink (cfile->info_file);
     set_main_title(cfile->name,0);
+
+    if (mainw->multitrack!=NULL) {
+      gint current_file=mainw->current_file;
+      reget_afilesize (mainw->current_file);
+      get_total_time(cfile);
+      mainw->current_file=mainw->multitrack->render_file;
+      mt_init_clips(mainw->multitrack,current_file,TRUE);
+      while (g_main_context_iteration(NULL,FALSE));
+      mt_clip_select(mainw->multitrack,TRUE);
+    }
+
     pthread_mutex_unlock(&mainw->gtk_mutex);
     
 #ifdef ENABLE_OSC
@@ -3465,6 +3502,12 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
   fclose(rfile);
 
   if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
+
+  if (mainw->multitrack!=NULL) {
+    mainw->current_file=mainw->multitrack->render_file;
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
 
 }
 

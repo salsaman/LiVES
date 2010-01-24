@@ -657,7 +657,7 @@ int pulse_audio_read_init(void) {
 int pulse_driver_activate(pulse_driver_t *pdriver) {
 // create a new client and connect it to pulse server
   gchar *pa_clientname="LiVES_audio_out";
-  gchar *mypid=g_strdup_printf("%d",getpid());
+  gchar *mypid;
 
   pa_sample_spec pa_spec;
   pa_channel_map pa_map;
@@ -666,6 +666,10 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_operation *pa_op;
 
   pa_volume_t pavol;
+
+  if (pdriver->pstream!=NULL) return 0;
+
+  mypid=g_strdup_printf("%d",getpid());
 
   pdriver->pa_props=pa_proplist_new();
 

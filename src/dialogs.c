@@ -1525,8 +1525,10 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   
   if (mainw->is_ready) gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_window_set_title (GTK_WINDOW (procw->processing), _("LiVES: - Processing..."));
+
   if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
   else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
+
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (procw->processing), TRUE);
 
@@ -1701,7 +1703,8 @@ void end_threaded_dialog(void) {
     pthread_mutex_unlock(&mainw->gtk_mutex);
     if (thread_text!=NULL) g_free(thread_text);
     mainw->cancel_type=CANCEL_KILL;
-    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    if (mainw->splash_window==NULL) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
   }
   if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
   else gtk_widget_queue_draw(mainw->multitrack->window);
@@ -1725,7 +1728,7 @@ void do_splash_progress(void) {
   thread_text=NULL;
 
   mainw->threaded_dialog=TRUE;
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window->window);
   pthread_create(&dthread,NULL,splash_prog,NULL);
 }
 

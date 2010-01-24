@@ -85,10 +85,10 @@ lives_exit (void) {
 #ifdef ENABLE_JACK
       lives_jack_end();
       if (mainw->jackd!=NULL) {
-	jack_close_device(mainw->jackd,TRUE);
+	jack_close_device(mainw->jackd);
       }
       if (mainw->jackd_read!=NULL) {
-	jack_close_device(mainw->jackd_read,TRUE);
+	jack_close_device(mainw->jackd_read);
       }
 #endif
     }
@@ -6929,16 +6929,19 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
   }
   if (!mainw->is_ready) {
     mainw->is_ready=TRUE;
+    if (prefs->startup_interface==STARTUP_CE) {
+
 #ifdef ENABLE_JACK
-    if (mainw->jackd!=NULL) {
-      jack_driver_activate(mainw->jackd);
-    }
+      if (mainw->jackd!=NULL) {
+	jack_driver_activate(mainw->jackd);
+      }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed!=NULL) {
-      pulse_driver_activate(mainw->pulsed);
-    }
+      if (mainw->pulsed!=NULL) {
+	pulse_driver_activate(mainw->pulsed);
+      }
 #endif
+    }
   }
   return FALSE;
 }

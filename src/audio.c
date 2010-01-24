@@ -1047,7 +1047,7 @@ void jack_rec_audio_end(void) {
   // recording ended
 
   // stop recording
-  jack_close_device(mainw->jackd_read,TRUE);
+  jack_close_device(mainw->jackd_read);
   mainw->jackd_read=NULL;
 
   // close file

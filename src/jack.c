@@ -602,7 +602,7 @@ int jack_get_srate (nframes_t nframes, void *arg) {
 void jack_shutdown(void* arg) {
   jack_driver_t* jackd = (jack_driver_t*)arg;
 
-  jackd->client = 0; /* reset client */
+  jackd->client = NULL; /* reset client */
   jackd->jackd_died = TRUE;
   jackd->msgq=NULL;
 
@@ -632,34 +632,27 @@ static void jack_reset_driver(jack_driver_t *jackd) {
 }
 
 
-void jack_close_device(jack_driver_t* jackd, gboolean close_client) {
+void jack_close_device(jack_driver_t* jackd) {
   int i;
 
-  if (close_client) {
-    //g_printerr("closing the jack client thread\n");
-    if (jackd->client) {
-      jack_deactivate(jackd->client); /* supposed to help the jack_client_close() to succeed */
-      //g_printerr("after jack_deactivate()\n");
-      jack_client_close(jackd->client);
-    }
-
-    jack_reset_driver(jackd);
-    jackd->client=0;
-    free(jackd->sound_buffer);
-    jackd->sound_buffer=NULL;
-    jackd->buffer_size=0;
-
-    /* free up the port strings */
-    //g_printerr("freeing up port strings\n");
-    if (jackd->jack_port_name_count>1) {
-      for (i=0;i<jackd->jack_port_name_count;i++) free(jackd->jack_port_name[i]);
-      free(jackd->jack_port_name);
-    }
+  //g_printerr("closing the jack client thread\n");
+  if (jackd->client) {
+    jack_deactivate(jackd->client); /* supposed to help the jack_client_close() to succeed */
+    //g_printerr("after jack_deactivate()\n");
+    jack_client_close(jackd->client);
   }
-  else {
-    if(!jackd->client) {
-      g_printerr("critical error, closing a device that has no client\n");
-    }
+  
+  jack_reset_driver(jackd);
+  jackd->client=NULL;
+  free(jackd->sound_buffer);
+  jackd->sound_buffer=NULL;
+  jackd->buffer_size=0;
+  
+  /* free up the port strings */
+  //g_printerr("freeing up port strings\n");
+  if (jackd->jack_port_name_count>1) {
+    for (i=0;i<jackd->jack_port_name_count;i++) free(jackd->jack_port_name[i]);
+    free(jackd->jack_port_name);
   }
 }
 
@@ -941,7 +934,7 @@ int jack_driver_activate (jack_driver_t *jackd) {
   /* if something failed we need to shut the client down and return 0 */
   if (failed) {
     g_printerr("failed, closing and returning error\n");
-    jack_close_device(jackd,TRUE);
+    jack_close_device(jackd);
     return 1;
   }
 
@@ -1047,7 +1040,7 @@ int jack_read_driver_activate (jack_driver_t *jackd) {
   /* if something failed we need to shut the client down and return 0 */
   if (failed) {
     g_printerr("failed, closing and returning error\n");
-    jack_close_device(jackd,TRUE);
+    jack_close_device(jackd);
     return 1;
   }
 
@@ -1075,7 +1068,7 @@ jack_driver_t *jack_get_driver(gint dev_idx, gboolean is_output) {
 #endif
   
   /* should we try to restart the jack server? */
-  if (jackd->jackd_died&&jackd->client==0) {
+  if (jackd->jackd_died&&jackd->client==NULL) {
     struct timeval now;
     gettimeofday(&now, 0);
     

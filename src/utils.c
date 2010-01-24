@@ -813,6 +813,9 @@ get_play_times(void) {
 
   if (!mainw->is_ready) return;
 
+  if (mainw->laudio_drawable==NULL||mainw->raudio_drawable==NULL) return;
+
+
   // draw timer bars
   allocwidth=mainw->video_draw->allocation.width;
   allocheight=mainw->video_draw->allocation.height;
@@ -1160,6 +1163,8 @@ draw_little_bars (void) {
   gdouble offset=cfile->pointer_time/cfile->total_time*mainw->vidbar->allocation.width;
   gint frame;
 
+  if (!prefs->show_gui) return;
+
   if (pthread_mutex_trylock(&mainw->gtk_mutex)) return;
 
   if (!(frame=calc_frame_from_time(mainw->current_file,cfile->pointer_time))) frame=cfile->frames;
@@ -1505,12 +1510,12 @@ gboolean switch_aud_to_pulse(void) {
     
 #ifdef ENABLE_JACK
     if (mainw->jackd_read!=NULL) {
-      jack_close_device(mainw->jackd_read,TRUE);
+      jack_close_device(mainw->jackd_read);
       mainw->jackd_read=NULL;
     }
 
     if (mainw->jackd!=NULL) {
-      jack_close_device(mainw->jackd,TRUE);
+      jack_close_device(mainw->jackd);
       mainw->jackd=NULL;
     }
 #endif
@@ -1536,12 +1541,12 @@ void switch_aud_to_sox(void) {
 
 #ifdef ENABLE_JACK
   if (mainw->jackd_read!=NULL) {
-    jack_close_device(mainw->jackd_read,TRUE);
+    jack_close_device(mainw->jackd_read);
     mainw->jackd_read=NULL;
   }
 
   if (mainw->jackd!=NULL) {
-    jack_close_device(mainw->jackd,TRUE);
+    jack_close_device(mainw->jackd);
     mainw->jackd=NULL;
   }
 #endif
@@ -1587,12 +1592,12 @@ switch_aud_to_mplayer(void) {
 
 #ifdef ENABLE_JACK
   if (mainw->jackd_read!=NULL) {
-    jack_close_device(mainw->jackd_read,TRUE);
+    jack_close_device(mainw->jackd_read);
     mainw->jackd_read=NULL;
   }
 
   if (mainw->jackd!=NULL) {
-    jack_close_device(mainw->jackd,TRUE);
+    jack_close_device(mainw->jackd);
     mainw->jackd=NULL;
   }
 #endif
@@ -2199,7 +2204,10 @@ void lives_set_cursor_style(gint cstyle, GdkWindow *window) {
   if (mainw->cursor!=NULL) gdk_cursor_unref(mainw->cursor);
   mainw->cursor=NULL;
 
-  if (window==NULL) window=mainw->LiVES->window;
+  if (window==NULL) {
+    if (mainw->multitrack==NULL) window=mainw->LiVES->window;
+    else window=mainw->multitrack->window->window;
+  }
 
   switch(cstyle) {
   case LIVES_CURSOR_NORMAL:

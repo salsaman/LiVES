@@ -198,7 +198,7 @@ lives_exit (void) {
     if (mainw->only_close) {
       mainw->suppress_dprint=TRUE;
       for (i=1;i<=MAX_FILES;i++) {
-	if (mainw->files[i]!=NULL) {
+	if (mainw->files[i]!=NULL&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
 	  mainw->current_file=i;
 	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  close_current_file(0);
@@ -206,7 +206,7 @@ lives_exit (void) {
 	}
       }
       mainw->suppress_dprint=FALSE;
-      resize(1);
+      if (mainw->multitrack==NULL) resize(1);
       mainw->was_set=FALSE;
       mainw->leave_files=FALSE;
       memset(mainw->set_name,0,1);
@@ -219,6 +219,13 @@ lives_exit (void) {
       d_print_done();
       pthread_mutex_unlock(&mainw->gtk_mutex);
       end_threaded_dialog();
+
+      if (mainw->multitrack!=NULL) {
+	mainw->current_file=mainw->multitrack->render_file;
+	mainw->multitrack->file_selected=-1;
+	mt_sensitise(mainw->multitrack);
+      }
+
       return;
     }
 
@@ -1080,6 +1087,25 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
+  if (mainw->only_close&&mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL) {
+
+    if (!check_for_layout_del(mainw->multitrack,FALSE)) {
+      if (mainw->multitrack!=NULL) {
+	mt_sensitise(mainw->multitrack);
+	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+      }
+      return;
+    }
+  }
+
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
     if (!check_for_layout_del(NULL,FALSE)) return;
     mainw->stored_event_list_changed=FALSE;
@@ -1095,6 +1121,10 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
       if (resp==0) {
 	gtk_widget_destroy(cdsw->dialog);
 	g_free(cdsw);
+	if (mainw->multitrack!=NULL) {
+	  mt_sensitise(mainw->multitrack);
+	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+	}
 	return;
       }
       if (resp==2) {
@@ -1107,7 +1137,10 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 	  mainw->no_exit=FALSE;
 	  on_save_set_activate(NULL,set_name);
 
-	  // we never return here...
+	  if (mainw->multitrack!=NULL) {
+	    mt_sensitise(mainw->multitrack);
+	    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+	  }
 	  g_free(set_name);
 	  return;
 	}
@@ -1157,7 +1190,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     }
   }
 
-  if (mainw->multitrack!=NULL) mt_memory_free();
+  if (mainw->multitrack!=NULL&&!mainw->only_close) mt_memory_free();
 
   mainw->was_set=mainw->leave_files=FALSE;
 
@@ -3676,7 +3709,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   g_free (old_set);
   if (!mainw->no_exit) {
     mainw->leave_files=TRUE;
-    if (mainw->multitrack!=NULL) mt_memory_free();
+    if (mainw->multitrack!=NULL&&!mainw->only_close) mt_memory_free();
     lives_exit();
   }
   else end_threaded_dialog();

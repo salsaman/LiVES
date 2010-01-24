@@ -1571,15 +1571,6 @@ void print_opthelp(void) {
 
 
 
-static gboolean mt_startup(gpointer data) {
-  if (!on_multitrack_activate(NULL,NULL)) {
-    if (prefs->show_gui) {
-      gtk_widget_show(mainw->LiVES);
-    }
-  }
-  return FALSE;
-}
-
 
 static gboolean lives_startup(gpointer data) {
   gboolean got_files=FALSE;
@@ -1693,8 +1684,7 @@ static gboolean lives_startup(gpointer data) {
 		    g_free(tmp);
 #endif
 		  }
-		  else g_idle_add(mt_startup,NULL);
-		  }}}}}}}}
+		}}}}}}}}
 
   else {
   // capture mode
@@ -1781,6 +1771,8 @@ static gboolean lives_startup(gpointer data) {
   splash_end();
 
   if (mainw->recoverable_layout) do_layout_recover_dialog();
+
+  if (!prefs->show_gui&&prefs->startup_interface==STARTUP_CE) mainw->is_ready=TRUE;
 
   return FALSE;
 }
@@ -3767,9 +3759,11 @@ void close_current_file(gint file_to_switch_to) {
       resize_play_window();
     }
 
-    resize(1);
-    load_start_image (0);
-    load_end_image (0);
+    if (mainw->multitrack==NULL) {
+      resize(1);
+      load_start_image (0);
+      load_end_image (0);
+    }
   }
 
   set_sel_label(mainw->sel_label);
@@ -3987,7 +3981,7 @@ void switch_to_file(gint old_file, gint new_file) {
     zero_spinbuttons();
   }
 
-  resize(1);
+  if (mainw->multitrack==NULL) resize(1);
 
   if (mainw->playing_file>-1) {
       if (mainw->fs) {
@@ -4273,7 +4267,7 @@ resize (gdouble scale) {
   gint hsize,vsize;
   gint scr_width,scr_height;
 
-  if (!prefs->show_gui) return;
+  if (!prefs->show_gui||mainw->multitrack!=NULL||(!mainw->is_ready&&prefs->startup_interface==STARTUP_MT)) return;
   get_border_size (mainw->LiVES,&bx,&by);
 
   if (prefs->gui_monitor==0) {

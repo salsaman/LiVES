@@ -3776,11 +3776,14 @@ void splash_end(void) {
   pthread_mutex_lock(&mainw->gtk_mutex);
   gtk_widget_destroy(mainw->splash_window);
   pthread_mutex_unlock(&mainw->gtk_mutex);
-  mainw->splash_window=NULL;
 
   end_threaded_dialog();
 
+  mainw->splash_window=NULL;
+
+  if (prefs->startup_interface==STARTUP_MT) on_multitrack_activate(NULL,NULL);
+
   while (g_main_context_iteration(NULL,FALSE));
 
- }
+}
 

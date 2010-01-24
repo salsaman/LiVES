@@ -138,7 +138,7 @@ int jack_open_device_read(jack_driver_t *); // open device for host input
 int jack_driver_activate (jack_driver_t *); // activate for host playback
 int jack_read_driver_activate (jack_driver_t *); // activate for host recording
 
-void jack_close_device(jack_driver_t*, gboolean close_client);
+void jack_close_device(jack_driver_t*);
 
 
 // utils

@@ -191,9 +191,11 @@ void unlink_event(weed_plant_t *event_list, weed_plant_t *event) {
 
 void delete_event(weed_plant_t *event_list, weed_plant_t *event) {
   // delete event from event_list
+  pthread_mutex_lock(&mainw->gtk_mutex);
   unlink_event(event_list,event);
   if (mainw->multitrack!=NULL) mt_fixup_events(mainw->multitrack,event,NULL);
   weed_plant_free(event);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 }
 
 

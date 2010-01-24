@@ -1817,13 +1817,17 @@ static void rerenumber_clips(gchar *lfile) {
       lmap=mainw->files[i]->layout_map;
       while (lmap!=NULL) {
 	if (!strncmp(lmap->data,lfile,strlen(lfile))) {
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  array=g_strsplit(lmap->data,"|",-1);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	  rnc=atoi(array[1]);
 	  
 	  renumbered_clips[rnc]=i;
 
 	  lfps[i]=strtod(array[3],NULL);
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  g_strfreev(array);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	}
 	lmap=lmap->next;
       }
@@ -2017,6 +2021,7 @@ void mt_show_current_frame(lives_mt *mt) {
       mt->idlefunc=mt_idle_add(mt);
     }
     add_to_playframe();
+
   }
 
   if (mainw->playing_file>-1) return;
@@ -7183,6 +7188,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   if (prefs->show_gui) {
     if (gtk_window_has_toplevel_focus(GTK_WINDOW(mt->window))) transfer_focus=TRUE;
     gtk_widget_show (mainw->LiVES);
+    mainw->is_ready=FALSE;
     unblock_expose();
   }
 
@@ -7296,8 +7302,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   mainw->multitrack=NULL;
 
-  if (mt->file_selected!=-1) switch_to_file ((mainw->current_file=0),mt->file_selected);
-
   g_free (mt);
 
   close_scrap_file();
@@ -7315,9 +7319,18 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   mainw->is_rendering=FALSE;
   if (transfer_focus) gtk_window_present(GTK_WINDOW(mainw->LiVES));
 
-  while (g_main_context_iteration(NULL,FALSE));
   reset_clip_menu();
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
+  
+  if (prefs->show_gui&&prefs->open_maximised) {
+    gtk_window_unmaximize (GTK_WINDOW(mainw->LiVES));
+    while (g_main_context_iteration(NULL,FALSE));
+    gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
+  }
+
+  while (g_main_context_iteration(NULL,FALSE));
+
+  if (mt->file_selected!=-1) switch_to_file ((mainw->current_file=0),mt->file_selected);
 
 #ifdef ENABLE_OSC
   lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_CE)));
@@ -8526,7 +8539,9 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     }
   }
 
-  if (prefs->show_gui) while (g_main_context_iteration(NULL,FALSE));
+  if (prefs->show_gui) {
+    while (g_main_context_iteration(NULL,FALSE));
+  }
 
   // create new file for rendering to
   renumber_clips();
@@ -8568,6 +8583,21 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
 
   // force out of sep win mode - otherwise we get display problems
   if (mainw->sep_win) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sepwin),!mainw->sep_win);
+
+
+
+  // in case we are starting up in mt mode
+#ifdef ENABLE_JACK
+  if (mainw->jackd!=NULL) {
+    jack_driver_activate(mainw->jackd);
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed!=NULL) {
+    pulse_driver_activate(mainw->pulsed);
+  }
+#endif
+
 
   if (prefs->show_gui) block_expose();
 
@@ -8684,6 +8714,8 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
 #endif
 
   if (multi->idlefunc==0) multi->idlefunc=mt_idle_add(multi);
+
+  mainw->is_ready=TRUE;
 
   return TRUE;
 }
@@ -15738,6 +15770,7 @@ static gchar *rec_error_add(gchar *ebuf, gchar *msg, int num, weed_timecode_t tc
 
   elist_errors++;
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
   if (tc==-1) new=g_strdup(msg); // missing timecode
   else {
     if (capable->cpu_bits==32) {
@@ -15756,6 +15789,7 @@ static gchar *rec_error_add(gchar *ebuf, gchar *msg, int num, weed_timecode_t tc
 #endif
   g_free(ebuf);
   g_free(new);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   return tmp;
 } 
 
@@ -16285,6 +16319,12 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
   // in other param_change events)
 
   // The checking done is quite sophisticated, and can correct many errors in badly-formed event_lists
+
+  // note we need to make extensive use of the gtk_mutex, as we are also showing the
+  // threaded dialog (setting and freeing of weed parameters makes use of the slice allocator
+  // which appears to be not thread-safe)
+
+
   weed_plant_t *event=get_first_event(event_list),*event_next;
   weed_timecode_t tc=0,last_tc=0;
   gchar *ebuf=g_strdup("");
@@ -16424,8 +16464,10 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		      }
 		    }
 		  }
+		  pthread_mutex_lock(&mainw->gtk_mutex);
 		  weed_free(inct);
 		  weed_free(ctmpls);
+		  pthread_mutex_unlock(&mainw->gtk_mutex);
 		  if (!was_deleted) {
 		    num_ctmpls=weed_leaf_num_elements(filter,"out_channel_templates");
 		    num_outct=weed_leaf_num_elements(event,"out_count");
@@ -16473,7 +16515,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 				  else force_backing_tracks=1;
 				}
 			      }
+			      pthread_mutex_lock(&mainw->gtk_mutex);
 			      weed_free(trax);
+			      pthread_mutex_unlock(&mainw->gtk_mutex);
 			      ntracks=weed_leaf_num_elements(event,"out_tracks");
 			      trax=weed_get_int_array(event,"out_tracks",&error);
 			      for (i=0;i<ntracks;i++) {
@@ -16493,7 +16537,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 				  else force_backing_tracks=1;
 				}
 			      }
+			      pthread_mutex_lock(&mainw->gtk_mutex);
 			      weed_free(trax);
+			      pthread_mutex_unlock(&mainw->gtk_mutex);
 			    }
 			  }
 			  // all tests passed
@@ -16523,7 +16569,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	    was_deleted=TRUE;
 	    if (mt!=NULL) mt->layout_prompt=TRUE;
 	  }
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  weed_free(filter_hash);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	  if (!was_deleted) {
 	    host_tag=get_next_tt_key(trans_table)+FX_KEYS_MAX_VIRTUAL+1;
 	    if (host_tag==-1) {
@@ -16534,8 +16582,8 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	    host_tag_s=g_strdup_printf("%d",host_tag);
 	    pthread_mutex_lock(&mainw->gtk_mutex);
 	    weed_set_string_value(event,"host_tag",host_tag_s);
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
 	    g_free(host_tag_s);
+	    pthread_mutex_unlock(&mainw->gtk_mutex);
 	    event_id=weed_get_voidptr_value(event,"event_id",&error);
 	    trans_table[(idx=host_tag-FX_KEYS_MAX_VIRTUAL-1)].in=event_id;
 	    trans_table[idx].out=event;
@@ -16550,8 +16598,8 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	      }
 	      pthread_mutex_lock(&mainw->gtk_mutex);
 	      weed_set_voidptr_array(event,"in_parameters",num_params,in_pchanges); // set all to NULL, we will re-fill as we go along
-	      pthread_mutex_unlock(&mainw->gtk_mutex);
 	      g_free(in_pchanges);
+	      pthread_mutex_unlock(&mainw->gtk_mutex);
 	    }
 	  }
 	}
@@ -16580,7 +16628,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
 	  host_tag_s=weed_get_string_value(init_event,"host_tag",&error);
 	  host_tag=atoi(host_tag_s);
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  weed_free(host_tag_s);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	  trans_table[(idx=host_tag-FX_KEYS_MAX_VIRTUAL-1)].in=NULL;
 	  if (idx<free_tt_key) free_tt_key=idx;
 	  pthread_mutex_lock(&mainw->gtk_mutex);
@@ -16600,12 +16650,14 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	      }
 	      pthread_mutex_lock(&mainw->gtk_mutex);
 	      weed_set_voidptr_array(event,"in_parameters",num_params,in_pchanges); // set array to last param_changes
-	      pthread_mutex_unlock(&mainw->gtk_mutex);
 	      g_free(in_pchanges);
 	      g_free(pchains[idx]);
+	      pthread_mutex_unlock(&mainw->gtk_mutex);
 	    }
 	  }
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  weed_free(filter_hash);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	}
       }
       break;
@@ -16630,9 +16682,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	if (num_init_events>1) new_init_events=remove_nulls_from_filter_map(new_init_events,num_init_events);
 	pthread_mutex_lock(&mainw->gtk_mutex);
 	weed_set_voidptr_array(event,"init_events",num_init_events,new_init_events);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
 	weed_free(init_events);
 	g_free(new_init_events);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
       else {
 	pthread_mutex_lock(&mainw->gtk_mutex);
@@ -16713,7 +16765,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 			// all checks passed
 			host_tag_s=weed_get_string_value(init_event,"host_tag",&error);
 			host_tag=atoi(host_tag_s);
+			pthread_mutex_lock(&mainw->gtk_mutex);
 			weed_free(host_tag_s);
+			pthread_mutex_unlock(&mainw->gtk_mutex);
 			idx=host_tag-FX_KEYS_MAX_VIRTUAL-1;
 			if (pchains[idx][pnum]==init_event) {
 			  orig_pchanges=weed_get_voidptr_array(init_event,"in_parameters",&error);
@@ -16724,10 +16778,8 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 			  }
 			  pthread_mutex_lock(&mainw->gtk_mutex);
 			  weed_set_voidptr_array(init_event,"in_parameters",num_params,in_pchanges);
-			  pthread_mutex_unlock(&mainw->gtk_mutex);
 			  g_free(in_pchanges);
 			  g_free(orig_pchanges);
-			  pthread_mutex_lock(&mainw->gtk_mutex);
 			  weed_set_voidptr_value(event,"prev_change",NULL);
 			  pthread_mutex_unlock(&mainw->gtk_mutex);
 			}
@@ -16743,9 +16795,13 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 			pthread_mutex_unlock(&mainw->gtk_mutex);
 			pchains[idx][pnum]=event;
 		      }}}
+		  pthread_mutex_lock(&mainw->gtk_mutex);
 		  weed_free(ptmpls);
+		  pthread_mutex_unlock(&mainw->gtk_mutex);
 		}
+		pthread_mutex_lock(&mainw->gtk_mutex);
 		weed_free(filter_hash);
+		pthread_mutex_unlock(&mainw->gtk_mutex);
 	      }}}}}
       break;
     case WEED_EVENT_HINT_FRAME:
@@ -16812,6 +16868,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	}
 
 	if (last_valid_frame==0) {
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  g_free(new_clip_index);
 	  g_free(new_frame_index);
 	  new_clip_index=g_malloc(sizint);
@@ -16819,13 +16876,13 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  *new_clip_index=-1;
 	  *new_frame_index=0;
 	  num_tracks=1;
-	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  weed_set_int_array(event,"clips",num_tracks,new_clip_index);
 	  weed_set_int_array(event,"frames",num_tracks,new_frame_index);
 	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	}
 	else {
 	  if (last_valid_frame<num_tracks) {
+	    pthread_mutex_lock(&mainw->gtk_mutex);
 	    weed_free(clip_index);
 	    weed_free(frame_index);
 	    clip_index=weed_malloc(last_valid_frame*sizint);
@@ -16835,7 +16892,6 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	      frame_index[i]=new_frame_index[i];
 	    }
 	    num_tracks=last_valid_frame;
-	    pthread_mutex_lock(&mainw->gtk_mutex);
 	    weed_set_int_array(event,"clips",num_tracks,clip_index);
 	    weed_set_int_array(event,"frames",num_tracks,frame_index);
 	    pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -16849,10 +16905,12 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	}
 
 
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	g_free(new_clip_index);
 	weed_free(clip_index);
 	g_free(new_frame_index);
 	weed_free(frame_index);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 
 	if (weed_plant_has_leaf(event,"audio_clips")) {
 	  // check audio clips
@@ -16869,10 +16927,12 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	      weed_leaf_delete(event,"audio_seeks");
 	    }
 	    else {
+	      pthread_mutex_lock(&mainw->gtk_mutex);
 	      aclip_index=weed_get_int_array(event,"audio_clips",&error);
 	      aseek_index=weed_get_double_array(event,"audio_seeks",&error);
 	      new_aclip_index=g_malloc(num_atracks*sizint);
 	      new_aseek_index=g_malloc(num_atracks*sizdbl);
+	      pthread_mutex_unlock(&mainw->gtk_mutex);
 	      j=0;
 	      for (i=0;i<num_atracks;i+=2) {
 		if (aclip_index[i+1]>0) {
@@ -16911,8 +16971,10 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		}
 	      }
 	      if (j==0) {
+		pthread_mutex_lock(&mainw->gtk_mutex);
 		weed_leaf_delete(event,"audio_clips");
 		weed_leaf_delete(event,"audio_seeks");
+		pthread_mutex_unlock(&mainw->gtk_mutex);
 	      }
 	      else {
 		pthread_mutex_lock(&mainw->gtk_mutex);
@@ -16920,10 +16982,12 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		weed_set_double_array(event,"audio_seeks",j,new_aseek_index);
 		pthread_mutex_unlock(&mainw->gtk_mutex);
 	      }
+	      pthread_mutex_lock(&mainw->gtk_mutex);
 	      weed_free(aclip_index);
 	      weed_free(aseek_index);
 	      g_free(new_aclip_index);
 	      g_free(new_aseek_index);
+	      pthread_mutex_unlock(&mainw->gtk_mutex);
 	    }
 	  }
 	}
@@ -17225,12 +17289,15 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   mt->changed=mainw->recoverable_layout;
   mt->auto_changed=FALSE;
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   while (g_main_context_iteration(NULL,FALSE));
   if (mt->idlefunc>0) {
     mt->idlefunc=0;
     mt->idlefunc=mt_idle_add(mt);
   }
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+
 
   // event list loaded, now we set the pointers for filter_map (init_events), param_change (init_events and param chains), filter_deinit (init_events)
   do_threaded_dialog(_("Checking and rebuilding event list"),FALSE);

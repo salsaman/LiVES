@@ -987,7 +987,6 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
   // opwidth and opheight limit the maximum frame size, they can either be set to 0,0 or to max display size; however if all sources are smaller than this
   // then the output will be smaller also and need resizing by the caller
 
-
   // TODO ** - handle return errors
   int num_in_tracks,num_out_tracks;
   int *in_tracks,*out_tracks;
@@ -3523,6 +3522,7 @@ gboolean weed_init_effect(int hotkey) {
       // this is a workaround for a problem in libvisual
       fg_gen_to_start=hotkey;
       fg_generator_key=hotkey;
+      fg_generator_mode=key_modes[hotkey];
       gen_start=TRUE;
     }
      else if (!fg_modeswitch&&mainw->num_tr_applied==0&&(mainw->noswitch||mainw->is_processing||mainw->preview)) return FALSE;
@@ -3561,7 +3561,7 @@ gboolean weed_init_effect(int hotkey) {
 
   if (inc_count==0) {
     // generator start
-    if (mainw->num_tr_applied>0&&!fg_modeswitch&&mainw->current_file>-1) {
+    if (mainw->num_tr_applied>0&&!fg_modeswitch&&mainw->current_file>-1&&mainw->playing_file>-1) {
       // transition is on, make into bg clip
       bg_generator_key=hotkey;
       bg_generator_mode=key_modes[hotkey];
@@ -3901,6 +3901,8 @@ gboolean weed_generator_start (weed_plant_t *inst) {
   }
 
   cfile->ext_src=inst;
+
+  if (is_bg) mainw->blend_file=mainw->current_file;
 
   if (!is_bg||old_file==-1||old_file==new_file) fg_generator_clip=new_file;
 

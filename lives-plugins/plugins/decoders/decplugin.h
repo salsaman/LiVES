@@ -67,6 +67,7 @@ boolean get_frame(char *URI, int64_t frame, void **pixel_data);
 
 // opt fns
 boolean rip_audio (char *URI, char *fname, int stframe, int frames);
+void rip_audio_cleanup(void);
 boolean set_palette(int palette);
 void module_unload(void);
 

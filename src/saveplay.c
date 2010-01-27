@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <setjmp.h>
 
 #include "main.h"
 #include "callbacks.h"
@@ -24,6 +25,13 @@
 #include "audio.h"
 #include "htmsocket.h"
 #include "cvirtual.h"
+
+
+jmp_buf riperror;
+
+static void catch_sigusr(int signum) {
+  longjmp(riperror,1);
+}
 
 void save_clip_values(gint which) {
   gint asigned;
@@ -170,6 +178,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     else {
       com=g_strdup_printf(_ ("Opening %s start time %.2f sec. frames %d"),file_name,start,frames);
     }
+    d_print(""); // exhaust "switch" message
+
     d_print(com);
     g_free(com);
     
@@ -211,13 +221,76 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	if (cfile->achans>0&&(((_decoder_plugin *)(cfile->ext_src))->rip_audio)!=NULL&&withsound==1) {
 	  // call rip_audio() in the decoder plugin
+
+	  // since this function blocks, we need to take some special measures to allow cancel
+
+	  // we will set mainw->sig_pid, this will cause a cancel in the threaded window
+	  // to send sigusr1 to us; this has the effect of a) killing the decoder plugin
+	  // b) calling catch_sigusr in this thread - we then do a longjmp() back here
+
+	  // the threaded dialog will wait until mainw->sig_file exists before sending
+	  // sigusr1. This allows the plugin time to complete its immediate setup
+
+	  // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup()
+
+
+	  struct sigaction sact;
+
 	  gchar *afile=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
 	  msgstr=g_strdup_printf(_("Opening audio for %s"),file_name);
 
 	  mainw->cancelled=CANCEL_NONE;
-	  do_threaded_dialog(msgstr,FALSE);
+
+	  sact.sa_handler=catch_sigusr;
+	  sact.sa_flags=SA_NODEFER;
+	  sigemptyset(&sact.sa_mask);
+	  
+	  sigaction (SIGUSR1, &sact, NULL);
+
+	  mainw->sig_pid=pthread_self();
+	  mainw->sig_file=g_strdup(afile);
+
+	  if (setjmp(riperror)) {
+	    // catch sigusr from threaded dialog cancel and then longjmp here
+	    signal(SIGUSR1,SIG_IGN);
+	    mainw->sig_pid=0;
+	    g_free(mainw->sig_file);
+	    mainw->sig_file=NULL;
+
+	    end_threaded_dialog();
+
+	    if (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup!=NULL) {
+	      (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup)();
+	    }
+
+	    close_current_file(old_file);
+	    mainw->noswitch=FALSE;
+	    if (mainw->multitrack!=NULL) {
+	      mainw->multitrack->pb_start_event=mt_pb_start_event;
+	      mainw->multitrack->has_audio_file=mt_has_audio_file;
+	    }
+	    if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
+	    mainw->file_open_params=NULL;
+	    g_free(afile);
+	    g_free(tmp);
+	    return;
+	  }
+
+	  do_threaded_dialog(msgstr,TRUE);
 	  g_free(msgstr);
-	  (((_decoder_plugin *)(cfile->ext_src))->rip_audio)((tmp=(char *)g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),afile,(cfile->fps*start+.5),frames);
+	  tmp=(char *)g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL);
+
+	  (((_decoder_plugin *)(cfile->ext_src))->rip_audio)(tmp,afile,(cfile->fps*start+.5),frames);
+
+	  if (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup!=NULL) {
+	    (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup)();
+	  }
+
+	  signal(SIGUSR1,SIG_IGN);
+	  mainw->sig_pid=0;
+	  g_free(mainw->sig_file);
+	  mainw->sig_file=NULL;
+
 	  end_threaded_dialog();
 	  g_free(afile);
 	}
@@ -270,7 +343,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	      com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
 	      dummyvar=system(com);
 	      g_free(com);
-	      g_free (mainw->file_open_params);
+	      if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
 	      mainw->file_open_params=NULL;
 	      close_current_file(old_file);
 	      return;
@@ -302,6 +375,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  mainw->multitrack->pb_start_event=mt_pb_start_event;
 	  mainw->multitrack->has_audio_file=mt_has_audio_file;
 	}
+	if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
+	mainw->file_open_params=NULL;
 	return;
       }
       unlink (cfile->info_file);
@@ -448,9 +523,13 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
 	dummyvar=system(com);
 	g_free(com);
-	g_free (mainw->file_open_params);
+	if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
 	mainw->file_open_params=NULL;
 	close_current_file(old_file);
+	if (mainw->multitrack!=NULL) {
+	  mainw->multitrack->pb_start_event=mt_pb_start_event;
+	  mainw->multitrack->has_audio_file=mt_has_audio_file;
+	}
 	return;
       }
     }
@@ -482,7 +561,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     do_blocking_error_dialog(mainw->msg);
     d_print_failed();
     close_current_file(old_file);
-    g_free (mainw->file_open_params);
+    if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
     mainw->file_open_params=NULL;
     return;
   }
@@ -515,7 +594,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       do_error_dialog(msg);
       d_print_failed();
       close_current_file(old_file);
-      g_free (mainw->file_open_params);
+      if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
       mainw->file_open_params=NULL;
       return;
     }
@@ -531,7 +610,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   if (prefs->show_recent) {
     add_to_recent(file_name,start,frames,mainw->file_open_params);
   }
-  g_free (mainw->file_open_params);
+  if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
   mainw->file_open_params=NULL;
 
   if (!strcmp(cfile->type,"Frames")||!strcmp(cfile->type,"jpeg")||!strcmp(cfile->type,"png")||!strcmp(cfile->type,"Audio")) {
@@ -741,6 +820,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
     }
     g_free(warn);
   }
+
+
 
   if (cfile->arate*cfile->achans) {
     if (!mainw->save_all) {
@@ -1008,6 +1089,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       return;
     }
   }
+
 
   mainw->no_switch_dprint=TRUE;
   d_print (mesg);
@@ -1679,7 +1761,7 @@ void play_file (void) {
     mainw->kb_timer=gtk_timeout_add (KEY_RPT_INTERVAL,&plugin_poll_keyboard,NULL);
 
 #ifdef ENABLE_JACK
-    if (mainw->event_list!=NULL&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!(mainw->preview&&mainw->is_processing)) {
+    if (mainw->event_list!=NULL&&!mainw->record&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!(mainw->preview&&mainw->is_processing)) {
       // if playing an event list, we switch to audio memory buffer mode
       if (mainw->multitrack!=NULL) init_jack_audio_buffers(cfile->achans,cfile->arate,exact_preview);
       else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
@@ -1687,7 +1769,7 @@ void play_file (void) {
     }
 #endif    
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->event_list!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!(mainw->preview&&mainw->is_processing)) {
+    if (mainw->event_list!=NULL&&!mainw->record&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!(mainw->preview&&mainw->is_processing)) {
       // if playing an event list, we switch to audio memory buffer mode
       if (mainw->multitrack!=NULL) init_pulse_audio_buffers(cfile->achans,cfile->arate,exact_preview);
       else init_pulse_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
@@ -1699,7 +1781,7 @@ void play_file (void) {
     do {
       mainw->cancelled=CANCEL_NONE;
 
-      if (mainw->event_list!=NULL) {
+      if (mainw->event_list!=NULL&&!mainw->record) {
 	if (pb_start_event==NULL) pb_start_event=get_first_frame_event(mainw->event_list);
 
 	if (has_audio_buffers) {
@@ -2173,6 +2255,7 @@ void play_file (void) {
 
   reset_clip_menu();
 
+  g_print("rte is %ld\n",mainw->rte);
 }
   
 

@@ -7337,8 +7337,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   mainw->multitrack=NULL;
 
-  g_free (mt);
-
   close_scrap_file();
 
   for (i=1;i<MAX_FILES;i++) {
@@ -7367,8 +7365,9 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   if (mt->file_selected!=-1) {
     switch_to_file ((mainw->current_file=0),mt->file_selected);
-
   }
+
+  g_free (mt);
 
 #ifdef ENABLE_OSC
   lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_CE)));

@@ -913,6 +913,10 @@ typedef struct {
   GIOChannel *iochan;
   GtkTextView *optextview;
 
+  pthread_t sig_pid;
+
+  gchar *sig_file;
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

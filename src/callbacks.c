@@ -508,6 +508,7 @@ on_recent_activate                      (GtkMenuItem     *menuitem,
   if (get_token_count(file,'\n')>1) {
     gchar **array=g_strsplit(file,"\n",2);
     g_snprintf(file,32768,"%s",array[0]);
+    if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
     mainw->file_open_params=g_strdup(array[1]);
     g_strfreev (array);
   }
@@ -540,6 +541,7 @@ on_location_select                   (GtkButton       *button,
   g_free(locw);
 
   mainw->opening_loc=TRUE;
+  if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
   if (prefs->no_bandwidth) {
     mainw->file_open_params=g_strdup ("nobandwidth");
   }
@@ -1337,16 +1339,18 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     do_progress_dialog(TRUE,FALSE,_ ("Undoing"));
     g_free(com);
 
-    audfile=g_strdup_printf("%s/%s/audio.bak",prefs->tmpdir,cfile->handle);
-    if (g_file_test (audfile, G_FILE_TEST_EXISTS)) {
-      // restore overwritten audio
-      com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
-      dummyvar=system(com);
-      g_free(com);
-      do_auto_dialog(_("Restoring audio..."),0);
-      reget_afilesize(mainw->current_file);
+    if (cfile->undo_action!=UNDO_ATOMIC_RESAMPLE_RESIZE) {
+      audfile=g_strdup_printf("%s/%s/audio.bak",prefs->tmpdir,cfile->handle);
+      if (g_file_test (audfile, G_FILE_TEST_EXISTS)) {
+	// restore overwritten audio
+	com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
+	dummyvar=system(com);
+	g_free(com);
+	do_auto_dialog(_("Restoring audio..."),0);
+	reget_afilesize(mainw->current_file);
+      }
+      g_free(audfile);
     }
-    g_free(audfile);
 
     if (cfile->frame_index_back!=NULL) {
       int *tmpindex=cfile->frame_index;
@@ -1764,6 +1768,9 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   gint start,end;
 
   gchar *text=g_strdup_printf(_ ("Copying frames %d to %d%s to the clipboard..."),cfile->start,cfile->end,mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
+
+  desensitize();
+
   d_print(text);
   g_free(text);
 
@@ -6417,6 +6424,7 @@ on_load_vcd_ok_clicked                (GtkButton     *button,
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   if (GPOINTER_TO_INT (user_data)==1) {
     g_snprintf (file_name,256,"dvd://%d",(int)mainw->fx1_val);
+    if (mainw->file_open_params!=NULL) g_free(mainw->file_open_params);
     mainw->file_open_params=g_strdup_printf ("-chapter %d -aid %d",(int)mainw->fx2_val,(int)mainw->fx3_val);
   }
   else {

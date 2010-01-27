@@ -1824,7 +1824,7 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
   dplug->module_unload=dlsym (dplug->handle,"module_unload");
   dplug->set_palette=dlsym (dplug->handle,"set_palette");
   dplug->rip_audio=dlsym (dplug->handle,"rip_audio");
-  dplug->set_audio_fmt=dlsym (dplug->handle,"set_audio_fmt");
+  dplug->rip_audio_cleanup=dlsym (dplug->handle,"rip_audio_cleanup");
 
   err=(*dplug->module_check_init)();
 
@@ -2886,7 +2886,8 @@ gchar *plugin_run_param_window(gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_
       on_render_fx_pre_activate(NULL,rfx);
 
       if (prefs->show_gui) {
-	gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
+	if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
+	else gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->multitrack->window));
       }
       gtk_window_set_modal (GTK_WINDOW (fx_dialog[1]), TRUE);
       

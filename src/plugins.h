@@ -194,14 +194,13 @@ typedef struct {
   // mandatory
   const char *(*module_check_init)(void);
   const char *(*version) (void);
-  const char **(*get_formats)(void);
   const lives_clip_data_t *(*get_clip_data)(char *URI);
-  gboolean (*rip_audio) (char *URI, char *fname, int stframe, int frames);
   gboolean (*get_frame)(char *URI, int64_t frame, void **pixel_data);
 
   // optional
   gboolean (*set_palette)(int palette);
-  gboolean (*set_audio_fmt)(int audio_fmt);
+  gboolean (*rip_audio) (char *URI, char *fname, int stframe, int frames);
+  void (*rip_audio_cleanup) (void);
   void (*module_unload)(void);
 
   int preferred_palette;

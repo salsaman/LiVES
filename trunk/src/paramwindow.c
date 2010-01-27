@@ -120,6 +120,7 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
   else on_render_fx_activate (NULL,rfx);
 
   mainw->keep_pre=FALSE;
+  mainw->is_generating=FALSE;
 }
 
 
@@ -149,6 +150,7 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
     mainw->suppress_dprint=TRUE;
     close_current_file(mainw->pre_src_file);
     mainw->suppress_dprint=FALSE;
+    mainw->is_generating=FALSE;
   }
 
   if (button!=NULL) {
@@ -167,6 +169,7 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
     }
   }
   if (fx_dialog[1]==NULL) special_cleanup();
+
   mainw->block_param_updates=FALSE;
 
 }

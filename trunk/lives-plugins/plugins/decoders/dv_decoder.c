@@ -37,6 +37,9 @@ static int mypalette=WEED_PALETTE_END;
 
 static FILE *nulfile;
 
+static int16_t *audio_buffers[4]={NULL,NULL,NULL,NULL},*audio=NULL;
+static int audio_fd=0;
+
 
 static void _set_palette(int palette) {
   switch (palette) {
@@ -220,6 +223,25 @@ static boolean dv_pad_with_silence(int fd, size_t zbytes) {
 
 
 
+
+
+void rip_audio_cleanup(void) {
+  int i;
+
+  for (i=0;i<4;i++) {
+    if (audio_buffers[i]!=NULL) free(audio_buffers[i]);
+    audio_buffers[i]=NULL;
+  }
+
+  if (audio!=NULL) free(audio);
+  audio=NULL;
+
+  if (audio_fd!=0) close (audio_fd);
+
+}
+
+
+
 boolean rip_audio (char *URI, char *fname, int stframe, int frames) {
   // rip audio from stframe length frames from URI
   // to file fname
@@ -233,12 +255,15 @@ boolean rip_audio (char *URI, char *fname, int stframe, int frames) {
   // sometimes we get fewer samples than expected, so we do two passes and set
   // scale on the first pass. This is then used to resample on the second pass
 
-  int16_t *audio_buffers[4],*audio;
+  // note: host can kill this function with SIGUSR1 at any point after we start writing the 
+  //       output file
+
+  // note: host will call rip_audio_cleanup() after calling here
+
   int i,j,ch,channels,samples;
   size_t bytes;
   off64_t stbytes=stframe*priv.frame_size;
   uint8_t buf[priv.frame_size];
-  int out_fd;
   int xframes=frames;
   double scale=0.;
   double offset_f=0.;
@@ -255,12 +280,11 @@ boolean rip_audio (char *URI, char *fname, int stframe, int frames) {
   }
 
   if(!(audio = malloc(DV_AUDIO_MAX_SAMPLES * 8 * sizeof(int16_t)))) {
+    for (i=0;i<4;i++) {
+      free(audio_buffers[i]);
+      audio_buffers[i]=NULL;
+    }
     fprintf(stderr, "dv_decoder: out of memory\n");
-    return FALSE;
-  }
-
-  if (!(out_fd=open(fname,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR))) {
-    fprintf(stderr, "dv_decoder: unable to open output %s\n",fname);
     return FALSE;
   }
 
@@ -273,6 +297,15 @@ boolean rip_audio (char *URI, char *fname, int stframe, int frames) {
     if (!attach_stream(URI)) return FALSE;
     old_URI=strdup(URI);
   }
+
+  // do this last so host knows we are ready
+  if (!(audio_fd=open(fname,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR))) {
+    fprintf(stderr, "dv_decoder: unable to open output %s\n",fname);
+    return FALSE;
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+
 
   channels = priv.dv_dec->audio->num_channels;
 
@@ -287,7 +320,6 @@ boolean rip_audio (char *URI, char *fname, int stframe, int frames) {
 
     if (frames>0) if (--frames==0) break;
   }
-
 
   scale=(long double)samps_actual/(long double)samps_expected-1.;
 
@@ -337,29 +369,19 @@ boolean rip_audio (char *URI, char *fname, int stframe, int frames) {
     bytes = samples*channels*2;
     
     // write out
-    if (write(out_fd, (char*) audio, bytes) != bytes) {
+    if (write(audio_fd, (char*) audio, bytes) != bytes) {
       fprintf(stderr, "dv_decoder: audio write error %s\n",fname);
-      close(out_fd);
       return FALSE;
     }
     
     if (frames>0) if (--frames==0) break;
   }
 
-
-  for(i=0;i<4;i++) {
-    free(audio_buffers[i]);
-  }
-  free(audio);
-
   // pad to end with silence
-  if (samps_expected) if (!dv_pad_with_silence(out_fd,samps_expected*channels*2)) {
+  if (samps_expected) if (!dv_pad_with_silence(audio_fd,samps_expected*channels*2)) {
     fprintf(stderr, "dv_decoder: audio write error %s\n",fname);
-    close(out_fd);
     return FALSE;
   }
-
-  close(out_fd);
 
   return TRUE;
 

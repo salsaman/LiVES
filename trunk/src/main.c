@@ -392,6 +392,7 @@ static gboolean pre_init(void) {
 #endif
 
   mainw->volume=1.f;
+  mainw->ccpd_with_sound=TRUE;
 
   if (!strcasecmp(prefs->theme,"none")) return FALSE;
   return TRUE;
@@ -466,12 +467,26 @@ static void lives_init(_ign_opts *ign_opts) {
   gchar buff[256];
   GList *encoders=NULL;
   GList *encoder_capabilities=NULL;
+  struct sigaction sact;
+  sigset_t smask;
+
+  sigemptyset(&smask);
+
+  sigaddset(&smask,SIGINT);
+  sigaddset(&smask,SIGTERM);
+  sigaddset(&smask,SIGSEGV);
+
+  sact.sa_handler=catch_sigint;
+  sact.sa_flags=0;
+  sact.sa_mask=smask;
 
   signal (SIGHUP,SIG_IGN);
   signal (SIGPIPE,SIG_IGN);
-  signal (SIGINT, catch_sigint);
-  signal (SIGTERM, catch_sigint);
-  signal (SIGSEGV, catch_sigint);
+  signal(SIGUSR1,SIG_IGN);
+
+  sigaction (SIGINT, &sact, NULL);
+  sigaction (SIGTERM, &sact, NULL);
+  sigaction (SIGSEGV, &sact, NULL);
 
   // initialise the mainwindow data
   mainw->scr_width=gdk_screen_width();
@@ -494,7 +509,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->sel_start=0;
   mainw->sel_move=SEL_MOVE_AUTO;
   mainw->record_foreign=FALSE;
-  mainw->ccpd_with_sound=FALSE;
   mainw->play_window=NULL;
   mainw->opwx=mainw->opwy=-1;
   mainw->save_all=TRUE;
@@ -742,6 +756,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->sl_undo_buffer_used=0;
   mainw->sl_undo_offset=0;
 
+  mainw->sig_pid=0;
+  mainw->sig_file=NULL;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -2244,7 +2260,8 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
   gtk_widget_set_sensitive (mainw->export_proj, FALSE);
   gtk_widget_set_sensitive (mainw->import_proj, FALSE);
-  gtk_widget_set_sensitive(mainw->recaudio_sel,FALSE);
+  gtk_widget_set_sensitive (mainw->recaudio_sel,FALSE);
+  gtk_widget_set_sensitive (mainw->mt_menu,FALSE);
 
   if (mainw->current_file>=0&&(mainw->playing_file==-1||mainw->foreign)) {
     if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
@@ -2263,7 +2280,6 @@ procw_desensitize(void) {
   // switch on/off a few extra widgets in the processing dialog
 
   if (mainw->multitrack!=NULL) return;
-
 
   if (mainw->current_file>0&&(cfile->menuentry!=NULL||cfile->opening)&&!mainw->preview) {
     // an effect etc,
@@ -2311,7 +2327,6 @@ procw_desensitize(void) {
   gtk_widget_set_sensitive (mainw->delaudio_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->load_cdtrack, FALSE);
   gtk_widget_set_sensitive (mainw->open_lives2lives, FALSE);
-  gtk_widget_set_sensitive (mainw->mt_menu, FALSE);
 
   if (mainw->current_file>0&&cfile->nopreview) {
     gtk_widget_set_sensitive (mainw->m_playbutton, FALSE);

@@ -253,7 +253,7 @@ do_error_dialog(const gchar *text) {
     do_error_dialog_with_check_transient(text,FALSE,0,NULL);
   } else {
     if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
-    do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
+    else do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
   }
 }
 
@@ -265,7 +265,7 @@ do_error_dialog_with_check(const gchar *text, gint warn_mask_number) {
     do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,NULL);
   } else {
     if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->LiVES));
-    do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
+    else do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
   }
 }
 
@@ -277,7 +277,7 @@ do_blocking_error_dialog(const gchar *text) {
     do_error_dialog_with_check_transient(text,TRUE,0,NULL);
   } else {
     if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->LiVES));
-    do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->multitrack->window));
+    else do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->multitrack->window));
   }
 }
 
@@ -1583,15 +1583,16 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     mainw->cancel_type=CANCEL_SOFT;
  }
 
-  while (!mainw->is_ready) {
+  while (!mainw->is_ready&&pthread_islocked) {
     pthread_mutex_unlock(&mainw->gtk_mutex);
-    pthread_islocked=FALSE;
     do {
-      if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) break;
+      if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
+	pthread_islocked=FALSE;
+	break;
+      }
       sched_yield();
       g_usleep(prefs->sleep_time);
     } while (pthread_mutex_trylock(&mainw->gtk_mutex));
-    pthread_islocked=TRUE;
   }
 
   if (!pthread_islocked) {
@@ -1603,20 +1604,21 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   while (g_main_context_iteration(NULL,FALSE));
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
 
-  while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER) {
+  while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER&&pthread_islocked) {
     // mutex locked
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(procw->progressbar));
 
     while (g_main_context_iteration(NULL,FALSE));
 
     pthread_mutex_unlock(&mainw->gtk_mutex);
-    pthread_islocked=FALSE;
     do {
-      if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) break;
+      if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
+	pthread_islocked=FALSE;
+	break;
+      }
       sched_yield();
       g_usleep(prefs->sleep_time);
     } while (pthread_mutex_trylock(&mainw->gtk_mutex));
-    pthread_islocked=TRUE;
   }
 
   gtk_widget_destroy(procw->processing);
@@ -1630,13 +1632,19 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
 static void *dth2 (void *arg) {
   dth2_inner(arg,FALSE);
-  pthread_exit(NULL);
   return NULL;
 }
 
 static void *dth2_with_cancel (void *arg) {
   dth2_inner(arg,TRUE);
-  pthread_exit(NULL);
+  if (mainw->cancelled==CANCEL_USER&&mainw->sig_pid>0) {
+    
+    while (!g_file_test(mainw->sig_file,G_FILE_TEST_EXISTS)) {
+      g_usleep(prefs->sleep_time);
+    }
+
+    pthread_kill(mainw->sig_pid,SIGUSR1);
+  }
   return NULL;
 }
 
@@ -1653,7 +1661,6 @@ static void *splash_prog (void *arg) {
     sched_yield();
     g_usleep(prefs->sleep_time);
   }
-  pthread_exit(NULL);
   return NULL;
 }
 
@@ -1702,10 +1709,10 @@ void end_threaded_dialog(void) {
     pthread_join(dthread,NULL);
     pthread_mutex_unlock(&mainw->gtk_mutex);
     if (thread_text!=NULL) g_free(thread_text);
-    mainw->cancel_type=CANCEL_KILL;
     if (mainw->splash_window==NULL) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
   }
+  mainw->cancel_type=CANCEL_KILL;
   if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
   else gtk_widget_queue_draw(mainw->multitrack->window);
 }

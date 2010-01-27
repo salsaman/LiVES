@@ -3730,8 +3730,6 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
     while (g_main_context_iteration (NULL,FALSE));
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
-      event_list_free (mainw->event_list);
-      mainw->event_list=NULL;
       cfile->redoable=FALSE;
       close_scrap_file();
       sensitize();

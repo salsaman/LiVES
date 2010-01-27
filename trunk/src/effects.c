@@ -54,6 +54,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   gint current_file=mainw->current_file;
 
   gint new_file=current_file;
+  gint ldfile;
 
   gboolean got_no_frames=FALSE;
   gchar *tmp;
@@ -119,7 +120,6 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     mainw->current_file=current_file;
-    mainw->is_generating=FALSE;
     return TRUE;
   }
 
@@ -134,6 +134,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     }
     else {
       if (rfx->num_in_channels==0) {
+	mainw->no_switch_dprint=TRUE;
 	if (mainw->gen_to_clipboard) {
 	  tmp=g_strdup(_("%s to clipboard..."));
 	  text=g_strdup_printf(tmp,_(rfx->action_desc));
@@ -149,9 +150,14 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       }
     }
   }
+
+  if (!mainw->no_switch_dprint) d_print(""); // force switch text
+  ldfile=mainw->last_dprint_file;
+
   d_print(text);
   g_free(text);
   g_free(tmp);
+  mainw->last_dprint_file=ldfile;
 
   cfile->redoable=cfile->undoable=FALSE;
   gtk_widget_set_sensitive (mainw->redo, FALSE);
@@ -196,12 +202,14 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   else cfile->fx_frame_pump=0;
 
   if (!do_progress_dialog(TRUE,TRUE,effectstring)||mainw->error) {
+    mainw->last_dprint_file=ldfile;
     do_rfx_cleanup(rfx);
     mainw->show_procd=TRUE;
     mainw->keep_pre=FALSE;
     if (mainw->error) {
       do_error_dialog (mainw->msg);
       d_print_failed();
+      mainw->last_dprint_file=ldfile;
     }
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
@@ -217,6 +225,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     }
     else mainw->current_file=current_file;
     mainw->is_generating=FALSE;
+    mainw->no_switch_dprint=FALSE;
     return FALSE;
   }
 
@@ -333,6 +342,8 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	  close_current_file(current_file);
 	  mainw->suppress_dprint=FALSE;
 	}
+	mainw->last_dprint_file=ldfile;
+	mainw->no_switch_dprint=FALSE;
 	return FALSE;
       }
     }
@@ -381,6 +392,8 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   }
 
   d_print_done();
+  mainw->no_switch_dprint=FALSE;
+  mainw->last_dprint_file=ldfile;
   return TRUE;
 }
 

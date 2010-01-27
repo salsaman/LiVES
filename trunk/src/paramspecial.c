@@ -376,6 +376,9 @@ void special_cleanup (void) {
   }
   mainw->framedraw_image=mainw->framedraw_reset=NULL;
   mainw->framedraw_spinbutton=NULL;
+
+  mainw->framedraw_preview=NULL;
+
   if (framedraw.extra_params!=NULL) g_free(framedraw.extra_params);
 
   framedraw.added=FALSE;

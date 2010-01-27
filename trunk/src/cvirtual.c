@@ -173,11 +173,12 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe) {
   for (i=sframe;i<=eframe;i++) {
     if (i>sfile->frames) break;
 
-    pthread_mutex_lock(&mainw->gtk_mutex);
     if (sfile->frame_index[i-1]>=0) {
 
+      pthread_mutex_lock(&mainw->gtk_mutex);
+
       while (g_main_context_iteration(NULL,FALSE));
-    
+
       pixbuf=pull_gdk_pixbuf_at_size(sfileno,i,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png",q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
       
       if (sfile->img_type==IMG_TYPE_JPEG) {
@@ -209,6 +210,10 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe) {
       sfile->frame_index[i-1]=-1;
     }
     pthread_mutex_unlock(&mainw->gtk_mutex);
+
+    sched_yield();
+
+    sync();
 
     if (mainw->cancelled!=CANCEL_NONE) {
       if (!check_if_non_virtual(sfile)) save_frame_index(sfileno);

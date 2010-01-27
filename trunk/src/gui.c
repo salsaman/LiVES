@@ -611,7 +611,7 @@ create_LiVES (void)
   mainw->ccpd_sound = gtk_check_menu_item_new_with_mnemonic (_("Decouple _Video from Audio"));
   gtk_widget_show (mainw->ccpd_sound);
   gtk_container_add (GTK_CONTAINER (menuitem12_menu), mainw->ccpd_sound);
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->ccpd_sound),TRUE);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->ccpd_sound),!mainw->ccpd_with_sound);
 
   separator55 = gtk_menu_item_new ();
   gtk_widget_show (separator55);

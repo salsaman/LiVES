@@ -2325,6 +2325,7 @@ if (defined($ARGV[0])) {
 
 	unlink $audio_in;
 	rename $audio_out,$audio_in;
+
 	`sync;sync;sync`;
 
 	&resample_audio;

@@ -831,8 +831,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and othe live CDs
 
-    prefs->startup_interface=future_prefs->startup_interface=STARTUP_CE;
-
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -2085,8 +2083,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->merge,(clipboard!=NULL&&cfile->frames>0));
   gtk_widget_set_sensitive (mainw->delete, mainw->current_file>0&&cfile->frames>0);
   gtk_widget_set_sensitive (mainw->playall, mainw->current_file>0);
-  if (mainw->multitrack==NULL||cfile->opening) gtk_widget_set_sensitive (mainw->m_playbutton, mainw->current_file>0);
-  else mt_swap_play_pause(mainw->multitrack,FALSE);
+  gtk_widget_set_sensitive (mainw->m_playbutton, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->m_playselbutton, mainw->current_file>0&&cfile->frames>0);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, mainw->current_file>0&&cfile->pointer_time>0.);
   gtk_widget_set_sensitive (mainw->m_loopbutton, TRUE);
@@ -3147,9 +3144,8 @@ void load_frame_image(gint frame, gint last_frame) {
 	  }
 	}
 
-	if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&(mainw->multitrack==NULL||!mainw->multitrack->is_rendering))||((!mainw->is_rendering||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))&&mainw->preview&&mainw->frame_layer==NULL)) {
+	if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&(mainw->multitrack==NULL||(!mainw->multitrack->is_rendering&&!mainw->is_generating)))||((!mainw->is_rendering||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))&&mainw->preview&&mainw->frame_layer==NULL)) {
 	  // preview ended
-	  
 	  if (!cfile->opening) mainw->cancelled=CANCEL_NO_MORE_PREVIEW;
 	  if (mainw->cancelled) {
 	    g_free(fname_next);
@@ -3224,6 +3220,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	}
       }
     } while (mainw->frame_layer==NULL&&mainw->cancelled==CANCEL_NONE&&cfile->clip_type==CLIP_TYPE_DISK);
+
     
     // from this point onwards we don't need to keep mainw->frame_layer around when we return
 
@@ -3688,7 +3685,6 @@ void close_current_file(gint file_to_switch_to) {
 	else do_quick_switch(file_to_switch_to);
 
 	if (mainw->multitrack!=NULL&&old_file!=mainw->multitrack->render_file) {
-	  mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
 	  mt_clip_select(mainw->multitrack,TRUE);
 	}
 

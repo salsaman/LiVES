@@ -243,6 +243,9 @@ struct _mt {
 
   GtkWidget *clear_ds;
 
+  GtkWidget *gens_submenu;
+  GtkWidget *capture;
+
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
 

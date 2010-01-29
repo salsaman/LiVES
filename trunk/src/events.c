@@ -3786,7 +3786,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
 	  break;
 	}
       }
-      if (mainw->stored_event_list!=NULL) {
+      if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
 	recover_layout_cancelled(NULL,NULL);
 	stored_event_list_free_all(TRUE);
       }

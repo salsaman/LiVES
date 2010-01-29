@@ -776,7 +776,7 @@ void remove_layout_files(GList *map) {
 	}
       }
       else {
-	if (mainw->stored_event_list!=NULL||mainw->stored_layout_undos!=NULL) {
+	if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
 	  stored_event_list_free_all(TRUE);
 	}
 	else remove_current_from_affected_layouts(mainw->multitrack);
@@ -1794,7 +1794,14 @@ after_foreign_play(void) {
   }
 
   add_to_winmenu();
-  switch_to_file(old_file,mainw->current_file);
+  if (mainw->multitrack==NULL) switch_to_file(old_file,mainw->current_file);
+  
+  else {
+    mainw->current_file=mainw->multitrack->render_file;
+    mt_init_clips(mainw->multitrack,new_file,TRUE);
+    mt_clip_select(mainw->multitrack,TRUE);
+  }
+
   cfile->is_loaded=TRUE;
   cfile->changed=TRUE;
   save_clip_values(mainw->current_file);

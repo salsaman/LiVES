@@ -720,6 +720,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     mainw->is_processing=TRUE;
     desensitize();
     procw_desensitize();
+    lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+
     cfile->proc_ptr=create_processing (mytext);
     if (mytext!=NULL) g_free(mytext);
 
@@ -731,6 +733,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (cancellable) {
       gtk_widget_show (cfile->proc_ptr->cancel_button);
     }
+    else lives_set_cursor_style(LIVES_CURSOR_BUSY,GDK_WINDOW(cfile->proc_ptr->processing->window));
+
     if (cfile->opening&&capable->has_sox&&mainw->playing_file==-1) {
       //gtk_widget_show (cfile->proc_ptr->preview_button);
       if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Preview"), NULL);
@@ -784,7 +788,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     while (!mainw->internal_messaging&&((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))||!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
 
       // just pulse the progress bar
-      if (!process_one(visible)) return FALSE;
+      if (!process_one(visible)) {
+	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	return FALSE;
+      }
 
       if (mainw->iochan!=NULL&&progress_count==0) {
 	// pump data from stdout to textbuffer
@@ -846,7 +853,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	}
 	else cfile->proc_ptr->frames_done=atoi(mainw->msg);
       }
-      if (!process_one(visible)) return FALSE;
+      if (!process_one(visible)) {
+	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	return FALSE;
+      }
 
       if (mainw->iochan!=NULL&&progress_count==0) {
 	// pump data from stdout to textbuffer
@@ -920,6 +930,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 #ifdef DEBUG
   g_print("exiting progress dialogue\n");
 #endif
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   return TRUE;
 }
 

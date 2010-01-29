@@ -300,9 +300,11 @@ static void save_mt_autoback(lives_mt *mt) {
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
 
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
+  do_threaded_dialog(_("Auto backup"),FALSE);
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   add_markers(mt,mt->event_list);
   save_event_list_inner(mt,fd,mt->event_list,mt->save_all_vals,NULL);
+  end_threaded_dialog();
   remove_markers(mt->event_list);
   close(fd);
   set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
@@ -321,7 +323,8 @@ static gboolean mt_auto_backup(gpointer user_data) {
 
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (!mt->auto_changed||mt->event_list==NULL||mt->idlefunc==0) {
+  if (!mt->auto_changed||mt->event_list==NULL||mt->idlefunc==0||prefs->mt_auto_back<0) {
+    mt->idlefunc=0;
     return FALSE;
   }
 
@@ -329,13 +332,12 @@ static gboolean mt_auto_backup(gpointer user_data) {
   stime=otv.tv_sec;
 
   if (mt->auto_back_time==0) mt->auto_back_time=stime;
-  if(mt->auto_back_time<stime||prefs->mt_auto_back==0) {
-    diff=stime-mt->auto_back_time;
-    if (diff>=prefs->mt_auto_back) {
-      save_mt_autoback(mt);
-      mt->auto_changed=FALSE;
-      mt->auto_back_time=stime;
-    }
+
+  diff=stime-mt->auto_back_time;
+  if (diff>=prefs->mt_auto_back) {
+    save_mt_autoback(mt);
+    mt->auto_changed=FALSE;
+    mt->auto_back_time=stime;
   }
 
   return TRUE;
@@ -346,6 +348,7 @@ guint mt_idle_add(lives_mt *mt) {
   if (prefs->mt_auto_back<0) return 0;
 
   if (prefs->mt_auto_back==0) {
+    mt->idlefunc=-1;
     mt_auto_backup(mt);
     return 0;
   }
@@ -1741,50 +1744,62 @@ static void renumber_clips(void) {
   // for now we rely on it being "random enough" (it should be at least if we are using /dev/urandom)
 
 
-  int cclip=1;
-  int i;
+  int cclip;
+  int i=1;
 
   GList *clist;
 
   renumbered_clips[0]=0;
 
-  for (i=1;i<=MAX_FILES&&mainw->files[i]!=NULL;i++) {
-    if (i!=mainw->scrap_file&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)) {
-      while (mainw->files[i]->unique_id==0l) {
-	mainw->files[i]->unique_id=random();
-	save_clip_value(i,CLIP_DETAILS_UNIQUE_ID,&mainw->files[i]->unique_id);
-      }
-    }
-    renumbered_clips[i]=i;
-  }
-  cclip=i;
+  // walk through files mainw->files[cclip]
+  // mainw->files[i] points to next non-NULL clip
 
-  for (++i;i<=MAX_FILES;i++) {
-    if (mainw->files[i]!=NULL) {
-      while (i!=mainw->scrap_file&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&mainw->files[i]->unique_id==0l) {
-	mainw->files[i]->unique_id=random();
-	save_clip_value(i,CLIP_DETAILS_UNIQUE_ID,&mainw->files[i]->unique_id);
-      }
-      mainw->files[cclip]=mainw->files[i];
+  // if we find a gap we move i to cclip
 
-      // we need to change the entries in mainw->cliplist
-      clist=mainw->cliplist;
-      while (clist!=NULL) {
-	if (GPOINTER_TO_INT(clist->data)==i) {
-	  clist->data=GINT_TO_POINTER(cclip);
-	  break;
+
+  for (cclip=1;i<=MAX_FILES;cclip++) {
+    if (mainw->files[cclip]==NULL) {
+
+      if (i!=cclip) {
+	mainw->files[cclip]=mainw->files[i];
+
+	// we need to change the entries in mainw->cliplist
+	clist=mainw->cliplist;
+	while (clist!=NULL) {
+	  if (GPOINTER_TO_INT(clist->data)==i) {
+	    clist->data=GINT_TO_POINTER(cclip);
+	    break;
+	  }
+	  clist=clist->next;
 	}
-	clist=clist->next;
-      }
 
-      mainw->files[i]=NULL;
-      if (mainw->scrap_file==i) mainw->scrap_file=cclip;
-      if (mainw->current_file==i) mainw->current_file=cclip;
-      renumbered_clips[cclip]=cclip;
-      mainw->first_free_file=cclip=i;
+	mainw->files[i]=NULL;
+	
+	if (mainw->scrap_file==i) mainw->scrap_file=cclip;
+	if (mainw->current_file==i) mainw->current_file=cclip;
+
+	if (mainw->first_free_file==cclip) mainw->first_free_file++;
+
+	renumbered_clips[i]=cclip;
+
+
+      }
+      // process this clip again
+      else cclip--;
     }
+
     else {
-      renumbered_clips[i]=i;
+      renumbered_clips[cclip]=cclip;
+      if (i==cclip) i++;
+    }
+
+    if (mainw->files[cclip]!=NULL&&cclip!=mainw->scrap_file&&(mainw->files[cclip]->clip_type==CLIP_TYPE_DISK||mainw->files[cclip]->clip_type==CLIP_TYPE_FILE)&&mainw->files[cclip]->unique_id==0l) {
+      mainw->files[cclip]->unique_id=random();
+      save_clip_value(cclip,CLIP_DETAILS_UNIQUE_ID,&mainw->files[cclip]->unique_id);
+    }
+
+    for (;i<=MAX_FILES;i++) {
+      if (mainw->files[i]!=NULL) break;
     }
   }
 }
@@ -1793,7 +1808,7 @@ static void renumber_clips(void) {
 static void rerenumber_clips(gchar *lfile) {
   // we loaded an event_list, now we match clip numbers in event_list with our current clips, using the layout map file
   // the renumbering is used for translations in event_list_rectify
-  // in mt_init_tracks we alter the track numbers in the event_list
+  // in mt_init_tracks we alter the clip numbers in the event_list
 
   // this means if we save again, the clip numbers in the disk event list (*.lay file) may be updated
   // however, since we also have a layout map file (*.map) for the set, this should not be too big an issue
@@ -4312,9 +4327,10 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
       set_pref("ar_layout","");
       memset(prefs->ar_layout_name,0,1);
     }
+
   }
 
-  if (mainw->stored_event_list!=NULL) {
+  if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
     stored_event_list_free_all(TRUE);
   }
   else if (mt!=NULL&&mt->event_list!=NULL) {
@@ -4350,7 +4366,7 @@ void delete_audio_tracks(lives_mt *mt, GList *list, gboolean full) {
 void mt_quit_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (!check_for_layout_del(mt,TRUE)) return;
+  if (!check_for_layout_del(mt,FALSE)) return;
 
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   mt->idlefunc=0;
@@ -4513,6 +4529,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->idlefunc=0; // idle function for auto backup
   mt->auto_back_time=0;
+
+  mt->render_file=mainw->current_file;
 
   if (prefs->gui_monitor==0) scr_width=mainw->scr_width;
   else scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
@@ -4831,6 +4849,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   gtk_widget_set_sensitive(mt->close,FALSE);
 
+
+  gtk_widget_add_accelerator (mt->close, "activate", mt->accel_group,
+                              GDK_w, GDK_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
+
   mt->recent_menu = gtk_menu_item_new_with_mnemonic (_("_Recent Files..."));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->recent_menu);
   recent_submenu=gtk_menu_new();
@@ -4922,8 +4945,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->clear_event_list);
 
   gtk_widget_add_accelerator (mt->clear_event_list, "activate", mt->accel_group,
-                              GDK_w, GDK_CONTROL_MASK,
+                              GDK_Delete, GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
+
+  gtk_widget_set_sensitive(mt->clear_event_list,mt->event_list!=NULL);
+
 
   separator = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
@@ -5680,6 +5706,30 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   g_signal_connect (GTK_OBJECT (mt->change_vals), "activate",
                       G_CALLBACK (mt_change_vals_activate),
                       (gpointer)mt);
+
+
+  separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
+
+
+  mt->gens_submenu = gtk_menu_item_new_with_mnemonic (_("_Generate"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->gens_submenu);
+
+  gtk_widget_ref(mainw->gens_menu);
+  gtk_menu_detach(GTK_MENU(mainw->gens_menu));
+
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->gens_submenu), mainw->gens_menu);
+
+
+  mt->capture = gtk_menu_item_new_with_mnemonic (_("Capture _External Window... "));
+  gtk_widget_show (mt->capture);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->capture);
+
+
+  g_signal_connect (GTK_OBJECT (mt->capture), "activate",
+                      G_CALLBACK (on_capture_activate),
+                      NULL);
 
 
   // Render
@@ -7288,6 +7338,10 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_toolitem),-1);
   gtk_widget_unref(mainw->vol_toolitem);
 
+  gtk_widget_ref(mainw->gens_menu);
+  gtk_menu_detach(GTK_MENU(mainw->gens_menu));
+
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
 
   if (mt->mt_frame_preview) {
     if (mainw->plug1!=NULL) {
@@ -8423,7 +8477,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
   if (add) i=orig_file;
 
   for (;(!add&&(i<MAX_FILES))||(add&&(i==orig_file));i++) {
-    if (mainw->files[i]!=NULL&&i!=mainw->scrap_file&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&i!=mainw->current_file) {
+    if (mainw->files[i]!=NULL&&i!=mainw->scrap_file&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&i!=mt->render_file) {
       if (i==orig_file||(mt->clip_selected==-1&&i==mainw->pre_src_file)) {
 	if (!add) mt->clip_selected=mt_clip_from_file(mt,i);
 	else {
@@ -8444,6 +8498,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
       }
       gtk_widget_set_events (eventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
       g_signal_connect (GTK_OBJECT(eventbox), "enter-notify-event",G_CALLBACK (on_clipbox_enter),(gpointer)mt);
+
       clips_to_files[count]=i;
 
       vbox = gtk_vbox_new (FALSE, 10);
@@ -8704,8 +8759,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   if (multi->opts.back_audio_tracks==0) gtk_widget_hide(multi->view_audio);
 
   if (cfile->achans>0) add_aparam_menuitems(multi);
-
-  multi->render_file=mainw->current_file;
 
   track_select(multi);
   mt_clip_select(multi,TRUE);  // call this again to scroll clip on screen
@@ -9163,7 +9216,7 @@ in_out_start_changed (GtkWidget *widget, gpointer user_data) {
   if (block==NULL) {
     file *sfile=mainw->files[mt->file_selected];
     sfile->start=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
-    set_clip_labels_variable(mt,mt->clip_selected);
+    set_clip_labels_variable(mt,mt->file_selected);
     update_in_image(mt);
 
     if (sfile->end<sfile->start) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_out),(gdouble)sfile->start);
@@ -9388,7 +9441,7 @@ in_out_end_changed (GtkWidget *widget, gpointer user_data) {
   if (block==NULL) {
     file *sfile=mainw->files[mt->file_selected];
     sfile->end=(int)new_end;
-    set_clip_labels_variable(mt,mt->clip_selected);
+    set_clip_labels_variable(mt,mt->file_selected);
     update_out_image(mt,0);
 
     if (sfile->end<sfile->start) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_in),(gdouble)sfile->end);
@@ -13398,6 +13451,8 @@ void mt_desensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->load_set,FALSE);
   gtk_widget_set_sensitive (mt->save_set,FALSE);
   gtk_widget_set_sensitive (mt->close,FALSE);
+  gtk_widget_set_sensitive (mt->capture,FALSE);
+  gtk_widget_set_sensitive (mt->gens_submenu,FALSE);
 
   if (mt->poly_state==POLY_IN_OUT) {
     val=gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->spinbutton_in));
@@ -13430,6 +13485,7 @@ void mt_sensitise (lives_mt *mt) {
     gtk_widget_set_sensitive (mt->save_event_list,FALSE);
   }
   if (mt->event_list!=NULL) gtk_widget_set_sensitive (mt->clear_event_list, TRUE);
+
   gtk_widget_set_sensitive (mt->remove_gaps, TRUE);
   gtk_widget_set_sensitive (mt->remove_first_gaps, TRUE);
   gtk_widget_set_sensitive (mt->add_vid_behind,TRUE);
@@ -13437,6 +13493,8 @@ void mt_sensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->quit,TRUE);
   gtk_widget_set_sensitive (mt->open_menu,TRUE);
   gtk_widget_set_sensitive (mt->recent_menu,TRUE);
+  gtk_widget_set_sensitive (mt->capture,TRUE);
+  gtk_widget_set_sensitive (mt->gens_submenu,TRUE);
 
   gtk_widget_set_sensitive (mt->load_set,!mainw->was_set);
 
@@ -13529,8 +13587,9 @@ void multitrack_preview_clicked  (GtkWidget *button, gpointer user_data) {
 
   if (mainw->playing_file==-1) multitrack_playall(mt);
   else {
-    on_preview_clicked((GtkButton *)button,NULL);
-    if (mainw->cancelled!=CANCEL_NO_PROPOGATE) mainw->cancelled=CANCEL_NONE;
+    //on_preview_clicked((GtkButton *)button,NULL);
+    //if (mainw->cancelled!=CANCEL_NO_PROPOGATE) mainw->cancelled=CANCEL_NONE;
+    mainw->cancelled=CANCEL_NO_PROPOGATE;
   }
 }
 
@@ -13682,6 +13741,8 @@ void multitrack_playall (lives_mt *mt) {
       mainw->is_rendering=mainw->is_processing=FALSE;
     }
   }
+
+  mt_swap_play_pause(mt,FALSE);
 
   gtk_container_remove (GTK_CONTAINER (mt->context_frame), mt->context_box);
 

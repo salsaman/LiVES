@@ -121,6 +121,12 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
   mainw->keep_pre=FALSE;
   mainw->is_generating=FALSE;
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
+
 }
 
 
@@ -151,6 +157,7 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
     close_current_file(mainw->pre_src_file);
     mainw->suppress_dprint=FALSE;
     mainw->is_generating=FALSE;
+    if (mainw->multitrack!=NULL) mainw->pre_src_file=-1;
   }
 
   if (button!=NULL) {
@@ -171,6 +178,11 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
   if (fx_dialog[1]==NULL) special_cleanup();
 
   mainw->block_param_updates=FALSE;
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
 
 }
 
@@ -719,6 +731,14 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     }
   }
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
   if (menuitem==NULL) {
     no_process=TRUE;
     is_realtime=TRUE;
@@ -735,6 +755,12 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
     // create a new file to generate frames into
     if (!get_new_handle((new_file=mainw->first_free_file),NULL)) {
+
+      if (mainw->multitrack!=NULL) {
+	mt_sensitise(mainw->multitrack);
+	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+      }
+
       return;
     }
     
@@ -988,7 +1014,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   }
 
   // extras for multitrack
-  if (mainw->multitrack!=NULL) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
     if (enabled_in_channels(filter,FALSE)==2&&get_transition_param(filter)!=-1) {
       // add in/out for multitrack transition
@@ -1003,7 +1029,8 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   }
 
   if (rfx->status!=RFX_STATUS_SCRAP&&!internal&&rfx->num_in_channels==0&&rfx->min_frames>-1) {
-    add_gen_to(GTK_BOX(param_vbox),rfx);
+    if (mainw->multitrack==NULL) add_gen_to(GTK_BOX(param_vbox),rfx);
+    else mainw->gen_to_clipboard=FALSE;
   }
 
   if (!internal) {
@@ -1142,7 +1169,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), top_hbox);
   gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
-  if (mainw->multitrack==NULL) gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
+  if (mainw->multitrack==NULL||rfx->status!=RFX_STATUS_WEED) gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);

@@ -62,14 +62,12 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <string.h>
 #include <signal.h>
 
-// disable this for compilers which don't support it
-#define HAS_SIGNED_RIGHT_SHIFT
-
 // don't change this unless the backend is changed as well
 // i.e. $GUI_BOOTSTRAP_FILE in smogrify
 #define BOOTSTRAP_NAME "/tmp/.smogrify"
 
-#define MAX_FILES 65536
+// max files is actually 1 more than this, since file 0 is the clipboard
+#define MAX_FILES 65535
 
 // this must match AC_PREFIX_DEFAULT in configure.in
 // TODO - when lives-plugins is a separate package, use pkg-config to get PREFIX and remove PREFIX_DEFAULT

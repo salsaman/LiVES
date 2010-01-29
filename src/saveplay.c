@@ -1529,7 +1529,13 @@ void play_file (void) {
   gtk_widget_set_sensitive (mainw->stop, TRUE);
 
   if (mainw->multitrack==NULL) gtk_widget_set_sensitive (mainw->m_playbutton, FALSE);
-  else if (!cfile->opening) mt_swap_play_pause(mainw->multitrack,TRUE);
+  else if (!cfile->opening) {
+    if (!mainw->is_processing) mt_swap_play_pause(mainw->multitrack,TRUE);
+    else {
+      gtk_widget_set_sensitive(mainw->multitrack->playall,FALSE);
+      gtk_widget_set_sensitive(mainw->m_playbutton,FALSE);
+    }
+  }
 
   gtk_widget_set_sensitive (mainw->m_playselbutton, FALSE);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
@@ -1761,7 +1767,7 @@ void play_file (void) {
     mainw->kb_timer=gtk_timeout_add (KEY_RPT_INTERVAL,&plugin_poll_keyboard,NULL);
 
 #ifdef ENABLE_JACK
-    if (mainw->event_list!=NULL&&!mainw->record&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!(mainw->preview&&mainw->is_processing)) {
+    if (mainw->event_list!=NULL&&!mainw->record&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!(mainw->preview&&mainw->is_processing&&!(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
       // if playing an event list, we switch to audio memory buffer mode
       if (mainw->multitrack!=NULL) init_jack_audio_buffers(cfile->achans,cfile->arate,exact_preview);
       else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
@@ -1769,7 +1775,7 @@ void play_file (void) {
     }
 #endif    
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->event_list!=NULL&&!mainw->record&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!(mainw->preview&&mainw->is_processing)) {
+    if (mainw->event_list!=NULL&&!mainw->record&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!(mainw->preview&&mainw->is_processing&&!(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
       // if playing an event list, we switch to audio memory buffer mode
       if (mainw->multitrack!=NULL) init_pulse_audio_buffers(cfile->achans,cfile->arate,exact_preview);
       else init_pulse_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
@@ -2228,15 +2234,13 @@ void play_file (void) {
   }
 #endif
 
-  if (mainw->record) is_new_file=deal_with_render_choice(TRUE);
-
   if (gen_file>-1&&mainw->current_file!=gen_file&&mainw->files[gen_file]!=NULL&&mainw->files[gen_file]->clip_type==CLIP_TYPE_GENERATOR&&cfile->clip_type!=CLIP_TYPE_GENERATOR) {
     current_file=mainw->pre_src_file=mainw->current_file;
     mainw->current_file=gen_file;
   }
 
-  if (!mainw->preview&&mainw->current_file>-1&&mainw->multitrack==NULL) {
-    if ((!is_new_file&&mainw->current_file!=current_file)||cfile->clip_type==CLIP_TYPE_GENERATOR) {
+  if (!mainw->preview&&mainw->current_file>-1&&(mainw->multitrack==NULL||mainw->current_file==gen_file)) {
+    if ((mainw->current_file!=current_file)||cfile->clip_type==CLIP_TYPE_GENERATOR) {
       mainw->osc_block=TRUE;
       if (mainw->current_file>0&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
 	weed_generator_end (cfile->ext_src);
@@ -2246,7 +2250,7 @@ void play_file (void) {
       else if (mainw->pre_src_file!=-1) switch_to_file (mainw->current_file,mainw->pre_src_file);
     }
     else {
-      get_play_times();
+      if (mainw->multitrack==NULL) get_play_times();
     }
   }
 
@@ -2255,7 +2259,9 @@ void play_file (void) {
 
   reset_clip_menu();
 
-  g_print("rte is %ld\n",mainw->rte);
+  if (mainw->record) deal_with_render_choice(TRUE);
+
+
 }
   
 
@@ -3615,7 +3621,7 @@ void rewrite_recovery_file(gint closed_file) {
   recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
 
   for (i=1;i<=MAX_FILES;i++) {
-    if ((closed_file<0||i!=closed_file)&&mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK&&i!=mainw->scrap_file&&mainw->files[i]->is_loaded&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
+    if ((closed_file<0||i!=closed_file)&&mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&i!=mainw->scrap_file&&mainw->files[i]->is_loaded&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
       recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
       dummyvar=write(recovery_fd,recovery_entry,strlen(recovery_entry));
       g_free(recovery_entry);

@@ -42,9 +42,8 @@ lives_exit (void) {
     int i;
     gchar *com;
 
-    if (mainw->stored_event_list!=NULL) {
-      event_list_free(mainw->stored_event_list);
-      mainw->stored_event_list=NULL;
+    if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
+      stored_event_list_free_all(FALSE);
     }
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
@@ -728,7 +727,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     }
   }
 
-  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+  if (mainw->sl_undo_mem!=NULL&&(cfile->stored_layout_frame!=0||cfile->stored_layout_audio!=0.)) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -923,8 +922,9 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
 
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
     if (!check_for_layout_del(NULL,FALSE)) return;
-    mainw->stored_event_list_changed=FALSE;
   }
+
+  if (mainw->sl_undo_mem!=NULL) stored_event_list_free_undos();
 
   if (!mainw->was_set) {
     mainw->no_exit=TRUE;
@@ -1110,7 +1110,6 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
     if (!check_for_layout_del(NULL,FALSE)) return;
-    mainw->stored_event_list_changed=FALSE;
   }
 
   if (real_clips_available()>0) {
@@ -2472,7 +2471,7 @@ on_insert_activate                    (GtkButton     *button,
 
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
-  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+  if (mainw->sl_undo_mem!=NULL&&(cfile->stored_layout_frame!=0||(with_sound&&cfile->stored_layout_audio!=0.))) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -2699,7 +2698,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
 
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
-  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+  if (mainw->sl_undo_mem!=NULL&&(cfile->stored_layout_frame!=0||(mainw->ccpd_with_sound&&cfile->stored_layout_audio!=0.))) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -3508,10 +3507,6 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   gboolean got_new_handle=FALSE;
 
-  if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
-    if (!check_for_layout_del(NULL,FALSE)) return;
-  }
-
   if (!mainw->no_exit&&!mainw->only_close) extra=g_strdup(", and LiVES will exit");
   else extra=g_strdup("");
 
@@ -3523,6 +3518,12 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     return;
   }
   g_free(msg);
+
+
+  if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
+    if (!check_for_layout_del(NULL,FALSE)) return;
+  }
+
 
   if (menuitem!=NULL) {
     do {
@@ -5058,6 +5059,14 @@ on_button3_clicked                     (GtkButton       *button,
 
   clear_mainw_msg();
 
+  if (mainw->current_file>-1&&cfile->proc_ptr!=NULL) {
+    gtk_widget_set_sensitive(cfile->proc_ptr->cancel_button,FALSE);
+    gtk_widget_set_sensitive(cfile->proc_ptr->pause_button,FALSE);
+    gtk_widget_set_sensitive(cfile->proc_ptr->stop_button,FALSE);
+    gtk_widget_set_sensitive(cfile->proc_ptr->preview_button,FALSE);
+  }
+  while (g_main_context_iteration(NULL,FALSE));
+
   if (!mainw->effects_paused||cfile->nokeep) {
     // Cancel
     if (mainw->cancel_type==CANCEL_SOFT) {
@@ -5109,6 +5118,8 @@ on_button3_clicked                     (GtkButton       *button,
       gchar *msg=g_strdup_printf(_ ("%d frames are enough !\n"),keep_frames-cfile->start);
       d_print(msg);
       g_free(msg);
+
+      lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
       if (!mainw->internal_messaging) {
 	com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
 	dummyvar=system(com);
@@ -5130,12 +5141,13 @@ on_button3_clicked                     (GtkButton       *button,
 	  mainw->keep_pre=FALSE;
 	}
       }
-      if (!mainw->is_rendering) {
+      if (!mainw->is_rendering||mainw->multitrack!=NULL) {
 	unlink(cfile->info_file);
 	dummyvar=system(com);
 	cfile->undo_end=keep_frames-1;
       }
       else mainw->cancelled=CANCEL_KEEP;
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     }
     else {
       // no frames there
@@ -7139,6 +7151,8 @@ on_preview_clicked                     (GtkButton       *button,
   // IMPORTANT: cfile->undo_start and cfile->undo_end determine which frames
   // should be played
 
+  static gboolean in_preview_func=FALSE;
+
   gboolean resume_after;
   gint ostart=cfile->start;
   gint oend=cfile->end;
@@ -7149,6 +7163,15 @@ on_preview_clicked                     (GtkButton       *button,
   guint64 old_rte; //TODO - block better
   gint current_file=mainw->current_file;
   weed_plant_t *filter_map=mainw->filter_map; // back this up in case we are rendering
+
+
+  if (in_preview_func) {
+    // this is a special value of cancel - don't propogate it to "open"
+    mainw->cancelled=CANCEL_NO_PROPOGATE;
+    return;
+  }
+
+  in_preview_func=TRUE;
 
   mainw->preview=TRUE;
   old_rte=mainw->rte;
@@ -7320,10 +7343,6 @@ on_preview_clicked                     (GtkButton       *button,
       }
     }
   }
-  else {
-    // this is a special value of cancel - don't propogate it to "open"
-    mainw->cancelled=CANCEL_NO_PROPOGATE;
-  }
     
   if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,"Preview", NULL);
   gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,"Preview", NULL);
@@ -7358,6 +7377,9 @@ on_preview_clicked                     (GtkButton       *button,
     mt_post_playback(mainw->multitrack);
     mainw->current_file=current_file;
   }
+
+  in_preview_func=FALSE;
+
 }
 
 
@@ -7981,6 +8003,14 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     return;
   }
 
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
   if (prefs->rec_desktop_audio&&((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
     resaudw=create_resaudw(8,NULL,NULL);
   }
@@ -7990,6 +8020,12 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   response=gtk_dialog_run (GTK_DIALOG (resaudw->dialog));
   if (response==GTK_RESPONSE_CANCEL) {
     gtk_widget_destroy (resaudw->dialog);
+
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
+
     return;
   }
   
@@ -8029,14 +8065,26 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   
   if (rec_end_time==0.) {
     do_error_dialog(_("\nRecord time must be greater than 0.\n"));
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     return;
   }
 
-  gtk_widget_hide(mainw->LiVES);
+  if (mainw->multitrack==NULL) gtk_widget_hide(mainw->LiVES);
+  else gtk_widget_hide(mainw->multitrack->window);
 
   if (!(do_warning_dialog(_ ("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\nClick 'Cancel' to cancel\n\n")))) {
-    if (prefs->show_gui) gtk_widget_show(mainw->LiVES);
+    if (prefs->show_gui) {
+      if (mainw->multitrack==NULL) gtk_widget_show(mainw->LiVES);
+      else gtk_widget_show(mainw->multitrack->window);
+    }
     d_print (_ ("External window was released.\n"));
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     return;
   }
   
@@ -8044,6 +8092,10 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   if (!get_temp_handle(mainw->first_free_file,TRUE)) {
     if (prefs->show_gui) gtk_widget_show(mainw->LiVES);
     while (g_main_context_iteration(NULL,FALSE));
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     return;
   }
 
@@ -8081,7 +8133,11 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   dummyvar=system(com);
 
-  if (prefs->show_gui) gtk_widget_show(mainw->LiVES);
+  if (prefs->show_gui) {
+    if (mainw->multitrack==NULL) gtk_widget_show(mainw->LiVES);
+    else gtk_widget_show(mainw->multitrack->window);
+  }
+
   mainw->noswitch=TRUE;
   while (g_main_context_iteration(NULL,FALSE));
   mainw->noswitch=FALSE;
@@ -8092,6 +8148,12 @@ on_capture_activate                (GtkMenuItem     *menuitem,
       sensitize();
     }
   }
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
+
 }
 
 
@@ -8461,7 +8523,7 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
   d_print_done();
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
-  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+  if (mainw->sl_undo_mem!=NULL&&cfile->stored_layout_audio!=0.) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -8740,7 +8802,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
   }
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
-  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+  if (mainw->sl_undo_mem!=NULL&&cfile->stored_layout_audio!=0.) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -9090,7 +9152,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
   d_print_done();
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
-  if (mainw->stored_layout_undos!=NULL&&cfile->stored_layout_frame!=0) {
+  if (mainw->sl_undo_mem!=NULL&&cfile->stored_layout_audio!=0.) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }

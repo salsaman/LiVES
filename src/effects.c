@@ -218,14 +218,21 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     mainw->resizing=FALSE;
     cfile->nokeep=FALSE;
     cfile->fx_frame_pump=0;
+
     if (rfx->num_in_channels==0) {
       mainw->suppress_dprint=TRUE;
       close_current_file(current_file);
       mainw->suppress_dprint=FALSE;
     }
     else mainw->current_file=current_file;
+
     mainw->is_generating=FALSE;
     mainw->no_switch_dprint=FALSE;
+
+    if (mainw->multitrack!=NULL) {
+      mainw->pre_src_file=-1;
+    }
+
     return FALSE;
   }
 
@@ -384,7 +391,15 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	if (prefs->crash_recovery) add_to_recovery_file(mainw->files[new_file]->handle);
       }
       cfile->changed=TRUE;
-      switch_to_file ((mainw->current_file=0),new_file);
+      if (mainw->multitrack==NULL) switch_to_file ((mainw->current_file=0),new_file);
+
+      else {
+	mainw->current_file=mainw->multitrack->render_file;
+	mt_init_clips(mainw->multitrack,new_file,TRUE);
+	mt_clip_select(mainw->multitrack,TRUE);
+	mainw->pre_src_file=-1;
+      }
+
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif

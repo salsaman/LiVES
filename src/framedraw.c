@@ -525,7 +525,7 @@ load_framedraw_image(GdkPixbuf *pixbuf) {
   if (mainw->framedraw_frame>cfile->frames) mainw->framedraw_frame=cfile->frames;
 
   // can happen if we preview for rendered generators
-  if (mainw->multitrack==NULL&&mainw->framedraw_frame==0) return;
+  if ((mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)&&mainw->framedraw_frame==0) return;
 
   if (pixbuf==NULL) {
     const gchar *img_ext=cfile->img_type==IMG_TYPE_JPEG?"jpg":"png";
@@ -543,7 +543,7 @@ load_framedraw_image(GdkPixbuf *pixbuf) {
   gdk_pixbuf_render_pixmap_and_mask (pixbuf, &mainw->framedraw_orig_pixmap, &dummy_bitmap, 128);
   if (needs_free&&pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
 
-  if (!(dummy_bitmap==NULL)) {
+  if (dummy_bitmap!=NULL) {
     gdk_pixmap_unref (dummy_bitmap);
   }
 

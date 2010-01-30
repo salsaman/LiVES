@@ -780,6 +780,10 @@ void remove_layout_files(GList *map) {
 	  stored_event_list_free_all(TRUE);
 	}
 	else remove_current_from_affected_layouts(mainw->multitrack);
+
+	prefs->ar_layout=FALSE;
+	set_pref("ar_layout","");
+	memset(prefs->ar_layout_name,0,1);
       }
       g_free(fname);
     }
@@ -2212,8 +2216,9 @@ void lives_set_cursor_style(gint cstyle, GdkWindow *window) {
   mainw->cursor=NULL;
 
   if (window==NULL) {
-    if (mainw->multitrack==NULL) window=mainw->LiVES->window;
-    else window=mainw->multitrack->window->window;
+    if (mainw->multitrack==NULL&&mainw->is_ready) window=mainw->LiVES->window;
+    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) window=mainw->multitrack->window->window;
+    else return;
   }
 
   switch(cstyle) {

@@ -2640,8 +2640,6 @@ _entryw* create_cds_dialog (gint type) {
   GtkWidget *discardbutton;
   GtkWidget *savebutton;
   GtkWidget *label=NULL;
-  GtkWidget *eventbox;
-  GtkWidget *checkbutton=NULL;
   GtkWidget *hbox;
   GtkAccelGroup *accel_group;
 
@@ -2726,45 +2724,6 @@ _entryw* create_cds_dialog (gint type) {
     gtk_entry_set_width_chars (GTK_ENTRY (cdsw->entry),32);
     gtk_entry_set_activates_default(GTK_ENTRY(cdsw->entry),TRUE);
     gtk_widget_show_all (hbox);
-  }
-
-  if (type==0||type==1) {
-    checkbutton = gtk_check_button_new ();
-    label=gtk_label_new_with_mnemonic (_("_Auto reload next time"));
-
-    eventbox=gtk_event_box_new();
-    gtk_container_add (GTK_CONTAINER (eventbox), label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      checkbutton);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-    if (palette->style&STYLE_1&&mainw!=NULL) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    gtk_widget_show_all (hbox);
-    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-    
-    if ((type==0&&prefs->ar_layout)||(type==1&&!mainw->only_close)) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
-      if (type==1) prefs->ar_clipset=TRUE;
-      else prefs->ar_layout=TRUE;
-    }
-    else {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
-      if (type==1) prefs->ar_clipset=FALSE;
-      else prefs->ar_layout=FALSE;
-    }
-    
-    g_object_set_data(G_OBJECT(checkbutton),"cdsw",(gpointer)cdsw);
-    
-    g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
-		      G_CALLBACK (on_autoreload_toggled),
-		      GINT_TO_POINTER(type));
   }
 
   if (type==0&&!(prefs->warning_mask&WARN_MASK_EXIT_MT)) {

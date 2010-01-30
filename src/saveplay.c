@@ -1331,8 +1331,6 @@ void play_file (void) {
   gint loop=0;
   gboolean mute;
 
-  gboolean is_new_file=FALSE;
-
   gint gen_file=-1;
 
   GClosure *freeze_closure;
@@ -3635,7 +3633,7 @@ void rewrite_recovery_file(gint closed_file) {
 
 gboolean check_for_recovery_files (gboolean auto_recover) {
   gboolean retval=FALSE;
-  gchar *recovery_file;
+  gchar *recovery_file,*recovery_numbering_file;
   guint recpid;
   gchar *com;
 
@@ -3669,6 +3667,11 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
 	    com=g_strdup_printf("/bin/mv %s %s/.layout.%d.%d.%d",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
 	    dummyvar=system(com);
 	    g_free(com);
+	    recovery_numbering_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
+	    com=g_strdup_printf("/bin/mv %s %s/.layout_numbering.%d.%d.%d",recovery_numbering_file,prefs->tmpdir,getuid(),getgid(),getpid());
+	    dummyvar=system(com);
+	    g_free(com);
+	    g_free(recovery_numbering_file);
 	    mainw->recoverable_layout=TRUE;
 	  }
 	  g_free(recovery_file);

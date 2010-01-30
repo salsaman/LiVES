@@ -1618,10 +1618,10 @@ create_LiVES (void)
   label=gtk_label_new(_("Volume"));
   gtk_container_add(GTK_CONTAINER(mainw->vol_label),label);
 
-#ifdef HAVE_GTK_NICE_VERSION
+#if GTK_CHECK_VERSION(2,16,0) 
   mainw->volume_scale=gtk_volume_button_new();
   gtk_scale_button_set_value(GTK_SCALE_BUTTON(mainw->volume_scale),mainw->volume);
-  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_HORIZONTAL); // TODO - change for GTK+ 2.16
+  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_HORIZONTAL);
 #else
   mainw->volume_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mainw->volume_scale),FALSE);
@@ -2583,83 +2583,84 @@ create_LiVES (void)
 					       NULL);
 
   // these are for the menu transport buttons
-  g_signal_connect (GTK_OBJECT (mainw->m_sepwinbutton), "clicked",
-		    G_CALLBACK (on_sepwin_pressed),
-		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->m_playbutton), "clicked",
-		    G_CALLBACK (on_playall_activate),
-		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->m_stopbutton), "clicked",
-		    G_CALLBACK (on_stop_activate),
-		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->m_playselbutton), "clicked",
-		    G_CALLBACK (on_playsel_activate),
-		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->m_rewindbutton), "clicked",
-		    G_CALLBACK (on_rewind_activate),
-		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->m_mutebutton), "clicked",
-		    G_CALLBACK (on_mute_button_activate),
-		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->m_loopbutton), "clicked",
-		    G_CALLBACK (on_loop_button_activate),
-		    NULL);
-
-  // these are 'invisible' buttons for the key accelerators
-  g_signal_connect (GTK_OBJECT (mainw->t_stopbutton), "clicked",
+  if (capable->smog_version_correct) {
+    g_signal_connect (GTK_OBJECT (mainw->m_sepwinbutton), "clicked",
+		      G_CALLBACK (on_sepwin_pressed),
+		      NULL);
+    g_signal_connect (GTK_OBJECT (mainw->m_playbutton), "clicked",
+		      G_CALLBACK (on_playall_activate),
+		      NULL);
+    g_signal_connect (GTK_OBJECT (mainw->m_stopbutton), "clicked",
+		      G_CALLBACK (on_stop_activate),
+		      NULL);
+    g_signal_connect (GTK_OBJECT (mainw->m_playselbutton), "clicked",
+		      G_CALLBACK (on_playsel_activate),
+		      NULL);
+    g_signal_connect (GTK_OBJECT (mainw->m_rewindbutton), "clicked",
+		      G_CALLBACK (on_rewind_activate),
+		      NULL);
+    g_signal_connect (GTK_OBJECT (mainw->m_mutebutton), "clicked",
+		      G_CALLBACK (on_mute_button_activate),
+		      NULL);
+    g_signal_connect (GTK_OBJECT (mainw->m_loopbutton), "clicked",
+		      G_CALLBACK (on_loop_button_activate),
+		      NULL);
+    
+    // these are 'invisible' buttons for the key accelerators
+    g_signal_connect (GTK_OBJECT (mainw->t_stopbutton), "clicked",
                       G_CALLBACK (on_stop_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_bckground), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_bckground), "clicked",
                       G_CALLBACK (on_fade_pressed),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_sepwin), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_sepwin), "clicked",
                       G_CALLBACK (on_sepwin_pressed),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_double), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_double), "clicked",
                       G_CALLBACK (on_double_size_pressed),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_fullscreen), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_fullscreen), "clicked",
                       G_CALLBACK (on_full_screen_pressed),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_infobutton), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_infobutton), "clicked",
                       G_CALLBACK (on_show_file_info_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_hide), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_hide), "clicked",
                       G_CALLBACK (on_toolbar_hide),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_slower), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_slower), "clicked",
                       G_CALLBACK (on_slower_pressed),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_faster), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_faster), "clicked",
                       G_CALLBACK (on_faster_pressed),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_back), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_back), "clicked",
                       G_CALLBACK (on_back_pressed),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->t_forward), "clicked",
+    g_signal_connect (GTK_OBJECT (mainw->t_forward), "clicked",
                       G_CALLBACK (on_forward_pressed),
                       NULL);
-
-  mainw->mouse_fn1=g_signal_connect (GTK_OBJECT (mainw->eventbox2), "motion_notify_event",
-                      G_CALLBACK (on_mouse_sel_update),
-                      NULL);
-  g_signal_handler_block (mainw->eventbox2,mainw->mouse_fn1);
-  mainw->mouse_blocked=TRUE;
-  g_signal_connect (GTK_OBJECT (mainw->eventbox2), "button_release_event",
+    
+    mainw->mouse_fn1=g_signal_connect (GTK_OBJECT (mainw->eventbox2), "motion_notify_event",
+				       G_CALLBACK (on_mouse_sel_update),
+				       NULL);
+    g_signal_handler_block (mainw->eventbox2,mainw->mouse_fn1);
+    mainw->mouse_blocked=TRUE;
+    g_signal_connect (GTK_OBJECT (mainw->eventbox2), "button_release_event",
                       G_CALLBACK (on_mouse_sel_reset),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->eventbox2), "button_press_event",
+    g_signal_connect (GTK_OBJECT (mainw->eventbox2), "button_press_event",
                       G_CALLBACK (on_mouse_sel_start),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->hruler), "motion_notify_event",
+    g_signal_connect (GTK_OBJECT (mainw->hruler), "motion_notify_event",
                       G_CALLBACK (return_true),
                       NULL);
-  mainw->hrule_func=g_signal_connect (GTK_OBJECT (mainw->eventbox5), "motion_notify_event",
-                      G_CALLBACK (on_hrule_update),
-                      NULL);
-  g_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
-  g_signal_connect (GTK_OBJECT(mainw->eventbox5), "enter-notify-event",G_CALLBACK (on_hrule_enter),NULL);
-
+    mainw->hrule_func=g_signal_connect (GTK_OBJECT (mainw->eventbox5), "motion_notify_event",
+					G_CALLBACK (on_hrule_update),
+					NULL);
+    g_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
+    g_signal_connect (GTK_OBJECT(mainw->eventbox5), "enter-notify-event",G_CALLBACK (on_hrule_enter),NULL);
+  }
 
   mainw->hrule_blocked=TRUE;
   g_signal_connect (GTK_OBJECT (mainw->eventbox5), "button_release_event",

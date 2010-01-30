@@ -738,6 +738,8 @@ on_close_activate                      (GtkMenuItem     *menuitem,
 
   close_current_file(0);
 
+  if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) write_backup_layout_numbering(mainw->multitrack);
+
   if (mainw->multitrack!=NULL) {
     mainw->current_file=mainw->multitrack->render_file;
     if (mainw->multitrack->event_list!=NULL) only_current=FALSE;

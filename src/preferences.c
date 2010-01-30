@@ -1046,10 +1046,12 @@ apply_prefs(gboolean skip_warn) {
   if (startup_ce&&future_prefs->startup_interface!=STARTUP_CE) {
     future_prefs->startup_interface=STARTUP_CE;
     set_int_pref("startup_interface",STARTUP_CE);
+    if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) write_backup_layout_numbering(mainw->multitrack);
   }
   else if (!startup_ce&&future_prefs->startup_interface!=STARTUP_MT) {
     future_prefs->startup_interface=STARTUP_MT;
     set_int_pref("startup_interface",STARTUP_MT);
+    if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) write_backup_layout_numbering(mainw->multitrack);
   }
 
   return needs_restart;

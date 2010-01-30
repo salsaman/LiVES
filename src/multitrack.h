@@ -774,7 +774,7 @@ gboolean used_in_current_layout(lives_mt *, gint file);
 gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack); // ctrack can be -1 to compare all events, else we cf for ctrack
 void move_init_in_filter_map(weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, weed_plant_t *ito, gint track, gboolean after);
 void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, int track, weed_timecode_t new_start_tc, int new_track);
-void mt_fixup_events(lives_mt *mt, weed_plant_t *old_event, weed_plant_t *new_event);
+void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_event);
 
 // event_list load/save
 weed_plant_t *load_event_list(lives_mt *, gchar *eload_file);
@@ -802,10 +802,11 @@ void remove_current_from_affected_layouts(lives_mt *);
 guint mt_idle_add(lives_mt *);
 void recover_layout(GtkButton *, gpointer);
 void recover_layout_cancelled(GtkButton *, gpointer user_data);
+void write_backup_layout_numbering(lives_mt *);
 
 
 // internal functions
-void mouse_select_end(GtkWidget *widget, lives_mt *);
+void mouse_select_end(GtkWidget *, lives_mt *);
 
 
 // misc

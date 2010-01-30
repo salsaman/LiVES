@@ -301,25 +301,23 @@ void write_backup_layout_numbering(lives_mt *mt) {
   int fd,i,vali;
   gdouble vald;
   gchar *asave_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-  
+  GList *clist=mainw->cliplist;
+
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
 
-  for (i=0;i<=MAX_FILES;i++) {
+  while (clist!=NULL) {
+    i=GPOINTER_TO_INT(clist->data);
     if (mt!=NULL) {
-      if (clips_to_files[i]==0) break;
-      vali=clips_to_files[i];
-      dummyvar=write(fd,&vali,sizint);
-      vald=mainw->files[vali]->fps;
+      dummyvar=write(fd,&i,sizint);
+      vald=mainw->files[i]->fps;
       dummyvar=write(fd,&vald,sizdbl);
     }
     else {
-      if (mainw->files[i]!=NULL) {
-	vali=mainw->files[i]->stored_layout_idx;
-	if (vali!=-1) {
-	  dummyvar=write(fd,&vali,sizint);
-	  vald=mainw->files[i]->fps;
-	  dummyvar=write(fd,&vald,sizdbl);
-	}
+      vali=mainw->files[i]->stored_layout_idx;
+      if (vali!=-1) {
+	dummyvar=write(fd,&vali,sizint);
+	vald=mainw->files[i]->fps;
+	dummyvar=write(fd,&vald,sizdbl);
       }
     }
   }
@@ -442,9 +440,18 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   g_free(eload_file);
   
   eload_file=g_strdup_printf("%slayout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-  //unlink(eload_file);
+  unlink(eload_file);
   g_free(eload_file);
 
+  eload_file=g_strdup_printf("%slayout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  unlink(eload_file);
+  g_free(eload_file);
+
+  eload_file=g_strdup_printf("%s.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  unlink(eload_file);
+  g_free(eload_file);
+
+  if (mainw->scrap_file>-1) close_scrap_file();
 
 }
 

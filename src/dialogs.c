@@ -1489,6 +1489,11 @@ void do_vpp_fps_error (void) {
 }
 
 
+void do_after_crash_warning (void) {
+  do_error_dialog_with_check(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),WARN_MASK_CLEAN_AFTER_CRASH);
+}
+
+
 
 static void on_dth_cancel_clicked (GtkButton *button, gpointer user_data) {
   mainw->cancelled=CANCEL_USER;

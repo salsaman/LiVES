@@ -738,8 +738,6 @@ on_close_activate                      (GtkMenuItem     *menuitem,
 
   close_current_file(0);
 
-  if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) write_backup_layout_numbering(mainw->multitrack);
-
   if (mainw->multitrack!=NULL) {
     mainw->current_file=mainw->multitrack->render_file;
     if (mainw->multitrack->event_list!=NULL) only_current=FALSE;
@@ -3509,6 +3507,8 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   gboolean got_new_handle=FALSE;
 
+  GList *cliplist;
+
   if (!mainw->no_exit&&!mainw->only_close) extra=g_strdup(", and LiVES will exit");
   else extra=g_strdup("");
 
@@ -3609,44 +3609,46 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   else ord_fd=open(ordfile,O_CREAT|O_WRONLY|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
   g_free(ordfile);
 
-  for (i=1;i<=MAX_FILES;i++) {
-    if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&i!=mainw->scrap_file&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
-      if ((tmp=strrchr(mainw->files[i]->handle,'/'))!=NULL) {
-	g_snprintf(new_handle,256,"%s/clips%s",mainw->set_name,tmp);
-      }
-      else {
+  cliplist=mainw->cliplist;
+
+  while (cliplist!=NULL) {
+    i=GPOINTER_TO_INT(cliplist->data);
+    if ((tmp=strrchr(mainw->files[i]->handle,'/'))!=NULL) {
+      g_snprintf(new_handle,256,"%s/clips%s",mainw->set_name,tmp);
+    }
+    else {
+      g_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
+    }
+    if (strcmp(new_handle,mainw->files[i]->handle)) {
+      new_dir=g_strdup_printf("%s/%s",prefs->tmpdir,new_handle);
+      if (g_file_test(new_dir,G_FILE_TEST_IS_DIR)) {
+	// get a new unique handle
+	get_temp_handle(i,FALSE);
 	g_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
       }
-      if (strcmp(new_handle,mainw->files[i]->handle)) {
-	new_dir=g_strdup_printf("%s/%s",prefs->tmpdir,new_handle);
-	if (g_file_test(new_dir,G_FILE_TEST_IS_DIR)) {
-	  // get a new unique handle
-	  get_temp_handle(i,FALSE);
-	  g_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
-	}
-	g_free(new_dir);
-
-	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
-	  // must do this before we move it
-	  close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
-	  mainw->files[i]->ext_src=NULL;
-	}
-
-	com=g_strdup_printf("/bin/mv %s/%s %s/%s",prefs->tmpdir,mainw->files[i]->handle,prefs->tmpdir,new_handle);
-	dummyvar=system(com);
-	g_free(com);
-
-	got_new_handle=TRUE;
-
-	g_snprintf(mainw->files[i]->handle,256,"%s",new_handle);
-	g_snprintf(mainw->files[i]->info_file,256,"%s/%s/.status",prefs->tmpdir,mainw->files[i]->handle);
+      g_free(new_dir);
+      
+      if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	// must do this before we move it
+	close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
+	mainw->files[i]->ext_src=NULL;
       }
-
-      ord_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
-      dummyvar=write(ord_fd,ord_entry,strlen(ord_entry));
-      g_free(ord_entry);
-
+      
+      com=g_strdup_printf("/bin/mv %s/%s %s/%s",prefs->tmpdir,mainw->files[i]->handle,prefs->tmpdir,new_handle);
+      dummyvar=system(com);
+      g_free(com);
+      
+      got_new_handle=TRUE;
+      
+      g_snprintf(mainw->files[i]->handle,256,"%s",new_handle);
+      g_snprintf(mainw->files[i]->info_file,256,"%s/%s/.status",prefs->tmpdir,mainw->files[i]->handle);
     }
+    
+    ord_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
+    dummyvar=write(ord_fd,ord_entry,strlen(ord_entry));
+    g_free(ord_entry);
+
+    cliplist=cliplist->next;
   }
 
   close (ord_fd);

@@ -89,6 +89,8 @@ typedef struct {
 
 #define WARN_MASK_LAYOUT_POPUP (1<<23)
 
+#define WARN_MASK_CLEAN_AFTER_CRASH (1<<24)
+
 
   gchar effect_command[256];
   gchar video_open_command[256];
@@ -304,6 +306,7 @@ typedef struct {
   GtkWidget *checkbutton_warn_mt_no_jack;
   GtkWidget *checkbutton_warn_yuv4m_open;
   GtkWidget *checkbutton_warn_mt_backup_space;
+  GtkWidget *checkbutton_warn_after_crash;
   GtkWidget *spinbutton_warn_fsize;
   GtkWidget *spinbutton_bwidth;
   GtkWidget *theme_combo;

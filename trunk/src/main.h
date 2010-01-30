@@ -585,6 +585,7 @@ void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
 void do_file_perm_error(gchar *file_name);
 void do_encoder_img_ftm_error(render_details *rdet);
+void do_after_crash_warning (void);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *text, gboolean has_cancel);
@@ -623,7 +624,7 @@ gboolean save_frame(gint frame, const gchar *filename);
 void wait_for_stop (const gchar *stop_command);
 void save_clip_values(gint which_file);
 void add_to_recovery_file (gchar *handle);
-void rewrite_recovery_file(gint closed_file); // closed_file < 0 for no closed file
+void rewrite_recovery_file(void);
 gboolean check_for_recovery_files (gboolean auto_recover);
 void recover_layout_map(gint numclips);
 gchar *get_deinterlace_string(void);

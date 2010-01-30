@@ -1137,7 +1137,7 @@ remove_from_winmenu(void) {
   gtk_widget_destroy(cfile->menuentry);
   mainw->clips_available--;
   mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
-  if (prefs->crash_recovery) rewrite_recovery_file(mainw->current_file);
+  if (prefs->crash_recovery) rewrite_recovery_file();
 }
 
 

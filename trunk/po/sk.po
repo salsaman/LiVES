@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-01-31 01:41-0300\n"
+"POT-Creation-Date: 2010-01-31 02:31-0300\n"
 "PO-Revision-Date: 2009-10-11 20:42+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -591,12 +591,12 @@ msgid "Closed file %s\n"
 msgstr "Zatvorený súbor %s\n"
 
 #: src/main.c:3770 src/gui.c:502 src/utils.c:2279 src/utils.c:2305
-#: src/saveplay.c:2389 src/multitrack.c:3678 src/multitrack.c:5081
+#: src/saveplay.c:2389 src/multitrack.c:3681 src/multitrack.c:5085
 msgid "_Undo"
 msgstr "_Späť"
 
 #: src/main.c:3771 src/gui.c:515 src/utils.c:2280 src/utils.c:2306
-#: src/saveplay.c:2390 src/multitrack.c:3699 src/multitrack.c:5104
+#: src/saveplay.c:2390 src/multitrack.c:3702 src/multitrack.c:5108
 msgid "_Redo"
 msgstr "_Znova"
 
@@ -641,10 +641,10 @@ msgstr ""
 "Ak je zapnuté, zo snímkov bude odstránené prekladanie tak, ako sú "
 "importované."
 
-#: src/interface.c:186 src/callbacks.c:7328 src/gui.c:2826 src/gui.c:3363
+#: src/interface.c:186 src/callbacks.c:7337 src/gui.c:2826 src/gui.c:3363
 #: src/saveplay.c:1453 src/saveplay.c:2036 src/dialogs.c:740 src/dialogs.c:741
 #: src/dialogs.c:824 src/dialogs.c:825 src/framedraw.c:191
-#: src/multitrack.c:6448
+#: src/multitrack.c:6452
 msgid "Preview"
 msgstr "Náhľad"
 
@@ -661,7 +661,7 @@ msgstr "Kliknutím zobrazíte _ukážku vybraných zvukových súborov"
 msgid "Click here to _Preview the video"
 msgstr "Kliknutím zobrazíte _ukážku vybraných video súborov"
 
-#: src/interface.c:292 src/dialogs.c:1543
+#: src/interface.c:292 src/dialogs.c:1549
 msgid "LiVES: - Processing..."
 msgstr "LiVES: -Spracovávanie..."
 
@@ -679,7 +679,7 @@ msgstr ""
 "\n"
 "Nezabudnite potom vypnúť efekty (ctrl-0) !"
 
-#: src/interface.c:332 src/callbacks.c:7134 src/dialogs.c:1576
+#: src/interface.c:332 src/callbacks.c:7143 src/dialogs.c:1582
 msgid ""
 "\n"
 "Please Wait"
@@ -1387,7 +1387,7 @@ msgstr "Obnoviť .lv1 súbor"
 msgid "Backup as .lv1 file"
 msgstr "Zálohovať ako .lv1 súbor"
 
-#: src/callbacks.c:1154
+#: src/callbacks.c:1156
 msgid ""
 "\n"
 "\n"
@@ -1399,86 +1399,86 @@ msgstr ""
 "Zostava bude odstránená z disku.\n"
 "Ste si istý ?\n"
 
-#: src/callbacks.c:1204
+#: src/callbacks.c:1213
 msgid "Deleting set..."
 msgstr "Odstraňujem zostavu..."
 
-#: src/callbacks.c:1205
+#: src/callbacks.c:1214
 msgid "Deleting set"
 msgstr "Odstraňujem zostavu"
 
-#: src/callbacks.c:1211
+#: src/callbacks.c:1220
 #, c-format
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Zostava %s bola navždy odstránená z disku.\n"
 
-#: src/callbacks.c:1254 src/callbacks.c:9148
+#: src/callbacks.c:1263 src/callbacks.c:9157
 msgid "Insert Silence"
 msgstr "Vložiť ticho"
 
-#: src/callbacks.c:1290 src/callbacks.c:1340 src/callbacks.c:1473
+#: src/callbacks.c:1299 src/callbacks.c:1349 src/callbacks.c:1482
 msgid "Undoing"
 msgstr "Vraciam späť"
 
-#: src/callbacks.c:1350 src/callbacks.c:1515
+#: src/callbacks.c:1359 src/callbacks.c:1524
 msgid "Restoring audio..."
 msgstr "Obnovenie zvuku..."
 
-#: src/callbacks.c:1361
+#: src/callbacks.c:1370
 msgid "Clearing frame images"
 msgstr "Čistenie rámu obrázkov"
 
-#: src/callbacks.c:1385
+#: src/callbacks.c:1394
 #, fuzzy
 msgid "Deleting excess frames"
 msgstr "Generovať farebné snímky"
 
-#: src/callbacks.c:1433
+#: src/callbacks.c:1442
 msgid "Undoing audio"
 msgstr "Vraciam späť zvuk"
 
-#: src/callbacks.c:1574
+#: src/callbacks.c:1583
 #, c-format
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "Dĺžka videa je teraz %d obrázkov pri %.3f snímkov za sekundu.\n"
 
-#: src/callbacks.c:1577 src/resample.c:603 src/resample.c:2400
+#: src/callbacks.c:1586 src/resample.c:603 src/resample.c:2400
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "Schránka bola prevzorkovaná na %d snímkov.\n"
 
-#: src/callbacks.c:1716 src/callbacks.c:1730
+#: src/callbacks.c:1725 src/callbacks.c:1739
 msgid "Redoing"
 msgstr "Prestavba"
 
-#: src/callbacks.c:1771
+#: src/callbacks.c:1780
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Kopírovanie snímkov %dLiVES do %d%s do schránky..."
 
-#: src/callbacks.c:1788 src/saveplay.c:870 src/saveplay.c:976
+#: src/callbacks.c:1797 src/saveplay.c:870 src/saveplay.c:976
 #: src/saveplay.c:1027 src/saveplay.c:2720
 msgid "Pulling frames from clip"
 msgstr "Ťahanie snímkov z klipu"
 
-#: src/callbacks.c:1814
+#: src/callbacks.c:1823
 msgid "Copying to the clipboard"
 msgstr "Kopírovanie do schránky"
 
-#: src/callbacks.c:1875
+#: src/callbacks.c:1884
 msgid "Cut"
 msgstr "Vystrihnúť"
 
-#: src/callbacks.c:1914
+#: src/callbacks.c:1923
 msgid "Pasting"
 msgstr "Vložiť"
 
-#: src/callbacks.c:1931
+#: src/callbacks.c:1940
 #, c-format
 msgid "Pasted %d frames to new clip.\n"
 msgstr "Vložených %d snímkov do nového klipu.\n"
 
-#: src/callbacks.c:1992
+#: src/callbacks.c:2001
 #, fuzzy
 msgid ""
 "This operation requires resizing or converting of frames.\n"
@@ -1488,7 +1488,7 @@ msgstr ""
 "Táto operácia vyžaduje zmeniť veľkosť snímkov. Prosím nainštalujte 'convert' "
 "z Image-magick balíčka a reštartujte LiVES.\n"
 
-#: src/callbacks.c:2009
+#: src/callbacks.c:2018
 msgid ""
 "\n"
 "\n"
@@ -1502,7 +1502,7 @@ msgstr ""
 "Skúste označiť všetky snímky a potom použite \n"
 "Funkciu 'Trim Audio' z ponuky zvuku."
 
-#: src/callbacks.c:2029
+#: src/callbacks.c:2038
 msgid ""
 "LiVES cannot insert because the audio rates do not match.\n"
 "Please install 'sox', and try again."
@@ -1510,7 +1510,7 @@ msgstr ""
 "LiVES nemohol vložiť pretože nesúhlasí pomer zvuku.\n"
 "Prosím nainštalujte 'sox' a skúste znova."
 
-#: src/callbacks.c:2047
+#: src/callbacks.c:2056
 msgid ""
 "\n"
 "Insertion will cause frames to shift in some multitrack layouts.\n"
@@ -1520,7 +1520,7 @@ msgstr ""
 "Vložením dôjde k posunu snímkov v niektorých viacstopových rozmiestneniach.\n"
 "Skutočne chcete pokračovať ?\n"
 
-#: src/callbacks.c:2091 src/callbacks.c:9105
+#: src/callbacks.c:2100 src/callbacks.c:9114
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -1530,11 +1530,11 @@ msgstr ""
 "Vložením dôjde k posunu zvuku v niektorých viacstopových rozmiestneniach.\n"
 "Skutočne chcete pokračovať ?\n"
 
-#: src/callbacks.c:2172 src/callbacks.c:2186
+#: src/callbacks.c:2181 src/callbacks.c:2195
 msgid "Resampling clipboard audio"
 msgstr "Prevzorkovať zvuk v schránke"
 
-#: src/callbacks.c:2196
+#: src/callbacks.c:2205
 msgid ""
 "\n"
 "\n"
@@ -1546,7 +1546,7 @@ msgstr ""
 "LiVES nemohol prevzokovať zvuk v schránke. \n"
 "Zvuk bol zo schránky vymazaný.\n"
 
-#: src/callbacks.c:2209
+#: src/callbacks.c:2218
 msgid ""
 "\n"
 "\n"
@@ -1560,30 +1560,30 @@ msgstr ""
 "Chcete pokračovať s vložením \n"
 "nezmeneného zvuku ?\n"
 
-#: src/callbacks.c:2250 src/callbacks.c:2378
+#: src/callbacks.c:2259 src/callbacks.c:2387
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr "Vkladám %d%s snímkov zo schránky..."
 
-#: src/callbacks.c:2261 src/callbacks.c:2312 src/callbacks.c:2389
+#: src/callbacks.c:2270 src/callbacks.c:2321 src/callbacks.c:2398
 msgid "Inserting"
 msgstr "Vkladám"
 
-#: src/callbacks.c:2288
+#: src/callbacks.c:2297
 #, c-format
 msgid "Inserting %d times from the clipboard%s..."
 msgstr "Vložiť %d krát zo schránky%s..."
 
-#: src/callbacks.c:2293
+#: src/callbacks.c:2302
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "Vloženie %d snímkov zo schránky%s..."
 
-#: src/callbacks.c:2440
+#: src/callbacks.c:2449
 msgid "Insert"
 msgstr "Vložiť"
 
-#: src/callbacks.c:2500
+#: src/callbacks.c:2509
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
@@ -1593,7 +1593,7 @@ msgstr ""
 "Odstránenie všetkých snímkov zatvorí súbor.\n"
 "Ste si istý ?"
 
-#: src/callbacks.c:2508
+#: src/callbacks.c:2517
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
@@ -1604,8 +1604,8 @@ msgstr ""
 "rozdeleniach.\n"
 "Ste si istý, že chcete pokračovať ?\n"
 
-#: src/callbacks.c:2524 src/callbacks.c:8486 src/callbacks.c:8684
-#: src/callbacks.c:8744
+#: src/callbacks.c:2533 src/callbacks.c:8495 src/callbacks.c:8693
+#: src/callbacks.c:8753
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -1616,7 +1616,7 @@ msgstr ""
 "rozdeleniach.\n"
 "Ste si istý, že chcete pokračovať ?\n"
 
-#: src/callbacks.c:2540
+#: src/callbacks.c:2549
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
@@ -1626,7 +1626,7 @@ msgstr ""
 "Odstránenie spôsobí posun snímkov v niektorých viacstopových rozdeleniach.\n"
 "Ste si istý, že chcete pokračovať ?\n"
 
-#: src/callbacks.c:2556 src/callbacks.c:8728
+#: src/callbacks.c:2565 src/callbacks.c:8737
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -1636,20 +1636,20 @@ msgstr ""
 "Odstránenie spôsobí posun zvuku v niektorých viacstopových rozdeleniach.\n"
 "Ste si istý, že chcete pokračovať ?\n"
 
-#: src/callbacks.c:2609
+#: src/callbacks.c:2618
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr "Odstraňujem snímky %d do %d%s..."
 
-#: src/callbacks.c:2622
+#: src/callbacks.c:2631
 msgid "Deleting"
 msgstr "Odstraňuje sa"
 
-#: src/callbacks.c:2697
+#: src/callbacks.c:2706
 msgid "Delete"
 msgstr "Odstrániť"
 
-#: src/callbacks.c:2718
+#: src/callbacks.c:2727
 msgid ""
 "\n"
 "\n"
@@ -1659,7 +1659,7 @@ msgstr ""
 "\n"
 "Výber je zamknutý.\n"
 
-#: src/callbacks.c:3015
+#: src/callbacks.c:3024
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -1671,11 +1671,11 @@ msgstr ""
 "(Pre zrušenie, stlačte 'r' alebo kliknite na Prehrať|Nahrávať opäť pred "
 "prehraním.)\n"
 
-#: src/callbacks.c:3020
+#: src/callbacks.c:3029
 msgid "Record cancelled.\n"
 msgstr "Nahrávanie zrušené.\n"
 
-#: src/callbacks.c:3174
+#: src/callbacks.c:3183
 #, c-format
 msgid ""
 "\n"
@@ -1688,7 +1688,7 @@ msgstr ""
 "Správy '%s' o rozšírení:\n"
 "%s\n"
 
-#: src/callbacks.c:3177
+#: src/callbacks.c:3186
 #, c-format
 msgid ""
 "\n"
@@ -1697,7 +1697,7 @@ msgid ""
 "The plugin may be broken or not installed correctly."
 msgstr ""
 
-#: src/callbacks.c:3517
+#: src/callbacks.c:3526
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk%"
@@ -1710,27 +1710,27 @@ msgstr ""
 "\n"
 "Prosím stlačte 'Zrušit' ak nesúhlasíte.\n"
 
-#: src/callbacks.c:3583
+#: src/callbacks.c:3592
 #, c-format
 msgid "Saving set %s"
 msgstr "Uloženie zostavy %s"
 
-#: src/callbacks.c:3793
+#: src/callbacks.c:3802
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "Načítavam klipy zo zostavy %s"
 
-#: src/callbacks.c:3851
+#: src/callbacks.c:3860
 #, c-format
 msgid "No clips were recovered for set (%s).\n"
 msgstr "Neboli obnovené žiadne klipy pre zostavu (%s).\n"
 
-#: src/callbacks.c:3861
+#: src/callbacks.c:3870
 #, c-format
 msgid "%d clips were recovered from set (%s).\n"
 msgstr "%d klipov bolo obnovených zo zostavy (%s).\n"
 
-#: src/callbacks.c:4066
+#: src/callbacks.c:4075
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -1741,24 +1741,24 @@ msgstr ""
 "Pokračujte IBA ak nemáte spustenú dalšiu kópiu LiVES.\n"
 "Pokračujete kliknutím na OK.\n"
 
-#: src/callbacks.c:4068
+#: src/callbacks.c:4077
 msgid "Cleaning up disk space..."
 msgstr "Čistenie disku..."
 
-#: src/callbacks.c:4103
+#: src/callbacks.c:4112
 msgid "Clearing disk space"
 msgstr "Čistenie disku"
 
-#: src/callbacks.c:4138
+#: src/callbacks.c:4147
 #, c-format
 msgid "%d MB of disk space was recovered.\n"
 msgstr "%d NB miesta na disku bolo obnovených.\n"
 
-#: src/callbacks.c:4159
+#: src/callbacks.c:4168
 msgid "Resetting frame rates and frame values..."
 msgstr "Resetovanie hodnotenia snímkov a hodnoty snímkov..."
 
-#: src/callbacks.c:4203
+#: src/callbacks.c:4212
 #, c-format
 msgid ""
 "\n"
@@ -1766,8 +1766,8 @@ msgid ""
 "Internal: %s (%d bpp)\n"
 msgstr ""
 
-#: src/callbacks.c:4214 src/callbacks.c:4233 src/callbacks.c:4247
-#: src/callbacks.c:4281
+#: src/callbacks.c:4223 src/callbacks.c:4242 src/callbacks.c:4256
+#: src/callbacks.c:4290
 msgid ""
 "\n"
 "  Opening..."
@@ -1775,7 +1775,7 @@ msgstr ""
 "\n"
 "  Otváram..."
 
-#: src/callbacks.c:4221
+#: src/callbacks.c:4230
 #, c-format
 msgid ""
 "\n"
@@ -1784,7 +1784,7 @@ msgstr ""
 "\n"
 "(%d virtuálnej)"
 
-#: src/callbacks.c:4224
+#: src/callbacks.c:4233
 #, c-format
 msgid ""
 "\n"
@@ -1793,14 +1793,14 @@ msgstr ""
 "\n"
 "(%d dekódované)"
 
-#: src/callbacks.c:4236 src/callbacks.c:4250 src/callbacks.c:4284
+#: src/callbacks.c:4245 src/callbacks.c:4259 src/callbacks.c:4293
 #, fuzzy, c-format
 msgid ""
 "\n"
 "  %.2f sec."
 msgstr "%.2f sek."
 
-#: src/callbacks.c:4241
+#: src/callbacks.c:4250
 msgid ""
 "\n"
 "  Unknown"
@@ -1808,34 +1808,34 @@ msgstr ""
 "\n"
 "  Neznáme"
 
-#: src/callbacks.c:4254 src/callbacks.c:4268
+#: src/callbacks.c:4263 src/callbacks.c:4277
 #, fuzzy
 msgid "unsigned"
 msgstr "neoznačený "
 
-#: src/callbacks.c:4255 src/callbacks.c:4269
+#: src/callbacks.c:4264 src/callbacks.c:4278
 #, fuzzy
 msgid "signed"
 msgstr "označený "
 
-#: src/callbacks.c:4257 src/callbacks.c:4271
+#: src/callbacks.c:4266 src/callbacks.c:4280
 #, fuzzy
 msgid "big-endian"
 msgstr ", veľký-endian"
 
-#: src/callbacks.c:4258 src/callbacks.c:4272
+#: src/callbacks.c:4267 src/callbacks.c:4281
 #, fuzzy
 msgid "little-endian"
 msgstr ", malý-endian"
 
-#: src/callbacks.c:4260 src/callbacks.c:4274
+#: src/callbacks.c:4269 src/callbacks.c:4283
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
 
-#: src/callbacks.c:4344
+#: src/callbacks.c:4353
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -1852,11 +1852,11 @@ msgid ""
 "Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
 msgstr ""
 
-#: src/callbacks.c:4358
+#: src/callbacks.c:4367
 msgid "A video editor and VJ program."
 msgstr "Úprava videa a VJ program"
 
-#: src/callbacks.c:4380
+#: src/callbacks.c:4389
 #, fuzzy, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -1879,7 +1879,7 @@ msgstr ""
 "salsaman@xs4all.nl\n"
 "Stránka programu: http://lives.sourceforge.net"
 
-#: src/callbacks.c:4547
+#: src/callbacks.c:4556
 msgid ""
 "\n"
 "\n"
@@ -1889,7 +1889,7 @@ msgstr ""
 "\n"
 "Je nutné nainštalovať mplayer, aby bol možný náhľad tohoto súboru.\n"
 
-#: src/callbacks.c:4754 src/callbacks.c:6247
+#: src/callbacks.c:4763 src/callbacks.c:6256
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -1901,162 +1901,162 @@ msgstr ""
 "viacstopých rozloženiach. \n"
 "Naozaj chcete pokračovať?"
 
-#: src/callbacks.c:4835
+#: src/callbacks.c:4844
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "Otváram zvuk %s, typ %s..."
 
-#: src/callbacks.c:4851 src/saveplay.c:323
+#: src/callbacks.c:4860 src/saveplay.c:323
 msgid "Opening audio"
 msgstr "Otváram zvuk"
 
-#: src/callbacks.c:4856 src/callbacks.c:4887 src/callbacks.c:6317
-#: src/callbacks.c:6348 src/callbacks.c:6386 src/callbacks.c:8426
+#: src/callbacks.c:4865 src/callbacks.c:4896 src/callbacks.c:6326
+#: src/callbacks.c:6357 src/callbacks.c:6395 src/callbacks.c:8435
 msgid "Cancelling"
 msgstr "Rušenie"
 
-#: src/callbacks.c:4907 src/callbacks.c:6421
+#: src/callbacks.c:4916 src/callbacks.c:6430
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr "Nový zvuk: %d Hz %d kanál(y) %d bps\n"
 
-#: src/callbacks.c:4913 src/callbacks.c:6407 src/callbacks.c:8443
-#: src/callbacks.c:9028
+#: src/callbacks.c:4922 src/callbacks.c:6416 src/callbacks.c:8452
+#: src/callbacks.c:9037
 msgid "Committing audio"
 msgstr "Vytvoriť zvuk"
 
-#: src/callbacks.c:4920 src/callbacks.c:6428
+#: src/callbacks.c:4929 src/callbacks.c:6437
 msgid "New Audio"
 msgstr "Nový zvuk"
 
-#: src/callbacks.c:5127
+#: src/callbacks.c:5136
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d snímkov je postačujúcich !\n"
 
-#: src/callbacks.c:5216
+#: src/callbacks.c:5225
 #, fuzzy
 msgid "LiVES: - Encoder debug output"
 msgstr "LiVES: - nastavenie kódovania"
 
-#: src/callbacks.c:5251 src/gui.c:1707
+#: src/callbacks.c:5260 src/gui.c:1707
 msgid "Fullscreen playback (f)"
 msgstr "Prehranie na celej obrazovke (f)"
 
-#: src/callbacks.c:5253
+#: src/callbacks.c:5262
 msgid "Fullscreen playback off (f)"
 msgstr "Prehranie na celej obrazovke vypnuté (f)"
 
-#: src/callbacks.c:5447 src/gui.c:1694
+#: src/callbacks.c:5456 src/gui.c:1694
 msgid "Double size (d)"
 msgstr "Dvojitá veľkosť (d)"
 
-#: src/callbacks.c:5452
+#: src/callbacks.c:5461
 msgid "Single size (d)"
 msgstr "Vlastná veľkosť (d)"
 
-#: src/callbacks.c:5564 src/callbacks.c:5565
+#: src/callbacks.c:5573 src/callbacks.c:5574
 msgid "Hide the play window (s)"
 msgstr "Skryť okno s prehrávaním (s)"
 
-#: src/callbacks.c:5574 src/gui.c:1542
+#: src/callbacks.c:5583 src/gui.c:1542
 msgid "Show the play window (s)"
 msgstr "Zobraziť okno s prehrávaním (s)"
 
-#: src/callbacks.c:5575 src/gui.c:1685
+#: src/callbacks.c:5584 src/gui.c:1685
 msgid "Play in separate window (s)"
 msgstr "Prehrať v oddelenom okne (s)"
 
-#: src/callbacks.c:5779 src/gui.c:3345
+#: src/callbacks.c:5788 src/gui.c:3345
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Okno prehrávania"
 
-#: src/callbacks.c:5873
+#: src/callbacks.c:5882
 msgid "Switch continuous looping off (o)"
 msgstr "Vypnúť nekonečnú sľučku (o)"
 
-#: src/callbacks.c:5880 src/gui.c:1589
+#: src/callbacks.c:5889 src/gui.c:1589
 msgid "Switch continuous looping on (o)"
 msgstr "Zapnúť nekonečnú sľučku (o)"
 
-#: src/callbacks.c:5948
+#: src/callbacks.c:5957
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Hlasitosť zvuku (%.2f)"
 
-#: src/callbacks.c:5989 src/callbacks.c:5990 src/gui.c:3265
+#: src/callbacks.c:5998 src/callbacks.c:5999 src/gui.c:3265
 msgid "Unmute the audio (z)"
 msgstr "Zapnúť zvuk (z)"
 
-#: src/callbacks.c:6001 src/callbacks.c:6002 src/gui.c:1600 src/gui.c:3264
+#: src/callbacks.c:6010 src/callbacks.c:6011 src/gui.c:1600 src/gui.c:3264
 msgid "Mute the audio (z)"
 msgstr "Vypnúť zvuk (z)"
 
-#: src/callbacks.c:6166
+#: src/callbacks.c:6175
 msgid "Reversing clipboard..."
 msgstr "Vratná schránka..."
 
-#: src/callbacks.c:6175
+#: src/callbacks.c:6184
 msgid "Reversing clipboard"
 msgstr "Vratná schránka"
 
-#: src/callbacks.c:6192 src/callbacks.c:6464
+#: src/callbacks.c:6201 src/callbacks.c:6473
 msgid "Select Audio File"
 msgstr "Vybrať zvukový súbor"
 
-#: src/callbacks.c:6208
+#: src/callbacks.c:6217
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 "Prosím nastavte si CD prehrávaciu jednotku v menu Nástroje | Nastavenie | "
 "Misc\n"
 
-#: src/callbacks.c:6276
+#: src/callbacks.c:6285
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "Otváranie stopy na CD %d od %s..."
 
-#: src/callbacks.c:6281
+#: src/callbacks.c:6290
 #, c-format
 msgid "CD track %d"
 msgstr "Stopa na CD %d"
 
-#: src/callbacks.c:6310
+#: src/callbacks.c:6319
 msgid "Opening CD track..."
 msgstr "Otváram stopu na CD..."
 
-#: src/callbacks.c:6340 src/callbacks.c:6381
+#: src/callbacks.c:6349 src/callbacks.c:6390
 msgid "Error loading CD track\n"
 msgstr "Chyba pri načítaní CD stopy\n"
 
-#: src/callbacks.c:6516
+#: src/callbacks.c:6525
 msgid "Selecting tracks"
 msgstr "Výber skladieb"
 
-#: src/callbacks.c:6572
+#: src/callbacks.c:6581
 msgid "layout errors"
 msgstr "rozloženie chýb"
 
-#: src/callbacks.c:6581
+#: src/callbacks.c:6590
 msgid "Close _Window"
 msgstr "Zatvoriť _okno"
 
-#: src/callbacks.c:6592
+#: src/callbacks.c:6601
 msgid "Clear _Errors"
 msgstr "Vymazanie _chýb"
 
-#: src/callbacks.c:6603
+#: src/callbacks.c:6612
 msgid "_Delete affected layouts"
 msgstr "_Odstrániť postihnuté rozloženia"
 
-#: src/callbacks.c:7116
+#: src/callbacks.c:7125
 msgid "Resume"
 msgstr "Obnoviť"
 
-#: src/callbacks.c:7118
+#: src/callbacks.c:7127
 msgid "Keep"
 msgstr "Ponechať"
 
-#: src/callbacks.c:7119
+#: src/callbacks.c:7128
 msgid ""
 "\n"
 "Paused\n"
@@ -2066,28 +2066,28 @@ msgstr ""
 "\n"
 "Pauza"
 
-#: src/callbacks.c:7121
+#: src/callbacks.c:7130
 msgid "paused..."
 msgstr "pozastavené..."
 
-#: src/callbacks.c:7132
+#: src/callbacks.c:7141
 msgid "Pause"
 msgstr "Pauza"
 
-#: src/callbacks.c:7133
+#: src/callbacks.c:7142
 msgid "Cancel"
 msgstr "Zrušiť"
 
-#: src/callbacks.c:7135
+#: src/callbacks.c:7144
 msgid "resumed..."
 msgstr "pokračovanie..."
 
-#: src/callbacks.c:7684
+#: src/callbacks.c:7693
 #, c-format
 msgid "Save Frame as %s..."
 msgstr "Uložiť snímky ako %s..."
 
-#: src/callbacks.c:8006
+#: src/callbacks.c:8015
 msgid ""
 "\n"
 "\n"
@@ -2100,7 +2100,7 @@ msgstr ""
 "funkciu\n"
 "\n"
 
-#: src/callbacks.c:8076 src/callbacks.c:8966
+#: src/callbacks.c:8085 src/callbacks.c:8975
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2108,7 +2108,7 @@ msgstr ""
 "\n"
 "Nahrávací čas musí byť väčší ako 0.\n"
 
-#: src/callbacks.c:8087
+#: src/callbacks.c:8096
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2122,11 +2122,11 @@ msgstr ""
 "Kliknite na 'Zrušiť' pre zrušenie\n"
 "\n"
 
-#: src/callbacks.c:8092
+#: src/callbacks.c:8101
 msgid "External window was released.\n"
 msgstr "Vonkajšie okno bola uvoľnené.\n"
 
-#: src/callbacks.c:8113
+#: src/callbacks.c:8122
 #, fuzzy
 msgid ""
 "Click on a Window to Capture it\n"
@@ -2135,7 +2135,7 @@ msgstr ""
 "Kliknite na okno pre zachytenie obsahu\n"
 "Stlačte 'q' pre zastavenie nahrávania.\n"
 
-#: src/callbacks.c:8133
+#: src/callbacks.c:8142
 #, c-format
 msgid ""
 "\n"
@@ -2150,19 +2150,19 @@ msgstr ""
 "Stop nebo 'q' pre ukončenie.\n"
 "(Bude použité predvolené nastavenie %.3f snímkov za sekundu.)\n"
 
-#: src/callbacks.c:8155
+#: src/callbacks.c:8164
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES nemôže zaznamenať toto okno. Prepáčte.\n"
 
-#: src/callbacks.c:8278
+#: src/callbacks.c:8287
 msgid "Export Selected Audio as..."
 msgstr "Exportovanie vybraného zvuku ako..."
 
-#: src/callbacks.c:8281
+#: src/callbacks.c:8290
 msgid "Export Audio as..."
 msgstr "Exportovať zvuk ako..."
 
-#: src/callbacks.c:8320
+#: src/callbacks.c:8329
 msgid ""
 "\n"
 "\n"
@@ -2176,81 +2176,81 @@ msgstr ""
 "Kliknite na 'OK' pre export s novou rýchlosťou alebo 'Zrušiť' a exportovat "
 "originálnym pomerom.\n"
 
-#: src/callbacks.c:8326
+#: src/callbacks.c:8335
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Exportovanie zvukových snímkov %d do %d ako %s..."
 
-#: src/callbacks.c:8331
+#: src/callbacks.c:8340
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Export zvuku ako %s..."
 
-#: src/callbacks.c:8343
+#: src/callbacks.c:8352
 msgid "Exporting audio"
 msgstr "Exportujem zvuk"
 
-#: src/callbacks.c:8375
+#: src/callbacks.c:8384
 msgid "Append Audio File..."
 msgstr "Pridať zvukový súbor..."
 
-#: src/callbacks.c:8414
+#: src/callbacks.c:8423
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "Pridávam zvukový súbor %s..."
 
-#: src/callbacks.c:8420
+#: src/callbacks.c:8429
 msgid "Appending audio"
 msgstr "Pridávam zvuk"
 
-#: src/callbacks.c:8459
+#: src/callbacks.c:8468
 msgid "Append Audio"
 msgstr "Pridať zvuk"
 
-#: src/callbacks.c:8514
+#: src/callbacks.c:8523
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Orezanie zvuku z %.2f to %.2f sekundy..."
 
-#: src/callbacks.c:8521
+#: src/callbacks.c:8530
 msgid "Trimming/Padding audio"
 msgstr "Orezanie/vyplnenie zvuku"
 
-#: src/callbacks.c:8525
+#: src/callbacks.c:8534
 msgid "Trim/Pad Audio"
 msgstr "Orezať/Doplniť zvuk"
 
-#: src/callbacks.c:8599
+#: src/callbacks.c:8608
 msgid "Fading audio in"
 msgstr "Zoslabovanie zvuku v"
 
-#: src/callbacks.c:8600
+#: src/callbacks.c:8609
 msgid "Fade audio in"
 msgstr "Zoslabujúci zvuk v"
 
-#: src/callbacks.c:8605
+#: src/callbacks.c:8614
 msgid "Fading audio out"
 msgstr "Stíšenie zvuku"
 
-#: src/callbacks.c:8606
+#: src/callbacks.c:8615
 msgid "Fade audio out"
 msgstr "Stíšiť zvuk"
 
-#: src/callbacks.c:8627
+#: src/callbacks.c:8636
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s nad %.1f sekundy..."
 
-#: src/callbacks.c:8629
+#: src/callbacks.c:8638
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s od času %.2f sekúnd do %.2f sekúnd..."
 
-#: src/callbacks.c:8636
+#: src/callbacks.c:8645
 msgid "Fading audio..."
 msgstr "Stišovanie zvuku"
 
-#: src/callbacks.c:8713
+#: src/callbacks.c:8722
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2259,37 +2259,37 @@ msgstr ""
 "\n"
 "Odstránenie všetkých zvukov zatvorí tento súbor."
 
-#: src/callbacks.c:8716
+#: src/callbacks.c:8725
 msgid "Deleting all audio..."
 msgstr "Odstránenie všetkých zvukov..."
 
-#: src/callbacks.c:8722
+#: src/callbacks.c:8731
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Odstránenie zvuku od %.2f do %.2f sekundy..."
 
-#: src/callbacks.c:8792
+#: src/callbacks.c:8801
 msgid "Deleting Audio"
 msgstr "Odstraňujem zvuk"
 
-#: src/callbacks.c:8795
+#: src/callbacks.c:8804
 msgid "Delete Audio"
 msgstr "Odstrániť zvuk"
 
-#: src/callbacks.c:9055
+#: src/callbacks.c:9064
 msgid "Record new audio"
 msgstr "Nahrať nový zvuk"
 
-#: src/callbacks.c:9133
+#: src/callbacks.c:9142
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Vložiť ticho od %.2f do %.2f sekundy..."
 
-#: src/callbacks.c:9145
+#: src/callbacks.c:9154
 msgid "Inserting Silence"
 msgstr "Vložiť ticho"
 
-#: src/callbacks.c:9236
+#: src/callbacks.c:9245
 #, c-format
 msgid ""
 "\n"
@@ -2369,55 +2369,55 @@ msgstr "vkladám %d extra snímok(y)\n"
 msgid "Merge done.\n"
 msgstr "Zlúčenie skončené.\n"
 
-#: src/gui.c:267 src/multitrack.c:4815
+#: src/gui.c:267 src/multitrack.c:4819
 msgid "_File"
 msgstr "_Súbor"
 
-#: src/gui.c:278 src/multitrack.c:4838
+#: src/gui.c:278 src/multitrack.c:4842
 msgid "_Open File/Directory"
 msgstr "_Otvoriť súbor/Adresár"
 
-#: src/gui.c:284 src/multitrack.c:4845
+#: src/gui.c:284 src/multitrack.c:4849
 msgid "O_pen File Selection..."
 msgstr "O_tvoriť súbor výberu..."
 
-#: src/gui.c:288 src/multitrack.c:4853
+#: src/gui.c:288 src/multitrack.c:4857
 msgid "Open _Location/Stream..."
 msgstr "Otvoriť _umiestnenie/stream..."
 
-#: src/gui.c:294 src/multitrack.c:4863
+#: src/gui.c:294 src/multitrack.c:4867
 msgid "Import Selection from _dvd/vcd..."
 msgstr "Importovať výber z _dvd/vcd..."
 
-#: src/gui.c:302 src/multitrack.c:4872
+#: src/gui.c:302 src/multitrack.c:4876
 msgid "Import Selection from _dvd"
 msgstr "Importovať výber z _dvd"
 
-#: src/gui.c:305 src/multitrack.c:4882
+#: src/gui.c:305 src/multitrack.c:4886
 msgid "Import Selection from _vcd"
 msgstr "Importovať výber z _vcd"
 
-#: src/gui.c:308 src/multitrack.c:4897
+#: src/gui.c:308 src/multitrack.c:4901
 msgid "_Import from Device"
 msgstr "_Importovať výber z jednotky"
 
-#: src/gui.c:316 src/multitrack.c:4907
+#: src/gui.c:316 src/multitrack.c:4911
 msgid "Import from _Firewire Device (dv)"
 msgstr "Importovať z _Firewire  jednotky (dv)"
 
-#: src/gui.c:317 src/multitrack.c:4914
+#: src/gui.c:317 src/multitrack.c:4918
 msgid "Import from _Firewire Device (hdv)"
 msgstr "Importovať z _Firewire  jednotky (hdv)"
 
-#: src/gui.c:341 src/multitrack.c:4937
+#: src/gui.c:341 src/multitrack.c:4941
 msgid "_Recent Files..."
 msgstr "_Nedávne súbory..."
 
-#: src/gui.c:392 src/multitrack.c:4996
+#: src/gui.c:392 src/multitrack.c:5000
 msgid "_Reload Clip Set..."
 msgstr "Znovu otvoriť sadu klipov..."
 
-#: src/gui.c:396 src/multitrack.c:5004
+#: src/gui.c:396 src/multitrack.c:5008
 msgid "Close/Sa_ve All Clips"
 msgstr "Zavrieť/Ul_ožiť všetky klipy"
 
@@ -2457,11 +2457,11 @@ msgstr "_Obnoviť klip z .lv1..."
 msgid "Encode/Load/Backup _with Sound"
 msgstr "Kódovať/Otvoriť/Zálohovať _zo zvukom"
 
-#: src/gui.c:483 src/multitrack.c:5038
+#: src/gui.c:483 src/multitrack.c:5042
 msgid "Clean _up Diskspace"
 msgstr "_Vyčistiť disk"
 
-#: src/gui.c:491 src/multitrack.c:5071
+#: src/gui.c:491 src/multitrack.c:5075
 msgid "_Edit"
 msgstr "_Upraviť"
 
@@ -2537,7 +2537,7 @@ msgstr "_Obrátiť výber"
 msgid "_Lock Selection Width"
 msgstr "_Zamknúť šírku výberu"
 
-#: src/gui.c:692 src/multitrack.c:5215
+#: src/gui.c:692 src/multitrack.c:5219
 msgid "_Play"
 msgstr "_Prehrať"
 
@@ -2553,15 +2553,15 @@ msgstr "Pre_hrať výber"
 msgid "Play _Clipboard"
 msgstr "Prehrať _schránku"
 
-#: src/gui.c:740 src/multitrack.c:5244
+#: src/gui.c:740 src/multitrack.c:5248
 msgid "_Stop"
 msgstr "_Zastaviť"
 
-#: src/gui.c:753 src/multitrack.c:5254
+#: src/gui.c:753 src/multitrack.c:5258
 msgid "Re_wind"
 msgstr "Pre_vinúť"
 
-#: src/gui.c:783 src/multitrack.c:5269
+#: src/gui.c:783 src/multitrack.c:5273
 msgid "_Full Screen"
 msgstr "Na _celú obrazovku"
 
@@ -2569,7 +2569,7 @@ msgstr "Na _celú obrazovku"
 msgid "_Double Size"
 msgstr "_Dvojitá veľkosť"
 
-#: src/gui.c:800 src/multitrack.c:5276
+#: src/gui.c:800 src/multitrack.c:5280
 msgid "Play in _Separate Window"
 msgstr "Prehrať v _oddelenom okne"
 
@@ -2581,7 +2581,7 @@ msgstr "_Prázdne pozadie"
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr "(Automaticky)_opakovať video (vyplniť podľa zvuku)"
 
-#: src/gui.c:825 src/multitrack.c:5284
+#: src/gui.c:825 src/multitrack.c:5288
 msgid "L_oop Continuously"
 msgstr "Ne_pretržitá sľučka"
 
@@ -2589,11 +2589,11 @@ msgstr "Ne_pretržitá sľučka"
 msgid "Pin_g Pong Loops"
 msgstr "Pin_g Pong sľučky"
 
-#: src/gui.c:842 src/multitrack.c:5292
+#: src/gui.c:842 src/multitrack.c:5296
 msgid "_Mute"
 msgstr "_Ztlmiť zvuk"
 
-#: src/gui.c:856 src/multitrack.c:5305
+#: src/gui.c:856 src/multitrack.c:5309
 msgid "Separate Window 'S_ticky' Mode"
 msgstr "Oddelené okno 'L_epivý' mód"
 
@@ -2601,7 +2601,7 @@ msgstr "Oddelené okno 'L_epivý' mód"
 msgid "S_how Frame Counter"
 msgstr "U_káž počítadlo snímkov"
 
-#: src/gui.c:874 src/multitrack.c:5320
+#: src/gui.c:874 src/multitrack.c:5324
 msgid "Effect_s"
 msgstr "Efekt_y"
 
@@ -2617,7 +2617,7 @@ msgstr "_Vlastné efekty"
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr "_Spustiť test Vykresľovanie efektov/Nástroje/Generátor..."
 
-#: src/gui.c:895 src/multitrack.c:5757
+#: src/gui.c:895 src/multitrack.c:5761
 msgid "_Tools"
 msgstr "_Nástroje"
 
@@ -2645,7 +2645,7 @@ msgstr "Vlastné _nástroje"
 msgid "Custom _Utilities"
 msgstr "Vlastné _pomôcky"
 
-#: src/gui.c:934 src/multitrack.c:5796
+#: src/gui.c:934 src/multitrack.c:5800
 msgid "_Generate"
 msgstr "Vy_generovať"
 
@@ -2661,11 +2661,11 @@ msgstr "Spúšťam rozšírenie vykresľovanie efektov"
 msgid "Resample _Video to New Frame Rate..."
 msgstr "Prevzorkovať _video na nový pomer..."
 
-#: src/gui.c:967 src/multitrack.c:5805
+#: src/gui.c:967 src/multitrack.c:5809
 msgid "Capture _External Window... "
 msgstr "Zachytiť _externé okno "
 
-#: src/gui.c:976 src/multitrack.c:5767
+#: src/gui.c:976 src/multitrack.c:5771
 msgid "_Preferences..."
 msgstr "_Predvoľby..."
 
@@ -2781,15 +2781,15 @@ msgstr "Zobraziť/ _Upraviť komentáre k súboru"
 msgid "Show _Clipboard Info"
 msgstr "Zobraziť informáciu o _schránke"
 
-#: src/gui.c:1198 src/multitrack.c:5972
+#: src/gui.c:1198 src/multitrack.c:5976
 msgid "Show _Messages"
 msgstr "Zobraziť _správy"
 
-#: src/gui.c:1202 src/multitrack.c:5976
+#: src/gui.c:1202 src/multitrack.c:5980
 msgid "Show _Layout Errors"
 msgstr "Zobraziť chyby _rozloženia"
 
-#: src/gui.c:1207 src/multitrack.c:5876
+#: src/gui.c:1207 src/multitrack.c:5880
 msgid "_Clips"
 msgstr "_Klipy"
 
@@ -2935,7 +2935,7 @@ msgstr "_Bláznivé snḿky"
 msgid "_LiVES TV (broadband)"
 msgstr "_LiVES TV (širokopásmová)"
 
-#: src/gui.c:1472 src/multitrack.c:5998
+#: src/gui.c:1472 src/multitrack.c:6002
 msgid "_Help"
 msgstr "_Pomocník"
 
@@ -2963,7 +2963,7 @@ msgstr "Navrhnite _funkciu"
 msgid "Help with _translating"
 msgstr "Pomôcť s prekladom"
 
-#: src/gui.c:1517 src/multitrack.c:6017
+#: src/gui.c:1517 src/multitrack.c:6021
 msgid "_About"
 msgstr "_O programe"
 
@@ -2971,7 +2971,7 @@ msgstr "_O programe"
 msgid "Rewind to start (w)"
 msgstr "Previnúť na štart (w)"
 
-#: src/gui.c:1556 src/multitrack.c:13671
+#: src/gui.c:1556 src/multitrack.c:13675
 msgid "Play all (p)"
 msgstr "Prehrať všetko (p)"
 
@@ -3372,12 +3372,12 @@ msgstr ""
 "\n"
 "Prepísať ?\n"
 
-#: src/utils.c:2272 src/utils.c:2298 src/multitrack.c:3671
+#: src/utils.c:2272 src/utils.c:2298 src/multitrack.c:3674
 #, c-format
 msgid "_Undo %s"
 msgstr "_Vrátiť %s"
 
-#: src/utils.c:2273 src/utils.c:2299 src/multitrack.c:3693
+#: src/utils.c:2273 src/utils.c:2299 src/multitrack.c:3696
 #, c-format
 msgid "_Redo %s"
 msgstr "_Znovu %s"
@@ -4307,6 +4307,13 @@ msgstr ""
 "Mám skúsiť opravu disku kópiou rozloženia?\n"
 
 #: src/dialogs.c:1461
+#, fuzzy
+msgid ""
+"LiVES was unable to load the layout.\n"
+"Sorry.\n"
+msgstr "LiVES nemôže zaznamenať toto okno. Prepáčte.\n"
+
+#: src/dialogs.c:1467
 msgid ""
 "\n"
 "\n"
@@ -4316,7 +4323,7 @@ msgstr ""
 "\n"
 "Zvukový pomer musí byť väčší ako 0.\n"
 
-#: src/dialogs.c:1465
+#: src/dialogs.c:1471
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -4328,7 +4335,7 @@ msgstr ""
 "a jeho zobrazenie môže trvať veľmi dlho.\n"
 "Ste si istí, že chcete zobraziť?\n"
 
-#: src/dialogs.c:1470
+#: src/dialogs.c:1476
 msgid ""
 "\n"
 "\n"
@@ -4338,7 +4345,7 @@ msgstr ""
 "\n"
 "Musíte nainštalovať 'dvgrab' aby ste mohli používať túto funkciu.\n"
 
-#: src/dialogs.c:1475
+#: src/dialogs.c:1481
 msgid ""
 "\n"
 "\n"
@@ -4347,25 +4354,25 @@ msgid ""
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
 
-#: src/dialogs.c:1479
+#: src/dialogs.c:1485
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr "Zlyhalo rozšírenie video prehrávania k inicializovaniu palety !\n"
 
-#: src/dialogs.c:1483
+#: src/dialogs.c:1489
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr "Zlyhalo rozšírenie dekodéra k inicializovaniu palety !\n"
 
-#: src/dialogs.c:1488
+#: src/dialogs.c:1494
 msgid "Unable to set framerate of video plugin\n"
 msgstr "Nedá sa nastaviť pomer snímkov video rozšírenia\n"
 
-#: src/dialogs.c:1493
+#: src/dialogs.c:1499
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:1504
+#: src/dialogs.c:1510
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -4374,23 +4381,23 @@ msgid ""
 "echo %d > /proc/sys/net/core/rmem_max\n"
 msgstr ""
 
-#: src/dialogs.c:1780
+#: src/dialogs.c:1786
 msgid "cancelled.\n"
 msgstr "zrušené.\n"
 
-#: src/dialogs.c:1787
+#: src/dialogs.c:1793
 msgid "failed.\n"
 msgstr "zlyhalo.\n"
 
-#: src/dialogs.c:1794
+#: src/dialogs.c:1800
 msgid "done.\n"
 msgstr "dokončené.\n"
 
-#: src/dialogs.c:1798
+#: src/dialogs.c:1804
 msgid "error in file. Failed.\n"
 msgstr "chyba v súbore. Zlyhanie.\n"
 
-#: src/dialogs.c:1803
+#: src/dialogs.c:1809
 #, c-format
 msgid ""
 "\n"
@@ -4403,7 +4410,7 @@ msgstr ""
 "%s\n"
 "Prosím skontrolujte práva k súboru a skúste znova."
 
-#: src/dialogs.c:1811
+#: src/dialogs.c:1817
 #, c-format
 msgid ""
 "\n"
@@ -7256,7 +7263,7 @@ msgstr "_Vyčistiť všetky efekty"
 msgid "Mode active"
 msgstr "Aktívny mód"
 
-#: src/rte_window.c:1011 src/multitrack.c:6809
+#: src/rte_window.c:1011 src/multitrack.c:6813
 msgid "Info"
 msgstr "Informácia"
 
@@ -7354,64 +7361,64 @@ msgstr "Nemožno otvoriť yuv4mpeg mimo streamu %s\n"
 msgid "Auto backup"
 msgstr ""
 
-#: src/multitrack.c:484
+#: src/multitrack.c:487
 msgid "Backing audio"
 msgstr "Podpora zvuku"
 
-#: src/multitrack.c:902
+#: src/multitrack.c:905
 msgid "_Apply"
 msgstr "_Použiť"
 
-#: src/multitrack.c:923
+#: src/multitrack.c:926
 #, fuzzy
 msgid "Time"
 msgstr "Časový kód"
 
-#: src/multitrack.c:942
+#: src/multitrack.c:945
 msgid "_Del. node"
 msgstr "_Odstrániť uzol"
 
-#: src/multitrack.c:950
+#: src/multitrack.c:953
 msgid "_Next node"
 msgstr "_Ďaľší uzol"
 
-#: src/multitrack.c:958
+#: src/multitrack.c:961
 msgid "_Prev node"
 msgstr "_Predchádzajúci uzol"
 
-#: src/multitrack.c:1229 src/multitrack.c:2814
+#: src/multitrack.c:1232 src/multitrack.c:2817
 #, c-format
 msgid "Current track: %s (layer %d)\n"
 msgstr "Aktuálna stopa: %s (vrstva %d)\n"
 
-#: src/multitrack.c:1231 src/multitrack.c:2815
+#: src/multitrack.c:1234 src/multitrack.c:2818
 msgid "Current track: Backing audio\n"
 msgstr "Aktuálna stopa: Podpora zvuku\n"
 
-#: src/multitrack.c:1232
+#: src/multitrack.c:1235
 #, c-format
 msgid "Current track: Layer %d audio\n"
 msgstr "Aktuálna stopa: Vrstva %d zvuku\n"
 
-#: src/multitrack.c:1235
+#: src/multitrack.c:1238
 #, c-format
 msgid "%.2f sec.\n"
 msgstr "%.2f sek.\n"
 
-#: src/multitrack.c:1240 src/multitrack.c:2820
+#: src/multitrack.c:1243 src/multitrack.c:2823
 #, c-format
 msgid "Source: %s"
 msgstr "Zdroj: %s"
 
-#: src/multitrack.c:1243 src/multitrack.c:2822
+#: src/multitrack.c:1246 src/multitrack.c:2825
 msgid "Right click for context menu.\n"
 msgstr "Kliknite pravým tlačidlom na kontextové menu.\n"
 
-#: src/multitrack.c:1245
+#: src/multitrack.c:1248
 msgid "Double click on a block to select it.\n"
 msgstr "Dvojkliknutím na blok ho vyberiete.\n"
 
-#: src/multitrack.c:2713
+#: src/multitrack.c:2716
 msgid ""
 "\n"
 "\n"
@@ -7420,7 +7427,7 @@ msgid ""
 "double clicking on it.\n"
 msgstr ""
 
-#: src/multitrack.c:2716
+#: src/multitrack.c:2719
 #, fuzzy
 msgid ""
 "\n"
@@ -7428,7 +7435,7 @@ msgid ""
 "No effect selected.\n"
 msgstr "Bez efektov"
 
-#: src/multitrack.c:2719
+#: src/multitrack.c:2722
 msgid ""
 "\n"
 "\n"
@@ -7437,7 +7444,7 @@ msgid ""
 "to apply transitions.\n"
 msgstr ""
 
-#: src/multitrack.c:2722
+#: src/multitrack.c:2725
 msgid ""
 "\n"
 "\n"
@@ -7446,12 +7453,12 @@ msgid ""
 "to apply compositors.\n"
 msgstr ""
 
-#: src/multitrack.c:2818
+#: src/multitrack.c:2821
 #, c-format
 msgid "%.2f sec. to %.2f sec.\n"
 msgstr "%.2f sek.do %.2f sek.\n"
 
-#: src/multitrack.c:2823
+#: src/multitrack.c:2826
 msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
@@ -7459,163 +7466,163 @@ msgstr ""
 "Jedným kliknutím na časovú stopu\n"
 "vyberte snímok.\n"
 
-#: src/multitrack.c:3177
+#: src/multitrack.c:3180
 #, fuzzy
 msgid "LiVES: Selected clip"
 msgstr "LiVES: Vybraný efekt"
 
-#: src/multitrack.c:3184
+#: src/multitrack.c:3187
 msgid "_Adjust start and end points"
 msgstr ""
 
-#: src/multitrack.c:3193
+#: src/multitrack.c:3196
 msgid "_Edit/encode in clip editor"
 msgstr ""
 
-#: src/multitrack.c:3200
+#: src/multitrack.c:3203
 #, fuzzy
 msgid "_Close this clip"
 msgstr "_Zavrieť tento klip"
 
-#: src/multitrack.c:3394
+#: src/multitrack.c:3397
 msgid "Audio mixer (ctrl-m)"
 msgstr "Zvukový mixér (ctrl-m)"
 
-#: src/multitrack.c:3422
+#: src/multitrack.c:3425
 msgid "Show frame preview"
 msgstr "Zobraziť náhľad snímku"
 
-#: src/multitrack.c:3431
+#: src/multitrack.c:3434
 msgid "Auto preview"
 msgstr "Automatický náhľad"
 
-#: src/multitrack.c:3502
+#: src/multitrack.c:3505
 msgid "Single click on timeline to select a frame.\n"
 msgstr "Jedným kliknutím na časovú stopu vyberte snímok.\n"
 
-#: src/multitrack.c:3503
+#: src/multitrack.c:3506
 msgid "Double click on timeline to select a block.\n"
 msgstr "Dvojitým kliknutím na časovú stopu vyberte blok.\n"
 
-#: src/multitrack.c:3504
+#: src/multitrack.c:3507
 msgid "Clips can be dragged onto the timeline.\n"
 msgstr "Klipy nemôžu byť pretiahnuté v časovej stope.\n"
 
-#: src/multitrack.c:3506
+#: src/multitrack.c:3509
 msgid "Mouse mode is: Move\n"
 msgstr "Mód myši je: Pohyb\n"
 
-#: src/multitrack.c:3507
+#: src/multitrack.c:3510
 msgid "clips can be moved around.\n"
 msgstr "klipmi je možné pohybovať.\n"
 
-#: src/multitrack.c:3512
+#: src/multitrack.c:3515
 msgid "Mouse mode is: Select.\n"
 msgstr "Mód myši je: Výber.\n"
 
-#: src/multitrack.c:3513
+#: src/multitrack.c:3516
 msgid "Drag with mouse on timeline\n"
 msgstr "Ťahať myšou v časovej stope\n"
 
-#: src/multitrack.c:3514
+#: src/multitrack.c:3517
 msgid "to select tracks and time.\n"
 msgstr "pre výber stopy a času.\n"
 
-#: src/multitrack.c:3524
+#: src/multitrack.c:3527
 msgid "_Snap mode: On"
 msgstr "Mód _Zachytenia: Zapnutý"
 
-#: src/multitrack.c:3528
+#: src/multitrack.c:3531
 msgid "_Snap mode: Off"
 msgstr "Mód _Zachytenia: Vypnutý"
 
-#: src/multitrack.c:3553 src/multitrack.c:6380
+#: src/multitrack.c:3556 src/multitrack.c:6384
 msgid "Insert with audio"
 msgstr "Vložiť zo zvukom"
 
-#: src/multitrack.c:3557 src/multitrack.c:6388
+#: src/multitrack.c:3560 src/multitrack.c:6392
 msgid "Insert without audio"
 msgstr "Vložiť bez zvuku"
 
-#: src/multitrack.c:3583
+#: src/multitrack.c:3586
 msgid "_Mouse mode: Move"
 msgstr "Mód _myši: Pohyb"
 
-#: src/multitrack.c:3587
+#: src/multitrack.c:3590
 msgid "_Mouse mode: Select"
 msgstr "Mód _myši: Výber"
 
-#: src/multitrack.c:3626
+#: src/multitrack.c:3629
 msgid "Close gaps"
 msgstr "Zatvoriť medzery"
 
-#: src/multitrack.c:3628
+#: src/multitrack.c:3631
 msgid "Move block"
 msgstr "Posunúť blok"
 
-#: src/multitrack.c:3630
+#: src/multitrack.c:3633
 msgid "Move audio block"
 msgstr "Posunúť zvukový blok"
 
-#: src/multitrack.c:3632
+#: src/multitrack.c:3635
 msgid "Delete block"
 msgstr "Odstrániť blok"
 
-#: src/multitrack.c:3634
+#: src/multitrack.c:3637
 msgid "Delete audio block"
 msgstr "Odstrániť zvukový blok"
 
-#: src/multitrack.c:3636
+#: src/multitrack.c:3639
 msgid "Split tracks"
 msgstr "Rozdeliť stopy"
 
-#: src/multitrack.c:3638
+#: src/multitrack.c:3641
 msgid "Split block"
 msgstr "Rozdeliť bloky"
 
-#: src/multitrack.c:3641
+#: src/multitrack.c:3644
 #, c-format
 msgid "Apply %s"
 msgstr "Použiť %s"
 
-#: src/multitrack.c:3646
+#: src/multitrack.c:3649
 #, c-format
 msgid "Delete %s"
 msgstr "Odstrániť %s"
 
-#: src/multitrack.c:3650
+#: src/multitrack.c:3653
 msgid "Insert block"
 msgstr "Vložiť blok"
 
-#: src/multitrack.c:3652
+#: src/multitrack.c:3655
 msgid "Insert gap"
 msgstr "Vložiť medzeru"
 
-#: src/multitrack.c:3654
+#: src/multitrack.c:3657
 msgid "Insert audio block"
 msgstr "Vložiť blok zvuku"
 
-#: src/multitrack.c:3656
+#: src/multitrack.c:3659
 msgid "Effect order change"
 msgstr "Zmeniť poradie efektov"
 
-#: src/multitrack.c:4031
+#: src/multitrack.c:4034
 msgid "unsigned "
 msgstr "neoznačený "
 
-#: src/multitrack.c:4032
+#: src/multitrack.c:4035
 msgid "signed "
 msgstr "označený "
 
-#: src/multitrack.c:4034
+#: src/multitrack.c:4037
 msgid "big endian"
 msgstr "veľký endian"
 
-#: src/multitrack.c:4035
+#: src/multitrack.c:4038
 msgid "little endian"
 msgstr "malý endian"
 
-#: src/multitrack.c:4037
+#: src/multitrack.c:4040
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
@@ -7624,15 +7631,15 @@ msgstr ""
 "Multitrack hodnoty nastavené na %.3f fps, veľkosť snímku %d x %d, zvukové "
 "kanály %d, pomer zvuku %d, veľkosť  vzorky zvuku %d, %s.\n"
 
-#: src/multitrack.c:4069
+#: src/multitrack.c:4072
 msgid "invalid event list. Failed.\n"
 msgstr "Neplatný zoznam udalostí. Zlyhanie.\n"
 
-#: src/multitrack.c:4074
+#: src/multitrack.c:4077
 msgid "event list has invalid fps. Failed.\n"
 msgstr "zoznam udalostí má neplatné fps. Zlyhanie.\n"
 
-#: src/multitrack.c:4083
+#: src/multitrack.c:4086
 #, c-format
 msgid ""
 "\n"
@@ -7647,7 +7654,7 @@ msgstr ""
 "zatvorte aktuálnu zostavu,\n"
 "potom spustite novú zostavu z menu súbora.\n"
 
-#: src/multitrack.c:4129
+#: src/multitrack.c:4132
 #, c-format
 msgid ""
 "\n"
@@ -7658,369 +7665,369 @@ msgstr ""
 "LiVES našiel neplatný počet zvukových kanálov (%d).\n"
 "Nemohlo byť spustené.\n"
 
-#: src/multitrack.c:4458
+#: src/multitrack.c:4462
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 
-#: src/multitrack.c:4828
+#: src/multitrack.c:4832
 #, fuzzy
 msgid "_Open..."
 msgstr ""
 "\n"
 "  Otváram..."
 
-#: src/multitrack.c:4923
+#: src/multitrack.c:4927
 #, fuzzy
 msgid "_Close the selected clip"
 msgstr "_Vložiť vybraný klip"
 
-#: src/multitrack.c:5017
+#: src/multitrack.c:5021
 msgid "_Save layout as..."
 msgstr "_Uložiť rozloženie ako..."
 
-#: src/multitrack.c:5021
+#: src/multitrack.c:5025
 msgid "_Load layout..."
 msgstr "_Nahrať rozloženie..."
 
-#: src/multitrack.c:5024
+#: src/multitrack.c:5028
 msgid "_Wipe/Delete layout..."
 msgstr "_Vyčistiť/Zmazať rozloženie..."
 
-#: src/multitrack.c:5050
+#: src/multitrack.c:5054
 msgid "_Retain width, height and audio values in saved layouts"
 msgstr "_Zachovať šírku, výšku a hodnoty zvuku v uloženom rozložení"
 
-#: src/multitrack.c:5054
+#: src/multitrack.c:5058
 msgid "_Ignore width, height and audio values from loaded layouts"
 msgstr "_Ignorovať šírku, výšku a hodnoty zvuku z nahraného rozloženia"
 
-#: src/multitrack.c:5131
+#: src/multitrack.c:5135
 msgid "_CLIP EDITOR"
 msgstr "_KLIP EDITOR"
 
-#: src/multitrack.c:5143
+#: src/multitrack.c:5147
 #, fuzzy
 msgid "_Adjust selected clip start/end points"
 msgstr "_Vložiť vybraný zvuk klipu"
 
-#: src/multitrack.c:5152
+#: src/multitrack.c:5156
 msgid "_Insert selected clip"
 msgstr "_Vložiť vybraný klip"
 
-#: src/multitrack.c:5161
+#: src/multitrack.c:5165
 msgid "_Insert selected clip audio"
 msgstr "_Vložiť vybraný zvuk klipu"
 
-#: src/multitrack.c:5170
+#: src/multitrack.c:5174
 msgid "_Delete selected block"
 msgstr "_Odstrániť vybraný blok"
 
-#: src/multitrack.c:5179
+#: src/multitrack.c:5183
 msgid "_Jump to previous block boundary"
 msgstr "_Skočiť na predchádzajúcu hranicu bloku"
 
-#: src/multitrack.c:5188
+#: src/multitrack.c:5192
 msgid "_Jump to next block boundary"
 msgstr "_Skočiť na hranicu ďaľšieho bloku"
 
-#: src/multitrack.c:5201
+#: src/multitrack.c:5205
 msgid "Clear _marks from timeline"
 msgstr "Vymazať _značky z časovej osi"
 
-#: src/multitrack.c:5209
+#: src/multitrack.c:5213
 msgid "Ignore selection limits when inserting"
 msgstr "Ignorovať obmedzenia výberu pri vkladaní"
 
-#: src/multitrack.c:5225 src/multitrack.c:13670
+#: src/multitrack.c:5229 src/multitrack.c:13674
 msgid "_Play from Timeline Position"
 msgstr "_Prehrať z určitého miesta na časovej osi"
 
-#: src/multitrack.c:5330
+#: src/multitrack.c:5334
 msgid "_Move effects with blocks"
 msgstr "_Presunúť efekty s blokmi"
 
-#: src/multitrack.c:5342
+#: src/multitrack.c:5346
 msgid "View/_Edit selected effect"
 msgstr "Zobraziť/_Upraviť vybraný efekt"
 
-#: src/multitrack.c:5346
+#: src/multitrack.c:5350
 msgid "_Delete selected effect"
 msgstr "_Odstrániť vybraný efekt"
 
-#: src/multitrack.c:5354
+#: src/multitrack.c:5358
 msgid "Apply effect to _block..."
 msgstr "Použiť efekt na _blok..."
 
-#: src/multitrack.c:5365
+#: src/multitrack.c:5369
 msgid "Apply effect to _region..."
 msgstr "Použiť efekt na _región..."
 
-#: src/multitrack.c:5531
+#: src/multitrack.c:5535
 msgid "_Tracks"
 msgstr "_Stopy"
 
-#: src/multitrack.c:5541
+#: src/multitrack.c:5545
 msgid "Make _Backing Audio current track"
 msgstr "Presun aktuálnej zvukovej stopy na _pozadie"
 
-#: src/multitrack.c:5552
+#: src/multitrack.c:5556
 msgid "Add Video Track at _Rear"
 msgstr "Pridať video stopu na _koniec"
 
-#: src/multitrack.c:5560
+#: src/multitrack.c:5564
 msgid "Add Video Track at _Front"
 msgstr "Pridať video stopu na _začiatok"
 
-#: src/multitrack.c:5573
+#: src/multitrack.c:5577
 msgid "_Split current track at cursor"
 msgstr "_Rozdeliť súčasnú stopu na kurzor"
 
-#: src/multitrack.c:5585
+#: src/multitrack.c:5589
 msgid "_Split selected video tracks"
 msgstr "_Rozdeliť vybrané video stopy"
 
-#: src/multitrack.c:5598
+#: src/multitrack.c:5602
 msgid "Insert gap in selected tracks/time"
 msgstr "Vložiť medzeru vo zvolenej skladbe/čase"
 
-#: src/multitrack.c:5606
+#: src/multitrack.c:5610
 msgid "Insert gap in current track/selected time"
 msgstr "Vložiť medzeru v aktuálnej skladbe/vybranom čase"
 
-#: src/multitrack.c:5618
+#: src/multitrack.c:5622
 msgid "Close all _gaps in selected tracks/time"
 msgstr "Zatvoriť všetky _medzery v aktuálnej skladbe/čase"
 
-#: src/multitrack.c:5629
+#: src/multitrack.c:5633
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr "Zatvoriť _prvú medzeru(y) v aktuálnej skladbe/čase"
 
-#: src/multitrack.c:5644
+#: src/multitrack.c:5648
 msgid "Se_lection"
 msgstr "Vý_ber"
 
-#: src/multitrack.c:5654
+#: src/multitrack.c:5658
 msgid "_Snap to overlap"
 msgstr "_Prichytiť na prekrytie"
 
-#: src/multitrack.c:5667
+#: src/multitrack.c:5671
 msgid "_Select Current Track"
 msgstr "_Vybrať aktuálnu stopu"
 
-#: src/multitrack.c:5674
+#: src/multitrack.c:5678
 msgid "Select _all video tracks"
 msgstr "Vybrať _všetky video stopy"
 
-#: src/multitrack.c:5681
+#: src/multitrack.c:5685
 msgid "Select _no video tracks"
 msgstr "Nevybrať _žiadne video stopy"
 
-#: src/multitrack.c:5688
+#: src/multitrack.c:5692
 msgid "Select all _time"
 msgstr "Vybrať všetko"
 
-#: src/multitrack.c:5699
+#: src/multitrack.c:5703
 msgid "Select from _zero time"
 msgstr "Vybrať od začiatku"
 
-#: src/multitrack.c:5706
+#: src/multitrack.c:5710
 msgid "Select to _end time"
 msgstr "Vybrať do konca"
 
-#: src/multitrack.c:5713
+#: src/multitrack.c:5717
 msgid "_Copy..."
 msgstr "_Kopírovať..."
 
-#: src/multitrack.c:5723
+#: src/multitrack.c:5727
 msgid "_Timecode to region start"
 msgstr "_Časový kód pre začiatok oblasti"
 
-#: src/multitrack.c:5730
+#: src/multitrack.c:5734
 msgid "_Timecode to region end"
 msgstr "_Časový kód pre koniec oblasti"
 
-#: src/multitrack.c:5737
+#: src/multitrack.c:5741
 msgid "_Region start to timecode"
 msgstr "_Spustiť v čase"
 
-#: src/multitrack.c:5744
+#: src/multitrack.c:5748
 msgid "_Region end to timecode"
 msgstr "_Ukončiť v čase"
 
-#: src/multitrack.c:5782
+#: src/multitrack.c:5786
 msgid "_Change width, height and audio values..."
 msgstr "_Zmeniť šírku, výšku a hodnoty zvuku..."
 
-#: src/multitrack.c:5817
+#: src/multitrack.c:5821
 msgid "_Render"
 msgstr "_Vykresliť"
 
-#: src/multitrack.c:5827
+#: src/multitrack.c:5831
 msgid "_Render all to new clip"
 msgstr "_Vykresliť všetko do nového klipu"
 
-#: src/multitrack.c:5842
+#: src/multitrack.c:5846
 msgid "Render _video"
 msgstr "Vykresliť _video"
 
-#: src/multitrack.c:5847
+#: src/multitrack.c:5851
 msgid "Render _audio"
 msgstr "Vykresliť _zvuk"
 
-#: src/multitrack.c:5856
+#: src/multitrack.c:5860
 msgid "_Pre-render audio"
 msgstr ""
 
-#: src/multitrack.c:5865
+#: src/multitrack.c:5869
 msgid "_View"
 msgstr "_Zobrazenie"
 
-#: src/multitrack.c:5883
+#: src/multitrack.c:5887
 msgid "Block _In/out points"
 msgstr "Blokovať body _vstupu/výstupu"
 
-#: src/multitrack.c:5892
+#: src/multitrack.c:5896
 msgid "_Effects at current"
 msgstr "Aktuálne _efekty"
 
-#: src/multitrack.c:5903
+#: src/multitrack.c:5907
 msgid "Show backing _audio track"
 msgstr "Zobraziť _zvukovú stopu na pozadí"
 
-#: src/multitrack.c:5907
+#: src/multitrack.c:5911
 msgid "Compact view"
 msgstr "Kompaktný pohľad"
 
-#: src/multitrack.c:5915
+#: src/multitrack.c:5919
 msgid "Maximum tracks to display..."
 msgstr "Maximum stôp k zobrazeniu..."
 
-#: src/multitrack.c:5922
+#: src/multitrack.c:5926
 msgid "Scroll to follow playback"
 msgstr "Prejdite na nasledujúce prehrávanie"
 
-#: src/multitrack.c:5926
+#: src/multitrack.c:5930
 msgid "_Center on cursor"
 msgstr "_Vystrediť na kurzor"
 
-#: src/multitrack.c:5933
+#: src/multitrack.c:5937
 msgid "_Zoom in"
 msgstr "_Priblížiť"
 
-#: src/multitrack.c:5944
+#: src/multitrack.c:5948
 msgid "_Zoom out"
 msgstr "_Oddialiť"
 
-#: src/multitrack.c:5955
+#: src/multitrack.c:5959
 msgid "Audio parameters"
 msgstr "Parametre zvuku"
 
-#: src/multitrack.c:5969
+#: src/multitrack.c:5973
 msgid "Multitrack _details"
 msgstr "_Detaily o multitracku"
 
-#: src/multitrack.c:5985
+#: src/multitrack.c:5989
 msgid "_Event Window"
 msgstr "_Okno udalosti"
 
-#: src/multitrack.c:5989
+#: src/multitrack.c:5993
 msgid "_Event Window (selected time only)"
 msgstr "_Okno udalosti (iba vybraný čas)"
 
-#: src/multitrack.c:5993
+#: src/multitrack.c:5997
 msgid "_Show FRAME events"
 msgstr "_Zobraziť udalosti SNÍMKY"
 
-#: src/multitrack.c:6009
+#: src/multitrack.c:6013
 msgid "_Show multitrack keys"
 msgstr "_Zobraziť multitrack klávesy"
 
-#: src/multitrack.c:6249
+#: src/multitrack.c:6253
 msgid "Timecode"
 msgstr "Časový kód"
 
-#: src/multitrack.c:6303
+#: src/multitrack.c:6307
 msgid "Mouse mode: _Move"
 msgstr "Mód myši: _Pohyb"
 
-#: src/multitrack.c:6311
+#: src/multitrack.c:6315
 msgid "Mouse mode: _Select"
 msgstr "Mód myši: _Výber"
 
-#: src/multitrack.c:6342
+#: src/multitrack.c:6346
 msgid "Snap Mode: O_ff"
 msgstr "Mód prichytenia: _Vypnutý"
 
-#: src/multitrack.c:6350
+#: src/multitrack.c:6354
 msgid "Snap mode: O_n"
 msgstr "Mód prichytenia: _Zapnutý"
 
-#: src/multitrack.c:6418
+#: src/multitrack.c:6422
 msgid "Compact View (d)"
 msgstr "Kompaktný pohľad (d)"
 
-#: src/multitrack.c:6425
+#: src/multitrack.c:6429
 msgid "Expanded View (d)"
 msgstr "Rozšírený pohľad (d)"
 
-#: src/multitrack.c:6497
+#: src/multitrack.c:6501
 #, fuzzy
 msgid "Clips"
 msgstr "_Klipy"
 
-#: src/multitrack.c:6527
+#: src/multitrack.c:6531
 #, fuzzy
 msgid "In/out"
 msgstr "Informácia"
 
-#: src/multitrack.c:6536
+#: src/multitrack.c:6540
 msgid "FX stack"
 msgstr ""
 
-#: src/multitrack.c:6575 src/omc-learn.c:654
+#: src/multitrack.c:6579 src/omc-learn.c:654
 msgid "Params."
 msgstr ""
 
-#: src/multitrack.c:6598
+#: src/multitrack.c:6602
 msgid "_Reverse playback  "
 msgstr "_Opačné prehrávanie  "
 
-#: src/multitrack.c:6626
+#: src/multitrack.c:6630
 msgid "_Velocity  "
 msgstr "_Rýchlosť  "
 
-#: src/multitrack.c:6683
+#: src/multitrack.c:6687
 msgid "Anchor the start point to the timeline"
 msgstr "Ukotviť bod štartu na časovej osi"
 
-#: src/multitrack.c:6686
+#: src/multitrack.c:6690
 msgid "Anchor _start"
 msgstr "Ukotviť _štart"
 
-#: src/multitrack.c:6720
+#: src/multitrack.c:6724
 #, fuzzy
 msgid "Start frame"
 msgstr "_Iba počiatočný snímok"
 
-#: src/multitrack.c:6757
+#: src/multitrack.c:6761
 msgid "Anchor the end point to the timeline"
 msgstr "Ukotviť bod konca na časovej osi"
 
-#: src/multitrack.c:6760
+#: src/multitrack.c:6764
 msgid "Anchor _end"
 msgstr "Ukotviť _koniec"
 
-#: src/multitrack.c:6793
+#: src/multitrack.c:6797
 #, fuzzy
 msgid "End frame"
 msgstr "%d snímkov"
 
-#: src/multitrack.c:6939
+#: src/multitrack.c:6943
 msgid "Scroll"
 msgstr "Prejdite"
 
-#: src/multitrack.c:7492
+#: src/multitrack.c:7496
 msgid ""
 "\n"
 "==============================\n"
@@ -8030,89 +8037,89 @@ msgstr ""
 "==============================\n"
 "Prepnuté do režimu úpravy klipu\n"
 
-#: src/multitrack.c:7642
+#: src/multitrack.c:7646
 msgid "Timeline (seconds)"
 msgstr "Časová os (sekundy)"
 
-#: src/multitrack.c:8026
+#: src/multitrack.c:8030
 msgid " Backing audio"
 msgstr " Zvuk v pozadí"
 
-#: src/multitrack.c:8029
+#: src/multitrack.c:8033
 #, c-format
 msgid " Layer %d audio"
 msgstr " Vrstva %d zvuku"
 
-#: src/multitrack.c:8036
+#: src/multitrack.c:8040
 #, fuzzy
 msgid "Show/hide audio details"
 msgstr "Zobraziť _správy"
 
-#: src/multitrack.c:8053 src/multitrack.c:8186
+#: src/multitrack.c:8057 src/multitrack.c:8190
 #, c-format
 msgid "Layer %d audio"
 msgstr "Vrstva %d zvuku"
 
-#: src/multitrack.c:8141
+#: src/multitrack.c:8145
 #, fuzzy
 msgid "Select track"
 msgstr "Výber skladieb"
 
-#: src/multitrack.c:8144
+#: src/multitrack.c:8148
 msgid "Show/hide audio"
 msgstr ""
 
-#: src/multitrack.c:8150
+#: src/multitrack.c:8154
 #, c-format
 msgid "Video %d"
 msgstr "Video %d"
 
-#: src/multitrack.c:8178 src/multitrack.c:8216
+#: src/multitrack.c:8182 src/multitrack.c:8220
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s (vrstva %d)"
 
-#: src/multitrack.c:8187
+#: src/multitrack.c:8191
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:8299
+#: src/multitrack.c:8303
 msgid "LiVES: Selected effect"
 msgstr "LiVES: Vybraný efekt"
 
-#: src/multitrack.c:8306
+#: src/multitrack.c:8310
 msgid "_View/Edit this effect"
 msgstr "_Zobraziť/upraviť tento efekt"
 
-#: src/multitrack.c:8309
+#: src/multitrack.c:8313
 msgid "_View this effect"
 msgstr "_Zobraziť tento efekt"
 
-#: src/multitrack.c:8317
+#: src/multitrack.c:8321
 msgid "_Delete this effect"
 msgstr "_Odstrániť tento efekt"
 
-#: src/multitrack.c:8413
+#: src/multitrack.c:8417
 #, c-format
 msgid "  %d to %d selected  "
 msgstr "  %d do %d vybraného  "
 
-#: src/multitrack.c:8416 src/multitrack.c:8645
+#: src/multitrack.c:8420 src/multitrack.c:8649
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f sek."
 
-#: src/multitrack.c:8616
+#: src/multitrack.c:8620
 #, c-format
 msgid "%d frames"
 msgstr "%d snímkov"
 
-#: src/multitrack.c:8639
+#: src/multitrack.c:8643
 msgid "audio only"
 msgstr "iba zvuk"
 
-#: src/multitrack.c:8872
+#: src/multitrack.c:8876
 msgid ""
 "\n"
 "==============================\n"
@@ -8122,57 +8129,57 @@ msgstr ""
 "==============================\n"
 "Prepnúť do Multitrack módu\n"
 
-#: src/multitrack.c:10391
+#: src/multitrack.c:10395
 #, fuzzy
 msgid "Drag the time slider to where you\n"
 msgstr "Presuňte posúvač času kam potrebujete\n"
 
-#: src/multitrack.c:10392
+#: src/multitrack.c:10396
 #, fuzzy
 msgid "want to set effect parameters\n"
 msgstr "pre nastavenie parametrov efektu\n"
 
-#: src/multitrack.c:10393
+#: src/multitrack.c:10397
 #, fuzzy
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr "Nastaviť parametre, a kliknite na \"Použiť\"\n"
 
-#: src/multitrack.c:10486
+#: src/multitrack.c:10490
 #, c-format
 msgid "%s output"
 msgstr "%s výstup"
 
-#: src/multitrack.c:10492
+#: src/multitrack.c:10496
 #, c-format
 msgid "layer %d"
 msgstr "vrstva %d"
 
-#: src/multitrack.c:10494
+#: src/multitrack.c:10498
 msgid "audio track"
 msgstr "zvuková stopa"
 
-#: src/multitrack.c:10495
+#: src/multitrack.c:10499
 #, c-format
 msgid "%s to %s"
 msgstr "%s na %s"
 
-#: src/multitrack.c:10546
+#: src/multitrack.c:10550
 msgid "_Prev filter map"
 msgstr "Mapa _predchádzajúceho filtra"
 
-#: src/multitrack.c:10556
+#: src/multitrack.c:10560
 msgid "Insert _before"
 msgstr "Vložiť _pred"
 
-#: src/multitrack.c:10564
+#: src/multitrack.c:10568
 msgid "Insert _after"
 msgstr "Vložiť _po"
 
-#: src/multitrack.c:10577
+#: src/multitrack.c:10581
 msgid "_Next filter map"
 msgstr "Mapa _nasledujúceho filtra"
 
-#: src/multitrack.c:10598
+#: src/multitrack.c:10602
 msgid ""
 "\n"
 "\n"
@@ -8180,68 +8187,68 @@ msgid ""
 "current time.\n"
 msgstr ""
 
-#: src/multitrack.c:10779
+#: src/multitrack.c:10783
 msgid "LiVES: Selected block/frame"
 msgstr "LiVES: Vybraný blok/snímok"
 
-#: src/multitrack.c:10785
+#: src/multitrack.c:10789
 msgid "_Delete this block"
 msgstr "_Odstrániť tento blok"
 
-#: src/multitrack.c:10794
+#: src/multitrack.c:10798
 msgid "_Split block here"
 msgstr "Tu _rozdeliť bloky"
 
-#: src/multitrack.c:10802
+#: src/multitrack.c:10806
 msgid "List _effects here"
 msgstr "Zoznam _efektov"
 
-#: src/multitrack.c:10811 src/multitrack.c:10878
+#: src/multitrack.c:10815 src/multitrack.c:10882
 #, c-format
 msgid "_Adjust %s"
 msgstr "_Nastaviť %s"
 
-#: src/multitrack.c:10825
+#: src/multitrack.c:10829
 msgid "_Select this block"
 msgstr "_Vybrať tento blok"
 
-#: src/multitrack.c:10851
+#: src/multitrack.c:10855
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Vybraný snímok"
 
-#: src/multitrack.c:10859
+#: src/multitrack.c:10863
 msgid "_Insert here"
 msgstr "_Vložiť sem"
 
-#: src/multitrack.c:10865
+#: src/multitrack.c:10869
 msgid "_Insert audio here"
 msgstr "_Vložiť zvuk sem"
 
-#: src/multitrack.c:12131
+#: src/multitrack.c:12135
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr "Vložená medzera vo vybranej stope od %.4f do %.4f\n"
 
-#: src/multitrack.c:12165
+#: src/multitrack.c:12169
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr "Vložená medzera v stope %s od %.4f do %.4f\n"
 
-#: src/multitrack.c:12353
+#: src/multitrack.c:12357
 #, c-format
 msgid "Undid %s\n"
 msgstr "Zrušený %s\n"
 
-#: src/multitrack.c:12538
+#: src/multitrack.c:12542
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:12562
+#: src/multitrack.c:12566
 msgid "Multitrack details"
 msgstr "Podrobnosti multitrack"
 
-#: src/multitrack.c:12574
+#: src/multitrack.c:12578
 msgid ""
 "\n"
 " (variable)"
@@ -8249,56 +8256,56 @@ msgstr ""
 "\n"
 " (variabilný)"
 
-#: src/multitrack.c:12770 src/multitrack.c:15441 src/multitrack.c:15453
+#: src/multitrack.c:12774 src/multitrack.c:15445 src/multitrack.c:15457
 #, c-format
 msgid "track %s"
 msgstr "stopa %s"
 
-#: src/multitrack.c:12775 src/multitrack.c:15446
+#: src/multitrack.c:12779 src/multitrack.c:15450
 #, c-format
 msgid "tracks %s and %s"
 msgstr "stopy %s a %s"
 
-#: src/multitrack.c:12781 src/multitrack.c:15456
+#: src/multitrack.c:12785 src/multitrack.c:15460
 msgid "selected tracks"
 msgstr "vybrané stopy"
 
-#: src/multitrack.c:12785
+#: src/multitrack.c:12789
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr "Pridané %s %s do %s z %.4f do %.4f\n"
 
-#: src/multitrack.c:12813
+#: src/multitrack.c:12817
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr "Pridaný efekt %s do stopy %s z %.4f do %.4f\n"
 
-#: src/multitrack.c:13005
+#: src/multitrack.c:13009
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr "vykreslené %d snímky do nového klipu.\n"
 
-#: src/multitrack.c:13068
+#: src/multitrack.c:13072
 msgid "Cleaning up..."
 msgstr "Prebieha čistenie..."
 
-#: src/multitrack.c:13663
+#: src/multitrack.c:13667
 msgid "_Pause"
 msgstr "_Pozastaviť"
 
-#: src/multitrack.c:13664
+#: src/multitrack.c:13668
 msgid "Pause (p)"
 msgstr "Pozastavené (p)"
 
-#: src/multitrack.c:13808
+#: src/multitrack.c:13812
 msgid "Press 'm' during playback"
 msgstr "Stlač 'm' počas prehrávania"
 
-#: src/multitrack.c:13809
+#: src/multitrack.c:13813
 msgid "to make a mark on the timeline"
 msgstr "urobiť značku na časovej osi"
 
-#: src/multitrack.c:14046
+#: src/multitrack.c:14050
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
@@ -8306,18 +8313,18 @@ msgid ""
 msgstr ""
 "Vložený zvuk %.4f do %.4f z klipu %s do zvuku v pozadí od %.4f do %.4f\n"
 
-#: src/multitrack.c:14292
+#: src/multitrack.c:14296
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr "Vložené snímky %d do %d z klipu %s do do stopy %s od %.4f do %.4f\n"
 
-#: src/multitrack.c:14793
+#: src/multitrack.c:14797
 #, c-format
 msgid "Time region %.3f to %.3f selected.\n"
 msgstr "Vybrané časové pásmo %.3f na %.3f.\n"
 
-#: src/multitrack.c:14797
+#: src/multitrack.c:14801
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -8325,24 +8332,24 @@ msgstr ""
 "vyberte jednu alebo viac stôp\n"
 "k vytvoreniu regionu.\n"
 
-#: src/multitrack.c:14799
+#: src/multitrack.c:14803
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "%d video stopa vybraná.\n"
 
-#: src/multitrack.c:14807
+#: src/multitrack.c:14811
 msgid "Single click on an effect to select it.\n"
 msgstr "Klinutím na efekt ho vyberiete.\n"
 
-#: src/multitrack.c:14808
+#: src/multitrack.c:14812
 msgid "Double click on an effect to edit it.\n"
 msgstr "Dvojitým klinutím na efekt ho upravíte.\n"
 
-#: src/multitrack.c:14809
+#: src/multitrack.c:14813
 msgid "Right click on an effect for context menu.\n"
 msgstr "Klinutím pravým tlačítkom na efekt pre kontextové menu.\n"
 
-#: src/multitrack.c:14811
+#: src/multitrack.c:14815
 msgid ""
 "\n"
 "Effect order can be changed at FILTER MAPS:"
@@ -8350,74 +8357,74 @@ msgstr ""
 "\n"
 "Poradie efektov je možné zmeniť v MAPE FILTROV:"
 
-#: src/multitrack.c:14812
+#: src/multitrack.c:14816
 msgid "- select an effect, then use the INSERT BEFORE"
 msgstr "- vyberte efekt, potom použite VLOŽIT PRED"
 
-#: src/multitrack.c:14813
+#: src/multitrack.c:14817
 msgid "or INSERT AFTER buttons to move it."
 msgstr "alebo VLOŽIŤ PO tlačítkom pre pohyb."
 
-#: src/multitrack.c:14850
+#: src/multitrack.c:14854
 msgid "You can click and drag below the timeline\n"
 msgstr "Môžete kliknúť a presunúť v časovej osi\n"
 
-#: src/multitrack.c:14851
+#: src/multitrack.c:14855
 msgid "to select a time region.\n"
 msgstr "vybrať časové pásmo.\n"
 
-#: src/multitrack.c:15049 src/multitrack.c:15062
+#: src/multitrack.c:15053 src/multitrack.c:15066
 msgid "Click on another effect,\n"
 msgstr "Kliknite na iný efekt.\n"
 
-#: src/multitrack.c:15050 src/multitrack.c:15063
+#: src/multitrack.c:15054 src/multitrack.c:15067
 msgid "and the selected one will be inserted\n"
 msgstr "a vybraný bude vložený\n"
 
-#: src/multitrack.c:15051
+#: src/multitrack.c:15055
 msgid "after it.\n"
 msgstr "po.\n"
 
-#: src/multitrack.c:15064
+#: src/multitrack.c:15068
 msgid "before it.\n"
 msgstr "pred.\n"
 
-#: src/multitrack.c:15270
+#: src/multitrack.c:15274
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "Odstránené hodnoty pre efekt %s v čase %.4f\n"
 
-#: src/multitrack.c:15462
+#: src/multitrack.c:15466
 msgid "audio"
 msgstr "zvuk"
 
-#: src/multitrack.c:15464
+#: src/multitrack.c:15468
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "Nastaviť hodnoty pre %s %s na %s v čase %.4f\n"
 
-#: src/multitrack.c:15878 src/multitrack.c:17432
+#: src/multitrack.c:15882 src/multitrack.c:17436
 msgid "_Autoreload each time"
 msgstr "_Automatické znovu načítanie"
 
-#: src/multitrack.c:15948
+#: src/multitrack.c:15952
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "Rozloženie uložené do %s\n"
 
-#: src/multitrack.c:17341
+#: src/multitrack.c:17345
 msgid "clips and frames"
 msgstr "klipy a snímky"
 
-#: src/multitrack.c:17345
+#: src/multitrack.c:17349
 msgid "clips"
 msgstr "klipy"
 
-#: src/multitrack.c:17348
+#: src/multitrack.c:17352
 msgid "frames"
 msgstr "snímky"
 
-#: src/multitrack.c:17358
+#: src/multitrack.c:17362
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -8425,7 +8432,7 @@ msgstr ""
 "\n"
 "Automatické načítanie rozloženia.\n"
 
-#: src/multitrack.c:17361
+#: src/multitrack.c:17365
 #, c-format
 msgid ""
 "%s\n"
@@ -8436,12 +8443,12 @@ msgstr ""
 "Niektoré %s sa nenachádzajú v rozložení%s\n"
 "Preto nemohli byť správne otvorené.\n"
 
-#: src/multitrack.c:17482
+#: src/multitrack.c:17487
 #, fuzzy
 msgid "auto backup"
 msgstr "zvuková stopa"
 
-#: src/multitrack.c:17485
+#: src/multitrack.c:17490
 #, c-format
 msgid ""
 "\n"
@@ -8450,57 +8457,57 @@ msgstr ""
 "\n"
 "Nedá sa načítať súbor s rozložením %s\n"
 
-#: src/multitrack.c:17493
+#: src/multitrack.c:17506
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "Načítavam rozloženie z %s..."
 
-#: src/multitrack.c:17513
+#: src/multitrack.c:17526
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "%d udalostí...spracovávam..."
 
-#: src/multitrack.c:17531
+#: src/multitrack.c:17544
 msgid "Checking and rebuilding event list"
 msgstr "Kontrolujem a opäť vytváram zoznam udalostí"
 
-#: src/multitrack.c:17558
+#: src/multitrack.c:17571
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "%d nájdených chýb.\n"
 
-#: src/multitrack.c:17606
+#: src/multitrack.c:17619
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr "Multitrack fps nastavené na %.3f\n"
 
-#: src/multitrack.c:18305
+#: src/multitrack.c:18318
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: Multitrack mixovanie zvuku"
 
-#: src/multitrack.c:18342
+#: src/multitrack.c:18355
 msgid "_Reset values"
 msgstr "_Vynulovať hodnoty"
 
-#: src/multitrack.c:18346
+#: src/multitrack.c:18359
 msgid "_Close mixer"
 msgstr "_Zatvoriť mixér"
 
-#: src/multitrack.c:18402
+#: src/multitrack.c:18415
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:18408
+#: src/multitrack.c:18421
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:18439
+#: src/multitrack.c:18452
 msgid "_Gang layer audio"
 msgstr "_Usporiadanie vrstvy zvuku"
 
-#: src/multitrack.c:18445
+#: src/multitrack.c:18458
 msgid "Adjust all layer audio values to the same value"
 msgstr "Nastavte všetky hladiny hodnôt zvuku na rovnakú hodnotu"
 

@@ -460,7 +460,10 @@ void recover_layout(GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   while (g_main_context_iteration (NULL,FALSE));
   if (prefs->startup_interface==STARTUP_CE) {
-    if (!on_multitrack_activate(NULL,NULL)) multitrack_delete(mainw->multitrack,FALSE);
+    if (!on_multitrack_activate(NULL,NULL)) {
+      multitrack_delete(mainw->multitrack,FALSE);
+      do_bad_layout_error();
+    }
   }
   else {
     mainw->multitrack->auto_reloading=TRUE;
@@ -4381,13 +4384,14 @@ void stored_event_list_free_all(gboolean wiped) {
 
 gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
   // save or wipe event_list
+  gint resp=2;
 
   if ((mt==NULL||mt->event_list==NULL||get_first_event(mt->event_list)==NULL)&&(mainw->stored_event_list==NULL||get_first_event(mainw->stored_event_list)==NULL)) return TRUE;
 
   if (((mt!=NULL&&(mt->changed||mainw->scrap_file!=-1))||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed))) {
     gint type=(mainw->scrap_file==-1||mt==NULL)?3*(!exiting):4;
     _entryw *cdsw=create_cds_dialog(type);
-    gint resp=gtk_dialog_run(GTK_DIALOG(cdsw->dialog));
+    resp=gtk_dialog_run(GTK_DIALOG(cdsw->dialog));
     gtk_widget_destroy(cdsw->dialog);
     g_free(cdsw);
     if (resp==0) return FALSE;
@@ -4413,7 +4417,7 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
   if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
     stored_event_list_free_all(TRUE);
   }
-  else if (mt!=NULL&&mt->event_list!=NULL) {
+  else if (mt!=NULL&&mt->event_list!=NULL&&(exiting||resp==1)) {
     event_list_free(mt->event_list);
     event_list_free_undos(mt);
     mt->event_list=NULL;
@@ -17475,6 +17479,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     g_free(com);
 
     g_free(eload_dir);
+    mt->idlefunc=mt_idle_add(mt);
     return NULL;
   }
 
@@ -17488,6 +17493,14 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     g_free(eload_dir);
     g_free(eload_name);
     return NULL;
+  }
+
+  event_list_free_undos(mt);
+
+  if (mainw->event_list!=NULL) {
+    event_list_free(mt->event_list);
+    mt->event_list=NULL;
+    mt_clear_timeline(mt);
   }
 
   msg=g_strdup_printf(_("Loading layout from %s..."),eload_name);

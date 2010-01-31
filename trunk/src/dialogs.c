@@ -1457,6 +1457,12 @@ gboolean do_mt_rect_prompt(void) {
   return do_warning_dialog(_("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\nShould I try to repair the disk copy of the layout ?\n"));
 }
 
+void do_bad_layout_error(void) {
+  do_error_dialog(_("LiVES was unable to load the layout.\nSorry.\n"));
+}  
+
+
+
 void do_audrate_error_dialog(void) {
   do_error_dialog(_ ("\n\nAudio rate must be greater than 0.\n"));
 }

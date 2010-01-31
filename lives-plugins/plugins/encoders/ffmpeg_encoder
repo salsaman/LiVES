@@ -247,6 +247,9 @@ if ($command eq "encode") {
 if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
+    chdir $curtmpdir;
+
+
     unlink "passfile";
     &sig_complete;
     exit 0;

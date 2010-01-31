@@ -139,6 +139,8 @@ if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
 
+    chdir $curtmpdir;
+
     $to_ext=".ppm";
 
     for ($i=$start;$i<=$end;$i++) {

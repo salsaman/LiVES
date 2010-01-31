@@ -5109,7 +5109,10 @@ on_button3_clicked                     (GtkButton       *button,
 
     mainw->cancelled=CANCEL_USER;
 
-    if (mainw->is_rendering) cfile->frames=0;
+    if (mainw->is_rendering) {
+      cfile->frames=0;
+      d_print_cancelled();
+    }
     else {
       if (mainw->cancel_type!=CANCEL_SOFT) {
 	if ((infofile=fopen(cfile->info_file,"r"))>0) {

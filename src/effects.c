@@ -238,7 +238,6 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   do_rfx_cleanup(rfx);
 
-  mainw->is_generating=FALSE;
   mainw->resizing=FALSE;
   cfile->nokeep=FALSE;
   cfile->fx_frame_pump=0;
@@ -327,6 +326,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	mainw->suppress_dprint=FALSE;
 	
 	if (!got_no_frames) mainw->current_file=new_file;
+	}
       }
       else {
 	gchar *tfile=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,cfile->frames,prefs->image_ext);
@@ -339,6 +339,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       }
 
       if (got_no_frames||cfile->frames==0) {
+	mainw->is_generating=FALSE;
 	if (!mainw->cancelled) {
 	  do_error_dialog(_("\nNo frames were generated.\n"));
 	  d_print_failed();
@@ -351,10 +352,11 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	}
 	mainw->last_dprint_file=ldfile;
 	mainw->no_switch_dprint=FALSE;
+	if (mainw->multitrack!=NULL) mainw->current_file=mainw->multitrack->render_file;
 	return FALSE;
       }
     }
-
+  
     if (rfx->num_in_channels!=0||mainw->gen_to_clipboard) {
       if (rfx->num_in_channels==0) {
 
@@ -388,28 +390,32 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	cfile->is_loaded=TRUE;
 	add_to_winmenu();
 	save_clip_values(new_file);
-	if (prefs->crash_recovery) add_to_recovery_file(mainw->files[new_file]->handle);
+
+	if (mainw->multitrack!=NULL) {
+	  mt_init_clips(mainw->multitrack,mainw->current_file,TRUE);
+	  mt_clip_select(mainw->multitrack,TRUE);
+	}
+
       }
       cfile->changed=TRUE;
       if (mainw->multitrack==NULL) switch_to_file ((mainw->current_file=0),new_file);
-
       else {
 	mainw->current_file=mainw->multitrack->render_file;
-	mt_init_clips(mainw->multitrack,new_file,TRUE);
-	mt_clip_select(mainw->multitrack,TRUE);
 	mainw->pre_src_file=-1;
       }
-
+      
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif
     }
-  }
 
-  d_print_done();
-  mainw->no_switch_dprint=FALSE;
-  mainw->last_dprint_file=ldfile;
-  return TRUE;
+
+    mainw->is_generating=FALSE;
+    
+    d_print_done();
+    mainw->no_switch_dprint=FALSE;
+    mainw->last_dprint_file=ldfile;
+    return TRUE;
 }
 
 

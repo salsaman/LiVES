@@ -607,7 +607,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif
 
-  if (prefs->show_recent) {
+  if (prefs->show_recent&&!mainw->is_generating) {
     add_to_recent(file_name,start,frames,mainw->file_open_params);
   }
   if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
@@ -659,7 +659,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   else {
     reget_afilesize (mainw->current_file);
     get_total_time(cfile);
-    mainw->current_file=mainw->multitrack->render_file;
+    if (!mainw->is_generating) mainw->current_file=mainw->multitrack->render_file;
     mt_init_clips(mainw->multitrack,current_file,TRUE);
     while (g_main_context_iteration(NULL,FALSE));
     mt_clip_select(mainw->multitrack,TRUE);

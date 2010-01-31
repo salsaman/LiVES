@@ -4642,7 +4642,11 @@ void add_rfx_effects(void) {
     gchar *tmp;
 
     for (plugin_idx=0;plugin_idx<rfx_list_length;plugin_idx++) {
+      sched_yield();
       pthread_mutex_lock(&mainw->gtk_mutex);
+      if (mainw->splash_window==NULL) {
+	while (g_main_context_iteration(NULL,FALSE));
+      }
       if (plugin_idx==rfx_builtin_list_length) {
 	g_free(type);
 	type=g_strdup_printf(PLUGIN_RENDERED_EFFECTS_CUSTOM);
@@ -4790,7 +4794,11 @@ void add_rfx_effects(void) {
     
   // now we need to add to the effects menu and set a callback
   for (rfx=&mainw->rendered_fx[(plugin_idx=1)];plugin_idx<=rfx_slot_count;rfx=&mainw->rendered_fx[++plugin_idx]) {
+    sched_yield();
     pthread_mutex_lock(&mainw->gtk_mutex);
+    if (mainw->splash_window==NULL) {
+      while (g_main_context_iteration(NULL,FALSE));
+    }
     render_fx_get_params (rfx,rfx->name,rfx->status);
     pthread_mutex_unlock(&mainw->gtk_mutex);
     rfx->source=NULL;
@@ -4946,7 +4954,11 @@ void add_rfx_effects(void) {
 
   if (rfx_slot_count) {
     for (rfx=&mainw->rendered_fx[(plugin_idx=1)];plugin_idx<=rfx_slot_count;rfx=&mainw->rendered_fx[++plugin_idx]) {
+      sched_yield();
       pthread_mutex_lock(&mainw->gtk_mutex);
+      if (mainw->splash_window==NULL) {
+	while (g_main_context_iteration(NULL,FALSE));
+      }
       if ((rfx->props&RFX_PROPS_MAY_RESIZE&&rfx->num_in_channels==1)||rfx->min_frames<0) {
 	// add resizing effects to tools menu
 

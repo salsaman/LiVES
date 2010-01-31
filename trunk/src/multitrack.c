@@ -13075,7 +13075,6 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free(com);
       end_threaded_dialog();
     }
-    d_print_cancelled();
   }
   gtk_widget_set_sensitive(mt->render_vid,TRUE);
   gtk_widget_set_sensitive(mt->render_aud,TRUE);

@@ -1177,7 +1177,7 @@ if (defined($ARGV[0])) {
 		    unless ($showed_err) {
 			print STDERR "Error playing audio !\n";
 			print STDERR "Failed command was: $syscom2\n";
-			$syscom2;
+			system($syscom2);
 			$showed_err=1;
 		    }
 		}
@@ -1714,7 +1714,7 @@ if (defined($ARGV[0])) {
 	    $arate=$ARGV[6];
 	    $achans=$ARGV[7];
 	    $asamps=$ARGV[8];
-	    $asigned=$ARG[9];
+	    $asigned=$ARGV[9];
 	    $aendian=$ARGV[10];
 
 	    $from_handle=$ARGV[11];
@@ -2031,7 +2031,7 @@ if (defined($ARGV[0])) {
 	    $end=$frames;
 	}
 
-	&undo(!$leave_back);
+	&undo(!$leave_bak);
 
 	for ($i=$frames+1;$i<=$oend;$i++) {
 	    $name=&mkname($i);
@@ -2756,7 +2756,6 @@ if (defined($ARGV[0])) {
 	    splice(@ARGV,7,1);
 	    
 	    # call render plugins in plugins/effects/rendered/$command
-	    $lib_dir=&rc_get("lib_dir");
 
 	    unless (defined($fx_prev)) {
 		$out_ext=".mgk";
@@ -4258,14 +4257,14 @@ sub open_images {
 
 	unless ($only_first) {
 	    # open in numeric order
-	    @files = sort {$a <=> $b} (@files);
+	    @files = sort {byfile($a,$b)} (@files);
 	    if (!defined($antialias)) {
 		$antialias=&rc_get("antialias");
 	    }
 	}
 
 	foreach (@files) {
-	    unless ($_ =~ /^\./||(-d $_)) {
+	    unless ($_ =~ /^\./||(! -f $_)||(-z $_)) {
 		$file="$dir/$_";
 		$nframes=&open_single_image($i);
 		if (-s "$curtmpdir/$name$img_ext") {
@@ -4291,6 +4290,30 @@ sub open_images {
     }
     return $i-$orig;
 }
+
+
+
+sub byfile {
+    #thanks to dominus !
+    my @a = split /(\d+)/, $a;
+    my @b = split /(\d+)/, $b;
+    my $M = @a > @b ? @a : @b;
+    my $res = 0;
+    for (my $i = 0; $i < $M; $i++) {
+	return -1 if ! defined $a[$i];
+	return 1 if  ! defined $b[$i];
+	if ($a[$i] =~ /\d/) {
+	    $res = $a[$i] <=> $b[$i];
+	} else {
+	    $res = $a[$i] cmp $b[$i];
+	}
+	last if $res;
+    }
+    $res;
+}
+
+
+
 
 
 sub open_single_image {
@@ -5011,7 +5034,7 @@ sub count_frames {
 sub my_basename {
     my ($exe)=shift;
     my @parts=split(/\//,$exe);
-    return @parts[-1];
+    return $parts[-1];
 }
 
 

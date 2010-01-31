@@ -1097,14 +1097,16 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     mt_desensitise(mainw->multitrack);
   }
 
-  if (mainw->only_close&&mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL) {
 
-    if (!check_for_layout_del(mainw->multitrack,FALSE)) {
-      if (mainw->multitrack!=NULL) {
-	mt_sensitise(mainw->multitrack);
-	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    if (mainw->only_close) {
+      if (!check_for_layout_del(mainw->multitrack,FALSE)) {
+	if (mainw->multitrack!=NULL) {
+	  mt_sensitise(mainw->multitrack);
+	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+	}
+	return;
       }
-      return;
     }
   }
 
@@ -1164,6 +1166,13 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 
     set_pref("ar_clipset","");
     prefs->ar_clipset=FALSE;
+
+    event_list_free_undos(mainw->multitrack);
+
+    if (mainw->multitrack->event_list!=NULL) {
+      event_list_free(mainw->multitrack->event_list);
+      mainw->multitrack->event_list=NULL;
+    }
 
     // check for layout maps
     for (i=1;i<MAX_FILES;i++) {

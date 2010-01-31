@@ -3794,6 +3794,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       if (on_multitrack_activate (NULL, (gpointer)mainw->event_list)) {
 	mainw->event_list=NULL;
 	new_clip=TRUE;
+	
       }
       else render_choice=RENDER_CHOICE_PREVIEW;
       break;

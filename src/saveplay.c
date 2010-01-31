@@ -3252,6 +3252,8 @@ gboolean open_scrap_file (void) {
 
   add_to_recovery_file(scrap_handle);
 
+  mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+
   g_free(scrap_handle);
 
   mainw->current_file=current_file;
@@ -3304,7 +3306,9 @@ void close_scrap_file (void) {
   mainw->current_file=mainw->scrap_file;
   close_current_file(current_file);
 
-  rewrite_recovery_file();
+  mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->scrap_file));
+
+  if (prefs->crash_recovery) rewrite_recovery_file();
 
   mainw->scrap_file=-1;
 }
@@ -3440,9 +3444,10 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       break;
     }
 
+
     memset(buff+strlen(buff)-strlen("\n"),0,1);
+
     if (!strcmp(buff+strlen(buff)-1,"*")) {
-  
       // set to be opened
       memset(buff+strlen(buff)-2,0,1);
       last_was_normal_file=FALSE;
@@ -3463,16 +3468,16 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
     else {
       // load single file
 
-      if (strncmp(buff,"scrap|",5)) {
+      if (!strncmp(buff,"scrap|",6)) {
 	is_scrap=TRUE;
-	buffptr=buff+5;
+	buffptr=buff+6;
       }
       else {
 	buffptr=buff;
       }
 
-
       clipdir=g_strdup_printf("%s/%s",prefs->tmpdir,buffptr);
+
       if (!g_file_test(clipdir,G_FILE_TEST_IS_DIR)) {
 	g_free(clipdir);
 	continue;
@@ -3564,53 +3569,56 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       else {
 	if (is_scrap||!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
       }
-    }
-
-
-    if (!is_scrap) {
-      // read the playback fps, play frame, and name
-      open_set_file (mainw->set_name,++clipnum);
-      
-      if (mainw->cached_list!=NULL) {
+  
+      if (!is_scrap) {
+	// read the playback fps, play frame, and name
+	open_set_file (mainw->set_name,++clipnum);
+	
+	if (mainw->cached_list!=NULL) {
+	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  g_list_free_strings(mainw->cached_list);
+	  g_list_free(mainw->cached_list);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  mainw->cached_list=NULL;
+	}
+	
+	if (mainw->current_file<1) continue;
+	
+	get_total_time (cfile);
+	if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
+	
+	// add to clip menu
+	// mutex lock
 	pthread_mutex_lock(&mainw->gtk_mutex);
-	g_list_free_strings(mainw->cached_list);
-	g_list_free(mainw->cached_list);
+	add_to_winmenu();
+	get_next_free_file();
+	cfile->start=cfile->frames>0?1:0;
+	cfile->end=cfile->frames;
+	cfile->is_loaded=TRUE;
+	unlink (cfile->info_file);
+	set_main_title(cfile->name,0);
+	
+	if (mainw->multitrack!=NULL) {
+	  gint current_file=mainw->current_file;
+	  reget_afilesize (mainw->current_file);
+	  get_total_time(cfile);
+	  mainw->current_file=mainw->multitrack->render_file;
+	  mt_init_clips(mainw->multitrack,current_file,TRUE);
+	  while (g_main_context_iteration(NULL,FALSE));
+	  mt_clip_select(mainw->multitrack,TRUE);
+	}
+	
 	pthread_mutex_unlock(&mainw->gtk_mutex);
-	mainw->cached_list=NULL;
-      }
-      
-      if (mainw->current_file<1) continue;
-      
-      get_total_time (cfile);
-      if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
-      
-      // add to clip menu
-      // mutex lock
-      pthread_mutex_lock(&mainw->gtk_mutex);
-      add_to_winmenu();
-      get_next_free_file();
-      cfile->start=cfile->frames>0?1:0;
-      cfile->end=cfile->frames;
-      cfile->is_loaded=TRUE;
-      unlink (cfile->info_file);
-      set_main_title(cfile->name,0);
-      
-      if (mainw->multitrack!=NULL) {
-	gint current_file=mainw->current_file;
-	reget_afilesize (mainw->current_file);
-	get_total_time(cfile);
-	mainw->current_file=mainw->multitrack->render_file;
-	mt_init_clips(mainw->multitrack,current_file,TRUE);
-	while (g_main_context_iteration(NULL,FALSE));
-	mt_clip_select(mainw->multitrack,TRUE);
-      }
-
-      pthread_mutex_unlock(&mainw->gtk_mutex);
-
+	
 #ifdef ENABLE_OSC
-      lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
+	lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif
-      // mutex unlock
+	// mutex unlock
+      }
+      else {
+	mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+	get_next_free_file();
+      }
     }
   }
 
@@ -3654,7 +3662,8 @@ void rewrite_recovery_file(void) {
 
   while (clist!=NULL) {
     i=GPOINTER_TO_INT(clist->data);
-    recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
+    if (i!=mainw->scrap_file) recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
+    else recovery_entry=g_strdup_printf("scrap|%s\n",mainw->files[i]->handle);
     dummyvar=write(recovery_fd,recovery_entry,strlen(recovery_entry));
     g_free(recovery_entry);
     clist=clist->next;
@@ -3729,7 +3738,7 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
 
   rewrite_recovery_file();
 
-  do_after_crash_warning();
+  if (retval) do_after_crash_warning();
 
   return retval;
 }

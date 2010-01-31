@@ -6,12 +6,13 @@ Allow continuous mouse movement on multitrack timeline.
 Allow timecode to be edited in multitrack mode.
 Switching to->from multitrack mode maintains the layout in memory.
 Allow startup in mt mode.
-Fix an encoder/png problem.
+Fix an encoder/png problem. *
 Fix image loading (regression).
-Fix some minor memory leaks.
+Fix problem with crash recovery restoring a file twice. *
+Fix some minor memory leaks. *
 
 	
-
+* Backported to 1.0.9
 
 
 	

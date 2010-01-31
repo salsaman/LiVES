@@ -320,6 +320,7 @@ void write_backup_layout_numbering(lives_mt *mt) {
 	dummyvar=write(fd,&vald,sizdbl);
       }
     }
+    clist=clist->next;
   }
 
   close(fd);
@@ -327,7 +328,7 @@ void write_backup_layout_numbering(lives_mt *mt) {
 }
 
 
-static void renumber_from_backup_layout_numbering(void) {
+static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   int fd,count=1,vari;
   gdouble vard;
   gchar *aload_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
@@ -337,6 +338,7 @@ static void renumber_from_backup_layout_numbering(void) {
   fd=open(aload_file,O_RDONLY);
 
   while (1) {
+    if (count==mt->render_file) count++;
     if (read(fd,&vari,sizint)>0) {
       renumbered_clips[vari]=count;
       if (read(fd,&vard,sizdbl)>0) {
@@ -360,7 +362,7 @@ static void save_mt_autoback(lives_mt *mt) {
   int fd;
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
 
-  set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
+  if (mt->is_ready) set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
   do_threaded_dialog(_("Auto backup"),FALSE);
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   add_markers(mt,mt->event_list);
@@ -369,7 +371,7 @@ static void save_mt_autoback(lives_mt *mt) {
   end_threaded_dialog();
   remove_markers(mt->event_list);
   close(fd);
-  set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
+  if (mt->is_ready) set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
 
   g_free(asave_file);
 }
@@ -386,10 +388,11 @@ static gboolean mt_auto_backup(gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   static gboolean in_auto_back_func=FALSE;
 
-  if (!mt->auto_changed||mt->event_list==NULL||mt->idlefunc==0||prefs->mt_auto_back<0||mainw->scrap_file>-1) {
+  if (!mt->auto_changed||mt->event_list==NULL||mt->idlefunc==0||prefs->mt_auto_back<0) {
     mt->idlefunc=0;
     return FALSE;
   }
+
 
   if (in_auto_back_func) return TRUE;
 
@@ -415,7 +418,7 @@ static gboolean mt_auto_backup(gpointer user_data) {
 
 guint mt_idle_add(lives_mt *mt) {
   // we don't have provision for saving with scrap file yet (TODO)
-  if (prefs->mt_auto_back<0||mainw->scrap_file>-1) return 0;
+  if (prefs->mt_auto_back<0) return 0;
 
   if (prefs->mt_auto_back==0) {
     mt->idlefunc=-1;
@@ -450,8 +453,6 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   eload_file=g_strdup_printf("%s.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
   unlink(eload_file);
   g_free(eload_file);
-
-  if (mainw->scrap_file>-1) close_scrap_file();
 
 }
 
@@ -7487,6 +7488,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   if (transfer_focus) gtk_window_present(GTK_WINDOW(mainw->LiVES));
 
   reset_clip_menu();
+  mainw->last_dprint_file=-1;
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
   
   if (prefs->show_gui&&prefs->open_maximised) {
@@ -8476,10 +8478,13 @@ void mt_delete_clips(lives_mt *mt, gint file) {
   GtkBoxChild *child;
   GtkWidget *label1,*label2;
   gint neg=0,i=0;
+  gboolean removed=FALSE;
 
   while (list!=NULL) {
     list_next=list->next;
     if (clips_to_files[i]==file) {
+      removed=TRUE;
+
       if (list->prev!=NULL) list->prev->next=list->next;
       if (list->next!=NULL) list->next->prev=list->prev;
 
@@ -8506,7 +8511,7 @@ void mt_delete_clips(lives_mt *mt, gint file) {
     i++;
   }
 
-  if (mt->event_list!=NULL&&used_in_current_layout(mt,file)) {
+  if (mt->event_list!=NULL&&used_in_current_layout(mt,file)&&removed) {
     gint current_file=mainw->current_file;
 
     if (!event_list_rectify(mt,mt->event_list)||get_first_event(mt->event_list)==NULL) {
@@ -8521,6 +8526,7 @@ void mt_delete_clips(lives_mt *mt, gint file) {
       mainw->current_file=current_file;
     }
   }
+
   if (mainw->current_file==-1) {
     gtk_widget_set_sensitive (mt->adjust_start_end, FALSE);
   }
@@ -8551,13 +8557,16 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
   gchar filename[256];
   gchar *tmp;
   int count=g_list_length(mt->clip_labels)/2;
+  GList *cliplist=mainw->cliplist;
 
   mt->clip_selected=-1;
 
   if (add) i=orig_file;
 
-  for (;(!add&&(i<MAX_FILES))||(add&&(i==orig_file));i++) {
-    if (mainw->files[i]!=NULL&&i!=mainw->scrap_file&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&i!=mt->render_file) {
+  while (add||cliplist!=NULL) {
+    if (add) i=orig_file;
+    else i=GPOINTER_TO_INT(cliplist->data);
+    if (i!=mainw->scrap_file) {
       if (i==orig_file||(mt->clip_selected==-1&&i==mainw->pre_src_file)) {
 	if (!add) mt->clip_selected=mt_clip_from_file(mt,i);
 	else {
@@ -8649,8 +8658,12 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 			G_CALLBACK (on_drag_clip_end),
 			(gpointer)mt);
       
-      if (add) gtk_widget_show_all(eventbox);
+      if (add) {
+	gtk_widget_show_all(eventbox);
+	break;
+      }
     }
+    cliplist=cliplist->next;
   }
 }
 
@@ -17524,7 +17537,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     rerenumber_clips(eload_file);
   }
   else {
-    renumber_from_backup_layout_numbering();
+    renumber_from_backup_layout_numbering(mt);
   }
 
   mt->avol_init_event=NULL;

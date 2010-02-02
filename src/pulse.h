@@ -123,7 +123,7 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); // pull last msg f
 
 long pulse_audio_seek_bytes (pulse_driver_t *, long bytes); // seek to byte position
 
-gint64 lives_pulse_get_time(pulse_driver_t *); // get time from pa, in 10^-8 seconds
+gint64 lives_pulse_get_time(pulse_driver_t *, gboolean absolute); // get time from pa, in 10^-8 seconds
 
 
 //////////////////////

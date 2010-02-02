@@ -2794,7 +2794,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
       if (mainw->blend_file>-1) mainw->files[mainw->blend_file]->frameno=mainw->frame_index[1];
     }
     else mainw->blend_file=-1;
-      
+
     new_file=-1;
     for (i=0;i<mainw->num_tracks&&new_file==-1;i++) new_file=mainw->clip_index[i];
     if (i==2) mainw->blend_file=-1;
@@ -2805,9 +2805,9 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
     else
       g_print ("event: front frame is %d tc %ld curr_tc=%ld\n",mainw->frame_index[0],tc,curr_tc);
 #endif
-      
+
     // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
-    if (new_file==-1) new_file=mainw->multitrack->render_file;
+    if (new_file==-1) new_file=mainw->current_file;
       
     if (new_file!=mainw->current_file) {
       mainw->files[new_file]->frameno=mainw->frame_index[i-1];

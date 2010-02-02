@@ -22,7 +22,7 @@
 /*
     NO WARRANTY
 
-      BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+    BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
       FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
 OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
       PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
@@ -411,7 +411,7 @@ typedef struct {                // corresponds to one clip in the GUI
 
   gboolean deinterlace;
 
-
+#define IMG_TYPE_UNKNOWN (1<<0)
 #define IMG_TYPE_JPEG (1<<1)
 #define IMG_TYPE_PNG (1<<2)
 
@@ -800,6 +800,7 @@ void get_border_size (GtkWidget *win, gint *bx, gint *by);
 gchar *g_strappend (gchar *string, gint len, const gchar *new);
 GList *g_list_append_unique(GList *xlist, gchar *add);
 void find_when_to_stop (void);
+gint calc_new_playback_position(file *sfile, weed_timecode_t otc, weed_timecode_t ntc);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 
 GList *get_set_list(const gchar *dir);
@@ -845,6 +846,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 void lives_exit (void);
 void on_check_clicked(void);
 void on_fileread_clicked (GtkFileChooser *fch, gpointer widget);
+gboolean dirchange_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
 // paramspecial.c
 gboolean mt_framedraw(lives_mt *, GdkPixbuf *);

@@ -348,7 +348,7 @@ struct _mt {
   gboolean is_rendering; // TRUE if we are in the process of rendering/pre-rendering to a clip, cf. mainw->is_rendering
   gboolean pr_audio; // TRUE if we are in the process of prerendering audio to a clip
 
-#define MAX_DISP_VTRACKS 4
+#define MAX_DISP_VTRACKS 5
   gint max_disp_vtracks;
   gint current_fx;
 

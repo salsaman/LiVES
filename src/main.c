@@ -759,6 +759,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->sig_pid=0;
   mainw->sig_file=NULL;
 
+  mainw->go_away=TRUE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -1788,6 +1790,7 @@ static gboolean lives_startup(gpointer data) {
 
   if (!prefs->show_gui&&prefs->startup_interface==STARTUP_CE) mainw->is_ready=TRUE;
 
+  mainw->go_away=FALSE;
   return FALSE;
 }
 
@@ -2514,6 +2517,60 @@ load_preview_image(gboolean update_always) {
 }
 
 
+#define IMG_BUFF_SIZE 4096
+
+static gint xxwidth=0,xxheight=0;
+
+void pbsize_set(GdkPixbufLoader *pbload, gint width, gint height, gpointer ptr) {
+  if (xxwidth*xxheight>0) gdk_pixbuf_loader_set_size(pbload,xxwidth,xxheight);
+}
+
+GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint height, const gchar *img_ext, GError **gerror) {
+
+  GdkPixbufLoader *pbload;
+  guchar buff[IMG_BUFF_SIZE];
+  size_t bsize;
+  int fd=open(fname,O_RDONLY);
+
+  if (fd==-1) return NULL;
+
+  xxwidth=width;
+  xxheight=height;
+  
+  if (!strcmp(img_ext,"png")) pbload=gdk_pixbuf_loader_new_with_type("png",gerror);
+  else if (!strcmp(img_ext,"jpg")) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
+  else pbload=gdk_pixbuf_loader_new();
+
+  g_signal_connect (G_OBJECT (pbload), "size_prepared",
+                      G_CALLBACK (pbsize_set),
+                      NULL);
+
+  while (1) {
+    if (!(bsize=read(fd,buff,IMG_BUFF_SIZE))) break;
+    sched_yield();
+    if (!gdk_pixbuf_loader_write(pbload,buff,bsize,gerror)) {
+      close (fd);
+      return NULL;
+    }
+    sched_yield();
+  }
+
+  sched_yield();
+
+  close(fd);
+
+  if (!gdk_pixbuf_loader_close(pbload,gerror)) return NULL;
+
+  return gdk_pixbuf_loader_get_pixbuf(pbload);
+
+}
+
+
+
+
+
+
+
 
 
 gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, int target_palette) {
@@ -2631,10 +2688,10 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
       else {
 	gchar *fname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
 	if (height*width==0) {
-	  pixbuf=gdk_pixbuf_new_from_file(fname,&gerror);
+	  pixbuf=gdk_pixbuf_new_from_file_progressive(fname,0,0,image_ext,&gerror);
 	}
 	else {
-	  pixbuf=gdk_pixbuf_new_from_file_at_scale(fname,width,height,FALSE,&gerror);
+	  pixbuf=gdk_pixbuf_new_from_file_progressive(fname,width,height,image_ext,&gerror);
 	}
 	g_free(fname);
 	mainw->osc_block=FALSE;

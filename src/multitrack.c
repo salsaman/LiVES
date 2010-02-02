@@ -305,26 +305,27 @@ void write_backup_layout_numbering(lives_mt *mt) {
 
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
 
-  while (clist!=NULL) {
-    i=GPOINTER_TO_INT(clist->data);
-    if (mt!=NULL) {
-      dummyvar=write(fd,&i,sizint);
-      vald=mainw->files[i]->fps;
-      dummyvar=write(fd,&vald,sizdbl);
-    }
-    else {
-      vali=mainw->files[i]->stored_layout_idx;
-      if (vali!=-1) {
-	dummyvar=write(fd,&vali,sizint);
+  if (fd!=-1) {
+    while (clist!=NULL) {
+      i=GPOINTER_TO_INT(clist->data);
+      if (mt!=NULL) {
+	dummyvar=write(fd,&i,sizint);
 	vald=mainw->files[i]->fps;
 	dummyvar=write(fd,&vald,sizdbl);
       }
+      else {
+	vali=mainw->files[i]->stored_layout_idx;
+	if (vali!=-1) {
+	  dummyvar=write(fd,&vali,sizint);
+	  vald=mainw->files[i]->fps;
+	  dummyvar=write(fd,&vald,sizdbl);
+	}
+      }
+      clist=clist->next;
     }
-    clist=clist->next;
+    
+    close(fd);
   }
-
-  close(fd);
-
 }
 
 
@@ -337,21 +338,22 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
   fd=open(aload_file,O_RDONLY);
 
-  while (1) {
-    if (count==mt->render_file) count++;
-    if (read(fd,&vari,sizint)>0) {
-      renumbered_clips[vari]=count;
-      if (read(fd,&vard,sizdbl)>0) {
-	lfps[count]=vard;
+  if (fd!=-1) {
+    while (1) {
+      if (count==mt->render_file) count++;
+      if (read(fd,&vari,sizint)>0) {
+	renumbered_clips[vari]=count;
+	if (read(fd,&vard,sizdbl)>0) {
+	  lfps[count]=vard;
+	}
+	else break;
       }
       else break;
+      count++;
     }
-    else break;
-    count++;
+
+    close(fd);
   }
-
-  close(fd);
-
 }
 
 
@@ -1131,8 +1133,8 @@ static void track_select (lives_mt *mt) {
 	  if (mt->poly_state==POLY_FX_STACK) polymorph(mt,POLY_FX_STACK);
 	}
 	else {
-	  if (labelbox!=NULL) gtk_widget_set_state(labelbox,GTK_STATE_NORMAL);
-	  if (ahbox!=NULL) gtk_widget_set_state(ahbox,GTK_STATE_NORMAL);
+	  if (labelbox!=NULL&&GTK_IS_WIDGET(labelbox)) gtk_widget_set_state(labelbox,GTK_STATE_NORMAL);
+	  if (ahbox!=NULL&&GTK_IS_WIDGET(ahbox)) gtk_widget_set_state(ahbox,GTK_STATE_NORMAL);
 	  gtk_widget_set_sensitive(mt->select_track,TRUE);
 	  gtk_widget_set_sensitive(mt->cback_audio,TRUE);
 	}
@@ -1275,6 +1277,40 @@ track_ebox_pressed (GtkWidget *labelbox, GdkEventButton *event, gpointer user_da
   show_track_info(mt,g_list_nth_data(mt->video_draws,mt->current_track),mt->current_track,mt->ptr_time);
   return FALSE;
 }
+
+
+
+static gboolean
+on_mt_timeline_scroll           (GtkWidget       *widget,
+				 GdkEventScroll  *event,
+				 gpointer         user_data) {
+  // scroll timeline up/down with mouse wheel
+  lives_mt *mt=(lives_mt *)user_data;
+
+  guint kstate;
+  gint cval;
+
+  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->multitrack->window))) return FALSE;
+
+  cval=GTK_ADJUSTMENT(GTK_RANGE(mt->scrollbar)->adjustment)->value;
+
+  kstate=event->state;
+
+  if (event->direction==GDK_SCROLL_UP) {
+    if (--cval<0) return FALSE;;
+  }
+  else if (event->direction==GDK_SCROLL_DOWN) {
+    if (++cval>=g_list_length(mt->video_draws)) return FALSE;
+  }
+
+  gtk_range_set_value(GTK_RANGE(mt->scrollbar),cval);
+
+  return FALSE;
+}
+
+
+
+
 
 
 
@@ -1742,6 +1778,12 @@ void scroll_tracks (lives_mt *mt) {
   gtk_widget_show_all(mt->timeline_table);
   gtk_widget_queue_draw (mt->vpaned);
 
+  gtk_widget_add_events (mt->timeline_table, GDK_SCROLL_MASK);
+
+  g_signal_connect (GTK_OBJECT (mt->timeline_table), "scroll_event",
+		    G_CALLBACK (on_mt_timeline_scroll),
+		    (gpointer)mt);
+
 }
 
 
@@ -2076,10 +2118,37 @@ void set_timeline_end_secs (lives_mt *mt, gdouble secs) {
 static weed_timecode_t set_play_position(lives_mt *mt) {
   // get start event
 
-  weed_timecode_t tc=q_gint64(GTK_RULER(mt->timeline)->position*U_SEC,cfile->fps);
-  if (tc>event_list_get_end_tc(mt->event_list)) mt->pb_start_event=get_first_event(mt->event_list);
-  else mt->pb_start_event=get_frame_event_at(mt->event_list,tc,NULL,TRUE);
+  weed_timecode_t tc;
+  weed_timecode_t end_tc=event_list_get_end_tc(mt->event_list);
+  
+  mainw->cancelled=CANCEL_NONE;
+
+#ifdef ENABLE_JACK_TRANSPORT
+  mt->pb_loop_event=get_first_frame_event(mt->event_list);
+  if (mainw->jack_can_stop&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)) {
+    tc=q_gint64(U_SEC*jack_transport_get_time(),cfile->fps);
+    if (!mainw->loop_cont) {
+      if (tc>end_tc) {
+	mainw->cancelled=CANCEL_VID_END;
+	return 0;
+      }
+    }
+    tc%=end_tc;
+    mt->is_paused=FALSE;
+  }
+  else {
+#endif
+    tc=q_gint64(GTK_RULER(mt->timeline)->position*U_SEC,cfile->fps);
+#ifdef ENABLE_JACK_TRANSPORT
+  }
+#endif
+  if (tc>event_list_get_end_tc(mt->event_list)||tc==0) mt->pb_start_event=get_first_frame_event(mt->event_list);
+  else {
+    mt->pb_start_event=get_frame_event_at(mt->event_list,tc,NULL,TRUE);
+  }
+#ifndef ENABLE_JACK_TRANSPORT
   mt->pb_loop_event=mt->pb_start_event;
+#endif
 
   return get_event_timecode(mt->pb_start_event);
 }
@@ -2603,6 +2672,8 @@ scroll_track_by_scrollbar (GtkVScrollbar *sbar, gpointer user_data) {
 }
 
 
+
+
 static void mt_zoom (lives_mt *mt, gdouble scale) {
   gdouble tl_span=(mt->tl_max-mt->tl_min)/2.;
   gdouble tl_cur;
@@ -3007,7 +3078,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 	xeventbox=gtk_event_box_new();
 	g_object_set_data(G_OBJECT(xeventbox),"fxid",GINT_TO_POINTER(i));
 
-	gtk_widget_set_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+	gtk_widget_add_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 	if (palette->style&STYLE_1) {
 	  if (palette->style&STYLE_3) {
 	    gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->normal_back);
@@ -6468,7 +6539,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_container_add (GTK_CONTAINER (mt->play_box), mt->play_blank);
 
-  gtk_widget_set_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY | GDK_LEAVE_NOTIFY);
+  gtk_widget_add_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY | GDK_LEAVE_NOTIFY);
 
   g_signal_connect (GTK_OBJECT (eventbox), "motion_notify_event",
 		    G_CALLBACK (on_framedraw_mouse_update),
@@ -6884,7 +6955,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 		    G_CALLBACK (on_track_header_release),
 		    (gpointer)mt);
 
-  gtk_widget_set_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+  gtk_widget_add_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
   mt->mouse_mot1=g_signal_connect (GTK_OBJECT (eventbox), "motion_notify_event",
 				   G_CALLBACK (on_track_header_move),
 				   (gpointer)mt);
@@ -6928,7 +6999,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 		    G_CALLBACK (on_track_between_release),
 		    (gpointer)mt);
 
-  gtk_widget_set_events (mt->tl_eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+  gtk_widget_add_events (mt->tl_eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
   mt->mouse_mot2=g_signal_connect (GTK_OBJECT (mt->tl_eventbox), "motion_notify_event",
 				  G_CALLBACK (on_track_move),
 				  (gpointer)mt);
@@ -7679,8 +7750,8 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     mt->timeline_eb=gtk_event_box_new();
     gtk_widget_show(mt->timeline_eb);
     
-    gtk_widget_set_events (mt->timeline_eb, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
-    gtk_widget_set_events (mt->timeline_reg, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+    gtk_widget_add_events (mt->timeline_eb, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+    gtk_widget_add_events (mt->timeline_reg, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
     g_signal_connect (GTK_OBJECT(mt->timeline_eb), "enter-notify-event",G_CALLBACK (on_tleb_enter),(gpointer)mt);
     g_signal_connect (GTK_OBJECT(mt->timeline_reg), "enter-notify-event",G_CALLBACK (on_tlreg_enter),(gpointer)mt);
     
@@ -8162,8 +8233,8 @@ void add_video_track (lives_mt *mt, gboolean behind) {
   g_object_set_data (G_OBJECT(eventbox), "bgimg", NULL);
 
 
-  GTK_ADJUSTMENT(mt->vadjustment)->upper=(gdouble)mt->num_video_tracks;
   GTK_ADJUSTMENT(mt->vadjustment)->page_size=max_disp_vtracks>mt->num_video_tracks?(gdouble)mt->num_video_tracks:(gdouble)max_disp_vtracks;
+  GTK_ADJUSTMENT(mt->vadjustment)->upper=(gdouble)mt->num_video_tracks+GTK_ADJUSTMENT(mt->vadjustment)->page_size;
 
   if (!behind) {
     // track in front of (above) stack
@@ -8589,7 +8660,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 	}
 	else gtk_widget_modify_bg (eventbox, GTK_STATE_SELECTED, &palette->normal_back);
       }
-      gtk_widget_set_events (eventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+      gtk_widget_add_events (eventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
       g_signal_connect (GTK_OBJECT(eventbox), "enter-notify-event",G_CALLBACK (on_clipbox_enter),(gpointer)mt);
 
       clips_to_files[count]=i;
@@ -10505,7 +10576,7 @@ void polymorph (lives_mt *mt, gshort poly) {
 	    xeventbox=gtk_event_box_new();
 	    g_object_set_data(G_OBJECT(xeventbox),"init_event",(gpointer)init_event);
 
-	    gtk_widget_set_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+	    gtk_widget_add_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 	    if (palette->style&STYLE_1) {
 	      if (palette->style&STYLE_3) {
 		gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->normal_back);
@@ -13833,10 +13904,13 @@ void multitrack_playall (lives_mt *mt) {
     if (mt->event_list!=NULL) {
       mainw->is_rendering=TRUE;  // NOTE : mainw->is_rendering is not the same as mt->is_rendering !
       set_play_position(mt);
+      if (mainw->cancelled!=CANCEL_VID_END) {
+	// otherwise jack transport set us out of range
 
-      if (mt->is_paused) mt->pb_loop_event=pb_loop_event;
-
-      on_preview_clicked (NULL,GINT_TO_POINTER(1));
+	if (mt->is_paused) mt->pb_loop_event=pb_loop_event;
+	
+	on_preview_clicked (NULL,GINT_TO_POINTER(1));
+      }
 
       mainw->is_rendering=mainw->is_processing=FALSE;
     }

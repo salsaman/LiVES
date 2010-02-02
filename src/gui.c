@@ -1994,7 +1994,7 @@ create_LiVES (void)
   gtk_ruler_set_range (GTK_RULER (mainw->hruler), 0., 10., 0., 10.);
   gtk_widget_set_size_request (mainw->hruler, -1, 20);
   gtk_widget_modify_bg (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_widget_set_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+  gtk_widget_add_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox5), mainw->hruler);
 
   if (palette->style&STYLE_1) {
@@ -2004,7 +2004,7 @@ create_LiVES (void)
   mainw->eventbox2 = gtk_event_box_new ();
   gtk_widget_show (mainw->eventbox2);
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->eventbox2, TRUE, TRUE, 0);
-  gtk_widget_set_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+  gtk_widget_add_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
   gtk_widget_modify_bg (mainw->eventbox2, GTK_STATE_NORMAL, &palette->normal_back);
 
   vbox2 = gtk_vbox_new (FALSE, 0);

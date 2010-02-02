@@ -50,12 +50,7 @@ void sample_move_d8_d16(short *dst, unsigned char *src,
       nDstCount--;
 
       ptr=src+ccount+src_offset_i;
-      if (scale<0.f) {
-	ptr=ptr>src?ptr:src;
-      }
-      else {
-	ptr=ptr<src_end?ptr:src_end;
-      }
+      ptr=ptr>src?(ptr<(src_end+ccount)?ptr:(src_end+ccount)):src;
       
       if (!swap_sign) *(dst++) = *(ptr)<<8;
       else if (swap_sign==SWAP_U_TO_S) *(dst++)=((short)(*(ptr))-128)<<8;
@@ -103,12 +98,7 @@ void sample_move_d16_d16(short *dst, short *src,
       // same number of channels
 
       ptr=src+src_offset_i;
-      if (scale<0.f) {
-	ptr=ptr>src?ptr:src;
-      }
-      else {
-	ptr=ptr<src_end?ptr:src_end;
-      }
+      ptr=ptr>src?(ptr<src_end?ptr:src_end):src;
 
       w_memcpy(dst,ptr,nSrcChannels*sizeof(short));
       dst+=nDstCount;
@@ -122,12 +112,7 @@ void sample_move_d16_d16(short *dst, short *src,
 	nDstCount--;
 	
 	ptr=src+ccount+src_offset_i;
-	if (scale<0.f) {
-	  ptr=ptr>src?ptr:src;
-	}
-	else {
-	  ptr=ptr<src_end?ptr:src_end;
-	}
+	ptr=ptr>src?(ptr<(src_end+ccount)?ptr:(src_end+ccount)):src;
 
 	/* copy the data over */
 	if (!swap_endian) {
@@ -179,7 +164,6 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
     src_offset_i=(int)src_offset_f*nSrcChannels;
   }
 
-  // take care of (rounding errors ?)
   src_end=src+tbytes/sizeof(short)-nSrcChannels;
 
   while (nsamples--) {
@@ -194,13 +178,8 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
       nDstCount--;
       
       ptr=src+ccount+src_offset_i;
-      if (scale<0.f) {
-	ptr=ptr>src?ptr:src;
-      }
-      else {
-	ptr=ptr<src_end?ptr:src_end;
-      }
-      
+      ptr=ptr>src?(ptr<(src_end+ccount)?ptr:src_end+ccount):src;
+
       /* copy the data over */
       if (!swap_sign) *(dst++) = (*ptr>>8);
       else if (swap_sign==SWAP_S_TO_U) *(dst++) = (uint8_t)((int8_t)(*ptr>>8)+128);
@@ -221,9 +200,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 }
 
 
-/* convert from 16 bit to floating point */
-/* channels to a buffer that will hold a single channel stream */
-/* src_skip is in terms of 16bit samples */
+
 void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsigned long src_skip, int is_unsigned, float vol) {
   register float svolp,svoln;
 
@@ -252,7 +229,7 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
 #ifdef ENABLE_OIL
       oil_scaleconv_f32_s16(&val,src,1,&y,val>0?&xp:&xn);
 #else
-      if ((val = (float)((*src) / (*src>0?svolp:svoln) ))>1.0f) val=1.0f;
+      if ((val = (float)((float)(*src) / (*src>0?svolp:svoln) ))>1.0f) val=1.0f;
       else if (val<-1.0f) val=-1.0f;
 #endif
     }
@@ -262,7 +239,7 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
       val-=vol;
 #else
       valss=(unsigned short)*src-SAMPLE_MAX_16BITI;
-      if ((val = (float)((valss) / (valss>0?svolp:svoln) ))>1.0f) val=1.0f;
+      if ((val = (float)((float)(valss) / (valss>0?svolp:svoln) ))>1.0f) val=1.0f;
       else if (val<-1.0f) val=-1.0f;
 #endif
     }
@@ -271,6 +248,12 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
   }
 
 }
+
+
+
+
+
+
 
 
 
@@ -888,8 +871,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
       zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate;
 
-      tbytes=(gdouble)xsamples*ABS(zavel)*in_asamps[track]*in_achans[track];
-      tbytes=((size_t)(tbytes/in_achans[track]/(in_asamps[track])))*in_achans[track]*(in_asamps[track]);
+      tbytes=(gint)((gdouble)xsamples*ABS(zavel)+((gdouble)fastrand()/(gdouble)G_MAXUINT32))*in_asamps[track]*in_achans[track];
 
       in_buff=g_malloc(tbytes);
 
@@ -898,9 +880,15 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       bytes_read=read(in_fd[track],in_buff,tbytes);
       //g_print("read %ld bytes\n",bytes_read);
 
-      if (zavel<0.) seekstart[track]-=tbytes;
+      if (zavel<0.) seekstart[track]-=bytes_read;
 
-      if (bytes_read<tbytes) memset(in_buff+bytes_read,0,tbytes-bytes_read);
+      if (bytes_read<tbytes) {
+	if (zavel>0) memset(in_buff+bytes_read,0,tbytes-bytes_read);
+	else {
+	  memmove(in_buff+tbytes-bytes_read,in_buff,bytes_read);
+	  memset(in_buff,0,tbytes-bytes_read);
+	}
+      }
 
       nframes=tbytes/(in_asamps[track])/in_achans[track]/ABS(zavel);
 

@@ -7050,7 +7050,6 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
     }
   }
   if (!mainw->is_ready) {
-    mainw->is_ready=TRUE;
     if (prefs->startup_interface==STARTUP_CE) {
 
 #ifdef ENABLE_JACK
@@ -7065,6 +7064,7 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
 #endif
     }
     resize(1);
+    mainw->is_ready=TRUE;
   }
   return FALSE;
 }

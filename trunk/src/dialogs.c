@@ -17,7 +17,6 @@
 #include "audio.h" // for fill_abuffer_from
 
 // for ping-pong loops
-extern gboolean dirchange_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); // defined in callbacks.c
 
 //
 extern void reset_frame_and_clip_index (void);
@@ -397,7 +396,7 @@ gboolean process_one (gboolean visible) {
     
 #ifdef ENABLE_JACK
     if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&!mainw->is_rendering&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
-      mainw->currticks=lives_jack_get_time(mainw->jackd);
+      mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
       if (mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback)) normal_time=TRUE;
       else normal_time=FALSE;
     }
@@ -405,7 +404,7 @@ gboolean process_one (gboolean visible) {
 
 #ifdef HAVE_PULSE_AUDIO
     if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&!mainw->is_rendering&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
-      mainw->currticks=lives_pulse_get_time(mainw->pulsed);
+      mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
       if (mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback)) normal_time=TRUE;
       else normal_time=FALSE;
     }
@@ -440,6 +439,9 @@ gboolean process_one (gboolean visible) {
 #endif
 
     }
+
+
+
     if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL&&(tc=mainw->currticks-mainw->origticks)>=event_start)) {
       cfile->next_event=process_events (cfile->next_event,mainw->currticks-mainw->origticks);
 
@@ -758,10 +760,19 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (cfile->next_event!=NULL) event_start=get_event_timecode(cfile->next_event);
 
   if (!visible) {
+#ifdef ENABLE_JACK_TRANSPORT
+    if (mainw->jack_can_stop&&mainw->multitrack==NULL&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES)&&cfile->next_event==NULL)) {
+      cfile->last_frameno=1;
+      mainw->currticks=mainw->firstticks=0;
+      mainw->play_start=calc_new_playback_position(cfile,0,jack_transport_get_time()*U_SEC);
+    }
+#endif
     cfile->last_frameno=cfile->frameno=mainw->play_start;
     mainw->deltaticks=0;
   }
+
   gettimeofday(&tv, NULL);
+  mainw->video_seek_ready=TRUE;
   
   // [IMPORTANT] we subtract this from every calculation to make the numbers smaller
   mainw->startsecs=tv.tv_sec;

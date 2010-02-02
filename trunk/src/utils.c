@@ -140,6 +140,80 @@ LIVES_INLINE float LEFloat_to_BEFloat(float f) {
 }
 
 
+gint calc_new_playback_position(file *sfile, weed_timecode_t otc, weed_timecode_t ntc) {
+  // returns a frame number, sets mainw->period
+  // takes into account looping modes
+
+  // in case the frame is out of range, returns 0 and sets mainw->cancelled
+
+  gint cframe=sfile->last_frameno,nframe;
+  weed_timecode_t dtc=ntc-otc;
+  gint dir=0;
+
+  nframe=cframe+(gint)((gdouble)dtc/U_SEC*sfile->pb_fps);
+
+  if (nframe<1||nframe>sfile->frames) {
+    if (mainw->whentostop==STOP_ON_VID_END) {
+      mainw->cancelled=CANCEL_VID_END;
+      return 0;
+    }
+    
+#ifdef RT_AUDIO
+    if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0&&((prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file)||(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file))) {
+      weed_timecode_t atc=0;
+#ifdef ENABLE_JACK      
+      if (prefs->audio_player==AUD_PLAYER_JACK) atc=lives_jack_get_time(mainw->jackd,FALSE);
+#endif
+#ifdef HAVE_PULSE_AUDIO
+      if (prefs->audio_player==AUD_PLAYER_PULSE) atc=lives_pulse_get_time(mainw->pulsed,FALSE);
+#endif
+      atc+=dtc;
+      
+      if (atc<0||atc/U_SEC>=sfile->laudio_time) {
+	mainw->cancelled=CANCEL_AUD_END;
+	return 0;
+      }
+    }
+#endif
+
+    // get our frame back to within bounds
+
+    nframe%=sfile->frames;
+    if (nframe==0) nframe=sfile->frames;
+
+    if (sfile->pb_fps<0) dir=1;
+    
+    if (mainw->ping_pong) {
+      dir+=(gint)((gdouble)ntc/((gdouble)sfile->frames/sfile->pb_fps*U_SEC));
+      dir%=2;
+    }
+    if (dir) {
+      nframe=sfile->frames+1-ABS(nframe);
+      if (mainw->playing_file>-1) {
+	if (cfile->pb_fps>0) {
+	  dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	}
+      }
+      else nframe=-nframe;
+    }
+    else {
+      nframe=ABS(nframe);
+      if (mainw->playing_file>-1) {
+	if (cfile->pb_fps<0) {
+	  dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	}
+      }
+    }
+  }
+
+  return nframe;
+
+}
+
+
+
+
+
 void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
   // of cwidth, cheight - given restrictions rwidth * rheight

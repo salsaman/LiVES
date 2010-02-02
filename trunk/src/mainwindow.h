@@ -910,12 +910,15 @@ typedef struct {
 
   gboolean soft_debug; // for testing
 
+  // encoder text output
   GIOChannel *iochan;
   GtkTextView *optextview;
 
+  // error signalling during decoder plugin "rip_audio"
   pthread_t sig_pid;
-
   gchar *sig_file;
+
+  gboolean go_away;
 
 } mainwindow;
 

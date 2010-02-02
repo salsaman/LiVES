@@ -528,7 +528,6 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
 gboolean record_toggle_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
 
-gboolean dirchange_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); // defined as extern in dialogs.c
 
 gboolean fps_reset_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 

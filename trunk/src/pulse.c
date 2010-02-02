@@ -257,7 +257,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       else {
 	if (G_LIKELY(pulsed->fd>0)) {
 	  pulsed->aPlayPtr->size=0;
-	  in_bytes=ABS((in_frames=((gdouble)pulsed->in_arate/(gdouble)pulsed->out_arate*(gdouble)pulseFramesAvailable+(fastrand()/G_MAXUINT32))))*pulsed->in_achans*(pulsed->in_asamps>>3);
+	  in_bytes=ABS((in_frames=((gdouble)pulsed->in_arate/(gdouble)pulsed->out_arate*(gdouble)pulseFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))*pulsed->in_achans*(pulsed->in_asamps>>3);
 	  //g_print("in bytes=%ld %ld %ld %ld %d %d\n",in_bytes,pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable,pulsed->in_achans,pulsed->in_asamps);
 	  if ((shrink_factor=(gfloat)in_frames/(gfloat)pulseFramesAvailable)<0.f) {
 	    // reverse playback
@@ -770,14 +770,14 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
 
 
 
-gint64 lives_pulse_get_time(pulse_driver_t *pulsed) {
+gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
   volatile aserver_message_t *msg=pulsed->msgq;
   gdouble frames_written;
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (pulse_get_msgq(pulsed)!=NULL); // wait for seek
   frames_written=pulsed->frames_written;
   if (frames_written<0.) frames_written=0.;
-  if (pulsed->is_output) return pulsed->audio_ticks+(gint64)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
-  return pulsed->audio_ticks+(gint64)(frames_written/(gdouble)pulsed->in_arate*U_SEC);
+  if (pulsed->is_output) return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
+  return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)pulsed->in_arate*U_SEC);
 
 }
 

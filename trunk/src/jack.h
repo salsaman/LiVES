@@ -111,6 +111,8 @@ typedef struct {
 
   gboolean is_silent;
 
+  gboolean is_active;
+
   gint playing_file;
 
   volatile float jack_pulse[1024];
@@ -143,11 +145,14 @@ void jack_close_device(jack_driver_t*);
 
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); // pull last msg from msgq, or return NULL
-gint64 lives_jack_get_time(jack_driver_t *); // get time from jack, in 10^-8 seconds
+gint64 lives_jack_get_time(jack_driver_t *, gboolean absolute); // get time from jack, in 10^-8 seconds
 void jack_audio_seek_frame (jack_driver_t *, gint frame); // seek to (video) frame
 long jack_audio_seek_bytes (jack_driver_t *, long bytes); // seek to byte position
 
 void jack_get_rec_avals(jack_driver_t *);
+
+gdouble jack_transport_get_time(void);
+
 
 #endif
 

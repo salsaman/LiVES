@@ -165,7 +165,8 @@ void lives_osc_close_notify_socket (void) {
 
 /* /video/play */
 void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-
+  if (mainw->go_away) return;
+  
   if (mainw->playing_file==-1&&mainw->current_file>0) on_playall_activate(NULL,NULL);
 
 }
@@ -190,6 +191,7 @@ void lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, O
 
 
 void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (mainw->go_away) return;
 
   if (mainw->current_file<0||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) return;
 
@@ -205,6 +207,7 @@ void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OS
 
 
 void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (mainw->go_away) return;
 
   if (mainw->current_file<0||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) return;
 

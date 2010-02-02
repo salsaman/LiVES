@@ -17,10 +17,14 @@
 static jack_client_t *jack_transport_client;
 
 int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *pos, void *arg) {
-  // we will return FALSE until the first frame is loaded, and the audio seek is ready
-  // TODO
-  //return mainw->video_seek_ready;
-  return TRUE; // for now
+  // we will return FALSE until we call gettimeofday for the origin
+
+  gboolean seek_ready=mainw->video_seek_ready;
+
+  // reset for next time
+  mainw->video_seek_ready=FALSE;
+
+  return seek_ready;
 }
 
 void lives_jack_init (void) {
@@ -70,6 +74,8 @@ void lives_jack_init (void) {
   jack_transport_client=jack_client_open (jt_client, options, &status, server_name);
 
 #ifdef ENABLE_JACK_TRANSPORT
+  mainw->video_seek_ready=TRUE;
+  jack_activate(jack_transport_client);
   if (jack_transport_client!=NULL) jack_set_sync_callback (jack_transport_client, lives_start_ready_callback, NULL);
   gtk_timeout_add(KEY_RPT_INTERVAL,&lives_jack_poll,NULL);
 #else
@@ -89,10 +95,31 @@ void lives_jack_init (void) {
 // transport handling
 
 
+
+gdouble jack_transport_get_time(void) {
+#ifdef ENABLE_JACK_TRANSPORT
+  jack_nframes_t srate; 
+  jack_position_t pos;
+  jack_transport_state_t jacktstate;
+
+  jacktstate=jack_transport_query (jack_transport_client, &pos);
+  srate=jack_get_sample_rate(jack_transport_client);
+  return (gdouble)pos.frame/(gdouble)srate;
+#endif
+  return 0.;
+}
+
+
+
+
+
+
 static void jack_transport_check_state (void) {
 #ifdef ENABLE_JACK_TRANSPORT
   jack_position_t pos;
   jack_transport_state_t jacktstate;
+
+  if (mainw->go_away) return;
 
   if (!(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)) return;
 
@@ -100,9 +127,13 @@ static void jack_transport_check_state (void) {
 
   jacktstate=jack_transport_query (jack_transport_client, &pos);
 
-  if (mainw->jack_can_start&&(jacktstate==JackTransportRolling||jacktstate==JackTransportStarting)&&mainw->playing_file==-1&&mainw->current_file>0) {
+  if (mainw->jack_can_start&&(jacktstate==JackTransportRolling||jacktstate==JackTransportStarting)&&mainw->playing_file==-1&&mainw->current_file>0&&!mainw->is_processing) {
+    mainw->jack_can_start=FALSE;
     mainw->jack_can_stop=TRUE;
     on_playall_activate(NULL,NULL);
+  }
+  else if (jacktstate==JackTransportRolling||jacktstate==JackTransportStarting) {
+    mainw->video_seek_ready=TRUE;
   }
   if (jacktstate==JackTransportStopped) {
      if (mainw->playing_file>-1&&mainw->jack_can_stop) on_stop_activate (NULL,NULL);
@@ -122,7 +153,10 @@ gboolean lives_jack_poll(gpointer data) {
 
 void lives_jack_end (void) {
 #ifdef ENABLE_JACK_TRANSPORT
-  if (jack_transport_client!=NULL) jack_client_close (jack_transport_client);
+  if (jack_transport_client!=NULL) {
+    jack_deactivate (jack_transport_client);
+    jack_client_close (jack_transport_client);
+  }
 #endif
   jack_transport_client=NULL;
 }
@@ -315,7 +349,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       else {
 	if (G_LIKELY(jackd->fd>0)) {
 	  jackd->aPlayPtr->size=0;
-	  in_bytes=ABS((in_frames=((gdouble)jackd->sample_in_rate/(gdouble)jackd->sample_out_rate*(gdouble)jackFramesAvailable+(fastrand()/G_MAXUINT32))))*jackd->num_input_channels*jackd->bytes_per_channel;
+	  in_bytes=ABS((in_frames=((gdouble)jackd->sample_in_rate/(gdouble)jackd->sample_out_rate*(gdouble)jackFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))*jackd->num_input_channels*jackd->bytes_per_channel;
 	  if ((shrink_factor=(gfloat)in_frames/(gfloat)jackFramesAvailable)<0.f) {
 	    // reverse playback
 	    if ((jackd->seek_pos-=in_bytes)<0) {
@@ -436,9 +470,10 @@ static int audio_process (nframes_t nframes, void *arg) {
 	
 	numFramesToWrite = MIN(jackFramesAvailable, inputFramesAvailable/ABS(shrink_factor)); /* write as many bytes as we have space remaining, or as much as we have data to write */
 	
+
 #ifdef DEBUG_AJACK
 	g_printerr("inputFramesAvailable after conversion %ld\n", (gulong)((gdouble)inputFramesAvailable/shrink_factor));
-	g_printerr("nframes == %d, jackFramesAvailable == %ld,\n\tjackd->num_input_channels == %ld, jackd->num_output_channels == %ld\n",  nframes, jackFramesAvailable, jackd->num_input_channels, jackd->num_output_channels);
+	g_printerr("nframes == %d, jackFramesAvailable == %ld,\n\tjackd->num_input_channels == %ld, jackd->num_output_channels == %ld, nf2w %ld, in_bytes %d, sf %.8f\n",  nframes, jackFramesAvailable, jackd->num_input_channels, jackd->num_output_channels, numFramesToWrite, in_bytes, shrink_factor);
 #endif
 	
 	/* convert from 8 bit to 16 bit and mono to stereo if necessary */
@@ -599,6 +634,7 @@ int jack_get_srate (nframes_t nframes, void *arg) {
 }
 
 
+
 void jack_shutdown(void* arg) {
   jack_driver_t* jackd = (jack_driver_t*)arg;
 
@@ -648,6 +684,9 @@ void jack_close_device(jack_driver_t* jackd) {
   jackd->sound_buffer=NULL;
   jackd->buffer_size=0;
   
+  jackd->is_active=FALSE;
+
+
   /* free up the port strings */
   //g_printerr("freeing up port strings\n");
   if (jackd->jack_port_name_count>1) {
@@ -682,6 +721,8 @@ int jack_open_device(jack_driver_t *jackd) {
   /* zero out the buffer pointer and the size of the buffer */
   jackd->sound_buffer=NULL;
   jackd->buffer_size=0;
+
+  jackd->is_active=FALSE;
 
   /* set up an error handler */
   jack_set_error_function(jack_error_func);
@@ -741,6 +782,7 @@ int jack_open_device(jack_driver_t *jackd) {
   /* tell the JACK server to call `srate()' whenever
      the sample rate of the system changes. */
   jack_set_sample_rate_callback(jackd->client, jack_get_srate, jackd);
+
 
   /* tell the JACK server to call `jack_shutdown()' if
      it ever shuts down, either entirely, or if it
@@ -850,6 +892,8 @@ int jack_driver_activate (jack_driver_t *jackd) {
   const char** ports;
   gboolean failed=FALSE;
 
+  if (jackd->is_active) return 0; // already running
+
   /* tell the JACK server that we are ready to roll */
   if (jack_activate(jackd->client)) {
     //ERR( "cannot activate client\n");
@@ -930,6 +974,8 @@ int jack_driver_activate (jack_driver_t *jackd) {
       free(ports); /* free the returned array of ports */
     }
   }
+
+  jackd->is_active=TRUE;
 
   /* if something failed we need to shut the client down and return 0 */
   if (failed) {
@@ -1166,13 +1212,13 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
   return jackd->msgq;
 }
 
-gint64 lives_jack_get_time(jack_driver_t *jackd) {
+gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
   volatile aserver_message_t *msg=jackd->msgq;
   gdouble frames_written=jackd->frames_written;
   if (frames_written<0.) frames_written=0.;
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (jack_get_msgq(jackd)!=NULL); // wait for seek
-  if (jackd->is_output) return jackd->audio_ticks+(gint64)(frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
-  return jackd->audio_ticks+(gint64)(frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
+  if (jackd->is_output) return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
+  return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
 }
 
 

@@ -143,11 +143,13 @@ typedef struct {
   gshort rte_keys_virtual;
 
   guint jack_opts;
-#define JACK_OPTS_TRANSPORT_CLIENT (1<<0)
+#define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   // jack can start/stop
 #define JACK_OPTS_TRANSPORT_MASTER (1<<1)
 #define JACK_OPTS_START_TSERVER (1<<2)
 #define JACK_OPTS_NOPLAY_WHEN_PAUSED (1<<3)
 #define JACK_OPTS_START_ASERVER (1<<4)
+#define JACK_OPTS_TIMEBASE_CLIENT (1<<5)    // jack sets play start position
+#define JACK_OPTS_TIMEBASE_MASTER (1<<6)
 
   gchar jack_tserver[256];
   gchar jack_aserver[256];
@@ -325,6 +327,7 @@ typedef struct {
   GtkWidget *jack_aserver_entry;
   GtkWidget *checkbutton_jack_master;
   GtkWidget *checkbutton_jack_client;
+  GtkWidget *checkbutton_jack_tb_client;
   GtkWidget *checkbutton_jack_pwp;
   GtkWidget *checkbutton_start_tjack;
   GtkWidget *checkbutton_start_ajack;

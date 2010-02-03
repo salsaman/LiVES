@@ -1310,12 +1310,75 @@ on_mt_timeline_scroll           (GtkWidget       *widget,
 
 
 
+static gint get_top_track_for(lives_mt *mt, gint track) {
+  // find top track such that all of track fits at the bottom
+
+  GtkWidget *eventbox;
+  GList *vdraw;
+  gint extras=mt->max_disp_vtracks-1;
+  gint hidden,expanded;
+
+  if (mt->opts.back_audio_tracks>0&&mt->audio_draws==NULL) mt->opts.back_audio_tracks=0;
+  if (cfile->achans>0&&mt->opts.back_audio_tracks>0) {
+    eventbox=mt->audio_draws->data;
+    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
+    if (!hidden) {
+      extras--;
+      expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+      if (expanded) {
+	extras-=cfile->achans;
+      }
+    }
+  }
+
+  if (extras<0) return track;
+
+  vdraw=g_list_nth(mt->video_draws,track);
+  eventbox=vdraw->data;
+  expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+  if (expanded) {
+    eventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+    extras--;
+    expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+    if (expanded) {
+      extras-=cfile->achans;
+    }
+  }
+
+  if (extras<0) return track;
+
+  vdraw=vdraw->prev;
+
+  while (vdraw!=NULL) {
+    eventbox=vdraw->data;
+    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+    expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+    extras--;
+    if (expanded) {
+      eventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+      extras--;
+      expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+      if (expanded) {
+	extras-=cfile->achans;
+      }
+    }
+    if (extras<0) break;
+    vdraw=vdraw->prev;
+    track--;
+  }
+
+  if (track<0) track=0;
+  return track;
+
+}
 
 
 
 
-void scroll_tracks (lives_mt *mt) {
-  int rows=0,idx=0;
+
+
+void scroll_tracks (lives_mt *mt, gint top_track) {
+  int rows=0;
   GList *vdraws=mt->video_draws;
   GList *table_children;
   gulong seltrack_func;
@@ -1329,8 +1392,54 @@ void scroll_tracks (lives_mt *mt) {
   gint aud_tracks=0;
   gboolean expanded;
   GtkWidget *xeventbox,*aeventbox;
-  gint scrolled;
+  gint hidden;
   gulong exp_track_func;
+
+  GTK_ADJUSTMENT(mt->vadjustment)->page_size=mt->max_disp_vtracks;
+  GTK_ADJUSTMENT(mt->vadjustment)->upper=mt->num_video_tracks*2-1;
+  GTK_ADJUSTMENT(mt->vadjustment)->value=top_track;
+
+  if (top_track<0) top_track=0;
+  if (top_track>=g_list_length(mt->video_draws)) top_track=g_list_length(mt->video_draws)-1;
+
+  mt->top_track=top_track;
+
+  // first set all tracks to hidden
+  while (vdraws!=NULL) {
+    eventbox=vdraws->data;
+    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
+    hidden|=TRACK_I_HIDDEN_SCROLLED;
+    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(hidden));
+
+
+    aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+
+    if (aeventbox!=NULL) {
+      hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"hidden"));
+      hidden|=TRACK_I_HIDDEN_SCROLLED;
+      g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(hidden));
+      
+      
+      xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan0");
+    
+      if (xeventbox!=NULL) {
+	hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
+	hidden|=TRACK_I_HIDDEN_SCROLLED;
+	g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(hidden));
+	
+      }
+
+      xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan1");
+    
+      if (xeventbox!=NULL) {
+	hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
+	hidden|=TRACK_I_HIDDEN_SCROLLED;
+	g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(hidden));
+      }
+    }
+
+    vdraws=vdraws->next;
+  }
 
   if (mt->timeline_table!=NULL) {
     gtk_widget_destroy(mt->timeline_table);
@@ -1448,16 +1557,20 @@ void scroll_tracks (lives_mt *mt) {
   }
 
 
-  while (vdraws!=NULL&&rows<mt->max_disp_vtracks-aud_tracks) {
+  GTK_ADJUSTMENT(mt->vadjustment)->page_size-=aud_tracks;
+
+  vdraws=g_list_nth(mt->video_draws,top_track);
+
+  rows+=aud_tracks;
+
+  while (vdraws!=NULL&&rows<mt->max_disp_vtracks) {
     eventbox=(GtkWidget *)vdraws->data;
 
-    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
-    if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-      // we may have just collapsed an audio track...
-      g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled^=TRACK_I_OUTSCROLLED_POST));
-    }
+    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(hidden));
 
-    if (scrolled==0) {
+    if (hidden==0) {
+
       label=(GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label")));
       arrow=(GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"arrow")));
       checkbutton=(GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"checkbutton")));
@@ -1491,14 +1604,14 @@ void scroll_tracks (lives_mt *mt) {
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
       gtk_container_add (GTK_CONTAINER (ahbox), arrow);
 
-      gtk_table_attach (GTK_TABLE (mt->timeline_table), labelbox, 0, 6, rows+aud_tracks, rows+1+aud_tracks, GTK_FILL, 0, 0, 0);
-      gtk_table_attach (GTK_TABLE (mt->timeline_table), ahbox, 6, 7, rows+aud_tracks, rows+1+aud_tracks, GTK_FILL, 0, 0, 0);
+      gtk_table_attach (GTK_TABLE (mt->timeline_table), labelbox, 0, 6, rows, rows+1, GTK_FILL, 0, 0, 0);
+      gtk_table_attach (GTK_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, GTK_FILL, 0, 0, 0);
       
       g_object_set_data (G_OBJECT(eventbox),"labelbox",labelbox);
       g_object_set_data (G_OBJECT(eventbox),"ahbox",ahbox);
       g_object_set_data (G_OBJECT(ahbox),"eventbox",eventbox);
 
-      gtk_table_attach (GTK_TABLE (mt->timeline_table), eventbox, 7, 40, rows+aud_tracks, rows+1+aud_tracks,
+      gtk_table_attach (GTK_TABLE (mt->timeline_table), eventbox, 7, 40, rows, rows+1,
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			(GtkAttachOptions) (GTK_FILL), 0, 0);
 
@@ -1527,244 +1640,149 @@ void scroll_tracks (lives_mt *mt) {
       g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
 			G_CALLBACK (track_arrow_pressed),
 			(gpointer)mt);
+      rows++;
 
-      if (rows==0) GTK_ADJUSTMENT(mt->vadjustment)->value=idx;
+      if (rows==mt->max_disp_vtracks) break;
+
 
       if (mt->opts.pertrack_audio&&g_object_get_data(G_OBJECT(eventbox),"expanded")) {
+
 	aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
-	scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"hidden"));
-	if (rows<mt->max_disp_vtracks-aud_tracks-1) {
-	  if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-	    // we may have just collapsed an audio track...
-	    g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(scrolled^=TRACK_I_OUTSCROLLED_POST));
-	  }
-	  if (scrolled==0) {
-	    aud_tracks++;
+
+	hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+	g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(hidden));
+
+
+	if (hidden==0) {
+	  GTK_ADJUSTMENT(mt->vadjustment)->page_size--;
 	    
-	    expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"expanded"));
+	  expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"expanded"));
 	    
-	    label=(GTK_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"label")));
-	    arrow=(GTK_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"arrow")));
-	    
-	    labelbox=gtk_event_box_new();
-	    hbox=gtk_hbox_new(FALSE,10);
-	    ahbox=gtk_event_box_new();
-	    
-	    gtk_widget_set_state(label,GTK_STATE_NORMAL);
-	    gtk_widget_set_state(arrow,GTK_STATE_NORMAL);
-	    
-	    if (palette->style&STYLE_1) {
-	      if (palette->style&STYLE_3) {
-		gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-		gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-		gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-		gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->info_text);
-	      }
-	      else {
-		gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->normal_back);
-		gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->normal_back);
-		gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_fore);
-		gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
-	      }
+	  label=(GTK_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"label")));
+	  arrow=(GTK_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"arrow")));
+	  
+	  labelbox=gtk_event_box_new();
+	  hbox=gtk_hbox_new(FALSE,10);
+	  ahbox=gtk_event_box_new();
+	  
+	  gtk_widget_set_state(label,GTK_STATE_NORMAL);
+	  gtk_widget_set_state(arrow,GTK_STATE_NORMAL);
+	  
+	  if (palette->style&STYLE_1) {
+	    if (palette->style&STYLE_3) {
+	      gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	      gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	      gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
+	      gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->info_text);
 	    }
-	    
-	    gtk_container_add (GTK_CONTAINER (labelbox), hbox);
-	    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-	    gtk_container_add (GTK_CONTAINER (ahbox), arrow);
-	    
-	    gtk_table_attach (GTK_TABLE (mt->timeline_table), labelbox, 1, 6, rows+aud_tracks, rows+1+aud_tracks, GTK_FILL, 0, 0, 0);
-	    gtk_table_attach (GTK_TABLE (mt->timeline_table), ahbox, 6, 7, rows+aud_tracks, rows+1+aud_tracks, GTK_FILL, 0, 0, 0);
-	    
-	    g_object_set_data (G_OBJECT(aeventbox),"labelbox",labelbox);
-	    g_object_set_data (G_OBJECT(aeventbox),"ahbox",ahbox);
-	    g_object_set_data (G_OBJECT(ahbox),"eventbox",aeventbox);
-	    g_object_set_data(G_OBJECT(labelbox),"layer_number",GINT_TO_POINTER(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"))));
-	    gtk_widget_modify_bg(aeventbox, GTK_STATE_NORMAL, &palette->white);
-	    
-	    g_signal_connect (GTK_OBJECT (labelbox), "button_press_event",
-			      G_CALLBACK (atrack_ebox_pressed),
-			      (gpointer)mt);
-	    
-	    g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
-			      G_CALLBACK (track_arrow_pressed),
-			      (gpointer)mt);
-	    
-	    gtk_table_attach (GTK_TABLE (mt->timeline_table), aeventbox, 7, 40, rows+aud_tracks, rows+1+aud_tracks,
-			      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-			      (GtkAttachOptions) (GTK_FILL), 0, 0);
-	    
-	    g_signal_connect (GTK_OBJECT (aeventbox), "button_press_event",
-			      G_CALLBACK (on_track_click),
-			      (gpointer)mt);
-	    g_signal_connect (GTK_OBJECT (aeventbox), "button_release_event",
-			      G_CALLBACK (on_track_release),
-			      (gpointer)mt);
-	    exp_track_func=g_signal_connect_after (GTK_OBJECT (aeventbox), "expose_event",
-						   G_CALLBACK (expose_track_event),
-						   (gpointer)mt);
-	    g_object_set_data (G_OBJECT(aeventbox),"expose_func",(gpointer)exp_track_func);
-	    
-	    if (expanded) {
-	      xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan0");
-	      scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-	      if (rows<mt->max_disp_vtracks-aud_tracks-1) {
-		if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-		  // we may have just collapsed an audio track...
-		  g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled^=TRACK_I_OUTSCROLLED_POST));
-		}
-		
-		if (scrolled==0) {
-		  gtk_table_attach (GTK_TABLE (mt->timeline_table), xeventbox, 7, 40, rows+1+aud_tracks, rows+2+aud_tracks,
-				    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-				    (GtkAttachOptions) (GTK_FILL), 0, 0);
-		  
-		  exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
-							 G_CALLBACK (mt_expose_laudtrack_event),
-							 (gpointer)mt);
-		  g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
-		  
-		  gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->white);
-		  aud_tracks++;
-		  
-		  if (cfile->achans>1) {
-		    xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan1");
-		    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-		    if (rows<mt->max_disp_vtracks-aud_tracks-1) {
-		      if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-			// we may have just collapsed an audio track...
-			g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled^=TRACK_I_OUTSCROLLED_POST));
-		      }
-		      
-		      if (scrolled==0) {
-			gtk_table_attach (GTK_TABLE (mt->timeline_table), xeventbox, 7, 40, rows+1+aud_tracks, rows+2+aud_tracks,
-					  (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-					  (GtkAttachOptions) (GTK_FILL), 0, 0);
-			
-			gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->white);
-			exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
-							       G_CALLBACK (mt_expose_raudtrack_event),
-							       (gpointer)mt);
-			
-			g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
-			aud_tracks++;
-		      }
-		      else {
-			g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(TRACK_I_OUTSCROLLED_POST));
-		      }
-		    }
-		    else {
-		      if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-			g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-		      }
-		    }
-		  }
-		}
-		else {
-		  g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(TRACK_I_OUTSCROLLED_POST));
-		  if (cfile->achans>1) {
-		    xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan1");
-		    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-		    if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-		      g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-		    }
-		  }
-		}
-	      }
-	      else {
-		if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-		  g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-		}
-		if (cfile->achans>1) {
-		  xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan1");
-		  scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-		  if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-		    g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-		  }
-		}
-	      }
+	    else {
+	      gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->normal_back);
+	      gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->normal_back);
+	      gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_fore);
+	      gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
 	    }
 	  }
-	  else {
-	    g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(TRACK_I_OUTSCROLLED_POST));
-	    if (g_object_get_data(G_OBJECT(aeventbox),"expanded")) {
-	      xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan0");
-	      scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-	      if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-		g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-	      }
-	      if (cfile->achans>1) {
-		xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan1");
-		scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-		if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-		  g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-		}
-	      }
-	    }
-	  }
-	}
-	else {
-	  if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-	    g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-	  }
-	  if (g_object_get_data(G_OBJECT(aeventbox),"expanded")) {
+	  
+	  gtk_container_add (GTK_CONTAINER (labelbox), hbox);
+	  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+	  gtk_container_add (GTK_CONTAINER (ahbox), arrow);
+	  
+	  gtk_table_attach (GTK_TABLE (mt->timeline_table), labelbox, 1, 6, rows, rows+1, GTK_FILL, 0, 0, 0);
+	  gtk_table_attach (GTK_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, GTK_FILL, 0, 0, 0);
+	  
+	  g_object_set_data (G_OBJECT(aeventbox),"labelbox",labelbox);
+	  g_object_set_data (G_OBJECT(aeventbox),"ahbox",ahbox);
+	  g_object_set_data (G_OBJECT(ahbox),"eventbox",aeventbox);
+	  g_object_set_data(G_OBJECT(labelbox),"layer_number",GINT_TO_POINTER(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"))));
+	  gtk_widget_modify_bg(aeventbox, GTK_STATE_NORMAL, &palette->white);
+	  
+	  g_signal_connect (GTK_OBJECT (labelbox), "button_press_event",
+			    G_CALLBACK (atrack_ebox_pressed),
+			    (gpointer)mt);
+	  
+	  g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
+			    G_CALLBACK (track_arrow_pressed),
+			    (gpointer)mt);
+	  
+	  gtk_table_attach (GTK_TABLE (mt->timeline_table), aeventbox, 7, 40, rows, rows+1,
+			    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+			    (GtkAttachOptions) (GTK_FILL), 0, 0);
+	  
+	  g_signal_connect (GTK_OBJECT (aeventbox), "button_press_event",
+			    G_CALLBACK (on_track_click),
+			    (gpointer)mt);
+	  g_signal_connect (GTK_OBJECT (aeventbox), "button_release_event",
+			    G_CALLBACK (on_track_release),
+			    (gpointer)mt);
+	  exp_track_func=g_signal_connect_after (GTK_OBJECT (aeventbox), "expose_event",
+						 G_CALLBACK (expose_track_event),
+						 (gpointer)mt);
+	  g_object_set_data (G_OBJECT(aeventbox),"expose_func",(gpointer)exp_track_func);
+	  
+
+	  rows++;
+
+	  if (rows==mt->max_disp_vtracks) break;
+
+	  if (expanded) {
 	    xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan0");
-	    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-	    if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-	      g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
+	    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+	    g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(hidden));
+	    
+	    if (hidden==0) {
+	      GTK_ADJUSTMENT(mt->vadjustment)->page_size--;
+
+
+	      gtk_table_attach (GTK_TABLE (mt->timeline_table), xeventbox, 7, 40, rows, rows+1,
+				(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+				(GtkAttachOptions) (GTK_FILL), 0, 0);
+	      
+	      exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
+						     G_CALLBACK (mt_expose_laudtrack_event),
+						     (gpointer)mt);
+	      g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
+	      
+	      gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->white);
+
+	      rows++;
+	      if (rows==mt->max_disp_vtracks) break;
 	    }
+
 	    if (cfile->achans>1) {
 	      xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan1");
-	      scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-	      if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-		g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
+	      hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+	      g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(hidden));
+	      
+	      if (hidden==0) {
+		GTK_ADJUSTMENT(mt->vadjustment)->page_size--;
+		
+		gtk_table_attach (GTK_TABLE (mt->timeline_table), xeventbox, 7, 40, rows, rows+1,
+				  (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+				  (GtkAttachOptions) (GTK_FILL), 0, 0);
+		
+		gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->white);
+		exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
+						       G_CALLBACK (mt_expose_raudtrack_event),
+						       (gpointer)mt);
+		
+		g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
+		
+		rows++;
+		if (rows==mt->max_disp_vtracks) break;
+
 	      }
 	    }
 	  }
 	}
       }
-      else if (mt->opts.pertrack_audio) {
-	aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
-	g_object_set_data (G_OBJECT(aeventbox),"labelbox",NULL);
-	g_object_set_data (G_OBJECT(aeventbox),"ahbox",NULL);
-      }
-      rows++;
     }
     vdraws=vdraws->next;
-    idx++;
   }
   
-  while (vdraws!=NULL) {
-    // we may have just expanded an audio track...
-    eventbox=(GtkWidget *)vdraws->data;
-    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
-    if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-      g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-    }
-    if (mt->opts.pertrack_audio&&g_object_get_data(G_OBJECT(eventbox),"expanded")) {
-      aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
-      if (aeventbox!=NULL) {
-	scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"hidden"));
-	if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-	  g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-	}
-	if (g_object_get_data(G_OBJECT(aeventbox),"expanded")) {
-	  xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan0");
-	  scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-	  if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-	    g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-	  }
-	  if (cfile->achans>1) {
-	    xeventbox=g_object_get_data(G_OBJECT(aeventbox),"achan1");
-	    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-	    if (!(scrolled&TRACK_I_OUTSCROLLED_POST)) {
-	      g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-	    }
-	  }
-	}
-      }
-    }
-    vdraws=vdraws->next;
-  }
+
+  if (GTK_ADJUSTMENT(mt->vadjustment)->page_size<1) GTK_ADJUSTMENT(mt->vadjustment)->page_size=1;
+
+  GTK_ADJUSTMENT(mt->vadjustment)->upper=get_top_track_for(mt,mt->num_video_tracks-1)+GTK_ADJUSTMENT(mt->vadjustment)->page_size;
 
   table_children=GTK_TABLE(mt->timeline_table)->children;
 
@@ -1778,13 +1796,8 @@ void scroll_tracks (lives_mt *mt) {
   gtk_widget_show_all(mt->timeline_table);
   gtk_widget_queue_draw (mt->vpaned);
 
-  gtk_widget_add_events (mt->timeline_table, GDK_SCROLL_MASK);
-
-  g_signal_connect (GTK_OBJECT (mt->timeline_table), "scroll_event",
-		    G_CALLBACK (on_mt_timeline_scroll),
-		    (gpointer)mt);
-
 }
+
 
 
 gboolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer user_data) {
@@ -1792,16 +1805,10 @@ gboolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer u
   GtkWidget *arrow=g_object_get_data(G_OBJECT(eventbox),"arrow"),*new_arrow;
   lives_mt *mt=(lives_mt *)user_data;
   gboolean expanded=!(g_object_get_data(G_OBJECT(eventbox),"expanded"));
-  gint max_disp_vtracks=mt->max_disp_vtracks;
 
   if (mt->audio_draws==NULL||(!mt->opts.pertrack_audio&&(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data))) {
     track_ebox_pressed(eventbox,NULL,mt);
     return FALSE;
-  }
-
-  if (mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&mt->opts.back_audio_tracks>0&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
-    max_disp_vtracks--;
-    if (expanded) max_disp_vtracks-=cfile->achans;
   }
 
   g_object_set_data(G_OBJECT(eventbox),"expanded",GINT_TO_POINTER(expanded));
@@ -1813,6 +1820,7 @@ gboolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer u
     new_arrow = gtk_arrow_new (GTK_ARROW_DOWN, GTK_SHADOW_OUT);
   }
 
+
   gtk_widget_ref(new_arrow);
 
   g_object_set_data(G_OBJECT(eventbox),"arrow",new_arrow);
@@ -1823,10 +1831,7 @@ gboolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer u
   gtk_widget_unref(arrow);
   gtk_widget_destroy(arrow);
 
-  GTK_ADJUSTMENT(mt->vadjustment)->upper=(gdouble)mt->num_video_tracks;
-  GTK_ADJUSTMENT(mt->vadjustment)->page_size=max_disp_vtracks>mt->num_video_tracks?(gdouble)mt->num_video_tracks:(gdouble)max_disp_vtracks;
-
-  scroll_tracks(mt);
+  scroll_tracks(mt,mt->top_track);
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   while (g_main_context_iteration(NULL,FALSE));
   if (mt->idlefunc>0) {
@@ -2417,257 +2422,21 @@ gboolean mt_tlback_frame (GtkAccelGroup *group, GObject *obj, guint keyval, GdkM
 }
 
 
-static void scroll_pre (gint track, lives_mt *mt) {
-  gint scrolled;
-  int num_vis=0;
-  GList *liste=g_list_nth(mt->video_draws,track);
-  GtkWidget *xeventbox,*eventbox;
-  gint max_disp_vtracks=mt->max_disp_vtracks;
 
-  if (mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&mt->opts.back_audio_tracks>0&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
-    max_disp_vtracks--;
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"expanded"))) max_disp_vtracks-=cfile->achans;
-  }
-
-  while (liste!=NULL) {
-    xeventbox=(GTK_WIDGET(liste->data));
-    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-    if (scrolled&TRACK_I_OUTSCROLLED_PRE) {
-      scrolled^=TRACK_I_OUTSCROLLED_PRE;
-      g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled));
-    }
-    if (num_vis>=max_disp_vtracks) {
-       if (scrolled&TRACK_I_OUTSCROLLED_POST) break;
-       g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-    }
-    else {
-      if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-	scrolled^=TRACK_I_OUTSCROLLED_POST;
-	g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled));
-      }
-      if (scrolled==0) num_vis++;
-    }
-
-    if (mt->opts.pertrack_audio) {
-      if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"expanded"))) {
-	xeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"atrack"));
-	scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-	if (scrolled&TRACK_I_OUTSCROLLED_PRE) {
-	  scrolled^=TRACK_I_OUTSCROLLED_PRE;
-	  g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled));
-	}
-	if (num_vis>=max_disp_vtracks) {
-	  if (scrolled&TRACK_I_OUTSCROLLED_POST) break;
-	  g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-	}
-	else {
-	  if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-	    scrolled^=TRACK_I_OUTSCROLLED_POST;
-	    g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled));
-	  }
-	  if (scrolled==0) num_vis++;
-	}
-	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"expanded"))) {
-	  eventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"achan0"));
-	  scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
-	  if (scrolled&TRACK_I_OUTSCROLLED_PRE) {
-	    scrolled^=TRACK_I_OUTSCROLLED_PRE;
-	    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled));
-	  }
-	  if (num_vis>=max_disp_vtracks) {
-	    if (scrolled&TRACK_I_OUTSCROLLED_POST) break;
-	    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-	  }
-	  else {
-	    if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-	      scrolled^=TRACK_I_OUTSCROLLED_POST;
-	      g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled));
-	    }
-	    if (scrolled==0) num_vis++;
-	  }
-	  if (cfile->achans>1) {
-	    eventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"achan1"));
-	    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
-	    if (scrolled&TRACK_I_OUTSCROLLED_PRE) {
-	      scrolled^=TRACK_I_OUTSCROLLED_PRE;
-	      g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled));
-	    }
-	    if (num_vis>=max_disp_vtracks) {
-	      if (scrolled&TRACK_I_OUTSCROLLED_POST) break;
-	      g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_POST));
-	    }
-	    else {
-	      if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-		scrolled^=TRACK_I_OUTSCROLLED_POST;
-		g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled));
-	      }
-	      if (scrolled==0) num_vis++;
-	    }
-	  }
-	}
-      }
-    }
-    liste=liste->next;
-  }
-}
-
-
-static void scroll_post (gint track, lives_mt *mt) {
-  gint scrolled;
-  int num_vis=0,tnum_vis;
-  GList *liste=g_list_nth(mt->video_draws,track);
-  GtkWidget *xeventbox,*aeventbox,*eventbox;
-  gint max_disp_vtracks=mt->max_disp_vtracks;
-
-  if (mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&mt->opts.back_audio_tracks>0&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
-    max_disp_vtracks--;
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"expanded"))) max_disp_vtracks-=cfile->achans;
-  }
-
-  while (liste!=NULL) {
-    tnum_vis=0;
-    xeventbox=(GTK_WIDGET(liste->data));
-    if (mt->opts.pertrack_audio) {
-      if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"expanded"))) {
-	aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"atrack"));
-	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"expanded"))) {
-	  if (cfile->achans>1) {
-	    eventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"achan1"));
-	    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
-	    if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-	      scrolled^=TRACK_I_OUTSCROLLED_POST;
-	      g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled));
-	    }
-	    if (num_vis+3>=max_disp_vtracks) {
-	      if (scrolled&TRACK_I_OUTSCROLLED_PRE) break;
-	      g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_PRE));
-	    }
-	    else {
-	      if (scrolled&TRACK_I_OUTSCROLLED_PRE) {
-		scrolled^=TRACK_I_OUTSCROLLED_PRE;
-		g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled));
-	      }
-	      if (scrolled==0) tnum_vis++;
-	    }
-	  }
-	  eventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"achan0"));
-	  scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
-	  if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-	    scrolled^=TRACK_I_OUTSCROLLED_POST;
-	    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled));
-	  }
-	  if (num_vis+2>=max_disp_vtracks) {
-	    if (scrolled&TRACK_I_OUTSCROLLED_PRE) break;
-	    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_PRE));
-	  }
-	  else {
-	    if (scrolled&TRACK_I_OUTSCROLLED_PRE) {
-	      scrolled^=TRACK_I_OUTSCROLLED_PRE;
-	      g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled));
-	    }
-	    if (scrolled==0) tnum_vis++;
-	  }
-	}
-	scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"hidden"));
-	if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-	  scrolled^=TRACK_I_OUTSCROLLED_POST;
-	  g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(scrolled));
-	}
-	if (num_vis+1>=max_disp_vtracks) {
-	  if (scrolled&TRACK_I_OUTSCROLLED_PRE) break;
-	  g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_PRE));
-	}
-	else {
-	  if (scrolled&TRACK_I_OUTSCROLLED_PRE) {
-	    scrolled^=TRACK_I_OUTSCROLLED_PRE;
-	    g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(scrolled));
-	  }
-	  if (scrolled==0) tnum_vis++;
-	}
-      }
-    }
-    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-    if (scrolled&TRACK_I_OUTSCROLLED_POST) {
-      scrolled^=TRACK_I_OUTSCROLLED_POST;
-      g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled));
-    }
-    if (num_vis>=max_disp_vtracks) {
-       if (scrolled&TRACK_I_OUTSCROLLED_PRE) break;
-       g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_PRE));
-    }
-    else {
-      if (scrolled&TRACK_I_OUTSCROLLED_PRE) {
-	scrolled^=TRACK_I_OUTSCROLLED_PRE;
-	g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled));
-      }
-      if (scrolled==0) num_vis+=tnum_vis+1;
-    }
-    liste=liste->prev;
-  }
-}
-
-
-
-static void scroll_track_on_screen(gint track, lives_mt *mt) {
-  GtkWidget *xeventbox=GTK_WIDGET(g_list_nth_data(mt->video_draws,track));
-  gint scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-
-  if (scrolled==0) {
-    return;
-  }
-  else {
-    if (scrolled==TRACK_I_OUTSCROLLED_PRE) scroll_pre(track,mt);
-    if (scrolled==TRACK_I_OUTSCROLLED_POST) scroll_post(track,mt);
-  }
-  scroll_tracks(mt);
+static void scroll_track_on_screen(lives_mt *mt, gint track) {
+  if (track>mt->top_track) track=get_top_track_for(mt,track);
+  scroll_tracks(mt,track);
+ 
   return;
 }
 
 
 
-static void scroll_track_to_top(gint track, lives_mt *mt) {
-  GList *liste=g_list_nth(mt->video_draws,track);
-  GtkWidget *xeventbox=liste->data,*eventbox;
-  gint scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-
-  if (scrolled==0) {
-    while (liste!=NULL) {
-      xeventbox=GTK_WIDGET(liste->data);
-      scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-      if (scrolled&TRACK_I_OUTSCROLLED_PRE) break;
-      g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_PRE));
-      if (mt->opts.pertrack_audio) {
-	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"expanded"))) {
-	  xeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"atrack"));
-	  scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
-	  if (scrolled&TRACK_I_OUTSCROLLED_PRE) break;
-	  g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_PRE));
-	}
-	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"expanded"))) {
-	  eventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"achan0"));
-	  scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
-	  if (scrolled&TRACK_I_OUTSCROLLED_PRE) break;
-	  g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_PRE));
-	  if (cfile->achans>1) {
-	    eventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"achan1"));
-	    scrolled=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
-	    if (scrolled&TRACK_I_OUTSCROLLED_PRE) break;
-	    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(scrolled|TRACK_I_OUTSCROLLED_PRE));
-	  }
-	}
-      }
-      liste=liste->prev;
-    }
-  }
-
-  scroll_track_on_screen(track,mt);
-  return;
-}
 
 void
 scroll_track_by_scrollbar (GtkVScrollbar *sbar, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  scroll_track_to_top(GTK_ADJUSTMENT(GTK_RANGE(sbar)->adjustment)->value,mt);
+  scroll_tracks(mt,GTK_ADJUSTMENT(GTK_RANGE(sbar)->adjustment)->value);
   track_select(mt);
 }
 
@@ -2750,7 +2519,7 @@ gboolean mt_trdown (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifie
     }
   }
   mt->selected_init_event=NULL;
-  scroll_track_on_screen(mt->current_track,mt);
+  scroll_track_on_screen(mt,mt->current_track);
   track_select(mt);
 
   return TRUE;
@@ -2770,7 +2539,7 @@ gboolean mt_trup (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierT
     }
   }
   mt->selected_init_event=NULL;
-  if (mt->current_track!=-1) scroll_track_on_screen(mt->current_track,mt);
+  if (mt->current_track!=-1) scroll_track_on_screen(mt,mt->current_track);
   track_select(mt);
 
   return TRUE;
@@ -4333,7 +4102,7 @@ gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs) {
     retval=mt_set_vals_string();
   }
 
-  if (mt->is_ready) scroll_tracks(mt);
+  if (mt->is_ready) scroll_tracks(mt,0);
 
   if (cfile->achans==0) {
     mt->avol_fx=-1;
@@ -6999,12 +6768,18 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 		    G_CALLBACK (on_track_between_release),
 		    (gpointer)mt);
 
-  gtk_widget_add_events (mt->tl_eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+
+  gtk_widget_add_events (mt->tl_eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK|GDK_SCROLL_MASK);
   mt->mouse_mot2=g_signal_connect (GTK_OBJECT (mt->tl_eventbox), "motion_notify_event",
 				  G_CALLBACK (on_track_move),
 				  (gpointer)mt);
 
   g_signal_handler_block (mt->tl_eventbox,mt->mouse_mot2);
+
+
+  g_signal_connect (GTK_OBJECT (mt->tl_eventbox), "scroll_event",
+		    G_CALLBACK (on_mt_timeline_scroll),
+		    (gpointer)mt);
 
   gtk_box_pack_end (GTK_BOX (mt->tl_hbox), mt->scrollbar, FALSE, FALSE, 10);
 
@@ -7196,6 +6971,7 @@ void delete_audio_track(lives_mt *mt, GtkWidget *eventbox, gboolean full) {
   g_free(g_object_get_data(G_OBJECT(eventbox),"track_name"));
   gtk_widget_destroy(eventbox);
 }
+
 
 
 static int *update_layout_map(weed_plant_t *event_list) {
@@ -8061,6 +7837,7 @@ void delete_video_track(lives_mt *mt, gint layer, gboolean full) {
   checkbutton=g_object_get_data (G_OBJECT(eventbox), "checkbutton");
   label=g_object_get_data (G_OBJECT(eventbox), "label");
   arrow=g_object_get_data (G_OBJECT(eventbox), "arrow");
+
   gtk_widget_destroy(checkbutton);
   gtk_widget_destroy(label);
   gtk_widget_destroy(arrow);
@@ -8071,6 +7848,10 @@ void delete_video_track(lives_mt *mt, gint layer, gboolean full) {
     if (ahbox!=NULL) gtk_widget_destroy(ahbox);
   }
   g_free(g_object_get_data(G_OBJECT(eventbox),"track_name"));
+
+
+  // corresponding audio track will be deleted in delete_audio_track(s)
+
   gtk_widget_destroy(eventbox);
 }
 
@@ -8093,6 +7874,7 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
   g_object_set_data (G_OBJECT(audio_draw), "hidden", GINT_TO_POINTER(0));
   g_object_set_data (G_OBJECT(audio_draw), "expanded",GINT_TO_POINTER(FALSE));
   g_object_set_data (G_OBJECT(audio_draw), "bgimg", NULL);
+  g_object_set_data (G_OBJECT(audio_draw), "backup_image", NULL);
 
   GTK_ADJUSTMENT(mt->vadjustment)->upper=(gdouble)mt->num_video_tracks;
   GTK_ADJUSTMENT(mt->vadjustment)->page_size=max_disp_vtracks>mt->num_video_tracks?(gdouble)mt->num_video_tracks:(gdouble)max_disp_vtracks;
@@ -8136,6 +7918,8 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
     g_free(pname);
     g_object_set_data(G_OBJECT(eventbox),"owner",audio_draw);
     g_object_set_data (G_OBJECT(eventbox), "hidden", GINT_TO_POINTER(0));
+    g_object_set_data (G_OBJECT(eventbox), "bgimg", NULL);
+    g_object_set_data (G_OBJECT(eventbox), "backup_image", NULL);
   }
 
   gtk_widget_queue_draw (mt->vpaned);
@@ -8231,7 +8015,7 @@ void add_video_track (lives_mt *mt, gboolean behind) {
   g_object_set_data (G_OBJECT(eventbox), "block_last", (gpointer)NULL);
   g_object_set_data (G_OBJECT(eventbox), "hidden", GINT_TO_POINTER(0));
   g_object_set_data (G_OBJECT(eventbox), "bgimg", NULL);
-
+  g_object_set_data (G_OBJECT(eventbox), "backup_image", NULL);
 
   GTK_ADJUSTMENT(mt->vadjustment)->page_size=max_disp_vtracks>mt->num_video_tracks?(gdouble)mt->num_video_tracks:(gdouble)max_disp_vtracks;
   GTK_ADJUSTMENT(mt->vadjustment)->upper=(gdouble)mt->num_video_tracks+GTK_ADJUSTMENT(mt->vadjustment)->page_size;
@@ -8276,7 +8060,6 @@ void add_video_track (lives_mt *mt, gboolean behind) {
       liste->data=GINT_TO_POINTER(GPOINTER_TO_INT(liste->data)+1);
       liste=liste->next;
     }
-    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(TRACK_I_OUTSCROLLED_PRE));
   }
   else {
     // add track behind (below) stack
@@ -8284,7 +8067,6 @@ void add_video_track (lives_mt *mt, gboolean behind) {
     g_object_set_data (G_OBJECT(eventbox),"layer_number",GINT_TO_POINTER(mt->num_video_tracks-1));
     g_object_set_data (G_OBJECT(checkbutton),"layer_number",GINT_TO_POINTER(mt->num_video_tracks-1));
     g_object_set_data (G_OBJECT(arrow),"layer_number",GINT_TO_POINTER(mt->num_video_tracks-1));
-    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(TRACK_I_OUTSCROLLED_POST));
     mt->current_track=mt->num_video_tracks-1;
   }
 
@@ -8309,8 +8091,8 @@ void add_video_track (lives_mt *mt, gboolean behind) {
     g_object_set_data (G_OBJECT(eventbox),"atrack",aeventbox);
   }
 
-  if (!behind) scroll_track_on_screen(0,mt);
-  else scroll_track_on_screen(mt->num_video_tracks-1,mt);
+  if (!behind) scroll_track_on_screen(mt,0);
+  else scroll_track_on_screen(mt,mt->num_video_tracks-1);
 
   gtk_widget_queue_draw (mt->vpaned);
 
@@ -11666,7 +11448,7 @@ mt_view_audio_toggled                (GtkMenuItem     *menuitem,
   if (!mt->opts.show_audio) g_object_set_data(G_OBJECT(mt->audio_draws->data),"hidden",GINT_TO_POINTER(TRACK_I_HIDDEN_USER));
   else g_object_set_data(G_OBJECT(mt->audio_draws->data),"hidden",GINT_TO_POINTER(0));
 
-  scroll_tracks(mt);
+  scroll_tracks(mt,mt->top_track);
 
 }
 
@@ -18081,7 +17863,7 @@ void mt_change_disp_tracks_ok                (GtkButton     *button,
   lives_mt *mt=(lives_mt *)user_data;
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   mt->max_disp_vtracks=mainw->fx1_val;
-  scroll_tracks(mt);
+  scroll_tracks(mt,mt->top_track);
 }
 
 
@@ -18209,7 +17991,7 @@ void mt_change_vals_activate (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_widget_show(mt->render_aud);
     gtk_widget_show(mt->view_audio);
   }
-  scroll_tracks(mt);
+  scroll_tracks(mt,mt->top_track);
 }
 
 

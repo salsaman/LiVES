@@ -152,13 +152,14 @@ gboolean lives_jack_poll(gpointer data) {
 }
 
 void lives_jack_end (void) {
+  jack_client_t *client=jack_transport_client;
+  jack_transport_client=NULL; // stop polling transport
 #ifdef ENABLE_JACK_TRANSPORT
-  if (jack_transport_client!=NULL) {
-    jack_deactivate (jack_transport_client);
-    jack_client_close (jack_transport_client);
+  if (client!=NULL) {
+    jack_deactivate (client);
+    jack_client_close (client);
   }
 #endif
-  jack_transport_client=NULL;
 }
 
 

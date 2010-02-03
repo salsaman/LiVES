@@ -473,6 +473,8 @@ struct _mt {
 
   gint selected_filter; // filter selected in poly window tab
 
+  gint top_track; // top (video) track in scrolled window
+
   gboolean redraw_block; // block drawing of playback cursor during track redraws
 
   gboolean was_undo_redo;
@@ -534,9 +536,8 @@ typedef struct {
 
 
 // reasons for track invisibility (bitmap)
-#define TRACK_I_OUTSCROLLED_PRE (1<<0)
-#define TRACK_I_OUTSCROLLED_POST (1<<1)
-#define TRACK_I_HIDDEN_USER (1<<2)
+#define TRACK_I_HIDDEN_USER (1<<0)
+#define TRACK_I_HIDDEN_SCROLLED (1<<1)
 
 struct _track_rect {
   // track rectangles (blocks), we translate our event_list FRAME events into these, then when exposed, the eventbox draws them
@@ -677,7 +678,7 @@ void remove_first_gaps (GtkMenuItem *, gpointer mt);
 void on_insgap_sel_activate (GtkMenuItem *, gpointer mt);
 void on_insgap_cur_activate (GtkMenuItem *, gpointer mt);
 void on_split_activate (GtkMenuItem *, gpointer mt);
-void scroll_tracks (lives_mt *);
+void scroll_tracks (lives_mt *, gint top_track);
 gboolean track_arrow_pressed (GtkWidget *ahbox, GdkEventButton *, gpointer mt);
 
 // track mouse movement

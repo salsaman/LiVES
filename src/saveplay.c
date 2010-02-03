@@ -3572,7 +3572,9 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
   
       if (!is_scrap) {
 	// read the playback fps, play frame, and name
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	open_set_file (mainw->set_name,++clipnum);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 	
 	if (mainw->cached_list!=NULL) {
 	  pthread_mutex_lock(&mainw->gtk_mutex);

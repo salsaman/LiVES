@@ -248,6 +248,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  else (jackd->aPlayPtr->data)=NULL;
 	  jackd->seek_pos=0;
 	  jackd->playing_file=new_file;
+	  jackd->frames_written=0;
 	}
 	g_free(filename);
       }

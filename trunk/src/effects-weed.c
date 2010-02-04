@@ -4368,7 +4368,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   int key=weed_get_int_value(inst,"host_hotkey",&error);
   weed_plant_t *in_param=weed_inst_in_param(inst,pnum,FALSE);
 
-  append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[key],pchains[key]);
+  mainw->event_list=append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[key],pchains[key]);
 }
 
 
@@ -4432,9 +4432,9 @@ void weed_set_blend_factor(int hotkey) {
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
     tc=get_event_timecode(get_last_event(mainw->event_list));
-    append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[hotkey],pchains[hotkey]);
+    mainw->event_list=append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[hotkey],pchains[hotkey]);
     if (copyto>-1) {
-      append_param_change_event(mainw->event_list,tc,copyto,in_param2,init_events[hotkey],pchains[hotkey]);
+      mainw->event_list=append_param_change_event(mainw->event_list,tc,copyto,in_param2,init_events[hotkey],pchains[hotkey]);
     }
   }
 
@@ -4486,10 +4486,10 @@ void weed_set_blend_factor(int hotkey) {
   }
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
-    append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[hotkey],pchains[hotkey]);
+    mainw->event_list=append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[hotkey],pchains[hotkey]);
     if (copyto>-1) {
       weed_leaf_copy(in_param2,"value",in_param,"value");
-      append_param_change_event(mainw->event_list,tc,copyto,in_param2,init_events[hotkey],pchains[hotkey]);
+      mainw->event_list=append_param_change_event(mainw->event_list,tc,copyto,in_param2,init_events[hotkey],pchains[hotkey]);
     }
   }
 

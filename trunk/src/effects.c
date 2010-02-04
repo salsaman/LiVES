@@ -642,59 +642,23 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
 weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   file *blend_file;
   weed_plant_t *layer;
-  static gdouble blend_add_frames;
-  int oframeno;
-  static weed_timecode_t blend_tc;
-  gint blend_file_step;
+  static weed_timecode_t blend_tc=0;
+  weed_timecode_t ntc=tc;
 
   if (mainw->blend_file==-1||mainw->files[mainw->blend_file]==NULL) return NULL;
   blend_file=mainw->files[mainw->blend_file];
 
   if (mainw->blend_file!=mainw->last_blend_file) {
+    // mainw->last_blend_file is set to -1 on playback start
     mainw->last_blend_file=mainw->blend_file;
-    oframeno=blend_file->frameno;
-    blend_add_frames=0.;
+    blend_tc=tc;
   }
-  else blend_add_frames+=(gdouble)((tc-blend_tc)/U_SEC)*ABS(blend_file->pb_fps);
+  
+  blend_file->last_frameno=blend_file->frameno;
 
-  blend_tc=tc;
+  blend_file->frameno=calc_new_playback_position(mainw->blend_file,blend_tc,&ntc);
 
-  oframeno=blend_file->frameno;
-
-  blend_file_step=blend_file->pb_fps>0?1:-1;
-
-  blend_file->frameno+=(int)(blend_add_frames+.5)*blend_file_step;
-
-  blend_add_frames-=(gdouble)((blend_file->frameno-oframeno)*blend_file_step);
-
-  if (blend_file->frameno>blend_file->end) {
-    blend_add_frames-=blend_file->frameno-blend_file->end;
-    if (blend_add_frames<0.) blend_add_frames=0.;
-    if (mainw->ping_pong) {
-      blend_file->frameno=blend_file->end-(int)blend_add_frames;
-      blend_file->pb_fps=-ABS(blend_file->pb_fps);
-    }
-    else {
-      blend_file->frameno=blend_file->start+(int)blend_add_frames;
-      blend_file->pb_fps=ABS(blend_file->pb_fps);
-    }
-    blend_add_frames-=(int)blend_add_frames;
-    oframeno=blend_file->frameno;
-  }
-  else if (blend_file->frameno<blend_file->start) {
-    blend_add_frames-=blend_file->start-blend_file->frameno;
-    if (blend_add_frames<0.) blend_add_frames=0.;
-    if (mainw->ping_pong) {
-      blend_file->frameno=blend_file->start+(int)blend_add_frames;
-      blend_file->pb_fps=ABS(blend_file->pb_fps);
-    }
-    else {
-      blend_file->frameno=blend_file->end-(int)blend_add_frames;
-      blend_file->pb_fps=-ABS(blend_file->pb_fps);
-    }
-    blend_add_frames-=(int)blend_add_frames;
-    oframeno=blend_file->frameno;
-  }
+  blend_tc=ntc;
 
   layer=weed_plant_new(WEED_PLANT_CHANNEL);
   weed_set_int_value(layer,"clip",mainw->blend_file);

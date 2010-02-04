@@ -1463,6 +1463,7 @@ void free_jack_audio_buffers(void) {
       g_free(mainw->jackd->abufs[i]);
    }
   }
+  g_free(mainw->jackd->abufs);
 #endif
 }
 

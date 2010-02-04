@@ -10,18 +10,18 @@
 #ifndef __HAS_EVENTS_H__
 #define __HAS_EVENTS_H__
 
-weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames);
-weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_t tc, int filter_idx, int num_in_tracks);
-weed_plant_t *append_filter_deinit_event (weed_plant_t *event_list, weed_timecode_t tc, void *init_event, void **pchain);
-weed_plant_t *append_filter_map_event (weed_plant_t *event_list, weed_timecode_t tc, void **init_events);
-weed_plant_t *append_param_change_event (weed_plant_t *event_list, weed_timecode_t tc, gint pnum, weed_plant_t *param, void *init_event, void **pchain);
-weed_plant_t *append_marker_event (weed_plant_t *event_list, weed_timecode_t tc, int marker_type);
+weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames) WARN_UNUSED;
+weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_t tc, int filter_idx, int num_in_tracks) WARN_UNUSED;
+weed_plant_t *append_filter_deinit_event (weed_plant_t *event_list, weed_timecode_t tc, void *init_event, void **pchain) WARN_UNUSED;
+weed_plant_t *append_filter_map_event (weed_plant_t *event_list, weed_timecode_t tc, void **init_events) WARN_UNUSED;
+weed_plant_t *append_param_change_event (weed_plant_t *event_list, weed_timecode_t tc, gint pnum, weed_plant_t *param, void *init_event, void **pchain) WARN_UNUSED;
+weed_plant_t *append_marker_event (weed_plant_t *event_list, weed_timecode_t tc, int marker_type) WARN_UNUSED;
 
 /* will either insert or replace */
-weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames, weed_plant_t **shortcut);
+weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames, weed_plant_t **shortcut) WARN_UNUSED;
 void insert_audio_event_at(weed_plant_t *event_list,weed_plant_t *event, gint track, gint clipnum, gdouble time, gdouble vel);
 void remove_audio_for_track (weed_plant_t *event, int track);
-weed_plant_t *insert_blank_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t **shortcut);
+weed_plant_t *insert_blank_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t **shortcut) WARN_UNUSED;
 
 void remove_frame_from_event (weed_plant_t *event_list, weed_plant_t *event, gint track);
 void remove_end_blank_frames (weed_plant_t *event_list);

@@ -140,6 +140,15 @@ POSSIBILITY OF SUCH DAMAGES.
 #endif
 
 
+
+#ifdef __GNUC__
+#  define WARN_UNUSED  __attribute__((warn_unused_result))
+#else
+#  define WARN_UNUSED
+#endif
+
+
+
 // this struct is used only when physically resampling frames on the disk
 // we create an array of these and write them to the disk
 typedef struct {
@@ -800,7 +809,7 @@ void get_border_size (GtkWidget *win, gint *bx, gint *by);
 gchar *g_strappend (gchar *string, gint len, const gchar *new);
 GList *g_list_append_unique(GList *xlist, gchar *add);
 void find_when_to_stop (void);
-gint calc_new_playback_position(file *sfile, weed_timecode_t otc, weed_timecode_t ntc);
+gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_t *ntc);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 
 GList *get_set_list(const gchar *dir);

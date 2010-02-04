@@ -3008,7 +3008,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
       // write a RECORD_END marker
       tc=get_event_timecode(get_last_event(mainw->event_list));
-      append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_END); // mark record end
+      mainw->event_list=append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_END); // mark record end
     }
 
     mainw->record_paused=TRUE; // pause recording of further events

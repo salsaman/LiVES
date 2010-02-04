@@ -35,6 +35,7 @@ typedef struct __resaudw {
 _resaudw *resaudw;
 
 LIVES_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps);
+LIVES_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps);
 LIVES_INLINE weed_timecode_t q_dbl (gdouble in, gdouble fps);
 
 

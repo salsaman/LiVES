@@ -32,6 +32,12 @@ LIVES_INLINE weed_timecode_t q_gint64 (weed_timecode_t in, gdouble fps) {
   return (weed_timecode_t)0;
 }
 
+LIVES_INLINE weed_timecode_t q_gint64_floor (weed_timecode_t in, gdouble fps) {
+  if (in>0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
+  if (in<0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
+  return (weed_timecode_t)0;
+}
+
 LIVES_INLINE weed_timecode_t q_dbl (gdouble in, gdouble fps) {
   if (in>0) return ((weed_timecode_t)((long double)in*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   if (in<0) return ((weed_timecode_t)((long double)in*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
@@ -329,7 +335,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
 //////////////////////////////////////////////////////////////////
 
-weed_plant_t *
+WARN_UNUSED weed_plant_t *
 quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) { 
   // new style event system, now we quantise from event_list_t *in_list to *out_list with period tl/U_SEC
 

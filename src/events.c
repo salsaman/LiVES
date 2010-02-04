@@ -325,9 +325,9 @@ void remove_frame_from_event (weed_plant_t *event_list, weed_plant_t *event, gin
   for (i=0;i<numframes&&clips[i]<1;i++);
   if (i==numframes) {
     if (event==get_last_event(event_list)&&!weed_plant_has_leaf(event,"audio_clips")) delete_event(event_list,event);
-    else insert_blank_frame_event_at (event_list,tc,&event);
+    else event_list=insert_blank_frame_event_at (event_list,tc,&event);
   }
-  else insert_frame_event_at (event_list,tc,numframes,clips,frames,&event);
+  else event_list=insert_frame_event_at (event_list,tc,numframes,clips,frames,&event);
   weed_free(frames);
   weed_free(clips);
 }
@@ -951,7 +951,7 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
   // returns NULL on memory error
 
   weed_plant_t *event=NULL,*new_event,*prev;
-  weed_plant_t *new_event_list;
+  weed_plant_t *new_event_list,*xevent_list;
   weed_timecode_t xtc;
 
   int error;
@@ -985,7 +985,8 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
     }
   }
   if (event==NULL) {
-    if (append_frame_event (event_list,tc,numframes,clips,frames)==NULL) return NULL;
+    if ((xevent_list=append_frame_event (event_list,tc,numframes,clips,frames))==NULL) return NULL;
+    event_list=xevent_list;
     if (shortcut!=NULL) *shortcut=get_last_event(event_list);
     return event_list;
   }
@@ -1561,7 +1562,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
     event=get_next_frame_event(init_event);
 
     init_events=get_init_events_before(event_list,event,init_event,TRUE);
-    append_filter_map_event(event_list,new_tc,init_events);
+    event_list=append_filter_map_event(event_list,new_tc,init_events);
     g_free(init_events);
 
     filter_map=get_last_event(event_list);
@@ -1613,7 +1614,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
 	init_events=g_malloc(2*sizeof(void *));
 	init_events[0]=init_event;
 	init_events[1]=NULL;
-	append_filter_map_event (event_list, new_tc, init_events);
+	event_list=append_filter_map_event (event_list, new_tc, init_events);
 	g_free(init_events);
 	filter_map=get_last_event(event_list);
 	unlink_event(event_list,filter_map);

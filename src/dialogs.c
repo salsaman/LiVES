@@ -762,9 +762,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (!visible) {
 #ifdef ENABLE_JACK_TRANSPORT
     if (mainw->jack_can_stop&&mainw->multitrack==NULL&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES)&&cfile->next_event==NULL)) {
+      weed_timecode_t ntc=jack_transport_get_time()*U_SEC;
       cfile->last_frameno=1;
       mainw->currticks=mainw->firstticks=0;
-      mainw->play_start=calc_new_playback_position(cfile,0,jack_transport_get_time()*U_SEC);
+      mainw->play_start=calc_new_playback_position(mainw->current_file,0,&ntc);
     }
 #endif
     cfile->last_frameno=cfile->frameno=mainw->play_start;

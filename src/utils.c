@@ -18,6 +18,7 @@
 #include "main.h"
 #include "support.h"
 #include "audio.h"
+#include "resample.h"
 
 static gboolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
@@ -36,8 +37,7 @@ LIVES_INLINE gint myround(gdouble n) {
   return (n>=0.)?(gint)(n + 0.5):(gint)(n - 0.5);
 }
 
-LIVES_INLINE void 
-clear_mainw_msg (void) {
+LIVES_INLINE void clear_mainw_msg (void) {
   memset (mainw->msg,0,512);
 }
 
@@ -60,8 +60,7 @@ LIVES_INLINE int get_approx_ln(guint x) {
 
 
 
-LIVES_INLINE gchar *
-g_strappend (gchar *string, gint len, const gchar *new) {
+LIVES_INLINE gchar *g_strappend (gchar *string, gint len, const gchar *new) {
   gchar *tmp=g_strconcat (string,new,NULL);
   g_snprintf(string,len,"%s",tmp);
   g_free(tmp);
@@ -90,11 +89,26 @@ void setenv(const char *name, const char *val, int _xx) {
 }
 #endif
 
-LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame) {
-  return (frame-1.)/mainw->files[clip]->fps;
+/* convert to/from a big endian 32 bit float for internal use */
+LIVES_INLINE float LEFloat_to_BEFloat(float f) {
+  char *b=(char *)(&f);
+  if (G_BYTE_ORDER==G_LITTLE_ENDIAN) {
+    float fl;
+    guchar rev[4];
+    rev[0]=b[3];
+    rev[1]=b[2];
+    rev[2]=b[1];
+    rev[3]=b[0];
+    fl=*(float *)rev;
+    return fl;
+  }
+  return f;
 }
 
 
+LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame) {
+  return (frame-1.)/mainw->files[clip]->fps;
+}
 
 LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time) {
   // return the nearest frame (rounded) for a given time, max is cfile->frames
@@ -123,91 +137,123 @@ LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
 }
 
 
-/* convert to/from a big endian 32 bit float for internal use */
-LIVES_INLINE float LEFloat_to_BEFloat(float f) {
-  char *b=(char *)(&f);
-  if (G_BYTE_ORDER==G_LITTLE_ENDIAN) {
-    float fl;
-    guchar rev[4];
-    rev[0]=b[3];
-    rev[1]=b[2];
-    rev[2]=b[1];
-    rev[3]=b[0];
-    fl=*(float *)rev;
-    return fl;
-  }
-  return f;
-}
 
-
-gint calc_new_playback_position(file *sfile, weed_timecode_t otc, weed_timecode_t ntc) {
-  // returns a frame number, sets mainw->period
+gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_t *ntc) {
+  // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
 
-  // in case the frame is out of range, returns 0 and sets mainw->cancelled
+  // in case the frame is out of range and playing, returns 0 and sets mainw->cancelled 
 
-  gint cframe=sfile->last_frameno,nframe;
-  weed_timecode_t dtc=ntc-otc;
+  // ntc is adjusted backwards to timecode of the new frame
+
+  // this is currently used for the blend file, and for jack transport start position
+
+  // in future it can be used to calculate the playing frame also
+  // this should vastly simplify the code in process_one()
+
+
+  weed_timecode_t dtc=*ntc-otc;
+  file *sfile=mainw->files[fileno];
+
   gint dir=0;
+  gint cframe,nframe;
 
-  nframe=cframe+(gint)((gdouble)dtc/U_SEC*sfile->pb_fps);
+  gdouble fps=sfile->pb_fps;
 
+  if (mainw->playing_file==-1) fps=sfile->fps;
+
+  if (sfile==NULL) return 0;
+
+  cframe=sfile->last_frameno;
+
+  if (fps==0.) return cframe;
+
+  dtc=q_gint64_floor(dtc,fps);
+
+  *ntc=otc+dtc;
+
+  nframe=cframe+(gint)((gdouble)dtc/U_SEC*fps+(fps>0?.5:-.5));
+
+  if (mainw->playing_file==fileno) {
   if (nframe<1||nframe>sfile->frames) {
     if (mainw->whentostop==STOP_ON_VID_END) {
       mainw->cancelled=CANCEL_VID_END;
       return 0;
     }
-    
+  }
 #ifdef RT_AUDIO
-    if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0&&((prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file)||(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file))) {
-      weed_timecode_t atc=0;
+  if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0&&((prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file)||(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file))) {
+    weed_timecode_t atc=0;
 #ifdef ENABLE_JACK      
-      if (prefs->audio_player==AUD_PLAYER_JACK) atc=lives_jack_get_time(mainw->jackd,FALSE);
+    if (prefs->audio_player==AUD_PLAYER_JACK) atc=lives_jack_get_time(mainw->jackd,FALSE);
 #endif
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player==AUD_PLAYER_PULSE) atc=lives_pulse_get_time(mainw->pulsed,FALSE);
+    if (prefs->audio_player==AUD_PLAYER_PULSE) atc=lives_pulse_get_time(mainw->pulsed,FALSE);
 #endif
-      atc+=dtc;
-      
-      if (atc<0||atc/U_SEC>=sfile->laudio_time) {
-	mainw->cancelled=CANCEL_AUD_END;
-	return 0;
-      }
-    }
-#endif
-
-    // get our frame back to within bounds
-
-    nframe%=sfile->frames;
-    if (nframe==0) nframe=sfile->frames;
-
-    if (sfile->pb_fps<0) dir=1;
+    atc+=dtc;
     
+    if (atc<0||(gdouble)atc/U_SEC>=sfile->laudio_time) {
+      mainw->cancelled=CANCEL_AUD_END;
+      return 0;
+    }
+  }
+#endif
+  }
+
+
+  // get our frame back to within bounds
+  
+  nframe--; // because our frames start at 1
+
+  if (fps>0) {
+    dir=0;
     if (mainw->ping_pong) {
-      dir+=(gint)((gdouble)ntc/((gdouble)sfile->frames/sfile->pb_fps*U_SEC));
+      dir=(gint)((gdouble)nframe/(gdouble)sfile->frames);
       dir%=2;
     }
-    if (dir) {
-      nframe=sfile->frames+1-ABS(nframe);
-      if (mainw->playing_file>-1) {
-	if (cfile->pb_fps>0) {
-	  dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
-	}
+  }
+  else {
+    dir=1;
+    if (mainw->ping_pong) {
+      nframe-=sfile->frames-1;
+      dir=(gint)((gdouble)nframe/(gdouble)sfile->frames);
+      dir%=2;
+      dir++;
+    }
+  }
+
+  nframe%=sfile->frames;
+
+  if (fps<0) {
+    // backward]
+    if (dir==1) {
+      if (!mainw->ping_pong) {
+	if (nframe<0) nframe+=sfile->frames+1;
+	else nframe++;
       }
-      else nframe=-nframe;
+      else {
+	nframe+=sfile->frames;
+      }
     }
     else {
-      nframe=ABS(nframe);
-      if (mainw->playing_file>-1) {
-	if (cfile->pb_fps<0) {
-	  dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
-	}
+      nframe=ABS(nframe)+1;
+      if (mainw->ping_pong) {
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	else sfile->pb_fps=-sfile->pb_fps;
       }
+    }
+  }
+  else {
+    // forwards
+    nframe++;
+    if (mainw->ping_pong&&dir==1) {
+      nframe=sfile->frames-nframe;
+      if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+      else sfile->pb_fps=-sfile->pb_fps;
     }
   }
 
   return nframe;
-
 }
 
 

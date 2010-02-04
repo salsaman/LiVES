@@ -304,6 +304,7 @@ void write_backup_layout_numbering(lives_mt *mt) {
   GList *clist=mainw->cliplist;
 
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
+  g_free(asave_file);
 
   if (fd!=-1) {
     while (clist!=NULL) {
@@ -9483,7 +9484,7 @@ in_out_end_changed (GtkWidget *widget, gpointer user_data) {
 	new_end_event=get_next_frame_event(event);
 	if (new_end_event==NULL) {
 	  weed_plant_t *shortcut=ablock->end_event;
-	  insert_blank_frame_event_at(mt->event_list,q_gint64(new_tl_tc+(weed_timecode_t)((gdouble)(track>=0)*U_SEC/mt->fps),mt->fps),&shortcut);
+	  mt->event_list=insert_blank_frame_event_at(mt->event_list,q_gint64(new_tl_tc+(weed_timecode_t)((gdouble)(track>=0)*U_SEC/mt->fps),mt->fps),&shortcut);
 	  ablock->end_event=shortcut;
 	}
 	else ablock->end_event=new_end_event;
@@ -9544,7 +9545,7 @@ in_out_end_changed (GtkWidget *widget, gpointer user_data) {
 	remove_audio_for_track(ablock->end_event,track);
 	if (new_end_event==NULL) {
 	  weed_plant_t *shortcut=ablock->end_event;
-	  insert_blank_frame_event_at(mt->event_list,q_gint64(new_tl_tc+U_SEC/mt->fps,mt->fps),&shortcut);
+	  mt->event_list=insert_blank_frame_event_at(mt->event_list,q_gint64(new_tl_tc+U_SEC/mt->fps,mt->fps),&shortcut);
 	  ablock->end_event=shortcut;
 	}
 	else ablock->end_event=new_end_event;
@@ -12491,7 +12492,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   }
 
   // add effect_init event
-  append_filter_init_event(mt->event_list,start_tc,mt->current_fx,num_in_tracks);
+  mt->event_list=append_filter_init_event(mt->event_list,start_tc,mt->current_fx,num_in_tracks);
   mt->init_event=get_last_event(mt->event_list);
   unlink_event(mt->event_list,mt->init_event);
   weed_set_int_array(mt->init_event,"in_tracks",num_in_tracks,in_tracks);
@@ -12506,7 +12507,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
 
   // add effect map event
   init_events=get_init_events_before(mt->event_list,start_event,mt->init_event,TRUE);
-  append_filter_map_event(mt->event_list,start_tc,init_events);
+  mt->event_list=append_filter_map_event(mt->event_list,start_tc,init_events);
   g_free(init_events);
   event=get_last_event(mt->event_list);
   unlink_event(mt->event_list,event);
@@ -12516,7 +12517,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   update_filter_maps(mt->event_list,start_event,end_event,mt->init_event);
 
   // add effect deinit event
-  append_filter_deinit_event(mt->event_list,end_tc,(void *)mt->init_event,pchain);
+  mt->event_list=append_filter_deinit_event(mt->event_list,end_tc,(void *)mt->init_event,pchain);
   event=get_last_event(mt->event_list);
   unlink_event(mt->event_list,event);
   insert_filter_deinit_event_at(mt->event_list,end_event,event);
@@ -12528,7 +12529,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
 
   // add effect map event 
   init_events=get_init_events_before(mt->event_list,event,mt->init_event,FALSE); // also deletes the effect
-  append_filter_map_event(mt->event_list,end_tc,init_events);
+  mainw->event_list=append_filter_map_event(mt->event_list,end_tc,init_events);
   g_free(init_events);
 
   event=get_last_event(mt->event_list);
@@ -16229,7 +16230,7 @@ static gchar *add_filter_deinits(weed_plant_t *event_list, ttable *trans_table, 
   for (i=0;i<FX_KEYS_MAX-FX_KEYS_MAX_VIRTUAL;i++) {
     if (trans_table[i].out==NULL) return ebuf;
     if (trans_table[i].in!=NULL) {
-      append_filter_deinit_event(event_list,tc,(init_event=trans_table[i].out),pchains[i]);
+      event_list=append_filter_deinit_event(event_list,tc,(init_event=trans_table[i].out),pchains[i]);
       event=get_last_event(event_list);
 
       filter_hash=weed_get_string_value(init_event,"filter",&error);
@@ -16263,7 +16264,7 @@ static gchar *add_null_filter_map(weed_plant_t *event_list, weed_plant_t *last_f
   num_events=weed_leaf_num_elements(last_fm,"init_events");
   if (num_events==1&&weed_get_voidptr_value(last_fm,"init_events",&error)==NULL) return ebuf;
 
-  append_filter_map_event(event_list,tc,NULL);
+  event_list=append_filter_map_event(event_list,tc,NULL);
 
   ebuf=rec_error_add(ebuf,"Added missing empty filter_map",-1,tc);
   return ebuf;
@@ -16280,7 +16281,7 @@ static weed_plant_t *duplicate_frame_at(weed_plant_t *event_list, weed_plant_t *
   clips=weed_get_int_array(src_frame,"clips",&error);
   frames=weed_get_int_array(src_frame,"frames",&error);
 
-  insert_frame_event_at (event_list, tc, numframes, clips, frames, &src_frame);
+  event_list=insert_frame_event_at (event_list, tc, numframes, clips, frames, &src_frame);
 
   weed_free(clips);
   weed_free(frames);
@@ -16360,7 +16361,7 @@ static void add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gc
 
   if (!is_blank_frame(last_frame,TRUE)) {
     weed_plant_t *shortcut=last_frame;
-    insert_blank_frame_event_at(event_list,q_gint64(tc+1./U_SEC,fps),&shortcut);
+    event_list=insert_blank_frame_event_at(event_list,q_gint64(tc+1./U_SEC,fps),&shortcut);
   }
 
   while (alist!=NULL) {
@@ -17116,7 +17117,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	    ebuf=rec_error_add(ebuf,"Duplicated frame at",-1,cur_tc);
 	  }
 	  else {
-	    insert_blank_frame_event_at(event_list,cur_tc,&shortcut);
+	    event_list=insert_blank_frame_event_at(event_list,cur_tc,&shortcut);
 	    ebuf=rec_error_add(ebuf,"Inserted missing blank frame",-1,cur_tc);
 	  }
 	}

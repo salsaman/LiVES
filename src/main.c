@@ -2528,6 +2528,7 @@ void pbsize_set(GdkPixbufLoader *pbload, gint width, gint height, gpointer ptr) 
 GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint height, const gchar *img_ext, GError **gerror) {
 
   GdkPixbufLoader *pbload;
+  GdkPixbuf *pixbuf;
   guchar buff[IMG_BUFF_SIZE];
   size_t bsize;
   int fd=open(fname,O_RDONLY);
@@ -2561,7 +2562,11 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
 
   if (!gdk_pixbuf_loader_close(pbload,gerror)) return NULL;
 
-  return gdk_pixbuf_loader_get_pixbuf(pbload);
+  pixbuf=g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
+
+  g_object_unref(pbload);
+
+  return pixbuf;
 
 }
 
@@ -2971,7 +2976,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	gint fg_file=mainw->current_file;
 	gint fg_frame=mainw->actual_frame;
 	gint bg_file=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file?mainw->blend_file:-1;
-	gint bg_frame=mainw->blend_file>0&&mainw->blend_file!=-1?mainw->files[mainw->blend_file]->frameno:0;
+	gint bg_frame=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file?mainw->files[mainw->blend_file]->frameno:0;
 	int numframes;
 	int *clips,*frames;
 	weed_plant_t *event_list;

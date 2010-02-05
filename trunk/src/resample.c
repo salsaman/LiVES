@@ -24,25 +24,23 @@ static gboolean reorder_leave_back=FALSE;
 
 /////////////////////////////////////////////////////
 
-
-
 LIVES_INLINE weed_timecode_t q_gint64 (weed_timecode_t in, gdouble fps) {
-  if (in>0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
-  if (in<0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
+  if (in>(weed_timecode_t)0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
+  if (in<(weed_timecode_t)0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
 LIVES_INLINE weed_timecode_t q_gint64_floor (weed_timecode_t in, gdouble fps) {
-  if (in>0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
-  if (in<0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
+  if (in!=(weed_timecode_t)0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
 LIVES_INLINE weed_timecode_t q_dbl (gdouble in, gdouble fps) {
-  if (in>0) return ((weed_timecode_t)((long double)in*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
-  if (in<0) return ((weed_timecode_t)((long double)in*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
+  if (in>0.) return ((weed_timecode_t)((long double)in*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
+  if (in<0.) return ((weed_timecode_t)((long double)in*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   return (weed_timecode_t)0;
 }
+
 
 LIVES_INLINE gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps) {
   gint res_frames;

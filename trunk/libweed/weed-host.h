@@ -70,6 +70,7 @@ typedef int (*weed_leaf_set_flags_f)(weed_plant_t *plant, const char *key, int f
 typedef int (weed_leaf_set_caller_f)(weed_plant_t *plant, const char *key, int seed_type, int num_elems, void *value, int caller);
 
 #ifndef _SKIP_WEED_API_
+weed_default_getter_f weed_default_get;
 weed_leaf_get_f weed_leaf_get;
 weed_leaf_set_f weed_leaf_set;
 weed_leaf_set_f weed_leaf_set_plugin;

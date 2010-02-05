@@ -8,6 +8,7 @@ Switching to->from multitrack mode maintains the layout in memory.
 Allow startup in mt mode.
 Better scrolling of tracks in multitrack.
 Allow jack transport to set play start position.
+Fix possible bootstrap issue with weed plugins. *
 Fix an encoder/png problem. *
 Fix image loading (regression).
 Fix problem with crash recovery restoring a file twice. *

@@ -23,6 +23,8 @@ gboolean is_audio_channel_out(weed_plant_t *inst, int chnum);
 gboolean has_video_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean has_audio_chans_out(weed_plant_t *filter, gboolean count_opt);
 
+gint weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
+gint weed_filter_subcategorise (weed_plant_t *pl, int category, gboolean count_opt);
 gchar *weed_category_to_text(int cat, gboolean plural);
 gboolean has_usable_palette(weed_plant_t *chantmpl);
 

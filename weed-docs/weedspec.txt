@@ -80,8 +80,12 @@ Correct WEED_FILTER_HINT_STATELESS -> WEED_FILTER_HINT_IS_STATELESS
 Added WEED_CHANNEL_RESIZE_ON_ROWSTRIDES_CHANGED
 API Version to 130
 
+5/02/10
+Clarified text about default getter and bootstrap process.
 
-(C) Gabriel "Salsaman" Finch 2005 - 2009
+
+
+(C) Gabriel "Salsaman" Finch 2005 - 2010
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -1092,7 +1096,7 @@ rely on setting "copy_value_to" to force the host to set indentical
 
 == PLUGIN FUNCTIONS ==
 
-The only fixed function name the plugin MUST implement is weed_setup() function pointer, all other information is passed through respective plants (classes, functions, etc...)
+The only fixed function name the plugin MUST implement is weed_setup(), all other information is passed through respective plants (classes, functions, etc...)
 
 ==== weed_setup ====
 
@@ -1108,8 +1112,7 @@ The typedef of weed_bootstrap_f is:
     weed_plant_t *weed_bootstrap_func (default_getter_f *value, int num_versions, int *plugin_versions)
 }}}
 
-The plugin must call this, passing in a pointer to a (newly
-weed_malloc()ed) default_getter_f, an int
+The plugin must call this, passing in a pointer to a default_getter_f, an int
 "number of Weed api versions supported" and an int array of those
 versions.
 
@@ -1126,8 +1129,10 @@ function in the host of the form:
 
 The plugin should call default_getter to get all of its API functions from the
 host_info plant. It can also retrieve the "api_version" leaf (using the
-retrieved weed_leaf_get() ) to find
-out which of its API version the host assigned it. 
+retrieved weed_leaf_get() ) to find out which of its API version the host assigned it. 
+
+The default getter should use only standard memory functions, so that the plugin can 
+bootstrap the real memory functions (weed_malloc, weed_free, weed_memset and weed_memcpy).
 
 Normally a plugin would use a utility library which would take care of
 calling the bootstrap function and getting its API functions.
@@ -1145,6 +1150,46 @@ If no filters can be created (because of memory or other problems or
 version mismatches), the function should return NULL.
 
 The returned plant MUST have '''type''' WEED_PLANT_PLUGIN_INFO.
+
+
+
+To recap:
+
+1) host calls weed_init() with an API version to get its weed functions
+
+2) host dlopens a plugin, then calls weed_setup() in the plugin, passing in the bootstrap_fn
+
+3) plugin calls the bootstrap_fn in the host, passing ptr to default_getter and api versions
+
+4) host selects api version it will use, and sets default_getter function for plugin
+
+5) plugin uses default_getter function to get its api functions, depending on the api version
+
+6) plugin sets its plugin_info plant and returns it as the value from weed_setup()
+
+
+
+This may seem complex, but it provides several advantages:
+
+- each API version can have its own set of core functions
+
+- host and plugin can negotiate the plugin API version and select the latest which they both 
+  support
+
+- function overloading can be done. The host and plugin can have functions with the same name
+  but which actually resolve to different functions (for example, host and plugin both use
+  weed_leaf_set, although these actually resolve to weed_leaf_set_caller with different caller 
+  flags - this allows us to implement READ_ONLY_HOST and READ_ONLY_PLUGIN). The plugin cannot 
+  access the host's version of the function.
+
+- the host can have access to functions which the plugin cannot, for example, only the host 
+  can call weed_leaf_delete, weed_plant_free and weed_leaf_set_flags
+
+
+
+
+
+
 
 ==== init_func ====
 This is an optional function in Weed.

@@ -434,20 +434,6 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), separatormenuitem99);
   gtk_widget_set_sensitive (separatormenuitem99, FALSE);
 
-  mainw->import_proj = gtk_menu_item_new_with_mnemonic (_("_Import Project (.lv2)..."));
-  gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->import_proj);
-  gtk_widget_show (mainw->import_proj);
-
-  mainw->export_proj = gtk_menu_item_new_with_mnemonic (_("E_xport Project (.lv2)..."));
-  gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->export_proj);
-  gtk_widget_show (mainw->export_proj);
-  gtk_widget_set_sensitive (mainw->export_proj, FALSE);
-
-  separatormenuitem99 = gtk_menu_item_new ();
-  gtk_widget_show (separatormenuitem99);
-  gtk_container_add (GTK_CONTAINER (menuitem11_menu), separatormenuitem99);
-  gtk_widget_set_sensitive (separatormenuitem99, FALSE);
-
   mainw->backup = gtk_menu_item_new_with_mnemonic (_("_Backup Clip as .lv1..."));
   gtk_widget_show (mainw->backup);
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->backup);
@@ -1345,6 +1331,21 @@ create_LiVES (void)
 #endif
   }
 
+
+  separatormenuitem99 = gtk_menu_item_new ();
+  gtk_widget_show (separatormenuitem99);
+  gtk_container_add (GTK_CONTAINER (advanced_menu), separatormenuitem99);
+  gtk_widget_set_sensitive (separatormenuitem99, FALSE);
+
+  mainw->import_proj = gtk_menu_item_new_with_mnemonic (_("_Import Project (.lv2)..."));
+  gtk_container_add (GTK_CONTAINER (advanced_menu), mainw->import_proj);
+  gtk_widget_show (mainw->import_proj);
+
+  mainw->export_proj = gtk_menu_item_new_with_mnemonic (_("E_xport Project (.lv2)..."));
+  gtk_container_add (GTK_CONTAINER (advanced_menu), mainw->export_proj);
+  gtk_widget_show (mainw->export_proj);
+  gtk_widget_set_sensitive (mainw->export_proj, FALSE);
+
   mainw->vj_menu = gtk_menu_item_new_with_mnemonic (_("_VJ"));
   gtk_widget_show (mainw->vj_menu);
   gtk_container_add (GTK_CONTAINER(mainw->menubar), mainw->vj_menu);
@@ -1505,7 +1506,7 @@ create_LiVES (void)
   gtk_widget_show (suggest_feature);
   gtk_container_add (GTK_CONTAINER (menuitem14_menu), suggest_feature);
 
-  help_translate = gtk_menu_item_new_with_mnemonic (_("Help with _translating"));
+  help_translate = gtk_menu_item_new_with_mnemonic (_("Assist with _translating"));
   gtk_widget_show (help_translate);
   gtk_container_add (GTK_CONTAINER (menuitem14_menu), help_translate);
 

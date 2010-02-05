@@ -54,6 +54,8 @@
 
 #include <glib.h>
 
+extern weed_default_getter_f weed_default_get;
+
 extern weed_leaf_get_f weed_leaf_get;
 extern weed_leaf_set_f weed_leaf_set;
 extern weed_leaf_set_f weed_leaf_set_plugin;
@@ -74,6 +76,8 @@ extern weed_malloc_f weed_malloc;
 extern weed_free_f weed_free;
 extern weed_memcpy_f weed_memcpy;
 extern weed_memset_f weed_memset;
+
+static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void *value);
 
 static weed_plant_t *_weed_plant_new(int plant_type);
 static char **_weed_plant_list_leaves(weed_plant_t *plant);
@@ -323,6 +327,34 @@ static int _weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int seed_
 }
 
 
+static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void *value) {
+  // the plugin should use this only when bootstrapping in order to get its memory functions
+  // the actual weed_leaf_get
+
+  // here we must assume that the plugin does not yet have its memory functions, so we can only
+  // use the standard ones
+
+  // additionally, the prototype of this function must never change
+
+  weed_leaf_t *leaf=weed_find_leaf (plant,key);
+  if (leaf==NULL||idx>leaf->num_elements) return WEED_ERROR_NOSUCH_LEAF;
+  if (value==NULL) return WEED_NO_ERROR;
+  if (weed_seed_is_ptr (leaf->seed_type)) memcpy (value,&leaf->data[idx]->value,sizeof(void *));
+  else {
+    if (leaf->seed_type==WEED_SEED_STRING) {
+      size_t size=leaf->data[idx]->size;
+      char **valuecharptrptr=(char **)value;
+      if (size>0) memcpy(*valuecharptrptr,leaf->data[idx]->value,size);
+      memset(*valuecharptrptr+size,0,1);
+    }
+    else memcpy (value,leaf->data[idx]->value,weed_seed_get_size(leaf->seed_type,leaf->data[idx]->value));
+  }
+  return WEED_NO_ERROR;
+
+}
+
+
+
 static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *value) {
   weed_leaf_t *leaf=weed_find_leaf (plant,key);
   if (leaf==NULL||idx>leaf->num_elements) return WEED_ERROR_NOSUCH_LEAF;
@@ -371,7 +403,10 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
 
   case 100:
   case 110:
+  case 120:
+  case 130:
   default:
+    weed_default_get=_weed_default_get;
     weed_leaf_get=_weed_leaf_get;
     weed_leaf_delete=_weed_leaf_delete;
     weed_plant_free=_weed_plant_free;

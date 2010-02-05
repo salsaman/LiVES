@@ -222,6 +222,8 @@ lives_exit (void) {
       if (mainw->multitrack!=NULL) {
 	mainw->current_file=mainw->multitrack->render_file;
 	mainw->multitrack->file_selected=-1;
+	polymorph(mainw->multitrack,POLY_NONE);
+	polymorph(mainw->multitrack,POLY_CLIPS);
 	mt_sensitise(mainw->multitrack);
       }
 
@@ -251,6 +253,15 @@ lives_exit (void) {
 #ifdef ENABLE_OSC
     if (prefs->osc_udp_started) lives_osc_end();
 #endif
+  }
+
+  if (mainw->multitrack!=NULL) {
+    event_list_free_undos(mainw->multitrack);
+    
+    if (mainw->multitrack->event_list!=NULL) {
+      event_list_free(mainw->multitrack->event_list);
+      mainw->multitrack->event_list=NULL;
+    }
   }
 
   if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
@@ -522,6 +533,8 @@ on_recent_activate                      (GtkMenuItem     *menuitem,
   deduce_file(file,start,end);
 
   if (mainw->multitrack!=NULL) {
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
@@ -549,6 +562,8 @@ on_location_select                   (GtkButton       *button,
   open_file(file_name);
 
   if (mainw->multitrack!=NULL) {
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
@@ -740,6 +755,8 @@ on_close_activate                      (GtkMenuItem     *menuitem,
 
   if (mainw->multitrack!=NULL) {
     mainw->current_file=mainw->multitrack->render_file;
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     if (mainw->multitrack->event_list!=NULL) only_current=FALSE;
   }
 
@@ -1098,7 +1115,6 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL) {
-
     if (mainw->only_close) {
       if (!check_for_layout_del(mainw->multitrack,FALSE)) {
 	if (mainw->multitrack!=NULL) {
@@ -1173,7 +1189,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
       event_list_free(mainw->multitrack->event_list);
       mainw->multitrack->event_list=NULL;
     }
-
+  
     // check for layout maps
     for (i=1;i<MAX_FILES;i++) {
       if (mainw->files[i]!=NULL&&mainw->files[i]->layout_map!=NULL) {
@@ -3826,6 +3842,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       if ((new_file=mainw->first_free_file)==-1) {
 	if (!skip_threaded_dialog) end_threaded_dialog();
 	too_many_files();
+	polymorph(mainw->multitrack,POLY_NONE);
+	polymorph(mainw->multitrack,POLY_CLIPS);
 	return FALSE;
       }
       mainw->current_file=new_file;
@@ -3890,6 +3908,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       }
       else {
 	mainw->current_file=mainw->multitrack->render_file;
+	polymorph(mainw->multitrack,POLY_NONE);
+	polymorph(mainw->multitrack,POLY_CLIPS);
 	mt_sensitise(mainw->multitrack);
 	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
@@ -3926,6 +3946,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
 	if (mainw->multitrack!=NULL) {
 	  mainw->current_file=mainw->multitrack->render_file;
+	  polymorph(mainw->multitrack,POLY_NONE);
+	  polymorph(mainw->multitrack,POLY_CLIPS);
 	  mt_sensitise(mainw->multitrack);
 	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 	}
@@ -4053,6 +4075,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) {
     mainw->current_file=mainw->multitrack->render_file;
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
@@ -4655,6 +4679,8 @@ on_ok_button1_clicked                  (GtkButton       *button,
   g_strfreev(fnames);
 
   if (mainw->multitrack!=NULL) {
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
@@ -4723,6 +4749,8 @@ on_opensel_range_ok_clicked                  (GtkButton       *button,
   open_file_sel(file_name,mainw->fx1_val,(gint)mainw->fx2_val);
 
   if (mainw->multitrack!=NULL) {
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
@@ -8171,6 +8199,8 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   }
 
   if (mainw->multitrack!=NULL) {
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }

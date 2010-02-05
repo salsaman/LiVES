@@ -83,6 +83,7 @@ static LIVES_INLINE gint mt_clip_from_file(lives_mt *mt, gint file) {
 static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, gboolean save_all_vals, unsigned char **mem) {
   weed_plant_t *event=get_first_event(event_list);
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
   if (save_all_vals) {
     weed_set_int_value(event_list,"width",cfile->hsize);
     weed_set_int_value(event_list,"height",cfile->vsize);
@@ -129,15 +130,21 @@ static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list
     weed_leaf_delete(event_list,"audio_volume_tracks");
     weed_leaf_delete(event_list,"audio_volume_values");
   }
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 
   if (mem==NULL&&fd<0) return;
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
   weed_plant_serialise(fd,event_list,mem);
   while (event!=NULL) {
     if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_voidptr_value(event,"event_id",(void *)event);
     weed_plant_serialise(fd,event,mem);
     event=get_next_event(event);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+    sched_yield();
+    pthread_mutex_lock(&mainw->gtk_mutex);
   }
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 }
 
 
@@ -366,12 +373,12 @@ static void save_mt_autoback(lives_mt *mt) {
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
 
   if (mt->is_ready) set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
-  do_threaded_dialog(_("Auto backup"),FALSE);
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   add_markers(mt,mt->event_list);
+  do_threaded_dialog(_("Auto backup"),FALSE);
   save_event_list_inner(mt,fd,mt->event_list,mt->save_all_vals,NULL);
-  write_backup_layout_numbering(mt);
   end_threaded_dialog();
+  write_backup_layout_numbering(mt);
   remove_markers(mt->event_list);
   close(fd);
   if (mt->is_ready) set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
@@ -546,6 +553,9 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
   GdkPixbuf *thumbnail=NULL;
   int framenum,last_framenum;
   gint width=BLOCK_THUMB_WIDTH;
+
+  gint hidden=(gint)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "hidden"));
+  if (hidden) return;
 
   if (offset_startd>=mt->tl_max) return;
   offset_start=(int)((offset_startd-mt->tl_min)/tl_span*eventbox->allocation.width+.5);
@@ -2529,7 +2539,7 @@ gboolean mt_trdown (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifie
 
 gboolean mt_trup (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  if (mt->current_track==-1||(mt->current_track==0&&!mt->opts.show_audio)) return TRUE;
+  if (mt->current_track==-1||(mt->current_track==0&&!mt->aud_track_selected&&!mt->opts.show_audio)) return TRUE;
 
   if (mt->aud_track_selected) mt->aud_track_selected=FALSE;
   else {
@@ -2548,8 +2558,23 @@ gboolean mt_trup (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierT
 
 
 
+LIVES_INLINE gint poly_page_to_tab(guint page) {
+  return ++page;
+}
 
-static void notebook_error(GtkNotebook *nb, guint page, gint err, lives_mt *mt) {
+LIVES_INLINE gint poly_tab_to_page(guint tab) {
+  return --tab;
+}
+
+
+LIVES_INLINE gint get_poly_state_from_page(lives_mt *mt) {
+  return poly_page_to_tab(gtk_notebook_get_current_page(GTK_NOTEBOOK(mt->nb)));
+}
+
+
+static void notebook_error(GtkNotebook *nb, guint tab, gint err, lives_mt *mt) {
+  guint page=poly_tab_to_page(tab);
+
   if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
 
   switch(err) {
@@ -2558,6 +2583,9 @@ static void notebook_error(GtkNotebook *nb, guint page, gint err, lives_mt *mt) 
     break;
   case NB_ERROR_NOEFFECT:
     mt->nb_label=gtk_label_new(_("\n\nNo effect selected.\n"));
+    break;
+  case NB_ERROR_NOCLIP:
+    mt->nb_label=gtk_label_new(_("\n\nNo clips loaded.\n"));
     break;
   case NB_ERROR_NOTRANS:
     mt->nb_label=gtk_label_new(_("\n\nYou must select two video tracks\nand a time region\nto apply transitions.\n"));
@@ -2571,69 +2599,92 @@ static void notebook_error(GtkNotebook *nb, guint page, gint err, lives_mt *mt) 
   gtk_widget_modify_fg(mt->nb_label, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_container_add(GTK_CONTAINER(gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page)),mt->nb_label);
   gtk_widget_show(mt->nb_label);
+  gtk_widget_hide(mt->poly_box);
+
+  gtk_widget_queue_resize(mt->nb_label);
 
 }
 
 
 
 
-static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint page, gpointer user_data) {
+static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint tab, gpointer user_data) {
+  guint page;
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (!mt->is_ready) return FALSE;
+  if (nbp!=NULL) {
+    page=tab;
+    tab=poly_page_to_tab(page);
+  }
+  else {
+    page=poly_tab_to_page(tab);
+  }
 
   if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
   mt->nb_label=NULL;
 
-  switch (page) {
-  case 0:
+  gtk_widget_show(mt->poly_box);
+
+  switch (tab) {
+  case POLY_CLIPS:
+    if (mt->clip_labels==NULL) {
+      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOCLIP,mt);
+      return FALSE;
+    }
     if (mt->poly_state!=POLY_CLIPS) polymorph(mt,POLY_CLIPS);
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
-  case 1:
+  case POLY_IN_OUT:
     if (mt->block_selected==NULL&&mt->poly_state!=POLY_IN_OUT) {
-      notebook_error(GTK_NOTEBOOK(nb),page,NB_ERROR_SEL,mt);
+      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_SEL,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_IN_OUT) polymorph(mt,POLY_IN_OUT);
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
-  case 2:
+  case POLY_FX_STACK:
     if (mt->poly_state!=POLY_FX_STACK) polymorph(mt,POLY_FX_STACK);
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
-  case 3:
+  case POLY_EFFECTS:
     if (mt->poly_state!=POLY_EFFECTS) polymorph(mt,POLY_EFFECTS);
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
-  case 4:
+  case POLY_TRANS:
     if (g_list_length(mt->selected_tracks)!=2||mt->region_start==mt->region_end) {
-      notebook_error(GTK_NOTEBOOK(nb),page,NB_ERROR_NOTRANS,mt);
+      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOTRANS,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_TRANS) polymorph(mt,POLY_TRANS);
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
-  case 5:
+  case POLY_COMP:
     if (mt->selected_tracks==NULL||mt->region_start==mt->region_end) {
-      notebook_error(GTK_NOTEBOOK(nb),page,NB_ERROR_NOCOMP,mt);
+      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOCOMP,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_COMP) polymorph(mt,POLY_COMP);
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
-  case 6:
-    if (mt->poly_state==POLY_PARAMS) gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
-    else {
-      notebook_error(GTK_NOTEBOOK(nb),page,NB_ERROR_NOEFFECT,mt);
+  case POLY_PARAMS:
+    if (mt->poly_state!=POLY_PARAMS) {
+      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOEFFECT,mt);
       return FALSE;
     }
+    gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
   }
 
   return FALSE;
 } 
 
+
+static void set_poly_tab(lives_mt *mt, guint tab) {
+  gint page=poly_tab_to_page(tab);
+
+  if (gtk_notebook_get_current_page(GTK_NOTEBOOK(mt->nb))==page) notebook_page(mt->nb,NULL,tab,mt);
+  else gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),page);
+}
 
 
 
@@ -2676,9 +2727,7 @@ static void select_block (lives_mt *mt) {
 
   mt->context_time=-1.;
   
-  if (gtk_notebook_get_current_page(GTK_NOTEBOOK(mt->nb))==1) notebook_page(mt->nb,NULL,1,mt);
-
-
+  set_poly_tab(mt,POLY_IN_OUT);
 }
 
 
@@ -2836,7 +2885,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
   gchar *txt;
   gint nfilts=rte_get_numfilters();
   int i;
-
+  gint cat,subcat;
 
   for (i=0;i<nfilts;i++) {
     weed_plant_t *filter=get_weed_filter(i);
@@ -2844,6 +2893,12 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 
       if (enabled_in_channels(filter,TRUE)==ninchans&&enabled_out_channels(filter,FALSE)==1) {
 	txt=weed_filter_get_name(i);
+	cat=weed_filter_categorise(filter,enabled_in_channels(filter,TRUE),enabled_out_channels(filter,FALSE));
+	if ((subcat=weed_filter_subcategorise(filter,cat,(cat==5)))!=0) {
+	  gchar *tmp=g_strdup_printf("%s (%s)",txt,weed_category_to_text(subcat,FALSE));
+	  g_free(txt);
+	  txt=tmp;
+	}
 
 	xeventbox=gtk_event_box_new();
 	g_object_set_data(G_OBJECT(xeventbox),"fxid",GINT_TO_POINTER(i));
@@ -2940,6 +2995,9 @@ void
 mt_spin_start_value_changed           (GtkSpinButton   *spinbutton,
 				       gpointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  gboolean has_region=(mt->region_start!=mt->region_end);
+
+  g_signal_handler_block(mt->spinbutton_start,mt->spin_start_func);
   mt->region_start=q_dbl(gtk_spin_button_get_value(spinbutton),mt->fps)/U_SEC;
   gtk_spin_button_set_value(spinbutton,mt->region_start);
   gtk_spin_button_set_range (GTK_SPIN_BUTTON (mt->spinbutton_end),mt->region_start+1./mt->fps,mt->end_secs);
@@ -2947,12 +3005,47 @@ mt_spin_start_value_changed           (GtkSpinButton   *spinbutton,
   gdk_window_process_updates(mt->timeline_reg->window,FALSE);
   draw_region(mt);
   do_sel_context(mt);
+
+  if ((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)) {
+    if (mt->selected_tracks!=NULL) {
+      gtk_widget_set_sensitive(mt->split_sel,TRUE);
+      if (mt->region_start!=mt->region_end) {
+	gtk_widget_set_sensitive(mt->ins_gap_sel,TRUE);
+	gtk_widget_set_sensitive (mt->remove_gaps, TRUE);
+	gtk_widget_set_sensitive (mt->remove_first_gaps, TRUE);
+	gtk_widget_set_sensitive(mt->fx_region,TRUE);
+	switch (g_list_length(mt->selected_tracks)) {
+	case 1:
+	  gtk_widget_set_sensitive(mt->fx_region_1,TRUE);
+	  break;
+	case 2:
+	  gtk_widget_set_sensitive(mt->fx_region_2,TRUE);
+	  break;
+	default:
+	  break;
+	}
+      }
+      // update labels
+      if (get_poly_state_from_page(mt)==POLY_TRANS||get_poly_state_from_page(mt)==POLY_COMP) {
+	//polymorph(mt,POLY_NONE);
+	polymorph(mt,get_poly_state_from_page(mt));
+      }
+    }
+  }
+
+  g_signal_handler_unblock(mt->spinbutton_start,mt->spin_start_func);
 }
+
+
 
 void
 mt_spin_end_value_changed           (GtkSpinButton   *spinbutton,
 				     gpointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  gboolean has_region=(mt->region_start!=mt->region_end);
+
+  g_signal_handler_block(mt->spinbutton_end,mt->spin_end_func);
+
   mt->region_end=q_dbl(gtk_spin_button_get_value(spinbutton),mt->fps)/U_SEC;
   gtk_spin_button_set_value(spinbutton,mt->region_end);
   gtk_spin_button_set_range (GTK_SPIN_BUTTON (mt->spinbutton_start),0.,mt->region_end-1./mt->fps);
@@ -2960,6 +3053,35 @@ mt_spin_end_value_changed           (GtkSpinButton   *spinbutton,
   gdk_window_process_updates(mt->timeline_reg->window,FALSE);
   draw_region(mt);
   do_sel_context(mt);
+
+  if ((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)) {
+    if (mt->selected_tracks!=NULL) {
+      gtk_widget_set_sensitive(mt->split_sel,TRUE);
+      if (mt->region_start!=mt->region_end) {
+	gtk_widget_set_sensitive(mt->ins_gap_sel,TRUE);
+	gtk_widget_set_sensitive (mt->remove_gaps, TRUE);
+	gtk_widget_set_sensitive (mt->remove_first_gaps, TRUE);
+	gtk_widget_set_sensitive(mt->fx_region,TRUE);
+	switch (g_list_length(mt->selected_tracks)) {
+	case 1:
+	  gtk_widget_set_sensitive(mt->fx_region_1,TRUE);
+	  break;
+	case 2:
+	  gtk_widget_set_sensitive(mt->fx_region_2,TRUE);
+	  break;
+	default:
+	  break;
+	}
+      }
+      // update labels
+      if (get_poly_state_from_page(mt)==POLY_TRANS||get_poly_state_from_page(mt)==POLY_COMP) {
+	polymorph(mt,POLY_NONE);
+	polymorph(mt,get_poly_state_from_page(mt));
+      }
+    }
+  }
+
+  g_signal_handler_unblock(mt->spinbutton_end,mt->spin_end_func);
 }
 
 
@@ -3109,11 +3231,10 @@ static gboolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, g
     set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,file,0,height/2);
     mt->hotspot_x=mt->hotspot_y=0;
   }
-
   
   return FALSE;
-
 }
+
 
 
 static gboolean
@@ -3233,7 +3354,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   
-  gtk_box_pack_start (GTK_BOX (mt->top_vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (mt->top_vbox), hbox, FALSE, FALSE, 2);
 
   mt->amixer_button=gtk_button_new_with_label (_ ("Audio mixer (ctrl-m)"));
   gtk_box_pack_start (GTK_BOX (hbox), mt->amixer_button, FALSE, FALSE, 10);
@@ -4437,6 +4558,13 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   GtkWidget *frame;
   GtkWidget *ccursor;
   GtkWidget *sep;
+  GtkWidget *show_manual;
+  GtkWidget *donate;
+  GtkWidget *email_author;
+  GtkWidget *report_bug;
+  GtkWidget *suggest_feature;
+  GtkWidget *help_translate;
+
 
   GtkObject *vadjustment;
   GtkObject *spinbutton_adj;
@@ -4550,6 +4678,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->max_disp_vtracks=MAX_DISP_VTRACKS;
   mt->mt_frame_preview=FALSE;
   mt->current_rfx=NULL;
+  mt->current_fx=-1;
   mt->putative_block=NULL;
   mt->specific_event=NULL;
 
@@ -5859,6 +5988,40 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
   gtk_widget_set_sensitive (separator, FALSE);
 
+  show_manual = gtk_menu_item_new_with_mnemonic (_("_Manual (opens in browser)"));
+  gtk_widget_show (show_manual);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), show_manual);
+
+  separator = gtk_menu_item_new ();
+  gtk_widget_show (separator);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
+
+  donate = gtk_menu_item_new_with_mnemonic (_("_Donate to the project !"));
+  gtk_widget_show (donate);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), donate);
+
+  email_author = gtk_menu_item_new_with_mnemonic (_("_Email the author"));
+  gtk_widget_show (email_author);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), email_author);
+
+  report_bug = gtk_menu_item_new_with_mnemonic (_("Report a _bug"));
+  gtk_widget_show (report_bug);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), report_bug);
+
+  suggest_feature = gtk_menu_item_new_with_mnemonic (_("Suggest a _feature"));
+  gtk_widget_show (suggest_feature);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), suggest_feature);
+
+  help_translate = gtk_menu_item_new_with_mnemonic (_("Assist with _translating"));
+  gtk_widget_show (help_translate);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), help_translate);
+
+  separator = gtk_menu_item_new ();
+  gtk_widget_show (separator);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
+
   about = gtk_menu_item_new_with_mnemonic (_("_About"));
   gtk_widget_show (about);
   gtk_container_add (GTK_CONTAINER (menuitem_menu), about);
@@ -6063,6 +6226,31 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->seltrack_func=g_signal_connect (GTK_OBJECT (mt->select_track), "activate",
 				      G_CALLBACK (on_seltrack_activate),
 				      (gpointer)mt);
+
+  g_signal_connect (GTK_OBJECT (show_manual), "activate",
+		    G_CALLBACK (show_manual_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (email_author), "activate",
+		    G_CALLBACK (email_author_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (donate), "activate",
+		    G_CALLBACK (donate_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (report_bug), "activate",
+		    G_CALLBACK (report_bug_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (suggest_feature), "activate",
+		    G_CALLBACK (suggest_feature_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (help_translate), "activate",
+		    G_CALLBACK (help_translate_activate),
+		    NULL);
+
   g_signal_connect (GTK_OBJECT (about), "activate",
                       G_CALLBACK (on_about_activate),
                       NULL);
@@ -6431,12 +6619,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   write_backup_layout_numbering(mt);
 
   // poly audio velocity
-  mt->avel_box = gtk_vbox_new (FALSE, 20);
+  mt->avel_box = gtk_vbox_new (FALSE, 0);
   gtk_widget_ref (mt->avel_box);
 
-
   hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(mt->avel_box),hbox,FALSE,TRUE,0);
+  gtk_box_pack_start(GTK_BOX(mt->avel_box),hbox,FALSE,FALSE,10);
 
   mt->checkbutton_avel_reverse = gtk_check_button_new ();
   eventbox=gtk_event_box_new();
@@ -6464,8 +6651,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 						  mt);
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(mt->avel_box),hbox,FALSE,TRUE,0);
+  hbox = gtk_hbox_new (FALSE, 10);
+  gtk_box_pack_start(GTK_BOX(mt->avel_box),hbox,FALSE,FALSE,10);
 
 
   label = gtk_label_new_with_mnemonic (_("_Velocity  "));
@@ -6648,6 +6835,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_widget_show_all(mt->in_out_box);
   gtk_widget_show_all(mt->nb);
 
+  g_signal_connect (GTK_OBJECT (mt->nb), "switch_page",
+		    G_CALLBACK (notebook_page),
+		    (gpointer)mt);
+
+
   mt->poly_state=POLY_NONE;
   polymorph(mt,POLY_CLIPS);
 
@@ -6786,7 +6978,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
 
   hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (tl_vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (tl_vbox), hbox, FALSE, FALSE, 4);
   label=gtk_label_new(_("Scroll"));
 
   if (palette->style&STYLE_1) {
@@ -6895,10 +7087,6 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
     if (!mt->opts.insert_audio) on_insa_mode_changed(GTK_MENU_ITEM(mt->insa_off),(gpointer)mt);
     else on_insa_mode_changed(GTK_MENU_ITEM(mt->insa_on),(gpointer)mt);
   }
-
-  g_signal_connect (GTK_OBJECT (mt->nb), "switch_page",
-		    G_CALLBACK (notebook_page),
-		    (gpointer)mt);
 
   mt_sensitise(mt);
   mt->is_ready=TRUE;
@@ -8448,7 +8636,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 
       clips_to_files[count]=i;
 
-      vbox = gtk_vbox_new (FALSE, 10);
+      vbox = gtk_vbox_new (FALSE, 6);
 
       thumb_image=gtk_image_new();
       gtk_image_set_from_pixbuf(GTK_IMAGE(thumb_image),thumbnail);
@@ -8674,6 +8862,10 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     gtk_widget_show_all (multi->window);
     if (!prefs->show_recent) {
       gtk_widget_hide (multi->recent_menu);
+    }
+    if (multi->nb_label!=NULL) {
+      gtk_widget_hide (multi->poly_box);
+      gtk_widget_queue_resize(multi->nb_label);
     }
     gtk_widget_hide (mainw->LiVES);
     gtk_widget_hide(multi->preview_button);
@@ -9943,6 +10135,7 @@ void polymorph (lives_mt *mt, gshort poly) {
   gchar *fname,*otrackname,*txt;
   gint olayer;
   gboolean has_effect=FALSE;
+  gboolean tab_set=FALSE;
   GtkWidget *bbox;
   weed_plant_t *prev_fm_event,*next_fm_event,*shortcut;
   gint fxcount=0;
@@ -10007,17 +10200,17 @@ void polymorph (lives_mt *mt, gshort poly) {
     mt->apply_fx_button=NULL;
     gtk_widget_set_sensitive(mt->fx_edit,FALSE);
     gtk_widget_set_sensitive(mt->fx_delete,FALSE);
-    if (poly==POLY_PARAMS) {
-      if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+    if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+    if (poly==POLY_PARAMS) { 
       while (g_main_context_iteration(NULL,FALSE));
-      if (mt->idlefunc>0) {
-	mt->idlefunc=0;
-	mt->idlefunc=mt_idle_add(mt);
-      }
     }
     else {
       mt->init_event=NULL;
       mt_show_current_frame(mt);
+    }
+    if (mt->idlefunc>0) {
+      mt->idlefunc=0;
+      mt->idlefunc=mt_idle_add(mt);
     }
 
     break;
@@ -10038,9 +10231,11 @@ void polymorph (lives_mt *mt, gshort poly) {
 
   mt->poly_state=poly;
 
+  if (mt->poly_state==POLY_NONE) return; // transitional state
+
   switch (poly) {
   case (POLY_IN_OUT) :
-    gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),1);
+    set_poly_tab(mt,POLY_IN_OUT);
 
     mt->init_event=NULL;
     if (block==NULL||block->ordered) {
@@ -10215,13 +10410,14 @@ void polymorph (lives_mt *mt, gshort poly) {
 
     break;
   case (POLY_CLIPS) :
-    gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),0);
+    set_poly_tab(mt,POLY_CLIPS);
     mt->init_event=NULL;
     gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->clip_scroll,TRUE,TRUE,0);
     if (mt->is_ready) mouse_mode_context(mt);
     break;
   case (POLY_PARAMS):
-    gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),6);
+    set_poly_tab(mt,POLY_PARAMS);
+
     filter=get_weed_filter(mt->current_fx);
     mt->current_rfx=weed_to_rfx(filter,FALSE);
 
@@ -10242,8 +10438,15 @@ void polymorph (lives_mt *mt, gshort poly) {
     add_mt_param_box(mt,FALSE);
 
     if (mainw->playing_file<0) {
-      if (mt->current_track>=0) show_preview(mt,q_gint64(tc+gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC,mt->fps));
-      on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
+      if (mt->current_track>=0) {
+	if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+	show_preview(mt,q_gint64(tc+gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC,mt->fps));
+	on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
+	if (mt->idlefunc>0) {
+	  mt->idlefunc=0;
+	  mt->idlefunc=mt_idle_add(mt);
+	}
+      }
     }
     clear_context(mt);
     add_context_label(mt,_("Drag the time slider to where you\n"));
@@ -10251,7 +10454,7 @@ void polymorph (lives_mt *mt, gshort poly) {
     add_context_label(mt,_("Set parameters, then click \"Apply\"\n"));
     break;
   case POLY_FX_STACK:
-    gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),2);
+    set_poly_tab(mt,POLY_FX_STACK);
     mt->init_event=NULL;
     if (mt->current_track>=0) eventbox=g_list_nth_data(mt->video_draws,mt->current_track);
     else eventbox=mt->audio_draws->data;
@@ -10463,11 +10666,15 @@ void polymorph (lives_mt *mt, gshort poly) {
     break;
 
   case POLY_COMP:
-    nins++;
+    set_poly_tab(mt,POLY_COMP);
+    tab_set=TRUE;
+    ++nins;
   case POLY_TRANS:
-    nins++;
+    if (!tab_set)set_poly_tab(mt,POLY_TRANS);
+    tab_set=TRUE; 
+    ++nins;
   case POLY_EFFECTS:
-    gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),nins+2);
+    if (!tab_set)set_poly_tab(mt,POLY_EFFECTS);
 
     mt->fx_list_box=gtk_vbox_new(FALSE,0);
     mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
@@ -11450,7 +11657,7 @@ mt_view_audio_toggled                (GtkMenuItem     *menuitem,
   else g_object_set_data(G_OBJECT(mt->audio_draws->data),"hidden",GINT_TO_POINTER(0));
 
   scroll_tracks(mt,mt->top_track);
-
+  track_select(mt);
 }
 
 void
@@ -12498,6 +12705,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   weed_set_int_array(mt->init_event,"in_tracks",num_in_tracks,in_tracks);
   weed_set_int_array(mt->init_event,"out_tracks",num_out_tracks,out_tracks);
   insert_filter_init_event_at(mt->event_list,start_event,mt->init_event);
+
   if (pchain!=NULL) {
     g_free(pchain);
     pchain=NULL;
@@ -12542,6 +12750,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   if (mt->current_fx==mt->avol_fx) return;
 
   polymorph(mt,POLY_PARAMS);
+
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
   
   mt->idlefunc=mt_idle_add(mt);
@@ -13354,6 +13563,13 @@ void on_seltrack_activate (GtkMenuItem *menuitem, gpointer user_data) {
       }
     }
   }
+
+  // update labels
+  if (get_poly_state_from_page(mt)==POLY_TRANS||get_poly_state_from_page(mt)==POLY_COMP) {
+    polymorph(mt,POLY_NONE);
+    polymorph(mt,get_poly_state_from_page(mt));
+  }
+
 }
 
 
@@ -13362,9 +13578,12 @@ void on_seltrack_toggled (GtkToggleButton *checkbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   mt->current_track=track;
+  if (track>-1) mt->aud_track_selected=FALSE;
+  else mt->aud_track_selected=TRUE;
 
   // track_select will call on_seltrack_activate, which will set our new state
   track_select(mt);
+
 }
 
 
@@ -13782,6 +14001,8 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
     GList *tracks_sel;
     block=g_object_get_data(G_OBJECT(eventbox),"block_last");
     if (block!=NULL) {
+      track_rect *selblock=NULL;
+      if (mt->block_selected!=block) selblock=mt->block_selected;
       tracks_sel=g_list_copy(mt->selected_tracks);
       if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
       mt->selected_tracks=NULL;
@@ -13796,6 +14017,7 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
       mt->region_start=oldr_start;
       mt->region_end=oldr_end;
       mt_sensitise(mt);
+      if (selblock!=NULL) mt->block_selected=selblock;
     }
   }
 
@@ -13885,6 +14107,8 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
     track_rect *block=g_object_get_data(G_OBJECT(eventbox),"block_last");
     GList *tracks_sel;
     if (block!=NULL) {
+      track_rect *selblock=NULL;
+      if (mt->block_selected!=block) selblock=mt->block_selected;
       tracks_sel=g_list_copy(mt->selected_tracks);
       if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
       mt->selected_tracks=NULL;
@@ -13898,6 +14122,7 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
       if (tracks_sel!=NULL) g_list_free(tracks_sel);
       mt->region_start=oldr_start;
       mt->region_end=oldr_end;
+      if (selblock!=NULL) mt->block_selected=selblock;
     }
   }
 
@@ -14776,6 +15001,13 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
       break;
     }
   }
+
+  // update labels
+  if (get_poly_state_from_page(mt)==POLY_TRANS||get_poly_state_from_page(mt)==POLY_COMP) {
+    polymorph(mt,POLY_NONE);
+    polymorph(mt,get_poly_state_from_page(mt));
+  }
+
   return TRUE;
 }
 

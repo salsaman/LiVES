@@ -100,6 +100,8 @@ static int match_highest_version (int *hostv, int hostn, int *plugv, int plugn) 
 }
 
 // symbols (function pointers) which are exported to plugins
+weed_default_getter_f wdg;
+
 weed_leaf_get_f wlg;
 weed_plant_new_f wpn;
 weed_plant_list_leaves_f wpll;
@@ -119,6 +121,10 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
   int host_api_version;
   weed_plant_t *host_info=weed_plant_new(WEED_PLANT_HOST_INFO);
 
+
+  // these functions are defined in weed-host.h and set in weed_init()
+  wdg=weed_default_get;
+
   wlg=weed_leaf_get;
   wpn=weed_plant_new;
   wpll=weed_plant_list_leaves;
@@ -136,12 +142,12 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
 
   if (num_versions<1) return NULL;
   if ((host_api_version=match_highest_version(host_api_versions_supported,3,plugin_versions,num_versions))==0) return NULL;
-   switch (host_api_version) {
+  switch (host_api_version) {
   case 100:
   case 110:
   case 120:
   case 130:
-    value[0]=wlg; // bootstrap weed_get_get (the plugin's default_getter)
+    value[0]=wdg; // bootstrap weed_get_get (the plugin's default_getter)
 
     weed_set_int_value(host_info,"api_version",host_api_version);
 
@@ -171,7 +177,7 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
 // filter library functions
 
 
-static int weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels) {
+gint weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels) {
   weed_plant_t *filt=pl;
   int filter_flags,error;
   if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"template",&error);
@@ -188,9 +194,14 @@ static int weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_ch
 }
 
 
-static int weed_filter_subcategorise (weed_plant_t *pl, int category, gboolean count_opt) {
+gint weed_filter_subcategorise (weed_plant_t *pl, int category, gboolean count_opt) {
   weed_plant_t *filt=pl;
-  gboolean has_video_chansi=has_video_chans_in(filt,count_opt);
+  gboolean has_video_chansi;
+  int error;
+
+  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"template",&error);
+
+  has_video_chansi=has_video_chans_in(filt,count_opt);
 
   if (category==2) {
     if (get_transition_param(filt)!=-1) {
@@ -241,20 +252,20 @@ gchar *weed_category_to_text(int cat, gboolean plural) {
 
     // subcategories
   case 9:
-    if (!plural) return (g_strdup(_("audio/video transition")));
+    if (!plural) return (g_strdup(_("audio/video")));
     else return (g_strdup(_("Audio/Video Transitions")));
   case 10:
-    if (!plural) return (g_strdup(_("video only transition")));
+    if (!plural) return (g_strdup(_("video only")));
     else return (g_strdup(_("Video only Transitions")));
   case 11:
-    if (!plural) return (g_strdup(_("audio only transition")));
+    if (!plural) return (g_strdup(_("audio only")));
     else return (g_strdup(_("Audio only Transitions")));
   case 12:
-    if (!plural) return (g_strdup(_("audio mixer")));
+    if (!plural) return (g_strdup(_("audio")));
     else return (g_strdup(_("Audio Mixers")));
   case 13:
-    if (!plural) return (g_strdup(_("audio filter")));
-    else return (g_strdup(_("Audio Filters")));
+    if (!plural) return (g_strdup(_("audio")));
+    else return (g_strdup(_("Audio Effects")));
   case 14:
     if (!plural) return (g_strdup(_("audio volume controller")));
     else return (g_strdup(_("Audio Volume Controllers")));
@@ -3028,7 +3039,7 @@ void weed_filter_free(weed_plant_t *filter) {
 
 void weed_unload_all(void) {
   int i,error;
-  weed_plant_t *filter,*plugin_info;
+  weed_plant_t *filter,*plugin_info,*host_info;
   void *handle;
   weed_desetup_f desetup_fn;
   GList *pinfo=NULL,*xpinfo;
@@ -3064,6 +3075,8 @@ void weed_unload_all(void) {
   xpinfo=pinfo;
 
   while (pinfo!=NULL) {
+    host_info=weed_get_plantptr_value((weed_plant_t *)pinfo->data,"host_info",&error);
+    weed_plant_free(host_info);
     weed_plant_free((weed_plant_t *)pinfo->data);
     pinfo=pinfo->next;
   }

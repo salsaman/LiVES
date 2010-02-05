@@ -1068,12 +1068,14 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
       GtkWidget *savebutton = gtk_button_new_with_mnemonic (_("_Save to file"));
       gtk_widget_show (savebutton);
       gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), savebutton, GTK_RESPONSE_YES);
+      gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
     
       g_signal_connect (GTK_OBJECT (savebutton), "clicked",
 			G_CALLBACK (on_save_textview_clicked),
 			mainw->optextview);
     }
     else {
+      gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
       gtk_widget_set_size_request (okbutton, 586, 78);
       GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
       gtk_widget_grab_default (okbutton);
@@ -1081,7 +1083,6 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
       gtk_container_set_border_width (GTK_CONTAINER (okbutton), 12);
     }
 
-    gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
     
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_cancel_button1_clicked),
@@ -2706,6 +2707,8 @@ _entryw* create_cds_dialog (gint type) {
   }
 
   if (type==1) {
+    GtkWidget *eventbox,*checkbutton;
+
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     
@@ -2724,6 +2727,43 @@ _entryw* create_cds_dialog (gint type) {
     gtk_entry_set_width_chars (GTK_ENTRY (cdsw->entry),32);
     gtk_entry_set_activates_default(GTK_ENTRY(cdsw->entry),TRUE);
     gtk_widget_show_all (hbox);
+
+    checkbutton = gtk_check_button_new ();
+    label=gtk_label_new_with_mnemonic (_("_Auto reload next time"));
+
+    eventbox=gtk_event_box_new();
+    gtk_container_add (GTK_CONTAINER (eventbox), label);
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      checkbutton);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
+    if (palette->style&STYLE_1&&mainw!=NULL) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+    gtk_widget_show_all (hbox);
+    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    
+    if ((type==0&&prefs->ar_layout)||(type==1&&!mainw->only_close)) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
+      if (type==1) prefs->ar_clipset=TRUE;
+      else prefs->ar_layout=TRUE;
+    }
+    else {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
+      if (type==1) prefs->ar_clipset=FALSE;
+      else prefs->ar_layout=FALSE;
+    }
+    
+    g_object_set_data(G_OBJECT(checkbutton),"cdsw",(gpointer)cdsw);
+    
+    g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
+		      G_CALLBACK (on_autoreload_toggled),
+		      GINT_TO_POINTER(type));
   }
 
   if (type==0&&!(prefs->warning_mask&WARN_MASK_EXIT_MT)) {

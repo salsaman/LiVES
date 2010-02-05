@@ -123,6 +123,8 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
   mainw->is_generating=FALSE;
 
   if (mainw->multitrack!=NULL) {
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
@@ -628,7 +630,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
 
   GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
-
+  
   radiobutton = gtk_radio_button_new (NULL);
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton), radiobutton_group);
   radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));

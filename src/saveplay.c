@@ -3459,6 +3459,8 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 
 	if (mainw->multitrack!=NULL) {
 	  mainw->current_file=mainw->multitrack->render_file;
+	  polymorph(mainw->multitrack,POLY_NONE);
+	  polymorph(mainw->multitrack,POLY_CLIPS);
 	  mt_sensitise(mainw->multitrack);
 	}
 
@@ -3490,6 +3492,8 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 
 	if (mainw->multitrack!=NULL) {
 	  mainw->current_file=mainw->multitrack->render_file;
+	  polymorph(mainw->multitrack,POLY_NONE);
+	  polymorph(mainw->multitrack,POLY_CLIPS);
 	  mt_sensitise(mainw->multitrack);
 	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 	}
@@ -3632,6 +3636,8 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 
   if (mainw->multitrack!=NULL) {
     mainw->current_file=mainw->multitrack->render_file;
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }

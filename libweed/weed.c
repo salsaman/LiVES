@@ -50,6 +50,7 @@
 #define _SKIP_WEED_API_
 #include "weed-host.h"
 
+extern weed_default_getter_f weed_default_get;
 extern weed_leaf_get_f weed_leaf_get;
 extern weed_leaf_set_f weed_leaf_set;
 extern weed_leaf_set_f weed_leaf_set_plugin;
@@ -65,6 +66,8 @@ extern weed_leaf_set_flags_f weed_leaf_set_flags;
 
 #include <string.h> // for malloc, memset, memcpy
 #include <stdlib.h> // for free
+
+static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void *value);
 
 extern weed_malloc_f weed_malloc;
 extern weed_free_f weed_free;
@@ -307,6 +310,33 @@ static int _weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int seed_
 }
 
 
+static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void *value) {
+  // the plugin should use this only when bootstrapping in order to get its memory functions
+  // the actual weed_leaf_get
+
+  // here we must assume that the plugin does not yet have its memory functions, so we can only
+  // use the standard ones
+
+  // additionally, the prototype of this function must never change
+
+  weed_leaf_t *leaf=weed_find_leaf (plant,key);
+  if (leaf==NULL||idx>leaf->num_elements) return WEED_ERROR_NOSUCH_LEAF;
+  if (value==NULL) return WEED_NO_ERROR;
+  if (weed_seed_is_ptr (leaf->seed_type)) memcpy (value,&leaf->data[idx]->value,sizeof(void *));
+  else {
+    if (leaf->seed_type==WEED_SEED_STRING) {
+      size_t size=leaf->data[idx]->size;
+      char **valuecharptrptr=(char **)value;
+      if (size>0) memcpy(*valuecharptrptr,leaf->data[idx]->value,size);
+      memset(*valuecharptrptr+size,0,1);
+    }
+    else memcpy (value,leaf->data[idx]->value,weed_seed_get_size(leaf->seed_type,leaf->data[idx]->value));
+  }
+  return WEED_NO_ERROR;
+
+}
+
+
 static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *value) {
   weed_leaf_t *leaf=weed_find_leaf (plant,key);
   if (leaf==NULL||idx>leaf->num_elements) return WEED_ERROR_NOSUCH_LEAF;
@@ -323,6 +353,7 @@ static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *v
   }
   return WEED_NO_ERROR;
 }
+
 
 static int _weed_leaf_num_elements(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf=weed_find_leaf (plant, key);
@@ -349,6 +380,11 @@ static int _weed_leaf_get_flags(weed_plant_t *plant, const char *key) {
 }
 
 void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_f _memcpyf, weed_memset_f _memsetf) {
+  // this is called by the host in order for it to set its version of the functions
+
+  // *the plugin should never call this, instead the plugin functions are passed to the plugin
+  // from the host in the "host_info" plant*
+
 
   switch (api) {
     // higher API versions may use different functions, or add to them
@@ -356,7 +392,9 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
   case 100:
   case 110:
   case 120:
+  case 130:
   default:
+    weed_default_get=_weed_default_get;
     weed_leaf_get=_weed_leaf_get;
     weed_leaf_delete=_weed_leaf_delete;
     weed_plant_free=_weed_plant_free;

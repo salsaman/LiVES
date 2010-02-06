@@ -1497,6 +1497,19 @@ static gboolean is_in_hints(weed_plant_t *event,void **hints) {
 
 
 void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void **hints) {
+  // TODO - try to add at same position as in hints ***
+
+  // init_events are the events we are adding to
+  // event is what we are adding
+
+  // hints is the init_events from the previous filter_map
+
+  // eg. init_events    g,b,d        hints  a,b,c,d
+
+  // is_in_hints_before(x,y,hints) returns TRUE if x comes before y in hints, otherwise FALSE
+
+  // so is_in_hints_before(c,d, hints) returns TRUE. Then we know to add c before d
+
   int i,error,j=0;
   void **init_events=weed_get_voidptr_array(fmap,"init_events",&error);
   int num_inits=weed_leaf_num_elements(fmap,"init_events");
@@ -1516,7 +1529,7 @@ void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void 
       new_init_events[j++]=event;
       added=TRUE;
     }
-    else new_init_events[j++]=init_events[i];
+    new_init_events[j++]=init_events[i];
     if (init_events[i]==event) added=TRUE;
   }
   if (!added) new_init_events[j++]=event;
@@ -1701,11 +1714,13 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
     // get event_hints so we can add filter back at guess position
     filter_map=get_filter_map_before(event_list,deinit_event,-1);
     if (filter_map!=NULL&&filter_map_has_event(filter_map,init_event)) {
-      init_events=weed_get_voidptr_array(event,"init_events",&error);
-      num_inits=weed_leaf_num_elements(event,"init_events");
+      init_events=weed_get_voidptr_array(filter_map,"init_events",&error);
+      num_inits=weed_leaf_num_elements(filter_map,"init_events");
       event_hints=g_malloc((num_inits+1)*sizeof(void *));
       for (i=0;i<num_inits;i++) {
-	if (adding) event_hints[j++]=init_events[i];
+	if (adding) {
+	  event_hints[j++]=init_events[i];
+	}
 	if (init_events[i]==init_event) adding=TRUE;
       }
       event_hints[j]=NULL;
@@ -2159,6 +2174,7 @@ static void event_list_free_events (weed_plant_t *event_list) {
 
   while (event!=NULL) {
     next_event=get_next_event(event);
+    if (mainw->multitrack!=NULL&&event_list==mainw->multitrack->event_list) mt_fixup_events(mainw->multitrack,event,NULL);
     weed_plant_free (event);
     event=next_event;
   }
@@ -4526,7 +4542,7 @@ render_details *create_render_details (gint type) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   
-  spinbutton_adj = gtk_adjustment_new (rdet->fps, .0001, FPS_MAX, 1, 10, 0);
+  spinbutton_adj = gtk_adjustment_new (rdet->fps, 1., FPS_MAX, 1, 10, 0);
   
   rdet->spinbutton_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (rdet->spinbutton_fps),TRUE);

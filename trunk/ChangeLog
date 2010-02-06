@@ -7,6 +7,7 @@ Allow timecode to be edited in multitrack mode.
 Switching to->from multitrack mode maintains the layout in memory.
 Allow startup in mt mode.
 Better scrolling of tracks in multitrack.
+Change multitrack "snap mode" to "gravity left", add "gravity right".
 Allow jack transport to set play start position.
 Fix possible bootstrap issue with weed plugins. *
 Fix an encoder/png problem. *

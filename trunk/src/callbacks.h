@@ -1,6 +1,6 @@
 // callbacks.h
 // LiVES
-// (c) G. Finch <salsaman@xs4all.nl> 2003 - 2009
+// (c) G. Finch <salsaman@xs4all.nl> 2003 - 2010
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -143,10 +143,6 @@ on_stop_activate                      (GtkMenuItem     *menuitem,
 void
 on_rev_clipboard_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
-
-void 
-on_audp_entry_changed (GtkWidget *vidp_entry, gpointer);
-
 
 void 
 on_encoder_entry_changed                 (GtkEntry *encoder_entry, 

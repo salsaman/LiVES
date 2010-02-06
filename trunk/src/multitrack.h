@@ -54,8 +54,9 @@ struct _mt_opts {
   gboolean move_effects; // should we move effects attached to a block ?
   gboolean fx_auto_preview;
   gboolean snap_over; // snap to overlap
-  gboolean snapt; // block snap
+  gshort grav_mode;
   gshort mouse_mode;
+  gshort insert_mode;
   gboolean show_audio;
   gboolean show_ctx;
   gboolean ign_ins_sel;
@@ -70,6 +71,20 @@ struct _mt_opts {
 #define MOUSE_MODE_MOVE 1
 #define MOUSE_MODE_SELECT 2
 #define MOUSE_MODE_COPY 3
+
+#define INSERT_MODE_NORMAL 1  // the default (only insert if it fits)
+
+  // not implemented yet
+#define INSERT_MODE_OVERWRITE 2 // overwite existing blocks
+#define INSERT_MODE_EXPAND 3 // repeat to fill gap
+#define INSERT_MODE_FILL_START 4 // insert enough to fill gap (from selection start)
+#define INSERT_MODE_FILL_END 5 // insert enough to fill gap (to selection end)
+
+
+#define GRAV_MODE_NORMAL 1
+#define GRAV_MODE_LEFT 2
+#define GRAV_MODE_RIGHT 3 // not yet implemented
+
 
 struct _mt {
   // widgets
@@ -128,13 +143,12 @@ struct _mt {
   GtkWidget *mm_menuitem;
   GtkWidget *mm_move;
   GtkWidget *mm_select;
-  GtkWidget *snapt_menuitem;
-  GtkWidget *snapt_on;
-  GtkWidget *snapt_off;
-  GtkWidget *insa_menuitem;
-  GtkWidget *insa_menuitemsep;
-  GtkWidget *insa_on;
-  GtkWidget *insa_off;
+  GtkWidget *ins_menuitem;
+  GtkWidget *ins_normal;
+  GtkWidget *grav_menuitem;
+  GtkWidget *grav_normal;
+  GtkWidget *grav_left;
+  GtkWidget *grav_right;
   GtkWidget *select_track;
   GtkWidget *view_events;
   GtkWidget *view_clips;
@@ -188,7 +202,6 @@ struct _mt {
   GtkWidget *fx_ibefore_button;
   GtkWidget *fx_iafter_button;
   GtkWidget *cback_audio;
-  GtkWidget *save_vals;
   GtkWidget *load_vals;
   GtkWidget *change_vals;
   GtkWidget *aparam_separator;
@@ -201,7 +214,6 @@ struct _mt {
   GtkWidget *clear_marks;
   GtkWidget *fd_frame;
   GtkWidget *apply_fx_button;
-  GtkWidget *cview_button;
   GtkWidget *eview_button;
   GtkWidget *follow_play;
   GtkWidget *change_max_disp;
@@ -247,6 +259,13 @@ struct _mt {
   GtkWidget *gens_submenu;
   GtkWidget *capture;
 
+  GtkWidget *insa_eventbox;
+  GtkWidget *insa_checkbutton;
+  GtkWidget *snapo_checkbutton;
+
+
+
+
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
 
@@ -277,13 +296,13 @@ struct _mt {
 
   gulong mm_move_func;
   gulong mm_select_func;
+
+  gulong ins_normal_func;
+
+  gulong grav_normal_func;
+  gulong grav_left_func;
+  gulong grav_right_func;
   
-  gulong snapt_on_func;
-  gulong snapt_off_func;
-
-  gulong insa_on_func;
-  gulong insa_off_func;
-
   gulong sepwin_func;
   gulong mute_audio_func;
   gulong loop_cont_func;
@@ -319,12 +338,6 @@ struct _mt {
 #define POLY_TRANS 5
 #define POLY_COMP 6
 #define POLY_PARAMS 7
-
-  gshort insert_mode;
-#define INSERT_MODE_NORMAL 1  // the default
-#define INSERT_MODE_OVERWRITE 2
-#define INSERT_MODE_EXPAND 3
-  //#define INSERT_MODE_FILL 4
 
   gint render_file;
 
@@ -434,7 +447,6 @@ struct _mt {
 
   gboolean layout_prompt; // on occasion, prompt user if they want to correct layout on disk or not
   gboolean layout_set_properties;
-  gboolean save_all_vals;
   gboolean ignore_load_vals;
 
   gdouble user_fps;
@@ -459,6 +471,7 @@ struct _mt {
   weed_plant_t *specific_event; // a pointer to some generally interesting event
 
   gdouble context_time; // this is set when the user right clicks on a track, otherwise -1.
+  gboolean use_context;
 
   gint cursor_style;
 
@@ -490,7 +503,7 @@ struct _mt {
 
   gboolean tl_mouse;
 
-  guint idlefunc;
+  guint idlefunc; // autobackup function 
 
   GList *clip_labels;
 
@@ -607,6 +620,8 @@ void mt_sensitise (lives_mt *);
 // external control callbacks
 void insert_here_cb (GtkMenuItem *, gpointer mt);
 void insert_audio_here_cb (GtkMenuItem *, gpointer mt);
+void insert_at_ctx_cb (GtkMenuItem *, gpointer mt);
+void insert_audio_at_ctx_cb (GtkMenuItem *, gpointer mt);
 void multitrack_end_cb (GtkMenuItem *, gpointer mt);
 void delete_block_cb (GtkMenuItem *, gpointer mt);
 void selblock_cb (GtkMenuItem *, gpointer mt);
@@ -764,7 +779,7 @@ void on_fx_insb_clicked  (GtkWidget *button, gpointer user_data);
 void on_fx_insa_clicked  (GtkWidget *button, gpointer user_data);
 
 // utils
-guint event_list_get_byte_size(weed_plant_t *event_list, int *num_events);  // returns bytes and sets num_events
+guint event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list, int *num_events);  // returns bytes and sets num_events
 gboolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
 gboolean make_backup_space (lives_mt *, size_t space_needed);
 void activate_mt_preview(lives_mt *); // sensitize Show Preview and Apply buttons

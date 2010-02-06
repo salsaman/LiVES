@@ -1077,8 +1077,9 @@ void mt_memory_free(void) {
   g_list_free(mainw->multitrack->tl_marks);
   
   if (mainw->multitrack->event_list!=NULL) event_list_free(mainw->multitrack->event_list);
-  
-  if (mainw->multitrack->undo_mem!=NULL) g_free(mainw->multitrack->undo_mem);
+  mainw->multitrack->event_list=NULL;
+
+  if (mainw->multitrack->undo_mem!=NULL) event_list_free_undos(mainw->multitrack);
 
   recover_layout_cancelled(NULL,NULL);
 
@@ -3119,45 +3120,6 @@ void on_pause_clicked(void) {
   mainw->cancelled=CANCEL_USER_PAUSED;
 }
 
-
-void on_audp_entry_changed (GtkWidget *audp_entry, gpointer ptr) {
-  const gchar *audp=gtk_entry_get_text (GTK_ENTRY (audp_entry));
-
-  if (!strlen(audp)||!strcmp(audp,prefsw->audp_name)) return;
-
-  if (mainw->playing_file>-1) {
-    do_aud_during_play_error();
-    g_signal_handler_block(audp_entry,prefsw->audp_entry_func);
-    gtk_entry_set_text(GTK_ENTRY(audp_entry),prefsw->audp_name);
-    gtk_widget_queue_draw(audp_entry);
-    g_signal_handler_unblock(audp_entry,prefsw->audp_entry_func);
-    return;
-  }
-
-#ifdef RT_AUDIO
-  if (!strncmp(audp,"jack",4)||!strncmp(audp,"pulse",5)) {
-    gtk_widget_set_sensitive(prefsw->checkbutton_aclips,TRUE);
-    gtk_widget_set_sensitive(prefsw->checkbutton_afollow,TRUE);
-    gtk_widget_set_sensitive(prefsw->raudio,TRUE);
-  }
-  else {
-    gtk_widget_set_sensitive(prefsw->checkbutton_aclips,FALSE);
-    gtk_widget_set_sensitive(prefsw->checkbutton_afollow,FALSE);
-    gtk_widget_set_sensitive(prefsw->raudio,FALSE);
-  }
-  if (!strncmp(audp,"jack",4)) {
-    gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
-  }
-  else {
-    gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,FALSE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),FALSE);
-  }
-#endif
-  g_free(prefsw->audp_name);
-  prefsw->audp_name=g_strdup(gtk_entry_get_text(GTK_ENTRY(audp_entry)));
-
-}
 
 
 void 
@@ -5589,6 +5551,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
   GtkWidget *sep_img;
   GtkWidget *sep_img2;
 
+
   mainw->sep_win=!mainw->sep_win;
 
   if (mainw->multitrack!=NULL) {
@@ -5628,7 +5591,6 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
       kill_play_window();
     }
     if (mainw->multitrack!=NULL&&mainw->playing_file==-1) {
-      if (mainw->sep_win) while (g_main_context_iteration(NULL,FALSE)); // force play window to appear
       activate_mt_preview(mainw->multitrack); // show frame preview
     }
   }
@@ -5685,7 +5647,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 
 	make_play_window();
 
-	g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+	if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
 	mainw->pw_exp_is_blocked=TRUE;
      
 	if (mainw->ext_playback&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
@@ -7091,8 +7053,8 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
       }
 #endif
     }
-    resize(1);
     mainw->is_ready=TRUE;
+    resize(1);
   }
   return FALSE;
 }
@@ -7118,7 +7080,8 @@ expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
     unblock_expose();
   }
   if (mainw->multitrack!=NULL&&mainw->multitrack->sepwin_pixbuf!=NULL) {
-    g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+    if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+    mainw->pw_exp_is_blocked=TRUE;
     block_expose();
     if (rect.width>gdk_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
       rect.width=gdk_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
@@ -7129,6 +7092,7 @@ expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
     gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf),rect.x,rect.y,rect.x,rect.y,rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
     unblock_expose();
     g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
+    mainw->pw_exp_is_blocked=FALSE;
   }
   return FALSE;
 }
@@ -7250,7 +7214,7 @@ on_preview_clicked                     (GtkButton       *button,
 
       if (mainw->multitrack==NULL&&!cfile->is_loaded) {
 	if (mainw->play_window!=NULL) {
-	  g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+	  if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
 	  mainw->pw_exp_is_blocked=TRUE;
 	  cfile->is_loaded=TRUE;
 	  resize_play_window();
@@ -7272,7 +7236,7 @@ on_preview_clicked                     (GtkButton       *button,
     if (user_data!=NULL) {
       // called from multitrack
       if (mainw->play_window!=NULL) {
-	g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+	if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
 	mainw->pw_exp_is_blocked=TRUE;
 	resize_play_window();
       }
@@ -7385,7 +7349,7 @@ on_preview_clicked                     (GtkButton       *button,
       if (mainw->play_window!=NULL) {
 	if (!cfile->opening_audio) {
 	  g_signal_handlers_block_matched(mainw->play_window,G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED,0,0,0,(gpointer)expose_play_window,NULL);
-	  g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
+	  if (mainw->pw_exp_is_blocked) g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
 	  mainw->pw_exp_is_blocked=FALSE;
 	}
 	resize_play_window();

@@ -5936,11 +5936,11 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, char *key, gboolea
       weed_leaf_get(plant,key,j,&value);
     }
     if (mem==NULL) {
-      dummyvar=write(fd,&vlen,sizint);
+      dummyvar=write(fd,&vlen,sizint); // actually should be size_t
       dummyvar=write(fd,value,(size_t)vlen);
     }
     else {
-      w_memcpy(*mem,&vlen,sizint);
+      w_memcpy(*mem,&vlen,sizint);  // actually should be size_t
       *mem+=sizint;
       w_memcpy(*mem,value,(size_t)vlen);
       *mem+=vlen;
@@ -6106,36 +6106,39 @@ static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, gchar *key, unsig
     type=*(int*)(values[0]);
   }
   else {
-    switch (st) {
-    case WEED_SEED_INT:
-      // fallthrough
-    case WEED_SEED_BOOLEAN:
-      ints=g_malloc(ne*sizint);
-      for (j=0;j<ne;j++) ints[j]=*(int *)values[j];
-      weed_leaf_set (plant, key, st, ne, (void *)ints);
-      g_free(ints);
-      break;
-    case WEED_SEED_DOUBLE:
-      dubs=g_malloc(ne*sizdbl);
-      for (j=0;j<ne;j++) dubs[j]=*(double *)values[j];
-      weed_leaf_set (plant, key, st, ne, (void *)dubs);
-      g_free(dubs);
-      break;
-    case WEED_SEED_INT64:
-      int64s=g_malloc(ne*8);
-      for (j=0;j<ne;j++) int64s[j]=*(int64_t *)values[j];
-      weed_leaf_set (plant, key, st, ne, (void *)int64s);
-      g_free(int64s);
-      break;
-    case WEED_SEED_STRING:
-      weed_leaf_set (plant, key, st, ne, (void *)values);
-      break;
-    default:
-      if (plant!=NULL) {
-	void **voids=g_malloc(ne*sizeof(void *));
-	for (j=0;j<ne;j++) voids[j]=*(void **)values[j];
-	weed_leaf_set (plant, key, st, ne, (void *)voids);
-	g_free(voids);
+    if (values==NULL) weed_leaf_set(plant,key,st,0,NULL);
+    else {
+      switch (st) {
+      case WEED_SEED_INT:
+	// fallthrough
+      case WEED_SEED_BOOLEAN:
+	ints=g_malloc(ne*sizint);
+	for (j=0;j<ne;j++) ints[j]=*(int *)values[j];
+	weed_leaf_set (plant, key, st, ne, (void *)ints);
+	g_free(ints);
+	break;
+      case WEED_SEED_DOUBLE:
+	dubs=g_malloc(ne*sizdbl);
+	for (j=0;j<ne;j++) dubs[j]=*(double *)values[j];
+	weed_leaf_set (plant, key, st, ne, (void *)dubs);
+	g_free(dubs);
+	break;
+      case WEED_SEED_INT64:
+	int64s=g_malloc(ne*8);
+	for (j=0;j<ne;j++) int64s[j]=*(int64_t *)values[j];
+	weed_leaf_set (plant, key, st, ne, (void *)int64s);
+	g_free(int64s);
+	break;
+      case WEED_SEED_STRING:
+	weed_leaf_set (plant, key, st, ne, (void *)values);
+	break;
+      default:
+	if (plant!=NULL) {
+	  void **voids=g_malloc(ne*sizeof(void *));
+	  for (j=0;j<ne;j++) voids[j]=*(void **)values[j];
+	  weed_leaf_set (plant, key, st, ne, (void *)voids);
+	  g_free(voids);
+	}
       }
     }
   }

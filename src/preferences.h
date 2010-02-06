@@ -1,6 +1,6 @@
 // preferences.h
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2009
+// (c) G. Finch 2004 - 2010
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -365,6 +365,7 @@ typedef struct {
   GtkWidget *button_midid;
   GtkWidget *rb_startup_ce;
   GtkWidget *rb_startup_mt;
+  GtkWidget *jack_int_label;
 } _prefsw;
 
 

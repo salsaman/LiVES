@@ -1223,6 +1223,22 @@ static void on_mtbackevery_toggled (GtkToggleButton *tbutton, gpointer user_data
 
 }
 
+#ifdef ENABLE_JACK_TRANSPORT
+static void after_jack_client_toggled(GtkToggleButton *tbutton, gpointer user_data) {
+
+  if (!gtk_toggle_button_get_active(tbutton)) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client),FALSE);
+    gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,FALSE);
+  }
+  else {
+    gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,TRUE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?TRUE:FALSE);
+  }
+}
+#endif
+
+
+
 #ifdef ALSA_MIDI
 static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   _prefsw *xprefsw;
@@ -1236,6 +1252,52 @@ static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) 
   gtk_widget_set_sensitive(xprefsw->spinbutton_midirpt,!gtk_toggle_button_get_active(tbutton));
 }
 #endif
+
+
+
+
+static void on_audp_entry_changed (GtkWidget *audp_entry, gpointer ptr) {
+  const gchar *audp=gtk_entry_get_text (GTK_ENTRY (audp_entry));
+
+  if (!strlen(audp)||!strcmp(audp,prefsw->audp_name)) return;
+
+  if (mainw->playing_file>-1) {
+    do_aud_during_play_error();
+    g_signal_handler_block(audp_entry,prefsw->audp_entry_func);
+    gtk_entry_set_text(GTK_ENTRY(audp_entry),prefsw->audp_name);
+    gtk_widget_queue_draw(audp_entry);
+    g_signal_handler_unblock(audp_entry,prefsw->audp_entry_func);
+    return;
+  }
+
+#ifdef RT_AUDIO
+  if (!strncmp(audp,"jack",4)||!strncmp(audp,"pulse",5)) {
+    gtk_widget_set_sensitive(prefsw->checkbutton_aclips,TRUE);
+    gtk_widget_set_sensitive(prefsw->checkbutton_afollow,TRUE);
+    gtk_widget_set_sensitive(prefsw->raudio,TRUE);
+  }
+  else {
+    gtk_widget_set_sensitive(prefsw->checkbutton_aclips,FALSE);
+    gtk_widget_set_sensitive(prefsw->checkbutton_afollow,FALSE);
+    gtk_widget_set_sensitive(prefsw->raudio,FALSE);
+  }
+  if (!strncmp(audp,"jack",4)) {
+    gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
+    gtk_widget_show(prefsw->jack_int_label);
+  }
+  else {
+    gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),FALSE);
+    gtk_widget_hide(prefsw->jack_int_label);
+  }
+#endif
+  g_free(prefsw->audp_name);
+  prefsw->audp_name=g_strdup(gtk_entry_get_text(GTK_ENTRY(audp_entry)));
+
+}
+
+
 
 _prefsw *create_prefs_dialog (void) {
   GtkWidget *dialog_vbox8;
@@ -2135,6 +2197,13 @@ _prefsw *create_prefs_dialog (void) {
 
   add_fill_to_box(GTK_BOX(hbox10));
 
+  prefsw->jack_int_label=gtk_label_new(_("(See also the Jack Integration tab for jack startup options)"));
+  gtk_box_pack_start (GTK_BOX (vbox), prefsw->jack_int_label, FALSE, FALSE, 0);
+
+  gtk_widget_hide(prefsw->jack_int_label);
+
+
+
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
     prefsw->audp_name=g_strdup_printf("pulse audio (%s)",mainw->recommended_string);
@@ -2148,6 +2217,7 @@ _prefsw *create_prefs_dialog (void) {
     if (!has_ap_rec)
       prefsw->audp_name=g_strdup_printf("jack (%s)",mainw->recommended_string);
     else prefsw->audp_name=g_strdup_printf("jack");
+    gtk_widget_show(prefsw->jack_int_label);
   }
   has_ap_rec=TRUE;
 #endif
@@ -3143,16 +3213,22 @@ _prefsw *create_prefs_dialog (void) {
    
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_client),(future_prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)?TRUE:FALSE);
 
-
    prefsw->checkbutton_jack_tb_client = gtk_check_button_new_with_mnemonic (_ ("Jack transport sets start position"));
    gtk_widget_show (prefsw->checkbutton_jack_tb_client);
    gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_jack_tb_client, TRUE, FALSE, 0);
    
-   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?TRUE:FALSE);
+   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client))):FALSE);
+
+   gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
 
    label = gtk_label_new (_("(See also Playback -> Audio follows video rate/direction)"));
    gtk_widget_show (label);
    gtk_box_pack_start (GTK_BOX (vbox98), label, FALSE, FALSE, 10);
+
+   g_signal_connect_after (GTK_OBJECT (prefsw->checkbutton_jack_client), "toggled",
+			   G_CALLBACK (after_jack_client_toggled),
+			   NULL);
+
 
 #endif
 
@@ -3515,10 +3591,10 @@ on_prefs_ok_clicked                   (GtkButton       *button,
   }
   else {
     if (mainw->prefs_changed&PREFS_THEME_CHANGED&&!dont_show_warnings) {
-      do_error_dialog(_("Theme changes will not take effect until the next time you start LiVES."));
+      do_blocking_error_dialog(_("Theme changes will not take effect until the next time you start LiVES."));
     }
     if (mainw->prefs_changed&PREFS_JACK_CHANGED&&!dont_show_warnings) {
-      do_error_dialog(_("Jack options will not take effect until the next time you start LiVES."));
+      do_blocking_error_dialog(_("Jack options will not take effect until the next time you start LiVES."));
     }
     if (!dont_show_warnings) mainw->prefs_changed=0;
   }

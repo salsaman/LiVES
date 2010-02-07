@@ -263,7 +263,16 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	      (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup)();
 	    }
 
+	    if (mainw->cancelled==CANCEL_KEEP) {
+	      // user clicked "enough"
+	      mainw->cancelled=CANCEL_NONE;
+	      goto pt1;
+	    }
+
+	    d_print("\n");
+	    d_print_cancelled();
 	    close_current_file(old_file);
+
 	    mainw->noswitch=FALSE;
 	    if (mainw->multitrack!=NULL) {
 	      mainw->multitrack->pb_start_event=mt_pb_start_event;
@@ -276,6 +285,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    return;
 	  }
 
+	  cfile->opening_only_audio=TRUE;
 	  do_threaded_dialog(msgstr,TRUE);
 	  g_free(msgstr);
 	  tmp=(char *)g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL);
@@ -286,18 +296,23 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup)();
 	  }
 
+	  end_threaded_dialog();
+
+      pt1:
+	  cfile->opening_only_audio=FALSE;
 	  signal(SIGUSR1,SIG_IGN);
 	  mainw->sig_pid=0;
 	  g_free(mainw->sig_file);
 	  mainw->sig_file=NULL;
-
-	  end_threaded_dialog();
+	  g_free(tmp);
+	  tmp=NULL;
 	  g_free(afile);
 	}
 	else {
 	  cfile->arate=0.;
 	  cfile->achans=cfile->asampsize=0;
 	}
+
 	cfile->fps=cfile->pb_fps=cdata->fps;
 	d_print("\n");
 	
@@ -544,7 +559,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     g_free(ofile);
   }
 
-  cfile->opening=cfile->opening_audio=FALSE;
+  cfile->opening=cfile->opening_audio=cfile->opening_only_audio=FALSE;
   mainw->opening_frames=-1;
 
 #if defined DEBUG
@@ -657,7 +672,10 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     switch_to_file((mainw->current_file=0),current_file);
   }
   else {
+    lives_mt *multi=mainw->multitrack;
+    mainw->multitrack=NULL; // allow getting of afilesize
     reget_afilesize (mainw->current_file);
+    mainw->multitrack=multi;
     get_total_time(cfile);
     if (!mainw->is_generating) mainw->current_file=mainw->multitrack->render_file;
     mt_init_clips(mainw->multitrack,current_file,TRUE);
@@ -1537,9 +1555,9 @@ void play_file (void) {
 
   gtk_widget_set_sensitive (mainw->m_playselbutton, FALSE);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
-  gtk_widget_set_sensitive (mainw->m_mutebutton, (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE));
+  gtk_widget_set_sensitive (mainw->m_mutebutton, (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE||mainw->multitrack!=NULL));
 
-  gtk_widget_set_sensitive (mainw->m_loopbutton, (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&mainw->current_file>0);
+  gtk_widget_set_sensitive (mainw->m_loopbutton, (!cfile->achans||mainw->mute||mainw->multitrack!=NULL||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->loop_continue, (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&mainw->current_file>0);
 
   if (cfile->frames==0&&mainw->multitrack==NULL) {
@@ -3606,7 +3624,10 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	
 	if (mainw->multitrack!=NULL) {
 	  gint current_file=mainw->current_file;
+	  lives_mt *multi=mainw->multitrack;
+	  mainw->multitrack=NULL;
 	  reget_afilesize (mainw->current_file);
+	  mainw->multitrack=multi;
 	  get_total_time(cfile);
 	  mainw->current_file=mainw->multitrack->render_file;
 	  mt_init_clips(mainw->multitrack,current_file,TRUE);

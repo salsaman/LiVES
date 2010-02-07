@@ -1514,7 +1514,8 @@ void do_after_crash_warning (void) {
 
 
 static void on_dth_cancel_clicked (GtkButton *button, gpointer user_data) {
-  mainw->cancelled=CANCEL_USER;
+  if (GPOINTER_TO_INT(user_data)==1) mainw->cancelled=CANCEL_KEEP;
+  else mainw->cancelled=CANCEL_USER;
 }
 
 
@@ -1604,18 +1605,38 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   if (mainw->is_ready) gtk_widget_modify_fg(procw->label3, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
 
+
+
+
+
+
+
   if (has_cancel) {
     GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     gtk_widget_show (cancelbutton);
+
+    if (mainw->current_file>-1&&cfile!=NULL&&cfile->opening_only_audio) {
+      GtkWidget *enoughbutton = gtk_button_new_with_mnemonic (_ ("_Enough"));
+      gtk_widget_show (enoughbutton);
+      gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), enoughbutton, GTK_RESPONSE_CANCEL);
+      GTK_WIDGET_SET_FLAGS (enoughbutton, GTK_CAN_DEFAULT);
+      
+      g_signal_connect (GTK_OBJECT (enoughbutton), "clicked",
+			G_CALLBACK (on_dth_cancel_clicked),
+			GINT_TO_POINTER(1));
+      
+      mainw->cancel_type=CANCEL_SOFT;
+    }
+
     gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), cancelbutton, GTK_RESPONSE_CANCEL);
     GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
 
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
                       G_CALLBACK (on_dth_cancel_clicked),
-                      NULL);
+                      GINT_TO_POINTER(0));
 
     mainw->cancel_type=CANCEL_SOFT;
- }
+  }
 
   while (!mainw->is_ready&&pthread_islocked) {
     pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -1638,7 +1659,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   while (g_main_context_iteration(NULL,FALSE));
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
 
-  while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER&&pthread_islocked) {
+  while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER&&mainw->cancelled!=CANCEL_KEEP&&pthread_islocked) {
     // mutex locked
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(procw->progressbar));
 
@@ -1671,7 +1692,7 @@ static void *dth2 (void *arg) {
 
 static void *dth2_with_cancel (void *arg) {
   dth2_inner(arg,TRUE);
-  if (mainw->cancelled==CANCEL_USER&&mainw->sig_pid>0) {
+  if ((mainw->cancelled==CANCEL_USER||mainw->cancelled==CANCEL_KEEP)&&mainw->sig_pid>0) {
     
     while (!g_file_test(mainw->sig_file,G_FILE_TEST_EXISTS)) {
       g_usleep(prefs->sleep_time);

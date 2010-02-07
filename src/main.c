@@ -3157,7 +3157,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	// here if we are rendering from multitrack, previewing a recording, or applying realtime effects to a selection
 	weed_timecode_t tc=mainw->cevent_tc;
 
-	if (mainw->clip_index[0]==mainw->scrap_file&&mainw->clip_index[0]>-1) {
+	if (mainw->clip_index[0]==mainw->scrap_file&&mainw->clip_index[0]>-1&&mainw->num_tracks==1) {
 	  // do not apply fx, just pull frame
 	  mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->clip_index[0]);
@@ -3310,7 +3310,7 @@ void load_frame_image(gint frame, gint last_frame) {
 
     if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
       if ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&(weed_get_int_value(mainw->frame_layer,"width",&weed_error)*weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize) {
-	if ((mainw->rte!=0||mainw->is_rendering)&&mainw->current_file!=mainw->scrap_file) {
+	if ((mainw->rte!=0||mainw->is_rendering)&&(mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)) {
 	  mainw->frame_layer=on_rte_apply (mainw->frame_layer, opwidth, opheight, (weed_timecode_t)(mainw->currticks-mainw->origticks));
 	}
       }

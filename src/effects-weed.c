@@ -1030,6 +1030,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
 
   gint lcount=0;
 
+
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) return FILTER_ERROR_NO_IN_CHANNELS;
 
@@ -1158,6 +1159,10 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
       clip=weed_get_int_value(layer,"clip",&error);
       if (!pull_frame(layer,mainw->files[clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) return FILTER_ERROR_MISSING_FRAME;
     }
+
+    // we only apply transitions and compositors to the scrap file
+    if (clip==mainw->scrap_file&&num_in_tracks==1&&num_out_tracks==1) return FILTER_ERROR_IS_SCRAP_FILE;
+
     // use comparative widths - in RGB(A) pixels
     palette=weed_get_int_value(layer,"current_palette",&error);
     if ((inwidth=(weed_get_int_value(layer,"width",&error)*weed_palette_get_pixels_per_macropixel(palette)))>maxinwidth) maxinwidth=inwidth;

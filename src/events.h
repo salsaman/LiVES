@@ -91,6 +91,8 @@ typedef struct {
   GtkWidget *spinbutton_fps;
   GtkWidget *pertrack_checkbutton;
   GtkWidget *backaudio_checkbutton;
+  GtkWidget *always_checkbutton;
+  GtkWidget *always_hbox;
   gulong encoder_name_fn;
   gulong encoder_ofmt_fn;
   gboolean enc_changed;

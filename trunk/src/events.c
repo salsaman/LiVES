@@ -3079,6 +3079,7 @@ gint render_events (gboolean reset) {
 	if (mainw->scrap_file!=-1) {
 	  for (i=0;i<num_tracks;i++) {
 	    if (clip_index[i]!=mainw->scrap_file) {
+	      scrap_track=-1;
 	      break;
 	    }
 	    if (scrap_track==-1) scrap_track=i;
@@ -4764,11 +4765,43 @@ render_details *create_render_details (gint type) {
     
   }
 
+
+  rdet->always_checkbutton = gtk_check_button_new ();
+  
+  rdet->always_hbox = gtk_hbox_new (FALSE, 0);
+
+  eventbox=gtk_event_box_new();
+
+  label=gtk_label_new_with_mnemonic (_("_Always use these values"));
+  gtk_tooltips_set_tip (mainw->tooltips, rdet->always_checkbutton, _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."), NULL);
+  gtk_tooltips_copy(eventbox,rdet->always_checkbutton);
+  
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label),rdet->always_checkbutton);
+  
+  gtk_container_add(GTK_CONTAINER(eventbox),label);
+  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		    G_CALLBACK (label_act_toggle),
+		    rdet->always_checkbutton);
+  
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+  
+  gtk_box_pack_start (GTK_BOX (rdet->always_hbox), rdet->always_checkbutton, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (rdet->always_hbox), eventbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG(rdet->dialog)->action_area), rdet->always_hbox, FALSE, FALSE, 0);
+
+
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
     gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+
   }
+  else add_fill_to_box(GTK_BOX (GTK_DIALOG(rdet->dialog)->action_area));
+
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_FOCUS);
+
 
   rdet->okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
@@ -4780,6 +4813,7 @@ render_details *create_render_details (gint type) {
 			      GDK_Escape, 0, 0);
 
   gtk_widget_show_all (rdet->dialog);
+  gtk_widget_hide(rdet->always_hbox);
 
   if (type==4) gtk_widget_hide(resaudw->aud_hbox);
   

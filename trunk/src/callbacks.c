@@ -7039,6 +7039,7 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
       get_play_times();
     }
   }
+
   if (!mainw->is_ready) {
     if (prefs->startup_interface==STARTUP_CE) {
 

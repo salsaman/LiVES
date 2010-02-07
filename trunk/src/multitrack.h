@@ -628,6 +628,7 @@ void selblock_cb (GtkMenuItem *, gpointer mt);
 void list_fx_here_cb (GtkMenuItem *, gpointer mt);
 void edit_start_end_cb (GtkMenuItem *, gpointer mt);
 void close_clip_cb (GtkMenuItem *, gpointer mt);
+void show_clipinfo_cb (GtkMenuItem *, gpointer mt);
 
 //// menuitem callbacks
 void on_add_video_track_activate (GtkMenuItem *, gpointer mt);

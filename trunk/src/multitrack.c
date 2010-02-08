@@ -7571,6 +7571,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   }
 
   if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) gdk_pixbuf_unref(mt->sepwin_pixbuf);
+  mt->sepwin_pixbuf=NULL;
 
   // free our track_rects
   if (cfile->achans>0) {
@@ -10596,6 +10597,7 @@ void polymorph (lives_mt *mt, gshort poly) {
 
     mt->fx_box=NULL;
     get_track_index(mt,tc);
+
     has_params=add_mt_param_box(mt,FALSE);
 
     if (mainw->playing_file<0) {
@@ -10773,7 +10775,7 @@ void polymorph (lives_mt *mt, gshort poly) {
     if (fxcount>1) {
       mt->fx_ibefore_button = gtk_button_new_with_mnemonic (_("Insert _before"));
       gtk_box_pack_start (GTK_BOX (bbox), mt->fx_ibefore_button, FALSE, FALSE, 0);
-      gtk_widget_set_sensitive(mt->fx_ibefore_button,mt->fx_order==FX_ORD_NONE&&WEED_EVENT_IS_FILTER_MAP(mt->fm_edit_event)&&mt->selected_init_event!=NULL);
+      gtk_widget_set_sensitive(mt->fx_ibefore_button,mt->fx_order==FX_ORD_NONE&&get_event_timecode(mt->fm_edit_event)==get_event_timecode(frame_event)&&mt->selected_init_event!=NULL);
       
       g_signal_connect (GTK_OBJECT (mt->fx_ibefore_button), "clicked",
 			G_CALLBACK (on_fx_insb_clicked),
@@ -10781,7 +10783,7 @@ void polymorph (lives_mt *mt, gshort poly) {
       
       mt->fx_iafter_button = gtk_button_new_with_mnemonic (_("Insert _after"));
       gtk_box_pack_start (GTK_BOX (bbox), mt->fx_iafter_button, FALSE, FALSE, 0);
-      gtk_widget_set_sensitive(mt->fx_iafter_button,mt->fx_order==FX_ORD_NONE&&WEED_EVENT_IS_FILTER_MAP(mt->fm_edit_event)&&mt->selected_init_event!=NULL);
+      gtk_widget_set_sensitive(mt->fx_iafter_button,mt->fx_order==FX_ORD_NONE&&get_event_timecode(mt->fm_edit_event)==get_event_timecode(frame_event)&&mt->selected_init_event!=NULL);
       
       g_signal_connect (GTK_OBJECT (mt->fx_iafter_button), "clicked",
 			G_CALLBACK (on_fx_insa_clicked),
@@ -12869,6 +12871,10 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   weed_timecode_t start_tc=get_event_timecode(start_event);
   weed_timecode_t end_tc=get_event_timecode(end_event);
   gboolean did_backup=mt->did_backup;
+  gboolean has_params;
+  gdouble timesecs=GTK_RULER (mt->timeline)->position;
+  weed_timecode_t tc=q_gint64(timesecs*U_SEC,mt->fps);
+  lives_rfx_t *rfx;
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
@@ -12938,9 +12944,18 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
     apply_avol_filter(mt);
   }
 
-  polymorph(mt,POLY_PARAMS);
+  rfx=weed_to_rfx(filter,FALSE);
+  get_track_index(mt,tc);
+  has_params=make_param_box(NULL,rfx);
+  rfx_free(rfx);
+  g_free(rfx);
 
-  gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
+  if (has_params) {
+    polymorph(mt,POLY_PARAMS);
+    gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
+  }
+  else polymorph(mt,POLY_FX_STACK);
+
   
   mt->idlefunc=mt_idle_add(mt);
 
@@ -16548,10 +16563,21 @@ gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack) 
 
   for (i1=0;i1<num_events1;i1++) {
 
+    if (i2<num_events2&&init_event_is_process_last(inits2[i2])) {
+      // for process_last we don't care about the exact order
+      if (init_event_in_list(inits1,num_events1,inits2[i2])) {
+	i2++;
+	continue;
+      }
+    }
+
     if (init_event_is_process_last(inits1[i1])) {
       // for process_last we don't care about the exact order
-      if (init_event_in_list(inits2,num_events2,inits1[i1])) continue;
+      if (init_event_in_list(inits2,num_events2,inits1[i1])) {
+	continue;
+      }
     }
+
 
     if (ctrack!=-1000000) {
       in_in_tracks=in_out_tracks=FALSE;
@@ -16637,7 +16663,6 @@ gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack) 
       i2++;
     }
   }
-
 
   if (i2<num_events2) {
     if (ctrack==-1000000) {

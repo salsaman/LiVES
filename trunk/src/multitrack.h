@@ -9,8 +9,6 @@
 #ifndef __HAS_MULTITRACK_H__
 #define __HAS_MULTITRACK_H__
 
-#include "events.h"
-
 #define CLIP_THUMB_WIDTH 72
 #define CLIP_THUMB_HEIGHT 72
 
@@ -750,6 +748,7 @@ void add_context_label (lives_mt *, gchar *text);
 void mouse_mode_context(lives_mt *);
 void do_sel_context (lives_mt *);
 void do_fx_list_context (lives_mt *, gint fxcount);
+void do_fx_move_context(lives_mt *mt);
 
 // playback / animation
 void multitrack_playall (lives_mt *);
@@ -790,7 +789,7 @@ gboolean used_in_current_layout(lives_mt *, gint file);
 
 // event_list utilities
 gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack); // ctrack can be -1 to compare all events, else we cf for ctrack
-void move_init_in_filter_map(weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, weed_plant_t *ito, gint track, gboolean after);
+void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, weed_plant_t *ito, gint track, gboolean after);
 void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, int track, weed_timecode_t new_start_tc, int new_track);
 void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_event);
 

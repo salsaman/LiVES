@@ -42,7 +42,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2009 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2010 */
 
 #ifndef __WEED_EFFECTS_H__
 #define __WEED_EFFECTS_H__
@@ -56,12 +56,9 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-  /* API version * 130 */
-#define WEED_API_VERSION 130
-#define WEED_API_VERSION_100
-#define WEED_API_VERSION_110
-#define WEED_API_VERSION_120
-#define WEED_API_VERSION_130
+  /* API version * 131 */
+#define WEED_API_VERSION 131
+#define WEED_API_VERSION_131
 
   /* plant types */
 #define WEED_PLANT_PLUGIN_INFO 1
@@ -127,13 +124,15 @@ extern "C"
 /* Colorspaces for Color parameters */
 #define WEED_COLORSPACE_RGB   1
 #define WEED_COLORSPACE_RGBA  2
-#define WEED_COLORSPACE_HSV   3
 
 /* Filter flags */
 #define WEED_FILTER_NON_REALTIME    (1<<0)
 #define WEED_FILTER_IS_CONVERTER    (1<<1)
 #define WEED_FILTER_HINT_IS_STATELESS (1<<2)
 #define WEED_FILTER_HINT_IS_POINT_EFFECT (1<<3)
+
+/* API version 131 */
+#define WEED_FILTER_PROCESS_LAST (1<<4)
 
 /* Channel flags */
 #define WEED_CHANNEL_REINIT_ON_SIZE_CHANGE    (1<<0)
@@ -147,6 +146,7 @@ extern "C"
 #define WEED_CHANNEL_PALETTE_CAN_VARY         (1<<4)
 
 /* API version 110 */
+// deprecated ! use WEED_FILTER_PROCESS_LAST instead
 #define WEED_CHANNEL_FOLLOWS_OUTPUT           (1<<5)
 
 /* Parameter flags */

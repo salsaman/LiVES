@@ -43,7 +43,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2008 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2010 */
 
 #include <string.h>
 
@@ -67,8 +67,8 @@
 /////////////////////////////////////////////////////////////////
 
 int weed_plant_has_leaf (weed_plant_t *plant, const char *key) {
-  if (weed_leaf_get(plant,key,0,NULL)==WEED_ERROR_NOSUCH_LEAF) return 0;
-  return 1;
+  if (weed_leaf_get(plant,key,0,NULL)==WEED_ERROR_NOSUCH_LEAF) return WEED_FALSE;
+  return WEED_TRUE;
 }
 
 /////////////////////////////////////////////////////////////////
@@ -426,8 +426,7 @@ int weed_set_plantptr_array (weed_plant_t *plant, const char *key, int num_elems
 
 
 int weed_leaf_copy (weed_plant_t *dst, char *keyt, weed_plant_t *src, char *keyf) {
-  int num=weed_leaf_num_elements(src,keyf);
-
+  int num,seed_type,i,error;
   int *datai;
   double *datad;
   char **datac;
@@ -435,7 +434,10 @@ int weed_leaf_copy (weed_plant_t *dst, char *keyt, weed_plant_t *src, char *keyf
   void **datav;
   weed_plant_t **datap;
 
-  int seed_type=weed_leaf_seed_type(src,keyf),i,error;
+  if (weed_plant_has_leaf(src,keyf)==WEED_FALSE) return WEED_ERROR_NOSUCH_LEAF;
+
+  seed_type=weed_leaf_seed_type(src,keyf);
+  num=weed_leaf_num_elements(src,keyf);
 
   if (num==0) weed_leaf_set(dst,keyt,seed_type,0,NULL);
   else {

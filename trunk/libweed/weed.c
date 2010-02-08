@@ -43,7 +43,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2010*/
 
 
 #include "weed.h"
@@ -320,7 +320,8 @@ static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void
   // additionally, the prototype of this function must never change
 
   weed_leaf_t *leaf=weed_find_leaf (plant,key);
-  if (leaf==NULL||idx>leaf->num_elements) return WEED_ERROR_NOSUCH_LEAF;
+  if (leaf==NULL) return WEED_ERROR_NOSUCH_LEAF;
+  if (idx>=leaf->num_elements) return WEED_ERROR_NOSUCH_ELEMENT;
   if (value==NULL) return WEED_NO_ERROR;
   if (weed_seed_is_ptr (leaf->seed_type)) memcpy (value,&leaf->data[idx]->value,sizeof(void *));
   else {
@@ -339,7 +340,8 @@ static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void
 
 static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *value) {
   weed_leaf_t *leaf=weed_find_leaf (plant,key);
-  if (leaf==NULL||idx>leaf->num_elements) return WEED_ERROR_NOSUCH_LEAF;
+  if (leaf==NULL) return WEED_ERROR_NOSUCH_LEAF;
+  if (idx>=leaf->num_elements) return WEED_ERROR_NOSUCH_ELEMENT;
   if (value==NULL) return WEED_NO_ERROR;
   if (weed_seed_is_ptr (leaf->seed_type)) weed_memcpy (value,&leaf->data[idx]->value,sizeof(void *));
   else {
@@ -363,7 +365,7 @@ static int _weed_leaf_num_elements(weed_plant_t *plant, const char *key) {
 
 static size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, int idx) {
   weed_leaf_t *leaf=weed_find_leaf (plant, key);
-  if (leaf==NULL||idx>leaf->num_elements) return 0;
+  if (leaf==NULL||idx>=leaf->num_elements) return 0;
   return leaf->data[idx]->size;
 }
 
@@ -393,6 +395,7 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
   case 110:
   case 120:
   case 130:
+  case 131:
   default:
     weed_default_get=_weed_default_get;
     weed_leaf_get=_weed_leaf_get;

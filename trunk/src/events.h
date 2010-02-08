@@ -1,6 +1,6 @@
 // events.h
 // LiVES
-// (c) G. Finch 2005 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2005 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -49,6 +49,8 @@ weed_plant_t *get_prev_frame_event (weed_plant_t *event);
 
 weed_plant_t *get_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut, gboolean exact);
 weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut);
+gboolean filter_map_after_frame(weed_plant_t *fmap);
+
 
 // definitions in events.c
 weed_plant_t *get_first_event(weed_plant_t *event_list);
@@ -140,16 +142,17 @@ void insert_filter_init_event_at(weed_plant_t *event_list, weed_plant_t *at_even
 void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *filter, weed_plant_t *init_event, int ntracks);
 void insert_filter_deinit_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 gboolean insert_filter_map_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event, gboolean before_frames);
-weed_plant_t *get_filter_map_before(weed_plant_t *event_list, weed_plant_t *event, gint ctrack);
-weed_plant_t *get_filter_map_after(weed_plant_t *event_list, weed_plant_t *event, gint ctrack);
-void **get_init_events_before(weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *init_event, gboolean add);
-void update_filter_maps (weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event);
+weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack);
+weed_plant_t *get_filter_map_after(weed_plant_t *event, gint ctrack);
+void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gboolean add);
+void update_filter_maps (weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event);
 void insert_param_change_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 void insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, int marker_type, gpointer data);
 
 void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void **hints);
 gboolean init_event_in_list(void **init_events, int num_inits, weed_plant_t *event);
 gboolean filter_init_has_owner(weed_plant_t *init_event, int track);
+gboolean init_event_is_process_last(weed_plant_t *event);
 
 // effect deletion/moving
 gboolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, gboolean can_stay, gdouble fps);

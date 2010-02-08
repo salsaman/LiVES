@@ -117,7 +117,7 @@ weed_memset_f weedmemset;
 
 
 weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_versions, int *plugin_versions) {
-  int host_api_versions_supported[]={100,110,120,130}; // must be ordered in ascending order
+  int host_api_versions_supported[]={131}; // must be ordered in ascending order
   int host_api_version;
   weed_plant_t *host_info=weed_plant_new(WEED_PLANT_HOST_INFO);
 
@@ -147,6 +147,7 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
   case 110:
   case 120:
   case 130:
+  case 131:
     value[0]=wdg; // bootstrap weed_get_get (the plugin's default_getter)
 
     weed_set_int_value(host_info,"api_version",host_api_version);
@@ -1154,9 +1155,10 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
   for (i=0;i<num_in_tracks;i++) {
     if (weed_plant_has_leaf(in_channels[i],"temp_disabled")&&weed_get_boolean_value(in_channels[i],"temp_disabled",&error)==WEED_TRUE) continue;
     layer=layers[in_tracks[i]];
+    clip=weed_get_int_value(layer,"clip",&error);
+
     if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
       // pull_frame will set pixel_data,width,height,current_palette and rowstrides
-      clip=weed_get_int_value(layer,"clip",&error);
       if (!pull_frame(layer,mainw->files[clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) return FILTER_ERROR_MISSING_FRAME;
     }
 

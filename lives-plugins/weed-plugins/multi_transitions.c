@@ -11,7 +11,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 

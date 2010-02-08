@@ -584,6 +584,19 @@ weed_plant_t *get_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, 
 
 
 
+gboolean filter_map_after_frame(weed_plant_t *fmap) {
+  // return TRUE if filter_map follows frame at same timecode
+  weed_plant_t *frame=get_prev_frame_event(fmap);
+
+  if (frame!=NULL&&get_event_timecode(frame)==get_event_timecode(fmap)) return TRUE;
+  return FALSE;
+}
+
+
+
+
+
+
 weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut) {
   weed_plant_t *frame_event=get_frame_event_at(event_list,tc,shortcut,FALSE);
   if (get_event_timecode(frame_event)>tc) {
@@ -594,8 +607,8 @@ weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timec
 
 
 
-weed_plant_t *get_filter_map_after(weed_plant_t *event_list, weed_plant_t *event, gint ctrack) {
-  // get filter_map following event; if ctrack!=-1 then we ignore filter maps with no in_track/out_track == ctrack
+weed_plant_t *get_filter_map_after(weed_plant_t *event, gint ctrack) {
+  // get filter_map following event; if ctrack!=-1000000 then we ignore filter maps with no in_track/out_track == ctrack
   void **init_events;
   gboolean has_in,has_out;
   int error,num_init_events,i,j;
@@ -606,7 +619,7 @@ weed_plant_t *get_filter_map_after(weed_plant_t *event_list, weed_plant_t *event
 
   while (event!=NULL) {
     if (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP) {
-      if (ctrack==-1) return event;
+      if (ctrack==-1000000) return event;
       has_in=has_out=FALSE;
       if (!weed_plant_has_leaf(event,"init_events")) {
 	event=get_next_event(event);
@@ -620,7 +633,10 @@ weed_plant_t *get_filter_map_after(weed_plant_t *event_list, weed_plant_t *event
       }
       num_init_events=weed_leaf_num_elements(event,"init_events");
       for (i=0;i<num_init_events;i++) {
+	g_print("check %d\n",i);
 	init_event=init_events[i];
+	if (init_event_is_process_last(init_event)) continue;
+	g_print("xchack\n");
 	if (weed_plant_has_leaf(init_event,"in_tracks")) {
 	  in_tracks=weed_get_int_array(init_event,"in_tracks",&error);
 	  num_tracks=weed_leaf_num_elements(init_event,"in_tracks");
@@ -659,8 +675,8 @@ weed_plant_t *get_filter_map_after(weed_plant_t *event_list, weed_plant_t *event
 
 
 
-weed_plant_t *get_filter_map_before(weed_plant_t *event_list, weed_plant_t *event, gint ctrack) {
-  // get filter_map preceding event; if ctrack!=-1 then we ignore filter maps with no in_track/out_track == ctrack
+weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack) {
+  // get filter_map preceding event; if ctrack!=-1000000 then we ignore filter maps with no in_track/out_track == ctrack
   void **init_events;
   gboolean has_in,has_out;
   int error,num_init_events,i,j;
@@ -670,7 +686,8 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event_list, weed_plant_t *even
 
   while (event!=NULL) {
     if (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP) {
-      if (ctrack==-1) return event;
+      g_print("pt xyz\n");
+      if (ctrack==-1000000) return event;
       has_in=has_out=FALSE;
       if (!weed_plant_has_leaf(event,"init_events")) {
 	event=get_prev_event(event);
@@ -685,6 +702,9 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event_list, weed_plant_t *even
       num_init_events=weed_leaf_num_elements(event,"init_events");
       for (i=0;i<num_init_events;i++) {
 	init_event=init_events[i];
+	g_print("pt za %d\n",i);
+	if (init_event_is_process_last(init_event)) continue;
+	g_print("pt zb %d\n",i);
 	if (weed_plant_has_leaf(init_event,"in_tracks")) {
 	  in_tracks=weed_get_int_array(init_event,"in_tracks",&error);
 	  num_tracks=weed_leaf_num_elements(init_event,"in_tracks");
@@ -710,6 +730,7 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event_list, weed_plant_t *even
 	  }
 	}
 	if (has_in||has_out) {
+	  g_print("pt xyz3 %p\n",event);
 	  weed_free(init_events);
 	  return event;
 	}
@@ -718,11 +739,12 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event_list, weed_plant_t *even
     }
     event=get_prev_event(event);
   }
+  g_print("nulla\n");
   return NULL;
 }
 
 
-void **get_init_events_before(weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *init_event, gboolean add) {
+void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gboolean add) {
   // find previous FILTER_MAP event, and append or delete new init_event
   void **init_events=NULL,**new_init_events;
   int error,num_init_events=0,i,j=0;
@@ -798,7 +820,7 @@ void **get_init_events_before(weed_plant_t *event_list, weed_plant_t *event, wee
 }
 
 
-void update_filter_maps (weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event) {
+void update_filter_maps (weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event) {
   // append init_event to all FILTER_MAPS between event and end_event
 
   while (event!=end_event) {
@@ -1260,7 +1282,7 @@ void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_
   int error,i;
   weed_plant_t *deinit_event=weed_get_voidptr_value(init_event,"deinit_event",&error);
   weed_plant_t *event=init_event;
-  weed_plant_t *filter_map=get_filter_map_before(event_list,init_event,-1);
+  weed_plant_t *filter_map=get_filter_map_before(init_event,-1000000);
   void **new_init_events;
   weed_timecode_t deinit_tc=get_event_timecode(deinit_event);
   weed_plant_t *event_next;
@@ -1269,7 +1291,7 @@ void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_
     event_next=get_next_event(event);
    // update filter_maps
     if (WEED_EVENT_IS_FILTER_MAP(event)) {
-      new_init_events=get_init_events_before(event_list,event,init_event,FALSE);
+      new_init_events=get_init_events_before(event,init_event,FALSE);
       for (i=0;new_init_events[i]!=NULL;i++);
       if (i==0) weed_set_voidptr_value(event,"init_events",NULL);
       else weed_set_voidptr_array(event,"init_events",i,new_init_events);
@@ -1304,7 +1326,7 @@ void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_
 
 
 static gboolean remove_event_from_filter_map(weed_plant_t *fmap, weed_plant_t *event) {
-  // return FALSE is result is NULL filter_map
+  // return FALSE if result is NULL filter_map
   int error;
   void **init_events=weed_get_voidptr_array(fmap,"init_events",&error);
   void **new_init_events;
@@ -1317,7 +1339,7 @@ static gboolean remove_event_from_filter_map(weed_plant_t *fmap, weed_plant_t *e
     if (init_events[i]!=event) new_init_events[j++]=init_events[i];
   }
     
-  if (j==0||(j==1&&event==NULL)) weed_set_voidptr_value(fmap,"init_events",NULL);
+  if (j==0||(j==1&&(event==NULL||init_events[0]==NULL))) weed_set_voidptr_value(fmap,"init_events",NULL);
   else weed_set_voidptr_array(fmap,"init_events",j,new_init_events);
   weed_free(init_events);
   g_free(new_init_events);
@@ -1327,7 +1349,10 @@ static gboolean remove_event_from_filter_map(weed_plant_t *fmap, weed_plant_t *e
 
 inline gboolean init_event_in_list(void **init_events, int num_inits, weed_plant_t *event) {
   int i;
-  for (i=0;i<num_inits;i++) if (init_events[i]==(void **)event) return TRUE;
+  if (init_events==NULL||init_events[0]==NULL) return FALSE;
+  for (i=0;i<num_inits;i++) {
+    if (init_events[i]==(void **)event) return TRUE;
+  }
   return FALSE;
 }
 
@@ -1496,6 +1521,33 @@ static gboolean is_in_hints(weed_plant_t *event,void **hints) {
 
 
 
+
+gboolean init_event_is_process_last(weed_plant_t *event) {
+  int error;
+  gboolean res=FALSE;
+  gchar *hashname;
+  weed_plant_t *filter;
+
+  if (event==NULL) return FALSE;
+
+  hashname=weed_get_string_value(event,"filter",&error);
+  filter=get_weed_filter(weed_get_idx_for_hashname(hashname,TRUE));
+  g_print("hs %s %p\n",hashname,filter);
+  if (weed_plant_has_leaf(filter,"flags")) {
+      int fflags=weed_get_int_value(filter,"flags",&error);
+      if (fflags&WEED_FILTER_PROCESS_LAST) {
+	g_print("is pl\n");
+	res=TRUE;
+      }
+  }
+  
+  weed_free(hashname);
+  return res;
+}
+
+
+
+
 void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void **hints) {
   // TODO - try to add at same position as in hints ***
 
@@ -1504,28 +1556,32 @@ void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void 
 
   // hints is the init_events from the previous filter_map
 
-  // eg. init_events    g,b,d        hints  a,b,c,d
-
-  // is_in_hints_before(x,y,hints) returns TRUE if x comes before y in hints, otherwise FALSE
-
-  // so is_in_hints_before(c,d, hints) returns TRUE. Then we know to add c before d
 
   int i,error,j=0;
-  void **init_events=weed_get_voidptr_array(fmap,"init_events",&error);
-  int num_inits=weed_leaf_num_elements(fmap,"init_events");
+  void **init_events;
+  int num_inits;
   void **new_init_events;
-  gboolean added=FALSE;
+  gboolean added=FALSE,plast=FALSE,mustadd=FALSE;
 
-  if (num_inits==1&&init_events[0]==NULL) {
+  remove_event_from_filter_map(fmap,event);
+
+  init_events=weed_get_voidptr_array(fmap,"init_events",&error);
+  num_inits=weed_leaf_num_elements(fmap,"init_events");
+
+  if (num_inits==1&&(init_events==NULL||init_events[0]==NULL)) {
     weed_set_voidptr_value(fmap,"init_events",event);
     weed_free(init_events);
     return;
   }
 
+  if (init_event_is_process_last(event)) plast=TRUE;
+
   new_init_events=g_malloc((num_inits+1)*sizeof(void *));
 
   for (i=0;i<num_inits;i++) {
-    if (!added&&is_in_hints(init_events[i],hints)) {
+    if (init_event_is_process_last(init_events[i])) mustadd=TRUE;
+
+    if (mustadd||(!plast&&!added&&is_in_hints(init_events[i],hints))) {
       new_init_events[j++]=event;
       added=TRUE;
     }
@@ -1559,7 +1615,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
 
   if (new_tc>tc) {
     // moving right
-    filter_map=get_filter_map_before(event_list,event,-1);
+    filter_map=get_filter_map_before(event,-1000000);
     while (get_event_timecode(event)<new_tc) {
       event_next=get_next_event(event);
       if (WEED_EVENT_IS_FILTER_MAP(event)) {
@@ -1574,7 +1630,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
 
     event=get_next_frame_event(init_event);
 
-    init_events=get_init_events_before(event_list,event,init_event,TRUE);
+    init_events=get_init_events_before(event,init_event,TRUE);
     event_list=append_filter_map_event(event_list,new_tc,init_events);
     g_free(init_events);
 
@@ -1615,7 +1671,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
 
     if (is_on) {
       event=get_next_frame_event(init_event);
-      filter_map=get_filter_map_before(event_list,event,-1);
+      filter_map=get_filter_map_before(event,-1000000);
 
       // insert filter_map at new filter_init
       if (filter_map!=NULL) {
@@ -1675,24 +1731,34 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
   if (new_tc<tc) {
     // moving left
     //find last event at new_tc, we are going to insert deinit_event after this
+
+
+    // first find filter_map before new end position, copy it with filter removed
     while (get_event_timecode(event)>new_tc) event=get_prev_event(event);
-    filter_map=get_filter_map_before(event_list,event,-1);
+    filter_map=get_filter_map_before(event,-1000000);
     if (filter_map!=NULL) {
-      copy_filter_map=weed_plant_copy(filter_map);
-      if (!WEED_EVENT_IS_FRAME(event)) event=get_prev_frame_event(event);
-      if (event==NULL) event=get_first_event(event_list);
-      insert_filter_map_event_at(event_list,event,copy_filter_map,FALSE);
+      if (get_event_timecode(filter_map)!=get_event_timecode(event)) {
+	copy_filter_map=weed_plant_copy(filter_map);
+	if (!WEED_EVENT_IS_FRAME(event)) event=get_prev_frame_event(event);
+	if (event==NULL) event=get_first_event(event_list);
+	insert_filter_map_event_at(event_list,event,copy_filter_map,FALSE);
+      }
+      else copy_filter_map=filter_map;
       remove_event_from_filter_map(copy_filter_map,init_event);
-      if (compare_filter_maps(filter_map,copy_filter_map,-1000000)) delete_event(event_list,copy_filter_map);
+      if (filter_map!=copy_filter_map&&compare_filter_maps(filter_map,copy_filter_map,-1000000)) delete_event(event_list,copy_filter_map);
       else filter_map=copy_filter_map;
     }
+
     while (!WEED_EVENT_IS_FRAME(event)) event=get_prev_event(event);
     xevent=event;
-    filter_map=get_filter_map_before(event_list,event,-1);
+    filter_map=get_filter_map_before(event,-1000000);
+
+    // remove from following filter_maps
 
     while (event!=NULL&&get_event_timecode(event)<=tc) {
       event_next=get_next_event(event);
       if (WEED_EVENT_IS_FILTER_MAP(event)) {
+	// found a filter map, so remove the event from it
 	is_null_filter_map=!remove_event_from_filter_map(event,init_event);
 	if ((filter_map==NULL&&is_null_filter_map)||(filter_map!=NULL&&compare_filter_maps(filter_map,event,-1000000))) delete_event(event_list,event);
 	else filter_map=event;
@@ -1712,7 +1778,7 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
     xevent=get_prev_event(deinit_event);
 
     // get event_hints so we can add filter back at guess position
-    filter_map=get_filter_map_before(event_list,deinit_event,-1);
+    filter_map=get_filter_map_before(deinit_event,-1000000);
     if (filter_map!=NULL&&filter_map_has_event(filter_map,init_event)) {
       init_events=weed_get_voidptr_array(filter_map,"init_events",&error);
       num_inits=weed_leaf_num_elements(filter_map,"init_events");
@@ -1754,7 +1820,7 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
       event=deinit_event;
       while (event!=NULL&&get_event_timecode(event)==new_tc) event=get_next_event(event);
       if (event==NULL) event=get_last_event(event_list);
-      filter_map=get_filter_map_before(event_list,event,-1);
+      filter_map=get_filter_map_before(event,-1000000);
 
       if (filter_map!=NULL&&filter_map_has_event(filter_map,init_event)) {
 	// if last FILTER_MAP before deinit_event mentions init_event, remove init_event, insert FILTER_MAP after deinit_event
@@ -2120,6 +2186,8 @@ GtkWidget *events_rec_dialog (void) {
   radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
     
   gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
+
+  if (mainw->stored_event_list!=NULL) gtk_widget_set_sensitive(radiobutton,FALSE);
     
   label=gtk_label_new_with_mnemonic (_("View/edit events in _event window"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
@@ -3884,7 +3952,7 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
 
   if (nbtracks>0) vis[0]=1.;
 
-  fmap=get_filter_map_before(mainw->multitrack->event_list,frame_event,-1);
+  fmap=get_filter_map_before(frame_event,-1000000);
 
   for (i=0;i<ntracks;i++) {
     matrix[i]=(float *)g_malloc(ntracks*sizeof(float));
@@ -4029,7 +4097,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 
  int i,j,num_elems,seed_type,hint,error;
  weed_timecode_t tc,tc_secs;
- gchar *strval;
+ gchar *strval=NULL;
  gchar *text;
 
  char **propnames;
@@ -4157,7 +4225,19 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	   weed_free(string[j]);
 	   break;
 	 case WEED_SEED_VOIDPTR:
-	   strval=g_strdup_printf("%p",voidval[j]);
+	   if (!(strncmp(propnames[i],"init_event",10))) {
+	     weed_plant_t *ievent=(weed_plant_t *)voidval[j];
+	     if (ievent!=NULL) {
+	       gchar *iname=weed_get_string_value(ievent,"filter",&error);
+	       if (iname!=NULL) {
+		 gchar *fname=weed_filter_get_name(weed_get_idx_for_hashname(iname,TRUE));
+		 strval=g_strdup_printf("%p (%s)",voidval[j],fname);
+		 weed_free(fname);
+	       }
+	       weed_free(iname);
+	     }
+	   }
+	   if (strval==NULL) strval=g_strdup_printf("%p",voidval[j]);
 	   break;
 	 case WEED_SEED_PLANTPTR:
 	   strval=g_strdup_printf("-->%p",voidval[j]);
@@ -4180,7 +4260,8 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	   gtk_tree_store_append (gtkstore, &iter3, &iter2);
 	   gtk_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
 	 }
-	 g_free (strval);
+	 if (strval!=NULL) g_free (strval);
+	 strval=NULL;
        }
 
        switch (seed_type) {

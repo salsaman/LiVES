@@ -13,7 +13,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={110}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]={131,110}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -152,6 +152,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[]={weed_audio_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE),NULL};
     weed_plant_t *in_params[]={weed_float_init("volume","_Volume",1.0,0.0,1.0),weed_float_init("pan","_Pan",0.,-1.,1.),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("audio volume and pan","salsaman",1,WEED_FILTER_IS_CONVERTER,&avol_init,&avol_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    int error;
+    weed_plant_t *host_info=weed_get_plantptr_value(plugin_info,"host_info",&error);
+    int api=weed_get_int_value(host_info,"api_version",&error);
 
     weed_set_int_value(in_chantmpls[0],"max_repeats",0); // set optional repeats of this channel
 
@@ -163,6 +166,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     // set is_volume_master from weedaudio spec 110
     weed_set_boolean_value(in_params[0],"is_volume_master",WEED_TRUE);
+
+    if (api>=131) weed_set_int_value(filter_class,"flags",WEED_FILTER_PROCESS_LAST|WEED_FILTER_IS_CONVERTER);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

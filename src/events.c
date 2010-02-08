@@ -633,10 +633,8 @@ weed_plant_t *get_filter_map_after(weed_plant_t *event, gint ctrack) {
       }
       num_init_events=weed_leaf_num_elements(event,"init_events");
       for (i=0;i<num_init_events;i++) {
-	g_print("check %d\n",i);
 	init_event=init_events[i];
 	if (init_event_is_process_last(init_event)) continue;
-	g_print("xchack\n");
 	if (weed_plant_has_leaf(init_event,"in_tracks")) {
 	  in_tracks=weed_get_int_array(init_event,"in_tracks",&error);
 	  num_tracks=weed_leaf_num_elements(init_event,"in_tracks");
@@ -686,7 +684,6 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack) {
 
   while (event!=NULL) {
     if (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP) {
-      g_print("pt xyz\n");
       if (ctrack==-1000000) return event;
       has_in=has_out=FALSE;
       if (!weed_plant_has_leaf(event,"init_events")) {
@@ -702,9 +699,7 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack) {
       num_init_events=weed_leaf_num_elements(event,"init_events");
       for (i=0;i<num_init_events;i++) {
 	init_event=init_events[i];
-	g_print("pt za %d\n",i);
 	if (init_event_is_process_last(init_event)) continue;
-	g_print("pt zb %d\n",i);
 	if (weed_plant_has_leaf(init_event,"in_tracks")) {
 	  in_tracks=weed_get_int_array(init_event,"in_tracks",&error);
 	  num_tracks=weed_leaf_num_elements(init_event,"in_tracks");
@@ -730,7 +725,6 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack) {
 	  }
 	}
 	if (has_in||has_out) {
-	  g_print("pt xyz3 %p\n",event);
 	  weed_free(init_events);
 	  return event;
 	}
@@ -739,7 +733,6 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack) {
     }
     event=get_prev_event(event);
   }
-  g_print("nulla\n");
   return NULL;
 }
 
@@ -1532,11 +1525,9 @@ gboolean init_event_is_process_last(weed_plant_t *event) {
 
   hashname=weed_get_string_value(event,"filter",&error);
   filter=get_weed_filter(weed_get_idx_for_hashname(hashname,TRUE));
-  g_print("hs %s %p\n",hashname,filter);
   if (weed_plant_has_leaf(filter,"flags")) {
       int fflags=weed_get_int_value(filter,"flags",&error);
       if (fflags&WEED_FILTER_PROCESS_LAST) {
-	g_print("is pl\n");
 	res=TRUE;
       }
   }
@@ -1802,7 +1793,7 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
     insert_filter_deinit_event_at(event_list,event,deinit_event);
 
     if (is_on) {
-      // ensure filter remains on until repositioned FILTER_DEINIT
+      // ensure filter remains on until new position
       event=xevent;
       while (event!=deinit_event) {
 	if (get_event_timecode(event)==new_tc&&WEED_EVENT_IS_FRAME(event)) break;

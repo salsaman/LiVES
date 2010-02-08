@@ -475,14 +475,13 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
 
   gdouble def_fps=0.;
 
-  gboolean added=FALSE;
-
+  gboolean added=add_fps;
+  gboolean chk_params=(vbox==NULL);
 
   // add fps
 
 
   if (add_fps) {
-    added=TRUE;
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
     
@@ -523,6 +522,8 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
    
     added=TRUE;
  
+    if (chk_params) continue;
+
     if (rfx->is_template) {
       cname=weed_get_string_value(tmpl,"name",&error);
       ltxt=g_strdup_printf(_("%s : size"),cname);
@@ -596,19 +597,20 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
 
 
 
-
-  hseparator = gtk_hseparator_new ();
-  if (added) gtk_box_pack_start (vbox, hseparator, TRUE, TRUE, 0);
-
-  if (!rfx->is_template) {
-    lives_param_t param;
-    // add "aspectratio" widget
-    init_special();
-    add_to_special("aspect|-100|-101|",rfx); // use virtual parameter numbers -100 and -101
-    param.widgets[0]=spinbuttonw;
-    check_for_special (&param,-100,vbox,rfx);
+  if (!chk_params) {
+    hseparator = gtk_hseparator_new ();
+    if (added) gtk_box_pack_start (vbox, hseparator, TRUE, TRUE, 0);
+    
+    if (!rfx->is_template) {
+      lives_param_t param;
+      // add "aspectratio" widget
+      init_special();
+      add_to_special("aspect|-100|-101|",rfx); // use virtual parameter numbers -100 and -101
+      param.widgets[0]=spinbuttonw;
+      check_for_special (&param,-100,vbox,rfx);
     param.widgets[0]=spinbuttonh;
     check_for_special (&param,-101,vbox,rfx);
+    }
   }
 
   return added;
@@ -953,8 +955,8 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
   // returns TRUE if we added any parameters
 
-  GtkWidget *param_vbox;
-  GtkWidget *top_hbox;
+  GtkWidget *param_vbox=NULL;
+  GtkWidget *top_hbox=NULL;
   GtkWidget *hbox=NULL;
 
   gchar **array;
@@ -967,7 +969,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   GList *layout=NULL;
   int i,j,k,pnum,error;
   int length;
-  lives_param_t *param;
+  lives_param_t *param=NULL;
 
   gint num_tok;
   gchar label_text[256]; // max length of a label in layout hints
@@ -978,25 +980,32 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   gboolean internal=FALSE;
   gboolean noslid;
   gboolean has_param=FALSE;
+  gboolean chk_params=FALSE;
 
-  mainw->textwidget_focus=NULL;
+  if (top_vbox==NULL) {
+    chk_params=TRUE;
+  }
+  else {
+    mainw->textwidget_focus=NULL;
 
-  if (fx_dialog[1]==NULL) {
-    // initialise special widgets
-    init_special();
+    if (fx_dialog[1]==NULL) {
+      // initialise special widgets
+      init_special();
+    }
+    
+    if (rfx->status==RFX_STATUS_WEED) usrgrp_to_livesgrp[1]=NULL;
+    else usrgrp_to_livesgrp[0]=NULL;
+
+    // paramwindow start, everything goes in top_hbox
+    
+    top_hbox = gtk_hbox_new (FALSE, 10);
+    
+    // param_vbox holds the dynamic parameters
+    param_vbox = gtk_vbox_new (FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (top_hbox), param_vbox, TRUE, TRUE, 10);
+    gtk_box_set_spacing (GTK_BOX (param_vbox), 5);
   }
 
-  if (rfx->status==RFX_STATUS_WEED) usrgrp_to_livesgrp[1]=NULL;
-  else usrgrp_to_livesgrp[0]=NULL;
-
-  // paramwindow start, everything goes in top_hbox
-
-  top_hbox = gtk_hbox_new (FALSE, 10);
-
-  // param_vbox holds the dynamic parameters
-  param_vbox = gtk_vbox_new (FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (top_hbox), param_vbox, TRUE, TRUE, 10);
-  gtk_box_set_spacing (GTK_BOX (param_vbox), 5);
   switch (rfx->status) {
   case RFX_STATUS_BUILTIN:
     type=g_strdup(PLUGIN_RENDERED_EFFECTS_BUILTIN);
@@ -1005,18 +1014,18 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     type=g_strdup(PLUGIN_RENDERED_EFFECTS_CUSTOM);
     break;
   case RFX_STATUS_SCRAP:
-    type=g_strdup(PLUGIN_RFX_SCRAP);
-    break;
+      type=g_strdup(PLUGIN_RFX_SCRAP);
+      break;
   case RFX_STATUS_WEED:
-    internal=TRUE;
-    break;
+      internal=TRUE;
+      break;
   default:
     type=g_strdup(PLUGIN_RENDERED_EFFECTS_TEST);
     break;
   }
-
+  
   // extras for multitrack
-  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED&&!chk_params) {
     weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
     if (enabled_in_channels(filter,FALSE)==2&&get_transition_param(filter)!=-1) {
       // add in/out for multitrack transition
@@ -1026,16 +1035,16 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   }
 
   // extras for converters
-  if (internal&&weed_instance_is_resizer(rfx->source)) {
+  if (internal&&weed_instance_is_resizer(rfx->source)&&!chk_params) {
     has_param=add_sizes(GTK_BOX(param_vbox),FALSE,rfx);
   }
 
-  if (rfx->status!=RFX_STATUS_SCRAP&&!internal&&rfx->num_in_channels==0&&rfx->min_frames>-1) {
+  if (rfx->status!=RFX_STATUS_SCRAP&&!internal&&rfx->num_in_channels==0&&rfx->min_frames>-1&&!chk_params) {
     if (mainw->multitrack==NULL) add_gen_to(GTK_BOX(param_vbox),rfx);
     else mainw->gen_to_clipboard=FALSE;
   }
 
-  if (!internal) {
+  if (!internal&&!chk_params) {
     // do onchange|init
     if ((onchange=plugin_request_by_line (type,rfx->name,"get_onchange"))!=NULL) {
       for (i=0;i<g_list_length (onchange);i++) {
@@ -1055,7 +1064,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     hints=plugin_request_by_line (type,rfx->name,"get_param_window");
     g_free(type);
   }
-  else hints=get_external_window_hints(rfx);
+  else if (!chk_params) hints=get_external_window_hints(rfx);
 
   // do param window hints
   if (hints!=NULL) {
@@ -1151,38 +1160,41 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   // add any unused parameters
   for (i=0;i<rfx->num_params;i++) {
     rfx->params[i].changed=FALSE;
+    if (rfx->params[i].hidden||rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
     if (!used[i]) {
-      add_param_to_box (GTK_BOX (param_vbox),rfx,i,TRUE);
+      if (!chk_params) add_param_to_box (GTK_BOX (param_vbox),rfx,i,TRUE);
       has_param=TRUE;
     }
   }
 
-  if (!has_param) {
-    hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 20);
-    add_fill_to_box(GTK_BOX(hbox));
-    add_label_to_box(GTK_BOX(hbox),FALSE,_("No parameters"));
-    add_fill_to_box(GTK_BOX(hbox));
+  if (!chk_params) {
+    if (!has_param) {
+      hbox = gtk_hbox_new (FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 20);
+      add_fill_to_box(GTK_BOX(hbox));
+      add_label_to_box(GTK_BOX(hbox),FALSE,_("No parameters"));
+      add_fill_to_box(GTK_BOX(hbox));
+    }
+    
+    scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+    gtk_widget_show (scrolledwindow);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    
+    gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), top_hbox);
+    gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
+    if (mainw->multitrack==NULL||rfx->status!=RFX_STATUS_WEED) gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
+    
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_bg(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    }
+    gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
   }
-
-  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_show (scrolledwindow);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), top_hbox);
-  gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
-  if (mainw->multitrack==NULL||rfx->status!=RFX_STATUS_WEED) gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
 
   if (mainw->multitrack==NULL&&rfx->status==RFX_STATUS_WEED&&rfx->is_template) {
     weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
     if (enabled_in_channels(filter,FALSE)==0&&enabled_out_channels(filter,FALSE)>0) {
       // out channel size(s) and target_fps for generators
-      add_sizes(GTK_BOX(top_vbox),TRUE,rfx);
+      if (!chk_params) add_sizes(GTK_BOX(top_vbox),TRUE,rfx);
       has_param=TRUE;
     }
   }
@@ -1803,7 +1815,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -1928,7 +1940,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2112,7 +2124,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2178,7 +2190,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2243,7 +2255,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2291,7 +2303,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2400,7 +2412,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   }
   g_free (old_text);
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 
@@ -2476,7 +2488,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL) {
+  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }

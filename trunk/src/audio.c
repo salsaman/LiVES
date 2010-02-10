@@ -704,6 +704,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   if (out_achans==0) return 0l;
 
+
   if (to_file>-1) {
     // prepare outfile stuff
     outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
@@ -723,7 +724,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     
     // fill to ins_pt with zeros
     pad_with_silence(out_fd,cur_size,ins_size,out_asamps,out_unsigned,out_bendian);
-    sync();
+    //sync();
 
 
   }
@@ -798,7 +799,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       ins_pt*=out_achans*out_arate*out_asamps;
       ins_size=((long)(ins_pt/out_achans/out_asamps)+.5)*out_achans*out_asamps;
       pad_with_silence(out_fd,oins_size,ins_size,out_asamps,out_unsigned,out_bendian);
-      sync();
+      //sync();
       close (out_fd);
     }
     else {
@@ -814,6 +815,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       }
       obuf->samples_filled+=tsamples;
     }
+
     return tsamples;
   }
 
@@ -876,7 +878,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       in_buff=g_malloc(tbytes);
 
       if (zavel<0.) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
-    
+
       bytes_read=read(in_fd[track],in_buff,tbytes);
       //g_print("read %ld bytes\n",bytes_read);
 
@@ -939,7 +941,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 #ifdef DEBUG_ARENDER
 	g_print(".");
 #endif
-	sync();
+	//sync();
       }
       else {
 	if (prefs->audio_player==AUD_PLAYER_JACK) {
@@ -1377,7 +1379,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   
   if (last_tc<fill_tc) {
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
-
     for (i=0;i<nfiles;i++) {
       // increase seek values
       aseeks[i]+=avels[i]*(fill_tc-last_tc)/U_SEC;
@@ -1399,8 +1400,23 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 }
 
 
+static void *abth(void *arg) {
+  lives_audio_buf_t *abuff=(lives_audio_buf_t *)arg;
+  fill_abuffer_from(abuff, mainw->event_list, NULL, FALSE);
+  return NULL;
+}
 
 
+void fill_abuffer_thread(lives_audio_buf_t *abuff) {
+  static pthread_t abthread;
+  static gboolean pth_started=FALSE;
+
+  if (pth_started) pthread_join(abthread,NULL);
+
+  pthread_create(&abthread,NULL,abth,abuff);
+
+  pth_started=TRUE;
+}
 
 
 void init_jack_audio_buffers (gint achans, gint arate, gboolean exact) {

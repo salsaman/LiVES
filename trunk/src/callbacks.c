@@ -57,11 +57,11 @@ lives_exit (void) {
 	mainw->stream_ticks=-1;
       }
       
-      if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
-	com=g_strdup_printf ("touch %s/%s/.stoploop 2>/dev/null",prefs->tmpdir,mainw->files[mainw->playing_file]->handle);
+      if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE&&mainw->aud_file_to_kill>-1&&mainw->files[mainw->aud_file_to_kill]!=NULL) {
+	com=g_strdup_printf ("touch %s/%s/.stoploop 2>/dev/null",prefs->tmpdir,mainw->files[mainw->aud_file_to_kill]->handle);
 	dummyvar=system(com);
 	g_free (com);
-	com=g_strdup_printf("smogrify stop_audio %s",mainw->files[mainw->playing_file]->handle);
+	com=g_strdup_printf("smogrify stop_audio %s",mainw->files[mainw->aud_file_to_kill]->handle);
 	dummyvar=system(com);
 	g_free(com);
       }
@@ -5508,17 +5508,21 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 	  }
 	  resize(2);
 	}
-	mainw->pheight*=2;
-	mainw->pheight++;
-	mainw->pwidth*=2;
-	mainw->pwidth+=2;
+	if (!prefs->ce_maxspect) {
+	  mainw->pheight*=2;
+	  mainw->pheight++;
+	  mainw->pwidth*=2;
+	  mainw->pwidth+=2;
+	}
       }
       else {
 	resize(1);
-	mainw->pheight--;
-	mainw->pheight/=2;
-	mainw->pwidth-=2;
-	mainw->pwidth/=2;
+	if (!prefs->ce_maxspect) {
+	  mainw->pheight--;
+	  mainw->pheight/=2;
+	  mainw->pwidth-=2;
+	  mainw->pwidth/=2;
+	}
 	if (!mainw->faded) {
 	  if (palette->style&STYLE_1) {
 	    gtk_widget_show(mainw->sep_image);
@@ -7453,9 +7457,9 @@ on_mouse_scroll           (GtkWidget       *widget,
   guint kstate;
   guint type=1;
 
-  if (!prefs->mouse_scroll_clips) return FALSE;
+  if (!prefs->mouse_scroll_clips||mainw->noswitch) return FALSE;
 
-  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))) return FALSE;
+  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))&&(mainw->multitrack!=NULL||mainw->playing_file==-1||mainw->play_window==NULL||!gtk_window_is_active(GTK_WINDOW(mainw->play_window)))) return FALSE;
 
   kstate=event->state;
 

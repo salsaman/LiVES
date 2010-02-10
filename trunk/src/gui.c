@@ -1745,7 +1745,7 @@ create_LiVES (void)
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_hide),10);
   gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_hide),mainw->tooltips,_("Hide this toolbar"),"");
 
-  t_label=gtk_label_new(_ ("Use ctrl and <- arrows -> to move through clip. Press 'r' before playing to record changes."));
+  t_label=gtk_label_new(_ ("Press \"s\" to toggle separate play window for improved performance, \"q\" to stop."));
   gtk_widget_modify_fg(t_label, GTK_STATE_NORMAL, &palette->white);
   gtk_box_pack_start (GTK_BOX (mainw->tb_hbox), t_label, FALSE, FALSE, 0);
 
@@ -1820,7 +1820,7 @@ create_LiVES (void)
   gtk_widget_hide(mainw->framebar);
 
   hbox1 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox1);
+  gtk_widget_show(hbox1);
   gtk_box_pack_start (GTK_BOX (vbox4), hbox1, FALSE, FALSE, 0);
   gtk_widget_modify_bg (hbox1, GTK_STATE_NORMAL, &palette->normal_back);
 

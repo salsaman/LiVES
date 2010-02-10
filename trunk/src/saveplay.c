@@ -1368,6 +1368,9 @@ void play_file (void) {
 
   gchar *tmpfilename=NULL;
 
+  if (prefs->audio_player!=AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
+  else mainw->aud_file_to_kill=-1;
+
 
 #ifdef ENABLE_JACK
   if (!mainw->preview&&!mainw->foreign) jack_pb_start();
@@ -1966,6 +1969,7 @@ void play_file (void) {
     if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE&&stopcom!=NULL) {
       // kill sound(if still playing)
       dummyvar=system(stopcom);
+      mainw->aud_file_to_kill=-1;
       g_free (stopcom);
     }
 #ifdef ENABLE_JACK
@@ -2000,6 +2004,7 @@ void play_file (void) {
     // wait for audio_ended...
     if (cfile->achans>0&&com2!=NULL) {
       wait_for_stop(com2);
+      mainw->aud_file_to_kill=-1;
     }
     if (com2!=NULL) g_free(com2);
   }
@@ -3348,7 +3353,6 @@ void recover_layout_map(numclips) {
 	lmap_node_next=lmap_node->next;
 	lmap_entry=lmap_node->data;
 	if (!strcmp(mainw->files[i]->handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
-	  
 	  // got a match, assign list to layout_map and delete this node
 	  lmap_entry_list=lmap_entry->list;
 	  while (lmap_entry_list!=NULL) {
@@ -3444,8 +3448,10 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
     is_scrap=FALSE;
 
     if (mainw->cached_list!=NULL) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
       mainw->cached_list=NULL;
     }
 
@@ -3457,6 +3463,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	switch_to_file((mainw->current_file=0),current_file);
       }
       reset_clip_menu();
+      while (g_main_context_iteration(NULL,FALSE));
       pthread_mutex_unlock(&mainw->gtk_mutex);
       // mutex unlock
       break;
@@ -3474,6 +3481,8 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (!on_load_set_ok(NULL,GINT_TO_POINTER(TRUE))) {
 	fclose(rfile);
 	end_threaded_dialog();
+
+	if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
 
 	if (mainw->multitrack!=NULL) {
 	  mainw->current_file=mainw->multitrack->render_file;
@@ -3507,6 +3516,8 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	fclose(rfile);
 	end_threaded_dialog();
 	too_many_files();
+
+	if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
 
 	if (mainw->multitrack!=NULL) {
 	  mainw->current_file=mainw->multitrack->render_file;
@@ -3633,6 +3644,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	  mt_init_clips(mainw->multitrack,current_file,TRUE);
 	  while (g_main_context_iteration(NULL,FALSE));
 	  mt_clip_select(mainw->multitrack,TRUE);
+	  while (g_main_context_iteration(NULL,FALSE));
 	}
 	
 	pthread_mutex_unlock(&mainw->gtk_mutex);

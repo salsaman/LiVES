@@ -1996,6 +1996,7 @@ gint weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtr
   for (i=0;i<ntracks;i++) {
     in_abuf=weed_get_voidptr_value(layers[i],"audio_data",&error);
     g_free(in_abuf);
+
     weed_plant_free(layers[i]);
   }
   g_free(layers);
@@ -2175,7 +2176,9 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
 
   // the results of abuf[0] and abuf[1] (for stereo) will be written to fileno
 
-  if (filter_map==NULL||!weed_plant_has_leaf(filter_map,"init_events")||(weed_get_voidptr_value(filter_map,"init_events",&error)==NULL)) return;
+  if (filter_map==NULL||!weed_plant_has_leaf(filter_map,"init_events")||(weed_get_voidptr_value(filter_map,"init_events",&error)==NULL)) {
+    return;
+  }
   if ((num_inst=weed_leaf_num_elements(filter_map,"init_events"))>0) {
     init_events=weed_get_voidptr_array(filter_map,"init_events",&error);
     for (i=0;i<num_inst;i++) {

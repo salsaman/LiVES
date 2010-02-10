@@ -399,15 +399,12 @@ typedef struct {                // corresponds to one clip in the GUI
   // size must be >= frames, MUST be contiguous in memory
 
   int *frame_index_back; // for undo
-  //int nbfi; // number of backup frame indices
 
   gint fx_frame_pump; // rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
 #define FX_FRAME_PUMP_VAL 100 // how many frames at a time to pump to rfx
 
-  //int **forward_frame_index; // for rendo
-  //int nffi; // number of forward frame indices
-
+#define IMG_BUFF_SIZE 4096 // chunk size for reading images
 
   gboolean ratio_fps; // if the fps was set by a ratio
 

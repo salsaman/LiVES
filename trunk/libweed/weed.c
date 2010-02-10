@@ -102,6 +102,7 @@ static inline char *weed_strdup (const char *string) {
 }
 
 static inline int weed_strcmp (const char *st1, const char *st2) {
+  
   while (!(*st1==0&&*st2==0)) {
     if (*(st1)==0||*(st2)==0||*(st1++)!=*(st2++)) return 1;
   }

@@ -375,7 +375,9 @@ typedef struct {
                      // close the current clip, or call load_frame_image()
   gint new_clip;
 
-  gboolean reverse_pb; 
+  gint aud_file_to_kill; // # of audio file to kill on crash
+
+  gboolean reverse_pb; // used in osc.c
 
   // TODO - make this a mutex and more finely grained : things we need to block are (clip switches, clip closure, effects on/off, etc)
   gboolean osc_block;
@@ -633,7 +635,7 @@ typedef struct {
   GtkWidget *laudbar;
   GtkWidget *raudbar;
 
-#define MAIN_SPIN_SPACER 76 // pixel spacing for start/end spins for clip and multitrack editors
+#define MAIN_SPIN_SPACER 72 // pixel spacing for start/end spins for clip and multitrack editors
   GtkWidget *spinbutton_end;
   GtkWidget *spinbutton_start;
 

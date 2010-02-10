@@ -36,6 +36,8 @@
 // size of silent block in bytes
 #define SILENCE_BLOCK_SIZE 65536
 
+// chunk size for audio buffer reads
+#define READ_BLOCK_SIZE 4096
 
 // buffer size for realtime audio
 #define XSAMPLES 128000
@@ -108,6 +110,10 @@ void pulse_rec_audio_end(void);
 #endif
 
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, gboolean exact);
+
+// non-blocking version
+void fill_abuffer_thread(lives_audio_buf_t *abuf);
+
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, gboolean get_audstate, gboolean exact);
 

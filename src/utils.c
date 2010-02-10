@@ -274,13 +274,13 @@ void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
     // bound by rheight
     *cheight=rheight;
     *cwidth=((gdouble)rheight*aspect+.5);
-    if (*cwidth>rwidth) *cwidth-=1;
+    if (*cwidth>rwidth) *cwidth=rwidth;
   }
   else {
     // bound by rwidth
     *cwidth=rwidth;
     *cheight=((gdouble)rwidth/aspect+.5);
-    if (*cheight>rheight) *cheight-=1;
+    if (*cheight>rheight) *cheight=rheight;
   }
 }
 

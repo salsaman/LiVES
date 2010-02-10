@@ -245,6 +245,7 @@ typedef struct {
 #define STARTUP_CE 0
 #define STARTUP_MT 1
 
+  gboolean ce_maxspect;
 
 } _prefs;
 
@@ -366,6 +367,7 @@ typedef struct {
   GtkWidget *rb_startup_ce;
   GtkWidget *rb_startup_mt;
   GtkWidget *jack_int_label;
+  GtkWidget *checkbutton_ce_maxspect;
 } _prefsw;
 
 

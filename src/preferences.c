@@ -328,6 +328,7 @@ apply_prefs(gboolean skip_warn) {
   gboolean ext_jpeg=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->jpeg));
   gboolean show_tool=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->show_tool));
   gboolean mouse_scroll=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mouse_scroll));
+  gboolean ce_maxspect=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect));
   gint fsize_to_warn=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
   gint dl_bwidth=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_bwidth));
   gint ocp=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_ocp));
@@ -473,6 +474,15 @@ apply_prefs(gboolean skip_warn) {
   if (mouse_scroll!=(prefs->mouse_scroll_clips)) {
     prefs->mouse_scroll_clips=mouse_scroll;
     set_boolean_pref("mouse_scroll_clips",mouse_scroll);
+  }
+
+  if (ce_maxspect!=(prefs->ce_maxspect)) {
+    prefs->ce_maxspect=ce_maxspect;
+    set_boolean_pref("ce_maxspect",ce_maxspect);
+    if (mainw->current_file>-1) {
+      gint current_file=mainw->current_file;
+      switch_to_file((mainw->current_file=0),current_file);
+    }
   }
 
 
@@ -1779,6 +1789,19 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->mouse_scroll, TRUE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->mouse_scroll), 22);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->mouse_scroll), prefs->mouse_scroll_clips);
+
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox7), hbox, TRUE, FALSE, 0);
+
+
+  prefsw->checkbutton_ce_maxspect = gtk_check_button_new_with_mnemonic (_("Shrink previews to fit in interface"));
+  gtk_widget_show (prefsw->checkbutton_ce_maxspect);
+
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_ce_maxspect, TRUE, TRUE, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->checkbutton_ce_maxspect), 22);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_ce_maxspect), prefs->ce_maxspect);
 
 
 

@@ -7626,11 +7626,14 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   
   if (prefs->show_gui&&prefs->open_maximised) {
     gtk_window_unmaximize (GTK_WINDOW(mainw->LiVES));
-    while (g_main_context_iteration(NULL,FALSE));
-    gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
   }
+  
 
   while (g_main_context_iteration(NULL,FALSE));
+
+  if (prefs->show_gui&&prefs->open_maximised) {
+    gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
+  }
 
   if (mt->file_selected!=-1) {
     switch_to_file ((mainw->current_file=0),mt->file_selected);
@@ -15855,6 +15858,10 @@ GList *load_layout_map(void) {
   // thus a layout could be transferred to another set and the unique_id's altered, one could use a layout.map and a layout file as a template for
   // rendering many different sets
 
+
+  // this is called from recover_layout_map() in saveplay.c, where the map entries are assigned
+  // to files (clips)
+
   int fd;
   gchar *lmap_name=g_strdup_printf("%s/%s/layouts/layout.map",prefs->tmpdir,mainw->set_name);
   GList *lmap=NULL;
@@ -17438,7 +17445,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	new_clip_index=g_malloc(num_tracks*sizint);
 	new_frame_index=g_malloc(num_tracks*sizint);
 	last_valid_frame=0;
-#define DEBUG_MISSING_CLIPS
+	//#define DEBUG_MISSING_CLIPS
 #ifdef DEBUG_MISSING_CLIPS
 	//g_print("pt zzz %d\n",num_tracks);
 #endif

@@ -453,7 +453,7 @@ if __name__ == '__main__':
 
         if verbose:
             quiet = '-v'
-            tonull = ''
+            tonull = '1>&2'
         else:
             quiet = '-q'
             tonull = '2> /dev/null'

@@ -66,6 +66,7 @@ static  _ign_opts ign_opts;
 static int zargc;
 static char **zargv;
 
+static gint xxwidth=0,xxheight=0;
 
 /////////////////////////////////
 
@@ -475,6 +476,7 @@ static void lives_init(_ign_opts *ign_opts) {
   sigaddset(&smask,SIGINT);
   sigaddset(&smask,SIGTERM);
   sigaddset(&smask,SIGSEGV);
+  sigaddset(&smask,SIGABRT);
 
   sact.sa_handler=catch_sigint;
   sact.sa_flags=0;
@@ -487,6 +489,7 @@ static void lives_init(_ign_opts *ign_opts) {
   sigaction (SIGINT, &sact, NULL);
   sigaction (SIGTERM, &sact, NULL);
   sigaction (SIGSEGV, &sact, NULL);
+  sigaction (SIGABRT, &sact, NULL);
 
   // initialise the mainwindow data
   mainw->scr_width=gdk_screen_width();
@@ -761,6 +764,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->go_away=TRUE;
 
+  mainw->aud_file_to_kill=-1;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -831,7 +836,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->num_rtaudiobufs=4;
 
-    prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and othe live CDs
+    prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and other live CDs
+
+    prefs->ce_maxspect=get_boolean_pref("ce_maxspect");;
 
     //////////////////////////////////////////////////////////////////
 
@@ -1164,14 +1171,15 @@ static void lives_init(_ign_opts *ign_opts) {
 	      lives_exit();
 	    }
 	  }
-
-	  pulse_audio_init();
-	  pulse_audio_read_init();
-	  mainw->pulsed=pulse_get_driver(TRUE);
-
-	  mainw->pulsed->whentostop=&mainw->whentostop;
-	  mainw->pulsed->cancelled=&mainw->cancelled;
-	  mainw->pulsed->in_use=FALSE;
+	  else {
+	    pulse_audio_init();
+	    pulse_audio_read_init();
+	    mainw->pulsed=pulse_get_driver(TRUE);
+	    
+	    mainw->pulsed->whentostop=&mainw->whentostop;
+	    mainw->pulsed->cancelled=&mainw->cancelled;
+	    mainw->pulsed->in_use=FALSE;
+	  }
 	}
 #endif
 
@@ -2341,34 +2349,83 @@ void load_start_image(gint frame) {
   GdkPixbuf *start_pixbuf=NULL;
   weed_plant_t *layer;
   weed_timecode_t tc;
+  gint rwidth,rheight,width,height;
+  gboolean noswitch=mainw->noswitch;
 
   if (mainw->multitrack!=NULL) return;
 
   if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
+    pthread_mutex_lock(&mainw->gtk_mutex);
     if (!(mainw->imframe==NULL)) {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->imframe);
     }
     else {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),NULL);
     }
+    pthread_mutex_unlock(&mainw->gtk_mutex);
     return;
   }
 
-  layer=weed_plant_new(WEED_PLANT_CHANNEL);
   tc=((frame-1.))/cfile->fps*U_SECL;
-  weed_set_int_value(layer,"clip",mainw->current_file);
-  weed_set_int_value(layer,"frame",frame);
 
-  if (pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
-    convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
-    start_pixbuf=layer_to_pixbuf(layer);
-  }
-  weed_plant_free(layer);
+  if (!prefs->ce_maxspect||mainw->double_size) {
+    pthread_mutex_lock(&mainw->gtk_mutex);
+    layer=weed_plant_new(WEED_PLANT_CHANNEL);
+    weed_set_int_value(layer,"clip",mainw->current_file);
+    weed_set_int_value(layer,"frame",frame);
 
-  gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
-  if (start_pixbuf!=NULL) {
-    gdk_pixbuf_unref(start_pixbuf);
+    if (pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
+      start_pixbuf=layer_to_pixbuf(layer);
+    }
+    weed_plant_free(layer);
+  
+    if (GDK_IS_PIXBUF(start_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+    if (start_pixbuf!=NULL) {
+      if (G_IS_OBJECT(start_pixbuf)) {
+	gdk_pixbuf_unref(start_pixbuf);
+      }
+    }
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+    return;
   }
+
+  mainw->noswitch=TRUE;
+
+  pthread_mutex_lock(&mainw->gtk_mutex);
+
+  do {
+    width=cfile->hsize;
+    height=cfile->vsize;
+    rwidth=mainw->image272->allocation.width;
+    rheight=mainw->image272->allocation.height;
+    calc_maxspect(rwidth,rheight,&width,&height);
+
+    layer=weed_plant_new(WEED_PLANT_CHANNEL);
+    weed_set_int_value(layer,"clip",mainw->current_file);
+    weed_set_int_value(layer,"frame",frame);
+
+    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) start_pixbuf=layer_to_pixbuf(layer);
+
+    weed_plant_free(layer);
+  
+    if (GDK_IS_PIXBUF(start_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+    if (start_pixbuf!=NULL) {
+      if (G_IS_OBJECT(start_pixbuf)) {
+	gdk_pixbuf_unref(start_pixbuf);
+      }
+    }
+
+    gtk_widget_queue_resize(mainw->image272);
+
+    while (g_main_context_iteration(NULL,FALSE));
+  } while (rwidth!=mainw->image272->allocation.width||rheight!=mainw->image272->allocation.height);
+
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+
+
+  mainw->noswitch=noswitch;
+
 
 }
 
@@ -2378,34 +2435,86 @@ void load_end_image(gint frame) {
   GdkPixbuf *end_pixbuf=NULL;
   weed_plant_t *layer;
   weed_timecode_t tc;
+  gint rwidth,rheight,width,height;
+  gboolean noswitch=mainw->noswitch;
 
   if (mainw->multitrack!=NULL) return;
 
+  
+
   if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
+    pthread_mutex_lock(&mainw->gtk_mutex);
     if (!(mainw->imframe==NULL)) {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->imframe);
     }
     else {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),NULL);
     }
+    pthread_mutex_unlock(&mainw->gtk_mutex);
     return;
   }
 
+
   tc=((frame-1.))/cfile->fps*U_SECL;
 
-  layer=weed_plant_new(WEED_PLANT_CHANNEL);
-  weed_set_int_value(layer,"clip",mainw->current_file);
-  weed_set_int_value(layer,"frame",frame);
-  if (pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
-    convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
-    end_pixbuf=layer_to_pixbuf(layer);
-  }
-  weed_plant_free(layer);
+  if (!prefs->ce_maxspect||mainw->double_size) {
+    pthread_mutex_lock(&mainw->gtk_mutex);
+    layer=weed_plant_new(WEED_PLANT_CHANNEL);
+    weed_set_int_value(layer,"clip",mainw->current_file);
+    weed_set_int_value(layer,"frame",frame);
 
-  gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
-  if (end_pixbuf!=NULL) {
-    gdk_pixbuf_unref(end_pixbuf);
+    if (pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
+      end_pixbuf=layer_to_pixbuf(layer);
+    }
+    weed_plant_free(layer);
+  
+    if (GDK_IS_PIXBUF(end_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+    if (end_pixbuf!=NULL) {
+      if (G_IS_OBJECT(end_pixbuf)) {
+	gdk_pixbuf_unref(end_pixbuf);
+      }
+    }
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+    return;
   }
+
+  mainw->noswitch=TRUE;
+
+  pthread_mutex_lock(&mainw->gtk_mutex);
+  do {
+    width=cfile->hsize;
+    height=cfile->vsize;
+    rwidth=mainw->image273->allocation.width;
+    rheight=mainw->image273->allocation.height;
+    calc_maxspect(rwidth,rheight,&width,&height);
+
+    layer=weed_plant_new(WEED_PLANT_CHANNEL);
+    weed_set_int_value(layer,"clip",mainw->current_file);
+    weed_set_int_value(layer,"frame",frame);
+
+    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) end_pixbuf=layer_to_pixbuf(layer);
+
+    weed_plant_free(layer);
+  
+    if (GDK_IS_PIXBUF(end_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+    if (end_pixbuf!=NULL) {
+      if (G_IS_OBJECT(end_pixbuf)) {
+	gdk_pixbuf_unref(end_pixbuf);
+      }
+    }
+
+    gtk_widget_queue_resize(mainw->image273);
+
+    mainw->noswitch=TRUE;
+    while (g_main_context_iteration(NULL,FALSE));
+    mainw->noswitch=noswitch;
+  } while (rwidth!=mainw->image273->allocation.width||rheight!=mainw->image273->allocation.height);
+
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+  mainw->noswitch=noswitch;
+
+
 }
 
 
@@ -2517,11 +2626,7 @@ load_preview_image(gboolean update_always) {
 }
 
 
-#define IMG_BUFF_SIZE 4096
-
-static gint xxwidth=0,xxheight=0;
-
-void pbsize_set(GdkPixbufLoader *pbload, gint width, gint height, gpointer ptr) {
+static void pbsize_set(GdkPixbufLoader *pbload, gint width, gint height, gpointer ptr) {
   if (xxwidth*xxheight>0) gdk_pixbuf_loader_set_size(pbload,xxwidth,xxheight);
 }
 
@@ -2554,6 +2659,7 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
       return NULL;
     }
     sched_yield();
+
   }
 
   sched_yield();
@@ -2786,8 +2892,11 @@ GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext
   }
   weed_plant_free(layer);
   if (pixbuf!=NULL&&(gdk_pixbuf_get_width(pixbuf)!=width||gdk_pixbuf_get_height(pixbuf)!=height)) {
-    GdkPixbuf *pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
+    GdkPixbuf *pixbuf2;
+    pthread_mutex_lock(&mainw->gtk_mutex);
+    pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
     gdk_pixbuf_unref(pixbuf);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
     pixbuf=pixbuf2;
   }
   return pixbuf;
@@ -3169,7 +3278,8 @@ void load_frame_image(gint frame, gint last_frame) {
 	}
 	else {
 	  int i;
-	  weed_plant_t **layers=g_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
+	  weed_plant_t **layers;
+	  layers=g_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
 	  for (i=0;i<mainw->num_tracks;i++) {
 	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
 	    weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
@@ -3410,7 +3520,7 @@ void load_frame_image(gint frame, gint last_frame) {
       }
     }
 
-    if ((mainw->multitrack==NULL&&(mainw->double_size))||(mainw->fs&&(!mainw->ext_playback||!(mainw->vpp->capabilities&VPP_CAN_RESIZE)))||(mainw->must_resize&&((!mainw->multitrack&&mainw->sep_win)||(mainw->multitrack!=NULL&&!mainw->sep_win)))) {
+    if ((mainw->multitrack==NULL&&mainw->double_size&&!prefs->ce_maxspect)||(mainw->fs&&(!mainw->ext_playback||!(mainw->vpp->capabilities&VPP_CAN_RESIZE)))||(mainw->must_resize&&((mainw->multitrack==NULL&&mainw->sep_win)||(mainw->multitrack!=NULL&&!mainw->sep_win)))) {
       if (!mainw->ext_playback||(mainw->pwidth!=mainw->vpp->fwidth||mainw->pheight!=mainw->vpp->fheight)) {
 	if (mainw->multitrack!=NULL) {
 	  if (!mainw->fs||mainw->play_window==NULL) {
@@ -3442,6 +3552,16 @@ void load_frame_image(gint frame, gint last_frame) {
     else {
       mainw->pwidth=cfile->hsize;
       mainw->pheight=cfile->vsize;
+
+      if (mainw->multitrack==NULL&&mainw->play_window==NULL&&prefs->ce_maxspect) {
+	gint rwidth=mainw->image274->allocation.width;
+	gint rheight=mainw->image274->allocation.height;
+	if (mainw->double_size) {
+	  mainw->pwidth*=2;
+	  mainw->pheight*=2;
+	}
+	calc_maxspect(rwidth,rheight,&mainw->pwidth,&mainw->pheight);
+      }
     }
 
 
@@ -3614,13 +3734,17 @@ void load_frame_image(gint frame, gint last_frame) {
 
 
 GdkPixbuf *lives_scale_simple (GdkPixbuf *pixbuf, gint width, gint height) {
+  GdkPixbuf *pixbuf2;
+  pthread_mutex_lock(&mainw->gtk_mutex);
   if (prefs->pb_quality==PB_QUALITY_HIGH) {
-    return gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
+    pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
   }
-  if (prefs->pb_quality==PB_QUALITY_MED) {
-    return gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_BILINEAR);
+  else if (prefs->pb_quality==PB_QUALITY_MED) {
+    pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_BILINEAR);
   }
-  return gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_NEAREST);
+  else pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_NEAREST);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+  return pixbuf2;
 }
 
 
@@ -4088,6 +4212,11 @@ void switch_to_file(gint old_file, gint new_file) {
 	  g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
           load_start_image(cfile->start);
           load_end_image(cfile->end);
+	  if (prefs->ce_maxspect) {
+	    load_start_image(cfile->start);
+	    load_end_image(cfile->end);
+	  }
+	  load_frame_image(cfile->frameno,cfile->frameno);
 	}
 	if (mainw->double_size) {
 	  frame_size_update();

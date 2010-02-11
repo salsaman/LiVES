@@ -229,72 +229,31 @@ gchar *find_free_camfile(gint format) {
 gboolean rec(s_cam *cam) {
   // returns filename of file being written
 
+  gchar *tmp2,*tmp3,*com;
+  gchar *splits;
 
-  struct pollfd raw1394_poll;
-
-  unsigned char fmt;
-  unsigned short dbs_fn_qpc_sph;
-  gchar *tmp,*tmp2,*tmp3;
-  int outfile;
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dvgrabw->split))) splits=g_strdup("-autosplit ");
+  else splits=g_strdup("");
 
   if (cam->format==CAM_FORMAT_DV) {
     // dv format
-    gchar *com=g_strdup_printf("dvgrab --format raw %s/%s >/dev/null 2>&1 &",(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+    com=g_strdup_printf("dvgrab -format raw %s%s/%s >/dev/null 2>&1 &",splits,(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
     dummyvar=system (com);
     g_free(com);
     g_free(tmp2);
     g_free(tmp3);
+    g_free(splits);
     return TRUE;
   }
 
   // hdv format
-
-  /* initialize the poll control structure */
-  raw1394_poll.fd = raw1394_get_fd(cam->rec_handle);
-  raw1394_poll.events = POLLIN;
-
-  outfile=open((tmp=g_strdup_printf("%s/%s",(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)))),O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
-  g_free(tmp);
+  com=g_strdup_printf("dvgrab -format mpeg2 %s%s/%s >/dev/null 2>&1 &",splits,(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+  dummyvar=system (com);
+  g_free(com);
   g_free(tmp2);
   g_free(tmp3);
+  g_free(splits);
 
-  if (!outfile) return FALSE;
-
-  /* the main loop */
-  while (g_alldone == 0) {
-    /* check for pending events before using raw1394 */
-    if ( poll( &raw1394_poll, 1, 10) > 0 ) {
-
-      if (raw1394_poll.revents & POLLIN) {
-        
-	/* wait for a packet to arrive */
-	/* printf("waiting to receive...\n"); */
-	raw1394_loop_iterate(cam->rec_handle);
-	
-	/* check various fields of CIP header for valid packet */
-	dbs_fn_qpc_sph = (htonl(*(unsigned long*)(g_rx_packet+4)) >> 10) & 0x3fff;
-	fmt = (htonl(*(unsigned long*)(g_rx_packet+8)) >> 24) & 0x3f;
-
-	if (g_rx_length > 188 && fmt == 0x20 && dbs_fn_qpc_sph == 0x01b1) {
-	  
-	  unsigned char *data = g_rx_packet + 16; /* skip over iso header, CIP header, and SPH */
-	  size_t len = g_rx_length;
-	  
-	  /* write each TSP in the iso packet minus SPH */
-	  for ( ; len > 188; len -= 192, data += 192 ) {
-	    if (write( outfile, data, 188 ) <=0 ) {
-	      g_alldone = 1;
-	      break;
-	    }
-	  }
-	}
-      }
-    }
-    while (g_main_context_iteration(NULL,FALSE));
-  }
-
-  g_alldone=0;
-  close (outfile);
   return TRUE;
 }
 
@@ -312,11 +271,12 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
   cam=camready();
   if (cam==NULL) return;
 
-  if (type==CAM_FORMAT_HDV) {
+  /*  if (type==CAM_FORMAT_HDV) {
     cam->rec_handle=open_raw1394();
     if (cam->rec_handle==NULL) return;
   }
-  else cam->rec_handle=NULL;
+  else*/ 
+  cam->rec_handle=NULL;
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {

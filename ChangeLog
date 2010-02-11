@@ -7,8 +7,10 @@ Allow timecode to be edited in multitrack mode.
 Switching to->from multitrack mode maintains the layout in memory.
 Allow startup in mt mode.
 Better scrolling of tracks in multitrack.
+Implement progressive image loading.
 Change multitrack "snap mode" to "gravity left".
 Allow jack transport to set play start position.
+Add option of resizing frames to fit in clip editor interface.
 Fix possible bootstrap issue with weed plugins. *
 Fix an encoder/png problem. *
 Fix image loading (regression).

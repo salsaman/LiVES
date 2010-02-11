@@ -115,7 +115,7 @@ gboolean on_camdelete_event (GtkWidget *widget, GdkEvent *event, gpointer user_d
 void on_camquit_clicked (GtkButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   on_camstop_clicked(button,user_data);
-  if (cam->format==CAM_FORMAT_HDV) close_raw1394(cam->rec_handle);
+  //if (cam->format==CAM_FORMAT_HDV) close_raw1394(cam->rec_handle);
   gtk_widget_destroy(dvgrabw->window);
   if (dvgrabw->cursor!=NULL) gdk_cursor_unref(dvgrabw->cursor);
   if (dvgrabw->filename!=NULL) g_free(dvgrabw->filename);

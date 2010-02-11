@@ -20,6 +20,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   GtkWidget *image;
   GtkWidget *vbox;
   GtkWidget *hbox;
+  GtkWidget *eventbox;
   GtkWidget *label;
   GtkWidget *hseparator;
   GtkWidget *direntry;
@@ -88,6 +89,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   else gtk_entry_set_text(GTK_ENTRY(dvgrabw->filent),"hdvgrab-");
   gtk_label_set_mnemonic_widget(GTK_LABEL(label),dvgrabw->filent);
 
+
   if (type==CAM_FORMAT_DV) label=gtk_label_new("%d.dv");
   else label=gtk_label_new("%d.mpg");
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
@@ -101,16 +103,43 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
+  dvgrabw->split=gtk_check_button_new();
+
+  eventbox=gtk_event_box_new();
+  gtk_tooltips_copy(eventbox,dvgrabw->split);
+  label=gtk_label_new_with_mnemonic (_("_Split into scenes"));
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label),dvgrabw->split);
+  
+  gtk_container_add(GTK_CONTAINER(eventbox),label);
+  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		    G_CALLBACK (label_act_toggle),
+		    dvgrabw->split);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  
+  hbox = gtk_hbox_new (FALSE, 0);
+  
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+  
+  gtk_box_pack_start (GTK_BOX (hbox), dvgrabw->split, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+
+
   dvgrabw->status_entry=gtk_entry_new();
 
   gtk_box_pack_start(GTK_BOX(vbox),dvgrabw->status_entry,FALSE,FALSE,0);
   gtk_entry_set_text(GTK_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
   gtk_editable_set_editable (GTK_EDITABLE(dvgrabw->status_entry),FALSE);
 
+
   hseparator = gtk_hseparator_new ();
   gtk_box_pack_start (GTK_BOX (vbox), hseparator, FALSE, TRUE, 10);
 
   hbuttonbox1 = gtk_hbutton_box_new ();
+
   gtk_box_pack_start(GTK_BOX(vbox),hbuttonbox1,FALSE,FALSE,0);
 
   button3 = gtk_button_new_from_stock(GTK_STOCK_MEDIA_REWIND);

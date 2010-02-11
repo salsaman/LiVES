@@ -147,7 +147,7 @@ create_warn_dialog (gint warn_mask_number) {
 
   dialog2 = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Warning !"));
-  if (mainw->is_ready&&palette->style&STYLE_1) {
+  if (palette->style&STYLE_1) {
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog2),FALSE);
     gtk_widget_modify_bg(dialog2, GTK_STATE_NORMAL, &palette->normal_back);
   }
@@ -167,7 +167,7 @@ create_warn_dialog (gint warn_mask_number) {
   gtk_label_set_line_wrap (GTK_LABEL (mainw->warning_label), FALSE);
   gtk_label_set_selectable (GTK_LABEL (mainw->warning_label), TRUE);
 
-  if (mainw->is_ready&&palette->style&STYLE_1) {
+  if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(mainw->warning_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
@@ -1349,12 +1349,6 @@ do_text_window (const gchar *title, const gchar *text) {
 
 
 void 
-do_firstever_dialog (void) {
-  startup_message_nonfatal (g_strdup (_ ("\n\nWelcome to LiVES. If this is your first time using LiVES, please check all the\nPreferences using Control-P. In particular make sure the temporary directory is located somewhere with plenty of diskspace.\nHave fun !\n")));
-}
-
-
-void 
 do_upgrade_error_dialog (void) {
   startup_message_nonfatal (g_strdup (_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your ~/.lives file")));
 }
@@ -1840,7 +1834,14 @@ inline void d_print_file_error_failed(void) {
 
 void do_file_perm_error(gchar *file_name) {
   gchar *msg=g_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
-  do_error_dialog(msg);
+  do_blocking_error_dialog(msg);
+  g_free(msg);
+}
+
+
+void do_dir_perm_error(gchar *dir_name) {
+  gchar *msg=g_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),dir_name);
+  do_blocking_error_dialog(msg);
   g_free(msg);
 }
 

@@ -2818,7 +2818,7 @@ _prefsw *create_prefs_dialog (void) {
    
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_save_set), !(prefs->warning_mask&WARN_MASK_SAVE_SET));
    
-   prefsw->checkbutton_warn_mplayer = gtk_check_button_new_with_mnemonic (_("Show a warning if _mplayer is not found when LiVES is started."));
+   prefsw->checkbutton_warn_mplayer = gtk_check_button_new_with_mnemonic (_("Show a warning if _mplayer, sox, composite or convert is not found when LiVES is started."));
    gtk_widget_show (prefsw->checkbutton_warn_mplayer);
    gtk_box_pack_start (GTK_BOX (vbox18), prefsw->checkbutton_warn_mplayer, FALSE, TRUE, 0);
    

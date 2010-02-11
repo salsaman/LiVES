@@ -86,12 +86,12 @@ gboolean lives_pulse_init (short startup_phase) {
     }
     else {
       msg=g_strdup(_("\nUnable to connect to pulse audio server.\n"));
-      if (startup_phase<1) {
+      if (startup_phase==0) {
 	do_error_dialog(msg);
       }
       else {
 	msg2=g_strdup_printf("%s%s",msg,_("LiVES will exit and you can choose another audio player.\n"));
-	do_error_dialog(msg2);
+	do_blocking_error_dialog(msg2);
 	g_free(msg2);
       }
       g_free(msg);

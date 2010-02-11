@@ -131,7 +131,7 @@ typedef struct {
 
   gboolean omc_noisy;
 
-  gshort startup_phase; // 1 = new startup, 2, pre-audio start, 100 = all tests passed
+  gshort startup_phase; // -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
   const gchar *wm; //window manager name
   gint ocp; // open_compression_percent : get/set in prefs
 

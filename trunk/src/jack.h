@@ -17,7 +17,7 @@
 #include <jack/jack.h>
 #include <jack/transport.h>
 
-void lives_jack_init (void); /* start up server on LiVES init */
+gboolean lives_jack_init (void); /* start up server on LiVES init */
 gboolean lives_jack_poll(gpointer data); /* poll function to check transport state */
 void lives_jack_end (void);
 

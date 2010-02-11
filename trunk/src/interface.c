@@ -1705,6 +1705,8 @@ _entryw* create_rename_dialog (gint type) {
   // type 4 = save clip set from mt
   // type 5 = save clip set for project export
 
+  // type 6 = initial tempdir
+
 
   GtkWidget *dialog_vbox13;
   GtkWidget *hbox19;
@@ -1713,6 +1715,8 @@ _entryw* create_rename_dialog (gint type) {
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
   GtkWidget *set_combo;
+  GtkWidget *dirbutton1;
+  GtkWidget *dirimage1;
 
   _entryw *renamew=(_entryw*)(g_malloc(sizeof(_entryw)));
 
@@ -1723,7 +1727,11 @@ _entryw* create_rename_dialog (gint type) {
   gtk_window_set_position (GTK_WINDOW (renamew->dialog), GTK_WIN_POS_CENTER);
 
   if (!prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(renamew->dialog),GTK_WINDOW(mainw->LiVES));
+    if (mainw->multitrack==NULL) {
+      if (mainw->is_ready) {
+	gtk_window_set_transient_for(GTK_WINDOW(renamew->dialog),GTK_WINDOW(mainw->LiVES));
+      }
+    }
     else gtk_window_set_transient_for(GTK_WINDOW(renamew->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
@@ -1734,7 +1742,7 @@ _entryw* create_rename_dialog (gint type) {
     gtk_widget_modify_bg (renamew->dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_default_size (GTK_WINDOW (renamew->dialog), 500, 200);
+  if (type!=6) gtk_window_set_default_size (GTK_WINDOW (renamew->dialog), 500, 200);
 
   gtk_container_set_border_width (GTK_CONTAINER (renamew->dialog), 10);
 
@@ -1761,15 +1769,42 @@ _entryw* create_rename_dialog (gint type) {
     }
   }
 
+
+  if (type==6) {
+    label = gtk_label_new (_("Welcome to LiVES !\nThis startup wizard will guide you through the\ninitial install so that you can get the most from this application.\n"));
+    gtk_widget_show (label);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox13), label, FALSE, FALSE, 0);
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    label = gtk_label_new (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\nNote, on many systems, /tmp is cleared on shutdown, so it may be inadvisable to create it in /tmp.\n"));
+    gtk_widget_show (label);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox13), label, FALSE, FALSE, 0);
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+  }
+
+
   hbox19 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox19);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox13), hbox19, TRUE, TRUE, 0);
+  if (type!=6) {
+    gtk_box_pack_start (GTK_BOX (dialog_vbox13), hbox19, TRUE, TRUE, 0);
+  }
+  else {
+    gtk_box_pack_start (GTK_BOX (dialog_vbox13), hbox19, TRUE, TRUE, 40);
+  }
 
   if (type==1) {
     gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Rename Clip"));
   }
   else if (type==2||type==3||type==4||type==5) {
     gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Enter Set Name"));
+  }
+  else if (type==6) {
+    gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Choose working directory"));
   }
 
   if (type==1) {
@@ -1788,6 +1823,7 @@ _entryw* create_rename_dialog (gint type) {
     gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
+
   if (type==3) {
     set_combo=gtk_combo_new();
     renamew->setlist=get_set_list(prefs->tmpdir);
@@ -1797,13 +1833,36 @@ _entryw* create_rename_dialog (gint type) {
     gtk_box_pack_start (GTK_BOX (hbox19), set_combo, TRUE, TRUE, 0);
   }
   else {
-    renamew->entry = gtk_entry_new_with_max_length (128);
+    renamew->entry = gtk_entry_new_with_max_length (type==6?255:128);
     if (type==2&&strlen (mainw->set_name)) {
       gtk_entry_set_text (GTK_ENTRY (renamew->entry),mainw->set_name);
     }
-    gtk_widget_show (renamew->entry);
+    if (type==6) {
+      gchar *tmpdir;
+      if (prefs->startup_phase==-1) tmpdir=g_strdup_printf("%s/livestmp/",capable->home_dir);
+      else tmpdir=g_strdup(prefs->tmpdir);
+      gtk_entry_set_text (GTK_ENTRY (renamew->entry),tmpdir);
+      g_free(tmpdir);
+    }
     gtk_box_pack_start (GTK_BOX (hbox19), renamew->entry, TRUE, TRUE, 0);
+    gtk_widget_show (renamew->entry);
   }
+
+
+  if (type==6) {
+    dirbutton1 = gtk_button_new ();
+    gtk_widget_show (dirbutton1);
+    
+    dirimage1 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
+    gtk_widget_show (dirimage1);
+
+    gtk_container_add (GTK_CONTAINER (dirbutton1), dirimage1);
+
+    gtk_box_pack_start (GTK_BOX (hbox19), dirbutton1, FALSE, TRUE, 10);
+    g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_simple_clicked),renamew->entry);
+
+  }
+
 
   gtk_entry_set_activates_default (GTK_ENTRY (renamew->entry), TRUE);
 
@@ -1843,7 +1902,7 @@ _entryw* create_rename_dialog (gint type) {
 		      G_CALLBACK (on_load_set_ok),
 		      GINT_TO_POINTER(FALSE));
   }
-  else if (type==4||type==2||type==5) {
+  else if (type==4||type==2||type==5||type==6) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (response_ok),
 		      NULL);
@@ -2802,170 +2861,6 @@ _entryw* create_cds_dialog (gint type) {
   if (type==1||type==2)gtk_widget_grab_default(savebutton);
 
   return cdsw;
-}
-
-
-
-
-
-
-gboolean do_audio_choice_dialog(short startup_phase) {
-  GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*label;
-  GtkWidget *okbutton,*cancelbutton;
-  GSList *radiobutton_group = NULL;
-  gchar *txt0,*txt1,*txt2,*txt3,*txt4,*txt5,*txt6,*txt7,*msg;
-
-  gint response;
-
-  // TODO - make toplevel window so we can present it
-
-  if (startup_phase==2) {
-    txt0=g_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
-  }
-  else txt0=g_strdup("WELCOME TO LiVES !\n\n");
-
-  txt1=g_strdup(_("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
-
-#ifndef HAVE_PULSE_AUDIO
-  txt2=g_strdup(_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
-#else
-  if (!capable->has_pulse_audio) {
-    txt2=g_strdup(_(", but you do not have pulse audio installed on your system.\n You are advised to install pulse audio first before running LiVES.\n\n"));
-  }
-  else txt2=g_strdup(".\n\n");
-#endif
-
-  txt3=g_strdup(_("JACK audio is recommended for pro users"));
-
-#ifndef ENABLE_JACK
-  txt4=g_strdup(_(", but this version of LiVES was not compiled with jack audio support.\n\n"));
-#else
-  if (!capable->has_jackd) {
-    txt4=g_strdup(_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
-  }
-  else {
-    txt4=g_strdup(_(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack, you can restart and try with another audio player instead.\n\n"));
-  }
-#endif
-
-  txt5=g_strdup(_("SOX may be used if neither of the preceding players work, "));
-
-  if (capable->has_sox) {
-    txt6=g_strdup(_("but some audio features will be disabled.\n\n"));
-  }
-  else {
-    txt6=g_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
-  }
-
-  if (capable->has_mplayer) {
-    txt7=g_strdup(_("The MPLAYER audio player is only recommended for testing purposes.\n\n"));
-  }
-  else {
-    txt7=g_strdup("");
-  }
-
-  msg=g_strdup_printf("%s%s%s%s%s%s%s%s",txt0,txt1,txt2,txt3,txt4,txt5,txt6,txt7);
-
-  g_free(txt0);
-  g_free(txt1);
-  g_free(txt2);
-  g_free(txt3);
-  g_free(txt4);
-  g_free(txt5);
-  g_free(txt6);
-  g_free(txt7);
-
-  dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Choose an audio player"));
-
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
-  gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
-
-  dialog_vbox = GTK_DIALOG (dialog)->vbox;
-  
-  label=gtk_label_new(msg);
-  gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
-  g_free(msg);
-
-
-  radiobutton0 = gtk_radio_button_new_with_mnemonic (NULL, _("Use _pulse audio player"));
-
-#ifdef HAVE_PULSE_AUDIO
-  gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton0);
-
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
-#endif
-
-  radiobutton1 = gtk_radio_button_new_with_mnemonic (NULL, _("Use _jack audio player"));
-#ifdef ENABLE_JACK
-  gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton1);
-
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
-#endif
-
-  radiobutton2 = gtk_radio_button_new_with_mnemonic (NULL, _("Use _sox audio player"));
-  if (capable->has_sox) {
-    gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton2);
-
-    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton2), radiobutton_group);
-    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton2));
-
-  }
-
-  radiobutton3 = gtk_radio_button_new_with_mnemonic (NULL, _("Use _mplayer audio player"));
-  if (capable->has_mplayer) {
-    gtk_container_add (GTK_CONTAINER (dialog_vbox), radiobutton3);
-
-    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton3), radiobutton_group);
-    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton3));
-
-  }
-
-  g_signal_connect (GTK_OBJECT (radiobutton0), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_PULSE));
-
-  g_signal_connect (GTK_OBJECT (radiobutton1), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_JACK));
-
-  g_signal_connect (GTK_OBJECT (radiobutton2), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_SOX));
-
-  g_signal_connect (GTK_OBJECT (radiobutton3), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_MPLAYER));
-
-  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton);
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_widget_grab_default(okbutton);
-  gtk_widget_grab_focus(okbutton);
-
-  gtk_widget_show_all(dialog);
-
-  response=gtk_dialog_run(GTK_DIALOG(dialog));
-
-  gtk_widget_hide(dialog);  // destroying this makes gtk+ crash...
-
-  if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
-    gtk_widget_hide(mainw->vol_toolitem);
-    gtk_widget_hide(mainw->vol_label);
-    gtk_widget_hide (mainw->recaudio_submenu);
-  }
-
-  while (g_main_context_iteration(NULL,FALSE));
-
-  return (response==GTK_RESPONSE_OK);
 }
 
 

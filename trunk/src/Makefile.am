@@ -123,6 +123,7 @@ lives_exe_SOURCES = \
 	multitrack.h multitrack.c \
 	stream.h stream.c \
 	cvirtual.c cvirtual.h \
+	startup.c startup.h \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES)

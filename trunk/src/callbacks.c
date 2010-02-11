@@ -9269,10 +9269,3 @@ void on_lerrors_delete_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_data) {
-  gint audp=GPOINTER_TO_INT(user_data);
-
-  if (!gtk_toggle_button_get_active(tbutton)) return;
-
-  prefs->audio_player=audp;
-}

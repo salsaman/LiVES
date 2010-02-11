@@ -3065,7 +3065,7 @@ void weed_unload_all(void) {
 
     handle=weed_get_voidptr_value(plugin_info,"handle",&error);
 
-    if (handle!=NULL) {
+    if (handle!=NULL&&prefs->startup_phase==0) {
       if ((desetup_fn=dlsym (handle,"weed_desetup"))!=NULL) {
 	// call weed_desetup()
 	(*desetup_fn)();
@@ -3096,6 +3096,7 @@ void weed_unload_all(void) {
   for (i=0;i<MAX_WEED_FILTERS;i++) {
     if (hashnames[i]!=NULL) g_free(hashnames[i]);
   }
+
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
 }

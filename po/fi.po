@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-11 13:41-0300\n"
+"POT-Creation-Date: 2010-02-11 19:29-0300\n"
 "PO-Revision-Date: 2009-12-25 10:27+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -366,7 +366,7 @@ msgstr ""
 msgid "Starting GUI..."
 msgstr "Käynnistetään graafinen käyttöliittymä..."
 
-#: src/main.c:1657
+#: src/main.c:1656
 #, c-format
 msgid ""
 "\n"
@@ -382,7 +382,7 @@ msgstr ""
 "%s/%s.\n"
 "(Muuta tarvittaessa <prefix_dir>-arvoa tiedostosta ~/.lives)\n"
 
-#: src/main.c:1673
+#: src/main.c:1669
 msgid ""
 "\n"
 "LiVES was unable to write a small file to /tmp\n"
@@ -392,7 +392,7 @@ msgstr ""
 "LiVES ei pystynyt kirjoittamaan pientä tiedostoa /tmp-kansioon\n"
 "Tarkista että sinulla on kirjoitusoikeus /tmp-kansioon ja yritä uudelleen.\n"
 
-#: src/main.c:1677
+#: src/main.c:1673
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -401,7 +401,7 @@ msgid ""
 "before running LiVES.\n"
 msgstr ""
 
-#: src/main.c:1683
+#: src/main.c:1679
 #, c-format
 msgid ""
 "\n"
@@ -416,7 +416,7 @@ msgstr ""
 "\n"
 "Tarkista tiedoston käyttöoikeudet ja yritä uudestaan.\n"
 
-#: src/main.c:1690
+#: src/main.c:1686
 #, c-format
 msgid ""
 "\n"
@@ -433,7 +433,7 @@ msgstr ""
 "Tarkista tiedoston ja sen sijaintihakemiston käyttöoikeudet\n"
 "ja yritä uudestaan.\n"
 
-#: src/main.c:1697
+#: src/main.c:1693
 #, c-format
 msgid ""
 "\n"
@@ -452,7 +452,7 @@ msgstr ""
 "%s/.lives\n"
 "ja yritä uudelleen.\n"
 
-#: src/main.c:1704
+#: src/main.c:1700
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -463,21 +463,21 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 
-#: src/main.c:1708
+#: src/main.c:1704
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/main.c:1717
+#: src/main.c:1713
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
 "LiVES more fully.\n"
 msgstr ""
 
-#: src/main.c:1720
+#: src/main.c:1716
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -487,7 +487,7 @@ msgstr ""
 "LiVES ei löytänyt \"convert\"-ohjelmaa. Asenna convert ja image-magick jos "
 "haluat käyttää hahmonnettuja tehosteita.\n"
 
-#: src/main.c:1723
+#: src/main.c:1719
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -497,14 +497,14 @@ msgstr ""
 "LiVES ei löytänyt \"composite\"-ohjelmaa. Asenna composite ja image-magick "
 "jos haluat käyttää yhdistä-toimintoa.\n"
 
-#: src/main.c:1726
+#: src/main.c:1722
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
 
-#: src/main.c:1730
+#: src/main.c:1725
 #, c-format
 msgid ""
 "\n"
@@ -515,42 +515,42 @@ msgid ""
 "You may need to change the value of <lib_dir> in ~/.lives\n"
 msgstr ""
 
-#: src/main.c:1814
+#: src/main.c:1807
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Ladataan automaattisesti leikesarja %s..."
 
-#: src/main.c:1997
+#: src/main.c:1990
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr ""
 
-#: src/main.c:2083
+#: src/main.c:2076
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Nimetön%d> %dx%d : %d kuvaa %d bpp %.3f fps"
 
-#: src/main.c:2087
+#: src/main.c:2080
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? kuvaa ??? bpp %.3f fps"
 
-#: src/main.c:2090
+#: src/main.c:2083
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d kuvaa %d bpp %.3f fps"
 
-#: src/main.c:2096
+#: src/main.c:2089
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Ei tiedostoa>"
 
-#: src/main.c:3395 src/main.c:3396 src/gui.c:1859 src/gui.c:2824
+#: src/main.c:3388 src/main.c:3389 src/gui.c:1859 src/gui.c:2824
 #: src/saveplay.c:1471
 msgid "Play"
 msgstr "Toista"
 
-#: src/main.c:3764
+#: src/main.c:3757
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -558,35 +558,35 @@ msgstr ""
 "LiVES ei pystynyt kaappaamaan tätä kuvaa\n"
 "\n"
 
-#: src/main.c:3847
+#: src/main.c:3840
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Tiedosto %s suljettiin\n"
 
-#: src/main.c:3992 src/gui.c:488 src/utils.c:2399 src/utils.c:2425
+#: src/main.c:3985 src/gui.c:488 src/utils.c:2399 src/utils.c:2425
 #: src/saveplay.c:2412 src/multitrack.c:3642 src/multitrack.c:5095
 msgid "_Undo"
 msgstr "Kum_oa"
 
-#: src/main.c:3993 src/gui.c:501 src/utils.c:2400 src/utils.c:2426
+#: src/main.c:3986 src/gui.c:501 src/utils.c:2400 src/utils.c:2426
 #: src/saveplay.c:2413 src/multitrack.c:3663 src/multitrack.c:5118
 msgid "_Redo"
 msgstr "_Tee uudestaan"
 
-#: src/main.c:4019 src/interface.c:634 src/gui.c:2015 src/preferences.c:1534
+#: src/main.c:4012 src/interface.c:634 src/gui.c:2015 src/preferences.c:1534
 #: src/resample.c:1735
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4020 src/interface.c:653 src/gui.c:2034
+#: src/main.c:4013 src/interface.c:653 src/gui.c:2034
 msgid "Left Audio"
 msgstr "Vasen ääni"
 
-#: src/main.c:4021 src/gui.c:2052
+#: src/main.c:4014 src/gui.c:2052
 msgid "Right Audio"
 msgstr "Oikea ääni"
 
-#: src/main.c:4066
+#: src/main.c:4059
 msgid ""
 "\n"
 "\n"
@@ -607,7 +607,7 @@ msgstr "Käytä lomituksen poistoa"
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
-#: src/interface.c:186 src/callbacks.c:7337 src/gui.c:2827 src/gui.c:3364
+#: src/interface.c:186 src/callbacks.c:7340 src/gui.c:2827 src/gui.c:3364
 #: src/saveplay.c:1474 src/saveplay.c:2059 src/dialogs.c:742 src/dialogs.c:743
 #: src/dialogs.c:836 src/dialogs.c:837 src/framedraw.c:191
 #: src/multitrack.c:6568
@@ -646,7 +646,7 @@ msgstr ""
 "\n"
 "Muista poistaa tehosteet käytöstä (ctrl-0) myöhemmin!"
 
-#: src/interface.c:332 src/callbacks.c:7143 src/dialogs.c:1589
+#: src/interface.c:332 src/callbacks.c:7146 src/dialogs.c:1589
 msgid ""
 "\n"
 "Please Wait"
@@ -872,7 +872,7 @@ msgstr "LiVES: - Nimeä leikesarja"
 
 #: src/interface.c:1807
 #, fuzzy
-msgid "LiVES: - Choose working directory"
+msgid "LiVES: - Choose a Working Directory"
 msgstr "LiVESin työkansio."
 
 #: src/interface.c:1811
@@ -1236,7 +1236,7 @@ msgstr "Palauta .lv1-tiedosto"
 msgid "Backup as .lv1 file"
 msgstr "Varmuuskopioi .lv1-tiedostoon"
 
-#: src/callbacks.c:1173
+#: src/callbacks.c:1176
 msgid ""
 "\n"
 "\n"
@@ -1248,93 +1248,93 @@ msgstr ""
 "Leikesarja poistetaan levyltä.\n"
 "Haluatko varmasti tehdä tämän?\n"
 
-#: src/callbacks.c:1230
+#: src/callbacks.c:1233
 msgid "Deleting set..."
 msgstr "Poistetaan leikesarja..."
 
-#: src/callbacks.c:1231
+#: src/callbacks.c:1234
 msgid "Deleting set"
 msgstr "Poistetaan leikesarja"
 
-#: src/callbacks.c:1237
+#: src/callbacks.c:1240
 #, c-format
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Leikesarja %s poistettiin lopullisesti levyltä.\n"
 
-#: src/callbacks.c:1280 src/callbacks.c:9159
+#: src/callbacks.c:1283 src/callbacks.c:9162
 msgid "Insert Silence"
 msgstr ""
 
-#: src/callbacks.c:1316 src/callbacks.c:1366 src/callbacks.c:1499
+#: src/callbacks.c:1319 src/callbacks.c:1369 src/callbacks.c:1502
 msgid "Undoing"
 msgstr "Kumotaan"
 
-#: src/callbacks.c:1376 src/callbacks.c:1541
+#: src/callbacks.c:1379 src/callbacks.c:1544
 msgid "Restoring audio..."
 msgstr ""
 
-#: src/callbacks.c:1387
+#: src/callbacks.c:1390
 msgid "Clearing frame images"
 msgstr ""
 
-#: src/callbacks.c:1411
+#: src/callbacks.c:1414
 #, fuzzy
 msgid "Deleting excess frames"
 msgstr "Luodaan värillisiä kuvia"
 
-#: src/callbacks.c:1459
+#: src/callbacks.c:1462
 msgid "Undoing audio"
 msgstr ""
 
-#: src/callbacks.c:1600
+#: src/callbacks.c:1603
 #, c-format
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "Videon pituus on nyt %d kuvaa nopeudella %.3f kuvaa sekunnissa.\n"
 
-#: src/callbacks.c:1603 src/resample.c:607 src/resample.c:2404
+#: src/callbacks.c:1606 src/resample.c:607 src/resample.c:2404
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr ""
 
-#: src/callbacks.c:1742 src/callbacks.c:1756
+#: src/callbacks.c:1745 src/callbacks.c:1759
 msgid "Redoing"
 msgstr ""
 
-#: src/callbacks.c:1797
+#: src/callbacks.c:1800
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Kopioidaan kuvat %d - %d%s leikepöydälle..."
 
-#: src/callbacks.c:1814 src/saveplay.c:888 src/saveplay.c:994
+#: src/callbacks.c:1817 src/saveplay.c:888 src/saveplay.c:994
 #: src/saveplay.c:1045 src/saveplay.c:2743
 msgid "Pulling frames from clip"
 msgstr ""
 
-#: src/callbacks.c:1840
+#: src/callbacks.c:1843
 msgid "Copying to the clipboard"
 msgstr "Kopioidaan leikepöydälle"
 
-#: src/callbacks.c:1901
+#: src/callbacks.c:1904
 msgid "Cut"
 msgstr "Leikkaa"
 
-#: src/callbacks.c:1940
+#: src/callbacks.c:1943
 msgid "Pasting"
 msgstr "Liitetään"
 
-#: src/callbacks.c:1957
+#: src/callbacks.c:1960
 #, c-format
 msgid "Pasted %d frames to new clip.\n"
 msgstr "Liitettiin %d kuvaa uuteen leikkeeseen.\n"
 
-#: src/callbacks.c:2018
+#: src/callbacks.c:2021
 msgid ""
 "This operation requires resizing or converting of frames.\n"
 "Please install 'convert' from the Image-magick package, and then restart "
 "LiVES.\n"
 msgstr ""
 
-#: src/callbacks.c:2035
+#: src/callbacks.c:2038
 msgid ""
 "\n"
 "\n"
@@ -1343,31 +1343,31 @@ msgid ""
 "the 'Trim Audio' function from the Audio menu."
 msgstr ""
 
-#: src/callbacks.c:2055
+#: src/callbacks.c:2058
 msgid ""
 "LiVES cannot insert because the audio rates do not match.\n"
 "Please install 'sox', and try again."
 msgstr ""
 
-#: src/callbacks.c:2073
+#: src/callbacks.c:2076
 msgid ""
 "\n"
 "Insertion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2117 src/callbacks.c:9116
+#: src/callbacks.c:2120 src/callbacks.c:9119
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2198 src/callbacks.c:2212
+#: src/callbacks.c:2201 src/callbacks.c:2215
 msgid "Resampling clipboard audio"
 msgstr ""
 
-#: src/callbacks.c:2222
+#: src/callbacks.c:2225
 msgid ""
 "\n"
 "\n"
@@ -1375,7 +1375,7 @@ msgid ""
 "Clipboard audio has been erased.\n"
 msgstr ""
 
-#: src/callbacks.c:2235
+#: src/callbacks.c:2238
 msgid ""
 "\n"
 "\n"
@@ -1384,30 +1384,30 @@ msgid ""
 "using unchanged audio ?\n"
 msgstr ""
 
-#: src/callbacks.c:2276 src/callbacks.c:2404
+#: src/callbacks.c:2279 src/callbacks.c:2407
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr "Lisätään %d%s kuvaa leikepöydältä..."
 
-#: src/callbacks.c:2287 src/callbacks.c:2338 src/callbacks.c:2415
+#: src/callbacks.c:2290 src/callbacks.c:2341 src/callbacks.c:2418
 msgid "Inserting"
 msgstr "Lisätään"
 
-#: src/callbacks.c:2314
+#: src/callbacks.c:2317
 #, c-format
 msgid "Inserting %d times from the clipboard%s..."
 msgstr "Lisätään %d kertaa leikepöydältä%s..."
 
-#: src/callbacks.c:2319
+#: src/callbacks.c:2322
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "Lisätään %d kuvaa leikepöydältä%s..."
 
-#: src/callbacks.c:2466
+#: src/callbacks.c:2469
 msgid "Insert"
 msgstr "Lisäys"
 
-#: src/callbacks.c:2526
+#: src/callbacks.c:2529
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
@@ -1417,49 +1417,49 @@ msgstr ""
 "Kaikkien kuvien poisto sulkee tämän tiedoston.\n"
 "Haluatko varmasti tehdä tämän?"
 
-#: src/callbacks.c:2534
+#: src/callbacks.c:2537
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2550 src/callbacks.c:8497 src/callbacks.c:8695
-#: src/callbacks.c:8755
+#: src/callbacks.c:2553 src/callbacks.c:8500 src/callbacks.c:8698
+#: src/callbacks.c:8758
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2566
+#: src/callbacks.c:2569
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2582 src/callbacks.c:8739
+#: src/callbacks.c:2585 src/callbacks.c:8742
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2635
+#: src/callbacks.c:2638
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr "Poistetaan kuvat %d - %d%s..."
 
-#: src/callbacks.c:2648
+#: src/callbacks.c:2651
 msgid "Deleting"
 msgstr "Poistetaan"
 
-#: src/callbacks.c:2723
+#: src/callbacks.c:2726
 msgid "Delete"
 msgstr "Poisto"
 
-#: src/callbacks.c:2744
+#: src/callbacks.c:2747
 msgid ""
 "\n"
 "\n"
@@ -1469,7 +1469,7 @@ msgstr ""
 "\n"
 "Valinta on lukittu.\n"
 
-#: src/callbacks.c:3041
+#: src/callbacks.c:3044
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -1477,11 +1477,11 @@ msgid ""
 "play.)\n"
 msgstr ""
 
-#: src/callbacks.c:3046
+#: src/callbacks.c:3049
 msgid "Record cancelled.\n"
 msgstr "Nauhoitus peruttu.\n"
 
-#: src/callbacks.c:3161
+#: src/callbacks.c:3164
 #, c-format
 msgid ""
 "\n"
@@ -1494,7 +1494,7 @@ msgstr ""
 "'%s'-liitännäinen ilmoittaa:\n"
 "%s\n"
 
-#: src/callbacks.c:3164
+#: src/callbacks.c:3167
 #, c-format
 msgid ""
 "\n"
@@ -1507,7 +1507,7 @@ msgstr ""
 "Liitännäisestä %s ei löytynyt 'init'-metodia.\n"
 "Liitännäinen saattaa olla rikki tai virheellisesti asennettu."
 
-#: src/callbacks.c:3504
+#: src/callbacks.c:3507
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk%"
@@ -1516,27 +1516,27 @@ msgid ""
 "Please press 'Cancel' if that is not what you want.\n"
 msgstr ""
 
-#: src/callbacks.c:3570
+#: src/callbacks.c:3573
 #, c-format
 msgid "Saving set %s"
 msgstr "Tallennetaan leikesarja %s"
 
-#: src/callbacks.c:3780
+#: src/callbacks.c:3783
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "Ladataan leikkeet leikesarjasta %s"
 
-#: src/callbacks.c:3840
+#: src/callbacks.c:3843
 #, c-format
 msgid "No clips were recovered for set (%s).\n"
 msgstr "Leikesarjaan (%s) ei palautettu yhtään leikettä.\n"
 
-#: src/callbacks.c:3850
+#: src/callbacks.c:3853
 #, c-format
 msgid "%d clips were recovered from set (%s).\n"
 msgstr "%d leike(ttä) palautettiin leikesarjasta (%s).\n"
 
-#: src/callbacks.c:4061
+#: src/callbacks.c:4064
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -1548,24 +1548,24 @@ msgstr ""
 "kopioita LiVESistä.\n"
 "Napsauta OK jatkaaksesi.\n"
 
-#: src/callbacks.c:4063
+#: src/callbacks.c:4066
 msgid "Cleaning up disk space..."
 msgstr ""
 
-#: src/callbacks.c:4098
+#: src/callbacks.c:4101
 msgid "Clearing disk space"
 msgstr ""
 
-#: src/callbacks.c:4133
+#: src/callbacks.c:4136
 #, c-format
 msgid "%d MB of disk space was recovered.\n"
 msgstr "Palautettiin %d Mt levytilaa.\n"
 
-#: src/callbacks.c:4154
+#: src/callbacks.c:4157
 msgid "Resetting frame rates and frame values..."
 msgstr ""
 
-#: src/callbacks.c:4198
+#: src/callbacks.c:4201
 #, c-format
 msgid ""
 "\n"
@@ -1573,8 +1573,8 @@ msgid ""
 "Internal: %s (%d bpp)\n"
 msgstr ""
 
-#: src/callbacks.c:4209 src/callbacks.c:4228 src/callbacks.c:4242
-#: src/callbacks.c:4276
+#: src/callbacks.c:4212 src/callbacks.c:4231 src/callbacks.c:4245
+#: src/callbacks.c:4279
 msgid ""
 "\n"
 "  Opening..."
@@ -1582,28 +1582,28 @@ msgstr ""
 "\n"
 "  Avataan..."
 
-#: src/callbacks.c:4216
+#: src/callbacks.c:4219
 #, c-format
 msgid ""
 "\n"
 "(%d virtual)"
 msgstr ""
 
-#: src/callbacks.c:4219
+#: src/callbacks.c:4222
 #, c-format
 msgid ""
 "\n"
 "(%d decoded)"
 msgstr ""
 
-#: src/callbacks.c:4231 src/callbacks.c:4245 src/callbacks.c:4279
+#: src/callbacks.c:4234 src/callbacks.c:4248 src/callbacks.c:4282
 #, c-format
 msgid ""
 "\n"
 "  %.2f sec."
 msgstr ""
 
-#: src/callbacks.c:4236
+#: src/callbacks.c:4239
 msgid ""
 "\n"
 "  Unknown"
@@ -1611,30 +1611,30 @@ msgstr ""
 "\n"
 "  Tuntematon"
 
-#: src/callbacks.c:4249 src/callbacks.c:4263
+#: src/callbacks.c:4252 src/callbacks.c:4266
 msgid "unsigned"
 msgstr ""
 
-#: src/callbacks.c:4250 src/callbacks.c:4264
+#: src/callbacks.c:4253 src/callbacks.c:4267
 msgid "signed"
 msgstr ""
 
-#: src/callbacks.c:4252 src/callbacks.c:4266
+#: src/callbacks.c:4255 src/callbacks.c:4269
 msgid "big-endian"
 msgstr ""
 
-#: src/callbacks.c:4253 src/callbacks.c:4267
+#: src/callbacks.c:4256 src/callbacks.c:4270
 msgid "little-endian"
 msgstr ""
 
-#: src/callbacks.c:4255 src/callbacks.c:4269
+#: src/callbacks.c:4258 src/callbacks.c:4272
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
 
-#: src/callbacks.c:4339
+#: src/callbacks.c:4342
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -1665,11 +1665,11 @@ msgstr ""
 "jos näin ei ole, kirjoita osoitteeseen Free Software Foundation, Inc.,\n"
 "59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
 
-#: src/callbacks.c:4353
+#: src/callbacks.c:4356
 msgid "A video editor and VJ program."
 msgstr "Videomuokkain ja VJ-ohjelma."
 
-#: src/callbacks.c:4375
+#: src/callbacks.c:4378
 #, fuzzy, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -1693,7 +1693,7 @@ msgstr ""
 "salsaman@xs4all.nl\n"
 "Kotisivu: http://lives.sourceforge.net"
 
-#: src/callbacks.c:4542
+#: src/callbacks.c:4545
 msgid ""
 "\n"
 "\n"
@@ -1703,7 +1703,7 @@ msgstr ""
 "\n"
 "Tämän tiedoston esikatselu onnistuu ainoastaan jos mplayer on asennettuna.\n"
 
-#: src/callbacks.c:4753 src/callbacks.c:6253
+#: src/callbacks.c:4756 src/callbacks.c:6256
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -1711,159 +1711,159 @@ msgid ""
 "."
 msgstr ""
 
-#: src/callbacks.c:4834
+#: src/callbacks.c:4837
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "Avataan äänitiedosto %s, tyyppi %s..."
 
-#: src/callbacks.c:4850 src/saveplay.c:338
+#: src/callbacks.c:4853 src/saveplay.c:338
 msgid "Opening audio"
 msgstr "Avataan äänitiedosto"
 
-#: src/callbacks.c:4855 src/callbacks.c:4886 src/callbacks.c:6323
-#: src/callbacks.c:6354 src/callbacks.c:6392 src/callbacks.c:8437
+#: src/callbacks.c:4858 src/callbacks.c:4889 src/callbacks.c:6326
+#: src/callbacks.c:6357 src/callbacks.c:6395 src/callbacks.c:8440
 msgid "Cancelling"
 msgstr "Perutaan"
 
-#: src/callbacks.c:4906 src/callbacks.c:6427
+#: src/callbacks.c:4909 src/callbacks.c:6430
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr "Uusi ääniraita: %d Hz %d kanava(a) %d bps\n"
 
-#: src/callbacks.c:4912 src/callbacks.c:6413 src/callbacks.c:8454
-#: src/callbacks.c:9039
+#: src/callbacks.c:4915 src/callbacks.c:6416 src/callbacks.c:8457
+#: src/callbacks.c:9042
 msgid "Committing audio"
 msgstr ""
 
-#: src/callbacks.c:4919 src/callbacks.c:6434
+#: src/callbacks.c:4922 src/callbacks.c:6437
 msgid "New Audio"
 msgstr "Uusi ääniraita"
 
-#: src/callbacks.c:5129
+#: src/callbacks.c:5132
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr ""
 
-#: src/callbacks.c:5218
+#: src/callbacks.c:5221
 msgid "LiVES: - Encoder debug output"
 msgstr ""
 
-#: src/callbacks.c:5253 src/gui.c:1708
+#: src/callbacks.c:5256 src/gui.c:1708
 msgid "Fullscreen playback (f)"
 msgstr ""
 
-#: src/callbacks.c:5255
+#: src/callbacks.c:5258
 msgid "Fullscreen playback off (f)"
 msgstr ""
 
-#: src/callbacks.c:5449 src/gui.c:1695
+#: src/callbacks.c:5452 src/gui.c:1695
 msgid "Double size (d)"
 msgstr ""
 
-#: src/callbacks.c:5454
+#: src/callbacks.c:5457
 msgid "Single size (d)"
 msgstr ""
 
-#: src/callbacks.c:5571 src/callbacks.c:5572
+#: src/callbacks.c:5574 src/callbacks.c:5575
 msgid "Hide the play window (s)"
 msgstr "Piilota toistoikkuna (s)"
 
-#: src/callbacks.c:5581 src/gui.c:1543
+#: src/callbacks.c:5584 src/gui.c:1543
 msgid "Show the play window (s)"
 msgstr "Näytä toistoikkuna (s)"
 
-#: src/callbacks.c:5582 src/gui.c:1686
+#: src/callbacks.c:5585 src/gui.c:1686
 msgid "Play in separate window (s)"
 msgstr "Toista erillisessä ikkunassa (s)"
 
-#: src/callbacks.c:5785 src/gui.c:3346
+#: src/callbacks.c:5788 src/gui.c:3346
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Toistoikkuna"
 
-#: src/callbacks.c:5879
+#: src/callbacks.c:5882
 msgid "Switch continuous looping off (o)"
 msgstr ""
 
-#: src/callbacks.c:5886 src/gui.c:1590
+#: src/callbacks.c:5889 src/gui.c:1590
 msgid "Switch continuous looping on (o)"
 msgstr ""
 
-#: src/callbacks.c:5954
+#: src/callbacks.c:5957
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Äänenvoimakkuus (%.2f)"
 
-#: src/callbacks.c:5995 src/callbacks.c:5996 src/gui.c:3266
+#: src/callbacks.c:5998 src/callbacks.c:5999 src/gui.c:3266
 msgid "Unmute the audio (z)"
 msgstr "Palauta ääni (z)"
 
-#: src/callbacks.c:6007 src/callbacks.c:6008 src/gui.c:1601 src/gui.c:3265
+#: src/callbacks.c:6010 src/callbacks.c:6011 src/gui.c:1601 src/gui.c:3265
 msgid "Mute the audio (z)"
 msgstr "Vaimenna ääni (z)"
 
-#: src/callbacks.c:6172
+#: src/callbacks.c:6175
 msgid "Reversing clipboard..."
 msgstr "Käännetään leikepöydän järjestys..."
 
-#: src/callbacks.c:6181
+#: src/callbacks.c:6184
 msgid "Reversing clipboard"
 msgstr "Käännetään leikepöydän järjestys"
 
-#: src/callbacks.c:6198 src/callbacks.c:6470
+#: src/callbacks.c:6201 src/callbacks.c:6473
 msgid "Select Audio File"
 msgstr "Valitse äänitiedosto"
 
-#: src/callbacks.c:6214
+#: src/callbacks.c:6217
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "Määritä CD-soittolaite kohdasta Työkalut | Asetukset | Sekalaiset\n"
 
-#: src/callbacks.c:6282
+#: src/callbacks.c:6285
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr ""
 
-#: src/callbacks.c:6287
+#: src/callbacks.c:6290
 #, c-format
 msgid "CD track %d"
 msgstr "CD-raita %d"
 
-#: src/callbacks.c:6316
+#: src/callbacks.c:6319
 msgid "Opening CD track..."
 msgstr "Avataan CD-raita..."
 
-#: src/callbacks.c:6346 src/callbacks.c:6387
+#: src/callbacks.c:6349 src/callbacks.c:6390
 msgid "Error loading CD track\n"
 msgstr "Virhe ladattaessa CD-raitaa\n"
 
-#: src/callbacks.c:6522
+#: src/callbacks.c:6525
 msgid "Selecting tracks"
 msgstr ""
 
-#: src/callbacks.c:6578
+#: src/callbacks.c:6581
 msgid "layout errors"
 msgstr ""
 
-#: src/callbacks.c:6587
+#: src/callbacks.c:6590
 msgid "Close _Window"
 msgstr ""
 
-#: src/callbacks.c:6598
+#: src/callbacks.c:6601
 msgid "Clear _Errors"
 msgstr ""
 
-#: src/callbacks.c:6609
+#: src/callbacks.c:6612
 msgid "_Delete affected layouts"
 msgstr ""
 
-#: src/callbacks.c:7125
+#: src/callbacks.c:7128
 msgid "Resume"
 msgstr "Jatka"
 
-#: src/callbacks.c:7127
+#: src/callbacks.c:7130
 msgid "Keep"
 msgstr "Pidä"
 
-#: src/callbacks.c:7128
+#: src/callbacks.c:7131
 msgid ""
 "\n"
 "Paused\n"
@@ -1871,28 +1871,28 @@ msgid ""
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:7130
+#: src/callbacks.c:7133
 msgid "paused..."
 msgstr "pysäytetty..."
 
-#: src/callbacks.c:7141
+#: src/callbacks.c:7144
 msgid "Pause"
 msgstr "Pysäytä"
 
-#: src/callbacks.c:7142
+#: src/callbacks.c:7145
 msgid "Cancel"
 msgstr "Peruuta"
 
-#: src/callbacks.c:7144
+#: src/callbacks.c:7147
 msgid "resumed..."
 msgstr "jatketaan..."
 
-#: src/callbacks.c:7693
+#: src/callbacks.c:7696
 #, c-format
 msgid "Save Frame as %s..."
 msgstr "Tallenna kuva %s-tiedostoon..."
 
-#: src/callbacks.c:8015
+#: src/callbacks.c:8018
 msgid ""
 "\n"
 "\n"
@@ -1904,7 +1904,7 @@ msgstr ""
 "Tätä ominaisuutta voi käyttää vain jos \"xwininfo\" on asennettuna\n"
 "\n"
 
-#: src/callbacks.c:8085 src/callbacks.c:8977
+#: src/callbacks.c:8088 src/callbacks.c:8980
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -1912,7 +1912,7 @@ msgstr ""
 "\n"
 "Tallennusajan tulee olla pidempi kuin 0.\n"
 
-#: src/callbacks.c:8096
+#: src/callbacks.c:8099
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -1927,17 +1927,17 @@ msgstr ""
 "Napsauta \"Peruuta\" peruaksesi toiminnon\n"
 "\n"
 
-#: src/callbacks.c:8101
+#: src/callbacks.c:8104
 msgid "External window was released.\n"
 msgstr "Ulkoinen ikkuna vapautettiin.\n"
 
-#: src/callbacks.c:8122
+#: src/callbacks.c:8125
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
 
-#: src/callbacks.c:8142
+#: src/callbacks.c:8145
 #, c-format
 msgid ""
 "\n"
@@ -1947,20 +1947,20 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:8164
+#: src/callbacks.c:8167
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 "LiVES ei pystynyt kaappaamaan tästä ikkunasta. Pahoittelemme tapahtunutta.\n"
 
-#: src/callbacks.c:8289
+#: src/callbacks.c:8292
 msgid "Export Selected Audio as..."
 msgstr "Vie valittu äänijakso tiedostoon..."
 
-#: src/callbacks.c:8292
+#: src/callbacks.c:8295
 msgid "Export Audio as..."
 msgstr "Vie ääniraita tiedostoon..."
 
-#: src/callbacks.c:8331
+#: src/callbacks.c:8334
 msgid ""
 "\n"
 "\n"
@@ -1974,81 +1974,81 @@ msgstr ""
 "Napsauta \"OK\" viedäksesi uudella nopeudella, tai \"Peruuta\" viedäksesi "
 "alkuperäisellä nopeudella.\n"
 
-#: src/callbacks.c:8337
+#: src/callbacks.c:8340
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Viedään äänijakso %d - %d tiedostoon %s..."
 
-#: src/callbacks.c:8342
+#: src/callbacks.c:8345
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Viedään ääniraita tiedostoon %s..."
 
-#: src/callbacks.c:8354
+#: src/callbacks.c:8357
 msgid "Exporting audio"
 msgstr "Viedään ääniraita"
 
-#: src/callbacks.c:8386
+#: src/callbacks.c:8389
 msgid "Append Audio File..."
 msgstr ""
 
-#: src/callbacks.c:8425
+#: src/callbacks.c:8428
 #, c-format
 msgid "Appending audio file %s..."
 msgstr ""
 
-#: src/callbacks.c:8431
+#: src/callbacks.c:8434
 msgid "Appending audio"
 msgstr ""
 
-#: src/callbacks.c:8470
+#: src/callbacks.c:8473
 msgid "Append Audio"
 msgstr ""
 
-#: src/callbacks.c:8525
+#: src/callbacks.c:8528
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8532
+#: src/callbacks.c:8535
 msgid "Trimming/Padding audio"
 msgstr ""
 
-#: src/callbacks.c:8536
+#: src/callbacks.c:8539
 msgid "Trim/Pad Audio"
 msgstr ""
 
-#: src/callbacks.c:8610
+#: src/callbacks.c:8613
 msgid "Fading audio in"
 msgstr ""
 
-#: src/callbacks.c:8611
+#: src/callbacks.c:8614
 msgid "Fade audio in"
 msgstr ""
 
-#: src/callbacks.c:8616
+#: src/callbacks.c:8619
 msgid "Fading audio out"
 msgstr ""
 
-#: src/callbacks.c:8617
+#: src/callbacks.c:8620
 msgid "Fade audio out"
 msgstr ""
 
-#: src/callbacks.c:8638
+#: src/callbacks.c:8641
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8640
+#: src/callbacks.c:8643
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8647
+#: src/callbacks.c:8650
 msgid "Fading audio..."
 msgstr ""
 
-#: src/callbacks.c:8724
+#: src/callbacks.c:8727
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2058,37 +2058,37 @@ msgstr ""
 "Tämä tiedosto suljetaan jos koko ääniraita poistetaan.\n"
 "Haluatko varmasti tehdä tämän?"
 
-#: src/callbacks.c:8727
+#: src/callbacks.c:8730
 msgid "Deleting all audio..."
 msgstr "Poistetaan koko ääniraita..."
 
-#: src/callbacks.c:8733
+#: src/callbacks.c:8736
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8803
+#: src/callbacks.c:8806
 msgid "Deleting Audio"
 msgstr "Poistetaan ääniraita"
 
-#: src/callbacks.c:8806
+#: src/callbacks.c:8809
 msgid "Delete Audio"
 msgstr ""
 
-#: src/callbacks.c:9066
+#: src/callbacks.c:9069
 msgid "Record new audio"
 msgstr ""
 
-#: src/callbacks.c:9144
+#: src/callbacks.c:9147
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:9156
+#: src/callbacks.c:9159
 msgid "Inserting Silence"
 msgstr ""
 
-#: src/callbacks.c:9247
+#: src/callbacks.c:9250
 #, c-format
 msgid ""
 "\n"
@@ -4251,26 +4251,26 @@ msgstr ""
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Ladattu onnistuneesti %d Weed-suodatinta\n"
 
-#: src/effects-weed.c:3501
+#: src/effects-weed.c:3502
 msgid "Warning - no more effect slots left !\n"
 msgstr ""
 
-#: src/effects-weed.c:3572
+#: src/effects-weed.c:3573
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:3606
+#: src/effects-weed.c:3607
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4107
+#: src/effects-weed.c:4108
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4175
+#: src/effects-weed.c:4176
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""

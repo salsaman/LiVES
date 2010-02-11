@@ -46,6 +46,7 @@ gboolean do_tempdir_query(void) {
     response=gtk_dialog_run(GTK_DIALOG(tdentry->dialog));
 
     if (response==GTK_RESPONSE_CANCEL) {
+      g_free(tdentry);
       return FALSE;
     }
     dirname=g_strdup(gtk_entry_get_text(GTK_ENTRY(tdentry->entry)));
@@ -90,6 +91,7 @@ gboolean do_tempdir_query(void) {
   }
 
   gtk_widget_destroy(tdentry->dialog);
+  g_free(tdentry);
 
   com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",prefs->tmpdir);
   dummyvar=system(com);
@@ -103,6 +105,8 @@ gboolean do_tempdir_query(void) {
   g_free (com);
 
   set_pref("tempdir",prefs->tmpdir);
+
+  g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
 
   g_free(dirname);
   return TRUE;
@@ -409,7 +413,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
   response=gtk_dialog_run(GTK_DIALOG(dialog));
 
-  gtk_widget_hide(dialog);  // destroying this makes gtk+ crash...
+  gtk_widget_destroy(dialog);
 
   if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
     gtk_widget_hide(mainw->vol_toolitem);
@@ -421,7 +425,6 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
   return (response==GTK_RESPONSE_OK);
 }
-
 
 
 
@@ -492,9 +495,149 @@ void do_startup_interface_query(void) {
   // prompt for startup ce or startup mt
 
 
+  GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*label;
+  GtkWidget *okbutton;
+  GtkWidget *eventbox,*hbox;
+  GSList *radiobutton_group = NULL;
+  gchar *txt1,*txt2,*txt3,*msg;
+
+  gint response;
+
+  txt1=g_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
+  txt2=g_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
+  txt3=g_strdup(_("\n\nThe default can always be changed later from Preferences.\n"));
+
+
+  msg=g_strdup_printf("%s%s%s",txt1,txt2,txt3);
+
+
+  g_free(txt1);
+  g_free(txt2);
+  g_free(txt3);
+
+  dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Choose the startup interface"));
+
+  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
+
+  if (palette->style&STYLE_1) {
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  dialog_vbox = GTK_DIALOG (dialog)->vbox;
+  
+  label=gtk_label_new(msg);
+  gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
+  g_free(msg);
+
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
 
 
 
 
+  radiobutton0 = gtk_radio_button_new (NULL);
+
+
+  eventbox=gtk_event_box_new();
+  label=gtk_label_new_with_mnemonic ( _("Start in _Clip Edit mode"));
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label), radiobutton0);
+
+  gtk_container_add(GTK_CONTAINER(eventbox),label);
+  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		    G_CALLBACK (label_act_toggle),
+		    radiobutton0);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+
+  gtk_box_pack_start (GTK_BOX (hbox), radiobutton0, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+
+
+
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
+  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
+
+  label=gtk_label_new(_("This is the best choice for simple editing tasks or for VJs\n"));
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
+
+
+
+
+  radiobutton1 = gtk_radio_button_new(NULL);
+
+
+  eventbox=gtk_event_box_new();
+  label=gtk_label_new_with_mnemonic ( _("Start in _Multitrack mode"));
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label), radiobutton1);
+
+  gtk_container_add(GTK_CONTAINER(eventbox),label);
+  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		    G_CALLBACK (label_act_toggle),
+		    radiobutton1);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+
+  gtk_box_pack_start (GTK_BOX (hbox), radiobutton1, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+
+
+  label=gtk_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
+
+
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton_group);
+  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
+
+  if (prefs->startup_interface==STARTUP_MT) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton1),TRUE);
+  }
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  gtk_widget_grab_default(okbutton);
+  gtk_widget_grab_focus(okbutton);
+
+
+  gtk_widget_show_all(dialog);
+
+  response=gtk_dialog_run(GTK_DIALOG(dialog));
+
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radiobutton1))) future_prefs->startup_interface=prefs->startup_interface=STARTUP_MT;
+  
+  set_int_pref("startup_interface",prefs->startup_interface);
+
+  gtk_widget_destroy(dialog);
+
+  while (g_main_context_iteration(NULL,FALSE));
 
 }

@@ -1130,7 +1130,10 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
     if (!check_for_layout_del(NULL,FALSE)) return;
   }
-
+  else if (mainw->stored_layout_undos!=NULL) {
+    stored_event_list_free_undos();
+  }
+  
   if (mainw->scrap_file>-1) close_scrap_file();
 
   if (real_clips_available()>0) {

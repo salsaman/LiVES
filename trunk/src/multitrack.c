@@ -9086,7 +9086,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   d_print (_ ("\n==============================\nSwitched to Multitrack mode\n"));
 
 
-  if (cfile->achans>0&&prefs->audio_player!=AUD_PLAYER_JACK) {
+  if (cfile->achans>0&&prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
     do_mt_no_jack_error(WARN_MASK_MT_NO_JACK);
   }
 

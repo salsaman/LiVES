@@ -1804,7 +1804,7 @@ _entryw* create_rename_dialog (gint type) {
     gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Enter Set Name"));
   }
   else if (type==6) {
-    gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Choose working directory"));
+    gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Choose a Working Directory"));
   }
 
   if (type==1) {

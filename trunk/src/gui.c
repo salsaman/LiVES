@@ -3790,18 +3790,20 @@ void splash_msg(const gchar *msg, gdouble pct) {
 
 void splash_end(void) {
   
-  if (mainw->foreign||mainw->splash_window==NULL) return;
+  if (mainw->foreign) return;
+    
+  if (mainw->splash_window!=NULL) {
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
-  gtk_widget_destroy(mainw->splash_window);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+    pthread_mutex_lock(&mainw->gtk_mutex);
+    gtk_widget_destroy(mainw->splash_window);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+    
+    end_threaded_dialog();
+    
+    mainw->splash_window=NULL;
+  }
 
-  end_threaded_dialog();
-
-  mainw->splash_window=NULL;
-
-  if (prefs->startup_interface==STARTUP_MT) on_multitrack_activate(NULL,NULL);
-
+  if (prefs->startup_interface==STARTUP_MT&&mainw->multitrack==NULL) on_multitrack_activate(NULL,NULL);
   while (g_main_context_iteration(NULL,FALSE));
 
 }

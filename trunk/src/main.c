@@ -1653,16 +1653,12 @@ static gboolean lives_startup(gpointer data) {
   if (capable->smog_version_correct) {
     if (theme_expected&&palette->style==STYLE_PLAIN&&!mainw->foreign) {
       // non-fatal errors
-      if (prefs->startup_phase==0) {
-	gchar *err=g_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"),(tmp=g_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR);
-	g_free(tmp);
-	startup_message_nonfatal (g_strdup (err));
-	g_free(err);
-	g_snprintf(prefs->theme,64,"none");
-      }
-      else {
-	upgrade_error=TRUE;
-      }
+      gchar *err=g_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"),(tmp=g_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR);
+      g_free(tmp);
+      startup_message_nonfatal (g_strdup (err));
+      g_free(err);
+      g_snprintf(prefs->theme,64,"none");
+      upgrade_error=TRUE;
     }
     lives_init(&ign_opts);
   }
@@ -1726,14 +1722,10 @@ static gboolean lives_startup(gpointer data) {
 		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_encoder_plugins) {
-		      if (prefs->startup_phase==0) {
-			gchar *err=g_strdup_printf(_ ("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in ~/.lives\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
-			startup_message_nonfatal_dismissable (err,WARN_MASK_NO_ENCODERS);
-			g_free(err);
-		      }
-		      else {
-			upgrade_error=TRUE;
-		      }
+		      gchar *err=g_strdup_printf(_ ("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in ~/.lives\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
+		      startup_message_nonfatal_dismissable (err,WARN_MASK_NO_ENCODERS);
+		      g_free(err);
+		      upgrade_error=TRUE;
 		    }
 		  }
 		    
@@ -1798,6 +1790,7 @@ static gboolean lives_startup(gpointer data) {
     if (upgrade_error) {
       do_upgrade_error_dialog();
     }
+    prefs->startup_phase=0;
   }
 
   if (strlen (start_file)) {

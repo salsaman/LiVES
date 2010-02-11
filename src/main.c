@@ -39,6 +39,7 @@
 #include "audio.h"
 #include "paramwindow.h"
 #include "stream.h"
+#include "startup.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -294,7 +295,7 @@ static gboolean pre_init(void) {
     prefs->audio_player=AUD_PLAYER_PULSE;
   
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->startup_phase==1&&capable->has_pulse_audio) {
+  if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_pulse_audio) {
     prefs->audio_player=AUD_PLAYER_PULSE;
     set_pref("audio_player","pulse");
   }
@@ -304,7 +305,7 @@ static gboolean pre_init(void) {
 
 
 #ifdef ENABLE_JACK
-    if (prefs->startup_phase==1&&capable->has_jackd) {
+    if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_jackd) {
       prefs->audio_player=AUD_PLAYER_JACK;
       set_pref("audio_player","jack");
     }
@@ -950,7 +951,7 @@ static void lives_init(_ign_opts *ign_opts) {
       
       memset(prefs->encoder.of_name,0,1);
 
-      if (prefs->startup_phase==1&&capable->has_encoder_plugins&&capable->has_python) {
+      if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_encoder_plugins&&capable->has_python) {
 	GList *ofmt_all=NULL;
 	gchar **array;
 	g_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
@@ -1110,6 +1111,18 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #endif
 
+      if ((prefs->startup_phase==1||prefs->startup_phase==-1)) {
+	splash_end();
+	// get initial tempdir
+	if (!do_tempdir_query()) {
+	  lives_exit();
+	}
+	if (prefs->startup_phase==-1) {
+	  prefs->startup_phase=1;
+	  set_int_pref("startup_phase",1);
+	}
+      }
+
       if (((capable->has_jackd||capable->has_pulse_audio)&&(capable->has_sox||capable->has_mplayer))||(capable->has_jackd&&capable->has_pulse_audio)) {
 	if (prefs->startup_phase>0&&prefs->startup_phase<3) {
 	  splash_end();
@@ -1119,6 +1132,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	  if (prefs->audio_player==AUD_PLAYER_JACK) prefs->jack_opts=JACK_OPTS_START_ASERVER;
 	  else prefs->jack_opts=0;
 	  set_int_pref("jack_opts",prefs->jack_opts);
+
 	}
 
 	if (prefs->startup_phase==1) {
@@ -1130,7 +1144,13 @@ static void lives_init(_ign_opts *ign_opts) {
 	if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER) {
 	  // start jack transport polling
 	  splash_msg(_("Starting jack audio server..."),.8);
-	  lives_jack_init();
+	  if (!lives_jack_init()) {
+	    do_jack_noopen_warn();
+	    if (prefs->startup_phase==2) {
+	      do_jack_noopen_warn2();
+	    }
+	    lives_exit();
+	  }
 	}
 
 	if (prefs->audio_player==AUD_PLAYER_JACK) {
@@ -1141,12 +1161,17 @@ static void lives_init(_ign_opts *ign_opts) {
 	    if (jack_open_device(mainw->jackd)) mainw->jackd=NULL;
 
 	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||mainw->jackd==NULL)&&prefs->startup_phase==0) {
-	      g_printerr("%s",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with: lives -aplayer sox\n\n"));
+#ifdef HAVE_PULSE_AUDIO
+	      gchar *otherbit=(_(" or \"lives -aplayer pulse\""));
+#else
+	      gchar *otherbit="";
+#endif
+	      g_printerr("%s%s\n\n",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with: \"lives -aplayer sox\""),otherbit);
 	    }
 
 	    if (mainw->jackd==NULL) {
+	      do_jack_noopen_warn();
 	      if (prefs->startup_phase==2) {
-		do_jack_noopen_warn();
 		do_jack_noopen_warn2();
 	      }
 	      lives_exit();
@@ -1185,7 +1210,20 @@ static void lives_init(_ign_opts *ign_opts) {
 
     }
 
+
     if (prefs->startup_phase!=0) {
+      splash_end();
+      if (prefs->startup_phase<=3) {
+	set_int_pref("startup_phase",3);
+	prefs->startup_phase=3;
+	
+	if (!do_startup_tests()) {
+	  lives_exit();
+	}
+
+	do_startup_interface_query();
+      }
+
       set_int_pref("startup_phase",100); // tell backend to delete this
       prefs->startup_phase=100;
     }
@@ -1679,13 +1717,13 @@ static gboolean lives_startup(gpointer data) {
 		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'mplayer'. You may wish to install mplayer to use LiVES more fully.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_convert) {
-		      startup_message_nonfatal (_ ("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"));
+		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_composite) {
-		      startup_message_nonfatal (_ ("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"));
+		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_sox) {
-		      startup_message_nonfatal (_ ("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"));
+		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_encoder_plugins) {
 		      if (prefs->startup_phase==0) {
@@ -1759,9 +1797,6 @@ static gboolean lives_startup(gpointer data) {
   if (prefs->startup_phase==100) {
     if (upgrade_error) {
       do_upgrade_error_dialog();
-    }
-    else {
-      do_firstever_dialog();
     }
   }
 
@@ -2023,6 +2058,7 @@ int main (int argc, char *argv[]) {
 
 
 gboolean startup_message_fatal(gchar *msg) {
+  splash_end();
   do_blocking_error_dialog (msg);
   lives_exit();
   return TRUE;

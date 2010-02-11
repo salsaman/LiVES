@@ -590,6 +590,7 @@ void do_no_decoder_error(gchar *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
 void do_file_perm_error(gchar *file_name);
+void do_dir_perm_error(gchar *dir_name);
 void do_encoder_img_ftm_error(render_details *rdet);
 void do_after_crash_warning (void);
 void do_bad_layout_error(void);

@@ -27,7 +27,9 @@ int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *p
   return seek_ready;
 }
 
-void lives_jack_init (void) {
+
+
+gboolean lives_jack_init (void) {
   gchar *jt_client=g_strdup_printf("LiVES-%d",getpid());
   const char *server_name="default";
   jack_options_t options=JackServerName;
@@ -72,6 +74,9 @@ void lives_jack_init (void) {
 
   // startup the server
   jack_transport_client=jack_client_open (jt_client, options, &status, server_name);
+  g_free(jt_client);
+
+  if (jack_transport_client==NULL) return FALSE;
 
 #ifdef ENABLE_JACK_TRANSPORT
   mainw->video_seek_ready=TRUE;
@@ -87,7 +92,7 @@ void lives_jack_init (void) {
     d_print (_("JACK server started\n"));
   }
 
-  g_free(jt_client);
+  return TRUE;
 
 }
 

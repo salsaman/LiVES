@@ -4911,11 +4911,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   }
 
 
-  device_menu = gtk_menu_item_new_with_mnemonic (_("_Import from Device"));
 #ifdef HAVE_LDVGRAB
+  device_menu = gtk_menu_item_new_with_mnemonic (_("_Import from Device"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu2), device_menu);
-#endif
   device_submenu=gtk_menu_new();
+
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (device_menu), device_submenu);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(device_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
@@ -4923,6 +4923,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   menuitem = gtk_menu_item_new_with_mnemonic (_("Import from _Firewire Device (dv)"));
   gtk_container_add (GTK_CONTAINER (device_submenu), menuitem);
+
 
   g_signal_connect (GTK_OBJECT (menuitem), "activate",
 		    G_CALLBACK (on_open_fw_activate),
@@ -4934,7 +4935,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   g_signal_connect (GTK_OBJECT (menuitem), "activate",
 		    G_CALLBACK (on_open_fw_activate),
 		    GINT_TO_POINTER(CAM_FORMAT_HDV));
-
+#endif
 
 
   mt->close = gtk_menu_item_new_with_mnemonic (_("_Close the selected clip"));

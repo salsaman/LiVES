@@ -42,6 +42,7 @@ struct _dvgrabw {
   GtkWidget *play;
   GtkWidget *quit;
   GtkWidget *status_entry;
+  GtkWidget *split;
   GdkCursor *cursor;
   gboolean playing;
   gchar *dirname;

@@ -811,8 +811,6 @@ static void on_resaudw_achans_changed (GtkWidget *widg, gpointer user_data) {
       gtk_widget_set_sensitive (resaudw->rb_bigend,TRUE);
       gtk_widget_set_sensitive (resaudw->rb_littleend,TRUE);
     }
-    gtk_widget_set_sensitive (resaudw->rb_signed,TRUE);
-    gtk_widget_set_sensitive (resaudw->rb_unsigned,TRUE);
     gtk_widget_set_sensitive (resaudw->entry_arate,TRUE);
     gtk_widget_set_sensitive (resaudw->entry_asamps,TRUE);
     gtk_widget_set_sensitive (resaudw->entry_achans,TRUE);
@@ -840,10 +838,18 @@ on_resaudw_asamps_changed (GtkWidget *irrelevant, gpointer rubbish) {
   if (atoi (gtk_entry_get_text (GTK_ENTRY (resaudw->entry_asamps)))==8) {
     gtk_widget_set_sensitive (resaudw->rb_bigend,FALSE);
     gtk_widget_set_sensitive (resaudw->rb_littleend,FALSE);
+    gtk_widget_set_sensitive (resaudw->rb_signed,FALSE);
+    gtk_widget_set_sensitive (resaudw->rb_unsigned,TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned),TRUE);
   }
   else {
     gtk_widget_set_sensitive (resaudw->rb_bigend,TRUE);
     gtk_widget_set_sensitive (resaudw->rb_littleend,TRUE);
+    if (atoi (gtk_entry_get_text (GTK_ENTRY (resaudw->entry_asamps)))==16) {
+      gtk_widget_set_sensitive (resaudw->rb_signed,TRUE);
+      gtk_widget_set_sensitive (resaudw->rb_unsigned,FALSE);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_signed),TRUE);
+    }
   }
 }
 
@@ -1065,6 +1071,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
   gint aendian;
 
   gboolean chans_fixed=FALSE;
+  gboolean is_8bit;
 
   if (type==10) {
     if (mainw->multitrack!=NULL) chans_fixed=TRUE; // TODO *
@@ -1511,6 +1518,10 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->asamps);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_asamps);
     gtk_entry_set_text (GTK_ENTRY (resaudw->entry_asamps),tmp);
+
+    if (!strcmp(tmp,"8")) is_8bit=TRUE;
+    else is_8bit=FALSE;
+
     g_free (tmp);
 
     vseparator5 = gtk_vseparator_new ();
@@ -1552,7 +1563,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
   
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (resaudw->rb_signed), TRUE);
-    if (type==7) gtk_widget_set_sensitive(resaudw->rb_signed,FALSE);
+    if (type==7||is_8bit) gtk_widget_set_sensitive(resaudw->rb_signed,FALSE);
     
 
     hbox = gtk_hbox_new (FALSE, 0);
@@ -1585,10 +1596,10 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     }
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
 
-    if (type==7) gtk_widget_set_sensitive(resaudw->rb_unsigned,FALSE);
+    if (type==7||!is_8bit) gtk_widget_set_sensitive(resaudw->rb_unsigned,FALSE);
 
     if (type<3||(type>4&&type<8)) aendian=mainw->fx4_val;
-    else if (type==8) aendian=DEFAULT_AUDIO_SIGNED|((G_BYTE_ORDER==G_BIG_ENDIAN)&AFORM_BIG_ENDIAN);
+    else if (type==8) aendian=DEFAULT_AUDIO_SIGNED16|((G_BYTE_ORDER==G_BIG_ENDIAN)&AFORM_BIG_ENDIAN);
     else if (type==3) aendian=rdet->aendian;
     else aendian=prefs->mt_def_signed_endian;
 

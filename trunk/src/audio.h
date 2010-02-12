@@ -24,7 +24,8 @@
 # define DEFAULT_AUDIO_RATE 44100
 # define DEFAULT_AUDIO_CHANS 2
 # define DEFAULT_AUDIO_SAMPS 16
-# define DEFAULT_AUDIO_SIGNED !(AFORM_UNSIGNED)
+# define DEFAULT_AUDIO_SIGNED8 (AFORM_UNSIGNED)
+# define DEFAULT_AUDIO_SIGNED16 !(AFORM_UNSIGNED)
 
 
 // TODO ** - make configurable - audio buffer size for rendering

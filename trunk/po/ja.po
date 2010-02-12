@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-12 12:35-0300\n"
+"POT-Creation-Date: 2010-02-12 13:34-0300\n"
 "PO-Revision-Date: 2009-12-25 22:54+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -584,7 +584,7 @@ msgid "_Redo"
 msgstr "リドゥ(_R)"
 
 #: src/main.c:4015 src/interface.c:634 src/gui.c:2009 src/preferences.c:1532
-#: src/resample.c:1735
+#: src/resample.c:1746
 msgid "Video"
 msgstr "ビデオ"
 
@@ -721,7 +721,7 @@ msgstr "フレーム"
 msgid "Events"
 msgstr "イベント"
 
-#: src/interface.c:656 src/resample.c:1691
+#: src/interface.c:656 src/resample.c:1702
 msgid "Audio"
 msgstr "音声"
 
@@ -1331,7 +1331,7 @@ msgstr "オーディオのアンドゥ"
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "ビデオの長さは現在%dフレームです(%.3fフレーム毎秒)。\n"
 
-#: src/callbacks.c:1589 src/resample.c:607 src/resample.c:2404
+#: src/callbacks.c:1589 src/resample.c:607 src/resample.c:2415
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "クリップボードは%dフレームにリサンプリングされました。\n"
@@ -6669,137 +6669,137 @@ msgstr "リトル・エンディアン"
 msgid ", big-endian"
 msgstr "ビッグ・エンディアン"
 
-#: src/resample.c:936
+#: src/resample.c:942
 #, c-format
 msgid "Resampling video at %.8f frames per second..."
 msgstr "%.8f フレーム毎秒でビデオをリサンプリング..."
 
-#: src/resample.c:939
+#: src/resample.c:945
 #, c-format
 msgid "Resampling video at %.3f frames per second..."
 msgstr "%.3f フレーム毎秒でビデオをリサンプリング..."
 
-#: src/resample.c:970
+#: src/resample.c:976
 msgid "Reordering error !\n"
 msgstr "リオーダリング・エラー !\n"
 
-#: src/resample.c:981
+#: src/resample.c:987
 msgid "Resample"
 msgstr "リサンプリング"
 
-#: src/resample.c:1104
+#: src/resample.c:1111
 msgid "LiVES: - Resample Audio"
 msgstr "LiVES: - 音声のリサンプリング"
 
-#: src/resample.c:1107
+#: src/resample.c:1114
 msgid "LiVES: - Insert Silence"
 msgstr "LiVES: - 無音声の挿入"
 
-#: src/resample.c:1110
+#: src/resample.c:1117
 msgid "LiVES: - New Clip Audio"
 msgstr "LiVES: - 新しい音声クリップ"
 
-#: src/resample.c:1113
+#: src/resample.c:1120
 msgid "LiVES: - External Clip Settings"
 msgstr "LiVES: - 外部クリップ設定"
 
-#: src/resample.c:1151 src/resample.c:1425
+#: src/resample.c:1158 src/resample.c:1432
 msgid "Rate (Hz) "
 msgstr "レート (Hz) "
 
-#: src/resample.c:1172
+#: src/resample.c:1179
 msgid "         Channels "
 msgstr "         チャンネル "
 
-#: src/resample.c:1192
+#: src/resample.c:1199
 msgid "        Sample Size "
 msgstr "        サンプルサイズ "
 
-#: src/resample.c:1231 src/resample.c:1535
+#: src/resample.c:1238 src/resample.c:1546
 msgid "Signed"
 msgstr "符号付き"
 
-#: src/resample.c:1258 src/resample.c:1569
+#: src/resample.c:1265 src/resample.c:1580
 msgid "Unsigned"
 msgstr "符号なし"
 
-#: src/resample.c:1305 src/resample.c:1622
+#: src/resample.c:1312 src/resample.c:1633
 msgid "Little Endian"
 msgstr "リトル・エンディアン"
 
-#: src/resample.c:1332 src/resample.c:1654
+#: src/resample.c:1339 src/resample.c:1665
 msgid "Big Endian"
 msgstr "ビッグ・エンディアン"
 
-#: src/resample.c:1357
+#: src/resample.c:1364
 msgid "Current"
 msgstr "現在"
 
-#: src/resample.c:1391
+#: src/resample.c:1398
 msgid "_Enable audio"
 msgstr "音声の有効化"
 
-#: src/resample.c:1424
+#: src/resample.c:1431
 msgid "_Rate (Hz) "
 msgstr "レート(Hz) "
 
-#: src/resample.c:1452
+#: src/resample.c:1459
 msgid "    _Channels "
 msgstr "    チャンネル "
 
-#: src/resample.c:1453
+#: src/resample.c:1460
 msgid "    Channels "
 msgstr "    チャンネル "
 
-#: src/resample.c:1486
+#: src/resample.c:1493
 msgid "    _Sample Size "
 msgstr "    サンプルサイズ "
 
-#: src/resample.c:1487
+#: src/resample.c:1494
 msgid "    Sample Size "
 msgstr "    サンプルサイズ "
 
-#: src/resample.c:1692
+#: src/resample.c:1703
 msgid "New"
 msgstr "新規"
 
-#: src/resample.c:1721
+#: src/resample.c:1732
 msgid "_Frames Per Second "
 msgstr "フレーム毎秒 "
 
-#: src/resample.c:1762
+#: src/resample.c:1773
 msgid "Record for maximum:  "
 msgstr "最大レコード:  "
 
-#: src/resample.c:1784
+#: src/resample.c:1795
 msgid " hours  "
 msgstr " 時間  "
 
-#: src/resample.c:1796
+#: src/resample.c:1807
 msgid " minutes  "
 msgstr " 分  "
 
-#: src/resample.c:1808
+#: src/resample.c:1819
 msgid " seconds  "
 msgstr " 秒  "
 
-#: src/resample.c:1823
+#: src/resample.c:1834
 msgid "Unlimited"
 msgstr "無制限"
 
-#: src/resample.c:1851
+#: src/resample.c:1862
 msgid "Click OK to begin recording, or Cancel to quit."
 msgstr "記録の開始にはOKを、やめるにはキャンセルをクリック"
 
-#: src/resample.c:1956
+#: src/resample.c:1967
 msgid "LiVES: - Change playback speed"
 msgstr "LiVES: - 再生速度の変更"
 
-#: src/resample.c:1959
+#: src/resample.c:1970
 msgid "LiVES: - Resample Video"
 msgstr "LiVES: - ビデオのリサンプリング"
 
-#: src/resample.c:1980
+#: src/resample.c:1991
 #, c-format
 msgid ""
 "\n"
@@ -6816,7 +6816,7 @@ msgstr ""
 "要求する再生スピードをフレーム毎秒の数値で\n"
 "入力してください(_f)"
 
-#: src/resample.c:1983
+#: src/resample.c:1994
 #, c-format
 msgid ""
 "\n"
@@ -6833,15 +6833,15 @@ msgstr ""
 "要求するリサンプリングレートをフレーム毎秒の数値で\n"
 "入力してください(_r)"
 
-#: src/resample.c:2009
+#: src/resample.c:2020
 msgid "OR enter the desired clip length in _seconds"
 msgstr "もしくは、クリップの長さを秒単位で入力して下さい(_s)"
 
-#: src/resample.c:2032
+#: src/resample.c:2043
 msgid "Change the _audio speed as well"
 msgstr "音声スピードも変更"
 
-#: src/resample.c:2145
+#: src/resample.c:2156
 msgid ""
 "\n"
 "Speeding up the clip will cause missing frames in some multitrack layouts.\n"
@@ -6851,7 +6851,7 @@ msgstr ""
 "速度を上げるとマルチトラックレイアウトでフレームを失う原因になります。\n"
 "速度を変更しますか?\n"
 
-#: src/resample.c:2162
+#: src/resample.c:2173
 msgid ""
 "\n"
 "Speeding up the clip will cause missing audio in some multitrack layouts.\n"
@@ -6861,7 +6861,7 @@ msgstr ""
 "速度を上げるとマルチトラックレイアウトで音声を失う原因になります。\n"
 "速度を変更しますか?\n"
 
-#: src/resample.c:2177
+#: src/resample.c:2188
 msgid ""
 "\n"
 "Changing the speed will cause frames to shift some multitrack layouts.\n"
@@ -6872,7 +6872,7 @@ msgstr ""
 "す。。\n"
 "続けますか?\n"
 
-#: src/resample.c:2191
+#: src/resample.c:2202
 msgid ""
 "\n"
 "Changing the speed will cause audio to shift some multitrack layouts.\n"
@@ -6882,33 +6882,33 @@ msgstr ""
 "速度を変更するとマルチトラックレイアウトで音声がずれる原因になります。。\n"
 "続けますか?\n"
 
-#: src/resample.c:2237
+#: src/resample.c:2248
 msgid "Speed Change"
 msgstr "スピード変更"
 
-#: src/resample.c:2246
+#: src/resample.c:2257
 #, c-format
 msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr "再生スピードを　%.3f フレーム毎秒および音声 %d Hz に変更しました。\n"
 
-#: src/resample.c:2249
+#: src/resample.c:2260
 #, c-format
 msgid "Changed playback speed to %.3f frames per second.\n"
 msgstr "再生スピードを　%.3f フレーム毎秒に変更しました。\n"
 
-#: src/resample.c:2304
+#: src/resample.c:2315
 msgid "Resampling video"
 msgstr "ビデオをリサンプリングします"
 
-#: src/resample.c:2311 src/resample.c:2398
+#: src/resample.c:2322 src/resample.c:2409
 msgid "Resampling clipboard video"
 msgstr "クリップボードビデオをリサンプリングします"
 
-#: src/resample.c:2316
+#: src/resample.c:2327
 msgid "Reordering frames"
 msgstr "フレームを並べ換えます"
 
-#: src/resample.c:2325
+#: src/resample.c:2336
 msgid ""
 "\n"
 "\n"
@@ -6918,11 +6918,11 @@ msgstr ""
 "\n"
 "LiVESはフレームを並べ換えられませんでした。"
 
-#: src/resample.c:2368
+#: src/resample.c:2379
 msgid "Deordering frames"
 msgstr "フレームを再び並べ換えます"
 
-#: src/resample.c:2415
+#: src/resample.c:2426
 msgid "resampling error..."
 msgstr "リサンプリングエラー..."
 

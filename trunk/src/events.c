@@ -3597,10 +3597,11 @@ gboolean render_to_clip (gboolean new_clip) {
       if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
 	xse=AFORM_UNSIGNED;;
       }
-      else cfile->signed_endian=0;
+      else xse=AFORM_SIGNED;
       if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))) {
 	xse|=AFORM_BIG_ENDIAN;
       }
+      else xse|=AFORM_LITTLE_ENDIAN;
 
       gtk_widget_destroy (rdet->dialog);
       

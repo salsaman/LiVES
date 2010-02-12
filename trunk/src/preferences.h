@@ -54,7 +54,10 @@ typedef struct {
   // if these bits are set, we do not show the warning
 #define WARN_MASK_FPS (1<<0)
 #define WARN_MASK_FSIZE (1<<1)
+
+  // no longer used
 #define WARN_MASK_SAVE_QUALITY (1<<2)
+
 #define WARN_MASK_SAVE_SET (1<<3)
 #define WARN_MASK_NO_MPLAYER (1<<4)
 #define WARN_MASK_RENDERED_FX (1<<5)
@@ -300,7 +303,6 @@ typedef struct {
   GtkWidget *checkbutton_warn_layout_ashift;
   GtkWidget *checkbutton_warn_layout_popup;
   GtkWidget *checkbutton_warn_discard_layout;
-  GtkWidget *checkbutton_warn_save_quality;
   GtkWidget *checkbutton_warn_after_dvgrab;
   GtkWidget *checkbutton_show_stats;
   GtkWidget *check_xmms_pause;

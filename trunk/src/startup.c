@@ -40,7 +40,7 @@ gboolean do_tempdir_query(void) {
   gint response;
   gboolean ok=FALSE;
   _entryw *tdentry=create_rename_dialog(6);
-  gchar *tmp,*com,*dirname;
+  gchar *com,*dirname;
 
   while (!ok) {
     response=gtk_dialog_run(GTK_DIALOG(tdentry->dialog));

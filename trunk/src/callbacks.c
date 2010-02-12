@@ -603,17 +603,6 @@ on_stop_clicked (GtkMenuItem     *menuitem,
 
 
 
-void
-on_save_activate                      (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  // save
-  while (g_main_context_iteration(NULL,FALSE));
-  mainw->save_all=TRUE;
-  mainw->fx1_bool=FALSE;
-  save_file(TRUE,cfile->save_file_name);
-}
-
 
 void
 on_save_as_activate (GtkMenuItem *menuitem, gpointer user_data) {
@@ -1179,11 +1168,13 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     set_pref("ar_clipset","");
     prefs->ar_clipset=FALSE;
 
-    event_list_free_undos(mainw->multitrack);
-
-    if (mainw->multitrack->event_list!=NULL) {
-      event_list_free(mainw->multitrack->event_list);
-      mainw->multitrack->event_list=NULL;
+    if (mainw->multitrack!=NULL) {
+      event_list_free_undos(mainw->multitrack);
+      
+      if (mainw->multitrack->event_list!=NULL) {
+	event_list_free(mainw->multitrack->event_list);
+	mainw->multitrack->event_list=NULL;
+      }
     }
   
     // check for layout maps

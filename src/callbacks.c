@@ -318,7 +318,12 @@ on_filesel_complex_clicked                      (GtkButton *button,
 {
   // append /livestmp
   on_filesel_simple_clicked (NULL,entry);
-  if (strlen (file_name)<10||strncmp (file_name+strlen (file_name)-10,"/livestmp/",10)) g_strappend (file_name,256,"/livestmp/");
+
+  if (strcmp(file_name+strlen(file_name)-1,"/")) {
+    g_strappend(file_name,256,"/");
+  }
+
+  if (strlen (file_name)<10||strncmp (file_name+strlen (file_name)-10,"/livestmp/",10)) g_strappend (file_name,256,"livestmp/");
   gtk_entry_set_text(entry,file_name);
 
 }
@@ -331,28 +336,15 @@ on_filesel_simple_clicked (GtkButton *button, GtkEntry *entry) {
   gchar *fname=g_strdup(gtk_entry_get_text(entry));
   while (g_main_context_iteration(NULL,FALSE));
   dirname=choose_file(fname,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,NULL);
-  g_snprintf(file_name,256,"%s",dirname);
+  if (dirname!=NULL) {
+    g_snprintf(file_name,256,"%s",dirname);
+    g_free(dirname);
+  }
+  else g_snprintf(file_name,256,"%s",fname);
   g_free(fname);
-  g_free(dirname);
   if (button!=NULL) gtk_entry_set_text(entry,file_name);
 }
 
-
-
-void
-on_filesel_simple_ok_clicked (GtkButton *button, GtkEntry *entry) {
-  // not used
-
-}
-
-
-void
-on_filesel_complex_ok_clicked                  (GtkButton       *button,
-						GtkEntry         *entry)
-{
-  // not used
-
-}
 
 
 

@@ -1222,7 +1222,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	set_int_pref("startup_phase",3);
 	prefs->startup_phase=3;
 	
-	if (!do_startup_tests()) {
+	if (!do_startup_tests(FALSE)) {
 	  lives_exit();
 	}
 
@@ -2199,6 +2199,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->toy_random_frames, TRUE);
   gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
   gtk_widget_set_sensitive (mainw->gens_submenu, TRUE);
+  gtk_widget_set_sensitive (mainw->troubleshoot, TRUE);
 
   if (mainw->current_file>0&&(cfile->start==1||cfile->end==cfile->frames)&&!(cfile->start==1&&cfile->end==cfile->frames)) {
     gtk_widget_set_sensitive(mainw->select_invert,TRUE);
@@ -2280,6 +2281,7 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->trim_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->delaudio_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->gens_submenu, FALSE);
+  gtk_widget_set_sensitive (mainw->troubleshoot, FALSE);
   gtk_widget_set_sensitive (mainw->resample_audio, FALSE);
   gtk_widget_set_sensitive (mainw->fade_aud_in, FALSE);
   gtk_widget_set_sensitive (mainw->fade_aud_out, FALSE);
@@ -3831,6 +3833,8 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_set_sensitive (mainw->vj_load_set, !mainw->was_set);
     gtk_widget_set_sensitive (mainw->clear_ds, TRUE);
     gtk_widget_set_sensitive (mainw->gens_submenu, TRUE);
+    gtk_widget_set_sensitive (mainw->mt_menu, TRUE);
+    gtk_widget_set_sensitive (mainw->troubleshoot, TRUE);
 #ifdef HAVE_YUV4MPEG
     gtk_widget_set_sensitive (mainw->open_yuv4m, TRUE);
 #endif

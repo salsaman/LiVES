@@ -16,6 +16,7 @@
 #include "resample.h"
 #include "rte_window.h"
 #include "stream.h"
+#include "startup.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -1509,6 +1510,10 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (menuitem14_menu), separator27);
   gtk_widget_set_sensitive (separator27, FALSE);
 
+  mainw->troubleshoot=gtk_menu_item_new_with_mnemonic (_("_Troubleshoot"));
+  gtk_widget_show (mainw->troubleshoot);
+  gtk_container_add (GTK_CONTAINER (menuitem14_menu), mainw->troubleshoot);
+
   about = gtk_menu_item_new_with_mnemonic (_("_About"));
   gtk_widget_show (about);
   gtk_container_add (GTK_CONTAINER (menuitem14_menu), about);
@@ -2541,6 +2546,10 @@ create_LiVES (void)
 
   g_signal_connect (GTK_OBJECT (about), "activate",
 		    G_CALLBACK (on_about_activate),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (mainw->troubleshoot), "activate",
+		    G_CALLBACK (on_troubleshoot_activate),
 		    NULL);
 
   g_signal_connect (GTK_OBJECT (show_manual), "activate",

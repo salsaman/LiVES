@@ -499,7 +499,7 @@ LIVES_INLINE gchar *get_resource(gchar *fname) {
 
 
 
-gboolean do_startup_tests(void) {
+gboolean do_startup_tests(gboolean tshoot) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
 
@@ -517,11 +517,31 @@ gboolean do_startup_tests(void) {
   gboolean success,success2,success3,success4;
 
   gint response,res;
+  gint current_file=mainw->current_file;
 
   int out_fd,info_fd;
 
+  gchar *image_ext=g_strdup(prefs->image_ext);
+
+  mainw->suppress_dprint=TRUE;
+
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
+
   dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Testing Configuration"));
+
+  if (!tshoot) {
+    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Testing Configuration"));
+  }
+  else {
+    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Troubleshoot"));
+  }
 
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
@@ -549,8 +569,11 @@ gboolean do_startup_tests(void) {
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  okbutton = gtk_button_new_from_stock ("gtk-go-forward");
-  gtk_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
+  if (!tshoot) {
+    okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+    gtk_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
+  }
+  else okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
@@ -585,7 +608,7 @@ gboolean do_startup_tests(void) {
   // test if sox can convert raw 44100 -> wav 22050
   add_test(table,1,_("Checking if sox can convert audio"),success);
   
-  set_pref("default_image_format","png");
+  if (!tshoot) set_pref("default_image_format","png");
   g_snprintf (prefs->image_ext,16,"%s","png");
 
   get_temp_handle(mainw->first_free_file,TRUE);
@@ -631,9 +654,19 @@ gboolean do_startup_tests(void) {
     }
   }
 
+  if (tshoot) g_snprintf (prefs->image_ext,16,"%s",image_ext);
+
   if (mainw->cancelled!=CANCEL_NONE) {
-    close_current_file(-1);
+    mainw->cancelled=CANCEL_NONE;
+    close_current_file(current_file);
     gtk_widget_destroy(dialog);
+    mainw->suppress_dprint=FALSE;
+
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
+
     return FALSE;
   }
 
@@ -650,7 +683,14 @@ gboolean do_startup_tests(void) {
       gtk_widget_destroy(dialog);
       while (g_main_context_iteration(NULL,FALSE));
       do_no_mplayer_sox_error();
-      close_current_file(-1);
+      close_current_file(current_file);
+      mainw->suppress_dprint=FALSE;
+
+      if (mainw->multitrack!=NULL) {
+	mt_sensitise(mainw->multitrack);
+	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+      }
+
       return FALSE;
     }
   }
@@ -722,7 +762,7 @@ gboolean do_startup_tests(void) {
       get_frame_count(mainw->current_file);
       
       if (cfile->frames==0) {
-	fail_test(table,4,_(""));
+	fail_test(table,4,_("You may wish to upgrade mplayer to a newer version"));
       }
       
       else {
@@ -733,26 +773,37 @@ gboolean do_startup_tests(void) {
   }
 
   if (mainw->cancelled!=CANCEL_NONE) {
-    close_current_file(-1);
+    mainw->cancelled=CANCEL_NONE;
+    close_current_file(current_file);
     gtk_widget_destroy(dialog);
+    mainw->suppress_dprint=FALSE;
+
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
+
     return FALSE;
   }
   
   // check if mplayer can decode to jpeg
 
-  add_test(table,5,_("Checking if mplayer can decode to jpeg"),!success3&&success2);
+  add_test(table,5,_("Checking if mplayer can decode to jpeg"),success2);
 
 
-  if (!success3&&success2) {
+  if (success2) {
     res=system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
     
     if (res==0) {
       pass_test(table,5);
-      set_pref("default_image_format","jpeg");
-      g_snprintf (prefs->image_ext,16,"%s","jpg");
+      if (!success3) {
+	set_pref("default_image_format","jpeg");
+	g_snprintf (prefs->image_ext,16,"%s","jpg");
+      }
     }
     else {
-      fail_test(table,5,_("You should install mplayer with either png/alpha or jpeg support"));
+      if (!success3) fail_test(table,5,_("You should install mplayer with either png/alpha or jpeg support"));
+      else fail_test(table,5,_("You may wish to add jpeg output support to mplayer"));
     }
   }
   
@@ -780,25 +831,32 @@ gboolean do_startup_tests(void) {
   }
 
 
-  close_current_file(-1);
+  close_current_file(current_file);
 
-  gtk_widget_set_sensitive(cancelbutton,TRUE);
   gtk_widget_set_sensitive(okbutton,TRUE);
+  if (tshoot) gtk_widget_hide(cancelbutton); 
+  
+
+  if (!tshoot) {
+    label=gtk_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
+    gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
     
-
-  label=gtk_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
-  gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
-
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_show(label);
   }
-
-  gtk_widget_show(label);
 
   response=gtk_dialog_run(GTK_DIALOG(dialog));
 
   gtk_widget_destroy(dialog);
+  mainw->suppress_dprint=FALSE;
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
 
   return (response==GTK_RESPONSE_OK);
 }
@@ -959,4 +1017,11 @@ void do_startup_interface_query(void) {
 
   while (g_main_context_iteration(NULL,FALSE));
 
+}
+
+
+
+void on_troubleshoot_activate                     (GtkMenuItem     *menuitem,
+						   gpointer         user_data) {
+  do_startup_tests(TRUE);
 }

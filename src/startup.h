@@ -11,9 +11,10 @@
 
 gboolean do_tempdir_query(void);
 gboolean do_audio_choice_dialog(short startup_phase);
-gboolean do_startup_tests(void);
+gboolean do_startup_tests(gboolean tshoot);
 void do_startup_interface_query(void);
 
+void on_troubleshoot_activate (GtkMenuItem *, gpointer);
 
 
 #endif

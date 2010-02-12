@@ -39,6 +39,7 @@
 #include "interface.h"
 #include "effects.h"
 #include "audio.h"
+#include "startup.h"
 
 static int renumbered_clips[MAX_FILES+1]; // used to match clips from the event recorder with renumbered clips (without gaps)
 static gdouble lfps[MAX_FILES+1]; // table of layout fps
@@ -6051,6 +6052,10 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
   gtk_widget_set_sensitive (separator, FALSE);
 
+  mt->troubleshoot=gtk_menu_item_new_with_mnemonic (_("_Troubleshoot"));
+  gtk_widget_show (mt->troubleshoot);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->troubleshoot);
+
   about = gtk_menu_item_new_with_mnemonic (_("_About"));
   gtk_widget_show (about);
   gtk_container_add (GTK_CONTAINER (menuitem_menu), about);
@@ -6335,6 +6340,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   g_signal_connect (GTK_OBJECT (about), "activate",
                       G_CALLBACK (on_about_activate),
                       NULL);
+
+  g_signal_connect (GTK_OBJECT (mt->troubleshoot), "activate",
+		    G_CALLBACK (on_troubleshoot_activate),
+		    NULL);
+
   g_signal_connect (GTK_OBJECT (show_mt_keys), "activate",
                       G_CALLBACK (on_mt_showkeys_activate),
                       NULL);
@@ -13835,6 +13845,7 @@ void mt_desensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->close,FALSE);
   gtk_widget_set_sensitive (mt->capture,FALSE);
   gtk_widget_set_sensitive (mt->gens_submenu,FALSE);
+  gtk_widget_set_sensitive (mainw->troubleshoot, FALSE);
 
   if (mt->poly_state==POLY_IN_OUT) {
     if (mt->block_selected!=NULL) {
@@ -13879,6 +13890,7 @@ void mt_sensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->recent_menu,TRUE);
   gtk_widget_set_sensitive (mt->capture,TRUE);
   gtk_widget_set_sensitive (mt->gens_submenu,TRUE);
+  gtk_widget_set_sensitive (mainw->troubleshoot, TRUE);
 
   gtk_widget_set_sensitive (mainw->m_mutebutton, TRUE);
 

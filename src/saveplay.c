@@ -630,7 +630,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
   if (!strcmp(cfile->type,"Frames")||!strcmp(cfile->type,"jpeg")||!strcmp(cfile->type,"png")||!strcmp(cfile->type,"Audio")) {
     cfile->is_untitled=TRUE;
-    gtk_widget_set_sensitive(mainw->save,FALSE);
   }
 
   if (cfile->frames==1&&(!strcmp(cfile->type,"jpeg")||!strcmp(cfile->type,"png"))) {
@@ -1269,7 +1268,6 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
       if (cfile->is_untitled) {
 	cfile->is_untitled=FALSE;
-	gtk_widget_set_sensitive(mainw->save,TRUE);
       }
       if (!cfile->was_renamed) {
 	set_menu_text(cfile->menuentry,full_file_name,FALSE);
@@ -2808,7 +2806,6 @@ backup_file(const gchar *file_name) {
   cfile->changed=FALSE;
   // set is_untitled to stop users from saving with a .lv1 extension
   cfile->is_untitled=TRUE;
-  gtk_widget_set_sensitive(mainw->save,FALSE);
   d_print_done();
 }
 

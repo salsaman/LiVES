@@ -4264,6 +4264,8 @@ gchar *set_values_from_defs(lives_mt *mt, gboolean from_prefs) {
 
 
 void event_list_free_undos(lives_mt *mt) {
+  if (mt==NULL) return;
+
   if (mt->undos!=NULL) g_list_free(mt->undos);
   mt->undos=NULL;
   mt->undo_buffer_used=0;

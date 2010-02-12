@@ -492,7 +492,6 @@ typedef struct {
   GdkPixbuf *imframe;
   GdkPixbuf *imsep;
   GtkWidget *LiVES;
-  GtkWidget *save;
   GtkWidget *open;
   GtkWidget *open_sel;
   GtkWidget *open_vcd_menu;

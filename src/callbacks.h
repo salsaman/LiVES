@@ -33,10 +33,6 @@ on_stop_clicked                         (GtkMenuItem     *menuitem,
                                          gpointer         user_data);
 
 void
-on_save_activate                      (GtkMenuItem     *menuitem,
-				       gpointer         user_data);
-
-void
 on_save_selection_activate            (GtkMenuItem     *menuitem,
 				       gpointer         user_data);
 

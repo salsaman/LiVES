@@ -403,12 +403,7 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), separator88);
   gtk_widget_set_sensitive (separator88, FALSE);
 
-  mainw->save = gtk_image_menu_item_new_from_stock ("gtk-save", mainw->accel_group);
-  gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->save);
-  gtk_widget_set_sensitive (mainw->save, FALSE);
-  set_menu_text(mainw->save,_("_Encode Clip"),TRUE);
-
-  mainw->save_as = gtk_image_menu_item_new_from_stock ("gtk-save-as", mainw->accel_group);
+  mainw->save_as = gtk_image_menu_item_new_from_stock ("gtk-save", mainw->accel_group);
   gtk_container_add (GTK_CONTAINER(menuitem11_menu), mainw->save_as);
   gtk_widget_set_sensitive (mainw->save_as, FALSE);
   set_menu_text(mainw->save_as,_("Encode Clip _As..."),TRUE);
@@ -417,7 +412,6 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->save_selection);
   gtk_widget_set_sensitive (mainw->save_selection, FALSE);
 
-  gtk_widget_show (mainw->save);
   gtk_widget_show (mainw->save_as);
   gtk_widget_show (mainw->save_selection);
 
@@ -2239,9 +2233,6 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (mainw->recent4), "activate",
                       G_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(4));
-  g_signal_connect (GTK_OBJECT (mainw->save), "activate",
-                      G_CALLBACK (on_save_activate),
-		    NULL);
   g_signal_connect (GTK_OBJECT (mainw->backup), "activate",
                       G_CALLBACK (on_backup_activate),
 		    NULL);

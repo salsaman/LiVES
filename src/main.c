@@ -2115,7 +2115,6 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->recent_menu, TRUE);
   gtk_widget_set_sensitive (mainw->save_as, mainw->current_file>0&&capable->has_encoder_plugins);
   gtk_widget_set_sensitive (mainw->backup, mainw->current_file>0);
-  gtk_widget_set_sensitive (mainw->save, mainw->current_file>0&&!(cfile->is_untitled)&&capable->has_encoder_plugins);
   gtk_widget_set_sensitive (mainw->save_selection, mainw->current_file>0&&cfile->frames>0&&capable->has_encoder_plugins);
   gtk_widget_set_sensitive (mainw->clear_ds, TRUE);
   gtk_widget_set_sensitive (mainw->playsel, mainw->current_file>0&&cfile->frames>0);
@@ -2259,7 +2258,6 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->clear_ds, FALSE);
   gtk_widget_set_sensitive (mainw->save_as, FALSE);
   gtk_widget_set_sensitive (mainw->backup, FALSE);
-  gtk_widget_set_sensitive (mainw->save, FALSE);
   gtk_widget_set_sensitive (mainw->playsel, FALSE);
   gtk_widget_set_sensitive (mainw->playclip, FALSE);
   gtk_widget_set_sensitive (mainw->copy, FALSE);
@@ -4172,7 +4170,6 @@ void switch_to_file(gint old_file, gint new_file) {
       mainw->loop=gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mainw->loop_video));
     }
     
-    gtk_widget_set_sensitive (mainw->save, !(cfile->is_untitled)&&capable->has_encoder_plugins);
     gtk_widget_set_sensitive (mainw->undo, cfile->undoable);
     gtk_widget_set_sensitive (mainw->redo, cfile->redoable);
     gtk_widget_set_sensitive (mainw->export_submenu, (cfile->achans>0));

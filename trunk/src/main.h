@@ -562,6 +562,7 @@ void do_mt_keys_window (void);
 void do_messages_window (void);
 void do_firstever_dialog (void);
 void do_upgrade_error_dialog(void);
+void do_no_mplayer_sox_error(void);
 void do_aud_during_play_error(void);
 void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);

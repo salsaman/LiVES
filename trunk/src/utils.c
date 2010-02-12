@@ -1836,7 +1836,7 @@ after_foreign_play(void) {
   gchar file_name[256];
 
   // assume for now we only get one clip passed back
-  if ((capture_fd=open(capfile,O_RDONLY))>0) {
+  if ((capture_fd=open(capfile,O_RDONLY))>-1) {
     memset(capbuf,0,256);
     if ((length=read(capture_fd,capbuf,256))) {
       if (get_token_count (capbuf,'|')>2) {
@@ -2138,7 +2138,7 @@ sget_file_size(gchar *name) {
   struct stat filestat;
   int fd;
 
-  if ((fd=open(name,O_RDONLY))>0) {
+  if ((fd=open(name,O_RDONLY))>-1) {
     close (fd);
   }
   else {

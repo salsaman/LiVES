@@ -3041,7 +3041,7 @@ void open_set_file (gchar *set_name, gint clipnum) {
     int pb_fps;
     gchar *setfile=g_strdup_printf("%s/%s/set.%s",prefs->tmpdir,cfile->handle,set_name);
 
-    if ((set_fd=open(setfile,O_RDONLY))>0) {
+    if ((set_fd=open(setfile,O_RDONLY))>-1) {
       // get perf_start
       if ((nlen=read(set_fd,&pb_fps,sizint))) {
 	cfile->pb_fps=pb_fps/1000.;

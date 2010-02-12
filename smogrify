@@ -3778,6 +3778,7 @@ sub convert_audio_to_wav {
 	}
 
 	if ($sox_version<13) {
+	    $nodither="";
 	    if ($asamps==8) {
 		$sasamps="b";
 	    }
@@ -3786,6 +3787,7 @@ sub convert_audio_to_wav {
 	    }
 	}
 	else {
+	    $nodither="-D";
 	    $sasamps=$aasamps;
 	}
 
@@ -3819,7 +3821,7 @@ sub convert_audio_to_wav {
 		$nsigned=$asigned;
 	    }
 	}
-	system("sox -t .raw -r $arate $asigned -$sasamps -c $achans $audio_in -t .wav -r $nrate -c $nchans $nsigned -$nasamps $curtmpdir/audiodump.wav >/dev/null 2>&1");
+	system("sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans $audio_in -t .wav -r $nrate -c $nchans $nsigned -$nasamps $curtmpdir/audiodump.wav >/dev/null 2>&1");
     }
 
     `sync;sync;sync`;
@@ -3896,10 +3898,12 @@ sub resample_audio {
 	else {
 	    $nsamps="w";
 	}
+	$nodither="";
     }
     else {
 	$osamps=$asamps/8;
 	$nsamps/=8;
+	$nodither="-D";
     }
     
     if ($asigned==1) {
@@ -3931,10 +3935,10 @@ sub resample_audio {
     }
     
     if (defined($stretch)) {
-	system("sox -t .raw -r $arate -c $achans -$osigned -$osamps $oendian $audio_in -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps $audio_out stretch $stretch>/dev/null 2>&1");
+	system("sox $nodither -t .raw -r $arate -c $achans -$osigned -$osamps $oendian $audio_in -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps $audio_out stretch $stretch>/dev/null 2>&1");
     }
     else {
-	system("sox -t .raw -r $arate -c $achans -$osigned -$osamps $oendian $audio_in -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps $audio_out>/dev/null 2>&1");
+	system("sox $nodither -t .raw -r $arate -c $achans -$osigned -$osamps $oendian $audio_in -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps $audio_out>/dev/null 2>&1");
     }
 }
 

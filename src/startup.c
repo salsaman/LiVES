@@ -494,7 +494,7 @@ static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
 
 
 LIVES_INLINE gchar *get_resource(gchar *fname) {
-  return g_strdup_printf("%s/%s/resources/%s",prefs->prefix_dir,DATA_DIR,fname);
+  return g_strdup_printf("%s%sresources/%s",prefs->prefix_dir,DATA_DIR,fname);
 }
 
 
@@ -701,7 +701,7 @@ gboolean do_startup_tests(void) {
     info_fd=-1;
     unlink(cfile->info_file);
 
-    rname=get_resource("vidtest2.avi");
+    rname=get_resource("vidtest.avi");
 
     com=g_strdup_printf("smogrify open %s \"%s\" 0 png 0. 0",cfile->handle,(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
     g_free(tmp);

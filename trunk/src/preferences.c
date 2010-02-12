@@ -485,7 +485,6 @@ apply_prefs(gboolean skip_warn) {
     }
   }
 
-
   if (strcmp(tmpdir+strlen(tmpdir)-1,"/")) {
     g_strappend(tmpdir,256,"/");
   }

@@ -1859,7 +1859,7 @@ _entryw* create_rename_dialog (gint type) {
     gtk_container_add (GTK_CONTAINER (dirbutton1), dirimage1);
 
     gtk_box_pack_start (GTK_BOX (hbox19), dirbutton1, FALSE, TRUE, 10);
-    g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_simple_clicked),renamew->entry);
+    g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_complex_clicked),renamew->entry);
 
   }
 

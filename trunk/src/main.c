@@ -1046,20 +1046,25 @@ static void lives_init(_ign_opts *ign_opts) {
 
       get_pref_utf8("vid_load_dir",prefs->def_vid_load_dir,256);
       g_snprintf(mainw->vid_load_dir,256,"%s",prefs->def_vid_load_dir);
-      
+      ensure_isdir(mainw->vid_load_dir);
+
       get_pref_utf8("vid_save_dir",prefs->def_vid_save_dir,256);
       g_snprintf(mainw->vid_save_dir,256,"%s",prefs->def_vid_save_dir);
+      ensure_isdir(mainw->vid_save_dir);
       
       get_pref_utf8("audio_dir",prefs->def_audio_dir,256);
       g_snprintf(mainw->audio_dir,256,"%s",prefs->def_audio_dir);
+      ensure_isdir(mainw->audio_dir);
       g_snprintf(mainw->xmms_dir,256,"%s",mainw->audio_dir);
       
       get_pref_utf8("image_dir",prefs->def_image_dir,256);
       g_snprintf(mainw->image_dir,256,"%s",prefs->def_image_dir);
+      ensure_isdir(mainw->image_dir);
       
       get_pref_utf8("proj_dir",prefs->def_proj_dir,256);
       g_snprintf(mainw->proj_load_dir,256,"%s",prefs->def_proj_dir);
-      g_snprintf(mainw->proj_save_dir,256,"%s",prefs->def_proj_dir);
+      ensure_isdir(mainw->proj_load_dir);
+      g_snprintf(mainw->proj_save_dir,256,"%s",mainw->proj_load_dir);
       
       prefs->show_player_stats=get_boolean_pref ("show_player_stats");
       

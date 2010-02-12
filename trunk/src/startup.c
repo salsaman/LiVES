@@ -51,18 +51,6 @@ gboolean do_tempdir_query(void) {
     }
     dirname=g_strdup(gtk_entry_get_text(GTK_ENTRY(tdentry->entry)));
 
-    if (strlen(dirname)==0||strncmp(dirname+strlen(dirname)-1,"/",1)) {
-      tmp=g_strdup_printf("%s/",dirname);
-      g_free(dirname);
-      dirname=tmp;
-    }
-
-    if (strlen(dirname)<10||strncmp(dirname+strlen(dirname)-10,"/livestmp/",10)) {
-      tmp=g_strdup_printf("%slivestmp/",dirname);
-      g_free(dirname);
-      dirname=tmp;
-    }
-
     if (strlen(dirname)>255) {
       do_blocking_error_dialog(_("Directory name is too long !"));
       g_free(dirname);

@@ -384,7 +384,8 @@ gboolean do_audio_choice_dialog(short startup_phase) {
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+  gtk_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
@@ -507,26 +508,17 @@ gboolean do_startup_tests(void) {
   GtkWidget *okbutton;
   GtkWidget *cancelbutton;
 
-  gchar *com,*rname,*afile;
+  gchar *com,*rname,*afile,*tmp;
 
   guchar *abuff;
 
   size_t fsize;
 
-  gboolean success,success2,success3;
+  gboolean success,success2,success3,success4;
 
   gint response,res;
 
   int out_fd,info_fd;
-
-  rname=get_resource("");
-
-  if (!g_file_test(rname,G_FILE_TEST_IS_DIR)) {
-    /// oops, no resources dir
-    g_free(rname);
-    return TRUE;
-  }
-
 
   dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Testing Configuration"));
@@ -557,7 +549,8 @@ gboolean do_startup_tests(void) {
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+  gtk_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
@@ -592,6 +585,9 @@ gboolean do_startup_tests(void) {
   // test if sox can convert raw 44100 -> wav 22050
   add_test(table,1,_("Checking if sox can convert audio"),success);
   
+  set_pref("default_image_format","png");
+  g_snprintf (prefs->image_ext,16,"%s","png");
+
   get_temp_handle(mainw->first_free_file,TRUE);
 
 
@@ -621,6 +617,8 @@ gboolean do_startup_tests(void) {
 
     if (info_fd!=-1) {
       close(info_fd);
+
+      sync();
 
       fsize=sget_file_size(afile);
       g_free(afile);
@@ -681,19 +679,64 @@ gboolean do_startup_tests(void) {
 
   // check if mplayer can decode to png/alpha
 
-  add_test(table,4,_("Checking if mplayer can decode to png/alpha"),FALSE);
+  rname=get_resource("");
+
+  if (!g_file_test(rname,G_FILE_TEST_IS_DIR)) {
+    /// oops, no resources dir
+    success4=FALSE;
+  }
+  else success4=TRUE;
 
 
-  // try to open resource mjpeg
+  g_free(rname);
 
-
-
-
-
+  add_test(table,4,_("Checking if mplayer can decode to png/alpha"),success2&&success4);
 
   success3=FALSE;
 
+  // try to open resource vidtest.avi
 
+  if (success2&&success4) {
+
+    info_fd=-1;
+    unlink(cfile->info_file);
+
+    rname=get_resource("vidtest2.avi");
+
+    com=g_strdup_printf("smogrify open %s \"%s\" 0 png 0. 0",cfile->handle,(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
+    g_free(tmp);
+    
+    dummyvar=system(com);
+    g_free(com);
+    g_free(rname);
+
+    while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
+      g_usleep(prefs->sleep_time);
+    }
+
+    if (info_fd!=-1) {
+      close(info_fd);
+
+      sync();
+
+      get_frame_count(mainw->current_file);
+      
+      if (cfile->frames==0) {
+	fail_test(table,4,_(""));
+      }
+      
+      else {
+	pass_test(table,4);
+	success3=TRUE;
+      }
+    }
+  }
+
+  if (mainw->cancelled!=CANCEL_NONE) {
+    close_current_file(-1);
+    gtk_widget_destroy(dialog);
+    return FALSE;
+  }
   
   // check if mplayer can decode to jpeg
 
@@ -743,7 +786,7 @@ gboolean do_startup_tests(void) {
   gtk_widget_set_sensitive(okbutton,TRUE);
     
 
-  label=gtk_label_new(_("\n\n    Click Cancel to exit and install any missing components, or OK to continue    \n"));
+  label=gtk_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
 
 
@@ -895,7 +938,8 @@ void do_startup_interface_query(void) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton1),TRUE);
   }
 
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+  gtk_button_set_label(GTK_BUTTON(okbutton),_("_Finish"));
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);

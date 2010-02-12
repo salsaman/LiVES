@@ -2124,7 +2124,7 @@ void show_manual_section (const gchar *lang, const gchar *section) {
 }
 
 
-glong
+gulong
 get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;
@@ -2132,7 +2132,7 @@ get_file_size(int fd) {
   return (gulong)(filestat.st_size);
 }
 
-glong
+gulong
 sget_file_size(gchar *name) {
   // get the size of file fd
   struct stat filestat;
@@ -2446,7 +2446,7 @@ set_sel_label (GtkWidget *sel_label) {
   else {
     tstr=g_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-calc_time_from_frame (mainw->current_file,cfile->start));
     frstr=g_strdup_printf ("%d",cfile->end-cfile->start+1);
-    gtk_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL)));
+    gtk_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL))); // note to translators - try to keep the text of the middle part the same length, by deleing "-" if necessary
     g_free(sy);
     g_free(sz);
 

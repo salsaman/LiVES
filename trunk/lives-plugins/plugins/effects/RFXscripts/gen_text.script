@@ -36,11 +36,13 @@ nframes|Number of _frames|num0|100|1|100000|
 width|Frame _width|num0|640|2|10000|
 height|Frame _height|num0|480|2|10000|
 font|_Font|string_list|0|Default|AvantGarde-Book|AvantGarde-BookOblique|AvantGarde-Demi|AvantGarde-DemiOblique|Bookman-Demi|Bookman-DemiItalic|Bookman-Light|Bookman-LightItalic|Courier|Courier-Bold|Courier-Oblique|Courier-BoldOblique|Helvetica|Helvetica-Bold|Helvetica-BoldOblique|Helvetica-Narrow|Helvetica-Narrow-Oblique|Helvetica-Narrow-Bold|Helvetica-Narrow-BoldOblique|NewCenturySchlbk-Roman|NewCenturySchlbk-Italic|NewCenturySchlbk-Bold|NewCenturySchlbk-BoldItalic|Palatino-Roman|Palatino-Italic|Palatino-Bold|Palatino-BoldItalic|Times-Roman|Times-Bold|Times-Italic|Times-BoldItalic|Symbol||
+fps|_Frames per second|num3|25.000|1.000|200.000|
 </params>
 
 <param_window>
-layout|p7|p8|p9|
-layout|p1|fill|p2|fill|p5|
+layout|p7|p11|
+layout|p8|p9|
+layout|p1|p2|fill|p5|
 </param_window>
 
 <properties>
@@ -132,6 +134,7 @@ if ($p10==-1) {
 if ($p10>=0) {
   $font="-font $fo";
 }
+$fps=$p11;
 </pre>
 
 <loop>

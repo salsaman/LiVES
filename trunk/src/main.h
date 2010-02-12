@@ -755,8 +755,8 @@ void prepare_to_play_foreign(void);
 gboolean after_foreign_play(void);
 gboolean check_file(const gchar *file_name, gboolean check_exists);  // check if file exists
 gboolean check_dir_access (gchar *dir);
-glong get_file_size(int fd);
-glong sget_file_size(gchar *name);
+gulong get_file_size(int fd);
+gulong sget_file_size(gchar *name);
 gboolean ensure_isdir(gchar *fname);
 gchar *ensure_extension(gchar *fname, gchar *ext);
 void activate_url_inner(const gchar *link);

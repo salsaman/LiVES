@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-11 21:46-0300\n"
+"POT-Creation-Date: 2010-02-12 02:38-0300\n"
 "PO-Revision-Date: 2009-12-20 11:10+0000\n"
 "Last-Translator: lisovszki <lisovszki@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -9810,6 +9810,9 @@ msgstr "_Vaku..."
 msgid "_Font"
 msgstr "_Betűtípus"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Frames per second"
 msgstr "_Másodpercenkénti képkockák"

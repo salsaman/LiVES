@@ -1076,6 +1076,11 @@ tempdir_warning (void) {
 }
 
 
+void do_no_mplayer_sox_error(void) {
+  do_blocking_error_dialog(_ ("\nLiVES currently requires either 'mplayer' or 'sox' to function. Please install one or other of these, and try again.\n"));
+}
+
+
 void
 do_encoder_sox_error(void) {
   do_error_dialog (_ ("Audio resampling is required for this format.\nPlease install 'sox'\nOr switch to another encoder format in Tools | Preferences | Encoding\n"));

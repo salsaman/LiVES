@@ -393,7 +393,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
 
   if (prefs->audio_player==-1) {
-    do_blocking_error_dialog(_ ("\nLiVES currently requires either 'mplayer' or 'sox' to function. Please install one or other of these, and try again.\n"));
+    do_no_mplayer_sox_error();
     return GTK_RESPONSE_CANCEL;
   }
 
@@ -420,16 +420,22 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  gtk_table_attach (GTK_TABLE (table), label, 0, 9, row, row+1, GTK_FILL, 0, 0, 0);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, 0, 0, 10, 10);
   gtk_widget_show(label);
 
   if (!noskip) {
-    label=gtk_label_new(_("skipped")); // translators - as in "skipped test"
+    GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_REMOVE,GTK_ICON_SIZE_LARGE_TOOLBAR);
+    label=gtk_label_new(_("Skipped")); // translators - as in "skipped test"
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
-    gtk_table_attach (GTK_TABLE (table), label, 10, 15, row, row+1, GTK_FILL, 0, 0, 0);
+    gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, 0, 0, 10, 10);
     gtk_widget_show(label);
+
+    gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, 0, 0, 0, 10);
+    gtk_widget_show(image);
   }
 
   while (g_main_context_iteration(NULL,FALSE));
@@ -438,12 +444,17 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
 
 static gboolean pass_test(GtkWidget *table, gint row) {
   GtkWidget *label=gtk_label_new(_("Passed"));  // translators - as in "passed test"
+  GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_APPLY,GTK_ICON_SIZE_LARGE_TOOLBAR);
+
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_table_attach (GTK_TABLE (table), label, 10, 15, row, row+1, GTK_FILL, 0, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, 0, 0, 10, 10);
   gtk_widget_show(label);
+
+  gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, 0, 0, 0, 10);
+  gtk_widget_show(image);
 
   while (g_main_context_iteration(NULL,FALSE));
   return TRUE;
@@ -452,10 +463,11 @@ static gboolean pass_test(GtkWidget *table, gint row) {
 
 static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
   GtkWidget *label;
+  GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_CANCEL,GTK_ICON_SIZE_LARGE_TOOLBAR);
 
   label=gtk_label_new(ftext);
 
-  gtk_table_attach (GTK_TABLE (table), label, 16, 39, row, row+1, GTK_FILL, 0, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), label, 3, 4, row, row+1, 0, 0, 10, 10);
   gtk_widget_show(label);
   
   if (palette->style&STYLE_1) {
@@ -468,9 +480,11 @@ static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_table_attach (GTK_TABLE (table), label, 10, 15, row, row+1, GTK_FILL, 0, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, 0, 0, 10, 10);
   gtk_widget_show(label);
 
+  gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, 0, 0, 0, 10);
+  gtk_widget_show(image);
 
   while (g_main_context_iteration(NULL,FALSE));
   
@@ -499,11 +513,11 @@ gboolean do_startup_tests(void) {
 
   size_t fsize;
 
-  gboolean success;
+  gboolean success,success2,success3;
 
-  gint response;
+  gint response,res;
 
-  int out_fd;
+  int out_fd,info_fd;
 
   rname=get_resource("");
 
@@ -529,7 +543,7 @@ gboolean do_startup_tests(void) {
   dialog_vbox = GTK_DIALOG (dialog)->vbox;
 
 
-  label=gtk_label_new(_("LiVES will now run some basic configuration tests"));
+  label=gtk_label_new(_("LiVES will now run some basic configuration tests\n"));
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
 
 
@@ -551,21 +565,20 @@ gboolean do_startup_tests(void) {
   gtk_widget_grab_focus(okbutton);
 
 
-  gtk_widget_set_sensitive(cancelbutton,FALSE);
   gtk_widget_set_sensitive(okbutton,FALSE);
 
 
-  table = gtk_table_new (10, 40, TRUE);
+  table = gtk_table_new (10, 4, FALSE);
   gtk_container_add (GTK_CONTAINER (dialog_vbox), table);
 
   gtk_widget_show_all(dialog);
 
-
+  while (g_main_context_iteration(NULL,FALSE));
 
 
   // check for sox presence
 
-  add_test(table,0,_("Checking for sox presence"),TRUE);
+  add_test(table,0,_("Checking for \"sox\" presence"),TRUE);
 
 
   if (!capable->has_sox) {
@@ -584,6 +597,9 @@ gboolean do_startup_tests(void) {
 
   if (success) {
     
+    info_fd=-1;
+    unlink(cfile->info_file);
+
     // write 1 second of silence
     afile=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle);
     out_fd=open(afile,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
@@ -593,63 +609,132 @@ gboolean do_startup_tests(void) {
     g_free(afile);
     g_free(abuff);
 
-    afile=g_strdup_printf("%s/%s/testout.wav",prefs->tmpdir,cfile->handle);
+    afile=g_strdup_printf("%s%s/testout.wav",prefs->tmpdir,cfile->handle);
     
-    com=g_strdup_printf("smogrify export_audio 0. 0. 44100 2 16 0 22050 %s",afile);
+    com=g_strdup_printf("smogrify export_audio %s 0. 0. 44100 2 16 0 22050 %s",cfile->handle,afile);
     dummyvar=system(com);
     g_free(com);
-    
-    fsize=sget_file_size(afile);
-    g_free(afile);
-    
-    if (fsize==0) {
-      fail_test(table,1,_("You should install sox_fmt_all or similar"));
+
+    while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
+      g_usleep(prefs->sleep_time);
     }
 
-    else pass_test(table,1);
+    if (info_fd!=-1) {
+      close(info_fd);
 
+      fsize=sget_file_size(afile);
+      g_free(afile);
+      
+      if (fsize==0) {
+	fail_test(table,1,_("You should install sox_fmt_all or similar"));
+      }
+      
+      else pass_test(table,1);
+    }
   }
 
+  if (mainw->cancelled!=CANCEL_NONE) {
+    close_current_file(-1);
+    gtk_widget_destroy(dialog);
+    return FALSE;
+  }
+
+
   // check for mplayer presence
+
+  add_test(table,2,_("Checking for \"mplayer\" presence"),TRUE);
+
+
+  if (!capable->has_mplayer) {
+    success2=fail_test(table,2,_("You should install mplayer to be able to use all the decoding features in LiVES"));
+
+    if (!success) {
+      gtk_widget_destroy(dialog);
+      while (g_main_context_iteration(NULL,FALSE));
+      do_no_mplayer_sox_error();
+      close_current_file(-1);
+      return FALSE;
+    }
+  }
+  else {
+    success2=pass_test(table,2);
+  }
+
 
   // if present
 
   // check if mplayer can decode audio
-  // -ao list
-  // -vo list
 
-  // if not, warn
+  add_test(table,3,_("Checking if mplayer can convert audio"),success2);
 
+  if (success2) {
+    res=system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1");
+    
+    
+    if (res==0) {
+      pass_test(table,3);
+    }
+    else {
+      fail_test(table,3,_("You should install mplayer with pcm/wav support"));
+    }
+  }
 
   // check if mplayer can decode to png/alpha
 
+  add_test(table,4,_("Checking if mplayer can decode to png/alpha"),FALSE);
 
-  // check if mplayer can decode to jpeg
+
+  // try to open resource mjpeg
+
+
+
+
+
+
+  success3=FALSE;
+
 
   
-  //    if neither: warn and continue
+  // check if mplayer can decode to jpeg
+
+  add_test(table,5,_("Checking if mplayer can decode to jpeg"),!success3&&success2);
 
 
-  //    if no png set def img fmt to jpeg
-
-
+  if (!success3&&success2) {
+    res=system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
+    
+    if (res==0) {
+      pass_test(table,5);
+      set_pref("default_image_format","jpeg");
+      g_snprintf (prefs->image_ext,16,"%s","jpg");
+    }
+    else {
+      fail_test(table,5,_("You should install mplayer with either png/alpha or jpeg support"));
+    }
+  }
+  
 
 
   // check decode of ogg/theora
   // if not, warn
-
-
-
+  //6
 
   // check decode of dv
   // if not, warn
-
+  //7
 
   // check for convert
 
+  add_test(table,8,_("Checking for \"convert\" presence"),TRUE);
 
-  // check for composite
 
+  if (!capable->has_convert) {
+    success=fail_test(table,8,_("Install imageMagick to be able to use all of the rendered effects"));
+
+  }
+  else {
+    success=pass_test(table,8);
+  }
 
 
   close_current_file(-1);
@@ -658,6 +743,15 @@ gboolean do_startup_tests(void) {
   gtk_widget_set_sensitive(okbutton,TRUE);
     
 
+  label=gtk_label_new(_("\n\n    Click Cancel to exit and install any missing components, or OK to continue    \n"));
+  gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
+
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  gtk_widget_show(label);
 
   response=gtk_dialog_run(GTK_DIALOG(dialog));
 

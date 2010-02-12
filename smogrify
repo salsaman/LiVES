@@ -2195,6 +2195,7 @@ if (defined($ARGV[0])) {
 	}
   
 	system("mv $audio_out \"$nfile\" >/dev/null 2>&1");
+	system("chmod 644 \"$nfile\" >/dev/null 2>&1");
 
 	&sig_complete;
 	exit 0;
@@ -2560,7 +2561,6 @@ if (defined($ARGV[0])) {
 	    &ogg_open;
 	}
 	elsif ($ext eq ".wav") {
-	    $audio_in=$curtmpdir."/audiodump.wav";
 	    &wav_open;
 	}
 	else {

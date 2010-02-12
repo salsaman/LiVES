@@ -182,7 +182,7 @@ on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   d_print(msg);
   g_free(msg);
 
-  if (!(fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))) {
+  if ((fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
     msg=g_strdup_printf (_("\n\nUnable to write defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
     do_error_dialog (msg);
     g_free (msg);
@@ -201,7 +201,7 @@ on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   close(fd);
 
-  if (!(fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))) {
+  if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
     msg=g_strdup_printf (_("\n\nUnable to write default sizes file\n%s\nError code %d\n"),prefs->fxsizesfile,errno);
     do_error_dialog (msg);
     g_free (msg);
@@ -236,7 +236,7 @@ void load_rte_defs (void) {
   }
 
   if (g_file_test(prefs->fxdefsfile,G_FILE_TEST_EXISTS)) {
-    if (!(fd=open(prefs->fxdefsfile,O_RDONLY))) {
+    if ((fd=open(prefs->fxdefsfile,O_RDONLY))==-1) {
       msg2=g_strdup_printf (_("Unable to read defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
       do_error_dialog (msg2);
       g_free (msg2);
@@ -268,7 +268,7 @@ void load_rte_defs (void) {
   }
 
   if (g_file_test(prefs->fxsizesfile,G_FILE_TEST_EXISTS)) {
-    if (!(fd=open(prefs->fxsizesfile,O_RDONLY))) {
+    if ((fd=open(prefs->fxsizesfile,O_RDONLY))==-1) {
       msg=g_strdup_printf (_("\n\nUnable to read sizes file\n%s\nError code %d\n"),prefs->fxsizesfile,errno);
       do_error_dialog (msg);
       g_free (msg);

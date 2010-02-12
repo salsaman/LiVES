@@ -82,7 +82,7 @@ static GList *get_plugin_result (gchar *command, gchar *delim, gboolean allow_bl
   }
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
-  while (!(outfile_fd=open(outfile,O_RDONLY))&&(count-->0||list_plugins)) {
+  while ((outfile_fd=open(outfile,O_RDONLY))==-1&&(count-->0||list_plugins)) {
     g_usleep (prefs->sleep_time);
   }
   
@@ -275,7 +275,7 @@ void save_vpp_defaults(_vid_playback_plugin *vpp) {
     return;
   }
 
-  if (!(fd=open(vpp_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))) {
+  if ((fd=open(vpp_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
     msg=g_strdup_printf (_("\n\nUnable to write video playback plugin defaults file\n%s\nError code %d\n"),vpp_file,errno);
     g_printerr ("%s",msg);
     g_free (msg);
@@ -339,7 +339,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
   d_print(msg);
   g_free(msg);
 
-  if (!(fd=open(vpp_file,O_RDONLY))) {
+  if ((fd=open(vpp_file,O_RDONLY))==-1) {
     msg=g_strdup_printf (_("unable to read file\n%s\nError code %d\n"),vpp_file,errno);
     d_print (msg);
     g_free (msg);

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-12 02:38-0300\n"
+"POT-Creation-Date: 2010-02-12 11:36-0300\n"
 "PO-Revision-Date: 2009-10-11 20:42+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -479,7 +479,7 @@ msgstr ""
 "\n"
 "Ďakujem.\n"
 
-#: src/main.c:1709
+#: src/main.c:1709 src/dialogs.c:1080
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -665,7 +665,7 @@ msgstr "Kliknutím zobrazíte _ukážku vybraných zvukových súborov"
 msgid "Click here to _Preview the video"
 msgstr "Kliknutím zobrazíte _ukážku vybraných video súborov"
 
-#: src/interface.c:292 src/dialogs.c:1556
+#: src/interface.c:292 src/dialogs.c:1561
 msgid "LiVES: - Processing..."
 msgstr "LiVES: -Spracovávanie..."
 
@@ -683,7 +683,7 @@ msgstr ""
 "\n"
 "Nezabudnite potom vypnúť efekty (ctrl-0) !"
 
-#: src/interface.c:332 src/callbacks.c:7129 src/dialogs.c:1589
+#: src/interface.c:332 src/callbacks.c:7129 src/dialogs.c:1594
 msgid ""
 "\n"
 "Please Wait"
@@ -696,7 +696,7 @@ msgstr ""
 msgid "Show details"
 msgstr "Zobraziť _správy"
 
-#: src/interface.c:399 src/dialogs.c:1613
+#: src/interface.c:399 src/dialogs.c:1618
 msgid "_Enough"
 msgstr "_Dostatočne"
 
@@ -3680,7 +3680,7 @@ msgstr ""
 "\n"
 "Uistite sa prosím, že do tohoto adresára môžete zapisovať."
 
-#: src/dialogs.c:1081
+#: src/dialogs.c:1086
 msgid ""
 "Audio resampling is required for this format.\n"
 "Please install 'sox'\n"
@@ -3690,7 +3690,7 @@ msgstr ""
 "Prosím nainštalujte 'sox'\n"
 "Alebo vyberte iný formát kódovania v Nástroje | Nastavenia | Encoding\n"
 
-#: src/dialogs.c:1086
+#: src/dialogs.c:1091
 msgid ""
 "\n"
 "\n"
@@ -3702,7 +3702,7 @@ msgstr ""
 "Tento formát sa nedá použiť s vybraným zvukovým kodekom.\n"
 "Nastavte zvukový kodek v Nástroje|Nastavenia|Encoding\n"
 
-#: src/dialogs.c:1091
+#: src/dialogs.c:1096
 msgid ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
@@ -3710,7 +3710,7 @@ msgstr ""
 "Toto rozloženie obsahuje vygenerované snímky.\n"
 "Nedá sa uložiť, musíte ich najskôr vykresliť do klipu.\n"
 
-#: src/dialogs.c:1098 src/dialogs.c:1181
+#: src/dialogs.c:1103 src/dialogs.c:1186
 #, c-format
 msgid ""
 "\n"
@@ -3721,7 +3721,7 @@ msgstr ""
 "\n"
 "Vzhľadom na obmedzenia vo %s formáte\n"
 
-#: src/dialogs.c:1115
+#: src/dialogs.c:1120
 msgid ""
 "LiVES recommends the following settings:\n"
 "\n"
@@ -3729,35 +3729,35 @@ msgstr ""
 "LiVES doporučuje nasledujúce nastavenia:\n"
 "\n"
 
-#: src/dialogs.c:1119 src/dialogs.c:1216 src/resample.c:757
+#: src/dialogs.c:1124 src/dialogs.c:1221 src/resample.c:757
 msgid ", signed"
 msgstr ", podpísané"
 
-#: src/dialogs.c:1120 src/dialogs.c:1217 src/resample.c:760
+#: src/dialogs.c:1125 src/dialogs.c:1222 src/resample.c:760
 msgid ", unsigned"
 msgstr ". nepodpísané"
 
-#: src/dialogs.c:1125
+#: src/dialogs.c:1130
 #, fuzzy, c-format
 msgid "Use an audio rate of %d Hz%s\n"
 msgstr "Použiť pomer zvuku %d Hz\n"
 
-#: src/dialogs.c:1132
+#: src/dialogs.c:1137
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
 msgstr "Nastaviť video na %.3f snímkov za sekundu\n"
 
-#: src/dialogs.c:1136
+#: src/dialogs.c:1141
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
 msgstr "Nastaviť video na %d:%d snímkov za sekundu\n"
 
-#: src/dialogs.c:1141 src/dialogs.c:1244
+#: src/dialogs.c:1146 src/dialogs.c:1249
 #, c-format
 msgid "Set video size to %d x %d pixels\n"
 msgstr "Nastaviť veľkosť videa na %d x %d pixelov\n"
 
-#: src/dialogs.c:1149 src/dialogs.c:1243
+#: src/dialogs.c:1154 src/dialogs.c:1248
 msgid ""
 "\n"
 "You may wish to:\n"
@@ -3765,35 +3765,35 @@ msgstr ""
 "\n"
 "Možno si budete priať:\n"
 
-#: src/dialogs.c:1152 src/dialogs.c:1235
+#: src/dialogs.c:1157 src/dialogs.c:1240
 #, c-format
 msgid "resize video to %d x %d pixels\n"
 msgstr "zmeniť veľkosť videa na %d x %d pixelov\n"
 
-#: src/dialogs.c:1157
+#: src/dialogs.c:1162
 msgid "disable audio, since the target encoder cannot encode audio\n"
 msgstr "vypnúť zvuk, pretože cieľový enkodér nemohol zakódovať zvuk\n"
 
-#: src/dialogs.c:1213
+#: src/dialogs.c:1218
 msgid "LiVES must:\n"
 msgstr "LiVES musí:\n"
 
-#: src/dialogs.c:1221
+#: src/dialogs.c:1226
 #, fuzzy, c-format
 msgid "resample audio to %d Hz%s\n"
 msgstr "prevzorkovať zvuk na %d Hz\n"
 
-#: src/dialogs.c:1227
+#: src/dialogs.c:1232
 #, c-format
 msgid "resample video to %.3f frames per second\n"
 msgstr "prevzorkovať video na %.3f snímkov za sekundu\n"
 
-#: src/dialogs.c:1231
+#: src/dialogs.c:1236
 #, c-format
 msgid "resample video to %d:%d frames per second\n"
 msgstr "prevzorkovať video na %d:%d snímkov za sekundu\n"
 
-#: src/dialogs.c:1250
+#: src/dialogs.c:1255
 msgid ""
 "\n"
 "You will be able to undo these changes afterwards.\n"
@@ -3807,7 +3807,7 @@ msgstr ""
 "Kliknite na `OK` pre pokračovanie, `Zrušiť` pre stornovanie.\n"
 "\n"
 
-#: src/dialogs.c:1253
+#: src/dialogs.c:1258
 msgid ""
 "\n"
 "Changes applied to the selection will not be permanent.\n"
@@ -3817,7 +3817,7 @@ msgstr ""
 "Zmeny použité do výberu nebudú trvalé.\n"
 "\n"
 
-#: src/dialogs.c:1273
+#: src/dialogs.c:1278
 msgid ""
 "\n"
 "\n"
@@ -3831,7 +3831,7 @@ msgstr ""
 "pamäte.\n"
 "Skúste nahrať len vybranú časť súboru."
 
-#: src/dialogs.c:1281
+#: src/dialogs.c:1286
 msgid ""
 "The playback speed (fps), or the audio rate\n"
 " of the clipboard does not match\n"
@@ -3850,7 +3850,7 @@ msgstr ""
 "\n"
 "Vyberte Zrušiť pre ukončenie vkladania alebo OK pre pokračovanie."
 
-#: src/dialogs.c:1289
+#: src/dialogs.c:1294
 msgid ""
 "When opening a yuvmpeg stream, you should first create a fifo file and then "
 "write yuv4mpeg frames to it.\n"
@@ -3859,11 +3859,11 @@ msgid ""
 "click Cancel."
 msgstr ""
 
-#: src/dialogs.c:1313
+#: src/dialogs.c:1318
 msgid "Show Keys"
 msgstr "Zobraziť klávesy"
 
-#: src/dialogs.c:1314
+#: src/dialogs.c:1319
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -3905,11 +3905,11 @@ msgid ""
 "g                             ping pong loops\n"
 msgstr ""
 
-#: src/dialogs.c:1322
+#: src/dialogs.c:1327
 msgid "Multitrack Keys"
 msgstr "Klávesy pre výber stopy"
 
-#: src/dialogs.c:1323
+#: src/dialogs.c:1328
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "\n"
@@ -3948,11 +3948,11 @@ msgstr ""
 "\n"
 "Pre ďaľšie klávesy s pozrite menu.\n"
 
-#: src/dialogs.c:1339
+#: src/dialogs.c:1344
 msgid "Message History"
 msgstr "História správy"
 
-#: src/dialogs.c:1353
+#: src/dialogs.c:1358
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your ~/.lives file"
@@ -3960,7 +3960,7 @@ msgstr ""
 "Po upgrade/inštalácii, budete musieť poopraviť <prefix_dir> nastavenia ~/."
 "lives souboru."
 
-#: src/dialogs.c:1358
+#: src/dialogs.c:1363
 #, c-format
 msgid ""
 "\n"
@@ -3977,7 +3977,7 @@ msgstr ""
 "%s%s%s\n"
 "alebo zmeňte hodnotu <lib_dir> v ~/.lives\n"
 
-#: src/dialogs.c:1364
+#: src/dialogs.c:1369
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
@@ -3987,11 +3987,11 @@ msgstr ""
 "\n"
 " (Názov súboru musí mať koncovku .mp3, .ogg, .wav, .mod, .xm alebo .it)"
 
-#: src/dialogs.c:1365
+#: src/dialogs.c:1370
 msgid "failed (unknown type)\n"
 msgstr "zlyhalo (neznámy typ)\n"
 
-#: src/dialogs.c:1370
+#: src/dialogs.c:1375
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
@@ -4003,7 +4003,7 @@ msgstr ""
 "Kliknite na OK pre odstránenie, alebo Zrušiť pre ponechanie.\n"
 "(Bez zostavy budú nepoužiteľné).\n"
 
-#: src/dialogs.c:1375
+#: src/dialogs.c:1380
 #, c-format
 msgid ""
 "\n"
@@ -4016,7 +4016,7 @@ msgstr ""
 "Kliknitím na OK pridáte aktuálne klipy a rozloženia da existujúcej zostavy.\n"
 "Kliknutím na Zrušiť vyberiete nový názov.\n"
 
-#: src/dialogs.c:1382
+#: src/dialogs.c:1387
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -4027,7 +4027,7 @@ msgstr ""
 "Snímky z tohoto klipu sú použité v niektorých viacstopých rozloženiach.\n"
 "Ste si istý že chcete pokračovať ?"
 
-#: src/dialogs.c:1386
+#: src/dialogs.c:1391
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -4038,7 +4038,7 @@ msgstr ""
 "Zvuky z tohoto klipu sú použité v niektorých viacstopých rozloženiach.\n"
 "Ste si istý že chcete pokračovať ?"
 
-#: src/dialogs.c:1390
+#: src/dialogs.c:1395
 #, c-format
 msgid ""
 "\n"
@@ -4057,7 +4057,7 @@ msgstr ""
 "a kliknutím na OK skúste znova.\n"
 "Inak kliknite na Zrušiť pre zrušenie načítavania súboru.\n"
 
-#: src/dialogs.c:1397
+#: src/dialogs.c:1402
 #, c-format
 msgid ""
 "\n"
@@ -4072,7 +4072,7 @@ msgstr ""
 "%s\n"
 "Klip sa nedá načítať.\n"
 
-#: src/dialogs.c:1404
+#: src/dialogs.c:1409
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -4083,7 +4083,7 @@ msgstr ""
 "Nedá sa spustiť jack. Prosím presvedčte sa či ho máte správne nainštalovaný\n"
 "a tiež či nie je zvuková karta používaná iným programom.\n"
 
-#: src/dialogs.c:1409
+#: src/dialogs.c:1414
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
@@ -4091,7 +4091,7 @@ msgstr ""
 "\n"
 "Môžete tiež reštartovať LiVES a vybrať iný audio prehrávač.\n"
 
-#: src/dialogs.c:1414
+#: src/dialogs.c:1419
 #, c-format
 msgid ""
 "\n"
@@ -4106,7 +4106,7 @@ msgstr ""
 "Môžete zvýšiť hodnoty v Preferences/Multitrack.\n"
 "Odporúča sa zvýšiť aspoň o %d MB"
 
-#: src/dialogs.c:1420
+#: src/dialogs.c:1425
 #, c-format
 msgid ""
 "\n"
@@ -4119,7 +4119,7 @@ msgstr ""
 "Je doporučené ho odstrániť.\n"
 "Kliknite na OK pre odstránenie, Zrušiť pre ponechanie na disku.\n"
 
-#: src/dialogs.c:1427
+#: src/dialogs.c:1432
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -4127,7 +4127,7 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:1431
+#: src/dialogs.c:1436
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -4139,7 +4139,7 @@ msgstr ""
 "Zvýšte veľkosť pamäte pre krok späť\n"
 "v Nastavenia/Multitrack/Pamäť späť\n"
 
-#: src/dialogs.c:1435
+#: src/dialogs.c:1440
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
@@ -4148,20 +4148,20 @@ msgstr ""
 "LiVES nemohol rezervovať dostatok pamäte pre zásobník viacstopého kroku "
 "späť.\n"
 
-#: src/dialogs.c:1437
+#: src/dialogs.c:1442
 msgid "or enter a smaller value.\n"
 msgstr "alebo vložte nižšiu hodnotu.\n"
 
-#: src/dialogs.c:1439
+#: src/dialogs.c:1444
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr ""
 "Skúste opäť z editora klipov, skúste zavrieť niektoré ďaľšie aplikácie\n"
 
-#: src/dialogs.c:1440
+#: src/dialogs.c:1445
 msgid "Try closing some other applications\n"
 msgstr "Skúste zavrieť niektoré ďaľšie aplikácie\n"
 
-#: src/dialogs.c:1451
+#: src/dialogs.c:1456
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
@@ -4170,14 +4170,14 @@ msgstr ""
 "zvuk.\n"
 "Upravte nastavenie zvuku v menu Nástroje.\n"
 
-#: src/dialogs.c:1455
+#: src/dialogs.c:1460
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr ""
 "Súčasné nastavenie obsahuje zvuk, ale zvukové kanály nemôžu byť nastavené na "
 "nulu.\n"
 
-#: src/dialogs.c:1459
+#: src/dialogs.c:1464
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
@@ -4187,7 +4187,7 @@ msgstr ""
 "\"jack\" alebo \"pulse audio\" prehrávačom.\n"
 "Môžete to nastaviť v Nástroje|Predvoľby|Prehrávanie."
 
-#: src/dialogs.c:1463
+#: src/dialogs.c:1468
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
@@ -4197,14 +4197,14 @@ msgstr ""
 "systému, alebo zo staršej verzie LiVES).\n"
 "Mám skúsiť opravu disku kópiou rozloženia?\n"
 
-#: src/dialogs.c:1467
+#: src/dialogs.c:1472
 #, fuzzy
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
 msgstr "LiVES nemôže zaznamenať toto okno. Prepáčte.\n"
 
-#: src/dialogs.c:1473
+#: src/dialogs.c:1478
 msgid ""
 "\n"
 "\n"
@@ -4214,7 +4214,7 @@ msgstr ""
 "\n"
 "Zvukový pomer musí byť väčší ako 0.\n"
 
-#: src/dialogs.c:1477
+#: src/dialogs.c:1482
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -4226,7 +4226,7 @@ msgstr ""
 "a jeho zobrazenie môže trvať veľmi dlho.\n"
 "Ste si istí, že chcete zobraziť?\n"
 
-#: src/dialogs.c:1482
+#: src/dialogs.c:1487
 msgid ""
 "\n"
 "\n"
@@ -4236,7 +4236,7 @@ msgstr ""
 "\n"
 "Musíte nainštalovať 'dvgrab' aby ste mohli používať túto funkciu.\n"
 
-#: src/dialogs.c:1487
+#: src/dialogs.c:1492
 msgid ""
 "\n"
 "\n"
@@ -4245,25 +4245,25 @@ msgid ""
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
 
-#: src/dialogs.c:1491
+#: src/dialogs.c:1496
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr "Zlyhalo rozšírenie video prehrávania k inicializovaniu palety !\n"
 
-#: src/dialogs.c:1495
+#: src/dialogs.c:1500
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr "Zlyhalo rozšírenie dekodéra k inicializovaniu palety !\n"
 
-#: src/dialogs.c:1500
+#: src/dialogs.c:1505
 msgid "Unable to set framerate of video plugin\n"
 msgstr "Nedá sa nastaviť pomer snímkov video rozšírenia\n"
 
-#: src/dialogs.c:1505
+#: src/dialogs.c:1510
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:1517
+#: src/dialogs.c:1522
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -4272,23 +4272,23 @@ msgid ""
 "echo %d > /proc/sys/net/core/rmem_max\n"
 msgstr ""
 
-#: src/dialogs.c:1813
+#: src/dialogs.c:1818
 msgid "cancelled.\n"
 msgstr "zrušené.\n"
 
-#: src/dialogs.c:1820
+#: src/dialogs.c:1825
 msgid "failed.\n"
 msgstr "zlyhalo.\n"
 
-#: src/dialogs.c:1827
+#: src/dialogs.c:1832
 msgid "done.\n"
 msgstr "dokončené.\n"
 
-#: src/dialogs.c:1831
+#: src/dialogs.c:1836
 msgid "error in file. Failed.\n"
 msgstr "chyba v súbore. Zlyhanie.\n"
 
-#: src/dialogs.c:1836
+#: src/dialogs.c:1841
 #, c-format
 msgid ""
 "\n"
@@ -4301,7 +4301,7 @@ msgstr ""
 "%s\n"
 "Prosím skontrolujte práva k súboru a skúste znova."
 
-#: src/dialogs.c:1843
+#: src/dialogs.c:1848
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4314,7 +4314,7 @@ msgstr ""
 "%s\n"
 "Prosím skontrolujte práva k súboru a skúste znova."
 
-#: src/dialogs.c:1851
+#: src/dialogs.c:1856
 #, c-format
 msgid ""
 "\n"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-12 11:36-0300\n"
+"POT-Creation-Date: 2010-02-12 12:35-0300\n"
 "PO-Revision-Date: 2009-08-26 18:26+0000\n"
 "Last-Translator: Helen McCall <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -937,132 +937,137 @@ msgstr "New name "
 msgid "Set name "
 msgstr "Set name "
 
-#: src/interface.c:1954
+#: src/interface.c:1880
+#, fuzzy
+msgid "_Next"
+msgstr "Pasting"
+
+#: src/interface.c:1958
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- Load CD Track"
 
-#: src/interface.c:1957
+#: src/interface.c:1961
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LiVES:- Select DVD Title/Chapter"
 
-#: src/interface.c:1960
+#: src/interface.c:1964
 msgid "LiVES:- Select VCD Title"
 msgstr "LiVES:- Select VCD Title"
 
-#: src/interface.c:1963
+#: src/interface.c:1967
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- Change Maximum Visible Tracks"
 
-#: src/interface.c:1994
+#: src/interface.c:1998
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "Track to load (from %s)"
 
-#: src/interface.c:1997
+#: src/interface.c:2001
 msgid "DVD Title"
 msgstr "DVD Title"
 
-#: src/interface.c:2000
+#: src/interface.c:2004
 msgid "VCD Title"
 msgstr "VCD Title"
 
-#: src/interface.c:2003
+#: src/interface.c:2007
 msgid "Maximum number of tracks to display"
 msgstr "Maximum number of tracks to display"
 
-#: src/interface.c:2035
+#: src/interface.c:2039
 msgid "Chapter  "
 msgstr "Chapter  "
 
-#: src/interface.c:2055
+#: src/interface.c:2059
 msgid "Audio ID  "
 msgstr "Audio ID  "
 
-#: src/interface.c:2157
+#: src/interface.c:2161
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- Fade Audio In"
 
-#: src/interface.c:2160
+#: src/interface.c:2164
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- Fade Audio Out"
 
-#: src/interface.c:2186
+#: src/interface.c:2190
 msgid "Fade in over  "
 msgstr "Fade in over  "
 
-#: src/interface.c:2187
+#: src/interface.c:2191
 msgid "first"
 msgstr "first"
 
-#: src/interface.c:2190
+#: src/interface.c:2194
 msgid "Fade out over  "
 msgstr "Fade out over  "
 
-#: src/interface.c:2191
+#: src/interface.c:2195
 msgid "last"
 msgstr "last"
 
-#: src/interface.c:2228
+#: src/interface.c:2232
 msgid "seconds."
 msgstr "seconds."
 
-#: src/interface.c:2253
+#: src/interface.c:2257
 msgid "selection."
 msgstr "selection."
 
-#: src/interface.c:2319
+#: src/interface.c:2323
 msgid "LiVES: - Play Random Music"
 msgstr "LiVES: - Play Random Music"
 
-#: src/interface.c:2347
+#: src/interface.c:2351
 msgid "Number of Tracks Requested:    "
 msgstr "Number of Tracks Requested:    "
 
-#: src/interface.c:2370
+#: src/interface.c:2374
 msgid "Directory:"
 msgstr "Directory:"
 
-#: src/interface.c:2396
+#: src/interface.c:2400
 msgid "Include subdirectories"
 msgstr "Include subdirectories"
 
-#: src/interface.c:2424
+#: src/interface.c:2428
 msgid "Minimum File Size (MB)         "
 msgstr "Minimum File Size (MB)         "
 
-#: src/interface.c:2444
+#: src/interface.c:2448
 msgid "Maximum File Size (MB)        "
 msgstr "Maximum File Size (MB)        "
 
-#: src/interface.c:2502
+#: src/interface.c:2506
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - File Comments (optional)"
 
-#: src/interface.c:2522
+#: src/interface.c:2526
 msgid "Title/Name : "
 msgstr "Title/Name : "
 
-#: src/interface.c:2533
+#: src/interface.c:2537
 msgid "Author/Artist : "
 msgstr "Author/Artist : "
 
-#: src/interface.c:2544
+#: src/interface.c:2548
 msgid "Comments : "
 msgstr "Comments : "
 
-#: src/interface.c:2618
+#: src/interface.c:2622
 msgid "LiVES: choose a directory"
 msgstr "LiVES: choose a directory"
 
-#: src/interface.c:2621
+#: src/interface.c:2625
 msgid "LiVES: choose a file"
 msgstr "LiVES: choose a file"
 
-#: src/interface.c:2713
+#: src/interface.c:2717
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES: - Cancel/Discard/Save"
 
-#: src/interface.c:2733
+#: src/interface.c:2737
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1070,45 +1075,45 @@ msgid ""
 msgstr ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
-"What would you like to do ?\n"
-
-#: src/interface.c:2736
-msgid ""
-"You are about to leave multitrack mode.\n"
-"The current layout has been changed since the last save.\n"
-"What would you like to do ?\n"
-msgstr ""
-"You are about to leave multitrack mode.\n"
-"The current layout has been changed since the last save.\n"
 "What would you like to do ?\n"
 
 #: src/interface.c:2740
 msgid ""
-"You are about to exit LiVES.\n"
-"The current clip set can be saved.\n"
+"You are about to leave multitrack mode.\n"
+"The current layout has been changed since the last save.\n"
 "What would you like to do ?\n"
 msgstr ""
-"You are about to exit LiVES.\n"
-"The current clip set can be saved.\n"
+"You are about to leave multitrack mode.\n"
+"The current layout has been changed since the last save.\n"
 "What would you like to do ?\n"
 
-#: src/interface.c:2741
+#: src/interface.c:2744
 msgid ""
-"The current clip set has not been saved.\n"
+"You are about to exit LiVES.\n"
+"The current clip set can be saved.\n"
 "What would you like to do ?\n"
 msgstr ""
-"The current clip set has not been saved.\n"
+"You are about to exit LiVES.\n"
+"The current clip set can be saved.\n"
 "What would you like to do ?\n"
 
 #: src/interface.c:2745
 msgid ""
+"The current clip set has not been saved.\n"
+"What would you like to do ?\n"
+msgstr ""
+"The current clip set has not been saved.\n"
+"What would you like to do ?\n"
+
+#: src/interface.c:2749
+msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
 msgstr ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
 
-#: src/interface.c:2748
+#: src/interface.c:2752
 #, fuzzy
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
@@ -1117,13 +1122,13 @@ msgstr ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
 
-#: src/interface.c:2753
+#: src/interface.c:2757
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
 msgstr ""
 
-#: src/interface.c:2756
+#: src/interface.c:2760
 #, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
@@ -1133,44 +1138,44 @@ msgstr ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
 
-#: src/interface.c:2779
+#: src/interface.c:2783
 msgid "Clip set _name"
 msgstr "Clip set _name"
 
-#: src/interface.c:2791
+#: src/interface.c:2795
 msgid "_Auto reload next time"
 msgstr "_Auto reload next time"
 
-#: src/interface.c:2847 src/interface.c:2858
+#: src/interface.c:2851 src/interface.c:2862
 msgid "_Wipe layout"
 msgstr "_Wipe layout"
 
-#: src/interface.c:2848
+#: src/interface.c:2852
 msgid "_Ignore changes"
 msgstr "_Ignore changes"
 
-#: src/interface.c:2849
+#: src/interface.c:2853
 msgid "_Delete clip set"
 msgstr "_Delete clip set"
 
-#: src/interface.c:2850
+#: src/interface.c:2854
 msgid "_Delete layout"
 msgstr "_Delete layout"
 
-#: src/interface.c:2856
+#: src/interface.c:2860
 msgid "_Save layout"
 msgstr "_Save layout"
 
-#: src/interface.c:2857
+#: src/interface.c:2861
 msgid "_Save clip set"
 msgstr "_Save clip set"
 
-#: src/interface.c:2877
+#: src/interface.c:2881
 #, fuzzy
 msgid "LiVES: recover layout ?"
 msgstr "LiVES: choose a file"
 
-#: src/interface.c:2892
+#: src/interface.c:2896
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"

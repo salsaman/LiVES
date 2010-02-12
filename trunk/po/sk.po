@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-12 11:36-0300\n"
+"POT-Creation-Date: 2010-02-12 12:35-0300\n"
 "PO-Revision-Date: 2009-10-11 20:42+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -935,132 +935,137 @@ msgstr "Nový názov "
 msgid "Set name "
 msgstr "Zadať názov "
 
-#: src/interface.c:1954
+#: src/interface.c:1880
+#, fuzzy
+msgid "_Next"
+msgstr "_Text"
+
+#: src/interface.c:1958
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- Nahrajte CD stopu"
 
-#: src/interface.c:1957
+#: src/interface.c:1961
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LiVES:- Zvoliť DVD titul/kapitolu"
 
-#: src/interface.c:1960
+#: src/interface.c:1964
 msgid "LiVES:- Select VCD Title"
 msgstr "LiVES:- Zvoliť VCD titul"
 
-#: src/interface.c:1963
+#: src/interface.c:1967
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- Zmeniť maximum viditeľných stôp"
 
-#: src/interface.c:1994
+#: src/interface.c:1998
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "Nahrať stopu (z %s)"
 
-#: src/interface.c:1997
+#: src/interface.c:2001
 msgid "DVD Title"
 msgstr "DVD titul"
 
-#: src/interface.c:2000
+#: src/interface.c:2004
 msgid "VCD Title"
 msgstr "VCD titul"
 
-#: src/interface.c:2003
+#: src/interface.c:2007
 msgid "Maximum number of tracks to display"
 msgstr "Maximálny počet zobrazených stôp"
 
-#: src/interface.c:2035
+#: src/interface.c:2039
 msgid "Chapter  "
 msgstr "Kapitola  "
 
-#: src/interface.c:2055
+#: src/interface.c:2059
 msgid "Audio ID  "
 msgstr "Audio ID  "
 
-#: src/interface.c:2157
+#: src/interface.c:2161
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- Postupne zosilniť zvuk"
 
-#: src/interface.c:2160
+#: src/interface.c:2164
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- Postupne zoslabiť zvuk"
 
-#: src/interface.c:2186
+#: src/interface.c:2190
 msgid "Fade in over  "
 msgstr "Zosilniť cez  "
 
-#: src/interface.c:2187
+#: src/interface.c:2191
 msgid "first"
 msgstr "prvý"
 
-#: src/interface.c:2190
+#: src/interface.c:2194
 msgid "Fade out over  "
 msgstr "Zoslabiť cez  "
 
-#: src/interface.c:2191
+#: src/interface.c:2195
 msgid "last"
 msgstr "posledný"
 
-#: src/interface.c:2228
+#: src/interface.c:2232
 msgid "seconds."
 msgstr "sekundy."
 
-#: src/interface.c:2253
+#: src/interface.c:2257
 msgid "selection."
 msgstr "výber."
 
-#: src/interface.c:2319
+#: src/interface.c:2323
 msgid "LiVES: - Play Random Music"
 msgstr "LiVES: - Hrať náhodnú hudbu"
 
-#: src/interface.c:2347
+#: src/interface.c:2351
 msgid "Number of Tracks Requested:    "
 msgstr "Počet požadovaných stôp    "
 
-#: src/interface.c:2370
+#: src/interface.c:2374
 msgid "Directory:"
 msgstr "Adresár"
 
-#: src/interface.c:2396
+#: src/interface.c:2400
 msgid "Include subdirectories"
 msgstr "Vrátane podpriečinkov"
 
-#: src/interface.c:2424
+#: src/interface.c:2428
 msgid "Minimum File Size (MB)         "
 msgstr "Minimálna veľkosť súboru (MB)         "
 
-#: src/interface.c:2444
+#: src/interface.c:2448
 msgid "Maximum File Size (MB)        "
 msgstr "Maximálna veľkosť súboru (MB)        "
 
-#: src/interface.c:2502
+#: src/interface.c:2506
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - Komentár k súboru (nepovinné)"
 
-#: src/interface.c:2522
+#: src/interface.c:2526
 msgid "Title/Name : "
 msgstr "Titul/Názov : "
 
-#: src/interface.c:2533
+#: src/interface.c:2537
 msgid "Author/Artist : "
 msgstr "Autor/Umelec : "
 
-#: src/interface.c:2544
+#: src/interface.c:2548
 msgid "Comments : "
 msgstr "Komentáre : "
 
-#: src/interface.c:2618
+#: src/interface.c:2622
 msgid "LiVES: choose a directory"
 msgstr "LiVES: vybrať adresár"
 
-#: src/interface.c:2621
+#: src/interface.c:2625
 msgid "LiVES: choose a file"
 msgstr "LiVES: vybrať súbor"
 
-#: src/interface.c:2713
+#: src/interface.c:2717
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES: - Zrušiť/odstrániť/uložiť"
 
-#: src/interface.c:2733
+#: src/interface.c:2737
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1070,7 +1075,7 @@ msgstr ""
 "Súčasné zmeny neboli uložené.\n"
 "Čo chcete urobiť ?\n"
 
-#: src/interface.c:2736
+#: src/interface.c:2740
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1080,7 +1085,7 @@ msgstr ""
 "Súčasné zmeny boli zmenené od posledného uloženia.\n"
 "Čo chcete urobiť ?\n"
 
-#: src/interface.c:2740
+#: src/interface.c:2744
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1090,7 +1095,7 @@ msgstr ""
 "Súčasná zostava klipov nebola uložená.\n"
 "Čo chcete urobiť ?\n"
 
-#: src/interface.c:2741
+#: src/interface.c:2745
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1098,7 +1103,7 @@ msgstr ""
 "Súčasná zostava klipov nebola uložená.\n"
 "Čo chcete urobiť ?\n"
 
-#: src/interface.c:2745
+#: src/interface.c:2749
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1106,7 +1111,7 @@ msgstr ""
 "Súčasné rozloženie nebolo uložené.\n"
 "Čo chcete urobiť ?\n"
 
-#: src/interface.c:2748
+#: src/interface.c:2752
 #, fuzzy
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
@@ -1115,7 +1120,7 @@ msgstr ""
 "Súčasné rozloženie nebolo uložené.\n"
 "Čo chcete urobiť ?\n"
 
-#: src/interface.c:2753
+#: src/interface.c:2757
 #, fuzzy
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
@@ -1124,7 +1129,7 @@ msgstr ""
 "Toto rozloženie obsahuje vygenerované snímky.\n"
 "Nedá sa uložiť, musíte ich najskôr vykresliť do klipu.\n"
 
-#: src/interface.c:2756
+#: src/interface.c:2760
 #, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
@@ -1134,43 +1139,43 @@ msgstr ""
 "Súčasné rozloženie nebolo uložené.\n"
 "Čo chcete urobiť ?\n"
 
-#: src/interface.c:2779
+#: src/interface.c:2783
 msgid "Clip set _name"
 msgstr "Zadať názov _klipu"
 
-#: src/interface.c:2791
+#: src/interface.c:2795
 msgid "_Auto reload next time"
 msgstr "_Automatické otvorenie pri ďaľšom  spusteni"
 
-#: src/interface.c:2847 src/interface.c:2858
+#: src/interface.c:2851 src/interface.c:2862
 msgid "_Wipe layout"
 msgstr "_Vymazať rozloženie"
 
-#: src/interface.c:2848
+#: src/interface.c:2852
 msgid "_Ignore changes"
 msgstr "_Ignorovať zmeny"
 
-#: src/interface.c:2849
+#: src/interface.c:2853
 msgid "_Delete clip set"
 msgstr "_Odstrániť zostavu klipov"
 
-#: src/interface.c:2850
+#: src/interface.c:2854
 msgid "_Delete layout"
 msgstr "_Odstrániť rozloženie"
 
-#: src/interface.c:2856
+#: src/interface.c:2860
 msgid "_Save layout"
 msgstr "_Uložiť rozloženie"
 
-#: src/interface.c:2857
+#: src/interface.c:2861
 msgid "_Save clip set"
 msgstr "_Uložiť zostavu klipov"
 
-#: src/interface.c:2877
+#: src/interface.c:2881
 msgid "LiVES: recover layout ?"
 msgstr "LiVES: vrátiť zmeny ?"
 
-#: src/interface.c:2892
+#: src/interface.c:2896
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"

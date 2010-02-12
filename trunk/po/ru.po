@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-12 11:36-0300\n"
+"POT-Creation-Date: 2010-02-12 12:35-0300\n"
 "PO-Revision-Date: 2009-12-25 12:29+0000\n"
 "Last-Translator: Georgiy <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -947,132 +947,137 @@ msgstr "Новое имя "
 msgid "Set name "
 msgstr "Имя набора "
 
-#: src/interface.c:1954
+#: src/interface.c:1880
+#, fuzzy
+msgid "_Next"
+msgstr "Вставить"
+
+#: src/interface.c:1958
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- Загрузить трек с CD"
 
-#: src/interface.c:1957
+#: src/interface.c:1961
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LiVES:- Выбрать на DVD название или главу"
 
-#: src/interface.c:1960
+#: src/interface.c:1964
 msgid "LiVES:- Select VCD Title"
 msgstr "LiVES:- Выбрать на VCD название"
 
-#: src/interface.c:1963
+#: src/interface.c:1967
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- Изменить максимальное количество видимых треков"
 
-#: src/interface.c:1994
+#: src/interface.c:1998
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "Трек для загрузки (из %s)"
 
-#: src/interface.c:1997
+#: src/interface.c:2001
 msgid "DVD Title"
 msgstr "Название DVD"
 
-#: src/interface.c:2000
+#: src/interface.c:2004
 msgid "VCD Title"
 msgstr "Название VCD"
 
-#: src/interface.c:2003
+#: src/interface.c:2007
 msgid "Maximum number of tracks to display"
 msgstr "Максимальное количество показываемых треков"
 
-#: src/interface.c:2035
+#: src/interface.c:2039
 msgid "Chapter  "
 msgstr "Глава  "
 
-#: src/interface.c:2055
+#: src/interface.c:2059
 msgid "Audio ID  "
 msgstr "ID аудио  "
 
-#: src/interface.c:2157
+#: src/interface.c:2161
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- Усилить звук"
 
-#: src/interface.c:2160
+#: src/interface.c:2164
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- Приглушить звук"
 
-#: src/interface.c:2186
+#: src/interface.c:2190
 msgid "Fade in over  "
 msgstr "Усилить звук на протяжении  "
 
-#: src/interface.c:2187
+#: src/interface.c:2191
 msgid "first"
 msgstr "первых"
 
-#: src/interface.c:2190
+#: src/interface.c:2194
 msgid "Fade out over  "
 msgstr "Приглушить на протяжении  "
 
-#: src/interface.c:2191
+#: src/interface.c:2195
 msgid "last"
 msgstr "последних"
 
-#: src/interface.c:2228
+#: src/interface.c:2232
 msgid "seconds."
 msgstr "секунд."
 
-#: src/interface.c:2253
+#: src/interface.c:2257
 msgid "selection."
 msgstr "выделенных кадров."
 
-#: src/interface.c:2319
+#: src/interface.c:2323
 msgid "LiVES: - Play Random Music"
 msgstr "LiVES: - Воспроизвести музыку вразброс"
 
-#: src/interface.c:2347
+#: src/interface.c:2351
 msgid "Number of Tracks Requested:    "
 msgstr "Количество запрошенных дорожек:    "
 
-#: src/interface.c:2370
+#: src/interface.c:2374
 msgid "Directory:"
 msgstr "Каталог:"
 
-#: src/interface.c:2396
+#: src/interface.c:2400
 msgid "Include subdirectories"
 msgstr "Включая подкаталоги"
 
-#: src/interface.c:2424
+#: src/interface.c:2428
 msgid "Minimum File Size (MB)         "
 msgstr "Минимальный размер файла (MB)         "
 
-#: src/interface.c:2444
+#: src/interface.c:2448
 msgid "Maximum File Size (MB)        "
 msgstr "Максимальный размер файла (MB)        "
 
-#: src/interface.c:2502
+#: src/interface.c:2506
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - Комментарии к файлу (не обязательно)"
 
-#: src/interface.c:2522
+#: src/interface.c:2526
 msgid "Title/Name : "
 msgstr "Название/Имя : "
 
-#: src/interface.c:2533
+#: src/interface.c:2537
 msgid "Author/Artist : "
 msgstr "Автор/Создатель : "
 
-#: src/interface.c:2544
+#: src/interface.c:2548
 msgid "Comments : "
 msgstr "Комментарии : "
 
-#: src/interface.c:2618
+#: src/interface.c:2622
 msgid "LiVES: choose a directory"
 msgstr "LiVES: выберите каталог"
 
-#: src/interface.c:2621
+#: src/interface.c:2625
 msgid "LiVES: choose a file"
 msgstr "LiVES: выберите файл"
 
-#: src/interface.c:2713
+#: src/interface.c:2717
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES: - Отменить/Сбросить изменения/Сохранить"
 
-#: src/interface.c:2733
+#: src/interface.c:2737
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1082,7 +1087,7 @@ msgstr ""
 "Текущая схема размещения не была сохранена.\n"
 "Что вы хотите сделать?\n"
 
-#: src/interface.c:2736
+#: src/interface.c:2740
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1092,7 +1097,7 @@ msgstr ""
 "Текущая схема размещения была изменена при предыдущем сохранении.\n"
 "Что вы хотите сделать?\n"
 
-#: src/interface.c:2740
+#: src/interface.c:2744
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1102,7 +1107,7 @@ msgstr ""
 "Текущий набор отрезков может быть сохранён.\n"
 "Что вы хотите сделать?\n"
 
-#: src/interface.c:2741
+#: src/interface.c:2745
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1110,7 +1115,7 @@ msgstr ""
 "Текущий набор отрезков не был сохранён.\n"
 "Что вы хотите сделать?\n"
 
-#: src/interface.c:2745
+#: src/interface.c:2749
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1118,7 +1123,7 @@ msgstr ""
 "Макет не был сохранён.\n"
 "Что вы хотите сделать?\n"
 
-#: src/interface.c:2748
+#: src/interface.c:2752
 #, fuzzy
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
@@ -1127,13 +1132,13 @@ msgstr ""
 "Макет не был сохранён.\n"
 "Что вы хотите сделать?\n"
 
-#: src/interface.c:2753
+#: src/interface.c:2757
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
 msgstr ""
 
-#: src/interface.c:2756
+#: src/interface.c:2760
 #, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
@@ -1143,43 +1148,43 @@ msgstr ""
 "Макет не был сохранён.\n"
 "Что вы хотите сделать?\n"
 
-#: src/interface.c:2779
+#: src/interface.c:2783
 msgid "Clip set _name"
 msgstr "Название набора клипов"
 
-#: src/interface.c:2791
+#: src/interface.c:2795
 msgid "_Auto reload next time"
 msgstr "_Автоматически загрузить в следующий раз"
 
-#: src/interface.c:2847 src/interface.c:2858
+#: src/interface.c:2851 src/interface.c:2862
 msgid "_Wipe layout"
 msgstr "_Очистить макет"
 
-#: src/interface.c:2848
+#: src/interface.c:2852
 msgid "_Ignore changes"
 msgstr "_Игнорировать изменения"
 
-#: src/interface.c:2849
+#: src/interface.c:2853
 msgid "_Delete clip set"
 msgstr "_Удалить набор клипов"
 
-#: src/interface.c:2850
+#: src/interface.c:2854
 msgid "_Delete layout"
 msgstr "_Удалить макет"
 
-#: src/interface.c:2856
+#: src/interface.c:2860
 msgid "_Save layout"
 msgstr "_Сохранить макет"
 
-#: src/interface.c:2857
+#: src/interface.c:2861
 msgid "_Save clip set"
 msgstr "_Сохранить набор клипов"
 
-#: src/interface.c:2877
+#: src/interface.c:2881
 msgid "LiVES: recover layout ?"
 msgstr "LiVES: восстановить размещение ?"
 
-#: src/interface.c:2892
+#: src/interface.c:2896
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"

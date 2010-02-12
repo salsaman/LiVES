@@ -1875,7 +1875,11 @@ _entryw* create_rename_dialog (gint type) {
   gtk_dialog_add_action_widget (GTK_DIALOG (renamew->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
 
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  if (type==6) {
+    okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+    gtk_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
+  }
+  else okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (renamew->dialog), okbutton, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);

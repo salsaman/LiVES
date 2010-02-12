@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-11 21:46-0300\n"
+"POT-Creation-Date: 2010-02-12 02:38-0300\n"
 "PO-Revision-Date: 2009-12-27 12:41+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -8798,6 +8798,9 @@ msgstr ""
 msgid "_Font"
 msgstr "_Brak"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "_Frames per second"

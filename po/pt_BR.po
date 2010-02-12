@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-11 21:46-0300\n"
+"POT-Creation-Date: 2010-02-12 02:38-0300\n"
 "PO-Revision-Date: 2009-12-25 23:08+0000\n"
 "Last-Translator: Wille <wille@riseup.net>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -9768,6 +9768,9 @@ msgstr "Piscar para [_F]"
 msgid "_Font"
 msgstr "_Fonte"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Frames per second"
 msgstr "_Frames por segundo (FPS)"

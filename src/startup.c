@@ -415,18 +415,193 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 }
 
 
+static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) {
+  GtkWidget *label=gtk_label_new(ttext);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+  gtk_table_attach (GTK_TABLE (table), label, 0, 9, row, row+1, GTK_FILL, 0, 0, 0);
+  gtk_widget_show(label);
+
+  if (!noskip) {
+    label=gtk_label_new(_("skipped")); // translators - as in "skipped test"
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    gtk_table_attach (GTK_TABLE (table), label, 10, 15, row, row+1, GTK_FILL, 0, 0, 0);
+    gtk_widget_show(label);
+  }
+
+  while (g_main_context_iteration(NULL,FALSE));
+}
 
 
+static gboolean pass_test(GtkWidget *table, gint row) {
+  GtkWidget *label=gtk_label_new(_("Passed"));  // translators - as in "passed test"
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  gtk_table_attach (GTK_TABLE (table), label, 10, 15, row, row+1, GTK_FILL, 0, 0, 0);
+  gtk_widget_show(label);
+
+  while (g_main_context_iteration(NULL,FALSE));
+  return TRUE;
+}
+
+
+static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
+  GtkWidget *label;
+
+  label=gtk_label_new(ftext);
+
+  gtk_table_attach (GTK_TABLE (table), label, 16, 39, row, row+1, GTK_FILL, 0, 0, 0);
+  gtk_widget_show(label);
+  
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+  
+  label=gtk_label_new(_("Failed"));  // translators - as in "failed test"
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  gtk_table_attach (GTK_TABLE (table), label, 10, 15, row, row+1, GTK_FILL, 0, 0, 0);
+  gtk_widget_show(label);
+
+
+  while (g_main_context_iteration(NULL,FALSE));
+  
+  return FALSE;
+}
+
+
+LIVES_INLINE gchar *get_resource(gchar *fname) {
+  return g_strdup_printf("%s/%s/resources/%s",prefs->prefix_dir,DATA_DIR,fname);
+}
 
 
 
 gboolean do_startup_tests(void) {
+  GtkWidget *dialog;
+  GtkWidget *dialog_vbox;
+
+  GtkWidget *label;
+  GtkWidget *table;
+  GtkWidget *okbutton;
+  GtkWidget *cancelbutton;
+
+  gchar *com,*rname,*afile;
+
+  size_t fsize;
+
+  gboolean success;
+
+  gint response;
+
+  rname=get_resource("");
+
+  if (!g_file_test(rname,G_FILE_TEST_IS_DIR)) {
+    /// oops, no resources dir
+    g_free(rname);
+    return TRUE;
+  }
+
+
+  dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Testing Configuration"));
+
+  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
+
+  if (palette->style&STYLE_1) {
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  dialog_vbox = GTK_DIALOG (dialog)->vbox;
+
+
+  label=gtk_label_new(_("LiVES will now run some basic configuration tests"));
+  gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
+
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+
+
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  gtk_widget_grab_default(okbutton);
+  gtk_widget_grab_focus(okbutton);
+
+
+  gtk_widget_set_sensitive(cancelbutton,FALSE);
+  gtk_widget_set_sensitive(okbutton,FALSE);
+
+
+  table = gtk_table_new (10, 40, TRUE);
+  gtk_container_add (GTK_CONTAINER (dialog_vbox), table);
+
+  gtk_widget_show_all(dialog);
+
+
+
+
   // check for sox presence
 
-  // test if sox can convert wav -> raw
+  add_test(table,0,_("Checking for sox presence"),TRUE);
+
+
+  if (!capable->has_sox) {
+    success=fail_test(table,0,_("You should install sox to be able to use all the audio features in LiVES"));
+
+  }
+  else {
+    success=pass_test(table,0);
+  }
+
+  // test if sox can convert raw 44100 -> wav 22050
+  add_test(table,1,_("Checking if sox can convert audio"),success);
   
+  get_temp_handle(mainw->first_free_file,TRUE);
 
 
+  if (success) {
+    
+    rname=get_resource("audiotest");
+    
+    com=g_strdup_printf("/bin/cp %s %s/%s/audio",rname,prefs->tmpdir,cfile->handle);
+    dummyvar=system(com);
+    g_free(com);
+    
+    afile=g_strdup_printf("%s/%s/testout.wav",prefs->tmpdir,cfile->handle);
+    
+    com=g_strdup_printf("smogrify export_audio 0. 0. 44100 2 16 1 22050 %s",afile);
+    dummyvar=system(com);
+    g_free(com);
+    
+    fsize=sget_file_size(afile);
+    g_free(afile);
+    
+    if (fsize==0) {
+      fail_test(table,1,_("You should install sox_fmt_all"));
+    }
+
+    else pass_test(table,1);
+
+  }
 
   // check for mplayer presence
 
@@ -469,8 +644,19 @@ gboolean do_startup_tests(void) {
   // check for composite
 
 
-  return TRUE;
 
+  close_current_file(-1);
+
+  gtk_widget_set_sensitive(cancelbutton,TRUE);
+  gtk_widget_set_sensitive(okbutton,TRUE);
+    
+
+
+  response=gtk_dialog_run(GTK_DIALOG(dialog));
+
+  gtk_widget_destroy(dialog);
+
+  return (response==GTK_RESPONSE_OK);
 }
 
 

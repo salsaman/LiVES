@@ -427,6 +427,7 @@ intl/Makefile
 m4/Makefile
 libweed/Makefile
 src/Makefile
+resources/Makefile
 lives-plugins/Makefile
 lives-plugins/plugins/effects/RFXscripts/Makefile
 lives-plugins/plugins/effects/Makefile

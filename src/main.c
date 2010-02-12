@@ -4515,7 +4515,7 @@ resize (gdouble scale) {
   gint hsize,vsize;
   gint scr_width,scr_height;
 
-  if (!prefs->show_gui||mainw->multitrack!=NULL||(!mainw->is_ready&&prefs->startup_interface==STARTUP_MT)) return;
+  if (!prefs->show_gui||mainw->multitrack!=NULL||!mainw->is_ready) return;
   get_border_size (mainw->LiVES,&bx,&by);
 
   if (prefs->gui_monitor==0) {

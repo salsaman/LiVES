@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives 1.1.9-svn\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-11 21:46-0300\n"
+"POT-Creation-Date: 2010-02-12 03:11-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -8694,6 +8694,9 @@ msgstr ""
 msgid "_Font"
 msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Frames per second"
 msgstr ""

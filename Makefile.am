@@ -9,7 +9,7 @@ endif
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config.h.in \
                        stamp-h.in config.log config.cache config.status
 
-SUBDIRS = $(OSC_SUBDIRS) intl libweed src m4 lives-plugins po
+SUBDIRS = $(OSC_SUBDIRS) intl libweed src m4 lives-plugins po resources
 PACKAGE_CAPITALISED = LiVES
 
 docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
@@ -47,7 +47,8 @@ installdirs:
 	mkdir -p $(DESTDIR)$(datadir) \
 	mkdir -p $(DESTDIR)$(docdir) \
 	mkdir -p $(DESTDIR)$(sharedir)/applications/ \
-	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/
+	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/ \
+	mkdir -p $(DESTDIR)$(sharedir)/resources/
 
 install-exec-local:
 	rm -rf $(DESTDIR)$(bindir)/lives
@@ -87,6 +88,7 @@ uninstall-local:
 	rm -rf $(DESTDIR)$(docdir)
 	rm -rf $(DESTDIR)$(sharedir)/applications/LiVES.desktop
 	rm -rf $(DESTDIR)$(sharedir)/pixmaps/lives.xmp
+	rm -rf $(DESTDIR)$(sharedir)/resources
 
 	@echo
 	@echo "		*** WARNING - user specific configuration files have NOT been removed."

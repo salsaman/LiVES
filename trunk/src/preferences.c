@@ -2013,6 +2013,12 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (png),!strcmp (prefs->image_ext,"png"));
 
 
+  label157 = gtk_label_new (_("(Check Help/Troubleshoot to see which image formats are supported)"));
+  gtk_widget_show (label157);
+  gtk_label_set_justify (GTK_LABEL (label157), GTK_JUSTIFY_LEFT);
+  gtk_box_pack_start (GTK_BOX (hbox115), label157, FALSE, TRUE, 0);
+
+
   hbox = gtk_hbox_new (FALSE, 120);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox109), hbox, FALSE, FALSE, 0);

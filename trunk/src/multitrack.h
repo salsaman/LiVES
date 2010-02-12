@@ -218,6 +218,7 @@ struct _mt {
   GtkWidget *add_vid_behind;
   GtkWidget *add_vid_front;
   GtkWidget *quit;
+  GtkWidget *troubleshoot;
   GtkWidget *fx_params_label;
   GtkWidget *amixer_button;
   GtkWidget *view_sel_events;

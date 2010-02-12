@@ -609,6 +609,7 @@ typedef struct {
   GtkWidget *save_rte_defs;
   GtkWidget *vj_reset;
   GtkWidget *mt_menu;
+  GtkWidget *troubleshoot;
 
   // for the fileselection preview
   GtkWidget *fs_playarea;

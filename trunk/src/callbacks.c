@@ -5002,7 +5002,7 @@ void on_cancel_button1_clicked (GtkButton *button, gpointer user_data) {
   }
 
   mainw->fs_playarea=NULL;
-
+ 
   if (mainw->multitrack!=NULL) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);

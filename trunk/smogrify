@@ -1473,7 +1473,7 @@ if (defined($ARGV[0])) {
 	    if (defined(open IN,"< $pidfile")) {
 		close IN;
 		# cancel any processing
-		system("smogrify cancel $handle");
+		system("smogrify stopsubsub $handle");
 	    }
 	    
 	    if (chdir $curtmpdir) {

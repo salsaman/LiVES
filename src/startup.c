@@ -495,11 +495,15 @@ gboolean do_startup_tests(void) {
 
   gchar *com,*rname,*afile;
 
+  guchar *abuff;
+
   size_t fsize;
 
   gboolean success;
 
   gint response;
+
+  int out_fd;
 
   rname=get_resource("");
 
@@ -580,15 +584,18 @@ gboolean do_startup_tests(void) {
 
   if (success) {
     
-    rname=get_resource("audiotest");
-    
-    com=g_strdup_printf("/bin/cp %s %s/%s/audio",rname,prefs->tmpdir,cfile->handle);
-    dummyvar=system(com);
-    g_free(com);
-    
+    // write 1 second of silence
+    afile=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle);
+    out_fd=open(afile,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+    abuff=calloc(44100,4);
+    dummyvar=write (out_fd,abuff,176400);
+    close(out_fd);
+    g_free(afile);
+    g_free(abuff);
+
     afile=g_strdup_printf("%s/%s/testout.wav",prefs->tmpdir,cfile->handle);
     
-    com=g_strdup_printf("smogrify export_audio 0. 0. 44100 2 16 1 22050 %s",afile);
+    com=g_strdup_printf("smogrify export_audio 0. 0. 44100 2 16 0 22050 %s",afile);
     dummyvar=system(com);
     g_free(com);
     
@@ -596,7 +603,7 @@ gboolean do_startup_tests(void) {
     g_free(afile);
     
     if (fsize==0) {
-      fail_test(table,1,_("You should install sox_fmt_all"));
+      fail_test(table,1,_("You should install sox_fmt_all or similar"));
     }
 
     else pass_test(table,1);

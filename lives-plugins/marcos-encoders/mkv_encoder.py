@@ -385,7 +385,7 @@ def do_encode():
                      '--mixed-refs --bime --trellis 2 --no-fast-pskip'
     else:
         print 'Unexpected video type.'
-        raise SystemExit
+        raise SystemExit, 1
 
     vqual = vtype[0:-2]
     if vqual == 'hi':
@@ -590,7 +590,7 @@ def is_installed(prog):
 
     if wprog == '':
         print prog + ': command not found'
-        raise SystemExit
+        raise SystemExit, 1
     else:
         if verbose:
             print wprog + ': found'
@@ -608,23 +608,23 @@ if __name__ == '__main__':
 
     try:
         if sys.version_info[0:3] < (2, 3, 0):
-            raise SystemExit
+            raise SystemExit, 1
     except:
         print 'You need Python 2.3.0 or greater to run me!'
-        raise SystemExit
+        raise SystemExit, 1
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
                                          'ho:p:d:w:a:qvt:ekc:r:s:b:f:VCD:L:')
     except:
         print "Something's wrong. Try the '-h' flag."
-        raise SystemExit
+        raise SystemExit, 1
 
     opts = dict(opts)
 
     if not opts and not args:
         print usage
-        raise SystemExit
+        raise SystemExit, 1
 
     if '-h' in opts:
         print usage + help
@@ -653,7 +653,7 @@ if __name__ == '__main__':
 
     if img_pre not in ['', 'eimg', 'rimg']:
          print 'Improper image name prefix.'
-         raise SystemExit
+         raise SystemExit, 1
 
     temp_dir = ''
     img_dir = opts.get('-d', '.')
@@ -666,12 +666,12 @@ if __name__ == '__main__':
     if not os.path.isdir(img_dir):
         print 'The image source directory: '  + img_dir + \
               ' does not exist!'
-        raise SystemExit
+        raise SystemExit, 1
 
     if len(args) not in [0, 2]:
         print 'If frames are specified both first and last ' + \
               'image numbers must be chosen.'
-        raise SystemExit
+        raise SystemExit, 1
     elif len(args) == 0:
         args = [None, None]
 
@@ -695,7 +695,7 @@ if __name__ == '__main__':
 
     if aspectc not in [str(i) for i in xrange(1,5)]:
         print 'Invalid aspect ratio.'
-        raise SystemExit
+        raise SystemExit, 1
     else:
         if aspectc == '1': aspect = '1/1'
         elif aspectc == '2': aspect = '4/3'
@@ -713,7 +713,7 @@ if __name__ == '__main__':
                      'hi_x', 'mh_x', 'ml_x', 'lo_x', \
                      'hi_h', 'mh_h', 'ml_h', 'lo_h']:
         print 'Invalid video type.'
-        raise SystemExit
+        raise SystemExit, 1
 
     fpsc = opts.get('-f', '4')
 
@@ -741,7 +741,7 @@ if __name__ == '__main__':
 
     if not foundfps:
         print 'Invalid fps code or rate.'
-        raise SystemExit
+        raise SystemExit, 1
 
     if '-e' not in opts:
         enhance = False
@@ -750,7 +750,7 @@ if __name__ == '__main__':
 
     if enhance and img_pre:
         print 'Sorry, you cannot enhance already-enhanced images'
-        raise SystemExit
+        raise SystemExit, 1
 
     if '-k' not in opts:
         keep = False
@@ -762,7 +762,7 @@ if __name__ == '__main__':
 
     if (cgeom or rgeom) and not enhance:
         print 'Missing "-e" option.'
-        raise SystemExit
+        raise SystemExit, 1
 
     lv1file = opts.get('-L', None)
     if lv1file:
@@ -771,10 +771,10 @@ if __name__ == '__main__':
             lv1 = tarfile.open(os.path.abspath(lv1file))
         except:
             print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit
+            raise SystemExit, 1
         if 'header.tar' not in lv1.getnames():
             print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit
+            raise SystemExit, 1
         for tfile in lv1.getmembers():
             lv1.extract(tfile, img_dir)
         for tfile in glob.glob(os.path.join(img_dir, '*.tar')):
@@ -790,7 +790,7 @@ if __name__ == '__main__':
         ext = '.png'
     else:
         print 'Cannot find any appropriate %s or %s files!' % ('.jpg','.png')
-        raise SystemExit
+        raise SystemExit, 1
     first_frame = test_file + ext
     last_frame = os.path.join(img_dir, img_pre + last_frame_num + ext)
 
@@ -806,7 +806,7 @@ if __name__ == '__main__':
         except:
             print 'Could not create the work directory ' + \
                   work_dir
-            raise SystemExit
+            raise SystemExit, 1
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')

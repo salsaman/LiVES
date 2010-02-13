@@ -1126,7 +1126,6 @@ void add_to_winmenu(void) {
   mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
   cfile->old_frames=cfile->frames;
   cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
-
 }
 
 

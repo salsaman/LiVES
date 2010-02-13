@@ -1,22 +1,16 @@
 #!/usr/bin/env python
 
 """
-gif_encoder.py
+ogm_encoder.py
 
-Front-end to various programs needed to create GIF
-movies with some image-enhancing capabilities through the use of
+Front-end to various programs needed to create OGM movies
+with some image-enhancing capabilities through the use of
 ImageMagick. Meant as a companion to LiVES (to possibly call
 from within a plugin, see http://www.xs4all.nl/~salsaman/lives/ )
 but can also be used as a stand-alone program.
 
-Requires ImageMagick (GraphicsMagick might also
-work) and Python 2.3.0 or greater. Note that audio
-support is not implemented, only video encoding.
-Note that encoding and decoding requires huge amounts
-of memory, and so it's mostly meant for very short
-clips (e.g. animated web graphics). The resulting
-clips can be viewed using the "animate" command which is
-part of ImageMagick, or a graphical web browser.
+Requires MPlayer, ImageMagick (GraphicsMagick might also
+work), sox, Oggenc, OGMtools and Python 2.3.0 or greater.
 
 Copyright (C) 2004-2005 Marco De la Cruz (marco@reimeika.ca)
 It's a trivial program, but might as well GPL it, so see:
@@ -25,17 +19,21 @@ http://www.gnu.org/copyleft/gpl.html for license.
 See my vids at http://amv.reimeika.ca !
 """
 
-version = '0.0.6'
+version = '0.1.5'
 convert = 'convert'
+mencoder = 'mencoder'
+oggenc = 'oggenc'
+sox = 'sox'
+ogmplex = 'ogmmerge'
 
 usage = \
       """
-gif_encoder.py -h
-gif_encoder.py -V
-gif_encoder.py -C
-gif_encoder.py [-o out] [-p pre] [-d dir] [-a aspect*] [-D delay*]
-               [-q|-v] [-t type*] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
-               [-s sndfile*] [-b sndrate*] [-f fpscode] [-L lv1file]
+ogm_encoder.py -h
+ogm_encoder.py -V
+ogm_encoder.py -C
+ogm_encoder.py [-o out] [-p pre] [-d dir] [-a aspect] [-D delay]
+               [-q|-v] [-t type] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
+               [-s sndfile] [-b sndrate] [-f fpscode] [-L lv1file]
                [firstframe lastframe]
       """
 
@@ -43,8 +41,8 @@ help = \
      """
 SUMMARY (ver. %s):
 
-Encodes a series of PNG or JPG images into an animated GIF
-(.gif) and is also capable of performing some simple image
+Encodes a series of PNG or JPG images into an MPEG-4/Ogg Vorbis
+(OGM) stream and is also capable of performing some simple image
 enhacements using ImageMagick. The images and audio are assumed to
 be in an uncompressed LiVES format, hence making this encoder
 more suitable to be used within a LiVES plugin (but can also
@@ -59,18 +57,18 @@ OPTIONS:
 -C          check external program dependencies and exit.
 
 -o out      will save the video in file "out".
-            Default: "gif_movie.gif".
+            Default: "'type'_movie.ogm". See below for 'type'.
 
 -p pre      the encoder assumes that sound and images are named using
             LiVES' conventions i.e. "audio" and "00000001.ext",
             "00000002.ext"... where "ext" is either "jpg" or "png".
-            However, gif_encoder.py will create temporary files
+            However, ogm_encoder.py will create temporary files
             which can be saved for later use (for example, after
             enhancing the images with "-e" , which may take a long
             time). These temporary files will be named
             "pre_00000001.ext", etc... where "pre" is either "eimg"
             or "rimg" and will be kept if the "-k" option is used.
-            gif_encoder.py can then be run over the enhanced images
+            ogm_encoder.py can then be run over the enhanced images
             only by selecting the appropriate prefix ("eimg" or
             "rimg") here. See "-e" to see what each prefix means.
             Default: "" (an empty string).
@@ -80,18 +78,47 @@ OPTIONS:
             "pre_00000001.ext" as explained above.
             Default: "."
 
--a aspect*  sets the aspect ratio of the resulting movie.
-            * = NOT IMPLEMENTED
+-a aspect   sets the aspect ratio of the resulting MPEG-4. This can be:
 
--D delay*   linearly delay the audio stream by "delay" ms.
-            * = NOT IMPLEMENTED
+               1    1:1 display
+               2    4:3 display
+               3    16:9 display
+               4    2.21:1 display
+
+            Default: "2"
+
+-D delay    linearly delay the audio stream by "delay" ms.
+            Default: "0"
 
 -q          quiet operation, only complains on error.
 
 -v          be verbose.
 
--t type*    type of video created.
-            * = NOT IMPLEMENTED 
+-t type     type of video created. The options here are:
+
+               "hi":   a very high quality DivX 4/5 file, suitable
+                       for archiving images of 720x480.
+
+               "mh":   medium-high quality DivX 4/5, which still allows
+                       to watch small videos (352x240 and below)
+                       fullscreen.
+
+               "ml":   medium-low quality DivX 4/5, suitable for
+                       most videos but in particular small videos
+                       (352x240 and below) meant for online
+                       distribution.
+
+               "lo":   a low quality DivX 4/5 format. Enlarging
+                       small videos will result in noticeable
+                       artifacts. Good for distributing over slow
+                       connections.
+
+               "hi_d", "mh_d", "ml_d", "lo_d": same as above.
+
+               "hi_x", "mh_x", "ml_x", "lo_x": same as above, but
+                                               using XviD encoding.
+
+            Default: "ml"
 
 -e          perform some simple filtering/enhancement to improve image
             quality. The images created by using this option will be
@@ -119,7 +146,10 @@ OPTIONS:
 
             -c geom    in addition to enhancing the images, crop them
                        to the specified geometry e.g. "688x448+17+11".
-                       Filename prefix remains "eimg".
+                       Filename prefix remains "eimg". Note that the
+                       dimensions of the images should both be multiples
+                       of "16", otherwise some players may show artifacts
+                       (such as garbage or green bars at the borders).
 
             -r geom    this will create a second set of images resulting
                        from resizing the images that have already been
@@ -127,13 +157,17 @@ OPTIONS:
                        specified). The geometry here is simple a new
                        image size e.g. "352x240!". This second set will have
                        filenames prefixed with the string "rimg" (see "-p"
-                       above).
+                       above). Note that the dimensions of the images
+                       should both be multiples of "16", otherwise some
+                       players may show artifacts (such as garbage or
+                       green bars at the borders).
 
--s sndfile* name of the audio file.
-            * = NOT IMPLEMENTED
+-s sndfile  name of the audio file. Can be either raw "audio" or
+            "[/path/to/]soundfile.wav".
+            Default: "audio" inside "dir" as specified by "-d".
 
--b sndrate* sample rate of the sound file in Hertz.
-            * = NOT IMPLEMENTED
+-b sndrate  sample rate of the sound file in Hertz.
+            Default: "44100".
 
 -f fpscode  frame-rate code. Acceptable values are:
 
@@ -183,11 +217,13 @@ EXAMPLES:
 
 Suppose you have restored a LiVES' .lv1 file (in either JPG or PNG format),
 and that the images are stored in the directory "/tmp/livestmp/991319584/".
-Then, in order to create an gif file you can simply do the following:
+In this example the movie is assumed to be 16:9. Then, in order to create
+an OGM file you can simply do the following:
 
-   gif_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.gif
+   ogm_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.ogm -a 3
 
-and the clip "default.gif" will be created in "/movies/".
+and the clip "default.ogm" will be created in "/movies/" with the correct
+aspect ratio.
 
 Suppose we want to make a downloadable version of the clip, small in size
 but of good quality. The following command activates the generic enhancement
@@ -195,28 +231,41 @@ filter and resizes the images to "352x240". Note that these operations
 are performed after cropping the originals a bit (using "704x464+5+6").
 This is done because we are assuming that there is a black border around
 the original pictures which we want to get rid of (this might distort the
-images somewhat, so be careful about cropping/resizing):
+images somewhat, so be careful about cropping/resizing, and remember to
+use dimensions which are multiples of 16):
 
-   gif_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpgif \\
-   -o /movies/download.gif -k -e -c "704x464+5+6" -r "352x240"
+   ogm_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpogm \\
+   -o /movies/download.ogm -a 3 -k -e -c "704x464+5+6" -r "352x240"
 
 Since we use the "-k" flag the enhanced images are kept (both full-size
-crops and the resized ones) in "/tmp/tmpgif". Beware that this may consume
+crops and the resized ones) in "/tmp/tmpogm". Beware that this may consume
 a lot of disk space (about 10x as much as the originals). The reason we
 keep them is because the above may take quite a long time and we may want
-to re-use the enhanced images. So, for example, creating a
+to re-use the enhanced images. So, for example, creating a high-quality
 clip at full size can be accomplished now as follows:
 
-   gif_encoder.py -d /tmp/tmpgif -o /movies/archive.gif \\
-   -s /tmp/livestmp/991319584/audio -k -p eimg
+   ogm_encoder.py -d /tmp/tmpogm -t hi -o /movies/archive.ogm \\
+   -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
 If, for example, we only want to encode frames 100 to 150 we can run
 the following:
 
-   gif_encoder.py -v -d /tmp/tmpgif -o /movies/selection.gif \\
-   -k -p eimg 100 150
+   ogm_encoder.py -v -d /tmp/tmpogm -o /movies/selection.ogm \\
+   -a 3 -k -p eimg 100 150
 
-To delete all the enhanced images you can just remove "/tmp/tmpgif".
+Note that no audio has been selected ("-s"). This is because
+ogm_encoder.py cannot trim the audio to the appropriate length.
+You would need to use LiVES to do this.
+
+To delete all the enhanced images you can just remove "/tmp/tmpogm".
+
+If you notice that the video and audio become out of sync so that
+near the end of the movie the video trails the audio by, say, 0.2s,
+you can use the "-D" option as follows:
+
+   ogm_encoder.py -d /tmp/livestmp/991319584 -o test.ogm -D 200
+
+Note that negative time values are also allowed.
 
 Suppose that you have "movie1.lv1", "movie2.lv1" and "movie3.lv1".
 Batch-encoding can be done as follows (zsh-syntax):
@@ -224,12 +273,12 @@ Batch-encoding can be done as follows (zsh-syntax):
    for i in movie?.lv1
    do
      mkdir /tmp/$i:r
-     gif_encoder.py -d /tmp/$i:r -o /tmp/$i:r.gif -L $i
+     ogm_encoder.py -d /tmp/$i:r -o /tmp/$i:r.ogm -L $i
      rm -rf /tmp/$i:r
    done
 
-This will generate the files "movie1.gif", "movie2.gif" and
-"movie3.gif" in "/tmp". Note that is is not necessary to
+This will generate the files "movie1.ogm", "movie2.ogm" and
+"movie3.ogm" in "/tmp". Note that is is not necessary to
 specify whether the files are stored in JPG or PNG format,
 and that potentially time-consuming options (e.g. "-e") may
 be enabled. It is not necessary to have a working LiVES
@@ -242,7 +291,7 @@ def run(command):
     """
 
     if verbose:
-        print 'Running: \n' + command + '\n=== ... ==='
+        print('Running: \n' + command + '\n=== ... ===')
         std = ''
     else:
         std = ' > /dev/null 2>&1'
@@ -257,7 +306,7 @@ def do_enhance():
     """
 
     if not quiet:
-        print 'Enhancing images... please wait, this might take long...'
+        print('Enhancing images... please wait, this might take long...')
 
     enh_opts = "-enhance -sharpen '0.0x0.5' -gamma 1.2 -contrast -depth 8"
 
@@ -294,25 +343,61 @@ def do_enhance():
 
 def do_encode():
     """
-    Encode a series of images as an GIF file.
+    Encode a series of images into an MPEG-4 stream, multiplexing
+    audio if necessary
     """
+
+    if not quiet:
+        print('Creating "%s"-quality MPEG-4' % vtype)
 
     if verbose:
         std = ''
-        std2 = ''
-        be_verbose = '-verbose'
     else:
         std = ' > /dev/null 2>&1'
-        std2 = ' 2> /dev/null'
-        be_verbose = ''
+
+    common_vopts = '-mf type=%s:fps=%s ' % (ext[1:], fps) + \
+                  '-vf hqdn3d=2:1:3,pp=va:128:8/ha:128:8/dr,dsize=%s -nosound' % aspect
+
+    if vtype[-1] == 'd':
+        codec_vopts = '-ovc lavc -lavcopts ' + \
+                      'vcodec=mpeg4:trell:mbd=2:vmax_b_frames=1:v4mv' + \
+                      ':cmp=2:subcmp=2:precmp=2:predia=1:autoaspect:vbitrate='
+        cpass = 'vpass='
+    else:
+        codec_vopts = '-ovc xvid -xvidencopts qpel:chroma_me:chroma_opt' + \
+                      ':max_bframes=1:autoaspect:hq_ac:vhq=4:bitrate='
+        cpass = 'pass='
+
+    vqual = vtype[0:-2]
+    if vqual == 'hi':
+        if vtype[-1] == 'd': rate = '2000:'
+        if vtype[-1] == 'x': rate = '2000:'
+        mencoder_opts = ' '.join([common_vopts, codec_vopts + rate + cpass])
+        oggenc_opts = '-q 9'
+    elif vqual == 'mh':
+        if vtype[-1] == 'd': rate = '1000:'
+        if vtype[-1] == 'x': rate = '1000:'
+        mencoder_opts = ' '.join([common_vopts, codec_vopts + rate + cpass])
+        oggenc_opts = '-q 8'
+    elif vqual == 'ml':
+        if vtype[-1] == 'd': rate = '500:'
+        if vtype[-1] == 'x': rate = '500:'
+        mencoder_opts = ' '.join([common_vopts, codec_vopts + rate + cpass])
+        oggenc_opts = '-q 6'
+    elif vqual == 'lo':
+        if vtype[-1] == 'd': rate = '200:'
+        if vtype[-1] == 'x': rate = '200:'
+        mencoder_opts = ' '.join([common_vopts, codec_vopts + rate + cpass])
+        oggenc_opts = '-q 4'
+
 
     if img_dir != work_dir and not enhance:
         source_dir = img_dir
     else:
         source_dir = work_dir
+    mpegv = tempfile.mkstemp('.mpv', '', work_dir)[1]
 
     if frame_range:
-        numframes = str(last_num - first_num + 1)
         frame_list = [img_pre + str(f).zfill(8) + ext \
                       for f in range(first_num, last_num + 1)]
         syml = 'temporary_symlink_'
@@ -323,27 +408,60 @@ def do_encode():
             os.symlink(frfile, frlink)
     else:
         syml = ''
-        numframes = len(glob.glob(os.path.join(source_dir, \
-                                             img_pre + '*' + ext)))
-
-    # Delay between frames is in 100ths of a second
-    spf = 100*(1/fps)
-
-    gifv = tempfile.mkstemp('.gif', '', work_dir)[1]
 
     all_vars = {}
     all_vars.update(globals())
     all_vars.update(locals())
 
-    if not quiet:
-        print 'Creating GIF file'
-
     command = """cd %(source_dir)s ; \\
-%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(gifv)s
+%(mencoder)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s1 -o /dev/null %(std)s ; \\
+%(mencoder)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s2 -o %(mpegv)s %(std)s
 """ % all_vars
     run(command)
+    if os.path.exists(os.path.join(source_dir, 'divx2pass.log')):
+        os.remove(os.path.join(source_dir, 'divx2pass.log'))
+    if os.path.exists(os.path.join(source_dir, 'xvid-twopass.stats')):
+        os.remove(os.path.join(source_dir, 'xvid-twopass.stats'))
 
-    shutil.move(gifv, vidname)
+    if audio:
+        if not quiet:
+            print('Creating "%s"-quality ogg vorbis file' % vtype)
+
+        ogg = tempfile.mkstemp('.ogg', '', work_dir)[1]
+        if rawsndf:
+            wav = tempfile.mkstemp('.wav', '', work_dir)[1]
+            sox_opts = '-t raw -r %s -w -c 2 -s' % sndr
+            command = ' '.join([sox, sox_opts, sndf, wav])
+            run(command)
+        else:
+            wav = sndf
+        command = ' '.join([oggenc, oggenc_opts, wav, '-o', ogg, std])
+        run(command)
+
+        if delay != '0':
+            totfr = len(glob.glob(os.path.join(source_dir, syml + img_pre + '*' + ext)))
+            # "delay" is in ms, transform into s
+            totfrshift = int(totfr + round((locale.atof(delay)/1000.0)*locale.atof(fps)))
+            delaysh = ',%s/%s' % (totfrshift, totfr)
+        else:
+            delaysh = ''
+
+        all_vars.update(locals())
+
+        if not quiet: print('Multiplexing...')
+        command = """
+%(ogmplex)s -o "%(vidname)s" %(mpegv)s -s 0%(delaysh)s %(ogg)s %(std)s""" % all_vars
+        run(command)
+
+        if rawsndf and os.path.exists(wav): os.remove(wav)
+        if os.path.exists(ogg): os.remove(ogg)
+    else:
+        if not quiet: print('Multiplexing...')
+        command = """
+%(ogmplex)s -o "%(vidname)s" %(mpegv)s %(std)s""" % all_vars
+        run(command)
+
+    if os.path.exists(mpegv): os.remove(mpegv)
 
     if frame_range:
         lframes = os.path.join(source_dir, syml)
@@ -357,7 +475,7 @@ def do_clean():
     """
 
     if not quiet:
-        print 'Deleting all enhanced images (if any)'
+        print('Deleting all enhanced images (if any)')
 
     eframes = os.path.join(work_dir, 'eimg')
     rframes = os.path.join(work_dir, 'rimg')
@@ -402,11 +520,11 @@ def is_installed(prog):
     wprog = which(prog)
 
     if wprog == '':
-        print prog + ': command not found'
-        raise SystemExit, 1
+        print(prog + ': command not found')
+        raise SystemExit(1)
     else:
         if verbose:
-            print wprog + ': found'
+            print(wprog + ': found')
 
 
 if __name__ == '__main__':
@@ -420,31 +538,31 @@ if __name__ == '__main__':
     import tarfile
 
     try:
-        if sys.version_info[0:3] < (2, 3, 0):
-            raise SystemExit, 1
+        if sys.version_info[0:3] < (3, 0, 0):
+            raise SystemExit(1)
     except:
-        print 'You need Python 2.3.0 or greater to run me!'
-        raise SystemExit, 1
+        print('You need Python 3.0.0 or greater to run me!')
+        raise SystemExit(1)
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
                                          'ho:p:d:w:a:qvt:ekc:r:s:b:f:VCD:L:')
     except:
-        print "Something's wrong. Try the '-h' flag."
-        raise SystemExit, 1
+        print("Something's wrong. Try the '-h' flag.")
+        raise SystemExit(1)
 
     opts = dict(opts)
 
     if not opts and not args:
-        print usage
-        raise SystemExit, 1
+        print(usage)
+        raise SystemExit(1)
 
     if '-h' in opts:
-        print usage + help
+        print(usage + help)
         raise SystemExit
 
     if '-V' in opts:
-        print 'gif_encoder.py version ' + version
+        print('ogm_encoder.py version ' + version)
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):
@@ -458,15 +576,15 @@ if __name__ == '__main__':
     else:
         quiet = False
 
-    for i in [convert]:
+    for i in [convert, mencoder, oggenc, sox, ogmplex]:
         is_installed(i)
     if '-C' in opts: raise SystemExit
 
     img_pre = opts.get('-p', '')
 
     if img_pre not in ['', 'eimg', 'rimg']:
-         print 'Improper image name prefix.'
-         raise SystemExit, 1
+         print('Improper image name prefix.')
+         raise SystemExit(1)
 
     temp_dir = ''
     img_dir = opts.get('-d', '.')
@@ -477,14 +595,14 @@ if __name__ == '__main__':
         img_dir = temp_dir + '/img_dir'
 
     if not os.path.isdir(img_dir):
-        print 'The image source directory: '  + img_dir + \
-              ' does not exist!'
-        raise SystemExit, 1
+        print('The image source directory: '  + img_dir + \
+              ' does not exist!')
+        raise SystemExit(1)
 
     if len(args) not in [0, 2]:
-        print 'If frames are specified both first and last ' + \
-              'image numbers must be chosen.'
-        raise SystemExit, 1
+        print('If frames are specified both first and last ' + \
+              'image numbers must be chosen.')
+        raise SystemExit(1)
     elif len(args) == 0:
         args = [None, None]
 
@@ -504,41 +622,56 @@ if __name__ == '__main__':
     last_frame_num = last_frame_num.zfill(8)
     last_num = int(last_frame_num)
 
-    # Aspect ratio is not used
     aspectc = opts.get('-a', '2')
 
-    # Video type is not used
-    vtype = opts.get('-t', 'gif')
+    if aspectc not in [str(i) for i in range(1,5)]:
+        print('Invalid aspect ratio.')
+        raise SystemExit(1)
+    else:
+        if aspectc == '1': aspect = '1/1'
+        elif aspectc == '2': aspect = '4/3'
+        elif aspectc == '3': aspect = '16/9'
+        elif aspectc == '4': aspect = '221/100'
 
-    out_gif = opts.get('-o', vtype + '_movie.gif')
+    vtype = opts.get('-t', 'ml')
+
+    out_ogm = opts.get('-o', vtype + '_movie.ogm')
+
+    if '_' not in vtype:
+        vtype = vtype + '_d'
+
+    if vtype not in ['hi_d', 'mh_d', 'ml_d', 'lo_d', \
+                     'hi_x', 'mh_x', 'ml_x', 'lo_x']:
+        print('Invalid video type.')
+        raise SystemExit(1)
 
     fpsc = opts.get('-f', '4')
 
-    if fpsc not in [str(i) for i in xrange(1,9)]:
-        if not quiet: print 'Invalid fps code, attempting float fps.'
+    if fpsc not in [str(i) for i in range(1,9)]:
+        if not quiet: print('Invalid fps code, attempting float fps.')
         foundfps = False
     else:
-        if fpsc == '1': fps = 24000.0/1001.0
-        elif fpsc == '2': fps = 24.0
-        elif fpsc == '3': fps = 25.0
-        elif fpsc == '4': fps = 30000.0/1001.0
-        elif fpsc == '5': fps = 30.0
-        elif fpsc == '6': fps = 50.0
-        elif fpsc == '7': fps = 60000.0/1001.0
-        elif fpsc == '8': fps = 60.0
+        if fpsc == '1': fps = str(24000.0/1001.0)
+        elif fpsc == '2': fps = str(24.0)
+        elif fpsc == '3': fps = str(25.0)
+        elif fpsc == '4': fps = str(30000.0/1001.0)
+        elif fpsc == '5': fps = str(30.0)
+        elif fpsc == '6': fps = str(50.0)
+        elif fpsc == '7': fps = str(60000.0/1001.0)
+        elif fpsc == '8': fps = str(60.0)
         foundfps = True
 
     if not foundfps:
         try:
             fps = locale.atof(fpsc)
-            if not quiet: print 'Using fps = %s' % fps
+            if not quiet: print('Using fps = %s' % fps)
             if fps > 0: foundfps = True
         except:
             pass
 
     if not foundfps:
-        print 'Invalid fps code or rate.'
-        raise SystemExit, 1
+        print('Invalid fps code or rate.')
+        raise SystemExit(1)
 
     if '-e' not in opts:
         enhance = False
@@ -546,8 +679,8 @@ if __name__ == '__main__':
         enhance = True
 
     if enhance and img_pre:
-        print 'Sorry, you cannot enhance already-enhanced images'
-        raise SystemExit, 1
+        print('Sorry, you cannot enhance already-enhanced images')
+        raise SystemExit(1)
 
     if '-k' not in opts:
         keep = False
@@ -558,23 +691,20 @@ if __name__ == '__main__':
     rgeom = opts.get('-r', '')
 
     if (cgeom or rgeom) and not enhance:
-        print 'Missing "-e" option.'
-        raise SystemExit, 1
-
-    delay = opts.get('-D', '0')
-    if verbose: print 'Linear audio delay (ms): ' + delay
+        print('Missing "-e" option.')
+        raise SystemExit(1)
 
     lv1file = opts.get('-L', None)
     if lv1file:
-        if not quiet: print 'Opening lv1 file...'
+        if not quiet: print('Opening lv1 file...')
         try:
             lv1 = tarfile.open(os.path.abspath(lv1file))
         except:
-            print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit, 1
+            print('This does not appear to be a valid LiVES file!')
+            raise SystemExit(1)
         if 'header.tar' not in lv1.getnames():
-            print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit, 1
+            print('This does not appear to be a valid LiVES file!')
+            raise SystemExit(1)
         for tfile in lv1.getmembers():
             lv1.extract(tfile, img_dir)
         for tfile in glob.glob(os.path.join(img_dir, '*.tar')):
@@ -589,63 +719,98 @@ if __name__ == '__main__':
     elif os.path.isfile(test_file + '.png'):
         ext = '.png'
     else:
-        print 'Cannot find any appropriate %s or %s files!' % ('.jpg','.png')
-        raise SystemExit, 1
+        print('Cannot find any appropriate %s or %s files!' % ('.jpg','.png'))
+        raise SystemExit(1)
     first_frame = test_file + ext
     last_frame = os.path.join(img_dir, img_pre + last_frame_num + ext)
 
-    if not quiet: print 'Found: ' + first_frame
-    
+    if not quiet: print('Found: ' + first_frame)
+
     work_dir = opts.get('-w', img_dir)
     work_dir = os.path.abspath(work_dir)
     if not os.path.isdir(work_dir):
-        if not quiet: print 'Creating ' + work_dir
+        if not quiet: print('Creating ' + work_dir)
         try:
             os.makedirs(work_dir)
-            os.chmod(work_dir, 0755)
+            os.chmod(work_dir, 0o755)
         except:
-            print 'Could not create the work directory ' + \
-                  work_dir
-            raise SystemExit, 1
+            print('Could not create the work directory ' + \
+                  work_dir)
+            raise SystemExit(1)
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
         os.symlink(work_dir, temp_dir + '/work_dir')
         work_dir = temp_dir + '/work_dir'
 
-    # Audio is not used
     sndf = opts.get('-s', os.path.join(img_dir, 'audio'))
+#    sndf = os.path.abspath(sndf)
+    rawsndf = True
+    if not os.path.isfile(sndf):
+        audio = False
+        rawsndf = False
+    else:
+        audio = True
+        if sndf[-4:] == '.wav':
+            rawsndf = False
+        if not quiet: print('Found audio file: ' + sndf)
+
+    sndr = opts.get('-b', '44100')
+
+    delay = opts.get('-D', '0')
+    if verbose and audio: print('Linear audio delay (ms): ' + delay)
 
     if enhance:
         do_enhance()
         # Note that do_enhance() always creates images prefixed
         # with 'rimg'. What's important to note if that if the
         # images are resized the 'rimg' are indeed resized, but
-        # if not the 'rimg' are simply symlinks to the 'eimg'
+        # if not the 'rimg' are simply symlinks to (or copies of) the 'eimg'
         # (enhanced) images.
         img_pre = 'rimg'
         ext = '.png'
-    vidname = os.path.join(work_dir, out_gif)
+    vidname = os.path.join(work_dir, out_ogm)
     # do_encode() acts on images prefixed by img_pre.
     do_encode()
     if not keep:
         do_clean()
     if temp_dir != '':
         shutil.rmtree(temp_dir)
-    if not quiet: print "Done!"
+    if not quiet: print("Done!")
 
 
 """
 CHANGELOG:
 
-29 Oct 2004 : 0.0.1 : first release.
-08 Nov 2004 : 0.0.2 : make sure that the enhanced
+21 Jul 2004 : 0.0.2 : added support for ".wav" files.
+                      added '-C' flag.
+28 Jul 2004 : 0.0.3 : added '-D' flag.
+                      fixed typos.
+                      eliminated some subshell calls.
+                      convert dirs to absolute paths.
+                      fixed frame range detection.
+                      fixed work_dir permissions.
+30 Jul 2004 : 0.0.4 : added '-L' flag.
+                      encoder is now feature-complete.
+25 Sep 2004 : 0.0.5 : make sure "rawsndf" is set correctly.
+                      check if files exist before removing.
+02 Oct 2004 : 0.0.6 : multiplex even if no audio.
+28 Oct 2004 : 0.0.7 : can handle arbitrary fps values.
+02 Nov 2004 : 0.0.8 : added XviD encoding.
+08 Nov 2004 : 0.0.9 : make sure that the enhanced
                       color depth is 8-bits/channel.
-02 Jan 2005 : 0.0.3 : updated docs.
-                      added sound rate (-b) option (unused).
-21 Mar 2005 : 0.0.4 : use env python (hopefully >= 2.3)
-09 Mar 2006 : 0.0.5 : added '-depth 8' to resize, as ImageMagick
+                      fixed XviD aspect ratio.
+                      added chroma_opt to XviD.
+02 Jan 2005 : 0.1.0 : updated docs.
+                      added sound rate (-b) option.
+26 Mar 2005 : 0.1.1 : use env python (hopefully >= 2.3).
+                      replace denoise3d with hqdn3d.
+24 Aug 2005 : 0.1.2 : Fixed 2.21:1 aspect ratio.
+                      fine-tune mplayer filters.
+09 Mar 2006 : 0.1.3 : added '-depth 8' to resize, as ImageMagick
                       keeps changing its damn behaviour.
-28 Jun 2007 : 0.0.6 : handles paths with spaces appropriately
+                      Fixed bitrate levels.
+13 Mar 2006 : 0.1.4 : tweaked bitrate levels.
+28 Jun 2007 : 0.1.5 : handles paths with spaces appropriately
                       (thanks Gabriel).
 """

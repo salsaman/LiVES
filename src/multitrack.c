@@ -296,7 +296,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 void write_backup_layout_numbering(lives_mt *mt) {
   // link clip numbers in the auto save event_list to actual clip numbers
 
-  int fd,i,vali;
+  int fd,i,vali,hdlsize;
   gdouble vald;
   gchar *asave_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
   GList *clist=mainw->cliplist;
@@ -311,6 +311,9 @@ void write_backup_layout_numbering(lives_mt *mt) {
 	dummyvar=write(fd,&i,sizint);
 	vald=mainw->files[i]->fps;
 	dummyvar=write(fd,&vald,sizdbl);
+	hdlsize=strlen(mainw->files[i]->handle);
+	dummyvar=write (fd,&hdlsize,sizint);
+	dummyvar=write (fd,&mainw->files[i]->handle,hdlsize);
       }
       else {
 	vali=mainw->files[i]->stored_layout_idx;
@@ -318,6 +321,9 @@ void write_backup_layout_numbering(lives_mt *mt) {
 	  dummyvar=write(fd,&vali,sizint);
 	  vald=mainw->files[i]->fps;
 	  dummyvar=write(fd,&vald,sizdbl);
+	  hdlsize=strlen(mainw->files[i]->handle);
+	  dummyvar=write (fd,&hdlsize,sizint);
+	  dummyvar=write (fd,&mainw->files[i]->handle,hdlsize);
 	}
       }
       clist=clist->next;
@@ -344,6 +350,11 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 	renumbered_clips[vari]=count;
 	if (read(fd,&vard,sizdbl)>0) {
 	  lfps[count]=vard;
+	  if (read(fd,&vari,sizint)>0) {
+	    // skip the handle
+	    lseek(fd,vari,SEEK_CUR);
+	  }
+	  else break;
 	}
 	else break;
       }
@@ -7122,21 +7133,41 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
     }
   }
   else if (mainw->recoverable_layout) {
-    gchar *tmp=g_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-    gchar *eload_file=subst(tmp,"//","/");
-    g_free(tmp);
+    gchar *aload_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+    gchar *eload_file=g_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
     mt->auto_reloading=TRUE;
     mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
     mt->auto_reloading=FALSE;
-    unlink(eload_file);
-    g_free(eload_file);
     if (mt->event_list!=NULL) {
+      unlink(eload_file);
+      unlink(aload_file);
+      g_free(eload_file);
+      g_free(aload_file);
       mt_init_tracks(mt,TRUE);
       remove_markers(mt->event_list);
     }
     else {
+      // failed to load
+      // keep the faulty layout for forensic purposes
+      gchar *com;
+      gchar *aload_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+
+      com=g_strdup_printf("/bin/mkdir -p %s/unrecoverable_layouts/ 2>/dev/null",prefs->tmpdir);
+      dummyvar=system(com);
+      g_free(com);
+
+      com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",eload_file,prefs->tmpdir);
+      dummyvar=system(com);
+      g_free(com);
+
+      com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",aload_file,prefs->tmpdir);
+      dummyvar=system(com);
+      g_free(com);
+
       mainw->multitrack=mt;
       mt->fps=prefs->mt_def_fps;
+      g_free(eload_file);
+      g_free(aload_file);
       return mt;
     }
   }
@@ -7775,7 +7806,6 @@ static void reset_renumbering(lives_mt *mt) {
     }
     else renumbered_clips[i]=0;
   }
-  if (prefs->mt_auto_back>=0) write_backup_layout_numbering(mt);
 }
 
 
@@ -8952,8 +8982,9 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     }
   }
 
-
-
+  if (cfile->clip_type==CLIP_TYPE_GENERATOR) {
+    weed_generator_end (cfile->ext_src);
+  }
 
   if (prefs->show_gui) {
     while (g_main_context_iteration(NULL,FALSE));
@@ -18193,19 +18224,13 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int i;
   lives_mt *mt=(lives_mt *)user_data;
   weed_plant_t *new_event_list;
-  gchar *eload_file=NULL,*tmp;
+  gchar *eload_file=NULL;
 
   if (!check_for_layout_del(mt,FALSE)) return;
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
-  }
-
-  if (mainw->recoverable_layout) {
-    tmp=g_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-    eload_file=subst(tmp,"//","/");
-    g_free(tmp);
   }
 
   new_event_list=load_event_list(mt,eload_file);

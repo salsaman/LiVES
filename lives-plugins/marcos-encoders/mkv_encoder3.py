@@ -1,29 +1,16 @@
 #!/usr/bin/env python
 
-
-import locale
-locale.setlocale(locale.LC_NUMERIC,"")
-
-
 """
-dirac_encoder.py
+mkv_encoder.py
 
-Front-end to various programs needed to create Dirac
+Front-end to various programs needed to create MKV (Matroska)
 movies with some image-enhancing capabilities through the use of
 ImageMagick. Meant as a companion to LiVES (to possibly call
 from within a plugin, see http://www.xs4all.nl/~salsaman/lives/ )
 but can also be used as a stand-alone program.
 
 Requires MPlayer, ImageMagick (GraphicsMagick might also
-work), Dirac, and Python 2.3.0 or greater. Note that audio
-support is not yet implemented, only video encoding. Also
-note that Dirac is still at a very early stage of development,
-and hence this code is highly experimental. Use at your
-own risk.
-
-Dirac's encoder API changed between versions 0.5.1 and 0.5.2.
-This encoder will not work with 0.5.1 but has been tested with
-0.5.2.
+work), sox, Oggenc, MKVtoolnix and Python 2.3.0 or greater.
 
 Copyright (C) 2004-2005 Marco De la Cruz (marco@reimeika.ca)
 It's a trivial program, but might as well GPL it, so see:
@@ -32,29 +19,32 @@ http://www.gnu.org/copyleft/gpl.html for license.
 See my vids at http://amv.reimeika.ca !
 """
 
-version = '0.0.a15'
+version = '0.1.5'
 convert = 'convert'
 mencoder = 'mencoder'
-dirac_encoder = 'dirac_encoder'
+x264 = 'x264'
+oggenc = 'oggenc'
+sox = 'sox'
+mkvplex = 'mkvmerge'
 identify = 'identify'
 
 usage = \
       """
-dirac_encoder.py -h
-dirac_encoder.py -V
-dirac_encoder.py -C
-dirac_encoder.py [-o out] [-p pre] [-d dir] [-a aspect] [-D delay*]
-                 [-q|-v] [-t type] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
-                 [-s sndfile*] [-b sndrate*] [-f fpscode] [-L lv1file]
-                 [firstframe lastframe]
+mkv_encoder.py -h
+mkv_encoder.py -V
+mkv_encoder.py -C
+mkv_encoder.py [-o out] [-p pre] [-d dir] [-a aspect] [-D delay]
+               [-q|-v] [-t type] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
+               [-s sndfile] [-b sndrate] [-f fpscode] [-L lv1file]
+               [firstframe lastframe]
       """
 
 help = \
      """
 SUMMARY (ver. %s):
 
-Encodes a series of PNG or JPG images into a Dirac
-(.drc) stream and is also capable of performing some simple image
+Encodes a series of PNG or JPG images into an MPEG-4/Ogg Vorbis
+(MKV) stream and is also capable of performing some simple image
 enhacements using ImageMagick. The images and audio are assumed to
 be in an uncompressed LiVES format, hence making this encoder
 more suitable to be used within a LiVES plugin (but can also
@@ -69,18 +59,18 @@ OPTIONS:
 -C          check external program dependencies and exit.
 
 -o out      will save the video in file "out".
-            Default: "'type'_movie.drc". See below for 'type'.
+            Default: "'type'_movie.mkv". See below for 'type'.
 
 -p pre      the encoder assumes that sound and images are named using
             LiVES' conventions i.e. "audio" and "00000001.ext",
             "00000002.ext"... where "ext" is either "jpg" or "png".
-            However, dirac_encoder.py will create temporary files
+            However, mkv_encoder.py will create temporary files
             which can be saved for later use (for example, after
             enhancing the images with "-e" , which may take a long
             time). These temporary files will be named
             "pre_00000001.ext", etc... where "pre" is either "eimg"
             or "rimg" and will be kept if the "-k" option is used.
-            dirac_encoder.py can then be run over the enhanced images
+            mkv_encoder.py can then be run over the enhanced images
             only by selecting the appropriate prefix ("eimg" or
             "rimg") here. See "-e" to see what each prefix means.
             Default: "" (an empty string).
@@ -90,7 +80,7 @@ OPTIONS:
             "pre_00000001.ext" as explained above.
             Default: "."
 
--a aspect   sets the aspect ratio of the resulting Dirac file. This can be:
+-a aspect   sets the aspect ratio of the resulting MPEG-4. This can be:
 
                1    1:1 display
                2    4:3 display
@@ -99,9 +89,8 @@ OPTIONS:
 
             Default: "2"
 
--D delay*   linearly delay the audio stream by "delay" ms.
+-D delay    linearly delay the audio stream by "delay" ms.
             Default: "0"
-            * = NOT IMPLEMENTED (YET?)
 
 -q          quiet operation, only complains on error.
 
@@ -109,22 +98,30 @@ OPTIONS:
 
 -t type     type of video created. The options here are:
 
-               "hi":   a very high quality MPEG-4 file, suitable
+               "hi":   a very high quality XviD file, suitable
                        for archiving images of 720x480.
 
-               "mh":   medium-high quality MPEG-4, which still allows
+               "mh":   medium-high quality XviD, which still allows
                        to watch small videos (352x240 and below)
                        fullscreen.
 
-               "ml":   medium-low quality MPEG-4, suitable for
+               "ml":   medium-low quality XviD, suitable for
                        most videos but in particular small videos
                        (352x240 and below) meant for online
                        distribution.
 
-               "lo":   a low quality MPEG-4 format. Enlarging
+               "lo":   a low quality XviD format. Enlarging
                        small videos will result in noticeable
                        artifacts. Good for distributing over slow
                        connections.
+
+               "hi_x", "mh_x", "ml_x", "lo_x": same as above.
+
+               "hi_h", "mh_h", "ml_h", "lo_h": same as above, but
+                                               using the h.264 codec.
+
+               "hi_d", "mh_d", "ml_d", "lo_d": same as above, but
+                                               using DivX 4/5 encoding.
 
             Default: "ml"
 
@@ -170,13 +167,12 @@ OPTIONS:
                        players may show artifacts (such as garbage or
                        green bars at the borders).
 
--s sndfile* name of the audio file. Can be either raw "audio" or
+-s sndfile  name of the audio file. Can be either raw "audio" or
             "[/path/to/]soundfile.wav".
             Default: "audio" inside "dir" as specified by "-d".
-            * = NOT IMPLEMENTED (YET?)
 
--b sndrate* sample rate of the sound file in Hertz.
-            * = NOT IMPLEMENTED (YET?)
+-b sndrate  sample rate of the sound file in Hertz.
+            Default: "44100".
 
 -f fpscode  frame-rate code. Acceptable values are:
 
@@ -188,6 +184,9 @@ OPTIONS:
               6 - 50.0 (PAL FIELD RATE)
               7 - 60000.0/1001.0 (NTSC FIELD RATE)
               8 - 60.0
+
+            If the input value is a float (e.g. 5.0, 14.555, etc.)
+            the encoder will use that as frame rate.
 
             Default: "4".
 
@@ -224,11 +223,11 @@ EXAMPLES:
 Suppose you have restored a LiVES' .lv1 file (in either JPG or PNG format),
 and that the images are stored in the directory "/tmp/livestmp/991319584/".
 In this example the movie is assumed to be 16:9. Then, in order to create
-an drc file you can simply do the following:
+an MKV file you can simply do the following:
 
-   dirac_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.drc -a 3
+   mkv_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.mkv -a 3
 
-and the clip "default.drc" will be created in "/movies/" with the correct
+and the clip "default.mkv" will be created in "/movies/" with the correct
 aspect ratio.
 
 Suppose we want to make a downloadable version of the clip, small in size
@@ -240,36 +239,36 @@ the original pictures which we want to get rid of (this might distort the
 images somewhat, so be careful about cropping/resizing, and remember to
 use dimensions which are multiples of 16):
 
-   dirac_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpdrc \\
-   -o /movies/download.drc -a 3 -k -e -c "704x464+5+6" -r "352x240"
+   mkv_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpmkv \\
+   -o /movies/download.mkv -a 3 -k -e -c "704x464+5+6" -r "352x240"
 
 Since we use the "-k" flag the enhanced images are kept (both full-size
-crops and the resized ones) in "/tmp/tmpdrc". Beware that this may consume
+crops and the resized ones) in "/tmp/tmpmkv". Beware that this may consume
 a lot of disk space (about 10x as much as the originals). The reason we
 keep them is because the above may take quite a long time and we may want
 to re-use the enhanced images. So, for example, creating a high-quality
 clip at full size can be accomplished now as follows:
 
-   dirac_encoder.py -d /tmp/tmpdrc -t hi -o /movies/archive.drc \\
+   mkv_encoder.py -d /tmp/tmpmkv -t hi -o /movies/archive.mkv \\
    -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
 If, for example, we only want to encode frames 100 to 150 we can run
 the following:
 
-   dirac_encoder.py -v -d /tmp/tmpdrc -o /movies/selection.drc \\
+   mkv_encoder.py -v -d /tmp/tmpmkv -o /movies/selection.mkv \\
    -a 3 -k -p eimg 100 150
 
 Note that no audio has been selected ("-s"). This is because
-dirac_encoder.py cannot trim the audio to the appropriate length.
+mkv_encoder.py cannot trim the audio to the appropriate length.
 You would need to use LiVES to do this.
 
-To delete all the enhanced images you can just remove "/tmp/tmpdrc".
+To delete all the enhanced images you can just remove "/tmp/tmpmkv".
 
 If you notice that the video and audio become out of sync so that
 near the end of the movie the video trails the audio by, say, 0.2s,
 you can use the "-D" option as follows:
 
-   dirac_encoder.py -d /tmp/livestmp/991319584 -o test.drc -D 200
+   mkv_encoder.py -d /tmp/livestmp/991319584 -o test.mkv -D 200
 
 Note that negative time values are also allowed.
 
@@ -279,26 +278,17 @@ Batch-encoding can be done as follows (zsh-syntax):
    for i in movie?.lv1
    do
      mkdir /tmp/$i:r
-     dirac_encoder.py -d /tmp/$i:r -o /tmp/$i:r.drc -L $i
+     mkv_encoder.py -d /tmp/$i:r -o /tmp/$i:r.mkv -L $i
      rm -rf /tmp/$i:r
    done
 
-This will generate the files "movie1.drc", "movie2.drc" and
-"movie3.drc" in "/tmp". Note that is is not necessary to
+This will generate the files "movie1.mkv", "movie2.mkv" and
+"movie3.mkv" in "/tmp". Note that is is not necessary to
 specify whether the files are stored in JPG or PNG format,
 and that potentially time-consuming options (e.g. "-e") may
 be enabled. It is not necessary to have a working LiVES
 installation to encode .lv1 files.
      """ % version
-
-def gcd(a, b):
-        """
-        gcd(a, b) (a,b are integers)
-        Returns the greatest common divisor of two integers.
-        """
-        if b == 0: return a
-        else: return gcd(b, a%b)
-
 
 def run(command):
     """
@@ -358,47 +348,97 @@ def do_enhance():
 
 def do_encode():
     """
-    Encode a series of images into a Dirac stream.
+    Encode a series of images into an MPEG-4 stream, multiplexing
+    audio if necessary
     """
+
+    if not quiet:
+        print('Creating "%s"-quality MPEG-4' % vtype)
 
     if verbose:
         std = ''
-        be_verbose = '-verbose'
+        hinfo = '--quiet'
     else:
         std = ' > /dev/null 2>&1'
-        be_verbose = ''
+        hinfo = '--progress'
 
-    fpsnum = fps.split('/')[0]
-    fpsden = fps.split('/')[1]
-    ffps = eval('float('+fpsnum+')/'+fpsden)
-    mencoder_opts = '-mf type=%s:fps=%s ' % (ext[1:], ffps) + \
-		    '-nosound -vf hqdn3d=2:1:3,pp=va:128:8/ha:128:8/dr,' + \
-		    'dsize=%s,format=i420 -ovc raw -of rawvideo -o ' % aspect
-    dirac_opts = '-HD1080'
-    if vtype == 'hi':
-        dirac_opts = ' '.join([dirac_opts, '-qf 10'])
+    common_vopts = '-mf type=%s:fps=%s ' % (ext[1:], fps) + \
+                   '-nosound -vf hqdn3d=2:1:3,pp=va:128:8/ha:128:8/dr,dsize=%s' % aspect
+
+    if vtype[-1] == 'd':
+        codec_vopts = '-ovc lavc -lavcopts ' + \
+                      'vcodec=mpeg4:trell:mbd=2:vmax_b_frames=1:v4mv' + \
+                      ':cmp=2:subcmp=2:precmp=2:predia=1:autoaspect:vbitrate='
+        cpass = 'vpass='
+    elif vtype[-1] == 'x':
+        codec_vopts = '-ovc xvid -xvidencopts qpel:chroma_me:chroma_opt' + \
+                      ':max_bframes=1:autoaspect:hq_ac:vhq=4:bitrate='
+        cpass = 'pass='
+    elif vtype[-1] == 'h':
+        mencoder_opts = common_vopts + ',format=i420 -ovc raw -of rawvideo -o '
+        codec_vopts = hinfo + ' --fps %s -B' % (fps)
+        cpass = '--pass '
+        cpass1opts = '--bframes 3 --b-pyramid --filter 1:1 --weightb ' + \
+                     '--qcomp 0.8 --analyse dia --subme 1 --no-psnr'
+        cpass2opts = '--bframes 3 --b-pyramid --ref 6 --filter 1:1 --weightb ' + \
+                     '--qcomp 0.8 --analyse all --8x8dct --subme 6 --b-rdo ' + \
+                     '--mixed-refs --bime --trellis 2 --no-fast-pskip'
+    else:
+        print('Unexpected video type.')
+        raise SystemExit(1)
+
+    vqual = vtype[0:-2]
+    if vqual == 'hi':
+        if vtype[-1] == 'd': rate = '2000:'
+        if vtype[-1] == 'x': rate = '2000:'
+        if vtype[-1] == 'h':
+            rate = '2000'
+            x264_opts = ' '.join([codec_vopts, rate, cpass])
+        else:
+            mencoder_opts = ' '.join([common_vopts, codec_vopts + rate + cpass])
         oggenc_opts = '-q 9'
-    elif vtype == 'mh':
-        dirac_opts = ' '.join([dirac_opts, '-qf 8'])
-        oggenc_opts = '-q 8'
-    elif vtype == 'ml':
-        dirac_opts = ' '.join([dirac_opts, '-qf 6'])
+    elif vqual == 'mh':
+        if vtype[-1] == 'd': rate = '1000:'
+        if vtype[-1] == 'x': rate = '1000:'
+        if vtype[-1] == 'h':
+            rate = '1000'
+            x264_opts = ' '.join([codec_vopts, rate, cpass])
+        else:
+            mencoder_opts = ' '.join([common_vopts, codec_vopts + rate + cpass])
         oggenc_opts = '-q 6'
-    elif vtype == 'lo':
-        dirac_opts = ' '.join([dirac_opts, '-qf 4'])
+    elif vqual == 'ml':
+        if vtype[-1] == 'd': rate = '500:'
+        if vtype[-1] == 'x': rate = '500:'
+        if vtype[-1] == 'h':
+            rate = '500'
+            x264_opts = ' '.join([codec_vopts, rate, cpass])
+        else:
+            mencoder_opts = ' '.join([common_vopts, codec_vopts + rate + cpass])
         oggenc_opts = '-q 4'
-
+    elif vqual == 'lo':
+        if vtype[-1] == 'd': rate = '200:'
+        if vtype[-1] == 'x': rate = '200:'
+        if vtype[-1] == 'h':
+            rate = '200'
+            x264_opts = ' '.join([codec_vopts, rate, cpass])
+        else:
+            mencoder_opts = ' '.join([common_vopts, codec_vopts + rate + cpass])
+        oggenc_opts = '-q 2'
 
     if img_dir != work_dir and not enhance:
         source_dir = img_dir
     else:
         source_dir = work_dir
+
+    x264log = os.path.join(source_dir, 'TMP_x264pass.log')
     yuvv = os.path.join(source_dir, 'TMP_YUVstream.yuv')
-    yuvvne = yuvv[:-4]
-    dyuvv = tempfile.mkstemp('', '', work_dir)[1]
+    if vtype[-1] == 'h':
+        vidv = tempfile.mkstemp('.mkv', '', work_dir)[1]
+    else:
+        vidv = tempfile.mkstemp('.mpv', '', work_dir)[1]
+
 
     if frame_range:
-        numframes = str(last_num - first_num + 1)
         frame_list = [img_pre + str(f).zfill(8) + ext \
                       for f in range(first_num, last_num + 1)]
         syml = 'temporary_symlink_'
@@ -409,43 +449,50 @@ def do_encode():
             os.symlink(frfile, frlink)
     else:
         syml = ''
-        numframes = len(glob.glob(os.path.join(source_dir, \
-                                             img_pre + '*' + ext)))
 
     fgeom = os.popen(' '.join([identify, '-format "%w %h"', \
                                os.path.join(source_dir, \
-                                            img_pre + first_frame_num + ext)])).read().strip().split()
+                                            img_pre + \
+                                            first_frame_num + \
+                                            ext)])).read().strip().split()
     fx = int(fgeom[0])
     fy = int(fgeom[1])
-    # Why 1.5? See http://sourceforge.net/forum/forum.php?thread_id=1143416&forum_id=353618
-    fbytes = int(fx*fy*1.5)
 
     all_vars = {}
     all_vars.update(globals())
     all_vars.update(locals())
 
-    if not quiet:
-        print('Creating "%s"-quality Dirac file' % vtype)
 
-    yuvcommand = """cd %(source_dir)s ; \\
-%(mencoder)s mf://%(syml)s%(img_pre)s*%(ext)s %(mencoder_opts)s%(yuvv)s %(std)s
+    if vtype[-1] == 'h':
+        yuvcommand = """cd %(source_dir)s ; \\
+mkfifo -m 0600 %(yuvv)s ; \\
+%(mencoder)s mf://%(syml)s%(img_pre)s*%(ext)s %(mencoder_opts)s%(yuvv)s %(std)s &
     """ % all_vars
-    run(yuvcommand)
-    command = """cd %(source_dir)s ; \\
-%(dirac_encoder)s -width %(fx)s -height %(fy)s -fr %(ffps)s %(be_verbose)s %(dirac_opts)s %(yuvvne)s %(dyuvv)s %(std)s
-""" % all_vars
-    run(command)
-    os.remove(yuvv)
+        run(yuvcommand)
+        command = """cd %(source_dir)s ; \\
+%(x264)s --stats "%(x264log)s" %(cpass1opts)s %(x264_opts)s1 -o /dev/null %(yuvv)s %(fx)sx%(fy)s %(std)s
+    """ % all_vars
+        run(command)
+        os.remove(yuvv)
+        run(yuvcommand)
+        command = """cd %(source_dir)s ; \\
+%(x264)s --stats "%(x264log)s" %(cpass2opts)s %(x264_opts)s2 -o "%(vidv)s" %(yuvv)s %(fx)sx%(fy)s %(std)s
+    """ % all_vars
+        run(command)
+        os.remove(yuvv)
+        os.remove(x264log)
+    else:
+        command = """cd %(source_dir)s ; \\
+%(mencoder)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s1 -o /dev/null %(std)s ; \\
+%(mencoder)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s2 -o %(vidv)s %(std)s
+    """ % all_vars
+        run(command)
 
-    for tfile in [dyuvv, dyuvv + '.yuv', dyuvv + '.imt']:
-        if os.path.exists(tfile):
-            if verbose:
-                print('Removing ' + tfile)
-            os.remove(tfile)
+    if os.path.exists(os.path.join(source_dir, 'divx2pass.log')):
+        os.remove(os.path.join(source_dir, 'divx2pass.log'))
+    if os.path.exists(os.path.join(source_dir, 'xvid-twopass.stats')):
+        os.remove(os.path.join(source_dir, 'xvid-twopass.stats'))
 
-# Audio not supported yet. Planned to use Matroska container but
-# Dirac developers are thinking of MXF.
-    audio = False
     if audio:
         if not quiet:
             print('Creating "%s"-quality ogg vorbis file' % vtype)
@@ -464,36 +511,26 @@ def do_encode():
         if delay != '0':
             totfr = len(glob.glob(os.path.join(source_dir, syml + img_pre + '*' + ext)))
             # "delay" is in ms, transform into s
-            totfrshift = int(totfr + round((locale.atof(delay)/1000.0)*locale.atof(ffps)))
+            totfrshift = int(totfr + round((locale.atof(delay)/1000.0)*locale.atof(fps)))
             delaysh = ',%s/%s' % (totfrshift, totfr)
         else:
             delaysh = ''
 
         all_vars.update(locals())
 
-        if not quiet:
-            print('Multiplexing...')
+        if not quiet: print('Multiplexing...')
         command = """
 %(mkvplex)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(vidv)s -y '0:0%(delaysh)s' %(ogg)s %(std)s""" % all_vars
         run(command)
         if rawsndf and os.path.exists(wav): os.remove(wav)
         if os.path.exists(ogg): os.remove(ogg)
-        if os.path.exists(dyuvv + '.drc'): os.remove(dyuvv + '.drc')
     else:
-        shutil.move(dyuvv + '.drc', vidname)
-        note = """
-You can play the Dirac file %(vidname)s by running:
+        if not quiet: print('Multiplexing...')
+        command = """
+%(mkvplex)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(vidv)s %(std)s""" % all_vars
+        run(command)
 
-dirac_decoder -v %(vidname)s %(vidname)s
-mplayer -demuxer rawvideo -rawvideo fps=%(ffps)s:size=%(fbytes)s:w=%(fx)s:h=%(fy)s %(vidname)s.yuv
-
-If %(vidname)s has an extension do not include it in the above
-commands e.g. if it's "test.drc" then do:
-
-dirac_decoder -v test test
-mplayer -demuxer rawvideo -rawvideo fps=%(ffps)s:size=%(fbytes)s:w=%(fx)s:h=%(fy)s test.yuv
-""" % all_vars
-        if not quiet: print(note)
+    if os.path.exists(vidv): os.remove(vidv)
 
     if frame_range:
         lframes = os.path.join(source_dir, syml)
@@ -553,7 +590,7 @@ def is_installed(prog):
 
     if wprog == '':
         print(prog + ': command not found')
-        raise SystemExit, 1
+        raise SystemExit(1)
     else:
         if verbose:
             print(wprog + ': found')
@@ -570,31 +607,31 @@ if __name__ == '__main__':
     import tarfile
 
     try:
-        if sys.version_info[0:3] < (2, 3, 0):
-            raise SystemExit, 1
+        if sys.version_info[0:3] < (3, 0, 0):
+            raise SystemExit(1)
     except:
-        print('You need Python 2.3.0 or greater to run me!')
-        raise SystemExit, 1
+        print('You need Python 3.0.0 or greater to run me!')
+        raise SystemExit(1)
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
                                          'ho:p:d:w:a:qvt:ekc:r:s:b:f:VCD:L:')
     except:
         print("Something's wrong. Try the '-h' flag.")
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     opts = dict(opts)
 
     if not opts and not args:
         print(usage)
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     if '-h' in opts:
         print(usage + help)
         raise SystemExit
 
     if '-V' in opts:
-        print('dirac_encoder.py version ' + version)
+        print('mkv_encoder.py version ' + version)
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):
@@ -608,7 +645,7 @@ if __name__ == '__main__':
     else:
         quiet = False
 
-    for i in [convert, mencoder, dirac_encoder, identify]:
+    for i in [convert, mencoder, oggenc, sox, mkvplex, x264, identify]:
         is_installed(i)
     if '-C' in opts: raise SystemExit
 
@@ -616,7 +653,7 @@ if __name__ == '__main__':
 
     if img_pre not in ['', 'eimg', 'rimg']:
          print('Improper image name prefix.')
-         raise SystemExit, 1
+         raise SystemExit(1)
 
     temp_dir = ''
     img_dir = opts.get('-d', '.')
@@ -629,12 +666,12 @@ if __name__ == '__main__':
     if not os.path.isdir(img_dir):
         print('The image source directory: '  + img_dir + \
               ' does not exist!')
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     if len(args) not in [0, 2]:
         print('If frames are specified both first and last ' + \
               'image numbers must be chosen.')
-        raise SystemExit, 1
+        raise SystemExit(1)
     elif len(args) == 0:
         args = [None, None]
 
@@ -658,20 +695,25 @@ if __name__ == '__main__':
 
     if aspectc not in [str(i) for i in range(1,5)]:
         print('Invalid aspect ratio.')
-        raise SystemExit, 1
+        raise SystemExit(1)
     else:
-        if aspectc == '1': aspect = '1:1'
-        elif aspectc == '2': aspect = '4:3'
-        elif aspectc == '3': aspect = '16:9'
-        elif aspectc == '4': aspect = '2.21:1'
+        if aspectc == '1': aspect = '1/1'
+        elif aspectc == '2': aspect = '4/3'
+        elif aspectc == '3': aspect = '16/9'
+        elif aspectc == '4': aspect = '2.21/1'
 
     vtype = opts.get('-t', 'ml')
 
-    if vtype not in ['hi', 'mh', 'ml', 'lo']:
-        print('Invalid video type.')
-        raise SystemExit, 1
+    out_mkv = opts.get('-o', vtype + '_movie.mkv')
 
-    out_drc = opts.get('-o', vtype + '_movie.drc')
+    if '_' not in vtype:
+        vtype = vtype + '_x'
+
+    if vtype not in ['hi_d', 'mh_d', 'ml_d', 'lo_d', \
+                     'hi_x', 'mh_x', 'ml_x', 'lo_x', \
+                     'hi_h', 'mh_h', 'ml_h', 'lo_h']:
+        print('Invalid video type.')
+        raise SystemExit(1)
 
     fpsc = opts.get('-f', '4')
 
@@ -679,33 +721,27 @@ if __name__ == '__main__':
         if not quiet: print('Invalid fps code, attempting float fps.')
         foundfps = False
     else:
-        if fpsc == '1': fps = '24000/1001'
-        elif fpsc == '2': fps = '24/1'
-        elif fpsc == '3': fps = '25/1'
-        elif fpsc == '4': fps = '30000/1001'
-        elif fpsc == '5': fps = '30/1'
-        elif fpsc == '6': fps = '50/1'
-        elif fpsc == '7': fps = '60000/1001'
-        elif fpsc == '8': fps = '60/1'
+        if fpsc == '1': fps = str(24000.0/1001.0)
+        elif fpsc == '2': fps = str(24.0)
+        elif fpsc == '3': fps = str(25.0)
+        elif fpsc == '4': fps = str(30000.0/1001.0)
+        elif fpsc == '5': fps = str(30.0)
+        elif fpsc == '6': fps = str(50.0)
+        elif fpsc == '7': fps = str(60000.0/1001.0)
+        elif fpsc == '8': fps = str(60.0)
         foundfps = True
 
     if not foundfps:
         try:
-            fpsnum = int(locale.atof(fpsc)*10**15)
-            fpsden = 10**15
-            divisor = gcd(fpsnum, fpsden)
-            if divisor > 1:
-                fpsnum = fpsnum/divisor
-                fpsden = fpsden/divisor
-            fps = '%s/%s' % (fpsnum, fpsden)
-            if not quiet: print('Using fps = ' + fps)
-            if fpsnum > 0: foundfps = True
+            fps = locale.atof(fpsc)
+            if not quiet: print('Using fps = %s' % fps)
+            if fps > 0: foundfps = True
         except:
             pass
 
     if not foundfps:
         print('Invalid fps code or rate.')
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     if '-e' not in opts:
         enhance = False
@@ -714,7 +750,7 @@ if __name__ == '__main__':
 
     if enhance and img_pre:
         print('Sorry, you cannot enhance already-enhanced images')
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     if '-k' not in opts:
         keep = False
@@ -726,10 +762,7 @@ if __name__ == '__main__':
 
     if (cgeom or rgeom) and not enhance:
         print('Missing "-e" option.')
-        raise SystemExit, 1
-
-    delay = opts.get('-D', '0')
-    if verbose: print('Linear audio delay (ms): ' + delay)
+        raise SystemExit(1)
 
     lv1file = opts.get('-L', None)
     if lv1file:
@@ -738,10 +771,10 @@ if __name__ == '__main__':
             lv1 = tarfile.open(os.path.abspath(lv1file))
         except:
             print('This does not appear to be a valid LiVES file!')
-            raise SystemExit, 1
+            raise SystemExit(1)
         if 'header.tar' not in lv1.getnames():
             print('This does not appear to be a valid LiVES file!')
-            raise SystemExit, 1
+            raise SystemExit(1)
         for tfile in lv1.getmembers():
             lv1.extract(tfile, img_dir)
         for tfile in glob.glob(os.path.join(img_dir, '*.tar')):
@@ -757,12 +790,12 @@ if __name__ == '__main__':
         ext = '.png'
     else:
         print('Cannot find any appropriate %s or %s files!' % ('.jpg','.png'))
-        raise SystemExit, 1
+        raise SystemExit(1)
     first_frame = test_file + ext
     last_frame = os.path.join(img_dir, img_pre + last_frame_num + ext)
 
     if not quiet: print('Found: ' + first_frame)
-    
+
     work_dir = opts.get('-w', img_dir)
     work_dir = os.path.abspath(work_dir)
     if not os.path.isdir(work_dir):
@@ -773,7 +806,7 @@ if __name__ == '__main__':
         except:
             print('Could not create the work directory ' + \
                   work_dir)
-            raise SystemExit, 1
+            raise SystemExit(1)
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
@@ -794,16 +827,19 @@ if __name__ == '__main__':
 
     sndr = opts.get('-b', '44100')
 
+    delay = opts.get('-D', '0')
+    if verbose and audio: print('Linear audio delay (ms): ' + delay)
+
     if enhance:
         do_enhance()
         # Note that do_enhance() always creates images prefixed
         # with 'rimg'. What's important to note if that if the
         # images are resized the 'rimg' are indeed resized, but
-        # if not the 'rimg' are simply symlinks to (or copies of) the 'eimg'
+        # if not the 'rimg' are simply symlinks to the 'eimg'
         # (enhanced) images.
         img_pre = 'rimg'
         ext = '.png'
-    vidname = os.path.join(work_dir, out_drc)
+    vidname = os.path.join(work_dir, out_mkv)
     # do_encode() acts on images prefixed by img_pre.
     do_encode()
     if not keep:
@@ -816,28 +852,37 @@ if __name__ == '__main__':
 """
 CHANGELOG:
 
-18 Sep 2004 : 0.0.a1 : first alpha release.
-23 Sep 2004 : 0.0.a2 : renamed from "mkvd_encoder" ro
-                       "dirac_encoder".
-                       use mplayer to create yuv.
-25 Sep 2004 : 0.0.a3 : updated docs.
-27 Sep 2004 : 0.0.a5 : switched back to RGBtoYUV420.
-                       YUV generation now reliable but
-                       still very inefficient.
-27 Sep 2004 : 0.0.a6 : can handle arbitrary fps values.
-08 Nov 2004 : 0.0.a7 : make sure that the enhanced
-                       color depth is 8-bits/channel.
-02 Jan 2005 : 0.0.a8 : updated docs.
-                       added sound rate (-b) option (unused for now).
-24 Feb 2005 : 0.0.a9 : fixed frame rate calculation.
-26 Mar 2005 : 0.0.a10 : use env python (hopefully >= 2.3).
-                        replace denoise3d with hqdn3d.
-12 Jun 2005 : 0.0.a11 : updated to use Dirac version 0.5.2.
-24 Aug 2005 : 0.0.a12 : Fixed 2.21:1 aspect ratio.
-09 Mar 2006 : 0.0.a13 : added '-depth 8' to resize, as ImageMagick
-                        keeps changing its damn behaviour.
-13 Mar 2006 : 0.0.a14 : more efficient YUV generation.
-                        updated playback explanation.
-28 Jun 2007 : 0.1.a15 : handles paths with spaces appropriately
-                        (thanks Gabriel).
+21 Jul 2004 : 0.0.2 : added support for ".wav" files.
+                      added '-C' flag.
+28 Jul 2004 : 0.0.3 : added '-D' flag.
+                      fixed typos.
+                      eliminated some subshell calls.
+                      convert dirs to absolute paths.
+                      fixed frame range detection.
+                      fixed work_dir permissions.
+30 Jul 2004 : 0.0.4 : added '-L' flag.
+                      encoder is now feature-complete.
+25 Sep 2004 : 0.0.5 : make sure "rawsndf" is set correctly.
+                      check if files exist before removing.
+02 Oct 2004 : 0.0.6 : multiplex even if no audio.
+28 Oct 2004 : 0.0.7 : can handle arbitrary fps values.
+02 Nov 2004 : 0.0.8 : added XviD encoding.
+08 Nov 2004 : 0.0.9 : make sure that the enhanced
+                      color depth is 8-bits/channel.
+                      fixed XviD aspect ratio.
+                      added chroma_opt to XviD.
+02 Jan 2005 : 0.1.0 : updated docs.
+                      added sound rate (-b) option.
+26 Mar 2005 : 0.1.1 : use env python (hopefully >= 2.3).
+                      replace denoise3d with hqdn3d.
+24 Aug 2005 : 0.1.2 : fixed 2.21:1 aspect ratio.
+                      fine-tune mplayer filters.
+09 Mar 2006 : 0.1.3 : added '-depth 8' to resize, as ImageMagick
+                      keeps changing its damn behaviour.
+                      fixed bitrate levels.
+12 Mar 2006 : 0.1.4 : added h.264 codec.
+                      tweaked bitrate levels.
+                      fixed audio delay.
+28 Jun 2007 : 0.1.5 : handles paths with spaces appropriately
+                      (thanks Gabriel).
 """

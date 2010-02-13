@@ -2732,11 +2732,9 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
   int error;
   int clip=weed_get_int_value(layer,"clip",&error);
   int frame=weed_get_int_value(layer,"frame",&error);
-  int nplanes;
   GdkPixbuf *pixbuf=NULL;
   gboolean do_not_free=TRUE;
   weed_plant_t *vlayer;
-  int i;
   void **pixel_data;
   int clip_type;
 
@@ -2865,10 +2863,6 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
     // special handling for clips where host controls size
     vlayer=weed_layer_new_from_generator((weed_plant_t *)sfile->ext_src,tc);
     weed_layer_copy(layer,vlayer);
-    nplanes=weed_leaf_num_elements(vlayer,"pixel_data");
-    pixel_data=weed_get_voidptr_array(vlayer,"pixel_data",&error);
-    for (i=0;i<nplanes;i++) g_free(pixel_data[i]);
-    g_free(pixel_data);
     weed_set_voidptr_value(vlayer,"pixel_data",NULL);
     mainw->osc_block=FALSE;
     return TRUE;
@@ -3595,6 +3589,8 @@ void load_frame_image(gint frame, gint last_frame) {
 	  mainw->pheight*=2;
 	}
 	calc_maxspect(rwidth,rheight,&mainw->pwidth,&mainw->pheight);
+	if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
+	if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
       }
     }
 
@@ -3671,7 +3667,7 @@ void load_frame_image(gint frame, gint last_frame) {
     }
   
     ////////////////////////////////////////////////////////
-
+    
     fx_layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
     if (cfile->img_type==IMG_TYPE_JPEG||!weed_palette_has_alpha_channel(fx_layer_palette)) cpal=WEED_PALETTE_RGB24;

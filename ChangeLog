@@ -13,6 +13,7 @@ Allow jack transport to set play start position.
 Add option of resizing frames to fit in clip editor interface.
 Removed File/Encode (File/Encode_as is safer)
 New startup wizard for first time users (in progress).
+Faster frame generation for realtime generators.
 Fix possible bootstrap issue with weed plugins. *
 Fix an encoder/png problem. *
 Fix image loading (regression).

@@ -3616,6 +3616,10 @@ gboolean render_to_clip (gboolean new_clip) {
 
     }
   
+    if (cfile->clip_type==CLIP_TYPE_GENERATOR) {
+      weed_generator_end (cfile->ext_src);
+    }
+
     // create new file
     mainw->current_file=mainw->first_free_file;
     

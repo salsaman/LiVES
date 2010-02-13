@@ -6132,7 +6132,7 @@ weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current
 
 weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
   // copy source slayer to dest dlayer
-  // this is a deep copy, since the pixel_data array is also copied
+  // for a newly created layer, this is a deep copy, since the pixel_data array is also copied
 
   // if dlayer is NULL, we return a new plant, otherwise we return dlayer
 
@@ -6141,10 +6141,14 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
   int height,width,palette;
   int i,*rowstrides;
   size_t size;
+  gboolean deep=FALSE;
 
   weed_plant_t *layer;
 
-  if (dlayer==NULL) layer=weed_plant_new(WEED_PLANT_CHANNEL);
+  if (dlayer==NULL) {
+    layer=weed_plant_new(WEED_PLANT_CHANNEL);
+    deep=TRUE;
+  }
   else layer=dlayer;
 
   // now copy relevant leaves
@@ -6154,19 +6158,22 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
   pd_elements=weed_leaf_num_elements(slayer,"pixel_data");
   pixel_data=weed_get_voidptr_array(slayer,"pixel_data",&error);
   rowstrides=weed_get_int_array(slayer,"rowstrides",&error);
-  pd_array=g_malloc(pd_elements*sizeof(void *));
-  for (i=0;i<pd_elements;i++) {
-    size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
-    pd_array[i]=g_malloc(size);
-    w_memcpy(pd_array[i],pixel_data[i],size);
+  if (deep) {
+    pd_array=g_malloc(pd_elements*sizeof(void *));
+    for (i=0;i<pd_elements;i++) {
+      size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
+      pd_array[i]=g_malloc(size);
+      w_memcpy(pd_array[i],pixel_data[i],size);
+    }
   }
+  else pd_array=pixel_data;
   weed_set_voidptr_array(layer,"pixel_data",pd_elements,pd_array);
   weed_set_int_value(layer,"height",height);
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"current_palette",palette);
   weed_set_int_array(layer,"rowstrides",pd_elements,rowstrides);
 
-  g_free(pd_array);
+  if (deep) g_free(pd_array);
   weed_free(pixel_data);
   weed_free(rowstrides);
   return layer;

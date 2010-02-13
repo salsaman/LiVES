@@ -242,7 +242,7 @@ def run(command):
     """
 
     if verbose:
-        print 'Running: \n' + command + '\n=== ... ==='
+        print('Running: \n' + command + '\n=== ... ===')
         std = ''
     else:
         std = ' > /dev/null 2>&1'
@@ -257,7 +257,7 @@ def do_enhance():
     """
 
     if not quiet:
-        print 'Enhancing images... please wait, this might take long...'
+        print('Enhancing images... please wait, this might take long...')
 
     enh_opts = "-enhance -sharpen '0.0x0.5' -gamma 1.2 -contrast -depth 8"
 
@@ -336,7 +336,7 @@ def do_encode():
     all_vars.update(locals())
 
     if not quiet:
-        print 'Creating GIF file'
+        print('Creating GIF file')
 
     command = """cd %(source_dir)s ; \\
 %(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(gifv)s
@@ -357,7 +357,7 @@ def do_clean():
     """
 
     if not quiet:
-        print 'Deleting all enhanced images (if any)'
+        print('Deleting all enhanced images (if any)')
 
     eframes = os.path.join(work_dir, 'eimg')
     rframes = os.path.join(work_dir, 'rimg')
@@ -402,11 +402,11 @@ def is_installed(prog):
     wprog = which(prog)
 
     if wprog == '':
-        print prog + ': command not found'
-        raise SystemExit, 1
+        print(prog + ': command not found')
+        raise SystemExit(1)
     else:
         if verbose:
-            print wprog + ': found'
+            print(wprog + ': found')
 
 
 if __name__ == '__main__':
@@ -420,31 +420,31 @@ if __name__ == '__main__':
     import tarfile
 
     try:
-        if sys.version_info[0:3] < (2, 3, 0):
-            raise SystemExit, 1
+        if sys.version_info[0:3] < (3, 0, 0):
+            raise SystemExit(1)
     except:
-        print 'You need Python 2.3.0 or greater to run me!'
-        raise SystemExit, 1
+        print('You need Python 3.0.0 or greater to run me!')
+        raise SystemExit(1)
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
                                          'ho:p:d:w:a:qvt:ekc:r:s:b:f:VCD:L:')
     except:
-        print "Something's wrong. Try the '-h' flag."
-        raise SystemExit, 1
+        print("Something's wrong. Try the '-h' flag.")
+        raise SystemExit(1)
 
     opts = dict(opts)
 
     if not opts and not args:
-        print usage
-        raise SystemExit, 1
+        print(usage)
+        raise SystemExit(1)
 
     if '-h' in opts:
-        print usage + help
+        print(usage + help)
         raise SystemExit
 
     if '-V' in opts:
-        print 'gif_encoder.py version ' + version
+        print('gif_encoder.py version ' + version)
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):
@@ -465,8 +465,8 @@ if __name__ == '__main__':
     img_pre = opts.get('-p', '')
 
     if img_pre not in ['', 'eimg', 'rimg']:
-         print 'Improper image name prefix.'
-         raise SystemExit, 1
+         print('Improper image name prefix.')
+         raise SystemExit(1)
 
     temp_dir = ''
     img_dir = opts.get('-d', '.')
@@ -477,14 +477,14 @@ if __name__ == '__main__':
         img_dir = temp_dir + '/img_dir'
 
     if not os.path.isdir(img_dir):
-        print 'The image source directory: '  + img_dir + \
-              ' does not exist!'
-        raise SystemExit, 1
+        print('The image source directory: '  + img_dir + \
+              ' does not exist!')
+        raise SystemExit(1)
 
     if len(args) not in [0, 2]:
-        print 'If frames are specified both first and last ' + \
-              'image numbers must be chosen.'
-        raise SystemExit, 1
+        print('If frames are specified both first and last ' + \
+              'image numbers must be chosen.')
+        raise SystemExit(1)
     elif len(args) == 0:
         args = [None, None]
 
@@ -514,8 +514,8 @@ if __name__ == '__main__':
 
     fpsc = opts.get('-f', '4')
 
-    if fpsc not in [str(i) for i in xrange(1,9)]:
-        if not quiet: print 'Invalid fps code, attempting float fps.'
+    if fpsc not in [str(i) for i in range(1,9)]:
+        if not quiet: print('Invalid fps code, attempting float fps.')
         foundfps = False
     else:
         if fpsc == '1': fps = 24000.0/1001.0
@@ -531,14 +531,14 @@ if __name__ == '__main__':
     if not foundfps:
         try:
             fps = locale.atof(fpsc)
-            if not quiet: print 'Using fps = %s' % fps
+            if not quiet: print('Using fps = %s' % fps)
             if fps > 0: foundfps = True
         except:
             pass
 
     if not foundfps:
-        print 'Invalid fps code or rate.'
-        raise SystemExit, 1
+        print('Invalid fps code or rate.')
+        raise SystemExit(1)
 
     if '-e' not in opts:
         enhance = False
@@ -546,8 +546,8 @@ if __name__ == '__main__':
         enhance = True
 
     if enhance and img_pre:
-        print 'Sorry, you cannot enhance already-enhanced images'
-        raise SystemExit, 1
+        print('Sorry, you cannot enhance already-enhanced images')
+        raise SystemExit(1)
 
     if '-k' not in opts:
         keep = False
@@ -558,23 +558,23 @@ if __name__ == '__main__':
     rgeom = opts.get('-r', '')
 
     if (cgeom or rgeom) and not enhance:
-        print 'Missing "-e" option.'
-        raise SystemExit, 1
+        print('Missing "-e" option.')
+        raise SystemExit(1)
 
     delay = opts.get('-D', '0')
-    if verbose: print 'Linear audio delay (ms): ' + delay
+    if verbose: print('Linear audio delay (ms): ' + delay)
 
     lv1file = opts.get('-L', None)
     if lv1file:
-        if not quiet: print 'Opening lv1 file...'
+        if not quiet: print('Opening lv1 file...')
         try:
             lv1 = tarfile.open(os.path.abspath(lv1file))
         except:
-            print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit, 1
+            print('This does not appear to be a valid LiVES file!')
+            raise SystemExit(1)
         if 'header.tar' not in lv1.getnames():
-            print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit, 1
+            print('This does not appear to be a valid LiVES file!')
+            raise SystemExit(1)
         for tfile in lv1.getmembers():
             lv1.extract(tfile, img_dir)
         for tfile in glob.glob(os.path.join(img_dir, '*.tar')):
@@ -589,24 +589,24 @@ if __name__ == '__main__':
     elif os.path.isfile(test_file + '.png'):
         ext = '.png'
     else:
-        print 'Cannot find any appropriate %s or %s files!' % ('.jpg','.png')
-        raise SystemExit, 1
+        print('Cannot find any appropriate %s or %s files!' % ('.jpg','.png'))
+        raise SystemExit(1)
     first_frame = test_file + ext
     last_frame = os.path.join(img_dir, img_pre + last_frame_num + ext)
 
-    if not quiet: print 'Found: ' + first_frame
+    if not quiet: print('Found: ' + first_frame)
     
     work_dir = opts.get('-w', img_dir)
     work_dir = os.path.abspath(work_dir)
     if not os.path.isdir(work_dir):
-        if not quiet: print 'Creating ' + work_dir
+        if not quiet: print('Creating ' + work_dir)
         try:
             os.makedirs(work_dir)
-            os.chmod(work_dir, 0755)
+            os.chmod(work_dir, 0o755)
         except:
-            print 'Could not create the work directory ' + \
-                  work_dir
-            raise SystemExit, 1
+            print('Could not create the work directory ' + \
+                  work_dir)
+            raise SystemExit(1)
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
@@ -632,7 +632,7 @@ if __name__ == '__main__':
         do_clean()
     if temp_dir != '':
         shutil.rmtree(temp_dir)
-    if not quiet: print "Done!"
+    if not quiet: print("Done!")
 
 
 """

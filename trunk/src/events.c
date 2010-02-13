@@ -3811,7 +3811,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
     while (g_main_context_iteration (NULL,FALSE));
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
-      cfile->redoable=FALSE;
+      if (mainw->current_file>-1) cfile->redoable=FALSE;
       close_scrap_file();
       sensitize();
       break;
@@ -3832,7 +3832,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       dac=prefs->mt_def_achans;
       das=prefs->mt_def_asamps;
       dse=prefs->mt_def_signed_endian;
-      if (!mainw->clip_switched&&prefs->render_prompt) {
+      if (!mainw->clip_switched&&prefs->render_prompt&&mainw->current_file>-1) {
 	if (cfile->hsize>0) prefs->mt_def_width=cfile->hsize;
 	if (cfile->vsize>0) prefs->mt_def_height=cfile->vsize;
 	prefs->mt_def_fps=cfile->fps;
@@ -3875,10 +3875,9 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       if (on_multitrack_activate (NULL, (gpointer)mainw->event_list)) {
 	mainw->event_list=NULL;
 	new_clip=TRUE;
-	
       }
       else render_choice=RENDER_CHOICE_PREVIEW;
-      break;
+     break;
     case RENDER_CHOICE_EVENT_LIST:
       if (count_events(mainw->event_list,prefs->event_window_show_frame_events,0,0)>1000) if (!do_event_list_warning()) {
 	render_choice=RENDER_CHOICE_PREVIEW;
@@ -3901,6 +3900,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
     event_list_free(mainw->event_list);
     mainw->event_list=NULL;
   }
+
   return new_clip;
 }
 

@@ -2190,6 +2190,7 @@ void play_file (void) {
   }
   
   if (mainw->current_file>-1) cfile->play_paused=FALSE;
+
   if (mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR) {
     gint xcurrent_file=mainw->current_file;
     weed_bg_generator_end (mainw->files[mainw->blend_file]->ext_src);
@@ -2253,34 +2254,22 @@ void play_file (void) {
   }
 #endif
 
-  if (gen_file>-1&&mainw->current_file!=gen_file&&mainw->files[gen_file]!=NULL&&mainw->files[gen_file]->clip_type==CLIP_TYPE_GENERATOR&&cfile->clip_type!=CLIP_TYPE_GENERATOR) {
-    current_file=mainw->pre_src_file=mainw->current_file;
-    mainw->current_file=gen_file;
-  }
+  // need to do this here, in case we want to preview a generator which will close to -1
+  if (mainw->record) deal_with_render_choice(TRUE);
 
-  if (!mainw->preview&&mainw->current_file>-1&&(mainw->multitrack==NULL||mainw->current_file==gen_file)) {
-    if ((mainw->current_file!=current_file)||cfile->clip_type==CLIP_TYPE_GENERATOR) {
-      mainw->osc_block=TRUE;
-      if (mainw->current_file>0&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
-	weed_generator_end (cfile->ext_src);
-      }
-      mainw->osc_block=FALSE;
+  if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
+    mainw->osc_block=TRUE;
+    weed_generator_end (cfile->ext_src);
+    mainw->osc_block=FALSE;
+    if (mainw->multitrack==NULL) {
       if (mainw->files[current_file]!=NULL) switch_to_file (mainw->current_file,current_file);
       else if (mainw->pre_src_file!=-1) switch_to_file (mainw->current_file,mainw->pre_src_file);
-    }
-    else {
-      if (mainw->multitrack==NULL) get_play_times();
     }
   }
 
   if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
-  else mainw->pre_src_file=-1;
 
   reset_clip_menu();
-
-  if (mainw->record) deal_with_render_choice(TRUE);
-
-
 }
   
 
@@ -3682,6 +3671,8 @@ void add_to_recovery_file (gchar *handle) {
   gchar *com=g_strdup_printf("/bin/echo \"%s\" >> %s",handle,mainw->recovery_file);
   dummyvar=system(com);
   g_free(com);
+
+  if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) write_backup_layout_numbering(mainw->multitrack);
 }
 
 

@@ -169,7 +169,11 @@ plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const
       com=g_strdup_printf("%s/%s %s",prefs->tmpdir,plugin_name,request);
     }
     else {
+#ifdef DEBUG_PLUGINS
       com=g_strdup_printf ("%s%s%s/%s %s",prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,request);
+#else
+      com=g_strdup_printf ("%s%s%s/%s %s 2>/dev/null",prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,request);
+#endif
     }
     if (plugin_name==NULL||!strlen(plugin_name)) {
       return reslist;
@@ -1219,9 +1223,9 @@ do_plugin_encoder_error(const gchar *plugin_name) {
     g_free(msg);
     return;
   }
+
   msg=g_strdup_printf(_("LiVES did not receive a response from the encoder plugin called '%s'.\nPlease make sure you have that plugin installed correctly in\n%s%s%s\nor switch to another plugin using Tools|Preferences|Encoding\n"),plugin_name,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
-  if (rdet!=NULL) do_error_dialog_with_check_transient(msg,FALSE,0,GTK_WINDOW(rdet->dialog));
-  else do_error_dialog(msg);
+  do_blocking_error_dialog(msg);
   g_free(msg);
 }
 
@@ -1627,8 +1631,6 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
   while (list!=NULL) {
     listnext=list->next;
     if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,list->data,"get_capabilities"))==NULL) {
-      do_plugin_encoder_error(list->data);
-
       encoders=g_list_delete_link(encoders,list);
     }
     else {

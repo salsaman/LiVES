@@ -276,7 +276,7 @@ lives_exit (void) {
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
 
-  if (mainw->leave_files) end_threaded_dialog();
+  end_threaded_dialog();
 
 #ifdef ENABLE_NLS
   if (trString!=NULL) g_free(trString);

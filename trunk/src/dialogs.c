@@ -783,7 +783,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+    if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) {
+      pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+      g_print("pt a\n");
+    }
 #endif
   }
 
@@ -801,6 +804,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
       // just pulse the progress bar
       if (!process_one(visible)) {
+	g_print("pt a2\n");
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	return FALSE;
       }

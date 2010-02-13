@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# version for python 3
 
 import locale
 locale.setlocale(locale.LC_NUMERIC,"")
@@ -36,14 +37,14 @@ Copyright (C) 2008 - 2010 Salsaman (salsaman@xs4all.nl)
 
 
 version = '0.2.12'
-mpeg = 'mpeg_encoder.py'
-ogm = 'ogm_encoder.py'
-mkv = 'mkv_encoder.py'
-ogg = 'theora_encoder.py'
-avi = 'avi_encoder.py'
-drc = 'dirac_encoder.py'
-mng = 'mng_encoder.py'
-gif = 'gif_encoder.py'
+mpeg = 'mpeg_encoder3.py'
+ogm = 'ogm_encoder3.py'
+mkv = 'mkv_encoder3.py'
+ogg = 'theora_encoder3.py'
+avi = 'avi_encoder3.py'
+drc = 'dirac_encoder3.py'
+mng = 'mng_encoder3.py'
+gif = 'gif_encoder3.py'
 
 usage = \
       """
@@ -125,9 +126,11 @@ def run(command):
     """
     Run a shell command
     """
+    if sys.version_info[0:3] < (3, 0, 0):
+        raise SystemExit
 
     if verbose:
-        print >> sys.stderr, 'Running: \n' + command + '\n=== ... ==='
+        print('Running: \n' + command + '\n=== ... ===', file=sys.stderr)
     os.system(command)
 
 
@@ -167,11 +170,11 @@ def is_installed(prog):
 
     if wprog == '':
         if verbose:
-            print >> sys.stderr, prog + ': command not found'
+            print(prog + ': command not found', file=sys.stderr)
         found = 0
     else:
         if verbose:
-            print >> sys.stderr, wprog + ': found'
+            print(wprog + ': found', file=sys.stderr)
         found  = 1
 
     if found:
@@ -186,7 +189,7 @@ def is_installed(prog):
 
         if 'command not found' in std_out_err.read():
             if verbose:
-                print >> sys.stderr, prog + ': missing dependencies'
+                print(prog + ': missing dependencies', file=sys.stderr)
             found = 0
 
     return found
@@ -197,27 +200,27 @@ def clear():
     """
 
     if verbose: 
-        print >> sys.stderr, 'Deleting ' + tempdir
+        print('Deleting ' + tempdir, file=sys.stderr)
 
     shutil.rmtree(tempdir, True)
 
     for link in glob.glob('./temporary_symlink*'):
         try:
             if verbose:
-                print >> sys.stderr, 'Deleting ' + link
+                print('Deleting ' + link, file=sys.stderr)
             os.remove(link)
         except:
             if verbose:
-                print >> sys.stderr, 'Tried deleting ' + link
+                print('Tried deleting ' + link, file=sys.stderr)
             pass
     for bmp in glob.glob('./TMPBMP*.bmp'):
         try:
             if verbose:
-                print >> sys.stderr, 'Deleting ' + bmp
+                print('Deleting ' + bmp, file=sys.stderr)
             os.remove(link)
         except:
             if verbose: 
-                print >> sys.stderr, 'Tried deleting ' + bmp
+                print('Tried deleting ' + bmp, file=sys.stderr)
             pass
     if os.path.exists('./divx2pass.log'):
         os.remove('./divx2pass.log')
@@ -249,29 +252,29 @@ if __name__ == '__main__':
         if sys.version_info[0:3] < (2, 3, 0):
             raise SystemExit
     except:
-        print >> sys.stderr, 'You need Python 2.3.0 or greater to run me!'
+        print('You need Python 2.3.0 or greater to run me!', file=sys.stderr)
         raise SystemExit
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
                                          'hvV')
     except:
-        print >> sys.stderr, "Something's wrong. Try the '-h' flag."
+        print("Something's wrong. Try the '-h' flag.", file=sys.stderr)
         raise SystemExit
 
     opts = dict(opts)
 
     if not opts and not args:
-        print >> sys.stderr, usage
+        print(usage, file=sys.stderr)
         raise SystemExit
 
     if '-h' in opts:
-        print >> sys.stderr, usage + help
+        print(usage + help, file=sys.stderr)
         raise SystemExit
 
     if '-V' in opts:
-        print 'multi_encoder version ' + version
-        print 'multi_encoder version ' + version
+        print('multi_encoder version ' + version)
+        print('multi_encoder version ' + version)
         raise SystemExit
 
     if '-v' in opts:
@@ -280,7 +283,7 @@ if __name__ == '__main__':
         verbose = False
 
     if len(args) < 1:
-        print >> sys.stderr, 'You must specify a directive.'
+        print('You must specify a directive.', file=sys.stderr)
         raise SystemExit
 
     dir = args[0]
@@ -288,14 +291,14 @@ if __name__ == '__main__':
     if dir not in ['version', 'init', \
                    'get_capabilities', 'get_formats', 'finalise', \
                    'get_format_request', 'encode', 'clear']:
-        print >> sys.stderr, 'Directive "' + dir + '" not recognized.'
+        print('Directive "' + dir + '" not recognized.', file=sys.stderr)
         raise SystemExit
     elif verbose:
-        print >> sys.stderr, 'Directive "' + dir + '" chosen.'
+        print('Directive "' + dir + '" chosen.', file=sys.stderr)
 
 
     if dir == 'version':
-        print >> sys.stderr,  version
+        print(version, file=sys.stderr)
         raise SystemExit
 
     if dir == 'init':
@@ -304,14 +307,14 @@ if __name__ == '__main__':
                     is_installed(drc) + is_installed(gif) + \
                     is_installed(mng) + is_installed(avi)
         if installed < 1:
-            print 'No encoders found!'
-            raise SystemExit, 1
-        print 'initialised'
+            print('No encoders found!')
+            raise SystemExit(1)
+        print('initialised')
         raise SystemExit
 
     if dir == 'get_capabilities':
         # Can encode png (4) + not pure perl (8)
-        print '12'
+        print('12')
         raise SystemExit
 
     if dir == 'get_formats':
@@ -332,95 +335,95 @@ if __name__ == '__main__':
        sr = 'arate=32000;44100;48000'
        if is_installed(mpeg):
            specs = '|4|%s,%s,%s,%s,%s|mpg|' % (fps, ar, hb, vb, sr)
-           print 'qlo-mpeg|Fast, very low Quality MPG (MPEG-1/MP2)' + specs
-           print 'lo-mpeg|Low Quality MPG (MPEG-1/MP2)' + specs
-           print 'ml-mpeg|Medium-Low Quality MPG (MPEG-1/MP2)' + specs
-           print 'mh-mpeg|Medium-High Quality MPG (MPEG-1/MP2)'+ specs
-           print 'hi-mpeg|High Quality MPG (MPEG-1/MP2)' + specs
+           print('qlo-mpeg|Fast, very low Quality MPG (MPEG-1/MP2)' + specs)
+           print('lo-mpeg|Low Quality MPG (MPEG-1/MP2)' + specs)
+           print('ml-mpeg|Medium-Low Quality MPG (MPEG-1/MP2)' + specs)
+           print('mh-mpeg|Medium-High Quality MPG (MPEG-1/MP2)'+ specs)
+           print('hi-mpeg|High Quality MPG (MPEG-1/MP2)' + specs)
 
            specs = '|4|%s,%s,%s,%s,%s|mpg|' % (ntscfps, ar, hb, vb, sr)
-           print 'vcd-mpeg|VCD-compatible MPG (NTSC)' + specs
-           print 'svcd-mpeg|SVCD-compatible MPG (NTSC)' + specs
+           print('vcd-mpeg|VCD-compatible MPG (NTSC)' + specs)
+           print('svcd-mpeg|SVCD-compatible MPG (NTSC)' + specs)
            # For DVD the encoder will resample the sound rate to 48000
-           print 'dvd-mpeg|DVD-compatible MPG (NTSC)' + specs
+           print('dvd-mpeg|DVD-compatible MPG (NTSC)' + specs)
 
            specs = '|2|%s,%s,%s,%s,%s|mpg|' % (ntscfps, ar, hb, vb, sr)
-           print 'sdvd-mpeg|Strictly DVD-compatible MPG (NTSC)' + specs
+           print('sdvd-mpeg|Strictly DVD-compatible MPG (NTSC)' + specs)
            specs = '|4|%s,%s,%s,%s,%s|mpg|' % (palfps, ar, hb, vb, sr)
-           print 'pvcd-mpeg|VCD-compatible MPG (PAL)' + specs
+           print('pvcd-mpeg|VCD-compatible MPG (PAL)' + specs)
            specs = '|2|%s,%s,%s,%s,%s|mpg|' % (palfps, ar, hb, vb, sr)
-           print 'psvcd-mpeg|SVCD-compatible MPG (PAL)' + specs
+           print('psvcd-mpeg|SVCD-compatible MPG (PAL)' + specs)
            # For DVD the encoder will resample the sound rate to 48000
-           print 'pdvd-mpeg|DVD-compatible MPG (PAL)' + specs
-           print 'spdvd-mpeg|Strictly DVD-compatible MPG (PAL)' + specs
+           print('pdvd-mpeg|DVD-compatible MPG (PAL)' + specs)
+           print('spdvd-mpeg|Strictly DVD-compatible MPG (PAL)' + specs)
        sr = 'arate=8000;11025;12000;16000;22050;24000;32000;44100;48000'
        if is_installed(ogm):
            specs = '|8|%s,%s,%s,%s|ogm|' % (ar, hb, vb, sr)
-           print 'lo_d-ogm|Low Quality OGM (DIVX 4:5/VORBIS)' + specs
-           print 'ml_d-ogm|Medium-Low Quality OGM (DIVX 4:5/VORBIS)' + specs
-           print 'mh_d-ogm|Medium-High Quality OGM (DIVX 4:5/VORBIS)' + specs
-           print 'hi_d-ogm|High Quality OGM (DIVX 4:5/VORBIS)' + specs
-           print 'lo_x-ogm|Low Quality OGM (XVID/VORBIS)' + specs
-           print 'ml_x-ogm|Medium-Low Quality OGM (XVID/VORBIS)' + specs
-           print 'mh_x-ogm|Medium-High Quality OGM (XVID/VORBIS)' + specs
-           print 'hi_x-ogm|High Quality OGM (XVID/VORBIS)' + specs
+           print('lo_d-ogm|Low Quality OGM (DIVX 4:5/VORBIS)' + specs)
+           print('ml_d-ogm|Medium-Low Quality OGM (DIVX 4:5/VORBIS)' + specs)
+           print('mh_d-ogm|Medium-High Quality OGM (DIVX 4:5/VORBIS)' + specs)
+           print('hi_d-ogm|High Quality OGM (DIVX 4:5/VORBIS)' + specs)
+           print('lo_x-ogm|Low Quality OGM (XVID/VORBIS)' + specs)
+           print('ml_x-ogm|Medium-Low Quality OGM (XVID/VORBIS)' + specs)
+           print('mh_x-ogm|Medium-High Quality OGM (XVID/VORBIS)' + specs)
+           print('hi_x-ogm|High Quality OGM (XVID/VORBIS)' + specs)
 
        if is_installed(mkv):
            specs = '|8|%s,%s,%s,%s|mkv|' % (ar, hb, vb, sr)
-           print 'lo_d-mkv|Low Quality MKV (DIVX 4:5/VORBIS)' + specs
-           print 'ml_d-mkv|Medium-Low Quality MKV (DIVX 4:5/VORBIS)' + specs
-           print 'mh_d-mkv|Medium-High Quality MKV (DIVX 4:5/VORBIS)' + specs
-           print 'hi_d-mkv|High Quality MKV (DIVX 4:5/VORBIS)' + specs
-           print 'lo_x-mkv|Low Quality MKV (XVID/VORBIS)' + specs
-           print 'ml_x-mkv|Medium-Low Quality MKV (XVID/VORBIS)' + specs
-           print 'mh_x-mkv|Medium-High Quality MKV (XVID/VORBIS)' + specs
-           print 'hi_x-mkv|High Quality MKV (XVID/VORBIS)' + specs
-           print 'lo_h-mkv|Low Quality MKV (H.264/VORBIS)' + specs
-           print 'ml_h-mkv|Medium-Low Quality MKV (H.264/VORBIS)' + specs
-           print 'mh_h-mkv|Medium-High Quality MKV (H.264/VORBIS)' + specs
-           print 'hi_h-mkv|High Quality MKV (H.264/VORBIS)' + specs
+           print('lo_d-mkv|Low Quality MKV (DIVX 4:5/VORBIS)' + specs)
+           print('ml_d-mkv|Medium-Low Quality MKV (DIVX 4:5/VORBIS)' + specs)
+           print('mh_d-mkv|Medium-High Quality MKV (DIVX 4:5/VORBIS)' + specs)
+           print('hi_d-mkv|High Quality MKV (DIVX 4:5/VORBIS)' + specs)
+           print('lo_x-mkv|Low Quality MKV (XVID/VORBIS)' + specs)
+           print('ml_x-mkv|Medium-Low Quality MKV (XVID/VORBIS)' + specs)
+           print('mh_x-mkv|Medium-High Quality MKV (XVID/VORBIS)' + specs)
+           print('hi_x-mkv|High Quality MKV (XVID/VORBIS)' + specs)
+           print('lo_h-mkv|Low Quality MKV (H.264/VORBIS)' + specs)
+           print('ml_h-mkv|Medium-Low Quality MKV (H.264/VORBIS)' + specs)
+           print('mh_h-mkv|Medium-High Quality MKV (H.264/VORBIS)' + specs)
+           print('hi_h-mkv|High Quality MKV (H.264/VORBIS)' + specs)
 
        if is_installed(avi):
            specs = '|1|%s,%s,%s,%s|avi|' % (ar, hb, vb, sr)
-           print 'lo_s-avi|EXP Low Quality AVI (SNOW/MP3)' + specs
-           print 'ml_s-avi|EXP Medium-Low Quality AVI (SNOW/MP3)' + specs
-           print 'mh_s-avi|EXP Medium-High Quality AVI (SNOW/MP3)' + specs
-           print 'hi_s-avi|EXP High Quality AVI (SNOW/MP3)' + specs
-           print 'lo_h-avi|EXP Low Quality AVI (H.264/MP3)' + specs
-           print 'ml_h-avi|EXP Medium-Low Quality AVI (H.264/MP3)' + specs
-           print 'mh_h-avi|EXP Medium-High Quality AVI (H.264/MP3)' + specs
-           print 'hi_h-avi|EXP High Quality AVI (H.264/MP3)' + specs
-           print 'lo_x-avi|Low Quality AVI (XVID/MP3)' + specs
-           print 'ml_x-avi|Medium-Low Quality AVI (XVID/MP3)' + specs
-           print 'mh_x-avi|Medium-High Quality AVI (XVID/MP3)' + specs
-           print 'hi_x-avi|High Quality AVI (XVID/MP3)' + specs
+           print('lo_s-avi|EXP Low Quality AVI (SNOW/MP3)' + specs)
+           print('ml_s-avi|EXP Medium-Low Quality AVI (SNOW/MP3)' + specs)
+           print('mh_s-avi|EXP Medium-High Quality AVI (SNOW/MP3)' + specs)
+           print('hi_s-avi|EXP High Quality AVI (SNOW/MP3)' + specs)
+           print('lo_h-avi|EXP Low Quality AVI (H.264/MP3)' + specs)
+           print('ml_h-avi|EXP Medium-Low Quality AVI (H.264/MP3)' + specs)
+           print('mh_h-avi|EXP Medium-High Quality AVI (H.264/MP3)' + specs)
+           print('hi_h-avi|EXP High Quality AVI (H.264/MP3)' + specs)
+           print('lo_x-avi|Low Quality AVI (XVID/MP3)' + specs)
+           print('ml_x-avi|Medium-Low Quality AVI (XVID/MP3)' + specs)
+           print('mh_x-avi|Medium-High Quality AVI (XVID/MP3)' + specs)
+           print('hi_x-avi|High Quality AVI (XVID/MP3)' + specs)
 
        if is_installed(ogg):
            specs = '|8|%s,%s,%s,%s|ogg|' % (ar, hb, vb, sr)
-           print 'lo-theora|Low Quality OGG (THEORA/VORBIS)' + specs
-           print 'ml-theora|Medium-Low Quality OGG (THEORA/VORBIS)' + specs
-           print 'mh-theora|Medium-High Quality OGG (THEORA/VORBIS)' + specs
-           print 'hi-theora|High Quality OGG (THEORA/VORBIS)' + specs
+           print('lo-theora|Low Quality OGG (THEORA/VORBIS)' + specs)
+           print('ml-theora|Medium-Low Quality OGG (THEORA/VORBIS)' + specs)
+           print('mh-theora|Medium-High Quality OGG (THEORA/VORBIS)' + specs)
+           print('hi-theora|High Quality OGG (THEORA/VORBIS)' + specs)
 
        # EXPERIMENTAL. Also, drc doesn't support sound yet (needs wrapper).
        if is_installed(drc):
            specs = '|0|%s,%s,%s,%s|drc|' % (ar, hb, vb, sr)
-           print 'lo-dirac|EXP Low Quality DRC (DIRAC/NONE)' + specs
-           print 'ml-dirac|EXP Medium-Low Quality DRC (DIRAC/NONE)' + specs
-           print 'mh-dirac|EXP Medium-High Quality DRC (DIRAC/NONE)' + specs
-           print 'hi-dirac|EXP High Quality DRC (DIRAC/NONE)' + specs
+           print('lo-dirac|EXP Low Quality DRC (DIRAC/NONE)' + specs)
+           print('ml-dirac|EXP Medium-Low Quality DRC (DIRAC/NONE)' + specs)
+           print('mh-dirac|EXP Medium-High Quality DRC (DIRAC/NONE)' + specs)
+           print('hi-dirac|EXP High Quality DRC (DIRAC/NONE)' + specs)
 
        if is_installed(mng):
            specs = '|0|none|mng|'
-           print 'hi-mng|MNG (MNG/NONE) format' + specs
+           print('hi-mng|MNG (MNG/NONE) format' + specs)
        if is_installed(gif):
            specs = '|0|none|gif|'
-           print 'hi-gif|Animated GIF (GIF/NONE) format' + specs
+           print('hi-gif|Animated GIF (GIF/NONE) format' + specs)
        raise SystemExit
 
     if dir == 'get_format_request':
         # wav (1) + clipped audio (2) + selected frames (4)
-        print '7'
+        print('7')
         raise SystemExit
 
     if dir == 'encode':
@@ -465,14 +468,14 @@ if __name__ == '__main__':
             # 2.21:1
             arc = '4'
         else:
-            print 'Unable to determine the aspect ratio, got: %s' % aspect
+            print('Unable to determine the aspect ratio, got: %s' % aspect)
 
             # something like this would be good
             #output = open('./.status', 'w')
             #output.write(message)
             #output.close()
 
-            raise SystemExit, 1
+            raise SystemExit(1)
 
         (type, prog) = vformat.split('-')
 
@@ -519,7 +522,7 @@ if __name__ == '__main__':
                fpsc, aspect, arc, type, prog, tempdir, encode_command)
 
         if verbose:
-            print >> sys.stderr, message
+            print(message, file=sys.stderr)
 
         os.system(encode_command)
         raise SystemExit
@@ -529,7 +532,7 @@ if __name__ == '__main__':
         raise SystemExit
 
     if dir == 'finalise':
-        print 'finalised'
+        print('finalised')
         raise SystemExit
 
 """

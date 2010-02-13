@@ -1447,7 +1447,7 @@ _prefsw *create_prefs_dialog (void) {
 
   gboolean has_ap_rec=FALSE;
 
-  _prefsw *prefsw=(_prefsw*)(g_malloc(sizeof(_prefsw)));
+  prefsw=(_prefsw*)(g_malloc(sizeof(_prefsw)));
 
   prefsw->prefs_dialog = gtk_dialog_new ();
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->prefs_dialog), 10);
@@ -2435,7 +2435,6 @@ _prefsw *create_prefs_dialog (void) {
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
     if ((encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL))==NULL) {
-      do_plugin_encoder_error(NULL);
     }
     else {
       encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);

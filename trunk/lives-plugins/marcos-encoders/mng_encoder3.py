@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 """
-gif_encoder.py
+mng_encoder.py
 
-Front-end to various programs needed to create GIF
+Front-end to various programs needed to create MNG
 movies with some image-enhancing capabilities through the use of
 ImageMagick. Meant as a companion to LiVES (to possibly call
 from within a plugin, see http://www.xs4all.nl/~salsaman/lives/ )
@@ -16,7 +16,7 @@ Note that encoding and decoding requires huge amounts
 of memory, and so it's mostly meant for very short
 clips (e.g. animated web graphics). The resulting
 clips can be viewed using the "animate" command which is
-part of ImageMagick, or a graphical web browser.
+part of ImageMagick.
 
 Copyright (C) 2004-2005 Marco De la Cruz (marco@reimeika.ca)
 It's a trivial program, but might as well GPL it, so see:
@@ -30,10 +30,10 @@ convert = 'convert'
 
 usage = \
       """
-gif_encoder.py -h
-gif_encoder.py -V
-gif_encoder.py -C
-gif_encoder.py [-o out] [-p pre] [-d dir] [-a aspect*] [-D delay*]
+mng_encoder.py -h
+mng_encoder.py -V
+mng_encoder.py -C
+mng_encoder.py [-o out] [-p pre] [-d dir] [-a aspect*] [-D delay*]
                [-q|-v] [-t type*] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
                [-s sndfile*] [-b sndrate*] [-f fpscode] [-L lv1file]
                [firstframe lastframe]
@@ -43,8 +43,8 @@ help = \
      """
 SUMMARY (ver. %s):
 
-Encodes a series of PNG or JPG images into an animated GIF
-(.gif) and is also capable of performing some simple image
+Encodes a series of PNG or JPG images into an MNG
+(.mng) stream and is also capable of performing some simple image
 enhacements using ImageMagick. The images and audio are assumed to
 be in an uncompressed LiVES format, hence making this encoder
 more suitable to be used within a LiVES plugin (but can also
@@ -59,18 +59,18 @@ OPTIONS:
 -C          check external program dependencies and exit.
 
 -o out      will save the video in file "out".
-            Default: "gif_movie.gif".
+            Default: "mng_movie.mng".
 
 -p pre      the encoder assumes that sound and images are named using
             LiVES' conventions i.e. "audio" and "00000001.ext",
             "00000002.ext"... where "ext" is either "jpg" or "png".
-            However, gif_encoder.py will create temporary files
+            However, mng_encoder.py will create temporary files
             which can be saved for later use (for example, after
             enhancing the images with "-e" , which may take a long
             time). These temporary files will be named
             "pre_00000001.ext", etc... where "pre" is either "eimg"
             or "rimg" and will be kept if the "-k" option is used.
-            gif_encoder.py can then be run over the enhanced images
+            mng_encoder.py can then be run over the enhanced images
             only by selecting the appropriate prefix ("eimg" or
             "rimg") here. See "-e" to see what each prefix means.
             Default: "" (an empty string).
@@ -183,11 +183,11 @@ EXAMPLES:
 
 Suppose you have restored a LiVES' .lv1 file (in either JPG or PNG format),
 and that the images are stored in the directory "/tmp/livestmp/991319584/".
-Then, in order to create an gif file you can simply do the following:
+Then, in order to create an mng file you can simply do the following:
 
-   gif_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.gif
+   mng_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.mng
 
-and the clip "default.gif" will be created in "/movies/".
+and the clip "default.mng" will be created in "/movies/".
 
 Suppose we want to make a downloadable version of the clip, small in size
 but of good quality. The following command activates the generic enhancement
@@ -197,26 +197,26 @@ This is done because we are assuming that there is a black border around
 the original pictures which we want to get rid of (this might distort the
 images somewhat, so be careful about cropping/resizing):
 
-   gif_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpgif \\
-   -o /movies/download.gif -k -e -c "704x464+5+6" -r "352x240"
+   mng_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpmng \\
+   -o /movies/download.mng -k -e -c "704x464+5+6" -r "352x240"
 
 Since we use the "-k" flag the enhanced images are kept (both full-size
-crops and the resized ones) in "/tmp/tmpgif". Beware that this may consume
+crops and the resized ones) in "/tmp/tmpmng". Beware that this may consume
 a lot of disk space (about 10x as much as the originals). The reason we
 keep them is because the above may take quite a long time and we may want
 to re-use the enhanced images. So, for example, creating a
 clip at full size can be accomplished now as follows:
 
-   gif_encoder.py -d /tmp/tmpgif -o /movies/archive.gif \\
+   mng_encoder.py -d /tmp/tmpmng -o /movies/archive.mng \\
    -s /tmp/livestmp/991319584/audio -k -p eimg
 
 If, for example, we only want to encode frames 100 to 150 we can run
 the following:
 
-   gif_encoder.py -v -d /tmp/tmpgif -o /movies/selection.gif \\
+   mng_encoder.py -v -d /tmp/tmpmng -o /movies/selection.mng \\
    -k -p eimg 100 150
 
-To delete all the enhanced images you can just remove "/tmp/tmpgif".
+To delete all the enhanced images you can just remove "/tmp/tmpmng".
 
 Suppose that you have "movie1.lv1", "movie2.lv1" and "movie3.lv1".
 Batch-encoding can be done as follows (zsh-syntax):
@@ -224,12 +224,12 @@ Batch-encoding can be done as follows (zsh-syntax):
    for i in movie?.lv1
    do
      mkdir /tmp/$i:r
-     gif_encoder.py -d /tmp/$i:r -o /tmp/$i:r.gif -L $i
+     mng_encoder.py -d /tmp/$i:r -o /tmp/$i:r.mng -L $i
      rm -rf /tmp/$i:r
    done
 
-This will generate the files "movie1.gif", "movie2.gif" and
-"movie3.gif" in "/tmp". Note that is is not necessary to
+This will generate the files "movie1.mng", "movie2.mng" and
+"movie3.mng" in "/tmp". Note that is is not necessary to
 specify whether the files are stored in JPG or PNG format,
 and that potentially time-consuming options (e.g. "-e") may
 be enabled. It is not necessary to have a working LiVES
@@ -242,7 +242,7 @@ def run(command):
     """
 
     if verbose:
-        print 'Running: \n' + command + '\n=== ... ==='
+        print('Running: \n' + command + '\n=== ... ===')
         std = ''
     else:
         std = ' > /dev/null 2>&1'
@@ -257,7 +257,7 @@ def do_enhance():
     """
 
     if not quiet:
-        print 'Enhancing images... please wait, this might take long...'
+        print('Enhancing images... please wait, this might take long...')
 
     enh_opts = "-enhance -sharpen '0.0x0.5' -gamma 1.2 -contrast -depth 8"
 
@@ -294,7 +294,7 @@ def do_enhance():
 
 def do_encode():
     """
-    Encode a series of images as an GIF file.
+    Encode a series of images as an MNG file.
     """
 
     if verbose:
@@ -329,21 +329,21 @@ def do_encode():
     # Delay between frames is in 100ths of a second
     spf = 100*(1/fps)
 
-    gifv = tempfile.mkstemp('.gif', '', work_dir)[1]
+    mngv = tempfile.mkstemp('.mng', '', work_dir)[1]
 
     all_vars = {}
     all_vars.update(globals())
     all_vars.update(locals())
 
     if not quiet:
-        print 'Creating GIF file'
+        print('Creating MNG file')
 
     command = """cd %(source_dir)s ; \\
-%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(gifv)s
+%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(mngv)s
 """ % all_vars
     run(command)
 
-    shutil.move(gifv, vidname)
+    shutil.move(mngv, vidname)
 
     if frame_range:
         lframes = os.path.join(source_dir, syml)
@@ -357,7 +357,7 @@ def do_clean():
     """
 
     if not quiet:
-        print 'Deleting all enhanced images (if any)'
+        print('Deleting all enhanced images (if any)')
 
     eframes = os.path.join(work_dir, 'eimg')
     rframes = os.path.join(work_dir, 'rimg')
@@ -402,11 +402,11 @@ def is_installed(prog):
     wprog = which(prog)
 
     if wprog == '':
-        print prog + ': command not found'
-        raise SystemExit, 1
+        print(prog + ': command not found')
+        raise SystemExit(1)
     else:
         if verbose:
-            print wprog + ': found'
+            print(wprog + ': found')
 
 
 if __name__ == '__main__':
@@ -420,31 +420,31 @@ if __name__ == '__main__':
     import tarfile
 
     try:
-        if sys.version_info[0:3] < (2, 3, 0):
-            raise SystemExit, 1
+        if sys.version_info[0:3] < (3, 0, 0):
+            raise SystemExit(1)
     except:
-        print 'You need Python 2.3.0 or greater to run me!'
-        raise SystemExit, 1
+        print('You need Python 3.0.0 or greater to run me!')
+        raise SystemExit(1)
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
                                          'ho:p:d:w:a:qvt:ekc:r:s:b:f:VCD:L:')
     except:
-        print "Something's wrong. Try the '-h' flag."
-        raise SystemExit, 1
+        print("Something's wrong. Try the '-h' flag.")
+        raise SystemExit(1)
 
     opts = dict(opts)
 
     if not opts and not args:
-        print usage
-        raise SystemExit, 1
+        print(usage)
+        raise SystemExit(1)
 
     if '-h' in opts:
-        print usage + help
+        print(usage + help)
         raise SystemExit
 
     if '-V' in opts:
-        print 'gif_encoder.py version ' + version
+        print('mng_encoder.py version ' + version)
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):
@@ -465,8 +465,8 @@ if __name__ == '__main__':
     img_pre = opts.get('-p', '')
 
     if img_pre not in ['', 'eimg', 'rimg']:
-         print 'Improper image name prefix.'
-         raise SystemExit, 1
+         print('Improper image name prefix.')
+         raise SystemExit(1)
 
     temp_dir = ''
     img_dir = opts.get('-d', '.')
@@ -477,14 +477,14 @@ if __name__ == '__main__':
         img_dir = temp_dir + '/img_dir'
 
     if not os.path.isdir(img_dir):
-        print 'The image source directory: '  + img_dir + \
-              ' does not exist!'
-        raise SystemExit, 1
+        print('The image source directory: '  + img_dir + \
+              ' does not exist!')
+        raise SystemExit(1)
 
     if len(args) not in [0, 2]:
-        print 'If frames are specified both first and last ' + \
-              'image numbers must be chosen.'
-        raise SystemExit, 1
+        print('If frames are specified both first and last ' + \
+              'image numbers must be chosen.')
+        raise SystemExit(1)
     elif len(args) == 0:
         args = [None, None]
 
@@ -508,14 +508,14 @@ if __name__ == '__main__':
     aspectc = opts.get('-a', '2')
 
     # Video type is not used
-    vtype = opts.get('-t', 'gif')
+    vtype = opts.get('-t', 'mng')
 
-    out_gif = opts.get('-o', vtype + '_movie.gif')
+    out_mng = opts.get('-o', vtype + '_movie.mng')
 
     fpsc = opts.get('-f', '4')
 
-    if fpsc not in [str(i) for i in xrange(1,9)]:
-        if not quiet: print 'Invalid fps code, attempting float fps.'
+    if fpsc not in [str(i) for i in range(1,9)]:
+        if not quiet: print('Invalid fps code, attempting float fps.')
         foundfps = False
     else:
         if fpsc == '1': fps = 24000.0/1001.0
@@ -531,14 +531,14 @@ if __name__ == '__main__':
     if not foundfps:
         try:
             fps = locale.atof(fpsc)
-            if not quiet: print 'Using fps = %s' % fps
+            if not quiet: print('Using fps = %s' % fps)
             if fps > 0: foundfps = True
         except:
             pass
 
     if not foundfps:
-        print 'Invalid fps code or rate.'
-        raise SystemExit, 1
+        print('Invalid fps code or rate.')
+        raise SystemExit(1)
 
     if '-e' not in opts:
         enhance = False
@@ -546,8 +546,8 @@ if __name__ == '__main__':
         enhance = True
 
     if enhance and img_pre:
-        print 'Sorry, you cannot enhance already-enhanced images'
-        raise SystemExit, 1
+        print('Sorry, you cannot enhance already-enhanced images')
+        raise SystemExit(1)
 
     if '-k' not in opts:
         keep = False
@@ -558,23 +558,23 @@ if __name__ == '__main__':
     rgeom = opts.get('-r', '')
 
     if (cgeom or rgeom) and not enhance:
-        print 'Missing "-e" option.'
-        raise SystemExit, 1
+        print('Missing "-e" option.')
+        raise SystemExit(1)
 
     delay = opts.get('-D', '0')
-    if verbose: print 'Linear audio delay (ms): ' + delay
+    if verbose: print('Linear audio delay (ms): ' + delay)
 
     lv1file = opts.get('-L', None)
     if lv1file:
-        if not quiet: print 'Opening lv1 file...'
+        if not quiet: print('Opening lv1 file...')
         try:
             lv1 = tarfile.open(os.path.abspath(lv1file))
         except:
-            print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit, 1
+            print('This does not appear to be a valid LiVES file!')
+            raise SystemExit(1)
         if 'header.tar' not in lv1.getnames():
-            print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit, 1
+            print('This does not appear to be a valid LiVES file!')
+            raise SystemExit(1)
         for tfile in lv1.getmembers():
             lv1.extract(tfile, img_dir)
         for tfile in glob.glob(os.path.join(img_dir, '*.tar')):
@@ -589,24 +589,24 @@ if __name__ == '__main__':
     elif os.path.isfile(test_file + '.png'):
         ext = '.png'
     else:
-        print 'Cannot find any appropriate %s or %s files!' % ('.jpg','.png')
-        raise SystemExit, 1
+        print('Cannot find any appropriate %s or %s files!' % ('.jpg','.png'))
+        raise SystemExit(1)
     first_frame = test_file + ext
     last_frame = os.path.join(img_dir, img_pre + last_frame_num + ext)
 
-    if not quiet: print 'Found: ' + first_frame
+    if not quiet: print('Found: ' + first_frame)
     
     work_dir = opts.get('-w', img_dir)
     work_dir = os.path.abspath(work_dir)
     if not os.path.isdir(work_dir):
-        if not quiet: print 'Creating ' + work_dir
+        if not quiet: print('Creating ' + work_dir)
         try:
             os.makedirs(work_dir)
-            os.chmod(work_dir, 0755)
+            os.chmod(work_dir, 0o755)
         except:
-            print 'Could not create the work directory ' + \
-                  work_dir
-            raise SystemExit, 1
+            print('Could not create the work directory ' + \
+                  work_dir)
+            raise SystemExit(1)
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
@@ -621,24 +621,24 @@ if __name__ == '__main__':
         # Note that do_enhance() always creates images prefixed
         # with 'rimg'. What's important to note if that if the
         # images are resized the 'rimg' are indeed resized, but
-        # if not the 'rimg' are simply symlinks to the 'eimg'
+        # if not the 'rimg' are simply symlinks to (or copies of) the 'eimg'
         # (enhanced) images.
         img_pre = 'rimg'
         ext = '.png'
-    vidname = os.path.join(work_dir, out_gif)
+    vidname = os.path.join(work_dir, out_mng)
     # do_encode() acts on images prefixed by img_pre.
     do_encode()
     if not keep:
         do_clean()
     if temp_dir != '':
         shutil.rmtree(temp_dir)
-    if not quiet: print "Done!"
+    if not quiet: print("Done!")
 
 
 """
 CHANGELOG:
 
-29 Oct 2004 : 0.0.1 : first release.
+27 Oct 2004 : 0.0.1 : first release.
 08 Nov 2004 : 0.0.2 : make sure that the enhanced
                       color depth is 8-bits/channel.
 02 Jan 2005 : 0.0.3 : updated docs.

@@ -3999,22 +3999,7 @@ gboolean weed_generator_start (weed_plant_t *inst) {
 
     play_file();
 
-    mainw->noswitch=FALSE;
 
-    if (mainw->current_file>0&&(mainw->pre_src_file==-1||mainw->multitrack!=NULL)&&mainw->current_file!=mainw->scrap_file&&mainw->current_file!=new_file) mainw->pre_src_file=mainw->current_file;
-
-    if (fg_generator_clip!=-1) {
-      if (rte_window!=NULL) rtew_set_keych(fg_generator_key,FALSE);
-      inst=mainw->files[fg_generator_clip]->ext_src;
-      if (mainw->blend_file==-1||mainw->blend_file==mainw->current_file||mainw->blend_file!=new_file) {
-	mainw->current_file=fg_generator_clip;
-	weed_generator_end (inst);
-      }
-    }
-    if (mainw->pre_src_file>-1&&mainw->multitrack==NULL&&mainw->files[mainw->pre_src_file]!=NULL) {
-      switch_to_file ((mainw->current_file=0),mainw->pre_src_file);
-      mainw->pre_src_file=-2;
-    }
   }
   else {
     // already playing

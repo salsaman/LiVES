@@ -1,22 +1,29 @@
 #!/usr/bin/env python
 
-"""
-gif_encoder.py
 
-Front-end to various programs needed to create GIF
+import locale
+locale.setlocale(locale.LC_NUMERIC,"")
+
+
+"""
+dirac_encoder.py
+
+Front-end to various programs needed to create Dirac
 movies with some image-enhancing capabilities through the use of
 ImageMagick. Meant as a companion to LiVES (to possibly call
 from within a plugin, see http://www.xs4all.nl/~salsaman/lives/ )
 but can also be used as a stand-alone program.
 
-Requires ImageMagick (GraphicsMagick might also
-work) and Python 2.3.0 or greater. Note that audio
-support is not implemented, only video encoding.
-Note that encoding and decoding requires huge amounts
-of memory, and so it's mostly meant for very short
-clips (e.g. animated web graphics). The resulting
-clips can be viewed using the "animate" command which is
-part of ImageMagick, or a graphical web browser.
+Requires MPlayer, ImageMagick (GraphicsMagick might also
+work), Dirac, and Python 2.3.0 or greater. Note that audio
+support is not yet implemented, only video encoding. Also
+note that Dirac is still at a very early stage of development,
+and hence this code is highly experimental. Use at your
+own risk.
+
+Dirac's encoder API changed between versions 0.5.1 and 0.5.2.
+This encoder will not work with 0.5.1 but has been tested with
+0.5.2.
 
 Copyright (C) 2004-2005 Marco De la Cruz (marco@reimeika.ca)
 It's a trivial program, but might as well GPL it, so see:
@@ -25,26 +32,29 @@ http://www.gnu.org/copyleft/gpl.html for license.
 See my vids at http://amv.reimeika.ca !
 """
 
-version = '0.0.6'
+version = '0.0.a15'
 convert = 'convert'
+mencoder = 'mencoder'
+dirac_encoder = 'dirac_encoder'
+identify = 'identify'
 
 usage = \
       """
-gif_encoder.py -h
-gif_encoder.py -V
-gif_encoder.py -C
-gif_encoder.py [-o out] [-p pre] [-d dir] [-a aspect*] [-D delay*]
-               [-q|-v] [-t type*] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
-               [-s sndfile*] [-b sndrate*] [-f fpscode] [-L lv1file]
-               [firstframe lastframe]
+dirac_encoder.py -h
+dirac_encoder.py -V
+dirac_encoder.py -C
+dirac_encoder.py [-o out] [-p pre] [-d dir] [-a aspect] [-D delay*]
+                 [-q|-v] [-t type] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
+                 [-s sndfile*] [-b sndrate*] [-f fpscode] [-L lv1file]
+                 [firstframe lastframe]
       """
 
 help = \
      """
 SUMMARY (ver. %s):
 
-Encodes a series of PNG or JPG images into an animated GIF
-(.gif) and is also capable of performing some simple image
+Encodes a series of PNG or JPG images into a Dirac
+(.drc) stream and is also capable of performing some simple image
 enhacements using ImageMagick. The images and audio are assumed to
 be in an uncompressed LiVES format, hence making this encoder
 more suitable to be used within a LiVES plugin (but can also
@@ -59,18 +69,18 @@ OPTIONS:
 -C          check external program dependencies and exit.
 
 -o out      will save the video in file "out".
-            Default: "gif_movie.gif".
+            Default: "'type'_movie.drc". See below for 'type'.
 
 -p pre      the encoder assumes that sound and images are named using
             LiVES' conventions i.e. "audio" and "00000001.ext",
             "00000002.ext"... where "ext" is either "jpg" or "png".
-            However, gif_encoder.py will create temporary files
+            However, dirac_encoder.py will create temporary files
             which can be saved for later use (for example, after
             enhancing the images with "-e" , which may take a long
             time). These temporary files will be named
             "pre_00000001.ext", etc... where "pre" is either "eimg"
             or "rimg" and will be kept if the "-k" option is used.
-            gif_encoder.py can then be run over the enhanced images
+            dirac_encoder.py can then be run over the enhanced images
             only by selecting the appropriate prefix ("eimg" or
             "rimg") here. See "-e" to see what each prefix means.
             Default: "" (an empty string).
@@ -80,18 +90,43 @@ OPTIONS:
             "pre_00000001.ext" as explained above.
             Default: "."
 
--a aspect*  sets the aspect ratio of the resulting movie.
-            * = NOT IMPLEMENTED
+-a aspect   sets the aspect ratio of the resulting Dirac file. This can be:
+
+               1    1:1 display
+               2    4:3 display
+               3    16:9 display
+               4    2.21:1 display
+
+            Default: "2"
 
 -D delay*   linearly delay the audio stream by "delay" ms.
-            * = NOT IMPLEMENTED
+            Default: "0"
+            * = NOT IMPLEMENTED (YET?)
 
 -q          quiet operation, only complains on error.
 
 -v          be verbose.
 
--t type*    type of video created.
-            * = NOT IMPLEMENTED 
+-t type     type of video created. The options here are:
+
+               "hi":   a very high quality MPEG-4 file, suitable
+                       for archiving images of 720x480.
+
+               "mh":   medium-high quality MPEG-4, which still allows
+                       to watch small videos (352x240 and below)
+                       fullscreen.
+
+               "ml":   medium-low quality MPEG-4, suitable for
+                       most videos but in particular small videos
+                       (352x240 and below) meant for online
+                       distribution.
+
+               "lo":   a low quality MPEG-4 format. Enlarging
+                       small videos will result in noticeable
+                       artifacts. Good for distributing over slow
+                       connections.
+
+            Default: "ml"
 
 -e          perform some simple filtering/enhancement to improve image
             quality. The images created by using this option will be
@@ -119,7 +154,10 @@ OPTIONS:
 
             -c geom    in addition to enhancing the images, crop them
                        to the specified geometry e.g. "688x448+17+11".
-                       Filename prefix remains "eimg".
+                       Filename prefix remains "eimg". Note that the
+                       dimensions of the images should both be multiples
+                       of "16", otherwise some players may show artifacts
+                       (such as garbage or green bars at the borders).
 
             -r geom    this will create a second set of images resulting
                        from resizing the images that have already been
@@ -127,13 +165,18 @@ OPTIONS:
                        specified). The geometry here is simple a new
                        image size e.g. "352x240!". This second set will have
                        filenames prefixed with the string "rimg" (see "-p"
-                       above).
+                       above). Note that the dimensions of the images
+                       should both be multiples of "16", otherwise some
+                       players may show artifacts (such as garbage or
+                       green bars at the borders).
 
--s sndfile* name of the audio file.
-            * = NOT IMPLEMENTED
+-s sndfile* name of the audio file. Can be either raw "audio" or
+            "[/path/to/]soundfile.wav".
+            Default: "audio" inside "dir" as specified by "-d".
+            * = NOT IMPLEMENTED (YET?)
 
 -b sndrate* sample rate of the sound file in Hertz.
-            * = NOT IMPLEMENTED
+            * = NOT IMPLEMENTED (YET?)
 
 -f fpscode  frame-rate code. Acceptable values are:
 
@@ -145,9 +188,6 @@ OPTIONS:
               6 - 50.0 (PAL FIELD RATE)
               7 - 60000.0/1001.0 (NTSC FIELD RATE)
               8 - 60.0
-
-            If the input value is a float (e.g. 5.0, 14.555, etc.)
-            the encoder will use that as frame rate.
 
             Default: "4".
 
@@ -183,11 +223,13 @@ EXAMPLES:
 
 Suppose you have restored a LiVES' .lv1 file (in either JPG or PNG format),
 and that the images are stored in the directory "/tmp/livestmp/991319584/".
-Then, in order to create an gif file you can simply do the following:
+In this example the movie is assumed to be 16:9. Then, in order to create
+an drc file you can simply do the following:
 
-   gif_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.gif
+   dirac_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.drc -a 3
 
-and the clip "default.gif" will be created in "/movies/".
+and the clip "default.drc" will be created in "/movies/" with the correct
+aspect ratio.
 
 Suppose we want to make a downloadable version of the clip, small in size
 but of good quality. The following command activates the generic enhancement
@@ -195,28 +237,41 @@ filter and resizes the images to "352x240". Note that these operations
 are performed after cropping the originals a bit (using "704x464+5+6").
 This is done because we are assuming that there is a black border around
 the original pictures which we want to get rid of (this might distort the
-images somewhat, so be careful about cropping/resizing):
+images somewhat, so be careful about cropping/resizing, and remember to
+use dimensions which are multiples of 16):
 
-   gif_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpgif \\
-   -o /movies/download.gif -k -e -c "704x464+5+6" -r "352x240"
+   dirac_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpdrc \\
+   -o /movies/download.drc -a 3 -k -e -c "704x464+5+6" -r "352x240"
 
 Since we use the "-k" flag the enhanced images are kept (both full-size
-crops and the resized ones) in "/tmp/tmpgif". Beware that this may consume
+crops and the resized ones) in "/tmp/tmpdrc". Beware that this may consume
 a lot of disk space (about 10x as much as the originals). The reason we
 keep them is because the above may take quite a long time and we may want
-to re-use the enhanced images. So, for example, creating a
+to re-use the enhanced images. So, for example, creating a high-quality
 clip at full size can be accomplished now as follows:
 
-   gif_encoder.py -d /tmp/tmpgif -o /movies/archive.gif \\
-   -s /tmp/livestmp/991319584/audio -k -p eimg
+   dirac_encoder.py -d /tmp/tmpdrc -t hi -o /movies/archive.drc \\
+   -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
 If, for example, we only want to encode frames 100 to 150 we can run
 the following:
 
-   gif_encoder.py -v -d /tmp/tmpgif -o /movies/selection.gif \\
-   -k -p eimg 100 150
+   dirac_encoder.py -v -d /tmp/tmpdrc -o /movies/selection.drc \\
+   -a 3 -k -p eimg 100 150
 
-To delete all the enhanced images you can just remove "/tmp/tmpgif".
+Note that no audio has been selected ("-s"). This is because
+dirac_encoder.py cannot trim the audio to the appropriate length.
+You would need to use LiVES to do this.
+
+To delete all the enhanced images you can just remove "/tmp/tmpdrc".
+
+If you notice that the video and audio become out of sync so that
+near the end of the movie the video trails the audio by, say, 0.2s,
+you can use the "-D" option as follows:
+
+   dirac_encoder.py -d /tmp/livestmp/991319584 -o test.drc -D 200
+
+Note that negative time values are also allowed.
 
 Suppose that you have "movie1.lv1", "movie2.lv1" and "movie3.lv1".
 Batch-encoding can be done as follows (zsh-syntax):
@@ -224,17 +279,26 @@ Batch-encoding can be done as follows (zsh-syntax):
    for i in movie?.lv1
    do
      mkdir /tmp/$i:r
-     gif_encoder.py -d /tmp/$i:r -o /tmp/$i:r.gif -L $i
+     dirac_encoder.py -d /tmp/$i:r -o /tmp/$i:r.drc -L $i
      rm -rf /tmp/$i:r
    done
 
-This will generate the files "movie1.gif", "movie2.gif" and
-"movie3.gif" in "/tmp". Note that is is not necessary to
+This will generate the files "movie1.drc", "movie2.drc" and
+"movie3.drc" in "/tmp". Note that is is not necessary to
 specify whether the files are stored in JPG or PNG format,
 and that potentially time-consuming options (e.g. "-e") may
 be enabled. It is not necessary to have a working LiVES
 installation to encode .lv1 files.
      """ % version
+
+def gcd(a, b):
+        """
+        gcd(a, b) (a,b are integers)
+        Returns the greatest common divisor of two integers.
+        """
+        if b == 0: return a
+        else: return gcd(b, a%b)
+
 
 def run(command):
     """
@@ -242,7 +306,7 @@ def run(command):
     """
 
     if verbose:
-        print 'Running: \n' + command + '\n=== ... ==='
+        print(('Running: \n' + command + '\n=== ... ==='))
         std = ''
     else:
         std = ' > /dev/null 2>&1'
@@ -257,7 +321,7 @@ def do_enhance():
     """
 
     if not quiet:
-        print 'Enhancing images... please wait, this might take long...'
+        print('Enhancing images... please wait, this might take long...')
 
     enh_opts = "-enhance -sharpen '0.0x0.5' -gamma 1.2 -contrast -depth 8"
 
@@ -294,22 +358,44 @@ def do_enhance():
 
 def do_encode():
     """
-    Encode a series of images as an GIF file.
+    Encode a series of images into a Dirac stream.
     """
 
     if verbose:
         std = ''
-        std2 = ''
         be_verbose = '-verbose'
     else:
         std = ' > /dev/null 2>&1'
-        std2 = ' 2> /dev/null'
         be_verbose = ''
+
+    fpsnum = fps.split('/')[0]
+    fpsden = fps.split('/')[1]
+    ffps = eval('float('+fpsnum+')/'+fpsden)
+    mencoder_opts = '-mf type=%s:fps=%s ' % (ext[1:], ffps) + \
+		    '-nosound -vf hqdn3d=2:1:3,pp=va:128:8/ha:128:8/dr,' + \
+		    'dsize=%s,format=i420 -ovc raw -of rawvideo -o ' % aspect
+    dirac_opts = '-HD1080'
+    if vtype == 'hi':
+        dirac_opts = ' '.join([dirac_opts, '-qf 10'])
+        oggenc_opts = '-q 9'
+    elif vtype == 'mh':
+        dirac_opts = ' '.join([dirac_opts, '-qf 8'])
+        oggenc_opts = '-q 8'
+    elif vtype == 'ml':
+        dirac_opts = ' '.join([dirac_opts, '-qf 6'])
+        oggenc_opts = '-q 6'
+    elif vtype == 'lo':
+        dirac_opts = ' '.join([dirac_opts, '-qf 4'])
+        oggenc_opts = '-q 4'
+
 
     if img_dir != work_dir and not enhance:
         source_dir = img_dir
     else:
         source_dir = work_dir
+    yuvv = os.path.join(source_dir, 'TMP_YUVstream.yuv')
+    yuvvne = yuvv[:-4]
+    dyuvv = tempfile.mkstemp('', '', work_dir)[1]
 
     if frame_range:
         numframes = str(last_num - first_num + 1)
@@ -326,24 +412,88 @@ def do_encode():
         numframes = len(glob.glob(os.path.join(source_dir, \
                                              img_pre + '*' + ext)))
 
-    # Delay between frames is in 100ths of a second
-    spf = 100*(1/fps)
-
-    gifv = tempfile.mkstemp('.gif', '', work_dir)[1]
+    fgeom = os.popen(' '.join([identify, '-format "%w %h"', \
+                               os.path.join(source_dir, \
+                                            img_pre + first_frame_num + ext)])).read().strip().split()
+    fx = int(fgeom[0])
+    fy = int(fgeom[1])
+    # Why 1.5? See http://sourceforge.net/forum/forum.php?thread_id=1143416&forum_id=353618
+    fbytes = int(fx*fy*1.5)
 
     all_vars = {}
     all_vars.update(globals())
     all_vars.update(locals())
 
     if not quiet:
-        print 'Creating GIF file'
+        print(('Creating "%s"-quality Dirac file' % vtype))
 
+    yuvcommand = """cd %(source_dir)s ; \\
+%(mencoder)s mf://%(syml)s%(img_pre)s*%(ext)s %(mencoder_opts)s%(yuvv)s %(std)s
+    """ % all_vars
+    run(yuvcommand)
     command = """cd %(source_dir)s ; \\
-%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(gifv)s
+%(dirac_encoder)s -width %(fx)s -height %(fy)s -fr %(ffps)s %(be_verbose)s %(dirac_opts)s %(yuvvne)s %(dyuvv)s %(std)s
 """ % all_vars
     run(command)
+    os.remove(yuvv)
 
-    shutil.move(gifv, vidname)
+    for tfile in [dyuvv, dyuvv + '.yuv', dyuvv + '.imt']:
+        if os.path.exists(tfile):
+            if verbose:
+                print(('Removing ' + tfile))
+            os.remove(tfile)
+
+# Audio not supported yet. Planned to use Matroska container but
+# Dirac developers are thinking of MXF.
+    audio = False
+    if audio:
+        if not quiet:
+            print(('Creating "%s"-quality ogg vorbis file' % vtype))
+
+        ogg = tempfile.mkstemp('.ogg', '', work_dir)[1]
+        if rawsndf:
+            wav = tempfile.mkstemp('.wav', '', work_dir)[1]
+            sox_opts = '-t raw -r %s -w -c 2 -s' % sndr
+            command = ' '.join([sox, sox_opts, sndf, wav])
+            run(command)
+        else:
+            wav = sndf
+        command = ' '.join([oggenc, oggenc_opts, wav, '-o', ogg, std])
+        run(command)
+
+        if delay != '0':
+            totfr = len(glob.glob(os.path.join(source_dir, syml + img_pre + '*' + ext)))
+            # "delay" is in ms, transform into s
+            totfrshift = int(totfr + round((locale.atof(delay)/1000.0)*locale.atof(ffps)))
+            delaysh = ',%s/%s' % (totfrshift, totfr)
+        else:
+            delaysh = ''
+
+        all_vars.update(locals())
+
+        if not quiet:
+            print('Multiplexing...')
+        command = """
+%(mkvplex)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(vidv)s -y '0:0%(delaysh)s' %(ogg)s %(std)s""" % all_vars
+        run(command)
+        if rawsndf and os.path.exists(wav): os.remove(wav)
+        if os.path.exists(ogg): os.remove(ogg)
+        if os.path.exists(dyuvv + '.drc'): os.remove(dyuvv + '.drc')
+    else:
+        shutil.move(dyuvv + '.drc', vidname)
+        note = """
+You can play the Dirac file %(vidname)s by running:
+
+dirac_decoder -v %(vidname)s %(vidname)s
+mplayer -demuxer rawvideo -rawvideo fps=%(ffps)s:size=%(fbytes)s:w=%(fx)s:h=%(fy)s %(vidname)s.yuv
+
+If %(vidname)s has an extension do not include it in the above
+commands e.g. if it's "test.drc" then do:
+
+dirac_decoder -v test test
+mplayer -demuxer rawvideo -rawvideo fps=%(ffps)s:size=%(fbytes)s:w=%(fx)s:h=%(fy)s test.yuv
+""" % all_vars
+        if not quiet: print(note)
 
     if frame_range:
         lframes = os.path.join(source_dir, syml)
@@ -357,7 +507,7 @@ def do_clean():
     """
 
     if not quiet:
-        print 'Deleting all enhanced images (if any)'
+        print('Deleting all enhanced images (if any)')
 
     eframes = os.path.join(work_dir, 'eimg')
     rframes = os.path.join(work_dir, 'rimg')
@@ -402,11 +552,11 @@ def is_installed(prog):
     wprog = which(prog)
 
     if wprog == '':
-        print prog + ': command not found'
-        raise SystemExit, 1
+        print((prog + ': command not found'))
+        raise SystemExit(1)
     else:
         if verbose:
-            print wprog + ': found'
+            print((wprog + ': found'))
 
 
 if __name__ == '__main__':
@@ -420,31 +570,31 @@ if __name__ == '__main__':
     import tarfile
 
     try:
-        if sys.version_info[0:3] < (2, 3, 0):
-            raise SystemExit, 1
+        if sys.version_info[0:3] < (3, 0, 0):
+            raise SystemExit(1)
     except:
-        print 'You need Python 2.3.0 or greater to run me!'
-        raise SystemExit, 1
+        print('You need Python 3.0.0 or greater to run me!')
+        raise SystemExit(1)
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
                                          'ho:p:d:w:a:qvt:ekc:r:s:b:f:VCD:L:')
     except:
-        print "Something's wrong. Try the '-h' flag."
-        raise SystemExit, 1
+        print("Something's wrong. Try the '-h' flag.")
+        raise SystemExit(1)
 
     opts = dict(opts)
 
     if not opts and not args:
-        print usage
-        raise SystemExit, 1
+        print(usage)
+        raise SystemExit(1)
 
     if '-h' in opts:
-        print usage + help
+        print((usage + help))
         raise SystemExit
 
     if '-V' in opts:
-        print 'gif_encoder.py version ' + version
+        print(('dirac_encoder.py version ' + version))
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):
@@ -458,15 +608,15 @@ if __name__ == '__main__':
     else:
         quiet = False
 
-    for i in [convert]:
+    for i in [convert, mencoder, dirac_encoder, identify]:
         is_installed(i)
     if '-C' in opts: raise SystemExit
 
     img_pre = opts.get('-p', '')
 
     if img_pre not in ['', 'eimg', 'rimg']:
-         print 'Improper image name prefix.'
-         raise SystemExit, 1
+         print('Improper image name prefix.')
+         raise SystemExit(1)
 
     temp_dir = ''
     img_dir = opts.get('-d', '.')
@@ -477,14 +627,14 @@ if __name__ == '__main__':
         img_dir = temp_dir + '/img_dir'
 
     if not os.path.isdir(img_dir):
-        print 'The image source directory: '  + img_dir + \
-              ' does not exist!'
-        raise SystemExit, 1
+        print(('The image source directory: '  + img_dir + \
+              ' does not exist!'))
+        raise SystemExit(1)
 
     if len(args) not in [0, 2]:
-        print 'If frames are specified both first and last ' + \
-              'image numbers must be chosen.'
-        raise SystemExit, 1
+        print(('If frames are specified both first and last ' + \
+              'image numbers must be chosen.'))
+        raise SystemExit(1)
     elif len(args) == 0:
         args = [None, None]
 
@@ -504,41 +654,58 @@ if __name__ == '__main__':
     last_frame_num = last_frame_num.zfill(8)
     last_num = int(last_frame_num)
 
-    # Aspect ratio is not used
     aspectc = opts.get('-a', '2')
 
-    # Video type is not used
-    vtype = opts.get('-t', 'gif')
+    if aspectc not in [str(i) for i in range(1,5)]:
+        print('Invalid aspect ratio.')
+        raise SystemExit(1)
+    else:
+        if aspectc == '1': aspect = '1:1'
+        elif aspectc == '2': aspect = '4:3'
+        elif aspectc == '3': aspect = '16:9'
+        elif aspectc == '4': aspect = '2.21:1'
 
-    out_gif = opts.get('-o', vtype + '_movie.gif')
+    vtype = opts.get('-t', 'ml')
+
+    if vtype not in ['hi', 'mh', 'ml', 'lo']:
+        print('Invalid video type.')
+        raise SystemExit(1)
+
+    out_drc = opts.get('-o', vtype + '_movie.drc')
 
     fpsc = opts.get('-f', '4')
 
-    if fpsc not in [str(i) for i in xrange(1,9)]:
-        if not quiet: print 'Invalid fps code, attempting float fps.'
+    if fpsc not in [str(i) for i in range(1,9)]:
+        if not quiet: print('Invalid fps code, attempting float fps.')
         foundfps = False
     else:
-        if fpsc == '1': fps = 24000.0/1001.0
-        elif fpsc == '2': fps = 24.0
-        elif fpsc == '3': fps = 25.0
-        elif fpsc == '4': fps = 30000.0/1001.0
-        elif fpsc == '5': fps = 30.0
-        elif fpsc == '6': fps = 50.0
-        elif fpsc == '7': fps = 60000.0/1001.0
-        elif fpsc == '8': fps = 60.0
+        if fpsc == '1': fps = '24000/1001'
+        elif fpsc == '2': fps = '24/1'
+        elif fpsc == '3': fps = '25/1'
+        elif fpsc == '4': fps = '30000/1001'
+        elif fpsc == '5': fps = '30/1'
+        elif fpsc == '6': fps = '50/1'
+        elif fpsc == '7': fps = '60000/1001'
+        elif fpsc == '8': fps = '60/1'
         foundfps = True
 
     if not foundfps:
         try:
-            fps = locale.atof(fpsc)
-            if not quiet: print 'Using fps = %s' % fps
-            if fps > 0: foundfps = True
+            fpsnum = int(locale.atof(fpsc)*10**15)
+            fpsden = 10**15
+            divisor = gcd(fpsnum, fpsden)
+            if divisor > 1:
+                fpsnum = fpsnum/divisor
+                fpsden = fpsden/divisor
+            fps = '%s/%s' % (fpsnum, fpsden)
+            if not quiet: print(('Using fps = ' + fps))
+            if fpsnum > 0: foundfps = True
         except:
             pass
 
     if not foundfps:
-        print 'Invalid fps code or rate.'
-        raise SystemExit, 1
+        print('Invalid fps code or rate.')
+        raise SystemExit(1)
 
     if '-e' not in opts:
         enhance = False
@@ -546,8 +713,8 @@ if __name__ == '__main__':
         enhance = True
 
     if enhance and img_pre:
-        print 'Sorry, you cannot enhance already-enhanced images'
-        raise SystemExit, 1
+        print('Sorry, you cannot enhance already-enhanced images')
+        raise SystemExit(1)
 
     if '-k' not in opts:
         keep = False
@@ -558,23 +725,23 @@ if __name__ == '__main__':
     rgeom = opts.get('-r', '')
 
     if (cgeom or rgeom) and not enhance:
-        print 'Missing "-e" option.'
-        raise SystemExit, 1
+        print('Missing "-e" option.')
+        raise SystemExit(1)
 
     delay = opts.get('-D', '0')
-    if verbose: print 'Linear audio delay (ms): ' + delay
+    if verbose: print(('Linear audio delay (ms): ' + delay))
 
     lv1file = opts.get('-L', None)
     if lv1file:
-        if not quiet: print 'Opening lv1 file...'
+        if not quiet: print('Opening lv1 file...')
         try:
             lv1 = tarfile.open(os.path.abspath(lv1file))
         except:
-            print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit, 1
+            print('This does not appear to be a valid LiVES file!')
+            raise SystemExit(1)
         if 'header.tar' not in lv1.getnames():
-            print 'This does not appear to be a valid LiVES file!'
-            raise SystemExit, 1
+            print('This does not appear to be a valid LiVES file!')
+            raise SystemExit(1)
         for tfile in lv1.getmembers():
             lv1.extract(tfile, img_dir)
         for tfile in glob.glob(os.path.join(img_dir, '*.tar')):
@@ -589,63 +756,88 @@ if __name__ == '__main__':
     elif os.path.isfile(test_file + '.png'):
         ext = '.png'
     else:
-        print 'Cannot find any appropriate %s or %s files!' % ('.jpg','.png')
-        raise SystemExit, 1
+        print(('Cannot find any appropriate %s or %s files!' % ('.jpg','.png')))
+        raise SystemExit(1)
     first_frame = test_file + ext
     last_frame = os.path.join(img_dir, img_pre + last_frame_num + ext)
 
-    if not quiet: print 'Found: ' + first_frame
+    if not quiet: print(('Found: ' + first_frame))
     
     work_dir = opts.get('-w', img_dir)
     work_dir = os.path.abspath(work_dir)
     if not os.path.isdir(work_dir):
-        if not quiet: print 'Creating ' + work_dir
+        if not quiet: print(('Creating ' + work_dir))
         try:
             os.makedirs(work_dir)
-            os.chmod(work_dir, 0755)
+            os.chmod(work_dir, 0o755)
         except:
-            print 'Could not create the work directory ' + \
-                  work_dir
-            raise SystemExit, 1
+            print(('Could not create the work directory ' + \
+                  work_dir))
+            raise SystemExit(1)
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
         os.symlink(work_dir, temp_dir + '/work_dir')
         work_dir = temp_dir + '/work_dir'
 
-    # Audio is not used
     sndf = opts.get('-s', os.path.join(img_dir, 'audio'))
+#    sndf = os.path.abspath(sndf)
+    rawsndf = True
+    if not os.path.isfile(sndf):
+        audio = False
+        rawsndf = False
+    else:
+        audio = True
+        if sndf[-4:] == '.wav':
+            rawsndf = False
+        if not quiet: print(('Found audio file: ' + sndf))
+
+    sndr = opts.get('-b', '44100')
 
     if enhance:
         do_enhance()
         # Note that do_enhance() always creates images prefixed
         # with 'rimg'. What's important to note if that if the
         # images are resized the 'rimg' are indeed resized, but
-        # if not the 'rimg' are simply symlinks to the 'eimg'
+        # if not the 'rimg' are simply symlinks to (or copies of) the 'eimg'
         # (enhanced) images.
         img_pre = 'rimg'
         ext = '.png'
-    vidname = os.path.join(work_dir, out_gif)
+    vidname = os.path.join(work_dir, out_drc)
     # do_encode() acts on images prefixed by img_pre.
     do_encode()
     if not keep:
         do_clean()
     if temp_dir != '':
         shutil.rmtree(temp_dir)
-    if not quiet: print "Done!"
+    if not quiet: print("Done!")
 
 
 """
 CHANGELOG:
 
-29 Oct 2004 : 0.0.1 : first release.
-08 Nov 2004 : 0.0.2 : make sure that the enhanced
-                      color depth is 8-bits/channel.
-02 Jan 2005 : 0.0.3 : updated docs.
-                      added sound rate (-b) option (unused).
-21 Mar 2005 : 0.0.4 : use env python (hopefully >= 2.3)
-09 Mar 2006 : 0.0.5 : added '-depth 8' to resize, as ImageMagick
-                      keeps changing its damn behaviour.
-28 Jun 2007 : 0.0.6 : handles paths with spaces appropriately
-                      (thanks Gabriel).
+18 Sep 2004 : 0.0.a1 : first alpha release.
+23 Sep 2004 : 0.0.a2 : renamed from "mkvd_encoder" ro
+                       "dirac_encoder".
+                       use mplayer to create yuv.
+25 Sep 2004 : 0.0.a3 : updated docs.
+27 Sep 2004 : 0.0.a5 : switched back to RGBtoYUV420.
+                       YUV generation now reliable but
+                       still very inefficient.
+27 Sep 2004 : 0.0.a6 : can handle arbitrary fps values.
+08 Nov 2004 : 0.0.a7 : make sure that the enhanced
+                       color depth is 8-bits/channel.
+02 Jan 2005 : 0.0.a8 : updated docs.
+                       added sound rate (-b) option (unused for now).
+24 Feb 2005 : 0.0.a9 : fixed frame rate calculation.
+26 Mar 2005 : 0.0.a10 : use env python (hopefully >= 2.3).
+                        replace denoise3d with hqdn3d.
+12 Jun 2005 : 0.0.a11 : updated to use Dirac version 0.5.2.
+24 Aug 2005 : 0.0.a12 : Fixed 2.21:1 aspect ratio.
+09 Mar 2006 : 0.0.a13 : added '-depth 8' to resize, as ImageMagick
+                        keeps changing its damn behaviour.
+13 Mar 2006 : 0.0.a14 : more efficient YUV generation.
+                        updated playback explanation.
+28 Jun 2007 : 0.1.a15 : handles paths with spaces appropriately
+                        (thanks Gabriel).
 """

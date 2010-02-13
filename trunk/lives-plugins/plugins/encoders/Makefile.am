@@ -8,6 +8,7 @@ ffmpeg_encoder \
 mencoder_encoder \
 mjpegtools_encoder \
 multi_encoder \
+multi_encoder3 \
 qtutils_encoder \
 sswf_encoder \
 transcode_encoder \

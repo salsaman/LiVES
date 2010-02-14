@@ -791,7 +791,7 @@ gboolean check_for_lock_file(gchar *set_name, gint type);
 gint real_clips_available(void);
 void g_list_free_strings(GList *list);
 void gtk_tooltips_copy(GtkWidget *dest, GtkWidget *source);
-
+void adjustment_configure(GtkAdjustment *adjustment, gdouble value, gdouble lower, gdouble upper, gdouble step_increment, gdouble page_increment, gdouble page_size);
 gboolean create_event_space(gint length_in_eventsb);
 void add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *file_open_params);
 gint verhash (gchar *version);

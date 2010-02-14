@@ -23,7 +23,8 @@
 gboolean 
 key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data) {
   // this gets called for every keypress - check for cached keys
-  return pl_key_function ((event->type==GDK_KEY_PRESS),event->keyval,event->state);
+  guint modifiers = gtk_accelerator_get_default_mod_mask ();
+  return pl_key_function ((event->type==GDK_KEY_PRESS),event->keyval,event->state&modifiers      );
 }
 
 

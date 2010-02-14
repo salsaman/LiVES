@@ -2139,15 +2139,16 @@ void set_timeline_end_secs (lives_mt *mt, gdouble secs) {
 
 static weed_timecode_t set_play_position(lives_mt *mt) {
   // get start event
-
+  gboolean has_pb_loop_event=FALSE;
   weed_timecode_t tc;
   weed_timecode_t end_tc=event_list_get_end_tc(mt->event_list);
   
   mainw->cancelled=CANCEL_NONE;
 
 #ifdef ENABLE_JACK_TRANSPORT
-  mt->pb_loop_event=get_first_frame_event(mt->event_list);
   if (mainw->jack_can_stop&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)) {
+    mt->pb_loop_event=get_first_frame_event(mt->event_list);
+    has_pb_loop_event=TRUE;
     tc=q_gint64(U_SEC*jack_transport_get_time(),cfile->fps);
     if (!mainw->loop_cont) {
       if (tc>end_tc) {
@@ -2168,9 +2169,8 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
   else {
     mt->pb_start_event=get_frame_event_at(mt->event_list,tc,NULL,TRUE);
   }
-#ifndef ENABLE_JACK_TRANSPORT
-  mt->pb_loop_event=mt->pb_start_event;
-#endif
+
+  if (!has_pb_loop_event) mt->pb_loop_event=mt->pb_start_event;
 
   return get_event_timecode(mt->pb_start_event);
 }

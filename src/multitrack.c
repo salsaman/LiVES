@@ -4596,8 +4596,10 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   GtkWidget *recent_submenu;
   GtkWidget *vcd_dvd_submenu;
   GtkWidget *vcd_dvd_menu;
+#ifdef HAVE_LDVGRAB
   GtkWidget *device_menu;
   GtkWidget *device_submenu;
+#endif
   GtkWidget *submenu_menu;
   GtkWidget *submenu_menu2;
   GtkWidget *submenu_menu3;
@@ -6568,7 +6570,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 #ifndef HAVE_GTK_NICE_VERSION
   gtk_widget_ref(mainw->vol_label);
   gtk_container_remove(GTK_CONTAINER(mainw->vol_label->parent),mainw->vol_label);
-  gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),3);
+  gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
   gtk_widget_unref(mainw->vol_label);
 #else
   gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_VERTICAL);
@@ -7585,8 +7587,8 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   gtk_container_remove(GTK_CONTAINER(mainw->vol_label->parent),mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
   gtk_widget_unref(mainw->vol_label);
+#else
   gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_HORIZONTAL);
-
 #endif
 
   gtk_widget_ref(mainw->vol_toolitem);
@@ -10522,8 +10524,8 @@ void polymorph (lives_mt *mt, gshort poly) {
       gtk_widget_hide(mt->checkbutton_end_anchored);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_in),0);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_out),0);
-      gtk_adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_in_adj),mainw->files[filenum]->start,1.,mainw->files[filenum]->frames,1.,100.,0.);
-      gtk_adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_out_adj),mainw->files[filenum]->end,1.,mainw->files[filenum]->frames,1.,100.,0.);
+      adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_in_adj),mainw->files[filenum]->start,1.,mainw->files[filenum]->frames,1.,100.,0.);
+      adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_out_adj),mainw->files[filenum]->end,1.,mainw->files[filenum]->frames,1.,100.,0.);
       gtk_widget_hide(mt->in_eventbox);
       gtk_widget_hide(mt->out_eventbox);
       gtk_widget_show(mt->start_in_label);
@@ -10534,8 +10536,8 @@ void polymorph (lives_mt *mt, gshort poly) {
       gtk_widget_show(mt->checkbutton_end_anchored);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_in),2);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_out),2);
-      gtk_adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_in_adj),0.,0.,0.,1./mt->fps,1.,0.);
-      gtk_adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_out_adj),0.,0.,0.,1./mt->fps,1.,0.);
+      adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_in_adj),0.,0.,0.,1./mt->fps,1.,0.);
+      adjustment_configure(GTK_ADJUSTMENT(mt->spinbutton_out_adj),0.,0.,0.,1./mt->fps,1.,0.);
       gtk_widget_show(mt->in_eventbox);
       gtk_widget_show(mt->out_eventbox);
       gtk_widget_hide(mt->start_in_label);

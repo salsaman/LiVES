@@ -8,17 +8,19 @@ Switching to->from multitrack mode maintains the layout in memory.
 Allow startup in mt mode.
 Better scrolling of tracks in multitrack.
 Implement progressive image loading.
-Change multitrack "snap mode" to "gravity left".
+Change multitrack "snap mode" to "gravity left" / "gravity normal"
 Allow jack transport to set play start position.
 Add option of resizing frames to fit in clip editor interface.
-Removed File/Encode (File/Encode_as is safer)
-New startup wizard for first time users (in progress).
+Removed "File/Encode" ("File/Encode as" is safer)
+New startup wizard for first time users.
+Added Help/Troubleshoot.
 Faster frame generation for realtime generators.
-Fix possible bootstrap issue with weed plugins. *
-Fix an encoder/png problem. *
-Fix image loading (regression).
-Fix problem with crash recovery restoring a file twice. *
-Fix some minor memory leaks. *
+Add python 3 support to multi_encoder.
+Fixed a possible bootstrap issue with weed plugins. *
+Fixed an encoder/png problem. *
+Fixed image loading (regression).
+Fixed problem with crash recovery restoring a file twice. *
+Fixed some minor memory leaks. *
 
 	
 * Backported to 1.0.9

@@ -182,13 +182,13 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
     }
   }
 #ifdef RT_AUDIO
-  if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0&&((prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file)||(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file))) {
+  if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
     weed_timecode_t atc=0;
 #ifdef ENABLE_JACK      
-    if (prefs->audio_player==AUD_PLAYER_JACK) atc=lives_jack_get_time(mainw->jackd,FALSE);
+    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file) atc=lives_jack_get_time(mainw->jackd,FALSE);
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player==AUD_PLAYER_PULSE) atc=lives_pulse_get_time(mainw->pulsed,FALSE);
+    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file) atc=lives_pulse_get_time(mainw->pulsed,FALSE);
 #endif
     atc+=dtc;
     
@@ -2083,7 +2083,7 @@ check_dir_access (gchar *dir) {
   }
   g_free (testfile);
   if (!exists) {
-    com=g_strdup_printf ("rm -r %s",dir);
+    com=g_strdup_printf ("/bin/rm -r %s",dir);
     dummyvar=system (com);
     g_free (com);
   }
@@ -3226,3 +3226,27 @@ gint get_box_child_index (GtkBox *box, GtkWidget *tchild) {
 }
 
 
+
+void adjustment_configure(GtkAdjustment *adjustment,
+		     gdouble value,
+		     gdouble lower,
+		     gdouble upper,
+		     gdouble step_increment,
+		     gdouble page_increment,
+		     gdouble page_size) {
+
+#ifdef HAVE_GTK_NICE_VERSION
+  return gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
+#endif
+
+  g_object_freeze_notify (G_OBJECT(adjustment));
+
+  gtk_adjustment_set_upper(adjustment,upper);
+  gtk_adjustment_set_lower(adjustment,lower);
+  gtk_adjustment_set_value(adjustment,value);
+  gtk_adjustment_set_step_increment(adjustment,step_increment);
+  gtk_adjustment_set_page_increment(adjustment,page_increment);
+  gtk_adjustment_set_page_size(adjustment,page_size);
+
+  g_object_thaw_notify (G_OBJECT(adjustment));
+}

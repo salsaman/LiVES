@@ -149,7 +149,7 @@ lives_exit (void) {
       }
     }
 
-    if (!mainw->leave_files&&strlen(mainw->set_name)) {
+    if (!mainw->leave_files&&strlen(mainw->set_name)&&!mainw->leave_recovery) {
       gchar *set_layout_dir=g_strdup_printf("%s/%s/layouts",prefs->tmpdir,mainw->set_name);
       if (!g_file_test(set_layout_dir,G_FILE_TEST_IS_DIR)) {
 	com=g_strdup_printf("/bin/rm -r %s/%s/ 2>/dev/null",prefs->tmpdir,mainw->set_name);
@@ -3544,7 +3544,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
       if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) {
 	if (do_set_rename_old_layouts_warning(mainw->set_name)) {
 	  // clear old layout maps
-	  com=g_strdup_printf("rm -r %s/%s/layouts/ 2>/dev/null",prefs->tmpdir,mainw->set_name);
+	  com=g_strdup_printf("/bin/rm -r %s/%s/layouts/ 2>/dev/null",prefs->tmpdir,mainw->set_name);
 	  dummyvar=system(com);
 	  g_free(com);
 	}

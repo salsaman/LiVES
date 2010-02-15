@@ -3389,7 +3389,7 @@ void recover_layout_map(numclips) {
 
 
 
-static void recover_files(gchar *recovery_file, gboolean auto_recover) {
+static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   gchar buff[256],*buffptr;
   gchar *clipdir;
   gint new_file,clipnum=0;
@@ -3416,7 +3416,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	mt_sensitise(mainw->multitrack);
       }
 
-      return;
+      return FALSE;
     }
   }
 
@@ -3426,7 +3426,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 
   // mutex lock
   pthread_mutex_lock(&mainw->gtk_mutex);
-  d_print(_("recovering files..."));
+  d_print(_("Recovering files..."));
   pthread_mutex_unlock(&mainw->gtk_mutex);
   // mutex unlock
 
@@ -3477,7 +3477,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	  mt_sensitise(mainw->multitrack);
 	}
 
-	return;
+	return TRUE;
       }
     }
     else {
@@ -3513,7 +3513,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
 	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 	}
 
-	return;
+	return TRUE;
       }
       if (strstr(buffptr,"/clips/")) {
 	gchar **array;
@@ -3661,6 +3661,7 @@ static void recover_files(gchar *recovery_file, gboolean auto_recover) {
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
 
+  return TRUE;
 }
 
 
@@ -3708,62 +3709,73 @@ void rewrite_recovery_file(void) {
 gboolean check_for_recovery_files (gboolean auto_recover) {
   gboolean retval=FALSE;
   gchar *recovery_file,*recovery_numbering_file;
-  guint recpid;
-  gchar *com;
+  guint recpid=0;
 
-  if (g_file_test(mainw->recovery_file,G_FILE_TEST_EXISTS)) {
-    recover_files(mainw->recovery_file,auto_recover);
-    retval=TRUE;
-  }
-  else {
-    size_t bytes;
-    int info_fd;
-    gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
-    gchar *com=g_strdup_printf("smogrify get_recovery_file %d %d %s recovery> %s",getuid(),getgid(),capable->myname,info_file);
-
-    unlink(info_file);
-    dummyvar=system(com);
-    g_free(com);
-
-    info_fd=open(info_file,O_RDONLY);
-    if (info_fd>-1) {
-      if ((bytes=read(info_fd,mainw->msg,256))>0) {
-	memset(mainw->msg+bytes,0,1);
-	if ((recpid=atoi(mainw->msg))>0) {
-	  recover_files((recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid)),auto_recover);
-	  unlink(recovery_file);
-	  g_free(recovery_file);
-	  retval=TRUE;
-
-	  // check for layout recovery file
-	  recovery_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
-	  if (g_file_test (recovery_file, G_FILE_TEST_EXISTS)) {
-	    com=g_strdup_printf("/bin/mv %s %s/.layout.%d.%d.%d",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
-	    dummyvar=system(com);
-	    g_free(com);
-	    recovery_numbering_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
-	    com=g_strdup_printf("/bin/mv %s %s/.layout_numbering.%d.%d.%d",recovery_numbering_file,prefs->tmpdir,getuid(),getgid(),getpid());
-	    dummyvar=system(com);
-	    g_free(com);
-	    g_free(recovery_numbering_file);
-	    mainw->recoverable_layout=TRUE;
-	  }
-	  else {
-	    if (mainw->scrap_file!=-1) close_scrap_file();
-	  }
-	  g_free(recovery_file);
-	}
-      }
-      close(info_fd);
-    }
-    unlink(info_file);
-    g_free(info_file);
-  }
-
-  com=g_strdup_printf("smogrify clean_recovery_files %d %d %s",getuid(),getgid(),capable->myname);
-
+  size_t bytes;
+  int info_fd;
+  gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
+  gchar *com=g_strdup_printf("smogrify get_recovery_file %d %d %s recovery> %s",getuid(),getgid(),capable->myname,info_file);
+  
+  unlink(info_file);
   dummyvar=system(com);
   g_free(com);
+  
+  info_fd=open(info_file,O_RDONLY);
+  if (info_fd>-1) {
+    if ((bytes=read(info_fd,mainw->msg,256))>0) {
+      memset(mainw->msg+bytes,0,1);
+      if ((recpid=atoi(mainw->msg))>0) {
+	
+      }
+    }
+    close(info_fd);
+  }
+  unlink(info_file);
+  g_free(info_file);
+
+  if (recpid==0) return FALSE;
+
+  
+  retval=recover_files((recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid)),auto_recover);
+  unlink(recovery_file);
+  g_free(recovery_file);
+  
+  // check for layout recovery file
+  recovery_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
+  if (g_file_test (recovery_file, G_FILE_TEST_EXISTS)) {
+    // move files temporarily to stop them being cleansed
+    com=g_strdup_printf("/bin/mv %s %s/.layout.%d.%d.%d",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
+    dummyvar=system(com);
+    g_free(com);
+    recovery_numbering_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
+    com=g_strdup_printf("/bin/mv %s %s/.layout_numbering.%d.%d.%d",recovery_numbering_file,prefs->tmpdir,getuid(),getgid(),getpid());
+    dummyvar=system(com);
+    g_free(com);
+    g_free(recovery_numbering_file);
+    mainw->recoverable_layout=TRUE;
+  }
+  else {
+    if (mainw->scrap_file!=-1) close_scrap_file();
+  }
+  g_free(recovery_file);
+  
+  com=g_strdup_printf("smogrify clean_recovery_files %d %d %s",getuid(),getgid(),capable->myname);
+  dummyvar=system(com);
+  g_free(com);
+
+  if (mainw->recoverable_layout) {
+    recovery_file=g_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+    com=g_strdup_printf("/bin/mv %s %s/layout.%d.%d.%d",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
+    dummyvar=system(com);
+    g_free(com);
+    g_free(recovery_file);
+
+    recovery_numbering_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+    com=g_strdup_printf("/bin/mv %s %s/layout_numbering.%d.%d.%d",recovery_numbering_file,prefs->tmpdir,getuid(),getgid(),getpid());
+    dummyvar=system(com);
+    g_free(com);
+    g_free(recovery_numbering_file);
+  }
 
   rewrite_recovery_file();
 

@@ -337,7 +337,7 @@ void write_backup_layout_numbering(lives_mt *mt) {
 static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   int fd,count=1,vari;
   gdouble vard;
-  gchar *aload_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  gchar *aload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
 
   if (prefs->startup_interface==STARTUP_MT) count++;
 
@@ -445,7 +445,7 @@ guint mt_idle_add(lives_mt *mt) {
 
 
 void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
-  gchar *eload_file=g_strdup_printf("%s.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
   if (button!=NULL) {
     gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
     mainw->recoverable_layout=FALSE;
@@ -454,19 +454,53 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   unlink(eload_file);
   g_free(eload_file);
   
-  eload_file=g_strdup_printf("%slayout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-  unlink(eload_file);
-  g_free(eload_file);
-
-  eload_file=g_strdup_printf("%slayout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-  unlink(eload_file);
-  g_free(eload_file);
-
-  eload_file=g_strdup_printf("%s.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  eload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
   unlink(eload_file);
   g_free(eload_file);
 
 }
+
+
+
+static void mt_load_recovery_layout(lives_mt *mt) {
+    gchar *aload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+    gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+    mt->auto_reloading=TRUE;
+    mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
+    mt->auto_reloading=FALSE;
+    if (mt->event_list!=NULL) {
+      unlink(eload_file);
+      unlink(aload_file);
+      g_free(eload_file);
+      g_free(aload_file);
+      mt_init_tracks(mt,TRUE);
+      remove_markers(mt->event_list);
+
+      save_mt_autoback(mt);
+    }
+    else {
+      // failed to load
+      // keep the faulty layout for forensic purposes
+      gchar *com;
+
+      com=g_strdup_printf("/bin/mkdir -p %s/unrecoverable_layouts/ 2>/dev/null",prefs->tmpdir);
+      dummyvar=system(com);
+      g_free(com);
+
+      com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",eload_file,prefs->tmpdir);
+      dummyvar=system(com);
+      g_free(com);
+
+      com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",aload_file,prefs->tmpdir);
+      dummyvar=system(com);
+      g_free(com);
+
+      mt->fps=prefs->mt_def_fps;
+      g_free(eload_file);
+      g_free(aload_file);
+    }
+}
+
 
 void recover_layout(GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -480,8 +514,9 @@ void recover_layout(GtkButton *button, gpointer user_data) {
   else {
     mainw->multitrack->auto_reloading=TRUE;
     set_pref("ar_layout",""); // in case we crash...
-    on_load_event_list_activate(NULL,mainw->multitrack);
+    mt_load_recovery_layout(mainw->multitrack);
     mainw->multitrack->auto_reloading=FALSE;
+    mt_sensitise(mainw->multitrack);
   }
   mainw->recoverable_layout=FALSE;
 }
@@ -4433,6 +4468,7 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
     event_list_free_undos(mt);
     mt->event_list=NULL;
     mt_clear_timeline(mt);
+    close_scrap_file();
     d_print(_("Layout was wiped.\n"));
   }
 
@@ -4558,7 +4594,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   }
 
 }
-
 
 
 
@@ -7135,43 +7170,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
     }
   }
   else if (mainw->recoverable_layout) {
-    gchar *aload_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-    gchar *eload_file=g_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-    mt->auto_reloading=TRUE;
-    mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
-    mt->auto_reloading=FALSE;
-    if (mt->event_list!=NULL) {
-      unlink(eload_file);
-      unlink(aload_file);
-      g_free(eload_file);
-      g_free(aload_file);
-      mt_init_tracks(mt,TRUE);
-      remove_markers(mt->event_list);
-    }
-    else {
-      // failed to load
-      // keep the faulty layout for forensic purposes
-      gchar *com;
-      gchar *aload_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-
-      com=g_strdup_printf("/bin/mkdir -p %s/unrecoverable_layouts/ 2>/dev/null",prefs->tmpdir);
-      dummyvar=system(com);
-      g_free(com);
-
-      com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",eload_file,prefs->tmpdir);
-      dummyvar=system(com);
-      g_free(com);
-
-      com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",aload_file,prefs->tmpdir);
-      dummyvar=system(com);
-      g_free(com);
-
-      mainw->multitrack=mt;
-      mt->fps=prefs->mt_def_fps;
-      g_free(eload_file);
-      g_free(aload_file);
-      return mt;
-    }
+    mt_load_recovery_layout(mt);
   }
   else {
     mt_init_tracks (mt,TRUE);
@@ -7650,8 +7649,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   mainw->multitrack=NULL;
   mainw->event_list=NULL;
-
-  close_scrap_file();
 
   for (i=1;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL) {
@@ -8984,7 +8981,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     }
   }
 
-  if (cfile->clip_type==CLIP_TYPE_GENERATOR) {
+  if (mainw->current_file>-1&&cfile!=NULL&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
     weed_generator_end (cfile->ext_src);
   }
 
@@ -9062,6 +9059,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (mainw->recoverable_layout&&multi->event_list==NULL&&prefs->startup_interface==STARTUP_CE) {
+    // failed to load recovery layout
     multi->clip_selected=mt_clip_from_file(multi,orig_file);
     multi->file_selected=orig_file;
     return FALSE;
@@ -9152,11 +9150,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   mt_show_current_frame(multi);
 
   if (transfer_focus) gtk_window_present(GTK_WINDOW(multi->window));
-
-  if (mainw->recoverable_layout&&multi->event_list!=NULL&&prefs->startup_interface==STARTUP_CE) {
-    while (g_main_context_iteration(NULL,FALSE));
-    save_mt_autoback(multi);
-  }
 
 #ifdef ENABLE_OSC
   lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_MT)));
@@ -13893,7 +13886,7 @@ void mt_desensitise (lives_mt *mt) {
 
 
 void mt_sensitise (lives_mt *mt) {
-  GtkWidget *eventbox;
+  GtkWidget *eventbox=NULL;
 
   if (mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
     gtk_widget_set_sensitive (mt->playall,TRUE);
@@ -13912,6 +13905,7 @@ void mt_sensitise (lives_mt *mt) {
     gtk_widget_set_sensitive (mt->render,FALSE);
     gtk_widget_set_sensitive (mt->save_event_list,FALSE);
   }
+
   if (mt->event_list!=NULL) gtk_widget_set_sensitive (mt->clear_event_list, TRUE);
 
   gtk_widget_set_sensitive (mt->remove_gaps, TRUE);
@@ -13951,9 +13945,13 @@ void mt_sensitise (lives_mt *mt) {
   }
 
   if (mt->video_draws!=NULL&&mt->current_track>-1) eventbox=g_list_nth_data (mt->video_draws,mt->current_track);
-  else eventbox=mt->audio_draws->data;
-  gtk_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=(gulong)NULL);
-  gtk_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=(gulong)NULL);
+  else if (mt->audio_draws!=NULL) eventbox=mt->audio_draws->data;
+
+  if (eventbox!=NULL) {
+    gtk_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=(gulong)NULL);
+    gtk_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=(gulong)NULL);
+  }
+
   gtk_widget_set_sensitive (mt->change_vals,TRUE);
 
   if (mt->block_selected) {
@@ -13984,7 +13982,6 @@ void mt_sensitise (lives_mt *mt) {
   }
 
   track_select(mt);
-
 
 }
 
@@ -16439,6 +16436,8 @@ static void *find_init_event_in_ttable(ttable *trans_table, weed_plant_t *in, gb
 
 static void **remove_nulls_from_filter_map(void **init_events, int *num_events) {
   // remove NULLs from filter_map init_events
+
+  // old array may be free()d, return value should be freed() unless NULL
   int num_nulls=0,i,j=0;
   void **new_init_events;
 
@@ -16449,11 +16448,16 @@ static void **remove_nulls_from_filter_map(void **init_events, int *num_events) 
 
   *num_events-=num_nulls;
 
-  new_init_events=g_malloc((*num_events)*sizeof(void *));
+  if (*num_events==0) new_init_events=NULL;
+
+  else new_init_events=g_malloc(((*num_events==0)?1:*num_events)*sizeof(void *));
   
   for (i=0;i<*num_events;i++) if (init_events[i]!=NULL) new_init_events[j++]=init_events[i];
 
   g_free(init_events);
+
+  if (*num_events==0) *num_events=1;
+
   return new_init_events;
 }
 
@@ -16789,7 +16793,7 @@ static gchar *filter_map_check(ttable *trans_table,weed_plant_t *filter_map, wee
   }
   if (num_init_events>1) copy_events=remove_nulls_from_filter_map(copy_events,&num_init_events);
 
-  g_free(copy_events);
+  if (copy_events!=NULL) g_free(copy_events);
   weed_free(init_events);
   return ebuf;
 }
@@ -17335,20 +17339,21 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  }
 	  else new_init_events[i]=NULL;
 	}
-	if (num_init_events>1) new_init_events=remove_nulls_from_filter_map(new_init_events,&num_init_events);
+	new_init_events=remove_nulls_from_filter_map(new_init_events,&num_init_events);
 	pthread_mutex_lock(&mainw->gtk_mutex);
-	weed_set_voidptr_array(event,"init_events",num_init_events,new_init_events);
+	if (new_init_events==NULL) weed_set_voidptr_value(event,"init_events",NULL);
+	else {
+	  weed_set_voidptr_array(event,"init_events",num_init_events,new_init_events);
 
-	for (i=0;i<num_init_events;i++) {
-	  if (new_init_events!=NULL&&new_init_events[i]!=NULL&&init_event_is_process_last(new_init_events[i])) {
-	    // reposition process_last events to the end
-	    add_init_event_to_filter_map(event,new_init_events[i],NULL);
+	  for (i=0;i<num_init_events;i++) {
+	    if (init_event_is_process_last(new_init_events[i])) {
+	      // reposition process_last events to the end
+	      add_init_event_to_filter_map(event,new_init_events[i],NULL);
+	    }
 	  }
+	  g_free(new_init_events);
 	}
-
-
 	weed_free(init_events);
-	g_free(new_init_events);
 	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
       else {
@@ -17713,6 +17718,12 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
     }
   }
 
+  // add any missing filter_deinit events
+  ebuf=add_filter_deinits(event_list,trans_table,pchains,last_tc,ebuf);
+
+  // check the last filter map
+  if (last_filter_map!=NULL) ebuf=add_null_filter_map(event_list,last_filter_map,last_tc,ebuf);
+
   last_event=get_last_event(event_list);
   remove_end_blank_frames(event_list);
 
@@ -17722,11 +17733,6 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
     ebuf=rec_error_add(ebuf,"Removed final blank frames",-1,last_tc);
   }
 
-  // add any missing filter_deinit events
-  ebuf=add_filter_deinits(event_list,trans_table,pchains,last_tc,ebuf);
-
-  // check the last filter map
-  if (last_filter_map!=NULL) ebuf=add_null_filter_map(event_list,last_filter_map,last_tc,ebuf);
 
   // pass 2 - move left any FILTER_DEINITS before the FRAME, move right any FILTER_INITS or PARAM_CHANGES after the FRAME
   // ensure we have at most 1 FILTER_MAP before each FRAME, and 1 FILTER_MAP after a FRAME
@@ -17864,6 +17870,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   }
 
   if (mainw->was_set) startdir=g_strdup_printf("%s%s/",eload_dir,mainw->set_name);
+
   if (!g_file_test(startdir,G_FILE_TEST_IS_DIR)||!mainw->was_set) {
     if (startdir!=NULL) g_free(startdir);
     startdir=g_strdup(eload_dir);
@@ -18024,8 +18031,6 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   mt->layout_prompt=FALSE;
 
-  if (mt->is_ready) mt_sensitise(mt);
-
   if (mt->avol_fx==-1&&mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate!=-1) {
     // user (or system) has delegated an audio volume filter from the candidates
     mt->avol_fx=GPOINTER_TO_INT(g_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].list,mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate));
@@ -18160,8 +18165,10 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   d_print(_("Layout was wiped.\n"));
 
+  close_scrap_file();
+
   recover_layout_cancelled(NULL,NULL);
-  
+
   if (strlen(mt->layout_name)>0&&!strcmp(mt->layout_name,prefs->ar_layout_name)) {
     set_pref("ar_layout","");
     memset(prefs->ar_layout_name,0,1);
@@ -18241,6 +18248,7 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   recover_layout_cancelled(NULL,NULL);
 
   if (new_event_list==NULL) {
+    mt_sensitise(mt);
     mt->idlefunc=mt_idle_add(mt);
     return;
   }
@@ -18282,11 +18290,6 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   remove_markers(mt->event_list);
   mt_sensitise(mt);
   mt_show_current_frame(mt);
-
-  if (mainw->recoverable_layout&&mt->event_list!=NULL) {
-    while (g_main_context_iteration(NULL,FALSE));
-    save_mt_autoback(mt);
-  }
 
   mt->idlefunc=mt_idle_add(mt);
 }

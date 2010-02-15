@@ -3616,7 +3616,7 @@ gboolean render_to_clip (gboolean new_clip) {
 
     }
   
-    if (cfile->clip_type==CLIP_TYPE_GENERATOR) {
+    if (mainw->current_file>-1&&cfile!=NULL&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
       weed_generator_end (cfile->ext_src);
     }
 

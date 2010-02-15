@@ -211,7 +211,7 @@ lives_exit (void) {
       memset(mainw->set_name,0,1);
       mainw->only_close=FALSE;
       prefs->crash_recovery=TRUE;
-      mainw->recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+
       pthread_mutex_lock(&mainw->gtk_mutex);
       if (mainw->current_file>-1) sensitize();
       gtk_widget_queue_draw(mainw->LiVES);

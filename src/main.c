@@ -74,39 +74,41 @@ static gint xxwidth=0,xxheight=0;
 
 void catch_sigint(int signum) {
   // trap for ctrl-C and others 
-  if (!(mainw==NULL)) {
-    if (!(mainw->LiVES==NULL)) {
+  if (mainw!=NULL) {
+    if (mainw->LiVES!=NULL) {
       if (mainw->foreign) {
 	exit (signum);
       }
-      if (signum==0||signum==SIGINT||signum==SIGSEGV) {
-	if (signum==SIGSEGV) {
-	  signal (SIGSEGV, SIG_DFL);
-	  g_printerr("%s",_("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\nThanks. Recovery should be possible if you restart LiVES.\n"));
-	  g_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version (" LiVES_VERSION ")\n"));
+      if (signum==SIGABRT||signum==SIGSEGV) {
+	signal (SIGSEGV, SIG_DFL);
+	signal (SIGABRT, SIG_DFL);
+	g_printerr("%s",_("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\nThanks. Recovery should be possible if you restart LiVES.\n"));
+	g_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version (" LiVES_VERSION ")\n"));
 
-	  if (capable->has_gdb) {
-	    if (debug_crashes) g_printerr("%s",_("and any information shown below:\n\n"));
-	    else g_printerr("%s","Please try running LiVES with the -debug option to collect more information.\n\n");
-	  }
-	  else {
-	    g_printerr("%s",_("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
-	  }
-	  mainw->leave_recovery=TRUE;
+	if (capable->has_gdb) {
+	  if (debug_crashes) g_printerr("%s",_("and any information shown below:\n\n"));
+	  else g_printerr("%s","Please try running LiVES with the -debug option to collect more information.\n\n");
 	}
+	else {
+	  g_printerr("%s",_("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
+	}
+      
 	if (debug_crashes) {
 	  g_on_error_stack_trace(capable->myname_full);
 	}
-
-	if (mainw->was_set) {
-	  g_printerr ("%s",_("Preserving set.\n"));
-	  mainw->leave_files=TRUE;
-	}
       }
+      
+      if (mainw->was_set) {
+	g_printerr ("%s",_("Preserving set.\n"));
+      }
+
+      mainw->leave_recovery=mainw->leave_files=TRUE;
+      
       mainw->only_close=FALSE;
       lives_exit();
     }
   }
+  exit(signum);
 }
 
 
@@ -539,7 +541,7 @@ static void lives_init(_ign_opts *ign_opts) {
     mainw->endian=AFORM_BIG_ENDIAN;
   }
 
-  mainw->leave_files=FALSE;
+  mainw->leave_files=TRUE;
   mainw->was_set=FALSE;
   mainw->toy_go_wild=FALSE;
 
@@ -667,7 +669,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->affected_layouts_map=mainw->current_layouts_map=NULL;
 
   mainw->recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-  mainw->leave_recovery=FALSE;
+  mainw->leave_recovery=TRUE;
 
   mainw->pchains=NULL;
 

@@ -1141,6 +1141,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 	  if (prefs->ar_clipset) set_pref("ar_clipset",set_name);
 	  else set_pref("ar_clipset","");
 	  mainw->no_exit=FALSE;
+	  mainw->leave_recovery=FALSE;
 	  on_save_set_activate(NULL,set_name);
 
 	  if (mainw->multitrack!=NULL) {
@@ -1207,10 +1208,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 
   if (mainw->multitrack!=NULL&&!mainw->only_close) mt_memory_free();
 
-  mainw->was_set=mainw->leave_files=FALSE;
-
-  // deactivate crash recovery
-  prefs->crash_recovery=FALSE;
+  mainw->was_set=mainw->leave_files=mainw->leave_recovery=FALSE;
 
   if (had_clips) {
     d_print(_("Deleting set..."));
@@ -1226,6 +1224,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     memset(mainw->set_name,0,1);
   }
 
+  mainw->leave_files=mainw->leave_recovery=TRUE;
 }
 
 

@@ -3631,6 +3631,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	  while (g_main_context_iteration(NULL,FALSE));
 	  mt_clip_select(mainw->multitrack,TRUE);
 	  while (g_main_context_iteration(NULL,FALSE));
+	  mainw->current_file=current_file;
 	}
 	
 	pthread_mutex_unlock(&mainw->gtk_mutex);

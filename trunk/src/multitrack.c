@@ -67,6 +67,8 @@ static weed_plant_t *pb_loop_event,*pb_filter_map;
 
 static gboolean mainw_was_ready;
 
+static gboolean was_recovery=FALSE;
+
 ///////////////////////////////////////////////////////////////////
 
 static LIVES_INLINE gint mt_file_from_clip(lives_mt *mt, gint clip) {
@@ -306,9 +308,10 @@ void write_backup_layout_numbering(lives_mt *mt) {
 
   if (fd!=-1) {
     while (clist!=NULL) {
-      i=GPOINTER_TO_INT(clist->data);
+      vali=i=GPOINTER_TO_INT(clist->data);
+      if (was_recovery) vali--;
       if (mt!=NULL) {
-	dummyvar=write(fd,&i,sizint);
+	dummyvar=write(fd,&vali,sizint);
 	vald=mainw->files[i]->fps;
 	dummyvar=write(fd,&vald,sizdbl);
 	hdlsize=strlen(mainw->files[i]->handle);
@@ -345,7 +348,6 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
   if (fd!=-1) {
     while (1) {
-      if (count==mt->render_file) count++;
       if (read(fd,&vari,sizint)>0) {
 	renumbered_clips[vari]=count;
 	if (read(fd,&vard,sizdbl)>0) {
@@ -515,6 +517,7 @@ void recover_layout(GtkButton *button, gpointer user_data) {
     mainw->multitrack->auto_reloading=TRUE;
     set_pref("ar_layout",""); // in case we crash...
     mt_load_recovery_layout(mainw->multitrack);
+    if (mainw->multitrack->event_list!=NULL) was_recovery=TRUE;
     mainw->multitrack->auto_reloading=FALSE;
     mt_sensitise(mainw->multitrack);
   }

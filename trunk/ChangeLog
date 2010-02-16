@@ -21,7 +21,7 @@ Fixed an encoder/png problem. *
 Fixed image loading (regression).
 Fixed problem with crash recovery restoring a file twice. *
 Fixed some minor memory leaks. *
-
+Handle SIGABRT correctly. *
 	
 * Backported to 1.0.9
 

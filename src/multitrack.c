@@ -67,8 +67,6 @@ static weed_plant_t *pb_loop_event,*pb_filter_map;
 
 static gboolean mainw_was_ready;
 
-static gboolean was_recovery=FALSE;
-
 ///////////////////////////////////////////////////////////////////
 
 static LIVES_INLINE gint mt_file_from_clip(lives_mt *mt, gint clip) {
@@ -308,10 +306,9 @@ void write_backup_layout_numbering(lives_mt *mt) {
 
   if (fd!=-1) {
     while (clist!=NULL) {
-      vali=i=GPOINTER_TO_INT(clist->data);
-      if (was_recovery) vali--;
+      i=GPOINTER_TO_INT(clist->data);
       if (mt!=NULL) {
-	dummyvar=write(fd,&vali,sizint);
+	dummyvar=write(fd,&i,sizint);
 	vald=mainw->files[i]->fps;
 	dummyvar=write(fd,&vald,sizdbl);
 	hdlsize=strlen(mainw->files[i]->handle);
@@ -338,7 +335,7 @@ void write_backup_layout_numbering(lives_mt *mt) {
 
 
 static void renumber_from_backup_layout_numbering(lives_mt *mt) {
-  int fd,count=1,vari;
+  int fd,count=1,vari,offs=0;
   gdouble vard;
   gchar *aload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
 
@@ -349,7 +346,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   if (fd!=-1) {
     while (1) {
       if (read(fd,&vari,sizint)>0) {
-	renumbered_clips[vari]=count;
+	renumbered_clips[vari+offs]=count;
 	if (read(fd,&vard,sizdbl)>0) {
 	  lfps[count]=vard;
 	  if (read(fd,&vari,sizint)>0) {
@@ -477,7 +474,6 @@ static void mt_load_recovery_layout(lives_mt *mt) {
       g_free(aload_file);
       mt_init_tracks(mt,TRUE);
       remove_markers(mt->event_list);
-
       save_mt_autoback(mt);
     }
     else {
@@ -517,7 +513,6 @@ void recover_layout(GtkButton *button, gpointer user_data) {
     mainw->multitrack->auto_reloading=TRUE;
     set_pref("ar_layout",""); // in case we crash...
     mt_load_recovery_layout(mainw->multitrack);
-    if (mainw->multitrack->event_list!=NULL) was_recovery=TRUE;
     mainw->multitrack->auto_reloading=FALSE;
     mt_sensitise(mainw->multitrack);
   }
@@ -6767,7 +6762,6 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   set_mt_title(mt);
 
   mt_init_clips (mt,orig_file,FALSE);
-  write_backup_layout_numbering(mt);
 
   // poly audio velocity
   mt->avel_box = gtk_vbox_new (FALSE, 0);

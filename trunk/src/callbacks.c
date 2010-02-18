@@ -1434,16 +1434,9 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       cfile->start=cfile->insert_start;
       cfile->end=cfile->insert_end;
 
-      if (cfile->undo_action==UNDO_INSERT_WITH_AUDIO) mainw->ccpd_with_sound=FALSE;
+      if (cfile->undo_action==UNDO_INSERT_WITH_AUDIO) mainw->ccpd_with_sound=TRUE;
+      else mainw->ccpd_with_sound=FALSE;
       on_delete_activate (NULL,NULL);
-
-      if (cfile->undo_action==UNDO_INSERT_WITH_AUDIO) {
-	unlink(cfile->info_file);
-	com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
-	dummyvar=system (com);
-	do_auto_dialog(_("Undoing audio"),0);
-	g_free (com);
-      }
 
       cfile->start=ostart;
       if (ostart>=cfile->insert_start) {
@@ -1585,10 +1578,12 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       com=g_strdup_printf(_ ("Length of video is now %d frames at %.3f frames per second.\n"),cfile->frames,cfile->fps);
     }
     else {
+      mainw->no_switch_dprint=TRUE;
       com=g_strdup_printf(_ ("Clipboard was resampled to %d frames.\n"),cfile->frames);
     }
     d_print(com);
     g_free(com);
+    mainw->no_switch_dprint=FALSE;
   }
 
   if (cfile->end>cfile->frames) {
@@ -1650,6 +1645,8 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
   if (cfile->undo_action==UNDO_INSERT_SILENCE) {
     on_ins_silence_activate (NULL,NULL);
     mainw->osc_block=FALSE;
+    d_print_done();
+    sensitize();
     return;
   }
   if (cfile->undo_action==UNDO_CHANGE_SPEED) {
@@ -1783,6 +1780,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
 
   desensitize();
 
+  d_print(""); // force switchtext
   d_print(text);
   g_free(text);
 
@@ -1897,6 +1895,8 @@ on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
   gchar *msg;
   gint old_file=mainw->current_file,current_file;
 
+  if (clipboard==NULL) return;
+
   mainw->current_file=mainw->first_free_file;
   
   if (!get_new_handle(mainw->current_file,NULL)) {
@@ -1993,6 +1993,8 @@ on_insert_activate                    (GtkButton     *button,
   gint ocarps=clipboard->arps;
   gint leave_backup=1;
   gboolean has_lmap_error=FALSE;
+
+  gboolean insert_silence=FALSE;
 
   gint orig_frames=cfile->frames;
 
@@ -2166,61 +2168,67 @@ on_insert_activate                    (GtkButton     *button,
   if (mainw->insert_after) where=cfile->end;
 
   // at least we should try to convert the audio to match...
-  // with_sound should never be TRUE if clipboard has no audio
+  // if with_sound is TRUE, and clipboard has no audio, we will insert silence (unless target 
+  // also has no audio
   if (with_sound) {
 
-    if ((cfile->achans*cfile->arps*cfile->asampsize>0)&&(cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian||cfile->arate!=clipboard->arate)) {
+    if (clipboard->achans==0) {
+      if (cfile->achans>0) insert_silence=TRUE;
+      with_sound=FALSE;
+    }
+    else {
+      if ((cfile->achans*cfile->arps*cfile->asampsize>0)&&(cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian||cfile->arate!=clipboard->arate)) {
 
-      cb_audio_change=TRUE;
+	cb_audio_change=TRUE;
 
-      if (clipboard->arps!=clipboard->arps||cfile->arate!=clipboard->arate) {
-	// pb rate != real rate - stretch to pb rate and resample
-	if ((audio_stretch=(gdouble)clipboard->arps/(gdouble)clipboard->arate*(gdouble)cfile->arate/(gdouble)cfile->arps)!=1.) {
+	if (clipboard->arps!=clipboard->arps||cfile->arate!=clipboard->arate) {
+	  // pb rate != real rate - stretch to pb rate and resample
+	  if ((audio_stretch=(gdouble)clipboard->arps/(gdouble)clipboard->arate*(gdouble)cfile->arate/(gdouble)cfile->arps)!=1.) {
+	    unlink (clipboard->info_file);
+	    com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d %.4f",clipboard->handle,clipboard->arps,clipboard->achans,clipboard->asampsize,clipboard_signed,clipboard_endian,cfile->arps,clipboard->achans,clipboard->asampsize,clipboard_signed,clipboard_endian,audio_stretch);
+	    dummyvar=system (com);
+	    mainw->current_file=0;
+	    do_progress_dialog (TRUE,FALSE,_ ("Resampling clipboard audio"));
+	    mainw->current_file=current_file;
+	    g_free (com);
+	  
+	    // not really, but we pretend...
+	    clipboard->arps=cfile->arps;
+	  }
+	}
+
+	if (cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian) {
 	  unlink (clipboard->info_file);
-	  com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d %.4f",clipboard->handle,clipboard->arps,clipboard->achans,clipboard->asampsize,clipboard_signed,clipboard_endian,cfile->arps,clipboard->achans,clipboard->asampsize,clipboard_signed,clipboard_endian,audio_stretch);
+	  com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d",clipboard->handle,clipboard->arps,clipboard->achans,clipboard->asampsize,clipboard_signed,clipboard_endian,cfile->arps,cfile->achans,cfile->asampsize,cfile_signed,cfile_endian);
 	  dummyvar=system (com);
 	  mainw->current_file=0;
 	  do_progress_dialog (TRUE,FALSE,_ ("Resampling clipboard audio"));
 	  mainw->current_file=current_file;
 	  g_free (com);
-	  
-	  // not really, but we pretend...
-	  clipboard->arps=cfile->arps;
 	}
-      }
-
-      if (cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian) {
-	unlink (clipboard->info_file);
-	com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d",clipboard->handle,clipboard->arps,clipboard->achans,clipboard->asampsize,clipboard_signed,clipboard_endian,cfile->arps,cfile->achans,cfile->asampsize,cfile_signed,cfile_endian);
-	dummyvar=system (com);
-	mainw->current_file=0;
-	do_progress_dialog (TRUE,FALSE,_ ("Resampling clipboard audio"));
-	mainw->current_file=current_file;
-	g_free (com);
-      }
       
-      if (clipboard->afilesize==0l) {
-	if (prefs->conserve_space) {
-	  // oops...
-	  clipboard->achans=clipboard->arate=clipboard->asampsize=0;
-	  with_sound=FALSE;
-	  do_error_dialog (_ ("\n\nLiVES was unable to resample the clipboard audio. \nClipboard audio has been erased.\n"));
-	}
-	else {
-	  unlink (clipboard->info_file);
-	  mainw->current_file=0;
-	  com=g_strdup_printf ("smogrify undo_audio %s",clipboard->handle);
-	  dummyvar=system (com);
-	  g_free (com);
-	  mainw->current_file=current_file;
+	if (clipboard->afilesize==0l) {
+	  if (prefs->conserve_space) {
+	    // oops...
+	    clipboard->achans=clipboard->arate=clipboard->asampsize=0;
+	    with_sound=FALSE;
+	    do_error_dialog (_ ("\n\nLiVES was unable to resample the clipboard audio. \nClipboard audio has been erased.\n"));
+	  }
+	  else {
+	    unlink (clipboard->info_file);
+	    mainw->current_file=0;
+	    com=g_strdup_printf ("smogrify undo_audio %s",clipboard->handle);
+	    dummyvar=system (com);
+	    g_free (com);
+	    mainw->current_file=current_file;
 	  
-	  clipboard->arps=ocarps;
-	  reget_afilesize(0);
+	    clipboard->arps=ocarps;
+	    reget_afilesize(0);
 	  
-	  if (!do_warning_dialog (_ ("\n\nLiVES was unable to resample the clipboard audio.\nDo you wish to continue with the insert \nusing unchanged audio ?\n"))) {
-	    mainw->error=TRUE;
-	    return;
-	  }}}}}
+	    if (!do_warning_dialog (_ ("\n\nLiVES was unable to resample the clipboard audio.\nDo you wish to continue with the insert \nusing unchanged audio ?\n"))) {
+	      mainw->error=TRUE;
+	      return;
+	    }}}}}}
 
   
   // if pref is set, resample clipboard video
@@ -2259,6 +2267,7 @@ on_insert_activate                    (GtkButton     *button,
 
   if (!mainw->insert_after&&remainder_frames>0) {
     msg=g_strdup_printf(_ ("Inserting %d%s frames from the clipboard..."),remainder_frames,times_to_insert>1.?" remainder":"");
+    d_print(""); // force switchtext
     d_print(msg);
     g_free(msg);
 
@@ -2297,11 +2306,13 @@ on_insert_activate                    (GtkButton     *button,
   // inserts of whole clipboard
   if ((int)times_to_insert>1) {
     msg=g_strdup_printf(_ ("Inserting %d times from the clipboard%s..."),(int)times_to_insert,with_sound?" (with sound)":"");
+    d_print("");
     d_print(msg);
     g_free(msg);
   }
   else if ((int)times_to_insert>0) {
     msg=g_strdup_printf(_ ("Inserting %d frames from the clipboard%s..."),cb_end-cb_start+1,with_sound?" (with sound)":"");
+    d_print("");
     d_print(msg);
     g_free(msg);
   }
@@ -2416,7 +2427,23 @@ on_insert_activate                    (GtkButton     *button,
     d_print_done();
   } 
   
-  
+
+  // if we had deferred audio, we insert silence in selection
+  if (insert_silence) {
+    cfile->undo1_dbl=calc_time_from_frame(mainw->current_file,cfile->insert_start);
+    cfile->undo2_dbl=calc_time_from_frame(mainw->current_file,cfile->insert_end+1);
+    cfile->undo_arate=cfile->arate;
+    cfile->undo_signed_endian=cfile->signed_endian;
+    cfile->undo_achans=cfile->achans;
+    cfile->undo_asampsize=cfile->asampsize;
+    cfile->undo_arps=cfile->arps;
+
+    on_ins_silence_activate(NULL,NULL);
+
+    with_sound=TRUE;
+  }
+
+
   // insert done
 
   // start or end can be zero if we inserted into pure audio
@@ -2618,6 +2645,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
 
   if (menuitem!=NULL) {
     com=g_strdup_printf(_ ("Deleting frames %d to %d%s..."),cfile->start,cfile->end,mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
+    d_print(""); // force switchtext
     d_print(com);
     g_free(com);
   }
@@ -3489,7 +3517,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   msg=g_strdup_printf(_("Saving the set will cause copies of all loaded clips to remain on the disk%s.\n\nPlease press 'Cancel' if that is not what you want.\n"),extra);
   g_free(extra);
 
-  if (!do_warning_dialog_with_check (msg,WARN_MASK_SAVE_SET)) {
+  if (menuitem!=NULL&&!do_warning_dialog_with_check (msg,WARN_MASK_SAVE_SET)) {
     g_free(msg);
     return;
   }
@@ -4817,6 +4845,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
   else cfile->arps=cfile->arate;
 
   mesg=g_strdup_printf(_ ("Opening audio %s, type %s..."),file_name,a_type);
+    d_print(""); // force switchtext
   d_print(mesg);
   g_free(mesg);
 
@@ -8408,6 +8437,7 @@ on_ok_append_audio_clicked                      (GtkButton *button,
   }
 
   g_snprintf (mainw->msg,256,_ ("Appending audio file %s..."),file_name);
+  d_print(""); // force switchtext
   d_print (mainw->msg);
  
   unlink (cfile->info_file);
@@ -8778,6 +8808,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
   cfile->undo_arps=cfile->arps;
 
   if (msg!=NULL) {
+    d_print("");
     d_print(msg);
     g_free(msg);
   }
@@ -9066,7 +9097,7 @@ void
 on_ins_silence_activate (GtkMenuItem     *menuitem,
 			 gpointer         user_data)
 {
-  gdouble start,end;
+  gdouble start=0,end=0;
   gchar *com,*msg;
   gint asigned,aendian;
   gboolean has_lmap_error=FALSE;
@@ -9092,10 +9123,11 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
     return;
   }
 
-  start=calc_time_from_frame (mainw->current_file,cfile->start);
-  end=calc_time_from_frame (mainw->current_file,cfile->end+1);
-  
+
   if (menuitem!=NULL) {
+    start=calc_time_from_frame (mainw->current_file,cfile->start);
+    end=calc_time_from_frame (mainw->current_file,cfile->end+1);
+
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)) {
       if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,start))!=NULL) {
 	if (!do_warning_dialog(_("\nInsertion will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
@@ -9127,12 +9159,15 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
     }
 
     msg=g_strdup_printf(_ ("Inserting silence from %.2f to %.2f seconds..."),start,end);
+    d_print(""); // force switchtext
     d_print(msg);
     g_free(msg);
   }
 
-  cfile->undo1_dbl=start*=(gdouble)cfile->arate/(gdouble)cfile->arps;
-  cfile->undo2_dbl=end*=(gdouble)cfile->arate/(gdouble)cfile->arps;
+  cfile->undo1_dbl=start;
+  start*=(gdouble)cfile->arate/(gdouble)cfile->arps;
+  cfile->undo2_dbl=end;
+  end*=(gdouble)cfile->arate/(gdouble)cfile->arps;
 
   com=g_strdup_printf("smogrify insert %s %s %.8f 0. %.8f %s 2 0 0 0 0 %d %d %d %d %d -1",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", start, end-start, cfile->handle, -cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), !(cfile->signed_endian&AFORM_BIG_ENDIAN));
 
@@ -9153,8 +9188,10 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
 
   save_clip_values(mainw->current_file);
 
-  sensitize();
-  d_print_done();
+  if (menuitem!=NULL) {
+    sensitize();
+    d_print_done();
+  }
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
   if (mainw->sl_undo_mem!=NULL&&cfile->stored_layout_audio!=0.) {

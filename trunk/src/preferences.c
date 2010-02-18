@@ -1574,9 +1574,11 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_fps, FALSE, TRUE, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_mt_def_fps);
 
+  prefsw->backaudio_checkbutton = gtk_check_button_new ();
+  prefsw->pertrack_checkbutton = gtk_check_button_new ();
+
   resaudw=create_resaudw(4,NULL,vbox77);
 
-  prefsw->backaudio_checkbutton = gtk_check_button_new ();
   gtk_widget_show(prefsw->backaudio_checkbutton);
   eventbox=gtk_event_box_new();
   gtk_widget_show(eventbox);
@@ -1601,7 +1603,6 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_widget_set_sensitive(prefsw->backaudio_checkbutton,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
-  prefsw->pertrack_checkbutton = gtk_check_button_new ();
   gtk_widget_show(prefsw->pertrack_checkbutton);
   eventbox=gtk_event_box_new();
   gtk_widget_show(eventbox);

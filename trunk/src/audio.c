@@ -601,6 +601,7 @@ static void pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int a
 	}
       }
     }
+
     for (i=0;i<sbytes;i+=SILENCE_BLOCK_SIZE) {
       if (sbytes-i<SILENCE_BLOCK_SIZE) sblocksize=sbytes-i;
       dummyvar=write (out_fd,zero_buff,sblocksize);

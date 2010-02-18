@@ -1,6 +1,6 @@
 // osc.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2009
+// (c) G. Finch 2004 - 2010
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -29,6 +29,7 @@ static lives_osc *livesOSC=NULL;
 #define OSC_STRING_SIZE 255
 
 #define FX_MAX FX_KEYS_MAX_VIRTUAL-1
+
 
 
 /* convert a big endian 32 bit string to an int for internal use */
@@ -527,6 +528,342 @@ void lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OS
 
 
 
+
+void lives_osc_cb_fgclip_close(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+  int noaudio=0;
+  int clipno=mainw->current_file;
+  gint current_file=clipno;
+
+  if (mainw->playing_file>-1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return;
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+
+  if (clipno==current_file) current_file=-1;
+
+  mainw->current_file=clipno;
+
+  close_current_file(current_file);
+
+}
+
+
+
+
+
+void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+  int noaudio=0;
+  int clipno=mainw->current_file;
+  gint start,end,current_file=clipno;
+  gboolean ccpd;
+
+  if (mainw->playing_file>-1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return;
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+
+  mainw->current_file=clipno;
+  start=cfile->start;
+  end=cfile->end;
+
+  cfile->start=1;
+  cfile->end=cfile->frames;
+
+  ccpd=mainw->ccpd_with_sound;
+
+  mainw->ccpd_with_sound=!noaudio;
+
+  on_copy_activate(NULL,NULL);
+
+  mainw->ccpd_with_sound=ccpd;
+
+  cfile->start=start;
+  cfile->end=end;
+
+  mainw->current_file=current_file;
+
+}
+
+
+
+void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+
+  int noaudio=0;
+  int clipno=mainw->current_file;
+  gint current_file=clipno;
+  gboolean ccpd;
+
+  if (mainw->playing_file>-1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return;
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+
+  mainw->current_file=clipno;
+
+  ccpd=mainw->ccpd_with_sound;
+
+  mainw->ccpd_with_sound=!noaudio;
+
+  on_copy_activate(NULL,NULL);
+
+  mainw->ccpd_with_sound=ccpd;
+
+  mainw->current_file=current_file;
+
+}
+
+
+
+
+
+void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+
+  int noaudio=0;
+  int clipno=mainw->current_file;
+  gint current_file=clipno;
+  gboolean ccpd;
+
+  if (mainw->playing_file>-1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return;
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+
+  mainw->current_file=clipno;
+
+  ccpd=mainw->ccpd_with_sound;
+
+  mainw->ccpd_with_sound=!noaudio;
+
+  on_cut_activate(GINT_TO_POINTER(1),NULL);
+
+  mainw->ccpd_with_sound=ccpd;
+
+  mainw->current_file=current_file;
+
+}
+
+
+
+
+void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+
+  int noaudio=0;
+  int clipno=mainw->current_file;
+  gint current_file=clipno;
+  gboolean ccpd;
+
+  if (mainw->playing_file>-1) return;
+
+
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return;
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+
+  mainw->current_file=clipno;
+
+  ccpd=mainw->ccpd_with_sound;
+
+  mainw->ccpd_with_sound=!noaudio;
+
+  on_delete_activate(GINT_TO_POINTER(1),NULL);
+
+  mainw->ccpd_with_sound=ccpd;
+
+  mainw->current_file=current_file;
+
+}
+
+
+
+
+void lives_osc_cb_clipbd_paste(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+  int noaudio=0;
+  gboolean ccpd;
+
+  if (mainw->playing_file>-1) return;
+
+  if (clipboard==NULL) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return;
+  }
+
+  ccpd=mainw->ccpd_with_sound;
+
+  mainw->ccpd_with_sound=!noaudio;
+
+  on_paste_as_new_activate(NULL,NULL);
+
+  mainw->ccpd_with_sound=ccpd;
+
+}
+
+
+
+
+void lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+
+  int noaudio=0;
+  int times=1;
+  int clipno=mainw->current_file;
+  gint current_file=clipno;
+
+
+  if (mainw->playing_file>-1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+    lives_osc_parse_int_argument(vargs,&times);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+    lives_osc_parse_int_argument(vargs,&times);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return;
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+
+  if (times==0||times<-1) return;
+
+  mainw->current_file=clipno;
+
+  mainw->insert_after=FALSE;
+
+  if (clipboard->achans==0&&cfile->achans==0) noaudio=TRUE;
+
+  mainw->fx1_bool=(times==-1); // fit to audio
+  mainw->fx1_val=times;       // times to insert otherwise
+  mainw->fx2_bool=!noaudio;  // with audio
+
+  on_insert_activate(NULL,NULL);
+
+  mainw->current_file=current_file;
+
+}
+
+
+
+
+
+void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+
+  int noaudio=0;
+  int times=1;
+  int clipno=mainw->current_file;
+  gint current_file=clipno;
+
+
+  if (mainw->playing_file>-1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+    lives_osc_parse_int_argument(vargs,&times);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+    lives_osc_parse_int_argument(vargs,&times);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&noaudio);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return;
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+
+  if (times==0||times<-1) return;
+
+  mainw->current_file=clipno;
+
+  mainw->insert_after=TRUE;
+
+  if (clipboard->achans==0&&cfile->achans==0) noaudio=TRUE;
+
+  mainw->fx1_bool=(times==-1); // fit to audio
+  mainw->fx1_val=times;       // times to insert otherwise
+  mainw->fx2_bool=!noaudio;  // with audio
+
+  on_insert_activate(NULL,NULL);
+
+  mainw->current_file=current_file;
+
+}
+
+
+
+
 void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip and reset framenumber
 
@@ -613,7 +950,15 @@ void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *
 
 void lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (mainw->was_set) mainw->leave_files=TRUE;
+  if (mainw->playing_file>-1) return;
+
+  mainw->only_close=mainw->no_exit=FALSE;
+  mainw->leave_recovery=FALSE;
+
+  if (mainw->was_set) {
+    on_save_set_activate(NULL,mainw->set_name);
+  }
+  else mainw->leave_files=FALSE;
   lives_exit();
 
 }
@@ -1389,6 +1734,14 @@ static struct
     { "/effect_key/usermode/get",		"get",	lives_osc_cb_rte_getusermode,		        56	},
     { "/clip/encode_as",		"encode_as",	lives_osc_cb_clip_encodeas,			1	},
     { "/clip/select",		"select",	lives_osc_cb_fgclip_select,			1	},
+    { "/clip/close",		"close",	lives_osc_cb_fgclip_close,	  		        1	},
+    { "/clip/copy",		"copy",	lives_osc_cb_fgclip_copy,	  		        1	},
+    { "/clip/selection/copy",		"copy",	lives_osc_cb_fgclipsel_copy,	  		        55	},
+    { "/clip/selection/cut",		"cut",	lives_osc_cb_fgclipsel_cut,	  		        55	},
+    { "/clip/selection/delete",		"delete",	lives_osc_cb_fgclipsel_delete,	  		        55	},
+    { "/clipboard/paste",		"paste",	lives_osc_cb_clipbd_paste,			70	},
+    { "/clipboard/insert_before",		"insert_before",	lives_osc_cb_clipbd_insertb,			70	},
+    { "/clipboard/insert_after",		"insert_after",	lives_osc_cb_clipbd_inserta,			70	},
     { "/clip/retrigger",		"retrigger",	lives_osc_cb_fgclip_retrigger,			1	},
     { "/clip/select/next",		"next",	lives_osc_cb_fgclip_select_next,			54	},
     { "/clip/select/previous",		"previous",	lives_osc_cb_fgclip_select_previous,			54	},
@@ -1468,6 +1821,8 @@ static struct
     {	"/clip/start/", 	"start",         50, 1,0	},
     {	"/clip/end/", 	        "end",           51, 1,0	},
     {	"/clip/select/", 	        "select",           54, 1,0	},
+    {	"/clip/selection/", 	        "selection",           55, 1,0	},
+    {	"/clipboard/", 		"clipboard",		 70, -1,0	},
     {	"/record/", 		"record",	 3, -1,0	},
     {	"/effect/" , 		"effect",	 4, -1,0	},
     {	"/effect_key/" , 		"effect_key",	 25, -1,0	},

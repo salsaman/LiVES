@@ -16,6 +16,7 @@ New startup wizard for first time users.
 Added Help/Troubleshoot.
 Faster frame generation for realtime generators.
 Add python 3 support to multi_encoder.
+Add OSC commands /clip/close,/clip/copy,/clip/selection/copy,/clip/selection/cut,/clip/selection/delete,/clipboard/paste,/clipboard/insert_before,/clipboard/insert_after.
 Fixed a possible bootstrap issue with weed plugins. *
 Fixed an encoder/png problem. *
 Fixed image loading (regression).

@@ -2393,6 +2393,8 @@ gboolean resample_clipboard(gdouble new_fps) {
   gchar *msg;
   gint current_file=mainw->current_file;
 
+  if (new_fps==clipboard->fps) return TRUE;
+
   if (clipboard->undo1_dbl==cfile->fps&&!prefs->conserve_space) {
     gint old_frames=clipboard->old_frames;
     gdouble old_fps=clipboard->fps;

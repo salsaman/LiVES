@@ -2832,6 +2832,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
       }
       else {
 	gchar *fname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
+
 	if (height*width==0) {
 	  pixbuf=gdk_pixbuf_new_from_file_progressive(fname,0,0,image_ext,&gerror);
 	}

@@ -913,6 +913,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     cfile->arate=mainw->files[current_file]->arate;
     cfile->achans=mainw->files[current_file]->achans;
     cfile->asampsize=mainw->files[current_file]->asampsize;
+    cfile->img_type=mainw->files[current_file]->img_type;
 
     com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d %s",cfile->handle,mainw->files[current_file]->start,mainw->files[current_file]->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN),mainw->files[current_file]->handle);
 
@@ -1224,6 +1225,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
 
     if (g_file_test ((tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), G_FILE_TEST_EXISTS)) {
+      g_free(tmp);
       stat((tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),&filestat);
       if (filestat.st_size>0) output_exists=TRUE;
     }

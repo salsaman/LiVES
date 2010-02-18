@@ -1350,6 +1350,7 @@ create_insert_dialog (void)
 
 
 
+  if (cfile->achans==0&&clipboard->achans==0) gtk_widget_set_sensitive(insertw->with_sound,FALSE);
 
   hbox = gtk_hbox_new (FALSE, 0);
 
@@ -1357,7 +1358,8 @@ create_insert_dialog (void)
 
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (insertw->without_sound), radiobutton2_group);
   radiobutton2_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (insertw->without_sound));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(insertw->without_sound),!(clipboard->achans>0&&mainw->ccpd_with_sound));
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(insertw->without_sound),!((cfile->achans>0||clipboard->achans>0)&&mainw->ccpd_with_sound));
+
 
   gtk_box_pack_start (GTK_BOX (hbox), insertw->without_sound, FALSE, FALSE, 10);
 
@@ -1382,8 +1384,8 @@ create_insert_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  gtk_widget_set_sensitive (insertw->with_sound, clipboard->achans>0);
-  gtk_widget_set_sensitive (insertw->without_sound, clipboard->achans>0);
+  gtk_widget_set_sensitive (insertw->with_sound, clipboard->achans>0||cfile->achans>0);
+  gtk_widget_set_sensitive (insertw->without_sound, clipboard->achans>0||cfile->achans>0);
 
   vseparator1 = gtk_vseparator_new ();
   gtk_widget_show (vseparator1);

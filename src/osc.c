@@ -855,6 +855,9 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
   mainw->fx1_val=times;       // times to insert otherwise
   mainw->fx2_bool=!noaudio;  // with audio
 
+  mainw->fx1_start=1;
+  mainw->fx2_start=count_resampled_frames(clipboard->frames,clipboard->fps,cfile->fps);
+
   on_insert_activate(NULL,NULL);
 
   mainw->current_file=current_file;

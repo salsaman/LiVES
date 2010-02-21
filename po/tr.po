@@ -8,18 +8,17 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-17 23:35-0300\n"
-"PO-Revision-Date: 2009-04-05 08:57+0000\n"
-"Last-Translator: gamer <Unknown>\n"
+"POT-Creation-Date: 2010-02-21 12:51-0300\n"
+"PO-Revision-Date: 2010-01-09 13:29+0000\n"
+"Last-Translator: zeugma <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2009-07-07 15:52+0000\n"
+"X-Launchpad-Export-Date: 2010-02-21 13:12+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:85
-#, fuzzy
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
@@ -27,23 +26,14 @@ msgid ""
 "group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
-"\n"
-"LiVES çöktüğünde\n"
-"http://www.sourceforge.net/projects/lives/ adresine hata raporu bildiriniz.\n"
-"LiVES yeniden başlatıldığında kurtarılabilir.\n"
 
 #: src/main.c:86
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "When reporting crashes, please include details of your operating system, "
 "distribution, and the LiVES version ("
 msgstr ""
-"\n"
-"\n"
-"Eğer programın çökmesiyle ilgili hata kaydı girerseniz lütfen İşletim "
-"sisteminizi, dağıtımınızı ve LiVES versiyonu bilgilerini ekleyiniz ("
 
 #: src/main.c:89
 msgid ""
@@ -178,14 +168,12 @@ msgid "jackd...NOT DETECTED..."
 msgstr "jackd...BULUNAMADI..."
 
 #: src/main.c:1275
-#, fuzzy
 msgid "pulse audio...detected..."
-msgstr "mplayer ... bulundu ..."
+msgstr ""
 
 #: src/main.c:1276
-#, fuzzy
 msgid "pulse audio...NOT DETECTED..."
-msgstr "mplayer ... BULUNAMADI ..."
+msgstr ""
 
 #: src/main.c:1277
 msgid "python...detected..."
@@ -233,23 +221,19 @@ msgid "Temp directory is %s\n"
 msgstr "Geçici dizin:% s\n"
 
 #: src/main.c:1295
-#, fuzzy
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
-"UYARI - LIVES bu sürümü jack desteği olmadan derlendi.\n"
-"Pek çok ses özellikleri kullanılamaz olacak\n"
 
 #: src/main.c:1298
 msgid "Compiled with jack support, good !\n"
 msgstr "Jack desteği ile derlendi, iyi!\n"
 
 #: src/main.c:1301
-#, fuzzy
 msgid "Compiled with pulse audio support, wonderful !\n"
-msgstr "Jack desteği ile derlendi, iyi!\n"
+msgstr ""
 
 #: src/main.c:1305
 #, c-format
@@ -346,9 +330,8 @@ msgid ""
 msgstr ""
 
 #: src/main.c:1633
-#, fuzzy
 msgid " or sox\n"
-msgstr "veya sox\n"
+msgstr ""
 
 #: src/main.c:1635
 msgid "-devicemap <mapname>          : autoload devicemap\n"
@@ -509,46 +492,46 @@ msgstr ""
 msgid "LiVES-%s: <No File>"
 msgstr ""
 
-#: src/main.c:3389 src/main.c:3390 src/gui.c:1858 src/gui.c:2824
-#: src/saveplay.c:1469
+#: src/main.c:3390 src/main.c:3391 src/gui.c:1858 src/gui.c:2824
+#: src/saveplay.c:1471
 msgid "Play"
 msgstr "Oynat"
 
-#: src/main.c:3760
+#: src/main.c:3761
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/main.c:3845
+#: src/main.c:3846
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Dosya kapandı %s\n"
 
-#: src/main.c:3990 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
-#: src/saveplay.c:2399 src/multitrack.c:3687 src/multitrack.c:5144
+#: src/main.c:3991 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
+#: src/saveplay.c:2401 src/multitrack.c:3687 src/multitrack.c:5144
 msgid "_Undo"
 msgstr "_Geri Al"
 
-#: src/main.c:3991 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
-#: src/saveplay.c:2400 src/multitrack.c:3708 src/multitrack.c:5167
+#: src/main.c:3992 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
+#: src/saveplay.c:2402 src/multitrack.c:3708 src/multitrack.c:5167
 msgid "_Redo"
 msgstr "_Yinele"
 
-#: src/main.c:4017 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
+#: src/main.c:4018 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
 #: src/resample.c:1746
 msgid "Video"
 msgstr "Vidyo"
 
-#: src/main.c:4018 src/interface.c:653 src/gui.c:2033
+#: src/main.c:4019 src/interface.c:653 src/gui.c:2033
 msgid "Left Audio"
 msgstr "Sol Ses"
 
-#: src/main.c:4019 src/gui.c:2051
+#: src/main.c:4020 src/gui.c:2051
 msgid "Right Audio"
 msgstr "Sağ ses"
 
-#: src/main.c:4064
+#: src/main.c:4065
 msgid ""
 "\n"
 "\n"
@@ -570,7 +553,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:186 src/callbacks.c:7351 src/gui.c:2827 src/gui.c:3364
-#: src/saveplay.c:1472 src/saveplay.c:2057 src/dialogs.c:742 src/dialogs.c:743
+#: src/saveplay.c:1474 src/saveplay.c:2059 src/dialogs.c:742 src/dialogs.c:743
 #: src/dialogs.c:836 src/dialogs.c:837 src/framedraw.c:191
 #: src/multitrack.c:6626
 msgid "Preview"
@@ -614,7 +597,7 @@ msgstr ""
 
 #: src/interface.c:376
 msgid "Show details"
-msgstr ""
+msgstr "Ayrıntıları göster"
 
 #: src/interface.c:399 src/dialogs.c:1618
 msgid "_Enough"
@@ -828,9 +811,8 @@ msgid "LiVES: - Enter Set Name"
 msgstr ""
 
 #: src/interface.c:1808
-#, fuzzy
 msgid "LiVES: - Choose a Working Directory"
-msgstr "LIVES: bir dizin seçin"
+msgstr ""
 
 #: src/interface.c:1812
 msgid "New name "
@@ -841,9 +823,8 @@ msgid "Set name "
 msgstr ""
 
 #: src/interface.c:1881
-#, fuzzy
 msgid "_Next"
-msgstr "Yapıştırılıyor"
+msgstr ""
 
 #: src/interface.c:1959
 msgid "LiVES:- Load CD Track"
@@ -900,7 +881,7 @@ msgstr ""
 
 #: src/interface.c:2192
 msgid "first"
-msgstr ""
+msgstr "birinci"
 
 #: src/interface.c:2195
 msgid "Fade out over  "
@@ -908,11 +889,11 @@ msgstr ""
 
 #: src/interface.c:2196
 msgid "last"
-msgstr ""
+msgstr "sonuncu"
 
 #: src/interface.c:2233
 msgid "seconds."
-msgstr ""
+msgstr "saniye."
 
 #: src/interface.c:2258
 msgid "selection."
@@ -1006,13 +987,10 @@ msgstr ""
 "Ne yapmak istiyorsunuz?\n"
 
 #: src/interface.c:2753
-#, fuzzy
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
-"Mevcut düzen kaydedilmedi.\n"
-"Ne yapmak istiyorsunuz?\n"
 
 #: src/interface.c:2758
 msgid ""
@@ -1021,14 +999,11 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:2761
-#, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
 "What do you wish to do ?"
 msgstr ""
-"Mevcut düzen kaydedilmedi.\n"
-"Ne yapmak istiyorsunuz?\n"
 
 #: src/interface.c:2784
 msgid "Clip set _name"
@@ -1063,9 +1038,8 @@ msgid "_Save clip set"
 msgstr ""
 
 #: src/interface.c:2882
-#, fuzzy
 msgid "LiVES: recover layout ?"
-msgstr "LIVES: bir dosya seçin"
+msgstr ""
 
 #: src/interface.c:2897
 msgid ""
@@ -1208,9 +1182,8 @@ msgid "Clearing frame images"
 msgstr "Çerçeve resimler siliniyor"
 
 #: src/callbacks.c:1396
-#, fuzzy
 msgid "Deleting excess frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: src/callbacks.c:1578
 #, c-format
@@ -1231,8 +1204,8 @@ msgstr "Yineleniyor"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1797 src/saveplay.c:887 src/saveplay.c:993
-#: src/saveplay.c:1044 src/saveplay.c:2730
+#: src/callbacks.c:1797 src/saveplay.c:887 src/saveplay.c:994
+#: src/saveplay.c:1045 src/saveplay.c:2732
 msgid "Pulling frames from clip"
 msgstr "Klipten çerçeveler alınıyor"
 
@@ -1524,9 +1497,8 @@ msgid "unsigned"
 msgstr ""
 
 #: src/callbacks.c:4263 src/callbacks.c:4277
-#, fuzzy
 msgid "signed"
-msgstr "Yineleniyor"
+msgstr ""
 
 #: src/callbacks.c:4265 src/callbacks.c:4279
 msgid "big-endian"
@@ -1542,6 +1514,8 @@ msgid ""
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
+"  %d Hz %d bit\n"
+"%s %s"
 
 #: src/callbacks.c:4352
 msgid ""
@@ -1627,9 +1601,8 @@ msgid "%d frames are enough !\n"
 msgstr ""
 
 #: src/callbacks.c:5232
-#, fuzzy
 msgid "LiVES: - Encoder debug output"
-msgstr "LIVES - Kodlama seçenekleri"
+msgstr ""
 
 #: src/callbacks.c:5267 src/gui.c:1707
 msgid "Fullscreen playback (f)"
@@ -1960,7 +1933,7 @@ msgstr ""
 #: src/support.c:77 src/support.c:101
 #, c-format
 msgid "Couldn't find pixmap file: %s"
-msgstr ""
+msgstr "Pixmap dosyasını bulamadı: %s"
 
 #: src/merge.c:87
 msgid "LiVES: - Merge"
@@ -2029,7 +2002,7 @@ msgstr ""
 
 #: src/gui.c:268 src/multitrack.c:4881
 msgid "_File"
-msgstr ""
+msgstr "_Dosya"
 
 #: src/gui.c:279 src/multitrack.c:4904
 msgid "_Open File/Directory"
@@ -2109,7 +2082,7 @@ msgstr ""
 
 #: src/gui.c:472 src/multitrack.c:5134
 msgid "_Edit"
-msgstr ""
+msgstr "_Düzenle"
 
 #: src/gui.c:514
 msgid "_MULTITRACK mode"
@@ -2129,7 +2102,7 @@ msgstr ""
 
 #: src/gui.c:558
 msgid "Paste as _New"
-msgstr ""
+msgstr "_Yeni Olarak Yapıştır"
 
 #: src/gui.c:567
 msgid "_Merge Clipboard with Selection..."
@@ -2137,7 +2110,7 @@ msgstr ""
 
 #: src/gui.c:574
 msgid "_Delete Selection"
-msgstr ""
+msgstr "_Seçimi sil"
 
 #: src/gui.c:592
 msgid "Decouple _Video from Audio"
@@ -2145,7 +2118,7 @@ msgstr ""
 
 #: src/gui.c:602
 msgid "_Select..."
-msgstr ""
+msgstr "_Seç..."
 
 #: src/gui.c:615
 msgid "Select _All Frames"
@@ -2177,7 +2150,7 @@ msgstr ""
 
 #: src/gui.c:660
 msgid "_Invert Selection"
-msgstr ""
+msgstr "_Seçimi Tersine Çevir"
 
 #: src/gui.c:668
 msgid "_Lock Selection Width"
@@ -2185,7 +2158,7 @@ msgstr ""
 
 #: src/gui.c:673 src/multitrack.c:5278
 msgid "_Play"
-msgstr ""
+msgstr "_Oynat"
 
 #: src/gui.c:684
 msgid "_Play All"
@@ -2201,7 +2174,7 @@ msgstr ""
 
 #: src/gui.c:721 src/multitrack.c:5307
 msgid "_Stop"
-msgstr ""
+msgstr "_Durdur"
 
 #: src/gui.c:734 src/multitrack.c:5317
 msgid "Re_wind"
@@ -2209,7 +2182,7 @@ msgstr ""
 
 #: src/gui.c:764 src/multitrack.c:5332
 msgid "_Full Screen"
-msgstr ""
+msgstr "_Tam Ekran"
 
 #: src/gui.c:773
 msgid "_Double Size"
@@ -2237,7 +2210,7 @@ msgstr ""
 
 #: src/gui.c:823 src/multitrack.c:5355
 msgid "_Mute"
-msgstr ""
+msgstr "_Sessiz"
 
 #: src/gui.c:837 src/multitrack.c:5368
 msgid "Separate Window 'S_ticky' Mode"
@@ -2265,7 +2238,7 @@ msgstr ""
 
 #: src/gui.c:876 src/multitrack.c:5807
 msgid "_Tools"
-msgstr ""
+msgstr "_Araçlar"
 
 #: src/gui.c:879
 msgid "Tools are applied to complete clips."
@@ -2293,7 +2266,7 @@ msgstr ""
 
 #: src/gui.c:915 src/multitrack.c:5846
 msgid "_Generate"
-msgstr ""
+msgstr "_Üret"
 
 #: src/gui.c:919
 msgid "Custom _Generators"
@@ -2313,11 +2286,11 @@ msgstr ""
 
 #: src/gui.c:957 src/multitrack.c:5817
 msgid "_Preferences..."
-msgstr ""
+msgstr "_Yeğlenenler..."
 
 #: src/gui.c:968
 msgid "_Audio"
-msgstr ""
+msgstr "_Ses"
 
 #: src/gui.c:979
 msgid "Load _New Audio for Clip..."
@@ -2329,7 +2302,7 @@ msgstr ""
 
 #: src/gui.c:986
 msgid "E_ject CD"
-msgstr ""
+msgstr "_CD'yi Çıkart"
 
 #: src/gui.c:1000
 msgid "Record E_xternal Audio..."
@@ -2413,7 +2386,7 @@ msgstr ""
 
 #: src/gui.c:1146
 msgid "_Info"
-msgstr ""
+msgstr "_Bilgi"
 
 #: src/gui.c:1157
 msgid "Show Clip _Info"
@@ -2437,7 +2410,7 @@ msgstr ""
 
 #: src/gui.c:1188 src/multitrack.c:5926
 msgid "_Clips"
-msgstr ""
+msgstr "_Klipler"
 
 #: src/gui.c:1199
 msgid "_Rename Current Clip in Menu..."
@@ -2445,7 +2418,7 @@ msgstr ""
 
 #: src/gui.c:1214
 msgid "A_dvanced"
-msgstr ""
+msgstr "_Gelişmiş"
 
 #: src/gui.c:1226
 msgid "_RFX Effects/Tools/Utilities"
@@ -2514,7 +2487,7 @@ msgstr ""
 
 #: src/gui.c:1344
 msgid "_VJ"
-msgstr ""
+msgstr "_VJ"
 
 #: src/gui.c:1355
 msgid "Real Time _Effect Mapping"
@@ -2573,11 +2546,11 @@ msgstr ""
 
 #: src/gui.c:1432
 msgid "To_ys"
-msgstr ""
+msgstr "_Araçlar"
 
 #: src/gui.c:1443
 msgid "_None"
-msgstr ""
+msgstr "_Hiçbiri"
 
 #: src/gui.c:1453
 msgid "_Mad Frames"
@@ -2589,7 +2562,7 @@ msgstr ""
 
 #: src/gui.c:1468 src/multitrack.c:6048
 msgid "_Help"
-msgstr ""
+msgstr "_Yardım"
 
 #: src/gui.c:1479 src/multitrack.c:6067
 msgid "_Manual (opens in browser)"
@@ -2621,7 +2594,7 @@ msgstr ""
 
 #: src/gui.c:1517 src/multitrack.c:6105
 msgid "_About"
-msgstr ""
+msgstr "_Hakkında"
 
 #: src/gui.c:1548
 msgid "Rewind to start (w)"
@@ -2641,7 +2614,7 @@ msgstr ""
 
 #: src/gui.c:1618
 msgid "Volume"
-msgstr ""
+msgstr "Hacim"
 
 #: src/gui.c:1645
 msgid "Audio volume (1.00)"
@@ -2673,7 +2646,7 @@ msgstr ""
 
 #: src/gui.c:1745
 msgid "Hide this toolbar"
-msgstr ""
+msgstr "Araç çubuğunu gizle"
 
 #: src/gui.c:1747
 msgid ""
@@ -2691,15 +2664,15 @@ msgstr ""
 
 #: src/gui.c:1811
 msgid "                                                            "
-msgstr ""
+msgstr "                                                            "
 
 #: src/gui.c:1842 src/gui.c:2822
 msgid "First Frame"
-msgstr ""
+msgstr "İlk Kare"
 
 #: src/gui.c:1911 src/gui.c:2831
 msgid "Last Frame"
-msgstr ""
+msgstr "Son Kare"
 
 #: src/gui.c:1930
 msgid "The first selected frame in this clip"
@@ -2723,7 +2696,7 @@ msgstr ""
 
 #: src/gui.c:3083
 msgid "_Free"
-msgstr ""
+msgstr "_Serbest"
 
 #: src/gui.c:3088
 msgid "Free choice of frame number"
@@ -2731,7 +2704,7 @@ msgstr ""
 
 #: src/gui.c:3113
 msgid "_Start"
-msgstr ""
+msgstr "_Başlat"
 
 #: src/gui.c:3118
 msgid "Frame number is linked to start frame"
@@ -2755,7 +2728,7 @@ msgstr ""
 
 #: src/gui.c:3213
 msgid "Rewind"
-msgstr ""
+msgstr "Geriye Sar"
 
 #: src/gui.c:3224 src/dialogs.c:354 src/dialogs.c:356 src/dialogs.c:892
 #: src/dialogs.c:894
@@ -2987,12 +2960,12 @@ msgstr ""
 #: src/utils.c:2392 src/utils.c:2418 src/multitrack.c:3680
 #, c-format
 msgid "_Undo %s"
-msgstr ""
+msgstr "_Geri al %s"
 
 #: src/utils.c:2393 src/utils.c:2419 src/multitrack.c:3702
 #, c-format
 msgid "_Redo %s"
-msgstr ""
+msgstr "_Yinele %s"
 
 #: src/utils.c:2444
 msgid "-------------Selection------------"
@@ -3013,14 +2986,14 @@ msgstr ""
 #: src/saveplay.c:176 src/saveplay.c:521
 #, c-format
 msgid "Opening %s"
-msgstr ""
+msgstr "%s açılıyor"
 
 #: src/saveplay.c:179
 #, c-format
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:187 src/saveplay.c:2720
+#: src/saveplay.c:187 src/saveplay.c:2722
 msgid " without sound"
 msgstr ""
 
@@ -3078,59 +3051,59 @@ msgstr ""
 
 #: src/saveplay.c:874
 msgid "selection"
-msgstr ""
+msgstr "seleksiyon"
 
-#: src/saveplay.c:923 src/saveplay.c:1018
+#: src/saveplay.c:924 src/saveplay.c:1019
 msgid "Linking selection"
 msgstr ""
 
-#: src/saveplay.c:1059
+#: src/saveplay.c:1060
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:1067
+#: src/saveplay.c:1068
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1070
+#: src/saveplay.c:1071
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1165
+#: src/saveplay.c:1166
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1196
+#: src/saveplay.c:1197
 msgid "error.\n"
-msgstr ""
+msgstr "hata.\n"
 
-#: src/saveplay.c:1251
+#: src/saveplay.c:1253
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1397
+#: src/saveplay.c:1399
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1401
+#: src/saveplay.c:1403
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1404
+#: src/saveplay.c:1406
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:2217
+#: src/saveplay.c:2219
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:2223
+#: src/saveplay.c:2225
 msgid ""
 "\n"
 "\n"
@@ -3139,16 +3112,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2335
+#: src/saveplay.c:2337
 msgid "Unknown"
-msgstr ""
+msgstr "Bilinmeyen"
 
-#: src/saveplay.c:2428
+#: src/saveplay.c:2430
 #, c-format
 msgid "Untitled%d"
-msgstr ""
+msgstr "Adsız Belge%d"
 
-#: src/saveplay.c:2537
+#: src/saveplay.c:2539
 #, c-format
 msgid ""
 "\n"
@@ -3156,68 +3129,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2549
+#: src/saveplay.c:2551
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2557
+#: src/saveplay.c:2559
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2561 src/saveplay.c:3153
+#: src/saveplay.c:2563 src/saveplay.c:3155
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2565 src/saveplay.c:3157
+#: src/saveplay.c:2567 src/saveplay.c:3159
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2568 src/saveplay.c:3160
+#: src/saveplay.c:2570 src/saveplay.c:3162
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2576
+#: src/saveplay.c:2578
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2650
+#: src/saveplay.c:2652
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2715
+#: src/saveplay.c:2717
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2749
+#: src/saveplay.c:2751
 msgid "Backing up"
-msgstr ""
+msgstr "Yedekleniyor"
 
-#: src/saveplay.c:2780
+#: src/saveplay.c:2782
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3079
+#: src/saveplay.c:3081
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3098
+#: src/saveplay.c:3100
 msgid "Restoring"
-msgstr ""
+msgstr "Yeniden Yükleniyor"
 
-#: src/saveplay.c:3120
+#: src/saveplay.c:3122
 #, c-format
 msgid ""
 "\n"
@@ -3226,25 +3199,24 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3412
+#: src/saveplay.c:3414
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:3425
+#: src/saveplay.c:3427
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:3429
+#: src/saveplay.c:3431
 msgid "Recovering files..."
 msgstr ""
 
 #: src/dialogs.c:71
-#, fuzzy
 msgid "Show affected _layouts"
-msgstr "Etkilenen düzenleri sil"
+msgstr ""
 
 #: src/dialogs.c:149
 msgid "LiVES: - Warning !"
@@ -3252,7 +3224,7 @@ msgstr ""
 
 #: src/dialogs.c:163
 msgid "warning"
-msgstr ""
+msgstr "uyarı"
 
 #: src/dialogs.c:308
 msgid "Audio players cannot be switched during playback."
@@ -3708,11 +3680,10 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:1472
-#, fuzzy
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
-msgstr "LIVES: bir dosya seçin"
+msgstr ""
 
 #: src/dialogs.c:1478
 msgid ""
@@ -3778,11 +3749,11 @@ msgstr ""
 
 #: src/dialogs.c:1825
 msgid "failed.\n"
-msgstr ""
+msgstr "başarısız.\n"
 
 #: src/dialogs.c:1832
 msgid "done.\n"
-msgstr ""
+msgstr "tamam.\n"
 
 #: src/dialogs.c:1836
 msgid "error in file. Failed.\n"
@@ -3867,7 +3838,7 @@ msgstr ""
 
 #: src/effects-weed.c:229
 msgid "generator"
-msgstr ""
+msgstr "üretici"
 
 #: src/effects-weed.c:230
 msgid "Generators"
@@ -3879,15 +3850,15 @@ msgstr ""
 
 #: src/effects-weed.c:233
 msgid "Transitions"
-msgstr ""
+msgstr "Geçişler"
 
 #: src/effects-weed.c:235
 msgid "effect"
-msgstr ""
+msgstr "efekt"
 
 #: src/effects-weed.c:236 src/preferences.c:2551
 msgid "Effects"
-msgstr ""
+msgstr "Efektler"
 
 #: src/effects-weed.c:238
 msgid "utility"
@@ -3895,7 +3866,7 @@ msgstr ""
 
 #: src/effects-weed.c:239
 msgid "Utilities"
-msgstr ""
+msgstr "Yardımcı Araçlar"
 
 #: src/effects-weed.c:241
 msgid "compositor"
@@ -3915,7 +3886,7 @@ msgstr ""
 
 #: src/effects-weed.c:247
 msgid "splitter"
-msgstr ""
+msgstr "ayrac"
 
 #: src/effects-weed.c:248
 msgid "Splitters"
@@ -3955,7 +3926,7 @@ msgstr ""
 
 #: src/effects-weed.c:265 src/effects-weed.c:268 src/multitrack.c:15858
 msgid "audio"
-msgstr ""
+msgstr "ses"
 
 #: src/effects-weed.c:266
 msgid "Audio Mixers"
@@ -3973,9 +3944,9 @@ msgstr ""
 msgid "Audio Volume Controllers"
 msgstr ""
 
-#: src/effects-weed.c:276 src/plugins.c:1850
+#: src/effects-weed.c:276 src/plugins.c:1847
 msgid "unknown"
-msgstr ""
+msgstr "bilinmeyen"
 
 #: src/effects-weed.c:2719
 #, c-format
@@ -4073,7 +4044,7 @@ msgstr ""
 #: src/paramwindow.c:529
 #, c-format
 msgid "%s : size"
-msgstr ""
+msgstr "%s : boyut"
 
 #: src/paramwindow.c:533
 msgid "New size (pixels)"
@@ -4081,11 +4052,11 @@ msgstr ""
 
 #: src/paramwindow.c:545 src/plugins.c:796
 msgid "_Width"
-msgstr ""
+msgstr "_Genişlik"
 
 #: src/paramwindow.c:571 src/plugins.c:811
 msgid "_Height"
-msgstr ""
+msgstr "_Yükseklik"
 
 #: src/paramwindow.c:642
 msgid "Generate to _Clipboard"
@@ -4113,11 +4084,11 @@ msgstr ""
 
 #: src/paramwindow.c:875
 msgid "Set as default"
-msgstr ""
+msgstr "Öntanımlı olarak ata"
 
 #: src/paramwindow.c:882 src/rte_window.c:1126 src/omc-learn.c:1358
 msgid "Close _window"
-msgstr ""
+msgstr "Pencereyi kapat"
 
 #: src/paramwindow.c:1175
 msgid "No parameters"
@@ -4137,27 +4108,27 @@ msgstr ""
 
 #: src/paramwindow.c:1494
 msgid "Red"
-msgstr ""
+msgstr "Kırmızı"
 
 #: src/paramwindow.c:1502
 msgid "The red value (0 - 255)"
-msgstr ""
+msgstr "Kırmızı değeri (0 - 255)"
 
 #: src/paramwindow.c:1505
 msgid "Green"
-msgstr ""
+msgstr "Yeşil"
 
 #: src/paramwindow.c:1512
 msgid "The green value (0 - 255)"
-msgstr ""
+msgstr "Yeşil değeri (0 - 255)"
 
 #: src/paramwindow.c:1516
 msgid "Blue"
-msgstr ""
+msgstr "Mavi"
 
 #: src/paramwindow.c:1522
 msgid "The blue value (0 - 255)"
-msgstr ""
+msgstr "Mavi değeri (0 - 255)"
 
 #: src/plugins.c:61
 #, c-format
@@ -4220,7 +4191,7 @@ msgstr ""
 
 #: src/plugins.c:751
 msgid "_FPS"
-msgstr ""
+msgstr "_FPS"
 
 #: src/plugins.c:837
 msgid "Colourspace input to the plugin.\n"
@@ -4288,11 +4259,11 @@ msgid ""
 "or switch to another plugin using Tools|Preferences|Encoding\n"
 msgstr ""
 
-#: src/plugins.c:1557
+#: src/plugins.c:1556
 msgid "Unable to resize, please install imageMagick\n"
 msgstr ""
 
-#: src/plugins.c:1796
+#: src/plugins.c:1793
 #, c-format
 msgid ""
 "\n"
@@ -4301,7 +4272,7 @@ msgid ""
 "Error was %s\n"
 msgstr ""
 
-#: src/plugins.c:1817
+#: src/plugins.c:1814
 #, c-format
 msgid ""
 "\n"
@@ -4311,16 +4282,16 @@ msgid ""
 "Unable to use it.\n"
 msgstr ""
 
-#: src/plugins.c:1855
+#: src/plugins.c:1852
 msgid "/unknown"
 msgstr ""
 
-#: src/plugins.c:1881
+#: src/plugins.c:1878
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:2881
+#: src/plugins.c:2878
 #, c-format
 msgid "%s advanced settings"
 msgstr ""
@@ -4335,7 +4306,7 @@ msgstr ""
 
 #: src/rfx-builder.c:155
 msgid "Type:"
-msgstr ""
+msgstr "Türü:"
 
 #: src/rfx-builder.c:169
 msgid "Effect -"
@@ -4424,7 +4395,7 @@ msgstr ""
 
 #: src/rfx-builder.c:392
 msgid "_Properties..."
-msgstr ""
+msgstr "_Özellikler..."
 
 #: src/rfx-builder.c:395
 msgid "Set properties for the plugin. Optional."
@@ -4448,7 +4419,7 @@ msgstr ""
 
 #: src/rfx-builder.c:423
 msgid "Language code:"
-msgstr ""
+msgstr "Dil kodu:"
 
 #: src/rfx-builder.c:441
 msgid "Language for pre/loop/post/triggers. Optional."
@@ -4516,7 +4487,7 @@ msgstr ""
 
 #: src/rfx-builder.c:785
 msgid "_New Entry"
-msgstr ""
+msgstr "_Yeni Girdi"
 
 #: src/rfx-builder.c:789
 msgid "_Edit Entry"
@@ -4528,11 +4499,11 @@ msgstr ""
 
 #: src/rfx-builder.c:798
 msgid "Move _Up"
-msgstr ""
+msgstr "_Yukarı Taşı"
 
 #: src/rfx-builder.c:802
 msgid "Move _Down"
-msgstr ""
+msgstr "_Aşağı Taşı"
 
 #: src/rfx-builder.c:1137
 msgid "LiVES: - RFX Properties"
@@ -4893,7 +4864,7 @@ msgstr ""
 
 #: src/rfx-builder.c:3902
 msgid "test..."
-msgstr ""
+msgstr "test..."
 
 #: src/rfx-builder.c:3907
 msgid "rebuilding dynamic menu entries..."
@@ -4984,15 +4955,15 @@ msgstr ""
 
 #: src/rfx-builder.c:4199 src/rfx-builder.c:4354 src/rfx-builder.c:4421
 msgid "Builtin"
-msgstr ""
+msgstr "Yapısal"
 
 #: src/rfx-builder.c:4200 src/rfx-builder.c:4356 src/rfx-builder.c:4425
 msgid "Custom"
-msgstr ""
+msgstr "Özel"
 
 #: src/rfx-builder.c:4201 src/rfx-builder.c:4429
 msgid "Test"
-msgstr ""
+msgstr "Sınama"
 
 #: src/rfx-builder.c:4226
 msgid "LiVES: - Copy RFX Script"
@@ -5143,7 +5114,7 @@ msgstr ""
 
 #: src/preferences.c:1566
 msgid "          _FPS      "
-msgstr ""
+msgstr "          _FPS      "
 
 #: src/preferences.c:1585
 msgid "Enable backing audio track"
@@ -5171,16 +5142,15 @@ msgstr ""
 
 #: src/preferences.c:1680
 msgid "seconds"
-msgstr ""
+msgstr "saniye"
 
 #: src/preferences.c:1688
 msgid "After every _change"
 msgstr ""
 
 #: src/preferences.c:1697
-#, fuzzy
 msgid "_Never"
-msgstr "Yapıştırılıyor"
+msgstr "_Hiçbir Zaman"
 
 #: src/preferences.c:1720
 msgid "Multitrack/Render"
@@ -5215,9 +5185,8 @@ msgid "Shrink previews to fit in interface"
 msgstr ""
 
 #: src/preferences.c:1812
-#, fuzzy
 msgid "Startup mode:"
-msgstr "Çerçeveler"
+msgstr ""
 
 #: src/preferences.c:1819
 msgid "_Clip editor"
@@ -5255,7 +5224,7 @@ msgstr ""
 
 #: src/preferences.c:1943
 msgid "GUI"
-msgstr ""
+msgstr "GUI"
 
 #: src/preferences.c:1960
 msgid "Video open command             "
@@ -5275,11 +5244,11 @@ msgstr ""
 
 #: src/preferences.c:2001
 msgid "_jpeg"
-msgstr ""
+msgstr "_jpeg"
 
 #: src/preferences.c:2009
 msgid "_png"
-msgstr ""
+msgstr "_png"
 
 #: src/preferences.c:2017
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
@@ -5339,11 +5308,11 @@ msgstr ""
 
 #: src/preferences.c:2155
 msgid "_Advanced"
-msgstr ""
+msgstr "_Gelişmiş"
 
 #: src/preferences.c:2173
 msgid "VIDEO"
-msgstr ""
+msgstr "VİDEO"
 
 #: src/preferences.c:2191
 msgid "_Player"
@@ -5355,7 +5324,7 @@ msgstr ""
 
 #: src/preferences.c:2259
 msgid "mplayer"
-msgstr ""
+msgstr "mplayer"
 
 #: src/preferences.c:2269
 msgid "Audio play _command"
@@ -5375,11 +5344,11 @@ msgstr ""
 
 #: src/preferences.c:2306
 msgid "AUDIO"
-msgstr ""
+msgstr "SES"
 
 #: src/preferences.c:2311
 msgid "Playback"
-msgstr ""
+msgstr "Oynat"
 
 #: src/preferences.c:2323
 msgid ""
@@ -5413,7 +5382,7 @@ msgstr ""
 
 #: src/preferences.c:2409
 msgid "Recording"
-msgstr ""
+msgstr "Kaydediliyor"
 
 #: src/preferences.c:2428
 msgid "      Encoder                  "
@@ -5425,11 +5394,11 @@ msgstr ""
 
 #: src/preferences.c:2506
 msgid "Audio codec"
-msgstr ""
+msgstr "Ses çözücüsü"
 
 #: src/preferences.c:2517
 msgid "Encoding"
-msgstr ""
+msgstr "Kodlama"
 
 #: src/preferences.c:2530
 msgid "Use _antialiasing when resizing"
@@ -5505,7 +5474,7 @@ msgstr ""
 
 #: src/preferences.c:2770
 msgid "Directories"
-msgstr ""
+msgstr "Dizinler"
 
 #: src/preferences.c:2788
 msgid ""
@@ -5519,7 +5488,7 @@ msgstr ""
 
 #: src/preferences.c:2808
 msgid " MB"
-msgstr ""
+msgstr " MB"
 
 #: src/preferences.c:2813
 msgid "Show a warning before saving a se_t"
@@ -5612,7 +5581,7 @@ msgstr ""
 
 #: src/preferences.c:2943
 msgid "Warnings"
-msgstr ""
+msgstr "Uyarılar"
 
 #: src/preferences.c:2953
 msgid "Midi synch (requires the files midistart and midistop)"
@@ -5656,7 +5625,7 @@ msgstr ""
 
 #: src/preferences.c:3050
 msgid "Misc"
-msgstr ""
+msgstr "Çeşitli"
 
 #: src/preferences.c:3064
 msgid "New theme:           "
@@ -5664,7 +5633,7 @@ msgstr ""
 
 #: src/preferences.c:3094
 msgid "Themes"
-msgstr ""
+msgstr "Temalar"
 
 #: src/preferences.c:3110
 msgid "Download bandwidth (Kb/s)       "
@@ -5783,9 +5752,8 @@ msgid "_MIDI events"
 msgstr ""
 
 #: src/preferences.c:3393
-#, fuzzy
 msgid "Use _ALSA MIDI (recommended)"
-msgstr "Tavsiye edilen ayarları kullan"
+msgstr ""
 
 #: src/preferences.c:3396
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
@@ -5813,7 +5781,7 @@ msgstr ""
 
 #: src/preferences.c:3449
 msgid "Advanced"
-msgstr ""
+msgstr "Gelişmiş"
 
 #: src/preferences.c:3457
 msgid "MIDI check _rate"
@@ -5857,26 +5825,26 @@ msgstr ""
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 
-#: src/osc.c:1180 src/lives-yuv4mpeg.c:179
+#: src/osc.c:1234 src/lives-yuv4mpeg.c:179
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:1952
+#: src/osc.c:2006
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:1976
+#: src/osc.c:2030
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:1981
+#: src/osc.c:2035
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:2095
+#: src/osc.c:2149
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""
@@ -5888,7 +5856,7 @@ msgstr ""
 
 #: src/resample.c:282 src/resample.c:302
 msgid "Resize"
-msgstr ""
+msgstr "Yeniden Boyutlandır"
 
 #: src/resample.c:312
 msgid "Resample/Resize"
@@ -5947,7 +5915,7 @@ msgstr ""
 
 #: src/resample.c:987
 msgid "Resample"
-msgstr ""
+msgstr "Örnek tekrar"
 
 #: src/resample.c:1111
 msgid "LiVES: - Resample Audio"
@@ -5983,7 +5951,7 @@ msgstr ""
 
 #: src/resample.c:1265 src/resample.c:1580
 msgid "Unsigned"
-msgstr ""
+msgstr "İşaretsiz"
 
 #: src/resample.c:1312 src/resample.c:1633
 msgid "Little Endian"
@@ -5995,7 +5963,7 @@ msgstr ""
 
 #: src/resample.c:1364
 msgid "Current"
-msgstr ""
+msgstr "Güncel"
 
 #: src/resample.c:1398
 msgid "_Enable audio"
@@ -6023,7 +5991,7 @@ msgstr ""
 
 #: src/resample.c:1703
 msgid "New"
-msgstr ""
+msgstr "Yeni"
 
 #: src/resample.c:1732
 msgid "_Frames Per Second "
@@ -6047,7 +6015,7 @@ msgstr ""
 
 #: src/resample.c:1834
 msgid "Unlimited"
-msgstr ""
+msgstr "Sınırsız"
 
 #: src/resample.c:1862
 msgid "Click OK to begin recording, or Cancel to quit."
@@ -6314,7 +6282,7 @@ msgstr ""
 
 #: src/rte_window.c:504
 msgid "No Description"
-msgstr ""
+msgstr "Açıklama Yok"
 
 #: src/rte_window.c:509
 #, c-format
@@ -6334,7 +6302,7 @@ msgstr ""
 #: src/rte_window.c:547
 #, c-format
 msgid "Author: %s"
-msgstr ""
+msgstr "Yayıncı: %s"
 
 #: src/rte_window.c:555
 #, c-format
@@ -6343,7 +6311,7 @@ msgstr ""
 
 #: src/rte_window.c:567
 msgid "Description: "
-msgstr ""
+msgstr "Açıklama: "
 
 #: src/rte_window.c:743
 msgid ""
@@ -6370,7 +6338,7 @@ msgstr ""
 #: src/rte_window.c:899
 #, c-format
 msgid "Ctrl-%d"
-msgstr ""
+msgstr "Ctrl-%d"
 
 #: src/rte_window.c:908
 msgid "Key active"
@@ -6390,7 +6358,7 @@ msgstr ""
 
 #: src/rte_window.c:1011 src/multitrack.c:6991
 msgid "Info"
-msgstr ""
+msgstr "Bilgiler"
 
 #: src/rte_window.c:1012
 msgid "Set Parameters"
@@ -6398,7 +6366,7 @@ msgstr ""
 
 #: src/rte_window.c:1013
 msgid "Clear"
-msgstr ""
+msgstr "Temizle"
 
 #: src/rte_window.c:1022
 msgid "Effect name:"
@@ -6483,11 +6451,11 @@ msgstr ""
 
 #: src/multitrack.c:956
 msgid "_Apply"
-msgstr ""
+msgstr "_Uygula"
 
 #: src/multitrack.c:977
 msgid "Time"
-msgstr ""
+msgstr "Süre"
 
 #: src/multitrack.c:996
 msgid "_Del. node"
@@ -6518,12 +6486,12 @@ msgstr ""
 #: src/multitrack.c:1291
 #, c-format
 msgid "%.2f sec.\n"
-msgstr ""
+msgstr "%.2f saniye.\n"
 
 #: src/multitrack.c:1296 src/multitrack.c:2756
 #, c-format
 msgid "Source: %s"
-msgstr ""
+msgstr "Kaynak: %s"
 
 #: src/multitrack.c:1299 src/multitrack.c:2758
 msgid "Right click for context menu.\n"
@@ -6588,9 +6556,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:3186
-#, fuzzy
 msgid "LiVES: Selected clip"
-msgstr "LIVES: - VCD Başlığı Seçiniz"
+msgstr ""
 
 #: src/multitrack.c:3193
 msgid "_Adjust start and end points"
@@ -6618,7 +6585,7 @@ msgstr ""
 
 #: src/multitrack.c:3446
 msgid "Auto preview"
-msgstr ""
+msgstr "Otomatik önizleme"
 
 #: src/multitrack.c:3517
 msgid "Single click on timeline"
@@ -6633,9 +6600,8 @@ msgid "Double click on timeline"
 msgstr ""
 
 #: src/multitrack.c:3520
-#, fuzzy
 msgid "to select a block."
-msgstr "Parça seçilmesi"
+msgstr ""
 
 #: src/multitrack.c:3521
 msgid "Clips can be dragged"
@@ -6725,7 +6691,7 @@ msgstr ""
 #: src/multitrack.c:3655
 #, c-format
 msgid "Delete %s"
-msgstr ""
+msgstr "%s Sil"
 
 #: src/multitrack.c:3659
 msgid "Insert block"
@@ -6802,11 +6768,8 @@ msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr ""
 
 #: src/multitrack.c:4894
-#, fuzzy
 msgid "_Open..."
 msgstr ""
-"\n"
-"  Açılıyor..."
 
 #: src/multitrack.c:4990
 msgid "_Close the selected clip"
@@ -6930,7 +6893,7 @@ msgstr ""
 
 #: src/multitrack.c:5707
 msgid "Se_lection"
-msgstr ""
+msgstr "Seçi_m"
 
 #: src/multitrack.c:5717
 msgid "_Select Current Track"
@@ -6958,7 +6921,7 @@ msgstr ""
 
 #: src/multitrack.c:5763
 msgid "_Copy..."
-msgstr ""
+msgstr "_Kopyala..."
 
 #: src/multitrack.c:5773
 msgid "_Timecode to region start"
@@ -6982,7 +6945,7 @@ msgstr ""
 
 #: src/multitrack.c:5867
 msgid "_Render"
-msgstr ""
+msgstr "_Tarama"
 
 #: src/multitrack.c:5877
 msgid "_Render all to new clip"
@@ -7002,7 +6965,7 @@ msgstr ""
 
 #: src/multitrack.c:5915
 msgid "_View"
-msgstr ""
+msgstr "_Göster"
 
 #: src/multitrack.c:5933
 msgid "Block _In/out points"
@@ -7018,7 +6981,7 @@ msgstr ""
 
 #: src/multitrack.c:5957
 msgid "Compact view"
-msgstr ""
+msgstr "Yoğun görünüm"
 
 #: src/multitrack.c:5965
 msgid "Maximum tracks to display..."
@@ -7094,9 +7057,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:6489
-#, fuzzy
 msgid "Insert with _audio"
-msgstr "Ses ile ekle"
+msgstr ""
 
 #: src/multitrack.c:6515
 msgid ""
@@ -7105,9 +7067,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:6520
-#, fuzzy
 msgid "Select _overlap"
-msgstr "Parça seçilmesi"
+msgstr ""
 
 #: src/multitrack.c:6571 src/multitrack.c:11904
 msgid "Expanded View (d)"
@@ -7150,9 +7111,8 @@ msgid "Anchor _start"
 msgstr ""
 
 #: src/multitrack.c:6897
-#, fuzzy
 msgid "Start frame"
-msgstr "Çerçeveler"
+msgstr ""
 
 #: src/multitrack.c:6934
 msgid "Anchor the end point to the timeline"
@@ -7163,13 +7123,12 @@ msgid "Anchor _end"
 msgstr ""
 
 #: src/multitrack.c:6970
-#, fuzzy
 msgid "End frame"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: src/multitrack.c:7127
 msgid "Scroll"
-msgstr ""
+msgstr "Kaydırma"
 
 #: src/multitrack.c:7665
 msgid ""
@@ -7201,9 +7160,8 @@ msgid "Layer %d audio"
 msgstr ""
 
 #: src/multitrack.c:8347
-#, fuzzy
 msgid "Select track"
-msgstr "Parça seçilmesi"
+msgstr ""
 
 #: src/multitrack.c:8350
 msgid "Show/hide audio"
@@ -7222,7 +7180,7 @@ msgstr ""
 #: src/multitrack.c:8393
 #, c-format
 msgid " %s"
-msgstr ""
+msgstr " %s"
 
 #: src/multitrack.c:8503
 msgid "LiVES: Selected effect"
@@ -7241,9 +7199,8 @@ msgid "_Delete this effect"
 msgstr ""
 
 #: src/multitrack.c:8568
-#, fuzzy
 msgid "Cannot insert after this effect"
-msgstr "Seçim sonrası ekle"
+msgstr ""
 
 #: src/multitrack.c:8588
 msgid "This effect cannot be moved"
@@ -7311,7 +7268,7 @@ msgstr ""
 #: src/multitrack.c:10754
 #, c-format
 msgid "%s to %s"
-msgstr ""
+msgstr "%s'den %s'e"
 
 #: src/multitrack.c:10805
 msgid "_Prev filter map"
@@ -7455,11 +7412,11 @@ msgstr ""
 
 #: src/multitrack.c:13376
 msgid "Cleaning up..."
-msgstr ""
+msgstr "Temizleniyor..."
 
 #: src/multitrack.c:13991
 msgid "_Pause"
-msgstr ""
+msgstr "_Duraklat"
 
 #: src/multitrack.c:13992
 msgid "Pause (p)"
@@ -7601,7 +7558,7 @@ msgstr ""
 
 #: src/multitrack.c:17796
 msgid "frames"
-msgstr ""
+msgstr "çerçeve"
 
 #: src/multitrack.c:17806
 msgid ""
@@ -7722,28 +7679,28 @@ msgstr ""
 
 #: src/omc-learn.c:549
 msgid "data"
-msgstr ""
+msgstr "veri"
 
 #: src/omc-learn.c:552
 msgid "velocity"
-msgstr ""
+msgstr "hız"
 
 #: src/omc-learn.c:553
 msgid "note"
-msgstr ""
+msgstr "not"
 
 #: src/omc-learn.c:555 src/omc-learn.c:714 src/omc-learn.c:1087
 #: src/omc-learn.c:1570
 msgid "value"
-msgstr ""
+msgstr "değer"
 
 #: src/omc-learn.c:557
 msgid "state"
-msgstr ""
+msgstr "şehir"
 
 #: src/omc-learn.c:669
 msgid "variable"
-msgstr ""
+msgstr "değişken"
 
 #: src/omc-learn.c:981
 msgid "Vars."
@@ -7786,11 +7743,11 @@ msgstr ""
 
 #: src/omc-learn.c:1095
 msgid "x"
-msgstr ""
+msgstr "x"
 
 #: src/omc-learn.c:1104
 msgid "range"
-msgstr ""
+msgstr "aralık"
 
 #: src/omc-learn.c:1123
 msgid "+ offset1"
@@ -7819,9 +7776,8 @@ msgid "Clear _unmatched"
 msgstr ""
 
 #: src/omc-learn.c:1346
-#, fuzzy
 msgid "_Delete all"
-msgstr "Düzeni sil"
+msgstr "He_psini sil"
 
 #: src/omc-learn.c:1399
 msgid "Start video playback"
@@ -7901,7 +7857,7 @@ msgstr ""
 
 #: src/omc-learn.c:1443
 msgid "Stop recording"
-msgstr ""
+msgstr "Kaydı durdur"
 
 #: src/omc-learn.c:1446
 msgid "Toggle recording state"
@@ -7978,20 +7934,20 @@ msgstr ""
 
 #: src/omc-learn.c:1529
 msgid "fps"
-msgstr ""
+msgstr "fps"
 
 #: src/omc-learn.c:1536 src/omc-learn.c:1542 src/omc-learn.c:1548
 #: src/omc-learn.c:1555 src/omc-learn.c:1591 src/omc-learn.c:1598
 msgid "key"
-msgstr ""
+msgstr "anahtar"
 
 #: src/omc-learn.c:1562
 msgid "pnum"
-msgstr ""
+msgstr "pnum"
 
 #: src/omc-learn.c:1577
 msgid "fps_ratio"
-msgstr ""
+msgstr "fps_ratio"
 
 #: src/omc-learn.c:1695
 msgid ""
@@ -8056,8 +8012,9 @@ msgid "Loading device mapping from file %s..."
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "180 _degrees             "
-msgstr ""
+msgstr "          _FPS      "
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "90 degrees _Anticlockwise"
@@ -8077,11 +8034,12 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "Adjust contrast"
-msgstr ""
+msgstr "Kontrastı ayarla"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "Adjusting contrast of"
-msgstr ""
+msgstr "Kontrastı ayarla"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Adjusting noise on"
@@ -8108,51 +8066,48 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
 msgid "Blank frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "çerçeve"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "Blanking"
-msgstr ""
+msgstr "Yedekleniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
 msgid "Block _height"
-msgstr "Çerçeve boyutu"
+msgstr "_Yükseklik"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "Çerçeve boyutu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
-msgstr ""
+msgstr "Bulanıklaştır"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "Bluring"
-msgstr ""
+msgstr "Bulanıklaştır"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _end"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _start"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
@@ -8160,14 +8115,12 @@ msgid "Brightness change"
 msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness end"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness start"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
@@ -8197,17 +8150,16 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Charcoal"
-msgstr ""
+msgstr "Karakalem"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboard"
-msgstr "Değişiklikleri Yoksay"
+msgstr "Dama Tahtası"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
 msgid "Checkerboarding"
-msgstr "Değişiklikleri Yoksay"
+msgstr "Dama Tahtası"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
@@ -8220,83 +8172,76 @@ msgid "Clipboard _under selection"
 msgstr "Seçim sonrası ekle"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorize"
-msgstr "Yapıştırılıyor"
+msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "Colorizing"
-msgstr "Yapıştırılıyor"
+msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
 msgid "Colour cycle"
-msgstr "Yapıştırılıyor"
+msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "Yapıştırılıyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "Colour filter"
-msgstr "Yapıştırılıyor"
+msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "Yapıştırılıyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "Yapıştırılıyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
 msgid "Deinterlace"
-msgstr "Deinterlace uygula"
+msgstr "Ayrıştırma"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "Deinterlacing"
-msgstr "Deinterlace uygula"
+msgstr "Ayrıştırma"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "Despeckle"
-msgstr "Siliniyor"
+msgstr "Parazit Kaldır"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 #, fuzzy
 msgid "Despeckling"
-msgstr "Siliniyor"
+msgstr "Parazit Kaldır"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dream"
-msgstr "Yineleniyor"
+msgstr "Hayal"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
 msgid "Dreamifying"
-msgstr "Yineleniyor"
+msgstr "Hayal"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "E_nd %"
-msgstr ""
+msgstr "_Geri al %s"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "Edge detect"
@@ -8308,65 +8253,61 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
-msgstr ""
+msgstr "Kabartma"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#, fuzzy
 msgid "Embossing"
-msgstr ""
+msgstr "Kabartma"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhance"
-msgstr "İptal"
+msgstr "Pekiştir"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
 msgid "Enhancing"
-msgstr "İptal ediliyor"
+msgstr "Pekiştir"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "Fade _end"
-msgstr "Çerçeveler"
+msgstr "Kaybol"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Fade"
-msgstr "Çerçeveler"
+msgstr "Kaybol"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Fading"
-msgstr "Geri alınıyor"
+msgstr "Kaybolma"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "Fina_l frame"
-msgstr "Çerçeveler"
+msgstr "İlk Kare"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "Flash _colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
-msgstr ""
+msgstr "Dikey çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
+#, fuzzy
 msgid "Flop horizontally"
-msgstr ""
+msgstr "Dikey çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -8391,44 +8332,36 @@ msgid "Frames _per second (FPS)"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma change"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generating blank frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
@@ -8436,14 +8369,12 @@ msgid "Generating clip from image"
 msgstr "Çerçeve resimler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generating coloured frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generating title frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -8454,14 +8385,13 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "Çerçeveler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
 msgid "Hue _start"
-msgstr "Düzeni kaydet"
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -8469,14 +8399,12 @@ msgid "Hue change"
 msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "Çerçeveler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumble"
@@ -8491,36 +8419,36 @@ msgid "Keep _Centered"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "L_eft"
-msgstr ""
+msgstr "_Metin"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+#, fuzzy
 msgid "Making monochrome"
-msgstr ""
+msgstr "Siyah-beyaz"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Yineleniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
 msgid "Modulating"
-msgstr "Yineleniyor"
+msgstr "Döndürme"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
-msgstr ""
+msgstr "Siyah-beyaz"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negate"
-msgstr "Yapıştırılıyor"
+msgstr "Negatifleştir"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
 msgid "Negating"
-msgstr "Yapıştırılıyor"
+msgstr "Negatifleştir"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -8531,14 +8459,12 @@ msgid "Noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "Normalize"
-msgstr "Yapıştırılıyor"
+msgstr "Normalleştir"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "Normalizing"
-msgstr "Yapıştırılıyor"
+msgstr "Normalleştiriliyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -8554,9 +8480,8 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "Yapıştırılıyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
@@ -8564,14 +8489,13 @@ msgid "Pixilating"
 msgstr "Yapıştırılıyor"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterize"
-msgstr "Yapıştırılıyor"
+msgstr "Posterleştirme"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
 msgid "Posterizing"
-msgstr "Yapıştırılıyor"
+msgstr "Posterleştirme"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -8601,56 +8525,50 @@ msgstr "Tüm çerçeveleri yeniden boyutlandır"
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
 msgid "Rotate Clip"
-msgstr "Yineleniyor"
+msgstr "Döndürme"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "Rotating"
-msgstr "Yineleniyor"
+msgstr "Döndürme"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "S_tart %"
-msgstr "Düzeni kaydet"
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "Sepia"
-msgstr "Yineleniyor"
+msgstr "Sepya"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Shift horizontally"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "Shift vertically"
-msgstr ""
+msgstr "Dikey çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Shrink/Expand"
@@ -8662,84 +8580,75 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Skip forward"
-msgstr ""
+msgstr "İleri doğru atla"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarize"
-msgstr "Yapıştırılıyor"
+msgstr "Soldurma"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "Solarizing"
-msgstr "Yapıştırılıyor"
+msgstr "Soldurma"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "Spin"
-msgstr "Yineleniyor"
+msgstr "Çevirme"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
 msgid "Spinning"
-msgstr "Yineleniyor"
+msgstr "Çevirme"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
 msgid "Splice"
-msgstr "Yineleniyor"
+msgstr "Çevirme"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
 msgid "Splicing"
-msgstr "Yapıştırılıyor"
+msgstr "Çevirme"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "Spread"
-msgstr "Yineleniyor"
+msgstr "Dağıt"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "Spreading"
-msgstr "Yineleniyor"
+msgstr "Boşluk"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Step per _Frame"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
 msgid "Swirl s_tep"
-msgstr "Düzeni kaydet"
+msgstr "Girdap"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl"
-msgstr "Yineleniyor"
+msgstr "Girdap"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
 msgid "Swirling"
-msgstr "Yineleniyor"
+msgstr "Girdap"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "Text Overlay"
-msgstr "Yapıştırılıyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
@@ -8751,17 +8660,16 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trimming"
-msgstr ""
+msgstr "Kırpma"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "Tunnel"
-msgstr "İptal ediliyor"
+msgstr "Tünel"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
 msgid "Tunneling"
-msgstr "İptal ediliyor"
+msgstr "Tünel"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Use _Natural image size"
@@ -8776,14 +8684,12 @@ msgid "Vertical shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "Wave"
-msgstr "Yapıştırılıyor"
+msgstr "Dalga"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "Waving"
-msgstr "Yapıştırılıyor"
+msgstr "Uyarı"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
@@ -8791,14 +8697,12 @@ msgstr "Yapıştırılıyor"
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "_Background Colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Background colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -8810,17 +8714,16 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Bottom"
-msgstr ""
+msgstr "_Alt"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Calculate"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
 msgid "_Cycle Start"
-msgstr "Düzeni kaydet"
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Decrease Contrast"
@@ -8833,46 +8736,40 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_End Colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_End amount"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "Çerçeveler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Fill colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "_First frame"
-msgstr "Çerçeveler"
+msgstr "İlk Kare"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
-msgstr ""
+msgstr "_Yazıtipi"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
@@ -8882,22 +8779,21 @@ msgid "_Frames per second"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Frames"
-msgstr "Çerçeveler"
+msgstr "_Kare"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "_Image File"
-msgstr ""
+msgstr "_Dosya"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -8906,7 +8802,7 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
 msgid "_Levels"
-msgstr "Yapıştırılıyor"
+msgstr "_Hiçbir Zaman"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -8918,17 +8814,19 @@ msgid "_Max zoom x 10"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Middle"
-msgstr ""
+msgstr "_Dosya"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "_Midtone"
-msgstr ""
+msgstr "_Sessiz"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
 msgid "_Negate"
-msgstr "Yapıştırılıyor"
+msgstr "Negatifleştir"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
@@ -8946,12 +8844,13 @@ msgid "_Offset Y"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Other Center"
-msgstr ""
+msgstr "_Diğer"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_Other"
-msgstr ""
+msgstr "_Diğer"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -8962,25 +8861,23 @@ msgstr "Dosya boyutu"
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
 msgid "_Radius end"
-msgstr "Çerçeveler"
+msgstr "_Yarıçap"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
 msgid "_Radius start"
-msgstr "Çerçeveler"
+msgstr "_Yarıçap"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "_Radius"
-msgstr "Çerçeveler"
+msgstr "_Yarıçap"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_Random colour each frame"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -8989,57 +8886,55 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Right"
-msgstr ""
+msgstr "_Sağ"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
 msgid "_Rotate Selection by"
-msgstr "Seçim sonrası ekle"
+msgstr "_Seçimi sil"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
 msgid "_Sigma start"
-msgstr "Düzeni kaydet"
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Skip ahead"
-msgstr ""
+msgstr "_Geç"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
-msgstr ""
+msgstr "_Geç"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "_Splice"
-msgstr "Yineleniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Start Colour"
-msgstr "Düzeni kaydet"
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
 msgid "_Start Value"
-msgstr "Düzeni kaydet"
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -9048,23 +8943,22 @@ msgstr "Düzeni kaydet"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Stroke colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "Düzeni kaydet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Text"
-msgstr ""
+msgstr "_Metin"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Time (seconds)"
-msgstr ""
+msgstr "saniye"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
@@ -9073,7 +8967,7 @@ msgstr "Panoya kopyalanıyor"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Top"
-msgstr ""
+msgstr "_Üst"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Vertical segments"
@@ -9082,7 +8976,7 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #, fuzzy
 msgid "_Wavemax"
-msgstr "Yapıştırılıyor"
+msgstr "Dalga"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -9091,11 +8985,12 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "_Wrap Around"
-msgstr ""
+msgstr "_Satır Bölme"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_X Center"
-msgstr ""
+msgstr "_Tarama"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
@@ -9104,7 +8999,7 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
 msgid "_X Start"
-msgstr "Düzeni kaydet"
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9112,8 +9007,9 @@ msgid "_X offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Y Center"
-msgstr ""
+msgstr "_Tarama"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
@@ -9122,7 +9018,7 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
 msgid "_Y Start"
-msgstr "Düzeni kaydet"
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9130,68 +9026,69 @@ msgid "_Y offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "_degrees"
-msgstr ""
+msgstr "_Serbest"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "_then"
-msgstr ""
+msgstr "_Diğer"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
 msgid "blank_frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "çerçeve"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
-msgstr ""
+msgstr "bulanıklaştır"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "brightness_change"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+#, fuzzy
 msgid "charcoal"
-msgstr ""
+msgstr "Karakalem"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "colorize"
-msgstr "Yapıştırılıyor"
+msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "Yapıştırılıyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Çerçeve resimler siliniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "contrast"
-msgstr ""
+msgstr "Kontrastı ayarla"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
-msgstr ""
+msgstr "Çevrim"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
 msgid "deinterlace"
-msgstr "Deinterlace uygula"
+msgstr "Ayrıştırma"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 #, fuzzy
 msgid "despeckle"
-msgstr "Siliniyor"
+msgstr "Parazit Kaldır"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
 msgid "dream"
-msgstr "Yineleniyor"
+msgstr "Hayal"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "edge_detect"
@@ -9199,81 +9096,76 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "emboss"
-msgstr ""
+msgstr "kabartma"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
 msgid "enhance"
-msgstr "İptal"
+msgstr "Pekiştir"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "every"
-msgstr "Yapıştırılıyor"
+msgstr "her"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
-msgstr ""
+msgstr "fc"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
+#, fuzzy
 msgid "flip"
-msgstr ""
+msgstr "_Klipler"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "frame_calculator"
-msgstr "Düzeni kaydet"
-
-#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
-msgid "gamma_change"
-msgstr "Değişiklikleri Yoksay"
-
-#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
-msgid "gen_blank_frames"
-msgstr "Çerçeve resimler siliniyor"
-
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
-msgid "gen_clip_from_image"
-msgstr "Çerçeve resimler siliniyor"
-
-#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
-msgid "gen_coloured_frames"
-msgstr "Çerçeve resimler siliniyor"
-
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-msgid "gen_text"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "gamma_change"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+msgid "gen_blank_frames"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "gen_clip_from_image"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "gen_coloured_frames"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
+msgid "gen_text"
+msgstr "_Metin"
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "Yineleniyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+#, fuzzy
 msgid "monochrome"
-msgstr ""
+msgstr "Siyah-beyaz"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
 msgid "negate"
-msgstr "Yapıştırılıyor"
+msgstr "Negatifleştir"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
@@ -9282,126 +9174,120 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
 msgid "normalize"
-msgstr "Yapıştırılıyor"
+msgstr "Normalleştir"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "Yapıştırılıyor"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
 msgid "posterize"
-msgstr "Yapıştırılıyor"
+msgstr "Posterleştirme"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
-#, fuzzy
 msgid "resize"
-msgstr "Çerçeve boyutu"
+msgstr "yeniden boyutlandır"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "rotate"
-msgstr "Toplam süre"
+msgstr "çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "sepia"
-msgstr "Yineleniyor"
+msgstr "kahverengi tonu"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "shift_horizontal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "shift_vertical"
-msgstr ""
+msgstr "Dikey çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "skip_forwards"
-msgstr ""
+msgstr "İleri doğru atla"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "solarize"
-msgstr "Yapıştırılıyor"
+msgstr "Soldurma"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "spin"
-msgstr "Yineleniyor"
+msgstr "döndür"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
 msgid "spread"
-msgstr "Yineleniyor"
+msgstr "Dağıt"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
 msgid "swirl"
-msgstr "Yineleniyor"
+msgstr "Girdap"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "textover"
-msgstr "Yapıştırılıyor"
+msgstr "her"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "transition_bwthresh"
-msgstr "Değişiklikleri Yoksay"
+msgstr "Geçişler"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
 msgid "transition_checkerboard"
-msgstr "Değişiklikleri Yoksay"
+msgstr "Dama Tahtası"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
 msgid "transition_fade2"
-msgstr "Değişiklikleri Yoksay"
+msgstr "Geçişler"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
 msgid "transition_splice"
-msgstr "Değişiklikleri Yoksay"
+msgstr "Geçişler"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
 msgid "trim_frames"
-msgstr "Çerçeveler"
+msgstr "çerçeve"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "tunnel"
-msgstr "İptal ediliyor"
+msgstr "tünel"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #, fuzzy
 msgid "wave"
-msgstr "Yapıştırılıyor"
+msgstr "Dalga"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "Unable to open output file !"
-msgstr "LIVES: bir dosya seçin"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 #, fuzzy
@@ -9417,9 +9303,8 @@ msgid "This does not appear to be a valid video or image file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES was unable to open it."
-msgstr "LIVES: bir dosya seçin"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."
@@ -9438,13 +9323,13 @@ msgid "This does not appear to be a valid backup file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES was not able to open the file"
-msgstr "LIVES: bir dosya seçin"
+msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "$file"
-msgstr ""
+msgstr "başarısız.\n"
 
 #: /usr/bin/smogrify:0
 #, fuzzy
@@ -9476,49 +9361,12 @@ msgid "$plugin_name failed:"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "$error"
-msgstr ""
+msgstr "hata.\n"
 
 #~ msgid "Undoing audio"
 #~ msgstr "Ses geri alınıyor"
-
-#, fuzzy
-#~ msgid ""
-#~ ", but this version of LiVES was not compiled with pulse audio support.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "UYARI - LIVES bu sürümü jack desteği olmadan derlendi.\n"
-#~ "Pek çok ses özellikleri kullanılamaz olacak\n"
-
-#, fuzzy
-#~ msgid ""
-#~ ", but this version of LiVES was not compiled with jack audio support.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "UYARI - LIVES bu sürümü jack desteği olmadan derlendi.\n"
-#~ "Pek çok ses özellikleri kullanılamaz olacak\n"
-
-#~ msgid "LiVES: - Choose an audio player"
-#~ msgstr "LIVES - ses çalar seçin"
-
-#, fuzzy
-#~ msgid "Use _pulse audio player"
-#~ msgstr "Ses çalar jack kullanıyor"
-
-#~ msgid "Use _jack audio player"
-#~ msgstr "Ses çalar jack kullanıyor"
-
-#, fuzzy
-#~ msgid "Use _sox audio player"
-#~ msgstr "Ses çalar jack kullanıyor"
-
-#, fuzzy
-#~ msgid "Use _mplayer audio player"
-#~ msgstr "Ses çalar jack kullanıyor"
-
-#, fuzzy
-#~ msgid "Effects stack"
-#~ msgstr "Parça seçilmesi"
 
 #~ msgid ""
 #~ "and if possible obtain a backtrace using gdb.\n"
@@ -9530,3 +9378,43 @@ msgstr ""
 #~ "\n"
 #~ "\n"
 #~ "\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "\n"
+#~ "When reporting crashes, please include details of your operating system, "
+#~ "distribution, the LiVES version ("
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "Eğer programın çökmesiyle ilgili hata kaydı girerseniz lütfen İşletim "
+#~ "sisteminizi, dağıtımınızı ve LiVES versiyonu bilgilerini ekleyiniz ("
+
+#~ msgid ""
+#~ "WARNING - this version of LiVES was compiled without jack support.\n"
+#~ "Many audio features will be unavalaible.\n"
+#~ msgstr ""
+#~ "UYARI - LIVES bu sürümü jack desteği olmadan derlendi.\n"
+#~ "Pek çok ses özellikleri kullanılamaz olacak\n"
+
+#~ msgid "or sox\n"
+#~ msgstr "veya sox\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Unfortunately LiVES crashed.\n"
+#~ "Please report this bug at http://www.sourceforge.net/projects/lives/\n"
+#~ "Thanks.\n"
+#~ "Recovery should be possible if you restart LiVES.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "LiVES çöktüğünde\n"
+#~ "http://www.sourceforge.net/projects/lives/ adresine hata raporu "
+#~ "bildiriniz.\n"
+#~ "LiVES yeniden başlatıldığında kurtarılabilir.\n"
+
+#~ msgid "LiVES: - Choose an audio player"
+#~ msgstr "LIVES - ses çalar seçin"
+
+#~ msgid "Use _jack audio player"
+#~ msgstr "Ses çalar jack kullanıyor"

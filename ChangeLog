@@ -1,5 +1,5 @@
-Version 1.2.0
--------------
+Version 1.2.0 (21 Feb 2010)
+---------------------------
 GUI updates for multitrack mode.
 Implement drag and drop effects in multitrack mode.
 Allow continuous mouse movement on multitrack timeline.
@@ -23,6 +23,9 @@ Fixed image loading (regression).
 Fixed problem with crash recovery restoring a file twice. *
 Fixed some minor memory leaks. *
 Handle SIGABRT correctly. *
+
+Initial translations to Telugu, Ukranian and Romanian. Updated translations to Arabic, Catalan, Simplified Chinese, Czech, Estonian, Finnish, Galician, Hungarian, Polish, Russian, Slovak, Turkish, Uzbek and others.
+
 	
 * Backported to 1.0.9
 

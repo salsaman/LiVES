@@ -1536,7 +1536,6 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
     if (owidth%hblock==0&&oheight%vblock==0) allow_aspect_override=TRUE;
 
     // end recheck
-
   }
 
   // fps can't be altered if we have a multitrack event_list
@@ -1559,7 +1558,6 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	}
       }
     }
-
     if (rdet!=NULL&&!rdet->is_encoding) {
       rdet->arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
       rdet->achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
@@ -1567,7 +1565,6 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       rdet->aendian=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))?AFORM_UNSIGNED:AFORM_SIGNED;
 
       if (width!=rdet->width||height!=rdet->height||best_fps_delta!=0.||best_arate!=rdet->arate||((asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED))) {
-      
 	if (rdet_suggest_values(width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,allow_aspect_override,(best_fps_delta==0.))) {
 	  gchar *arate_string;
 	  rdet->width=width;

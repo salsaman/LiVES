@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-17 23:35-0300\n"
-"PO-Revision-Date: 2009-12-25 18:39+0000\n"
+"POT-Creation-Date: 2010-02-21 12:51-0300\n"
+"PO-Revision-Date: 2010-02-19 18:18+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2009-12-27 16:24+0000\n"
+"X-Launchpad-Export-Date: 2010-02-21 12:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:85
@@ -92,7 +92,7 @@ msgstr "נוטרל !"
 
 #: src/main.c:700
 msgid "**The current layout**"
-msgstr ""
+msgstr "**הפריסה הנוכחית**"
 
 #: src/main.c:1104
 msgid "Loading realtime effect plugins..."
@@ -107,7 +107,6 @@ msgid " or \"lives -aplayer pulse\""
 msgstr ""
 
 #: src/main.c:1176
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -117,14 +116,6 @@ msgid ""
 "\n"
 "Alternatively, try to start lives with: \"lives -aplayer sox\""
 msgstr ""
-"\n"
-"\n"
-"יש לבצע הפעלה ידנית של jack. נא לוודא כי jackd פועל, \n"
-"או לשנות את הערך של <jack_opts> ב־~/.lives ל־16\n"
-"ולהפעיל את LiVES מחדש.\n"
-"\n"
-"לחילופין,יש לנסות להתחיל את LiVES כך: lives -aplayer sox\n"
-"\n"
 
 #: src/main.c:1199
 msgid "Starting pulse audio server..."
@@ -321,11 +312,11 @@ msgstr "-nogui : לא יוצג מנשק המשתמש הגרפי\n"
 
 #: src/main.c:1619
 msgid "-startup-ce      : start in clip editor mode\n"
-msgstr ""
+msgstr "-startup-ce      : start in clip editor mode\n"
 
 #: src/main.c:1620
 msgid "-startup-mt      : start in multitrack mode\n"
-msgstr ""
+msgstr "-startup-mt      : start in multitrack mode\n"
 
 #: src/main.c:1622
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
@@ -579,12 +570,12 @@ msgstr "LiVES-%s <%s> %dx%d : %d שקופיות %d bpp %.3f שקופיות לש�
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s <ללא קובץ>"
 
-#: src/main.c:3389 src/main.c:3390 src/gui.c:1858 src/gui.c:2824
-#: src/saveplay.c:1469
+#: src/main.c:3390 src/main.c:3391 src/gui.c:1858 src/gui.c:2824
+#: src/saveplay.c:1471
 msgid "Play"
 msgstr "נגן"
 
-#: src/main.c:3760
+#: src/main.c:3761
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -592,35 +583,35 @@ msgstr ""
 "ל־LiVES לא הית אפשרות ללכוד תמונה זו\n"
 "\n"
 
-#: src/main.c:3845
+#: src/main.c:3846
 #, c-format
 msgid "Closed file %s\n"
 msgstr "הקובץ %s נסגר\n"
 
-#: src/main.c:3990 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
-#: src/saveplay.c:2399 src/multitrack.c:3687 src/multitrack.c:5144
+#: src/main.c:3991 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
+#: src/saveplay.c:2401 src/multitrack.c:3687 src/multitrack.c:5144
 msgid "_Undo"
 msgstr "_ביטול"
 
-#: src/main.c:3991 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
-#: src/saveplay.c:2400 src/multitrack.c:3708 src/multitrack.c:5167
+#: src/main.c:3992 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
+#: src/saveplay.c:2402 src/multitrack.c:3708 src/multitrack.c:5167
 msgid "_Redo"
 msgstr "ב_צע שוב"
 
-#: src/main.c:4017 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
+#: src/main.c:4018 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
 #: src/resample.c:1746
 msgid "Video"
 msgstr "וידאו"
 
-#: src/main.c:4018 src/interface.c:653 src/gui.c:2033
+#: src/main.c:4019 src/interface.c:653 src/gui.c:2033
 msgid "Left Audio"
 msgstr "ערוץ שמע שמאלי"
 
-#: src/main.c:4019 src/gui.c:2051
+#: src/main.c:4020 src/gui.c:2051
 msgid "Right Audio"
 msgstr "ערוץ שמע ימני"
 
-#: src/main.c:4064
+#: src/main.c:4065
 msgid ""
 "\n"
 "\n"
@@ -646,7 +637,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "באם מוגדר, תבוצע פעולת deinterlace על השקופיות בעת הייבוא."
 
 #: src/interface.c:186 src/callbacks.c:7351 src/gui.c:2827 src/gui.c:3364
-#: src/saveplay.c:1472 src/saveplay.c:2057 src/dialogs.c:742 src/dialogs.c:743
+#: src/saveplay.c:1474 src/saveplay.c:2059 src/dialogs.c:742 src/dialogs.c:743
 #: src/dialogs.c:836 src/dialogs.c:837 src/framedraw.c:191
 #: src/multitrack.c:6626
 msgid "Preview"
@@ -918,9 +909,8 @@ msgid "LiVES: - Enter Set Name"
 msgstr "LiVES: - הזנת שם לאוסף"
 
 #: src/interface.c:1808
-#, fuzzy
 msgid "LiVES: - Choose a Working Directory"
-msgstr "תיקיית העבודה של LiVES."
+msgstr "LiVES: - בחר מדריך עבודה"
 
 #: src/interface.c:1812
 msgid "New name "
@@ -931,9 +921,8 @@ msgid "Set name "
 msgstr "שם האוסף "
 
 #: src/interface.c:1881
-#, fuzzy
 msgid "_Next"
-msgstr "_טקסט"
+msgstr "_הבא"
 
 #: src/interface.c:1959
 msgid "LiVES:- Load CD Track"
@@ -1107,32 +1096,25 @@ msgstr ""
 "איזור פעולה יש לבצע ?\n"
 
 #: src/interface.c:2753
-#, fuzzy
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
-"הפריסה הנוכחית לא נשמרה.\n"
-"איזור פעולה יש לבצע ?\n"
+"הפריסה הנוכחית השתנתה מאז שנשמרה לאחרונה.\n"
+"מה ברצונך לעשות ?\n"
 
 #: src/interface.c:2758
-#, fuzzy
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
 msgstr ""
-"פריסה זו כולל שקופיות מחוללות.\n"
-"לא ניתן לשמור אותה, עליך לאגדה לקטע קודם.\n"
 
 #: src/interface.c:2761
-#, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
 "What do you wish to do ?"
 msgstr ""
-"הפריסה הנוכחית לא נשמרה.\n"
-"איזור פעולה יש לבצע ?\n"
 
 #: src/interface.c:2784
 msgid "Clip set _name"
@@ -1198,9 +1180,11 @@ msgid ""
 ",\n"
 " - including the current layout - "
 msgstr ""
+",\n"
+" - כולל הפריסה הנוכחית - "
 
 #: src/callbacks.c:678
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%s\n"
@@ -1208,14 +1192,9 @@ msgid ""
 "\n"
 "Really close it ?"
 msgstr ""
-"\n"
-"%s\n"
-"נמצא בשימוש לפריסות רב־רצועותיות.\n"
-"\n"
-"האם לסגור אותו בכל זאת ?"
 
 #: src/callbacks.c:679
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%s\n"
@@ -1224,10 +1203,10 @@ msgid ""
 "Really close it ?"
 msgstr ""
 "\n"
-"%s\n"
-"נמצא בשימוש לפריסות רב־רצועותיות.\n"
+"%s \n"
+"נמצא בשימוש בפריסה הנוכחית.\n"
 "\n"
-"האם לסגור אותו בכל זאת ?"
+"האם לסגור אותו?"
 
 #: src/callbacks.c:710
 #, c-format
@@ -1340,9 +1319,8 @@ msgid "Clearing frame images"
 msgstr "פינוי התמונות מהשקופיות"
 
 #: src/callbacks.c:1396
-#, fuzzy
 msgid "Deleting excess frames"
-msgstr "יוצר אי־סדר בשקופיות"
+msgstr ""
 
 #: src/callbacks.c:1578
 #, c-format
@@ -1363,8 +1341,8 @@ msgstr "מבצע מחדש"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "מעתיק שקופיות מ־%d ־ל%d%s וללוח הגזירים..."
 
-#: src/callbacks.c:1797 src/saveplay.c:887 src/saveplay.c:993
-#: src/saveplay.c:1044 src/saveplay.c:2730
+#: src/callbacks.c:1797 src/saveplay.c:887 src/saveplay.c:994
+#: src/saveplay.c:1045 src/saveplay.c:2732
 msgid "Pulling frames from clip"
 msgstr "מושך שקופיות מהקטע"
 
@@ -1702,6 +1680,8 @@ msgid ""
 "\n"
 "  %.2f sec."
 msgstr ""
+"\n"
+"  %.2f שניות."
 
 #: src/callbacks.c:4249
 msgid ""
@@ -1769,7 +1749,7 @@ msgid "A video editor and VJ program."
 msgstr "עורך וידאו ותוכנת VJ."
 
 #: src/callbacks.c:4388
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES Version %s\n"
 "(c) G. Finch (salsaman) 2002-2010\n"
@@ -1782,19 +1762,15 @@ msgid ""
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
 "LiVES גרסה %s\n"
-"c) G. Finch (salsaman) 2002-2009\n"
+"(c) G. Finch (salsaman) 2002-2010\n"
 "\n"
-"משוחרר תחת הרשיון GPL3 או מאוחר יותר (https://www.gnu.org/licenses/gpl.txt)\n"
-"LiVES מופץ ללא אחריות\n"
+"משוחרר תחת הרשיון GPL בגרסה 3 או אחת מאוחרת יותר (http://www.gnu.org/"
+"licenses/gpl.txt)\n"
+"LiVES מופצת ללא אחריות\n"
 "\n"
-"ניתן ליצור קשר עם הכותב בכתובת:\n"
+"ניתן ליצור קשר עם היוצר בכתובת:\n"
 "salsaman@xs4all.nl\n"
-"עמוד הבית: http://lives.sourceforge.net\n"
-"\n"
-"תורגם לעברית ע\"י:\n"
-"ליאל <lielft@gmail.com>\n"
-"ירון <sh-yaron@gmail.com>\n"
-"דור – http://ddorda.useopensource.net"
+"עמוד הבית: http://lives.sourceforge.net."
 
 #: src/callbacks.c:4555
 msgid ""
@@ -2045,6 +2021,8 @@ msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
+"יש ללחוץ על חלון כדי ללכוד אותו\n"
+"יש ללחוץ על 'q' כדי להפסיק את ההקלטה"
 
 #: src/callbacks.c:8156
 #, c-format
@@ -2869,13 +2847,12 @@ msgid "Suggest a _feature"
 msgstr "הצעת _תכונה חדשה"
 
 #: src/gui.c:1504 src/multitrack.c:6092
-#, fuzzy
 msgid "Assist with _translating"
-msgstr "_עזרה בתרגום"
+msgstr "לסייע _בתרגום"
 
 #: src/gui.c:1513 src/multitrack.c:6101
 msgid "_Troubleshoot"
-msgstr ""
+msgstr "_איתור תקלות"
 
 #: src/gui.c:1517 src/multitrack.c:6105
 msgid "_About"
@@ -3076,7 +3053,7 @@ msgstr ""
 
 #: src/utils.c:376
 msgid "(blank)"
-msgstr ""
+msgstr "(ריק)"
 
 #: src/utils.c:378
 #, c-format
@@ -3319,7 +3296,7 @@ msgstr "פותח את %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "פותח את %s בזמן התחלה %.2f שניות. %d שקופיות"
 
-#: src/saveplay.c:187 src/saveplay.c:2720
+#: src/saveplay.c:187 src/saveplay.c:2722
 msgid " without sound"
 msgstr " ללא קול"
 
@@ -3401,33 +3378,33 @@ msgstr ""
 msgid "selection"
 msgstr "בחירה"
 
-#: src/saveplay.c:923 src/saveplay.c:1018
+#: src/saveplay.c:924 src/saveplay.c:1019
 msgid "Linking selection"
 msgstr "מקשר בחירה"
 
-#: src/saveplay.c:1059
+#: src/saveplay.c:1060
 msgid " (with no sound)\n"
 msgstr " (ללא קול)\n"
 
-#: src/saveplay.c:1067
+#: src/saveplay.c:1068
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr "שומר שקופיות %d ל־%d%s כ־\"%s\" : מקודד = %s : סוג = %s..."
 
-#: src/saveplay.c:1070
+#: src/saveplay.c:1071
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr "שומר שקופיות 1 ל־%d%s כ־\"%s\" : מקודד %s: סוג = %s..."
 
-#: src/saveplay.c:1165
+#: src/saveplay.c:1166
 msgid "Saving [can take a long time]"
 msgstr "שומר [עלול לקחת זמן רב]"
 
-#: src/saveplay.c:1196
+#: src/saveplay.c:1197
 msgid "error.\n"
 msgstr "שגיאה.\n"
 
-#: src/saveplay.c:1251
+#: src/saveplay.c:1253
 msgid ""
 "\n"
 "\n"
@@ -3437,24 +3414,24 @@ msgstr ""
 "\n"
 "שגיאת מקודד - קובץ הפלט לא נוצר !\n"
 
-#: src/saveplay.c:1397
+#: src/saveplay.c:1399
 msgid "recording aborted by preview.\n"
 msgstr "ההקלטה נעצרה ע\"י התצוגה המקדימה.\n"
 
-#: src/saveplay.c:1401
+#: src/saveplay.c:1403
 msgid "recording aborted by clipboard playback.\n"
 msgstr "ההקלטה נעצרה ע\"י נגינת לוח הגזירים.\n"
 
-#: src/saveplay.c:1404
+#: src/saveplay.c:1406
 msgid "Recording performance..."
 msgstr "מקליט ביצועים..."
 
-#: src/saveplay.c:2217
+#: src/saveplay.c:2219
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "קצב השקופיות לשנייה הממוצע היה %.4f\n"
 
-#: src/saveplay.c:2223
+#: src/saveplay.c:2225
 msgid ""
 "\n"
 "\n"
@@ -3468,16 +3445,16 @@ msgstr ""
 "באפשרותך ללחוץ על כלים--->שנה גודל כולל\n"
 "ולשנות את גודלן של כל השקופיות לגודל הנוכחי\n"
 
-#: src/saveplay.c:2335
+#: src/saveplay.c:2337
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/saveplay.c:2428
+#: src/saveplay.c:2430
 #, c-format
 msgid "Untitled%d"
 msgstr "חסר כותרת%d"
 
-#: src/saveplay.c:2537
+#: src/saveplay.c:2539
 #, c-format
 msgid ""
 "\n"
@@ -3488,12 +3465,12 @@ msgstr ""
 "מהירות הנגינה לא נכונה ! משתמש במהירות ברירת המחדל של %.3f שקופיות לשנייה. \n"
 "ניתן לקבוע את ברירת המחדל לערך אחר בכלים | העדפות | שונות.\n"
 
-#: src/saveplay.c:2549
+#: src/saveplay.c:2551
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "מהירות הנגינה כוונה ל־%.3f שקופיות לשנייה כדי להתאימו לשמע.\n"
 
-#: src/saveplay.c:2557
+#: src/saveplay.c:2559
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -3503,7 +3480,7 @@ msgstr ""
 "%.3f\n"
 "שמע:"
 
-#: src/saveplay.c:2561 src/saveplay.c:3153
+#: src/saveplay.c:2563 src/saveplay.c:3155
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -3512,49 +3489,49 @@ msgstr ""
 "שקופיות=%d סוג=%s גודל=%dx%d סיביות לפיקסל=%d שקופיות לשנייה=%.3f\n"
 "שמע:"
 
-#: src/saveplay.c:2565 src/saveplay.c:3157
+#: src/saveplay.c:2567 src/saveplay.c:3159
 #, c-format
 msgid "%s none\n"
 msgstr "ללא %s\n"
 
-#: src/saveplay.c:2568 src/saveplay.c:3160
+#: src/saveplay.c:2570 src/saveplay.c:3162
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d ערוצים %d סיביות לפיקסל\n"
 
-#: src/saveplay.c:2576
+#: src/saveplay.c:2578
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - הערה: %s\n"
 
-#: src/saveplay.c:2650
+#: src/saveplay.c:2652
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "שומר שקופית %d כ־%s..."
 
-#: src/saveplay.c:2715
+#: src/saveplay.c:2717
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "מגבה את %s ל־%s"
 
-#: src/saveplay.c:2749
+#: src/saveplay.c:2751
 msgid "Backing up"
 msgstr "מגבה"
 
-#: src/saveplay.c:2780
+#: src/saveplay.c:2782
 msgid "performance data was backed up..."
 msgstr "נתוני הביצועים גובו..."
 
-#: src/saveplay.c:3079
+#: src/saveplay.c:3081
 #, c-format
 msgid "Restoring %s..."
 msgstr "משחזר את %s..."
 
-#: src/saveplay.c:3098
+#: src/saveplay.c:3100
 msgid "Restoring"
 msgstr "משחזר"
 
-#: src/saveplay.c:3120
+#: src/saveplay.c:3122
 #, c-format
 msgid ""
 "\n"
@@ -3567,7 +3544,7 @@ msgstr ""
 "הקובץ %s פגום.\n"
 "לא הייתה אפשרות לשחזרו.\n"
 
-#: src/saveplay.c:3412
+#: src/saveplay.c:3414
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -3577,19 +3554,17 @@ msgstr ""
 "נמצאו קבצים מהרצה קודמת של LiVES.\n"
 "האם ברצונך לשחזרם ?\n"
 
-#: src/saveplay.c:3425
+#: src/saveplay.c:3427
 msgid "Recovering files"
 msgstr "משחזר קבצים"
 
-#: src/saveplay.c:3429
-#, fuzzy
+#: src/saveplay.c:3431
 msgid "Recovering files..."
-msgstr "משחזר קבצים..."
+msgstr ""
 
 #: src/dialogs.c:71
-#, fuzzy
 msgid "Show affected _layouts"
-msgstr "_מחיקת פריסות ששונו"
+msgstr ""
 
 #: src/dialogs.c:149
 msgid "LiVES: - Warning !"
@@ -3741,7 +3716,7 @@ msgstr ", לא רשום"
 #: src/dialogs.c:1130
 #, c-format
 msgid "Use an audio rate of %d Hz%s\n"
-msgstr ""
+msgstr "שימוש בתדר שמע של %d הרץ%s\n"
 
 #: src/dialogs.c:1137
 #, c-format
@@ -3782,7 +3757,7 @@ msgstr "LiVES חייב:\n"
 #: src/dialogs.c:1226
 #, c-format
 msgid "resample audio to %d Hz%s\n"
-msgstr ""
+msgstr "דגימה מחדש של השמע לתדר של %d הרץ%s\n"
 
 #: src/dialogs.c:1232
 #, c-format
@@ -4242,11 +4217,12 @@ msgstr ""
 "האם לנסות לתקן את עותק הכונן של הפריסה ?\n"
 
 #: src/dialogs.c:1472
-#, fuzzy
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
-msgstr "LiVES כשל בלכידת חלון זה. עמכם הסליחה.\n"
+msgstr ""
+"LiVES אין אפשרות לטעון את הפריסה.\n"
+"מצטער.\n"
 
 #: src/dialogs.c:1478
 msgid ""
@@ -4355,17 +4331,13 @@ msgstr ""
 "נא לבדוק את הרשאות הקובץ ולנסות שוב."
 
 #: src/dialogs.c:1848
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to either create or write to the directory:\n"
 "%s\n"
 "Please check the directory permissions and try again."
 msgstr ""
-"\n"
-"ל־LiVES לא הייתה אפשרות לכתוב לקובץ:\n"
-"%s\n"
-"נא לבדוק את הרשאות הקובץ ולנסות שוב."
 
 #: src/dialogs.c:1856
 #, c-format
@@ -4493,18 +4465,16 @@ msgid "Converters"
 msgstr "ממירים"
 
 #: src/effects-weed.c:256
-#, fuzzy
 msgid "audio/video"
-msgstr "מעבר וידאו\\שמע"
+msgstr ""
 
 #: src/effects-weed.c:257
 msgid "Audio/Video Transitions"
 msgstr "מעברי וידאו\\שמע"
 
 #: src/effects-weed.c:259
-#, fuzzy
 msgid "video only"
-msgstr "שמע בלבד"
+msgstr ""
 
 #: src/effects-weed.c:260
 msgid "Video only Transitions"
@@ -4527,9 +4497,8 @@ msgid "Audio Mixers"
 msgstr "מערבלי שמע"
 
 #: src/effects-weed.c:269
-#, fuzzy
 msgid "Audio Effects"
-msgstr "אפקטים _מותאמים אישית"
+msgstr "ניהול פרוייקט"
 
 #: src/effects-weed.c:271
 msgid "audio volume controller"
@@ -4539,7 +4508,7 @@ msgstr "בקר עוצמת שמע"
 msgid "Audio Volume Controllers"
 msgstr "בקרי עוצמת שמע"
 
-#: src/effects-weed.c:276 src/plugins.c:1850
+#: src/effects-weed.c:276 src/plugins.c:1847
 msgid "unknown"
 msgstr "לא ידוע"
 
@@ -4560,7 +4529,7 @@ msgstr ""
 #: src/effects-weed.c:2942
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
-msgstr ""
+msgstr "%d רכיבי תכנה נטענו בהצלחה\n"
 
 #: src/effects-weed.c:3502
 msgid "Warning - no more effect slots left !\n"
@@ -4896,11 +4865,11 @@ msgstr ""
 "%s%s%s\n"
 "או להחליף לתוסף אחר בכלים|העדפות|קידוד\n"
 
-#: src/plugins.c:1557
+#: src/plugins.c:1556
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "אין אפשרות לשנות גודל, נא להתקין את imageMagick\n"
 
-#: src/plugins.c:1796
+#: src/plugins.c:1793
 #, c-format
 msgid ""
 "\n"
@@ -4913,7 +4882,7 @@ msgstr ""
 "נכשל בנסיון לפתוח את תוסף המפענח %s\n"
 "השגיאה הייתה %s\n"
 
-#: src/plugins.c:1817
+#: src/plugins.c:1814
 #, c-format
 msgid ""
 "\n"
@@ -4928,16 +4897,16 @@ msgstr ""
 "אינו מכיל אפשרות הכרחית.\n"
 "לא ניתן להשתמש בו.\n"
 
-#: src/plugins.c:1855
+#: src/plugins.c:1852
 msgid "/unknown"
 msgstr "\\לא ידוע"
 
-#: src/plugins.c:1881
+#: src/plugins.c:1878
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "נכשל בטעינת %s, המעברים עלולים לא לשנות גודל.\n"
 
-#: src/plugins.c:2881
+#: src/plugins.c:2878
 #, c-format
 msgid "%s advanced settings"
 msgstr "הגדרות %s מתקדמות"
@@ -5948,19 +5917,16 @@ msgid "Shrink previews to fit in interface"
 msgstr ""
 
 #: src/preferences.c:1812
-#, fuzzy
 msgid "Startup mode:"
-msgstr "מצב _בזק: מופעל"
+msgstr "מצב עלייה:"
 
 #: src/preferences.c:1819
-#, fuzzy
 msgid "_Clip editor"
-msgstr "החלפה בין _קטעים"
+msgstr "_עורך קטעים"
 
 #: src/preferences.c:1829
-#, fuzzy
 msgid "_Multitrack mode"
-msgstr "מקשים רב־רצועתיים"
+msgstr "_מצב מרובה רצועות"
 
 #: src/preferences.c:1885
 msgid "Multi-head support"
@@ -6017,7 +5983,7 @@ msgstr "_jpeg"
 
 #: src/preferences.c:2009
 msgid "_png"
-msgstr ""
+msgstr "_png"
 
 #: src/preferences.c:2017
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
@@ -6269,11 +6235,10 @@ msgid "Show a warning before saving a se_t"
 msgstr "הצגת אזהרה לפני שמירת א_וסף"
 
 #: src/preferences.c:2819
-#, fuzzy
 msgid ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
-msgstr "הצגת אזהרה אם _mplayer לא נמצא בהפעלת LiVES."
+msgstr ""
 
 #: src/preferences.c:2825
 msgid "Show a warning if no _rendered effects are found at startup."
@@ -6354,7 +6319,7 @@ msgstr "הצגת אזהרה כשריבוי הרצועות דל בשטח גיבו
 
 #: src/preferences.c:2937
 msgid "Show a warning advising cleaning of disk space after a crash."
-msgstr ""
+msgstr "הצג אזהרה מייעץ ניקוי שטח דיסק לאחר התרסקות."
 
 #: src/preferences.c:2943
 msgid "Warnings"
@@ -6460,24 +6425,20 @@ msgid "Start _server on LiVES startup"
 msgstr "הפעלת ה_שרת בהפעלת LiVES"
 
 #: src/preferences.c:3218
-#, fuzzy
 msgid "Jack transport _master (start and stop)"
-msgstr "_מנהל תעבורת Jack"
+msgstr ""
 
 #: src/preferences.c:3231
-#, fuzzy
 msgid "Jack transport _client (start and stop)"
-msgstr "_לקוח תעבורת Jack"
+msgstr ""
 
 #: src/preferences.c:3237
-#, fuzzy
 msgid "Jack transport sets start position"
-msgstr "_מנהל תעבורת Jack"
+msgstr ""
 
 #: src/preferences.c:3245
-#, fuzzy
 msgid "(See also Playback -> Audio follows video rate/direction)"
-msgstr "התאמת השמע ל_קצב\\כיוון הוידאו"
+msgstr ""
 
 #: src/preferences.c:3261
 msgid "Jack audio"
@@ -6502,9 +6463,8 @@ msgid "The name of the jack server for audio"
 msgstr "שם שרת הjack לשמע"
 
 #: src/preferences.c:3299
-#, fuzzy
 msgid "Play audio even when transport is _paused"
-msgstr "נגינת שמע גם במצב _השהייה"
+msgstr ""
 
 #: src/preferences.c:3307
 msgid "Jack Integration"
@@ -6613,26 +6573,26 @@ msgstr "שינויי ערכת הנושא לא ישפיעו עד הפעלת LiVES
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr "אפשרויות הJack לא יישתנו עד ההפעלה הבאה של LiVES."
 
-#: src/osc.c:1180 src/lives-yuv4mpeg.c:179
+#: src/osc.c:1234 src/lives-yuv4mpeg.c:179
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "מסנכרן לקצב שקופיות חיצוני של %.8f שקופיות לשנייה.\n"
 
-#: src/osc.c:1952
+#: src/osc.c:2006
 msgid "Cannot initialize OSC receiver\n"
 msgstr "לא ניתן לאתחל את מקלט ה־OSC\n"
 
-#: src/osc.c:1976
+#: src/osc.c:2030
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "אזהרה: לא ניתן להפעיל את שרת הOSC בפותחת הUDP %d\n"
 
-#: src/osc.c:1981
+#: src/osc.c:2035
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "שרת הOSC הופעל בפותחת הUDP %d\n"
 
-#: src/osc.c:2095
+#: src/osc.c:2149
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "לא ניתן להפעיל את שרת הOSC/UDP בפותחה %d \n"
@@ -7317,9 +7277,8 @@ msgid "Unable to open yuv4mpeg out stream %s\n"
 msgstr "לא ניתן לפתוח את זרימת ה־yuv4mpeg היוצאת %s\n"
 
 #: src/multitrack.c:379
-#, fuzzy
 msgid "Auto backup"
-msgstr "גיבוי פריסות אוטומטי"
+msgstr ""
 
 #: src/multitrack.c:532
 msgid "Backing audio"
@@ -7330,9 +7289,8 @@ msgid "_Apply"
 msgstr "_החלה"
 
 #: src/multitrack.c:977
-#, fuzzy
 msgid "Time"
-msgstr "קוד זמן"
+msgstr "זמן"
 
 #: src/multitrack.c:996
 msgid "_Del. node"
@@ -7375,11 +7333,10 @@ msgid "Right click for context menu.\n"
 msgstr "יש ללחוץ על לחצן העכבר הימני עבור תפריט אפשרויות.\n"
 
 #: src/multitrack.c:1301
-#, fuzzy
 msgid ""
 "Double click on a block\n"
 "to select it."
-msgstr "יש ללחוץ לחיצה כפולה על מקטע כדי לבחור אותו\n"
+msgstr ""
 
 #: src/multitrack.c:2623
 msgid ""
@@ -7391,15 +7348,16 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:2626
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "No effect selected.\n"
-msgstr "אין כאן אפקטים"
+msgstr ""
+"\n"
+"\n"
+"לא נבחרו אפקטים.\n"
 
 #: src/multitrack.c:2629
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -7407,7 +7365,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"הבחירה נעולה.\n"
+"קליפים לא טעון.\n"
 
 #: src/multitrack.c:2632
 msgid ""
@@ -7453,14 +7411,12 @@ msgid "_Edit/encode in clip editor"
 msgstr ""
 
 #: src/multitrack.c:3209
-#, fuzzy
 msgid "_Show clip information"
-msgstr "הצגת מידע על הקטע (i)"
+msgstr "_הצג מידע קליפ"
 
 #: src/multitrack.c:3216
-#, fuzzy
 msgid "_Close this clip"
-msgstr "_סגירת  קטע זה"
+msgstr "_סגירת קטע זה"
 
 #: src/multitrack.c:3409
 msgid "Audio mixer (ctrl-m)"
@@ -7475,66 +7431,52 @@ msgid "Auto preview"
 msgstr "תצוגה מקדימה אוטומטית"
 
 #: src/multitrack.c:3517
-#, fuzzy
 msgid "Single click on timeline"
 msgstr ""
-"יש ללחוץ לחיצה בודדת על ציר הזמן\n"
-"כדי לבחור שקופית.\n"
 
 #: src/multitrack.c:3518
-#, fuzzy
 msgid "to select a frame."
-msgstr "כדי לבחור רצועות וזמן.\n"
+msgstr "כדי לבחור מסגרת."
 
 #: src/multitrack.c:3519
-#, fuzzy
 msgid "Double click on timeline"
-msgstr "יש ללחוץ לחיצה כפולה על ציר הזמן כדי לבחור מקטע\n"
+msgstr ""
 
 #: src/multitrack.c:3520
-#, fuzzy
 msgid "to select a block."
-msgstr "_מחיקת המקטע הנבחר"
+msgstr "כדי לבחור בלוק."
 
 #: src/multitrack.c:3521
-#, fuzzy
 msgid "Clips can be dragged"
-msgstr "ניתן לגרור קטעים לציר הזמן.\n"
+msgstr ""
 
 #: src/multitrack.c:3522
-#, fuzzy
 msgid "onto the timeline."
-msgstr "עיגון נקודת הסיום לציר הזמן"
+msgstr ""
 
 #: src/multitrack.c:3524
-#, fuzzy
 msgid "Mouse mode is: Move"
-msgstr "מצב העכבר הוא: הזזה\n"
+msgstr ""
 
 #: src/multitrack.c:3525
-#, fuzzy
 msgid "clips can be moved around."
-msgstr "ניתן להזיז קטעים מסביב.\n"
+msgstr ""
 
 #: src/multitrack.c:3530
-#, fuzzy
 msgid "Mouse mode is: Select."
-msgstr "מצב העכבר הוא: בחירה\n"
+msgstr ""
 
 #: src/multitrack.c:3531
-#, fuzzy
 msgid "Drag with mouse on timeline"
-msgstr "גרירה עם העכבר על ציר הזמן\n"
+msgstr ""
 
 #: src/multitrack.c:3532
-#, fuzzy
 msgid "to select tracks and time."
-msgstr "כדי לבחור רצועות וזמן.\n"
+msgstr "כדי לבחור מסלולים הזמן."
 
 #: src/multitrack.c:3543
-#, fuzzy
 msgid "_Insert mode: Normal"
-msgstr "_הוספה כאן"
+msgstr ""
 
 #: src/multitrack.c:3559
 msgid "_Mouse mode: Move"
@@ -7679,16 +7621,12 @@ msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr "LiVES-%s: ריבוי רצועות %dx%d : %d סיביות לפיקסל %.3f שקופיות לשנייה"
 
 #: src/multitrack.c:4894
-#, fuzzy
 msgid "_Open..."
-msgstr ""
-"\n"
-"  פותח..."
+msgstr "_פתיחה..."
 
 #: src/multitrack.c:4990
-#, fuzzy
 msgid "_Close the selected clip"
-msgstr "_הוספת קטע נבחר"
+msgstr "_סגור את הקליפ הנבחר"
 
 #: src/multitrack.c:5084
 msgid "_Save layout as..."
@@ -7972,9 +7910,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:6489
-#, fuzzy
 msgid "Insert with _audio"
-msgstr "הוספה עם שמע"
+msgstr ""
 
 #: src/multitrack.c:6515
 msgid ""
@@ -7983,9 +7920,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:6520
-#, fuzzy
 msgid "Select _overlap"
-msgstr "_ביטול סימון כל רצועות הוידאו"
+msgstr ""
 
 #: src/multitrack.c:6571 src/multitrack.c:11904
 msgid "Expanded View (d)"
@@ -7996,14 +7932,12 @@ msgid "Compact View (d)"
 msgstr "תצוגה חסכונית (d)"
 
 #: src/multitrack.c:6675
-#, fuzzy
 msgid "Clips"
-msgstr "_קטעים"
+msgstr "קטעים"
 
 #: src/multitrack.c:6706
-#, fuzzy
 msgid "In/out"
-msgstr "מידע"
+msgstr ""
 
 #: src/multitrack.c:6715
 msgid "FX stack"
@@ -8073,9 +8007,8 @@ msgid " Layer %d audio"
 msgstr " שמע בשכבה %d"
 
 #: src/multitrack.c:8240
-#, fuzzy
 msgid "Show/hide audio details"
-msgstr "הצגת פרטים"
+msgstr ""
 
 #: src/multitrack.c:8257 src/multitrack.c:8392
 #, c-format
@@ -8083,14 +8016,12 @@ msgid "Layer %d audio"
 msgstr "שמע בשכבה %d"
 
 #: src/multitrack.c:8347
-#, fuzzy
 msgid "Select track"
-msgstr "בוחר רצועות"
+msgstr "בחירת רצועה"
 
 #: src/multitrack.c:8350
-#, fuzzy
 msgid "Show/hide audio"
-msgstr "החלת מעבר Crossfade על השמע"
+msgstr ""
 
 #: src/multitrack.c:8356
 #, c-format
@@ -8124,13 +8055,12 @@ msgid "_Delete this effect"
 msgstr "_מחיקת אפקט זה"
 
 #: src/multitrack.c:8568
-#, fuzzy
 msgid "Cannot insert after this effect"
-msgstr "הוספה ל_אחר הבחירה"
+msgstr "לא ניתן להוסיף לאחר השפעה זו"
 
 #: src/multitrack.c:8588
 msgid "This effect cannot be moved"
-msgstr ""
+msgstr "אפקט זה לא ניתן להעביר"
 
 #: src/multitrack.c:8633
 #, c-format
@@ -8158,19 +8088,16 @@ msgstr ""
 "מותג למצב ריבוי רצועות\n"
 
 #: src/multitrack.c:10655
-#, fuzzy
 msgid "Drag the time slider to where you"
-msgstr "גרירת מחוון הזמן למקום הרצוי\n"
+msgstr ""
 
 #: src/multitrack.c:10656
-#, fuzzy
 msgid "want to set effect parameters"
-msgstr "כדי לקבוע פרמטרי אפקטים\n"
+msgstr ""
 
 #: src/multitrack.c:10657
-#, fuzzy
 msgid "Set parameters, then click \"Apply\"\n"
-msgstr "יש לקבוע את הפרמטרים ובסיום ללחוץ \"החלה\"\n"
+msgstr ""
 
 #: src/multitrack.c:10658
 msgid ""
@@ -8180,9 +8107,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:10661
-#, fuzzy
 msgid "Effect has no parameters.\n"
-msgstr "אין פרמטרים"
+msgstr "אפקט אין פרמטרים.\n"
 
 #: src/multitrack.c:10745
 #, c-format
@@ -8226,6 +8152,10 @@ msgid ""
 "No effects at current track,\n"
 "current time.\n"
 msgstr ""
+"\n"
+"\n"
+"אין השפעות על המסלול הנוכחי,\n"
+"הזמן הנוכחי.\n"
 
 #: src/multitrack.c:10862
 msgid ""
@@ -8242,11 +8172,10 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:10877
-#, fuzzy
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
-msgstr "ניתן לגרור קטעים לציר הזמן.\n"
+msgstr ""
 
 #: src/multitrack.c:11044
 msgid "LiVES: Selected block/frame"
@@ -8380,11 +8309,11 @@ msgid ""
 msgstr "נוספו שקופיות %d ל־%d מהקטע %s לרצועה %s מהזמן %.4f עד %.4f\n"
 
 #: src/multitrack.c:15132
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
 "selected.\n"
-msgstr "נבחר איזור הזמן %.3f ל־%.3f.\n"
+msgstr ""
 
 #: src/multitrack.c:15136
 msgid ""
@@ -8400,75 +8329,64 @@ msgid "%d video tracks selected.\n"
 msgstr "נבחרו %d רצועות וידאו.\n"
 
 #: src/multitrack.c:15140
-#, fuzzy
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
-msgstr "יש ללחוץ לחיצה כפולה על ציר הזמן כדי לבחור מקטע\n"
+msgstr ""
 
 #: src/multitrack.c:15147
-#, fuzzy
 msgid ""
 "Single click on an effect\n"
 "to select it."
-msgstr "לחיצה בודדת על אפקט כדי לבחור אותו.\n"
+msgstr ""
 
 #: src/multitrack.c:15148
-#, fuzzy
 msgid ""
 "Double click on an effect\n"
 "to edit it."
-msgstr "לחיצה כפולה על אפקט כדי לערוך אותו.\n"
+msgstr ""
 
 #: src/multitrack.c:15149
-#, fuzzy
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
-msgstr "לחיצה ימנית על אפקט עבור תפריט אפשרויות.\n"
+msgstr ""
 
 #: src/multitrack.c:15151
-#, fuzzy
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr ""
-"\n"
-"סדר האפקט יכול להשתנות במפות המסננים:"
 
 #: src/multitrack.c:15158
-#, fuzzy
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
-msgstr "-  יש לבחור אפקט ולאחר מכן להשתמש בהוספה לפני"
+msgstr ""
 
 #: src/multitrack.c:15159
 msgid "or INSERT AFTER buttons to move it."
 msgstr "או בכפתורי הכנסה אחרי כדי להזיזו."
 
 #: src/multitrack.c:15195
-#, fuzzy
 msgid ""
 "You can click and drag\n"
 "below the timeline"
-msgstr "באפשרותך ללחוץ ולגרור מתחת לציר הזמן\n"
+msgstr ""
 
 #: src/multitrack.c:15196
 msgid "to select a time region.\n"
 msgstr "כדי לבחור איזור זמן.\n"
 
 #: src/multitrack.c:15427 src/multitrack.c:15440
-#, fuzzy
 msgid "Click on another effect,"
-msgstr "יש ללחוץ על אפקט אחר,\n"
+msgstr "לחץ על אפקט אחר,"
 
 #: src/multitrack.c:15428 src/multitrack.c:15441
-#, fuzzy
 msgid ""
 "and the selected one\n"
 "will be inserted"
-msgstr "והאפקט הנבחר יוכנס\n"
+msgstr ""
 
 #: src/multitrack.c:15429
 msgid "after it.\n"
@@ -8529,9 +8447,8 @@ msgstr ""
 "בעקבות כך הוא לא ייטען כראוי.\n"
 
 #: src/multitrack.c:17932
-#, fuzzy
 msgid "auto backup"
-msgstr "גיבוי פריסות אוטומטי"
+msgstr ""
 
 #: src/multitrack.c:17935
 #, c-format
@@ -9030,9 +8947,8 @@ msgid "Adjusting noise on"
 msgstr "מכוון את הרעש ב"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-#, fuzzy
 msgid "Applying charcoal to"
-msgstr "מחיל את \"עתיק\" על"
+msgstr "החלת פחם"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
@@ -9166,38 +9082,34 @@ msgid "Colorizing"
 msgstr "צביעה"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "_מרחב צבעים"
+msgstr "מחזור צבע"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
 msgid "Colour cycling"
-msgstr "_מרחב צבעים"
+msgstr "מחזור צבע"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "מסנן_צבע"
+msgstr "פילטר צבע"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "Colour filtering"
-msgstr "מסנן_צבע"
+msgstr "פילטר צבע"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "_מרחב צבעים"
+msgstr "להחליף צבע"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
-msgstr ""
+msgstr "רמת הרעש קונסטנט"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "_תחילת עיגול"
+msgstr "_שלב מחזור"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlace"
@@ -9227,9 +9139,8 @@ msgstr "חלום"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "E_nd %"
-msgstr "_ביטול %s"
+msgstr "_סוף %"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "Edge detect"
@@ -9271,9 +9182,8 @@ msgid "Fading"
 msgstr "מתעמעם"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "Fina_l frame"
-msgstr "שקופית סיום"
+msgstr "מסגרת סו_פי"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
@@ -9290,19 +9200,16 @@ msgid "Flop horizontally"
 msgstr "הפוך אנכי"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "_חישוב"
+msgstr "מסגרת מחשבון"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "צבע _גבול"
+msgstr "_צבע מסגרת"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _height"
-msgstr "_גובה מקטע"
+msgstr "_גובה מסגרת"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
@@ -9310,14 +9217,12 @@ msgid "Frame _in frame position of clipboard..."
 msgstr "יצירת שקופיות ללוח הגזירים"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr "יצירת שקופיות ללוח הגזירים"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _width"
-msgstr "גודל השקופית"
+msgstr "_רוחב מסגרת"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
@@ -9327,70 +9232,65 @@ msgstr "_שקופיות לשנייה "
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
 msgid "Gamma _end"
-msgstr "_שינוי ערך gamma"
+msgstr "לשנות גמא"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "_התחלה"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma change"
-msgstr "_שינוי ערך gamma"
+msgstr "לשנות גמא"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "שקופיות ריקות"
+msgstr "מסגרות ריקות צור"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "יצירה ל_לוח הגזירים"
+msgstr "הפקת קליפ מתוך התמונה"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "יצירה ל_לוח הגזירים"
+msgstr "ליצור מסגרות צבעוניות"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "יצירת שקופיות לקטע חדש"
+msgstr "מסגרות כותרת צור"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
 msgid "Generating blank frames"
-msgstr "מסדר מחדש שקופיות"
+msgstr "מסגרות ריקות צור"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "Generating clip from image"
-msgstr "פינוי התמונות מהשקופיות"
+msgstr "הפקת קליפ מתוך התמונה"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "Generating coloured frames"
-msgstr "יוצר אי־סדר בשקופיות"
+msgstr "ליצור מסגרות צבעוניות"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "Generating title frames"
-msgstr "יוצר אי־סדר בשקופיות"
+msgstr "מסגרות כותרת צור"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
+#, fuzzy
 msgid "Horizontal flopping"
-msgstr ""
+msgstr "_קטעי אופקי"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#, fuzzy
 msgid "Horizontal shifting"
-msgstr ""
+msgstr "_קטעי אופקי"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "עמעום"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -9403,9 +9303,8 @@ msgid "Hue change"
 msgstr "שינוי_רוויה"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "עמעום"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9414,16 +9313,16 @@ msgstr "_תחילת רדיוס"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumble"
-msgstr ""
+msgstr "ערבוביה"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+#, fuzzy
 msgid "Jumbling"
-msgstr ""
+msgstr "ערבוביה"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Keep _Centered"
-msgstr "_מרכז אחר"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "L_eft"
@@ -9434,9 +9333,8 @@ msgid "Making monochrome"
 msgstr "ממיר את הוידאו לשחור־לבן"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "מסובבב"
+msgstr "להסלים (BSH)"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9482,12 +9380,11 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
-msgstr ""
+msgstr "צילום / עדיין"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "מדביק"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
@@ -9504,23 +9401,21 @@ msgid "Posterizing"
 msgstr "יצירת פוסטר"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
-#, fuzzy
 msgid "Random zoom"
-msgstr "תקריב_אקראי"
+msgstr "זום אקראיים"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 #, fuzzy
 msgid "Random zooming"
-msgstr "תקריב_אקראי"
+msgstr "זום אקראיים"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "Reduce noise"
-msgstr "הוספת רעש"
+msgstr "רעש צמצם"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Reduction radius"
-msgstr ""
+msgstr "רדיוס צמצום"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
@@ -9663,9 +9558,8 @@ msgid "Swirling"
 msgstr "מערבל"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "Text Overlay"
-msgstr "טקסט_מעל"
+msgstr "טקסט כיסוי"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
@@ -9723,7 +9617,7 @@ msgstr "_צבע רקע"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
-msgstr ""
+msgstr "_שחור ולבן המצלמה"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_Black is transparent"
@@ -9742,9 +9636,8 @@ msgid "_Cycle Start"
 msgstr "_תחילת עיגול"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Decrease Contrast"
-msgstr "ניגודיות"
+msgstr "_ירידה חדות"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9763,9 +9656,8 @@ msgstr "_צבע סיום"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "עמעום"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -9780,9 +9672,8 @@ msgid "_Fill colour"
 msgstr "_צבע סיום"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_First frame"
-msgstr "שקופית ראשונה"
+msgstr "_מסגרת ראשונה"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
@@ -9811,16 +9702,15 @@ msgstr "_החזקה עבור"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
-msgstr ""
+msgstr "_קטעי אופקי"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Image File"
 msgstr "_קובץ תמונה"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Increase Contrast"
-msgstr "ניגודיות"
+msgstr "_להגביר חדות"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "_Levels"
@@ -9855,14 +9745,12 @@ msgid "_Number of frames"
 msgstr "_מספר שקופיות"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Offset X"
-msgstr "+ היסט 1"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Offset Y"
-msgstr "+ היסט 1"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Other Center"
@@ -9895,7 +9783,7 @@ msgstr "_רדיוס"
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Random colour each frame"
-msgstr "יוצר אי־סדר בשקופיות"
+msgstr "ליצור מסגרות צבעוניות"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9988,8 +9876,9 @@ msgid "_Top"
 msgstr "_למעלה"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "_Vertical segments"
-msgstr ""
+msgstr "_קטעי אופקי"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #, fuzzy
@@ -10048,14 +9937,12 @@ msgid "_Y offset"
 msgstr "+ היסט 1"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "_degrees"
-msgstr "_פנוי"
+msgstr "_מעלות"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "_then"
-msgstr "_אחר"
+msgstr "_אז"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "blank_frames"
@@ -10070,9 +9957,8 @@ msgid "brightness_change"
 msgstr "שינוי _בהירות"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-#, fuzzy
 msgid "charcoal"
-msgstr "צביעת פחם"
+msgstr "פחם"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "colorize"
@@ -10085,7 +9971,7 @@ msgstr "מסנן_צבע"
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
 msgid "colour_replace"
-msgstr "_מרחב צבעים"
+msgstr "להחליף צבע"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -10134,14 +10020,13 @@ msgid "flip"
 msgstr "קטעים"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
-#, fuzzy
 msgid "flop"
-msgstr "קטעים"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
 msgid "frame_calculator"
-msgstr "_חישוב"
+msgstr "מסגרת מחשבון"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "gamma_change"
@@ -10155,12 +10040,12 @@ msgstr "שקופיות_ריקות"
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "gen_clip_from_image"
-msgstr "יצירה ל_לוח הגזירים"
+msgstr "הפקת קליפ מתוך התמונה"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "gen_coloured_frames"
-msgstr "יצירה ל_לוח הגזירים"
+msgstr "ליצור מסגרות צבעוניות"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -10172,13 +10057,14 @@ msgid "hue_change"
 msgstr "שינוי_רוויה"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+#, fuzzy
 msgid "jumble"
-msgstr ""
+msgstr "ערבוביה"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
 msgid "modulate"
-msgstr "מסובבב"
+msgstr "להסלים (BSH)"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
@@ -10197,13 +10083,13 @@ msgid "normalize"
 msgstr "התאמת עוצמת השמע"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "photo_still"
-msgstr ""
+msgstr "צילום / עדיין"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "מדביק"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -10332,7 +10218,7 @@ msgstr "זה לא נראה כמו קובץ גיבוי תקין"
 
 #: /usr/bin/smogrify:0
 msgid "LiVES was not able to open the file"
-msgstr "ל־LiVES לא הייתה אפשרות לפתוח את הקובץ"
+msgstr "ל־LiVES לא היתה אפשרות לפתוח את הקובץ"
 
 #: /usr/bin/smogrify:0
 msgid "$file"
@@ -10340,7 +10226,7 @@ msgstr "$file"
 
 #: /usr/bin/smogrify:0
 msgid "LiVES audio error."
-msgstr "שגיאת שמע של LiVES"
+msgstr "שגיאת שמע של LiVES."
 
 #: /usr/bin/smogrify:0
 msgid "cdda2wav is required for this function."
@@ -10352,15 +10238,15 @@ msgstr "נא להתקין זאת קודם."
 
 #: /usr/bin/smogrify:0
 msgid "You must set the CD device first in Preferences."
-msgstr "מחובתך להגדיר את כונן התקליטורים קודם בהעדפות"
+msgstr "יש להגדיר את כונן התקליטורים תחילה בהעדפות."
 
 #: /usr/bin/smogrify:0
 msgid "LiVES could not find enough tracks fitting your request."
-msgstr "LiVES לא יכל למצוא מספיק רצועות שמתאימות לבקשתך."
+msgstr "LiVES לא הצליח למצוא מספיק רצועות המתאימות לבקשתך."
 
 #: /usr/bin/smogrify:0
 msgid "Try again with different values."
-msgstr "יש לנסות שוב עם ערכים אחרים"
+msgstr "יש לנסות שוב עם ערכים אחרים."
 
 #: /usr/bin/smogrify:0
 msgid "$plugin_name failed:"
@@ -10372,189 +10258,6 @@ msgstr "$error"
 
 #~ msgid "Undoing audio"
 #~ msgstr "מבטל פעולת שמע"
-
-#~ msgid "_Encode Clip"
-#~ msgstr "_קידוד קטע"
-
-#~ msgid "Warn about loss of _quality when saving to an existing file"
-#~ msgstr "הצגת"
-
-#~ msgid ""
-#~ "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
-#~ "\n"
-#~ msgstr ""
-#~ "ארע כשלון בנסיון להפעיל את נגן השמע שנבחר !\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "Before starting LiVES, you need to choose an audio player.\n"
-#~ "\n"
-#~ "PULSE AUDIO is recommended for most users"
-#~ msgstr ""
-#~ "לפני הפעלת LiVES, יש צורך לבחור נגן שמע.\n"
-#~ "\n"
-#~ "Pulse Audio מומלץ לרוב המשתמשים."
-
-#~ msgid ""
-#~ ", but this version of LiVES was not compiled with pulse audio support.\n"
-#~ "\n"
-#~ msgstr ""
-#~ ", אולם גרסה זו של LiVES לא הודרה עם תמיכה ב־pulse audio.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ ", but you do not have pulse audio installed on your system.\n"
-#~ " You are advised to install pulse audio first before running LiVES.\n"
-#~ "\n"
-#~ msgstr ""
-#~ ", אבל pulse audio לא מותקן במערכת זו.\n"
-#~ " מומלץ להתקין אותו לפני הרצת LiVES.\n"
-#~ "\n"
-
-#~ msgid "JACK audio is recommended for pro users"
-#~ msgstr "JACK מומלץ למשתמשים מקצועיים"
-
-#~ msgid ""
-#~ ", but this version of LiVES was not compiled with jack audio support.\n"
-#~ "\n"
-#~ msgstr ""
-#~ ", אולם גרסה זו של LiVES לא הודרה עם תמיכה ב־jack.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ ", but you do not have jackd installed. You may wish to install jackd "
-#~ "first before running LiVES.\n"
-#~ "\n"
-#~ msgstr ""
-#~ ", אולם jackd אינו מותק על מערכת זו. אולי ברצונך להתקין את jackd לפני הרצת "
-#~ "LiVES.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ ", but may prevent LiVES from starting on some systems.\n"
-#~ "If LiVES will not start with jack, you can restart and try with another "
-#~ "audio player instead.\n"
-#~ "\n"
-#~ msgstr ""
-#~ ", אולם בחירה זו עלולה למנוע מ־LiVES לפעול במערכות מסוימות.\n"
-#~ "אם LiVES לא יפעל עם jack, ניתן להפעילו מחדש עם נגן שמע אחר.\n"
-#~ "\n"
-
-#~ msgid "SOX may be used if neither of the preceding players work, "
-#~ msgstr "ניתן להשתמש ב־SOX אם אף אחד מהנגנים האחרים לא עובד, "
-
-#~ msgid ""
-#~ "but some audio features will be disabled.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "אולם תכונות מסוימות הקשורות לשמע ינוטרלו.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "but you do not have sox installed.\n"
-#~ "You are advised to install it before running LiVES.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "אולם sox לא מותקן במערכת.\n"
-#~ "רצוי להתקינו לפני הרצת LiVES.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "The MPLAYER audio player is only recommended for testing purposes.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "נגן השמע MPLAYER מומלץ רק למטרות בדיקה.\n"
-#~ "\n"
-
-#~ msgid "LiVES: - Choose an audio player"
-#~ msgstr "LiVES: - בחירת נגן שמע"
-
-#~ msgid "Use _pulse audio player"
-#~ msgstr "שימוש בנגן השמע _pulse"
-
-#~ msgid "Use _jack audio player"
-#~ msgstr "שימוש בנגן השמע _jack"
-
-#~ msgid "Use _sox audio player"
-#~ msgstr "שימוש בנגן השמע _sox"
-
-#~ msgid "Use _mplayer audio player"
-#~ msgstr "שימוש בנגן השמע _mplayer"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Welcome to LiVES. If this is your first time using LiVES, please check "
-#~ "all the\n"
-#~ "Preferences using Control-P. In particular make sure the temporary "
-#~ "directory is located somewhere with plenty of diskspace.\n"
-#~ "Have fun !\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "ברוכים הבאים ל־LiVES. אם זה השימוש הראשון שלך ב־LiVES, יש לבדוק את כל "
-#~ "ההעדפות באמצעות Control-P. בנוסף, יש לוודא שהתיקייה הזמנית ממוקמת במקום "
-#~ "בעל הרבה שטח כונן פנוי.\n"
-#~ "שימוש מהנה !\n"
-
-#~ msgid ""
-#~ "Use ctrl and <- arrows -> to move through clip. Press 'r' before playing "
-#~ "to record changes."
-#~ msgstr ""
-#~ "ניתן להשתמש ב־ctrl ו <-חצים-> כדי לזוז בקטע. יש ללחוץ על 'r' לפני הנגינה "
-#~ "בכדי להקליט את השינויים."
-
-#~ msgid "Single click on timeline to select a frame.\n"
-#~ msgstr "יש ללחוץ לחיצה בודדת על ציר הזמן כדי לבחור שקופית.\n"
-
-#~ msgid "_Snap mode: On"
-#~ msgstr "מצב _בזק: מופעל"
-
-#~ msgid "_Snap mode: Off"
-#~ msgstr "מצב _בזק: כבוי"
-
-#~ msgid "Insert without audio"
-#~ msgstr "הוספה בלי שמע"
-
-#~ msgid "_Retain width, height and audio values in saved layouts"
-#~ msgstr "שמירת ערכי רוחב, גובה ושמע בפריסות שמורות"
-
-#~ msgid "_Snap to overlap"
-#~ msgstr "_פיצוח לחפיפה"
-
-#~ msgid "Timecode"
-#~ msgstr "קוד זמן"
-
-#~ msgid "Snap Mode: O_ff"
-#~ msgstr "מצב בזק: כ_בוי"
-
-#~ msgid "Snap mode: O_n"
-#~ msgstr "מצב בזק: מ_ופעל"
-
-#~ msgid "video only transition"
-#~ msgstr "מעבר וידאו בלבד"
-
-#~ msgid "audio only transition"
-#~ msgstr "מעבר שמע בלבד"
-
-#~ msgid "audio mixer"
-#~ msgstr "מערבל שמע"
-
-#~ msgid "audio filter"
-#~ msgstr "מסנן שמע"
-
-#~ msgid "Audio Filters"
-#~ msgstr "מסנני שמע"
-
-#~ msgid "You can preview by clicking on\n"
-#~ msgstr "באפשרותך להפעיל את התצוגה המקדימה בלחיצה על\n"
-
-#~ msgid "\"Show Frame Preview\" below.\n"
-#~ msgstr "\"תצוגת שקופית מקדימה\" להלן.\n"
-
-#, fuzzy
-#~ msgid "Effects stack"
-#~ msgstr "אפקטים"
 
 #~ msgid "or sox\n"
 #~ msgstr "או sox\n"
@@ -10581,8 +10284,30 @@ msgstr "$error"
 #~ "בעת דיווח על קריסות, יש לכלול פרטים אודות מערכת ההפעלה, ההפצה וגירסת "
 #~ "ה־LiVES הנמצאים בשימוש ("
 
+#~ msgid ""
+#~ "\n"
+#~ "\n"
+#~ "Manual start of jackd required. Please make sure jackd is running, \n"
+#~ "or else change the value of <jack_opts> in ~/.lives to 16\n"
+#~ "and restart LiVES.\n"
+#~ "\n"
+#~ "Alternatively, try to start lives with: lives -aplayer sox\n"
+#~ "\n"
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "יש לבצע הפעלה ידנית של jack. נא לוודא כי jackd פועל, \n"
+#~ "או לשנות את הערך של <jack_opts> ב־~/.lives ל־16\n"
+#~ "ולהפעיל את LiVES מחדש.\n"
+#~ "\n"
+#~ "לחילופין,יש לנסות להתחיל את LiVES כך: lives -aplayer sox\n"
+#~ "\n"
+
 #~ msgid "failed (permission denied)\n"
 #~ msgstr "נכשל (בעיית הרשאות)\n"
+
+#~ msgid "recovering files..."
+#~ msgstr "משחזר קבצים..."
 
 #~ msgid ""
 #~ "WARNING - this version of LiVES was compiled without jack support.\n"
@@ -10590,6 +10315,15 @@ msgstr "$error"
 #~ msgstr ""
 #~ "אזהרה - גרסה זו של LiVES הודרה ללא תמיכה ב־jack.\n"
 #~ "רבות מתכונות השמע לא תהיינה זמינות.\n"
+
+#~ msgid "LiVES: - Choose an audio player"
+#~ msgstr "LiVES: - בחירת נגן שמע"
+
+#~ msgid "_Encode Clip"
+#~ msgstr "_קידוד קטע"
+
+#~ msgid "Use _jack audio player"
+#~ msgstr "שימוש בנגן השמע _jack"
 
 #~ msgid "Use _%s audio player"
 #~ msgstr "שימוש בנגן השמע _%s"
@@ -10600,6 +10334,13 @@ msgstr "$error"
 #~ msgstr ""
 #~ "יש ללחוץ על חלון כדי ללכדו\n"
 #~ "או ללחוץ על 'q' להפסקת ההקלטה.\n"
+
+#~ msgid ""
+#~ "Use ctrl and <- arrows -> to move through clip. Press 'r' before playing "
+#~ "to record changes."
+#~ msgstr ""
+#~ "ניתן להשתמש ב־ctrl ו <-חצים-> כדי לזוז בקטע. יש ללחוץ על 'r' לפני הנגינה "
+#~ "בכדי להקליט את השינויים."
 
 #~ msgid ""
 #~ "\n"
@@ -10632,6 +10373,37 @@ msgstr "$error"
 #~ "תצוגת השמע הרב־רצועתי זמינה רב עם נגן השמע jack.\n"
 #~ "באפשרותך להגדיר זאת בכלים|העדפות|נגינה."
 
+#~ msgid "audio/video transition"
+#~ msgstr "מעבר וידאו\\שמע"
+
+#~ msgid "video only transition"
+#~ msgstr "מעבר וידאו בלבד"
+
+#~ msgid "audio mixer"
+#~ msgstr "מערבל שמע"
+
+#~ msgid "audio filter"
+#~ msgstr "מסנן שמע"
+
+#~ msgid "Audio Filters"
+#~ msgstr "מסנני שמע"
+
+#~ msgid "audio only transition"
+#~ msgstr "מעבר שמע בלבד"
+
+#~ msgid ""
+#~ "\n"
+#~ "%s\n"
+#~ "is used in some multitrack layouts.\n"
+#~ "\n"
+#~ "Really close it ?"
+#~ msgstr ""
+#~ "\n"
+#~ "%s\n"
+#~ "נמצא בשימוש לפריסות רב־רצועותיות.\n"
+#~ "\n"
+#~ "האם לסגור אותו בכל זאת ?"
+
 #~ msgid ""
 #~ "This operation requires resizing of frames. Please install 'convert' from "
 #~ "the Image-magick package, and then restart LiVES.\n"
@@ -10655,14 +10427,99 @@ msgstr "$error"
 #~ msgid "_Debug Mode"
 #~ msgstr "מצב _ניפוי"
 
+#~ msgid "Show a warning if _mplayer is not found when LiVES is started."
+#~ msgstr "הצגת אזהרה אם _mplayer לא נמצא בהפעלת LiVES."
+
+#~ msgid "Warn about loss of _quality when saving to an existing file"
+#~ msgstr "הצגת"
+
 #~ msgid ""
 #~ "Warn if multitrack has audio channels, and your audio player is not \"jack"
 #~ "\"."
 #~ msgstr ""
 #~ "הצגת אזהרה אם ריבוי הרצועות מכיל ערוצי שמע, ונגן השמע שלך אינו \"jack\"."
 
+#~ msgid "Jack transport _client"
+#~ msgstr "_לקוח תעבורת Jack"
+
+#~ msgid "Jack transport _master"
+#~ msgstr "_מנהל תעבורת Jack"
+
+#~ msgid "Play audio even when _paused"
+#~ msgstr "נגינת שמע גם במצב _השהייה"
+
 #~ msgid "resample audio to %d Hz\n"
 #~ msgstr "לדגום מחדש את השמע ל־%d Hz\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "\n"
+#~ "Welcome to LiVES. If this is your first time using LiVES, please check "
+#~ "all the\n"
+#~ "Preferences using Control-P. In particular make sure the temporary "
+#~ "directory is located somewhere with plenty of diskspace.\n"
+#~ "Have fun !\n"
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "ברוכים הבאים ל־LiVES. אם זה השימוש הראשון שלך ב־LiVES, יש לבדוק את כל "
+#~ "ההעדפות באמצעות Control-P. בנוסף, יש לוודא שהתיקייה הזמנית ממוקמת במקום "
+#~ "בעל הרבה שטח כונן פנוי.\n"
+#~ "שימוש מהנה !\n"
+
+#~ msgid "Double click on a block to select it.\n"
+#~ msgstr "יש ללחוץ לחיצה כפולה על מקטע כדי לבחור אותו\n"
+
+#~ msgid "Single click on timeline to select a frame.\n"
+#~ msgstr "יש ללחוץ לחיצה בודדת על ציר הזמן כדי לבחור שקופית.\n"
+
+#~ msgid "Drag with mouse on timeline\n"
+#~ msgstr "גרירה עם העכבר על ציר הזמן\n"
+
+#~ msgid "Mouse mode is: Select.\n"
+#~ msgstr "מצב העכבר הוא: בחירה\n"
+
+#~ msgid "Double click on timeline to select a block.\n"
+#~ msgstr "יש ללחוץ לחיצה כפולה על ציר הזמן כדי לבחור מקטע\n"
+
+#~ msgid "Clips can be dragged onto the timeline.\n"
+#~ msgstr "ניתן לגרור קטעים לציר הזמן.\n"
+
+#~ msgid "Mouse mode is: Move\n"
+#~ msgstr "מצב העכבר הוא: הזזה\n"
+
+#~ msgid "clips can be moved around.\n"
+#~ msgstr "ניתן להזיז קטעים מסביב.\n"
+
+#~ msgid "Insert without audio"
+#~ msgstr "הוספה בלי שמע"
+
+#~ msgid "Insert with audio"
+#~ msgstr "הוספה עם שמע"
+
+#~ msgid "to select tracks and time.\n"
+#~ msgstr "כדי לבחור רצועות וזמן.\n"
+
+#~ msgid "_Snap mode: Off"
+#~ msgstr "מצב _בזק: כבוי"
+
+#~ msgid "_Snap mode: On"
+#~ msgstr "מצב _בזק: מופעל"
+
+#~ msgid "_Retain width, height and audio values in saved layouts"
+#~ msgstr "שמירת ערכי רוחב, גובה ושמע בפריסות שמורות"
+
+#~ msgid "_Snap to overlap"
+#~ msgstr "_פיצוח לחפיפה"
+
+#~ msgid "Snap mode: O_n"
+#~ msgstr "מצב בזק: מ_ופעל"
+
+#~ msgid "Timecode"
+#~ msgstr "קוד זמן"
+
+#~ msgid "Snap Mode: O_ff"
+#~ msgstr "מצב בזק: כ_בוי"
 
 #~ msgid ""
 #~ "\n"
@@ -10685,3 +10542,52 @@ msgstr "$error"
 #~ "לפני הפעלת LiVES, יש לבחור בנגן שמע.\n"
 #~ "Jack הינה אפשרות מומלצת, אולם עלול למנוע מ־LiVES לעלות במערכות מסוימות.\n"
 #~ "אם טעינת LiVES נכשלת עם jack, ניתן להפעילו מחדש ולנסות עם %s במקום.\n"
+
+#~ msgid "Drag the time slider to where you want\n"
+#~ msgstr "גרירת מחוון הזמן למקום הרצוי\n"
+
+#~ msgid "to set effect parameters\n"
+#~ msgstr "כדי לקבוע פרמטרי אפקטים\n"
+
+#~ msgid "Set parameters, and then click \"Apply\"\n"
+#~ msgstr "יש לקבוע את הפרמטרים ובסיום ללחוץ \"החלה\"\n"
+
+#~ msgid "You can preview by clicking on\n"
+#~ msgstr "באפשרותך להפעיל את התצוגה המקדימה בלחיצה על\n"
+
+#~ msgid "\"Show Frame Preview\" below.\n"
+#~ msgstr "\"תצוגת שקופית מקדימה\" להלן.\n"
+
+#~ msgid "No effects here"
+#~ msgstr "אין כאן אפקטים"
+
+#~ msgid "Time region %.3f to %.3f selected.\n"
+#~ msgstr "נבחר איזור הזמן %.3f ל־%.3f.\n"
+
+#~ msgid "Single click on an effect to select it.\n"
+#~ msgstr "לחיצה בודדת על אפקט כדי לבחור אותו.\n"
+
+#~ msgid "Double click on an effect to edit it.\n"
+#~ msgstr "לחיצה כפולה על אפקט כדי לערוך אותו.\n"
+
+#~ msgid "Right click on an effect for context menu.\n"
+#~ msgstr "לחיצה ימנית על אפקט עבור תפריט אפשרויות.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Effect order can be changed at FILTER MAPS:"
+#~ msgstr ""
+#~ "\n"
+#~ "סדר האפקט יכול להשתנות במפות המסננים:"
+
+#~ msgid "- select an effect, then use the INSERT BEFORE"
+#~ msgstr "-  יש לבחור אפקט ולאחר מכן להשתמש בהוספה לפני"
+
+#~ msgid "You can click and drag below the timeline\n"
+#~ msgstr "באפשרותך ללחוץ ולגרור מתחת לציר הזמן\n"
+
+#~ msgid "Click on another effect,\n"
+#~ msgstr "יש ללחוץ על אפקט אחר,\n"
+
+#~ msgid "and the selected one will be inserted\n"
+#~ msgstr "והאפקט הנבחר יוכנס\n"

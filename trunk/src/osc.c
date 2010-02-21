@@ -536,6 +536,8 @@ void lives_osc_cb_fgclip_close(void *context, int arglen, const void *vargs, OSC
 
   if (mainw->playing_file>-1) return;
 
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&noaudio);
@@ -566,6 +568,8 @@ void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCT
 
   if (mainw->playing_file>-1) return;
 
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
     lives_osc_parse_int_argument(vargs,&noaudio);
@@ -579,7 +583,7 @@ void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCT
     return;
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
 
   mainw->current_file=clipno;
   start=cfile->start;
@@ -614,6 +618,8 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
 
   if (mainw->playing_file>-1) return;
 
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
     lives_osc_parse_int_argument(vargs,&noaudio);
@@ -627,7 +633,7 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
     return;
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
 
   mainw->current_file=clipno;
 
@@ -656,6 +662,8 @@ void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OS
 
   if (mainw->playing_file>-1) return;
 
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
     lives_osc_parse_int_argument(vargs,&noaudio);
@@ -669,7 +677,7 @@ void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OS
     return;
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
 
   mainw->current_file=clipno;
 
@@ -697,6 +705,7 @@ void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs,
 
   if (mainw->playing_file>-1) return;
 
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
 
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
@@ -711,7 +720,7 @@ void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs,
     return;
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
 
   mainw->current_file=clipno;
 
@@ -737,6 +746,8 @@ void lives_osc_cb_clipbd_paste(void *context, int arglen, const void *vargs, OSC
   if (mainw->playing_file>-1) return;
 
   if (clipboard==NULL) return;
+
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
@@ -769,6 +780,8 @@ void lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, O
 
   if (mainw->playing_file>-1) return;
 
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+
   if (lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
     lives_osc_parse_int_argument(vargs,&noaudio);
@@ -788,7 +801,7 @@ void lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, O
     return;
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
 
   if (times==0||times<-1) return;
 
@@ -822,6 +835,8 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
 
   if (mainw->playing_file>-1) return;
 
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+
   if (lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
     lives_osc_parse_int_argument(vargs,&noaudio);
@@ -841,7 +856,7 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
     return;
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
 
   if (times==0||times<-1) return;
 
@@ -898,8 +913,7 @@ void lives_osc_cb_bgclip_retrigger (void *context, int arglen, const void *vargs
 
 
 
-void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when,
-	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
@@ -909,8 +923,7 @@ void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *varg
 }
 
 
-void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when,
-	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
@@ -922,8 +935,7 @@ void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *varg
 
 
 
-void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when,
-	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
@@ -933,8 +945,7 @@ void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *
 }
 
 
-void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when,
-	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
@@ -1079,28 +1090,68 @@ void lives_osc_cb_bgclip_get_current(void *context, int arglen, const void *varg
 
 
 void lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-
+  int current_file=mainw->current_file;
+  int clip=current_file;
   int frame;
+
+  file *sfile;
+
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&frame);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&frame);
+  }
+  else return;
 
-  lives_osc_parse_int_argument(vargs,&frame);
-  if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) return;
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
 
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),frame);
+  sfile=mainw->files[clip];
+
+  if (frame<1||(sfile->clip_type!=CLIP_TYPE_DISK&&sfile->clip_type!=CLIP_TYPE_FILE)) return;
+
+  if (frame>sfile->frames) frame=sfile->frames;
+
+  if (clip==mainw->current_file) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),frame);
+  else sfile->start=frame;
 }
 
 void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-
+  int current_file=mainw->current_file;
+  int clip=current_file;
   int frame;
+
+  file *sfile;
+
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
 
-  lives_osc_check_arguments (arglen,vargs,"i",TRUE);
-  lives_osc_parse_int_argument(vargs,&frame);
-  if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) return;
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&frame);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&frame);
+  }
+  else return;
 
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),frame);
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  sfile=mainw->files[clip];
+
+  if (frame<1||(sfile->clip_type!=CLIP_TYPE_DISK&&sfile->clip_type!=CLIP_TYPE_FILE)) return;
+
+  if (frame>sfile->frames) frame=sfile->frames;
+
+  if (clip==mainw->current_file) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),frame);
+  else sfile->end=frame;
+
 }
 
 

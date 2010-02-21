@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-17 23:35-0300\n"
-"PO-Revision-Date: 2009-12-25 17:22+0000\n"
+"POT-Creation-Date: 2010-02-21 12:51-0300\n"
+"PO-Revision-Date: 2010-02-21 11:06+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2009-12-27 15:56+0000\n"
+"X-Launchpad-Export-Date: 2010-02-21 11:52+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:85
@@ -26,6 +26,10 @@ msgid ""
 "group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
+"\n"
+"不幸的生命坠毁。\n"
+"请报告这个错误在http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
+"谢谢。应该有可能恢复，如果您重新启动的生命。\n"
 
 #: src/main.c:86
 msgid ""
@@ -85,7 +89,7 @@ msgstr "已禁用 ！"
 
 #: src/main.c:700
 msgid "**The current layout**"
-msgstr ""
+msgstr "**当前的布局**"
 
 #: src/main.c:1104
 msgid "Loading realtime effect plugins..."
@@ -97,10 +101,9 @@ msgstr "正在启动 jack 音频服务器..."
 
 #: src/main.c:1172
 msgid " or \"lives -aplayer pulse\""
-msgstr ""
+msgstr " 或\"lives -aplayer pulse\""
 
 #: src/main.c:1176
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -110,14 +113,6 @@ msgid ""
 "\n"
 "Alternatively, try to start lives with: \"lives -aplayer sox\""
 msgstr ""
-"\n"
-"\n"
-"需要手动开启 jackd。请确保 jackd 已运行。 \n"
-"或将 ~/.lives 中的 <jack_opts> 改为 16\n"
-"然后重启 LiVES。\n"
-"\n"
-"或者， 这样启动LiVES： lives -aplayer sox\n"
-"\n"
 
 #: src/main.c:1199
 msgid "Starting pulse audio server..."
@@ -185,7 +180,7 @@ msgstr "jackd...未发现..."
 
 #: src/main.c:1275
 msgid "pulse audio...detected..."
-msgstr ""
+msgstr "pulse audio...检测..."
 
 #: src/main.c:1276
 msgid "pulse audio...NOT DETECTED..."
@@ -314,11 +309,11 @@ msgstr "-nogui           : 不显示用户界面\n"
 
 #: src/main.c:1619
 msgid "-startup-ce      : start in clip editor mode\n"
-msgstr ""
+msgstr "-startup-ce      : 启动剪辑编辑模式\n"
 
 #: src/main.c:1620
 msgid "-startup-mt      : start in multitrack mode\n"
-msgstr ""
+msgstr "-startup-mt : 在多轨启动模式\n"
 
 #: src/main.c:1622
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
@@ -326,7 +321,7 @@ msgstr ""
 
 #: src/main.c:1623
 msgid "-nooscstart      : do not start OSC listener\n"
-msgstr ""
+msgstr "-nooscstart : 不要开始振荡监听\n"
 
 #: src/main.c:1625
 msgid ""
@@ -335,7 +330,7 @@ msgstr "-aplayer <ap>    : 和选择的音频播放器一起启动。<ap> 可以
 
 #: src/main.c:1627
 msgid ", pulse"
-msgstr ""
+msgstr ", pulse"
 
 #: src/main.c:1630
 msgid ", sox or jack\n"
@@ -350,15 +345,15 @@ msgstr ""
 
 #: src/main.c:1633
 msgid " or sox\n"
-msgstr ""
+msgstr " 或 sox\n"
 
 #: src/main.c:1635
 msgid "-devicemap <mapname>          : autoload devicemap\n"
-msgstr ""
+msgstr "-devicemap <mapname>          : 自动加载装置图\n"
 
 #: src/main.c:1636
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
-msgstr ""
+msgstr "-debug : 尝试调试崩溃（需要'gdb的'安装）\n"
 
 #: src/main.c:1653 src/gui.c:930
 msgid "Starting GUI..."
@@ -434,6 +429,13 @@ msgid ""
 "\n"
 "Thankyou.\n"
 msgstr ""
+"\n"
+"一个smogrify不正确的版本被发现在您的路径。\n"
+"\n"
+"请查看自述文件，该文件与此程序包来\n"
+"在运行的生活。\n"
+"\n"
+"三江源。\n"
 
 #: src/main.c:1711 src/dialogs.c:1080
 msgid ""
@@ -509,48 +511,50 @@ msgstr ""
 #: src/main.c:2096
 #, c-format
 msgid "LiVES-%s: <No File>"
-msgstr ""
+msgstr "LiVES-%s: <没有文件>"
 
-#: src/main.c:3389 src/main.c:3390 src/gui.c:1858 src/gui.c:2824
-#: src/saveplay.c:1469
+#: src/main.c:3390 src/main.c:3391 src/gui.c:1858 src/gui.c:2824
+#: src/saveplay.c:1471
 msgid "Play"
 msgstr "播放"
 
-#: src/main.c:3760
+#: src/main.c:3761
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
+"生命无法捕获此图片\n"
+"\n"
 
-#: src/main.c:3845
+#: src/main.c:3846
 #, c-format
 msgid "Closed file %s\n"
-msgstr ""
+msgstr "已完成的文件 %s\n"
 
-#: src/main.c:3990 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
-#: src/saveplay.c:2399 src/multitrack.c:3687 src/multitrack.c:5144
+#: src/main.c:3991 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
+#: src/saveplay.c:2401 src/multitrack.c:3687 src/multitrack.c:5144
 msgid "_Undo"
 msgstr "撤消(_U)"
 
-#: src/main.c:3991 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
-#: src/saveplay.c:2400 src/multitrack.c:3708 src/multitrack.c:5167
+#: src/main.c:3992 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
+#: src/saveplay.c:2402 src/multitrack.c:3708 src/multitrack.c:5167
 msgid "_Redo"
 msgstr "重做(_R)"
 
-#: src/main.c:4017 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
+#: src/main.c:4018 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
 #: src/resample.c:1746
 msgid "Video"
 msgstr "视频"
 
-#: src/main.c:4018 src/interface.c:653 src/gui.c:2033
+#: src/main.c:4019 src/interface.c:653 src/gui.c:2033
 msgid "Left Audio"
 msgstr "左声道"
 
-#: src/main.c:4019 src/gui.c:2051
+#: src/main.c:4020 src/gui.c:2051
 msgid "Right Audio"
 msgstr "右声道"
 
-#: src/main.c:4064
+#: src/main.c:4065
 msgid ""
 "\n"
 "\n"
@@ -565,14 +569,14 @@ msgstr ""
 
 #: src/interface.c:133
 msgid "Apply Deinterlace"
-msgstr ""
+msgstr "申请反交错"
 
 #: src/interface.c:156
 msgid "If this is set, frames will be deinterlaced as they are imported."
-msgstr ""
+msgstr "如果是这样设置，将帧隔行扫描，因为它们都是进口的。"
 
 #: src/interface.c:186 src/callbacks.c:7351 src/gui.c:2827 src/gui.c:3364
-#: src/saveplay.c:1472 src/saveplay.c:2057 src/dialogs.c:742 src/dialogs.c:743
+#: src/saveplay.c:1474 src/saveplay.c:2059 src/dialogs.c:742 src/dialogs.c:743
 #: src/dialogs.c:836 src/dialogs.c:837 src/framedraw.c:191
 #: src/multitrack.c:6626
 msgid "Preview"
@@ -592,7 +596,7 @@ msgstr ""
 
 #: src/interface.c:292 src/dialogs.c:1561
 msgid "LiVES: - Processing..."
-msgstr ""
+msgstr "LiVES: - 处理..."
 
 #: src/interface.c:329
 msgid ""
@@ -608,14 +612,16 @@ msgid ""
 "\n"
 "Please Wait"
 msgstr ""
+"\n"
+"请稍候"
 
 #: src/interface.c:376
 msgid "Show details"
-msgstr ""
+msgstr "显示详情"
 
 #: src/interface.c:399 src/dialogs.c:1618
 msgid "_Enough"
-msgstr ""
+msgstr "_足够的"
 
 #: src/interface.c:400 src/framedraw.c:249
 msgid "_Preview"
@@ -667,7 +673,7 @@ msgstr "音频"
 
 #: src/interface.c:697 src/interface.c:747
 msgid "Rate/size"
-msgstr ""
+msgstr "速率/尺寸"
 
 #: src/interface.c:756
 msgid "Right audio"
@@ -679,11 +685,11 @@ msgstr ""
 
 #: src/interface.c:840
 msgid "<------------- (Check the box to resize as suggested)"
-msgstr ""
+msgstr "<------------- (检查框大小的建议)"
 
 #: src/interface.c:841
 msgid "<------------- (Check the box to use the size recommendation)"
-msgstr ""
+msgstr "<------------- (检查中使用的大小建议)"
 
 #: src/interface.c:872
 msgid "Keep _my settings"
@@ -703,7 +709,7 @@ msgstr ""
 
 #: src/interface.c:970
 msgid "Show _Details"
-msgstr ""
+msgstr "显示_详细资料"
 
 #: src/interface.c:1064
 msgid "_Close Window"
@@ -711,47 +717,47 @@ msgstr "关闭窗口(_C)"
 
 #: src/interface.c:1068
 msgid "_Save to file"
-msgstr ""
+msgstr "_保存到文件"
 
 #: src/interface.c:1170
 msgid "LiVES: - Insert"
-msgstr ""
+msgstr "LiVES: - 插入"
 
 #: src/interface.c:1192
 msgid "_Number of times to insert"
-msgstr ""
+msgstr "_多次会议，插入"
 
 #: src/interface.c:1213
 msgid "_Insert to fit audio"
-msgstr ""
+msgstr "_适合插入音频"
 
 #: src/interface.c:1257
 msgid "Insert _before selection"
-msgstr ""
+msgstr "插入_前选择"
 
 #: src/interface.c:1262
 msgid "Insert clipboard before selected frames"
-msgstr ""
+msgstr "前插入剪贴板选择帧"
 
 #: src/interface.c:1294
 msgid "Insert _after selection"
-msgstr ""
+msgstr "插入_后选择"
 
 #: src/interface.c:1299
 msgid "Insert clipboard after selected frames"
-msgstr ""
+msgstr "选定后插入剪贴板帧"
 
 #: src/interface.c:1330
 msgid "Insert _with sound"
-msgstr ""
+msgstr "插入_有声"
 
 #: src/interface.c:1366
 msgid "Insert with_out sound"
-msgstr ""
+msgstr "没有健_全插入"
 
 #: src/interface.c:1469
 msgid "LiVES: - Open Selection"
-msgstr ""
+msgstr "LiVES: - 公开选拔"
 
 #: src/interface.c:1498
 msgid "    Selection start time (sec)"
@@ -759,11 +765,11 @@ msgstr ""
 
 #: src/interface.c:1508
 msgid "    Number of frames to open"
-msgstr ""
+msgstr "    拍摄张数开放"
 
 #: src/interface.c:1607
 msgid "LiVES: - Open Location"
-msgstr ""
+msgstr "LiVES: - 打开位置"
 
 #: src/interface.c:1612
 msgid ""
@@ -781,11 +787,11 @@ msgstr "URL : "
 
 #: src/interface.c:1640
 msgid "Do not send bandwidth information"
-msgstr ""
+msgstr "不发送带宽信息"
 
 #: src/interface.c:1641
 msgid "Try this setting if you are having problems getting a stream"
-msgstr ""
+msgstr "试试这个设置如果您有问题，得到一个流"
 
 #: src/interface.c:1754
 msgid ""
@@ -831,16 +837,15 @@ msgstr ""
 
 #: src/interface.c:1812
 msgid "New name "
-msgstr ""
+msgstr "新名称 "
 
 #: src/interface.c:1815
 msgid "Set name "
-msgstr ""
+msgstr "集名称 "
 
 #: src/interface.c:1881
-#, fuzzy
 msgid "_Next"
-msgstr "文本(_T)"
+msgstr "_下一页"
 
 #: src/interface.c:1959
 msgid "LiVES:- Load CD Track"
@@ -873,11 +878,11 @@ msgstr ""
 
 #: src/interface.c:2008
 msgid "Maximum number of tracks to display"
-msgstr ""
+msgstr "最大数量的曲目显示"
 
 #: src/interface.c:2040
 msgid "Chapter  "
-msgstr ""
+msgstr "章  "
 
 #: src/interface.c:2060
 msgid "Audio ID  "
@@ -913,15 +918,15 @@ msgstr "秒。"
 
 #: src/interface.c:2258
 msgid "selection."
-msgstr ""
+msgstr "选择。"
 
 #: src/interface.c:2324
 msgid "LiVES: - Play Random Music"
-msgstr ""
+msgstr "LiVES: - 随机播放音乐"
 
 #: src/interface.c:2352
 msgid "Number of Tracks Requested:    "
-msgstr ""
+msgstr "数曲目要求：    "
 
 #: src/interface.c:2375
 msgid "Directory:"
@@ -945,23 +950,23 @@ msgstr ""
 
 #: src/interface.c:2527
 msgid "Title/Name : "
-msgstr ""
+msgstr "标题/名称： "
 
 #: src/interface.c:2538
 msgid "Author/Artist : "
-msgstr ""
+msgstr "作者/艺术家： "
 
 #: src/interface.c:2549
 msgid "Comments : "
-msgstr ""
+msgstr "评论： "
 
 #: src/interface.c:2623
 msgid "LiVES: choose a directory"
-msgstr ""
+msgstr "LiVES: 选择一个目录"
 
 #: src/interface.c:2626
 msgid "LiVES: choose a file"
-msgstr ""
+msgstr "LiVES: 选择一个文件"
 
 #: src/interface.c:2718
 msgid "LiVES: - Cancel/Discard/Save"
@@ -993,18 +998,24 @@ msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
 msgstr ""
+"目前的剪辑集尚未保存。\n"
+"你要什么做什么？\n"
 
 #: src/interface.c:2750
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
 msgstr ""
+"当前的布局尚未保存。\n"
+"你要什么做什么？\n"
 
 #: src/interface.c:2753
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
+"当前的布局没有改变，因为它最后保存。\n"
+"你要什么做什么？\n"
 
 #: src/interface.c:2758
 msgid ""
@@ -1025,27 +1036,27 @@ msgstr ""
 
 #: src/interface.c:2796
 msgid "_Auto reload next time"
-msgstr ""
+msgstr "_下一次自动加载"
 
 #: src/interface.c:2852 src/interface.c:2863
 msgid "_Wipe layout"
-msgstr ""
+msgstr "_擦除布局"
 
 #: src/interface.c:2853
 msgid "_Ignore changes"
-msgstr ""
+msgstr "_忽略的变化"
 
 #: src/interface.c:2854
 msgid "_Delete clip set"
-msgstr ""
+msgstr "_夹上删除"
 
 #: src/interface.c:2855
 msgid "_Delete layout"
-msgstr ""
+msgstr "_删除布局"
 
 #: src/interface.c:2861
 msgid "_Save layout"
-msgstr ""
+msgstr "_保存布局"
 
 #: src/interface.c:2862
 msgid "_Save clip set"
@@ -1053,7 +1064,7 @@ msgstr ""
 
 #: src/interface.c:2882
 msgid "LiVES: recover layout ?"
-msgstr ""
+msgstr "LiVES: 恢复布局？"
 
 #: src/interface.c:2897
 msgid ""
@@ -1080,6 +1091,8 @@ msgid ""
 ",\n"
 " - including the current layout - "
 msgstr ""
+"，\n"
+" - 包括当前的布局 - "
 
 #: src/callbacks.c:678
 #, c-format
@@ -1116,6 +1129,8 @@ msgid ""
 "\n"
 "Invalid project file.\n"
 msgstr ""
+"\n"
+"无效的项目文件。\n"
 
 #: src/callbacks.c:839
 #, c-format
@@ -1137,7 +1152,7 @@ msgstr ""
 
 #: src/callbacks.c:863
 msgid "Importing project"
-msgstr ""
+msgstr "导入项目"
 
 #: src/callbacks.c:945
 #, c-format
@@ -1146,7 +1161,7 @@ msgstr ""
 
 #: src/callbacks.c:952
 msgid "Exporting project"
-msgstr ""
+msgstr "出口项目"
 
 #: src/callbacks.c:968
 msgid "Restore .lv1 file"
@@ -1163,14 +1178,18 @@ msgid ""
 "Set will be deleted from the disk.\n"
 "Are you sure ?\n"
 msgstr ""
+"\n"
+"\n"
+"设置将被删除从磁盘。\n"
+"你确定吗？\n"
 
 #: src/callbacks.c:1214
 msgid "Deleting set..."
-msgstr ""
+msgstr "删除设置..."
 
 #: src/callbacks.c:1215
 msgid "Deleting set"
-msgstr ""
+msgstr "删除设置"
 
 #: src/callbacks.c:1221
 #, c-format
@@ -1179,7 +1198,7 @@ msgstr ""
 
 #: src/callbacks.c:1265 src/callbacks.c:9179
 msgid "Insert Silence"
-msgstr ""
+msgstr "插入沉默"
 
 #: src/callbacks.c:1301 src/callbacks.c:1351 src/callbacks.c:1477
 msgid "Undoing"
@@ -1191,11 +1210,11 @@ msgstr ""
 
 #: src/callbacks.c:1372
 msgid "Clearing frame images"
-msgstr ""
+msgstr "结算帧图像"
 
 #: src/callbacks.c:1396
 msgid "Deleting excess frames"
-msgstr ""
+msgstr "删除多余的帧"
 
 #: src/callbacks.c:1578
 #, c-format
@@ -1209,15 +1228,15 @@ msgstr ""
 
 #: src/callbacks.c:1724 src/callbacks.c:1738
 msgid "Redoing"
-msgstr ""
+msgstr "重做"
 
 #: src/callbacks.c:1779
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1797 src/saveplay.c:887 src/saveplay.c:993
-#: src/saveplay.c:1044 src/saveplay.c:2730
+#: src/callbacks.c:1797 src/saveplay.c:887 src/saveplay.c:994
+#: src/saveplay.c:1045 src/saveplay.c:2732
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -1231,7 +1250,7 @@ msgstr "剪切"
 
 #: src/callbacks.c:1925
 msgid "Pasting"
-msgstr ""
+msgstr "粘贴"
 
 #: src/callbacks.c:1942
 #, c-format
@@ -1266,6 +1285,9 @@ msgid ""
 "Insertion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
+"\n"
+"插入帧将导致一些转向多轨布局。\n"
+"您确定要继续吗？\n"
 
 #: src/callbacks.c:2104 src/callbacks.c:9133
 msgid ""
@@ -1273,10 +1295,13 @@ msgid ""
 "Insertion will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
+"\n"
+"插入音频会导致一些转移多轨布局。\n"
+"您确定要继续吗？\n"
 
 #: src/callbacks.c:2191 src/callbacks.c:2205
 msgid "Resampling clipboard audio"
-msgstr ""
+msgstr "音频重采样剪贴板"
 
 #: src/callbacks.c:2215
 msgid ""
@@ -1324,6 +1349,9 @@ msgid ""
 "Deleting all frames will close this file.\n"
 "Are you sure ?"
 msgstr ""
+"\n"
+"删除所有的帧将关闭该文件。\n"
+"你确定吗？"
 
 #: src/callbacks.c:2546
 msgid ""
@@ -1331,6 +1359,9 @@ msgid ""
 "Deletion will cause missing frames in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
+"\n"
+"删除将导致丢失一些多轨布局框架。\n"
+"您确定要继续吗？\n"
 
 #: src/callbacks.c:2562 src/callbacks.c:8512 src/callbacks.c:8710
 #: src/callbacks.c:8770
@@ -1339,6 +1370,9 @@ msgid ""
 "Deletion will cause missing audio in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
+"\n"
+"删除会导致一些失踪的多轨音频布局。\n"
+"您确定要继续吗？\n"
 
 #: src/callbacks.c:2578
 msgid ""
@@ -1346,6 +1380,9 @@ msgid ""
 "Deletion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
+"\n"
+"帧删除会导致一些转移多轨布局。\n"
+"您确定要继续吗？\n"
 
 #: src/callbacks.c:2594 src/callbacks.c:8754
 msgid ""
@@ -1353,6 +1390,9 @@ msgid ""
 "Deletion will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
+"\n"
+"删除会导致音频转向一些多轨布局。\n"
+"您确定要继续吗？\n"
 
 #: src/callbacks.c:2647
 #, c-format
@@ -1373,6 +1413,9 @@ msgid ""
 "\n"
 "Selection is locked.\n"
 msgstr ""
+"\n"
+"\n"
+"选择被锁定。\n"
 
 #: src/callbacks.c:3054
 msgid ""
@@ -1384,7 +1427,7 @@ msgstr ""
 
 #: src/callbacks.c:3059
 msgid "Record cancelled.\n"
-msgstr ""
+msgstr "记录取消。\n"
 
 #: src/callbacks.c:3174
 #, c-format
@@ -1443,11 +1486,11 @@ msgstr ""
 
 #: src/callbacks.c:4076
 msgid "Cleaning up disk space..."
-msgstr ""
+msgstr "清理磁盘空间..."
 
 #: src/callbacks.c:4111
 msgid "Clearing disk space"
-msgstr ""
+msgstr "结算磁盘空间"
 
 #: src/callbacks.c:4146
 #, c-format
@@ -1472,6 +1515,8 @@ msgid ""
 "\n"
 "  Opening..."
 msgstr ""
+"\n"
+"  开幕..."
 
 #: src/callbacks.c:4229
 #, c-format
@@ -1499,6 +1544,8 @@ msgid ""
 "\n"
 "  Unknown"
 msgstr ""
+"\n"
+"  未知"
 
 #: src/callbacks.c:4262 src/callbacks.c:4276
 msgid "unsigned"
@@ -1539,10 +1586,23 @@ msgid ""
 "along with this program; if not, write to the Free Software\n"
 "Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
 msgstr ""
+"该程序是自由软件，您可以重新发布和/或修改\n"
+"它在GNU通用公共许可证发表的条款\n"
+"自由软件基金会，或者用许可证的，或第3版\n"
+"（在你的选择）用任何更新的版本。\n"
+"\n"
+"本程序是，希望这将是有益的，\n"
+"但没有任何担保，甚至没有暗示的保证\n"
+"适销性或针对特定用途的保证。见\n"
+"GNU通用公共许可证的更多细节。\n"
+"\n"
+"您应该已经收到一份GNU通用公共许可证的副本\n"
+"随着这项计划，如果没有，写信给自由软件\n"
+"基金公司，59寺广场 - 套房330，马萨诸塞州波士顿02111-1307，美国。\n"
 
 #: src/callbacks.c:4366
 msgid "A video editor and VJ program."
-msgstr ""
+msgstr "阿视频编辑和南军的计划。"
 
 #: src/callbacks.c:4388
 #, c-format
@@ -1564,6 +1624,9 @@ msgid ""
 "\n"
 "You need to install mplayer to be able to preview this file.\n"
 msgstr ""
+"\n"
+"\n"
+"您需要安装mplayer的能够预览该文件。\n"
 
 #: src/callbacks.c:4766 src/callbacks.c:6267
 msgid ""
@@ -1572,6 +1635,9 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 "."
 msgstr ""
+"\n"
+"载入新的音频可能会导致丢失一些多轨音频布局。\n"
+"您确定要继续吗？"
 
 #: src/callbacks.c:4847
 #, c-format
@@ -1580,7 +1646,7 @@ msgstr ""
 
 #: src/callbacks.c:4864 src/saveplay.c:338
 msgid "Opening audio"
-msgstr ""
+msgstr "开幕式音频"
 
 #: src/callbacks.c:4869 src/callbacks.c:4900 src/callbacks.c:6337
 #: src/callbacks.c:6368 src/callbacks.c:6406 src/callbacks.c:8452
@@ -1595,11 +1661,11 @@ msgstr ""
 #: src/callbacks.c:4926 src/callbacks.c:6427 src/callbacks.c:8469
 #: src/callbacks.c:9055
 msgid "Committing audio"
-msgstr ""
+msgstr "犯音频"
 
 #: src/callbacks.c:4933 src/callbacks.c:6448
 msgid "New Audio"
-msgstr ""
+msgstr "新的音频"
 
 #: src/callbacks.c:5143
 #, c-format
@@ -1620,7 +1686,7 @@ msgstr ""
 
 #: src/callbacks.c:5463 src/gui.c:1694
 msgid "Double size (d)"
-msgstr ""
+msgstr "双尺寸（四）"
 
 #: src/callbacks.c:5468
 msgid "Single size (d)"
@@ -1628,15 +1694,15 @@ msgstr ""
 
 #: src/callbacks.c:5585 src/callbacks.c:5586
 msgid "Hide the play window (s)"
-msgstr ""
+msgstr "隐藏游戏窗口（拧）"
 
 #: src/callbacks.c:5595 src/gui.c:1542
 msgid "Show the play window (s)"
-msgstr ""
+msgstr "显示播放窗口（拧）"
 
 #: src/callbacks.c:5596 src/gui.c:1685
 msgid "Play in separate window (s)"
-msgstr ""
+msgstr "玩在单独的窗口（拧）"
 
 #: src/callbacks.c:5799 src/gui.c:3346
 msgid "LiVES: - Play Window"
@@ -1644,11 +1710,11 @@ msgstr ""
 
 #: src/callbacks.c:5893
 msgid "Switch continuous looping off (o)"
-msgstr ""
+msgstr "连续循环开关关闭（海外）"
 
 #: src/callbacks.c:5900 src/gui.c:1589
 msgid "Switch continuous looping on (o)"
-msgstr ""
+msgstr "开关连续循环的（海外）"
 
 #: src/callbacks.c:5968
 #, c-format
@@ -1673,7 +1739,7 @@ msgstr ""
 
 #: src/callbacks.c:6212 src/callbacks.c:6484
 msgid "Select Audio File"
-msgstr ""
+msgstr "选择音频文件"
 
 #: src/callbacks.c:6228
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
@@ -1699,23 +1765,23 @@ msgstr ""
 
 #: src/callbacks.c:6536
 msgid "Selecting tracks"
-msgstr ""
+msgstr "选择跟踪"
 
 #: src/callbacks.c:6592
 msgid "layout errors"
-msgstr ""
+msgstr "布局错误"
 
 #: src/callbacks.c:6601
 msgid "Close _Window"
-msgstr ""
+msgstr "关闭_窗口"
 
 #: src/callbacks.c:6612
 msgid "Clear _Errors"
-msgstr ""
+msgstr "清除_错误"
 
 #: src/callbacks.c:6623
 msgid "_Delete affected layouts"
-msgstr ""
+msgstr "_删除受影响的布局"
 
 #: src/callbacks.c:7139
 msgid "Resume"
@@ -1732,10 +1798,14 @@ msgid ""
 "(click Keep to keep what you have and stop)\n"
 "(click Resume to continue processing)"
 msgstr ""
+"\n"
+"暂停\n"
+"（点击保持让你有什么停止）\n"
+"（单击继续，继续处理）"
 
 #: src/callbacks.c:7144
 msgid "paused..."
-msgstr ""
+msgstr "暂停..."
 
 #: src/callbacks.c:7155
 msgid "Pause"
@@ -1747,7 +1817,7 @@ msgstr "取消"
 
 #: src/callbacks.c:7158
 msgid "resumed..."
-msgstr ""
+msgstr "续..."
 
 #: src/callbacks.c:7707
 #, c-format
@@ -1761,12 +1831,18 @@ msgid ""
 "You must install \"xwininfo\" before you can use this feature\n"
 "\n"
 msgstr ""
+"\n"
+"\n"
+"您必须安装“xwininfo”，然后才能使用此功能\n"
+"\n"
 
 #: src/callbacks.c:8099 src/callbacks.c:8993
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
 msgstr ""
+"\n"
+"记录时间必须大于零。\n"
 
 #: src/callbacks.c:8110
 msgid ""
@@ -1779,7 +1855,7 @@ msgstr ""
 
 #: src/callbacks.c:8115
 msgid "External window was released.\n"
-msgstr ""
+msgstr "对外窗口被释放。\n"
 
 #: src/callbacks.c:8136
 msgid ""
@@ -1803,11 +1879,11 @@ msgstr ""
 
 #: src/callbacks.c:8303
 msgid "Export Selected Audio as..."
-msgstr ""
+msgstr "音频输出选择的..."
 
 #: src/callbacks.c:8306
 msgid "Export Audio as..."
-msgstr ""
+msgstr "音频输出为..."
 
 #: src/callbacks.c:8345
 msgid ""
@@ -1817,6 +1893,10 @@ msgid ""
 "Click 'OK' to export at the new speed, or 'Cancel' to export at the original "
 "rate.\n"
 msgstr ""
+"\n"
+"\n"
+"音频播放速度已被更改此剪辑。\n"
+"点击'确定'出口在新的速度，或'取消'出口在原来的速度。\n"
 
 #: src/callbacks.c:8351
 #, c-format
@@ -1830,11 +1910,11 @@ msgstr ""
 
 #: src/callbacks.c:8368
 msgid "Exporting audio"
-msgstr ""
+msgstr "音频输出"
 
 #: src/callbacks.c:8400
 msgid "Append Audio File..."
-msgstr ""
+msgstr "附加音频文件..."
 
 #: src/callbacks.c:8439
 #, c-format
@@ -1843,11 +1923,11 @@ msgstr ""
 
 #: src/callbacks.c:8446
 msgid "Appending audio"
-msgstr ""
+msgstr "追加音频"
 
 #: src/callbacks.c:8485
 msgid "Append Audio"
-msgstr ""
+msgstr "附加音频"
 
 #: src/callbacks.c:8540
 #, c-format
@@ -1890,7 +1970,7 @@ msgstr ""
 
 #: src/callbacks.c:8662
 msgid "Fading audio..."
-msgstr ""
+msgstr "衰落音频..."
 
 #: src/callbacks.c:8739
 msgid ""
@@ -1898,10 +1978,13 @@ msgid ""
 "Deleting all audio will close this file.\n"
 "Are you sure ?"
 msgstr ""
+"\n"
+"删除所有音频将关闭该文件。\n"
+"你确定吗？"
 
 #: src/callbacks.c:8742
 msgid "Deleting all audio..."
-msgstr ""
+msgstr "删除所有音频..."
 
 #: src/callbacks.c:8748
 #, c-format
@@ -1914,11 +1997,11 @@ msgstr ""
 
 #: src/callbacks.c:8822
 msgid "Delete Audio"
-msgstr ""
+msgstr "删除音频"
 
 #: src/callbacks.c:9082
 msgid "Record new audio"
-msgstr ""
+msgstr "新的音频记录"
 
 #: src/callbacks.c:9161
 #, c-format
@@ -1970,11 +2053,11 @@ msgstr ""
 
 #: src/merge.c:202
 msgid "_Insert Frames"
-msgstr ""
+msgstr "_插入帧"
 
 #: src/merge.c:216
 msgid "_Drop Frames"
-msgstr ""
+msgstr "_丢弃帧"
 
 #: src/merge.c:229
 msgid "Number of Times to Loop Clipboard"
@@ -1986,7 +2069,7 @@ msgstr ""
 
 #: src/merge.c:262
 msgid "_Transition Method:"
-msgstr ""
+msgstr "_过渡方法："
 
 #: src/merge.c:471
 msgid "Merging clipboard with selection..."
@@ -2004,7 +2087,7 @@ msgstr ""
 
 #: src/merge.c:616
 msgid "Merge done.\n"
-msgstr ""
+msgstr "合并完成。\n"
 
 #: src/gui.c:268 src/multitrack.c:4881
 msgid "_File"
@@ -2016,11 +2099,11 @@ msgstr ""
 
 #: src/gui.c:285 src/multitrack.c:4911
 msgid "O_pen File Selection..."
-msgstr ""
+msgstr "_打开文件选择..."
 
 #: src/gui.c:289 src/multitrack.c:4919
 msgid "Open _Location/Stream..."
-msgstr ""
+msgstr "打开_位置/流..."
 
 #: src/gui.c:295 src/multitrack.c:4929
 msgid "Import Selection from _dvd/vcd..."
@@ -2036,7 +2119,7 @@ msgstr ""
 
 #: src/gui.c:309 src/multitrack.c:4964
 msgid "_Import from Device"
-msgstr ""
+msgstr "_从设备进口"
 
 #: src/gui.c:317 src/multitrack.c:4973
 msgid "Import from _Firewire Device (dv)"
@@ -2048,7 +2131,7 @@ msgstr ""
 
 #: src/gui.c:342 src/multitrack.c:5004
 msgid "_Recent Files..."
-msgstr ""
+msgstr "_最近的文件..."
 
 #: src/gui.c:393 src/multitrack.c:5063
 msgid "_Reload Clip Set..."
@@ -2068,7 +2151,7 @@ msgstr ""
 
 #: src/gui.c:419
 msgid "_Close This Clip"
-msgstr ""
+msgstr "_关闭此影片"
 
 #: src/gui.c:432
 msgid "_Backup Clip as .lv1..."
@@ -2096,11 +2179,11 @@ msgstr ""
 
 #: src/gui.c:527
 msgid "_Copy Selection"
-msgstr ""
+msgstr "_复制选择"
 
 #: src/gui.c:536
 msgid "Cu_t Selection"
-msgstr ""
+msgstr "_切的选择"
 
 #: src/gui.c:545
 msgid "_Insert from Clipboard..."
@@ -2128,7 +2211,7 @@ msgstr "选择(_S)..."
 
 #: src/gui.c:615
 msgid "Select _All Frames"
-msgstr ""
+msgstr "选择_所有帧"
 
 #: src/gui.c:623
 msgid "_Start Frame Only"
@@ -2152,7 +2235,7 @@ msgstr ""
 
 #: src/gui.c:656
 msgid "Select Last _Effect"
-msgstr ""
+msgstr "选择最后的_影响"
 
 #: src/gui.c:660
 msgid "_Invert Selection"
@@ -2160,7 +2243,7 @@ msgstr "反转选择(_I)"
 
 #: src/gui.c:668
 msgid "_Lock Selection Width"
-msgstr ""
+msgstr "_锁选择宽度"
 
 #: src/gui.c:673 src/multitrack.c:5278
 msgid "_Play"
@@ -2168,11 +2251,11 @@ msgstr "播放(_P)"
 
 #: src/gui.c:684
 msgid "_Play All"
-msgstr ""
+msgstr "_全部播放"
 
 #: src/gui.c:696
 msgid "Pla_y Selection"
-msgstr ""
+msgstr "_播放选择"
 
 #: src/gui.c:704
 msgid "Play _Clipboard"
@@ -2192,7 +2275,7 @@ msgstr "全屏(_F)"
 
 #: src/gui.c:773
 msgid "_Double Size"
-msgstr ""
+msgstr "_双倍大小"
 
 #: src/gui.c:781 src/multitrack.c:5339
 msgid "Play in _Separate Window"
@@ -2200,19 +2283,19 @@ msgstr ""
 
 #: src/gui.c:790
 msgid "_Blank Background"
-msgstr ""
+msgstr "_空白背景"
 
 #: src/gui.c:797
 msgid "(Auto)_loop Video (to fit audio track)"
-msgstr ""
+msgstr "（自动）_循环视频（以适应音轨）"
 
 #: src/gui.c:806 src/multitrack.c:5347
 msgid "L_oop Continuously"
-msgstr ""
+msgstr "连_续循环"
 
 #: src/gui.c:815
 msgid "Pin_g Pong Loops"
-msgstr ""
+msgstr "乒_乓循环"
 
 #: src/gui.c:823 src/multitrack.c:5355
 msgid "_Mute"
@@ -2224,19 +2307,19 @@ msgstr ""
 
 #: src/gui.c:845
 msgid "S_how Frame Counter"
-msgstr ""
+msgstr "_显示帧计数器"
 
 #: src/gui.c:855 src/multitrack.c:5383
 msgid "Effect_s"
-msgstr ""
+msgstr "效_果"
 
 #: src/gui.c:858
 msgid "Effects are applied to the current selection."
-msgstr ""
+msgstr "效果应用到当前的选择。"
 
 #: src/gui.c:868
 msgid "_Custom Effects"
-msgstr ""
+msgstr "_自定义效果"
 
 #: src/gui.c:871
 msgid "_Run Test Rendered Effect/Tool/Generator..."
@@ -2248,7 +2331,7 @@ msgstr "工具(_T)"
 
 #: src/gui.c:879
 msgid "Tools are applied to complete clips."
-msgstr ""
+msgstr "工具应用到剪辑完成。"
 
 #: src/gui.c:888
 msgid "_Reverse Clipboard"
@@ -2264,11 +2347,11 @@ msgstr "工具(_U)"
 
 #: src/gui.c:906
 msgid "Custom _Tools"
-msgstr ""
+msgstr "自定义_工具"
 
 #: src/gui.c:909
 msgid "Custom _Utilities"
-msgstr ""
+msgstr "自定义_工具"
 
 #: src/gui.c:915 src/multitrack.c:5846
 msgid "_Generate"
@@ -2276,7 +2359,7 @@ msgstr "生成(_G)"
 
 #: src/gui.c:919
 msgid "Custom _Generators"
-msgstr ""
+msgstr "定制发_电机"
 
 #: src/gui.c:928
 msgid "Loading rendered effect plugins..."
@@ -2308,7 +2391,7 @@ msgstr ""
 
 #: src/gui.c:986
 msgid "E_ject CD"
-msgstr ""
+msgstr "_退出CD"
 
 #: src/gui.c:1000
 msgid "Record E_xternal Audio..."
@@ -2316,11 +2399,11 @@ msgstr ""
 
 #: src/gui.c:1011
 msgid "to New _Clip..."
-msgstr ""
+msgstr "新建剪_辑..."
 
 #: src/gui.c:1015
 msgid "to _Selection"
-msgstr ""
+msgstr "以选_择"
 
 #: src/gui.c:1025
 msgid "Fade Audio _In..."
@@ -2332,7 +2415,7 @@ msgstr ""
 
 #: src/gui.c:1041
 msgid "_Export Audio..."
-msgstr ""
+msgstr "_出口音频..."
 
 #: src/gui.c:1053
 msgid "Export _Selected Audio..."
@@ -2344,7 +2427,7 @@ msgstr ""
 
 #: src/gui.c:1061
 msgid "_Append Audio..."
-msgstr ""
+msgstr "_附加音频..."
 
 #: src/gui.c:1066
 msgid "_Trim/Pad Audio..."
@@ -2360,7 +2443,7 @@ msgstr ""
 
 #: src/gui.c:1088
 msgid "_Delete Audio..."
-msgstr ""
+msgstr "_删除音频..."
 
 #: src/gui.c:1100
 msgid "Delete _Selected Audio"
@@ -2376,7 +2459,7 @@ msgstr ""
 
 #: src/gui.c:1113
 msgid "_Resample Audio..."
-msgstr ""
+msgstr "_重采样音频..."
 
 #: src/gui.c:1123
 msgid "Play _Music Using xmms..."
@@ -2408,15 +2491,15 @@ msgstr ""
 
 #: src/gui.c:1179 src/multitrack.c:6022
 msgid "Show _Messages"
-msgstr ""
+msgstr "显示_消息"
 
 #: src/gui.c:1183 src/multitrack.c:6026
 msgid "Show _Layout Errors"
-msgstr ""
+msgstr "显示布_局错误"
 
 #: src/gui.c:1188 src/multitrack.c:5926
 msgid "_Clips"
-msgstr ""
+msgstr "_剪辑"
 
 #: src/gui.c:1199
 msgid "_Rename Current Clip in Menu..."
@@ -2493,7 +2576,7 @@ msgstr ""
 
 #: src/gui.c:1344
 msgid "_VJ"
-msgstr ""
+msgstr "_南军"
 
 #: src/gui.c:1355
 msgid "Real Time _Effect Mapping"
@@ -2532,23 +2615,23 @@ msgstr ""
 
 #: src/gui.c:1392
 msgid "_MIDI/joystick interface"
-msgstr ""
+msgstr "_的MIDI /游戏杆接口"
 
 #: src/gui.c:1406
 msgid "_MIDI/joystick learner..."
-msgstr ""
+msgstr "_的MIDI /游戏杆学习者..."
 
 #: src/gui.c:1411
 msgid "_Save device mapping..."
-msgstr ""
+msgstr "_储存设备映射..."
 
 #: src/gui.c:1417
 msgid "_Load device mapping..."
-msgstr ""
+msgstr "_负载设备映射..."
 
 #: src/gui.c:1428
 msgid "Show VJ _Keys"
-msgstr ""
+msgstr "展南军_钥匙"
 
 #: src/gui.c:1432
 msgid "To_ys"
@@ -2560,11 +2643,11 @@ msgstr "无(_N)"
 
 #: src/gui.c:1453
 msgid "_Mad Frames"
-msgstr ""
+msgstr "_疯狂框架"
 
 #: src/gui.c:1458
 msgid "_LiVES TV (broadband)"
-msgstr ""
+msgstr "_生命电视（宽带）"
 
 #: src/gui.c:1468 src/multitrack.c:6048
 msgid "_Help"
@@ -2572,23 +2655,23 @@ msgstr "帮助 (_H)"
 
 #: src/gui.c:1479 src/multitrack.c:6067
 msgid "_Manual (opens in browser)"
-msgstr ""
+msgstr "_手动（打开浏览器）"
 
 #: src/gui.c:1488 src/multitrack.c:6076
 msgid "_Donate to the project !"
-msgstr ""
+msgstr "_捐赠的项目！"
 
 #: src/gui.c:1492 src/multitrack.c:6080
 msgid "_Email the author"
-msgstr ""
+msgstr "_电子邮件提交"
 
 #: src/gui.c:1496 src/multitrack.c:6084
 msgid "Report a _bug"
-msgstr ""
+msgstr "报告错_误"
 
 #: src/gui.c:1500 src/multitrack.c:6088
 msgid "Suggest a _feature"
-msgstr ""
+msgstr "推荐功_能"
 
 #: src/gui.c:1504 src/multitrack.c:6092
 msgid "Assist with _translating"
@@ -2604,19 +2687,19 @@ msgstr "关于(_A)"
 
 #: src/gui.c:1548
 msgid "Rewind to start (w)"
-msgstr ""
+msgstr "倒带启动 (w)"
 
 #: src/gui.c:1556 src/multitrack.c:13999
 msgid "Play all (p)"
-msgstr ""
+msgstr "播放所有 (p)"
 
 #: src/gui.c:1566 src/gui.c:1668
 msgid "Stop playback (q)"
-msgstr ""
+msgstr "停止播放 (q)"
 
 #: src/gui.c:1575
 msgid "Play selection (y)"
-msgstr ""
+msgstr "播放选择 (y)"
 
 #: src/gui.c:1618
 msgid "Volume"
@@ -2648,11 +2731,11 @@ msgstr ""
 
 #: src/gui.c:1739
 msgid "Show clip info (i)"
-msgstr ""
+msgstr "显示剪辑信息 (i)"
 
 #: src/gui.c:1745
 msgid "Hide this toolbar"
-msgstr ""
+msgstr "隐藏此工具栏"
 
 #: src/gui.c:1747
 msgid ""
@@ -2666,7 +2749,7 @@ msgstr ""
 
 #: src/gui.c:1787
 msgid "Vary the video speed"
-msgstr ""
+msgstr "不同的视频播放速度"
 
 #: src/gui.c:1811
 msgid "                                                            "
@@ -2674,23 +2757,23 @@ msgstr "                                                            "
 
 #: src/gui.c:1842 src/gui.c:2822
 msgid "First Frame"
-msgstr ""
+msgstr "第一帧"
 
 #: src/gui.c:1911 src/gui.c:2831
 msgid "Last Frame"
-msgstr ""
+msgstr "最后框架"
 
 #: src/gui.c:1930
 msgid "The first selected frame in this clip"
-msgstr ""
+msgstr "第一个选定的范围内，此剪辑"
 
 #: src/gui.c:1959
 msgid "The last selected frame in this clip"
-msgstr ""
+msgstr "最后选定的帧在这个剪辑"
 
 #: src/gui.c:2171
 msgid "Starting...\n"
-msgstr ""
+msgstr "启动...\n"
 
 #: src/gui.c:2700
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
@@ -2706,7 +2789,7 @@ msgstr "空闲(_F)"
 
 #: src/gui.c:3088
 msgid "Free choice of frame number"
-msgstr ""
+msgstr "自由选择的帧号"
 
 #: src/gui.c:3113
 msgid "_Start"
@@ -2718,7 +2801,7 @@ msgstr ""
 
 #: src/gui.c:3144
 msgid "_End"
-msgstr ""
+msgstr "_末端"
 
 #: src/gui.c:3149
 msgid "Frame number is linked to end frame"
@@ -2726,7 +2809,7 @@ msgstr ""
 
 #: src/gui.c:3175
 msgid "_Pointer"
-msgstr ""
+msgstr "_指针"
 
 #: src/gui.c:3180
 msgid "Frame number is linked to playback pointer"
@@ -2739,15 +2822,15 @@ msgstr "倒回"
 #: src/gui.c:3224 src/dialogs.c:354 src/dialogs.c:356 src/dialogs.c:892
 #: src/dialogs.c:894
 msgid "Play all"
-msgstr ""
+msgstr "播放所有"
 
 #: src/gui.c:3235
 msgid "Play Selection"
-msgstr ""
+msgstr "播放选择"
 
 #: src/gui.c:3247
 msgid "Loop On/Off"
-msgstr ""
+msgstr "循环开/关"
 
 #: src/gui.c:3305
 msgid "Start _recording"
@@ -2759,15 +2842,15 @@ msgstr ""
 
 #: src/gui.c:3317
 msgid "_Record Performance"
-msgstr ""
+msgstr "_创记录的业绩"
 
 #: src/gui.c:3393
 msgid "Hide Play Window"
-msgstr ""
+msgstr "隐藏播放窗口"
 
 #: src/gui.c:3650
 msgid "Show Play Window"
-msgstr ""
+msgstr "显示播放窗口"
 
 #: src/utils.c:315
 msgid "Clearing the clipboard"
@@ -2787,6 +2870,9 @@ msgid ""
 "==============================\n"
 "Switched to empty clip\n"
 msgstr ""
+"\n"
+"==============================\n"
+"切换到空剪辑\n"
 
 #: src/utils.c:376
 msgid "(blank)"
@@ -2876,6 +2962,8 @@ msgid ""
 "\n"
 "Set names may not be blank.\n"
 msgstr ""
+"\n"
+"设置名称可能不能为空。\n"
 
 #: src/utils.c:616
 #, c-format
@@ -2912,11 +3000,11 @@ msgstr ""
 
 #: src/utils.c:1231
 msgid "(No video)"
-msgstr ""
+msgstr "（无视频）"
 
 #: src/utils.c:1238
 msgid "(No audio)"
-msgstr ""
+msgstr "（无音频）"
 
 #: src/utils.c:1243
 msgid "Mono  [opening...]"
@@ -2951,7 +3039,7 @@ msgstr ""
 
 #: src/utils.c:1871
 msgid "Cleaning up clip"
-msgstr ""
+msgstr "清理夹"
 
 #: src/utils.c:2022
 #, c-format
@@ -2975,7 +3063,7 @@ msgstr "重做 %s(_R)"
 
 #: src/utils.c:2444
 msgid "-------------Selection------------"
-msgstr ""
+msgstr "-------------选择------------"
 
 #: src/utils.c:2449
 msgid " sec ] ----------Selection---------- [ "
@@ -2983,11 +3071,11 @@ msgstr ""
 
 #: src/utils.c:2449
 msgid " frames ] ----------"
-msgstr ""
+msgstr " 帧 ] ----------"
 
 #: src/saveplay.c:95
 msgid "Examining file header"
-msgstr ""
+msgstr "检查文件头"
 
 #: src/saveplay.c:176 src/saveplay.c:521
 #, c-format
@@ -2999,9 +3087,9 @@ msgstr "正在打开 %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:187 src/saveplay.c:2720
+#: src/saveplay.c:187 src/saveplay.c:2722
 msgid " without sound"
-msgstr ""
+msgstr " 没有健全"
 
 #: src/saveplay.c:240
 #, c-format
@@ -3022,7 +3110,7 @@ msgstr ""
 
 #: src/saveplay.c:425
 msgid " - please be patient."
-msgstr ""
+msgstr " - 请耐心等待。"
 
 #: src/saveplay.c:600
 msgid ""
@@ -3038,6 +3126,9 @@ msgid ""
 "\n"
 "You may need to install mplayer to open this file.\n"
 msgstr ""
+"\n"
+"\n"
+"您可能需要安装mplayer的打开这个文件。\n"
 
 #: src/saveplay.c:606
 msgid ""
@@ -3059,57 +3150,57 @@ msgstr ""
 msgid "selection"
 msgstr "选择"
 
-#: src/saveplay.c:923 src/saveplay.c:1018
+#: src/saveplay.c:924 src/saveplay.c:1019
 msgid "Linking selection"
-msgstr ""
+msgstr "连接选择"
 
-#: src/saveplay.c:1059
+#: src/saveplay.c:1060
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:1067
+#: src/saveplay.c:1068
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1070
+#: src/saveplay.c:1071
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1165
+#: src/saveplay.c:1166
 msgid "Saving [can take a long time]"
-msgstr ""
+msgstr "保存[可能需要较长时间]"
 
-#: src/saveplay.c:1196
+#: src/saveplay.c:1197
 msgid "error.\n"
-msgstr ""
+msgstr "错误。\n"
 
-#: src/saveplay.c:1251
+#: src/saveplay.c:1253
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1397
+#: src/saveplay.c:1399
 msgid "recording aborted by preview.\n"
-msgstr ""
+msgstr "灌录预览中止。\n"
 
-#: src/saveplay.c:1401
+#: src/saveplay.c:1403
 msgid "recording aborted by clipboard playback.\n"
-msgstr ""
+msgstr "录音回放的剪贴板中止。\n"
 
-#: src/saveplay.c:1404
+#: src/saveplay.c:1406
 msgid "Recording performance..."
-msgstr ""
+msgstr "录音性能..."
 
-#: src/saveplay.c:2217
+#: src/saveplay.c:2219
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:2223
+#: src/saveplay.c:2225
 msgid ""
 "\n"
 "\n"
@@ -3118,16 +3209,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2335
+#: src/saveplay.c:2337
 msgid "Unknown"
 msgstr "未知"
 
-#: src/saveplay.c:2428
+#: src/saveplay.c:2430
 #, c-format
 msgid "Untitled%d"
 msgstr "未命名%d"
 
-#: src/saveplay.c:2537
+#: src/saveplay.c:2539
 #, c-format
 msgid ""
 "\n"
@@ -3135,68 +3226,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2549
+#: src/saveplay.c:2551
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2557
+#: src/saveplay.c:2559
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2561 src/saveplay.c:3153
+#: src/saveplay.c:2563 src/saveplay.c:3155
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2565 src/saveplay.c:3157
+#: src/saveplay.c:2567 src/saveplay.c:3159
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2568 src/saveplay.c:3160
+#: src/saveplay.c:2570 src/saveplay.c:3162
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2576
+#: src/saveplay.c:2578
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2650
+#: src/saveplay.c:2652
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2715
+#: src/saveplay.c:2717
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2749
+#: src/saveplay.c:2751
 msgid "Backing up"
-msgstr ""
+msgstr "备份"
 
-#: src/saveplay.c:2780
+#: src/saveplay.c:2782
 msgid "performance data was backed up..."
-msgstr ""
+msgstr "性能数据备份..."
 
-#: src/saveplay.c:3079
+#: src/saveplay.c:3081
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3098
+#: src/saveplay.c:3100
 msgid "Restoring"
 msgstr "还原中"
 
-#: src/saveplay.c:3120
+#: src/saveplay.c:3122
 #, c-format
 msgid ""
 "\n"
@@ -3205,24 +3296,24 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3412
+#: src/saveplay.c:3414
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:3425
+#: src/saveplay.c:3427
 msgid "Recovering files"
-msgstr ""
+msgstr "恢复文件"
 
-#: src/saveplay.c:3429
+#: src/saveplay.c:3431
 msgid "Recovering files..."
 msgstr ""
 
 #: src/dialogs.c:71
 msgid "Show affected _layouts"
-msgstr ""
+msgstr "显示受影响的_布局"
 
 #: src/dialogs.c:149
 msgid "LiVES: - Warning !"
@@ -3234,7 +3325,7 @@ msgstr "警告"
 
 #: src/dialogs.c:308
 msgid "Audio players cannot be switched during playback."
-msgstr ""
+msgstr "音频播放器不能播放过程中进行切换。"
 
 #: src/dialogs.c:313
 msgid ""
@@ -3360,6 +3451,8 @@ msgid ""
 "\n"
 "You may wish to:\n"
 msgstr ""
+"\n"
+"您可能希望：\n"
 
 #: src/dialogs.c:1157 src/dialogs.c:1240
 #, c-format
@@ -3404,6 +3497,9 @@ msgid ""
 "Changes applied to the selection will not be permanent.\n"
 "\n"
 msgstr ""
+"\n"
+"更改应用到的选择不会是永久的。\n"
+"\n"
 
 #: src/dialogs.c:1278
 msgid ""
@@ -3436,7 +3532,7 @@ msgstr ""
 
 #: src/dialogs.c:1318
 msgid "Show Keys"
-msgstr ""
+msgstr "显示键"
 
 #: src/dialogs.c:1319
 msgid ""
@@ -3482,7 +3578,7 @@ msgstr ""
 
 #: src/dialogs.c:1327
 msgid "Multitrack Keys"
-msgstr ""
+msgstr "多轨钥匙"
 
 #: src/dialogs.c:1328
 msgid ""
@@ -3508,7 +3604,7 @@ msgstr ""
 
 #: src/dialogs.c:1344
 msgid "Message History"
-msgstr ""
+msgstr "消息历史"
 
 #: src/dialogs.c:1358
 msgid ""
@@ -3907,9 +4003,8 @@ msgid "Converters"
 msgstr ""
 
 #: src/effects-weed.c:256
-#, fuzzy
 msgid "audio/video"
-msgstr "音频"
+msgstr ""
 
 #: src/effects-weed.c:257
 msgid "Audio/Video Transitions"
@@ -3940,9 +4035,8 @@ msgid "Audio Mixers"
 msgstr ""
 
 #: src/effects-weed.c:269
-#, fuzzy
 msgid "Audio Effects"
-msgstr "特效"
+msgstr ""
 
 #: src/effects-weed.c:271
 msgid "audio volume controller"
@@ -3952,7 +4046,7 @@ msgstr ""
 msgid "Audio Volume Controllers"
 msgstr ""
 
-#: src/effects-weed.c:276 src/plugins.c:1850
+#: src/effects-weed.c:276 src/plugins.c:1847
 msgid "unknown"
 msgstr "未知"
 
@@ -4267,11 +4361,11 @@ msgid ""
 "or switch to another plugin using Tools|Preferences|Encoding\n"
 msgstr ""
 
-#: src/plugins.c:1557
+#: src/plugins.c:1556
 msgid "Unable to resize, please install imageMagick\n"
 msgstr ""
 
-#: src/plugins.c:1796
+#: src/plugins.c:1793
 #, c-format
 msgid ""
 "\n"
@@ -4280,7 +4374,7 @@ msgid ""
 "Error was %s\n"
 msgstr ""
 
-#: src/plugins.c:1817
+#: src/plugins.c:1814
 #, c-format
 msgid ""
 "\n"
@@ -4290,16 +4384,16 @@ msgid ""
 "Unable to use it.\n"
 msgstr ""
 
-#: src/plugins.c:1855
+#: src/plugins.c:1852
 msgid "/unknown"
 msgstr ""
 
-#: src/plugins.c:1881
+#: src/plugins.c:1878
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:2881
+#: src/plugins.c:2878
 #, c-format
 msgid "%s advanced settings"
 msgstr ""
@@ -5193,9 +5287,8 @@ msgid "Shrink previews to fit in interface"
 msgstr ""
 
 #: src/preferences.c:1812
-#, fuzzy
 msgid "Startup mode:"
-msgstr "开始框架"
+msgstr ""
 
 #: src/preferences.c:1819
 msgid "_Clip editor"
@@ -5834,26 +5927,26 @@ msgstr ""
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 
-#: src/osc.c:1180 src/lives-yuv4mpeg.c:179
+#: src/osc.c:1234 src/lives-yuv4mpeg.c:179
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:1952
+#: src/osc.c:2006
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:1976
+#: src/osc.c:2030
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:1981
+#: src/osc.c:2035
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:2095
+#: src/osc.c:2149
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""
@@ -6463,9 +6556,8 @@ msgid "_Apply"
 msgstr "应用(_A)"
 
 #: src/multitrack.c:977
-#, fuzzy
 msgid "Time"
-msgstr "主题"
+msgstr ""
 
 #: src/multitrack.c:996
 msgid "_Del. node"
@@ -6610,9 +6702,8 @@ msgid "Double click on timeline"
 msgstr ""
 
 #: src/multitrack.c:3520
-#, fuzzy
 msgid "to select a block."
-msgstr "删除区块"
+msgstr ""
 
 #: src/multitrack.c:3521
 msgid "Clips can be dragged"
@@ -6779,9 +6870,8 @@ msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr ""
 
 #: src/multitrack.c:4894
-#, fuzzy
 msgid "_Open..."
-msgstr "拷贝(_C)..."
+msgstr ""
 
 #: src/multitrack.c:4990
 msgid "_Close the selected clip"
@@ -7079,9 +7169,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:6520
-#, fuzzy
 msgid "Select _overlap"
-msgstr "选择文件"
+msgstr ""
 
 #: src/multitrack.c:6571 src/multitrack.c:11904
 msgid "Expanded View (d)"
@@ -7096,9 +7185,8 @@ msgid "Clips"
 msgstr ""
 
 #: src/multitrack.c:6706
-#, fuzzy
 msgid "In/out"
-msgstr "交易"
+msgstr ""
 
 #: src/multitrack.c:6715
 msgid "FX stack"
@@ -7174,9 +7262,8 @@ msgid "Layer %d audio"
 msgstr ""
 
 #: src/multitrack.c:8347
-#, fuzzy
 msgid "Select track"
-msgstr "选择文件"
+msgstr ""
 
 #: src/multitrack.c:8350
 msgid "Show/hide audio"
@@ -8056,9 +8143,8 @@ msgid "Adjusting contrast of"
 msgstr "调整对比度"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "Adjusting noise on"
-msgstr "调整对比度"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -8081,9 +8167,8 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
@@ -8100,9 +8185,8 @@ msgid "Block _height"
 msgstr "高度(_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "高度(_H)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
@@ -8114,9 +8198,8 @@ msgid "Bluring"
 msgstr "模糊的"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Brightness _end"
@@ -8127,8 +8210,9 @@ msgid "Brightness _start"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness change"
-msgstr ""
+msgstr "_忽略的变化"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Brightness end"
@@ -8180,12 +8264,12 @@ msgstr "跳棋盘"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "Clipboard _over selection"
-msgstr "反转选择(_I)"
+msgstr "插入_后选择"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "Clipboard _under selection"
-msgstr "反转选择(_I)"
+msgstr "插入_后选择"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -8202,9 +8286,8 @@ msgid "Colour cycle"
 msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "加彩色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
@@ -8212,23 +8295,20 @@ msgid "Colour filter"
 msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "加彩色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "加彩色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlace"
@@ -8309,9 +8389,8 @@ msgid "Fina_l frame"
 msgstr "结束图框"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "Flash _colour"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
@@ -8323,14 +8402,13 @@ msgid "Flop horizontally"
 msgstr "垂直翻转"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "Frame _Colour"
-msgstr "启动(_S)"
+msgstr "_显示帧计数器"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -8351,64 +8429,56 @@ msgid "Frame _width"
 msgstr "帧尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "秒"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "退色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma change"
-msgstr "退色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "结束图框"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "结束图框"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "结束图框"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "结束图框"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
 msgid "Generating blank frames"
-msgstr "结束图框"
+msgstr "删除多余的帧"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "Generating clip from image"
-msgstr "结束图框"
+msgstr "结算帧图像"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "Generating coloured frames"
-msgstr "结束图框"
+msgstr "删除多余的帧"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "Generating title frames"
-msgstr "结束图框"
+msgstr "删除多余的帧"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -8419,9 +8489,8 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "退色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -8429,18 +8498,17 @@ msgid "Hue _start"
 msgstr "启动(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue change"
+msgstr "_忽略的变化"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Hue end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
-msgid "Hue end"
-msgstr "退色"
-
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumble"
@@ -8451,14 +8519,13 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Keep _Centered"
-msgstr "渲染(_R)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "L_eft"
-msgstr "文本(_T)"
+msgstr "_下一页"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 #, fuzzy
@@ -8466,9 +8533,8 @@ msgid "Making monochrome"
 msgstr "单色"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "旋转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -8505,8 +8571,9 @@ msgid "Normalizing"
 msgstr "标准化"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Number of _frames"
-msgstr ""
+msgstr "    拍摄张数开放"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -8517,14 +8584,13 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "旋转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
 msgid "Pixilating"
-msgstr "旋转"
+msgstr "粘贴"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
@@ -8552,8 +8618,9 @@ msgid "Reduction radius"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Replacing colours in"
-msgstr ""
+msgstr "音频重采样剪贴板"
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 #, fuzzy
@@ -8576,38 +8643,32 @@ msgid "S_tart %"
 msgstr "启动(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "转换"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "转换"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "转换"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "转换"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "转换"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
 msgstr "棕黑色"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "Shift horizontally"
-msgstr "垂直翻转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
@@ -8662,9 +8723,8 @@ msgid "Spreading"
 msgstr "扩散"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "开始框架"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
@@ -8674,9 +8734,8 @@ msgid "Step per _Frame"
 msgstr "开始框架"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "漩涡"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -8693,9 +8752,8 @@ msgid "Swirling"
 msgstr "漩涡"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "Text Overlay"
-msgstr "每隔"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
@@ -8746,12 +8804,12 @@ msgstr "波"
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
 msgid "_Background Colour"
-msgstr "启动(_S)"
+msgstr "_空白背景"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "_Background colour"
-msgstr "启动(_S)"
+msgstr "_空白背景"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -8775,9 +8833,8 @@ msgid "_Cycle Start"
 msgstr "启动(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Decrease Contrast"
-msgstr "调整对比度"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -8786,9 +8843,8 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_End Colour"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -8797,26 +8853,23 @@ msgstr "结束图框"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "退色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "半径(_R)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Fill colour"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "_First frame"
-msgstr "开始框架"
+msgstr "第一帧"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Flash for"
@@ -8830,9 +8883,8 @@ msgstr "字体(_F)"
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Frames per second"
-msgstr "秒"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Frames"
@@ -8852,9 +8904,8 @@ msgid "_Image File"
 msgstr "文件(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Increase Contrast"
-msgstr "调整对比度"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -8887,8 +8938,9 @@ msgstr "反转(_N)"
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "_Number of frames"
-msgstr ""
+msgstr "    拍摄张数开放"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -8911,7 +8963,7 @@ msgstr "其他(_O)"
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "_Point size"
-msgstr "文件大小"
+msgstr "_指针"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -8946,16 +8998,15 @@ msgstr "右侧(_R)"
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
 msgid "_Rotate Selection by"
-msgstr "删除选中区域(_D)"
+msgstr "_切的选择"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -8972,9 +9023,8 @@ msgid "_Skip"
 msgstr "跳过(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
@@ -9001,14 +9051,12 @@ msgstr "开始框架"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Stroke colour"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "启动(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9052,8 +9100,9 @@ msgid "_X Center"
 msgstr "渲染(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_X End"
-msgstr ""
+msgstr "_末端"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
@@ -9071,8 +9120,9 @@ msgid "_Y Center"
 msgstr "渲染(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Y End"
-msgstr ""
+msgstr "_末端"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
@@ -9118,14 +9168,12 @@ msgid "colorize"
 msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "加彩色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "加彩色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -9174,8 +9222,9 @@ msgid "fc"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
+#, fuzzy
 msgid "flip"
-msgstr ""
+msgstr "_剪辑"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "flop"
@@ -9186,28 +9235,25 @@ msgid "frame_calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "转换"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "画面"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "gen_clip_from_image"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "画面"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "gen_text"
-msgstr "文本(_T)"
+msgstr "_下一页"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
@@ -9218,9 +9264,8 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "旋转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
@@ -9245,9 +9290,8 @@ msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "旋转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -9267,18 +9311,16 @@ msgid "rotate"
 msgstr "旋转"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "转换"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
 msgstr "红褐色"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "shift_horizontal"
-msgstr "垂直翻转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
@@ -9358,8 +9400,9 @@ msgid "Unable to open output file !"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES could not write to $nfile."
-msgstr ""
+msgstr "LiVES: 选择一个文件"
 
 #: /usr/bin/smogrify:0
 msgid "Unable to locate the program $rfx_builder_multi"
@@ -9370,16 +9413,19 @@ msgid "This does not appear to be a valid video or image file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was unable to open it."
 msgstr ""
+"生命无法捕获此图片\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."
-msgstr ""
+msgstr "查看详细信息终端窗口。"
 
 #: /usr/bin/smogrify:0
 msgid "You need to install dvgrab to use this option."
-msgstr ""
+msgstr "您需要安装dvgrab使用此选项。"
 
 #: /usr/bin/smogrify:0
 msgid "Error creating new backup."
@@ -9390,13 +9436,15 @@ msgid "This does not appear to be a valid backup file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was not able to open the file"
 msgstr ""
+"生命无法捕获此图片\n"
+"\n"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "$file"
-msgstr "失败。\n"
+msgstr "$file"
 
 #: /usr/bin/smogrify:0
 msgid "LiVES audio error."
@@ -9404,38 +9452,34 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "cdda2wav is required for this function."
-msgstr ""
+msgstr "cdda2wav是需要这个功能。"
 
 #: /usr/bin/smogrify:0
 msgid "Please install it first."
-msgstr ""
+msgstr "请首先安装它。"
 
 #: /usr/bin/smogrify:0
 msgid "You must set the CD device first in Preferences."
-msgstr ""
+msgstr "您必须设置光盘设备在使用偏好第一。"
 
 #: /usr/bin/smogrify:0
 msgid "LiVES could not find enough tracks fitting your request."
-msgstr ""
+msgstr "生活中无法找到足够的跟踪拟合您的要求。"
 
 #: /usr/bin/smogrify:0
 msgid "Try again with different values."
-msgstr ""
+msgstr "再次尝试使用不同的值。"
 
 #: /usr/bin/smogrify:0
 msgid "$plugin_name failed:"
-msgstr ""
+msgstr "$plugin_name failed:"
 
 #: /usr/bin/smogrify:0
 msgid "$error"
-msgstr ""
+msgstr "$error"
 
-#~ msgid "Audio Filters"
-#~ msgstr "音频过滤器"
-
-#, fuzzy
-#~ msgid "Effects stack"
-#~ msgstr "特效"
+#~ msgid "Undoing audio"
+#~ msgstr "撤消音频"
 
 #~ msgid ""
 #~ "\n"

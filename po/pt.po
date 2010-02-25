@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-21 12:51-0300\n"
+"POT-Creation-Date: 2010-02-25 20:14-0300\n"
 "PO-Revision-Date: 2010-01-31 17:38+0000\n"
 "Last-Translator: Tiago Silva <Unknown>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -553,12 +553,12 @@ msgstr "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Nenhum Arquivo>"
 
-#: src/main.c:3390 src/main.c:3391 src/gui.c:1858 src/gui.c:2824
+#: src/main.c:3395 src/main.c:3396 src/gui.c:1858 src/gui.c:2824
 #: src/saveplay.c:1471
 msgid "Play"
 msgstr "Tocar"
 
-#: src/main.c:3761
+#: src/main.c:3766
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -566,35 +566,35 @@ msgstr ""
 "LiVES não conseguiu capturar esta imagem\n"
 "\n"
 
-#: src/main.c:3846
+#: src/main.c:3851
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Arquivo %s fechado\n"
 
-#: src/main.c:3991 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
+#: src/main.c:3996 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
 #: src/saveplay.c:2401 src/multitrack.c:3687 src/multitrack.c:5144
 msgid "_Undo"
 msgstr "Desfazer [_U]"
 
-#: src/main.c:3992 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
+#: src/main.c:3997 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
 #: src/saveplay.c:2402 src/multitrack.c:3708 src/multitrack.c:5167
 msgid "_Redo"
 msgstr "_Refazer"
 
-#: src/main.c:4018 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
+#: src/main.c:4023 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
 #: src/resample.c:1746
 msgid "Video"
 msgstr "Vídeo"
 
-#: src/main.c:4019 src/interface.c:653 src/gui.c:2033
+#: src/main.c:4024 src/interface.c:653 src/gui.c:2033
 msgid "Left Audio"
 msgstr "Áudio Esquerdo"
 
-#: src/main.c:4020 src/gui.c:2051
+#: src/main.c:4025 src/gui.c:2051
 msgid "Right Audio"
 msgstr "Áudio Direito"
 
-#: src/main.c:4065
+#: src/main.c:4070
 msgid ""
 "\n"
 "\n"
@@ -5105,7 +5105,7 @@ msgstr "Lento (nota para GUI) [_S]"
 msgid "_Batch mode generator"
 msgstr "Gerador de modo _batch"
 
-#: src/rfx-builder.c:1755
+#: src/rfx-builder.c:1753
 msgid ""
 "\n"
 "\n"
@@ -5119,7 +5119,7 @@ msgstr ""
 "Favor remover o gatilho primeiro.\n"
 "\n"
 
-#: src/rfx-builder.c:1783
+#: src/rfx-builder.c:1781
 msgid ""
 "\n"
 "\n"
@@ -5131,172 +5131,172 @@ msgstr ""
 "Alguns gatilhos foram ajustados.\n"
 "Por favor confirme o código gatilho.\n"
 
-#: src/rfx-builder.c:1857
+#: src/rfx-builder.c:1855
 msgid "LiVES: - New RFX Parameter"
 msgstr "LiVES: - Novo Parâmetro RFX"
 
-#: src/rfx-builder.c:1860
+#: src/rfx-builder.c:1858
 msgid "LiVES: - Edit RFX Parameter"
 msgstr "LiVES: - Editar Parâmetro RFX"
 
-#: src/rfx-builder.c:1885
+#: src/rfx-builder.c:1883
 msgid "_Name:    "
 msgstr "_Nome:    "
 
-#: src/rfx-builder.c:1901
+#: src/rfx-builder.c:1899
 msgid "Name of the parameter, must be unique in the plugin."
 msgstr "Nome do parâmetro, deve ser único no plugin."
 
-#: src/rfx-builder.c:1910
+#: src/rfx-builder.c:1908
 msgid "_Label:    "
 msgstr "_Rótulo:    "
 
-#: src/rfx-builder.c:1926
+#: src/rfx-builder.c:1924
 msgid ""
 "Label to be shown by the parameter. An underscore represents mnemonic "
 "accelerator."
 msgstr ""
 "Rótulo a ser mostrado pelo parâmetro. Um sublinhado representa um atalho."
 
-#: src/rfx-builder.c:1934
+#: src/rfx-builder.c:1932
 msgid "Button _Group: "
 msgstr "_Grupo de botões: "
 
-#: src/rfx-builder.c:1947
+#: src/rfx-builder.c:1945
 msgid "A non-zero value can be used to group radio buttons."
 msgstr "Um valor diferente de zero pode ser usado para agrupar botões rádio."
 
-#: src/rfx-builder.c:1955
+#: src/rfx-builder.c:1953
 msgid "_Type:         "
 msgstr "_Tipo:         "
 
-#: src/rfx-builder.c:1977
+#: src/rfx-builder.c:1975
 msgid "Parameter type (select from list)."
 msgstr "Tipo de parâmetro (selecione de uma lista)."
 
-#: src/rfx-builder.c:2008
+#: src/rfx-builder.c:2006
 msgid "Decimal _places: "
 msgstr "Casas decimais [_P]: "
 
-#: src/rfx-builder.c:2036
+#: src/rfx-builder.c:2034
 msgid "_Default value:    "
 msgstr "Valor pa_drão:    "
 
-#: src/rfx-builder.c:2059
+#: src/rfx-builder.c:2057
 msgid "_Default: "
 msgstr "Padrão [_D]: "
 
-#: src/rfx-builder.c:2098
+#: src/rfx-builder.c:2096
 msgid "_Minimum value: "
 msgstr "Valor _mínimo: "
 
-#: src/rfx-builder.c:2119
+#: src/rfx-builder.c:2117
 msgid "Ma_ximum value: "
 msgstr "Valor má_ximo: "
 
-#: src/rfx-builder.c:2141
+#: src/rfx-builder.c:2139
 msgid "     _Step size:   "
 msgstr "     Tamanho do pa_sso:   "
 
-#: src/rfx-builder.c:2155
+#: src/rfx-builder.c:2153
 msgid ""
 "How much the parameter is adjusted when the spinbutton arrows are pressed."
 msgstr "Quanto do parâmetro é ajustado quando as setas são pressionadas."
 
-#: src/rfx-builder.c:2165
+#: src/rfx-builder.c:2163
 msgid "_Wrap: "
 msgstr ""
 
-#: src/rfx-builder.c:2182
+#: src/rfx-builder.c:2180
 msgid "Whether the value wraps max->min and min->max."
 msgstr "Se o valor empacota max->min e min->max."
 
-#: src/rfx-builder.c:2413
+#: src/rfx-builder.c:2411
 msgid "Set _values"
 msgstr "Definir _valores"
 
-#: src/rfx-builder.c:2420 src/rfx-builder.c:2489
+#: src/rfx-builder.c:2418 src/rfx-builder.c:2487
 msgid "Default value:    "
 msgstr "Valor padrão:    "
 
-#: src/rfx-builder.c:2421
+#: src/rfx-builder.c:2419
 msgid "Minimum value: "
 msgstr "Valor mínimo: "
 
-#: src/rfx-builder.c:2422
+#: src/rfx-builder.c:2420
 msgid "Maximum value: "
 msgstr "Valor máximo: "
 
-#: src/rfx-builder.c:2507
+#: src/rfx-builder.c:2505
 msgid "Default _Red:  "
 msgstr "Padrão ve_rmelho:  "
 
-#: src/rfx-builder.c:2508
+#: src/rfx-builder.c:2506
 msgid "Default _Green:"
 msgstr "Padrão verde [_G]:"
 
-#: src/rfx-builder.c:2509
+#: src/rfx-builder.c:2507
 msgid "Default _Blue: "
 msgstr "Padrão azul [_B]: "
 
-#: src/rfx-builder.c:2527
+#: src/rfx-builder.c:2525
 msgid "Set _default"
 msgstr "_Definir padrão"
 
-#: src/rfx-builder.c:2529
+#: src/rfx-builder.c:2527
 msgid "Default value:  "
 msgstr "Valor padrão:  "
 
-#: src/rfx-builder.c:2530
+#: src/rfx-builder.c:2528
 msgid "Maximum length (chars): "
 msgstr "Comprimento máximo (caracteres): "
 
-#: src/rfx-builder.c:2570
+#: src/rfx-builder.c:2568
 msgid "LiVES: - New RFX Parameter Window Hint"
 msgstr "LiVES: - Notas da Janela de Parâmetros RFX"
 
-#: src/rfx-builder.c:2573
+#: src/rfx-builder.c:2571
 msgid "LiVES: - Edit RFX Parameter Window Hint"
 msgstr "LiVES: - Notas da Janela de Edição de Parâmetros RFX"
 
-#: src/rfx-builder.c:2622
+#: src/rfx-builder.c:2620
 msgid "Keyword:         "
 msgstr "Palavra-chave:         "
 
-#: src/rfx-builder.c:2651
+#: src/rfx-builder.c:2649
 msgid "Special Type:         "
 msgstr "Tipo especial:         "
 
-#: src/rfx-builder.c:2680
+#: src/rfx-builder.c:2678
 msgid "Special Subtype:         "
 msgstr "Subtipo especial:         "
 
-#: src/rfx-builder.c:2708 src/rfx-builder.c:2773
+#: src/rfx-builder.c:2706 src/rfx-builder.c:2771
 msgid "Row:    "
 msgstr "Linha:    "
 
-#: src/rfx-builder.c:2799
+#: src/rfx-builder.c:2797
 #, c-format
 msgid "Linked parameters (%d):    "
 msgstr "Parâmetros atrelados (%d):    "
 
-#: src/rfx-builder.c:2813
+#: src/rfx-builder.c:2811
 msgid "Linked parameters (4):    "
 msgstr "Parametros atrelados (4):    "
 
-#: src/rfx-builder.c:2816
+#: src/rfx-builder.c:2814
 msgid "Linked parameters (2):    "
 msgstr "Parâmetros atrelados (2):    "
 
-#: src/rfx-builder.c:2841
+#: src/rfx-builder.c:2839
 msgid "LiVES: - New RFX Trigger"
 msgstr "LiVES: - Novo Gatilho RFX"
 
-#: src/rfx-builder.c:2844
+#: src/rfx-builder.c:2842
 msgid "LiVES: - Edit RFX Trigger"
 msgstr "LiVES: - Editar Gatilho RFX"
 
-#: src/rfx-builder.c:2868
+#: src/rfx-builder.c:2866
 msgid "When:         "
 msgstr "Quando:         "
 
@@ -5317,11 +5317,11 @@ msgstr "LiVES: - Codigo Pós-Loop"
 msgid "LiVES: - Default text (max length %d)"
 msgstr "LiVES: - Texto padrão (tam. máx. %d)"
 
-#: src/rfx-builder.c:3036
+#: src/rfx-builder.c:3037
 msgid "LiVES: - Enter values, one per line"
 msgstr "LiVES: - Entre com valores, um por linha"
 
-#: src/rfx-builder.c:3153
+#: src/rfx-builder.c:3155
 msgid ""
 "\n"
 "\n"
@@ -5331,7 +5331,7 @@ msgstr ""
 "\n"
 "O nome não deve ficar em branco.\n"
 
-#: src/rfx-builder.c:3158
+#: src/rfx-builder.c:3160
 msgid ""
 "\n"
 "\n"
@@ -5341,7 +5341,7 @@ msgstr ""
 "\n"
 "Nome não pode conter espaços.\n"
 
-#: src/rfx-builder.c:3163
+#: src/rfx-builder.c:3165
 msgid ""
 "\n"
 "\n"
@@ -5351,7 +5351,7 @@ msgstr ""
 "\n"
 "Texto do menu não pode estar em branco.\n"
 
-#: src/rfx-builder.c:3168
+#: src/rfx-builder.c:3170
 msgid ""
 "\n"
 "\n"
@@ -5361,7 +5361,7 @@ msgstr ""
 "\n"
 "Descrição da ação não pode estar em branco.\n"
 
-#: src/rfx-builder.c:3173
+#: src/rfx-builder.c:3175
 msgid ""
 "\n"
 "\n"
@@ -5371,7 +5371,7 @@ msgstr ""
 "\n"
 "O nome do autor não deve ficar em branco.\n"
 
-#: src/rfx-builder.c:3180 src/rfx-builder.c:4347
+#: src/rfx-builder.c:3182 src/rfx-builder.c:4353
 msgid ""
 "\n"
 "\n"
@@ -5383,7 +5383,7 @@ msgstr ""
 "Já existe um plugin com este nome.\n"
 "O nome deve ser único.\n"
 
-#: src/rfx-builder.c:3187
+#: src/rfx-builder.c:3189
 msgid ""
 "\n"
 "\n"
@@ -5393,7 +5393,7 @@ msgstr ""
 "\n"
 "Codigo do loop não deve estar em branco.\n"
 
-#: src/rfx-builder.c:3193
+#: src/rfx-builder.c:3195
 msgid ""
 "\n"
 "\n"
@@ -5403,7 +5403,7 @@ msgstr ""
 "\n"
 "O código do gatilho não deve ser deixado em branco para um utilitário.\n"
 
-#: src/rfx-builder.c:3206
+#: src/rfx-builder.c:3208
 msgid ""
 "\n"
 "\n"
@@ -5413,7 +5413,7 @@ msgstr ""
 "\n"
 "O nome do parâmetro não deve ser deixado em branco.\n"
 
-#: src/rfx-builder.c:3211
+#: src/rfx-builder.c:3213
 msgid ""
 "\n"
 "\n"
@@ -5427,12 +5427,12 @@ msgstr ""
 "plugin.\n"
 "\n"
 
-#: src/rfx-builder.c:3249
+#: src/rfx-builder.c:3252
 #, c-format
 msgid "Writing script file %s..."
 msgstr "Escrevendo arquivo de script %s..."
 
-#: src/rfx-builder.c:3261
+#: src/rfx-builder.c:3264
 #, c-format
 msgid ""
 "\n"
@@ -5447,36 +5447,36 @@ msgstr ""
 "%s\n"
 "Código de erro %d\n"
 
-#: src/rfx-builder.c:3523
+#: src/rfx-builder.c:3526
 msgid "No <define> section found in script.\n"
 msgstr "A seção <define> não foi encontrada no script.\n"
 
-#: src/rfx-builder.c:3530 src/rfx-builder.c:3539
+#: src/rfx-builder.c:3533 src/rfx-builder.c:3542
 msgid "Bad script version.\n"
 msgstr "Versão do script ruim.\n"
 
-#: src/rfx-builder.c:3551
+#: src/rfx-builder.c:3554
 msgid "No <name> section found in script.\n"
 msgstr "A seção <name> não foi encontrada no script.\n"
 
-#: src/rfx-builder.c:3559
+#: src/rfx-builder.c:3562
 msgid "No <version> section found in script.\n"
 msgstr "A seção <version> não foi enonctrada no script.\n"
 
-#: src/rfx-builder.c:3567
+#: src/rfx-builder.c:3570
 msgid "No <author> section found in script.\n"
 msgstr "A seção <author> não foi encontrada no script.\n"
 
-#: src/rfx-builder.c:3581
+#: src/rfx-builder.c:3584
 msgid "No <description> section found in script.\n"
 msgstr "A seção <description> não foi encontrada no script.\n"
 
-#: src/rfx-builder.c:3585
+#: src/rfx-builder.c:3588
 #, c-format
 msgid "Bad description. (%s)\n"
 msgstr "Descrição ruim. (%s)\n"
 
-#: src/rfx-builder.c:3747
+#: src/rfx-builder.c:3750
 #, c-format
 msgid ""
 "\n"
@@ -5491,27 +5491,27 @@ msgstr ""
 "encontrado no script.\n"
 "\n"
 
-#: src/rfx-builder.c:3892
+#: src/rfx-builder.c:3895
 msgid "Rebuilding all RFX scripts...builtin..."
 msgstr "Reconstruindo todos scripts RFX..."
 
-#: src/rfx-builder.c:3893
+#: src/rfx-builder.c:3896
 msgid "Rebuilding scripts"
 msgstr "Reconstruindo scripts"
 
-#: src/rfx-builder.c:3898
+#: src/rfx-builder.c:3901
 msgid "custom..."
 msgstr "customizado..."
 
-#: src/rfx-builder.c:3902
+#: src/rfx-builder.c:3905
 msgid "test..."
 msgstr "teste..."
 
-#: src/rfx-builder.c:3907
+#: src/rfx-builder.c:3910
 msgid "rebuilding dynamic menu entries..."
 msgstr "reconstruindo entradas dinâmicas de menu..."
 
-#: src/rfx-builder.c:3930 src/rfx-builder.c:3937
+#: src/rfx-builder.c:3933 src/rfx-builder.c:3940
 #, c-format
 msgid ""
 "\n"
@@ -5524,7 +5524,7 @@ msgstr ""
 "LiVES não conseguiu encontrar o programa %s.\n"
 "Por favor confirme se este programa está no PATH e é executável.\n"
 
-#: src/rfx-builder.c:3973
+#: src/rfx-builder.c:3976
 #, c-format
 msgid ""
 "\n"
@@ -5539,12 +5539,12 @@ msgstr ""
 "%s ?\n"
 "\n"
 
-#: src/rfx-builder.c:3980
+#: src/rfx-builder.c:3983
 #, c-format
 msgid "Deleting rfx script %s..."
 msgstr "Deletando script RFX %s..."
 
-#: src/rfx-builder.c:3989
+#: src/rfx-builder.c:3992
 #, c-format
 msgid ""
 "\n"
@@ -5559,7 +5559,7 @@ msgstr ""
 "%s\n"
 "Código do erro %d\n"
 
-#: src/rfx-builder.c:4014
+#: src/rfx-builder.c:4017
 #, c-format
 msgid ""
 "\n"
@@ -5574,12 +5574,12 @@ msgstr ""
 "já existe.\n"
 "Por favor delete-o primeiro, ou renomeie o script de teste.\n"
 
-#: src/rfx-builder.c:4023
+#: src/rfx-builder.c:4026
 #, c-format
 msgid "Promoting rfx test plugin %s to custom..."
 msgstr "Promovendo plugin rfx %s de teste para customizado..."
 
-#: src/rfx-builder.c:4036 src/rfx-builder.c:4394
+#: src/rfx-builder.c:4039 src/rfx-builder.c:4400
 #, c-format
 msgid ""
 "\n"
@@ -5596,20 +5596,20 @@ msgstr ""
 "%s\n"
 "Código %d\n"
 
-#: src/rfx-builder.c:4050
+#: src/rfx-builder.c:4053
 msgid "Import Script from..."
 msgstr "Importar Script de..."
 
-#: src/rfx-builder.c:4066
+#: src/rfx-builder.c:4069
 msgid "Export Script to..."
 msgstr "Exportar Script para..."
 
-#: src/rfx-builder.c:4083 src/rfx-builder.c:4139
+#: src/rfx-builder.c:4086 src/rfx-builder.c:4145
 #, c-format
 msgid "Copying %s to %s..."
 msgstr "Copiando %s para %s..."
 
-#: src/rfx-builder.c:4132
+#: src/rfx-builder.c:4137
 #, c-format
 msgid ""
 "\n"
@@ -5624,55 +5624,55 @@ msgstr ""
 "já existe.\n"
 "Por favor delete-o primeiro, ou renomeie o script a ser importado.\n"
 
-#: src/rfx-builder.c:4199 src/rfx-builder.c:4354 src/rfx-builder.c:4421
+#: src/rfx-builder.c:4205 src/rfx-builder.c:4360 src/rfx-builder.c:4428
 msgid "Builtin"
 msgstr "Builtin"
 
-#: src/rfx-builder.c:4200 src/rfx-builder.c:4356 src/rfx-builder.c:4425
+#: src/rfx-builder.c:4206 src/rfx-builder.c:4362 src/rfx-builder.c:4432
 msgid "Custom"
 msgstr "Customizado"
 
-#: src/rfx-builder.c:4201 src/rfx-builder.c:4429
+#: src/rfx-builder.c:4207 src/rfx-builder.c:4436
 msgid "Test"
 msgstr "Teste"
 
-#: src/rfx-builder.c:4226
+#: src/rfx-builder.c:4232
 msgid "LiVES: - Copy RFX Script"
 msgstr "LiVES: - Copy RFX Script"
 
-#: src/rfx-builder.c:4228
+#: src/rfx-builder.c:4234
 msgid "From type:    "
 msgstr "Do tipo:    "
 
-#: src/rfx-builder.c:4247
+#: src/rfx-builder.c:4253
 msgid "   Script:    "
 msgstr "   Script:    "
 
-#: src/rfx-builder.c:4256
+#: src/rfx-builder.c:4262
 msgid "LiVES: - Rename test RFX Script"
 msgstr "LiVES: - Renomear Script RFX de Teste"
 
-#: src/rfx-builder.c:4257
+#: src/rfx-builder.c:4263
 msgid "From script: "
 msgstr "Do script: "
 
-#: src/rfx-builder.c:4262
+#: src/rfx-builder.c:4268
 msgid "LiVES: - RFX Script name"
 msgstr "LiVES: - Nome do Script RFX"
 
-#: src/rfx-builder.c:4263
+#: src/rfx-builder.c:4269
 msgid "Script name: "
 msgstr "Nome do script: "
 
-#: src/rfx-builder.c:4295
+#: src/rfx-builder.c:4301
 msgid "New name: "
 msgstr "Novo nome: "
 
-#: src/rfx-builder.c:4298
+#: src/rfx-builder.c:4304
 msgid "New script name: "
 msgstr "Novo nome de script: "
 
-#: src/rfx-builder.c:4378
+#: src/rfx-builder.c:4384
 msgid ""
 "\n"
 "\n"
@@ -5684,21 +5684,21 @@ msgstr ""
 "Já existe um script de teste com este nome.\n"
 "O nome do script deve ser único.\n"
 
-#: src/rfx-builder.c:4388
+#: src/rfx-builder.c:4394
 #, c-format
 msgid "Renaming RFX test script %s to %s..."
 msgstr "Renomeando script RFX de teste %s para %s..."
 
-#: src/rfx-builder.c:4618
+#: src/rfx-builder.c:4625
 msgid "_Apply Real Time Effects to Selection"
 msgstr "_Aplicar Efeitos em Tempo-Real para Seleção"
 
-#: src/rfx-builder.c:4669
+#: src/rfx-builder.c:4676
 #, c-format
 msgid "Loading rendered effect %s..."
 msgstr ""
 
-#: src/rfx-builder.c:4769
+#: src/rfx-builder.c:4776
 msgid ""
 "See: VJ - show VJ keys. Set the realtime effects, and then apply them here."
 msgstr ""

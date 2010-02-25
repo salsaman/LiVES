@@ -367,7 +367,7 @@ rfx_build_window_t *make_rfx_build_window (gchar *script_name, gshort status) {
     gtk_widget_modify_fg (rfxbuilder->min_frames_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (1, 1, 1000, 1, 10, 0);
+  spinbutton_adj = gtk_adjustment_new (1., 1., 1000., 1., 1., 0);
   rfxbuilder->spinbutton_min_frames = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (rfxbuilder->spinbutton_min_frames);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_min_frames, TRUE, FALSE, 0);
@@ -1393,12 +1393,11 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 	// TODO - use lives_rfx_special_t->has_subtype,name,num_params
 	if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),"framedraw")) {
 	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_spsub_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
-	  g_free(tmpx);
 	}
 	else {
 	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
-	  g_free(tmpx);
 	}
+	g_free(tmpx);
       }
     }
     else {
@@ -1631,12 +1630,11 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
       // TODO - use lives_rfx_special_t->has_subtype,name,num_params
       if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),"framedraw")) {
 	gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),(tmpx=g_strdup_printf ("%s%s%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_spsub_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
-	g_free(tmpx);
       }
       else {
 	gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),(tmpx=g_strdup_printf ("%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
-	g_free(tmpx);
       }
+      g_free(tmpx);
     }
     gtk_widget_destroy (paramw_dialog);
     break;
@@ -1938,7 +1936,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->bg_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (0, 0, 16, 1, 1, 1);
+  spinbutton_adj = gtk_adjustment_new (0., 0., 16., 1., 1., 0.);
   rfxbuilder->spinbutton_param_group = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_param_group, TRUE, FALSE, 0);
   if (pnum>=0) {
@@ -2013,7 +2011,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_dp_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (0, 0, 16, 1, 1, 0);
+  spinbutton_adj = gtk_adjustment_new (0., 0., 16., 1., 1., 0.);
   rfxbuilder->spinbutton_param_dp = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (rfxbuilder->spinbutton_param_dp);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_param_dp, TRUE, FALSE, 0);
@@ -2041,7 +2039,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_def_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (0, -G_MAXINT, G_MAXINT, 1, 1, 1);
+  spinbutton_adj = gtk_adjustment_new (0., -G_MAXINT, G_MAXINT, 1., 1., 0.);
   rfxbuilder->spinbutton_param_def = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_def_label),rfxbuilder->spinbutton_param_def);
 
@@ -2103,7 +2101,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_min_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (0, -G_MAXINT, G_MAXINT, 1, 1, 0);
+  spinbutton_adj = gtk_adjustment_new (0., -G_MAXINT, G_MAXINT, 1., 1., 0.);
   rfxbuilder->spinbutton_param_min = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
 
   gtk_widget_show (rfxbuilder->spinbutton_param_min);
@@ -2124,7 +2122,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_max_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (RFX_DEF_NUM_MAX, -G_MAXINT, G_MAXINT, 1, 1, 0);
+  spinbutton_adj = gtk_adjustment_new (RFX_DEF_NUM_MAX, -G_MAXINT, G_MAXINT, 1., 1., 0.);
   rfxbuilder->spinbutton_param_max = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_max_label),rfxbuilder->spinbutton_param_max);
 
@@ -2146,7 +2144,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_step_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (1, 1, G_MAXINT, 1, 1, 0);
+  spinbutton_adj = gtk_adjustment_new (1., 1., G_MAXINT, 1., 1., 0.);
   rfxbuilder->spinbutton_param_step = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
 
   gtk_widget_show (rfxbuilder->spinbutton_param_step);
@@ -2594,7 +2592,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
       rest=g_strdup (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])));
     }
     else if (!strcmp (kw,"special")) {
-      gint numtok=get_token_count (g_strdup (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum]))),(int)rfxbuilder->field_delim[0]);
+      gint numtok=get_token_count (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])),(int)rfxbuilder->field_delim[0]);
       gchar **array=g_strsplit(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])),rfxbuilder->field_delim,3);
       sp=g_strdup (array[0]);
       if (!strcmp (sp,"framedraw")) {
@@ -2950,6 +2948,8 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=user_data;
 
+  gchar *tmpx;
+
   dialog = gtk_dialog_new ();
   gtk_widget_show (dialog);
 
@@ -3022,7 +3022,8 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
       if ((len=strlen (rfxbuilder->copy_params[rfxbuilder->edit_param].def))>maxlen) len=maxlen;
       
       rfxbuilder->codetype=CODE_TYPE_STRDEF;
-      gtk_window_set_title (GTK_WINDOW (dialog), g_strdup_printf (_("LiVES: - Default text (max length %d)"),maxlen));
+      gtk_window_set_title (GTK_WINDOW (dialog), (tmpx=g_strdup_printf (_("LiVES: - Default text (max length %d)"),maxlen)));
+      g_free(tmpx);
       gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (rfxbuilder->code_textview),GTK_WRAP_WORD);
 
       gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), rfxbuilder->copy_params[rfxbuilder->edit_param].def, len);
@@ -3033,7 +3034,8 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
       GtkTextIter start_iter;
 
       rfxbuilder->codetype=CODE_TYPE_STRING_LIST;
-      gtk_window_set_title (GTK_WINDOW (dialog), g_strdup (_("LiVES: - Enter values, one per line")));
+      gtk_window_set_title (GTK_WINDOW (dialog), (tmpx=g_strdup (_("LiVES: - Enter values, one per line"))));
+      g_free(tmpx);
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].list!=NULL) {
 	for (i=0;i<g_list_length (rfxbuilder->copy_params[rfxbuilder->edit_param].list);i++) {
 	  string_new=g_strconcat (string, g_list_nth_data (rfxbuilder->copy_params[rfxbuilder->edit_param].list,i),"\n",NULL);
@@ -3230,7 +3232,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   gchar *new_name;
   gchar *buf;
   gchar *msg;
-  gchar *tmp,*tmp2;
+  gchar *tmp,*tmp2,*tmpx;
 
   if (rfxbuilder->mode!=RFXBUILDER_MODE_EDIT) {
     if (!(new_name=prompt_for_script_name (script_name,RFX_STATUS_TEST))) return FALSE;
@@ -3242,7 +3244,8 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 
   script_file_dir=g_strdup_printf ("%s/%s%s/",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS);
 
-  dummyvar=system (g_strdup_printf ("/bin/mkdir -p %s",script_file_dir));
+  dummyvar=system ((tmpx=g_strdup_printf ("/bin/mkdir -p %s",script_file_dir)));
+  g_free(tmpx);
   script_file=g_strdup_printf ("%s%s",script_file_dir,script_name);
   g_free (script_file_dir);
   g_free (script_name);
@@ -4099,7 +4102,7 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
   gshort status=(gshort)GPOINTER_TO_INT (user_data);
   gchar *filename=g_filename_to_utf8 (gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL);
   gchar *rfx_script_to,*rfx_dir_to;
-  gchar *com,*msg,*tmp,*tmp2;
+  gchar *com,*msg,*tmp,*tmp2,*tmpx;
   gchar basename[256];
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -4110,14 +4113,16 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
   switch (status) {
   case RFX_STATUS_TEST :
     rfx_dir_to=g_strdup_printf ("%s/%s%s/",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS);
-    dummyvar=system (g_strdup_printf ("/bin/mkdir -p \"%s\"",(tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL))));
+    dummyvar=system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",(tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))));
     g_free(tmp);
+    g_free(tmpx);
     rfx_script_to=g_strdup_printf ("%s%s",rfx_dir_to,basename);
     g_free (rfx_dir_to);
     break;
   case RFX_STATUS_CUSTOM :
     rfx_dir_to=g_strdup_printf ("%s/%s%s/",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS);
-    dummyvar=system (g_strdup_printf ("/bin/mkdir -p \"%s\"",(tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL))));
+    dummyvar=system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",(tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))));
+    g_free(tmpx);
     g_free(tmp);
     rfx_script_to=g_strdup_printf ("%s%s",rfx_dir_to,basename);
     g_free (rfx_dir_to);
@@ -4129,7 +4134,8 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
 
   if (g_file_test (rfx_script_to, G_FILE_TEST_EXISTS)) {
     // needs switch...eventually
-    do_blocking_error_dialog (g_strdup_printf (_("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the import script.\n"),basename));
+    do_blocking_error_dialog ((tmpx=g_strdup_printf (_("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the import script.\n"),basename)));
+    g_free(tmpx);
     g_free (rfx_script_to);
     g_free (filename);
     return;
@@ -4391,7 +4397,8 @@ gchar *prompt_for_script_name(gchar *sname, gshort status) {
 
 	  if ((ret=rename (rfx_script_from,rfx_script_to))) {
 	    d_print_failed();
-	    do_error_dialog (g_strdup_printf(_ ("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d\n"),rfx_script_from,rfx_script_to,ret));
+	    do_error_dialog ((tmp=g_strdup_printf(_ ("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d\n"),rfx_script_from,rfx_script_to,ret)));
+	    g_free(tmp);
 	  }
 	  else {
 	    d_print_done();

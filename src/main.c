@@ -2441,8 +2441,10 @@ void load_start_image(gint frame) {
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
 
-    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) start_pixbuf=layer_to_pixbuf(layer);
-
+    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
+      start_pixbuf=layer_to_pixbuf(layer);
+    }
     weed_plant_free(layer);
   
     if (GDK_IS_PIXBUF(start_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
@@ -2529,7 +2531,10 @@ void load_end_image(gint frame) {
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
 
-    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) end_pixbuf=layer_to_pixbuf(layer);
+    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
+      end_pixbuf=layer_to_pixbuf(layer);
+    }
 
     weed_plant_free(layer);
   
@@ -2918,7 +2923,7 @@ GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext
   else palette=WEED_PALETTE_RGB24;
 
   if (pull_frame_at_size(layer,image_ext,tc,width,height,palette)) {
-    convert_layer_palette(layer,palette,0);  
+    convert_layer_palette(layer,palette,0);
     pixbuf=layer_to_pixbuf(layer);
   }
   weed_plant_free(layer);

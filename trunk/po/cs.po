@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-21 12:51-0300\n"
+"POT-Creation-Date: 2010-02-25 20:14-0300\n"
 "PO-Revision-Date: 2010-01-17 09:42+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -565,12 +565,12 @@ msgstr "LiVES-%s: <%s> %dx%d : %d snímků, %d bitů na pixel, %.3f snímků/s"
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <žádný soubor>"
 
-#: src/main.c:3390 src/main.c:3391 src/gui.c:1858 src/gui.c:2824
+#: src/main.c:3395 src/main.c:3396 src/gui.c:1858 src/gui.c:2824
 #: src/saveplay.c:1471
 msgid "Play"
 msgstr "Přehrát"
 
-#: src/main.c:3761
+#: src/main.c:3766
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -578,35 +578,35 @@ msgstr ""
 "LiVES nebyl schopen zachytit tento obrázek\n"
 "\n"
 
-#: src/main.c:3846
+#: src/main.c:3851
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Zavřený soubor %s\n"
 
-#: src/main.c:3991 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
+#: src/main.c:3996 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
 #: src/saveplay.c:2401 src/multitrack.c:3687 src/multitrack.c:5144
 msgid "_Undo"
 msgstr "_Zpět"
 
-#: src/main.c:3992 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
+#: src/main.c:3997 src/gui.c:496 src/utils.c:2400 src/utils.c:2426
 #: src/saveplay.c:2402 src/multitrack.c:3708 src/multitrack.c:5167
 msgid "_Redo"
 msgstr "_Znovu"
 
-#: src/main.c:4018 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
+#: src/main.c:4023 src/interface.c:634 src/gui.c:2014 src/preferences.c:1532
 #: src/resample.c:1746
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4019 src/interface.c:653 src/gui.c:2033
+#: src/main.c:4024 src/interface.c:653 src/gui.c:2033
 msgid "Left Audio"
 msgstr "Levý zvuk"
 
-#: src/main.c:4020 src/gui.c:2051
+#: src/main.c:4025 src/gui.c:2051
 msgid "Right Audio"
 msgstr "Pravý zvuk"
 
-#: src/main.c:4065
+#: src/main.c:4070
 msgid ""
 "\n"
 "\n"
@@ -5022,7 +5022,7 @@ msgstr "_Pomalu (nápověda GUI)"
 msgid "_Batch mode generator"
 msgstr ""
 
-#: src/rfx-builder.c:1755
+#: src/rfx-builder.c:1753
 msgid ""
 "\n"
 "\n"
@@ -5036,7 +5036,7 @@ msgstr ""
 "Nejdříve odstraňte spouštěč .\n"
 "\n"
 
-#: src/rfx-builder.c:1783
+#: src/rfx-builder.c:1781
 msgid ""
 "\n"
 "\n"
@@ -5048,172 +5048,172 @@ msgstr ""
 "Některé spouštěče byly upraveny.\n"
 "Zkontrolujte kód spouštěče.\n"
 
-#: src/rfx-builder.c:1857
+#: src/rfx-builder.c:1855
 msgid "LiVES: - New RFX Parameter"
 msgstr "LiVES: - Nový RFX Parametr"
 
-#: src/rfx-builder.c:1860
+#: src/rfx-builder.c:1858
 msgid "LiVES: - Edit RFX Parameter"
 msgstr "LiVES: - Editovat RFX Parametr"
 
-#: src/rfx-builder.c:1885
+#: src/rfx-builder.c:1883
 msgid "_Name:    "
 msgstr "_Jméno:    "
 
-#: src/rfx-builder.c:1901
+#: src/rfx-builder.c:1899
 msgid "Name of the parameter, must be unique in the plugin."
 msgstr "Jméno parametru musí být v pluginu jedinečné."
 
-#: src/rfx-builder.c:1910
+#: src/rfx-builder.c:1908
 msgid "_Label:    "
 msgstr "_Jméno/Označení:    "
 
-#: src/rfx-builder.c:1926
+#: src/rfx-builder.c:1924
 msgid ""
 "Label to be shown by the parameter. An underscore represents mnemonic "
 "accelerator."
 msgstr ""
 "Jméno zobrazované parametrem. Podtržené představuje mnemotechnickou pomůcku."
 
-#: src/rfx-builder.c:1934
+#: src/rfx-builder.c:1932
 msgid "Button _Group: "
 msgstr "Tlačítko _skupina: "
 
-#: src/rfx-builder.c:1947
+#: src/rfx-builder.c:1945
 msgid "A non-zero value can be used to group radio buttons."
 msgstr "Pro skupinu přepínačů může být použita pouze nenulová hodnota."
 
-#: src/rfx-builder.c:1955
+#: src/rfx-builder.c:1953
 msgid "_Type:         "
 msgstr "_Typ:         "
 
-#: src/rfx-builder.c:1977
+#: src/rfx-builder.c:1975
 msgid "Parameter type (select from list)."
 msgstr "Typ parametru (vyberte ze seznamu)"
 
-#: src/rfx-builder.c:2008
+#: src/rfx-builder.c:2006
 msgid "Decimal _places: "
 msgstr "Počet decimálních _míst: "
 
-#: src/rfx-builder.c:2036
+#: src/rfx-builder.c:2034
 msgid "_Default value:    "
 msgstr "_Výchozí hodnota:    "
 
-#: src/rfx-builder.c:2059
+#: src/rfx-builder.c:2057
 msgid "_Default: "
 msgstr "_Výchozí: "
 
-#: src/rfx-builder.c:2098
+#: src/rfx-builder.c:2096
 msgid "_Minimum value: "
 msgstr "_Minimální hodnota: "
 
-#: src/rfx-builder.c:2119
+#: src/rfx-builder.c:2117
 msgid "Ma_ximum value: "
 msgstr "Ma_ximální hodnota: "
 
-#: src/rfx-builder.c:2141
+#: src/rfx-builder.c:2139
 msgid "     _Step size:   "
 msgstr "     _Krok:   "
 
-#: src/rfx-builder.c:2155
+#: src/rfx-builder.c:2153
 msgid ""
 "How much the parameter is adjusted when the spinbutton arrows are pressed."
 msgstr "O kolik je upraven parametr po stisku otáčecích šipek."
 
-#: src/rfx-builder.c:2165
+#: src/rfx-builder.c:2163
 msgid "_Wrap: "
 msgstr "_Zalomení: "
 
-#: src/rfx-builder.c:2182
+#: src/rfx-builder.c:2180
 msgid "Whether the value wraps max->min and min->max."
 msgstr "Vždy když hodnota překročí max->min a min->max."
 
-#: src/rfx-builder.c:2413
+#: src/rfx-builder.c:2411
 msgid "Set _values"
 msgstr "Nastav _hodnoty"
 
-#: src/rfx-builder.c:2420 src/rfx-builder.c:2489
+#: src/rfx-builder.c:2418 src/rfx-builder.c:2487
 msgid "Default value:    "
 msgstr "Výchozí hodnota:    "
 
-#: src/rfx-builder.c:2421
+#: src/rfx-builder.c:2419
 msgid "Minimum value: "
 msgstr "Minimální hodnota: "
 
-#: src/rfx-builder.c:2422
+#: src/rfx-builder.c:2420
 msgid "Maximum value: "
 msgstr "Maximální hodnota: "
 
-#: src/rfx-builder.c:2507
+#: src/rfx-builder.c:2505
 msgid "Default _Red:  "
 msgstr "Výchozí _červená:  "
 
-#: src/rfx-builder.c:2508
+#: src/rfx-builder.c:2506
 msgid "Default _Green:"
 msgstr "Výchozí _zelená"
 
-#: src/rfx-builder.c:2509
+#: src/rfx-builder.c:2507
 msgid "Default _Blue: "
 msgstr "Výchozí _modrá "
 
-#: src/rfx-builder.c:2527
+#: src/rfx-builder.c:2525
 msgid "Set _default"
 msgstr "Nastavit _výchozí"
 
-#: src/rfx-builder.c:2529
+#: src/rfx-builder.c:2527
 msgid "Default value:  "
 msgstr "Výchozí hodnota:  "
 
-#: src/rfx-builder.c:2530
+#: src/rfx-builder.c:2528
 msgid "Maximum length (chars): "
 msgstr "Maximální délka (znaků): "
 
-#: src/rfx-builder.c:2570
+#: src/rfx-builder.c:2568
 msgid "LiVES: - New RFX Parameter Window Hint"
 msgstr "LiVES: - Nový RFX Parametr nápovědy okna"
 
-#: src/rfx-builder.c:2573
+#: src/rfx-builder.c:2571
 msgid "LiVES: - Edit RFX Parameter Window Hint"
 msgstr "LiVES: - Editovat RFX Parametr nápovědy okna"
 
-#: src/rfx-builder.c:2622
+#: src/rfx-builder.c:2620
 msgid "Keyword:         "
 msgstr "Klíčové slovo:         "
 
-#: src/rfx-builder.c:2651
+#: src/rfx-builder.c:2649
 msgid "Special Type:         "
 msgstr "Speciální typ:         "
 
-#: src/rfx-builder.c:2680
+#: src/rfx-builder.c:2678
 msgid "Special Subtype:         "
 msgstr "Speciální podtyp:         "
 
-#: src/rfx-builder.c:2708 src/rfx-builder.c:2773
+#: src/rfx-builder.c:2706 src/rfx-builder.c:2771
 msgid "Row:    "
 msgstr "Řada:    "
 
-#: src/rfx-builder.c:2799
+#: src/rfx-builder.c:2797
 #, c-format
 msgid "Linked parameters (%d):    "
 msgstr ""
 
-#: src/rfx-builder.c:2813
+#: src/rfx-builder.c:2811
 msgid "Linked parameters (4):    "
 msgstr "Propojené parametry (4):    "
 
-#: src/rfx-builder.c:2816
+#: src/rfx-builder.c:2814
 msgid "Linked parameters (2):    "
 msgstr "Propojené parametry (2):    "
 
-#: src/rfx-builder.c:2841
+#: src/rfx-builder.c:2839
 msgid "LiVES: - New RFX Trigger"
 msgstr "LiVES: - Nový RFX spouštěč"
 
-#: src/rfx-builder.c:2844
+#: src/rfx-builder.c:2842
 msgid "LiVES: - Edit RFX Trigger"
 msgstr "LiVES: - Upravitt RFX spouštěč"
 
-#: src/rfx-builder.c:2868
+#: src/rfx-builder.c:2866
 msgid "When:         "
 msgstr "Pokud:         "
 
@@ -5234,11 +5234,11 @@ msgstr "LiVES: - Po smyčkový kód"
 msgid "LiVES: - Default text (max length %d)"
 msgstr "LiVES: -Výchozí text (max. délka %d)"
 
-#: src/rfx-builder.c:3036
+#: src/rfx-builder.c:3037
 msgid "LiVES: - Enter values, one per line"
 msgstr "LiVES: - Zadejte hodnoty, jedna na řádek"
 
-#: src/rfx-builder.c:3153
+#: src/rfx-builder.c:3155
 msgid ""
 "\n"
 "\n"
@@ -5248,7 +5248,7 @@ msgstr ""
 "\n"
 "Jméno nesmí být prázdné.\n"
 
-#: src/rfx-builder.c:3158
+#: src/rfx-builder.c:3160
 msgid ""
 "\n"
 "\n"
@@ -5258,7 +5258,7 @@ msgstr ""
 "\n"
 "Jméno nesmí obsahovat mezery.\n"
 
-#: src/rfx-builder.c:3163
+#: src/rfx-builder.c:3165
 msgid ""
 "\n"
 "\n"
@@ -5268,7 +5268,7 @@ msgstr ""
 "\n"
 "Text v menu nesmí zůstat prázdný.\n"
 
-#: src/rfx-builder.c:3168
+#: src/rfx-builder.c:3170
 msgid ""
 "\n"
 "\n"
@@ -5278,7 +5278,7 @@ msgstr ""
 "\n"
 "Popis akce nesmí zůstat prázdný.\n"
 
-#: src/rfx-builder.c:3173
+#: src/rfx-builder.c:3175
 msgid ""
 "\n"
 "\n"
@@ -5288,7 +5288,7 @@ msgstr ""
 "\n"
 "Jméno autor nesmí zůstat prázdné.\n"
 
-#: src/rfx-builder.c:3180 src/rfx-builder.c:4347
+#: src/rfx-builder.c:3182 src/rfx-builder.c:4353
 msgid ""
 "\n"
 "\n"
@@ -5300,7 +5300,7 @@ msgstr ""
 "Plugin s tímto jménem již existuje.\n"
 "Jméno musí být jedinečné.\n"
 
-#: src/rfx-builder.c:3187
+#: src/rfx-builder.c:3189
 msgid ""
 "\n"
 "\n"
@@ -5310,7 +5310,7 @@ msgstr ""
 "\n"
 "Smyčkový kód by neměl být prázdný\n"
 
-#: src/rfx-builder.c:3193
+#: src/rfx-builder.c:3195
 msgid ""
 "\n"
 "\n"
@@ -5320,7 +5320,7 @@ msgstr ""
 "\n"
 "Spouštěcí kód by pro pomůcku neměl být prázdný\n"
 
-#: src/rfx-builder.c:3206
+#: src/rfx-builder.c:3208
 msgid ""
 "\n"
 "\n"
@@ -5330,7 +5330,7 @@ msgstr ""
 "\n"
 "Jméno parametru nesmí být prázdné.\n"
 
-#: src/rfx-builder.c:3211
+#: src/rfx-builder.c:3213
 msgid ""
 "\n"
 "\n"
@@ -5343,12 +5343,12 @@ msgstr ""
 "Nalezen duplicitní parametr. Jméno parametru musí být v pluginu jedinečné.\n"
 "\n"
 
-#: src/rfx-builder.c:3249
+#: src/rfx-builder.c:3252
 #, c-format
 msgid "Writing script file %s..."
 msgstr "Zápis skriptového souboru %s..."
 
-#: src/rfx-builder.c:3261
+#: src/rfx-builder.c:3264
 #, c-format
 msgid ""
 "\n"
@@ -5363,36 +5363,36 @@ msgstr ""
 "%s\n"
 "Kód chyby %d\n"
 
-#: src/rfx-builder.c:3523
+#: src/rfx-builder.c:3526
 msgid "No <define> section found in script.\n"
 msgstr "<define> sekce nebyla ve skriptu nalezena.\n"
 
-#: src/rfx-builder.c:3530 src/rfx-builder.c:3539
+#: src/rfx-builder.c:3533 src/rfx-builder.c:3542
 msgid "Bad script version.\n"
 msgstr "Špatná verze skriptu.\n"
 
-#: src/rfx-builder.c:3551
+#: src/rfx-builder.c:3554
 msgid "No <name> section found in script.\n"
 msgstr "<name> sekce nebyla ve skriptu nalezena.\n"
 
-#: src/rfx-builder.c:3559
+#: src/rfx-builder.c:3562
 msgid "No <version> section found in script.\n"
 msgstr "<version> sekce nebyla ve skriptu nalezena.\n"
 
-#: src/rfx-builder.c:3567
+#: src/rfx-builder.c:3570
 msgid "No <author> section found in script.\n"
 msgstr "<author> sekce nebyla ve skriptu nalezena.\n"
 
-#: src/rfx-builder.c:3581
+#: src/rfx-builder.c:3584
 msgid "No <description> section found in script.\n"
 msgstr "<description> sekce nebyla ve skriptu nalezena .\n"
 
-#: src/rfx-builder.c:3585
+#: src/rfx-builder.c:3588
 #, c-format
 msgid "Bad description. (%s)\n"
 msgstr "Špatný popis. (%s)\n"
 
-#: src/rfx-builder.c:3747
+#: src/rfx-builder.c:3750
 #, c-format
 msgid ""
 "\n"
@@ -5407,27 +5407,27 @@ msgstr ""
 "nalezen ve skriptu.\n"
 "\n"
 
-#: src/rfx-builder.c:3892
+#: src/rfx-builder.c:3895
 msgid "Rebuilding all RFX scripts...builtin..."
 msgstr "Předělávání všech RFX skriptů...vestavěno..."
 
-#: src/rfx-builder.c:3893
+#: src/rfx-builder.c:3896
 msgid "Rebuilding scripts"
 msgstr "Předělávání skriptů"
 
-#: src/rfx-builder.c:3898
+#: src/rfx-builder.c:3901
 msgid "custom..."
 msgstr "vlastní..."
 
-#: src/rfx-builder.c:3902
+#: src/rfx-builder.c:3905
 msgid "test..."
 msgstr "test..."
 
-#: src/rfx-builder.c:3907
+#: src/rfx-builder.c:3910
 msgid "rebuilding dynamic menu entries..."
 msgstr "Předělávání vstupů dynamického menu ..."
 
-#: src/rfx-builder.c:3930 src/rfx-builder.c:3937
+#: src/rfx-builder.c:3933 src/rfx-builder.c:3940
 #, c-format
 msgid ""
 "\n"
@@ -5440,7 +5440,7 @@ msgstr ""
 "LiVES nemohl najít program %s.\n"
 "Zkontrolujte, je-li v cestě a je spustitelný program.\n"
 
-#: src/rfx-builder.c:3973
+#: src/rfx-builder.c:3976
 #, c-format
 msgid ""
 "\n"
@@ -5455,12 +5455,12 @@ msgstr ""
 "%s ?\n"
 "\n"
 
-#: src/rfx-builder.c:3980
+#: src/rfx-builder.c:3983
 #, c-format
 msgid "Deleting rfx script %s..."
 msgstr "Mazání rfx skriptu %s..."
 
-#: src/rfx-builder.c:3989
+#: src/rfx-builder.c:3992
 #, c-format
 msgid ""
 "\n"
@@ -5475,7 +5475,7 @@ msgstr ""
 "%s\n"
 "Kód chyby: %d\n"
 
-#: src/rfx-builder.c:4014
+#: src/rfx-builder.c:4017
 #, c-format
 msgid ""
 "\n"
@@ -5490,12 +5490,12 @@ msgstr ""
 "už existuje.\n"
 "Vymažte jej nebo přejmenujte testovací skript.\n"
 
-#: src/rfx-builder.c:4023
+#: src/rfx-builder.c:4026
 #, c-format
 msgid "Promoting rfx test plugin %s to custom..."
 msgstr "Prosazování testovacího rfx pluginu %s do běžného..."
 
-#: src/rfx-builder.c:4036 src/rfx-builder.c:4394
+#: src/rfx-builder.c:4039 src/rfx-builder.c:4400
 #, c-format
 msgid ""
 "\n"
@@ -5512,20 +5512,20 @@ msgstr ""
 "%s\n"
 "Kód %d\n"
 
-#: src/rfx-builder.c:4050
+#: src/rfx-builder.c:4053
 msgid "Import Script from..."
 msgstr "Importovat skript z..."
 
-#: src/rfx-builder.c:4066
+#: src/rfx-builder.c:4069
 msgid "Export Script to..."
 msgstr "Exportovat skript do..."
 
-#: src/rfx-builder.c:4083 src/rfx-builder.c:4139
+#: src/rfx-builder.c:4086 src/rfx-builder.c:4145
 #, c-format
 msgid "Copying %s to %s..."
 msgstr "Kopírování %s do %s..."
 
-#: src/rfx-builder.c:4132
+#: src/rfx-builder.c:4137
 #, c-format
 msgid ""
 "\n"
@@ -5540,55 +5540,55 @@ msgstr ""
 "již existuje.\n"
 "Nejprve jej vymažte nebo přejmenujte importovaný skript.\n"
 
-#: src/rfx-builder.c:4199 src/rfx-builder.c:4354 src/rfx-builder.c:4421
+#: src/rfx-builder.c:4205 src/rfx-builder.c:4360 src/rfx-builder.c:4428
 msgid "Builtin"
 msgstr "Vestavěno"
 
-#: src/rfx-builder.c:4200 src/rfx-builder.c:4356 src/rfx-builder.c:4425
+#: src/rfx-builder.c:4206 src/rfx-builder.c:4362 src/rfx-builder.c:4432
 msgid "Custom"
 msgstr "Vlastní"
 
-#: src/rfx-builder.c:4201 src/rfx-builder.c:4429
+#: src/rfx-builder.c:4207 src/rfx-builder.c:4436
 msgid "Test"
 msgstr "Test"
 
-#: src/rfx-builder.c:4226
+#: src/rfx-builder.c:4232
 msgid "LiVES: - Copy RFX Script"
 msgstr "LiVES: - Kopírovat RFX skript"
 
-#: src/rfx-builder.c:4228
+#: src/rfx-builder.c:4234
 msgid "From type:    "
 msgstr "Z typu :    "
 
-#: src/rfx-builder.c:4247
+#: src/rfx-builder.c:4253
 msgid "   Script:    "
 msgstr "   Skript :    "
 
-#: src/rfx-builder.c:4256
+#: src/rfx-builder.c:4262
 msgid "LiVES: - Rename test RFX Script"
 msgstr "LiVES: - Přejmenovat testovací RFX skript"
 
-#: src/rfx-builder.c:4257
+#: src/rfx-builder.c:4263
 msgid "From script: "
 msgstr "Ze skriptu : "
 
-#: src/rfx-builder.c:4262
+#: src/rfx-builder.c:4268
 msgid "LiVES: - RFX Script name"
 msgstr "LiVES: - Jméno RFX  skriptu"
 
-#: src/rfx-builder.c:4263
+#: src/rfx-builder.c:4269
 msgid "Script name: "
 msgstr "Jméno skriptu: "
 
-#: src/rfx-builder.c:4295
+#: src/rfx-builder.c:4301
 msgid "New name: "
 msgstr "Nové jméno: "
 
-#: src/rfx-builder.c:4298
+#: src/rfx-builder.c:4304
 msgid "New script name: "
 msgstr "Nové jméno skriptu: "
 
-#: src/rfx-builder.c:4378
+#: src/rfx-builder.c:4384
 msgid ""
 "\n"
 "\n"
@@ -5600,21 +5600,21 @@ msgstr ""
 "Testovací skript s tímto jménem již existuje.\n"
 "Jméno musí být unikátní.\n"
 
-#: src/rfx-builder.c:4388
+#: src/rfx-builder.c:4394
 #, c-format
 msgid "Renaming RFX test script %s to %s..."
 msgstr "Přejmenování RFX testovacího skriptu %s na %s..."
 
-#: src/rfx-builder.c:4618
+#: src/rfx-builder.c:4625
 msgid "_Apply Real Time Effects to Selection"
 msgstr "_Použití Real time efektů na výběr"
 
-#: src/rfx-builder.c:4669
+#: src/rfx-builder.c:4676
 #, c-format
 msgid "Loading rendered effect %s..."
 msgstr ""
 
-#: src/rfx-builder.c:4769
+#: src/rfx-builder.c:4776
 msgid ""
 "See: VJ - show VJ keys. Set the realtime effects, and then apply them here."
 msgstr ""

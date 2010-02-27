@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-25 20:14-0300\n"
-"PO-Revision-Date: 2010-02-14 14:25+0000\n"
+"POT-Creation-Date: 2010-02-27 10:04-0300\n"
+"PO-Revision-Date: 2010-02-24 17:26+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Catalan <ca@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-02-21 11:48+0000\n"
+"X-Launchpad-Export-Date: 2010-02-27 11:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:85
@@ -220,6 +220,9 @@ msgid ""
 "\n"
 "Window manager reports as \"%s\"; "
 msgstr ""
+"\n"
+"\n"
+"Administrador Finestra d'informes com \"%s\"; "
 
 #: src/main.c:1288
 #, c-format
@@ -288,7 +291,7 @@ msgstr ""
 
 #: src/main.c:1615
 msgid "-noset           : do not load any set on startup\n"
-msgstr ""
+msgstr "-noset : no carregueu cap conjunt en l'arrencada\n"
 
 #: src/main.c:1616
 msgid "-norecover       : force no-loading of crash recovery\n"
@@ -304,11 +307,11 @@ msgstr "-nogui : no mostrar la interfície gràfica d'usuari\n"
 
 #: src/main.c:1619
 msgid "-startup-ce      : start in clip editor mode\n"
-msgstr ""
+msgstr "-startup-ce : començarà en mode d'imatge en l'editor\n"
 
 #: src/main.c:1620
 msgid "-startup-mt      : start in multitrack mode\n"
-msgstr ""
+msgstr "-startup-mt : començarà en la manera multipista\n"
 
 #: src/main.c:1622
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
@@ -316,7 +319,7 @@ msgstr ""
 
 #: src/main.c:1623
 msgid "-nooscstart      : do not start OSC listener\n"
-msgstr ""
+msgstr "-nooscstart : no comenci oient OSC\n"
 
 #: src/main.c:1625
 msgid ""
@@ -342,7 +345,7 @@ msgstr ""
 
 #: src/main.c:1633
 msgid " or sox\n"
-msgstr ""
+msgstr " o sox\n"
 
 #: src/main.c:1635
 msgid "-devicemap <mapname>          : autoload devicemap\n"
@@ -502,7 +505,7 @@ msgstr ""
 #: src/main.c:2096
 #, c-format
 msgid "LiVES-%s: <No File>"
-msgstr ""
+msgstr "LiVES-%s: <N d'arxiu>"
 
 #: src/main.c:3395 src/main.c:3396 src/gui.c:1858 src/gui.c:2824
 #: src/saveplay.c:1471
@@ -518,7 +521,7 @@ msgstr ""
 #: src/main.c:3851
 #, c-format
 msgid "Closed file %s\n"
-msgstr ""
+msgstr "Tancat el fitxer %s\n"
 
 #: src/main.c:3996 src/gui.c:483 src/utils.c:2399 src/utils.c:2425
 #: src/saveplay.c:2401 src/multitrack.c:3687 src/multitrack.c:5144
@@ -595,12 +598,19 @@ msgid ""
 "\n"
 "Remember to switch off effects (ctrl-0) afterwards !"
 msgstr ""
+"\n"
+"\n"
+"Esperi\n"
+"\n"
+"Recordeu apagar els efectes (ctrl-0) després !"
 
 #: src/interface.c:332 src/callbacks.c:7157 src/dialogs.c:1594
 msgid ""
 "\n"
 "Please Wait"
 msgstr ""
+"\n"
+"Esperi"
 
 #: src/interface.c:376
 msgid "Show details"
@@ -608,7 +618,7 @@ msgstr "Mostra els detalls"
 
 #: src/interface.c:399 src/dialogs.c:1618
 msgid "_Enough"
-msgstr ""
+msgstr "_Suficient"
 
 #: src/interface.c:400 src/framedraw.c:249
 msgid "_Preview"
@@ -616,7 +626,7 @@ msgstr "_Previsualització"
 
 #: src/interface.c:401
 msgid "Pau_se"
-msgstr ""
+msgstr "Pau_sa"
 
 #: src/interface.c:428
 msgid "_Cancel"
@@ -680,7 +690,7 @@ msgstr ""
 
 #: src/interface.c:872
 msgid "Keep _my settings"
-msgstr ""
+msgstr "Mantingui la configuració del _meu"
 
 #: src/interface.c:873
 msgid "Use _recommended settings"
@@ -694,7 +704,7 @@ msgstr ""
 
 #: src/interface.c:970
 msgid "Show _Details"
-msgstr ""
+msgstr "Mostra _Detalls"
 
 #: src/interface.c:1064
 msgid "_Close Window"
@@ -702,15 +712,15 @@ msgstr "_Tanca la finestra"
 
 #: src/interface.c:1068
 msgid "_Save to file"
-msgstr ""
+msgstr "_Desa en arxiu"
 
 #: src/interface.c:1170
 msgid "LiVES: - Insert"
-msgstr ""
+msgstr "LiVES: - Insereix"
 
 #: src/interface.c:1192
 msgid "_Number of times to insert"
-msgstr ""
+msgstr "_Nombre de vegades per inserir"
 
 #: src/interface.c:1213
 msgid "_Insert to fit audio"
@@ -734,15 +744,15 @@ msgstr ""
 
 #: src/interface.c:1330
 msgid "Insert _with sound"
-msgstr ""
+msgstr "Insereix _amb el so"
 
 #: src/interface.c:1366
 msgid "Insert with_out sound"
-msgstr ""
+msgstr "Insereix _sense so"
 
 #: src/interface.c:1469
 msgid "LiVES: - Open Selection"
-msgstr ""
+msgstr "LiVES: - De selecció obert"
 
 #: src/interface.c:1498
 msgid "    Selection start time (sec)"
@@ -768,15 +778,16 @@ msgstr ""
 
 #: src/interface.c:1624
 msgid "URL : "
-msgstr ""
+msgstr "URL : "
 
 #: src/interface.c:1640
 msgid "Do not send bandwidth information"
-msgstr ""
+msgstr "No enviï informació d'ample de banda"
 
 #: src/interface.c:1641
 msgid "Try this setting if you are having problems getting a stream"
 msgstr ""
+"Proveu aquesta opció si vostè està tenint problemes per aconseguir un flux de"
 
 #: src/interface.c:1754
 msgid ""
@@ -818,11 +829,11 @@ msgstr ""
 
 #: src/interface.c:1808
 msgid "LiVES: - Choose a Working Directory"
-msgstr ""
+msgstr "LiVES: - Tria un directori de treball"
 
 #: src/interface.c:1812
 msgid "New name "
-msgstr ""
+msgstr "Nou nom "
 
 #: src/interface.c:1815
 msgid "Set name "
@@ -830,7 +841,7 @@ msgstr ""
 
 #: src/interface.c:1881
 msgid "_Next"
-msgstr ""
+msgstr "_Següent"
 
 #: src/interface.c:1959
 msgid "LiVES:- Load CD Track"
@@ -867,7 +878,7 @@ msgstr ""
 
 #: src/interface.c:2040
 msgid "Chapter  "
-msgstr ""
+msgstr "Capítol  "
 
 #: src/interface.c:2060
 msgid "Audio ID  "
@@ -903,7 +914,7 @@ msgstr "segons."
 
 #: src/interface.c:2258
 msgid "selection."
-msgstr ""
+msgstr "selecció."
 
 #: src/interface.c:2324
 msgid "LiVES: - Play Random Music"
@@ -935,19 +946,19 @@ msgstr ""
 
 #: src/interface.c:2527
 msgid "Title/Name : "
-msgstr ""
+msgstr "Títol/Nom : "
 
 #: src/interface.c:2538
 msgid "Author/Artist : "
-msgstr ""
+msgstr "Autor/Artista : "
 
 #: src/interface.c:2549
 msgid "Comments : "
-msgstr ""
+msgstr "Comentaris : "
 
 #: src/interface.c:2623
 msgid "LiVES: choose a directory"
-msgstr ""
+msgstr "LiVES: seleccioneu un directori"
 
 #: src/interface.c:2626
 msgid "LiVES: choose a file"
@@ -1023,7 +1034,7 @@ msgstr ""
 
 #: src/interface.c:2853
 msgid "_Ignore changes"
-msgstr ""
+msgstr "No feu cas dels canvis"
 
 #: src/interface.c:2854
 msgid "_Delete clip set"
@@ -1035,7 +1046,7 @@ msgstr ""
 
 #: src/interface.c:2861
 msgid "_Save layout"
-msgstr ""
+msgstr "_Guardar disseny"
 
 #: src/interface.c:2862
 msgid "_Save clip set"
@@ -1043,7 +1054,7 @@ msgstr ""
 
 #: src/interface.c:2882
 msgid "LiVES: recover layout ?"
-msgstr ""
+msgstr "LiVES: recuperació de disseny ?"
 
 #: src/interface.c:2897
 msgid ""
@@ -1070,6 +1081,8 @@ msgid ""
 ",\n"
 " - including the current layout - "
 msgstr ""
+",\n"
+" - incloent-hi el disseny actual - "
 
 #: src/callbacks.c:678
 #, c-format
@@ -1106,6 +1119,8 @@ msgid ""
 "\n"
 "Invalid project file.\n"
 msgstr ""
+"\n"
+"Arxiu de projecte no vàlid.\n"
 
 #: src/callbacks.c:839
 #, c-format
@@ -1363,6 +1378,9 @@ msgid ""
 "\n"
 "Selection is locked.\n"
 msgstr ""
+"\n"
+"\n"
+"La selecció està bloquejat.\n"
 
 #: src/callbacks.c:3054
 msgid ""
@@ -8104,8 +8122,9 @@ msgid "Brightness _start"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness change"
-msgstr ""
+msgstr "No feu cas dels canvis"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Brightness end"
@@ -8385,8 +8404,9 @@ msgid "Hue _start"
 msgstr "_Inici"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue change"
-msgstr ""
+msgstr "No feu cas dels canvis"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Hue end"
@@ -8456,8 +8476,9 @@ msgid "Normalizing"
 msgstr "S'està normalitzant"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Number of _frames"
-msgstr ""
+msgstr "_Nombre de vegades per inserir"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -8819,8 +8840,9 @@ msgstr "Negatiu"
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "_Number of frames"
-msgstr ""
+msgstr "_Nombre de vegades per inserir"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -8926,7 +8948,7 @@ msgstr "_Inici"
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
 msgid "_Start amount"
-msgstr "_Inici"
+msgstr "_Guardar disseny"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9128,7 +9150,7 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "gen_text"
-msgstr "_Text"
+msgstr "_Següent"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"

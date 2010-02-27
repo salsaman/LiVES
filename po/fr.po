@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-25 20:14-0300\n"
+"POT-Creation-Date: 2010-02-27 10:04-0300\n"
 "PO-Revision-Date: 2010-02-14 15:37+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -8977,8 +8977,9 @@ msgid "Frame _in frame position of clipboard..."
 msgstr "Générer les images vers le Presse-papiers..."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr ""
+msgstr "Générer les images vers le Presse-papiers..."
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _width"
@@ -9415,8 +9416,9 @@ msgid "_First frame"
 msgstr "Première image"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Flash for"
-msgstr ""
+msgstr "_Couleur Vide"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -9485,12 +9487,14 @@ msgid "_Number of frames"
 msgstr "_Nombre des cadres"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset X"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset Y"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Other Center"
@@ -9755,8 +9759,9 @@ msgid "flip"
 msgstr "clips"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
+#, fuzzy
 msgid "flop"
-msgstr ""
+msgstr "clips"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy

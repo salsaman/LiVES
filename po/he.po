@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-25 20:14-0300\n"
+"POT-Creation-Date: 2010-02-27 10:04-0300\n"
 "PO-Revision-Date: 2010-02-19 18:18+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -9217,8 +9217,9 @@ msgid "Frame _in frame position of clipboard..."
 msgstr "יצירת שקופיות ללוח הגזירים"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr ""
+msgstr "יצירת שקופיות ללוח הגזירים"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _width"
@@ -9235,8 +9236,9 @@ msgid "Gamma _end"
 msgstr "לשנות גמא"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _start"
-msgstr ""
+msgstr "_התחלה"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma change"
@@ -9289,8 +9291,9 @@ msgid "Horizontal shifting"
 msgstr "_קטעי אופקי"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _end"
-msgstr ""
+msgstr "עמעום"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -9303,8 +9306,9 @@ msgid "Hue change"
 msgstr "שינוי_רוויה"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "עמעום"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9321,8 +9325,9 @@ msgid "Jumbling"
 msgstr "ערבוביה"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Keep _Centered"
-msgstr ""
+msgstr "_מרכז אחר"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "L_eft"
@@ -9383,8 +9388,9 @@ msgid "Photo/still"
 msgstr "צילום / עדיין"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "מדביק"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
@@ -9587,12 +9593,14 @@ msgid "Use _Natural image size"
 msgstr "שימוש ב_החלקת עקומות בעת שינויי גודל"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
+#, fuzzy
 msgid "Vertical flipping"
-msgstr ""
+msgstr "_קטעי אופקי"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "Vertical shifting"
-msgstr ""
+msgstr "_קטעי אופקי"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Wave"
@@ -9656,8 +9664,9 @@ msgstr "_צבע סיום"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "_Fade level"
-msgstr ""
+msgstr "עמעום"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -9745,12 +9754,14 @@ msgid "_Number of frames"
 msgstr "_מספר שקופיות"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset X"
-msgstr ""
+msgstr "+ היסט 1"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset Y"
-msgstr ""
+msgstr "+ היסט 1"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Other Center"
@@ -10020,8 +10031,9 @@ msgid "flip"
 msgstr "קטעים"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
+#, fuzzy
 msgid "flop"
-msgstr ""
+msgstr "קטעים"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
@@ -10088,8 +10100,9 @@ msgid "photo_still"
 msgstr "צילום / עדיין"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "מדביק"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy

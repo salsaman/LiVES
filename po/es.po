@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-02-25 20:14-0300\n"
-"PO-Revision-Date: 2010-01-10 13:19+0000\n"
-"Last-Translator: whirmon <Unknown>\n"
+"POT-Creation-Date: 2010-02-27 10:04-0300\n"
+"PO-Revision-Date: 2010-02-23 18:27+0000\n"
+"Last-Translator: Felipe Contreras <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-02-21 13:04+0000\n"
+"X-Launchpad-Export-Date: 2010-02-27 11:56+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:85
@@ -92,7 +92,7 @@ msgstr "¡desactivado!"
 
 #: src/main.c:700
 msgid "**The current layout**"
-msgstr ""
+msgstr "**La actual disposición**"
 
 #: src/main.c:1104
 msgid "Loading realtime effect plugins..."
@@ -104,7 +104,7 @@ msgstr "Iniciando el servidor de audio jack"
 
 #: src/main.c:1172
 msgid " or \"lives -aplayer pulse\""
-msgstr ""
+msgstr " o \"lives -aplayer pulse\""
 
 #: src/main.c:1176
 msgid ""
@@ -116,6 +116,14 @@ msgid ""
 "\n"
 "Alternatively, try to start lives with: \"lives -aplayer sox\""
 msgstr ""
+"\n"
+"\n"
+"Se requiere iniciar jackd manualmente. Por favor, verifique que jackd está "
+"en ejecución. \n"
+"o también, cambie el valor de <jack_ops> en ~/.lives a 16\n"
+"y reinicie LiVES\n"
+"\n"
+"Alternativamente, intente inicar LiVES con: \"lives -aplayer sox\""
 
 #: src/main.c:1199
 msgid "Starting pulse audio server..."
@@ -314,11 +322,11 @@ msgstr "-nogui: no muestra la interfaz gráfica\n"
 
 #: src/main.c:1619
 msgid "-startup-ce      : start in clip editor mode\n"
-msgstr ""
+msgstr "-startup-ce : inicia en modo editor de copiado.\n"
 
 #: src/main.c:1620
 msgid "-startup-mt      : start in multitrack mode\n"
-msgstr ""
+msgstr "-startup-mt : inicia en modo multipista.\n"
 
 #: src/main.c:1622
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
@@ -349,6 +357,10 @@ msgid ""
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
+"-jackpots <ops> : ops es una máscara de bits con las opciones de inicio de "
+"jack [1 = transporte de jack como cliente, 2 = transporte de jack como "
+"maestro, 4 = iniciar servidor de transporte de jack, 8 = pausar audio cuando "
+"vídeo sea pausado, 16 = inicar servidor de audio jack] \n"
 
 #: src/main.c:1633
 msgid " or sox\n"
@@ -905,6 +917,10 @@ msgid ""
 "This startup wizard will guide you through the\n"
 "initial install so that you can get the most from this application.\n"
 msgstr ""
+"¡ Bienvenido a LiVES !\n"
+"Este configurador de inicio le guiará a través de la\n"
+"instalación inicial de forma que obtenga el máximo rendimiento de esta "
+"aplicación.\n"
 
 #: src/interface.c:1782
 msgid ""
@@ -914,6 +930,11 @@ msgid ""
 "Note, on many systems, /tmp is cleared on shutdown, so it may be inadvisable "
 "to create it in /tmp.\n"
 msgstr ""
+"\n"
+"Primero que todo necesita escoger un directorio de trabajo para LiVES.\n"
+"Este debería ser un directorio con abundante espacio libre disponible.\n"
+"Note que en muchos sistemas el contenido de /tmp es borrado al apagar, por "
+"lo que puede ser desaconsejable crearlo en /tmp.\n"
 
 #: src/interface.c:1802
 msgid "LiVES: - Rename Clip"
@@ -925,7 +946,7 @@ msgstr "LiVES: - Introduzca el Nombre"
 
 #: src/interface.c:1808
 msgid "LiVES: - Choose a Working Directory"
-msgstr ""
+msgstr "LiVES: - Elija un directorio de trabajo"
 
 #: src/interface.c:1812
 msgid "New name "
@@ -937,7 +958,7 @@ msgstr "Seleccione el nombre "
 
 #: src/interface.c:1881
 msgid "_Next"
-msgstr ""
+msgstr "_Siguiente"
 
 #: src/interface.c:1959
 msgid "LiVES:- Load CD Track"
@@ -1327,7 +1348,7 @@ msgstr "Limpiando imagenes de cuadro"
 
 #: src/callbacks.c:1396
 msgid "Deleting excess frames"
-msgstr ""
+msgstr "Borrando cuadros sobrantes"
 
 #: src/callbacks.c:1578
 #, c-format
@@ -8706,12 +8727,12 @@ msgstr "Limpiando imagenes de cuadro"
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "Generating coloured frames"
-msgstr "Reordenando cuadros"
+msgstr "Borrando cuadros sobrantes"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "Generating title frames"
-msgstr "Reordenando cuadros"
+msgstr "Borrando cuadros sobrantes"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 #, fuzzy
@@ -9081,9 +9102,8 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_End Colour"
-msgstr "_Codificar Clip"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -9706,9 +9726,6 @@ msgstr "Falló $plugin_name:"
 msgid "$error"
 msgstr "$error"
 
-#~ msgid "Undoing audio"
-#~ msgstr "Deshaciendo audio"
-
 #~ msgid ""
 #~ "WARNING - this version of LiVES was compiled without jack support.\n"
 #~ "Many audio features will be unavalaible.\n"
@@ -9769,6 +9786,9 @@ msgstr "$error"
 #~ "es utilizado en algunas disposiciones multi pistas.\n"
 #~ "\n"
 #~ "¿Realmente desea cerrarlo?"
+
+#~ msgid "Undoing audio"
+#~ msgstr "Deshaciendo audio"
 
 #~ msgid ""
 #~ "\n"

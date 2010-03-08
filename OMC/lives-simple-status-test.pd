@@ -1,0 +1,13 @@
+#N canvas 484 166 450 300 10;
+#X obj 165 249 sendOSC;
+#X msg 50 191 connect 127.0.0.1 9999;
+#X msg 48 148 disconnect;
+#X msg 180 72 send /app/ping;
+#X obj 258 160 netreceive 9998 1;
+#X obj 260 203 print;
+#X msg 122 35 send /lives/open_status_socket 127.0.0.1 9998;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 4 0 5 0;
+#X connect 6 0 0 0;

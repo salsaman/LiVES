@@ -4,6 +4,7 @@
 import locale
 locale.setlocale(locale.LC_NUMERIC,"")
 
+import stat
 
 """
 multi_encoder
@@ -35,7 +36,7 @@ Copyright (C) 2008 - 2010 Salsaman (salsaman@xs4all.nl)
 """
 
 
-version = '0.2.12'
+version = '0.2.13'
 mpeg = 'mpeg_encoder.py'
 ogm = 'ogm_encoder.py'
 mkv = 'mkv_encoder.py'
@@ -426,8 +427,8 @@ if __name__ == '__main__':
     if dir == 'encode':
 
         fps = args[1]
-        outfile = args[2]
-        outfile = '"' + outfile + '"'
+        outfile_orig = args[2]
+        outfile = '"' + outfile_orig + '"'
         start = args[3]
         end = args[4]
         ext = args[5]
@@ -522,6 +523,8 @@ if __name__ == '__main__':
             print >> sys.stderr, message
 
         os.system(encode_command)
+        os.chmod(outfile_orig,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+
         raise SystemExit
 
     if dir == 'clear':
@@ -594,5 +597,6 @@ Nov 2008 : 0.2.10 : salsaman - add locale support (fixes radix problem)
 Jun 2009 : 0.2.11 : salsaman - replace deprecated os.popen
 
 Feb 2010 : 0.2.12 : salsaman - pipe error/info output to stderr
+Mar 2010 : 0.2.13 : salsaman - remove metd toplevel directory and set outfile mode
 
 """

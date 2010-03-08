@@ -1,3 +1,17 @@
+Version 1.2.2
+-------------
+Fix multi_encoder file permissions
+Fix minor problem with post encoding cleanup *
+Fix osc notify to work with pd
+
+
+
+
+* backported to 1.0.9
+
+
+
+
 Version 1.2.1 (27 Feb 2010)
 ---------------------------
 Fix crash when opening ogg/theora files (regression).

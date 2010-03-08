@@ -140,7 +140,8 @@ gboolean lives_status_send (gchar *msg) {
 gboolean lives_osc_notify (int msgnumber,gchar *msgstring) {
   if (notify_socket==NULL) return FALSE;
   else {
-    gchar *msg=g_strdup_printf("%d %s",msgnumber,msgstring);
+    gchar *sep=((msgstring==NULL||strlen(msgstring)==0)?"":" ");
+    gchar *msg=g_strdup_printf("%d%s%s\n",msgnumber,sep,msgstring);
     gboolean retval = lives_stream_out (notify_socket,strlen (msg),msg);
     g_free(msg);
     return retval;

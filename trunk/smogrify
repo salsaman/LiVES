@@ -32,7 +32,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 # Do not change these except for testing !
 
 $background=1;
-$version="1.2.1";
+$version="1.2.2-svn";
 #$dyneversion="LIVES-20091209";
 
 
@@ -720,6 +720,10 @@ if (defined($ARGV[0])) {
 		    &clear_symlinks;
 		}
 	    }
+
+	    #need this again - something resets us
+	    chdir $curtmpdir;
+
 	    if ($plugin eq "") {
 		# let the plugin clean up any other temp files
 		$command="clear";

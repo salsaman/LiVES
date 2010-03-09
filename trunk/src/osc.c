@@ -1609,7 +1609,7 @@ void lives_osc_cb_rte_getmodespk(void *context, int arglen, const void *vargs, O
 
 
 
-
+// deprecated - do not use
 void lives_osc_cb_rte_getusermode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int nmode;
   int effect_key;
@@ -1780,6 +1780,9 @@ static struct
     { "/effect_key/count",		"count",	lives_osc_cb_rte_count,		        25	},
     { "/effect_key/parameter/value/set",		"set",	lives_osc_cb_rte_setparam,		        42	},
     { "/effect_key/nparameter/value/set",		"set",	lives_osc_cb_rte_setnparam,		        92	},
+    { "/effect_key/nparameter/min/get",		"get",	lives_osc_cb_rte_getnparammin,		        93	},
+    { "/effect_key/nparameter/max/get",		"get",	lives_osc_cb_rte_getnparammax,		        94	},
+    { "/effect_key/nparameter/default/get",		"get",	lives_osc_cb_rte_getnparamdef,		        95	},
     { "/effect_key/mode/set",		"set",	lives_osc_cb_rte_setmode,		        43	},
     { "/effect_key/mode/get",		"get",	lives_osc_cb_rte_getmode,		        43	},
     { "/effect_key/mode/next",		"next",	lives_osc_cb_rte_nextmode,		        43	},
@@ -1885,6 +1888,9 @@ static struct
     {	"/effect_key/parameter/value/" ,"value",	 42, 41,0	},
     {	"/effect_key/nparameter/" , 	"nparameter",	 91, 25,0	},
     {	"/effect_key/nparameter/value/" ,"value",	 92, 91,0	},
+    {	"/effect_key/nparameter/min/" ,"min",	 93, 91,0	},
+    {	"/effect_key/nparameter/max/" ,"max",	 94, 91,0	},
+    {	"/effect_key/nparameter/default/" ,"default",	 95, 91,0	},
     {	"/effect_key/map/" , 		"map",	 32, 25,0	},
     {	"/effect_key/mode/" , 		"mode",	 43, 25,0	},
     {	"/effect_key/name/" , 		"name",	 44, 25,0	},

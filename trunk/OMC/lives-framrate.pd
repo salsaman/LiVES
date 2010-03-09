@@ -1,0 +1,31 @@
+#N canvas 246 349 674 342 10;
+#X obj 168 288 sendOSC;
+#X msg 50 191 connect 127.0.0.1 9999;
+#X msg 48 148 disconnect;
+#X msg 262 23 send /video/play;
+#X msg 262 64 send /video/stop;
+#X msg 265 104 send /app/quit;
+#X obj 445 21 r framerate;
+#X msg 408 106 send /clip/foreground/fps/ratio/set \$1;
+#X text 450 50 framerate can be e.g 1 normal speed \, 2 double speed
+-0.5 half speed backwards \, etc.;
+#X obj 330 175 spigot;
+#X obj 404 186 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X text 425 185 <- enable;
+#X obj 385 231 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X msg 362 279 send /clip/foreground/fps/ratio/set 1;
+#X text 407 229 <- reset;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 4 0 0 0;
+#X connect 5 0 0 0;
+#X connect 6 0 7 0;
+#X connect 7 0 9 0;
+#X connect 9 0 0 0;
+#X connect 10 0 9 1;
+#X connect 10 0 12 0;
+#X connect 12 0 13 0;
+#X connect 13 0 0 0;

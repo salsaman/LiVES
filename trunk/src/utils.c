@@ -3236,7 +3236,8 @@ void adjustment_configure(GtkAdjustment *adjustment,
 		     gdouble page_size) {
 
 #ifdef HAVE_GTK_NICE_VERSION
-  return gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
+  gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
+  return;
 #endif
 
   g_object_freeze_notify (G_OBJECT(adjustment));

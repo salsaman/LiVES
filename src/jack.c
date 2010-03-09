@@ -50,7 +50,7 @@ gboolean lives_jack_init (void) {
 	com=g_strdup_printf("echo \"%s -Z -d alsa\">%s",jackd_loc,prefs->jack_aserver);
 #else
 #ifdef IS_SOLARIS
-	// use OSS on Darwin
+	// use OSS on Solaris
 	com=g_strdup_printf("echo \"%s -Z -d oss\">%s",jackd_loc,prefs->jack_aserver);
 #else
 	// use coreaudio on Darwin

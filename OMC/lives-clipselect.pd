@@ -1,0 +1,22 @@
+#N canvas 189 223 674 390 10;
+#X obj 144 160 sendOSC;
+#X msg 78 192 connect 127.0.0.1 9999;
+#X msg 20 154 disconnect;
+#X msg 141 20 send /video/play;
+#X msg 175 60 send /video/stop;
+#X msg 193 109 send /app/quit;
+#X obj 411 16 hradio 15 1 0 8 empty empty empty 0 -8 0 10 -262144 -1
+-1 0;
+#X floatatom 410 79 5 0 0 0 - - -;
+#X obj 410 47 + 1;
+#X msg 333 115 send /clip/foreground/select \$1;
+#X text 447 79 clip number (external index);
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 4 0 0 0;
+#X connect 5 0 0 0;
+#X connect 6 0 8 0;
+#X connect 7 0 9 0;
+#X connect 8 0 7 0;
+#X connect 9 0 0 0;

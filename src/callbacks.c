@@ -1117,7 +1117,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   
   if (mainw->scrap_file>-1) close_scrap_file();
 
-  if (real_clips_available()>0) {
+  if (mainw->clips_available>0) {
     gchar *set_name;
     _entryw *cdsw=create_cds_dialog(1);
     gint resp;

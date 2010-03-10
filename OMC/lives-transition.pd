@@ -1,0 +1,57 @@
+#N canvas 189 223 674 390 10;
+#X obj 199 161 sendOSC;
+#X msg 78 192 connect 127.0.0.1 9999;
+#X msg 20 154 disconnect;
+#X msg 141 20 send /video/play;
+#X msg 175 60 send /video/stop;
+#X msg 193 109 send /app/quit;
+#X obj 416 -18 hsl 128 15 2.55 255 0 0 /effect_key/enable empty empty
+-2 -8 0 10 -262144 -1 -1 12700 0;
+#X obj 122 -22 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 480 57 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 485 127 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X msg 311 -14 0;
+#X text 559 -19 0 - 255;
+#X msg 329 17 send /effect_key/nparameter/value/set 8 0 \$1;
+#X msg 330 93 send /effect_key/enable 8;
+#X msg 322 165 send /effect_key/disable 8;
+#X text 502 53 enable transition;
+#X text 508 126 disable transition;
+#X obj 325 208 hradio 15 1 0 8 empty empty empty 0 -8 0 10 -262144
+-1 -1 0;
+#X floatatom 324 271 5 0 0 0 - - -;
+#X obj 324 239 + 1;
+#X obj 499 208 hradio 15 1 0 8 empty empty empty 0 -8 0 10 -262144
+-1 -1 1;
+#X floatatom 499 271 5 0 0 0 - - -;
+#X obj 499 239 + 1;
+#X msg 247 307 send /clip/foreground/select \$1;
+#X msg 471 305 send /clip/background/select \$1;
+#X text 377 228 foreground;
+#X text 551 228 background;
+#X text 42 -25 reset value;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 4 0 0 0;
+#X connect 5 0 0 0;
+#X connect 6 0 12 0;
+#X connect 7 0 10 0;
+#X connect 8 0 13 0;
+#X connect 8 0 6 0;
+#X connect 9 0 14 0;
+#X connect 10 0 6 0;
+#X connect 12 0 0 0;
+#X connect 13 0 0 0;
+#X connect 14 0 0 0;
+#X connect 17 0 19 0;
+#X connect 18 0 23 0;
+#X connect 19 0 18 0;
+#X connect 20 0 22 0;
+#X connect 21 0 24 0;
+#X connect 22 0 21 0;
+#X connect 23 0 0 0;
+#X connect 24 0 0 0;

@@ -1,0 +1,55 @@
+#N canvas 210 168 674 390 10;
+#X obj 141 307 sendOSC;
+#X msg 78 192 connect 127.0.0.1 9999;
+#X msg 20 154 disconnect;
+#X msg 141 20 send /video/play;
+#X msg 175 60 send /video/stop;
+#X msg 193 109 send /app/quit;
+#X obj 416 -18 hsl 128 15 1 16 0 0 /effect_key/enable empty empty -2
+-8 0 10 -262144 -1 -1 0 0;
+#X obj 417 50 hsl 128 15 0 1 0 1 empty empty empty -2 -8 0 10 -262144
+-1 -1 6350 0;
+#X obj 419 131 hsl 128 15 0 1 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 6350 0;
+#X msg 285 274 send /effect_key/enable 1;
+#X msg 289 307 send /effect_key/disable 1;
+#X msg 329 16 send /effect_key/nparameter/value/set 1 0 \$1;
+#X msg 326 88 send /effect_key/nparameter/value/set 1 1 \$1;
+#X msg 320 175 send /effect_key/nparameter/value/set 1 2 \$1;
+#X msg 269 -14 0.5;
+#X msg 310 -14 1;
+#X obj 77 93 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X text 7 92 reset vals;
+#X obj 482 240 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 481 279 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X text 500 239 enable effect;
+#X text 500 278 disable effect;
+#X text 558 -19 1 - 16;
+#X text 562 49 0 - 1;
+#X text 558 130 0 - 1;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 4 0 0 0;
+#X connect 5 0 0 0;
+#X connect 6 0 11 0;
+#X connect 7 0 12 0;
+#X connect 8 0 13 0;
+#X connect 9 0 0 0;
+#X connect 10 0 0 0;
+#X connect 11 0 0 0;
+#X connect 12 0 0 0;
+#X connect 13 0 0 0;
+#X connect 14 0 7 0;
+#X connect 14 0 8 0;
+#X connect 15 0 6 0;
+#X connect 16 0 14 0;
+#X connect 16 0 15 0;
+#X connect 18 0 9 0;
+#X connect 18 0 8 0;
+#X connect 18 0 7 0;
+#X connect 18 0 6 0;
+#X connect 19 0 10 0;

@@ -1,4 +1,4 @@
-#N canvas 246 349 674 342 10;
+#N canvas 251 372 674 342 10;
 #X obj 168 288 sendOSC;
 #X msg 50 191 connect 127.0.0.1 9999;
 #X msg 48 148 disconnect;

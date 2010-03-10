@@ -3193,6 +3193,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	      int i,other_file;
 	      for (i=0;i<11;i++) {
 		other_file=(1+(int) ((double)(mainw->clips_available)*rand()/(RAND_MAX+1.0)));
+		other_file=GPOINTER_TO_INT(g_list_nth_data(mainw->cliplist,other_file));
 		if (mainw->files[other_file]!=NULL) {
 		  // steal a frame from another clip
 		  mainw->current_file=other_file;

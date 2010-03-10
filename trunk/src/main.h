@@ -788,7 +788,6 @@ void get_frame_count(gint idx);
 gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps);
 gboolean int_array_contains_value(int *array, int num_elems, int value);
 gboolean check_for_lock_file(gchar *set_name, gint type);
-gint real_clips_available(void);
 void g_list_free_strings(GList *list);
 void gtk_tooltips_copy(GtkWidget *dest, GtkWidget *source);
 void adjustment_configure(GtkAdjustment *adjustment, gdouble value, gdouble lower, gdouble upper, gdouble step_increment, gdouble page_increment, gdouble page_size);

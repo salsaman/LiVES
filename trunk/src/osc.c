@@ -1366,10 +1366,23 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
   
   switch (hint) {
   case WEED_HINT_INTEGER:
-    if (!lives_osc_check_arguments (arglen,vargs,"iii",TRUE)) return;
-    lives_osc_parse_int_argument(vargs,&valuei);
-    lives_osc_parse_int_argument(vargs,&valuei);
-    lives_osc_parse_int_argument(vargs,&valuei);
+    if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) {
+      if (!lives_osc_check_arguments (arglen,vargs,"iif",FALSE)) return;
+      // we wanted an int but we got a float
+      //so we will round to the nearest value
+      lives_osc_check_arguments (arglen,vargs,"iif",TRUE);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      lives_osc_parse_float_argument(vargs,&valuef);
+      valuei=myround(valuef);
+
+    }
+    else {
+      lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      lives_osc_parse_int_argument(vargs,&valuei);
+    }
 
     if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
       // if we are recording, add this change to our event_list
@@ -1388,10 +1401,21 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
     break;
     
   case WEED_HINT_FLOAT:
-    if (!lives_osc_check_arguments (arglen,vargs,"iif",TRUE)) return;
-    lives_osc_parse_int_argument(vargs,&valuei);
-    lives_osc_parse_int_argument(vargs,&valuei);
-    lives_osc_parse_float_argument(vargs,&valuef);
+    if (!lives_osc_check_arguments (arglen,vargs,"iif",FALSE)) {
+      if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) return;
+      // we wanted a float but we got an int, we can convert
+      lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      valuef=(gdouble)valuei;
+    }
+    else {
+      lives_osc_check_arguments (arglen,vargs,"iif",TRUE);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      lives_osc_parse_int_argument(vargs,&valuei);
+      lives_osc_parse_float_argument(vargs,&valuef);
+    }
 
     if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
       // if we are recording, add this change to our event_list
@@ -1412,26 +1436,40 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
       if (weed_leaf_seed_type(tparamtmpl,"default")==WEED_SEED_INT) {
-	if (!lives_osc_check_arguments (arglen,vargs,"iiiii",TRUE)) return;
-	lives_osc_parse_int_argument(vargs,&valuei);
-	lives_osc_parse_int_argument(vargs,&valuei);
-	lives_osc_parse_int_argument(vargs,&valuesi[0]);
-	lives_osc_parse_int_argument(vargs,&valuesi[1]);
-	lives_osc_parse_int_argument(vargs,&valuesi[2]);
-
+	if (!lives_osc_check_arguments (arglen,vargs,"iiiii",FALSE)) {
+	  if (!lives_osc_check_arguments (arglen,vargs,"iifff",FALSE)) return;
+	  // we wanted ints but we got floats
+	  lives_osc_check_arguments (arglen,vargs,"iifff",TRUE);
+	  lives_osc_parse_int_argument(vargs,&valuei);
+	  lives_osc_parse_int_argument(vargs,&valuei);
+	  lives_osc_parse_float_argument(vargs,&valuef);
+	  valuesi[0]=myround(valuef);
+	  lives_osc_parse_float_argument(vargs,&valuef);
+	  valuesi[1]=myround(valuef);
+	  lives_osc_parse_float_argument(vargs,&valuef);
+	  valuesi[2]=myround(valuef);
+	}
+	else { 
+	  lives_osc_check_arguments (arglen,vargs,"iiiii",TRUE);
+	  lives_osc_parse_int_argument(vargs,&valuei);
+	  lives_osc_parse_int_argument(vargs,&valuei);
+	  lives_osc_parse_int_argument(vargs,&valuesi[0]);
+	  lives_osc_parse_int_argument(vargs,&valuesi[1]);
+	  lives_osc_parse_int_argument(vargs,&valuesi[2]);
+	} 
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
 	}
-
-
+	
+	
 	weed_set_int_array(tparam,"value",3,valuesi);
-
+	
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
 	}
-
+	
       }
       else {
 	if (!lives_osc_check_arguments (arglen,vargs,"iifff",TRUE)) return;
@@ -1542,6 +1580,55 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
       pnum--;
     }
   }
+}
+
+
+
+void lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+
+  int effect_key;
+  int pnum,i;
+
+  // return number of numeric single valued, non-reinit
+  // i.e. simple numeric parameters
+
+  int error;
+  weed_plant_t *filter;
+  weed_plant_t **in_ptmpls;
+  weed_plant_t *ptmpl;
+  int hint,flags;
+  int nparams;
+
+  int count=0;
+  gchar *msg;
+  
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return;
+
+  lives_osc_parse_int_argument(vargs,&effect_key);
+  lives_osc_parse_int_argument(vargs,&pnum);
+
+  if (effect_key<1||effect_key>FX_MAX) return;
+  //g_print("key %d pnum %d\n",effect_key,pnum);
+
+  filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+
+  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return;
+  nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  if (pnum>=nparams) return;
+  
+  in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+  
+  for (i=0;i<nparams;i++) {
+    ptmpl=in_ptmpls[i];
+    hint=weed_get_int_value(ptmpl,"hint",&error);
+    flags=weed_get_int_value(ptmpl,"flags",&error);
+    if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
+      count++;
+    }
+  }
+  msg=g_strdup_printf("%d\n",count);
+  lives_status_send(msg);
+  g_free(msg);
 }
 
 
@@ -1732,6 +1819,58 @@ void lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *vargs,
 }
 
 
+void lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+
+  int effect_key;
+  int pnum,i;
+
+  // pick pnum which is numeric single valued, non-reinit
+  // i.e. simple numeric parameter
+
+  int error;
+  weed_plant_t *filter;
+  weed_plant_t **in_ptmpls;
+  weed_plant_t *ptmpl;
+  int hint,flags;
+  int nparams;
+
+  gboolean res=FALSE;
+
+  gchar *msg;
+  
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return;
+
+  lives_osc_parse_int_argument(vargs,&effect_key);
+  lives_osc_parse_int_argument(vargs,&pnum);
+
+  if (effect_key<1||effect_key>FX_MAX) return;
+  //g_print("key %d pnum %d\n",effect_key,pnum);
+
+  filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+
+  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return;
+  nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  if (pnum>=nparams) return;
+  
+  in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+  
+  for (i=0;i<nparams;i++) {
+    ptmpl=in_ptmpls[i];
+    hint=weed_get_int_value(ptmpl,"hint",&error);
+    flags=weed_get_int_value(ptmpl,"flags",&error);
+    if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
+      if (pnum==0) {
+	if (weed_plant_has_leaf(ptmpl,"transition")&&weed_get_boolean_value(ptmpl,"transition",&error)==WEED_TRUE) res=TRUE;
+	msg=g_strdup_printf("%d\n",res);
+	lives_status_send(msg);
+	g_free(msg);
+	weed_free(in_ptmpls);
+	return;
+      }
+      pnum--;
+    }
+  }
+}
 
 void lives_osc_cb_rte_getmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar *tmp;
@@ -1969,10 +2108,12 @@ static struct
     { "/effect_key/toggle",		"toggle",	lives_osc_cb_fx_toggle,		        25	},
     { "/effect_key/count",		"count",	lives_osc_cb_rte_count,		        25	},
     { "/effect_key/parameter/value/set",		"set",	lives_osc_cb_rte_setparam,		        42	},
+    { "/effect_key/nparameter/count",		"count",	lives_osc_cb_rte_nparamcount,		        91	},
     { "/effect_key/nparameter/value/set",		"set",	lives_osc_cb_rte_setnparam,		        92	},
     { "/effect_key/nparameter/min/get",		"get",	lives_osc_cb_rte_getnparammin,		        93	},
     { "/effect_key/nparameter/max/get",		"get",	lives_osc_cb_rte_getnparammax,		        94	},
     { "/effect_key/nparameter/default/get",		"get",	lives_osc_cb_rte_getnparamdef,		        95	},
+    { "/effect_key/nparameter/is_transition/get",		"get",	lives_osc_cb_rte_getnparamtrans,		        96	},
     { "/effect_key/mode/set",		"set",	lives_osc_cb_rte_setmode,		        43	},
     { "/effect_key/mode/get",		"get",	lives_osc_cb_rte_getmode,		        43	},
     { "/effect_key/mode/next",		"next",	lives_osc_cb_rte_nextmode,		        43	},
@@ -2081,6 +2222,7 @@ static struct
     {	"/effect_key/nparameter/min/" ,"min",	 93, 91,0	},
     {	"/effect_key/nparameter/max/" ,"max",	 94, 91,0	},
     {	"/effect_key/nparameter/default/" ,"default",	 95, 91,0	},
+    {	"/effect_key/nparameter/is_transition/" ,"is_transition", 96, 91,0  },
     {	"/effect_key/map/" , 		"map",	 32, 25,0	},
     {	"/effect_key/mode/" , 		"mode",	 43, 25,0	},
     {	"/effect_key/name/" , 		"name",	 44, 25,0	},

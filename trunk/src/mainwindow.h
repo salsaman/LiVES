@@ -1,6 +1,6 @@
 // mainwindow.h
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@xs4all.nl> 2003 - 2009
+// (c) G. Finch <salsaman@xs4all.nl> 2003 - 2010
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 

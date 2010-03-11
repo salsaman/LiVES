@@ -374,8 +374,7 @@ void cancel_process(gboolean visible) {
 }
 
 gboolean process_one (gboolean visible) {
-  gint64 tc;
-  guint first_frame=0,last_frame=INT_MAX;
+  gint64 tc,new_ticks;
   gint oframeno=0;
 
   gboolean normal_time;
@@ -392,8 +391,12 @@ gboolean process_one (gboolean visible) {
       mainw->new_clip=-1;
     }
 
+    // get current time
+
     normal_time=TRUE;
     
+    // get time from soundcard
+
 #ifdef ENABLE_JACK
     if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&!mainw->is_rendering&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
       mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
@@ -411,8 +414,12 @@ gboolean process_one (gboolean visible) {
 #endif
 
     if (normal_time) {
+      // or from system clock
+
       gettimeofday(&tv, NULL);
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+
+      // adjust audio rate slightly if we are behind or ahead
 
 #ifdef ENABLE_JACK
       if ((mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.))&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>mainw->origticks)) {
@@ -441,8 +448,8 @@ gboolean process_one (gboolean visible) {
     }
 
 
-
     if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL&&(tc=mainw->currticks-mainw->origticks)>=event_start)) {
+      // playing an event_list
       cfile->next_event=process_events (cfile->next_event,mainw->currticks-mainw->origticks);
 
 #ifdef ENABLE_JACK
@@ -463,98 +470,15 @@ gboolean process_one (gboolean visible) {
       cancel_process(visible);
       return FALSE;
     }
-    else {
-      oframeno=cfile->frameno;
-      last_frame=(mainw->playing_sel&&!mainw->is_rendering)?cfile->end:mainw->play_end;
-      first_frame=mainw->playing_sel?cfile->start:1;
-      cfile->frameno+=cfile->play_paused?0:(gint)(((gint64)(mainw->currticks-mainw->startticks)+mainw->deltaticks)/mainw->period);
-      if (mainw->noframedrop) cfile->frameno=cfile->frameno>oframeno?oframeno+1:cfile->frameno<oframeno?oframeno-1:cfile->frameno;
-    }
-    // see if we reached the start (backwards...)
-    if (G_UNLIKELY(cfile->frameno<first_frame)) {
-      // loop backwards...
-      mainw->deltaticks=0;
-      mainw->startticks=mainw->currticks-(cfile->frameno-oframeno)*mainw->period;
-      if (mainw->ping_pong&&(cfile->pb_fps<0.||mainw->scratch!=SCRATCH_NONE)) {
-	dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(mainw->playing_sel));
-	oframeno=(cfile->frameno=first_frame)-1;
-      }
-      else {
-	oframeno=(cfile->frameno=last_frame)+1;
-      }
-      if (!mainw->foreign&&cfile->achans>0&&mainw->playing_sel&&!mainw->is_rendering) {
-	// audio seek to start
-#ifdef ENABLE_JACK
-	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
-	  if (mainw->jackd->sample_in_rate<0) {
-	    jack_audio_seek_frame(mainw->jackd,cfile->end);
-	  }
-	  else {
-	    jack_audio_seek_frame(mainw->jackd,cfile->frameno);
-	  }
-	}
-#endif
-#ifdef HAVE_PULSE_AUDIO
-	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
-	  if (mainw->pulsed->in_arate<0) {
-	    pulse_audio_seek_frame(mainw->pulsed,cfile->end);
-	  }
-	  else {
-	    pulse_audio_seek_frame(mainw->pulsed,cfile->frameno);
-	  }
-	}
-#endif
-      }
-    }
-    
-    // check if we are done
-    if (G_UNLIKELY((cfile->frameno>last_frame)&&last_frame>0)) {
-      if (mainw->whentostop==STOP_ON_VID_END) {
-	mainw->cancelled=CANCEL_VID_END;
-      }
-      else {
 
-	// loop forwards
-	if (mainw->playing_sel) mainw->play_start=cfile->start;
-	if (mainw->ping_pong&&(cfile->pb_fps>0.||mainw->scratch!=SCRATCH_NONE)) {
-	  dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(mainw->playing_sel));
-	  oframeno=(cfile->frameno=last_frame)+1;
-	}
-	else {
-	  oframeno=(cfile->frameno=first_frame)-1;
-	}
-	mainw->deltaticks=0;
-	mainw->startticks=mainw->currticks-(cfile->frameno-oframeno)*mainw->period;
-	if (!mainw->foreign&&(prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&cfile->achans>0&&mainw->playing_sel) {
-	  if (!mainw->loop_cont&&mainw->whentostop==STOP_ON_AUD_END) {
-	    mainw->cancelled=CANCEL_AUD_END;
-	  }
-	  else {
-	    // audio seek to start
-#ifdef ENABLE_JACK
-	    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!mainw->is_rendering) {
-	      gint audio_frameno;
-	      if (mainw->ping_pong&&(cfile->pb_fps<0.||mainw->scratch!=SCRATCH_NONE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
-		audio_frameno=cfile->frameno;
-	      }
-	      else audio_frameno=first_frame;
-	      jack_audio_seek_frame(mainw->jackd,audio_frameno);
-	    }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-	    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!mainw->is_rendering) {
-	      gint audio_frameno;
-	      if (mainw->ping_pong&&(cfile->pb_fps<0.||mainw->scratch!=SCRATCH_NONE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
-		audio_frameno=cfile->frameno;
-	      }
-	      else audio_frameno=first_frame;
-	      pulse_audio_seek_frame(mainw->pulsed,audio_frameno);
-	    }
-#endif
-	  }
-	}
-      }
-    }
+
+
+    // free playback
+    new_ticks=mainw->currticks+mainw->deltaticks;
+    
+    oframeno=cfile->last_frameno=cfile->frameno;
+    cfile->frameno=calc_new_playback_position(mainw->current_file,mainw->startticks,&new_ticks);
+    mainw->startticks=new_ticks;
 
     mainw->scratch=SCRATCH_NONE;
     
@@ -563,10 +487,9 @@ gboolean process_one (gboolean visible) {
       // calculate the audio 'frame'
       mainw->aframeno=(gint64)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
       if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:cfile->laudio_time*cfile->fps)))) {
-	mainw->firstticks=mainw->currticks;
+	mainw->firstticks=mainw->startticks-mainw->deltaticks;
       }
 
-      mainw->startticks+=(gint64)((cfile->frameno-oframeno)*mainw->period);
       if ((mainw->fixed_fpsd<=0.&&cfile->frameno!=oframeno&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
 	load_frame_image(cfile->frameno,oframeno);
 	last_display_ticks=mainw->currticks;
@@ -762,10 +685,15 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (!visible) {
 #ifdef ENABLE_JACK_TRANSPORT
     if (mainw->jack_can_stop&&mainw->multitrack==NULL&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES)&&cfile->next_event==NULL)) {
+      // calculate the start position from jack transport
+
       weed_timecode_t ntc=jack_transport_get_time()*U_SEC;
+      gboolean noframedrop=mainw->noframedrop;
+      mainw->noframedrop=FALSE;
       cfile->last_frameno=1;
       mainw->currticks=mainw->firstticks=0;
       mainw->play_start=calc_new_playback_position(mainw->current_file,0,&ntc);
+      mainw->noframedrop=noframedrop;
     }
 #endif
     cfile->last_frameno=cfile->frameno=mainw->play_start;

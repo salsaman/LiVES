@@ -2,7 +2,8 @@ Version 1.2.2
 -------------
 Fix multi_encoder file permissions
 Fix minor problem with post encoding cleanup *
-Fix osc notify to work with pd
+Update OSC control to work better with puredata.
+
 
 
 

@@ -1401,23 +1401,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 }
 
 
-static void *abth(void *arg) {
-  lives_audio_buf_t *abuff=(lives_audio_buf_t *)arg;
-  fill_abuffer_from(abuff, mainw->event_list, NULL, FALSE);
-  return NULL;
-}
-
-
-void fill_abuffer_thread(lives_audio_buf_t *abuff) {
-  static pthread_t abthread;
-  static gboolean pth_started=FALSE;
-
-  if (pth_started) pthread_join(abthread,NULL);
-
-  pthread_create(&abthread,NULL,abth,abuff);
-
-  pth_started=TRUE;
-}
 
 
 void init_jack_audio_buffers (gint achans, gint arate, gboolean exact) {
@@ -1501,6 +1484,47 @@ void free_pulse_audio_buffers(void) {
     }
   }
 #endif
+}
+
+
+
+
+gboolean resync_audio(gint frameno) {
+  // if we are using a realtime audio player, resync to frameno
+  // and return TRUE
+
+  // otherwise return FALSE
+
+
+  // this is called for example when the play position jumps, either due
+  // to external transport changes, (jack transport, osc retrigger or goto)
+  // or if we are looping a video selection
+
+  // this is only active if "audio follows video rate/fps changes" is set
+
+  if (!(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
+
+#ifdef ENABLE_JACK
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!mainw->is_rendering) {
+    jack_audio_seek_frame(mainw->jackd,frameno);
+    mainw->rec_aclip=mainw->current_file;
+    mainw->rec_avel=cfile->pb_fps/cfile->fps;
+    mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+    return TRUE;
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!mainw->is_rendering) {
+    pulse_audio_seek_frame(mainw->pulsed,frameno);
+    mainw->rec_aclip=mainw->current_file;
+    mainw->rec_avel=cfile->pb_fps/cfile->fps;
+    mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+    return TRUE;
+  }
+#endif
+  return FALSE;
+
 }
 
 

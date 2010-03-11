@@ -896,6 +896,8 @@ void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs
 
   if (cfile->pb_fps>0.||(cfile->play_paused&&cfile->freeze_fps>0.)) cfile->frameno=cfile->last_frameno=1;
   else cfile->frameno=cfile->last_frameno=cfile->frames;
+
+  resync_audio(cfile->frameno);
 }
 
 
@@ -1052,6 +1054,7 @@ void lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTim
 
   cfile->last_frameno=cfile->frameno=frame;
 
+  resync_audio(frame);
 }
 
 

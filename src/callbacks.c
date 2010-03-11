@@ -3370,6 +3370,8 @@ gboolean fps_reset_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   // make sure this is called, sometimes we switch clips too soon...
   changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 
+  resync_audio(cfile->frameno);
+
   return TRUE;
 }
 

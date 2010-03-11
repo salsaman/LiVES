@@ -1169,11 +1169,12 @@ static void lives_init(_ign_opts *ign_opts) {
 
 	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||mainw->jackd==NULL)&&prefs->startup_phase==0) {
 #ifdef HAVE_PULSE_AUDIO
-	      gchar *otherbit=(_(" or \"lives -aplayer pulse\""));
+	      gchar *otherbit=g_strdup(_(" or \"lives -aplayer pulse\""));
 #else
-	      gchar *otherbit="";
+	      gchar *otherbit=g_strdup("");
 #endif
 	      g_printerr("%s%s\n\n",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with: \"lives -aplayer sox\""),otherbit);
+	      g_free(otherbit);
 	    }
 
 	    if (mainw->jackd==NULL) {

@@ -142,6 +142,10 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
 
+  // the range is first_frame -> last_frame
+
+  // which is generally 1 -> sfile->frames, unless we are playing a selection
+
   // in case the frame is out of range and playing, returns 0 and sets mainw->cancelled 
 
   // ntc is adjusted backwards to timecode of the new frame
@@ -157,6 +161,8 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   gint dir=0;
   gint cframe,nframe;
+
+  gint first_frame,last_frame;
 
   gdouble fps=sfile->pb_fps;
 
@@ -174,70 +180,92 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   nframe=cframe+(gint)((gdouble)dtc/U_SEC*fps+(fps>0?.5:-.5));
 
+
   if (mainw->playing_file==fileno) {
-  if (nframe<1||nframe>sfile->frames) {
-    if (mainw->whentostop==STOP_ON_VID_END) {
-      mainw->cancelled=CANCEL_VID_END;
-      return 0;
-    }
+    last_frame=(mainw->playing_sel&&!mainw->is_rendering)?sfile->end:mainw->play_end;
+    first_frame=mainw->playing_sel?sfile->start:1;
   }
-#ifdef RT_AUDIO
-  if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
-    weed_timecode_t atc=0;
-#ifdef ENABLE_JACK      
-    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file) atc=lives_jack_get_time(mainw->jackd,FALSE);
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file) atc=lives_pulse_get_time(mainw->pulsed,FALSE);
-#endif
-    atc+=dtc;
-    
-    if (atc<0||(gdouble)atc/U_SEC>=sfile->laudio_time) {
-      mainw->cancelled=CANCEL_AUD_END;
-      return 0;
-    }
-  }
-#endif
+  else {
+    last_frame=sfile->frames;
+    first_frame=1;
   }
 
+
+  if (mainw->playing_file==fileno) {
+
+    if (mainw->noframedrop) {
+      if (nframe>cframe) nframe=cframe+1;
+      else if (nframe<cframe) nframe=cframe-1;
+    }
+
+    if (nframe<first_frame||nframe>last_frame) {
+      if (mainw->whentostop==STOP_ON_VID_END) {
+	mainw->cancelled=CANCEL_VID_END;
+	return 0;
+      }
+    }
+#ifdef RT_AUDIO
+    if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
+      weed_timecode_t atc=0;
+#ifdef ENABLE_JACK      
+      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file) atc=lives_jack_get_time(mainw->jackd,FALSE);
+#endif
+#ifdef HAVE_PULSE_AUDIO
+      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file) atc=lives_pulse_get_time(mainw->pulsed,FALSE);
+#endif
+      atc+=dtc;
+      
+      if (atc<0||(gdouble)atc/U_SEC>=sfile->laudio_time) {
+	mainw->cancelled=CANCEL_AUD_END;
+	return 0;
+      }
+    }
+#endif
+  }
+  
 
   // get our frame back to within bounds
   
-  nframe--; // because our frames start at 1
+  nframe-=first_frame;
 
   if (fps>0) {
     dir=0;
     if (mainw->ping_pong) {
-      dir=(gint)((gdouble)nframe/(gdouble)sfile->frames);
+      dir=(gint)((gdouble)nframe/(gdouble)(last_frame-first_frame+1));
       dir%=2;
     }
   }
   else {
     dir=1;
     if (mainw->ping_pong) {
-      nframe-=sfile->frames-1;
-      dir=(gint)((gdouble)nframe/(gdouble)sfile->frames);
+      nframe-=(last_frame-first_frame);
+      dir=(gint)((gdouble)nframe/(gdouble)(last_frame-first_frame+1));
       dir%=2;
       dir++;
     }
   }
 
-  nframe%=sfile->frames;
+  nframe%=(last_frame-first_frame+1);
 
   if (fps<0) {
-    // backward]
+    // backwards
     if (dir==1) {
+      // even winding
       if (!mainw->ping_pong) {
-	if (nframe<0) nframe+=sfile->frames+1;
-	else nframe++;
+	// loop
+	if (nframe<0) nframe+=last_frame+1;
+	else nframe+=first_frame;
+	if (nframe>cframe&&mainw->playing_file==fileno) resync_audio(nframe);
       }
       else {
-	nframe+=sfile->frames;
+	nframe+=last_frame; // normal
       }
     }
     else {
-      nframe=ABS(nframe)+1;
+      // odd winding
+      nframe=ABS(nframe)+first_frame;
       if (mainw->ping_pong) {
+	// bounce
 	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
       }
@@ -245,12 +273,25 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
   }
   else {
     // forwards
-    nframe++;
-    if (mainw->ping_pong&&dir==1) {
-      nframe=sfile->frames-nframe;
-      if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
-      else sfile->pb_fps=-sfile->pb_fps;
+    nframe+=first_frame;
+    if (dir==1) {
+      // odd winding
+      if (mainw->playing_file==fileno) mainw->deltaticks=0;
+      if (mainw->ping_pong) {
+	// bounce
+	nframe=last_frame-(nframe-(first_frame-1));
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	else sfile->pb_fps=-sfile->pb_fps;
+      }
     }
+    else if (!mainw->ping_pong&&mainw->playing_file==fileno) {
+      // resync audio at start of loop selection
+      if (nframe<cframe) {
+	if (nframe<first_frame) nframe=first_frame;
+	resync_audio(nframe);
+      }
+    }
+    if (nframe<first_frame) nframe=first_frame;
   }
 
   return nframe;

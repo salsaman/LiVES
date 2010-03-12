@@ -164,7 +164,9 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   gint first_frame,last_frame;
 
-  gdouble fps=sfile->pb_fps;
+  gboolean did_resync=FALSE;
+
+  gdouble fps=sfile->pb_fps,audtime;
 
   if (mainw->playing_file==-1) fps=sfile->fps;
 
@@ -215,7 +217,9 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 #endif
       atc+=dtc;
       
-      if (atc<0||(gdouble)atc/U_SEC>=sfile->laudio_time) {
+      audtime=(gdouble)atc/U_SEC;
+
+      if (audtime<0.||audtime>=sfile->laudio_time) {
 	mainw->cancelled=CANCEL_AUD_END;
 	return 0;
       }
@@ -255,7 +259,10 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 	// loop
 	if (nframe<0) nframe+=last_frame+1;
 	else nframe+=first_frame;
-	if (nframe>cframe&&mainw->playing_file==fileno) resync_audio(nframe);
+	if (nframe>cframe&&mainw->playing_file==fileno&&mainw->loop_cont&&!mainw->loop) {
+	  resync_audio(nframe);
+	  did_resync=TRUE;
+	}
       }
       else {
 	nframe+=last_frame; // normal
@@ -284,15 +291,16 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 	else sfile->pb_fps=-sfile->pb_fps;
       }
     }
-    else if (!mainw->ping_pong&&mainw->playing_file==fileno) {
+    else if (!mainw->ping_pong&&mainw->playing_file==fileno&&nframe<cframe&&mainw->loop_cont&&!mainw->loop) {
       // resync audio at start of loop selection
-      if (nframe<cframe) {
-	if (nframe<first_frame) nframe=first_frame;
-	resync_audio(nframe);
-      }
+      if (nframe<first_frame) nframe=first_frame;
+      resync_audio(nframe);
+      did_resync=TRUE;
     }
     if (nframe<first_frame) nframe=first_frame;
   }
+
+  if (mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno&&!did_resync) resync_audio(nframe);
 
   return nframe;
 }

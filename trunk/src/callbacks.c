@@ -7859,22 +7859,6 @@ on_back_pressed (GtkButton *button,
   mainw->deltaticks-=(gint64)(CHANGE_SPEED*3*mainw->period);
   mainw->scratch=SCRATCH_BACK;
 
-#ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file&&cfile->achans>0) {
-    jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos-(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
-    mainw->rec_aclip=mainw->current_file;
-    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file&&cfile->achans>0) {
-    pulse_audio_seek_bytes(mainw->pulsed,mainw->pulsed->seek_pos-(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
-    mainw->rec_aclip=mainw->current_file;
-    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
-  }
-#endif
 }
 
 void
@@ -7888,22 +7872,6 @@ on_forward_pressed (GtkButton *button,
   mainw->deltaticks+=(gint64)(CHANGE_SPEED*mainw->period);
   mainw->scratch=SCRATCH_FWD;
 
-#ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file&&cfile->achans>0) {
-    jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos+(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
-    mainw->rec_aclip=mainw->current_file;
-    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file&&cfile->achans>0) {
-    pulse_audio_seek_bytes(mainw->pulsed,mainw->pulsed->seek_pos+(long)((CHANGE_SPEED*mainw->period)/U_SEC*cfile->arate)*cfile->achans*cfile->asampsize/8);
-    mainw->rec_aclip=mainw->current_file;
-    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
-  }
-#endif
 }
 
 

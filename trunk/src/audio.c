@@ -22,6 +22,8 @@ inline void sample_silence_dS (float *dst, unsigned long nsamples) {
 
 void sample_move_d8_d16(short *dst, unsigned char *src,
 			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
+  // convert 8 bit audio to 16 bit audio
+
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
@@ -29,7 +31,7 @@ void sample_move_d8_d16(short *dst, unsigned char *src,
   unsigned char *ptr;
   unsigned char *src_end;
 
-  // take care of (rounding errors ?)
+  // take care of rounding errors
   src_end=src+tbytes-nSrcChannels;
 
   if(!nSrcChannels) return;
@@ -89,7 +91,7 @@ void sample_move_d16_d16(short *dst, short *src,
     src_offset_i=(int)src_offset_f*nSrcChannels;
   }
 
-  // take care of (rounding errors ?)
+  // take care of rounding errors
   src_end=src+tbytes/sizeof(short)-nSrcChannels;
 
   while (nsamples--) {
@@ -202,10 +204,13 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 
 
 void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsigned long src_skip, int is_unsigned, float vol) {
+  // convert 16 bit audio to float audio
+
+
   register float svolp,svoln;
 
 #ifdef ENABLE_OIL
-  float val;
+  float val=0.;  // set a value to stop valgrind complaining
   double xn,xp,xa;
   double y=0.f;
 #else
@@ -270,7 +275,7 @@ long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps,
 #ifdef ENABLE_OIL
   double x=(SAMPLE_MAX_16BIT_N+SAMPLE_MAX_16BIT_P)/2.;
   double y=0.f;
-  short val;
+  short val=0;
   unsigned short valu=0;
 #else
   register short val;
@@ -618,7 +623,7 @@ static void pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int a
 
 long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf) {
   // called during multitrack rendering to create the actual audio file
-  // (or in-memory buffer for preview playback)
+  // (or in-memory buffer for preview playback in multitrack)
 
   // also used for fade-in/fade-out in the clip editor (opvol_start, opvol_end)
 
@@ -637,7 +642,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   // the small chunks are processed and mixed, converted from float to int, and then written to the outfile
 
-  // if obuf != NULL we write to float to obuf instead
+  // if obuf != NULL we write to obuf instead
 
 
   // TODO - allow MAX_AUDIO_MEM to be configurable; currently this is fixed at 8 MB
@@ -725,8 +730,6 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     
     // fill to ins_pt with zeros
     pad_with_silence(out_fd,cur_size,ins_size,out_asamps,out_unsigned,out_bendian);
-    //sync();
-
 
   }
   else {
@@ -792,7 +795,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
   }
 
   if (first_nonsilent==-1) {
-
+    // all in tracks are empty
     // output silence
     if (to_file>-1) {
       long oins_size=ins_size;
@@ -810,7 +813,11 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 	    obuf->data.floatbuf[i][j]=0.;
 	  }
 	  else {
-	    obuf->data.int16buf[j*out_achans+i]=0;
+	    if (!out_unsigned) obuf->data.int16buf[j*out_achans+i]=0;
+	    else {
+	      if (out_bendian) obuf->data.int16buf[j*out_achans+i]=0x8000;
+	      else obuf->data.int16buf[j*out_achans+i]=0x80;
+	    }
 	  }
 	}
       }
@@ -936,15 +943,16 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       }
       
       if (to_file>-1) {
+	// output to file
 	// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
 	frames_out=sample_move_float_int((void *)finish_buff,chunk_float_buffer,blocksize,1.,out_achans,out_asamps*8,out_unsigned,out_reverse_endian,opvol);
 	dummyvar=write (out_fd,finish_buff,frames_out*out_asamps*out_achans);
 #ifdef DEBUG_ARENDER
 	g_print(".");
 #endif
-	//sync();
       }
       else {
+	// output to memory buffer
 	if (prefs->audio_player==AUD_PLAYER_JACK) {
 	  frames_out=chunk_to_float_abuf(obuf,chunk_float_buffer,blocksize);
 	}
@@ -1115,6 +1123,9 @@ void pulse_rec_audio_end(void) {
 
 
 static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ostate, int nostate, int nstate) {
+  // increase the element size of the audstate array (ostate)
+  // from nostate elements to nstate elements
+
   lives_audio_track_state_t *audstate=(lives_audio_track_state_t *)g_malloc(nstate*sizeof(lives_audio_track_state_t));
   int i;
 
@@ -1141,6 +1152,9 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
 
 
 static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
+  // parse an audio frame, and set the track file, seek and velocity values
+
+
   int error,atrack;
   int num_aclips=weed_leaf_num_elements(event,"audio_clips");
   int *aclips=weed_get_int_array(event,"audio_clips",&error);
@@ -1187,10 +1201,11 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
   weed_timecode_t last_tc=0,fill_tc;
   int i;
 
+  // gets effects state (initing any effects which should be active)
+
   // optionally: gets audio state at audio frame prior to st_event, sets atstate[0].tc
   // and initialises audio buffers
 
-  // also gets effects state (initing any effects which should be active)
 
 
   fill_tc=get_event_timecode(st_event);
@@ -1289,6 +1304,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   abuf->start_sample=0; // read level
 
   if (st_event!=NULL) {
+    // this is only called for the first buffered read
+
     event=st_event;
     last_tc=get_event_timecode(event);
 
@@ -1297,6 +1314,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     if (aseeks!=NULL) g_free(aseeks);
 
     if (mainw->multitrack!=NULL) nfiles=weed_leaf_num_elements(mainw->multitrack->avol_init_event,"in_tracks");
+
     else nfiles=1;
 
     from_files=(int *)g_malloc(nfiles*sizint);
@@ -1307,6 +1325,16 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       from_files[i]=0;
       avels[i]=aseeks[i]=0.;
     }
+
+    // TODO - actually what we should do here is get the audio state for
+    // the *last* frame in the buffer and then adjust the seeks back to the
+    // beginning of the buffer, in case an audio track starts during the
+    // buffering period. The current way is fine for a preview, but when we 
+    // implement rendering of partial event lists we will need to do this
+
+    // a negative seek value would mean that we need to pad silence at the 
+    // start of the track buffer
+
 
     atstate=get_audio_and_effects_state_at(event_list,event,TRUE,exact);
     
@@ -1330,6 +1358,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   }
 
   if (mainw->multitrack!=NULL) {
+    // get channel volumes from the mixer
     for (i=0;i<nfiles;i++) {
       if (mainw->multitrack!=NULL&&mainw->multitrack->audio_vols!=NULL) {
 	chvols[i]=(gdouble)GPOINTER_TO_INT(g_list_nth_data(mainw->multitrack->audio_vols,i))/1000000.;
@@ -1379,6 +1408,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   }
   
   if (last_tc<fill_tc) {
+    // flush the rest of the audio
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
     for (i=0;i<nfiles;i++) {
       // increase seek values
@@ -1386,7 +1416,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
   }
 
-  
+
   mainw->write_abuf++;
   if (mainw->write_abuf>=prefs->num_rtaudiobufs) mainw->write_abuf=0;
 

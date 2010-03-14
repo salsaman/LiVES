@@ -3068,7 +3068,7 @@ get_signed_endian (int asigned, int endian) {
 
 
 gint 
-get_token_count (gchar *string, int delim) {
+get_token_count (const gchar *string, int delim) {
   gint pieces=1;
   if (string==NULL) return 0;
   if (delim<=0||delim>255) return 1;

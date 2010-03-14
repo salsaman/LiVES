@@ -800,7 +800,7 @@ void zero_spinbuttons (void);
 void draw_little_bars (void);
 void set_sel_label (GtkWidget *label);
 void clear_mainw_msg (void);
-gint get_token_count (gchar *string, int delim);
+gint get_token_count (const gchar *string, int delim);
 GdkPixmap* gdk_pixmap_copy (GdkPixmap *pixmap);
 GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette);
 void get_border_size (GtkWidget *win, gint *bx, gint *by);

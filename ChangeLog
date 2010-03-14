@@ -1,14 +1,23 @@
-Version 1.2.2
+Version 1.3.2
 -------------
-Fix multi_encoder file permissions
-Fix minor problem with post encoding cleanup *
-Update OSC control to work better with puredata.
+Fix multi_encoder file permissions **
+Fix minor problem with post encoding cleanup * **
+Fix crash in multitrack "remove first gaps" ** ***
+Update OSC control to work better with puredata. **
+Implement new player transport (in progress)
+Add "Gravity: Right" in multitrack (in progress)
+
 
 
 
 
 
 * backported to 1.0.9
+** backported to 1.2.2
+*** backported to 1.0.10
+
+
+
 
 
 

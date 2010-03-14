@@ -3590,11 +3590,15 @@ static void on_grav_mode_changed (GtkMenuItem *menuitem, gpointer user_data) {
     set_menu_text(mt->grav_menuitem,_("_Gravity: Left"),TRUE);
     mt->opts.grav_mode=GRAV_MODE_LEFT;
   }
-  else if (menuitem==(GtkMenuItem *)mt->grav_right) {
+
+  if (menuitem==(GtkMenuItem *)mt->grav_right) {
     set_menu_text(mt->grav_menuitem,_("_Gravity: Right"),TRUE);
     mt->opts.grav_mode=GRAV_MODE_RIGHT;
+    set_menu_text(mt->remove_first_gaps,_("Close _last gap(s) in selected tracks/time"),TRUE);
   }
-
+  else {
+    set_menu_text(mt->remove_first_gaps,_("Close _first gap(s) in selected tracks/time"),TRUE);
+  }
 
   g_signal_handler_block(mt->grav_normal,mt->grav_normal_func);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->grav_normal),mt->opts.grav_mode==GRAV_MODE_NORMAL);
@@ -5689,7 +5693,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
                               GDK_g, GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  mt->remove_first_gaps = gtk_menu_item_new_with_mnemonic (_("Close _first gap(s) in selected tracks/time"));
+  mt->remove_first_gaps = gtk_menu_item_new_with_mnemonic ("");
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->remove_first_gaps);
 
   g_signal_connect (GTK_OBJECT (mt->remove_first_gaps), "activate",
@@ -6206,7 +6210,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
 
   mt->grav_right = gtk_check_menu_item_new_with_mnemonic (_("Gravity: _Right"));
-  //gtk_container_add (GTK_CONTAINER(submenu), mt->grav_right);
+  gtk_container_add (GTK_CONTAINER(submenu), mt->grav_right);
 
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->grav_right),mt->opts.grav_mode==GRAV_MODE_RIGHT);
 
@@ -9179,7 +9183,9 @@ gboolean block_overlap (GtkWidget *eventbox, gdouble time_start, gdouble time_en
 
 
 static track_rect *get_block_before (GtkWidget *eventbox, gdouble time, gboolean allow_cur) {
-  // if allow_cur is TRUE, we may count blocks whose end is after "time" (i.e. before or at)
+  // get the last block which ends before or at time
+  // if allow_cur is TRUE, we may count blocks whose end is after "time" but whose start is 
+  // before or at time
 
   weed_timecode_t tc=time*U_SECL;
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks"),*last_block=NULL;
@@ -9192,12 +9198,16 @@ static track_rect *get_block_before (GtkWidget *eventbox, gdouble time, gboolean
   return last_block;
 }
 
-static track_rect *get_block_after (GtkWidget *eventbox, gdouble time) {
+static track_rect *get_block_after (GtkWidget *eventbox, gdouble time, gboolean allow_cur) {
+  // return the first block which starts at or after time
+  // if allow_cur is TRUE, we may count blocks whose end is after "time" but whose start is 
+  // before or at time
+
   weed_timecode_t tc=time*U_SECL;
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks");
 
   while (block!=NULL) {
-    if (get_event_timecode(block->start_event)>=tc) break;
+    if (get_event_timecode(block->start_event)>=tc||(allow_cur&&get_event_timecode(block->end_event)>=tc)) break;
     block=block->next;
   }
   return block;
@@ -9275,20 +9285,30 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, gdouble timesecs
   
   remove_end_blank_frames(mt->event_list);
 
-  if (block!=NULL&&mt->opts.grav_mode==GRAV_MODE_LEFT&&!did_backup) {
+  if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(mt->opts.grav_mode==GRAV_MODE_RIGHT&&block->next!=NULL))&&!did_backup) {
     gdouble oldr_start=mt->region_start;
     gdouble oldr_end=mt->region_end;
     GList *tracks_sel=NULL;
     track_rect *lblock;
-    gdouble rtc=get_event_timecode(block->start_event)/U_SEC-1./mt->fps,rstart=0.;
+    gdouble rtc=get_event_timecode(block->start_event)/U_SEC-1./mt->fps,rstart=0.,rend;
 
-    if (rtc>=0.) {
-      lblock=get_block_before(eventbox,rtc,TRUE);
-      if (lblock!=NULL) rstart=get_event_timecode(lblock->end_event)/U_SEC+1./mt->fps;
+    if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
+      // gravity left - move left until we hit another block or time 0
+      if (rtc>=0.) {
+	lblock=block->prev;
+	if (lblock!=NULL) rstart=get_event_timecode(lblock->end_event)/U_SEC+1./mt->fps;
+      }
+      rend=get_event_timecode(block->end_event)/U_SEC;
+    }
+    else {
+      // gravity right - move right until we hit the next block
+      lblock=block->next;
+      rstart=get_event_timecode(block->start_event)/U_SEC;
+      rend=get_event_timecode(lblock->start_event)/U_SEC-1./mt->fps;
     }
 
     mt->region_start=rstart;
-    mt->region_end=get_event_timecode(block->end_event)/U_SEC;
+    mt->region_end=rend;
 
     if (new_track>-1) {
       tracks_sel=g_list_copy(mt->selected_tracks);
@@ -11953,7 +11973,7 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, gboole
   track_rect *block=NULL;
   gint track;
   GtkWidget *eventbox;
-  weed_timecode_t tc,new_tc,tc_last;
+  weed_timecode_t tc,new_tc,tc_last,new_tc_last,tc_first,block_tc;
   gint filenum;
   gboolean did_backup=mt->did_backup;
   GList *track_sel;
@@ -11972,6 +11992,7 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, gboole
   tc_last=q_gint64(mt->region_end*U_SEC,mt->fps);
 
   while (vsel!=NULL||(mt->current_track==-1&&!audio_done)) {
+    offset=0;
     if (mt->current_track>-1) {
       track=GPOINTER_TO_INT(vsel->data);
       eventbox=g_list_nth_data(mt->video_draws,track);
@@ -11983,40 +12004,110 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, gboole
     tc=mt->region_start*U_SEC;
     tc=q_gint64(tc,mt->fps);
 
-    block=get_block_before(eventbox,tc/U_SEC,TRUE);
-    if (block!=NULL) {
-      new_tc=q_gint64(get_event_timecode(block->end_event)+(gdouble)(track>-1)*U_SEC/mt->fps,mt->fps);
-      if (new_tc>tc) tc=new_tc;
-    }
-
-    while (tc<=tc_last) {
-
-      block=get_block_after(eventbox,tc/U_SEC);
-      if (block==NULL) break;
-
-      new_tc=get_event_timecode(block->start_event);
-      if (new_tc>tc_last) break;
-
-      if (tc<new_tc) {
-	// move this block to tc
-	if (offset>0) tc=q_gint64(new_tc-offset,mt->fps);
-	filenum=get_frame_event_clip(block->start_event,track);
-	mt->clip_selected=mt_clip_from_file(mt,filenum);
-	mt_clip_select(mt,FALSE);
-	if (!mt->did_backup) mt_backup(mt,MT_UNDO_REMOVE_GAPS,NULL);
-	
-	// save current selected_tracks, move_block may change this
-	track_sel=mt->selected_tracks;
-	mt->selected_tracks=NULL;
-	block=move_block(mt,block,tc/U_SEC,track,track);
-	if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
-	mt->selected_tracks=track_sel;
-	if (only_first&&offset==0) offset=new_tc-tc;
+    if (mt->opts.grav_mode!=GRAV_MODE_RIGHT) {
+      // adjust the region so it begins after any first partially contained block
+      block=get_block_before(eventbox,tc/U_SEC,TRUE);
+      if (block!=NULL) {
+	new_tc=q_gint64(get_event_timecode(block->end_event)+(gdouble)(track>-1)*U_SEC/mt->fps,mt->fps);
+	if (new_tc>tc) tc=new_tc;
       }
-      tc=q_gint64(get_event_timecode(block->end_event)+(gdouble)(track>-1)*U_SEC/mt->fps,mt->fps);
     }
-    if (mt->current_track>-1) vsel=vsel->next;
-    else audio_done=TRUE;
+    else {
+      // adjust the region so it ends before any last partially contained block
+      block=get_block_after(eventbox,tc_last/U_SEC,TRUE);
+      if (block!=NULL) {
+	new_tc_last=q_gint64(get_event_timecode(block->start_event)-(gdouble)(track>-1)*U_SEC/mt->fps,mt->fps);
+	if (new_tc_last<tc_last) tc_last=new_tc_last;
+      }
+    }
+
+
+    if (mt->opts.grav_mode!=GRAV_MODE_RIGHT) {
+      // moving left
+      // what we do here:
+      // find first block in range. move it left to tc
+      // then we adjust tc to the end of the block (+ 1 frame for video tracks)
+      // and continue until we reach the end of the region
+
+      // note video and audio are treated slightly differently
+      // a video block must end before the next one starts
+      // audio blocks can start and end at the same frame
+
+      // if we remove only first gap, we move the first block, store how far it moved in offset
+      // and then move all other blocks by offset
+
+
+      while (tc<=tc_last) {
+	
+	block=get_block_after(eventbox,tc/U_SEC,FALSE);
+	if (block==NULL) break;
+	
+	new_tc=get_event_timecode(block->start_event);
+	if (new_tc>tc_last) break;
+	
+	if (tc<new_tc) {
+	  // move this block to tc
+	  if (offset>0) tc=q_gint64(new_tc-offset,mt->fps);
+	  filenum=get_frame_event_clip(block->start_event,track);
+	  mt->clip_selected=mt_clip_from_file(mt,filenum);
+	  mt_clip_select(mt,FALSE);
+	  if (!mt->did_backup) mt_backup(mt,MT_UNDO_REMOVE_GAPS,NULL);
+	  
+	  // save current selected_tracks, move_block may change this
+	  track_sel=mt->selected_tracks;
+	  mt->selected_tracks=NULL;
+	  block=move_block(mt,block,tc/U_SEC,track,track);
+	  if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
+	  mt->selected_tracks=track_sel;
+	  if (only_first&&offset==0) offset=new_tc-tc;
+	}
+	tc=q_gint64(get_event_timecode(block->end_event)+(gdouble)(track>-1)*U_SEC/mt->fps,mt->fps);
+      }
+      if (mt->current_track>-1) vsel=vsel->next;
+      else audio_done=TRUE;
+    }
+    else {
+      // moving right
+      // here we do the reverse:
+      // find last block in range. move it right so it ends at tc
+      // then we adjust tc to the start of the block + 1 frame
+      // and continue until we reach the end of the region
+
+      tc_first=tc;
+      tc=tc_last;
+      while (tc>=tc_first) {
+
+	block=get_block_before(eventbox,tc/U_SEC,FALSE);
+	if (block==NULL) break;
+	
+	new_tc=get_event_timecode(block->end_event);
+	if (new_tc<tc_first) break;
+
+	// subtract the length of the block to get the start point
+	block_tc=new_tc-get_event_timecode(block->start_event);
+
+	if (tc>new_tc) {
+	  // move this block to tc
+	  if (offset>0) tc=q_gint64(new_tc-block_tc+offset,mt->fps);
+	  else tc=q_gint64(tc-block_tc,mt->fps);
+	  filenum=get_frame_event_clip(block->start_event,track);
+	  mt->clip_selected=mt_clip_from_file(mt,filenum);
+	  mt_clip_select(mt,FALSE);
+	  if (!mt->did_backup) mt_backup(mt,MT_UNDO_REMOVE_GAPS,NULL);
+	  
+	  // save current selected_tracks, move_block may change this
+	  track_sel=mt->selected_tracks;
+	  mt->selected_tracks=NULL;
+	  block=move_block(mt,block,tc/U_SEC,track,track);
+	  if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
+	  mt->selected_tracks=track_sel;
+	  if (only_first&&offset==0) offset=tc-new_tc+block_tc;
+	}
+	tc=q_gint64(get_event_timecode(block->start_event)-(gdouble)(track>-1)*U_SEC/mt->fps,mt->fps);
+      }
+      if (mt->current_track>-1) vsel=vsel->next;
+      else audio_done=TRUE;
+    }
   }
   
   if (!did_backup) {
@@ -12037,6 +12128,9 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, gboole
 
 
 void remove_first_gaps (GtkMenuItem *menuitem, gpointer user_data) {
+  // remove first gaps in selected time/tracks
+  // if gravity is Right then we remove last gaps instead
+
   remove_gaps_inner(menuitem,user_data,TRUE);
 }
 
@@ -12159,7 +12253,7 @@ static void insgap_inner (lives_mt *mt, gint tnum, gboolean is_sel, gint passnm)
       sblock=sblock->next;
     }
     else {
-      sblock=get_block_after(eventbox,mt->region_start);
+      sblock=get_block_after(eventbox,mt->region_start,FALSE);
     }
 
     if (sblock==NULL) return;
@@ -12171,7 +12265,7 @@ static void insgap_inner (lives_mt *mt, gint tnum, gboolean is_sel, gint passnm)
     if (tnum>=0&&mt->opts.pertrack_audio) {
       GtkWidget *aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
       if (aeventbox!=NULL) {
-	ablock=get_block_after(aeventbox,mt->region_start);
+	ablock=get_block_after(aeventbox,mt->region_start,FALSE);
 	if (ablock!=NULL) {
 	  while (ablock->next!=NULL) ablock=ablock->next; 
 	  event=ablock->end_event;
@@ -13216,7 +13310,7 @@ static void mt_jumpto (lives_mt *mt, gint dir) {
       }
     }
     else {
-      block=get_block_after(eventbox,secs);
+      block=get_block_after(eventbox,secs,FALSE);
       if (block==NULL) return;
       secs=get_event_timecode(block->start_event)/U_SEC;
     }
@@ -13703,7 +13797,11 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt_sensitise(mt);
   }
 
-  if (mt->opts.grav_mode==GRAV_MODE_LEFT&&!mt->moving_block&&!did_backup) {
+  if ((mt->opts.grav_mode==GRAV_MODE_LEFT||mt->opts.grav_mode==GRAV_MODE_RIGHT)&&!mt->moving_block&&!did_backup) {
+    // gravity left - remove first gap from old block start to end time
+    // gravity right - remove last gap from 0 to old block end time
+
+
     gdouble oldr_start=mt->region_start;
     gdouble oldr_end=mt->region_end;
     GList *tracks_sel=NULL;
@@ -13713,8 +13811,16 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
       mt->selected_tracks=NULL;
       mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
     }
-    mt->region_start=start_tc/U_SEC;
-    mt->region_end=mt->end_secs;
+
+    if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
+      mt->region_start=start_tc/U_SEC;
+      mt->region_end=mt->end_secs;
+    }
+    else {
+      mt->region_start=0.;
+      mt->region_end=end_tc/U_SEC;
+    }
+
     remove_first_gaps(NULL,mt);
     if (mt->current_track>-1) {
       g_list_free(mt->selected_tracks);
@@ -14247,12 +14353,12 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
 
   insert_frames (mt->file_selected,ins_start,ins_end,secs*U_SECL,DIRECTION_POSITIVE,eventbox,mt,NULL);
 
+  block=g_object_get_data(G_OBJECT(eventbox),"block_last");
 
-  if (mt->opts.grav_mode==GRAV_MODE_LEFT&&!(did_backup||mt->moving_block)) {
+  if ((mt->opts.grav_mode==GRAV_MODE_LEFT||(block->next!=NULL&&mt->opts.grav_mode==GRAV_MODE_RIGHT))&&!(did_backup||mt->moving_block)) {
     gdouble oldr_start=mt->region_start;
     gdouble oldr_end=mt->region_end;
     GList *tracks_sel;
-    block=g_object_get_data(G_OBJECT(eventbox),"block_last");
     if (block!=NULL) {
       track_rect *selblock=NULL;
       if (mt->block_selected!=block) selblock=mt->block_selected;
@@ -14260,9 +14366,17 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
       if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
       mt->selected_tracks=NULL;
       mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
-      if (block->prev!=NULL) mt->region_start=get_event_timecode(block->prev->end_event)/U_SEC;
-      else mt->region_start=0.;
-      mt->region_end=get_event_timecode(block->start_event)/U_SEC;
+
+      if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
+	if (block->prev!=NULL) mt->region_start=get_event_timecode(block->prev->end_event)/U_SEC;
+	else mt->region_start=0.;
+	mt->region_end=get_event_timecode(block->start_event)/U_SEC;
+      }
+      else {
+	mt->region_start=get_event_timecode(block->end_event)/U_SEC;
+	mt->region_end=get_event_timecode(block->next->start_event)/U_SEC;
+      }
+
       remove_first_gaps(NULL,mt);
       g_list_free(mt->selected_tracks);
       mt->selected_tracks=g_list_copy(tracks_sel);
@@ -14275,7 +14389,6 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   if (!did_backup) {
-    block=g_object_get_data(G_OBJECT(eventbox),"block_last");
     if (mt->avol_fx!=-1&&block!=NULL&&block->next==NULL&&get_first_event(mt->event_list)!=NULL) {
       apply_avol_filter(mt);
     }
@@ -14674,7 +14787,7 @@ void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t o
   block=get_block_before(mt->audio_draws->data,start_tc/U_SEC,TRUE);
   if (block!=NULL) shortcut=block->end_event;
 
-  block=get_block_after(mt->audio_draws->data,start_tc/U_SEC);
+  block=get_block_after(mt->audio_draws->data,start_tc/U_SEC,FALSE);
 
   // insert audio seek at tc
   frame_event=get_frame_event_at(mt->event_list,start_tc,shortcut,TRUE);

@@ -81,7 +81,7 @@ struct _mt_opts {
 
 #define GRAV_MODE_NORMAL 1
 #define GRAV_MODE_LEFT 2
-#define GRAV_MODE_RIGHT 3 // not yet implemented
+#define GRAV_MODE_RIGHT 3
 
 
 struct _mt {

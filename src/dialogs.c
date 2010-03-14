@@ -1461,6 +1461,9 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   process *procw=(process*)(g_malloc(sizeof(process)));
   gchar tmp_label[256];
   gboolean pthread_islocked=TRUE;
+  GMainContext *ctx=NULL;
+
+  g_main_context_push_thread_default(ctx);
 
   // mutex lock
   do {
@@ -1583,15 +1586,14 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     return;
   }
 
-  while (g_main_context_iteration(NULL,FALSE));
+  while (g_main_context_iteration(ctx,FALSE));
+
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
 
   while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER&&mainw->cancelled!=CANCEL_KEEP&&pthread_islocked) {
     // mutex locked
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(procw->progressbar));
-
-    while (g_main_context_iteration(NULL,FALSE));
-
+    while (g_main_context_iteration(ctx,FALSE));
     pthread_mutex_unlock(&mainw->gtk_mutex);
     do {
       if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
@@ -1604,7 +1606,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   }
 
   gtk_widget_destroy(procw->processing);
-  while (g_main_context_iteration(NULL,FALSE));
+  while (g_main_context_iteration(ctx,FALSE));
   if (pthread_islocked) pthread_mutex_unlock(&mainw->gtk_mutex);
 
   g_free(procw);

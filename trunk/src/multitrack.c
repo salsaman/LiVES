@@ -67,6 +67,8 @@ static weed_plant_t *pb_loop_event,*pb_filter_map;
 
 static gboolean mainw_was_ready;
 
+static gboolean in_auto_back_func=FALSE;
+
 ///////////////////////////////////////////////////////////////////
 
 static LIVES_INLINE gint mt_file_from_clip(lives_mt *mt, gint clip) {
@@ -139,7 +141,7 @@ static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list
 }
 
 
-static GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
+static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, gint frame) {
   GdkPixbuf *thumbnail,*pixbuf;
   GError *error=NULL;
   gchar *buf;
@@ -150,6 +152,8 @@ static GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
   }
 
   if (width<2||height<2) return NULL;
+
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
 
   if (mainw->files[file]->frames>0) {
     weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
@@ -163,6 +167,10 @@ static GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
     g_free(buf);
     if (error!=NULL||pixbuf==NULL) {
       g_error_free(error);
+      if (mt->idlefunc>0) {
+	mt->idlefunc=0;
+	mt->idlefunc=mt_idle_add(mt);
+      }
       return NULL;
     }
     
@@ -172,6 +180,11 @@ static GdkPixbuf *make_thumb (gint file, gint width, gint height, gint frame) {
       gdk_pixbuf_unref(pixbuf);
     }
     else thumbnail=pixbuf;
+  }
+
+  if (mt->idlefunc>0) {
+    mt->idlefunc=0;
+    mt->idlefunc=mt_idle_add(mt);
   }
 
   return thumbnail;
@@ -218,7 +231,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 	twidth=BLOCK_THUMB_WIDTH;
 	if ((i+twidth)>width) twidth=width-i;
 	if (twidth>=2) {
-	  thumbnail=make_thumb(clip,twidth,height,frame_start+(gint)((gdouble)i/(gdouble)width*frames_width));
+	  thumbnail=make_thumb(mt,clip,twidth,height,frame_start+(gint)((gdouble)i/(gdouble)width*frames_width));
 	  // render it in the eventbox
 	  if (thumbnail!=NULL) {
 	    trow=gdk_pixbuf_get_rowstride(thumbnail);
@@ -397,17 +410,17 @@ static gboolean mt_auto_backup(gpointer user_data) {
   int64_t stime,diff;
 
   lives_mt *mt=(lives_mt *)user_data;
-  static gboolean in_auto_back_func=FALSE;
 
   if (!mt->auto_changed||mt->event_list==NULL||mt->idlefunc==0||prefs->mt_auto_back<0) {
     mt->idlefunc=0;
     return FALSE;
   }
 
-
   if (in_auto_back_func) return TRUE;
 
   in_auto_back_func=TRUE;
+
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
 
   gettimeofday(&otv, NULL);
   stime=otv.tv_sec;
@@ -423,12 +436,13 @@ static gboolean mt_auto_backup(gpointer user_data) {
 
   in_auto_back_func=FALSE;
 
+  if (mt->idlefunc>0) mt->idlefunc=mt_idle_add(mt);
+
   return TRUE;
 }
 
 
 guint mt_idle_add(lives_mt *mt) {
-  // we don't have provision for saving with scrap file yet (TODO)
   if (prefs->mt_auto_back<0) return 0;
 
   if (prefs->mt_auto_back==0) {
@@ -626,7 +640,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	  
 	  if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
 	  thumbnail=NULL;
-	  if (framenum!=last_framenum) thumbnail=make_thumb(filenum,width,eventbox->allocation.height-1,framenum);
+	  if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,eventbox->allocation.height-1,framenum);
 	  last_framenum=framenum;
 	  if (i+width>offset_end) width=offset_end-i;
 	  // render it in the eventbox
@@ -819,6 +833,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
   gint startx,width;
   GdkPixbuf *bgimage;
   track_rect *sblock=NULL;
+  gulong idlefunc;
 
   if (mt->no_expose) return TRUE;
 
@@ -838,6 +853,11 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
     return FALSE;
   }
 
+
+  idlefunc=mt->idlefunc;
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+  mt->idlefunc=0;
+
   if (width>eventbox->allocation.width-startx) width=eventbox->allocation.width-startx;
 
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "drawn"))) {
@@ -847,6 +867,9 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
       gdk_pixbuf_render_to_drawable (bgimage,GDK_DRAWABLE (eventbox->window),mainw->gc,startx,0,startx,0,width,-1,GDK_RGB_DITHER_NONE,0,0);
       if (is_audio_eventbox(mt,eventbox)&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL) draw_aparams(mt,eventbox,mt->aparam_view_list,mt->avol_init_event,startx,width);
       if (mt->block_selected!=NULL) draw_block(mt,mt->block_selected,-1,-1);
+      if (idlefunc>0) {
+	mt->idlefunc=mt_idle_add(mt);
+      }
       return FALSE;
     }
   }
@@ -887,6 +910,9 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
 
   set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
 
+  if (idlefunc>0) {
+    mt->idlefunc=mt_idle_add(mt);
+  }
   return FALSE;
 }
 
@@ -2222,6 +2248,8 @@ void mt_show_current_frame(lives_mt *mt) {
   weed_plant_t *frame_layer=mainw->frame_layer;
   gboolean internal_messaging=mainw->internal_messaging;
 
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+
   // show frame image in window
   if (!mt->mt_frame_preview) {
     gboolean sep_win=mainw->sep_win;
@@ -2248,10 +2276,7 @@ void mt_show_current_frame(lives_mt *mt) {
 
     if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
     while (g_main_context_iteration(NULL,FALSE));
-    if (mt->idlefunc>0) {
-      mt->idlefunc=0;
-      mt->idlefunc=mt_idle_add(mt);
-    }
+  
     mainw->sep_win=FALSE;
     add_to_playframe();
     mainw->sep_win=sep_win;
@@ -2388,6 +2413,12 @@ void mt_show_current_frame(lives_mt *mt) {
 
   GTK_RULER(mt->timeline)->position=ptr_time;
   gtk_widget_queue_draw(mt->timeline);
+
+  if (mt->idlefunc>0) {
+    mt->idlefunc=0;
+    mt->idlefunc=mt_idle_add(mt);
+  }
+
 }
 
 
@@ -8800,7 +8831,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 	}
       }
       // make a small thumbnail, add it to the clips box
-      thumbnail=make_thumb(i,width,height,mainw->files[i]->start);
+      thumbnail=make_thumb(mt,i,width,height,mainw->files[i]->start);
 
       eventbox=gtk_event_box_new();
       if (palette->style&STYLE_1) {
@@ -9333,6 +9364,9 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, gdouble timesecs
     mt_sensitise(mt);
   }
 
+  // get this again because it could have moved
+  block = (track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
+
   if (!did_backup) {
     if (mt->avol_fx!=-1&&(block==NULL||block->next==NULL)&&mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&get_first_event(mt->event_list)!=NULL) {
       apply_avol_filter(mt);
@@ -9518,7 +9552,7 @@ static void update_in_image(lives_mt *mt) {
 
   calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
 
-  thumb=make_thumb(filenum,width,height,frame_start);
+  thumb=make_thumb(mt,filenum,width,height,frame_start);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
   if (thumb!=NULL) gdk_pixbuf_unref(thumb);
 }
@@ -9545,7 +9579,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
 
   calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
 
-  thumb=make_thumb(filenum,width,height,frame_end);
+  thumb=make_thumb(mt,filenum,width,height,frame_end);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
   if (thumb!=NULL) gdk_pixbuf_unref(thumb);
 }
@@ -10514,7 +10548,7 @@ void polymorph (lives_mt *mt, gshort poly) {
       }
       
       // start image
-      thumb=make_thumb(filenum,width,height,frame_start);
+      thumb=make_thumb(mt,filenum,width,height,frame_start);
       gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
       if (thumb!=NULL) gdk_pixbuf_unref(thumb);
     }
@@ -10588,7 +10622,7 @@ void polymorph (lives_mt *mt, gshort poly) {
 
     if (track>-1) {
       // end image
-      thumb=make_thumb(filenum,width,height,frame_end);
+      thumb=make_thumb(mt,filenum,width,height,frame_end);
       gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
       if (thumb!=NULL) gdk_pixbuf_unref(thumb);
       out_end_range=count_resampled_frames(mainw->files[filenum]->frames,mainw->files[filenum]->fps,mt->fps)/mt->fps;
@@ -11131,6 +11165,8 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
   GtkWidget *menu=gtk_menu_new();
   gboolean has_something=FALSE;
 
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+
   mouse_select_end(NULL,mt);
 
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected frame"));
@@ -11183,6 +11219,12 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
   }
   else gtk_widget_destroy(menu);
 
+  if (mt->idlefunc>0) {
+    mt->idlefunc=0;
+    mt->idlefunc=mt_idle_add(mt);
+  }
+
+
 }
 
 
@@ -11201,6 +11243,8 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
   gint old_track=mt->current_track;
   gboolean got_track=FALSE;
   weed_timecode_t tc,tcpp;
+
+  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
 
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
 
@@ -11255,12 +11299,11 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       gdk_display_warp_pointer(mt->display,screen,abs_x+mt->hotspot_x,abs_y+mt->hotspot_y-height/2);
 
       if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
-      while (g_main_context_iteration(NULL,FALSE));
-      if (mt->idlefunc>0) {
-	mt->idlefunc=0;
-	mt->idlefunc=mt_idle_add(mt);
+      if (!in_auto_back_func) {
+	pthread_mutex_lock(&mainw->gtk_mutex);
+	while (g_main_context_iteration(NULL,FALSE));
+	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
-
 #endif
     }
 
@@ -11276,6 +11319,7 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       // need to move at least 1.5 pixels, or to another track
       if ((track!=mt->current_track||(tc-start_tc>(tcpp*3/2))||(start_tc-tc>(tcpp*3/2)))&&((old_track<0&&track<0)||(old_track>=0&&track>=0))) {
 	move_block(mt,mt->putative_block,timesecs,old_track,track);
+	mt->putative_block=NULL;
 
 	gdk_window_get_pointer(GDK_WINDOW (eventbox->window), &x, &y, NULL);
 	timesecs=get_time_from_x(mt,x);
@@ -11292,6 +11336,12 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
 
   set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
   gtk_widget_set_sensitive(mt->mm_menuitem,TRUE);
+
+  if (mt->idlefunc>0) {
+    mt->idlefunc=0;
+    mt->idlefunc=mt_idle_add(mt);
+  }
+
   return TRUE;
 }
 
@@ -12084,7 +12134,7 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, gboole
 	if (new_tc<tc_first) break;
 
 	// subtract the length of the block to get the start point
-	block_tc=new_tc-get_event_timecode(block->start_event);
+	block_tc=new_tc-get_event_timecode(block->start_event)+U_SEC/mt->fps;
 
 	if (tc>new_tc) {
 	  // move this block to tc
@@ -14355,38 +14405,39 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
 
   block=g_object_get_data(G_OBJECT(eventbox),"block_last");
 
-  if ((mt->opts.grav_mode==GRAV_MODE_LEFT||(block->next!=NULL&&mt->opts.grav_mode==GRAV_MODE_RIGHT))&&!(did_backup||mt->moving_block)) {
+  if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(block->next!=NULL&&mt->opts.grav_mode==GRAV_MODE_RIGHT))&&!(did_backup||mt->moving_block)) {
     gdouble oldr_start=mt->region_start;
     gdouble oldr_end=mt->region_end;
     GList *tracks_sel;
-    if (block!=NULL) {
-      track_rect *selblock=NULL;
-      if (mt->block_selected!=block) selblock=mt->block_selected;
-      tracks_sel=g_list_copy(mt->selected_tracks);
-      if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
-      mt->selected_tracks=NULL;
-      mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
-
-      if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
-	if (block->prev!=NULL) mt->region_start=get_event_timecode(block->prev->end_event)/U_SEC;
-	else mt->region_start=0.;
-	mt->region_end=get_event_timecode(block->start_event)/U_SEC;
-      }
-      else {
-	mt->region_start=get_event_timecode(block->end_event)/U_SEC;
-	mt->region_end=get_event_timecode(block->next->start_event)/U_SEC;
-      }
-
-      remove_first_gaps(NULL,mt);
-      g_list_free(mt->selected_tracks);
-      mt->selected_tracks=g_list_copy(tracks_sel);
-      if (tracks_sel!=NULL) g_list_free(tracks_sel);
-      mt->region_start=oldr_start;
-      mt->region_end=oldr_end;
-      mt_sensitise(mt);
-      if (selblock!=NULL) mt->block_selected=selblock;
+    track_rect *selblock=NULL;
+    if (mt->block_selected!=block) selblock=mt->block_selected;
+    tracks_sel=g_list_copy(mt->selected_tracks);
+    if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
+    mt->selected_tracks=NULL;
+    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
+    
+    if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
+      if (block->prev!=NULL) mt->region_start=get_event_timecode(block->prev->end_event)/U_SEC;
+      else mt->region_start=0.;
+      mt->region_end=get_event_timecode(block->start_event)/U_SEC;
     }
+    else {
+      mt->region_start=get_event_timecode(block->end_event)/U_SEC;
+      mt->region_end=get_event_timecode(block->next->start_event)/U_SEC;
+    }
+    
+    remove_first_gaps(NULL,mt);
+    g_list_free(mt->selected_tracks);
+    mt->selected_tracks=g_list_copy(tracks_sel);
+    if (tracks_sel!=NULL) g_list_free(tracks_sel);
+    mt->region_start=oldr_start;
+    mt->region_end=oldr_end;
+    mt_sensitise(mt);
+    if (selblock!=NULL) mt->block_selected=selblock;
   }
+
+  // get this again because it could have moved
+  block=g_object_get_data(G_OBJECT(eventbox),"block_last");
 
   if (!did_backup) {
     if (mt->avol_fx!=-1&&block!=NULL&&block->next==NULL&&get_first_event(mt->event_list)!=NULL) {
@@ -14468,29 +14519,36 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
 
   insert_audio (mt->file_selected,ins_start,ins_end,secs*U_SECL,mt->insert_avel,dir,eventbox,mt,NULL);
 
-  if (mt->opts.grav_mode==GRAV_MODE_LEFT&&(!did_backup||mt->moving_block)) {
+  block=g_object_get_data(G_OBJECT(eventbox),"block_last");
+
+  if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(mt->opts.grav_mode==GRAV_MODE_RIGHT&&block->next!=NULL))&&!(did_backup||mt->moving_block)) {
     gdouble oldr_start=mt->region_start;
     gdouble oldr_end=mt->region_end;
-    track_rect *block=g_object_get_data(G_OBJECT(eventbox),"block_last");
     GList *tracks_sel;
-    if (block!=NULL) {
-      track_rect *selblock=NULL;
-      if (mt->block_selected!=block) selblock=mt->block_selected;
-      tracks_sel=g_list_copy(mt->selected_tracks);
-      if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
-      mt->selected_tracks=NULL;
-      mt->current_track=-1;
+    track_rect *selblock=NULL;
+    if (mt->block_selected!=block) selblock=mt->block_selected;
+    tracks_sel=g_list_copy(mt->selected_tracks);
+    if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
+    mt->selected_tracks=NULL;
+    mt->current_track=-1;
+    
+    if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
       if (block->prev!=NULL) mt->region_start=get_event_timecode(block->prev->end_event)/U_SEC;
       else mt->region_start=0.;
       mt->region_end=get_event_timecode(block->start_event)/U_SEC;
-      remove_first_gaps(NULL,mt);
-      g_list_free(mt->selected_tracks);
-      mt->selected_tracks=g_list_copy(tracks_sel);
-      if (tracks_sel!=NULL) g_list_free(tracks_sel);
-      mt->region_start=oldr_start;
-      mt->region_end=oldr_end;
-      if (selblock!=NULL) mt->block_selected=selblock;
     }
+    else {
+      mt->region_start=get_event_timecode(block->end_event)/U_SEC;
+      mt->region_end=get_event_timecode(block->next->start_event)/U_SEC;
+    }
+    
+    remove_first_gaps(NULL,mt);
+    g_list_free(mt->selected_tracks);
+    mt->selected_tracks=g_list_copy(tracks_sel);
+    if (tracks_sel!=NULL) g_list_free(tracks_sel);
+    mt->region_start=oldr_start;
+    mt->region_end=oldr_end;
+    if (selblock!=NULL) mt->block_selected=selblock;
   }
 
   mt->did_backup=did_backup;
@@ -14509,9 +14567,11 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
       if (xeventbox!=NULL) gtk_widget_queue_draw (xeventbox);
     }
   }
+
+  // get this again because it could have moved
+  block=g_object_get_data(G_OBJECT(eventbox),"block_last");
   
   if (!did_backup) {
-    block=g_object_get_data(G_OBJECT(eventbox),"block_last");
     if (mt->avol_fx!=-1&&block!=NULL&&block->next==NULL&&get_first_event(mt->event_list)!=NULL) {
       apply_avol_filter(mt);
     }

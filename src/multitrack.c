@@ -7793,6 +7793,7 @@ static track_rect *add_block_start_point (GtkWidget *eventbox, weed_timecode_t t
   }
 
   if (block==NULL) g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)new_block);
+
   return new_block;
 }
 
@@ -11397,7 +11398,7 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
   gtk_widget_set_sensitive(mt->mm_menuitem,FALSE);
 
   gdk_window_get_pointer(GDK_WINDOW (eventbox->window), &x, &y, NULL);
-  timesecs=get_time_from_x(mt,x);
+  timesecs=get_time_from_x(mt,x+mt->hotspot_x);
 
   if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
   else track=-1;

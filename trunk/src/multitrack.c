@@ -386,7 +386,6 @@ static void save_mt_autoback(lives_mt *mt) {
   int fd;
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
 
-  if (mt->is_ready) set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   add_markers(mt,mt->event_list);
   do_threaded_dialog(_("Auto backup"),FALSE);
@@ -395,7 +394,6 @@ static void save_mt_autoback(lives_mt *mt) {
   write_backup_layout_numbering(mt);
   remove_markers(mt->event_list);
   close(fd);
-  if (mt->is_ready) set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
 
   g_free(asave_file);
 }

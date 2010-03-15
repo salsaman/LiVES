@@ -9327,7 +9327,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, gdouble timesecs
       // gravity left - move left until we hit another block or time 0
       if (rtc>=0.) {
 	lblock=block->prev;
-	if (lblock!=NULL) rstart=get_event_timecode(lblock->end_event)/U_SEC+1./mt->fps;
+	if (lblock!=NULL) rstart=get_event_timecode(lblock->end_event)/U_SEC;
       }
       rend=get_event_timecode(block->end_event)/U_SEC;
     }
@@ -9335,7 +9335,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, gdouble timesecs
       // gravity right - move right until we hit the next block
       lblock=block->next;
       rstart=get_event_timecode(block->start_event)/U_SEC;
-      rend=get_event_timecode(lblock->start_event)/U_SEC-1./mt->fps;
+      rend=get_event_timecode(lblock->start_event)/U_SEC;
     }
 
     mt->region_start=rstart;
@@ -12134,7 +12134,7 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, gboole
 	if (new_tc<tc_first) break;
 
 	// subtract the length of the block to get the start point
-	block_tc=new_tc-get_event_timecode(block->start_event)+U_SEC/mt->fps;
+	block_tc=new_tc-get_event_timecode(block->start_event)+(gdouble)(track>-1)*U_SEC/mt->fps;
 
 	if (tc>new_tc) {
 	  // move this block to tc
@@ -14866,7 +14866,7 @@ void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t o
     insert_audio_event_at(mt->event_list,frame_event,-1,filenum,0.,0.);
     add_block_end_point (mt->audio_draws->data, frame_event);
   }
-  else add_block_end_point (mt->audio_draws->data, get_prev_frame_event(block->start_event));
+  else add_block_end_point (mt->audio_draws->data, block->start_event);
 
   end_secs=event_list_get_end_secs(mt->event_list);
   if (end_secs>mt->end_secs) {

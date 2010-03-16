@@ -150,10 +150,15 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   // ntc is adjusted backwards to timecode of the new frame
 
-  // this is currently used for the blend file, and for jack transport start position
 
-  // in future it can be used to calculate the playing frame also
-  // this should vastly simplify the code in process_one()
+  // the basic operation is quite simple, given the time difference between the last frame and 
+  // now, we calculate the new frame from the current fps and then ensure it is in the range
+  // first_frame -> last_frame
+
+  // Complications arise because we have ping-pong loop mode where the the play direction 
+  // alternates - here we need to determine how many times we have reached the start or end 
+  // play point. This is similar to the winding number in topological calculations.
+
 
 
   weed_timecode_t dtc=*ntc-otc;
@@ -196,6 +201,8 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
   if (mainw->playing_file==fileno) {
 
     if (mainw->noframedrop) {
+      // if noframedrop is set, we may not skip any frames
+      // - the usual situation is that we are allowed to skip frames
       if (nframe>cframe) nframe=cframe+1;
       else if (nframe<cframe) nframe=cframe-1;
     }
@@ -260,12 +267,18 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 	if (nframe<0) nframe+=last_frame+1;
 	else nframe+=first_frame;
 	if (nframe>cframe&&mainw->playing_file==fileno&&mainw->loop_cont&&!mainw->loop) {
+	  // resync audio at end of loop section (playing backwards)
 	  resync_audio(nframe);
 	  did_resync=TRUE;
 	}
       }
       else {
 	nframe+=last_frame; // normal
+	if (nframe>last_frame) {
+	  nframe=last_frame-(nframe-last_frame);
+	  if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	  else sfile->pb_fps=-sfile->pb_fps;
+	}
       }
     }
     else {
@@ -283,7 +296,6 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
     nframe+=first_frame;
     if (dir==1) {
       // odd winding
-      if (mainw->playing_file==fileno) mainw->deltaticks=0;
       if (mainw->ping_pong) {
 	// bounce
 	nframe=last_frame-(nframe-(first_frame-1));
@@ -291,16 +303,29 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 	else sfile->pb_fps=-sfile->pb_fps;
       }
     }
-    else if (!mainw->ping_pong&&mainw->playing_file==fileno&&nframe<cframe&&mainw->loop_cont&&!mainw->loop) {
+    else if (mainw->playing_sel&&!mainw->ping_pong&&mainw->playing_file==fileno&&nframe<cframe&&mainw->loop_cont&&!mainw->loop) {
       // resync audio at start of loop selection
-      if (nframe<first_frame) nframe=first_frame;
+      if (nframe<first_frame) {
+	nframe=last_frame-(first_frame-nframe)+1;
+      }
       resync_audio(nframe);
       did_resync=TRUE;
     }
-    if (nframe<first_frame) nframe=first_frame;
+    if (nframe<first_frame) {
+      // scratch or transport backwards
+      if (mainw->ping_pong) {
+	nframe=first_frame;
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	else sfile->pb_fps=-sfile->pb_fps;
+
+      }
+      else nframe=last_frame-nframe;
+    }
   }
 
-  if (mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno&&!did_resync) resync_audio(nframe);
+  if (mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno&&!did_resync) {
+    resync_audio(nframe);
+  }
 
   return nframe;
 }

@@ -549,7 +549,6 @@ static void lives_init(_ign_opts *ign_opts) {
     mainw->clipstore[i]=0;
   }
 
-  mainw->loop=TRUE;
   mainw->ping_pong=FALSE;
 
   mainw->nervous=FALSE;

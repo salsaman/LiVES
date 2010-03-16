@@ -798,7 +798,7 @@ create_LiVES (void)
   gtk_widget_show (mainw->loop_video);
   gtk_container_add (GTK_CONTAINER (menuitem13_menu), mainw->loop_video);
   gtk_widget_set_sensitive (mainw->loop_video, FALSE);
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->loop_video),TRUE);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->loop_video),mainw->loop);
   gtk_widget_add_accelerator (mainw->loop_video, "activate", mainw->accel_group,
                               GDK_l, 0,
                               GTK_ACCEL_VISIBLE);

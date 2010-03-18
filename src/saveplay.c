@@ -2408,7 +2408,7 @@ create_cfile(void) {
 
 
 gboolean
-get_new_handle (gint index, gchar *name) {
+get_new_handle (gint index, const gchar *name) {
   // here is where we first initialize for the clipboard
   // and for paste_as_new, and restore
   // pass in name as NULL or "" and it will be set with an untitled number
@@ -3683,26 +3683,33 @@ void add_to_recovery_file (gchar *handle) {
 void rewrite_recovery_file(void) {
   int i;
   gchar *recovery_entry;
-  int recovery_fd;
+  int recovery_fd=-1;
   GList *clist=mainw->cliplist;
+  gboolean opened=FALSE;
 
   if (clist==NULL) {
     unlink(mainw->recovery_file);
     return;
   }
 
-  recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
 
   while (clist!=NULL) {
     i=GPOINTER_TO_INT(clist->data);
-    if (i!=mainw->scrap_file) recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
-    else recovery_entry=g_strdup_printf("scrap|%s\n",mainw->files[i]->handle);
-    dummyvar=write(recovery_fd,recovery_entry,strlen(recovery_entry));
-    g_free(recovery_entry);
+    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
+      if (i!=mainw->scrap_file) recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
+      else recovery_entry=g_strdup_printf("scrap|%s\n",mainw->files[i]->handle);
+      if (!opened) {
+	recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
+	opened=TRUE;
+      }
+      dummyvar=write(recovery_fd,recovery_entry,strlen(recovery_entry));
+      g_free(recovery_entry);
+    }
     clist=clist->next;
   }
 
-  close(recovery_fd);
+  if (!opened) unlink(mainw->recovery_file);
+  else close(recovery_fd);
 
   if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) write_backup_layout_numbering(mainw->multitrack);
 

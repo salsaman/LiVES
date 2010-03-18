@@ -398,6 +398,8 @@ static gboolean pre_init(void) {
   mainw->volume=1.f;
   mainw->ccpd_with_sound=TRUE;
 
+  mainw->loop=mainw->loop_cont=FALSE;
+
   if (!strcasecmp(prefs->theme,"none")) return FALSE;
   return TRUE;
 
@@ -500,7 +502,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   for (i=0;i<=MAX_FILES;mainw->files[i++]=NULL);
   mainw->fs=FALSE;
-  mainw->loop=mainw->loop_cont=FALSE;
   mainw->prefs_changed=FALSE;
   mainw->last_dprint_file=mainw->current_file=mainw->playing_file=-1;
   mainw->first_free_file=1;
@@ -2859,7 +2860,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
     break;
 #ifdef HAVE_YUV4MPEG
   case CLIP_TYPE_YUV4MPEG:
-    weed_layer_set_from_yuv4m(layer,sfile->ext_src);
+    weed_layer_set_from_yuv4m(layer,sfile);
     mainw->osc_block=FALSE;
     return TRUE;
 #endif
@@ -3894,6 +3895,13 @@ void close_current_file(gint file_to_switch_to) {
 
     }
 
+    if (cfile->clip_type==CLIP_TYPE_YUV4MPEG) {
+#ifdef HAVE_YUV4MPEG
+      lives_yuv_stream_stop_read(cfile->ext_src);
+      g_free (cfile->ext_src);
+#endif
+    }
+
     g_free(cfile);
     cfile=NULL;
 
@@ -4514,7 +4522,7 @@ void
 resize (gdouble scale) {
   // resize the frame widgets
   // set scale<0. to _force_ the playback frame to expand (for external capture)
-#define HSPACE 300
+#define HSPACE 320
   gdouble oscale=scale;
   gint xsize;
   gint bx,by;
@@ -4536,7 +4544,7 @@ resize (gdouble scale) {
     scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
   }
 
-  hsize=(scr_width-(70+bx))/3;
+  hsize=(scr_width-(72+bx))/3;
   vsize=(scr_height-(HSPACE+hspace+by));
 
   if (scale<0.) {

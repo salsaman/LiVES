@@ -1122,7 +1122,7 @@ void add_to_winmenu(void) {
   }
   gtk_widget_show (active_image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (cfile->menuentry), active_image);
-  mainw->clips_available++;
+  if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) mainw->clips_available++;
   mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
   cfile->old_frames=cfile->frames;
   cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
@@ -1135,9 +1135,12 @@ void
 remove_from_winmenu(void) {
   gtk_container_remove(GTK_CONTAINER(mainw->winmenu), cfile->menuentry);
   gtk_widget_destroy(cfile->menuentry);
-  mainw->clips_available--;
   mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
-  if (prefs->crash_recovery) rewrite_recovery_file();
+  if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
+    mainw->clips_available--;
+    if (prefs->crash_recovery) rewrite_recovery_file();
+  }
+
 }
 
 

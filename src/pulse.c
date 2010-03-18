@@ -60,14 +60,14 @@ gboolean lives_pulse_init (short startup_phase) {
   pa_state=pa_context_get_state(pcon);
 
   gettimeofday(&otv, NULL);
-  stime=otv.tv_sec*1000000000+otv.tv_usec;
+  stime=otv.tv_sec*1000000+otv.tv_usec;
 
   while (pa_state!=PA_CONTEXT_READY&&ntime<PULSE_START_WAIT) {
     g_usleep(prefs->sleep_time);
     sched_yield();
     pa_state=pa_context_get_state(pcon);
     gettimeofday(&otv, NULL);
-    ntime=(otv.tv_sec*1000000000+otv.tv_usec-stime)>>10;
+    ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
   }
 
   if (ntime>=PULSE_START_WAIT) {

@@ -26,6 +26,9 @@
 #include "audio.h"
 #include "cvirtual.h"
 
+#ifdef HAVE_YUV4MPEG
+#include "lives-yuv4mpeg.h"
+#endif
 
 static gchar file_name[32768];
 
@@ -127,8 +130,15 @@ lives_exit (void) {
 
     for (i=0;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {
-	if (((!mainw->leave_files&&!prefs->crash_recovery&&strlen(mainw->set_name)==0))||((i==0&&!mainw->only_close)||(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&mainw->files[i]->clip_type!=CLIP_TYPE_FILE)||(i==mainw->scrap_file&&!mainw->leave_recovery))||(mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
-	  // close all open clips
+	if ((!mainw->leave_files&&!prefs->crash_recovery&&strlen(mainw->set_name)==0)||(!mainw->only_close&&(i==0||(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&mainw->files[i]->clip_type!=CLIP_TYPE_FILE)))||(i==mainw->scrap_file&&!mainw->leave_recovery)||(mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
+	  // close all open clips, except for ones we want to retain
+
+#ifdef HAVE_YUV4MPEG
+	  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG) {
+	    lives_yuv_stream_stop_read(mainw->files[i]->ext_src);
+	    g_free (mainw->files[i]->ext_src);
+	  }
+#endif
 	  com=g_strdup_printf("smogrify close %s",mainw->files[i]->handle);
 	  dummyvar=system(com);
 	  g_free(com);
@@ -197,7 +207,7 @@ lives_exit (void) {
     if (mainw->only_close) {
       mainw->suppress_dprint=TRUE;
       for (i=1;i<=MAX_FILES;i++) {
-	if (mainw->files[i]!=NULL&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
+	if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
 	  mainw->current_file=i;
 	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  close_current_file(0);
@@ -3617,7 +3627,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   while (cliplist!=NULL) {
     i=GPOINTER_TO_INT(cliplist->data);
-    if (mainw->files[i]!=NULL) {
+    if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)) {
       if ((tmp=strrchr(mainw->files[i]->handle,'/'))!=NULL) {
 	g_snprintf(new_handle,256,"%s/clips%s",mainw->set_name,tmp);
       }
@@ -4199,7 +4209,7 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
   char buff[512];
   fileinfo *filew;
 
-  gchar *sigs,*ends;
+  gchar *sigs,*ends,*tmp;
   
   if (mainw->current_file==-1) return;
 
@@ -4210,7 +4220,8 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
   
   if (cfile->frames>0) {
     // type
-    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp)\n"),cfile->type,cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png",cfile->bpp);
+    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp)\n"),cfile->type,(tmp=g_strdup(cfile->clip_type==CLIP_TYPE_YUV4MPEG?(_("buffered")):(cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp);
+    g_free(tmp);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview24)),buff, -1);
     // fps
     g_snprintf(buff,512,"\n  %.3f%s",cfile->fps,cfile->ratio_fps?"...":"");

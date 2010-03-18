@@ -378,6 +378,7 @@ gboolean process_one (gboolean visible) {
   gint oframeno=0;
 
   gboolean normal_time;
+  gboolean show_frame;
 
 #ifdef RT_AUDIO
   gdouble audio_stretch;
@@ -477,20 +478,30 @@ gboolean process_one (gboolean visible) {
     new_ticks=mainw->currticks+mainw->deltaticks;
     
     oframeno=cfile->last_frameno=cfile->frameno;
+    show_frame=FALSE;
     cfile->frameno=calc_new_playback_position(mainw->current_file,mainw->startticks,&new_ticks);
-    mainw->startticks=new_ticks;
+    if (new_ticks!=mainw->startticks) {
+      show_frame=TRUE;
+      mainw->startticks=new_ticks;
+    }
 
     mainw->scratch=SCRATCH_NONE;
     
     // play next frame
     if (G_LIKELY(mainw->cancelled==CANCEL_NONE)) {
-      // calculate the audio 'frame'
+
+
+      // calculate the audio 'frame' - TODO
       mainw->aframeno=(gint64)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
       if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:cfile->laudio_time*cfile->fps)))) {
 	mainw->firstticks=mainw->startticks-mainw->deltaticks;
       }
 
-      if ((mainw->fixed_fpsd<=0.&&cfile->frameno!=oframeno&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
+
+
+      if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
+	// time to show a new frame
+
 	load_frame_image(cfile->frameno,oframeno);
 	last_display_ticks=mainw->currticks;
       }
@@ -1788,4 +1799,9 @@ void do_encoder_img_ftm_error(render_details *rdet) {
   do_error_dialog_with_check_transient(msg,TRUE,0,GTK_WINDOW(rdet->dialog));
 
   g_free(msg);
+}
+
+
+void do_card_in_use_error(void) {
+  do_blocking_error_dialog(_("\nThis card is already in use and cannot be opened multiple times.\n"));
 }

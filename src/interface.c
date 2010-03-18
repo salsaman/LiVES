@@ -1934,6 +1934,10 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   // type 2 = vcd title -- do we need chapter as well ?
   // type 3 = number of tracks in mt
 
+
+  // type 4 = TV card (device and channel)
+  // type 5 = fw card
+
   // TODO - add pref for dvd/vcd device
 
   // TODO - for CD make this nicer - get track names
@@ -1944,7 +1948,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   GtkWidget *hbox17;
   GtkWidget *hbox17b;
   GtkWidget *label61;
-  GtkWidget *label62;
+  GtkWidget *label62=NULL;
   GtkWidget *label62b;
   GtkObject *spinbutton35_adj=NULL;
   GtkWidget *spinbutton35;
@@ -1970,6 +1974,9 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   else if (type==3) {
     gtk_window_set_title (GTK_WINDOW (cd_dialog), _("LiVES:- Change Maximum Visible Tracks"));
   }
+  else if (type==4||type==5) {
+    gtk_window_set_title (GTK_WINDOW (cd_dialog), _("LiVES:- Device details"));
+  }
 
   gtk_window_set_position (GTK_WINDOW (cd_dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (cd_dialog), TRUE);
@@ -1978,7 +1985,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   gtk_window_set_default_size (GTK_WINDOW (cd_dialog), 300, 200);
 
   if (!prefs->show_gui) {
-    if (type==0||type==1||type==2) {
+    if (type==0||type==1||type==2||type==4||type==5) {
       gtk_window_set_transient_for(GTK_WINDOW(cd_dialog),GTK_WINDOW(mainw->LiVES));
     }
     else {
@@ -2010,6 +2017,12 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   else if (type==3) {
     label_text=g_strdup(_("Maximum number of tracks to display"));
   }
+  else if (type==4) {
+    label_text=g_strdup(_("Device:        /dev/video"));
+  }
+  else if (type==5) {
+    label_text=g_strdup(_("Device:        fw:"));
+  }
 
   label61 = gtk_label_new (label_text);
   g_free(label_text);
@@ -2022,25 +2035,31 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   gtk_label_set_justify (GTK_LABEL (label61), GTK_JUSTIFY_LEFT);
 
   if (type==0||type==1||type==2) {
-    spinbutton35_adj = gtk_adjustment_new (mainw->fx1_val, 1, 256, 1, 10, 0);
+    spinbutton35_adj = gtk_adjustment_new (mainw->fx1_val, 1., 256., 1., 10., 0.);
   }
   else if (type==3) {
-    spinbutton35_adj = gtk_adjustment_new (mainw->fx1_val, 4, 8, 1, 1, 0);
+    spinbutton35_adj = gtk_adjustment_new (mainw->fx1_val, 4., 8., 1., 1., 0.);
+  }
+  else if (type==4||type==5) {
+    spinbutton35_adj = gtk_adjustment_new (0., 0., 7., 1., 1., 0.);
   }
 
   spinbutton35 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton35_adj), 1, 0);
   gtk_widget_show (spinbutton35);
   gtk_box_pack_start (GTK_BOX (hbox16), spinbutton35, FALSE, TRUE, 0);
 
+
   hbox17 = gtk_hbox_new (FALSE, 50);
-  spinbutton36_adj = gtk_adjustment_new (mainw->fx2_val, 1, 1024, 1, 10, 0);
+  if (type==1) spinbutton36_adj = gtk_adjustment_new (mainw->fx2_val, 1, 1024, 1, 10, 0);
+  else if (type==4) spinbutton36_adj = gtk_adjustment_new (1, 1, 69, 1, 1, 0);
   spinbutton36 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36_adj), 1, 0);
 
-  if (type==1) {
+  if (type==1||type==4) {
     gtk_widget_show (hbox17);
     gtk_box_pack_start (GTK_BOX (dialog_vbox11), hbox17, TRUE, TRUE, 0);
 
-    label62=gtk_label_new(_("Chapter  "));
+    if (type==1) label62=gtk_label_new(_("Chapter  "));
+    else if (type==4) label62=gtk_label_new(_("Channel  "));
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg (label62, GTK_STATE_NORMAL, &palette->normal_fore);
     }
@@ -2053,24 +2072,26 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_box_pack_start (GTK_BOX (hbox17), spinbutton36, FALSE, TRUE, 0);
 
 
-    hbox17b = gtk_hbox_new (FALSE, 50);
-    spinbutton36b_adj = gtk_adjustment_new (mainw->fx3_val, 128, 159, 1, 1, 0);
-    spinbutton36b = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36b_adj), 1, 0);
-
-    gtk_widget_show (hbox17b);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox11), hbox17b, TRUE, TRUE, 0);
-
-    label62b=gtk_label_new(_("Audio ID  "));
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label62b, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (type==1) {
+      hbox17b = gtk_hbox_new (FALSE, 50);
+      if (type==1) spinbutton36b_adj = gtk_adjustment_new (mainw->fx3_val, 128, 159, 1, 1, 0);
+      spinbutton36b = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36b_adj), 1, 0);
+      
+      gtk_widget_show (hbox17b);
+      gtk_box_pack_start (GTK_BOX (dialog_vbox11), hbox17b, TRUE, TRUE, 0);
+      
+      label62b=gtk_label_new(_("Audio ID  "));
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_fg (label62b, GTK_STATE_NORMAL, &palette->normal_fore);
+      }
+      
+      gtk_widget_show (label62b);
+      gtk_box_pack_start (GTK_BOX (hbox17b), label62b, FALSE, FALSE, 0);
+      gtk_label_set_justify (GTK_LABEL (label62b), GTK_JUSTIFY_LEFT);
+      
+      gtk_widget_show (spinbutton36b);
+      gtk_box_pack_start (GTK_BOX (hbox17b), spinbutton36b, FALSE, TRUE, 0);
     }
-
-    gtk_widget_show (label62b);
-    gtk_box_pack_start (GTK_BOX (hbox17b), label62b, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label62b), GTK_JUSTIFY_LEFT);
-
-    gtk_widget_show (spinbutton36b);
-    gtk_box_pack_start (GTK_BOX (hbox17b), spinbutton36b, FALSE, TRUE, 0);
   }
 
   dialog_action_area11 = GTK_DIALOG (cd_dialog)->action_area;
@@ -2102,9 +2123,11 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 			    GINT_TO_POINTER (3));
   }
 
-  g_signal_connect (GTK_OBJECT (cancelbutton9), "clicked",
-		    G_CALLBACK (on_cancel_button1_clicked),
-		    NULL);
+  if (type!=4&&type!=5) {
+    g_signal_connect (GTK_OBJECT (cancelbutton9), "clicked",
+		      G_CALLBACK (on_cancel_button1_clicked),
+		      NULL);
+  }
 
   if (type==0) {
     g_signal_connect (GTK_OBJECT (okbutton8), "clicked",

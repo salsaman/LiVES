@@ -1474,7 +1474,7 @@ if (defined($ARGV[0])) {
 	    $cache=$ARGV[3];
 	    $fifofile=$ARGV[4];
 
-	    system("dvgrab -noavc -card $cardno - 2>/dev/null| mplayer - -cache $cache -demuxer lavf -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1");
+	    system("dvgrab -noavc -card $cardno - 2>/dev/null| mplayer - -really-quiet -cache $cache -demuxer lavf -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1");
 	    exit 0;
 	}
 

@@ -771,6 +771,8 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
 
 
 gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
+  // get the time in ticks since either playback started or since last seek
+
   volatile aserver_message_t *msg=pulsed->msgq;
   gdouble frames_written;
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (pulse_get_msgq(pulsed)!=NULL); // wait for seek
@@ -781,11 +783,18 @@ gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
 
 }
 
+gdouble lives_pulse_get_pos(pulse_driver_t *pulsed) {
+  // get current time position (seconds) in audio file
+  return pulsed->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+}
+
 
 static aserver_message_t pulse_message;
 
 void pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
-  // seek to frame "frame" in current file
+  // seek to frame "frame" in current audio file
+  // position will be adjusted to (floor) nearest sample
+
   volatile aserver_message_t *pmsg;
   if (frame<1) frame=1;
   long seekstart;
@@ -800,7 +809,11 @@ void pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
 
 
 long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
-  // seek to relative "secs" in current file
+  // seek to position "bytes" in current audio file
+  // position will be adjusted to (floor) nearest sample
+
+  // if the position is > size of file, we will seek to the end of the file
+
   volatile aserver_message_t *pmsg;
   long seekstart;
   do {

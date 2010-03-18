@@ -490,13 +490,14 @@ gboolean process_one (gboolean visible) {
     // play next frame
     if (G_LIKELY(mainw->cancelled==CANCEL_NONE)) {
 
-
-      // calculate the audio 'frame' - TODO
-      mainw->aframeno=(gint64)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
-      if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:cfile->laudio_time*cfile->fps)))) {
-	mainw->firstticks=mainw->startticks-mainw->deltaticks;
+      // calculate the audio 'frame' for no-realtime audio players
+      // for realtime players, we did this in calc_new_playback_position()
+      if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
+	mainw->aframeno=(gint64)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
+	if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:cfile->laudio_time*cfile->fps)))) {
+	  mainw->firstticks=mainw->startticks-mainw->deltaticks;
+	}
       }
-
 
 
       if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {

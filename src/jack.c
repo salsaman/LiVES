@@ -1220,6 +1220,8 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
 }
 
 gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
+  // get the time in ticks since either playback started or since last seek
+
   volatile aserver_message_t *msg=jackd->msgq;
   gdouble frames_written=jackd->frames_written;
   if (frames_written<0.) frames_written=0.;
@@ -1229,10 +1231,19 @@ gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
 }
 
 
+gdouble lives_jack_get_pos(jack_driver_t *jackd) {
+  // get current time position (seconds) in audio file
+  return jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+}
+
+
+
 static aserver_message_t jack_message;
 
 void jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
-  // seek to frame "frame" in current file
+  // seek to frame "frame" in current audio file
+  // position will be adjusted to (floor) nearest sample
+
   volatile aserver_message_t *jmsg;
   if (frame<1) frame=1;
   long seekstart;
@@ -1247,7 +1258,11 @@ void jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
 
 
 long jack_audio_seek_bytes (jack_driver_t *jackd, long bytes) {
-  // seek to relative "secs" in current file
+  // seek to position "bytes" in current audio file
+  // position will be adjusted to (floor) nearest sample
+
+  // if the position is > size of file, we will seek to the end of the file
+
   volatile aserver_message_t *jmsg;
   long seekstart;
   do {

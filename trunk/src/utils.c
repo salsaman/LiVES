@@ -138,6 +138,58 @@ LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
 
 
 
+
+
+static gboolean check_for_audio_stop (gint first_frame, gint last_frame) {
+  // return FALSE if audio stops playback
+
+  guint64 atc;
+
+#ifdef ENABLE_JACK
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+    if (!mainw->loop) {
+      if (!mainw->loop_cont) {
+	if (mainw->aframeno<first_frame||mainw->aframeno>last_frame) {
+	  return FALSE;
+	}
+      }
+    }
+    else {
+      if (!mainw->loop_cont) {
+	atc=lives_jack_get_time(mainw->jackd,FALSE);
+	if (atc/U_SEC>cfile->laudio_time) {
+	  return FALSE;
+	}
+      }
+    }
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+    if (!mainw->loop) {
+      if (!mainw->loop_cont) {
+	if (mainw->aframeno<first_frame||mainw->aframeno>last_frame) {
+	  return FALSE;
+	}
+      }
+    }
+    else {
+      if (!mainw->loop_cont) {
+	atc=lives_pulse_get_time(mainw->pulsed,FALSE);
+	if (atc/U_SEC>cfile->laudio_time) {
+	  return FALSE;
+	}
+      }
+    }
+  }
+#endif
+  return TRUE;
+}
+
+
+
+
+
 gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_t *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
@@ -162,6 +214,10 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
   // caller should check return value of ntc, and if it differs from otc, show the frame
 
 
+  // note we also calculate the audio "frame" and position for realtime audio players
+  // this is done so we can check here if audio limits stopped playback
+
+
   weed_timecode_t dtc=*ntc-otc;
   file *sfile=mainw->files[fileno];
 
@@ -172,11 +228,29 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   gboolean do_resync=FALSE;
 
-  gdouble fps=sfile->pb_fps,audtime;
+  gdouble fps=sfile->pb_fps;
 
   if (mainw->playing_file==-1) fps=sfile->fps;
 
   if (sfile==NULL) return 0;
+
+  // calculate audio "frame"
+  if (mainw->playing_file==fileno) {
+#ifdef ENABLE_JACK
+    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+      // get seek_pos from jack
+      mainw->aframeno=lives_jack_get_pos(mainw->jackd)/cfile->fps+1.;
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    // request for another audio buffer - used only during mt playback
+    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+      // get seek_pos from pulse
+      mainw->aframeno=lives_pulse_get_pos(mainw->pulsed)/cfile->fps+1.;
+    }
+#endif
+  }
+
 
   cframe=sfile->last_frameno;
 
@@ -209,26 +283,19 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
       else if (nframe<cframe) nframe=cframe-1;
     }
 
+    // check if video stopped playback
     if (nframe<first_frame||nframe>last_frame) {
       if (mainw->whentostop==STOP_ON_VID_END) {
 	mainw->cancelled=CANCEL_VID_END;
 	return 0;
       }
     }
+
+
+    // check if audio stopped playback
 #ifdef RT_AUDIO
     if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
-      weed_timecode_t atc=0;
-#ifdef ENABLE_JACK      
-      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file) atc=lives_jack_get_time(mainw->jackd,FALSE);
-#endif
-#ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file) atc=lives_pulse_get_time(mainw->pulsed,FALSE);
-#endif
-      atc+=dtc;
-      
-      audtime=(gdouble)atc/U_SEC;
-
-      if (audtime<0.||audtime>=sfile->laudio_time) {
+      if (!check_for_audio_stop(first_frame,last_frame)) {
 	mainw->cancelled=CANCEL_AUD_END;
 	return 0;
       }
@@ -236,6 +303,9 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 #endif
   }
   
+
+
+
 
   // get our frame back to within bounds
   
@@ -328,6 +398,13 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   if (do_resync||(mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno)) {
     resync_audio(nframe);
+    if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
+      // we check for audio stop here, but the seek may not have happened yet
+      if (!check_for_audio_stop(first_frame,last_frame)) {
+	mainw->cancelled=CANCEL_AUD_END;
+	return 0;
+      }
+    }
   }
 
   return nframe;

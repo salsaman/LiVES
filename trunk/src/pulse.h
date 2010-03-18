@@ -125,6 +125,8 @@ long pulse_audio_seek_bytes (pulse_driver_t *, long bytes); // seek to byte posi
 
 gint64 lives_pulse_get_time(pulse_driver_t *, gboolean absolute); // get time from pa, in 10^-8 seconds
 
+gdouble lives_pulse_get_pos(pulse_driver_t *);
+
 
 //////////////////////
 

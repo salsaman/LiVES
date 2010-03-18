@@ -153,6 +153,7 @@ void jack_get_rec_avals(jack_driver_t *);
 
 gdouble jack_transport_get_time(void);
 
+gdouble lives_jack_get_pos(jack_driver_t *);
 
 #endif
 

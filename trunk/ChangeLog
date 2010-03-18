@@ -1,16 +1,21 @@
 Version 1.3.2
 -------------
-Add support for firewire and TV inputs (in progress)
+Add support for firewire and TV card inputs
 Fix multi_encoder file permissions **
 Fix minor problem with post encoding cleanup * **
 Fix crash in multitrack "remove first gaps" ** ***
 Fix for audio block gravity ** ***
-Fix mt auto back thread concurrency problem
+Fix mt auto backup thread concurrency problem
 Update OSC control to work better with puredata. **
 Implement new player transport (in progress)
 Add "Gravity: Right" in multitrack
 Change default extension for ogg video from "ogg" to "ogv" **
 
+
+Move effects with blocks in mt (TODO)
+Add history pane in mt (TODO)
+Play selection in mt (TODO)
+Pause during encoding (TODO)
 
 
 

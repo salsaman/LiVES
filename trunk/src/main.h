@@ -530,6 +530,7 @@ void resize_play_window (void);
 void kill_play_window (void);
 void make_preview_box (void);
 void add_to_playframe (void);
+GtkWidget* create_cdtrack_dialog (gint type, gpointer user_data);
 GtkTextView *create_output_textview(void);
 
 // dialogs.c
@@ -595,6 +596,7 @@ void do_dir_perm_error(gchar *dir_name);
 void do_encoder_img_ftm_error(render_details *rdet);
 void do_after_crash_warning (void);
 void do_bad_layout_error(void);
+void do_card_in_use_error(void);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *text, gboolean has_cancel);
@@ -623,7 +625,7 @@ void deduce_file(gchar *filename, gdouble start_time, gint end);
 void open_file (const gchar *filename);
 void open_file_sel(const gchar *file_name,gdouble start_time, gint frames);
 void open_fw_device (void);
-gboolean get_new_handle(gint index, gchar *name);
+gboolean get_new_handle(gint index, const gchar *name);
 gboolean get_temp_handle(gint index, gboolean create);
 void get_handle_from_info_file(gint index);
 void create_cfile(void);

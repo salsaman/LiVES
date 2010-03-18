@@ -1,6 +1,6 @@
 // effects-weed.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2009
+// (c) G. Finch 2005 - 2010
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -184,10 +184,6 @@ void update_host_info (weed_plant_t *inst);
 
 // add default filler values to a parameter or pchange.
 void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum, int hint, int index);
-
-// default size for generators
-#define DEF_GEN_WIDTH 640
-#define DEF_GEN_HEIGHT 480
 
 
 // some general utilities

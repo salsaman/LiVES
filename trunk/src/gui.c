@@ -150,6 +150,8 @@ create_LiVES (void)
   GtkWidget *hbox3;
   GtkWidget *t_label;
   GtkWidget *label;
+  GtkWidget *submenu;
+  GtkWidget *menuitem;
 
   GtkObject *spinbutton_pb_fps_adj;
   GtkObject *spinbutton_adj;
@@ -339,6 +341,41 @@ create_LiVES (void)
     gtk_widget_show (mainw->open_loc);
   }
 
+
+  mainw->add_live_menu = gtk_menu_item_new_with_mnemonic (_("_Add Live Input"));
+#ifdef HAVE_YUV4MPEG
+  if (capable->has_mplayer) {
+    gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->add_live_menu);
+    submenu=gtk_menu_new();
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->add_live_menu), submenu);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_bg(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    }
+
+    gtk_widget_show (mainw->add_live_menu);
+    gtk_widget_show (submenu);
+    
+    if (capable->has_dvgrab) {
+      menuitem = gtk_menu_item_new_with_mnemonic (_("Add Live _Firewire Device"));
+      gtk_container_add (GTK_CONTAINER (submenu), menuitem);
+      gtk_widget_show (menuitem);
+
+      g_signal_connect (GTK_OBJECT (menuitem), "activate",
+			G_CALLBACK (on_live_fw_activate),
+			NULL);
+
+
+    }
+    menuitem = gtk_menu_item_new_with_mnemonic (_("Add Live _TV Device"));
+    gtk_container_add (GTK_CONTAINER (submenu), menuitem);
+    gtk_widget_show (menuitem);
+
+    g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		      G_CALLBACK (on_live_tvcard_activate),
+		      NULL);
+  }
+#endif
+
   mainw->recent_menu = gtk_menu_item_new_with_mnemonic (_("_Recent Files..."));
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->recent_menu);
   mainw->recent_submenu=gtk_menu_new();
@@ -407,7 +444,7 @@ create_LiVES (void)
   mainw->save_as = gtk_image_menu_item_new_from_stock ("gtk-save", mainw->accel_group);
   gtk_container_add (GTK_CONTAINER(menuitem11_menu), mainw->save_as);
   gtk_widget_set_sensitive (mainw->save_as, FALSE);
-  set_menu_text(mainw->save_as,_("Encode Clip _As..."),TRUE);
+  set_menu_text(mainw->save_as,_("_Encode Clip As..."),TRUE);
 
   mainw->save_selection = gtk_menu_item_new_with_mnemonic (_("Encode _Selection As..."));
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->save_selection);
@@ -1923,7 +1960,7 @@ create_LiVES (void)
   mainw->spinbutton_start = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_start_adj), 1, 0);
 
   gtk_widget_show (mainw->spinbutton_start);
-  gtk_box_pack_start (GTK_BOX (hbox3), mainw->spinbutton_start, TRUE, FALSE, MAIN_SPIN_SPACER);
+  gtk_box_pack_start (GTK_BOX (hbox3), mainw->spinbutton_start, TRUE, FALSE, 0);
   GTK_WIDGET_SET_FLAGS (mainw->spinbutton_start, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mainw->spinbutton_start), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (mainw->spinbutton_start),GTK_UPDATE_ALWAYS);
@@ -1951,7 +1988,7 @@ create_LiVES (void)
   spinbutton_end_adj = gtk_adjustment_new (0., 0., 0., 1., 100., 0.);
   mainw->spinbutton_end = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_end_adj), 1, 0);
   gtk_widget_show (mainw->spinbutton_end);
-  gtk_box_pack_start (GTK_BOX (hbox3), mainw->spinbutton_end, TRUE, FALSE, MAIN_SPIN_SPACER);
+  gtk_box_pack_start (GTK_BOX (hbox3), mainw->spinbutton_end, TRUE, FALSE, 0);
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_end),10);
   GTK_WIDGET_SET_FLAGS (mainw->spinbutton_end, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mainw->spinbutton_end), TRUE);
@@ -1991,11 +2028,13 @@ create_LiVES (void)
   gtk_widget_modify_bg (mainw->eventbox5, GTK_STATE_NORMAL, &palette->normal_back);
 
   mainw->hruler = gtk_hruler_new();
-  gtk_ruler_set_range (GTK_RULER (mainw->hruler), 0., 10., 0., 10.);
+  gtk_ruler_set_range (GTK_RULER (mainw->hruler), 0., 1000000., 0., 1000000.);
+
   gtk_widget_set_size_request (mainw->hruler, -1, 20);
+  gtk_container_add (GTK_CONTAINER (mainw->eventbox5), mainw->hruler);
+
   gtk_widget_modify_bg (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_widget_add_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
-  gtk_container_add (GTK_CONTAINER (mainw->eventbox5), mainw->hruler);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_fore);

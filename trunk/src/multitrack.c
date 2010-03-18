@@ -320,6 +320,11 @@ void write_backup_layout_numbering(lives_mt *mt) {
   if (fd!=-1) {
     while (clist!=NULL) {
       i=GPOINTER_TO_INT(clist->data);
+      if (mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&mainw->files[i]->clip_type!=CLIP_TYPE_FILE) {
+	clist=clist->next;
+	continue;
+
+      }
       if (mt!=NULL) {
 	dummyvar=write(fd,&i,sizint);
 	vald=mainw->files[i]->fps;
@@ -8820,6 +8825,11 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
   while (add||cliplist!=NULL) {
     if (add) i=orig_file;
     else i=GPOINTER_TO_INT(cliplist->data);
+    if (mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&mainw->files[i]->clip_type!=CLIP_TYPE_FILE) {
+      cliplist=cliplist->next;
+      continue;
+      
+    }
     if (i!=mainw->scrap_file) {
       if (i==orig_file||(mt->clip_selected==-1&&i==mainw->pre_src_file)) {
 	if (!add) mt->clip_selected=mt_clip_from_file(mt,i);

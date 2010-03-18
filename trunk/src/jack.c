@@ -302,7 +302,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   /* handle playing state */
   if (jackd->state==JackTransportRolling||jackd->play_when_stopped) {
     gulong jackFramesAvailable = nframes; /* frames we have left to write to jack */
-    gulong inputFramesAvailable;          /* frames we have available this loop */
+   gulong inputFramesAvailable;          /* frames we have available this loop */
     gulong numFramesToWrite;              /* num frames we are writing this loop */
     glong in_frames=0;
     gulong in_bytes=0;
@@ -736,7 +736,7 @@ int jack_open_device(jack_driver_t *jackd) {
   jackd->client=NULL;
 
   gettimeofday(&otv, NULL);
-  stime=otv.tv_sec*1000000000+otv.tv_usec;
+  stime=otv.tv_sec*1000000+otv.tv_usec;
 
   while (jackd->client==NULL&&ntime<JACK_START_WAIT) {
     jackd->client = jack_client_open (client_name, options, &status, server_name);
@@ -744,7 +744,7 @@ int jack_open_device(jack_driver_t *jackd) {
     g_usleep(prefs->sleep_time);
 
     gettimeofday(&otv, NULL);
-    ntime=(otv.tv_sec*1000000000+otv.tv_usec-stime)>>10;
+    ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
   }
 
 

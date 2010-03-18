@@ -159,6 +159,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
   // alternates - here we need to determine how many times we have reached the start or end 
   // play point. This is similar to the winding number in topological calculations.
 
+  // caller should check return value of ntc, and if it differs from otc, show the frame
 
 
   weed_timecode_t dtc=*ntc-otc;
@@ -169,7 +170,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   gint first_frame,last_frame;
 
-  gboolean did_resync=FALSE;
+  gboolean do_resync=FALSE;
 
   gdouble fps=sfile->pb_fps,audtime;
 
@@ -187,6 +188,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   nframe=cframe+(gint)((gdouble)dtc/U_SEC*fps+(fps>0?.5:-.5));
 
+  if (nframe==cframe) return nframe;
 
   if (mainw->playing_file==fileno) {
     last_frame=(mainw->playing_sel&&!mainw->is_rendering)?sfile->end:mainw->play_end;
@@ -268,8 +270,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 	else nframe+=first_frame;
 	if (nframe>cframe&&mainw->playing_file==fileno&&mainw->loop_cont&&!mainw->loop) {
 	  // resync audio at end of loop section (playing backwards)
-	  resync_audio(nframe);
-	  did_resync=TRUE;
+	  do_resync=TRUE;
 	}
       }
       else {
@@ -308,8 +309,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
       if (nframe<first_frame) {
 	nframe=last_frame-(first_frame-nframe)+1;
       }
-      resync_audio(nframe);
-      did_resync=TRUE;
+      do_resync=TRUE;
     }
     if (nframe<first_frame) {
       // scratch or transport backwards
@@ -323,7 +323,10 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
     }
   }
 
-  if (mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno&&!did_resync) {
+  if (nframe<first_frame) nframe=first_frame;
+  if (nframe>last_frame) nframe=last_frame;
+
+  if (do_resync||(mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno)) {
     resync_audio(nframe);
   }
 
@@ -1270,7 +1273,10 @@ get_play_times(void) {
       gtk_widget_show (mainw->video_draw);
       gtk_widget_show (mainw->laudio_draw);
       gtk_widget_show (mainw->raudio_draw);
+
       GTK_RULER (mainw->hruler)->upper=cfile->total_time;
+      gtk_widget_queue_draw(mainw->hruler);
+
       draw_little_bars();
       if (mainw->playing_file==-1&&prefs->sepwin_type==1&&mainw->sep_win&&cfile->is_loaded) {
 	if (mainw->preview_box==NULL) {

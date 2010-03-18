@@ -57,6 +57,11 @@
 #define EXT_CNTL_MIDI 2
 
 
+// default size for generators
+#define DEF_GEN_WIDTH 640
+#define DEF_GEN_HEIGHT 480
+
+
 
 typedef struct {
   // set in set_palette_colours()
@@ -506,6 +511,7 @@ typedef struct {
   GtkWidget *open_device_submenu;
   GtkWidget *open_firewire;
   GtkWidget *open_hfirewire;
+  GtkWidget *add_live_menu;
   GtkWidget *recent_menu;
   GtkWidget *recent_submenu;
   GtkWidget *recent1;
@@ -635,7 +641,7 @@ typedef struct {
   GtkWidget *laudbar;
   GtkWidget *raudbar;
 
-#define MAIN_SPIN_SPACER 72 // pixel spacing for start/end spins for clip and multitrack editors
+#define MAIN_SPIN_SPACER 52 // pixel spacing for start/end spins for clip and multitrack editors
   GtkWidget *spinbutton_end;
   GtkWidget *spinbutton_start;
 

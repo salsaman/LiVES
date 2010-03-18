@@ -397,7 +397,7 @@ if __name__ == '__main__':
            print 'hi_x-avi|High Quality AVI (XVID/MP3)' + specs
 
        if is_installed(ogg):
-           specs = '|8|%s,%s,%s,%s|ogg|' % (ar, hb, vb, sr)
+           specs = '|8|%s,%s,%s,%s|ogv|' % (ar, hb, vb, sr)
            print 'lo-theora|Low Quality OGG (THEORA/VORBIS)' + specs
            print 'ml-theora|Medium-Low Quality OGG (THEORA/VORBIS)' + specs
            print 'mh-theora|Medium-High Quality OGG (THEORA/VORBIS)' + specs

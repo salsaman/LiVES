@@ -3243,12 +3243,15 @@ gint save_event_frames(void) {
 ///  the scrap file is used during recording to dump any streamed (non-disk) clips to
 /// during render/preview we load frames from the scrap file, but only as necessary
 
+static gdouble scrap_mb;  // MiB written to file
+static gulong free_mb; // MiB free to write
 
 gboolean open_scrap_file (void) {
   // create a virtual clip
   gint current_file=mainw->current_file;
   gint new_file=mainw->first_free_file;
-
+  
+  gchar *dir;
   gchar *scrap_handle;
 
   if (!get_temp_handle (new_file,TRUE)) return FALSE;
@@ -3267,43 +3270,239 @@ gboolean open_scrap_file (void) {
 
   g_free(scrap_handle);
 
+  dir=g_strdup_printf("%s/%s",prefs->tmpdir,cfile->handle);
+  free_mb=get_fs_free(dir)/1000000;
+  g_free(dir);
+
   mainw->current_file=current_file;
+
+  scrap_mb=0.;
+
   return TRUE;
 }
 
 
 
-gint save_to_scrap_file (GdkPixbuf *pixbuf) {
+
+
+
+gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
+  // load raw frame data from scrap file
+
+  // return FALSE if the frame does not exist/we are unable to read it
+
+
+  int width,height,palette,nplanes;
+  int *rowstrides;
+
+  int i,fd;
+
+  gchar *oname=g_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,frame);
+
+  gchar buf[sizint+1];
+
+  size_t bytes,tsize;
+
+  void **pdata;
+
+  fd=open(oname,O_RDONLY);
+
+  if (fd==-1) return FALSE;
+
+  memset(&buf[sizint],0,1);
+
+  bytes=read(fd,buf,sizint);
+  if (bytes<sizint) return FALSE;
+
+  palette=atoi(buf);
+  weed_set_int_value(layer,"current_palette",palette);
+
+  bytes=read(fd,buf,sizint);
+  if (bytes<sizint) return FALSE;
+
+  width=atoi(buf);
+  weed_set_int_value(layer,"width",width);
+
+
+  bytes=read(fd,buf,sizint);
+  if (bytes<sizint) return FALSE;
+
+  height=atoi(buf);
+  weed_set_int_value(layer,"height",height);
+
+
+  nplanes=weed_palette_get_numplanes(palette);
+
+  rowstrides=g_malloc(nplanes*sizint);
+
+  for (i=0;i<nplanes;i++) {
+    bytes=read(fd,buf,sizint);
+    if (bytes<sizint) {
+      g_free(rowstrides);
+      return FALSE;
+    }
+    rowstrides[i]=atoi(buf);
+  }
+
+  weed_set_int_array(layer,"rowstrides",nplanes,rowstrides);
+
+  pdata=g_malloc(nplanes*sizeof(void *));
+
+  for (i=0;i<nplanes;i++) {
+    pdata[i]=NULL;
+  }
+
+  weed_set_voidptr_array(layer,"pixel_data",nplanes,pdata);
+
+  for (i=0;i<nplanes;i++) {
+    tsize=rowstrides[i]*height*weed_palette_get_plane_ratio_vertical(palette,i);
+    pdata[i]=g_malloc(tsize);
+    bytes=read(fd,pdata[i],tsize);
+    if (bytes<tsize) {
+      g_free(rowstrides);
+      g_free(pdata);
+      return FALSE;
+    }
+  }
+
+  g_free(rowstrides);
+
+  weed_set_voidptr_array(layer,"pixel_data",nplanes,pdata);
+  g_free(pdata);
+
+
+  close (fd);
+
+  return TRUE;
+}
+
+
+
+gint save_to_scrap_file (weed_plant_t *layer) {
   // returns frame number
   // TODO - handle errors, like out of disk space...
 
-  GError *error=NULL;
-  gchar *oname=g_strdup_printf ("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,mainw->files[mainw->scrap_file]->frames+1,prefs->image_ext);
 
-  if (!strcmp (prefs->image_ext,"jpg")) {
-    gdk_pixbuf_save (pixbuf, oname, "jpeg", &error,"quality", "100", NULL);
-  }
-  else if (!strcmp (prefs->image_ext,"png")) {
-    gdk_pixbuf_save (pixbuf, oname, "png", &error, NULL);
-  }
-  else {
-    //gdk_pixbuf_save_to_callback(...);
-  }
-  if (error==NULL) {
-    int fd;
-    int flags=O_RDONLY;
+  // dump the raw frame data to a file
+
+  // format is:
+  // (int)palette,(int)rowstrides[],(int)height,(char *)pixel_data[]
+
+  // we also check if there is enough free space left; if not, recording is paused
+
+
+  int fd;
+  int flags=O_WRONLY|O_CREAT|O_TRUNC;
+  
+  int width,height,palette,nplanes,error;
+  int *rowstrides;
+
+  int i;
+
+  void **pdata;
+
+  gchar *oname=g_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,mainw->files[mainw->scrap_file]->frames+1);
+
+  gchar *buf,*framecount;
+
+  struct stat filestat;
 
 #ifdef O_NOATIME
-    flags|=O_NOATIME;
+  flags|=O_NOATIME;
 #endif
 
-    fd=open(oname,flags);
-    fsync(fd); // try to sync file access, to make saving smoother
-    close(fd);
-    mainw->files[mainw->scrap_file]->frames++;
+  fd=open(oname,flags,S_IRUSR|S_IWUSR);
+
+  if (fd==-1) {
+    g_free(oname);
+    return mainw->files[mainw->scrap_file]->frames;
   }
+
+  // write current_palette, rowstrides and height
+  palette=weed_get_int_value(layer,"current_palette",&error);
+  buf=g_strdup_printf("%d",palette);
+  dummyvar=write(fd,buf,sizint);
+  g_free(buf);
+  
+  width=weed_get_int_value(layer,"width",&error);
+  buf=g_strdup_printf("%d",width);
+  dummyvar=write(fd,buf,sizint);
+  g_free(buf);
+
+  height=weed_get_int_value(layer,"height",&error);
+  buf=g_strdup_printf("%d",height);
+  dummyvar=write(fd,buf,sizint);
+  g_free(buf);
+  
+
+  nplanes=weed_palette_get_numplanes(palette);
+  
+  rowstrides=weed_get_int_array(layer,"rowstrides",&error);
+  
+  for (i=0;i<nplanes;i++) {
+    buf=g_strdup_printf("%d",rowstrides[i]);
+    dummyvar=write(fd,buf,sizint);
+    g_free(buf);
+  }
+  
+   
+  // now write pixel_data planes
+  
+  pdata=weed_get_voidptr_array(layer,"pixel_data",&error);
+  
+  for (i=0;i<nplanes;i++) {
+    dummyvar=write(fd,pdata[i],rowstrides[i]*height*weed_palette_get_plane_ratio_vertical(palette,i));
+  }
+  
+  fstat(fd,&filestat);
+
+  scrap_mb+=(gdouble)(filestat.st_size)/1000000.;
+
+  // check free space every 1000 frames
+  if (mainw->files[mainw->scrap_file]->frames%1000==0) {
+    gchar *dir=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle);
+    free_mb=get_fs_free(dir)/1000000;
+    g_free(dir);
+  }
+
+  if ((!mainw->fs||prefs->play_monitor!=prefs->gui_monitor)&&prefs->show_framecount) {
+    if (scrap_mb<(gdouble)free_mb*.75) {
+      framecount=g_strdup_printf(_("rec %.2f MB"),scrap_mb); // translators: rec(ord) %.2f M(ega)B(ytes)
+    }
+    else {
+      // warn if scrap_file > 3/4 of free space
+      framecount=g_strdup_printf(_("!rec %.2f MB"),scrap_mb); // translators: rec(ord) %.2f M(ega)B(ytes)
+    }
+    gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),framecount);
+    g_free(framecount);
+  }
+
+  fsync(fd); // try to sync file access, to make saving smoother
+  close(fd);
+
+  weed_free(rowstrides);
+  weed_free(pdata);
+
   g_free(oname);
-  return mainw->files[mainw->scrap_file]->frames;
+
+  // check if we have enough free space left on the volume
+  if ((glong)(((gdouble)free_mb-scrap_mb)/1000.)<prefs->rec_stop_gb) {
+    // check free space again
+    gchar *dir=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle);
+    free_mb=get_fs_free(dir)/1000000;
+    g_free(dir);
+
+    if ((glong)(((gdouble)free_mb-scrap_mb)/1000.)<prefs->rec_stop_gb) {
+      if (mainw->record&&!mainw->record_paused) {
+	gchar *msg=g_strdup_printf(_("Recording was paused because free disk space is below %ld GB.\nRecord stop level can be set in Preferences.\n"),prefs->rec_stop_gb);
+	d_print(msg);
+	g_free(msg);
+	on_record_perf_activate(NULL,NULL);
+      }
+    }
+  }
+
+  return ++mainw->files[mainw->scrap_file]->frames;
 
 }
 

@@ -3232,14 +3232,18 @@ void weed_generator_end (weed_plant_t *inst) {
   }
 
 
-  // close generator file and switch to original file if possible
-  close_current_file(mainw->pre_src_file);
 
   if (mainw->new_blend_file!=-1&&is_bg) {
     mainw->blend_file=mainw->new_blend_file;
     mainw->new_blend_file=-1;
+    // close generator file and switch to original file if possible
+    close_current_file(mainw->pre_src_file);
   }
-  else if (mainw->current_file==current_file) mainw->clip_switched=clip_switched;
+  else {
+    // close generator file and switch to original file if possible
+    close_current_file(mainw->pre_src_file);
+    if (mainw->current_file==current_file) mainw->clip_switched=clip_switched;
+  }
 
   if (is_bg) {
     mainw->current_file=current_file;

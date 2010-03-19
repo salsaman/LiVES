@@ -15,8 +15,8 @@
 
 
 
-static gboolean prompt_existing_dir(gchar *dirname) {
-  gchar *msg=g_strdup_printf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n"),dirname);
+static gboolean prompt_existing_dir(gchar *dirname, gdouble freespace) {
+  gchar *msg=g_strdup_printf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %.2f GB)\n"),dirname,freespace);
   gboolean res=do_warning_dialog(msg);
   g_free(msg);
   return res;
@@ -26,8 +26,8 @@ static gboolean prompt_existing_dir(gchar *dirname) {
 
 
 
-static gboolean prompt_new_dir(gchar *dirname) {
-  gchar *msg=g_strdup_printf(_("Create the directory\n%s\n?\n"),dirname);
+static gboolean prompt_new_dir(gchar *dirname, gdouble freespace) {
+  gchar *msg=g_strdup_printf(_("Create the directory\n%s\n?\n\n(Free space = %.2f GB)"),dirname,freespace);
   gboolean res=do_warning_dialog(msg);
   g_free(msg);
   return res;
@@ -41,6 +41,7 @@ gboolean do_tempdir_query(void) {
   gboolean ok=FALSE;
   _entryw *tdentry=create_rename_dialog(6);
   gchar *com,*dirname;
+  gdouble free_gb;
 
   while (!ok) {
     response=gtk_dialog_run(GTK_DIALOG(tdentry->dialog));
@@ -57,24 +58,27 @@ gboolean do_tempdir_query(void) {
       continue;
     }
 
-    if (g_file_test(dirname,G_FILE_TEST_IS_DIR)) {
-      if (!prompt_existing_dir(dirname)) {
-	g_free(dirname);
-	continue;
-      }
-    }
-    else {
-      if (!prompt_new_dir(dirname)) {
-	g_free(dirname);
-	continue;
-      }
-    }
-
     if (!check_dir_access(dirname)) {
       do_dir_perm_error(dirname);
       g_free(dirname);
       continue;
     }
+
+    free_gb=(gdouble)get_fs_free(dirname)/1000000000.;
+
+    if (g_file_test(dirname,G_FILE_TEST_IS_DIR)) {
+      if (!prompt_existing_dir(dirname,free_gb)) {
+	g_free(dirname);
+	continue;
+      }
+    }
+    else {
+      if (!prompt_new_dir(dirname,free_gb)) {
+	g_free(dirname);
+	continue;
+      }
+    }
+
     ok=TRUE;
   }
 

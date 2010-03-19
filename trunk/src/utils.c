@@ -255,7 +255,10 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
 
   cframe=sfile->last_frameno;
 
-  if (fps==0.) return cframe;
+  if (fps==0.) {
+    *ntc=otc;
+    return cframe;
+  }
 
   dtc=q_gint64_floor(dtc,fps);
 

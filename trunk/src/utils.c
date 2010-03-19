@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>  
 
 #include "main.h"
 #include "support.h"
@@ -3398,3 +3399,44 @@ void adjustment_configure(GtkAdjustment *adjustment,
   g_object_thaw_notify (G_OBJECT(adjustment));
 #endif
 }
+
+
+
+gulong get_fs_free(const gchar *dir) {
+  // get free space in bytes for volume containing directory dir
+  // return 0 if we cannot create/write to dir
+
+  gulong bytes;
+
+  gboolean must_delete=FALSE;
+
+  gchar *com;
+
+  struct statvfs sbuf;
+
+  if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
+    com=g_strdup_printf("/bin/mkdir -p %s",dir);
+    dummyvar=system(com);
+    g_free(com);
+    if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
+      return 0;
+    }
+    must_delete=TRUE;
+  }
+
+  if (statvfs(dir,&sbuf)==-1) return 0;
+
+  if (sbuf.f_flag&ST_RDONLY) return 0;
+
+  bytes=sbuf.f_bsize*sbuf.f_bavail;
+
+
+  if (must_delete) {
+    com=g_strdup_printf("/bin/rm -rf %s",dir);
+    dummyvar=system(com);
+    g_free(com);
+  }
+
+  return bytes;
+}
+

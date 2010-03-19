@@ -3412,7 +3412,7 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
     if (num_tried++==num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if ((list_index=g_list_previous(list_index))==NULL) list_index=g_list_last (mainw->cliplist);
     i=GPOINTER_TO_INT (list_index->data);
-  } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?mainw->blend_file:mainw->current_file));
+  } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||i==mainw->scrap_file||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?mainw->blend_file:mainw->current_file));
 
   if (type==2||(mainw->num_tr_applied>0&&mainw->playing_file>0&&type!=1)) {
     if (i!=mainw->blend_file) {
@@ -3468,7 +3468,7 @@ gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
     if (num_tried++==num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if ((list_index=g_list_next(list_index))==NULL) list_index=g_list_first (mainw->cliplist);
     i=GPOINTER_TO_INT (list_index->data);
-  } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?mainw->blend_file:mainw->current_file));
+  } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||i==mainw->scrap_file||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?mainw->blend_file:mainw->current_file));
   
 
   if (type==2||(mainw->num_tr_applied>0&&mainw->playing_file>0&&type!=1)) {
@@ -3882,9 +3882,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
       }
       pthread_mutex_lock(&mainw->gtk_mutex);
-      mainw->no_switch_dprint=TRUE;
       d_print (msg);
-      mainw->no_switch_dprint=FALSE;
       g_free (msg);
       if (mainw->multitrack==NULL) {
 	if (mainw->is_ready) {

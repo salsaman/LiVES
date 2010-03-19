@@ -656,7 +656,8 @@ void open_set_file (gchar *set_name, gint clipnum);
 
 // saveplay.c scrap file
 gboolean open_scrap_file (void);
-gint save_to_scrap_file (GdkPixbuf *pixbuf);
+gint save_to_scrap_file (weed_plant_t *layer);
+gboolean load_from_scrap_file(weed_plant_t *layer, int frame);
 void close_scrap_file (void);
 
 
@@ -761,6 +762,7 @@ gboolean check_file(const gchar *file_name, gboolean check_exists);  // check if
 gboolean check_dir_access (gchar *dir);
 gulong get_file_size(int fd);
 gulong sget_file_size(gchar *name);
+gulong get_fs_free(const gchar *dir);
 gboolean ensure_isdir(gchar *fname);
 gchar *ensure_extension(gchar *fname, gchar *ext);
 void activate_url_inner(const gchar *link);

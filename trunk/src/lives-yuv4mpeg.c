@@ -263,8 +263,6 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
   while (ntime<YUV4_F_TIME&&!pthread_kill(y4thread,0)) {
     // wait for thread to complete or timeout
     g_usleep(prefs->sleep_time);
-    while (g_main_context_iteration(NULL,FALSE));
-
     gettimeofday(&otv, NULL);
     ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
   }

@@ -406,6 +406,8 @@ apply_prefs(gboolean skip_warn) {
 #endif
 #endif
 
+  gint rec_gb=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
+
   gchar audio_player[256];
   gint listlen=g_list_length (prefs->acodec_list);
   guint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO;
@@ -765,6 +767,13 @@ apply_prefs(gboolean skip_warn) {
 
     prefs->rte_keys_virtual=rte_keys_virtual;
     set_int_pref("rte_keys_virtual",prefs->rte_keys_virtual);
+  }
+
+
+  if (prefs->rec_stop_gb!=rec_gb) {
+    // disk free level at which we must stop recording
+    prefs->rec_stop_gb=rec_gb;
+    set_int_pref("rec_stop_gb",prefs->rec_stop_gb);
   }
 
   if (ins_speed==prefs->ins_resample) {
@@ -2404,6 +2413,31 @@ _prefsw *create_prefs_dialog (void) {
   if (mainw->playing_file>0&&mainw->record) gtk_widget_set_sensitive (prefsw->raudio,FALSE);
 
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) gtk_widget_set_sensitive (prefsw->raudio,FALSE);
+
+  hseparator8 = gtk_hseparator_new ();
+  gtk_widget_show (hseparator8);
+  gtk_box_pack_start (GTK_BOX (vbox12), hseparator8, TRUE, TRUE, 0);
+
+
+  hbox = gtk_hbox_new (FALSE,0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox12), hbox, TRUE, TRUE, 0);
+  
+  label = gtk_label_new_with_mnemonic (_("Pause recording if free disk space falls below"));
+  gtk_widget_show (label);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+
+  spinbutton_adj = gtk_adjustment_new (prefs->rec_stop_gb, 0, 1024., 1., 10., 0.);
+  
+  prefsw->spinbutton_rec_gb = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
+  gtk_widget_show (prefsw->spinbutton_rec_gb);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_rec_gb, FALSE, TRUE, 0);
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_rec_gb);
+
+  label = gtk_label_new_with_mnemonic (_("GB")); // translators - gigabytes
+  gtk_widget_show (label);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+
 
 
   label = gtk_label_new (_("Recording"));

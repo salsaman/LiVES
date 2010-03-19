@@ -250,6 +250,8 @@ typedef struct {
 
   gboolean ce_maxspect;
 
+  glong rec_stop_gb;
+
 } _prefs;
 
 
@@ -341,6 +343,7 @@ typedef struct {
   GtkWidget *spinbutton_mt_def_fps;
   GtkWidget *spinbutton_mt_undo_buf;
   GtkWidget *spinbutton_mt_ab_time;
+  GtkWidget *spinbutton_rec_gb;
   GtkWidget *mt_autoback_every;
   GtkWidget *mt_autoback_always;
   GtkWidget *mt_autoback_never;

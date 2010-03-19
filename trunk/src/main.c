@@ -843,6 +843,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->ce_maxspect=get_boolean_pref("ce_maxspect");;
 
+    prefs->rec_stop_gb=get_int_pref("rec_stop_gb");
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -2782,6 +2784,9 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
       create_empty_pixel_data(layer);
       return TRUE;
     }
+    else if (clip==mainw->scrap_file) {
+      return load_from_scrap_file(layer,frame);
+    }
     else {
       if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&frame<=sfile->frames&&sfile->frame_index[frame-1]>=0) {
 	gchar *tmp;
@@ -3182,9 +3187,9 @@ void load_frame_image(gint frame, gint last_frame) {
 	    insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
 	    mainw->rec_aclip=-1;
 	  }
-	  framecount=g_strdup_printf("rec %9d/%d",mainw->actual_frame,cfile->frames>mainw->actual_frame?cfile->frames:mainw->actual_frame);
+	  framecount=g_strdup_printf(_("rec %9d/%d"),mainw->actual_frame,cfile->frames>mainw->actual_frame?cfile->frames:mainw->actual_frame); // translators: rec(ord)
 	}
-	else (framecount=g_strdup_printf("!rec %9d/%d",mainw->actual_frame,cfile->frames)); // out of memory
+	else (framecount=g_strdup_printf(_("!rec %9d/%d"),mainw->actual_frame,cfile->frames)); // out of memory (translators: rec(ord))
 	g_free(clips);
 	g_free(frames);
       }
@@ -3485,14 +3490,7 @@ void load_frame_image(gint frame, gint last_frame) {
     // if our output layer is RGB24, save to scrap_file now if we have to
      if (mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE))) {
        if (fx_layer_palette==WEED_PALETTE_RGB24||fx_layer_palette==WEED_PALETTE_RGBA32) {
-	 pixbuf=layer_to_pixbuf(mainw->frame_layer);
-	 save_to_scrap_file (pixbuf);
-	 mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf);
-	 mainw->free_fn=lives_free_with_check;
-	 g_object_unref(pixbuf);
-	 pixbuf=NULL;
-	 mainw->do_not_free=NULL;
-	 mainw->free_fn=free;
+	 save_to_scrap_file (mainw->frame_layer);
 	 saved_to_scrap_file=TRUE;
        }
      }
@@ -3530,20 +3528,17 @@ void load_frame_image(gint frame, gint last_frame) {
 	if (mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE))) {
 	  if (!saved_to_scrap_file) {
 	    if (mainw->vpp->palette==WEED_PALETTE_RGB24||mainw->vpp->palette==WEED_PALETTE_RGBA32) {
-	      pixbuf=layer_to_pixbuf(fx_layer_copy);
+
+	      save_to_scrap_file (fx_layer_copy);
 	      weed_plant_free(fx_layer_copy);
 	      if (mainw->frame_layer==fx_layer_copy) mainw->frame_layer=NULL;
 	      fx_layer_copy=NULL;
-	      save_to_scrap_file (pixbuf);
-	      gdk_pixbuf_unref(pixbuf);
 	    }
 	    else {
 	      if (fx_layer_palette!=WEED_PALETTE_RGB24&&fx_layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(mainw->frame_layer,(!strcmp(prefs->image_ext,"jpg")||!weed_palette_has_alpha_channel(fx_layer_palette))?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32,0);
-	      pixbuf=layer_to_pixbuf(mainw->frame_layer);
+	      save_to_scrap_file (mainw->frame_layer);
 	      weed_plant_free(mainw->frame_layer);
 	      mainw->frame_layer=NULL;
-	      save_to_scrap_file (pixbuf);
-	      gdk_pixbuf_unref(pixbuf);
 	    }
 	  }
 	}
@@ -3655,13 +3650,11 @@ void load_frame_image(gint frame, gint last_frame) {
 	  if (!saved_to_scrap_file) {
 	    fx_layer_palette=weed_layer_get_palette(fx_layer_copy);
 	    if (fx_layer_palette!=WEED_PALETTE_RGB24&&fx_layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(fx_layer_copy,(!strcmp(prefs->image_ext,"jpg")||!weed_palette_has_alpha_channel(fx_layer_palette))?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32,0);
-	    pixbuf=layer_to_pixbuf(fx_layer_copy);
-	    save_to_scrap_file (pixbuf);
+	    save_to_scrap_file (fx_layer_copy);
 	    if (fx_layer_copy!=mainw->frame_layer) weed_layer_free(mainw->frame_layer);
 	    mainw->frame_layer=NULL;
 	    weed_plant_free(fx_layer_copy);
 	    fx_layer_copy=NULL;
-	    gdk_pixbuf_unref(pixbuf);
 	  }
 	}
 	if (fx_layer_copy!=NULL) weed_layer_free(fx_layer_copy);
@@ -3680,6 +3673,12 @@ void load_frame_image(gint frame, gint last_frame) {
   
     ////////////////////////////////////////////////////////
     
+
+    if (mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE))) {
+      mainw->noswitch=noswitch;
+      if (!saved_to_scrap_file) save_to_scrap_file (mainw->frame_layer);
+    }
+
     fx_layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
     if (cfile->img_type==IMG_TYPE_JPEG||!weed_palette_has_alpha_channel(fx_layer_palette)) cpal=WEED_PALETTE_RGB24;
@@ -3691,10 +3690,6 @@ void load_frame_image(gint frame, gint last_frame) {
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer=NULL;
 
-    if (mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE))) {
-      mainw->noswitch=noswitch;
-      if (!saved_to_scrap_file) save_to_scrap_file (pixbuf);
-    }
     mainw->noswitch=noswitch;
 
     if (mainw->fs&&!mainw->ext_playback&&(mainw->multitrack==NULL||mainw->sep_win)) {

@@ -140,13 +140,13 @@ LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
 
 
 
-static gboolean check_for_audio_stop (gint first_frame, gint last_frame) {
+static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_frame) {
   // return FALSE if audio stops playback
 
   guint64 atc;
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {
     if (!mainw->loop) {
       if (!mainw->loop_cont) {
 	if (mainw->aframeno<first_frame||mainw->aframeno>last_frame) {
@@ -165,7 +165,7 @@ static gboolean check_for_audio_stop (gint first_frame, gint last_frame) {
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==fileno) {
     if (!mainw->loop) {
       if (!mainw->loop_cont) {
 	if (mainw->aframeno<first_frame||mainw->aframeno>last_frame) {
@@ -295,7 +295,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
     // check if audio stopped playback
 #ifdef RT_AUDIO
     if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
-      if (!check_for_audio_stop(first_frame,last_frame)) {
+      if (!check_for_audio_stop(fileno,first_frame,last_frame)) {
 	mainw->cancelled=CANCEL_AUD_END;
 	return 0;
       }

@@ -2148,6 +2148,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->show_file_comments, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->full_screen, TRUE);
   gtk_widget_set_sensitive (mainw->mt_menu, TRUE);
+  gtk_widget_set_sensitive (mainw->add_live_menu,TRUE);
   gtk_widget_set_sensitive (mainw->export_proj, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->import_proj, mainw->current_file==-1);
 
@@ -2307,6 +2308,7 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->import_proj, FALSE);
   gtk_widget_set_sensitive (mainw->recaudio_sel,FALSE);
   gtk_widget_set_sensitive (mainw->mt_menu,FALSE);
+  gtk_widget_set_sensitive (mainw->add_live_menu,FALSE);
 
   if (mainw->current_file>=0&&(mainw->playing_file==-1||mainw->foreign)) {
     if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
@@ -3840,6 +3842,7 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_set_sensitive (mainw->clear_ds, TRUE);
     gtk_widget_set_sensitive (mainw->gens_submenu, TRUE);
     gtk_widget_set_sensitive (mainw->mt_menu, TRUE);
+    gtk_widget_set_sensitive (mainw->add_live_menu,TRUE);
     gtk_widget_set_sensitive (mainw->troubleshoot, TRUE);
 #ifdef HAVE_YUV4MPEG
     gtk_widget_set_sensitive (mainw->open_yuv4m, TRUE);

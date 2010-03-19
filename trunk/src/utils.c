@@ -237,14 +237,14 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
   // calculate audio "frame"
   if (mainw->playing_file==fileno) {
 #ifdef ENABLE_JACK
-    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {
       // get seek_pos from jack
       mainw->aframeno=lives_jack_get_pos(mainw->jackd)/cfile->fps+1.;
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
     // request for another audio buffer - used only during mt playback
-    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==fileno) {
       // get seek_pos from pulse
       mainw->aframeno=lives_pulse_get_pos(mainw->pulsed)/cfile->fps+1.;
     }

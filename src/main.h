@@ -597,6 +597,7 @@ void do_encoder_img_ftm_error(render_details *rdet);
 void do_after_crash_warning (void);
 void do_bad_layout_error(void);
 void do_card_in_use_error(void);
+void do_dev_busy_error(gchar *devstr);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *text, gboolean has_cancel);

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-19 00:54-0300\n"
+"POT-Creation-Date: 2010-03-19 10:52-0300\n"
 "PO-Revision-Date: 2009-08-26 18:26+0000\n"
 "Last-Translator: Helen McCall <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -584,12 +584,12 @@ msgstr "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <No File>"
 
-#: src/main.c:3397 src/main.c:3398 src/gui.c:1895 src/gui.c:2863
+#: src/main.c:3399 src/main.c:3400 src/gui.c:1895 src/gui.c:2863
 #: src/saveplay.c:1471
 msgid "Play"
 msgstr "Play"
 
-#: src/main.c:3768
+#: src/main.c:3770
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -597,35 +597,35 @@ msgstr ""
 "LiVES was unable to capture this image\n"
 "\n"
 
-#: src/main.c:3853
+#: src/main.c:3856
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Closed file %s\n"
 
-#: src/main.c:4005 src/gui.c:520 src/utils.c:2556 src/utils.c:2582
+#: src/main.c:4008 src/gui.c:520 src/utils.c:2556 src/utils.c:2582
 #: src/saveplay.c:2401 src/multitrack.c:3725 src/multitrack.c:5182
 msgid "_Undo"
 msgstr "_Undo"
 
-#: src/main.c:4006 src/gui.c:533 src/utils.c:2557 src/utils.c:2583
+#: src/main.c:4009 src/gui.c:533 src/utils.c:2557 src/utils.c:2583
 #: src/saveplay.c:2402 src/multitrack.c:3746 src/multitrack.c:5205
 msgid "_Redo"
 msgstr "_Redo"
 
-#: src/main.c:4032 src/interface.c:634 src/gui.c:2053 src/preferences.c:1532
+#: src/main.c:4035 src/interface.c:634 src/gui.c:2053 src/preferences.c:1532
 #: src/resample.c:1746
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4033 src/interface.c:653 src/gui.c:2072
+#: src/main.c:4036 src/interface.c:653 src/gui.c:2072
 msgid "Left Audio"
 msgstr "Left Audio"
 
-#: src/main.c:4034 src/gui.c:2090
+#: src/main.c:4037 src/gui.c:2090
 msgid "Right Audio"
 msgstr "Right Audio"
 
-#: src/main.c:4079
+#: src/main.c:4082
 msgid ""
 "\n"
 "\n"
@@ -4116,6 +4116,16 @@ msgid ""
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
+#: src/dialogs.c:1815
+#, c-format
+msgid ""
+"\n"
+"The device %s is in use or unavailable.\n"
+"- Check the device permissions\n"
+"- Check if this device is in use by another program.\n"
+"- Check if the device actually exists.\n"
+msgstr ""
+
 #: src/effects.c:127
 #, c-format
 msgid "%s all frames..."
@@ -6721,83 +6731,83 @@ msgid ""
 "Please make sure your home directory is writable.\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:106
+#: src/lives-yuv4mpeg.c:136
 msgid "Unable to open the incoming video stream\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:145
+#: src/lives-yuv4mpeg.c:175
 msgid "Unable to read the incoming video stream\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:166
+#: src/lives-yuv4mpeg.c:196
 #, c-format
 msgid "Video dimensions: %d x %d are invalid. Stream cannot be opened"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:174
+#: src/lives-yuv4mpeg.c:204
 #, c-format
 msgid "Reset clip values for %s: size=%dx%d fps=%.3f\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:245
+#: src/lives-yuv4mpeg.c:275
 msgid "Unable to read the incoming video frame\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:314
+#: src/lives-yuv4mpeg.c:344
 msgid "yuv4mpeg stream"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:340
+#: src/lives-yuv4mpeg.c:370
 msgid "yu4mpeg stream in"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:342
+#: src/lives-yuv4mpeg.c:372
 #, c-format
 msgid "Opened yuv4mpeg stream on %s"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:348
+#: src/lives-yuv4mpeg.c:378
 #, fuzzy
 msgid "Audio: "
 msgstr "Audio"
 
-#: src/lives-yuv4mpeg.c:351
+#: src/lives-yuv4mpeg.c:381
 msgid "none\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:354
+#: src/lives-yuv4mpeg.c:384
 #, c-format
 msgid "%d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:392
+#: src/lives-yuv4mpeg.c:422
 #, c-format
 msgid ""
 "Unable to set display framerate to %.3f fps.\n"
 "\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:401
+#: src/lives-yuv4mpeg.c:431
 #, c-format
 msgid "Unable to open yuv4mpeg out stream %s\n"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:524
+#: src/lives-yuv4mpeg.c:564
 #, c-format
 msgid "TV card %d"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:556
+#: src/lives-yuv4mpeg.c:605
 #, c-format
 msgid "Opened TV card %d (%s)"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:604
+#: src/lives-yuv4mpeg.c:653
 #, c-format
 msgid "Firewire card %d"
 msgstr ""
 
-#: src/lives-yuv4mpeg.c:631
+#: src/lives-yuv4mpeg.c:680
 #, c-format
 msgid "Opened firewire card %d"
 msgstr ""

@@ -400,7 +400,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
     resync_audio(nframe);
     if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
       // we check for audio stop here, but the seek may not have happened yet
-      if (!check_for_audio_stop(first_frame,last_frame)) {
+      if (!check_for_audio_stop(fileno,first_frame,last_frame)) {
 	mainw->cancelled=CANCEL_AUD_END;
 	return 0;
       }

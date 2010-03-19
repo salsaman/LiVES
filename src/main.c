@@ -3560,7 +3560,7 @@ void load_frame_image(gint frame, gint last_frame) {
       }
     }
 
-    if ((mainw->multitrack==NULL&&mainw->double_size&&!prefs->ce_maxspect)||(mainw->fs&&(!mainw->ext_playback||!(mainw->vpp->capabilities&VPP_CAN_RESIZE)))||(mainw->must_resize&&((mainw->multitrack==NULL&&mainw->sep_win)||(mainw->multitrack!=NULL&&!mainw->sep_win)))) {
+    if ((mainw->multitrack==NULL&&mainw->double_size&&(!prefs->ce_maxspect||mainw->sep_win))||(mainw->fs&&(!mainw->ext_playback||!(mainw->vpp->capabilities&VPP_CAN_RESIZE)))||(mainw->must_resize&&((mainw->multitrack==NULL&&mainw->sep_win)||(mainw->multitrack!=NULL&&!mainw->sep_win)))) {
       if (!mainw->ext_playback||(mainw->pwidth!=mainw->vpp->fwidth||mainw->pheight!=mainw->vpp->fheight)) {
 	if (mainw->multitrack!=NULL) {
 	  if (!mainw->fs||mainw->play_window==NULL) {

@@ -1475,7 +1475,10 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   gboolean pthread_islocked=TRUE;
   GMainContext *ctx=NULL;
 
+
+#if GLIB_CHECK_VERSION(2,22,0)
   g_main_context_push_thread_default(ctx);
+#endif
 
   // mutex lock
   do {

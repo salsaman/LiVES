@@ -3384,16 +3384,17 @@ void adjustment_configure(GtkAdjustment *adjustment,
 #ifdef HAVE_GTK_NICE_VERSION
   gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
   return;
-#endif
+#else
 
   g_object_freeze_notify (G_OBJECT(adjustment));
 
-  gtk_adjustment_set_upper(adjustment,upper);
-  gtk_adjustment_set_lower(adjustment,lower);
-  gtk_adjustment_set_value(adjustment,value);
-  gtk_adjustment_set_step_increment(adjustment,step_increment);
-  gtk_adjustment_set_page_increment(adjustment,page_increment);
-  gtk_adjustment_set_page_size(adjustment,page_size);
+  adjustment->upper=upper;
+  adjustment->lower=lower;
+  adjustment->value=value;
+  adjustment->step_increment=step_increment;
+  adjustment->page_increment=page_increment;
+  adjustment->page_size=page_size;
 
   g_object_thaw_notify (G_OBJECT(adjustment));
+#endif
 }

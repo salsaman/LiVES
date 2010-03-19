@@ -3882,7 +3882,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
       }
       pthread_mutex_lock(&mainw->gtk_mutex);
+      mainw->no_switch_dprint=TRUE;
       d_print (msg);
+      mainw->no_switch_dprint=FALSE;
       g_free (msg);
       if (mainw->multitrack==NULL) {
 	if (mainw->is_ready) {

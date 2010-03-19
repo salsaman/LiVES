@@ -489,7 +489,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   signal (SIGHUP,SIG_IGN);
   signal (SIGPIPE,SIG_IGN);
-  signal(SIGUSR1,SIG_IGN);
+  signal (SIGUSR1,SIG_IGN);
 
   sigaction (SIGINT, &sact, NULL);
   sigaction (SIGTERM, &sact, NULL);

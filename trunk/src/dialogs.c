@@ -1809,3 +1809,10 @@ void do_encoder_img_ftm_error(render_details *rdet) {
 void do_card_in_use_error(void) {
   do_blocking_error_dialog(_("\nThis card is already in use and cannot be opened multiple times.\n"));
 }
+
+
+void do_dev_busy_error(gchar *devstr) {
+  gchar *msg=g_strdup_printf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n- Check if the device actually exists.\n"),devstr);
+  do_blocking_error_dialog(msg);
+  g_free(msg);
+}

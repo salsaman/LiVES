@@ -13,6 +13,7 @@
 #include "support.h"
 #include "lives-yuv4mpeg.h"
 #include <sys/types.h>
+#include <sys/file.h>
 #include <errno.h>
 
 static int yuvout,hsize_out,vsize_out;
@@ -52,9 +53,38 @@ static void *y4header_thread (void *arg) {
 }
 
 
+static void fill_read(int fd, void *buf, size_t count) {
+  size_t bytes=0;
+
+  do {
+    bytes+=read(fd,buf+bytes,count-bytes);
+  } while (bytes<count);
+
+}
+
+
 static void *y4frame_thread (void *arg) {
   lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)arg;
-  int i = y4m_read_frame (yuv4mpeg->fd, &(yuv4mpeg->streaminfo),&(yuv4mpeg->frameinfo), (uint8_t **)yuv4mpeg->pixel_data);
+  gchar buff[5],bchar;
+  int i=Y4M_OK;
+
+  // read 5 bytes FRAME
+  fill_read(yuv4mpeg->fd,&buff,5);
+
+  if (strncmp(buff,"FRAME",5)) {
+    i=Y4M_ERR_MAGIC;
+    pthread_exit(GINT_TO_POINTER(i));
+  }
+
+  do {
+    fill_read(yuv4mpeg->fd,&bchar,1);
+  } while (strncmp(&bchar,"\n",1));
+
+  // read YUV420
+  fill_read(yuv4mpeg->fd,yuv4mpeg->pixel_data[0],yuv4mpeg->hsize*yuv4mpeg->vsize);
+  fill_read(yuv4mpeg->fd,yuv4mpeg->pixel_data[1],yuv4mpeg->hsize*yuv4mpeg->vsize/4);
+  fill_read(yuv4mpeg->fd,yuv4mpeg->pixel_data[2],yuv4mpeg->hsize*yuv4mpeg->vsize/4);
+
   pthread_exit(GINT_TO_POINTER(i));
 }
 
@@ -448,6 +478,16 @@ lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
 
 
 
+static gboolean check_dev_busy(gchar *devstr) {
+  int ret;
+  int fd=open(devstr,O_RDONLY|O_NONBLOCK);
+  if (fd==-1) return FALSE;
+  ret=flock(fd,LOCK_EX|LOCK_NB);
+  close(fd);
+  if (ret==-1) return FALSE;
+  return TRUE;
+}
+
 
 
 
@@ -530,14 +570,23 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
+  devstr=g_strdup_printf("/dev/video%d",cardno);
+
+  if (!check_dev_busy(devstr)) {
+    do_dev_busy_error(fname);
+    g_free(devstr);
+    g_free(chanstr);
+    g_free(fifofile);
+    g_free(fname);
+    return;
+  }
+
   tv_cards=g_list_append(tv_cards,GINT_TO_POINTER(cardno));
 
   mainw->current_file=new_file;
 
   unlink(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
-
-  devstr=g_strdup_printf("/dev/video%d",cardno);
 
   com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s",cfile->handle,chanstr,devstr,fifofile);
   dummyvar=system(com);

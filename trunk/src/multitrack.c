@@ -7731,7 +7731,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
 gboolean
 on_mt_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-  multitrack_delete((lives_mt *)user_data,!(prefs->warning_mask&WARN_MASK_EXIT_MT));
+  mt_quit_activate(NULL,user_data);
   return FALSE;
 }
 

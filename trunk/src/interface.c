@@ -516,7 +516,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 
   if (cfile->frames>0||is_mt) {
     frame4 = gtk_frame_new (NULL);
-    gtk_widget_set_size_request (frame4, 660, 340);
+    gtk_widget_set_size_request (frame4, 800, 340);
     gtk_widget_show (frame4);
     gtk_box_pack_start (GTK_BOX (vbox5), frame4, TRUE, TRUE, 0);
     if (palette->style&STYLE_1) {
@@ -529,7 +529,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     
     filew->textview24 = gtk_text_view_new ();
     gtk_widget_show (filew->textview24);
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview24, 126, 48);
+    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview24, 180, 48);
     gtk_widget_set_size_request (filew->textview24, 180, 80);
     gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview24), FALSE);
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview24), GTK_JUSTIFY_CENTER);
@@ -537,7 +537,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     
     filew->textview25 = gtk_text_view_new ();
     gtk_widget_show (filew->textview25);
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview25, 448, 48);
+    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview25, 580, 48);
     gtk_widget_set_size_request (filew->textview25, 180, 80);
     gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview25), FALSE);
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview25), GTK_JUSTIFY_CENTER);
@@ -545,7 +545,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     
     filew->textview26 = gtk_text_view_new ();
     gtk_widget_show (filew->textview26);
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview26, 126, 136);
+    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview26, 180, 136);
     gtk_widget_set_size_request (filew->textview26, 180, 80);
     gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview26), FALSE);
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview26), GTK_JUSTIFY_CENTER);
@@ -553,7 +553,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     
     filew->textview27 = gtk_text_view_new ();
     gtk_widget_show (filew->textview27);
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview27, 448, 136);
+    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview27, 580, 136);
     gtk_widget_set_size_request (filew->textview27, 180, 80);
     gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview27), FALSE);
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview27), GTK_JUSTIFY_CENTER);
@@ -561,7 +561,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     
     filew->textview28 = gtk_text_view_new ();
     gtk_widget_show (filew->textview28);
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview28, 448, 224);
+    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview28, 580, 224);
     gtk_widget_set_size_request (filew->textview28, 180, 80);
     gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview28), FALSE);
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview28), GTK_JUSTIFY_CENTER);
@@ -569,7 +569,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     
     filew->textview29 = gtk_text_view_new ();
     gtk_widget_show (filew->textview29);
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview29, 126, 224);
+    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview29, 180, 224);
     gtk_widget_set_size_request (filew->textview29, 180, 80);
     gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview29), FALSE);
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview29), GTK_JUSTIFY_CENTER);
@@ -578,7 +578,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     label45 = gtk_label_new (_("Format"));
     gtk_widget_show (label45);
     gtk_fixed_put (GTK_FIXED (fixed3), label45, 44, 64);
-    gtk_widget_set_size_request (label45, 55, 20);
+    gtk_widget_set_size_request (label45, 125, 20);
     gtk_label_set_justify (GTK_LABEL (label45), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label45, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -587,7 +587,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     label46 = gtk_label_new (_("Frame size"));
     gtk_widget_show (label46);
     gtk_fixed_put (GTK_FIXED (fixed3), label46, 18, 152);
-    gtk_widget_set_size_request (label46, 75, 20);
+    gtk_widget_set_size_request (label46, 145, 20);
     gtk_label_set_justify (GTK_LABEL (label46), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label46, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -597,7 +597,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     else label47 = gtk_label_new (_("Byte size"));
     gtk_widget_show (label47);
     gtk_fixed_put (GTK_FIXED (fixed3), label47, 18, 240);
-    gtk_widget_set_size_request (label47, 75, 20);
+    gtk_widget_set_size_request (label47, 145, 20);
     gtk_label_set_justify (GTK_LABEL (label47), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label47, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -605,8 +605,8 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 
     label48 = gtk_label_new (_("Total time"));
     gtk_widget_show (label48);
-    gtk_fixed_put (GTK_FIXED (fixed3), label48, 350, 240);
-    gtk_widget_set_size_request (label48, 75, 20);
+    gtk_fixed_put (GTK_FIXED (fixed3), label48, 450, 240);
+    gtk_widget_set_size_request (label48, 145, 20);
     gtk_label_set_justify (GTK_LABEL (label48), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label48, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -614,8 +614,8 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 
     label44 = gtk_label_new (_("FPS"));
     gtk_widget_show (label44);
-    gtk_fixed_put (GTK_FIXED (fixed3), label44, 376, 64);
-    gtk_widget_set_size_request (label44, 50, 20);
+    gtk_fixed_put (GTK_FIXED (fixed3), label44, 476, 64);
+    gtk_widget_set_size_request (label44, 120, 20);
     gtk_label_set_justify (GTK_LABEL (label44), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label44, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -624,8 +624,8 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     if (!is_mt) label43 = gtk_label_new (_("Frames"));
     else label43 = gtk_label_new (_("Events"));
     gtk_widget_show (label43);
-    gtk_fixed_put (GTK_FIXED (fixed3), label43, 376, 152);
-    gtk_widget_set_size_request (label43, 55, 20);
+    gtk_fixed_put (GTK_FIXED (fixed3), label43, 476, 152);
+    gtk_widget_set_size_request (label43, 125, 20);
     gtk_label_set_justify (GTK_LABEL (label43), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label43, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -642,7 +642,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 
   if (audio_channels>0) {
     frame5 = gtk_frame_new (NULL);
-    gtk_widget_set_size_request (frame5, 560, 140);
+    gtk_widget_set_size_request (frame5, 700, 140);
     gtk_widget_show (frame5);
     gtk_box_pack_start (GTK_BOX (vbox5), frame5, TRUE, TRUE, 0);
     if (palette->style&STYLE_1) {
@@ -670,7 +670,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     if (!is_mt) {
       filew->textview_ltime = gtk_text_view_new ();
       gtk_widget_show (filew->textview_ltime);
-      gtk_fixed_put (GTK_FIXED (fixed5), filew->textview_ltime, 448, 16);
+      gtk_fixed_put (GTK_FIXED (fixed5), filew->textview_ltime, 580, 16);
       gtk_widget_set_size_request (filew->textview_ltime, 180, 50);
       gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview_ltime), FALSE);
       gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_ltime), GTK_JUSTIFY_CENTER);
@@ -678,8 +678,8 @@ create_info_window (gint audio_channels, gboolean is_mt) {
       
       label50 = gtk_label_new (_("Total time"));
       gtk_widget_show (label50);
-      gtk_fixed_put (GTK_FIXED (fixed5), label50, 350, 32);
-      gtk_widget_set_size_request (label50, 75, 16);
+      gtk_fixed_put (GTK_FIXED (fixed5), label50, 450, 32);
+      gtk_widget_set_size_request (label50, 145, 16);
       gtk_label_set_justify (GTK_LABEL (label50), GTK_JUSTIFY_LEFT);
       if (palette->style&STYLE_1) {
 	gtk_widget_modify_fg(label50, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -688,7 +688,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 
     filew->textview_lrate = gtk_text_view_new ();
     gtk_widget_show (filew->textview_lrate);
-    gtk_fixed_put (GTK_FIXED (fixed5), filew->textview_lrate, 126, 16);
+    gtk_fixed_put (GTK_FIXED (fixed5), filew->textview_lrate, 180, 16);
     gtk_widget_set_size_request (filew->textview_lrate, 180, 50);
     gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview_lrate), FALSE);
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_lrate), GTK_JUSTIFY_CENTER);
@@ -697,7 +697,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
     label52 = gtk_label_new (_("Rate/size"));
     gtk_widget_show (label52);
     gtk_fixed_put (GTK_FIXED (fixed5), label52, 30, 32);
-    gtk_widget_set_size_request (label52, 63, 16);
+    gtk_widget_set_size_request (label52, 130, 16);
     gtk_label_set_justify (GTK_LABEL (label52), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label52, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -706,7 +706,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 
     if (audio_channels>1) {
       frame6 = gtk_frame_new (NULL);
-      gtk_widget_set_size_request (frame6, 460, 100);
+      gtk_widget_set_size_request (frame6, 600, 100);
       gtk_widget_show (frame6);
       gtk_box_pack_start (GTK_BOX (vbox5), frame6, TRUE, TRUE, 0);
       if (palette->style&STYLE_1) {
@@ -720,7 +720,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
       if (!is_mt) {
 	filew->textview_rtime = gtk_text_view_new ();
 	gtk_widget_show (filew->textview_rtime);
-	gtk_fixed_put (GTK_FIXED (fixed6), filew->textview_rtime, 448, 16);
+	gtk_fixed_put (GTK_FIXED (fixed6), filew->textview_rtime, 580, 16);
 	gtk_widget_set_size_request (filew->textview_rtime, 180, 50);
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview_rtime), FALSE);
 	gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_rtime), GTK_JUSTIFY_CENTER);
@@ -728,8 +728,8 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 	
 	label51 = gtk_label_new (_("Total time"));
 	gtk_widget_show (label51);
-	gtk_fixed_put (GTK_FIXED (fixed6), label51, 350, 32);
-	gtk_widget_set_size_request (label51, 75, 16);
+	gtk_fixed_put (GTK_FIXED (fixed6), label51, 450, 32);
+	gtk_widget_set_size_request (label51, 145, 16);
 	gtk_label_set_justify (GTK_LABEL (label51), GTK_JUSTIFY_LEFT);
 	if (palette->style&STYLE_1) {
 	  gtk_widget_modify_fg(label51, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -738,7 +738,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 
       filew->textview_rrate = gtk_text_view_new ();
       gtk_widget_show (filew->textview_rrate);
-      gtk_fixed_put (GTK_FIXED (fixed6), filew->textview_rrate, 126, 16);
+      gtk_fixed_put (GTK_FIXED (fixed6), filew->textview_rrate, 180, 16);
       gtk_widget_set_size_request (filew->textview_rrate, 180, 50);
       gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview_rrate), FALSE);
       gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_rrate), GTK_JUSTIFY_CENTER);
@@ -747,7 +747,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
       label53 = gtk_label_new (_("Rate/size"));
       gtk_widget_show (label53);
       gtk_fixed_put (GTK_FIXED (fixed6), label53, 30, 32);
-      gtk_widget_set_size_request (label53, 63, 16);
+      gtk_widget_set_size_request (label53, 130, 16);
       gtk_label_set_justify (GTK_LABEL (label53), GTK_JUSTIFY_LEFT);
       if (palette->style&STYLE_1) {
 	gtk_widget_modify_fg(label53, GTK_STATE_NORMAL, &palette->normal_fore);

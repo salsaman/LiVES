@@ -1956,6 +1956,10 @@ static void time_to_string (lives_mt *mt, gdouble secs, gint length) {
 static void renumber_clips(void) {
   // remove gaps in our mainw->files array - caused when clips are closed
   // we also ensure each clip has a (non-zero) 64 bit unique_id to help with later id of the clips
+  // this is not strictly necessary any more, since we now track clips in the layout by 
+  // handle and unique id
+
+  // however, it helps to keep the numbers low if many files have been closed
 
   // called once when we enter multitrack mode
 
@@ -1964,7 +1968,7 @@ static void renumber_clips(void) {
 
 
   int cclip;
-  int i=1;
+  int i=1,j;
 
   GList *clist;
 
@@ -1981,6 +1985,10 @@ static void renumber_clips(void) {
 
       if (i!=cclip) {
 	mainw->files[cclip]=mainw->files[i];
+
+	for (j=0;j<FN_KEYS-1;j++) {
+	  if (mainw->clipstore[j]==i) mainw->clipstore[j]=cclip;
+	}
 
 	// we need to change the entries in mainw->cliplist
 	clist=mainw->cliplist;

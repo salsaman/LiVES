@@ -3866,6 +3866,10 @@ void close_current_file(gint file_to_switch_to) {
     cfile->hsize=mainw->def_width-H_RESIZE_ADJUST;
     cfile->vsize=mainw->def_height-V_RESIZE_ADJUST;
     
+    for (i=0;i<FN_KEYS-1;i++) {
+      if (mainw->clipstore[i]==mainw->current_file) mainw->clipstore[i]=0;
+    }
+
     // this must all be done last...
     if (cfile->menuentry!=NULL) {
       // c.f. on_prevclip_activate

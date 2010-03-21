@@ -1,5 +1,5 @@
-Version 1.3.2
--------------
+Version 1.3.2 (21 Mar 2010)
+---------------------------
 Fix jack/pulse audio breakage in multitrack.
 Add (experimental) support for firewire and TV card inputs
 Faster, lossless recording of generators/inputs
@@ -16,7 +16,9 @@ Implement new player transport
 Add "Gravity: Right" in multitrack
 Change default extension for ogg video from "ogg" to "ogv"
 
+Updated translations to Arabic, Brazilian Portuguese, Simplified Chinese, GB English,  Estonian, French, German, Hebrew, Hungarian, Italian,
 
+Initial translations to Danish and Occitan.
 
 
 * backported to 1.0.10

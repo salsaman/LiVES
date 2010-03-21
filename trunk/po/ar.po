@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 14:57-0300\n"
-"PO-Revision-Date: 2010-01-17 21:11+0000\n"
-"Last-Translator: Guybrush88 <Unknown>\n"
+"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"PO-Revision-Date: 2010-03-19 07:52+0000\n"
+"Last-Translator: عمرو رجائى(Amr) <amr.ragaee@gmail.com>\n"
 "Language-Team: Arabic <ar@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-02-21 11:40+0000\n"
+"X-Launchpad-Export-Date: 2010-03-21 18:00+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:76
@@ -36,10 +36,10 @@ msgid ""
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
 "\n"
-"لسوء الحظ تحطمت حياة الناس.\n"
-"الرجاء الإبلاغ عن هذا الخطأ في http://sourceforge.net/tracker/"
-"؟group_id=64341&atid=507139\n"
-"شكرا. انتعاش ينبغي أن يكون ممكنا إذا قمت بإعادة الأرواح.\n"
+"حدث خطأ بالبرنامج\n"
+"الرجاء الإبلاغ عن هذه العلة على هذا الرابط http://sourceforge.net/tracker/?"
+"group_id=64341&atid=507139\n"
+"سيتم إنعاش البرنامج بعد إعادة تشغيله. وشكرا\n"
 
 #: src/main.c:93
 msgid ""
@@ -50,15 +50,15 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"عند الإبلاغ عن أعطال ، يرجى إدراج تفاصيل نظام التشغيل الخاص بك ، والتوزيع "
-"،وإصدار الأرواح ("
+"عند الإبلاغ عن العلل ، يرجى ذِكر نظام التشغيل الخاص بك ، والتوزيعة ، وإصدار "
+"البرنامج."
 
 #: src/main.c:96
 msgid ""
 "and any information shown below:\n"
 "\n"
 msgstr ""
-"وأية معلومات هو مبين أدناه :\n"
+"وأية معلومات موضحة أدناه.\n"
 "\n"
 
 #: src/main.c:100
@@ -67,18 +67,21 @@ msgid ""
 "information.\n"
 "\n"
 msgstr ""
+"الرجاء تثبيت 'gdb' ثم تشغيل البرنامج مع خيار التصحيح ، لجمع مزيد من "
+"المعلومات.\n"
+"\n"
 
 #: src/main.c:109
 msgid "Preserving set.\n"
-msgstr "الحفاظ على مجموعة.\n"
+msgstr "الحفاظ على ضبط\n"
 
 #: src/main.c:436
 msgid "Resizing"
-msgstr "تغيّير الحجم"
+msgstr "غيّر حجم"
 
 #: src/main.c:443
 msgid "_Resize All Frames"
-msgstr "غيّر حجم جميع أطر"
+msgstr "غيّر حجم جميع الإطارات"
 
 #: src/main.c:703
 msgid "Any"
@@ -86,31 +89,31 @@ msgstr "أيّ"
 
 #: src/main.c:704
 msgid "None"
-msgstr "لا شيء"
+msgstr "بدون"
 
 #: src/main.c:705
 msgid "recommended"
-msgstr "موصى به"
+msgstr "موّصى به"
 
 #: src/main.c:706
 msgid "disabled !"
-msgstr "معطّل"
+msgstr "معطّل !"
 
 #: src/main.c:707
 msgid "**The current layout**"
-msgstr "** والتخطيط الحالي**"
+msgstr "**التخطيط الحالي**"
 
 #: src/main.c:1113
 msgid "Loading realtime effect plugins..."
-msgstr "تحميل المحمول الأثر الحقيقي..."
+msgstr "تحميل إضافات مؤثرات 'realtime'..."
 
 #: src/main.c:1162
 msgid "Starting jack audio server..."
-msgstr "بدءا جاك خادم الصوت..."
+msgstr "بدء خادم جاك الصوت..."
 
 #: src/main.c:1181
 msgid " or \"lives -aplayer pulse\""
-msgstr ""
+msgstr " أو \"lives -aplayer pulse\""
 
 #: src/main.c:1185
 msgid ""
@@ -125,99 +128,99 @@ msgstr ""
 
 #: src/main.c:1209
 msgid "Starting pulse audio server..."
-msgstr "يبدأ النبض خادم الصوت..."
+msgstr "بدء خادم 'pulse audio'..."
 
 #: src/main.c:1270
 msgid "Checking optional dependencies:"
-msgstr "التحقق من التبعيات اختياري :"
+msgstr "التحقق من إكتشاف التبعيات"
 
 #: src/main.c:1271
 msgid "mplayer...detected..."
-msgstr "إمبلاير... الكشف عن..."
+msgstr "إكتشاف ... 'mplayer'..."
 
 #: src/main.c:1272
 msgid "mplayer...NOT DETECTED..."
-msgstr "إمبلاير... عدم الكشف عن..."
+msgstr "عدم إكتشاف ... 'mplayer'..."
 
 #: src/main.c:1273
 msgid "convert...detected..."
-msgstr "تحويل... اكتشاف..."
+msgstr "إكتشاف... 'convert'..."
 
 #: src/main.c:1274
 msgid "convert...NOT DETECTED..."
-msgstr "تحويل... عدم الكشف عن..."
+msgstr "عدم إكتشاف... 'convert'..."
 
 #: src/main.c:1275
 msgid "composite...detected..."
-msgstr "مركب... اكتشاف..."
+msgstr "إكتشاف...'composite'..."
 
 #: src/main.c:1276
 msgid "composite...NOT DETECTED..."
-msgstr "مركب... عدم الكشف عن..."
+msgstr "عدم إكتشاف... 'composite'..."
 
 #: src/main.c:1277
 msgid "sox...detected\n"
-msgstr "الجوارب... الكشف عن\n"
+msgstr "إكتشاف...'sox'\n"
 
 #: src/main.c:1278
 msgid "sox...NOT DETECTED\n"
-msgstr "الجوارب... عدم الكشف عن\n"
+msgstr "عدم إكتشاف...'sox'\n"
 
 #: src/main.c:1279
 msgid "xmms...detected..."
-msgstr "xmms... اكتشاف..."
+msgstr "إكتشاف...'xmms'..."
 
 #: src/main.c:1280
 msgid "xmms...NOT DETECTED..."
-msgstr "xmms... عدم الكشف عن..."
+msgstr "عدم إكتشاف...'xmms'..."
 
 #: src/main.c:1281
 msgid "cdda2wav...detected..."
-msgstr "cdda2wav... الكشف عن..."
+msgstr "إكتشاف...'cdda2wav'..."
 
 #: src/main.c:1282
 msgid "cdda2wav...NOT DETECTED..."
-msgstr "cdda2wav... عدم الكشف عن..."
+msgstr "عدم إكتشاف...'cdda2wav'..."
 
 #: src/main.c:1283
 msgid "jackd...detected..."
-msgstr "jackd... الكشف عن..."
+msgstr "إكتشاف ...جاك..."
 
 #: src/main.c:1284
 msgid "jackd...NOT DETECTED..."
-msgstr "jackd... عدم الكشف عن..."
+msgstr "عدم إكتشاف ...جاك..."
 
 #: src/main.c:1285
 msgid "pulse audio...detected..."
-msgstr "نبض الصوت... الكشف عن..."
+msgstr "إكتشاف ...'pulse audio'..."
 
 #: src/main.c:1286
 msgid "pulse audio...NOT DETECTED..."
-msgstr "نبض الصوت... عدم الكشف عن..."
+msgstr "عدم إكتشاف ...'pulse audio'..."
 
 #: src/main.c:1287
 msgid "python...detected..."
-msgstr "الثعبان... الكشف عن..."
+msgstr "إكتشاف ...بايثون..."
 
 #: src/main.c:1288
 msgid "python...NOT DETECTED..."
-msgstr "الثعبان... عدم الكشف عن..."
+msgstr "عدم إكتشاف ...بايثون..."
 
 #: src/main.c:1289
 msgid "dvgrab...detected..."
-msgstr "dvgrab... الكشف عن..."
+msgstr "إكتشاف ...'dvgrab'..."
 
 #: src/main.c:1290
 msgid "dvgrab...NOT DETECTED..."
-msgstr "dvgrab... عدم الكشف عن..."
+msgstr "عدم إكتشاف ...'dvgrab'..."
 
 #: src/main.c:1291
 msgid "xwininfo...detected..."
-msgstr "xwininfo... الكشف عن..."
+msgstr "إكتشاف ... 'xwininfo'..."
 
 #: src/main.c:1292
 msgid "xwininfo...NOT DETECTED..."
-msgstr "xwininfo... عدم الكشف عن..."
+msgstr "عدم إكتشاف ... 'xwininfo'..."
 
 #: src/main.c:1295
 #, c-format
@@ -226,16 +229,19 @@ msgid ""
 "\n"
 "Window manager reports as \"%s\"; "
 msgstr ""
+"\n"
+"\n"
+"تقرير مدير النافذة كـ \"%s\"; "
 
 #: src/main.c:1298
 #, c-format
 msgid "number of monitors detected: %d\n"
-msgstr "الكشف عن عدد من المراقبين : %d\n"
+msgstr "إكتشاف عدد الشاشات %d\n"
 
 #: src/main.c:1301
 #, c-format
 msgid "Temp directory is %s\n"
-msgstr ""
+msgstr "مجلدات الملفات المؤقتة %s\n"
 
 #: src/main.c:1305
 msgid ""
@@ -243,14 +249,17 @@ msgid ""
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
+"تحذير - هذا الإصدار من برنامج لايفز قد تم دمجه بدون\n"
+"توصيل جاك الصوت او 'pulse audio'\n"
+"العديد من ميزات الصوت لن تكون متوفرة\n"
 
 #: src/main.c:1308
 msgid "Compiled with jack support, good !\n"
-msgstr "جمعت بدعم جاك ، وجيدة !\n"
+msgstr "التواصل مع جاك الصوت ، جيد !\n"
 
 #: src/main.c:1311
 msgid "Compiled with pulse audio support, wonderful !\n"
-msgstr "جمعت بدعم نبض الصوت ، رائع !\n"
+msgstr "التواصل مع 'pulse audio' ، رائع !\n"
 
 #: src/main.c:1315
 #, c-format
@@ -258,7 +267,7 @@ msgid ""
 "Welcome to LiVES version %s.\n"
 "\n"
 msgstr ""
-"أرحب LiVES الإصدار %s\n"
+"مرحبا بك مع إصدار برنامج لايفز %s\n"
 "\n"
 
 #: src/main.c:1617
@@ -267,67 +276,73 @@ msgid ""
 "\n"
 "Startup syntax is: %s [opts] [filename [start_time] [frames]]\n"
 msgstr ""
+"\n"
+"جمل بدأ البرنامج: %s [المدخلات] [اسم الملف [وقت-البدأ] [الإطارات]\n"
 
 #: src/main.c:1618
 msgid "Where: filename is the name of a media file or backup file.\n"
-msgstr ""
+msgstr "حيث: اسم الملف هو أسم ملف الميديا أو اسم ملف النسخ الاحتياطي\n"
 
 #: src/main.c:1619
 msgid "start_time : filename start time in seconds\n"
-msgstr ""
+msgstr "وقت-البدأ : تعريف وقت البدأ بوحدة الثانية\n"
 
 #: src/main.c:1620
 msgid "frames : maximum number of frames to open\n"
-msgstr ""
+msgstr "الإطارات : أكبر عدد ممكن لفتح الإطارات\n"
 
 #: src/main.c:1622
 msgid "opts can be:\n"
-msgstr ""
+msgstr "تستطيع الإختيار:\n"
 
 #: src/main.c:1623
 msgid "-help            : show this help text and exit\n"
-msgstr ""
+msgstr "-مساعدة : عرض مستند المساعدة وإغلاقه\n"
 
 #: src/main.c:1624
 msgid "-set <setname>   : autoload clip set setname\n"
-msgstr ""
+msgstr "-المجموعة <اسم المجموعة> : تحميل تلقائى لإسم مجموعة المقاطع\n"
 
 #: src/main.c:1625
 msgid "-noset           : do not load any set on startup\n"
-msgstr ""
+msgstr "-مجموعة غير متوفرة : عدم تحميل أى مجموعة عند البداية\n"
 
 #: src/main.c:1626
 msgid "-norecover       : force no-loading of crash recovery\n"
-msgstr ""
+msgstr "-عدم إسترجاع : عدم إسترجاع المجموعة المعطوبة بالقوة\n"
 
 #: src/main.c:1627
 msgid "-recover         : force loading of crash recovery\n"
-msgstr ""
+msgstr "-إسترجاع : إسترجاع المجموعة المعطوبة بالقوة\n"
 
 #: src/main.c:1628
 msgid "-nogui           : do not show the gui\n"
-msgstr ""
+msgstr "-عدم إستخدام الواجهة الرسومية : لا تستعرض الواجهة الرسومية\n"
 
 #: src/main.c:1629
 msgid "-startup-ce      : start in clip editor mode\n"
-msgstr ""
+msgstr "-إبدأ تشغيل محرر المقاطع : بداية تشغيل وضع محرر المقاطع\n"
 
 #: src/main.c:1630
 msgid "-startup-mt      : start in multitrack mode\n"
-msgstr ""
+msgstr "-إبدأ-تشغيل المسارات المتعددة : بداية تشغيل وضع المسارات المتعددة\n"
 
 #: src/main.c:1632
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr ""
+"إبدأ مكتب المنسق الخاص <منفذ> : ابدأ مكتب المنسق الخاص بالمستمع على منفذ "
+"'UDP'\n"
 
 #: src/main.c:1633
 msgid "-nooscstart      : do not start OSC listener\n"
-msgstr ""
+msgstr "لا تبدأ مكتب المنسق الخاص : لا تبدأ مكتب المنسق الخاص بالمستمع\n"
 
 #: src/main.c:1635
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
+"-أوديو بلاير <ap> : إبدأ مع إختيار أوديو بلاير . <ap> يُمكن أن يكون إم بلاير "
+"'mplayer'"
 
 #: src/main.c:1637
 msgid ", pulse"
@@ -335,7 +350,7 @@ msgstr ""
 
 #: src/main.c:1640
 msgid ", sox or jack\n"
-msgstr ""
+msgstr "، 'sox' أو جاك\n"
 
 #: src/main.c:1641
 msgid ""
@@ -346,19 +361,19 @@ msgstr ""
 
 #: src/main.c:1643
 msgid " or sox\n"
-msgstr ""
+msgstr " أو 'sox'\n"
 
 #: src/main.c:1645
 msgid "-devicemap <mapname>          : autoload devicemap\n"
-msgstr ""
+msgstr "-مخطط الجهاز <إسم المخطط> : تحميل تلقائى لمخطط الجهاز\n"
 
 #: src/main.c:1646
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
-msgstr ""
+msgstr "- صَحّح : حاول تصحيح الأعطاب (يحتاج تثبيت 'gdb')\n"
 
 #: src/main.c:1663 src/gui.c:966
 msgid "Starting GUI..."
-msgstr ""
+msgstr "بداية تشغيل الواجة الرسومية..."
 
 #: src/main.c:1673
 #, c-format
@@ -370,6 +385,13 @@ msgid ""
 "%s/%s.\n"
 "(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"
 msgstr ""
+"\n"
+"\n"
+"السمة 'theme' التى طلبتها ربما تكون غير موجودة . من فضلك تأكد أنك قمت "
+"بتنصيبها\n"
+"%s/%s.\n"
+"ربما كنت بحاجة إلى تغيير قيمة <prefix_dir> فى ملف لايفز فى مجلد الهوم الخاص "
+"بك  ~/.lives file)\n"
 
 #: src/main.c:1686
 msgid ""
@@ -377,6 +399,10 @@ msgid ""
 "LiVES was unable to write a small file to /tmp\n"
 "Please make sure you have write access to /tmp and try again.\n"
 msgstr ""
+"\n"
+"لم يستطيع البرنامج كتابة ملف صغير فى مسار الملفات المؤقتة '/tmp'\n"
+"من فضلك تأكد ان لديك تصريح الوصول للكتابة على مسار الملفات المؤقتة ثم أعد "
+"المحاولة.\n"
 
 #: src/main.c:1690
 msgid ""
@@ -386,6 +412,11 @@ msgid ""
 "Please review the README file which came with this package\n"
 "before running LiVES.\n"
 msgstr ""
+"\n"
+"لابد من وجود `smogrify` فى مسارك الخاص . وتكون قابلة للتنفيذ\n"
+"\n"
+"من فضلك راجع ملف 'README' المرفق مع الحزمة\n"
+"قبل تشغيل برنامج لايفز.\n"
 
 #: src/main.c:1696
 #, c-format
@@ -396,6 +427,11 @@ msgid ""
 "\n"
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
+"\n"
+"لم يستطيع البرنامج قراءة ملف الإعدادات\n"
+"%s/.lives\n"
+"\n"
+"يرجى التحقق من تصريحات هذا الملف والمجلد ثم إعادة المحاولة\n"
 
 #: src/main.c:1703
 #, c-format
@@ -407,6 +443,11 @@ msgid ""
 "Please check the file permissions for this file and directory\n"
 "and try again.\n"
 msgstr ""
+"\n"
+"لم يستطيع البرنامج الكتابة على ملف الإعدادات\n"
+"%s/.lives\n"
+"\n"
+"يرجى التحقق من تصريحات هذا الملف والمجلد ثم إعادة المحاولة\n"
 
 #: src/main.c:1710
 #, c-format
@@ -419,6 +460,13 @@ msgid ""
 "%s/.lives\n"
 "and try again.\n"
 msgstr ""
+"\n"
+"لم يستطيع البرنامج إستخدام مجلد الملفات المؤقتة\n"
+"%s\n"
+"\n"
+"يرجى التحقق من وضْع مجلد <tempdir>\n"
+"%s/.lives\n"
+"ثم إعادة المحاولة\n"
 
 #: src/main.c:1717
 msgid ""
@@ -430,6 +478,13 @@ msgid ""
 "\n"
 "Thankyou.\n"
 msgstr ""
+"\n"
+"تم إيجاد إصدار غير صحيح من 'smogrify' فى مسارك الخاص\n"
+"\n"
+"من فضلك راجع ملف 'README' المرفق مع الحزمة\n"
+"قبل تشغيل برنامج لايفز.\n"
+"\n"
+"وشكرا\n"
 
 #: src/main.c:1721 src/dialogs.c:1020
 msgid ""
@@ -437,6 +492,9 @@ msgid ""
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
+"\n"
+"يحتاج برنامج لايفز اى من أدوات 'mplayer' أو 'sox' لآداء مهامه . يرجى تنصيب "
+"أحد هذه الأدوات ، ثم إعادة المحاولة\n"
 
 #: src/main.c:1730
 msgid ""
@@ -444,6 +502,9 @@ msgid ""
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
 "LiVES more fully.\n"
 msgstr ""
+"\n"
+"لم يستطيع برنامج لايفز الوصول الى الأداة 'mplayer' . ربما تحتاج تنصيب الأداة "
+"للحصول على أداء أفضل.\n"
 
 #: src/main.c:1733
 msgid ""
@@ -451,6 +512,9 @@ msgid ""
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
+"\n"
+"لم يستطيع برنامج لايفز الوصول الى الأداة 'convert' و 'image-magick' . ربما "
+"تحتاج تنصيب الأداتين للحصول على تأثيرات الإعادة.\n"
 
 #: src/main.c:1736
 msgid ""
@@ -458,6 +522,9 @@ msgid ""
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
+"\n"
+"لم يستطيع برنامج لايفز الوصول الى الأداة 'composite' و 'image-magick' . ربما "
+"تحتاج تنصيب الأداتين للحصول على تأثيرات الدمج 'merge function'\n"
 
 #: src/main.c:1739
 msgid ""
@@ -465,6 +532,9 @@ msgid ""
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
+"\n"
+"لم يستطيع برنامج لايفز الوصول الى الأداة 'sox' . بعض مميرات الصوت لن تعمل. "
+"يجب تنصيب الأداة 'sox'\n"
 
 #: src/main.c:1742
 #, c-format
@@ -476,16 +546,22 @@ msgid ""
 "You will not be able to 'Save' without them.\n"
 "You may need to change the value of <lib_dir> in ~/.lives\n"
 msgstr ""
+"\n"
+"لم يستطيع برنامج لايفز إيجاد أى إضافات التشفير'encoder plugins'\n"
+"يرجى التحقق من تنصيب هذه الأدوات بشكل صحيح\n"
+"%s%s%s/\n"
+"لن تستطيع حفظ الملفات بدون هذه الأدوات\n"
+"ربما تحتاج الى تغيير القيمة <lib_dir> فى ~/.lives\n"
 
 #: src/main.c:1824
 #, c-format
 msgid "Autoloading set %s..."
-msgstr ""
+msgstr "التحميل التلقائى للمجموعة %s..."
 
 #: src/main.c:2007
 #, c-format
 msgid "Invalid audio player %s\n"
-msgstr ""
+msgstr "أوديو بلاير 'audio player' غير صالح %s\n"
 
 #: src/main.c:2093
 #, c-format
@@ -520,41 +596,43 @@ msgstr ""
 #: src/main.c:3421 src/main.c:3422 src/gui.c:1895 src/gui.c:2863
 #: src/saveplay.c:1471
 msgid "Play"
-msgstr "شغل"
+msgstr "شغّل"
 
 #: src/main.c:3782
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
 
 #: src/main.c:3868
 #, c-format
 msgid "Closed file %s\n"
-msgstr ""
+msgstr "ملف مغلق %s\n"
 
 #: src/main.c:4024 src/gui.c:519 src/utils.c:2560 src/utils.c:2586
 #: src/saveplay.c:2401 src/multitrack.c:3733 src/multitrack.c:5190
 msgid "_Undo"
-msgstr "ت_راجع"
+msgstr "_تراجع"
 
 #: src/main.c:4025 src/gui.c:532 src/utils.c:2561 src/utils.c:2587
 #: src/saveplay.c:2402 src/multitrack.c:3754 src/multitrack.c:5213
 msgid "_Redo"
-msgstr "_تكرار"
+msgstr "_كرّر"
 
 #: src/main.c:4051 src/interface.c:634 src/gui.c:2053 src/preferences.c:1541
 #: src/resample.c:1746
 msgid "Video"
-msgstr "الفيديو"
+msgstr "فيديو"
 
 #: src/main.c:4052 src/interface.c:653 src/gui.c:2072
 msgid "Left Audio"
-msgstr ""
+msgstr "الصوت الأيسر"
 
 #: src/main.c:4053 src/gui.c:2090
 msgid "Right Audio"
-msgstr ""
+msgstr "الصوت الأيمن"
 
 #: src/main.c:4098
 msgid ""
@@ -649,6 +727,8 @@ msgid ""
 "but some audio features will be disabled.\n"
 "\n"
 msgstr ""
+"ولكن بعض ميزات الصوت سوف يتم تعطيلها.\n"
+"\n"
 
 #: src/startup.c:185
 msgid ""
@@ -688,19 +768,16 @@ msgid "_Next"
 msgstr ""
 
 #: src/startup.c:435
-#, fuzzy
 msgid "Skipped"
-msgstr "_تخطى"
+msgstr ""
 
 #: src/startup.c:451
-#, fuzzy
 msgid "Passed"
-msgstr "ايقاف مؤقت"
+msgstr ""
 
 #: src/startup.c:482
-#, fuzzy
 msgid "Failed"
-msgstr "_ملف"
+msgstr ""
 
 #: src/startup.c:544
 msgid "LiVES: - Testing Configuration"
@@ -715,9 +792,8 @@ msgid "LiVES will now run some basic configuration tests\n"
 msgstr ""
 
 #: src/startup.c:601
-#, fuzzy
 msgid "Checking for \"sox\" presence"
-msgstr "التحقق من التبعيات اختياري :"
+msgstr ""
 
 #: src/startup.c:605
 msgid ""
@@ -733,9 +809,8 @@ msgid "You should install sox_fmt_all or similar"
 msgstr ""
 
 #: src/startup.c:680
-#, fuzzy
 msgid "Checking for \"mplayer\" presence"
-msgstr "التحقق من التبعيات اختياري :"
+msgstr ""
 
 #: src/startup.c:684
 msgid ""
@@ -772,9 +847,8 @@ msgid "You may wish to add jpeg output support to mplayer"
 msgstr ""
 
 #: src/startup.c:826
-#, fuzzy
 msgid "Checking for \"convert\" presence"
-msgstr "التحقق من التبعيات اختياري :"
+msgstr ""
 
 #: src/startup.c:830
 msgid "Install imageMagick to be able to use all of the rendered effects"
@@ -836,11 +910,11 @@ msgstr ""
 
 #: src/interface.c:39
 msgid "Let LiVES set the _file extension"
-msgstr ""
+msgstr "دع برنامج لايفز يقوم بتعيين _إمتداد الملف"
 
 #: src/interface.c:133
 msgid "Apply Deinterlace"
-msgstr ""
+msgstr "طبق 'Deinterlace'"
 
 #: src/interface.c:156
 msgid "If this is set, frames will be deinterlaced as they are imported."
@@ -1162,9 +1236,8 @@ msgid "Chapter  "
 msgstr "الفصل  "
 
 #: src/interface.c:2062
-#, fuzzy
 msgid "Channel  "
-msgstr "الفصل  "
+msgstr ""
 
 #: src/interface.c:2083
 msgid "Audio ID  "
@@ -2387,9 +2460,8 @@ msgid "Close/Sa_ve All Clips"
 msgstr ""
 
 #: src/gui.c:446
-#, fuzzy
 msgid "_Encode Clip As..."
-msgstr "لكليب _جديد..."
+msgstr ""
 
 #: src/gui.c:448
 msgid "Encode _Selection As..."
@@ -6799,9 +6871,8 @@ msgid "Opened yuv4mpeg stream on %s"
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:376
-#, fuzzy
 msgid "Audio: "
-msgstr "الصوت"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:379
 msgid "none\n"
@@ -8706,8 +8777,9 @@ msgid "Fina_l frame"
 msgstr "الإطار الأول"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "Flash _colour"
-msgstr ""
+msgstr "_خلفية بيضاء"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
@@ -8719,8 +8791,9 @@ msgid "Flop horizontally"
 msgstr "انعكاس عمودي"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frame Calculator"
-msgstr ""
+msgstr "اب_دأ"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -8746,8 +8819,9 @@ msgid "Frame _width"
 msgstr "حجم الإطار"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr ""
+msgstr "ثوان"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -8770,16 +8844,19 @@ msgid "Generate blank frames"
 msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generate clip from image"
-msgstr ""
+msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generate coloured frames"
-msgstr ""
+msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generate title frames"
-msgstr ""
+msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -8787,16 +8864,19 @@ msgid "Generating blank frames"
 msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generating clip from image"
-msgstr ""
+msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generating coloured frames"
-msgstr ""
+msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generating title frames"
-msgstr ""
+msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -8855,8 +8935,9 @@ msgid "Making monochrome"
 msgstr "أحادي اللون"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "يدوّر"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -8947,7 +9028,7 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 #, fuzzy
 msgid "Resize All Frames"
-msgstr "غيّر حجم جميع أطر"
+msgstr "غيّر حجم جميع الإطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
@@ -8965,24 +9046,29 @@ msgid "S_tart %"
 msgstr "اب_دأ"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _end"
-msgstr ""
+msgstr "الانتقالات"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "الانتقالات"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation change"
-msgstr ""
+msgstr "الانتقالات"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation end"
-msgstr ""
+msgstr "الانتقالات"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation start"
-msgstr ""
+msgstr "الانتقالات"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
@@ -9195,8 +9281,9 @@ msgstr "_نصف القطر"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Fill colour"
-msgstr ""
+msgstr "اب_دأ"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -9515,8 +9602,9 @@ msgid "colour_filter"
 msgstr "تلوين"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "تلوين"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -9579,8 +9667,9 @@ msgid "frame_calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "gamma_change"
-msgstr ""
+msgstr "_تجاهل التغييرات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -9592,8 +9681,9 @@ msgid "gen_clip_from_image"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "gen_coloured_frames"
-msgstr ""
+msgstr "إطارات"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -9746,12 +9836,18 @@ msgid "wave"
 msgstr "موجي"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "Unable to open output file !"
 msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES could not write to $nfile."
 msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Unable to locate the program $rfx_builder_multi"
@@ -9762,8 +9858,11 @@ msgid "This does not appear to be a valid video or image file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was unable to open it."
 msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."
@@ -9778,8 +9877,11 @@ msgid "This does not appear to be a valid backup file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was not able to open the file"
 msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 #, fuzzy
@@ -9816,4 +9918,4 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "$error"
-msgstr ""
+msgstr "$خطأ"

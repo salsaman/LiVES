@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 14:57-0300\n"
-"PO-Revision-Date: 2010-02-17 05:52+0000\n"
-"Last-Translator: yurchor <yurchor@gmail.com>\n"
+"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"PO-Revision-Date: 2010-03-21 07:01+0000\n"
+"Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-02-21 13:16+0000\n"
+"X-Launchpad-Export-Date: 2010-03-21 19:04+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:76
@@ -26,6 +26,11 @@ msgid ""
 "All translators should read the LiVES translation notes at\n"
 "http://lives.sourceforge.net/TRANS-README.txt"
 msgstr ""
+"Attention Translators !\n"
+"This message is intended for you, so please do not translate it.\n"
+"\n"
+"All translators should read the LiVES translation notes at\n"
+"http://lives.sourceforge.net/TRANS-README.txt"
 
 #: src/main.c:92
 msgid ""
@@ -616,12 +621,12 @@ msgstr "LiVES-%s: <файла не вказано>"
 #: src/main.c:3207
 #, c-format
 msgid "rec %9d/%d"
-msgstr ""
+msgstr "зап %9d/%d"
 
 #: src/main.c:3209
 #, c-format
 msgid "!rec %9d/%d"
-msgstr ""
+msgstr "!зап %9d/%d"
 
 #: src/main.c:3421 src/main.c:3422 src/gui.c:1895 src/gui.c:2863
 #: src/saveplay.c:1471
@@ -687,6 +692,11 @@ msgid ""
 "\n"
 "(Free space = %.2f GB)\n"
 msgstr ""
+"Каталог з назвою\n"
+"%s\n"
+"вже існує. Бажаєте скористатися цим каталогом?\n"
+"\n"
+"(Вільного місця = %.2f ГБ)\n"
 
 #: src/startup.c:30
 #, c-format
@@ -697,16 +707,23 @@ msgid ""
 "\n"
 "(Free space = %.2f GB)"
 msgstr ""
+"Створити каталог\n"
+"%s\n"
+"?\n"
+"\n"
+"(Вільного місця = %.2f ГБ)"
 
 #: src/startup.c:56
 msgid "Directory name is too long !"
-msgstr ""
+msgstr "Назва каталогу занадто довга!"
 
 #: src/startup.c:148
 msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
 msgstr ""
+"LiVES НЕ ВДАЛОСЯ ЗАПУСТИТИ ВКАЗАНИЙ ВАМИ АУДІОПРОГРАВАЧ!\n"
+"\n"
 
 #: src/startup.c:155
 msgid ""
@@ -714,16 +731,17 @@ msgid ""
 "\n"
 "PULSE AUDIO is recommended for most users"
 msgstr ""
+"Перш ніж запускати LiVES, вам слід вказати аудіопрогравач.\n"
+"\n"
+"Звичайним користувачам ми рекомендуємо скористатися PulseAudio"
 
 #: src/startup.c:158
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
-"ПОПЕРЕДЖЕННЯ: цю версію LiVES було зібрано без підтримки\n"
-"jack або PulseAudio.\n"
-"Ви не зможете скористатися багатьма можливостями з обробки звуку.\n"
+", але цю версію LiVES було зібрано без підтримки PulseAudio.\n"
+"\n"
 
 #: src/startup.c:161
 msgid ""
@@ -731,21 +749,21 @@ msgid ""
 " You are advised to install pulse audio first before running LiVES.\n"
 "\n"
 msgstr ""
+", але у вашій системі не встановлено PulseAudio.\n"
+" Радимо вам встановити PulseAudio, перед запуском LiVES.\n"
+"\n"
 
 #: src/startup.c:166
-#, fuzzy
 msgid "JACK audio is recommended for pro users"
-msgstr "Звичайна — рекомендована для більшості користувачів"
+msgstr "Сервер JACK варто використовувати користувачам-професіоналам"
 
 #: src/startup.c:169
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
-"ПОПЕРЕДЖЕННЯ: цю версію LiVES було зібрано без підтримки\n"
-"jack або PulseAudio.\n"
-"Ви не зможете скористатися багатьма можливостями з обробки звуку.\n"
+", але цю версію LiVES було зібрано без підтримки Jack.\n"
+"\n"
 
 #: src/startup.c:172
 msgid ""
@@ -753,6 +771,9 @@ msgid ""
 "before running LiVES.\n"
 "\n"
 msgstr ""
+", але у вашій системі не встановлено jackd. Вам варто встановити jackd, перш "
+"ніж ви запустите LiVES.\n"
+"\n"
 
 #: src/startup.c:175
 msgid ""
@@ -761,16 +782,24 @@ msgid ""
 "audio player instead.\n"
 "\n"
 msgstr ""
+", але може перешкодити запуску LiVES у деяких системах.\n"
+"Якщо LiVES не вдасться запустити з Jack, ви можете перезапустити програму і "
+"спробувати якийсь інший аудіопрогравач.\n"
+"\n"
 
 #: src/startup.c:179
 msgid "SOX may be used if neither of the preceding players work, "
 msgstr ""
+"SOX можна скористатися, якщо не працюватиме жоден з запропонованих вище "
+"програвачів, "
 
 #: src/startup.c:182
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
 msgstr ""
+"але деякі з можливостей роботи зі звуком буде вимкнено.\n"
+"\n"
 
 #: src/startup.c:185
 msgid ""
@@ -778,137 +807,134 @@ msgid ""
 "You are advised to install it before running LiVES.\n"
 "\n"
 msgstr ""
+"але у вашій системі Sox не встановлено.\n"
+"Радимо вам встановити його до того, як ви почнете користуватися LiVES.\n"
+"\n"
 
 #: src/startup.c:189
 msgid ""
 "The MPLAYER audio player is only recommended for testing purposes.\n"
 "\n"
 msgstr ""
+"Звуковий програвач Mplayer варто використовувати лише з метою тестування.\n"
+"\n"
 
 #: src/startup.c:207
-#, fuzzy
 msgid "LiVES: - Choose an audio player"
-msgstr "LiVES: вибір файла"
+msgstr "LiVES: - Вибір звукового програвача"
 
 #: src/startup.c:236
 msgid "Use _pulse audio player"
-msgstr ""
+msgstr "Вик_ористовувати програвач PulseAudio"
 
 #: src/startup.c:270
-#, fuzzy
 msgid "Use _jack audio player"
-msgstr "Запущено інструмент читання звуку Jack.\n"
+msgstr "Ви_користовувати звуковий програвач Jack"
 
 #: src/startup.c:305
 msgid "Use _sox audio player"
-msgstr ""
+msgstr "Вико_ристовувати звуковий програвач Sox"
 
 #: src/startup.c:339
 msgid "Use _mplayer audio player"
-msgstr ""
+msgstr "В_икористовувати звуковий програвач mplayer"
 
 #: src/startup.c:392 src/startup.c:578 src/interface.c:1884
 msgid "_Next"
 msgstr "_Далі"
 
 #: src/startup.c:435
-#, fuzzy
 msgid "Skipped"
-msgstr "_Забігання наперед"
+msgstr "Пропущено"
 
 #: src/startup.c:451
-#, fuzzy
 msgid "Passed"
-msgstr "Призупинити"
+msgstr "Пройдено"
 
 #: src/startup.c:482
-#, fuzzy
 msgid "Failed"
-msgstr "_Файл"
+msgstr "Невдача"
 
 #: src/startup.c:544
-#, fuzzy
 msgid "LiVES: - Testing Configuration"
-msgstr "LiVES: - Відкриття адреси"
+msgstr "LiVES: - перевірка налаштувань"
 
 #: src/startup.c:547
-#, fuzzy
 msgid "LiVES: - Troubleshoot"
-msgstr "_Усування вад"
+msgstr "LiVES: - усування вад"
 
 #: src/startup.c:562
 msgid "LiVES will now run some basic configuration tests\n"
-msgstr ""
+msgstr "Зараз LiVES виконає декілька перевірок основних налаштувань\n"
 
 #: src/startup.c:601
-#, fuzzy
 msgid "Checking for \"sox\" presence"
-msgstr "Пошук додаткових залежностей:"
+msgstr "Перевірка наявності «sox»"
 
 #: src/startup.c:605
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
+"Щоб мати змогу скористатися всіма можливостями з обробки звуку у LiVES, вам "
+"слід встановити sox"
 
 #: src/startup.c:613
 msgid "Checking if sox can convert audio"
-msgstr ""
+msgstr "Перевірка можливості перетворення звукових даних sox"
 
 #: src/startup.c:654
 msgid "You should install sox_fmt_all or similar"
-msgstr ""
+msgstr "Вам слід встановити sox_fmt_all або подібну програму"
 
 #: src/startup.c:680
-#, fuzzy
 msgid "Checking for \"mplayer\" presence"
-msgstr "Пошук додаткових залежностей:"
+msgstr "Перевірка наявності «mplayer»"
 
 #: src/startup.c:684
-#, fuzzy
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
 msgstr ""
-"\n"
-"\n"
-"Вам слід встановити mplayer, щоб мати змогу переглянути цей файл.\n"
+"Щоб мати змогу скористатися всіма можливостями з декодування звуку у LiVES, "
+"вам слід встановити mplayer"
 
 #: src/startup.c:710
 msgid "Checking if mplayer can convert audio"
-msgstr ""
+msgstr "Перевірка можливості перетворення звуку за допомогою mplayer"
 
 #: src/startup.c:720
 msgid "You should install mplayer with pcm/wav support"
-msgstr ""
+msgstr "Щоб скористатися підтримкою pcm/wav, вам слід встановити mplayer"
 
 #: src/startup.c:737
 msgid "Checking if mplayer can decode to png/alpha"
-msgstr ""
+msgstr "Перевірка можливості декодування png/alpha за допомогою mplayer"
 
 #: src/startup.c:769
 msgid "You may wish to upgrade mplayer to a newer version"
-msgstr ""
+msgstr "Вам варто оновити пакунок mplayer"
 
 #: src/startup.c:795
 msgid "Checking if mplayer can decode to jpeg"
-msgstr ""
+msgstr "Перевірка можливості декодування jpeg за допомогою mplayer"
 
 #: src/startup.c:809
 msgid "You should install mplayer with either png/alpha or jpeg support"
 msgstr ""
+"Щоб скористатися підтримкою png/alpha або jpeg, вам слід встановити mplayer"
 
 #: src/startup.c:810
 msgid "You may wish to add jpeg output support to mplayer"
-msgstr ""
+msgstr "Вам варто додати підтримку виведення у форматі jpeg до пакунка mplayer"
 
 #: src/startup.c:826
-#, fuzzy
 msgid "Checking for \"convert\" presence"
-msgstr "Пошук додаткових залежностей:"
+msgstr "Перевірка наявності «convert»"
 
 #: src/startup.c:830
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr ""
+"Щоб мати змогу скористатися усіма ефектами обробки, встановіть imageMagick"
 
 #: src/startup.c:845
 msgid ""
@@ -917,6 +943,11 @@ msgid ""
 "    Click Cancel to exit and install any missing components, or Next to "
 "continue    \n"
 msgstr ""
+"\n"
+"\n"
+"    Натисніть кнопку «Скасувати», щоб завершити роботу і встановити всі "
+"додаткові компоненти, а бо натисніть кнопку «Далі», щоб продовжити "
+"роботу    \n"
 
 #: src/startup.c:886
 msgid ""
@@ -924,6 +955,9 @@ msgid ""
 "\n"
 "Finally, you can choose the default startup interface for LiVES.\n"
 msgstr ""
+"\n"
+"\n"
+"Нарешті, ви можете вибрати типовий інтерфейс запуску LiVES.\n"
 
 #: src/startup.c:887
 msgid ""
@@ -931,6 +965,10 @@ msgid ""
 "\n"
 "LiVES has two main interfaces and you can start up with either of them.\n"
 msgstr ""
+"\n"
+"\n"
+"У LiVES передбачено два основних інтерфейси, ви можете запускати програму з "
+"будь-яким з цих інтерфейсів.\n"
 
 #: src/startup.c:888
 msgid ""
@@ -938,33 +976,39 @@ msgid ""
 "\n"
 "The default can always be changed later from Preferences.\n"
 msgstr ""
+"\n"
+"\n"
+"Типовий інтерфейс згодом можна змінити за допомогою діалогового вікна "
+"«Параметри».\n"
 
 #: src/startup.c:899
-#, fuzzy
 msgid "LiVES: - Choose the startup interface"
-msgstr "LiVES: - Виберіть робочий каталог"
+msgstr "LiVES: - вибір інтерфейсу запуску"
 
 #: src/startup.c:928
 msgid "Start in _Clip Edit mode"
-msgstr ""
+msgstr "Запускати у режимі редагування _кліпів"
 
 #: src/startup.c:952
 msgid "This is the best choice for simple editing tasks or for VJs\n"
 msgstr ""
+"Цей режим є найкращим вибором для простих завдань з редагування або для ві-"
+"джеїв\n"
 
 #: src/startup.c:967
-#, fuzzy
 msgid "Start in _Multitrack mode"
-msgstr "Режим _декількох доріжок"
+msgstr "Запускати у _багатодоріжковому режимі"
 
 #: src/startup.c:987
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
+"Цей режим буде кращим вибором для складних завдань з одночасного редагування "
+"декількох кліпів.\n"
 
 #: src/startup.c:1004
 msgid "_Finish"
-msgstr ""
+msgstr "_Завершити"
 
 #: src/interface.c:39
 msgid "Let LiVES set the _file extension"
@@ -1298,9 +1342,8 @@ msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- Зміна максимальної кількості видимих доріжок"
 
 #: src/interface.c:1978
-#, fuzzy
 msgid "LiVES:- Device details"
-msgstr "LiVES: вибір файла"
+msgstr "LiVES:- Параметри пристроїв"
 
 #: src/interface.c:2009
 #, c-format
@@ -1320,23 +1363,20 @@ msgid "Maximum number of tracks to display"
 msgstr "Максимальна кількість доріжок для показу"
 
 #: src/interface.c:2021
-#, fuzzy
 msgid "Device:        /dev/video"
-msgstr "Пристрій КД           "
+msgstr "Пристрій:        /dev/video"
 
 #: src/interface.c:2024
-#, fuzzy
 msgid "Device:        fw:"
-msgstr "Пристрій КД           "
+msgstr "Пристрій:        fw:"
 
 #: src/interface.c:2061
 msgid "Chapter  "
 msgstr "Частина  "
 
 #: src/interface.c:2062
-#, fuzzy
 msgid "Channel  "
-msgstr "    Канали "
+msgstr "Канал  "
 
 #: src/interface.c:2083
 msgid "Audio ID  "
@@ -2057,7 +2097,7 @@ msgstr ""
 
 #: src/callbacks.c:4223
 msgid "buffered"
-msgstr ""
+msgstr "буферизовано"
 
 #: src/callbacks.c:4235 src/callbacks.c:4254 src/callbacks.c:4268
 #: src/callbacks.c:4302
@@ -2722,16 +2762,15 @@ msgstr "Імпортувати з п_ристрою Firewire (hdv)"
 
 #: src/gui.c:344
 msgid "_Add Live Input"
-msgstr ""
+msgstr "_Додати потік даних"
 
 #: src/gui.c:358
-#, fuzzy
 msgid "Add Live _Firewire Device"
-msgstr "Імпортувати з п_ристрою Firewire (dv)"
+msgstr "Додати потік даних з п_ристрою firewire"
 
 #: src/gui.c:368
 msgid "Add Live _TV Device"
-msgstr ""
+msgstr "Додати потік телевізійних даних"
 
 #: src/gui.c:378 src/multitrack.c:5050
 msgid "_Recent Files..."
@@ -2746,9 +2785,8 @@ msgid "Close/Sa_ve All Clips"
 msgstr "Закрити/З_берегти всі кліпи"
 
 #: src/gui.c:446
-#, fuzzy
 msgid "_Encode Clip As..."
-msgstr "Закодувати кліп _як…"
+msgstr "За_кодувати кліп як…"
 
 #: src/gui.c:448
 msgid "Encode _Selection As..."
@@ -3997,12 +4035,12 @@ msgstr ""
 #: src/saveplay.c:3470
 #, c-format
 msgid "rec %.2f MB"
-msgstr ""
+msgstr "зап %.2f МБ"
 
 #: src/saveplay.c:3474
 #, c-format
 msgid "!rec %.2f MB"
-msgstr ""
+msgstr "!зап %.2f МБ"
 
 #: src/saveplay.c:3497
 #, c-format
@@ -4010,6 +4048,10 @@ msgid ""
 "Recording was paused because free disk space is below %ld GB.\n"
 "Record stop level can be set in Preferences.\n"
 msgstr ""
+"Запис було призупинено, оскільки на диску залишилося менше %ld ГБ вільного "
+"місця.\n"
+"Параметри призупинки запису можна встановити за допомогою діалогового вікна "
+"«Параметри».\n"
 
 #: src/saveplay.c:3613
 msgid ""
@@ -4865,6 +4907,9 @@ msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
+"\n"
+"Дані цієї картки вже використовуються, потік даних не можна відкривати "
+"декілька разів.\n"
 
 #: src/dialogs.c:1815
 #, c-format
@@ -4875,6 +4920,11 @@ msgid ""
 "- Check if this device is in use by another program.\n"
 "- Check if the device actually exists.\n"
 msgstr ""
+"\n"
+"Пристрій %s вже використовується або недоступний.\n"
+"- Перевірте права доступу до пристрою.\n"
+"- Перевірте, чи не користується цим пристроєм стороння програма.\n"
+"- Перевірте, чи створено системою файл пристрою.\n"
 
 #: src/effects.c:127
 #, c-format
@@ -6685,11 +6735,11 @@ msgstr "_Звукові дані (потрібен сервер Jack або Puls
 
 #: src/preferences.c:2426
 msgid "Pause recording if free disk space falls below"
-msgstr ""
+msgstr "Призупинити запис, якщо на диску залишилося менше"
 
 #: src/preferences.c:2437
 msgid "GB"
-msgstr ""
+msgstr "ГБ"
 
 #: src/preferences.c:2443
 msgid "Recording"
@@ -7845,14 +7895,12 @@ msgstr ""
 "каталогу.\n"
 
 #: src/lives-yuv4mpeg.c:136
-#, fuzzy
 msgid "Unable to open the incoming video stream\n"
-msgstr "Не вдалося відкрити вихідний потік yuv4mpeg %s\n"
+msgstr "Не вдалося відкрити вхідний потік відеоданих\n"
 
 #: src/lives-yuv4mpeg.c:175
-#, fuzzy
 msgid "Unable to read the incoming video stream\n"
-msgstr "Не вдалося встановити частоту кадрів додатка роботи з відео\n"
+msgstr "Не вдалося прочитати вхідний потік відеоданих\n"
 
 #: src/lives-yuv4mpeg.c:196
 #, c-format
@@ -7860,35 +7908,31 @@ msgid "Video dimensions: %d x %d are invalid. Stream cannot be opened"
 msgstr "Некоректні розміри кадру: %d x %d. Не вдалося відкрити потік даних"
 
 #: src/lives-yuv4mpeg.c:204
-#, fuzzy, c-format
+#, c-format
 msgid "Reset clip values for %s: size=%dx%d fps=%.3f\n"
 msgstr ""
-"Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
-"Звукові дані:"
+"Відновлено значення параметрів кліпу %s: розміри=%dx%d частота кадрів=%.3f\n"
 
 #: src/lives-yuv4mpeg.c:273
-#, fuzzy
 msgid "Unable to read the incoming video frame\n"
-msgstr "Не вдалося встановити частоту кадрів додатка роботи з відео\n"
+msgstr "Не вдалося прочитати вхідний відеокадр\n"
 
 #: src/lives-yuv4mpeg.c:342
-#, fuzzy
 msgid "yuv4mpeg stream"
-msgstr "Не вдалося відкрити потік даних yuv4mpeg %s\n"
+msgstr "yuv4mpeg-потік"
 
 #: src/lives-yuv4mpeg.c:368
 msgid "yu4mpeg stream in"
-msgstr ""
+msgstr "yu4mpeg-потік у"
 
 #: src/lives-yuv4mpeg.c:370
-#, fuzzy, c-format
+#, c-format
 msgid "Opened yuv4mpeg stream on %s"
-msgstr "Відкрито потік yuv4mpeg у %sstream.yuv"
+msgstr "Відкрито потік даних yuv4mpeg з %s"
 
 #: src/lives-yuv4mpeg.c:376
-#, fuzzy
 msgid "Audio: "
-msgstr "Звук"
+msgstr "Звук: "
 
 #: src/lives-yuv4mpeg.c:379
 msgid "none\n"
@@ -7916,22 +7960,22 @@ msgstr "Не вдалося відкрити вихідний потік yuv4mpe
 #: src/lives-yuv4mpeg.c:562
 #, c-format
 msgid "TV card %d"
-msgstr ""
+msgstr "ТБ-картка %d"
 
 #: src/lives-yuv4mpeg.c:603
 #, c-format
 msgid "Opened TV card %d (%s)"
-msgstr ""
+msgstr "Відкрито ТБ-картку %d (%s)"
 
 #: src/lives-yuv4mpeg.c:651
 #, c-format
 msgid "Firewire card %d"
-msgstr ""
+msgstr "Firewire-картка %d"
 
 #: src/lives-yuv4mpeg.c:678
 #, c-format
 msgid "Opened firewire card %d"
-msgstr ""
+msgstr "Відкрито firewire-картку %d"
 
 #: src/multitrack.c:396
 msgid "Auto backup"
@@ -8150,15 +8194,15 @@ msgstr "щоб позначити доріжки і часові ділянки.
 
 #: src/multitrack.c:3585
 msgid "_Insert mode: Normal"
-msgstr "Режим _вставлення: звичайний"
+msgstr "_Вставлення: звичайне"
 
 #: src/multitrack.c:3601
 msgid "_Mouse mode: Move"
-msgstr "_Режим миші: пересування"
+msgstr "_Миша: пересування"
 
 #: src/multitrack.c:3605
 msgid "_Mouse mode: Select"
-msgstr "_Режим миші: позначення"
+msgstr "_Миша: позначення"
 
 #: src/multitrack.c:3628 src/multitrack.c:6223
 msgid "_Gravity: Normal"
@@ -8173,9 +8217,8 @@ msgid "_Gravity: Right"
 msgstr "_Тяжіння: праворуч"
 
 #: src/multitrack.c:3639
-#, fuzzy
 msgid "Close _last gap(s) in selected tracks/time"
-msgstr "Закрити пер_шу прогалину в позначених доріжках/часовому фрагменті"
+msgstr "Закрити за_лишкові прогалини у позначених доріжках/проміжку часу"
 
 #: src/multitrack.c:3642
 msgid "Close _first gap(s) in selected tracks/time"
@@ -8480,7 +8523,7 @@ msgstr "_Змінити ширину, висоту та гучність зву�
 
 #: src/multitrack.c:5913
 msgid "_Render"
-msgstr "_Обробити"
+msgstr "_Обробка"
 
 #: src/multitrack.c:5923
 msgid "_Render all to new clip"
@@ -10888,6 +10931,18 @@ msgstr "Помилка $plugin_name:"
 msgid "$error"
 msgstr "$error"
 
+#~ msgid "You need to install dvgrab to use this option."
+#~ msgstr "Для користування цим пунктом вам слід встановити dvgrab."
+
+#~ msgid "Undoing audio"
+#~ msgstr "Скасування звуку"
+
+#~ msgid "Encode Clip _As..."
+#~ msgstr "Закодувати кліп _як…"
+
+#~ msgid "Unable to open yuv4mpeg stream %s\n"
+#~ msgstr "Не вдалося відкрити потік даних yuv4mpeg %s\n"
+
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -10898,6 +10953,9 @@ msgstr "$error"
 #~ "Не вдалося відкрити потік даних, частота кадрів не збігається з "
 #~ "фіксованою.\n"
 
+#~ msgid "Opened yuv4mpeg stream on %sstream.yuv"
+#~ msgstr "Відкрито потік yuv4mpeg у %sstream.yuv"
+
 #~ msgid ""
 #~ " size=%dx%d bpp=%d fps=%.3f\n"
 #~ "Audio: "
@@ -10907,9 +10965,3 @@ msgstr "$error"
 
 #~ msgid "Sync lock off.\n"
 #~ msgstr "Синхронізацію вимкнено.\n"
-
-#~ msgid "You need to install dvgrab to use this option."
-#~ msgstr "Для користування цим пунктом вам слід встановити dvgrab."
-
-#~ msgid "Undoing audio"
-#~ msgstr "Скасування звуку"

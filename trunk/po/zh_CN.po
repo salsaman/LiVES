@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 14:57-0300\n"
-"PO-Revision-Date: 2010-02-21 11:06+0000\n"
-"Last-Translator: Guybrush88 <Unknown>\n"
+"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"PO-Revision-Date: 2010-03-21 02:05+0000\n"
+"Last-Translator: Eleanor Chen <chenyueg@gmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-02-21 11:52+0000\n"
+"X-Launchpad-Export-Date: 2010-03-21 18:08+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:76
@@ -36,9 +36,10 @@ msgid ""
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
 "\n"
-"不幸的生命坠毁。\n"
-"请报告这个错误在http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
-"谢谢。应该有可能恢复，如果您重新启动的生命。\n"
+"很不幸 LiVES 崩溃了。\n"
+"请到 http://sourceforge.net/tracker/?group_id=64341&atid=507139 提交 bug，谢"
+"谢。\n"
+"重启 LiVES 之后应该可以恢复。\n"
 
 #: src/main.c:93
 msgid ""
@@ -49,7 +50,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"报告崩溃时请包括操作系统信息，如发行版 LiVES 版本 ("
+"报告崩溃时请包括操作系统、发行版及 LiVES 版本信息 ("
 
 #: src/main.c:96
 msgid ""
@@ -65,12 +66,12 @@ msgid ""
 "information.\n"
 "\n"
 msgstr ""
-"请安装gdb然后运行LiVES时添加 -debug选项收集更多信息。\n"
+"请安装 gdb 然后添加 -debug选项运行 LiVES 时以便收集更多信息。\n"
 "\n"
 
 #: src/main.c:109
 msgid "Preserving set.\n"
-msgstr "保留设置。\n"
+msgstr "正在保存场景。\n"
 
 #: src/main.c:436
 msgid "Resizing"
@@ -122,6 +123,13 @@ msgid ""
 "\n"
 "Alternatively, try to start lives with: \"lives -aplayer sox\""
 msgstr ""
+"\n"
+"\n"
+"需要手动启动jackd。请确保jackd正在运行中。\n"
+"或者将 ~/.lives文件夹下<jack_opts>的值改为16\n"
+"然后重启LiVES。\n"
+"\n"
+"或者，试着用\"lives -aplayer sox\"命令运行lives。"
 
 #: src/main.c:1209
 msgid "Starting pulse audio server..."
@@ -189,11 +197,11 @@ msgstr "jackd...未发现..."
 
 #: src/main.c:1285
 msgid "pulse audio...detected..."
-msgstr "pulse audio...检测..."
+msgstr "pulse audio...发现..."
 
 #: src/main.c:1286
 msgid "pulse audio...NOT DETECTED..."
-msgstr "pulse 音频...未检测到..."
+msgstr "pulse 音频...未发现..."
 
 #: src/main.c:1287
 msgid "python...detected..."
@@ -233,7 +241,7 @@ msgstr ""
 #: src/main.c:1298
 #, c-format
 msgid "number of monitors detected: %d\n"
-msgstr "检测到的监视器数量：%d\n"
+msgstr "检测到的显视器数量：%d\n"
 
 #: src/main.c:1301
 #, c-format
@@ -246,7 +254,7 @@ msgid ""
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
-"注意 － 该版本的 LiVES 没有编译上\n"
+"警告 － 该版本的 LiVES 没有编译上\n"
 "jack 或 pulse 音频支持。\n"
 "许多音频功能将不可用。\n"
 
@@ -256,7 +264,7 @@ msgstr "编译上 jack 支持了，好！\n"
 
 #: src/main.c:1311
 msgid "Compiled with pulse audio support, wonderful !\n"
-msgstr "编译上 pulse 音频支持了，太好了！\n"
+msgstr "编译上 pulse 音频支持了，很好！\n"
 
 #: src/main.c:1315
 #, c-format
@@ -264,7 +272,7 @@ msgid ""
 "Welcome to LiVES version %s.\n"
 "\n"
 msgstr ""
-"欢迎来到 LiVES（版本 %s）。\n"
+"欢迎来到 LiVES 版本 %s。\n"
 "\n"
 
 #: src/main.c:1617
@@ -298,15 +306,15 @@ msgstr "-help            : 显示此帮助文字并退出\n"
 
 #: src/main.c:1624
 msgid "-set <setname>   : autoload clip set setname\n"
-msgstr ""
+msgstr "-set <setname> : 自动加载场景 setname\n"
 
 #: src/main.c:1625
 msgid "-noset           : do not load any set on startup\n"
-msgstr "-noset           : 启动时不要加载任何设置\n"
+msgstr "-noset : 启动时不加载任何场景\n"
 
 #: src/main.c:1626
 msgid "-norecover       : force no-loading of crash recovery\n"
-msgstr "-norecover       : 强制不载入崩溃恢复\n"
+msgstr "-norecover : 强制不从崩溃中恢复\n"
 
 #: src/main.c:1627
 msgid "-recover         : force loading of crash recovery\n"
@@ -314,23 +322,23 @@ msgstr "-recover         : 强制载入崩溃恢复\n"
 
 #: src/main.c:1628
 msgid "-nogui           : do not show the gui\n"
-msgstr "-nogui           : 不显示用户界面\n"
+msgstr "-nogui : 不显示图形用户界面\n"
 
 #: src/main.c:1629
 msgid "-startup-ce      : start in clip editor mode\n"
-msgstr "-startup-ce      : 启动剪辑编辑模式\n"
+msgstr "-startup-ce : 以剪辑编辑模式启动\n"
 
 #: src/main.c:1630
 msgid "-startup-mt      : start in multitrack mode\n"
-msgstr "-startup-mt : 在多轨启动模式\n"
+msgstr "-startup-mt : 以多轨模式启动\n"
 
 #: src/main.c:1632
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
-msgstr ""
+msgstr "-oscstart <port> : 在 UDP 端口 <port> 启动 OSC 监听\n"
 
 #: src/main.c:1633
 msgid "-nooscstart      : do not start OSC listener\n"
-msgstr "-nooscstart : 不要开始振荡监听\n"
+msgstr "-nooscstart : 不启动 OSC 监听\n"
 
 #: src/main.c:1635
 msgid ""
@@ -351,6 +359,9 @@ msgid ""
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
+"-jackopts <opts>    : opts 是比特型  jack 启动选项 [1 = jack transport "
+"client, 2 = jack transport master, 4 = start jack transport server, 8 = "
+"pause audio when video paused, 16 = start jack audio server] \n"
 
 #: src/main.c:1643
 msgid " or sox\n"
@@ -358,15 +369,15 @@ msgstr " 或 sox\n"
 
 #: src/main.c:1645
 msgid "-devicemap <mapname>          : autoload devicemap\n"
-msgstr "-devicemap <mapname>          : 自动加载装置图\n"
+msgstr "-devicemap <mapname>          : 自动加载 devicemap\n"
 
 #: src/main.c:1646
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
-msgstr "-debug : 尝试调试崩溃（需要'gdb的'安装）\n"
+msgstr "-debug : 尝试调试崩溃（需要安装 gdb）\n"
 
 #: src/main.c:1663 src/gui.c:966
 msgid "Starting GUI..."
-msgstr "正在启动用户界面..."
+msgstr "正在启动图形用户界面..."
 
 #: src/main.c:1673
 #, c-format
@@ -378,6 +389,11 @@ msgid ""
 "%s/%s.\n"
 "(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"
 msgstr ""
+"\n"
+"\n"
+"无法找到您指定的主题。请确认您将主题安装与\n"
+"%s/%s。\n"
+"（或许您需要修改 ~/.lives 文件中 <prefix_dir> 的值）\n"
 
 #: src/main.c:1686
 msgid ""
@@ -385,6 +401,9 @@ msgid ""
 "LiVES was unable to write a small file to /tmp\n"
 "Please make sure you have write access to /tmp and try again.\n"
 msgstr ""
+"\n"
+"LiVES 无法向 /tmp 写入小文件\n"
+"请确保您有向 /tmp 的写入权限并重试。\n"
 
 #: src/main.c:1690
 msgid ""
@@ -394,6 +413,11 @@ msgid ""
 "Please review the README file which came with this package\n"
 "before running LiVES.\n"
 msgstr ""
+"\n"
+"`smogrify` 必须在您的环境变量 path 中并可执行\n"
+"\n"
+"请在运行 LiVES 前\n"
+"参阅 README 文件。\n"
 
 #: src/main.c:1696
 #, c-format
@@ -404,6 +428,11 @@ msgid ""
 "\n"
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
+"\n"
+"LiVES 无法读取配置文件\n"
+"%s/.lives\n"
+"\n"
+"请检查文件权限并重试。\n"
 
 #: src/main.c:1703
 #, c-format
@@ -415,6 +444,12 @@ msgid ""
 "Please check the file permissions for this file and directory\n"
 "and try again.\n"
 msgstr ""
+"\n"
+"LiVES 无法写入配置文件\n"
+"%s/.lives\n"
+"\n"
+"请检查文件及包含该文件的目录权限\n"
+"并重试。\n"
 
 #: src/main.c:1710
 #, c-format
@@ -427,6 +462,13 @@ msgid ""
 "%s/.lives\n"
 "and try again.\n"
 msgstr ""
+"\n"
+"LiVES 无法使用临时目录\n"
+"%s\n"
+"\n"
+"请检查文件\n"
+"%s/.lives\n"
+"中 <tempdir> 的设置并重试。\n"
 
 #: src/main.c:1717
 msgid ""
@@ -439,12 +481,12 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 "\n"
-"一个smogrify不正确的版本被发现在您的路径。\n"
+"您环境变量 path 中的 smogrify 版本不正确。\n"
 "\n"
-"请查看自述文件，该文件与此程序包来\n"
-"在运行的生活。\n"
+"请在运行 LiVES 前\n"
+"参阅 README 文件。\n"
 "\n"
-"三江源。\n"
+"谢谢。\n"
 
 #: src/main.c:1721 src/dialogs.c:1020
 msgid ""
@@ -452,6 +494,8 @@ msgid ""
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
+"\n"
+"LiVES 目前需要 'mplayer' 或 'sox' 以正常工作。请至少安装其中之一并重试。\n"
 
 #: src/main.c:1730
 msgid ""
@@ -459,6 +503,8 @@ msgid ""
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
 "LiVES more fully.\n"
 msgstr ""
+"\n"
+"LiVES 无法定位 'mplayer'。您可以安装 mplayer 来获得更完整的 LiVES 功能。\n"
 
 #: src/main.c:1733
 msgid ""
@@ -466,6 +512,9 @@ msgid ""
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
+"\n"
+"LiVES 无法定位 'convert'。您可以安装 convert 和 image-magick 来使用渲染效"
+"果。\n"
 
 #: src/main.c:1736
 msgid ""
@@ -473,6 +522,9 @@ msgid ""
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
+"\n"
+"LiVES 无法定位 'composite'。您需要安装 composite 和 image-magick 来使用融合功"
+"能。\n"
 
 #: src/main.c:1739
 msgid ""
@@ -480,6 +532,8 @@ msgid ""
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
+"\n"
+"LiVES 无法定位 'sox'。有些音频特性可能无法工作。您应该安装 'sox'。\n"
 
 #: src/main.c:1742
 #, c-format
@@ -491,31 +545,37 @@ msgid ""
 "You will not be able to 'Save' without them.\n"
 "You may need to change the value of <lib_dir> in ~/.lives\n"
 msgstr ""
+"\n"
+"LiVES 无法找到任何编码插件。\n"
+"请检查您是否已将插件正确安装至\n"
+"%s%s%s/\n"
+"没有插件您无法进行 '保存'。\n"
+"您或许需要修改 ~/.lives 中 <lib_dir> 的设置。\n"
 
 #: src/main.c:1824
 #, c-format
 msgid "Autoloading set %s..."
-msgstr ""
+msgstr "自动装载场景 %s..."
 
 #: src/main.c:2007
 #, c-format
 msgid "Invalid audio player %s\n"
-msgstr ""
+msgstr "无效的音频播放器 %s\n"
 
 #: src/main.c:2093
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
-msgstr ""
+msgstr "LiVES-%s: <Untitled%d> %dx%d : %d 帧 %d bpp %.3f fps"
 
 #: src/main.c:2097
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
-msgstr ""
+msgstr "LiVES-%s: <%s> %dx%d : ??? 帧 ??? bpp %.3f fps"
 
 #: src/main.c:2100
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
-msgstr ""
+msgstr "LiVES-%s: <%s> %dx%d : %d 帧 %d bpp %.3f fps"
 
 #: src/main.c:2106
 #, c-format
@@ -542,13 +602,13 @@ msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
-"生命无法捕获此图片\n"
+"LiVES 无法捕获此图片\n"
 "\n"
 
 #: src/main.c:3868
 #, c-format
 msgid "Closed file %s\n"
-msgstr "已完成的文件 %s\n"
+msgstr "已关闭文件 %s\n"
 
 #: src/main.c:4024 src/gui.c:519 src/utils.c:2560 src/utils.c:2586
 #: src/saveplay.c:2401 src/multitrack.c:3733 src/multitrack.c:5190
@@ -581,6 +641,10 @@ msgid ""
 "mplayer.\n"
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
+"\n"
+"\n"
+"如果指定音频播放器为 mplayer，LiVES 无法在同时打开的片段见切换。\n"
+"请调整首选项中的回放设置并重试。\n"
 
 #: src/startup.c:19
 #, c-format
@@ -620,14 +684,10 @@ msgid ""
 msgstr ""
 
 #: src/startup.c:158
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
-"注意 － 该版本的 LiVES 没有编译上\n"
-"jack 或 pulse 音频支持。\n"
-"许多音频功能将不可用。\n"
 
 #: src/startup.c:161
 msgid ""
@@ -641,14 +701,10 @@ msgid "JACK audio is recommended for pro users"
 msgstr ""
 
 #: src/startup.c:169
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
-"注意 － 该版本的 LiVES 没有编译上\n"
-"jack 或 pulse 音频支持。\n"
-"许多音频功能将不可用。\n"
 
 #: src/startup.c:172
 msgid ""
@@ -674,6 +730,8 @@ msgid ""
 "but some audio features will be disabled.\n"
 "\n"
 msgstr ""
+"但一些音频功能将被禁用。\n"
+"\n"
 
 #: src/startup.c:185
 msgid ""
@@ -689,63 +747,56 @@ msgid ""
 msgstr ""
 
 #: src/startup.c:207
-#, fuzzy
 msgid "LiVES: - Choose an audio player"
-msgstr "LiVES: 选择一个文件"
+msgstr ""
 
 #: src/startup.c:236
 msgid "Use _pulse audio player"
-msgstr ""
+msgstr "音频播放器使用_pulse"
 
 #: src/startup.c:270
 msgid "Use _jack audio player"
-msgstr ""
+msgstr "音频播放器使用_jack"
 
 #: src/startup.c:305
 msgid "Use _sox audio player"
-msgstr ""
+msgstr "音频播放器使用_sox"
 
 #: src/startup.c:339
 msgid "Use _mplayer audio player"
-msgstr ""
+msgstr "音频播放器使用_mplayer"
 
 #: src/startup.c:392 src/startup.c:578 src/interface.c:1884
 msgid "_Next"
-msgstr "_下一页"
+msgstr "下一步(_N)"
 
 #: src/startup.c:435
-#, fuzzy
 msgid "Skipped"
-msgstr "跳过(_S)"
+msgstr ""
 
 #: src/startup.c:451
-#, fuzzy
 msgid "Passed"
-msgstr "暂停"
+msgstr ""
 
 #: src/startup.c:482
-#, fuzzy
 msgid "Failed"
-msgstr "文件(_F)"
+msgstr ""
 
 #: src/startup.c:544
-#, fuzzy
 msgid "LiVES: - Testing Configuration"
-msgstr "LiVES: - 打开位置"
+msgstr ""
 
 #: src/startup.c:547
-#, fuzzy
 msgid "LiVES: - Troubleshoot"
-msgstr "LiVES: - 插入"
+msgstr ""
 
 #: src/startup.c:562
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr ""
 
 #: src/startup.c:601
-#, fuzzy
 msgid "Checking for \"sox\" presence"
-msgstr "检查可选的依赖："
+msgstr ""
 
 #: src/startup.c:605
 msgid ""
@@ -761,19 +812,14 @@ msgid "You should install sox_fmt_all or similar"
 msgstr ""
 
 #: src/startup.c:680
-#, fuzzy
 msgid "Checking for \"mplayer\" presence"
-msgstr "检查可选的依赖："
+msgstr ""
 
 #: src/startup.c:684
-#, fuzzy
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
 msgstr ""
-"\n"
-"\n"
-"您需要安装mplayer的能够预览该文件。\n"
 
 #: src/startup.c:710
 msgid "Checking if mplayer can convert audio"
@@ -804,9 +850,8 @@ msgid "You may wish to add jpeg output support to mplayer"
 msgstr ""
 
 #: src/startup.c:826
-#, fuzzy
 msgid "Checking for \"convert\" presence"
-msgstr "检查可选的依赖："
+msgstr ""
 
 #: src/startup.c:830
 msgid "Install imageMagick to be able to use all of the rendered effects"
@@ -854,9 +899,8 @@ msgid "This is the best choice for simple editing tasks or for VJs\n"
 msgstr ""
 
 #: src/startup.c:967
-#, fuzzy
 msgid "Start in _Multitrack mode"
-msgstr "-startup-mt : 在多轨启动模式\n"
+msgstr ""
 
 #: src/startup.c:987
 msgid ""
@@ -869,15 +913,15 @@ msgstr ""
 
 #: src/interface.c:39
 msgid "Let LiVES set the _file extension"
-msgstr ""
+msgstr "让 LiVES 自动选择文件（_f）扩展名"
 
 #: src/interface.c:133
 msgid "Apply Deinterlace"
-msgstr "申请反交错"
+msgstr "应用反交错"
 
 #: src/interface.c:156
 msgid "If this is set, frames will be deinterlaced as they are imported."
-msgstr "如果是这样设置，将帧隔行扫描，因为它们都是进口的。"
+msgstr "如果设置此项，视频在导入时将被反交错化。"
 
 #: src/interface.c:186 src/callbacks.c:7364 src/gui.c:2866 src/gui.c:3403
 #: src/saveplay.c:1474 src/saveplay.c:2059 src/dialogs.c:677 src/dialogs.c:678
@@ -888,19 +932,19 @@ msgstr "预览"
 
 #: src/interface.c:207
 msgid "Click here to _Preview any selected video, image or audio file"
-msgstr ""
+msgstr "点击此处预览（_P）选定的视频、图像或音频文件"
 
 #: src/interface.c:210
 msgid "Click here to _Preview any selected audio file"
-msgstr ""
+msgstr "点击此处预览（_P）任何选定的音频文件"
 
 #: src/interface.c:213
 msgid "Click here to _Preview the video"
-msgstr ""
+msgstr "点击此处预览（_P）视频"
 
 #: src/interface.c:292 src/dialogs.c:1507
 msgid "LiVES: - Processing..."
-msgstr "LiVES: - 处理..."
+msgstr "LiVES: - 正在处理..."
 
 #: src/interface.c:329
 msgid ""
@@ -910,6 +954,11 @@ msgid ""
 "\n"
 "Remember to switch off effects (ctrl-0) afterwards !"
 msgstr ""
+"\n"
+"\n"
+"请稍候\n"
+"\n"
+"请不要忘记之后关闭效果（ctrl-0）！"
 
 #: src/interface.c:332 src/callbacks.c:7170 src/dialogs.c:1540
 msgid ""
@@ -921,15 +970,15 @@ msgstr ""
 
 #: src/interface.c:376
 msgid "Show details"
-msgstr "显示详情"
+msgstr "显示细节"
 
 #: src/interface.c:399 src/dialogs.c:1564
 msgid "_Enough"
-msgstr "_足够的"
+msgstr "可以了（_E）"
 
 #: src/interface.c:400 src/framedraw.c:249
 msgid "_Preview"
-msgstr "察看(_P)"
+msgstr "预览(_P)"
 
 #: src/interface.c:401
 msgid "Pau_se"
@@ -961,7 +1010,7 @@ msgstr "总时间"
 
 #: src/interface.c:615
 msgid "FPS"
-msgstr "每秒帧数"
+msgstr "帧每秒"
 
 #: src/interface.c:624
 msgid "Frames"
@@ -969,7 +1018,7 @@ msgstr "帧"
 
 #: src/interface.c:625
 msgid "Events"
-msgstr "活动"
+msgstr "事件"
 
 #: src/interface.c:656 src/resample.c:1702
 msgid "Audio"
@@ -985,15 +1034,15 @@ msgstr "右声道"
 
 #: src/interface.c:814
 msgid "LiVES: - Encoding options"
-msgstr ""
+msgstr "LiVES: - 编码选项"
 
 #: src/interface.c:840
 msgid "<------------- (Check the box to resize as suggested)"
-msgstr "<------------- (检查框大小的建议)"
+msgstr "<------------- （勾选此处按推荐值调整尺寸）"
 
 #: src/interface.c:841
 msgid "<------------- (Check the box to use the size recommendation)"
-msgstr "<------------- (检查中使用的大小建议)"
+msgstr "<------------- （勾选此处使用推荐的尺寸）"
 
 #: src/interface.c:872
 msgid "Keep _my settings"
@@ -1013,7 +1062,7 @@ msgstr ""
 
 #: src/interface.c:970
 msgid "Show _Details"
-msgstr "显示_详细资料"
+msgstr "显示详情（_D）"
 
 #: src/interface.c:1064
 msgid "_Close Window"
@@ -1021,7 +1070,7 @@ msgstr "关闭窗口(_C)"
 
 #: src/interface.c:1068
 msgid "_Save to file"
-msgstr "_保存到文件"
+msgstr "保存到文件（_S）"
 
 #: src/interface.c:1173
 msgid "LiVES: - Insert"
@@ -1029,47 +1078,47 @@ msgstr "LiVES: - 插入"
 
 #: src/interface.c:1195
 msgid "_Number of times to insert"
-msgstr "_多次会议，插入"
+msgstr "插入次数（_N）"
 
 #: src/interface.c:1216
 msgid "_Insert to fit audio"
-msgstr "_适合插入音频"
+msgstr "插入以适应音频（_I）"
 
 #: src/interface.c:1260
 msgid "Insert _before selection"
-msgstr "插入_前选择"
+msgstr "插入到选区前（_B）"
 
 #: src/interface.c:1265
 msgid "Insert clipboard before selected frames"
-msgstr "前插入剪贴板选择帧"
+msgstr "插入剪切板内容到选定帧之前"
 
 #: src/interface.c:1297
 msgid "Insert _after selection"
-msgstr "插入_后选择"
+msgstr "插入到选区后（_A）"
 
 #: src/interface.c:1302
 msgid "Insert clipboard after selected frames"
-msgstr "选定后插入剪贴板帧"
+msgstr "插入剪切板内容到选定帧之后"
 
 #: src/interface.c:1333
 msgid "Insert _with sound"
-msgstr "插入_有声"
+msgstr "带声音插入（_W）"
 
 #: src/interface.c:1369
 msgid "Insert with_out sound"
-msgstr "没有健_全插入"
+msgstr "不带声音插入（_O）"
 
 #: src/interface.c:1472
 msgid "LiVES: - Open Selection"
-msgstr "LiVES: - 公开选拔"
+msgstr "LiVES: - 打开选区"
 
 #: src/interface.c:1501
 msgid "    Selection start time (sec)"
-msgstr ""
+msgstr "    选区起始时间（秒）"
 
 #: src/interface.c:1511
 msgid "    Number of frames to open"
-msgstr "    拍摄张数开放"
+msgstr "    打开帧数"
 
 #: src/interface.c:1610
 msgid "LiVES: - Open Location"
@@ -1084,6 +1133,11 @@ msgid ""
 "Also make sure you have set your bandwidth in Preferences|Streaming\n"
 "\n"
 msgstr ""
+"\n"
+"\n"
+"要打开流媒体，您必须保证 mplayer 中已经编译了正确的库。\n"
+"并保证在 首选向|流媒体 中设置了带宽\n"
+"\n"
 
 #: src/interface.c:1627
 msgid "URL : "
@@ -1095,7 +1149,7 @@ msgstr "不发送带宽信息"
 
 #: src/interface.c:1644
 msgid "Try this setting if you are having problems getting a stream"
-msgstr "试试这个设置如果您有问题，得到一个流"
+msgstr "如果获取流媒体有问题是请尝试此选项"
 
 #: src/interface.c:1757
 msgid ""
@@ -1104,12 +1158,18 @@ msgid ""
 "Please enter the set name you wish to use.\n"
 "LiVES will remind you to save the clip set later when you try to exit.\n"
 msgstr ""
+"您需要为当前的剪辑场景起个名字。\n"
+"这将使您能够在稍后重新载入相同的剪辑布局。\n"
+"请输入您希望使用的场景名字。\n"
+"LiVES 将会在稍后退出时提示您保存剪辑场景。\n"
 
 #: src/interface.c:1767
 msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
 msgstr ""
+"为了导出此项目，您必须为剪辑场景起个名字。\n"
+"这个名字同时也是项目名字。\n"
 
 #: src/interface.c:1778
 msgid ""
@@ -1117,6 +1177,9 @@ msgid ""
 "This startup wizard will guide you through the\n"
 "initial install so that you can get the most from this application.\n"
 msgstr ""
+"欢迎使用 LiVES !\n"
+"启动向导将指引您进行初始安装，\n"
+"以尽可能开启本程序功能。\n"
 
 #: src/interface.c:1785
 msgid ""
@@ -1126,18 +1189,23 @@ msgid ""
 "Note, on many systems, /tmp is cleared on shutdown, so it may be inadvisable "
 "to create it in /tmp.\n"
 msgstr ""
+"\n"
+"首先，您需要为 LiVES 选择一个工作目录。\n"
+"这个目录应该有足够的剩余空间。\n"
+"注意，很多系统上，/tmp 在关机时会被清除，因此不建议您将工作目录放在 /tmp "
+"下。\n"
 
 #: src/interface.c:1805
 msgid "LiVES: - Rename Clip"
-msgstr ""
+msgstr "LiVES: - 重命名剪辑"
 
 #: src/interface.c:1808
 msgid "LiVES: - Enter Set Name"
-msgstr ""
+msgstr "LiVES: - 输入场景名"
 
 #: src/interface.c:1811
 msgid "LiVES: - Choose a Working Directory"
-msgstr ""
+msgstr "LiVES: - 选择工作目录"
 
 #: src/interface.c:1815
 msgid "New name "
@@ -1145,78 +1213,76 @@ msgstr "新名称 "
 
 #: src/interface.c:1818
 msgid "Set name "
-msgstr "集名称 "
+msgstr "场景名 "
 
 #: src/interface.c:1966
 msgid "LiVES:- Load CD Track"
-msgstr ""
+msgstr "LiVES:- 载入 CD 音轨"
 
 #: src/interface.c:1969
 msgid "LiVES:- Select DVD Title/Chapter"
-msgstr ""
+msgstr "LiVES:- 选择 DVD 标题/章节"
 
 #: src/interface.c:1972
 msgid "LiVES:- Select VCD Title"
-msgstr ""
+msgstr "LiVES:- 选择 VCD 标题"
 
 #: src/interface.c:1975
 msgid "LiVES:- Change Maximum Visible Tracks"
-msgstr ""
+msgstr "LiVES:- 更改最大可见Change Maximum Visible Tracks"
 
 #: src/interface.c:1978
-#, fuzzy
 msgid "LiVES:- Device details"
-msgstr "LiVES: 选择一个文件"
+msgstr "LiVES:-设备明细"
 
 #: src/interface.c:2009
 #, c-format
 msgid "Track to load (from %s)"
-msgstr ""
+msgstr "载入音轨 (从 %s)"
 
 #: src/interface.c:2012
 msgid "DVD Title"
-msgstr ""
+msgstr "DVD 标题"
 
 #: src/interface.c:2015
 msgid "VCD Title"
-msgstr ""
+msgstr "VCD 标题"
 
 #: src/interface.c:2018
 msgid "Maximum number of tracks to display"
-msgstr "最大数量的曲目显示"
+msgstr "显示的最大音轨数"
 
 #: src/interface.c:2021
 msgid "Device:        /dev/video"
-msgstr ""
+msgstr "设备：/dev/video"
 
 #: src/interface.c:2024
 msgid "Device:        fw:"
-msgstr ""
+msgstr "设备： fw:"
 
 #: src/interface.c:2061
 msgid "Chapter  "
 msgstr "章  "
 
 #: src/interface.c:2062
-#, fuzzy
 msgid "Channel  "
-msgstr "章  "
+msgstr "通道  "
 
 #: src/interface.c:2083
 msgid "Audio ID  "
-msgstr ""
+msgstr "音频 ID  "
 
 #: src/interface.c:2188
 msgid "LiVES:- Fade Audio In"
-msgstr ""
+msgstr "LiVES:- 音频渐强"
 
 #: src/interface.c:2191
 msgid "LiVES:- Fade Audio Out"
-msgstr ""
+msgstr "LiVES:- 音频渐弱"
 
 #: src/interface.c:2217
 msgid "Fade in over  "
-msgstr ""
+msgstr "建强结束  "
 
 #: src/interface.c:2218
 msgid "first"
@@ -1224,7 +1290,7 @@ msgstr "第一个"
 
 #: src/interface.c:2221
 msgid "Fade out over  "
-msgstr ""
+msgstr "渐弱结束  "
 
 #: src/interface.c:2222
 msgid "last"
@@ -1236,7 +1302,7 @@ msgstr "秒。"
 
 #: src/interface.c:2284
 msgid "selection."
-msgstr "选择。"
+msgstr "选区."
 
 #: src/interface.c:2350
 msgid "LiVES: - Play Random Music"
@@ -1244,7 +1310,7 @@ msgstr "LiVES: - 随机播放音乐"
 
 #: src/interface.c:2378
 msgid "Number of Tracks Requested:    "
-msgstr "数曲目要求：    "
+msgstr "要求的音轨数:    "
 
 #: src/interface.c:2401
 msgid "Directory:"
@@ -1256,15 +1322,15 @@ msgstr "包含子目录"
 
 #: src/interface.c:2455
 msgid "Minimum File Size (MB)         "
-msgstr ""
+msgstr "最小文件尺寸 (MB)         "
 
 #: src/interface.c:2475
 msgid "Maximum File Size (MB)        "
-msgstr ""
+msgstr "最大文件尺寸 (MB)        "
 
 #: src/interface.c:2533
 msgid "LiVES: - File Comments (optional)"
-msgstr ""
+msgstr "LiVES: - 文件注释（可选）"
 
 #: src/interface.c:2553
 msgid "Title/Name : "
@@ -1288,7 +1354,7 @@ msgstr "LiVES: 选择一个文件"
 
 #: src/interface.c:2744
 msgid "LiVES: - Cancel/Discard/Save"
-msgstr ""
+msgstr "LiVES: - 取消/放弃/保存"
 
 #: src/interface.c:2764
 msgid ""
@@ -1296,6 +1362,9 @@ msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
 msgstr ""
+"你就要离开多轨（multitrack ）模式。\n"
+"当前布局（layout）还没有保存。\n"
+"你打算保存吗？\n"
 
 #: src/interface.c:2767
 msgid ""
@@ -1303,6 +1372,9 @@ msgid ""
 "The current layout has been changed since the last save.\n"
 "What would you like to do ?\n"
 msgstr ""
+"你就要离开多轨（multitrack ）模式。\n"
+"当前布局（layout）至上一次保存已经有改动。\n"
+"你打算保存吗？\n"
 
 #: src/interface.c:2771
 msgid ""
@@ -1310,6 +1382,9 @@ msgid ""
 "The current clip set can be saved.\n"
 "What would you like to do ?\n"
 msgstr ""
+"您即将退出生活。\n"
+"当前剪辑设置可以保存。\n"
+"你要什么做什么？\n"
 
 #: src/interface.c:2772
 msgid ""
@@ -1332,14 +1407,16 @@ msgid ""
 "The current layout has not been changed since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
-"当前的布局没有改变，因为它最后保存。\n"
-"你要什么做什么？\n"
+"当前布局（layout）至上一次保存并未改动。\n"
+"你打算做什么？\n"
 
 #: src/interface.c:2784
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
 msgstr ""
+"当前的布局包含生成的帧，并且不能保留。\n"
+"你在离开多轨（multitrack）模式前最好渲染一下这些帧。\n"
 
 #: src/interface.c:2787
 msgid ""
@@ -1347,6 +1424,9 @@ msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "What do you wish to do ?"
 msgstr ""
+"你就要离开多轨（multitrack）模式。\n"
+"当前的布局包含生成的帧，并且不能保留。\n"
+"你打算做什么？"
 
 #: src/interface.c:2810
 msgid "Clip set _name"
@@ -1378,7 +1458,7 @@ msgstr "_保存布局"
 
 #: src/interface.c:2888
 msgid "_Save clip set"
-msgstr ""
+msgstr "_夹上保存"
 
 #: src/interface.c:2908
 msgid "LiVES: recover layout ?"
@@ -1390,11 +1470,14 @@ msgid ""
 "LiVES has detected a multitrack layout from a previous session.\n"
 "Would you like to try and recover it ?\n"
 msgstr ""
+"\n"
+"LiVES检测到先前的多轨布局\n"
+"你要恢复到这个布局吗？\n"
 
 #: src/callbacks.c:124
 #, c-format
 msgid "Saving as set %s..."
-msgstr ""
+msgstr "将场景保存为 %s..."
 
 #: src/callbacks.c:379 src/callbacks.c:409 src/callbacks.c:629
 msgid "Select File"
@@ -1421,6 +1504,11 @@ msgid ""
 "\n"
 "Really close it ?"
 msgstr ""
+"\n"
+"%s\n"
+"正在被多轨布局%s使用。\n"
+"\n"
+"确实要关闭吗？"
 
 #: src/callbacks.c:689
 #, c-format
@@ -1431,6 +1519,11 @@ msgid ""
 "\n"
 "Really close it ?"
 msgstr ""
+"\n"
+"%s\n"
+"正在被当前布局使用。\n"
+"\n"
+"确实要关闭吗？"
 
 #: src/callbacks.c:720
 #, c-format
@@ -1441,6 +1534,11 @@ msgid ""
 "\n"
 "Really close it ?"
 msgstr ""
+"\n"
+"%s\n"
+"还没有保存或者备份。\n"
+"\n"
+"确实要关闭吗？"
 
 #: src/callbacks.c:838
 msgid ""
@@ -1462,11 +1560,18 @@ msgid ""
 "then File|Close/Save all Clips and provide a new set name or discard it.\n"
 "Once you have done this, you will be able to import the new project.\n"
 msgstr ""
+"\n"
+"名称为 %s的场景已经存在。\n"
+"为了导入这个工程，你必须重命名或者删除已有场景。\n"
+"你可以通过 文件|重新加载场景 来完成这个，并指定场景名称\n"
+"%s\n"
+"然后通过 文件|关闭/保存所有剪辑 并且提供新的场景名称或者忽略。\n"
+"一旦你完成这些，你就可以导入新工程了。.\n"
 
 #: src/callbacks.c:859
 #, c-format
 msgid "Importing the project %s as set %s..."
-msgstr ""
+msgstr "导入工程 %s 为场景 %s..."
 
 #: src/callbacks.c:873
 msgid "Importing project"
@@ -1475,7 +1580,7 @@ msgstr "导入项目"
 #: src/callbacks.c:955
 #, c-format
 msgid "Exporting project %s..."
-msgstr ""
+msgstr "导出工程为%s..."
 
 #: src/callbacks.c:962
 msgid "Exporting project"
@@ -1483,11 +1588,11 @@ msgstr "出口项目"
 
 #: src/callbacks.c:978
 msgid "Restore .lv1 file"
-msgstr ""
+msgstr "恢复 .lv1文件"
 
 #: src/callbacks.c:995
 msgid "Backup as .lv1 file"
-msgstr ""
+msgstr "备份为 .lv1文件"
 
 #: src/callbacks.c:1168
 msgid ""
@@ -1512,7 +1617,7 @@ msgstr "删除设置"
 #: src/callbacks.c:1231
 #, c-format
 msgid "Set %s was permanently deleted from the disk.\n"
-msgstr ""
+msgstr "%s的设置永久删除磁盘。\n"
 
 #: src/callbacks.c:1275 src/callbacks.c:9160
 msgid "Insert Silence"
@@ -1520,11 +1625,11 @@ msgstr "插入沉默"
 
 #: src/callbacks.c:1311 src/callbacks.c:1361 src/callbacks.c:1487
 msgid "Undoing"
-msgstr ""
+msgstr "撤消"
 
 #: src/callbacks.c:1371 src/callbacks.c:1529
 msgid "Restoring audio..."
-msgstr ""
+msgstr "还原音频..."
 
 #: src/callbacks.c:1382
 msgid "Clearing frame images"
@@ -1537,12 +1642,12 @@ msgstr "删除多余的帧"
 #: src/callbacks.c:1588
 #, c-format
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
-msgstr ""
+msgstr "视频长度现在为 %d帧，播放速度为 %.3f帧/秒。\n"
 
 #: src/callbacks.c:1592 src/resample.c:607 src/resample.c:2417
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
-msgstr ""
+msgstr "剪贴板已经被重新取样为 %d 帧\n"
 
 #: src/callbacks.c:1734 src/callbacks.c:1748
 msgid "Redoing"
@@ -1551,7 +1656,7 @@ msgstr "重做"
 #: src/callbacks.c:1789
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
-msgstr ""
+msgstr "正在将%d 到 %d%s 帧拷贝到剪贴板……"
 
 #: src/callbacks.c:1807 src/saveplay.c:887 src/saveplay.c:994
 #: src/saveplay.c:1045 src/saveplay.c:2732
@@ -1560,7 +1665,7 @@ msgstr ""
 
 #: src/callbacks.c:1833
 msgid "Copying to the clipboard"
-msgstr ""
+msgstr "正在拷贝到剪贴板……"
 
 #: src/callbacks.c:1894
 msgid "Cut"
@@ -1573,7 +1678,7 @@ msgstr "粘贴"
 #: src/callbacks.c:1952
 #, c-format
 msgid "Pasted %d frames to new clip.\n"
-msgstr ""
+msgstr "粘贴第%d 帧到剪辑。\n"
 
 #: src/callbacks.c:2015
 msgid ""
@@ -1813,7 +1918,7 @@ msgstr "结算磁盘空间"
 #: src/callbacks.c:4158
 #, c-format
 msgid "%d MB of disk space was recovered.\n"
-msgstr ""
+msgstr "%d个MB的磁盘空间被收回。\n"
 
 #: src/callbacks.c:4179
 msgid "Resetting frame rates and frame values..."
@@ -1826,6 +1931,9 @@ msgid ""
 "External: %s\n"
 "Internal: %s (%d bpp)\n"
 msgstr ""
+"\n"
+"外部： %s\n"
+"内部： %s (%d bpp)\n"
 
 #: src/callbacks.c:4223
 msgid "buffered"
@@ -1846,6 +1954,8 @@ msgid ""
 "\n"
 "(%d virtual)"
 msgstr ""
+"\n"
+"（%d个虚拟）"
 
 #: src/callbacks.c:4245
 #, c-format
@@ -1853,6 +1963,8 @@ msgid ""
 "\n"
 "(%d decoded)"
 msgstr ""
+"\n"
+"（%d个解码）"
 
 #: src/callbacks.c:4257 src/callbacks.c:4271 src/callbacks.c:4305
 #, c-format
@@ -1860,6 +1972,8 @@ msgid ""
 "\n"
 "  %.2f sec."
 msgstr ""
+"\n"
+"  %.2f 秒"
 
 #: src/callbacks.c:4262
 msgid ""
@@ -1891,6 +2005,8 @@ msgid ""
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
+"  %d Hz %d bit\n"
+"%s %s"
 
 #: src/callbacks.c:4365
 msgid ""
@@ -1992,7 +2108,7 @@ msgstr "新的音频"
 #: src/callbacks.c:5156
 #, c-format
 msgid "%d frames are enough !\n"
-msgstr ""
+msgstr "%d个帧够了！\n"
 
 #: src/callbacks.c:5245
 msgid "LiVES: - Encoder debug output"
@@ -2028,7 +2144,7 @@ msgstr "玩在单独的窗口（拧）"
 
 #: src/callbacks.c:5812 src/gui.c:3385
 msgid "LiVES: - Play Window"
-msgstr ""
+msgstr "LiVES: - 播放窗口"
 
 #: src/callbacks.c:5906
 msgid "Switch continuous looping off (o)"
@@ -2045,11 +2161,11 @@ msgstr ""
 
 #: src/callbacks.c:6022 src/callbacks.c:6023 src/gui.c:3305
 msgid "Unmute the audio (z)"
-msgstr ""
+msgstr "取消静音音频 (z)"
 
 #: src/callbacks.c:6034 src/callbacks.c:6035 src/gui.c:1636 src/gui.c:3304
 msgid "Mute the audio (z)"
-msgstr ""
+msgstr "静音音频 (z)"
 
 #: src/callbacks.c:6199
 msgid "Reversing clipboard..."
@@ -2144,7 +2260,7 @@ msgstr "续..."
 #: src/callbacks.c:7720
 #, c-format
 msgid "Save Frame as %s..."
-msgstr ""
+msgstr "为保存框架%s。。。"
 
 #: src/callbacks.c:8010
 msgid ""
@@ -2197,7 +2313,7 @@ msgstr ""
 
 #: src/callbacks.c:8159
 msgid "LiVES was unable to capture this window. Sorry.\n"
-msgstr ""
+msgstr "生命无法捕获此窗口。对不起。\n"
 
 #: src/callbacks.c:8284
 msgid "Export Selected Audio as..."
@@ -2476,9 +2592,8 @@ msgid "Close/Sa_ve All Clips"
 msgstr ""
 
 #: src/gui.c:446
-#, fuzzy
 msgid "_Encode Clip As..."
-msgstr "新建剪_辑..."
+msgstr ""
 
 #: src/gui.c:448
 msgid "Encode _Selection As..."
@@ -6901,9 +7016,8 @@ msgid "Opened yuv4mpeg stream on %s"
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:376
-#, fuzzy
 msgid "Audio: "
-msgstr "音频"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:379
 msgid "none\n"
@@ -8679,12 +8793,12 @@ msgstr "跳棋盘"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "Clipboard _over selection"
-msgstr "插入_后选择"
+msgstr "插入到选区后（_A）"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "Clipboard _under selection"
-msgstr "插入_后选择"
+msgstr "插入到选区后（_A）"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -8837,12 +8951,14 @@ msgid "Frame _height"
 msgstr "帧尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr ""
+msgstr "正在将%d 到 %d%s 帧拷贝到剪贴板……"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr ""
+msgstr "正在将%d 到 %d%s 帧拷贝到剪贴板……"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -8850,8 +8966,9 @@ msgid "Frame _width"
 msgstr "帧尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr ""
+msgstr "秒"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -8957,7 +9074,7 @@ msgstr "渲染(_R)"
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "L_eft"
-msgstr "_下一页"
+msgstr "下一步(_N)"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 #, fuzzy
@@ -8965,8 +9082,9 @@ msgid "Making monochrome"
 msgstr "单色"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "旋转"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9005,7 +9123,7 @@ msgstr "标准化"
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "Number of _frames"
-msgstr "    拍摄张数开放"
+msgstr "    打开帧数"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -9076,24 +9194,29 @@ msgid "S_tart %"
 msgstr "启动(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _end"
-msgstr ""
+msgstr "转换"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "转换"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation change"
-msgstr ""
+msgstr "转换"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation end"
-msgstr ""
+msgstr "转换"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation start"
-msgstr ""
+msgstr "转换"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
@@ -9261,8 +9384,9 @@ msgid "_Bottom"
 msgstr "到底部(_B)"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Calculate"
-msgstr ""
+msgstr "_显示帧计数器"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -9304,8 +9428,9 @@ msgstr "半径(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Fill colour"
-msgstr ""
+msgstr "_显示帧计数器"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -9313,8 +9438,9 @@ msgid "_First frame"
 msgstr "第一帧"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Flash for"
-msgstr ""
+msgstr "_显示帧计数器"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -9383,7 +9509,7 @@ msgstr "反转(_N)"
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "_Number of frames"
-msgstr "    拍摄张数开放"
+msgstr "    打开帧数"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -9517,8 +9643,9 @@ msgid "_Time (seconds)"
 msgstr "秒"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "_Top left is clipboard"
-msgstr ""
+msgstr "正在拷贝到剪贴板……"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Top"
@@ -9622,8 +9749,9 @@ msgid "colour_filter"
 msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -9682,12 +9810,14 @@ msgid "flop"
 msgstr "_剪辑"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "frame_calculator"
-msgstr ""
+msgstr "_显示帧计数器"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "gamma_change"
-msgstr ""
+msgstr "_忽略的变化"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -9707,7 +9837,7 @@ msgstr "删除多余的帧"
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "gen_text"
-msgstr "_下一页"
+msgstr "下一步(_N)"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -9858,7 +9988,7 @@ msgstr "波浪线"
 #, fuzzy
 msgid "Unable to open output file !"
 msgstr ""
-"生命无法捕获此图片\n"
+"LiVES 无法捕获此图片\n"
 "\n"
 
 #: /usr/bin/smogrify:0
@@ -9878,7 +10008,7 @@ msgstr ""
 #, fuzzy
 msgid "LiVES was unable to open it."
 msgstr ""
-"生命无法捕获此图片\n"
+"LiVES 无法捕获此图片\n"
 "\n"
 
 #: /usr/bin/smogrify:0
@@ -9897,7 +10027,7 @@ msgstr ""
 #, fuzzy
 msgid "LiVES was not able to open the file"
 msgstr ""
-"生命无法捕获此图片\n"
+"LiVES 无法捕获此图片\n"
 "\n"
 
 #: /usr/bin/smogrify:0
@@ -9905,8 +10035,9 @@ msgid "$file"
 msgstr "$file"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES audio error."
-msgstr ""
+msgstr "LiVES:- 音频渐强"
 
 #: /usr/bin/smogrify:0
 msgid "cdda2wav is required for this function."
@@ -9936,12 +10067,6 @@ msgstr "$plugin_name failed:"
 msgid "$error"
 msgstr "$error"
 
-#~ msgid "You need to install dvgrab to use this option."
-#~ msgstr "您需要安装dvgrab使用此选项。"
-
-#~ msgid "Undoing audio"
-#~ msgstr "撤消音频"
-
 #~ msgid ""
 #~ "\n"
 #~ "Unfortunately LiVES crashed.\n"
@@ -9954,3 +10079,9 @@ msgstr "$error"
 #~ "请把这个错误提交到 http://www.sourceforge.net/projects/lives/\n"
 #~ "谢谢您。\n"
 #~ "如果您重新启动 LiVES 或许可以恢复。\n"
+
+#~ msgid "Undoing audio"
+#~ msgstr "撤消音频"
+
+#~ msgid "You need to install dvgrab to use this option."
+#~ msgstr "您需要安装dvgrab使用此选项。"

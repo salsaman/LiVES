@@ -405,7 +405,6 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
       pthread_mutex_lock(&mainw->abuf_mutex);
       // request main thread to fill another buffer
       mainw->abufs_to_fill++;
-
       if (mainw->jackd->read_abuf<0) {
 	// playback ended while we were processing
 	pthread_mutex_unlock(&mainw->abuf_mutex);

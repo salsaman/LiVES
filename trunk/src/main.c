@@ -844,7 +844,7 @@ static void lives_init(_ign_opts *ign_opts) {
     
     prefs->render_audio=TRUE;
 
-    prefs->num_rtaudiobufs=4;
+    prefs->num_rtaudiobufs=8;
 
     prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and other live CDs
 

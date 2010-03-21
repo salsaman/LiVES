@@ -2812,8 +2812,6 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
   aseek_tc+=(weed_timecode_t)((gdouble)(tc-mainw->cevent_tc)*stored_avel);
   mainw->cevent_tc=tc;
 
-  pthread_mutex_lock(&mainw->abuf_mutex);
-
   return_event=get_next_event(next_event);
   hint=get_event_hint (next_event);
   switch (hint) {
@@ -3055,7 +3053,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
   case WEED_EVENT_HINT_PARAM_CHANGE:
     break;
   }
-  pthread_mutex_unlock(&mainw->abuf_mutex);
+
   return return_event;
 }
 

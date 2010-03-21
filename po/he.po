@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 14:57-0300\n"
-"PO-Revision-Date: 2010-02-19 18:18+0000\n"
-"Last-Translator: Guybrush88 <Unknown>\n"
+"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"PO-Revision-Date: 2010-03-21 00:21+0000\n"
+"Last-Translator: Ilan <ilan@fonz.net>\n"
 "Language-Team: Hebrew <he@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-02-21 12:28+0000\n"
+"X-Launchpad-Export-Date: 2010-03-21 18:32+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:76
@@ -672,6 +672,8 @@ msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
 msgstr ""
+"ארע כשלון בנסיון להפעיל את נגן השמע שנבחר !\n"
+"\n"
 
 #: src/startup.c:155
 msgid ""
@@ -679,16 +681,17 @@ msgid ""
 "\n"
 "PULSE AUDIO is recommended for most users"
 msgstr ""
+"לפני הפעלת LiVES, יש צורך לבחור נגן שמע.\n"
+"\n"
+"Pulse Audio מומלץ לרוב המשתמשים."
 
 #: src/startup.c:158
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
-"אזהרה – גרסה זו של LiVES הודרה ללא\n"
-"תמיכה ב־jack או ב־pulse audio.\n"
-"תכונות רבות הקשורות לשמע לא תהיינה זמינות.\n"
+", אולם גרסה זו של LiVES לא הודרה עם תמיכה ב־pulse audio.\n"
+"\n"
 
 #: src/startup.c:161
 msgid ""
@@ -696,20 +699,21 @@ msgid ""
 " You are advised to install pulse audio first before running LiVES.\n"
 "\n"
 msgstr ""
+", אבל pulse audio לא מותקן במערכת זו.\n"
+" מומלץ להתקין אותו לפני הרצת LiVES.\n"
+"\n"
 
 #: src/startup.c:166
-#, fuzzy
 msgid "JACK audio is recommended for pro users"
-msgstr "רגיל - מומלץ לרוב המשתמשים"
+msgstr "JACK מומלץ למשתמשים מקצועיים"
 
 #: src/startup.c:169
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
-"אזהרה - גרסה זו של LiVES הודרה ללא תמיכה ב־jack.\n"
-"רבות מתכונות השמע לא תהיינה זמינות.\n"
+", אולם גרסה זו של LiVES לא הודרה עם תמיכה ב־jack.\n"
+"\n"
 
 #: src/startup.c:172
 msgid ""
@@ -717,28 +721,32 @@ msgid ""
 "before running LiVES.\n"
 "\n"
 msgstr ""
+", אולם jackd אינו מותק על מערכת זו. אולי ברצונך להתקין את jackd לפני הרצת "
+"LiVES.\n"
+"\n"
 
 #: src/startup.c:175
-#, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
 "If LiVES will not start with jack, you can restart and try with another "
 "audio player instead.\n"
 "\n"
 msgstr ""
-"לפני הפעלת LiVES, יש לבחור בנגן שמע.\n"
-"Jack הינה אפשרות מומלצת, אולם עלול למנוע מ־LiVES לעלות במערכות מסוימות.\n"
-"אם טעינת LiVES נכשלת עם jack, ניתן להפעילו מחדש ולנסות עם %s במקום.\n"
+", אולם בחירה זו עלולה למנוע מ־LiVES לפעול במערכות מסוימות.\n"
+"אם LiVES לא יפעל עם jack, ניתן להפעילו מחדש עם נגן שמע אחר.\n"
+"\n"
 
 #: src/startup.c:179
 msgid "SOX may be used if neither of the preceding players work, "
-msgstr ""
+msgstr "ניתן להשתמש ב־SOX אם אף אחד מהנגנים האחרים לא עובד, "
 
 #: src/startup.c:182
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
 msgstr ""
+"אולם תכונות מסוימות הקשורות לשמע ינוטרלו.\n"
+"\n"
 
 #: src/startup.c:185
 msgid ""
@@ -746,73 +754,69 @@ msgid ""
 "You are advised to install it before running LiVES.\n"
 "\n"
 msgstr ""
+"אולם sox לא מותקן במערכת.\n"
+"רצוי להתקינו לפני הרצת LiVES.\n"
+"\n"
 
 #: src/startup.c:189
 msgid ""
 "The MPLAYER audio player is only recommended for testing purposes.\n"
 "\n"
 msgstr ""
+"נגן השמע MPLAYER מומלץ רק למטרות בדיקה.\n"
+"\n"
 
 #: src/startup.c:207
 msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: - בחירת נגן שמע"
 
 #: src/startup.c:236
-#, fuzzy
 msgid "Use _pulse audio player"
-msgstr "שימוש בנגן השמע _%s"
+msgstr "שימוש בנגן השמע _pulse"
 
 #: src/startup.c:270
 msgid "Use _jack audio player"
 msgstr "שימוש בנגן השמע _jack"
 
 #: src/startup.c:305
-#, fuzzy
 msgid "Use _sox audio player"
-msgstr "שימוש בנגן השמע _%s"
+msgstr "שימוש בנגן השמע _sox"
 
 #: src/startup.c:339
-#, fuzzy
 msgid "Use _mplayer audio player"
-msgstr "שימוש בנגן השמע _jack"
+msgstr "שימוש בנגן השמע _mplayer"
 
 #: src/startup.c:392 src/startup.c:578 src/interface.c:1884
 msgid "_Next"
 msgstr "_הבא"
 
 #: src/startup.c:435
-#, fuzzy
 msgid "Skipped"
-msgstr "_דילוג"
+msgstr ""
 
 #: src/startup.c:451
-#, fuzzy
 msgid "Passed"
-msgstr "השהיה"
+msgstr ""
 
 #: src/startup.c:482
-#, fuzzy
 msgid "Failed"
-msgstr "_קובץ"
+msgstr ""
 
 #: src/startup.c:544
-#, fuzzy
 msgid "LiVES: - Testing Configuration"
-msgstr "LiVES: - פתיחת מיקום"
+msgstr ""
 
 #: src/startup.c:547
-#, fuzzy
 msgid "LiVES: - Troubleshoot"
-msgstr "_איתור תקלות"
+msgstr ""
 
 #: src/startup.c:562
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr ""
 
 #: src/startup.c:601
-#, fuzzy
 msgid "Checking for \"sox\" presence"
-msgstr "מתבצעת בדיקת חבילות תלות אפשריות:"
+msgstr ""
 
 #: src/startup.c:605
 msgid ""
@@ -828,19 +832,14 @@ msgid "You should install sox_fmt_all or similar"
 msgstr ""
 
 #: src/startup.c:680
-#, fuzzy
 msgid "Checking for \"mplayer\" presence"
-msgstr "מתבצעת בדיקת חבילות תלות אפשריות:"
+msgstr ""
 
 #: src/startup.c:684
-#, fuzzy
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
 msgstr ""
-"\n"
-"\n"
-"יש להתקין את mplayer בכדי להציג את קובץ זה.\n"
 
 #: src/startup.c:710
 msgid "Checking if mplayer can convert audio"
@@ -871,9 +870,8 @@ msgid "You may wish to add jpeg output support to mplayer"
 msgstr ""
 
 #: src/startup.c:826
-#, fuzzy
 msgid "Checking for \"convert\" presence"
-msgstr "מתבצעת בדיקת חבילות תלות אפשריות:"
+msgstr ""
 
 #: src/startup.c:830
 msgid "Install imageMagick to be able to use all of the rendered effects"
@@ -909,9 +907,8 @@ msgid ""
 msgstr ""
 
 #: src/startup.c:899
-#, fuzzy
 msgid "LiVES: - Choose the startup interface"
-msgstr "LiVES: - בחירת נגן שמע"
+msgstr ""
 
 #: src/startup.c:928
 msgid "Start in _Clip Edit mode"
@@ -922,9 +919,8 @@ msgid "This is the best choice for simple editing tasks or for VJs\n"
 msgstr ""
 
 #: src/startup.c:967
-#, fuzzy
 msgid "Start in _Multitrack mode"
-msgstr "_מצב מרובה רצועות"
+msgstr ""
 
 #: src/startup.c:987
 msgid ""
@@ -1201,6 +1197,9 @@ msgid ""
 "This startup wizard will guide you through the\n"
 "initial install so that you can get the most from this application.\n"
 msgstr ""
+"ברוכים הבאים ל־LiVES !\n"
+"אשף ההפעלה הזה ידריך אותך במהלך\n"
+"ההתקנה, כך שתוכל לקבל את המיטב מיישום זה.\n"
 
 #: src/interface.c:1785
 msgid ""
@@ -1248,9 +1247,8 @@ msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- שינוי מספר הרצועות הגלויות המירבי"
 
 #: src/interface.c:1978
-#, fuzzy
 msgid "LiVES:- Device details"
-msgstr "LiVES: בחירת קובץ"
+msgstr ""
 
 #: src/interface.c:2009
 #, c-format
@@ -1270,23 +1268,20 @@ msgid "Maximum number of tracks to display"
 msgstr "מספר מירבי של רצועות לתצוגה"
 
 #: src/interface.c:2021
-#, fuzzy
 msgid "Device:        /dev/video"
-msgstr "התקן תקליטורים           "
+msgstr ""
 
 #: src/interface.c:2024
-#, fuzzy
 msgid "Device:        fw:"
-msgstr "התקן תקליטורים           "
+msgstr ""
 
 #: src/interface.c:2061
 msgid "Chapter  "
 msgstr "פרק  "
 
 #: src/interface.c:2062
-#, fuzzy
 msgid "Channel  "
-msgstr "    ערוצים "
+msgstr ""
 
 #: src/interface.c:2083
 msgid "Audio ID  "
@@ -1519,6 +1514,11 @@ msgid ""
 "\n"
 "Really close it ?"
 msgstr ""
+"\n"
+"%s\n"
+"נמצא השימוש בכמה פריסות מרובות־רצועות%s.\n"
+"\n"
+"האם לסגור אותו בכל־זאת?"
 
 #: src/callbacks.c:689
 #, c-format
@@ -2636,9 +2636,8 @@ msgid "_Add Live Input"
 msgstr ""
 
 #: src/gui.c:358
-#, fuzzy
 msgid "Add Live _Firewire Device"
-msgstr "ייבוא מהתקן _Firewire (DV)"
+msgstr ""
 
 #: src/gui.c:368
 msgid "Add Live _TV Device"
@@ -2657,9 +2656,8 @@ msgid "Close/Sa_ve All Clips"
 msgstr "סגירת\\שמ_ירת כל הקטעים"
 
 #: src/gui.c:446
-#, fuzzy
 msgid "_Encode Clip As..."
-msgstr "קידוד קטע _כ..."
+msgstr ""
 
 #: src/gui.c:448
 msgid "Encode _Selection As..."
@@ -3922,7 +3920,7 @@ msgstr "משחזר קבצים"
 
 #: src/saveplay.c:3630
 msgid "Recovering files..."
-msgstr ""
+msgstr "משחזר קבצים..."
 
 #: src/dialogs.c:71
 msgid "Show affected _layouts"
@@ -4844,7 +4842,7 @@ msgstr "ממירים"
 
 #: src/effects-weed.c:256
 msgid "audio/video"
-msgstr ""
+msgstr "שמע/וידאו"
 
 #: src/effects-weed.c:257
 msgid "Audio/Video Transitions"
@@ -4852,7 +4850,7 @@ msgstr "מעברי וידאו\\שמע"
 
 #: src/effects-weed.c:259
 msgid "video only"
-msgstr ""
+msgstr "וידאו בלבד"
 
 #: src/effects-weed.c:260
 msgid "Video only Transitions"
@@ -6365,7 +6363,7 @@ msgstr "_png"
 
 #: src/preferences.c:2026
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
-msgstr ""
+msgstr "עמרי"
 
 #: src/preferences.c:2036
 msgid "Use instant opening when possible"
@@ -6499,7 +6497,7 @@ msgstr ""
 
 #: src/preferences.c:2437
 msgid "GB"
-msgstr ""
+msgstr "ג\"ב"
 
 #: src/preferences.c:2443
 msgid "Recording"
@@ -7602,14 +7600,12 @@ msgstr ""
 "נא לוודא שתיקיית הבית שלך ניתנת לכתיבה.\n"
 
 #: src/lives-yuv4mpeg.c:136
-#, fuzzy
 msgid "Unable to open the incoming video stream\n"
-msgstr "לא ניתן לפתוח את זרימת ה־yuv4mpeg היוצאת %s\n"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:175
-#, fuzzy
 msgid "Unable to read the incoming video stream\n"
-msgstr "ל־LiVES לא הייתה אפשרות לקבוע את קצב השקופיות של תוסף הוידאו\n"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:196
 #, c-format
@@ -7617,35 +7613,30 @@ msgid "Video dimensions: %d x %d are invalid. Stream cannot be opened"
 msgstr "מימדי הוידאו: %d x %d לא נכונים. לא ניתן לפתוח את הזרימה"
 
 #: src/lives-yuv4mpeg.c:204
-#, fuzzy, c-format
+#, c-format
 msgid "Reset clip values for %s: size=%dx%d fps=%.3f\n"
 msgstr ""
-"שקופיות=%d סוג=%s גודל=%dx%d סיביות לפיקסל=%d שקופיות לשנייה=%.3f\n"
-"שמע:"
 
 #: src/lives-yuv4mpeg.c:273
-#, fuzzy
 msgid "Unable to read the incoming video frame\n"
-msgstr "ל־LiVES לא הייתה אפשרות לקבוע את קצב השקופיות של תוסף הוידאו\n"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:342
-#, fuzzy
 msgid "yuv4mpeg stream"
-msgstr "לא ניתן לפתוח את זרימת הyuv4mpeg %s\n"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:368
 msgid "yu4mpeg stream in"
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:370
-#, fuzzy, c-format
+#, c-format
 msgid "Opened yuv4mpeg stream on %s"
-msgstr "נפתחה זרימת yuv4mpeg ב%sstream.yuv"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:376
-#, fuzzy
 msgid "Audio: "
-msgstr "שמע"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:379
 msgid "none\n"
@@ -7692,7 +7683,7 @@ msgstr ""
 
 #: src/multitrack.c:396
 msgid "Auto backup"
-msgstr ""
+msgstr "גיבוי אוטומטי"
 
 #: src/multitrack.c:549
 msgid "Backing audio"
@@ -7846,7 +7837,7 @@ msgstr "תצוגה מקדימה אוטומטית"
 
 #: src/multitrack.c:3559
 msgid "Single click on timeline"
-msgstr ""
+msgstr "לחיצה בודדת על ציר הזמן"
 
 #: src/multitrack.c:3560
 msgid "to select a frame."
@@ -7854,7 +7845,7 @@ msgstr "כדי לבחור מסגרת."
 
 #: src/multitrack.c:3561
 msgid "Double click on timeline"
-msgstr ""
+msgstr "לחיצה כפולה על ציר הזמן"
 
 #: src/multitrack.c:3562
 msgid "to select a block."
@@ -7862,27 +7853,27 @@ msgstr "כדי לבחור בלוק."
 
 #: src/multitrack.c:3563
 msgid "Clips can be dragged"
-msgstr ""
+msgstr "ניתן לגרור קטעים"
 
 #: src/multitrack.c:3564
 msgid "onto the timeline."
-msgstr ""
+msgstr "לציר הזמן."
 
 #: src/multitrack.c:3566
 msgid "Mouse mode is: Move"
-msgstr ""
+msgstr "העכבר נמצא במצב: הזזה"
 
 #: src/multitrack.c:3567
 msgid "clips can be moved around."
-msgstr ""
+msgstr "ניתן להזיז קטעים."
 
 #: src/multitrack.c:3572
 msgid "Mouse mode is: Select."
-msgstr ""
+msgstr "העכבר נמצא במצב: בחירה."
 
 #: src/multitrack.c:3573
 msgid "Drag with mouse on timeline"
-msgstr ""
+msgstr "ניתן לגרור עם העכבר את ציר הזמן"
 
 #: src/multitrack.c:3574
 msgid "to select tracks and time."
@@ -7913,9 +7904,8 @@ msgid "_Gravity: Right"
 msgstr ""
 
 #: src/multitrack.c:3639
-#, fuzzy
 msgid "Close _last gap(s) in selected tracks/time"
-msgstr "סגירת הרווחים הראשונים בזמן\\רצועות הנבחרות"
+msgstr ""
 
 #: src/multitrack.c:3642
 msgid "Close _first gap(s) in selected tracks/time"
@@ -10684,31 +10674,6 @@ msgstr "$plugin_name נכשל:"
 msgid "$error"
 msgstr "$error"
 
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Unable to open stream, framerate does not match fixed rate.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "לא ניתן לפתוח זרימה, קצב השקופיות לא תואם לקצב הקבוע.\n"
-
-#~ msgid ""
-#~ " size=%dx%d bpp=%d fps=%.3f\n"
-#~ "Audio: "
-#~ msgstr ""
-#~ " גודל=%dx%d סיביות לפיקסל=%d שקופיות לשנייה=%.3f\n"
-#~ "שמע: "
-
-#~ msgid "Sync lock off.\n"
-#~ msgstr "נעילת הסינכרון כובתה.\n"
-
-#~ msgid "You need to install dvgrab to use this option."
-#~ msgstr "יש צורך להתקין את ספריית dvgrab כדי להשתמש באפשרות זו."
-
-#~ msgid "Undoing audio"
-#~ msgstr "מבטל פעולת שמע"
-
 #~ msgid "or sox\n"
 #~ msgstr "או sox\n"
 
@@ -10759,8 +10724,21 @@ msgstr "$error"
 #~ msgid "recovering files..."
 #~ msgstr "משחזר קבצים..."
 
+#~ msgid ""
+#~ "WARNING - this version of LiVES was compiled without jack support.\n"
+#~ "Many audio features will be unavalaible.\n"
+#~ msgstr ""
+#~ "אזהרה - גרסה זו של LiVES הודרה ללא תמיכה ב־jack.\n"
+#~ "רבות מתכונות השמע לא תהיינה זמינות.\n"
+
 #~ msgid "_Encode Clip"
 #~ msgstr "_קידוד קטע"
+
+#~ msgid "Use _%s audio player"
+#~ msgstr "שימוש בנגן השמע _%s"
+
+#~ msgid "Undoing audio"
+#~ msgstr "מבטל פעולת שמע"
 
 #~ msgid ""
 #~ "Click on a Window to Capture it\n"
@@ -10769,12 +10747,18 @@ msgstr "$error"
 #~ "יש ללחוץ על חלון כדי ללכדו\n"
 #~ "או ללחוץ על 'q' להפסקת ההקלטה.\n"
 
+#~ msgid "Encode Clip _As..."
+#~ msgstr "קידוד קטע _כ..."
+
 #~ msgid ""
 #~ "Use ctrl and <- arrows -> to move through clip. Press 'r' before playing "
 #~ "to record changes."
 #~ msgstr ""
 #~ "ניתן להשתמש ב־ctrl ו <-חצים-> כדי לזוז בקטע. יש ללחוץ על 'r' לפני הנגינה "
 #~ "בכדי להקליט את השינויים."
+
+#~ msgid "You need to install dvgrab to use this option."
+#~ msgstr "יש צורך להתקין את ספריית dvgrab כדי להשתמש באפשרות זו."
 
 #~ msgid ""
 #~ "\n"
@@ -10901,6 +10885,31 @@ msgstr "$error"
 #~ "בעל הרבה שטח כונן פנוי.\n"
 #~ "שימוש מהנה !\n"
 
+#~ msgid "Opened yuv4mpeg stream on %sstream.yuv"
+#~ msgstr "נפתחה זרימת yuv4mpeg ב%sstream.yuv"
+
+#~ msgid "Unable to open yuv4mpeg stream %s\n"
+#~ msgstr "לא ניתן לפתוח את זרימת הyuv4mpeg %s\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "\n"
+#~ "Unable to open stream, framerate does not match fixed rate.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "לא ניתן לפתוח זרימה, קצב השקופיות לא תואם לקצב הקבוע.\n"
+
+#~ msgid ""
+#~ " size=%dx%d bpp=%d fps=%.3f\n"
+#~ "Audio: "
+#~ msgstr ""
+#~ " גודל=%dx%d סיביות לפיקסל=%d שקופיות לשנייה=%.3f\n"
+#~ "שמע: "
+
+#~ msgid "Sync lock off.\n"
+#~ msgstr "נעילת הסינכרון כובתה.\n"
+
 #~ msgid "Double click on a block to select it.\n"
 #~ msgstr "יש ללחוץ לחיצה כפולה על מקטע כדי לבחור אותו\n"
 
@@ -10965,6 +10974,17 @@ msgstr "$error"
 #~ "\n"
 #~ "ניתן להקליט שמע רק באמצעות שימוש בנגן השמע jack.\n"
 #~ "באפשרותך לבחור כך בכלים\\העדפות\\נגינה.\n"
+
+#~ msgid ""
+#~ "Before starting LiVES, you need to choose an audio player.\n"
+#~ "Jack is recommended, but may prevent LiVES from starting on some "
+#~ "systems.\n"
+#~ "If LiVES will not start with jack, you can restart and try with %s "
+#~ "instead.\n"
+#~ msgstr ""
+#~ "לפני הפעלת LiVES, יש לבחור בנגן שמע.\n"
+#~ "Jack הינה אפשרות מומלצת, אולם עלול למנוע מ־LiVES לעלות במערכות מסוימות.\n"
+#~ "אם טעינת LiVES נכשלת עם jack, ניתן להפעילו מחדש ולנסות עם %s במקום.\n"
 
 #~ msgid "Drag the time slider to where you want\n"
 #~ msgstr "גרירת מחוון הזמן למקום הרצוי\n"

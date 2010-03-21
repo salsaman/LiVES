@@ -10,14 +10,14 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 14:57-0300\n"
-"PO-Revision-Date: 2010-02-14 15:37+0000\n"
-"Last-Translator: Guybrush88 <Unknown>\n"
+"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"PO-Revision-Date: 2010-03-21 11:36+0000\n"
+"Last-Translator: Pierre Slamich <pierre.slamich@gmail.com>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-02-21 12:12+0000\n"
+"X-Launchpad-Export-Date: 2010-03-21 18:24+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 "X-Poedit-Country: FRANCE\n"
 "X-Poedit-Language: French\n"
@@ -683,13 +683,15 @@ msgstr ""
 
 #: src/startup.c:56
 msgid "Directory name is too long !"
-msgstr ""
+msgstr "Le nom du dossier est trop long!"
 
 #: src/startup.c:148
 msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
 msgstr ""
+"LiVES A MANQUÉ LE DÉBUT DE TON LECTEUR AUDIO SÉLECTIONNÉ !\n"
+"\n"
 
 #: src/startup.c:155
 msgid ""
@@ -697,16 +699,18 @@ msgid ""
 "\n"
 "PULSE AUDIO is recommended for most users"
 msgstr ""
+"Avant de commencer à utiliser LiVES, il faut choisir un lecteur audio.\n"
+"\n"
+"PULSE AUDIO est recommandé pour la plupart des utilisateurs"
 
 #: src/startup.c:158
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
-"ATTENTION - cette version de LiVES a été compilée sans \n"
-"prise en charge de jack ou de pulse audio.\n"
-"De nombreuses fonctionnalités ne seront pas disponibles.\n"
+", mais cette version de LiVES n'a pas étée compilée avec le support de "
+"pulse.\n"
+"\n"
 
 #: src/startup.c:161
 msgid ""
@@ -714,21 +718,22 @@ msgid ""
 " You are advised to install pulse audio first before running LiVES.\n"
 "\n"
 msgstr ""
+", mais vous n'avez pas PulseAudio d'installé sur votre système.\n"
+" Vous devez l'installer avant de lancer LiVES.\n"
+"\n"
 
 #: src/startup.c:166
-#, fuzzy
 msgid "JACK audio is recommended for pro users"
-msgstr "Normale - recommandée pour la plupart des utilisateurs"
+msgstr "L'audio JACK est recomandé pour les utilisateurs professionnels"
 
 #: src/startup.c:169
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
-"ATTENTION - Cette version de LiVES a été compilé sans le support du serveur "
-"jack.\n"
-"La plupart des fonctions audios seront indisponibles.\n"
+", mais cette version de LiVES n'a pas étée compilée avec le support de "
+"l'audio jack.\n"
+"\n"
 
 #: src/startup.c:172
 msgid ""
@@ -736,30 +741,29 @@ msgid ""
 "before running LiVES.\n"
 "\n"
 msgstr ""
+", mais vous n'avez pas installé jackd. Vous souhaitez installer mai jackd "
+"avant de lancer LiVES.\n"
+"\n"
 
 #: src/startup.c:175
-#, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
 "If LiVES will not start with jack, you can restart and try with another "
 "audio player instead.\n"
 "\n"
 msgstr ""
-"Avant de démarrer LiVES, vous devez choisir un lecteur audio.\n"
-"Jack est recommandé, mais peut empécher LiVES de démarrer sur certains "
-"systèmes.\n"
-"Si LiVES ne démarre pas avec jack, vous pouvez rédémarrer et essayer avec %"
-"s.\n"
 
 #: src/startup.c:179
 msgid "SOX may be used if neither of the preceding players work, "
-msgstr ""
+msgstr "SOX peut être utilisé si aucun des lecteurs précédents a fonctionné, "
 
 #: src/startup.c:182
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
 msgstr ""
+"mais certaines fonctionnalités audio serontdésactivées.\n"
+"\n"
 
 #: src/startup.c:185
 msgid ""
@@ -779,61 +783,52 @@ msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: - choisir un lecteur audio"
 
 #: src/startup.c:236
-#, fuzzy
 msgid "Use _pulse audio player"
-msgstr "Utiliser le lecteur audio _%s"
+msgstr "Utilise le lecteur audio _pulse"
 
 #: src/startup.c:270
 msgid "Use _jack audio player"
 msgstr "Utiliser le lecteur audio jack"
 
 #: src/startup.c:305
-#, fuzzy
 msgid "Use _sox audio player"
-msgstr "Utiliser le lecteur audio _%s"
+msgstr "Utilise le lecteur audio _sox"
 
 #: src/startup.c:339
-#, fuzzy
 msgid "Use _mplayer audio player"
-msgstr "Utiliser le lecteur audio jack"
+msgstr "Utilise le lecteur audui _mplayer"
 
 #: src/startup.c:392 src/startup.c:578 src/interface.c:1884
 msgid "_Next"
 msgstr "_Suivant"
 
 #: src/startup.c:435
-#, fuzzy
 msgid "Skipped"
-msgstr "Ignorer"
+msgstr ""
 
 #: src/startup.c:451
-#, fuzzy
 msgid "Passed"
-msgstr "Pause"
+msgstr ""
 
 #: src/startup.c:482
-#, fuzzy
 msgid "Failed"
-msgstr "_Fichier"
+msgstr ""
 
 #: src/startup.c:544
-#, fuzzy
 msgid "LiVES: - Testing Configuration"
-msgstr "LiVES: - Ouvrir emplacement"
+msgstr ""
 
 #: src/startup.c:547
-#, fuzzy
 msgid "LiVES: - Troubleshoot"
-msgstr "_Résolution de problèmes"
+msgstr ""
 
 #: src/startup.c:562
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr ""
 
 #: src/startup.c:601
-#, fuzzy
 msgid "Checking for \"sox\" presence"
-msgstr "Verification des dépendances optionnelles:"
+msgstr "Vérification de la présence de \"sox\""
 
 #: src/startup.c:605
 msgid ""
@@ -842,30 +837,25 @@ msgstr ""
 
 #: src/startup.c:613
 msgid "Checking if sox can convert audio"
-msgstr ""
+msgstr "Vérifie si sox peut convertir du son"
 
 #: src/startup.c:654
 msgid "You should install sox_fmt_all or similar"
-msgstr ""
+msgstr "Vous devriez installer sox_fmt_all ou équivalent"
 
 #: src/startup.c:680
-#, fuzzy
 msgid "Checking for \"mplayer\" presence"
-msgstr "Verification des dépendances optionnelles:"
+msgstr "Vérifie si \"mplayer\" est présent"
 
 #: src/startup.c:684
-#, fuzzy
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
 msgstr ""
-"\n"
-"\n"
-"Vous devez installer Mplayer pour pouvoir visionner ce fichier.\n"
 
 #: src/startup.c:710
 msgid "Checking if mplayer can convert audio"
-msgstr ""
+msgstr "Vérifie si mplayer peut convertir du son"
 
 #: src/startup.c:720
 msgid "You should install mplayer with pcm/wav support"
@@ -873,7 +863,7 @@ msgstr ""
 
 #: src/startup.c:737
 msgid "Checking if mplayer can decode to png/alpha"
-msgstr ""
+msgstr "Vérifie si mplayer peut décoder en png/alpha"
 
 #: src/startup.c:769
 msgid "You may wish to upgrade mplayer to a newer version"
@@ -881,7 +871,7 @@ msgstr ""
 
 #: src/startup.c:795
 msgid "Checking if mplayer can decode to jpeg"
-msgstr ""
+msgstr "Vérifie si mplayer peut décoder en jpeg"
 
 #: src/startup.c:809
 msgid "You should install mplayer with either png/alpha or jpeg support"
@@ -892,9 +882,8 @@ msgid "You may wish to add jpeg output support to mplayer"
 msgstr ""
 
 #: src/startup.c:826
-#, fuzzy
 msgid "Checking for \"convert\" presence"
-msgstr "Verification des dépendances optionnelles:"
+msgstr ""
 
 #: src/startup.c:830
 msgid "Install imageMagick to be able to use all of the rendered effects"
@@ -930,9 +919,8 @@ msgid ""
 msgstr ""
 
 #: src/startup.c:899
-#, fuzzy
 msgid "LiVES: - Choose the startup interface"
-msgstr "LiVES: - choisir un lecteur audio"
+msgstr ""
 
 #: src/startup.c:928
 msgid "Start in _Clip Edit mode"
@@ -943,9 +931,8 @@ msgid "This is the best choice for simple editing tasks or for VJs\n"
 msgstr ""
 
 #: src/startup.c:967
-#, fuzzy
 msgid "Start in _Multitrack mode"
-msgstr "-startup-mt : démarrer en mode multipiste\n"
+msgstr ""
 
 #: src/startup.c:987
 msgid ""
@@ -1288,9 +1275,8 @@ msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- Changer le nombre de pistes affichées"
 
 #: src/interface.c:1978
-#, fuzzy
 msgid "LiVES:- Device details"
-msgstr "LiVES: choisir un fichier"
+msgstr ""
 
 #: src/interface.c:2009
 #, c-format
@@ -1310,23 +1296,20 @@ msgid "Maximum number of tracks to display"
 msgstr "Nombre maximal de piste à afficher"
 
 #: src/interface.c:2021
-#, fuzzy
 msgid "Device:        /dev/video"
-msgstr "Lecteur CD           "
+msgstr ""
 
 #: src/interface.c:2024
-#, fuzzy
 msgid "Device:        fw:"
-msgstr "Lecteur CD           "
+msgstr ""
 
 #: src/interface.c:2061
 msgid "Chapter  "
 msgstr "Chapitre  "
 
 #: src/interface.c:2062
-#, fuzzy
 msgid "Channel  "
-msgstr "    Canaux "
+msgstr ""
 
 #: src/interface.c:2083
 msgid "Audio ID  "
@@ -1486,6 +1469,10 @@ msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "What do you wish to do ?"
 msgstr ""
+"Vous êtes sur le point de quitter le mode multipiste.\n"
+"La configuration actuelle contient des images générées et ne peuvent pas "
+"être conservés.\n"
+"Que souhaitez-vous faire ?"
 
 #: src/interface.c:2810
 msgid "Clip set _name"
@@ -2643,9 +2630,8 @@ msgid "_Add Live Input"
 msgstr ""
 
 #: src/gui.c:358
-#, fuzzy
 msgid "Add Live _Firewire Device"
-msgstr "Importe depuis _Firewire périphérique (dv)"
+msgstr ""
 
 #: src/gui.c:368
 msgid "Add Live _TV Device"
@@ -2664,9 +2650,8 @@ msgid "Close/Sa_ve All Clips"
 msgstr "Ferme / _Enregistre Tous Les Clips"
 
 #: src/gui.c:446
-#, fuzzy
 msgid "_Encode Clip As..."
-msgstr "vers nouveau clip..."
+msgstr ""
 
 #: src/gui.c:448
 msgid "Encode _Selection As..."
@@ -3018,7 +3003,7 @@ msgstr "Afficher Messages"
 
 #: src/gui.c:1219 src/multitrack.c:6072
 msgid "Show _Layout Errors"
-msgstr ""
+msgstr "Afficher les erreurs de _mise en page"
 
 #: src/gui.c:1224 src/multitrack.c:5972
 msgid "_Clips"
@@ -3091,11 +3076,11 @@ msgstr ""
 
 #: src/gui.c:1371
 msgid "_Import Project (.lv2)..."
-msgstr ""
+msgstr "_Importe Projet (.lv2)..."
 
 #: src/gui.c:1375
 msgid "E_xport Project (.lv2)..."
-msgstr ""
+msgstr "_Exporte Projet (.lv2)..."
 
 #: src/gui.c:1380
 msgid "_VJ"
@@ -3107,7 +3092,7 @@ msgstr ""
 
 #: src/gui.c:1397
 msgid "Bind real time effects to ctrl-number keys."
-msgstr ""
+msgstr "Lie les effets en temps réel aux touches ctrl-nombre."
 
 #: src/gui.c:1399
 msgid "Set Real Time Effect _Defaults"
@@ -3909,7 +3894,7 @@ msgstr "Récupération des fichiers"
 
 #: src/saveplay.c:3630
 msgid "Recovering files..."
-msgstr ""
+msgstr "Récupération des fichiers..."
 
 #: src/dialogs.c:71
 msgid "Show affected _layouts"
@@ -7430,14 +7415,12 @@ msgid ""
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:136
-#, fuzzy
 msgid "Unable to open the incoming video stream\n"
-msgstr "Impossible d'ouvrir le flux de sortie yuv4mpeg %s\n"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:175
-#, fuzzy
 msgid "Unable to read the incoming video stream\n"
-msgstr "Impossible d'ouvrir le flux yuv4mpeg %s\n"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:196
 #, c-format
@@ -7454,23 +7437,21 @@ msgid "Unable to read the incoming video frame\n"
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:342
-#, fuzzy
 msgid "yuv4mpeg stream"
-msgstr "Impossible d'ouvrir le flux yuv4mpeg %s\n"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:368
 msgid "yu4mpeg stream in"
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:370
-#, fuzzy, c-format
+#, c-format
 msgid "Opened yuv4mpeg stream on %s"
-msgstr "Flux yuv4mpeg ouvert sur %sstream.yuv"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:376
-#, fuzzy
 msgid "Audio: "
-msgstr "Audio"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:379
 msgid "none\n"
@@ -7728,9 +7709,8 @@ msgid "_Gravity: Right"
 msgstr ""
 
 #: src/multitrack.c:3639
-#, fuzzy
 msgid "Close _last gap(s) in selected tracks/time"
-msgstr "Insérer un vide dans les pistes/temps sélectionné"
+msgstr ""
 
 #: src/multitrack.c:3642
 msgid "Close _first gap(s) in selected tracks/time"
@@ -9859,8 +9839,9 @@ msgid "_Frames"
 msgstr "_Cadres"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "_Couleur Vide"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
@@ -10435,17 +10416,6 @@ msgstr "$plugin_name échec:"
 msgid "$error"
 msgstr "erreur.\n"
 
-#~ msgid ""
-#~ " size=%dx%d bpp=%d fps=%.3f\n"
-#~ "Audio: "
-#~ msgstr ""
-#~ " dimension = %d x %d bpp = %d fps = %.3f\n"
-#~ "Audio: "
-
-#~ msgid "You need to install dvgrab to use this option."
-#~ msgstr ""
-#~ "Vous devrez installer le paquetage dvgrab pour utiliser cette option."
-
 #~ msgid "or sox\n"
 #~ msgstr "ou sox\n"
 
@@ -10454,6 +10424,22 @@ msgstr "erreur.\n"
 
 #~ msgid "autoloading set %s..."
 #~ msgstr "chargement automatique de %s..."
+
+#~ msgid ""
+#~ "Before starting LiVES, you need to choose an audio player.\n"
+#~ "Jack is recommended, but may prevent LiVES from starting on some "
+#~ "systems.\n"
+#~ "If LiVES will not start with jack, you can restart and try with %s "
+#~ "instead.\n"
+#~ msgstr ""
+#~ "Avant de démarrer LiVES, vous devez choisir un lecteur audio.\n"
+#~ "Jack est recommandé, mais peut empécher LiVES de démarrer sur certains "
+#~ "systèmes.\n"
+#~ "Si LiVES ne démarre pas avec jack, vous pouvez rédémarrer et essayer avec "
+#~ "%s.\n"
+
+#~ msgid "Use _%s audio player"
+#~ msgstr "Utiliser le lecteur audio _%s"
 
 #~ msgid ""
 #~ "This operation requires resizing of frames. Please install 'convert' from "
@@ -10537,6 +10523,12 @@ msgstr "erreur.\n"
 #~ msgid "Play audio even when _paused"
 #~ msgstr "Lire l'audio même en pause"
 
+#~ msgid "Unable to open yuv4mpeg stream %s\n"
+#~ msgstr "Impossible d'ouvrir le flux yuv4mpeg %s\n"
+
+#~ msgid "Opened yuv4mpeg stream on %sstream.yuv"
+#~ msgstr "Flux yuv4mpeg ouvert sur %sstream.yuv"
+
 #~ msgid "Double click on a block to select it.\n"
 #~ msgstr "Double-cliquer sur un bloque pour le sélectionner.\n"
 
@@ -10596,3 +10588,22 @@ msgstr "erreur.\n"
 
 #~ msgid "and the selected one will be inserted\n"
 #~ msgstr "et la sélection sera inséré\n"
+
+#~ msgid "You need to install dvgrab to use this option."
+#~ msgstr ""
+#~ "Vous devrez installer le paquetage dvgrab pour utiliser cette option."
+
+#~ msgid ""
+#~ "WARNING - this version of LiVES was compiled without jack support.\n"
+#~ "Many audio features will be unavalaible.\n"
+#~ msgstr ""
+#~ "ATTENTION - Cette version de LiVES a été compilé sans le support du "
+#~ "serveur jack.\n"
+#~ "La plupart des fonctions audios seront indisponibles.\n"
+
+#~ msgid ""
+#~ " size=%dx%d bpp=%d fps=%.3f\n"
+#~ "Audio: "
+#~ msgstr ""
+#~ " dimension = %d x %d bpp = %d fps = %.3f\n"
+#~ "Audio: "

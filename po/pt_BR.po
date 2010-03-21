@@ -3,14 +3,14 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 14:57-0300\n"
-"PO-Revision-Date: 2010-03-20 19:59+0000\n"
+"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"PO-Revision-Date: 2010-03-20 20:49+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-03-20 20:24+0000\n"
+"X-Launchpad-Export-Date: 2010-03-21 18:04+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 "X-Poedit-Language: Portuguese\n"
 "X-Poedit-SourceCharset: utf-8\n"
@@ -688,16 +688,17 @@ msgid ""
 "\n"
 "PULSE AUDIO is recommended for most users"
 msgstr ""
+"Antes de iniciar o LiVES, você precisa escolher um player de áudio.\n"
+"\n"
+"O PULSE AUDIO é o mais recomendável para a maior parte dos usuários."
 
 #: src/startup.c:158
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
 msgstr ""
-"CUIDADO - esta versão do LiVES foi compilada sem o\n"
-"jack ou suporte ao pulse audio.\n"
-"Muitos recursos de áudio não estarão disponíveis.\n"
+", porém esta versão do LiVES não foi compilada com suporte ao pulse audio.\n"
+"\n"
 
 #: src/startup.c:161
 msgid ""
@@ -705,20 +706,21 @@ msgid ""
 " You are advised to install pulse audio first before running LiVES.\n"
 "\n"
 msgstr ""
+", porém você não tem o pulse audio instalado em seu sistema.\n"
+" É aconselhável instalar o pulse audio primeiro antes de iniciar o LiVES.\n"
+"\n"
 
 #: src/startup.c:166
-#, fuzzy
 msgid "JACK audio is recommended for pro users"
-msgstr "Normal - recomendado para a maioria dos usuários"
+msgstr "JACK audio é recomendável para usuários avançados"
 
 #: src/startup.c:169
-#, fuzzy
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
 msgstr ""
-"AVISO - esta versão do LiVES foi compilada sem suporte a JACK.\n"
-"Muitos recursos de áudio não estarão disponíveis.\n"
+", porém esta versão do LiVES não foi compilada com suporte ao Jack.\n"
+"\n"
 
 #: src/startup.c:172
 msgid ""
@@ -726,29 +728,29 @@ msgid ""
 "before running LiVES.\n"
 "\n"
 msgstr ""
+", porém você não tem o jackd instalado. Você pode querer instalar o jackd "
+"antes de iniciar o LiVES.\n"
+"\n"
 
 #: src/startup.c:175
-#, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
 "If LiVES will not start with jack, you can restart and try with another "
 "audio player instead.\n"
 "\n"
 msgstr ""
-"Antes de iniciar o LiVES, você deve escolher um player de áudio.\n"
-"Jack é recomendado, mas pode prevenir o LiVES de iniciar em alguns "
-"sistemas.\n"
-"Se LiVES não iniciar com jack, você pode reiniciar e tentar o  %s.\n"
 
 #: src/startup.c:179
 msgid "SOX may be used if neither of the preceding players work, "
-msgstr ""
+msgstr "O SOX pode ser utilizado se nenhum dos outros players funcionarem, "
 
 #: src/startup.c:182
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
 msgstr ""
+"porém alguns recursos de áudio serão desabilitados\n"
+"\n"
 
 #: src/startup.c:185
 msgid ""
@@ -756,73 +758,69 @@ msgid ""
 "You are advised to install it before running LiVES.\n"
 "\n"
 msgstr ""
+"entretanto você não tem o SOX instalado.\n"
+"É aconselhável instalá-lo antes de iniciar o LiVES.\n"
+"\n"
 
 #: src/startup.c:189
 msgid ""
 "The MPLAYER audio player is only recommended for testing purposes.\n"
 "\n"
 msgstr ""
+"O MPLAYER é recomendável apenas para testes.\n"
+"\n"
 
 #: src/startup.c:207
 msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: escolha um reprodutor de áudio"
 
 #: src/startup.c:236
-#, fuzzy
 msgid "Use _pulse audio player"
-msgstr "Usar o reprodutor de áudio _%s"
+msgstr ""
 
 #: src/startup.c:270
 msgid "Use _jack audio player"
 msgstr "Usar o reprodutor de áudio _jack"
 
 #: src/startup.c:305
-#, fuzzy
 msgid "Use _sox audio player"
-msgstr "Usar o reprodutor de áudio _%s"
+msgstr ""
 
 #: src/startup.c:339
-#, fuzzy
 msgid "Use _mplayer audio player"
-msgstr "Usar o reprodutor de áudio _jack"
+msgstr ""
 
 #: src/startup.c:392 src/startup.c:578 src/interface.c:1884
 msgid "_Next"
 msgstr "_Próximo"
 
 #: src/startup.c:435
-#, fuzzy
 msgid "Skipped"
-msgstr "Pular [_S]"
+msgstr ""
 
 #: src/startup.c:451
-#, fuzzy
 msgid "Passed"
-msgstr "Pausa"
+msgstr ""
 
 #: src/startup.c:482
-#, fuzzy
 msgid "Failed"
-msgstr "_Arquivo"
+msgstr ""
 
 #: src/startup.c:544
-#, fuzzy
 msgid "LiVES: - Testing Configuration"
-msgstr "LiVES: - Abrir Stream"
+msgstr ""
 
 #: src/startup.c:547
-#, fuzzy
 msgid "LiVES: - Troubleshoot"
-msgstr "Resolução de Problemas"
+msgstr ""
 
 #: src/startup.c:562
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr ""
 
 #: src/startup.c:601
-#, fuzzy
 msgid "Checking for \"sox\" presence"
-msgstr "Checando dependências opcionais:"
+msgstr ""
 
 #: src/startup.c:605
 msgid ""
@@ -838,19 +836,14 @@ msgid "You should install sox_fmt_all or similar"
 msgstr ""
 
 #: src/startup.c:680
-#, fuzzy
 msgid "Checking for \"mplayer\" presence"
-msgstr "Checando dependências opcionais:"
+msgstr ""
 
 #: src/startup.c:684
-#, fuzzy
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
 msgstr ""
-"\n"
-"\n"
-"Instale o mplayer para poder vêr este arquivo.\n"
 
 #: src/startup.c:710
 msgid "Checking if mplayer can convert audio"
@@ -881,9 +874,8 @@ msgid "You may wish to add jpeg output support to mplayer"
 msgstr ""
 
 #: src/startup.c:826
-#, fuzzy
 msgid "Checking for \"convert\" presence"
-msgstr "Checando dependências opcionais:"
+msgstr ""
 
 #: src/startup.c:830
 msgid "Install imageMagick to be able to use all of the rendered effects"
@@ -919,9 +911,8 @@ msgid ""
 msgstr ""
 
 #: src/startup.c:899
-#, fuzzy
 msgid "LiVES: - Choose the startup interface"
-msgstr "LiVES: escolha um reprodutor de áudio"
+msgstr ""
 
 #: src/startup.c:928
 msgid "Start in _Clip Edit mode"
@@ -932,9 +923,8 @@ msgid "This is the best choice for simple editing tasks or for VJs\n"
 msgstr ""
 
 #: src/startup.c:967
-#, fuzzy
 msgid "Start in _Multitrack mode"
-msgstr "Modo _multipista"
+msgstr ""
 
 #: src/startup.c:987
 msgid ""
@@ -8476,7 +8466,7 @@ msgstr ""
 
 #: src/multitrack.c:7884
 msgid "Timeline (seconds)"
-msgstr "Linha de tempo (segundos)"
+msgstr "Linha de tempo (segs.)"
 
 #: src/multitrack.c:8277
 msgid " Backing audio"
@@ -8512,7 +8502,7 @@ msgstr "Vídeo %d"
 #: src/multitrack.c:8431 src/multitrack.c:8467
 #, c-format
 msgid "%s (layer %d)"
-msgstr "%s (camada %d)"
+msgstr "%s (cam. %d)"
 
 #: src/multitrack.c:8440
 #, c-format
@@ -8612,19 +8602,19 @@ msgstr "%s até %s"
 
 #: src/multitrack.c:10876
 msgid "_Prev filter map"
-msgstr "Mapa de filtro _ant."
+msgstr "Mapa de filtro _ant"
 
 #: src/multitrack.c:10886
 msgid "Insert _before"
-msgstr "Ins. an_tes"
+msgstr "Ins an_tes"
 
 #: src/multitrack.c:10894
 msgid "Insert _after"
-msgstr "Ins. apó_s"
+msgstr "Ins apó_s"
 
 #: src/multitrack.c:10907
 msgid "_Next filter map"
-msgstr "_Próx. mapa de filtro"
+msgstr "_Próx mapa de filtro"
 
 #: src/multitrack.c:10921
 msgid ""
@@ -10158,8 +10148,9 @@ msgid "_Middle"
 msgstr "_Meio"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "_Midtone"
-msgstr ""
+msgstr "_Meio"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Negate"
@@ -10172,12 +10163,14 @@ msgid "_Number of frames"
 msgstr "_Número de frames"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset X"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset Y"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Other Center"
@@ -10298,8 +10291,9 @@ msgid "_Vertical segments"
 msgstr "Segmentos _verticais"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "_Wavemax"
-msgstr ""
+msgstr "Onda"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -10324,8 +10318,9 @@ msgstr "Início do _X"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_X offset"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Y Center"
@@ -10341,8 +10336,9 @@ msgstr "_Y Start"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Y offset"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_degrees"
@@ -10393,8 +10389,9 @@ msgid "deinterlace"
 msgstr "desinterlaçar"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+#, fuzzy
 msgid "despeckle"
-msgstr ""
+msgstr "Tirar manchas"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "dream"
@@ -10685,6 +10682,13 @@ msgstr "$error"
 #~ "\n"
 #~ "\n"
 
+#~ msgid ""
+#~ "WARNING - this version of LiVES was compiled without jack support.\n"
+#~ "Many audio features will be unavalaible.\n"
+#~ msgstr ""
+#~ "AVISO - esta versão do LiVES foi compilada sem suporte a JACK.\n"
+#~ "Muitos recursos de áudio não estarão disponíveis.\n"
+
 #~ msgid "or sox\n"
 #~ msgstr "ou sox\n"
 
@@ -10693,6 +10697,21 @@ msgstr "$error"
 
 #~ msgid "autoloading set %s..."
 #~ msgstr "carregando automaticamente set %s..."
+
+#~ msgid ""
+#~ "Before starting LiVES, you need to choose an audio player.\n"
+#~ "Jack is recommended, but may prevent LiVES from starting on some "
+#~ "systems.\n"
+#~ "If LiVES will not start with jack, you can restart and try with %s "
+#~ "instead.\n"
+#~ msgstr ""
+#~ "Antes de iniciar o LiVES, você deve escolher um player de áudio.\n"
+#~ "Jack é recomendado, mas pode prevenir o LiVES de iniciar em alguns "
+#~ "sistemas.\n"
+#~ "Se LiVES não iniciar com jack, você pode reiniciar e tentar o  %s.\n"
+
+#~ msgid "Use _%s audio player"
+#~ msgstr "Usar o reprodutor de áudio _%s"
 
 #~ msgid ""
 #~ "\n"

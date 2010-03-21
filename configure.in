@@ -5,7 +5,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,1.3.2-svn,http://www.sourceforge.net/tracker/?group_id=64341&atid=507139)
+AC_INIT(LiVES,1.3.2,http://www.sourceforge.net/tracker/?group_id=64341&atid=507139)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
@@ -81,7 +81,7 @@ AC_DEFINE_UNQUOTED(PREFIX, "${prefix}", [prefix])
 AC_DEFINE_UNQUOTED(LiVES_VERSION, "${VERSION}", [])
 
 dnl Add the languages which your application supports here.
-ALL_LINGUAS="ar fr ca cs ja nl_NL de_DE pt pt_BR hu es it pl tr ru zh_CN sk he en_GB fi et gl uz te ro uk"
+ALL_LINGUAS="ar fr ca cs da ja nl_NL de_DE pt pt_BR hu es it pl tr ru zh_CN sk he en_GB fi et gl uz te ro uk oc"
 AM_GNU_GETTEXT
 AM_GNU_GETTEXT_VERSION(0.17)
 

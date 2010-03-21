@@ -1,35 +1,30 @@
 Version 1.3.2
 -------------
-Add support for firewire and TV card inputs
+Fix jack/pulse audio breakage in multitrack.
+Add (experimental) support for firewire and TV card inputs
 Faster, lossless recording of generators/inputs
 Implement record pause when disc is low (user definable)
 Some interface improvements for translated versions.
 (Translators - please see: http://lives.sourceforge.net/TRANS-README.txt)
-Fix multi_encoder file permissions **
-Fix minor problem with post encoding cleanup * **
-Fix crash in multitrack "remove first gaps" ** ***
-Fix for audio block gravity ** ***
+Fix multi_encoder file permissions
+Fix minor problem with post encoding cleanup *
+Fix crash in multitrack "remove first gaps" *
+Fix for audio block gravity *
 Fix mt auto backup thread concurrency problem
-Update OSC control to work better with puredata. **
-Implement new player transport (in progress)
+Update OSC control to work better with puredata.
+Implement new player transport
 Add "Gravity: Right" in multitrack
-Change default extension for ogg video from "ogg" to "ogv" **
-
-
-Move effects with blocks in mt (TODO)
-Add history pane in mt (TODO)
-Play selection in mt (TODO)
-Pause during encoding (TODO)
+Change default extension for ogg video from "ogg" to "ogv"
 
 
 
 
-* backported to 1.0.9
-** backported to 1.2.2
-*** backported to 1.0.10
+* backported to 1.0.10
 
 
-
+Version 1.2.2
+-------------
+Skipped - due to minor issues in 1.0.9 -> 1.0.10
 
 
 

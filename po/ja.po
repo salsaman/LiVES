@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-20 22:01-0300\n"
+"POT-Creation-Date: 2010-03-20 22:12-0300\n"
 "PO-Revision-Date: 2010-02-15 12:06+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -634,6 +634,299 @@ msgstr ""
 "できません。\n"
 "「設定」の再生オプションを調整して、再試行して下さい。\n"
 
+#: src/startup.c:19
+#, c-format
+msgid ""
+"A directory named\n"
+"%s\n"
+"already exists. Do you wish to use this directory ?\n"
+"\n"
+"(Free space = %.2f GB)\n"
+msgstr ""
+
+#: src/startup.c:30
+#, c-format
+msgid ""
+"Create the directory\n"
+"%s\n"
+"?\n"
+"\n"
+"(Free space = %.2f GB)"
+msgstr ""
+
+#: src/startup.c:56
+msgid "Directory name is too long !"
+msgstr ""
+
+#: src/startup.c:148
+msgid ""
+"LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
+"\n"
+msgstr ""
+
+#: src/startup.c:155
+msgid ""
+"Before starting LiVES, you need to choose an audio player.\n"
+"\n"
+"PULSE AUDIO is recommended for most users"
+msgstr ""
+
+#: src/startup.c:158
+#, fuzzy
+msgid ""
+", but this version of LiVES was not compiled with pulse audio support.\n"
+"\n"
+msgstr ""
+"警告 - このバージョンのLiVESはjackサポートなしでコンパイルされました。\n"
+"多くの音響機能は利用できません。\n"
+
+#: src/startup.c:161
+msgid ""
+", but you do not have pulse audio installed on your system.\n"
+" You are advised to install pulse audio first before running LiVES.\n"
+"\n"
+msgstr ""
+
+#: src/startup.c:166
+#, fuzzy
+msgid "JACK audio is recommended for pro users"
+msgstr "通常 - 多くのユーザに推奨"
+
+#: src/startup.c:169
+#, fuzzy
+msgid ""
+", but this version of LiVES was not compiled with jack audio support.\n"
+"\n"
+msgstr ""
+"警告 - このバージョンのLiVESはjackサポートなしでコンパイルされました。\n"
+"多くの音響機能は利用できません。\n"
+
+#: src/startup.c:172
+msgid ""
+", but you do not have jackd installed. You may wish to install jackd first "
+"before running LiVES.\n"
+"\n"
+msgstr ""
+
+#: src/startup.c:175
+#, fuzzy
+msgid ""
+", but may prevent LiVES from starting on some systems.\n"
+"If LiVES will not start with jack, you can restart and try with another "
+"audio player instead.\n"
+"\n"
+msgstr ""
+"LiVESを開始する前に、音声プレーヤーを選択する必要gああります。\n"
+"Jackが推奨されていますが、システムによってはLiVES開始の障害になるかもしれませ"
+"ん。\n"
+"もしjackとLiVESを動作させられないときは、代わりに %s を試して再起動して下さ"
+"い。\n"
+
+#: src/startup.c:179
+msgid "SOX may be used if neither of the preceding players work, "
+msgstr ""
+
+#: src/startup.c:182
+msgid ""
+"but some audio features will be disabled.\n"
+"\n"
+msgstr ""
+
+#: src/startup.c:185
+msgid ""
+"but you do not have sox installed.\n"
+"You are advised to install it before running LiVES.\n"
+"\n"
+msgstr ""
+
+#: src/startup.c:189
+msgid ""
+"The MPLAYER audio player is only recommended for testing purposes.\n"
+"\n"
+msgstr ""
+
+#: src/startup.c:207
+msgid "LiVES: - Choose an audio player"
+msgstr "LiVES: - オーディオプレイヤーを選んで下さい。fairu"
+
+#: src/startup.c:236
+#, fuzzy
+msgid "Use _pulse audio player"
+msgstr "_%s オーディオプレイヤーを使う。"
+
+#: src/startup.c:270
+msgid "Use _jack audio player"
+msgstr "_jackオーディオプレイヤーを使う。"
+
+#: src/startup.c:305
+#, fuzzy
+msgid "Use _sox audio player"
+msgstr "_%s オーディオプレイヤーを使う。"
+
+#: src/startup.c:339
+#, fuzzy
+msgid "Use _mplayer audio player"
+msgstr "_jackオーディオプレイヤーを使う。"
+
+#: src/startup.c:392 src/startup.c:578 src/interface.c:1884
+msgid "_Next"
+msgstr "_次へ"
+
+#: src/startup.c:435
+#, fuzzy
+msgid "Skipped"
+msgstr "次にスキップ"
+
+#: src/startup.c:451
+#, fuzzy
+msgid "Passed"
+msgstr "ポーズ"
+
+#: src/startup.c:482
+#, fuzzy
+msgid "Failed"
+msgstr "ファイル(_F)"
+
+#: src/startup.c:544
+#, fuzzy
+msgid "LiVES: - Testing Configuration"
+msgstr "LiVES: - 場所を開く"
+
+#: src/startup.c:547
+#, fuzzy
+msgid "LiVES: - Troubleshoot"
+msgstr "_トラブルシュート"
+
+#: src/startup.c:562
+msgid "LiVES will now run some basic configuration tests\n"
+msgstr ""
+
+#: src/startup.c:601
+#, fuzzy
+msgid "Checking for \"sox\" presence"
+msgstr "オプションの依存性をチェック:"
+
+#: src/startup.c:605
+msgid ""
+"You should install sox to be able to use all the audio features in LiVES"
+msgstr ""
+
+#: src/startup.c:613
+msgid "Checking if sox can convert audio"
+msgstr ""
+
+#: src/startup.c:654
+msgid "You should install sox_fmt_all or similar"
+msgstr ""
+
+#: src/startup.c:680
+#, fuzzy
+msgid "Checking for \"mplayer\" presence"
+msgstr "オプションの依存性をチェック:"
+
+#: src/startup.c:684
+#, fuzzy
+msgid ""
+"You should install mplayer to be able to use all the decoding features in "
+"LiVES"
+msgstr ""
+"\n"
+"\n"
+"このファイルをプレビューするにはmplayerをインストールする必要があります。\n"
+
+#: src/startup.c:710
+msgid "Checking if mplayer can convert audio"
+msgstr ""
+
+#: src/startup.c:720
+msgid "You should install mplayer with pcm/wav support"
+msgstr ""
+
+#: src/startup.c:737
+msgid "Checking if mplayer can decode to png/alpha"
+msgstr ""
+
+#: src/startup.c:769
+msgid "You may wish to upgrade mplayer to a newer version"
+msgstr ""
+
+#: src/startup.c:795
+msgid "Checking if mplayer can decode to jpeg"
+msgstr ""
+
+#: src/startup.c:809
+msgid "You should install mplayer with either png/alpha or jpeg support"
+msgstr ""
+
+#: src/startup.c:810
+msgid "You may wish to add jpeg output support to mplayer"
+msgstr ""
+
+#: src/startup.c:826
+#, fuzzy
+msgid "Checking for \"convert\" presence"
+msgstr "オプションの依存性をチェック:"
+
+#: src/startup.c:830
+msgid "Install imageMagick to be able to use all of the rendered effects"
+msgstr ""
+
+#: src/startup.c:845
+msgid ""
+"\n"
+"\n"
+"    Click Cancel to exit and install any missing components, or Next to "
+"continue    \n"
+msgstr ""
+
+#: src/startup.c:886
+msgid ""
+"\n"
+"\n"
+"Finally, you can choose the default startup interface for LiVES.\n"
+msgstr ""
+
+#: src/startup.c:887
+msgid ""
+"\n"
+"\n"
+"LiVES has two main interfaces and you can start up with either of them.\n"
+msgstr ""
+
+#: src/startup.c:888
+msgid ""
+"\n"
+"\n"
+"The default can always be changed later from Preferences.\n"
+msgstr ""
+
+#: src/startup.c:899
+#, fuzzy
+msgid "LiVES: - Choose the startup interface"
+msgstr "LiVES: - オーディオプレイヤーを選んで下さい。fairu"
+
+#: src/startup.c:928
+msgid "Start in _Clip Edit mode"
+msgstr ""
+
+#: src/startup.c:952
+msgid "This is the best choice for simple editing tasks or for VJs\n"
+msgstr ""
+
+#: src/startup.c:967
+#, fuzzy
+msgid "Start in _Multitrack mode"
+msgstr "_マルチモード"
+
+#: src/startup.c:987
+msgid ""
+"This is a better choice for complex editing tasks involving multiple clips.\n"
+msgstr ""
+
+#: src/startup.c:1004
+msgid "_Finish"
+msgstr ""
+
 #: src/interface.c:39
 msgid "Let LiVES set the _file extension"
 msgstr "LiVESに拡張子_fileを指定する"
@@ -942,10 +1235,6 @@ msgstr "新しい名前 "
 #: src/interface.c:1818
 msgid "Set name "
 msgstr "セットの名前 "
-
-#: src/interface.c:1884 src/startup.c:392 src/startup.c:578
-msgid "_Next"
-msgstr "_次へ"
 
 #: src/interface.c:1966
 msgid "LiVES:- Load CD Track"
@@ -9089,295 +9378,6 @@ msgstr ""
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr "デバイスマップをファイル %s　からロード..."
-
-#: src/startup.c:19
-#, c-format
-msgid ""
-"A directory named\n"
-"%s\n"
-"already exists. Do you wish to use this directory ?\n"
-"\n"
-"(Free space = %.2f GB)\n"
-msgstr ""
-
-#: src/startup.c:30
-#, c-format
-msgid ""
-"Create the directory\n"
-"%s\n"
-"?\n"
-"\n"
-"(Free space = %.2f GB)"
-msgstr ""
-
-#: src/startup.c:56
-msgid "Directory name is too long !"
-msgstr ""
-
-#: src/startup.c:148
-msgid ""
-"LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
-"\n"
-msgstr ""
-
-#: src/startup.c:155
-msgid ""
-"Before starting LiVES, you need to choose an audio player.\n"
-"\n"
-"PULSE AUDIO is recommended for most users"
-msgstr ""
-
-#: src/startup.c:158
-#, fuzzy
-msgid ""
-", but this version of LiVES was not compiled with pulse audio support.\n"
-"\n"
-msgstr ""
-"警告 - このバージョンのLiVESはjackサポートなしでコンパイルされました。\n"
-"多くの音響機能は利用できません。\n"
-
-#: src/startup.c:161
-msgid ""
-", but you do not have pulse audio installed on your system.\n"
-" You are advised to install pulse audio first before running LiVES.\n"
-"\n"
-msgstr ""
-
-#: src/startup.c:166
-#, fuzzy
-msgid "JACK audio is recommended for pro users"
-msgstr "通常 - 多くのユーザに推奨"
-
-#: src/startup.c:169
-#, fuzzy
-msgid ""
-", but this version of LiVES was not compiled with jack audio support.\n"
-"\n"
-msgstr ""
-"警告 - このバージョンのLiVESはjackサポートなしでコンパイルされました。\n"
-"多くの音響機能は利用できません。\n"
-
-#: src/startup.c:172
-msgid ""
-", but you do not have jackd installed. You may wish to install jackd first "
-"before running LiVES.\n"
-"\n"
-msgstr ""
-
-#: src/startup.c:175
-#, fuzzy
-msgid ""
-", but may prevent LiVES from starting on some systems.\n"
-"If LiVES will not start with jack, you can restart and try with another "
-"audio player instead.\n"
-"\n"
-msgstr ""
-"LiVESを開始する前に、音声プレーヤーを選択する必要gああります。\n"
-"Jackが推奨されていますが、システムによってはLiVES開始の障害になるかもしれませ"
-"ん。\n"
-"もしjackとLiVESを動作させられないときは、代わりに %s を試して再起動して下さ"
-"い。\n"
-
-#: src/startup.c:179
-msgid "SOX may be used if neither of the preceding players work, "
-msgstr ""
-
-#: src/startup.c:182
-msgid ""
-"but some audio features will be disabled.\n"
-"\n"
-msgstr ""
-
-#: src/startup.c:185
-msgid ""
-"but you do not have sox installed.\n"
-"You are advised to install it before running LiVES.\n"
-"\n"
-msgstr ""
-
-#: src/startup.c:189
-msgid ""
-"The MPLAYER audio player is only recommended for testing purposes.\n"
-"\n"
-msgstr ""
-
-#: src/startup.c:207
-msgid "LiVES: - Choose an audio player"
-msgstr "LiVES: - オーディオプレイヤーを選んで下さい。fairu"
-
-#: src/startup.c:236
-#, fuzzy
-msgid "Use _pulse audio player"
-msgstr "_%s オーディオプレイヤーを使う。"
-
-#: src/startup.c:270
-msgid "Use _jack audio player"
-msgstr "_jackオーディオプレイヤーを使う。"
-
-#: src/startup.c:305
-#, fuzzy
-msgid "Use _sox audio player"
-msgstr "_%s オーディオプレイヤーを使う。"
-
-#: src/startup.c:339
-#, fuzzy
-msgid "Use _mplayer audio player"
-msgstr "_jackオーディオプレイヤーを使う。"
-
-#: src/startup.c:435
-#, fuzzy
-msgid "Skipped"
-msgstr "次にスキップ"
-
-#: src/startup.c:451
-#, fuzzy
-msgid "Passed"
-msgstr "ポーズ"
-
-#: src/startup.c:482
-#, fuzzy
-msgid "Failed"
-msgstr "ファイル(_F)"
-
-#: src/startup.c:544
-#, fuzzy
-msgid "LiVES: - Testing Configuration"
-msgstr "LiVES: - 場所を開く"
-
-#: src/startup.c:547
-#, fuzzy
-msgid "LiVES: - Troubleshoot"
-msgstr "_トラブルシュート"
-
-#: src/startup.c:562
-msgid "LiVES will now run some basic configuration tests\n"
-msgstr ""
-
-#: src/startup.c:601
-#, fuzzy
-msgid "Checking for \"sox\" presence"
-msgstr "オプションの依存性をチェック:"
-
-#: src/startup.c:605
-msgid ""
-"You should install sox to be able to use all the audio features in LiVES"
-msgstr ""
-
-#: src/startup.c:613
-msgid "Checking if sox can convert audio"
-msgstr ""
-
-#: src/startup.c:654
-msgid "You should install sox_fmt_all or similar"
-msgstr ""
-
-#: src/startup.c:680
-#, fuzzy
-msgid "Checking for \"mplayer\" presence"
-msgstr "オプションの依存性をチェック:"
-
-#: src/startup.c:684
-#, fuzzy
-msgid ""
-"You should install mplayer to be able to use all the decoding features in "
-"LiVES"
-msgstr ""
-"\n"
-"\n"
-"このファイルをプレビューするにはmplayerをインストールする必要があります。\n"
-
-#: src/startup.c:710
-msgid "Checking if mplayer can convert audio"
-msgstr ""
-
-#: src/startup.c:720
-msgid "You should install mplayer with pcm/wav support"
-msgstr ""
-
-#: src/startup.c:737
-msgid "Checking if mplayer can decode to png/alpha"
-msgstr ""
-
-#: src/startup.c:769
-msgid "You may wish to upgrade mplayer to a newer version"
-msgstr ""
-
-#: src/startup.c:795
-msgid "Checking if mplayer can decode to jpeg"
-msgstr ""
-
-#: src/startup.c:809
-msgid "You should install mplayer with either png/alpha or jpeg support"
-msgstr ""
-
-#: src/startup.c:810
-msgid "You may wish to add jpeg output support to mplayer"
-msgstr ""
-
-#: src/startup.c:826
-#, fuzzy
-msgid "Checking for \"convert\" presence"
-msgstr "オプションの依存性をチェック:"
-
-#: src/startup.c:830
-msgid "Install imageMagick to be able to use all of the rendered effects"
-msgstr ""
-
-#: src/startup.c:845
-msgid ""
-"\n"
-"\n"
-"    Click Cancel to exit and install any missing components, or Next to "
-"continue    \n"
-msgstr ""
-
-#: src/startup.c:886
-msgid ""
-"\n"
-"\n"
-"Finally, you can choose the default startup interface for LiVES.\n"
-msgstr ""
-
-#: src/startup.c:887
-msgid ""
-"\n"
-"\n"
-"LiVES has two main interfaces and you can start up with either of them.\n"
-msgstr ""
-
-#: src/startup.c:888
-msgid ""
-"\n"
-"\n"
-"The default can always be changed later from Preferences.\n"
-msgstr ""
-
-#: src/startup.c:899
-#, fuzzy
-msgid "LiVES: - Choose the startup interface"
-msgstr "LiVES: - オーディオプレイヤーを選んで下さい。fairu"
-
-#: src/startup.c:928
-msgid "Start in _Clip Edit mode"
-msgstr ""
-
-#: src/startup.c:952
-msgid "This is the best choice for simple editing tasks or for VJs\n"
-msgstr ""
-
-#: src/startup.c:967
-#, fuzzy
-msgid "Start in _Multitrack mode"
-msgstr "_マルチモード"
-
-#: src/startup.c:987
-msgid ""
-"This is a better choice for complex editing tasks involving multiple clips.\n"
-msgstr ""
-
-#: src/startup.c:1004
-msgid "_Finish"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "180 _degrees             "

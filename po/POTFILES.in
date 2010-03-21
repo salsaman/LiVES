@@ -1,6 +1,7 @@
 # List of source files containing translatable strings.
 
 src/main.c
+src/startup.c
 src/interface.c
 src/callbacks.c
 src/support.c
@@ -27,4 +28,4 @@ src/jack.c
 src/colourspace.c
 src/cvirtual.c
 src/omc-learn.c
-src/startup.c
+

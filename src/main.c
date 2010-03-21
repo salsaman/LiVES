@@ -2678,15 +2678,20 @@ load_preview_image(gboolean update_always) {
   if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
 }
 
+#ifndef NO_PROG_LOAD
 
 static void pbsize_set(GdkPixbufLoader *pbload, gint width, gint height, gpointer ptr) {
   if (xxwidth*xxheight>0) gdk_pixbuf_loader_set_size(pbload,xxwidth,xxheight);
 }
 
+#endif
+
 GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint height, const gchar *img_ext, GError **gerror) {
 
-  GdkPixbufLoader *pbload;
   GdkPixbuf *pixbuf;
+
+#ifndef NO_PROG_LOAD
+  GdkPixbufLoader *pbload;
   guchar buff[IMG_BUFF_SIZE];
   size_t bsize;
   int fd=open(fname,O_RDONLY);
@@ -2725,6 +2730,11 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
 
   g_object_unref(pbload);
 
+# else
+
+  pixbuf=gdk_pixbuf_new_from_file_at_scale(fname,width,height,FALSE,gerror);
+
+#endif
   return pixbuf;
 
 }

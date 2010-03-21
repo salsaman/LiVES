@@ -247,7 +247,6 @@ create_LiVES (void)
     colour_equal((GdkColor *)(&palette->normal_fore),normal);
   }
 
-  gtk_window_set_default_size (GTK_WINDOW (mainw->LiVES), mainw->scr_width*3/2, mainw->scr_height/2);
  
   gtk_window_set_title (GTK_WINDOW (mainw->LiVES), "LiVES");
 

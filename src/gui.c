@@ -150,8 +150,11 @@ create_LiVES (void)
   GtkWidget *hbox3;
   GtkWidget *t_label;
   GtkWidget *label;
+
+#ifdef HAVE_YUV4MPEG
   GtkWidget *submenu;
   GtkWidget *menuitem;
+#endif 
 
   GtkObject *spinbutton_pb_fps_adj;
   GtkObject *spinbutton_adj;

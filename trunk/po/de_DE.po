@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"POT-Creation-Date: 2010-03-21 16:53-0300\n"
 "PO-Revision-Date: 2010-03-12 20:59+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -9611,8 +9611,9 @@ msgid "_Frames"
 msgstr "Bilder"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "_Zeige Bildzähler"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"

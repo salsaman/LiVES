@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES 0.9.5cvs\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"POT-Creation-Date: 2010-03-21 16:53-0300\n"
 "PO-Revision-Date: 2010-01-12 10:14+0000\n"
 "Last-Translator: cumulus007 <cumulus0007@gmail.com>\n"
 "Language-Team: \n"
@@ -8567,24 +8567,29 @@ msgid "Border _Colour"
 msgstr "_Starten"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _end"
-msgstr ""
+msgstr "Overgangen"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _start"
-msgstr ""
+msgstr "Overgangen"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness change"
-msgstr ""
+msgstr "Overgangen"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness end"
-msgstr ""
+msgstr "Overgangen"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness start"
-msgstr ""
+msgstr "Overgangen"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0

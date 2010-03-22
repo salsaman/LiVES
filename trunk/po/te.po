@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-03-21 16:32-0300\n"
+"POT-Creation-Date: 2010-03-21 16:53-0300\n"
 "PO-Revision-Date: 2009-12-27 23:30+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Telugu <te@li.org>\n"
@@ -8467,24 +8467,29 @@ msgid "Border _Colour"
 msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _end"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _start"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness change"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness end"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness start"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
@@ -8547,8 +8552,9 @@ msgid "Colorizing"
 msgstr "హెచ్చరిక"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycle"
-msgstr ""
+msgstr "హెచ్చరిక"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -8556,8 +8562,9 @@ msgid "Colour cycling"
 msgstr "హెచ్చరిక"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filter"
-msgstr ""
+msgstr "హెచ్చరిక"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
@@ -8565,8 +8572,9 @@ msgid "Colour filtering"
 msgstr "హెచ్చరిక"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Colour replace"
-msgstr ""
+msgstr "చట్రంలు"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
@@ -9490,8 +9498,9 @@ msgid "colorize"
 msgstr "హెచ్చరిక"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "colour_filter"
-msgstr ""
+msgstr "హెచ్చరిక"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy

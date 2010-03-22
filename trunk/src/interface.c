@@ -2048,13 +2048,13 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   gtk_widget_show (spinbutton35);
   gtk_box_pack_start (GTK_BOX (hbox16), spinbutton35, FALSE, TRUE, 0);
 
-
-  hbox17 = gtk_hbox_new (FALSE, 50);
-  if (type==1) spinbutton36_adj = gtk_adjustment_new (mainw->fx2_val, 1, 1024, 1, 10, 0);
-  else if (type==4) spinbutton36_adj = gtk_adjustment_new (1, 1, 69, 1, 1, 0);
-  spinbutton36 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36_adj), 1, 0);
-
   if (type==1||type==4) {
+
+    hbox17 = gtk_hbox_new (FALSE, 50);
+
+    if (type==1) spinbutton36_adj = gtk_adjustment_new (mainw->fx2_val, 1, 1024, 1, 10, 0);
+    else spinbutton36_adj = gtk_adjustment_new (1, 1, 69, 1, 1, 0);
+
     gtk_widget_show (hbox17);
     gtk_box_pack_start (GTK_BOX (dialog_vbox11), hbox17, TRUE, TRUE, 0);
 
@@ -2068,6 +2068,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_box_pack_start (GTK_BOX (hbox17), label62, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label62), GTK_JUSTIFY_LEFT);
 
+    spinbutton36 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36_adj), 1, 0);
     gtk_widget_show (spinbutton36);
     gtk_box_pack_start (GTK_BOX (hbox17), spinbutton36, FALSE, TRUE, 0);
 

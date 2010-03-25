@@ -2216,7 +2216,7 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
   mainw->cancelled=CANCEL_NONE;
 
 #ifdef ENABLE_JACK_TRANSPORT
-  if (mainw->jack_can_stop&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)) {
+  if (mainw->jack_can_stop&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_START)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)) {
     mt->pb_loop_event=get_first_frame_event(mt->event_list);
     has_pb_loop_event=TRUE;
     tc=q_gint64(U_SEC*jack_transport_get_time(),cfile->fps);

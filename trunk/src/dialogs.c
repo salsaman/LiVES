@@ -367,7 +367,9 @@ void cancel_process(gboolean visible) {
       sensitize();
     }
   }
-  else mainw->is_processing=TRUE;
+  else {
+    mainw->is_processing=TRUE;
+  }
   if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_DISK&&((mainw->cancelled!=CANCEL_NO_MORE_PREVIEW&&mainw->cancelled!=CANCEL_USER)||!cfile->opening)) {
     unlink(cfile->info_file);
   }
@@ -377,7 +379,7 @@ gboolean process_one (gboolean visible) {
   gint64 tc,new_ticks;
   gint oframeno=0;
 
-  gboolean normal_time;
+  gshort time_source;
   gboolean show_frame;
 
 #ifdef RT_AUDIO
@@ -394,34 +396,55 @@ gboolean process_one (gboolean visible) {
 
     // get current time
 
-    normal_time=TRUE;
+    // time is obtained as follows:
+    // -  if there is an external transport or clock active, we take our time from that
+    // -  else if we have a fixed output framerate (e.g. we are streaming) we take our time from
+    //         the system clock
+    //  in these cases we adjust our audio rate slightly to keep in synch with video
+    // - otherwise, we take the time from soundcard by counting samples played (the normal case),    //   and we synch video with that
+
+
+
+    time_source=LIVES_TIME_SOURCE_NONE;
+
+#ifdef ENABLE_JACK_TRANSPORT
+    if (mainw->jack_can_stop&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES))) {
+      // calculate the time from jack transport
+      mainw->currticks=jack_transport_get_time()*U_SEC;
+      time_source=LIVES_TIME_SOURCE_EXTERNAL;
+    }
+#endif
+
     
     // get time from soundcard
 
 #ifdef ENABLE_JACK
-    if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&!mainw->is_rendering&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
-      mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
-      if (mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback)) normal_time=TRUE;
-      else normal_time=FALSE;
+    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&!mainw->is_rendering&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
+      if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
+	mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE)+mainw->origticks;
+	time_source=LIVES_TIME_SOURCE_SOUNDCARD;
+      }
     }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&!mainw->is_rendering&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
-      mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
-      if (mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback)) normal_time=TRUE;
-      else normal_time=FALSE;
+    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&!mainw->is_rendering&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
+      if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
+      mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE)+mainw->origticks;
+      time_source=LIVES_TIME_SOURCE_SOUNDCARD;
+      }
     }
 #endif
 
-    if (normal_time) {
-      // or from system clock
-
+    if (time_source==LIVES_TIME_SOURCE_NONE) {
+      // get time from system clock
       gettimeofday(&tv, NULL);
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+    }
 
-      // adjust audio rate slightly if we are behind or ahead
 
+    // adjust audio rate slightly if we are behind or ahead
+    if (time_source!=LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
       if ((mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.))&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>mainw->origticks)) {
 	// fps is synched to external source, so we adjust the audio rate to fit
@@ -449,44 +472,54 @@ gboolean process_one (gboolean visible) {
     }
 
 
-    if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL&&(tc=mainw->currticks-mainw->origticks)>=event_start)) {
+    if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL)) {
       // playing an event_list
-      cfile->next_event=process_events (cfile->next_event,mainw->currticks-mainw->origticks);
 
-#ifdef ENABLE_JACK
-      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->abufs_to_fill>0) {
-	mainw->jackd->abufs[mainw->write_abuf]->samples_filled=0;
-	fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
+      if (mainw->scratch!=SCRATCH_NONE&&mainw->multitrack!=NULL) {
+#ifdef ENABLE_JACK_TRANSPORT
+	// handle transport jump
+	weed_timecode_t transtc=jack_transport_get_time()*U_SEC;
+	mainw->multitrack->pb_start_event=get_frame_event_at(mainw->multitrack->event_list,transtc,NULL,TRUE);
+	if (mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_EVENT_LIST_END;
+#endif
       }
+      else if ((tc=mainw->currticks-mainw->origticks)>=event_start) {
+	cfile->next_event=process_events (cfile->next_event,mainw->currticks-mainw->origticks);
+	
+	// see if we need to fill an audio buffer
+#ifdef ENABLE_JACK
+	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->abufs_to_fill>0) {
+	  mainw->jackd->abufs[mainw->write_abuf]->samples_filled=0;
+	  fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
+	}
 #endif
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->abufs_to_fill>0) {
-	mainw->pulsed->abufs[mainw->write_abuf]->samples_filled=0;
-	fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
-      }
+	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->abufs_to_fill>0) {
+	  mainw->pulsed->abufs[mainw->write_abuf]->samples_filled=0;
+	  fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
+	}
 #endif
-
+      }
+      while (g_main_context_iteration(NULL,FALSE)); // allow kb timer to run
       if (cfile->next_event==NULL&&mainw->preview) mainw->cancelled=CANCEL_EVENT_LIST_END;
       if (mainw->cancelled==CANCEL_NONE) return TRUE;
       cancel_process(visible);
       return FALSE;
     }
 
-
-
     // free playback
     new_ticks=mainw->currticks+mainw->deltaticks;
     
     oframeno=cfile->last_frameno=cfile->frameno;
     show_frame=FALSE;
+
     cfile->frameno=calc_new_playback_position(mainw->current_file,mainw->startticks,&new_ticks);
+    
     if (new_ticks!=mainw->startticks) {
       show_frame=TRUE;
       mainw->startticks=new_ticks;
     }
 
-    mainw->scratch=SCRATCH_NONE;
-    
     // play next frame
     if (G_LIKELY(mainw->cancelled==CANCEL_NONE)) {
 
@@ -507,14 +540,15 @@ gboolean process_one (gboolean visible) {
 	last_display_ticks=mainw->currticks;
       }
 
+
 #ifdef ENABLE_JACK
-      // request for another audio buffer - used only during mt playback
+      // request for another audio buffer - used only during mt render preview
       if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->abufs_to_fill>0) {
 	fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
       }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-      // request for another audio buffer - used only during mt playback
+      // request for another audio buffer - used only during mt render preview
       if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->abufs_to_fill>0) {
 	fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
       }
@@ -621,6 +655,13 @@ gboolean process_one (gboolean visible) {
 
 gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar *text) {
   // monitor progress, return FALSE if the operation was cancelled
+
+  // this is the outer loop for playback and all kinds of processing
+
+  // visible is set for processing (progress dialog is visible)
+  // or unset for video playback (progress dialog is not shown)
+
+
   FILE *infofile=NULL;
   gboolean finished=FALSE;
   gchar *mytext=g_strdup(text);
@@ -638,7 +679,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (!visible) {
     mainw->startticks=mainw->startsecs=mainw->currticks=0;
     if (mainw->event_list!=NULL) {
-      // this is for audio, work out the apparent frame when we have variable fps
+      // get audio start time
       audio_start=calc_time_from_frame(mainw->current_file,mainw->play_start)*cfile->fps;
     }
     reset_frame_and_clip_index();
@@ -694,44 +735,77 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
   if (cfile->next_event!=NULL) event_start=get_event_timecode(cfile->next_event);
 
+
+  gettimeofday(&tv, NULL);
+
+  // mainw->origticks is our base for quantising (and is constant for each playback session)
+  // firstticks is to do with the audio "frame" for sox, mplayer
+  // startticks is the ticks value of the last frame played
+
+  mainw->origticks=mainw->firstticks=mainw->startticks=tv.tv_usec*U_SEC_RATIO;
+  last_open_check_ticks=mainw->origticks;
+
   if (!visible) {
+    // video playback
+
 #ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jack_can_stop&&mainw->multitrack==NULL&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES)&&cfile->next_event==NULL)) {
+    if (mainw->jack_can_stop&&mainw->multitrack==NULL&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES)&&cfile->next_event==NULL)) {
       // calculate the start position from jack transport
 
-      weed_timecode_t ntc=jack_transport_get_time()*U_SEC;
+      gint64 ntc=jack_transport_get_time()*U_SEC;
       gboolean noframedrop=mainw->noframedrop;
       mainw->noframedrop=FALSE;
       cfile->last_frameno=1;
-      mainw->currticks=mainw->firstticks=0;
-      mainw->play_start=calc_new_playback_position(mainw->current_file,0,&ntc);
+      mainw->origticks=0;
+      if (prefs->jack_opts&JACK_OPTS_TIMEBASE_START) {
+	mainw->play_start=calc_new_playback_position(mainw->current_file,0,&ntc);
+      }
       mainw->noframedrop=noframedrop;
+      if (prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT) {
+	// timebase client - follows jack transport position
+	mainw->startticks=ntc;
+      }
+
     }
 #endif
     cfile->last_frameno=cfile->frameno=mainw->play_start;
     mainw->deltaticks=0;
   }
 
-  gettimeofday(&tv, NULL);
-  mainw->video_seek_ready=TRUE;
-  
+
   // [IMPORTANT] we subtract this from every calculation to make the numbers smaller
   mainw->startsecs=tv.tv_sec;
-  
-  if (!mainw->foreign&&!visible) {
+
+
+  // MUST do re-seek after setting startsecs in order to set our clock properly
+  // re-seek to new playback start
 #ifdef ENABLE_JACK
-    if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
+  if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) {
+    jack_audio_seek_frame(mainw->jackd,mainw->play_start);
+    while (jack_get_msgq(mainw->jackd)!=NULL);
+    mainw->rec_aclip=mainw->current_file;
+    mainw->rec_avel=cfile->pb_fps/cfile->fps;
+    mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
-#endif
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) {
+    pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+    while (pulse_get_msgq(mainw->pulsed)!=NULL);
+    mainw->rec_aclip=mainw->current_file;
+    mainw->rec_avel=cfile->pb_fps/cfile->fps;
+    mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+ #endif
   }
-
-  // mainw->origticks is our base for quantising (and is constant for each playback session)
-  mainw->origticks=mainw->firstticks=mainw->startticks=tv.tv_usec*U_SEC_RATIO;
-  last_open_check_ticks=mainw->origticks;
+  
 
   if (mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering) mainw->origticks-=get_event_timecode(mainw->multitrack->pb_start_event); // playback start from middle of multitrack
+
+  // tell jack transport we are ready to play
+  mainw->video_seek_ready=TRUE;
+
+  mainw->scratch=SCRATCH_NONE;
+
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
@@ -739,7 +813,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   do {
     while (!mainw->internal_messaging&&((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))||!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
 
-      // just pulse the progress bar
+      // just pulse the progress bar, or play video
+      // returns FALSE if playback ended
       if (!process_one(visible)) {
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	return FALSE;
@@ -747,24 +822,27 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
       if (mainw->iochan!=NULL&&progress_count==0) {
 	// pump data from stdout to textbuffer
+	// this is for encoder output
 	pump_io_chan(mainw->iochan);
       }
 
     }
     if (!mainw->internal_messaging) {
+      // background processing (e.g. rendered effects)
       if ((infofile=fopen(cfile->info_file,"r"))) {
 	// OK, now we might have some frames
 	dummychar=fgets(mainw->msg,512,infofile);
 	fclose(infofile);
       }
     }
+    // else call realtime effect pass
     else (*mainw->progress_fn)(FALSE);
 
 #ifdef DEBUG
     g_print("msg %s\n",mainw->msg);
 #endif
 
-
+    // we got a message from the backend...
 
     if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&!cfile->nopreview) {
       if (!cfile->opening||(capable->has_sox&&mainw->playing_file==-1)) gtk_widget_show (cfile->proc_ptr->preview_button);

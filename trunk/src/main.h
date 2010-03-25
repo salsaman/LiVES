@@ -812,7 +812,7 @@ void get_border_size (GtkWidget *win, gint *bx, gint *by);
 gchar *g_strappend (gchar *string, gint len, const gchar *new);
 GList *g_list_append_unique(GList *xlist, gchar *add);
 void find_when_to_stop (void);
-gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_t *ntc);
+gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 
 GList *get_set_list(const gchar *dir);

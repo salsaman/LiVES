@@ -62,6 +62,12 @@
 #define DEF_GEN_HEIGHT 480
 
 
+// timebase sources
+#define LIVES_TIME_SOURCE_NONE 0
+#define LIVES_TIME_SOURCE_SYSTEM 1
+#define LIVES_TIME_SOURCE_SOUNDCARD 2
+#define LIVES_TIME_SOURCE_EXTERNAL 3
+
 
 typedef struct {
   // set in set_palette_colours()
@@ -402,10 +408,11 @@ typedef struct {
   // video playback plugin was updated; write settings to a file
   gboolean write_vpp_file;
 
-  gshort scratch;
+  volatile gshort scratch;
 #define SCRATCH_NONE 0
 #define SCRATCH_BACK -1
 #define SCRATCH_FWD 1
+#define SCRATCH_JUMP 2
 
   // internal fx
   gboolean internal_messaging;
@@ -468,7 +475,7 @@ typedef struct {
   gboolean jack_can_stop;
   gboolean jack_can_start;
 
-  gboolean video_seek_ready;
+  volatile gboolean video_seek_ready;
 
   // selection pointers
   gulong mouse_fn1;

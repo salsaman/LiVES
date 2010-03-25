@@ -897,6 +897,7 @@ static void lives_init(_ign_opts *ign_opts) {
       }
 
       future_prefs->jack_opts=get_int_pref("jack_opts");
+      //future_prefs->jack_opts|=JACK_OPTS_TIMEBASE_CLIENT;
       if (!ign_opts->ign_jackopts) {
 	prefs->jack_opts=future_prefs->jack_opts;
       }

@@ -41,7 +41,6 @@ plugin_poll_keyboard (gpointer data) {
   // as of LiVES 1.1.0, this is now called 10 times faster to provide lower latency for
   // OSC and external controllers
 
-
 #ifdef OMC_MIDI_IMPL
   gint midi_check_rate;
   gboolean gotone;
@@ -71,7 +70,9 @@ plugin_poll_keyboard (gpointer data) {
   // check jack transport state
 #ifdef ENABLE_JACK
 #ifdef ENABLE_JACK_TRANSPORT
-  if (!mainw->is_processing) lives_jack_poll(NULL);
+  if (!mainw->is_processing||(mainw->multitrack!=NULL&&mainw->playing_file==mainw->multitrack->render_file&&!mainw->multitrack->is_rendering)) {
+    lives_jack_poll(NULL);
+  }
 #endif
 #endif
 

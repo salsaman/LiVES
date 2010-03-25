@@ -3114,7 +3114,8 @@ on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
   mainw->cancelled=CANCEL_USER;
-  mainw->jack_can_stop=mainw->jack_can_start=FALSE;
+  if (mainw->jack_can_stop) mainw->jack_can_start=FALSE;
+  mainw->jack_can_stop=FALSE;
 
 }
 
@@ -3128,7 +3129,8 @@ on_stop_activate_by_del                  (GtkWidget       *widget,
   // called if the user closes the separate play window
   if (mainw->playing_file>-1) {
     mainw->cancelled=CANCEL_USER;
-    mainw->jack_can_stop=mainw->jack_can_start=FALSE;
+    if (mainw->jack_can_stop) mainw->jack_can_start=FALSE;
+    mainw->jack_can_stop=FALSE;
   }
   if (prefs->sepwin_type==1) {
     on_sepwin_pressed(NULL,NULL);
@@ -3139,7 +3141,7 @@ on_stop_activate_by_del                  (GtkWidget       *widget,
 
 
 void on_pause_clicked(void) {
-  mainw->jack_can_stop=mainw->jack_can_start=FALSE;
+  mainw->jack_can_stop=FALSE;
   mainw->cancelled=CANCEL_USER_PAUSED;
 }
 

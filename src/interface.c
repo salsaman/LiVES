@@ -1953,7 +1953,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   GtkObject *spinbutton35_adj=NULL;
   GtkWidget *spinbutton35;
   GtkObject *spinbutton36_adj;
-  GtkWidget *spinbutton36;
+  GtkWidget *spinbutton36=NULL;
   GtkObject *spinbutton36b_adj;
   GtkWidget *spinbutton36b;
   GtkWidget *dialog_action_area11;
@@ -2114,9 +2114,11 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 			  G_CALLBACK (on_spin_value_changed),
 			  GINT_TO_POINTER (1));
 
-  g_signal_connect_after (GTK_OBJECT (spinbutton36), "value_changed",
-			  G_CALLBACK (on_spin_value_changed),
-			  GINT_TO_POINTER (2));
+  if (type==4) {
+    g_signal_connect_after (GTK_OBJECT (spinbutton36), "value_changed",
+			    G_CALLBACK (on_spin_value_changed),
+			    GINT_TO_POINTER (2));
+  }
 
   if (type==1) {
     g_signal_connect_after (GTK_OBJECT (spinbutton36), "value_changed",

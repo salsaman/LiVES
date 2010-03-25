@@ -191,7 +191,7 @@ static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_f
 
 
 
-gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_t *ntc) {
+gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
 
@@ -219,7 +219,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
   // this is done so we can check here if audio limits stopped playback
 
 
-  weed_timecode_t dtc=*ntc-otc;
+  gint64 dtc=*ntc-otc;
   file *sfile=mainw->files[fileno];
 
   gint dir=0;
@@ -290,6 +290,7 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
     // check if video stopped playback
     if (nframe<first_frame||nframe>last_frame) {
       if (mainw->whentostop==STOP_ON_VID_END) {
+	g_print("pt aaa %d %d %d\n",nframe,first_frame,last_frame);
 	mainw->cancelled=CANCEL_VID_END;
 	return 0;
       }
@@ -401,7 +402,11 @@ gint calc_new_playback_position(gint fileno, weed_timecode_t otc, weed_timecode_
   if (nframe>last_frame) nframe=last_frame;
 
   if (do_resync||(mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno)) {
+    gboolean is_jump=FALSE;
+    if (mainw->scratch==SCRATCH_JUMP) is_jump=TRUE;
+    mainw->scratch=SCRATCH_NONE;
     resync_audio(nframe);
+    if (is_jump) mainw->video_seek_ready=TRUE;
     if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
       // we check for audio stop here, but the seek may not have happened yet
       if (!check_for_audio_stop(fileno,first_frame,last_frame)) {

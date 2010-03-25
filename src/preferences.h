@@ -132,13 +132,13 @@ typedef struct {
   gboolean osc_udp_started;
   guint osc_udp_port;
 
+  // not used yet
   gboolean omc_noisy;
 
   gshort startup_phase; // -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
   const gchar *wm; //window manager name
   gint ocp; // open_compression_percent : get/set in prefs
 
-  // whether the 'blend_file' (second file in a transition) is fg or bg
   gboolean antialias;
 
   gboolean ignore_tiny_fps_diffs;
@@ -147,12 +147,13 @@ typedef struct {
 
   guint jack_opts;
 #define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   // jack can start/stop
-#define JACK_OPTS_TRANSPORT_MASTER (1<<1)
-#define JACK_OPTS_START_TSERVER (1<<2)
-#define JACK_OPTS_NOPLAY_WHEN_PAUSED (1<<3)
-#define JACK_OPTS_START_ASERVER (1<<4)
-#define JACK_OPTS_TIMEBASE_CLIENT (1<<5)    // jack sets play start position
-#define JACK_OPTS_TIMEBASE_MASTER (1<<6)
+#define JACK_OPTS_TRANSPORT_MASTER (1<<1)  // transport master
+#define JACK_OPTS_START_TSERVER (1<<2)     // start transport server
+#define JACK_OPTS_NOPLAY_WHEN_PAUSED (1<<3) // play audio even when transport paused
+#define JACK_OPTS_START_ASERVER (1<<4)     // start audio server
+#define JACK_OPTS_TIMEBASE_START (1<<5)    // jack sets play start position
+#define JACK_OPTS_TIMEBASE_CLIENT (1<<6)    // full timebase client
+#define JACK_OPTS_TIMEBASE_MASTER (1<<7)   // timebase master (not implemented yet)
 
   gchar jack_tserver[256];
   gchar jack_aserver[256];
@@ -332,7 +333,7 @@ typedef struct {
   GtkWidget *jack_aserver_entry;
   GtkWidget *checkbutton_jack_master;
   GtkWidget *checkbutton_jack_client;
-  GtkWidget *checkbutton_jack_tb_client;
+  GtkWidget *checkbutton_jack_tb_start;
   GtkWidget *checkbutton_jack_pwp;
   GtkWidget *checkbutton_start_tjack;
   GtkWidget *checkbutton_start_ajack;

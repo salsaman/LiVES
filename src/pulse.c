@@ -172,7 +172,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	  g_printerr("pulsed: error opening %s\n",filename);
 	  pulsed->playing_file=-1;
 	}
-	if (pulsed->fd>0) {
+	else {
 	  if (pulsed->aPlayPtr->data!=NULL) g_free(pulsed->aPlayPtr->data);
 	  if (nbytes>0) pulsed->aPlayPtr->data=g_malloc(nbytes*100);
 	  else (pulsed->aPlayPtr->data)=NULL;
@@ -183,15 +183,15 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       }
       break;
     case ASERVER_CMD_FILE_CLOSE:
-      if (pulsed->fd>0) close(pulsed->fd);
-      pulsed->fd=0;
+      if (pulsed->fd>=0) close(pulsed->fd);
+      pulsed->fd=-1;
       if (pulsed->aPlayPtr->data!=NULL) g_free(pulsed->aPlayPtr->data);
       pulsed->aPlayPtr->data=NULL;
       pulsed->aPlayPtr->size=0;
       pulsed->playing_file=-1;
       break;
     case ASERVER_CMD_FILE_SEEK:
-      if (pulsed->fd<1) break;
+      if (pulsed->fd<0) break;
       xseek=seek=atol(msg->data);
       if (seek<0.) xseek=0.;
       if (!pulsed->mute) {
@@ -229,7 +229,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
     pulsed->num_calls++;
 
-    if (!pulsed->in_use||((pulsed->fd<1||pulsed->seek_pos<0.)&&pulsed->read_abuf<0)||pulsed->is_paused) {
+    if (!pulsed->in_use||((pulsed->fd<0||pulsed->seek_pos<0.)&&pulsed->read_abuf<0)||pulsed->is_paused) {
 
       sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
 
@@ -255,7 +255,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
       }
       else {
-	if (G_LIKELY(pulsed->fd>0)) {
+	if (G_LIKELY(pulsed->fd>=0)) {
 	  pulsed->aPlayPtr->size=0;
 	  in_bytes=ABS((in_frames=((gdouble)pulsed->in_arate/(gdouble)pulsed->out_arate*(gdouble)pulseFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))*pulsed->in_achans*(pulsed->in_asamps>>3);
 	  //g_print("in bytes=%ld %ld %ld %ld %d %d\n",in_bytes,pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable,pulsed->in_achans,pulsed->in_asamps);
@@ -599,7 +599,7 @@ int pulse_audio_init(void) {
   for (j=0;j<PULSE_MAX_OUTPUT_CHANS;j++) pulsed.volume[j]=1.0f;
   pulsed.state=PA_STREAM_UNCONNECTED;
   pulsed.in_arate=44100;
-  pulsed.fd=0;
+  pulsed.fd=-1;
   pulsed.seek_pos=pulsed.seek_end=0;
   pulsed.msgq=NULL;
   pulsed.num_calls=0;
@@ -633,7 +633,7 @@ int pulse_audio_read_init(void) {
 
   for (j=0;j<PULSE_MAX_OUTPUT_CHANS;j++) pulsed_reader.volume[j]=1.0f;
   pulsed_reader.state=PA_STREAM_UNCONNECTED;
-  pulsed_reader.fd=0;
+  pulsed_reader.fd=-1;
   pulsed_reader.seek_pos=pulsed_reader.seek_end=0;
   pulsed_reader.msgq=NULL;
   pulsed_reader.num_calls=0;

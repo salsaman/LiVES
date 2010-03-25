@@ -1826,7 +1826,6 @@ void play_file (void) {
 	    pthread_mutex_lock(&mainw->abuf_mutex);
 	    mainw->jackd->read_abuf=0;
 	    pthread_mutex_unlock(&mainw->abuf_mutex);
-	    
 	    mainw->jackd->in_use=TRUE;
 	  }
 #endif
@@ -1845,10 +1844,12 @@ void play_file (void) {
 	    pthread_mutex_lock(&mainw->abuf_mutex);
 	    mainw->pulsed->read_abuf=0;
 	    pthread_mutex_unlock(&mainw->abuf_mutex);
-	    
 	    mainw->pulsed->in_use=TRUE;
+	    
 	  }
 #endif
+	  // let transport roll
+	  mainw->video_seek_ready=TRUE;
 	}
 
       }
@@ -1907,7 +1908,7 @@ void play_file (void) {
 	cfile->next_event=NULL;
 	mainw->multitrack->pb_start_event=mainw->multitrack->pb_loop_event;
       }
-    } while (mainw->multitrack!=NULL&&mainw->loop_cont&&(mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));
+    } while (mainw->multitrack!=NULL&&(mainw->loop_cont||mainw->scratch!=SCRATCH_NONE)&&(mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));
     mainw->osc_block=TRUE;
     gtk_timeout_remove (mainw->kb_timer);
     mainw->rte_textparm=NULL;
@@ -1915,6 +1916,8 @@ void play_file (void) {
   }
     
   // play completed
+
+  mainw->video_seek_ready=FALSE;
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
@@ -1983,8 +1986,10 @@ void play_file (void) {
   mainw->actual_frame=0;
 
 #ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED,"");
+  lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED,"");
 #endif
+
+  mainw->video_seek_ready=FALSE;
 
   // PLAY FINISHED...
   if (prefs->stop_screensaver) dummyvar=system("xset s on 2>/dev/null; xset +dpms 2>/dev/null; gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null;");

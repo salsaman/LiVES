@@ -16,18 +16,6 @@
 
 static jack_client_t *jack_transport_client;
 
-int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *pos, void *arg) {
-  // we will return FALSE until we call gettimeofday for the origin
-
-  gboolean seek_ready=mainw->video_seek_ready;
-
-  // reset for next time
-  mainw->video_seek_ready=FALSE;
-
-  return seek_ready;
-}
-
-
 
 gboolean lives_jack_init (void) {
   gchar *jt_client=g_strdup_printf("LiVES-%d",getpid());
@@ -79,7 +67,6 @@ gboolean lives_jack_init (void) {
   if (jack_transport_client==NULL) return FALSE;
 
 #ifdef ENABLE_JACK_TRANSPORT
-  mainw->video_seek_ready=TRUE;
   jack_activate(jack_transport_client);
   if (jack_transport_client!=NULL) jack_set_sync_callback (jack_transport_client, lives_start_ready_callback, NULL);
   gtk_timeout_add(KEY_RPT_INTERVAL,&lives_jack_poll,NULL);
@@ -124,6 +111,7 @@ static void jack_transport_check_state (void) {
   jack_position_t pos;
   jack_transport_state_t jacktstate;
 
+  // go away until the app has started up properly
   if (mainw->go_away) return;
 
   if (!(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)) return;
@@ -137,12 +125,12 @@ static void jack_transport_check_state (void) {
     mainw->jack_can_stop=TRUE;
     on_playall_activate(NULL,NULL);
   }
-  else if (jacktstate==JackTransportRolling||jacktstate==JackTransportStarting) {
-    mainw->video_seek_ready=TRUE;
-  }
+
   if (jacktstate==JackTransportStopped) {
-     if (mainw->playing_file>-1&&mainw->jack_can_stop) on_stop_activate (NULL,NULL);
-     mainw->jack_can_start=TRUE;
+    if (mainw->playing_file>-1&&mainw->jack_can_stop) {
+      on_stop_activate (NULL,NULL);
+    }
+    mainw->jack_can_start=TRUE;
   }
 #endif
 }
@@ -247,7 +235,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  g_printerr("jack: error opening %s\n",filename);
 	  jackd->playing_file=-1;
 	}
-	if (jackd->fd>0) {
+	else {
 	  if (jackd->aPlayPtr->data!=NULL) g_free(jackd->aPlayPtr->data);
 	  if (jackd->buffer_size>0) jackd->aPlayPtr->data=g_malloc(jackd->buffer_size*100);
 	  else (jackd->aPlayPtr->data)=NULL;
@@ -259,15 +247,15 @@ static int audio_process (nframes_t nframes, void *arg) {
       }
       break;
     case ASERVER_CMD_FILE_CLOSE:
-      if (jackd->fd>0) close(jackd->fd);
-      jackd->fd=0;
+      if (jackd->fd>=0) close(jackd->fd);
+      jackd->fd=-1;
       if (jackd->aPlayPtr->data!=NULL) g_free(jackd->aPlayPtr->data);
       jackd->aPlayPtr->data=NULL;
       jackd->aPlayPtr->size=0;
       jackd->playing_file=-1;
       break;
     case ASERVER_CMD_FILE_SEEK:
-      if (jackd->fd<1) break;
+      if (jackd->fd<0) break;
       xseek=seek=atol(msg->data);
       if (seek<0.) xseek=0.;
       if (!jackd->mute) {
@@ -286,7 +274,9 @@ static int audio_process (nframes_t nframes, void *arg) {
     jackd->msgq = NULL;    /* take this message off of the queue */
 
     return 0;
-  }  
+  }
+
+  if (nframes==0) return 0;
 
   if (nframes != jackd->chunk_size) jackd->chunk_size = nframes;
 
@@ -318,7 +308,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 
     jackd->num_calls++;
 
-    if (!jackd->in_use||((jackd->fd<1||jackd->seek_pos<0.)&&jackd->read_abuf<0)||jackd->is_paused) {
+    if (!jackd->in_use||((jackd->fd<0||jackd->seek_pos<0.)&&jackd->read_abuf<0)||jackd->is_paused) {
       /* output silence if nothing is being outputted */
       if (!jackd->is_silent) for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
       jackd->is_silent=TRUE;
@@ -354,7 +344,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 
       }
       else {
-	if (G_LIKELY(jackd->fd>0)) {
+	if (G_LIKELY(jackd->fd>=0)) {
 	  jackd->aPlayPtr->size=0;
 	  in_bytes=ABS((in_frames=((gdouble)jackd->sample_in_rate/(gdouble)jackd->sample_out_rate*(gdouble)jackFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))*jackd->num_input_channels*jackd->bytes_per_channel;
 	  if ((shrink_factor=(gfloat)in_frames/(gfloat)jackFramesAvailable)<0.f) {
@@ -564,6 +554,46 @@ static int audio_process (nframes_t nframes, void *arg) {
 
 
 
+int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *pos, void *arg) {
+  gboolean seek_ready;
+
+  // mainw->video_seek_ready is generally FALSE
+  // if we are not playing, the transport poll should start playing which will set set 
+  // mainw->video_seek_ready to true, as soon as the audio seeks to the right place
+
+  // if we are playing, we set mainw->scratch
+  // this will either force a resync of audio in free playback
+  // or reset the event_list position in multitrack playback
+
+  // go away until the app has started up properly
+  if (mainw->go_away) {
+    if (state==JackTransportStopped) mainw->jack_can_start=TRUE;
+    else mainw->jack_can_start=mainw->jack_can_stop=FALSE;
+    return TRUE;
+  }
+
+  if (!(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)) return TRUE;
+
+  if (jack_transport_client==NULL) return TRUE;
+
+  if (state!=JackTransportStarting) return TRUE;
+
+  seek_ready=mainw->video_seek_ready;
+
+  if (mainw->playing_file!=-1&&prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT) {
+    // trigger audio resync
+    if (mainw->scratch==SCRATCH_NONE) mainw->scratch=SCRATCH_JUMP;
+  }
+
+  // reset for next seek
+  if (seek_ready) mainw->video_seek_ready=FALSE;
+
+  return seek_ready;
+
+}
+
+
+
 
 static int audio_read (nframes_t nframes, void *arg) {
   // read nframes from jack buffer, and then write to mainw->aud_rec_fd
@@ -628,7 +658,7 @@ static int jack_get_bufsize (nframes_t nframes, void *arg) {
   
   if (jackd->is_output) {
     if (jackd->aPlayPtr->data!=NULL) g_free(jackd->aPlayPtr->data);
-    if (jackd->fd>0) jackd->aPlayPtr->data=g_malloc(jackd->buffer_size*100);
+    if (jackd->fd>=0) jackd->aPlayPtr->data=g_malloc(jackd->buffer_size*100);
   }
 
   return 0;
@@ -1159,7 +1189,7 @@ int jack_audio_init(void) {
     for (j=0;j<JACK_MAX_OUTPUT_PORTS;j++) jackd->volume[j]=1.0f;
     jackd->state=JackTClosed;
     jackd->sample_out_rate=jackd->sample_in_rate=0;
-    jackd->fd=0;
+    jackd->fd=-1;
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
@@ -1194,7 +1224,7 @@ int jack_audio_read_init(void) {
     for (j=0;j<JACK_MAX_INPUT_PORTS;j++) jackd->volume[j]=1.0f;
     jackd->state=JackTClosed;
     jackd->sample_out_rate=jackd->sample_in_rate=0;
-    jackd->fd=0;
+    jackd->fd=-1;
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
@@ -1226,6 +1256,7 @@ gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
   gdouble frames_written=jackd->frames_written;
   if (frames_written<0.) frames_written=0.;
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (jack_get_msgq(jackd)!=NULL); // wait for seek
+
   if (jackd->is_output) return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
   return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
 }

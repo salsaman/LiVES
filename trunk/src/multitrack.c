@@ -141,10 +141,14 @@ static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list
 }
 
 
-static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, gint frame) {
+static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, gint frame, gboolean noblanks) {
   GdkPixbuf *thumbnail,*pixbuf;
   GError *error=NULL;
   gchar *buf;
+
+  gboolean tried_all=FALSE;
+
+  gint nframe,oframe=frame;
 
   if (file<1) {
     g_printerr("Warning - make thumb for file %d\n",file);
@@ -155,32 +159,49 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
 
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
 
-  if (mainw->files[file]->frames>0) {
-    weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
-    thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,GDK_INTERP_HYPER);
-  }
-  else {
-    buf=g_strdup_printf("%s%s/audio.png",prefs->prefix_dir,ICON_DIR);
-    pixbuf=gdk_pixbuf_new_from_file_at_scale(buf,width,height,FALSE,&error);
-    // ...at_scale is inaccurate !
-    
-    g_free(buf);
-    if (error!=NULL||pixbuf==NULL) {
-      g_error_free(error);
-      if (mt->idlefunc>0) {
-	mt->idlefunc=0;
-	mt->idlefunc=mt_idle_add(mt);
+  do {
+    if (mainw->files[file]->frames>0) {
+      weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
+      thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,GDK_INTERP_HYPER);
+    }
+    else {
+      buf=g_strdup_printf("%s%s/audio.png",prefs->prefix_dir,ICON_DIR);
+      pixbuf=gdk_pixbuf_new_from_file_at_scale(buf,width,height,FALSE,&error);
+      // ...at_scale is inaccurate !
+      
+      g_free(buf);
+      if (error!=NULL||pixbuf==NULL) {
+	g_error_free(error);
+	if (mt->idlefunc>0) {
+	  mt->idlefunc=0;
+	  mt->idlefunc=mt_idle_add(mt);
+	}
+	return NULL;
       }
-      return NULL;
+      
+      if (gdk_pixbuf_get_width(pixbuf)!=width||gdk_pixbuf_get_height(pixbuf)!=height) {
+	// ...at_scale is inaccurate
+	thumbnail=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
+	gdk_pixbuf_unref(pixbuf);
+      }
+      else thumbnail=pixbuf;
     }
-    
-    if (gdk_pixbuf_get_width(pixbuf)!=width||gdk_pixbuf_get_height(pixbuf)!=height) {
-      // ...at_scale is inaccurate
-      thumbnail=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
-      gdk_pixbuf_unref(pixbuf);
+
+    if (tried_all) noblanks=FALSE;
+
+    if (noblanks&&!gdk_pixbuf_is_all_black(thumbnail)) noblanks=FALSE;
+    if (noblanks) {
+      nframe=frame+mainw->files[file]->frames/10.;
+      if (nframe==frame) nframe++;
+      if (nframe>mainw->files[file]->frames) {
+	nframe=oframe;
+	tried_all=TRUE;
+      }
+      frame=nframe;
     }
-    else thumbnail=pixbuf;
-  }
+
+
+  } while (noblanks);
 
   if (mt->idlefunc>0) {
     mt->idlefunc=0;
@@ -231,7 +252,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 	twidth=BLOCK_THUMB_WIDTH;
 	if ((i+twidth)>width) twidth=width-i;
 	if (twidth>=2) {
-	  thumbnail=make_thumb(mt,clip,twidth,height,frame_start+(gint)((gdouble)i/(gdouble)width*frames_width));
+	  thumbnail=make_thumb(mt,clip,twidth,height,frame_start+(gint)((gdouble)i/(gdouble)width*frames_width),FALSE);
 	  // render it in the eventbox
 	  if (thumbnail!=NULL) {
 	    trow=gdk_pixbuf_get_rowstride(thumbnail);
@@ -643,7 +664,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	  
 	  if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
 	  thumbnail=NULL;
-	  if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,eventbox->allocation.height-1,framenum);
+	  if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,eventbox->allocation.height-1,framenum,FALSE);
 	  last_framenum=framenum;
 	  if (i+width>offset_end) width=offset_end-i;
 	  // render it in the eventbox
@@ -4282,11 +4303,19 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
 static void on_insa_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.insert_audio=gtk_toggle_button_get_active(tbutton);
+  if (prefs->lamp_buttons) {
+    if (mt->opts.insert_audio) gtk_widget_modify_bg(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->light_green);
+    else gtk_widget_modify_bg(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->dark_red);
+  }
 }
 
 static void on_snapo_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.snap_over=gtk_toggle_button_get_active(tbutton);
+  if (prefs->lamp_buttons) {
+    if (mt->opts.snap_over) gtk_widget_modify_bg(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->light_green);
+    else gtk_widget_modify_bg(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->dark_red);
+  }
 }
 
 
@@ -6555,7 +6584,12 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 			  mt);
 
 
-
+  if (prefs->lamp_buttons) {
+    on_insa_toggled(GTK_TOGGLE_BUTTON(mt->insa_checkbutton),mt);
+    gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(mt->insa_checkbutton),FALSE);
+    gtk_widget_modify_bg(mt->insa_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
+    gtk_widget_modify_bg(mt->insa_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
+  }
 
   mt->snapo_checkbutton = gtk_check_button_new ();
   gtk_tooltips_set_tip (mainw->tooltips, mt->snapo_checkbutton, _("Select whether timeline selection snaps to overlap between selected tracks or not"), NULL);
@@ -6584,6 +6618,13 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 			  G_CALLBACK (on_snapo_toggled),
 			  mt);
 
+  if (prefs->lamp_buttons) {
+    gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(mt->snapo_checkbutton),FALSE);
+    gtk_widget_modify_bg(mt->snapo_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
+    gtk_widget_modify_bg(mt->snapo_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
+    
+    on_snapo_toggled(GTK_TOGGLE_BUTTON(mt->snapo_checkbutton),mt);
+  }
 
   // TODO - add a vbox with two hboxes
   // in each hbox we have 16 images
@@ -7234,8 +7275,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mainw->multitrack=mt;
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Page_Up, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (mt_nextclip),mt,NULL));
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Page_Down, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (mt_prevclip),mt,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Page_Up, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (mt_prevclip),mt,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Page_Down, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (mt_nextclip),mt,NULL));
 
   gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Left, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (mt_tlback),mt,NULL));
   gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Right, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (mt_tlfor),mt,NULL));
@@ -8848,7 +8889,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 	}
       }
       // make a small thumbnail, add it to the clips box
-      thumbnail=make_thumb(mt,i,width,height,mainw->files[i]->start);
+      thumbnail=make_thumb(mt,i,width,height,mainw->files[i]->start,TRUE);
 
       eventbox=gtk_event_box_new();
       if (palette->style&STYLE_1) {
@@ -9569,7 +9610,7 @@ static void update_in_image(lives_mt *mt) {
 
   calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
 
-  thumb=make_thumb(mt,filenum,width,height,frame_start);
+  thumb=make_thumb(mt,filenum,width,height,frame_start,FALSE);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
   if (thumb!=NULL) gdk_pixbuf_unref(thumb);
 }
@@ -9596,7 +9637,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
 
   calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
 
-  thumb=make_thumb(mt,filenum,width,height,frame_end);
+  thumb=make_thumb(mt,filenum,width,height,frame_end,FALSE);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
   if (thumb!=NULL) gdk_pixbuf_unref(thumb);
 }
@@ -10565,7 +10606,7 @@ void polymorph (lives_mt *mt, gshort poly) {
       }
       
       // start image
-      thumb=make_thumb(mt,filenum,width,height,frame_start);
+      thumb=make_thumb(mt,filenum,width,height,frame_start,FALSE);
       gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
       if (thumb!=NULL) gdk_pixbuf_unref(thumb);
     }
@@ -10639,7 +10680,7 @@ void polymorph (lives_mt *mt, gshort poly) {
 
     if (track>-1) {
       // end image
-      thumb=make_thumb(mt,filenum,width,height,frame_end);
+      thumb=make_thumb(mt,filenum,width,height,frame_end,FALSE);
       gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
       if (thumb!=NULL) gdk_pixbuf_unref(thumb);
       out_end_range=count_resampled_frames(mainw->files[filenum]->frames,mainw->files[filenum]->fps,mt->fps)/mt->fps;
@@ -11605,7 +11646,7 @@ void animate_multitrack (lives_mt *mt) {
   gint offset=-1;
   int i;
   gint len=g_list_length (mt->video_draws);
-  gdouble currtime=(mainw->currticks-mainw->origticks)/U_SEC;
+  gdouble currtime=mainw->currticks/U_SEC;
   gint ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
   gboolean expanded=FALSE;
   gdouble tl_page;
@@ -11822,10 +11863,6 @@ void re_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
 //////////////////////////////////////////////////
 
 
-void on_snap_over_changed (GtkMenuItem *menuitem, gpointer user_data) {
-  lives_mt *mt=(lives_mt *)user_data;
-  mt->opts.snap_over=!mt->opts.snap_over;
-}
 
 void
 on_fx_auto_prev_changed (GtkMenuItem *menuitem, gpointer user_data) {
@@ -14184,11 +14221,7 @@ void multitrack_preview_clicked  (GtkWidget *button, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (mainw->playing_file==-1) multitrack_playall(mt);
-  else {
-    //on_preview_clicked((GtkButton *)button,NULL);
-    //if (mainw->cancelled!=CANCEL_NO_PROPOGATE) mainw->cancelled=CANCEL_NONE;
-    mainw->cancelled=CANCEL_NO_PROPOGATE;
-  }
+  else mainw->cancelled=CANCEL_NO_PROPOGATE;
 }
 
 
@@ -18890,6 +18923,18 @@ static void on_amixer_reset_clicked (GtkButton *button, lives_amixer_t *amixer) 
 
 static void after_amixer_gang_toggled (GtkToggleButton *toggle, lives_amixer_t *amixer) {
   gtk_widget_set_sensitive(amixer->inv_checkbutton,(gtk_toggle_button_get_active(toggle)));
+  if (prefs->lamp_buttons) {
+    if (gtk_toggle_button_get_active(toggle)) gtk_widget_modify_bg(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->light_green);
+    else gtk_widget_modify_bg(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->dark_red);
+  }
+}
+
+
+static void after_amixer_inv_toggled (GtkToggleButton *toggle, lives_amixer_t *amixer) {
+  if (prefs->lamp_buttons) {
+    if (gtk_toggle_button_get_active(toggle)) gtk_widget_modify_bg(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->light_green);
+    else gtk_widget_modify_bg(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->dark_red);
+  }
 }
 
 
@@ -19071,8 +19116,23 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   vbox = gtk_vbox_new (FALSE, 15);
   gtk_box_pack_start (GTK_BOX (vbox2), vbox, TRUE, TRUE, 10);
   
-  amixer->inv_checkbutton = gtk_check_button_new ();
     
+  if (prefs->lamp_buttons) {
+    amixer->inv_checkbutton = gtk_check_button_new_with_label (" ");
+    gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(amixer->inv_checkbutton),FALSE);
+    gtk_widget_modify_bg(amixer->inv_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
+    gtk_widget_modify_bg(amixer->inv_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
+
+    g_signal_connect_after (GTK_OBJECT (amixer->inv_checkbutton), "toggled",
+			    G_CALLBACK (after_amixer_inv_toggled),
+			    (gpointer)amixer);
+
+    after_amixer_inv_toggled(GTK_TOGGLE_BUTTON(amixer->inv_checkbutton),amixer);
+
+  }
+  else amixer->inv_checkbutton = gtk_check_button_new ();
+
+
   if (mt->opts.back_audio_tracks>0&&mt->opts.pertrack_audio) {
     label=gtk_label_new_with_mnemonic(_("_Invert backing audio\nand layer volumes"));
     
@@ -19108,7 +19168,15 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     add_fill_to_box(GTK_BOX(hbox));
   }
 
-  amixer->gang_checkbutton = gtk_check_button_new ();
+
+  if (prefs->lamp_buttons) {
+    amixer->gang_checkbutton = gtk_check_button_new_with_label (" ");
+    gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(amixer->gang_checkbutton),FALSE);
+    gtk_widget_modify_bg(amixer->gang_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
+    gtk_widget_modify_bg(amixer->gang_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
+  }
+  else amixer->gang_checkbutton = gtk_check_button_new ();
+
 
   if (mt->opts.pertrack_audio) {
     label=gtk_label_new_with_mnemonic(_("_Gang layer audio"));
@@ -19197,6 +19265,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 			  G_CALLBACK (after_amixer_gang_toggled),
 			  (gpointer)amixer);
 
+  after_amixer_gang_toggled(GTK_TOGGLE_BUTTON(amixer->gang_checkbutton),amixer);
 
   gtk_widget_grab_focus (close_button);
 

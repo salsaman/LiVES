@@ -575,7 +575,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->internal_messaging=FALSE;
   mainw->progress_fn=NULL;
-  mainw->origticks=1;
 
   mainw->last_grabable_effect=-1;
   mainw->blend_file=-1;
@@ -844,13 +843,15 @@ static void lives_init(_ign_opts *ign_opts) {
     
     prefs->render_audio=TRUE;
 
-    prefs->num_rtaudiobufs=8;
+    prefs->num_rtaudiobufs=4;
 
     prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and other live CDs
 
     prefs->ce_maxspect=get_boolean_pref("ce_maxspect");;
 
     prefs->rec_stop_gb=get_int_pref("rec_stop_gb");
+
+    prefs->lamp_buttons=TRUE;
 
     //////////////////////////////////////////////////////////////////
 
@@ -897,7 +898,6 @@ static void lives_init(_ign_opts *ign_opts) {
       }
 
       future_prefs->jack_opts=get_int_pref("jack_opts");
-      //future_prefs->jack_opts|=JACK_OPTS_TIMEBASE_CLIENT;
       if (!ign_opts->ign_jackopts) {
 	prefs->jack_opts=future_prefs->jack_opts;
       }
@@ -1332,6 +1332,8 @@ void set_palette_colours (void) {
   // set configurable colours and theme colours for the app
   gdk_color_parse ("black", &palette->black);
   gdk_color_parse ("white", &palette->white);
+  gdk_color_parse ("SeaGreen3", &palette->light_green);
+  gdk_color_parse ("dark red", &palette->dark_red);
   gdk_color_parse ("light blue", &palette->light_blue);
   gdk_color_parse ("light yellow", &palette->light_yellow);
   gdk_color_parse ("grey10", &palette->grey20);
@@ -3086,7 +3088,7 @@ void load_frame_image(gint frame, gint last_frame) {
     if (mainw->record&&!mainw->record_paused) {
       // add blank frame
       weed_plant_t *event=get_last_event(mainw->event_list);
-      weed_plant_t *event_list=insert_blank_frame_event_at(mainw->event_list,mainw->currticks-mainw->origticks,&event);
+      weed_plant_t *event_list=insert_blank_frame_event_at(mainw->event_list,mainw->currticks,&event);
       if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting) {
 	// we are recording, and the audio clip changed; add audio
 	if (mainw->event_list==NULL) mainw->event_list=event_list;
@@ -3162,12 +3164,12 @@ void load_frame_image(gint frame, gint last_frame) {
 	}
 
 	if (mainw->record_starting) {
-	  event_list=append_marker_event(mainw->event_list, mainw->currticks-mainw->origticks, EVENT_MARKER_RECORD_START); // mark record start
+	  event_list=append_marker_event(mainw->event_list, mainw->currticks, EVENT_MARKER_RECORD_START); // mark record start
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
 	  
 	  if (prefs->rec_opts&REC_EFFECTS) {
 	    // add init events and pchanges for all active fx
-	    add_filter_init_events(mainw->event_list,mainw->currticks-mainw->origticks);
+	    add_filter_init_events(mainw->event_list,mainw->currticks);
 	  }
 
 #ifdef ENABLE_JACK
@@ -3198,7 +3200,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	  frames[1]=bg_frame;
 	}
 	if (framecount!=NULL) g_free(framecount);
-	if ((event_list=append_frame_event (mainw->event_list,mainw->currticks-mainw->origticks,numframes,clips,frames))!=NULL) {
+	if ((event_list=append_frame_event (mainw->event_list,mainw->currticks,numframes,clips,frames))!=NULL) {
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
 	  if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)) {
 	    weed_plant_t *event=get_last_event(mainw->event_list);
@@ -3373,7 +3375,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
 	  weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
 	  if (img_ext==NULL) img_ext=(cfile->img_type==IMG_TYPE_JPEG?g_strdup("jpg"):g_strdup("png"));
-	  if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)(mainw->currticks-mainw->origticks),cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
+	  if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks,cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
 	    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
 	    mainw->frame_layer=NULL;
 	  }
@@ -3391,7 +3393,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	    return;
 	  }
 	  gettimeofday(&tv, NULL);
-	  mainw->currticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+	  mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 	  mainw->startticks=mainw->currticks+mainw->deltaticks;
 	}
 	  
@@ -3484,7 +3486,7 @@ void load_frame_image(gint frame, gint last_frame) {
     if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
       if ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&(weed_get_int_value(mainw->frame_layer,"width",&weed_error)*weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize) {
 	if ((mainw->rte!=0||mainw->is_rendering)&&(mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)) {
-	  mainw->frame_layer=on_rte_apply (mainw->frame_layer, opwidth, opheight, (weed_timecode_t)(mainw->currticks-mainw->origticks));
+	  mainw->frame_layer=on_rte_apply (mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
 	}
       }
       else {

@@ -657,7 +657,6 @@ void mt_render_aud_toggled (GtkMenuItem *, gpointer mt);
 void mt_fplay_toggled (GtkMenuItem *, gpointer mt);
 void mt_change_vals_activate (GtkMenuItem *, gpointer mt);
 void on_set_pvals_clicked  (GtkWidget *button, gpointer mt);
-void on_snap_over_changed (GtkMenuItem *, gpointer mt);
 void on_move_fx_changed (GtkMenuItem *, gpointer mt);
 void on_fx_auto_prev_changed (GtkMenuItem *, gpointer mt);
 void select_all_time (GtkMenuItem *, gpointer mt);

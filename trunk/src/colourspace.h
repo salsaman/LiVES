@@ -39,7 +39,7 @@ gboolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma);
 void resize_layer (weed_plant_t *layer, int width, int height, int interp);
 void create_empty_pixel_data(weed_plant_t *layer);
 GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer);
-gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf);
+gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *);
 
 // to layers.c
 weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer);
@@ -61,6 +61,9 @@ gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 gdouble weed_palette_get_plane_ratio_vertical(int pal, int plane);
 gboolean weed_palette_is_lower_quality(int p1, int p2);
 gboolean weed_palette_is_resizable(int pal);
+
+gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf);
+
 
 const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);

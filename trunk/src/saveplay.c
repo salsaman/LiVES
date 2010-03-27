@@ -1825,6 +1825,7 @@ void play_file (void) {
 	    
 	    pthread_mutex_lock(&mainw->abuf_mutex);
 	    mainw->jackd->read_abuf=0;
+	    mainw->abufs_to_fill=0;
 	    pthread_mutex_unlock(&mainw->abuf_mutex);
 	    mainw->jackd->in_use=TRUE;
 	  }
@@ -1843,6 +1844,7 @@ void play_file (void) {
 	    
 	    pthread_mutex_lock(&mainw->abuf_mutex);
 	    mainw->pulsed->read_abuf=0;
+	    mainw->abufs_to_fill=0;
 	    pthread_mutex_unlock(&mainw->abuf_mutex);
 	    mainw->pulsed->in_use=TRUE;
 	    

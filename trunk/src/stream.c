@@ -756,7 +756,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	// where frames were being generated and streamed and then received
 	// - needs testing in other situations
 	gettimeofday(&tv, NULL);
-	currticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+	currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 	if (mainw->record&&!mainw->record_paused) {
 	  if (has_last_delta_ticks&&(abs64(currticks-lstream->timecode))<last_delta_ticks) {
 	    // drop this frame

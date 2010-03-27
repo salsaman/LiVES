@@ -1421,7 +1421,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   last_tc=fill_tc;
 
-  if (mainw->abufs_to_fill) {
+  if (mainw->abufs_to_fill>0) {
     pthread_mutex_lock(&mainw->abuf_mutex);
     mainw->abufs_to_fill--;
     pthread_mutex_unlock(&mainw->abuf_mutex);
@@ -1444,10 +1444,10 @@ void init_jack_audio_buffers (gint achans, gint arate, gboolean exact) {
     
     mainw->jackd->abufs[i]->achans=achans;
     mainw->jackd->abufs[i]->arate=arate;
-    mainw->jackd->abufs[i]->sample_space=XSAMPLES;
+    mainw->jackd->abufs[i]->sample_space=XSAMPLES/prefs->num_rtaudiobufs;
     mainw->jackd->abufs[i]->data.floatbuf=g_malloc(achans*sizeof(float *));
     for (chan=0;chan<achans;chan++) {
-      mainw->jackd->abufs[i]->data.floatbuf[chan]=g_malloc(XSAMPLES*sizeof(float));
+      mainw->jackd->abufs[i]->data.floatbuf[chan]=g_malloc(XSAMPLES/prefs->num_rtaudiobufs*sizeof(float));
     }
   }
 #endif
@@ -1466,8 +1466,8 @@ void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact) {
     
     mainw->pulsed->abufs[i]->achans=achans;
     mainw->pulsed->abufs[i]->arate=arate;
-    mainw->pulsed->abufs[i]->sample_space=XSAMPLES;  // sample_space here is in stereo samples
-    mainw->pulsed->abufs[i]->data.int16buf=g_malloc(XSAMPLES*achans*sizeof(short));
+    mainw->pulsed->abufs[i]->sample_space=XSAMPLES/prefs->num_rtaudiobufs;  // sample_space here is in stereo samples
+    mainw->pulsed->abufs[i]->data.int16buf=g_malloc(XSAMPLES/prefs->num_rtaudiobufs*achans*sizeof(short));
   }
 #endif
 }

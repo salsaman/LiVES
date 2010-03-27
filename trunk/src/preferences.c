@@ -368,8 +368,9 @@ apply_prefs(gboolean skip_warn) {
   gboolean jack_master=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
   gboolean jack_client=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
   gboolean jack_tb_start=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
+  gboolean jack_tb_client=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
   gboolean jack_pwp=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
-  guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+JACK_OPTS_NOPLAY_WHEN_PAUSED*!jack_pwp+JACK_OPTS_TIMEBASE_START*jack_tb_start);
+  guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+JACK_OPTS_NOPLAY_WHEN_PAUSED*!jack_pwp+JACK_OPTS_TIMEBASE_START*jack_tb_start+JACK_OPTS_TIMEBASE_CLIENT*jack_tb_client);
 #endif
 
 #ifdef RT_AUDIO
@@ -1250,6 +1251,18 @@ static void after_jack_client_toggled(GtkToggleButton *tbutton, gpointer user_da
   else {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_start,TRUE);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_start),(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_START)?TRUE:FALSE);
+  }
+}
+
+static void after_jack_tb_start_toggled(GtkToggleButton *tbutton, gpointer user_data) {
+
+  if (!gtk_toggle_button_get_active(tbutton)) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client),FALSE);
+    gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,FALSE);
+  }
+  else {
+    gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,TRUE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?TRUE:FALSE);
   }
 }
 #endif
@@ -3276,14 +3289,37 @@ _prefsw *create_prefs_dialog (void) {
 
    gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_start,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
 
-   label = gtk_label_new (_("(See also Playback -> Audio follows video rate/direction)"));
-   gtk_widget_show (label);
-   gtk_box_pack_start (GTK_BOX (vbox98), label, FALSE, FALSE, 10);
-
    g_signal_connect_after (GTK_OBJECT (prefsw->checkbutton_jack_client), "toggled",
 			   G_CALLBACK (after_jack_client_toggled),
 			   NULL);
 
+
+
+   hbox = gtk_hbox_new (FALSE,0);
+   gtk_box_pack_start (GTK_BOX (vbox98), hbox, TRUE, TRUE, 0);
+   
+
+   add_fill_to_box(GTK_BOX(hbox));
+
+   prefsw->checkbutton_jack_tb_client = gtk_check_button_new_with_mnemonic (_ ("Jack transport timebase slave"));
+   gtk_widget_show (prefsw->checkbutton_jack_tb_client);
+   gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_jack_tb_client, TRUE, FALSE, 0);
+   
+   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start))):FALSE);
+
+   gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
+
+   label = gtk_label_new (_("(See also Playback -> Audio follows video rate/direction)"));
+   gtk_widget_show (label);
+   gtk_box_pack_start (GTK_BOX (vbox98), label, FALSE, FALSE, 10);
+
+   g_signal_connect_after (GTK_OBJECT (prefsw->checkbutton_jack_tb_start), "toggled",
+			   G_CALLBACK (after_jack_tb_start_toggled),
+			   NULL);
+
+   add_fill_to_box(GTK_BOX(hbox));
+
+   gtk_widget_show_all (hbox);
 
 #endif
 

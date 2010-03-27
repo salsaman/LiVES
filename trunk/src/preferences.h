@@ -251,6 +251,8 @@ typedef struct {
 
   gboolean ce_maxspect;
 
+  gboolean lamp_buttons;
+
   glong rec_stop_gb;
 
 } _prefs;
@@ -334,6 +336,7 @@ typedef struct {
   GtkWidget *checkbutton_jack_master;
   GtkWidget *checkbutton_jack_client;
   GtkWidget *checkbutton_jack_tb_start;
+  GtkWidget *checkbutton_jack_tb_client;
   GtkWidget *checkbutton_jack_pwp;
   GtkWidget *checkbutton_start_tjack;
   GtkWidget *checkbutton_start_ajack;

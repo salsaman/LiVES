@@ -290,7 +290,6 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
     // check if video stopped playback
     if (nframe<first_frame||nframe>last_frame) {
       if (mainw->whentostop==STOP_ON_VID_END) {
-	g_print("pt aaa %d %d %d\n",nframe,first_frame,last_frame);
 	mainw->cancelled=CANCEL_VID_END;
 	return 0;
       }

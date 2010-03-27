@@ -832,6 +832,43 @@ gdouble weed_palette_get_compression_ratio (int pal) {
 }
 
 
+
+
+/////////////////////////////////////////////
+
+#define BLACK_THRESH 20
+
+gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf) {
+  gint width=gdk_pixbuf_get_width(pixbuf);
+  gint height=gdk_pixbuf_get_height(pixbuf);
+  gint rstride=gdk_pixbuf_get_rowstride(pixbuf);
+  gboolean has_alpha=gdk_pixbuf_get_has_alpha(pixbuf);
+  guchar *pdata=gdk_pixbuf_get_pixels(pixbuf);
+
+  int psize=has_alpha?4:3;
+  register int i,j;
+
+  width*=psize;
+
+  for (j=0;j<height;j++) {
+    for (i=0;i<width;i+=psize) {
+      if (pdata[i]>BLACK_THRESH||pdata[i+1]>BLACK_THRESH||pdata[i+2]>BLACK_THRESH) {
+	return FALSE;
+      }
+    }
+    pdata+=rstride;
+  }
+
+  return TRUE;
+}
+  
+
+
+
+
+
+
+
 ///////////////////////////////////////////////////////////
 // frame conversions
 

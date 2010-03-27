@@ -348,7 +348,7 @@ void cancel_process(gboolean visible) {
   if (prefs->show_player_stats&&!visible&&mainw->fps_measure>0.) {
     // statistics
     gettimeofday(&tv, NULL);
-    mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origticks)/U_SEC;
+    mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO)/U_SEC;
   }
   if (visible) {
     if (mainw->preview_box!=NULL&&!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Play all"), NULL);
@@ -375,8 +375,13 @@ void cancel_process(gboolean visible) {
   }
 }
 
+
+#ifdef RT_AUDIO
+static guint64 audio_ticks=0.;
+#endif
+
 gboolean process_one (gboolean visible) {
-  gint64 tc,new_ticks;
+  gint64 new_ticks;
   gint oframeno=0;
 
   gshort time_source;
@@ -384,7 +389,6 @@ gboolean process_one (gboolean visible) {
 
 #ifdef RT_AUDIO
   gdouble audio_stretch;
-  guint64 audio_ticks=0.;
 #endif
 
   if (!visible) {
@@ -421,7 +425,7 @@ gboolean process_one (gboolean visible) {
 #ifdef ENABLE_JACK
     if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&!mainw->is_rendering&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
       if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-	mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE)+mainw->origticks;
+	mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
 	time_source=LIVES_TIME_SOURCE_SOUNDCARD;
       }
     }
@@ -430,7 +434,7 @@ gboolean process_one (gboolean visible) {
 #ifdef HAVE_PULSE_AUDIO
     if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&!mainw->is_rendering&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
       if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-      mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE)+mainw->origticks;
+      mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
       time_source=LIVES_TIME_SOURCE_SOUNDCARD;
       }
     }
@@ -439,19 +443,23 @@ gboolean process_one (gboolean visible) {
     if (time_source==LIVES_TIME_SOURCE_NONE) {
       // get time from system clock
       gettimeofday(&tv, NULL);
-      mainw->currticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+      mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+      time_source=LIVES_TIME_SOURCE_SYSTEM;
     }
 
 
     // adjust audio rate slightly if we are behind or ahead
     if (time_source!=LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
-      if ((mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.))&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>mainw->origticks)) {
+      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>0)) {
 	// fps is synched to external source, so we adjust the audio rate to fit
-	audio_ticks=mainw->currticks;
-	if ((audio_stretch=(mainw->currticks-mainw->origticks)/(audio_ticks-mainw->origticks))<2.) {
-	  if (!cfile->play_paused) mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
-	  else mainw->jackd->sample_in_rate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
+	if ((audio_stretch=mainw->currticks/audio_ticks)<2.) {
+
+	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	    if (!cfile->play_paused) mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
+	    else mainw->jackd->sample_in_rate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
+	  }
+	  else mainw->jackd->sample_in_rate=cfile->arate*audio_stretch;
 	}
       }
 #endif
@@ -459,18 +467,21 @@ gboolean process_one (gboolean visible) {
 
 
 #ifdef HAVE_PULSE_AUDIO
-      if ((mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.))&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>mainw->origticks)) {
+      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>0)) {
 	// fps is synched to external source, so we adjust the audio rate to fit
 	audio_ticks=mainw->currticks;
-	if ((audio_stretch=(mainw->currticks-mainw->origticks)/(audio_ticks-mainw->origticks))<2.) {
-	  if (!cfile->play_paused) mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
-	  else mainw->pulsed->in_arate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
+	if ((audio_stretch=mainw->currticks/audio_ticks)<2.) {
+	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	    if (!cfile->play_paused) mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
+	    else mainw->pulsed->in_arate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
+	  } 
+	  else mainw->pulsed->in_arate=cfile->arate*audio_stretch;
 	}
       }
 #endif
-
     }
 
+    audio_ticks=mainw->currticks;
 
     if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL)) {
       // playing an event_list
@@ -483,8 +494,8 @@ gboolean process_one (gboolean visible) {
 	if (mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_EVENT_LIST_END;
 #endif
       }
-      else if ((tc=mainw->currticks-mainw->origticks)>=event_start) {
-	cfile->next_event=process_events (cfile->next_event,mainw->currticks-mainw->origticks);
+      else if (mainw->currticks>=event_start) {
+	cfile->next_event=process_events (cfile->next_event,mainw->currticks);
 	
 	// see if we need to fill an audio buffer
 #ifdef ENABLE_JACK
@@ -577,7 +588,7 @@ gboolean process_one (gboolean visible) {
 
       if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&(cfile->hsize>0||cfile->vsize>0||cfile->frames>0)) {
 	gettimeofday(&tv, NULL);
-	mainw->currticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+	mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*get_approx_ln((guint)mainw->opening_frames)) {
 	  on_check_clicked();
 	  last_open_check_ticks=mainw->currticks;
@@ -585,7 +596,7 @@ gboolean process_one (gboolean visible) {
 	    if (cfile->frames>0&&cfile->frames!=123456789) {
 	      fraction_done=(gdouble)mainw->opening_frames/(gdouble)cfile->frames;
 	      if (fraction_done>1.) fraction_done=1.;
-	      timesofar=(mainw->currticks-mainw->origticks-mainw->timeout_ticks)/U_SEC;
+	      timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
 	      est_time=timesofar/fraction_done-timesofar;
 	      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
 	      prog_label=g_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),mainw->opening_frames,cfile->frames,(guint)(est_time+.5));
@@ -603,11 +614,11 @@ gboolean process_one (gboolean visible) {
       else if (visible&&cfile->proc_ptr->frames_done>=cfile->progress_start&&cfile->proc_ptr->frames_done<=cfile->progress_end&&cfile->progress_end>0&&!mainw->effects_paused) {
 	if (progress_count++>=PROG_LOOP_VAL) {
 	  gettimeofday(&tv, NULL);
-	  mainw->currticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+	  mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 	  fraction_done=(cfile->proc_ptr->frames_done-cfile->progress_start)/(cfile->progress_end-cfile->progress_start+1.);
 	  if (fraction_done>1.) fraction_done=1.;
 	  if (cfile->proc_ptr->frames_done>disp_frames_done) gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
-	  timesofar=(mainw->currticks-mainw->origticks-mainw->timeout_ticks)/U_SEC;
+	  timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
 	  est_time=timesofar/fraction_done-timesofar;
 	  prog_label=g_strdup_printf(_("\n%d%% done. Time remaining: %u sec\n"),(gint)(fraction_done*100.),(guint)(est_time+.5));
 	  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label3),prog_label);
@@ -677,7 +688,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   progress_count=0;
 
   if (!visible) {
-    mainw->startticks=mainw->startsecs=mainw->currticks=0;
     if (mainw->event_list!=NULL) {
       // get audio start time
       audio_start=calc_time_from_frame(mainw->current_file,mainw->play_start)*cfile->fps;
@@ -736,14 +746,19 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (cfile->next_event!=NULL) event_start=get_event_timecode(cfile->next_event);
 
 
-  gettimeofday(&tv, NULL);
+  // mainw->origsecs, mainw->origusecs is our base for quantising 
+  // (and is constant for each playback session)
 
-  // mainw->origticks is our base for quantising (and is constant for each playback session)
   // firstticks is to do with the audio "frame" for sox, mplayer
   // startticks is the ticks value of the last frame played
 
-  mainw->origticks=mainw->firstticks=mainw->startticks=tv.tv_usec*U_SEC_RATIO;
-  last_open_check_ticks=mainw->origticks;
+  mainw->firstticks=mainw->startticks=last_open_check_ticks=0;
+
+  gettimeofday(&tv, NULL);
+
+  // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
+  mainw->origsecs=tv.tv_sec;
+  mainw->origusecs=tv.tv_usec;
 
   if (!visible) {
     // video playback
@@ -756,7 +771,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       gboolean noframedrop=mainw->noframedrop;
       mainw->noframedrop=FALSE;
       cfile->last_frameno=1;
-      mainw->origticks=0;
       if (prefs->jack_opts&JACK_OPTS_TIMEBASE_START) {
 	mainw->play_start=calc_new_playback_position(mainw->current_file,0,&ntc);
       }
@@ -769,15 +783,14 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
 #endif
     cfile->last_frameno=cfile->frameno=mainw->play_start;
+
+    // deltaticks is used for scratching (forwards and back)
     mainw->deltaticks=0;
   }
 
 
-  // [IMPORTANT] we subtract this from every calculation to make the numbers smaller
-  mainw->startsecs=tv.tv_sec;
 
-
-  // MUST do re-seek after setting startsecs in order to set our clock properly
+  // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) {
@@ -799,13 +812,22 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   }
   
 
-  if (mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering) mainw->origticks-=get_event_timecode(mainw->multitrack->pb_start_event); // playback start from middle of multitrack
+  if (mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering) {
+    // playback start from middle of multitrack
+    // calculate when we "would have started" at time 0
+    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-get_event_timecode(mainw->multitrack->pb_start_event);
+    mainw->origsecs=origticks/U_SEC;
+    mainw->origusecs=((guint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
+  }
 
   // tell jack transport we are ready to play
   mainw->video_seek_ready=TRUE;
 
   mainw->scratch=SCRATCH_NONE;
 
+#ifdef RT_AUDIO
+audio_ticks=0.;
+#endif
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
@@ -936,7 +958,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (prefs->show_player_stats) {
       if (mainw->fps_measure>0.) {
 	gettimeofday(&tv, NULL);
-	mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origticks)/U_SEC;
+	mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO)/U_SEC;
       }
     }
     mainw->is_processing=TRUE;
@@ -1343,7 +1365,7 @@ do_keys_window (void) {
 void 
 do_mt_keys_window (void) {
   gchar *tmp=g_strdup(_ ("Multitrack Keys"));
-  do_text_window (tmp,_ ("You can use the following keys to control the multitrack window:-\n\nctrl-left-arrow              move timeline cursor left 1 second\nctrl-right-arrow            move timeline cursor right 1 second\nshift-left-arrow            move timeline cursor left 1 frame\nshift-right-arrow          move timeline cursor right 1 frame\nctrl-up-arrow               move current track up\nctrl-down-arrow           move current track down\nctrl-page-up                select next clip\nctrl-page-down            select previous clip\nctrl-space                    select/deselect current track\nctrl-plus                       zoom in\nctrl-minus                    zoom out\nm                                 make a mark on the timeline (during playback)\nw                                 rewind to play start.\n\nFor other keys, see the menus.\n"));
+  do_text_window (tmp,_ ("You can use the following keys to control the multitrack window:-\n\nctrl-left-arrow              move timeline cursor left 1 second\nctrl-right-arrow            move timeline cursor right 1 second\nshift-left-arrow            move timeline cursor left 1 frame\nshift-right-arrow          move timeline cursor right 1 frame\nctrl-up-arrow               move current track up\nctrl-down-arrow           move current track down\nctrl-page-up                select previous clip\nctrl-page-down            select next clip\nctrl-space                    select/deselect current track\nctrl-plus                       zoom in\nctrl-minus                    zoom out\nm                                 make a mark on the timeline (during playback)\nw                                 rewind to play start.\n\nFor other keys, see the menus.\n"));
   g_free(tmp);
 }
 

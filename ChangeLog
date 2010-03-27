@@ -1,6 +1,10 @@
 Version 1.3.3
 -------------
-Implement full jack timebase client (in progress).
+Implement full jack timebase client.
+Improved a/v sync.
+Swap ctrl-pag-up, ctrl-page-down in multitrack.
+Multitrack GUI improvements.
+
 
 
 

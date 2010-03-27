@@ -199,7 +199,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       }
       pulsed->seek_pos=seek;
       gettimeofday(&tv, NULL);
-      pulsed->audio_ticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+      pulsed->audio_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
       pulsed->frames_written=0;
       break;
     default:

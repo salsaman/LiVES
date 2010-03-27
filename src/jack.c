@@ -68,10 +68,11 @@ gboolean lives_jack_init (void) {
 
 #ifdef ENABLE_JACK_TRANSPORT
   jack_activate(jack_transport_client);
-  if (jack_transport_client!=NULL) jack_set_sync_callback (jack_transport_client, lives_start_ready_callback, NULL);
+  jack_set_sync_timeout(jack_transport_client,5000000); // seems to not work
+  jack_set_sync_callback (jack_transport_client, lives_start_ready_callback, NULL);
   gtk_timeout_add(KEY_RPT_INTERVAL,&lives_jack_poll,NULL);
 #else
-  if (jack_transport_client!=NULL) jack_client_close (jack_transport_client);
+  jack_client_close (jack_transport_client);
   jack_transport_client=NULL;
 #endif
 
@@ -263,7 +264,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       }
       jackd->seek_pos=seek;
       gettimeofday(&tv, NULL);
-      jackd->audio_ticks=U_SECL*(tv.tv_sec-mainw->startsecs)+tv.tv_usec*U_SEC_RATIO;
+      jackd->audio_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
       jackd->frames_written=0;
       break;
     default:
@@ -578,7 +579,9 @@ int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *p
 
   if (state!=JackTransportStarting) return TRUE;
 
-  seek_ready=mainw->video_seek_ready;
+  // work around a bug in jack
+  //seek_ready=mainw->video_seek_ready;
+  seek_ready=TRUE;
 
   if (mainw->playing_file!=-1&&prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT) {
     // trigger audio resync

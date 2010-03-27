@@ -3643,13 +3643,13 @@ gboolean weed_init_effect(int hotkey) {
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
     // place this synchronous with the preceding frame
-    event_list=append_filter_init_event (mainw->event_list,mainw->currticks-mainw->origticks,key_to_fx[hotkey][key_modes[hotkey]],-1);
+    event_list=append_filter_init_event (mainw->event_list,mainw->currticks,key_to_fx[hotkey][key_modes[hotkey]],-1);
     if (mainw->event_list==NULL) mainw->event_list=event_list;
     init_events[hotkey]=(void *)get_last_event(mainw->event_list);
     ntracks=weed_leaf_num_elements(init_events[hotkey],"in_tracks");
     pchains[hotkey]=filter_init_add_pchanges(mainw->event_list,get_weed_filter(key_to_fx[hotkey][key_modes[hotkey]]),init_events[hotkey],ntracks);
     create_filter_map(); // we create filter_map event_t * array with ordered effects
-    mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks-mainw->origticks,filter_map);
+    mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks,filter_map);
     weed_set_int_value(new_instance,"host_hotkey",hotkey);
   }
 
@@ -3734,11 +3734,11 @@ void weed_deinit_effect(int hotkey) {
   }
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&init_events[hotkey]!=NULL&&(prefs->rec_opts&REC_EFFECTS)&&num_in_chans>0) {
     // place this synchronous with the preceding frame
-    mainw->event_list=append_filter_deinit_event (mainw->event_list,mainw->currticks-mainw->origticks,init_events[hotkey],pchains[hotkey]);
+    mainw->event_list=append_filter_deinit_event (mainw->event_list,mainw->currticks,init_events[hotkey],pchains[hotkey]);
     init_events[hotkey]=NULL;
     if (pchains[hotkey]!=NULL) g_free(pchains[hotkey]);
     create_filter_map(); // we create filter_map event_t * array with ordered effects
-    mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks-mainw->origticks,filter_map);
+    mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks,filter_map);
   }
 }
 

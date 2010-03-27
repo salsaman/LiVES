@@ -86,6 +86,8 @@ typedef struct {
   GdkColor light_yellow;
   GdkColor pink;
   GdkColor light_red;
+  GdkColor dark_red;
+  GdkColor light_green;
   GdkColor grey20;
   GdkColor grey25;
   GdkColor grey45;
@@ -372,14 +374,14 @@ typedef struct {
 
   // for the internal player
   gdouble period; // == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
-  gint64 startticks; // effective ticks when last frame was (should have been) displayed
-  gint64 timeout_ticks; // incremented if effect/rendering is paused/previewed
-  gint64 startsecs; // playback start seconds - subtracted from all other ticks to keep numbers smaller
-  gint64 currticks; // current playback ticks : goes from origticks upwards
+  guint64 startticks; // effective ticks when last frame was (should have been) displayed
+  guint64 timeout_ticks; // incremented if effect/rendering is paused/previewed
+  guint64 origsecs; // playback start seconds - subtracted from all other ticks to keep numbers smaller
+  guint64 origusecs; // usecs at start of playback
+  guint64 currticks; // current playback ticks : goes from origticks upwards
   gint64 deltaticks; // deltaticks for scratching
-  gint64 firstticks; // ticks when audio started playing
-  gint64 origticks; // ticks at start of playback
-  gint64 stream_ticks;  // ticks since first frame sent to playback plugin
+  guint64 firstticks; // ticks when audio started playing
+  guint64 stream_ticks;  // ticks since first frame sent to playback plugin
 
   gboolean size_warn; // warn the user that incorrectly sized frames were found
   gboolean noswitch; // set to TRUE during frame load/display operation. If TRUE we should not switch clips, 

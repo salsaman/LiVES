@@ -3365,6 +3365,10 @@ gboolean dirchange_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
 
 gboolean fps_reset_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+  // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
+  // also resync the audio
+
+
   if (mainw->playing_file==-1) return TRUE;
 
   // change play direction
@@ -3382,7 +3386,9 @@ gboolean fps_reset_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   // make sure this is called, sometimes we switch clips too soon...
   changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 
-  resync_audio(cfile->frameno);
+  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+    resync_audio(cfile->frameno);
+  }
 
   return TRUE;
 }

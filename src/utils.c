@@ -400,17 +400,19 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
   if (nframe<first_frame) nframe=first_frame;
   if (nframe>last_frame) nframe=last_frame;
 
-  if (do_resync||(mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno)) {
-    gboolean is_jump=FALSE;
-    if (mainw->scratch==SCRATCH_JUMP) is_jump=TRUE;
-    mainw->scratch=SCRATCH_NONE;
-    resync_audio(nframe);
-    if (is_jump) mainw->video_seek_ready=TRUE;
-    if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
-      // we check for audio stop here, but the seek may not have happened yet
-      if (!check_for_audio_stop(fileno,first_frame,last_frame)) {
-	mainw->cancelled=CANCEL_AUD_END;
-	return 0;
+  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+    if (do_resync||(mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno)) {
+      gboolean is_jump=FALSE;
+      if (mainw->scratch==SCRATCH_JUMP) is_jump=TRUE;
+      mainw->scratch=SCRATCH_NONE;
+      resync_audio(nframe);
+      if (is_jump) mainw->video_seek_ready=TRUE;
+      if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
+	// we check for audio stop here, but the seek may not have happened yet
+	if (!check_for_audio_stop(fileno,first_frame,last_frame)) {
+	  mainw->cancelled=CANCEL_AUD_END;
+	  return 0;
+	}
       }
     }
   }

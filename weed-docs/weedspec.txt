@@ -787,8 +787,10 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
 '''Optional leaves for channel plants with video''': [[BR]]
 
  * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio
-                                               of the pixel of the image (pixel aspect ratio different than 1.0
+                                               of the pixel of the image (pixel aspect ratio 
+                                               different than 1.0
                                                means pixels are non-square) [set by host]
+
 
 If the plugin sets any of these in the channel_template, and the host is using a YUV
 "current_palette", host should try to match plugin preference where

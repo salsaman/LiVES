@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sched.h>
 
 #include <ogg/ogg.h>
 #include <theora/theora.h>
@@ -757,7 +758,7 @@ static boolean attach_stream(char *URI) {
 
   int64_t granulepos,testkframe;
 
-  if (!(opriv.fd=open(URI,O_RDONLY))) {
+  if ((opriv.fd=open(URI,O_RDONLY))==-1) {
     fprintf(stderr, "ogg_theora_decoder: unable to open %s\n",URI);
     return FALSE;
   }
@@ -1027,7 +1028,9 @@ const char *version(void) {
 
 
 
-const lives_clip_data_t *get_clip_data(char *URI) {
+const lives_clip_data_t *get_clip_data(char *URI, int nclip) {
+
+  if (nclip>0) return NULL;
 
   if (old_URI==NULL||strcmp(URI,old_URI)) {
     if (old_URI!=NULL) {
@@ -1040,6 +1043,8 @@ const lives_clip_data_t *get_clip_data(char *URI) {
   }
 
   if (vstream==NULL) return NULL;
+
+  cdata.nclips=1;
 
   // video part
   cdata.interlace=LIVES_INTERLACE_NONE;
@@ -1072,6 +1077,10 @@ const lives_clip_data_t *get_clip_data(char *URI) {
   cdata.palettes[1]=WEED_PALETTE_END;
 
   cdata.nframes=vstream->nframes;
+
+  cdata.par=1.;
+  cdata.offs_x=0;
+  cdata.offs_y=0;
 
   sprintf(cdata.container_name,"%s","ogg");
   sprintf(cdata.video_name,"%s","theora");
@@ -1150,6 +1159,8 @@ static boolean ogg_data_process(yuv_buffer *yuv, boolean cont) {
       if (yuv==NULL) frame_out=TRUE;
 
       if (frame_out) break;
+
+      sched_yield();
     }
 
     ignore_count=FALSE;
@@ -1160,14 +1171,15 @@ static boolean ogg_data_process(yuv_buffer *yuv, boolean cont) {
 }
 
 
-boolean get_frame(char *URI, int64_t tframe, void **pixel_data) {
+boolean get_frame(char *URI, int nclip, int64_t tframe, void **pixel_data) {
   // seek to frame, and return pixel_data
   yuv_buffer yuv;
   boolean crow=FALSE;
   void *y,*u,*v;
   int64_t kframe=-1,xkframe;
   boolean cont=FALSE;
-  int max_frame_diff=2<<(vstream->priv->keyframe_granule_shift-2);
+  boolean new_uri=FALSE;
+  int max_frame_diff;
   int64_t granulepos;
   static int64_t last_cframe;
 
@@ -1179,7 +1191,9 @@ boolean get_frame(char *URI, int64_t tframe, void **pixel_data) {
 
   static index_entry *fidx=NULL;
 
-  int mheight=(opriv.y_height>>1)<<1; // yes indeed, there is a file with a height of 601 pixels...
+  int mheight;
+
+  if (nclip>0) return FALSE;
 
   if (old_URI==NULL||strcmp(URI,old_URI)) {
     if (old_URI!=NULL) {
@@ -1189,15 +1203,20 @@ boolean get_frame(char *URI, int64_t tframe, void **pixel_data) {
     }
     if (!attach_stream(URI)) return FALSE;
     old_URI=strdup(URI);
+    new_uri=TRUE;
   }
+
+  mheight=(opriv.y_height>>1)<<1; // yes indeed, there is a file with a height of 601 pixels...
+
+  max_frame_diff=2<<(vstream->priv->keyframe_granule_shift-2);
 
   tframe+=kframe_offset;
 
-  if (tframe==last_frame) {
+  if (tframe==last_frame&&!new_uri) {
     theora_decode_YUVout(&tpriv.ts, &yuv);
   }
   else {
-    if (tframe<last_frame||tframe-last_frame>max_frame_diff) {
+    if (new_uri||(tframe<last_frame||tframe-last_frame>max_frame_diff)) {
       // need to find a new kframe
       fidx=get_bounds_for(indexa,tframe,&ppos_lower,&ppos_upper);
       if (fidx==NULL) {
@@ -1213,7 +1232,7 @@ boolean get_frame(char *URI, int64_t tframe, void **pixel_data) {
     
     ignore_packets=FALSE;
     
-    if (tframe>last_frame&&((tframe-last_frame<=max_frame_diff||kframe==last_kframe))) {
+    if (!new_uri&&(tframe>last_frame&&((tframe-last_frame<=max_frame_diff||kframe==last_kframe)))) {
       // same keyframe as last time, or next frame; we can continue where we left off
       cont=TRUE;
       skip=tframe-last_frame-1;
@@ -1275,6 +1294,7 @@ boolean get_frame(char *URI, int64_t tframe, void **pixel_data) {
       v+=yuv.uv_stride;
     }
     crow=!crow;
+    sched_yield();
   }
 
   return TRUE;

@@ -32,19 +32,29 @@ typedef int boolean;
 #define LIVES_INTERLACE_NONE 0
 #define LIVES_INTERLACE_BOTTOM_FIRST 1
 #define LIVES_INTERLACE_TOP_FIRST 2
-#define LIVES_INTERLACE_PROGRESSIVE 3
 
 
 typedef struct {
+  int nclips; // number of clips in container
   int width;
   int height;
-  int nframes;
+  int64_t nframes;
   int interlace;
+
+  // x and y offsets of picture within frame
+  // for primary pixel plane
+  int offs_x;
+  int offs_y;
+
+  float par; // pixel aspect ratio
+
+  float fps;
+
+  int *palettes;
+
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
-  float fps;
-  int *palettes;
 
   char container_name[512]; // name of container, e.g. "ogg" or NULL
   char video_name[512]; // name of video codec, e.g. "theora" or NULL
@@ -62,11 +72,15 @@ typedef struct {
 // std functions
 const char *module_check_init(void);
 const char *version(void);
-const lives_clip_data_t *get_clip_data(char *URI);
-boolean get_frame(char *URI, int64_t frame, void **pixel_data);
+
+// nclip starts at 0
+const lives_clip_data_t *get_clip_data(char *URI, int nclip);
+
+// frame starts at 0
+boolean get_frame(char *URI, int nclip, int64_t frame, void **pixel_data);
 
 // opt fns
-boolean rip_audio (char *URI, char *fname, int stframe, int frames);
+int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
 void rip_audio_cleanup(void);
 boolean set_palette(int palette);
 void module_unload(void);

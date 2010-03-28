@@ -28,7 +28,7 @@ static gdouble audio_start;
 static gboolean accelerators_swapped;
 static gint frames_done;
 static gint disp_frames_done;
-static guint64 last_display_ticks=0;  // ticks when last display happened (fixed)
+static gint64 last_display_ticks=0;  // ticks when last display happened (fixed)
 
 static gint64 last_open_check_ticks;
 
@@ -376,9 +376,6 @@ void cancel_process(gboolean visible) {
 }
 
 
-#ifdef RT_AUDIO
-static guint64 audio_ticks=0.;
-#endif
 
 gboolean process_one (gboolean visible) {
   gint64 new_ticks;
@@ -389,6 +386,7 @@ gboolean process_one (gboolean visible) {
 
 #ifdef RT_AUDIO
   gdouble audio_stretch;
+  gint64 audio_ticks;
 #endif
 
   if (!visible) {
@@ -451,7 +449,7 @@ gboolean process_one (gboolean visible) {
     // adjust audio rate slightly if we are behind or ahead
     if (time_source!=LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>0)) {
+      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&audio_ticks>0) {
 	// fps is synched to external source, so we adjust the audio rate to fit
 	if ((audio_stretch=mainw->currticks/audio_ticks)<2.) {
 
@@ -467,9 +465,8 @@ gboolean process_one (gboolean visible) {
 
 
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&!mainw->is_rendering&&(audio_ticks>0)) {
+      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&!mainw->is_rendering&&audio_ticks>0) {
 	// fps is synched to external source, so we adjust the audio rate to fit
-	audio_ticks=mainw->currticks;
 	if ((audio_stretch=mainw->currticks/audio_ticks)<2.) {
 	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 	    if (!cfile->play_paused) mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
@@ -480,8 +477,6 @@ gboolean process_one (gboolean visible) {
       }
 #endif
     }
-
-    audio_ticks=mainw->currticks;
 
     if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL)) {
       // playing an event_list
@@ -815,9 +810,12 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering) {
     // playback start from middle of multitrack
     // calculate when we "would have started" at time 0
+
+    // WARNING: origticks could be negative
+
     gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-get_event_timecode(mainw->multitrack->pb_start_event);
     mainw->origsecs=origticks/U_SEC;
-    mainw->origusecs=((guint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
+    mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
   }
 
   // tell jack transport we are ready to play
@@ -825,9 +823,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
   mainw->scratch=SCRATCH_NONE;
 
-#ifdef RT_AUDIO
-audio_ticks=0.;
-#endif
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function

@@ -2816,7 +2816,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	  // try to switch palette
 	  if ((*dplug->set_palette)(target_palette)) {
 	    // sucess ! re-read clip data
-	    const lives_clip_data_t *cdata=(*dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)));
+	    const lives_clip_data_t *cdata=(*dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
 	    g_free(tmp);
 	    
 	    dplug->YUV_sampling=cdata->YUV_sampling;
@@ -2829,7 +2829,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	    if (dplug->current_palette!=dplug->preferred_palette&&((weed_palette_is_rgb_palette(target_palette)&&weed_palette_is_rgb_palette(dplug->preferred_palette))||(weed_palette_is_yuv_palette(target_palette)&&weed_palette_is_yuv_palette(dplug->preferred_palette)))) {
 	      if ((*dplug->set_palette)(dplug->preferred_palette)) {
 		// sucess ! re-read clip data
-		const lives_clip_data_t *cdata=(*dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)));
+		const lives_clip_data_t *cdata=(*dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
 		g_free(tmp);
 		
 		dplug->YUV_sampling=cdata->YUV_sampling;
@@ -2853,7 +2853,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
-	(*dplug->get_frame)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),(int64_t)(sfile->frame_index[frame-1]),pixel_data);
+	(*dplug->get_frame)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0,(int64_t)(sfile->frame_index[frame-1]),pixel_data);
 
 	g_free(tmp);
 	g_free(pixel_data);

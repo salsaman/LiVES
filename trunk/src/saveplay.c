@@ -290,7 +290,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  g_free(msgstr);
 	  tmp=(char *)g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL);
 
-	  (((_decoder_plugin *)(cfile->ext_src))->rip_audio)(tmp,afile,(cfile->fps*start+.5),frames);
+	  (((_decoder_plugin *)(cfile->ext_src))->rip_audio)(tmp,0,afile,(cfile->fps*start+.5),frames,NULL);
 
 	  if (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup!=NULL) {
 	    (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup)();
@@ -1658,6 +1658,8 @@ void play_file (void) {
   mainw->actual_frame=0;
 
   if (!mainw->foreign) {
+    // start up our audio player (jack or pulse)
+
     if (audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
       if (mainw->jackd!=NULL) {
@@ -1681,7 +1683,7 @@ void play_file (void) {
 	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd->reverse_endian=TRUE;
 	  else mainw->jackd->reverse_endian=FALSE;
 	  while (jack_get_msgq(mainw->jackd)!=NULL);
-	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&(mainw->event_list==NULL||(mainw->preview&&mainw->is_processing))) {
+	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&(mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
 	    // tell jack server to open audio file and start playing it
 	    jack_message.command=ASERVER_CMD_FILE_OPEN;
 	    jack_message.data=g_strdup_printf("%d",mainw->current_file);
@@ -1720,7 +1722,7 @@ void play_file (void) {
 	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed->reverse_endian=TRUE;
 	  else mainw->pulsed->reverse_endian=FALSE;
 	  while (pulse_get_msgq(mainw->pulsed)!=NULL);
-	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering||cfile->opening)&&(mainw->event_list==NULL||(mainw->preview&&mainw->is_processing))) {
+	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering||cfile->opening)&&(mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
 	    // tell pulse server to open audio file and start playing it
 	    pulse_message.command=ASERVER_CMD_FILE_OPEN;
 	    pulse_message.data=g_strdup_printf("%d",mainw->current_file);
@@ -1737,6 +1739,8 @@ void play_file (void) {
 #endif
     }
     else if (cfile->achans>0) {
+      // sox or mplayer audio - run as background process
+
       gchar *tmp;
       if (mainw->loop_cont) {
 	// tell audio to loop forever
@@ -1782,7 +1786,8 @@ void play_file (void) {
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED,"");
 #endif
-
+    
+    // add a timer for the keyboard and other realtime events (osc, midi, joystick, etc)
     mainw->kb_timer=gtk_timeout_add (KEY_RPT_INTERVAL,&plugin_poll_keyboard,NULL);
 
 #ifdef ENABLE_JACK

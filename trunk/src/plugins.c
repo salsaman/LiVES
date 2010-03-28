@@ -1699,7 +1699,7 @@ const lives_clip_data_t *get_decoder_plugin(file *sfile) {
     g_free(decplugname);
 
     if (dplug!=NULL) {
-      if ((cdata=(dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL))))!=NULL) {
+      if ((cdata=(dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0))!=NULL) {
 	g_free(tmp);
 	sfile->ext_src=dplug;
 	break;

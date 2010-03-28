@@ -374,14 +374,14 @@ typedef struct {
 
   // for the internal player
   gdouble period; // == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
-  guint64 startticks; // effective ticks when last frame was (should have been) displayed
-  guint64 timeout_ticks; // incremented if effect/rendering is paused/previewed
-  guint64 origsecs; // playback start seconds - subtracted from all other ticks to keep numbers smaller
-  guint64 origusecs; // usecs at start of playback
-  guint64 currticks; // current playback ticks : goes from origticks upwards
+  gint64 startticks; // effective ticks when last frame was (should have been) displayed
+  gint64 timeout_ticks; // incremented if effect/rendering is paused/previewed
+  gint64 origsecs; // playback start seconds - subtracted from all other ticks to keep numbers smaller
+  gint64 origusecs; // usecs at start of playback - ditto
+  gint64 currticks; // current playback ticks (relative)
   gint64 deltaticks; // deltaticks for scratching
-  guint64 firstticks; // ticks when audio started playing
-  guint64 stream_ticks;  // ticks since first frame sent to playback plugin
+  gint64 firstticks; // ticks when audio started playing (for non-realtime audio plugins)
+  gint64 stream_ticks;  // ticks since first frame sent to playback plugin
 
   gboolean size_warn; // warn the user that incorrectly sized frames were found
   gboolean noswitch; // set to TRUE during frame load/display operation. If TRUE we should not switch clips, 

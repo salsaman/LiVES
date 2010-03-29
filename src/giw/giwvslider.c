@@ -20,6 +20,7 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
+// additional code G. Finch (salsaman@gmail.com) 2010 - 
 
 
 #include <stdio.h>
@@ -187,11 +188,14 @@ giw_vslider_destroy (GtkObject *object)
     
   // Freeing all
   if (vslider->adjustment)
-    g_object_unref (GTK_OBJECT (vslider->adjustment));
-  if (vslider->legends)
+    g_object_unref (G_OBJECT (vslider->adjustment));
+  vslider->adjustment=NULL;
+  if (vslider->legends) {
     for (loop=0; loop<vslider->major_ticks; loop++){
-      g_object_unref(GTK_OBJECT(vslider->legends[loop]));
+      if (vslider->legends[loop]!=NULL) g_object_unref(G_OBJECT(vslider->legends[loop]));
+    }
     g_free(vslider->legends);
+    vslider->legends=NULL;
   }
     
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
@@ -338,7 +342,7 @@ giw_vslider_expose (GtkWidget      *widget,
    
   //Drawing the back hole
   gdk_draw_rectangle (widget->window,
-	                widget->style->dark_gc[widget->state],
+	                widget->style->black_gc,
 			TRUE,
 			vslider->x+vslider->width/2-2,
 			vslider->y,
@@ -566,7 +570,7 @@ giw_vslider_set_adjustment (GiwVSlider *vslider,
   // Freeing the last one
   if (vslider->adjustment){
     gtk_signal_disconnect_by_data (GTK_OBJECT (vslider->adjustment), (gpointer) vslider);
-    g_object_unref (GTK_OBJECT (vslider->adjustment));
+    g_object_unref (G_OBJECT (vslider->adjustment));
     vslider->adjustment=NULL;
   }
    
@@ -780,10 +784,11 @@ vslider_free_legends(GiwVSlider *vslider)
   g_return_if_fail (vslider != NULL);
   
   if (vslider->legends!=NULL){
-    for (loop=0; loop<vslider->major_ticks; loop++)
-      if (vslider->legends[loop]!=NULL)
+    for (loop=0; loop<vslider->major_ticks; loop++) {
+      if (vslider->legends[loop]!=NULL) {
         g_object_unref(G_OBJECT(vslider->legends[loop]));
-
+      }
+    }
     g_free(vslider->legends);
     vslider->legends=NULL;
   }

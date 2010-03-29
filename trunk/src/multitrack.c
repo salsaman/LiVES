@@ -5295,8 +5295,11 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->insert);
 
   gtk_widget_add_accelerator (mt->insert, "activate", mt->accel_group,
-                              GDK_i, GDK_CONTROL_MASK,
+                              GDK_i, 0,
                               GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator (mt->insert, "activate", mt->accel_group,
+                              GDK_i, GDK_CONTROL_MASK,
+                              0);
   gtk_widget_set_sensitive (mt->insert, FALSE);
 
 
@@ -18893,7 +18896,16 @@ static void on_amixer_close_clicked (GtkButton *button, lives_amixer_t *amixer) 
   // set vols from slider vals
 
   for (i=0;i<amixer->nchans;i++) {
-    val=gtk_range_get_value(GTK_RANGE(amixer->ch_sliders[i]));
+#if ENABLE_GIW
+    if (prefs->lamp_buttons) {
+      val=giw_vslider_get_value(GIW_VSLIDER(amixer->ch_sliders[i]));
+    }
+    else {
+#endif
+      val=gtk_range_get_value(GTK_RANGE(amixer->ch_sliders[i]));
+#if ENABLE_GIW
+    }
+#endif
     (g_list_nth(mt->audio_vols,i))->data=GINT_TO_POINTER((gint)(val*1000000.));
   }
 
@@ -18917,9 +18929,21 @@ static void on_amixer_reset_clicked (GtkButton *button, lives_amixer_t *amixer) 
   // copy vols to slider vals
 
   for (i=0;i<amixer->nchans;i++) {
-    g_signal_handler_block(amixer->ch_sliders[i],amixer->ch_slider_fns[i]);
-    gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),(gdouble)GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols,i))/1000000.);
-    g_signal_handler_unblock(amixer->ch_sliders[i],amixer->ch_slider_fns[i]);
+
+#if ENABLE_GIW
+    if (prefs->lamp_buttons) {
+      g_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+      giw_vslider_set_value(GIW_VSLIDER(amixer->ch_sliders[i]),(gdouble)GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols,i))/1000000.);
+      g_signal_handler_unblock(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+    }
+    else {
+#endif
+      g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+      gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),(gdouble)GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols,i))/1000000.);
+      g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+#if ENABLE_GIW
+    }
+#endif
   }
 
 }
@@ -18942,39 +18966,88 @@ static void after_amixer_inv_toggled (GtkToggleButton *toggle, lives_amixer_t *a
 }
 
 
-void on_amixer_slider_changed (GtkRange *slider, lives_amixer_t *amixer) {
-  gint layer=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(slider),"layer"));
+void on_amixer_slider_changed (GtkAdjustment *adj, lives_amixer_t *amixer) {
+  gint layer=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(adj),"layer"));
   gboolean gang=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(amixer->gang_checkbutton));
   gboolean inv=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(amixer->inv_checkbutton));
-  gdouble val=gtk_range_get_value(slider);
+  gdouble val;
   int i;
   lives_mt *mt=amixer->mt;
 
+#if ENABLE_GIW
+  if (prefs->lamp_buttons) {
+    GiwVSlider *slider=GIW_VSLIDER(amixer->ch_sliders[layer]);
+    val=giw_vslider_get_value(slider);
+  }
+  else {
+#endif
+    if (TRUE) {
+      GtkRange *range=GTK_RANGE(amixer->ch_sliders[layer]);
+      val=gtk_range_get_value(range);
+    }
+#if ENABLE_GIW
+  }
+#endif
+
   if (gang) {
-    if (layer>=0) {
+    if (layer>0) {
       for (i=mt->opts.back_audio_tracks;i<amixer->nchans;i++) {
-	g_signal_handler_block(amixer->ch_sliders[i],amixer->ch_slider_fns[i]);
-	gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),val);
-	g_signal_handler_unblock(amixer->ch_sliders[i],amixer->ch_slider_fns[i]);
+#if ENABLE_GIW
+	if (prefs->lamp_buttons) {
+	  g_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	  giw_vslider_set_value(GIW_VSLIDER(amixer->ch_sliders[i]),val);
+	  g_signal_handler_unblock(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	}
+	else {
+#endif
+	  g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	  gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),val);
+	  g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+#if ENABLE_GIW
+	}
+#endif
       }
       if (inv&&mt->opts.back_audio_tracks>0) {
-	g_signal_handler_block(amixer->ch_sliders[0],amixer->ch_slider_fns[0]);
-	gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[0]),1.-val);
-	g_signal_handler_unblock(amixer->ch_sliders[0],amixer->ch_slider_fns[0]);
+#if ENABLE_GIW
+	if (prefs->lamp_buttons) {
+	  g_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[0])),amixer->ch_slider_fns[0]);
+	  giw_vslider_set_value(GIW_VSLIDER(amixer->ch_sliders[0]),1.-val<0.?0.:1.-val);
+	  g_signal_handler_unblock(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[0])),amixer->ch_slider_fns[0]);
+	}
+	else {
+#endif
+	  g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[0])),amixer->ch_slider_fns[0]);
+	  gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[0]),1.-val);
+	  g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[0])),amixer->ch_slider_fns[0]);
+#if ENABLE_GIW
+	}
+#endif
       }
     }
     else {
       if (inv) {
 	for (i=1;i<amixer->nchans;i++) {
-	  g_signal_handler_block(amixer->ch_sliders[i],amixer->ch_slider_fns[i]);
-	  gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),1.-val);
-	  g_signal_handler_unblock(amixer->ch_sliders[i],amixer->ch_slider_fns[i]);
+#if ENABLE_GIW
+	  if (prefs->lamp_buttons) {
+	    g_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	    giw_vslider_set_value(GIW_VSLIDER(amixer->ch_sliders[i]),1.-val<0.?0.:1.-val);
+	    g_signal_handler_unblock(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	  }
+	  else {
+#endif
+	    g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	    gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),1.-val);
+	    g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+#if ENABLE_GIW
+	  }
+#endif
+	  
 	}
       }
     }
   }
 
-  (g_list_nth(mt->audio_vols,layer+mt->opts.back_audio_tracks))->data=GINT_TO_POINTER((gint)(val*1000000.));
+  //                                                                                             (g_list_nth(mt->audio_vols,layer))->data=GINT_TO_POINTER((gint)(val*1000000.));
 
 }
 
@@ -18992,6 +19065,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   GtkWidget *scrolledwindow;
   GtkWidget *label;
   GtkWidget *eventbox;
+  GtkWidget *spinbutton;
   GtkWidget *close_button;
   GtkWidget *reset_button;
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
@@ -19080,21 +19154,23 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 
   if (mt->opts.back_audio_tracks>0) {
 
-    adj = gtk_adjustment_new (0.5, 0., 8., 0.01, 0.1, 0.);
+    adj = gtk_adjustment_new (0.5, 0., 4., 0.01, 0.1, 0.);
 
+    spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (adj), 0.1, 3);
 
 #if ENABLE_GIW
-    if (0&&prefs->lamp_buttons) {
+    if (prefs->lamp_buttons) {
 
       amixer->ch_sliders[0]=giw_vslider_new(GTK_ADJUSTMENT(adj));
-      gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[0]),2);
-      gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[0]),GTK_POS_BOTTOM);
-
+      giw_vslider_set_legends_digits(GIW_VSLIDER(amixer->ch_sliders[0]),1);
+      giw_vslider_set_major_ticks_number(GIW_VSLIDER(amixer->ch_sliders[0]),4);
+      giw_vslider_set_minor_ticks_number(GIW_VSLIDER(amixer->ch_sliders[0]),4);
+      
+			
       if (palette->style&STYLE_1) {
 	gtk_widget_modify_bg(amixer->ch_sliders[0], GTK_STATE_NORMAL, &palette->normal_back);
       }
-
-
+			
     }
     else {
 #endif
@@ -19102,18 +19178,16 @@ void amixer_show (GtkButton *button, gpointer user_data) {
       gtk_range_set_inverted(GTK_RANGE(amixer->ch_sliders[0]),TRUE);
       gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[0]),2);
       gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[0]),GTK_POS_BOTTOM);
-
-
-      amixer->ch_slider_fns[0]=g_signal_connect_after (GTK_OBJECT (amixer->ch_sliders[0]), "value_changed",
-						       G_CALLBACK (on_amixer_slider_changed),
-						       (gpointer)amixer);
-    
-      
 #if ENABLE_GIW
     }
 #endif
 
-    g_object_set_data(G_OBJECT(amixer->ch_sliders[0]),"layer",GINT_TO_POINTER(-1));
+    amixer->ch_slider_fns[0]=g_signal_connect_after (GTK_OBJECT (adj), "value_changed",
+						       G_CALLBACK (on_amixer_slider_changed),
+						       (gpointer)amixer);
+      
+      
+    g_object_set_data(G_OBJECT(adj),"layer",GINT_TO_POINTER(0));
     
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(amixer->ch_sliders[0], GTK_STATE_NORMAL, &palette->normal_fore);
@@ -19131,6 +19205,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     gtk_box_pack_start (GTK_BOX (main_hbox), vbox, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (vbox), amixer->ch_sliders[0], TRUE, TRUE, 50);
+    gtk_box_pack_start (GTK_BOX (vbox), spinbutton, FALSE, FALSE, 10);
     
   }
 
@@ -19243,16 +19318,34 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   add_fill_to_box(GTK_BOX(vbox2));
 
   for (i=mt->opts.back_audio_tracks;i<nachans;i++) {
-    adj = gtk_adjustment_new (0.5, 0., 8., 0.01, 0.1, 0.);
+    adj = gtk_adjustment_new (0.5, 0., 4., 0.01, 0.1, 0.);
     
-    amixer->ch_sliders[i]=gtk_vscale_new(GTK_ADJUSTMENT(adj));
-    gtk_range_set_inverted(GTK_RANGE(amixer->ch_sliders[i]),TRUE);
-    gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[i]),2);
-    gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[i]),GTK_POS_BOTTOM);
+    spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (adj), 0.1, 3);
+
+#if ENABLE_GIW
+    if (prefs->lamp_buttons) {
+
+      amixer->ch_sliders[i]=giw_vslider_new(GTK_ADJUSTMENT(adj));
+      giw_vslider_set_legends_digits(GIW_VSLIDER(amixer->ch_sliders[i]),1);
+      giw_vslider_set_major_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),4);
+      giw_vslider_set_minor_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),4);
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_bg(amixer->ch_sliders[i], GTK_STATE_NORMAL, &palette->normal_back);
+      }
+    }
+    else {
+#endif
+      amixer->ch_sliders[i]=gtk_vscale_new(GTK_ADJUSTMENT(adj));
+      gtk_range_set_inverted(GTK_RANGE(amixer->ch_sliders[i]),TRUE);
+      gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[i]),2);
+      gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[i]),GTK_POS_BOTTOM);
+#if ENABLE_GIW
+    }
+#endif
     
-    g_object_set_data(G_OBJECT(amixer->ch_sliders[i]),"layer",GINT_TO_POINTER(i));
+    g_object_set_data(G_OBJECT(adj),"layer",GINT_TO_POINTER(i));
     
-    amixer->ch_slider_fns[i]=g_signal_connect_after (GTK_OBJECT (amixer->ch_sliders[i]), "value_changed",
+    amixer->ch_slider_fns[i]=g_signal_connect_after (GTK_OBJECT (adj), "value_changed",
 						     G_CALLBACK (on_amixer_slider_changed),
 						     (gpointer)amixer);
     
@@ -19272,6 +19365,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     gtk_box_pack_start (GTK_BOX (main_hbox), vbox, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (vbox), amixer->ch_sliders[i], TRUE, TRUE, 50);
+    gtk_box_pack_start (GTK_BOX (vbox), spinbutton, FALSE, FALSE, 10);
 
   }
 

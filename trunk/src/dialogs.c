@@ -386,7 +386,7 @@ gboolean process_one (gboolean visible) {
 
 #ifdef RT_AUDIO
   gdouble audio_stretch;
-  gint64 audio_ticks;
+  gint64 audio_ticks=0;
 #endif
 
   if (!visible) {

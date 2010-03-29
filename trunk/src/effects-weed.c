@@ -1223,12 +1223,8 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
 	resize_layer(layer,width,height,GDK_INTERP_HYPER);
       }
       else {
-	if (prefs->pb_quality==PB_QUALITY_MED) {
-	  resize_layer(layer,width,height,GDK_INTERP_BILINEAR);
-	}
-	else {
-	  resize_layer(layer,width,height,GDK_INTERP_NEAREST);
-	}
+	gint interp=get_interp_value(prefs->pb_quality);
+	resize_layer(layer,width,height,interp);
       }
 
       inwidth=weed_get_int_value(layer,"width",&error);

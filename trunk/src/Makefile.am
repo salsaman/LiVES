@@ -91,6 +91,14 @@ if HAVE_GTK_VERSION214
 gtk_def=-DHAVE_GTK_NICE_VERSION=1
 endif
 
+
+if ENABLE_GIW
+giw_SOURCES=giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h
+giw_LDADD=-lm
+giw_CFLAGS=-DENABLE_GIW=1
+endif
+
+
 lives_exe_SOURCES = \
 	main.c\
 	support.c support.h \
@@ -126,11 +134,13 @@ lives_exe_SOURCES = \
 	startup.c startup.h \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
-	$(ldvgrab_SOURCES)
+	$(ldvgrab_SOURCES) \
+	$(giw_SOURCES)
 
-lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) $(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_slice_LDADD) ../libweed/libweed-utils.la
+lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) $(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_slice_LDADD) $(giw_LDADD) ../libweed/libweed-utils.la
 
 lives_exe_LDFLAGS = -O3
-AM_CFLAGS = -O3 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) $(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(pulse_CFLAGS)  -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
+
+AM_CFLAGS = -O3 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) $(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS)  -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 

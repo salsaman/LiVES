@@ -3449,3 +3449,11 @@ gulong get_fs_free(const gchar *dir) {
   return bytes;
 }
 
+
+
+
+LIVES_INLINE gint get_interp_value(gshort quality) {
+  if (quality==PB_QUALITY_HIGH) return GDK_INTERP_HYPER;
+  else if (quality==PB_QUALITY_MED) return GDK_INTERP_BILINEAR;
+  return GDK_INTERP_NEAREST;
+}

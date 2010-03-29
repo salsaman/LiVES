@@ -1,0 +1,70 @@
+GIW - GTK INSTRUMENTATION WIDGETS
+
+1- GENERAL
+  The GIW is a library with widgets for instrumentation applications, or any kind of 
+  scientific application. The avaliable widgets can display and receive data in varius 
+  forms. Those widgets were built using the GTK library.
+  
+  GIW is hosted at http://tesla.eletrica.ufpr.br/giw
+  GIW's sourceforge page in http://giw.sourceforge.net/
+  GTK is hosted at http://www.gtk.org 
+  
+2- HOW TO USE
+  GIW was developed to be used in two different ways.
+  
+  1. Inline
+  	- you compile the widget.c and widget.h source as another source member of your
+  	  regular gtk project.
+  
+  2. Shared Library
+  	- You install the shared library 
+  	  (and plan to distribute the shared library with you project)
+  	- Add the "#include <giw.h> " to source files which reference gwi
+  	- Add the "giw" to the pkg-config statement in your makefile
+  	  * example "pkg-config --cflags --libs gtk+-2.0 giw"
+ 
+3- INSTALLATION 
+  unpack the source tarball
+  $ ./configure         {--enable-gtk-doc may be needed, if you have gtk-doc installed}
+  $ make clean all
+  $ sudo make install   (as root user)
+  
+  or install the source rpm and build binaries:
+  -- $ rpm -ivh giw-<release>.src.rpm
+     $ cd /usr/src/redhat/SPECS
+     $ rpmbuild -ba --target i686 giw.spec
+     $ cd /usr/src/redhat/RPMS/i686
+     ... then install binary
+
+  or install the binary rpm : 
+  -- $ rpm -ivh giw-<release>.i686.rpm
+  
+  libgiw.so, giw.h, giw.pc is now installed in /usr/{lib/giw, include/giw, lib/pkgconfig}
+  html documentation files are in /usr/share/doc/giw
+  devhelp documentation automatically loaded, just start devhelp '$ devhelp'
+  
+  to compile a sample.c program that uses this library, do:
+  $ gcc -Wall -g -O2 `pkg-config --cflags --libs giw` -o sample_out sample.c
+  
+  where: sample.c is your gtk based program source file
+  giw samples have been compiled and placed into /usr/bin/ as giw_*_simple giw_*_full
+  with sources installed in /usr/share/doc/giw/*.c
+  
+  note: giw drags gtk+-2.0 and glib-2.0 with it; when using pkg-config
+  - try: $ pkg-config --cflags giw
+    compared to $ pkg-config --cflags gtk+-2.0
+    -- if it fails, try: $ export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig
+    --                   $ pkg-config --cflags giw
+    
+  
+4- LICENSE
+  GIW is published under the Lesser GNU License. LGPL
+  
+5- CONTACT
+  This project is maintained in the UFPR (Federal Universtity of Paran� - Curitiba - Brazil).
+  A e-mail for contact is: alpebu@yahoo.com.br 
+  
+6- SUPPORT
+  James Scott, Jr. <skoona@users.sourceforge.net>
+  http://giw.sourceforge.net/
+  

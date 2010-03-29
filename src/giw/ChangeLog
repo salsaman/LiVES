@@ -1,0 +1,48 @@
+* Tue Sep 11, 2007 -- James Scott <skoona@users.sourceforge.net>
+- Public release verion 0.2.4
+ 
+  François Galea provided a patch to fix one bug 
+  and solved some Glib warnings when using giwxyplot.
+  The bug:
+  giwxyplot:190
+  -    g_object_unref(xyplot->back_gc);
+  +    g_object_unref(xyplot->data_gc);
+
+  The warnings:
+  *somehow, at program end, giw_xyplot_destroy is called twice for each 
+  created giwxyplot. Maybe there is a smarter solution, but setting all 
+  unreferenced object pointers to NULL solves the problem.
+ 
+  *gdk_draw_lines was called even if data is not available.
+ 
+* Sat Feb 3, 2007 -- James Scott <skoona@users.sourceforge.net>
+- Public release verion 0.2.3
+- Removed -ansi -pedantic from compile cflags, this broke the compile mainly
+  from the use of // as a comment prefix.
+- fixup the makefile for the library or build directory
+  changed each *.c file to include its header using <header.h>
+  verus double-quotes.  This is a runtime benefit for the package.
+- Added -soname and -version-info to configure.in to enable
+  changing library version info from the config scripts, also updated
+  makefile.am in the build dir to pickup these values.
+- Changed makefile.am to include the source of all example programs
+  in a binary install, by placing them into /usr/local/doc/giw/*.c
+- Added some install text to README file.  I will need to combace to this doc later.  
+- Created an rpm of the library giw-0.2.3-fc6.{i686,src}.rpm
+
+* Sat Dec 9, 2006 -- James Scott <skoona@users.sourceforge.net>
+- Public release verion 0.2.2
+- Added support for creating the library - libgiw.so 
+  and the pkg-config pc file - giw.pc .
+- Changed all the examples to compile using this library
+- started fixing all the compile warnings
+- investigating how to create an rpm for this package
+- changed to LGPL from GPL
+
+* Sat Dec 9, 2006 -- James Scott <skoona@users.sourceforge.net>
+- Public release verion 0.2.1
+- Added autoconf scripts to basic codeset
+- added GNU_SOURCE to correct strange compile errors in math.h
+- added -lm to all link library lists
+- Added math.h and stdlib.h to xyplot_full_example.c
+- Changes GtkkWidget *clock global to *gclock, in clock_{full,simple}_example.c

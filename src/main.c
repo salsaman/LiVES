@@ -2402,6 +2402,7 @@ void load_start_image(gint frame) {
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
   gboolean noswitch=mainw->noswitch;
+  gint interp;
 
   if (mainw->multitrack!=NULL) return;
 
@@ -2457,7 +2458,9 @@ void load_start_image(gint frame) {
     weed_set_int_value(layer,"frame",frame);
 
     if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
-      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+      interp=get_interp_value(prefs->pb_quality);
+      resize_layer(layer,width,height,interp);
       start_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
@@ -2489,6 +2492,7 @@ void load_end_image(gint frame) {
   weed_plant_t *layer;
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
+  gint interp;
   gboolean noswitch=mainw->noswitch;
 
   if (mainw->multitrack!=NULL) return;
@@ -2518,6 +2522,8 @@ void load_end_image(gint frame) {
 
     if (pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
+      interp=get_interp_value(prefs->pb_quality);
+      resize_layer(layer,width,height,interp);
       end_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
@@ -3639,17 +3645,7 @@ void load_frame_image(gint frame, gint last_frame) {
       }
       else fx_layer_copy=mainw->frame_layer;
 
-      if (prefs->pb_quality==PB_QUALITY_HIGH) {
-	interp=GDK_INTERP_HYPER;
-      }
-      else {
-	if (prefs->pb_quality==PB_QUALITY_MED) {
-	  interp=GDK_INTERP_BILINEAR;
-	}
-	else {
-	  interp=GDK_INTERP_NEAREST;
-	}
-      }
+      interp=get_interp_value(prefs->pb_quality);
 
       if (mainw->vpp->fwidth>0&&mainw->vpp->fheight>0) resize_layer(fx_layer_copy,mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(fx_layer_palette),mainw->vpp->fheight,interp);
       convert_layer_palette(fx_layer_copy,mainw->vpp->palette,mainw->vpp->YUV_clamping);
@@ -3792,14 +3788,9 @@ void load_frame_image(gint frame, gint last_frame) {
 
 GdkPixbuf *lives_scale_simple (GdkPixbuf *pixbuf, gint width, gint height) {
   GdkPixbuf *pixbuf2;
+  gint interp=get_interp_value(prefs->pb_quality);
   pthread_mutex_lock(&mainw->gtk_mutex);
-  if (prefs->pb_quality==PB_QUALITY_HIGH) {
-    pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
-  }
-  else if (prefs->pb_quality==PB_QUALITY_MED) {
-    pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_BILINEAR);
-  }
-  else pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_NEAREST);
+  pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
   pthread_mutex_unlock(&mainw->gtk_mutex);
   return pixbuf2;
 }

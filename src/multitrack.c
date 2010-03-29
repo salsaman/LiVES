@@ -41,6 +41,10 @@
 #include "audio.h"
 #include "startup.h"
 
+#ifdef ENABLE_GIW
+#include "giw/giwvslider.h"
+#endif
+
 static int renumbered_clips[MAX_FILES+1]; // used to match clips from the event recorder with renumbered clips (without gaps)
 static gdouble lfps[MAX_FILES+1]; // table of layout fps
 static void **pchain; // param chain for currently being edited filter
@@ -19078,16 +19082,38 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 
     adj = gtk_adjustment_new (0.5, 0., 8., 0.01, 0.1, 0.);
 
-    amixer->ch_sliders[0]=gtk_vscale_new(GTK_ADJUSTMENT(adj));
-    gtk_range_set_inverted(GTK_RANGE(amixer->ch_sliders[0]),TRUE);
-    gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[0]),2);
-    gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[0]),GTK_POS_BOTTOM);
+
+#if ENABLE_GIW
+    if (0&&prefs->lamp_buttons) {
+
+      amixer->ch_sliders[0]=giw_vslider_new(GTK_ADJUSTMENT(adj));
+      gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[0]),2);
+      gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[0]),GTK_POS_BOTTOM);
+
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_bg(amixer->ch_sliders[0], GTK_STATE_NORMAL, &palette->normal_back);
+      }
+
+
+    }
+    else {
+#endif
+      amixer->ch_sliders[0]=gtk_vscale_new(GTK_ADJUSTMENT(adj));
+      gtk_range_set_inverted(GTK_RANGE(amixer->ch_sliders[0]),TRUE);
+      gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[0]),2);
+      gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[0]),GTK_POS_BOTTOM);
+
+
+      amixer->ch_slider_fns[0]=g_signal_connect_after (GTK_OBJECT (amixer->ch_sliders[0]), "value_changed",
+						       G_CALLBACK (on_amixer_slider_changed),
+						       (gpointer)amixer);
     
+      
+#if ENABLE_GIW
+    }
+#endif
+
     g_object_set_data(G_OBJECT(amixer->ch_sliders[0]),"layer",GINT_TO_POINTER(-1));
-    
-    amixer->ch_slider_fns[0]=g_signal_connect_after (GTK_OBJECT (amixer->ch_sliders[0]), "value_changed",
-						     G_CALLBACK (on_amixer_slider_changed),
-						     (gpointer)amixer);
     
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(amixer->ch_sliders[0], GTK_STATE_NORMAL, &palette->normal_fore);

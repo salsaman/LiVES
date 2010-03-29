@@ -25,6 +25,9 @@
 #include "rte_window.h"
 #include "framedraw.h"
 
+#ifdef ENABLE_GIW
+#include "giw/giwknob.h"
+#endif
 
 extern gboolean do_effect (lives_rfx_t *, gboolean is_preview); //effects.c in LiVES
 extern void on_realfx_activate (GtkMenuItem *, gpointer rfx); // effects.c in LiVES
@@ -1206,7 +1209,8 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
 
 
-
+#define GIW_KNOB_WIDTH 40
+#define GIW_KNOB_HEIGHT 40
 
 
 
@@ -1214,6 +1218,8 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
 gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean add_slider) {
   // box here is vbox inside top_hbox inside top_dialog
+
+  // add paramter pnum for rfx to box
 
   GtkWidget *label;
   GtkWidget *eventbox;
@@ -1424,10 +1430,28 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     param->widgets[0]=spinbutton;
 
     if (add_slider) {
-      scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
+#ifdef ENABLE_GIW
+      if (!prefs->lamp_buttons) {
+#endif
+	scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
+	gtk_scale_set_draw_value(GTK_SCALE(scale),FALSE);
+	gtk_box_pack_start (GTK_BOX (hbox), scale, TRUE, TRUE, 10);
+#ifdef ENABLE_GIW
+      }
+      else {
+	scale=giw_knob_new(GTK_ADJUSTMENT(spinbutton_adj));
+	gtk_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
+	giw_knob_set_legends_digits(GIW_KNOB(scale),0);
+	if (palette->style&STYLE_1) {
+	  gtk_widget_modify_text(scale, GTK_STATE_NORMAL, &palette->normal_back);
+	  gtk_widget_modify_fg(scale, GTK_STATE_NORMAL, &palette->normal_fore);
+	  gtk_widget_modify_bg (scale, GTK_STATE_NORMAL, &palette->normal_back);
+	}
+	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 60);
+	add_fill_to_box (GTK_BOX (hbox));
+      }
+#endif
       if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, scale, param->desc, NULL);
-      gtk_box_pack_start (GTK_BOX (hbox), scale, TRUE, TRUE, 10);
-      gtk_scale_set_draw_value(GTK_SCALE(scale),FALSE);
     }
     break;
     

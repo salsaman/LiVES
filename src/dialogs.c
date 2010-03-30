@@ -449,10 +449,9 @@ gboolean process_one (gboolean visible) {
     // adjust audio rate slightly if we are behind or ahead
     if (time_source!=LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&audio_ticks>0) {
+      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&mainw->currticks>U_SECL*5&&(audio_ticks=lives_jack_get_time(mainw->jackd,TRUE))>0) {
 	// fps is synched to external source, so we adjust the audio rate to fit
-	if ((audio_stretch=mainw->currticks/audio_ticks)<2.) {
-
+	if ((audio_stretch=(gdouble)audio_ticks/(gdouble)mainw->currticks)<2.) {
 	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 	    if (!cfile->play_paused) mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
 	    else mainw->jackd->sample_in_rate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
@@ -465,9 +464,9 @@ gboolean process_one (gboolean visible) {
 
 
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&!mainw->is_rendering&&audio_ticks>0) {
+      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&!mainw->is_rendering&&mainw->currticks>U_SECL*5&&(audio_ticks=lives_pulse_get_time(mainw->pulsed,TRUE))>0) {
 	// fps is synched to external source, so we adjust the audio rate to fit
-	if ((audio_stretch=mainw->currticks/audio_ticks)<2.) {
+	if ((audio_stretch=audio_ticks/mainw->currticks)<2.) {
 	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 	    if (!cfile->play_paused) mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
 	    else mainw->pulsed->in_arate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
@@ -747,7 +746,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   // firstticks is to do with the audio "frame" for sox, mplayer
   // startticks is the ticks value of the last frame played
 
-  mainw->firstticks=mainw->startticks=last_open_check_ticks=0;
+  mainw->startticks=mainw->currticks=0;
 
   gettimeofday(&tv, NULL);
 
@@ -774,13 +773,25 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	// timebase client - follows jack transport position
 	mainw->startticks=ntc;
       }
-
+      mainw->currticks=ntc;
     }
 #endif
     cfile->last_frameno=cfile->frameno=mainw->play_start;
 
     // deltaticks is used for scratching (forwards and back)
     mainw->deltaticks=0;
+  }
+
+  if (mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering) {
+    // playback start from middle of multitrack
+    // calculate when we "would have started" at time 0
+
+    // WARNING: origticks could be negative
+
+    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-get_event_timecode(mainw->multitrack->pb_start_event);
+    mainw->origsecs=origticks/U_SEC;
+    mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
+    mainw->currticks+=origticks;
   }
 
 
@@ -806,17 +817,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
  #endif
   }
   
-
-  if (mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering) {
-    // playback start from middle of multitrack
-    // calculate when we "would have started" at time 0
-
-    // WARNING: origticks could be negative
-
-    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-get_event_timecode(mainw->multitrack->pb_start_event);
-    mainw->origsecs=origticks/U_SEC;
-    mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
-  }
 
   // tell jack transport we are ready to play
   mainw->video_seek_ready=TRUE;

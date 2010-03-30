@@ -264,7 +264,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       }
       jackd->seek_pos=seek;
       gettimeofday(&tv, NULL);
-      jackd->audio_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+      jackd->audio_ticks=mainw->currticks;
       jackd->frames_written=0;
       break;
     default:

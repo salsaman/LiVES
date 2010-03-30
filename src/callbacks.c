@@ -713,7 +713,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
       }
     }
   }
-  else {
+  if (!lmap_errors) {
     if (cfile->changed) {
       get_menu_text(cfile->menuentry,title);
       if (strlen(title)>128) g_snprintf(title,32,"%s",(_("This file")));

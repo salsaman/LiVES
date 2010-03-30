@@ -207,6 +207,9 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe) {
 
       if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
       pixbuf=NULL;
+
+      // another thread may have called check_if_non_virtual
+      if (sfile->frame_index==NULL) break;
       sfile->frame_index[i-1]=-1;
     }
     pthread_mutex_unlock(&mainw->gtk_mutex);

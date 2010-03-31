@@ -375,11 +375,12 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
       // process each sample
 
       if ((curval=ioffs+src_offset_i)>=abuf->samples_filled) {
-	// current buffer is full
+	// current buffer is consumed
 	break;
       }
       xchan=0;
       for (j=0;j<nchans;j++) {
+	// copy channel by channel (de-interleave)
 	pthread_mutex_lock(&mainw->abuf_mutex);
 	if (mainw->jackd->read_abuf<0) {
 	  pthread_mutex_unlock(&mainw->abuf_mutex);
@@ -390,6 +391,7 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
 	pthread_mutex_unlock(&mainw->abuf_mutex);
 	xchan++;
       }
+      // resample on the fly
       src_offset_i=(int)(src_offset_f+=scale);
       samps++;
       samples_out++;
@@ -400,7 +402,7 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
     offs+=samps;
 
     if (nsamps>0) {
-      // buffer was filled, move on to next buffer
+      // buffer was consumed, move on to next buffer
 
       pthread_mutex_lock(&mainw->abuf_mutex);
       // request main thread to fill another buffer
@@ -1534,21 +1536,25 @@ gboolean resync_audio(gint frameno) {
   if (!(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!mainw->is_rendering) {
-    jack_audio_seek_frame(mainw->jackd,frameno);
-    mainw->rec_aclip=mainw->current_file;
-    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+    if (!mainw->is_rendering) {
+      jack_audio_seek_frame(mainw->jackd,frameno);
+      mainw->rec_aclip=mainw->current_file;
+      mainw->rec_avel=cfile->pb_fps/cfile->fps;
+      mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+    }
     return TRUE;
   }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!mainw->is_rendering) {
-    pulse_audio_seek_frame(mainw->pulsed,frameno);
-    mainw->rec_aclip=mainw->current_file;
-    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+    if (!mainw->is_rendering) {
+      pulse_audio_seek_frame(mainw->pulsed,frameno);
+      mainw->rec_aclip=mainw->current_file;
+      mainw->rec_avel=cfile->pb_fps/cfile->fps;
+      mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+    }
     return TRUE;
   }
 #endif

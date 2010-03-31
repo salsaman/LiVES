@@ -53,6 +53,10 @@ lives_exit (void) {
       g_source_remove(mainw->multitrack->idlefunc);
     }
 
+    if (mainw->multitrack!=NULL&&!mainw->only_close) {
+      if (mainw->multitrack->undo_mem!=NULL) g_free(mainw->multitrack->undo_mem);
+    }
+
     if (mainw->playing_file>-1) {
       gtk_timeout_remove (mainw->kb_timer);
       if (mainw->ext_playback) {
@@ -197,13 +201,19 @@ lives_exit (void) {
 	  g_list_free(cfile->layout_map);
 	}
 
+	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	  // must do this before we move it
+	  close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
+	  mainw->files[i]->ext_src=NULL;
+	}
+
 	cfile->layout_map=NULL;
 
 	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
     }
 
-
+  
     if (mainw->only_close) {
       mainw->suppress_dprint=TRUE;
       for (i=1;i<=MAX_FILES;i++) {
@@ -1125,6 +1135,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     stored_event_list_free_undos();
   }
   
+
   if (mainw->scrap_file>-1) close_scrap_file();
 
   if (mainw->clips_available>0) {
@@ -1178,7 +1189,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 
     set_pref("ar_clipset","");
     prefs->ar_clipset=FALSE;
-
+  
     if (mainw->multitrack!=NULL) {
       event_list_free_undos(mainw->multitrack);
       

@@ -378,6 +378,7 @@ typedef struct {
   gint64 timeout_ticks; // incremented if effect/rendering is paused/previewed
   gint64 origsecs; // playback start seconds - subtracted from all other ticks to keep numbers smaller
   gint64 origusecs; // usecs at start of playback - ditto
+  gint64 offsetticks; // offset for external transport
   gint64 currticks; // current playback ticks (relative)
   gint64 deltaticks; // deltaticks for scratching
   gint64 firstticks; // ticks when audio started playing (for non-realtime audio plugins)

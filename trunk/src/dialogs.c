@@ -15,6 +15,7 @@
 #include "support.h"
 #include "cvirtual.h"
 #include "audio.h" // for fill_abuffer_from
+#include "resample.h"
 
 // for ping-pong loops
 
@@ -348,7 +349,7 @@ void cancel_process(gboolean visible) {
   if (prefs->show_player_stats&&!visible&&mainw->fps_measure>0.) {
     // statistics
     gettimeofday(&tv, NULL);
-    mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO)/U_SEC;
+    mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
   }
   if (visible) {
     if (mainw->preview_box!=NULL&&!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Play all"), NULL);
@@ -421,7 +422,7 @@ gboolean process_one (gboolean visible) {
     // get time from soundcard
 
 #ifdef ENABLE_JACK
-    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&!mainw->is_rendering&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
+    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
       if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
 	mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
 	time_source=LIVES_TIME_SOURCE_SOUNDCARD;
@@ -430,7 +431,7 @@ gboolean process_one (gboolean visible) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&!mainw->is_rendering&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
+    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
       if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
       mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
       time_source=LIVES_TIME_SOURCE_SOUNDCARD;
@@ -449,29 +450,43 @@ gboolean process_one (gboolean visible) {
     // adjust audio rate slightly if we are behind or ahead
     if (time_source!=LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&!mainw->is_rendering&&mainw->currticks>U_SECL*5&&(audio_ticks=lives_jack_get_time(mainw->jackd,TRUE))>0) {
-	// fps is synched to external source, so we adjust the audio rate to fit
-	if ((audio_stretch=(gdouble)audio_ticks/(gdouble)mainw->currticks)<2.) {
-	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-	    if (!cfile->play_paused) mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
-	    else mainw->jackd->sample_in_rate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
+      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))&&(mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_jack_get_time(mainw->jackd,TRUE))>mainw->offsetticks) {
+	if ((audio_stretch=(gdouble)(audio_ticks-mainw->offsetticks)/(gdouble)(mainw->currticks-mainw->offsetticks))<2.) {
+	  // if audio_stretch is > 1. it means that audio is playing too fast
+	  // < 1. it is playing too slow
+
+	  // if too fast we increase the apparent sample rate so that it gets downsampled more
+	  // if too slow we decrease the apparent sample rate so that it gets upsampled more
+
+	  if (mainw->multitrack==NULL) {
+	    if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	      if (!cfile->play_paused) mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
+	      else mainw->jackd->sample_in_rate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
+	    }
+	    else mainw->jackd->sample_in_rate=cfile->arate*audio_stretch;
 	  }
-	  else mainw->jackd->sample_in_rate=cfile->arate*audio_stretch;
+	  else {
+	    mainw->jackd->abufs[mainw->jackd->read_abuf]->arate=cfile->arate*audio_stretch;
+	  }
 	}
       }
 #endif
 
 
-
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&!mainw->is_rendering&&mainw->currticks>U_SECL*5&&(audio_ticks=lives_pulse_get_time(mainw->pulsed,TRUE))>0) {
+      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))&&(mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_pulse_get_time(mainw->pulsed,TRUE))>mainw->offsetticks) {
 	// fps is synched to external source, so we adjust the audio rate to fit
-	if ((audio_stretch=audio_ticks/mainw->currticks)<2.) {
-	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-	    if (!cfile->play_paused) mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
-	    else mainw->pulsed->in_arate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
-	  } 
-	  else mainw->pulsed->in_arate=cfile->arate*audio_stretch;
+	if ((audio_stretch=(gdouble)(audio_ticks-mainw->offsetticks)/(gdouble)(mainw->currticks-mainw->offsetticks))<2.) {
+	  if (mainw->multitrack==NULL) {
+	    if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	      if (!cfile->play_paused) mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
+	      else mainw->pulsed->in_arate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
+	    } 
+	    else mainw->pulsed->in_arate=cfile->arate*audio_stretch;
+	  }
+	  else {
+	    mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate=cfile->arate*audio_stretch;
+	  }
 	}
       }
 #endif
@@ -483,7 +498,7 @@ gboolean process_one (gboolean visible) {
       if (mainw->scratch!=SCRATCH_NONE&&mainw->multitrack!=NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
 	// handle transport jump
-	weed_timecode_t transtc=jack_transport_get_time()*U_SEC;
+	weed_timecode_t transtc=q_gint64(jack_transport_get_time()*U_SEC,cfile->fps);
 	mainw->multitrack->pb_start_event=get_frame_event_at(mainw->multitrack->event_list,transtc,NULL,TRUE);
 	if (mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_EVENT_LIST_END;
 #endif
@@ -746,7 +761,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   // firstticks is to do with the audio "frame" for sox, mplayer
   // startticks is the ticks value of the last frame played
 
-  mainw->startticks=mainw->currticks=0;
+  mainw->startticks=mainw->currticks=mainw->offsetticks=0;
 
   gettimeofday(&tv, NULL);
 
@@ -788,10 +803,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     // WARNING: origticks could be negative
 
-    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-get_event_timecode(mainw->multitrack->pb_start_event);
+    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-(mainw->offsetticks=get_event_timecode(mainw->multitrack->pb_start_event));
     mainw->origsecs=origticks/U_SEC;
     mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
-    mainw->currticks+=origticks;
   }
 
 
@@ -805,7 +819,12 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
-   }
+  }
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering&&cfile->achans>0) {
+    // have to set this here as we don't do a seek in multitrack
+    mainw->jackd->audio_ticks=mainw->offsetticks;
+    mainw->jackd->frames_written=0;
+  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) {
@@ -814,8 +833,13 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
- #endif
   }
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering&&cfile->achans>0) {
+    mainw->pulsed->audio_ticks=mainw->offsetticks;
+    mainw->pulsed->frames_written=0;
+  }
+#endif
+
   
 
   // tell jack transport we are ready to play
@@ -953,7 +977,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (prefs->show_player_stats) {
       if (mainw->fps_measure>0.) {
 	gettimeofday(&tv, NULL);
-	mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO)/U_SEC;
+	mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
       }
     }
     mainw->is_processing=TRUE;

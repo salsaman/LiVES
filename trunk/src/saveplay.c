@@ -1657,6 +1657,8 @@ void play_file (void) {
   cfile->play_paused=FALSE;
   mainw->actual_frame=0;
 
+  mainw->currticks=0;
+
   if (!mainw->foreign) {
     // start up our audio player (jack or pulse)
 
@@ -1807,6 +1809,7 @@ void play_file (void) {
     }
 #endif    
 
+
     //play until stopped or a stream finishes
     do {
       mainw->cancelled=CANCEL_NONE;
@@ -1823,8 +1826,13 @@ void play_file (void) {
 	    
 	    // fill our audio buffers now
 	    // this will also get our effects state
+
+	    // reset because audio sync may have set it
+	    if (mainw->multitrack!=NULL) mainw->jackd->abufs[0]->arate=cfile->arate;
 	    fill_abuffer_from(mainw->jackd->abufs[0],mainw->event_list,pb_start_event,exact_preview);
 	    for (i=1;i<prefs->num_rtaudiobufs;i++) {
+	      // reset because audio sync may have set it
+	      if (mainw->multitrack!=NULL) mainw->jackd->abufs[i]->arate=cfile->arate;
 	      fill_abuffer_from(mainw->jackd->abufs[i],mainw->event_list,NULL,FALSE);
 	    }
 	    
@@ -1864,6 +1872,7 @@ void play_file (void) {
       if (mainw->multitrack==NULL||mainw->multitrack->pb_start_event==NULL) {
 	do_progress_dialog(FALSE,FALSE,NULL);
 
+	// reset audio buffers
 #ifdef ENABLE_JACK
 	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 	  // must do this before deinit fx
@@ -1887,12 +1896,14 @@ void play_file (void) {
 	cfile->next_event=mainw->multitrack->pb_start_event;
 
 	if (!has_audio_buffers) {
+	  // no audio buffering
 	  // get just effects state
 	  get_audio_and_effects_state_at(mainw->multitrack->event_list,mainw->multitrack->pb_start_event,FALSE,mainw->multitrack->exact_preview);
 	}
 
 	do_progress_dialog(FALSE,FALSE,NULL);
 
+	// reset audio read buffers
 #ifdef ENABLE_JACK
 	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 	  // must do this before deinit fx
@@ -1910,11 +1921,15 @@ void play_file (void) {
 	}
 #endif
 
+	// realtime effects off
 	deinit_render_effects();
 
 	cfile->next_event=NULL;
-	mainw->multitrack->pb_start_event=mainw->multitrack->pb_loop_event;
+
+	// multitrack loop - go back to loop start position unless external transport moved us
+	if (mainw->scratch==SCRATCH_NONE) mainw->multitrack->pb_start_event=mainw->multitrack->pb_loop_event;
       }
+      if (mainw->multitrack!=NULL) pb_start_event=mainw->multitrack->pb_start_event;
     } while (mainw->multitrack!=NULL&&(mainw->loop_cont||mainw->scratch!=SCRATCH_NONE)&&(mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));
     mainw->osc_block=TRUE;
     gtk_timeout_remove (mainw->kb_timer);

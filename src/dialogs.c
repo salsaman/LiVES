@@ -60,7 +60,7 @@ void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data)
 static int progress_count;
 
 
-#define PROG_LOOP_VAL 100
+#define PROG_LOOP_VAL 50
 
 
 

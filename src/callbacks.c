@@ -7161,11 +7161,13 @@ on_effects_paused                     (GtkButton       *button,
 				       gpointer         user_data)
 {
   gchar *com;
+  gint64 xticks;
+
+  gettimeofday(&tv, NULL);
+  xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 
   if (!mainw->effects_paused) {
-    gettimeofday(&tv, NULL);
-    mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-    mainw->timeout_ticks-=mainw->currticks;
+    mainw->timeout_ticks-=xticks;
     com=g_strdup_printf("smogrify pause %s",cfile->handle);
     if (!mainw->preview) {
       gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
@@ -7179,9 +7181,7 @@ on_effects_paused                     (GtkButton       *button,
     if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) gtk_widget_hide(cfile->proc_ptr->stop_button);
 #endif
   } else {
-    gettimeofday(&tv, NULL);
-    mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-    mainw->timeout_ticks+=mainw->currticks;
+    mainw->timeout_ticks+=xticks;
     com=g_strdup_printf("smogrify resume %s",cfile->handle);
     if (!mainw->preview) {
       gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
@@ -7225,6 +7225,7 @@ on_preview_clicked                     (GtkButton       *button,
   gboolean ointernal_messaging=mainw->internal_messaging;
   int i;
   guint64 old_rte; //TODO - block better
+  gint64 xticks;
   gint current_file=mainw->current_file;
   weed_plant_t *filter_map=mainw->filter_map; // back this up in case we are rendering
 
@@ -7240,8 +7241,8 @@ on_preview_clicked                     (GtkButton       *button,
   mainw->preview=TRUE;
   old_rte=mainw->rte;
   gettimeofday(&tv, NULL);
-  mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-  mainw->timeout_ticks-=mainw->currticks;
+  xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+  mainw->timeout_ticks-=xticks;
 
   if (mainw->internal_messaging) {
     mainw->internal_messaging=FALSE;
@@ -7431,8 +7432,8 @@ on_preview_clicked                     (GtkButton       *button,
     gtk_widget_queue_draw (mainw->LiVES);
   }
   gettimeofday(&tv, NULL);
-  mainw->currticks=U_SECL*(tv.tv_sec-mainw->origusecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-  mainw->timeout_ticks+=mainw->currticks;
+  xticks=U_SECL*(tv.tv_sec-mainw->origusecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+  mainw->timeout_ticks+=xticks;
   mainw->filter_map=filter_map;
 
   if (mainw->multitrack!=NULL) {

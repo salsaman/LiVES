@@ -1158,11 +1158,16 @@ static void lives_init(_ign_opts *ign_opts) {
 	}
 
 #ifdef ENABLE_JACK
-	if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER) {
+	if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER||prefs->jack_opts&JACK_OPTS_START_TSERVER) {
 	  // start jack transport polling
-	  splash_msg(_("Starting jack audio server..."),.8);
+	  if (prefs->jack_opts&JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."),.8);
+	  else {
+	    if (prefs->jack_opts&JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."),.8);
+	    else splash_msg(_("Connecting to jack transport server..."),.8);
+	  }
 	  if (!lives_jack_init()) {
-	    do_jack_noopen_warn();
+	    if (prefs->jack_opts&JACK_OPTS_START_ASERVER||prefs->jack_opts&JACK_OPTS_START_TSERVER) do_jack_noopen_warn();
+	    else do_jack_noopen_warn3();
 	    if (prefs->startup_phase==2) {
 	      do_jack_noopen_warn2();
 	    }

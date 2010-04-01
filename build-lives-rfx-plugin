@@ -89,6 +89,11 @@ else {
 }
 
 
+if ($in_channels>0) {
+    push(@requires,"convert");
+}
+
+
 #########################################################
 
 # generate into /tmp
@@ -278,7 +283,7 @@ unless ($is_batch_gen) {
 	    print OUT "    }\n";
 
 	    print OUT "    if (!(\$img_ext2 eq \$img_ext) && &location(\"convert\") eq \"\") {\n";
-	    print OUT "         &sig_error(\"'convert' is required to merge differing image types.\",\"Please install imagemagick and try again.\");\n";
+	    print OUT "         &sig_error(\"'convert' is required by this plugin.\",\"Please install imagemagick and try again.\");\n";
 	    print OUT "         exit 1;\n";
 	    print OUT "    }\n";
 
@@ -318,9 +323,11 @@ unless ($is_batch_gen) {
     print OUT "	\$out=\"\$name\$out_ext\";\n\n";
 
     if ($in_channels>0) {
-	print OUT " while (! -f \$in) {\n";
+	print OUT "# wait for front end to create $in\n";
+	print OUT " while (!-f \$in) {\n";
 	print OUT "     sleep 1;\n";
 	print OUT " }\n\n";
+
     }
 
 }
@@ -341,16 +348,22 @@ unless ($is_batch_gen) {
 	print OUT "        \$frame2++;\n";
     }
     
+    print OUT "        \$opfailed=0;\n";
     print OUT "        if (! -f \$out) {\n";
-    print OUT "            print STDERR \"Warning: effect plugin $plugin_name skipped frame \$frame !\";\n";
-    print OUT "            `cp \$in \$out`;\n";
+    print OUT "            print STDERR \"Warning: effect plugin $plugin_name skipped frame \$frame !\n\";\n";
+    print OUT "            print STDERR \"Retrying\n\";\n";
+
+    print OUT "            \$frame--;\n";
+    print OUT "            \$opfailed=1;\n";
     print OUT "        }\n";
+    print OUT "        unless (\$opfailed) {\n";
     if ($in_channels==0) {
-	print OUT "	&sig_progress(\$frame,\$nwidth,\$nheight,\$fps,\$end);\n";
+	print OUT "	    &sig_progress(\$frame,\$nwidth,\$nheight,\$fps,\$end);\n";
     }
     else {
-	print OUT "	&sig_progress(\$frame);\n";
+	print OUT "	    &sig_progress(\$frame);\n";
     }
+    print OUT "        }\n";
     
     for ($i=0;$i<@params;$i++) {
 	unless ($params[$i] eq "") {

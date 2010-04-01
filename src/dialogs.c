@@ -1465,7 +1465,12 @@ void do_no_decoder_error(gchar *fname) {
 
 
 void do_jack_noopen_warn(void) {
-  do_blocking_error_dialog(_("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\nand also that the soundcard is not in use by another program.\n"));
+  do_blocking_error_dialog(_("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\nand also that the soundcard is not in use by another program\nor alternately, start up LiVES with:\nlives -jackopts 0\nand then adjust your jack options in Preferences | Jack Integration.\n"));
+}
+
+
+void do_jack_noopen_warn3(void) {
+  do_blocking_error_dialog(_("\nUnable to connect to jack transport. Please start jack before starting LiVES\nor alternately, start up LiVES with:\nlives -jackopts 0\nand then adjust your jack options in Preferences | Jack Integration.\n"));
 }
 
 

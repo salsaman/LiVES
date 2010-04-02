@@ -43,6 +43,7 @@
 
 #ifdef ENABLE_GIW
 #include "giw/giwvslider.h"
+#include "giw/giwled.h"
 #endif
 
 static int renumbered_clips[MAX_FILES+1]; // used to match clips from the event recorder with renumbered clips (without gaps)
@@ -1260,7 +1261,17 @@ static void track_select (lives_mt *mt) {
 	gtk_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
 
 	checkbutton=g_object_get_data (G_OBJECT(eventbox), "checkbutton");
-	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) {
+	
+#ifdef ENABLE_GIW
+	if ((prefs->lamp_buttons&&!giw_led_get_mode(GIW_LED(checkbutton)))||(!prefs->lamp_buttons&&
+#else			
+        if (
+#endif
+	    !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton)))
+#ifdef ENABLE_GIW
+	    )
+#endif
+	  {
 	  if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->select_track),FALSE);
 	  else on_seltrack_activate(GTK_MENU_ITEM(mt->select_track),mt);
 	}
@@ -1283,8 +1294,17 @@ static void track_select (lives_mt *mt) {
     else {
       if (i==mt->current_track) {
 	checkbutton=g_object_get_data (G_OBJECT(eventbox), "checkbutton");
-	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) {
-	  if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->select_track),FALSE);
+#ifdef ENABLE_GIW
+	if ((prefs->lamp_buttons&&!giw_led_get_mode(GIW_LED(checkbutton)))||(!prefs->lamp_buttons&&
+#else			
+        if (
+#endif
+	    !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton)))
+#ifdef ENABLE_GIW
+	    )
+#endif
+	  {
+	   if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->select_track),FALSE);
 	  else on_seltrack_activate(GTK_MENU_ITEM(mt->select_track),mt);
 	}
 	else {
@@ -1700,6 +1720,17 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 	  gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
 	  gtk_widget_modify_fg (checkbutton, GTK_STATE_SELECTED, &palette->normal_fore);
 	}
+#ifdef ENABLE_GIW
+	if (prefs->lamp_buttons) {
+	if (0&&palette->style&STYLE_3) {
+	  gtk_widget_modify_bg (checkbutton, GTK_STATE_SELECTED, &palette->normal_back);
+	}
+	else {
+	  gtk_widget_modify_bg (checkbutton, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	}
+	  giw_led_set_colors(GIW_LED(checkbutton),palette->light_green,palette->dark_red);
+	}
+#endif
       }
 
       g_object_set_data(G_OBJECT(labelbox),"layer_number",GINT_TO_POINTER(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"))));
@@ -1721,9 +1752,17 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 			(GtkAttachOptions) (GTK_FILL), 0, 0);
 
       gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->white);
-      seltrack_func=g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-					    G_CALLBACK (on_seltrack_toggled),
-					    mt);
+
+      if (!prefs->lamp_buttons) {
+	seltrack_func=g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
+					      G_CALLBACK (on_seltrack_toggled),
+					      mt);
+      }
+      else {
+	seltrack_func=g_signal_connect_after (GTK_OBJECT (checkbutton), "mode-changed",
+					      G_CALLBACK (on_seltrack_toggled),
+					      mt);
+      }
       g_signal_connect (GTK_OBJECT (labelbox), "button_press_event",
 			G_CALLBACK (track_ebox_pressed),
 			(gpointer)mt);
@@ -3464,7 +3503,7 @@ on_clipbox_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data
 
 
 void mt_init_start_end_spins(lives_mt *mt) {
-  GtkWidget *hbox,*eventbox,*label;
+  GtkWidget *hbox,*btoolbar;
   GtkObject *spinbutton_start_adj;
   GtkObject *spinbutton_end_adj;
   
@@ -3473,8 +3512,24 @@ void mt_init_start_end_spins(lives_mt *mt) {
   
   gtk_box_pack_start (GTK_BOX (mt->top_vbox), hbox, FALSE, FALSE, 6);
 
-  mt->amixer_button=gtk_button_new_with_label (_ ("Audio mixer (ctrl-m)"));
-  gtk_box_pack_start (GTK_BOX (hbox), mt->amixer_button, FALSE, FALSE, 10);
+  btoolbar=gtk_toolbar_new();
+  gtk_box_pack_start (GTK_BOX (hbox), btoolbar, FALSE, FALSE, 20);
+
+  gtk_toolbar_set_show_arrow(GTK_TOOLBAR(btoolbar),FALSE);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(btoolbar, GTK_STATE_INSENSITIVE, &palette->normal_back);
+  }
+
+  gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
+
+
+  mt->amixer_button=GTK_WIDGET(gtk_tool_button_new(NULL,_ ("Audio mixer (ctrl-m)")));
+
+  gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mt->amixer_button),-1);
 
   gtk_widget_add_accelerator (mt->amixer_button, "clicked", mt->accel_group,
                               GDK_m, GDK_CONTROL_MASK,
@@ -3500,39 +3555,6 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   gtk_entry_set_width_chars (GTK_ENTRY (mt->spinbutton_start),12);
   mt->sel_label = gtk_label_new(NULL);
-
-  mt->preview_button=gtk_button_new_with_label(_("Show frame preview"));
-
-  g_signal_connect (GTK_OBJECT (mt->preview_button), "clicked",
-		    G_CALLBACK (on_frame_preview_clicked),
-		    (gpointer)mt);
-
-
-  mt->fx_auto_prev = gtk_check_button_new ();
-  eventbox=gtk_event_box_new();
-  label=gtk_label_new (_("Auto preview"));
-
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    mt->fx_auto_prev);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
-  }
-  
-  mt->fx_auto_prev_box = gtk_hbox_new (FALSE, 0);
-  //gtk_box_pack_start (GTK_BOX (hbox), mt->fx_auto_prev_box, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (mt->fx_auto_prev_box), mt->fx_auto_prev, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (mt->fx_auto_prev_box), eventbox, FALSE, FALSE, 10);
-  
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mt->fx_auto_prev),mt->opts.fx_auto_preview);
-
-  g_signal_connect_after (GTK_OBJECT (mt->fx_auto_prev), "toggled",
-			  G_CALLBACK (on_fx_auto_prev_changed),
-			  (gpointer)mt);
 
 
   set_sel_label(mt->sel_label);
@@ -4874,7 +4896,6 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->did_backup=FALSE;
   mt->framedraw=NULL;
-  mt->preview_button=NULL;
 
   mt->audio_draws=NULL;
   mt->audio_vols=NULL;
@@ -6562,6 +6583,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->tc_func=g_signal_connect_after (G_OBJECT (mt->timecode),"focus_out_event", G_CALLBACK (after_timecode_changed), (gpointer) mt);
 
+  gtk_widget_modify_base(mt->timecode, GTK_STATE_NORMAL, &palette->black);
+  gtk_widget_modify_text(mt->timecode, GTK_STATE_NORMAL, &palette->light_green);
 
 
   gtk_tooltips_set_tip (mainw->tooltips, mt->insa_checkbutton, _("Select whether video clips are inserted and moved with their audio or not"), NULL);
@@ -7965,6 +7988,15 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     mt->timeline_eb=gtk_event_box_new();
     gtk_widget_show(mt->timeline_eb);
     
+    if (palette->style&STYLE_1) {
+      if (palette->style&STYLE_3) {
+	gtk_widget_modify_fg (mt->timeline, GTK_STATE_NORMAL, &palette->normal_fore);
+	gtk_widget_modify_bg (mt->timeline, GTK_STATE_NORMAL, &palette->normal_back);
+	gtk_widget_modify_bg (mt->timeline_eb, GTK_STATE_NORMAL, &palette->menu_and_bars);
+	gtk_widget_modify_bg (mt->timeline_reg, GTK_STATE_NORMAL, &palette->menu_and_bars);
+      }
+    }
+
     gtk_widget_add_events (mt->timeline_eb, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
     gtk_widget_add_events (mt->timeline_reg, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
     g_signal_connect (GTK_OBJECT(mt->timeline_eb), "enter-notify-event",G_CALLBACK (on_tleb_enter),(gpointer)mt);
@@ -8437,7 +8469,17 @@ void add_video_track (lives_mt *mt, gboolean behind) {
 
   mt->num_video_tracks++;
 
-  checkbutton = gtk_check_button_new ();
+#ifdef ENABLE_GIW
+  if (!prefs->lamp_buttons) {
+#endif
+    checkbutton = gtk_check_button_new ();
+#ifdef ENABLE_GIW
+  }
+  else {
+    checkbutton=giw_led_new();
+    giw_led_enable_mouse(GIW_LED(checkbutton),TRUE);
+  }
+#endif
   gtk_widget_ref(checkbutton);
   gtk_tooltips_set_tip (mainw->tooltips, checkbutton, _("Select track"), NULL);
 
@@ -9172,8 +9214,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
       gtk_widget_queue_resize(multi->nb_label);
     }
     gtk_widget_hide (mainw->LiVES);
-    gtk_widget_hide(multi->preview_button);
-    gtk_widget_hide(multi->fx_auto_prev_box);
   }
 
   if (cfile->achans==0) {
@@ -9652,8 +9692,6 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
 
 
 void show_preview (lives_mt *mt, weed_timecode_t tc) {
-
-  gtk_widget_set_sensitive(mt->preview_button,FALSE);
 
   mt_show_current_frame(mt);
 
@@ -11106,11 +11144,24 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
       checkbutton=g_object_get_data(G_OBJECT(xeventbox),"checkbutton");
       gdk_window_get_position(xeventbox->window,&rel_x,&rel_y);
       if (start_y>(rel_y+xheight/2)||(start_y+height)<(rel_y+xheight/2)) {
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) {
-	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
-	  mt->current_track=current_track;
-	  track_select(mt);
+#ifdef ENABLE_GIW
+	if (!prefs->lamp_buttons) {
+#endif
+	  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
+	    mt->current_track=current_track;
+	    track_select(mt);
+	  }
+#ifdef ENABLE_GIW
 	}
+	else {
+	  if (giw_led_get_mode(GIW_LED(checkbutton))) {
+	    giw_led_set_mode(GIW_LED(checkbutton),FALSE);
+	    mt->current_track=current_track;
+	    track_select(mt);
+	  }
+	}
+#endif
 	continue;
       }
       offs_y_start=0;
@@ -11126,11 +11177,24 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
       gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_start, start_x-rel_x, offs_y_end);
       gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x+width-rel_x-1, offs_y_start, start_x+width-rel_x-1, offs_y_end);
 
-      if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
-	mt->current_track=current_track;
-	track_select(mt);
+#ifdef ENABLE_GIW
+      if (!prefs->lamp_buttons) {
+#endif
+	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) {
+	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
+	  mt->current_track=current_track;
+	  track_select(mt);
+	}
       }
+#ifdef ENABLE_GIW
+      else {
+	if (!giw_led_get_mode(GIW_LED(checkbutton))) {
+	  giw_led_set_mode(GIW_LED(checkbutton),TRUE);
+	  mt->current_track=current_track;
+	  track_select(mt);
+	}
+      }
+#endif
     }
   }
 
@@ -11872,13 +11936,6 @@ void re_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-on_fx_auto_prev_changed (GtkMenuItem *menuitem, gpointer user_data) {
-  lives_mt *mt=(lives_mt *)user_data;
-  mt->opts.fx_auto_preview=!mt->opts.fx_auto_preview;
-  if (mt->opts.fx_auto_preview&&GTK_WIDGET_SENSITIVE(mt->preview_button)&&mt->current_track>=0) show_preview(mt,q_gint64(GTK_RULER(mt->timeline)->position*U_SEC,mt->fps));
-}
-
-void
 on_move_fx_changed (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.move_effects=!mt->opts.move_effects;
@@ -11933,8 +11990,16 @@ void select_all_vid (GtkMenuItem *menuitem, gpointer user_data) {
     eventbox=vdr->data;
     checkbutton=g_object_get_data(G_OBJECT(eventbox),"checkbutton");
 
-    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
-
+#ifdef ENABLE_GIW
+    if (!prefs->lamp_buttons) {
+#endif
+      if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
+#ifdef ENABLE_GIW
+    }
+    else {
+      if (!giw_led_get_mode(GIW_LED(checkbutton))) giw_led_set_mode(GIW_LED(checkbutton),TRUE);
+    }
+#endif
     mt->current_track=i++;
     // we need to call this since it appears that checkbuttons on hidden tracks don't get updated until shown
     on_seltrack_activate(GTK_MENU_ITEM(mt->select_track),mt);
@@ -11959,8 +12024,17 @@ void select_no_vid (GtkMenuItem *menuitem, gpointer user_data) {
     eventbox=vdr->data;
     checkbutton=g_object_get_data(G_OBJECT(eventbox),"checkbutton");
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
 
+#ifdef ENABLE_GIW
+    if (!prefs->lamp_buttons) {
+#endif
+      if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
+#ifdef ENABLE_GIW
+    }
+    else {
+      if (giw_led_get_mode(GIW_LED(checkbutton))) giw_led_set_mode(GIW_LED(checkbutton),FALSE);
+    }
+#endif
     mt->current_track=i++;
     // we need to call this since it appears that checkbuttons on hidden tracks don't get updated until shown
     on_seltrack_activate(GTK_MENU_ITEM(mt->select_track),mt);
@@ -12822,7 +12896,16 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     while (slist!=NULL) {
       eventbox=g_list_nth_data(mt->video_draws,GPOINTER_TO_INT(slist->data));
       checkbutton=g_object_get_data(G_OBJECT(eventbox),"checkbutton");
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
+#ifdef ENABLE_GIW
+      if (!prefs->lamp_buttons) {
+#endif
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
+      }
+#ifdef ENABLE_GIW
+      else {
+	giw_led_set_mode(GIW_LED(checkbutton),TRUE);
+      }
+#endif
       slist=slist->next;
     }
     if (seltracks!=NULL) g_list_free(seltracks);
@@ -12994,7 +13077,16 @@ multitrack_redo            (GtkMenuItem     *menuitem,
     while (slist!=NULL) {
       eventbox=g_list_nth_data(mt->video_draws,GPOINTER_TO_INT(slist->data));
       checkbutton=g_object_get_data(G_OBJECT(eventbox),"checkbutton");
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
+#ifdef ENABLE_GIW
+      if (!prefs->lamp_buttons) {
+#endif
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
+#ifdef ENABLE_GIW
+      }
+      else {
+	giw_led_set_mode(GIW_LED(checkbutton),TRUE);
+      }
+#endif
       slist=slist->next;
     }
     if (seltracks!=NULL) g_list_free(seltracks);
@@ -13988,11 +14080,24 @@ void on_seltrack_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (g_list_index(mt->selected_tracks,GINT_TO_POINTER(mt->current_track))!=-1) mt->selected_tracks=g_list_remove(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
   }
 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))!=mi_state) {
-    g_signal_handler_block(checkbutton,seltrack_func);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),mi_state);
-    g_signal_handler_unblock(checkbutton,seltrack_func);
+#ifdef ENABLE_GIW
+  if (!prefs->lamp_buttons) {
+#endif
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton))!=mi_state) {
+      g_signal_handler_block(checkbutton,seltrack_func);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),mi_state);
+      g_signal_handler_unblock(checkbutton,seltrack_func);
+    }
+#ifdef ENABLE_GIW
   }
+  else {
+    if (giw_led_get_mode(GIW_LED(checkbutton))!=mi_state) {
+      g_signal_handler_block(checkbutton,seltrack_func);
+      giw_led_set_mode(GIW_LED(checkbutton),mi_state);
+      g_signal_handler_unblock(checkbutton,seltrack_func);
+    }
+  }
+#endif
   do_sel_context(mt);
 
   gtk_widget_set_sensitive(mt->fx_region,FALSE);
@@ -14032,7 +14137,7 @@ void on_seltrack_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_seltrack_toggled (GtkToggleButton *checkbutton, gpointer user_data) {
+void on_seltrack_toggled (GtkWidget *checkbutton, gpointer user_data) {
   gint track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(checkbutton),"layer_number"));
   lives_mt *mt=(lives_mt *)user_data;
 
@@ -15809,7 +15914,6 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
 
   timesecs=tc/U_SEC;
   mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
-  gtk_widget_set_sensitive(mt->preview_button,TRUE);
 
   if (mt->current_track>=0) {
     if (mt->opts.fx_auto_preview) show_preview(mt,tc); // see, I told you !
@@ -15986,7 +16090,6 @@ void activate_mt_preview(lives_mt *mt) {
       show_preview(mt,q_gint64(GTK_RULER(mt->timeline)->position*U_SEC,mt->fps));
       mainw->no_interp=FALSE;
     }
-    else if (mt->preview_button!=NULL) gtk_widget_set_sensitive(mt->preview_button,TRUE);
     if (mt->apply_fx_button!=NULL) gtk_widget_set_sensitive(mt->apply_fx_button,TRUE);
   }
   else mt_show_current_frame(mt);

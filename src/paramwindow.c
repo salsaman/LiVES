@@ -1839,7 +1839,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -1964,7 +1964,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2148,7 +2148,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2214,7 +2214,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2279,7 +2279,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2327,7 +2327,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }
@@ -2436,7 +2436,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   }
   g_free (old_text);
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 
@@ -2512,7 +2512,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
     param->change_blocked=FALSE;
   }
   if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&mainw->multitrack->preview_button!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
 }

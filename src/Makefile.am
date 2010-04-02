@@ -93,7 +93,7 @@ endif
 
 
 if ENABLE_GIW
-giw_SOURCES=giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h
+giw_SOURCES=giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h
 giw_LDADD=-lm
 giw_CFLAGS=-DENABLE_GIW=1
 endif

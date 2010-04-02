@@ -670,7 +670,10 @@ if __name__ == '__main__':
     img_dir = os.path.abspath(img_dir)
     if ' ' in img_dir:
         temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
-        os.symlink(img_dir, temp_dir + '/img_dir')
+        try:
+            os.symlink(img_dir, temp_dir + '/img_dir')
+        except (IOError, OSError):
+            shutil.copy(img_dir, temp_dir + '/img_dir')
         img_dir = temp_dir + '/img_dir'
 
     if not os.path.isdir(img_dir):
@@ -809,7 +812,10 @@ if __name__ == '__main__':
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
-        os.symlink(work_dir, temp_dir + '/work_dir')
+        try:
+            os.symlink(work_dir, temp_dir + '/work_dir')
+        except (IOError, OSError):
+            shutil.copy(work_dir, temp_dir + '/work_dir')
         work_dir = temp_dir + '/work_dir'
 
     sndf = opts.get('-s', os.path.join(img_dir, 'audio'))

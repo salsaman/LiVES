@@ -320,7 +320,10 @@ def do_encode():
             frfile = os.path.join(source_dir, iframe)
             frlink = os.path.join(source_dir, syml + iframe)
             if os.path.islink(frlink): os.remove(frlink)
-            os.symlink(frfile, frlink)
+	    try:
+            	os.symlink(frfile, frlink)
+	    except (IOError, OSError):
+		shutil.copy(frfile, frlink)
     else:
         syml = ''
         numframes = len(glob.glob(os.path.join(source_dir, \
@@ -473,7 +476,10 @@ if __name__ == '__main__':
     img_dir = os.path.abspath(img_dir)
     if ' ' in img_dir:
         temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
-        os.symlink(img_dir, temp_dir + '/img_dir')
+        try:
+            os.symlink(img_dir, temp_dir + '/img_dir')
+        except (IOError, OSError):
+            shutil.copy(img_dir, temp_dir + '/img_dir')
         img_dir = temp_dir + '/img_dir'
 
     if not os.path.isdir(img_dir):
@@ -610,7 +616,10 @@ if __name__ == '__main__':
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
-        os.symlink(work_dir, temp_dir + '/work_dir')
+        try:
+            os.symlink(work_dir, temp_dir + '/work_dir')
+        except (IOError, OSError):
+            shutil.copy(work_dir, temp_dir + '/work_dir')
         work_dir = temp_dir + '/work_dir'
 
     # Audio is not used

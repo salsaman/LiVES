@@ -21,7 +21,7 @@
 #define BLOCK_DRAW_TYPE BLOCK_DRAW_THUMB
 
 #define MT_PLAY_WIDTH_SMALL 320
-#define MT_PLAY_HEIGHT_SMALL 220
+#define MT_PLAY_HEIGHT_SMALL 216
 
 #define MT_PLAY_WIDTH_EXP 480
 #define MT_PLAY_HEIGHT_EXP 360
@@ -136,8 +136,6 @@ struct _mt {
   GtkWidget *fx_region_2a;
   GtkWidget *fx_region_3;
   GtkWidget *move_fx;
-  GtkWidget *fx_auto_prev;
-  GtkWidget *fx_auto_prev_box;
   GtkWidget *mm_menuitem;
   GtkWidget *mm_move;
   GtkWidget *mm_select;
@@ -175,7 +173,6 @@ struct _mt {
   GtkWidget *sel_label;
   GtkWidget *l_sel_arrow;
   GtkWidget *r_sel_arrow;
-  GtkWidget *preview_button; // button
   GtkWidget *save_event_list; // menuitem
   GtkWidget *load_event_list; // menuitem
   GtkWidget *clear_event_list; // menuitem
@@ -658,7 +655,6 @@ void mt_fplay_toggled (GtkMenuItem *, gpointer mt);
 void mt_change_vals_activate (GtkMenuItem *, gpointer mt);
 void on_set_pvals_clicked  (GtkWidget *button, gpointer mt);
 void on_move_fx_changed (GtkMenuItem *, gpointer mt);
-void on_fx_auto_prev_changed (GtkMenuItem *, gpointer mt);
 void select_all_time (GtkMenuItem *, gpointer mt);
 void select_from_zero_time (GtkMenuItem *, gpointer mt);
 void select_to_end_time (GtkMenuItem *, gpointer mt);
@@ -711,7 +707,7 @@ gboolean on_track_header_move (GtkWidget *widget, GdkEventMotion *event, gpointe
 void unselect_all (lives_mt *); // unselect all blocks
 void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gshort direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
 void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gdouble avel, gshort direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
-void on_seltrack_toggled (GtkToggleButton *, gpointer mt);
+void on_seltrack_toggled (GtkWidget *, gpointer mt);
 void scroll_track_by_scrollbar (GtkVScrollbar *sbar, gpointer mt);
 
 // block functions

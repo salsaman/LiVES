@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-04-01 10:26-0300\n"
+"POT-Creation-Date: 2010-04-02 16:07-0300\n"
 "PO-Revision-Date: 2010-03-21 00:21+0000\n"
 "Last-Translator: Ilan <ilan@fonz.net>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -618,12 +618,12 @@ msgid "Closed file %s\n"
 msgstr "הקובץ %s נסגר\n"
 
 #: src/main.c:4023 src/gui.c:522 src/utils.c:2566 src/utils.c:2592
-#: src/saveplay.c:2428 src/multitrack.c:3758 src/multitrack.c:5223
+#: src/saveplay.c:2428 src/multitrack.c:3780 src/multitrack.c:5244
 msgid "_Undo"
 msgstr "_ביטול"
 
 #: src/main.c:4024 src/gui.c:535 src/utils.c:2567 src/utils.c:2593
-#: src/saveplay.c:2429 src/multitrack.c:3779 src/multitrack.c:5246
+#: src/saveplay.c:2429 src/multitrack.c:3801 src/multitrack.c:5267
 msgid "_Redo"
 msgstr "ב_צע שוב"
 
@@ -956,7 +956,7 @@ msgstr "באם מוגדר, תבוצע פעולת deinterlace על השקופיו
 #: src/interface.c:186 src/callbacks.c:7384 src/gui.c:2869 src/gui.c:3406
 #: src/saveplay.c:1474 src/saveplay.c:2086 src/dialogs.c:737 src/dialogs.c:738
 #: src/dialogs.c:895 src/dialogs.c:896 src/framedraw.c:191
-#: src/multitrack.c:6720
+#: src/multitrack.c:6743
 msgid "Preview"
 msgstr "תצוגה מקדימה"
 
@@ -2601,43 +2601,43 @@ msgstr "מכניס כעת %d שקופיות נוספות\n"
 msgid "Merge done.\n"
 msgstr "המיזוג הסתיים.\n"
 
-#: src/gui.c:272 src/multitrack.c:4960
+#: src/gui.c:272 src/multitrack.c:4981
 msgid "_File"
 msgstr "_קובץ"
 
-#: src/gui.c:283 src/multitrack.c:4983
+#: src/gui.c:283 src/multitrack.c:5004
 msgid "_Open File/Directory"
 msgstr "_פתיחת קובץ\\תיקייה"
 
-#: src/gui.c:289 src/multitrack.c:4990
+#: src/gui.c:289 src/multitrack.c:5011
 msgid "O_pen File Selection..."
 msgstr "פ_תיחת בחירת הקובץ..."
 
-#: src/gui.c:293 src/multitrack.c:4998
+#: src/gui.c:293 src/multitrack.c:5019
 msgid "Open _Location/Stream..."
 msgstr "פתיחת מיקום\\זרם"
 
-#: src/gui.c:299 src/multitrack.c:5008
+#: src/gui.c:299 src/multitrack.c:5029
 msgid "Import Selection from _dvd/vcd..."
 msgstr "ייבוא בחירה מ _DVD\\VCD"
 
-#: src/gui.c:307 src/multitrack.c:5017
+#: src/gui.c:307 src/multitrack.c:5038
 msgid "Import Selection from _dvd"
 msgstr "ייבוא בחירה מ_DVD"
 
-#: src/gui.c:310 src/multitrack.c:5027
+#: src/gui.c:310 src/multitrack.c:5048
 msgid "Import Selection from _vcd"
 msgstr "ייבוא בחירה מ_VCD"
 
-#: src/gui.c:313 src/multitrack.c:5043
+#: src/gui.c:313 src/multitrack.c:5064
 msgid "_Import from Device"
 msgstr "_ייבוא מהתקן"
 
-#: src/gui.c:321 src/multitrack.c:5052
+#: src/gui.c:321 src/multitrack.c:5073
 msgid "Import from _Firewire Device (dv)"
 msgstr "ייבוא מהתקן _Firewire (DV)"
 
-#: src/gui.c:322 src/multitrack.c:5060
+#: src/gui.c:322 src/multitrack.c:5081
 msgid "Import from _Firewire Device (hdv)"
 msgstr "ייבוא מהתקן _Firewire (hdv)"
 
@@ -2653,15 +2653,15 @@ msgstr ""
 msgid "Add Live _TV Device"
 msgstr ""
 
-#: src/gui.c:381 src/multitrack.c:5083
+#: src/gui.c:381 src/multitrack.c:5104
 msgid "_Recent Files..."
 msgstr "קבצים _אחרונים..."
 
-#: src/gui.c:432 src/multitrack.c:5142
+#: src/gui.c:432 src/multitrack.c:5163
 msgid "_Reload Clip Set..."
 msgstr "_טעינת אוסף הקטעים..."
 
-#: src/gui.c:436 src/multitrack.c:5150
+#: src/gui.c:436 src/multitrack.c:5171
 msgid "Close/Sa_ve All Clips"
 msgstr "סגירת\\שמ_ירת כל הקטעים"
 
@@ -2689,11 +2689,11 @@ msgstr "_שיחזור קטע מ־.lv1"
 msgid "Encode/Load/Backup _with Sound"
 msgstr "קידוד\\טעינה\\גיבוי _עם קול"
 
-#: src/gui.c:503 src/multitrack.c:5184
+#: src/gui.c:503 src/multitrack.c:5205
 msgid "Clean _up Diskspace"
 msgstr "_ניקוי שטח כונן"
 
-#: src/gui.c:511 src/multitrack.c:5213
+#: src/gui.c:511 src/multitrack.c:5234
 msgid "_Edit"
 msgstr "ע_ריכה"
 
@@ -2769,7 +2769,7 @@ msgstr "_הפיכת בחירה"
 msgid "_Lock Selection Width"
 msgstr "_נעילת אורך הבחירה"
 
-#: src/gui.c:712 src/multitrack.c:5360
+#: src/gui.c:712 src/multitrack.c:5381
 msgid "_Play"
 msgstr "_נגינה"
 
@@ -2785,15 +2785,15 @@ msgstr "נג_ינת בחירה"
 msgid "Play _Clipboard"
 msgstr "נגינה מ_לוח הגזירים"
 
-#: src/gui.c:760 src/multitrack.c:5389
+#: src/gui.c:760 src/multitrack.c:5410
 msgid "_Stop"
 msgstr "_עצירה"
 
-#: src/gui.c:773 src/multitrack.c:5399
+#: src/gui.c:773 src/multitrack.c:5420
 msgid "Re_wind"
 msgstr "_העברה _קדימה"
 
-#: src/gui.c:803 src/multitrack.c:5414
+#: src/gui.c:803 src/multitrack.c:5435
 msgid "_Full Screen"
 msgstr "_מסך מלא"
 
@@ -2801,7 +2801,7 @@ msgstr "_מסך מלא"
 msgid "_Double Size"
 msgstr "גודל _כפול"
 
-#: src/gui.c:820 src/multitrack.c:5421
+#: src/gui.c:820 src/multitrack.c:5442
 msgid "Play in _Separate Window"
 msgstr "נגינה בחלון _נוסף"
 
@@ -2813,7 +2813,7 @@ msgstr "רקע _שחור"
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr "(אוטומטי) _יצירת לולאת וידאו (כדי להתאימו לרצועת השמע)"
 
-#: src/gui.c:845 src/multitrack.c:5429
+#: src/gui.c:845 src/multitrack.c:5450
 msgid "L_oop Continuously"
 msgstr "יצירת לולאה מתמשכת"
 
@@ -2821,11 +2821,11 @@ msgstr "יצירת לולאה מתמשכת"
 msgid "Pin_g Pong Loops"
 msgstr "Pin_g Pong לולאות"
 
-#: src/gui.c:862 src/multitrack.c:5437
+#: src/gui.c:862 src/multitrack.c:5458
 msgid "_Mute"
 msgstr "_השתק"
 
-#: src/gui.c:876 src/multitrack.c:5450
+#: src/gui.c:876 src/multitrack.c:5471
 msgid "Separate Window 'S_ticky' Mode"
 msgstr "הפרדת חלון במצב 'ד_ביק'"
 
@@ -2833,7 +2833,7 @@ msgstr "הפרדת חלון במצב 'ד_ביק'"
 msgid "S_how Frame Counter"
 msgstr "ה_צגת מונה השקופיות"
 
-#: src/gui.c:894 src/multitrack.c:5465
+#: src/gui.c:894 src/multitrack.c:5486
 msgid "Effect_s"
 msgstr "אפקט_ים"
 
@@ -2849,7 +2849,7 @@ msgstr "אפקטים _מותאמים אישית"
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr "_הרצת בדיקת האפקט, הכלי או המחולל..."
 
-#: src/gui.c:915 src/multitrack.c:5889
+#: src/gui.c:915 src/multitrack.c:5910
 msgid "_Tools"
 msgstr "_כלים"
 
@@ -2877,7 +2877,7 @@ msgstr "_כלים מותאמים אישית"
 msgid "Custom _Utilities"
 msgstr "_כלי שירות מותאמים אישית"
 
-#: src/gui.c:954 src/multitrack.c:5928
+#: src/gui.c:954 src/multitrack.c:5949
 msgid "_Generate"
 msgstr "_ייצר"
 
@@ -2893,11 +2893,11 @@ msgstr "טעינת תוספים לאפקטים מוכנים..."
 msgid "Resample _Video to New Frame Rate..."
 msgstr "_דגימה מחדש של ה_וידאו למהירות שקופיות חדשה..."
 
-#: src/gui.c:987 src/multitrack.c:5937
+#: src/gui.c:987 src/multitrack.c:5958
 msgid "Capture _External Window... "
 msgstr "לכידת חלון _חיצוני... "
 
-#: src/gui.c:996 src/multitrack.c:5899
+#: src/gui.c:996 src/multitrack.c:5920
 msgid "_Preferences..."
 msgstr "_העדפות..."
 
@@ -3013,15 +3013,15 @@ msgstr "הצגת\\_עריכת הערות הקובץ"
 msgid "Show _Clipboard Info"
 msgstr "הצגת מידע על _לוח הגזירים"
 
-#: src/gui.c:1218 src/multitrack.c:6104
+#: src/gui.c:1218 src/multitrack.c:6125
 msgid "Show _Messages"
 msgstr "הצגת _הודעות"
 
-#: src/gui.c:1222 src/multitrack.c:6108
+#: src/gui.c:1222 src/multitrack.c:6129
 msgid "Show _Layout Errors"
 msgstr "הצגת שגיאות _פריסה"
 
-#: src/gui.c:1227 src/multitrack.c:6008
+#: src/gui.c:1227 src/multitrack.c:6029
 msgid "_Clips"
 msgstr "_קטעים"
 
@@ -3175,39 +3175,39 @@ msgstr "_שיגוע שקופיות"
 msgid "_LiVES TV (broadband)"
 msgstr "טלוויזית _LiVES (פס רחב)"
 
-#: src/gui.c:1507 src/multitrack.c:6130
+#: src/gui.c:1507 src/multitrack.c:6151
 msgid "_Help"
 msgstr "_עזרה"
 
-#: src/gui.c:1518 src/multitrack.c:6149
+#: src/gui.c:1518 src/multitrack.c:6170
 msgid "_Manual (opens in browser)"
 msgstr "_מדריך (נפתח בדפדפן)"
 
-#: src/gui.c:1527 src/multitrack.c:6158
+#: src/gui.c:1527 src/multitrack.c:6179
 msgid "_Donate to the project !"
 msgstr "_תרומה למיזם"
 
-#: src/gui.c:1531 src/multitrack.c:6162
+#: src/gui.c:1531 src/multitrack.c:6183
 msgid "_Email the author"
 msgstr "_שליחת דוא\"ל לכותב התוכנה"
 
-#: src/gui.c:1535 src/multitrack.c:6166
+#: src/gui.c:1535 src/multitrack.c:6187
 msgid "Report a _bug"
 msgstr "דיווח על _באג"
 
-#: src/gui.c:1539 src/multitrack.c:6170
+#: src/gui.c:1539 src/multitrack.c:6191
 msgid "Suggest a _feature"
 msgstr "הצעת _תכונה חדשה"
 
-#: src/gui.c:1543 src/multitrack.c:6174
+#: src/gui.c:1543 src/multitrack.c:6195
 msgid "Assist with _translating"
 msgstr "לסייע _בתרגום"
 
-#: src/gui.c:1552 src/multitrack.c:6183
+#: src/gui.c:1552 src/multitrack.c:6204
 msgid "_Troubleshoot"
 msgstr "_איתור תקלות"
 
-#: src/gui.c:1556 src/multitrack.c:6187
+#: src/gui.c:1556 src/multitrack.c:6208
 msgid "_About"
 msgstr "_אודות"
 
@@ -3215,7 +3215,7 @@ msgstr "_אודות"
 msgid "Rewind to start (w)"
 msgstr "חזרה להתחלה (w)"
 
-#: src/gui.c:1595 src/multitrack.c:14216
+#: src/gui.c:1595 src/multitrack.c:14321
 msgid "Play all (p)"
 msgstr "נגן הכל (p)"
 
@@ -3613,12 +3613,12 @@ msgstr ""
 "\n"
 "לשכתבו ?\n"
 
-#: src/utils.c:2559 src/utils.c:2585 src/multitrack.c:3751
+#: src/utils.c:2559 src/utils.c:2585 src/multitrack.c:3773
 #, c-format
 msgid "_Undo %s"
 msgstr "_ביטול %s"
 
-#: src/utils.c:2560 src/utils.c:2586 src/multitrack.c:3773
+#: src/utils.c:2560 src/utils.c:2586 src/multitrack.c:3795
 #, c-format
 msgid "_Redo %s"
 msgstr "_ביצוע מחדש %s"
@@ -4881,7 +4881,7 @@ msgstr "וידאו בלבד"
 msgid "Video only Transitions"
 msgstr "מעברי וידאו בלבד"
 
-#: src/effects-weed.c:262 src/multitrack.c:8959
+#: src/effects-weed.c:262 src/multitrack.c:9001
 msgid "audio only"
 msgstr "שמע בלבד"
 
@@ -4889,7 +4889,7 @@ msgstr "שמע בלבד"
 msgid "Audio only Transitions"
 msgstr "מעברי שמע בלבד"
 
-#: src/effects-weed.c:265 src/effects-weed.c:268 src/multitrack.c:16088
+#: src/effects-weed.c:265 src/effects-weed.c:268 src/multitrack.c:16191
 msgid "audio"
 msgstr "שמע"
 
@@ -7596,7 +7596,7 @@ msgstr "_ניקוי כל האפקטים"
 msgid "Mode active"
 msgstr "מצב פעיל"
 
-#: src/rte_window.c:1011 src/multitrack.c:7085
+#: src/rte_window.c:1011 src/multitrack.c:7108
 msgid "Info"
 msgstr "מידע"
 
@@ -7711,69 +7711,69 @@ msgstr ""
 msgid "Opened firewire card %d"
 msgstr ""
 
-#: src/multitrack.c:421
+#: src/multitrack.c:422
 msgid "Auto backup"
 msgstr "גיבוי אוטומטי"
 
-#: src/multitrack.c:574
+#: src/multitrack.c:575
 msgid "Backing audio"
 msgstr "מוסיקת רקע"
 
-#: src/multitrack.c:1010
+#: src/multitrack.c:1011
 msgid "_Apply"
 msgstr "_החלה"
 
-#: src/multitrack.c:1031
+#: src/multitrack.c:1032
 msgid "Time"
 msgstr "זמן"
 
-#: src/multitrack.c:1050
+#: src/multitrack.c:1051
 msgid "_Del. node"
 msgstr "_מחיקת צומת"
 
-#: src/multitrack.c:1058
+#: src/multitrack.c:1059
 msgid "_Next node"
 msgstr "הצומת _הבא"
 
-#: src/multitrack.c:1066
+#: src/multitrack.c:1067
 msgid "_Prev node"
 msgstr "הצומת _הקודם"
 
-#: src/multitrack.c:1339 src/multitrack.c:2817
+#: src/multitrack.c:1359 src/multitrack.c:2856
 #, c-format
 msgid "Current track: %s (layer %d)\n"
 msgstr "רצועה נוכחית: %s (שכבה %d)\n"
 
-#: src/multitrack.c:1341 src/multitrack.c:2818
+#: src/multitrack.c:1361 src/multitrack.c:2857
 msgid "Current track: Backing audio\n"
 msgstr "רצועה נוכחית: מוסיקת רקע\n"
 
-#: src/multitrack.c:1342
+#: src/multitrack.c:1362
 #, c-format
 msgid "Current track: Layer %d audio\n"
 msgstr "רצועה נוכחית: שמע השכבה %d\n"
 
-#: src/multitrack.c:1345
+#: src/multitrack.c:1365
 #, c-format
 msgid "%.2f sec.\n"
 msgstr "%.2f שניות.\n"
 
-#: src/multitrack.c:1350 src/multitrack.c:2823
+#: src/multitrack.c:1370 src/multitrack.c:2862
 #, c-format
 msgid "Source: %s"
 msgstr "מקור: %s"
 
-#: src/multitrack.c:1353 src/multitrack.c:2825
+#: src/multitrack.c:1373 src/multitrack.c:2864
 msgid "Right click for context menu.\n"
 msgstr "יש ללחוץ על לחצן העכבר הימני עבור תפריט אפשרויות.\n"
 
-#: src/multitrack.c:1355
+#: src/multitrack.c:1375
 msgid ""
 "Double click on a block\n"
 "to select it."
 msgstr ""
 
-#: src/multitrack.c:2690
+#: src/multitrack.c:2729
 msgid ""
 "\n"
 "\n"
@@ -7782,7 +7782,7 @@ msgid ""
 "double clicking on it.\n"
 msgstr ""
 
-#: src/multitrack.c:2693
+#: src/multitrack.c:2732
 msgid ""
 "\n"
 "\n"
@@ -7792,7 +7792,7 @@ msgstr ""
 "\n"
 "לא נבחרו אפקטים.\n"
 
-#: src/multitrack.c:2696
+#: src/multitrack.c:2735
 msgid ""
 "\n"
 "\n"
@@ -7802,7 +7802,7 @@ msgstr ""
 "\n"
 "קליפים לא טעון.\n"
 
-#: src/multitrack.c:2699
+#: src/multitrack.c:2738
 msgid ""
 "\n"
 "\n"
@@ -7811,7 +7811,7 @@ msgid ""
 "to apply transitions.\n"
 msgstr ""
 
-#: src/multitrack.c:2702
+#: src/multitrack.c:2741
 msgid ""
 "\n"
 "\n"
@@ -7820,12 +7820,12 @@ msgid ""
 "to apply compositors.\n"
 msgstr ""
 
-#: src/multitrack.c:2821
+#: src/multitrack.c:2860
 #, c-format
 msgid "%.2f sec. to %.2f sec.\n"
 msgstr "%.2f שניות ל%.2f שניות.\n"
 
-#: src/multitrack.c:2826
+#: src/multitrack.c:2865
 msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
@@ -7833,185 +7833,177 @@ msgstr ""
 "יש ללחוץ לחיצה בודדת על ציר הזמן\n"
 "כדי לבחור שקופית.\n"
 
-#: src/multitrack.c:3253
+#: src/multitrack.c:3292
 msgid "LiVES: Selected clip"
 msgstr "LiVES: קטע נבחר"
 
-#: src/multitrack.c:3260
+#: src/multitrack.c:3299
 msgid "_Adjust start and end points"
 msgstr ""
 
-#: src/multitrack.c:3269
+#: src/multitrack.c:3308
 msgid "_Edit/encode in clip editor"
 msgstr ""
 
-#: src/multitrack.c:3276
+#: src/multitrack.c:3315
 msgid "_Show clip information"
 msgstr "_הצג מידע קליפ"
 
-#: src/multitrack.c:3283
+#: src/multitrack.c:3322
 msgid "_Close this clip"
 msgstr "_סגירת קטע זה"
 
-#: src/multitrack.c:3476
+#: src/multitrack.c:3530
 msgid "Audio mixer (ctrl-m)"
 msgstr "מערבל שמע (ctrl-m)"
 
-#: src/multitrack.c:3504
-msgid "Show frame preview"
-msgstr "הצגת תצוגה מקדימה של שקופית"
-
-#: src/multitrack.c:3513
-msgid "Auto preview"
-msgstr "תצוגה מקדימה אוטומטית"
-
-#: src/multitrack.c:3584
+#: src/multitrack.c:3606
 msgid "Single click on timeline"
 msgstr "לחיצה בודדת על ציר הזמן"
 
-#: src/multitrack.c:3585
+#: src/multitrack.c:3607
 msgid "to select a frame."
 msgstr "כדי לבחור מסגרת."
 
-#: src/multitrack.c:3586
+#: src/multitrack.c:3608
 msgid "Double click on timeline"
 msgstr "לחיצה כפולה על ציר הזמן"
 
-#: src/multitrack.c:3587
+#: src/multitrack.c:3609
 msgid "to select a block."
 msgstr "כדי לבחור בלוק."
 
-#: src/multitrack.c:3588
+#: src/multitrack.c:3610
 msgid "Clips can be dragged"
 msgstr "ניתן לגרור קטעים"
 
-#: src/multitrack.c:3589
+#: src/multitrack.c:3611
 msgid "onto the timeline."
 msgstr "לציר הזמן."
 
-#: src/multitrack.c:3591
+#: src/multitrack.c:3613
 msgid "Mouse mode is: Move"
 msgstr "העכבר נמצא במצב: הזזה"
 
-#: src/multitrack.c:3592
+#: src/multitrack.c:3614
 msgid "clips can be moved around."
 msgstr "ניתן להזיז קטעים."
 
-#: src/multitrack.c:3597
+#: src/multitrack.c:3619
 msgid "Mouse mode is: Select."
 msgstr "העכבר נמצא במצב: בחירה."
 
-#: src/multitrack.c:3598
+#: src/multitrack.c:3620
 msgid "Drag with mouse on timeline"
 msgstr "ניתן לגרור עם העכבר את ציר הזמן"
 
-#: src/multitrack.c:3599
+#: src/multitrack.c:3621
 msgid "to select tracks and time."
 msgstr "כדי לבחור מסלולים הזמן."
 
-#: src/multitrack.c:3610
+#: src/multitrack.c:3632
 msgid "_Insert mode: Normal"
 msgstr ""
 
-#: src/multitrack.c:3626
+#: src/multitrack.c:3648
 msgid "_Mouse mode: Move"
 msgstr "מצב _עכבר: הזזה"
 
-#: src/multitrack.c:3630
+#: src/multitrack.c:3652
 msgid "_Mouse mode: Select"
 msgstr "מצב _עכבר: בחירה"
 
-#: src/multitrack.c:3653 src/multitrack.c:6259
+#: src/multitrack.c:3675 src/multitrack.c:6280
 msgid "_Gravity: Normal"
 msgstr ""
 
-#: src/multitrack.c:3657
+#: src/multitrack.c:3679
 msgid "_Gravity: Left"
 msgstr ""
 
-#: src/multitrack.c:3662
+#: src/multitrack.c:3684
 msgid "_Gravity: Right"
 msgstr ""
 
-#: src/multitrack.c:3664
+#: src/multitrack.c:3686
 msgid "Close _last gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:3667
+#: src/multitrack.c:3689
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr "סגירת הרווחים הראשונים בזמן\\רצועות הנבחרות"
 
-#: src/multitrack.c:3706
+#: src/multitrack.c:3728
 msgid "Close gaps"
 msgstr "סגירת פערים"
 
-#: src/multitrack.c:3708
+#: src/multitrack.c:3730
 msgid "Move block"
 msgstr "הזזת מקטע"
 
-#: src/multitrack.c:3710
+#: src/multitrack.c:3732
 msgid "Move audio block"
 msgstr "הזזת מקטע שמע"
 
-#: src/multitrack.c:3712
+#: src/multitrack.c:3734
 msgid "Delete block"
 msgstr "מחיקת מקטע"
 
-#: src/multitrack.c:3714
+#: src/multitrack.c:3736
 msgid "Delete audio block"
 msgstr "מחיקת מקטע שמע"
 
-#: src/multitrack.c:3716
+#: src/multitrack.c:3738
 msgid "Split tracks"
 msgstr "פיצול רצועות"
 
-#: src/multitrack.c:3718
+#: src/multitrack.c:3740
 msgid "Split block"
 msgstr "פיצול מקטע"
 
-#: src/multitrack.c:3721
+#: src/multitrack.c:3743
 #, c-format
 msgid "Apply %s"
 msgstr "החלת %s"
 
-#: src/multitrack.c:3726
+#: src/multitrack.c:3748
 #, c-format
 msgid "Delete %s"
 msgstr "מחיקת %s"
 
-#: src/multitrack.c:3730
+#: src/multitrack.c:3752
 msgid "Insert block"
 msgstr "הוספת מקטע"
 
-#: src/multitrack.c:3732
+#: src/multitrack.c:3754
 msgid "Insert gap"
 msgstr "הוספת פער"
 
-#: src/multitrack.c:3734
+#: src/multitrack.c:3756
 msgid "Insert audio block"
 msgstr "הוספת מקטע שמע"
 
-#: src/multitrack.c:3736
+#: src/multitrack.c:3758
 msgid "Effect order change"
 msgstr "סדר שינוי האפקט"
 
-#: src/multitrack.c:4121
+#: src/multitrack.c:4143
 msgid "unsigned "
 msgstr "לא רשום "
 
-#: src/multitrack.c:4122
+#: src/multitrack.c:4144
 msgid "signed "
 msgstr "רשום "
 
-#: src/multitrack.c:4124
+#: src/multitrack.c:4146
 msgid "big endian"
 msgstr "big endian"
 
-#: src/multitrack.c:4125
+#: src/multitrack.c:4147
 msgid "little endian"
 msgstr "little endian"
 
-#: src/multitrack.c:4127
+#: src/multitrack.c:4149
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
@@ -8020,15 +8012,15 @@ msgstr ""
 "ערכי ריבוי הרצועות נקבעו ל %.3f שקופיות לשנייה, גודל שקופית %dx%d, %d ערוצי "
 "שמע, תדר שמע %d, גודל דגימת השמע %d, %s.\n"
 
-#: src/multitrack.c:4159
+#: src/multitrack.c:4181
 msgid "invalid event list. Failed.\n"
 msgstr "רשימת אירועים לא תקינה. נכשל.\n"
 
-#: src/multitrack.c:4164
+#: src/multitrack.c:4186
 msgid "event list has invalid fps. Failed.\n"
 msgstr "נמצא קצב שקופיות לשנייה לא תקין ברשימת האירועים. נכשל.\n"
 
-#: src/multitrack.c:4173
+#: src/multitrack.c:4195
 #, c-format
 msgid ""
 "\n"
@@ -8043,7 +8035,7 @@ msgstr ""
 "לסגור את האוסף הנוכחי\n"
 "ולטעון את האוסף החדש מתפריט קובץ.\n"
 
-#: src/multitrack.c:4213
+#: src/multitrack.c:4235
 #, c-format
 msgid ""
 "\n"
@@ -8054,375 +8046,375 @@ msgstr ""
 "זהו לא מספר ערוצי שמע תקין (%d) עבור LiVES.\n"
 "לא ניתן לטעון אותו..\n"
 
-#: src/multitrack.c:4541 src/multitrack.c:4549 src/multitrack.c:18393
+#: src/multitrack.c:4563 src/multitrack.c:4571 src/multitrack.c:18496
 msgid "Layout was wiped.\n"
 msgstr ""
 
-#: src/multitrack.c:4589
+#: src/multitrack.c:4611
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr "LiVES-%s: ריבוי רצועות %dx%d : %d סיביות לפיקסל %.3f שקופיות לשנייה"
 
-#: src/multitrack.c:4973
+#: src/multitrack.c:4994
 msgid "_Open..."
 msgstr "_פתיחה..."
 
-#: src/multitrack.c:5069
+#: src/multitrack.c:5090
 msgid "_Close the selected clip"
 msgstr "_סגור את הקליפ הנבחר"
 
-#: src/multitrack.c:5163
+#: src/multitrack.c:5184
 msgid "_Save layout as..."
 msgstr "_שמירת פריסה כ..."
 
-#: src/multitrack.c:5167
+#: src/multitrack.c:5188
 msgid "_Load layout..."
 msgstr "_טעינת פריסה..."
 
-#: src/multitrack.c:5170
+#: src/multitrack.c:5191
 msgid "_Wipe/Delete layout..."
 msgstr "_ניקוי\\מחיקת פריסה..."
 
-#: src/multitrack.c:5196
+#: src/multitrack.c:5217
 msgid "_Ignore width, height and audio values from loaded layouts"
 msgstr "_התעלמות מערכי רוחב,גובה ושמע הנמצאים בפריסות שנטענו"
 
-#: src/multitrack.c:5273
+#: src/multitrack.c:5294
 msgid "_CLIP EDITOR"
 msgstr "_עורך הקטעים"
 
-#: src/multitrack.c:5285
+#: src/multitrack.c:5306
 msgid "_Adjust selected clip start/end points"
 msgstr ""
 
-#: src/multitrack.c:5294
+#: src/multitrack.c:5315
 msgid "_Insert selected clip"
 msgstr "_הוספת קטע נבחר"
 
-#: src/multitrack.c:5306
+#: src/multitrack.c:5327
 msgid "_Insert selected clip audio"
 msgstr "_הוספת השמע של הקטע הנבחר"
 
-#: src/multitrack.c:5315
+#: src/multitrack.c:5336
 msgid "_Delete selected block"
 msgstr "_מחיקת המקטע הנבחר"
 
-#: src/multitrack.c:5324
+#: src/multitrack.c:5345
 msgid "_Jump to previous block boundary"
 msgstr "_קפיצה לגבול המקטע הקודם"
 
-#: src/multitrack.c:5333
+#: src/multitrack.c:5354
 msgid "_Jump to next block boundary"
 msgstr "_קפיצה לגבול המקטע הבא"
 
-#: src/multitrack.c:5346
+#: src/multitrack.c:5367
 msgid "Clear _marks from timeline"
 msgstr "ניקוי _סימונים מציר הזמן"
 
-#: src/multitrack.c:5354
+#: src/multitrack.c:5375
 msgid "Ignore selection limits when inserting"
 msgstr "התעלמות ממגבלות הבחירה בהוספה"
 
-#: src/multitrack.c:5370 src/multitrack.c:14215
+#: src/multitrack.c:5391 src/multitrack.c:14320
 msgid "_Play from Timeline Position"
 msgstr "_נגינה מהמיקום בציר הזמן"
 
-#: src/multitrack.c:5475
+#: src/multitrack.c:5496
 msgid "_Move effects with blocks"
 msgstr "_הזזת האפקטים עם המקטעים"
 
-#: src/multitrack.c:5487
+#: src/multitrack.c:5508
 msgid "View/_Edit selected effect"
 msgstr "הצגת\\_עריכת האפקט הנבחר"
 
-#: src/multitrack.c:5491
+#: src/multitrack.c:5512
 msgid "_Delete selected effect"
 msgstr "_מחיקת האפקט הנבחר"
 
-#: src/multitrack.c:5499
+#: src/multitrack.c:5520
 msgid "Apply effect to _block..."
 msgstr "החלת אפקט ל_מקטע..."
 
-#: src/multitrack.c:5510
+#: src/multitrack.c:5531
 msgid "Apply effect to _region..."
 msgstr "החלפ אפקט ל_איזור..."
 
-#: src/multitrack.c:5676
+#: src/multitrack.c:5697
 msgid "_Tracks"
 msgstr "_רצועות"
 
-#: src/multitrack.c:5686
+#: src/multitrack.c:5707
 msgid "Make _Backing Audio current track"
 msgstr "בחירת רצועת מוסיקת הרקע כנוכחית"
 
-#: src/multitrack.c:5697
+#: src/multitrack.c:5718
 msgid "Add Video Track at _Rear"
 msgstr "הוספת רצועת וידאו מ_אחור"
 
-#: src/multitrack.c:5705
+#: src/multitrack.c:5726
 msgid "Add Video Track at _Front"
 msgstr "הוספת רצועת וידאו מ_לפנים"
 
-#: src/multitrack.c:5718
+#: src/multitrack.c:5739
 msgid "_Split current track at cursor"
 msgstr "_פיצול הרצועה הנוכחית בסימון"
 
-#: src/multitrack.c:5730
+#: src/multitrack.c:5751
 msgid "_Split selected video tracks"
 msgstr "_פיצול רצועות הוידאו הנבחרות"
 
-#: src/multitrack.c:5743
+#: src/multitrack.c:5764
 msgid "Insert gap in selected tracks/time"
 msgstr "הכנסת רווח בזמן\\רצועות הנבחרות"
 
-#: src/multitrack.c:5751
+#: src/multitrack.c:5772
 msgid "Insert gap in current track/selected time"
 msgstr "הכנסת רווח ברצועה הנוכחית\\בזמן הנבחר"
 
-#: src/multitrack.c:5763
+#: src/multitrack.c:5784
 msgid "Close all _gaps in selected tracks/time"
 msgstr "סגירת כל ה_רווחים בזמן\\רצועות הנבחרות"
 
-#: src/multitrack.c:5789
+#: src/multitrack.c:5810
 msgid "Se_lection"
 msgstr "בח_ירה"
 
-#: src/multitrack.c:5799
+#: src/multitrack.c:5820
 msgid "_Select Current Track"
 msgstr "_בחירת הרצועה הנוכחית"
 
-#: src/multitrack.c:5806
+#: src/multitrack.c:5827
 msgid "Select _all video tracks"
 msgstr "בחירת _כל רצועות הוידאו"
 
-#: src/multitrack.c:5813
+#: src/multitrack.c:5834
 msgid "Select _no video tracks"
 msgstr "_ביטול סימון כל רצועות הוידאו"
 
-#: src/multitrack.c:5820
+#: src/multitrack.c:5841
 msgid "Select all _time"
 msgstr "בחירת הכל"
 
-#: src/multitrack.c:5831
+#: src/multitrack.c:5852
 msgid "Select from _zero time"
 msgstr "בחירה מ_ההתחלה"
 
-#: src/multitrack.c:5838
+#: src/multitrack.c:5859
 msgid "Select to _end time"
 msgstr "בחירה ל_סוף"
 
-#: src/multitrack.c:5845
+#: src/multitrack.c:5866
 msgid "_Copy..."
 msgstr "_העתקה..."
 
-#: src/multitrack.c:5855
+#: src/multitrack.c:5876
 msgid "_Timecode to region start"
 msgstr "_קוד זמן לתחילת האיזור"
 
-#: src/multitrack.c:5862
+#: src/multitrack.c:5883
 msgid "_Timecode to region end"
 msgstr "_קוד זמן לסיום האיזור"
 
-#: src/multitrack.c:5869
+#: src/multitrack.c:5890
 msgid "_Region start to timecode"
 msgstr "_התחלת האיזור לקוד זמן"
 
-#: src/multitrack.c:5876
+#: src/multitrack.c:5897
 msgid "_Region end to timecode"
 msgstr "_סיום האיזור לקוד זמן"
 
-#: src/multitrack.c:5914
+#: src/multitrack.c:5935
 msgid "_Change width, height and audio values..."
 msgstr "_שינוי ערכי הרוחב, הגובה והשמע..."
 
-#: src/multitrack.c:5949
+#: src/multitrack.c:5970
 msgid "_Render"
 msgstr "_עיבוד"
 
-#: src/multitrack.c:5959
+#: src/multitrack.c:5980
 msgid "_Render all to new clip"
 msgstr "_עיבוד הכל לקטע חדש"
 
-#: src/multitrack.c:5974
+#: src/multitrack.c:5995
 msgid "Render _video"
 msgstr "עיבוד _וידאו"
 
-#: src/multitrack.c:5979
+#: src/multitrack.c:6000
 msgid "Render _audio"
 msgstr "עיבוד _שמע"
 
-#: src/multitrack.c:5988
+#: src/multitrack.c:6009
 msgid "_Pre-render audio"
 msgstr "_קדם־עיבוד שמע"
 
-#: src/multitrack.c:5997
+#: src/multitrack.c:6018
 msgid "_View"
 msgstr "_תצוגה"
 
-#: src/multitrack.c:6015
+#: src/multitrack.c:6036
 msgid "Block _In/out points"
 msgstr "נקודות _כניסה\\יציאה של המקטע"
 
-#: src/multitrack.c:6024
+#: src/multitrack.c:6045
 msgid "_Effects at current"
 msgstr "_אפקטים בנוכחי"
 
-#: src/multitrack.c:6035
+#: src/multitrack.c:6056
 msgid "Show backing _audio track"
 msgstr "הצגת רצועת _מוסיקת רקע"
 
-#: src/multitrack.c:6039
+#: src/multitrack.c:6060
 msgid "Compact view"
 msgstr "תצוגה חסכנית"
 
-#: src/multitrack.c:6047
+#: src/multitrack.c:6068
 msgid "Maximum tracks to display..."
 msgstr "מספר רצועות מקסימלי להצגה..."
 
-#: src/multitrack.c:6054
+#: src/multitrack.c:6075
 msgid "Scroll to follow playback"
 msgstr "גלילה כדי לעקוב אחרי הנגינה"
 
-#: src/multitrack.c:6058
+#: src/multitrack.c:6079
 msgid "_Center on cursor"
 msgstr "_מרכוז על הסמן"
 
-#: src/multitrack.c:6065
+#: src/multitrack.c:6086
 msgid "_Zoom in"
 msgstr "_התקרבות"
 
-#: src/multitrack.c:6076
+#: src/multitrack.c:6097
 msgid "_Zoom out"
 msgstr "_התרחקות"
 
-#: src/multitrack.c:6087
+#: src/multitrack.c:6108
 msgid "Audio parameters"
 msgstr "פרמטרי שמע"
 
-#: src/multitrack.c:6101
+#: src/multitrack.c:6122
 msgid "Multitrack _details"
 msgstr "_נתוני ריבוי רצועות"
 
-#: src/multitrack.c:6117
+#: src/multitrack.c:6138
 msgid "_Event Window"
 msgstr "חלון _אירועים"
 
-#: src/multitrack.c:6121
+#: src/multitrack.c:6142
 msgid "_Event Window (selected time only)"
 msgstr "_חלון אירועים (בזמן הנבחר בלבד)"
 
-#: src/multitrack.c:6125
+#: src/multitrack.c:6146
 msgid "_Show FRAME events"
 msgstr "_הצגת אירועי שקופיות"
 
-#: src/multitrack.c:6141
+#: src/multitrack.c:6162
 msgid "_Show multitrack keys"
 msgstr "_הצגת מקשי ריבוי רצועות"
 
-#: src/multitrack.c:6206
+#: src/multitrack.c:6227
 msgid "Mouse mode: _Move"
 msgstr "מצב עכבר: _הזזה"
 
-#: src/multitrack.c:6214
+#: src/multitrack.c:6235
 msgid "Mouse mode: _Select"
 msgstr "מצב עכבר: _בחירה"
 
-#: src/multitrack.c:6241
+#: src/multitrack.c:6262
 msgid "Insert mode: _Normal"
 msgstr ""
 
-#: src/multitrack.c:6269
+#: src/multitrack.c:6290
 msgid "Gravity: _Normal"
 msgstr ""
 
-#: src/multitrack.c:6279
+#: src/multitrack.c:6300
 msgid "Gravity: _Left"
 msgstr ""
 
-#: src/multitrack.c:6290
+#: src/multitrack.c:6311
 msgid "Gravity: _Right"
 msgstr ""
 
-#: src/multitrack.c:6567
+#: src/multitrack.c:6590
 msgid ""
 "Select whether video clips are inserted and moved with their audio or not"
 msgstr ""
 
-#: src/multitrack.c:6571
+#: src/multitrack.c:6594
 msgid "Insert with _audio"
 msgstr ""
 
-#: src/multitrack.c:6602
+#: src/multitrack.c:6625
 msgid ""
 "Select whether timeline selection snaps to overlap between selected tracks "
 "or not"
 msgstr ""
 
-#: src/multitrack.c:6607
+#: src/multitrack.c:6630
 msgid "Select _overlap"
 msgstr ""
 
-#: src/multitrack.c:6665 src/multitrack.c:12035
+#: src/multitrack.c:6688 src/multitrack.c:12109
 msgid "Expanded View (d)"
 msgstr "תצוגה מורחבת (d)"
 
-#: src/multitrack.c:6667 src/multitrack.c:12042
+#: src/multitrack.c:6690 src/multitrack.c:12116
 msgid "Compact View (d)"
 msgstr "תצוגה חסכונית (d)"
 
-#: src/multitrack.c:6769
+#: src/multitrack.c:6792
 msgid "Clips"
 msgstr "קטעים"
 
-#: src/multitrack.c:6800
+#: src/multitrack.c:6823
 msgid "In/out"
 msgstr ""
 
-#: src/multitrack.c:6809
+#: src/multitrack.c:6832
 msgid "FX stack"
 msgstr ""
 
-#: src/multitrack.c:6848 src/omc-learn.c:654
+#: src/multitrack.c:6871 src/omc-learn.c:654
 msgid "Params."
 msgstr "פרמטרים."
 
-#: src/multitrack.c:6869
+#: src/multitrack.c:6892
 msgid "_Reverse playback  "
 msgstr "_היפוך נגינה  "
 
-#: src/multitrack.c:6897
+#: src/multitrack.c:6920
 msgid "_Velocity  "
 msgstr "_מהירות  "
 
-#: src/multitrack.c:6954
+#: src/multitrack.c:6977
 msgid "Anchor the start point to the timeline"
 msgstr "עיגון נקודת ההתחלה לציר הזמן"
 
-#: src/multitrack.c:6957
+#: src/multitrack.c:6980
 msgid "Anchor _start"
 msgstr "עוגן _התחלה"
 
-#: src/multitrack.c:6991
+#: src/multitrack.c:7014
 msgid "Start frame"
 msgstr "שקופית התחלה"
 
-#: src/multitrack.c:7028
+#: src/multitrack.c:7051
 msgid "Anchor the end point to the timeline"
 msgstr "עיגון נקודת הסיום לציר הזמן"
 
-#: src/multitrack.c:7031
+#: src/multitrack.c:7054
 msgid "Anchor _end"
 msgstr "עוגן _סוף"
 
-#: src/multitrack.c:7064
+#: src/multitrack.c:7087
 msgid "End frame"
 msgstr "שקופית סיום"
 
-#: src/multitrack.c:7221
+#: src/multitrack.c:7244
 msgid "Scroll"
 msgstr "גלילה"
 
-#: src/multitrack.c:7759
+#: src/multitrack.c:7782
 msgid ""
 "\n"
 "==============================\n"
@@ -8432,91 +8424,91 @@ msgstr ""
 "==============================\n"
 "מותג למצב עריכת קטע\n"
 
-#: src/multitrack.c:7932
+#: src/multitrack.c:7955
 msgid "Timeline (seconds)"
 msgstr "ציר זמן (שניות)"
 
-#: src/multitrack.c:8325
+#: src/multitrack.c:8357
 msgid " Backing audio"
 msgstr " מוסיקת רקע"
 
-#: src/multitrack.c:8328
+#: src/multitrack.c:8360
 #, c-format
 msgid " Layer %d audio"
 msgstr " שמע בשכבה %d"
 
-#: src/multitrack.c:8335
+#: src/multitrack.c:8367
 msgid "Show/hide audio details"
 msgstr ""
 
-#: src/multitrack.c:8352 src/multitrack.c:8487
+#: src/multitrack.c:8384 src/multitrack.c:8529
 #, c-format
 msgid "Layer %d audio"
 msgstr "שמע בשכבה %d"
 
-#: src/multitrack.c:8442
+#: src/multitrack.c:8484
 msgid "Select track"
 msgstr "בחירת רצועה"
 
-#: src/multitrack.c:8445
+#: src/multitrack.c:8487
 msgid "Show/hide audio"
 msgstr ""
 
-#: src/multitrack.c:8451
+#: src/multitrack.c:8493
 #, c-format
 msgid "Video %d"
 msgstr "וידאו %d"
 
-#: src/multitrack.c:8479 src/multitrack.c:8515
+#: src/multitrack.c:8521 src/multitrack.c:8557
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s (שכבה %d)"
 
-#: src/multitrack.c:8488
+#: src/multitrack.c:8530
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:8598
+#: src/multitrack.c:8640
 msgid "LiVES: Selected effect"
 msgstr "LiVES: אפקט נבחר"
 
-#: src/multitrack.c:8605
+#: src/multitrack.c:8647
 msgid "_View/Edit this effect"
 msgstr "_הצגת\\עריכת אפקט זה"
 
-#: src/multitrack.c:8608
+#: src/multitrack.c:8650
 msgid "_View this effect"
 msgstr "_הצגת אפקט זה"
 
-#: src/multitrack.c:8616
+#: src/multitrack.c:8658
 msgid "_Delete this effect"
 msgstr "_מחיקת אפקט זה"
 
-#: src/multitrack.c:8663
+#: src/multitrack.c:8705
 msgid "Cannot insert after this effect"
 msgstr "לא ניתן להוסיף לאחר השפעה זו"
 
-#: src/multitrack.c:8683
+#: src/multitrack.c:8725
 msgid "This effect cannot be moved"
 msgstr "אפקט זה לא ניתן להעביר"
 
-#: src/multitrack.c:8728
+#: src/multitrack.c:8770
 #, c-format
 msgid "  %d to %d selected  "
 msgstr "  %d ל־%d נבחר...  "
 
-#: src/multitrack.c:8731 src/multitrack.c:8965
+#: src/multitrack.c:8773 src/multitrack.c:9007
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f שניות."
 
-#: src/multitrack.c:8936
+#: src/multitrack.c:8978
 #, c-format
 msgid "%d frames"
 msgstr "%d שקופיות"
 
-#: src/multitrack.c:9226
+#: src/multitrack.c:9266
 msgid ""
 "\n"
 "==============================\n"
@@ -8526,65 +8518,65 @@ msgstr ""
 "==============================\n"
 "מותג למצב ריבוי רצועות\n"
 
-#: src/multitrack.c:10774
+#: src/multitrack.c:10812
 msgid "Drag the time slider to where you"
 msgstr ""
 
-#: src/multitrack.c:10775
+#: src/multitrack.c:10813
 msgid "want to set effect parameters"
 msgstr ""
 
-#: src/multitrack.c:10776
+#: src/multitrack.c:10814
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr ""
 
-#: src/multitrack.c:10777
+#: src/multitrack.c:10815
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
 "Nodes can be deleted."
 msgstr ""
 
-#: src/multitrack.c:10780
+#: src/multitrack.c:10818
 msgid "Effect has no parameters.\n"
 msgstr "אפקט אין פרמטרים.\n"
 
-#: src/multitrack.c:10864
+#: src/multitrack.c:10902
 #, c-format
 msgid "%s output"
 msgstr "פלט %s"
 
-#: src/multitrack.c:10870
+#: src/multitrack.c:10908
 #, c-format
 msgid "layer %d"
 msgstr "שכבה %d"
 
-#: src/multitrack.c:10872
+#: src/multitrack.c:10910
 msgid "audio track"
 msgstr "רצועת שמע"
 
-#: src/multitrack.c:10873
+#: src/multitrack.c:10911
 #, c-format
 msgid "%s to %s"
 msgstr "%s ל־%s"
 
-#: src/multitrack.c:10924
+#: src/multitrack.c:10962
 msgid "_Prev filter map"
 msgstr "מפת המסננים _הקודמת"
 
-#: src/multitrack.c:10934
+#: src/multitrack.c:10972
 msgid "Insert _before"
 msgstr "הוספה _לפני"
 
-#: src/multitrack.c:10942
+#: src/multitrack.c:10980
 msgid "Insert _after"
 msgstr "הוספה _אחרי"
 
-#: src/multitrack.c:10955
+#: src/multitrack.c:10993
 msgid "_Next filter map"
 msgstr "מפת המסננים _הבאה"
 
-#: src/multitrack.c:10969
+#: src/multitrack.c:11007
 msgid ""
 "\n"
 "\n"
@@ -8596,88 +8588,88 @@ msgstr ""
 "אין השפעות על המסלול הנוכחי,\n"
 "הזמן הנוכחי.\n"
 
-#: src/multitrack.c:10981
+#: src/multitrack.c:11019
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:10988
+#: src/multitrack.c:11026
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:10996
+#: src/multitrack.c:11034
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
 msgstr ""
 
-#: src/multitrack.c:11163
+#: src/multitrack.c:11227
 msgid "LiVES: Selected block/frame"
 msgstr "LiVES: מקטע\\שקופית נבחרים"
 
-#: src/multitrack.c:11169
+#: src/multitrack.c:11233
 msgid "_Delete this block"
 msgstr "_מחיקת מקטע זה"
 
-#: src/multitrack.c:11178
+#: src/multitrack.c:11242
 msgid "_Split block here"
 msgstr "_פיצול המקטע כאן"
 
-#: src/multitrack.c:11186
+#: src/multitrack.c:11250
 msgid "List _effects here"
 msgstr "רשימת _האפקטים המוחלים כאן"
 
-#: src/multitrack.c:11195 src/multitrack.c:11264
+#: src/multitrack.c:11259 src/multitrack.c:11328
 #, c-format
 msgid "_Adjust %s"
 msgstr "_כיוון %s"
 
-#: src/multitrack.c:11209
+#: src/multitrack.c:11273
 msgid "_Select this block"
 msgstr "_בחירת מקטע זה"
 
-#: src/multitrack.c:11237
+#: src/multitrack.c:11301
 msgid "LiVES: Selected frame"
 msgstr "LiVES: שקופית נבחרת"
 
-#: src/multitrack.c:11245
+#: src/multitrack.c:11309
 msgid "_Insert here"
 msgstr "_הוספה כאן"
 
-#: src/multitrack.c:11251
+#: src/multitrack.c:11315
 msgid "_Insert audio here"
 msgstr "_הוספת שמע כאן"
 
-#: src/multitrack.c:12627
+#: src/multitrack.c:12701
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr "נוסף מרווח ברצועות הנבחרות מהזמן %.4f ל־%.4f\n"
 
-#: src/multitrack.c:12661
+#: src/multitrack.c:12735
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr "נוסף מרווח ברצועה %s מהזמן %.4f ל־%.4f\n"
 
-#: src/multitrack.c:12849
+#: src/multitrack.c:12932
 #, c-format
 msgid "Undid %s\n"
 msgstr "ביטול הפעולה %s\n"
 
-#: src/multitrack.c:13034
+#: src/multitrack.c:13126
 #, c-format
 msgid "Redid %s\n"
 msgstr "ביצוע הפעולה %s מחדש\n"
 
-#: src/multitrack.c:13058
+#: src/multitrack.c:13150
 msgid "Multitrack details"
 msgstr "נתוני ריבוי־רצועות"
 
-#: src/multitrack.c:13070
+#: src/multitrack.c:13162
 msgid ""
 "\n"
 " (variable)"
@@ -8685,76 +8677,76 @@ msgstr ""
 "\n"
 " (משתנה)"
 
-#: src/multitrack.c:13285 src/multitrack.c:16067 src/multitrack.c:16079
+#: src/multitrack.c:13377 src/multitrack.c:16170 src/multitrack.c:16182
 #, c-format
 msgid "track %s"
 msgstr "הרצועה %s"
 
-#: src/multitrack.c:13290 src/multitrack.c:16072
+#: src/multitrack.c:13382 src/multitrack.c:16175
 #, c-format
 msgid "tracks %s and %s"
 msgstr "הרצועות %s ו־%s"
 
-#: src/multitrack.c:13296 src/multitrack.c:16082
+#: src/multitrack.c:13388 src/multitrack.c:16185
 msgid "selected tracks"
 msgstr "רצועות נבחרות"
 
-#: src/multitrack.c:13300
+#: src/multitrack.c:13392
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr "נוסף %s ל־%s ל־%s מ־%.4f ל־%.4f\n"
 
-#: src/multitrack.c:13329
+#: src/multitrack.c:13421
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr "נוסף האפקט %s לרצועה %s מ־%.4f ל־%.4f\n"
 
-#: src/multitrack.c:13520
+#: src/multitrack.c:13612
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr "עובדו %d שקופיות לקטע חדש.\n"
 
-#: src/multitrack.c:13581
+#: src/multitrack.c:13673
 msgid "Cleaning up..."
 msgstr "מנקה..."
 
-#: src/multitrack.c:14208
+#: src/multitrack.c:14313
 msgid "_Pause"
 msgstr "_השהיה"
 
-#: src/multitrack.c:14209
+#: src/multitrack.c:14314
 msgid "Pause (p)"
 msgstr "השהיה (p)"
 
-#: src/multitrack.c:14349
+#: src/multitrack.c:14454
 msgid "Press 'm' during playback"
 msgstr "יש ללחוץ על 'm' בזמן נגינה"
 
-#: src/multitrack.c:14350
+#: src/multitrack.c:14455
 msgid "to make a mark on the timeline"
 msgstr "כדי לסמן את המיקום הנוכחי על ציר הזמן"
 
-#: src/multitrack.c:14613
+#: src/multitrack.c:14718
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr "נוסף שמע %.4f ל־%.4f מהקטע %s למוסיקת הרקע מהזמן %.4f עד %.4f\n"
 
-#: src/multitrack.c:14861
+#: src/multitrack.c:14966
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr "נוספו שקופיות %d ל־%d מהקטע %s לרצועה %s מהזמן %.4f עד %.4f\n"
 
-#: src/multitrack.c:15362
+#: src/multitrack.c:15467
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
 "selected.\n"
 msgstr ""
 
-#: src/multitrack.c:15366
+#: src/multitrack.c:15471
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -8762,111 +8754,111 @@ msgstr ""
 "יש לבחור רצועה אחת או יותר\n"
 "כדי ליצור איזור.\n"
 
-#: src/multitrack.c:15368
+#: src/multitrack.c:15473
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "נבחרו %d רצועות וידאו.\n"
 
-#: src/multitrack.c:15370
+#: src/multitrack.c:15475
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
 msgstr ""
 
-#: src/multitrack.c:15377
+#: src/multitrack.c:15482
 msgid ""
 "Single click on an effect\n"
 "to select it."
 msgstr ""
 
-#: src/multitrack.c:15378
+#: src/multitrack.c:15483
 msgid ""
 "Double click on an effect\n"
 "to edit it."
 msgstr ""
 
-#: src/multitrack.c:15379
+#: src/multitrack.c:15484
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
 msgstr ""
 
-#: src/multitrack.c:15381
+#: src/multitrack.c:15486
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr ""
 
-#: src/multitrack.c:15388
+#: src/multitrack.c:15493
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:15389
+#: src/multitrack.c:15494
 msgid "or INSERT AFTER buttons to move it."
 msgstr "או בכפתורי הכנסה אחרי כדי להזיזו."
 
-#: src/multitrack.c:15425
+#: src/multitrack.c:15530
 msgid ""
 "You can click and drag\n"
 "below the timeline"
 msgstr ""
 
-#: src/multitrack.c:15426
+#: src/multitrack.c:15531
 msgid "to select a time region.\n"
 msgstr "כדי לבחור איזור זמן.\n"
 
-#: src/multitrack.c:15657 src/multitrack.c:15670
+#: src/multitrack.c:15762 src/multitrack.c:15775
 msgid "Click on another effect,"
 msgstr "לחץ על אפקט אחר,"
 
-#: src/multitrack.c:15658 src/multitrack.c:15671
+#: src/multitrack.c:15763 src/multitrack.c:15776
 msgid ""
 "and the selected one\n"
 "will be inserted"
 msgstr ""
 
-#: src/multitrack.c:15659
+#: src/multitrack.c:15764
 msgid "after it.\n"
 msgstr "אחריו.\n"
 
-#: src/multitrack.c:15672
+#: src/multitrack.c:15777
 msgid "before it.\n"
 msgstr "לפניו.\n"
 
-#: src/multitrack.c:15894
+#: src/multitrack.c:15998
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "הוסרו ערכי הפרמטר עבור האפקט %s בזמן %.4f\n"
 
-#: src/multitrack.c:16090
+#: src/multitrack.c:16193
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "ערכי הפרמטר נקבעו ל־%s %s על  %s בזמן %.4f\n"
 
-#: src/multitrack.c:16505 src/multitrack.c:18111
+#: src/multitrack.c:16608 src/multitrack.c:18214
 msgid "_Autoreload each time"
 msgstr "_טעינה אוטומטית מחדש כל פעם"
 
-#: src/multitrack.c:16575
+#: src/multitrack.c:16678
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "הפריסה נשמרה ל־%s\n"
 
-#: src/multitrack.c:18019
+#: src/multitrack.c:18122
 msgid "clips and frames"
 msgstr "קטעים ושקופיות"
 
-#: src/multitrack.c:18023
+#: src/multitrack.c:18126
 msgid "clips"
 msgstr "קטעים"
 
-#: src/multitrack.c:18026
+#: src/multitrack.c:18129
 msgid "frames"
 msgstr "שקופיות"
 
-#: src/multitrack.c:18036
+#: src/multitrack.c:18139
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -8874,7 +8866,7 @@ msgstr ""
 "\n"
 "טעינת פריסה אוטומטית.\n"
 
-#: src/multitrack.c:18039
+#: src/multitrack.c:18142
 #, c-format
 msgid ""
 "%s\n"
@@ -8885,11 +8877,11 @@ msgstr ""
 "כמה %s אינם נמצאים בפריסה %s\n"
 "בעקבות כך הוא לא ייטען כראוי.\n"
 
-#: src/multitrack.c:18162
+#: src/multitrack.c:18265
 msgid "auto backup"
 msgstr ""
 
-#: src/multitrack.c:18165
+#: src/multitrack.c:18268
 #, c-format
 msgid ""
 "\n"
@@ -8898,43 +8890,43 @@ msgstr ""
 "\n"
 "לא ניתן לטעון את קובץ הפריסה %s\n"
 
-#: src/multitrack.c:18181
+#: src/multitrack.c:18284
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "טוען פריסה מ־%s..."
 
-#: src/multitrack.c:18201
+#: src/multitrack.c:18304
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "התקבלו %d אירועים...מעבד..."
 
-#: src/multitrack.c:18219
+#: src/multitrack.c:18322
 msgid "Checking and rebuilding event list"
 msgstr "בודק ובונה מחדש את רשימת האירועים"
 
-#: src/multitrack.c:18246
+#: src/multitrack.c:18349
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "אותרו %d שגיאות.\n"
 
-#: src/multitrack.c:18279
+#: src/multitrack.c:18382
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr "השקופיות לשנייה בריבוי הרצועות נקבעו ל־%.3f\n"
 
-#: src/multitrack.c:19103
+#: src/multitrack.c:19206
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: מערבל שמע עבור ריבוי רצועות"
 
-#: src/multitrack.c:19140
+#: src/multitrack.c:19243
 msgid "_Reset values"
 msgstr "_איפוס ערכים"
 
-#: src/multitrack.c:19144
+#: src/multitrack.c:19247
 msgid "_Close mixer"
 msgstr "_סגירת המערבל"
 
-#: src/multitrack.c:19238
+#: src/multitrack.c:19341
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
@@ -8942,15 +8934,15 @@ msgstr ""
 "_היפוך מוסיקת הרקע\n"
 "ועוצמות השמע בשכבה"
 
-#: src/multitrack.c:19244
+#: src/multitrack.c:19347
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr "כיוון ערכי מוסיקת הרקע והשמע בשכבה כך שהם יגיעו לסכום 1.0"
 
-#: src/multitrack.c:19283
+#: src/multitrack.c:19386
 msgid "_Gang layer audio"
 msgstr "_חיבור שכבת השמע"
 
-#: src/multitrack.c:19289
+#: src/multitrack.c:19392
 msgid "Adjust all layer audio values to the same value"
 msgstr "כיוון כל ערכי שכבת השמע לאותו ערך"
 
@@ -10703,6 +10695,12 @@ msgstr "$plugin_name נכשל:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
+
+#~ msgid "Show frame preview"
+#~ msgstr "הצגת תצוגה מקדימה של שקופית"
+
+#~ msgid "Auto preview"
+#~ msgstr "תצוגה מקדימה אוטומטית"
 
 #~ msgid "or sox\n"
 #~ msgstr "או sox\n"

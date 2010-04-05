@@ -16,7 +16,7 @@ shared_ldflags = -shared -fPIC -DPIC -Wl,-Bsymbolic -module -avoid-version --tag
 shared_cflags = -fPIC -DPIC
 endif
 
-AM_LDFLAGS = $(shared_ldflags) -O3 -L/usr/lib64 ../../libweed/libweed-utils.la ../../libweed/libweed-plugin-utils.la
+AM_LDFLAGS = $(shared_ldflags) -O3 ../../libweed/libweed-utils.la ../../libweed/libweed-plugin-utils.la
 AM_CFLAGS = $(shared_cflags) -O3 -ffast-math
 AM_CPPFLAGS = $(shared_cflags) -O3 -ffast-math
 

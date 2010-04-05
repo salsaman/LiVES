@@ -12,7 +12,7 @@ shared_ldflags = -shared -fPIC -DPIC -Wl,-Bsymbolic -module -avoid-version --tag
 shared_cflags = -fPIC -DPIC
 endif
 
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -O3 -L/usr/lib64  ../../../libweed/libweed-utils.la ../../../libweed/libweed-plugin-utils.la
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -O3  ../../../libweed/libweed-utils.la ../../../libweed/libweed-plugin-utils.la
 AM_CFLAGS = $(shared_cflags) -I$(srcdir)/.. @GTK_CFLAGS@ -O3 -ffast-math
 
 if ENABLE_VJACK

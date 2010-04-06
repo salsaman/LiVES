@@ -357,13 +357,13 @@ giw_knob_expose (GtkWidget      *widget,
   c = cos(knob->angle);
 
   gdk_draw_line (widget->window,
-			widget->style->fg_gc[widget->state],
+			widget->style->white_gc,
 			xc+c*((float)knob->radius*0.6),
 			yc-s*((float)knob->radius*0.6),
 			xc+c*knob->radius,
 			yc-s*knob->radius);
   gdk_draw_arc (widget->window,
-			widget->style->fg_gc[widget->state],
+			widget->style->white_gc,
 			TRUE,
 			xc+c*((float)knob->radius*0.8)-knob->radius*0.1,
 			yc-s*((float)knob->radius*0.8)-knob->radius*0.1,

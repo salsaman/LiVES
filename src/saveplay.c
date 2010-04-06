@@ -1101,6 +1101,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	g_free (com);
       }
       gtk_widget_destroy(fx_dialog[1]);
+      fx_dialog[1]=NULL;
       g_free(mesg);
       g_free(fps_string);
       d_print_cancelled();

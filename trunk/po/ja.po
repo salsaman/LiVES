@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-04-02 16:07-0300\n"
+"POT-Creation-Date: 2010-04-06 01:54-0300\n"
 "PO-Revision-Date: 2010-02-15 12:06+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -590,7 +590,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:3435 src/main.c:3436 src/gui.c:1898 src/gui.c:2866
-#: src/saveplay.c:1471
+#: src/saveplay.c:1472
 msgid "Play"
 msgstr "再生"
 
@@ -608,12 +608,12 @@ msgid "Closed file %s\n"
 msgstr "ファイル「%s」を閉じました\n"
 
 #: src/main.c:4023 src/gui.c:522 src/utils.c:2566 src/utils.c:2592
-#: src/saveplay.c:2428 src/multitrack.c:3780 src/multitrack.c:5244
+#: src/saveplay.c:2429 src/multitrack.c:3780 src/multitrack.c:5244
 msgid "_Undo"
 msgstr "アンドゥ(_U)"
 
 #: src/main.c:4024 src/gui.c:535 src/utils.c:2567 src/utils.c:2593
-#: src/saveplay.c:2429 src/multitrack.c:3801 src/multitrack.c:5267
+#: src/saveplay.c:2430 src/multitrack.c:3801 src/multitrack.c:5267
 msgid "_Redo"
 msgstr "リドゥ(_R)"
 
@@ -952,7 +952,7 @@ msgstr ""
 "ます。"
 
 #: src/interface.c:186 src/callbacks.c:7384 src/gui.c:2869 src/gui.c:3406
-#: src/saveplay.c:1474 src/saveplay.c:2086 src/dialogs.c:737 src/dialogs.c:738
+#: src/saveplay.c:1475 src/saveplay.c:2087 src/dialogs.c:737 src/dialogs.c:738
 #: src/dialogs.c:895 src/dialogs.c:896 src/framedraw.c:191
 #: src/multitrack.c:6743
 msgid "Preview"
@@ -1680,7 +1680,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "%dから%d%sフレームをクリップボードにコピーします..."
 
 #: src/callbacks.c:1818 src/saveplay.c:887 src/saveplay.c:994
-#: src/saveplay.c:1045 src/saveplay.c:2759
+#: src/saveplay.c:1045 src/saveplay.c:2760
 msgid "Pulling frames from clip"
 msgstr "クリップからフレームを抽出"
 
@@ -3663,7 +3663,7 @@ msgstr "%sを開きます"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "%sを開きます。開始時刻%.2f秒、%dフレーム"
 
-#: src/saveplay.c:187 src/saveplay.c:2749
+#: src/saveplay.c:187 src/saveplay.c:2750
 msgid " without sound"
 msgstr " 音声なし"
 
@@ -3765,15 +3765,15 @@ msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "フレーム1から%d%sを\"%s\"として保存 : エンコーダ = %s : フォーマット = %s..."
 
-#: src/saveplay.c:1166
+#: src/saveplay.c:1167
 msgid "Saving [can take a long time]"
 msgstr "保存 [しばらく時間がかかるかもしれません]"
 
-#: src/saveplay.c:1197
+#: src/saveplay.c:1198
 msgid "error.\n"
 msgstr "エラー。\n"
 
-#: src/saveplay.c:1253
+#: src/saveplay.c:1254
 msgid ""
 "\n"
 "\n"
@@ -3783,24 +3783,24 @@ msgstr ""
 "\n"
 "エンコーダエラー - 出力ファイルは作成されませんでした !\n"
 
-#: src/saveplay.c:1399
+#: src/saveplay.c:1400
 msgid "recording aborted by preview.\n"
 msgstr "プレビューにより記録は中止されました。\n"
 
-#: src/saveplay.c:1403
+#: src/saveplay.c:1404
 msgid "recording aborted by clipboard playback.\n"
 msgstr "クリップボードの再生により記録は中止されました。\n"
 
-#: src/saveplay.c:1406
+#: src/saveplay.c:1407
 msgid "Recording performance..."
 msgstr "演奏を記録します..."
 
-#: src/saveplay.c:2246
+#: src/saveplay.c:2247
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "平均のFPSは%.4fです\n"
 
-#: src/saveplay.c:2252
+#: src/saveplay.c:2253
 msgid ""
 "\n"
 "\n"
@@ -3814,16 +3814,16 @@ msgstr ""
 "ツール--->全てをリサイズ、によって、\n"
 "全てのフレームを現在のサイズにリサイズして下さい。\n"
 
-#: src/saveplay.c:2364
+#: src/saveplay.c:2365
 msgid "Unknown"
 msgstr "不明"
 
-#: src/saveplay.c:2457
+#: src/saveplay.c:2458
 #, c-format
 msgid "Untitled%d"
 msgstr "無題%d"
 
-#: src/saveplay.c:2566
+#: src/saveplay.c:2567
 #, c-format
 msgid ""
 "\n"
@@ -3834,12 +3834,12 @@ msgstr ""
 "再生速度が指定されていないか無効です ! %.3ffpsの標準設定を使います. \n"
 "標準値は「ツール|属性|その他」で指定できます。\n"
 
-#: src/saveplay.c:2578
+#: src/saveplay.c:2579
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "再生速度は音声に合わせて%.3fフレーム毎秒に合わせられました\n"
 
-#: src/saveplay.c:2586
+#: src/saveplay.c:2587
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -3848,7 +3848,7 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d *bpp=グレースケール* fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:2590 src/saveplay.c:3182
+#: src/saveplay.c:2591 src/saveplay.c:3183
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -3857,49 +3857,49 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d bpp=%d fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:2594 src/saveplay.c:3186
+#: src/saveplay.c:2595 src/saveplay.c:3187
 #, c-format
 msgid "%s none\n"
 msgstr "%s なし\n"
 
-#: src/saveplay.c:2597 src/saveplay.c:3189
+#: src/saveplay.c:2598 src/saveplay.c:3190
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d チャンネル %d bps\n"
 
-#: src/saveplay.c:2605
+#: src/saveplay.c:2606
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - コメント: %s\n"
 
-#: src/saveplay.c:2679
+#: src/saveplay.c:2680
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "フレーム%dを%sとして保存..."
 
-#: src/saveplay.c:2744
+#: src/saveplay.c:2745
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "%sから%sへバックアップします"
 
-#: src/saveplay.c:2778
+#: src/saveplay.c:2779
 msgid "Backing up"
 msgstr "バックアップします"
 
-#: src/saveplay.c:2809
+#: src/saveplay.c:2810
 msgid "performance data was backed up..."
 msgstr "演奏データをバックアップしました..."
 
-#: src/saveplay.c:3108
+#: src/saveplay.c:3109
 #, c-format
 msgid "Restoring %s..."
 msgstr "%sをリストアします..."
 
-#: src/saveplay.c:3127
+#: src/saveplay.c:3128
 msgid "Restoring"
 msgstr "リストアします"
 
-#: src/saveplay.c:3149
+#: src/saveplay.c:3150
 #, c-format
 msgid ""
 "\n"
@@ -3912,24 +3912,24 @@ msgstr ""
 "このファイル%sは壊れています。\n"
 "LiVESはリストアできませんでした。\n"
 
-#: src/saveplay.c:3497
+#: src/saveplay.c:3498
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3501
+#: src/saveplay.c:3502
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3524
+#: src/saveplay.c:3525
 #, c-format
 msgid ""
 "Recording was paused because free disk space is below %ld GB.\n"
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3640
+#: src/saveplay.c:3641
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -3939,11 +3939,11 @@ msgstr ""
 "LiVESを前回起動した際のファイルを発見しました。\n"
 "回復を試みますか?\n"
 
-#: src/saveplay.c:3653
+#: src/saveplay.c:3654
 msgid "Recovering files"
 msgstr "ファイルを回復"
 
-#: src/saveplay.c:3657
+#: src/saveplay.c:3658
 msgid "Recovering files..."
 msgstr ""
 
@@ -5077,35 +5077,35 @@ msgstr "パラメータなし"
 msgid "Invalid parameter"
 msgstr "無効なパラメータ"
 
-#: src/paramwindow.c:1499
+#: src/paramwindow.c:1506
 msgid "LiVES: - Select Colour"
 msgstr "LiVES:- 色の選択"
 
-#: src/paramwindow.c:1503
+#: src/paramwindow.c:1510
 msgid "Click to set the colour"
 msgstr "クリックでカラーを設定"
 
-#: src/paramwindow.c:1518
+#: src/paramwindow.c:1525
 msgid "Red"
 msgstr "赤"
 
-#: src/paramwindow.c:1526
+#: src/paramwindow.c:1533
 msgid "The red value (0 - 255)"
 msgstr "赤の値 (0 - 255)"
 
-#: src/paramwindow.c:1529
+#: src/paramwindow.c:1536
 msgid "Green"
 msgstr "緑"
 
-#: src/paramwindow.c:1536
+#: src/paramwindow.c:1543
 msgid "The green value (0 - 255)"
 msgstr "緑の値 (0 - 255)"
 
-#: src/paramwindow.c:1540
+#: src/paramwindow.c:1547
 msgid "Blue"
 msgstr "青"
 
-#: src/paramwindow.c:1546
+#: src/paramwindow.c:1553
 msgid "The blue value (0 - 255)"
 msgstr "青の値 (0 - 255)"
 

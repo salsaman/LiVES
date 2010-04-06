@@ -1109,7 +1109,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	if (param->hidden||param->type==LIVES_PARAM_UNDISPLAYABLE) continue;
 	// parameter, eg. p1
 	if (!has_box) {
-	  hbox = gtk_hbox_new (FALSE, 0);
+	  hbox = gtk_hbox_new (TRUE, 0);
 	  gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 10);
 	  has_box=TRUE;
 	  has_param=TRUE;
@@ -1296,6 +1296,9 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
       }
+
+      gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
+
       gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
       GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
@@ -1325,6 +1328,9 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
       }
+
+      gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
+
       if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
 	dlabel=gtk_label_new (g_strdup_printf("(%s)",_ (disp_string)));
 	if (palette->style&STYLE_1) {
@@ -1403,20 +1409,20 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
 
     else {
-      hbox = gtk_hbox_new (FALSE, 0);
+      hbox = gtk_hbox_new (TRUE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
     }
 
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 4);
     gtk_tooltips_copy(hbox,spinbutton);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
       dlabel=gtk_label_new (g_strdup_printf("%s",_ (disp_string)));
       weed_free(disp_string);
-      gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, 10);
+      gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, 4);
       param->widgets[1]=dlabel;
     }
-    else gtk_box_pack_start (GTK_BOX (hbox), spinbutton, FALSE, FALSE, 10);
+    else gtk_box_pack_start (GTK_BOX (hbox), spinbutton, FALSE, FALSE, 0);
 
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton)->entry)), TRUE);
 
@@ -1435,7 +1441,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 #endif
 	scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
 	gtk_scale_set_draw_value(GTK_SCALE(scale),FALSE);
-	gtk_box_pack_start (GTK_BOX (hbox), scale, TRUE, TRUE, 10);
+	gtk_box_pack_start (GTK_BOX (hbox), scale, TRUE, TRUE, 0);
 #ifdef ENABLE_GIW
       }
       else {
@@ -1447,7 +1453,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	  gtk_widget_modify_fg(scale, GTK_STATE_NORMAL, &palette->normal_fore);
 	  gtk_widget_modify_bg (scale, GTK_STATE_NORMAL, &palette->normal_back);
 	}
-	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 60);
+	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 0);
 	add_fill_to_box (GTK_BOX (hbox));
       }
 #endif
@@ -1488,6 +1494,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       hbox = gtk_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
     }
+    gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
 
     // colsel button
 
@@ -1583,6 +1590,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
+    gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
       if (param->max==0.) txt=g_strdup (disp_string);
@@ -1671,6 +1679,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       hbox = gtk_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
     }
+    gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
     combo = gtk_combo_new ();
     if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, combo, param->desc, NULL);
 
@@ -1735,6 +1744,8 @@ void add_fill_to_box (GtkBox *box) {
 
 void add_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text) {
   GtkWidget *label;
+
+  gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
 
   if (do_trans) label = gtk_label_new_with_mnemonic (_ (text));
   else label = gtk_label_new_with_mnemonic (text);

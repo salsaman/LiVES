@@ -7123,7 +7123,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
     mt->sep_image=NULL;
     hseparator = gtk_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 2);
-    if (palette->style&STYLE_6) {
+    if (palette->style&STYLE_5) {
       gtk_widget_modify_fg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
       gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
     }
@@ -7131,7 +7131,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   else {
     hseparator = gtk_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 0);
-    if (palette->style&STYLE_6) {
+    if (palette->style&STYLE_5) {
       gtk_widget_modify_fg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
       gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
     }
@@ -7139,7 +7139,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), mt->sep_image, FALSE, FALSE, 0);
     hseparator = gtk_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 0);
-    if (palette->style&STYLE_6) {
+    if (palette->style&STYLE_5) {
       gtk_widget_modify_fg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
       gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
     }

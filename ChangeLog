@@ -1,6 +1,6 @@
 Version 1.3.3
 -------------
-Implement full jack timebase client.
+Implement FULL jack timebase client.
 Improved a/v sync.
 Complete the implementation of the new transport.
 Swap ctrl-page-up, ctrl-page-down in multitrack.
@@ -8,7 +8,7 @@ Multitrack/mixer GUI improvements.
 Integrate code from GTK+ Instumentation Widgets
 Fix posible crash in rendered effect previews. *
 Show file close warnings for files not used in layouts (regression) *
-
+Properly unload decoder plugins on shutdown.
 
 
 

@@ -157,7 +157,11 @@ lives_exit (void) {
 	  }
 	}
 	if (!mainw->only_close) {
-	  
+	  if (mainw->files[i]->frame_index!=NULL) {
+	    g_free(mainw->files[i]->frame_index);
+	    mainw->files[i]->frame_index=NULL;
+	  }
+
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	    close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
 	    mainw->files[i]->ext_src=NULL;
@@ -212,6 +216,11 @@ lives_exit (void) {
 	  // must do this before we move it
 	  close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
 	  mainw->files[i]->ext_src=NULL;
+	}
+
+	if (mainw->files[i]->frame_index!=NULL) {
+	  g_free(mainw->files[i]->frame_index);
+	  mainw->files[i]->frame_index=NULL;
 	}
 
 	cfile->layout_map=NULL;

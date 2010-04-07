@@ -4294,8 +4294,8 @@ sub open_images {
 	}
 
 	foreach (@files) {
-	    unless ($_ =~ /^\./||(! -f $_)||(-z $_)) {
-		$file="$dir/$_";
+	    $file="$dir/$_";
+	    unless ($_ =~ /^\./||(! -f $file)||(-z $file)) {
 		$nframes=&open_single_image($i);
 		if (-s "$curtmpdir/$name$img_ext") {
 		    if ($only_first) {

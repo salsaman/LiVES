@@ -1413,13 +1413,13 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
     }
 
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 4);
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     gtk_tooltips_copy(hbox,spinbutton);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
       dlabel=gtk_label_new (g_strdup_printf("%s",_ (disp_string)));
       weed_free(disp_string);
-      gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, 4);
+      gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, 10);
       param->widgets[1]=dlabel;
     }
     else gtk_box_pack_start (GTK_BOX (hbox), spinbutton, FALSE, FALSE, 0);
@@ -2800,6 +2800,10 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
 
   gint red,green,blue;
   gint offs=0;
+  gint maxlen=g_list_length(plist)-1;
+
+
+  if (ABS(pnum)>maxlen) return 0;
 
   switch (param->type) {
   case LIVES_PARAM_BOOL:
@@ -2823,7 +2827,9 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
     if (param->dp) {
       gdouble double_val=g_strtod (g_list_nth_data (plist,pnum++),NULL);
       if (with_min_max) {
+	if (ABS(pnum)>maxlen) return 1;
 	param->min=g_strtod (g_list_nth_data (plist,pnum++),NULL);
+	if (ABS(pnum)>maxlen) return 2;
 	param->max=g_strtod (g_list_nth_data (plist,pnum++),NULL);
 	if (double_val<param->min) double_val=param->min;
 	if (double_val>param->max) double_val=param->max;
@@ -2844,8 +2850,11 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
     else {
       gint int_value=atoi (g_list_nth_data (plist,pnum++));
       if (with_min_max) {
-	gint int_min=atoi (g_list_nth_data (plist,pnum++));
-	gint int_max=atoi (g_list_nth_data (plist,pnum++));
+	gint int_min,int_max;
+	if (ABS(pnum)>maxlen) return 1;
+	int_min=atoi (g_list_nth_data (plist,pnum++));
+	if (ABS(pnum)>maxlen) return 2;
+	int_max=atoi (g_list_nth_data (plist,pnum++));
 	if (int_value<int_min) int_value=int_min;
 	if (int_value>int_max) int_value=int_max;
 	param->min=(gdouble)int_min;
@@ -2868,7 +2877,9 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
     break;
   case LIVES_PARAM_COLRGB24:
     red=atoi (g_list_nth_data (plist,pnum++)); // red
+    if (ABS(pnum)>maxlen) return 1;
     green=atoi (g_list_nth_data (plist,pnum++)); // green
+    if (ABS(pnum)>maxlen) return 2;
     blue=atoi (g_list_nth_data (plist,pnum++)); // blue
     if (param->change_blocked) break;
     set_colRGB24_param(param->value,red,green,blue);

@@ -828,7 +828,6 @@ static void detach_stream (char *URI) {
   close(opriv.fd);
 
   ogg_sync_clear(&opriv.oy);
-
   theora_clear(&tpriv.ts);
   theora_comment_clear(&tpriv.tc);
   theora_info_clear(&tpriv.ti);

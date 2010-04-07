@@ -157,6 +157,12 @@ lives_exit (void) {
 	  }
 	}
 	if (!mainw->only_close) {
+	  
+	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	    close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
+	    mainw->files[i]->ext_src=NULL;
+	  }
+
 	  g_free(mainw->files[i]);
 	  mainw->files[i]=NULL;
 	}
@@ -186,6 +192,7 @@ lives_exit (void) {
       unlink(set_lock_file);
       g_free(set_lock_file);
     }
+
 
     for (i=1;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {

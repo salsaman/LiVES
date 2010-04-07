@@ -1363,7 +1363,7 @@ void set_palette_colours (void) {
     colour_equal(&palette->menu_and_bars,&palette->pink);
     colour_equal(&palette->info_text,&palette->normal_fore);
     colour_equal(&palette->info_base,&palette->normal_back);
-    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_6;
+    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
   }
   else {
     if (!(strcmp(prefs->theme,"cutting_room"))) {

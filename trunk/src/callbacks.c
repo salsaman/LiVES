@@ -7432,7 +7432,7 @@ on_preview_clicked                     (GtkButton       *button,
     gtk_widget_queue_draw (mainw->LiVES);
   }
   gettimeofday(&tv, NULL);
-  xticks=U_SECL*(tv.tv_sec-mainw->origusecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+  xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
   mainw->timeout_ticks+=xticks;
   mainw->filter_map=filter_map;
 

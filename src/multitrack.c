@@ -147,7 +147,7 @@ static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list
 
 
 static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, gint frame, gboolean noblanks) {
-  GdkPixbuf *thumbnail,*pixbuf;
+  GdkPixbuf *thumbnail=NULL,*pixbuf;
   GError *error=NULL;
   gchar *buf;
 
@@ -165,6 +165,7 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
 
   do {
+
     if (mainw->files[file]->frames>0) {
       weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
       thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,GDK_INTERP_HYPER);
@@ -203,6 +204,8 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
 	tried_all=TRUE;
       }
       frame=nframe;
+      if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
+      thumbnail=NULL;
     }
 
 

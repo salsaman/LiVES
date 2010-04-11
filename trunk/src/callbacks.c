@@ -9040,19 +9040,28 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
   }
 
   mainw->suppress_dprint=TRUE;
+  mainw->no_switch_dprint=TRUE;
   
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK) {
-    jack_rec_audio_to_clip(mainw->current_file,FALSE);
+    jack_rec_audio_to_clip(mainw->current_file,old_file,type==0?RECA_NEW_CLIP:RECA_EXISTING);
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
-    pulse_rec_audio_to_clip(mainw->current_file,FALSE);
+    pulse_rec_audio_to_clip(mainw->current_file,old_file,type==0?RECA_NEW_CLIP:RECA_EXISTING);
   }
 #endif
 
-  if (mainw->cancelled==CANCEL_USER) {
+  if (type==1) {
+    // set these again, as playsel may have reset them
+    mainw->files[old_file]->arate=mainw->files[old_file]->arps=cfile->arate;
+    mainw->files[old_file]->asampsize=cfile->asampsize;
+    mainw->files[old_file]->achans=cfile->achans;
+    mainw->files[old_file]->signed_endian=cfile->signed_endian;
+  }
+
+  if (type!=1&&mainw->cancelled==CANCEL_USER) {
     mainw->cancelled=CANCEL_NONE;
     if (type==1) {
       mainw->files[old_file]->arps=oarps;
@@ -9063,25 +9072,35 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
     }
     close_current_file(old_file);
     mainw->suppress_dprint=FALSE;
+    d_print_cancelled();
+    mainw->no_switch_dprint=FALSE;
     return;
   }
 
+  mainw->cancelled=CANCEL_NONE;
   while (g_main_context_iteration(NULL,FALSE));
-
+  
   if (type==1) {
+    // set these again in case reget_afilesize() reset them
+    cfile->arate=cfile->arps=mainw->files[old_file]->arate;
+    cfile->asampsize=mainw->files[old_file]->asampsize;
+    cfile->achans=mainw->files[old_file]->achans;
+    cfile->signed_endian=mainw->files[old_file]->signed_endian;
+
     do_threaded_dialog(_("Committing audio"),FALSE);
     aud_start=0.;
     reget_afilesize(mainw->current_file);
     get_total_time(cfile);
     aud_end=cfile->laudio_time;
     ins_pt=(mainw->files[old_file]->start-1.)/mainw->files[old_file]->fps*U_SEC;
+
     if (!prefs->conserve_space) {
       com=g_strdup_printf("smogrify backup_audio %s",mainw->files[old_file]->handle);
       dummyvar=system(com);
       g_free(com);
     }
 
-    render_audio_segment(1,&(mainw->current_file),old_file,&vel,&aud_start,ins_pt,ins_pt+(aud_end-aud_start)*U_SECL,&vol,vol,vol,NULL);
+    render_audio_segment(1,&(mainw->current_file),old_file,&vel,&aud_start,ins_pt,ins_pt+(weed_timecode_t)((aud_end-aud_start)*U_SEC),&vol,vol,vol,NULL);
     end_threaded_dialog();
     close_current_file(old_file);
   }
@@ -9100,7 +9119,9 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
       cfile->undo_action=UNDO_REC_AUDIO;
     }
   }
+
   d_print_done();
+  mainw->no_switch_dprint=FALSE;
 
   if (has_lmap_error_recsel) {
     has_lmap_error_recsel=FALSE;

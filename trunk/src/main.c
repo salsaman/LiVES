@@ -775,6 +775,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->aud_file_to_kill=-1;
 
+  mainw->aud_rec_fd=-1;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());

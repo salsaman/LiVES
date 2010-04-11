@@ -5,12 +5,14 @@ Improved a/v sync.
 Complete the implementation of the new transport.
 Swap ctrl-page-up, ctrl-page-down in multitrack.
 Multitrack/mixer GUI improvements.
-Integrate code from GTK+ Instumentation Widgets
-Fix posible crash in rendered effect previews. *
+Add some widgets from GTK+ Instumentation Widgets
+Fix possible crash in rendered effect previews. *
 Show file close warnings for files not used in layouts (regression) *
-Properly unload decoder plugins on shutdown.
+Properly unload decoder plugins on shutdown. *
+Playback video during "record external audio to selection". (in progress)
+	
 
-
+* backported to 1.0.10
 
 
 

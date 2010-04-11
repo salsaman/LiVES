@@ -1768,7 +1768,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     radiobutton=gtk_radio_button_new(rbgroup);
     rbgroup = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
 
-    gtk_box_pack_start (GTK_BOX (hbox2), radiobutton, FALSE, FALSE, 10);
+    if (type!=6&&type!=7) gtk_box_pack_start (GTK_BOX (hbox2), radiobutton, FALSE, FALSE, 10);
 
     label=gtk_label_new_with_mnemonic ( _("Record for maximum:  "));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
@@ -1829,6 +1829,8 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     resaudw->unlim_radiobutton=gtk_radio_button_new(rbgroup);
     rbgroup = gtk_radio_button_get_group (GTK_RADIO_BUTTON (resaudw->unlim_radiobutton));
 
+
+    
     gtk_box_pack_start (GTK_BOX (hbox2), resaudw->unlim_radiobutton, FALSE, FALSE, 10);
 
     label=gtk_label_new_with_mnemonic ( _("Unlimited"));
@@ -1846,7 +1848,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     }
     gtk_box_pack_start (GTK_BOX (hbox2), eventbox, FALSE, FALSE, 10);
 
-    gtk_widget_show_all (hbox2);
+    if (type!=6&&type!=7) gtk_widget_show_all (hbox2);
 
     g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
                       G_CALLBACK (on_rb_audrec_time_toggled),

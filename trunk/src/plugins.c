@@ -1738,6 +1738,7 @@ const lives_clip_data_t *get_decoder_plugin(file *sfile) {
       ((_decoder_plugin *)(sfile->ext_src))->interlace=cdata->interlace;
 
       msg=g_strdup_printf(" :: using decoder plugin %s",((_decoder_plugin *)(sfile->ext_src))->name);
+
       d_print(msg);
       g_free(msg);
 

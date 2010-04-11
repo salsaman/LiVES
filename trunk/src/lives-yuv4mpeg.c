@@ -529,6 +529,14 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
 
   gint response;
 
+  gint width=0,height=0;
+
+  gboolean advanced=FALSE;
+
+  gdouble fps=0.;
+
+  gchar *driver=NULL,*outfmt=NULL;
+
   gchar *com,*tmp;
   gchar *fifofile=g_strdup_printf("%s/tvpic.%d",prefs->tmpdir,getpid());
 
@@ -586,7 +594,13 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   unlink(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
-  com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s",cfile->handle,chanstr,devstr,fifofile);
+  if (!advanced) {
+    com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s",cfile->handle,chanstr,devstr,fifofile);
+  }
+  else {
+    com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s %d %d %.8f %s %s",cfile->handle,chanstr,devstr,fifofile,width,height,fps,driver,outfmt);
+  }
+
   dummyvar=system(com);
   g_free(com);
 

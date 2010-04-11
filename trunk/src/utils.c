@@ -298,7 +298,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
     // check if audio stopped playback
 #ifdef RT_AUDIO
-    if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
+    if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0&&sfile->frames>0) {
       if (!check_for_audio_stop(fileno,first_frame,last_frame)) {
 	mainw->cancelled=CANCEL_AUD_END;
 	return 0;
@@ -307,9 +307,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 #endif
   }
   
-
-
-
+  if (sfile->frames==0) return 0;
 
   // get our frame back to within bounds
   
@@ -1609,13 +1607,13 @@ find_when_to_stop (void) {
   // a>v    stop on video end    stop on audio end           no stop
   // v>a    stop on video end    stop on video end           no stop
   // generator start - not playing : stop on vid_end, unless pure audio;
-  if (cfile->clip_type==CLIP_TYPE_GENERATOR) mainw->whentostop=STOP_ON_VID_END;
-  else if (mainw->multitrack!=NULL) mainw->whentostop=STOP_ON_VID_END;
+  if (cfile->clip_type==CLIP_TYPE_GENERATOR||mainw->aud_rec_fd!=-1) mainw->whentostop=STOP_ON_VID_END;
+  else if (mainw->multitrack!=NULL&&cfile->frames>0) mainw->whentostop=STOP_ON_VID_END;
   else if (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE) mainw->whentostop=NEVER_STOP;
   else if (cfile->opening_only_audio) mainw->whentostop=STOP_ON_AUD_END;
   else if (cfile->opening_audio) mainw->whentostop=STOP_ON_VID_END;
   else if (mainw->loop_cont&&!mainw->preview) mainw->whentostop=NEVER_STOP;
-  else if (mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)<MAX (cfile->laudio_time,cfile->raudio_time)) mainw->whentostop=STOP_ON_AUD_END;
+  else if (cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)<MAX (cfile->laudio_time,cfile->raudio_time))) mainw->whentostop=STOP_ON_AUD_END;
   else mainw->whentostop=STOP_ON_VID_END; // tada...
 }
 
@@ -1928,10 +1926,10 @@ prepare_to_play_foreign(void) {
     cfile->asampsize=mainw->rec_asamps;
     cfile->signed_endian=mainw->rec_signed_endian;
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read==NULL) pulse_rec_audio_to_clip(mainw->current_file,TRUE);
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read==NULL) pulse_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
 #endif
 #ifdef ENABLE_JACK
-    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) jack_rec_audio_to_clip(mainw->current_file,TRUE);
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) jack_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
 #endif
   }
 

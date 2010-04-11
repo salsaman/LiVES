@@ -1665,7 +1665,7 @@ void play_file (void) {
 
     if (audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      if (mainw->jackd!=NULL) {
+      if (mainw->jackd!=NULL&&mainw->aud_rec_fd==-1) {
 	mainw->jackd->is_paused=FALSE;
 	mainw->jackd->mute=mainw->mute;
 	if (mainw->loop_cont&&!mainw->preview) {
@@ -1704,7 +1704,7 @@ void play_file (void) {
     }
     else if (audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      if (mainw->pulsed!=NULL) {
+      if (mainw->pulsed!=NULL&&mainw->aud_rec_fd==-1) {
 	mainw->pulsed->is_paused=FALSE;
 	mainw->pulsed->mute=mainw->mute;
 	if (mainw->loop_cont&&!mainw->preview) {
@@ -3777,9 +3777,9 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (load_frame_index(mainw->current_file)) {
 	gboolean next=FALSE;
 	while (1) {
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  if ((cdata=get_decoder_plugin(cfile))==NULL) {
 	    if (mainw->error) {
-	      pthread_mutex_lock(&mainw->gtk_mutex);
 	      if (do_original_lost_warning(cfile->file_name)) {
 		
 		// TODO ** - show layout errors
@@ -3789,13 +3789,11 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	      }
 	    }
 	    else {
-	      pthread_mutex_lock(&mainw->gtk_mutex);
 	      do_no_decoder_error(cfile->file_name);
 	    }
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
-	    
 	    next=TRUE;
 	  }
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	  break;
 	}
 	if (next) {

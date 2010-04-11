@@ -114,9 +114,9 @@ void pulse_close_client(pulse_driver_t *); //
 
 void pulse_shutdown(void); // shudown server, mainloop, context
 
-void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data);
+void pulse_flush_read_data(pulse_driver_t *, size_t rbytes, void *data);
 
-
+void pulse_driver_uncork(pulse_driver_t *);
 
 // utils
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); // pull last msg from msgq, or return NULL

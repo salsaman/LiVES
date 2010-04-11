@@ -485,7 +485,7 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
 
   int swap_sign=afile->signed_endian&AFORM_UNSIGNED;
 
-  if (prb==0) return;
+  if (prb==0||mainw->rec_samples==0) return;
 
   gbuf=(short *)g_malloc(prb);
 
@@ -507,8 +507,6 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
     sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,pulsed->in_achans,swap_sign?SWAP_S_TO_U:0);
   }
     
-  pulsed->frames_written+=frames_out;
-
   g_free(gbuf);
   prb=0;
 
@@ -527,21 +525,29 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
 
 static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // read nframes from pulse buffer, and then write to mainw->aud_rec_fd
+
+  // this is the callback from pulse when we are recording
+
   pulse_driver_t* pulsed = (pulse_driver_t*)arg;
   float out_scale=(float)pulsed->in_arate/(float)afile->arate;
   size_t frames_out;
   void *data;
-  size_t rbytes;
-
+  size_t rbytes=nbytes;
+  
   if (mainw->effects_paused) return; // pause during record
 
   pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
+
+  if (data==NULL) return;
 
   prb+=rbytes;
 
   frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
   
-  if (prb<PULSE_READ_BYTES&&frames_out<mainw->rec_samples) {
+  // should really be frames_read here
+  pulsed->frames_written+=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
+
+  if (prb<PULSE_READ_BYTES&&(mainw->rec_samples==-1||frames_out<mainw->rec_samples)) {
     // buffer until we have enough
     w_memcpy(&prbuf[prb-rbytes],data,rbytes);
     pa_stream_drop(pulsed->pstream);
@@ -692,9 +698,16 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   if (G_BYTE_ORDER==G_BIG_ENDIAN) pdriver->out_endian=AFORM_BIG_ENDIAN;
   else pdriver->out_endian=AFORM_LITTLE_ENDIAN;
 
-  pa_battr.maxlength=LIVES_PA_BUFF_MAXLEN;
+  if (pdriver->is_output) {
+    pa_battr.maxlength=LIVES_PA_BUFF_MAXLEN;
+    pa_battr.tlength=LIVES_PA_BUFF_TARGET;
+  }
+  else {
+    pa_battr.maxlength=(uint32_t)-1;
+    pa_battr.tlength=(uint32_t)-1;
+  }
+
   pa_battr.minreq=(uint32_t)-1;
-  pa_battr.tlength=LIVES_PA_BUFF_TARGET;
   pa_battr.prebuf=0;
 
   if (pulse_server_rate==0) {
@@ -733,7 +746,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     // set read callback
     pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);
 
-    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,0);
+    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,PA_STREAM_START_CORKED);
 
     prb=0;
 
@@ -741,11 +754,18 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
       g_usleep(prefs->sleep_time);
     }
 
+    pdriver->audio_ticks=0;
+    pdriver->frames_written=0;
   }
 
   g_free(mypid);
 
   return 0;
+}
+
+
+void pulse_driver_uncork(pulse_driver_t *pdriver) {
+  pa_stream_cork(pdriver->pstream,0,NULL,NULL);
 }
 
 

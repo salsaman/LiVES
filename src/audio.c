@@ -7,6 +7,7 @@
 #include "main.h"
 #include "audio.h"
 #include "events.h"
+#include "callbacks.h"
 #include "effects-weed.h"
 #include "support.h"
 
@@ -711,7 +712,6 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   if (out_achans==0) return 0l;
 
-
   if (to_file>-1) {
     // prepare outfile stuff
     outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
@@ -1010,7 +1010,7 @@ inline void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, 
 
 
 #ifdef ENABLE_JACK
-void jack_rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
+void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   // open audio file for writing
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
@@ -1031,13 +1031,21 @@ void jack_rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
   jack_read_driver_activate(mainw->jackd_read);
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
-  if (is_window_grab) return;
+  if (rec_type==RECA_WINDOW_GRAB) return;
 
   mainw->cancelled=CANCEL_NONE;
   mainw->cancel_type=CANCEL_SOFT;
   // show countdown/stop dialog
+  mainw->suppress_dprint=FALSE;
   d_print(_("Recording audio..."));
-  do_auto_dialog(_("Recording audio"),1);
+  mainw->suppress_dprint=TRUE;
+  if (rec_type==RECA_NEW_CLIP) do_auto_dialog(_("Recording audio"),1);
+  else {
+    gint current_file=mainw->current_file;
+    mainw->current_file=old_file;
+    on_playsel_activate(NULL,NULL);
+    mainw->current_file=current_file;
+  }
   jack_rec_audio_end();
 }
 
@@ -1052,6 +1060,7 @@ void jack_rec_audio_end(void) {
 
   // close file
   close(mainw->aud_rec_fd);
+  mainw->aud_rec_fd=-1;
   mainw->cancel_type=CANCEL_KILL;
 }
 
@@ -1061,7 +1070,7 @@ void jack_rec_audio_end(void) {
 
 
 #ifdef HAVE_PULSE_AUDIO
-void pulse_rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
+void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   // open audio file for writing
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
@@ -1081,13 +1090,21 @@ void pulse_rec_audio_to_clip(gint fileno, gboolean is_window_grab) {
   pulse_driver_activate(mainw->pulsed_read);
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
-  if (is_window_grab) return;
+  if (rec_type==RECA_WINDOW_GRAB) return;
 
   mainw->cancelled=CANCEL_NONE;
   mainw->cancel_type=CANCEL_SOFT;
   // show countdown/stop dialog
+  mainw->suppress_dprint=FALSE;
   d_print(_("Recording audio..."));
-  do_auto_dialog(_("Recording audio"),1);
+  mainw->suppress_dprint=TRUE;
+  if (rec_type==RECA_NEW_CLIP) do_auto_dialog(_("Recording audio"),1);
+  else {
+    gint current_file=mainw->current_file;
+    mainw->current_file=old_file;
+    on_playsel_activate(NULL,NULL);
+    mainw->current_file=current_file;
+  }
   pulse_rec_audio_end();
 }
 
@@ -1105,6 +1122,7 @@ void pulse_rec_audio_end(void) {
 
   // close file
   close(mainw->aud_rec_fd);
+  mainw->aud_rec_fd=-1;
   mainw->cancel_type=CANCEL_KILL;
 }
 

@@ -424,17 +424,19 @@ gboolean process_one (gboolean visible) {
 #ifdef ENABLE_JACK
     if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
       if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-	mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
+	if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
+	else mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
 	time_source=LIVES_TIME_SOURCE_SOUNDCARD;
       }
     }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
+    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
       if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-      mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
-      time_source=LIVES_TIME_SOURCE_SOUNDCARD;
+	if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
+	else mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
+	time_source=LIVES_TIME_SOURCE_SOUNDCARD;
       }
     }
 #endif
@@ -445,7 +447,6 @@ gboolean process_one (gboolean visible) {
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
       time_source=LIVES_TIME_SOURCE_SYSTEM;
     }
-
 
     // adjust audio rate slightly if we are behind or ahead
     if (time_source!=LIVES_TIME_SOURCE_SOUNDCARD) {
@@ -827,6 +828,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
+
+  if (mainw->pulsed_read!=NULL) pulse_driver_uncork(mainw->pulsed_read);
+
   if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) {
     pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
     while (pulse_get_msgq(mainw->pulsed)!=NULL);
@@ -1047,11 +1051,10 @@ void do_auto_dialog (const gchar *text, gint type) {
     gtk_widget_show(proc_ptr->stop_button);
     //gtk_widget_show(proc_ptr->pause_button);
     gtk_widget_show(proc_ptr->cancel_button);
-    if (mainw->rec_end_time!=-1.) {
+    pulse_driver_uncork(mainw->pulsed_read);
+    if (mainw->rec_samples!=0) {
       while (g_main_context_iteration(NULL,FALSE));
-      gettimeofday(&tv, NULL);
-      time=tv.tv_sec*1000000.+tv.tv_usec; // time in microseconds
-      end_time=time+mainw->rec_end_time*1000000.;
+      g_usleep(prefs->sleep_time);
     }
   }
 

@@ -599,6 +599,9 @@ int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *p
 
 static int audio_read (nframes_t nframes, void *arg) {
   // read nframes from jack buffer, and then write to mainw->aud_rec_fd
+
+  // this is the jack callback for when we are recording audio
+
   jack_driver_t* jackd = (jack_driver_t*)arg;
   void *holding_buff;
   float *in_buffer[jackd->num_input_channels];
@@ -1135,6 +1138,8 @@ int jack_read_driver_activate (jack_driver_t *jackd) {
   jackd->in_use=FALSE;
 
   jackd->is_paused=FALSE;
+
+  jackd->audio_ticks=0;
 
   d_print(_("Started jack audio reader.\n"));
 

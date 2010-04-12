@@ -76,25 +76,28 @@ gboolean lives_pulse_init (short startup_phase) {
     pulse_shutdown();
 
     g_printerr("%s",_("\nUnable to connect to pulse audio server\n"));
-    if (startup_phase==0&&capable->has_sox) {
-      do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"));
-      switch_aud_to_sox();
-    }
-    else if (startup_phase==0&&capable->has_mplayer) {
-      do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to mplayer audio player.\nYou can change this in Preferences/Playback.\n"));
-      switch_aud_to_mplayer();
-    }
-    else {
-      msg=g_strdup(_("\nUnable to connect to pulse audio server.\n"));
-      if (startup_phase==0) {
-	do_error_dialog(msg);
+
+    if (!mainw->foreign) {
+      if (startup_phase==0&&capable->has_sox) {
+	do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"));
+	switch_aud_to_sox();
+      }
+      else if (startup_phase==0&&capable->has_mplayer) {
+	do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to mplayer audio player.\nYou can change this in Preferences/Playback.\n"));
+	switch_aud_to_mplayer();
       }
       else {
-	msg2=g_strdup_printf("%s%s",msg,_("LiVES will exit and you can choose another audio player.\n"));
-	do_blocking_error_dialog(msg2);
-	g_free(msg2);
+	msg=g_strdup(_("\nUnable to connect to pulse audio server.\n"));
+	if (startup_phase==0) {
+	  do_error_dialog(msg);
+	}
+	else {
+	  msg2=g_strdup_printf("%s%s",msg,_("LiVES will exit and you can choose another audio player.\n"));
+	  do_blocking_error_dialog(msg2);
+	  g_free(msg2);
+	}
+	g_free(msg);
       }
-      g_free(msg);
     }
     return FALSE;
   }

@@ -8225,7 +8225,7 @@ void on_capture2_activate(void) {
     if (mainw->files[i]==NULL) break;
     dummyvar=write(capture_fd,mainw->files[i]->handle,strlen(mainw->files[i]->handle));
     dummyvar=write(capture_fd,"|",1);
-    g_snprintf (buf,32,"%d",cfile->frameno+1);
+    g_snprintf (buf,32,"%d",cfile->frameno);
     dummyvar=write(capture_fd,buf,strlen (buf));
     dummyvar=write(capture_fd,"|",1);
   }

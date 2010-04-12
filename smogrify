@@ -2425,31 +2425,30 @@ if (defined($ARGV[0])) {
     if ($command eq "fill_and_redo_frames") {
 	# remove any gaps in the play images
 	unlink "$curtmpdir/pause";
-	$start=$ARGV[2];
-	$end=$ARGV[3];
-	$width=$ARGV[4];
-	$height=$ARGV[5];
-	$img_ext=".".$ARGV[6];
+	$end=$ARGV[2];
+	$width=$ARGV[3];
+	$height=$ARGV[4];
+	$img_ext=".".$ARGV[5];
 	$has_audio=0;
-	$fps=$ARGV[7];
-	$arate=$ARGV[8];
-	$achans=$ARGV[9];
-	$asamps=$ARGV[10];
-	$asigned=$ARGV[11];
-	$aendian=$ARGV[12];
+	$fps=$ARGV[6];
+	$arate=$ARGV[7];
+	$achans=$ARGV[8];
+	$asamps=$ARGV[9];
+	$asigned=$ARGV[10];
+	$aendian=$ARGV[11];
 
 	if ($achans>0) {
 	    $has_audio=1;
 	}
 
-	$new_frames=&fill_and_redo_frames;
+	&fill_and_redo_frames;
 	
 	if ($has_audio) {
-	    $aud_end=($new_frames/$fps)*$achans*$arate*($asamps/8);
+	    $aud_end=($end/$fps)*$achans*$arate*($asamps/8);
 	    $audio_in="$curtmpdir/audio";
 	    $audsize=-s $audio_in;
 	    if ($audsize > $aud_end) {
-		$audio_out=&clip_audio(0.,$new_frames/$fps);
+		$audio_out=&clip_audio(0.,$end/$fps);
 		unlink $audio_in;
 		rename $audio_out,$audio_in;
 	    }
@@ -2462,7 +2461,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 
-	&sig_complete($new_frames,$hsize,$vsize,$bpp);
+	&sig_complete;
 	exit 0;
     }
 
@@ -4499,24 +4498,10 @@ sub get_image_size {
 
 
 sub fill_and_redo_frames {
-    # starting at start and ending at end, we will remove any gaps in image files
-    # we return the last repacked frame number
-
-    # if pre_cut_frames is defined, we will cut that many frames from start first
-    if (defined($pre_cut_frames)) {
-	for ($i=$start;$i<$start+$pre_cut_frames;$i++) {
-	    $name=&mkname($i);
-	    unlink "$name$img_ext";
-	}
-    }
-    $hsize=$vsize=$bpp=0;
-    $oldnext=-1;
+    # resample and fill gaps in frames
 
     my $conv_command=$convert_command;
-
-    $missing=0;
-    $lastframe=0;
-    $imresact="none";
+    my $next=0;
 
     chdir $curtmpdir;
 
@@ -4524,51 +4509,47 @@ sub fill_and_redo_frames {
 	$conv_command.=" -alpha On";
     }
     
-    for ($i=$start;$i+$pre_cut_frames+$missing<=$end;$i++) {
+    for ($i=1;$i<=$end;$i++) {
 	$name=&mkname($i);
-	$found=0;
 
-	while ($found==0&&$i+$pre_cut_frames+$missing<=$end) {
+	if ($next<$i&&$next>-1) {
+	    $last=$next;
+	    $next=&get_next_frame;
+	}
+	if ($last>0&&($i-$last)<($next-$i)) {
+	    $fromname=&mkname($last);
+	}
+	else {
+	    $fromname=&mkname($next);
+	}
 
-	    $next=$i+$pre_cut_frames+$missing;
-	    $nextname=&mkname($next);
-
-	    if (-f "$nextname$img_ext") {
-		$lastframe=$i;
-		$found=1;
-
-		# clip the bottom row
-		unless ($next==$oldnext) {
-		    system("$conv_command -crop $width" . "!x" . $height . "! $nextname$img_ext $nextname.mgk >/dev/null 2>&1");
-		    unlink "$nextname$img_ext";
-		    rename "$nextname.mgk","$nextname$img_ext";
-		    $oldnext=$next;
-		}
-		unless ($next==$i) {
-		    system("cp $nextname$img_ext $name$img_ext");
-		}
-		if ($missing>0) {
-		    $missing--;
-		}
-	    }
-	    else {
-		# frame not found - try the next one
-		$missing++;
-	    }
+	unless ($fromname eq $name) {
+	    system("/bin/cp $fromname$img_ext $name$img_ext");
 	}
 	&sig_progress($i);
     }
-    
-    for ($i=$end-$pre_cut_frames+1;$i<=$end;$i++) {
-	$name=&mkname($i);
-	unlink "$name$img_ext";
-    }
 
-    $file=&mkname(1);
-    $file.=$img_ext;
-    &get_image_size($file);
-    return $lastframe;
 }
+
+
+sub get_next_frame {
+    my $j;
+    my $xname;
+
+    for ($j=$i;$j<=$end;$j++) {
+	$xname=&mkname($j);
+	if (-f "$xname$img_ext") {
+	    # found next frame, resize it
+	    system("$convert_command -crop $width" . "!x" . $height . "! $xname$img_ext $xname.mgk >/dev/null 2>&1");
+	    unlink "$xname$img_ext";
+	    rename "$xname.mgk","$xname$img_ext";
+	    return $j;
+	}
+    }
+    # no next frame found
+    return -1;
+}
+
 
 
 

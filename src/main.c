@@ -3783,6 +3783,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	}
       } while (gerror!=NULL); // TODO ** - check for disk space error
       gdk_pixbuf_unref(pixbuf);
+      cfile->frames=frame;
     }
     else {
       do_error_dialog(_ ("LiVES was unable to capture this image\n\n"));

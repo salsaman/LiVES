@@ -266,7 +266,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
   nframe=cframe+(gint)((gdouble)dtc/U_SEC*fps+(fps>0?.5:-.5));
 
-  if (nframe==cframe) return nframe;
+  if (nframe==cframe||mainw->foreign) return nframe;
 
   if (mainw->playing_file==fileno) {
     last_frame=(mainw->playing_sel&&!mainw->is_rendering)?sfile->end:mainw->play_end;
@@ -1926,7 +1926,11 @@ prepare_to_play_foreign(void) {
     cfile->asampsize=mainw->rec_asamps;
     cfile->signed_endian=mainw->rec_signed_endian;
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read==NULL) pulse_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read==NULL) {
+      lives_pulse_init(0);
+      pulse_audio_read_init();
+      pulse_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
+    }
 #endif
 #ifdef ENABLE_JACK
     if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) jack_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
@@ -1992,7 +1996,7 @@ after_foreign_play(void) {
   gchar *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,getpid());
   gchar capbuf[256];
   ssize_t length;
-  gint new_file;
+  gint new_file=-1;
   gint new_frames=0;
   gint old_file=mainw->current_file;
 
@@ -2007,80 +2011,63 @@ after_foreign_play(void) {
       if (get_token_count (capbuf,'|')>2) {
 	array=g_strsplit(capbuf,"|",3);
 	new_frames=atoi(array[1]);
-	new_file=mainw->first_free_file;
-	mainw->current_file=new_file;
-	cfile=(file *)(g_malloc(sizeof(file)));
-	g_snprintf(cfile->handle,255,"%s",array[0]);
-	g_strfreev(array);
-	create_cfile();
-	g_snprintf(cfile->file_name,256,"Capture %d",mainw->cap_number);
-	g_snprintf(cfile->name,256,"Capture %d",mainw->cap_number++);
-	g_snprintf(cfile->type,40,"Frames");
-	cfile->progress_start=cfile->start=1;
-	cfile->progress_end=cfile->frames=cfile->end=new_frames;
-	cfile->pb_fps=cfile->fps=mainw->rec_fps;
 
-	if (mainw->rec_achans>0) {
-	  cfile->arate=cfile->arps=mainw->rec_arate;
-	  cfile->achans=mainw->rec_achans;
-	  cfile->asampsize=mainw->rec_asamps;
-	  cfile->signed_endian=mainw->rec_signed_endian;
-	}
-
-	g_snprintf(file_name,256,"%s/%s/",prefs->tmpdir,cfile->handle);
-	
-	com=g_strdup_printf("smogrify fill_and_redo_frames %s %d %d %d %d %s %.4f %d %d %d %d %d",cfile->handle,1,cfile->frames,mainw->foreign_width,mainw->foreign_height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
-	unlink(cfile->info_file);
-	dummyvar=system(com);
-	cfile->nopreview=TRUE;
-	if (do_progress_dialog(TRUE,TRUE,_ ("Cleaning up clip"))) {
-	  array=g_strsplit(mainw->msg,"|",5);
-	  new_frames=atoi(array[1]);
-	  cfile->hsize=atoi(array[2]);
-	  cfile->vsize=atoi(array[3]);
-	  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
+	if (new_frames>0) {
+	  new_file=mainw->first_free_file;
+	  mainw->current_file=new_file;
+	  cfile=(file *)(g_malloc(sizeof(file)));
+	  g_snprintf(cfile->handle,255,"%s",array[0]);
 	  g_strfreev(array);
+	  create_cfile();
+	  g_snprintf(cfile->file_name,256,"Capture %d",mainw->cap_number);
+	  g_snprintf(cfile->name,256,"Capture %d",mainw->cap_number++);
+	  g_snprintf(cfile->type,40,"Frames");
+
+	  cfile->progress_start=cfile->start=1;
+	  cfile->progress_end=cfile->frames=cfile->end=new_frames;
+	  cfile->pb_fps=cfile->fps=mainw->rec_fps;
+
+	  cfile->hsize=mainw->foreign_width;
+	  cfile->vsize=mainw->foreign_height;
 	  
-	  if (new_frames>0) {
-	    cfile->start=1;
-	    cfile->end=cfile->frames=new_frames;
+	  if (mainw->rec_achans>0) {
+	    cfile->arate=cfile->arps=mainw->rec_arate;
+	    cfile->achans=mainw->rec_achans;
+	    cfile->asampsize=mainw->rec_asamps;
+	    cfile->signed_endian=mainw->rec_signed_endian;
+	  }
+	  
+	  g_snprintf(file_name,256,"%s/%s/",prefs->tmpdir,cfile->handle);
+	  
+	  com=g_strdup_printf("smogrify fill_and_redo_frames %s %d %d %d %s %.4f %d %d %d %d %d",cfile->handle,cfile->frames,mainw->foreign_width,mainw->foreign_height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
+	  unlink(cfile->info_file);
+	  dummyvar=system(com);
+	  cfile->nopreview=TRUE;
+	  if (do_progress_dialog(TRUE,TRUE,_ ("Cleaning up clip"))) {
 	    get_next_free_file();
 	  }
 	  else {
-	    // failed cleanup
-	    cfile->frames=cfile->start=cfile->end=new_frames=0;
+	    // cancelled cleanup
+	    new_frames=0;
+	    close_current_file(old_file);
 	  }
+	  g_free(com);
 	}
-	else {
-	  // cancelled cleanup
-	  cfile->frames=cfile->start=cfile->end=new_frames=0;
-	}
-	g_free(com);
+	else g_strfreev(array);
       }
+      close(capture_fd);
+      unlink(capfile);
     }
-    close(capture_fd);
-    unlink(capfile);
   }
-  else {
-    // nothing captured
-    g_free(capfile);
-    if (mainw->current_file>0) {
-      switch_to_file (old_file,old_file);
-      cfile->nopreview=FALSE;
-    }
-    else {
-      close_current_file(old_file);
-    }
-    return FALSE;
-  }
-  cfile->nopreview=FALSE;
-  g_free(capfile);
 
   if (new_frames==0) {
-    // failed to get any frames from this clip
-    close_current_file(old_file);
+    // nothing captured; or cancelled
+    g_free(capfile);
     return FALSE;
   }
+
+  cfile->nopreview=FALSE;
+  g_free(capfile);
 
   add_to_winmenu();
   if (mainw->multitrack==NULL) switch_to_file(old_file,mainw->current_file);

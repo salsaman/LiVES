@@ -7809,7 +7809,7 @@ on_slower_pressed (GtkButton *button,
     change=0.1;
   }
 
-  if (mainw->playing_file==-1||mainw->internal_messaging) return;
+  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
 
   if (mainw->rte_keys!=-1&&user_data==NULL) {
     mainw->blend_factor-=(mainw->blend_factor>0.);
@@ -7857,7 +7857,7 @@ on_faster_pressed (GtkButton *button,
     change=0.1;
   }
 
-  if (mainw->playing_file==-1||mainw->internal_messaging) return;
+  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
 
   if (mainw->rte_keys!=-1&&user_data==NULL) {
     mainw->blend_factor+=(mainw->blend_factor<255.);
@@ -7899,7 +7899,7 @@ void
 on_back_pressed (GtkButton *button,
 		   gpointer user_data)
 {
-  if (mainw->playing_file==-1||mainw->internal_messaging) return;
+  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
 
@@ -7912,7 +7912,7 @@ void
 on_forward_pressed (GtkButton *button,
 		   gpointer user_data)
 {
-  if (mainw->playing_file==-1||mainw->internal_messaging) return;
+  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
 
@@ -7923,7 +7923,7 @@ on_forward_pressed (GtkButton *button,
 
 
 gboolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
-  if (mainw->playing_file==-1) return TRUE;
+  if (mainw->playing_file==-1||(mainw->is_processing&&cfile->is_loaded)) return TRUE;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return TRUE;
 
   if (group!=NULL) mainw->rte_keys=-1;
@@ -7999,7 +7999,7 @@ gboolean storeclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
     mainw->clipstore[clip]=mainw->current_file;
   }
   else {
-  if (mainw->current_file<1||mainw->preview||(mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return TRUE;
+  if (mainw->current_file<1||mainw->preview||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return TRUE;
     if (mainw->playing_file==-1) {
       if (!cfile->is_loaded) mainw->cancelled=CANCEL_NO_PROPOGATE;
       switch_to_file (mainw->current_file,mainw->clipstore[clip]);
@@ -8994,6 +8994,8 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
     aendian=0;
   }
 
+  mainw->is_processing=TRUE;
+
   cfile->signed_endian=get_signed_endian(asigned,aendian);
   gtk_widget_destroy (resaudw->dialog);
   while (g_main_context_iteration(NULL,FALSE));
@@ -9002,12 +9004,14 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 
   if (cfile->arate<=0) {
     do_audrate_error_dialog();
+    mainw->is_processing=FALSE;
     close_current_file(old_file);
     return;
   }
 
   if (mainw->rec_end_time==0.) {
     do_error_dialog(_("\nRecord time must be greater than 0.\n"));
+    mainw->is_processing=FALSE;
     close_current_file(old_file);
     return;
   }
@@ -9070,6 +9074,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
       mainw->files[old_file]->asampsize=oasamps;
       mainw->files[old_file]->signed_endian=ose;
     }
+    mainw->is_processing=FALSE;
     close_current_file(old_file);
     mainw->suppress_dprint=FALSE;
     d_print_cancelled();
@@ -9127,6 +9132,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
     has_lmap_error_recsel=FALSE;
     popup_lmap_errors(NULL,NULL);
   }
+  mainw->is_processing=FALSE;
 
 #endif
 }

@@ -141,10 +141,10 @@ rfx_build_window_t *make_rfx_build_window (gchar *script_name, gshort status) {
     gtk_dialog_set_has_separator(GTK_DIALOG(rfxbuilder->dialog),FALSE);
   }
 
-  gtk_container_set_border_width (GTK_CONTAINER (rfxbuilder->dialog), 10);
+  gtk_container_set_border_width (GTK_CONTAINER (rfxbuilder->dialog), 8);
 
   dialog_vbox = GTK_DIALOG (rfxbuilder->dialog)->vbox;
-  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
+  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 8);
   gtk_widget_show (dialog_vbox);
 
   // types
@@ -485,6 +485,10 @@ rfx_build_window_t *make_rfx_build_window (gchar *script_name, gshort status) {
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (rfxbuilder->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", mainw->accel_group,
+                              GDK_Escape, 0, 0);
+
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);

@@ -782,7 +782,7 @@ gboolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
 gboolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   gint old_file=mainw->current_file;
 
-  if (mainw->playing_file<0||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||mainw->blend_file==mainw->current_file||mainw->files[mainw->blend_file]==NULL||mainw->preview||mainw->noswitch) {
+  if (mainw->playing_file<1||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||mainw->blend_file==mainw->current_file||mainw->files[mainw->blend_file]==NULL||mainw->preview||mainw->noswitch||(mainw->is_processing&&cfile->is_loaded)) {
     return TRUE;
   }
 

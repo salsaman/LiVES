@@ -744,18 +744,18 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   }
   else {
     // set read callback
+    pdriver->audio_ticks=0;
+    pdriver->frames_written=0;
+    prb=0;
+
     pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);
 
-    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,PA_STREAM_START_CORKED);
-
-    prb=0;
+    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,PA_STREAM_START_CORKED|PA_STREAM_EARLY_REQUESTS);
 
     while (pa_stream_get_state(pdriver->pstream)!=PA_STREAM_READY) {
       g_usleep(prefs->sleep_time);
     }
 
-    pdriver->audio_ticks=0;
-    pdriver->frames_written=0;
   }
 
   g_free(mypid);
@@ -798,7 +798,7 @@ gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
   frames_written=pulsed->frames_written;
   if (frames_written<0.) frames_written=0.;
   if (pulsed->is_output) return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
-  return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)pulsed->in_arate*U_SEC);
+  return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)afile->arate*U_SEC);
 
 }
 

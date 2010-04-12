@@ -1039,7 +1039,9 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   mainw->suppress_dprint=FALSE;
   d_print(_("Recording audio..."));
   mainw->suppress_dprint=TRUE;
-  if (rec_type==RECA_NEW_CLIP) do_auto_dialog(_("Recording audio"),1);
+  if (rec_type==RECA_NEW_CLIP) {
+    do_auto_dialog(_("Recording audio"),1);
+  }
   else {
     gint current_file=mainw->current_file;
     mainw->current_file=old_file;
@@ -1114,9 +1116,11 @@ void pulse_rec_audio_end(void) {
   // recording ended
 
   // stop recording
-  pulse_close_client(mainw->pulsed_read);
 
+  pa_threaded_mainloop_lock(mainw->pulsed->mloop);
   pulse_flush_read_data(mainw->pulsed_read,0,NULL);
+  pulse_close_client(mainw->pulsed_read);
+  pa_threaded_mainloop_unlock(mainw->pulsed->mloop);
 
   mainw->pulsed_read=NULL;
 

@@ -1051,7 +1051,9 @@ void do_auto_dialog (const gchar *text, gint type) {
     gtk_widget_show(proc_ptr->stop_button);
     //gtk_widget_show(proc_ptr->pause_button);
     gtk_widget_show(proc_ptr->cancel_button);
-    pulse_driver_uncork(mainw->pulsed_read);
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed_read!=NULL) pulse_driver_uncork(mainw->pulsed_read);
+#endif
     if (mainw->rec_samples!=0) {
       while (g_main_context_iteration(NULL,FALSE));
       g_usleep(prefs->sleep_time);

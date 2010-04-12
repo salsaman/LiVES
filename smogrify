@@ -4501,7 +4501,7 @@ sub fill_and_redo_frames {
     # resample and fill gaps in frames
 
     my $conv_command=$convert_command;
-    my $next=0;
+    my $next=iiiiiiiii0;
 
     chdir $curtmpdir;
 

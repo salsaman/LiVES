@@ -9,7 +9,8 @@ Add some widgets from GTK+ Instumentation Widgets
 Fix possible crash in rendered effect previews. *
 Show file close warnings for files not used in layouts (regression) *
 Properly unload decoder plugins on shutdown. *
-Playback video during "record external audio to selection". (in progress)
+Playback video during "record external audio to selection".
+Smoother resampling for external window capture.
 	
 
 * backported to 1.0.10

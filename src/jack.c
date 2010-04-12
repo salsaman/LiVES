@@ -612,7 +612,9 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   if (mainw->effects_paused) return 0; // pause during record
 
-  frames_out=(long)((gdouble)nframes/out_scale+.5);
+  if (mainw->rec_samples==0) return 0; // wrote enough already, return until main thread stop
+
+  frames_out=(long)((gdouble)nframes/out_scale+1.);
 
   holding_buff=malloc(frames_out*afile->achans*afile->asampsize/8);
 

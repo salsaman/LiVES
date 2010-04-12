@@ -3763,8 +3763,16 @@ void load_frame_image(gint frame, gint last_frame) {
     gchar *tmp;
 
     if (mainw->rec_vid_frames==-1) gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
-    else gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
-    g_free(tmp);
+    else {
+      if (frame>mainw->rec_vid_frames) {
+	mainw->cancelled=CANCEL_KEEP;
+	if (cfile->frames>0) cfile->frames=mainw->rec_vid_frames;
+	return;
+      }
+
+      gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
+      g_free(tmp);
+    }
 
     if ((pixbuf=gdk_pixbuf_get_from_drawable (NULL,GDK_DRAWABLE(mainw->foreign_map),mainw->foreign_cmap,0,0,0,0,mainw->playarea->allocation.width,mainw->playarea->allocation.height))!=NULL) {
       gchar fname[256];
@@ -3789,6 +3797,9 @@ void load_frame_image(gint frame, gint last_frame) {
       do_error_dialog(_ ("LiVES was unable to capture this image\n\n"));
       mainw->cancelled=CANCEL_CAPTURE_ERROR;
     }
+
+    if (frame==mainw->rec_vid_frames) mainw->cancelled=CANCEL_KEEP;
+
   }
   if (framecount!=NULL) g_free(framecount);
 }

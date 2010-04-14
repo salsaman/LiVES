@@ -1742,6 +1742,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     resaudw->fps_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
     gtk_widget_show (resaudw->fps_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox25), resaudw->fps_spinbutton, FALSE, FALSE, 20);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (resaudw->fps_spinbutton)->entry)), TRUE);
 
     label93 = gtk_label_new (_("Video"));
     gtk_widget_show (label93);
@@ -1791,6 +1792,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     resaudw->hour_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
     gtk_widget_show (resaudw->hour_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox), resaudw->hour_spinbutton, TRUE, TRUE, 0);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (resaudw->hour_spinbutton)->entry)), TRUE);
     
     label=gtk_label_new(_(" hours  "));
     gtk_widget_show(label);
@@ -1803,6 +1805,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     resaudw->minute_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
     gtk_widget_show (resaudw->minute_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox), resaudw->minute_spinbutton, TRUE, TRUE, 0);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (resaudw->minute_spinbutton)->entry)), TRUE);
 
     label=gtk_label_new(_(" minutes  "));
     gtk_widget_show(label);
@@ -1815,6 +1818,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     resaudw->second_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 2);
     gtk_widget_show (resaudw->second_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox), resaudw->second_spinbutton, TRUE, TRUE, 0);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (resaudw->second_spinbutton)->entry)), TRUE);
 
     label=gtk_label_new(_(" seconds  "));
     gtk_widget_show(label);
@@ -1823,8 +1827,12 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
 
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_widget_show (hbox);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
+
     hbox2 = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox2, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 10);
 
     resaudw->unlim_radiobutton=gtk_radio_button_new(rbgroup);
     rbgroup = gtk_radio_button_get_group (GTK_RADIO_BUTTON (resaudw->unlim_radiobutton));
@@ -1881,6 +1889,10 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_dialog_add_action_widget (GTK_DIALOG (resaudw->dialog), cancelbutton13, GTK_RESPONSE_CANCEL);
     GTK_WIDGET_SET_FLAGS (cancelbutton13, GTK_CAN_DEFAULT);
     
+    gtk_widget_add_accelerator (cancelbutton13, "activate", mainw->accel_group,
+				GDK_Escape, 0, 0);
+    
+      
     okbutton12 = gtk_button_new_from_stock ("gtk-ok");
     gtk_widget_show (okbutton12);
     gtk_dialog_add_action_widget (GTK_DIALOG (resaudw->dialog), okbutton12, GTK_RESPONSE_OK);
@@ -1891,7 +1903,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
       g_signal_connect (GTK_OBJECT (cancelbutton13), "clicked",
 			G_CALLBACK (on_cancel_button1_clicked),
 			resaudw);
-      
+
       if (type==1) {
 	g_signal_connect (GTK_OBJECT (okbutton12), "clicked",
 			  G_CALLBACK (on_resaudio_ok_clicked),

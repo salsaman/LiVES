@@ -8067,7 +8067,8 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     resaudw=create_resaudw(9,NULL,NULL);
   }
   response=gtk_dialog_run (GTK_DIALOG (resaudw->dialog));
-  if (response==GTK_RESPONSE_CANCEL) {
+  
+  if (response!=GTK_RESPONSE_OK) {
     gtk_widget_destroy (resaudw->dialog);
 
     if (mainw->multitrack!=NULL) {
@@ -8179,6 +8180,8 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   // force the dialog to disappear
   while (g_main_context_iteration(NULL,FALSE));
+
+  g_print("com is %s\n",com);
 
   dummyvar=system(com);
 

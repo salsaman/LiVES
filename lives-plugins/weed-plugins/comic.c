@@ -28,20 +28,16 @@ static int package_version=1; // version of this package
 /////////////////////////////////////////////////////////////
 
 static uint32_t sqrti (uint32_t n) {
-  register uint32_t root, remainder, place;
+  register uint32_t root=0, remainder=n, place=0x40000000, tmp;
 
-  root = 0;
-  remainder = n;
-  place = 0x40000000;
-
-  while (place > remainder) place = place >> 2;
+  while (place > remainder) place>>=2;
   while (place) {
-    if (remainder >= root + place) {
-      remainder = remainder - root - place;
-      root = root + (place << 1);
+    if (remainder >= (tmp=(root + place))) {
+      remainder -= tmp;
+      root+=(place << 1);
     }
-    root = root >> 1;
-    place = place >> 2;
+    root>>=1;
+    place>>=2;
   }
   return root;
 }
@@ -63,7 +59,7 @@ static void cp_chroma (unsigned char *dst, unsigned char *src, int irowstride, i
   
 
 
-int comic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+static int comic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
   uint8_t **srcp=(uint8_t **)weed_get_voidptr_array(in_channel,"pixel_data",&error);
@@ -75,7 +71,7 @@ int comic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int palette=weed_get_int_value(in_channel,"current_palette",&error);
   int clamping=weed_get_int_value(in_channel,"YUV_clamping",&error);
   int irowstride,orowstride;
-  unsigned char *src,*dst,*end;
+  uint8_t *src,*dst,*end;
   int row0,row1,sum,scale=384,mix=192;
   int yinv,ymin,ymax,nplanes;
   register int i;
@@ -87,13 +83,16 @@ int comic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   irowstride=irowstrides[0];
   orowstride=orowstrides[0];
 
+  // skip top scanline
   weed_memcpy(dst,src,width);
 
   src+=irowstride;
   dst+=orowstride;
 
+  // calc end
   end=src+(height-2)*irowstride;
 
+  // dst remainder after copying width
   orowstride-=width;
 
   if (clamping==WEED_YUV_CLAMPING_UNCLAMPED) {
@@ -107,38 +106,48 @@ int comic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     ymax=235;
   }
 
+  // skip rightmost pixel
   width--;
 
+  // process each row
   for (;src<end;src+=(irowstride-width-1)) {
 
+    // skip leftmost pixel
     *(dst++)=*src;
     src++;
 
+    // process all pixels except leftmost and rightmost
     for (i=1;i<width;i++) {
 
       // do edge detect and convolve
       row0=( *(src+irowstride-1) - *(src-irowstride-1) ) + ( ( *(src+irowstride) - *(src-irowstride) ) << 1 ) + ( *(src+irowstride+1) - *(src+irowstride-1) );
       row1=( *(src-irowstride+1) - *(src-irowstride-1) ) + ( ( *(src+1) - *(src-1) ) << 1) + ( *(src+irowstride+1) + *(src+irowstride-1) );
       
-      sum= ( ( 3 * sqrti( row0 * row0 * row1 *row1 ) / 2 ) * scale ) >>8;
+      sum= ( ( 3 * sqrti( row0 * row0 + row1 *row1 ) / 2 ) * scale ) >>8;
 
       // clamp and invert
-      sum=yinv-sum<ymin?ymin:sum>ymax?ymax:sum;
+      sum=yinv-(sum<ymin?ymin:sum>ymax?ymax:sum);
 
       // mix 25% effected with 75% original
-      sum=((256-mix)*sum+mix*(*src));
+      sum=((256-mix)*sum+mix*(*src))>>8;
 
-      *(dst++)=(unsigned char)sum;
+      *(dst++)=(uint8_t)(sum=(sum<ymin?ymin:sum>ymax?ymax:sum));
       src++;
     }
+
+    // skip rightmost pixel
     *(dst++)=*src;
     src++;
+
+    // dst to next row
     dst+=orowstride;
   }
 
   width++;
 
+  // copy bottom row
   weed_memcpy(dst,src,width);
+
 
   if (palette==WEED_PALETTE_YUV420P||palette==WEED_PALETTE_YVU420P) height>>=1;
   if (palette==WEED_PALETTE_YUV420P||palette==WEED_PALETTE_YVU420P||palette==WEED_PALETTE_YUV422P) width>>=1;
@@ -168,7 +177,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("comic","salsaman",1,0,NULL,&comic_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("comicbook","salsaman",1,0,NULL,&comic_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
 
     // set preference of unclamped
     weed_set_int_value(in_chantmpls[0],"YUV_clamping",WEED_YUV_CLAMPING_UNCLAMPED);

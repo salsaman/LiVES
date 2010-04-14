@@ -4501,7 +4501,7 @@ sub fill_and_redo_frames {
     # resample and fill gaps in frames
 
     my $conv_command=$convert_command;
-    my $next=iiiiiiiii0;
+    my $next=0;
 
     chdir $curtmpdir;
 
@@ -4540,7 +4540,7 @@ sub get_next_frame {
 	$xname=&mkname($j);
 	if (-f "$xname$img_ext") {
 	    # found next frame, resize it
-	    system("$convert_command -crop $width" . "!x" . $height . "! $xname$img_ext $xname.mgk >/dev/null 2>&1");
+	    system("$conv_command -crop $width" . "!x" . $height . "! $xname$img_ext $xname.mgk >/dev/null 2>&1");
 	    unlink "$xname$img_ext";
 	    rename "$xname.mgk","$xname$img_ext";
 	    return $j;

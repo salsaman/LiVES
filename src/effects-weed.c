@@ -739,16 +739,16 @@ int check_weed_palette_list (int *palette_list, int num_palettes, int palette) {
   // pass 3: no alpha; switch colorspaces, try to find same or higher quality
   if (best_palette==WEED_PALETTE_END) {
     for (i=0;i<num_palettes;i++) {
-      if (best_palette==WEED_PALETTE_END&&(palette_list[i]==WEED_PALETTE_RGBA32||palette_list[i]==WEED_PALETTE_BGRA32||palette_list[i]==WEED_PALETTE_ARGB32)) {
-	best_palette=palette_list[i];
-      }
-      if (best_palette==WEED_PALETTE_END&&(palette_list[i]==WEED_PALETTE_YUVA8888||palette_list[i]==WEED_PALETTE_YUVA4444P)) {
-	best_palette=palette_list[i];
-      }
       if ((weed_palette_is_rgb_palette(palette)||best_palette==WEED_PALETTE_END)&&(palette_list[i]==WEED_PALETTE_RGB24||palette_list[i]==WEED_PALETTE_BGR24)) {
 	best_palette=palette_list[i];
       }
       if ((weed_palette_is_yuv_palette(palette)||best_palette==WEED_PALETTE_END)&&(palette_list[i]==WEED_PALETTE_YUV888||palette_list[i]==WEED_PALETTE_YUV444P)) {
+	best_palette=palette_list[i];
+      }
+      if (best_palette==WEED_PALETTE_END&&(palette_list[i]==WEED_PALETTE_RGBA32||palette_list[i]==WEED_PALETTE_BGRA32||palette_list[i]==WEED_PALETTE_ARGB32)) {
+	best_palette=palette_list[i];
+      }
+      if (best_palette==WEED_PALETTE_END&&(palette_list[i]==WEED_PALETTE_YUVA8888||palette_list[i]==WEED_PALETTE_YUVA4444P)) {
 	best_palette=palette_list[i];
       }
     }
@@ -1250,7 +1250,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
       // palette change needed; first try to change channel palette
       int num_palettes=weed_leaf_num_elements(chantmpl,"palette_list");
       int *palettes=weed_get_int_array(chantmpl,"palette_list",&error);
-      if (check_weed_palette_list(palettes,num_palettes,palette)==palette) {
+      if ((palette=check_weed_palette_list(palettes,num_palettes,palette))!=inpalette) {
 	weed_set_int_value(channel,"current_palette",palette);
 	if (channel_flags&WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) needs_reinit=TRUE;
 	weed_set_int_value(channel,"width",incwidth/weed_palette_get_pixels_per_macropixel(palette)*weed_palette_get_pixels_per_macropixel(inpalette));

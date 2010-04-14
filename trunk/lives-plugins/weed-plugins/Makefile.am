@@ -39,6 +39,7 @@ fxpluginslib_LTLIBRARIES = alien_overlay.la \
 	blurzoom.la \
 	ccorrect.la \
 	colorkey.la \
+	comic.la \
 	deinterlace.la \
 	edge.la \
 	fg_bg_removal.la \

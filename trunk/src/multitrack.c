@@ -19257,7 +19257,7 @@ GtkWidget * amixer_add_channel_slider (lives_mt *mt, gint i) {
   if (prefs->lamp_buttons) {
     amixer->ch_sliders[i]=giw_vslider_new(GTK_ADJUSTMENT(adj));
     giw_vslider_set_legends_digits(GIW_VSLIDER(amixer->ch_sliders[i]),1);
-    giw_vslider_set_major_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),4);
+    giw_vslider_set_major_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),5);
     giw_vslider_set_minor_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),4);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_bg(amixer->ch_sliders[i], GTK_STATE_NORMAL, &palette->normal_back);

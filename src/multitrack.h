@@ -47,6 +47,8 @@ typedef struct _track_rect track_rect;
 
 typedef struct _mt_opts mt_opts;
 
+typedef struct _lives_amixer_t lives_amixer_t;
+
 struct _mt_opts {
   gboolean set; // have we set opts (in mainw) ?
   gboolean move_effects; // should we move effects attached to a block ?
@@ -272,6 +274,7 @@ struct _mt {
   GList *audio_draws; // list of audio boxes, 0 == backing audio, 1 == track 0 audio, etc.
 
   GList *audio_vols; // layer volume levels (coarse control) - set in mixer
+  GList *audio_vols_back; // layer volume levels (coarse control) - reset levels
 
   GtkAccelGroup *accel_group;
   GList *video_draws; // list of video timeline eventboxes, in layer order
@@ -503,6 +506,8 @@ struct _mt {
 
   GList *clip_labels;
 
+  lives_amixer_t *amixer;
+
 };  // lives_mt
 
 
@@ -535,14 +540,15 @@ typedef struct {
 } mt_undo;
 
 
-typedef struct {
+struct _lives_amixer_t {
+  GtkWidget *main_hbox;
   GtkWidget **ch_sliders;
   GtkWidget *gang_checkbutton;
   GtkWidget *inv_checkbutton;
   gulong *ch_slider_fns;
   gint nchans;
   lives_mt *mt;
-} lives_amixer_t;
+};
 
 
 // reasons for track invisibility (bitmap)
@@ -822,10 +828,15 @@ void write_backup_layout_numbering(lives_mt *);
 void mouse_select_end(GtkWidget *, lives_mt *);
 
 
+// amixer funcs
+void amixer_show (GtkButton *, gpointer mt);
+void on_amixer_close_clicked (GtkButton *, lives_mt *mt);
+GtkWidget * amixer_add_channel_slider (lives_mt *, gint i);
+
+
 // misc
 void mt_change_disp_tracks_ok (GtkButton *, gpointer user_data);
 void mt_swap_play_pause (lives_mt *, gboolean put_pause);
-void amixer_show (GtkButton *, gpointer user_data);
 gchar *set_values_from_defs(lives_mt *, gboolean from_prefs);
 
 

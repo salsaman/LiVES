@@ -61,6 +61,7 @@ fxpluginslib_LTLIBRARIES = alien_overlay.la \
 	rotozoom.la \
 	simple_blend.la \
 	slide_over.la \
+	softlight.la \
 	targeted_zoom.la \
 	textfun.la \
 	tvpic.la \

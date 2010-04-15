@@ -176,60 +176,62 @@ static void init_RGB_to_YUV_tables(void) {
   // tables here are currently for Y'CbCr only 
   // TODO - add tables for Y'UV and BT.709
 
+  // actually (let's use JPEG YCC)
+
   gint i;
 
   // clamped Y'CbCr
   for (i = 0; i < 256; i++) {
-    Y_Rc[i] = myround(0.299 * (gdouble)i 
+    Y_Rc[i] = myround(0.2989 * (gdouble)i 
 		      * 219./255.) * (1<<FP_BITS);
-    Y_Gc[i] = myround(0.587 * (gdouble)i 
+    Y_Gc[i] = myround(0.5866 * (gdouble)i 
 		      * 219./255.) * (1<<FP_BITS);
-    Y_Bc[i] = myround(0.114 * (gdouble)i 
+    Y_Bc[i] = myround(0.1145 * (gdouble)i 
 		      * 219./255.) * (1<<FP_BITS)
-		      + (16 * (1<<FP_BITS));
+      + (16 * (1<<FP_BITS));  // here we add the 16 which goes into all components
 
-    Cb_Bc[i] = myround(-0.168736 * (gdouble)i 
+    Cb_Bc[i] = myround(-0.1687 * (gdouble)i 
 		       * 224./255.) * (1<<FP_BITS);
-    Cb_Gc[i] = myround(-0.331264 * (gdouble)i 
+    Cb_Gc[i] = myround(-0.3312 * (gdouble)i 
 		       * 224./255.) * (1<<FP_BITS);
     Cb_Rc[i] = myround(0.500 * (gdouble)i 
 		       * 224./255.) * (1<<FP_BITS)
-		       + (128 * (1<<FP_BITS)); // this is correct, because 144.0*(224/255) == 128.0
+		       + (127.5 * (1<<FP_BITS));
     
     Cr_Bc[i] = myround(0.500 * (gdouble)i 
 		       * 224./255.) * (1<<FP_BITS);
-    Cr_Gc[i] = myround(-0.418688 * (gdouble)i 
+    Cr_Gc[i] = myround(-0.4183 * (gdouble)i 
 		       * 224./255.) * (1<<FP_BITS);
-    Cr_Rc[i] = myround(-0.081312 * (gdouble)i 
+    Cr_Rc[i] = myround(-0.0816 * (gdouble)i 
 		       * 224./255.) * (1<<FP_BITS)
-		       + (128 * (1<<FP_BITS));
+		       + (127.5 * (1<<FP_BITS));
   }
 
-  // unclamped YCbCr
 
   for (i = 0; i < 256; i++) {
-    Y_Ru[i] = myround(0.299 * (gdouble)i )
+    Y_Ru[i] = myround(0.2989 * (gdouble)i )
 		      * (1<<FP_BITS);
-    Y_Gu[i] = myround(0.587 * (gdouble)i ) 
+    Y_Gu[i] = myround(0.5866 * (gdouble)i ) 
 		      * (1<<FP_BITS);
-    Y_Bu[i] = myround(0.114 * (gdouble)i ) 
-		      * (1<<FP_BITS);
+    Y_Bu[i] = myround(0.1145 * (gdouble)i ) 
+                      * (1<<FP_BITS);
+
     
-    Cb_Bu[i] = myround(-0.168736 * (gdouble)i ) 
+    Cb_Bu[i] = myround(-0.1687 * (gdouble)i ) 
 		       * (1<<FP_BITS);
-    Cb_Gu[i] = myround(-0.331264 * (gdouble)i ) 
+    Cb_Gu[i] = myround(-0.3312 * (gdouble)i ) 
 		       * (1<<FP_BITS);
     Cb_Ru[i] = myround(0.500 * (gdouble)i )
 		       * (1<<FP_BITS)
-		       + (128 * (1<<FP_BITS));
+		       + (127.5 * (1<<FP_BITS));
 
     Cr_Bu[i] = myround(0.500 * (gdouble)i )
 		       * (1<<FP_BITS);
-    Cr_Gu[i] = myround(-0.418688 * (gdouble)i ) 
+    Cr_Gu[i] = myround(-0.4183 * (gdouble)i ) 
 		       * (1<<FP_BITS);
-    Cr_Ru[i] = myround(-0.081312 * (gdouble)i ) 
+    Cr_Ru[i] = myround(-0.0816 * (gdouble)i ) 
 		       * (1<<FP_BITS)
-		       + (128 * (1<<FP_BITS));
+		       + (127.5 * (1<<FP_BITS));
   }
   conv_RY_inited = 1;
 }
@@ -284,16 +286,16 @@ static void init_YUV_to_RGB_tables(void) {
 
   // unclamped Y'CbCr
   for (i = 0; i <= 255; i++) {
-    RGB_Yu[i] = myround(1.1643828125 * (gdouble)(i*219./255.+16)) * (1<<FP_BITS);
+    RGB_Yu[i] = i * (1<<FP_BITS);
   }
 
   for (i = 0; i <= 255; i++) {
-    R_Cru[i] = myround((1.59602734375 * (gdouble)(i*224./255.+16.) -222.921)) * (1<<FP_BITS);
-    G_Cru[i] = myround((-0.81296875 * (gdouble)(i*224./255.+16.) + 135.576)) * (1<<FP_BITS);
-    G_Cbu[i] = myround(-0.39176171875 * (gdouble)(i*224./255.+16.)) * (1<<FP_BITS);
-    B_Cbu[i] = myround((2.017234375 * (gdouble)(i*224./255.+16.) -276.836)) * (1<<FP_BITS);
+    R_Cru[i] = myround(1.4022 * ((gdouble)(i)-127.5)) * (1<<FP_BITS);
+    G_Cru[i] = myround(-0.7145 * ((gdouble)(i)-127.5)) * (1<<FP_BITS);
+    G_Cbu[i] = myround(-0.3456 * ((gdouble)(i)-127.5)) * (1<<FP_BITS);
+    B_Cbu[i] = myround(1.7710 * ((gdouble)(i)-127.5)) * (1<<FP_BITS);
   }
-    
+
 
   conv_YR_inited = 1;
 }
@@ -304,24 +306,24 @@ static void init_YUV_to_YUV_tables (void) {
   int i;
 
   // init clamped -> unclamped, same subspace
-  for (i=0;i<16;i++) {
+  for (i=0;i<17;i++) {
     Yclamped_to_Yunclamped[i]=0;
   }
-  for (i=16;i<235;i++) {
+  for (i=17;i<235;i++) {
     Yclamped_to_Yunclamped[i]=myround((i-16.)*255./219.);
   }
   for (i=235;i<256;i++) {
     Yclamped_to_Yunclamped[i]=255;
   }
 
-  for (i=0;i<16;i++) {
+  for (i=0;i<17;i++) {
     UVclamped_to_UVunclamped[i]=0;
   }
-  for (i=16;i<240;i++) {
+  for (i=17;i<240;i++) {
     UVclamped_to_UVunclamped[i]=myround((i-16.)*255./224.);
   }
   for (i=240;i<256;i++) {
-    Yclamped_to_Yunclamped[i]=255;
+    UVclamped_to_UVunclamped[i]=255;
   }
 
 
@@ -610,7 +612,7 @@ static inline void yuyv_2_yuv422 (yuyv_macropixel *yuyv, guchar *y0, guchar *u0,
 
 
 static inline guchar avg_chroma (size_t x, size_t y) {
-  // actually this can also average luma, if cavg points to cavgu
+  // cavg == cavgc for clamped, cavgu for unclamped
   return *(cavg+(x<<8)+y);
 }
 
@@ -3820,7 +3822,7 @@ static void convert_double_chroma(guchar **src, int width, int height, guchar **
 
 
 static void convert_quad_chroma(guchar **src, int width, int height, guchar **dest, gboolean add_alpha, gboolean clamped) {
-  // width and height here are width and height of src *chroma* planes, in bytes
+  // width and height here are width and height of dest chroma planes, in bytes
   
   // double the chroma samples vertically and horizontally, with interpolation, eg. 420p to 444p
 
@@ -3828,13 +3830,16 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
 
   //TODO: handle jpeg and dvpal input
 
+  // TESTED !
 
   register int i,j;
   guchar *d_u=dest[1],*d_v=dest[2],*s_u=src[1],*s_v=src[2];
   gboolean chroma=FALSE;
-  int hwidth=width>>1;
-  int height2=height<<1;
-  int width2=width<<1;
+  int height2=height;
+  int width2=width;
+
+  height>>=1;
+  width>>=1;
 
   // for this algorithm, we assume chroma samples are aligned like mpeg
 
@@ -3860,12 +3865,12 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
       d_v[j-1-width2]=avg_chroma(d_v[j-1-width2],d_v[j-1]);
     }
     if (chroma) {
-      s_u+=hwidth;
-      s_v+=hwidth;
+      s_u+=width;
+      s_v+=width;
     }
     chroma=!chroma;
-    d_u+=width;
-    d_v+=width;
+    d_u+=width2;
+    d_v+=width2;
   }
 
   if (add_alpha) memset(dest+((width*height)<<3),255,((width*height)<<3));
@@ -3874,7 +3879,7 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
 
 
 static void convert_quad_chroma_packed(guchar **src, int width, int height, guchar *dest, gboolean add_alpha, gboolean clamped) {
-  // width and height here are width and height of src y plane, in bytes
+  // width and height here are width and height of dest chroma planes, in bytes
   // stretch (double) the chroma samples vertically and horizontally, with interpolation
 
   // ouput to packed pixels
@@ -3940,7 +3945,7 @@ static void convert_quad_chroma_packed(guchar **src, int width, int height, guch
 }
 
 static void convert_double_chroma_packed(guchar **src, int width, int height, guchar *dest, gboolean add_alpha, gboolean clamped) {
-  // width and height here are width and height of src y plane, in bytes
+  // width and height here are width and height of dest chroma planes, in bytes
   // double the chroma samples horizontally, with interpolation
 
   // output to packed pixels
@@ -4911,6 +4916,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
       gudest_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
+      g_free(gudest_array[0]);
       gudest_array[0]=gusrc_array[0];
       weed_set_voidptr_array(layer,"pixel_data",3,(void **)gudest_array);
       convert_halve_chroma(gusrc_array,width,height,gudest_array,iclamped);
@@ -5014,6 +5020,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
       gudest_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
+      g_free(gudest_array[0]);
       gudest_array[0]=gusrc_array[0];
       weed_set_voidptr_array(layer,"pixel_data",3,(void **)gudest_array);
       convert_halve_chroma(gusrc_array,width,height,gudest_array,iclamped);
@@ -5561,9 +5568,10 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
       gudest_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
+      g_free(gudest_array[0]);
       gudest_array[0]=gusrc_array[0];
       weed_set_voidptr_array(layer,"pixel_data",3,(void **)gudest_array);
-      convert_double_chroma(gusrc_array,width>>2,height>>2,gudest_array,iclamped);
+      convert_double_chroma(gusrc_array,width>>1,height>>1,gudest_array,iclamped);
       gusrc_array[0]=NULL;
       weed_free(gudest_array);
       break;
@@ -5571,9 +5579,10 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
       gudest_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
+      g_free(gudest_array[0]);
       gudest_array[0]=gusrc_array[0];
       weed_set_voidptr_array(layer,"pixel_data",3,(void **)gudest_array);
-      convert_quad_chroma(gusrc_array,width>>2,height>>2,gudest_array,FALSE,iclamped);
+      convert_quad_chroma(gusrc_array,width,height,gudest_array,FALSE,iclamped);
       gusrc_array[0]=NULL;
       g_free(gudest_array);
       break;
@@ -5581,9 +5590,10 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
       gudest_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
+      g_free(gudest_array[0]);
       gudest_array[0]=gusrc_array[0];
       weed_set_voidptr_array(layer,"pixel_data",4,(void **)gudest_array);
-      convert_quad_chroma(gusrc_array,width>>2,height>>2,gudest_array,TRUE,iclamped);
+      convert_quad_chroma(gusrc_array,width,height,gudest_array,TRUE,iclamped);
       gusrc_array[0]=NULL;
       weed_free(gudest_array);
       break;
@@ -5682,6 +5692,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
       gudest_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
+      g_free(gudest_array[0]);
       gudest_array[0]=gusrc_array[0];
       weed_set_voidptr_array(layer,"pixel_data",3,(void **)gudest_array);
       convert_halve_chroma(gusrc_array,width>>1,height>>1,gudest_array,iclamped);
@@ -5693,6 +5704,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
       gudest_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
+      g_free(gudest_array[0]);
       gudest_array[0]=gusrc_array[0];
       weed_set_voidptr_array(layer,"pixel_data",3,(void **)gudest_array);
       convert_double_chroma(gusrc_array,width>>1,height>>1,gudest_array,iclamped);
@@ -5703,6 +5715,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
       gudest_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
+      g_free(gudest_array[0]);
       gudest_array[0]=gusrc_array[0];
       weed_set_voidptr_array(layer,"pixel_data",4,(void **)gudest_array);
       convert_double_chroma(gusrc_array,width>>1,height>>1,gudest_array,iclamped);
@@ -6250,3 +6263,6 @@ int weed_layer_get_palette(weed_plant_t *layer) {
   if (error==WEED_NO_ERROR) return pal;
   return WEED_PALETTE_END;
 }
+
+
+

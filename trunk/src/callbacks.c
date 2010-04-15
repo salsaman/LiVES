@@ -8181,8 +8181,6 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   // force the dialog to disappear
   while (g_main_context_iteration(NULL,FALSE));
 
-  g_print("com is %s\n",com);
-
   dummyvar=system(com);
 
   if (prefs->show_gui) {
@@ -8196,9 +8194,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   if (!after_foreign_play()&&mainw->cancelled==CANCEL_NONE) {
     do_error_dialog(_ ("LiVES was unable to capture this window. Sorry.\n"));
-    if (mainw->current_file>-1) {
-      sensitize();
-    }
+    sensitize();
   }
 
   if (mainw->multitrack!=NULL) {
@@ -8228,7 +8224,7 @@ void on_capture2_activate(void) {
     if (mainw->files[i]==NULL) break;
     dummyvar=write(capture_fd,mainw->files[i]->handle,strlen(mainw->files[i]->handle));
     dummyvar=write(capture_fd,"|",1);
-    g_snprintf (buf,32,"%d",cfile->frameno);
+    g_snprintf (buf,32,"%d",cfile->frames);
     dummyvar=write(capture_fd,buf,strlen (buf));
     dummyvar=write(capture_fd,"|",1);
   }

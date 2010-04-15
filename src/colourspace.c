@@ -173,10 +173,8 @@ static inline void update_gamma_lut(double gamma) {
 
 
 static void init_RGB_to_YUV_tables(void) {
-  // tables here are currently for Y'CbCr only 
+  // tables here are currently for Y'CbCr (actually JPEG YCC) only 
   // TODO - add tables for Y'UV and BT.709
-
-  // actually (let's use JPEG YCC)
 
   gint i;
 

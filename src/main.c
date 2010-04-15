@@ -2066,7 +2066,7 @@ int main (int argc, char *argv[]) {
 	if (optind<argc) start=g_strtod(argv[optind++],NULL); // start time (seconds)
 	if (optind<argc) end=atoi(argv[optind++]); // number of frames
       }}}
-  
+
 
   g_idle_add(lives_startup,NULL);
 

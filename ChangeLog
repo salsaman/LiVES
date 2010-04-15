@@ -12,7 +12,7 @@ Properly unload decoder plugins on shutdown. *
 Play video during "record external audio to selection".
 Smoother resampling for external window capture.
 Fix some minor bugs in colourspace conversion. *
-
+Added two new effects, comicbook and softlight.
 
 * backported to 1.0.10
 

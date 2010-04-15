@@ -11,9 +11,10 @@ Show file close warnings for files not used in layouts (regression) *
 Properly unload decoder plugins on shutdown. *
 Play video during "record external audio to selection".
 Smoother resampling for external window capture.
-Fix some minor bugs in colourspace conversion. *
+Fix some minor bugs in internal colourspace conversion. *
 Added two new effects, comicbook and softlight.
-
+Enable realtime audio mixing in multitrack.
+	
 * backported to 1.0.10
 
 

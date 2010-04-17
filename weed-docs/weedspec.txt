@@ -80,12 +80,15 @@ Correct WEED_FILTER_HINT_STATELESS -> WEED_FILTER_HINT_IS_STATELESS
 Added WEED_CHANNEL_RESIZE_ON_ROWSTRIDES_CHANGE
 API Version to 130
 
-5/02/10
+5/02/10 salsaman
 Clarified text about default getter and bootstrap process.
 
-7/02/10
+7/02/10 salsaman
 Removed WEED_COLORSPACE_HSV, deprecated WEED_FILTER_FOLLOWS_OUTPUT, 
 added WEED_FILTER_PROCESS_LAST
+
+16/04/10 salsaman
+Clarified meaning of YUV_subspace
 
 
 (C) Gabriel "Salsaman" Finch 2005 - 2010
@@ -722,11 +725,7 @@ be altered by the host.
 
  * "YUV_subspace"     : WEED_SEED_INT : Subspace (Y'CbCr digital, Y'UV
                                         analog or BT.709) type for YUV
-                                        palettes, defined below -
-					Host should use Y'CbCr unless
-                                        plugin prefers
-                                        otherwise. Default is Y'CbCr
-                                        if not set.
+					Effect plugins generally can ignore this.
 
 
 '''Optional leaves for channels with audio''': [[BR]]
@@ -804,10 +803,10 @@ possible, and process video accordingly:
                                         palettes, host should try to
                                         match if plugin set it in template
 
- * "YUV_subspace"     : WEED_SEED_INT : Preferred YUV Subspace (Y'CbCr digital or Y'UV
-                                        analog) type for YUV
-                                        palettes, host should try to
+ * "YUV_subspace"     : WEED_SEED_INT : Preferred YUV Subspace (see below)
+                                        type for YUV palettes, host should try to
                                         match if plugin set it in template
+					Generally not needed.
 
 
 '''Optional leaves for channel plants with audio''': [[BR]]
@@ -1417,8 +1416,7 @@ Ranges are 16-235 for Y, 16 - 240 for U and V, unless
 WEED_YUV_CLAMPING_UNCLAMPED is set in "YUV_clamping" for
 channel/channel_template.
 
-Palette is Y'CbCr digital, unless WEED_YUV_SUBSPACE_YUV or WEED_YUV_SUBSPACE_BT709 is set in
-"YUV_subspace" for channel/channel_template.
+Subspace may be any YUV subspace, unless "YUV_subspace" is set for channel/channel_template.
 
 {{{
 WEED_PALETTE_YUV422P           WEED_PALETTE_YV16
@@ -1612,7 +1610,7 @@ Flag bits >=30 are reserved for custom flags.
 Where chroma subsampling is used, chroma values are assumed to be centered between luma samples, unless
 specified otherwise.
 
- * WEED_YUV_SAMPLING_DEFAULT : Default subsampling. May be used for YUV888 or YUVA8888 (optional).
+ * WEED_YUV_SAMPLING_DEFAULT : Default subsampling. Ignored for YUV888 or YUVA8888.
 
  * WEED_YUV_SAMPLING_MPEG  : Same as JPEG, but Chroma samples are
    horizontally aligned. There is notion of fields. [This is the
@@ -1644,13 +1642,14 @@ clamping types >=512 are reserved for custom clampings.
 
 ==== YUV subspace ====
 
- * WEED_YUV_SUBSPACE_YCBCR :: Y'CbCr colorspace. The default if not present 
+ * WEED_YUV_SUBSPACE_YCBCR :: Y'CbCr digital colorspace. 
+   conversion factors (Wr=0.2989, Wb=0.1145, UV offset 127.5)
 
  * WEED_YUV_SUBSPACE_YUV :: YUV analog uses slightly different
-   conversion factors than CbCr digital (Wr=0.299, Wb=0.114)
+   conversion factors than CbCr digital (Wr=0.299, Wb=0.114, UV offset 128)
 
  * WEED_YUV_SUBSPACE_BT709 :: BT.709 high definition uses slightly different
-   conversion factors than CbCr digital (Wr=0.2125, Wb=0.0721)
+   conversion factors than CbCr digital (Wr=0.2125, Wb=0.0721, UV offset 128)
 
 subspace types >=512 are reserved for custom subspaces.
 

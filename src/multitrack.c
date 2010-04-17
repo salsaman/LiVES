@@ -19227,7 +19227,9 @@ void on_amixer_slider_changed (GtkAdjustment *adj, lives_mt *mt) {
     }
   }
 
-  (g_list_nth(mt->audio_vols,layer))->data=GINT_TO_POINTER((gint)(val*1000000.));
+  if (!mt->is_rendering) {
+    (g_list_nth(mt->audio_vols,layer))->data=GINT_TO_POINTER((gint)(val*1000000.));
+  }
 
 }
 

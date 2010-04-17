@@ -496,7 +496,7 @@ static void init_YUV_to_YUV_tables (void) {
 
 static void init_average(void) {
   short a,b,c;
-  int x,y,cx,cy;
+  int x,y,cx,cy,clav;
   for (x=0;x<256;x++) {
     cx=myround((gdouble)x/255.*224.);
     cx=cx<0?0:cx>224?224:cx;
@@ -4540,7 +4540,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 #ifdef DEBUG_PCONV
     g_print("converting clamping %d to %d\n",!iclamped,!oclamping);
 #endif
-    switch_yuv_clamping_and_subspace(layer,oclamping?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,osubspace,0.);
+    switch_yuv_clamping_and_subspace(layer,oclamping?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,osubspace);
     iclamped=oclamping;
   }
 

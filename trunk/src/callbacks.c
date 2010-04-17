@@ -8022,9 +8022,9 @@ void
 on_toolbar_hide (GtkButton *button,
 		 gpointer user_data)
 {
-  mainw->fixed_height+=mainw->tb_hbox->allocation.height+4;
-  future_prefs->show_tool=FALSE;
   gtk_widget_hide (mainw->tb_hbox);
+  fullscreen_internal();
+  future_prefs->show_tool=FALSE;
 }
 
 

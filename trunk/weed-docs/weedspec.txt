@@ -1642,14 +1642,15 @@ clamping types >=512 are reserved for custom clampings.
 
 ==== YUV subspace ====
 
- * WEED_YUV_SUBSPACE_YCBCR :: Y'CbCr digital colorspace. 
-   conversion factors (Wr=0.2989, Wb=0.1145, UV offset 127.5)
+ * WEED_YUV_SUBSPACE_YUV :: Standard YUV (Y'CbCr 601) using conversion
+   factors (Kr=0.299, Kb=0.114, UV offset 128). The default if not specified.
 
- * WEED_YUV_SUBSPACE_YUV :: YUV analog uses slightly different
-   conversion factors than CbCr digital (Wr=0.299, Wb=0.114, UV offset 128)
+ * WEED_YUV_SUBSPACE_YCBCR :: Unofficial Y'CbCr digital colorspace. 
+   conversion factors (Kr=0.2989, Kb=0.1145, UV offset 127.5)
+   May give slightly more accurate Y,U,V values. For internal use only.
 
- * WEED_YUV_SUBSPACE_BT709 :: BT.709 high definition uses slightly different
-   conversion factors than CbCr digital (Wr=0.2125, Wb=0.0721, UV offset 128)
+ * WEED_YUV_SUBSPACE_BT709 :: BT.709 high definition TV uses different
+   conversion factors than Y'CbCr digital/ananlog (Kr=0.2125, Kb=0.0721, UV offset 128)
 
 subspace types >=512 are reserved for custom subspaces.
 

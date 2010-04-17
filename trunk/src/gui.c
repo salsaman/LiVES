@@ -2989,7 +2989,8 @@ fullscreen_internal(void) {
   // resize for full screen, internal player, no separate window
   
   if (mainw->multitrack==NULL) {
-    
+    gint fixed_height;
+
     gtk_widget_hide(mainw->frame1);
     gtk_widget_hide(mainw->frame2);
 
@@ -3004,13 +3005,18 @@ fullscreen_internal(void) {
 
     gtk_widget_hide(mainw->menu_hbox);
 
+
+    if (mainw->playing_file==-1) {
+      gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),NULL);
+    }
+
+    while (g_main_context_iteration(NULL,FALSE));
+
     // size of frame in fullscreen, internal
-    gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),NULL);
-    gtk_widget_set_size_request (mainw->playframe, mainw->eventbox->allocation.width, mainw->fixed_height);
-    
-    // size of image in fullscreen, internal
-    mainw->pheight=mainw->fixed_height;
-    mainw->pwidth=mainw->eventbox->allocation.width;
+    fixed_height=mainw->eventbox->allocation.height+mainw->menubar->allocation.height;
+    if (prefs->show_tool) fixed_height-=mainw->tb_hbox->allocation.height;
+
+    gtk_widget_set_size_request (mainw->playframe, mainw->eventbox->allocation.width, fixed_height);
 
   }
   else {

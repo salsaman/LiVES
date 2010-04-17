@@ -5957,7 +5957,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 
 
 gboolean convert_layer_palette (weed_plant_t *layer, int outpl, int op_clamping) {
-  return convert_layer_palette_full(layer,outpl,WEED_YUV_SAMPLING_DEFAULT,op_clamping==WEED_YUV_CLAMPING_CLAMPED,0);
+  return convert_layer_palette_full(layer,outpl,WEED_YUV_SAMPLING_DEFAULT,op_clamping==WEED_YUV_CLAMPING_CLAMPED,WEED_YUV_SUBSPACE_YUV);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

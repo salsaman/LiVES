@@ -13,6 +13,23 @@ J at v2v dot cc for help with the build system
 Linux Fund for supporting early livido development and the 1.0 fundraising 
 drive
 
+
+
+GTK+ Instrumentation Widgets
+
+- Project manager, and main programmer:
+Alexandre Pereira Bueno
+
+- Supervisor:
+Eduardo Parente Ribeiro
+
+- Colaborator:
+Jorge Torres
+James Scott Jr <skoona@users.sourceforge.net>
+
+
+
+
 and the translators:
 
 Laurant Lallane, Herr Molner, Nicolas Chauvet, Pierre Slamich (French)
@@ -29,11 +46,12 @@ Gamer (Turkish)
 Yinghua Wang (Simplified Chinese)
 Milboy (Slovenian)
 
-& others.
+& many others.
 
 
 the packagers; particularly:
-Joao Pinto & Christoph Korn (getdeb.net), Scott Barninger, Lu Zero (gentoo), Christian Marillat (debian-multimedai.org)
+Joao Pinto & Christoph Korn (getdeb.net), Scott Barninger, Lu Zero (gentoo), Harry Rickards (Linux and Ubuntu), and the debian-multimedia team.
+
 
 
 

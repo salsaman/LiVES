@@ -14,6 +14,7 @@ Smoother resampling for external window capture.
 Fix some minor bugs in internal colourspace conversion. *
 Added two new effects, comicbook and softlight.
 Enable realtime audio mixing in multitrack.
+Fixed some oddities when resizing window to fullscreen internal. *
 	
 * backported to 1.0.10
 

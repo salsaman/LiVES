@@ -1637,9 +1637,6 @@ void play_file (void) {
       mainw->pheight=mainw->vpp->fheight;
     }
     
-    mainw->fixed_height=mainw->eventbox->allocation.height+mainw->menubar->allocation.height;
-    if (prefs->show_tool) mainw->fixed_height-=mainw->tb_hbox->allocation.height+4;
-
     if (mainw->fs&&!mainw->sep_win&&cfile->frames>0) {
       fullscreen_internal();
     }

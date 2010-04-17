@@ -664,7 +664,6 @@ typedef struct {
   void ***pchains;
 
   // for the internal player
-  gint fixed_height;
   GtkWidget *image274;
   GtkWidget *play_window;
   weed_plant_t *frame_layer;

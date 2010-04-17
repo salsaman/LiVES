@@ -3047,15 +3047,26 @@ static void get_max_opsize(int *opwidth, int *opheight) {
   if (mainw->multitrack==NULL) {
     // no playback plugin
     if (mainw->fs&&!mainw->is_rendering) {
-      if (prefs->play_monitor==0) {
-	if (mainw->scr_width>*opwidth) *opwidth=mainw->scr_width;
-	if (mainw->scr_height>*opheight) *opwidth=mainw->scr_width;
+      if (!mainw->sep_win) {
+	do {
+	  *opwidth=mainw->playframe->allocation.width;
+	  *opheight=mainw->playframe->allocation.height;
+	  if (*opwidth * *opheight==0) {
+	    while (g_main_context_iteration(NULL,FALSE));
+	  }
+	} while (*opwidth * *opheight == 0);
       }
       else {
-	if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
-	else pmonitor=prefs->gui_monitor;
-	if (mainw->mgeom[pmonitor-1].width>*opwidth) *opwidth=mainw->mgeom[pmonitor-1].width;
-	if (mainw->mgeom[pmonitor-1].height>*opheight) *opheight=mainw->mgeom[pmonitor-1].height;
+	if (prefs->play_monitor==0) {
+	  if (mainw->scr_width>*opwidth) *opwidth=mainw->scr_width;
+	  if (mainw->scr_height>*opheight) *opheight=mainw->scr_height;
+	}
+	else {
+	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
+	  else pmonitor=prefs->gui_monitor;
+	  if (mainw->mgeom[pmonitor-1].width>*opwidth) *opwidth=mainw->mgeom[pmonitor-1].width;
+	  if (mainw->mgeom[pmonitor-1].height>*opheight) *opheight=mainw->mgeom[pmonitor-1].height;
+	}
       }
     }
     else {
@@ -3713,21 +3724,32 @@ void load_frame_image(gint frame, gint last_frame) {
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer=NULL;
 
-    mainw->noswitch=noswitch;
-
     if (mainw->fs&&!mainw->ext_playback&&(mainw->multitrack==NULL||mainw->sep_win)) {
       // set again, in case vpp was turned off because of preview conditions
-      if (prefs->play_monitor==0) {
-	mainw->pwidth=mainw->scr_width;
-	mainw->pheight=mainw->scr_height;
+      if (!mainw->sep_win) {
+	do {
+	  mainw->pwidth=mainw->playframe->allocation.width;
+	  mainw->pheight=mainw->playframe->allocation.height;
+	  if (mainw->pwidth * mainw->pheight==0) {
+	    while (g_main_context_iteration(NULL,FALSE));
+	  }
+	} while (mainw->pwidth * mainw->pheight == 0);
       }
       else {
-	if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
-	else pmonitor=prefs->gui_monitor;
-	mainw->pwidth=mainw->mgeom[pmonitor-1].width;
-	mainw->pheight=mainw->mgeom[pmonitor-1].height;
+	if (prefs->play_monitor==0) {
+	  mainw->pwidth=mainw->scr_width;
+	  mainw->pheight=mainw->scr_height;
+	}
+	else {
+	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
+	  else pmonitor=prefs->gui_monitor;
+	  mainw->pwidth=mainw->mgeom[pmonitor-1].width;
+	  mainw->pheight=mainw->mgeom[pmonitor-1].height;
+	}
       }
     }
+
+    mainw->noswitch=noswitch;
 
     if (gdk_pixbuf_get_width(pixbuf)!=mainw->pwidth||gdk_pixbuf_get_height(pixbuf)!=mainw->pheight) {
       GdkPixbuf *pixbuf2=lives_scale_simple(pixbuf,mainw->pwidth,mainw->pheight);

@@ -1177,7 +1177,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   }
 
   cached_key=cached_mod=0;
-  msg=g_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,vpp->palette,(tmp=weed_palette_get_name_full(vpp->palette,vpp->YUV_clamping,WEED_YUV_SUBSPACE_YCBCR)));
+  msg=g_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,vpp->palette,(tmp=weed_palette_get_name_full(vpp->palette,vpp->YUV_clamping,WEED_YUV_SUBSPACE_YUV)));
   g_free(tmp);
   d_print (msg);
   g_free (msg);

@@ -496,51 +496,17 @@ static void init_YUV_to_YUV_tables (void) {
 
 static void init_average(void) {
   short a,b,c;
-  int x,y,cx,cy,clav;
+  int x,y;
   for (x=0;x<256;x++) {
-    cx=myround((gdouble)x/255.*224.);
-    cx=cx<0?0:cx>224?224:cx;
-
     for (y=0;y<256;y++) {
-      cy=myround((gdouble)y/255.*224.);
-      cy=cy<0?0:cy>224?224:cy;
-
       a=(short)(x-128);
       b=(short)(y-128);
-
+      if ((c=(a+b-((a*b)>>8)+128))>240) c=240;
+      cavgc[x][y]=(guchar)(c>16?c:16);         // this is fine because headroom==footroom==16
       if ((c=(a+b-((a*b)>>8)+128))>255) c=255;
       cavgu[x][y]=(guchar)(c>0?c:0);
-
-      clav=myround((gdouble)cavgu[x][y]/255.*229.+16.);
-      cavgc[cx+16][cy+16]=clav<16?16:clav>240?240:clav;
     }
   }
-
-  for (x=0;x<16;x++) {
-    for (y=0;y<256;y++) {
-      cavgc[x][y]=cavgc[16][y];
-    }
-  }
-
-  for (x=241;x<256;x++) {
-    for (y=0;y<256;y++) {
-      cavgc[x][y]=cavgc[240][y];
-    }
-  }
-
-
-  for (x=0;x<16;x++) {
-    for (y=0;y<256;y++) {
-      cavgc[y][x]=cavgc[y][16];
-    }
-  }
-
-  for (x=241;x<256;x++) {
-    for (y=0;y<256;y++) {
-      cavgc[y][x]=cavgc[y][240];
-    }
-  }
-
   avg_inited=1;
 }
 

@@ -162,7 +162,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     return;
   }
 
-  if ((msg=(aserver_message_t *)pulsed->msgq)!=NULL) {
+  while ((msg=(aserver_message_t *)pulsed->msgq)!=NULL) {
 
     switch (msg->command) {
     case ASERVER_CMD_FILE_OPEN:
@@ -181,6 +181,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	  else (pulsed->aPlayPtr->data)=NULL;
 	  pulsed->seek_pos=0;
 	  pulsed->playing_file=new_file;
+	  pulsed->audio_ticks=mainw->currticks;
+	  pulsed->frames_written=0;
 	}
 	g_free(filename);
       }
@@ -209,7 +211,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     }
     if (msg->data!=NULL) g_free(msg->data);
     msg->command=ASERVER_CMD_PROCESSED;
-    pulsed->msgq = NULL;
+    pulsed->msgq = msg->next;
   }
 
   if (pulsed->chunk_size!=nbytes) pulsed->chunk_size = nbytes;
@@ -826,7 +828,7 @@ void pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
   if (pulsed->playing_file==-1) return;
   if (frame>afile->frames) frame=afile->frames;
   seekstart=(long)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
-  afile->aseek_pos=pulse_audio_seek_bytes(pulsed,seekstart);
+  pulse_audio_seek_bytes(pulsed,seekstart);
 }
 
 

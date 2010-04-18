@@ -72,7 +72,7 @@ typedef struct {
 
   int fd; /* if >0 we are playing from a file */
   gboolean is_opening; // TRUE if file is opening (audiodump.pcm)
-  off_t seek_pos;
+  volatile off_t seek_pos;
   off_t seek_end;
   gboolean usigned;
   gboolean reverse_endian;

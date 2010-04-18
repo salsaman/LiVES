@@ -4217,6 +4217,7 @@ on_vj_reset_activate            (GtkMenuItem     *menuitem,
     if (mainw->files[i]!=NULL&&i!=mainw->playing_file) {
       mainw->files[i]->pb_fps=mainw->files[i]->fps;
       mainw->files[i]->frameno=1;
+      mainw->files[i]->aseek_pos=0;
 
       save_clip_value(i,CLIP_DETAILS_PB_FPS,&mainw->files[i]->pb_fps);
       save_clip_value(i,CLIP_DETAILS_PB_FRAMENO,&mainw->files[i]->frameno);
@@ -4962,7 +4963,6 @@ on_ok_button4_clicked                  (GtkButton       *button,
   }
 
   cfile->changed=TRUE;
-  cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*cfile->asampsize/8);
   d_print_done();
 
   mesg=g_strdup_printf(_ ("New audio: %d Hz %d channel(s) %d bps\n"),cfile->arate,cfile->achans,cfile->asampsize);

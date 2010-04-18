@@ -1528,6 +1528,7 @@ void play_file (void) {
   if (mainw->num_tr_applied>0&&!mainw->preview&&mainw->blend_file>-1) {
     // reset frame counter for blend_file
     mainw->files[mainw->blend_file]->frameno=1;
+    mainw->files[mainw->blend_file]->aseek_pos=0;
   }
 
   gtk_widget_set_sensitive(mainw->m_stopbutton,TRUE);

@@ -223,7 +223,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   if (!mainw->is_ready||jackd==NULL||(mainw->playing_file==-1&&jackd->is_silent&&jackd->msgq==NULL)) return 0;
 
   /* process one message */
-  if((msg=(aserver_message_t *)jackd->msgq)!=NULL) {
+  while ((msg=(aserver_message_t *)jackd->msgq)!=NULL) {
 
     switch (msg->command) {
     case ASERVER_CMD_FILE_OPEN:
@@ -271,9 +271,7 @@ static int audio_process (nframes_t nframes, void *arg) {
     }
     if (msg->data!=NULL) g_free(msg->data);
     msg->command=ASERVER_CMD_PROCESSED;
-    jackd->msgq = NULL;    /* take this message off of the queue */
-
-    return 0;
+    jackd->msgq = msg->next;
   }
 
   if (nframes==0) return 0;
@@ -1293,7 +1291,7 @@ void jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
   if (jackd->playing_file==-1) return;
   if (frame>afile->frames) frame=afile->frames;
   seekstart=(long)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
-  afile->aseek_pos=jack_audio_seek_bytes(jackd,seekstart);
+  jack_audio_seek_bytes(jackd,seekstart);
 }
 
 

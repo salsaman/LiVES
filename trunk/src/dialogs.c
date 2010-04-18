@@ -557,6 +557,20 @@ gboolean process_one (gboolean visible) {
       if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
 	// time to show a new frame
 
+#ifdef ENABLE_JACK
+	// note the audio seek position
+	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+	  cfile->aseek_pos=mainw->jackd->seek_pos;
+	}
+#endif
+#ifdef HAVE_PULSE_AUDIO
+	// note the audio seek position
+	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+	  cfile->aseek_pos=mainw->pulsed->seek_pos;
+	}
+#endif
+
+	// load and display the new frame
 	load_frame_image(cfile->frameno,oframeno);
 	last_display_ticks=mainw->currticks;
       }
@@ -809,6 +823,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
   }
 
+  if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(mainw->play_start-1.)/cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
+
 
 
   // MUST do re-seek after setting origsecs in order to set our clock properly
@@ -845,7 +861,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 #endif
 
   
-
   // tell jack transport we are ready to play
   mainw->video_seek_ready=TRUE;
 

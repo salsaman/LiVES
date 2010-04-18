@@ -4348,6 +4348,16 @@ void do_quick_switch (gint new_file) {
   gint ohsize=mainw->pwidth;
   gboolean osc_block;
 
+#ifdef HAVE_PULSE_AUDIO
+  aserver_message_t pulse_message;
+  aserver_message_t pulse_message2;
+#endif
+
+#ifdef ENABLE_JACK
+  aserver_message_t jack_message;
+  aserver_message_t jack_message2;
+#endif
+
   if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
 
   if (mainw->noswitch||(mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_CLIPS))||mainw->foreign||(mainw->preview&&!mainw->is_rendering&&mainw->multitrack==NULL)) return;
@@ -4374,7 +4384,6 @@ void do_quick_switch (gint new_file) {
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering) {
 #ifdef ENABLE_JACK
   if (mainw->jackd!=NULL) {
-      aserver_message_t jack_message;
       while (jack_get_msgq(mainw->jackd)!=NULL);
       if (mainw->jackd->fd>0) {
 	  jack_message.command=ASERVER_CMD_FILE_CLOSE;
@@ -4383,7 +4392,6 @@ void do_quick_switch (gint new_file) {
 	  mainw->jackd->msgq=&jack_message;
 	  while (jack_get_msgq(mainw->jackd)!=NULL);
      }
-     if (cfile!=NULL) cfile->aseek_pos=mainw->jackd->seek_pos;
 
      mainw->jackd->in_use=TRUE;
 
@@ -4411,13 +4419,17 @@ void do_quick_switch (gint new_file) {
 	// tell jack server to open audio file and start playing it
 
 	jack_message.command=ASERVER_CMD_FILE_OPEN;
-	jack_message.next=NULL;
 	if (mainw->files[new_file]->opening) {
           mainw->jackd->is_opening=TRUE;
         }
         jack_message.data=g_strdup_printf("%d",new_file);
+
+	jack_message2.command=ASERVER_CMD_FILE_SEEK;
+	jack_message.next=&jack_message2;
+        jack_message2.data=g_strdup_printf("%ld",mainw->files[new_file]->aseek_pos);
+	jack_message2.next=NULL;
+
         mainw->jackd->msgq=&jack_message;
-        mainw->files[new_file]->aseek_pos=jack_audio_seek_bytes(mainw->jackd,mainw->files[new_file]->aseek_pos);
         mainw->jackd->in_use=TRUE;
 
      if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
@@ -4441,7 +4453,6 @@ void do_quick_switch (gint new_file) {
   if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering) {
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed!=NULL) {
-      aserver_message_t pulse_message;
       while (pulse_get_msgq(mainw->pulsed)!=NULL);
       if (mainw->pulsed->fd>0) {
 	  pulse_message.command=ASERVER_CMD_FILE_CLOSE;
@@ -4450,7 +4461,6 @@ void do_quick_switch (gint new_file) {
 	  mainw->pulsed->msgq=&pulse_message;
 	  while (pulse_get_msgq(mainw->pulsed)!=NULL);
      }
-     if (cfile!=NULL) cfile->aseek_pos=mainw->pulsed->seek_pos;
 
      mainw->pulsed->in_use=TRUE;
 
@@ -4478,13 +4488,18 @@ void do_quick_switch (gint new_file) {
 	// tell pulse server to open audio file and start playing it
 
 	pulse_message.command=ASERVER_CMD_FILE_OPEN;
-	pulse_message.next=NULL;
+
 	if (mainw->files[new_file]->opening) {
           mainw->pulsed->is_opening=TRUE;
         }
         pulse_message.data=g_strdup_printf("%d",new_file);
+
+	pulse_message2.command=ASERVER_CMD_FILE_SEEK;
+	pulse_message.next=&pulse_message2;
+        pulse_message2.data=g_strdup_printf("%ld",mainw->files[new_file]->aseek_pos);
+	pulse_message2.next=NULL;
+
         mainw->pulsed->msgq=&pulse_message;
-        mainw->files[new_file]->aseek_pos=pulse_audio_seek_bytes(mainw->pulsed,mainw->files[new_file]->aseek_pos);
         mainw->pulsed->in_use=TRUE;
 
      if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {

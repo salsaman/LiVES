@@ -1113,7 +1113,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   int i;
   gboolean has_layout_map=FALSE;
   gchar *com,*esave_dir,*msg;
-  gboolean had_clips=FALSE;
+  gboolean had_clips=FALSE,legal_set_name;
 
   if (user_data!=NULL&&GPOINTER_TO_INT(user_data)==1) mainw->only_close=TRUE;
   else mainw->only_close=FALSE;
@@ -1160,6 +1160,8 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     gint resp;
     had_clips=TRUE;
     do {
+      legal_set_name=TRUE;
+      gtk_widget_show(cdsw->dialog);
       resp=gtk_dialog_run(GTK_DIALOG(cdsw->dialog));
       if (resp==0) {
 	gtk_widget_destroy(cdsw->dialog);
@@ -1172,7 +1174,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
       }
       if (resp==2) {
 	// save set
-	if (is_legal_set_name((set_name=g_strdup(gtk_entry_get_text(GTK_ENTRY(cdsw->entry)))),TRUE)) {
+	if ((legal_set_name=is_legal_set_name((set_name=g_strdup(gtk_entry_get_text(GTK_ENTRY(cdsw->entry)))),TRUE))) {
 	  gtk_widget_destroy(cdsw->dialog);
 	  g_free(cdsw);
 	  if (prefs->ar_clipset) set_pref("ar_clipset",set_name);
@@ -1188,10 +1190,11 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 	  g_free(set_name);
 	  return;
 	}
+	legal_set_name=FALSE;
+	gtk_widget_hide(cdsw->dialog);
 	g_free(set_name);
       }
-      if (mainw->was_set) {
-	gtk_widget_hide(cdsw->dialog);
+      if (mainw->was_set&&legal_set_name) {
 	if (!do_warning_dialog(_("\n\nSet will be deleted from the disk.\nAre you sure ?\n"))) {
 	  resp=2;
 	}

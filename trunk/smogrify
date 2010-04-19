@@ -5053,6 +5053,7 @@ sub count_frames {
 	    $gap/=2;
 	}
     }
+    
     return $count;
 }
     

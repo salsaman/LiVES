@@ -2989,7 +2989,6 @@ fullscreen_internal(void) {
   // resize for full screen, internal player, no separate window
   
   if (mainw->multitrack==NULL) {
-    gint fixed_height;
 
     gtk_widget_hide(mainw->frame1);
     gtk_widget_hide(mainw->frame2);
@@ -3012,12 +3011,7 @@ fullscreen_internal(void) {
 
     while (g_main_context_iteration(NULL,FALSE));
 
-    // size of frame in fullscreen, internal
-    fixed_height=mainw->eventbox->allocation.height+mainw->menubar->allocation.height;
-    if (prefs->show_tool) fixed_height-=mainw->tb_hbox->allocation.height;
-    else fixed_height-=36;
-
-    gtk_widget_set_size_request (mainw->playframe, mainw->eventbox->allocation.width, fixed_height);
+    gtk_widget_set_size_request (mainw->playframe, mainw->eventbox->allocation.width, mainw->eventbox->allocation.height);
 
   }
   else {

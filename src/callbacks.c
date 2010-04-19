@@ -7144,10 +7144,22 @@ expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
   
   gdk_region_get_clipbox(reg,&rect);
 
-  if ((mainw->multitrack==NULL||mainw->multitrack->sepwin_pixbuf==NULL)&&(mainw->current_file==-1||!cfile->is_loaded)&&mainw->imframe!=NULL) {
+  if ((mainw->multitrack==NULL||mainw->multitrack->sepwin_pixbuf==NULL)&&(mainw->current_file==-1||!cfile->is_loaded||(cfile->clip_type!=CLIP_TYPE_FILE&&cfile->clip_type!=CLIP_TYPE_DISK))&&mainw->imframe!=NULL) {
+    if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+    mainw->pw_exp_is_blocked=TRUE;
     block_expose();
+
+    if (rect.width>gdk_pixbuf_get_width(GDK_PIXBUF (mainw->imframe))) {
+      rect.width=gdk_pixbuf_get_width(GDK_PIXBUF (mainw->imframe));
+    }
+    if (rect.height>gdk_pixbuf_get_height(GDK_PIXBUF (mainw->imframe))) {
+      rect.height=gdk_pixbuf_get_height(GDK_PIXBUF (mainw->imframe));
+    }
+
     gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->imframe),rect.x,rect.y,rect.x,rect.y,rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
     unblock_expose();
+    g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
+    mainw->pw_exp_is_blocked=FALSE;
   }
   if (mainw->multitrack!=NULL&&mainw->multitrack->sepwin_pixbuf!=NULL) {
     if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);

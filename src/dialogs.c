@@ -611,9 +611,10 @@ gboolean process_one (gboolean visible) {
       // set the progress bar %
 
       if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&(cfile->hsize>0||cfile->vsize>0||cfile->frames>0)) {
+	guint apxl;
 	gettimeofday(&tv, NULL);
 	mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*get_approx_ln((guint)mainw->opening_frames)) {
+	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*((apxl=get_approx_ln((guint)mainw->opening_frames))<1000?apxl:1000)) {
 	  on_check_clicked();
 	  last_open_check_ticks=mainw->currticks;
 	  if (mainw->opening_frames!=-1) {

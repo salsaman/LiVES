@@ -47,6 +47,7 @@ static void _set_palette(int palette) {
     cdata.width=360;
     cdata.YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
     cdata.YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
+    cdata.YUV_sampling=WEED_YUV_SAMPLING_DEFAULT; // TODO - may be different for PAL/NTSC
     break;
   case WEED_PALETTE_RGB24:
     cdata.width=720;
@@ -200,8 +201,8 @@ const lives_clip_data_t *get_clip_data(char *URI, int nclip) {
   // video part
   cdata.interlace=LIVES_INTERLACE_BOTTOM_FIRST;
 
-  cdata.par=1.; // maybe 40/39 ?
-  cdata.offs_x=0; // maybe 9 ?
+  cdata.par=1.;
+  cdata.offs_x=0;
 
   cdata.offs_y=0;
 

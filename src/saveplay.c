@@ -6,6 +6,7 @@
 
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
+#include "../libweed/weed-effects.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -3319,6 +3320,7 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
 
   int width,height,palette,nplanes;
+  int clamping,subspace,sampling;
   int *rowstrides;
 
   int i,fd;
@@ -3342,6 +3344,30 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   palette=atoi(buf);
   weed_set_int_value(layer,"current_palette",palette);
+
+
+
+  if (weed_palette_is_yuv_palette(palette)) {
+
+    bytes=read(fd,buf,sizint);
+    if (bytes<sizint) return FALSE;
+    
+    clamping=atoi(buf);
+    weed_set_int_value(layer,"YUV_clamping",clamping);
+
+    bytes=read(fd,buf,sizint);
+    if (bytes<sizint) return FALSE;
+    
+    subspace=atoi(buf);
+    weed_set_int_value(layer,"YUV_subspace",subspace);
+
+    bytes=read(fd,buf,sizint);
+    if (bytes<sizint) return FALSE;
+    
+    sampling=atoi(buf);
+    weed_set_int_value(layer,"YUV_sampling",sampling);
+  }
+
 
   bytes=read(fd,buf,sizint);
   if (bytes<sizint) return FALSE;
@@ -3412,7 +3438,9 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   // dump the raw frame data to a file
 
   // format is:
-  // (int)palette,(int)rowstrides[],(int)height,(char *)pixel_data[]
+  // (int)palette,[(int)YUV_clamping,(int)YUV_subspace,(int)YUV_sampling,](int)rowstrides[],(int)height,(char *)pixel_data[]
+
+  // sampling, clamping and subspace are only written for YUV palettes
 
   // we also check if there is enough free space left; if not, recording is paused
 
@@ -3422,6 +3450,8 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   
   int width,height,palette,nplanes,error;
   int *rowstrides;
+
+  int clamping,subspace,sampling;
 
   int i;
 
@@ -3449,7 +3479,33 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   buf=g_strdup_printf("%d",palette);
   dummyvar=write(fd,buf,sizint);
   g_free(buf);
-  
+
+  if (weed_palette_is_yuv_palette(palette)) {
+    if (weed_plant_has_leaf(layer,"YUV_clamping")) {
+      clamping=weed_get_int_value(layer,"YUV_clamping",&error);
+    }
+    else clamping=WEED_YUV_CLAMPING_CLAMPED;
+    buf=g_strdup_printf("%d",clamping);
+    dummyvar=write(fd,buf,sizint);
+    g_free(buf);
+
+    if (weed_plant_has_leaf(layer,"YUV_subspace")) {
+      subspace=weed_get_int_value(layer,"YUV_subspace",&error);
+    }
+    else subspace=WEED_YUV_SUBSPACE_YUV;
+    buf=g_strdup_printf("%d",subspace);
+    dummyvar=write(fd,buf,sizint);
+    g_free(buf);
+
+    if (weed_plant_has_leaf(layer,"YUV_sampling")) {
+      sampling=weed_get_int_value(layer,"YUV_sampling",&error);
+    }
+    else sampling=WEED_YUV_SAMPLING_DEFAULT;
+    buf=g_strdup_printf("%d",sampling);
+    dummyvar=write(fd,buf,sizint);
+    g_free(buf);
+  }
+
   width=weed_get_int_value(layer,"width",&error);
   buf=g_strdup_printf("%d",width);
   dummyvar=write(fd,buf,sizint);

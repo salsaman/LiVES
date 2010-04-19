@@ -1177,7 +1177,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   }
 
   cached_key=cached_mod=0;
-  msg=g_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,vpp->palette,(tmp=weed_palette_get_name_full(vpp->palette,vpp->YUV_clamping,WEED_YUV_SUBSPACE_YUV)));
+  msg=g_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,vpp->palette,(tmp=weed_palette_get_name_full(vpp->palette,vpp->YUV_clamping,WEED_YUV_SUBSPACE_YCBCR)));
   g_free(tmp);
   d_print (msg);
   g_free (msg);
@@ -1730,11 +1730,16 @@ const lives_clip_data_t *get_decoder_plugin(file *sfile) {
 	  sfile->ext_src=NULL;
 	  return NULL;
 	}
+	// check data again after setting palette
+	cdata=(dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
       }
 
-      ((_decoder_plugin *)(sfile->ext_src))->YUV_sampling=cdata->YUV_sampling;
-      ((_decoder_plugin *)(sfile->ext_src))->YUV_clamping=cdata->YUV_clamping;
-      ((_decoder_plugin *)(sfile->ext_src))->YUV_subspace=cdata->YUV_subspace;
+      if (weed_palette_is_yuv_palette(dplug->current_palette)) {
+	((_decoder_plugin *)(sfile->ext_src))->YUV_clamping=cdata->YUV_clamping;
+	((_decoder_plugin *)(sfile->ext_src))->YUV_subspace=cdata->YUV_subspace;
+	((_decoder_plugin *)(sfile->ext_src))->YUV_sampling=cdata->YUV_sampling;
+      }
+
       ((_decoder_plugin *)(sfile->ext_src))->interlace=cdata->interlace;
 
       msg=g_strdup_printf(" :: using decoder plugin %s",((_decoder_plugin *)(sfile->ext_src))->name);

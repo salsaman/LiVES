@@ -2831,10 +2831,12 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	    // sucess ! re-read clip data
 	    const lives_clip_data_t *cdata=(*dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
 	    g_free(tmp);
-	    
-	    dplug->YUV_sampling=cdata->YUV_sampling;
-	    dplug->YUV_clamping=cdata->YUV_clamping;
-	    dplug->YUV_subspace=cdata->YUV_subspace;
+
+	    if (weed_palette_is_yuv_palette(target_palette)) {
+	      dplug->YUV_sampling=cdata->YUV_sampling;
+	      dplug->YUV_clamping=cdata->YUV_clamping;
+	      dplug->YUV_subspace=cdata->YUV_subspace;
+	    }
 	    dplug->interlace=cdata->interlace;
 	    dplug->current_palette=target_palette;
 	  }
@@ -2845,9 +2847,11 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 		const lives_clip_data_t *cdata=(*dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
 		g_free(tmp);
 		
-		dplug->YUV_sampling=cdata->YUV_sampling;
-		dplug->YUV_clamping=cdata->YUV_clamping;
-		dplug->YUV_subspace=cdata->YUV_subspace;
+		if (weed_palette_is_yuv_palette(dplug->preferred_palette)) {
+		  dplug->YUV_sampling=cdata->YUV_sampling;
+		  dplug->YUV_clamping=cdata->YUV_clamping;
+		  dplug->YUV_subspace=cdata->YUV_subspace;
+		}
 		dplug->interlace=cdata->interlace;
 		dplug->current_palette=dplug->preferred_palette;
 	      }
@@ -2859,9 +2863,11 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	weed_set_int_value(layer,"width",width);
 	weed_set_int_value(layer,"height",height);
 	weed_set_int_value(layer,"current_palette",dplug->current_palette);
-	weed_set_int_value(layer,"YUV_sampling",dplug->YUV_sampling);
-	weed_set_int_value(layer,"YUV_clamping",dplug->YUV_clamping);
-	weed_set_int_value(layer,"YUV_subspace",dplug->YUV_subspace);
+	if (weed_palette_is_yuv_palette(dplug->current_palette)) {
+	  weed_set_int_value(layer,"YUV_sampling",dplug->YUV_sampling);
+	  weed_set_int_value(layer,"YUV_clamping",dplug->YUV_clamping);
+	  weed_set_int_value(layer,"YUV_subspace",dplug->YUV_subspace);
+	}
 	create_empty_pixel_data(layer);
 
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);

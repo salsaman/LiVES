@@ -1007,7 +1007,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
   weed_plant_t *layer;
   weed_plant_t **in_channels,**out_channels,*channel,*chantmpl;
   int frame;
-  int inwidth,inheight,inpalette,outpalette,channel_flags,palette,cpalette;
+  int inwidth,inheight,inpalette,outpalette,channel_flags,palette,cpalette,isubspace;
   int outwidth,outheight;
   gboolean needs_reinit=FALSE,inplace=FALSE;
   int incwidth,incheight,numplanes=0,width,height;
@@ -1263,6 +1263,16 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
 	weed_free(channel_rows);
       }
       weed_free(palettes);
+
+      if (weed_palette_is_yuv_palette(palette)) {
+	if (!(weed_plant_has_leaf(chantmpl,"YUV_subspace"))||weed_get_int_value(chantmpl,"YUV_subspace",&error)==WEED_YUV_SUBSPACE_YUV) {
+	  // set to default for LiVES
+	  weed_set_int_value(channel,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
+	}
+	else {
+	  weed_set_int_value(channel,"YUV_subspace",weed_get_int_value(chantmpl,"YUV_subspace",&error));
+	}
+      }
     }
   }
 
@@ -1286,6 +1296,10 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
     if (weed_plant_has_leaf(layer,"YUV_clamping")) iclamping=(weed_get_int_value(layer,"YUV_clamping",&error));
     else iclamping=WEED_YUV_CLAMPING_CLAMPED;
 
+    // TODO - convert subspace if necessary
+    if (weed_plant_has_leaf(layer,"YUV_subspace")) isubspace=(weed_get_int_value(layer,"YUV_subspace",&error));
+    else isubspace=WEED_YUV_SUBSPACE_YUV;
+
     if (weed_get_int_value(layer,"current_palette",&error)!=inpalette||oclamping!=iclamping) {
       if (!convert_layer_palette(layer,inpalette,oclamping)) {
 	weed_free(in_tracks);
@@ -1305,6 +1319,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
     if (weed_plant_has_leaf(layer,"YUV_sampling")) weed_set_int_value(channel,"YUV_sampling",weed_get_int_value(layer,"YUV_sampling",&error));
     else weed_leaf_delete(channel,"YUV_sampling");
 
+    // TODO - convert subspace if necessary
     if (weed_plant_has_leaf(layer,"YUV_subspace")) weed_set_int_value(channel,"YUV_subspace",weed_get_int_value(layer,"YUV_subspace",&error));
     else weed_leaf_delete(channel,"YUV_subspace");
 
@@ -1400,6 +1415,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
 	  
 	  if (weed_plant_has_leaf(def_channel,"YUV_subspace")) weed_set_int_value(channel,"YUV_subspace",weed_get_int_value(def_channel,"YUV_subspace",&error));
 	  else weed_leaf_delete(channel,"YUV_subspace");
+
 	  numplanes=weed_leaf_num_elements(def_channel,"rowstrides");
 	  layer_rows=weed_get_int_array(def_channel,"rowstrides",&error);
 	  weed_set_int_array(channel,"rowstrides",numplanes,layer_rows);
@@ -1544,6 +1560,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
     
     if (weed_plant_has_leaf(channel,"YUV_subspace")) weed_set_int_value(layer,"YUV_subspace",weed_get_int_value(channel,"YUV_subspace",&error));
     else weed_leaf_delete(layer,"YUV_subspace");
+
   }
 
   for (i=0;i<num_inc;i++) {
@@ -2542,6 +2559,7 @@ static gboolean set_in_channel_palettes (gint idx, gint num_channels) {
       */
       weed_free(palettes);
     }
+
     if (!weed_plant_has_leaf(chantmpls[i],"optional")) num_channels--; // mandatory channel
   }
 
@@ -3280,6 +3298,17 @@ static weed_plant_t **weed_channels_create (weed_plant_t *filter, gboolean in) {
       channels[ccount]=weed_plant_new(WEED_PLANT_CHANNEL);
       weed_set_plantptr_value(channels[ccount],"template",chantmpls[i]);
       weed_set_int_value(channels[ccount],"current_palette",(pal=weed_get_int_value(chantmpls[i],"current_palette",&error)));
+
+      if (weed_palette_is_yuv_palette(pal)) {
+	if (!(weed_plant_has_leaf(chantmpls[i],"YUV_subspace"))||weed_get_int_value(chantmpls[i],"YUV_subspace",&error)==WEED_YUV_SUBSPACE_YUV) {
+	  // set to default for LiVES
+	  weed_set_int_value(channels[ccount],"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
+	}
+	else {
+	  weed_set_int_value(channels[ccount],"YUV_subspace",weed_get_int_value(chantmpls[i],"YUV_subspace",&error));
+	}
+      }
+
       if (weed_plant_has_leaf(chantmpls[i],"disabled")) (weed_set_boolean_value(channels[ccount],"disabled",weed_get_boolean_value(chantmpls[i],"disabled",&error)));
       weed_add_plant_flags(channels[ccount],WEED_LEAF_READONLY_PLUGIN);
       ccount++;

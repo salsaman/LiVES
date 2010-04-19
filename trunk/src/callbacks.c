@@ -3851,6 +3851,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   orderfile=fopen(ordfile,"r");
   g_free(ordfile);
 
+  mainw->suppress_dprint=TRUE;
+
   while (1) {
 
     if (mainw->cached_list!=NULL) {
@@ -3866,6 +3868,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       g_free (com);
       if ((new_file=mainw->first_free_file)==-1) {
 	if (!skip_threaded_dialog) end_threaded_dialog();
+	mainw->suppress_dprint=FALSE;
 	too_many_files();
 	polymorph(mainw->multitrack,POLY_NONE);
 	polymorph(mainw->multitrack,POLY_CLIPS);
@@ -3880,6 +3883,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     }
 
     if (strlen (mainw->msg)==0||(!strncmp (mainw->msg,"none",4))) {
+      mainw->suppress_dprint=FALSE;
       if (!skip_threaded_dialog) end_threaded_dialog();
       if (orderfile!=NULL) fclose (orderfile);
       else {
@@ -3966,6 +3970,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       g_free(clipdir);
       pthread_mutex_unlock(&mainw->gtk_mutex);
       if ((new_file=mainw->first_free_file)==-1) {
+	mainw->suppress_dprint=FALSE;
 	end_threaded_dialog();
 	too_many_files();
 
@@ -4106,6 +4111,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
 
+  mainw->suppress_dprint=FALSE;
   return TRUE;
 }
 

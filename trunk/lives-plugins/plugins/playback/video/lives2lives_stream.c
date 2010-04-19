@@ -299,7 +299,7 @@ boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data
   // then for video type:
   // (int64_t)timecode, (int32_t)width in macropixels, (int32_t)height, (double)fps, (int32_t)palette
   // last 4 entries reserved for: (int32_t)yuv sampling [0=mpeg], (int32_t)yuv clamping [0=clamped,1=unclamped],
-  // (int32_t)yuv subspace [0=YCbCr]; (int32_t)compression [0=uncompressed]
+  // (int32_t)yuv subspace [1=YCbCr]; (int32_t)compression [0=uncompressed]
 
   // flags for video type are currently: bit 0 set == packet is continuation of current frame
 
@@ -318,10 +318,10 @@ boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data
   setsockopt(((desc *)(lstream->handle))->sockfd, SOL_SOCKET, SO_SNDBUF, (void *) &mcount, sizeof(mcount));
 
   if (CPU_BITS==32) {
-    snprintf(hdrstr,128,"1 0 0 %d %lld %d %d %.8f %d 0 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette, lstream->YUV_clamping);
+    snprintf(hdrstr,128,"1 0 0 %d %lld %d %d %.8f %d 1 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette, lstream->YUV_clamping);
   }
   else {
-    snprintf(hdrstr,128,"1 0 0 %d %ld %d %d %.8f %d 0 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette, lstream->YUV_clamping);
+    snprintf(hdrstr,128,"1 0 0 %d %ld %d %d %.8f %d 1 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette, lstream->YUV_clamping);
   }
 
   hdrstrlen=strlen(hdrstr);

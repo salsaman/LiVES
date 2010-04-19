@@ -184,7 +184,7 @@ static void init_RGB_to_YUV_tables(void) {
   // uses Kr = 0.299 and Kb = 0.114
   // offs U,V = 128
 
-  // (I call this subspace YUV_SUBSPACE_YUV) - although it is actually Y'CbCr
+  // (I call this subspace YUV_SUBSPACE_YCBCR)
 
   // this is used for e.g. theora encoding, and I think for video cards
 
@@ -200,8 +200,6 @@ static void init_RGB_to_YUV_tables(void) {
   // these values seem to give pretty good results
 
   // I think this may be what jpeg/JFIF uses
-
-  // (I call this subspace YUV_SUBSPACE_YCBCR)
 
   // I might experiment with different values for this subspace
   // so it should only be used for internal conversions to and from YUV
@@ -222,7 +220,7 @@ static void init_RGB_to_YUV_tables(void) {
 
 
 
-  // These values are for what I call YUV_SUBSPACE_YUV
+  // These values are for what I call YUV_SUBSPACE_CBCR
   // this should be the default for all external sources, unless they specify otherwise
 
   // clamped Y'CbCr
@@ -285,7 +283,7 @@ static void init_RGB_to_YUV_tables(void) {
 
 
 
-  // These values are for what I call YUV_SUBSPACE_YCBR
+  // These values are for an experimental YCbCr
 
   // clamped Y'CbCr
   // actually we scale and offset to unclamped
@@ -352,7 +350,7 @@ static void init_YUV_to_RGB_tables(void) {
 
   gint i;
 
-  // These values are for what I call YUV_SUBSPACE_YUV
+  // These values are for what I call YUV_SUBSPACE_YCBCR
 
   /* clip Y values under 16 */
   for (i = 0; i < 17; i++) {
@@ -403,7 +401,7 @@ static void init_YUV_to_RGB_tables(void) {
 
 
 
-  // These values are for what I call YUV_SUBSPACE_YCBCR
+  // These values are for an experimental subspace
 
   /*
 
@@ -517,6 +515,8 @@ static void set_conversion_arrays(int clamping, int subspace) {
 
   switch (subspace) {
   case WEED_YUV_SUBSPACE_YUV:
+  case WEED_YUV_SUBSPACE_YCBCR:
+  case WEED_YUV_SUBSPACE_BT709:
     if (clamping==WEED_YUV_CLAMPING_CLAMPED) {
       Y_R=Y_Rc;
       Y_G=Y_Gc;
@@ -584,7 +584,10 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 
   switch (isubspace) {
   case WEED_YUV_SUBSPACE_YUV:
+    g_warning("YUV subspace not specified, assuming Y'CbCr");
+  case WEED_YUV_SUBSPACE_YCBCR:
     switch (osubspace) {
+    case WEED_YUV_SUBSPACE_YCBCR:
     case WEED_YUV_SUBSPACE_YUV:
       if (iclamping==WEED_YUV_CLAMPING_CLAMPED) {
 	//Y'CbCr clamped -> Y'CbCr unclamped
@@ -598,28 +601,14 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
       }
       break;
       // TODO - other subspaces
-    }
-    break;
-  case WEED_YUV_SUBSPACE_YCBCR:
-    switch (osubspace) {
-    case WEED_YUV_SUBSPACE_YCBCR:
-      if (iclamping==WEED_YUV_CLAMPING_CLAMPED) {
-	//Y'UV clamped -> Y'UV unclamped
-	Y_to_Y=Yclamped_to_Yunclamped;
-	U_to_U=V_to_V=UVclamped_to_UVunclamped;
-      }
-      else {
-	//Y'UV unclamped -> Y'UV clamped
-	Y_to_Y=Yunclamped_to_Yclamped;
-	U_to_U=V_to_V=UVunclamped_to_UVclamped;
-      }
-      break;
-      // TODO - other subspaces
+    default:
+      g_print("Invalid YUV subspace conversion\n");
     }
     break;
   case WEED_YUV_SUBSPACE_BT709:
     switch (osubspace) {
     case WEED_YUV_SUBSPACE_BT709:
+    case WEED_YUV_SUBSPACE_YUV:
       if (iclamping==WEED_YUV_CLAMPING_CLAMPED) {
 	//BT.709 clamped -> BT.709 unclamped
 	Y_to_Y=Yclamped_to_Yunclamped;
@@ -632,10 +621,13 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
       }
       break;
       // TODO - other subspaces
+    default:
+      g_print("Invalid YUV subspace conversion\n");
     }
+  default:
+    g_print("Invalid YUV subspace conversion\n");
     break;
   }
-
 }
 
 
@@ -946,8 +938,8 @@ const char *weed_yuv_clamping_get_name(int clamping) {
 
 const char *weed_yuv_subspace_get_name(int subspace) {
   if (subspace==WEED_YUV_SUBSPACE_YUV) return "Y'UV";
-  if (subspace==WEED_YUV_SUBSPACE_BT709) return "BT.709";
   if (subspace==WEED_YUV_SUBSPACE_YCBCR) return "Y'CbCr";
+  if (subspace==WEED_YUV_SUBSPACE_BT709) return "BT.709";
   return NULL;
 }
 
@@ -1031,7 +1023,7 @@ static void convert_yuv888_to_rgb_frame(guchar *src, gint hsize, gint vsize, gin
   
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) offs=4;
   ohs=orowstride-offs*hsize;
@@ -1054,7 +1046,7 @@ static void convert_yuva8888_to_rgba_frame(guchar *src, gint hsize, gint vsize, 
   
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (del_alpha) offs=3;
   ohs=orowstride-offs*hsize;
@@ -1075,7 +1067,7 @@ static void convert_yuv888_to_bgr_frame(guchar *src, gint hsize, gint vsize, gin
   
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) offs=4;
   ohs=orowstride-offs*hsize;
@@ -1098,7 +1090,7 @@ static void convert_yuva8888_to_bgra_frame(guchar *src, gint hsize, gint vsize, 
   
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (del_alpha) offs=3;
   ohs=orowstride-offs*hsize;
@@ -1130,7 +1122,7 @@ static void convert_yuv420p_to_rgb_frame(guchar **src, gint width, gint height, 
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (i=0;i<height;i++) {
     y=*(s_y++);
@@ -1211,7 +1203,7 @@ static void convert_yuv420p_to_bgr_frame(guchar **src, gint width, gint height, 
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (i=0;i<height;i++) {
     y=*(s_y++);
@@ -1286,7 +1278,7 @@ void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint row
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) {
     z++;
@@ -1317,7 +1309,7 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) {
     z++;
@@ -1348,7 +1340,7 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) {
     z++;
@@ -1380,7 +1372,7 @@ static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) {
     z++;
@@ -1410,7 +1402,7 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (in_has_alpha) ipsize=4;
 
@@ -1442,7 +1434,7 @@ static void convert_rgb_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (in_has_alpha) ipsize=4;
 
@@ -1476,7 +1468,7 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (in_has_alpha) ipsize=4;
 
@@ -1508,7 +1500,7 @@ static void convert_bgr_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (in_has_alpha) ipsize=4;
 
@@ -1550,7 +1542,7 @@ void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint r
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) ipsize=4;
 
@@ -1616,7 +1608,7 @@ static void convert_bgr_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize,
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) ipsize=4;
 
@@ -1705,7 +1697,7 @@ static void convert_rgb_to_yuv411_frame(guchar *rgbdata, gint hsize, gint vsize,
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) {
     z++;
@@ -1744,7 +1736,7 @@ static void convert_bgr_to_yuv411_frame(guchar *rgbdata, gint hsize, gint vsize,
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) {
     z++;
@@ -1778,7 +1770,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) {
     psize=8;
@@ -1808,7 +1800,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) {
     psize=8;
@@ -1837,7 +1829,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) {
     psize=8;
@@ -1907,7 +1899,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) {
     psize=8;
@@ -1977,7 +1969,7 @@ static void convert_yuv_planar_to_rgb_frame(guchar **src, int width, int height,
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (out_alpha) opstep=4;
 
@@ -2010,7 +2002,7 @@ static void convert_yuv_planar_to_bgr_frame(guchar **src, int width, int height,
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (out_alpha) opstep=4;
 
@@ -2040,7 +2032,7 @@ static void convert_yuv_planar_to_uyvy_frame(guchar **src, int width, int height
   guchar *u=src[1];
   guchar *v=src[2];
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (x=0;x<size;x++) {
     // subsample two u pixels
@@ -2064,7 +2056,7 @@ static void convert_yuv_planar_to_yuyv_frame(guchar **src, int width, int height
   guchar *u=src[1];
   guchar *v=src[2];
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (x=0;x<hsize;x++) {
     yuyv->y0=*(y++);
@@ -2144,7 +2136,7 @@ static void convert_yuvp_to_yuv420_frame(guchar **src, int width, int height, gu
 
   int hwidth=width>>1;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (dest[0]!=src[0]) w_memcpy(dest[0],src[0],width*height);
 
@@ -2194,7 +2186,7 @@ static void convert_yuvp_to_yuv411_frame(guchar **src, int width, int height, yu
   int widtha=(width>>1)<<1; // cut rightmost odd bytes
   int cbytes=width-widtha;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (i=0;i<height;i++) {
     for (j=0;j<widtha;j+=4) {
@@ -2327,7 +2319,7 @@ static void convert_uyvy_to_yuv420_frame(uyvy_macropixel *uyvy, int width, int h
 
   guchar *end=y+width*height*2;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (y<end) {
     for (j=0;j<width;j++) {
@@ -2369,7 +2361,7 @@ static void convert_yuyv_to_yuv420_frame(yuyv_macropixel *yuyv, int width, int h
 
   guchar *end=y+width*height*2;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (y<end) {
     for (j=0;j<width;j++) {
@@ -2405,7 +2397,7 @@ static void convert_uyvy_to_yuv411_frame(uyvy_macropixel *uyvy, int width, int h
   int widtha=(width<<1)>>1;
   size_t cbytes=width-widtha;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (;uyvy<end;uyvy+=cbytes) {
     for (x=0;x<widtha;x+=2) {
@@ -2437,7 +2429,7 @@ static void convert_yuyv_to_yuv411_frame(yuyv_macropixel *yuyv, int width, int h
   int widtha=(width<<1)>>1;
   size_t cybtes=width-widtha;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (;yuyv<end;yuyv+=cybtes) {
     for (x=0;x<widtha;x+=2) {
@@ -2478,7 +2470,7 @@ static void convert_yuv888_to_yuv420_frame(guchar *yuv8, int width, int height, 
   size_t hwidth=width>>1,ipsize=3,ipsize2;
   int widthx;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (src_alpha) ipsize=4;
 
@@ -2569,7 +2561,7 @@ static void convert_yuv888_to_yuv422_frame(guchar *yuv8, int width, int height, 
   int offs=0;
   size_t ipsize;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) offs=1;
 
@@ -2593,7 +2585,7 @@ static void convert_yuv888_to_uyvy_frame(guchar *yuv, int width, int height, uyv
   int offs=0;
   size_t ipsize;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) offs=1;
 
@@ -2618,7 +2610,7 @@ static void convert_yuv888_to_yuyv_frame(guchar *yuv, int width, int height, yuy
   int offs=0;
   size_t ipsize;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (has_alpha) offs=1;
 
@@ -2674,7 +2666,7 @@ static void convert_yuv411_to_rgb_frame(yuv411_macropixel *yuv411, int width, in
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) {
     m=4;
@@ -2781,7 +2773,7 @@ static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, in
 
   if (G_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) {
     m=4;
@@ -2885,7 +2877,7 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
   yuv411_macropixel *end=yuv411+width*height;
   guchar u,v,h_u,h_v,q_u,q_v,y0,y1;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) psize=4;
 
@@ -3009,7 +3001,7 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
   guchar *d_v=dest[2];
   guchar *d_a=dest[3];
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
     // write first 2 pixels
@@ -3110,7 +3102,7 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
   yuv411_macropixel *end=yuv411+width*height;
   guchar u,v,h_u,h_v,y0,y1;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
     // write first uyvy pixel
@@ -3182,7 +3174,7 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
   yuv411_macropixel *end=yuv411+width*height;
   guchar u,v,h_u,h_v,y0,y1;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
     // write first yuyv pixel
@@ -3258,7 +3250,7 @@ static void convert_yuv411_to_yuv422_frame(yuv411_macropixel *yuv411, int width,
   guchar *d_u=dest[1];
   guchar *d_v=dest[2];
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
     // write first 2 y and 1 uv pixel
@@ -3328,7 +3320,7 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
     d_v=dest[1];
   }
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
     // write first 2 y and 1 uv pixel
@@ -3905,7 +3897,7 @@ static void convert_halve_chroma(guchar **src, int width, int height, guchar **d
   guchar *d_u=dest[1],*d_v=dest[2],*s_u=src[1],*s_v=src[2];
   gboolean chroma=FALSE;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (i=0;i<height;i++) {
     for (j=0;j<width;j++) {
@@ -3945,7 +3937,7 @@ static void convert_double_chroma(guchar **src, int width, int height, guchar **
   gboolean chroma=FALSE;
   int height2=height<<1;
 
-  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YUV);
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (i=0;i<height2;i++) {
     for (j=0;j<width;j++) {
@@ -4148,7 +4140,7 @@ void switch_yuv_clamping_and_subspace (weed_plant_t *layer, int oclamping, int o
   // we assume subspace Y'CbCr
   int error;
   int iclamping=weed_get_int_value(layer,"YUV_clamping",&error);
-  int isubspace;
+  int isubspace=weed_get_int_value(layer,"YUV_subspace",&error);
 
   int palette=weed_get_int_value(layer,"current_palette",&error);
   int width=weed_get_int_value(layer,"width",&error);
@@ -4157,8 +4149,6 @@ void switch_yuv_clamping_and_subspace (weed_plant_t *layer, int oclamping, int o
   void **pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
   guchar *src,*src1,*src2,*end;
-
-  isubspace=osubspace=WEED_YUV_SUBSPACE_YUV; // TODO
 
   get_YUV_to_YUV_conversion_arrays(iclamping,isubspace,oclamping,osubspace);
 
@@ -4502,9 +4492,9 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
   g_free(tmp3);
 #endif
 
-  if (weed_palette_is_yuv_palette(inpl)&&weed_palette_is_yuv_palette(outpl)&&iclamped!=oclamping) {
+  if (weed_palette_is_yuv_palette(inpl)&&weed_palette_is_yuv_palette(outpl)&&(iclamped!=oclamping||isubspace!=osubspace)) {
 #ifdef DEBUG_PCONV
-    g_print("converting clamping %d to %d\n",!iclamped,!oclamping);
+    g_printerr("converting clamping %d to %d\n",!iclamped,!oclamping);
 #endif
     switch_yuv_clamping_and_subspace(layer,oclamping?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,osubspace);
     iclamped=oclamping;
@@ -4512,19 +4502,15 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 
   if (inpl==outpl) {
 #ifdef DEBUG_PCONV
-  g_print("not converting palette\n");
+  g_printerr("not converting palette\n");
 #endif
-    if (isamtype==osamtype&&isubspace==osubspace) return TRUE;
+  if (!weed_palette_is_yuv_palette(inpl)||(isamtype==osamtype&&(isubspace==osubspace||(osubspace!=WEED_YUV_SUBSPACE_BT709&&osubspace!=WEED_YUV_SUBSPACE_BT709)))) return TRUE;
     g_printerr("Switch sampling types or subspace: conversion not yet written !\n");
     return TRUE;
   }
 
   width=weed_get_int_value(layer,"width",&error);
   height=weed_get_int_value(layer,"height",&error);
-
-  if (!((inpl==WEED_PALETTE_YUV420P&&outpl==WEED_PALETTE_YVU420P)||(inpl==WEED_PALETTE_YVU420P&&outpl==WEED_PALETTE_YUV420P))) {
-    weed_leaf_delete(layer,"YUV_sampling"); // TODO
-  }
 
   switch (inpl) {
   case WEED_PALETTE_BGR24:
@@ -5933,9 +5919,15 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
   if (weed_palette_is_rgb_palette(outpl)) {
     weed_leaf_delete(layer,"YUV_clamping");
     weed_leaf_delete(layer,"YUV_subspace");
+    weed_leaf_delete(layer,"YUV_sampling");
   }
   else {
     weed_set_int_value(layer,"YUV_clamping",oclamping?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED);
+    if (weed_palette_is_rgb_palette(inpl)) {
+      // TODO - bt709
+      weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
+    }
+    if (!weed_plant_has_leaf(layer,"YUV_sampling")) weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
   }
 
   if (weed_palette_is_rgb_palette(inpl)&&weed_palette_is_yuv_palette(outpl)) {
@@ -5957,7 +5949,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 
 
 gboolean convert_layer_palette (weed_plant_t *layer, int outpl, int op_clamping) {
-  return convert_layer_palette_full(layer,outpl,WEED_YUV_SAMPLING_DEFAULT,op_clamping==WEED_YUV_CLAMPING_CLAMPED,WEED_YUV_SUBSPACE_YUV);
+  return convert_layer_palette_full(layer,outpl,WEED_YUV_SAMPLING_DEFAULT,op_clamping==WEED_YUV_CLAMPING_CLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -6280,24 +6272,28 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
   pd_elements=weed_leaf_num_elements(slayer,"pixel_data");
   pixel_data=weed_get_voidptr_array(slayer,"pixel_data",&error);
   rowstrides=weed_get_int_array(slayer,"rowstrides",&error);
-  if (deep) {
-    pd_array=g_malloc(pd_elements*sizeof(void *));
-    for (i=0;i<pd_elements;i++) {
-      size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
-      pd_array[i]=g_malloc(size);
-      w_memcpy(pd_array[i],pixel_data[i],size);
-    }
+  pd_array=g_malloc(pd_elements*sizeof(void *));
+  for (i=0;i<pd_elements;i++) {
+    size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
+    pd_array[i]=g_malloc(size);
+    w_memcpy(pd_array[i],pixel_data[i],size);
   }
-  else pd_array=pixel_data;
   weed_set_voidptr_array(layer,"pixel_data",pd_elements,pd_array);
   weed_set_int_value(layer,"height",height);
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"current_palette",palette);
   weed_set_int_array(layer,"rowstrides",pd_elements,rowstrides);
 
-  if (deep) g_free(pd_array);
+  if (weed_plant_has_leaf(slayer,"YUV_clamping")) weed_set_int_value(layer,"YUV_clamping",weed_get_int_value(slayer,"YUV_clamping",&error));
+  if (weed_plant_has_leaf(slayer,"YUV_subspace")) weed_set_int_value(layer,"YUV_subspace",weed_get_int_value(slayer,"YUV_subspace",&error));
+  if (weed_plant_has_leaf(slayer,"YUV_sampling")) weed_set_int_value(layer,"YUV_sampling",weed_get_int_value(slayer,"YUV_sampling",&error));
+
+  if (weed_plant_has_leaf(slayer,"pixel_aspect_ratio")) weed_set_double_value(layer,"pixel_aspect_ratio",weed_get_int_value(slayer,"pixel_aspect_ratio",&error));
+
+  g_free(pd_array);
   weed_free(pixel_data);
   weed_free(rowstrides);
+
   return layer;
 }
 

@@ -1081,6 +1081,10 @@ const lives_clip_data_t *get_clip_data(char *URI, int nclip) {
   cdata.offs_x=0;
   cdata.offs_y=0;
 
+  cdata.YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
+  cdata.YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
+  cdata.YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
+
   sprintf(cdata.container_name,"%s","ogg");
   sprintf(cdata.video_name,"%s","theora");
 

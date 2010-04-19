@@ -12,8 +12,9 @@ Properly unload decoder plugins on shutdown. *
 Play video during "record external audio to selection".
 Smoother resampling for external window capture.
 Fix some minor bugs in internal colourspace conversion. *
+Improved support for YUV colourspaces.
 Added two new effects, comicbook and softlight.
-Enable realtime audio mixing in multitrack.
+Enable realtime audio mixer in multitrack.
 Fixed some oddities when resizing window to fullscreen internal. *
 	
 * backported to 1.0.10

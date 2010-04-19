@@ -3015,6 +3015,7 @@ fullscreen_internal(void) {
     // size of frame in fullscreen, internal
     fixed_height=mainw->eventbox->allocation.height+mainw->menubar->allocation.height;
     if (prefs->show_tool) fixed_height-=mainw->tb_hbox->allocation.height;
+    else fixed_height-=36;
 
     gtk_widget_set_size_request (mainw->playframe, mainw->eventbox->allocation.width, fixed_height);
 

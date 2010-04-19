@@ -248,6 +248,7 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
   weed_set_int_value(layer,"width",sfile->hsize);
   weed_set_int_value(layer,"height",sfile->vsize);
   weed_set_int_value(layer,"current_palette",WEED_PALETTE_YUV420P);
+  weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
 
   create_empty_pixel_data(layer);
 

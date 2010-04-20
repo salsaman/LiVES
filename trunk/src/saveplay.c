@@ -885,8 +885,10 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
+      cfile->progress_start=1;
+      cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      virtual_to_images(mainw->current_file,cfile->start,cfile->end);
+      virtual_to_images(mainw->current_file,cfile->start,cfile->end,TRUE);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE) {
@@ -994,8 +996,10 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
+      cfile->progress_start=1;
+      cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      virtual_to_images(mainw->current_file,cfile->start,cfile->end);
+      virtual_to_images(mainw->current_file,cfile->start,cfile->end,TRUE);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE) {
@@ -1045,8 +1049,10 @@ void save_file (gboolean existing, gchar *n_file_name) {
   if (mainw->save_all) {
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
+      cfile->progress_start=1;
+      cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      virtual_to_images(mainw->current_file,1,cfile->frames);
+      virtual_to_images(mainw->current_file,1,cfile->frames,TRUE);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE) {
@@ -2691,7 +2697,7 @@ save_frame(gint frame, const gchar *file_name) {
   g_free(com);
 
   if (cfile->clip_type==CLIP_TYPE_FILE) {
-    virtual_to_images(mainw->current_file,frame,frame);
+    virtual_to_images(mainw->current_file,frame,frame,FALSE);
   }
 
   com=g_strdup_printf("smogrify save_frame %s %d \"%s\"",cfile->handle,frame,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)));
@@ -2766,8 +2772,10 @@ backup_file(const gchar *file_name) {
 
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     mainw->cancelled=CANCEL_NONE;
+    cfile->progress_start=1;
+    cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
     do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-    virtual_to_images(mainw->current_file,1,cfile->frames);
+    virtual_to_images(mainw->current_file,1,cfile->frames,TRUE);
     end_threaded_dialog();
 
     if (mainw->cancelled!=CANCEL_NONE) {

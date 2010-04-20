@@ -156,17 +156,21 @@ gboolean check_if_non_virtual(file *sfile) {
 
 
 
-void virtual_to_images(gint sfileno, gint sframe, gint eframe) {
+void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_progress) {
   // pull frames from a clip to images
   // from sframe to eframe inclusive (first frame is 1)
 
-  // should be threadsafe
+  // if update_progress, set mainw->msg with number of frames pulled
+
+  // should be threadsafe apart from progress update
 
   register int i;
   file *sfile=mainw->files[sfileno];
   GdkPixbuf *pixbuf;
   GError *error=NULL;
   gchar *oname;
+
+  gint progress=1;
 
   if (sframe<1) sframe=1;
 
@@ -211,6 +215,11 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe) {
       // another thread may have called check_if_non_virtual
       if (sfile->frame_index==NULL) break;
       sfile->frame_index[i-1]=-1;
+
+      if (update_progress) {
+	// sig_progress...
+	g_snprintf (mainw->msg,256,"%d",progress++);
+      }
     }
     pthread_mutex_unlock(&mainw->gtk_mutex);
 

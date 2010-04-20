@@ -71,7 +71,7 @@ if (defined($ARGV[0])) {
     if ($command eq "stopsubsub"||$command eq "stopsubsubs"||$command eq "stop_audio") {
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
-	my $sig="TERM";
+	my $sig="SIGTERM";
 	if ($command eq "stop_audio") {
 		$pidfile="$curtmpdir/.pidpb";
 	}
@@ -119,29 +119,21 @@ if (defined($ARGV[0])) {
 	    
 	    else {
 		print "Attempting to stop process ".$target_pid." with $command\n";
-		system("kill -$sig $target_pid>/dev/null 2>&1");
+		if ($sig eq "SIGTERM") {
+		    `kill -$sig $target_pid >/dev/null 2>&1`;
+		}
+		else {
+		    `pkill -$sig -P $target_pid`;# must not ! >/dev/null 2>&1`;
+		}
 	    }
 	    
 	    #unlink $pidfile;
-	    if ($command ne "stop_audio" && $sig eq "TERM") {
+	    if ($command ne "stop_audio" && $sig eq "SIGTERM") {
 		&sig_killed;
 	    }
 	    exit 0;
 	}
 	exit 1;
-    }
-
-
-    if ($command eq "pause_play") {
-	`kill -STOP mplayer`;
-	`kill -STOP sox`;
-	exit 0;
-    }
-
-    if ($command eq "resume_play") {
-	`kill -CONT mplayer`;
-	`kill -CONT sox`;
-	exit 0;
     }
 
 
@@ -3000,8 +2992,12 @@ sub kill_child_pids {
 	}
 	close IN;
     }
-
-    `kill -$sig $target_pid`;# must not ! >/dev/null 2>&1`;
+    if ($sig eq "SIGTERM") {
+	`kill -$sig $target_pid >/dev/null 2>&1`;
+    }
+    else {
+	`pkill -$sig -P $target_pid`;# must not ! >/dev/null 2>&1`;
+    }
     unlink "$tmpdir/.pids.$target_pid";
 }
 

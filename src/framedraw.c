@@ -432,7 +432,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     // pull some frames to get started
     gint vend=mainw->framedraw_frame+FX_FRAME_PUMP_VAL;
     if (vend>cfile->end) vend=cfile->end;
-    virtual_to_images(mainw->current_file,mainw->framedraw_frame,vend);
+    virtual_to_images(mainw->current_file,mainw->framedraw_frame,vend,FALSE);
   }
 
   clear_mainw_msg();

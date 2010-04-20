@@ -329,9 +329,10 @@ process * create_processing (const gchar *text) {
     procw->label2 = gtk_label_new (_("\n\nPlease Wait\n\nRemember to switch off effects (ctrl-0) afterwards !"));
   }
 #ifdef RT_AUDIO
-  else if (mainw->jackd_read==NULL&&mainw->pulsed_read==NULL) procw->label2 = gtk_label_new (_("\nPlease Wait"));
+  else if (mainw->jackd_read!=NULL||mainw->pulsed_read!=NULL) procw->label2 = gtk_label_new ("");
 #endif
-  else procw->label2 = gtk_label_new ("");
+  else procw->label2=gtk_label_new (_("\nPlease Wait"));
+
   gtk_widget_show (procw->label2);
   gtk_widget_set_size_request (procw->label2, PROG_LABEL_WIDTH, -1);
 

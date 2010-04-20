@@ -378,6 +378,27 @@ void cancel_process(gboolean visible) {
 
 
 
+
+static void disp_fraction(gint done, gint start, gint end, gdouble timesofar, process *proc) {
+  // display fraction done and estimated time remaining
+  gchar *prog_label;
+  gdouble est_time;
+  gdouble fraction_done=(done-start)/(end-start+1.);
+
+  if (fraction_done>1.) fraction_done=1.;
+
+  if (done>disp_frames_done) gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(proc->progressbar),fraction_done);
+
+  est_time=timesofar/fraction_done-timesofar;
+  prog_label=g_strdup_printf(_("\n%d%% done. Time remaining: %u sec\n"),(gint)(fraction_done*100.),(guint)(est_time+.5));
+  gtk_label_set_text(GTK_LABEL(proc->label3),prog_label);
+  g_free(prog_label);
+
+  disp_frames_done=done;
+
+}
+
+
 gboolean process_one (gboolean visible) {
   gint64 new_ticks;
   gint oframeno=0;
@@ -637,18 +658,13 @@ gboolean process_one (gboolean visible) {
 
       else if (visible&&cfile->proc_ptr->frames_done>=cfile->progress_start&&cfile->proc_ptr->frames_done<=cfile->progress_end&&cfile->progress_end>0&&!mainw->effects_paused) {
 	if (progress_count++>=PROG_LOOP_VAL) {
+
 	  gettimeofday(&tv, NULL);
 	  mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	  fraction_done=(cfile->proc_ptr->frames_done-cfile->progress_start)/(cfile->progress_end-cfile->progress_start+1.);
-	  if (fraction_done>1.) fraction_done=1.;
-	  if (cfile->proc_ptr->frames_done>disp_frames_done) gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
 	  timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
-	  est_time=timesofar/fraction_done-timesofar;
-	  prog_label=g_strdup_printf(_("\n%d%% done. Time remaining: %u sec\n"),(gint)(fraction_done*100.),(guint)(est_time+.5));
-	  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label3),prog_label);
-	  g_free(prog_label);
+
+	  disp_fraction(cfile->proc_ptr->frames_done,cfile->progress_start,cfile->progress_end,timesofar,cfile->proc_ptr);
 	  progress_count=0;
-	  disp_frames_done=cfile->proc_ptr->frames_done;
 	}
       }
       else {
@@ -665,7 +681,7 @@ gboolean process_one (gboolean visible) {
       gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
       if (vend>cfile->progress_end) vend=cfile->progress_end;
       if (vend>cfile->fx_frame_pump) {
-	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend);
+	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend,FALSE);
 	cfile->fx_frame_pump=vend;
       }
       progress_count=PROG_LOOP_VAL;
@@ -759,7 +775,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
       if (vend>cfile->progress_end) vend=cfile->progress_end;
       if (vend>cfile->fx_frame_pump) {
-	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend);
+	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend,FALSE);
 	cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
       }
     }
@@ -1620,8 +1636,9 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   process *procw=(process*)(g_malloc(sizeof(process)));
   gchar tmp_label[256];
   gboolean pthread_islocked=TRUE;
+  gdouble timesofar,sttime;
+  gint progress;
   GMainContext *ctx=NULL;
-
 
 #if GLIB_CHECK_VERSION(2,22,0)
   g_main_context_push_thread_default(ctx);
@@ -1643,20 +1660,18 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   }
 
   procw->processing = gtk_dialog_new ();
+  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
   gtk_container_set_border_width (GTK_CONTAINER (procw->processing), 10);
   gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
+  
   gtk_widget_show(procw->processing);
 
-  gtk_widget_set_size_request (procw->processing, 320, 185);
-  gtk_window_set_resizable (GTK_WINDOW (procw->processing), FALSE);
-  
   if (mainw->is_ready) gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_window_set_title (GTK_WINDOW (procw->processing), _("LiVES: - Processing..."));
 
   if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
   else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
 
-  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (procw->processing), TRUE);
 
   dialog_vbox1 = GTK_DIALOG (procw->processing)->vbox;
@@ -1675,6 +1690,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   g_snprintf(tmp_label,256,"%s...\n",(gchar *)arg);
   procw->label = gtk_label_new (tmp_label);
   gtk_widget_show (procw->label);
+  gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label, FALSE, FALSE, 0);
   if (mainw->is_ready) gtk_widget_modify_fg(procw->label, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_label_set_justify (GTK_LABEL (procw->label), GTK_JUSTIFY_LEFT);
@@ -1696,12 +1712,6 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   gtk_label_set_justify (GTK_LABEL (procw->label3), GTK_JUSTIFY_CENTER);
   if (mainw->is_ready) gtk_widget_modify_fg(procw->label3, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
-
-
-
-
-
-
 
   if (has_cancel) {
     GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
@@ -1748,13 +1758,28 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     return;
   }
 
+  gtk_window_set_resizable (GTK_WINDOW (procw->processing), FALSE);
+  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
   while (g_main_context_iteration(ctx,FALSE));
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
 
+  disp_frames_done=0;
+  gettimeofday(&tv, NULL);
+  sttime=tv.tv_sec*1000000+tv.tv_usec;
+
   while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER&&mainw->cancelled!=CANCEL_KEEP&&pthread_islocked) {
     // mutex locked
-    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(procw->progressbar));
+    if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
+      // pulse the progress bar
+      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(procw->progressbar));
+    }
+    else {
+      // show fraction
+      gettimeofday(&tv, NULL);
+      timesofar=(gdouble)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
+      disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
+    }
     while (g_main_context_iteration(ctx,FALSE));
     pthread_mutex_unlock(&mainw->gtk_mutex);
     do {
@@ -1839,6 +1864,7 @@ void do_threaded_dialog(gchar *text, gboolean has_cancel) {
   thread_text=g_strdup(text);
   mainw->threaded_dialog=TRUE;
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+  clear_mainw_msg();
   if (!has_cancel) pthread_create(&dthread,NULL,dth2,thread_text);
   else pthread_create(&dthread,NULL,dth2_with_cancel,thread_text);
 }

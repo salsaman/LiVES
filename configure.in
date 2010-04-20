@@ -25,8 +25,6 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
-AC_PROG_PGREP
-AC_PROG_PKILL
 AM_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_HEADER_STDC
@@ -109,6 +107,19 @@ AC_CHECK_FUNCS(posix_memalign)
 
 
 AC_PATH_PROGS(PERL, perl perl5)
+
+
+# Check for pgrep
+AC_PATH_PROG(PGREP, pgrep, no)
+if test $PGREP = no; then
+   AC_MSG_ERROR([Cannot find pgrep, make sure it is installed and in your PATH])
+fi
+
+# Check for pkg-config
+AC_PATH_PROG(PKILL, pkill, no)
+if test $PKILL = no; then
+   AC_MSG_ERROR([Cannot find pkill, make sure it is installed and in your PATH])
+fi
 
 # Check for pkg-config
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)

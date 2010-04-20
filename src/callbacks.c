@@ -76,7 +76,7 @@ lives_exit (void) {
 
     if (mainw->current_file>-1) {
       if (cfile->handle!=NULL) {
-	com=g_strdup_printf("smogrify stopsubsub %s -1 2>/dev/null",cfile->handle);
+	com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
 	dummyvar=system(com);
 	g_free(com);
       }
@@ -3171,6 +3171,7 @@ on_stop_activate_by_del                  (GtkWidget       *widget,
 
 
 void on_pause_clicked(void) {
+
   mainw->jack_can_stop=FALSE;
   mainw->cancelled=CANCEL_USER_PAUSED;
 }
@@ -5016,7 +5017,7 @@ end_fs_preview(void) {
   if (mainw->in_fs_preview) {
     if (prefs->pause_xmms) dummyvar=system("xmms -u");
     mainw->in_fs_preview=FALSE;
-    com=g_strdup_printf ("smogrify stopsubsub fsp%d",(mypid=getpid()));
+    com=g_strdup_printf ("smogrify stopsubsub fsp%d 2>/dev/null",(mypid=getpid()));
     dummyvar=system (com);
     g_free (com);
 
@@ -7200,43 +7201,71 @@ on_effects_paused                     (GtkButton       *button,
   gchar *com;
   gint64 xticks;
 
-  gettimeofday(&tv, NULL);
-  xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+  if (mainw->iochan!=NULL) {
+    // pause during encoding (if we start using mainw->iochan for other things, this will
+    // need changing...)
 
-  if (!mainw->effects_paused) {
-    mainw->timeout_ticks-=xticks;
-    com=g_strdup_printf("smogrify pause %s",cfile->handle);
-    if (!mainw->preview) {
+    if (!mainw->effects_paused) {
+      // use effects_paused for this
+      com=g_strdup_printf("smogrify stopsubsubs %s SIGTSTP 2>/dev/null",cfile->handle);
+      dummyvar=system(com);
+      
       gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
-      if (!cfile->nokeep) {
-	gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Keep"));
-	gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Keep to keep what you have and stop)\n(click Resume to continue processing)"));
-      }
+      
+      gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Resume to continue processing)"));
+      
       d_print(_ ("paused..."));
     }
-#ifdef RT_AUDIO
-    if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) gtk_widget_hide(cfile->proc_ptr->stop_button);
-#endif
-  } else {
-    mainw->timeout_ticks+=xticks;
-    com=g_strdup_printf("smogrify resume %s",cfile->handle);
-    if (!mainw->preview) {
+
+    else {
+      com=g_strdup_printf("smogrify stopsubsubs %s SIGCONT 2>/dev/null",cfile->handle);
+      dummyvar=system(com);
+
       gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
-      gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button), _("Cancel"));
       gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
       d_print(_ ("resumed..."));
     }
-#ifdef RT_AUDIO
-    if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) gtk_widget_show(cfile->proc_ptr->stop_button);
-#endif
   }
-
-  if (!mainw->internal_messaging
+  else {
+    // pause during effects processing
+    gettimeofday(&tv, NULL);
+    xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+    
+    if (!mainw->effects_paused) {
+      mainw->timeout_ticks-=xticks;
+      com=g_strdup_printf("smogrify pause %s",cfile->handle);
+      if (!mainw->preview) {
+	gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
+	if (!cfile->nokeep) {
+	  gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Keep"));
+	  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Keep to keep what you have and stop)\n(click Resume to continue processing)"));
+	}
+	d_print(_ ("paused..."));
+      }
 #ifdef RT_AUDIO
-      &&!((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL))
+      if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) gtk_widget_hide(cfile->proc_ptr->stop_button);
 #endif
-      ) {
-    dummyvar=system(com);
+    } else {
+      mainw->timeout_ticks+=xticks;
+      com=g_strdup_printf("smogrify resume %s",cfile->handle);
+      if (!mainw->preview) {
+	gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
+	gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button), _("Cancel"));
+	gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
+	d_print(_ ("resumed..."));
+      }
+#ifdef RT_AUDIO
+      if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) gtk_widget_show(cfile->proc_ptr->stop_button);
+#endif
+    }
+
+    if (!mainw->internal_messaging
+#ifdef RT_AUDIO
+	&&!((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL))
+#endif
+	) {
+      dummyvar=system(com);
+    }
   }
   g_free(com);
   mainw->effects_paused=!mainw->effects_paused;

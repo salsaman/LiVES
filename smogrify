@@ -71,24 +71,26 @@ if (defined($ARGV[0])) {
     if ($command eq "stopsubsub"||$command eq "stopsubsubs"||$command eq "stop_audio") {
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
+	my $sig="TERM";
 	if ($command eq "stop_audio") {
 		$pidfile="$curtmpdir/.pidpb";
 	}
 	else {
 		$pidfile="$curtmpdir/.pid";
+		if (defined($ARGV[2])) {
+		    $sig=$ARGV[2];
+		}
 	}
 	$statusfile="$curtmpdir/.status";
-	$wait_for_pid=1;
-	if (defined $ARGV[2]) {
-	    $wait_for_pid=-1;
-	}
 
 	unless (-d "$curtmpdir") {
 	    exit 2;
 	}
+
 	if (defined(open IN,"< $pidfile")) {
 	    read IN,$target_pid,8;
 	    close IN;
+
 	    if ($target_pid eq NULL) {
 		exit 1;
 	    }
@@ -99,7 +101,7 @@ if (defined($ARGV[0])) {
 	    }
 	    elsif ($command eq "stopsubsub"||$command eq "stop_audio") {
 		# kill all subprocesses of target_pid, and target_pid
-		&kill_child_pids($target_pid);
+		&kill_child_pids($target_pid,$sig);
 	    }
 	    elsif ($command eq "stopsubsubs") {
 		# kill all subprocesses of target_pid, but not target_pid
@@ -108,7 +110,7 @@ if (defined($ARGV[0])) {
 		    while (<IN>) {
 			$pid=$_;
 			chomp($pid);
-			&kill_child_pids($pid);
+			&kill_child_pids($pid,$sig);
 		    }
 		    close IN;
 		}
@@ -117,11 +119,11 @@ if (defined($ARGV[0])) {
 	    
 	    else {
 		print "Attempting to stop process ".$target_pid." with $command\n";
-		system("kill -TERM $target_pid>/dev/null 2>&1");
+		system("kill -$sig $target_pid>/dev/null 2>&1");
 	    }
 	    
-	    unlink $pidfile;
-	    unless ($command eq "stop_audio") {
+	    #unlink $pidfile;
+	    if ($command ne "stop_audio" && $sig eq "TERM") {
 		&sig_killed;
 	    }
 	    exit 0;
@@ -2986,18 +2988,20 @@ sub get_pgid {
 }
 
 sub kill_child_pids {
-    my $target_pid=shift;
+    my ($target_pid,$sig)=@_;
     my $pid;
     `pgrep -P $target_pid > $tmpdir/.pids.$target_pid`;
-    `kill -TERM $target_pid >/dev/null 2>&1`;
+
     if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
 	while (<IN>) {
 	    $pid=$_;
 	    chomp($pid);
-	    &kill_child_pids($pid);
+	    &kill_child_pids($pid,$sig);
 	}
 	close IN;
     }
+
+    `kill -$sig $target_pid`;# must not ! >/dev/null 2>&1`;
     unlink "$tmpdir/.pids.$target_pid";
 }
 
@@ -4776,7 +4780,6 @@ sub sig_complete {
     `sync;sync;sync`;
 
     if (-d $curtmpdir) {
-	&check_for_pause;
 	open OUT,"> $statusfile";
 	print OUT $status;
 	close OUT;
@@ -4793,7 +4796,7 @@ sub sig_killed {
     open OUT,"> $statusfile";
     print OUT $status;
     close OUT;
-    unlink $pidfile;
+#    unlink $pidfile;
 }
 
 

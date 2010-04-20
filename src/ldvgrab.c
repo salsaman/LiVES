@@ -107,9 +107,14 @@ void camdest(s_cam *cam) {
 s_cam *camready (void) {
   gchar *msg;
   rom1394_directory rom_dir;
-  int i;
+  int i,j;
+
+  int n_ports;
+  struct raw1394_portinfo pinf[ 16 ];
 
   s_cam *cam=(s_cam *)malloc(sizeof(s_cam));
+
+  cam->device=-1;
 
 #ifdef RAW1394_V_0_8
   cam->handle = raw1394_get_handle();
@@ -127,29 +132,42 @@ s_cam *camready (void) {
     return NULL;
   } 
 
-  if (raw1394_set_port(cam->handle, 0) < 0) {
-    do_error_dialog(_("\nraw1394 - couldn't set port !\n"));
-    raw1394_destroy_handle(cam->handle);
-    return NULL;
+  if ( ( n_ports = raw1394_get_port_info( cam->handle, pinf, 16 ) ) < 0 ) {
+      msg=g_strdup_printf(_("raw1394 - failed to get port info: %s.\n"), strerror( errno ));
+      raw1394_destroy_handle( cam->handle ); 
+      return NULL;;
   }
 
-  for (i=0; i < raw1394_get_nodecount(cam->handle); ++i) {
-    if (rom1394_get_directory(cam->handle, i, &rom_dir) < 0) {
-      msg=g_strdup_printf(_("error reading config rom directory for node %d\n"), i);
+
+
+  for ( j = 0; j < n_ports && cam->device == -1; j++ ) {
+
+    if (raw1394_set_port(cam->handle, j) < 0) {
+      msg=g_strdup_printf(_("\nraw1394 - couldn't set port %d !\n"),j);
       d_print(msg);
       g_free(msg);
       continue;
     }
     
-    if ( (rom1394_get_node_type(&rom_dir) == ROM1394_NODE_TYPE_AVC) &&
-	 avc1394_check_subunit_type(cam->handle, i, AVC1394_SUBUNIT_TYPE_VCR)) {
-      cam->device = i;
-      break;
+    for (i=0; i < raw1394_get_nodecount(cam->handle); ++i) {
+
+      if (rom1394_get_directory(cam->handle, i, &rom_dir) < 0) {
+	msg=g_strdup_printf(_("error reading config rom directory for node %d\n"), i);
+	d_print(msg);
+	g_free(msg);
+	continue;
+      }
+
+      if ( (rom1394_get_node_type(&rom_dir) == ROM1394_NODE_TYPE_AVC) &&
+	   avc1394_check_subunit_type(cam->handle, i, AVC1394_SUBUNIT_TYPE_VCR)) {
+	cam->device = i;
+	break;
+      }
     }
   }
-    
+
   if (cam->device == -1) {
-    do_error_dialog(_("\nCould not find any AV/C devices on the 1394 bus.\n"));
+    do_error_dialog(_("\nLiVES could not find any firewire camera.\nPlease make sure your camera is switched on,\nand check that you have read/write permissions for the camera device\n(generally /dev/raw1394*).\n"));
     raw1394_destroy_handle(cam->handle);
     return NULL;
   }

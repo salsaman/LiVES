@@ -331,7 +331,7 @@ int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t n
 
   for (i=0;i<4;i++) {
     if (audio_buffers[i]==NULL) {
-      if (!(audio_buffers[i] = (int16_t *)malloc(DV_AUDIO_MAX_SAMPLES * sizeof(int16_t)))) {
+      if (!(audio_buffers[i] = (int16_t *)malloc(DV_AUDIO_MAX_SAMPLES * 2 * sizeof(int16_t)))) {
 	fprintf(stderr, "dv_decoder: out of memory\n");
 	return 0;
       }
@@ -339,7 +339,7 @@ int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t n
   }
 
   if (audio==NULL) {
-    if(!(audio = malloc(DV_AUDIO_MAX_SAMPLES * 4 * sizeof(int16_t)))) {
+    if(!(audio = malloc(DV_AUDIO_MAX_SAMPLES * 8 * sizeof(int16_t)))) {
       for (i=0;i<4;i++) {
 	free(audio_buffers[i]);
 	audio_buffers[i]=NULL;

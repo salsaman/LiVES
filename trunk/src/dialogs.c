@@ -590,12 +590,11 @@ gboolean process_one (gboolean visible) {
 #endif
 
     }
-  }
-  
-  // paused
-  if (G_UNLIKELY(cfile->play_paused)) {
-    mainw->startticks=mainw->currticks+mainw->deltaticks;
-    if (mainw->ext_playback&&mainw->vpp->send_keycodes!=NULL) (*mainw->vpp->send_keycodes)(pl_key_function);
+    // paused
+    if (G_UNLIKELY(cfile->play_paused)) {
+      mainw->startticks=mainw->currticks+mainw->deltaticks;
+      if (mainw->ext_playback&&mainw->vpp->send_keycodes!=NULL) (*mainw->vpp->send_keycodes)(pl_key_function);
+    }
   }
 
   if (visible) {
@@ -614,7 +613,7 @@ gboolean process_one (gboolean visible) {
 	guint apxl;
 	gettimeofday(&tv, NULL);
 	mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*((apxl=get_approx_ln((guint)mainw->opening_frames))<1000?apxl:1000)) {
+	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*((apxl=get_approx_ln((guint)mainw->opening_frames))<500?apxl:500)) {
 	  on_check_clicked();
 	  last_open_check_ticks=mainw->currticks;
 	  if (mainw->opening_frames!=-1) {
@@ -671,7 +670,6 @@ gboolean process_one (gboolean visible) {
       }
       progress_count=PROG_LOOP_VAL;
     }
-
 
   }
 
@@ -861,6 +859,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   }
 #endif
 
+  if (mainw->iochan!=NULL) gtk_widget_show (cfile->proc_ptr->pause_button);
+
   
   // tell jack transport we are ready to play
   mainw->video_seek_ready=TRUE;
@@ -886,6 +886,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	// this is for encoder output
 	pump_io_chan(mainw->iochan);
       }
+
+      if (visible&&!mainw->internal_messaging) g_usleep(prefs->sleep_time);
 
     }
     if (!mainw->internal_messaging) {

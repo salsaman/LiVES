@@ -904,6 +904,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
       }
     }
 
+    mainw->effects_paused=FALSE;
+
     mainw->current_file=new_file;
     cfile->hsize=mainw->files[current_file]->hsize;
     cfile->vsize=mainw->files[current_file]->vsize;
@@ -1160,6 +1162,9 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
   g_free(extra_params);
 
+  mainw->effects_paused=FALSE;
+  cfile->nokeep=TRUE;
+  
   unlink(cfile->info_file);
   save_file_comments();
   dummyvar=system(com);
@@ -1169,6 +1174,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
   mesg=g_strdup (mainw->msg);
 
   if (mainw->iochan!=NULL) {
+    // flush last of stdout/stderr from plugin
+
     fsync(new_stderr);
 
     pump_io_chan(mainw->iochan);
@@ -1182,6 +1189,9 @@ void save_file (gboolean existing, gchar *n_file_name) {
     g_free(new_stderr_name);
     g_free(redir);
   }
+
+  mainw->effects_paused=FALSE;
+  cfile->nokeep=FALSE;
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
     com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,1,cfile->frames,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name);

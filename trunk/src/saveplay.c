@@ -1375,10 +1375,10 @@ void play_file (void) {
 #ifdef ENABLE_JACK
   aserver_message_t jack_message;
 #endif
-
 #ifdef HAVE_PULSE_AUDIO
   aserver_message_t pulse_message;
 #endif
+
 
   weed_plant_t *pb_start_event=NULL;
   gboolean exact_preview=FALSE;
@@ -1705,6 +1705,8 @@ void play_file (void) {
 	    // tell jack server to open audio file and start playing it
 	    jack_message.command=ASERVER_CMD_FILE_OPEN;
 	    jack_message.data=g_strdup_printf("%d",mainw->current_file);
+
+	    // TODO ** - use chain messages
 	    jack_message.next=NULL;
 	    mainw->jackd->msgq=&jack_message;
 	    jack_audio_seek_frame(mainw->jackd,mainw->play_start);
@@ -1975,6 +1977,7 @@ void play_file (void) {
       jack_message.data=NULL;
       jack_message.next=NULL;
       mainw->jackd->msgq=&jack_message;
+
     }
     if (mainw->record&&(prefs->rec_opts&REC_AUDIO)) {
       weed_plant_t *event=get_last_frame_event(mainw->event_list);

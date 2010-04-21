@@ -163,7 +163,6 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
   }
 
   while ((msg=(aserver_message_t *)pulsed->msgq)!=NULL) {
-
     switch (msg->command) {
     case ASERVER_CMD_FILE_OPEN:
       new_file=atoi(msg->data);
@@ -211,9 +210,9 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     }
     if (msg->data!=NULL) g_free(msg->data);
     msg->command=ASERVER_CMD_PROCESSED;
-    pulsed->msgq = msg->next;
+    if (msg->next==NULL) pulsed->msgq=NULL;
+    else pulsed->msgq = msg->next;
   }
-
   if (pulsed->chunk_size!=nbytes) pulsed->chunk_size = nbytes;
 
   pulsed->state=pa_context_get_state(pulsed->con);
@@ -842,7 +841,7 @@ long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
   long seekstart;
   do {
     pmsg=pulse_get_msgq(pulsed);
-  } while ((pmsg!=NULL)&&pmsg->command!=ASERVER_CMD_FILE_SEEK);
+  } while ((pmsg!=NULL));
   if (pulsed->playing_file==-1) return 0;
   seekstart=((long)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8);
 

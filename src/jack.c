@@ -271,7 +271,8 @@ static int audio_process (nframes_t nframes, void *arg) {
     }
     if (msg->data!=NULL) g_free(msg->data);
     msg->command=ASERVER_CMD_PROCESSED;
-    jackd->msgq = msg->next;
+    if (msg->next==NULL) jackd->msgq=NULL; 
+    else jackd->msgq = msg->next;
   }
 
   if (nframes==0) return 0;

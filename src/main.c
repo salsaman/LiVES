@@ -4504,7 +4504,6 @@ void do_quick_switch (gint new_file) {
 	pulse_message.next=&pulse_message2;
         pulse_message2.data=g_strdup_printf("%ld",mainw->files[new_file]->aseek_pos);
 	pulse_message2.next=NULL;
-
         mainw->pulsed->msgq=&pulse_message;
         mainw->pulsed->in_use=TRUE;
 

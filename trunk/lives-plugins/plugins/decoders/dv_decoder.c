@@ -298,15 +298,13 @@ int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t n
   // if fname is NULL we write to buf instead (unless buf is NULL)
 
 
-  int i,ch,channels,samples;
+  int i,ch,channels,samples,samps_out;
   size_t j=0,k=0,bytes;
   off64_t stbytes;
   uint8_t *buf;
   int xframes;
   double scale=0.;
   double offset_f=0.;
-
-  off_t offset_i=0;
 
   int64_t samps_actual=0,samps_expected,tot_samples=0;
 
@@ -395,6 +393,8 @@ int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t n
   while (1) {
     // now we do the actual decoding, outputting to file and/or memory
 
+    samps_out=0;
+
     if (read (priv.fd, buf, priv.frame_size) < priv.frame_size) break;
     dv_parse_header(priv.dv_dec, buf);
     
@@ -405,14 +405,13 @@ int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t n
     j=0;
 
     // interleave the audio into a single buffer
-    for (i=0;i<samples;i++) {
-      offset_i=(size_t)offset_f;
+    for (i=0;i<samples&&samps_expected;i++) {
       
       for (ch=0;ch<channels;ch++) {
-	if (fname!=NULL) audio[j++] = audio_buffers[ch][i+offset_i];
+	if (fname!=NULL) audio[j++] = audio_buffers[ch][i];
 	else {
 	  // copy a 16 bit sample
-	  memcpy(&(abuff[ch][k]),&(audio_buffers[ch][i+offset_i]),2);
+	  memcpy(&(abuff[ch][k]),&(audio_buffers[ch][i]),2);
 	}
       }
 
@@ -420,29 +419,26 @@ int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t n
       
       offset_f+=scale;
 
-      if (offset_f<-1.&&i>0) {
-	// slipped back a whole sample
+      if (offset_f<=-1.&&i>0) {
+	// slipped back a whole sample, process same i
 	offset_f+=1.;
 	i--;
-	samples++;
       }
       
       
-      if (offset_f>1.) {
-	// slipped forward a whole sample
+      if (offset_f>=1.) {
+	// slipped forward a whole sample, process i+2
 	offset_f-=1.;
 	i++;
-	samples--;
       }
+
+      samps_expected--;
+      samps_out++;
     }
-      
-    samps_expected-=samples;
     
-    if (samps_expected<0) samples+=samps_expected;
+    bytes = samps_out*channels*2;
     
-    bytes = samples*channels*2;
-    
-    tot_samples+=samples;
+    tot_samples+=samps_out;
 
     // write out
     if (fname!=NULL) {

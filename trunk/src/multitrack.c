@@ -5405,12 +5405,12 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   image = gtk_image_new_from_stock ("gtk-refresh", GTK_ICON_SIZE_MENU);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mt->playall), image);
 
-  /*  playsel = gtk_image_menu_item_new_with_mnemonic (_("Pla_y Selection"));
-  gtk_widget_add_accelerator (playsel, "activate", mt->accel_group,
+  mt->playsel = gtk_image_menu_item_new_with_mnemonic (_("Pla_y selected time only"));
+  gtk_widget_add_accelerator (mt->playsel, "activate", mt->accel_group,
                               GDK_y, 0,
                               GTK_ACCEL_VISIBLE);
-  gtk_container_add (GTK_CONTAINER (menuitem_menu), playsel);
-  gtk_widget_set_sensitive (playsel, FALSE);*/
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->playsel);
+  gtk_widget_set_sensitive (mt->playsel, FALSE);
 
   mt->stop = gtk_image_menu_item_new_with_mnemonic (_("_Stop"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->stop);

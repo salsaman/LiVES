@@ -123,6 +123,7 @@ struct _mt {
   GtkWidget *hpaned;
   GtkWidget *scrollbar;
   GtkWidget *playall;
+  GtkWidget *playsel;
   GtkWidget *jumpnext;
   GtkWidget *jumpback;
   GtkWidget *render;

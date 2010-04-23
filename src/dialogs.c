@@ -33,6 +33,10 @@ static gint64 last_display_ticks=0;  // ticks when last display happened (fixed)
 
 static gint64 last_open_check_ticks;
 
+static gboolean shown_paused_frames;
+
+static gdouble est_time;
+
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (U_SECL/10l)
 
@@ -624,36 +628,41 @@ gboolean process_one (gboolean visible) {
       if (mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_NO_PROPOGATE;
     }
     else {
-      gdouble est_time,fraction_done,timesofar;
+      gdouble fraction_done,timesofar;
       gchar *prog_label;
 
       if (GTK_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
       // set the progress bar %
 
-      if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&(cfile->hsize>0||cfile->vsize>0||cfile->frames>0)) {
+      if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&(cfile->hsize>0||cfile->vsize>0||cfile->frames>0)&&(!mainw->effects_paused||!shown_paused_frames)) {
 	guint apxl;
 	gettimeofday(&tv, NULL);
 	mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*((apxl=get_approx_ln((guint)mainw->opening_frames))<500?apxl:500)) {
+	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*((apxl=get_approx_ln((guint)mainw->opening_frames))<200?apxl:200)||(mainw->effects_paused&&!shown_paused_frames)) {
+	  // TODO -trigger after preview playback
 	  on_check_clicked();
 	  last_open_check_ticks=mainw->currticks;
-	  if (mainw->opening_frames!=-1) {
+	  if (mainw->opening_frames>1) {
 	    if (cfile->frames>0&&cfile->frames!=123456789) {
-	      fraction_done=(gdouble)mainw->opening_frames/(gdouble)cfile->frames;
+	      fraction_done=(gdouble)(mainw->opening_frames-1)/(gdouble)cfile->frames;
 	      if (fraction_done>1.) fraction_done=1.;
-	      timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
-	      est_time=timesofar/fraction_done-timesofar;
+	      if (!mainw->effects_paused) {
+		timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
+		est_time=timesofar/fraction_done-timesofar;
+	      }
 	      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
-	      prog_label=g_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),mainw->opening_frames,cfile->frames,(guint)(est_time+.5));
+	      if (est_time!=-1.) prog_label=g_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),mainw->opening_frames-1,cfile->frames,(guint)(est_time+.5));
+	      else prog_label=g_strdup_printf(_("\n%d/%d frames opened.\n"),mainw->opening_frames-1,cfile->frames);
 	    }
 	    else {
 	      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
-	      prog_label=g_strdup_printf(_("\n%d frames opened.\n"),mainw->opening_frames);
+	      prog_label=g_strdup_printf(_("\n%d frames opened.\n"),mainw->opening_frames-1);
 	    }
 	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label3),prog_label);
 	    g_free(prog_label);
 	  }
 	}
+	shown_paused_frames=mainw->effects_paused;
       }
 
       else if (visible&&cfile->proc_ptr->frames_done>=cfile->progress_start&&cfile->proc_ptr->frames_done<=cfile->progress_end&&cfile->progress_end>0&&!mainw->effects_paused) {
@@ -721,6 +730,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (visible) accelerators_swapped=FALSE;
   frames_done=disp_frames_done=0;
   last_display_ticks=0;
+  shown_paused_frames=FALSE;
+  est_time=-1.;
 
   mainw->cevent_tc=0;
 
@@ -741,7 +752,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   mainw->cancelled=CANCEL_NONE;   
   mainw->error=FALSE;
   clear_mainw_msg();
-  if (!mainw->preview) mainw->timeout_ticks=0;
+  if (!mainw->preview||cfile->opening) mainw->timeout_ticks=0;
 
   if (visible) {
     mainw->is_processing=TRUE;
@@ -762,8 +773,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
     else lives_set_cursor_style(LIVES_CURSOR_BUSY,GDK_WINDOW(cfile->proc_ptr->processing->window));
 
-    if (cfile->opening&&capable->has_sox&&mainw->playing_file==-1) {
-      //gtk_widget_show (cfile->proc_ptr->preview_button);
+    if (cfile->opening&&(capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
       if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Preview"), NULL);
       gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Preview"), NULL);
       gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, 0);
@@ -792,6 +802,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   // startticks is the ticks value of the last frame played
 
   mainw->startticks=mainw->currticks=mainw->offsetticks=0;
+  last_open_check_ticks=0;
 
   gettimeofday(&tv, NULL);
 
@@ -921,14 +932,15 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     g_print("msg %s\n",mainw->msg);
 #endif
 
+
     // we got a message from the backend...
 
     if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&!cfile->nopreview) {
-      if (!cfile->opening||(capable->has_sox&&mainw->playing_file==-1)) gtk_widget_show (cfile->proc_ptr->preview_button);
-      if (cfile->opening) gtk_widget_show (cfile->proc_ptr->stop_button);
-      else {
-	gtk_widget_show (cfile->proc_ptr->pause_button);
+      if (!cfile->opening||((capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1)) gtk_widget_show (cfile->proc_ptr->preview_button);
+      if (cfile->opening_loc) gtk_widget_show (cfile->proc_ptr->stop_button);
+      else gtk_widget_show (cfile->proc_ptr->pause_button);
 
+      if (!cfile->opening) {
 	gtk_widget_grab_default (cfile->proc_ptr->preview_button);
 	if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Preview"), NULL);
 	gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Preview"), NULL);
@@ -938,7 +950,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       }
     }
 
-    if (strncmp(mainw->msg,"completed",8)&&strncmp(mainw->msg,"error",5)&&(visible||((strncmp(mainw->msg,"video_ended",11)||mainw->whentostop!=STOP_ON_VID_END)&&(strncmp(mainw->msg,"audio_ended",11)||mainw->preview||mainw->whentostop!=STOP_ON_AUD_END)))) {
+    if (strncmp(mainw->msg,"completed",8)&&strncmp(mainw->msg,"error",5)&&strncmp(mainw->msg,"killed",6)&&(visible||((strncmp(mainw->msg,"video_ended",11)||mainw->whentostop!=STOP_ON_VID_END)&&(strncmp(mainw->msg,"audio_ended",11)||mainw->preview||mainw->whentostop!=STOP_ON_AUD_END)))) {
       // processing not yet completed...
       if (visible) {
 	// last frame processed ->> will go from cfile->start to cfile->end
@@ -976,6 +988,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
     else finished=TRUE;
   } while (!finished);
+
 
 #ifdef DEBUG
   g_print ("exit pt 3 %s\n",mainw->msg);
@@ -1083,7 +1096,6 @@ void do_auto_dialog (const gchar *text, gint type) {
   }
   else if (type==1) {
     gtk_widget_show(proc_ptr->stop_button);
-    //gtk_widget_show(proc_ptr->pause_button);
     gtk_widget_show(proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed_read!=NULL) pulse_driver_uncork(mainw->pulsed_read);

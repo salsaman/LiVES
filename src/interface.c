@@ -399,7 +399,9 @@ process * create_processing (const gchar *text) {
 
   procw->stop_button = gtk_button_new_with_mnemonic (_ ("_Enough"));
   procw->preview_button = gtk_button_new_with_mnemonic (_ ("_Preview"));
-  procw->pause_button = gtk_button_new_with_mnemonic (_ ("Pau_se"));
+
+  if (cfile->nokeep) procw->pause_button = gtk_button_new_with_mnemonic (_ ("Paus_e"));
+  else procw->pause_button = gtk_button_new_with_mnemonic (_ ("Pause/_Enough"));
 
   gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->preview_button, 1);
   gtk_widget_hide(procw->preview_button);
@@ -411,7 +413,7 @@ process * create_processing (const gchar *text) {
 
 
   if (mainw->current_file>-1) {
-    if ((cfile->opening&&(cfile->frames>0||cfile->opening_loc))
+    if (cfile->opening_loc
 #ifdef ENABLE_JACK
 	||mainw->jackd_read!=NULL
 #endif
@@ -421,7 +423,7 @@ process * create_processing (const gchar *text) {
 	) {
       // the "enough" button for opening
       gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->stop_button, 0);
-      //gtk_widget_show(procw->stop_button);
+      gtk_widget_show(procw->stop_button);
       GTK_WIDGET_SET_FLAGS (procw->stop_button, GTK_CAN_DEFAULT);
     }
   }

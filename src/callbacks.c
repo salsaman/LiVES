@@ -5139,6 +5139,11 @@ on_button3_clicked                     (GtkButton       *button,
   guint keep_frames=0;
   FILE *infofile;
 
+  if (cfile->opening&&mainw->effects_paused) {
+    on_stop_clicked(NULL,NULL);
+    return;
+  }
+
   clear_mainw_msg();
 
   if (mainw->current_file>-1&&cfile->proc_ptr!=NULL) {
@@ -7203,32 +7208,33 @@ on_effects_paused                     (GtkButton       *button,
   gchar *com;
   gint64 xticks;
 
-  if (mainw->iochan!=NULL) {
+  if (mainw->iochan!=NULL||cfile->opening) {
     // pause during encoding (if we start using mainw->iochan for other things, this will
     // need changing...)
 
     if (!mainw->effects_paused) {
       // use effects_paused for this
-      com=g_strdup_printf("smogrify stopsubsubs %s SIGTSTP 2>/dev/null",cfile->handle);
+      com=g_strdup_printf("smogrify stopsubsub %s SIGTSTP 2>/dev/null",cfile->handle);
       dummyvar=system(com);
-      
-      gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
-      
-      gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Resume to continue processing)"));
-      
-      d_print(_ ("paused..."));
+      if (!cfile->opening) {
+	gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
+	gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Resume to continue processing)"));
+	d_print(_ ("paused..."));
+      }
     }
 
     else {
-      com=g_strdup_printf("smogrify stopsubsubs %s SIGCONT 2>/dev/null",cfile->handle);
+      com=g_strdup_printf("smogrify stopsubsub %s SIGCONT 2>/dev/null",cfile->handle);
       dummyvar=system(com);
 
-      gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
-      gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
-      d_print(_ ("resumed..."));
+      if (!cfile->opening) {
+	gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
+	gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
+	d_print(_ ("resumed..."));
+      }
     }
   }
-  else {
+  if (mainw->iochan==NULL) {
     // pause during effects processing
     gettimeofday(&tv, NULL);
     xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
@@ -7239,7 +7245,8 @@ on_effects_paused                     (GtkButton       *button,
       if (!mainw->preview) {
 	gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
 	if (!cfile->nokeep) {
-	  gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Keep"));
+	  if (!cfile->opening) gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Keep"));
+	  else gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Enough"));
 	  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Keep to keep what you have and stop)\n(click Resume to continue processing)"));
 	}
 	d_print(_ ("paused..."));
@@ -7251,7 +7258,8 @@ on_effects_paused                     (GtkButton       *button,
       mainw->timeout_ticks+=xticks;
       com=g_strdup_printf("smogrify resume %s",cfile->handle);
       if (!mainw->preview) {
-	gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
+	if (cfile->opening) gtk_button_set_label(GTK_BUTTON(button),_ ("Pause/_Enough"));
+	else gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
 	gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button), _("Cancel"));
 	gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
 	d_print(_ ("resumed..."));
@@ -7261,7 +7269,7 @@ on_effects_paused                     (GtkButton       *button,
 #endif
     }
 
-    if (!mainw->internal_messaging
+    if (!cfile->opening&&!mainw->internal_messaging
 #ifdef RT_AUDIO
 	&&!((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL))
 #endif

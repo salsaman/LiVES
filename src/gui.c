@@ -1811,7 +1811,14 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->framebar, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (mainw->framebar), 2);
 
+  /* TRANSLATORS: please keep the translated string the same length */
   mainw->vps_label = gtk_label_new (_("     Video playback speed (frames per second)        "));
+  tmp=g_strdup(gtk_label_get_text(GTK_LABEL(mainw->vps_label)));
+  if (strlen(tmp)>55) memset(tmp+55,0,1);
+  gtk_label_set_text(GTK_LABEL(mainw->vps_label),tmp);
+  g_free(tmp);
+
+
   gtk_widget_show (mainw->vps_label);
   gtk_box_pack_start (GTK_BOX (mainw->framebar), mainw->vps_label, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (mainw->vps_label), GTK_JUSTIFY_LEFT);

@@ -16,7 +16,7 @@ Improved support for YUV colourspaces.
 Added two new effects, comicbook and softlight.
 Enable realtime audio mixer in multitrack.
 Fixed some oddities when resizing window to fullscreen internal. *
-Allow pause/resume during encoding.
+Allow pause/resume during encoding and opening.
 Reduce CPU usage when paused in effects or encoding.
 
 	

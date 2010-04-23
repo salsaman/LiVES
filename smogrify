@@ -105,7 +105,7 @@ if (defined($ARGV[0])) {
 	    }
 	    elsif ($command eq "stopsubsubs") {
 		# kill all subprocesses of target_pid, but not target_pid
-		`pgrep -P $target_pid > $tmpdir/.pids.$target_pid`;
+		`pgrep -P $target_pid > $tmpdir/.pids.$target_pid 2>/dev/null`;
 		if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
 		    while (<IN>) {
 			$pid=$_;
@@ -138,8 +138,7 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "new") {
-	# warning - this has changed recently, it now takes a $key
-	# this can normally be set to getpid()
+	# $key can normally be set to getpid()
 
 	$key=$ARGV[1];
 
@@ -1314,8 +1313,8 @@ if (defined($ARGV[0])) {
             }
 
 
-	    @info=split /  /, `grep VIDEO: $curtmpfile`;
-	    @info2=split / /, `grep AUDIO: $curtmpfile`;
+	    @info=split /  /, `grep VIDEO: $curtmpfile 2>/dev/null`;
+	    @info2=split / /, `grep AUDIO: $curtmpfile 2>/dev/null`;
 	    
 	    unlink $curtmpfile;
 	    #$type=$info[1];
@@ -2982,7 +2981,7 @@ sub get_pgid {
 sub kill_child_pids {
     my ($target_pid,$sig)=@_;
     my $pid;
-    `pgrep -P $target_pid > $tmpdir/.pids.$target_pid`;
+    `pgrep -P $target_pid > $tmpdir/.pids.$target_pid 2>/dev/null`;
 
     if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
 	while (<IN>) {
@@ -4792,7 +4791,7 @@ sub sig_killed {
     open OUT,"> $statusfile";
     print OUT $status;
     close OUT;
-#    unlink $pidfile;
+    unlink $pidfile;
 }
 
 
@@ -5035,6 +5034,7 @@ sub count_frames {
     }
 
     $name=&mkname(1);
+
     unless (-f "$curtmpdir/$name$img_ext") {
 	return 0;
     }

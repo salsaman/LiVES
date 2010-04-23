@@ -3469,7 +3469,7 @@ void load_frame_image(gint frame, gint last_frame) {
 	  }
 	  
 	  // or we reached the end of the preview
-	  if ((!cfile->opening&&frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start))||(cfile->opening&&(mainw->toy_type==LIVES_TOY_TV||!mainw->preview))) {
+	  if ((!cfile->opening&&frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start))||(cfile->opening&&(mainw->toy_type==LIVES_TOY_TV||!mainw->preview||mainw->effects_paused))) {
 	    if (mainw->toy_type==LIVES_TOY_TV) {
 	      // force a loop (set mainw->cancelled to 100 to play selection again)
 	      mainw->cancelled=CANCEL_KEEP_LOOPING;

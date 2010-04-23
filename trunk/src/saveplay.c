@@ -480,6 +480,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     add_to_winmenu();
     set_main_title(cfile->file_name,0);
 
+    mainw->effects_paused=FALSE;
+
     if (cfile->ext_src==NULL) {
       if (mainw->file_open_params==NULL) mainw->file_open_params=g_strdup("");
 
@@ -528,6 +530,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	g_free(msgstr);
 	
 	mainw->opening_frames=-1;
+	mainw->effects_paused=FALSE;
 	
 	if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
 	  mainw->cancelled=CANCEL_NONE;
@@ -562,6 +565,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
   cfile->opening=cfile->opening_audio=cfile->opening_only_audio=FALSE;
   mainw->opening_frames=-1;
+  mainw->effects_paused=FALSE;
 
 #if defined DEBUG
   g_print("Out of dpd\n");
@@ -3734,6 +3738,8 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   pthread_mutex_unlock(&mainw->gtk_mutex);
   // mutex unlock
 
+  mainw->suppress_dprint=TRUE;
+
   while (1) {
     is_scrap=FALSE;
 
@@ -3781,6 +3787,8 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	  mt_sensitise(mainw->multitrack);
 	}
 
+	mainw->suppress_dprint=FALSE;
+	d_print_failed();
 	return TRUE;
       }
     }
@@ -3817,6 +3825,8 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 	}
 
+	mainw->suppress_dprint=FALSE;
+	d_print_failed();
 	return TRUE;
       }
       if (strstr(buffptr,"/clips/")) {
@@ -3964,6 +3974,8 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
 
+  mainw->suppress_dprint=FALSE;
+  d_print_done();
   return TRUE;
 }
 

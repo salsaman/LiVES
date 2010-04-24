@@ -1949,7 +1949,9 @@ void play_file (void) {
 	cfile->next_event=NULL;
 
 	// multitrack loop - go back to loop start position unless external transport moved us
-	if (mainw->scratch==SCRATCH_NONE) mainw->multitrack->pb_start_event=mainw->multitrack->pb_loop_event;
+	if (mainw->scratch==SCRATCH_NONE) {
+	  mainw->multitrack->pb_start_event=mainw->multitrack->pb_loop_event;
+	}
       }
       if (mainw->multitrack!=NULL) pb_start_event=mainw->multitrack->pb_start_event;
     } while (mainw->multitrack!=NULL&&(mainw->loop_cont||mainw->scratch!=SCRATCH_NONE)&&(mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));

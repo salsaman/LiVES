@@ -503,6 +503,8 @@ struct _mt {
 
   gboolean tl_mouse;
 
+  gboolean playing_sel; // are we playing just the time selection ?
+
   guint idlefunc; // autobackup function 
 
   GList *clip_labels;
@@ -755,6 +757,7 @@ void do_fx_move_context(lives_mt *mt);
 
 // playback / animation
 void multitrack_playall (lives_mt *);
+void multitrack_play_sel (GtkMenuItem *, gpointer mt);
 void animate_multitrack (lives_mt *);
 void unpaint_line(lives_mt *, GtkWidget *eventbox);
 void unpaint_lines(lives_mt *);

@@ -2932,7 +2932,10 @@ on_playall_activate                    (GtkMenuItem     *menuitem,
   if (mainw->current_file<=0) return;
 
   if (mainw->multitrack!=NULL) {
-    if (mainw->playing_file==-1) multitrack_playall(mainw->multitrack);
+    if (mainw->playing_file==-1) {
+      if (!mainw->multitrack->playing_sel) multitrack_playall(mainw->multitrack);
+      else multitrack_play_sel(NULL,mainw->multitrack);
+    }
     else on_pause_clicked();
     return;
   }
@@ -3140,6 +3143,7 @@ void
 on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_paused&&mainw->playing_file==-1) {
     mainw->multitrack->is_paused=FALSE;
+    mainw->multitrack->playing_sel=FALSE;
     mt_tl_move(mainw->multitrack,mainw->multitrack->ptr_time-GTK_RULER (mainw->multitrack->timeline)->position);
     gtk_widget_set_sensitive (mainw->stop, FALSE);
     gtk_widget_set_sensitive (mainw->m_stopbutton, FALSE);

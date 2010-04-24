@@ -521,6 +521,7 @@ gboolean process_one (gboolean visible) {
     if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL)) {
       // playing an event_list
 
+
       if (mainw->scratch!=SCRATCH_NONE&&mainw->multitrack!=NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
 	// handle transport jump
@@ -530,21 +531,26 @@ gboolean process_one (gboolean visible) {
 #endif
       }
       else if (mainw->currticks>=event_start) {
-	cfile->next_event=process_events (cfile->next_event,mainw->currticks);
+	// see if we are playing a selection and reached the end
+	if (mainw->multitrack!=NULL&&mainw->multitrack->playing_sel&&get_event_timecode(cfile->next_event)/U_SEC>=mainw->multitrack->region_end) mainw->cancelled=CANCEL_EVENT_LIST_END;
+	else {
+	  cfile->next_event=process_events (cfile->next_event,mainw->currticks);
 	
-	// see if we need to fill an audio buffer
+	  // see if we need to fill an audio buffer
 #ifdef ENABLE_JACK
-	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->abufs_to_fill>0) {
-	  mainw->jackd->abufs[mainw->write_abuf]->samples_filled=0;
-	  fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
-	}
+	  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->abufs_to_fill>0) {
+	    mainw->jackd->abufs[mainw->write_abuf]->samples_filled=0;
+	    fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
+	  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->abufs_to_fill>0) {
-	  mainw->pulsed->abufs[mainw->write_abuf]->samples_filled=0;
-	  fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
-	}
+	  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->abufs_to_fill>0) {
+	    mainw->pulsed->abufs[mainw->write_abuf]->samples_filled=0;
+	    fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf],mainw->event_list,NULL,FALSE);
+	  }
+	  
 #endif
+	}
       }
       while (g_main_context_iteration(NULL,FALSE)); // allow kb timer to run
       if (cfile->next_event==NULL&&mainw->preview) mainw->cancelled=CANCEL_EVENT_LIST_END;

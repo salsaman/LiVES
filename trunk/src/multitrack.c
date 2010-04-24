@@ -3158,12 +3158,12 @@ mt_spin_start_value_changed           (GtkSpinButton   *spinbutton,
   draw_region(mt);
   do_sel_context(mt);
 
-  if ((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)) {
-    if (mt->selected_tracks!=NULL) {
+  if ((((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)))&&mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
+  if (mt->selected_tracks!=NULL) {
       gtk_widget_set_sensitive(mt->split_sel,TRUE);
       if (mt->region_start!=mt->region_end) {
+	gtk_widget_set_sensitive(mt->playsel,TRUE);
 	gtk_widget_set_sensitive(mt->ins_gap_sel,TRUE);
-	gtk_widget_set_sensitive (mt->remove_gaps, TRUE);
 	gtk_widget_set_sensitive (mt->remove_first_gaps, TRUE);
 	gtk_widget_set_sensitive(mt->fx_region,TRUE);
 	switch (g_list_length(mt->selected_tracks)) {
@@ -3206,10 +3206,11 @@ mt_spin_end_value_changed           (GtkSpinButton   *spinbutton,
   draw_region(mt);
   do_sel_context(mt);
 
-  if ((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)) {
+  if ((((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)))&&mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
     if (mt->selected_tracks!=NULL) {
       gtk_widget_set_sensitive(mt->split_sel,TRUE);
       if (mt->region_start!=mt->region_end) {
+	gtk_widget_set_sensitive(mt->playsel,TRUE);
 	gtk_widget_set_sensitive(mt->ins_gap_sel,TRUE);
 	gtk_widget_set_sensitive (mt->remove_gaps, TRUE);
 	gtk_widget_set_sensitive (mt->remove_first_gaps, TRUE);
@@ -4712,7 +4713,6 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   GtkWidget *selcopy_menu;
   GtkWidget *image;
   GtkWidget *separator;
-  //GtkWidget *playsel;
   GtkWidget *full_screen;
   GtkWidget *sticky;
   GtkWidget *about;
@@ -4774,6 +4774,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
   mt->idlefunc=0; // idle function for auto backup
   mt->auto_back_time=0;
+
+  mt->playing_sel=FALSE;
 
   mt->render_file=mainw->current_file;
 
@@ -6343,6 +6345,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   g_signal_connect (GTK_OBJECT (mt->playall), "activate",
 		    G_CALLBACK (on_playall_activate),
 		    NULL);
+  g_signal_connect (GTK_OBJECT (mt->playsel), "activate",
+		    G_CALLBACK (multitrack_play_sel),
+		    (gpointer)mt);
   g_signal_connect (GTK_OBJECT (mt->insert), "activate",
 		    G_CALLBACK (multitrack_insert),
 		    (gpointer)mt);
@@ -8223,7 +8228,9 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 		}
 	      }
 	    }
+	    if (aclips[i+1]>0) aclips[i+1]=renumbered_clips[aclips[i+1]];
 	  }
+	  weed_set_int_array(event,"audio_clips",num_aclips,aclips);
 	  weed_free(aclips);
 	  weed_free(aseeks);
 	}
@@ -13021,6 +13028,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     polymorph(mt,POLY_FX_STACK);
   }
   if (mt->poly_state!=POLY_PARAMS) mt_show_current_frame(mt);
+  mt_desensitise(mt);
   mt_sensitise(mt);
 
   mt->idlefunc=mt_idle_add(mt);
@@ -13203,6 +13211,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
   g_free(utxt);
   g_free(msg);
 
+  mt_desensitise(mt);
   mt_sensitise(mt);
   mt->idlefunc=mt_idle_add(mt);
 }
@@ -14183,7 +14192,7 @@ void on_seltrack_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gtk_widget_set_sensitive(mt->fx_region_1,FALSE);
   gtk_widget_set_sensitive(mt->fx_region_2,FALSE);
   
-  if (mt->selected_tracks!=NULL) {
+  if (mt->selected_tracks!=NULL&&mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
     gtk_widget_set_sensitive(mt->split_sel,TRUE);
     if (mt->region_start!=mt->region_end) {
       gtk_widget_set_sensitive(mt->ins_gap_sel,TRUE);
@@ -14236,6 +14245,7 @@ void mt_desensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->insert,FALSE);
   gtk_widget_set_sensitive (mt->audio_insert,FALSE);
   gtk_widget_set_sensitive (mt->playall,FALSE);
+  gtk_widget_set_sensitive (mt->playsel,FALSE);
   gtk_widget_set_sensitive (mt->view_events,FALSE);
   gtk_widget_set_sensitive (mt->view_sel_events,FALSE);
   gtk_widget_set_sensitive (mt->render, FALSE);
@@ -14266,6 +14276,10 @@ void mt_desensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->gens_submenu,FALSE);
   gtk_widget_set_sensitive (mainw->troubleshoot, FALSE);
 
+  gtk_widget_set_sensitive (mt->fx_region, FALSE);
+  gtk_widget_set_sensitive (mt->ins_gap_sel, FALSE);
+  gtk_widget_set_sensitive (mt->ins_gap_cur, FALSE);
+
   if (mt->poly_state==POLY_IN_OUT) {
     if (mt->block_selected!=NULL) {
       val=gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->spinbutton_in));
@@ -14292,6 +14306,7 @@ void mt_sensitise (lives_mt *mt) {
   }
   else {
     gtk_widget_set_sensitive (mt->playall,FALSE);
+    gtk_widget_set_sensitive (mt->playsel,FALSE);
     gtk_widget_set_sensitive (mainw->m_playbutton, FALSE);
     gtk_widget_set_sensitive (mt->view_events,FALSE);
     gtk_widget_set_sensitive (mt->view_sel_events,FALSE);
@@ -14301,8 +14316,6 @@ void mt_sensitise (lives_mt *mt) {
 
   if (mt->event_list!=NULL) gtk_widget_set_sensitive (mt->clear_event_list, TRUE);
 
-  gtk_widget_set_sensitive (mt->remove_gaps, TRUE);
-  gtk_widget_set_sensitive (mt->remove_first_gaps, TRUE);
   gtk_widget_set_sensitive (mt->add_vid_behind,TRUE);
   gtk_widget_set_sensitive (mt->add_vid_front,TRUE);
   gtk_widget_set_sensitive (mt->quit,TRUE);
@@ -14370,6 +14383,21 @@ void mt_sensitise (lives_mt *mt) {
     g_signal_handler_unblock (mt->spinbutton_out,mt->spin_out_func);
   }
 
+
+
+
+  if (mt->region_end>mt->region_start&&mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
+    if (mt->selected_tracks!=NULL) {
+      gtk_widget_set_sensitive (mt->fx_region, TRUE);
+      gtk_widget_set_sensitive (mt->ins_gap_sel, TRUE);
+      gtk_widget_set_sensitive (mt->remove_gaps, TRUE);
+      gtk_widget_set_sensitive (mt->remove_first_gaps, TRUE);
+    }
+    gtk_widget_set_sensitive(mt->playsel,TRUE);
+    gtk_widget_set_sensitive (mt->ins_gap_cur, TRUE);
+    gtk_widget_set_sensitive(mt->view_sel_events,TRUE);
+  }
+
   track_select(mt);
 
 }
@@ -14432,7 +14460,7 @@ void mt_prepare_for_playback(lives_mt *mt) {
   gtk_widget_set_sensitive (mt->rewind,FALSE);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
 
-  if (!mt->is_paused) mt->ptr_time=GTK_RULER(mt->timeline)->position;
+  if (!mt->is_paused&&!mt->playing_sel) mt->ptr_time=GTK_RULER(mt->timeline)->position;
 
   mainw->must_resize=TRUE;
 
@@ -14549,7 +14577,8 @@ void multitrack_playall (lives_mt *mt) {
       if (mainw->cancelled!=CANCEL_VID_END) {
 	// otherwise jack transport set us out of range
 
-	if (mt->is_paused) mt->pb_loop_event=pb_loop_event;
+	if (mt->playing_sel) mt->pb_loop_event=get_frame_event_at(mt->event_list,q_gint64(mt->region_start*U_SEC,mt->fps),NULL,TRUE);
+	else if (mt->is_paused) mt->pb_loop_event=pb_loop_event;
 	
 	on_preview_clicked (NULL,GINT_TO_POINTER(1));
       }
@@ -14577,6 +14606,30 @@ void multitrack_playall (lives_mt *mt) {
 }
 
 
+
+void multitrack_play_sel (GtkMenuItem *menuitem, gpointer user_data) {
+  // get current pointer time; if it is outside the time region jump to start
+  gdouble ptr_time;
+  lives_mt *mt=(lives_mt *)user_data;
+
+  ptr_time=GTK_RULER(mt->timeline)->position;
+  if (!mt->is_paused) mt->ptr_time=ptr_time;
+
+  if (ptr_time<mt->region_start||ptr_time>=mt->region_end) {
+    GTK_RULER(mt->timeline)->position=mt->region_start;
+  }
+
+  // set loop start point to region start, and pb_start to current position
+  // set loop end point to region end or tl end, whichever is soonest
+  mt->playing_sel=TRUE;
+
+  multitrack_playall(mt);
+
+  // on return here, return the pointer to its original position, unless paused
+  if (!mt->is_paused) {
+    mt->playing_sel=FALSE;
+  }
+}
 
 
 
@@ -15525,7 +15578,9 @@ void get_region_overlap(lives_mt *mt) {
   if (event==NULL) mt->region_end=0.;
   mt->region_end=get_event_timecode(event)/U_SEC+1./mt->fps;
 
-  gtk_widget_set_sensitive(mt->view_sel_events,mt->region_start!=mt->region_end);
+  if (mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
+    gtk_widget_set_sensitive(mt->view_sel_events,mt->region_start!=mt->region_end);
+  }
 
 }
 
@@ -15608,7 +15663,7 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
       mt->region_end+=mt->region_start;
       mt->region_start=mt->region_end-mt->region_start;
     }
-    if (mt->region_end>mt->region_start) {
+    if (mt->region_end>mt->region_start&&mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
       if (mt->selected_tracks!=NULL) {
 	gtk_widget_set_sensitive (mt->fx_region, TRUE);
 	gtk_widget_set_sensitive (mt->ins_gap_sel, TRUE);
@@ -15618,10 +15673,12 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
       else {
 	gtk_widget_set_sensitive (mt->fx_region, FALSE);
       }
+      gtk_widget_set_sensitive(mt->playsel,TRUE);
       gtk_widget_set_sensitive (mt->ins_gap_cur, TRUE);
       gtk_widget_set_sensitive(mt->view_sel_events,TRUE);
     }
     else {
+      gtk_widget_set_sensitive (mt->playsel,FALSE);
       gtk_widget_set_sensitive (mt->fx_region, FALSE);
       gtk_widget_set_sensitive (mt->ins_gap_cur, FALSE);
       gtk_widget_set_sensitive (mt->ins_gap_sel, FALSE);
@@ -15635,6 +15692,7 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
     gtk_widget_set_sensitive (mt->fx_region, FALSE);
     gtk_widget_set_sensitive (mt->ins_gap_cur, FALSE);
     gtk_widget_set_sensitive (mt->ins_gap_sel, FALSE);
+    gtk_widget_set_sensitive (mt->playsel,FALSE);
     gtk_widget_set_sensitive (mt->remove_gaps, FALSE);
     gtk_widget_set_sensitive (mt->remove_first_gaps, FALSE);
     if (mt->init_event!=NULL&&mt->poly_state==POLY_PARAMS) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),pos-get_event_timecode(mt->init_event)/U_SEC);

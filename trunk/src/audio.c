@@ -771,21 +771,24 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     in_unsigned[track]=infile->signed_endian&AFORM_UNSIGNED;
     in_bendian=infile->signed_endian&AFORM_BIG_ENDIAN;
 
-    if ((!in_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(in_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) in_reverse_endian[track]=TRUE;
-    else in_reverse_endian[track]=FALSE;
-
-    seekstart[track]=(off64_t)(fromtime[track]*in_arate[track])*in_achans[track]*in_asamps[track];
-    seekstart[track]=((off64_t)(seekstart[track]/in_achans[track]/(in_asamps[track])))*in_achans[track]*in_asamps[track];
-    
-    zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
-    if (ABS(zavel)>zavel_max) zavel_max=ABS(zavel);
-
-    infilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,infile->handle);
-    in_fd[track]=open(infilename,O_RDONLY);
-    
-    lseek64(in_fd[track],seekstart[track],SEEK_SET);
-
-    g_free(infilename);
+    if (G_UNLIKELY(in_achans[track]==0)) is_silent[track]=TRUE;
+    else {
+      if ((!in_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(in_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) in_reverse_endian[track]=TRUE;
+      else in_reverse_endian[track]=FALSE;
+      
+      seekstart[track]=(off64_t)(fromtime[track]*in_arate[track])*in_achans[track]*in_asamps[track];
+      seekstart[track]=((off64_t)(seekstart[track]/in_achans[track]/(in_asamps[track])))*in_achans[track]*in_asamps[track];
+      
+      zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
+      if (ABS(zavel)>zavel_max) zavel_max=ABS(zavel);
+      
+      infilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,infile->handle);
+      in_fd[track]=open(infilename,O_RDONLY);
+      
+      lseek64(in_fd[track],seekstart[track],SEEK_SET);
+      
+      g_free(infilename);
+    }
   }
 
   for (track=0;track<nfiles;track++) {

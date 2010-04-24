@@ -1946,11 +1946,11 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   // TODO - for CD make this nicer - get track names
 
   GtkWidget *cd_dialog;
-  GtkWidget *dialog_vbox11;
-  GtkWidget *hbox16;
+  GtkWidget *dialog_vbox;
+  GtkWidget *hbox;
   GtkWidget *hbox17;
   GtkWidget *hbox17b;
-  GtkWidget *label61;
+  GtkWidget *label;
   GtkWidget *label62=NULL;
   GtkWidget *label62b;
   GtkObject *spinbutton35_adj=NULL;
@@ -1959,9 +1959,9 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   GtkWidget *spinbutton36=NULL;
   GtkObject *spinbutton36b_adj;
   GtkWidget *spinbutton36b;
-  GtkWidget *dialog_action_area11;
-  GtkWidget *cancelbutton9;
-  GtkWidget *okbutton8;
+  GtkWidget *dialog_action_area;
+  GtkWidget *cancelbutton;
+  GtkWidget *okbutton;
   gchar *label_text=NULL;
   
   cd_dialog = gtk_dialog_new ();
@@ -2001,12 +2001,12 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_widget_modify_bg (cd_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox11 = GTK_DIALOG (cd_dialog)->vbox;
-  gtk_widget_show (dialog_vbox11);
+  dialog_vbox = GTK_DIALOG (cd_dialog)->vbox;
+  gtk_widget_show (dialog_vbox);
 
-  hbox16 = gtk_hbox_new (FALSE, 50);
-  gtk_widget_show (hbox16);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox11), hbox16, TRUE, TRUE, 0);
+  hbox = gtk_hbox_new (FALSE, 50);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
   if (type==0) {
     label_text=g_strdup_printf(_("Track to load (from %s)"),prefs->cdplay_device);
@@ -2027,15 +2027,15 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     label_text=g_strdup(_("Device:        fw:"));
   }
 
-  label61 = gtk_label_new (label_text);
+  label = gtk_label_new (label_text);
   g_free(label_text);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label61, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_widget_show (label61);
-  gtk_box_pack_start (GTK_BOX (hbox16), label61, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label61), GTK_JUSTIFY_LEFT);
+  gtk_widget_show (label);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
 
   if (type==0||type==1||type==2) {
     spinbutton35_adj = gtk_adjustment_new (mainw->fx1_val, 1., 256., 1., 10., 0.);
@@ -2049,7 +2049,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
   spinbutton35 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton35_adj), 1, 0);
   gtk_widget_show (spinbutton35);
-  gtk_box_pack_start (GTK_BOX (hbox16), spinbutton35, FALSE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), spinbutton35, FALSE, TRUE, 0);
 
   if (type==1||type==4) {
 
@@ -2059,7 +2059,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     else spinbutton36_adj = gtk_adjustment_new (1, 1, 69, 1, 1, 0);
 
     gtk_widget_show (hbox17);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox11), hbox17, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox17, TRUE, TRUE, 0);
 
     if (type==1) label62=gtk_label_new(_("Chapter  "));
     else if (type==4) label62=gtk_label_new(_("Channel  "));
@@ -2082,7 +2082,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
       spinbutton36b = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36b_adj), 1, 0);
       
       gtk_widget_show (hbox17b);
-      gtk_box_pack_start (GTK_BOX (dialog_vbox11), hbox17b, TRUE, TRUE, 0);
+      gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox17b, TRUE, TRUE, 0);
       
       label62b=gtk_label_new(_("Audio ID  "));
       if (palette->style&STYLE_1) {
@@ -2098,20 +2098,25 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     }
   }
 
-  dialog_action_area11 = GTK_DIALOG (cd_dialog)->action_area;
-  gtk_widget_show (dialog_action_area11);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area11), GTK_BUTTONBOX_END);
+  if (type==4||type==5) {
+    add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
+  }
 
-  cancelbutton9 = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton9);
-  gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), cancelbutton9, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton9, GTK_CAN_DEFAULT);
 
-  okbutton8 = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton8);
-  gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), okbutton8, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton8, GTK_CAN_DEFAULT);
-  gtk_widget_grab_default (okbutton8);
+  dialog_action_area = GTK_DIALOG (cd_dialog)->action_area;
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default (okbutton);
   
   g_signal_connect_after (GTK_OBJECT (spinbutton35), "value_changed",
 			  G_CALLBACK (on_spin_value_changed),
@@ -2130,23 +2135,23 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   }
 
   if (type!=4&&type!=5) {
-    g_signal_connect (GTK_OBJECT (cancelbutton9), "clicked",
+    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		      G_CALLBACK (on_cancel_button1_clicked),
 		      NULL);
   }
 
   if (type==0) {
-    g_signal_connect (GTK_OBJECT (okbutton8), "clicked",
+    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_load_cdtrack_ok_clicked),
 		      NULL);
   }
   else if (type==1||type==2)  {
-    g_signal_connect (GTK_OBJECT (okbutton8), "clicked",
+    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_load_vcd_ok_clicked),
 		      GINT_TO_POINTER (type));
   }
   else if (type==3)  {
-    g_signal_connect (GTK_OBJECT (okbutton8), "clicked",
+    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (mt_change_disp_tracks_ok),
 		      user_data);
   }

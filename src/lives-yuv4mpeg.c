@@ -548,6 +548,8 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
 
   GtkWidget *card_dialog;
 
+  mainw->open_deint=FALSE;
+
   card_dialog=create_cdtrack_dialog(4,NULL);
   response=gtk_dialog_run(GTK_DIALOG(card_dialog));
   if (response==GTK_RESPONSE_CANCEL) {
@@ -591,6 +593,8 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   tv_cards=g_list_append(tv_cards,GINT_TO_POINTER(cardno));
 
   mainw->current_file=new_file;
+
+  cfile->deinterlace=mainw->open_deint;
 
   unlink(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
@@ -645,6 +649,8 @@ on_live_fw_activate                      (GtkMenuItem     *menuitem,
 
   GtkWidget *card_dialog;
 
+  mainw->open_deint=FALSE;
+
   card_dialog=create_cdtrack_dialog(5,NULL);
   response=gtk_dialog_run(GTK_DIALOG(card_dialog));
   if (response==GTK_RESPONSE_CANCEL) {
@@ -674,6 +680,7 @@ on_live_fw_activate                      (GtkMenuItem     *menuitem,
   fw_cards=g_list_append(fw_cards,GINT_TO_POINTER(cardno));
 
   mainw->current_file=new_file;
+  cfile->deinterlace=mainw->open_deint;
 
   unlink(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);

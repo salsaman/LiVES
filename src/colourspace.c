@@ -1520,7 +1520,6 @@ static void convert_bgr_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
       y++;
       u++;
       v++;
-      if (out_has_alpha) a++;
     }
   }
 }

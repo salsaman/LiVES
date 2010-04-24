@@ -2907,6 +2907,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 #ifdef HAVE_YUV4MPEG
   case CLIP_TYPE_YUV4MPEG:
     weed_layer_set_from_yuv4m(layer,sfile);
+    if (sfile->deinterlace) deinterlace_frame(layer,tc);
     mainw->osc_block=FALSE;
     return TRUE;
 #endif

@@ -1759,8 +1759,10 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   }
 
   while (!mainw->is_ready&&pthread_islocked) {
+    // mutex unlock
     pthread_mutex_unlock(&mainw->gtk_mutex);
     do {
+      // wait to get lock again
       if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
 	pthread_islocked=FALSE;
 	break;
@@ -1799,8 +1801,10 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
       disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
     }
     while (g_main_context_iteration(ctx,FALSE));
+    // unlock mutex
     pthread_mutex_unlock(&mainw->gtk_mutex);
     do {
+      // wait to get mutex again
       if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
 	pthread_islocked=FALSE;
 	break;
@@ -1812,9 +1816,10 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
   gtk_widget_destroy(procw->processing);
   while (g_main_context_iteration(ctx,FALSE));
-  if (pthread_islocked) pthread_mutex_unlock(&mainw->gtk_mutex);
 
   g_free(procw);
+  // unlock mutex
+  if (pthread_islocked) pthread_mutex_unlock(&mainw->gtk_mutex);
 }
 
 

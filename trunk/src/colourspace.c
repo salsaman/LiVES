@@ -1490,6 +1490,9 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 
 
 static void convert_bgr_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, guchar **yuvp, gboolean in_has_alpha, gboolean out_has_alpha, gboolean clamped) {
+
+  // TESTED !
+
   int ipsize=3;
   int iwidth;
   guchar *end=rgbdata+(rowstride*vsize);

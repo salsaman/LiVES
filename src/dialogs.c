@@ -1896,13 +1896,7 @@ void do_threaded_dialog(gchar *text, gboolean has_cancel) {
 void end_threaded_dialog(void) {
   if (mainw->threaded_dialog) {
     mainw->threaded_dialog=FALSE;
-    while (pthread_mutex_trylock(&mainw->gtk_mutex)) {
-      // wait to get lock
-      sched_yield();
-      g_usleep(prefs->sleep_time);
-    }
     pthread_join(dthread,NULL);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
     if (thread_text!=NULL) g_free(thread_text);
     if (mainw->splash_window==NULL) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);

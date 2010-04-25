@@ -1927,6 +1927,17 @@ _entryw* create_rename_dialog (gint type) {
 }
 
 
+void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
+
+
+
+
+
+
+
+}
+
+
 GtkWidget*
 create_cdtrack_dialog (gint type, gpointer user_data)
 {
@@ -2101,6 +2112,17 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   if (type==4||type==5) {
     add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
   }
+
+  /*advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
+  gtk_widget_show (advbutton);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), advbutton, FALSE, FALSE, 40);
+
+  g_signal_connect (GTK_OBJECT (advbutton), "clicked",
+		    G_CALLBACK (on_liveinp_advanced_clicked),
+		    NULL);*/
+
+
+
 
 
   dialog_action_area = GTK_DIALOG (cd_dialog)->action_area;

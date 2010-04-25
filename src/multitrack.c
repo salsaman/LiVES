@@ -422,6 +422,9 @@ static void save_mt_autoback(lives_mt *mt) {
 
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   add_markers(mt,mt->event_list);
+#if GLIB_CHECK_VERSION(2,22,0)
+  g_main_context_push_thread_default(ctx);
+#endif
   do_threaded_dialog(_("Auto backup"),FALSE);
   save_event_list_inner(mt,fd,mt->event_list,NULL);
   end_threaded_dialog();

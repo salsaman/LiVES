@@ -259,7 +259,7 @@ giw_led_expose (GtkWidget      *widget,
   // Drawing backgorund
   gtk_paint_flat_box (widget->style,
 			widget->window,
-		      widget->parent==NULL?GTK_STATE_NORMAL:gtk_widget_get_state(widget->parent),
+		      widget->parent==NULL?GTK_STATE_NORMAL:widget->parent->state,
 			GTK_SHADOW_NONE,
 			&rect,
 			widget,

@@ -349,17 +349,17 @@ giw_vslider_expose (GtkWidget      *widget,
 			4,
 			vslider->height);
   gdk_draw_rectangle (widget->window,
-	                widget->style->fg_gc[widget->state],
+	                widget->style->bg_gc[widget->state],
 			FALSE,
 			vslider->x+vslider->width/2-2,
 			vslider->y,
 			4,
 			vslider->height);
-			
+
   // The button
-  gtk_paint_slider (widget->style,
+  /*  gtk_paint_slider (widget->style,
 			widget->window,
-			vslider->button_state,
+		        vslider->button_state,
 			vslider->button_shadow,
 			&rect,
 			widget,
@@ -368,7 +368,15 @@ giw_vslider_expose (GtkWidget      *widget,
 			vslider->button_y,
 			vslider->button_w,
 			vslider->button_h,
-			GTK_ORIENTATION_VERTICAL);
+			GTK_ORIENTATION_VERTICAL); */
+
+  gdk_draw_rectangle (widget->window,
+	                widget->style->fg_gc[widget->state],
+			TRUE,
+			vslider->button_x,
+			vslider->button_y,
+			vslider->button_w,
+			vslider->button_h);
 
   // The phanton button
   if ((vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) && (vslider->button !=0 ))

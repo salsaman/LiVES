@@ -7871,16 +7871,19 @@ static track_rect *add_block_start_point (GtkWidget *eventbox, weed_timecode_t t
 
   while (block!=NULL) {
     if (get_event_timecode(block->start_event)>tc) {
+      // found a block after insertion point
       if (block->prev!=NULL) {
 	block->prev->next=new_block;
 	new_block->prev=block->prev;
       }
+      // add as first block
       else g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)new_block);
       new_block->next=block;
       block->prev=new_block;
       break;
     }
     if (block->next==NULL) {
+      // add as last block
       block->next=new_block;
       new_block->prev=block;
       break;
@@ -7888,6 +7891,7 @@ static track_rect *add_block_start_point (GtkWidget *eventbox, weed_timecode_t t
     block=block->next;
   }
 
+  // there were no blocks there
   if (block==NULL) g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)new_block);
 
   return new_block;
@@ -14062,8 +14066,9 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   firstblock=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
   if (firstblock==block) g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)block->next);
-  if ((blockprev=block->prev)!=NULL) block->prev->next=block->next;
-  if ((blocknext=block->next)!=NULL) block->next->prev=block->prev;
+  if ((blockprev=block->prev)!=NULL) blockprev->next=block->next;
+  if (block->next!=NULL) block->next->prev=blockprev;
+
   g_free(block);
 
   gtk_widget_queue_draw (eventbox);

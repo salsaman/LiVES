@@ -13993,7 +13993,6 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gboolean done=FALSE;
   weed_timecode_t start_tc,end_tc;
   weed_plant_t *first_event;
-  track_rect *firstblock;
   gboolean did_backup=mt->did_backup;
 
   if (mt->is_rendering) return;
@@ -14064,10 +14063,9 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
   }
 
-  firstblock=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
-  if (firstblock==block) g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)block->next);
   if ((blockprev=block->prev)!=NULL) blockprev->next=block->next;
-  if (block->next!=NULL) block->next->prev=blockprev;
+  else g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)block->next);
+  if ((blocknext=block->next)!=NULL) blocknext->prev=blockprev;
 
   g_free(block);
 
@@ -14690,10 +14688,12 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
     ins_start=mt->insert_start;
     ins_end=mt->insert_end;
   }
+  g_print("pt a4444\n");
 
   insert_frames (mt->file_selected,ins_start,ins_end,secs*U_SECL,DIRECTION_POSITIVE,eventbox,mt,NULL);
 
   block=g_object_get_data(G_OBJECT(eventbox),"block_last");
+  g_print("pt a457\n");
 
   if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(block->next!=NULL&&mt->opts.grav_mode==GRAV_MODE_RIGHT))&&!(did_backup||mt->moving_block)) {
     gdouble oldr_start=mt->region_start;
@@ -14736,7 +14736,7 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   mt->did_backup=did_backup;
-  
+
   if (!resize_timeline(mt)) {
     redraw_eventbox(mt,eventbox);
   }

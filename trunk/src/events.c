@@ -982,14 +982,15 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
   if (tc<=get_event_timecode(get_last_event(event_list))) {
     if (shortcut!=NULL&&*shortcut!=NULL) {
       event=*shortcut;
-      if (get_event_timecode(event)>tc) {
-	while (event!=NULL&&get_event_timecode(event)>tc) event=get_prev_frame_event(event);
-	if (event==NULL) event=get_first_event(event_list);
-      }
-      else {
-	while (event!=NULL&&get_event_timecode(event)<tc) event=get_next_frame_event(event);
-	if (event==NULL) event=get_last_event(event_list);
-      }
+    }
+
+    if (get_event_timecode(event)>tc) {
+      while (event!=NULL&&get_event_timecode(event)>tc) event=get_prev_frame_event(event);
+      if (event==NULL) event=get_first_event(event_list);
+    }
+    else {
+      while (event!=NULL&&get_event_timecode(event)<tc) event=get_next_frame_event(event);
+      if (event==NULL) event=get_last_event(event_list);
     }
     
     while (event!=NULL&&(((xtc=get_event_timecode(event))<tc)||(xtc==tc&&(!WEED_EVENT_IS_FILTER_DEINIT(event))))) {
@@ -1017,6 +1018,10 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
   // new_event_list is now an event_list with one frame event. We will steal its event and prepend it !
 
   new_event=get_first_event(new_event_list);
+
+  weed_leaf_delete(new_event,"first");
+  weed_leaf_delete(new_event,"last");
+
   prev=get_prev_event(event);
   if (prev!=NULL) {
     error=weed_set_voidptr_value(prev,"next",new_event);

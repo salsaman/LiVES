@@ -621,6 +621,8 @@ static gboolean is_audio_eventbox(lives_mt *mt, GtkWidget *ebox) {
 
 
 static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
+  // x1 is start point of drawing area (in pixels), x2 is width of drawing area (in pixels)
+
   gdouble tl_span=mt->tl_max-mt->tl_min;
   GtkWidget *eventbox=block->eventbox;
   weed_plant_t *event=block->start_event;
@@ -638,7 +640,10 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
   gint hidden=(gint)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "hidden"));
   if (hidden) return;
 
+  // block to right of screen
   if (offset_startd>=mt->tl_max) return;
+
+  // block to right of drawing area
   offset_start=(int)((offset_startd-mt->tl_min)/tl_span*eventbox->allocation.width+.5);
   if ((x1>0||x2>0)&&offset_start>(x1+x2)) return;
 
@@ -647,7 +652,8 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 
   //if (offset_end+offset_start>eventbox->allocation.width) offset_end=eventbox->allocation.width-offset_start;
 
-  if (x1>0&&offset_end<x1) return;
+  // end of block before drawing area
+  if (offset_end<x1) return;
 
   switch (block->state) {
   case BLOCK_UNSELECTED:

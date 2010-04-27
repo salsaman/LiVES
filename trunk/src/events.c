@@ -982,10 +982,15 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
   if (tc<=get_event_timecode(get_last_event(event_list))) {
     if (shortcut!=NULL&&*shortcut!=NULL) {
       event=*shortcut;
-      if (get_event_timecode(event)>tc) while (event!=NULL&&get_event_timecode(event)>tc) event=get_prev_frame_event(event);
-      else while (event!=NULL&&get_event_timecode(event)<tc) event=get_next_frame_event(event);
+      if (get_event_timecode(event)>tc) {
+	while (event!=NULL&&get_event_timecode(event)>tc) event=get_prev_frame_event(event);
+	if (event==NULL) event=get_first_event(event_list);
+      }
+      else {
+	while (event!=NULL&&get_event_timecode(event)<tc) event=get_next_frame_event(event);
+	if (event==NULL) event=get_last_event(event_list);
+      }
     }
-    if (event==NULL) event=get_first_event(event_list);
     
     while (event!=NULL&&(((xtc=get_event_timecode(event))<tc)||(xtc==tc&&(!WEED_EVENT_IS_FILTER_DEINIT(event))))) {
       if (shortcut!=NULL) *shortcut=event;

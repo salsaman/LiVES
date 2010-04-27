@@ -14688,12 +14688,10 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
     ins_start=mt->insert_start;
     ins_end=mt->insert_end;
   }
-  g_print("pt a4444\n");
 
   insert_frames (mt->file_selected,ins_start,ins_end,secs*U_SECL,DIRECTION_POSITIVE,eventbox,mt,NULL);
 
   block=g_object_get_data(G_OBJECT(eventbox),"block_last");
-  g_print("pt a457\n");
 
   if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(block->next!=NULL&&mt->opts.grav_mode==GRAV_MODE_RIGHT))&&!(did_backup||mt->moving_block)) {
     gdouble oldr_start=mt->region_start;
@@ -14956,6 +14954,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
       frames=weed_get_int_array(event,"frames",&error);
       shortcut1=event;
     }
+    else if (direction==DIRECTION_POSITIVE&&mainw->event_list!=NULL) shortcut1=get_last_event(mainw->event_list);
 
     if (numframes<=track) {
       // TODO - memcheck
@@ -15053,7 +15052,6 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
       break;
     }
   }
-
 
   if (!isfirst) {
     if (direction==DIRECTION_POSITIVE) {

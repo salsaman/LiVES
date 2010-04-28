@@ -12,7 +12,8 @@ multi_encoder3 \
 qtutils_encoder \
 sswf_encoder \
 transcode_encoder \
-pdf_encoder
+pdf_encoder \
+x264_encoder
 
 install-data-hook:
 	chmod +x $(DESTDIR)$(encoderdir)/*

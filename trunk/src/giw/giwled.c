@@ -278,15 +278,6 @@ giw_led_expose (GtkWidget      *widget,
   else
     gdk_gc_set_rgb_fg_color (gc, &(led->color_off));
     
-  gdk_draw_arc (widget->window,
-                gc,
-		TRUE,
-		led->x+2,
-                led->y+2,
-		led->size-4,
-		led->size-4,
-		0,
-                64*360);
   
   // The border  
   gdk_draw_arc (widget->window,
@@ -318,6 +309,16 @@ giw_led_expose (GtkWidget      *widget,
 		led->radius+3,
 		-64*60,
                 64*75);
+
+  gdk_draw_arc (widget->window,
+                gc,
+		TRUE,
+		led->x+2,
+                led->y+2,
+		led->size-4,
+		led->size-4,
+		0,
+                64*360);
 
   g_object_unref(gc);
   

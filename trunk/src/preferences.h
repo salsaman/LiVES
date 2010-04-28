@@ -254,17 +254,61 @@ typedef struct {
   gboolean lamp_buttons;
 
   glong rec_stop_gb;
-
 } _prefs;
 
+enum {
+    LIST_ENTRY_GUI,
+    LIST_ENTRY_MULTITRACK,
+    LIST_ENTRY_DECODING,
+    LIST_ENTRY_PLAYBACK,
+    LIST_ENTRY_RECORDING,
+    LIST_ENTRY_ENCODING,
+    LIST_ENTRY_EFFECTS,
+    LIST_ENTRY_DIRECTORIES,
+    LIST_ENTRY_WARNINGS,
+    LIST_ENTRY_MISC,
+    LIST_ENTRY_THEMES,
+    LIST_ENTRY_NET,
+    LIST_ENTRY_JACK,
+    LIST_ENTRY_MIDI
+};
 
+enum {
+    LIST_ICON = 0,
+    LIST_ITEM,
+    LIST_NUM,
+    N_COLUMNS
+};
 
 // prefs window
 typedef struct {
   gulong encoder_ofmt_fn;
   gulong encoder_name_fn;
   GtkWidget *prefs_dialog;
-  GtkWidget *prefs_notebook;
+  
+  // Added by AK
+  GtkWidget *prefs_list;
+  GtkWidget *prefs_table;
+  //
+  GtkWidget *vbox_right_gui;
+  GtkWidget *vbox_right_multitrack;
+  GtkWidget *vbox_right_decoding;
+  GtkWidget *vbox_right_playback;
+  GtkWidget *vbox_right_recording;
+  GtkWidget *vbox_right_encoding;
+  GtkWidget *vbox_right_effects;
+  GtkWidget *table_right_directories;
+  GtkWidget *vbox_right_warnings;
+  GtkWidget *vbox_right_warnings_outer;
+  GtkWidget *vbox_right_misc;
+  GtkWidget *vbox_right_themes;
+  GtkWidget *vbox_right_net;
+  GtkWidget *vbox_right_jack;
+  GtkWidget *vbox_right_midi;
+  GtkWidget *scrollw;
+  //
+  GtkWidget *right_shown;
+
   GtkWidget *cancelbutton;
   GtkWidget *stop_screensaver_check;
   GtkWidget *open_maximised_check;
@@ -379,8 +423,6 @@ typedef struct {
   GtkWidget *checkbutton_ce_maxspect;
 } _prefsw;
 
-
-
 typedef struct {  // startup overrides from commandline
   gboolean ign_clipset;
   gboolean ign_osc;
@@ -388,7 +430,6 @@ typedef struct {  // startup overrides from commandline
   gboolean ign_aplayer;
   gboolean ign_stmode;
 } _ign_opts;
-
 
 typedef struct {
   gchar tmpdir[256];
@@ -416,7 +457,6 @@ _prefs *prefs;
 _future_prefs *future_prefs;
 _prefsw *prefsw;
 
-
 void set_acodec_list_from_allowed (_prefsw *, render_details *);
 void  rdet_acodec_changed (GtkEntry *acodec_entry, gpointer user_data);
 
@@ -431,5 +471,9 @@ void on_prefs_ok_clicked (GtkButton *, gpointer);
 void on_prefs_cancel_clicked (GtkButton *, gpointer);
 
 void set_vpp(gboolean set_in_prefs);
+
+void on_prefDomainChanged(GtkTreeSelection *, gpointer);
+
+void select_pref_list_row(guint);
 
 #endif

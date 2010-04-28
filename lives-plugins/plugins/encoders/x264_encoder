@@ -87,7 +87,7 @@ if ($command eq "encode") {
 
     chdir $curtmpdir;
 
-    $fifofile=$tmpdir."/264stream.yvm";
+    $fifofile="264stream.yvm";
     unlink $fifofile;
 
     `/bin/mkfifo $fifofile`;
@@ -108,7 +108,7 @@ if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
 
-    $fifofile=$tmpdir."/264stream.yvm";
+    $fifofile="264stream.yvm";
     unlink $fifofile;
 
     &sig_complete;

@@ -1526,11 +1526,11 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     vseparator5 = gtk_vseparator_new ();
     gtk_widget_show (vseparator5);
-    gtk_box_pack_start (GTK_BOX (hbox25), vseparator5, FALSE, FALSE, 12);
+    if (type!=4) gtk_box_pack_start (GTK_BOX (hbox25), vseparator5, FALSE, FALSE, 12);
 
     vbox24 = gtk_vbox_new (FALSE, 0);
     gtk_widget_show (vbox24);
-    gtk_box_pack_start (GTK_BOX (hbox25), vbox24, TRUE, TRUE, 0);
+    if (type!=4) gtk_box_pack_start (GTK_BOX (hbox25), vbox24, TRUE, TRUE, 0);
 
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_widget_show(hbox);

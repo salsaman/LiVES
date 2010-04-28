@@ -1731,16 +1731,23 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 	}
 #ifdef ENABLE_GIW
 	if (prefs->lamp_buttons) {
-	if (0&&palette->style&STYLE_3) {
-	  gtk_widget_modify_bg (checkbutton, GTK_STATE_SELECTED, &palette->normal_back);
-	}
-	else {
-	  gtk_widget_modify_bg (checkbutton, GTK_STATE_SELECTED, &palette->menu_and_bars);
-	}
-	  giw_led_set_colors(GIW_LED(checkbutton),palette->light_green,palette->dark_red);
+	  if (0&&palette->style&STYLE_3) {
+	    gtk_widget_modify_bg (checkbutton, GTK_STATE_SELECTED, &palette->normal_back);
+	  }
+	  else {
+	    gtk_widget_modify_bg (checkbutton, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	  }
 	}
 #endif
       }
+
+
+#ifdef ENABLE_GIW
+      if (prefs->lamp_buttons) {
+	giw_led_set_colors(GIW_LED(checkbutton),palette->light_green,palette->dark_red);
+      }
+#endif
+
 
       g_object_set_data(G_OBJECT(labelbox),"layer_number",GINT_TO_POINTER(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"))));
 
@@ -6798,8 +6805,10 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
 
 
   mt->nb = gtk_notebook_new ();
-  gtk_widget_modify_bg (mt->nb, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_widget_modify_bg (mt->nb, GTK_STATE_ACTIVE, &palette->menu_and_bars);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg (mt->nb, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_bg (mt->nb, GTK_STATE_ACTIVE, &palette->menu_and_bars);
+  }
 
   hbox = gtk_hbox_new (FALSE, 0);
 

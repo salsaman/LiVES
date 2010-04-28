@@ -22,7 +22,7 @@ Allow pause/resume during encoding and opening.
 Reduce CPU usage when paused in effects or encoding.
 Add image overlay effect into core rendered effects.
 Add highly experimental blu-ray video support (1080p NTSC and 720p)
-
+New preferences layout (Alexij Kolga).
 
 	
 * backported to 1.0.10

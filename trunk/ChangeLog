@@ -1,11 +1,13 @@
 Version 1.3.3
 -------------
+Fix crash after moving blocks in multitrack (regression).
+Faster insertion of frames in multitrack.
 Implement FULL jack timebase client.
 Improved a/v sync.
 Complete the implementation of the new transport.
 Swap ctrl-page-up, ctrl-page-down in multitrack.
 Multitrack/mixer GUI improvements.
-Add some widgets from GTK+ Instumentation Widgets
+Add some widgets from GTK+ Instrumentation Widgets
 Fix possible crash in rendered effect previews. *
 Show file close warnings for files not used in layouts (regression) *
 Properly unload decoder plugins on shutdown. *
@@ -18,8 +20,10 @@ Enable realtime audio mixer in multitrack.
 Fixed some oddities when resizing window to fullscreen internal. *
 Allow pause/resume during encoding and opening.
 Reduce CPU usage when paused in effects or encoding.
+Add image overlay effect into core rendered effects.
+Add highly experimental blu-ray video support (1080p NTSC and 720p)
 
-	
+
 	
 * backported to 1.0.10
 

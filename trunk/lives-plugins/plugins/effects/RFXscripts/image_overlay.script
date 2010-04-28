@@ -1,0 +1,146 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+image_overlay
+</name>
+
+<version>
+2
+</version>
+
+<author>
+DgMvEcuador|
+</author>
+
+<description>
+Image overlay|Overlaying an image onto video|1|1|
+</description>
+
+<requires>
+composite
+</requires>
+
+<params>
+iposX|Init pos_X:|num0|0|-10000|10000|
+iposY|Init pos_Y:|num0|0|-10000|10000|
+isizeX|_Init Size X:|num0|0|0|1000000|
+isizeY|_Init Size Y:|num0|0|0|1000000|
+ns1|Use _Natural Size|bool|0|
+a1|Init _Alpha:|num0|100|0|100|
+img|_Image|string||80|
+anim|Active _animation|bool|0|
+eposX|End pos_X:|num0|0|-10000|10000|
+eposY|End pos_Y:|num0|0|-10000|10000|
+esizeX|_End Size X:|num0|0|0|1000000|
+esizeY|_End Size Y:|num0|0|0|1000000|
+ns2|Use _Natural Size|bool|0|
+a1|End _Alpha:|num0|100|0|100|
+aspect|Keep image aspect _ratio|bool|1|
+</params>
+
+<param_window>
+layout|p0|p1|
+layout|p2|p3|
+layout|p4|
+layout|p5
+layout|p6|
+layout|p14|
+layout|hseparator|
+layout|p7|
+layout|p8|p9|
+layout|p10|p11|
+special|fileread|6|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$actualX=$p0;
+$actualY=$p1;
+$actualSizeX=$p2;
+$actualSizeY=$p3;
+
+$ns1=$p4;
+$alfa1=$p5;
+
+$img=$p6;
+$ani=$p7;
+
+$finalX=$p8;
+$finalY=$p9;
+$finalSizeX=$p10;
+$finalSizeY=$p11;
+
+$ns2=$p12;
+$alfa2=$p13;
+
+if ($p14) {
+	$asp="";
+}
+else {
+	$asp="!";
+}
+
+
+if ( $ns1 )
+{
+	&get_image_size($img);
+	$actualSizeX=$hsize;
+	$actualSizeY=$vsize;
+}
+
+if ( $ns2 )
+{
+	&get_image_size($img);
+	$finalSizeX=$hsize;
+	$finalSizeY=$vsize;
+}
+
+if ( $ani )
+{
+	$pasos=$end-$start+1;
+	$deltaX=($finalX-$actualX)/$pasos;
+	$deltaY=($finalY-$actualY)/$pasos;
+	$deltaSizeX=($finalSizeX-$actualSizeX)/$pasos;
+	$deltaSizeY=($finalSizeY-$actualSizeY)/$pasos;
+	$deltaAlfa=($alfa2-$alfa1)/$pasos;
+} else {
+	$deltaX=0;
+	$deltaY=0;
+	$deltaSizeX=0;
+	$deltaSizeY=0;
+	$deltaAlfa=0;
+}
+
+</pre>
+
+<loop>
+system("$composite_command -alpha on -dissolve $alfa1 -geometry $actualSizeX$asp"."x"."$actualSizeY$asp"."+"."$actualX"."+"."$actualY \"$img\" \"$in\" \"$out\"");
+if ( $ani )
+{
+	$actualX+=$deltaX;
+	$actualY+=$deltaY;
+	$actualSizeX+=$deltaSizeX;
+	$actualSizeY+=$deltaSizeY;
+	$alfa1+=$deltaAlfa;
+}
+</loop>
+
+<post>
+</post>
+
+<onchange>
+init|$p0_max=$p8_max=$width;
+init|$p1_max=$p9_max=$height;
+</onchange>
+

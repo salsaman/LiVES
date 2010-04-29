@@ -1800,7 +1800,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
       timesofar=(gdouble)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
       disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
     }
-    while (g_main_context_iteration(ctx,FALSE));
+    g_main_context_iteration(ctx,FALSE);
     // unlock mutex
     pthread_mutex_unlock(&mainw->gtk_mutex);
     do {

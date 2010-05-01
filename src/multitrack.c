@@ -18357,7 +18357,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   if (mainw->was_set) startdir=g_strdup_printf("%s%s/",eload_dir,mainw->set_name);
 
-  if (!g_file_test(startdir,G_FILE_TEST_IS_DIR)||!mainw->was_set) {
+  if (!mainw->was_set||!g_file_test(startdir,G_FILE_TEST_IS_DIR)) {
     if (startdir!=NULL) g_free(startdir);
     startdir=g_strdup(eload_dir);
   }

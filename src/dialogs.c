@@ -1780,7 +1780,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
   gtk_window_set_resizable (GTK_WINDOW (procw->processing), FALSE);
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
-  while (g_main_context_iteration(ctx,FALSE));
+  g_main_context_iteration(ctx,FALSE);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
 

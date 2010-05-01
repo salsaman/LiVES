@@ -17287,14 +17287,14 @@ static gchar *filter_map_check(ttable *trans_table,weed_plant_t *filter_map, wee
 
 static gchar *add_filter_deinits(weed_plant_t *event_list, ttable *trans_table, void ***pchains, weed_timecode_t tc, gchar *ebuf) {
   // add filter deinit events for any remaining active filters
-  int i,error,num_params;
+  int i,j,error,num_params;
   gchar *filter_hash;
   gint idx;
   weed_plant_t *filter,*init_event,*event;
   void **in_pchanges;
 
   for (i=0;i<FX_KEYS_MAX-FX_KEYS_MAX_VIRTUAL;i++) {
-    if (trans_table[i].out==NULL) return ebuf;
+    if (trans_table[i].out==NULL) continue;
     if (trans_table[i].in!=NULL) {
       event_list=append_filter_deinit_event(event_list,tc,(init_event=trans_table[i].out),pchains[i]);
       event=get_last_event(event_list);
@@ -17304,13 +17304,13 @@ static gchar *add_filter_deinits(weed_plant_t *event_list, ttable *trans_table, 
 	filter=get_weed_filter(idx);
 	if ((num_params=num_in_params(filter,TRUE,TRUE))>0) {
 	  in_pchanges=g_malloc(num_params*sizeof(void *));
-	  for (i=0;i<num_params;i++) {
-	    if (!WEED_EVENT_IS_FILTER_INIT(pchains[idx][i])) in_pchanges[i]=pchains[idx][i];
-	    else in_pchanges[i]=NULL;
+	  for (j=0;j<num_params;j++) {
+	    if (!WEED_EVENT_IS_FILTER_INIT(pchains[i][j])) in_pchanges[j]=pchains[i][j];
+	    else in_pchanges[j]=NULL;
 	  }
 	  weed_set_voidptr_array(event,"in_parameters",num_params,in_pchanges); // set array to last param_changes
 	  g_free(in_pchanges);
-	  g_free(pchains[idx]);
+	  g_free(pchains[i]);
 	}
       }
       weed_free(filter_hash);

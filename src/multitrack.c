@@ -418,6 +418,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 static void save_mt_autoback(lives_mt *mt) {
   int fd;
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  mt_desensitise(mt);
 
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   add_markers(mt,mt->event_list);
@@ -429,6 +430,9 @@ static void save_mt_autoback(lives_mt *mt) {
   close(fd);
 
   g_free(asave_file);
+
+  mt_sensitise(mt);
+
 }
 
 

@@ -37,6 +37,10 @@ static gboolean shown_paused_frames;
 
 static gdouble est_time;
 
+
+static pthread_t dthread;
+static gchar *thread_text=NULL;
+
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (U_SECL/10l)
 
@@ -1864,8 +1868,6 @@ static void *splash_prog (void *arg) {
 
 
 
-static pthread_t dthread;
-static gchar *thread_text;
  
 void do_threaded_dialog(gchar *text, gboolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
@@ -1898,6 +1900,7 @@ void end_threaded_dialog(void) {
     mainw->threaded_dialog=FALSE;
     pthread_join(dthread,NULL);
     if (thread_text!=NULL) g_free(thread_text);
+    thread_text=NULL;
     if (mainw->splash_window==NULL) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
   }

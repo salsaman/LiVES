@@ -971,26 +971,31 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
 
   int error;
 
-  if (event_list==NULL) {
+  if (event_list==NULL||get_first_frame_event(event_list)==NULL) {
+    // no existing event list, or no frames (uh oh !) append
     event_list=append_frame_event(event_list,tc,numframes,clips,frames);
     if (event_list==NULL) return NULL; // memory error
     if (shortcut!=NULL) *shortcut=get_last_event(event_list);
     return event_list;
   }
 
-
+  // skip the next part if we know we have to add at end
   if (tc<=get_event_timecode(get_last_event(event_list))) {
     if (shortcut!=NULL&&*shortcut!=NULL) {
       event=*shortcut;
     }
-
+    else event=get_first_event(event_list);
+    
     if (get_event_timecode(event)>tc) {
+      // step backwards until we get to a frame before where we want to add
       while (event!=NULL&&get_event_timecode(event)>tc) event=get_prev_frame_event(event);
-      if (event==NULL) event=get_first_event(event_list);
+      // event can come out NULL (add before first frame event), in which case we fall through
     }
     else {
       while (event!=NULL&&get_event_timecode(event)<tc) event=get_next_frame_event(event);
-      if (event==NULL) event=get_last_event(event_list);
+
+      // we reached the end, so we will add after last frame event
+      if (event==NULL) event=get_last_frame_event(event_list);
     }
     
     while (event!=NULL&&(((xtc=get_event_timecode(event))<tc)||(xtc==tc&&(!WEED_EVENT_IS_FILTER_DEINIT(event))))) {
@@ -1005,24 +1010,24 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
       event=get_next_event(event);
     }
   }
-  if (event==NULL) {
+  else {
+    // event is after last event, append it
     if ((xevent_list=append_frame_event (event_list,tc,numframes,clips,frames))==NULL) return NULL;
     event_list=xevent_list;
     if (shortcut!=NULL) *shortcut=get_last_event(event_list);
     return event_list;
   }
 
-  // OK, event is the event after where we want to insert our frame event
+
+  // add frame before first frame event
   
   if ((new_event_list=append_frame_event(NULL,tc,numframes,clips,frames))==NULL) return NULL;
   // new_event_list is now an event_list with one frame event. We will steal its event and prepend it !
 
   new_event=get_first_event(new_event_list);
 
-  weed_leaf_delete(new_event,"first");
-  weed_leaf_delete(new_event,"last");
-
   prev=get_prev_event(event);
+
   if (prev!=NULL) {
     error=weed_set_voidptr_value(prev,"next",new_event);
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;

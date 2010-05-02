@@ -2980,7 +2980,6 @@ void do_layout_recover_dialog(void) {
   g_signal_connect (okbutton, "clicked",G_CALLBACK (recover_layout),NULL);
 
   gtk_widget_show_all(mdialog);
-
 }
 
 

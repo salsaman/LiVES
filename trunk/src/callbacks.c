@@ -46,15 +46,21 @@ lives_exit (void) {
     gchar *com;
 
     if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       stored_event_list_free_all(FALSE);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       g_source_remove(mainw->multitrack->idlefunc);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 
     if (mainw->multitrack!=NULL&&!mainw->only_close) {
+      pthread_mutex_lock(&mainw->gtk_mutex);
       if (mainw->multitrack->undo_mem!=NULL) g_free(mainw->multitrack->undo_mem);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 
     if (mainw->playing_file>-1) {
@@ -128,8 +134,8 @@ lives_exit (void) {
       msg=g_strdup_printf(_("Saving as set %s..."),mainw->set_name);
       pthread_mutex_lock(&mainw->gtk_mutex);
       d_print(msg);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
       g_free(msg);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 
     for (i=0;i<=MAX_FILES;i++) {
@@ -139,35 +145,47 @@ lives_exit (void) {
 
 #ifdef HAVE_YUV4MPEG
 	  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG) {
+	    pthread_mutex_lock(&mainw->gtk_mutex);
 	    lives_yuv_stream_stop_read(mainw->files[i]->ext_src);
 	    g_free (mainw->files[i]->ext_src);
+	    pthread_mutex_unlock(&mainw->gtk_mutex);
 	  }
 #endif
 	  com=g_strdup_printf("smogrify close %s",mainw->files[i]->handle);
 	  dummyvar=system(com);
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  g_free(com);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	}
 	else {
 	  // or just clean them up
 	  com=g_strdup_printf("smogrify clear_tmp_files %s",mainw->files[i]->handle);
 	  dummyvar=system(com);
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  g_free(com);
 	  if (mainw->files[i]->frame_index!=NULL) {
 	    save_frame_index(i);
 	  }
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	}
 	if (!mainw->only_close) {
 	  if (mainw->files[i]->frame_index!=NULL) {
+	    pthread_mutex_lock(&mainw->gtk_mutex);
 	    g_free(mainw->files[i]->frame_index);
+	    pthread_mutex_unlock(&mainw->gtk_mutex);
 	    mainw->files[i]->frame_index=NULL;
 	  }
 
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	    pthread_mutex_lock(&mainw->gtk_mutex);
 	    close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
+	    pthread_mutex_unlock(&mainw->gtk_mutex);
 	    mainw->files[i]->ext_src=NULL;
 	  }
 
+	  pthread_mutex_lock(&mainw->gtk_mutex);
 	  g_free(mainw->files[i]);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
 	  mainw->files[i]=NULL;
 	}
       }
@@ -178,23 +196,33 @@ lives_exit (void) {
       if (!g_file_test(set_layout_dir,G_FILE_TEST_IS_DIR)) {
 	com=g_strdup_printf("/bin/rm -r %s/%s/ 2>/dev/null",prefs->tmpdir,mainw->set_name);
 	dummyvar=system(com);
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	g_free(com);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
       else {
 	com=g_strdup_printf("/bin/rm -r %s/%s/clips 2>/dev/null",prefs->tmpdir,mainw->set_name);
 	dummyvar=system(com);
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	g_free(com);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
 	com=g_strdup_printf("/bin/rm %s/%s/order 2>/dev/null",prefs->tmpdir,mainw->set_name);
 	dummyvar=system(com);
+	pthread_mutex_lock(&mainw->gtk_mutex);
 	g_free(com);
+	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
+      pthread_mutex_lock(&mainw->gtk_mutex);
       g_free(set_layout_dir);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 
     if (strlen(mainw->set_name)) {
       gchar *set_lock_file=g_strdup_printf("%s/%s/lock.%d",prefs->tmpdir,mainw->set_name,getpid());
       unlink(set_lock_file);
+      pthread_mutex_lock(&mainw->gtk_mutex);
       g_free(set_lock_file);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 
 
@@ -275,8 +303,10 @@ lives_exit (void) {
   }
 
   if (mainw->current_layouts_map!=NULL) {
+    pthread_mutex_lock(&mainw->gtk_mutex);
     g_list_free_strings(mainw->current_layouts_map);
     g_list_free(mainw->current_layouts_map);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
   if (capable->smog_version_correct) {
@@ -292,14 +322,17 @@ lives_exit (void) {
   }
 
   if (mainw->multitrack!=NULL) {
+    pthread_mutex_lock(&mainw->gtk_mutex);
     event_list_free_undos(mainw->multitrack);
     
     if (mainw->multitrack->event_list!=NULL) {
       event_list_free(mainw->multitrack->event_list);
       mainw->multitrack->event_list=NULL;
     }
+    pthread_mutex_unlock(&mainw->gtk_mutex);
   }
 
+  pthread_mutex_lock(&mainw->gtk_mutex);
   if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
   if (prefs->fxsizesfile!=NULL) g_free(prefs->fxsizesfile);
   g_free(mainw->recovery_file);
@@ -311,6 +344,7 @@ lives_exit (void) {
   g_free(mainw->cl_string);
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 
   end_threaded_dialog();
 

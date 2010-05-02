@@ -131,4 +131,7 @@ void free_jack_audio_buffers(void);
 void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact);
 void free_pulse_audio_buffers(void);
 
+void audio_free_fnames(void);
+
+
 #endif

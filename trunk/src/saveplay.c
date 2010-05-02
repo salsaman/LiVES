@@ -1968,11 +1968,6 @@ void play_file (void) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 
-    if (has_audio_buffers) {
-      free_jack_audio_buffers();
-      audio_free_fnames();
-    }
-
     if (mainw->foreign&&mainw->jackd_read!=NULL) jack_rec_audio_end();
 
     if (!mainw->preview&&!mainw->foreign) jack_pb_stop();
@@ -1990,16 +1985,17 @@ void play_file (void) {
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
+
+    if (has_audio_buffers) {
+      free_jack_audio_buffers();
+      audio_free_fnames();
+    }
+
   }
   else {
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
-
-    if (has_audio_buffers) {
-      free_pulse_audio_buffers();
-      audio_free_fnames();
-    }
 
     if (mainw->foreign&&mainw->pulsed_read!=NULL) pulse_rec_audio_end();
 
@@ -2015,6 +2011,12 @@ void play_file (void) {
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
+
+    if (has_audio_buffers) {
+      free_pulse_audio_buffers();
+      audio_free_fnames();
+    }
+
   }
   else {
 #endif

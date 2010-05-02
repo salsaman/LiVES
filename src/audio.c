@@ -620,6 +620,34 @@ static void pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int a
   }
 }
 
+#define NSTOREDFILES 16
+static gchar *storedfnames[NSTOREDFILES];
+static int storefds[BSTOREDFILES];
+static gboolean storedfdsset=FALSE;
+
+void audio_reset_stored_fnames(void) {
+  int i;
+  for (i=0;i<NSTOREDFILES;i++) {
+    storedfnames[i]=NULL;
+    storedfds[i]=-1;
+  }
+  storedfdsset=TRUE;
+}
+
+
+
+void audio_free_fnames(void) {
+  int i;
+  for (i=0;i<NSTOREDFILES;i++) {
+    if (storedfnames!=NULL) {
+      g_free(storedfnames);
+      storedfnames[i]=NULL;
+      if (storedfds[i]>-1) close(storedfds[i]);
+      storedfds[i]=-1;
+    }
+  }
+}
+
 
 
 
@@ -712,6 +740,8 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   if (out_achans==0) return 0l;
 
+  if (!storedfdscleared) 
+
   if (to_file>-1) {
     // prepare outfile stuff
     outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
@@ -783,8 +813,14 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (ABS(zavel)>zavel_max) zavel_max=ABS(zavel);
       
       infilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,infile->handle);
-      in_fd[track]=open(infilename,O_RDONLY);
-      
+
+      if (track<NSTOREDFDS&&storedfnames[track]!=NULL&&!strcmp(infilename,storedfnames[track])) {
+	in_fd[track]=storedfds[track];
+      }
+      else {
+	in_fd[track]=open(infilename,O_RDONLY);
+      }
+
       lseek64(in_fd[track],seekstart[track],SEEK_SET);
       
       g_free(infilename);

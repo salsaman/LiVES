@@ -10946,7 +10946,7 @@ void polymorph (lives_mt *mt, gshort poly) {
     tc=q_gint64(secs*U_SEC,mt->fps);
 
     frame_event=get_frame_event_at(mt->event_list,tc,shortcut,TRUE);
-    filter_map=mt->fm_edit_event=get_filter_map_before(frame_event,-1000000);
+    filter_map=mt->fm_edit_event=get_filter_map_before(frame_event,-1000000,NULL);
 
     mt->fx_list_box=gtk_vbox_new(FALSE,0);
     mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
@@ -10965,6 +10965,7 @@ void polymorph (lives_mt *mt, gshort poly) {
 	for (i=0;i<num_fx;i++) {
 	  init_event=(weed_plant_t *)init_events[i];
 	  if (init_event!=NULL) {
+
 	    num_in_tracks=0;
 	    is_input=FALSE;
 	    if (weed_plant_has_leaf(init_event,"in_tracks")) {
@@ -10997,7 +10998,6 @@ void polymorph (lives_mt *mt, gshort poly) {
 	      }
 	    }
 
-	    if (!is_input&&!is_output) continue;
 	    has_effect=TRUE;
 
 	    fxcount++;
@@ -15797,7 +15797,7 @@ weed_plant_t *get_prev_fm (lives_mt *mt, gint current_track, weed_plant_t *event
 
   if (event==NULL) return NULL;
 
-  eventx=get_filter_map_before(event,current_track);
+  eventx=get_filter_map_before(event,current_track,NULL);
 
   if (eventx==NULL) return NULL;
 
@@ -15809,7 +15809,7 @@ weed_plant_t *get_prev_fm (lives_mt *mt, gint current_track, weed_plant_t *event
 
       if (event2==NULL) return NULL;
 
-      event3=get_filter_map_before(event2,current_track);
+      event3=get_filter_map_before(event2,current_track,NULL);
 
       if (!compare_filter_maps(event3,eventx,current_track)) {
 	event=event2=event3;
@@ -15821,7 +15821,7 @@ weed_plant_t *get_prev_fm (lives_mt *mt, gint current_track, weed_plant_t *event
   else {
     if ((event2=get_prev_frame_event(event))==NULL) return NULL;
 
-    event2=get_filter_map_before(event2,current_track);
+    event2=get_filter_map_before(event2,current_track,NULL);
     
     if (event2==NULL) return NULL;
   }
@@ -15834,7 +15834,7 @@ weed_plant_t *get_prev_fm (lives_mt *mt, gint current_track, weed_plant_t *event
 
     if (event3==NULL) break;
 
-    event2=get_filter_map_before(event3,current_track);
+    event2=get_filter_map_before(event3,current_track,NULL);
 
     if (event2==NULL) break;
 
@@ -15855,7 +15855,7 @@ weed_plant_t *get_next_fm (lives_mt *mt, gint current_track, weed_plant_t *event
 
   if ((event2=get_filter_map_after(event,current_track))==NULL) return event;
 
-  event3=get_filter_map_before(event,-1000000);
+  event3=get_filter_map_before(event,-1000000,NULL);
 
   if (event3==NULL) return NULL;
 
@@ -16953,48 +16953,6 @@ static void **remove_nulls_from_filter_map(void **init_events, int *num_events) 
 
 
 
-static gboolean init_event_is_relevant(lives_mt *mt, weed_plant_t *event, gint track) {
-  // see if event is relevant to track, i.e. if track is contained in "in_tracks" or "out_tracks"
-  // this could be used to simplify some other code fragments (TODO)
-
-  int error,i;
-  int *in_tracks,*out_tracks;
-  int num_tracks;
-
-  if (event==mt->avol_init_event) return FALSE; // TODO - maybe set for all process_last events
-
-  if (weed_plant_has_leaf(event,"in_tracks")) {
-    num_tracks=weed_leaf_num_elements(event,"in_tracks");
-    in_tracks=weed_get_int_array(event,"in_tracks",&error);
-    for (i=0;i<num_tracks;i++) {
-      if (in_tracks[i]==track) {
-	weed_free(in_tracks);
-	return TRUE;
-      }
-    }
-    weed_free(in_tracks);
-  }
-
-  if (weed_plant_has_leaf(event,"out_tracks")) {
-    num_tracks=weed_leaf_num_elements(event,"out_tracks");
-    out_tracks=weed_get_int_array(event,"out_tracks",&error);
-    for (i=0;i<num_tracks;i++) {
-      if (out_tracks[i]==track) {
-	weed_free(out_tracks);
-	return TRUE;
-      }
-    }
-    weed_free(out_tracks);
-  }
-  return FALSE;
-}
-
-
-
-
-
-
-
 
 void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *ifrom, weed_plant_t *ito, gint track, gboolean after) {
   int error,i,j;
@@ -17018,7 +16976,7 @@ void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_
       j=0;
       for (i=0;i<num_inits;i++) {
 	if (init_events[i]==ifrom) continue;
-	if (!init_event_is_relevant(mt,init_events[i],track)) continue;
+	if (!init_event_is_relevant(init_events[i],track)) continue;
 	j++;
 	if (init_events[i]==ito) {
 	  num_before=j-1+after;
@@ -17030,7 +16988,7 @@ void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_
       if (num_after>0) events_after=g_malloc(num_after*sizeof(void *));
       j1=j2=0;
       for (i=0;i<num_inits;i++) {
-	if (!init_event_is_relevant(mt,init_events[i],track)) continue;
+	if (!init_event_is_relevant(init_events[i],track)) continue;
 	if (init_events[i]==ifrom) continue;
 	if (j1<num_before) {
 	  events_before[j1]=init_events[i];
@@ -17046,7 +17004,7 @@ void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_
     got_after=FALSE;
     for (i=0;i<num_inits;i++) {
       if (init_events[i]==ifrom) continue;
-      if (!init_event_is_relevant(mt,init_events[i],track)) continue;
+      if (!init_event_is_relevant(init_events[i],track)) continue;
       if (!got_after&&init_event_in_list(events_after,num_after,init_events[i])) got_after=TRUE;
       if (got_after&&init_event_in_list(events_before,num_before,init_events[i])) {
 	weed_free(init_events);
@@ -17060,7 +17018,7 @@ void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_
     j=0;
     for (i=0;i<num_inits;i++) {
       if (init_events[i]==ifrom) continue;
-      if (init_event_in_list(events_before,num_before,init_events[i])||!init_event_is_relevant(mt,init_events[i],track)) new_init_events[j]=init_events[i];
+      if (init_event_in_list(events_before,num_before,init_events[i])||!init_event_is_relevant(init_events[i],track)) new_init_events[j]=init_events[i];
       else {
 	if (!got_after) {
 	  got_after=TRUE;
@@ -17089,10 +17047,8 @@ void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_
 
 gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack) {
   // return TRUE if the maps match exactly; if ctrack is !=-1000000, then we only compare filter maps where ctrack is an in_track or out_track
-  int i1,i2,j,error,num_events1,num_events2;
-  int num_tracks;
+  int i1,i2,error,num_events1,num_events2;
   void **inits1,**inits2;
-  gboolean in_in_tracks,in_out_tracks;
 
   if (!weed_plant_has_leaf(fm1,"init_events")&&!weed_plant_has_leaf(fm2,"init_events")) return TRUE;
   if (ctrack==-1000000&&((!weed_plant_has_leaf(fm1,"init_events")&&weed_get_voidptr_value(fm2,"init_events",&error)!=NULL)||(!weed_plant_has_leaf(fm2,"init_events")&&weed_get_voidptr_value(fm1,"init_events",&error)!=NULL))) return FALSE;
@@ -17129,75 +17085,25 @@ gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack) 
 
 
     if (ctrack!=-1000000) {
-      in_in_tracks=in_out_tracks=FALSE;
+
       if (inits1[i1]!=NULL) {
-	if (weed_plant_has_leaf(inits1[i1],"in_tracks")) {
-	  int *in_tracks=weed_get_int_array(inits1[i1],"in_tracks",&error);
-	  num_tracks=weed_leaf_num_elements(inits1[i1],"in_tracks");
-	  for (j=0;j<num_tracks;j++) {
-	    if (in_tracks[j]==ctrack) {
-	      if (i2>=num_events2) {
-		weed_free(inits1);
-		weed_free(inits2);
-		return FALSE;
-	      }
-	      in_in_tracks=TRUE;
-	      break;
-	    }
+
+	if (init_event_is_relevant(inits1[i1],ctrack)) {
+	  if (i2>=num_events2) {
+	    weed_free(inits1);
+	    weed_free(inits2);
+	    return FALSE;
 	  }
-	  weed_free(in_tracks);
 	}
-	if (weed_plant_has_leaf(inits1[i1],"out_tracks")) {
-	  int *out_tracks=weed_get_int_array(inits1[i1],"out_tracks",&error);
-	  num_tracks=weed_leaf_num_elements(inits1[i1],"out_tracks");
-	  for (j=0;j<num_tracks;j++) {
-	    if (out_tracks[j]==ctrack) {
-	      if (i2>=num_events2) {
-		weed_free(inits1);
-		weed_free(inits2);
-		weed_free(out_tracks);
-		return FALSE;
-	      }
-	      in_out_tracks=TRUE;
-	      break;
-	    }
-	  }
-	  weed_free(out_tracks);
-	}
+	else continue;  // skip this one, it doesn't involve ctrack
+
       }
-      if (!in_in_tracks&&!in_out_tracks) continue; // skip this one, it doesn't involve ctrack
+      else continue; // skip NULLS
     }
 
     if (i2<num_events2) {
       if (ctrack!=-1000000) {
-	in_in_tracks=in_out_tracks=FALSE;
-	
-	if (inits2[i2]!=NULL) {
-	  if (weed_plant_has_leaf(inits2[i2],"in_tracks")) {
-	    int *in_tracks=weed_get_int_array(inits2[i2],"in_tracks",&error);
-	    num_tracks=weed_leaf_num_elements(inits2[i2],"in_tracks");
-	    for (j=0;j<num_tracks;j++) {
-	      if (in_tracks[j]==ctrack) {
-		in_in_tracks=TRUE;
-		break;
-	      }
-	    }
-	    weed_free(in_tracks);
-	  }
-	  if (weed_plant_has_leaf(inits2[i2],"out_tracks")) {
-	    int *out_tracks=weed_get_int_array(inits2[i2],"out_tracks",&error);
-	    num_tracks=weed_leaf_num_elements(inits2[i2],"out_tracks");
-	    for (j=0;j<num_tracks;j++) {
-	      if (out_tracks[j]==ctrack) {
-		in_out_tracks=TRUE;
-		break;
-	      }
-	    }
-	    weed_free(out_tracks);
-	  }
-	}
-	
-	if (!in_in_tracks&&!in_out_tracks) {
+	if (inits2[i2]==NULL||!init_event_is_relevant(inits2[i2],ctrack)) {
 	  i2++;
 	  i1--;
 	  continue; // skip this one, it doesn't involve ctrack
@@ -17226,32 +17132,12 @@ gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack) 
 	  if (init_event_in_list(inits1,num_events1,inits2[i2])) continue;
 	}
 
-	if (weed_plant_has_leaf(inits2[i2],"in_tracks")) {
-	  int *in_tracks=weed_get_int_array(inits2[i2],"in_tracks",&error);
-	  num_tracks=weed_leaf_num_elements(inits2[i2],"in_tracks");
-	  for (j=0;j<num_tracks;j++) {
-	    if (in_tracks[j]==ctrack) {
-	      weed_free(inits1);
-	      weed_free(inits2);
-	      weed_free(in_tracks);
-	      return FALSE;
-	    }
-	  }
-	  weed_free(in_tracks);
+	if (init_event_is_relevant(inits2[i2],ctrack)) {
+	  weed_free(inits1);
+	  weed_free(inits2);
+	  return FALSE;
 	}
-	if (weed_plant_has_leaf(inits2[i2],"out_tracks")) {
-	  int *out_tracks=weed_get_int_array(inits2[i2],"out_tracks",&error);
-	  num_tracks=weed_leaf_num_elements(inits2[i2],"out_tracks");
-	  for (j=0;j<num_tracks;j++) {
-	    if (out_tracks[j]==ctrack) {
-	      weed_free(inits1);
-	      weed_free(inits2);
-	      weed_free(out_tracks);
-	      return FALSE;
-	    }
-	  }
-	  weed_free(out_tracks);
-	}
+
       }
     }
   }

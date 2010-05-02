@@ -50,6 +50,7 @@ weed_plant_t *get_prev_frame_event (weed_plant_t *event);
 weed_plant_t *get_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut, gboolean exact);
 weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut);
 gboolean filter_map_after_frame(weed_plant_t *fmap);
+gboolean init_event_is_relevant(weed_plant_t *init_event, gint ctrack);
 
 
 // definitions in events.c
@@ -142,7 +143,7 @@ void insert_filter_init_event_at(weed_plant_t *event_list, weed_plant_t *at_even
 void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *filter, weed_plant_t *init_event, int ntracks);
 void insert_filter_deinit_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 gboolean insert_filter_map_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event, gboolean before_frames);
-weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack);
+weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack, weed_plant_t *stop_event);
 weed_plant_t *get_filter_map_after(weed_plant_t *event, gint ctrack);
 void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gboolean add);
 void update_filter_maps (weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event);

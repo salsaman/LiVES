@@ -1970,6 +1970,7 @@ void play_file (void) {
 
     if (has_audio_buffers) {
       free_jack_audio_buffers();
+      audio_free_fnames();
     }
 
     if (mainw->foreign&&mainw->jackd_read!=NULL) jack_rec_audio_end();
@@ -1997,6 +1998,7 @@ void play_file (void) {
 
     if (has_audio_buffers) {
       free_pulse_audio_buffers();
+      audio_free_fnames();
     }
 
     if (mainw->foreign&&mainw->pulsed_read!=NULL) pulse_rec_audio_end();

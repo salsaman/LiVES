@@ -16,6 +16,44 @@
 #include "../libweed/weed-host.h"
 
 
+
+// keep first 16 audio_in filesysten handles open
+#define NSTOREDFDS 16
+static gchar *storedfnames[NSTOREDFDS];
+static int storedfds[NSTOREDFDS];
+static gboolean storedfdsset=FALSE;
+
+static void audio_reset_stored_fnames(void) {
+  int i;
+  for (i=0;i<NSTOREDFDS;i++) {
+    storedfnames[i]=NULL;
+    storedfds[i]=-1;
+  }
+  storedfdsset=TRUE;
+}
+
+
+
+void audio_free_fnames(void) {
+  // cleanup stored filehandles after playback/fade/render
+  
+  int i;
+
+  if (!storedfdsset) return;
+
+  for (i=0;i<NSTOREDFDS;i++) {
+    if (storedfnames!=NULL) {
+      g_free(storedfnames[i]);
+      storedfnames[i]=NULL;
+      if (storedfds[i]>-1) close(storedfds[i]);
+      storedfds[i]=-1;
+    }
+  }
+}
+
+
+
+
 inline void sample_silence_dS (float *dst, unsigned long nsamples) {
   memset(dst,0,nsamples*sizeof(float));
 }
@@ -620,34 +658,6 @@ static void pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int a
   }
 }
 
-#define NSTOREDFILES 16
-static gchar *storedfnames[NSTOREDFILES];
-static int storedfds[NSTOREDFILES];
-static gboolean storedfdsset=FALSE;
-
-void audio_reset_stored_fnames(void) {
-  int i;
-  for (i=0;i<NSTOREDFILES;i++) {
-    storedfnames[i]=NULL;
-    storedfds[i]=-1;
-  }
-  storedfdsset=TRUE;
-}
-
-
-
-void audio_free_fnames(void) {
-  int i;
-  for (i=0;i<NSTOREDFILES;i++) {
-    if (storedfnames!=NULL) {
-      g_free(storedfnames);
-      storedfnames[i]=NULL;
-      if (storedfds[i]>-1) close(storedfds[i]);
-      storedfds[i]=-1;
-    }
-  }
-}
-
 
 
 
@@ -740,7 +750,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   if (out_achans==0) return 0l;
 
-  //if (!storedfdscleared) 
+  if (!storedfdsset) audio_reset_stored_fnames();
 
   if (to_file>-1) {
     // prepare outfile stuff
@@ -814,12 +824,20 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       
       infilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,infile->handle);
 
-      /*      if (track<NSTOREDFDS&&storedfnames[track]!=NULL&&!strcmp(infilename,storedfnames[track])) {
+
+      // try to speed up access by keeping some files open
+      if (track<NSTOREDFDS&&storedfnames[track]!=NULL&&!strcmp(infilename,storedfnames[track])) {
 	in_fd[track]=storedfds[track];
       }
-      else {*/
+      else {
+	if (track<NSTOREDFDS&&storedfds[track]>=-1) close(storedfds[track]);
 	in_fd[track]=open(infilename,O_RDONLY);
-	//}
+	
+	if (track<NSTOREDFDS) {
+	  storedfds[track]=in_fd[track];
+	  storedfnames[track]=g_strdup(infilename);
+	}
+      }
 
       lseek64(in_fd[track],seekstart[track],SEEK_SET);
       
@@ -958,7 +976,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     }
 
     // now we send small chunks at a time to the audio vol/pan effect
-    
+    shortcut=NULL;
     blocksize=RENDER_BLOCK_SIZE;
 
     for (i=0;i<xsamples;i+=RENDER_BLOCK_SIZE) {
@@ -1023,7 +1041,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
   // close files
   for (track=0;track<nfiles;track++) {
     if (!is_silent[track]) {
-      close (in_fd[track]);
+      if (track>=NSTOREDFDS) close (in_fd[track]);
     }
     for (c=0;c<out_achans;c++) {
       g_free(chunk_float_buffer[track*out_achans+c]);

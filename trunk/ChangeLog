@@ -2,6 +2,7 @@ Version 1.3.3
 -------------
 Fix crash after moving blocks in multitrack (regression).
 Faster insertion of frames in multitrack.
+Fix thread locking issue. *
 Implement FULL jack timebase client.
 Improved a/v sync.
 Complete the implementation of the new transport.

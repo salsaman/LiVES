@@ -496,6 +496,8 @@ guint mt_idle_add(lives_mt *mt) {
 
 void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  gboolean rlay=mainw->recoverable_layout;
+
   if (button!=NULL) {
     gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
     mainw->recoverable_layout=FALSE;
@@ -507,6 +509,8 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   eload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
   unlink(eload_file);
   g_free(eload_file);
+
+  if (rlay) do_after_crash_warning();
 
 }
 
@@ -568,6 +572,9 @@ void recover_layout(GtkButton *button, gpointer user_data) {
     mt_sensitise(mainw->multitrack);
   }
   mainw->recoverable_layout=FALSE;
+
+  do_after_crash_warning();
+
 }
   
 
@@ -676,25 +683,28 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	filenum=get_frame_event_clip(block->start_event,track);
 	last_framenum=-1;
 	for (i=offset_start;i<offset_end;i+=BLOCK_THUMB_WIDTH) {
-	  // create a small thumb
+	  if (i>x2) break;
 	  event=get_frame_event_at(mt->event_list,tc,event,FALSE);
 	  tc+=tl_span/eventbox->allocation.width*width*U_SEC;
-	  framenum=get_frame_event_frame(event,track);
-	  
-	  if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
-	  thumbnail=NULL;
-	  if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,eventbox->allocation.height-1,framenum,FALSE);
-	  last_framenum=framenum;
-	  if (i+width>offset_end) width=offset_end-i;
-	  // render it in the eventbox
-	  if (thumbnail!=NULL) {
-	    if (width>gdk_pixbuf_get_width(thumbnail)) width=gdk_pixbuf_get_width(thumbnail);
-	    gdk_pixbuf_render_to_drawable (thumbnail,GDK_DRAWABLE (eventbox->window),mainw->gc,0,0,i,0,width,-1,GDK_RGB_DITHER_NONE,0,0);
+	  if (i+width>=0) {
+	    // create a small thumb
+	    framenum=get_frame_event_frame(event,track);
+	    
+	    if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
+	    thumbnail=NULL;
+	    if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,eventbox->allocation.height-1,framenum,FALSE);
+	    last_framenum=framenum;
+	    if (i+width>offset_end) width=offset_end-i;
+	    // render it in the eventbox
+	    if (thumbnail!=NULL) {
+	      if (width>gdk_pixbuf_get_width(thumbnail)) width=gdk_pixbuf_get_width(thumbnail);
+	      gdk_pixbuf_render_to_drawable (thumbnail,GDK_DRAWABLE (eventbox->window),mainw->gc,0,0,i,0,width,-1,GDK_RGB_DITHER_NONE,0,0);
+	    }
+	    if (mainw->playing_file>-1) unpaint_lines(mt);
+	    mt->redraw_block=TRUE; // stop drawing cursor during playback
+	    if (mainw->playing_file>-1&&mainw->cancelled==CANCEL_NONE) process_one(FALSE);
+	    mt->redraw_block=FALSE;
 	  }
-	  if (mainw->playing_file>-1) unpaint_lines(mt);
-	  mt->redraw_block=TRUE; // stop drawing cursor during playback
-	  if (mainw->playing_file>-1&&mainw->cancelled==CANCEL_NONE) process_one(FALSE);
-	  mt->redraw_block=FALSE;
 	}
 	if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
       }

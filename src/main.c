@@ -2432,7 +2432,6 @@ void load_start_image(gint frame) {
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
-
     if (pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
       start_pixbuf=layer_to_pixbuf(layer);
@@ -2529,8 +2528,6 @@ void load_end_image(gint frame) {
 
     if (pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
-      interp=get_interp_value(prefs->pb_quality);
-      resize_layer(layer,width,height,interp);
       end_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);

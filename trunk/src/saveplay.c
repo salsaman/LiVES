@@ -1376,14 +1376,6 @@ void play_file (void) {
   GClosure *freeze_closure;
   gshort audio_player=prefs->audio_player;
 
-#ifdef ENABLE_JACK
-  aserver_message_t jack_message;
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  aserver_message_t pulse_message;
-#endif
-
-
   weed_plant_t *pb_start_event=NULL;
   gboolean exact_preview=FALSE;
   gboolean has_audio_buffers=FALSE;
@@ -1986,11 +1978,6 @@ void play_file (void) {
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
 
-    if (has_audio_buffers) {
-      free_jack_audio_buffers();
-      audio_free_fnames();
-    }
-
   }
   else {
 #endif
@@ -2010,11 +1997,6 @@ void play_file (void) {
     if (mainw->record&&(prefs->rec_opts&REC_AUDIO)) {
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
-    }
-
-    if (has_audio_buffers) {
-      free_pulse_audio_buffers();
-      audio_free_fnames();
     }
 
   }
@@ -2300,15 +2282,28 @@ void play_file (void) {
   }
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
     while (jack_get_msgq(mainw->jackd)!=NULL);
     mainw->jackd->in_use=FALSE;
+
+    if (has_audio_buffers) {
+      free_jack_audio_buffers();
+      audio_free_fnames();
+    }
+
+
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->in_use) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
     while (pulse_get_msgq(mainw->pulsed)!=NULL);
     mainw->pulsed->in_use=FALSE;
+
+    if (has_audio_buffers) {
+      free_pulse_audio_buffers();
+      audio_free_fnames();
+    }
+
   }
 #endif
 

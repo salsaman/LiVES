@@ -4355,16 +4355,6 @@ void do_quick_switch (gint new_file) {
   gint ohsize=mainw->pwidth;
   gboolean osc_block;
 
-#ifdef HAVE_PULSE_AUDIO
-  aserver_message_t pulse_message;
-  aserver_message_t pulse_message2;
-#endif
-
-#ifdef ENABLE_JACK
-  aserver_message_t jack_message;
-  aserver_message_t jack_message2;
-#endif
-
   if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
 
   if (mainw->noswitch||(mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_CLIPS))||mainw->foreign||(mainw->preview&&!mainw->is_rendering&&mainw->multitrack==NULL)) return;

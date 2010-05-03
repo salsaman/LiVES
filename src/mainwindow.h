@@ -966,4 +966,16 @@ _merge_opts* merge_opts;
 // note, we can only have two of these currently, one for rendered effects, one for real time effects
 GtkWidget *fx_dialog[2];
 
+
+
+#ifdef ENABLE_JACK
+  volatile aserver_message_t jack_message;
+  volatile aserver_message_t jack_message2;
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  volatile aserver_message_t pulse_message;
+  volatile aserver_message_t pulse_message2;
+#endif
+
 #endif // HAS_MAINWINDOW_H

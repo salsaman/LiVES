@@ -812,8 +812,6 @@ gdouble lives_pulse_get_pos(pulse_driver_t *pulsed) {
 }
 
 
-static aserver_message_t pulse_message;
-
 void pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
@@ -836,8 +834,8 @@ long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
   // position will be adjusted to (floor) nearest sample
 
   // if the position is > size of file, we will seek to the end of the file
-
   volatile aserver_message_t *pmsg;
+
   long seekstart;
   do {
     pmsg=pulse_get_msgq(pulsed);

@@ -1277,8 +1277,6 @@ gdouble lives_jack_get_pos(jack_driver_t *jackd) {
 
 
 
-static aserver_message_t jack_message;
-
 void jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample

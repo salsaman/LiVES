@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-05-02 12:05-0300\n"
+"POT-Creation-Date: 2010-05-02 23:10-0300\n"
 "PO-Revision-Date: 2010-03-21 07:01+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -639,7 +639,7 @@ msgid "!rec %9d/%d"
 msgstr "!зап %9d/%d"
 
 #: src/main.c:3455 src/main.c:3456 src/gui.c:1905 src/gui.c:2873
-#: src/saveplay.c:1493
+#: src/saveplay.c:1485
 msgid "Play"
 msgstr "Пуск"
 
@@ -657,12 +657,12 @@ msgid "Closed file %s\n"
 msgstr "Закритий файл %s\n"
 
 #: src/main.c:4066 src/gui.c:522 src/utils.c:2551 src/utils.c:2577
-#: src/saveplay.c:2457 src/multitrack.c:3814 src/multitrack.c:5280
+#: src/saveplay.c:2452 src/multitrack.c:3814 src/multitrack.c:5280
 msgid "_Undo"
 msgstr "В_ернути"
 
 #: src/main.c:4067 src/gui.c:535 src/utils.c:2552 src/utils.c:2578
-#: src/saveplay.c:2458 src/multitrack.c:3835 src/multitrack.c:5303
+#: src/saveplay.c:2453 src/multitrack.c:3835 src/multitrack.c:5303
 msgid "_Redo"
 msgstr "Повт_орити"
 
@@ -1035,7 +1035,7 @@ msgstr ""
 "час імпортування."
 
 #: src/interface.c:186 src/callbacks.c:7498 src/gui.c:2876 src/gui.c:3414
-#: src/saveplay.c:1496 src/saveplay.c:2115 src/dialogs.c:787 src/dialogs.c:788
+#: src/saveplay.c:1488 src/saveplay.c:2097 src/dialogs.c:787 src/dialogs.c:788
 #: src/dialogs.c:955 src/dialogs.c:956 src/framedraw.c:191
 #: src/multitrack.c:6782
 msgid "Preview"
@@ -1791,7 +1791,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Копіювання кадрів з %d до %d%s до буфера даних…"
 
 #: src/callbacks.c:1873 src/saveplay.c:894 src/saveplay.c:1005
-#: src/saveplay.c:1058 src/saveplay.c:2790
+#: src/saveplay.c:1058 src/saveplay.c:2785
 msgid "Pulling frames from clip"
 msgstr "Отримання кадрів з кліпу"
 
@@ -3809,7 +3809,7 @@ msgstr "Відкриття %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Відкриття %s час початку — %.2f с, %d кадрів"
 
-#: src/saveplay.c:188 src/saveplay.c:2778
+#: src/saveplay.c:188 src/saveplay.c:2773
 msgid " without sound"
 msgstr " без звуку"
 
@@ -3932,24 +3932,24 @@ msgstr ""
 "\n"
 "Помилка кодування. Файл даних не було створено!\n"
 
-#: src/saveplay.c:1421
+#: src/saveplay.c:1413
 msgid "recording aborted by preview.\n"
 msgstr "запис перервано переглядом.\n"
 
-#: src/saveplay.c:1425
+#: src/saveplay.c:1417
 msgid "recording aborted by clipboard playback.\n"
 msgstr "запис перервано відтворенням даних з буфера.\n"
 
-#: src/saveplay.c:1428
+#: src/saveplay.c:1420
 msgid "Recording performance..."
 msgstr "Виконання запису…"
 
-#: src/saveplay.c:2275
+#: src/saveplay.c:2257
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Середня частота кадрів — %.4f\n"
 
-#: src/saveplay.c:2281
+#: src/saveplay.c:2263
 msgid ""
 "\n"
 "\n"
@@ -3964,16 +3964,16 @@ msgstr ""
 "кадрів»\n"
 "і змінити розміри всіх кадрів до поточного значення.\n"
 
-#: src/saveplay.c:2393
+#: src/saveplay.c:2388
 msgid "Unknown"
 msgstr "Невідомо"
 
-#: src/saveplay.c:2486
+#: src/saveplay.c:2481
 #, c-format
 msgid "Untitled%d"
 msgstr "Без_назви%d"
 
-#: src/saveplay.c:2595
+#: src/saveplay.c:2590
 #, c-format
 msgid ""
 "\n"
@@ -3986,14 +3986,14 @@ msgstr ""
 "Типову частоту кадрів можна встановити за допомогою пункту меню «Інструменти "
 "| Параметри | Інше».\n"
 
-#: src/saveplay.c:2607
+#: src/saveplay.c:2602
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Швидкість відтворення було скориговано до значення %.3f кадрів на секунду, "
 "щоб зберегти відповідність з звуковими даними.\n"
 
-#: src/saveplay.c:2615
+#: src/saveplay.c:2610
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4003,7 +4003,7 @@ msgstr ""
 "%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:2619 src/saveplay.c:3213
+#: src/saveplay.c:2614 src/saveplay.c:3208
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4012,49 +4012,49 @@ msgstr ""
 "Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:2623 src/saveplay.c:3217
+#: src/saveplay.c:2618 src/saveplay.c:3212
 #, c-format
 msgid "%s none\n"
 msgstr "%s немає\n"
 
-#: src/saveplay.c:2626 src/saveplay.c:3220
+#: src/saveplay.c:2621 src/saveplay.c:3215
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Гц %d каналів %d б/с\n"
 
-#: src/saveplay.c:2634
+#: src/saveplay.c:2629
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Коментар: %s\n"
 
-#: src/saveplay.c:2708
+#: src/saveplay.c:2703
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Збереження кадру %d як %s..."
 
-#: src/saveplay.c:2773
+#: src/saveplay.c:2768
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Створення резервної копії %s на %s"
 
-#: src/saveplay.c:2809
+#: src/saveplay.c:2804
 msgid "Backing up"
 msgstr "Створення резервної копії"
 
-#: src/saveplay.c:2840
+#: src/saveplay.c:2835
 msgid "performance data was backed up..."
 msgstr "було створено резервну копію записаних даних…"
 
-#: src/saveplay.c:3139
+#: src/saveplay.c:3134
 #, c-format
 msgid "Restoring %s..."
 msgstr "Відновлення %s…"
 
-#: src/saveplay.c:3158
+#: src/saveplay.c:3153
 msgid "Restoring"
 msgstr "Відновлення"
 
-#: src/saveplay.c:3180
+#: src/saveplay.c:3175
 #, c-format
 msgid ""
 "\n"
@@ -4067,17 +4067,17 @@ msgstr ""
 "Дані у файлі %s пошкоджено.\n"
 "LiVES не вдалося відновити їх.\n"
 
-#: src/saveplay.c:3583
+#: src/saveplay.c:3578
 #, c-format
 msgid "rec %.2f MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:3587
+#: src/saveplay.c:3582
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!зап %.2f МБ"
 
-#: src/saveplay.c:3610
+#: src/saveplay.c:3605
 #, c-format
 msgid ""
 "\n"
@@ -4085,7 +4085,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3726
+#: src/saveplay.c:3721
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4095,11 +4095,11 @@ msgstr ""
 "Було знайдено файли від попереднього запуску LiVES.\n"
 "Бажаєте, щоб програма спробувала їх відновити?\n"
 
-#: src/saveplay.c:3739
+#: src/saveplay.c:3734
 msgid "Recovering files"
 msgstr "Відновлення файлів"
 
-#: src/saveplay.c:3743
+#: src/saveplay.c:3738
 msgid "Recovering files..."
 msgstr "Відновлення файлів…"
 

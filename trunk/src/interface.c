@@ -1930,17 +1930,44 @@ _entryw* create_rename_dialog (gint type) {
 
 
 void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
-  GtkWidget *adv_hbox=GTK_WIDGET(user_data);
+  tvcardw_t *tvcardw=(tvcardw_t *)(user_data);
 
-  if (!GTK_WIDGET_VISIBLE(adv_hbox)) gtk_widget_show(adv_hbox);
+  tvcardw->use_advanced=!tvcardw->use_advanced;
+
+  if (tvcardw->use_advanced) {
+    gtk_widget_show(tvcardw->adv_vbox);
+    gtk_button_set_label(GTK_BUTTON(tvcardw->advbutton),_("Use def_aults"));
+  }
   else {
-    gtk_window_resize(gtk_widget_get_toplevel(adv_hbox),4,40);
-    gtk_widget_hide(adv_hbox);
+    gtk_button_set_label(GTK_BUTTON(tvcardw->advbutton),_("_Advanced"));
+    gtk_window_resize(GTK_WINDOW(gtk_widget_get_toplevel(tvcardw->adv_vbox)),4,40);
+    gtk_widget_hide(tvcardw->adv_vbox);
   }
 
-  gtk_widget_queue_resize(adv_hbox->parent);
+  gtk_widget_queue_resize(tvcardw->adv_vbox->parent);
 
 }
+
+
+static void rb_tvcarddef_toggled(GtkToggleButton *tbut, gpointer user_data) {
+  tvcardw_t *tvcardw=(tvcardw_t *)(user_data);
+
+  if (!gtk_toggle_button_get_active(tbut)) {
+    gtk_widget_set_sensitive(tvcardw->spinbuttonw,TRUE);
+    gtk_widget_set_sensitive(tvcardw->spinbuttonh,TRUE);
+    gtk_widget_set_sensitive(tvcardw->spinbuttonf,TRUE);
+  }
+  else {
+    gtk_widget_set_sensitive(tvcardw->spinbuttonw,FALSE);
+    gtk_widget_set_sensitive(tvcardw->spinbuttonh,FALSE);
+    gtk_widget_set_sensitive(tvcardw->spinbuttonf,FALSE);
+  }
+
+
+}
+
+
+
 
 
 GtkWidget*
@@ -1975,17 +2002,18 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   GtkWidget *spinbutton36=NULL;
   GtkObject *spinbutton36b_adj;
   GtkWidget *spinbutton36b;
+  GtkWidget *radiobutton;
+  GtkWidget *eventbox;
   GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
-  GtkWidget *advbutton;
-  GtkWidget *adv_vbox;
-  GtkWidget *spinbutton;
   GtkObject *spinbutton_adj;
 
   gchar *label_text=NULL;
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
   
+  GSList *radiobutton_group=NULL;
+
   cd_dialog = gtk_dialog_new ();
   if (type==0) {
     gtk_window_set_title (GTK_WINDOW (cd_dialog), _("LiVES:- Load CD Track"));
@@ -2072,6 +2100,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   spinbutton35 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton35_adj), 1, 0);
   gtk_widget_show (spinbutton35);
   gtk_box_pack_start (GTK_BOX (hbox), spinbutton35, FALSE, TRUE, 0);
+  gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton35)->entry)), TRUE);
 
   add_fill_to_box(GTK_BOX(hbox));
 
@@ -2098,12 +2127,14 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     spinbutton36 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36_adj), 1, 0);
     gtk_widget_show (spinbutton36);
     gtk_box_pack_start (GTK_BOX (hbox17), spinbutton36, FALSE, TRUE, 0);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton36)->entry)), TRUE);
 
 
     if (type==1) {
       hbox17b = gtk_hbox_new (FALSE, 50);
       if (type==1) spinbutton36b_adj = gtk_adjustment_new (mainw->fx3_val, 128, 159, 1, 1, 0);
       spinbutton36b = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36b_adj), 1, 0);
+      gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton36b)->entry)), TRUE);
       
       gtk_widget_show (hbox17b);
       gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox17b, TRUE, TRUE, 0);
@@ -2129,6 +2160,29 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
 
   if (type==4) {
+    GList *dlist=NULL;
+    GList *olist=NULL;
+
+    tvcardw_t *tvcardw=(tvcardw_t *)g_malloc(sizeof(tvcardw_t));
+    tvcardw->use_advanced=FALSE;
+
+    dlist=g_list_append(dlist,"autodetect");
+    dlist=g_list_append(dlist,"v4l2");
+    dlist=g_list_append(dlist,"v4l");
+    dlist=g_list_append(dlist,"bsdbt848");
+    dlist=g_list_append(dlist,"dummy");
+
+    olist=g_list_append(olist,"autodetect");
+    olist=g_list_append(olist,"yv12");
+    olist=g_list_append(olist,"rgb32");
+    olist=g_list_append(olist,"rgb24");
+    olist=g_list_append(olist,"rgb16");
+    olist=g_list_append(olist,"rgb15");
+    olist=g_list_append(olist,"uyvy");
+    olist=g_list_append(olist,"yuy2");
+    olist=g_list_append(olist,"i420");
+
+
     gtk_box_set_spacing(GTK_BOX(dialog_vbox),20);
 
     hbox = gtk_hbox_new (FALSE, 50);
@@ -2137,22 +2191,87 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     
     add_fill_to_box(GTK_BOX(hbox));
 
-    advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
-    gtk_widget_show (advbutton);
-    gtk_box_pack_start (GTK_BOX (hbox), advbutton, TRUE, TRUE, 40);
+    tvcardw->advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
+    gtk_widget_show (tvcardw->advbutton);
+    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->advbutton, TRUE, TRUE, 40);
     
     add_fill_to_box(GTK_BOX(hbox));
 
 
-    adv_vbox = gtk_vbox_new (FALSE, 50);
-    gtk_widget_show (adv_vbox);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), adv_vbox, TRUE, TRUE, 20);
+    tvcardw->adv_vbox = gtk_vbox_new (FALSE, 50);
+    gtk_widget_show (tvcardw->adv_vbox);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), tvcardw->adv_vbox, TRUE, TRUE, 20);
     
 
-    // add width, height, fps, driver and outfmt
+    // add input, width, height, fps, driver and outfmt
 
 
     hbox = gtk_hbox_new (FALSE, 0);
+    label=gtk_label_new_with_mnemonic(_("Input number"));
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    
+    spinbutton_adj = gtk_adjustment_new (0.,0.,16.,1.,1.,0.);
+    tvcardw->spinbuttoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttoni)->entry)), TRUE);
+    
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), tvcardw->spinbuttoni);
+    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->spinbuttoni, TRUE, FALSE, 0);
+
+    gtk_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
+    gtk_widget_show_all (hbox);
+
+
+    hbox = gtk_hbox_new (FALSE, 0);
+
+    tvcardw->radiobuttond = gtk_radio_button_new (NULL);
+    gtk_radio_button_set_group (GTK_RADIO_BUTTON (tvcardw->radiobuttond), radiobutton_group);
+    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (tvcardw->radiobuttond));
+    
+    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->radiobuttond, FALSE, FALSE, 10);
+    
+    label=gtk_label_new_with_mnemonic (_ ("Use default width, height and FPS"));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),tvcardw->radiobuttond);
+    
+    eventbox=gtk_event_box_new();
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      tvcardw->radiobuttond);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+    
+
+    g_signal_connect_after (GTK_OBJECT (tvcardw->radiobuttond), "toggled",
+			    G_CALLBACK (rb_tvcarddef_toggled),
+			    (gpointer)tvcardw);
+
+
+
+    gtk_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
+    gtk_widget_show_all (hbox);
+
+
+
+    hbox = gtk_hbox_new (FALSE, 0);
+
+    radiobutton = gtk_radio_button_new (radiobutton_group);
+    
+    gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
+    
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg (hbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (hbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+
+
     label=gtk_label_new_with_mnemonic(_("Width"));
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -2160,12 +2279,13 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
     spinbutton_adj = gtk_adjustment_new (640.,4.,4096.,2.,2.,0.);
-    spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
+    tvcardw->spinbuttonw = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonw)->entry)), TRUE);
     
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton);
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, TRUE, FALSE, 0);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), tvcardw->spinbuttonw);
+    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->spinbuttonw, TRUE, FALSE, 0);
 
-
+    gtk_widget_set_sensitive(tvcardw->spinbuttonw,FALSE);
 
     label=gtk_label_new_with_mnemonic(_("Height"));
     if (palette->style&STYLE_1) {
@@ -2174,19 +2294,14 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
     spinbutton_adj = gtk_adjustment_new (480.,4.,4096.,2.,2.,0.);
-    spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
+    tvcardw->spinbuttonh = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonh)->entry)), TRUE);
     
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton);
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, TRUE, FALSE, 0);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), tvcardw->spinbuttonh);
+    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->spinbuttonh, TRUE, FALSE, 0);
+    gtk_widget_set_sensitive(tvcardw->spinbuttonh,FALSE);
     
-    gtk_box_pack_start (GTK_BOX (adv_vbox), hbox, TRUE, FALSE, 0);
-    gtk_widget_show_all (hbox);
 
-
-
-
-
-    hbox = gtk_hbox_new (FALSE, 0);
     label=gtk_label_new_with_mnemonic(_("FPS"));
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -2194,25 +2309,75 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
     spinbutton_adj = gtk_adjustment_new (25., 1., FPS_MAX, 1., 10., 0.);
-    spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,3);
+    tvcardw->spinbuttonf = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,3);
+    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonf)->entry)), TRUE);
     
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton);
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, TRUE, FALSE, 0);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), tvcardw->spinbuttonf);
+    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->spinbuttonf, TRUE, FALSE, 0);
+    gtk_widget_set_sensitive(tvcardw->spinbuttonf,FALSE);
 
-    gtk_box_pack_start (GTK_BOX (adv_vbox), hbox, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
     gtk_widget_show_all (hbox);
 
 
+    hbox = gtk_hbox_new (FALSE, 0);
 
-    g_signal_connect (GTK_OBJECT (advbutton), "clicked",
+    tvcardw->combod = gtk_combo_new ();
+ 
+    label = gtk_label_new_with_mnemonic (_("Driver"));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(tvcardw->combod)->entry);
+ 
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->combod, FALSE, TRUE, 10);
+    gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO (tvcardw->combod))->entry),FALSE);
+   
+    combo_set_popdown_strings (GTK_COMBO (tvcardw->combod), dlist);
+    gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(tvcardw->combod))->entry),TRUE);
+
+
+
+
+    tvcardw->comboo = gtk_combo_new ();
+ 
+    label = gtk_label_new_with_mnemonic (_("Output format"));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(tvcardw->comboo)->entry);
+ 
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->comboo, FALSE, TRUE, 10);
+    gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO (tvcardw->comboo))->entry),FALSE);
+    gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(tvcardw->comboo))->entry),TRUE);
+   
+    combo_set_popdown_strings (GTK_COMBO (tvcardw->comboo), olist);
+
+
+    gtk_widget_show_all (hbox);
+    gtk_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
+
+
+
+
+
+
+
+
+    g_signal_connect (GTK_OBJECT (tvcardw->advbutton), "clicked",
 		      G_CALLBACK (on_liveinp_advanced_clicked),
-		      adv_vbox);
+		      tvcardw);
 
 
-    gtk_widget_hide(adv_vbox);
+    gtk_widget_hide(tvcardw->adv_vbox);
+
+    g_object_set_data(G_OBJECT(cd_dialog),"tvcard_data",tvcardw);
 
   }
-
 
   dialog_action_area = GTK_DIALOG (cd_dialog)->action_area;
   gtk_widget_show (dialog_action_area);

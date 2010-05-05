@@ -2,10 +2,12 @@ Version 1.3.3
 -------------
 Fix crash after moving blocks in multitrack (regression).
 Faster insertion of frames in multitrack.
-Fix thread locking issue. *
+Optimisations for longer (10 minute+) clips in multitrack.
+Fix an issue with splitting/moving backing audio blocks in mt.
+Fix several thread concurrency issues. (Thanks to Thomas Holmgren) *
 Implement FULL jack timebase client.
 Improved a/v sync.
-Complete the implementation of the new transport.
+Complete the implementation of the new player transport.
 Swap ctrl-page-up, ctrl-page-down in multitrack.
 Multitrack/mixer GUI improvements.
 Add some widgets from GTK+ Instrumentation Widgets
@@ -16,15 +18,17 @@ Play video during "record external audio to selection".
 Smoother resampling for external window capture.
 Fix some minor bugs in internal colourspace conversion. *
 Improved support for YUV colourspaces.
-Added two new effects, comicbook and softlight.
+Added two new effects, "comicbook" and "softlight".
 Enable realtime audio mixer in multitrack.
 Fixed some oddities when resizing window to fullscreen internal. *
 Allow pause/resume during encoding and opening.
 Reduce CPU usage when paused in effects or encoding.
 Add image overlay effect into core rendered effects.
-Add highly experimental blu-ray video support (1080p NTSC and 720p)
+Add highly experimental x264 blu-ray video support (1080p NTSC and 720p)
 New preferences layout (Alexij Kolga).
+Add "advanced" tab to TV card/webcam input.
 
+	
 	
 * backported to 1.0.10
 

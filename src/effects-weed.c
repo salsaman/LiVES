@@ -141,14 +141,14 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
   weedmemset=weed_memset;
 
   if (num_versions<1) return NULL;
-  if ((host_api_version=match_highest_version(host_api_versions_supported,3,plugin_versions,num_versions))==0) return NULL;
+  if ((host_api_version=match_highest_version(host_api_versions_supported,1,plugin_versions,num_versions))==0) return NULL;
   switch (host_api_version) {
   case 100:
   case 110:
   case 120:
   case 130:
   case 131:
-    value[0]=wdg; // bootstrap weed_get_get (the plugin's default_getter)
+    value[0]=wdg; // bootstrap weed_default_get (the plugin's default_getter)
 
     weed_set_int_value(host_info,"api_version",host_api_version);
 

@@ -126,7 +126,7 @@ create_fileselection (const gchar *title, gint preview_type, gpointer free_on_ca
   return fileselection;
 }
 
-static void add_deinterlace_checkbox(GtkBox *for_deint) {
+static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
   GtkWidget *hbox=gtk_hbox_new (FALSE, 0);
   GtkWidget *checkbutton = gtk_check_button_new ();
   GtkWidget *eventbox=gtk_event_box_new();
@@ -156,6 +156,8 @@ static void add_deinterlace_checkbox(GtkBox *for_deint) {
   gtk_tooltips_set_tip (mainw->tooltips, checkbutton,_("If this is set, frames will be deinterlaced as they are imported."), NULL);
 
   gtk_widget_show_all(hbox);
+
+  return hbox;
 }
 
 
@@ -1928,12 +1930,15 @@ _entryw* create_rename_dialog (gint type) {
 
 
 void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
+  GtkWidget *adv_hbox=GTK_WIDGET(user_data);
 
+  if (!GTK_WIDGET_VISIBLE(adv_hbox)) gtk_widget_show(adv_hbox);
+  else {
+    gtk_window_resize(gtk_widget_get_toplevel(adv_hbox),4,40);
+    gtk_widget_hide(adv_hbox);
+  }
 
-
-
-
-
+  gtk_widget_queue_resize(adv_hbox->parent);
 
 }
 
@@ -1973,7 +1978,13 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
+  GtkWidget *advbutton;
+  GtkWidget *adv_vbox;
+  GtkWidget *spinbutton;
+  GtkObject *spinbutton_adj;
+
   gchar *label_text=NULL;
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
   
   cd_dialog = gtk_dialog_new ();
   if (type==0) {
@@ -2062,6 +2073,8 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   gtk_widget_show (spinbutton35);
   gtk_box_pack_start (GTK_BOX (hbox), spinbutton35, FALSE, TRUE, 0);
 
+  add_fill_to_box(GTK_BOX(hbox));
+
   if (type==1||type==4) {
 
     hbox17 = gtk_hbox_new (FALSE, 50);
@@ -2110,19 +2123,95 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   }
 
   if (type==4||type==5) {
-    add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
+    hbox=add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
+    add_fill_to_box(GTK_BOX(hbox));
   }
 
-  /*advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
-  gtk_widget_show (advbutton);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), advbutton, FALSE, FALSE, 40);
 
-  g_signal_connect (GTK_OBJECT (advbutton), "clicked",
-		    G_CALLBACK (on_liveinp_advanced_clicked),
-		    NULL);*/
+  if (type==4) {
+    gtk_box_set_spacing(GTK_BOX(dialog_vbox),20);
+
+    hbox = gtk_hbox_new (FALSE, 50);
+    gtk_widget_show (hbox);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 20);
+    
+    add_fill_to_box(GTK_BOX(hbox));
+
+    advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
+    gtk_widget_show (advbutton);
+    gtk_box_pack_start (GTK_BOX (hbox), advbutton, TRUE, TRUE, 40);
+    
+    add_fill_to_box(GTK_BOX(hbox));
+
+
+    adv_vbox = gtk_vbox_new (FALSE, 50);
+    gtk_widget_show (adv_vbox);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), adv_vbox, TRUE, TRUE, 20);
+    
+
+    // add width, height, fps, driver and outfmt
+
+
+    hbox = gtk_hbox_new (FALSE, 0);
+    label=gtk_label_new_with_mnemonic(_("Width"));
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    
+    spinbutton_adj = gtk_adjustment_new (640.,4.,4096.,2.,2.,0.);
+    spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
+    
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton);
+    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, TRUE, FALSE, 0);
 
 
 
+    label=gtk_label_new_with_mnemonic(_("Height"));
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    
+    spinbutton_adj = gtk_adjustment_new (480.,4.,4096.,2.,2.,0.);
+    spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
+    
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton);
+    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, TRUE, FALSE, 0);
+    
+    gtk_box_pack_start (GTK_BOX (adv_vbox), hbox, TRUE, FALSE, 0);
+    gtk_widget_show_all (hbox);
+
+
+
+
+
+    hbox = gtk_hbox_new (FALSE, 0);
+    label=gtk_label_new_with_mnemonic(_("FPS"));
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    
+    spinbutton_adj = gtk_adjustment_new (25., 1., FPS_MAX, 1., 10., 0.);
+    spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,3);
+    
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton);
+    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, TRUE, FALSE, 0);
+
+    gtk_box_pack_start (GTK_BOX (adv_vbox), hbox, TRUE, FALSE, 0);
+    gtk_widget_show_all (hbox);
+
+
+
+    g_signal_connect (GTK_OBJECT (advbutton), "clicked",
+		      G_CALLBACK (on_liveinp_advanced_clicked),
+		      adv_vbox);
+
+
+    gtk_widget_hide(adv_vbox);
+
+  }
 
 
   dialog_action_area = GTK_DIALOG (cd_dialog)->action_area;
@@ -2133,6 +2222,9 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              GDK_Escape, 0, 0);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
@@ -2177,6 +2269,11 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 		      G_CALLBACK (mt_change_disp_tracks_ok),
 		      user_data);
   }
+
+
+  gtk_window_add_accel_group (GTK_WINDOW (cd_dialog), accel_group);
+
+
   return cd_dialog;
 }
 

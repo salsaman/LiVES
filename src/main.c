@@ -2498,7 +2498,6 @@ void load_end_image(gint frame) {
   weed_plant_t *layer;
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
-  gint interp;
   gboolean noswitch=mainw->noswitch;
 
   if (mainw->multitrack!=NULL) return;

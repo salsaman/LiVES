@@ -162,6 +162,7 @@ AC_CHECK_LIB(jack,jack_get_client_name)
 if test "x$ac_cv_lib_jack_jack_get_client_name" = "xyes"; then
 AC_CHECK_HEADERS(jack/jack.h, HAVE_JACK=true, HAVE_JACK=false)
 
+
 if test "$HAVE_JACK" != "false"; then
 if test "x$disable_jack_transport" != "xyes" ; then
 
@@ -257,6 +258,7 @@ HAVE_GIW=false
 ]
 )
 fi
+
 AM_CONDITIONAL(ENABLE_GIW,$HAVE_GIW)
 
 
@@ -389,6 +391,7 @@ dnl check for pulse-audio
 PKG_CHECK_MODULES(PULSE,libpulse >= 0.9.14,HAVE_PULSE_AUDIO=true,HAVE_PULSE_AUDIO=false)
 AC_SUBST(PULSE_CFLAGS)
 AC_SUBST(PULSE_LIBS)
+
 AM_CONDITIONAL(HAVE_PULSE_AUDIO,$HAVE_PULSE_AUDIO)
 
 

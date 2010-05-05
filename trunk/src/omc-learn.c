@@ -1686,8 +1686,8 @@ static lives_omc_match_node_t *omc_match_sig(gint type, gint index, gchar *sig) 
 }
 
 
-
-static gchar *omclearn_request_min(gint type) {
+/* not used yet */
+/*static gchar *omclearn_request_min(gint type) {
   gchar *msg=NULL;
 
   switch (type) {
@@ -1706,12 +1706,8 @@ static gchar *omclearn_request_min(gint type) {
   if (msg!=NULL) g_free(msg);
 
 
-  // now we need to re-read our source
-
-  //return omc_source_get(type);
-
   return NULL;
-}
+  }*/
 
 
 

@@ -107,8 +107,8 @@ gdouble jack_transport_get_time(void) {
 
 
 
-static void jack_transport_check_state (void) {
 #ifdef ENABLE_JACK_TRANSPORT
+static void jack_transport_check_state (void) {
   jack_position_t pos;
   jack_transport_state_t jacktstate;
 
@@ -133,8 +133,8 @@ static void jack_transport_check_state (void) {
     }
     mainw->jack_can_start=TRUE;
   }
-#endif
 }
+#endif
 
 gboolean lives_jack_poll(gpointer data) {
   // data is always NULL
@@ -146,7 +146,9 @@ gboolean lives_jack_poll(gpointer data) {
 }
 
 void lives_jack_end (void) {
+#ifdef ENABLE_JACK_TRANSPORT
   jack_client_t *client=jack_transport_client;
+#endif
   jack_transport_client=NULL; // stop polling transport
 #ifdef ENABLE_JACK_TRANSPORT
   if (client!=NULL) {
@@ -178,6 +180,8 @@ static jack_driver_t outdev[JACK_MAX_OUTDEVICES];
 static jack_driver_t indev[JACK_MAX_OUTDEVICES];
 
 
+/* not used yet */
+/*
 static float set_pulse(float *buf, size_t bufsz, int step) {
   float *ptr=buf;
   float *end=buf+bufsz;
@@ -192,7 +196,7 @@ static float set_pulse(float *buf, size_t bufsz, int step) {
   }
   if (count>0) return tot/(float)count;
   return 0.;
-}
+  }*/
 
 
 void jack_get_rec_avals(jack_driver_t *jackd) {

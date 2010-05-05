@@ -2307,8 +2307,10 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
   // get start event
   gboolean has_pb_loop_event=FALSE;
   weed_timecode_t tc;
+#ifdef ENABLE_JACK_TRANSPORT
   weed_timecode_t end_tc=event_list_get_end_tc(mt->event_list);
-  
+#endif  
+
   mainw->cancelled=CANCEL_NONE;
 
 #ifdef ENABLE_JACK_TRANSPORT
@@ -11304,8 +11306,8 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
 	  mt->current_track=current_track;
 	  track_select(mt);
 	}
-      }
 #ifdef ENABLE_GIW
+      }
       else {
 	if (!giw_led_get_mode(GIW_LED(checkbutton))) {
 	  giw_led_set_mode(GIW_LED(checkbutton),TRUE);
@@ -12871,23 +12873,24 @@ multitrack_undo            (GtkMenuItem     *menuitem,
   size_t space_needed;
   mt_undo *last_undo=g_list_nth_data(mt->undos,g_list_length(mt->undos)-1-mt->undo_offset);
   unsigned char *memblock,*mem_end;
-  int i;
   mt_undo *new_redo=NULL;
+  int i;
   gint current_track;
-  gdouble end_secs;
-  GList *slist;
-  gint num_tracks;
-  GtkWidget *checkbutton,*eventbox,*label;
-  GList *label_list=NULL;
-  GList *vlist,*llist;
-  gchar *txt;
-  GList *seltracks=NULL;
   gint clip_sel;
+  gint avol_fx;
+  gint num_tracks;
   gboolean block_is_selected=FALSE;
   gboolean avoid_fx_list=FALSE;
   gchar *msg,*utxt,*tmp;
+  gchar *txt;
+
+  gdouble end_secs;
+  GList *slist;
+  GList *label_list=NULL;
+  GList *vlist,*llist;
+  GList *seltracks=NULL;
   GList *aparam_view_list;
-  gint avol_fx;
+  GtkWidget *checkbutton,*eventbox,*label;
 
   if (mt->undo_mem==NULL) return;
 
@@ -13018,8 +13021,8 @@ multitrack_undo            (GtkMenuItem     *menuitem,
       if (!prefs->lamp_buttons) {
 #endif
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
-      }
 #ifdef ENABLE_GIW
+      }
       else {
 	giw_led_set_mode(GIW_LED(checkbutton),TRUE);
       }

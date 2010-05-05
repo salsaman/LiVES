@@ -7,6 +7,11 @@
 // functions dealing with getting/setting user preferences
 // TODO - use atom type system for prefs
 
+// aleksij kolga worked on the Tree View of preferences
+
+
+
+
 #include "../libweed/weed.h"
 #include "../libweed/weed-effects.h"
 
@@ -336,8 +341,9 @@ apply_prefs(gboolean skip_warn) {
   gboolean rec_effects=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->reffects));
   gboolean rec_clips=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rclips));
   gboolean rec_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->raudio));
+#ifdef RT_AUDIO
   gboolean rec_desk_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rdesk_audio));
-
+#endif
   gboolean mt_enter_prompt=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_enter_prompt));
   gboolean render_prompt=!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_render_prompt));
   gint mt_def_width=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_width));

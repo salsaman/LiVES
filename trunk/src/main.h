@@ -483,10 +483,8 @@ capability *capable;
 #ifdef HAVE_JACK_JACK_H
 
 #ifdef HAVE_JACK_TRANSPORT_H
-#define ENABLE_JACK_TRANSPORT
 #endif
 
-#define ENABLE_JACK
 #include "jack.h"
 #endif
 

@@ -11,6 +11,7 @@
 #include "main.h"
 
 #include "support.h"
+#include "interface.h"
 #include "lives-yuv4mpeg.h"
 #include <sys/types.h>
 #include <sys/file.h>
@@ -530,14 +531,6 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
 
   gint response;
 
-  gint width=0,height=0;
-
-  gboolean advanced=FALSE;
-
-  gdouble fps=0.;
-
-  gchar *driver=NULL,*outfmt=NULL;
-
   gchar *com,*tmp;
   gchar *fifofile=g_strdup_printf("%s/tvpic.%d",prefs->tmpdir,getpid());
 
@@ -548,13 +541,20 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
 
   GtkWidget *card_dialog;
 
+  tvcardw_t *tvcardw;
+
   mainw->open_deint=FALSE;
 
   card_dialog=create_cdtrack_dialog(4,NULL);
+
+  tvcardw=g_object_get_data(G_OBJECT(card_dialog),"tvcard_data");
+
+
   response=gtk_dialog_run(GTK_DIALOG(card_dialog));
   if (response==GTK_RESPONSE_CANCEL) {
     gtk_widget_destroy(card_dialog);
     g_free(fifofile);
+    g_free(tvcardw);
     return;
   }
 
@@ -567,6 +567,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     do_card_in_use_error();
     g_free(chanstr);
     g_free(fifofile);
+    g_free(tvcardw);
     return;
   }
 
@@ -576,6 +577,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     g_free(chanstr);
     g_free(fifofile);
     g_free(fname);
+    g_free(tvcardw);
     return;
   }
 
@@ -587,6 +589,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     g_free(chanstr);
     g_free(fifofile);
     g_free(fname);
+    g_free(tvcardw);
     return;
   }
 
@@ -599,11 +602,28 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   unlink(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
-  if (!advanced) {
+  if (!tvcardw->use_advanced) {
     com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s",cfile->handle,chanstr,devstr,fifofile);
   }
   else {
-    com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s %d %d %.8f %s %s",cfile->handle,chanstr,devstr,fifofile,width,height,fps,driver,outfmt);
+    gdouble fps=0.;
+    gchar *driver=NULL,*outfmt=NULL;
+    gint width=0,height=0;
+    gint input=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttoni));
+    
+    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(tvcardw->radiobuttond))) {
+      width=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttonw));
+      height=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttonh));
+      fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(tvcardw->spinbuttonf));
+    }
+
+    driver=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(tvcardw->combod))->entry)));
+    outfmt=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(tvcardw->comboo))->entry)));
+
+    com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s %d %d %d %.3f %s %s",cfile->handle,chanstr,devstr,fifofile,input,width,height,fps,driver,outfmt);
+    g_free(driver);
+    g_free(outfmt);
+
   }
 
   dummyvar=system(com);
@@ -614,6 +634,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     g_free(chanstr);
     g_free(fifofile);
     g_free(devstr);
+    g_free(tvcardw);
     return;
   }
 			       
@@ -626,6 +647,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   g_free(chanstr);
   g_free(devstr);
   g_free(fifofile);
+  g_free(tvcardw);
   
 }
 

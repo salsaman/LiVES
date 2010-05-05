@@ -1458,23 +1458,36 @@ if (defined($ARGV[0])) {
 	    $devstr=$ARGV[3];
 	    $fifofile=$ARGV[4];
 
-	    if (defined($ARGV[5])&&defined($ARGV[6])) {
-		$sizestr="width=$ARGV[5] height=$ARGV[6]";
-	    }
+	    $inputstr=$sizestr=$fpsstr=$driverstr=$outfmt="";
 
-	    if (defined($ARGV[7])) {
-		$fpsstr="fps=$ARGV[7]";
+	    if (defined($ARGV[5])) {
+		$inputstr=":input=$ARGV[5]";
+	    }
+	    if (defined($ARGV[6])&&defined($ARGV[7])) {
+		if ($ARGV[6]>0&&$ARGV[7]>0) {
+		    $sizestr=":width=$ARGV[6]:height=$ARGV[7]";
+		}
 	    }
 
 	    if (defined($ARGV[8])) {
-		$driverstr="driver=$ARGV[8]";
+		if ($ARGV[8]>0.) {
+		    $fpsstr=":fps=$ARGV[8]";
+		}
 	    }
 
 	    if (defined($ARGV[9])) {
-		$outfmt="outfmt=$ARGV[9]";
+		if ($ARGV[9] ne "autodetect") {
+		    $driverstr=":driver=$ARGV[9]";
+		}
 	    }
 
-	    system("mplayer -really-quiet tv://$chanstr -tv device=$devstr $driverstr $sizestr $outfmt $fpsstr -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1");
+	    if (defined($ARGV[10])) {
+		if ($ARGV[10] ne "autodetect") {
+		    $outfmt=":outfmt=$ARGV[10]";
+		}
+	    }
+
+	    system("mplayer -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1");
 	    exit 0;
 	}
 

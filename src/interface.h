@@ -101,6 +101,23 @@ typedef struct {
   gboolean is_sel;
 } aud_dialog_t;
 
+
+typedef struct {
+  gboolean use_advanced;
+  GtkWidget *advbutton;
+  GtkWidget *adv_vbox;
+  GtkWidget *combod;
+  GtkWidget *comboo;
+  GtkWidget *spinbuttoni;
+  GtkWidget *spinbuttonw;
+  GtkWidget *spinbuttonh;
+  GtkWidget *spinbuttonf;
+  GtkWidget *radiobuttond;
+
+} tvcardw_t;
+
+
+
 aud_dialog_t *create_audfade_dialog (gint type);
 
 _commentsw *commentsw;

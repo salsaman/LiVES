@@ -312,8 +312,8 @@ static int _weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int seed_
 
 
 static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void *value) {
-  // the plugin should use this only when bootstrapping in order to get its memory functions
-  // the actual weed_leaf_get
+  // the plugin should use this only when bootstrapping in order to get functions
+  // weed_memcpy, weed_memset and weed_leaf_get
 
   // here we must assume that the plugin does not yet have its memory functions, so we can only
   // use the standard ones

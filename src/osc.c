@@ -80,13 +80,13 @@ static gboolean lives_osc_check_arguments(int arglen, const void *vargs, const g
 }
 
 
-
-static void lives_osc_parse_char_argument(const void *vargs, gchar *dst)
+/* not used yet */
+/*static void lives_osc_parse_char_argument(const void *vargs, gchar *dst)
 {
   const char *args = (char*)vargs;
   strncpy(dst, args+osc_header_len+offset,1);
   offset+=4;
-}
+  }*/
 
 
 
@@ -889,7 +889,7 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
 void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip and reset framenumber
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->playing_file<1||mainw->preview||mainw->is_processing) return;
   if (!lives_osc_check_arguments (arglen,vargs,"i",FALSE)) return;
 
   lives_osc_cb_fgclip_select(context,arglen,vargs,when,ra);
@@ -897,7 +897,11 @@ void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs
   if (cfile->pb_fps>0.||(cfile->play_paused&&cfile->freeze_fps>0.)) cfile->frameno=cfile->last_frameno=1;
   else cfile->frameno=cfile->last_frameno=cfile->frames;
 
-  resync_audio(cfile->frameno);
+#ifdef RT_AUDIO
+  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+    resync_audio(cfile->frameno);
+  }
+#endif
 }
 
 
@@ -905,7 +909,7 @@ void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs
 void lives_osc_cb_bgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip and reset framenumber
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->playing_file<1||mainw->preview||mainw->is_processing) return;
   if (!lives_osc_check_arguments (arglen,vargs,"i",FALSE)) return;
 
   lives_osc_cb_bgclip_select(context,arglen,vargs,when,ra);
@@ -1054,7 +1058,11 @@ void lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTim
 
   cfile->last_frameno=cfile->frameno=frame;
 
-  resync_audio(frame);
+#ifdef RT_AUDIO
+  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+    resync_audio(frame);
+  }
+#endif
 }
 
 

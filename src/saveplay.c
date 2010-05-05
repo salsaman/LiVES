@@ -1380,7 +1380,9 @@ void play_file (void) {
   gboolean exact_preview=FALSE;
   gboolean has_audio_buffers=FALSE;
 
+#ifdef RT_AUDIO
   gchar *tmpfilename=NULL;
+#endif
 
   if (prefs->audio_player!=AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
   else mainw->aud_file_to_kill=-1;

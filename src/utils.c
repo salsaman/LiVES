@@ -144,7 +144,9 @@ LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
 static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_frame) {
   // return FALSE if audio stops playback
 
+#ifdef RT_AUDIO
   guint64 atc;
+#endif
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {

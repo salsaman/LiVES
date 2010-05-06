@@ -298,7 +298,7 @@ static uint32_t detect_stream(ogg_packet * op) {
    *(p))
 
 
-lives_in_stream *lives_in_stream_new (int type) {
+static lives_in_stream *lives_in_stream_new (int type) {
   lives_in_stream *lstream=(lives_in_stream *)malloc(sizeof(lives_in_stream));
   lstream->type=type;
   lstream->ext_data=NULL;

@@ -748,7 +748,7 @@ static int open_ogg(void) {
 
 
 
-static boolean attach_stream(char *URI) {
+static boolean attach_stream(const char *URI) {
   // open the file and get a handle
 
   int i;
@@ -1027,7 +1027,7 @@ const char *version(void) {
 
 
 
-const lives_clip_data_t *get_clip_data(char *URI, int nclip) {
+const lives_clip_data_t *get_clip_data(const char *URI, int nclip) {
 
   if (nclip>0) return NULL;
 
@@ -1174,7 +1174,7 @@ static boolean ogg_data_process(yuv_buffer *yuv, boolean cont) {
 }
 
 
-boolean get_frame(char *URI, int nclip, int64_t tframe, void **pixel_data) {
+boolean get_frame(const char *URI, int nclip, int64_t tframe, void **pixel_data) {
   // seek to frame, and return pixel_data
   yuv_buffer yuv;
   boolean crow=FALSE;

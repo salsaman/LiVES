@@ -12,7 +12,7 @@
 typedef struct {
   int fd;
 
-  off_t total_bytes;
+  off64_t total_bytes;
 
   ogg_sync_state  oy;
   ogg_page        current_page;

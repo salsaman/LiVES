@@ -830,7 +830,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 	in_fd[track]=storedfds[track];
       }
       else {
-	if (track<NSTOREDFDS&&storedfds[track]>=-1) close(storedfds[track]);
+	if (track<NSTOREDFDS&&storedfds[track]>-1) close(storedfds[track]);
 	in_fd[track]=open(infilename,O_RDONLY);
 	
 	if (track<NSTOREDFDS) {

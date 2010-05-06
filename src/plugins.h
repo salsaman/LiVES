@@ -187,8 +187,8 @@ typedef struct {
   int arate;
   int achans;
   int asamps;
-  int asigned;
-  int ainterleaf;
+  gboolean asigned;
+  gboolean ainterleaf;
 
 } lives_clip_data_t;
 
@@ -209,11 +209,11 @@ typedef struct {
   const lives_clip_data_t *(*get_clip_data)(char *URI, int nclip);
 
   // frame starts at 0 in these functions
-  gboolean (*get_frame)(char *URI, int nclip, int64_t frame, void **pixel_data);
+  gboolean (*get_frame)(const char *URI, int nclip, int64_t frame, void **pixel_data);
 
   // optional
   gboolean (*set_palette)(int palette);
-  int64_t (*rip_audio) (char *URI, int nclip, char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
+  int64_t (*rip_audio) (const char *URI, int nclip, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
   void (*rip_audio_cleanup) (void);
   void (*module_unload)(void);
 

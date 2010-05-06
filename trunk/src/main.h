@@ -743,7 +743,7 @@ gint get_box_child_index (GtkBox *box, GtkWidget *tchild);
 void reset_clip_menu (void);
 void get_play_times(void);
 void get_total_time (file *file);
-guint get_signed_endian (int asigned, int endian);
+guint get_signed_endian (gboolean is_signed, gboolean little_endian);
 void fullscreen_internal(void);
 void unhide_cursor(GdkWindow *window);
 void hide_cursor(GdkWindow *window);

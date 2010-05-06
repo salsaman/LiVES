@@ -3146,22 +3146,24 @@ gchar *remove_trailing_zeroes(gdouble val) {
 }
 
 
-guint 
-get_signed_endian (int asigned, int endian) {
-  if (asigned==1) {
-    if (endian==1) {
+guint get_signed_endian (gboolean is_signed, gboolean little_endian) {
+  // asigned TRUE == signed, FALSE == unsigned
+
+
+  if (is_signed) {
+    if (little_endian) {
       return 0;
     }
-    if (endian==0) {
+    else {
       return AFORM_BIG_ENDIAN;
     }
   }
   else {
-    if (asigned==0) { 
-      if (endian==1) {
+    if (!is_signed) { 
+      if (little_endian) {
 	return AFORM_UNSIGNED;
       }
-      if (endian==0) {
+      else {
 	return AFORM_UNSIGNED|AFORM_BIG_ENDIAN;
       }
     }

@@ -211,7 +211,7 @@ const lives_clip_data_t *get_clip_data(const char *URI, int nclip) {
   cdata.achans=dv_get_num_channels(priv.dv_dec);
   cdata.asamps=16;
 
-  cdata.asigned=FALSE;
+  cdata.asigned=TRUE;
   cdata.ainterleaf=FALSE;
 
 

@@ -115,7 +115,7 @@ static boolean attach_stream(const char *URI) {
   dv_dec_set_header(header);
   dv_parse_header(priv.dv_dec,header);
 
-  lseek(priv.fd,0,SEEK_SET);
+  lseek64(priv.fd,0,SEEK_SET);
   fbuffer=malloc(priv.frame_size);
   if (read (priv.fd, fbuffer, priv.frame_size) < priv.frame_size) {
     fprintf(stderr, "dv_decoder: unable to read first frame for %s\n",URI);

@@ -41,7 +41,7 @@ static int64_t data_start;
 static char *old_URI=NULL;
 
 // seeking
-static off_t input_position;
+static off64_t input_position;
 static int skip;
 static int64_t last_kframe,last_frame,cframe,kframe_offset;
 static int64_t cpagepos;
@@ -216,17 +216,17 @@ static int64_t get_page(int64_t inpos) {
     return 0;
   }
 
-  lseek (opriv.fd, inpos, SEEK_SET);
+  lseek64 (opriv.fd, inpos, SEEK_SET);
 
   if (read (opriv.fd, header, PAGE_HEADER_BYTES) < PAGE_HEADER_BYTES) {
-    lseek (opriv.fd, inpos, SEEK_SET);
+    lseek64 (opriv.fd, inpos, SEEK_SET);
     return 0;
   }
 
   nsegs = header[PAGE_HEADER_BYTES-1];
   
   if (read (opriv.fd, header+PAGE_HEADER_BYTES, nsegs) < nsegs) {
-    lseek (opriv.fd, inpos, SEEK_SET);
+    lseek64 (opriv.fd, inpos, SEEK_SET);
     return 0;
   }
 
@@ -333,7 +333,7 @@ static int setup_track(int64_t start_position) {
 
   opriv.page_valid=0;
 
-  lseek(opriv.fd, start_position, SEEK_SET);
+  lseek64(opriv.fd, start_position, SEEK_SET);
   input_position=start_position;
 
   /* Get the first page of each stream */
@@ -505,7 +505,7 @@ static int setup_track(int64_t start_position) {
 
 static void seek_byte(int64_t pos) {
   ogg_sync_reset(&(opriv.oy));
-  lseek(opriv.fd,pos,SEEK_SET);
+  lseek64(opriv.fd,pos,SEEK_SET);
   input_position=pos;
   opriv.page_valid=0;
 }
@@ -530,7 +530,7 @@ static int64_t get_data(void) {
   ogg_sync_reset(&opriv.oy);
   buf = ogg_sync_buffer(&(opriv.oy), bytes_to_read);
 
-  lseek (opriv.fd, input_position, SEEK_SET);
+  lseek64 (opriv.fd, input_position, SEEK_SET);
   result = read(opriv.fd, (uint8_t*)buf, bytes_to_read);
 
   opriv.page_valid=0;

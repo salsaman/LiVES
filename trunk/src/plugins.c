@@ -1732,6 +1732,7 @@ const lives_clip_data_t *get_decoder_plugin(file *sfile) {
 	}
 	// check data again after setting palette
 	cdata=(dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
+	g_free(tmp);
       }
 
       if (weed_palette_is_yuv_palette(dplug->current_palette)) {

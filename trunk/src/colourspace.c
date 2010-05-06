@@ -6250,6 +6250,8 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
   // copy source slayer to dest dlayer
   // for a newly created layer, this is a deep copy, since the pixel_data array is also copied
 
+  // for an existing dlayer, we copy pixel_data by reference
+
   // if dlayer is NULL, we return a new plant, otherwise we return dlayer
 
   int pd_elements,error;
@@ -6274,12 +6276,17 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
   pd_elements=weed_leaf_num_elements(slayer,"pixel_data");
   pixel_data=weed_get_voidptr_array(slayer,"pixel_data",&error);
   rowstrides=weed_get_int_array(slayer,"rowstrides",&error);
-  pd_array=g_malloc(pd_elements*sizeof(void *));
-  for (i=0;i<pd_elements;i++) {
-    size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
-    pd_array[i]=g_malloc(size);
-    w_memcpy(pd_array[i],pixel_data[i],size);
+
+  if (deep) {
+    pd_array=g_malloc(pd_elements*sizeof(void *));
+    for (i=0;i<pd_elements;i++) {
+      size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
+      pd_array[i]=g_malloc(size);
+      w_memcpy(pd_array[i],pixel_data[i],size);
+    }
   }
+  else pd_array=pixel_data;
+
   weed_set_voidptr_array(layer,"pixel_data",pd_elements,pd_array);
   weed_set_int_value(layer,"height",height);
   weed_set_int_value(layer,"width",width);
@@ -6292,7 +6299,7 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
 
   if (weed_plant_has_leaf(slayer,"pixel_aspect_ratio")) weed_set_double_value(layer,"pixel_aspect_ratio",weed_get_int_value(slayer,"pixel_aspect_ratio",&error));
 
-  g_free(pd_array);
+  if (pd_array!=pixel_data) g_free(pd_array);
   weed_free(pixel_data);
   weed_free(rowstrides);
 

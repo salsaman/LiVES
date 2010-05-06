@@ -2913,8 +2913,10 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
     return TRUE;
   case CLIP_TYPE_GENERATOR:
     // special handling for clips where host controls size
+    // Note: vlayer is actually the out channel of the generator, so we should
+    // never free it
     vlayer=weed_layer_new_from_generator((weed_plant_t *)sfile->ext_src,tc);
-    weed_layer_copy(layer,vlayer);
+    weed_layer_copy(layer,vlayer); // layer is non-NULL, so copy by reference
     weed_set_voidptr_value(vlayer,"pixel_data",NULL);
     mainw->osc_block=FALSE;
     return TRUE;

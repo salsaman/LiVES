@@ -823,7 +823,7 @@ static boolean attach_stream(const char *URI) {
 
 
 
-static void detach_stream (char *URI) {
+static void detach_stream (const char *URI) {
   // close the file, free the decoder
   close(opriv.fd);
 

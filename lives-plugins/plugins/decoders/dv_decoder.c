@@ -88,7 +88,7 @@ static void dv_dec_set_header(uint8_t *data) {
 }
 
 
-static boolean attach_stream(char *URI) {
+static boolean attach_stream(const char *URI) {
   // open the file and get a handle
   struct stat sb;
   uint8_t header[DV_HEADER_SIZE];
@@ -134,7 +134,7 @@ static boolean attach_stream(char *URI) {
   return TRUE;
 }
 
-static void detach_stream (char *URI) {
+static void detach_stream (const char *URI) {
   // close the file, free the decoder
   close(priv.fd);
   dv_decoder_free(priv.dv_dec);
@@ -177,7 +177,7 @@ boolean set_palette(int palette) {
 }
 
 
-const lives_clip_data_t *get_clip_data(char *URI, int nclip) {
+const lives_clip_data_t *get_clip_data(const char *URI, int nclip) {
 
   if (nclip>0) return NULL;
 
@@ -211,8 +211,8 @@ const lives_clip_data_t *get_clip_data(char *URI, int nclip) {
   cdata.achans=dv_get_num_channels(priv.dv_dec);
   cdata.asamps=16;
 
-  cdata.asigned=0;
-  cdata.ainterleaf=0;
+  cdata.asigned=FALSE;
+  cdata.ainterleaf=FALSE;
 
 
   return &cdata;
@@ -275,7 +275,7 @@ void rip_audio_cleanup(void) {
 
 
 
-int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff) {
+int64_t rip_audio (const char *URI, int nclip, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff) {
   // rip audio from (video) frame stframe, length nframes (video) frames from URI
   // to file fname
 
@@ -469,7 +469,7 @@ int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t n
 
 
 
-boolean get_frame(char *URI, int nclip, int64_t tframe, void **pixel_data) {
+boolean get_frame(const char *URI, int nclip, int64_t tframe, void **pixel_data) {
   // seek to frame, and return width, height and pixel_data
 
   // tframe starts at 0

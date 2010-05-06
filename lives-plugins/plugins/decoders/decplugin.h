@@ -63,7 +63,7 @@ typedef struct {
   int arate;
   int achans;
   int asamps;
-  int asigned;
+  boolean asigned;
   boolean ainterleaf;
 } lives_clip_data_t;
 
@@ -80,7 +80,7 @@ const lives_clip_data_t *get_clip_data(const char *URI, int nclip);
 boolean get_frame(const char *URI, int nclip, int64_t frame, void **pixel_data);
 
 // opt fns
-int64_t rip_audio (char *URI, int nclip, char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
+int64_t rip_audio (const char *URI, int nclip, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
 void rip_audio_cleanup(void);
 boolean set_palette(int palette);
 void module_unload(void);

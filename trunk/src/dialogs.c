@@ -1681,6 +1681,8 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     return; // parent process finished already
   }
 
+
+
   procw->processing = gtk_dialog_new ();
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
   gtk_container_set_border_width (GTK_CONTAINER (procw->processing), 10);

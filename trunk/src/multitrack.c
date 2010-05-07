@@ -425,14 +425,15 @@ static void save_mt_autoback(lives_mt *mt) {
   // flush any pending events
   while (g_main_context_iteration(NULL,FALSE));
 
-  // create a dummy "modal" dialog
+  // create a dummy "modal" dialog -> the threaded window should be modal
+  // but it seems on some systems modality is per-thread !
   dummyd = gtk_dialog_new ();
   gtk_window_set_default_size(GTK_WINDOW(dummyd),0,0);
-
-  // Thomas, uncomment the next line if it is still crashing
-
-  //gtk_widget_show(dummyd);
+  gtk_window_set_decorated(GTK_WINDOW(dummyd),FALSE);
   gtk_window_set_modal (GTK_WINDOW (dummyd), TRUE);
+  gtk_window_set_keep_below (GTK_WINDOW (dummyd), TRUE);
+  gtk_window_set_transient_for (GTK_WINDOW (dummyd), GTK_WINDOW(mt->window));
+  gtk_widget_show(dummyd);
 
   // show dummy window
   while (g_main_context_iteration(NULL,FALSE));

@@ -428,7 +428,10 @@ static void save_mt_autoback(lives_mt *mt) {
   // create a dummy "modal" dialog
   dummyd = gtk_dialog_new ();
   gtk_window_set_default_size(GTK_WINDOW(dummyd),0,0);
-  gtk_widget_show(dummyd);
+
+  // Thomas, uncomment the next line if it is still crashing
+
+  //gtk_widget_show(dummyd);
   gtk_window_set_modal (GTK_WINDOW (dummyd), TRUE);
 
   // show dummy window

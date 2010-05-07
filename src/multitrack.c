@@ -418,7 +418,21 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 static void save_mt_autoback(lives_mt *mt) {
   int fd;
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  GtkWidget *dummyd;
+
   mt_desensitise(mt);
+
+  // flush any pending events
+  while (g_main_context_iteration(NULL,FALSE));
+
+  // create a dummy "modal" dialog
+  dummyd = gtk_dialog_new ();
+  gtk_window_set_default_size(GTK_WINDOW(dummyd),0,0);
+  gtk_widget_show(dummyd);
+  gtk_window_set_modal (GTK_WINDOW (dummyd), TRUE);
+
+  // show dummy window
+  while (g_main_context_iteration(NULL,FALSE));
 
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   add_markers(mt,mt->event_list);
@@ -432,6 +446,8 @@ static void save_mt_autoback(lives_mt *mt) {
   g_free(asave_file);
 
   mt_sensitise(mt);
+
+  gtk_widget_destroy(dummyd);
 
 }
 

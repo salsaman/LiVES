@@ -1,4 +1,4 @@
-Version 1.3.3 (06 May 2010)
+Version 1.3.3 (09 May 2010)
 ---------------------------
 Fix crash after moving blocks in multitrack (regression).
 Faster insertion of frames in multitrack.
@@ -27,7 +27,8 @@ Add image overlay effect into core rendered effects.
 Add highly experimental x264 blu-ray video support (1080p NTSC and 720p)
 New preferences layout (Alexij Kolga).
 Add "advanced" tab to TV card/webcam input.
-
+Play selected time only in multitrack.
+	
 
 Updated translations to Ukranian, Turkish, Spanish, Slovak, Russian, Polish, Occitan, Hebrew, Danish and Brazilian Portuguese.
 

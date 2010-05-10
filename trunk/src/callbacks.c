@@ -3840,7 +3840,10 @@ on_load_set_activate            (GtkMenuItem     *menuitem,
     mt_desensitise(mainw->multitrack);
   }
 
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+  while (g_main_context_iteration(NULL,FALSE));
   renamew=create_rename_dialog(3);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   gtk_widget_show(renamew->dialog);
 }
 

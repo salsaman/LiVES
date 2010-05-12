@@ -374,7 +374,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	  //g_print("pt a5 %d %d\n",pulsed->in_use,in_bytes);
 	  return;
 	}
-
+	
 	inputFramesAvailable = pulsed->aPlayPtr->size / (pulsed->in_achans * (pulsed->in_asamps>>3));
 #ifdef DEBUG_PULSE
 	g_printerr("%ld inputFramesAvailable == %ld, %ld, %ld %ld,pulseFramesAvailable == %ld\n", pulsed->aPlayPtr->size, inputFramesAvailable, in_frames, pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable);
@@ -385,83 +385,84 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     
 #ifdef DEBUG_PULSE
 	g_printerr("inputFramesAvailable after conversion %d\n",(gulong)((gdouble)inputFramesAvailable/shrink_factor+.001));
-    g_printerr("nframes == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nframes, pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
+	g_printerr("nframes == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nframes, pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
 #endif
-    
-    swap_sign=afile->signed_endian&AFORM_UNSIGNED;
-
-    if (pulsed->in_asamps==pulsed->out_asamps&&shrink_factor==1.&&pulsed->in_achans==pulsed->out_achans&&!pulsed->reverse_endian&&!swap_sign) {
-      // no transformation needed
-      pulsed->sound_buffer=buffer;
-    }
-    else {
-      pulsed->sound_buffer=g_malloc0(pulsed->chunk_size);
-
-      if (pulsed->in_asamps==8) {
-	sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, swap_sign?SWAP_U_TO_S:0);
-      }
-      else {
-	sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian?SWAP_X_TO_L:0, swap_sign?SWAP_U_TO_S:0);
-      }
-    }
-
-    pulsed->frames_written+=numFramesToWrite;
-    pulseFramesAvailable-=numFramesToWrite;
-    
+	
+	swap_sign=afile->signed_endian&AFORM_UNSIGNED;
+	
+	if (pulsed->in_asamps==pulsed->out_asamps&&shrink_factor==1.&&pulsed->in_achans==pulsed->out_achans&&!pulsed->reverse_endian&&!swap_sign) {
+	  // no transformation needed
+	  pulsed->sound_buffer=buffer;
+	}
+	else {
+	  pulsed->sound_buffer=g_malloc0(pulsed->chunk_size);
+	  
+	  if (pulsed->in_asamps==8) {
+	    sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, swap_sign?SWAP_U_TO_S:0);
+	  }
+	  else {
+	    sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian?SWAP_X_TO_L:0, swap_sign?SWAP_U_TO_S:0);
+	  }
+	}
+	
+	pulsed->frames_written+=numFramesToWrite;
+	pulseFramesAvailable-=numFramesToWrite;
+	
 #ifdef DEBUG_PULSE
-    g_printerr("pulseFramesAvailable == %ld\n", pulseFramesAvailable);
+	g_printerr("pulseFramesAvailable == %ld\n", pulseFramesAvailable);
 #endif
       }
   
-  // playback from memory or file
-
-  if (mainw->volume!=old_volume) {
-    pa_operation *pa_op;
-    pavol=pa_sw_volume_from_linear(mainw->volume);
-    pa_cvolume_set(&out_vol,pulsed->out_achans,pavol);
-    pa_op=pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&out_vol,NULL,NULL);
-    pa_operation_unref(pa_op);
-    old_volume=mainw->volume;
-  }
-
-
-  while (nbytes>0) {
-    if (nbytes<xbytes) xbytes=nbytes;
-    
-    if (!from_memory) {
-      if (xbytes/pulsed->out_achans/(pulsed->out_asamps>>3)<=numFramesToWrite&&offs==0) {
-	buffer=pulsed->sound_buffer;
+      // playback from memory or file
+      
+      if (mainw->volume!=old_volume) {
+	pa_operation *pa_op;
+	pavol=pa_sw_volume_from_linear(mainw->volume);
+	pa_cvolume_set(&out_vol,pulsed->out_achans,pavol);
+	pa_op=pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&out_vol,NULL,NULL);
+	pa_operation_unref(pa_op);
+	old_volume=mainw->volume;
       }
-      else {
-	buffer=g_malloc(xbytes);
-	w_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
-	offs+=xbytes;
-	needs_free=TRUE;
+      
+      
+      while (nbytes>0) {
+	if (nbytes<xbytes) xbytes=nbytes;
+	
+	if (!from_memory) {
+	  if (xbytes/pulsed->out_achans/(pulsed->out_asamps>>3)<=numFramesToWrite&&offs==0) {
+	    buffer=pulsed->sound_buffer;
+	  }
+	  else {
+	    buffer=g_malloc(xbytes);
+	    w_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
+	    offs+=xbytes;
+	    needs_free=TRUE;
+	  }
+	  pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:pulse_buff_free,0,PA_SEEK_RELATIVE);
+	}
+	else {
+	  if (pulsed->read_abuf>-1&&!pulsed->mute) {
+	    buffer=g_malloc(xbytes);
+	    sample_move_abuf_int16((short *)buffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
+	    pa_stream_write(pulsed->pstream,buffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
+	  }
+	  else {
+	    sample_silence_pulse(pulsed,xbytes,xbytes);
+	  }
+	}
+	nbytes-=xbytes;
       }
-      pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:pulse_buff_free,0,PA_SEEK_RELATIVE);
-    }
-    else {
-      if (pulsed->read_abuf>-1&&!pulsed->mute) {
-	buffer=g_malloc(xbytes);
-	sample_move_abuf_int16((short *)buffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
-	pa_stream_write(pulsed->pstream,buffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
-      }
-      else {
-	sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
-      }
-    }
-    nbytes-=xbytes;
-  }
-
-  if (needs_free&&pulsed->sound_buffer!=pulsed->aPlayPtr->data) g_free(pulsed->sound_buffer);
-
+      
+      if (needs_free&&pulsed->sound_buffer!=pulsed->aPlayPtr->data) g_free(pulsed->sound_buffer);
+      
     }
        
     if(pulseFramesAvailable) {
 #ifdef DEBUG_PULSE
       g_printerr("buffer underrun of %ld frames\n", pulseFramesAvailable);
 #endif
-      sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
+      xbytes=pa_stream_writable_size(pstream);
+      sample_silence_pulse(pulsed,pulseFramesAvailable*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
     }
   }
   else {

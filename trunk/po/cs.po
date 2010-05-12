@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-05-09 11:08-0300\n"
+"POT-Creation-Date: 2010-05-12 10:07-0300\n"
 "PO-Revision-Date: 2010-01-17 09:42+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -563,43 +563,43 @@ msgstr "Automaticky načítám sadu %s..."
 msgid "Invalid audio player %s\n"
 msgstr "Neplatný zvukový přehrávač %s\n"
 
-#: src/main.c:2103
+#: src/main.c:2108
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 "LiVES-%s: <Bezejmenný%d> %dx%d : %d snímků, %d bitů na pixel, %.3f snímků/s"
 
-#: src/main.c:2107
+#: src/main.c:2112
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? snímků ???, bitů na pixel, %.3f snímků/s"
 
-#: src/main.c:2110
+#: src/main.c:2115
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d snímků, %d bitů na pixel, %.3f snímků/s"
 
-#: src/main.c:2116
+#: src/main.c:2121
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <žádný soubor>"
 
-#: src/main.c:3239
+#: src/main.c:3244
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3241
+#: src/main.c:3246
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3453 src/main.c:3454 src/gui.c:1905 src/gui.c:2873
+#: src/main.c:3458 src/main.c:3459 src/gui.c:1905 src/gui.c:2873
 #: src/saveplay.c:1489
 msgid "Play"
 msgstr "Přehrát"
 
-#: src/main.c:3824
+#: src/main.c:3829
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -607,35 +607,35 @@ msgstr ""
 "LiVES nebyl schopen zachytit tento obrázek\n"
 "\n"
 
-#: src/main.c:3908
+#: src/main.c:3913
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Zavřený soubor %s\n"
 
-#: src/main.c:4064 src/gui.c:522 src/utils.c:2553 src/utils.c:2579
+#: src/main.c:4069 src/gui.c:522 src/utils.c:2553 src/utils.c:2579
 #: src/saveplay.c:2456 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "_Zpět"
 
-#: src/main.c:4065 src/gui.c:535 src/utils.c:2554 src/utils.c:2580
+#: src/main.c:4070 src/gui.c:535 src/utils.c:2554 src/utils.c:2580
 #: src/saveplay.c:2457 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "_Znovu"
 
-#: src/main.c:4091 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
+#: src/main.c:4096 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
 #: src/resample.c:1747
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4092 src/interface.c:658 src/gui.c:2082
+#: src/main.c:4097 src/interface.c:658 src/gui.c:2082
 msgid "Left Audio"
 msgstr "Levý zvuk"
 
-#: src/main.c:4093 src/gui.c:2100
+#: src/main.c:4098 src/gui.c:2100
 msgid "Right Audio"
 msgstr "Pravý zvuk"
 
-#: src/main.c:4138
+#: src/main.c:4143
 msgid ""
 "\n"
 "\n"
@@ -772,73 +772,73 @@ msgstr "Použít zvukový přehrávač _%s"
 msgid "Use _jack audio player"
 msgstr "Použít zvukový přehrávač _jack"
 
-#: src/startup.c:305
+#: src/startup.c:307
 #, fuzzy
 msgid "Use _sox audio player"
 msgstr "Použít zvukový přehrávač _%s"
 
-#: src/startup.c:339
+#: src/startup.c:342
 #, fuzzy
 msgid "Use _mplayer audio player"
 msgstr "Použít zvukový přehrávač _jack"
 
-#: src/startup.c:392 src/startup.c:578 src/interface.c:1889
+#: src/startup.c:395 src/startup.c:581 src/interface.c:1889
 msgid "_Next"
 msgstr ""
 
-#: src/startup.c:435
+#: src/startup.c:438
 #, fuzzy
 msgid "Skipped"
 msgstr "_Přeskočit"
 
-#: src/startup.c:451
+#: src/startup.c:454
 #, fuzzy
 msgid "Passed"
 msgstr "Pauza"
 
-#: src/startup.c:482
+#: src/startup.c:485
 #, fuzzy
 msgid "Failed"
 msgstr "_Soubor"
 
-#: src/startup.c:544
+#: src/startup.c:547
 #, fuzzy
 msgid "LiVES: - Testing Configuration"
 msgstr "LiVES: - Otevřít umístění"
 
-#: src/startup.c:547
+#: src/startup.c:550
 #, fuzzy
 msgid "LiVES: - Troubleshoot"
 msgstr "LiVES: - Sloučit"
 
-#: src/startup.c:562
+#: src/startup.c:565
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr ""
 
-#: src/startup.c:601
+#: src/startup.c:604
 #, fuzzy
 msgid "Checking for \"sox\" presence"
 msgstr "Kontrola dodatečných závislostí:"
 
-#: src/startup.c:605
+#: src/startup.c:608
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
 
-#: src/startup.c:613
+#: src/startup.c:616
 msgid "Checking if sox can convert audio"
 msgstr ""
 
-#: src/startup.c:654
+#: src/startup.c:657
 msgid "You should install sox_fmt_all or similar"
 msgstr ""
 
-#: src/startup.c:680
+#: src/startup.c:683
 #, fuzzy
 msgid "Checking for \"mplayer\" presence"
 msgstr "Kontrola dodatečných závislostí:"
 
-#: src/startup.c:684
+#: src/startup.c:687
 #, fuzzy
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
@@ -848,44 +848,44 @@ msgstr ""
 "\n"
 "Musíte nainstalovat mplayer pro náhled tohoto souboru.\n"
 
-#: src/startup.c:710
+#: src/startup.c:713
 msgid "Checking if mplayer can convert audio"
 msgstr ""
 
-#: src/startup.c:720
+#: src/startup.c:723
 msgid "You should install mplayer with pcm/wav support"
 msgstr ""
 
-#: src/startup.c:737
+#: src/startup.c:740
 msgid "Checking if mplayer can decode to png/alpha"
 msgstr ""
 
-#: src/startup.c:769
+#: src/startup.c:772
 msgid "You may wish to upgrade mplayer to a newer version"
 msgstr ""
 
-#: src/startup.c:795
+#: src/startup.c:798
 msgid "Checking if mplayer can decode to jpeg"
 msgstr ""
 
-#: src/startup.c:809
+#: src/startup.c:812
 msgid "You should install mplayer with either png/alpha or jpeg support"
 msgstr ""
 
-#: src/startup.c:810
+#: src/startup.c:813
 msgid "You may wish to add jpeg output support to mplayer"
 msgstr ""
 
-#: src/startup.c:826
+#: src/startup.c:829
 #, fuzzy
 msgid "Checking for \"convert\" presence"
 msgstr "Kontrola dodatečných závislostí:"
 
-#: src/startup.c:830
+#: src/startup.c:833
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr ""
 
-#: src/startup.c:845
+#: src/startup.c:848
 msgid ""
 "\n"
 "\n"
@@ -893,51 +893,51 @@ msgid ""
 "continue    \n"
 msgstr ""
 
-#: src/startup.c:886
+#: src/startup.c:889
 msgid ""
 "\n"
 "\n"
 "Finally, you can choose the default startup interface for LiVES.\n"
 msgstr ""
 
-#: src/startup.c:887
+#: src/startup.c:890
 msgid ""
 "\n"
 "\n"
 "LiVES has two main interfaces and you can start up with either of them.\n"
 msgstr ""
 
-#: src/startup.c:888
+#: src/startup.c:891
 msgid ""
 "\n"
 "\n"
 "The default can always be changed later from Preferences.\n"
 msgstr ""
 
-#: src/startup.c:899
+#: src/startup.c:902
 #, fuzzy
 msgid "LiVES: - Choose the startup interface"
 msgstr "LiVES: - Zvolte zvukový přehrávač"
 
-#: src/startup.c:928
+#: src/startup.c:931
 msgid "Start in _Clip Edit mode"
 msgstr ""
 
-#: src/startup.c:952
+#: src/startup.c:955
 msgid "This is the best choice for simple editing tasks or for VJs\n"
 msgstr ""
 
-#: src/startup.c:967
+#: src/startup.c:970
 #, fuzzy
 msgid "Start in _Multitrack mode"
 msgstr "Při spuštění vícestopého módu:"
 
-#: src/startup.c:987
+#: src/startup.c:990
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
 
-#: src/startup.c:1004
+#: src/startup.c:1007
 msgid "_Finish"
 msgstr ""
 

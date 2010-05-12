@@ -295,7 +295,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   /* handle playing state */
   if (jackd->state==JackTransportRolling||jackd->play_when_stopped) {
     gulong jackFramesAvailable = nframes; /* frames we have left to write to jack */
-   gulong inputFramesAvailable;          /* frames we have available this loop */
+    gulong inputFramesAvailable;          /* frames we have available this loop */
     gulong numFramesToWrite;              /* num frames we are writing this loop */
     glong in_frames=0;
     gulong in_bytes=0;
@@ -468,11 +468,11 @@ static int audio_process (nframes_t nframes, void *arg) {
 #endif
 	buffer = jackd->aPlayPtr->data;
 	
-	numFramesToWrite = MIN(jackFramesAvailable, inputFramesAvailable/ABS(shrink_factor)); /* write as many bytes as we have space remaining, or as much as we have data to write */
+	numFramesToWrite = MIN(jackFramesAvailable, (inputFramesAvailable/ABS(shrink_factor)+.001)); /* write as many bytes as we have space remaining, or as much as we have data to write */
 	
 
 #ifdef DEBUG_AJACK
-	g_printerr("inputFramesAvailable after conversion %ld\n", (gulong)((gdouble)inputFramesAvailable/shrink_factor));
+	g_printerr("inputFramesAvailable after conversion %ld\n", (gulong)((gdouble)inputFramesAvailable/shrink_factor+.001));
 	g_printerr("nframes == %d, jackFramesAvailable == %ld,\n\tjackd->num_input_channels == %ld, jackd->num_output_channels == %ld, nf2w %ld, in_bytes %d, sf %.8f\n",  nframes, jackFramesAvailable, jackd->num_input_channels, jackd->num_output_channels, numFramesToWrite, in_bytes, shrink_factor);
 #endif
 	

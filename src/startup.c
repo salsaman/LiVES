@@ -254,13 +254,13 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
   if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_PULSE;
 
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
+  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton0),TRUE);
     set_pref("audio_player","pulse");
   }
 
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
 #endif
 
   radiobutton1 = gtk_radio_button_new(NULL);
@@ -289,13 +289,15 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
   if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_JACK;
 
-  if (prefs->audio_player==AUD_PLAYER_JACK) {
+  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton_group);
+  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
+
+  if (prefs->audio_player==AUD_PLAYER_JACK||!capable->has_pulse_audio) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton1),TRUE);
     set_pref("audio_player","jack");
   }
 
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
+
 #endif
 
   radiobutton2 = gtk_radio_button_new (NULL);
@@ -323,13 +325,14 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_SOX;
 
+    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton2), radiobutton_group);
+    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton2));
+
     if (prefs->audio_player==AUD_PLAYER_SOX) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton2),TRUE);
       set_pref("audio_player","sox");
     }
 
-    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton2), radiobutton_group);
-    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton2));
 
   }
 
@@ -357,13 +360,13 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_MPLAYER;
 
+    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton3), radiobutton_group);
+    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton3));
+
     if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton3),TRUE);
       set_pref("audio_player","mplayer");
     }
-
-    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton3), radiobutton_group);
-    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton3));
 
   }
 

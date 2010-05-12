@@ -958,7 +958,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 	}
       }
 
-      nframes=tbytes/(in_asamps[track])/in_achans[track]/ABS(zavel);
+      nframes=(tbytes/(in_asamps[track])/in_achans[track]/ABS(zavel)+.001);
 
       // convert to float
       if (in_asamps[track]==1) {

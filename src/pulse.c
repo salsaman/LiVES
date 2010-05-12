@@ -381,10 +381,10 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 #endif
 	buffer = pulsed->aPlayPtr->data;
     
-	numFramesToWrite = MIN(pulseFramesAvailable, inputFramesAvailable/ABS(shrink_factor));
+	numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable/ABS(shrink_factor)+.001));
     
 #ifdef DEBUG_PULSE
-    g_printerr("inputFramesAvailable after conversion %ld\n", (gulong)((gdouble)inputFramesAvailable/shrink_factor));
+	g_printerr("inputFramesAvailable after conversion %d\n",(gulong)((gdouble)inputFramesAvailable/shrink_factor+.001));
     g_printerr("nframes == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nframes, pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
 #endif
     

@@ -90,6 +90,8 @@ void setenv(const char *name, const char *val, int _xx) {
 }
 #endif
 
+
+
 /* convert to/from a big endian 32 bit float for internal use */
 LIVES_INLINE float LEFloat_to_BEFloat(float f) {
   char *b=(char *)(&f);

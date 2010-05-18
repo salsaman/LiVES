@@ -701,14 +701,30 @@ static double granulepos_2_time(lives_in_stream *s, int64_t pos) {
 }
 
 
+static int stream_peek(int fd, char *str, size_t len) {
+  off_t cpos=lseek(fd,0,SEEK_CUR); // get current posn 
+  return pread(fd,str,len,cpos); // read len bytes without changing cpos
+}
 
-static int open_ogg(void) {
+
+
+
+static int open_ogg(int fd) {
   double stream_duration;
   int64_t gpos;
+  char scheck[4];
+
+  if (stream_peek(fd,scheck,4)<4) return 0;
+
+  if (strncmp(scheck,"OggS",4)) return 0;
 
   ogg_sync_init(&(opriv.oy));
 
   data_start=0;
+
+
+
+
 
   /* Set up the first track */
   if (!setup_track(data_start)) {
@@ -770,10 +786,18 @@ static boolean attach_stream(const char *URI) {
   opriv.page_valid=0;
 
   /* get ogg info */
-  if (!open_ogg()) {
+  if (!open_ogg(opriv.fd)) {
     close(opriv.fd);
     return FALSE;
   }
+
+
+
+  // theora only
+
+
+
+  // TODO - check all decoders, and init correct one
 
   /* Initialize theora structures */
   theora_info_init(&tpriv.ti);
@@ -794,10 +818,18 @@ static boolean attach_stream(const char *URI) {
   
   theora_decode_init(&tpriv.ts, &tpriv.ti);
   
+
+
+
+
   last_kframe=10000000;
   last_frame=100000000;
 
+  // index init 
   indexa=NULL;
+
+
+
 
 
   // check to find whether first frame is zero or one
@@ -828,10 +860,17 @@ static void detach_stream (const char *URI) {
   close(opriv.fd);
 
   ogg_sync_clear(&opriv.oy);
+
+
+  // theora only
+  // TODO - call function in decoder
   theora_clear(&tpriv.ts);
   theora_comment_clear(&tpriv.tc);
   theora_info_clear(&tpriv.ti);
 
+
+
+  // free stream data
   if (astream!=NULL) {
     if (astream->ext_data!=NULL) free(astream->ext_data);
     ogg_stream_clear(&astream->priv->os);
@@ -848,6 +887,8 @@ static void detach_stream (const char *URI) {
     vstream=NULL;
   }
 
+
+  // free index entries
   if (indexa!=NULL) index_entries_free(indexa);
   indexa=NULL;
 

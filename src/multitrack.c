@@ -11445,7 +11445,7 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
     gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  if ((track<0&&mt->file_selected>0&&mainw->files[mt->file_selected]->achans>0&&mainw->files[mt->file_selected]->laudio_time>0.)||(track>=0&&mainw->files[mt->file_selected]->frames>0)) {
+  if (mt->file_selected>0&&((track<0&&mainw->files[mt->file_selected]->achans>0&&mainw->files[mt->file_selected]->laudio_time>0.)||(track>=0&&mainw->files[mt->file_selected]->frames>0))) {
     if (track>=0) {
       insert_here = gtk_menu_item_new_with_mnemonic (_("_Insert here"));
       g_signal_connect (GTK_OBJECT (insert_here), "activate",

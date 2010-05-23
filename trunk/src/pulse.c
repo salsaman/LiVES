@@ -122,6 +122,7 @@ static void pulse_buff_free(void *ptr) {
 
 static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t xbytes) {
   guchar *buff;
+  if (xbytes<=0) return;
   while (nbytes>0) {
     if (nbytes<xbytes) xbytes=nbytes;
     buff=g_malloc0(xbytes);

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# (c) G. Finch (salsaman) 2009
+# (c) G. Finch (salsaman) 2009 - 2010
 
 # released under the GNU GPL 3 or later
 # see file COPYING or www.gnu.org for details
@@ -12,6 +12,7 @@
 # v 2.2 - format changed in ffmpeg from image to image2, update
 # v 2.3 add youtube and flv formats
 # v 2.4 allow encoding of .png images
+# v 2.5 add threading support and experimental webm encoding
 
 #######################################################################
 
@@ -26,7 +27,7 @@ else {
 
 
 if ($command eq "version") {
-    print "ffmpeg encoder plugin v2.4\n";
+    print "ffmpeg encoder plugin v2.5\n";
     exit 0;
 }
 
@@ -81,7 +82,7 @@ if ($command eq "get_formats") {
     print "flv|flv|9|arate=44100;22050;11025|flv|\n";
     print "flv-youtube|flv (425x318, optimised for youtube)|33|arate=44100;22050;11025,size=425x318|flv|\n";
     print "flv-youtubex|flv (other sizes, optimised for youtube)|33|arate=44100;22050;11025,aspect=1.3333:1|flv|\n";
-    #print "theora|ogg-theora (experimental, requires ffmpeg2theora)|5|none|ogv\n";
+    print "webm|webm (experimental)|8|none|webm|\n";
     exit 0;
 }
 
@@ -133,6 +134,8 @@ if ($command eq "encode") {
     $usemp3=$ARGV[13];
     $usemp3lame=$ARGV[14];
 
+    $ncpus=&get_num_procs;
+
     if ($otype eq "") {
 	$otype="divx";
 	&rc_set("output_type",$otype);
@@ -151,6 +154,9 @@ if ($command eq "encode") {
     }
     elsif ($otype eq "flv"||$otype eq "flv-youtube"||$otype eq "flv-youtubex") {
 	$vcodec="-f flv";
+    }
+    elsif ($otype eq "webm") {
+	$vcodec="-f webm";
     }
 
     if ($otype eq "flv-youtube"||$otype eq "flv-youtubex") {
@@ -225,10 +231,10 @@ if ($command eq "encode") {
     }
     else {
 	if ($ffver>=52) {
-	    $syscom="$encoder_command -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
+	    $syscom="$encoder_command -threads $ncpus -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
 	}
 	else {
-	    $syscom="$encoder_command -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
+	    $syscom="$encoder_command -threads $ncpus -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
 	}
     }
 
@@ -282,3 +288,10 @@ sub get_format_request {
 }
 
 
+sub get_num_procs {
+    my $result=`cat /proc/cpuinfo|grep processor`;
+
+    $result=(split (/\n/,$result))[-1];
+    $result=(split (/: /,$result))[1];
+    return ++$result;
+}

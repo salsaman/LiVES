@@ -1318,7 +1318,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 
   if (user_audio&&future_prefs->encoder.of_allowed_acodecs==0) best_arate=-1;
 
-  if (!strcmp(prefs->encoder.of_restrict,"none")&&best_arate>-1) {
+  if ((strlen(prefs->encoder.of_restrict)==0||!strcmp(prefs->encoder.of_restrict,"none"))&&best_arate>-1) {
     return TRUE;
   }
 
@@ -1333,42 +1333,67 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
     asampsize=rdet->asamps;
   }
 
-  pieces=get_token_count (prefs->encoder.of_restrict,',');
-  checks=g_strsplit(prefs->encoder.of_restrict,",",pieces);
 
 
-  for (r=0;r<pieces;r++) {
-    // check each restriction in turn
 
-    if (!strncmp (checks[r],"fps=",4)) {
-      gdouble allowed_fps;
-      gint mbest_num=0,mbest_denom=0;
-      gint numparts;
-      gchar *fixer;
 
-      best_fps_delta=1000000000.;
-      array=g_strsplit(checks[r],"=",2);
-      numtok=get_token_count (array[1],';');
-      array2=g_strsplit(array[1],";",numtok);
-      for (i=0;i<numtok;i++) {
-	mbest_num=mbest_denom=0;
-	if ((numparts=get_token_count (array2[i],':'))>1) {
-	  gchar **array3=g_strsplit(array2[i],":",2);
-	  mbest_num=atoi (array3[0]);
-	  mbest_denom=atoi (array3[1]);
-	  g_strfreev (array3);
-	  if (mbest_denom==0) continue;
-	  allowed_fps=(mbest_num*1.)/(mbest_denom*1.);
-	}
-	else allowed_fps=g_strtod (array2[i],NULL);
 
-	// convert to 8dp
-	fixer=g_strdup_printf ("%.8f %.8f",allowed_fps,fps);
-	g_free (fixer);
 
-	if (allowed_fps>=fps) {
-	  if (allowed_fps-fps<best_fps_delta) {
-	    best_fps_delta=allowed_fps-fps;
+  if (strlen(prefs->encoder.of_restrict)>0) {
+
+    pieces=get_token_count (prefs->encoder.of_restrict,',');
+    checks=g_strsplit(prefs->encoder.of_restrict,",",pieces);
+    
+
+    for (r=0;r<pieces;r++) {
+      // check each restriction in turn
+      
+      if (!strncmp (checks[r],"fps=",4)) {
+	gdouble allowed_fps;
+	gint mbest_num=0,mbest_denom=0;
+	gint numparts;
+	gchar *fixer;
+	
+	best_fps_delta=1000000000.;
+	array=g_strsplit(checks[r],"=",2);
+	numtok=get_token_count (array[1],';');
+	array2=g_strsplit(array[1],";",numtok);
+	for (i=0;i<numtok;i++) {
+	  mbest_num=mbest_denom=0;
+	  if ((numparts=get_token_count (array2[i],':'))>1) {
+	    gchar **array3=g_strsplit(array2[i],":",2);
+	    mbest_num=atoi (array3[0]);
+	    mbest_denom=atoi (array3[1]);
+	    g_strfreev (array3);
+	    if (mbest_denom==0) continue;
+	    allowed_fps=(mbest_num*1.)/(mbest_denom*1.);
+	  }
+	  else allowed_fps=g_strtod (array2[i],NULL);
+	  
+	  // convert to 8dp
+	  fixer=g_strdup_printf ("%.8f %.8f",allowed_fps,fps);
+	  g_free (fixer);
+	  
+	  if (allowed_fps>=fps) {
+	    if (allowed_fps-fps<best_fps_delta) {
+	      best_fps_delta=allowed_fps-fps;
+	      if (mbest_denom>0) {
+		best_fps_num=mbest_num;
+		best_fps_denom=mbest_denom;
+		best_fps=0.;
+		if (rdet==NULL) cfile->ratio_fps=TRUE;
+		else rdet->ratio_fps=TRUE;
+	      }
+	      else {
+		best_fps_num=best_fps_denom=0;
+		best_fps=allowed_fps;
+		if (rdet==NULL) cfile->ratio_fps=FALSE;
+		else rdet->ratio_fps=FALSE;
+	      }
+	    }
+	  }
+	  else if ((best_fps_denom==0&&allowed_fps>best_fps)||(best_fps_denom>0&&allowed_fps>(best_fps_num*1.)/(best_fps_denom*1.))) {
+	    best_fps_delta=fps-allowed_fps;
 	    if (mbest_denom>0) {
 	      best_fps_num=mbest_num;
 	      best_fps_denom=mbest_denom;
@@ -1377,171 +1402,157 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	      else rdet->ratio_fps=TRUE;
 	    }
 	    else {
-	      best_fps_num=best_fps_denom=0;
 	      best_fps=allowed_fps;
+	      best_fps_num=best_fps_denom=0;
 	      if (rdet==NULL) cfile->ratio_fps=FALSE;
 	      else rdet->ratio_fps=FALSE;
 	    }
 	  }
-	}
-	else if ((best_fps_denom==0&&allowed_fps>best_fps)||(best_fps_denom>0&&allowed_fps>(best_fps_num*1.)/(best_fps_denom*1.))) {
-	  best_fps_delta=fps-allowed_fps;
-	  if (mbest_denom>0) {
-	    best_fps_num=mbest_num;
-	    best_fps_denom=mbest_denom;
-	    best_fps=0.;
-	    if (rdet==NULL) cfile->ratio_fps=TRUE;
-	    else rdet->ratio_fps=TRUE;
+	  if (best_fps_delta<(.0005*prefs->ignore_tiny_fps_diffs)) {
+	    best_fps_delta=0.;
+	    best_fps_denom=best_fps_num=0;
 	  }
-	  else {
-	    best_fps=allowed_fps;
-	    best_fps_num=best_fps_denom=0;
-	    if (rdet==NULL) cfile->ratio_fps=FALSE;
-	    else rdet->ratio_fps=FALSE;
-	  }
+	  if (best_fps_delta==0.) break;
 	}
-	if (best_fps_delta<(.0005*prefs->ignore_tiny_fps_diffs)) {
-	  best_fps_delta=0.;
-	  best_fps_denom=best_fps_num=0;
-	}
-	if (best_fps_delta==0.) break;
+	g_strfreev(array);
+	g_strfreev(array2);
+	continue;
       }
-      g_strfreev(array);
-      g_strfreev(array2);
-      continue;
-    }
-
-    if (!strncmp (checks[r],"size=",5)) {
-      // TODO - allow list for size
-      array=g_strsplit(checks[r],"=",2);
-      array2=g_strsplit(array[1],"x",2);
-      width=atoi (array2[0]);
-      height=atoi (array2[1]);
-      g_strfreev(array2);
-      g_strfreev(array);
-      sizer=TRUE;
-      continue;
-    }
-
-
-
-    if (!strncmp (checks[r],"asigned=",8)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
-      array=g_strsplit(checks[r],"=",2);
-      if (!strcmp(array[1],"signed")) {
-	asigned=1;
-      }
-
-      if (!strcmp(array[1],"unsigned")) {
-	asigned=2;
-      }
-
-      g_strfreev(array);
       
-      if (asigned!=0&&!capable->has_sox) {
-	do_encoder_sox_error();
-	g_strfreev(checks);
-	return FALSE;
+      if (!strncmp (checks[r],"size=",5)) {
+	// TODO - allow list for size
+	array=g_strsplit(checks[r],"=",2);
+	array2=g_strsplit(array[1],"x",2);
+	width=atoi (array2[0]);
+	height=atoi (array2[1]);
+	g_strfreev(array2);
+	g_strfreev(array);
+	sizer=TRUE;
+	continue;
       }
-      continue;
+      
+      
+      
+      if (!strncmp (checks[r],"asigned=",8)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
+	array=g_strsplit(checks[r],"=",2);
+	if (!strcmp(array[1],"signed")) {
+	  asigned=1;
+	}
+	
+	if (!strcmp(array[1],"unsigned")) {
+	  asigned=2;
+	}
+	
+	g_strfreev(array);
+      
+	if (asigned!=0&&!capable->has_sox) {
+	  do_encoder_sox_error();
+	  g_strfreev(checks);
+	  return FALSE;
+	}
+	continue;
+      }
+      
+      
+      if (!strncmp (checks[r],"arate=",6)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
+	// we only perform this test if we are encoding with audio
+	// find next highest allowed rate from list,
+	// if none are higher, use the highest
+	gint allowed_arate;
+	best_arate_delta=1000000000;
+	
+	array=g_strsplit(checks[r],"=",2);
+	numtok=get_token_count (array[1],';');
+	array2=g_strsplit(array[1],";",numtok);
+	for (i=0;i<numtok;i++) {
+	  allowed_arate=atoi (array2[i]);
+	  if (allowed_arate>=arate) {
+	    if (allowed_arate-arate<best_arate_delta) {
+	      best_arate_delta=allowed_arate-arate;
+	      best_arate=allowed_arate;
+	    }
+	  }
+	  else if (allowed_arate>best_arate) best_arate=allowed_arate;
+	}
+	g_strfreev(array2);
+	g_strfreev(array);
+	
+	if (!capable->has_sox) {
+	  do_encoder_sox_error();
+	  g_strfreev(checks);
+	  return FALSE;
+	}
+	continue;
+      }
+      
+      if (!strncmp (checks[r],"hblock=",7)) {
+	// width must be a multiple of this
+	array=g_strsplit(checks[r],"=",2);
+	hblock=atoi (array[1]);
+	width=(gint)(width/hblock+.5)*hblock;
+	g_strfreev(array);
+	continue;
+      }
+      
+      if (!strncmp (checks[r],"vblock=",7)) {
+	// height must be a multiple of this
+	array=g_strsplit(checks[r],"=",2);
+	vblock=atoi (array[1]);
+	height=(gint)(height/vblock+.5)*vblock;
+	g_strfreev(array);
+	continue;
+      }
+      
+      if (!strncmp (checks[r],"aspect=",7)) {
+	// we calculate the nearest smaller frame size using aspect, 
+	// hblock and vblock
+	calc_aspect=TRUE;
+	array=g_strsplit(checks[r],"=",2);
+	g_snprintf (aspect_buffer,512,"%s",array[1]);
+	g_strfreev(array);
+	continue;
+      }
     }
-
-
-    if (!strncmp (checks[r],"arate=",6)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
-      // we only perform this test if we are encoding with audio
-      // find next highest allowed rate from list,
-      // if none are higher, use the highest
-      gint allowed_arate;
-      best_arate_delta=1000000000;
-
-      array=g_strsplit(checks[r],"=",2);
-      numtok=get_token_count (array[1],';');
-      array2=g_strsplit(array[1],";",numtok);
+    
+    /// end restrictions
+    g_strfreev(checks);
+    
+    if (!mainw->osc_auto&&calc_aspect&&!sizer) {
+      // we calculate this last, after getting hblock and vblock sizes
+      gchar **array3;
+      gdouble allowed_aspect;
+      gint xwidth=width;
+      gint xheight=height;
+      
+      width=height=1000000;
+      
+      numtok=get_token_count (aspect_buffer,';');
+      array2=g_strsplit(aspect_buffer,";",numtok);
+    
+      // see if we can get a width:height which is nearer an aspect than 
+      // current width:height
+      
       for (i=0;i<numtok;i++) {
-	allowed_arate=atoi (array2[i]);
-	if (allowed_arate>=arate) {
-	  if (allowed_arate-arate<best_arate_delta) {
-	    best_arate_delta=allowed_arate-arate;
-	    best_arate=allowed_arate;
-	  }
-	}
-	else if (allowed_arate>best_arate) best_arate=allowed_arate;
+	array3=g_strsplit(array2[i],":",2);
+	allowed_aspect=g_strtod(array3[0],NULL)/g_strtod(array3[1],NULL);
+	g_strfreev(array3);
+	minimise_aspect_delta (allowed_aspect,hblock,vblock,xwidth,xheight,&width,&height);
       }
       g_strfreev(array2);
-      g_strfreev(array);
       
-      if (!capable->has_sox) {
-	do_encoder_sox_error();
-	g_strfreev(checks);
-	return FALSE;
-      }
-      continue;
-    }
-
-    if (!strncmp (checks[r],"hblock=",7)) {
-      // width must be a multiple of this
-      array=g_strsplit(checks[r],"=",2);
-      hblock=atoi (array[1]);
-      width=(gint)(width/hblock+.5)*hblock;
-      g_strfreev(array);
-      continue;
+      // allow override if current width and height are integer multiples of blocks
+      if (owidth%hblock==0&&oheight%vblock==0) allow_aspect_override=TRUE;
+      
+      // end recheck
     }
     
-    if (!strncmp (checks[r],"vblock=",7)) {
-      // height must be a multiple of this
-      array=g_strsplit(checks[r],"=",2);
-      vblock=atoi (array[1]);
-      height=(gint)(height/vblock+.5)*vblock;
-      g_strfreev(array);
-      continue;
-    }
+    // fps can't be altered if we have a multitrack event_list
+    if (mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL) best_fps_delta=0.;
     
-    if (!strncmp (checks[r],"aspect=",7)) {
-      // we calculate the nearest smaller frame size using aspect, 
-      // hblock and vblock
-      calc_aspect=TRUE;
-      array=g_strsplit(checks[r],"=",2);
-      g_snprintf (aspect_buffer,512,"%s",array[1]);
-      g_strfreev(array);
-      continue;
-    }
-  }
-  
-  /// end restrictions
-  g_strfreev(checks);
-
-  if (!mainw->osc_auto&&calc_aspect&&!sizer) {
-    // we calculate this last, after getting hblock and vblock sizes
-    gchar **array3;
-    gdouble allowed_aspect;
-    gint xwidth=width;
-    gint xheight=height;
-
-    width=height=1000000;
-
-    numtok=get_token_count (aspect_buffer,';');
-    array2=g_strsplit(aspect_buffer,";",numtok);
+    if (sizer) allow_aspect_override=FALSE;
     
-    // see if we can get a width:height which is nearer an aspect than 
-    // current width:height
-
-    for (i=0;i<numtok;i++) {
-      array3=g_strsplit(array2[i],":",2);
-      allowed_aspect=g_strtod(array3[0],NULL)/g_strtod(array3[1],NULL);
-      g_strfreev(array3);
-      minimise_aspect_delta (allowed_aspect,hblock,vblock,xwidth,xheight,&width,&height);
-    }
-    g_strfreev(array2);
-
-    // allow override if current width and height are integer multiples of blocks
-    if (owidth%hblock==0&&oheight%vblock==0) allow_aspect_override=TRUE;
-
-    // end recheck
   }
 
-  // fps can't be altered if we have a multitrack event_list
-  if (mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL) best_fps_delta=0.;
-
-  if (sizer) allow_aspect_override=FALSE;
 
   if (((width!=owidth||height!=oheight)&&width*height>0)||(best_fps_delta>0.)||(best_arate_delta>0&&best_arate>0)||best_arate<0||asigned!=0) {
     gboolean ofx1_bool=mainw->fx1_bool;

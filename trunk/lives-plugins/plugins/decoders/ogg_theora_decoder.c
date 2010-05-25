@@ -331,6 +331,8 @@ static int setup_track(int64_t start_position) {
   int header_bytes = 0;
   int64_t input_pos;
 
+  uint8_t imajor,iminor,isubminor;
+
   opriv.page_valid=0;
 
   lseek64(opriv.fd, start_position, SEEK_SET);
@@ -407,6 +409,17 @@ static int setup_track(int64_t start_position) {
       append_extradata(vstream, &opriv.op);
       ogg_stream->header_packets_read = 1;
       
+      /* get version */
+      imajor=((uint8_t *)(vstream->ext_data))[55];
+      iminor=((uint8_t *)(vstream->ext_data))[56];
+      isubminor=((uint8_t *)(vstream->ext_data))[57];
+
+      vstream->version=imajor*1000000+iminor*1000+isubminor;
+
+      // TODO - get frame width, height, picture width, height, and x and y offsets
+
+
+
       /* Get fps and keyframe shift */
       vstream->fps_num = PTR_2_32BE(opriv.op.packet+22);
       vstream->fps_denom = PTR_2_32BE(opriv.op.packet+26);
@@ -726,7 +739,7 @@ static int open_ogg(int fd) {
 
 
 
-  /* Set up the first track */
+  /* Set up the tracks */
   if (!setup_track(data_start)) {
     ogg_sync_clear(&opriv.oy);
     return 0;
@@ -771,8 +784,6 @@ static boolean attach_stream(const char *URI) {
   uint8_t *ext_pos;
   ogg_packet op;
   struct stat sb;
-
-  int64_t granulepos,testkframe;
 
   if ((opriv.fd=open(URI,O_RDONLY))==-1) {
     fprintf(stderr, "ogg_theora_decoder: unable to open %s\n",URI);
@@ -828,27 +839,12 @@ static boolean attach_stream(const char *URI) {
   // index init 
   indexa=NULL;
 
-
-
-
-
   // check to find whether first frame is zero or one
+  // if version >= 3.2.1 first kframe is 1; otherwise 0
 
-  seek_byte(data_start);
-  ignore_packets=FALSE;
-  cframe=0;
+  if (vstream->version>=3002001) kframe_offset=1;
+  else kframe_offset=0;
 
-  // process until we get frame(s)
-  ogg_data_process(NULL,FALSE);
-
-  granulepos=ogg_page_granulepos(&opriv.current_page);
-  testkframe=granulepos >> vstream->priv->keyframe_granule_shift;
-
-  // check testframe against cframe
-  //fprintf(stderr,"first kframe is %lld\n",testkframe);
-
-  kframe_offset=testkframe;
-  
   return TRUE;
 }
 

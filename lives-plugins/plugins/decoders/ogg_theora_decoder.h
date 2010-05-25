@@ -86,6 +86,7 @@ typedef struct
 typedef struct lives_stream_s {
   int type;
   uint32_t fourcc;
+  uint64_t version;  // major * 1000000 + minor * 1000 + subminor
   stream_priv_t *priv;
   int stream_id;
   int samplerate;

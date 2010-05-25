@@ -529,7 +529,7 @@ static void seek_byte(int64_t pos) {
 static int64_t get_data(void) {
   int bytes_to_read;
   char * buf;
-  int result;
+  int64_t result;
   
   bytes_to_read = BYTES_TO_READ;
 
@@ -683,6 +683,7 @@ static int64_t get_last_granulepos (int serialno) {
   
   stream=stream_from_sno(serialno);
   if (stream==NULL) return -1;
+
   pos = find_last_page (data_start, opriv.total_bytes, serialno, &kframe, &granulepos);
   if (pos < 0) return -1;
 
@@ -762,7 +763,7 @@ static int open_ogg(int fd) {
     /*  kframe=gpos >> vstream->priv->keyframe_granule_shift;
 	vstream->nframes = kframe + gpos-(kframe<<vstream->priv->keyframe_granule_shift);*/
 
-    vstream->nframes=gpos-kframe_offset;
+    vstream->nframes=gpos;
 
     stream_duration =
       granulepos_2_time(vstream,gpos);

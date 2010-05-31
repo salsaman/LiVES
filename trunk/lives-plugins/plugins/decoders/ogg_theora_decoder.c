@@ -238,13 +238,14 @@ static int64_t get_page(int64_t inpos) {
 
   buf = ogg_sync_buffer(&(opriv.oy), page_size);
 
-  opriv.current_page_pos = inpos;
-
   memcpy(buf,header,PAGE_HEADER_BYTES+nsegs);
 
   result = read (opriv.fd, (uint8_t*)buf+PAGE_HEADER_BYTES+nsegs, page_size-PAGE_HEADER_BYTES-nsegs);
 
   ogg_sync_wrote(&(opriv.oy), result+PAGE_HEADER_BYTES+nsegs);
+
+
+
 
   if (ogg_sync_pageout(&(opriv.oy), &(opriv.current_page)) != 1) {
     //fprintf(stderr, "Got no packet %lld %d %s\n",result,page_size,buf);

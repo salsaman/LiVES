@@ -31,7 +31,7 @@ typedef struct {
 } desc;
 
 
-void *OpenHTMSocket(char *host, int portnumber, gboolean sender) {
+void *OpenHTMSocket(const char *host, int portnumber, gboolean sender) {
   int sockfd;
   struct sockaddr_in cl_addr;
   desc *o;

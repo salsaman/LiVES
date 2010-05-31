@@ -19,15 +19,7 @@ typedef struct {
   ogg_packet      op;
 
   char *buffer;
-
-  /* File position of the current page */
-  int64_t     current_page_pos;
-
-  int64_t end_pos;
  
-  /* Serial  number of the last page of the entire file */
-  int last_page_serialno;
-   
   /* current_page is valid */
   int page_valid;
  

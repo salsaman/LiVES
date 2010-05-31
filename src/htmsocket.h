@@ -1,6 +1,6 @@
 /*htm sockets*/
 
-void *OpenHTMSocket(char *host, int portnumber, gboolean sender);
+void *OpenHTMSocket(const char *host, int portnumber, gboolean sender);
 
 gboolean lives_stream_out(void *htmsendhandle, size_t length_in_bytes, void *buffer);
 

@@ -1663,6 +1663,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   GMainContext *ctx=NULL;
 
 #if GLIB_CHECK_VERSION(2,22,0)
+  ctx=g_main_context_new ();
   g_main_context_push_thread_default(ctx);
 #endif
 
@@ -1678,6 +1679,9 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
   if (!pthread_islocked) {
     g_free(procw);
+#if GLIB_CHECK_VERSION(2,22,0)
+  g_main_context_unref(ctx);
+#endif
     return; // parent process finished already
   }
 
@@ -1781,6 +1785,11 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   if (!pthread_islocked) {
     gtk_widget_destroy(procw->processing);
     g_free(procw);
+
+#if GLIB_CHECK_VERSION(2,22,0)
+  g_main_context_unref(ctx);
+#endif
+
     return;
   }
 
@@ -1824,8 +1833,16 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   while (g_main_context_iteration(ctx,FALSE));
 
   g_free(procw);
+
+#if GLIB_CHECK_VERSION(2,22,0)
+  g_main_context_unref(ctx);
+#endif
+
   // unlock mutex
   if (pthread_islocked) pthread_mutex_unlock(&mainw->gtk_mutex);
+
+
+
 }
 
 

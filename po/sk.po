@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-05-12 10:07-0300\n"
+"POT-Creation-Date: 2010-06-01 13:57-0300\n"
 "PO-Revision-Date: 2010-03-28 17:11+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -579,42 +579,42 @@ msgstr "Automaticky načítavam %s..."
 msgid "Invalid audio player %s\n"
 msgstr "Neplatný prehrávač zvuku %s\n"
 
-#: src/main.c:2108
+#: src/main.c:2103
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 
-#: src/main.c:2112
+#: src/main.c:2107
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? snímky ??? bpp %.3f fps"
 
-#: src/main.c:2115
+#: src/main.c:2110
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d snímky %d bpp %.3f fps"
 
-#: src/main.c:2121
+#: src/main.c:2116
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <No File>"
 
-#: src/main.c:3244
+#: src/main.c:3239
 #, c-format
 msgid "rec %9d/%d"
 msgstr "rec %9d/%d"
 
-#: src/main.c:3246
+#: src/main.c:3241
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!rec %9d/%d"
 
-#: src/main.c:3458 src/main.c:3459 src/gui.c:1905 src/gui.c:2873
+#: src/main.c:3453 src/main.c:3454 src/gui.c:1905 src/gui.c:2873
 #: src/saveplay.c:1489
 msgid "Play"
 msgstr "Prehrať"
 
-#: src/main.c:3829
+#: src/main.c:3824
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -622,35 +622,35 @@ msgstr ""
 "LiVES nebol schopný zachytiť tento obrázok\n"
 "\n"
 
-#: src/main.c:3913
+#: src/main.c:3908
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Zatvorený súbor %s\n"
 
-#: src/main.c:4069 src/gui.c:522 src/utils.c:2553 src/utils.c:2579
+#: src/main.c:4064 src/gui.c:522 src/utils.c:2552 src/utils.c:2578
 #: src/saveplay.c:2456 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "_Späť"
 
-#: src/main.c:4070 src/gui.c:535 src/utils.c:2554 src/utils.c:2580
+#: src/main.c:4065 src/gui.c:535 src/utils.c:2553 src/utils.c:2579
 #: src/saveplay.c:2457 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "_Znova"
 
-#: src/main.c:4096 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
+#: src/main.c:4091 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
 #: src/resample.c:1747
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4097 src/interface.c:658 src/gui.c:2082
+#: src/main.c:4092 src/interface.c:658 src/gui.c:2082
 msgid "Left Audio"
 msgstr "Ľavý audio kanál"
 
-#: src/main.c:4098 src/gui.c:2100
+#: src/main.c:4093 src/gui.c:2100
 msgid "Right Audio"
 msgstr "Pravý audio kanál"
 
-#: src/main.c:4143
+#: src/main.c:4138
 msgid ""
 "\n"
 "\n"
@@ -3488,11 +3488,11 @@ msgstr "Skryť okno s prehrávaním"
 msgid "Show Play Window"
 msgstr "Zobraziť okno s prehrávaním"
 
-#: src/utils.c:479
+#: src/utils.c:481
 msgid "Clearing the clipboard"
 msgstr "Vyprázdnenie schránky"
 
-#: src/utils.c:502
+#: src/utils.c:504
 #, c-format
 msgid ""
 "\n"
@@ -3503,7 +3503,7 @@ msgstr ""
 "==============================\n"
 "Prepnuté na klip %s\n"
 
-#: src/utils.c:506
+#: src/utils.c:508
 msgid ""
 "\n"
 "==============================\n"
@@ -3513,11 +3513,11 @@ msgstr ""
 "==============================\n"
 "Prepnuté na prázdny klip\n"
 
-#: src/utils.c:540
+#: src/utils.c:542
 msgid "(blank)"
 msgstr "(čisté)"
 
-#: src/utils.c:542
+#: src/utils.c:544
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
@@ -3526,7 +3526,7 @@ msgstr ""
 "Názov zostavy bol zmenený z %s na %s. Súvisiace rozmiestnenie bude primerane "
 "aktualizované\n"
 
-#: src/utils.c:549
+#: src/utils.c:551
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
@@ -3535,7 +3535,7 @@ msgstr ""
 "Klip %s nebol nájdený v tejto zostave.\n"
 "Je vyžadované nasledujúce rozloženie:\n"
 
-#: src/utils.c:553
+#: src/utils.c:555
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
@@ -3544,7 +3544,7 @@ msgstr ""
 "Klip %s bol zatvorený.\n"
 "Je požadované nasledujúce rozloženie:\n"
 
-#: src/utils.c:558
+#: src/utils.c:560
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
@@ -3553,7 +3553,7 @@ msgstr ""
 "Snímky v klipe %s boli posunuté.\n"
 "Nasledujúce rozloženie bude ovplyvnené:\n"
 
-#: src/utils.c:563
+#: src/utils.c:565
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
@@ -3562,7 +3562,7 @@ msgstr ""
 "Snímky z klipu %s boli zmazané.\n"
 "Nasledujúce rozdelenie bude ovplyvnené:\n"
 
-#: src/utils.c:568
+#: src/utils.c:570
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
@@ -3571,7 +3571,7 @@ msgstr ""
 "Z klipu %s bol odstránený zvuk.\n"
 "Nasledujúce rozdelenie bude ovplyvnené:\n"
 
-#: src/utils.c:573
+#: src/utils.c:575
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
@@ -3580,7 +3580,7 @@ msgstr ""
 "V klipe %s bol posunutý zvuk.\n"
 "Nasledujúce rozdelenie bude ovplyvnené:\n"
 
-#: src/utils.c:578
+#: src/utils.c:580
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
@@ -3589,7 +3589,7 @@ msgstr ""
 "V klipe %s bol zmenený zvuk.\n"
 "Nasledujúce rozdelenie bude ovplyvnené:\n"
 
-#: src/utils.c:583
+#: src/utils.c:585
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
@@ -3598,7 +3598,7 @@ msgstr ""
 "V klipe %s boli zmenené snímky.\n"
 "Nasledujúce rozdelenie bude ovplyvnené:\n"
 
-#: src/utils.c:746
+#: src/utils.c:748
 #, c-format
 msgid ""
 "Set %s\n"
@@ -3609,7 +3609,7 @@ msgstr ""
 "sa nedá otvoriť, pretože je používaná\n"
 "inou kópiou LiVES.\n"
 
-#: src/utils.c:752
+#: src/utils.c:754
 #, c-format
 msgid ""
 "\n"
@@ -3620,7 +3620,7 @@ msgstr ""
 "Zostava %s je používaná inou kópiou LiVES.\n"
 "Prosím vyberte iný názov zostavy.\n"
 
-#: src/utils.c:776
+#: src/utils.c:778
 msgid ""
 "\n"
 "Set names may not be blank.\n"
@@ -3628,7 +3628,7 @@ msgstr ""
 "\n"
 "Názov zostavy nemôže byť prázdny.\n"
 
-#: src/utils.c:780
+#: src/utils.c:782
 #, c-format
 msgid ""
 "\n"
@@ -3637,7 +3637,7 @@ msgstr ""
 "\n"
 "Názov nesmie obsahovať medzery alebo znaky%s.\n"
 
-#: src/utils.c:792
+#: src/utils.c:794
 #, c-format
 msgid ""
 "\n"
@@ -3648,68 +3648,68 @@ msgstr ""
 "Zostava %s už existuje.\n"
 "Prosím zvolte iný názov zostavy.\n"
 
-#: src/utils.c:1014
+#: src/utils.c:1013
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "Odstraňujem rozloženia %s\n"
 
-#: src/utils.c:1387
+#: src/utils.c:1386
 msgid "Video [opening...]"
 msgstr "Video [otváram...]"
 
-#: src/utils.c:1391
+#: src/utils.c:1390
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Video [%.2f sek]"
 
-#: src/utils.c:1395
+#: src/utils.c:1394
 msgid "(Undefined)"
 msgstr "(Nedefinované)"
 
-#: src/utils.c:1398
+#: src/utils.c:1397
 msgid "(No video)"
 msgstr "(Žiadne video)"
 
-#: src/utils.c:1405
+#: src/utils.c:1404
 msgid "(No audio)"
 msgstr "(Žiadny zvuk)"
 
-#: src/utils.c:1410
+#: src/utils.c:1409
 msgid "Mono  [opening...]"
 msgstr "Mono [otváram...]"
 
-#: src/utils.c:1413
+#: src/utils.c:1412
 msgid "Left Audio [opening...]"
 msgstr "Ľavý zvukový kanál [otváram...]"
 
-#: src/utils.c:1418
+#: src/utils.c:1417
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Mono [%.2f sek]"
 
-#: src/utils.c:1421
+#: src/utils.c:1420
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Ľavý zvukový kanál [%.2f sek]"
 
-#: src/utils.c:1429
+#: src/utils.c:1428
 msgid "Right Audio [opening...]"
 msgstr "Pravý zvukový kanál [otváram...]"
 
-#: src/utils.c:1432
+#: src/utils.c:1431
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Pravý zvukový kanál [%.2f sek]"
 
-#: src/utils.c:1868
+#: src/utils.c:1867
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVES nemôže při načítání klipov prepnúť na mplayer."
 
-#: src/utils.c:2048
+#: src/utils.c:2047
 msgid "Cleaning up clip"
 msgstr "Vyčistenie klipu"
 
-#: src/utils.c:2176
+#: src/utils.c:2175
 #, c-format
 msgid ""
 "\n"
@@ -3724,25 +3724,25 @@ msgstr ""
 "\n"
 "Prepísať ?\n"
 
-#: src/utils.c:2546 src/utils.c:2572 src/multitrack.c:3829
+#: src/utils.c:2545 src/utils.c:2571 src/multitrack.c:3829
 #, c-format
 msgid "_Undo %s"
 msgstr "_Vrátiť %s"
 
-#: src/utils.c:2547 src/utils.c:2573 src/multitrack.c:3851
+#: src/utils.c:2546 src/utils.c:2572 src/multitrack.c:3851
 #, c-format
 msgid "_Redo %s"
 msgstr "_Znovu %s"
 
-#: src/utils.c:2598
+#: src/utils.c:2597
 msgid "-------------Selection------------"
 msgstr "-------------Výber------------"
 
-#: src/utils.c:2603
+#: src/utils.c:2602
 msgid " sec ] ----------Selection---------- [ "
 msgstr " sek ] ----------výber---------- [ "
 
-#: src/utils.c:2603
+#: src/utils.c:2602
 msgid " frames ] ----------"
 msgstr " snímky ] ----------"
 
@@ -4974,7 +4974,7 @@ msgstr "Ovládač hlasitosti zvuku"
 msgid "Audio Volume Controllers"
 msgstr "Ovládače hlasitosti zvuku"
 
-#: src/effects-weed.c:276 src/plugins.c:1854
+#: src/effects-weed.c:276 src/plugins.c:1865
 msgid "unknown"
 msgstr "neznáme"
 
@@ -5326,11 +5326,11 @@ msgid ""
 "or switch to another plugin using Tools|Preferences|Encoding\n"
 msgstr ""
 
-#: src/plugins.c:1556
+#: src/plugins.c:1567
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "Nedá sa zmeniť veľkosť, prosím nainštalujte imageMagic\n"
 
-#: src/plugins.c:1800
+#: src/plugins.c:1811
 #, c-format
 msgid ""
 "\n"
@@ -5343,7 +5343,7 @@ msgstr ""
 "Nepodarilo sa otvoriť rozšírenie dekodéra  %s\n"
 "Chyba bola %s\n"
 
-#: src/plugins.c:1821
+#: src/plugins.c:1832
 #, c-format
 msgid ""
 "\n"
@@ -5358,16 +5358,16 @@ msgstr ""
 "chýbajú povinné funkcie.\n"
 "Nedá sa použiť.\n"
 
-#: src/plugins.c:1859
+#: src/plugins.c:1870
 msgid "/unknown"
 msgstr "/neznámy"
 
-#: src/plugins.c:1885
+#: src/plugins.c:1896
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Zlyhalo spustenie %s, nie je možné zmenit veľkosť prechodu.\n"
 
-#: src/plugins.c:2885
+#: src/plugins.c:2896
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s pokročilé nastavenia"

@@ -280,11 +280,13 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       cfile->vsize=weed_get_int_value(first_out,"height",&error);
     }
 
-    if (cfile->hsize==cfile->ohsize&&cfile->vsize==cfile->ovsize) cfile->undo_action=UNDO_EFFECT;
-    else {
-      save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
-      save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
-      cfile->undo_action=UNDO_RESIZABLE;
+    if (rfx->num_in_channels>0) {
+      if (cfile->hsize==cfile->ohsize&&cfile->vsize==cfile->ovsize) cfile->undo_action=UNDO_EFFECT;
+      else {
+	save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
+	save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
+	cfile->undo_action=UNDO_RESIZABLE;
+      }
     }
   }
 
@@ -390,6 +392,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	cfile->is_loaded=TRUE;
 	add_to_winmenu();
 	save_clip_values(new_file);
+	if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
 	if (mainw->multitrack!=NULL) {
 	  mt_init_clips(mainw->multitrack,mainw->current_file,TRUE);

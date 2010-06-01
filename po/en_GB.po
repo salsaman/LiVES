@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-05-12 10:07-0300\n"
+"POT-Creation-Date: 2010-06-01 13:57-0300\n"
 "PO-Revision-Date: 2010-02-22 15:36+0000\n"
 "Last-Translator: Robert Readman <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -579,42 +579,42 @@ msgstr "Autoloading set %s..."
 msgid "Invalid audio player %s\n"
 msgstr "Invalid audio player %s\n"
 
-#: src/main.c:2108
+#: src/main.c:2103
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 
-#: src/main.c:2112
+#: src/main.c:2107
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 
-#: src/main.c:2115
+#: src/main.c:2110
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 
-#: src/main.c:2121
+#: src/main.c:2116
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <No File>"
 
-#: src/main.c:3244
+#: src/main.c:3239
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3246
+#: src/main.c:3241
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3458 src/main.c:3459 src/gui.c:1905 src/gui.c:2873
+#: src/main.c:3453 src/main.c:3454 src/gui.c:1905 src/gui.c:2873
 #: src/saveplay.c:1489
 msgid "Play"
 msgstr "Play"
 
-#: src/main.c:3829
+#: src/main.c:3824
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -622,35 +622,35 @@ msgstr ""
 "LiVES was unable to capture this image\n"
 "\n"
 
-#: src/main.c:3913
+#: src/main.c:3908
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Closed file %s\n"
 
-#: src/main.c:4069 src/gui.c:522 src/utils.c:2553 src/utils.c:2579
+#: src/main.c:4064 src/gui.c:522 src/utils.c:2552 src/utils.c:2578
 #: src/saveplay.c:2456 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "_Undo"
 
-#: src/main.c:4070 src/gui.c:535 src/utils.c:2554 src/utils.c:2580
+#: src/main.c:4065 src/gui.c:535 src/utils.c:2553 src/utils.c:2579
 #: src/saveplay.c:2457 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "_Redo"
 
-#: src/main.c:4096 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
+#: src/main.c:4091 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
 #: src/resample.c:1747
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4097 src/interface.c:658 src/gui.c:2082
+#: src/main.c:4092 src/interface.c:658 src/gui.c:2082
 msgid "Left Audio"
 msgstr "Left Audio"
 
-#: src/main.c:4098 src/gui.c:2100
+#: src/main.c:4093 src/gui.c:2100
 msgid "Right Audio"
 msgstr "Right Audio"
 
-#: src/main.c:4143
+#: src/main.c:4138
 msgid ""
 "\n"
 "\n"
@@ -3450,11 +3450,11 @@ msgstr "Hide Play Window"
 msgid "Show Play Window"
 msgstr "Show Play Window"
 
-#: src/utils.c:479
+#: src/utils.c:481
 msgid "Clearing the clipboard"
 msgstr "Clearing the clipboard"
 
-#: src/utils.c:502
+#: src/utils.c:504
 #, c-format
 msgid ""
 "\n"
@@ -3465,7 +3465,7 @@ msgstr ""
 "==============================\n"
 "Switched to clip %s\n"
 
-#: src/utils.c:506
+#: src/utils.c:508
 msgid ""
 "\n"
 "==============================\n"
@@ -3475,11 +3475,11 @@ msgstr ""
 "==============================\n"
 "Switched to empty clip\n"
 
-#: src/utils.c:540
+#: src/utils.c:542
 msgid "(blank)"
 msgstr "(blank)"
 
-#: src/utils.c:542
+#: src/utils.c:544
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
@@ -3488,7 +3488,7 @@ msgstr ""
 "The set name has been changed from %s to %s. Affected layouts have been "
 "updated accordingly\n"
 
-#: src/utils.c:549
+#: src/utils.c:551
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
@@ -3497,7 +3497,7 @@ msgstr ""
 "The clip %s is missing from this set.\n"
 "It is required by the following layouts:\n"
 
-#: src/utils.c:553
+#: src/utils.c:555
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
@@ -3506,7 +3506,7 @@ msgstr ""
 "The clip %s has been closed.\n"
 "It is required by the following layouts:\n"
 
-#: src/utils.c:558
+#: src/utils.c:560
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
@@ -3515,7 +3515,7 @@ msgstr ""
 "Frames have been shifted in the clip %s.\n"
 "The following layouts are affected:\n"
 
-#: src/utils.c:563
+#: src/utils.c:565
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
@@ -3524,7 +3524,7 @@ msgstr ""
 "Frames have been deleted from the clip %s.\n"
 "The following layouts are affected:\n"
 
-#: src/utils.c:568
+#: src/utils.c:570
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
@@ -3533,7 +3533,7 @@ msgstr ""
 "Audio has been deleted from the clip %s.\n"
 "The following layouts are affected:\n"
 
-#: src/utils.c:573
+#: src/utils.c:575
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
@@ -3542,7 +3542,7 @@ msgstr ""
 "Audio has been shifted in clip %s.\n"
 "The following layouts are affected:\n"
 
-#: src/utils.c:578
+#: src/utils.c:580
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
@@ -3551,7 +3551,7 @@ msgstr ""
 "Audio has been altered in the clip %s.\n"
 "The following layouts are affected:\n"
 
-#: src/utils.c:583
+#: src/utils.c:585
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
@@ -3560,7 +3560,7 @@ msgstr ""
 "Frames have been altered in the clip %s.\n"
 "The following layouts are affected:\n"
 
-#: src/utils.c:746
+#: src/utils.c:748
 #, c-format
 msgid ""
 "Set %s\n"
@@ -3571,7 +3571,7 @@ msgstr ""
 "cannot be opened, as it is in use\n"
 "by another copy of LiVES.\n"
 
-#: src/utils.c:752
+#: src/utils.c:754
 #, c-format
 msgid ""
 "\n"
@@ -3582,7 +3582,7 @@ msgstr ""
 "The set %s is currently in use by another copy of LiVES.\n"
 "Please choose another set name.\n"
 
-#: src/utils.c:776
+#: src/utils.c:778
 msgid ""
 "\n"
 "Set names may not be blank.\n"
@@ -3590,7 +3590,7 @@ msgstr ""
 "\n"
 "Set names may not be blank.\n"
 
-#: src/utils.c:780
+#: src/utils.c:782
 #, c-format
 msgid ""
 "\n"
@@ -3599,7 +3599,7 @@ msgstr ""
 "\n"
 "Set names may not contain spaces or the characters%s.\n"
 
-#: src/utils.c:792
+#: src/utils.c:794
 #, c-format
 msgid ""
 "\n"
@@ -3610,68 +3610,68 @@ msgstr ""
 "The set %s already exists.\n"
 "Please choose another set name.\n"
 
-#: src/utils.c:1014
+#: src/utils.c:1013
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "Removing layout %s\n"
 
-#: src/utils.c:1387
+#: src/utils.c:1386
 msgid "Video [opening...]"
 msgstr "Video [opening...]"
 
-#: src/utils.c:1391
+#: src/utils.c:1390
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Video [%.2f sec]"
 
-#: src/utils.c:1395
+#: src/utils.c:1394
 msgid "(Undefined)"
 msgstr "(Undefined)"
 
-#: src/utils.c:1398
+#: src/utils.c:1397
 msgid "(No video)"
 msgstr "(No video)"
 
-#: src/utils.c:1405
+#: src/utils.c:1404
 msgid "(No audio)"
 msgstr "(No audio)"
 
-#: src/utils.c:1410
+#: src/utils.c:1409
 msgid "Mono  [opening...]"
 msgstr "Mono  [opening...]"
 
-#: src/utils.c:1413
+#: src/utils.c:1412
 msgid "Left Audio [opening...]"
 msgstr "Left Audio [opening...]"
 
-#: src/utils.c:1418
+#: src/utils.c:1417
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Mono [%.2f sec]"
 
-#: src/utils.c:1421
+#: src/utils.c:1420
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Left Audio [%.2f sec]"
 
-#: src/utils.c:1429
+#: src/utils.c:1428
 msgid "Right Audio [opening...]"
 msgstr "Right Audio [opening...]"
 
-#: src/utils.c:1432
+#: src/utils.c:1431
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Right Audio [%.2f sec]"
 
-#: src/utils.c:1868
+#: src/utils.c:1867
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVES cannot switch to mplayer whilst clips are loading."
 
-#: src/utils.c:2048
+#: src/utils.c:2047
 msgid "Cleaning up clip"
 msgstr "Cleaning up clip"
 
-#: src/utils.c:2176
+#: src/utils.c:2175
 #, c-format
 msgid ""
 "\n"
@@ -3686,25 +3686,25 @@ msgstr ""
 "\n"
 "Overwrite ?\n"
 
-#: src/utils.c:2546 src/utils.c:2572 src/multitrack.c:3829
+#: src/utils.c:2545 src/utils.c:2571 src/multitrack.c:3829
 #, c-format
 msgid "_Undo %s"
 msgstr "_Undo %s"
 
-#: src/utils.c:2547 src/utils.c:2573 src/multitrack.c:3851
+#: src/utils.c:2546 src/utils.c:2572 src/multitrack.c:3851
 #, c-format
 msgid "_Redo %s"
 msgstr "_Redo %s"
 
-#: src/utils.c:2598
+#: src/utils.c:2597
 msgid "-------------Selection------------"
 msgstr "-------------Selection------------"
 
-#: src/utils.c:2603
+#: src/utils.c:2602
 msgid " sec ] ----------Selection---------- [ "
 msgstr " sec ] ----------Selection---------- [ "
 
-#: src/utils.c:2603
+#: src/utils.c:2602
 msgid " frames ] ----------"
 msgstr " frames ] ----------"
 
@@ -5004,7 +5004,7 @@ msgstr "audio volume controller"
 msgid "Audio Volume Controllers"
 msgstr "Audio Volume Controllers"
 
-#: src/effects-weed.c:276 src/plugins.c:1854
+#: src/effects-weed.c:276 src/plugins.c:1865
 msgid "unknown"
 msgstr "unknown"
 
@@ -5363,11 +5363,11 @@ msgstr ""
 "%s%s%s\n"
 "or switch to another plugin using Tools|Preferences|Encoding\n"
 
-#: src/plugins.c:1556
+#: src/plugins.c:1567
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "Unable to resize, please install imageMagick\n"
 
-#: src/plugins.c:1800
+#: src/plugins.c:1811
 #, c-format
 msgid ""
 "\n"
@@ -5380,7 +5380,7 @@ msgstr ""
 "Failed to open decoder plugin %s\n"
 "Error was %s\n"
 
-#: src/plugins.c:1821
+#: src/plugins.c:1832
 #, c-format
 msgid ""
 "\n"
@@ -5395,16 +5395,16 @@ msgstr ""
 "is missing a mandatory function.\n"
 "Unable to use it.\n"
 
-#: src/plugins.c:1859
+#: src/plugins.c:1870
 msgid "/unknown"
 msgstr "/unknown"
 
-#: src/plugins.c:1885
+#: src/plugins.c:1896
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Failed to load %s, transitions may not resize.\n"
 
-#: src/plugins.c:2885
+#: src/plugins.c:2896
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s advanced settings"

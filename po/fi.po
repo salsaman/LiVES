@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-05-12 10:07-0300\n"
+"POT-Creation-Date: 2010-06-01 13:57-0300\n"
 "PO-Revision-Date: 2010-02-24 13:23+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -547,42 +547,42 @@ msgstr "Ladataan automaattisesti leikesarja %s..."
 msgid "Invalid audio player %s\n"
 msgstr "Virheellinen Musiikkisoitin %s\n"
 
-#: src/main.c:2108
+#: src/main.c:2103
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Nimetön%d> %dx%d : %d kuvaa %d bpp %.3f fps"
 
-#: src/main.c:2112
+#: src/main.c:2107
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? kuvaa ??? bpp %.3f fps"
 
-#: src/main.c:2115
+#: src/main.c:2110
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d kuvaa %d bpp %.3f fps"
 
-#: src/main.c:2121
+#: src/main.c:2116
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Ei tiedostoa>"
 
-#: src/main.c:3244
+#: src/main.c:3239
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3246
+#: src/main.c:3241
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3458 src/main.c:3459 src/gui.c:1905 src/gui.c:2873
+#: src/main.c:3453 src/main.c:3454 src/gui.c:1905 src/gui.c:2873
 #: src/saveplay.c:1489
 msgid "Play"
 msgstr "Toista"
 
-#: src/main.c:3829
+#: src/main.c:3824
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -590,35 +590,35 @@ msgstr ""
 "LiVES ei pystynyt kaappaamaan tätä kuvaa\n"
 "\n"
 
-#: src/main.c:3913
+#: src/main.c:3908
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Tiedosto %s suljettiin\n"
 
-#: src/main.c:4069 src/gui.c:522 src/utils.c:2553 src/utils.c:2579
+#: src/main.c:4064 src/gui.c:522 src/utils.c:2552 src/utils.c:2578
 #: src/saveplay.c:2456 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "Kum_oa"
 
-#: src/main.c:4070 src/gui.c:535 src/utils.c:2554 src/utils.c:2580
+#: src/main.c:4065 src/gui.c:535 src/utils.c:2553 src/utils.c:2579
 #: src/saveplay.c:2457 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "_Tee uudestaan"
 
-#: src/main.c:4096 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
+#: src/main.c:4091 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
 #: src/resample.c:1747
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4097 src/interface.c:658 src/gui.c:2082
+#: src/main.c:4092 src/interface.c:658 src/gui.c:2082
 msgid "Left Audio"
 msgstr "Vasen ääni"
 
-#: src/main.c:4098 src/gui.c:2100
+#: src/main.c:4093 src/gui.c:2100
 msgid "Right Audio"
 msgstr "Oikea ääni"
 
-#: src/main.c:4143
+#: src/main.c:4138
 msgid ""
 "\n"
 "\n"
@@ -3310,11 +3310,11 @@ msgstr "Piilota toistoikkuna"
 msgid "Show Play Window"
 msgstr "Näytä toistoikkuna"
 
-#: src/utils.c:479
+#: src/utils.c:481
 msgid "Clearing the clipboard"
 msgstr "Tyhjennetään leikepöytää"
 
-#: src/utils.c:502
+#: src/utils.c:504
 #, c-format
 msgid ""
 "\n"
@@ -3325,7 +3325,7 @@ msgstr ""
 "==============================\n"
 "Vaihdettiin leikkeeseen %s\n"
 
-#: src/utils.c:506
+#: src/utils.c:508
 msgid ""
 "\n"
 "==============================\n"
@@ -3335,32 +3335,32 @@ msgstr ""
 "==============================\n"
 "Vaihdettiin tyhjään leikkeeseen\n"
 
-#: src/utils.c:540
+#: src/utils.c:542
 msgid "(blank)"
 msgstr ""
 
-#: src/utils.c:542
+#: src/utils.c:544
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
 "updated accordingly\n"
 msgstr ""
 
-#: src/utils.c:549
+#: src/utils.c:551
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
 "It is required by the following layouts:\n"
 msgstr ""
 
-#: src/utils.c:553
+#: src/utils.c:555
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
 "It is required by the following layouts:\n"
 msgstr ""
 
-#: src/utils.c:558
+#: src/utils.c:560
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
@@ -3369,7 +3369,7 @@ msgstr ""
 "Leikkeen %s kuvia on siirrelty.\n"
 "Muutos vaikuttaa seuraaviin asetteluihin:\n"
 
-#: src/utils.c:563
+#: src/utils.c:565
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
@@ -3378,7 +3378,7 @@ msgstr ""
 "Leikkeestä %s on poistettu kuvia.\n"
 "Muutos vaikuttaa seuraaviin asetteluihin:\n"
 
-#: src/utils.c:568
+#: src/utils.c:570
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
@@ -3387,7 +3387,7 @@ msgstr ""
 "Leikkeestä %s on poistettu ääniraita.\n"
 "Muutos vaikuttaa seuraaviin asetteluihin:\n"
 
-#: src/utils.c:573
+#: src/utils.c:575
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
@@ -3396,7 +3396,7 @@ msgstr ""
 "Leikkeen %s ääniraitaa on siirrelty.\n"
 "Muutos vaikuttaa seuraaviin asetteluihin:\n"
 
-#: src/utils.c:578
+#: src/utils.c:580
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
@@ -3405,14 +3405,14 @@ msgstr ""
 "Leikkeen %s ääniraitaa on muutettu.\n"
 "Muutos vaikuttaa seuraaviin asetteluihin:\n"
 
-#: src/utils.c:583
+#: src/utils.c:585
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:746
+#: src/utils.c:748
 #, c-format
 msgid ""
 "Set %s\n"
@@ -3423,7 +3423,7 @@ msgstr ""
 "ei voida avata, sillä se on toisen\n"
 "LiVES-kopion käytössä.\n"
 
-#: src/utils.c:752
+#: src/utils.c:754
 #, c-format
 msgid ""
 "\n"
@@ -3431,7 +3431,7 @@ msgid ""
 "Please choose another set name.\n"
 msgstr ""
 
-#: src/utils.c:776
+#: src/utils.c:778
 msgid ""
 "\n"
 "Set names may not be blank.\n"
@@ -3439,7 +3439,7 @@ msgstr ""
 "\n"
 "Leikesarjalla pitää olla nimi.\n"
 
-#: src/utils.c:780
+#: src/utils.c:782
 #, c-format
 msgid ""
 "\n"
@@ -3448,7 +3448,7 @@ msgstr ""
 "\n"
 "Leikesarjan nimi ei saa sisältää välilyöntejä tai merkkejä %s.\n"
 
-#: src/utils.c:792
+#: src/utils.c:794
 #, c-format
 msgid ""
 "\n"
@@ -3459,68 +3459,68 @@ msgstr ""
 "%s-niminen leikesarja on jo olemassa.\n"
 "Valitse joku toinen nimi.\n"
 
-#: src/utils.c:1014
+#: src/utils.c:1013
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "Poistetaan asettelu %s\n"
 
-#: src/utils.c:1387
+#: src/utils.c:1386
 msgid "Video [opening...]"
 msgstr "Video [avataan...]"
 
-#: src/utils.c:1391
+#: src/utils.c:1390
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Video [%.2f s]"
 
-#: src/utils.c:1395
+#: src/utils.c:1394
 msgid "(Undefined)"
 msgstr ""
 
-#: src/utils.c:1398
+#: src/utils.c:1397
 msgid "(No video)"
 msgstr "(Ei videoraitaa)"
 
-#: src/utils.c:1405
+#: src/utils.c:1404
 msgid "(No audio)"
 msgstr "(Ei ääniraitaa)"
 
-#: src/utils.c:1410
+#: src/utils.c:1409
 msgid "Mono  [opening...]"
 msgstr "Mono  [avataan...]"
 
-#: src/utils.c:1413
+#: src/utils.c:1412
 msgid "Left Audio [opening...]"
 msgstr "Vasen ääni [avataan...]"
 
-#: src/utils.c:1418
+#: src/utils.c:1417
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Mono [%.2f s]"
 
-#: src/utils.c:1421
+#: src/utils.c:1420
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Vasen ääni [%.2f s]"
 
-#: src/utils.c:1429
+#: src/utils.c:1428
 msgid "Right Audio [opening...]"
 msgstr "Oikea ääni [avataan...]"
 
-#: src/utils.c:1432
+#: src/utils.c:1431
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Oikea ääni [%.2f s]"
 
-#: src/utils.c:1868
+#: src/utils.c:1867
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr ""
 
-#: src/utils.c:2048
+#: src/utils.c:2047
 msgid "Cleaning up clip"
 msgstr ""
 
-#: src/utils.c:2176
+#: src/utils.c:2175
 #, c-format
 msgid ""
 "\n"
@@ -3535,25 +3535,25 @@ msgstr ""
 "\n"
 "Korvataanko se?\n"
 
-#: src/utils.c:2546 src/utils.c:2572 src/multitrack.c:3829
+#: src/utils.c:2545 src/utils.c:2571 src/multitrack.c:3829
 #, c-format
 msgid "_Undo %s"
 msgstr "Kum_oa %s"
 
-#: src/utils.c:2547 src/utils.c:2573 src/multitrack.c:3851
+#: src/utils.c:2546 src/utils.c:2572 src/multitrack.c:3851
 #, c-format
 msgid "_Redo %s"
 msgstr "Tee uu_destaan %s"
 
-#: src/utils.c:2598
+#: src/utils.c:2597
 msgid "-------------Selection------------"
 msgstr "-------------Valinta------------"
 
-#: src/utils.c:2603
+#: src/utils.c:2602
 msgid " sec ] ----------Selection---------- [ "
 msgstr " s ] ----------Valinta---------- [ "
 
-#: src/utils.c:2603
+#: src/utils.c:2602
 msgid " frames ] ----------"
 msgstr " kuvaa ] ----------"
 
@@ -4658,7 +4658,7 @@ msgstr ""
 msgid "Audio Volume Controllers"
 msgstr ""
 
-#: src/effects-weed.c:276 src/plugins.c:1854
+#: src/effects-weed.c:276 src/plugins.c:1865
 msgid "unknown"
 msgstr "tuntematon"
 
@@ -4988,11 +4988,11 @@ msgid ""
 "or switch to another plugin using Tools|Preferences|Encoding\n"
 msgstr ""
 
-#: src/plugins.c:1556
+#: src/plugins.c:1567
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "Koon muuttaminen ei onnistu, ole hyvä ja asenna imageMagick\n"
 
-#: src/plugins.c:1800
+#: src/plugins.c:1811
 #, c-format
 msgid ""
 "\n"
@@ -5001,7 +5001,7 @@ msgid ""
 "Error was %s\n"
 msgstr ""
 
-#: src/plugins.c:1821
+#: src/plugins.c:1832
 #, c-format
 msgid ""
 "\n"
@@ -5011,16 +5011,16 @@ msgid ""
 "Unable to use it.\n"
 msgstr ""
 
-#: src/plugins.c:1859
+#: src/plugins.c:1870
 msgid "/unknown"
 msgstr ""
 
-#: src/plugins.c:1885
+#: src/plugins.c:1896
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:2885
+#: src/plugins.c:2896
 #, c-format
 msgid "%s advanced settings"
 msgstr ""

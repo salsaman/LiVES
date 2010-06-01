@@ -34,6 +34,7 @@ static size_t prb=0;
 
 
 static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *userdata) {
+  if (info==NULL) pulse_server_rate=0;
   pulse_server_rate=info->sample_spec.rate;
 }
 
@@ -725,6 +726,10 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_operation_unref(pa_op);
   }
 
+  if (pulse_server_rate==0) {
+    fprintf(stderr,"Error - problem connecting to pulseaudio...expect more problems.\n");
+    return 1;
+  }
 
   pa_spec.rate=pdriver->out_arate=pdriver->in_arate=pulse_server_rate;
 

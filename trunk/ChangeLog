@@ -5,6 +5,8 @@ Add more formats to x264 encoder (needs testing).
 Add experimental webm encoding support in ffmpeg_encoder.
 Fix crash when right clicking in mt with no clips loaded.
 Const correctness in code (A. Penkov)
+Fix possible crash in rendered generators, and add them to crash recovery.
+Thread context fix for gtk+ 2.22 and higher.
 
 
 

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-05-12 10:07-0300\n"
+"POT-Creation-Date: 2010-06-01 13:57-0300\n"
 "PO-Revision-Date: 2010-02-15 12:06+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -559,42 +559,42 @@ msgstr "set %s を自動ロード..."
 msgid "Invalid audio player %s\n"
 msgstr "無効なオーディオプレーヤー %s\n"
 
-#: src/main.c:2108
+#: src/main.c:2103
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <無題%d> %dx%d : %d frames %d bpp %.3f fps"
 
-#: src/main.c:2112
+#: src/main.c:2107
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 
-#: src/main.c:2115
+#: src/main.c:2110
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 
-#: src/main.c:2121
+#: src/main.c:2116
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <ファイル未設定>"
 
-#: src/main.c:3244
+#: src/main.c:3239
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3246
+#: src/main.c:3241
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3458 src/main.c:3459 src/gui.c:1905 src/gui.c:2873
+#: src/main.c:3453 src/main.c:3454 src/gui.c:1905 src/gui.c:2873
 #: src/saveplay.c:1489
 msgid "Play"
 msgstr "再生"
 
-#: src/main.c:3829
+#: src/main.c:3824
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -602,35 +602,35 @@ msgstr ""
 "LiVESはこの画像をキャプチャできませんでした\n"
 "\n"
 
-#: src/main.c:3913
+#: src/main.c:3908
 #, c-format
 msgid "Closed file %s\n"
 msgstr "ファイル「%s」を閉じました\n"
 
-#: src/main.c:4069 src/gui.c:522 src/utils.c:2553 src/utils.c:2579
+#: src/main.c:4064 src/gui.c:522 src/utils.c:2552 src/utils.c:2578
 #: src/saveplay.c:2456 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "アンドゥ(_U)"
 
-#: src/main.c:4070 src/gui.c:535 src/utils.c:2554 src/utils.c:2580
+#: src/main.c:4065 src/gui.c:535 src/utils.c:2553 src/utils.c:2579
 #: src/saveplay.c:2457 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "リドゥ(_R)"
 
-#: src/main.c:4096 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
+#: src/main.c:4091 src/interface.c:639 src/gui.c:2063 src/preferences.c:1926
 #: src/resample.c:1747
 msgid "Video"
 msgstr "ビデオ"
 
-#: src/main.c:4097 src/interface.c:658 src/gui.c:2082
+#: src/main.c:4092 src/interface.c:658 src/gui.c:2082
 msgid "Left Audio"
 msgstr "左音声"
 
-#: src/main.c:4098 src/gui.c:2100
+#: src/main.c:4093 src/gui.c:2100
 msgid "Right Audio"
 msgstr "右音声"
 
-#: src/main.c:4143
+#: src/main.c:4138
 msgid ""
 "\n"
 "\n"
@@ -3452,11 +3452,11 @@ msgstr "Cacher la Fenêtre de Lecture"
 msgid "Show Play Window"
 msgstr "再生ウィンドウの表示"
 
-#: src/utils.c:479
+#: src/utils.c:481
 msgid "Clearing the clipboard"
 msgstr "クリップボードを消去します"
 
-#: src/utils.c:502
+#: src/utils.c:504
 #, c-format
 msgid ""
 "\n"
@@ -3467,7 +3467,7 @@ msgstr ""
 "==============================\n"
 "クリップ「%s」へ変更しました\n"
 
-#: src/utils.c:506
+#: src/utils.c:508
 msgid ""
 "\n"
 "==============================\n"
@@ -3477,11 +3477,11 @@ msgstr ""
 "==============================\n"
 "空のクリップへ変更しました\n"
 
-#: src/utils.c:540
+#: src/utils.c:542
 msgid "(blank)"
 msgstr "（空白）"
 
-#: src/utils.c:542
+#: src/utils.c:544
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
@@ -3490,7 +3490,7 @@ msgstr ""
 "セット名は %s から %s に変更されました。それに伴いレイアウトがアップデートさ"
 "れています。\n"
 
-#: src/utils.c:549
+#: src/utils.c:551
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
@@ -3499,7 +3499,7 @@ msgstr ""
 "クリップ %s はこのセットに見当たりません。\n"
 "次のレイアウトに必要です。\n"
 
-#: src/utils.c:553
+#: src/utils.c:555
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
@@ -3508,7 +3508,7 @@ msgstr ""
 "クリップ %s は既に閉じています。\n"
 "次のレイアウトに必要です。\n"
 
-#: src/utils.c:558
+#: src/utils.c:560
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
@@ -3517,7 +3517,7 @@ msgstr ""
 "クリップ %s からフレームが移動しました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:563
+#: src/utils.c:565
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
@@ -3526,7 +3526,7 @@ msgstr ""
 "クリップ %s からフレームが消去されました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:568
+#: src/utils.c:570
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
@@ -3535,7 +3535,7 @@ msgstr ""
 "クリップ %s から音声が消去されました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:573
+#: src/utils.c:575
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
@@ -3544,7 +3544,7 @@ msgstr ""
 "クリップ %s で音声が移動しました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:578
+#: src/utils.c:580
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
@@ -3553,7 +3553,7 @@ msgstr ""
 "クリップ %s で音声が変更されました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:583
+#: src/utils.c:585
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
@@ -3562,7 +3562,7 @@ msgstr ""
 "クリップ %s でフレームが変更されました。\n"
 "次のレイアウトに影響します。\n"
 
-#: src/utils.c:746
+#: src/utils.c:748
 #, c-format
 msgid ""
 "Set %s\n"
@@ -3572,7 +3572,7 @@ msgstr ""
 "他のLiVESプログラムで使用されており、\n"
 "セット %s を開けません。\n"
 
-#: src/utils.c:752
+#: src/utils.c:754
 #, c-format
 msgid ""
 "\n"
@@ -3583,7 +3583,7 @@ msgstr ""
 "このセット %s は他のLiVESプログラムで使用されています。\n"
 "他のセット名を選んで下さい。\n"
 
-#: src/utils.c:776
+#: src/utils.c:778
 msgid ""
 "\n"
 "Set names may not be blank.\n"
@@ -3591,7 +3591,7 @@ msgstr ""
 "\n"
 "セット名が空白ではいけません。\n"
 
-#: src/utils.c:780
+#: src/utils.c:782
 #, c-format
 msgid ""
 "\n"
@@ -3600,7 +3600,7 @@ msgstr ""
 "\n"
 "セット名に空白もしくは %s 文字を含んではいけません。\n"
 
-#: src/utils.c:792
+#: src/utils.c:794
 #, c-format
 msgid ""
 "\n"
@@ -3611,68 +3611,68 @@ msgstr ""
 "セット %s は既に存在します。\n"
 "他のセット名を選んで下さい。\n"
 
-#: src/utils.c:1014
+#: src/utils.c:1013
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "レイアウト %s を削除\n"
 
-#: src/utils.c:1387
+#: src/utils.c:1386
 msgid "Video [opening...]"
 msgstr "ビデオ [開く...]"
 
-#: src/utils.c:1391
+#: src/utils.c:1390
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "ビデオ [%.2f 秒]"
 
-#: src/utils.c:1395
+#: src/utils.c:1394
 msgid "(Undefined)"
 msgstr "(未定義)"
 
-#: src/utils.c:1398
+#: src/utils.c:1397
 msgid "(No video)"
 msgstr "(ビデオなし)"
 
-#: src/utils.c:1405
+#: src/utils.c:1404
 msgid "(No audio)"
 msgstr "(音声なし)"
 
-#: src/utils.c:1410
+#: src/utils.c:1409
 msgid "Mono  [opening...]"
 msgstr "モノラル [開く...]"
 
-#: src/utils.c:1413
+#: src/utils.c:1412
 msgid "Left Audio [opening...]"
 msgstr "左音声 [開く...]"
 
-#: src/utils.c:1418
+#: src/utils.c:1417
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "モノラル [%.2f 秒]"
 
-#: src/utils.c:1421
+#: src/utils.c:1420
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "左音声 [%.2f 秒]"
 
-#: src/utils.c:1429
+#: src/utils.c:1428
 msgid "Right Audio [opening...]"
 msgstr "右音声 [開く...]"
 
-#: src/utils.c:1432
+#: src/utils.c:1431
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "右音声 [%.2f 秒]"
 
-#: src/utils.c:1868
+#: src/utils.c:1867
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVESはクリップがロードされている間にmplayerを起動できませんでした。"
 
-#: src/utils.c:2048
+#: src/utils.c:2047
 msgid "Cleaning up clip"
 msgstr "クリップを消去します"
 
-#: src/utils.c:2176
+#: src/utils.c:2175
 #, c-format
 msgid ""
 "\n"
@@ -3687,25 +3687,25 @@ msgstr ""
 "\n"
 "上書きしますか ?\n"
 
-#: src/utils.c:2546 src/utils.c:2572 src/multitrack.c:3829
+#: src/utils.c:2545 src/utils.c:2571 src/multitrack.c:3829
 #, c-format
 msgid "_Undo %s"
 msgstr "%sをアンドゥ(_U)"
 
-#: src/utils.c:2547 src/utils.c:2573 src/multitrack.c:3851
+#: src/utils.c:2546 src/utils.c:2572 src/multitrack.c:3851
 #, c-format
 msgid "_Redo %s"
 msgstr "%sをリドゥ(_R)"
 
-#: src/utils.c:2598
+#: src/utils.c:2597
 msgid "-------------Selection------------"
 msgstr "------------- 選択範囲 ------------"
 
-#: src/utils.c:2603
+#: src/utils.c:2602
 msgid " sec ] ----------Selection---------- [ "
 msgstr " 秒 ] ---------- 選択範囲 ---------- [ "
 
-#: src/utils.c:2603
+#: src/utils.c:2602
 msgid " frames ] ----------"
 msgstr " フレーム ] ----------"
 
@@ -4989,7 +4989,7 @@ msgstr "音声ボリューム・コントローラー"
 msgid "Audio Volume Controllers"
 msgstr "音声ボリューム・コントローラー"
 
-#: src/effects-weed.c:276 src/plugins.c:1854
+#: src/effects-weed.c:276 src/plugins.c:1865
 msgid "unknown"
 msgstr "不明"
 
@@ -5350,11 +5350,11 @@ msgstr ""
 "もしくは、ツール|設定|エンコーディング により他のプラグインに変更してくださ"
 "い。\n"
 
-#: src/plugins.c:1556
+#: src/plugins.c:1567
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "リサイズできません。ImageMagickをインストールして下さい。\n"
 
-#: src/plugins.c:1800
+#: src/plugins.c:1811
 #, c-format
 msgid ""
 "\n"
@@ -5367,7 +5367,7 @@ msgstr ""
 "再生デコーダプラグイン %s を開けません。\n"
 "エラーは %s\n"
 
-#: src/plugins.c:1821
+#: src/plugins.c:1832
 #, c-format
 msgid ""
 "\n"
@@ -5382,16 +5382,16 @@ msgstr ""
 "必須の機能がありません。\n"
 "利用することができません。\n"
 
-#: src/plugins.c:1859
+#: src/plugins.c:1870
 msgid "/unknown"
 msgstr "/不明"
 
-#: src/plugins.c:1885
+#: src/plugins.c:1896
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "%sのロードに失敗しました。トランジションはリサイズされません。\n"
 
-#: src/plugins.c:2885
+#: src/plugins.c:2896
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s 高度な設定"

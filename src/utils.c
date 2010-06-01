@@ -69,7 +69,7 @@ LIVES_INLINE gchar *g_strappend (gchar *string, gint len, const gchar *new) {
 }
 
 
-LIVES_INLINE GList *g_list_append_unique(GList *xlist, gchar *add) {
+LIVES_INLINE GList *g_list_append_unique(GList *xlist, const gchar *add) {
   if (g_list_find_custom(xlist,add,(GCompareFunc)strcmp)==NULL) return g_list_append(xlist,g_strdup(add));
   return xlist;
 }
@@ -521,7 +521,7 @@ void d_print(const gchar *text) {
 
 
 
-gboolean add_lmap_error(int lerror, gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current) {
+gboolean add_lmap_error(int lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current) {
   // potentially add a layout map error to the layout textbuffer
   GtkTextIter end_iter;
   gchar *text,*name2;
@@ -718,7 +718,7 @@ void clear_lmap_errors(void) {
 }
 
 
-gboolean check_for_lock_file(gchar *set_name, gint type) {
+gboolean check_for_lock_file(const gchar *set_name, gint type) {
   // check for lock file
   int info_fd;
   gchar *msg=NULL;
@@ -770,7 +770,7 @@ gboolean check_for_lock_file(gchar *set_name, gint type) {
 }
 
 
-gboolean is_legal_set_name(gchar *set_name, gboolean allow_dupes) {
+gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
   gchar *msg;
   gchar *reject=" /\\*\"";
 
@@ -917,12 +917,9 @@ gchar *get_extension(const gchar *filename) {
 
 
 
-gchar *ensure_extension(gchar *fname, gchar *ext) {
-  gchar *ret;
-  if (!strcmp(fname+strlen(fname)-strlen(ext),ext)) return fname;
-  ret=g_strconcat(fname,ext,NULL);
-  g_free(fname);
-  return ret;
+gchar *ensure_extension(const gchar *fname, const gchar *ext) {
+  if (!strcmp(fname+strlen(fname)-strlen(ext),ext)) return g_strdup(fname);
+  return g_strconcat(fname,ext,NULL);
 }
 
 
@@ -959,7 +956,7 @@ get_location(const gchar *exe, gchar *val, gint maxlen) {
 }
 
 
-gchar *repl_tmpdir(gchar *entry, gboolean fwd) {
+gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
   // replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
   // used for layout.map file
   // return value should be g_free()'d
@@ -2212,7 +2209,7 @@ check_file(const gchar *file_name, gboolean check_existing) {
 
 
 gboolean 
-check_dir_access (gchar *dir) {
+check_dir_access (const gchar *dir) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
 
@@ -2289,7 +2286,7 @@ get_file_size(int fd) {
 }
 
 gulong
-sget_file_size(gchar *name) {
+sget_file_size(const gchar *name) {
   // get the size of file fd
   struct stat filestat;
   int fd;
@@ -2629,7 +2626,7 @@ LIVES_INLINE void g_list_free_strings(GList *slist) {
 }
 
 
-void cache_file_contents(gchar *filename) {
+void cache_file_contents(const gchar *filename) {
   FILE *hfile;
   gchar buff[65536];
 
@@ -3118,7 +3115,7 @@ gboolean check_for_ratio_fps (gdouble fps) {
 }
 
 
-gdouble get_ratio_fps(gchar *string) {
+gdouble get_ratio_fps(const gchar *string) {
   // return a ratio (8dp) fps from a string with format num:denom
   gdouble fps;
   gchar *fps_string;
@@ -3191,7 +3188,7 @@ get_token_count (const gchar *string, int delim) {
 
 
 
-gchar *subst (gchar *string, gchar *from, gchar *to) {
+gchar *subst (const gchar *string, const gchar *from, const gchar *to) {
   // return a string with all occurrences of from replaced with to
   // return value should be freed after use
   gchar *ret=g_strdup(string),*first;
@@ -3258,7 +3255,7 @@ gint hextodec (const gchar *string) {
   return tot;
 }
 
-gint get_hex_digit (gchar *c) {
+gint get_hex_digit (const gchar *c) {
   if (!strcmp (c,"a")||!strcmp (c,"A")) return 10;
   if (!strcmp (c,"b")||!strcmp (c,"B")) return 11;
   if (!strcmp (c,"c")||!strcmp (c,"C")) return 12;

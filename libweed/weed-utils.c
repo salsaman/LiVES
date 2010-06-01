@@ -94,7 +94,7 @@ int weed_set_int64_value (weed_plant_t *plant, const char *key, int64_t value) {
   return weed_leaf_set (plant,key,WEED_SEED_INT64,1,&value);
 }
 
-int weed_set_string_value (weed_plant_t *plant, const char *key, char *value) {
+int weed_set_string_value (weed_plant_t *plant, const char *key, const char *value) {
   // returns a WEED_ERROR
   return weed_leaf_set (plant,key,WEED_SEED_STRING,1,&value);
 }
@@ -425,7 +425,7 @@ int weed_set_plantptr_array (weed_plant_t *plant, const char *key, int num_elems
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int weed_leaf_copy (weed_plant_t *dst, char *keyt, weed_plant_t *src, char *keyf) {
+int weed_leaf_copy (weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf) {
   int num,seed_type,i,error;
   int *datai;
   double *datad;

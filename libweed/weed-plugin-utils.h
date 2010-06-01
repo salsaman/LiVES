@@ -58,21 +58,21 @@ extern "C"
 
   weed_plant_t *weed_plugin_info_init (weed_bootstrap_f weed_boot, int num_versions, int *api_versions);
   int weed_get_api_version(weed_plant_t *plugin_info);
-  weed_plant_t *weed_channel_template_init (char *name, int flags, int *palettes);
-  weed_plant_t *weed_audio_channel_template_init (char *name, int flags);
-  weed_plant_t *weed_filter_class_init (char *name, char *author, int version, int flags, weed_init_f init_func, weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls, weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls);
+  weed_plant_t *weed_channel_template_init (const char *name, int flags, int *palettes);
+  weed_plant_t *weed_audio_channel_template_init (const char *name, int flags);
+  weed_plant_t *weed_filter_class_init (const char *name, const char *author, int version, int flags, weed_init_f init_func, weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls, weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls);
   void weed_plugin_info_add_filter_class (weed_plant_t *plugin_info, weed_plant_t *filter_class);
   weed_plant_t *weed_parameter_template_get_gui (weed_plant_t *paramt);
   weed_plant_t *weed_filter_class_get_gui (weed_plant_t *filter);
   
-  weed_plant_t *weed_integer_init (char *name, char *label, int def, int min, int max);
-  weed_plant_t *weed_string_list_init (char *name, char *label, int def, char **list);
-  weed_plant_t *weed_switch_init (char *name, char *label, int def);
-  weed_plant_t *weed_radio_init (char *name, char *label, int def, int group);
-  weed_plant_t *weed_float_init (char *name, char *label, double def, double min, double max);
-  weed_plant_t *weed_text_init (char *name, char *label, char *def);
-  weed_plant_t *weed_colRGBi_init (char *name, char *label, int red, int green, int blue);
-  weed_plant_t *weed_colRGBd_init (char *name, char *label, double red, double green, double blue);
+  weed_plant_t *weed_integer_init (const char *name, const char *label, int def, int min, int max);
+  weed_plant_t *weed_string_list_init (const char *name, const char *label, int def, char **list);
+  weed_plant_t *weed_switch_init (const char *name, const char *label, int def);
+  weed_plant_t *weed_radio_init (const char *name, const char *label, int def, int group);
+  weed_plant_t *weed_float_init (const char *name, const char *label, double def, double min, double max);
+  weed_plant_t *weed_text_init (const char *name, const char *label, const char *def);
+  weed_plant_t *weed_colRGBi_init (const char *name, const char *label, int red, int green, int blue);
+  weed_plant_t *weed_colRGBd_init (const char *name, const char *label, double red, double green, double blue);
 
   weed_plant_t **weed_clone_plants (weed_plant_t **plants);
 

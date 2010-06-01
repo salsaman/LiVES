@@ -42,7 +42,7 @@ typedef struct {
 #define LIVES_VSTREAM_COMPRESSION_NONE 0
 
 
-void lives2lives_read_stream (gchar *host, int port);
+void lives2lives_read_stream (const gchar *host, int port);
 void weed_layer_set_from_lives2lives (weed_plant_t *layer, gint clip, lives_vstream_t *lstream);
 void on_open_lives2lives_activate (GtkMenuItem *, gpointer);
 void on_send_lives2lives_activate (GtkMenuItem *, gpointer);

@@ -27,7 +27,7 @@ static gboolean list_plugins;
 // command-line plugins
 
 
-static GList *get_plugin_result (gchar *command, gchar *delim, gboolean allow_blanks) {
+static GList *get_plugin_result (const gchar *command, const gchar *delim, gboolean allow_blanks) {
   gchar **array;
   gint bytes=0,pieces;
   int outfile_fd,i;
@@ -153,7 +153,7 @@ plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, con
 
 
 GList *
-plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, gchar *delim, gboolean allow_blanks) {
+plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, gboolean allow_blanks) {
   // returns a GList of responses to -request, or NULL on error
   // by_line says whether we split on '\n' or on '|'
   GList *reslist=NULL;
@@ -192,7 +192,7 @@ plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const
 //////////////////
 // get list of plugins of various types
 
-GList *get_plugin_list (gchar *plugin_type, gboolean allow_nonex, gchar *plugdir, gchar *filter_ext) {
+GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gchar *plugdir, const gchar *filter_ext) {
   // returns a GList * of plugins of type plugin_type
   // returns empty list if there are no plugins of that type
 
@@ -204,7 +204,7 @@ GList *get_plugin_list (gchar *plugin_type, gboolean allow_nonex, gchar *plugdir
   gchar *com,*tmp;
   GList *pluglist;
 
-  gchar *ext=(filter_ext==NULL)?"":filter_ext;
+  const gchar *ext=(filter_ext==NULL)?"":filter_ext;
 
   if (!strcmp(plugin_type,PLUGIN_THEMES)) {
     com=g_strdup_printf ("smogrify list_plugins 0 1 \"%s%s\" \"\"",prefs->prefix_dir,THEME_DIR);
@@ -2313,14 +2313,14 @@ void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba) {
   w_memcpy(rgba,value,sizeof(lives_colRGBA32_t));
 }
 
-void set_bool_param(void *value, const gboolean _const) {
+void set_bool_param(void *value, gboolean _const) {
   set_int_param(value,!!_const);
 }
 
-void set_int_param(void *value, const gint _const) {
+void set_int_param(void *value, gint _const) {
   w_memcpy(value,&_const,sizint);
 }
-void set_double_param(void *value, const gdouble _const) {
+void set_double_param(void *value, gdouble _const) {
   w_memcpy(value,&_const,sizdbl);
 
 }
@@ -2356,7 +2356,7 @@ void set_colRGBA32_param(void *value, gshort red, gshort green, gshort blue, gsh
 
 
 
-gint find_rfx_plugin_by_name (gchar *name, gshort status) {
+gint find_rfx_plugin_by_name (const gchar *name, gshort status) {
   int i;
   for (i=1;i<mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) {
     if (mainw->rendered_fx[i].name!=NULL&&!strcmp (mainw->rendered_fx[i].name,name)&&mainw->rendered_fx[i].status==status) return (gint)i;
@@ -2823,7 +2823,7 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
 
 
 
-gchar *plugin_run_param_window(gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx) {
+gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx) {
 
   // here we create an rfx script from some fixed values and values from the plugin; we will then compile the script to an rfx scrap and use the scrap to get info
   // about additional parameters, and create the parameter window

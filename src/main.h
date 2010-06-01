@@ -566,8 +566,8 @@ void do_aud_during_play_error(void);
 void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);
 void do_set_load_lmap_error(void);
-gboolean do_set_duplicate_warning (gchar *new_set);
-gboolean do_set_rename_old_layouts_warning(gchar *new_set);
+gboolean do_set_duplicate_warning (const gchar *new_set);
+gboolean do_set_rename_old_layouts_warning(const gchar *new_set);
 gboolean do_layout_alter_frames_warning(void);
 gboolean do_layout_alter_audio_warning(void);
 gboolean do_yuv4m_open_warning(void);
@@ -585,21 +585,21 @@ void do_vpp_palette_error (void);
 void do_vpp_fps_error (void);
 void do_decoder_palette_error (void);
 void do_rmem_max_error (gint size);
-gboolean do_original_lost_warning(gchar *fname);
-void do_no_decoder_error(gchar *fname);
+gboolean do_original_lost_warning(const gchar *fname);
+void do_no_decoder_error(const gchar *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
 void do_jack_noopen_warn3(void);
-void do_file_perm_error(gchar *file_name);
-void do_dir_perm_error(gchar *dir_name);
+void do_file_perm_error(const gchar *file_name);
+void do_dir_perm_error(const gchar *dir_name);
 void do_encoder_img_ftm_error(render_details *rdet);
 void do_after_crash_warning (void);
 void do_bad_layout_error(void);
 void do_card_in_use_error(void);
-void do_dev_busy_error(gchar *devstr);
+void do_dev_busy_error(const gchar *devstr);
 
 gboolean process_one (gboolean visible);
-void do_threaded_dialog(gchar *text, gboolean has_cancel);
+void do_threaded_dialog(const gchar *text, gboolean has_cancel);
 void end_threaded_dialog(void);
 void response_ok (GtkButton *button, gpointer user_data);
 void response_cancel (GtkButton *button, gpointer user_data);
@@ -621,7 +621,7 @@ void do_text_window (const gchar *title, const gchar *text);
 void add_file_info(const gchar *check_handle, gboolean aud_only);
 void save_file_comments (void);
 void reget_afilesize (int fileno);
-void deduce_file(gchar *filename, gdouble start_time, gint end);
+void deduce_file(const gchar *filename, gdouble start_time, gint end);
 void open_file (const gchar *filename);
 void open_file_sel(const gchar *file_name,gdouble start_time, gint frames);
 void open_fw_device (void);
@@ -634,11 +634,11 @@ void play_file (void);
 gboolean save_frame(gint frame, const gchar *filename);
 void wait_for_stop (const gchar *stop_command);
 void save_clip_values(gint which_file);
-void add_to_recovery_file (gchar *handle);
+void add_to_recovery_file (const gchar *handle);
 void rewrite_recovery_file(void);
 gboolean check_for_recovery_files (gboolean auto_recover);
 void recover_layout_map(gint numclips);
-gchar *get_deinterlace_string(void);
+const gchar *get_deinterlace_string(void);
 
 // saveplay.c backup
 void backup_file(const gchar *filename);
@@ -650,7 +650,7 @@ void restore_file(const gchar *filename);
 gboolean read_headers(const gchar *file_name);
 
 // saveplay.c sets
-void open_set_file (gchar *set_name, gint clipnum);
+void open_set_file (const gchar *set_name, gint clipnum);
 
 
 // saveplay.c scrap file
@@ -662,9 +662,9 @@ void close_scrap_file (void);
 
 // main.c
 void catch_sigint(int signum);
-gboolean startup_message_fatal(gchar *msg);
-gboolean startup_message_nonfatal(gchar *msg);
-gboolean startup_message_nonfatal_dismissable(gchar *msg, gint warning_mask);
+gboolean startup_message_fatal(const gchar *msg);
+gboolean startup_message_nonfatal(const gchar *msg);
+gboolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask);
 capability *get_capabilities(void);
 void get_monitors(void);
 void load_start_image(gint frame);
@@ -721,7 +721,7 @@ void get_filename(gchar *filename);
 gchar *get_extension(const gchar *filename);
 void d_print(const gchar *text);
 void init_clipboard(void);
-void cache_file_contents(gchar *filename);
+void cache_file_contents(const gchar *filename);
 gchar *get_val_from_cached_list(const gchar *key, size_t maxlen);
 void get_pref(const gchar *key, gchar *val, gint maxlen);
 void get_pref_utf8(const gchar *key, gchar *val, gint maxlen);
@@ -758,12 +758,12 @@ void switch_aud_to_mplayer(void);
 void prepare_to_play_foreign(void);
 gboolean after_foreign_play(void);
 gboolean check_file(const gchar *file_name, gboolean check_exists);  // check if file exists
-gboolean check_dir_access (gchar *dir);
+gboolean check_dir_access (const gchar *dir);
 gulong get_file_size(int fd);
-gulong sget_file_size(gchar *name);
+gulong sget_file_size(const gchar *name);
 gulong get_fs_free(const gchar *dir);
 gboolean ensure_isdir(gchar *fname);
-gchar *ensure_extension(gchar *fname, gchar *ext);
+gchar *ensure_extension(const gchar *fname, const gchar *ext) WARN_UNUSED;
 void activate_url_inner(const gchar *link);
 void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data);
 void show_manual_section (const gchar *lang, const gchar *section);
@@ -774,24 +774,24 @@ LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time); // nearest
 LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time); // nearest frame mid
 
 gboolean check_for_ratio_fps (gdouble fps);
-gdouble get_ratio_fps(gchar *string);
+gdouble get_ratio_fps(const gchar *string);
 void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight);
 
 gchar *remove_trailing_zeroes(gdouble val);
 void toggle_button_toggle (GtkToggleButton *tbutton);
 void remove_layout_files(GList *lmap);
-gboolean add_lmap_error(int lerror, gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current);
+gboolean add_lmap_error(int lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current);
 void clear_lmap_errors(void);
 gboolean prompt_remove_layout_files(void);
-gboolean is_legal_set_name(gchar *set_name, gboolean allow_dupes);
-gchar *repl_tmpdir(gchar *entry, gboolean fwd);
+gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes);
+gchar *repl_tmpdir(const gchar *entry, gboolean fwd);
 gboolean get_clip_value(int which, int what, void *retval, size_t maxlen);
 void save_clip_value(int which, int what, void *val);
 gboolean check_frame_count(gint idx);
 void get_frame_count(gint idx);
 gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps);
 gboolean int_array_contains_value(int *array, int num_elems, int value);
-gboolean check_for_lock_file(gchar *set_name, gint type);
+gboolean check_for_lock_file(const gchar *set_name, gint type);
 void g_list_free_strings(GList *list);
 void gtk_tooltips_copy(GtkWidget *dest, GtkWidget *source);
 void adjustment_configure(GtkAdjustment *adjustment, gdouble value, gdouble lower, gdouble upper, gdouble step_increment, gdouble page_increment, gdouble page_size);
@@ -809,7 +809,7 @@ GdkPixmap* gdk_pixmap_copy (GdkPixmap *pixmap);
 GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette);
 void get_border_size (GtkWidget *win, gint *bx, gint *by);
 gchar *g_strappend (gchar *string, gint len, const gchar *new);
-GList *g_list_append_unique(GList *xlist, gchar *add);
+GList *g_list_append_unique(GList *xlist, const gchar *add);
 void find_when_to_stop (void);
 gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
@@ -818,10 +818,10 @@ LIVES_INLINE gint get_interp_value(gshort quality);
 GList *get_set_list(const gchar *dir);
 void combo_set_popdown_strings (GtkCombo *combo, GList *list);
 
-gchar *subst (gchar *string, gchar *from, gchar *to);
+gchar *subst (const gchar *string, const gchar *from, const gchar *to);
 
 gint hextodec (const gchar *string);
-gint get_hex_digit (gchar *c);
+gint get_hex_digit (const gchar *c);
 
 guint32 fastrand(void);
 void fastsrand(guint32 seed);
@@ -877,7 +877,7 @@ void *w_memcpy  (void *dest, const void *src, size_t n);
 gboolean lives_osc_init(guint osc_udp_port);
 gint lives_osc_poll(gpointer data);
 void lives_osc_end(void);
-gboolean lives_osc_notify(int msgtype, char *msgstring);
+gboolean lives_osc_notify(int msgtype, const char *msgstring);
 #include "osc_notify.h"
 #endif
 

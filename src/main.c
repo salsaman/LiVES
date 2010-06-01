@@ -374,7 +374,7 @@ static gboolean pre_init(void) {
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
   if (strlen(prefs->omc_js_fname)==0) {
-    gchar *tmp=get_js_filename();
+    const gchar *tmp=get_js_filename();
     if (tmp!=NULL) {
       g_snprintf(prefs->omc_js_fname,256,"%s",tmp);
       }
@@ -386,7 +386,7 @@ static gboolean pre_init(void) {
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
   if (strlen(prefs->omc_midi_fname)==0) {
-    gchar *tmp=get_midi_filename();
+    const gchar *tmp=get_midi_filename();
     if (tmp!=NULL) {
       g_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
     }
@@ -2077,19 +2077,19 @@ int main (int argc, char *argv[]) {
 
 
 
-gboolean startup_message_fatal(gchar *msg) {
+gboolean startup_message_fatal(const gchar *msg) {
   splash_end();
   do_blocking_error_dialog (msg);
   lives_exit();
   return TRUE;
 }
 
-gboolean startup_message_nonfatal(gchar *msg) {
+gboolean startup_message_nonfatal(const gchar *msg) {
   do_error_dialog (msg);
   return TRUE;
 }
 
-gboolean startup_message_nonfatal_dismissable(gchar *msg, gint warning_mask) {
+gboolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask) {
   do_error_dialog_with_check (msg, warning_mask);
   return TRUE;
 }

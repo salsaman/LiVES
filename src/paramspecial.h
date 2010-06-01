@@ -54,7 +54,7 @@ typedef struct {
 
 void init_special (void);
 
-gint add_to_special (gchar *special_string, lives_rfx_t *);
+gint add_to_special (const gchar *special_string, lives_rfx_t *);
 
 void check_for_special (lives_param_t *, gint num, GtkBox *, lives_rfx_t *);
 

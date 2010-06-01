@@ -107,7 +107,7 @@ static void remove_all_nodes(gboolean every, omclearn_w *omclw) {
 }
 
 
-static inline int js_index(gchar *string) {
+static inline int js_index(const gchar *string) {
   // js index, or midi channel number
   gchar **array=g_strsplit(string," ",-1);
   gint res=atoi(array[1]);
@@ -116,7 +116,7 @@ static inline int js_index(gchar *string) {
 }
 
 
-static inline int midi_index(gchar *string) {
+static inline int midi_index(const gchar *string) {
   // midi controller number
   gchar **array;
   gint res;
@@ -138,7 +138,7 @@ static int js_fd;
 
 
 
-gchar * get_js_filename(void) {
+const gchar * get_js_filename(void) {
   gchar *js_fname;
 
   // OPEN DEVICE FILE
@@ -173,7 +173,7 @@ gboolean js_open(void) {
     if (js_fd < 0) return FALSE;
   }
   else {
-    gchar *tmp=get_js_filename();
+    const gchar *tmp=get_js_filename();
     if (tmp!=NULL) {
       g_snprintf(prefs->omc_js_fname,256,"%s",tmp);
     }
@@ -225,7 +225,7 @@ gchar *js_mangle(void) {
 }
 
 
-static inline int js_msg_type(gchar *string) {
+static inline int js_msg_type(const gchar *string) {
   return atoi(string);
 }
 
@@ -239,7 +239,7 @@ static inline int js_msg_type(gchar *string) {
 static int midi_fd;
 
 
-gchar *get_midi_filename(void) {
+const gchar *get_midi_filename(void) {
 gchar *midi_fname;
 
   // OPEN DEVICE FILE
@@ -297,7 +297,7 @@ gboolean midi_open(void) {
     if (midi_fd < 0) return FALSE;
   }
   else {
-    gchar *tmp=get_midi_filename();
+    const gchar *tmp=get_midi_filename();
     if (tmp!=NULL) {
       g_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
     }
@@ -359,7 +359,7 @@ static int get_midi_len(int msgtype) {
 }
 
 
-static gint midi_msg_type(gchar *string) {
+static gint midi_msg_type(const gchar *string) {
   gint type=atoi(string);
 
   if ((type&0XF0)==0X90) return OMC_MIDI_NOTE;
@@ -515,7 +515,7 @@ gchar *midi_mangle(void) {
 
 
 
-static inline gchar *cut_string_elems(gchar *string, gint nelems) {
+static inline gchar *cut_string_elems(const gchar *string, gint nelems) {
   // remove elements after nelems
 
   gchar *retval=g_strdup(string);
@@ -560,7 +560,7 @@ static gchar *omc_learn_get_pname(gint type, gint idx) {
 
 
 
-static gint omc_learn_get_pvalue(gint type, gint idx, gchar *string) {
+static gint omc_learn_get_pvalue(gint type, gint idx, const gchar *string) {
   gchar **array=g_strsplit(string," ",-1);
   gint res;
 
@@ -579,7 +579,7 @@ static gint omc_learn_get_pvalue(gint type, gint idx, gchar *string) {
 
 
 
-static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_string, gchar *new_text, gpointer user_data) {
+static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *path_string, const gchar *new_text, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
   lives_omc_macro_t omacro=omc_macros[mnode->macro];
@@ -822,7 +822,7 @@ static void on_omc_combo_entry_changed (GtkEntry *macro_entry, gpointer ptr) {
 
 
 
-static void cell_toggled_callback (GtkCellRendererToggle *toggle, gchar *path_string, gpointer user_data) {
+static void cell_toggled_callback (GtkCellRendererToggle *toggle, const gchar *path_string, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
   gint row;
 
@@ -865,7 +865,7 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, gchar *path_st
 
 
 
-static void cell_edited_callback (GtkCellRendererSpin *spinbutton, gchar *path_string, gchar *new_text, gpointer user_data) {
+static void cell_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *path_string, const gchar *new_text, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
   gint col=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spinbutton),"colnum"));
@@ -954,7 +954,7 @@ static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row
 
 
 
-static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *mnode, gchar *string, omclearn_w *omclw) {
+static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *mnode, const gchar *string, omclearn_w *omclw) {
    GtkWidget *label,*combo;
    GtkCellRenderer *renderer;
    GtkTreeViewColumn *column;
@@ -1600,7 +1600,7 @@ static void init_omc_macros(void) {
 }
 
 
-static int get_nfixed(gint type, gchar *string) {
+static int get_nfixed(gint type, const gchar *string) {
   int nfixed=0;
 
   switch (type) {
@@ -1630,7 +1630,7 @@ static int get_nfixed(gint type, gchar *string) {
 
 
 
-static gboolean match_filtered_params(lives_omc_match_node_t *mnode, gchar *sig, int nfixed) {
+static gboolean match_filtered_params(lives_omc_match_node_t *mnode, const gchar *sig, int nfixed) {
   int i;
   gchar **array=g_strsplit(sig," ",-1);
 
@@ -1651,7 +1651,7 @@ static gboolean match_filtered_params(lives_omc_match_node_t *mnode, gchar *sig,
 
 
 
-static lives_omc_match_node_t *omc_match_sig(gint type, gint index, gchar *sig) {
+static lives_omc_match_node_t *omc_match_sig(gint type, gint index, const gchar *sig) {
   GSList *nlist=omc_node_list;
   gchar *srch,*cnodex;
   lives_omc_match_node_t *cnode;
@@ -1711,7 +1711,7 @@ static lives_omc_match_node_t *omc_match_sig(gint type, gint index, gchar *sig) 
 
 
 
-inline static gint omclearn_get_fixed_elems(gchar *string1, gchar *string2) {
+inline static gint omclearn_get_fixed_elems(const gchar *string1, const gchar *string2) {
   // count how many (non-space) elements match
   // e.g "a b c" and "a b d" returns 2
 
@@ -1733,7 +1733,7 @@ inline static gint omclearn_get_fixed_elems(gchar *string1, gchar *string2) {
 
 
 
-static inline gint get_nth_elem(gchar *string, gint idx) {
+static inline gint get_nth_elem(const gchar *string, gint idx) {
   gchar **array=g_strsplit(string," ",-1);
   gint retval=atoi(array[idx]);
   g_strfreev(array);
@@ -1744,7 +1744,7 @@ static inline gint get_nth_elem(gchar *string, gint idx) {
 
 
 
-static lives_omc_match_node_t *lives_omc_match_node_new(gint str_type, gint index, gchar *string, gint nfixed) {
+static lives_omc_match_node_t *lives_omc_match_node_new(gint str_type, gint index, const gchar *string, gint nfixed) {
   int i;
   gchar *tmp;
   gchar *srch_str;
@@ -1792,7 +1792,7 @@ static lives_omc_match_node_t *lives_omc_match_node_new(gint str_type, gint inde
 
 
 
-static gint *omclearn_get_values(gchar *string, gint nfixed) {
+static gint *omclearn_get_values(const gchar *string, gint nfixed) {
   register int i,j;
   size_t slen,tslen;
   gint *retvals,count=0,nvars;
@@ -1833,7 +1833,7 @@ static gint *omclearn_get_values(gchar *string, gint nfixed) {
 
 
 
-void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint index, gchar *string, gint nfixed, omclearn_w *omclw) {
+void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint index, const gchar *string, gint nfixed, omclearn_w *omclw) {
 
   if (nfixed==-1) {
     // already there : allow user to update
@@ -1856,7 +1856,7 @@ void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint 
 
 
 
-lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx, omclearn_w *omclw) {
+lives_omc_match_node_t *omc_learn(const gchar *string, gint str_type, gint idx, omclearn_w *omclw) {
   // here we come with a string, which must be a sequence of integers
   // separated by single spaces
 
@@ -1984,7 +1984,7 @@ lives_omc_match_node_t *omc_learn(gchar *string, gint str_type, gint idx, omclea
 
 
 
-void omc_process_string(gint supertype, gchar *string, gboolean learn, omclearn_w *omclw) {
+void omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw) {
   // only need to set omclw if learn is TRUE
 
   int type=0,idx=-1;
@@ -2095,7 +2095,7 @@ void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-static void write_fx_tag(gchar *string, int nfixed, lives_omc_match_node_t *mnode, lives_omc_macro_t *omacro, gchar *typetags) {
+static void write_fx_tag(const gchar *string, int nfixed, lives_omc_match_node_t *mnode, lives_omc_macro_t *omacro, gchar *typetags) {
   // get typetag for a filter parameter
 
   int i,j,k;
@@ -2169,7 +2169,7 @@ static void write_fx_tag(gchar *string, int nfixed, lives_omc_match_node_t *mnod
 
 
 
-OSCbuf *omc_learner_decode(gint type, gint idx, gchar *string) {
+OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
   gint macro,nfixed;
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
@@ -2381,14 +2381,14 @@ static void omc_node_list_free(GSList *slist) {
 }
 
 
-static void do_midi_load_error(gchar *fname) {
+static void do_midi_load_error(const gchar *fname) {
   gchar *msg=g_strdup_printf (_("\n\nError parsing file\n%s\n"),fname);
   do_blocking_error_dialog (msg);
   g_free (msg);
   d_print_failed();
 }
 
-static void do_midi_version_error(gchar *fname) {
+static void do_midi_version_error(const gchar *fname) {
   gchar *msg=g_strdup_printf (_("\n\nInvalid version in file\n%s\n"),fname);
   do_blocking_error_dialog (msg);
   g_free (msg);

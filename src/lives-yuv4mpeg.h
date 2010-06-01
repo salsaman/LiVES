@@ -42,7 +42,7 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *);
 
 
 // not used
-gboolean lives_yuv_stream_start_write (lives_yuv4m_t *, gchar *filename, gint hsize, gint vsize, gdouble fps);
+gboolean lives_yuv_stream_start_write (lives_yuv4m_t *, const gchar *filename, gint hsize, gint vsize, gdouble fps);
 gboolean lives_yuv_stream_write_frame (lives_yuv4m_t *, void *pixel_data);
 void lives_yuv_stream_stop_write (lives_yuv4m_t *);
 

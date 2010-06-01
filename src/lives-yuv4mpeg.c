@@ -415,7 +415,7 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 gboolean 
-lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, gchar *filename, gint hsize, gint vsize, gdouble fps) {
+lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *filename, gint hsize, gint vsize, gdouble fps) {
   int i;
 
   if (mainw->fixed_fpsd>-1.&&mainw->fixed_fpsd!=fps) {

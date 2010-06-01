@@ -749,7 +749,7 @@ void mt_clear_timeline(lives_mt *mt);
 
 // context box text
 void clear_context (lives_mt *);
-void add_context_label (lives_mt *, gchar *text);
+void add_context_label (lives_mt *, const gchar *text);
 void mouse_mode_context(lives_mt *);
 void do_sel_context (lives_mt *);
 void do_fx_list_context (lives_mt *, gint fxcount);
@@ -807,9 +807,9 @@ weed_plant_t *load_event_list(lives_mt *, gchar *eload_file);
 GList *load_layout_map(void);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
-void save_layout_map (int *lmap, double *lmap_audio, gchar *file, gchar *dir);
+void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gchar *dir);
 
-void migrate_layouts (gchar *old_set_name, gchar *new_set_name);
+void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name);
 
 GList *layout_frame_is_affected(gint clipno, gint frame);
 GList *layout_audio_is_affected(gint clipno, gdouble time);

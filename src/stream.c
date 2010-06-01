@@ -419,7 +419,7 @@ static gboolean l2l_parse_packet_header(lives_vstream_t *lstream, gint strtype, 
 
 
 
-void lives2lives_read_stream(gchar *host, int port) {
+void lives2lives_read_stream(const gchar *host, int port) {
   lives_vstream_t *lstream=(lives_vstream_t *)g_malloc(sizeof(lives_vstream_t));
   gboolean done=FALSE;
   gint old_file=mainw->current_file,new_file;

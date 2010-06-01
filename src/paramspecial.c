@@ -40,7 +40,7 @@ init_special (void) {
 
 
 gint 
-add_to_special (gchar *sp_string, lives_rfx_t *rfx) {
+add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
   gchar **array=g_strsplit (sp_string,"|",-1);
   int num_widgets=get_token_count(sp_string,'|')-2;
   int i,pnum;

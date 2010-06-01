@@ -137,7 +137,7 @@ gboolean lives_status_send (gchar *msg) {
 }
 
 
-gboolean lives_osc_notify (int msgnumber,gchar *msgstring) {
+gboolean lives_osc_notify (int msgnumber,const gchar *msgstring) {
   if (notify_socket==NULL) return FALSE;
   else {
     gchar *sep=((msgstring==NULL||strlen(msgstring)==0)?"":" ");

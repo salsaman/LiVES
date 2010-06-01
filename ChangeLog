@@ -7,6 +7,7 @@ Fix crash when right clicking in mt with no clips loaded.
 Const correctness in code (A. Penkov)
 Fix possible crash in rendered generators, and add them to crash recovery.
 Thread context fix for gtk+ 2.22 and higher.
+Fix startup mplayer png/alpha test.
 
 
 

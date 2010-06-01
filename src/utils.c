@@ -837,6 +837,7 @@ void get_frame_count(gint idx) {
   g_free(com);
   
   info_fd=open(info_file,O_RDONLY);
+
   if ((bytes=read(info_fd,mainw->msg,256))>0) {
     memset(mainw->msg+bytes,0,1);
     mainw->files[idx]->frames=atoi(mainw->msg);

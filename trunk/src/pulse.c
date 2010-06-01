@@ -727,7 +727,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   }
 
   if (pulse_server_rate==0) {
-    fprintf(stderr,"Error - problem connecting to pulseaudio...expect more problems.\n");
+    g_printerr("Warning - problem getting pulseaudio rate...expect more problems ahead.\n");
     return 1;
   }
 

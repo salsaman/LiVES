@@ -1192,6 +1192,12 @@ if (defined($ARGV[0])) {
     }
 
 
+	if ($command eq "open_test") {
+	    $command="open";
+	    $opentest=1;
+	}
+
+
 	if ($command eq "open") {
 	unlink "$curtmpdir/pause";
 
@@ -1304,7 +1310,9 @@ if (defined($ARGV[0])) {
 	    
 	    $syscom2=$syscom." >$curtmpfile 2>/dev/null";
 
-	    &sig_progress(0);
+	    unless ($opentest==1) {
+		&sig_progress(0);
+	    }
 
 	    system($syscom2);
 	    

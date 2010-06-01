@@ -750,7 +750,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     rname=get_resource("vidtest.avi");
 
-    com=g_strdup_printf("smogrify open %s \"%s\" 0 png 0. 0",cfile->handle,(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
+    com=g_strdup_printf("smogrify open_test %s \"%s\" 0 png",cfile->handle,(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
     g_free(tmp);
     
     dummyvar=system(com);
@@ -766,6 +766,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 
       sync();
 
+      cfile->img_type=IMG_TYPE_PNG;
       get_frame_count(mainw->current_file);
       
       if (cfile->frames==0) {

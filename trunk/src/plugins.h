@@ -17,7 +17,7 @@
 
 // generic plugins
 
-GList *get_plugin_list (gchar *plugin_type, gboolean allow_nonex, gchar *plugdir, gchar *filter_ext);
+GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gchar *plugdir, const gchar *filter_ext);
 #define PLUGIN_ENCODERS "encoders"
 #define PLUGIN_DECODERS "decoders"
 #define PLUGIN_VID_PLAYBACK "playback/video"
@@ -35,7 +35,7 @@ GList *plugin_request (const gchar *plugin_type, const gchar *plugin_name, const
 GList *plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
 GList *plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
 GList *plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-GList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, gchar *delim, gboolean allow_blanks);
+GList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, gboolean allow_blanks);
 
 
 // video playback plugins
@@ -376,7 +376,7 @@ void render_fx_get_params (lives_rfx_t *, const gchar *plugin_name, gshort statu
 
 void sort_rfx_array (lives_rfx_t *in_array, gint num_elements);
 
-gint find_rfx_plugin_by_name (gchar *name, gshort status);
+gint find_rfx_plugin_by_name (const gchar *name, gshort status);
 
 void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, gboolean full);
 
@@ -421,9 +421,9 @@ gdouble get_double_param(void *value);
 void get_colRGB24_param(void *value, lives_colRGB24_t *rgb);
 void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba);
 
-void set_bool_param(void *value, const gboolean _const);
-void set_int_param(void *value, const gint _const);
-void set_double_param(void *value, const gdouble _const);
+void set_bool_param(void *value, gboolean );
+void set_int_param(void *value, gint );
+void set_double_param(void *value, gdouble );
 void set_colRGB24_param(void *value, gshort red, gshort green, gshort blue);
 void set_colRGBA32_param(void *value, gshort red, gshort green, gshort blue, gshort alpha);
 
@@ -437,7 +437,7 @@ GList *array_to_string_list (gchar **array, gint offset, gint len);
 
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits);
 
-gchar *plugin_run_param_window(gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx);
+gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx);
 
 ////////////////////////////////////////////////////////////
 // video playback plugin window - fixed part

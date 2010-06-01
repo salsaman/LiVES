@@ -114,14 +114,14 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
   return TRUE;
 }
 
-gchar *get_deinterlace_string(void) {
+const gchar *get_deinterlace_string(void) {
   if (mainw->open_deint) return "-vf pp=ci";
   else return "";
 }
 
 
 void 
-deduce_file(gchar *file_name, gdouble start, gint end) {
+deduce_file(const gchar *file_name, gdouble start, gint end) {
   // this is a utility function to deduce whether we are dealing with a file, 
   // a selection, a backup, or a location
   gchar short_file_name[256];
@@ -3067,7 +3067,7 @@ gboolean read_headers(const gchar *file_name) {
 }
 
 
-void open_set_file (gchar *set_name, gint clipnum) {
+void open_set_file (const gchar *set_name, gint clipnum) {
   gchar name[256];
   gboolean needs_update=FALSE;
 
@@ -3988,7 +3988,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 
 
 
-void add_to_recovery_file (gchar *handle) {
+void add_to_recovery_file (const gchar *handle) {
   gchar *com=g_strdup_printf("/bin/echo \"%s\" >> %s",handle,mainw->recovery_file);
   dummyvar=system(com);
   g_free(com);

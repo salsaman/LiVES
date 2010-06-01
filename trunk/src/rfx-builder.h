@@ -201,7 +201,7 @@ typedef struct {
 } rfx_build_window_t;
 
 // builder window widgets/callbacks
-rfx_build_window_t *make_rfx_build_window (gchar *in_script_name, gshort in_status);
+rfx_build_window_t *make_rfx_build_window (const gchar *in_script_name, gshort in_status);
 void on_rfxbuilder_ok (GtkButton *, gpointer);
 void on_rfxbuilder_cancel (GtkButton *, gpointer);
 void rfxbuilder_destroy (rfx_build_window_t *);
@@ -254,7 +254,7 @@ void on_import_rfx_ok (GtkButton *, gpointer status);
 void add_rfx_effects(void);
 
 // utility functions
-gchar *prompt_for_script_name (gchar *sname, gshort status);
+gchar *prompt_for_script_name (const gchar *sname, gshort status);
 gboolean check_builder_programs (void);
 GList *get_script_list (gshort status);
 
@@ -264,7 +264,7 @@ gboolean perform_param_checks (rfx_build_window_t *, gint index, gint rows);
 
 // read/write script files
 gboolean rfxbuilder_to_script (rfx_build_window_t *);
-gboolean script_to_rfxbuilder (rfx_build_window_t *, gchar *script_file);
+gboolean script_to_rfxbuilder (rfx_build_window_t *, const gchar *script_file);
 
-GList *get_script_section (gchar *section, gchar *script_file, gboolean strip);
+GList *get_script_section (const gchar *section, const gchar *script_file, gboolean strip);
 

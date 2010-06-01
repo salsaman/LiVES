@@ -1496,7 +1496,7 @@ gboolean prompt_remove_layout_files(void) {
 }
 
 
-gboolean do_set_duplicate_warning (gchar *new_set) {
+gboolean do_set_duplicate_warning (const gchar *new_set) {
   gchar *msg=g_strdup_printf(_("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\nClick Cancel to pick a new name.\n"),new_set);
   gboolean retcode=do_warning_dialog_with_check(msg,WARN_MASK_DUPLICATE_SET);
   g_free(msg);
@@ -1511,14 +1511,14 @@ gboolean do_layout_alter_audio_warning(void) {
   return do_warning_dialog(_("\nAudio from this clip is used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
 
-gboolean do_original_lost_warning(gchar *fname) {
+gboolean do_original_lost_warning(const gchar *fname) {
   gchar *msg=g_strdup_printf(_("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, please copy it back to its original location\nand click 'OK' to try again.\nOtherwise click cancel to skip loading this file.\n"),fname);
   gboolean retcode=do_warning_dialog(msg);
   g_free(msg);
   return retcode;
 }
 
-void do_no_decoder_error(gchar *fname) {
+void do_no_decoder_error(const gchar *fname) {
   gchar *msg=g_strdup_printf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"),fname);
     do_error_dialog(msg);
     g_free(msg);
@@ -1546,7 +1546,7 @@ void do_mt_backup_space_error(lives_mt *mt, gint memreq_mb) {
     g_free(msg);
 }
 
-gboolean do_set_rename_old_layouts_warning(gchar *new_set) {
+gboolean do_set_rename_old_layouts_warning(const gchar *new_set) {
   gchar *msg=g_strdup_printf(_("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nClick OK to delete them, Cancel to leave them on the disk.\n"),new_set);
   gboolean retcode=do_warning_dialog(msg);
   g_free(msg);
@@ -1871,7 +1871,7 @@ static void *splash_prog (void *arg) {
 
 
  
-void do_threaded_dialog(gchar *text, gboolean has_cancel) {
+void do_threaded_dialog(const gchar *text, gboolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
   //
@@ -1977,14 +1977,14 @@ inline void d_print_file_error_failed(void) {
 }
 
 
-void do_file_perm_error(gchar *file_name) {
+void do_file_perm_error(const gchar *file_name) {
   gchar *msg=g_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
   do_blocking_error_dialog(msg);
   g_free(msg);
 }
 
 
-void do_dir_perm_error(gchar *dir_name) {
+void do_dir_perm_error(const gchar *dir_name) {
   gchar *msg=g_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),dir_name);
   do_blocking_error_dialog(msg);
   g_free(msg);
@@ -2006,7 +2006,7 @@ void do_card_in_use_error(void) {
 }
 
 
-void do_dev_busy_error(gchar *devstr) {
+void do_dev_busy_error(const gchar *devstr) {
   gchar *msg=g_strdup_printf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n- Check if the device actually exists.\n"),devstr);
   do_blocking_error_dialog(msg);
   g_free(msg);

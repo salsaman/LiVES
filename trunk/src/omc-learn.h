@@ -25,12 +25,12 @@
 gchar *js_mangle(void);
 gboolean js_open(void);
 void js_close(void);
-gchar *get_js_filename(void);
+const gchar *get_js_filename(void);
 #endif
 
 #ifdef OMC_MIDI_IMPL
 gchar *midi_mangle(void);
-gchar *get_midi_filename(void);
+const gchar *get_midi_filename(void);
 gboolean midi_open(void);
 void midi_close(void);
 #endif
@@ -150,7 +150,7 @@ void on_midi_learn_activate (GtkMenuItem *, gpointer);
 
 // process a string (i.e. convert to an OSC message and pass to OSC subsys)
 // only need to set omclw if learn is TRUE
-void omc_process_string(gint supertype, gchar *string, gboolean learn, omclearn_w *omclw);
+void omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw);
 
 
 
@@ -166,7 +166,7 @@ void on_midi_load_activate (GtkMenuItem *, gpointer);
 #define OSC_MAX_TYPETAGS 64 
 
 // decode learnt behaviours
-OSCbuf *omc_learner_decode(gint type, gint index, gchar *string);
+OSCbuf *omc_learner_decode(gint type, gint index, const gchar *string);
 
 
 #endif // _HAS_OMC_LEARN_H

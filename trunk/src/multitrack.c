@@ -9687,7 +9687,7 @@ void clear_context (lives_mt *mt) {
 }
 
 
-void add_context_label (lives_mt *mt, gchar *text) {
+void add_context_label (lives_mt *mt, const gchar *text) {
   // WARNING - do not add > 8 lines of text (including newlines) - otherwise the window can get resized
 
   GtkWidget *label=gtk_label_new (text);
@@ -16520,7 +16520,7 @@ GList *load_layout_map(void) {
 
 
 
-void save_layout_map (int *lmap, double *lmap_audio, gchar *file, gchar *dir) {
+void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gchar *dir) {
   // in the file "layout.map", we map each clip used in the set to which layouts (if any) it is used in
   // we also record the highest frame number used and the max audio time; and the current fps of the clip
   // and audio rate;
@@ -18707,7 +18707,7 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void migrate_layouts (gchar *old_set_name, gchar *new_set_name) {
+void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
   // load each event_list in mainw->layout_map_list
   GList *map=mainw->current_layouts_map;
   int fd;

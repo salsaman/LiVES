@@ -75,7 +75,7 @@ on_rename_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-rfx_build_window_t *make_rfx_build_window (gchar *script_name, gshort status) {
+rfx_build_window_t *make_rfx_build_window (const gchar *script_name, gshort status) {
   // TODO - set mnemonic widgets for entries
 
   GtkWidget *dialog_vbox;
@@ -3512,7 +3512,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 }
 
 
-gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, gchar *script_file) {
+gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *script_file) {
   GList *list;
   gchar **array;
   gint num_channels;
@@ -3844,7 +3844,7 @@ gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, gchar *script_fil
 
 
 
-GList *get_script_section (gchar *section, gchar *file, gboolean strip) {
+GList *get_script_section (const gchar *section, const gchar *file, gboolean strip) {
   FILE *script_file;
   gchar buff[65536];
   GList *list=NULL;
@@ -4164,7 +4164,7 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
 
 
 
-gchar *prompt_for_script_name(gchar *sname, gshort status) {
+gchar *prompt_for_script_name(const gchar *sname, gshort status) {
   // show dialog to get script name of rfx plugin dependant on type
   // set type to RFX_STATUS_ANY to let user pick type as well
   // return value should be g_free'd after use

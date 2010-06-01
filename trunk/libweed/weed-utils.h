@@ -43,7 +43,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2010 */
 
 #ifndef __WEED_UTILS_H__
 #define __WEED_UTILS_H__
@@ -62,7 +62,7 @@ int weed_set_int_value (weed_plant_t *plant, const char *key, int value);
 int weed_set_double_value (weed_plant_t *plant, const char *key, double value);
 int weed_set_boolean_value (weed_plant_t *plant, const char *key, int value);
 int weed_set_int64_value (weed_plant_t *plant, const char *key, int64_t value);
-int weed_set_string_value (weed_plant_t *plant, const char *key, char *value);
+int weed_set_string_value (weed_plant_t *plant, const char *key, const char *value);
 int weed_set_plantptr_value (weed_plant_t *plant, const char *key, weed_plant_t *value);
 int weed_set_voidptr_value (weed_plant_t *plant, const char *key, void *value);
 
@@ -90,7 +90,7 @@ int weed_set_string_array (weed_plant_t *plant, const char *key, int num_elems, 
 int weed_set_voidptr_array (weed_plant_t *plant, const char *key, int num_elems, void **values);
 int weed_set_plantptr_array (weed_plant_t *plant, const char *key, int num_elems, weed_plant_t **values);
 
-int weed_leaf_copy (weed_plant_t *dest, char *keyt, weed_plant_t *src, char *keyf);
+int weed_leaf_copy (weed_plant_t *dest, const char *keyt, weed_plant_t *src, const char *keyf);
 weed_plant_t *weed_plant_copy (weed_plant_t *src);
 int weed_get_plant_type (weed_plant_t *plant);
 

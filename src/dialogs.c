@@ -1660,12 +1660,6 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   gboolean pthread_islocked=TRUE;
   gdouble timesofar,sttime;
   gint progress;
-  GMainContext *ctx=NULL;
-
-#if GLIB_CHECK_VERSION(2,22,0)
-  ctx=g_main_context_new ();
-  g_main_context_push_thread_default(ctx);
-#endif
 
   // mutex lock
   do {
@@ -1679,9 +1673,6 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
   if (!pthread_islocked) {
     g_free(procw);
-#if GLIB_CHECK_VERSION(2,22,0)
-  g_main_context_unref(ctx);
-#endif
     return; // parent process finished already
   }
 
@@ -1785,23 +1776,21 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   if (!pthread_islocked) {
     gtk_widget_destroy(procw->processing);
     g_free(procw);
-
-#if GLIB_CHECK_VERSION(2,22,0)
-  g_main_context_unref(ctx);
-#endif
-
     return;
   }
 
   gtk_window_set_resizable (GTK_WINDOW (procw->processing), FALSE);
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
-  g_main_context_iteration(ctx,FALSE);
+
+  gtk_widget_queue_draw(procw->processing);
+  gdk_flush ();
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
 
   disp_frames_done=0;
   gettimeofday(&tv, NULL);
   sttime=tv.tv_sec*1000000+tv.tv_usec;
+
 
   while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER&&mainw->cancelled!=CANCEL_KEEP&&pthread_islocked) {
     // mutex locked
@@ -1815,7 +1804,10 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
       timesofar=(gdouble)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
       disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
     }
-    g_main_context_iteration(ctx,FALSE);
+
+    gtk_widget_queue_draw(procw->processing);
+    gdk_flush ();
+
     // unlock mutex
     pthread_mutex_unlock(&mainw->gtk_mutex);
     do {
@@ -1830,18 +1822,12 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   }
 
   gtk_widget_destroy(procw->processing);
-  while (g_main_context_iteration(ctx,FALSE));
+  gdk_flush ();
 
   g_free(procw);
 
-#if GLIB_CHECK_VERSION(2,22,0)
-  g_main_context_unref(ctx);
-#endif
-
   // unlock mutex
   if (pthread_islocked) pthread_mutex_unlock(&mainw->gtk_mutex);
-
-
 
 }
 

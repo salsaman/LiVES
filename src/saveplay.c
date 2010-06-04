@@ -203,14 +203,15 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     if (!strcmp(prefs->image_ext,"png")) cfile->img_type=IMG_TYPE_PNG;
 
     if (prefs->instant_open) {
-      cdata=get_decoder_plugin(cfile);
+      cdata=get_decoder_cdata(cfile);
       if (cfile->ext_src!=NULL) {
+	_decoder_plugin *dplug=(_decoder_plugin *)cfile->ext_src;
 	cfile->opening=TRUE;
 	cfile->clip_type=CLIP_TYPE_FILE;
 	
 	get_mime_type(cfile->type,40,cdata);
 	
-	cfile->hsize=cdata->width*weed_palette_get_pixels_per_macropixel(((_decoder_plugin *)(cfile->ext_src))->current_palette);
+	cfile->hsize=cdata->width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
 	cfile->vsize=cdata->height;
 	cfile->frames=cdata->nframes;
 	
@@ -222,7 +223,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	cfile->signed_endian=get_signed_endian(cdata->asigned, G_BYTE_ORDER==G_LITTLE_ENDIAN);
 
-	if (cfile->achans>0&&(((_decoder_plugin *)(cfile->ext_src))->rip_audio)!=NULL&&withsound==1) {
+	if (cfile->achans>0&&(dplug->rip_audio)!=NULL&&withsound==1) {
 	  // call rip_audio() in the decoder plugin
 
 	  // since this function blocks, we need to take some special measures to allow cancel
@@ -262,8 +263,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 	    end_threaded_dialog();
 
-	    if (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup!=NULL) {
-	      (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup)();
+	    if (dplug->rip_audio_cleanup!=NULL) {
+	      (dplug->rip_audio_cleanup)(cdata);
 	    }
 
 	    if (mainw->cancelled==CANCEL_KEEP) {
@@ -284,22 +285,20 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
 	    mainw->file_open_params=NULL;
 	    g_free(afile);
-	    g_free(tmp);
 	    return;
 	  }
 
 	  cfile->opening_only_audio=TRUE;
 	  do_threaded_dialog(msgstr,TRUE);
-	  g_free(msgstr);
-	  tmp=(char *)g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL);
 
-	  (((_decoder_plugin *)(cfile->ext_src))->rip_audio)(tmp,0,afile,(cfile->fps*start+.5),frames,NULL);
+	  (dplug->rip_audio)(cdata,afile,(cfile->fps*start+.5),frames,NULL);
 
-	  if (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup!=NULL) {
-	    (((_decoder_plugin *)(cfile->ext_src))->rip_audio_cleanup)();
+	  if (dplug->rip_audio_cleanup!=NULL) {
+	    (dplug->rip_audio_cleanup)(cdata);
 	  }
 
 	  end_threaded_dialog();
+	  g_free(msgstr);
 
       pt1:
 	  cfile->opening_only_audio=FALSE;
@@ -307,8 +306,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  mainw->sig_pid=0;
 	  g_free(mainw->sig_file);
 	  mainw->sig_file=NULL;
-	  g_free(tmp);
-	  tmp=NULL;
 	  g_free(afile);
 	}
 	else {
@@ -3868,7 +3865,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	gboolean next=FALSE;
 	while (1) {
 	  pthread_mutex_lock(&mainw->gtk_mutex);
-	  if ((cdata=get_decoder_plugin(cfile))==NULL) {
+	  if ((cdata=get_decoder_cdata(cfile))==NULL) {
 	    if (mainw->error) {
 	      if (do_original_lost_warning(cfile->file_name)) {
 		

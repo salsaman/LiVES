@@ -2478,6 +2478,8 @@ void load_start_image(gint frame) {
       }
     }
 
+    start_pixbuf=NULL;
+
     gtk_widget_queue_resize(mainw->image272);
 
     while (g_main_context_iteration(NULL,FALSE));
@@ -2499,10 +2501,9 @@ void load_end_image(gint frame) {
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
   gboolean noswitch=mainw->noswitch;
+  gint interp;
 
   if (mainw->multitrack!=NULL) return;
-
-  
 
   if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     pthread_mutex_lock(&mainw->gtk_mutex);
@@ -2557,6 +2558,8 @@ void load_end_image(gint frame) {
 
     if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
+      interp=get_interp_value(prefs->pb_quality);
+      resize_layer(layer,width,height,interp);
       end_pixbuf=layer_to_pixbuf(layer);
     }
 
@@ -2569,11 +2572,11 @@ void load_end_image(gint frame) {
       }
     }
 
+    end_pixbuf=NULL;
+
     gtk_widget_queue_resize(mainw->image273);
 
-    mainw->noswitch=TRUE;
     while (g_main_context_iteration(NULL,FALSE));
-    mainw->noswitch=noswitch;
   } while (rwidth!=mainw->image273->allocation.width||rheight!=mainw->image273->allocation.height);
 
   pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -2818,63 +2821,41 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
     }
     else {
       if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&frame<=sfile->frames&&sfile->frame_index[frame-1]>=0) {
-	gchar *tmp;
 	_decoder_plugin *dplug=(_decoder_plugin *)sfile->ext_src;
 
-	if (target_palette!=dplug->current_palette&&dplug->set_palette!=NULL) {
+	if (target_palette!=dplug->cdata->current_palette) {
 	  // try to switch palette
-	  if ((*dplug->set_palette)(target_palette)) {
-	    // sucess ! re-read clip data
-	    const lives_clip_data_t *cdata=(*dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
-	    g_free(tmp);
-
-	    if (weed_palette_is_yuv_palette(target_palette)) {
-	      dplug->YUV_sampling=cdata->YUV_sampling;
-	      dplug->YUV_clamping=cdata->YUV_clamping;
-	      dplug->YUV_subspace=cdata->YUV_subspace;
-	    }
-	    dplug->interlace=cdata->interlace;
-	    dplug->current_palette=target_palette;
+	  if (decplugin_supports_palette(dplug,target_palette)) {
+	    // switch palettes and re-read clip_data
+	    dplug->cdata->current_palette=target_palette;
+	    dplug->cdata=(*dplug->get_clip_data)(dplug->cdata->URI,dplug->cdata);
 	  }
 	  else {
-	    if (dplug->current_palette!=dplug->preferred_palette&&((weed_palette_is_rgb_palette(target_palette)&&weed_palette_is_rgb_palette(dplug->preferred_palette))||(weed_palette_is_yuv_palette(target_palette)&&weed_palette_is_yuv_palette(dplug->preferred_palette)))) {
-	      if ((*dplug->set_palette)(dplug->preferred_palette)) {
-		// sucess ! re-read clip data
-		const lives_clip_data_t *cdata=(*dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
-		g_free(tmp);
-		
-		if (weed_palette_is_yuv_palette(dplug->preferred_palette)) {
-		  dplug->YUV_sampling=cdata->YUV_sampling;
-		  dplug->YUV_clamping=cdata->YUV_clamping;
-		  dplug->YUV_subspace=cdata->YUV_subspace;
-		}
-		dplug->interlace=cdata->interlace;
-		dplug->current_palette=dplug->preferred_palette;
-	      }
+	    if (dplug->cdata->current_palette!=dplug->cdata->palettes[0]&&((weed_palette_is_rgb_palette(target_palette)&&weed_palette_is_rgb_palette(dplug->cdata->palettes[0]))||(weed_palette_is_yuv_palette(target_palette)&&weed_palette_is_yuv_palette(dplug->cdata->palettes[0])))) {
+	      dplug->cdata->current_palette=dplug->cdata->palettes[0];
+	      dplug->cdata=(*dplug->get_clip_data)(dplug->cdata->URI,dplug->cdata);
 	    }
 	  }
 	}
-	width=sfile->hsize/weed_palette_get_pixels_per_macropixel(dplug->current_palette);
+	width=sfile->hsize/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
 	height=sfile->vsize;
 	weed_set_int_value(layer,"width",width);
 	weed_set_int_value(layer,"height",height);
-	weed_set_int_value(layer,"current_palette",dplug->current_palette);
-	if (weed_palette_is_yuv_palette(dplug->current_palette)) {
-	  weed_set_int_value(layer,"YUV_sampling",dplug->YUV_sampling);
-	  weed_set_int_value(layer,"YUV_clamping",dplug->YUV_clamping);
-	  weed_set_int_value(layer,"YUV_subspace",dplug->YUV_subspace);
+	weed_set_int_value(layer,"current_palette",dplug->cdata->current_palette);
+	if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
+	  weed_set_int_value(layer,"YUV_sampling",dplug->cdata->YUV_sampling);
+	  weed_set_int_value(layer,"YUV_clamping",dplug->cdata->YUV_clamping);
+	  weed_set_int_value(layer,"YUV_subspace",dplug->cdata->YUV_subspace);
 	}
 	create_empty_pixel_data(layer);
 
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
-	(*dplug->get_frame)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0,(int64_t)(sfile->frame_index[frame-1]),pixel_data);
+	(*dplug->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),pixel_data);
 
-	g_free(tmp);
 	g_free(pixel_data);
 
-	if (sfile->deinterlace||(prefs->auto_deint&&dplug->interlace!=LIVES_INTERLACE_NONE)) deinterlace_frame(layer,tc);
-
+	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) deinterlace_frame(layer,tc);
 	mainw->osc_block=FALSE;
 	return TRUE;
       }

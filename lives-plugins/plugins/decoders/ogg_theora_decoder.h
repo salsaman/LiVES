@@ -79,7 +79,7 @@ typedef struct lives_stream_s {
   int type;
   uint32_t fourcc;
   uint64_t version;  // major * 1000000 + minor * 1000 + subminor
-  stream_priv_t *priv;
+  stream_priv_t *stpriv;
   int stream_id;
   int samplerate;
   int fps_num;
@@ -109,4 +109,32 @@ struct _index_entry {
 };
 
 
-static int ogg_data_process(yuv_buffer *yuv, boolean cont);
+
+
+
+typedef struct {
+  ogg_t *opriv;
+  lives_in_stream *astream;
+  lives_in_stream *vstream;
+  theora_priv_t *tpriv;
+  int64_t data_start;
+
+// seeking
+  off64_t input_position;
+  off64_t current_pos;
+  int skip;
+  int64_t last_kframe;
+  int64_t last_frame;
+  int64_t cframe;
+  int64_t kframe_offset;
+  int64_t cpagepos;
+  boolean ignore_packets;
+  boolean frame_out;
+
+// indexing
+  index_entry *idx;
+} lives_ogg_priv_t;
+
+
+
+

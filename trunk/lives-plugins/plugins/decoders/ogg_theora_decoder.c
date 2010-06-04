@@ -1,5 +1,5 @@
 // LiVES - ogg/theora/vorbis decoder plugin
-// (c) G. Finch 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2008 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -31,24 +31,13 @@
 
 #include "ogg_theora_decoder.h"
 
-static const char *plugin_version="LiVES ogg/theora decoder version 1.0";
 
-static lives_clip_data_t cdata;
-static ogg_t opriv;
-static lives_in_stream *astream=NULL,*vstream=NULL;
-static theora_priv_t tpriv;
-static int64_t data_start;
-static char *old_URI=NULL;
 
-// seeking
-static off64_t input_position;
-static int skip;
-static int64_t last_kframe,last_frame,cframe,kframe_offset;
-static int64_t cpagepos;
-static boolean ignore_packets,frame_out;
+static int ogg_data_process(lives_clip_data_t *cdata, yuv_buffer *yuv, boolean cont);
 
-// indexing
-static index_entry *indexa;
+static const char *plugin_version="LiVES ogg/theora decoder version 1.1";
+
+
 
 ////////////////////////////////////////////
 
@@ -68,7 +57,6 @@ static void index_entries_free (index_entry *idx) {
 
 
 
-
 static index_entry *index_entry_new(void) {
   index_entry *ie=(index_entry *)malloc(sizeof(index_entry));
   ie->next=NULL;
@@ -78,44 +66,44 @@ static index_entry *index_entry_new(void) {
 
 
 
-static index_entry *index_entry_add (index_entry *idx, int64_t granule, int64_t pagepos, index_entry **found) {
+static index_entry *index_entry_add (lives_clip_data_t *cdata, int64_t granule, int64_t pagepos) {
   // add or update entry for keyframe
-  index_entry *oidx=idx,*last_idx=NULL;
+  index_entry *idx,*oidx,*last_idx=NULL;
   int64_t gpos,frame,kframe,tframe,tkframe;
   
-  if (found!=NULL) *found=NULL;
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
 
-  if (vstream==NULL) return NULL;
+  if (priv->vstream==NULL) return NULL;
 
-  tkframe = granule >> vstream->priv->keyframe_granule_shift;
-  tframe = tkframe + granule-(tkframe<<vstream->priv->keyframe_granule_shift);
+  tkframe = granule >> priv->vstream->stpriv->keyframe_granule_shift;
+  tframe = tkframe + granule-(tkframe<<priv->vstream->stpriv->keyframe_granule_shift);
 
-  if (tkframe<1) return idx;
+  if (tkframe<1) return NULL;
+
+  oidx=idx=priv->idx;
 
   if (idx==NULL) {
     index_entry *ie=index_entry_new();
     ie->granulepos=granule;
     ie->pagepos=pagepos;
-    if (found!=NULL) *found=ie;
+    priv->idx=ie;
     return ie;
   }
-
 
   while (idx!=NULL) {
     gpos=idx->granulepos;
 
-    kframe = gpos >> vstream->priv->keyframe_granule_shift;
+    kframe = gpos >> priv->vstream->stpriv->keyframe_granule_shift;
     if (kframe>tframe) break;
 
     if (kframe==tkframe) {
       // entry exists, update it if applicable, and return it in found
-      frame = kframe + gpos-(kframe<<vstream->priv->keyframe_granule_shift);
+      frame = kframe + gpos-(kframe<<priv->vstream->stpriv->keyframe_granule_shift);
       if (frame<tframe) {
 	idx->granulepos=granule;
 	idx->pagepos=pagepos;
       }
-      if (found!=NULL) *found=idx;
-      return oidx;
+      return idx;
     }
 
     last_idx=idx;
@@ -143,16 +131,17 @@ static index_entry *index_entry_add (index_entry *idx, int64_t granule, int64_t 
   idx->granulepos=granule;
   idx->pagepos=pagepos;
 
-  if (found!=NULL) *found=idx;
-
-  return oidx;
+  return idx;
 }
 
 
 
-static index_entry *get_bounds_for (index_entry *idx, int64_t tframe, int64_t *ppos_lower, int64_t *ppos_upper) {
+static index_entry *get_bounds_for (lives_clip_data_t *cdata, int64_t tframe, int64_t *ppos_lower, int64_t *ppos_upper) {
   // find upper and lower pagepos for frame; alternately if found!=NULL and we find an exact match, we return it
   int64_t kframe,frame,gpos;
+
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  index_entry *idx=priv->idx;
 
   if (ppos_lower!=NULL) *ppos_lower=-1;
   if (ppos_upper!=NULL) *ppos_upper=-1;
@@ -166,7 +155,7 @@ static index_entry *get_bounds_for (index_entry *idx, int64_t tframe, int64_t *p
     }
 
     gpos=idx->granulepos;
-    kframe = gpos >> vstream->priv->keyframe_granule_shift;
+    kframe = gpos >> priv->vstream->stpriv->keyframe_granule_shift;
 
     //fprintf(stderr,"check %lld against %lld\n",tframe,kframe);
 
@@ -175,7 +164,7 @@ static index_entry *get_bounds_for (index_entry *idx, int64_t tframe, int64_t *p
       return NULL;
     }
 
-    frame = kframe + gpos-(kframe<<vstream->priv->keyframe_granule_shift);
+    frame = kframe + gpos-(kframe<<priv->vstream->stpriv->keyframe_granule_shift);
     //fprintf(stderr,"2check against %lld\n",frame);
     if (frame<tframe) {
       if (ppos_lower!=NULL) *ppos_lower=idx->pagepos;
@@ -204,29 +193,32 @@ static uint8_t * ptr_2_op(uint8_t * ptr, ogg_packet * op) {
 }
 
 
-static int64_t get_page(int64_t inpos) {
+static int64_t get_page(lives_clip_data_t *cdata, int64_t inpos) {
   uint8_t header[PAGE_HEADER_BYTES+255];
   int nsegs, i;
   int64_t result, gpos;
   int page_size;
   char * buf;
 
-  if (opriv.page_valid) {
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
+
+  if (opriv->page_valid) {
     fprintf(stderr,"page valid !\n");
     return 0;
   }
 
-  lseek64 (opriv.fd, inpos, SEEK_SET);
+  lseek64 (opriv->fd, inpos, SEEK_SET);
 
-  if (read (opriv.fd, header, PAGE_HEADER_BYTES) < PAGE_HEADER_BYTES) {
-    lseek64 (opriv.fd, inpos, SEEK_SET);
+  if (read (opriv->fd, header, PAGE_HEADER_BYTES) < PAGE_HEADER_BYTES) {
+    lseek64 (opriv->fd, inpos, SEEK_SET);
     return 0;
   }
 
   nsegs = header[PAGE_HEADER_BYTES-1];
   
-  if (read (opriv.fd, header+PAGE_HEADER_BYTES, nsegs) < nsegs) {
-    lseek64 (opriv.fd, inpos, SEEK_SET);
+  if (read (opriv->fd, header+PAGE_HEADER_BYTES, nsegs) < nsegs) {
+    lseek64 (opriv->fd, inpos, SEEK_SET);
     return 0;
   }
 
@@ -234,20 +226,20 @@ static int64_t get_page(int64_t inpos) {
 
   for (i=0;i<nsegs;i++) page_size += header[PAGE_HEADER_BYTES+i];
 
-  ogg_sync_reset(&opriv.oy);
+  ogg_sync_reset(&opriv->oy);
 
-  buf = ogg_sync_buffer(&(opriv.oy), page_size);
+  buf = ogg_sync_buffer(&(opriv->oy), page_size);
 
   memcpy(buf,header,PAGE_HEADER_BYTES+nsegs);
 
-  result = read (opriv.fd, (uint8_t*)buf+PAGE_HEADER_BYTES+nsegs, page_size-PAGE_HEADER_BYTES-nsegs);
+  result = read (opriv->fd, (uint8_t*)buf+PAGE_HEADER_BYTES+nsegs, page_size-PAGE_HEADER_BYTES-nsegs);
 
-  ogg_sync_wrote(&(opriv.oy), result+PAGE_HEADER_BYTES+nsegs);
-
-
+  ogg_sync_wrote(&(opriv->oy), result+PAGE_HEADER_BYTES+nsegs);
 
 
-  if (ogg_sync_pageout(&(opriv.oy), &(opriv.current_page)) != 1) {
+
+
+  if (ogg_sync_pageout(&(opriv->oy), &(opriv->current_page)) != 1) {
     //fprintf(stderr, "Got no packet %lld %d %s\n",result,page_size,buf);
     return 0;
   }
@@ -255,14 +247,14 @@ static int64_t get_page(int64_t inpos) {
   //fprintf(stderr, "Got packet %lld %d %s\n",result,page_size,buf);
 
 
-  if (vstream!=NULL) {
-    if (ogg_page_serialno(&(opriv.current_page))==vstream->stream_id) {
-      gpos=ogg_page_granulepos(&(opriv.current_page));
-      index_entry_add (indexa, gpos, inpos, NULL);
+  if (priv->vstream!=NULL) {
+    if (ogg_page_serialno(&(opriv->current_page))==priv->vstream->stream_id) {
+      gpos=ogg_page_granulepos(&(opriv->current_page));
+      index_entry_add (cdata, gpos, inpos);
     }
   }
 
-  opriv.page_valid = 1;
+  opriv->page_valid = 1;
   return result+PAGE_HEADER_BYTES+nsegs;
 }
 
@@ -316,14 +308,15 @@ static void append_extradata(lives_in_stream *s, ogg_packet * op) {
 }
 
 
-static inline lives_in_stream *stream_from_sno(int sno) {
-  if (astream!=NULL&&sno==astream->stream_id) return astream;
-  if (vstream!=NULL&&sno==vstream->stream_id) return vstream;
+static inline lives_in_stream *stream_from_sno(lives_clip_data_t *cdata, int sno) {
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  if (priv->astream!=NULL&&sno==priv->astream->stream_id) return priv->astream;
+  if (priv->vstream!=NULL&&sno==priv->vstream->stream_id) return priv->vstream;
   return NULL;
 }
 
 
-static int setup_track(int64_t start_position) {
+static int setup_tracks(lives_clip_data_t *cdata) {
   // pull first audio and video streams
 
   int done;
@@ -334,105 +327,108 @@ static int setup_track(int64_t start_position) {
 
   uint8_t imajor,iminor,isubminor;
 
-  opriv.page_valid=0;
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
 
-  lseek64(opriv.fd, start_position, SEEK_SET);
-  input_position=start_position;
+  opriv->page_valid=0;
+
+  lseek64(opriv->fd, priv->data_start, SEEK_SET);
+  priv->input_position=priv->data_start;
 
   /* Get the first page of each stream */
   while(1) {
-    if (!(input_pos=get_page(input_position))) {
+    if (!(input_pos=get_page(cdata,priv->input_position))) {
       //fprintf(stderr, "EOF1 while setting up track\n");
       return 0;
     }
 
-    input_position+=input_pos;
+    priv->input_position+=input_pos;
 
-    if (!ogg_page_bos(&(opriv.current_page))) {
-      opriv.page_valid = 1;
+    if (!ogg_page_bos(&(opriv->current_page))) {
+      opriv->page_valid = 1;
       break;
     }
 
     /* Setup stream */
-    serialno = ogg_page_serialno(&(opriv.current_page));
+    serialno = ogg_page_serialno(&(opriv->current_page));
     ogg_stream = calloc(1, sizeof(*ogg_stream));
     ogg_stream->last_granulepos = -1;
     
     ogg_stream_init(&ogg_stream->os, serialno);
-    ogg_stream_pagein(&ogg_stream->os, &(opriv.current_page));
-    opriv.page_valid = 0;
-    header_bytes += opriv.current_page.header_len + opriv.current_page.body_len;
+    ogg_stream_pagein(&ogg_stream->os, &(opriv->current_page));
+    opriv->page_valid = 0;
+    header_bytes += opriv->current_page.header_len + opriv->current_page.body_len;
 
-    if (ogg_stream_packetout(&ogg_stream->os, &opriv.op) != 1) {
+    if (ogg_stream_packetout(&ogg_stream->os, &opriv->op) != 1) {
       fprintf(stderr, "EOF3 while setting up track\n");
       return 0;
     }
       
-    ogg_stream->fourcc_priv = detect_stream(&opriv.op);
+    ogg_stream->fourcc_priv = detect_stream(&opriv->op);
 
     switch(ogg_stream->fourcc_priv) {
     case FOURCC_VORBIS:
-      if (astream!=NULL) {
+      if (priv->astream!=NULL) {
 	fprintf(stderr,"got extra audio stream\n");
 	break;
       }
-      astream = lives_in_stream_new(LIVES_STREAM_AUDIO);
-      astream->fourcc = FOURCC_VORBIS;
-      astream->priv   = ogg_stream;
-      astream->stream_id = serialno;
+      priv->astream = lives_in_stream_new(LIVES_STREAM_AUDIO);
+      priv->astream->fourcc = FOURCC_VORBIS;
+      priv->astream->stpriv   = ogg_stream;
+      priv->astream->stream_id = serialno;
 
       ogg_stream->header_packets_needed = 3;
-      append_extradata(astream, &opriv.op);
+      append_extradata(priv->astream, &opriv->op);
       ogg_stream->header_packets_read = 1;
 
       /* Get samplerate */
-      astream->samplerate=PTR_2_32LE(opriv.op.packet + 12);
-      //fprintf(stderr,"rate is %d\n",astream->samplerate);
+      priv->astream->samplerate=PTR_2_32LE(opriv->op.packet + 12);
+      //fprintf(stderr,"rate is %d\n",priv->astream->samplerate);
       
       /* Read remaining header packets from this page */
-      while (ogg_stream_packetout(&ogg_stream->os, &opriv.op) == 1) {
-	append_extradata(astream, &opriv.op);
+      while (ogg_stream_packetout(&ogg_stream->os, &opriv->op) == 1) {
+	append_extradata(priv->astream, &opriv->op);
 	ogg_stream->header_packets_read++;
 	if (ogg_stream->header_packets_read == ogg_stream->header_packets_needed)  break;
       }
       break;
     case FOURCC_THEORA:
-      if (vstream!=NULL) {
+      if (priv->vstream!=NULL) {
 	fprintf(stderr,"got extra video stream\n");
 	break;
       }
-      vstream = lives_in_stream_new(LIVES_STREAM_VIDEO);
-      vstream->fourcc = FOURCC_THEORA;
-      vstream->priv   = ogg_stream;
-      vstream->stream_id = serialno;
+      priv->vstream = lives_in_stream_new(LIVES_STREAM_VIDEO);
+      priv->vstream->fourcc = FOURCC_THEORA;
+      priv->vstream->stpriv   = ogg_stream;
+      priv->vstream->stream_id = serialno;
 
       ogg_stream->header_packets_needed = 3;
-      append_extradata(vstream, &opriv.op);
+      append_extradata(priv->vstream, &opriv->op);
       ogg_stream->header_packets_read = 1;
       
       /* get version */
-      imajor=((uint8_t *)(vstream->ext_data))[55];
-      iminor=((uint8_t *)(vstream->ext_data))[56];
-      isubminor=((uint8_t *)(vstream->ext_data))[57];
+      imajor=((uint8_t *)(priv->vstream->ext_data))[55];
+      iminor=((uint8_t *)(priv->vstream->ext_data))[56];
+      isubminor=((uint8_t *)(priv->vstream->ext_data))[57];
 
-      vstream->version=imajor*1000000+iminor*1000+isubminor;
+      priv->vstream->version=imajor*1000000+iminor*1000+isubminor;
 
       // TODO - get frame width, height, picture width, height, and x and y offsets
 
 
 
       /* Get fps and keyframe shift */
-      vstream->fps_num = PTR_2_32BE(opriv.op.packet+22);
-      vstream->fps_denom = PTR_2_32BE(opriv.op.packet+26);
+      priv->vstream->fps_num = PTR_2_32BE(opriv->op.packet+22);
+      priv->vstream->fps_denom = PTR_2_32BE(opriv->op.packet+26);
       
-      //fprintf(stderr,"fps is %d / %d\n",vstream->fps_num,vstream->fps_denom);
+      //fprintf(stderr,"fps is %d / %d\n",priv->vstream->fps_num,priv->vstream->fps_denom);
 
-      ogg_stream->keyframe_granule_shift = (char) ((opriv.op.packet[40] & 0x03) << 3);
-      ogg_stream->keyframe_granule_shift |= (opriv.op.packet[41] & 0xe0) >> 5;
+      ogg_stream->keyframe_granule_shift = (char) ((opriv->op.packet[40] & 0x03) << 3);
+      ogg_stream->keyframe_granule_shift |= (opriv->op.packet[41] & 0xe0) >> 5;
 
       /* Read remaining header packets from this page */
-      while (ogg_stream_packetout(&ogg_stream->os, &opriv.op) == 1) {
-	append_extradata(vstream, &opriv.op);
+      while (ogg_stream_packetout(&ogg_stream->os, &opriv->op) == 1) {
+	append_extradata(priv->vstream, &opriv->op);
 	ogg_stream->header_packets_read++;
 	if (ogg_stream->header_packets_read == ogg_stream->header_packets_needed) break;
       }
@@ -444,7 +440,7 @@ static int setup_track(int64_t start_position) {
     }
   }
 
-  if (vstream==NULL) return 0;
+  if (priv->vstream==NULL) return 0;
 
 
   /*
@@ -454,46 +450,46 @@ static int setup_track(int64_t start_position) {
 
   done = 0;
   while (!done) {
-    lives_in_stream *stream = stream_from_sno(ogg_page_serialno(&(opriv.current_page)));
+    lives_in_stream *stream = stream_from_sno(cdata,ogg_page_serialno(&(opriv->current_page)));
     if (stream) {
-      ogg_stream = (stream_priv_t*)(stream->priv);
-      ogg_stream_pagein(&(ogg_stream->os), &(opriv.current_page));
-      opriv.page_valid = 0;
-      header_bytes += opriv.current_page.header_len + opriv.current_page.body_len;
+      ogg_stream = (stream_priv_t*)(stream->stpriv);
+      ogg_stream_pagein(&(ogg_stream->os), &(opriv->current_page));
+      opriv->page_valid = 0;
+      header_bytes += opriv->current_page.header_len + opriv->current_page.body_len;
       
       switch(ogg_stream->fourcc_priv) {
       case FOURCC_THEORA:
       case FOURCC_VORBIS:
 	/* Read remaining header packets from this page */
-	while (ogg_stream_packetout(&ogg_stream->os, &opriv.op) == 1) {
-	  append_extradata(stream, &opriv.op);
+	while (ogg_stream_packetout(&ogg_stream->os, &opriv->op) == 1) {
+	  append_extradata(stream, &opriv->op);
 	  ogg_stream->header_packets_read++;
 	  /* Second packet is vorbis comment starting after 7 bytes */
-	  //if (ogg_stream->header_packets_read == 2) parse_vorbis_comment(stream, opriv.op.packet + 7, opriv.op.bytes - 7);
+	  //if (ogg_stream->header_packets_read == 2) parse_vorbis_comment(stream, opriv->op.packet + 7, opriv->op.bytes - 7);
 	  if (ogg_stream->header_packets_read == ogg_stream->header_packets_needed) break;
 	}
 	break;
       }
     }
     else {
-      opriv.page_valid = 0;
-      header_bytes += opriv.current_page.header_len + opriv.current_page.body_len;
+      opriv->page_valid = 0;
+      header_bytes += opriv->current_page.header_len + opriv->current_page.body_len;
     }
     
     /* Check if we are done for all streams */
     done = 1;
     
     //for (i = 0; i < track->num_audio_streams; i++) {
-    if (astream!=NULL) {
-      ogg_stream = astream->priv;
+    if (priv->astream!=NULL) {
+      ogg_stream = priv->astream->stpriv;
       if (ogg_stream->header_packets_read < ogg_stream->header_packets_needed) done = 0;
     }
     
     if (done) {
       //for(i = 0; i < track->num_video_streams; i++)
       //{
-      if (vstream!=NULL) {
-	ogg_stream = vstream->priv;
+      if (priv->vstream!=NULL) {
+	ogg_stream = priv->vstream->stpriv;
 	if (ogg_stream->header_packets_read < ogg_stream->header_packets_needed) done = 0;
       }
     }
@@ -502,54 +498,60 @@ static int setup_track(int64_t start_position) {
     /* Read the next page if we aren't done yet */
     
     if (!done) {
-      if (!(input_pos=get_page(input_position))) {
+      if (!(input_pos=get_page(cdata,priv->input_position))) {
 	fprintf(stderr, "EOF2 while setting up track");
 	return 0;
       }
-      input_position+=input_pos;
+      priv->input_position+=input_pos;
     }
   }
    
-  if (data_start==0) data_start=input_position;
+  if (priv->data_start==0) priv->data_start=priv->input_position;
 
   return 1;
 }
 
 
 
-static void seek_byte(int64_t pos) {
-  ogg_sync_reset(&(opriv.oy));
-  lseek64(opriv.fd,pos,SEEK_SET);
-  input_position=pos;
-  opriv.page_valid=0;
+static void seek_byte(lives_clip_data_t *cdata, int64_t pos) {
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
+
+  ogg_sync_reset(&(opriv->oy));
+  lseek64(opriv->fd,pos,SEEK_SET);
+  priv->input_position=pos;
+  opriv->page_valid=0;
 }
 
 
 /* Get new data */
 
-static int64_t get_data(void) {
+static int64_t get_data(lives_clip_data_t *cdata) {
   int bytes_to_read;
   char * buf;
   int64_t result;
   
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
+
   bytes_to_read = BYTES_TO_READ;
 
-  if (opriv.total_bytes > 0) {
-    if (input_position + bytes_to_read > opriv.total_bytes)
-      bytes_to_read = opriv.total_bytes - input_position;
+  if (opriv->total_bytes > 0) {
+    if (priv->input_position + bytes_to_read > opriv->total_bytes)
+      bytes_to_read = opriv->total_bytes - priv->input_position;
     if (bytes_to_read <= 0)
       return 0;
   }
 
-  ogg_sync_reset(&opriv.oy);
-  buf = ogg_sync_buffer(&(opriv.oy), bytes_to_read);
+  ogg_sync_reset(&opriv->oy);
+  buf = ogg_sync_buffer(&(opriv->oy), bytes_to_read);
 
-  lseek64 (opriv.fd, input_position, SEEK_SET);
-  result = read(opriv.fd, (uint8_t*)buf, bytes_to_read);
+  lseek64 (opriv->fd, priv->input_position, SEEK_SET);
+  result = read(opriv->fd, (uint8_t*)buf, bytes_to_read);
 
-  opriv.page_valid=0;
+  opriv->page_valid=0;
 
-  ogg_sync_wrote(&(opriv.oy), result);
+  ogg_sync_wrote(&(opriv->oy), result);
   return result;
 }
 
@@ -557,30 +559,33 @@ static int64_t get_data(void) {
 /* Find the first first page between pos1 and pos2,
    return file position, -1 is returned on failure */
 
-static int64_t find_first_page(int64_t pos1, int64_t pos2, int serialno, int64_t *kframe, int64_t *frame) {
+static int64_t find_first_page(lives_clip_data_t *cdata, int64_t pos1, int64_t pos2, int serialno, int64_t *kframe, int64_t *frame) {
   long result;
   int64_t bytes;
   int64_t granulepos;
 
-  seek_byte(pos1);
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
 
-  if (pos1==data_start) {
+  seek_byte(cdata,pos1);
+
+  if (pos1==priv->data_start) {
     // set a dummy granulepos at data_start
     if (frame) {
-      *kframe=kframe_offset;
-      *frame=kframe_offset;
+      *kframe=priv->kframe_offset;
+      *frame=priv->kframe_offset;
     }
-    opriv.page_valid=1;
-    return input_position;
+    opriv->page_valid=1;
+    return priv->input_position;
   }
 
   while(1) {
-    if (input_position>=pos2) return -1;
+    if (priv->input_position>=pos2) return -1;
 
-    if (!(bytes=get_data())) return -1; // eof
-    input_position+=bytes;
+    if (!(bytes=get_data(cdata))) return -1; // eof
+    priv->input_position+=bytes;
     
-    result = ogg_sync_pageseek(&opriv.oy, &opriv.current_page);
+    result = ogg_sync_pageseek(&opriv->oy, &opriv->current_page);
 
     if (!result) {
       // not found, need more data
@@ -588,36 +593,36 @@ static int64_t find_first_page(int64_t pos1, int64_t pos2, int serialno, int64_t
     }
     else if (result > 0) /* Page found, result is page size */
       {
-	if (serialno!=ogg_page_serialno(&(opriv.current_page))||ogg_page_packets(&opriv.current_page)==0) {
+	if (serialno!=ogg_page_serialno(&(opriv->current_page))||ogg_page_packets(&opriv->current_page)==0) {
 	  // page is not for this stream, or no packet ends here
-	  seek_byte(input_position-bytes+result);
+	  seek_byte(cdata,priv->input_position-bytes+result);
 	  continue;
 	}
 
-	granulepos = ogg_page_granulepos(&(opriv.current_page));
-	if (granulepos>0) index_entry_add(indexa,granulepos,input_position-bytes,NULL);
+	granulepos = ogg_page_granulepos(&(opriv->current_page));
+	if (granulepos>0) index_entry_add(cdata,granulepos,priv->input_position-bytes);
 
 	if (frame) {
-	  if (ogg_page_packets(&opriv.current_page)==0) {
+	  if (ogg_page_packets(&opriv->current_page)==0) {
 	    // no frame ends on this page; but we need to find a frame number
-	    seek_byte(input_position-bytes+result);
+	    seek_byte(cdata,priv->input_position-bytes+result);
 	    continue;
 	  }
 
 	  *kframe =
-	    granulepos >> vstream->priv->keyframe_granule_shift;
+	    granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
 
 	  *frame = *kframe +
-	    granulepos-(*kframe<<vstream->priv->keyframe_granule_shift);
+	    granulepos-(*kframe<<priv->vstream->stpriv->keyframe_granule_shift);
     
 	}
 
-	opriv.page_valid=1;
-	return input_position-bytes;
+	opriv->page_valid=1;
+	return priv->input_position-bytes;
       }
     else /* Skipped -result bytes */
       {
-	seek_byte(input_position-bytes-result);
+	seek_byte(cdata,priv->input_position-bytes-result);
 	continue;
       }
   }
@@ -630,19 +635,21 @@ static int64_t find_first_page(int64_t pos1, int64_t pos2, int serialno, int64_t
 /* Find the last page between pos1 and pos2,
    return file position, -1 is returned on failure */
 
-static int64_t find_last_page (int64_t pos1, int64_t pos2, int serialno, int64_t *kframe, int64_t *frame) {
+static int64_t find_last_page (lives_clip_data_t *cdata, int64_t pos1, int64_t pos2, int serialno, int64_t *kframe, int64_t *frame) {
 
   int64_t page_pos, last_page_pos = -1, start_pos;
   int64_t this_frame=0, last_frame = 0;
   int64_t this_kframe=0, last_kframe = 0;
 
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+
   start_pos = pos2 - BYTES_TO_READ;
 
   while(1) {
-    if (start_pos < data_start) start_pos = data_start;
+    if (start_pos < priv->data_start) start_pos = priv->data_start;
     if (start_pos<pos1) start_pos=pos1;
 
-    page_pos = find_first_page(start_pos, pos2, serialno, &this_kframe, &this_frame);
+    page_pos = find_first_page(cdata, start_pos, pos2, serialno, &this_kframe, &this_frame);
 
     if (page_pos == -1) {
       // no pages found in range
@@ -676,16 +683,19 @@ static int64_t find_last_page (int64_t pos1, int64_t pos2, int serialno, int64_t
 
 
 
-static int64_t get_last_granulepos (int serialno) {
+static int64_t get_last_granulepos (lives_clip_data_t *cdata, int serialno) {
   // granulepos here is actually a frame - TODO ** fix for audio !
 
   int64_t pos, granulepos, kframe;
   lives_in_stream *stream;
+
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
   
-  stream=stream_from_sno(serialno);
+  stream=stream_from_sno(cdata,serialno);
   if (stream==NULL) return -1;
 
-  pos = find_last_page (data_start, opriv.total_bytes, serialno, &kframe, &granulepos);
+  pos = find_last_page (cdata, priv->data_start, opriv->total_bytes, serialno, &kframe, &granulepos);
   if (pos < 0) return -1;
 
   return granulepos;
@@ -696,7 +706,7 @@ static int64_t get_last_granulepos (int serialno) {
 
 static double granulepos_2_time(lives_in_stream *s, int64_t pos) {
   int64_t frames;
-  stream_priv_t *stream_priv = (stream_priv_t *)(s->priv);
+  stream_priv_t *stream_priv = (stream_priv_t *)(s->stpriv);
 
   switch (stream_priv->fourcc_priv) {
   case FOURCC_VORBIS:
@@ -705,7 +715,7 @@ static double granulepos_2_time(lives_in_stream *s, int64_t pos) {
     break;
   case FOURCC_THEORA:
     //fprintf(stderr,"vpos is %lld\n",pos);
-    stream_priv = (stream_priv_t*)(s->priv);
+    stream_priv = (stream_priv_t*)(s->stpriv);
 
     frames = pos;
     
@@ -724,53 +734,53 @@ static int stream_peek(int fd, char *str, size_t len) {
 
 
 
-static int open_ogg(int fd) {
+static int open_ogg(lives_clip_data_t *cdata) {
   double stream_duration;
   int64_t gpos;
   char scheck[4];
 
-  if (stream_peek(fd,scheck,4)<4) return 0;
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
+
+  if (stream_peek(opriv->fd,scheck,4)<4) return 0;
 
   if (strncmp(scheck,"OggS",4)) return 0;
 
-  ogg_sync_init(&(opriv.oy));
+  ogg_sync_init(&(opriv->oy));
 
-  data_start=0;
-
-
-
+  priv->data_start=0;
 
 
   /* Set up the tracks */
-  if (!setup_track(data_start)) {
-    ogg_sync_clear(&opriv.oy);
+  if (!setup_tracks(cdata)) {
+    ogg_sync_clear(&opriv->oy);
     return 0;
   }
 
-  if (astream!=NULL) {
-    ogg_stream_reset(&astream->priv->os);
-    gpos=get_last_granulepos(astream->stream_id);
+  if (priv->astream!=NULL) {
+    ogg_stream_reset(&priv->astream->stpriv->os);
+    gpos=get_last_granulepos(cdata,priv->astream->stream_id);
     stream_duration =
-      granulepos_2_time(astream,gpos);
-    astream->duration=stream_duration;
-    astream->priv->last_granulepos=gpos;
-    //printf("astream duration is %.4f\n",stream_duration);
+      granulepos_2_time(priv->astream,gpos);
+    priv->astream->duration=stream_duration;
+    priv->astream->stpriv->last_granulepos=gpos;
+    //printf("priv->astream duration is %.4f\n",stream_duration);
   }
 
-  if (vstream!=NULL) {
-    ogg_stream_reset(&vstream->priv->os);
-    gpos=get_last_granulepos(vstream->stream_id);
+  if (priv->vstream!=NULL) {
+    ogg_stream_reset(&priv->vstream->stpriv->os);
+    gpos=get_last_granulepos(cdata,priv->vstream->stream_id);
     
-    /*  kframe=gpos >> vstream->priv->keyframe_granule_shift;
-	vstream->nframes = kframe + gpos-(kframe<<vstream->priv->keyframe_granule_shift);*/
+    /*  kframe=gpos >> priv->vstream->priv->keyframe_granule_shift;
+	priv->vstream->nframes = kframe + gpos-(kframe<<priv->vstream->priv->keyframe_granule_shift);*/
 
-    vstream->nframes=gpos;
+    priv->vstream->nframes=gpos;
 
     stream_duration =
-      granulepos_2_time(vstream,gpos);
-    vstream->duration=stream_duration;
-    vstream->priv->last_granulepos=gpos;
-    //printf("vstream duration is %.4f %lld\n",stream_duration,vstream->nframes);
+      granulepos_2_time(priv->vstream,gpos);
+    priv->vstream->duration=stream_duration;
+    priv->vstream->stpriv->last_granulepos=gpos;
+    //printf("priv->vstream duration is %.4f %lld\n",stream_duration,priv->vstream->nframes);
   }
 
   return 1;
@@ -779,7 +789,7 @@ static int open_ogg(int fd) {
 
 
 
-static boolean attach_stream(const char *URI) {
+static boolean attach_stream(lives_clip_data_t *cdata) {
   // open the file and get a handle
 
   int i;
@@ -787,20 +797,34 @@ static boolean attach_stream(const char *URI) {
   ogg_packet op;
   struct stat sb;
 
-  if ((opriv.fd=open(URI,O_RDONLY))==-1) {
-    fprintf(stderr, "ogg_theora_decoder: unable to open %s\n",URI);
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+
+  ogg_t *opriv=priv->opriv=(ogg_t *)malloc(sizeof(ogg_t));
+  theora_priv_t *tpriv=priv->tpriv=(theora_priv_t *)malloc(sizeof(theora_priv_t));
+
+  if ((opriv->fd=open(cdata->URI,O_RDONLY))==-1) {
+    fprintf(stderr, "ogg_theora_decoder: unable to open %s\n",cdata->URI);
+    free(opriv);
+    priv->opriv=NULL;
+    free(tpriv);
+    priv->tpriv=NULL;
     return FALSE;
   }
 
-  stat(URI,&sb);
+  stat(cdata->URI,&sb);
 
-  opriv.total_bytes=sb.st_size;
+  opriv->total_bytes=sb.st_size;
 
-  opriv.page_valid=0;
+  opriv->page_valid=0;
+
 
   /* get ogg info */
-  if (!open_ogg(opriv.fd)) {
-    close(opriv.fd);
+  if (!open_ogg(cdata)) {
+    close(opriv->fd);
+    free(opriv);
+    priv->opriv=NULL;
+    free(tpriv);
+    priv->tpriv=NULL;
     return FALSE;
   }
 
@@ -809,43 +833,44 @@ static boolean attach_stream(const char *URI) {
   // theora only
 
 
-
   // TODO - check all decoders, and init correct one
 
   /* Initialize theora structures */
-  theora_info_init(&tpriv.ti);
-  theora_comment_init(&tpriv.tc);
+  theora_info_init(&tpriv->ti);
+  theora_comment_init(&tpriv->tc);
   
   /* Get header packets and initialize decoder */
-  if (vstream->ext_data==NULL) {
+  if (priv->vstream->ext_data==NULL) {
       fprintf(stderr, "Theora codec requires extra data");
+      close(opriv->fd);
+      free(opriv);
+      priv->opriv=NULL;
+      free(tpriv);
+      priv->tpriv=NULL;
       return FALSE;
   }
 
-  ext_pos = vstream->ext_data;
+  ext_pos = priv->vstream->ext_data;
   
   for (i=0;i<3;i++) {
     ext_pos = ptr_2_op(ext_pos, &op);
-    theora_decode_header(&tpriv.ti, &tpriv.tc, &op);
+    theora_decode_header(&tpriv->ti, &tpriv->tc, &op);
   }
   
-  theora_decode_init(&tpriv.ts, &tpriv.ti);
+  theora_decode_init(&tpriv->ts, &tpriv->ti);
   
 
-
-
-
-  last_kframe=10000000;
-  last_frame=100000000;
+  priv->last_kframe=10000000;
+  priv->last_frame=100000000;
 
   // index init 
-  indexa=NULL;
+  priv->idx=NULL;
 
   // check to find whether first frame is zero or one
   // if version >= 3.2.1 first kframe is 1; otherwise 0
 
-  if (vstream->version>=3002001) kframe_offset=1;
-  else kframe_offset=0;
+  if (priv->vstream->version>=3002001) priv->kframe_offset=1;
+  else priv->kframe_offset=0;
 
   return TRUE;
 }
@@ -853,52 +878,57 @@ static boolean attach_stream(const char *URI) {
 
 
 
-static void detach_stream (const char *URI) {
+static void detach_stream (lives_clip_data_t *cdata) {
   // close the file, free the decoder
-  close(opriv.fd);
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
+  theora_priv_t *tpriv=priv->tpriv;
 
-  ogg_sync_clear(&opriv.oy);
+  close(opriv->fd);
+
+  ogg_sync_clear(&opriv->oy);
 
 
   // theora only
   // TODO - call function in decoder
-  theora_clear(&tpriv.ts);
-  theora_comment_clear(&tpriv.tc);
-  theora_info_clear(&tpriv.ti);
+  theora_clear(&tpriv->ts);
+  theora_comment_clear(&tpriv->tc);
+  theora_info_clear(&tpriv->ti);
 
 
 
   // free stream data
-  if (astream!=NULL) {
-    if (astream->ext_data!=NULL) free(astream->ext_data);
-    ogg_stream_clear(&astream->priv->os);
-    free(astream->priv);
-    free(astream);
-    astream=NULL;
+  if (priv->astream!=NULL) {
+    if (priv->astream->ext_data!=NULL) free(priv->astream->ext_data);
+    ogg_stream_clear(&priv->astream->stpriv->os);
+    free(priv->astream->stpriv);
+    free(priv->astream);
+    priv->astream=NULL;
   }
 
-  if (vstream!=NULL) {
-    if (vstream->ext_data!=NULL) free(vstream->ext_data);
-    ogg_stream_clear(&vstream->priv->os);
-    free(vstream->priv);
-    free(vstream);
-    vstream=NULL;
+  if (priv->vstream!=NULL) {
+    if (priv->vstream->ext_data!=NULL) free(priv->vstream->ext_data);
+    ogg_stream_clear(&priv->vstream->stpriv->os);
+    free(priv->vstream->stpriv);
+    free(priv->vstream);
+    priv->vstream=NULL;
   }
 
 
   // free index entries
-  if (indexa!=NULL) index_entries_free(indexa);
-  indexa=NULL;
+  if (priv->idx!=NULL) index_entries_free(priv->idx);
+  priv->idx=NULL;
 
 }
 
 
-static inline int64_t frame_to_gpos(int64_t kframe, int64_t frame) {
-  return (kframe << vstream->priv->keyframe_granule_shift) + (frame-kframe);
+static inline int64_t frame_to_gpos(lives_clip_data_t *cdata, int64_t kframe, int64_t frame) {
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  return (kframe << priv->vstream->stpriv->keyframe_granule_shift) + (frame-kframe);
 }
 
 
-static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, boolean can_exact) {
+static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, boolean can_exact) {
   // we do two passes here, first with can_exact set, then with can_exact unset
 
   // if can_exact is set, we find the granulepos nearest to or including the target granulepos
@@ -915,19 +945,22 @@ static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, 
   int64_t start_pos,end_pos,pagepos,fpagepos,fframe,low_pagepos=-1,segsize,low_kframe=-1;
   int64_t frame,kframe,fkframe,low_frame=-1,high_frame=-1;
 
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
+
   //fprintf(stderr,"seek to frame %lld %d\n",tframe,can_exact);
 
-  if (tframe<kframe_offset) {
+  if (tframe<priv->kframe_offset) {
     if (!can_exact) {
-      seek_byte(data_start);
-      return frame_to_gpos(kframe_offset,1);
+      seek_byte(cdata,priv->data_start);
+      return frame_to_gpos(cdata,priv->kframe_offset,1);
     }
-    return frame_to_gpos(1,0); // TODO ** unless there is a real granulepos
+    return frame_to_gpos(cdata,priv->kframe_offset,0); // TODO ** unless there is a real granulepos
   }
 
-  if (ppos_lower<0) ppos_lower=data_start;
-  if (ppos_upper<0) ppos_upper=opriv.total_bytes;
-  if (ppos_upper>opriv.total_bytes) ppos_upper=opriv.total_bytes;
+  if (ppos_lower<0) ppos_lower=priv->data_start;
+  if (ppos_upper<0) ppos_upper=opriv->total_bytes;
+  if (ppos_upper>opriv->total_bytes) ppos_upper=opriv->total_bytes;
 
   start_pos=ppos_lower;
   end_pos=ppos_upper;
@@ -943,9 +976,9 @@ static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, 
 
     if (start_pos>=end_pos) {
       if (start_pos==ppos_lower) {
-	if (!can_exact) seek_byte(start_pos);
-	cpagepos=start_pos;
-	return frame_to_gpos(1,1);
+	if (!can_exact) seek_byte(cdata,start_pos);
+	priv->cpagepos=start_pos;
+	return frame_to_gpos(cdata,priv->kframe_offset,1);
       }
       // should never reach here
       fprintf(stderr,"oops\n");
@@ -954,7 +987,7 @@ static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, 
 
     //fprintf(stderr,"check seg %lld to %lld for %lld\n",start_pos,end_pos,tframe);
 
-    if ((pagepos=find_first_page(start_pos,end_pos,vstream->stream_id,&kframe,&frame))!=-1) {
+    if ((pagepos=find_first_page(cdata,start_pos,end_pos,priv->vstream->stream_id,&kframe,&frame))!=-1) {
       // found a page
 
       //fprintf(stderr,"first gp is %lld, kf %lld\n",frame,kframe);
@@ -962,16 +995,16 @@ static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, 
       if (can_exact&&frame>=tframe&&kframe<=tframe) {
 	// got it !
 	//fprintf(stderr,"seek got keyframe %lld for %lld\n",kframe,tframe);
-	cpagepos=pagepos;
-	return frame_to_gpos(kframe,frame);
+	priv->cpagepos=pagepos;
+	return frame_to_gpos(cdata,kframe,frame);
       }
 
       if (frame>=tframe&&low_frame>-1&&low_frame<tframe) {
 	// seek to nearest keyframe
 	//fprintf(stderr,"set to low frame %lld,kf %lld\n",low_frame,low_kframe);
-	if (!can_exact) seek_byte(low_pagepos);
-	cpagepos=low_pagepos;
-	return frame_to_gpos(low_kframe,low_frame);
+	if (!can_exact) seek_byte(cdata,low_pagepos);
+	priv->cpagepos=low_pagepos;
+	return frame_to_gpos(cdata,low_kframe,low_frame);
       }
 
       if (frame>=tframe) {
@@ -990,7 +1023,7 @@ static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, 
       // see if it is in this segment
       //fprintf(stderr,"checking last page\n");
 
-      if ((pagepos=find_last_page(start_pos-1,end_pos,vstream->stream_id,&kframe,&frame))!=-1) {
+      if ((pagepos=find_last_page(cdata,start_pos-1,end_pos,priv->vstream->stream_id,&kframe,&frame))!=-1) {
 
 	//fprintf(stderr,"last gp is %lld, kf %lld\n",frame,kframe);
 
@@ -1001,15 +1034,15 @@ static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, 
 	if (frame>=tframe&&kframe<=tframe&&can_exact) {
 	  // got it !
 	  //fprintf(stderr,"seek2 got keyframe %lld %lld\n",kframe,frame);
-	  cpagepos=pagepos;
-	  return frame_to_gpos(kframe,frame);
+	  priv->cpagepos=pagepos;
+	  return frame_to_gpos(cdata,kframe,frame);
 	}
 
 	if (frame<tframe&&high_frame!=-1&&high_frame>=tframe) {
 	  //fprintf(stderr,"found high at %lld, using %lld\n",high_frame,frame);
-	  if (!can_exact) seek_byte(pagepos);
-	  cpagepos=pagepos;
-	  return frame_to_gpos(kframe,frame);
+	  if (!can_exact) seek_byte(cdata,pagepos);
+	  priv->cpagepos=pagepos;
+	  return frame_to_gpos(cdata,kframe,frame);
 	}
 
 	high_frame=-1;
@@ -1026,9 +1059,9 @@ static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, 
 	segsize=(segsize+1)>>1;
 	if (segsize<BYTES_TO_READ) {
 	  //fprintf(stderr,"seek3 got keyframe %lld for %lld\n",fkframe,tframe);
-	  if (!can_exact) seek_byte(fpagepos);
-	  cpagepos=fpagepos;
-	  return frame_to_gpos(fkframe,fframe);
+	  if (!can_exact) seek_byte(cdata,fpagepos);
+	  priv->cpagepos=fpagepos;
+	  return frame_to_gpos(cdata,fkframe,fframe);
 	}
 
 	end_pos-=segsize;
@@ -1054,153 +1087,210 @@ static int64_t ogg_seek(int64_t tframe, int64_t ppos_lower, int64_t ppos_upper, 
 
 
 
-const char *module_check_init(void) {
-  cdata.palettes=malloc(2*sizeof(int));
-  return NULL;
-}
-
-
 const char *version(void) {
   return plugin_version;
 }
 
 
 
-const lives_clip_data_t *get_clip_data(const char *URI, int nclip) {
+lives_clip_data_t *init_cdata(void) {
+  lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
+  lives_ogg_priv_t *priv;
 
-  if (nclip>0) return NULL;
+  priv=cdata->priv=malloc(sizeof(lives_ogg_priv_t));
 
-  if (old_URI==NULL||strcmp(URI,old_URI)) {
-    if (old_URI!=NULL) {
-      detach_stream(old_URI);
-      free(old_URI);
-      old_URI=NULL;
-    }
-    if (!attach_stream(URI)) return NULL;
-    old_URI=strdup(URI);
+  priv->vstream=NULL;
+  priv->astream=NULL;
+
+  priv->opriv=NULL;
+  priv->tpriv=NULL;
+
+  priv->idx=NULL;
+
+  cdata->palettes=malloc(2*sizeof(int));
+  cdata->URI=NULL;
+
+  return cdata;
+}
+
+
+
+
+lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
+  // the first time this is called, caller should pass NULL as the cdata
+  // subsequent calls to this should re-use the same cdata
+
+  // if the host wants a different URI, a different current_clip, or a different current_palette, 
+  // this must be called again with the same
+  // cdata as the second parameter
+  lives_ogg_priv_t *priv;
+  ogg_t *opriv;
+  theora_priv_t *tpriv;
+
+  if (cdata!=NULL&&cdata->current_clip>0) {
+    // currently we only support one clip per container
+
+    clip_data_free(cdata);
+    return NULL;
   }
 
-  if (vstream==NULL) return NULL;
+  if (cdata==NULL) {
+    cdata=init_cdata();
+  }
 
-  cdata.nclips=1;
+  priv=(lives_ogg_priv_t *)cdata->priv;
+
+  if (cdata->URI==NULL||strcmp(URI,cdata->URI)) {
+    if (cdata->URI!=NULL) {
+      detach_stream(cdata);
+      free(cdata->URI);
+    }
+    cdata->URI=strdup(URI);
+    if (!attach_stream(cdata)) {
+      free(cdata->URI);
+      cdata->URI=NULL;
+      clip_data_free(cdata);
+      return NULL;
+    }
+    cdata->current_clip=0;
+  }
+
+  if (priv->vstream==NULL) {
+    clip_data_free(cdata);
+    return NULL;
+  }
+
+  opriv=priv->opriv;
+  tpriv=priv->tpriv;
+
+  cdata->nclips=1;
 
   // video part
-  cdata.interlace=LIVES_INTERLACE_NONE;
+  cdata->interlace=LIVES_INTERLACE_NONE;
 
   /* Get format */
   
-  cdata.width  = opriv.y_width = tpriv.ti.frame_width;
-  cdata.height = opriv.y_height = tpriv.ti.frame_height;
+  cdata->width  = opriv->y_width = tpriv->ti.frame_width;
+  cdata->height = opriv->y_height = tpriv->ti.frame_height;
   
-  cdata.fps  = (float)tpriv.ti.fps_numerator/(float)tpriv.ti.fps_denominator;
+  cdata->fps  = (float)tpriv->ti.fps_numerator/(float)tpriv->ti.fps_denominator;
   
-  switch(tpriv.ti.pixelformat) {
+  switch(tpriv->ti.pixelformat) {
   case OC_PF_420:
-    cdata.palettes[0] = WEED_PALETTE_YUV420P;
-    opriv.uv_width = opriv.y_width>>1;
+    cdata->palettes[0] = WEED_PALETTE_YUV420P;
+    opriv->uv_width = opriv->y_width>>1;
     break;
   case OC_PF_422:
-    cdata.palettes[0] = WEED_PALETTE_YUV422P;
-    opriv.uv_width = opriv.y_width>>1;
+    cdata->palettes[0] = WEED_PALETTE_YUV422P;
+    opriv->uv_width = opriv->y_width>>1;
     break;
   case OC_PF_444:
-    cdata.palettes[0] = WEED_PALETTE_YUV444P;
-    opriv.uv_width = opriv.y_width;
+    cdata->palettes[0] = WEED_PALETTE_YUV444P;
+    opriv->uv_width = opriv->y_width;
     break;
   default:
-    fprintf(stderr, "Unknown pixelformat %d", tpriv.ti.pixelformat);
+    fprintf(stderr, "Unknown pixelformat %d", tpriv->ti.pixelformat);
     return NULL;
   }
   
-  cdata.palettes[1]=WEED_PALETTE_END;
+  cdata->palettes[1]=WEED_PALETTE_END;
 
-  cdata.nframes=vstream->nframes;
+  cdata->current_palette=cdata->palettes[0];
 
-  cdata.par=1.;
-  cdata.offs_x=0;
-  cdata.offs_y=0;
+  cdata->nframes=priv->vstream->nframes;
 
-  cdata.YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
-  cdata.YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
-  cdata.YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
+  cdata->par=1.;
 
-  sprintf(cdata.container_name,"%s","ogg");
-  sprintf(cdata.video_name,"%s","theora");
+  // TODO
+  cdata->offs_x=0;
+  cdata->offs_y=0;
+  cdata->frame_width=cdata->width;
+  cdata->frame_height=cdata->height;
 
-  if (astream!=NULL) {
-    sprintf(cdata.audio_name,"%s","vorbis");
-  }
-  else memset(cdata.audio_name,0,1);
+  cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
+  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
+  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
 
+  sprintf(cdata->container_name,"%s","ogg");
+  sprintf(cdata->video_name,"%s","theora");
 
   // audio part
+  if (priv->astream!=NULL) {
+    sprintf(cdata->audio_name,"%s","vorbis");
+  }
+  else memset(cdata->audio_name,0,1);
   
-  return &cdata;
+  return cdata;
 }
 
 
 
-static boolean ogg_theora_read(ogg_packet *op, yuv_buffer *yuv) {
+static boolean ogg_theora_read(lives_clip_data_t *cdata, ogg_packet *op, yuv_buffer *yuv) {
   // this packet is for our theora decoder
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  theora_priv_t *tpriv=priv->tpriv;
 
-  if (theora_decode_packetin(&tpriv.ts,op)==0) {
-    if (skip<=0) {
-      if (theora_decode_YUVout(&tpriv.ts, yuv)==0) {
-	frame_out=TRUE;
+  if (theora_decode_packetin(&tpriv->ts,op)==0) {
+    if (priv->skip<=0) {
+      if (theora_decode_YUVout(&tpriv->ts, yuv)==0) {
+	priv->frame_out=TRUE;
       }
     }
   }
-  return frame_out;
+  return priv->frame_out;
 }
 
 
 
-static boolean ogg_data_process(yuv_buffer *yuv, boolean cont) {
+static boolean ogg_data_process(lives_clip_data_t *cdata, yuv_buffer *yuv, boolean cont) {
   int64_t input_pos=0;
-  boolean ignore_count=(ignore_packets&&!cont);
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
+  boolean ignore_count=(priv->ignore_packets&&!cont);
 
-  frame_out=FALSE;
 
-  if (!cont) ogg_stream_reset(&vstream->priv->os);
+  priv->frame_out=FALSE;
 
-  while (!frame_out) {
-    opriv.page_valid=0;
+  if (!cont) ogg_stream_reset(&priv->vstream->stpriv->os);
+
+  while (!priv->frame_out) {
+    opriv->page_valid=0;
 
     if (!cont) {
-      if (!(input_pos=get_page(input_position))) {
+      if (!(input_pos=get_page(cdata,priv->input_position))) {
 	// should never reach here
 	fprintf(stderr, "EOF1 while decoding\n");
 	return FALSE;
       }
       
-      input_position+=input_pos;
+      priv->input_position+=input_pos;
       
-      if (ogg_page_serialno(&(opriv.current_page))!=vstream->stream_id) continue;
-      ogg_stream_pagein(&vstream->priv->os, &(opriv.current_page));
+      if (ogg_page_serialno(&(opriv->current_page))!=priv->vstream->stream_id) continue;
+      ogg_stream_pagein(&priv->vstream->stpriv->os, &(opriv->current_page));
     }
 
-    while (ogg_stream_packetout(&vstream->priv->os, &opriv.op) > 0) {
+    while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
       if (yuv!=NULL) {
       // cframe is the frame we are about to decode
 
 	//fprintf(stderr,"cframe is %d\n",cframe);
 
-	if (cframe==last_kframe&&!ignore_count) {
-	  ignore_packets=FALSE; // reached kframe before target, start decoding packets
+	if (priv->cframe==priv->last_kframe&&!ignore_count) {
+	  priv->ignore_packets=FALSE; // reached kframe before target, start decoding packets
 	}
 	
-	if (!ignore_packets) {
-	  ogg_theora_read(&opriv.op,yuv);
+	if (!priv->ignore_packets) {
+	  ogg_theora_read(cdata,&opriv->op,yuv);
 	}
       }
 
       if (!ignore_count) {
-	cframe++;
-	skip--;
+	priv->cframe++;
+	priv->skip--;
       }
-      if (yuv==NULL) frame_out=TRUE;
+      if (yuv==NULL) priv->frame_out=TRUE;
 
-      if (frame_out) break;
+      if (priv->frame_out) break;
 
       sched_yield();
     }
@@ -1213,21 +1303,18 @@ static boolean ogg_data_process(yuv_buffer *yuv, boolean cont) {
 }
 
 
-boolean get_frame(const char *URI, int nclip, int64_t tframe, void **pixel_data) {
+boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_data) {
   // seek to frame, and return pixel_data
   yuv_buffer yuv;
   boolean crow=FALSE;
   void *y,*u,*v;
   int64_t kframe=-1,xkframe;
   boolean cont=FALSE;
-  boolean new_uri=FALSE;
   int max_frame_diff;
   int64_t granulepos;
   static int64_t last_cframe;
 
   int64_t ppos_lower,ppos_upper;
-
-  int64_t current_pos=input_position;
 
   register int i;
 
@@ -1235,88 +1322,81 @@ boolean get_frame(const char *URI, int nclip, int64_t tframe, void **pixel_data)
 
   int mheight;
 
-  if (nclip>0) return FALSE;
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  ogg_t *opriv=priv->opriv;
+  theora_priv_t *tpriv=priv->tpriv;
 
-  if (old_URI==NULL||strcmp(URI,old_URI)) {
-    if (old_URI!=NULL) {
-      detach_stream(old_URI);
-      free(old_URI);
-      old_URI=NULL;
-    }
-    if (!attach_stream(URI)) return FALSE;
-    old_URI=strdup(URI);
-    new_uri=TRUE;
-  }
+  priv->current_pos=priv->input_position;
 
-  mheight=(opriv.y_height>>1)<<1; // yes indeed, there is a file with a height of 601 pixels...
+  mheight=(opriv->y_height>>1)<<1; // yes indeed, there is a file with a height of 601 pixels...
 
-  max_frame_diff=2<<(vstream->priv->keyframe_granule_shift-2);
+  max_frame_diff=2<<(priv->vstream->stpriv->keyframe_granule_shift-2);
 
-  tframe+=kframe_offset;
+  tframe+=priv->kframe_offset;
 
-  if (tframe==last_frame&&!new_uri) {
-    theora_decode_YUVout(&tpriv.ts, &yuv);
+  if (tframe==priv->last_frame) {
+    theora_decode_YUVout(&tpriv->ts, &yuv);
   }
   else {
-    if (new_uri||(tframe<last_frame||tframe-last_frame>max_frame_diff)) {
+    if (tframe<=priv->last_frame||tframe-priv->last_frame>max_frame_diff) {
       // need to find a new kframe
-      fidx=get_bounds_for(indexa,tframe,&ppos_lower,&ppos_upper);
+      fidx=get_bounds_for((lives_clip_data_t *)cdata,tframe,&ppos_lower,&ppos_upper);
       if (fidx==NULL) {
-	granulepos=ogg_seek(tframe,ppos_lower,ppos_upper,TRUE);
+	granulepos=ogg_seek((lives_clip_data_t *)cdata,tframe,ppos_lower,ppos_upper,TRUE);
 	if (granulepos==-1) return FALSE; // should never happen...
-	indexa=index_entry_add(indexa,granulepos,cpagepos,&fidx);
+	fidx=index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->cpagepos);
       }
       else granulepos=fidx->granulepos;
-      kframe = granulepos >> vstream->priv->keyframe_granule_shift;
-      if (kframe<kframe_offset) kframe=kframe_offset;
+      kframe = granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+      if (kframe<priv->kframe_offset) kframe=priv->kframe_offset;
     }
-    else kframe=last_kframe;
+    else kframe=priv->last_kframe;
     
-    ignore_packets=FALSE;
+    priv->ignore_packets=FALSE;
     
-    if (!new_uri&&(tframe>last_frame&&((tframe-last_frame<=max_frame_diff||kframe==last_kframe)))) {
+    if (tframe>priv->last_frame&&((tframe-priv->last_frame<=max_frame_diff||kframe==priv->last_kframe))) {
       // same keyframe as last time, or next frame; we can continue where we left off
       cont=TRUE;
-      skip=tframe-last_frame-1;
-      input_position=current_pos;
+      priv->skip=tframe-priv->last_frame-1;
+      priv->input_position=priv->current_pos;
     }
     else {
       if (fidx==NULL||fidx->prev==NULL) {
-	get_bounds_for(indexa,kframe-1,&ppos_lower,&ppos_upper);
-	granulepos=ogg_seek(kframe-1,ppos_lower,ppos_upper,FALSE);
+	get_bounds_for((lives_clip_data_t *)cdata,kframe-1,&ppos_lower,&ppos_upper);
+	granulepos=ogg_seek((lives_clip_data_t *)cdata,kframe-1,ppos_lower,ppos_upper,FALSE);
 	//fprintf(stderr,"starting from found gpos %lld\n",granulepos);
-	xkframe=granulepos >> vstream->priv->keyframe_granule_shift;
-	cframe = xkframe + granulepos-(xkframe<<vstream->priv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
-	if (input_position==data_start) {
-	  cframe=kframe=1;
+	xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+	priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
+	if (priv->input_position==priv->data_start) {
+	  priv->cframe=kframe=1;
 	}
 	else {
-	  indexa=index_entry_add(indexa,granulepos,input_position,NULL);
+	  index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->input_position);
 	}
-	last_cframe=cframe;
-	skip=tframe-cframe;
+	last_cframe=priv->cframe;
+	priv->skip=tframe-priv->cframe;
       }
       else {
 	// same keyframe as last time, but we are reversing
-	input_position=fidx->prev->pagepos;
+	priv->input_position=fidx->prev->pagepos;
 	granulepos=fidx->prev->granulepos;
 	//fprintf(stderr,"starting from gpos %lld\n",granulepos);
-	xkframe=granulepos >> vstream->priv->keyframe_granule_shift;
-	cframe = xkframe + granulepos-(xkframe<<vstream->priv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
-	skip=tframe-cframe;
+	xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+	priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
+	priv->skip=tframe-priv->cframe;
       }
       
-      if (input_position>data_start) {
-	ignore_packets=TRUE;
+      if (priv->input_position>priv->data_start) {
+	priv->ignore_packets=TRUE;
       }
       
     }
     
     //fprintf(stderr,"getting yuv at %lld\n",input_position);
     
-    last_frame=tframe;
-    last_kframe=kframe;
-    if (!ogg_data_process(&yuv,cont)) return FALSE;
+    priv->last_frame=tframe;
+    priv->last_kframe=kframe;
+    if (!ogg_data_process((lives_clip_data_t *)cdata,&yuv,cont)) return FALSE;
   }
 
   y=yuv.y;
@@ -1324,14 +1404,14 @@ boolean get_frame(const char *URI, int nclip, int64_t tframe, void **pixel_data)
   v=yuv.v;
 
   for (i=0;i<mheight;i++) {
-    memcpy(pixel_data[0],y,opriv.y_width);
-    pixel_data[0]+=opriv.y_width;
+    memcpy(pixel_data[0],y,opriv->y_width);
+    pixel_data[0]+=opriv->y_width;
     y+=yuv.y_stride;
     if (yuv.y_height==yuv.uv_height||crow) {
-      memcpy(pixel_data[1],u,opriv.uv_width);
-      memcpy(pixel_data[2],v,opriv.uv_width);
-      pixel_data[1]+=opriv.uv_width;
-      pixel_data[2]+=opriv.uv_width;
+      memcpy(pixel_data[1],u,opriv->uv_width);
+      memcpy(pixel_data[2],v,opriv->uv_width);
+      pixel_data[1]+=opriv->uv_width;
+      pixel_data[2]+=opriv->uv_width;
       u+=yuv.uv_stride;
       v+=yuv.uv_stride;
     }
@@ -1345,11 +1425,22 @@ boolean get_frame(const char *URI, int nclip, int64_t tframe, void **pixel_data)
   
 
 
-void module_unload(void) {
-  if (old_URI!=NULL) {
-    detach_stream(old_URI);
-    free(old_URI);
+
+void clip_data_free(lives_clip_data_t *cdata) {
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+
+  if (cdata->URI!=NULL) {
+    detach_stream(cdata);
+    free(cdata->URI);
   }
-  free(cdata.palettes);
+
+  if (priv->opriv!=NULL) free(priv->opriv);
+  if (priv->tpriv!=NULL) free(priv->tpriv);
+  
+  if (priv!=NULL) free(priv);
+  
+  free(cdata->palettes);
+  free(cdata);
 }
+
 

@@ -777,7 +777,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     if (cfile->changed) {
       get_menu_text(cfile->menuentry,title);
       if (strlen(title)>128) g_snprintf(title,32,"%s",(_("This file")));
-      warn=g_strdup_printf(_ ("\n%s\nhas not been saved or backed up.\n\nReally close it ?"),title);
+      warn=g_strdup_printf(_ ("The current copy of\n%s\nhas not been saved or backed up.\n\nReally close it ?"),title);
       if (!do_warning_dialog(warn)) {
 	g_free(warn);
 
@@ -4056,7 +4056,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       cfile->img_type=img_type; // ignore value from read_headers
       while (1) {
 	pthread_mutex_lock(&mainw->gtk_mutex);
-	if ((cdata=get_decoder_plugin(cfile))==NULL) {
+	if ((cdata=get_decoder_cdata(cfile))==NULL) {
 	  if (mainw->error) {
 	    if (do_original_lost_warning(cfile->file_name)) {
 
@@ -4071,6 +4071,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  }
 	  next=TRUE;
 	}
+
 	pthread_mutex_unlock(&mainw->gtk_mutex);
 	break;
       }

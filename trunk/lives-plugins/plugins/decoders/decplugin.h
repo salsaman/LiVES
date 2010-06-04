@@ -35,7 +35,15 @@ typedef int boolean;
 
 
 typedef struct {
-  int nclips; // number of clips in container
+  char *URI; // the URI of this cdata
+
+  int nclips; // number of clips (titles) in container
+  char container_name[512]; // name of container, e.g. "ogg" or NULL
+
+  // plugin should init this to 0 if URI changes
+  int current_clip; // current clip number in container (starts at 0, MUST be <= nclips) [rw host]
+
+  // video data
   int width;
   int height;
   int64_t nframes;
@@ -45,6 +53,8 @@ typedef struct {
   // for primary pixel plane
   int offs_x;
   int offs_y;
+  int frame_width;
+  int frame_height;
 
   float par; // pixel aspect ratio
 
@@ -52,38 +62,58 @@ typedef struct {
 
   int *palettes;
 
+  // plugin should init this to palettes[0] if URI changes
+  int current_palette;  // current palette [rw host]; must be contained in palettes
+  
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
-
-  char container_name[512]; // name of container, e.g. "ogg" or NULL
   char video_name[512]; // name of video codec, e.g. "theora" or NULL
-  char audio_name[512]; // name of audio codec, e.g. "vorbis" or NULL
 
+  /* audio data */
   int arate;
   int achans;
   int asamps;
   boolean asigned;
   boolean ainterleaf;
+  char audio_name[512]; // name of audio codec, e.g. "vorbis" or NULL
+
+  void *priv; // private data for demuxer/decoder
+
 } lives_clip_data_t;
 
 
 
 // std functions
-const char *module_check_init(void);
 const char *version(void);
 
-// nclip starts at 0
-const lives_clip_data_t *get_clip_data(const char *URI, int nclip);
+
+// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes) 
+// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
+// plugin may or may not check current_palette to see if it is valid
+
+lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *clip_data);
 
 // frame starts at 0
-boolean get_frame(const char *URI, int nclip, int64_t frame, void **pixel_data);
+boolean get_frame(const lives_clip_data_t *cdata, int64_t frame, void **pixel_data);
+
+// free clip data - this should be called for each instance before unloading the module
+void clip_data_free(lives_clip_data_t *);
+
+
+
 
 // opt fns
-int64_t rip_audio (const char *URI, int nclip, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
-void rip_audio_cleanup(void);
-boolean set_palette(int palette);
+const char *module_check_init(void);
+
+int64_t rip_audio (const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
+void rip_audio_cleanup(const lives_clip_data_t *);
+
 void module_unload(void);
+
+
+
+
 
 #define MK_FOURCC(a, b, c, d) ((a<<24)|(b<<16)|(c<<8)|d)
 

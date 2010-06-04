@@ -34,7 +34,10 @@ static size_t prb=0;
 
 
 static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *userdata) {
-  if (info==NULL) pulse_server_rate=0;
+  if (info==NULL) {
+    pulse_server_rate=0;
+    return;
+  }
   pulse_server_rate=info->sample_spec.rate;
 }
 

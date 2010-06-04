@@ -1666,7 +1666,15 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
 // decoder plugins
 
 
-const lives_clip_data_t *get_decoder_plugin(file *sfile) {
+LIVES_INLINE gboolean decplugin_supports_palette (_decoder_plugin *dplug, int palette) {
+  register int i=0;
+  int cpal;
+  while ((cpal=dplug->cdata->palettes[i++])!=WEED_PALETTE_END) if (cpal==palette) return TRUE;
+  return FALSE;
+}
+
+
+const lives_clip_data_t *get_decoder_cdata(file *sfile) {
   // pass file to each decoder plugin in turn, until we find one that can parse
   // the file
   // NULL is returned if no decoder plugin recognises the file - then we
@@ -1676,11 +1684,15 @@ const lives_clip_data_t *get_decoder_plugin(file *sfile) {
 
   // if the file does not exist, we set mainw->error=TRUE and return NULL
 
+  // if we find a plugin we also set sfile->ext_src to point to _decoder_plugin
+
+
+  // TODO - decoder plugins should now be threadsafe, so we need only open one instance of each decoder
+
   gchar *tmp=NULL;
-  const lives_clip_data_t *cdata=NULL;
   GList *decoder_plugins;
   gchar *decplugdir,*msg;
-  _decoder_plugin *dplug;
+  _decoder_plugin *dplug=NULL;
 
   mainw->error=FALSE;
 
@@ -1710,13 +1722,15 @@ const lives_clip_data_t *get_decoder_plugin(file *sfile) {
     g_free(decplugname);
 
     if (dplug!=NULL) {
-      if ((cdata=(dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0))!=NULL) {
+      if ((dplug->cdata=(dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),
+					       NULL))!=NULL) {
 	g_free(tmp);
 	sfile->ext_src=dplug;
 	break;
       }
       g_free(tmp);
       close_decoder_plugin(sfile,dplug);
+      dplug=NULL;
     }
     decoder_plugins=decoder_plugins->next;
   }
@@ -1724,56 +1738,27 @@ const lives_clip_data_t *get_decoder_plugin(file *sfile) {
   g_list_free_strings(decoder_plugins);
   g_list_free(decoder_plugins);
 
-  if (sfile->ext_src!=NULL) {
+  if (dplug!=NULL) {
+    msg=g_strdup_printf(" :: using decoder plugin %s",(dplug->name));
+    d_print(msg);
+    g_free(msg);
 
-    if (cdata!=NULL) {
-
-      // if plugin allows choice of palettes, we must set one straight away
-      // for now we just use the plugin's preferred palette
-
-      dplug=(_decoder_plugin *)(sfile->ext_src);
-
-      dplug->current_palette=dplug->preferred_palette=cdata->palettes[0];
-      if (dplug->set_palette!=NULL) {
-	if (!(dplug->set_palette)(dplug->current_palette)) {
-	  do_decoder_palette_error();
-	  close_decoder_plugin(sfile,sfile->ext_src);
-	  sfile->ext_src=NULL;
-	  return NULL;
-	}
-	// check data again after setting palette
-	cdata=(dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),0);
-	g_free(tmp);
-      }
-
-      if (weed_palette_is_yuv_palette(dplug->current_palette)) {
-	((_decoder_plugin *)(sfile->ext_src))->YUV_clamping=cdata->YUV_clamping;
-	((_decoder_plugin *)(sfile->ext_src))->YUV_subspace=cdata->YUV_subspace;
-	((_decoder_plugin *)(sfile->ext_src))->YUV_sampling=cdata->YUV_sampling;
-      }
-
-      ((_decoder_plugin *)(sfile->ext_src))->interlace=cdata->interlace;
-
-      msg=g_strdup_printf(" :: using decoder plugin %s",((_decoder_plugin *)(sfile->ext_src))->name);
-
-      d_print(msg);
-      g_free(msg);
-
-    }
-    else {
-      close_decoder_plugin(sfile,sfile->ext_src);
-      sfile->ext_src=NULL;
-      
-    }
+    return dplug->cdata;
   }
-  return cdata;
+
+  return NULL;
 }
 
 
 
 
 void close_decoder_plugin (file *sfile, _decoder_plugin *dplug) {
+  // TODO - decoder plugins should now be threadsafe, so we need only open one instance of each decoder
+  lives_clip_data_t *cdata=dplug->cdata;
+
   if (dplug==NULL) return;
+
+  if (cdata!=NULL) (*dplug->clip_data_free)(cdata);
 
   if (dplug->module_unload!=NULL) (*dplug->module_unload)();
 
@@ -1792,6 +1777,7 @@ void close_decoder_plugin (file *sfile, _decoder_plugin *dplug) {
 
 
 _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
+  // TODO - decoder plugins should now be threadsafe, so we need only open one instance of each decoder
 
   _decoder_plugin *dplug=(_decoder_plugin *)g_malloc(sizeof(_decoder_plugin));
   gchar *plugname=g_strdup_printf ("%s%s%s/%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
@@ -1815,9 +1801,6 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
     return NULL;
   }
 
-  if ((dplug->module_check_init=dlsym (dplug->handle,"module_check_init"))==NULL) {
-    OK=FALSE;
-  }
   if ((dplug->version=dlsym (dplug->handle,"version"))==NULL) {
     OK=FALSE;
   }
@@ -1825,6 +1808,9 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
     OK=FALSE;
   }
   if ((dplug->get_frame=dlsym (dplug->handle,"get_frame"))==NULL) {
+    OK=FALSE;
+  }
+  if ((dplug->clip_data_free=dlsym (dplug->handle,"clip_data_free"))==NULL) {
     OK=FALSE;
   }
 
@@ -1838,19 +1824,21 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
   }
 
   // optional
+  dplug->module_check_init=dlsym (dplug->handle,"module_check_init");
   dplug->module_unload=dlsym (dplug->handle,"module_unload");
-  dplug->set_palette=dlsym (dplug->handle,"set_palette");
   dplug->rip_audio=dlsym (dplug->handle,"rip_audio");
   dplug->rip_audio_cleanup=dlsym (dplug->handle,"rip_audio_cleanup");
 
-  err=(*dplug->module_check_init)();
-
-  if (err!=NULL) {
-    g_snprintf(mainw->msg,512,"%s",err);
-    // TODO
-    close_decoder_plugin(0,dplug);
-    g_free(dplug);
-    return NULL;
+  if (dplug->module_check_init!=NULL) {
+    err=(*dplug->module_check_init)();
+    
+    if (err!=NULL) {
+      g_snprintf(mainw->msg,512,"%s",err);
+      // TODO
+      close_decoder_plugin(0,dplug);
+      g_free(dplug);
+      return NULL;
+    }
   }
 
   dplug->name=g_strdup(plname);

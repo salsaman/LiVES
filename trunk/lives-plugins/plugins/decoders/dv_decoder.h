@@ -6,9 +6,15 @@
 #define DV_HEADER_SIZE (6*80) /* 6 DIF blocks */
 
 typedef struct  {
+  // input
   int fd;
   dv_decoder_t *dv_dec;
   int frame_size;
   boolean is_pal;
-} dv_priv_t;
+
+  // audio output
+  int16_t *audio_buffers[4];
+  int16_t *audio;
+  int audio_fd;
+} lives_dv_priv_t;
 

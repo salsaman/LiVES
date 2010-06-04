@@ -155,84 +155,107 @@ _encoder;
 
 // decoder plugins
 
+
+
+
+
+
 #define LIVES_INTERLACE_NONE 0
 #define LIVES_INTERLACE_BOTTOM_FIRST 1
 #define LIVES_INTERLACE_TOP_FIRST 2
 
+
 typedef struct {
-  int nclips; // number of clips in container
-  int width;
-  int height;
-  int64_t nframes;
+  gchar *URI; // the URI of this cdata
+
+  gint nclips; // number of clips (titles) in container
+  gchar container_name[512]; // name of container, e.g. "ogg" or NULL
+
+  // plugin should init this to 0 if URI changes
+  gint current_clip; // current clip number in container (starts at 0, MUST be <= nclips) [rw host]
+
+  // video data
+  gint width;
+  gint height;
+  gint64 nframes;
   int interlace;
 
   // x and y offsets of picture within frame
   // for primary pixel plane
-  int offs_x;
-  int offs_y;
+  gint offs_x;
+  gint offs_y;
+  gint frame_width;
+  gint frame_height;
 
-  float par; // pixel aspect ratio
+  gfloat par; // pixel aspect ratio
 
-  float fps;
+  gfloat fps;
+
   int *palettes;
 
+  // plugin should init this to palettes[0] if URI changes
+  int current_palette;  // current palette [rw host]; must be contained in palettes
+  
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
+  gchar video_name[512]; // name of video codec, e.g. "theora" or NULL
 
-  char container_name[512]; // name of container, e.g. "ogg"
-  char video_name[512]; // name of video codec, e.g. "theora"
-  char audio_name[512]; // name of audio codec, e.g. "vorbis"
-
-  int arate;
-  int achans;
-  int asamps;
+  /* audio data */
+  gint arate;
+  gint achans;
+  gint asamps;
   gboolean asigned;
   gboolean ainterleaf;
+  gchar audio_name[512]; // name of audio codec, e.g. "vorbis" or NULL
+
+  void *priv; // private data for demuxer/decoder - host should not touch this
 
 } lives_clip_data_t;
-
 
 
 
 typedef struct {
   // playback
   gchar *name; // plugin name
-  void *handle;
+  void *handle; // may be shared between several instances
+
+  lives_clip_data_t *cdata;
 
   // mandatory
-  const char *(*module_check_init)(void);
   const char *(*version) (void);
 
-  // set nclip == 0 to get nclips
-  // set nclip > 0 to get data for clip n
-  const lives_clip_data_t *(*get_clip_data)(char *URI, int nclip);
+  // call first time with NULL cdata
+  // subsequent calls should re-use cdata
+  // set cdata->current_clip > 0 to get data for clip n (0 <= n < cdata->nclips)
+  // we can also set cdata->current_palette (must be in list cdata->palettes[])
+
+  // if URI changes, current_clip and current_palette are reset by plugin
+
+  lives_clip_data_t *(*get_clip_data)(char *URI, lives_clip_data_t *cdata);
 
   // frame starts at 0 in these functions
-  gboolean (*get_frame)(const char *URI, int nclip, int64_t frame, void **pixel_data);
+  gboolean (*get_frame)(const lives_clip_data_t *, int64_t frame, void **pixel_data);
+
+  // call this for each cdata before unloading the module
+  void (*clip_data_free)(lives_clip_data_t *);
 
   // optional
-  gboolean (*set_palette)(int palette);
-  int64_t (*rip_audio) (const char *URI, int nclip, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
-  void (*rip_audio_cleanup) (void);
+  const char *(*module_check_init)(void);
+  int64_t (*rip_audio) (const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes, 
+			unsigned char **abuff);
+  void (*rip_audio_cleanup) (const lives_clip_data_t *cdata);
   void (*module_unload)(void);
-
-  int preferred_palette;
-  int current_palette;
-  int interlace;
-  int YUV_sampling;
-  int YUV_clamping;
-  int YUV_subspace;
-
-  double gamma_needed;
 
 } _decoder_plugin;
 
 
-const lives_clip_data_t *get_decoder_plugin(file *sfile);
-void close_decoder_plugin (file *sfile, _decoder_plugin *dplug);
-_decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile);
-void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata);
+const lives_clip_data_t *get_decoder_cdata(file *);
+void close_decoder_plugin (file *, _decoder_plugin *);
+_decoder_plugin *open_decoder_plugin(const gchar *plname, file *);
+void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *);
+
+LIVES_INLINE gboolean decplugin_supports_palette (_decoder_plugin *, int palette);
 
 
 // RFX plugins

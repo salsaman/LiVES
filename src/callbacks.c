@@ -178,7 +178,7 @@ lives_exit (void) {
 
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	    pthread_mutex_lock(&mainw->gtk_mutex);
-	    close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
+	    close_decoder_plugin(mainw->files[i]->ext_src);
 	    pthread_mutex_unlock(&mainw->gtk_mutex);
 	    mainw->files[i]->ext_src=NULL;
 	  }
@@ -242,7 +242,7 @@ lives_exit (void) {
 
 	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	  // must do this before we move it
-	  close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
+	  close_decoder_plugin(mainw->files[i]->ext_src);
 	  mainw->files[i]->ext_src=NULL;
 	}
 
@@ -345,6 +345,8 @@ lives_exit (void) {
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
   pthread_mutex_unlock(&mainw->gtk_mutex);
+
+  unload_decoder_plugins();
 
   end_threaded_dialog();
 
@@ -3724,7 +3726,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	
 	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	  // must do this before we move it
-	  close_decoder_plugin(mainw->files[i],mainw->files[i]->ext_src);
+	  close_decoder_plugin(mainw->files[i]->ext_src);
 	  mainw->files[i]->ext_src=NULL;
 	}
 	

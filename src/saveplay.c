@@ -205,7 +205,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     if (prefs->instant_open) {
       cdata=get_decoder_cdata(cfile);
       if (cfile->ext_src!=NULL) {
-	_decoder_plugin *dplug=(_decoder_plugin *)cfile->ext_src;
+	lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
 	cfile->opening=TRUE;
 	cfile->clip_type=CLIP_TYPE_FILE;
 	
@@ -223,7 +223,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	cfile->signed_endian=get_signed_endian(cdata->asigned, G_BYTE_ORDER==G_LITTLE_ENDIAN);
 
-	if (cfile->achans>0&&(dplug->rip_audio)!=NULL&&withsound==1) {
+	if (cfile->achans>0&&(dplug->decoder->rip_audio)!=NULL&&withsound==1) {
 	  // call rip_audio() in the decoder plugin
 
 	  // since this function blocks, we need to take some special measures to allow cancel
@@ -263,8 +263,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 	    end_threaded_dialog();
 
-	    if (dplug->rip_audio_cleanup!=NULL) {
-	      (dplug->rip_audio_cleanup)(cdata);
+	    if (dplug->decoder->rip_audio_cleanup!=NULL) {
+	      (dplug->decoder->rip_audio_cleanup)(cdata);
 	    }
 
 	    if (mainw->cancelled==CANCEL_KEEP) {
@@ -291,10 +291,10 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  cfile->opening_only_audio=TRUE;
 	  do_threaded_dialog(msgstr,TRUE);
 
-	  (dplug->rip_audio)(cdata,afile,(cfile->fps*start+.5),frames,NULL);
+	  (dplug->decoder->rip_audio)(cdata,afile,(cfile->fps*start+.5),frames,NULL);
 
-	  if (dplug->rip_audio_cleanup!=NULL) {
-	    (dplug->rip_audio_cleanup)(cdata);
+	  if (dplug->decoder->rip_audio_cleanup!=NULL) {
+	    (dplug->decoder->rip_audio_cleanup)(cdata);
 	  }
 
 	  end_threaded_dialog();

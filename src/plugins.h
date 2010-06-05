@@ -1,6 +1,6 @@
 // plugins.h
 // LiVES
-// (c) G. Finch 2003-2006 <salsaman@xs4all.nl>
+// (c) G. Finch 2003-2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -220,8 +220,6 @@ typedef struct {
   gchar *name; // plugin name
   void *handle; // may be shared between several instances
 
-  lives_clip_data_t *cdata;
-
   // mandatory
   const char *(*version) (void);
 
@@ -247,15 +245,29 @@ typedef struct {
   void (*rip_audio_cleanup) (const lives_clip_data_t *cdata);
   void (*module_unload)(void);
 
-} _decoder_plugin;
+} lives_decoder_sys_t;
+
+
+
+
+typedef struct {
+  const lives_decoder_sys_t *decoder;
+  lives_clip_data_t *cdata;
+} lives_decoder_t;
+
+
+
+
 
 
 const lives_clip_data_t *get_decoder_cdata(file *);
-void close_decoder_plugin (file *, _decoder_plugin *);
-_decoder_plugin *open_decoder_plugin(const gchar *plname, file *);
+void close_decoder_plugin (lives_decoder_t *);
+lives_decoder_sys_t *open_decoder_plugin(const gchar *plname);
 void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *);
+void unload_decoder_plugins(void);
 
-LIVES_INLINE gboolean decplugin_supports_palette (_decoder_plugin *, int palette);
+LIVES_INLINE gboolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
+
 
 
 // RFX plugins

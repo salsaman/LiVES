@@ -777,6 +777,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->aud_rec_fd=-1;
 
+  mainw->decoders_loaded=FALSE;
+  mainw->decoder_list=NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -2821,19 +2824,19 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
     }
     else {
       if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&frame<=sfile->frames&&sfile->frame_index[frame-1]>=0) {
-	_decoder_plugin *dplug=(_decoder_plugin *)sfile->ext_src;
+	lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
 
 	if (target_palette!=dplug->cdata->current_palette) {
 	  // try to switch palette
 	  if (decplugin_supports_palette(dplug,target_palette)) {
 	    // switch palettes and re-read clip_data
 	    dplug->cdata->current_palette=target_palette;
-	    dplug->cdata=(*dplug->get_clip_data)(dplug->cdata->URI,dplug->cdata);
+	    dplug->cdata=(*dplug->decoder->get_clip_data)(dplug->cdata->URI,dplug->cdata);
 	  }
 	  else {
 	    if (dplug->cdata->current_palette!=dplug->cdata->palettes[0]&&((weed_palette_is_rgb_palette(target_palette)&&weed_palette_is_rgb_palette(dplug->cdata->palettes[0]))||(weed_palette_is_yuv_palette(target_palette)&&weed_palette_is_yuv_palette(dplug->cdata->palettes[0])))) {
 	      dplug->cdata->current_palette=dplug->cdata->palettes[0];
-	      dplug->cdata=(*dplug->get_clip_data)(dplug->cdata->URI,dplug->cdata);
+	      dplug->cdata=(*dplug->decoder->get_clip_data)(dplug->cdata->URI,dplug->cdata);
 	    }
 	  }
 	}
@@ -2851,7 +2854,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
-	(*dplug->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),pixel_data);
+	(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),pixel_data);
 
 	g_free(pixel_data);
 
@@ -3914,7 +3917,8 @@ void close_current_file(gint file_to_switch_to) {
     }
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->ext_src!=NULL) {
-      close_decoder_plugin(cfile,cfile->ext_src);
+      close_decoder_plugin(cfile->ext_src);
+      cfile->ext_src=NULL;
     }
 
     if (cfile->frame_index!=NULL) g_free(cfile->frame_index);

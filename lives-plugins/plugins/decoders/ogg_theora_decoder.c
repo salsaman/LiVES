@@ -59,14 +59,13 @@ static void index_entries_free (index_entry *idx) {
 
 static index_entry *index_entry_new(void) {
   index_entry *ie=(index_entry *)malloc(sizeof(index_entry));
-  ie->next=NULL;
-  ie->prev=NULL;
+  ie->next=ie->prev=NULL;
   return ie;
 }
 
 
 
-static index_entry *index_entry_add (lives_clip_data_t *cdata, int64_t granule, int64_t pagepos) {
+static index_entry *theora_index_entry_add (lives_clip_data_t *cdata, int64_t granule, int64_t pagepos) {
   // add or update entry for keyframe
   index_entry *idx,*oidx,*last_idx=NULL;
   int64_t gpos,frame,kframe,tframe,tkframe;
@@ -250,7 +249,7 @@ static int64_t get_page(lives_clip_data_t *cdata, int64_t inpos) {
   if (priv->vstream!=NULL) {
     if (ogg_page_serialno(&(opriv->current_page))==priv->vstream->stream_id) {
       gpos=ogg_page_granulepos(&(opriv->current_page));
-      index_entry_add (cdata, gpos, inpos);
+      theora_index_entry_add (cdata, gpos, inpos);
     }
   }
 
@@ -600,7 +599,7 @@ static int64_t find_first_page(lives_clip_data_t *cdata, int64_t pos1, int64_t p
 	}
 
 	granulepos = ogg_page_granulepos(&(opriv->current_page));
-	if (granulepos>0) index_entry_add(cdata,granulepos,priv->input_position-bytes);
+	if (granulepos>0) theora_index_entry_add(cdata,granulepos,priv->input_position-bytes);
 
 	if (frame) {
 	  if (ogg_page_packets(&opriv->current_page)==0) {
@@ -1344,7 +1343,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
       if (fidx==NULL) {
 	granulepos=ogg_seek((lives_clip_data_t *)cdata,tframe,ppos_lower,ppos_upper,TRUE);
 	if (granulepos==-1) return FALSE; // should never happen...
-	fidx=index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->cpagepos);
+	fidx=theora_index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->cpagepos);
       }
       else granulepos=fidx->granulepos;
       kframe = granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
@@ -1371,7 +1370,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 	  priv->cframe=kframe=1;
 	}
 	else {
-	  index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->input_position);
+	  theora_index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->input_position);
 	}
 	last_cframe=priv->cframe;
 	priv->skip=tframe-priv->cframe;

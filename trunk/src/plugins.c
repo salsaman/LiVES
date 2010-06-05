@@ -1666,7 +1666,7 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
 // decoder plugins
 
 
-LIVES_INLINE gboolean decplugin_supports_palette (_decoder_plugin *dplug, int palette) {
+LIVES_INLINE gboolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette) {
   register int i=0;
   int cpal;
   while ((cpal=dplug->cdata->palettes[i++])!=WEED_PALETTE_END) if (cpal==palette) return TRUE;
@@ -1674,25 +1674,55 @@ LIVES_INLINE gboolean decplugin_supports_palette (_decoder_plugin *dplug, int pa
 }
 
 
+
+GList *load_decoders(void) {
+  lives_decoder_sys_t *dplug;
+  gchar *decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
+  GList *dlist=NULL;
+  GList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-so"),*decoder_plugins=decoder_plugins_o;
+  g_free(decplugdir);
+
+  while (decoder_plugins!=NULL) {
+    dplug=open_decoder_plugin((gchar *)decoder_plugins->data);
+    g_free(decoder_plugins->data);
+    if (dplug!=NULL) dlist=g_list_append(dlist,(gpointer)dplug);
+    decoder_plugins=decoder_plugins->next;
+  }
+
+  g_list_free(decoder_plugins_o);
+
+  return dlist;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 const lives_clip_data_t *get_decoder_cdata(file *sfile) {
-  // pass file to each decoder plugin in turn, until we find one that can parse
+  // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
   // the file
   // NULL is returned if no decoder plugin recognises the file - then we
   // fall back to other methods
 
   // otherwise we return data for the clip as supplied by the decoder plugin
 
-  // if the file does not exist, we set mainw->error=TRUE and return NULL
+  // If the file does not exist, we set mainw->error=TRUE and return NULL
 
-  // if we find a plugin we also set sfile->ext_src to point to _decoder_plugin
+  // If we find a plugin we also set sfile->ext_src to point to a newly created decoder_plugin_t
 
-
-  // TODO - decoder plugins should now be threadsafe, so we need only open one instance of each decoder
 
   gchar *tmp=NULL;
-  GList *decoder_plugins;
-  gchar *decplugdir,*msg;
-  _decoder_plugin *dplug=NULL;
+  GList *decoder_plugin;
+  gchar *msg;
+  lives_decoder_t *dplug=NULL;
 
   mainw->error=FALSE;
 
@@ -1706,40 +1736,39 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile) {
 
   sfile->ext_src=NULL;
 
-  decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
-  decoder_plugins=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-so");
-  g_free(decplugdir);
+  if (!mainw->decoders_loaded) {
+    mainw->decoder_list=load_decoders();
+    mainw->decoders_loaded=TRUE;
+  }
 
-  while (decoder_plugins!=NULL) {
-    gchar *decplugname=g_strdup_printf("%s.so",(gchar *)decoder_plugins->data);
-    dplug=open_decoder_plugin(decplugname,sfile);
+  decoder_plugin=mainw->decoder_list;
+
+  dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
+
+  while (decoder_plugin!=NULL) {
+    lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
 
     //#define DEBUG_DECPLUG
 #ifdef DEBUG_DECPLUG
-    g_print("trying decoder %s\n",decplugname);
+    g_print("trying decoder %s\n",dpsys->name);
 #endif
 
-    g_free(decplugname);
-
-    if (dplug!=NULL) {
-      if ((dplug->cdata=(dplug->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),
-					       NULL))!=NULL) {
-	g_free(tmp);
-	sfile->ext_src=dplug;
-	break;
-      }
+    if ((dplug->cdata=(dpsys->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),
+					     NULL))!=NULL) {
       g_free(tmp);
-      close_decoder_plugin(sfile,dplug);
-      dplug=NULL;
+      dplug->decoder=dpsys;
+      sfile->ext_src=dplug;
+      mainw->decoder_list=g_list_move_to_first(mainw->decoder_list, decoder_plugin);
+      break;
     }
-    decoder_plugins=decoder_plugins->next;
+    g_free(tmp);
+    decoder_plugin=decoder_plugin->next;
   }
 
-  g_list_free_strings(decoder_plugins);
-  g_list_free(decoder_plugins);
 
-  if (dplug!=NULL) {
-    msg=g_strdup_printf(" :: using decoder plugin %s",(dplug->name));
+  if (sfile->ext_src!=NULL) {
+    dplug=sfile->ext_src;
+    msg=g_strdup_printf(" :: using decoder plugin %s",(dplug->decoder->name));
     d_print(msg);
     g_free(msg);
 
@@ -1752,22 +1781,27 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile) {
 
 
 
-void close_decoder_plugin (file *sfile, _decoder_plugin *dplug) {
-  // TODO - decoder plugins should now be threadsafe, so we need only open one instance of each decoder
-  lives_clip_data_t *cdata=dplug->cdata;
+
+
+// close one instance of dplug
+void close_decoder_plugin (lives_decoder_t *dplug) {
+  lives_clip_data_t *cdata;
 
   if (dplug==NULL) return;
 
-  if (cdata!=NULL) (*dplug->clip_data_free)(cdata);
+  cdata=dplug->cdata;
 
+  if (cdata!=NULL) (*dplug->decoder->clip_data_free)(cdata);
+
+  g_free(dplug);
+
+}
+
+
+static void unload_decoder_plugin(lives_decoder_sys_t *dplug) {
   if (dplug->module_unload!=NULL) (*dplug->module_unload)();
 
   if (dplug->name!=NULL) {
-    if (sfile!=NULL) {
-      gchar *com=g_strdup_printf("/bin/rm -f %s/%s/%s",prefs->tmpdir,sfile->handle,dplug->name);
-      dummyvar=system(com);
-      g_free(com);
-    }
     g_free(dplug->name);
   }
 
@@ -1776,28 +1810,38 @@ void close_decoder_plugin (file *sfile, _decoder_plugin *dplug) {
 }
 
 
-_decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
-  // TODO - decoder plugins should now be threadsafe, so we need only open one instance of each decoder
+void unload_decoder_plugins(void) {
+  GList *dplugs=mainw->decoder_list;
 
-  _decoder_plugin *dplug=(_decoder_plugin *)g_malloc(sizeof(_decoder_plugin));
-  gchar *plugname=g_strdup_printf ("%s%s%s/%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
-  gchar *nplugname=g_strdup_printf("%s/%s/%s",prefs->tmpdir,sfile->handle,plname);
+  while (dplugs!=NULL) {
+    unload_decoder_plugin(dplugs->data);
+    dplugs=dplugs->next;
+  }
+
+  g_list_free(mainw->decoder_list);
+  mainw->decoder_list=NULL;
+  mainw->decoders_loaded=FALSE;
+}
+
+
+
+lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
+  lives_decoder_sys_t *dplug;
+
+  gchar *plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
   gboolean OK=TRUE;
   const gchar *err;
 
-  gchar *com=g_strdup_printf("/bin/cp %s %s",plugname,nplugname); // copy dl into clip directory - so we get a fresh copy for each file
-  dummyvar=system(com);
-  g_free(com);
-  g_free(plugname);
+  dplug=(lives_decoder_sys_t *)g_malloc(sizeof(lives_decoder_sys_t));
 
-  dplug->handle=dlopen(nplugname,RTLD_LAZY);
-  g_free(nplugname);
+  dplug->handle=dlopen(plugname,RTLD_LAZY);
+  g_free (plugname);
 
   if (dplug->handle==NULL) {
     gchar *msg=g_strdup_printf (_("\n\nFailed to open decoder plugin %s\nError was %s\n"),plname,dlerror());
     d_print(msg);
     g_free (msg);
-    g_free(dplug);
+    g_free (dplug);
     return NULL;
   }
 
@@ -1818,7 +1862,7 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
     gchar *msg=g_strdup_printf (_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"),plname);
     d_print(msg);
     g_free (msg);
-    close_decoder_plugin(0,dplug);
+    unload_decoder_plugin(dplug);
     g_free(dplug);
     return NULL;
   }
@@ -1834,8 +1878,7 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
     
     if (err!=NULL) {
       g_snprintf(mainw->msg,512,"%s",err);
-      // TODO
-      close_decoder_plugin(0,dplug);
+      unload_decoder_plugin(dplug);
       g_free(dplug);
       return NULL;
     }
@@ -1844,6 +1887,7 @@ _decoder_plugin *open_decoder_plugin(const gchar *plname, file *sfile) {
   dplug->name=g_strdup(plname);
   return dplug;
 }
+
 
 
 

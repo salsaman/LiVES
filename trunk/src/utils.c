@@ -3446,3 +3446,11 @@ LIVES_INLINE gint get_interp_value(gshort quality) {
   else if (quality==PB_QUALITY_MED) return GDK_INTERP_BILINEAR;
   return GDK_INTERP_NEAREST;
 }
+
+
+
+LIVES_INLINE GList *g_list_move_to_first(GList *list, GList *item) {
+  // move item to first in list
+  GList *xlist=g_list_remove_link(list,item); // item becomes standalone list
+  return g_list_concat(item,xlist); // concat rest of list after item
+}

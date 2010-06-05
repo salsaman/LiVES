@@ -935,6 +935,11 @@ typedef struct {
   pthread_t sig_pid;
   gchar *sig_file;
 
+  // decoders
+  gboolean decoders_loaded;
+  GList *decoder_list;
+
+
   gboolean go_away;
 
 } mainwindow;

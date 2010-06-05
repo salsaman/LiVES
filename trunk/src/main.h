@@ -814,6 +814,8 @@ void find_when_to_stop (void);
 gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 LIVES_INLINE gint get_interp_value(gshort quality);
+LIVES_INLINE GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
+
 
 GList *get_set_list(const gchar *dir);
 void combo_set_popdown_strings (GtkCombo *combo, GList *list);

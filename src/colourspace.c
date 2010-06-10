@@ -163,13 +163,13 @@ unsigned char gamma_lut[256];
 double current_gamma=-1.;
 
 /* Updates the gamma look-up-table. */
-static inline void update_gamma_lut(double gamma) {
+/*static inline void update_gamma_lut(double gamma) {
   register int i;
   double inv_gamma = (gamma);
   gamma_lut[0] = 0;
   for (i=1; i<256; ++i) gamma_lut[i] = CLAMP0255( myround(255.0 * pow( (double)i / 255.0, inv_gamma ) ) );
   current_gamma=gamma;
-}
+  }*/
 
 
 

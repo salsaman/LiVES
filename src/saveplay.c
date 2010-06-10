@@ -2586,6 +2586,12 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
   // some files give us silly frame rates, even single frames...
   // fps of 1000. is used for some streams (i.e. play each frame as it is received)
   if (cfile->fps==0.||cfile->fps==1000.||(cfile->frames<2&&cfile->is_loaded)) {
+      gdouble xduration=0.;
+
+      if (cfile->ext_src!=NULL&&cfile->fps>0) {
+	  xduration=cfile->frames/cfile->fps;
+      }
+
     if (!(cfile->afilesize*cfile->asampsize*cfile->arate*cfile->achans)||cfile->frames<2) {
       if (cfile->frames!=1) {
       mesg=g_strdup_printf(_ ("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \nDefault can be set in Tools | Preferences | Misc.\n"),prefs->default_fps);
@@ -2604,6 +2610,14 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
       d_print(mesg);
       g_free(mesg);
     }
+
+    if (xduration>0.) {
+	lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+// we should not (!) do this, but broken codecs force us to !
+	cdata->nframes=cfile->frames=xduration*cfile->fps;
+	cdata->fps=cfile->fps;
+    }
+
   }
   if (cfile->opening) return;
 

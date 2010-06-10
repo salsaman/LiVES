@@ -35,7 +35,7 @@ gboolean lives_jack_init (void) {
       get_location("jackd",jackd_loc,512);
       if (strlen(jackd_loc)) {
 #ifndef IS_DARWIN
-	com=g_strdup_printf("echo \"%s -Z -d alsa\">%s",jackd_loc,prefs->jack_aserver);
+	com=g_strdup_printf("echo \"%s -Z -r -d alsa\">%s",jackd_loc,prefs->jack_aserver);
 #else
 #ifdef IS_SOLARIS
 	// use OSS on Solaris

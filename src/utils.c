@@ -2947,12 +2947,7 @@ void save_clip_value(int which, int what, void *val) {
     break;
   case CLIP_DETAILS_UNIQUE_ID:
     key=g_strdup("unique_id");
-    if (capable->cpu_bits==32) {
-      myval=g_strdup_printf("%lld",*(gint64 *)val);
-    }
-    else {
-      myval=g_strdup_printf("%ld",*(gint64 *)val);
-    }
+    myval=g_strdup_printf("%"PRId64,*(gint64 *)val);
     break;
   case CLIP_DETAILS_ARATE:
     key=g_strdup("audio_rate");

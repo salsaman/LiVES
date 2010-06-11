@@ -16916,14 +16916,8 @@ static gchar *rec_error_add(gchar *ebuf, gchar *msg, int num, weed_timecode_t tc
   pthread_mutex_lock(&mainw->gtk_mutex);
   if (tc==-1) new=g_strdup(msg); // missing timecode
   else {
-    if (capable->cpu_bits==32) {
-      if (num==-1) new=g_strdup_printf("%s at timecode %lld\n",msg,tc);
-      else new=g_strdup_printf("%s %d at timecode %lld\n",msg,num,tc);
-    }
-    else {
-      if (num==-1) new=g_strdup_printf("%s at timecode %ld\n",msg,tc);
-      else new=g_strdup_printf("%s %d at timecode %ld\n",msg,num,tc);
-    }
+    if (num==-1) new=g_strdup_printf("%s at timecode %"PRId64"\n",msg,tc);
+    else new=g_strdup_printf("%s %d at timecode %"PRId64"\n",msg,num,tc);
   }
   tmp=g_strconcat (ebuf,new,NULL);
 #define SILENT_EVENT_LIST_LOAD

@@ -40,6 +40,8 @@ void weed_reinit_all(void);
 int num_in_params(weed_plant_t *, gboolean count_reinits, gboolean count_variable);
 weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean skip_hidden);
 gboolean is_hidden_param(weed_plant_t *plant, int i);
+int get_nth_simple_param(weed_plant_t *plant, int pnum);
+int count_simple_params(weed_plant_t *plant);
 weed_plant_t **weed_params_create (weed_plant_t *filter, gboolean in);
 int get_transition_param(weed_plant_t *filter);
 int get_master_vol_param(weed_plant_t *filter);

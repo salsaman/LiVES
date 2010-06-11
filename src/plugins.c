@@ -1758,7 +1758,7 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile) {
       g_free(tmp);
       dplug->decoder=dpsys;
       sfile->ext_src=dplug;
-      if (strncmp(dpsys->name,2,"zz")) {
+      if (strncmp(dpsys->name,"libzz",5)) {
 	mainw->decoder_list=g_list_move_to_first(mainw->decoder_list, decoder_plugin);
       }
       break;

@@ -1196,10 +1196,7 @@ weed_plant_t *append_marker_event (weed_plant_t *event_list, weed_timecode_t tc,
   weed_set_int_value (event,"lives_type",marker_type);
 
 #ifdef DEBUG_EVENTS
-  if (capable->cpu_bits==32)
-    g_print ("adding map event %p at tc %lld\n",init_events[0],tc);
-  else
-    g_print ("adding map event %p at tc %ld\n",init_events[0],tc);
+  g_print ("adding map event %p at tc %"PRId64"\n",init_events[0],tc);
 #endif
 
   if (get_first_event(event_list)==NULL) {
@@ -2619,8 +2616,7 @@ weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_
 
   ///////////////////////////////////////////////////////////////////////////////////
 #ifdef DEBUG_EVENTS
-  if (capable->cpu_bits==32) g_print ("adding init event at tc %lld\n",tc);
-  else g_print ("adding init event at tc %ld\n",tc);
+  g_print ("adding init event at tc %"PRId64"\n",tc);
 #endif
 
   if (get_first_event(event_list)==NULL) {
@@ -2759,10 +2755,7 @@ weed_plant_t *append_filter_map_event (weed_plant_t *event_list, weed_timecode_t
   else weed_set_voidptr_array (event,"init_events",i,init_events);
 
 #ifdef DEBUG_EVENTS
-  if (capable->cpu_bits==32)
-    g_print ("adding map event %p at tc %lld\n",init_events[0],tc);
-  else
-    g_print ("adding map event %p at tc %ld\n",init_events[0],tc);
+  g_print ("adding map event %p at tc %"PRId64"\n",init_events[0],tc);
 #endif
 
   if (get_first_event(event_list)==NULL) {
@@ -2827,10 +2820,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
   case WEED_EVENT_HINT_FRAME:
 
 #ifdef DEBUG_EVENTS
-  if (capable->cpu_bits==32)
-    g_print ("event: frame event at tc %lld curr_tc=%lld\n",tc,curr_tc);
-  else
-    g_print ("event: frame event at tc %ld curr_tc=%ld\n",tc,curr_tc);
+    g_print ("event: frame event at tc %"PRId64" curr_tc=%"PRId64"\n",tc,curr_tc);
 #endif
 
 
@@ -2885,10 +2875,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
     if (i==2) mainw->blend_file=-1;
 
 #ifdef DEBUG_EVENTS
-    if (capable->cpu_bits==32)
-      g_print ("event: front frame is %d tc %lld curr_tc=%lld\n",mainw->frame_index[0],tc,curr_tc);
-    else
-      g_print ("event: front frame is %d tc %ld curr_tc=%ld\n",mainw->frame_index[0],tc,curr_tc);
+    g_print ("event: front frame is %d tc %"PRId64" curr_tc=%"PRId64"\n",mainw->frame_index[0],tc,curr_tc);
 #endif
 
     // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
@@ -2955,10 +2942,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
       g_free (key_string);
     
 #ifdef DEBUG_EVENTS
-      if (capable->cpu_bits==32)
-	g_print ("event: init effect on key %d at tc %lld curr_tc=%lld\n",key,tc,curr_tc);
-      else
-	g_print ("event: init effect on key %d at tc %ld curr_tc=%ld\n",key,tc,curr_tc);
+      g_print ("event: init effect on key %d at tc %"PRId64" curr_tc=%"PRId64"\n",key,tc,curr_tc);
 #endif
     
       filter=get_weed_filter(idx);
@@ -4220,12 +4204,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	   strval=g_strdup_printf("%d",intval[j]);
 	   break;
 	 case WEED_SEED_INT64:
-	   if (capable->cpu_bits==32) {
-	     strval=g_strdup_printf("%lld",int64val[j]);
-	   }
-	   else {
-	     strval=g_strdup_printf("%ld",int64val[j]);
-	   }
+	   strval=g_strdup_printf("%"PRId64,int64val[j]);
 	   break;
 	 case WEED_SEED_DOUBLE:
 	   strval=g_strdup_printf("%.4f",doubval[j]);
@@ -4311,8 +4290,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
      // timecode
      tc_secs=tc/U_SECL;
      tc-=tc_secs*U_SECL;
-     if (capable->cpu_bits==32) text=g_strdup_printf(("Timecode=%lld.%lld"),tc_secs,tc);
-     else text=g_strdup_printf(("Timecode=%ld.%ld"),tc_secs,tc);
+     text=g_strdup_printf(("Timecode=%"PRId64".%"PRId64),tc_secs,tc);
      label = gtk_label_new (text);
      g_free(text);
      

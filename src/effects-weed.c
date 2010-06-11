@@ -4370,6 +4370,73 @@ weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean sk
   return param;
 }
 
+
+
+
+int get_nth_simple_param(weed_plant_t *plant, int pnum) {
+  // return the number of the nth "simple" parameter
+  // we define "simple" as - must be single valued int or float, must not be hidden
+
+  // -1 is returned if no such parameter is found
+
+  int i,error,hint,flags,nparams;
+  weed_plant_t **in_ptmpls;
+  weed_plant_t *tparamtmpl;
+
+  if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) plant=weed_get_plantptr_value(plant,"filter_class",&error);
+
+  if (!weed_plant_has_leaf(plant,"in_parameter_templates")) return -1;
+
+  in_ptmpls=weed_get_plantptr_array(plant,"in_parameter_templates",&error);
+  nparams=weed_leaf_num_elements(plant,"in_parameter_templates");
+
+  for (i=0;i<nparams;i++) {
+    tparamtmpl=in_ptmpls[i];
+    hint=weed_get_int_value(tparamtmpl,"hint",&error);
+    flags=weed_get_int_value(tparamtmpl,"flags",&error);
+    if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(tparamtmpl,"default")==1&&
+	!is_hidden_param(plant,i)) {
+      if (pnum==0) {
+	weed_free(in_ptmpls);
+	return i;
+      }
+      pnum--;
+    }
+  }
+  weed_free(in_ptmpls);
+  return -1;
+}
+
+
+
+int count_simple_params(weed_plant_t *plant) {
+
+  int i,error,hint,flags,nparams,count=0;
+  weed_plant_t **in_ptmpls;
+  weed_plant_t *tparamtmpl;
+
+  if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) plant=weed_get_plantptr_value(plant,"filter_class",&error);
+
+  if (!weed_plant_has_leaf(plant,"in_parameter_templates")) return count;
+
+  in_ptmpls=weed_get_plantptr_array(plant,"in_parameter_templates",&error);
+  nparams=weed_leaf_num_elements(plant,"in_parameter_templates");
+
+  for (i=0;i<nparams;i++) {
+    tparamtmpl=in_ptmpls[i];
+    hint=weed_get_int_value(tparamtmpl,"hint",&error);
+    flags=weed_get_int_value(tparamtmpl,"flags",&error);
+    if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(tparamtmpl,"default")==1&&
+	!is_hidden_param(plant,i)) {
+      count++;
+    }
+  }
+  weed_free(in_ptmpls);
+  return count;
+}
+
+
+
 char *get_weed_display_string (weed_plant_t *inst, int pnum) {
   // TODO - for setting defaults, we will need to create params
   char *disp_string;
@@ -4424,22 +4491,24 @@ void weed_set_blend_factor(int hotkey) {
   int param_hint;
   int copyto=-1;
   weed_plant_t *gui=NULL;
-  weed_plant_t **all_params;
+  weed_plant_t **in_params;
   int pnum=0;
   gboolean copy_ok=FALSE;
   weed_timecode_t tc=0;
   gint inc_count;
+  int i;
 
   if (hotkey<0) return;
   idx=key_to_instance[hotkey][key_modes[hotkey]];
 
   if (idx==-1||(inst=weed_instances[idx])==NULL) return;
 
-  in_param=weed_inst_in_param(inst,0,TRUE); // - skip hidden params
-  if (in_param==NULL) return;
+  i=get_nth_simple_param(inst,1);
 
-  all_params=weed_get_plantptr_array(inst,"in_parameters",&error);
-  while (all_params[pnum]!=in_param) pnum++;
+  if (i==-1) return;
+
+  in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  in_param=in_params[i];
 
   paramtmpl=weed_get_plantptr_value(in_param,"template",&error);
   param_hint=weed_get_int_value(paramtmpl,"hint",&error);
@@ -4454,7 +4523,7 @@ void weed_set_blend_factor(int hotkey) {
       //if (copyto==in_param||copyto<0) copyto=-1;
       if (copyto>-1) {
 	copy_ok=FALSE;
-	paramtmpl2=weed_get_plantptr_value(all_params[copyto],"template",&error);
+	paramtmpl2=weed_get_plantptr_value(in_params[copyto],"template",&error);
 	if (weed_plant_has_leaf(paramtmpl2,"flags")) flags2=weed_get_int_value(paramtmpl2,"flags",&error);
 	param_hint2=weed_get_int_value(paramtmpl2,"hint",&error);
 	if (param_hint==param_hint2&&((flags2&WEED_PARAMETER_VARIABLE_ELEMENTS)||weed_leaf_num_elements(paramtmpl,"default")==weed_leaf_num_elements(paramtmpl2,"default"))) {
@@ -4463,9 +4532,9 @@ void weed_set_blend_factor(int hotkey) {
 	  }}}}}
 
   if (!copy_ok) copyto=-1;
-  else (in_param2=all_params[copyto]);
+  else (in_param2=in_params[copyto]);
 
-  weed_free(all_params);
+  weed_free(in_params);
   inc_count=enabled_in_channels(inst,FALSE);
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
@@ -4539,20 +4608,24 @@ void weed_set_blend_factor(int hotkey) {
 gint weed_get_blend_factor(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
 
-  weed_plant_t *inst,*in_param,*paramtmpl;
+  weed_plant_t *inst,**in_params,*in_param,*paramtmpl;
   int idx,error;
   int vali,mini,maxi;
   double vald,mind,maxd;
   int weed_hint;
+  int i;
 
   if (hotkey<0) return 0;
   idx=key_to_instance[hotkey][key_modes[hotkey]];
 
   if (idx==-1||(inst=weed_instances[idx])==NULL) return 0;
 
-  if (!weed_plant_has_leaf(inst,"in_parameters")) return 0;
-  in_param=weed_get_plantptr_value(inst,"in_parameters",&error);
-  if (in_param==NULL) return 0;
+  i=get_nth_simple_param(inst,1);
+
+  if (i==-1) return 0;
+
+  in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  in_param=in_params[i];
 
   paramtmpl=weed_get_plantptr_value(in_param,"template",&error);
   weed_hint=weed_get_int_value(paramtmpl,"hint",&error);
@@ -4562,16 +4635,21 @@ gint weed_get_blend_factor(int hotkey) {
     vali=weed_get_int_value(in_param,"value",&error);
     mini=weed_get_int_value(paramtmpl,"min",&error);
     maxi=weed_get_int_value(paramtmpl,"max",&error);
+    weed_free(in_params);
     return (gdouble)(vali-mini)/(gdouble)(maxi-mini)*KEYSCALE;
   case WEED_HINT_FLOAT:
     vald=weed_get_double_value(in_param,"value",&error);
     mind=weed_get_double_value(paramtmpl,"min",&error);
     maxd=weed_get_double_value(paramtmpl,"max",&error);
+    weed_free(in_params);
     return (vald-mind)/(maxd-mind)*KEYSCALE;
   case WEED_HINT_SWITCH:
     vali=weed_get_boolean_value(in_param,"value",&error);
+    weed_free(in_params);
     return vali;
   }
+
+  weed_free(in_params);
 
   return 0;
 }

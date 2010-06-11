@@ -14,12 +14,10 @@
 
 ///////////////////////////////////////////////////////
 #include <stdio.h>
-#include <inttypes.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <libdv/dv.h>

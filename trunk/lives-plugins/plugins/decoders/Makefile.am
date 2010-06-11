@@ -23,11 +23,17 @@ dv_decoder_la_LDFLAGS = $(shared_ldflags) @LIBDV_LIBS@
 endif
 
 if HAVE_OGG
+ogg_libs = ogg_decoder.la
+ogg_decoder_la_SOURCES = ogg_decoder.c ogg_decoder.h
+ogg_decoder_la_CFLAGS = $(shared_cflags)
+ogg_decoder_la_LDFLAGS = $(shared_ldflags)
 if HAVE_THEORA
-ogg_theora_libs = ogg_theora_decoder.la
-ogg_theora_decoder_la_SOURCES = ogg_theora_decoder.c ogg_theora_decoder.h
-ogg_theora_decoder_la_CFLAGS = $(shared_cflags) @THEORA_CFLAGS@
-ogg_theora_decoder_la_LDFLAGS = $(shared_ldflags) @THEORA_LIBS@
+ogg_decoder_la_CFLAGS += @THEORA_CFLAGS@ -DHAVE_THEORA=1
+ogg_decoder_la_LDFLAGS += @THEORA_LIBS@
+endif
+if HAVE_DIRAC
+ogg_decoder_la_CFLAGS += @DIRAC_CFLAGS@ -DHAVE_DIRAC=1
+ogg_decoder_la_LDFLAGS += @DIRAC_LIBS@
 endif
 endif
 
@@ -42,6 +48,6 @@ endif
 #libzz_avformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVFORMAT_LIBS)
 #endif
 
-decoderpluginslib_LTLIBRARIES = $(ogg_theora_libs) $(dv_libs) $(avformat_libs) 
+decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(avformat_libs) 
 
 EXTRA_DIST = decplugin.h

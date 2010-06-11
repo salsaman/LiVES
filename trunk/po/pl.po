@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-06-05 16:43-0300\n"
+"POT-Creation-Date: 2010-06-11 14:18-0300\n"
 "PO-Revision-Date: 2010-03-26 20:00+0000\n"
 "Last-Translator: risto <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -1551,7 +1551,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
 #: src/callbacks.c:1875 src/saveplay.c:893 src/saveplay.c:1004
-#: src/saveplay.c:1057 src/saveplay.c:2786
+#: src/saveplay.c:1057 src/saveplay.c:2800
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -3380,7 +3380,7 @@ msgstr "Otwieranie %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:188 src/saveplay.c:2774
+#: src/saveplay.c:188 src/saveplay.c:2788
 msgid " without sound"
 msgstr ""
 
@@ -3508,7 +3508,7 @@ msgstr "Nieznane"
 msgid "Untitled%d"
 msgstr "Dokument_%d"
 
-#: src/saveplay.c:2591
+#: src/saveplay.c:2597
 #, c-format
 msgid ""
 "\n"
@@ -3516,68 +3516,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2603
+#: src/saveplay.c:2609
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2611
+#: src/saveplay.c:2625
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2615 src/saveplay.c:3209
+#: src/saveplay.c:2629 src/saveplay.c:3223
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2619 src/saveplay.c:3213
+#: src/saveplay.c:2633 src/saveplay.c:3227
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2622 src/saveplay.c:3216
+#: src/saveplay.c:2636 src/saveplay.c:3230
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2630
+#: src/saveplay.c:2644
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2704
+#: src/saveplay.c:2718
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2769
+#: src/saveplay.c:2783
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2805
+#: src/saveplay.c:2819
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:2836
+#: src/saveplay.c:2850
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3135
+#: src/saveplay.c:3149
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3154
+#: src/saveplay.c:3168
 msgid "Restoring"
 msgstr "Przywracanie"
 
-#: src/saveplay.c:3176
+#: src/saveplay.c:3190
 #, c-format
 msgid ""
 "\n"
@@ -3586,17 +3586,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3579
+#: src/saveplay.c:3593
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3583
+#: src/saveplay.c:3597
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3606
+#: src/saveplay.c:3620
 #, c-format
 msgid ""
 "\n"
@@ -3604,18 +3604,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3722
+#: src/saveplay.c:3736
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:3735
+#: src/saveplay.c:3749
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:3739
+#: src/saveplay.c:3753
 msgid "Recovering files..."
 msgstr ""
 
@@ -4386,7 +4386,7 @@ msgstr ""
 msgid "Audio Volume Controllers"
 msgstr ""
 
-#: src/effects-weed.c:276 src/plugins.c:1897
+#: src/effects-weed.c:276 src/plugins.c:1899
 msgid "unknown"
 msgstr "nieznane"
 
@@ -4705,7 +4705,7 @@ msgstr ""
 msgid "Unable to resize, please install imageMagick\n"
 msgstr ""
 
-#: src/plugins.c:1841
+#: src/plugins.c:1843
 #, c-format
 msgid ""
 "\n"
@@ -4714,7 +4714,7 @@ msgid ""
 "Error was %s\n"
 msgstr ""
 
-#: src/plugins.c:1862
+#: src/plugins.c:1864
 #, c-format
 msgid ""
 "\n"
@@ -4724,16 +4724,16 @@ msgid ""
 "Unable to use it.\n"
 msgstr ""
 
-#: src/plugins.c:1902
+#: src/plugins.c:1904
 msgid "/unknown"
 msgstr ""
 
-#: src/plugins.c:1928
+#: src/plugins.c:1930
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:2928
+#: src/plugins.c:2930
 #, c-format
 msgid "%s advanced settings"
 msgstr ""
@@ -6289,21 +6289,21 @@ msgstr ""
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:2356
+#: src/osc.c:2292
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:2380
+#: src/osc.c:2316
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:2385
+#: src/osc.c:2321
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:2499
+#: src/osc.c:2435
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""
@@ -7243,7 +7243,7 @@ msgid ""
 "It cannot be loaded.\n"
 msgstr ""
 
-#: src/multitrack.c:4619 src/multitrack.c:4627 src/multitrack.c:18574
+#: src/multitrack.c:4619 src/multitrack.c:4627 src/multitrack.c:18568
 msgid "Layout was wiped.\n"
 msgstr ""
 
@@ -8024,7 +8024,7 @@ msgstr ""
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16800 src/multitrack.c:18293
+#: src/multitrack.c:16800 src/multitrack.c:18287
 msgid "_Autoreload each time"
 msgstr ""
 
@@ -8033,25 +8033,25 @@ msgstr ""
 msgid "Saved layout to %s\n"
 msgstr ""
 
-#: src/multitrack.c:18201
+#: src/multitrack.c:18195
 msgid "clips and frames"
 msgstr ""
 
-#: src/multitrack.c:18205
+#: src/multitrack.c:18199
 msgid "clips"
 msgstr ""
 
-#: src/multitrack.c:18208
+#: src/multitrack.c:18202
 msgid "frames"
 msgstr "klatek"
 
-#: src/multitrack.c:18218
+#: src/multitrack.c:18212
 msgid ""
 "\n"
 "Auto reload layout.\n"
 msgstr ""
 
-#: src/multitrack.c:18221
+#: src/multitrack.c:18215
 #, c-format
 msgid ""
 "%s\n"
@@ -8059,68 +8059,68 @@ msgid ""
 "Therefore it could not be loaded properly.\n"
 msgstr ""
 
-#: src/multitrack.c:18344
+#: src/multitrack.c:18338
 msgid "auto backup"
 msgstr ""
 
-#: src/multitrack.c:18347
+#: src/multitrack.c:18341
 #, c-format
 msgid ""
 "\n"
 "Unable to load layout file %s\n"
 msgstr ""
 
-#: src/multitrack.c:18363
+#: src/multitrack.c:18357
 #, c-format
 msgid "Loading layout from %s..."
 msgstr ""
 
-#: src/multitrack.c:18383
+#: src/multitrack.c:18377
 #, c-format
 msgid "Got %d events...processing..."
 msgstr ""
 
-#: src/multitrack.c:18399
+#: src/multitrack.c:18393
 msgid "Checking and rebuilding event list"
 msgstr ""
 
-#: src/multitrack.c:18426
+#: src/multitrack.c:18420
 #, c-format
 msgid "%d errors detected.\n"
 msgstr ""
 
-#: src/multitrack.c:18459
+#: src/multitrack.c:18453
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:19375
+#: src/multitrack.c:19369
 msgid "LiVES: Multitrack audio mixer"
 msgstr ""
 
-#: src/multitrack.c:19412
+#: src/multitrack.c:19406
 msgid "_Reset values"
 msgstr ""
 
-#: src/multitrack.c:19416
+#: src/multitrack.c:19410
 msgid "_Close mixer"
 msgstr ""
 
-#: src/multitrack.c:19458
+#: src/multitrack.c:19452
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:19464
+#: src/multitrack.c:19458
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:19503
+#: src/multitrack.c:19497
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:19509
+#: src/multitrack.c:19503
 msgid "Adjust all layer audio values to the same value"
 msgstr ""
 

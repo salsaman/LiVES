@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-06-05 16:43-0300\n"
+"POT-Creation-Date: 2010-06-11 14:18-0300\n"
 "PO-Revision-Date: 2010-05-06 18:56+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -1819,7 +1819,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Копіювання кадрів з %d до %d%s до буфера даних…"
 
 #: src/callbacks.c:1875 src/saveplay.c:893 src/saveplay.c:1004
-#: src/saveplay.c:1057 src/saveplay.c:2786
+#: src/saveplay.c:1057 src/saveplay.c:2800
 msgid "Pulling frames from clip"
 msgstr "Отримання кадрів з кліпу"
 
@@ -3834,7 +3834,7 @@ msgstr "Відкриття %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Відкриття %s час початку — %.2f с, %d кадрів"
 
-#: src/saveplay.c:188 src/saveplay.c:2774
+#: src/saveplay.c:188 src/saveplay.c:2788
 msgid " without sound"
 msgstr " без звуку"
 
@@ -3998,7 +3998,7 @@ msgstr "Невідомо"
 msgid "Untitled%d"
 msgstr "Без_назви%d"
 
-#: src/saveplay.c:2591
+#: src/saveplay.c:2597
 #, c-format
 msgid ""
 "\n"
@@ -4011,14 +4011,14 @@ msgstr ""
 "Типову частоту кадрів можна встановити за допомогою пункту меню «Інструменти "
 "| Параметри | Інше».\n"
 
-#: src/saveplay.c:2603
+#: src/saveplay.c:2609
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Швидкість відтворення було скориговано до значення %.3f кадрів на секунду, "
 "щоб зберегти відповідність з звуковими даними.\n"
 
-#: src/saveplay.c:2611
+#: src/saveplay.c:2625
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4028,7 +4028,7 @@ msgstr ""
 "%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:2615 src/saveplay.c:3209
+#: src/saveplay.c:2629 src/saveplay.c:3223
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4037,49 +4037,49 @@ msgstr ""
 "Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:2619 src/saveplay.c:3213
+#: src/saveplay.c:2633 src/saveplay.c:3227
 #, c-format
 msgid "%s none\n"
 msgstr "%s немає\n"
 
-#: src/saveplay.c:2622 src/saveplay.c:3216
+#: src/saveplay.c:2636 src/saveplay.c:3230
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Гц %d каналів %d б/с\n"
 
-#: src/saveplay.c:2630
+#: src/saveplay.c:2644
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Коментар: %s\n"
 
-#: src/saveplay.c:2704
+#: src/saveplay.c:2718
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Збереження кадру %d як %s..."
 
-#: src/saveplay.c:2769
+#: src/saveplay.c:2783
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Створення резервної копії %s на %s"
 
-#: src/saveplay.c:2805
+#: src/saveplay.c:2819
 msgid "Backing up"
 msgstr "Створення резервної копії"
 
-#: src/saveplay.c:2836
+#: src/saveplay.c:2850
 msgid "performance data was backed up..."
 msgstr "було створено резервну копію записаних даних…"
 
-#: src/saveplay.c:3135
+#: src/saveplay.c:3149
 #, c-format
 msgid "Restoring %s..."
 msgstr "Відновлення %s…"
 
-#: src/saveplay.c:3154
+#: src/saveplay.c:3168
 msgid "Restoring"
 msgstr "Відновлення"
 
-#: src/saveplay.c:3176
+#: src/saveplay.c:3190
 #, c-format
 msgid ""
 "\n"
@@ -4092,17 +4092,17 @@ msgstr ""
 "Дані у файлі %s пошкоджено.\n"
 "LiVES не вдалося відновити їх.\n"
 
-#: src/saveplay.c:3579
+#: src/saveplay.c:3593
 #, c-format
 msgid "rec %.2f MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:3583
+#: src/saveplay.c:3597
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!зап %.2f МБ"
 
-#: src/saveplay.c:3606
+#: src/saveplay.c:3620
 #, c-format
 msgid ""
 "\n"
@@ -4115,7 +4115,7 @@ msgstr ""
 "Параметри призупинки запису можна встановити за допомогою діалогового вікна "
 "«Параметри».\n"
 
-#: src/saveplay.c:3722
+#: src/saveplay.c:3736
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4125,11 +4125,11 @@ msgstr ""
 "Було знайдено файли від попереднього запуску LiVES.\n"
 "Бажаєте, щоб програма спробувала їх відновити?\n"
 
-#: src/saveplay.c:3735
+#: src/saveplay.c:3749
 msgid "Recovering files"
 msgstr "Відновлення файлів"
 
-#: src/saveplay.c:3739
+#: src/saveplay.c:3753
 msgid "Recovering files..."
 msgstr "Відновлення файлів…"
 
@@ -5183,7 +5183,7 @@ msgstr "регулятор гучності"
 msgid "Audio Volume Controllers"
 msgstr "Регулятори гучності"
 
-#: src/effects-weed.c:276 src/plugins.c:1897
+#: src/effects-weed.c:276 src/plugins.c:1899
 msgid "unknown"
 msgstr "невідомий"
 
@@ -5553,7 +5553,7 @@ msgstr ""
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "Зміна розмірів неможлива, будь ласка, встановіть imageMagick\n"
 
-#: src/plugins.c:1841
+#: src/plugins.c:1843
 #, c-format
 msgid ""
 "\n"
@@ -5566,7 +5566,7 @@ msgstr ""
 "Не вдалося відкрити додаток декодування %s\n"
 "Помилка: %s\n"
 
-#: src/plugins.c:1862
+#: src/plugins.c:1864
 #, c-format
 msgid ""
 "\n"
@@ -5581,16 +5581,16 @@ msgstr ""
 "немає обов’язкової функції.\n"
 "Його використання неможливе.\n"
 
-#: src/plugins.c:1902
+#: src/plugins.c:1904
 msgid "/unknown"
 msgstr "/невідомо"
 
-#: src/plugins.c:1928
+#: src/plugins.c:1930
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Не вдалося завантажити %s, при переходах зміна розмірів неможлива.\n"
 
-#: src/plugins.c:2928
+#: src/plugins.c:2930
 #, c-format
 msgid "%s advanced settings"
 msgstr "Додаткові параметри %s"
@@ -7350,21 +7350,21 @@ msgstr ""
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "Синхронізація зовнішньої частоти кадрів у %.8f кадрів на секунду.\n"
 
-#: src/osc.c:2356
+#: src/osc.c:2292
 msgid "Cannot initialize OSC receiver\n"
 msgstr "Не вдалося ініціалізувати отримувач даних OSC\n"
 
-#: src/osc.c:2380
+#: src/osc.c:2316
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "ПОПЕРЕДЖЕННЯ: Не вдалося запустити сервер OSC на порту UDP %d\n"
 
-#: src/osc.c:2385
+#: src/osc.c:2321
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "Запущено сервер OSC на порту UDP %d\n"
 
-#: src/osc.c:2499
+#: src/osc.c:2435
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Не вдалося запустити сервер OSC/UDP на порту %d \n"
@@ -8435,7 +8435,7 @@ msgstr ""
 "Вказано некоректну для LiVES кількість каналів звукових даних (%d).\n"
 "Не вдалося завантажити.\n"
 
-#: src/multitrack.c:4619 src/multitrack.c:4627 src/multitrack.c:18574
+#: src/multitrack.c:4619 src/multitrack.c:4627 src/multitrack.c:18568
 msgid "Layout was wiped.\n"
 msgstr "Компонування було вилучено.\n"
 
@@ -9268,7 +9268,7 @@ msgstr "Вилучено значення параметрів ефекту %s �
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "Встановлено значення параметрів %s %s у %s для позиції часу %.4f\n"
 
-#: src/multitrack.c:16800 src/multitrack.c:18293
+#: src/multitrack.c:16800 src/multitrack.c:18287
 msgid "_Autoreload each time"
 msgstr "_Автоматично перезавантажувати кожного разу"
 
@@ -9277,19 +9277,19 @@ msgstr "_Автоматично перезавантажувати кожног�
 msgid "Saved layout to %s\n"
 msgstr "Збережено компонування для %s\n"
 
-#: src/multitrack.c:18201
+#: src/multitrack.c:18195
 msgid "clips and frames"
 msgstr "кліпи і кадри"
 
-#: src/multitrack.c:18205
+#: src/multitrack.c:18199
 msgid "clips"
 msgstr "кліпи"
 
-#: src/multitrack.c:18208
+#: src/multitrack.c:18202
 msgid "frames"
 msgstr "кадрів"
 
-#: src/multitrack.c:18218
+#: src/multitrack.c:18212
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -9297,7 +9297,7 @@ msgstr ""
 "\n"
 "Автоматичне перезавантаження компонування.\n"
 
-#: src/multitrack.c:18221
+#: src/multitrack.c:18215
 #, c-format
 msgid ""
 "%s\n"
@@ -9308,11 +9308,11 @@ msgstr ""
 "Не вистачає деяких %s з компонування %s\n"
 "Отже належне завантаження неможливе.\n"
 
-#: src/multitrack.c:18344
+#: src/multitrack.c:18338
 msgid "auto backup"
 msgstr "автоматичне створення резервних копій"
 
-#: src/multitrack.c:18347
+#: src/multitrack.c:18341
 #, c-format
 msgid ""
 "\n"
@@ -9321,43 +9321,43 @@ msgstr ""
 "\n"
 "Не вдалося завантажити файл компонування %s\n"
 
-#: src/multitrack.c:18363
+#: src/multitrack.c:18357
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "Завантаження компонування з %s…"
 
-#: src/multitrack.c:18383
+#: src/multitrack.c:18377
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "Отримано %d повідомлень про події… обробка…"
 
-#: src/multitrack.c:18399
+#: src/multitrack.c:18393
 msgid "Checking and rebuilding event list"
 msgstr "Перевірка і перебудова списку подій"
 
-#: src/multitrack.c:18426
+#: src/multitrack.c:18420
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "Виявлено %d помилок.\n"
 
-#: src/multitrack.c:18459
+#: src/multitrack.c:18453
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr "Частоту кадрів багатодоріжкової області встановлено у значення %.3f\n"
 
-#: src/multitrack.c:19375
+#: src/multitrack.c:19369
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: мікшер багатодоріжкового звуку"
 
-#: src/multitrack.c:19412
+#: src/multitrack.c:19406
 msgid "_Reset values"
 msgstr "Від_новити значення"
 
-#: src/multitrack.c:19416
+#: src/multitrack.c:19410
 msgid "_Close mixer"
 msgstr "_Закрити вікно мікшера"
 
-#: src/multitrack.c:19458
+#: src/multitrack.c:19452
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
@@ -9365,17 +9365,17 @@ msgstr ""
 "_Інвертувати гучності\n"
 "звукового супроводу і шарів"
 
-#: src/multitrack.c:19464
+#: src/multitrack.c:19458
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 "Скоригувати гучності звукового супроводу і шарів звуку так, щоб їх сума "
 "складала 1,0"
 
-#: src/multitrack.c:19503
+#: src/multitrack.c:19497
 msgid "_Gang layer audio"
 msgstr "Звук з’_єднаного шару"
 
-#: src/multitrack.c:19509
+#: src/multitrack.c:19503
 msgid "Adjust all layer audio values to the same value"
 msgstr "Вирівняти гучності всіх шарів звукових даних"
 

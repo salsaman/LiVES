@@ -1,4 +1,4 @@
-// LiVES - ogg/theora/vorbis decoder plugin
+// LiVES - ogg/theora/dirac/vorbis decoder plugin
 // (c) G. Finch 2008 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -13,29 +13,34 @@
 #include "../../../libweed/weed.h"
 #include "../../../libweed/weed-effects.h"
 
-
-
 ///////////////////////////////////////////////////////
-#include <inttypes.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sched.h>
 
 #include <ogg/ogg.h>
+
+#ifdef HAVE_THEORA
 #include <theora/theora.h>
+#endif
 
-#include "ogg_theora_decoder.h"
+#ifdef HAVE_DIRAC
+#include <schroedinger/schro.h>
+#endif
+
+
+#include "ogg_decoder.h"
 
 
 
-static int ogg_data_process(lives_clip_data_t *cdata, yuv_buffer *yuv, boolean cont);
+static int ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boolean cont);
 
-static const char *plugin_version="LiVES ogg/theora decoder version 1.1";
+
+static const char *plugin_version="LiVES ogg decoder version 1.1";
 
 
 
@@ -235,16 +240,12 @@ static int64_t get_page(lives_clip_data_t *cdata, int64_t inpos) {
 
   ogg_sync_wrote(&(opriv->oy), result+PAGE_HEADER_BYTES+nsegs);
 
-
-
-
   if (ogg_sync_pageout(&(opriv->oy), &(opriv->current_page)) != 1) {
     //fprintf(stderr, "Got no packet %lld %d %s\n",result,page_size,buf);
     return 0;
   }
 
   //fprintf(stderr, "Got packet %lld %d %s\n",result,page_size,buf);
-
 
   if (priv->vstream!=NULL) {
     if (ogg_page_serialno(&(opriv->current_page))==priv->vstream->stream_id) {
@@ -260,6 +261,8 @@ static int64_t get_page(lives_clip_data_t *cdata, int64_t inpos) {
 
 
 static uint32_t detect_stream(ogg_packet * op) {
+  // TODO - do this in the decoder plugins (not in demuxer)
+
   //fprintf(stderr,"detecting stream\n");
   if((op->bytes > 7) &&
      (op->packet[0] == 0x01) &&
@@ -272,6 +275,12 @@ static uint32_t detect_stream(ogg_packet * op) {
 	  !strncmp((char*)(op->packet+1), "theora", 6)) {
     //fprintf(stderr,"theora found\n");
     return FOURCC_THEORA;
+  }
+  else if((op->bytes > 5) &&
+	  (op->packet[4] == 0x00) &&
+	  !strncmp((char*)(op->packet), "BBCD", 6)) {
+    //fprintf(stderr,"dirac found\n");
+    return FOURCC_DIRAC;
   }
 
   return 0;
@@ -315,8 +324,55 @@ static inline lives_in_stream *stream_from_sno(lives_clip_data_t *cdata, int sno
 }
 
 
+
+
+
+
+static uint32_t dirac_uint( bs_t *p_bs )
+{
+    uint32_t u_count = 0, u_value = 0;
+
+    while( !bs_eof( p_bs ) && !bs_read( p_bs, 1 ) )
+    {
+        u_count++;
+        u_value <<= 1;
+        u_value |= bs_read( p_bs, 1 );
+    }
+
+    return (1<<u_count) - 1 + u_value;
+}
+
+static int dirac_bool( bs_t *p_bs )
+{
+    return bs_read( p_bs, 1 );
+}
+
+
+
+
+
 static int setup_tracks(lives_clip_data_t *cdata) {
   // pull first audio and video streams
+
+  // some constants for dirac (from vlc)
+  static const struct {
+    uint32_t u_n /* numerator */, u_d /* denominator */;
+  } p_dirac_frate_tbl[] = { /* table 10.3 */
+    {1,1}, /* this first value is never used */
+    {24000,1001}, {24,1}, {25,1}, {30000,1001}, {30,1},
+    {50,1}, {60000,1001}, {60,1}, {15000,1001}, {25,2},
+  };
+  static const size_t u_dirac_frate_tbl = sizeof(p_dirac_frate_tbl)/sizeof(*p_dirac_frate_tbl);
+
+  static const uint32_t pu_dirac_vidfmt_frate[] = { /* table C.1 */
+    1, 9, 10, 9, 10, 9, 10, 4, 3, 7, 6, 4, 3, 7, 6, 2, 2, 7, 6, 7, 6,
+  };
+  static const size_t u_dirac_vidfmt_frate = sizeof(pu_dirac_vidfmt_frate)/sizeof(*pu_dirac_vidfmt_frate);
+
+
+
+  ////////////////////////////////
+
 
   int done;
   stream_priv_t * ogg_stream;
@@ -324,10 +380,21 @@ static int setup_tracks(lives_clip_data_t *cdata) {
   int header_bytes = 0;
   int64_t input_pos;
 
-  uint8_t imajor,iminor,isubminor;
+  uint8_t imajor,iminor;
+
+#ifdef HAVE_THEORA
+  uint8_t isubminor;
+#endif
+
+  uint32_t iprof,ilevel;
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv;
+
+  uint32_t u_video_format,u_n,u_d;
+
+  bs_t bs;
+
 
   opriv->page_valid=0;
 
@@ -336,13 +403,14 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 
   /* Get the first page of each stream */
   while(1) {
+
     if (!(input_pos=get_page(cdata,priv->input_position))) {
       //fprintf(stderr, "EOF1 while setting up track\n");
       return 0;
     }
-
+    
     priv->input_position+=input_pos;
-
+    
     if (!ogg_page_bos(&(opriv->current_page))) {
       opriv->page_valid = 1;
       break;
@@ -357,33 +425,40 @@ static int setup_tracks(lives_clip_data_t *cdata) {
     ogg_stream_pagein(&ogg_stream->os, &(opriv->current_page));
     opriv->page_valid = 0;
     header_bytes += opriv->current_page.header_len + opriv->current_page.body_len;
-
+      
     if (ogg_stream_packetout(&ogg_stream->os, &opriv->op) != 1) {
       fprintf(stderr, "EOF3 while setting up track\n");
+      ogg_stream_clear(&ogg_stream->os);
+      free(ogg_stream);
       return 0;
     }
+
+
+    // TODO - do stream detection in decoder plugins
       
     ogg_stream->fourcc_priv = detect_stream(&opriv->op);
-
+      
     switch(ogg_stream->fourcc_priv) {
     case FOURCC_VORBIS:
       if (priv->astream!=NULL) {
 	fprintf(stderr,"got extra audio stream\n");
+	ogg_stream_clear(&ogg_stream->os);
+	free(ogg_stream);
 	break;
       }
       priv->astream = lives_in_stream_new(LIVES_STREAM_AUDIO);
       priv->astream->fourcc = FOURCC_VORBIS;
       priv->astream->stpriv   = ogg_stream;
       priv->astream->stream_id = serialno;
-
+	
       ogg_stream->header_packets_needed = 3;
       append_extradata(priv->astream, &opriv->op);
       ogg_stream->header_packets_read = 1;
-
+	
       /* Get samplerate */
       priv->astream->samplerate=PTR_2_32LE(opriv->op.packet + 12);
       //fprintf(stderr,"rate is %d\n",priv->astream->samplerate);
-      
+	
       /* Read remaining header packets from this page */
       while (ogg_stream_packetout(&ogg_stream->os, &opriv->op) == 1) {
 	append_extradata(priv->astream, &opriv->op);
@@ -391,31 +466,32 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 	if (ogg_stream->header_packets_read == ogg_stream->header_packets_needed)  break;
       }
       break;
+#ifdef HAVE_THEORA
     case FOURCC_THEORA:
       if (priv->vstream!=NULL) {
 	fprintf(stderr,"got extra video stream\n");
+	ogg_stream_clear(&ogg_stream->os);
+	free(ogg_stream);
 	break;
       }
       priv->vstream = lives_in_stream_new(LIVES_STREAM_VIDEO);
       priv->vstream->fourcc = FOURCC_THEORA;
       priv->vstream->stpriv   = ogg_stream;
       priv->vstream->stream_id = serialno;
-
+	
       ogg_stream->header_packets_needed = 3;
       append_extradata(priv->vstream, &opriv->op);
       ogg_stream->header_packets_read = 1;
-      
+	
       /* get version */
       imajor=((uint8_t *)(priv->vstream->ext_data))[55];
       iminor=((uint8_t *)(priv->vstream->ext_data))[56];
       isubminor=((uint8_t *)(priv->vstream->ext_data))[57];
-
+	
       priv->vstream->version=imajor*1000000+iminor*1000+isubminor;
-
+	
       // TODO - get frame width, height, picture width, height, and x and y offsets
-
-
-
+	
       /* Get fps and keyframe shift */
       priv->vstream->fps_num = PTR_2_32BE(opriv->op.packet+22);
       priv->vstream->fps_denom = PTR_2_32BE(opriv->op.packet+26);
@@ -431,7 +507,100 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 	ogg_stream->header_packets_read++;
 	if (ogg_stream->header_packets_read == ogg_stream->header_packets_needed) break;
       }
+
       break;
+#endif
+    case FOURCC_DIRAC:
+      if (priv->vstream!=NULL) {
+	fprintf(stderr,"got extra video stream\n");
+	ogg_stream_clear(&ogg_stream->os);
+	free(ogg_stream);
+	break;
+      }
+
+      priv->vstream = lives_in_stream_new(LIVES_STREAM_VIDEO);
+      priv->vstream->fourcc = FOURCC_DIRAC;
+      priv->vstream->stpriv   = ogg_stream;
+      priv->vstream->stream_id = serialno;
+
+      ogg_stream->header_packets_needed = 3;
+      ogg_stream->header_packets_read = 1;
+
+      ogg_stream->keyframe_granule_shift = 22; /* not 32 */
+
+      /* read in useful bits from sequence header */
+      bs_init( &bs, &opriv->op.packet, opriv->op.bytes );
+
+      /* get version */
+      bs_skip( &bs, 13*8); /* parse_info_header */
+
+      imajor=dirac_uint( &bs ); /* major_version */
+      iminor=dirac_uint( &bs ); /* minor_version */
+      iprof=dirac_uint( &bs ); /* profile */
+      ilevel=dirac_uint( &bs ); /* level */
+
+      priv->vstream->version=imajor*1000+iminor;
+
+      u_video_format = dirac_uint( &bs ); /* index */
+      if( u_video_format >= u_dirac_vidfmt_frate ) {
+	/* don't know how to parse this ogg dirac stream */
+	ogg_stream_clear(&ogg_stream->os);
+	free(ogg_stream);
+	free(priv->vstream);
+	priv->vstream=NULL;
+	break;
+      }
+
+      if( dirac_bool( &bs ) ) {
+	cdata->width=dirac_uint( &bs ); /* frame_width */
+	cdata->height=dirac_uint( &bs ); /* frame_height */
+      }
+      // else...????
+
+      if( dirac_bool( &bs ) ) {
+	dirac_uint( &bs ); /* chroma_format */
+      }
+
+      if( dirac_bool( &bs ) ) {
+	dirac_uint( &bs ); /* scan_format */
+      }
+
+      u_n = p_dirac_frate_tbl[pu_dirac_vidfmt_frate[u_video_format]].u_n;
+      u_d = p_dirac_frate_tbl[pu_dirac_vidfmt_frate[u_video_format]].u_d;
+
+      if( dirac_bool( &bs ) ) {
+	uint32_t u_frame_rate_index = dirac_uint( &bs );
+	if( u_frame_rate_index >= u_dirac_frate_tbl ) {
+	  /* something is wrong with this stream */
+	  ogg_stream_clear(&ogg_stream->os);
+	  free(ogg_stream);
+	  free(priv->vstream);
+	  priv->vstream=NULL;
+	  break;
+	}
+	u_n = p_dirac_frate_tbl[u_frame_rate_index].u_n;
+	u_d = p_dirac_frate_tbl[u_frame_rate_index].u_d;
+	if( u_frame_rate_index == 0 ) {
+	  u_n = dirac_uint( &bs ); /* frame_rate_numerator */
+	  u_d = dirac_uint( &bs ); /* frame_rate_denominator */
+	}
+      }
+      
+      cdata->fps = (float) u_n / u_d;
+
+      fprintf(stderr,"got dirac fps=%.4f %d x %d\n",cdata->fps,cdata->width,cdata->height);
+
+      /* Read remaining header packets from this page */
+      while (ogg_stream_packetout(&ogg_stream->os, &opriv->op) == 1) {
+	append_extradata(priv->vstream, &opriv->op);
+	ogg_stream->header_packets_read++;
+	if (ogg_stream->header_packets_read == ogg_stream->header_packets_needed) break;
+      }
+
+      ogg_stream_clear(&ogg_stream->os);
+      free(ogg_stream);
+      break;
+
     default:
       ogg_stream_clear(&ogg_stream->os);
       free(ogg_stream);
@@ -791,22 +960,15 @@ static int open_ogg(lives_clip_data_t *cdata) {
 static boolean attach_stream(lives_clip_data_t *cdata) {
   // open the file and get a handle
 
-  int i;
-  uint8_t *ext_pos;
-  ogg_packet op;
   struct stat sb;
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
-
   ogg_t *opriv=priv->opriv=(ogg_t *)malloc(sizeof(ogg_t));
-  theora_priv_t *tpriv=priv->tpriv=(theora_priv_t *)malloc(sizeof(theora_priv_t));
 
   if ((opriv->fd=open(cdata->URI,O_RDONLY))==-1) {
     fprintf(stderr, "ogg_theora_decoder: unable to open %s\n",cdata->URI);
     free(opriv);
     priv->opriv=NULL;
-    free(tpriv);
-    priv->tpriv=NULL;
     return FALSE;
   }
 
@@ -822,24 +984,24 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     close(opriv->fd);
     free(opriv);
     priv->opriv=NULL;
-    free(tpriv);
-    priv->tpriv=NULL;
     return FALSE;
   }
 
 
+#ifdef HAVE_THEORA
+  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+    // theora only
+    int i;
+    ogg_packet op;
+    uint8_t *ext_pos;
+    theora_priv_t *tpriv=priv->tpriv=(theora_priv_t *)malloc(sizeof(theora_priv_t));
 
-  // theora only
-
-
-  // TODO - check all decoders, and init correct one
-
-  /* Initialize theora structures */
-  theora_info_init(&tpriv->ti);
-  theora_comment_init(&tpriv->tc);
-  
-  /* Get header packets and initialize decoder */
-  if (priv->vstream->ext_data==NULL) {
+    /* Initialize theora structures */
+    theora_info_init(&tpriv->ti);
+    theora_comment_init(&tpriv->tc);
+    
+    /* Get header packets and initialize decoder */
+    if (priv->vstream->ext_data==NULL) {
       fprintf(stderr, "Theora codec requires extra data");
       close(opriv->fd);
       free(opriv);
@@ -847,17 +1009,23 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       free(tpriv);
       priv->tpriv=NULL;
       return FALSE;
-  }
+    }
 
-  ext_pos = priv->vstream->ext_data;
+    ext_pos = priv->vstream->ext_data;
+    
+    for (i=0;i<3;i++) {
+      ext_pos = ptr_2_op(ext_pos, &op);
+      theora_decode_header(&tpriv->ti, &tpriv->tc, &op);
+    }
   
-  for (i=0;i<3;i++) {
-    ext_pos = ptr_2_op(ext_pos, &op);
-    theora_decode_header(&tpriv->ti, &tpriv->tc, &op);
+    theora_decode_init(&tpriv->ts, &tpriv->ti);
+
+    // check to find whether first frame is zero or one
+    // if version >= 3.2.1 first kframe is 1; otherwise 0
+    if (priv->vstream->version>=3002001) priv->kframe_offset=1;
+    else priv->kframe_offset=0;
   }
-  
-  theora_decode_init(&tpriv->ts, &tpriv->ti);
-  
+#endif
 
   priv->last_kframe=10000000;
   priv->last_frame=100000000;
@@ -865,11 +1033,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   // index init 
   priv->idx=NULL;
 
-  // check to find whether first frame is zero or one
-  // if version >= 3.2.1 first kframe is 1; otherwise 0
-
-  if (priv->vstream->version>=3002001) priv->kframe_offset=1;
-  else priv->kframe_offset=0;
 
   return TRUE;
 }
@@ -881,19 +1044,21 @@ static void detach_stream (lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv;
-  theora_priv_t *tpriv=priv->tpriv;
 
   close(opriv->fd);
 
   ogg_sync_clear(&opriv->oy);
 
-
-  // theora only
-  // TODO - call function in decoder
-  theora_clear(&tpriv->ts);
-  theora_comment_clear(&tpriv->tc);
-  theora_info_clear(&tpriv->ti);
-
+#ifdef HAVE_THEORA
+  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+    // theora only
+    // TODO - call function in decoder
+    theora_priv_t *tpriv=priv->tpriv;
+    theora_clear(&tpriv->ts);
+    theora_comment_clear(&tpriv->tc);
+    theora_info_clear(&tpriv->ti);
+  }
+#endif
 
 
   // free stream data
@@ -1102,7 +1267,10 @@ lives_clip_data_t *init_cdata(void) {
   priv->astream=NULL;
 
   priv->opriv=NULL;
+
+#ifdef HAVE_THEORA
   priv->tpriv=NULL;
+#endif
 
   priv->idx=NULL;
 
@@ -1124,7 +1292,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   // cdata as the second parameter
   lives_ogg_priv_t *priv;
   ogg_t *opriv;
-  theora_priv_t *tpriv;
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -1160,7 +1327,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   }
 
   opriv=priv->opriv;
-  tpriv=priv->tpriv;
 
   cdata->nclips=1;
 
@@ -1169,28 +1335,34 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   /* Get format */
   
-  cdata->width  = opriv->y_width = tpriv->ti.frame_width;
-  cdata->height = opriv->y_height = tpriv->ti.frame_height;
-  
-  cdata->fps  = (float)tpriv->ti.fps_numerator/(float)tpriv->ti.fps_denominator;
-  
-  switch(tpriv->ti.pixelformat) {
-  case OC_PF_420:
-    cdata->palettes[0] = WEED_PALETTE_YUV420P;
-    opriv->uv_width = opriv->y_width>>1;
-    break;
-  case OC_PF_422:
-    cdata->palettes[0] = WEED_PALETTE_YUV422P;
-    opriv->uv_width = opriv->y_width>>1;
-    break;
-  case OC_PF_444:
-    cdata->palettes[0] = WEED_PALETTE_YUV444P;
-    opriv->uv_width = opriv->y_width;
-    break;
-  default:
-    fprintf(stderr, "Unknown pixelformat %d", tpriv->ti.pixelformat);
-    return NULL;
+#ifdef HAVE_THEORA
+  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+    theora_priv_t *tpriv=priv->tpriv;
+    cdata->width  = opriv->y_width = tpriv->ti.frame_width;
+    cdata->height = opriv->y_height = tpriv->ti.frame_height;
+    
+    cdata->fps  = (float)tpriv->ti.fps_numerator/(float)tpriv->ti.fps_denominator;
+    
+    switch(tpriv->ti.pixelformat) {
+    case OC_PF_420:
+      cdata->palettes[0] = WEED_PALETTE_YUV420P;
+      opriv->uv_width = opriv->y_width>>1;
+      break;
+    case OC_PF_422:
+      cdata->palettes[0] = WEED_PALETTE_YUV422P;
+      opriv->uv_width = opriv->y_width>>1;
+      break;
+    case OC_PF_444:
+      cdata->palettes[0] = WEED_PALETTE_YUV444P;
+      opriv->uv_width = opriv->y_width;
+      break;
+    default:
+      fprintf(stderr, "Unknown pixelformat %d", tpriv->ti.pixelformat);
+      return NULL;
+    }
+    sprintf(cdata->video_name,"%s","theora");
   }
+#endif
   
   cdata->palettes[1]=WEED_PALETTE_END;
 
@@ -1211,7 +1383,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
 
   sprintf(cdata->container_name,"%s","ogg");
-  sprintf(cdata->video_name,"%s","theora");
 
   // audio part
   if (priv->astream!=NULL) {
@@ -1223,6 +1394,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 }
 
 
+#ifdef HAVE_THEORA
 
 static boolean ogg_theora_read(lives_clip_data_t *cdata, ogg_packet *op, yuv_buffer *yuv) {
   // this packet is for our theora decoder
@@ -1239,9 +1411,11 @@ static boolean ogg_theora_read(lives_clip_data_t *cdata, ogg_packet *op, yuv_buf
   return priv->frame_out;
 }
 
+#endif
 
+static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boolean cont) {
+  // yuvbuffer must be cast to whatevr decoder expects
 
-static boolean ogg_data_process(lives_clip_data_t *cdata, yuv_buffer *yuv, boolean cont) {
   int64_t input_pos=0;
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv;
@@ -1269,7 +1443,7 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, yuv_buffer *yuv, boole
     }
 
     while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
-      if (yuv!=NULL) {
+      if (yuvbuffer!=NULL) {
       // cframe is the frame we are about to decode
 
 	//fprintf(stderr,"cframe is %d\n",cframe);
@@ -1279,7 +1453,12 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, yuv_buffer *yuv, boole
 	}
 	
 	if (!priv->ignore_packets) {
-	  ogg_theora_read(cdata,&opriv->op,yuv);
+#ifdef HAVE_THEORA
+	  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+	    yuv_buffer *yuv=yuvbuffer;
+	    ogg_theora_read(cdata,&opriv->op,yuv);
+	  }
+#endif
 	}
       }
 
@@ -1287,7 +1466,7 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, yuv_buffer *yuv, boole
 	priv->cframe++;
 	priv->skip--;
       }
-      if (yuv==NULL) priv->frame_out=TRUE;
+      if (yuvbuffer==NULL) priv->frame_out=TRUE;
 
       if (priv->frame_out) break;
 
@@ -1304,9 +1483,14 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, yuv_buffer *yuv, boole
 
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_data) {
   // seek to frame, and return pixel_data
+
+#ifdef HAVE_THEORA
   yuv_buffer yuv;
   boolean crow=FALSE;
   void *y,*u,*v;
+  register int i;
+#endif
+
   int64_t kframe=-1,xkframe;
   boolean cont=FALSE;
   int max_frame_diff;
@@ -1315,15 +1499,14 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
   int64_t ppos_lower,ppos_upper;
 
-  register int i;
-
   static index_entry *fidx=NULL;
 
   int mheight;
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv;
-  theora_priv_t *tpriv=priv->tpriv;
+
+  if (priv->vstream==NULL) return FALSE;
 
   priv->current_pos=priv->input_position;
 
@@ -1334,7 +1517,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
   tframe+=priv->kframe_offset;
 
   if (tframe==priv->last_frame) {
-    theora_decode_YUVout(&tpriv->ts, &yuv);
+#ifdef HAVE_THEORA
+    if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+      theora_priv_t *tpriv=priv->tpriv;
+      theora_decode_YUVout(&tpriv->ts, &yuv);
+    }
+#endif
   }
   else {
     if (tframe<=priv->last_frame||tframe-priv->last_frame>max_frame_diff) {
@@ -1395,33 +1583,44 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
     
     priv->last_frame=tframe;
     priv->last_kframe=kframe;
-    if (!ogg_data_process((lives_clip_data_t *)cdata,&yuv,cont)) return FALSE;
-  }
 
-  y=yuv.y;
-  u=yuv.u;
-  v=yuv.v;
-
-  for (i=0;i<mheight;i++) {
-    memcpy(pixel_data[0],y,opriv->y_width);
-    pixel_data[0]+=opriv->y_width;
-    y+=yuv.y_stride;
-    if (yuv.y_height==yuv.uv_height||crow) {
-      memcpy(pixel_data[1],u,opriv->uv_width);
-      memcpy(pixel_data[2],v,opriv->uv_width);
-      pixel_data[1]+=opriv->uv_width;
-      pixel_data[2]+=opriv->uv_width;
-      u+=yuv.uv_stride;
-      v+=yuv.uv_stride;
+#ifdef HAVE_THEORA
+    if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+      if (!ogg_data_process((lives_clip_data_t *)cdata,&yuv,cont)) return FALSE;
     }
-    crow=!crow;
-    sched_yield();
+#endif
+
   }
 
-  return TRUE;
-
-}
+#ifdef HAVE_THEORA
+  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+    y=yuv.y;
+    u=yuv.u;
+    v=yuv.v;
+    
+    for (i=0;i<mheight;i++) {
+      memcpy(pixel_data[0],y,opriv->y_width);
+      pixel_data[0]+=opriv->y_width;
+      y+=yuv.y_stride;
+      if (yuv.y_height==yuv.uv_height||crow) {
+	memcpy(pixel_data[1],u,opriv->uv_width);
+	memcpy(pixel_data[2],v,opriv->uv_width);
+	pixel_data[1]+=opriv->uv_width;
+	pixel_data[2]+=opriv->uv_width;
+	u+=yuv.uv_stride;
+	v+=yuv.uv_stride;
+      }
+      crow=!crow;
+      sched_yield();
+    }
+    
+    return TRUE;
+  }
+#endif
   
+  return FALSE;
+}
+
 
 
 
@@ -1434,11 +1633,14 @@ void clip_data_free(lives_clip_data_t *cdata) {
   }
 
   if (priv->opriv!=NULL) free(priv->opriv);
+
+#ifdef HAVE_THEORA
   if (priv->tpriv!=NULL) free(priv->tpriv);
-  
+#endif
+
   if (priv!=NULL) free(priv);
   
-  free(cdata->palettes);
+  if (cdata->palettes!=NULL) free(cdata->palettes);
   free(cdata);
 }
 

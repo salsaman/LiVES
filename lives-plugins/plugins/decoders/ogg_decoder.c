@@ -7,6 +7,36 @@
 // start decoding at the page whose granulepos converts to the highest frame number prior to the one you're looking for
 
 
+// TODO - split this into demuxer and decoders
+
+// ignore this, just some notes ----------
+// decoders should have the functions:
+// - recognise :: demuxer passes in the first packet of a stream, and a decoder claims it
+//                decoder tells how many more bos packets it needs (detect_stream)
+// - pre_init :: demuxer passes in bos packets until the decoder has parsed them all (setup tracks)
+// - init :: decoder initialises its internal data (attach_stream)
+// - set_data :: decoder completes cdata
+
+// - clear  :: decoder frees stuff (detach_stream)
+
+
+// granulepos to pos :: demuxer passes in something like a granulepos or a byte offset, decoder returns kframe,frame or
+//                      sample offset   [is this possible since it requires knowledge of demuxer and decoder ?]
+//                      (granulepos_to_time)
+
+
+// granulepos_2_frame and frame_2 _granulepos are problematic for splitting like this
+
+// - decode packet (and return if we got a frame out) (ogg_*_read)
+
+// - return same frame
+
+// finalise (clip_data_free)
+///----------------------------------------------------------
+
+
+
+
 #include "decplugin.h"
 
 // palettes, etc.
@@ -41,6 +71,16 @@ static int ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boolean c
 
 
 static const char *plugin_version="LiVES ogg decoder version 1.1";
+
+
+/////////////////////////////////////////
+// schroed stuff
+
+
+static void SchroBufferFree( SchroBuffer *buf, void *priv )
+{
+  // hmmm...
+}
 
 
 
@@ -523,7 +563,7 @@ static int setup_tracks(lives_clip_data_t *cdata) {
       priv->vstream->stpriv   = ogg_stream;
       priv->vstream->stream_id = serialno;
 
-      ogg_stream->header_packets_needed = 3;
+      ogg_stream->header_packets_needed = 1;
       ogg_stream->header_packets_read = 1;
 
       ogg_stream->keyframe_granule_shift = 22; /* not 32 */
@@ -586,19 +626,11 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 	}
       }
       
-      cdata->fps = (float) u_n / u_d;
+      cdata->fps = (float) u_n / (float) u_d;
 
-      fprintf(stderr,"got dirac fps=%.4f %d x %d\n",cdata->fps,cdata->width,cdata->height);
+      priv->vstream->fps_num = u_n;
+      priv->vstream->fps_denom = u_d;
 
-      /* Read remaining header packets from this page */
-      while (ogg_stream_packetout(&ogg_stream->os, &opriv->op) == 1) {
-	append_extradata(priv->vstream, &opriv->op);
-	ogg_stream->header_packets_read++;
-	if (ogg_stream->header_packets_read == ogg_stream->header_packets_needed) break;
-      }
-
-      ogg_stream_clear(&ogg_stream->os);
-      free(ogg_stream);
       break;
 
     default:
@@ -678,6 +710,44 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 
   return 1;
 }
+
+
+#ifdef HAVE_DIRAC
+void get_dirac_cdata(lives_clip_data_t *cdata, SchroDecoder *schrodec) {
+ SchroVideoFormat *sformat=schro_decoder_get_video_format(schrodec);
+ cdata->frame_width=cdata->width=sformat->width;
+ cdata->frame_height=cdata->height=sformat->height;
+
+ //cdata->width=sformat->clean_width;
+ //cdata->height=sformat->clean_height;
+ 
+ if (sformat->interlaced) {
+   if (sformat->top_field_first) cdata->interlace=LIVES_INTERLACE_TOP_FIRST;
+   else cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
+ }
+ else cdata->interlace=LIVES_INTERLACE_NONE;
+
+ switch( sformat->chroma_format ) {
+ case SCHRO_CHROMA_420: cdata->palettes[0]=WEED_PALETTE_YUV420P; break;
+ case SCHRO_CHROMA_422: cdata->palettes[0]=WEED_PALETTE_YUV422P; break;
+ case SCHRO_CHROMA_444: cdata->palettes[0]=WEED_PALETTE_YUV444P; break;
+ default:
+   cdata->palettes[0]=WEED_PALETTE_END;
+   break;
+ }
+
+ cdata->offs_x = sformat->left_offset;
+ cdata->offs_y = sformat->top_offset;
+
+ cdata->par = sformat->aspect_ratio_numerator/sformat->aspect_ratio_denominator;
+
+ if (sformat->luma_offset==0) cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+ else cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
+ 
+}
+#endif
+
+
 
 
 
@@ -777,22 +847,30 @@ static int64_t find_first_page(lives_clip_data_t *cdata, int64_t pos1, int64_t p
 	    continue;
 	  }
 
-	  *kframe =
-	    granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+	  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+	    *kframe = granulepos >> 31;
+	    *frame = *kframe + (granulepos >> 9 & 0x1fff);
+	    *kframe = *kframe / (1+(cdata->interlace==LIVES_INTERLACE_NONE));
+	    *frame = *frame / (1+(cdata->interlace==LIVES_INTERLACE_NONE));
+	  }
 
-	  *frame = *kframe +
-	    granulepos-(*kframe<<priv->vstream->stpriv->keyframe_granule_shift);
-    
+	  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+	    *kframe =
+	      granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+	    
+	    *frame = *kframe +
+	      granulepos-(*kframe<<priv->vstream->stpriv->keyframe_granule_shift);
+	    
+	  }
 	}
-
 	opriv->page_valid=1;
 	return priv->input_position-bytes;
       }
-    else /* Skipped -result bytes */
-      {
-	seek_byte(cdata,priv->input_position-bytes-result);
-	continue;
-      }
+    else {
+      /* Skipped -result bytes */
+      seek_byte(cdata,priv->input_position-bytes-result);
+      continue;
+    }
   }
   return -1;
 }
@@ -873,6 +951,8 @@ static int64_t get_last_granulepos (lives_clip_data_t *cdata, int serialno) {
 
 
 static double granulepos_2_time(lives_in_stream *s, int64_t pos) {
+  // actually should be frame or sample to time
+
   int64_t frames;
   stream_priv_t *stream_priv = (stream_priv_t *)(s->stpriv);
 
@@ -882,6 +962,7 @@ static double granulepos_2_time(lives_in_stream *s, int64_t pos) {
     return ((long double)pos/(long double)s->samplerate);
     break;
   case FOURCC_THEORA:
+  case FOURCC_DIRAC:
     //fprintf(stderr,"vpos is %lld\n",pos);
     stream_priv = (stream_priv_t*)(s->stpriv);
 
@@ -889,6 +970,7 @@ static double granulepos_2_time(lives_in_stream *s, int64_t pos) {
     
     return ((double)s->fps_denom/(double)s->fps_num*(double)frames);
     break;
+
   }
   return -1;
 }
@@ -988,6 +1070,13 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 
 
+  priv->last_kframe=10000000;
+  priv->last_frame=100000000;
+
+  // index init 
+  priv->idx=NULL;
+
+
 #ifdef HAVE_THEORA
   if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
     // theora only
@@ -1002,7 +1091,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     
     /* Get header packets and initialize decoder */
     if (priv->vstream->ext_data==NULL) {
-      fprintf(stderr, "Theora codec requires extra data");
+      fprintf(stderr, "Theora codec requires extra data\n");
       close(opriv->fd);
       free(opriv);
       priv->opriv=NULL;
@@ -1027,11 +1116,23 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 #endif
 
-  priv->last_kframe=10000000;
-  priv->last_frame=100000000;
 
-  // index init 
-  priv->idx=NULL;
+#ifdef HAVE_DIRAC
+  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+    // dirac only
+    priv->kframe_offset=0;
+
+    schro_init();
+    if ((priv->schrodec=schro_decoder_new())==NULL) {
+      fprintf(stderr, "Failed to init schro decoder\n");
+      close(opriv->fd);
+      free(opriv);
+      priv->opriv=NULL;
+      return FALSE;
+    }
+
+  }
+#endif
 
 
   return TRUE;
@@ -1050,7 +1151,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
   ogg_sync_clear(&opriv->oy);
 
 #ifdef HAVE_THEORA
-  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+  if (priv->tpriv!=NULL) {
     // theora only
     // TODO - call function in decoder
     theora_priv_t *tpriv=priv->tpriv;
@@ -1060,6 +1161,13 @@ static void detach_stream (lives_clip_data_t *cdata) {
   }
 #endif
 
+
+#ifdef HAVE_DIRAC
+  if (priv->schroframe!=NULL) schro_frame_unref(priv->schroframe);
+  if (priv->schrodec!=NULL) schro_decoder_free( priv->schrodec );
+  priv->schrodec=NULL;
+  priv->schroframe=NULL;
+#endif
 
   // free stream data
   if (priv->astream!=NULL) {
@@ -1087,6 +1195,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
 
 static inline int64_t frame_to_gpos(lives_clip_data_t *cdata, int64_t kframe, int64_t frame) {
+  // this is only valid for theora; for dirac there is no unique gpos for a particular frame
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   return (kframe << priv->vstream->stpriv->keyframe_granule_shift) + (frame-kframe);
 }
@@ -1272,6 +1381,11 @@ lives_clip_data_t *init_cdata(void) {
   priv->tpriv=NULL;
 #endif
 
+#ifdef HAVE_DIRAC
+  priv->schrodec=NULL;
+  priv->schroframe=NULL;
+#endif
+
   priv->idx=NULL;
 
   cdata->palettes=malloc(2*sizeof(int));
@@ -1333,6 +1447,19 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   // video part
   cdata->interlace=LIVES_INTERLACE_NONE;
 
+  cdata->par=1.;
+
+  // TODO
+  cdata->offs_x=0;
+  cdata->offs_y=0;
+  cdata->frame_width=cdata->width;
+  cdata->frame_height=cdata->height;
+
+  cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
+  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
+  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
+
+
   /* Get format */
   
 #ifdef HAVE_THEORA
@@ -1364,27 +1491,79 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   }
 #endif
   
+
+#ifdef HAVE_DIRAC
+  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+    // feed some pages to the decoder so it gets the idea
+    int64_t start_pos=priv->input_position;
+
+    seek_byte(cdata,priv->data_start);
+
+    while (1) {
+      int64_t input_pos;
+      boolean done=FALSE;
+
+      opriv->page_valid=0;
+
+      if (!(input_pos=get_page(cdata,priv->input_position))) {
+	// should never reach here
+	fprintf(stderr, "EOF1 while decoding\n");
+	return FALSE;
+      }
+      
+      priv->input_position+=input_pos;
+
+      if (ogg_page_serialno(&(opriv->current_page))!=priv->vstream->stream_id) continue;
+      ogg_stream_pagein(&priv->vstream->stpriv->os, &(opriv->current_page));
+    
+      while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
+	// feed packets to decoder
+        SchroBuffer *schrobuffer;
+	int state;
+
+        schrobuffer = schro_buffer_new_with_data( opriv->op.packet, opriv->op.bytes );
+        schrobuffer->free = SchroBufferFree;
+	schrobuffer->priv=NULL;
+	schro_decoder_autoparse_push( priv->schrodec, schrobuffer );
+
+        state = schro_decoder_autoparse_wait( priv->schrodec );
+
+        if (state==SCHRO_DECODER_FIRST_ACCESS_UNIT) {
+	  // should have our cdata now
+	  get_dirac_cdata(cdata,priv->schrodec);
+	  done=TRUE;
+	  break;
+	}
+
+      }
+      if (done) break;
+    }
+    // reset and seek back to start
+    //fprintf(stderr,"got dirac fps=%.4f %d x %d\n",cdata->fps,cdata->width,cdata->height);
+
+    schro_decoder_reset( priv->schrodec );
+    seek_byte(cdata,start_pos);
+    sprintf(cdata->video_name,"%s","dirac");
+  }
+
+#endif
+
+
   cdata->palettes[1]=WEED_PALETTE_END;
 
   cdata->current_palette=cdata->palettes[0];
 
   cdata->nframes=priv->vstream->nframes;
 
-  cdata->par=1.;
-
-  // TODO
-  cdata->offs_x=0;
-  cdata->offs_y=0;
-  cdata->frame_width=cdata->width;
-  cdata->frame_height=cdata->height;
-
-  cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
-  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
-  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
-
   sprintf(cdata->container_name,"%s","ogg");
 
+
   // audio part
+  cdata->asigned=FALSE;
+  cdata->achans=0;
+  cdata->ainterleaf=TRUE;
+  cdata->asamps=0;
+
   if (priv->astream!=NULL) {
     sprintf(cdata->audio_name,"%s","vorbis");
   }
@@ -1413,8 +1592,138 @@ static boolean ogg_theora_read(lives_clip_data_t *cdata, ogg_packet *op, yuv_buf
 
 #endif
 
+
+
+
+#ifdef HAVE_DIRAC
+
+
+static void schroframe_to_pixel_data(SchroFrame *sframe, uint8_t **pixel_data) {
+  uint8_t *y=sframe->components[0].data;
+  uint8_t *u=sframe->components[1].data;
+  uint8_t *v=sframe->components[2].data;
+  
+  register int i;
+
+  boolean crow=FALSE;
+
+  int mheight=(sframe->components[0].height >> 1) << 1;
+
+  for (i=0;i<mheight;i++) {
+    memcpy(pixel_data[0],y,sframe->components[0].width);
+    pixel_data[0]+=sframe->components[0].width;
+    y+=sframe->components[0].stride;
+    if (sframe->components[1].height==sframe->components[0].height||crow) {
+      memcpy(pixel_data[1],u,sframe->components[1].width);
+      memcpy(pixel_data[2],v,sframe->components[2].width);
+      pixel_data[1]+=sframe->components[1].width;
+      pixel_data[2]+=sframe->components[2].width;
+      u+=sframe->components[1].stride;
+      v+=sframe->components[2].stride;
+    }
+    crow=!crow;
+    sched_yield();
+  }
+
+
+}
+
+
+
+
+
+
+static boolean ogg_dirac_read(lives_clip_data_t *cdata, ogg_packet *op, uint8_t **pixel_data) {
+  // this packet is for our dirac decoder
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  SchroDecoder *sd=priv->schrodec;
+  SchroBuffer *schrobuffer;
+  SchroFrame *schroframe;
+  int state;
+  int frame_width=cdata->width;
+  int frame_height=cdata->height;
+
+  int i;
+
+  schrobuffer = schro_buffer_new_with_data( op->packet, op->bytes );
+  schrobuffer->free = SchroBufferFree;
+  schrobuffer->priv=NULL;
+  schro_decoder_autoparse_push( sd, schrobuffer );
+
+  while (1) {
+
+    state = schro_decoder_autoparse_wait( sd );
+    switch (state) {
+    case SCHRO_DECODER_NEED_BITS:
+      return FALSE;
+
+    case SCHRO_DECODER_NEED_FRAME:
+      schroframe = schro_frame_new();
+      
+      if (cdata->current_palette==WEED_PALETTE_YUV420P) schroframe->format = SCHRO_FRAME_FORMAT_U8_420;
+      if (cdata->current_palette==WEED_PALETTE_YUV422P) schroframe->format = SCHRO_FRAME_FORMAT_U8_422;
+      if (cdata->current_palette==WEED_PALETTE_YUV444P) schroframe->format = SCHRO_FRAME_FORMAT_U8_444;
+      
+      schroframe->width=cdata->width;
+      schroframe->height=cdata->height;
+      
+      for( i=0; i<3; i++ ) {
+        schroframe->components[i].width = frame_width;
+        schroframe->components[i].stride = frame_width;
+        schroframe->components[i].height = frame_height;
+        schroframe->components[i].length = frame_width*cdata->height;
+        schroframe->components[i].data = malloc(frame_width*frame_height);
+	
+        if (i==0) {
+	  if (cdata->current_palette==WEED_PALETTE_YUV420P) {
+	    frame_width>>=1;
+	    frame_height>>=1;
+	  }
+	  if (cdata->current_palette==WEED_PALETTE_YUV422P) {
+	    frame_width>>=1;
+	  }
+	  
+	}
+	else {
+	  schroframe->components[i].v_shift =
+	    SCHRO_FRAME_FORMAT_V_SHIFT( schroframe->format );
+	  schroframe->components[i].h_shift =
+	    SCHRO_FRAME_FORMAT_H_SHIFT( schroframe->format );
+        }
+      }
+      
+      schro_decoder_add_output_picture( sd, schroframe);
+      break;
+
+    case SCHRO_DECODER_OK:
+      fprintf(stderr,"dirac decoding picture %d\n",schro_decoder_get_picture_number(sd));
+      if ((schroframe=schro_decoder_pull(sd))!=NULL) {
+	// copy data to pixel_data
+	schroframe_to_pixel_data(schroframe,pixel_data);
+	priv->schroframe=schroframe;
+	priv->frame_out=TRUE;
+	return priv->frame_out;
+      }
+      break;
+      
+    case SCHRO_DECODER_ERROR:
+      fprintf(stderr,"Schro decoder error !\n");
+      priv->frame_out=TRUE;
+      return priv->frame_out;
+    }
+  }
+
+  return priv->frame_out;
+}
+
+#endif
+
+
+
+
+
 static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boolean cont) {
-  // yuvbuffer must be cast to whatevr decoder expects
+  // yuvbuffer must be cast to whatever decoder expects
 
   int64_t input_pos=0;
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
@@ -1459,6 +1768,15 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
 	    ogg_theora_read(cdata,&opriv->op,yuv);
 	  }
 #endif
+
+#ifdef HAVE_DIRAC
+	  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+	    uint8_t **yuv=yuvbuffer;
+	    ogg_dirac_read(cdata,&opriv->op,yuv);
+	  }
+#endif
+
+
 	}
       }
 
@@ -1516,11 +1834,32 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
   tframe+=priv->kframe_offset;
 
+
+#ifdef HAVE_DIRAC
+  // just for testing
+    if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+      max_frame_diff=20;
+      if (tframe<10) {
+	seek_byte(cdata,priv->data_start);
+	priv->current_pos=priv->input_position;
+	priv->last_frame=-1;
+	ogg_stream_reset(&priv->vstream->stpriv->os);
+	schro_decoder_reset(priv->schrodec);
+      }
+    }
+#endif
+
+
   if (tframe==priv->last_frame) {
 #ifdef HAVE_THEORA
     if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
       theora_priv_t *tpriv=priv->tpriv;
       theora_decode_YUVout(&tpriv->ts, &yuv);
+    }
+#endif
+#ifdef HAVE_DIRAC
+    if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+      schroframe_to_pixel_data(priv->schroframe,(uint8_t **)pixel_data);
     }
 #endif
   }
@@ -1587,6 +1926,14 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 #ifdef HAVE_THEORA
     if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
       if (!ogg_data_process((lives_clip_data_t *)cdata,&yuv,cont)) return FALSE;
+    }
+#endif
+
+#ifdef HAVE_DIRAC
+    if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+      if (priv->schroframe!=NULL) schro_frame_unref(priv->schroframe);
+      priv->schroframe=NULL;
+      return ogg_data_process((lives_clip_data_t *)cdata,pixel_data,cont);
     }
 #endif
 

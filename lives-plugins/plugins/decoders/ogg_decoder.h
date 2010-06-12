@@ -127,6 +127,11 @@ typedef struct {
   theora_priv_t *tpriv;
 #endif
 
+#ifdef HAVE_DIRAC
+  SchroDecoder *schrodec;
+  SchroFrame *schroframe;
+#endif
+
   int64_t data_start;
 
 // seeking

@@ -35,8 +35,6 @@
 ///----------------------------------------------------------
 
 
-
-
 #include "decplugin.h"
 
 // palettes, etc.
@@ -53,6 +51,7 @@
 #include <sched.h>
 
 #include <ogg/ogg.h>
+
 
 #ifdef HAVE_THEORA
 #include <theora/theora.h>
@@ -77,11 +76,12 @@ static const char *plugin_version="LiVES ogg decoder version 1.1";
 // schroed stuff
 
 
+#ifdef HAVE_DIRAC
 static void SchroBufferFree( SchroBuffer *buf, void *priv )
 {
   // hmmm...
 }
-
+#endif
 
 
 ////////////////////////////////////////////
@@ -227,7 +227,7 @@ static index_entry *get_bounds_for (lives_clip_data_t *cdata, int64_t tframe, in
 
 /////////////////////////////////////////////////////
 
-
+#ifdef HAVE_THEORA
 static uint8_t * ptr_2_op(uint8_t * ptr, ogg_packet * op) {
   memcpy(op, ptr, sizeof(*op));
   ptr += sizeof(*op);
@@ -235,7 +235,7 @@ static uint8_t * ptr_2_op(uint8_t * ptr, ogg_packet * op) {
   ptr += op->bytes;
   return ptr;
 }
-
+#endif
 
 static int64_t get_page(lives_clip_data_t *cdata, int64_t inpos) {
   uint8_t header[PAGE_HEADER_BYTES+255];

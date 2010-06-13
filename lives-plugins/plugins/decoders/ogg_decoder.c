@@ -754,7 +754,7 @@ void get_dirac_cdata(lives_clip_data_t *cdata, SchroDecoder *schrodec) {
  if (sformat->luma_offset==0) cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
  else cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
 
- printf("vals %d %d %d %d %d %d\n",sformat->width,sformat->height,sformat->clean_width,sformat->clean_height,sformat->interlaced,cdata->palettes[0]);
+ //printf("vals %d %d %d %d %d %d\n",sformat->width,sformat->height,sformat->clean_width,sformat->clean_height,sformat->interlaced,cdata->palettes[0]);
  
 }
 #endif
@@ -952,7 +952,14 @@ static int64_t get_last_granulepos (lives_clip_data_t *cdata, int serialno) {
   
   stream=stream_from_sno(cdata,serialno);
   if (stream==NULL) return -1;
+
+#ifdef HAVE_DIRAC
+  // TODO - fixme !
+  if (stream->stpriv->fourcc_priv==FOURCC_DIRAC) {
     return 417;
+  }
+#endif
+
   pos = find_last_page (cdata, priv->data_start, opriv->total_bytes, serialno, &kframe, &granulepos);
   if (pos < 0) return -1;
 
@@ -1552,7 +1559,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       if (done) break;
     }
     // reset and seek back to start
-    fprintf(stderr,"got dirac fps=%.4f %d x %d\n",cdata->fps,cdata->width,cdata->height);
+    //fprintf(stderr,"got dirac fps=%.4f %d x %d\n",cdata->fps,cdata->width,cdata->height);
 
     schro_decoder_reset( priv->schrodec );
     seek_byte(cdata,start_pos);
@@ -1616,9 +1623,9 @@ static boolean ogg_theora_read(lives_clip_data_t *cdata, ogg_packet *op, yuv_buf
 
 
 static void schroframe_to_pixel_data(SchroFrame *sframe, uint8_t **pixel_data) {
-  uint8_t *y=sframe->components[0].data;
-  uint8_t *u=sframe->components[1].data;
-  uint8_t *v=sframe->components[2].data;
+  uint8_t *s_y=sframe->components[0].data;
+  uint8_t *s_u=sframe->components[1].data;
+  uint8_t *s_v=sframe->components[2].data;
   
   uint8_t *d_y=pixel_data[0];
   uint8_t *d_u=pixel_data[1];
@@ -1631,16 +1638,16 @@ static void schroframe_to_pixel_data(SchroFrame *sframe, uint8_t **pixel_data) {
   int mheight=(sframe->components[0].height >> 1) << 1;
 
   for (i=0;i<mheight;i++) {
-    memcpy(d_y,y,sframe->components[0].width);
+    memcpy(d_y,s_y,sframe->components[0].width);
     d_y+=sframe->components[0].width;
-    y+=sframe->components[0].stride;
+    s_y+=sframe->components[0].stride;
     if (sframe->components[1].height==sframe->components[0].height||crow) {
-      memcpy(d_u,u,sframe->components[1].width);
-      memcpy(d_v,v,sframe->components[2].width);
+      memcpy(d_u,s_u,sframe->components[1].width);
+      memcpy(d_v,s_v,sframe->components[2].width);
       d_u+=sframe->components[1].width;
       d_v+=sframe->components[2].width;
-      u+=sframe->components[1].stride;
-      v+=sframe->components[2].stride;
+      s_u+=sframe->components[1].stride;
+      s_v+=sframe->components[2].stride;
     }
     crow=!crow;
     sched_yield();
@@ -1734,7 +1741,7 @@ static boolean ogg_dirac_read(lives_clip_data_t *cdata, ogg_packet *op, uint8_t 
 	  schroframe_to_pixel_data(schroframe,pixel_data);
 	  //iv->schroframe=schroframe;
 	  priv->frame_out=TRUE;
-	  // TODO - push this frame to queue
+	  // TODO - push this frame to queue (or rather, exit and then cont returns to parsing)
 	  schro_frame_unref(schroframe);
 	}
 	else {
@@ -1840,7 +1847,7 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
 
       if (priv->frame_out) break;
 
-      //sched_yield();
+      sched_yield();
     }
 
     ignore_count=FALSE;

@@ -1380,10 +1380,8 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_widget_show (frame7);
     gtk_box_pack_start (GTK_BOX (vbox21), frame7, TRUE, TRUE, 0);
 
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_bg (frame7, GTK_STATE_NORMAL, &palette->normal_back);
-      }
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_bg (frame7, GTK_STATE_NORMAL, &palette->normal_back);
     }
 
     xvbox = gtk_vbox_new (FALSE, 0);
@@ -1403,12 +1401,10 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 			G_CALLBACK (label_act_toggle),
 			resaudw->aud_checkbutton);
 
-      if (type!=4) {
-	if (palette->style&STYLE_1) {
-	  gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	  gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	  gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-	}
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
       }
 
       resaudw->aud_hbox = gtk_hbox_new (FALSE, 0);
@@ -1430,11 +1426,11 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     
     if (type>=3) label98 = gtk_label_new_with_mnemonic (_("_Rate (Hz) "));
     else label98 = gtk_label_new (_("Rate (Hz) "));
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label98, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label98, GTK_STATE_NORMAL, &palette->normal_fore);
     }
+
     gtk_widget_show (label98);
     gtk_box_pack_start (GTK_BOX (hbox25), label98, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label98), GTK_JUSTIFY_LEFT);
@@ -1458,11 +1454,11 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     
     if (type>=3) label99 = gtk_label_new_with_mnemonic (_("    _Channels "));
     else label99 = gtk_label_new (_("    Channels "));
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label99, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label99, GTK_STATE_NORMAL, &palette->normal_fore);
     }
+
     gtk_widget_show (label99);
     gtk_box_pack_start (GTK_BOX (hbox25), label99, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label99), GTK_JUSTIFY_LEFT);
@@ -1492,11 +1488,11 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     if (type>=3) label100 = gtk_label_new_with_mnemonic (_("    _Sample Size "));
     else label100 = gtk_label_new (_("    Sample Size "));
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label100, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label100, GTK_STATE_NORMAL, &palette->normal_fore);
     }
+
     gtk_widget_show (label100);
     gtk_box_pack_start (GTK_BOX (hbox25), label100, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label100), GTK_JUSTIFY_LEFT);
@@ -1553,13 +1549,13 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),
 		      resaudw->rb_signed);
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-      }
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
+
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
   
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (resaudw->rb_signed), TRUE);
@@ -1587,13 +1583,13 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),
 		      resaudw->rb_unsigned);
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-      }
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
+
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
 
     if (type==7||!is_8bit) gtk_widget_set_sensitive(resaudw->rb_unsigned,FALSE);
@@ -1640,13 +1636,13 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),
 		      resaudw->rb_littleend);
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-      }
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
+
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
 
     if (type==7) gtk_widget_set_sensitive(resaudw->rb_littleend,FALSE);
@@ -1672,13 +1668,13 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),
 		      resaudw->rb_bigend);
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-      }
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
+
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
 
     if (type==7) gtk_widget_set_sensitive(resaudw->rb_bigend,FALSE);
@@ -1701,11 +1697,11 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     if (type>=3) label93 = gtk_label_new (_("Audio"));
     else label93 = gtk_label_new (_("New"));
-    if (type!=4) {
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label93, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label93, GTK_STATE_NORMAL, &palette->normal_fore);
     }
+
     gtk_widget_show (label93);
 
     if (type==3&&palette->style&STYLE_1) gtk_widget_modify_bg(frame7, GTK_STATE_NORMAL, &palette->normal_back);

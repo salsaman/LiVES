@@ -280,6 +280,11 @@ enum {
     N_COLUMNS
 };
 
+
+#define PREF_WIN_WIDTH 960
+#define PREF_WIN_HEIGHT 640
+
+
 // prefs window
 typedef struct {
   gulong encoder_ofmt_fn;

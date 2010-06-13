@@ -34,7 +34,6 @@
 // finalise (clip_data_free)
 ///----------------------------------------------------------
 
-
 #include "decplugin.h"
 
 // palettes, etc.

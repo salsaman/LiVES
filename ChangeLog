@@ -5,13 +5,13 @@ Add more formats to x264 encoder (needs testing).
 Add experimental webm encoding support in ffmpeg_encoder.
 Fix crash when right clicking in mt with no clips loaded.
 Const correctness in code (A. Penkov)
-Fix possible crash in rendered generators, and add them to crash recovery.
+Fix possible crash in rendered generators, and add them to crash recovery. *
 Thread context fix for gtk+ 2.22 and higher.
 Fix startup mplayer png/alpha test.
 Fix end image size problem (regression).
 Updates to decoder plugins (make threadsafe).
-
-
+Add plugin decoder support for ogg/dirac files (in progress).
+Apply theming to the Prefences dialog (A. Kolga)
 
 
 

@@ -11,17 +11,17 @@ multi_encoder
 
 LiVES plugin which uses the following encoding programs:
 
-mpeg_encoder.py
-ogm_encoder.py
-mkv_encoder.py
-avi_encoder.py
-dirac_encoder.py
-theora_encoder.py
-mng_encoder.py
-gif_encoder.py
+lives_mpeg_encoder
+lives_ogm_encoder
+lives_mkv_encoder
+lives_avi_encoder
+lives_dirac_encoder
+lives_theora_encoder
+lives_mng_encoder
+lives_gif_encoder
 
-See each *.py encoder for complete list of requirements
-(you can type e.g. mpeg_encoder.py -C)
+See each lives_* encoder for complete list of requirements
+(you can type e.g. mpeg_encoder -C)
 
 Copyright (C) 2004-2006 Marco De la Cruz (marco@reimeika.ca)
 It's a trivial program, but might as well GPL it, so see:
@@ -36,15 +36,15 @@ Copyright (C) 2008 - 2010 Salsaman (salsaman@xs4all.nl)
 """
 
 
-version = '0.2.13'
-mpeg = 'mpeg_encoder.py'
-ogm = 'ogm_encoder.py'
-mkv = 'mkv_encoder.py'
-ogg = 'theora_encoder.py'
-avi = 'avi_encoder.py'
-drc = 'dirac_encoder.py'
-mng = 'mng_encoder.py'
-gif = 'gif_encoder.py'
+version = '0.2.14'
+mpeg = 'lives_mpeg_encoder'
+ogm = 'lives_ogm_encoder'
+mkv = 'lives_mkv_encoder'
+ogg = 'lives_theora_encoder'
+avi = 'lives_avi_encoder'
+drc = 'lives_dirac_encoder'
+mng = 'lives_mng_encoder'
+gif = 'lives_gif_encoder'
 
 usage = \
       """
@@ -58,14 +58,14 @@ SUMMARY (ver. %s):
 
 LiVES plugin which calls one of the following programs:
 
-mpeg_encoder.py
-ogm_encoder.py
-mkv_encoder.py
-theora_encoder.py
-avi_encoder.py
-dirac_encoder.py
-mng_encoder.py
-gif_encoder.py
+lives_mpeg_encoder
+lives_ogm_encoder
+lives_mkv_encoder
+lives_theora_encoder
+lives_avi_encoder
+lives_dirac_encoder
+lives_mng_encoder
+lives_gif_encoder
 
 in order to generate movies in one of the following formats:
 
@@ -84,7 +84,7 @@ VCD/SVCD/DVD (NTSC and PAL video)
 MNG (no sound)
 Animated GIF (no sound)
 
-The *.py encoder programs are either part of your LiVES
+The lives_* encoder programs are either part of your LiVES
 ditribution and/or available from:
 
 http://lives.reimeika.ca/lives_guide.html
@@ -484,7 +484,7 @@ if __name__ == '__main__':
             quiet = '-q'
             tonull = '2> /dev/null'
 
-        encode_command = ' '.join([prog + '_encoder.py', '-o', \
+        encode_command = ' '.join(['lives_' + prog + '_encoder', '-o', \
                                    outfile, '-w', tempdir, '-a', arc, \
                                    '-f', fpsc, quiet, '-t', \
                                    type, '-s ./audiodump.wav', \
@@ -598,5 +598,5 @@ Jun 2009 : 0.2.11 : salsaman - replace deprecated os.popen
 
 Feb 2010 : 0.2.12 : salsaman - pipe error/info output to stderr
 Mar 2010 : 0.2.13 : salsaman - remove metd toplevel directory and set outfile mode
-
+Jun 2010 : 0.2.14 : change names e.g. dirac_encoder.py -> lives_dirac_encoder
 """

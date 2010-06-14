@@ -30,9 +30,12 @@ It's a trivial program, but might as well GPL it, so see:
 http://www.gnu.org/copyleft/gpl.html for license.
 
 See my vids at http://amv.reimeika.ca !
+
+Updated by G. Finch (salsaman) 2010
+
 """
 
-version = '0.0.a15'
+version = '0.1'
 convert = 'convert'
 mencoder = 'mencoder'
 dirac_encoder = 'dirac_encoder'
@@ -306,7 +309,7 @@ def run(command):
     """
 
     if verbose:
-        print(('Running: \n' + command + '\n=== ... ==='))
+        print('Running: \n' + command + '\n=== ... ===')
         std = ''
     else:
         std = ' > /dev/null 2>&1'
@@ -428,14 +431,14 @@ def do_encode():
     all_vars.update(locals())
 
     if not quiet:
-        print(('Creating "%s"-quality Dirac file' % vtype))
+        print('Creating "%s"-quality Dirac file' % vtype)
 
     yuvcommand = """cd %(source_dir)s ; \\
 %(mencoder)s mf://%(syml)s%(img_pre)s*%(ext)s %(mencoder_opts)s%(yuvv)s %(std)s
     """ % all_vars
     run(yuvcommand)
     command = """cd %(source_dir)s ; \\
-%(dirac_encoder)s -width %(fx)s -height %(fy)s -fr %(ffps)s %(be_verbose)s %(dirac_opts)s %(yuvvne)s %(dyuvv)s %(std)s
+%(dirac_encoder)s -width %(fx)s -height %(fy)s -fr %(ffps)s %(be_verbose)s %(dirac_opts)s %(yuvv)s %(dyuvv)s.drc %(std)s
 """ % all_vars
     run(command)
     os.remove(yuvv)
@@ -443,7 +446,7 @@ def do_encode():
     for tfile in [dyuvv, dyuvv + '.yuv', dyuvv + '.imt']:
         if os.path.exists(tfile):
             if verbose:
-                print(('Removing ' + tfile))
+                print('Removing ' + tfile)
             os.remove(tfile)
 
 # Audio not supported yet. Planned to use Matroska container but
@@ -451,7 +454,7 @@ def do_encode():
     audio = False
     if audio:
         if not quiet:
-            print(('Creating "%s"-quality ogg vorbis file' % vtype))
+            print('Creating "%s"-quality ogg vorbis file' % vtype)
 
         ogg = tempfile.mkstemp('.ogg', '', work_dir)[1]
         if rawsndf:
@@ -555,11 +558,11 @@ def is_installed(prog):
     wprog = which(prog)
 
     if wprog == '':
-        print((prog + ': command not found'))
-        raise SystemExit(1)
+        print(prog + ': command not found')
+        raise SystemExit, 1
     else:
         if verbose:
-            print((wprog + ': found'))
+            print(wprog + ': found')
 
 
 if __name__ == '__main__':
@@ -573,31 +576,31 @@ if __name__ == '__main__':
     import tarfile
 
     try:
-        if sys.version_info[0:3] < (3, 0, 0):
-            raise SystemExit(1)
+        if sys.version_info[0:3] < (2, 3, 0):
+            raise SystemExit, 1
     except:
-        print('You need Python 3.0.0 or greater to run me!')
-        raise SystemExit(1)
+        print('You need Python 2.3.0 or greater to run me!')
+        raise SystemExit, 1
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
                                          'ho:p:d:w:a:qvt:ekc:r:s:b:f:VCD:L:')
     except:
         print("Something's wrong. Try the '-h' flag.")
-        raise SystemExit(1)
+        raise SystemExit, 1
 
     opts = dict(opts)
 
     if not opts and not args:
         print(usage)
-        raise SystemExit(1)
+        raise SystemExit, 1
 
     if '-h' in opts:
-        print((usage + help))
+        print(usage + help)
         raise SystemExit
 
     if '-V' in opts:
-        print(('dirac_encoder.py version ' + version))
+        print('dirac_encoder.py version ' + version)
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):
@@ -619,7 +622,7 @@ if __name__ == '__main__':
 
     if img_pre not in ['', 'eimg', 'rimg']:
          print('Improper image name prefix.')
-         raise SystemExit(1)
+         raise SystemExit, 1
 
     temp_dir = ''
     img_dir = opts.get('-d', '.')
@@ -633,14 +636,14 @@ if __name__ == '__main__':
         img_dir = temp_dir + '/img_dir'
 
     if not os.path.isdir(img_dir):
-        print(('The image source directory: '  + img_dir + \
-              ' does not exist!'))
-        raise SystemExit(1)
+        print('The image source directory: '  + img_dir + \
+              ' does not exist!')
+        raise SystemExit, 1
 
     if len(args) not in [0, 2]:
-        print(('If frames are specified both first and last ' + \
-              'image numbers must be chosen.'))
-        raise SystemExit(1)
+        print('If frames are specified both first and last ' + \
+              'image numbers must be chosen.')
+        raise SystemExit, 1
     elif len(args) == 0:
         args = [None, None]
 
@@ -664,7 +667,7 @@ if __name__ == '__main__':
 
     if aspectc not in [str(i) for i in range(1,5)]:
         print('Invalid aspect ratio.')
-        raise SystemExit(1)
+        raise SystemExit, 1
     else:
         if aspectc == '1': aspect = '1:1'
         elif aspectc == '2': aspect = '4:3'
@@ -675,7 +678,7 @@ if __name__ == '__main__':
 
     if vtype not in ['hi', 'mh', 'ml', 'lo']:
         print('Invalid video type.')
-        raise SystemExit(1)
+        raise SystemExit, 1
 
     out_drc = opts.get('-o', vtype + '_movie.drc')
 
@@ -704,14 +707,14 @@ if __name__ == '__main__':
                 fpsnum = fpsnum/divisor
                 fpsden = fpsden/divisor
             fps = '%s/%s' % (fpsnum, fpsden)
-            if not quiet: print(('Using fps = ' + fps))
+            if not quiet: print('Using fps = ' + fps)
             if fpsnum > 0: foundfps = True
         except:
             pass
 
     if not foundfps:
         print('Invalid fps code or rate.')
-        raise SystemExit(1)
+        raise SystemExit, 1
 
     if '-e' not in opts:
         enhance = False
@@ -720,7 +723,7 @@ if __name__ == '__main__':
 
     if enhance and img_pre:
         print('Sorry, you cannot enhance already-enhanced images')
-        raise SystemExit(1)
+        raise SystemExit, 1
 
     if '-k' not in opts:
         keep = False
@@ -732,10 +735,10 @@ if __name__ == '__main__':
 
     if (cgeom or rgeom) and not enhance:
         print('Missing "-e" option.')
-        raise SystemExit(1)
+        raise SystemExit, 1
 
     delay = opts.get('-D', '0')
-    if verbose: print(('Linear audio delay (ms): ' + delay))
+    if verbose: print('Linear audio delay (ms): ' + delay)
 
     lv1file = opts.get('-L', None)
     if lv1file:
@@ -744,10 +747,10 @@ if __name__ == '__main__':
             lv1 = tarfile.open(os.path.abspath(lv1file))
         except:
             print('This does not appear to be a valid LiVES file!')
-            raise SystemExit(1)
+            raise SystemExit, 1
         if 'header.tar' not in lv1.getnames():
             print('This does not appear to be a valid LiVES file!')
-            raise SystemExit(1)
+            raise SystemExit, 1
         for tfile in lv1.getmembers():
             lv1.extract(tfile, img_dir)
         for tfile in glob.glob(os.path.join(img_dir, '*.tar')):
@@ -762,24 +765,24 @@ if __name__ == '__main__':
     elif os.path.isfile(test_file + '.png'):
         ext = '.png'
     else:
-        print(('Cannot find any appropriate %s or %s files!' % ('.jpg','.png')))
-        raise SystemExit(1)
+        print('Cannot find any appropriate %s or %s files!' % ('.jpg','.png'))
+        raise SystemExit, 1
     first_frame = test_file + ext
     last_frame = os.path.join(img_dir, img_pre + last_frame_num + ext)
 
-    if not quiet: print(('Found: ' + first_frame))
+    if not quiet: print('Found: ' + first_frame)
     
     work_dir = opts.get('-w', img_dir)
     work_dir = os.path.abspath(work_dir)
     if not os.path.isdir(work_dir):
-        if not quiet: print(('Creating ' + work_dir))
+        if not quiet: print('Creating ' + work_dir)
         try:
             os.makedirs(work_dir)
             os.chmod(work_dir, 0o755)
         except:
-            print(('Could not create the work directory ' + \
-                  work_dir))
-            raise SystemExit(1)
+            print('Could not create the work directory ' + \
+                  work_dir)
+            raise SystemExit, 1
     if ' ' in work_dir:
         if temp_dir == '':
             temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
@@ -799,7 +802,7 @@ if __name__ == '__main__':
         audio = True
         if sndf[-4:] == '.wav':
             rawsndf = False
-        if not quiet: print(('Found audio file: ' + sndf))
+        if not quiet: print('Found audio file: ' + sndf)
 
     sndr = opts.get('-b', '44100')
 

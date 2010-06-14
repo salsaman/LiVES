@@ -589,6 +589,8 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 
       priv->vstream->version=imajor*1000+iminor;
 
+      //printf("dirac version %d\n",priv->vstream->version);
+
       u_video_format = dirac_uint( &bs ); /* index */
       if( u_video_format >= u_dirac_vidfmt_frate ) {
 	/* don't know how to parse this ogg dirac stream */
@@ -1690,6 +1692,7 @@ static boolean ogg_dirac_read(lives_clip_data_t *cdata, ogg_packet *op, uint8_t 
 
     state = schro_decoder_autoparse_wait( sd );
     switch (state) {
+
     case SCHRO_DECODER_NEED_BITS:
       return priv->frame_out;
 
@@ -1802,6 +1805,20 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
       
       if (ogg_page_serialno(&(opriv->current_page))!=priv->vstream->stream_id) continue;
       ogg_stream_pagein(&priv->vstream->stpriv->os, &(opriv->current_page));
+
+
+#ifdef HAVE_DIRAC
+	  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+	    uint64_t gpos=ogg_page_granulepos(&(opriv->current_page));
+	    uint64_t gl=gpos&0x2FFFFF;
+	    uint64_t gh=gpos>>22;
+	    uint64_t np=(gh+gl)>>9;
+	    uint64_t dt=gpos>>32;
+	    uint64_t dh=(gpos>>22)&0xff;
+	    uint64_t dl=gpos&0xff;
+	    printf("next pt will be %ld %ld %ld %ld %ld %ld\n",np,gpos,gh,gl,dt,(dh<<8)|dl);
+	  }
+#endif
     }
 
     while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
@@ -1900,7 +1917,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
       if (tframe<50) {
 
 	schro_decoder_reset(priv->schrodec);
-	seek_byte(cdata,priv->data_start);
+	seek_byte(cdata,0);
 	priv->current_pos=priv->input_position;
 	ogg_stream_reset(&priv->vstream->stpriv->os);
 

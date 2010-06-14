@@ -4,6 +4,29 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+// filter apply errors
+typedef enum {
+  FILTER_NO_ERROR=0,
+  FILTER_ERROR_MISSING_LAYER=1,
+  FILTER_ERROR_BLANK_FRAME=2,
+  FILTER_ERROR_MISSING_FRAME=3,
+  FILTER_ERROR_INVALID_PALETTE_CONVERSION=4,
+  FILTER_ERROR_UNABLE_TO_RESIZE=5,
+  FILTER_ERROR_INVALID_PALETTE_SETTINGS=6,
+  FILTER_ERROR_COULD_NOT_REINIT=7,
+  FILTER_ERROR_MUST_RELOAD=8,
+  FILTER_ERROR_NO_IN_CHANNELS=9,
+  FILTER_ERROR_INVALID_TRACK=10,
+  FILTER_ERROR_INTERPOLATION_FAILED=11,
+  FILTER_ERROR_INVALID_INSTANCE=12,
+  FILTER_ERROR_INVALID_FILTER=13,
+  FILTER_ERROR_INVALID_INIT_EVENT=14,
+  FILTER_ERROR_IS_AUDIO=15,
+  FILTER_ERROR_IS_SCRAP_FILE=16,
+
+  FILTER_INFO_REINITED=512
+} lives_filter_error_t;
+
 
 weed_plant_t *get_weed_filter(int filter_idx);
 gchar *weed_filter_get_name(int filter_idx);
@@ -76,9 +99,9 @@ int get_next_free_key(void); // next free "key" for the multitrack system
 void weed_deinit_all(void); // deinit all active effects
 
 weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight, void ***pchains);
-gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc);
+lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc);
 void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, long nsamps, gdouble arate, weed_timecode_t tc, double *vis);
-gint weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, long nsamps, gdouble arate, weed_timecode_t tc, double *vis);
+lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, long nsamps, gdouble arate, weed_timecode_t tc, double *vis);
 
 gboolean weed_generator_start (weed_plant_t *inst);
 weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t tc);
@@ -140,27 +163,6 @@ gint rte_bg_gen_mode (void);
 gint rte_fg_gen_mode (void);
 
 
-
-// filter apply errors
-#define FILTER_NO_ERROR 0
-#define FILTER_ERROR_MISSING_LAYER 1
-#define FILTER_ERROR_BLANK_FRAME 2
-#define FILTER_ERROR_MISSING_FRAME 3
-#define FILTER_ERROR_INVALID_PALETTE_CONVERSION 4
-#define FILTER_ERROR_UNABLE_TO_RESIZE 5
-#define FILTER_ERROR_INVALID_PALETTE_SETTINGS 6
-#define FILTER_ERROR_COULD_NOT_REINIT 7
-#define FILTER_ERROR_MUST_RELOAD 8
-#define FILTER_ERROR_NO_IN_CHANNELS 9
-#define FILTER_ERROR_INVALID_TRACK 10
-#define FILTER_ERROR_INTERPOLATION_FAILED 11
-#define FILTER_ERROR_INVALID_INSTANCE 12
-#define FILTER_ERROR_INVALID_FILTER 13
-#define FILTER_ERROR_INVALID_INIT_EVENT 14
-#define FILTER_ERROR_IS_AUDIO 15
-#define FILTER_ERROR_IS_SCRAP_FILE 16
-
-#define FILTER_INFO_REINITED 512
 
 ////////////////////////////////////////////////////////////////////////
 

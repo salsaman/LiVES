@@ -37,7 +37,6 @@
 #include "support.h"
 #include "paramwindow.h"
 #include "interface.h"
-#include "effects.h"
 #include "audio.h"
 #include "startup.h"
 
@@ -2768,12 +2767,12 @@ LIVES_INLINE gint poly_tab_to_page(guint tab) {
 }
 
 
-LIVES_INLINE gint get_poly_state_from_page(lives_mt *mt) {
+LIVES_INLINE lives_mt_poly_state_t get_poly_state_from_page(lives_mt *mt) {
   return poly_page_to_tab(gtk_notebook_get_current_page(GTK_NOTEBOOK(mt->nb)));
 }
 
 
-static void notebook_error(GtkNotebook *nb, guint tab, gint err, lives_mt *mt) {
+static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, lives_mt *mt) {
   guint page=poly_tab_to_page(tab);
 
   if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
@@ -8847,6 +8846,9 @@ fx_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data)
 	  mt_backup(mt,MT_UNDO_FILTER_MAP_CHANGE,NULL);
 	  move_init_in_filter_map(mt,mt->event_list,mt->fm_edit_event,osel,mt->selected_init_event,mt->current_track,TRUE);
 	  break;
+
+	default:
+	  break;
 	}
       }
 
@@ -10608,7 +10610,7 @@ out_anchor_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
 }
 
 
-void polymorph (lives_mt *mt, gshort poly) {
+void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
   GdkPixbuf *thumb;
   gint track;
   gint frame_start,frame_end=0;
@@ -10725,6 +10727,8 @@ void polymorph (lives_mt *mt, gshort poly) {
     gtk_widget_destroy(mt->fx_list_box);
     if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
     mt->nb_label=NULL;
+    break;
+  default:
     break;
   }
 
@@ -11188,6 +11192,9 @@ void polymorph (lives_mt *mt, gshort poly) {
     populate_filter_box(mt->fx_list_vbox,nins,mt);
 
     gtk_widget_show_all(mt->fx_list_box);
+    break;
+
+  default:
     break;
   }
   gtk_widget_queue_draw(mt->poly_box);
@@ -13615,7 +13622,7 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-static void mt_jumpto (lives_mt *mt, gint dir) {
+static void mt_jumpto (lives_mt *mt, lives_direction_t dir) {
   GtkWidget *eventbox;
   weed_timecode_t tc=q_gint64(GTK_RULER (mt->timeline)->position*U_SEC,mt->fps);
   gdouble secs=tc/U_SEC;
@@ -14819,7 +14826,7 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
   gboolean did_backup=mt->did_backup;
   track_rect *block;
   gchar *text,*tmp;
-  gshort dir;
+  lives_direction_t dir;
 
   if (mt->current_track!=-1||sfile->achans==0) return;
 
@@ -14934,7 +14941,7 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
  
-void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gshort direction, GtkWidget *eventbox, lives_mt *mt, track_rect *in_block) {
+void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, GtkWidget *eventbox, lives_mt *mt, track_rect *in_block) {
   // insert the selected frames from mainw->files[filenum] from source file filenum into mt->event_list starting at timeline timecode tc
   // if in_block is non-NULL, then we extend (existing) in_block with the new frames; otherwise we create a new block and insert it into eventbox
 
@@ -15161,7 +15168,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
 }
 
 
-void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gdouble avel, gshort direction, GtkWidget *eventbox, lives_mt *mt, track_rect *in_block) {
+void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gdouble avel, lives_direction_t direction, GtkWidget *eventbox, lives_mt *mt, track_rect *in_block) {
   // insert the selected audio from mainw->files[filenum] from source file filenum into mt->event_list starting at timeline timecode tc
   // if in_block is non-NULL, then we extend (existing) in_block with the new frames; otherwise we create a new block and insert it into eventbox
   weed_timecode_t start_tc=q_gint64(tc,mt->fps);

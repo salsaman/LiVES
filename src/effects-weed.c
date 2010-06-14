@@ -971,7 +971,7 @@ void weed_reinit_all(void) {
 
 
 
-gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc) {
+lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc) {
   // here we:
   // get our in_tracks and out_tracks that map filter_instance channels to layers
 
@@ -1581,7 +1581,7 @@ gint weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_pla
 
 
 
-static gint weed_apply_audio_instance_inner (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, weed_timecode_t tc, int nbtracks) {
+static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, weed_timecode_t tc, int nbtracks) {
   int num_in_tracks,num_out_tracks;
   int *in_tracks,*out_tracks;
   int error,i,j;
@@ -1805,7 +1805,7 @@ static gint weed_apply_audio_instance_inner (weed_plant_t *inst, weed_plant_t *i
 
 
 
-gint weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, long nsamps, gdouble arate, weed_timecode_t tc, double *vis) {
+lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, long nsamps, gdouble arate, weed_timecode_t tc, double *vis) {
   void *in_abuf,*out_abuf;
   int i,j,error;
   weed_plant_t **layers;

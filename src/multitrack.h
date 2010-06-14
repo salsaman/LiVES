@@ -1,6 +1,6 @@
 // multitrack.h
 // LiVES
-// (c) G. Finch 2005 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2005 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -49,14 +49,117 @@ typedef struct _mt_opts mt_opts;
 
 typedef struct _lives_amixer_t lives_amixer_t;
 
+#define MAX_DISP_VTRACKS 5
+
+typedef enum {
+  MOUSE_MODE_MOVE,
+  MOUSE_MODE_SELECT,
+  MOUSE_MODE_COPY
+} lives_mt_mouse_mode_t;
+
+
+typedef enum {
+  INSERT_MODE_NORMAL,  // the default (only insert if it fits)
+
+  // not implemented yet
+  INSERT_MODE_OVERWRITE, // overwite existing blocks
+  INSERT_MODE_EXPAND, // repeat to fill gap
+  INSERT_MODE_FILL_START, // insert enough to fill gap (from selection start)
+  INSERT_MODE_FILL_END // insert enough to fill gap (to selection end)
+} lives_mt_insert_mode_t;
+
+
+typedef enum {
+  GRAV_MODE_NORMAL,
+  GRAV_MODE_LEFT,
+  GRAV_MODE_RIGHT
+} lives_mt_grav_mode_t;
+
+
+typedef enum {
+// undo actions
+// no event_list
+  MT_UNDO_NONE=0,
+  MT_UNDO_INSERT_BLOCK=1,
+  MT_UNDO_INSERT_AUDIO_BLOCK=2,
+
+// minimal event_list
+  MT_UNDO_APPLY_FILTER=512,
+  MT_UNDO_DELETE_FILTER=513,
+  MT_UNDO_SPLIT=514,
+  MT_UNDO_SPLIT_MULTI=515,
+  MT_UNDO_FILTER_MAP_CHANGE=516,
+
+// full backups of event_list
+  MT_UNDO_DELETE_BLOCK=1024,
+  MT_UNDO_MOVE_BLOCK=1025,
+  MT_UNDO_REMOVE_GAPS=1026,
+  MT_UNDO_DELETE_AUDIO_BLOCK=1027,
+  MT_UNDO_MOVE_AUDIO_BLOCK=1028,
+  MT_UNDO_INSERT_GAP=1029
+} lives_mt_undo_t;
+
+
+
+typedef enum {
+  NB_ERROR_SEL,
+  NB_ERROR_NOEFFECT,
+  NB_ERROR_NOTRANS,
+  NB_ERROR_NOCOMP,
+  NB_ERROR_NOCLIP
+} lives_mt_nb_error_t;
+  
+
+
+typedef enum {
+  POLY_NONE=0,
+  POLY_CLIPS,
+  POLY_IN_OUT,
+  POLY_FX_STACK,
+  POLY_EFFECTS,
+  POLY_TRANS,
+  POLY_COMP,
+  POLY_PARAMS
+} lives_mt_poly_state_t;
+
+
+
+typedef enum {
+  DIRECTION_NEGATIVE,
+  DIRECTION_POSITIVE
+} lives_direction_t;
+
+
+typedef enum {
+  MT_LAST_FX_NONE=0,
+  MT_LAST_FX_BLOCK,
+  MT_LAST_FX_REGION
+} lives_mt_last_fx_type_t;
+
+
+typedef enum {
+  FX_ORD_NONE=0,
+  FX_ORD_BEFORE,
+  FX_ORD_AFTER
+} lives_mt_fx_order_t;
+
+
+typedef enum {
+// block state
+  BLOCK_UNSELECTED=0,
+  BLOCK_SELECTED
+} lives_mt_block_state_t;
+
+
+
 struct _mt_opts {
   gboolean set; // have we set opts (in mainw) ?
   gboolean move_effects; // should we move effects attached to a block ?
   gboolean fx_auto_preview;
   gboolean snap_over; // snap to overlap
-  gshort grav_mode;
-  gshort mouse_mode;
-  gshort insert_mode;
+  lives_mt_grav_mode_t grav_mode;
+  lives_mt_mouse_mode_t mouse_mode;
+  lives_mt_insert_mode_t insert_mode;
   gboolean show_audio;
   gboolean show_ctx;
   gboolean ign_ins_sel;
@@ -67,23 +170,6 @@ struct _mt_opts {
   gboolean gang_audio; // gang layer audio volume levels
   gint back_audio_tracks; // number of backing audio tracks (currently 0 or 1)
 };
-
-#define MOUSE_MODE_MOVE 1
-#define MOUSE_MODE_SELECT 2
-#define MOUSE_MODE_COPY 3
-
-#define INSERT_MODE_NORMAL 1  // the default (only insert if it fits)
-
-  // not implemented yet
-#define INSERT_MODE_OVERWRITE 2 // overwite existing blocks
-#define INSERT_MODE_EXPAND 3 // repeat to fill gap
-#define INSERT_MODE_FILL_START 4 // insert enough to fill gap (from selection start)
-#define INSERT_MODE_FILL_END 5 // insert enough to fill gap (to selection end)
-
-
-#define GRAV_MODE_NORMAL 1
-#define GRAV_MODE_LEFT 2
-#define GRAV_MODE_RIGHT 3
 
 
 struct _mt {
@@ -231,13 +317,6 @@ struct _mt {
   GtkWidget *nb;
   GtkWidget *nb_label;
 
-#define NB_ERROR_SEL 1
-#define NB_ERROR_NOEFFECT 2
-#define NB_ERROR_NOTRANS 3
-#define NB_ERROR_NOCOMP 4
-#define NB_ERROR_NOCLIP 5
-
-
   GtkWidget *open_menu;
   GtkWidget *recent_menu;
   GtkWidget *recent1;
@@ -261,8 +340,6 @@ struct _mt {
   GtkWidget *insa_eventbox;
   GtkWidget *insa_checkbutton;
   GtkWidget *snapo_checkbutton;
-
-
 
 
   GtkObject *spinbutton_in_adj;
@@ -329,21 +406,11 @@ struct _mt {
 
   GList *selected_tracks;
 
-  gshort poly_state;  // state of polymorph window
-#define POLY_NONE 0
-#define POLY_CLIPS 1
-#define POLY_IN_OUT 2
-#define POLY_FX_STACK 3
-#define POLY_EFFECTS 4
-#define POLY_TRANS 5
-#define POLY_COMP 6
-#define POLY_PARAMS 7
+  lives_mt_poly_state_t poly_state;  // state of polymorph window
 
   gint render_file;
 
-  gshort last_direction; // last direction timeline cursor was moved in
-#define DIRECTION_NEGATIVE 0
-#define DIRECTION_POSITIVE 1
+  lives_direction_t last_direction; // last direction timeline cursor was moved in
 
   track_rect *block_selected; // pointer to current selected block, or NULL
   track_rect *putative_block; // putative block to move or copy, or NULL
@@ -362,7 +429,6 @@ struct _mt {
   gboolean is_rendering; // TRUE if we are in the process of rendering/pre-rendering to a clip, cf. mainw->is_rendering
   gboolean pr_audio; // TRUE if we are in the process of prerendering audio to a clip
 
-#define MAX_DISP_VTRACKS 5
   gint max_disp_vtracks;
   gint current_fx;
 
@@ -420,17 +486,9 @@ struct _mt {
   lives_special_framedraw_rect_t *framedraw;
   gint track_index;
 
-  gint last_fx_type;
+  lives_mt_last_fx_type_t last_fx_type;
 
-#define MT_LAST_FX_NONE 0
-#define MT_LAST_FX_BLOCK 1
-#define MT_LAST_FX_REGION 2
-
-  gshort fx_order;
-
-#define FX_ORD_NONE 0
-#define FX_ORD_BEFORE 1
-#define FX_ORD_AFTER 2
+  lives_mt_fx_order_t fx_order;
 
   mt_opts opts;
 
@@ -514,30 +572,10 @@ struct _mt {
 };  // lives_mt
 
 
-// undo actions
-// no event_list
-#define MT_UNDO_NONE 0
-#define MT_UNDO_INSERT_BLOCK 1
-#define MT_UNDO_INSERT_AUDIO_BLOCK 2
-
-// minimal event_list
-#define MT_UNDO_APPLY_FILTER 512
-#define MT_UNDO_DELETE_FILTER 513
-#define MT_UNDO_SPLIT 514
-#define MT_UNDO_SPLIT_MULTI 515
-#define MT_UNDO_FILTER_MAP_CHANGE 516
-
-// full backups of event_list
-#define MT_UNDO_DELETE_BLOCK 1024
-#define MT_UNDO_MOVE_BLOCK 1025
-#define MT_UNDO_REMOVE_GAPS 1026
-#define MT_UNDO_DELETE_AUDIO_BLOCK 1027
-#define MT_UNDO_MOVE_AUDIO_BLOCK 1028
-#define MT_UNDO_INSERT_GAP 1029
 
 
 typedef struct {
-  gint action;
+  lives_mt_undo_t action;
   void *extra;
   size_t data_len; // including this mt_undo
 } mt_undo;
@@ -569,7 +607,7 @@ struct _track_rect {
 
   weed_timecode_t offset_start; // offset in sourcefile of first frame
 
-  gshort state;
+  lives_mt_block_state_t state;
   gboolean start_anchored;
   gboolean end_anchored;
   gboolean ordered; // are frames in sequential order ?
@@ -577,10 +615,6 @@ struct _track_rect {
   GtkWidget *eventbox; // pointer to eventbox widget which contains this block; we can use its "layer_number" to get the track/layer number
 
 };
-
-// block state
-#define BLOCK_UNSELECTED 0
-#define BLOCK_SELECTED 1
 
 
 /* translation table for matching event_id to init_event */
@@ -616,7 +650,7 @@ gboolean multitrack_delete (lives_mt *, gboolean save); // free the lives_mt str
 gboolean multitrack_end (GtkMenuItem *, gpointer mt);
 
 // morph the poly window
-void polymorph (lives_mt *, gshort poly);
+void polymorph (lives_mt *, lives_mt_poly_state_t poly);
 
 /// sens/desens
 void mt_desensitise (lives_mt *);
@@ -714,8 +748,8 @@ gboolean on_track_move (GtkWidget *widget, GdkEventMotion *event, gpointer mt);
 gboolean on_track_header_move (GtkWidget *widget, GdkEventMotion *event, gpointer mt);
 
 void unselect_all (lives_mt *); // unselect all blocks
-void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gshort direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
-void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gdouble avel, gshort direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
+void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
+void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gdouble avel, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
 void on_seltrack_toggled (GtkWidget *, gpointer mt);
 void scroll_track_by_scrollbar (GtkVScrollbar *sbar, gpointer mt);
 
@@ -849,20 +883,22 @@ void mt_clip_select (lives_mt *, gboolean scroll);
 void mt_delete_clips(lives_mt *, gint file);
 void mt_init_clips (lives_mt *, gint orig_file, gboolean add);
 
-/* default to warn about */
-#define LMAP_ERROR_MISSING_CLIP 1
-#define LMAP_ERROR_CLOSE_FILE 2
-#define LMAP_ERROR_DELETE_FRAMES 3
-#define LMAP_ERROR_DELETE_AUDIO 6
 
-/*non-default*/
-#define LMAP_ERROR_SHIFT_FRAMES 4
-#define LMAP_ERROR_ALTER_FRAMES 5
-#define LMAP_ERROR_SHIFT_AUDIO 7
-#define LMAP_ERROR_ALTER_AUDIO 8
+typedef enum {
+  /* default to warn about */
+  LMAP_ERROR_MISSING_CLIP=1,
+  LMAP_ERROR_CLOSE_FILE=2,
+  LMAP_ERROR_DELETE_FRAMES=3,
+  LMAP_ERROR_DELETE_AUDIO=4,
 
-/* info */
-#define LMAP_INFO_SETNAME_CHANGED 16
+  /*non-default*/
+  LMAP_ERROR_SHIFT_FRAMES=65,
+  LMAP_ERROR_ALTER_FRAMES=66,
+  LMAP_ERROR_SHIFT_AUDIO=67,
+  LMAP_ERROR_ALTER_AUDIO=68,
 
+  /* info */
+  LMAP_INFO_SETNAME_CHANGED=1024
+} lives_lmap_error_t;
 
 #endif

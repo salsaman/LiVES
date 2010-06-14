@@ -1717,6 +1717,10 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     param->widgets[0]=combo;
 
     break;
+
+  default:
+    break;
+
   }
   
   if (mainw->current_file>0&&fx_dialog[1]==NULL) {
@@ -2920,6 +2924,8 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
       if (upd&&param->widgets[0]!=NULL&&GTK_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list)) gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(param->widgets[0])->entry),g_list_nth_data(param->list,int_value));
       break;
     }
+  default:
+    break;
   }
   return pnum;
 }

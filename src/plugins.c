@@ -2315,6 +2315,8 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
     set_int_param (dest->def,get_int_param (src->def));
     if (src->list!=NULL) dest->list=g_list_copy (src->list);
     break;
+  default:
+    break;
   }
   if (!full) return;
   // TODO - copy value, copy widgets

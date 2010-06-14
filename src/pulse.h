@@ -77,8 +77,8 @@ typedef struct {
   gboolean usigned;
   gboolean reverse_endian;
 
-  gshort *whentostop; // pointer to mainw->whentostop
-  volatile gint *cancelled; // pointer to mainw->cancelled
+  lives_whentostop_t *whentostop; // pointer to mainw->whentostop
+  volatile lives_cancel_t *cancelled; // pointer to mainw->cancelled
 
   /* variables used for trying to restart the connection to pulse */
   gboolean pulsed_died;

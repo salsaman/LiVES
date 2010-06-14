@@ -34,6 +34,10 @@
 // vert displacement up from center for sepwin (actual value is half this)
 #define SEPWIN_VADJUST 200
 
+// default size for generators
+#define DEF_GEN_WIDTH 640
+#define DEF_GEN_HEIGHT 480
+
 // number of function keys
 #define FN_KEYS 12
 
@@ -47,26 +51,40 @@
 // the rest of the keys are accessible through the multitrack renderer (must, be > FX_KEYS_MAX_VIRTUAL)
 #define FX_KEYS_MAX 65536
 
+#define EFFECT_NONE 0
+#define GU641 ((guint64)1)
 
-// maximum number of external control peripherals
-#define MAX_EXT_CNTL 32
+
+// max ext_cntl + 1
+#define MAX_EXT_CNTL 2
 
 // external control types
-#define EXT_CNTL_NONE 0 // not used
-#define EXT_CNTL_JS 1
-#define EXT_CNTL_MIDI 2
-
-
-// default size for generators
-#define DEF_GEN_WIDTH 640
-#define DEF_GEN_HEIGHT 480
+typedef enum {
+  EXT_CNTL_NONE=-1, // not used
+  EXT_CNTL_JS=0,
+  EXT_CNTL_MIDI=1
+} lives_ext_cntl_t;
 
 
 // timebase sources
-#define LIVES_TIME_SOURCE_NONE 0
-#define LIVES_TIME_SOURCE_SYSTEM 1
-#define LIVES_TIME_SOURCE_SOUNDCARD 2
-#define LIVES_TIME_SOURCE_EXTERNAL 3
+typedef enum {
+  LIVES_TIME_SOURCE_NONE=0,
+  LIVES_TIME_SOURCE_SYSTEM,
+  LIVES_TIME_SOURCE_SOUNDCARD,
+  LIVES_TIME_SOURCE_EXTERNAL
+} lives_time_source_t;
+
+
+
+typedef enum {
+  LIVES_TOY_NONE=0,
+  LIVES_TOY_MAD_FRAMES,
+  LIVES_TOY_TV,
+  LIVES_TOY_AUTOLIVES
+} lives_toy_t;
+
+
+
 
 
 typedef struct {
@@ -179,58 +197,11 @@ typedef struct {
   gboolean record;
 
   gboolean in_fs_preview;
-  volatile gint cancelled;
-
-  // no cancel
-#define CANCEL_NONE 0
-
-  // user pressed stop
-#define CANCEL_USER 1
-
-  // cancel but keep opening
-#define CANCEL_NO_PROPOGATE 2
-
-  // effect processing finished during preview
-#define CANCEL_PREVIEW_FINISHED 3
-
-  // application quit
-#define CANCEL_APP_QUIT 4
-
-  // ran out of preview frames
-#define CANCEL_NO_MORE_PREVIEW 5
-
-  // image could not be captured
-#define CANCEL_CAPTURE_ERROR 6
-
-  // event_list completed
-#define CANCEL_EVENT_LIST_END 7
-
-  // video playback completed
-#define CANCEL_VID_END 8
-
-  // generator was stopped
-#define CANCEL_GENERATOR_END 9
-
-  // user pressed 'Keep'
-#define CANCEL_KEEP 10
-
-  // video playback completed
-#define CANCEL_AUD_END 11
-
-  // cancelled because of error
-#define CANCEL_ERROR 12
-
-  // cancelled and paused
-#define CANCEL_USER_PAUSED 13
-
-  // special cancel for TV toy
-#define CANCEL_KEEP_LOOPING 100
+  volatile lives_cancel_t cancelled;
 
   gboolean error;
 
-  guint cancel_type;
-#define CANCEL_KILL 0  // normal - kill background processes working on current clip
-#define CANCEL_SOFT 1 // just cancel in GUI (for keep, etc)
+  lives_cancel_type_t cancel_type;
 
   weed_plant_t *event_list; // current event_list, for recording
   weed_plant_t *stored_event_list; // stored mt -> clip editor
@@ -248,11 +219,7 @@ typedef struct {
   gint pwidth; // playback width in RGB pixels
   gint pheight; // playback height
 
-  gshort whentostop;
-  // which stream end should cause playback to finish ?
-#define NEVER_STOP 0
-#define STOP_ON_VID_END 1
-#define STOP_ON_AUD_END 2
+  lives_whentostop_t whentostop;
 
   gboolean noframedrop;
 
@@ -293,10 +260,8 @@ typedef struct {
   gboolean last_transition_align_start;
   gboolean last_transition_ins_frames;
 
-#define GU641 ((guint64)1)
-  guint64 rte; // current max for VJ mode == 64 effects on fg clip
 
-#define EFFECT_NONE 0
+  guint64 rte; // current max for VJ mode == 64 effects on fg clip
 
   guint last_grabable_effect;
   guint rte_keys; // which effect is bound to keyboard
@@ -315,10 +280,8 @@ typedef struct {
 
   gint scr_width;
   gint scr_height;
-  gint toy_type;
-#define TOY_NONE 0
-#define TOY_RANDOM_FRAMES 1
-#define TOY_TV 1
+  lives_toy_t toy_type;
+
   gboolean toy_go_wild;
 
   // copy/paste

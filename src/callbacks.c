@@ -1819,7 +1819,7 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
     cfile->frame_index=cfile->frame_index_back;
     cfile->frame_index_back=tmpindex;
     cfile->clip_type=CLIP_TYPE_FILE;
-    if (!check_if_non_virtual(cfile)) save_frame_index(mainw->current_file);
+    if (!check_if_non_virtual(mainw->current_file)) save_frame_index(mainw->current_file);
   }
 
   if (cfile->undo_action==UNDO_RESIZABLE) {
@@ -7379,7 +7379,7 @@ on_preview_clicked                     (GtkButton       *button,
 	switch_aud_to_sox();
       }
       if (!cfile->opening_only_audio) {
-	mainw->toy_type=TOY_NONE;
+	mainw->toy_type=LIVES_TOY_NONE;
 	gtk_widget_set_sensitive(mainw->toys,FALSE);
       }
       if (mainw->multitrack==NULL&&prefs->show_gui) gtk_widget_show (mainw->LiVES);

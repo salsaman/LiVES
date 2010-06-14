@@ -41,7 +41,7 @@ on_edit_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return; // script not loaded
   }
   g_free (script_name);
-  rfxbuilder->mode=RFXBUILDER_MODE_EDIT;
+  rfxbuilder->mode=RFX_BUILDER_MODE_EDIT;
   rfxbuilder->oname=g_strdup (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->name_entry)));
   gtk_widget_show (rfxbuilder->dialog);
 }
@@ -75,7 +75,7 @@ on_rename_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-rfx_build_window_t *make_rfx_build_window (const gchar *script_name, gshort status) {
+rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_status_t status) {
   // TODO - set mnemonic widgets for entries
 
   GtkWidget *dialog_vbox;
@@ -95,7 +95,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, gshort stat
 
   rfxbuilder->rfx_version=g_strdup(RFX_VERSION);
 
-  rfxbuilder->type=RFXBUILD_TYPE_EFFECT1; // the default
+  rfxbuilder->type=RFX_BUILD_TYPE_EFFECT1; // the default
 
   rfxbuilder->num_reqs=0;
   rfxbuilder->num_params=0;
@@ -117,7 +117,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, gshort stat
   rfxbuilder->script_name=NULL;  // use default name.script
   rfxbuilder->oname=NULL;
 
-  rfxbuilder->mode=RFXBUILDER_MODE_NEW;
+  rfxbuilder->mode=RFX_BUILDER_MODE_NEW;
 
   rfxbuilder->table_swap_row1=-1;
 
@@ -583,17 +583,19 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, gshort stat
     }
     g_free (script_file);
     switch (rfxbuilder->type) {
-    case RFXBUILD_TYPE_TOOL:
+    case RFX_BUILD_TYPE_TOOL:
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_tool_radiobutton),TRUE);
       break;
-    case RFXBUILD_TYPE_EFFECT0:
+    case RFX_BUILD_TYPE_EFFECT0:
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_effect0_radiobutton),TRUE);
       break;
-    case RFXBUILD_TYPE_UTILITY:
+    case RFX_BUILD_TYPE_UTILITY:
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_utility_radiobutton),TRUE);
       break;
-    case RFXBUILD_TYPE_EFFECT2:
+    case RFX_BUILD_TYPE_EFFECT2:
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_effect2_radiobutton),TRUE);
+      break;
+    default:
       break;
     }
   }
@@ -620,25 +622,25 @@ after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user_data
   gtk_widget_show (rfxbuilder->action_desc_hsep);
 
   if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_effect1_radiobutton)) {
-    rfxbuilder->type=RFXBUILD_TYPE_EFFECT1;
+    rfxbuilder->type=RFX_BUILD_TYPE_EFFECT1;
   }
   else if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_effect2_radiobutton)) {
-    rfxbuilder->type=RFXBUILD_TYPE_EFFECT2;
+    rfxbuilder->type=RFX_BUILD_TYPE_EFFECT2;
     gtk_widget_set_sensitive (rfxbuilder->properties_button,FALSE);
   }
   else if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_effect0_radiobutton)) {
-    rfxbuilder->type=RFXBUILD_TYPE_EFFECT0;
+    rfxbuilder->type=RFX_BUILD_TYPE_EFFECT0;
     gtk_widget_hide (rfxbuilder->spinbutton_min_frames);
     gtk_widget_hide (rfxbuilder->min_frames_label);
   }
   else if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_tool_radiobutton)) {
-    rfxbuilder->type=RFXBUILD_TYPE_TOOL;
+    rfxbuilder->type=RFX_BUILD_TYPE_TOOL;
     gtk_widget_hide (rfxbuilder->spinbutton_min_frames);
     gtk_widget_set_sensitive (rfxbuilder->properties_button,FALSE);
     gtk_widget_hide (rfxbuilder->min_frames_label);
   }
   else if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_utility_radiobutton)) {
-    rfxbuilder->type=RFXBUILD_TYPE_UTILITY;
+    rfxbuilder->type=RFX_BUILD_TYPE_UTILITY;
     gtk_widget_hide (rfxbuilder->spinbutton_min_frames);
     gtk_widget_set_sensitive (rfxbuilder->properties_button,FALSE);
     gtk_widget_set_sensitive (rfxbuilder->requirements_button,FALSE);
@@ -679,33 +681,33 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=user_data;
 
   if (button==GTK_BUTTON (rfxbuilder->requirements_button)) {
-    rfxbuilder->table_type=TABLE_TYPE_REQUIREMENTS;
+    rfxbuilder->table_type=RFX_TABLE_TYPE_REQUIREMENTS;
   }
   else if (button==GTK_BUTTON (rfxbuilder->params_button)) {
-    rfxbuilder->table_type=TABLE_TYPE_PARAMS;
+    rfxbuilder->table_type=RFX_TABLE_TYPE_PARAMS;
   }
   else if (button==GTK_BUTTON (rfxbuilder->param_window_button)) {
-    rfxbuilder->table_type=TABLE_TYPE_PARAM_WINDOW;
+    rfxbuilder->table_type=RFX_TABLE_TYPE_PARAM_WINDOW;
   }
   else if (button==GTK_BUTTON (rfxbuilder->trigger_button)) {
-    rfxbuilder->table_type=TABLE_TYPE_TRIGGERS;
+    rfxbuilder->table_type=RFX_TABLE_TYPE_TRIGGERS;
   }
 
   dialog = gtk_dialog_new ();
 
-  if (rfxbuilder->table_type==TABLE_TYPE_REQUIREMENTS) {
+  if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Requirements"));
     rfxbuilder->onum_reqs=rfxbuilder->num_reqs;
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_PARAMS) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Parameters"));
     rfxbuilder->onum_params=rfxbuilder->num_params;
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_PARAM_WINDOW) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Parameter Window Hints"));
     rfxbuilder->onum_paramw_hints=rfxbuilder->num_paramw_hints;
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_TRIGGERS) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Triggers"));
     rfxbuilder->onum_triggers=rfxbuilder->num_triggers;
   }
@@ -740,14 +742,14 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   // create table and add rows
   rfxbuilder->ptable_rows=rfxbuilder->table_rows=0;
 
-  if (rfxbuilder->table_type==TABLE_TYPE_REQUIREMENTS) {
+  if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
     rfxbuilder->table=gtk_table_new (rfxbuilder->num_reqs,1,FALSE);
     for (i=0;i<rfxbuilder->num_reqs;i++) {
       on_table_add_row (NULL,(gpointer)rfxbuilder);
       gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry[i]),rfxbuilder->reqs[i]);
     }
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_PARAMS) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
     rfxbuilder->copy_params=(lives_param_t *)g_malloc (RFXBUILD_MAX_PARAMS*sizeof(lives_param_t));
     rfxbuilder->table=gtk_table_new (rfxbuilder->num_params,3,FALSE);
     for (i=0;i<rfxbuilder->num_params;i++) {
@@ -755,13 +757,13 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
       on_table_add_row (NULL,(gpointer)rfxbuilder);
     }
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_PARAM_WINDOW) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
     rfxbuilder->table=gtk_table_new (rfxbuilder->table_rows,2,FALSE);
     for (i=0;i<rfxbuilder->num_paramw_hints;i++) {
       on_table_add_row (NULL,(gpointer)rfxbuilder);
     }
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_TRIGGERS) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
     rfxbuilder->copy_triggers=(rfx_trigger_t *)g_malloc ((RFXBUILD_MAX_PARAMS+1)*sizeof(rfx_trigger_t));
     rfxbuilder->table=gtk_table_new (rfxbuilder->table_rows,1,FALSE);
     for (i=0;i<rfxbuilder->num_triggers;i++) {
@@ -798,7 +800,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_show (remove_entry_button);
   gtk_box_pack_start (GTK_BOX (button_box), remove_entry_button, FALSE, FALSE, 0);
 
-  if (rfxbuilder->table_type==TABLE_TYPE_PARAM_WINDOW) {
+  if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
     rfxbuilder->move_up_button=gtk_button_new_with_mnemonic (_ ("Move _Up"));
     gtk_widget_show (rfxbuilder->move_up_button);
     gtk_box_pack_start (GTK_BOX (button_box), rfxbuilder->move_up_button, FALSE, FALSE, 0);
@@ -822,7 +824,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
 
-  if (rfxbuilder->table_type==TABLE_TYPE_REQUIREMENTS) {
+  if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_requirements_ok),
 		      user_data);
@@ -834,7 +836,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 		      G_CALLBACK (gtk_true),
 		      NULL);
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_PARAMS) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_params_ok),
 		      user_data);
@@ -846,7 +848,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 		      G_CALLBACK (gtk_true),
 		      NULL);
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_PARAM_WINDOW) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_param_window_ok),
 		      user_data);
@@ -858,7 +860,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 		      G_CALLBACK (gtk_true),
 		      NULL);
   }
-  else if (rfxbuilder->table_type==TABLE_TYPE_TRIGGERS) {
+  else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_triggers_ok),
 		      user_data);
@@ -885,7 +887,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 		    G_CALLBACK (on_table_delete_row),
 		    user_data);
 
-  if (rfxbuilder->table_type==TABLE_TYPE_PARAM_WINDOW) {
+  if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
     g_signal_connect (GTK_OBJECT (rfxbuilder->move_up_button), "clicked",
 		      G_CALLBACK (on_table_swap_row),
 		      user_data);
@@ -919,7 +921,7 @@ void on_requirements_cancel (GtkButton *button, gpointer user_data) {
 void on_properties_ok (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=user_data;
 
-  if (rfxbuilder->type!=RFXBUILD_TYPE_EFFECT0) {
+  if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0) {
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (rfxbuilder->prop_slow))) {
       rfxbuilder->props|=RFX_PROPS_SLOW;
     }
@@ -1027,22 +1029,22 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
 
 
   switch (rfxbuilder->codetype) {
-  case CODE_TYPE_PRE:
+  case RFX_CODE_TYPE_PRE:
     g_free (rfxbuilder->pre_code);
     rfxbuilder->pre_code=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
     break;
 
-  case CODE_TYPE_LOOP:
+  case RFX_CODE_TYPE_LOOP:
     g_free (rfxbuilder->loop_code);
     rfxbuilder->loop_code=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
     break;
 
-  case CODE_TYPE_POST:
+  case RFX_CODE_TYPE_POST:
     g_free (rfxbuilder->post_code);
     rfxbuilder->post_code=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
     break;
 
-  case CODE_TYPE_STRDEF:
+  case RFX_CODE_TYPE_STRDEF:
     {
       gint maxlen=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
       gchar buf[++maxlen];
@@ -1053,7 +1055,7 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
       rfxbuilder->copy_params[rfxbuilder->edit_param].def=subst (buf,rfxbuilder->field_delim,"");
       break;
     }
-  case CODE_TYPE_STRING_LIST:
+  case RFX_CODE_TYPE_STRING_LIST:
     {
       gchar *values=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
       gchar **lines=g_strsplit (values,"\n",-1);
@@ -1159,7 +1161,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_show (dialog_vbox);
 
   hbox = gtk_hbox_new (FALSE, 0);
-  if (rfxbuilder->type!=RFXBUILD_TYPE_EFFECT0) {
+  if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0) {
     gtk_widget_show (hbox);
   }
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
@@ -1178,7 +1180,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->prop_slow),TRUE);
   }
 
-  if (rfxbuilder->type==RFXBUILD_TYPE_EFFECT0) {
+  if (rfxbuilder->type==RFX_BUILD_TYPE_EFFECT0) {
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_widget_show (hbox);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
@@ -1245,7 +1247,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   gchar *tmpx;
 
   switch (rfxbuilder->table_type) {
-  case TABLE_TYPE_REQUIREMENTS:
+  case RFX_TABLE_TYPE_REQUIREMENTS:
     if (rfxbuilder->table_rows>=RFXBUILD_MAX_REQ) return;
 
     for (i=0;i<rfxbuilder->table_rows;i++) {
@@ -1268,7 +1270,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     }
     break;
 
-  case TABLE_TYPE_PARAMS:
+  case RFX_TABLE_TYPE_PARAMS:
     entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
     entry2 = rfxbuilder->entry2[rfxbuilder->table_rows] = gtk_entry_new ();
 
@@ -1346,6 +1348,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     case LIVES_PARAM_STRING_LIST:
       gtk_entry_set_text (GTK_ENTRY (entry3),"string_list");
       break;
+    default:
+      break;
     }
 
     gtk_widget_show (entry3);
@@ -1362,7 +1366,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     break;
 
 
-  case TABLE_TYPE_PARAM_WINDOW:
+  case RFX_TABLE_TYPE_PARAM_WINDOW:
     if (button!=NULL) {
       param_window_dialog=make_param_window_dialog(-1,rfxbuilder);
       if (gtk_dialog_run (GTK_DIALOG (param_window_dialog))==GTK_RESPONSE_CANCEL) {
@@ -1423,7 +1427,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     break;
 
 
- case TABLE_TYPE_TRIGGERS:
+ case RFX_TABLE_TYPE_TRIGGERS:
     entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
     
     if (button!=NULL) {
@@ -1538,6 +1542,8 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
     set_colRGB24_param (copy_param->def,gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)),gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)),gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)));
     copy_param->dp=0;
     break;
+  default:
+    break;
   }
 }
 
@@ -1561,7 +1567,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
   gchar *tmpx;
 
   switch (rfxbuilder->table_type) {
-  case TABLE_TYPE_REQUIREMENTS:
+  case RFX_TABLE_TYPE_REQUIREMENTS:
     for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
       if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)) found=i;
     }
@@ -1578,7 +1584,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
     }
     break;
 
-  case TABLE_TYPE_PARAMS:
+  case RFX_TABLE_TYPE_PARAMS:
     for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
       if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)||gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry3[i]),NULL,NULL)) found=i;
     }
@@ -1612,11 +1618,13 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
     case LIVES_PARAM_STRING_LIST:
       gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry3[found]),"string_list");
       break;
+    default:
+      break;
     }
     gtk_widget_destroy (param_dialog);
     break;
 
-  case TABLE_TYPE_PARAM_WINDOW:
+  case RFX_TABLE_TYPE_PARAM_WINDOW:
     for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
       if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)) found=i;
     }
@@ -1643,7 +1651,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
     gtk_widget_destroy (paramw_dialog);
     break;
 
-  case TABLE_TYPE_TRIGGERS:
+  case RFX_TABLE_TYPE_TRIGGERS:
     for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
       if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)) found=i;
     }
@@ -1674,16 +1682,18 @@ void on_table_swap_row (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=user_data;
 
   switch (rfxbuilder->table_type) {
-  case TABLE_TYPE_PARAM_WINDOW:
+  case RFX_TABLE_TYPE_PARAM_WINDOW:
     for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
       if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)) found=i;
     }
+  default:
+    break;
   }
 
   if (found==-1) if ((found=rfxbuilder->table_swap_row1)==-1) return;
 
   switch (rfxbuilder->table_type) {
-  case TABLE_TYPE_PARAM_WINDOW:
+  case RFX_TABLE_TYPE_PARAM_WINDOW:
     if (button==GTK_BUTTON (rfxbuilder->move_up_button)) {
       rfxbuilder->table_swap_row2=found-1;
     }
@@ -1703,6 +1713,8 @@ void on_table_swap_row (GtkButton *button, gpointer user_data) {
     g_free (entry_text);
 
     break;
+  default:
+    break;
   }
   rfxbuilder->table_swap_row1=rfxbuilder->table_swap_row2;
 
@@ -1718,7 +1730,7 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
   gboolean triggers_adjusted=FALSE;
 
   switch (rfxbuilder->table_type) {
-  case TABLE_TYPE_REQUIREMENTS:
+  case RFX_TABLE_TYPE_REQUIREMENTS:
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (move) {
 	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
@@ -1737,7 +1749,7 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
     rfxbuilder->num_reqs--;
     break;
 
-  case TABLE_TYPE_PARAMS:
+  case RFX_TABLE_TYPE_PARAMS:
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (move) {
 	// note - parameters become renumbered here
@@ -1786,7 +1798,7 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
     }
     break;
 
-  case TABLE_TYPE_PARAM_WINDOW:
+  case RFX_TABLE_TYPE_PARAM_WINDOW:
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (move) {
 	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
@@ -1807,7 +1819,7 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
     rfxbuilder->num_paramw_hints--;
     break;
 
-  case TABLE_TYPE_TRIGGERS:
+  case RFX_TABLE_TYPE_TRIGGERS:
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (move) {
 	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
@@ -1996,6 +2008,8 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     case LIVES_PARAM_STRING_LIST:
       gtk_entry_set_text (GTK_ENTRY (rfxbuilder->param_type_entry),"string_list");
       break;
+    default:
+      break;
     }
   }
   else rfxbuilder->edit_param=rfxbuilder->num_params;
@@ -2087,6 +2101,8 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     case LIVES_PARAM_COLRGB24:
       get_colRGB24_param (rfxbuilder->copy_params[pnum].def,&rgb);
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),(gdouble)rgb.red);
+      break;
+    default:
       break;
     }
   }
@@ -2246,6 +2262,8 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
       break;
     case LIVES_PARAM_STRING:
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),rfxbuilder->copy_params[pnum].max);
+      break;
+    default:
       break;
     }
   }
@@ -2660,7 +2678,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   splist = g_list_append (splist, "aspect");
   splist = g_list_append (splist, "framedraw");
   splist = g_list_append (splist, "fileread");
-  if (rfxbuilder->type==RFXBUILD_TYPE_EFFECT2) {
+  if (rfxbuilder->type==RFX_BUILD_TYPE_EFFECT2) {
     splist = g_list_append (splist, "mergealign");
   }
 
@@ -3002,19 +3020,19 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
     } */
 
   if (button==GTK_BUTTON (rfxbuilder->pre_button)) {
-    rfxbuilder->codetype=CODE_TYPE_PRE;
+    rfxbuilder->codetype=RFX_CODE_TYPE_PRE;
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Pre Loop Code"));
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), rfxbuilder->pre_code, -1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->loop_button)) {
-    rfxbuilder->codetype=CODE_TYPE_LOOP;
+    rfxbuilder->codetype=RFX_CODE_TYPE_LOOP;
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Loop Code"));
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), rfxbuilder->loop_code, -1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->post_button)) {
-    rfxbuilder->codetype=CODE_TYPE_POST;
+    rfxbuilder->codetype=RFX_CODE_TYPE_POST;
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Post Loop Code"));
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), rfxbuilder->post_code, -1);
   }
@@ -3025,7 +3043,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 
       if ((len=strlen (rfxbuilder->copy_params[rfxbuilder->edit_param].def))>maxlen) len=maxlen;
       
-      rfxbuilder->codetype=CODE_TYPE_STRDEF;
+      rfxbuilder->codetype=RFX_CODE_TYPE_STRDEF;
       gtk_window_set_title (GTK_WINDOW (dialog), (tmpx=g_strdup_printf (_("LiVES: - Default text (max length %d)"),maxlen)));
       g_free(tmpx);
       gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (rfxbuilder->code_textview),GTK_WRAP_WORD);
@@ -3037,7 +3055,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
       gchar *string=g_strdup (""),*string_new;
       GtkTextIter start_iter;
 
-      rfxbuilder->codetype=CODE_TYPE_STRING_LIST;
+      rfxbuilder->codetype=RFX_CODE_TYPE_STRING_LIST;
       gtk_window_set_title (GTK_WINDOW (dialog), (tmpx=g_strdup (_("LiVES: - Enter values, one per line"))));
       g_free(tmpx);
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].list!=NULL) {
@@ -3170,7 +3188,7 @@ gboolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
     g_free (name);
     return FALSE;
   }
-  if (!strlen(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->action_desc_entry)))&&rfxbuilder->type!=RFXBUILD_TYPE_UTILITY) {
+  if (!strlen(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->action_desc_entry)))&&rfxbuilder->type!=RFX_BUILD_TYPE_UTILITY) {
     do_blocking_error_dialog (_ ("\n\nAction description must not be blank.\n"));
     g_free (name);
     return FALSE;
@@ -3181,7 +3199,7 @@ gboolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
     return FALSE;
   }
 
-  if (rfxbuilder->mode!=RFXBUILDER_MODE_NEW&&!(rfxbuilder->mode==RFXBUILDER_MODE_EDIT&&!strcmp (rfxbuilder->oname,name))) {
+  if (rfxbuilder->mode!=RFX_BUILDER_MODE_NEW&&!(rfxbuilder->mode==RFX_BUILDER_MODE_EDIT&&!strcmp (rfxbuilder->oname,name))) {
     if (find_rfx_plugin_by_name (name,RFX_STATUS_TEST)>-1||find_rfx_plugin_by_name (name,RFX_STATUS_CUSTOM)>-1||find_rfx_plugin_by_name (name,RFX_STATUS_BUILTIN)>-1) {
       do_blocking_error_dialog (_ ("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
       g_free (name);
@@ -3189,13 +3207,13 @@ gboolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
     }
   }
 
-  if (!strlen(rfxbuilder->loop_code)&&rfxbuilder->type!=RFXBUILD_TYPE_UTILITY) {
+  if (!strlen(rfxbuilder->loop_code)&&rfxbuilder->type!=RFX_BUILD_TYPE_UTILITY) {
     do_blocking_error_dialog (_("\n\nLoop code should not be blank.\n"));
     g_free (name);
     return FALSE;
   }
 
-  if (rfxbuilder->num_triggers==0&&rfxbuilder->type==RFXBUILD_TYPE_UTILITY) {
+  if (rfxbuilder->num_triggers==0&&rfxbuilder->type==RFX_BUILD_TYPE_UTILITY) {
     do_blocking_error_dialog (_ ("\n\nTrigger code should not be blank for a utility.\n"));
     g_free (name);
     return FALSE;
@@ -3238,7 +3256,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   gchar *msg;
   gchar *tmp,*tmp2,*tmpx;
 
-  if (rfxbuilder->mode!=RFXBUILDER_MODE_EDIT) {
+  if (rfxbuilder->mode!=RFX_BUILDER_MODE_EDIT) {
     if (!(new_name=prompt_for_script_name (script_name,RFX_STATUS_TEST))) return FALSE;
     g_free (script_name);
     script_name=new_name;
@@ -3297,7 +3315,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   fputs(rfxbuilder->field_delim,sfile);
   fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->action_desc_entry)),sfile);
   fputs(rfxbuilder->field_delim,sfile);
-  if (rfxbuilder->type==RFXBUILD_TYPE_UTILITY) {
+  if (rfxbuilder->type==RFX_BUILD_TYPE_UTILITY) {
     buf=g_strdup ("-1");
   }
   else {
@@ -3307,10 +3325,10 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   g_free (buf);
   fputs(rfxbuilder->field_delim,sfile);
   switch (rfxbuilder->type) {
-  case RFXBUILD_TYPE_EFFECT2:
+  case RFX_BUILD_TYPE_EFFECT2:
     buf=g_strdup ("2");
     break;
-  case RFXBUILD_TYPE_EFFECT0:
+  case RFX_BUILD_TYPE_EFFECT0:
     buf=g_strdup ("0");
     break;
   default:
@@ -3444,6 +3462,8 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 	}
       }
       break;
+    default:
+      break;
     }
     if (i<rfxbuilder->num_params-1)
       fputs("\n",sfile);
@@ -3457,10 +3477,10 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   }
   fputs("</param_window>\n\n",sfile);
   fputs("<properties>\n",sfile);
-  if (rfxbuilder->type==RFXBUILD_TYPE_TOOL) props=rfxbuilder->props|RFX_PROPS_MAY_RESIZE;
+  if (rfxbuilder->type==RFX_BUILD_TYPE_TOOL) props=rfxbuilder->props|RFX_PROPS_MAY_RESIZE;
   else props=rfxbuilder->props;
   
-  if (rfxbuilder->type!=RFXBUILD_TYPE_EFFECT0&&(rfxbuilder->props&RFX_PROPS_BATCHG)) rfxbuilder->props^=RFX_PROPS_BATCHG;
+  if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0&&(rfxbuilder->props&RFX_PROPS_BATCHG)) rfxbuilder->props^=RFX_PROPS_BATCHG;
 
   buf=g_strdup_printf ("0x%04X",props);
   fputs (buf,sfile);
@@ -3525,7 +3545,7 @@ gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scri
 
   int i,j;
 
-  rfxbuilder->type=RFXBUILD_TYPE_EFFECT1;
+  rfxbuilder->type=RFX_BUILD_TYPE_EFFECT1;
   if (!(list=get_script_section ("define",script_file,TRUE))) {
     g_snprintf(mainw->msg,512,"%s",(_("No <define> section found in script.\n")));
     return FALSE;
@@ -3603,12 +3623,12 @@ gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scri
   num_channels=atoi (array[3]);
 
   if (num_channels==2) {
-    rfxbuilder->type=RFXBUILD_TYPE_EFFECT2;
+    rfxbuilder->type=RFX_BUILD_TYPE_EFFECT2;
   }
   if (num_channels==0) {
-    rfxbuilder->type=RFXBUILD_TYPE_EFFECT0;
+    rfxbuilder->type=RFX_BUILD_TYPE_EFFECT0;
   }
-  if (atoi (array[2])==-1) rfxbuilder->type=RFXBUILD_TYPE_UTILITY;
+  if (atoi (array[2])==-1) rfxbuilder->type=RFX_BUILD_TYPE_UTILITY;
   g_strfreev (array);
 
   rfxbuilder->script_name=g_strdup (script_file);
@@ -3633,7 +3653,7 @@ gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scri
   }
   if (rfxbuilder->props<0) rfxbuilder->props=0;
 
-  if (rfxbuilder->props&RFX_PROPS_MAY_RESIZE) rfxbuilder->type=RFXBUILD_TYPE_TOOL;
+  if (rfxbuilder->props&RFX_PROPS_MAY_RESIZE) rfxbuilder->type=RFX_BUILD_TYPE_TOOL;
 
   if ((list=get_script_section ("params",script_file,TRUE))) {
     gchar *type;
@@ -4377,7 +4397,7 @@ gchar *prompt_for_script_name(const gchar *sname, gshort status) {
 
 	  if (OK) {
 	    gtk_entry_set_text (GTK_ENTRY (rfxbuilder->name_entry),name);
-	    rfxbuilder->mode=RFXBUILDER_MODE_COPY;
+	    rfxbuilder->mode=RFX_BUILDER_MODE_COPY;
 	    gtk_widget_show (rfxbuilder->dialog);
 	  }
 	}
@@ -4826,6 +4846,8 @@ void add_rfx_effects(void) {
       case RFX_STATUS_TEST:
 	mainw->num_rendered_effects_test++;
 	break;
+      default:
+	break;
       }
       
     if (!(rfx->props&RFX_PROPS_MAY_RESIZE)&&rfx->min_frames>=0&&rfx->num_in_channels==1) {
@@ -4845,6 +4867,8 @@ void add_rfx_effects(void) {
 	break;
       case RFX_STATUS_TEST:
 	gtk_container_add (GTK_CONTAINER (mainw->run_test_rfx_menu), menuitem);
+	break;
+      default:
 	break;
       }
       
@@ -5005,6 +5029,8 @@ void add_rfx_effects(void) {
 	case RFX_STATUS_TEST:
 	  gtk_container_add (GTK_CONTAINER (mainw->run_test_rfx_menu), menuitem);
 	  break;
+	default:
+	  break;
 	}
 
 	if (menuitem!=mainw->resize_menuitem) {
@@ -5048,6 +5074,8 @@ void add_rfx_effects(void) {
 	  break;
 	case RFX_STATUS_TEST:
 	  gtk_container_add (GTK_CONTAINER (mainw->run_test_rfx_menu), menuitem);
+	  break;
+	default:
 	  break;
 	}
 

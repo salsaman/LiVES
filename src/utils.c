@@ -521,7 +521,7 @@ void d_print(const gchar *text) {
 
 
 
-gboolean add_lmap_error(int lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current) {
+gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current) {
   // potentially add a layout map error to the layout textbuffer
   GtkTextIter end_iter;
   gchar *text,*name2;
@@ -2485,7 +2485,7 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
 }
 
 
-void lives_set_cursor_style(gint cstyle, GdkWindow *window) {
+void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window) {
   if (mainw->cursor!=NULL) gdk_cursor_unref(mainw->cursor);
   mainw->cursor=NULL;
 
@@ -2502,6 +2502,8 @@ void lives_set_cursor_style(gint cstyle, GdkWindow *window) {
   case LIVES_CURSOR_BUSY:
     mainw->cursor=gdk_cursor_new(GDK_WATCH);
     gdk_window_set_cursor (window, mainw->cursor);
+    return;
+  default:
     return;
   }
 }
@@ -2686,7 +2688,7 @@ gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
 
 
 
-gboolean get_clip_value(int which, int what, void *retval, size_t maxlen) {
+gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
   FILE *valfile;
   gchar *vfile;
   gchar *lives_header=NULL;
@@ -2875,6 +2877,10 @@ gboolean get_clip_value(int which, int what, void *retval, size_t maxlen) {
     *(gint *)retval=atoi(val);
     if (retval==0) *(gint *)retval=mainw->files[which]->arate;
     break;
+  case CLIP_DETAILS_INTERLACE:
+    *(gint *)retval=atoi(val);
+    if (retval==0) *(gint *)retval=LIVES_INTERLACE_NONE;
+    break;
   case CLIP_DETAILS_FPS:
     *(gdouble *)retval=strtod(val,NULL);
     if (*(gdouble *)retval==0.) *(gdouble *)retval=prefs->default_fps;
@@ -2912,7 +2918,7 @@ gboolean get_clip_value(int which, int what, void *retval, size_t maxlen) {
 
 
 
-void save_clip_value(int which, int what, void *val) {
+void save_clip_value(int which, lives_clip_details_t what, void *val) {
   gchar *lives_header;
   gchar *com;
   gchar *myval;
@@ -2976,6 +2982,10 @@ void save_clip_value(int which, int what, void *val) {
     break;
   case CLIP_DETAILS_FRAMES:
     key=g_strdup("frames");
+    myval=g_strdup_printf("%d",*(gint *)val);
+    break;
+  case CLIP_DETAILS_INTERLACE:
+    key=g_strdup("interlace");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_TITLE:

@@ -19,7 +19,7 @@ void insert_images_in_virtual (gint sfileno, gint where, gint frames);
 void del_frame_index(file *sfile);
 void clean_images_from_virtual (file *sfile, gint oldframes);
 int *frame_index_copy(int *findex, gint nframes);
-gboolean check_if_non_virtual(file *sfile);
+gboolean check_if_non_virtual(gint fileno);
 
 void restore_frame_index_back (gint sfileno);
 

@@ -531,7 +531,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->effects_paused=FALSE;
   mainw->play_start=0;
   mainw->opening_loc=FALSE;
-  mainw->toy_type=TOY_NONE;
+  mainw->toy_type=LIVES_TOY_NONE;
   mainw->framedraw=mainw->framedraw_spinbutton=NULL;
   mainw->framedraw_copy_pixmap=mainw->framedraw_orig_pixmap=mainw->framedraw_bitmap=NULL;
   mainw->framedraw_bitmapgc=NULL;
@@ -3227,8 +3227,8 @@ void load_frame_image(gint frame, gint last_frame) {
 	g_free(frames);
       }
       else {
-	if (mainw->toy_type!=TOY_NONE) {
-	  if (mainw->toy_type==TOY_RANDOM_FRAMES&&!mainw->fs&&cfile->clip_type==CLIP_TYPE_DISK) {
+	if (mainw->toy_type!=LIVES_TOY_NONE) {
+	  if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!mainw->fs&&cfile->clip_type==CLIP_TYPE_DISK) {
 	    gint current_file=mainw->current_file;
 	    if (mainw->toy_go_wild) {
 	      int i,other_file;
@@ -3282,9 +3282,9 @@ void load_frame_image(gint frame, gint last_frame) {
 	  g_free(framecount);
 	  framecount=NULL;
 	}
-	if (mainw->toy_type!=TOY_NONE) {
+	if (mainw->toy_type!=LIVES_TOY_NONE) {
 	  // TODO - move into toys.c
-	  if (mainw->toy_type==TOY_RANDOM_FRAMES&&!mainw->fs) {
+	  if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!mainw->fs) {
 	    if (cfile->opening_only_audio) {
 	      load_start_image  (1+(int) ((double)cfile->frames*rand()/(RAND_MAX+1.0)));
 	      load_end_image (1+(int) ((double)cfile->frames*rand()/(RAND_MAX+1.0)));
@@ -3437,8 +3437,8 @@ void load_frame_image(gint frame, gint last_frame) {
 	      if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Play"), NULL);
 	      gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Play"), NULL);
 	      if (cfile->opening&&!cfile->is_loaded) {
-		if (mainw->toy_type==TOY_TV) {
-		  on_toy_activate(NULL,LIVES_TOY_NONE);
+		if (mainw->toy_type==LIVES_TOY_TV) {
+		  on_toy_activate(NULL,GINT_TO_POINTER(LIVES_TOY_NONE));
 		}
 	      }
 	      mainw->preview=FALSE;

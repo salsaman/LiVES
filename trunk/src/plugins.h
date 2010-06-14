@@ -12,7 +12,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include "main.h"
 
 
 // generic plugins
@@ -298,6 +297,21 @@ LIVES_INLINE gboolean decplugin_supports_palette (const lives_decoder_t *dplug, 
 #define RFX_MAXSTRINGLEN 1024
 
 
+typedef enum {
+
+  LIVES_PARAM_UNKNOWN=0,
+  LIVES_PARAM_NUM,
+  LIVES_PARAM_BOOL,
+  LIVES_PARAM_COLRGB24,
+  LIVES_PARAM_STRING,
+  LIVES_PARAM_STRING_LIST,
+  LIVES_PARAM_COLRGBA32,
+
+  LIVES_PARAM_UNDISPLAYABLE=65536
+  
+} lives_param_type_t;
+
+
 typedef struct {
   // weed style part
   gchar *name;
@@ -322,19 +336,8 @@ typedef struct {
 
   gboolean wrap;
   gint group;
-  gint type;
+  lives_param_type_t type;
 
-#define LIVES_PARAM_UNKNOWN 0
-#define LIVES_PARAM_NUM 1
-#define LIVES_PARAM_BOOL 2
-#define LIVES_PARAM_COLRGB24 3
-#define LIVES_PARAM_STRING 4
-#define LIVES_PARAM_STRING_LIST 5
-#define LIVES_PARAM_COLRGBA32 6
-
-
-#define LIVES_PARAM_UNDISPLAYABLE 65536
-  
   gint dp;  //decimals, 0 for int and bool
   void *value;  // current value(s)
 
@@ -364,23 +367,30 @@ typedef struct {
 } lives_param_t;
 
 
+typedef enum {
+  RFX_STATUS_BUILTIN=0, // factory presets
+  RFX_STATUS_CUSTOM=1, // custom effects in the custom menu
+  RFX_STATUS_TEST=2, // test effects in the advanced menu
+  RFX_STATUS_ANY=3, // indicates free choice of statuses
+  RFX_STATUS_WEED=4, // indicates an internal RFX, created from a weed instance
+  RFX_STATUS_SCRAP=5, // used for parsing RFX scraps from external apps
+
+  // these are only used when prompting for a name
+  RFX_STATUS_COPY=128, // indicates a copy operation to test
+  RFX_STATUS_RENAME=129 // indicates a copy operation to test
+} lives_rfx_status_t;
+
+
+
+
 typedef struct {
   gchar *name;  // the name of the executable (so we can run it !)
   gchar *menu_text; // for Weed, this is the filter_class "name"
   gchar *action_desc; // for Weed "Applying $s"
   gint min_frames; // for Weed, 1
   gint num_in_channels;
-  gshort status;
-#define RFX_STATUS_BUILTIN 0 // factory presets
-#define RFX_STATUS_CUSTOM 1 // custom effects in the custom menu
-#define RFX_STATUS_TEST 2 // test effects in the advanced menu
-#define RFX_STATUS_ANY 3 // indicates free choice of statuses
-#define RFX_STATUS_WEED 4 // indicates an internal RFX, created from a weed instance
-#define RFX_STATUS_SCRAP 5 // used for parsing RFX scraps from external apps
+  lives_rfx_status_t status;
 
-  // these are only used when prompting for a name
-#define RFX_STATUS_COPY 128 // indicates a copy operation to test
-#define RFX_STATUS_RENAME 129 // indicates a copy operation to test
 
   guint32 props;
 #define RFX_PROPS_SLOW        0x0001  // hint to GUI

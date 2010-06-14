@@ -2776,7 +2776,7 @@ fade_background(void) {
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_NONE);
   gtk_frame_set_label (GTK_FRAME(mainw->frame2), "");
 
-  if (mainw->toy_type!=TOY_RANDOM_FRAMES||mainw->foreign) {
+  if (mainw->toy_type!=LIVES_TOY_MAD_FRAMES||mainw->foreign) {
     gtk_widget_hide(mainw->image272);
     gtk_widget_hide(mainw->image273);
   }

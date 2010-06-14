@@ -56,6 +56,7 @@ void save_clip_values(gint which) {
   save_clip_value(which,CLIP_DETAILS_PB_FPS,&mainw->files[which]->pb_fps);
   save_clip_value(which,CLIP_DETAILS_WIDTH,&mainw->files[which]->hsize);
   save_clip_value(which,CLIP_DETAILS_HEIGHT,&mainw->files[which]->vsize);
+  save_clip_value(which,CLIP_DETAILS_INTERLACE,&mainw->files[which]->interlace);
   save_clip_value(which,CLIP_DETAILS_UNIQUE_ID,&mainw->files[which]->unique_id);
   save_clip_value(which,CLIP_DETAILS_ARATE,&mainw->files[which]->arps);
   save_clip_value(which,CLIP_DETAILS_PB_ARATE,&mainw->files[which]->arate);
@@ -211,8 +212,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	get_mime_type(cfile->type,40,cdata);
 	
-	cfile->hsize=cdata->width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
-	cfile->vsize=cdata->height;
+	cfile->hsize=cdata->frame_width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+	cfile->vsize=cdata->frame_height;
 	cfile->frames=cdata->nframes;
 	
 	if (frames>0&&cfile->frames>frames) cfile->frames=frames;
@@ -377,7 +378,12 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     
     if (cfile->ext_src!=NULL) {
       create_frame_index(mainw->current_file,TRUE,cfile->fps*(start==0?0:start-1),frames==0?cfile->frames:frames);
-      if (mainw->open_deint) cfile->deinterlace=TRUE;
+      if (mainw->open_deint) {
+	// override what the plugin says
+	cfile->deinterlace=TRUE;
+	cfile->interlace=LIVES_INTERLACE_TOP_FIRST; // guessing
+	save_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace);
+      }
     }
 
     else {
@@ -506,7 +512,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  on_playsel_activate (NULL, NULL);
 	} while (mainw->cancelled==CANCEL_KEEP_LOOPING);
 	mainw->preview=FALSE;
-	on_toy_activate(NULL,LIVES_TOY_NONE);
+	on_toy_activate(NULL,GINT_TO_POINTER(LIVES_TOY_NONE));
 	g_free (mainw->file_open_params);
 	mainw->file_open_params=NULL;
 	mainw->cancelled=CANCEL_NONE;
@@ -2248,7 +2254,7 @@ void play_file (void) {
   if (mainw->multitrack==NULL) gtk_widget_show(mainw->scrolledwindow);
 
   if (mainw->current_file>-1) {
-    if (mainw->toy_type==TOY_RANDOM_FRAMES&&!cfile->opening) {
+    if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!cfile->opening) {
       load_start_image (cfile->start);
       load_end_image (cfile->end);
     }
@@ -2426,6 +2432,7 @@ create_cfile(void) {
   cfile->stored_layout_audio=0.;
   cfile->stored_layout_fps=0.;
   cfile->stored_layout_idx=-1;
+  cfile->interlace=LIVES_INTERLACE_NONE;
 
   if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;
@@ -2990,6 +2997,9 @@ gboolean read_headers(const gchar *file_name) {
       get_clip_value(mainw->current_file,CLIP_DETAILS_KEYWORDS,cfile->comment,1024);
       get_clip_value(mainw->current_file,CLIP_DETAILS_FILENAME,cfile->file_name,256);
 
+      get_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace,0);
+      if (cfile->interlace!=LIVES_INTERLACE_NONE) cfile->deinterlace=TRUE; // user must have forced this
+
       return TRUE;
     }
   }
@@ -3092,6 +3102,8 @@ void open_set_file (const gchar *set_name, gint clipnum) {
     get_clip_value(mainw->current_file,CLIP_DETAILS_PB_FRAMENO,&cfile->frameno,0);
     get_clip_value(mainw->current_file,CLIP_DETAILS_CLIPNAME,name,256);
     get_clip_value(mainw->current_file,CLIP_DETAILS_UNIQUE_ID,&cfile->unique_id,0);
+    get_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace,0);
+    if (cfile->interlace!=LIVES_INTERLACE_NONE) cfile->deinterlace=TRUE; // user must have forced this
   }
   else {
     // pre 0.9.6
@@ -3284,7 +3296,7 @@ gint save_event_frames(void) {
     }
 
     cfile->frames=nevents;
-    if (!check_if_non_virtual(cfile)) save_frame_index(mainw->current_file);
+    if (!check_if_non_virtual(mainw->current_file)) save_frame_index(mainw->current_file);
     cfile->frames=xframes;
   }
 

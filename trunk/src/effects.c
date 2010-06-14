@@ -505,7 +505,7 @@ gint realfx_progress (gboolean reset) {
     mainw->internal_messaging=FALSE;
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
-      if (!check_if_non_virtual(cfile)) save_frame_index(mainw->current_file);
+      if (!check_if_non_virtual(mainw->current_file)) save_frame_index(mainw->current_file);
     }
 
   }

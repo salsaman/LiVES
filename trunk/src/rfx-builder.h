@@ -57,13 +57,42 @@ typedef struct {
 
 
 
+typedef enum {
+  RFX_BUILD_TYPE_EFFECT1,
+  RFX_BUILD_TYPE_EFFECT2,
+  RFX_BUILD_TYPE_EFFECT0,
+  RFX_BUILD_TYPE_TOOL,
+  RFX_BUILD_TYPE_UTILITY
+} lives_rfx_build_type_t;
+
+
+typedef enum {
+  RFX_TABLE_TYPE_REQUIREMENTS,
+  RFX_TABLE_TYPE_PARAMS,
+  RFX_TABLE_TYPE_TRIGGERS,
+  RFX_TABLE_TYPE_PARAM_WINDOW
+} lives_rfx_table_type_t;
+
+
+typedef enum {
+  RFX_CODE_TYPE_PRE,
+  RFX_CODE_TYPE_LOOP,
+  RFX_CODE_TYPE_POST,
+  RFX_CODE_TYPE_STRDEF,
+  RFX_CODE_TYPE_STRING_LIST
+} lives_rfx_code_type_t;
+
+
+typedef enum {
+  RFX_BUILDER_MODE_NEW=0,
+  RFX_BUILDER_MODE_EDIT,
+  RFX_BUILDER_MODE_COPY
+} lives_rfx_builder_mode_t;
+
+
+
 typedef struct {
-  gshort type;
-#define RFXBUILD_TYPE_EFFECT1 1
-#define RFXBUILD_TYPE_EFFECT2 2
-#define RFXBUILD_TYPE_EFFECT0 3
-#define RFXBUILD_TYPE_TOOL 4
-#define RFXBUILD_TYPE_UTILITY 5
+  lives_rfx_build_type_t type;
 
   GtkWidget *dialog;
   GtkWidget *name_entry;
@@ -95,20 +124,12 @@ typedef struct {
   GtkWidget *hbox_batchg;
   GtkWidget *min_frames_label;
 
-  gshort table_type;
-#define TABLE_TYPE_REQUIREMENTS 1
-#define TABLE_TYPE_PARAMS 2
-#define TABLE_TYPE_TRIGGERS 3
-#define TABLE_TYPE_PARAM_WINDOW 4
+  lives_rfx_table_type_t table_type;
+
   gint table_rows;
   gint ptable_rows;
 
-  gshort codetype;
-#define CODE_TYPE_PRE 1
-#define CODE_TYPE_LOOP 2
-#define CODE_TYPE_POST 3
-#define CODE_TYPE_STRDEF 4
-#define CODE_TYPE_STRING_LIST 5
+  lives_rfx_code_type_t codetype;
 
   GtkWidget *entry[RFXBUILD_MAX_TROWS];
   GtkWidget *entry2[RFXBUILD_MAX_TROWS];
@@ -179,10 +200,7 @@ typedef struct {
 
   gchar *field_delim;
 
-  gshort mode;
-#define RFXBUILDER_MODE_NEW 0
-#define RFXBUILDER_MODE_EDIT 1
-#define RFXBUILDER_MODE_COPY 2
+  lives_rfx_builder_mode_t mode;
 
   gint table_swap_row1;
   gint table_swap_row2;
@@ -201,7 +219,7 @@ typedef struct {
 } rfx_build_window_t;
 
 // builder window widgets/callbacks
-rfx_build_window_t *make_rfx_build_window (const gchar *in_script_name, gshort in_status);
+rfx_build_window_t *make_rfx_build_window (const gchar *in_script_name, lives_rfx_status_t in_status);
 void on_rfxbuilder_ok (GtkButton *, gpointer);
 void on_rfxbuilder_cancel (GtkButton *, gpointer);
 void rfxbuilder_destroy (rfx_build_window_t *);

@@ -109,10 +109,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #endif
 #endif
 
-// insert methods
-#define AFTER_END 1
-#define BEFORE_START 0
-
 // LiVES will show a warning if this (MBytes) is exceeded on load
 // (can be overridden in prefs)
 #define WARN_FILE_SIZE 500
@@ -214,6 +210,131 @@ typedef struct {
 #include "events.h"
 
 
+typedef enum {
+  UNDO_NONE=0,
+  UNDO_EFFECT,
+  UNDO_RESIZABLE,
+  UNDO_MERGE,
+  UNDO_RESAMPLE,
+  UNDO_TRIM_AUDIO,
+  UNDO_CHANGE_SPEED,
+  UNDO_AUDIO_RESAMPLE,
+  UNDO_APPEND_AUDIO,
+  UNDO_INSERT,
+  UNDO_CUT,
+  UNDO_DELETE,
+  UNDO_DELETE_AUDIO,
+  UNDO_INSERT_SILENCE,
+  UNDO_NEW_AUDIO,
+
+  // resample/resize and resample audio for encoding
+  UNDO_ATOMIC_RESAMPLE_RESIZE,
+
+  // resample/reorder/resize/apply effects
+  UNDO_RENDER,
+
+  UNDO_FADE_AUDIO,
+
+  // record audio to selection
+  UNDO_REC_AUDIO,
+
+  UNDO_INSERT_WITH_AUDIO
+} lives_undo_t;
+
+
+// which stream end should cause playback to finish ?
+typedef enum {
+  NEVER_STOP=0,
+  STOP_ON_VID_END,
+  STOP_ON_AUD_END
+} lives_whentostop_t;
+
+
+// cancel reason
+typedef enum {
+  // no cancel
+  CANCEL_NONE=0,
+
+  // user pressed stop
+  CANCEL_USER=1,
+
+  // cancel but keep opening
+  CANCEL_NO_PROPOGATE=2,
+
+  // effect processing finished during preview
+  CANCEL_PREVIEW_FINISHED=3,
+
+  // application quit
+  CANCEL_APP_QUIT=4,
+
+  // ran out of preview frames
+  CANCEL_NO_MORE_PREVIEW=5,
+
+  // image could not be captured
+  CANCEL_CAPTURE_ERROR=6,
+
+  // event_list completed
+  CANCEL_EVENT_LIST_END=7,
+
+  // video playback completed
+  CANCEL_VID_END=8,
+
+  // generator was stopped
+  CANCEL_GENERATOR_END=9,
+
+  // user pressed 'Keep'
+  CANCEL_KEEP=10,
+
+  // video playback completed
+  CANCEL_AUD_END=11,
+
+  // cancelled because of error
+  CANCEL_ERROR=12,
+
+  // cancelled and paused
+  CANCEL_USER_PAUSED=13,
+
+  // special cancel for TV toy
+  CANCEL_KEEP_LOOPING=100
+
+} lives_cancel_t;
+
+
+typedef enum {
+  CANCEL_KILL=0,  // normal - kill background processes working on current clip
+  CANCEL_SOFT     // just cancel in GUI (for keep, etc)
+} lives_cancel_type_t;
+
+
+
+
+typedef enum {
+  CLIP_TYPE_DISK, // imported video, broken into frames
+  CLIP_TYPE_YUV4MPEG,
+  CLIP_TYPE_GENERATOR,
+  CLIP_TYPE_FILE, // unimported video, not or partially broken in frames
+  CLIP_TYPE_LIVES2LIVES // type for LiVES to LiVES streaming
+} lives_clip_type_t;
+
+
+typedef enum {
+  IMG_TYPE_UNKNOWN=(1<<0),
+  IMG_TYPE_JPEG=(1<<1),
+  IMG_TYPE_PNG=(1<<2)
+} lives_image_type_t;
+
+
+
+#define AFORM_SIGNED 0
+#define AFORM_LITTLE_ENDIAN 0
+
+#define AFORM_UNSIGNED 1
+#define AFORM_BIG_ENDIAN (1<<1)
+#define AFORM_UNKNOWN 65536
+
+
+
+
 
 typedef struct {                // corresponds to one clip in the GUI
   // cfile - one clip
@@ -225,13 +346,6 @@ typedef struct {                // corresponds to one clip in the GUI
   gint vsize;
   gint arps; // audio sample rate
   guint signed_endian; // bitfield
-
-  #define AFORM_SIGNED 0
-  #define AFORM_LITTLE_ENDIAN 0
-
-  #define AFORM_UNSIGNED 1
-  #define AFORM_BIG_ENDIAN (1<<1)
-  #define AFORM_UNKNOWN 65536
 
   gint arate; // audio playback rate
   gint64 unique_id;    // this and the handle can be used to uniquely id a file
@@ -245,6 +359,8 @@ typedef struct {                // corresponds to one clip in the GUI
   gchar comment[256];
   gchar keywords[256];
   ////////////////
+
+  gint interlace; // interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
 
   // extended info (not saved)
   gint header_version;
@@ -323,42 +439,8 @@ typedef struct {                // corresponds to one clip in the GUI
   GList *layout_map;
   ////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
   //undo
-  gshort undo_action;
-#define UNDO_NONE 0
-#define UNDO_EFFECT 1
-#define UNDO_RESIZABLE 2
-#define UNDO_MERGE 3
-
-
-#define UNDO_RESAMPLE 5
-#define UNDO_TRIM_AUDIO 6
-#define UNDO_CHANGE_SPEED 7
-#define UNDO_AUDIO_RESAMPLE 8
-#define UNDO_APPEND_AUDIO 9
-#define UNDO_INSERT 10
-#define UNDO_CUT 11
-#define UNDO_DELETE 12
-#define UNDO_DELETE_AUDIO 13
-#define UNDO_INSERT_SILENCE 14
-#define UNDO_NEW_AUDIO 15
-
-  // resample/resize and resample audio for encoding
-#define UNDO_ATOMIC_RESAMPLE_RESIZE 16
-
-  // resample/reorder/resize/apply effects
-#define UNDO_RENDER 17
-
-#define UNDO_FADE_AUDIO 18
-
-  // record audio to selection
-#define UNDO_REC_AUDIO 19
-
-#define UNDO_INSERT_WITH_AUDIO 20
+  lives_undo_t undo_action;
 
   gint undo_start;
   gint undo_end;
@@ -385,12 +467,8 @@ typedef struct {                // corresponds to one clip in the GUI
   gint undo_asampsize;
   gint undo_arps; // audio sample rate
 
-  gshort clip_type;
-#define CLIP_TYPE_DISK 0 // imported video, broken into frames
-#define CLIP_TYPE_YUV4MPEG 1
-#define CLIP_TYPE_GENERATOR 2
-#define CLIP_TYPE_FILE 3 // unimported video, not or partially broken in frames
-#define CLIP_TYPE_LIVES2LIVES 4 // type for LiVES to LiVES streaming
+  lives_clip_type_t clip_type;
+
   void *ext_src; // points to opaque source for non-disk types
 
   int *frame_index; // index of frames for CLIP_TYPE_FILE
@@ -417,11 +495,7 @@ typedef struct {                // corresponds to one clip in the GUI
 
   gboolean deinterlace;
 
-#define IMG_TYPE_UNKNOWN (1<<0)
-#define IMG_TYPE_JPEG (1<<1)
-#define IMG_TYPE_PNG (1<<2)
-
-  guint img_type;
+  lives_image_type_t img_type;
 
   // layout map for the current layout
   gint stored_layout_frame;
@@ -509,6 +583,44 @@ struct timeval tv;
 
 // type sizes
 size_t sizint, sizdbl, sizshrt;
+
+
+
+typedef enum {
+  CLIP_DETAILS_BPP,
+  CLIP_DETAILS_FPS,
+  CLIP_DETAILS_PB_FPS,
+  CLIP_DETAILS_WIDTH,
+  CLIP_DETAILS_HEIGHT,
+  CLIP_DETAILS_UNIQUE_ID,
+  CLIP_DETAILS_ARATE,
+  CLIP_DETAILS_PB_ARATE,
+  CLIP_DETAILS_ACHANS,
+  CLIP_DETAILS_ASIGNED,
+  CLIP_DETAILS_AENDIAN,
+  CLIP_DETAILS_ASAMPS,
+  CLIP_DETAILS_FRAMES,
+  CLIP_DETAILS_TITLE,
+  CLIP_DETAILS_AUTHOR,
+  CLIP_DETAILS_COMMENT,
+  CLIP_DETAILS_PB_FRAMENO,
+  CLIP_DETAILS_FILENAME,
+  CLIP_DETAILS_CLIPNAME,
+  CLIP_DETAILS_HEADER_VERSION,
+  CLIP_DETAILS_KEYWORDS,
+  CLIP_DETAILS_INTERLACE
+} lives_clip_details_t;
+
+
+typedef enum {
+  LIVES_CURSOR_NORMAL=0,  // must be zero
+  LIVES_CURSOR_BLOCK,
+  LIVES_CURSOR_AUDIO_BLOCK,
+  LIVES_CURSOR_BUSY,
+  LIVES_CURSOR_FX_BLOCK
+} lives_cursor_t;
+
+
 
 
 // some useful functions
@@ -780,13 +892,13 @@ void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight);
 gchar *remove_trailing_zeroes(gdouble val);
 void toggle_button_toggle (GtkToggleButton *tbutton);
 void remove_layout_files(GList *lmap);
-gboolean add_lmap_error(int lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current);
+gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current);
 void clear_lmap_errors(void);
 gboolean prompt_remove_layout_files(void);
 gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes);
 gchar *repl_tmpdir(const gchar *entry, gboolean fwd);
-gboolean get_clip_value(int which, int what, void *retval, size_t maxlen);
-void save_clip_value(int which, int what, void *val);
+gboolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
+void save_clip_value(int which, lives_clip_details_t, void *val);
 gboolean check_frame_count(gint idx);
 void get_frame_count(gint idx);
 gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps);
@@ -834,14 +946,7 @@ void set_fg_colour(gint red, gint green, gint blue);
 gboolean label_act_toggle (GtkWidget *, GdkEventButton *, GtkToggleButton *);
 gboolean widget_act_toggle (GtkWidget *, GtkToggleButton *);
 
-void lives_set_cursor_style(gint cstyle, GdkWindow *window);
-
-#define LIVES_CURSOR_NORMAL 0  // must be zero
-#define LIVES_CURSOR_BLOCK 1
-#define LIVES_CURSOR_AUDIO_BLOCK 2
-#define LIVES_CURSOR_BUSY 3
-#define LIVES_CURSOR_FX_BLOCK 4
-
+void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window);
 
 
 gchar *text_view_get_text(GtkTextView *textview);
@@ -903,35 +1008,8 @@ char *dummychar;
 #define L2U8(String) ( g_locale_to_utf8 (String,-1,NULL,NULL,NULL) ) 
 
 
-/* clip details keys */
-#define CLIP_DETAILS_BPP 1
-#define CLIP_DETAILS_FPS 2
-#define CLIP_DETAILS_PB_FPS 3
-#define CLIP_DETAILS_WIDTH 4
-#define CLIP_DETAILS_HEIGHT 5
-#define CLIP_DETAILS_UNIQUE_ID 6
-#define CLIP_DETAILS_ARATE 7
-#define CLIP_DETAILS_PB_ARATE 8
-#define CLIP_DETAILS_ACHANS 9
-#define CLIP_DETAILS_ASIGNED 10
-#define CLIP_DETAILS_AENDIAN 11
-#define CLIP_DETAILS_ASAMPS 12
-#define CLIP_DETAILS_FRAMES 13
-#define CLIP_DETAILS_TITLE 14
-#define CLIP_DETAILS_AUTHOR 15
-#define CLIP_DETAILS_COMMENT 16
-#define CLIP_DETAILS_PB_FRAMENO 17
-#define CLIP_DETAILS_FILENAME 18
-#define CLIP_DETAILS_CLIPNAME 19
-#define CLIP_DETAILS_HEADER_VERSION 20
-#define CLIP_DETAILS_KEYWORDS 21
-
 #define PREFS_TIMEOUT 10000000 // 10 seconds // TODO !
 
-#define LIVES_TOY_NONE 0
-#define LIVES_TOY_MAD_FRAMES 1
-#define LIVES_TOY_TV 2
-#define LIVES_TOY_AUTOLIVES 2
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
 #endif // #ifndef HAS_MAIN_H

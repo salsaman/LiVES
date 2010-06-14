@@ -139,8 +139,9 @@ gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
 
 
 
-gboolean check_if_non_virtual(file *sfile) {
+gboolean check_if_non_virtual(gint fileno) {
   register int i;
+  file *sfile=mainw->files[fileno];
 
   if (sfile->frame_index!=NULL) {
     for (i=1;i<=sfile->frames;i++) {
@@ -150,6 +151,11 @@ gboolean check_if_non_virtual(file *sfile) {
 
   sfile->clip_type=CLIP_TYPE_DISK;
   del_frame_index(sfile);
+
+  if (sfile->interlace!=LIVES_INTERLACE_NONE) {
+    sfile->interlace=LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
+    save_clip_value(fileno,CLIP_DETAILS_INTERLACE,&sfile->interlace);
+  }
 
   return TRUE;
 }
@@ -228,12 +234,12 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
     sync();
 
     if (mainw->cancelled!=CANCEL_NONE) {
-      if (!check_if_non_virtual(sfile)) save_frame_index(sfileno);
+      if (!check_if_non_virtual(sfileno)) save_frame_index(sfileno);
       return;
     }
   }
 
-  if (!check_if_non_virtual(sfile)) save_frame_index(sfileno);
+  if (!check_if_non_virtual(sfileno)) save_frame_index(sfileno);
 }
 
 

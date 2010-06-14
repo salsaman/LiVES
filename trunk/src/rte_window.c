@@ -16,7 +16,6 @@
 #include "support.h"
 #include "rte_window.h"
 #include "effects.h"
-#include "effects-weed.h"
 #include "paramwindow.h"
 
 #define RTE_INFO_WIDTH 350
@@ -1334,6 +1333,9 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
 	break;
       case LIVES_PARAM_BOOL:
 	weed_set_boolean_array(ptmpls[i],"host_default",1,rfx->params[i].value);
+	break;
+      default:
+	break;
       }
     }
     weed_free(ptmpls);

@@ -411,7 +411,7 @@ gboolean process_one (gboolean visible) {
   gint64 new_ticks;
   gint oframeno=0;
 
-  gshort time_source;
+  lives_time_source_t time_source;
   gboolean show_frame;
 
 #ifdef RT_AUDIO

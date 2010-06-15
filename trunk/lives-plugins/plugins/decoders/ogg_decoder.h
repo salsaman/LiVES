@@ -39,18 +39,9 @@ typedef struct {
   int header_packets_needed;
 
   int64_t last_granulepos;
-  int64_t prev_granulepos;      /* Granulepos of the previous page */
 
   int keyframe_granule_shift;
 
-  int64_t frame_counter;
-
-  /* Set this during seeking */
-  int do_sync;
-
-  /* Position of the current and previous page */
-  int64_t page_pos;
-  int64_t prev_page_pos;
 } stream_priv_t;
 
 
@@ -110,10 +101,10 @@ typedef struct _index_entry index_entry;
 struct _index_entry {
   index_entry *next;
   index_entry *prev;
-  int64_t granulepos;
+  int64_t value;    // granulepos for theora, frame for dirac
   int64_t pagepos;
+  int64_t pagepos_end; // only used for dirac
 };
-
 
 
 

@@ -34,6 +34,7 @@
 // finalise (clip_data_free)
 ///----------------------------------------------------------
 
+
 #include "decplugin.h"
 
 // palettes, etc.
@@ -118,6 +119,14 @@ static index_entry *index_entry_new(void) {
 
 
 
+static void index_entry_delete(index_entry *idx) {
+  if (idx->prev!=NULL) idx->prev->next=idx->next;
+  if (idx->next!=NULL) idx->next->prev=idx->prev;
+  free(idx);
+}
+
+
+
 static index_entry *theora_index_entry_add (lives_clip_data_t *cdata, int64_t granule, int64_t pagepos) {
   // add or update entry for keyframe
   index_entry *idx,*oidx,*last_idx=NULL;
@@ -136,14 +145,14 @@ static index_entry *theora_index_entry_add (lives_clip_data_t *cdata, int64_t gr
 
   if (idx==NULL) {
     index_entry *ie=index_entry_new();
-    ie->granulepos=granule;
+    ie->value=granule;
     ie->pagepos=pagepos;
     priv->idx=ie;
     return ie;
   }
 
   while (idx!=NULL) {
-    gpos=idx->granulepos;
+    gpos=idx->value;
 
     kframe = gpos >> priv->vstream->stpriv->keyframe_granule_shift;
     if (kframe>tframe) break;
@@ -152,7 +161,7 @@ static index_entry *theora_index_entry_add (lives_clip_data_t *cdata, int64_t gr
       // entry exists, update it if applicable, and return it in found
       frame = kframe + gpos-(kframe<<priv->vstream->stpriv->keyframe_granule_shift);
       if (frame<tframe) {
-	idx->granulepos=granule;
+	idx->value=granule;
 	idx->pagepos=pagepos;
       }
       return idx;
@@ -180,11 +189,64 @@ static index_entry *theora_index_entry_add (lives_clip_data_t *cdata, int64_t gr
     idx->next->prev=idx;
   }
 
-  idx->granulepos=granule;
+  idx->value=granule;
   idx->pagepos=pagepos;
 
   return idx;
 }
+
+
+
+static index_entry *dirac_index_entry_add_before (index_entry *idx, int64_t pagepos) {
+  index_entry *new_idx=index_entry_new();
+
+  new_idx->value=-1;
+  new_idx->pagepos=pagepos;
+
+  if (idx!=NULL) {
+    new_idx->next=idx;
+    new_idx->prev=idx->prev;
+    if (idx->prev!=NULL) idx->prev->next=new_idx;
+    idx->prev=new_idx;
+  }
+  return new_idx;
+}
+
+
+
+static index_entry *dirac_index_entry_add (lives_clip_data_t *cdata, int64_t pagepos, int64_t frame) {
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+  index_entry *new_idx=priv->idx,*last_idx=NULL;
+
+  while (new_idx!=NULL) {
+    if (new_idx->pagepos>pagepos) {
+      new_idx=dirac_index_entry_add_before(new_idx,pagepos);
+      new_idx->value=frame;
+      new_idx->pagepos_end=pagepos;
+
+      if (new_idx->prev==NULL) return new_idx;
+      return priv->idx;
+    }
+    last_idx=new_idx;
+    new_idx=new_idx->next;
+  }
+
+  // add as last enry
+
+  new_idx=index_entry_new();
+  new_idx->value=frame;
+  new_idx->pagepos=new_idx->pagepos_end=pagepos;
+
+  if (priv->idx==NULL) return new_idx;
+
+  new_idx->prev=last_idx;
+  last_idx->next=new_idx;
+
+  return priv->idx;
+
+}
+
+
 
 
 
@@ -206,7 +268,7 @@ static index_entry *get_bounds_for (lives_clip_data_t *cdata, int64_t tframe, in
       continue;
     }
 
-    gpos=idx->granulepos;
+    gpos=idx->value;
     kframe = gpos >> priv->vstream->stpriv->keyframe_granule_shift;
 
     //fprintf(stderr,"check %lld against %lld\n",tframe,kframe);
@@ -587,7 +649,7 @@ static int setup_tracks(lives_clip_data_t *cdata) {
       iprof=dirac_uint( &bs ); /* profile */
       ilevel=dirac_uint( &bs ); /* level */
 
-      priv->vstream->version=imajor*1000+iminor;
+      priv->vstream->version=imajor*1000000+iminor*1000;
 
       //printf("dirac version %d\n",priv->vstream->version);
 
@@ -602,8 +664,8 @@ static int setup_tracks(lives_clip_data_t *cdata) {
       }
 
       if( dirac_bool( &bs ) ) {
-	cdata->width=dirac_uint( &bs ); /* frame_width */
-	cdata->height=dirac_uint( &bs ); /* frame_height */
+	cdata->frame_width=cdata->width=dirac_uint( &bs ); /* frame_width */
+	cdata->frame_height=cdata->width=dirac_uint( &bs ); /* frame_height */
       }
       // else...????
 
@@ -725,11 +787,11 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 #ifdef HAVE_DIRAC
 void get_dirac_cdata(lives_clip_data_t *cdata, SchroDecoder *schrodec) {
  SchroVideoFormat *sformat=schro_decoder_get_video_format(schrodec);
- cdata->frame_width=cdata->width=sformat->width;
- cdata->frame_height=cdata->height=sformat->height;
+ cdata->frame_width=sformat->width;
+ cdata->frame_height=sformat->height;
 
- //cdata->width=sformat->clean_width;
- //cdata->height=sformat->clean_height;
+ cdata->width=sformat->clean_width;
+ cdata->height=sformat->clean_height;
  
 
  if (sformat->interlaced) {
@@ -808,7 +870,7 @@ static int64_t get_data(lives_clip_data_t *cdata) {
 
 
 /* Find the first first page between pos1 and pos2,
-   return file position, -1 is returned on failure */
+   return file position, -1 is returned on failure. For theora only. */
 
 static int64_t find_first_page(lives_clip_data_t *cdata, int64_t pos1, int64_t pos2, int serialno, int64_t *kframe, int64_t *frame) {
   long result;
@@ -881,6 +943,7 @@ static int64_t find_first_page(lives_clip_data_t *cdata, int64_t pos1, int64_t p
       }
     else {
       /* Skipped -result bytes */
+      // priv->input_position becomes synced again
       seek_byte(cdata,priv->input_position-bytes-result);
       continue;
     }
@@ -941,6 +1004,173 @@ static int64_t find_last_page (lives_clip_data_t *cdata, int64_t pos1, int64_t p
 }
 
 
+/* find first sync frame in a given file region. Return file offset. -1 is returned if no sync frame found.
+This is for dirac only. */
+
+static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, int64_t pos2, int64_t *frame) {
+
+  lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
+
+  index_entry *idx=priv->idx;
+  index_entry *extend=NULL;
+
+  int64_t bytes,result;
+
+  ogg_t *opriv=priv->opriv;
+
+  // check index to see if pos1 is there
+
+  if (idx==NULL) {
+    // add
+    priv->idx=dirac_index_entry_add_before(NULL,pos1);
+    extend=priv->idx;
+  }
+  else {
+
+    while (idx!=NULL) {
+
+      if (idx->pagepos==pos1) {
+	if (idx->value>-1) *frame=idx->value;
+	// found !
+	return idx->pagepos;
+      }
+
+      if (idx->pagepos>pos2) {
+	// no entry found
+	if (idx->prev!=NULL) {
+	  if (idx->prev->pagepos_end==pos1-1) {
+	    // extend previous pagepos_end
+	    extend=idx->prev;
+	  }
+	  else {
+	    // add a new entry
+	    dirac_index_entry_add_before(idx,pos1);
+	    extend=idx->prev;
+	  }
+	}
+	else {
+	  // add as first entry
+	  priv->idx=dirac_index_entry_add_before(priv->idx,pos1);
+	  extend=priv->idx;
+	}
+	
+	break; // region is unchecked
+      }
+      
+      
+      if (idx->pagepos<pos1 && idx->pagepos_end>=pos1) {
+	if (idx->pagepos_end>pos2) {
+	  // region was checked and there are no seq frames
+	  *frame=-1;
+	  return idx->pagepos;
+	}
+	// continue from pagepos_end + 1
+	pos1=idx->pagepos_end+1;
+	
+	// extend pagepos_end
+	extend=idx;
+	break;
+      }
+    }
+  }
+
+  // pull pages and check packets until we either reach the end or find a sync point
+
+  
+  while(1) {
+    if (pos1>pos2) {
+
+      // reached the end and nothing was found
+      // close extend with the current pos
+
+      extend->pagepos_end=pos1-1;
+
+      *frame=-1;
+      return pos1; // we checked up to here
+    }
+
+
+    if ( (idx=find_pagepos_in_index_entries(priv->input_position))!=NULL ) {
+      // this part was already checked
+
+      if (idx->value!=-1) {
+	// we already found a sync frame here
+	extend->pagepos_end=priv->input_position-1;
+	*frame=idx->value;
+	return priv->input_position;
+      }
+
+      // no sync frame here - delete this entry and jump to pagepos_end
+      pos1=priv->input_position=idx->pagepos_end+1;
+      index_entry_delete(idx);
+      continue;
+    }
+
+
+    if (!(bytes=get_data(cdata))) {
+      *frame=-1;
+      return -1; // eof
+    }
+
+    priv->input_position+=bytes;
+
+
+    result = ogg_sync_pageseek(&opriv->oy, &opriv->current_page);
+
+    if (!result) {
+      // not found, need more data
+      continue;
+    }
+    else if (result>0) {
+      // found a page
+      if (priv->vstream->stream_id!=ogg_page_serialno(&(opriv->current_page))||ogg_page_packets(&opriv->current_page)==0) {
+	// page is not for this stream, or no packet ends here
+	seek_byte(cdata,priv->input_position-bytes+result);
+	continue;
+      }
+      
+      ogg_stream_pagein(&priv->vstream->stpriv->os, &(opriv->current_page));
+
+      while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
+
+	// is this packet a seq start ?
+	if (opriv->op.packet[4]==0) {
+	  // get the frame number, close extend, add a new index entry
+	  seek_byte(cdata,pos1);
+
+	  *frame=dirac_next_frame();
+
+	  extend->pagepos_end=pos1-1;
+
+	  priv->idx=dirac_index_entry_add(cdata,pos1,*frame);
+
+	  return pos1; // return offset of start page
+	  
+	}
+
+      }
+      // no seq start finished on this page, but one may have started
+      pos1=priv->input_position-bytes;
+
+    }
+    else {
+      /* Skipped -result bytes */
+      // priv->input_position becomes synced again
+      seek_byte(cdata,priv->input_position-bytes-result);
+      pos1=priv->input_position;
+      continue;
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
 
 static int64_t get_last_granulepos (lives_clip_data_t *cdata, int serialno) {
   // granulepos here is actually a frame - TODO ** fix for audio !
@@ -960,6 +1190,8 @@ static int64_t get_last_granulepos (lives_clip_data_t *cdata, int serialno) {
     return 417;
   }
 #endif
+
+  // TODO - fix for vorbis
 
   pos = find_last_page (cdata, priv->data_start, opriv->total_bytes, serialno, &kframe, &granulepos);
   if (pos < 0) return -1;
@@ -1488,8 +1720,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 #ifdef HAVE_THEORA
   if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
     theora_priv_t *tpriv=priv->tpriv;
-    cdata->width  = opriv->y_width = tpriv->ti.frame_width;
-    cdata->height = opriv->y_height = tpriv->ti.frame_height;
+    cdata->width  = cdata->frame_width = opriv->y_width = tpriv->ti.frame_width;
+    cdata->height = cdata->frame_height = opriv->y_height = tpriv->ti.frame_height;
     
     cdata->fps  = (float)tpriv->ti.fps_numerator/(float)tpriv->ti.fps_denominator;
     
@@ -1704,8 +1936,8 @@ static boolean ogg_dirac_read(lives_clip_data_t *cdata, ogg_packet *op, uint8_t 
       if (cdata->current_palette==WEED_PALETTE_YUV422P) schroframe->format = SCHRO_FRAME_FORMAT_U8_422;
       if (cdata->current_palette==WEED_PALETTE_YUV444P) schroframe->format = SCHRO_FRAME_FORMAT_U8_444;
       
-      schroframe->width=frame_width=cdata->width;
-      schroframe->height=frame_height=cdata->height;
+      schroframe->width=frame_width=cdata->frame_width;
+      schroframe->height=frame_height=cdata->frame_height;
       
       for( i=0; i<3; i++ ) {
         schroframe->components[i].width = frame_width;
@@ -1780,7 +2012,6 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
   ogg_t *opriv=priv->opriv;
   boolean ignore_count=(priv->ignore_packets&&!cont);
 
-
   priv->frame_out=FALSE;
 
   if (!cont) ogg_stream_reset(&priv->vstream->stpriv->os);
@@ -1805,20 +2036,6 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
       
       if (ogg_page_serialno(&(opriv->current_page))!=priv->vstream->stream_id) continue;
       ogg_stream_pagein(&priv->vstream->stpriv->os, &(opriv->current_page));
-
-
-#ifdef HAVE_DIRAC
-	  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
-	    uint64_t gpos=ogg_page_granulepos(&(opriv->current_page));
-	    uint64_t gl=gpos&0x2FFFFF;
-	    uint64_t gh=gpos>>22;
-	    uint64_t np=(gh+gl)>>9;
-	    uint64_t dt=gpos>>32;
-	    uint64_t dh=(gpos>>22)&0xff;
-	    uint64_t dl=gpos&0xff;
-	    printf("next pt will be %ld %ld %ld %ld %ld %ld\n",np,gpos,gh,gl,dt,(dh<<8)|dl);
-	  }
-#endif
     }
 
     while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
@@ -1842,6 +2059,9 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
 #ifdef HAVE_DIRAC
 	  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
 	    uint8_t **yuv=yuvbuffer;
+
+	    // TODO - if packet is seq start, add to index
+
 	    ogg_dirac_read(cdata,&opriv->op,yuv);
 	  }
 #endif
@@ -1913,8 +2133,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 #ifdef HAVE_DIRAC
   // just for testing
     if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
-      max_frame_diff=20;
-      if (tframe<50) {
+      max_frame_diff=500;
+      if (tframe<200) {
 
 	schro_decoder_reset(priv->schrodec);
 	seek_byte(cdata,0);
@@ -1950,7 +2170,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 	if (granulepos==-1) return FALSE; // should never happen...
 	fidx=theora_index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->cpagepos);
       }
-      else granulepos=fidx->granulepos;
+      else granulepos=fidx->value;
       kframe = granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
       if (kframe<priv->kframe_offset) kframe=priv->kframe_offset;
     }
@@ -1983,7 +2203,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
       else {
 	// same keyframe as last time, but we are reversing
 	priv->input_position=fidx->prev->pagepos;
-	granulepos=fidx->prev->granulepos;
+	granulepos=fidx->prev->value;
 	//fprintf(stderr,"starting from gpos %lld\n",granulepos);
 	xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
 	priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift)+1; // cframe will be the next frame we decode

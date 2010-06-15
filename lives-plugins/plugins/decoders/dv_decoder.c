@@ -1,5 +1,5 @@
 // LiVES - dv decoder plugin
-// (c) G. Finch 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2008 - 2010 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -8,7 +8,6 @@
 #include "decplugin.h"
 
 // palettes, etc.
-#include "../../../libweed/weed.h"
 #include "../../../libweed/weed-effects.h"
 
 
@@ -27,6 +26,8 @@
 const char *plugin_version="LiVES dv decoder version 1.2";
 
 static FILE *nulfile;
+
+extern void dv_parse_audio_header(dv_decoder_t *, uint8_t *);
 
 static void dv_dec_set_header(lives_clip_data_t *cdata, uint8_t *data) {
   lives_dv_priv_t *priv=cdata->priv;

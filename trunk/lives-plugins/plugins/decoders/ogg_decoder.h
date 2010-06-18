@@ -86,6 +86,8 @@ typedef struct lives_stream_s {
 
   void *ext_data;
   size_t ext_size;
+
+  int64_t bytes_to_read;
 } lives_in_stream;
 
 

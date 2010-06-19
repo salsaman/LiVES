@@ -61,6 +61,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <assert.h>
 
 // don't change this unless the backend is changed as well
 // i.e. $GUI_BOOTSTRAP_FILE in smogrify

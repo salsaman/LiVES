@@ -2797,9 +2797,14 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
   case CLIP_DETAILS_FILENAME:
     key=g_strdup("filename");
     break;
+  case CLIP_DETAILS_INTERLACE:
+    key=g_strdup("interlace");
+    break;
   default:
     g_printerr("invalid detail %d requested from file %s",which,lives_header);
     if (lives_header!=NULL) g_free(lives_header);
+    if (mainw->debug)
+      assert(FALSE);
     return FALSE;
   }
 
@@ -2879,7 +2884,6 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     break;
   case CLIP_DETAILS_INTERLACE:
     *(gint *)retval=atoi(val);
-    if (retval==0) *(gint *)retval=LIVES_INTERLACE_NONE;
     break;
   case CLIP_DETAILS_FPS:
     *(gdouble *)retval=strtod(val,NULL);
@@ -3023,6 +3027,8 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
   default:
     g_printerr("invalid detail %d set in file %s",which,lives_header);
     g_free(lives_header);
+    if (mainw->debug)
+      assert(FALSE);
     return;
   }
 

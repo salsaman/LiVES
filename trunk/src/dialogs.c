@@ -394,6 +394,7 @@ static void disp_fraction(gint done, gint start, gint end, gdouble timesofar, pr
   gdouble fraction_done=(done-start)/(end-start+1.);
 
   if (fraction_done>1.) fraction_done=1.;
+  if (fraction_done<0.) fraction_done=0.;
 
   if (done>disp_frames_done) gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(proc->progressbar),fraction_done);
 

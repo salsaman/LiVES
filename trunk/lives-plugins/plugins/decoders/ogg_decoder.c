@@ -56,7 +56,6 @@
 #endif
 
 #ifdef HAVE_DIRAC
-#define  SCHRO_ENABLE_UNSTABLE_API
 #include <schroedinger/schro.h>
 #endif
 
@@ -295,17 +294,23 @@ static index_entry *get_bounds_for (lives_clip_data_t *cdata, int64_t tframe, in
       continue;
     }
 
-    gpos=idx->value;
-    kframe = gpos >> priv->vstream->stpriv->keyframe_granule_shift;
+    if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+      gpos=idx->value;
+      kframe = gpos >> priv->vstream->stpriv->keyframe_granule_shift;
+      frame = kframe + gpos-(kframe<<priv->vstream->stpriv->keyframe_granule_shift);
+    }
+    else {
+      kframe=frame=idx->value;
+    }
 
     //fprintf(stderr,"check %lld against %lld\n",tframe,kframe);
 
     if (kframe>tframe) {
-      if (ppos_upper!=NULL) *ppos_upper=idx->pagepos+BYTES_TO_READ;
+      if (ppos_upper!=NULL) *ppos_upper=idx->pagepos;
       return NULL;
     }
 
-    frame = kframe + gpos-(kframe<<priv->vstream->stpriv->keyframe_granule_shift);
+
     //fprintf(stderr,"2check against %lld\n",frame);
     if (frame<tframe) {
       if (ppos_lower!=NULL) *ppos_lower=idx->pagepos;
@@ -1160,7 +1165,7 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
       }
 
       // no sync frame here - update this entry and jump to pagepos_end
-      if (pages_checked>=2) idx->pagepos=pos1;
+      if (pages_checked>=2&&idx->pagepos<pos1) idx->pagepos=pos1;
       
       pos1=priv->input_position=idx->pagepos_end+1;
       
@@ -1675,6 +1680,16 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
   // we find the highest sync frame <= target frame, and return the sync_frame number
   // can_exact should be set to TRUE
 
+
+
+  // the method used is bi-sections
+  // first we divided the region into two, then we check the first keyframe of the upper part
+  // if this is == target we return
+  // if > target, or we find no keyframes, we go to the lower segment
+  // this is then repeated until the segment size is too small to hold a packet, at which point we return our best
+  // match
+
+
   int64_t start_pos,end_pos,pagepos=-1;
   int64_t frame,kframe,segsize;
 
@@ -1712,7 +1727,7 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
 
   sel_upper=TRUE;
 
-  while (1) {
+  do {
     // see if the frame lies in current segment
 
     if (start_pos<ppos_lower) start_pos=ppos_lower;
@@ -1724,15 +1739,10 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
 	priv->cpagepos=start_pos;
 	return frame_to_gpos(cdata,priv->kframe_offset,1);
       }
-      // should never reach here
-      fprintf(stderr,"oops\n");
-      return -1;
+      break;
     }
 
-
-
     fprintf(stderr,"check seg %ld to %ld for %ld\n",start_pos,end_pos,tframe);
-
 
     if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) pagepos=find_first_page(cdata,start_pos,end_pos,priv->vstream->stream_id,&kframe,&frame);
 #ifdef HAVE_DIRAC
@@ -1767,33 +1777,31 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
       }
       else start_pos=pagepos;
 
-      segsize=(end_pos-start_pos+1)>>1;
-
-      if (sel_upper) start_pos+=segsize;
-      else {
-	end_pos-=segsize;
-	segsize=(segsize+1)>>1;
-	start_pos+=segsize;
-      }
-
-      if (segsize>1) continue;
     }
 
-    // no keyframe found
-
-    if (best_kframe>-1) {
-      fprintf(stderr,"seek2 got keyframe %ld %ld\n",best_kframe,best_frame);
-      if (!can_exact) seek_byte(cdata,best_pagepos);
-      priv->cpagepos=best_pagepos;
-      return frame_to_gpos(cdata,best_kframe,best_frame);
+    // no keyframe found, check lower segment
+    else {
+      fprintf(stderr,"no keyframe, checking lower segment\n");
+      end_pos-=segsize;
+      start_pos-=segsize;
     }
 
-    // should never reach here
-    fprintf(stderr,"not found\n");
-    return -1;
+    segsize=(end_pos-start_pos+1)>>1;
+    start_pos+=segsize;
+  } while (segsize>64);
+
+  if (best_kframe>-1) {
+    fprintf(stderr,"seek2 got keyframe %ld %ld\n",best_kframe,best_frame);
+    if (!can_exact) seek_byte(cdata,best_pagepos);
+    priv->cpagepos=best_pagepos;
+    return frame_to_gpos(cdata,best_kframe,best_frame);
   }
-
+  
+  // should never reach here
+  fprintf(stderr,"not found\n");
+  return -1;
 }
+
 
 
 
@@ -2398,30 +2406,34 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
     }
 #endif
 
+
+
     if (tframe<=priv->last_frame||tframe-priv->last_frame>max_frame_diff) {
-      // need to find a new kframe
-      if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
-	fidx=get_bounds_for((lives_clip_data_t *)cdata,tframe,&ppos_lower,&ppos_upper);
-      }
+
       // this is a big kludge, because really for dirac we should always seek from the first frame
       // because frames can refer to any earlier frame
-      else tframe-=2 ;
+      if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+	tframe-=2 ;
+      }
 
+      // need to find a new kframe
+      fidx=get_bounds_for((lives_clip_data_t *)cdata,tframe,&ppos_lower,&ppos_upper);
       if (fidx==NULL) {
 	int64_t last_ret_frame=priv->last_frame;
 	granulepos=ogg_seek((lives_clip_data_t *)cdata,tframe,ppos_lower,ppos_upper,TRUE);
 	priv->last_frame=last_ret_frame;
 	if (granulepos==-1) return FALSE; // should never happen...
-	if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
-	  fidx=theora_index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->cpagepos);
-	}
       }
       else granulepos=fidx->value;
 
       if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
 	kframe = granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
       }
-      else kframe=granulepos;
+      else {
+	kframe=granulepos;
+	// part 2 of the dirac kludge
+	tframe+=2;
+      }
 
       if (kframe<priv->kframe_offset) kframe=priv->kframe_offset;
     }
@@ -2439,7 +2451,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
       //printf("CONTINUING %ld %ld %ld %ld\n",tframe,priv->last_frame,kframe,priv->last_kframe);
     }
     else {
-      if (fidx==NULL||fidx->prev==NULL||priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+      if (fidx==NULL||(fidx->prev==NULL&&priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA)) {
 	if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
 	  get_bounds_for((lives_clip_data_t *)cdata,kframe-1,&ppos_lower,&ppos_upper);
 	  granulepos=ogg_seek((lives_clip_data_t *)cdata,kframe-1,ppos_lower,ppos_upper,FALSE);
@@ -2449,7 +2461,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 	  priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
 	}
 	else {
-	  seek_byte((lives_clip_data_t *)cdata,priv->cpagepos);
+	  priv->input_position=priv->cpagepos;
 	  priv->cframe=kframe;
 	  printf("SEEK TO %ld\n",priv->cpagepos);
 	}
@@ -2463,21 +2475,22 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 	  }
 	}
 
-	if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
-	  // part 2 of the dirac kludge
-	  tframe+=2;
-	}
-
 	last_cframe=priv->cframe;
 	priv->skip=tframe-priv->cframe;
       }
       else {
-	// same keyframe as last time, but we are reversing
-	priv->input_position=fidx->prev->pagepos;
-	granulepos=fidx->prev->value;
-	//fprintf(stderr,"starting from gpos %ld\n",granulepos);
-	xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
-	priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
+	// same keyframe as last time
+	if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+	  priv->input_position=fidx->prev->pagepos;
+	  granulepos=fidx->prev->value;
+	  //fprintf(stderr,"starting from gpos %ld\n",granulepos);
+	  xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+	  priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
+	}
+	else {
+	  priv->input_position=fidx->pagepos;
+	  priv->cframe=kframe=fidx->value;
+	}
 	priv->skip=tframe-priv->cframe;
       }
       

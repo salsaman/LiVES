@@ -102,9 +102,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_set_string_value(gui,"rfx_delim","|");
     weed_set_string_array(gui,"rfx_strings",3,rfx_strings);
 
-    gui=weed_parameter_template_get_gui(in_params[0]);
-    weed_set_int_value(gui,"copy_value_to",1);
-
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);

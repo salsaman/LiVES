@@ -6,6 +6,7 @@
 // see file COPYING or www.gnu.org for details
 
 #include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
 #include "../../libweed/weed-plugin.h"
 
@@ -100,6 +101,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_set_string_value(gui,"layout_scheme","RFX");
     weed_set_string_value(gui,"rfx_delim","|");
     weed_set_string_array(gui,"rfx_strings",3,rfx_strings);
+
+    gui=weed_parameter_template_get_gui(in_params[0]);
+    weed_set_int_value(gui,"copy_value_to",1);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

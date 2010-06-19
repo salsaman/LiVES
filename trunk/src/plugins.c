@@ -8,6 +8,7 @@
 #include <errno.h>
 
 #include "../libweed/weed.h"
+#include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-utils.h"
 #include "../libweed/weed-host.h"
@@ -1834,7 +1835,14 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
   gboolean OK=TRUE;
   const gchar *err;
 
+  if (!strcmp(plname,"ogg_theora_decoder")) {
+    // no longer compatible
+    return NULL;
+  }
+
   dplug=(lives_decoder_sys_t *)g_malloc(sizeof(lives_decoder_sys_t));
+
+  dplug->name=NULL;
 
   dplug->handle=dlopen(plugname,RTLD_LAZY);
   g_free (plugname);
@@ -2436,7 +2444,11 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 
     rpar[i].flags=flags;
 
+    gui=NULL;
+
     if (weed_plant_has_leaf(wtmpl,"gui")) gui=weed_get_plantptr_value(wtmpl,"gui",&error);
+
+    g_print("gui is %p\n",gui);
 
     rpar[i].group=0;
 
@@ -2471,12 +2483,15 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
     param_hint=weed_get_int_value(wtmpl,"hint",&error);
 
     if (gui!=NULL) {
+      g_print("2gui is %p\n",gui);
       if (weed_plant_has_leaf(gui,"copy_value_to")) {
 	int copyto=weed_get_int_value(gui,"copy_value_to",&error);
 	int param_hint2,flags2=0;
 	weed_plant_t *wtmpl2;
+	g_print("3gui is %d\n",copyto);
 	if (copyto==i||copyto<0) copyto=-1;
 	if (copyto>-1) {
+	  g_print("4gui is %d\n",copyto);
 	  wtmpl2=weed_get_plantptr_value(wpars[copyto],"template",&error);
 	  if (weed_plant_has_leaf(wtmpl2,"flags")) flags2=weed_get_int_value(wtmpl2,"flags",&error);
 	  param_hint2=weed_get_int_value(wtmpl2,"hint",&error);

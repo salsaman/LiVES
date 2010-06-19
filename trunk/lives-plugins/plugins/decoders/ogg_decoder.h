@@ -123,6 +123,7 @@ typedef struct {
 #ifdef HAVE_DIRAC
   SchroDecoder *schrodec;
   SchroFrame *schroframe;
+  int64_t schrotframe;
 #endif
 
   int64_t data_start;

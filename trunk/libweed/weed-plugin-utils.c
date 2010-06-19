@@ -51,6 +51,7 @@
 #include <stdio.h>
 
 #include "weed.h"
+#include "weed-palettes.h"
 #include "weed-effects.h"
 
 extern weed_leaf_get_f weed_leaf_get;

@@ -11,7 +11,11 @@ Fix startup mplayer png/alpha test.
 Fix end image size problem (regression).
 Updates to decoder plugins (make threadsafe).
 Add plugin decoder support for ogg/dirac files (in progress).
+Faster seeking in ogg/theora files.
 Apply theming to the Prefences dialog (A. Kolga)
+Move weed palette definitions into weed-palettes.c
+Code cleanup - use enums instead of #defines where possible.
+
 
 
 

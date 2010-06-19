@@ -4,8 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-#include "../libweed/weed.h"
-#include "../libweed/weed-effects.h"
+#include "../libweed/weed-palettes.h"
+
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -8045,7 +8045,7 @@ gboolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkM
     mainw->deltaticks=0;
     if (!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
       weed_plant_t *frame_layer=mainw->frame_layer;
-      load_frame_image (cfile->frameno+(mainw->loop&&mainw->playing_sel?cfile->start-1:mainw->play_start),cfile->last_frameno);
+      load_frame_image (cfile->frameno,cfile->last_frameno);
       mainw->frame_layer=frame_layer;
     }
   }

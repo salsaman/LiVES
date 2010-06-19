@@ -7,8 +7,7 @@
 // functions dealing with getting/setting user preferences
 // TODO - use atom type system for prefs
 
-#include "../libweed/weed.h"
-#include "../libweed/weed-effects.h"
+#include "../libweed/weed-palettes.h"
 
 #include "main.h"
 #include "paramwindow.h"

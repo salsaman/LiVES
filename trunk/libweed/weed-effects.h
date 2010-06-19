@@ -51,6 +51,10 @@
 #include <weed/weed.h>
 #endif
 
+#ifndef __WEED_PALETTES_H__
+#include <weed/weed-palettes.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -70,48 +74,6 @@ extern "C"
 #define WEED_PLANT_PARAMETER 7
 #define WEED_PLANT_GUI 8
 #define WEED_PLANT_HOST_INFO 255
-
-/* Palette types */
-/* RGB palettes */
-#define WEED_PALETTE_END 0
-#define WEED_PALETTE_RGB888 1
-#define WEED_PALETTE_RGB24 1
-#define WEED_PALETTE_BGR888 2
-#define WEED_PALETTE_BGR24 2
-#define WEED_PALETTE_RGBA8888 3
-#define WEED_PALETTE_RGBA32 3
-#define WEED_PALETTE_ARGB8888 4
-#define WEED_PALETTE_ARGB32 4
-#define WEED_PALETTE_RGBFLOAT 5
-#define WEED_PALETTE_RGBAFLOAT  6
-#define WEED_PALETTE_BGRA8888 7
-#define WEED_PALETTE_BGRA32 7
-
-/* YUV palettes */
-#define WEED_PALETTE_YUV422P 513
-#define WEED_PALETTE_YV16 513
-#define WEED_PALETTE_YUV420P 514
-#define WEED_PALETTE_YV12 514
-#define WEED_PALETTE_YVU420P 515
-#define WEED_PALETTE_I420 515
-#define WEED_PALETTE_IYUV 515
-#define WEED_PALETTE_YUV444P 516
-#define WEED_PALETTE_YUVA4444P 517
-#define WEED_PALETTE_YUYV8888 518
-#define WEED_PALETTE_YUYV 518
-#define WEED_PALETTE_YUY2 518
-#define WEED_PALETTE_UYVY8888 519
-#define WEED_PALETTE_UYVY 519
-#define WEED_PALETTE_YUV411 520
-#define WEED_PALETTE_IYU1 520
-#define WEED_PALETTE_YUV888 521
-#define WEED_PALETTE_IYU2 521
-#define WEED_PALETTE_YUVA8888 522
-
-/* Alpha palettes */
-#define WEED_PALETTE_A1 1025
-#define WEED_PALETTE_A8 1026
-#define WEED_PALETTE_AFLOAT 1027
 
 /* Parameter hints */
 #define WEED_HINT_UNSPECIFIED     0
@@ -155,23 +117,6 @@ extern "C"
 
 /* API version 110 */
 #define WEED_PARAMETER_ELEMENT_PER_CHANNEL    (1<<2)
-
-/* YUV sampling types */
-#define WEED_YUV_SAMPLING_DEFAULT   0
-#define WEED_YUV_SAMPLING_MPEG  0
-#define WEED_YUV_SAMPLING_JPEG   1
-#define WEED_YUV_SAMPLING_DVPAL  2
-#define WEED_YUV_SAMPLING_DVNTSC  3
-
-/* YUV clamping types */
-#define WEED_YUV_CLAMPING_CLAMPED 0
-#define WEED_YUV_CLAMPING_UNCLAMPED 1
-
-/* YUV subspace types */
-#define WEED_YUV_SUBSPACE_YUV 0
-#define WEED_YUV_SUBSPACE_YCBCR 1
-#define WEED_YUV_SUBSPACE_BT709 2
-
 
 /* Plugin errors */
 #define WEED_ERROR_TOO_MANY_INSTANCES 6

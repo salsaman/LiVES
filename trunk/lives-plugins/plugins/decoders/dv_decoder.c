@@ -7,9 +7,6 @@
 
 #include "decplugin.h"
 
-// palettes, etc.
-#include "../../../libweed/weed-effects.h"
-
 
 ///////////////////////////////////////////////////////
 #include <stdio.h>
@@ -156,6 +153,8 @@ static lives_clip_data_t *init_cdata (void) {
   
   priv->audio=NULL;
   priv->audio_fd=-1;
+
+  cdata->seek_flag=LIVES_SEEK_FAST;
   
   return cdata;
 }

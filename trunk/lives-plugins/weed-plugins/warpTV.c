@@ -19,6 +19,7 @@
 
 
 #include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
 #include "../../libweed/weed-plugin.h"
 

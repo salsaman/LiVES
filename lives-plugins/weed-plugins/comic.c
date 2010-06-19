@@ -8,6 +8,7 @@
 // thanks to Chris Yates for the idea
 
 #include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
 #include "../../libweed/weed-plugin.h"
 

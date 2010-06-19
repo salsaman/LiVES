@@ -35,7 +35,8 @@ libweed_utils_la_SOURCES = weed-utils.c
 
 libweed_plugin_utils_la_SOURCES = weed-plugin-utils.c
 
-libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-effects.h weed-events.h weed-plugin-utils.h
+libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
+	weed-plugin-utils.h
 
 libweedincludedir = $(includedir)/weed
 
@@ -56,7 +57,6 @@ libweed_utils_la_LDFLAGS = -O3 $(extra_ldflags) -version-info $(WEED_SO_VERSION)
 libweed_plugin_utils_la_CFLAGS = -O3 $(extra_cflags)
 
 libweed_plugin_utils_la_LDFLAGS = -O3 $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static
-
 
 
 install-exec-hook:

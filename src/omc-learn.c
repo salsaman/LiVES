@@ -6,6 +6,7 @@
 
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
+#include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
 
 #include "support.h"

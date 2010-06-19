@@ -12,6 +12,7 @@
 // windows.
 
 #include "../libweed/weed.h"
+#include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-utils.h"
 #include "../libweed/weed-host.h"

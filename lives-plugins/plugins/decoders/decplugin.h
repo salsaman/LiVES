@@ -15,6 +15,9 @@ extern "C"
 #include <inttypes.h>
 #include <sys/types.h>
 
+// palettes, etc.
+#include "../../../libweed/weed-palettes.h"
+
 
 #ifdef IS_DARWIN
 #ifndef lseek64
@@ -26,13 +29,24 @@ extern "C"
 #endif
 
 
-typedef int boolean;
+  typedef int boolean;
+#undef TRUE
+#undef FALSE
 #define TRUE 1
 #define FALSE 0
 
-#define LIVES_INTERLACE_NONE 0
-#define LIVES_INTERLACE_BOTTOM_FIRST 1
-#define LIVES_INTERLACE_TOP_FIRST 2
+typedef enum {
+  LIVES_INTERLACE_NONE=0,
+  LIVES_INTERLACE_BOTTOM_FIRST=1,
+  LIVES_INTERLACE_TOP_FIRST=2
+} lives_interlace_t;
+
+  // good
+#define LIVES_SEEK_FAST (1<<0)
+
+  // not so good
+#define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
+#define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
 
 typedef struct {
@@ -48,7 +62,7 @@ typedef struct {
   int width;
   int height;
   int64_t nframes;
-  int interlace;
+  lives_interlace_t interlace;
 
   // x and y offsets of picture within frame
   // for primary pixel plane
@@ -78,6 +92,8 @@ typedef struct {
   boolean asigned;
   boolean ainterleaf;
   char audio_name[512]; // name of audio codec, e.g. "vorbis" or NULL
+
+  int seek_flag; // bitmap of seek properties
 
   void *priv; // private data for demuxer/decoder
 

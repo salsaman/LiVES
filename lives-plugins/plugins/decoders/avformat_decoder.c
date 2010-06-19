@@ -7,10 +7,6 @@
 
 #include "decplugin.h"
 
-// palettes, etc.
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-effects.h"
-
 
 ///////////////////////////////////////////////////////
 #include <stdio.h>
@@ -662,6 +658,9 @@ static lives_clip_data_t *init_cdata (void) {
 
   priv->astream=-1;
   priv->vstream=-1;
+
+  // cannot seek...
+  priv->seek_flag=0;
 
   return cdata;
 }

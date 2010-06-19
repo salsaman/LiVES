@@ -9,6 +9,7 @@
 // based on code * Copyright (C) 2002 W.P. van Paassen - peter@paassen.tmfweb.nl
 
 #include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
 #include "../../libweed/weed-plugin.h"
 

@@ -8,6 +8,7 @@
 // functions/structs for event_lists and events
 
 #include "../libweed/weed.h"
+#include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-host.h"
 

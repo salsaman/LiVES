@@ -12,8 +12,8 @@
 #include "support.h"
 
 #include "../libweed/weed.h"
-#include "../libweed/weed-effects.h"
 #include "../libweed/weed-host.h"
+#include "../libweed/weed-palettes.h"
 
 
 

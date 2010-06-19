@@ -3,11 +3,11 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#include "../../../../libweed/weed.h"
-#include "../../../../libweed/weed-effects.h"
-
 #include "videoplugin.h"
 
+#include <inttypes.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 //////////////////////////////////////
 

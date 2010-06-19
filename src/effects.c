@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #include "../libweed/weed.h"
+#include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-host.h"
 

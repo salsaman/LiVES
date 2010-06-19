@@ -15,6 +15,7 @@
 // see file COPYING or www.gnu.org for details
 
 #include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
 #include "../../libweed/weed-plugin.h"
 

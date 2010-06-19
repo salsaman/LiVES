@@ -13,7 +13,12 @@ extern "C"
 
 #include <inttypes.h>
 
+#include "../../../../libweed/weed-palettes.h"
+
 typedef int boolean;
+#undef TRUE
+#undef FALSE
+
 #define TRUE 1
 #define FALSE 0
 

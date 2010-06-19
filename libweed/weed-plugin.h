@@ -42,7 +42,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2007 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2010 */
 
 #ifndef __WEED_PLUGIN_H__
 #define __WEED_PLUGIN_H__

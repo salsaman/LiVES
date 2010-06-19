@@ -158,10 +158,20 @@ _encoder;
 
 
 
+typedef enum {
+  LIVES_INTERLACE_NONE=0,
+  LIVES_INTERLACE_BOTTOM_FIRST=1,
+  LIVES_INTERLACE_TOP_FIRST=2
+} lives_interlace_t;
 
-#define LIVES_INTERLACE_NONE 0
-#define LIVES_INTERLACE_BOTTOM_FIRST 1
-#define LIVES_INTERLACE_TOP_FIRST 2
+// seek_flags is a bitmap
+
+  // good
+#define LIVES_SEEK_FAST (1<<0)
+
+  // not so good
+#define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
+#define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
 
 typedef struct {
@@ -177,7 +187,7 @@ typedef struct {
   gint width;
   gint height;
   gint64 nframes;
-  int interlace;
+  lives_interlace_t interlace;
 
   // x and y offsets of picture within frame
   // for primary pixel plane
@@ -207,6 +217,8 @@ typedef struct {
   gboolean asigned;
   gboolean ainterleaf;
   gchar audio_name[512]; // name of audio codec, e.g. "vorbis" or NULL
+
+  int seek_flag;
 
   void *priv; // private data for demuxer/decoder - host should not touch this
 

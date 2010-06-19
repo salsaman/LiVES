@@ -39,11 +39,9 @@ EXTRA_DIST = \
 	menu-entries/LiVES.desktop \
 	menu-entries/lives.xpm \
 	$(doc_DATA)
-#	$(giw_DATA)
+
 
 installdirs: 
-	rm -rf $(datadir)/$(PACKAGE)/*
-	rm -rf $(libdir)/$(PACKAGE)/*
 	mkinstalldirs
 	$(srcdir)/mkinstalldirs \
 	mkdir -p $(DESTDIR)$(bindir) \
@@ -52,6 +50,8 @@ installdirs:
 	mkdir -p $(DESTDIR)$(sharedir)/applications/ \
 	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/ \
 	mkdir -p $(DESTDIR)$(sharedir)/resources/
+
+
 
 install-exec-local:
 	rm -rf $(DESTDIR)$(bindir)/lives

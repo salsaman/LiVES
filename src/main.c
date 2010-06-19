@@ -59,7 +59,6 @@ static gboolean upgrade_error=FALSE;
 static gchar start_file[256];
 static gdouble start=0.;
 static gint end=0;
-static gboolean debug_crashes=FALSE;
 
 static gboolean theme_expected;
 
@@ -94,14 +93,14 @@ void catch_sigint(int signum) {
 	g_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version (" LiVES_VERSION ")\n"));
 
 	if (capable->has_gdb) {
-	  if (debug_crashes) g_printerr("%s",_("and any information shown below:\n\n"));
+	  if (mainw->debug) g_printerr("%s",_("and any information shown below:\n\n"));
 	  else g_printerr("%s","Please try running LiVES with the -debug option to collect more information.\n\n");
 	}
 	else {
 	  g_printerr("%s",_("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
 	}
       
-	if (debug_crashes) {
+	if (mainw->debug) {
 	  g_on_error_stack_trace(capable->myname_full);
 	}
       }
@@ -751,6 +750,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->recoverable_layout=FALSE;
 
+  mainw->debug=FALSE;
   mainw->soft_debug=FALSE;
 
   mainw->iochan=NULL;
@@ -1908,7 +1908,7 @@ int main (int argc, char *argv[]) {
   if ((myname=strrchr(capable->myname_full,'/'))==NULL) capable->myname=g_strdup(capable->myname_full);
   else capable->myname=g_strdup(++myname);
 
-   g_set_application_name("LiVES");
+  g_set_application_name("LiVES");
 
   // format is:
   // lives [opts] [filename [start_time] [frames]]
@@ -1962,7 +1962,7 @@ int main (int argc, char *argv[]) {
 	}
 	if (!strcmp(charopt,"debug")) {
 	  // debug crashes
-	  debug_crashes=TRUE;
+	  mainw->debug=TRUE;
 	  continue;
 	}
 	if (!strcmp(charopt,"recover")) {

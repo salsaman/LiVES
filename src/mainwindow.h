@@ -902,8 +902,8 @@ typedef struct {
   gboolean decoders_loaded;
   GList *decoder_list;
 
-
   gboolean go_away;
+  gboolean debug; // debug crashes and asserts
 
 } mainwindow;
 

@@ -4484,7 +4484,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
 
 void weed_set_blend_factor(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
-  weed_plant_t *inst,*in_param,*in_param2=NULL,*paramtmpl;
+  weed_plant_t *inst,*in_param,*in_param2=NULL,*paramtmpl,*paramtmpl2=NULL;
   int idx=key_to_instance[hotkey][key_modes[hotkey]],error;
   int vali,mini,maxi;
   double vald,mind,maxd;
@@ -4493,23 +4493,22 @@ void weed_set_blend_factor(int hotkey) {
   int copyto=-1;
   weed_plant_t *gui=NULL;
   weed_plant_t **in_params;
-  int pnum=0;
+  int pnum;
   gboolean copy_ok=FALSE;
   weed_timecode_t tc=0;
   gint inc_count;
-  int i;
 
   if (hotkey<0) return;
   idx=key_to_instance[hotkey][key_modes[hotkey]];
 
   if (idx==-1||(inst=weed_instances[idx])==NULL) return;
 
-  i=get_nth_simple_param(inst,1);
+  pnum=get_nth_simple_param(inst,0);
 
-  if (i==-1) return;
+  if (pnum==-1) return;
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
-  in_param=in_params[i];
+  in_param=in_params[pnum];
 
   paramtmpl=weed_get_plantptr_value(in_param,"template",&error);
   param_hint=weed_get_int_value(paramtmpl,"hint",&error);
@@ -4533,7 +4532,10 @@ void weed_set_blend_factor(int hotkey) {
 	  }}}}}
 
   if (!copy_ok) copyto=-1;
-  else (in_param2=in_params[copyto]);
+  else {
+    in_param2=in_params[copyto];
+    paramtmpl2=weed_get_plantptr_value(in_param2,"template",&error);
+  }
 
   weed_free(in_params);
   inc_count=enabled_in_channels(inst,FALSE);
@@ -4558,9 +4560,26 @@ void weed_set_blend_factor(int hotkey) {
     list=g_list_append(list,g_strdup_printf("%d",vali));
     list=g_list_append(list,g_strdup_printf("%d",mini));
     list=g_list_append(list,g_strdup_printf("%d",maxi));
-    update_pwindow(hotkey,0,list);
+    update_pwindow(hotkey,pnum,list);
     g_list_free_strings(list);
     g_list_free(list);
+
+    if (copyto>-1) {
+      vali=weed_get_int_value(in_param2,"value",&error);
+      mini=weed_get_int_value(paramtmpl2,"min",&error);
+      maxi=weed_get_int_value(paramtmpl2,"max",&error);
+      
+      weed_set_int_value (in_param2,"value",(int)((gdouble)mini+(mainw->blend_factor/KEYSCALE*(gdouble)(maxi-mini))+.5));
+      vali=weed_get_int_value (in_param2,"value",&error);
+      
+      list=g_list_append(list,g_strdup_printf("%d",vali));
+      list=g_list_append(list,g_strdup_printf("%d",mini));
+      list=g_list_append(list,g_strdup_printf("%d",maxi));
+      update_pwindow(hotkey,copyto,list);
+      g_list_free_strings(list);
+      g_list_free(list);
+    }
+
 
     break;
   case WEED_HINT_FLOAT:
@@ -4574,9 +4593,25 @@ void weed_set_blend_factor(int hotkey) {
     list=g_list_append(list,g_strdup_printf("%.4f",vald));
     list=g_list_append(list,g_strdup_printf("%.4f",mind));
     list=g_list_append(list,g_strdup_printf("%.4f",maxd));
-    update_pwindow(hotkey,0,list);
+    update_pwindow(hotkey,pnum,list);
     g_list_free_strings(list);
     g_list_free(list);
+
+    if (copyto>-1) {
+      vald=weed_get_double_value(in_param2,"value",&error);
+      mind=weed_get_double_value(paramtmpl2,"min",&error);
+      maxd=weed_get_double_value(paramtmpl2,"max",&error);
+      
+      weed_set_double_value (in_param2,"value",mind+(mainw->blend_factor/KEYSCALE*(maxd-mind)));
+      vald=weed_get_double_value (in_param2,"value",&error);
+      
+      list=g_list_append(list,g_strdup_printf("%.4f",vald));
+      list=g_list_append(list,g_strdup_printf("%.4f",mind));
+      list=g_list_append(list,g_strdup_printf("%.4f",maxd));
+      update_pwindow(hotkey,copyto,list);
+      g_list_free_strings(list);
+      g_list_free(list);
+    }
 
     break;
   case WEED_HINT_SWITCH:
@@ -4586,9 +4621,21 @@ void weed_set_blend_factor(int hotkey) {
     mainw->blend_factor=(gdouble)vali;
 
     list=g_list_append(list,g_strdup_printf("%d",vali));
-    update_pwindow(hotkey,0,list);
+    update_pwindow(hotkey,pnum,list);
     g_list_free_strings(list);
     g_list_free(list);
+
+    if (copyto>-1) {
+      vali=!!(int)mainw->blend_factor;
+      weed_set_boolean_value (in_param2,"value",vali);
+      vali=weed_get_boolean_value (in_param2,"value",&error);
+      mainw->blend_factor=(gdouble)vali;
+      
+      list=g_list_append(list,g_strdup_printf("%d",vali));
+      update_pwindow(hotkey,copyto,list);
+      g_list_free_strings(list);
+      g_list_free(list);
+    }
 
     break;
   }
@@ -4621,7 +4668,7 @@ gint weed_get_blend_factor(int hotkey) {
 
   if (idx==-1||(inst=weed_instances[idx])==NULL) return 0;
 
-  i=get_nth_simple_param(inst,1);
+  i=get_nth_simple_param(inst,0);
 
   if (i==-1) return 0;
 

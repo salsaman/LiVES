@@ -1871,7 +1871,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     mainw->cancelled=CANCEL_NONE;
     cfile->progress_start=1;
-    cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
+    cfile->progress_end=end-start+1;
     do_threaded_dialog(_("Pulling frames from clip"),TRUE);
     virtual_to_images(mainw->current_file,start,end,TRUE);
     end_threaded_dialog();

@@ -1737,6 +1737,8 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile) {
 
   sfile->ext_src=NULL;
 
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+
   if (!mainw->decoders_loaded) {
     mainw->decoder_list=load_decoders();
     mainw->decoders_loaded=TRUE;
@@ -1768,6 +1770,7 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile) {
     decoder_plugin=decoder_plugin->next;
   }
 
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
   if (sfile->ext_src!=NULL) {
     dplug=sfile->ext_src;

@@ -97,6 +97,17 @@ static int num_fonts_available = 0;
   va_end(vl);
 }*/
 
+int scribbler_generator_init(weed_plant_t *inst) {
+  int error;
+
+  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  weed_plant_t *pgui = weed_parameter_template_get_gui(in_params[P_BGALPHA]);
+  weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
+  weed_free(in_params);
+
+  return WEED_NO_ERROR;
+}
+
 static void getxypos(PangoLayout *layout, double *px, double *py, int weight, int height, int cent, double *pw, double *ph)
 {
   int w_, h_;
@@ -111,8 +122,6 @@ static void getxypos(PangoLayout *layout, double *px, double *py, int weight, in
     d = ((double)w_)/PANGO_SCALE;
     d /= 2.0;
     d = (weight>>1) - d;
-//    if(d < 0)
-//      d = 0.0;
   }
   else
     d = 0.0;
@@ -120,9 +129,6 @@ static void getxypos(PangoLayout *layout, double *px, double *py, int weight, in
     *px = d;
   
   d = ((double)h_)/PANGO_SCALE;
-//  if(d>height)
-//    d = 0.0;
-//  else
   d = height - d;
   if(py)
     *py = d;
@@ -238,6 +244,17 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
           pango_layout_set_font_description(layout, font);
           pango_layout_set_text(layout, text, -1);
           getxypos(layout, &x_pos, &y_pos, width, height, cent, &dwidth, &dheight);
+
+          if(!rise)
+            y_pos = y_text = height*top;
+
+          if(!in_channel) {
+            x_pos = y_pos = 0;
+            dwidth = width;
+            dheight = height;
+            b_alpha = 1.0;
+          }
+
           x_text = x_pos;
           y_text = y_pos;
           switch(cent) {
@@ -247,11 +264,6 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
           case 0:
           default:
                  pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
-          }
-
-          if(!rise) {
-          ////  y_text -= (dheight*top);
-            y_pos = y_text = height*top;
           }
 
           cairo_move_to(cairo, x_text, y_text);
@@ -366,7 +378,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     in_params[P_BACKGROUND]=weed_colRGBi_init("background","_Background",0,0,0);
     in_params[P_FGALPHA]=weed_float_init("fr_alpha","_Alpha _Foreground",1.0,0.0,1.0);
     in_params[P_BGALPHA]=weed_float_init("bg_alpha","_Alpha _Background",1.0,0.0,1.0);
-    in_params[P_FONTSIZE]=weed_float_init("fontsize","_Font Size",10.0,10.0,128.0);
+    in_params[P_FONTSIZE]=weed_float_init("fontsize","_Font Size",20.0,10.0,128.0);
     in_params[P_CENTER]=weed_switch_init("center","_Center text",1);
     in_params[P_RISE]=weed_switch_init("rising","_Rising text",1);
     in_params[P_TOP]=weed_float_init("top","_Top",0.0,0.0,1.0);
@@ -382,7 +394,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("scribbler_generator","Aleksej Penkov",1,0,NULL,&scribbler_process,NULL,NULL,weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
+    filter_class=weed_filter_class_init("scribbler_generator","Aleksej Penkov",1,0,&scribbler_generator_init,&scribbler_process,NULL,NULL,weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
     
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

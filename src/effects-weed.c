@@ -4383,6 +4383,7 @@ int get_nth_simple_param(weed_plant_t *plant, int pnum) {
   int i,error,hint,flags,nparams;
   weed_plant_t **in_ptmpls;
   weed_plant_t *tparamtmpl;
+  weed_plant_t *gui;
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) plant=weed_get_plantptr_value(plant,"filter_class",&error);
 
@@ -4392,9 +4393,17 @@ int get_nth_simple_param(weed_plant_t *plant, int pnum) {
   nparams=weed_leaf_num_elements(plant,"in_parameter_templates");
 
   for (i=0;i<nparams;i++) {
+    gui=NULL;
     tparamtmpl=in_ptmpls[i];
+    if (weed_plant_has_leaf(tparamtmpl,"gui")) gui=weed_get_plantptr_value(tparamtmpl,"gui",&error);
+
+
     hint=weed_get_int_value(tparamtmpl,"hint",&error);
+
+    if (gui!=NULL&&hint==WEED_HINT_INTEGER&&weed_plant_has_leaf(gui,"choices")) continue;
+
     flags=weed_get_int_value(tparamtmpl,"flags",&error);
+
     if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(tparamtmpl,"default")==1&&
 	!is_hidden_param(plant,i)) {
       if (pnum==0) {

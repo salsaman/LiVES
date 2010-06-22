@@ -87,7 +87,6 @@ typedef struct lives_stream_s {
   void *ext_data;
   size_t ext_size;
 
-  int64_t bytes_to_read;
 } lives_in_stream;
 
 
@@ -97,6 +96,7 @@ typedef struct lives_stream_s {
 
 #define BYTES_TO_READ 8500
 
+#define DIRAC_EXTRA_FRAMES 2
 
 typedef struct _index_entry index_entry;
 

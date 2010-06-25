@@ -51,6 +51,7 @@ The OpenSound Control WWW page is
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void fatal_error(char *s, ...) {
     va_list ap;

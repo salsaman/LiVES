@@ -34,6 +34,8 @@ The OpenSound Control WWW page is
    by Matt Wright, 3/19/98
 */
 
+#include <inttypes.h>
+
 #include <libOSC/OSC-common.h>  /* For Boolean */
 
 #define STRING_ALIGN_PAD 4
@@ -86,12 +88,12 @@ int OSCPaddedStrlen(const char *s) {
 }
 
 char *OSCPaddedStrcpy(char *target, const char *source) {
-    while (*target++ = *source++) {
+  while ((*target++ = *source++)) {
 	/* do nothing */
     }
 
     /* That copied one null byte */
-    while (((int) target) % 4 != 0) {
+    while (((uint64_t) target) % 4 != 0) {
 	*target = '\0';
 	target++;
     }

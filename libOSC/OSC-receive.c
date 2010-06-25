@@ -54,6 +54,7 @@ The OpenSound Control WWW page is
 #include <libOSC/OSC-drop.h>
 #include <libOSC/OSC-dispatch.h>
 #include <libOSC/NetworkUDP.h>
+#include <libOSC/OSC-callbacklist.h>
 
 #ifdef IS_SOLARIS
 #include <sys/filio.h>
@@ -705,11 +706,10 @@ Boolean OSCSendInternalMessageWithRSVP(char *address, int arglen, void *args,
 
 Boolean OSCScheduleInternalMessages(OSCTimeTag when, int numMessages, 
 				    char **addresses, int *arglens, void **args) {
-    int i, bufSizeNeeded, paddedStrLen;
+  int i, bufSizeNeeded;
     OSCPacketBuffer p;
-    queuedData *qd, *scan;
+    queuedData *qd;
     char *bufPtr;
-    char *oldBufPtr;
     
 
     /* Figure out how big of a buffer we'll need to hold this huge bundle.

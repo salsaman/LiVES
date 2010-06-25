@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-06-19 16:40-0300\n"
+"POT-Creation-Date: 2010-06-21 03:04-0300\n"
 "PO-Revision-Date: 2010-05-01 06:47+0000\n"
 "Last-Translator: Liel Fridman <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "X-Launchpad-Export-Date: 2010-05-06 12:09+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
-#: src/main.c:77
+#: src/main.c:76
 msgid ""
 "Attention Translators !\n"
 "This message is intended for you, so please do not translate it.\n"
@@ -32,7 +32,7 @@ msgstr ""
 "All translators should read the LiVES translation notes at\n"
 "http://lives.sourceforge.net/TRANS-README.txt"
 
-#: src/main.c:93
+#: src/main.c:92
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
@@ -46,7 +46,7 @@ msgstr ""
 "group_id=64341&atid=507139\n"
 "תודה. ניתן לשחזר את הנתונים שאבדו בהפעלה מחדש של LiVES.\n"
 
-#: src/main.c:94
+#: src/main.c:93
 msgid ""
 "\n"
 "\n"
@@ -58,7 +58,7 @@ msgstr ""
 "בעת דיווח על קריסות, נא לכלול פרטים על מערכת ההפעלה שלך, ההפצה וגרסת ה־LiVES "
 "שבשימוש ("
 
-#: src/main.c:97
+#: src/main.c:96
 msgid ""
 "and any information shown below:\n"
 "\n"
@@ -66,7 +66,7 @@ msgstr ""
 "וכל מידע זמין מוצג כאן:\n"
 "\n"
 
-#: src/main.c:101
+#: src/main.c:100
 msgid ""
 "Please install gdb and then run LiVES with the -debug option to collect more "
 "information.\n"
@@ -76,35 +76,35 @@ msgstr ""
 "מידע.\n"
 "\n"
 
-#: src/main.c:110
+#: src/main.c:109
 msgid "Preserving set.\n"
 msgstr "מתבצע שימור האוסף.\n"
 
-#: src/main.c:437
+#: src/main.c:436
 msgid "Resizing"
 msgstr "שינוי גודל"
 
-#: src/main.c:444
+#: src/main.c:443
 msgid "_Resize All Frames"
 msgstr "_שינוי גודל כל השקופיות"
 
-#: src/main.c:703
+#: src/main.c:702
 msgid "Any"
 msgstr "הכל"
 
-#: src/main.c:704
+#: src/main.c:703
 msgid "None"
 msgstr "ללא"
 
-#: src/main.c:705
+#: src/main.c:704
 msgid "recommended"
 msgstr "מומלץ"
 
-#: src/main.c:706
+#: src/main.c:705
 msgid "disabled !"
 msgstr "נוטרל !"
 
-#: src/main.c:707
+#: src/main.c:706
 msgid "**The current layout**"
 msgstr "**הפריסה הנוכחית**"
 
@@ -502,7 +502,7 @@ msgstr ""
 "\n"
 "תודה.\n"
 
-#: src/main.c:1735 src/dialogs.c:1200
+#: src/main.c:1735 src/dialogs.c:1201
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -982,8 +982,8 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "באם מוגדר, תבוצע פעולת deinterlace על השקופיות בעת הייבוא."
 
 #: src/interface.c:188 src/callbacks.c:7504 src/gui.c:2876 src/gui.c:3414
-#: src/saveplay.c:1495 src/saveplay.c:2104 src/dialogs.c:787 src/dialogs.c:788
-#: src/dialogs.c:955 src/dialogs.c:956 src/framedraw.c:189
+#: src/saveplay.c:1495 src/saveplay.c:2104 src/dialogs.c:788 src/dialogs.c:789
+#: src/dialogs.c:956 src/dialogs.c:957 src/framedraw.c:189
 #: src/multitrack.c:6804
 msgid "Preview"
 msgstr "תצוגה מקדימה"
@@ -1000,7 +1000,7 @@ msgstr "יש ללחוץ כאן כדי _להציג כל קטע שמע שנבחר"
 msgid "Click here to _Preview the video"
 msgstr "יש ללחוץ כאן כדי _להציג את הוידאו"
 
-#: src/interface.c:294 src/dialogs.c:1689
+#: src/interface.c:294 src/dialogs.c:1690
 msgid "LiVES: - Processing..."
 msgstr "LiVES: - בתהליכי עיבוד..."
 
@@ -1019,7 +1019,7 @@ msgstr ""
 "נא לזכור לכבות את האפקטים (Ctrl-0) לאחר מכן !"
 
 #: src/interface.c:336 src/callbacks.c:7276 src/callbacks.c:7308
-#: src/dialogs.c:1722
+#: src/dialogs.c:1723
 msgid ""
 "\n"
 "Please Wait"
@@ -1031,7 +1031,7 @@ msgstr ""
 msgid "Show details"
 msgstr "הצגת פרטים"
 
-#: src/interface.c:402 src/dialogs.c:1740
+#: src/interface.c:402 src/dialogs.c:1741
 msgid "_Enough"
 msgstr "_מספיק"
 
@@ -3431,8 +3431,8 @@ msgstr "מספר השקופיות מקושר למצביע הנגינה"
 msgid "Rewind"
 msgstr "הרצה אחורנית"
 
-#: src/gui.c:3274 src/dialogs.c:363 src/dialogs.c:365 src/dialogs.c:1012
-#: src/dialogs.c:1014
+#: src/gui.c:3274 src/dialogs.c:363 src/dialogs.c:365 src/dialogs.c:1013
+#: src/dialogs.c:1015
 msgid "Play all"
 msgstr "נגן הכל"
 
@@ -4046,7 +4046,7 @@ msgstr ""
 "ל־LiVES לא הייתה אפשרות לבצע פעולה זו בגלל נפח זיכרון מוגבל.\n"
 "נא לנסות לסגור יישומים אחרים קודם.\n"
 
-#: src/dialogs.c:401
+#: src/dialogs.c:402
 #, c-format
 msgid ""
 "\n"
@@ -4055,7 +4055,7 @@ msgstr ""
 "\n"
 "%d%% הסתיים. הזמן שנותר: %u שניות\n"
 
-#: src/dialogs.c:664
+#: src/dialogs.c:665
 #, c-format
 msgid ""
 "\n"
@@ -4064,14 +4064,14 @@ msgstr ""
 "\n"
 "%d/%d שקופיות נפתחו. נותרו %u שניות.\n"
 
-#: src/dialogs.c:665
+#: src/dialogs.c:666
 #, c-format
 msgid ""
 "\n"
 "%d/%d frames opened.\n"
 msgstr ""
 
-#: src/dialogs.c:669
+#: src/dialogs.c:670
 #, c-format
 msgid ""
 "\n"
@@ -4080,7 +4080,7 @@ msgstr ""
 "\n"
 "נפתחו %d שקופיות.\n"
 
-#: src/dialogs.c:1128
+#: src/dialogs.c:1129
 #, c-format
 msgid ""
 "\n"
@@ -4089,7 +4089,7 @@ msgstr ""
 "\n"
 "הזמן שנותר: %d שניות"
 
-#: src/dialogs.c:1183
+#: src/dialogs.c:1184
 #, c-format
 msgid ""
 "\n"
@@ -4100,7 +4100,7 @@ msgstr ""
 "מצטערים, LiVES יכול לפתוח רק %d קבצים בכל פעם.\n"
 "נא לסגור קובץ ולנסות שוב."
 
-#: src/dialogs.c:1190
+#: src/dialogs.c:1191
 #, c-format
 msgid ""
 "LiVES was unable to write to its temporary directory.\n"
@@ -4119,7 +4119,7 @@ msgstr ""
 "\n"
 "נא לוודא שניתן לכתוב לתקייה זו."
 
-#: src/dialogs.c:1206
+#: src/dialogs.c:1207
 msgid ""
 "Audio resampling is required for this format.\n"
 "Please install 'sox'\n"
@@ -4129,7 +4129,7 @@ msgstr ""
 "נא להתקין את החבילה 'sox'\n"
 "או לשנות מקודד בכלים | העדפות | קידוד\n"
 
-#: src/dialogs.c:1211
+#: src/dialogs.c:1212
 msgid ""
 "\n"
 "\n"
@@ -4141,7 +4141,7 @@ msgstr ""
 "המקודד אינו יכול להשתמש במקודד השמע שסופק.\n"
 "נא לקבוע את מקודד השמע בכלים | העדפות | קידוד\n"
 
-#: src/dialogs.c:1216
+#: src/dialogs.c:1217
 msgid ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
@@ -4149,7 +4149,7 @@ msgstr ""
 "פריסה זו כולל שקופיות מחוללות.\n"
 "לא ניתן לשמור אותה, עליך לאגדה לקטע קודם.\n"
 
-#: src/dialogs.c:1223 src/dialogs.c:1306
+#: src/dialogs.c:1224 src/dialogs.c:1307
 #, c-format
 msgid ""
 "\n"
@@ -4160,7 +4160,7 @@ msgstr ""
 "\n"
 "בגלל ההחמרה בסוג %s\n"
 
-#: src/dialogs.c:1240
+#: src/dialogs.c:1241
 msgid ""
 "LiVES recommends the following settings:\n"
 "\n"
@@ -4168,35 +4168,35 @@ msgstr ""
 "אנו ממליצים על ההגדרות הבאות:\n"
 "\n"
 
-#: src/dialogs.c:1244 src/dialogs.c:1341 src/resample.c:757
+#: src/dialogs.c:1245 src/dialogs.c:1342 src/resample.c:757
 msgid ", signed"
 msgstr ", רשום"
 
-#: src/dialogs.c:1245 src/dialogs.c:1342 src/resample.c:760
+#: src/dialogs.c:1246 src/dialogs.c:1343 src/resample.c:760
 msgid ", unsigned"
 msgstr ", לא רשום"
 
-#: src/dialogs.c:1250
+#: src/dialogs.c:1251
 #, c-format
 msgid "Use an audio rate of %d Hz%s\n"
 msgstr "שימוש בתדר שמע של %d הרץ%s\n"
 
-#: src/dialogs.c:1257
+#: src/dialogs.c:1258
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
 msgstr "קביעת קצב הוידאו ל־%.3f שקופיות לשנייה\n"
 
-#: src/dialogs.c:1261
+#: src/dialogs.c:1262
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
 msgstr "קביעת קצב הוידאו ל־%d:%d שקופיות לשנייה\n"
 
-#: src/dialogs.c:1266 src/dialogs.c:1369
+#: src/dialogs.c:1267 src/dialogs.c:1370
 #, c-format
 msgid "Set video size to %d x %d pixels\n"
 msgstr "קביעת גודל הוידאו ל־ %d על %d פיקסלים\n"
 
-#: src/dialogs.c:1274 src/dialogs.c:1368
+#: src/dialogs.c:1275 src/dialogs.c:1369
 msgid ""
 "\n"
 "You may wish to:\n"
@@ -4204,35 +4204,35 @@ msgstr ""
 "\n"
 "באפשרותך:\n"
 
-#: src/dialogs.c:1277 src/dialogs.c:1360
+#: src/dialogs.c:1278 src/dialogs.c:1361
 #, c-format
 msgid "resize video to %d x %d pixels\n"
 msgstr "לשנות את גודל הוידאו ל־%d על %d פיקסלים\n"
 
-#: src/dialogs.c:1282
+#: src/dialogs.c:1283
 msgid "disable audio, since the target encoder cannot encode audio\n"
 msgstr "לנטרל את השמע, בגלל שמקודד המטרה אינו מקודד שמע\n"
 
-#: src/dialogs.c:1338
+#: src/dialogs.c:1339
 msgid "LiVES must:\n"
 msgstr "LiVES חייב:\n"
 
-#: src/dialogs.c:1346
+#: src/dialogs.c:1347
 #, c-format
 msgid "resample audio to %d Hz%s\n"
 msgstr "דגימה מחדש של השמע לתדר של %d הרץ%s\n"
 
-#: src/dialogs.c:1352
+#: src/dialogs.c:1353
 #, c-format
 msgid "resample video to %.3f frames per second\n"
 msgstr "לדגום מחדש את הוידאו ל־%.3f שקופיות לשנייה\n"
 
-#: src/dialogs.c:1356
+#: src/dialogs.c:1357
 #, c-format
 msgid "resample video to %d:%d frames per second\n"
 msgstr "לדגום מחדש את הוידאו ל־%d:%d שקופיות לשנייה\n"
 
-#: src/dialogs.c:1375
+#: src/dialogs.c:1376
 msgid ""
 "\n"
 "You will be able to undo these changes afterwards.\n"
@@ -4246,7 +4246,7 @@ msgstr ""
 "יש ללחוץ על `אישור` להמשך, או על `ביטול` לביטול.\n"
 "\n"
 
-#: src/dialogs.c:1378
+#: src/dialogs.c:1379
 msgid ""
 "\n"
 "Changes applied to the selection will not be permanent.\n"
@@ -4256,7 +4256,7 @@ msgstr ""
 "השינויים שחלו לבחירה לא יהיו תמידיים.\n"
 "\n"
 
-#: src/dialogs.c:1398
+#: src/dialogs.c:1399
 msgid ""
 "\n"
 "\n"
@@ -4269,7 +4269,7 @@ msgstr ""
 "לא הייתה אפשרות להקליט את הביצועים. כרגע אין מספיק נפח זיכרון פנוי.\n"
 "באפשרותך לנסות להקליט רק עבור בחירת הקובץ."
 
-#: src/dialogs.c:1406
+#: src/dialogs.c:1407
 msgid ""
 "The playback speed (fps), or the audio rate\n"
 " of the clipboard does not match\n"
@@ -4287,7 +4287,7 @@ msgstr ""
 "\n"
 "יש ללחוץ על ביטול כדי לעצור את ההכנסה, או על אישור כדי להמשיך."
 
-#: src/dialogs.c:1414
+#: src/dialogs.c:1415
 msgid ""
 "When opening a yuvmpeg stream, you should first create a fifo file and then "
 "write yuv4mpeg frames to it.\n"
@@ -4300,11 +4300,11 @@ msgstr ""
 "LiVES יודיע לך כשהשקופיות יתקבלו.\n"
 "לחץ על אישור אם הבנת במה מדובר, אחרת, לחץ על ביטול."
 
-#: src/dialogs.c:1438
+#: src/dialogs.c:1439
 msgid "Show Keys"
 msgstr "הצגת מקשים"
 
-#: src/dialogs.c:1439
+#: src/dialogs.c:1440
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -4384,11 +4384,11 @@ msgstr ""
 "d                             גודל כפול\n"
 "g                             לולאת Ping Pong\n"
 
-#: src/dialogs.c:1447
+#: src/dialogs.c:1448
 msgid "Multitrack Keys"
 msgstr "מקשים רב־רצועתיים"
 
-#: src/dialogs.c:1448
+#: src/dialogs.c:1449
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "\n"
@@ -4410,11 +4410,11 @@ msgid ""
 "For other keys, see the menus.\n"
 msgstr ""
 
-#: src/dialogs.c:1464
+#: src/dialogs.c:1465
 msgid "Message History"
 msgstr "היסטורית הודעות"
 
-#: src/dialogs.c:1478
+#: src/dialogs.c:1479
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your ~/.lives file"
@@ -4422,7 +4422,7 @@ msgstr ""
 "לאחר התקנה\\שדרוג, ייתכן שיהיה צורך לשנות את הגדרת ה־<prefix_dir> בקובץ ~/."
 "lives"
 
-#: src/dialogs.c:1483
+#: src/dialogs.c:1484
 #, c-format
 msgid ""
 "\n"
@@ -4439,7 +4439,7 @@ msgstr ""
 "%s%s%s\n"
 "או לשנות את הערך של <lib_dir> ב־~/.lives\n"
 
-#: src/dialogs.c:1489
+#: src/dialogs.c:1490
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
@@ -4449,11 +4449,11 @@ msgstr ""
 "\n"
 "(שמות הקבצים חייבים להסתיים ב: .mp3, .ogg, .wav, .mod, .xm או .it)"
 
-#: src/dialogs.c:1490
+#: src/dialogs.c:1491
 msgid "failed (unknown type)\n"
 msgstr "נכשל (סוג לא ידוע)\n"
 
-#: src/dialogs.c:1495
+#: src/dialogs.c:1496
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
@@ -4465,7 +4465,7 @@ msgstr ""
 "יש ללחוץ על אישור כדי להסירם, או על ביטול כדי להשאירם.\n"
 "(הם לא יהיו שמישים ללא האוסף).\n"
 
-#: src/dialogs.c:1500
+#: src/dialogs.c:1501
 #, c-format
 msgid ""
 "\n"
@@ -4478,7 +4478,7 @@ msgstr ""
 "יש ללחוץ על אישור כדי להוסיף את הקטעים הנוכחיים והפריסות לאוסף הנוכחי. \n"
 "או לחילופין על ביטול כדי לבחור שם חדש.\n"
 
-#: src/dialogs.c:1507
+#: src/dialogs.c:1508
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -4490,7 +4490,7 @@ msgstr ""
 "האם ברצונך להמשיך בכל זאת ?\n"
 "."
 
-#: src/dialogs.c:1511
+#: src/dialogs.c:1512
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -4502,7 +4502,7 @@ msgstr ""
 "האם ברצונך להמשיך בכל זאת ?\n"
 "."
 
-#: src/dialogs.c:1515
+#: src/dialogs.c:1516
 #, c-format
 msgid ""
 "\n"
@@ -4521,7 +4521,7 @@ msgstr ""
 "וללחוץ על 'אישור' כדי לנסות שוב.\n"
 "לחילופין, ניתן ללחוץ על 'ביטול' כדי לדלג על טעינת קובץ זה.\n"
 
-#: src/dialogs.c:1522
+#: src/dialogs.c:1523
 #, c-format
 msgid ""
 "\n"
@@ -4536,7 +4536,7 @@ msgstr ""
 "%s\n"
 "לא ניתן לאתר את הקטע.\n"
 
-#: src/dialogs.c:1529
+#: src/dialogs.c:1530
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -4547,7 +4547,7 @@ msgid ""
 "and then adjust your jack options in Preferences | Jack Integration.\n"
 msgstr ""
 
-#: src/dialogs.c:1534
+#: src/dialogs.c:1535
 msgid ""
 "\n"
 "Unable to connect to jack transport. Please start jack before starting "
@@ -4557,7 +4557,7 @@ msgid ""
 "and then adjust your jack options in Preferences | Jack Integration.\n"
 msgstr ""
 
-#: src/dialogs.c:1539
+#: src/dialogs.c:1540
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
@@ -4565,7 +4565,7 @@ msgstr ""
 "\n"
 "לחילופין, באפשרותך להפעיל מחדש את LiVES ולבחור בנגן שמע אחר.\n"
 
-#: src/dialogs.c:1544
+#: src/dialogs.c:1545
 #, c-format
 msgid ""
 "\n"
@@ -4580,7 +4580,7 @@ msgstr ""
 "באפשרותך לשנות את הערך בהעדפות\\רב־רצועתי\n"
 "מומלץ לשנותו ללפחות %d מ\"ב"
 
-#: src/dialogs.c:1550
+#: src/dialogs.c:1551
 #, c-format
 msgid ""
 "\n"
@@ -4593,7 +4593,7 @@ msgstr ""
 "מומלץ למחוק אותן.\n"
 "יש ללחוץ על 'אישור' כדי למחוק אותם, או על 'ביטול' כדי להשאירם בכונן הקשיח.\n"
 
-#: src/dialogs.c:1557
+#: src/dialogs.c:1558
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -4605,7 +4605,7 @@ msgstr ""
 "ניתן לסגור יישומים אחדים, או להגדיל את מכסת הזיכרון\n"
 "בהעדפות\\רב־רצועתי\\זיכרון לביטול פעולות\n"
 
-#: src/dialogs.c:1561
+#: src/dialogs.c:1562
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -4617,7 +4617,7 @@ msgstr ""
 "ייתכן ויהיה צורך להגדיל את מכסת הזיכרון\n"
 "בהעדפות\\רב־רצועתי\\זיכרון לביטול פעולות\n"
 
-#: src/dialogs.c:1565
+#: src/dialogs.c:1566
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
@@ -4626,19 +4626,19 @@ msgstr ""
 "ל־LiVES לא הייתה אפשרות להשתמש במספיק זיכרון לחוצץ ביטול פעולות "
 "רב־רצועתיות.\n"
 
-#: src/dialogs.c:1567
+#: src/dialogs.c:1568
 msgid "or enter a smaller value.\n"
 msgstr "או להכניס ערך קטן יותר.\n"
 
-#: src/dialogs.c:1569
+#: src/dialogs.c:1570
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr "אפשר לנסות שוב מעורך הקטעים, או לנסות לסגור יישומים אחרים\n"
 
-#: src/dialogs.c:1570
+#: src/dialogs.c:1571
 msgid "Try closing some other applications\n"
 msgstr "ניתן לנסות לסגור יישומים אחרים\n"
 
-#: src/dialogs.c:1581
+#: src/dialogs.c:1582
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
@@ -4646,12 +4646,12 @@ msgstr ""
 "המצב הרב־רצועתי נקבע ל־0 ערוצי שמע, אבל פריסה זו מכילה שמע.\n"
 "באפשרותך לכוון את הגדרות השמע מתפריט הכלים.\n"
 
-#: src/dialogs.c:1585
+#: src/dialogs.c:1586
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr "הפריסה הנוכחית מכילה אודיו, לכן לא מומלץ שמספר הערוצים ייקבע לאפס.\n"
 
-#: src/dialogs.c:1589
+#: src/dialogs.c:1590
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
@@ -4661,7 +4661,7 @@ msgstr ""
 "נגן השמע \"jack\" או \"pulse audio\".\n"
 "באפשרותך לקבוע זאת בתפריט כלים|העדפות|נגינה."
 
-#: src/dialogs.c:1593
+#: src/dialogs.c:1594
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
@@ -4671,7 +4671,7 @@ msgstr ""
 "של LiVES).\n"
 "האם לנסות לתקן את עותק הכונן של הפריסה ?\n"
 
-#: src/dialogs.c:1597
+#: src/dialogs.c:1598
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
@@ -4679,7 +4679,7 @@ msgstr ""
 "LiVES אין אפשרות לטעון את הפריסה.\n"
 "מצטער.\n"
 
-#: src/dialogs.c:1603
+#: src/dialogs.c:1604
 msgid ""
 "\n"
 "\n"
@@ -4689,7 +4689,7 @@ msgstr ""
 "\n"
 "תדר השמע חייב להיות גדול מ־0.\n"
 
-#: src/dialogs.c:1607
+#: src/dialogs.c:1608
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -4701,7 +4701,7 @@ msgstr ""
 "והצגתה עלולה לקחת זמן רב.\n"
 "האם ברצונך להציגה בכל זאת ?\n"
 
-#: src/dialogs.c:1612
+#: src/dialogs.c:1613
 msgid ""
 "\n"
 "\n"
@@ -4711,7 +4711,7 @@ msgstr ""
 "\n"
 "מחובתך להתקין את 'dvgrab' כדי להשתמש בתכונה זו.\n"
 
-#: src/dialogs.c:1617
+#: src/dialogs.c:1618
 msgid ""
 "\n"
 "\n"
@@ -4725,25 +4725,25 @@ msgstr ""
 "נגן השמע \"jack\" או \"pulse audio\".\n"
 "באפשרותך לבחור אחת מאפשרויות אלו בתפריט כלים|העדפות|נגינה.\n"
 
-#: src/dialogs.c:1621
+#: src/dialogs.c:1622
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr "תוסף נגינת הוידאו נכשל בהצגת הלוח !\n"
 
-#: src/dialogs.c:1625
+#: src/dialogs.c:1626
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr "תוסף המקודד נכשל בהצגת לוח הצבעים !\n"
 
-#: src/dialogs.c:1630
+#: src/dialogs.c:1631
 msgid "Unable to set framerate of video plugin\n"
 msgstr "ל־LiVES לא הייתה אפשרות לקבוע את קצב השקופיות של תוסף הוידאו\n"
 
-#: src/dialogs.c:1635
+#: src/dialogs.c:1636
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:1647
+#: src/dialogs.c:1648
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -4756,23 +4756,23 @@ msgstr ""
 "\n"
 "echo %d > /proc/sys/net/core/rmnem_max\n"
 
-#: src/dialogs.c:1961
+#: src/dialogs.c:1962
 msgid "cancelled.\n"
 msgstr "בוטל.\n"
 
-#: src/dialogs.c:1968
+#: src/dialogs.c:1969
 msgid "failed.\n"
 msgstr "נכשל.\n"
 
-#: src/dialogs.c:1975
+#: src/dialogs.c:1976
 msgid "done.\n"
 msgstr "הסתיים.\n"
 
-#: src/dialogs.c:1979
+#: src/dialogs.c:1980
 msgid "error in file. Failed.\n"
 msgstr "שגיאה בקובץ. נכשל.\n"
 
-#: src/dialogs.c:1984
+#: src/dialogs.c:1985
 #, c-format
 msgid ""
 "\n"
@@ -4785,7 +4785,7 @@ msgstr ""
 "%s\n"
 "נא לבדוק את הרשאות הקובץ ולנסות שוב."
 
-#: src/dialogs.c:1991
+#: src/dialogs.c:1992
 #, c-format
 msgid ""
 "\n"
@@ -4794,7 +4794,7 @@ msgid ""
 "Please check the directory permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:1999
+#: src/dialogs.c:2000
 #, c-format
 msgid ""
 "\n"
@@ -4802,13 +4802,13 @@ msgid ""
 "Please select another encoder from the list.\n"
 msgstr ""
 
-#: src/dialogs.c:2008
+#: src/dialogs.c:2009
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
-#: src/dialogs.c:2013
+#: src/dialogs.c:2014
 #, c-format
 msgid ""
 "\n"
@@ -4980,7 +4980,7 @@ msgstr "בקר עוצמת שמע"
 msgid "Audio Volume Controllers"
 msgstr "בקרי עוצמת שמע"
 
-#: src/effects-weed.c:277 src/plugins.c:1907
+#: src/effects-weed.c:277 src/plugins.c:1910
 msgid "unknown"
 msgstr "לא ידוע"
 
@@ -5341,7 +5341,7 @@ msgstr ""
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "אין אפשרות לשנות גודל, נא להתקין את imageMagick\n"
 
-#: src/plugins.c:1851
+#: src/plugins.c:1854
 #, c-format
 msgid ""
 "\n"
@@ -5354,7 +5354,7 @@ msgstr ""
 "נכשל בנסיון לפתוח את תוסף המפענח %s\n"
 "השגיאה הייתה %s\n"
 
-#: src/plugins.c:1872
+#: src/plugins.c:1875
 #, c-format
 msgid ""
 "\n"
@@ -5369,16 +5369,16 @@ msgstr ""
 "אינו מכיל אפשרות הכרחית.\n"
 "לא ניתן להשתמש בו.\n"
 
-#: src/plugins.c:1912
+#: src/plugins.c:1915
 msgid "/unknown"
 msgstr "\\לא ידוע"
 
-#: src/plugins.c:1938
+#: src/plugins.c:1941
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "נכשל בטעינת %s, המעברים עלולים לא לשנות גודל.\n"
 
-#: src/plugins.c:2947
+#: src/plugins.c:2945
 #, c-format
 msgid "%s advanced settings"
 msgstr "הגדרות %s מתקדמות"

@@ -48,12 +48,15 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifdef TARGET_API_MAC_CARBON
 /* KLUDGE for OSX: */
 #define htonl(x) (x)
+#else
+#include <arpa/inet.h>
 #endif 
+
+#include <string.h>
 
 char *OSC_errorMessage;
 
 
-static int strlen(char *s);
 static int OSC_padString(char *dest, char *str);
 static int OSC_padStringWithAnExtraStupidComma(char *dest, char *str);
 static int OSC_WritePadding(char *dest, int i);
@@ -343,7 +346,6 @@ static int CheckTypeTag(OSCbuf *buf, char expectedType) {
 
 int OSC_writeFloatArg(OSCbuf *buf, float arg) {
     int4byte *intp;
-    int result;
 
     CheckOverflow(buf, 4);
 
@@ -421,11 +423,6 @@ int OSC_writeStringArg(OSCbuf *buf, char *arg) {
 
 /* String utilities */
 
-static int strlen(char *s) {
-    int i;
-    for (i=0; s[i] != '\0'; i++) /* Do nothing */ ;
-    return i;
-}
 
 #define STRING_ALIGN_PAD 4
 int OSC_effectiveStringLength(char *string) {

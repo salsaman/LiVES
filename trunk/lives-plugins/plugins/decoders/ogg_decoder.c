@@ -48,7 +48,6 @@
 
 #include <ogg/ogg.h>
 
-
 #ifdef HAVE_THEORA
 #include <theora/theora.h>
 #endif
@@ -1021,6 +1020,8 @@ static int64_t find_last_page (lives_clip_data_t *cdata, int64_t pos1, int64_t p
 
     page_pos = find_first_page(cdata, start_pos, pos2, serialno, &this_kframe, &this_frame);
 
+    printf("found page %ld\n",this_frame);
+
     if (page_pos == -1) {
       // no pages found in range
       if (last_page_pos >= 0)     /* No more pages in range -> return last one */
@@ -1583,15 +1584,19 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 #ifdef HAVE_DIRAC
   if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
     // dirac only
-    dirac_priv_t *dpriv=priv->dpriv;
+    dirac_priv_t *dpriv=priv->dpriv=(dirac_priv_t *)malloc(sizeof(dirac_priv_t));
 
     schro_init();
+
+    dpriv->schroframe=NULL;
 
     if ((dpriv->schrodec=schro_decoder_new())==NULL) {
       fprintf(stderr, "Failed to init schro decoder\n");
       close(opriv->fd);
       free(opriv);
       priv->opriv=NULL;
+      free(dpriv);
+      priv->dpriv=NULL;
       return FALSE;
     }
     //schro_debug_set_level(SCHRO_LEVEL_WARNING);
@@ -1629,6 +1634,8 @@ static void detach_stream (lives_clip_data_t *cdata) {
     theora_clear(&tpriv->ts);
     theora_comment_clear(&tpriv->tc);
     theora_info_clear(&tpriv->ti);
+    free(tpriv);
+    priv->tpriv=NULL;
   }
 #endif
 
@@ -1640,6 +1647,8 @@ static void detach_stream (lives_clip_data_t *cdata) {
   if (dpriv->schrodec!=NULL) schro_decoder_free( dpriv->schrodec );
   dpriv->schrodec=NULL;
   dpriv->schroframe=NULL;
+  free(dpriv);
+  priv->dpriv=NULL;
 #endif
 
   // free stream data
@@ -1837,9 +1846,6 @@ lives_clip_data_t *init_cdata(void) {
   lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
   lives_ogg_priv_t *priv=malloc(sizeof(lives_ogg_priv_t));;
 
-#ifdef HAVE_DIRAC
-  dirac_priv_t *dpriv=priv->dpriv;
-#endif
 
   cdata->priv=priv;
 
@@ -1853,8 +1859,7 @@ lives_clip_data_t *init_cdata(void) {
 #endif
 
 #ifdef HAVE_DIRAC
-  dpriv->schrodec=NULL;
-  dpriv->schroframe=NULL;
+  priv->dpriv=NULL;
 #endif
 
   priv->idx=NULL;
@@ -2600,10 +2605,6 @@ void clip_data_free(lives_clip_data_t *cdata) {
   }
 
   if (priv->opriv!=NULL) free(priv->opriv);
-
-#ifdef HAVE_THEORA
-  if (priv->tpriv!=NULL) free(priv->tpriv);
-#endif
 
   if (priv!=NULL) free(priv);
   

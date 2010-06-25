@@ -60,6 +60,13 @@ typedef struct
 #endif
 
 
+#ifdef HAVE_DIRAC
+typedef struct {
+  SchroDecoder *schrodec;
+  SchroFrame *schroframe;
+} dirac_priv_t;
+#endif
+
 #define LIVES_TIMESTAMP_UNDEFINED 0x8000000000000000LL
 
 
@@ -76,6 +83,8 @@ typedef struct lives_stream_s {
   int type;
   uint32_t fourcc;
   uint64_t version;  // major * 1000000 + minor * 1000 + subminor
+  int64_t data_start;
+
   stream_priv_t *stpriv;
   int stream_id;
   int samplerate;
@@ -121,12 +130,8 @@ typedef struct {
 #endif
 
 #ifdef HAVE_DIRAC
-  SchroDecoder *schrodec;
-  SchroFrame *schroframe;
-  int64_t schrotframe;
+  dirac_priv_t *dpriv;
 #endif
-
-  int64_t data_start;
 
 // seeking
   off64_t input_position;

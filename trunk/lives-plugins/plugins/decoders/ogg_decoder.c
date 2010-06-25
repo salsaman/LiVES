@@ -1641,14 +1641,16 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
 
 #ifdef HAVE_DIRAC
-  if (dpriv->schroframe!=NULL) {
-    schro_frame_unref(dpriv->schroframe);
+  if (priv->dpriv!=NULL) { 
+    if (dpriv->schroframe!=NULL) {
+      schro_frame_unref(dpriv->schroframe);
+    }
+    if (dpriv->schrodec!=NULL) schro_decoder_free( dpriv->schrodec );
+    dpriv->schrodec=NULL;
+    dpriv->schroframe=NULL;
+    free(dpriv);
+    priv->dpriv=NULL;
   }
-  if (dpriv->schrodec!=NULL) schro_decoder_free( dpriv->schrodec );
-  dpriv->schrodec=NULL;
-  dpriv->schroframe=NULL;
-  free(dpriv);
-  priv->dpriv=NULL;
 #endif
 
   // free stream data

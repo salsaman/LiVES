@@ -545,7 +545,7 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 
   opriv->page_valid=0;
 
-  lseek64(opriv->fd, priv->vstream->data_start, SEEK_SET);
+  lseek64(opriv->fd, 0, SEEK_SET);
   priv->input_position=0;
 
   /* Get the first page of each stream */

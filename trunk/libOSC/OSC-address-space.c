@@ -105,7 +105,7 @@ static void MakeFreeMethodsList(int n) {
 }
 
 OSCcontainer OSCInitAddressSpace(struct OSCAddressSpaceMemoryTuner *t) {
-    int bytesNeeded, i;
+    int bytesNeeded;
 
     if (Initialized)
 	fatal_error("OSCInitAddressSpace: already initialized!");
@@ -167,10 +167,10 @@ static OSCcontainer AllocContainer(void) {
     }
 }
 
-static void FreeContainer(OSCcontainer c) {
+/*static void FreeContainer(OSCcontainer c) {
     c->next = freeContainers;
     freeContainers = c;
-}
+    }*/
 
 static OSCMethod AllocMethod(void) {
     static int numExtraAllocs = 0;
@@ -195,10 +195,10 @@ static OSCMethod AllocMethod(void) {
     }
 }
 
-static void FreeMethod(OSCMethod c) {
+/*static void FreeMethod(OSCMethod c) {
     c->next = freeMethods;
     freeMethods = c;
-}
+    }*/
 
 
 /**************************** Containers  ****************************/    
@@ -532,7 +532,7 @@ static callbackListEnds DispatchSubMessage(char *pattern, OSCcontainer c) {
     callbackListEnds result;
     char *nextSlash, *restOfPattern;
     char offendingAddr[LONG_ADDR_LEN];
-    int i, j;
+    int i;
 
     result.begin = result.end = 0;
     nextSlash = NextSlashOrNull(pattern);

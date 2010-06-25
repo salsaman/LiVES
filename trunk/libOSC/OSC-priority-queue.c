@@ -40,6 +40,8 @@ The OpenSound Control WWW page is
 #include <libOSC/OSC-timetag.h>
 #include <libOSC/OSC-priority-queue.h>
 
+#include <inttypes.h>
+
 #define PRINT_PRIORITY_QUEUE
 
 #ifdef DEBUG_OSC_PRIORITY_QUEUE
@@ -82,7 +84,7 @@ OSCQueue OSCNewQueue(int maxItems, void *(*InitTimeMalloc)(int numBytes)) {
     return result;
 }
 
-OSCQueueInsert(OSCQueue q, OSCSchedulableObject new) {
+Boolean OSCQueueInsert(OSCQueue q, OSCSchedulableObject new) {
     if (q->n == CAPACITY) return FALSE;
 
     q->list[q->n] = new;
@@ -163,7 +165,7 @@ void OSCQueuePrint(OSCQueue q) {
     printf("OSC Priority queue at %p has %d elements:\n", q, q->n);
 
     for (i = 0; i < q->n; ++i) {
-	printf("   list[%2d] is %p, timetag = %llx\n", i, q->list[i], q->list[i]->timetag);
+      printf("   list[%2d] is %p, timetag = %"PRIu64"\n", i, q->list[i], *(uint64_t *)&(q->list[i]->timetag));
     }
     printf("\n\n");
 }

@@ -17,8 +17,6 @@ sharedir = $(prefix)/share
 
 doc_DATA = lives-plugins/marcos-encoders/README.multi_encoder AUTHORS BUGS ChangeLog FEATURES GETTING.STARTED README OMC/lives-OMC.txt RFX/LiVES-Perl.odt  RFX/rfxbuilder.odt RFX/RFX.spec weed-docs/weedspec.txt weed-docs/weedevents.txt docs/clip_format.txt
 
-#giw_DATA = giw/AUTHORS giw/ChangeLog giw/README giw/NEWS giw/COPYING
-
 EXTRA_DIST = \
 	configure \
 	build-lives-rfx-plugin* \

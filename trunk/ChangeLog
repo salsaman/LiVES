@@ -15,6 +15,7 @@ Faster seeking in ogg/theora files.
 Apply theming to the Prefences dialog (A. Kolga)
 Move weed palette definitions into weed-palettes.c
 Code cleanup - use enums instead of #defines where possible.
+Add new scribbler plugin (Penkov)
 
 
 

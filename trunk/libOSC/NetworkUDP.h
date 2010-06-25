@@ -30,6 +30,6 @@ The OpenSound Control WWW page is
 
 struct NetworkReturnAddressStruct {
     struct sockaddr_in  cl_addr;
-    int clilen;
+    socklen_t clilen;
     int sockfd;
 };

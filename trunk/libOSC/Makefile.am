@@ -13,7 +13,7 @@ if IS_SOLARIS
 solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
-libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS)
+libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) -Wstrict-aliasing=0
 
 if ENABLE_OSC
 libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\

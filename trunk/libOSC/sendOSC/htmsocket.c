@@ -114,12 +114,13 @@ void *OpenHTMSocket(char *host, int portnumber)
 			 * should be unique).  We'll use mktemp() to create a unique
 			 * pathname, based on our process id.
 			 */
-		
+		  int dummy;
+
 			bzero((char *) &ucl_addr, sizeof(ucl_addr));    /* zero out */
 			ucl_addr.sun_family = AF_UNIX;
 			strcpy(ucl_addr.sun_path, UNIXDG_TMP);
 
-			mkstemp(ucl_addr.sun_path);
+			dummy=mkstemp(ucl_addr.sun_path);
 			clilen = sizeof(ucl_addr.sun_family) + strlen(ucl_addr.sun_path);
 		
 			if (bind(sockfd, (struct sockaddr *) &ucl_addr, clilen) < 0)

@@ -317,12 +317,7 @@ boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data
   mcount=dsize*4;
   setsockopt(((desc *)(lstream->handle))->sockfd, SOL_SOCKET, SO_SNDBUF, (void *) &mcount, sizeof(mcount));
 
-  if (CPU_BITS==32) {
-    snprintf(hdrstr,128,"1 0 0 %d %lld %d %d %.8f %d 1 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette, lstream->YUV_clamping);
-  }
-  else {
-    snprintf(hdrstr,128,"1 0 0 %d %ld %d %d %.8f %d 1 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette, lstream->YUV_clamping);
-  }
+  snprintf(hdrstr,128,"1 0 0 %d %"PRId64" %d %d %.8f %d 1 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette, lstream->YUV_clamping);
 
   hdrstrlen=strlen(hdrstr);
 

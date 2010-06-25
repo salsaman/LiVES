@@ -149,6 +149,6 @@ lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD)
 
 lives_exe_LDFLAGS = -O3
 
-AM_CFLAGS = -O3 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) $(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS)  -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
+AM_CFLAGS = -O3  -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) $(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS)  -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 

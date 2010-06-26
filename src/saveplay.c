@@ -98,7 +98,6 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
 
   pthread_mutex_lock(&mainw->gtk_mutex);
   clear_mainw_msg();
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   
   while (!(infofile=fopen(cfile->info_file,"r"))) {
     while (g_main_context_iteration (NULL,FALSE));
@@ -110,7 +109,6 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
   dummychar=fgets(mainw->msg,512,infofile);
   fclose(infofile);
 
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   pthread_mutex_unlock(&mainw->gtk_mutex);
   return TRUE;
 }
@@ -174,6 +172,9 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     }
     g_free(fname);
     
+    lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+    while (g_main_context_iteration(NULL,FALSE));
+
     if (frames==0) {
       com=g_strdup_printf(_ ("Opening %s"),file_name);
     }
@@ -285,6 +286,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    }
 	    if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
 	    mainw->file_open_params=NULL;
+	    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	    g_free(afile);
 	    return;
 	  }
@@ -350,6 +352,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	      }
 
 	      if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
+		lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 		mainw->cancelled=CANCEL_NONE;
 		return;
 	      }
@@ -362,6 +365,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	      if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
 	      mainw->file_open_params=NULL;
 	      close_current_file(old_file);
+	      lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	      return;
 	    }
 	    if (mainw->error==0) add_file_info (cfile->handle,TRUE);
@@ -398,6 +402,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	}
 	if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
 	mainw->file_open_params=NULL;
+	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	return;
       }
       unlink (cfile->info_file);
@@ -425,6 +430,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    mainw->multitrack->pb_start_event=mt_pb_start_event;
 	    mainw->multitrack->has_audio_file=mt_has_audio_file;
 	  }
+	  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	  return;
 	}
 	g_free(warn);
@@ -516,6 +522,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	g_free (mainw->file_open_params);
 	mainw->file_open_params=NULL;
 	mainw->cancelled=CANCEL_NONE;
+	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	return;
       }
     }
@@ -539,6 +546,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
 	  mainw->cancelled=CANCEL_NONE;
+	  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	  return;
 	}
 	
@@ -554,6 +562,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  mainw->multitrack->pb_start_event=mt_pb_start_event;
 	  mainw->multitrack->has_audio_file=mt_has_audio_file;
 	}
+	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	return;
       }
     }
@@ -588,6 +597,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     close_current_file(old_file);
     if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
     mainw->file_open_params=NULL;
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     return;
   }
 
@@ -621,6 +631,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       close_current_file(old_file);
       if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
       mainw->file_open_params=NULL;
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
       return;
     }
     cfile->frames=0;
@@ -665,6 +676,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
       g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
       return;
     }
@@ -691,6 +703,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     while (g_main_context_iteration(NULL,FALSE));
     mt_clip_select(mainw->multitrack,TRUE);
   }
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 
 

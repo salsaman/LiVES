@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-06-21 03:04-0300\n"
-"PO-Revision-Date: 2010-04-24 00:08+0000\n"
-"Last-Translator: Angel Spy <melissadilara@yahoo.com>\n"
+"POT-Creation-Date: 2010-07-04 21:29-0300\n"
+"PO-Revision-Date: 2010-06-09 11:40+0000\n"
+"Last-Translator: 58zarali <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-05-06 12:08+0000\n"
+"X-Launchpad-Export-Date: 2010-07-04 22:21+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:76
@@ -59,11 +59,11 @@ msgstr ""
 
 #: src/main.c:109
 msgid "Preserving set.\n"
-msgstr ""
+msgstr "Koruma ayarları.\n"
 
 #: src/main.c:436
 msgid "Resizing"
-msgstr "Yeniden boyutlandırılıyor..."
+msgstr "Yeniden boyutlandırma"
 
 #: src/main.c:443
 msgid "_Resize All Frames"
@@ -258,7 +258,7 @@ msgid ""
 "Welcome to LiVES version %s.\n"
 "\n"
 msgstr ""
-"Hoşgeldiniz LIVES sürüm % s.\n"
+"LiVES'a Hoşgeldiniz version %s.\n"
 "\n"
 
 #: src/main.c:1631
@@ -502,25 +502,25 @@ msgstr ""
 #: src/main.c:2114
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
-msgstr ""
+msgstr "LiVES-%s: <%s> %dx%d : %d çerçeveler %d bpp %.3f fps"
 
 #: src/main.c:2120
 #, c-format
 msgid "LiVES-%s: <No File>"
-msgstr ""
+msgstr "LiVES-%s: <Dosya Yok>"
 
 #: src/main.c:3224
 #, c-format
 msgid "rec %9d/%d"
-msgstr ""
+msgstr "kayıt %9d/%d"
 
 #: src/main.c:3226
 #, c-format
 msgid "!rec %9d/%d"
-msgstr ""
+msgstr "!kayıt %9d/%d"
 
 #: src/main.c:3438 src/main.c:3439 src/gui.c:1905 src/gui.c:2873
-#: src/saveplay.c:1492
+#: src/saveplay.c:1505
 msgid "Play"
 msgstr "Oynat"
 
@@ -536,19 +536,19 @@ msgid "Closed file %s\n"
 msgstr "Dosya kapandı %s\n"
 
 #: src/main.c:4050 src/gui.c:522 src/utils.c:2555 src/utils.c:2581
-#: src/saveplay.c:2460 src/multitrack.c:3836 src/multitrack.c:5302
+#: src/saveplay.c:2473 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "_Geri Al"
 
 #: src/main.c:4051 src/gui.c:535 src/utils.c:2556 src/utils.c:2582
-#: src/saveplay.c:2461 src/multitrack.c:3857 src/multitrack.c:5325
+#: src/saveplay.c:2474 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "_Yinele"
 
 #: src/main.c:4077 src/interface.c:639 src/gui.c:2063 src/preferences.c:2117
 #: src/resample.c:1743
 msgid "Video"
-msgstr "Vidyo"
+msgstr "Video"
 
 #: src/main.c:4078 src/interface.c:658 src/gui.c:2082
 msgid "Left Audio"
@@ -586,10 +586,15 @@ msgid ""
 "\n"
 "(Free space = %.2f GB)"
 msgstr ""
+"Dizini oluştur\n"
+"%s\n"
+"?\n"
+"\n"
+"(Boş alan = %.2f GB)"
 
 #: src/startup.c:56
 msgid "Directory name is too long !"
-msgstr ""
+msgstr "Dizin adı çok uzun !"
 
 #: src/startup.c:148
 msgid ""
@@ -619,7 +624,7 @@ msgstr ""
 
 #: src/startup.c:166
 msgid "JACK audio is recommended for pro users"
-msgstr ""
+msgstr "JACK ses profesyonel kullanıcılar için önerilir"
 
 #: src/startup.c:169
 msgid ""
@@ -687,23 +692,23 @@ msgstr ""
 
 #: src/startup.c:395 src/startup.c:581 src/interface.c:1889
 msgid "_Next"
-msgstr ""
+msgstr "_Sonraki"
 
 #: src/startup.c:438
 msgid "Skipped"
-msgstr ""
+msgstr "Atlandı"
 
 #: src/startup.c:454
 msgid "Passed"
-msgstr ""
+msgstr "Geçti"
 
 #: src/startup.c:485
 msgid "Failed"
-msgstr ""
+msgstr "Başarısız"
 
 #: src/startup.c:547
 msgid "LiVES: - Testing Configuration"
-msgstr ""
+msgstr "LiVES: - Yapılandırma Kontrol Ediliyor"
 
 #: src/startup.c:550
 msgid "LiVES: - Troubleshoot"
@@ -754,7 +759,7 @@ msgstr ""
 
 #: src/startup.c:773
 msgid "You may wish to upgrade mplayer to a newer version"
-msgstr ""
+msgstr "Yeni bir sürüme yükseltmek istiyormusunuz"
 
 #: src/startup.c:799
 msgid "Checking if mplayer can decode to jpeg"
@@ -828,7 +833,7 @@ msgstr ""
 
 #: src/startup.c:1008
 msgid "_Finish"
-msgstr ""
+msgstr "_Son"
 
 #: src/interface.c:39
 msgid "Let LiVES set the _file extension"
@@ -843,7 +848,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:188 src/callbacks.c:7504 src/gui.c:2876 src/gui.c:3414
-#: src/saveplay.c:1495 src/saveplay.c:2104 src/dialogs.c:788 src/dialogs.c:789
+#: src/saveplay.c:1508 src/saveplay.c:2117 src/dialogs.c:788 src/dialogs.c:789
 #: src/dialogs.c:956 src/dialogs.c:957 src/framedraw.c:189
 #: src/multitrack.c:6804
 msgid "Preview"
@@ -863,7 +868,7 @@ msgstr ""
 
 #: src/interface.c:294 src/dialogs.c:1690
 msgid "LiVES: - Processing..."
-msgstr "LIVES - İşleme ..."
+msgstr "LiVES: - İşleniyor..."
 
 #: src/interface.c:331
 msgid ""
@@ -900,11 +905,11 @@ msgstr "_Önizleme"
 
 #: src/interface.c:405
 msgid "Paus_e"
-msgstr ""
+msgstr "Durakla_t"
 
 #: src/interface.c:406 src/callbacks.c:7305
 msgid "Pause/_Enough"
-msgstr ""
+msgstr "Duraklat/_Yeterli"
 
 #: src/interface.c:433
 msgid "_Cancel"
@@ -983,7 +988,7 @@ msgstr ""
 
 #: src/interface.c:975
 msgid "Show _Details"
-msgstr ""
+msgstr "_Detayları Göster"
 
 #: src/interface.c:1069
 msgid "_Close Window"
@@ -991,7 +996,7 @@ msgstr "_Pencereyi Kapat"
 
 #: src/interface.c:1073
 msgid "_Save to file"
-msgstr ""
+msgstr "Dosyaya _kaydet"
 
 #: src/interface.c:1178
 msgid "LiVES: - Insert"
@@ -1007,7 +1012,7 @@ msgstr ""
 
 #: src/interface.c:1265
 msgid "Insert _before selection"
-msgstr ""
+msgstr "Seçim _öncesi ekle"
 
 #: src/interface.c:1270
 msgid "Insert clipboard before selected frames"
@@ -1015,7 +1020,7 @@ msgstr ""
 
 #: src/interface.c:1302
 msgid "Insert _after selection"
-msgstr "Seçim sonrası ekle"
+msgstr "Seçim _sonrası ekle"
 
 #: src/interface.c:1307
 msgid "Insert clipboard after selected frames"
@@ -1087,6 +1092,9 @@ msgid ""
 "This startup wizard will guide you through the\n"
 "initial install so that you can get the most from this application.\n"
 msgstr ""
+"LiVES'a Hoşgeldiniz !\n"
+"This startup wizard will guide you through the\n"
+"initial install so that you can get the most from this application.\n"
 
 #: src/interface.c:1790
 msgid ""
@@ -1103,11 +1111,11 @@ msgstr "LiVES: - klip in ismini değiştir"
 
 #: src/interface.c:1813
 msgid "LiVES: - Enter Set Name"
-msgstr ""
+msgstr "LiVES: - Ayarlama Adını Girin"
 
 #: src/interface.c:1816
 msgid "LiVES: - Choose a Working Directory"
-msgstr ""
+msgstr "LiVES: - Çalışma Dizini Seçin"
 
 #: src/interface.c:1820
 msgid "New name "
@@ -1115,11 +1123,11 @@ msgstr "Yeni isim "
 
 #: src/interface.c:1823
 msgid "Set name "
-msgstr ""
+msgstr "Ayar ismi "
 
 #: src/interface.c:1939
 msgid "Use def_aults"
-msgstr ""
+msgstr "Varsayılanı kullan"
 
 #: src/interface.c:1942 src/interface.c:2194 src/preferences.c:2676
 msgid "_Advanced"
@@ -1143,7 +1151,7 @@ msgstr "LIVES - Maksimum Görünür Parça Sayısını Değiştir"
 
 #: src/interface.c:2031
 msgid "LiVES:- Device details"
-msgstr ""
+msgstr "LiVES:- Aygıt detayları"
 
 #: src/interface.c:2062
 #, c-format
@@ -1164,11 +1172,11 @@ msgstr ""
 
 #: src/interface.c:2074
 msgid "Device:        /dev/video"
-msgstr ""
+msgstr "Aygıt: /dev/video"
 
 #: src/interface.c:2077
 msgid "Device:        fw:"
-msgstr ""
+msgstr "Aygıt:        fw:"
 
 #: src/interface.c:2117
 msgid "Chapter  "
@@ -1176,7 +1184,7 @@ msgstr "Bölüm  "
 
 #: src/interface.c:2118
 msgid "Channel  "
-msgstr ""
+msgstr "Kanal  "
 
 #: src/interface.c:2142
 msgid "Audio ID  "
@@ -1184,7 +1192,7 @@ msgstr "Ses nosu  "
 
 #: src/interface.c:2210
 msgid "Input number"
-msgstr ""
+msgstr "Giriş numarası"
 
 #: src/interface.c:2235
 msgid "Use default width, height and FPS"
@@ -1192,19 +1200,19 @@ msgstr ""
 
 #: src/interface.c:2275
 msgid "Width"
-msgstr ""
+msgstr "Genişlik"
 
 #: src/interface.c:2290
 msgid "Height"
-msgstr ""
+msgstr "Yükseklik"
 
 #: src/interface.c:2327
 msgid "Driver"
-msgstr ""
+msgstr "Sürücü"
 
 #: src/interface.c:2346 src/preferences.c:3164
 msgid "Output format"
-msgstr ""
+msgstr "Çıktı biçimi"
 
 #: src/interface.c:2483
 msgid "LiVES:- Fade Audio In"
@@ -1236,7 +1244,7 @@ msgstr "saniye."
 
 #: src/interface.c:2579
 msgid "selection."
-msgstr ""
+msgstr "seçim"
 
 #: src/interface.c:2645
 msgid "LiVES: - Play Random Music"
@@ -1346,7 +1354,7 @@ msgstr ""
 
 #: src/interface.c:3105
 msgid "Clip set _name"
-msgstr ""
+msgstr "Klip ayar ismi"
 
 #: src/interface.c:3117
 msgid "_Auto reload next time"
@@ -1362,7 +1370,7 @@ msgstr "Değişiklikleri Yoksay"
 
 #: src/interface.c:3175
 msgid "_Delete clip set"
-msgstr ""
+msgstr "Klip ayarlarını sil"
 
 #: src/interface.c:3176
 msgid "_Delete layout"
@@ -1374,11 +1382,11 @@ msgstr "Düzeni kaydet"
 
 #: src/interface.c:3183
 msgid "_Save clip set"
-msgstr ""
+msgstr "Klip ayarlarını kaydet"
 
 #: src/interface.c:3203
 msgid "LiVES: recover layout ?"
-msgstr ""
+msgstr "LiVES: düzeni geri al ?"
 
 #: src/interface.c:3218
 msgid ""
@@ -1390,7 +1398,7 @@ msgstr ""
 #: src/callbacks.c:134
 #, c-format
 msgid "Saving as set %s..."
-msgstr ""
+msgstr "Ayarlar kaydediliyor %s..."
 
 #: src/callbacks.c:441 src/callbacks.c:471 src/callbacks.c:691
 msgid "Select File"
@@ -1471,7 +1479,7 @@ msgstr "Proje içeriye alınıyor"
 #: src/callbacks.c:1017
 #, c-format
 msgid "Exporting project %s..."
-msgstr "%s...Proje dışarıya çıkartılıyor"
+msgstr "%s... Proje dışarıya aktarılıyor"
 
 #: src/callbacks.c:1024
 msgid "Exporting project"
@@ -1483,7 +1491,7 @@ msgstr ".lv1 dosyası geri yükleniyor"
 
 #: src/callbacks.c:1057
 msgid "Backup as .lv1 file"
-msgstr ""
+msgstr ".lv1 dosyası olarak yedekle"
 
 #: src/callbacks.c:1234
 msgid ""
@@ -1499,7 +1507,7 @@ msgstr ""
 
 #: src/callbacks.c:1291
 msgid "Deleting set"
-msgstr ""
+msgstr "Ayarları sil"
 
 #: src/callbacks.c:1297
 #, c-format
@@ -1520,11 +1528,11 @@ msgstr ""
 
 #: src/callbacks.c:1448
 msgid "Clearing frame images"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Çerçeve resimleri siliniyor"
 
 #: src/callbacks.c:1472
 msgid "Deleting excess frames"
-msgstr ""
+msgstr "Fazla çerçeveler siliniyor"
 
 #: src/callbacks.c:1654
 #, c-format
@@ -1545,8 +1553,8 @@ msgstr "Yineleniyor"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1875 src/saveplay.c:899 src/saveplay.c:1010
-#: src/saveplay.c:1063 src/saveplay.c:2807
+#: src/callbacks.c:1875 src/saveplay.c:912 src/saveplay.c:1023
+#: src/saveplay.c:1076 src/saveplay.c:2820
 msgid "Pulling frames from clip"
 msgstr "Klipten çerçeveler alınıyor"
 
@@ -1582,6 +1590,11 @@ msgid ""
 "Try selecting all frames, and then using \n"
 "the 'Trim Audio' function from the Audio menu."
 msgstr ""
+"\n"
+"\n"
+"Video ses'ten uzun.\n"
+"Try selecting all frames, and then using \n"
+"the 'Trim Audio' function from the Audio menu."
 
 #: src/callbacks.c:2120
 msgid ""
@@ -1636,12 +1649,12 @@ msgstr "Ekleniyor"
 #: src/callbacks.c:2386
 #, c-format
 msgid "Inserting %d times from the clipboard%s..."
-msgstr ""
+msgstr "Zamanlar%d panodan%s ekleniyor..."
 
 #: src/callbacks.c:2392
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
-msgstr ""
+msgstr "Çerçeveler%d panodan%s ekleniyor..."
 
 #: src/callbacks.c:2556
 msgid "Insert"
@@ -1653,6 +1666,9 @@ msgid ""
 "Deleting all frames will close this file.\n"
 "Are you sure ?"
 msgstr ""
+"\n"
+"Bu dosyayı kapatınca tüm çerçeveler silinecek.\n"
+"Emin misiniz ?"
 
 #: src/callbacks.c:2624
 msgid ""
@@ -1686,7 +1702,7 @@ msgstr ""
 #: src/callbacks.c:2725
 #, c-format
 msgid "Deleting frames %d to %d%s..."
-msgstr ""
+msgstr "Çerçeveler siliniyor %d to %d%s..."
 
 #: src/callbacks.c:2739
 msgid "Deleting"
@@ -1702,6 +1718,9 @@ msgid ""
 "\n"
 "Selection is locked.\n"
 msgstr ""
+"\n"
+"\n"
+"Seçim kilitlendi.\n"
 
 #: src/callbacks.c:3135
 msgid ""
@@ -1713,7 +1732,7 @@ msgstr ""
 
 #: src/callbacks.c:3140
 msgid "Record cancelled.\n"
-msgstr ""
+msgstr "Kayıt iptal edildi.\n"
 
 #: src/callbacks.c:3259
 #, c-format
@@ -1745,12 +1764,12 @@ msgstr ""
 #: src/callbacks.c:3676
 #, c-format
 msgid "Saving set %s"
-msgstr ""
+msgstr "Ayarlar kaydediliyor %s"
 
 #: src/callbacks.c:3889
 #, c-format
 msgid "Loading clips from set %s"
-msgstr ""
+msgstr "Klip ayarlardan yükleniyor %s"
 
 #: src/callbacks.c:3953
 #, c-format
@@ -1776,7 +1795,7 @@ msgstr "Disk alanı temizleniyor..."
 
 #: src/callbacks.c:4214
 msgid "Clearing disk space"
-msgstr ""
+msgstr "Disk alanı temizleniyor"
 
 #: src/callbacks.c:4249
 #, c-format
@@ -1785,7 +1804,7 @@ msgstr ""
 
 #: src/callbacks.c:4270
 msgid "Resetting frame rates and frame values..."
-msgstr ""
+msgstr "Çerçeve hızları ve çerçeve değerleri sıfırlanıyor..."
 
 #: src/callbacks.c:4315
 #, c-format
@@ -1794,6 +1813,9 @@ msgid ""
 "External: %s\n"
 "Internal: %s (%d bpp)\n"
 msgstr ""
+"\n"
+"Harici: %s\n"
+"Dahili: %s (%d bpp)\n"
 
 #: src/callbacks.c:4315
 msgid "buffered"
@@ -1814,6 +1836,8 @@ msgid ""
 "\n"
 "(%d virtual)"
 msgstr ""
+"\n"
+"(%d sanal)"
 
 #: src/callbacks.c:4337
 #, c-format
@@ -1821,6 +1845,8 @@ msgid ""
 "\n"
 "(%d decoded)"
 msgstr ""
+"\n"
+"(%d çözümlenmiş)"
 
 #: src/callbacks.c:4349 src/callbacks.c:4363 src/callbacks.c:4397
 #, c-format
@@ -1828,6 +1854,8 @@ msgid ""
 "\n"
 "  %.2f sec."
 msgstr ""
+"\n"
+"  %.2f sn."
 
 #: src/callbacks.c:4354
 msgid ""
@@ -1839,11 +1867,11 @@ msgstr ""
 
 #: src/callbacks.c:4367 src/callbacks.c:4381
 msgid "unsigned"
-msgstr ""
+msgstr "imzasız"
 
 #: src/callbacks.c:4368 src/callbacks.c:4382
 msgid "signed"
-msgstr ""
+msgstr "imzalandı"
 
 #: src/callbacks.c:4370 src/callbacks.c:4384
 msgid "big-endian"
@@ -1881,7 +1909,7 @@ msgstr ""
 
 #: src/callbacks.c:4471
 msgid "A video editor and VJ program."
-msgstr ""
+msgstr "Bir video düzenleyicisi ve VJ programı."
 
 #: src/callbacks.c:4493
 #, c-format
@@ -1896,6 +1924,15 @@ msgid ""
 "salsaman@xs4all.nl\n"
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
+"LiVES Sürüm %s\n"
+"(c) G. Finch (salsaman) 2002-2010\n"
+"\n"
+"Released under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\n"
+"LiVES GARANTİ OLMADAN dağıtılmıştır\n"
+"\n"
+"İletişim Yazar:\n"
+"salsaman@xs4all.nl\n"
+"Ana Sayfa: http://lives.sourceforge.net"
 
 #: src/callbacks.c:4660
 msgid ""
@@ -1917,7 +1954,7 @@ msgstr ""
 msgid "Opening audio %s, type %s..."
 msgstr ""
 
-#: src/callbacks.c:4969 src/saveplay.c:339
+#: src/callbacks.c:4969 src/saveplay.c:341
 msgid "Opening audio"
 msgstr "Ses açılıyor"
 
@@ -1955,23 +1992,23 @@ msgstr ""
 
 #: src/callbacks.c:5378
 msgid "Fullscreen playback off (f)"
-msgstr ""
+msgstr "Tam ekran oynatma (f)"
 
 #: src/callbacks.c:5572 src/gui.c:1734
 msgid "Double size (d)"
-msgstr ""
+msgstr "Çift boyut (d)"
 
 #: src/callbacks.c:5577
 msgid "Single size (d)"
-msgstr ""
+msgstr "Tek boyut (d)"
 
 #: src/callbacks.c:5694 src/callbacks.c:5695
 msgid "Hide the play window (s)"
-msgstr ""
+msgstr "Oynatma penceresini gizle (s)"
 
 #: src/callbacks.c:5704 src/gui.c:1581
 msgid "Show the play window (s)"
-msgstr ""
+msgstr "Oynatma penceresini göster (s)"
 
 #: src/callbacks.c:5705 src/gui.c:1725
 msgid "Play in separate window (s)"
@@ -1979,7 +2016,7 @@ msgstr ""
 
 #: src/callbacks.c:5908 src/gui.c:3396
 msgid "LiVES: - Play Window"
-msgstr ""
+msgstr "LiVES: - Oynatma Penceresi"
 
 #: src/callbacks.c:6002
 msgid "Switch continuous looping off (o)"
@@ -1992,15 +2029,15 @@ msgstr ""
 #: src/callbacks.c:6077
 #, c-format
 msgid "Audio volume (%.2f)"
-msgstr ""
+msgstr "Ses hacmi (%.2f)"
 
 #: src/callbacks.c:6118 src/callbacks.c:6119 src/gui.c:3316
 msgid "Unmute the audio (z)"
-msgstr ""
+msgstr "Sesi kesme (z)"
 
 #: src/callbacks.c:6130 src/callbacks.c:6131 src/gui.c:1639 src/gui.c:3315
 msgid "Mute the audio (z)"
-msgstr ""
+msgstr "Sesi kes (z)"
 
 #: src/callbacks.c:6295
 msgid "Reversing clipboard..."
@@ -2026,11 +2063,11 @@ msgstr ""
 #: src/callbacks.c:6410
 #, c-format
 msgid "CD track %d"
-msgstr ""
+msgstr "CD parçası %d"
 
 #: src/callbacks.c:6439
 msgid "Opening CD track..."
-msgstr ""
+msgstr "CD parçası açılıyor..."
 
 #: src/callbacks.c:6469 src/callbacks.c:6510
 msgid "Error loading CD track\n"
@@ -2069,7 +2106,7 @@ msgstr ""
 
 #: src/callbacks.c:7266 src/callbacks.c:7296
 msgid "paused..."
-msgstr ""
+msgstr "duraklatıldı..."
 
 #: src/callbacks.c:7275 src/callbacks.c:7306
 msgid "Pause"
@@ -2085,7 +2122,7 @@ msgstr "Koru"
 
 #: src/callbacks.c:7293
 msgid "Enough"
-msgstr ""
+msgstr "Yeter"
 
 #: src/callbacks.c:7294
 msgid ""
@@ -2180,7 +2217,7 @@ msgstr ""
 
 #: src/callbacks.c:8488
 msgid "Exporting audio"
-msgstr ""
+msgstr "Ses dışa aktarılıyor"
 
 #: src/callbacks.c:8520
 msgid "Append Audio File..."
@@ -2251,7 +2288,7 @@ msgstr ""
 
 #: src/callbacks.c:8863
 msgid "Deleting all audio..."
-msgstr ""
+msgstr "Tüm sesler siliniyor..."
 
 #: src/callbacks.c:8869
 #, c-format
@@ -2264,11 +2301,11 @@ msgstr ""
 
 #: src/callbacks.c:8943
 msgid "Delete Audio"
-msgstr ""
+msgstr "Sesi sil"
 
 #: src/callbacks.c:9227
 msgid "Record new audio"
-msgstr ""
+msgstr "Yeni ses kaydet"
 
 #: src/callbacks.c:9309
 #, c-format
@@ -3352,26 +3389,26 @@ msgstr ""
 msgid "Examining file header"
 msgstr ""
 
-#: src/saveplay.c:178 src/saveplay.c:529
+#: src/saveplay.c:179 src/saveplay.c:536
 #, c-format
 msgid "Opening %s"
 msgstr "%s açılıyor"
 
-#: src/saveplay.c:181
+#: src/saveplay.c:182
 #, c-format
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:189 src/saveplay.c:2795
+#: src/saveplay.c:190 src/saveplay.c:2808
 msgid " without sound"
 msgstr ""
 
-#: src/saveplay.c:245
+#: src/saveplay.c:246
 #, c-format
 msgid "Opening audio for %s"
 msgstr ""
 
-#: src/saveplay.c:419
+#: src/saveplay.c:424
 #, c-format
 msgid ""
 "\n"
@@ -3383,11 +3420,11 @@ msgid ""
 "Are you sure you wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:431
+#: src/saveplay.c:437
 msgid " - please be patient."
 msgstr ""
 
-#: src/saveplay.c:610
+#: src/saveplay.c:620
 msgid ""
 "\n"
 "\n"
@@ -3395,14 +3432,14 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/saveplay.c:613
+#: src/saveplay.c:623
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer to open this file.\n"
 msgstr ""
 
-#: src/saveplay.c:616
+#: src/saveplay.c:626
 msgid ""
 "\n"
 "\n"
@@ -3410,7 +3447,7 @@ msgid ""
 "Tools|Preferences|Decoding\n"
 msgstr ""
 
-#: src/saveplay.c:833
+#: src/saveplay.c:846
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3418,61 +3455,61 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:884
+#: src/saveplay.c:897
 msgid "selection"
 msgstr "seleksiyon"
 
-#: src/saveplay.c:938 src/saveplay.c:1035
+#: src/saveplay.c:951 src/saveplay.c:1048
 msgid "Linking selection"
 msgstr ""
 
-#: src/saveplay.c:1078
+#: src/saveplay.c:1091
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:1086
+#: src/saveplay.c:1099
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1089
+#: src/saveplay.c:1102
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1188
+#: src/saveplay.c:1201
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1224
+#: src/saveplay.c:1237
 msgid "error.\n"
 msgstr "hata.\n"
 
-#: src/saveplay.c:1280
+#: src/saveplay.c:1293
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1420
+#: src/saveplay.c:1433
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1424
+#: src/saveplay.c:1437
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1427
+#: src/saveplay.c:1440
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:2264
+#: src/saveplay.c:2277
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:2270
+#: src/saveplay.c:2283
 msgid ""
 "\n"
 "\n"
@@ -3481,16 +3518,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2395
+#: src/saveplay.c:2408
 msgid "Unknown"
 msgstr "Bilinmeyen"
 
-#: src/saveplay.c:2489
+#: src/saveplay.c:2502
 #, c-format
 msgid "Untitled%d"
 msgstr "Adsız Belge%d"
 
-#: src/saveplay.c:2604
+#: src/saveplay.c:2617
 #, c-format
 msgid ""
 "\n"
@@ -3498,68 +3535,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2616
+#: src/saveplay.c:2629
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2632
+#: src/saveplay.c:2645
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2636 src/saveplay.c:3235
+#: src/saveplay.c:2649 src/saveplay.c:3248
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2640 src/saveplay.c:3239
+#: src/saveplay.c:2653 src/saveplay.c:3252
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2643 src/saveplay.c:3242
+#: src/saveplay.c:2656 src/saveplay.c:3255
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2651
+#: src/saveplay.c:2664
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2725
+#: src/saveplay.c:2738
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2790
+#: src/saveplay.c:2803
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2826
+#: src/saveplay.c:2839
 msgid "Backing up"
 msgstr "Yedekleniyor"
 
-#: src/saveplay.c:2857
+#: src/saveplay.c:2870
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3161
+#: src/saveplay.c:3174
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3180
+#: src/saveplay.c:3193
 msgid "Restoring"
 msgstr "Yeniden Yükleniyor"
 
-#: src/saveplay.c:3202
+#: src/saveplay.c:3215
 #, c-format
 msgid ""
 "\n"
@@ -3568,17 +3605,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3605
+#: src/saveplay.c:3618
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3609
+#: src/saveplay.c:3622
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3632
+#: src/saveplay.c:3645
 #, c-format
 msgid ""
 "\n"
@@ -3586,18 +3623,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3748
+#: src/saveplay.c:3761
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:3761
+#: src/saveplay.c:3774
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:3765
+#: src/saveplay.c:3778
 msgid "Recovering files..."
 msgstr ""
 
@@ -8456,9 +8493,8 @@ msgid "Loading device mapping from file %s..."
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "180 _degrees             "
-msgstr "          _FPS      "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "90 degrees _Anticlockwise"
@@ -8620,12 +8656,12 @@ msgstr "Dama Tahtası"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "Clipboard _over selection"
-msgstr "Seçim sonrası ekle"
+msgstr "Seçim _sonrası ekle"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "Clipboard _under selection"
-msgstr "Seçim sonrası ekle"
+msgstr "Seçim _sonrası ekle"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -8704,14 +8740,12 @@ msgid "E_nd %"
 msgstr "_Geri al %s"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "Edge detect"
-msgstr "_Metin"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "Edge detecting"
-msgstr "_Metin"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
@@ -8777,9 +8811,8 @@ msgid "Flop horizontally"
 msgstr "Dikey çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "_Arkaplan Rengi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -8792,12 +8825,14 @@ msgid "Frame _height"
 msgstr "Çerçeve boyutu"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr ""
+msgstr "Çerçeveler%d panodan%s ekleniyor..."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr ""
+msgstr "Çerçeveler%d panodan%s ekleniyor..."
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -8805,9 +8840,8 @@ msgid "Frame _width"
 msgstr "Çerçeve boyutu"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "saniye"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -8827,42 +8861,42 @@ msgstr "Değişiklikleri Yoksay"
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
 msgid "Generate blank frames"
-msgstr "çerçeve"
+msgstr "Fazla çerçeveler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "Generate clip from image"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Çerçeve resimleri siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "Generate coloured frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Fazla çerçeveler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "Generate title frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Fazla çerçeveler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
 msgid "Generating blank frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Fazla çerçeveler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "Generating clip from image"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Çerçeve resimleri siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "Generating coloured frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Fazla çerçeveler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "Generating title frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Fazla çerçeveler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -8898,9 +8932,8 @@ msgid "Hue start"
 msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Image overlay"
-msgstr "her"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -8934,7 +8967,7 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "L_eft"
-msgstr "_Metin"
+msgstr "_Sonraki"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 #, fuzzy
@@ -8942,9 +8975,8 @@ msgid "Making monochrome"
 msgstr "Siyah-beyaz"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Döndürme"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9057,29 +9089,24 @@ msgid "S_tart %"
 msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Geçişler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Geçişler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Geçişler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Geçişler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Geçişler"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
@@ -9151,9 +9178,8 @@ msgstr "_Başlat"
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Step per _Frame"
-msgstr "_Başlat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -9312,9 +9338,8 @@ msgid "_First frame"
 msgstr "İlk Kare"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "_Arkaplan Rengi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -9442,7 +9467,7 @@ msgstr "_Yarıçap"
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Random colour each frame"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Fazla çerçeveler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9475,7 +9500,7 @@ msgstr "_Başlat"
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "_Skip ahead"
-msgstr "_Geç"
+msgstr "Atlandı"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
@@ -9635,9 +9660,8 @@ msgid "colour_filter"
 msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Renklendir"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -9666,7 +9690,7 @@ msgstr "Hayal"
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
 msgid "edge_detect"
-msgstr "_Metin"
+msgstr "_Sonraki"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "emboss"
@@ -9700,9 +9724,8 @@ msgid "frame_calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "Değişiklikleri Yoksay"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -9712,17 +9735,17 @@ msgstr "çerçeve"
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
 msgid "gen_clip_from_image"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Çerçeve resimleri siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "gen_coloured_frames"
-msgstr "Çerçeve resimler siliniyor"
+msgstr "Fazla çerçeveler siliniyor"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
 msgid "gen_text"
-msgstr "_Metin"
+msgstr "_Sonraki"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -9869,14 +9892,12 @@ msgid "tunnel"
 msgstr "tünel"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "wave"
-msgstr "Dalga"
+msgstr "dalga"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "Unable to open output file !"
-msgstr "LIVES: bir dosya seçin"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 #, fuzzy
@@ -9892,9 +9913,8 @@ msgid "This does not appear to be a valid video or image file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES was unable to open it."
-msgstr "LIVES: bir dosya seçin"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."
@@ -9914,14 +9934,12 @@ msgid "LiVES was not able to open the file"
 msgstr "LIVES: bir dosya seçin"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "$file"
-msgstr "başarısız.\n"
+msgstr "$dosya"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES audio error."
-msgstr "LiVES:- Ses girişini zayıflatmak"
+msgstr "LiVES ses hatası."
 
 #: /usr/bin/smogrify:0
 msgid "cdda2wav is required for this function."
@@ -9929,7 +9947,7 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Please install it first."
-msgstr ""
+msgstr "Lütfen önce yükleyin."
 
 #: /usr/bin/smogrify:0
 msgid "You must set the CD device first in Preferences."
@@ -9945,12 +9963,11 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "$plugin_name failed:"
-msgstr ""
+msgstr "$eklenti_ismi geçersiz:"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "$error"
-msgstr "hata.\n"
+msgstr "$hata"
 
 #~ msgid ""
 #~ "and if possible obtain a backtrace using gdb.\n"

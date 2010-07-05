@@ -1,5 +1,5 @@
-Version 1.3.4
--------------
+Version 1.3.4 (04 Jul 2010)
+--------------------------
 Minor a/v sync fix. *
 Add more formats to x264 encoder (needs testing).
 Add experimental webm encoding support in ffmpeg_encoder.
@@ -10,13 +10,14 @@ Thread context fix for gtk+ 2.22 and higher.
 Fix startup mplayer png/alpha test.
 Fix end image size problem (regression).
 Updates to decoder plugins (make threadsafe).
-Add plugin decoder support for ogg/dirac files (in progress).
+Add plugin decoder support for ogg/dirac files.
 Faster seeking in ogg/theora files.
-Apply theming to the Prefences dialog (A. Kolga)
-Move weed palette definitions into weed-palettes.c
+Apply theming to the Preferences dialog (A. Kolga)
+Move weed palette definitions into weed-palettes.h
 Code cleanup - use enums instead of #defines where possible.
 Add new scribbler plugin (Penkov)
-
+Initial translation to Croatian.
+Updated translations to Hebrew, Polish, Turkish, Russian and Italian.
 
 
 

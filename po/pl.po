@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-06-21 03:04-0300\n"
-"PO-Revision-Date: 2010-03-26 20:00+0000\n"
-"Last-Translator: risto <Unknown>\n"
+"POT-Creation-Date: 2010-07-04 21:29-0300\n"
+"PO-Revision-Date: 2010-05-14 21:38+0000\n"
+"Last-Translator: Marek Jędrzejewski <slomianowlosy@gmail.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-05-06 12:09+0000\n"
+"X-Launchpad-Export-Date: 2010-07-04 22:20+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:76
@@ -67,6 +67,9 @@ msgid ""
 "information.\n"
 "\n"
 msgstr ""
+"Proszę zainstalować gdp, a potem uruchomić LiVES z opcją -debug, aby uzyskać "
+"więcej informacji.\n"
+"\n"
 
 #: src/main.c:109
 msgid "Preserving set.\n"
@@ -529,7 +532,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:3438 src/main.c:3439 src/gui.c:1905 src/gui.c:2873
-#: src/saveplay.c:1492
+#: src/saveplay.c:1505
 msgid "Play"
 msgstr "Odtwarzaj"
 
@@ -545,12 +548,12 @@ msgid "Closed file %s\n"
 msgstr ""
 
 #: src/main.c:4050 src/gui.c:522 src/utils.c:2555 src/utils.c:2581
-#: src/saveplay.c:2460 src/multitrack.c:3836 src/multitrack.c:5302
+#: src/saveplay.c:2473 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "_Cofnij"
 
 #: src/main.c:4051 src/gui.c:535 src/utils.c:2556 src/utils.c:2582
-#: src/saveplay.c:2461 src/multitrack.c:3857 src/multitrack.c:5325
+#: src/saveplay.c:2474 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "_Powtórz"
 
@@ -854,7 +857,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:188 src/callbacks.c:7504 src/gui.c:2876 src/gui.c:3414
-#: src/saveplay.c:1495 src/saveplay.c:2104 src/dialogs.c:788 src/dialogs.c:789
+#: src/saveplay.c:1508 src/saveplay.c:2117 src/dialogs.c:788 src/dialogs.c:789
 #: src/dialogs.c:956 src/dialogs.c:957 src/framedraw.c:189
 #: src/multitrack.c:6804
 msgid "Preview"
@@ -1550,8 +1553,8 @@ msgstr ""
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1875 src/saveplay.c:899 src/saveplay.c:1010
-#: src/saveplay.c:1063 src/saveplay.c:2807
+#: src/callbacks.c:1875 src/saveplay.c:912 src/saveplay.c:1023
+#: src/saveplay.c:1076 src/saveplay.c:2820
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -1935,7 +1938,7 @@ msgstr ""
 msgid "Opening audio %s, type %s..."
 msgstr ""
 
-#: src/callbacks.c:4969 src/saveplay.c:339
+#: src/callbacks.c:4969 src/saveplay.c:341
 msgid "Opening audio"
 msgstr ""
 
@@ -3370,26 +3373,26 @@ msgstr ""
 msgid "Examining file header"
 msgstr ""
 
-#: src/saveplay.c:178 src/saveplay.c:529
+#: src/saveplay.c:179 src/saveplay.c:536
 #, c-format
 msgid "Opening %s"
 msgstr "Otwieranie %s"
 
-#: src/saveplay.c:181
+#: src/saveplay.c:182
 #, c-format
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:189 src/saveplay.c:2795
+#: src/saveplay.c:190 src/saveplay.c:2808
 msgid " without sound"
 msgstr ""
 
-#: src/saveplay.c:245
+#: src/saveplay.c:246
 #, c-format
 msgid "Opening audio for %s"
 msgstr ""
 
-#: src/saveplay.c:419
+#: src/saveplay.c:424
 #, c-format
 msgid ""
 "\n"
@@ -3401,11 +3404,11 @@ msgid ""
 "Are you sure you wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:431
+#: src/saveplay.c:437
 msgid " - please be patient."
 msgstr ""
 
-#: src/saveplay.c:610
+#: src/saveplay.c:620
 msgid ""
 "\n"
 "\n"
@@ -3413,14 +3416,14 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/saveplay.c:613
+#: src/saveplay.c:623
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer to open this file.\n"
 msgstr ""
 
-#: src/saveplay.c:616
+#: src/saveplay.c:626
 msgid ""
 "\n"
 "\n"
@@ -3428,7 +3431,7 @@ msgid ""
 "Tools|Preferences|Decoding\n"
 msgstr ""
 
-#: src/saveplay.c:833
+#: src/saveplay.c:846
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3436,61 +3439,61 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:884
+#: src/saveplay.c:897
 msgid "selection"
 msgstr "zaznaczenie"
 
-#: src/saveplay.c:938 src/saveplay.c:1035
+#: src/saveplay.c:951 src/saveplay.c:1048
 msgid "Linking selection"
 msgstr ""
 
-#: src/saveplay.c:1078
+#: src/saveplay.c:1091
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:1086
+#: src/saveplay.c:1099
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1089
+#: src/saveplay.c:1102
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1188
+#: src/saveplay.c:1201
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1224
+#: src/saveplay.c:1237
 msgid "error.\n"
 msgstr ""
 
-#: src/saveplay.c:1280
+#: src/saveplay.c:1293
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1420
+#: src/saveplay.c:1433
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1424
+#: src/saveplay.c:1437
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1427
+#: src/saveplay.c:1440
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:2264
+#: src/saveplay.c:2277
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:2270
+#: src/saveplay.c:2283
 msgid ""
 "\n"
 "\n"
@@ -3499,16 +3502,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2395
+#: src/saveplay.c:2408
 msgid "Unknown"
 msgstr "Nieznane"
 
-#: src/saveplay.c:2489
+#: src/saveplay.c:2502
 #, c-format
 msgid "Untitled%d"
 msgstr "Dokument_%d"
 
-#: src/saveplay.c:2604
+#: src/saveplay.c:2617
 #, c-format
 msgid ""
 "\n"
@@ -3516,68 +3519,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2616
+#: src/saveplay.c:2629
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2632
+#: src/saveplay.c:2645
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2636 src/saveplay.c:3235
+#: src/saveplay.c:2649 src/saveplay.c:3248
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2640 src/saveplay.c:3239
+#: src/saveplay.c:2653 src/saveplay.c:3252
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2643 src/saveplay.c:3242
+#: src/saveplay.c:2656 src/saveplay.c:3255
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2651
+#: src/saveplay.c:2664
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2725
+#: src/saveplay.c:2738
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2790
+#: src/saveplay.c:2803
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2826
+#: src/saveplay.c:2839
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:2857
+#: src/saveplay.c:2870
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3161
+#: src/saveplay.c:3174
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3180
+#: src/saveplay.c:3193
 msgid "Restoring"
 msgstr "Przywracanie"
 
-#: src/saveplay.c:3202
+#: src/saveplay.c:3215
 #, c-format
 msgid ""
 "\n"
@@ -3586,17 +3589,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3605
+#: src/saveplay.c:3618
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3609
+#: src/saveplay.c:3622
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3632
+#: src/saveplay.c:3645
 #, c-format
 msgid ""
 "\n"
@@ -3604,18 +3607,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3748
+#: src/saveplay.c:3761
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:3761
+#: src/saveplay.c:3774
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:3765
+#: src/saveplay.c:3778
 msgid "Recovering files..."
 msgstr ""
 
@@ -8564,9 +8567,8 @@ msgid "Bluring"
 msgstr "Rozmywanie"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "_Uruchom"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
@@ -8776,9 +8778,8 @@ msgid "Fina_l frame"
 msgstr "Koniec ramki"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "Flash _colour"
-msgstr "_Uruchom"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
@@ -8790,9 +8791,8 @@ msgid "Flop horizontally"
 msgstr "Odbij pionowo"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "_Uruchom"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -8818,9 +8818,8 @@ msgid "Frame _width"
 msgstr "Wielkość filmu"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "sekundy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -8911,9 +8910,8 @@ msgid "Hue start"
 msgstr "_Uruchom"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Image overlay"
-msgstr "każdy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -8955,9 +8953,8 @@ msgid "Making monochrome"
 msgstr "Monochromatyczne"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Obrót"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9011,9 +9008,8 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "Obrót"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
@@ -9070,29 +9066,24 @@ msgid "S_tart %"
 msgstr "_Uruchom"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Przejścia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Przejścia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Przejścia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Przejścia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Przejścia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
@@ -9248,9 +9239,8 @@ msgid "_Background Colour"
 msgstr "_Uruchom"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Background colour"
-msgstr "_Uruchom"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -9316,9 +9306,8 @@ msgstr "_Promień"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Fill colour"
-msgstr "_Uruchom"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -9645,9 +9634,8 @@ msgid "colour_filter"
 msgstr "Koloryzacja"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Koloryzacja"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -9708,9 +9696,8 @@ msgid "frame_calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "_Ignorowanie zmian"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -9772,9 +9759,8 @@ msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "Obrót"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy

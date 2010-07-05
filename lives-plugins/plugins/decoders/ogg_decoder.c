@@ -280,8 +280,7 @@ static index_entry *get_bounds_for (lives_clip_data_t *cdata, int64_t tframe, in
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   index_entry *idx=priv->idx;
 
-  if (ppos_lower!=NULL) *ppos_lower=-1;
-  if (ppos_upper!=NULL) *ppos_upper=-1;
+  *ppos_lower=*ppos_upper=-1;
 
   while (idx!=NULL) {
 
@@ -303,14 +302,14 @@ static index_entry *get_bounds_for (lives_clip_data_t *cdata, int64_t tframe, in
     //fprintf(stderr,"check %lld against %lld\n",tframe,kframe);
 
     if (kframe>tframe) {
-      if (ppos_upper!=NULL) *ppos_upper=idx->pagepos;
+      *ppos_upper=idx->pagepos;
       return NULL;
     }
 
 
     //fprintf(stderr,"2check against %lld\n",frame);
     if (frame<tframe) {
-      if (ppos_lower!=NULL) *ppos_lower=idx->pagepos;
+      *ppos_lower=idx->pagepos;
       idx=idx->next;
       continue;
     }
@@ -335,6 +334,7 @@ static uint8_t * ptr_2_op(uint8_t * ptr, ogg_packet * op) {
   return ptr;
 }
 #endif
+
 
 static int64_t get_page(lives_clip_data_t *cdata, int64_t inpos) {
   uint8_t header[PAGE_HEADER_BYTES+255];
@@ -941,11 +941,18 @@ static int64_t find_first_page (lives_clip_data_t *cdata, int64_t pos1, int64_t 
 
   priv->input_position=pos1;
 
-  ogg_stream_reset(&priv->vstream->stpriv->os);
-
   //printf ("start %ld %ld\n",pos1,pos2);
 
   seek_byte(cdata,pos1);
+
+  if ( pos1 == priv->vstream->data_start ) {
+      /* set a dummy granulepos at data_start */
+      *kframe = priv->kframe_offset;
+      *frame = priv->kframe_offset;
+
+      opriv->page_valid = 1;
+      return priv->input_position;
+  }
 
   if (bytes_to_read>BYTES_TO_READ) bytes_to_read=BYTES_TO_READ;
 
@@ -978,7 +985,7 @@ static int64_t find_first_page (lives_clip_data_t *cdata, int64_t pos1, int64_t 
       continue;
     }
 
-    if (result>0||(result==0&&opriv->op.bytes>3&&!strncmp((char *)opriv->op.packet,"OggS",4))) {
+    if (result>0||(result==0&&opriv->oy.fill>3&&!strncmp((char *)opriv->oy.data,"OggS",4))) {
       pos1=priv->input_position;
       break;
     }
@@ -995,7 +1002,6 @@ static int64_t find_first_page (lives_clip_data_t *cdata, int64_t pos1, int64_t 
     //printf("here %ld and %ld\n",priv->input_position,pos2);
 
     if (priv->input_position>=pos2) {
-      printf("exit 1 %ld %ld %ld\n",priv->input_position,result,pos2);
       // reached the end of the search region and nothing was found
       *frame=-1;
       return priv->input_position; // we checked up to here
@@ -1028,37 +1034,24 @@ static int64_t find_first_page (lives_clip_data_t *cdata, int64_t pos1, int64_t 
 
     page_packets_checked=0;
 
-    while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
-
-      //printf("a checking packet %c %c %c %c %d\n",opriv->op.packet[0],opriv->op.packet[1],opriv->op.packet[2],opriv->op.packet[3],opriv->op.packet[4]);
-
+    if (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
       page_packets_checked++;
-      
     }
 
     if (page_packets_checked) {
       granulepos = ogg_page_granulepos(&(opriv->current_page));
-      if (granulepos>-1) {
-	theora_index_entry_add(cdata,granulepos,priv->input_position-bytes);
+      theora_index_entry_add(cdata,granulepos,pos1);
     
-	if (frame) {
-	  if (ogg_page_packets(&opriv->current_page)==0) {
-	    // no frame ends on this page; but we need to find a frame number
-	    seek_byte(cdata,pos1);
-	    continue;
-	  }
-	  
-	  *kframe =
-	    granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
-	  
-	  *frame = *kframe +
-	    granulepos-(*kframe<<priv->vstream->stpriv->keyframe_granule_shift);
-	  
-	}
-	opriv->page_valid=1;
-	return pos1;
-      }
+      *kframe =
+	  granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+      
+      *frame = *kframe +
+	  granulepos-(*kframe<<priv->vstream->stpriv->keyframe_granule_shift);
+      
+      opriv->page_valid=1;
+      return pos1;
     }
+
     //  -> start of next page
     priv->input_position+=result;
     
@@ -1068,10 +1061,10 @@ static int64_t find_first_page (lives_clip_data_t *cdata, int64_t pos1, int64_t 
 
 
 
-/* Find the last frame for vstream,
+/* Find the last frame for theora,
    -1 is returned on failure */
 
-static int64_t find_last_frame (lives_clip_data_t *cdata, lives_in_stream *vstream) {
+static int64_t find_last_theora_frame (lives_clip_data_t *cdata, lives_in_stream *vstream) {
 
   int64_t page_pos, start_pos;
   int64_t this_frame=0, last_frame = -1;
@@ -1088,7 +1081,6 @@ static int64_t find_last_frame (lives_clip_data_t *cdata, lives_in_stream *vstre
   start_pos = pos2 - BYTES_TO_READ;
 
   while(1) {
-    if (start_pos < vstream->data_start) start_pos = vstream->data_start;
     if (start_pos<pos1) start_pos=pos1;
 
     //printf("in pos %ld and %ld with %ld\n",start_pos,pos2,vstream->data_start);
@@ -1221,7 +1213,7 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
       continue;
     }
 
-    if (result>0||(result==0&&opriv->op.bytes>3&&!strncmp((char *)opriv->op.packet,"OggS",4))) {
+    if (result>0||(result==0&&opriv->oy.fill>3&&!strncmp((char *)opriv->oy.data,"OggS",4))) {
       pos1=priv->input_position;
       break;
     }
@@ -1373,8 +1365,8 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
 	// we can start counting pages from here
 	pages_checked=1;
       }
-    
-    
+
+
       if (pages_checked>=2) {
 	// if we checked from one packet to the next and found no seq header.
 	// We now know that the first pages had no seq header
@@ -1410,7 +1402,7 @@ This is for dirac only. */
 
 static int64_t find_last_sync_frame (lives_clip_data_t *cdata, lives_in_stream *vstream) {
   int64_t page_pos, last_page_pos = -1, start_pos;
-  int64_t this_frame=0;
+  int64_t this_frame=-1;
   int64_t pos1,pos2,serialno;
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
@@ -1423,7 +1415,6 @@ static int64_t find_last_sync_frame (lives_clip_data_t *cdata, lives_in_stream *
   start_pos = pos2 - BYTES_TO_READ;
 
   while(1) {
-    if (start_pos < priv->vstream->data_start) start_pos = priv->vstream->data_start;
     if (start_pos<pos1) start_pos=pos1;
 
     page_pos = find_first_sync_frame(cdata, start_pos, pos2, &this_frame);
@@ -1509,7 +1500,7 @@ static int64_t get_last_granulepos (lives_clip_data_t *cdata, int serialno) {
 
   // TODO - fix for vorbis
 
-  frame = find_last_frame (cdata,priv->vstream);
+  frame = find_last_theora_frame (cdata,priv->vstream);
   if (frame < 0) return -1;
 
   return frame;
@@ -1810,11 +1801,9 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
   //fprintf(stderr,"seek to frame %ld %d\n",tframe,can_exact);
 
   if (tframe<priv->kframe_offset) {
-    if (!can_exact) {
-      seek_byte(cdata,priv->vstream->data_start);
-    }
     priv->cpagepos=priv->vstream->data_start;
     if (!can_exact) {
+      seek_byte(cdata,priv->vstream->data_start);
       return frame_to_gpos(cdata,priv->kframe_offset,1);
     }
     return frame_to_gpos(cdata,priv->kframe_offset,0);

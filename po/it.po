@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-06-21 03:04-0300\n"
-"PO-Revision-Date: 2010-03-21 18:33+0000\n"
+"POT-Creation-Date: 2010-07-04 21:29-0300\n"
+"PO-Revision-Date: 2010-05-22 16:04+0000\n"
 "Last-Translator: Milo Casagrande <milo@casagrande.name>\n"
 "Language-Team: Italian <it@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-03-21 18:44+0000\n"
+"X-Launchpad-Export-Date: 2010-07-04 22:20+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:76
@@ -112,14 +112,12 @@ msgid "Starting jack audio server..."
 msgstr "Avvio del server audio jack in corso..."
 
 #: src/main.c:1171
-#, fuzzy
 msgid "Starting jack transport server..."
-msgstr "Avvio del server audio jack in corso..."
+msgstr ""
 
 #: src/main.c:1172
-#, fuzzy
 msgid "Connecting to jack transport server..."
-msgstr "Avvio del server audio jack in corso..."
+msgstr ""
 
 #: src/main.c:1193
 msgid " or \"lives -aplayer pulse\""
@@ -610,7 +608,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:3438 src/main.c:3439 src/gui.c:1905 src/gui.c:2873
-#: src/saveplay.c:1492
+#: src/saveplay.c:1505
 msgid "Play"
 msgstr "Riproduci"
 
@@ -628,12 +626,12 @@ msgid "Closed file %s\n"
 msgstr "Chiuso il file %s\n"
 
 #: src/main.c:4050 src/gui.c:522 src/utils.c:2555 src/utils.c:2581
-#: src/saveplay.c:2460 src/multitrack.c:3836 src/multitrack.c:5302
+#: src/saveplay.c:2473 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "_Annulla"
 
 #: src/main.c:4051 src/gui.c:535 src/utils.c:2556 src/utils.c:2582
-#: src/saveplay.c:2461 src/multitrack.c:3857 src/multitrack.c:5325
+#: src/saveplay.c:2474 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "_Ripeti"
 
@@ -683,10 +681,15 @@ msgid ""
 "\n"
 "(Free space = %.2f GB)"
 msgstr ""
+"Creare la directory\n"
+"%s\n"
+"?\n"
+"\n"
+"(Spazio libero = %.2f GB)"
 
 #: src/startup.c:56
 msgid "Directory name is too long !"
-msgstr ""
+msgstr "Il nome della directory è troppo lungo."
 
 #: src/startup.c:148
 msgid ""
@@ -816,15 +819,15 @@ msgstr "_Successivo"
 
 #: src/startup.c:438
 msgid "Skipped"
-msgstr ""
+msgstr "Saltato"
 
 #: src/startup.c:454
 msgid "Passed"
-msgstr ""
+msgstr "Superato"
 
 #: src/startup.c:485
 msgid "Failed"
-msgstr ""
+msgstr "Non riuscito"
 
 #: src/startup.c:547
 msgid "LiVES: - Testing Configuration"
@@ -970,7 +973,7 @@ msgstr ""
 "vengono importati."
 
 #: src/interface.c:188 src/callbacks.c:7504 src/gui.c:2876 src/gui.c:3414
-#: src/saveplay.c:1495 src/saveplay.c:2104 src/dialogs.c:788 src/dialogs.c:789
+#: src/saveplay.c:1508 src/saveplay.c:2117 src/dialogs.c:788 src/dialogs.c:789
 #: src/dialogs.c:956 src/dialogs.c:957 src/framedraw.c:189
 #: src/multitrack.c:6804
 msgid "Preview"
@@ -1029,14 +1032,12 @@ msgid "_Preview"
 msgstr "_Anteprima"
 
 #: src/interface.c:405
-#, fuzzy
 msgid "Paus_e"
-msgstr "Pausa"
+msgstr ""
 
 #: src/interface.c:406 src/callbacks.c:7305
-#, fuzzy
 msgid "Pause/_Enough"
-msgstr "_Abbastanza"
+msgstr ""
 
 #: src/interface.c:433
 msgid "_Cancel"
@@ -1278,9 +1279,8 @@ msgid "Set name "
 msgstr "Nome set "
 
 #: src/interface.c:1939
-#, fuzzy
 msgid "Use def_aults"
-msgstr "Imposta _predefinito"
+msgstr ""
 
 #: src/interface.c:1942 src/interface.c:2194 src/preferences.c:2676
 msgid "_Advanced"
@@ -1325,7 +1325,7 @@ msgstr "Numero massimo di tracce da mostrare"
 
 #: src/interface.c:2074
 msgid "Device:        /dev/video"
-msgstr ""
+msgstr "Device: /dev/video"
 
 #: src/interface.c:2077
 msgid "Device:        fw:"
@@ -1352,14 +1352,12 @@ msgid "Use default width, height and FPS"
 msgstr ""
 
 #: src/interface.c:2275
-#, fuzzy
 msgid "Width"
-msgstr "_Larghezza"
+msgstr ""
 
 #: src/interface.c:2290
-#, fuzzy
 msgid "Height"
-msgstr "_Altezza"
+msgstr ""
 
 #: src/interface.c:2327
 msgid "Driver"
@@ -1758,8 +1756,8 @@ msgstr "Rifacimento in corso"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Copia dei fotogrammi da %d a %d%s dagli appunti in corso..."
 
-#: src/callbacks.c:1875 src/saveplay.c:899 src/saveplay.c:1010
-#: src/saveplay.c:1063 src/saveplay.c:2807
+#: src/callbacks.c:1875 src/saveplay.c:912 src/saveplay.c:1023
+#: src/saveplay.c:1076 src/saveplay.c:2820
 msgid "Pulling frames from clip"
 msgstr "Togliendo i fotogrammi dal clip"
 
@@ -2239,7 +2237,7 @@ msgstr ""
 msgid "Opening audio %s, type %s..."
 msgstr "Apertura audio %s, tipo %s in corso..."
 
-#: src/callbacks.c:4969 src/saveplay.c:339
+#: src/callbacks.c:4969 src/saveplay.c:341
 msgid "Opening audio"
 msgstr "Apertura audio in corso"
 
@@ -2385,16 +2383,11 @@ msgid "Resume"
 msgstr "Riprendi"
 
 #: src/callbacks.c:7265
-#, fuzzy
 msgid ""
 "\n"
 "Paused\n"
 "(click Resume to continue processing)"
 msgstr ""
-"\n"
-"In Pausa\n"
-"(clicca Mantieni per mantenere quello che hai e interrompere)\n"
-"(clicca Riprendi per continuare il processo)"
 
 #: src/callbacks.c:7266 src/callbacks.c:7296
 msgid "paused..."
@@ -2413,9 +2406,8 @@ msgid "Keep"
 msgstr "Mantieni"
 
 #: src/callbacks.c:7293
-#, fuzzy
 msgid "Enough"
-msgstr "_Abbastanza"
+msgstr ""
 
 #: src/callbacks.c:7294
 msgid ""
@@ -2952,7 +2944,7 @@ msgstr "Separa Modalità 'A_ppiccicosa' Finestra"
 
 #: src/gui.c:884
 msgid "S_how Frame Counter"
-msgstr "M_ostra Il Contatore Deo Fotogrammi"
+msgstr "_Mostrare contatore fotogrammi"
 
 #: src/gui.c:894 src/multitrack.c:5544
 msgid "Effect_s"
@@ -3770,26 +3762,26 @@ msgstr " fotogrammi ] ----------"
 msgid "Examining file header"
 msgstr "Esaminando l'intestazione del file"
 
-#: src/saveplay.c:178 src/saveplay.c:529
+#: src/saveplay.c:179 src/saveplay.c:536
 #, c-format
 msgid "Opening %s"
 msgstr "Apertura di %s in corso"
 
-#: src/saveplay.c:181
+#: src/saveplay.c:182
 #, c-format
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Aprendo %s tempo di partenza %.2f secondi %d fotogrammi"
 
-#: src/saveplay.c:189 src/saveplay.c:2795
+#: src/saveplay.c:190 src/saveplay.c:2808
 msgid " without sound"
 msgstr " senza suono"
 
-#: src/saveplay.c:245
+#: src/saveplay.c:246
 #, c-format
 msgid "Opening audio for %s"
 msgstr "Apertura dell'audio per %s in corso"
 
-#: src/saveplay.c:419
+#: src/saveplay.c:424
 #, c-format
 msgid ""
 "\n"
@@ -3808,11 +3800,11 @@ msgstr ""
 "\n"
 "Sei sicuro di voler continuare ?"
 
-#: src/saveplay.c:431
+#: src/saveplay.c:437
 msgid " - please be patient."
 msgstr " - per piacere sii paziente."
 
-#: src/saveplay.c:610
+#: src/saveplay.c:620
 msgid ""
 "\n"
 "\n"
@@ -3824,7 +3816,7 @@ msgstr ""
 "LiVES non è stato in grado di estrarre il video oppure l'audio.\n"
 "Per piacere controlla la finestra del terminale per ulteriori dettagli.\n"
 
-#: src/saveplay.c:613
+#: src/saveplay.c:623
 msgid ""
 "\n"
 "\n"
@@ -3834,7 +3826,7 @@ msgstr ""
 "\n"
 "Dovresti aver bisogno di installare mplayer per aprire questo file.\n"
 
-#: src/saveplay.c:616
+#: src/saveplay.c:626
 msgid ""
 "\n"
 "\n"
@@ -3846,7 +3838,7 @@ msgstr ""
 "Per piacere controlla l'impostazione del comando dell'apertura del Video in\n"
 "Strumenti|Preferenze|Decodifica\n"
 
-#: src/saveplay.c:833
+#: src/saveplay.c:846
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3858,41 +3850,41 @@ msgstr ""
 "\n"
 "Vuoi continuare ancora ?"
 
-#: src/saveplay.c:884
+#: src/saveplay.c:897
 msgid "selection"
 msgstr "selezione"
 
-#: src/saveplay.c:938 src/saveplay.c:1035
+#: src/saveplay.c:951 src/saveplay.c:1048
 msgid "Linking selection"
 msgstr "Collegando la selezione"
 
-#: src/saveplay.c:1078
+#: src/saveplay.c:1091
 msgid " (with no sound)\n"
 msgstr " (con nessun suono)\n"
 
-#: src/saveplay.c:1086
+#: src/saveplay.c:1099
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 "Salvando i fotogrammi da %d a %d%s come \"%s\" : codificatore = %s : formato "
 "= %s..."
 
-#: src/saveplay.c:1089
+#: src/saveplay.c:1102
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "Salvando i fotogrammi da 1 a %d%s come \"%s\" : codificatore = %s : formato "
 "= %s..."
 
-#: src/saveplay.c:1188
+#: src/saveplay.c:1201
 msgid "Saving [can take a long time]"
 msgstr "Salvataggio in corso [può impiegare molto tempo]"
 
-#: src/saveplay.c:1224
+#: src/saveplay.c:1237
 msgid "error.\n"
 msgstr "errore.\n"
 
-#: src/saveplay.c:1280
+#: src/saveplay.c:1293
 msgid ""
 "\n"
 "\n"
@@ -3902,24 +3894,24 @@ msgstr ""
 "\n"
 "Errore del codificatore - il file di output non è stato creato !\n"
 
-#: src/saveplay.c:1420
+#: src/saveplay.c:1433
 msgid "recording aborted by preview.\n"
 msgstr "registrazione fermata dall'anteprima.\n"
 
-#: src/saveplay.c:1424
+#: src/saveplay.c:1437
 msgid "recording aborted by clipboard playback.\n"
 msgstr "registrazione fermata dalla riproduzione degli appunti.\n"
 
-#: src/saveplay.c:1427
+#: src/saveplay.c:1440
 msgid "Recording performance..."
 msgstr "Registrando l'esibizione..."
 
-#: src/saveplay.c:2264
+#: src/saveplay.c:2277
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Gli FPS medi sono stati %.4f\n"
 
-#: src/saveplay.c:2270
+#: src/saveplay.c:2283
 msgid ""
 "\n"
 "\n"
@@ -3933,16 +3925,16 @@ msgstr ""
 "Dovresti cliccare su Strumenti--->Ridimensiona Tutto\n"
 "e ridimensionare tutti i fotogrammi alla dimensione corrente.\n"
 
-#: src/saveplay.c:2395
+#: src/saveplay.c:2408
 msgid "Unknown"
 msgstr "Sconosciuto"
 
-#: src/saveplay.c:2489
+#: src/saveplay.c:2502
 #, c-format
 msgid "Untitled%d"
 msgstr "Senza titolo%d"
 
-#: src/saveplay.c:2604
+#: src/saveplay.c:2617
 #, c-format
 msgid ""
 "\n"
@@ -3954,14 +3946,14 @@ msgstr ""
 "predefinito di %.3f fps. \n"
 "Il predefinito può essere impostato in Strumenti | Preferenze | Miste.\n"
 
-#: src/saveplay.c:2616
+#: src/saveplay.c:2629
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "La velocità di riproduzione è stata regolata a %.3f fotogrammi al secondo "
 "per adattarsi all'audio.\n"
 
-#: src/saveplay.c:2632
+#: src/saveplay.c:2645
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -3970,7 +3962,7 @@ msgstr ""
 "Fotogrammi=%d tipo=%s dimensione=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:2636 src/saveplay.c:3235
+#: src/saveplay.c:2649 src/saveplay.c:3248
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -3979,49 +3971,49 @@ msgstr ""
 "Fotogrammi=%d tipo=%s dimensione=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:2640 src/saveplay.c:3239
+#: src/saveplay.c:2653 src/saveplay.c:3252
 #, c-format
 msgid "%s none\n"
 msgstr "%s niente\n"
 
-#: src/saveplay.c:2643 src/saveplay.c:3242
+#: src/saveplay.c:2656 src/saveplay.c:3255
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d canale/i %d bps\n"
 
-#: src/saveplay.c:2651
+#: src/saveplay.c:2664
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Commento: %s\n"
 
-#: src/saveplay.c:2725
+#: src/saveplay.c:2738
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Salvataggio del fotogramma %d come %s in corso..."
 
-#: src/saveplay.c:2790
+#: src/saveplay.c:2803
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Creando un backup da %s a %s"
 
-#: src/saveplay.c:2826
+#: src/saveplay.c:2839
 msgid "Backing up"
 msgstr "Creando un backup"
 
-#: src/saveplay.c:2857
+#: src/saveplay.c:2870
 msgid "performance data was backed up..."
 msgstr "i dati dell'esibizione hanno ricevuto un backup..."
 
-#: src/saveplay.c:3161
+#: src/saveplay.c:3174
 #, c-format
 msgid "Restoring %s..."
 msgstr "Ripristinando %s..."
 
-#: src/saveplay.c:3180
+#: src/saveplay.c:3193
 msgid "Restoring"
 msgstr "Ripristino in corso"
 
-#: src/saveplay.c:3202
+#: src/saveplay.c:3215
 #, c-format
 msgid ""
 "\n"
@@ -4034,17 +4026,17 @@ msgstr ""
 "Il file %s è corrotto.\n"
 "LiVES non è stato in grado di ripristinarlo.\n"
 
-#: src/saveplay.c:3605
+#: src/saveplay.c:3618
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3609
+#: src/saveplay.c:3622
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3632
+#: src/saveplay.c:3645
 #, c-format
 msgid ""
 "\n"
@@ -4052,7 +4044,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3748
+#: src/saveplay.c:3761
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4062,11 +4054,11 @@ msgstr ""
 "Sono stati trovati dei file da un precedente avvio di LiVES.\n"
 "Vuoi provare a recuperarli?\n"
 
-#: src/saveplay.c:3761
+#: src/saveplay.c:3774
 msgid "Recovering files"
 msgstr "Recupero dei file in corso"
 
-#: src/saveplay.c:3765
+#: src/saveplay.c:3778
 msgid "Recovering files..."
 msgstr "Recupero dei file in corso..."
 
@@ -4118,13 +4110,11 @@ msgstr ""
 "%d/%d fotogrammi aperti. Tempo rimanente %u secondi.\n"
 
 #: src/dialogs.c:666
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%d/%d frames opened.\n"
 msgstr ""
-"\n"
-"%d fotogrammi aperti.\n"
 
 #: src/dialogs.c:670
 #, c-format
@@ -4454,7 +4444,6 @@ msgid "Multitrack Keys"
 msgstr "Tasti Multi-traccia"
 
 #: src/dialogs.c:1449
-#, fuzzy
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "\n"
@@ -4475,29 +4464,6 @@ msgid ""
 "\n"
 "For other keys, see the menus.\n"
 msgstr ""
-"Puoi utilizzare i seguenti tasti per controllare la finestra multi-"
-"traccia:-\n"
-"\n"
-"ctrl-freccia-sinistra              sposta il cursore della linea del tempo a "
-"sinistra di 1 secondo\n"
-"ctrl-freccia-destra            sposta il cursore della linea del tempo a "
-"destra di 1 secondo\n"
-"shift-freccia-sinistra            sposta il cursore della linea del tempo a "
-"sinistra di 1 fotogramma\n"
-"shift-freccia-destra          sposta il cursore della linea del tempo a "
-"destra di 1 fotogramma\n"
-"ctrl-freccia-su               sposta la traccia corrente in alto\n"
-"ctrl-freccia-giù           sposta la traccia corrente in basso\n"
-"ctrl-pagina-su                seleziona prossimo clip\n"
-"ctrl-page-down            seleziona clip precedente\n"
-"ctrl-spazio                    seleziona/deseleziona traccia corrente\n"
-"ctrl-più                       ingrandisci\n"
-"ctrl-meno                    rimpicciolisci\n"
-"m                                 crea un segno sulla linea del tempo "
-"(durante la riproduzione)\n"
-"w                                 riavvolgi all'inizio della riproduzione.\n"
-"\n"
-"Per altri tasti, consulta i menu.\n"
 
 #: src/dialogs.c:1465
 msgid "Message History"
@@ -4627,7 +4593,6 @@ msgstr ""
 "Il clip non è stato caricato.\n"
 
 #: src/dialogs.c:1530
-#, fuzzy
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -4637,10 +4602,6 @@ msgid ""
 "lives -jackopts 0\n"
 "and then adjust your jack options in Preferences | Jack Integration.\n"
 msgstr ""
-"\n"
-"Impossibile avviare Jack. Si prega di controllare che alsa sia correttamente "
-"installato sul vostro elaboratore\n"
-"e che la scheda audio non sia utilizzata da un altro programma\n"
 
 #: src/dialogs.c:1535
 msgid ""
@@ -7097,9 +7058,8 @@ msgid "Jack transport sets start position"
 msgstr "Jack transport imposta la posizione di avvio"
 
 #: src/preferences.c:4478
-#, fuzzy
 msgid "Jack transport timebase slave"
-msgstr "_Master trasporto jack"
+msgstr ""
 
 #: src/preferences.c:4499
 msgid "(See also Playback -> Audio follows video rate/direction)"
@@ -8413,9 +8373,8 @@ msgid "_Play from Timeline Position"
 msgstr "_Riproduci dalla Posizione Sulla Linea Del Tempo"
 
 #: src/multitrack.c:5461
-#, fuzzy
 msgid "Pla_y selected time only"
-msgstr "Ripro_duci Selezione"
+msgstr ""
 
 #: src/multitrack.c:5554
 msgid "_Move effects with blocks"
@@ -10998,15 +10957,6 @@ msgstr "$errore"
 #~ "Per piacere rilascia la nota\n"
 #~ "\n"
 
-#~ msgid "Pau_se"
-#~ msgstr "Pau_sa"
-
-#~ msgid "Show frame preview"
-#~ msgstr "Mostra anteprima dei fotogrammi"
-
-#~ msgid "Auto preview"
-#~ msgstr "Anteprima automatica"
-
 #~ msgid ""
 #~ "WARNING - this version of LiVES was compiled without jack support.\n"
 #~ "Many audio features will be unavalaible.\n"
@@ -11017,6 +10967,9 @@ msgstr "$errore"
 
 #~ msgid "autoloading set %s..."
 #~ msgstr "autocaricamento in corso del set %s..."
+
+#~ msgid "Pau_se"
+#~ msgstr "Pau_sa"
 
 #~ msgid "Use _%s audio player"
 #~ msgstr "Utilizza lettore audio _%s"
@@ -11241,6 +11194,9 @@ msgstr "$errore"
 #~ msgstr ""
 #~ "Avvisa riguardo una perdita di _qualità quando si salva un file esistente"
 
+#~ msgid "Jack transport _master"
+#~ msgstr "_Master trasporto jack"
+
 #~ msgid "Double click on an effect to edit it.\n"
 #~ msgstr "Clicca due volte su un effetto per modificarlo.\n"
 
@@ -11360,11 +11316,73 @@ msgstr "$errore"
 #~ msgid "_Snap mode: Off"
 #~ msgstr "Modalità di _scatto: Off"
 
+#~ msgid "Auto preview"
+#~ msgstr "Anteprima automatica"
+
+#~ msgid ""
+#~ "\n"
+#~ "Unable to start up jack. Please ensure that alsa is set up correctly on "
+#~ "your machine\n"
+#~ "and also that the soundcard is not in use by another program.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Impossibile avviare Jack. Si prega di controllare che alsa sia "
+#~ "correttamente installato sul vostro elaboratore\n"
+#~ "e che la scheda audio non sia utilizzata da un altro programma\n"
+
 #~ msgid "_Snap to overlap"
 #~ msgstr "_Passa a sovrapposizione"
 
 #~ msgid "Drag the time slider to where you want\n"
 #~ msgstr "Trascina il cursore del tempo dove vuoi\n"
+
+#~ msgid ""
+#~ "You can use the following keys to control the multitrack window:-\n"
+#~ "\n"
+#~ "ctrl-left-arrow              move timeline cursor left 1 second\n"
+#~ "ctrl-right-arrow            move timeline cursor right 1 second\n"
+#~ "shift-left-arrow            move timeline cursor left 1 frame\n"
+#~ "shift-right-arrow          move timeline cursor right 1 frame\n"
+#~ "ctrl-up-arrow               move current track up\n"
+#~ "ctrl-down-arrow           move current track down\n"
+#~ "ctrl-page-up                select next clip\n"
+#~ "ctrl-page-down            select previous clip\n"
+#~ "ctrl-space                    select/deselect current track\n"
+#~ "ctrl-plus                       zoom in\n"
+#~ "ctrl-minus                    zoom out\n"
+#~ "m                                 make a mark on the timeline (during "
+#~ "playback)\n"
+#~ "w                                 rewind to play start.\n"
+#~ "\n"
+#~ "For other keys, see the menus.\n"
+#~ msgstr ""
+#~ "Puoi utilizzare i seguenti tasti per controllare la finestra multi-"
+#~ "traccia:-\n"
+#~ "\n"
+#~ "ctrl-freccia-sinistra              sposta il cursore della linea del "
+#~ "tempo a sinistra di 1 secondo\n"
+#~ "ctrl-freccia-destra            sposta il cursore della linea del tempo a "
+#~ "destra di 1 secondo\n"
+#~ "shift-freccia-sinistra            sposta il cursore della linea del tempo "
+#~ "a sinistra di 1 fotogramma\n"
+#~ "shift-freccia-destra          sposta il cursore della linea del tempo a "
+#~ "destra di 1 fotogramma\n"
+#~ "ctrl-freccia-su               sposta la traccia corrente in alto\n"
+#~ "ctrl-freccia-giù           sposta la traccia corrente in basso\n"
+#~ "ctrl-pagina-su                seleziona prossimo clip\n"
+#~ "ctrl-page-down            seleziona clip precedente\n"
+#~ "ctrl-spazio                    seleziona/deseleziona traccia corrente\n"
+#~ "ctrl-più                       ingrandisci\n"
+#~ "ctrl-meno                    rimpicciolisci\n"
+#~ "m                                 crea un segno sulla linea del tempo "
+#~ "(durante la riproduzione)\n"
+#~ "w                                 riavvolgi all'inizio della "
+#~ "riproduzione.\n"
+#~ "\n"
+#~ "Per altri tasti, consulta i menu.\n"
+
+#~ msgid "Show frame preview"
+#~ msgstr "Mostra anteprima dei fotogrammi"
 
 #~ msgid ""
 #~ "\n"

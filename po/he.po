@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-06-21 03:04-0300\n"
-"PO-Revision-Date: 2010-05-01 06:47+0000\n"
+"POT-Creation-Date: 2010-07-04 21:29-0300\n"
+"PO-Revision-Date: 2010-06-30 09:14+0000\n"
 "Last-Translator: Liel Fridman <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-05-06 12:09+0000\n"
+"X-Launchpad-Export-Date: 2010-07-04 22:20+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: src/main.c:76
@@ -602,15 +602,15 @@ msgstr "LiVES-%s <ללא קובץ>"
 #: src/main.c:3224
 #, c-format
 msgid "rec %9d/%d"
-msgstr ""
+msgstr "הקלטה %9d/%d"
 
 #: src/main.c:3226
 #, c-format
 msgid "!rec %9d/%d"
-msgstr ""
+msgstr "!הקלטה %9d/%d"
 
 #: src/main.c:3438 src/main.c:3439 src/gui.c:1905 src/gui.c:2873
-#: src/saveplay.c:1492
+#: src/saveplay.c:1505
 msgid "Play"
 msgstr "נגן"
 
@@ -628,12 +628,12 @@ msgid "Closed file %s\n"
 msgstr "הקובץ %s נסגר\n"
 
 #: src/main.c:4050 src/gui.c:522 src/utils.c:2555 src/utils.c:2581
-#: src/saveplay.c:2460 src/multitrack.c:3836 src/multitrack.c:5302
+#: src/saveplay.c:2473 src/multitrack.c:3836 src/multitrack.c:5302
 msgid "_Undo"
 msgstr "_ביטול"
 
 #: src/main.c:4051 src/gui.c:535 src/utils.c:2556 src/utils.c:2582
-#: src/saveplay.c:2461 src/multitrack.c:3857 src/multitrack.c:5325
+#: src/saveplay.c:2474 src/multitrack.c:3857 src/multitrack.c:5325
 msgid "_Redo"
 msgstr "ב_צע שוב"
 
@@ -672,6 +672,11 @@ msgid ""
 "\n"
 "(Free space = %.2f GB)\n"
 msgstr ""
+"תיקייה בשם\n"
+"%s\n"
+"כבר קיימת. האם להשתמש בתיקייה זו ?\n"
+"\n"
+"(מקום פנוי: %.2f ג\"ב)\n"
 
 #: src/startup.c:30
 #, c-format
@@ -982,7 +987,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "באם מוגדר, תבוצע פעולת deinterlace על השקופיות בעת הייבוא."
 
 #: src/interface.c:188 src/callbacks.c:7504 src/gui.c:2876 src/gui.c:3414
-#: src/saveplay.c:1495 src/saveplay.c:2104 src/dialogs.c:788 src/dialogs.c:789
+#: src/saveplay.c:1508 src/saveplay.c:2117 src/dialogs.c:788 src/dialogs.c:789
 #: src/dialogs.c:956 src/dialogs.c:957 src/framedraw.c:189
 #: src/multitrack.c:6804
 msgid "Preview"
@@ -1280,7 +1285,7 @@ msgstr "שם האוסף "
 
 #: src/interface.c:1939
 msgid "Use def_aults"
-msgstr ""
+msgstr "שימוש בברי_רות המחדל"
 
 #: src/interface.c:1942 src/interface.c:2194 src/preferences.c:2676
 msgid "_Advanced"
@@ -1345,23 +1350,23 @@ msgstr "מזהה השמע  "
 
 #: src/interface.c:2210
 msgid "Input number"
-msgstr ""
+msgstr "מספר קלט"
 
 #: src/interface.c:2235
 msgid "Use default width, height and FPS"
-msgstr ""
+msgstr "שימוש ברוחב, בגובה ובמספר השקופיות לשנייה המוגדרים כברירת מחדל"
 
 #: src/interface.c:2275
 msgid "Width"
-msgstr ""
+msgstr "רוחב"
 
 #: src/interface.c:2290
 msgid "Height"
-msgstr ""
+msgstr "גובה"
 
 #: src/interface.c:2327
 msgid "Driver"
-msgstr ""
+msgstr "מנהל התקן"
 
 #: src/interface.c:2346 src/preferences.c:3164
 msgid "Output format"
@@ -1510,6 +1515,8 @@ msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
 msgstr ""
+"הפריסה הנוכחית מכילה שקופיות שנוצרו ולא ניתן לשמור אותן.\n"
+"מומלץ לעבד אותה לפני יציאה ממצב ריבוי־הרצועות\n"
 
 #: src/interface.c:3082
 msgid ""
@@ -1517,6 +1524,9 @@ msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "What do you wish to do ?"
 msgstr ""
+"הנכם עומדים לצאת ממצב ריבוי־הרצועות.\n"
+"הפריסה הנוכחית כוללת שקופיות שנוצרו ולא ניתן לשמור אותן.\n"
+"מה ברצונכם לעשות ?"
 
 #: src/interface.c:3105
 msgid "Clip set _name"
@@ -1748,8 +1758,8 @@ msgstr "מבצע מחדש"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "מעתיק שקופיות מ־%d ־ל%d%s וללוח הגזירים..."
 
-#: src/callbacks.c:1875 src/saveplay.c:899 src/saveplay.c:1010
-#: src/saveplay.c:1063 src/saveplay.c:2807
+#: src/callbacks.c:1875 src/saveplay.c:912 src/saveplay.c:1023
+#: src/saveplay.c:1076 src/saveplay.c:2820
 msgid "Pulling frames from clip"
 msgstr "מושך שקופיות מהקטע"
 
@@ -1776,6 +1786,9 @@ msgid ""
 "Please install 'convert' from the Image-magick package, and then restart "
 "LiVES.\n"
 msgstr ""
+"פעולה זו דורשת שינוי גודל או המרה של שקופיות.\n"
+"נא להתקין את התסריט 'convert' מתוך החבילה Image-magic ולאחר מכן להפעיל מחדש "
+"את LiVES.\n"
 
 #: src/callbacks.c:2100
 msgid ""
@@ -2107,19 +2120,19 @@ msgstr ""
 
 #: src/callbacks.c:4367 src/callbacks.c:4381
 msgid "unsigned"
-msgstr ""
+msgstr "לא מסומן"
 
 #: src/callbacks.c:4368 src/callbacks.c:4382
 msgid "signed"
-msgstr ""
+msgstr "מסומן"
 
 #: src/callbacks.c:4370 src/callbacks.c:4384
 msgid "big-endian"
-msgstr ""
+msgstr "סידור בתים עולה"
 
 #: src/callbacks.c:4371 src/callbacks.c:4385
 msgid "little-endian"
-msgstr ""
+msgstr "סידור בתים יורד"
 
 #: src/callbacks.c:4373 src/callbacks.c:4387
 #, c-format
@@ -2127,6 +2140,8 @@ msgid ""
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
+"  %d הרץ, %d סיביות\n"
+"%s %s"
 
 #: src/callbacks.c:4457
 msgid ""
@@ -2212,7 +2227,7 @@ msgstr ""
 msgid "Opening audio %s, type %s..."
 msgstr "פותח שמע %s, סוג %s..."
 
-#: src/callbacks.c:4969 src/saveplay.c:339
+#: src/callbacks.c:4969 src/saveplay.c:341
 msgid "Opening audio"
 msgstr "פותח שמע"
 
@@ -2361,6 +2376,9 @@ msgid ""
 "Paused\n"
 "(click Resume to continue processing)"
 msgstr ""
+"\n"
+"מושהה\n"
+"(יש ללחוץ על כפתור ההמשך כדי להמשיך בתהליך)"
 
 #: src/callbacks.c:7266 src/callbacks.c:7296
 msgid "paused..."
@@ -2727,15 +2745,15 @@ msgstr "ייבוא מהתקן _Firewire (hdv)"
 
 #: src/gui.c:347
 msgid "_Add Live Input"
-msgstr ""
+msgstr "_הוספת קלט חי"
 
 #: src/gui.c:361
 msgid "Add Live _Firewire Device"
-msgstr ""
+msgstr "הוספת התקן _Firewire חי"
 
 #: src/gui.c:371
 msgid "Add Live _TV Device"
-msgstr ""
+msgstr "הוספת התקן _טלוויזיה חי"
 
 #: src/gui.c:381 src/multitrack.c:5162
 msgid "_Recent Files..."
@@ -2751,7 +2769,7 @@ msgstr "סגירת\\שמ_ירת כל הקטעים"
 
 #: src/gui.c:449
 msgid "_Encode Clip As..."
-msgstr ""
+msgstr "_קידוד הקטע כ..."
 
 #: src/gui.c:451
 msgid "Encode _Selection As..."
@@ -3352,6 +3370,8 @@ msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
 msgstr ""
+"יש ללחוץ על \"s\" כדי לפתוח או לסגור חלון נגינה נפרד לשם ביצועים משופרים, או "
+"על \"q\" כדי לעצור."
 
 #. TRANSLATORS: please keep the translated string the same length
 #: src/gui.c:1815
@@ -3724,26 +3744,26 @@ msgstr " שקופיות ] --------"
 msgid "Examining file header"
 msgstr "בוחן כותרת קובץ"
 
-#: src/saveplay.c:178 src/saveplay.c:529
+#: src/saveplay.c:179 src/saveplay.c:536
 #, c-format
 msgid "Opening %s"
 msgstr "פותח את %s"
 
-#: src/saveplay.c:181
+#: src/saveplay.c:182
 #, c-format
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "פותח את %s בזמן התחלה %.2f שניות. %d שקופיות"
 
-#: src/saveplay.c:189 src/saveplay.c:2795
+#: src/saveplay.c:190 src/saveplay.c:2808
 msgid " without sound"
 msgstr " ללא קול"
 
-#: src/saveplay.c:245
+#: src/saveplay.c:246
 #, c-format
 msgid "Opening audio for %s"
 msgstr "פותח שמע עבור %s"
 
-#: src/saveplay.c:419
+#: src/saveplay.c:424
 #, c-format
 msgid ""
 "\n"
@@ -3762,11 +3782,11 @@ msgstr ""
 "\n"
 "האם ברצונך להמשיך?"
 
-#: src/saveplay.c:431
+#: src/saveplay.c:437
 msgid " - please be patient."
 msgstr " - נא להתאזר בסבלנות"
 
-#: src/saveplay.c:610
+#: src/saveplay.c:620
 msgid ""
 "\n"
 "\n"
@@ -3778,7 +3798,7 @@ msgstr ""
 "אין אפשרות לחלץ שמע או וידאו אחרים.\n"
 "נא לבדוק את חלון המסוף לפרטים נוספים.\n"
 
-#: src/saveplay.c:613
+#: src/saveplay.c:623
 msgid ""
 "\n"
 "\n"
@@ -3788,7 +3808,7 @@ msgstr ""
 "\n"
 "מחובתך להתקין את mplayer כדי לפתוח את קובץ זה.\n"
 
-#: src/saveplay.c:616
+#: src/saveplay.c:626
 msgid ""
 "\n"
 "\n"
@@ -3800,7 +3820,7 @@ msgstr ""
 "נא לבדוק את הגדרות פקודת פתיחת הוידאו ב\n"
 "כלים|העדפות|פענוח\n"
 
-#: src/saveplay.c:833
+#: src/saveplay.c:846
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3812,37 +3832,37 @@ msgstr ""
 "\n"
 "האם ברצונך להמשיך אף על פי כן?"
 
-#: src/saveplay.c:884
+#: src/saveplay.c:897
 msgid "selection"
 msgstr "בחירה"
 
-#: src/saveplay.c:938 src/saveplay.c:1035
+#: src/saveplay.c:951 src/saveplay.c:1048
 msgid "Linking selection"
 msgstr "מקשר בחירה"
 
-#: src/saveplay.c:1078
+#: src/saveplay.c:1091
 msgid " (with no sound)\n"
 msgstr " (ללא קול)\n"
 
-#: src/saveplay.c:1086
+#: src/saveplay.c:1099
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr "שומר שקופיות %d ל־%d%s כ־\"%s\" : מקודד = %s : סוג = %s..."
 
-#: src/saveplay.c:1089
+#: src/saveplay.c:1102
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr "שומר שקופיות 1 ל־%d%s כ־\"%s\" : מקודד %s: סוג = %s..."
 
-#: src/saveplay.c:1188
+#: src/saveplay.c:1201
 msgid "Saving [can take a long time]"
 msgstr "שומר [עלול לקחת זמן רב]"
 
-#: src/saveplay.c:1224
+#: src/saveplay.c:1237
 msgid "error.\n"
 msgstr "שגיאה.\n"
 
-#: src/saveplay.c:1280
+#: src/saveplay.c:1293
 msgid ""
 "\n"
 "\n"
@@ -3852,24 +3872,24 @@ msgstr ""
 "\n"
 "שגיאת מקודד - קובץ הפלט לא נוצר !\n"
 
-#: src/saveplay.c:1420
+#: src/saveplay.c:1433
 msgid "recording aborted by preview.\n"
 msgstr "ההקלטה נעצרה ע\"י התצוגה המקדימה.\n"
 
-#: src/saveplay.c:1424
+#: src/saveplay.c:1437
 msgid "recording aborted by clipboard playback.\n"
 msgstr "ההקלטה נעצרה ע\"י נגינת לוח הגזירים.\n"
 
-#: src/saveplay.c:1427
+#: src/saveplay.c:1440
 msgid "Recording performance..."
 msgstr "מקליט ביצועים..."
 
-#: src/saveplay.c:2264
+#: src/saveplay.c:2277
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "קצב השקופיות לשנייה הממוצע היה %.4f\n"
 
-#: src/saveplay.c:2270
+#: src/saveplay.c:2283
 msgid ""
 "\n"
 "\n"
@@ -3883,16 +3903,16 @@ msgstr ""
 "באפשרותך ללחוץ על כלים--->שנה גודל כולל\n"
 "ולשנות את גודלן של כל השקופיות לגודל הנוכחי\n"
 
-#: src/saveplay.c:2395
+#: src/saveplay.c:2408
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/saveplay.c:2489
+#: src/saveplay.c:2502
 #, c-format
 msgid "Untitled%d"
 msgstr "חסר כותרת%d"
 
-#: src/saveplay.c:2604
+#: src/saveplay.c:2617
 #, c-format
 msgid ""
 "\n"
@@ -3903,12 +3923,12 @@ msgstr ""
 "מהירות הנגינה לא נכונה ! משתמש במהירות ברירת המחדל של %.3f שקופיות לשנייה. \n"
 "ניתן לקבוע את ברירת המחדל לערך אחר בכלים | העדפות | שונות.\n"
 
-#: src/saveplay.c:2616
+#: src/saveplay.c:2629
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "מהירות הנגינה כוונה ל־%.3f שקופיות לשנייה כדי להתאימו לשמע.\n"
 
-#: src/saveplay.c:2632
+#: src/saveplay.c:2645
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -3918,7 +3938,7 @@ msgstr ""
 "%.3f\n"
 "שמע:"
 
-#: src/saveplay.c:2636 src/saveplay.c:3235
+#: src/saveplay.c:2649 src/saveplay.c:3248
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -3927,49 +3947,49 @@ msgstr ""
 "שקופיות=%d סוג=%s גודל=%dx%d סיביות לפיקסל=%d שקופיות לשנייה=%.3f\n"
 "שמע:"
 
-#: src/saveplay.c:2640 src/saveplay.c:3239
+#: src/saveplay.c:2653 src/saveplay.c:3252
 #, c-format
 msgid "%s none\n"
 msgstr "ללא %s\n"
 
-#: src/saveplay.c:2643 src/saveplay.c:3242
+#: src/saveplay.c:2656 src/saveplay.c:3255
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d ערוצים %d סיביות לפיקסל\n"
 
-#: src/saveplay.c:2651
+#: src/saveplay.c:2664
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - הערה: %s\n"
 
-#: src/saveplay.c:2725
+#: src/saveplay.c:2738
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "שומר שקופית %d כ־%s..."
 
-#: src/saveplay.c:2790
+#: src/saveplay.c:2803
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "מגבה את %s ל־%s"
 
-#: src/saveplay.c:2826
+#: src/saveplay.c:2839
 msgid "Backing up"
 msgstr "מגבה"
 
-#: src/saveplay.c:2857
+#: src/saveplay.c:2870
 msgid "performance data was backed up..."
 msgstr "נתוני הביצועים גובו..."
 
-#: src/saveplay.c:3161
+#: src/saveplay.c:3174
 #, c-format
 msgid "Restoring %s..."
 msgstr "משחזר את %s..."
 
-#: src/saveplay.c:3180
+#: src/saveplay.c:3193
 msgid "Restoring"
 msgstr "משחזר"
 
-#: src/saveplay.c:3202
+#: src/saveplay.c:3215
 #, c-format
 msgid ""
 "\n"
@@ -3982,25 +4002,28 @@ msgstr ""
 "הקובץ %s פגום.\n"
 "לא הייתה אפשרות לשחזרו.\n"
 
-#: src/saveplay.c:3605
+#: src/saveplay.c:3618
 #, c-format
 msgid "rec %.2f MB"
-msgstr ""
+msgstr "הקלטה %.2f מ\"ב"
 
-#: src/saveplay.c:3609
+#: src/saveplay.c:3622
 #, c-format
 msgid "!rec %.2f MB"
-msgstr ""
+msgstr "!הקלטה %.2f מ\"ב"
 
-#: src/saveplay.c:3632
+#: src/saveplay.c:3645
 #, c-format
 msgid ""
 "\n"
 "RECORDING WAS PAUSED BECAUSE FREE DISK SPACE IS BELOW %ld GB !\n"
 "Record stop level can be set in Preferences.\n"
 msgstr ""
+"\n"
+"ההקלטה הושהתה מכיוון שהשטח הפנוי בכונן הינו מתחת ל־%ld ג\"ב !\n"
+"ניתן לקבוע את השלב שבו ההקלטה נעצרת בהעדפות.\n"
 
-#: src/saveplay.c:3748
+#: src/saveplay.c:3761
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4010,17 +4033,17 @@ msgstr ""
 "נמצאו קבצים מהרצה קודמת של LiVES.\n"
 "האם ברצונך לשחזרם ?\n"
 
-#: src/saveplay.c:3761
+#: src/saveplay.c:3774
 msgid "Recovering files"
 msgstr "משחזר קבצים"
 
-#: src/saveplay.c:3765
+#: src/saveplay.c:3778
 msgid "Recovering files..."
 msgstr "משחזר קבצים..."
 
 #: src/dialogs.c:80
 msgid "Show affected _layouts"
-msgstr ""
+msgstr "הצגת פריסות _מושפעות"
 
 #: src/dialogs.c:158
 msgid "LiVES: - Warning !"
@@ -4070,6 +4093,8 @@ msgid ""
 "\n"
 "%d/%d frames opened.\n"
 msgstr ""
+"\n"
+"%d/%d שקופיות נפתחו.\n"
 
 #: src/dialogs.c:670
 #, c-format

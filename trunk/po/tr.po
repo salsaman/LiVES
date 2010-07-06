@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-07-04 21:29-0300\n"
+"POT-Creation-Date: 2010-07-05 21:56-0300\n"
 "PO-Revision-Date: 2010-06-09 11:40+0000\n"
 "Last-Translator: 58zarali <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -8740,12 +8740,14 @@ msgid "E_nd %"
 msgstr "_Geri al %s"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "Edge detect"
-msgstr ""
+msgstr "_Sonraki"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "Edge detecting"
-msgstr ""
+msgstr "_Sonraki"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
@@ -8811,8 +8813,9 @@ msgid "Flop horizontally"
 msgstr "Dikey çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frame Calculator"
-msgstr ""
+msgstr "_Arkaplan Rengi"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -8840,8 +8843,9 @@ msgid "Frame _width"
 msgstr "Çerçeve boyutu"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr ""
+msgstr "saniye"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -8932,8 +8936,9 @@ msgid "Hue start"
 msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Image overlay"
-msgstr ""
+msgstr "her"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -8975,8 +8980,9 @@ msgid "Making monochrome"
 msgstr "Siyah-beyaz"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "Döndürme"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9089,24 +9095,29 @@ msgid "S_tart %"
 msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _end"
-msgstr ""
+msgstr "Geçişler"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "Geçişler"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation change"
-msgstr ""
+msgstr "Geçişler"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation end"
-msgstr ""
+msgstr "Geçişler"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation start"
-msgstr ""
+msgstr "Geçişler"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
@@ -9178,8 +9189,9 @@ msgstr "_Başlat"
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "Step per _Frame"
-msgstr ""
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -9338,8 +9350,9 @@ msgid "_First frame"
 msgstr "İlk Kare"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Flash for"
-msgstr ""
+msgstr "_Arkaplan Rengi"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -9660,8 +9673,9 @@ msgid "colour_filter"
 msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -9724,8 +9738,9 @@ msgid "frame_calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "gamma_change"
-msgstr ""
+msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -9896,8 +9911,9 @@ msgid "wave"
 msgstr "dalga"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "Unable to open output file !"
-msgstr ""
+msgstr "LIVES: bir dosya seçin"
 
 #: /usr/bin/smogrify:0
 #, fuzzy
@@ -9913,8 +9929,9 @@ msgid "This does not appear to be a valid video or image file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was unable to open it."
-msgstr ""
+msgstr "LIVES: bir dosya seçin"
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."

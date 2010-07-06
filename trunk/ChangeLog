@@ -1,6 +1,6 @@
 Version 1.3.4 (04 Jul 2010)
 --------------------------
-Minor a/v sync fix. *
+Minor a/v sync fixes. *
 Add more formats to x264 encoder (needs testing).
 Add experimental webm encoding support in ffmpeg_encoder.
 Fix crash when right clicking in mt with no clips loaded.

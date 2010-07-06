@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-07-04 21:29-0300\n"
+"POT-Creation-Date: 2010-07-05 21:56-0300\n"
 "PO-Revision-Date: 2010-05-21 19:03+0000\n"
 "Last-Translator: WhiteRabbit <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -8873,8 +8873,9 @@ msgid "Bluring"
 msgstr "Синяя"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Border _Colour"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
@@ -8952,8 +8953,9 @@ msgid "Clipboard _under selection"
 msgstr "Вставить _за выделеннием"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorize"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -8965,16 +8967,18 @@ msgid "Colour cycle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycling"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "Colour filter"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filtering"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "Colour replace"
@@ -9010,8 +9014,9 @@ msgid "Despeckling"
 msgstr "Удаление"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "Dream"
-msgstr ""
+msgstr "Остановить запись"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
@@ -9025,12 +9030,14 @@ msgid "E_nd %"
 msgstr "_Отменить %s"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "Edge detect"
-msgstr ""
+msgstr "_Далее"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "Edge detecting"
-msgstr ""
+msgstr "_Далее"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
@@ -9084,8 +9091,9 @@ msgid "Fina_l frame"
 msgstr "Конечный кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "Flash _colour"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
@@ -9096,8 +9104,9 @@ msgid "Flop horizontally"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frame Calculator"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -9125,12 +9134,14 @@ msgid "Frame _width"
 msgstr "Размер кадра"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr ""
+msgstr "Сроки (в секундах)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _end"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -9191,8 +9202,9 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _end"
-msgstr ""
+msgstr "Кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -9205,8 +9217,9 @@ msgid "Hue change"
 msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "Кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9287,8 +9300,9 @@ msgid "Noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "Normalize"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
@@ -9375,28 +9389,34 @@ msgid "S_tart %"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _end"
-msgstr ""
+msgstr "Переходы состояний"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "Переходы состояний"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation change"
-msgstr ""
+msgstr "Переходы состояний"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation end"
-msgstr ""
+msgstr "Переходы состояний"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation start"
-msgstr ""
+msgstr "Переходы состояний"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "Sepia"
-msgstr ""
+msgstr "подписан"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Shift horizontally"
@@ -9420,8 +9440,9 @@ msgid "Skip forward"
 msgstr "Слушать Вперед"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarize"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
@@ -9439,8 +9460,9 @@ msgid "Spinning"
 msgstr "предупреждение"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splice"
-msgstr ""
+msgstr "предупреждение"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
@@ -9475,8 +9497,9 @@ msgid "Swirl _start"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl s_tep"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -9489,8 +9512,9 @@ msgid "Swirling"
 msgstr "предупреждение"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "Text Overlay"
-msgstr ""
+msgstr "_Каждый"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
@@ -9551,8 +9575,9 @@ msgid "_Background Colour"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Background colour"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -9605,8 +9630,9 @@ msgstr "Конечный кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "_Fade level"
-msgstr ""
+msgstr "Кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -9616,8 +9642,9 @@ msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Fill colour"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -9755,8 +9782,9 @@ msgstr "_Приостановить"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "_Random colour each frame"
-msgstr ""
+msgstr "Вставка тишины"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9803,8 +9831,9 @@ msgid "_Source Colour"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "_Splice"
-msgstr ""
+msgstr "предупреждение"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9861,8 +9890,9 @@ msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "_Wavemax"
-msgstr ""
+msgstr "Предупреждения"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -9943,8 +9973,9 @@ msgid "charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "colorize"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "colour_filter"
@@ -10014,8 +10045,9 @@ msgid "frame_calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "gamma_change"
-msgstr ""
+msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -10028,8 +10060,9 @@ msgid "gen_clip_from_image"
 msgstr "Очищение изображений кадра"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "gen_coloured_frames"
-msgstr ""
+msgstr "Вставка тишины"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -10050,8 +10083,9 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "modulate"
-msgstr ""
+msgstr "Возврат операции"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
@@ -10067,8 +10101,9 @@ msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "normalize"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
@@ -10125,8 +10160,9 @@ msgid "skip_forwards"
 msgstr "Слушать Вперед"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "solarize"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
@@ -10179,8 +10215,9 @@ msgid "tunnel"
 msgstr "Отмена"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "wave"
-msgstr ""
+msgstr "Предупреждения"
 
 #: /usr/bin/smogrify:0
 msgid "Unable to open output file !"

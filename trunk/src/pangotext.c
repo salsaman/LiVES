@@ -93,7 +93,7 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,\
   gboolean center, gboolean rising, double top) {
   int error;
-  gboolean ret = WEED_FALSE;
+  gboolean ret = FALSE;
 
   int cent,rise;
   double f_alpha, b_alpha;
@@ -219,7 +219,7 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
             g_object_unref(pixbuf_new);
           g_object_unref(layout);
           pango_font_description_free(font);
-          ret = WEED_TRUE;
+          ret = TRUE;
         }
         cairo_destroy(cairo);
       }
@@ -294,5 +294,59 @@ char *get_srt_text(FILE *pf, double xtime) {
     }
   }
   return ret;
+}
+
+
+
+
+
+
+
+
+
+
+///
+
+void subtitles_free(file *sfile) {
+  if (sfile==NULL) return;
+
+  // in future we will free the list sfile->subt->index
+
+  if (sfile->subt!=NULL && sfile->subt->current!=NULL) {
+    if (sfile->subt->current->text!=NULL) free(sfile->subt->current->text);
+    free (sfile->subt->current);
+  }
+
+  if (sfile->subt->tfile!=NULL) fclose(sfile->subt->tfile);
+
+  free (sfile->subt);
+  sfile->subt=NULL;
+}
+
+
+gboolean subtitles_init(file *sfile, char * fname) {
+  // fname is the name of the subtitle file
+  FILE *tfile;
+
+  if (sfile==NULL) return FALSE;
+
+  if (sfile->subt!=NULL) subtitles_free(sfile);
+
+  sfile->subt=NULL;
+
+  if ((tfile=fopen(fname,"r"))==NULL) return FALSE;
+
+  sfile->subt->tfile=tfile;
+
+
+  // in future we will add stuff to our index and just point current to the current entry
+  sfile->subt->current=g_malloc(sizeof(lives_subtitle_t));
+
+  sfile->subt->current->text=NULL;
+  sfile->subt->current->start_time=sfile->subt->current->end_time=-1.;
+  sfile->subt->current->style=NULL;
+  sfile->subt->current->prev=sfile->subt->current->next=NULL;
+
+  return TRUE;
 }
 

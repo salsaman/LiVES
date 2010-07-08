@@ -253,6 +253,8 @@ typedef struct {
 
   gboolean lamp_buttons;
 
+  gboolean load_subs;
+
   glong rec_stop_gb;
 } _prefs;
 

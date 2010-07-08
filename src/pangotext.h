@@ -9,14 +9,30 @@
 #define LIVES_PANGOTEXT_H
 
 
+// for future use
 typedef struct {
-  FILE *tfile;
-  char *text;
+  lives_colRGB24_t fg;
+  lives_colRGB24_t bg;
+} lives_subtitle_style_t;
+
+
+typedef struct lives_subtitle_t _lives_subtitle_t;
+
+typedef struct {
   double start_time;
   double end_time;
+  lives_subtitle_style_t *style; // for future use
+  char *text;
+  _lives_subtitle_t *prev; // for future use
+  _lives_subtitle_t *next; // for future use
 } lives_subtitle_t;
 
 
+typedef struct {
+  FILE *tfile;
+  lives_subtitle_t *index; // for future use - we will create an index ordered by start_time
+  lives_subtitle_t *current; // pointer to current entry in index
+} lives_subtitles_t;
 
 
 typedef enum {
@@ -24,6 +40,7 @@ typedef enum {
   LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
   LIVES_TEXT_MODE_BACKGROUND_ONLY
 } lives_text_mode_t;
+
 
 char **get_font_list(void);
 

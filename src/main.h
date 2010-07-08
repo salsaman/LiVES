@@ -334,8 +334,21 @@ typedef enum {
 #define AFORM_UNKNOWN 65536
 
 
+typedef struct {
+  gshort red;
+  gshort green;
+  gshort blue;
+} lives_colRGB24_t;
+
+typedef struct {
+  gshort red;
+  gshort green;
+  gshort blue;
+  gshort alpha;
+} lives_colRGBA32_t;
 
 
+#include "pangotext.h"
 
 typedef struct {                // corresponds to one clip in the GUI
   // cfile - one clip
@@ -503,6 +516,8 @@ typedef struct {                // corresponds to one clip in the GUI
   gint stored_layout_idx;
   gdouble stored_layout_audio;
   gdouble stored_layout_fps;
+
+  lives_subtitles_t *subt;
 
   // TODO - change to lives_clip_t
 } file;
@@ -979,6 +994,10 @@ void refresh_rte_window (void);
 
 // effects-weed.c
 void *w_memcpy  (void *dest, const void *src, size_t n);
+
+// pngotext.h
+gboolean subtitles_init(file *sfile, char * fname);
+void subtitles_free(file *sfile);
 
 // osc.c
 #ifdef ENABLE_OSC

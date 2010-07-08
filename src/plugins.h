@@ -445,20 +445,6 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full);
 
 
 typedef struct {
-  gshort red;
-  gshort green;
-  gshort blue;
-} lives_colRGB24_t;
-
-typedef struct {
-  gshort red;
-  gshort green;
-  gshort blue;
-  gshort alpha;
-} lives_colRGBA32_t;
-
-
-typedef struct {
   GList *list; // list of filter_idx from which user can delegate
   gint delegate; // offset in list of current delegate
   gulong func; // menuitem activation function for current delegate

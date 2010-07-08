@@ -859,6 +859,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->lamp_buttons=TRUE;
 
+    prefs->load_subs=TRUE;
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -3939,6 +3941,8 @@ void close_current_file(gint file_to_switch_to) {
       }
 
     }
+
+    if (cfile->subt!=NULL) subtitles_free(cfile);
 
     if (cfile->clip_type==CLIP_TYPE_YUV4MPEG) {
 #ifdef HAVE_YUV4MPEG

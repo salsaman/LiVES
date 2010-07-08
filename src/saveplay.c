@@ -606,6 +606,25 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     cfile->opening_loc=FALSE;
   }
 
+  else {
+    if (prefs->load_subs) {
+      gchar *isubfname;
+      gchar filename[512];
+      g_snprintf(filename,512,"%s",file_name);
+      get_filename(filename); // strip extension
+      isubfname=g_strdup_printf("%s.srt",filename);
+      if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
+	gchar *subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
+	com=g_strdup_printf("/bin/cp %s %s",isubfname,subfname);
+	dummyvar=system(com);
+	g_free(com);
+	subtitles_init(cfile,subfname);
+	g_free(subfname);
+      }
+    }
+  }
+
+
   // now file should be loaded...get full details
   cfile->is_loaded=TRUE;
   if (cfile->ext_src==NULL) add_file_info(cfile->handle,FALSE);
@@ -2446,6 +2465,7 @@ create_cfile(void) {
   cfile->stored_layout_fps=0.;
   cfile->stored_layout_idx=-1;
   cfile->interlace=LIVES_INTERLACE_NONE;
+  cfile->subt=NULL;
 
   if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;
@@ -3166,6 +3186,8 @@ restore_file(const gchar *file_name) {
   gint new_file=mainw->first_free_file;
   gboolean not_cancelled;
 
+  gchar *subfname;
+
   // create a new file
   if (!get_new_handle(new_file,fname)) {
     return;
@@ -3243,6 +3265,14 @@ restore_file(const gchar *file_name) {
   cfile->proc_ptr=NULL;
 
   cfile->changed=FALSE;
+
+  if (prefs->load_subs) {
+    subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
+    if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
+      subtitles_init(cfile,subfname);
+    }
+    g_free(subfname);
+  }
 
   g_snprintf(cfile->type,40,"Frames");
   mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);

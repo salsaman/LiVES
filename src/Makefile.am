@@ -140,6 +140,7 @@ lives_exe_SOURCES = \
 	stream.h stream.c \
 	cvirtual.c cvirtual.h \
 	startup.c startup.h \
+	pangotext.c pangotext.h \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES) \

@@ -28,4 +28,5 @@ src/jack.c
 src/colourspace.c
 src/cvirtual.c
 src/omc-learn.c
+src/pangotext.c
 

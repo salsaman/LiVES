@@ -10,7 +10,7 @@
 
 
 #######################################################################
-# LiVES x264 plugin v0.1
+# LiVES x264 plugin v0.3
 
 #######################################################################
 
@@ -28,7 +28,7 @@ else {
 
 
 if ($command eq "version") {
-    print "x264 encoder plugin v0.02\n";
+    print "x264 encoder plugin v0.03\n";
     exit 0;
 }
 
@@ -94,10 +94,10 @@ if ($command eq "encode") {
 	$err="1>&2";
     }
 
-    $fifofile="264stream.yvm";
+    $fifofile="264stream.y4m";
     unlink $fifofile;
 
-    print STDERR "Creating fifo file $curtmpdir/$fifofile\n";
+    print STDERR "Creating fifo file $fifofile in $curtmpdir\n";
 
     `/bin/mkfifo $fifofile`;
 

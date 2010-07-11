@@ -97,19 +97,17 @@ if ($command eq "encode") {
     $fifofile="264stream.yvm";
     unlink $fifofile;
 
-    print STDERR "Creating fifo file $fifofile\n";
+    print STDERR "Creating fifo file $curtmpdir/$fifofile\n";
 
     `/bin/mkfifo $fifofile`;
 
-    $syscom="mplayer -really-quiet -fps 1000000 mf://*$img_ext -vo yuv4mpeg:file=$fifofile &";
+    $syscom="mplayer -really-quiet -fps 1000000 mf://*$img_ext -ao null -vo yuv4mpeg:file=$fifofile &";
 
-    print "Running stream to fifo with command:\n$syscom\n";
+    print STDERR "Running stream to fifo with command:\n$syscom\n";
 
     system($syscom);
 
-    system("sync");
-    system("sync");
-    system("sync");
+    `sync;sync;sync`;
 
     print STDERR "Waiting 5 seconds for stream to start...";
 
@@ -131,9 +129,10 @@ if ($command eq "encode") {
 
     sleep(1);
 
+    $syscom="x264 --crf 16 --preset veryslow --tune film --weightp 0 --bframes 3 --nal-hrd vbr --vbv-maxrate 40000 --vbv-bufsize 30000 --level 4.1 --keyint 24 --b-pyramid strict --slices 4 --aud --colorprim \"bt709\" --transfer \"bt709\" --colormatrix \"bt709\" --sar 1:1 $fifofile --fps $fps -o \"$nfile\" $err";
+
     print STDERR "Processing fifo with:\n$syscom\n";
 
-    $syscom="x264 --crf 16 --preset veryslow --tune film --weightp 0 --bframes 3 --nal-hrd vbr --vbv-maxrate 40000 --vbv-bufsize 30000 --level 4.1 --keyint 24 --b-pyramid strict --slices 4 --aud --colorprim \"bt709\" --transfer \"bt709\" --colormatrix \"bt709\" --sar 1:1 $fifofile --fps $fps -o \"$nfile\" $err";
     system($syscom);
 
     # required

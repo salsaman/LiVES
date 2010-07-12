@@ -74,10 +74,10 @@ if ($command eq "get_formats") {
    # audio types are: 0 - cannot encode audio, 1 - can encode using
     #  mp3, 2 - can encode using pcm, 3 - can encode using pcm and mp3
     
-    print "x264_br_1080p|x264 blu-ray 1080p NTSC (Experimental)|0|size=1920x1080,fps=24000:1001;24|mpg|\n"; # NTSC 1024p
-    print "x264_br_1080p|x264 blu-ray 1080p PAL (Experimental)|0|size=1920x1080,fps=25|mpg|\n"; # NTSC 1024p
-    print "x264_br_720p|x264 blu-ray 720p NTSC (Experimental)|0|size=1280x720,fps=60000:1001|mpg|\n"; # 720p
-    print "x264_br_720p|x264 blu-ray 720p PAL (Experimental)|0|size=1280x720,fps=50000:1001|mpg|\n"; # 720p
+    print "x264_br_1080p|x264 blu-ray 1080p NTSC (Experimental)|32|size=1920x1080,fps=24000:1001;24|mpg|\n"; # NTSC 1024p
+    print "x264_br_1080p|x264 blu-ray 1080p PAL (Experimental)|32|size=1920x1080,fps=25|mpg|\n"; # NTSC 1024p
+    print "x264_br_720p|x264 blu-ray 720p NTSC (Experimental)|32|size=1280x720,fps=60000:1001|mpg|\n"; # 720p
+    print "x264_br_720p|x264 blu-ray 720p PAL (Experimental)|32|size=1280x720,fps=50000:1001|mpg|\n"; # 720p
 
     exit 0;
 }
@@ -86,6 +86,18 @@ if ($command eq "get_formats") {
 
 if ($command eq "encode") {
     # encode 
+
+    if ($audiofile ne "" && &location("MP4Box") eq "") {
+	print STDERR "You must install MP4Box in order to encode with audio.\nTry installing the gpac package.\n";
+	&sig_complete;
+	exit 1;
+    }
+
+    if ($audiofile ne "" && &location("ffmpeg") eq "") {
+	print STDERR "You must install ffmpeg in order to encode with audio.\n";
+	&sig_complete;
+	exit 1;
+    }
 
     chdir $curtmpdir;
 
@@ -97,43 +109,42 @@ if ($command eq "encode") {
     $fifofile="264stream.y4m";
     unlink $fifofile;
 
-    print STDERR "Creating fifo file $fifofile in $curtmpdir\n";
-
-    `/bin/mkfifo $fifofile`;
-
-    $syscom="mplayer -really-quiet -fps 1000000 mf://*$img_ext -ao null -vo yuv4mpeg:file=$fifofile &";
+    $syscom="mplayer -frames $end mf://*$img_ext -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$fifofile $err </dev/null";
 
     print STDERR "Running stream to fifo with command:\n$syscom\n";
 
     system($syscom);
 
-    `sync;sync;sync`;
 
-    print STDERR "Waiting 5 seconds for stream to start...";
+    $ofile = $nfile;
 
-    sleep(1);
+    if ($audiofile ne "") {
+	$ofile="output.264";
+    }
 
-    print STDERR "4...";
-
-    sleep(1);
-
-    print STDERR "3...";
-
-    sleep(1);
-
-    print STDERR "2...";
-
-    sleep(1);
-
-    print STDERR "1...\n";
-
-    sleep(1);
-
-    $syscom="x264 --crf 16 --preset veryslow --tune film --weightp 0 --bframes 3 --nal-hrd vbr --vbv-maxrate 40000 --vbv-bufsize 30000 --level 4.1 --keyint 24 --b-pyramid strict --slices 4 --aud --colorprim \"bt709\" --transfer \"bt709\" --colormatrix \"bt709\" --sar 1:1 $fifofile --fps $fps -o \"$nfile\" $err";
+    $syscom="x264 --frames $end --crf 16 --threads auto --preset veryslow --tune film --weightp 0 --bframes 3 --nal-hrd vbr --vbv-maxrate 40000 --vbv-bufsize 30000 --level 4.1 --keyint 24 --b-pyramid strict --slices 4 --aud --colorprim \"bt709\" --transfer \"bt709\" --colormatrix \"bt709\" --sar 1:1 $fifofile --fps $fps -o \"$ofile\" $err";
 
     print STDERR "Processing fifo with:\n$syscom\n";
 
     system($syscom);
+
+
+    if ($audiofile ne "") {
+
+	$syscom="ffmpeg -i audiodump.wav -ab 192000 temp.aac $err";
+	
+	print STDERR "Encoding audio with:\n$syscom\n";
+
+	system($syscom);
+
+	$syscom="MP4Box -fps $fps -add output.264 -add temp.aac \"$nfile\" $err";
+
+	
+	print STDERR "Muxing with:\n$syscom\n";
+	
+	system($syscom);
+
+    }
 
     # required
     &sig_complete;
@@ -145,10 +156,12 @@ if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
 
-    print STDERR "Removing fifo file\n";
-
     $fifofile="264stream.yvm";
     unlink $fifofile;
+
+    unlink "output.264";
+
+    unlink "temp.aac";
 
     &sig_complete;
     exit 0;

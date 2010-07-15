@@ -159,6 +159,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   gboolean mt_has_audio_file=TRUE;
   gchar msg[256],loc[256];
   gchar *tmp=NULL;
+  gchar *isubfname=NULL;
   const lives_clip_data_t *cdata;
 
   weed_plant_t *mt_pb_start_event=NULL;
@@ -608,10 +609,9 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
   else {
     if (prefs->load_subs) {
-      gchar *isubfname;
       gchar filename[512];
       g_snprintf(filename,512,"%s",file_name);
-      get_filename(filename); // strip extension
+      get_filename(filename,FALSE); // strip extension
       isubfname=g_strdup_printf("%s.srt",filename);
       if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
 	gchar *subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
@@ -620,6 +620,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	g_free(com);
 	subtitles_init(cfile,subfname);
 	g_free(subfname);
+
       }
     }
   }
@@ -657,6 +658,14 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   }
 
   current_file=mainw->current_file;
+
+  if (isubfname!=NULL) {
+    tmp=g_strdup_printf(_("Loaded subtitle file: %s\n"),isubfname);
+    d_print(tmp);
+    g_free(tmp);
+    g_free(isubfname);
+  }
+
 
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
@@ -1007,6 +1016,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       dummyvar=system (com);
       g_free (com);
     }
+    sensitize();
     d_print_cancelled();
     if (rdet!=NULL) {
       gtk_widget_destroy (rdet->dialog);
@@ -1154,6 +1164,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
       fx_dialog[1]=NULL;
       g_free(mesg);
       g_free(fps_string);
+      sensitize();
       d_print_cancelled();
       return;
     }
@@ -1213,7 +1224,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
   cfile->nokeep=TRUE;
   
   unlink(cfile->info_file);
-  save_file_comments();
+  save_file_comments(current_file);
   dummyvar=system(com);
   g_free(com);
 
@@ -1382,6 +1393,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
   }
   g_free(full_file_name);
+  sensitize();
 
 }
 
@@ -2689,17 +2701,19 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
 
 
 void 
-save_file_comments (void) {
+save_file_comments (int fileno) {
   // save the comments etc for smogrify
   int comment_fd;
   gchar *comment_file=g_strdup_printf ("%s/%s/.comment",prefs->tmpdir,cfile->handle);
+  file *sfile=mainw->files[fileno];
+
   unlink (comment_file);
   comment_fd=creat(comment_file,S_IRUSR|S_IWUSR);
-  dummyvar=write(comment_fd,cfile->title,strlen (cfile->title));
+  dummyvar=write(comment_fd,sfile->title,strlen (sfile->title));
   dummyvar=write(comment_fd,"||%",3);
-  dummyvar=write(comment_fd,cfile->author,strlen (cfile->author));
+  dummyvar=write(comment_fd,sfile->author,strlen (sfile->author));
   dummyvar=write(comment_fd,"||%",3);
-  dummyvar=write(comment_fd,cfile->comment,strlen (cfile->comment));
+  dummyvar=write(comment_fd,sfile->comment,strlen (sfile->comment));
   close (comment_fd);
   g_free (comment_file);
 }

@@ -3004,6 +3004,13 @@ sub kill_child_pids {
     my $pid;
     `pgrep -P $target_pid > $tmpdir/.pids.$target_pid 2>/dev/null`;
 
+    if ($sig eq "KILL") {
+	`kill -$sig $target_pid >/dev/null 2>&1`;
+    }
+    else {
+	`pkill -$sig -P $target_pid`;# must not ! >/dev/null 2>&1`;
+    }
+
     if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
 	while (<IN>) {
 	    $pid=$_;
@@ -3012,12 +3019,7 @@ sub kill_child_pids {
 	}
 	close IN;
     }
-    if ($sig eq "KILL") {
-	`kill -$sig $target_pid >/dev/null 2>&1`;
-    }
-    else {
-	`pkill -$sig -P $target_pid`;# must not ! >/dev/null 2>&1`;
-    }
+
     unlink "$tmpdir/.pids.$target_pid";
 }
 

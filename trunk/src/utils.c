@@ -893,11 +893,11 @@ get_basename(gchar *filename) {
 }
 
 void
-get_filename(gchar *filename) {
+get_filename(gchar *filename, gboolean strip_dir) {
   // get filename (part without extension) of a file
   //filename should point to gchar[256]
   gchar **array;
-  get_basename(filename);
+  if (strip_dir) get_basename(filename);
   array=g_strsplit(filename,".",-1);
   g_snprintf(filename,256,"%s",array[0]);
   g_strfreev(array);

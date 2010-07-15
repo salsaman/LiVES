@@ -2762,9 +2762,27 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
 
 
 
+static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer) {
+    // render subtitles from whatever (currently only .srt) file
+    // uses default values for colours, fonts, size, etc.
 
+    // TODO - allow prefs settings for colours, fonts, size, alpha
 
+    //char *sfont=mainw->font_list[prefs->sub_font];
+    char *sfont="Sans";
+    lives_colRGBA32_t col_white,col_black_a;
+    
+    int error,size=weed_get_int_value(layer,"width",&error)/40;
 
+    col_white.red=col_white.green=col_white.blue=col_white.alpha=255;
+    col_black_a.red=col_black_a.green=col_black_a.blue=0;
+    col_black_a.alpha=80;
+    
+    get_srt_text(sfile,xtime);
+    if (sfile->subt->current!=NULL&&sfile->subt->current->text!=NULL) {
+        render_text_to_layer(layer,sfile->subt->current->text,sfont,size,LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
+    }
+}
 
 
 
@@ -2861,7 +2879,24 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 
 	g_free(pixel_data);
 
+        // deinterlace
 	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) deinterlace_frame(layer,tc);
+
+        // render subtitles from file
+        if (prefs->load_subs&&sfile->subt!=NULL) {
+            int palette=dplug->cdata->current_palette;
+            
+            // convert to RGB(A) or leave as BGR(A)
+	    if (palette!=WEED_PALETTE_RGB24&&palette!=WEED_PALETTE_RGBA32&&palette!=WEED_PALETTE_BGR24&&palette!=WEED_PALETTE_BGRA32) convert_layer_palette(layer,weed_palette_has_alpha_channel(palette)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32,0);
+
+            if (prefs->load_subs&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
+                // TODO - alpha channel will be lost
+	      double xtime=(double)(frame-1)/sfile->fps;
+	      render_subs_from_file(sfile,xtime,layer);
+            }
+
+        }
+
 	mainw->osc_block=FALSE;
 	return TRUE;
       }
@@ -2924,6 +2959,13 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
   g_object_unref(pixbuf);
   mainw->do_not_free=NULL;
   mainw->free_fn=free;
+
+  // render subtitles from file
+  if (prefs->load_subs&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
+    double xtime=(double)(frame-1)/sfile->fps;
+    // TODO - alpha channel will be lost
+    render_subs_from_file(sfile,xtime,layer);
+  }
 
   return TRUE;
 }

@@ -96,12 +96,14 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
   gboolean ret = FALSE;
 
   int cent,rise;
-  double f_alpha, b_alpha;
 
   int width, height, palette;
 
   double dwidth, dheight;
   lives_colRGBA32_t *fg, *bg;
+
+  double b_alpha=(double)bg_col->alpha/255.;
+  double f_alpha=(double)fg_col->alpha/255.;
 
   void **pixel_data = NULL;
 
@@ -129,9 +131,6 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
     bg->red=bg->blue;
     bg->blue=tmp;
   }
-
-  f_alpha = fg->alpha/255.0;
-  b_alpha = bg->alpha/255.0;
 
 
   // THINGS TO TO WITH TEXTS AND PANGO
@@ -167,44 +166,31 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
           if(!rise)
             y_pos = y_text = height*top;
 
-          if(!layer) {
-            x_pos = y_pos = 0;
-            dwidth = width;
-            dheight = height;
-            b_alpha = 1.0;
-          }
-
           x_text = x_pos;
           y_text = y_pos;
-          switch(cent) {
-          case 1:
-                 pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
-                 break;
-          case 0:
-          default:
-                 pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
-          }
+
+          if (cent) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
+          else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
 
           cairo_move_to(cairo, x_text, y_text);
 
           switch(mode) {
-          case 1:
-                 cairo_set_source_rgba(cairo,bg->red/255.0, bg->green/255.0, bg->blue/255.0, b_alpha);
+          case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
+                 cairo_set_source_rgba(cairo,bg->red, bg->green, bg->blue, b_alpha);
                  fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
                  cairo_move_to(cairo, x_text, y_text);
-                 cairo_set_source_rgba(cairo,fg->red/255.0, fg->green/255.0, fg->blue/255.0, f_alpha);
-                 pango_layout_set_text(layout, text, -1);
+                 cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
                  break;
-          case 2:
-                 cairo_set_source_rgba(cairo,bg->red/255.0, bg->green/255.0, bg->blue/255.0, b_alpha);
+          case LIVES_TEXT_MODE_BACKGROUND_ONLY:
+                 cairo_set_source_rgba(cairo,bg->red, bg->green, bg->blue, b_alpha);
                  fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
                  cairo_move_to(cairo, x_pos, y_pos);
-                 cairo_set_source_rgba(cairo,fg->red/255.0, fg->green/255.0, fg->blue/255.0, f_alpha);
+                 cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
                  pango_layout_set_text(layout, "", -1);
                  break;
-          case 0:
+          case LIVES_TEXT_MODE_FOREGROUND_ONLY:
           default:
-                 cairo_set_source_rgba(cairo,fg->red/255.0, fg->green/255.0, fg->blue/255.0, f_alpha);
+                 cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
                  break;
           }
 
@@ -215,8 +201,17 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
               0, 0,\
               -1, -1);
           result = pixbuf_to_layer(layer, pixbuf_new);
-          if(result)
-            g_object_unref(pixbuf_new);
+
+	  // nasty cleanup because of the way we handle pixel_data
+	  if (result) {
+	    mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf_new);
+	    mainw->free_fn=lives_free_with_check;
+	  }
+	  g_object_unref(pixbuf_new);
+	  mainw->do_not_free=NULL;
+	  mainw->free_fn=free;
+	  ///////////////////////////////////////////
+
           g_object_unref(layout);
           pango_font_description_free(font);
           ret = TRUE;
@@ -231,24 +226,66 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
   return ret;
 }
 
-//
-// return string must be freed with free() after usage
-//
-char *get_srt_text(FILE *pf, double xtime) {
+
+gboolean get_srt_text(file *sfile, double xtime) {
+  lives_subtitle_t *index = NULL;
+  lives_subtitle_t *index_ptr = NULL;
+  lives_subtitle_t *index_prev = NULL;
+  lives_subtitle_t *node = NULL;
+  lives_subtitle_t *curr = NULL;
   char *ret = NULL;
-  if(!pf)
-    return(NULL);
+  FILE *pf = NULL;
+  char data[32768];
 
-  int section = 0;
+  if(!sfile)
+    return (FALSE);
 
-  while(!feof(pf)) {
-    char data[256], *posnl, *poscr;
+  if(!sfile->subt)
+    return (FALSE);
+
+  curr = sfile->subt->current;
+
+  if(curr && (curr->start_time <= xtime) && (curr->end_time >= xtime))
+    return (TRUE);
+
+  if(curr && (curr->start_time <= xtime))
+    index_ptr = index_prev = index = curr;
+  else
+    index_ptr = index_prev = index = sfile->subt->index;
+
+  while(index_ptr) {
+    if((index_ptr->start_time <= xtime) && (index_ptr->end_time >= xtime)) {
+      sfile->subt->current = index_ptr;
+      return (TRUE);
+    }
+    if(index_ptr->start_time > xtime) {
+      sfile->subt->current = NULL;
+      return (TRUE);
+    }
+    index_prev = index_ptr;
+    index_ptr = (lives_subtitle_t *)index_ptr->next;
+  }
+
+  pf = sfile->subt->tfile;
+
+  while(fgets(data,sizeof(data), pf)) {
+    char *posnl = NULL, *poscr = NULL;
     int hstart, mstart, sstart, fstart;
     int hend, mend, send, fend;
     int i;
     double starttime, endtime;
 
-    if (!fgets(data, sizeof(data), pf)) return NULL;
+    //
+    // data contains subtitle number
+    //
+
+    if(!fgets(data,sizeof(data), pf)) {
+      sfile->subt->current=NULL;
+      return(FALSE);
+    }
+    //
+    // data contains time range
+    //
     // remove \n \r
     posnl = strstr(data, "\n");
     if(posnl)
@@ -257,67 +294,99 @@ char *get_srt_text(FILE *pf, double xtime) {
     if(poscr)
       *poscr = '\0';
 
-    if(!section) {
-      i = sscanf(data,"%d:%d:%d,%d --> %d:%d:%d,%d",\
-                 &hstart, &mstart, &sstart, &fstart,\
-                 &hend, &mend, &send, &fend);
-      if(i == 8) {
-        // this is a time tag
+    // try to parse it (time range)
+    i = sscanf(data,"%d:%d:%d,%d --> %d:%d:%d,%d",\
+               &hstart, &mstart, &sstart, &fstart,\
+               &hend, &mend, &send, &fend);
+    if(i == 8) {
+      // parsing ok
         starttime = hstart*3600 + mstart*60 + sstart + fstart/1000.;
         endtime = hend*3600 + mend*60 + send + fend/1000.;
-        if(xtime >= starttime && xtime <= endtime) {
-          section = 1;
+        node = (lives_subtitle_t *)malloc(sizeof(lives_subtitle_t));
+        if(node) {
+          node->start_time = starttime;
+          node->end_time = endtime;
+          node->text = NULL;
+          node->style = NULL;
+          node->next = NULL;
+          node->prev = (_lives_subtitle_t *)index_prev;
+          if(index_prev)
+            index_prev->next = (_lives_subtitle_t *)node;
+          else
+            sfile->subt->index = node;
+          index_prev = (lives_subtitle_t *)node;
         }
-      }
+        while(fgets(data, sizeof(data), pf)) {
+          // read the text and final empty line
+          // remove \n \r
+          posnl = strstr(data, "\n");
+          if(posnl)
+          *posnl = '\0';
+          poscr = strstr(data, "\r");
+          if(poscr)
+           *poscr = '\0';
+
+          if(strlen(data) > 0) {
+            if(posnl) *posnl = '\n';
+            if(poscr) *poscr = '\r';
+            if(ret == NULL) {
+              ret = (char *)malloc(strlen(data) + 1);
+              if(ret) strcpy(ret, data);
+            }
+            else {
+              ret = (char *)realloc(ret, strlen(ret) + strlen(data) + 1);
+              if(ret) strcat(ret, data);
+            }
+          }
+          else { // strlen(data) == 0
+            if(node) {
+              node->text = ret;
+              if(node->start_time <= xtime && node->end_time >= xtime) {
+                sfile->subt->current = node;
+                return TRUE;
+              }            
+              if(node->start_time > xtime) {
+                  sfile->subt->current = NULL;
+                  return (TRUE);
+              }
+            }
+            else
+              if(ret) free(ret);
+            ret = NULL;
+            break;
+          }
+       } // end while
     }
     else {
-      int len = strlen(data);
-      if(!len)
-        break;
-      //restore skipped symbols
-      if(poscr)
-        *poscr = '\r';
-      if(posnl)
-        *posnl = '\n';
-      len = strlen(data);
-      //add the line to the text
-      if(!ret) {
-        ret = (char *)malloc(len+1);
-        if(ret)
-         strcpy(ret,data);
-      }
-      else {
-        ret = (char *)realloc(ret, strlen(ret)+len+1);
-        if(ret)
-          strcpy(&ret[strlen(ret)], data);
-      }
+      // What to do here ? Probably wrong format
+      sfile->subt->current=NULL;
+      return (FALSE);
     }
   }
-  return ret;
+
+  // EOF
+  sfile->subt->current=NULL;
+  return (FALSE);
 }
-
-
-
-
-
-
-
-
-
 
 ///
 
 void subtitles_free(file *sfile) {
   if (sfile==NULL) return;
-
-  // in future we will free the list sfile->subt->index
-
-  if (sfile->subt!=NULL && sfile->subt->current!=NULL) {
-    if (sfile->subt->current->text!=NULL) free(sfile->subt->current->text);
-    free (sfile->subt->current);
-  }
+  if (sfile->subt==NULL) return;
 
   if (sfile->subt->tfile!=NULL) fclose(sfile->subt->tfile);
+ 
+  // remove subt->index entries
+  while(sfile->subt->index) {
+    lives_subtitle_t *to_delete = sfile->subt->index;
+
+    sfile->subt->index = (lives_subtitle_t *)sfile->subt->index->next;
+
+    if(to_delete->text != NULL) free(to_delete->text);
+    if(to_delete->style != NULL) free(to_delete->style);
+    free(to_delete);    
+  } 
 
   free (sfile->subt);
   sfile->subt=NULL;
@@ -336,16 +405,13 @@ gboolean subtitles_init(file *sfile, char * fname) {
 
   if ((tfile=fopen(fname,"r"))==NULL) return FALSE;
 
+  sfile->subt=(lives_subtitles_t *)g_malloc(sizeof(lives_subtitles_t));
+
   sfile->subt->tfile=tfile;
 
 
   // in future we will add stuff to our index and just point current to the current entry
-  sfile->subt->current=g_malloc(sizeof(lives_subtitle_t));
-
-  sfile->subt->current->text=NULL;
-  sfile->subt->current->start_time=sfile->subt->current->end_time=-1.;
-  sfile->subt->current->style=NULL;
-  sfile->subt->current->prev=sfile->subt->current->next=NULL;
+  sfile->subt->current=sfile->subt->index = NULL;
 
   return TRUE;
 }

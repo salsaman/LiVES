@@ -1427,6 +1427,7 @@ do_comments_dialog (void) {
     g_snprintf (cfile->author,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
     g_snprintf (cfile->comment,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
   }
+
   gtk_widget_destroy (commentsw->comments_dialog);
   g_free (commentsw);
   

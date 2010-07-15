@@ -6014,7 +6014,7 @@ gchar *make_weed_hashname(int filter_idx) {
 
   g_snprintf(plugin_fname,256,"%s",plugin_name);
   weed_free(plugin_name);
-  get_filename(plugin_fname);
+  get_filename(plugin_fname,TRUE);
 
   filter_name=weed_get_string_value(filter,"name",&error);
   filter_author=weed_get_string_value(filter,"author",&error);

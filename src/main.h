@@ -747,7 +747,7 @@ void do_text_window (const gchar *title, const gchar *text);
 
 // saveplay.c
 void add_file_info(const gchar *check_handle, gboolean aud_only);
-void save_file_comments (void);
+void save_file_comments (int fileno);
 void reget_afilesize (int fileno);
 void deduce_file(const gchar *filename, gdouble start_time, gint end);
 void open_file (const gchar *filename);
@@ -845,7 +845,7 @@ void lives_free_with_check(gpointer ptr);
 LIVES_INLINE gint myround(gdouble n);
 void get_dirname(gchar *filename);
 void get_basename(gchar *filename);
-void get_filename(gchar *filename);
+void get_filename(gchar *filename, gboolean strip_dir);
 gchar *get_extension(const gchar *filename);
 void d_print(const gchar *text);
 void init_clipboard(void);
@@ -998,6 +998,7 @@ void *w_memcpy  (void *dest, const void *src, size_t n);
 // pngotext.h
 gboolean subtitles_init(file *sfile, char * fname);
 void subtitles_free(file *sfile);
+gboolean get_srt_text(file *sfile, double xtime);
 
 // osc.c
 #ifdef ENABLE_OSC

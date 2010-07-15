@@ -2772,7 +2772,7 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
     char *sfont="Sans";
     lives_colRGBA32_t col_white,col_black_a;
     
-    int error,size=weed_get_int_value(layer,"width",&error)/40;
+    int error,size=weed_get_int_value(layer,"width",&error)/32;
 
     col_white.red=col_white.green=col_white.blue=col_white.alpha=255;
     col_black_a.red=col_black_a.green=col_black_a.blue=0;
@@ -2780,7 +2780,9 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
     
     get_srt_text(sfile,xtime);
     if (sfile->subt->current!=NULL&&sfile->subt->current->text!=NULL) {
-        render_text_to_layer(layer,sfile->subt->current->text,sfont,size,LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
+      gchar *tmp;
+      render_text_to_layer(layer,(tmp=g_strdup_printf(" %s ",sfile->subt->current->text)),sfont,size,LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
+      g_free(tmp);
     }
 }
 

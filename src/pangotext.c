@@ -254,12 +254,12 @@ gboolean get_srt_text(file *sfile, double xtime) {
     index_ptr = index_prev = index = sfile->subt->index;
 
   while(index_ptr) {
-    if((index_ptr->start_time <= xtime) && (index_ptr->end_time >= xtime)) {
-      sfile->subt->current = index_ptr;
-      return (TRUE);
-    }
     if(index_ptr->start_time > xtime) {
       sfile->subt->current = NULL;
+      return (TRUE);
+    }
+    if(index_ptr->end_time >= xtime) {
+      sfile->subt->current = index_ptr;
       return (TRUE);
     }
     index_prev = index_ptr;
@@ -339,23 +339,24 @@ gboolean get_srt_text(file *sfile, double xtime) {
             }
           }
           else { // strlen(data) == 0
-            if(node) {
-              node->text = ret;
-              if(node->start_time <= xtime && node->end_time >= xtime) {
-                sfile->subt->current = node;
-                return TRUE;
-              }            
-              if(node->start_time > xtime) {
-                  sfile->subt->current = NULL;
-                  return (TRUE);
-              }
-            }
-            else
-              if(ret) free(ret);
-            ret = NULL;
             break;
           }
        } // end while
+
+	if(node) {
+	  node->text = ret;
+	  if(node->start_time > xtime) {
+	    sfile->subt->current = NULL;
+	  }
+	  if(node->end_time >= xtime) {
+	    sfile->subt->current = node;
+	  }            
+	  return TRUE;
+	}
+	else
+	  if(ret) free(ret);
+	ret = NULL;
+
     }
     else {
       // What to do here ? Probably wrong format
@@ -409,8 +410,6 @@ gboolean subtitles_init(file *sfile, char * fname) {
 
   sfile->subt->tfile=tfile;
 
-
-  // in future we will add stuff to our index and just point current to the current entry
   sfile->subt->current=sfile->subt->index = NULL;
 
   return TRUE;

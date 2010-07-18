@@ -1882,10 +1882,16 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
   } while (segsize>64);
 
   if (best_kframe>-1) {
+    int64_t gpos=frame_to_gpos(cdata,best_kframe,tframe);
     //fprintf(stderr,"seek2 got keyframe %ld %ld\n",best_kframe,best_frame);
     if (!can_exact) seek_byte(cdata,best_pagepos);
     priv->cpagepos=best_pagepos;
-    return frame_to_gpos(cdata,best_kframe,best_frame);
+    // TODO - add to vlc
+    if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+      theora_index_entry_add((lives_clip_data_t *)cdata,gpos,priv->cpagepos);
+    }
+    gpos=frame_to_gpos(cdata,best_kframe,best_frame);
+    return gpos;
   }
   
   // should never reach here
@@ -2356,7 +2362,6 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
   int64_t input_pos=0;
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv;
-  boolean ignore_count=(priv->ignore_packets&&!cont);
 
   priv->frame_out=FALSE;
 
@@ -2394,12 +2399,12 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
 
       // cframe is the frame we are about to decode
 
-      //fprintf(stderr,"cframe is %d\n",cframe);
+      //fprintf(stderr,"cframe is %ld\n",priv->cframe);
 
 #ifdef HAVE_THEORA
       if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
 	
-	if (priv->cframe==priv->last_kframe&&!ignore_count) {
+	if (priv->cframe==priv->last_kframe) {
 	  priv->ignore_packets=FALSE; // reached kframe before target, start decoding packets
 	}
 	
@@ -2408,11 +2413,8 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
 	  ogg_theora_read(cdata,&opriv->op,yuv);
 	}
 
-	if (!ignore_count) {
-	  // 1 packet == 1 frame for theora
-	  priv->cframe++;
-	  priv->skip--;
-	}
+	priv->cframe++;
+	priv->skip--;
 
 
       }
@@ -2437,7 +2439,6 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
       sched_yield();
     }
 
-    ignore_count=FALSE;
     cont=FALSE;
   }
 
@@ -2516,8 +2517,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
     }
 #endif
 
-
-
     if (tframe<=priv->last_frame||tframe-priv->last_frame>max_frame_diff) {
 
       // this is a big kludge, because really for dirac we should always seek from the first frame
@@ -2529,15 +2528,18 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
       // need to find a new kframe
       fidx=get_bounds_for((lives_clip_data_t *)cdata,tframe,&ppos_lower,&ppos_upper);
       if (fidx==NULL) {
+	//printf("pt a\n");
 	int64_t last_ret_frame=priv->last_frame;
 	granulepos=ogg_seek((lives_clip_data_t *)cdata,tframe,ppos_lower,ppos_upper,TRUE);
 	priv->last_frame=last_ret_frame;
 	if (granulepos==-1) return FALSE; // should never happen...
       }
       else granulepos=fidx->value;
+      //printf("pt a2\n");
 
       if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
 	kframe = granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+	//printf("kframe %ld tframe %ld\n",kframe,tframe);
       }
       else {
 	kframe=granulepos;
@@ -2568,40 +2570,29 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 	  //fprintf(stderr,"starting from found gpos %ld\n",granulepos);
 	
 	  xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
-	  priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
+	  priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift); // cframe will be the next frame we decode
+	  //printf("xkframe is %ld %ld\n",xkframe,priv->cframe);
 	}
 	else {
-	  priv->input_position=priv->cpagepos;
 	  priv->cframe=kframe;
+	  priv->input_position=priv->cpagepos;
 	  //printf("SEEK TO %ld\n",priv->cpagepos);
 	}
+	//1671
 
 	if (priv->input_position==priv->vstream->data_start) {
 	  priv->cframe=kframe=priv->kframe_offset;
 	}
-	else {
-	  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
-	    theora_index_entry_add((lives_clip_data_t *)cdata,granulepos,priv->input_position);
-	  }
-	}
 
 	last_cframe=priv->cframe;
 	priv->skip=tframe-priv->cframe;
+	//printf("skip is %ld - %ld = %ld\n",tframe,priv->cframe,priv->skip);
       }
       else {
 	// same keyframe as last time
-	if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
-	  priv->input_position=fidx->prev->pagepos;
-	  granulepos=fidx->prev->value;
-	  //fprintf(stderr,"starting from gpos %ld\n",granulepos);
-	  xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
-	  priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift)+1; // cframe will be the next frame we decode
-	}
-	else {
-	  priv->input_position=fidx->pagepos;
-	  priv->cframe=kframe=fidx->value;
-	}
-	priv->skip=tframe-priv->cframe;
+	priv->input_position=fidx->pagepos;
+	priv->cframe=kframe=fidx->value;
+	priv->skip=tframe-priv->cframe+1;
       }
       
       if (priv->input_position>priv->vstream->data_start) {

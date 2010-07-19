@@ -378,11 +378,11 @@ def do_encode():
         mencoder_opts = common_vopts + ',format=i420 -ovc raw -of rawvideo -o '
         codec_vopts = hinfo + ' --fps %s -B' % (fps)
         cpass = '--pass '
-        cpass1opts = '--bframes 3 --b-pyramid --filter 1:1 --weightb ' + \
-                     '--qcomp 0.8 --analyse dia --subme 1 --no-psnr'
-        cpass2opts = '--bframes 3 --b-pyramid --ref 6 --filter 1:1 --weightb ' + \
-                     '--qcomp 0.8 --analyse all --8x8dct --subme 6 --b-rdo ' + \
-                     '--mixed-refs --bime --trellis 2 --no-fast-pskip'
+        cpass1opts = '--bframes 3 --filter 1:1 --weightb ' + \
+                     '--qcomp 0.8 --analyse dia --subme 1'
+        cpass2opts = '--bframes 3 --ref 6 --filter 1:1 --weightb ' + \
+                     '--qcomp 0.8 --analyse all --8x8dct --subme 6 ' + \
+                     '--mixed-refs --trellis 2 --no-fast-pskip'
     else:
         print('Unexpected video type.')
         raise SystemExit(1)

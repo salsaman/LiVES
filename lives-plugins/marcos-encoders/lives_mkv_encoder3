@@ -19,7 +19,7 @@ http://www.gnu.org/copyleft/gpl.html for license.
 See my vids at http://amv.reimeika.ca !
 """
 
-version = '0.1.5'
+version = '0.1.6'
 convert = 'convert'
 mencoder = 'mencoder'
 x264 = 'x264'

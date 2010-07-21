@@ -375,6 +375,8 @@ void on_fileread_clicked (GtkFileChooser *fch, gpointer user_data) {
 
   if (text==NULL) return;
 
+  if (GTK_IS_TEXT_VIEW(tentry)) tentry=(GtkWidget *)gtk_text_view_get_buffer(GTK_TEXT_VIEW(tentry));
+
   if (GTK_IS_ENTRY(tentry)) gtk_entry_set_text(GTK_ENTRY(tentry),(tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)));
   else gtk_text_buffer_set_text (GTK_TEXT_BUFFER(tentry), (tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)), -1);
   g_free(tmp);

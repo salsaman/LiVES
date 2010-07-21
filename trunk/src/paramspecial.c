@@ -53,23 +53,34 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 
   // TODO - make sure only one of each of these
 
-
   // returns extra width in pixels
   gint extra_width=0;
 
   if (!strcmp (array[0],"aspect")) {
     // aspect button
+    if (fx_dialog[1]!=NULL) {
+      g_strfreev(array);
+      return extra_width;
+    }
     aspect.width_param=atoi (array[1]);
     aspect.height_param=atoi (array[2]);
   }
   else if (!strcmp (array[0],"mergealign")) {
-    // aspect button
+    // align start/end
+    if (fx_dialog[1]!=NULL) {
+      g_strfreev(array);
+      return extra_width;
+    }
     mergealign.start_param=atoi (array[1]);
     mergealign.end_param=atoi (array[2]);
     mergealign.rfx=rfx;
   }
   else if (!strcmp (array[0],"framedraw")) {
     gint stdwidgets=0;
+    if (fx_dialog[1]!=NULL) {
+      g_strfreev(array);
+      return extra_width;
+    }
     framedraw.rfx=rfx;
     if (!strcmp (array[1],"rectdemask")) {
       framedraw.type=FD_RECT_DEMASK;
@@ -169,7 +180,7 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
   GList *slist;
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow
-  
+
   if (num==framedraw.xstart_param) {
     framedraw.xstart_widget=param->widgets[0];
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),0.);
@@ -275,6 +286,12 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
       gint epos;
 
       box=(GTK_WIDGET(param->widgets[0])->parent);
+
+      while (box !=NULL&&!GTK_IS_BOX(box)) {
+	box=box->parent;
+      }
+
+      if (box==NULL) return;
 
       clist=gtk_container_get_children(GTK_CONTAINER(box));
       epos=g_list_index(clist,param->widgets[0]);

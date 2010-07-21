@@ -2839,6 +2839,8 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
     if (!weed_plant_has_leaf(filter,"gui")) return NULL;
     gui=weed_get_plantptr_value(filter,"gui",&error);
 
+    if (!weed_plant_has_leaf(gui,"layout_scheme")) return NULL;
+
     string=weed_get_string_value(gui,"layout_scheme",&error);
     if (strcmp(string,"RFX")) {
       weed_free(string);

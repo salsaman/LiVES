@@ -992,10 +992,8 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   else {
     mainw->textwidget_focus=NULL;
 
-    if (fx_dialog[1]==NULL) {
-      // initialise special widgets
-      init_special();
-    }
+    // initialise special widgets
+    init_special();
     
     if (rfx->status==RFX_STATUS_WEED) usrgrp_to_livesgrp[1]=NULL;
     else usrgrp_to_livesgrp[0]=NULL;
@@ -1078,7 +1076,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
       if (!strncmp (g_list_nth_data (hints,i),lstring,7)) {
 	layout=g_list_append (layout,g_strdup((gchar *)g_list_nth_data (hints,i)+7));
       }
-      else if (!strncmp (g_list_nth_data (hints,i),sstring,8)&&mainw->current_file>0&&fx_dialog[1]==NULL) {
+      else if (!strncmp (g_list_nth_data (hints,i),sstring,8)&&mainw->current_file>0) {
 	add_to_special((gchar *)g_list_nth_data (hints,i)+8,rfx);
       }
     }
@@ -1724,7 +1722,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
   }
   
-  if (mainw->current_file>0&&fx_dialog[1]==NULL) {
+  if (mainw->current_file>0) {
     // see if there were any 'special' hints
     //mainw->block_param_updates=FALSE; // need to keep blocked until last param widget has been created
     check_for_special (param,pnum,GTK_BOX(GTK_WIDGET(box)->parent),rfx);

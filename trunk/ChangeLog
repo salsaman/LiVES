@@ -3,6 +3,8 @@ Version 1.3.5
 Add basic support for .srt subtitles. (salsaman & Penkov)
 Fix for ogg/theora decoding.
 Updates for lives_mkv_encoder.
+Add new effect "puretext".
+Updated translation to Turkish.
 
 
 

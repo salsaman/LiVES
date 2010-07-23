@@ -60,18 +60,51 @@ typedef enum {
 typedef enum {
   PT_LETTER_MODE, // proctext() is called per letter xtext from start -> start+length-1
   PT_WORD_MODE, // proctext() is called with per word xtext from start -> start+length-1
+  PT_LINE_MODE, // proctext() is called with per line xtext from start -> start+length-1
   PT_ALL_MODE // proctext called once with NULL xtext pointing to sdata->text (or NULL if length is 0)
 } pt_tmode_t;
 
 
 typedef enum {
   PT_SPIRAL_TEXT=0,
-  PT_SPINNING_LETTERS
+  PT_SPINNING_LETTERS,
+  PT_LETTER_STARFIELD
 } pt_op_mode_t;
 
 
 // for future use
 #define NTHREADS 1
+
+
+
+
+typedef struct {
+  int size;
+
+  double xpos;
+  double ypos;
+  double zpos;
+
+  double xvel;
+  double yvel;
+  double zvel;
+
+  double xaccel;
+  double yaccel;
+  double zaccel;
+
+  double rot;
+  double rotvel;
+  double rotaccel;
+  
+  rgb_t colour;
+  double alpha;
+
+} pt_letter_data_t;
+
+
+
+
 
 // static data per instance
 typedef struct {
@@ -117,7 +150,7 @@ typedef struct {
   //pthread_mutex_t xmutex;
 
   // per glyph/mode private data
-  void **priv;
+  pt_letter_data_t *letter_data;
 } sdata_t;
 
 
@@ -181,7 +214,8 @@ static void getlsize(PangoLayout *layout, double *pw, double *ph) {
 
 static inline void pt_set_alarm(sdata_t *sdata, int delta) {
   sdata->alarm=FALSE;
-  sdata->alarm_time=sdata->timer+(float)delta/1000.;
+  if (delta<0) sdata->alarm_time=-1.;
+  else sdata->alarm_time=sdata->timer+(float)delta/1000.;
 }
 
 
@@ -201,13 +235,134 @@ static void rotate_text(cairo_t *cairo, PangoLayout *layout, int x_center, int y
 }
 
 
+    // set font size
+void set_font_size(PangoLayout *layout, PangoFontDescription *font, int font_size) {
+  pango_font_description_set_absolute_size(font, font_size*PANGO_SCALE);
+  pango_layout_set_font_description(layout, font);
+}
+
+
+static void anim_letter(pt_letter_data_t *ldt) {
+  // update velocities and positions
+
+  ldt->xvel+=ldt->xaccel;
+  ldt->yvel+=ldt->yaccel;
+  ldt->zvel+=ldt->zaccel;
+  ldt->rotvel+=ldt->rotaccel;
+
+  ldt->xpos+=ldt->xvel;
+  ldt->ypos+=ldt->yvel;
+  ldt->zpos+=ldt->zvel;
+  ldt->rot+=ldt->rotvel;
+}
+
+
+static void colour_copy(rgb_t *col1, rgb_t *col2) {
+  // copy col2 to col1
+
+  col1->red=col2->red;
+  col1->green=col2->green;
+  col1->blue=col2->blue;
+}
+
+static inline double rand_angle(void) {
+  // return a random double between 0. and 2*M_PI
+  return (double)rand()/(double)RAND_MAX*2.*M_PI;
+}
+
+
+static int getrandi(int min, int max) {
+  return (double)rand()/(double)RAND_MAX*(max-min)+min+.5;
+}
+
+
+static pt_letter_data_t *letter_data_create(int len) {
+  pt_letter_data_t *ldt=(pt_letter_data_t *)weed_malloc(sizeof(pt_letter_data_t)*len);
+  return ldt;
+}
+
+
+static void letter_data_free(sdata_t *sdata) {
+  weed_free(sdata->letter_data);
+  sdata->letter_data=NULL;
+}
+
+
 static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *cairo, PangoLayout *layout, 
 		     PangoFontDescription *font, int width, int height) {
   double dwidth,dheight;
-  double font_size;
   double radX,radY;
 
   switch (sdata->mode) {
+  case (PT_LETTER_STARFIELD):
+    if (sdata->timer==0.) {
+      sdata->start=0;
+      sdata->length=0;
+
+      sdata->tmode=PT_LETTER_MODE;
+
+      sdata->letter_data=letter_data_create(sdata->tlength);
+    }
+
+    if (sdata->length>0) {
+      pt_letter_data_t *ldt=&sdata->letter_data[sdata->count];
+      double dist=ldt->zpos;
+      if (dist>1.) {
+	set_font_size(layout,font,1024./dist);
+
+	// get pixel size of letter/word
+	getlsize(layout, &dwidth, &dheight);
+
+	sdata->x_text=ldt->xpos/dist+(double)width/2.;
+	sdata->y_text=ldt->ypos/dist+(double)height/2.;
+
+	setxypos(dwidth,dheight,sdata->x_text,sdata->y_text,&sdata->x_text,&sdata->y_text);
+
+	sdata->fg_alpha=dist/100.+.5;
+
+	anim_letter(ldt);
+
+	colour_copy(&sdata->fg,&ldt->colour);
+
+      }
+      else pango_layout_set_text(layout, "", -1);
+
+    }
+
+    if (sdata->alarm) {
+      // set values for next letter
+      pt_letter_data_t *ldt=&sdata->letter_data[sdata->length];
+      double angle=rand_angle();
+
+      ldt->xpos=ldt->ypos=ldt->rot=ldt->rotvel=0.;
+      ldt->zpos=80.+sdata->length;
+
+      if (ldt->zpos>100.) ldt->zpos=100.;
+
+      ldt->xvel=sin(angle)*16.;
+      ldt->yvel=cos(angle)*16.;
+      ldt->zvel=-2.;
+
+      ldt->xaccel=ldt->yaccel=ldt->zaccel=ldt->rotaccel=0.;
+
+      if (sdata->length==0||!strncmp(&sdata->text[utf8offs(sdata->text,sdata->length)]," ",1)) {
+	ldt->colour.red=getrandi(60,255);
+	ldt->colour.green=getrandi(60,255);
+	ldt->colour.blue=getrandi(60,255);
+      }
+      else {
+	colour_copy(&ldt->colour,&(sdata->letter_data[sdata->length-1].colour));
+      }
+
+      sdata->length++;
+
+      if (sdata->length<sdata->tlength) pt_set_alarm(sdata,400); // milliseconds
+      else pt_set_alarm(sdata,-1);
+    }
+
+
+    break;
+
   case (PT_SPINNING_LETTERS):
     if (sdata->timer==0.) {
       sdata->int1=0;
@@ -226,11 +381,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       sdata->dbl3+=.1;
     }
 
-    font_size=64;
-
-    // set font size
-    pango_font_description_set_absolute_size(font, font_size*PANGO_SCALE);
-    pango_layout_set_font_description(layout, font);
+    set_font_size(layout,font,64);
 
     sdata->x_text=width-sdata->int1+sdata->dbl1;
     sdata->y_text=height/2;
@@ -247,10 +398,6 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     sdata->dbl1+=dwidth+10.;
 
     setxypos(0,dheight,sdata->x_text,sdata->y_text,&sdata->x_text,&sdata->y_text);
-
-    // colours
-    sdata->fg.red=sdata->fg.green=sdata->fg.blue=65535;
-    sdata->fg_alpha=1.;
 
     if (sdata->alarm) {
       pt_set_alarm(sdata,25); // milliseconds
@@ -271,12 +418,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       sdata->tmode=PT_LETTER_MODE;
     }
 
-    font_size=2560/(sdata->count+19.);
-
-    // set font size
-    pango_font_description_set_absolute_size(font, font_size*PANGO_SCALE);
-    // if we set size we must also reset font_description
-    pango_layout_set_font_description(layout, font);
+    set_font_size(layout,font,2560./(sdata->count+19.));
       
     // get pixel size of letter/word
     getlsize(layout, &dwidth, &dheight);
@@ -311,10 +453,6 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       setxypos(dwidth,dheight,width/2+sin(sdata->count/4.+(sdata->dbl3-1.)*8.)*radX,height/2-cos(-sdata->count/4.-(sdata->dbl3-1.)*8.)*radY,&sdata->x_text,&sdata->y_text);
       
     if (!strncmp(xtext,".",1)) sdata->int1++;
-      
-    // colours
-    sdata->fg.red=sdata->fg.green=sdata->fg.blue=65535;
-    sdata->fg_alpha=1.;
       
     if (sdata->alarm) {
       pt_set_alarm(sdata,250); // milliseconds
@@ -398,6 +536,7 @@ int puretext_init(weed_plant_t *inst) {
   sdata->dbl1=sdata->dbl2=sdata->dbl3=-1.;
   sdata->bool1=FALSE;
 
+  sdata->letter_data=NULL;
 
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
@@ -455,6 +594,7 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
     sdata->timer=-1.;
     sdata->mode=mode;
     sdata->alarm_time=0.;
+    if (sdata->letter_data!=NULL) letter_data_free(sdata);
   }
 
   weed_free(in_params); // must weed free because we got an array
@@ -537,6 +677,10 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 	    pango_layout_set_font_description(layout, font);
 	    pango_layout_set_text(layout, (char *)xtext, -1);
 
+	    // default colour - opaque white
+	    sdata->fg.red=sdata->fg.green=sdata->fg.blue=65535;
+	    sdata->fg_alpha=1.;
+
 	    cairo_save(cairo);
 
 	    // get size, position, and colour
@@ -552,10 +696,11 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 	    cairo_move_to(cairo, sdata->x_text, sdata->y_text);
 
-	    cairo_set_source_rgba(cairo,sdata->fg.red/255.0, sdata->fg.green/255.0, sdata->fg.blue/255.0, sdata->fg_alpha);
+	    cairo_set_source_rgba(cairo,sdata->fg.red/255.0, sdata->fg.green/255.0, sdata->fg.blue/255.0, 
+				  sdata->fg_alpha);
+	    pango_cairo_update_layout (cairo, layout);
 
 	    pango_cairo_show_layout(cairo, layout);
-
 
 	    cairo_restore(cairo);
 
@@ -605,7 +750,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class;
     PangoContext *ctx;
 
-    char *modes[]={"Spiral text","Spinning letters",NULL};
+    char *modes[]={"Spiral text","Spinning letters","Letter starfield",NULL};
     char *rfx_strings[]={"special|fileread|0|"};
 
     // this section contains code

@@ -22,7 +22,7 @@ typedef struct {
   double start_time;
   double end_time;
   lives_subtitle_style_t *style; // for future use
-  char *text;
+  long textpos;
   _lives_subtitle_t *prev; // for future use
   _lives_subtitle_t *next; // for future use
 } lives_subtitle_t;
@@ -30,7 +30,9 @@ typedef struct {
 
 typedef struct {
   FILE *tfile;
-  lives_subtitle_t *index; // for future use - we will create an index ordered by start_time
+  char *text;
+  double last_time;
+  lives_subtitle_t *index;
   lives_subtitle_t *current; // pointer to current entry in index
 } lives_subtitles_t;
 
@@ -47,7 +49,6 @@ char **get_font_list(void);
 gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,\
   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,\
   gboolean center, gboolean rising, double top);
-
 
 #endif
 

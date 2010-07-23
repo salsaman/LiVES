@@ -4121,7 +4121,13 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       pthread_mutex_lock(&mainw->gtk_mutex);
       subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
       if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
-	subtitles_init(cfile,subfname);
+	subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
+      }
+      else {
+	subfname=g_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
+	if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
+	  subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);
+	}
       }
       g_free(subfname);
       pthread_mutex_unlock(&mainw->gtk_mutex);

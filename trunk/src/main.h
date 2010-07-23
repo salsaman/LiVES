@@ -996,9 +996,10 @@ void refresh_rte_window (void);
 void *w_memcpy  (void *dest, const void *src, size_t n);
 
 // pngotext.h
-gboolean subtitles_init(file *sfile, char * fname);
+gboolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t);
 void subtitles_free(file *sfile);
 gboolean get_srt_text(file *sfile, double xtime);
+gboolean get_sub_text(file *sfile, double xtime);
 
 // osc.c
 #ifdef ENABLE_OSC

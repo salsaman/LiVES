@@ -2763,7 +2763,7 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
 
 
 static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer) {
-    // render subtitles from whatever (currently only .srt) file
+    // render subtitles from whatever (.srt or .sub) file
     // uses default values for colours, fonts, size, etc.
 
     // TODO - allow prefs settings for colours, fonts, size, alpha
@@ -2778,7 +2778,17 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
     col_black_a.red=col_black_a.green=col_black_a.blue=0;
     col_black_a.alpha=80;
     
-    get_srt_text(sfile,xtime);
+    switch (sfile->subt->type) {
+    case SUBTITLE_TYPE_SRT:
+      get_srt_text(sfile,xtime);
+      break;
+    case SUBTITLE_TYPE_SUB:
+      get_sub_text(sfile,xtime);
+      break;
+    default:
+      return;
+    }
+
     if (sfile->subt->text!=NULL) {
       gchar *tmp;
       render_text_to_layer(layer,(tmp=g_strdup_printf(" %s ",sfile->subt->text)),sfont,size,LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);

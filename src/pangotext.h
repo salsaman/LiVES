@@ -8,6 +8,12 @@
 #ifndef LIVES_PANGOTEXT_H
 #define LIVES_PANGOTEXT_H
 
+typedef enum {
+  SUBTITLE_TYPE_NONE=0,
+  SUBTITLE_TYPE_SRT,
+  SUBTITLE_TYPE_SUB
+} lives_subtitle_type_t;
+
 
 // for future use
 typedef struct {
@@ -24,11 +30,12 @@ typedef struct {
   lives_subtitle_style_t *style; // for future use
   long textpos;
   _lives_subtitle_t *prev; // for future use
-  _lives_subtitle_t *next; // for future use
+  _lives_subtitle_t *next;
 } lives_subtitle_t;
 
 
 typedef struct {
+  lives_subtitle_type_t type;
   FILE *tfile;
   char *text;
   double last_time;

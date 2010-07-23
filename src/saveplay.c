@@ -610,17 +610,31 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   else {
     if (prefs->load_subs) {
       gchar filename[512];
+      gchar *subfname;
+      lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
+
       g_snprintf(filename,512,"%s",file_name);
       get_filename(filename,FALSE); // strip extension
       isubfname=g_strdup_printf("%s.srt",filename);
       if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
-	gchar *subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
-	com=g_strdup_printf("/bin/cp %s %s",isubfname,subfname);
+	subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
+	subtype=SUBTITLE_TYPE_SRT;
+      }
+      else {
+	g_free(isubfname);
+	isubfname=g_strdup_printf("%s.sub",filename);
+	if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
+	  subfname=g_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
+	  subtype=SUBTITLE_TYPE_SUB;
+	}
+      }
+      if (subtype!=SUBTITLE_TYPE_NONE) {
+	com=g_strdup_printf("/bin/cp \"%s\" %s",isubfname,subfname);
 	dummyvar=system(com);
 	g_free(com);
-	subtitles_init(cfile,subfname);
+	subtitles_init(cfile,subfname,subtype);
 	g_free(subfname);
-
+	g_free(isubfname);
       }
     }
   }
@@ -3283,7 +3297,14 @@ restore_file(const gchar *file_name) {
   if (prefs->load_subs) {
     subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
     if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
-      subtitles_init(cfile,subfname);
+      subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
+    }
+    else {
+      g_free(subfname);
+      subfname=g_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
+      if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
+	subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);
+      }
     }
     g_free(subfname);
   }

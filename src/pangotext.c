@@ -326,14 +326,14 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
       *poscr = cr_str[0];
     curlen = strlen(data);
     if(!ret) {
-      ret = make_br_string(data);
+      ret = subst(data,"[BR]","\n");
       if(!ret) {
 	fseek(pf, curpos, SEEK_SET);
         return(FALSE);
       }
     }
     else {
-      retmore = make_br_string(data);
+      retmore = subst(data,"[BR]","\n");
       if(!retmore) {
 	fseek(pf, curpos, SEEK_SET);
         return(FALSE);
@@ -707,7 +707,7 @@ void subtitles_free(file *sfile) {
 }
 
 
-gboolean subtitles_init(file *sfile, char * fname) {
+gboolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t subtype) {
   // fname is the name of the subtitle file
   FILE *tfile;
 
@@ -728,6 +728,8 @@ gboolean subtitles_init(file *sfile, char * fname) {
   sfile->subt->text=NULL;
 
   sfile->subt->last_time=-1.;
+
+  sfile->subt->type=subtype;
 
   return TRUE;
 }

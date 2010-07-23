@@ -326,14 +326,14 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
       *poscr = cr_str[0];
     curlen = strlen(data);
     if(!ret) {
-      ret = subst(data,"[BR]","\n");
+      ret = subst(data,"[br]","\n");
       if(!ret) {
 	fseek(pf, curpos, SEEK_SET);
         return(FALSE);
       }
     }
     else {
-      retmore = subst(data,"[BR]","\n");
+      retmore = subst(data,"[br]","\n");
       if(!retmore) {
 	fseek(pf, curpos, SEEK_SET);
         return(FALSE);
@@ -505,10 +505,7 @@ gboolean get_srt_text(file *sfile, double xtime) {
     }
     else {
       // What to do here ? Probably wrong format
-      if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
-      sfile->subt->text=NULL;
-      sfile->subt->current=NULL;
-      return (FALSE);
+      continue;
     }
   }
 
@@ -521,7 +518,7 @@ gboolean get_srt_text(file *sfile, double xtime) {
 }
 
 
-// TODO !!!!
+
 // read .sub files
 gboolean get_sub_text(file *sfile, double xtime) {
   lives_subtitle_t *index = NULL;
@@ -531,7 +528,7 @@ gboolean get_sub_text(file *sfile, double xtime) {
   lives_subtitle_t *curr = NULL;
   FILE *pf = NULL;
   char data[32768];
-  int starttext;
+  gboolean starttext;
 
   if(!sfile)
     return (FALSE);
@@ -577,7 +574,8 @@ gboolean get_sub_text(file *sfile, double xtime) {
 
   pf = sfile->subt->tfile;
 
-  starttext = 0;
+  starttext = (sfile->subt->index!=NULL);
+
   while(fgets(data,sizeof(data), pf)) {
     char *poslf = NULL, *poscr = NULL;
     int hstart, mstart, sstart, fstart;
@@ -586,24 +584,12 @@ gboolean get_sub_text(file *sfile, double xtime) {
     double starttime, endtime;
 
     if(!strncmp(data, "[SUBTITLE]", 10)) {
-      starttext = 1;
-      continue;
+      starttext = TRUE;
     }
 
     if(!starttext)
       continue;
-    //
-    // data contains subtitle number
-    //
 
-    if(!fgets(data,sizeof(data), pf)) {
-      // EOF
-      if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
-      sfile->subt->text=NULL;
-      sfile->subt->current=NULL;
-      sub_get_last_time(sfile->subt);
-      return(FALSE);
-    }
     //
     // data contains time range
     //
@@ -666,11 +652,7 @@ gboolean get_sub_text(file *sfile, double xtime) {
        }
     }
     else {
-      // What to do here ? Probably wrong format
-      if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
-      sfile->subt->text=NULL;
-      sfile->subt->current=NULL;
-      return (FALSE);
+      continue;
     }
   }
 

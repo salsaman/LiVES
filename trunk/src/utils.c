@@ -3206,19 +3206,14 @@ gchar *subst (const gchar *string, const gchar *from, const gchar *to) {
   gchar *ret=g_strdup(string),*first;
   gchar *search=ret;
 
-  while (1) {
-    if ((search=strstr (search,from))==NULL) {
-      break;
-    }
-    else {
-      first=g_strndup(ret,search-ret);
-      search=g_strdup(search+strlen(from));
-      g_free(ret);
-      ret=g_strconcat (first,to,search,NULL);
-      g_free(search);
-      search=ret+strlen(first)+strlen(to);
-      g_free(first);
-    }
+  while ((search=strstr (search,from))!=NULL) {
+    first=g_strndup(ret,search-ret);
+    search=g_strdup(search+strlen(from));
+    g_free(ret);
+    ret=g_strconcat (first,to,search,NULL);
+    g_free(search);
+    search=ret+strlen(first)+strlen(to);
+    g_free(first);
   }
   return ret;
 }

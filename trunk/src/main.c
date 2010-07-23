@@ -2895,19 +2895,18 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) deinterlace_frame(layer,tc);
 
         // render subtitles from file
-        if (prefs->load_subs&&sfile->subt!=NULL) {
-            int palette=dplug->cdata->current_palette;
-            
-            // convert to RGB(A) or leave as BGR(A)
-	    if (palette!=WEED_PALETTE_RGB24&&palette!=WEED_PALETTE_RGBA32&&palette!=WEED_PALETTE_BGR24&&palette!=WEED_PALETTE_BGRA32) convert_layer_palette(layer,weed_palette_has_alpha_channel(palette)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32,0);
+	if (prefs->load_subs&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
+	  double xtime;
+	  int palette=dplug->cdata->current_palette;
 
-            if (prefs->load_subs&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
-                // TODO - alpha channel will be lost
-	      double xtime=(double)(frame-1)/sfile->fps;
-	      render_subs_from_file(sfile,xtime,layer);
-            }
+	  // convert to RGB(A) or leave as BGR(A)
+	  if (palette!=WEED_PALETTE_RGB24&&palette!=WEED_PALETTE_RGBA32&&palette!=WEED_PALETTE_BGR24&&palette!=WEED_PALETTE_BGRA32) convert_layer_palette(layer,weed_palette_has_alpha_channel(palette)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32,0);
+	  
+	  // TODO - alpha channel will be lost
+	  xtime=(double)(frame-1)/sfile->fps;
+	  render_subs_from_file(sfile,xtime,layer);
+	}
 
-        }
 
 	mainw->osc_block=FALSE;
 	return TRUE;

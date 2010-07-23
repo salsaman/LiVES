@@ -2779,9 +2779,9 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
     col_black_a.alpha=80;
     
     get_srt_text(sfile,xtime);
-    if (sfile->subt->current!=NULL&&sfile->subt->current->text!=NULL) {
+    if (sfile->subt->text!=NULL) {
       gchar *tmp;
-      render_text_to_layer(layer,(tmp=g_strdup_printf(" %s ",sfile->subt->current->text)),sfont,size,LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
+      render_text_to_layer(layer,(tmp=g_strdup_printf(" %s ",sfile->subt->text)),sfont,size,LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
       g_free(tmp);
     }
 }

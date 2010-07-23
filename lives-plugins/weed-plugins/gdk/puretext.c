@@ -633,7 +633,7 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
       cairo_t *cairo = gdk_cairo_create(pixmap);
       gboolean result;
       if(cairo) {
-
+	PangoContext *ctx=pango_cairo_create_context(cairo);
 	// TODO - get real offset of start in bytes
 
 	if (sdata->text_type==TEXT_TYPE_ASCII) {
@@ -645,7 +645,7 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 	// loop from start char to end char
 	for (i=sdata->start;i<sdata->start+(sdata->length==0?1:sdata->length);i++) {
-	  PangoLayout *layout = pango_cairo_create_layout(cairo);
+	  PangoLayout *layout = pango_layout_new(ctx);
 	  if(layout) { 
 	    PangoFontDescription *font;
 	    char *xtext;
@@ -711,6 +711,8 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 	  sdata->count++;
 
 	} // end loop
+
+	g_object_unref(ctx);
 
 	// and finally convert backwards
 	pixbuf_new = gdk_pixbuf_get_from_drawable(pixbuf, pixmap, NULL,	\

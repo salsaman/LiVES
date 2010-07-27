@@ -22,7 +22,7 @@ http://www.gnu.org/copyleft/gpl.html for license.
 See my vids at http://amv.reimeika.ca !
 """
 
-version = '0.1.8'
+version = '0.1.9'
 convert = 'convert'
 mpeg2enc = 'mpeg2enc'
 mp2enc = 'mp2enc'

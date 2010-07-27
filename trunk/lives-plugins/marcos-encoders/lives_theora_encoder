@@ -22,7 +22,7 @@ http://www.gnu.org/copyleft/gpl.html for license.
 See my vids at http://amv.reimeika.ca !
 """
 
-version = '0.1.6'
+version = '0.1.7'
 convert = 'convert'
 mplayer = 'mplayer'
 theora_encoder = 'encoder_example'

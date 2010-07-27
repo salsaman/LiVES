@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import locale
+locale.setlocale(locale.LC_NUMERIC,"")
+
 """
 ogm_encoder.py
 

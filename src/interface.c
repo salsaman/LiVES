@@ -60,7 +60,7 @@ void add_suffix_check(GtkBox *box) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), mainw->fx1_bool);
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			  G_CALLBACK (on_boolean_toggled),
-			  GINT_TO_POINTER(1));
+			  &mainw->fx1_bool);
   
 }
 
@@ -151,8 +151,8 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
   GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), mainw->open_deint);
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			  G_CALLBACK (on_opendeint_toggled),
-			  NULL);
+			  G_CALLBACK (on_boolean_toggled),
+			  &mainw->open_deint);
   gtk_tooltips_set_tip (mainw->tooltips, checkbutton,_("If this is set, frames will be deinterlaced as they are imported."), NULL);
 
   gtk_widget_show_all(hbox);
@@ -855,7 +855,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
 		      G_CALLBACK (on_boolean_toggled),
-		      GINT_TO_POINTER (1));
+		      &mainw->fx1_bool);
   }
   else if (text2==NULL) mainw->fx1_bool=TRUE;
 
@@ -1427,8 +1427,8 @@ create_insert_dialog (void)
                       G_CALLBACK (on_insertwsound_toggled),
                       NULL);
   g_signal_connect (GTK_OBJECT (radiobutton4), "toggled",
-                      G_CALLBACK (on_insert_after_toggled),
-                      NULL);
+                      G_CALLBACK (on_boolean_toggled),
+                      &mainw->insert_after);
   g_signal_connect (GTK_OBJECT (cancelbutton1), "clicked",
                       G_CALLBACK (on_cancel_button1_clicked),
                       insertw);
@@ -1667,8 +1667,8 @@ create_location_dialog (void)
   GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
 
   g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
-		    G_CALLBACK (on_locbw_toggled),
-		    NULL);
+		    G_CALLBACK (on_boolean_toggled),
+		    &prefs->no_bandwidth);
 
   gtk_widget_show_all(hbox);
 

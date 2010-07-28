@@ -2086,7 +2086,7 @@ create_new_pb_speed (gshort type)
 
   g_signal_connect (GTK_OBJECT (change_audio_speed), "toggled",
 		    G_CALLBACK (on_boolean_toggled),
-		    GINT_TO_POINTER (1));
+		    &mainw->fx1_bool);
   g_signal_connect (GTK_OBJECT (cancelbutton4), "clicked",
 		    G_CALLBACK (on_cancel_button1_clicked),
 		    NULL);
@@ -2116,7 +2116,7 @@ create_new_pb_speed (gshort type)
 			    radiobutton2);
     g_signal_connect (GTK_OBJECT (radiobutton2), "toggled",
 		      G_CALLBACK (on_boolean_toggled),
-		      GINT_TO_POINTER (2));
+		      &mainw->fx2_bool);
   }
 
   gtk_widget_show_all (new_pb_speed);

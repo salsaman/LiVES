@@ -202,14 +202,6 @@ on_location_select                   (GtkButton       *button,
 				      gpointer         user_data);
 
 void
-on_locbw_toggled                (GtkToggleButton *togglebutton,
-				 gpointer         user_data);
-
-void
-on_opendeint_toggled                (GtkToggleButton *togglebutton,
-				 gpointer         user_data);
-
-void
 on_autoreload_toggled                (GtkToggleButton *togglebutton,
 				 gpointer         user_data);
 
@@ -287,11 +279,6 @@ on_mute_activate                (GtkMenuItem     *menuitem,
 				 gpointer         user_data);
 
 void
-on_save_with_sound_activate                (GtkMenuItem     *menuitem,
-				 gpointer         user_data);
-
-
-void
 on_info_ok_button_clicked            (GtkButton       *button,
 				      gpointer         user_data);
 
@@ -345,10 +332,6 @@ on_xmms_stop_audio_activate                (GtkMenuItem     *menuitem,
 					    gpointer         user_data);
 
 
-void
-on_insert_after_toggled                (GtkToggleButton *togglebutton,
-                                        gpointer         user_data);
-
 void 
 on_insfitaudio_toggled                (GtkToggleButton *togglebutton,
 				       gpointer         user_data);
@@ -381,10 +364,6 @@ on_spin_step_value_changed           (GtkSpinButton   *spinbutton,
 void
 on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
 				       gpointer         user_data);
-
-void
-on_boolean_toggled        (GtkToggleButton *togglebutton,
-			    gpointer         user_data);
 
 gint
 expose_vid_event (GtkWidget *widget, GdkEventExpose *event);
@@ -621,10 +600,6 @@ on_resample_vid_ok                  (GtkButton       *button,
 				  GtkEntry         *entry);
 
 void
-on_ccpd_sound_activate                (GtkMenuItem     *menuitem,
-				       gpointer         user_data);
-
-void
 on_trim_audio_activate (GtkMenuItem     *menuitem,
 			gpointer         user_data);
 
@@ -666,9 +641,8 @@ void
 on_showfct_activate               (GtkMenuItem     *menuitem,
 				   gpointer         user_data);
 
-void
-on_showsubs_activate               (GtkMenuItem     *menuitem,
-				   gpointer         user_data);
+void on_boolean_toggled  (GtkMenuItem     *menuitem,
+			  gpointer         user_data);
 
 void
 on_show_messages_activate            (GtkMenuItem     *menuitem,

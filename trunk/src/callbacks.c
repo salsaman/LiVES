@@ -522,13 +522,6 @@ on_open_loc_activate                      (GtkMenuItem     *menuitem,
 
 }
 
-void
-on_locbw_toggled                (GtkToggleButton *togglebutton,
-				 gpointer         user_data)
-{
-  prefs->no_bandwidth=!prefs->no_bandwidth;
-}
-
 
 void
 on_autoreload_toggled                (GtkToggleButton *togglebutton,
@@ -3367,24 +3360,6 @@ on_encoder_entry_changed (GtkEntry *encoder_entry, gpointer ptr) {
 
 
 void
-on_opendeint_toggled                (GtkToggleButton *togglebutton,
-                                        gpointer         user_data)
-{
-  mainw->open_deint=!mainw->open_deint;
-
-}
-
-
-
-void
-on_insert_after_toggled                (GtkToggleButton *togglebutton,
-                                        gpointer         user_data)
-{
-  mainw->insert_after=!mainw->insert_after;
-
-}
-
-void
 on_insertwsound_toggled                (GtkToggleButton *togglebutton,
                                         gpointer         user_data)
 {
@@ -5909,12 +5884,7 @@ on_showfct_activate               (GtkMenuItem     *menuitem,
   }
 }
 
-void
-on_showsubs_activate               (GtkMenuItem     *menuitem,
-				   gpointer         user_data)
-{
-  prefs->show_subtitles=!prefs->show_subtitles;
-}
+
 
 void
 on_sticky_activate               (GtkMenuItem     *menuitem,
@@ -5972,19 +5942,12 @@ on_fade_activate               (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_save_with_sound_activate                (GtkMenuItem     *menuitem,
-					    gpointer         user_data)
-{
-  mainw->save_with_sound=!mainw->save_with_sound;
-}
 
-
-void
-on_ccpd_sound_activate                (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
+void on_boolean_toggled(GtkMenuItem     *menuitem,
+			gpointer         user_data)
 {
-  mainw->ccpd_with_sound=!mainw->ccpd_with_sound;
+  gboolean *ppref=(gboolean *)user_data;
+  *ppref=!*ppref;
 }
 
 
@@ -6272,37 +6235,6 @@ on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
     break;
   }
 }
-
-
-
-void
-on_boolean_toggled        (GtkToggleButton *togglebutton,
-			    gpointer         user_data)
-{
-  // TODO - use array, like mainw->fx_bool[n]
-
-  switch (GPOINTER_TO_INT (user_data)) {
-  case 1 :
-    mainw->fx1_bool=!mainw->fx1_bool;
-    break;
-  case 2 :
-    mainw->fx2_bool=!mainw->fx2_bool;
-    break;
-  case 3 :
-    mainw->fx3_bool=!mainw->fx3_bool;
-    break;
-  case 4 :
-    mainw->fx4_bool=!mainw->fx4_bool;
-    break;
-  case 5 :
-    mainw->fx5_bool=!mainw->fx5_bool;
-    break;
-  case 6 :
-    mainw->fx6_bool=!mainw->fx6_bool;
-    break;
-  }
-}
-
 
 
 

@@ -497,6 +497,11 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->sw_sound);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sw_sound),TRUE);
 
+  mainw->aload_subs = gtk_check_menu_item_new_with_mnemonic (_("Auto load subtitles"));
+  gtk_widget_show (mainw->aload_subs);
+  gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->aload_subs);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->aload_subs),prefs->autoload_subs);
+
   separatormenuitem3 = gtk_menu_item_new ();
   gtk_widget_show (separatormenuitem3);
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), separatormenuitem3);
@@ -2405,11 +2410,14 @@ create_LiVES (void)
                       G_CALLBACK (on_full_screen_activate),
                       NULL);
   g_signal_connect (GTK_OBJECT (mainw->sw_sound), "activate",
-                      G_CALLBACK (on_save_with_sound_activate),
-                      NULL);
+                      G_CALLBACK (on_boolean_toggled),
+		    &mainw->save_with_sound); // TODO - make pref
+  g_signal_connect (GTK_OBJECT (mainw->showsubs), "activate",
+                      G_CALLBACK (on_boolean_toggled),
+                      &prefs->autoload_subs);
   g_signal_connect (GTK_OBJECT (mainw->ccpd_sound), "activate",
-                      G_CALLBACK (on_ccpd_sound_activate),
-                      NULL);
+                      G_CALLBACK (on_boolean_toggled),
+		    &mainw->ccpd_with_sound); // TODO - make pref
   g_signal_connect (GTK_OBJECT (mainw->dsize), "activate",
                       G_CALLBACK (on_double_size_activate),
                       NULL);
@@ -2438,8 +2446,8 @@ create_LiVES (void)
                       G_CALLBACK (on_showfct_activate),
                       NULL);
   g_signal_connect (GTK_OBJECT (mainw->showsubs), "activate",
-                      G_CALLBACK (on_showsubs_activate),
-                      NULL);
+                      G_CALLBACK (on_boolean_toggled),
+                      &prefs->show_subtitles);
   g_signal_connect (GTK_OBJECT (mainw->preferences), "activate",
                       G_CALLBACK (on_preferences_activate),
                       NULL);

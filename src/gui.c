@@ -2414,6 +2414,9 @@ create_LiVES (void)
 		    &mainw->save_with_sound); // TODO - make pref
   g_signal_connect (GTK_OBJECT (mainw->showsubs), "activate",
                       G_CALLBACK (on_boolean_toggled),
+                      &prefs->show_subtitles);
+  g_signal_connect (GTK_OBJECT (mainw->aload_subs), "activate",
+                      G_CALLBACK (on_boolean_toggled),
                       &prefs->autoload_subs);
   g_signal_connect (GTK_OBJECT (mainw->ccpd_sound), "activate",
                       G_CALLBACK (on_boolean_toggled),

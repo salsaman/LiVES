@@ -147,42 +147,35 @@ static void fill_bckg(cairo_t *cr, double x, double y, double dx, double dy) {
 //
 
 int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-
-  int mode;
   char *text;
-
-  int fontnum;
 
   rgb_t *fg,*bg;
 
   int cent,rise;
+  int alpha_threshold = 0;
+  int fontnum;
+  int error,mode;
+
   double f_alpha, b_alpha;
-
-  int width, height, palette;
-
   double dwidth, dheight;
   double font_size, top;
 
-  weed_plant_t *in_channel=NULL;
-
   GdkPixbuf *pixbuf = NULL;
   GdkPixbuf *pixbuf_new = NULL;
-  int alpha_threshold = 0;
 
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *in_channel=NULL;
 
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
-  width=weed_get_int_value(out_channel,"width",&error);
-  height=weed_get_int_value(out_channel,"height",&error);
+  int width=weed_get_int_value(out_channel,"width",&error);
+  int height=weed_get_int_value(out_channel,"height",&error);
 
-  palette=weed_get_int_value(out_channel,"current_palette",&error);
+  int palette=weed_get_int_value(out_channel,"current_palette",&error);
 
   if (weed_plant_has_leaf(inst,"in_channels")) {
     in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   }
-
 
   text=weed_get_string_value(in_params[P_TEXT],"value",&error);
   mode=weed_get_int_value(in_params[P_MODE],"value",&error);
@@ -212,6 +205,25 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
   weed_free(in_params); // must weed free because we got an array
+
+  if (in_channel!=out_channel&&in_channel!=NULL) {
+    // if not inplace, copy in pixel_data to out pixel_data
+    void *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
+    void *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+    int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
+    int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
+    if (irowstride==orowstride&&irowstride==width*3) {
+      weed_memcpy(dst,src,width*3*height);
+    }
+    else {
+      register int i;
+      for (i=0;i<height;i++) {
+	weed_memcpy(dst,src,width*3);
+	dst+=orowstride;
+	src+=irowstride;
+      }
+    }
+  }
 
   // THINGS TO TO WITH TEXTS AND PANGO
   if((!in_channel) || (in_channel == out_channel))
@@ -343,7 +355,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
         pango_font_map_list_families(pfm, &pff, &num);
         if(num > 0) {
           // we should reserve num+1 for a final NULL pointer
-          fonts_available = (char **)malloc((num+1)*sizeof(char *));
+          fonts_available = (char **)weed_malloc((num+1)*sizeof(char *));
           if(fonts_available) {
             register int i;
             num_fonts_available = num;
@@ -408,7 +420,7 @@ void weed_desetup(void) {
     for(i = 0; i < num_fonts_available; ++i) {
       free((void *)fonts_available[i]);
     }
-    free((void *)fonts_available);
+    weed_free((void *)fonts_available);
   }    
   num_fonts_available = 0;
   fonts_available = NULL;

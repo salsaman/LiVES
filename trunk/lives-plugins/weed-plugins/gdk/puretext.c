@@ -1,6 +1,6 @@
 // puretext.c
 // weed plugin
-// (c) A. Penkov & salsaman 2010
+// (c) salsaman 2010 (contributions by A. Penkov)
 // cloned and modified from livetext.c (author G. Finch aka salsaman)
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -31,6 +31,8 @@ static int package_version=2; // version of this package
 #include <fcntl.h>
 #include <unistd.h>
 #include <wchar.h>
+#include <ctype.h>
+#include <wctype.h>
 
 #include <gdk/gdk.h>
 #include <pango/pangocairo.h>
@@ -68,7 +70,8 @@ typedef enum {
 typedef enum {
   PT_SPIRAL_TEXT=0,
   PT_SPINNING_LETTERS,
-  PT_LETTER_STARFIELD
+  PT_LETTER_STARFIELD,
+  PT_WORD_COALESCE
 } pt_op_mode_t;
 
 
@@ -122,7 +125,7 @@ typedef struct {
   pt_ttext_t text_type;
   char *text; // text loaded in from file
   size_t tlength; // length of text in characters
-  
+  int wlength; // length in words
 
   // offsets of text in layer (0,0) == top left
   int x_text;
@@ -156,6 +159,12 @@ typedef struct {
 
 
 
+typedef struct {
+  size_t start;
+  size_t length;
+} pt_subst_t;
+
+
 /////////////////////////////////////////////
 
 
@@ -183,7 +192,7 @@ static int num_fonts_available = 0;
 
 
 static size_t utf8len(char *text) {
-  size_t toffs=0;
+  register size_t toffs=0;
   while (text[toffs]!='\0') {
     toffs+=mbtowc(NULL,&text[toffs],4);
   }
@@ -192,13 +201,114 @@ static size_t utf8len(char *text) {
 
 
 static size_t utf8offs(char *text, int xoffs) {
-  size_t toffs=0;
+  register size_t toffs=0;
   while (text[toffs]!='\0'&&xoffs>0) {
     toffs+=mbtowc(NULL,&text[toffs],4);
     xoffs--;
   }
   return toffs;
 }
+
+
+static size_t get_ascii_word_length(char *text) {
+  // get length in words (non-spaces)
+  register size_t toffs=0;
+  int count=0;
+  gboolean isaspace=TRUE;
+
+  while (text[toffs]!='\0') {
+    if (isspace(text[toffs])) isaspace=TRUE;
+    else if (isaspace) {
+      count++;
+      isaspace=FALSE;
+    }
+    toffs++;
+  }
+  return count;
+}
+
+
+static size_t get_utf8_word_length(char *text) {
+  // get length in words (non-spaces)
+  register size_t toffs;
+  int count=0;
+  gboolean isaspace=TRUE;
+
+  while (text[toffs]!='\0') {
+    wchar_t pwc;
+    toffs+=mbtowc(&pwc,&text[toffs],4);
+    if (iswspace(pwc)) isaspace=TRUE;
+    else if (isaspace) {
+      count++;
+      isaspace=FALSE;
+    }
+  }
+  return count;
+}
+
+
+static pt_subst_t *get_nth_word_utf8(char *text, int idx) {
+  // get nth word, return start (bytes) and length (bytes)
+  // idx==0 for first word, etc
+
+  register size_t toffs=0,xtoffs;
+  gboolean isaspace=TRUE;
+
+  pt_subst_t *subst=(pt_subst_t *)weed_malloc(sizeof(pt_subst_t));
+  subst->start=0;
+
+  while (text[toffs]!='\0') {
+    wchar_t pwc;
+    xtoffs=mbtowc(&pwc,&text[toffs],4);
+    if (iswspace(pwc)) {
+      if (idx==-1) {
+	subst->length=toffs-subst->start;
+	return subst;
+      }
+      isaspace=TRUE;
+    }
+    else if (isaspace) {
+      if (--idx==-1) subst->start=toffs;
+      isaspace=FALSE;
+    }
+    toffs+=xtoffs;
+  }
+
+  subst->length=toffs-subst->start;
+  return subst;
+}
+
+
+static pt_subst_t *get_nth_word_ascii(char *text, int idx) {
+  // get nth word, return start (bytes) and length (bytes)
+  // idx==0 for first word, etc
+
+  register size_t toffs=0;
+  gboolean isaspace=TRUE;
+
+  pt_subst_t *subst=(pt_subst_t *)weed_malloc(sizeof(pt_subst_t));
+  subst->start=0;
+
+  while (text[toffs]!='\0') {
+    if (isspace(text[toffs])) {
+      if (idx==-1) {
+	subst->length=toffs-subst->start;
+	return subst;
+      }
+      isaspace=TRUE;
+    }
+    else if (isaspace) {
+      if (--idx==-1) subst->start=toffs;
+      isaspace=FALSE;
+    }
+    toffs++;
+  }
+
+  subst->length=toffs-subst->start;
+  return subst;
+}
+
+
 
 
 static void getlsize(PangoLayout *layout, double *pw, double *ph) {
@@ -259,10 +369,7 @@ static void anim_letter(pt_letter_data_t *ldt) {
 
 static void colour_copy(rgb_t *col1, rgb_t *col2) {
   // copy col2 to col1
-
-  col1->red=col2->red;
-  col1->green=col2->green;
-  col1->blue=col2->blue;
+  weed_memcpy(col1,col2,sizeof(rgb_t));
 }
 
 static inline double rand_angle(void) {
@@ -272,7 +379,7 @@ static inline double rand_angle(void) {
 
 
 static int getrandi(int min, int max) {
-  return (double)rand()/(double)RAND_MAX*(max-min)+min+.5;
+  return rand()%(max-min)+min;
 }
 
 
@@ -294,6 +401,75 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
   double radX,radY;
 
   switch (sdata->mode) {
+  case (PT_WORD_COALESCE):
+
+    if (sdata->timer==0.) {
+      sdata->start=-1;
+      sdata->length=1;
+      sdata->tmode=PT_WORD_MODE;
+    }
+    
+    if (sdata->start>-1) {
+      set_font_size(layout,font,64);
+      // get pixel size of word
+      getlsize(layout, &dwidth, &dheight);
+      
+      setxypos(dwidth,dheight,width/2,height/2,&sdata->x_text,&sdata->y_text);
+
+      sdata->dbl1-=sdata->dbl1/3.5+.5; // blur shrink
+      sdata->dbl2+=.07;
+      sdata->fg_alpha=sdata->dbl2;
+    }
+    
+    if (sdata->alarm) {
+      pt_subst_t *xsubst;
+      char nxlast;
+
+      sdata->bool1=!sdata->bool1;
+      sdata->dbl1=300.; // blur start
+      sdata->fg_alpha=sdata->dbl2=0.;
+
+      if (sdata->length>0) {
+	sdata->start++;
+	if (sdata->start>=sdata->wlength) {
+	  sdata->start=0;
+	  sdata->length=0;
+	  sdata->dbl1=0.;
+	  pt_set_alarm(sdata,1000); // milliseconds
+	}
+      }
+      else {
+	sdata->length=1;
+	sdata->bool1=TRUE;
+      }
+
+      if (sdata->length>0) {
+	if (sdata->start==sdata->wlength-1) {
+	  pt_set_alarm(sdata,1000); // milliseconds
+	}
+	else {
+	  // peek at last char of next word
+	  if (sdata->text_type==TEXT_TYPE_ASCII) {
+	    xsubst=get_nth_word_ascii(sdata->text,sdata->start);
+	  }
+	  else {
+	    xsubst=get_nth_word_utf8(sdata->text,sdata->start);
+	  }
+	  
+	  nxlast=sdata->text[xsubst->start+xsubst->length-1];
+	  
+	  weed_free(xsubst);
+	  
+	  if (nxlast=='.'||nxlast=='!'||nxlast=='?') pt_set_alarm(sdata,1000); // milliseconds
+	  else if (nxlast==',') pt_set_alarm(sdata,700); // milliseconds
+	  else if (nxlast==';') pt_set_alarm(sdata,800); // milliseconds
+	  else pt_set_alarm(sdata,500); // milliseconds
+	}
+      }
+    }
+    
+    break;
+
   case (PT_LETTER_STARFIELD):
     if (sdata->timer==0.) {
       sdata->start=0;
@@ -491,6 +667,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
 int puretext_init(weed_plant_t *inst) {
   int error,fd;
+  gboolean erropen=FALSE;
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   sdata_t *sdata;
 
@@ -501,7 +678,10 @@ int puretext_init(weed_plant_t *inst) {
 
   // open file and read in text
 
-  if ((fd=open(textfile,O_RDONLY))==-1) return WEED_ERROR_INIT_ERROR;
+  if ((fd=open(textfile,O_RDONLY))==-1) {
+    erropen=TRUE;
+    g_snprintf(buff,512,"Error opening file %s",textfile);
+  }
 
   weed_free(textfile);     
   weed_free(in_params);
@@ -517,19 +697,23 @@ int puretext_init(weed_plant_t *inst) {
 
   sdata->text_type=TEXT_TYPE_UTF8;
 
-  b_read=read(fd,buff,65535);
-
-  memset(buff+b_read,0,1);
+  if (!erropen) {
+    b_read=read(fd,buff,65535);
+    memset(buff+b_read,0,1);
+    close(fd);
+  }
 
   sdata->text=strdup(buff);
 
   sdata->start=sdata->length=0;
 
   if (sdata->text_type==TEXT_TYPE_ASCII) {
-    sdata->tlength=strlen((char *)sdata->text);
+    sdata->tlength=strlen(sdata->text);
+    sdata->wlength=get_ascii_word_length(sdata->text);
   }
   else {
     sdata->tlength=utf8len(sdata->text);
+    sdata->wlength=get_utf8_word_length(sdata->text);
   }
 
   sdata->int1=0;
@@ -561,34 +745,38 @@ int puretext_deinit(weed_plant_t *inst) {
 
 
 int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
-  int error;
-
-  int width, height, palette;
-
-  weed_plant_t *in_channel=NULL;
 
   GdkPixbuf *pixbuf = NULL;
   GdkPixbuf *pixbuf_new = NULL;
-  int alpha_threshold = 0;
 
-  int mode;
-
-  int i;
   size_t toffs;
+    
+  int alpha_threshold = 0;
+  int error;
 
+  register int i,j;
+
+  weed_plant_t *in_channel=  in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
+  unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
+  unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+
+  int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
+  int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
+
+  int width=weed_get_int_value(out_channel,"width",&error);
+  int height=weed_get_int_value(out_channel,"height",&error);
+  int palette=weed_get_int_value(out_channel,"current_palette",&error);
+
+  int mode=weed_get_int_value(in_params[P_MODE],"value",&error);
+
   sdata_t *sdata=(sdata_t *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
-  width=weed_get_int_value(out_channel,"width",&error);
-  height=weed_get_int_value(out_channel,"height",&error);
+  unsigned char *bgdata=NULL;
 
-  palette=weed_get_int_value(out_channel,"current_palette",&error);
-
-  in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
-
-  mode=weed_get_int_value(in_params[P_MODE],"value",&error);
+  pt_subst_t *xsubst;
 
   if (mode!=sdata->mode) {
     sdata->timer=-1.;
@@ -618,6 +806,28 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
   sdata->last_tc=tc;
 
   sdata->count=0;
+
+  if (in_channel!=out_channel&&in_channel!=NULL) {
+    // if not inplace, copy in pixel_data to out pixel_data
+    if (irowstride==orowstride&&irowstride==width*3) {
+      weed_memcpy(dst,src,width*3*height);
+    }
+    else {
+      for (i=0;i<height;i++) {
+	weed_memcpy(dst,src,width*3);
+	dst+=orowstride;
+	src+=irowstride;
+      }
+    }
+  }
+
+  if (sdata->mode==PT_WORD_COALESCE) {
+    // backup original data
+    bgdata=weed_malloc(height*orowstride);
+    weed_memcpy(bgdata,dst,height*orowstride);
+  }
+
+
 
   // THINGS TO TO WITH TEXTS AND PANGO
   if((!in_channel) || (in_channel == out_channel))
@@ -662,18 +872,39 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 	      weed_memset(xtext,0,1);
 	    }
 	    else {
-	      // letter mode
-	      if (sdata->text_type==TEXT_TYPE_ASCII) {
-		xtext=strndup(&sdata->text[toffs],1);
-		toffs++;
-	      }
-	      else {
-		int xlen=mbtowc(NULL,&sdata->text[toffs],4);
-		xtext=strndup(&sdata->text[toffs],xlen);
-		toffs+=xlen;
-	      }
-	    }
+	      switch (sdata->tmode) {
+		case PT_LETTER_MODE:
+		  // letter mode
+		  if (sdata->text_type==TEXT_TYPE_ASCII) {
+		    xtext=strndup(&sdata->text[toffs],1);
+		    toffs++;
+		  }
+		  else {
+		    int xlen=mbtowc(NULL,&sdata->text[toffs],4);
+		    xtext=strndup(&sdata->text[toffs],xlen);
+		    toffs+=xlen;
+		  }
+		  break;
 
+		case PT_WORD_MODE:
+		  // word mode
+		  if (sdata->text_type==TEXT_TYPE_ASCII) {
+		    xsubst=get_nth_word_ascii(sdata->text,i);
+		  }
+		  else {
+		    xsubst=get_nth_word_utf8(sdata->text,i);
+		  }
+		  xtext=strndup(&sdata->text[xsubst->start],xsubst->length);
+
+		  weed_free(xsubst);
+		  break;
+	      default:
+		// TODO - line mode and all mode
+		xtext=weed_malloc(1);
+		weed_memset(xtext,0,1);
+		break;
+		}
+	    }
 	    pango_layout_set_font_description(layout, font);
 	    pango_layout_set_text(layout, (char *)xtext, -1);
 
@@ -698,7 +929,6 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 	    cairo_set_source_rgba(cairo,sdata->fg.red/255.0, sdata->fg.green/255.0, sdata->fg.blue/255.0, 
 				  sdata->fg_alpha);
-	    pango_cairo_update_layout (cairo, layout);
 
 	    pango_cairo_show_layout(cairo, layout);
 
@@ -727,6 +957,37 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
     g_object_unref(pixmap);
   }
 
+
+  if (sdata->mode==PT_WORD_COALESCE) {
+    if (sdata->dbl1>0.) {
+      unsigned char *b_data=bgdata;
+      int width3=width*3;
+      unsigned char *dstx=dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+      
+      for (i=0;i<height;i++) {
+	for (j=0;j<width3;j+=3) {
+	  if (dst[j]!=b_data[j]||dst[j+1]!=b_data[j+1]||dst[j+2]!=b_data[j+2]) {
+	    // move point by sdata->dbl1 pixels
+	    double angle=rand_angle();
+	    int x=j/3+sin(angle)*sdata->dbl1;
+	    int y=i+cos(angle)*sdata->dbl1;
+	    if (x>0&&x<width&&y>0&&y<height) {
+	      // blur 1 pixel
+	      memcpy(&dstx[y*orowstride+x*3],&dst[j],3);
+	      // protect blurred pixel
+	      if (y>=i) memcpy(&bgdata[y*orowstride+x*3],&dst[j],3);
+	    }
+	    // replace original pixel
+	    memcpy(&dst[j],&b_data[j],3);
+	  }
+	}
+	dst+=orowstride;
+	b_data+=orowstride;
+      }
+    }
+    weed_free(bgdata);
+  }
+
   return WEED_NO_ERROR;
 }
 
@@ -752,8 +1013,10 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class;
     PangoContext *ctx;
 
-    char *modes[]={"Spiral text","Spinning letters","Letter starfield",NULL};
+    char *modes[]={"Spiral text","Spinning letters","Letter starfield","Word coalesce",NULL};
     char *rfx_strings[]={"special|fileread|0|"};
+
+    char *deftextfile;
 
     // this section contains code
     // for configure fonts available
@@ -769,7 +1032,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
         pango_font_map_list_families(pfm, &pff, &num);
         if(num > 0) {
           // we should reserve num+1 for a final NULL pointer
-          fonts_available = (char **)malloc((num+1)*sizeof(char *));
+          fonts_available = (char **)weed_malloc((num+1)*sizeof(char *));
           if(fonts_available) {
             register int i;
             num_fonts_available = num;
@@ -785,9 +1048,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       g_object_unref(ctx);
     }
 
-    in_params[P_TEXT]=weed_text_init("textfile","_Text file","");
+    deftextfile=g_build_filename(g_get_home_dir(), "livestext.txt", NULL);
+
+    in_params[P_TEXT]=weed_text_init("textfile","_Text file",deftextfile);
     in_params[P_MODE]=weed_string_list_init("mode","Effect _mode",0,modes);
     in_params[P_END]=NULL;
+
+    g_free(deftextfile);
 
     filter_class=weed_filter_class_init("puretext","Salsaman & Aleksej Penkov",1,0,&puretext_init,&puretext_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
 
@@ -814,7 +1081,7 @@ void weed_desetup(void) {
     for(i = 0; i < num_fonts_available; ++i) {
       free((void *)fonts_available[i]);
     }
-    free((void *)fonts_available);
+    weed_free((void *)fonts_available);
   }    
   num_fonts_available = 0;
   fonts_available = NULL;

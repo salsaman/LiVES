@@ -1707,6 +1707,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
 #ifdef HAVE_DIRAC
   if (priv->dpriv!=NULL) { 
+    schro_decoder_reset( dpriv->schrodec );
     if (dpriv->schroframe!=NULL) {
       schro_frame_unref(dpriv->schroframe);
     }

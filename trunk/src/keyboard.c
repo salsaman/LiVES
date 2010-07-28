@@ -292,6 +292,11 @@ gboolean showfct_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
   return TRUE;
 }
 
+gboolean showsubs_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),!prefs->show_subtitles);
+  return TRUE;
+}
+
 gboolean loop_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
   return TRUE;

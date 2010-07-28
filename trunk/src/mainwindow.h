@@ -535,6 +535,7 @@ typedef struct {
   GtkWidget *mute_audio;
   GtkWidget *sticky;
   GtkWidget *showfct;
+  GtkWidget *showsubs;
   GtkWidget *fade;
   GtkWidget *dsize;
 

@@ -243,6 +243,11 @@ static gboolean pre_init(void) {
   prefs->audio_player=AUD_PLAYER_SOX;
   prefs->open_decorated=TRUE;
 
+  prefs->lamp_buttons=TRUE;
+
+  prefs->autoload_subs=TRUE;
+  prefs->show_subtitles=TRUE;
+
   if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
     g_snprintf(prefs->theme,64,"none");
     return FALSE;
@@ -856,10 +861,6 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->ce_maxspect=get_boolean_pref("ce_maxspect");;
 
     prefs->rec_stop_gb=get_int_pref("rec_stop_gb");
-
-    prefs->lamp_buttons=TRUE;
-
-    prefs->load_subs=TRUE;
 
     //////////////////////////////////////////////////////////////////
 
@@ -2895,7 +2896,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) deinterlace_frame(layer,tc);
 
         // render subtitles from file
-	if (prefs->load_subs&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
+	if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
 	  double xtime;
 	  int palette=dplug->cdata->current_palette;
 
@@ -2972,7 +2973,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
   mainw->free_fn=free;
 
   // render subtitles from file
-  if (prefs->load_subs&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
+  if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
     double xtime=(double)(frame-1)/sfile->fps;
     // TODO - alpha channel will be lost
     render_subs_from_file(sfile,xtime,layer);

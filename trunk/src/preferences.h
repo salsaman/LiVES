@@ -117,6 +117,7 @@ typedef struct {
   gshort sepwin_type;
   gboolean show_player_stats;
   gboolean show_framecount;
+  gboolean show_subtitles;
   gboolean loop_recording;
   gboolean discard_tv;
   gboolean save_directories;
@@ -253,7 +254,7 @@ typedef struct {
 
   gboolean lamp_buttons;
 
-  gboolean load_subs;
+  gboolean autoload_subs;
 
   glong rec_stop_gb;
 } _prefs;

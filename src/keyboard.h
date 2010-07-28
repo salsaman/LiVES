@@ -49,6 +49,8 @@ gboolean dblsize_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, g
 
 gboolean showfct_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
+gboolean showsubs_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+
 gboolean fullscreen_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
 gboolean sepwin_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);

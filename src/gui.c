@@ -36,6 +36,7 @@ static GClosure *loop_closure;
 static GClosure *loop_cont_closure;
 static GClosure *fade_closure;
 static GClosure *showfct_closure;
+static GClosure *showsubs_closure;
 static GClosure *rec_closure;
 static GClosure *mute_audio_closure;
 static GClosure *ping_pong_closure;
@@ -194,6 +195,7 @@ create_LiVES (void)
   loop_cont_closure=NULL;
   fade_closure=NULL;
   showfct_closure=NULL;
+  showsubs_closure=NULL;
   rec_closure=NULL;
   mute_audio_closure=NULL;
   ping_pong_closure=NULL;
@@ -890,6 +892,16 @@ create_LiVES (void)
                               GTK_ACCEL_VISIBLE);
 
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showfct),capable->smog_version_correct&&prefs->show_framecount);
+
+  mainw->showsubs = gtk_check_menu_item_new_with_mnemonic (_("Show Subtitles"));
+  gtk_widget_show (mainw->showsubs);
+  gtk_container_add (GTK_CONTAINER (menuitem13_menu), mainw->showsubs);
+
+  gtk_widget_add_accelerator (mainw->showsubs, "activate", mainw->accel_group,
+                              GDK_v, 0,
+                              GTK_ACCEL_VISIBLE);
+
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),prefs->show_subtitles);
 
   effects = gtk_menu_item_new_with_mnemonic (_ ("Effect_s"));
   gtk_widget_show (effects);
@@ -2425,6 +2437,9 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (mainw->showfct), "activate",
                       G_CALLBACK (on_showfct_activate),
                       NULL);
+  g_signal_connect (GTK_OBJECT (mainw->showsubs), "activate",
+                      G_CALLBACK (on_showsubs_activate),
+                      NULL);
   g_signal_connect (GTK_OBJECT (mainw->preferences), "activate",
                       G_CALLBACK (on_preferences_activate),
                       NULL);
@@ -2828,6 +2843,9 @@ fade_background(void) {
       gtk_widget_remove_accelerator (mainw->showfct, mainw->accel_group, GDK_h, 0);
       gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_h, 0, 0, (showfct_closure=g_cclosure_new (G_CALLBACK (showfct_callback),NULL,NULL)));
       
+      gtk_widget_remove_accelerator (mainw->showsubs, mainw->accel_group, GDK_v, 0);
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_v, 0, 0, (showsubs_closure=g_cclosure_new (G_CALLBACK (showsubs_callback),NULL,NULL)));
+      
       gtk_widget_remove_accelerator (mainw->sepwin, mainw->accel_group, GDK_s, 0);
       gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_s, 0, 0, (sepwin_closure=g_cclosure_new (G_CALLBACK (sepwin_callback),NULL,NULL)));
 
@@ -2969,6 +2987,12 @@ unfade_background(void) {
     gtk_widget_add_accelerator (mainw->showfct, "activate", mainw->accel_group,
 				GDK_h, 0,
 				GTK_ACCEL_VISIBLE);
+
+    gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), showsubs_closure);
+    gtk_widget_add_accelerator (mainw->showsubs, "activate", mainw->accel_group,
+				GDK_v, 0,
+				GTK_ACCEL_VISIBLE);
+
     gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), sepwin_closure);
     gtk_widget_add_accelerator (mainw->sepwin, "activate", mainw->accel_group,
 				GDK_s, 0,

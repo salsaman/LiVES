@@ -667,6 +667,10 @@ on_showfct_activate               (GtkMenuItem     *menuitem,
 				   gpointer         user_data);
 
 void
+on_showsubs_activate               (GtkMenuItem     *menuitem,
+				   gpointer         user_data);
+
+void
 on_show_messages_activate            (GtkMenuItem     *menuitem,
 				      gpointer         user_data);
 

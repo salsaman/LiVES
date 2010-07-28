@@ -4117,7 +4117,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       mainw->cached_list=NULL;
     }
 
-    if (prefs->load_subs) {
+    if (prefs->autoload_subs) {
       pthread_mutex_lock(&mainw->gtk_mutex);
       subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
       if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
@@ -5909,7 +5909,12 @@ on_showfct_activate               (GtkMenuItem     *menuitem,
   }
 }
 
-
+void
+on_showsubs_activate               (GtkMenuItem     *menuitem,
+				   gpointer         user_data)
+{
+  prefs->show_subtitles=!prefs->show_subtitles;
+}
 
 void
 on_sticky_activate               (GtkMenuItem     *menuitem,

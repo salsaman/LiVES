@@ -608,7 +608,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   }
 
   else {
-    if (prefs->load_subs) {
+    if (prefs->autoload_subs) {
       gchar filename[512];
       gchar *subfname;
       lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
@@ -3293,7 +3293,7 @@ restore_file(const gchar *file_name) {
 
   cfile->changed=FALSE;
 
-  if (prefs->load_subs) {
+  if (prefs->autoload_subs) {
     subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
     if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
       subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);

@@ -2200,6 +2200,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->loop_video, mainw->current_file>0&&(cfile->achans>0&&cfile->frames>0));
   gtk_widget_set_sensitive (mainw->loop_continue, TRUE);
   gtk_widget_set_sensitive (mainw->load_audio, TRUE);
+  gtk_widget_set_sensitive (mainw->load_subs, mainw->current_file>0);
   if (capable->has_cdda2wav&&strlen (prefs->cdplay_device)) gtk_widget_set_sensitive (mainw->load_cdtrack, TRUE);
   gtk_widget_set_sensitive (mainw->rename, mainw->current_file>0&&!cfile->opening);
   gtk_widget_set_sensitive (mainw->change_speed, mainw->current_file>0);
@@ -2319,6 +2320,7 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->loop_video, (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE));
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) gtk_widget_set_sensitive (mainw->mute_audio, FALSE);
   gtk_widget_set_sensitive (mainw->load_audio, FALSE);
+  gtk_widget_set_sensitive (mainw->load_subs, FALSE);
   gtk_widget_set_sensitive (mainw->save_selection, FALSE);
   gtk_widget_set_sensitive (mainw->close, FALSE);
   gtk_widget_set_sensitive (mainw->change_speed, FALSE);

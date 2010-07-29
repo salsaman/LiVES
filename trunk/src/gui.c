@@ -955,6 +955,11 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->change_speed);
   gtk_widget_set_sensitive (mainw->change_speed, FALSE);
 
+  mainw->resample_video = gtk_menu_item_new_with_mnemonic (_("Resample _Video to New Frame Rate..."));
+  gtk_widget_show (mainw->resample_video);
+  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->resample_video);
+  gtk_widget_set_sensitive (mainw->resample_video, FALSE);
+
   mainw->utilities_submenu = gtk_menu_item_new_with_mnemonic (_("_Utilities"));
   mainw->utilities_menu=NULL;
   gtk_widget_show (mainw->utilities_submenu);
@@ -996,10 +1001,10 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), separator26);
   gtk_widget_set_sensitive (separator26, FALSE);
 
-  mainw->resample_video = gtk_menu_item_new_with_mnemonic (_("Resample _Video to New Frame Rate..."));
-  gtk_widget_show (mainw->resample_video);
-  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->resample_video);
-  gtk_widget_set_sensitive (mainw->resample_video, FALSE);
+  mainw->load_subs = gtk_menu_item_new_with_mnemonic (_("Load _Subtitles from File..."));
+  gtk_widget_show (mainw->load_subs);
+  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->load_subs);
+  gtk_widget_set_sensitive (mainw->load_subs, FALSE);
 
   mainw->capture = gtk_menu_item_new_with_mnemonic (_("Capture _External Window... "));
   gtk_widget_show (mainw->capture);
@@ -2459,6 +2464,9 @@ create_LiVES (void)
                       NULL);
   g_signal_connect (GTK_OBJECT (mainw->resample_video), "activate",
                       G_CALLBACK (on_resample_video_activate),
+                      NULL);
+  g_signal_connect (GTK_OBJECT (mainw->load_subs), "activate",
+                      G_CALLBACK (on_load_subs_activate),
                       NULL);
   g_signal_connect (GTK_OBJECT (mainw->capture), "activate",
                       G_CALLBACK (on_capture_activate),

@@ -6267,11 +6267,65 @@ on_rev_clipboard_activate                (GtkMenuItem     *menuitem,
 
 
 
+
+void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  gchar *subfile;
+  gchar *filt[]={"*.srt","*.sub",NULL};
+  gchar filename[512];
+  gchar *subfname,*isubfname,*com,*tmp;
+  lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
+
+  if (cfile->subt!=NULL) if (!do_existing_subs_warning()) return;
+
+  // try to repaint the screen, as it may take a few seconds to get a directory listing
+  while (g_main_context_iteration(NULL,FALSE));
+  subfile=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
+
+  if (subfile==NULL) return; // cancelled
+
+  g_snprintf(filename,512,"%s",subfile);
+  get_filename(filename,FALSE); // strip extension
+  isubfname=g_strdup_printf("%s.srt",filename);
+  if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
+    subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
+    subtype=SUBTITLE_TYPE_SRT;
+  }
+  else {
+    g_free(isubfname);
+    isubfname=g_strdup_printf("%s.sub",filename);
+    if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
+      subfname=g_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
+      subtype=SUBTITLE_TYPE_SUB;
+    }
+    else {
+      g_free(isubfname);
+      do_invalid_subs_error();
+      return;
+    }
+  }
+
+  if (cfile->subt!=NULL) subtitles_free(cfile);
+
+  com=g_strdup_printf("/bin/cp \"%s\" %s",isubfname,subfname);
+  dummyvar=system(com);
+  g_free(com);
+  subtitles_init(cfile,subfname,subtype);
+  g_free(subfname);
+  
+  tmp=g_strdup_printf(_("Loaded subtitle file: %s\n"),isubfname);
+  d_print(tmp);
+  g_free(tmp);
+  g_free(isubfname);
+}
+
+
+
+
 void
 on_load_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   GtkWidget *fileselection;
 
-  // try to repaint the screen, as it may take a few seconds to get a direcotry listing
+  // try to repaint the screen, as it may take a few seconds to get a directory listing
   while (g_main_context_iteration(NULL,FALSE));
 
   fileselection = create_fileselection (_ ("Select Audio File"),2,NULL);

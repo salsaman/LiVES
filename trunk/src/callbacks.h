@@ -319,6 +319,8 @@ void
 on_load_audio_activate                  (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
+void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data);
+
 void
 on_xmms_play_audio_activate                  (GtkMenuItem     *menuitem,
 					      gpointer         user_data);

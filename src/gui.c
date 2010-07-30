@@ -1006,6 +1006,16 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->load_subs);
   gtk_widget_set_sensitive (mainw->load_subs, FALSE);
 
+  mainw->erase_subs = gtk_menu_item_new_with_mnemonic (_("Erase subtitles"));
+  gtk_widget_show (mainw->erase_subs);
+  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->erase_subs);
+  gtk_widget_set_sensitive (mainw->erase_subs, FALSE);
+
+  separator26 = gtk_menu_item_new ();
+  gtk_widget_show (separator26);
+  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), separator26);
+  gtk_widget_set_sensitive (separator26, FALSE);
+
   mainw->capture = gtk_menu_item_new_with_mnemonic (_("Capture _External Window... "));
   gtk_widget_show (mainw->capture);
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->capture);
@@ -2467,6 +2477,9 @@ create_LiVES (void)
                       NULL);
   g_signal_connect (GTK_OBJECT (mainw->load_subs), "activate",
                       G_CALLBACK (on_load_subs_activate),
+                      NULL);
+  g_signal_connect (GTK_OBJECT (mainw->erase_subs), "activate",
+                      G_CALLBACK (on_erase_subs_activate),
                       NULL);
   g_signal_connect (GTK_OBJECT (mainw->capture), "activate",
                       G_CALLBACK (on_capture_activate),

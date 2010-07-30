@@ -538,6 +538,7 @@ typedef struct {
   GtkWidget *showsubs;
   GtkWidget *aload_subs;
   GtkWidget *load_subs;
+  GtkWidget *erase_subs;
   GtkWidget *fade;
   GtkWidget *dsize;
 

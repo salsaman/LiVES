@@ -323,6 +323,8 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data);
 
 void on_save_subs_activate (GtkMenuItem *menuitem, gpointer entry_widget);
 
+void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data);
+
 
 void
 on_xmms_play_audio_activate                  (GtkMenuItem     *menuitem,

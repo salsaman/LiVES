@@ -678,7 +678,7 @@ void do_mt_backup_space_error(lives_mt *, gint memreq_mb);
 gboolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
 void do_dvgrab_error(void);
-gboolean do_comments_dialog (file *sfile);
+gboolean do_comments_dialog (file *sfile, gchar *filename);
 void do_auto_dialog(const gchar *text, gint type);
 void do_encoder_acodec_error (void);
 void do_encoder_sox_error(void);

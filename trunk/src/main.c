@@ -786,6 +786,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->decoders_loaded=FALSE;
   mainw->decoder_list=NULL;
 
+  mainw->subt_save_file=NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());

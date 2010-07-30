@@ -379,6 +379,7 @@ void on_fileread_clicked (GtkFileChooser *fch, gpointer user_data) {
 
   if (GTK_IS_ENTRY(tentry)) gtk_entry_set_text(GTK_ENTRY(tentry),(tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)));
   else gtk_text_buffer_set_text (GTK_TEXT_BUFFER(tentry), (tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)), -1);
+
   g_free(tmp);
   g_free(text);
 
@@ -4399,7 +4400,7 @@ void
 on_show_file_comments_activate            (GtkMenuItem     *menuitem,
 					   gpointer         user_data)
 {
-  do_comments_dialog(NULL);
+  do_comments_dialog(NULL,NULL);
 }
 
 
@@ -6318,6 +6319,35 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_free(isubfname);
 }
 
+
+
+
+
+void on_save_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  gchar *subfile;
+  gchar xfname[512];
+  gchar xfname2[512];
+
+  GtkEntry *entry=(GtkEntry *)user_data;
+
+  // try to repaint the screen, as it may take a few seconds to get a directory listing
+  while (g_main_context_iteration(NULL,FALSE));
+
+  g_snprintf(xfname,512,"%s",mainw->subt_save_file);
+  get_dirname(xfname);
+
+  g_snprintf(xfname2,512,"%s",mainw->subt_save_file);
+  get_basename(xfname2);
+
+  subfile=choose_file(xfname,xfname2,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL);
+
+  if (subfile==NULL) return; // cancelled
+
+  if (check_file(subfile,FALSE))
+    gtk_entry_set_text(entry,subfile);
+
+  g_free(subfile);
+}
 
 
 

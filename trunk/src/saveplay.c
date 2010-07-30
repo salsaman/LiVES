@@ -1,4 +1,4 @@
-// saveplay.c
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         // saveplay.c
 // LiVES (lives-exe)
 // (c) G. Finch 2003 - 2010
 // released under the GNU GPL 3 or later
@@ -749,6 +749,42 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 
 
+static void copy_subs_to_file(file *sfile, gchar *fname) {
+  // note: this will be superceded by save_subs_to_file()
+
+  gchar *isname,*com,*msg;
+
+  if (sfile->subt==NULL) return;
+
+  switch (sfile->subt->type) {
+  case SUBTITLE_TYPE_SUB:
+    isname=g_build_filename(prefs->tmpdir,sfile->handle,"subs.sub",NULL);
+    break;
+
+  case SUBTITLE_TYPE_SRT:
+    isname=g_build_filename(prefs->tmpdir,sfile->handle,"subs.srt",NULL);
+    break;
+
+  default:
+    return;
+  }
+
+  com=g_strdup_printf("/bin/cp %s \"%s\"",isname,mainw->subt_save_file);
+  dummyvar=system(com);
+  g_free(com);
+
+  msg=g_strdup_printf(_("Subtitles were saved as %s\n"),mainw->subt_save_file);
+  d_print(msg);
+  g_free(msg);
+
+  g_free(isname);
+}
+
+
+
+
+
+
 void
 get_handle_from_info_file(gint index) {
   // called from get_new_handle to get the 'real' file handle
@@ -869,7 +905,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     if (!strlen (cfile->comment)) {
       g_snprintf (cfile->comment,251,"Created with LiVES");
     }
-    if (!do_comments_dialog(cfile)) {
+    if (!do_comments_dialog(cfile,full_file_name)) {
 	g_free(full_file_name);
 	if (rdet!=NULL) {
 	  gtk_widget_destroy (rdet->dialog);
@@ -880,6 +916,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	  resaudw=NULL;
 	}
 	g_free(extra_params);
+	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	mainw->subt_save_file=NULL;
 	return;
     }
   }
@@ -896,6 +934,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	  resaudw=NULL;
 	  rdet=NULL;
 	}
+	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	mainw->subt_save_file=NULL;
 	g_free(extra_params);
 	return;
     }
@@ -930,6 +970,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
       }
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
       g_free(extra_params);
       return;
     }
@@ -943,6 +985,9 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
       }
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
+      g_free(extra_params);
       return;
     }
 
@@ -965,6 +1010,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	  resaudw=NULL;
 	}
 	g_free(extra_params);
+	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	mainw->subt_save_file=NULL;
 	return;
       }
     }
@@ -1006,6 +1053,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	resaudw=NULL;
       }
       g_free(extra_params);
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
       return;
     }
 
@@ -1040,6 +1089,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
       resaudw=NULL;
     }
     g_free(extra_params);
+    if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+    mainw->subt_save_file=NULL;
     return;
   }
 
@@ -1077,6 +1128,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	  resaudw=NULL;
 	}
 	g_free(extra_params);
+	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	mainw->subt_save_file=NULL;
 	return;
       }
     }
@@ -1102,6 +1155,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	resaudw=NULL;
       }
       g_free(extra_params);
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
       return;
     }
 
@@ -1122,6 +1177,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
       if (mainw->cancelled!=CANCEL_NONE) {
 	mainw->cancelled=CANCEL_USER;
 	g_free(extra_params);
+	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	mainw->subt_save_file=NULL;
 	return;
       }
     }
@@ -1179,6 +1236,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
       g_free(fps_string);
       sensitize();
       d_print_cancelled();
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
       return;
     }
   }
@@ -1302,6 +1361,9 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	g_object_unref(mainw->optextview);
       }
 
+      if (extra_params!=NULL) g_free(extra_params);
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
       return;
     }
     g_free (mesg);
@@ -1340,6 +1402,9 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	g_object_unref(mainw->optextview);
       }
 
+      if (extra_params!=NULL) g_free(extra_params);
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
       return;
     }
     g_free(tmp);
@@ -1397,6 +1462,13 @@ void save_file (gboolean existing, gchar *n_file_name) {
   if (not_cancelled) {
     mainw->no_switch_dprint=TRUE;
     d_print_done();
+
+    if (mainw->subt_save_file!=NULL) {
+      copy_subs_to_file(cfile,mainw->subt_save_file);
+      g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
+    }
+
     mainw->no_switch_dprint=FALSE;
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,(mesg=g_strdup_printf("encode %d \"%s\"",mainw->current_file,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)))));

@@ -1633,7 +1633,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
-    
+
     if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
       scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
       gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);

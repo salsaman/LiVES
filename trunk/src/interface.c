@@ -2809,7 +2809,7 @@ create_rp_dialog (void)
 }
 
 
-_commentsw* create_comments_dialog (file *sfile) {
+_commentsw* create_comments_dialog (file *sfile, gchar *filename) {
   GtkWidget *dialog_vbox;
   GtkWidget *table;
   GtkWidget *label;
@@ -2820,6 +2820,7 @@ _commentsw* create_comments_dialog (file *sfile) {
   GtkWidget *dialog_action_area;
   GtkWidget *okbutton;
   GtkWidget *cancelbutton;
+  GtkWidget *buttond;
 
   _commentsw *commentsw=(_commentsw*)(g_malloc(sizeof(_commentsw)));
 
@@ -2940,7 +2941,7 @@ _commentsw* create_comments_dialog (file *sfile) {
       gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
 
-    if (sfile->subt==NULL) {
+    if (sfile->subt==NULL||!mainw->save_all) { // TODO
       gtk_widget_set_sensitive(commentsw->subt_checkbutton,FALSE);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(commentsw->subt_checkbutton),FALSE);
     }
@@ -2951,6 +2952,53 @@ _commentsw* create_comments_dialog (file *sfile) {
     gtk_box_pack_start (GTK_BOX (hbox), commentsw->subt_checkbutton, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
     gtk_widget_show_all (hbox);
+
+
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    commentsw->subt_entry=gtk_entry_new();
+    gtk_entry_set_width_chars(GTK_ENTRY(commentsw->subt_entry),32);
+    label = gtk_label_new_with_mnemonic (_("Subtitle file"));
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+
+    buttond = gtk_button_new_with_mnemonic(_("Browse..."));
+
+    g_signal_connect (buttond, "clicked",G_CALLBACK (on_save_subs_activate),
+    		      (gpointer)commentsw->subt_entry);
+
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), commentsw->subt_entry, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), buttond, FALSE, FALSE, 10);
+    gtk_widget_show_all (hbox);
+
+    if (sfile->subt==NULL||!mainw->save_all) { // TODO
+      gtk_widget_set_sensitive(commentsw->subt_entry,FALSE);
+      gtk_widget_set_sensitive(buttond,FALSE);
+    }
+    else {
+      gchar xfilename[512];
+      gchar *osubfname=NULL;
+
+      g_snprintf(xfilename,512,"%s",filename);
+      get_filename(xfilename,FALSE); // strip extension
+      switch (sfile->subt->type) {
+      case SUBTITLE_TYPE_SRT:
+	osubfname=g_strdup_printf("%s.srt",xfilename);
+	break;
+
+      case SUBTITLE_TYPE_SUB:
+	osubfname=g_strdup_printf("%s.sub",xfilename);
+	break;
+
+      default:
+	break;
+      }
+      gtk_entry_set_text(GTK_ENTRY(commentsw->subt_entry),osubfname);
+      mainw->subt_save_file=osubfname; // assign instead of free
+    }
   }
 
   dialog_action_area = GTK_DIALOG (commentsw->comments_dialog)->action_area;
@@ -3040,11 +3088,14 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
     if (fname!=NULL) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),fname);
     else if (i==1&&act==GTK_FILE_CHOOSER_ACTION_SAVE) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),filt[0]);
   }
-
-  if (fname!=NULL&&dir!=NULL) {
-    gchar *ffname=g_strconcat(dir,fname,NULL);
-    gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(chooser),ffname);
-    g_free(ffname);
+  else {
+    if (fname!=NULL&&dir!=NULL) {
+      gchar *ffname=g_strconcat(dir,fname,NULL);
+      gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER(chooser), dir);
+      gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER(chooser), fname);
+      gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(chooser),ffname);
+      g_free(ffname);
+    }
   }
 
   if (extra_widget!=NULL) gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(chooser),extra_widget);

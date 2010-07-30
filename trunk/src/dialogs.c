@@ -1417,14 +1417,29 @@ do_yuv4m_open_warning(void) {
 
 
 
-gboolean do_comments_dialog (file *sfile) {
+gboolean do_comments_dialog (file *sfile, gchar *filename) {
   gboolean response;
+  gboolean encoding=FALSE;
 
-  commentsw=create_comments_dialog(sfile);
+  commentsw=create_comments_dialog(sfile,filename);
+
+  if (sfile==NULL) sfile=cfile;
+  else encoding=TRUE;
+
   if ((response=(gtk_dialog_run(GTK_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
-    g_snprintf (cfile->title,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->title_entry)));
-    g_snprintf (cfile->author,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
-    g_snprintf (cfile->comment,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
+    g_snprintf (sfile->title,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->title_entry)));
+    g_snprintf (sfile->author,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
+    g_snprintf (sfile->comment,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
+
+    if (encoding) {
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
+      if (sfile->subt!=NULL) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
+	  mainw->subt_save_file=g_strdup(gtk_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
+	}
+      }
+    }
   }
 
   gtk_widget_destroy (commentsw->comments_dialog);

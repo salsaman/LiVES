@@ -2162,8 +2162,7 @@ reset_clip_menu (void) {
 
 
 
-gboolean
-check_file(const gchar *file_name, gboolean check_existing) {
+gboolean check_file(const gchar *file_name, gboolean check_existing) {
   int check;
   gboolean exists=FALSE;
   gchar *msg;

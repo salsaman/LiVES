@@ -908,6 +908,8 @@ typedef struct {
   gboolean go_away;
   gboolean debug; // debug crashes and asserts
 
+  gchar *subt_save_file; // name of file to save subtitles to
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

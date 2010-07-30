@@ -2809,19 +2809,23 @@ create_rp_dialog (void)
 }
 
 
-_commentsw*
-create_comments_dialog (void)
-{
-  GtkWidget *dialog_vbox17;
-  GtkWidget *table10;
-  GtkWidget *label102;
-  GtkWidget *label103;
-  GtkWidget *label105;
-  GtkWidget *dialog_action_area17;
-  GtkWidget *okbutton14;
-  GtkWidget *cancelbutton14;
+_commentsw* create_comments_dialog (file *sfile) {
+  GtkWidget *dialog_vbox;
+  GtkWidget *table;
+  GtkWidget *label;
+  GtkWidget *expander;
+  GtkWidget *vbox;
+  GtkWidget *hbox;
+  GtkWidget *eventbox;
+  GtkWidget *dialog_action_area;
+  GtkWidget *okbutton;
+  GtkWidget *cancelbutton;
 
   _commentsw *commentsw=(_commentsw*)(g_malloc(sizeof(_commentsw)));
+
+  gint bheight=200;
+
+  if (sfile!=NULL) bheight=350;
 
   commentsw->comments_dialog = gtk_dialog_new ();
   gtk_container_set_border_width (GTK_CONTAINER (commentsw->comments_dialog), 10);
@@ -2836,87 +2840,135 @@ create_comments_dialog (void)
     gtk_widget_modify_bg (commentsw->comments_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_default_size (GTK_WINDOW (commentsw->comments_dialog), 600, 200);
+  gtk_window_set_default_size (GTK_WINDOW (commentsw->comments_dialog), 600, bheight);
 
-  dialog_vbox17 = GTK_DIALOG (commentsw->comments_dialog)->vbox;
-  gtk_widget_show (dialog_vbox17);
+  dialog_vbox = GTK_DIALOG (commentsw->comments_dialog)->vbox;
+  gtk_widget_show (dialog_vbox);
 
-  table10 = gtk_table_new (4, 2, FALSE);
-  gtk_widget_show (table10);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox17), table10, TRUE, TRUE, 0);
+  table = gtk_table_new (4, 2, FALSE);
+  gtk_widget_show (table);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), table, TRUE, TRUE, 10);
 
-  label102 = gtk_label_new (_("Title/Name : "));
+  label = gtk_label_new (_("Title/Name : "));
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label102, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  gtk_widget_show (label102);
-  gtk_table_attach (GTK_TABLE (table10), label102, 0, 1, 0, 1,
+  gtk_widget_show (label);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (label102), GTK_JUSTIFY_LEFT);
-  gtk_misc_set_alignment (GTK_MISC (label102), 0, 0.5);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
-  label103 = gtk_label_new (_("Author/Artist : "));
-  gtk_widget_show (label103);
+  label = gtk_label_new (_("Author/Artist : "));
+  gtk_widget_show (label);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label103, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  gtk_table_attach (GTK_TABLE (table10), label103, 0, 1, 1, 2,
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (label103), GTK_JUSTIFY_LEFT);
-  gtk_misc_set_alignment (GTK_MISC (label103), 0, 0.5);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
-  label105 = gtk_label_new (_("Comments : "));
+  label = gtk_label_new (_("Comments : "));
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label105, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  gtk_widget_show (label105);
-  gtk_table_attach (GTK_TABLE (table10), label105, 0, 1, 3, 4,
+  gtk_widget_show (label);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, 3, 4,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (label105), GTK_JUSTIFY_LEFT);
-  gtk_misc_set_alignment (GTK_MISC (label105), 0, 0.5);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   commentsw->title_entry = gtk_entry_new ();
   gtk_widget_show (commentsw->title_entry);
-  gtk_table_attach (GTK_TABLE (table10), commentsw->title_entry, 1, 2, 0, 1,
+  gtk_table_attach (GTK_TABLE (table), commentsw->title_entry, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_entry_set_text (GTK_ENTRY (commentsw->title_entry),cfile->title);
 
   commentsw->author_entry = gtk_entry_new ();
   gtk_widget_show (commentsw->author_entry);
-  gtk_table_attach (GTK_TABLE (table10), commentsw->author_entry, 1, 2, 1, 2,
+  gtk_table_attach (GTK_TABLE (table), commentsw->author_entry, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_entry_set_text (GTK_ENTRY (commentsw->author_entry),cfile->author);
 
   commentsw->comment_entry = gtk_entry_new ();
   gtk_widget_show (commentsw->comment_entry);
-  gtk_table_attach (GTK_TABLE (table10), commentsw->comment_entry, 1, 2, 3, 4,
+  gtk_table_attach (GTK_TABLE (table), commentsw->comment_entry, 1, 2, 3, 4,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_entry_set_max_length (GTK_ENTRY (commentsw->comment_entry), 250);
 
   gtk_entry_set_text (GTK_ENTRY (commentsw->comment_entry),cfile->comment);
 
-  dialog_action_area17 = GTK_DIALOG (commentsw->comments_dialog)->action_area;
-  gtk_widget_show (dialog_action_area17);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area17), GTK_BUTTONBOX_END);
+  if (sfile!=NULL) {
 
-  cancelbutton14 = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton14);
-  gtk_dialog_add_action_widget (GTK_DIALOG (commentsw->comments_dialog), cancelbutton14, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton14, GTK_CAN_DEFAULT);
+    expander=gtk_expander_new_with_mnemonic(_("_Options"));
+    gtk_widget_show (expander);
+  
+    if (palette->style&STYLE_1) {
+      label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
 
-  okbutton14 = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton14);
-  gtk_dialog_add_action_widget (GTK_DIALOG (commentsw->comments_dialog), okbutton14, GTK_RESPONSE_OK);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), expander, TRUE, TRUE, 0);
 
-  GTK_WIDGET_SET_FLAGS (okbutton14, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_widget_grab_focus (okbutton14);
-  gtk_widget_grab_default (okbutton14);
+    vbox = gtk_vbox_new (FALSE, 0);
+    gtk_widget_show (vbox);
+    gtk_container_add (GTK_CONTAINER (expander), vbox);
+
+    // options
+
+    commentsw->subt_checkbutton = gtk_check_button_new ();
+    //if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, checkbutton, param->desc, NULL);
+    eventbox=gtk_event_box_new();
+    //gtk_tooltips_copy(eventbox,checkbutton);
+    label=gtk_label_new_with_mnemonic (_("Save subtitles to file"));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),commentsw->subt_checkbutton);
+    
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      commentsw->subt_checkbutton);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+
+    if (sfile->subt==NULL) {
+      gtk_widget_set_sensitive(commentsw->subt_checkbutton,FALSE);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(commentsw->subt_checkbutton),FALSE);
+    }
+    else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(commentsw->subt_checkbutton),TRUE);
+
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), commentsw->subt_checkbutton, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+    gtk_widget_show_all (hbox);
+  }
+
+  dialog_action_area = GTK_DIALOG (commentsw->comments_dialog)->action_area;
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (commentsw->comments_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (commentsw->comments_dialog), okbutton, GTK_RESPONSE_OK);
+
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  gtk_widget_grab_focus (okbutton);
+  gtk_widget_grab_default (okbutton);
 
   return commentsw;
 }

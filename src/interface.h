@@ -80,9 +80,10 @@ typedef struct __commentsw {
   GtkWidget *title_entry;
   GtkWidget *author_entry;
   GtkWidget *comment_entry;
+  GtkWidget *subt_checkbutton;
 } _commentsw;
 
-_commentsw* create_comments_dialog (void);
+_commentsw* create_comments_dialog (file *sfile);
 
 
 typedef struct {

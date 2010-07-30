@@ -727,6 +727,7 @@ void do_card_in_use_error(void);
 void do_dev_busy_error(const gchar *devstr);
 gboolean do_existing_subs_warning(void);
 void do_invalid_subs_error(void);
+gboolean do_erase_subs_warning(void);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(const gchar *text, gboolean has_cancel);

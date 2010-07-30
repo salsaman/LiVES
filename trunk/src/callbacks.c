@@ -6285,6 +6285,8 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (subfile==NULL) return; // cancelled
 
   g_snprintf(filename,512,"%s",subfile);
+  g_free(subfile);
+
   get_filename(filename,FALSE); // strip extension
   isubfname=g_strdup_printf("%s.srt",filename);
   if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
@@ -6310,8 +6312,12 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   com=g_strdup_printf("/bin/cp \"%s\" %s",isubfname,subfname);
   dummyvar=system(com);
   g_free(com);
+
   subtitles_init(cfile,subfname,subtype);
   g_free(subfname);
+
+  // force update
+  switch_to_file(0,mainw->current_file);
   
   tmp=g_strdup_printf(_("Loaded subtitle file: %s\n"),isubfname);
   d_print(tmp);
@@ -6349,6 +6355,38 @@ void on_save_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_free(subfile);
 }
 
+
+
+void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  gchar *sfname;
+
+  if (cfile->subt==NULL) return;
+
+  if (!do_erase_subs_warning()) return;
+
+  switch (cfile->subt->type) {
+  case SUBTITLE_TYPE_SRT:
+    sfname=g_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
+    break;
+
+  case SUBTITLE_TYPE_SUB:
+    sfname=g_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
+    break;
+
+  default:
+    return;
+  }
+
+  subtitles_free(cfile);
+
+  unlink(sfname);
+  g_free(sfname);
+
+  // force update
+  switch_to_file(0,mainw->current_file);
+
+  d_print(_("Subtitles were erased.\n"));
+}
 
 
 void

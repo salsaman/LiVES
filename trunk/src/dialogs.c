@@ -2039,3 +2039,8 @@ gboolean do_existing_subs_warning(void) {
 void do_invalid_subs_error(void) {
   do_error_dialog(_("\nLiVES currently only supports subtitles of type .srt and .sub.\n"));
 }
+
+
+gboolean do_erase_subs_warning(void) {
+  return do_warning_dialog(_("\nErase all subtitles from this clip.\nAre you sure ?\n"));
+}

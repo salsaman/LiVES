@@ -4399,7 +4399,7 @@ void
 on_show_file_comments_activate            (GtkMenuItem     *menuitem,
 					   gpointer         user_data)
 {
-  do_comments_dialog();
+  do_comments_dialog(NULL);
 }
 
 

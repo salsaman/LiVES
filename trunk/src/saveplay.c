@@ -869,7 +869,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     if (!strlen (cfile->comment)) {
       g_snprintf (cfile->comment,251,"Created with LiVES");
     }
-    if (!do_comments_dialog()) {
+    if (!do_comments_dialog(cfile)) {
 	g_free(full_file_name);
 	if (rdet!=NULL) {
 	  gtk_widget_destroy (rdet->dialog);

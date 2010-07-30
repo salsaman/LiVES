@@ -1417,11 +1417,10 @@ do_yuv4m_open_warning(void) {
 
 
 
-gboolean
-do_comments_dialog (void) {
+gboolean do_comments_dialog (file *sfile) {
   gboolean response;
 
-  commentsw=create_comments_dialog();
+  commentsw=create_comments_dialog(sfile);
   if ((response=(gtk_dialog_run(GTK_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
     g_snprintf (cfile->title,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->title_entry)));
     g_snprintf (cfile->author,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->author_entry)));

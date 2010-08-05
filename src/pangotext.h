@@ -41,6 +41,7 @@ typedef struct {
   double last_time;
   lives_subtitle_t *index;
   lives_subtitle_t *current; // pointer to current entry in index
+  int offset; // offset in frames (default 0)
 } lives_subtitles_t;
 
 

@@ -728,6 +728,7 @@ void do_dev_busy_error(const gchar *devstr);
 gboolean do_existing_subs_warning(void);
 void do_invalid_subs_error(void);
 gboolean do_erase_subs_warning(void);
+gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(const gchar *text, gboolean has_cancel);
@@ -998,11 +999,13 @@ void refresh_rte_window (void);
 // effects-weed.c
 void *w_memcpy  (void *dest, const void *src, size_t n);
 
-// pngotext.h
+// pangotext.c
 gboolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t);
 void subtitles_free(file *sfile);
 gboolean get_srt_text(file *sfile, double xtime);
 gboolean get_sub_text(file *sfile, double xtime);
+gboolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename);
+gboolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
 // osc.c
 #ifdef ENABLE_OSC

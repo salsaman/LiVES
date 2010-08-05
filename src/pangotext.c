@@ -68,7 +68,7 @@ char **get_font_list(void) {
       PangoFontFamily **pff = NULL;
       pango_font_map_list_families(pfm, &pff, &num);
       if(num > 0) {
-        font_list = (char **)malloc((num+1)*sizeof(char*));
+        font_list = (char **)g_malloc((num+1)*sizeof(char*));
         if(font_list) {
           int i;
           for(i = 0; i < num; ++i)
@@ -250,7 +250,7 @@ static char *srt_read_text(FILE *pf, lives_subtitle_t *title) {
   if(fseek(pf, title->textpos, SEEK_SET) == -1)
     return(FALSE);
 
-  while(fgets(data, sizeof(data), pf)) {
+  while(fgets(data, sizeof(data)-1, pf)) {
     // remove \n \r
     poslf = strstr(data, lf_str);
     if(poslf)
@@ -261,13 +261,10 @@ static char *srt_read_text(FILE *pf, lives_subtitle_t *title) {
     curlen = strlen(data);
     if(!curlen)
       break;
-    if(poslf)
-      *poslf = lf_str[0];
-    if(poscr)
-      *poscr = cr_str[0];
+    strcat(data,"\n");
     curlen = strlen(data);
     if(!ret) {
-      ret = (char *)malloc(curlen+1);
+      ret = (char *)g_malloc(curlen+1);
       if(ret)
         strcpy(ret, data);
       else {
@@ -276,7 +273,7 @@ static char *srt_read_text(FILE *pf, lives_subtitle_t *title) {
       }
     }
     else {
-      ret = (char *)realloc(ret, curlen+1+strlen(ret));
+      ret = (char *)g_realloc(ret, curlen+1+strlen(ret));
       if(ret)
         strcat(ret, data);
       else {
@@ -309,7 +306,7 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
   if(fseek(pf, title->textpos, SEEK_SET) == -1)
     return(FALSE);
 
-  while(fgets(data, sizeof(data), pf)) {
+  while(fgets(data, sizeof(data)-1, pf)) {
     // remove \n \r
     poslf = strstr(data, lf_str);
     if(poslf)
@@ -320,11 +317,7 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
     curlen = strlen(data);
     if(!curlen)
       break;
-    if(poslf)
-      *poslf = lf_str[0];
-    if(poscr)
-      *poscr = cr_str[0];
-    curlen = strlen(data);
+    strcat(data,"\n");
     if(!ret) {
       ret = subst(data,"[br]","\n");
       if(!ret) {
@@ -338,15 +331,15 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
 	fseek(pf, curpos, SEEK_SET);
         return(FALSE);
       }
-      ret = (char *)realloc(ret, strlen(retmore)+1+strlen(ret));
+      ret = (char *)g_realloc(ret, strlen(retmore)+1+strlen(ret));
       if(ret)
         strcat(ret, retmore);
       else {
 	fseek(pf, curpos, SEEK_SET);
-        free((void *)retmore);
+        g_free(retmore);
         return(FALSE);
       }
-      free((void *)retmore);
+      g_free(retmore);
     }
   }
 
@@ -461,7 +454,7 @@ gboolean get_srt_text(file *sfile, double xtime) {
       // parsing ok
         starttime = hstart*3600 + mstart*60 + sstart + fstart/1000.;
         endtime = hend*3600 + mend*60 + send + fend/1000.;
-        node = (lives_subtitle_t *)malloc(sizeof(lives_subtitle_t));
+        node = (lives_subtitle_t *)g_malloc(sizeof(lives_subtitle_t));
         if(node) {
           node->start_time = starttime;
           node->end_time = endtime;
@@ -587,8 +580,12 @@ gboolean get_sub_text(file *sfile, double xtime) {
       starttext = TRUE;
     }
 
-    if(!starttext)
+    if(!starttext) {
+      if(!strncmp(data,"[DELAY]",7)) {
+	sfile->subt->offset=atoi(data+7);
+      }
       continue;
+    }
 
     //
     // data contains time range
@@ -607,9 +604,9 @@ gboolean get_sub_text(file *sfile, double xtime) {
                &hend, &mend, &send, &fend);
     if(i == 8) {
       // parsing ok
-        starttime = hstart*3600 + mstart*60 + sstart + fstart/1000.;
-        endtime = hend*3600 + mend*60 + send + fend/1000.;
-        node = (lives_subtitle_t *)malloc(sizeof(lives_subtitle_t));
+        starttime = hstart*3600 + mstart*60 + sstart + fstart/100.;
+        endtime = hend*3600 + mend*60 + send + fend/100.;
+        node = (lives_subtitle_t *)g_malloc(sizeof(lives_subtitle_t));
         if(node) {
           node->start_time = starttime;
           node->end_time = endtime;
@@ -678,13 +675,13 @@ void subtitles_free(file *sfile) {
 
     sfile->subt->index = (lives_subtitle_t *)sfile->subt->index->next;
 
-    if(to_delete->style != NULL) free(to_delete->style);
-    free(to_delete);    
+    if(to_delete->style != NULL) g_free(to_delete->style);
+    g_free(to_delete);    
   } 
 
   if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
 
-  free (sfile->subt);
+  g_free (sfile->subt);
   sfile->subt=NULL;
 }
 
@@ -713,6 +710,179 @@ gboolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t subtype
 
   sfile->subt->type=subtype;
 
+  sfile->subt->offset=0;
+
   return TRUE;
+}
+
+static void parse_double_time(double tim, int *ph, int *pmin, int *psec, int *pmsec, int fix) {
+  int ntim = (int)tim;
+  int h, m, s, ms;
+
+  h = ntim/3600;
+  m = (ntim-h*3600)/60;
+  s = (ntim-h*3600-m*60);
+  if (fix==3) ms = (int)((tim-ntim)*1000.0+.5);
+  else ms = (int)((tim-ntim)*100.0+.5); // hundredths
+  if(ph)
+    *ph = h;
+  if(pmin)
+    *pmin = m;
+  if(psec)
+    *psec = s;
+  if(pmsec)
+    *pmsec = ms;
+}
+
+gboolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
+  lives_subtitles_t *subt=NULL;
+  long savepos = 0;
+  FILE *pf;
+  int num_saves;
+  lives_subtitle_t *ptr = NULL;
+ 
+  if(!sfile)
+    return(FALSE);
+  subt = sfile->subt;
+  if(!subt)
+    return(FALSE);
+  if(subt->last_time <= -1.)
+    get_srt_text(sfile, end_time);
+  if(subt->last_time <= -1.)
+    savepos = ftell(subt->tfile);
+
+  // save the contents
+  pf = fopen(filename, "w");
+  if(!pf)
+    return(FALSE);
+  num_saves = 0;
+  ptr = subt->index;
+  while(ptr) {
+    char *text = NULL;
+    if(ptr->start_time < end_time && ptr->end_time >= start_time) {
+      text = srt_read_text(subt->tfile, ptr);
+      if(text) {
+        int h, m, s, ms;
+        double dtim;
+
+	if (num_saves>0) fprintf(pf,"\n");
+
+        fprintf(pf, "%d\n", ++num_saves);
+
+	dtim = ptr->start_time;
+        if (dtim < start_time) dtim=start_time;
+        dtim += offset_time;
+
+        parse_double_time(dtim, &h, &m, &s, &ms, 3);
+        fprintf(pf, "%02d:%02d:%02d,%03d --> ", h, m, s, ms);
+
+        dtim = ptr->end_time;
+        if (dtim > end_time) dtim=end_time;
+        dtim += offset_time;
+
+        parse_double_time(dtim, &h, &m, &s, &ms, 3);
+        fprintf(pf, "%02d:%02d:%02d,%03d\n", h, m, s, ms);
+
+        fprintf(pf, "%s", text);
+        g_free(text);
+      }
+    }
+    else if (ptr->start_time>=end_time) break;
+    ptr = (lives_subtitle_t *)ptr->next;
+  }
+
+  fclose(pf);
+  if(!num_saves) // don't keep the empty file
+    unlink(filename);
+
+  if(subt->last_time <= -1.)
+    fseek(subt->tfile, savepos, SEEK_SET);
+
+  return(TRUE);
+}
+
+gboolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
+  lives_subtitles_t *subt=NULL;
+  long savepos = 0;
+  FILE *pf;
+  int num_saves;
+  lives_subtitle_t *ptr = NULL;
+ 
+  if(!sfile)
+    return(FALSE);
+  subt = sfile->subt;
+  if(!subt)
+    return(FALSE);
+  if(subt->last_time <= -1.)
+    get_sub_text(sfile, end_time);
+  if(subt->last_time <= -1.)
+    savepos = ftell(subt->tfile);
+
+  // save the contents
+  pf = fopen(filename, "w");
+  if(!pf)
+    return(FALSE);
+  num_saves = 0;
+  ptr = subt->index;
+
+  fprintf(pf, "[INFORMATION]\n");
+  fprintf(pf, "[TITLE] %s\n", sfile->title);
+  fprintf(pf, "[AUTHOR] %s\n", sfile->author);
+  fprintf(pf, "[SOURCE]\n");
+  fprintf(pf, "[FILEPATH]\n");
+  fprintf(pf, "[DELAY] 0\n");
+  fprintf(pf, "[COMMENT] %s\n", sfile->comment);
+  fprintf(pf, "[END INFORMATION]\n");
+  fprintf(pf, "[SUBTITLE]\n");
+
+
+  while(ptr) {
+    char *text = NULL;
+    char *br_text = NULL;
+    if(ptr->start_time < end_time && ptr->end_time >= start_time) {
+      text = sub_read_text(subt->tfile, ptr);
+      if(text) {
+        int h, m, s, ms;
+        double dtim;
+
+	if (!strncmp(text+strlen(text)-1,"\n",1)) memset(text+strlen(text)-1,0,1);
+
+        br_text = subst(text, "\n", "[br]");
+        if(br_text) {
+	  if (num_saves>0) fprintf(pf,"\n");
+
+	  dtim = ptr->start_time;
+	  if (dtim < start_time) dtim=start_time;
+	  dtim += offset_time;
+
+          parse_double_time(dtim, &h, &m, &s, &ms, 2);
+          fprintf(pf, "%02d:%02d:%02d.%02d,", h, m, s, ms);
+
+	  dtim = ptr->end_time;
+	  if (dtim > end_time) dtim=end_time;
+	  dtim += offset_time;
+
+          parse_double_time(dtim, &h, &m, &s, &ms, 2);
+          fprintf(pf, "%02d:%02d:%02d.%02d\n", h, m, s, ms);
+          fprintf(pf, "%s\n", br_text);
+          g_free(br_text);
+          num_saves++;
+        }
+        g_free(text);
+      }
+    }
+    else if (ptr->start_time>=end_time) break;
+    ptr = (lives_subtitle_t *)ptr->next;
+  }
+
+  fclose(pf);
+  if(!num_saves) // don't keep the empty file
+    unlink(filename);
+
+  if(subt->last_time <= -1.)
+    fseek(subt->tfile, savepos, SEEK_SET);
+
+  return(TRUE);
+
 }
 

@@ -2463,9 +2463,6 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (mainw->showfct), "activate",
                       G_CALLBACK (on_showfct_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->showsubs), "activate",
-                      G_CALLBACK (on_boolean_toggled),
-                      &prefs->show_subtitles);
   g_signal_connect (GTK_OBJECT (mainw->preferences), "activate",
                       G_CALLBACK (on_preferences_activate),
                       NULL);

@@ -2941,7 +2941,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
       gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
 
-    if (sfile->subt==NULL||!mainw->save_all) { // TODO
+    if (sfile->subt==NULL) {
       gtk_widget_set_sensitive(commentsw->subt_checkbutton,FALSE);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(commentsw->subt_checkbutton),FALSE);
     }
@@ -2974,7 +2974,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
     gtk_box_pack_start (GTK_BOX (hbox), buttond, FALSE, FALSE, 10);
     gtk_widget_show_all (hbox);
 
-    if (sfile->subt==NULL||!mainw->save_all) { // TODO
+    if (sfile->subt==NULL) {
       gtk_widget_set_sensitive(commentsw->subt_entry,FALSE);
       gtk_widget_set_sensitive(buttond,FALSE);
     }

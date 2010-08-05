@@ -749,35 +749,39 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 
 
-static void copy_subs_to_file(file *sfile, gchar *fname) {
-  // note: this will be superceded by save_subs_to_file()
-
-  gchar *isname,*com,*msg;
+static void save_subs_to_file(file *sfile, gchar *fname) {
+  gchar *msg,*ext;
+  lives_subtitle_type_t otype,itype;
 
   if (sfile->subt==NULL) return;
 
-  switch (sfile->subt->type) {
-  case SUBTITLE_TYPE_SUB:
-    isname=g_build_filename(prefs->tmpdir,sfile->handle,"subs.sub",NULL);
-    break;
+  itype=sfile->subt->type;
 
-  case SUBTITLE_TYPE_SRT:
-    isname=g_build_filename(prefs->tmpdir,sfile->handle,"subs.srt",NULL);
-    break;
+  ext=get_extension(fname);
 
-  default:
+  if (!strcmp(ext,"sub")) otype=SUBTITLE_TYPE_SUB;
+  else if (!strcmp(ext,"srt")) otype=SUBTITLE_TYPE_SRT;
+  else otype=itype;
+
+  g_free(ext);
+
+  // TODO - use sfile->subt->save_fn
+  switch (otype) {
+    case SUBTITLE_TYPE_SUB:
+      save_sub_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,(double)(sfile->start-1)/sfile->fps,fname);
+      break;
+
+    case SUBTITLE_TYPE_SRT:
+      save_srt_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,(double)(sfile->start-1)/sfile->fps,fname);
+      break;
+      
+    default:
     return;
   }
-
-  com=g_strdup_printf("/bin/cp %s \"%s\"",isname,mainw->subt_save_file);
-  dummyvar=system(com);
-  g_free(com);
 
   msg=g_strdup_printf(_("Subtitles were saved as %s\n"),mainw->subt_save_file);
   d_print(msg);
   g_free(msg);
-
-  g_free(isname);
 }
 
 
@@ -1464,7 +1468,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     d_print_done();
 
     if (mainw->subt_save_file!=NULL) {
-      copy_subs_to_file(cfile,mainw->subt_save_file);
+      save_subs_to_file(cfile,mainw->subt_save_file);
       g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
     }

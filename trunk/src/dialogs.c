@@ -1419,6 +1419,7 @@ do_yuv4m_open_warning(void) {
 
 gboolean do_comments_dialog (file *sfile, gchar *filename) {
   gboolean response;
+  gboolean ok=FALSE;
   gboolean encoding=FALSE;
 
   commentsw=create_comments_dialog(sfile,filename);
@@ -1426,18 +1427,28 @@ gboolean do_comments_dialog (file *sfile, gchar *filename) {
   if (sfile==NULL) sfile=cfile;
   else encoding=TRUE;
 
-  if ((response=(gtk_dialog_run(GTK_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
-    g_snprintf (sfile->title,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->title_entry)));
-    g_snprintf (sfile->author,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
-    g_snprintf (sfile->comment,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
-
-    if (encoding) {
-      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
-      mainw->subt_save_file=NULL;
-      if (sfile->subt!=NULL) {
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
-	  mainw->subt_save_file=g_strdup(gtk_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
+  while (!ok) {
+    ok=TRUE;
+    if ((response=(gtk_dialog_run(GTK_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
+      g_snprintf (sfile->title,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->title_entry)));
+      g_snprintf (sfile->author,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
+      g_snprintf (sfile->comment,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
+      
+      if (encoding&&sfile->subt!=NULL&&gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
+	gchar *ext=get_extension(gtk_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
+	if (strcmp(ext,"sub")&&strcmp(ext,"srt")) {
+	  if (!do_sub_type_warning(ext,sfile->subt->type==SUBTITLE_TYPE_SRT?"srt":"sub")) {
+	    gtk_entry_set_text(GTK_ENTRY(commentsw->subt_entry),mainw->subt_save_file);
+	    ok=FALSE;
+	    continue;
+	  }
 	}
+	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	mainw->subt_save_file=g_strdup(gtk_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
+      }
+      else {
+	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	mainw->subt_save_file=NULL;
       }
     }
   }
@@ -2043,4 +2054,13 @@ void do_invalid_subs_error(void) {
 
 gboolean do_erase_subs_warning(void) {
   return do_warning_dialog(_("\nErase all subtitles from this clip.\nAre you sure ?\n"));
+}
+
+
+gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext) {
+  gboolean ret;
+  gchar *msg=g_strdup_printf(_("\nLiVES does not recognise the subtitle file type \"%s\".\nClick Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),ext,type_ext);
+  ret=do_warning_dialog(msg);
+  g_free(msg);
+  return ret;
 }

@@ -6307,7 +6307,11 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
   }
 
-  if (cfile->subt!=NULL) subtitles_free(cfile);
+  if (cfile->subt!=NULL) {
+    // erase any existing subs
+    on_erase_subs_activate(NULL,NULL);
+    subtitles_free(cfile);
+  }
 
   com=g_strdup_printf("/bin/cp \"%s\" %s",isubfname,subfname);
   dummyvar=system(com);
@@ -6362,7 +6366,8 @@ void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (cfile->subt==NULL) return;
 
-  if (!do_erase_subs_warning()) return;
+  if (menuitem!=NULL)
+    if (!do_erase_subs_warning()) return;
 
   switch (cfile->subt->type) {
   case SUBTITLE_TYPE_SRT:
@@ -6382,10 +6387,12 @@ void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   unlink(sfname);
   g_free(sfname);
 
-  // force update
-  switch_to_file(0,mainw->current_file);
+  if (menuitem!=NULL) {
+    // force update
+    switch_to_file(0,mainw->current_file);
 
-  d_print(_("Subtitles were erased.\n"));
+    d_print(_("Subtitles were erased.\n"));
+  }
 }
 
 

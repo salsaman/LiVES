@@ -2779,7 +2779,16 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
     char *sfont="Sans";
     lives_colRGBA32_t col_white,col_black_a;
     
-    int error,size=weed_get_int_value(layer,"width",&error)/32;
+    int error,size;
+
+    xtime-=(double)sfile->subt->offset/sfile->fps;
+
+    // round to 2 dp
+    xtime=(double)((int)(xtime*100.+.5))/100.;
+
+    if (xtime<0.||(sfile->subt->last_time>-1.&&xtime>sfile->subt->last_time)) return;
+
+    size=weed_get_int_value(layer,"width",&error)/32;
 
     col_white.red=col_white.green=col_white.blue=col_white.alpha=255;
     col_black_a.red=col_black_a.green=col_black_a.blue=0;

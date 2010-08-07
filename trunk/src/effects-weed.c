@@ -3790,33 +3790,27 @@ void weed_deinit_all(void) {
   gint idx;
 
   mainw->osc_block=TRUE;
-  if (mainw->playing_file==-1&&rte_window!=NULL) {
+  if (rte_window!=NULL) {
     rtew_set_keygr(-1);
-    mainw->rte_keys=-1;
-    mainw->last_grabable_effect=-1;
   }
+
+  mainw->rte_keys=-1;
+  mainw->last_grabable_effect=-1;
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     if (rte_key_valid(i+1,TRUE)) {
-      if (mainw->playing_file==-1&&rte_window!=NULL) rtew_set_keych(i,FALSE);
-      if ((mainw->rte&(GU641<<i))) {
-	if ((idx=key_to_instance[i][key_modes[i]])!=-1&&weed_instances[idx]!=NULL) {
-	  if (enabled_in_channels(weed_instances[idx],FALSE)>0) {
-	    weed_deinit_effect(i);
-	  }
+      if (rte_window!=NULL) rtew_set_keych(i,FALSE);
+    }
+    if ((mainw->rte&(GU641<<i))) {
+      if ((idx=key_to_instance[i][key_modes[i]])!=-1&&weed_instances[idx]!=NULL) {
+	if (enabled_in_channels(weed_instances[idx],FALSE)>0) {
+	  weed_deinit_effect(i);
 	}
       }
+      mainw->rte^=(GU641<<i);
     }
-    if (mainw->rte&(GU641<<i)) mainw->rte^=(GU641<<i);
-    if (rte_window!=NULL) {
-      rtew_set_keych(i,FALSE);
-      if (i==mainw->rte_keys) {
-	rtew_set_keygr(-1);
-      }
-    }
-    if (i==mainw->last_grabable_effect) mainw->last_grabable_effect=-1;
   }
-  mainw->rte_keys=-1;
+
   mainw->osc_block=FALSE;
 }
 

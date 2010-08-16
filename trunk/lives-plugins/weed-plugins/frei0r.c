@@ -48,6 +48,12 @@ typedef void (*f0r_update_f)(f0r_instance_t instance, double time, const uint32_
 typedef void (*f0r_update2_f)(f0r_instance_t instance, double time, const uint32_t *inframe1, const uint32_t *inframe2, const uint32_t *inframe3, uint32_t *outframe);
 typedef void (*f0r_set_param_value_f)(f0r_instance_t *instance, f0r_param_t *param, int param_index);
 
+#if FREI0R_MAJOR_VERSION > 1 || FREI0R_MINOR_VERSION > 1
+#define CAN_GET_DEF
+typedef void (*f0r_get_param_value_f)(f0r_instance_t *instance, f0r_param_t *param, int param_index);
+#endif
+
+
 ////////////////////////////////////////////////////////////////
 
 
@@ -254,6 +260,11 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     f0r_update_f f0r_update=NULL;
     f0r_update2_f f0r_update2=NULL;
     f0r_set_param_value_f f0r_set_param_value=NULL;
+
+    double vald;
+    char *valch;
+    f0r_param_color_t valcol;
+    f0r_param_position_t valpos;
 
     // quick and dirty fix for 64bit systems
     char *fpp=getenv("FREI0R_PLUGIN_DIR");
@@ -524,8 +535,23 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  
 	  num_weed_params=0;
 
+#ifdef CAN_GET_DEF
+	  // try to get defaults
+	  if ((f0r_inst=(*f0r_construct) (640,480))==NULL) {
+	    (*f0r_deinit)();
+	    dlclose(handle);
+	    weed_free(pal);
+	    weed_free(out_chantmpls);
+	    if (in_chantmpls!=NULL) weed_free(in_chantmpls);
+	    continue;
+	  }
+#endif
+
 	  if (f0rinfo.num_params>0) {
 	    if ((f0r_set_param_value=dlsym(handle,"f0r_set_param_value"))==NULL) {
+#ifdef CAN_GET_DEF
+	      f0r_destruct(f0r_inst);
+#endif
 	      (*f0r_deinit)();
 	      dlclose(handle);
 	      weed_free(pal);
@@ -533,6 +559,18 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      if (in_chantmpls!=NULL) weed_free(in_chantmpls);
 	      continue;
 	    }
+
+#ifdef CAN_GET_DEF
+	    if ((f0r_get_param_value=dlsym(handle,"f0r_get_param_value"))==NULL) {
+	      f0r_destruct(f0r_inst);
+	      (*f0r_deinit)();
+	      dlclose(handle);
+	      weed_free(pal);
+	      weed_free(out_chantmpls);
+	      if (in_chantmpls!=NULL) weed_free(in_chantmpls);
+	      continue;
+	    }
+#endif
 
 	    for (pnum=0;pnum<f0rinfo.num_params;pnum++) {
 	      num_weed_params++;
@@ -555,12 +593,20 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      sprintf(label,"_%s",(char *)pinfo.name);
 	      switch (pinfo.type) {
 	      case F0R_PARAM_BOOL:
-		in_params[wnum]=weed_switch_init((char *)pinfo.name,label,0);
+		vald=0.;
+#ifdef CAN_GET_DEF
+		f0r_get_param_value(inst,&vald,pnum);
+#endif
+		in_params[wnum]=weed_switch_init((char *)pinfo.name,label,(int)vald);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		if (num_weed_params>f0rinfo.num_params) sprintf(rfx_strings[pnum],"layout|p%d|",wnum);
 		break;
 	      case F0R_PARAM_DOUBLE:
-		in_params[wnum]=weed_float_init((char *)pinfo.name,label,0.,0.,1.);
+		vald=0.;
+#ifdef CAN_GET_DEF
+		f0r_get_param_value(inst,&vald,pnum);
+#endif
+		in_params[wnum]=weed_float_init((char *)pinfo.name,label,vald,0.,1.);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		if (num_weed_params>f0rinfo.num_params) sprintf(rfx_strings[pnum],"layout|p%d|",wnum);
 		pgui=weed_parameter_template_get_gui(in_params[wnum]);
@@ -568,19 +614,27 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		weed_set_int_value(pgui,"decimals",2);
 		break;
 	      case F0R_PARAM_COLOR:
-		in_params[wnum]=weed_colRGBd_init((char *)pinfo.name,label,0.,0.,0.);
+		valcol.r=valcol.g=valcol.b=0.;
+#ifdef CAN_GET_DEF
+		f0r_get_param_value(inst,&valcol,pnum);
+#endif
+		in_params[wnum]=weed_colRGBd_init((char *)pinfo.name,label,valcol.r,valcol.g,valcol.b);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		if (num_weed_params>f0rinfo.num_params) sprintf(rfx_strings[pnum],"layout|p%d|",wnum);
 		break;
 	      case F0R_PARAM_POSITION:
-		in_params[wnum]=weed_float_init((char *)pinfo.name,label,0.,0.,1.);
+		valpos.x=valpos.y=0.;
+#ifdef CAN_GET_DEF
+		f0r_get_param_value(inst,&valpos,pnum);
+#endif
+		in_params[wnum]=weed_float_init((char *)pinfo.name,label,valpos.x,0.,1.);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		weed_set_boolean_value(in_params[wnum],"plugin_is_position",WEED_TRUE);
 		pgui=weed_parameter_template_get_gui(in_params[wnum]);
 		weed_set_double_value(pgui,"step_size",.01);
 		weed_set_int_value(pgui,"decimals",2);
 		wnum++;
-		in_params[wnum]=weed_float_init((char *)pinfo.name,"",0.,0.,1.);
+		in_params[wnum]=weed_float_init((char *)pinfo.name,"",valpos.y,0.,1.);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		sprintf(rfx_strings[pnum],"layout|p%d|\"X\"|fill|p%d|\"Y\"|fill|",wnum-1,wnum);
 		pgui=weed_parameter_template_get_gui(in_params[wnum]);
@@ -588,11 +642,20 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		weed_set_int_value(pgui,"decimals",2);
 		break;
 	      case F0R_PARAM_STRING:
-		in_params[wnum]=weed_text_init((char *)pinfo.name,label,"Frei0r");
+#ifdef CAN_GET_DEF
+		f0r_get_param_value(inst,&valch,pnum);
+#else
+		valch=strdup("Frei0r");
+#endif
+		in_params[wnum]=weed_text_init((char *)pinfo.name,label,valch);
+		free(valch);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		if (num_weed_params>f0rinfo.num_params) sprintf(rfx_strings[pnum],"layout|p%d|",wnum);
 		break;
 	      default:
+#ifdef CAN_GET_DEF
+		f0r_destruct(f0r_inst);
+#endif
 		(*f0r_deinit)();
 		dlclose(handle);
 		weed_free(pal);
@@ -611,6 +674,10 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    }
 	    in_params[pnum]=NULL;
 	  }
+
+#ifdef CAN_GET_DEF
+	  f0r_destruct(f0r_inst);
+#endif
 
 	  snprintf(weed_name,256,"Frei0r: %s",f0rinfo.name);
 	  pversion=f0rinfo.major_version*1000+f0rinfo.minor_version;

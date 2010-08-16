@@ -150,8 +150,16 @@ GList *weed_get_all_names (gshort list_type);
 gint rte_get_numfilters(void);
 
 /////////////////////////////////////////////////////////
+// key starts at 0
+
+void free_key_defaults(gint key, gint mode);
+void apply_key_defaults(weed_plant_t *inst, weed_plant_t **defs);
+void read_key_defaults(gint key, gint mode, unsigned char *buff);
+void save_key_defaults(FILE *fd, gint key, gint mode);
+void set_key_defaults(weed_plant_t *inst, gint key, gint mode);
 
 
+//////////////////////////////////////////////////////
 
 void rte_swap_fg_bg (void);
 

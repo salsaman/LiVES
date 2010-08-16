@@ -146,6 +146,7 @@ on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
       for (j=0;j<modes;j++) {
 	if (rte_keymode_valid(i,j,TRUE)) {
 	  fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j))),kfile);
+	  save_key_defaults(kfile,i-1,j);
 	}
       }
     }
@@ -299,6 +300,38 @@ void load_rte_defs (void) {
 }
 
 
+static int parsekeydefs(GList *list, gint i, gint key, gint mode) {
+  gint count=0;
+  gchar *string,*tmp;
+  gchar *buff=g_strdup("");
+
+  if (i>=g_list_length(list)) return 0;
+
+  string=(gchar *)(g_list_nth_data(list,i));
+
+  if (strcmp(string,"keydefs")) return 0;
+
+  while (strcmp(string,"endkeydefs")) {
+    if (key>-1) {
+      tmp=g_strconcat(buff,string,NULL);
+      g_free(buff);
+      buff=tmp;
+    }
+    count++;
+  }
+
+  if (key>-1) {
+    // remove trailing newline
+    memset(buff+strlen(buff)-1,0,1);
+    read_key_defaults(key-1,mode,(unsigned char *)(buff+7));
+  }
+
+  g_free(buff);
+
+  return ++count;
+}
+
+
 
 
 gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
@@ -319,7 +352,6 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   gchar *whashname;
 
   gchar *keymap_file=g_strdup_printf("%s/%sdefault.keymap",capable->home_dir,LIVES_CONFIG_DIR);
-  gint count;
 
   msg=g_strdup_printf(_("Loading default keymap from %s..."),keymap_file);
   d_print(msg);
@@ -338,7 +370,6 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   while (fgets(buff,65536,kfile)) {
     if (buff!=NULL) {
-      // TODO - should we g_free() line ?
       line=(g_strchomp (g_strchug(buff)));
       if ((linelen=strlen (line))) {
 	whole2=g_strconcat (whole,line,NULL);
@@ -370,10 +401,9 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       continue;
     }
 
-    count=get_token_count(line,'|');
     array=g_strsplit (line,"|",-1);
 
-    if (count>1&&!strcmp(array[0],"defaults")) {
+    if (!strcmp(array[0],"defaults")) {
       g_strfreev(array);
       array=g_strsplit(line,"|",2);
       if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
@@ -382,7 +412,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       continue;
     }
 
-    if (count>1&&!strcmp(array[0],"sizes")) {
+    if (!strcmp(array[0],"sizes")) {
       g_strfreev(array);
       array=g_strsplit(line,"|",2);
       if (prefs->fxsizesfile!=NULL) g_free(prefs->fxsizesfile);
@@ -407,6 +437,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       d_print((tmp=g_strdup_printf(_("Invalid key %d in %s\n"),key,keymap_file)));
       g_free(tmp);
       notfound=TRUE;
+      i+=parsekeydefs(list,i+1,-1,-1);
       continue;
     }
 
@@ -414,6 +445,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       d_print((tmp=g_strdup_printf(_("Invalid effect %s in %s\n"),hashname,keymap_file)));
       g_free(tmp);
       notfound=TRUE;
+      i+=parsekeydefs(list,i+1,-1,-1);
       continue;
     }
 
@@ -422,23 +454,28 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if ((mode=weed_add_effectkey(key,whashname,TRUE))==-1) {
       // could not locate effect
       notfound=TRUE;
+      i+=parsekeydefs(list,i+1,-1,-1);
       continue;
     }
     if (mode==-2){
       d_print((tmp=g_strdup_printf(_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
       g_free(tmp);
+      i+=parsekeydefs(list,i+1,-1,-1);
       continue;
     }
     if (mode==-3){
       d_print((tmp=g_strdup_printf(_("Too many effects bound to key %d.\n"),key)));
       g_free(tmp);
+      i+=parsekeydefs(list,i+1,-1,-1);
       continue;
     }
-    else if (rte_window!=NULL) {
+    if (rte_window!=NULL) {
       gtk_entry_set_text (GTK_ENTRY(combo_entries[(key-1)*modes+mode]),(tmp=rte_keymode_get_filter_name(key,mode)));
       g_free(tmp);
       type_label_set_text(key-1,mode);
     }
+
+    i+=parsekeydefs(list,i+1,key,mode);
   }
 
   g_list_free_strings(list);

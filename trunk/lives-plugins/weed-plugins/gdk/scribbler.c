@@ -79,31 +79,29 @@ static void plugin_free_buffer (guchar *pixels, gpointer data) {
 static char **fonts_available = NULL;
 static int num_fonts_available = 0;
 
-/////////////////////////////////////////////////////////////
-//
-// reserved for debugging output
-//
-/////////////////////////////////////////////////////////////
-/*static void debugout(const char *pszFormat, ...) {
-  static const char *pszDebugFileName = "/home/alexp/debugout.txt";
-  va_list vl;
-  va_start(vl, pszFormat);
-  char buff[32000];
-  vsprintf(buff, pszFormat, vl);
-  FILE *f = fopen(pszDebugFileName, "a");
-  if(f) {
-    fprintf(f, "%s", buff);
-    fclose(f);
-  }
-  va_end(vl);
-}*/
-
 int scribbler_generator_init(weed_plant_t *inst) {
   int error;
 
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
-  weed_plant_t *pgui = weed_parameter_template_get_gui(in_params[P_BGALPHA]);
-  weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
+  weed_plant_t *pgui;
+  int mode=weed_get_int_value(in_params[P_MODE],"value",&error);
+
+  pgui = weed_parameter_template_get_gui(in_params[P_BGALPHA]);
+  if (mode==0) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
+  else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
+
+  pgui = weed_parameter_template_get_gui(in_params[P_BACKGROUND]);
+  if (mode==0) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
+  else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
+
+  pgui = weed_parameter_template_get_gui(in_params[P_FGALPHA]);
+  if (mode==2) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
+  else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
+
+  pgui = weed_parameter_template_get_gui(in_params[P_FOREGROUND]);
+  if (mode==2) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
+  else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
+
   weed_free(in_params);
 
   return WEED_NO_ERROR;
@@ -340,6 +338,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *in_params[P_END+1],*pgui;
     weed_plant_t *filter_class;
     PangoContext *ctx;
+    int flags=0,error;
 
     // this section contains code
     // for configure fonts available
@@ -376,6 +375,11 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     in_params[P_TEXT]=weed_text_init("text","_Text","");
     in_params[P_MODE]=weed_string_list_init("mode","Colour _mode",0,modes);
+    if (weed_plant_has_leaf(in_params[P_MODE],"flags")) 
+      flags=weed_get_int_value(in_params[P_MODE],"flags",&error);
+    flags|=WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
+    weed_set_int_value(in_params[P_MODE],"flags",flags);
+
     if(fonts_available)
       in_params[P_FONT]=weed_string_list_init("font","_Font",0,fonts_available);
     else

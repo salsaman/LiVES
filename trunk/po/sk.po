@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-08-16 02:40+0100\n"
+"POT-Creation-Date: 2010-08-17 01:50+0100\n"
 "PO-Revision-Date: 2010-03-28 17:11+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -5068,12 +5068,12 @@ msgstr "Ovládače hlasitosti zvuku"
 msgid "unknown"
 msgstr "neznáme"
 
-#: src/effects-weed.c:2736
+#: src/effects-weed.c:2712
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Chyba: rozšírenie %s nemá weed_setup () funkciu.\n"
 
-#: src/effects-weed.c:2817
+#: src/effects-weed.c:2793
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5082,31 +5082,27 @@ msgstr ""
 "Info: Nemožno nahrať rozšírenie %s\n"
 "Chyba bola: %s\n"
 
-#: src/effects-weed.c:2960
+#: src/effects-weed.c:2934
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Úspešne načítané %d Weed filtre\n"
 
-#: src/effects-weed.c:3542
-msgid "Warning - no more effect slots left !\n"
-msgstr "Varovanie - na sloty nie je možné použiť viac efektov !\n"
-
-#: src/effects-weed.c:3619
+#: src/effects-weed.c:3633
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Nepodarilo sa spustiť inštanciu %s, kód chyby %d\n"
 
-#: src/effects-weed.c:3653
+#: src/effects-weed.c:3667
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nedá sa spustiť generátor %s\n"
 
-#: src/effects-weed.c:4135
+#: src/effects-weed.c:4139
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Nepodarilo sa spustiť generátor %s\n"
 
-#: src/effects-weed.c:4203
+#: src/effects-weed.c:4205
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nepodarilo sa spustiť generátor %s, chyba %d\n"
@@ -5135,68 +5131,68 @@ msgstr "Zachovať _pomer strán"
 msgid "LiVES: Select file"
 msgstr "LiVES: Vybrať súbor"
 
-#: src/paramwindow.c:363
+#: src/paramwindow.c:365
 msgid "Transition _In"
 msgstr "Prechod _v"
 
-#: src/paramwindow.c:368
+#: src/paramwindow.c:370
 msgid "Transition in"
 msgstr "Prechod v"
 
-#: src/paramwindow.c:394
+#: src/paramwindow.c:396
 msgid "Check the box to make audio transition with the video"
 msgstr "Začiarknite políčko, pre urobenie prechodu zvuku  s videom"
 
-#: src/paramwindow.c:397
+#: src/paramwindow.c:399
 msgid "Crossfade audio"
 msgstr ""
 
-#: src/paramwindow.c:431
+#: src/paramwindow.c:433
 msgid "Transition _Out"
 msgstr "Prechod _z"
 
-#: src/paramwindow.c:436
+#: src/paramwindow.c:438
 msgid "Transition out"
 msgstr "Prechod z"
 
-#: src/paramwindow.c:494
+#: src/paramwindow.c:496
 msgid "Target _FPS (plugin may override this)"
 msgstr "Cieľová _FPS (nemá vplyv na rozšírenie)"
 
-#: src/paramwindow.c:533
+#: src/paramwindow.c:535
 #, c-format
 msgid "%s : size"
 msgstr "%s : veľkosť"
 
-#: src/paramwindow.c:537
+#: src/paramwindow.c:539
 msgid "New size (pixels)"
 msgstr "Nová veľkosť (pixely)"
 
-#: src/paramwindow.c:549 src/plugins.c:797
+#: src/paramwindow.c:551 src/plugins.c:797
 msgid "_Width"
 msgstr "_Šírka"
 
-#: src/paramwindow.c:575 src/plugins.c:812
+#: src/paramwindow.c:577 src/plugins.c:812
 msgid "_Height"
 msgstr "_Výška"
 
-#: src/paramwindow.c:646
+#: src/paramwindow.c:648
 msgid "Generate to _Clipboard"
 msgstr "Generovať do _schránky"
 
-#: src/paramwindow.c:651
+#: src/paramwindow.c:653
 msgid "Generate frames to the clipboard"
 msgstr "Generovať snímky do schránky"
 
-#: src/paramwindow.c:667
+#: src/paramwindow.c:669
 msgid "Generate to _New Clip"
 msgstr "Generovať do _nového klipu"
 
-#: src/paramwindow.c:672
+#: src/paramwindow.c:674
 msgid "Generate frames to a new clip"
 msgstr "Generovať snímky do nového klipu"
 
-#: src/paramwindow.c:787
+#: src/paramwindow.c:789
 #, c-format
 msgid ""
 "\n"
@@ -5211,7 +5207,7 @@ msgstr ""
 msgid "Set as default"
 msgstr "Nastaviť ako štandardné"
 
-#: src/paramwindow.c:886 src/rte_window.c:1160 src/omc-learn.c:1359
+#: src/paramwindow.c:886 src/rte_window.c:1167 src/omc-learn.c:1359
 msgid "Close _window"
 msgstr "Zavrieť okno"
 
@@ -7167,21 +7163,21 @@ msgstr "Zmeny nastavenia jack se prejavia po reštarte LiVES."
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "Synchronizácia s externou frekvenciou %.8f snímkov za sekundu.\n"
 
-#: src/osc.c:2293
+#: src/osc.c:2302
 msgid "Cannot initialize OSC receiver\n"
 msgstr "Nemožno inicializovať OSC prijímač\n"
 
-#: src/osc.c:2317
+#: src/osc.c:2326
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "UPOZORNENIE: Nedá sa spustiť OSC server na UDP porte %d\n"
 
-#: src/osc.c:2322
+#: src/osc.c:2331
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "Spustený OSC server na UDP porte %d\n"
 
-#: src/osc.c:2436
+#: src/osc.c:2445
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Nedá sa spustiť OSC/UDP server na porte %d \n"
@@ -7500,7 +7496,7 @@ msgstr ""
 msgid "resampling error..."
 msgstr "chyba prevzorkovania..."
 
-#: src/rte_window.c:58 src/rte_window.c:565
+#: src/rte_window.c:58 src/rte_window.c:567
 #, c-format
 msgid "Type: %s"
 msgstr "Typ: %s"
@@ -7633,12 +7629,12 @@ msgstr ""
 msgid "Loading generator default sizes from %s..."
 msgstr "Nahrávánie predvolených rozmerov generátora z %s..."
 
-#: src/rte_window.c:354
+#: src/rte_window.c:356
 #, c-format
 msgid "Loading default keymap from %s..."
 msgstr "Nahrávánie predvoleného rozloženia kláves z %s..."
 
-#: src/rte_window.c:359
+#: src/rte_window.c:361
 #, c-format
 msgid ""
 "\n"
@@ -7653,22 +7649,22 @@ msgstr ""
 "%s\n"
 "Kód chyby %d\n"
 
-#: src/rte_window.c:397
+#: src/rte_window.c:399
 #, c-format
 msgid "Invalid line %d in %s\n"
 msgstr "Neplatná linka %d v %s\n"
 
-#: src/rte_window.c:435
+#: src/rte_window.c:437
 #, c-format
 msgid "Invalid key %d in %s\n"
 msgstr "Neplatný kľúč %d v %s\n"
 
-#: src/rte_window.c:443
+#: src/rte_window.c:445
 #, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr "Neplatný efekt %s v %s\n"
 
-#: src/rte_window.c:459
+#: src/rte_window.c:461
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key (%"
@@ -7677,16 +7673,16 @@ msgstr ""
 "Táto verzia LiVES neumožňuje kombináciu generátorov/ne-generátorov na "
 "rovnakej klávese (%d) !\n"
 
-#: src/rte_window.c:465
+#: src/rte_window.c:467
 #, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr "Pre klávesu %d je priradených priveľa efektov.\n"
 
-#: src/rte_window.c:483
+#: src/rte_window.c:485
 msgid "update required.\n"
 msgstr "vyžaduje aktualizáciu.\n"
 
-#: src/rte_window.c:491
+#: src/rte_window.c:493
 msgid ""
 "\n"
 "\n"
@@ -7698,40 +7694,40 @@ msgstr ""
 "Niektoré efekty sa nedajú nájsť.\n"
 "\n"
 
-#: src/rte_window.c:538
+#: src/rte_window.c:540
 msgid "No Description"
 msgstr "Bez popisu"
 
-#: src/rte_window.c:543
+#: src/rte_window.c:545
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr "LiVES: Informácie pre %s"
 
-#: src/rte_window.c:557
+#: src/rte_window.c:559
 #, c-format
 msgid "Effect name: %s"
 msgstr "Názov efektu: %s"
 
-#: src/rte_window.c:573
+#: src/rte_window.c:575
 #, c-format
 msgid "Plugin name: %s"
 msgstr "Názov rozšírenia: %s"
 
-#: src/rte_window.c:581
+#: src/rte_window.c:583
 #, c-format
 msgid "Author: %s"
 msgstr "Autor: %s"
 
-#: src/rte_window.c:589
+#: src/rte_window.c:591
 #, c-format
 msgid "Version: %d"
 msgstr "Verzia: %d"
 
-#: src/rte_window.c:601
+#: src/rte_window.c:603
 msgid "Description: "
 msgstr "Popis: "
 
-#: src/rte_window.c:777
+#: src/rte_window.c:784
 msgid ""
 "\n"
 "\n"
@@ -7745,61 +7741,61 @@ msgstr ""
 "rovnakej klávese.\n"
 "\n"
 
-#: src/rte_window.c:823
+#: src/rte_window.c:830
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVES nemohol nájsť efekt %s.\n"
 
-#: src/rte_window.c:909
+#: src/rte_window.c:916
 msgid "LiVES: Real time effect mapping"
 msgstr "LiVES: Zobrazenie efektu v reálnom čase"
 
-#: src/rte_window.c:918 src/rte_window.c:976
+#: src/rte_window.c:925 src/rte_window.c:983
 msgid "Key grab"
 msgstr "Zachytenie kláves"
 
-#: src/rte_window.c:933
+#: src/rte_window.c:940
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:942
+#: src/rte_window.c:949
 msgid "Key active"
 msgstr "Aktívne klávesy"
 
-#: src/rte_window.c:981
+#: src/rte_window.c:988
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1000
+#: src/rte_window.c:1007
 msgid "_Clear all effects"
 msgstr "_Vyčistiť všetky efekty"
 
-#: src/rte_window.c:1019
+#: src/rte_window.c:1026
 msgid "Mode active"
 msgstr "Aktívny mód"
 
-#: src/rte_window.c:1045 src/multitrack.c:7171
+#: src/rte_window.c:1052 src/multitrack.c:7171
 msgid "Info"
 msgstr "Informácia"
 
-#: src/rte_window.c:1046
+#: src/rte_window.c:1053
 msgid "Set Parameters"
 msgstr "Nastaviť parametre"
 
-#: src/rte_window.c:1047
+#: src/rte_window.c:1054
 msgid "Clear"
 msgstr "Zmazať"
 
-#: src/rte_window.c:1056
+#: src/rte_window.c:1063
 msgid "Effect name:"
 msgstr "Názov efektu:"
 
-#: src/rte_window.c:1150
+#: src/rte_window.c:1157
 msgid "_Save as default keymap"
 msgstr "_Uložiť ako predvolenú mapu kláves"
 
-#: src/rte_window.c:1155
+#: src/rte_window.c:1162
 msgid "_Load default keymap"
 msgstr "_Nahrať predvolenú mapu kláves"
 
@@ -10862,6 +10858,9 @@ msgstr "$plugin_name zlyhal:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$chyba"
+
+#~ msgid "Warning - no more effect slots left !\n"
+#~ msgstr "Varovanie - na sloty nie je možné použiť viac efektov !\n"
 
 #~ msgid ""
 #~ "\n"

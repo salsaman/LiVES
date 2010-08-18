@@ -307,18 +307,12 @@ static gint fg_generator_clip;
 
 static weed_plant_t *weed_filters[MAX_WEED_FILTERS]; // array of filter_classes
 
-static weed_plant_t *weed_instances[MAX_WEED_INSTANCES]; // array of filter_instances
-static weed_plant_t *weed_instances_copy[MAX_WEED_INSTANCES]; // array of filter_instances - copy for preview during rendering
-
-
 // each 'hotkey' controls n instances, selectable as 'modes' or banks
-static int key_to_instance[FX_KEYS_MAX][MAX_MODES_PER_KEY];
-static int key_to_instance_copy[FX_KEYS_MAX][1]; // copy for preview during rendering
+static weed_plant_t *key_to_instance[FX_KEYS_MAX][MAX_MODES_PER_KEY];
+static weed_plant_t *key_to_instance_copy[FX_KEYS_MAX][1]; // copy for preview during rendering
 
 static int key_to_fx[FX_KEYS_MAX][MAX_MODES_PER_KEY];
 static int key_modes[FX_KEYS_MAX];
-
-static int next_free_instance=0; // we use an arena of instances
 
 // count of how many filters we have loaded
 static gint num_weed_filters;
@@ -344,24 +338,15 @@ void backup_weed_instances(void) {
   // thus we backup our rendering instances, apply the current frame instances, and then restore the rendering instances
   register int i;
 
-  for (i=0;i<MAX_WEED_INSTANCES;i++) {
-    weed_instances_copy[i]=weed_instances[i];
-    weed_instances[i]=NULL;
-  }
-
   for (i=FX_KEYS_MAX_VIRTUAL;i<FX_KEYS_MAX;i++) {
     key_to_instance_copy[i][0]=key_to_instance[i][0];
-    key_to_instance[i][0]=-1;
+    key_to_instance[i][0]=NULL;
   }
 }
 
 
 void restore_weed_instances(void) {
   register int i;
-
-  for (i=0;i<MAX_WEED_INSTANCES;i++) {
-    weed_instances[i]=weed_instances_copy[i];
-  }
 
   for (i=FX_KEYS_MAX_VIRTUAL;i<FX_KEYS_MAX;i++) {
     key_to_instance[i][0]=key_to_instance_copy[i][0];
@@ -619,9 +604,9 @@ static void create_filter_map (void) {
   // when the instance is deinited
 
   int count=0,i;
-  int idx;
+  weed_plant_t *inst;
 
-  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) if (mainw->rte&(GU641<<i)&&(idx=key_to_instance[i][key_modes[i]])!=-1&&enabled_in_channels (weed_instances[idx],FALSE)>0) filter_map[count++]=init_events[i];
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) if (mainw->rte&(GU641<<i)&&(inst=key_to_instance[i][key_modes[i]])!=NULL&&enabled_in_channels (inst,FALSE)>0) filter_map[count++]=init_events[i];
   filter_map[count]=NULL; // marks the end of the effect map
 }
 
@@ -656,15 +641,15 @@ weed_plant_t *add_filter_init_events (weed_plant_t *event_list, weed_timecode_t 
   // here we are about to start playback, and we add init events for every effect which is switched on
   // we add the init events with a timecode of 0
   int i;
-  gint idx;
+  weed_plant_t *inst;
   int fx_idx,ntracks;
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
-    if ((idx=key_to_instance[i][key_modes[i]])!=-1&&enabled_in_channels (weed_instances[idx],FALSE)>0) {
+    if ((inst=key_to_instance[i][key_modes[i]])!=NULL&&enabled_in_channels (inst,FALSE)>0) {
       event_list=append_filter_init_event (event_list,tc,(fx_idx=key_to_fx[i][key_modes[i]]),-1);
       init_events[i]=(void *)get_last_event(event_list);
       ntracks=weed_leaf_num_elements(init_events[i],"in_tracks");
-      pchains[i]=filter_init_add_pchanges(event_list,weed_instances[key_to_instance[i][key_modes[i]]],init_events[i],ntracks);
+      pchains[i]=filter_init_add_pchanges(event_list,inst,init_events[i],ntracks);
     }
   }
   // add an empty filter_map event (in case more frames are added)
@@ -939,12 +924,11 @@ gint weed_reinit_effect (weed_plant_t *inst) {
       if (fx_dialog[1]!=NULL) {
 	// redraw GUI if necessary
 	rfx=g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
-	if (!rfx->is_template) {
+	if (rfx->source==inst) {
 	  gint keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
 	  gint modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
-	  close_pwindow(keyw,modew,TRUE);
+	  redraw_pwindow(keyw,modew);
 	}
-	else close_pwindow(0,0,TRUE);
       }
     }
     return FILTER_INFO_REINITED;
@@ -961,9 +945,7 @@ void weed_reinit_all(void) {
     if (rte_key_valid(i+1,TRUE)) {
       if (mainw->rte&(GU641<<i)) {
 	mainw->osc_block=TRUE;
-	if (key_to_instance[i][key_modes[i]]==-1) continue;
-	instance=weed_instances[key_to_instance[i][key_modes[i]]];
-	if (instance==NULL) continue;
+	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	if (enabled_in_channels(instance,FALSE)==0) continue;
 	weed_reinit_effect(instance);
       }
@@ -1834,9 +1816,8 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     int key=atoi(keystr);
     weed_free(keystr);
     if (rte_key_valid (key+1,FALSE)) {
-      if (key_to_instance[key][key_modes[key]]==-1) return FILTER_ERROR_INVALID_INSTANCE;
-      instance=weed_instances[key_to_instance[key][key_modes[key]]];
-      if (instance==NULL) return FILTER_ERROR_INVALID_INSTANCE;
+      if ((instance=key_to_instance[key][key_modes[key]])==NULL)
+	return FILTER_ERROR_INVALID_INSTANCE;
       if (weed_plant_has_leaf(init_event,"in_parameters")) {
 	ev_pchains=weed_get_voidptr_array(init_event,"in_parameters",&error);
 	if (ev_pchains[0]!=NULL) {
@@ -1943,8 +1924,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 	  set_param_gui_readwrite(instance);
 	  update_host_info(instance);
 	  if ((*init_func)(instance)!=WEED_NO_ERROR) {
-	    weed_instances[key_to_instance[key][key_modes[key]]]=NULL;
-	    key_to_instance[key][key_modes[key]]=-1;
+	    key_to_instance[key][key_modes[key]]=NULL;
 	    return FILTER_ERROR_COULD_NOT_REINIT;
 	  }
 	  set_param_gui_readonly(instance);
@@ -2070,9 +2050,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	key=atoi(keystr);
 	weed_free(keystr);
 	if (rte_key_valid (key+1,FALSE)) {
-	  if (key_to_instance[key][key_modes[key]]==-1) continue;
-	  instance=weed_instances[key_to_instance[key][key_modes[key]]];
-	  if (instance==NULL) continue;
+	  if ((instance=key_to_instance[key][key_modes[key]])==NULL) continue;
 	  if (pchains!=NULL&&pchains[key]!=NULL) {
 	    interpolate_params(instance,pchains[key],tc); // interpolate parameters during playback
 	  }
@@ -2121,14 +2099,12 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
       if (rte_key_valid(i+1,TRUE)) {
 	if (mainw->rte&(GU641<<i)) {
 	  mainw->osc_block=TRUE;
-	  if (key_to_instance[i][key_modes[i]]==-1) continue;
-	  instance=weed_instances[key_to_instance[i][key_modes[i]]];
-	  if (instance==NULL) continue;
+	  if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	  if (mainw->pchains!=NULL&&mainw->pchains[key]!=NULL) {
 	    interpolate_params(instance,mainw->pchains[key],tc); // interpolate parameters during preview
 	  }
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
-	  if (filter_error==FILTER_INFO_REINITED) close_pwindow(i,key_modes[i],TRUE); // redraw our paramwindow
+	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
 #ifdef DEBUG_RTE
 	  if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
 #endif
@@ -2856,15 +2832,13 @@ void weed_load_all (void) {
   fg_gen_to_start=fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
   bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
 
-  // reset all instances to NULL
-  for (i=0;i<MAX_WEED_INSTANCES;i++) weed_instances[i]=NULL;
-
   for (i=0;i<FX_KEYS_MAX;i++) {
     key_modes[i]=0;  // current active mode of each key
     filter_map[i]=NULL; // maps effects in order of application for multitrack rendering
     for (j=0;j<MAX_MODES_PER_KEY;j++) {
       if (i<FX_KEYS_MAX_VIRTUAL) key_defaults[i][j]=NULL;
-      key_to_instance[i][j]=key_to_fx[i][j]=-1;
+      key_to_instance[i][j]=NULL;
+      key_to_fx[i][j]=-1;
     }
   }
   filter_map[FX_KEYS_MAX+1]=NULL;
@@ -3127,21 +3101,40 @@ void weed_unload_all(void) {
 }
 
 
-static void weed_channels_free (weed_plant_t *inst) {
+static void weed_in_channels_free (weed_plant_t *inst) {
   weed_plant_t **channels;
   int i,error;
   int num_channels;
 
+  if (!weed_plant_has_leaf(inst,"in_channels")) return;
+
   num_channels=weed_leaf_num_elements(inst,"in_channels");
   channels=weed_get_plantptr_array(inst,"in_channels",&error);
-  for (i=0;i<num_channels;i++) weed_plant_free(channels[i]);
+  for (i=0;i<num_channels;i++) 
+    if (channels[i]!=NULL) weed_plant_free(channels[i]);
   weed_free(channels);
+
+}
+
+static void weed_out_channels_free (weed_plant_t *inst) {
+  weed_plant_t **channels;
+  int i,error;
+  int num_channels;
+
+  if (!weed_plant_has_leaf(inst,"out_channels")) return;
 
   num_channels=weed_leaf_num_elements(inst,"out_channels");
   channels=weed_get_plantptr_array(inst,"out_channels",&error);
-  for (i=0;i<num_channels;i++) weed_plant_free(channels[i]);
+  for (i=0;i<num_channels;i++) 
+    if (channels[i]!=NULL) weed_plant_free(channels[i]);
   weed_free(channels);
 }
+
+static void weed_channels_free (weed_plant_t *inst) {
+  weed_in_channels_free(inst);
+  weed_out_channels_free(inst);
+}
+
 
 static void weed_gui_free (weed_plant_t *plant) {
   weed_plant_t *gui;
@@ -3154,35 +3147,65 @@ static void weed_gui_free (weed_plant_t *plant) {
 }
 
 
-static void weed_parameters_free (weed_plant_t *inst) {
+static void weed_in_parameters_free (weed_plant_t *inst) {
   weed_plant_t **parameters;
   int i,error;
   int num_parameters;
 
+  if (!weed_plant_has_leaf(inst,"in_parameters")) return;
+
   num_parameters=weed_leaf_num_elements(inst,"in_parameters");
   parameters=weed_get_plantptr_array(inst,"in_parameters",&error);
   for (i=0;i<num_parameters;i++) {
-    if (parameters[i]==mainw->rte_textparm) mainw->rte_textparm=NULL;
-    weed_gui_free(parameters[i]);
-    weed_plant_free(parameters[i]);
-  }
-  weed_free(parameters);
-
-  num_parameters=weed_leaf_num_elements(inst,"out_parameters");
-  parameters=weed_get_plantptr_array(inst,"out_parameters",&error);
-  for (i=0;i<num_parameters;i++) {
-    weed_gui_free(parameters[i]);
-    weed_plant_free(parameters[i]);
+    if (parameters[i]!=NULL) {
+      if (parameters[i]==mainw->rte_textparm) mainw->rte_textparm=NULL;
+      weed_gui_free(parameters[i]);
+      weed_plant_free(parameters[i]);
+    }
   }
   weed_free(parameters);
 }
 
+static void weed_out_parameters_free (weed_plant_t *inst) {
+  weed_plant_t **parameters;
+  int i,error;
+  int num_parameters;
 
+  if (!weed_plant_has_leaf(inst,"out_parameters")) return;
 
-void weed_free_instance (weed_plant_t *inst) {
+  num_parameters=weed_leaf_num_elements(inst,"out_parameters");
+  parameters=weed_get_plantptr_array(inst,"out_parameters",&error);
+  for (i=0;i<num_parameters;i++) {
+    if (parameters[i]!=NULL) {
+      weed_gui_free(parameters[i]);
+      weed_plant_free(parameters[i]);
+    }
+  }
+  weed_free(parameters);
+}
+
+static void weed_parameters_free (weed_plant_t *inst) {
+  weed_in_parameters_free(inst);
+  weed_out_parameters_free(inst);
+}
+
+static void weed_free_instance (weed_plant_t *inst) {
   weed_channels_free(inst);
   weed_parameters_free(inst);
   weed_plant_free(inst);
+}
+
+void weed_instance_unref(weed_plant_t *inst) {
+  int error;
+  int nrefs=weed_get_int_value(inst,"refs",&error)-1;
+  if (nrefs==0) weed_free_instance(inst);
+  else weed_set_int_value(inst,"refs",nrefs);
+}
+
+void weed_instance_ref(weed_plant_t *inst) {
+  int error;
+  int nrefs=weed_get_int_value(inst,"refs",&error)+1;
+  weed_set_int_value(inst,"refs",nrefs);
 }
 
 
@@ -3213,25 +3236,19 @@ void weed_generator_end (weed_plant_t *inst) {
   if (rte_window!=NULL) {
     // update real time effects window if we are showing it
     if (!is_bg) {
-      rtew_set_param_button (fg_generator_key,fg_generator_mode,FALSE);
       rtew_set_keych(fg_generator_key,FALSE);
     }
     else {
-      rtew_set_param_button (bg_generator_key,bg_generator_mode,FALSE);
       rtew_set_keych(bg_generator_key,FALSE);
     }
   }
 
-  if (!is_bg) close_pwindow(fg_generator_key,fg_generator_mode,FALSE);
-  else close_pwindow(bg_generator_key,bg_generator_mode,FALSE);
-
   filter=weed_get_plantptr_value(inst,"filter_class",&error);
   weed_call_deinit_func(inst);
-  weed_free_instance(inst);
+  weed_instance_unref(inst);
 
   if (is_bg) {
-    weed_instances[key_to_instance[bg_generator_key][bg_generator_mode]]=NULL;
-    key_to_instance[bg_generator_key][bg_generator_mode]=-1;
+    key_to_instance[bg_generator_key][bg_generator_mode]=NULL;
     if (mainw->rte&(GU641<<bg_generator_key)) mainw->rte^=(GU641<<bg_generator_key);
     bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
     pre_src_file=mainw->pre_src_file;
@@ -3239,8 +3256,7 @@ void weed_generator_end (weed_plant_t *inst) {
     mainw->current_file=mainw->blend_file;
   }
   else {
-    weed_instances[key_to_instance[fg_generator_key][fg_generator_mode]]=NULL;
-    key_to_instance[fg_generator_key][fg_generator_mode]=-1;
+    key_to_instance[fg_generator_key][fg_generator_mode]=NULL;
     if (mainw->rte&(GU641<<fg_generator_key)) mainw->rte^=(GU641<<fg_generator_key);
     fg_gen_to_start=fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
     if (mainw->blend_file==mainw->current_file) mainw->blend_file=-1;
@@ -3472,15 +3488,10 @@ static weed_plant_t *weed_create_instance (weed_plant_t *filter, weed_plant_t **
   if (inp!=NULL) weed_set_plantptr_array(inst,"in_parameters",array_count(inp,TRUE),inp);
   if (outp!=NULL) weed_set_plantptr_array(inst,"out_parameters",array_count(outp,TRUE),outp);
 
+  weed_set_int_value(inst,"refs",1);
+
   weed_add_plant_flags(inst,WEED_LEAF_READONLY_PLUGIN);
   return inst;
-}
-
-
-static inline int get_next_free_instance(void) {
-  int i;
-  for (i=next_free_instance+1;i!=next_free_instance&&!(next_free_instance==-1&&i==MAX_WEED_INSTANCES);i++) if (weed_instances[(i=(i==MAX_WEED_INSTANCES?0:i))]==NULL) return i;
-  return -1;
 }
 
 
@@ -3538,11 +3549,6 @@ gboolean weed_init_effect(int hotkey) {
     return FALSE;
   }
 
-  if (next_free_instance==-1) {
-    d_print(_ ("Warning - no more effect slots left !\n"));
-    return FALSE;
-  }
-
   inc_count=enabled_in_channels(weed_filters[key_to_fx[hotkey][key_modes[hotkey]]],FALSE);
 
   // TODO - block template channel changes
@@ -3596,14 +3602,22 @@ gboolean weed_init_effect(int hotkey) {
 
   // TODO - unblock template channel changes
 
-  new_instance=weed_instances[next_free_instance]=weed_instance_from_filter(filter);
-  key_to_instance[hotkey][key_modes[hotkey]]=next_free_instance;
-
-  // if it is a key effect, set key defaults
-
-  if (hotkey<FX_KEYS_MAX_VIRTUAL&&key_defaults[hotkey][key_modes[hotkey]]!=NULL) {
-    apply_key_defaults(new_instance,key_defaults[hotkey][key_modes[hotkey]]);
+  // if the param window is already open, use instance from there
+  if (fx_dialog[1]!=NULL&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"key"))==hotkey&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"mode"))==key_modes[hotkey]) {
+    lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+    new_instance=rfx->source;
+    weed_instance_ref(new_instance);
   }
+  else {
+    new_instance=weed_instance_from_filter(filter);
+    // if it is a key effect, set key defaults
+
+    if (hotkey<FX_KEYS_MAX_VIRTUAL&&key_defaults[hotkey][key_modes[hotkey]]!=NULL) {
+      apply_key_defaults(new_instance,key_defaults[hotkey][key_modes[hotkey]]);
+    }
+  }
+
+  key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
 
   update_host_info(new_instance);
 
@@ -3619,9 +3633,9 @@ gboolean weed_init_effect(int hotkey) {
 	d_print ((tmp=g_strdup_printf (_ ("Failed to start instance %s, error code %d\n"),filter_name,error)));
 	g_free(tmp);
 	weed_free(filter_name);
-	weed_free_instance(new_instance);
-	weed_instances[key_to_instance[hotkey][key_modes[hotkey]]]=NULL;
-	key_to_instance[hotkey][key_modes[hotkey]]=-1;
+	weed_call_deinit_func(new_instance);
+	weed_instance_unref(new_instance);
+	key_to_instance[hotkey][key_modes[hotkey]]=NULL;
 	if (is_trans) mainw->num_tr_applied--;
 	return FALSE;
       }
@@ -3679,9 +3693,6 @@ gboolean weed_init_effect(int hotkey) {
     mainw->rte_keys=rte_keys;
     mainw->blend_factor=weed_get_blend_factor(rte_keys);
   }
-  if (rte_window!=NULL&&hotkey<prefs->rte_keys_virtual) rtew_set_param_button (hotkey,key_modes[hotkey],TRUE);
-
-  next_free_instance=get_next_free_instance();
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
     // place this synchronous with the preceding frame
@@ -3722,7 +3733,6 @@ void weed_deinit_effect(int hotkey) {
   gboolean is_modeswitch=FALSE;
   gboolean was_transition=FALSE;
   gint num_in_chans;
-  gint idx;
 
   if (hotkey<0) {
     is_modeswitch=TRUE;
@@ -3731,12 +3741,9 @@ void weed_deinit_effect(int hotkey) {
 
   if (hotkey>FX_KEYS_MAX) return;
 
-  if ((idx=key_to_instance[hotkey][key_modes[hotkey]])==-1) return;
+  if ((instance=key_to_instance[hotkey][key_modes[hotkey]])==NULL) return;
 
-  instance=weed_instances[idx];
-  if (instance==NULL) return;
-
-  num_in_chans=enabled_in_channels(weed_instances[idx],FALSE);
+  num_in_chans=enabled_in_channels(instance,FALSE);
 
   if (num_in_chans==0) {
     // is generator
@@ -3749,8 +3756,6 @@ void weed_deinit_effect(int hotkey) {
     return;
   }
   else {
-    if (rte_window!=NULL&&hotkey<prefs->rte_keys_virtual) rtew_set_param_button (hotkey,key_modes[hotkey],FALSE);
-    close_pwindow(hotkey,key_modes[hotkey],FALSE);
     weed_call_deinit_func(instance);
   }
 
@@ -3759,10 +3764,8 @@ void weed_deinit_effect(int hotkey) {
     mainw->num_tr_applied--;
   }
 
-  weed_free_instance(instance);
-
-  weed_instances[idx]=NULL;
-  key_to_instance[hotkey][key_modes[hotkey]]=-1;
+  weed_instance_unref(instance);
+  key_to_instance[hotkey][key_modes[hotkey]]=NULL;
 
   if (was_transition&&!is_modeswitch) {
     if (mainw->num_tr_applied<1) {
@@ -3791,7 +3794,7 @@ void deinit_render_effects (void) {
   register int i;
 
   for (i=FX_KEYS_MAX_VIRTUAL;i<FX_KEYS_MAX;i++) {
-    if (key_to_instance[i][0]!=-1) {
+    if (key_to_instance[i][0]!=NULL) {
       weed_deinit_effect (i);
       if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering) g_free(pchains[i]);
     }
@@ -3803,7 +3806,7 @@ void weed_deinit_all(void) {
   // deinit all except generators
   // this is called on ctrl-0 or on shutdown
   int i;
-  gint idx;
+  weed_plant_t *instance;
 
   mainw->osc_block=TRUE;
   if (rte_window!=NULL) {
@@ -3818,8 +3821,8 @@ void weed_deinit_all(void) {
       if (rte_window!=NULL) rtew_set_keych(i,FALSE);
     }
     if ((mainw->rte&(GU641<<i))) {
-      if ((idx=key_to_instance[i][key_modes[i]])!=-1&&weed_instances[idx]!=NULL) {
-	if (enabled_in_channels(weed_instances[idx],FALSE)>0) {
+      if ((instance=key_to_instance[i][key_modes[i]])!=NULL) {
+	if (enabled_in_channels(instance,FALSE)>0) {
 	  weed_deinit_effect(i);
 	}
       }
@@ -4115,7 +4118,7 @@ gboolean weed_playback_gen_start (void) {
 
   if (fg_gen_to_start!=-1) {
     if (enabled_in_channels(weed_filters[key_to_fx[fg_gen_to_start][key_modes[fg_gen_to_start]]],FALSE)==0) { // check is still gen
-      inst=weed_instances[key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]];
+      inst=key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]];
       if (inst!=NULL) {
 	filter=weed_get_plantptr_value(inst,"filter_class",&weed_error);
 	if (weed_plant_has_leaf(filter,"init_func")) {
@@ -4136,10 +4139,9 @@ gboolean weed_playback_gen_start (void) {
 	  g_free(tmp);
 	  weed_free(filter_name);
 	  weed_call_deinit_func(inst);
-	  weed_free_instance(inst);
+	  weed_instance_unref(inst);
 	}
-	weed_instances[key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]]=NULL;
-	key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]=-1;
+	key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]=NULL;
 	fg_gen_to_start=-1;
 	cfile->ext_src=NULL;
 	mainw->osc_block=FALSE;
@@ -4155,8 +4157,6 @@ gboolean weed_playback_gen_start (void) {
       }
       mainw->clip_switched=TRUE;
       cfile->ext_src=inst;
-      next_free_instance=get_next_free_instance();
-      if (rte_window!=NULL) rtew_set_param_button (fg_gen_to_start,key_modes[fg_gen_to_start],TRUE);
     }
     fg_gen_to_start=-1;
   }
@@ -4164,12 +4164,12 @@ gboolean weed_playback_gen_start (void) {
 
   if (bg_gen_to_start!=-1) {
     if (enabled_in_channels(weed_filters[key_to_fx[bg_gen_to_start][key_modes[bg_gen_to_start]]],FALSE)==0) { // check is still gen
-      if (key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]]==-1) {
+      if (key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]]==NULL) {
 	// restart bg generator
 	if (!weed_init_effect(bg_gen_to_start)) return TRUE;
 	was_started=TRUE;
       }
-      inst=weed_instances[key_to_instance[bgs][key_modes[bgs]]];
+      inst=key_to_instance[bgs][key_modes[bgs]];
       
       if (inst==NULL) {
 	// 2nd playback
@@ -4179,7 +4179,7 @@ gboolean weed_playback_gen_start (void) {
 	  error++;
 	}
 	mainw->playing_file=playing_file;
-	inst=weed_instances[key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]]];
+	inst=key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]];
       }
       else {
 	if (!was_started) {
@@ -4204,10 +4204,9 @@ gboolean weed_playback_gen_start (void) {
 	  g_free(tmp);
 	  weed_free(filter_name);
 	  weed_call_deinit_func(inst);
-	  weed_free_instance(inst);
+	  weed_instance_unref(inst);
 	}
-	weed_instances[key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]]]=NULL;
-	key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]]=-1;
+	key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]]=NULL;
 	bg_gen_to_start=-1;
 	mainw->blend_file=-1;
 	if (mainw->rte&(GU641<<ABS(bg_gen_to_start))) mainw->rte^=(GU641<<ABS(bg_gen_to_start));
@@ -4215,8 +4214,6 @@ gboolean weed_playback_gen_start (void) {
 	return FALSE;
       }
       mainw->files[mainw->blend_file]->ext_src=inst;
-      next_free_instance=get_next_free_instance();
-      if (rte_window!=NULL) rtew_set_param_button (bg_gen_to_start,key_modes[bg_gen_to_start],TRUE);
     }
     bg_gen_to_start=-1;
   }
@@ -4254,7 +4251,7 @@ gboolean is_hidden_param(weed_plant_t *plant, int i) {
 
   if (weed_plant_has_leaf(wtmpl,"flags")) flags=weed_get_int_value(wtmpl,"flags",&error);
   if (weed_plant_has_leaf(wtmpl,"gui")) gui=weed_get_plantptr_value(wtmpl,"gui",&error);
-  if (!(flags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)&&(gui==NULL||(!weed_plant_has_leaf(gui,"hidden")))) {
+  if (!(flags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)&&(gui==NULL||(!weed_plant_has_leaf(gui,"hidden")||weed_get_boolean_value(gui,"hidden",&error)==WEED_FALSE))) {
     if (gui!=NULL) {
       if (weed_plant_has_leaf(gui,"copy_value_to")) {
 	int copyto=weed_get_int_value(gui,"copy_value_to",&error);
@@ -4506,7 +4503,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
 void weed_set_blend_factor(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
   weed_plant_t *inst,*in_param,*in_param2=NULL,*paramtmpl,*paramtmpl2=NULL;
-  int idx=key_to_instance[hotkey][key_modes[hotkey]],error;
+  int error;
   int vali,mini,maxi;
   double vald,mind,maxd;
   GList *list=NULL;
@@ -4520,9 +4517,9 @@ void weed_set_blend_factor(int hotkey) {
   gint inc_count;
 
   if (hotkey<0) return;
-  idx=key_to_instance[hotkey][key_modes[hotkey]];
+  inst=key_to_instance[hotkey][key_modes[hotkey]];
 
-  if (idx==-1||(inst=weed_instances[idx])==NULL) return;
+  if (inst==NULL) return;
 
   pnum=get_nth_simple_param(inst,0);
 
@@ -4678,16 +4675,16 @@ gint weed_get_blend_factor(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
 
   weed_plant_t *inst,**in_params,*in_param,*paramtmpl;
-  int idx,error;
+  int error;
   int vali,mini,maxi;
   double vald,mind,maxd;
   int weed_hint;
   int i;
 
   if (hotkey<0) return 0;
-  idx=key_to_instance[hotkey][key_modes[hotkey]];
+  inst=key_to_instance[hotkey][key_modes[hotkey]];
 
-  if (idx==-1||(inst=weed_instances[idx])==NULL) return 0;
+  if (inst==NULL) return 0;
 
   i=get_nth_simple_param(inst,0);
 
@@ -4745,9 +4742,9 @@ gint weed_get_blend_factor(int hotkey) {
 ////////////////////////////////////////////////////////////////////////
 
 
-gchar *weed_instance_get_type(gint idx) {
+static LIVES_INLINE gchar *weed_instance_get_type(weed_plant_t *inst) {
   // return value should be free'd after use
-  return weed_category_to_text(weed_filter_categorise(weed_instances[idx],enabled_in_channels(weed_instances[idx],FALSE),enabled_out_channels(weed_instances[idx],FALSE)),FALSE);
+  return weed_category_to_text(weed_filter_categorise(inst,enabled_in_channels(inst,FALSE),enabled_out_channels(inst,FALSE)),FALSE);
 }
 
 
@@ -4756,8 +4753,8 @@ gchar *weed_instance_get_type(gint idx) {
 gchar *rte_keymode_get_type (gint key, gint mode) {
   // return value should be free'd after use
   gchar *type=g_strdup ("");
-  weed_plant_t *filter;
-  gint idx,inst_idx;
+  weed_plant_t *filter,*inst;
+  gint idx;
 
   key--;
   if (!rte_keymode_valid(key+1,mode,TRUE)) return g_strdup("");
@@ -4767,10 +4764,10 @@ gchar *rte_keymode_get_type (gint key, gint mode) {
 
   mainw->osc_block=TRUE;
 
-  if ((inst_idx=key_to_instance[key][mode])!=-1) {
+  if ((inst=key_to_instance[key][mode])!=NULL) {
     // return details for instance
     g_free(type);
-    type=weed_instance_get_type(inst_idx);
+    type=weed_instance_get_type(inst);
   }
   else type=weed_filter_get_type(idx);
 
@@ -4812,7 +4809,7 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
 
     mainw->osc_block=TRUE;
     if (mode==MAX_MODES_PER_KEY-1||key_to_fx[key][mode+1]==-1) {
-      if (key_to_instance[key][mode]!=-1) {
+      if (key_to_instance[key][mode]!=NULL) {
 	was_started=TRUE;
 	if (key_modes[key]==mode) modekey=-key-1;
 	else key_modes[key]=mode;
@@ -4832,7 +4829,8 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
       break; // quit the loop
     }
     else {
-      rte_switch_keymode(key+1,mode,(tmp=make_weed_hashname(key_to_fx[key+1][mode+1])));
+      rte_switch_keymode(key+1,mode,(tmp=make_weed_hashname
+				     (key_to_fx[key+1][mode+1])));
       g_free(tmp);
     }
   }
@@ -4893,11 +4891,10 @@ weed_plant_t *rte_keymode_get_instance(gint key, gint mode) {
   key--;
   if (!rte_keymode_valid(key+1,mode,FALSE)) return NULL;
   mainw->osc_block=TRUE;
-  if (key_to_instance[key][mode]==-1) {
+  if ((inst=key_to_instance[key][mode])==NULL) {
     mainw->osc_block=FALSE;
     return NULL;
   }
-  inst=weed_instances[key_to_instance[key][mode]];
   mainw->osc_block=FALSE;
   return inst;
 }
@@ -4983,16 +4980,17 @@ weed_plant_t *get_textparm() {
 
   weed_plant_t *inst,**in_params,*ptmpl,*ret;
 
-  int key=mainw->rte_keys,mode,error,i,idx,hint;
+  int key=mainw->rte_keys,mode,error,i,hint;
 
   if (key==-1) return NULL;
 
   mode=rte_key_getmode(key+1);
 
-  if ((idx=key_to_instance[key][mode])!=-1&&(inst=weed_instances[idx])!=NULL){
+  if ((inst=key_to_instance[key][mode])!=NULL){
     int nparms;
 
-    if (!weed_plant_has_leaf(inst,"in_parameters")||(nparms=weed_leaf_num_elements(inst,"in_parameters"))==0) return NULL;
+    if (!weed_plant_has_leaf(inst,"in_parameters")||
+	(nparms=weed_leaf_num_elements(inst,"in_parameters"))==0) return NULL;
 
     in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
     
@@ -5022,11 +5020,12 @@ weed_plant_t *get_textparm() {
 gboolean rte_key_setmode (gint key, gint newmode) {
   // newmode has two special values, -1 = cycle forwards, -2 = cycle backwards
 
+  weed_plant_t *inst;
   gint oldmode;
   gint blend_file;
   gshort whentostop=mainw->whentostop;
   gboolean was_started=FALSE;
-  gint idx,real_key;
+  gint real_key;
 
   if (key==0) {
     if ((key=mainw->rte_keys)==-1) return FALSE;
@@ -5069,9 +5068,9 @@ gboolean rte_key_setmode (gint key, gint newmode) {
 
   // TODO - block template channel changes
 
-  if ((idx=key_to_instance[key][oldmode])!=-1&&weed_instances[idx]!=NULL){
+  if ((inst=key_to_instance[key][oldmode])!=NULL) {
     was_started=TRUE;
-    if (enabled_in_channels(weed_instances[idx],FALSE)==2&&enabled_in_channels(weed_filters[key_to_fx[key][newmode]],FALSE)==2) {
+    if (enabled_in_channels(inst,FALSE)==2&&enabled_in_channels(weed_filters[key_to_fx[key][newmode]],FALSE)==2) {
       // transition --> transition, allow any bg generators to survive
       key=-key-1;
     }
@@ -5080,7 +5079,7 @@ gboolean rte_key_setmode (gint key, gint newmode) {
   if (oldmode!=newmode) {
     blend_file=mainw->blend_file;
 
-    if (was_started&&enabled_in_channels(weed_instances[idx],FALSE)>0) {
+    if (was_started&&enabled_in_channels(inst,FALSE)>0) {
       // not a generator
       weed_deinit_effect (key);
     }
@@ -5169,7 +5168,7 @@ gint rte_switch_keymode (gint key, gint mode, const gchar *hashname) {
 
   osc_block=mainw->osc_block;
   mainw->osc_block=TRUE;
-  if (key_to_instance[key][mode]!=-1) {
+  if (key_to_instance[key][mode]!=NULL) {
     key_modes[key]=mode;
     weed_deinit_effect(-key-1); // set is_modeswitch
     key_to_fx[key][mode]=id;

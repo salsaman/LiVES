@@ -629,7 +629,7 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   
   weed_plant_free(init_event);
   weed_call_deinit_func(deint_instance);
-  weed_free_instance(deint_instance);
+  weed_instance_unref(deint_instance);
 
   g_free(layers);
 }

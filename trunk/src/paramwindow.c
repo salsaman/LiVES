@@ -138,6 +138,8 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
 
 void on_paramwindow_cancel_clicked2 (GtkButton *button, lives_rfx_t *rfx) {
+  // close from rte window
+
   on_paramwindow_cancel_clicked(button,rfx);
   fx_dialog[1]=NULL;
   if (mainw->invis!=NULL) {
@@ -808,8 +810,6 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   if (rfx->status==RFX_STATUS_WEED&&rfx->is_template) is_defaults=TRUE;
 
-  //if (is_realtime&&is_defaults) gtk_window_add_accel_group (GTK_WINDOW (fx_dialog[1]), mainw->accel_group);
-
   gtk_container_set_border_width (GTK_CONTAINER (fx_dialog[n]), 20);
   gtk_window_set_position (GTK_WINDOW (fx_dialog[n]), GTK_WIN_POS_CENTER);
 
@@ -950,8 +950,22 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
 }
   
+static void check_hidden_gui(lives_param_t *param) {
+  int error;
+  weed_plant_t *wtmpl,*gui;
 
+  if ((wtmpl=(weed_plant_t *)param->source)==NULL) return;
 
+  if (!weed_plant_has_leaf(wtmpl,"gui")) return;
+
+  gui=weed_get_plantptr_value(wtmpl,"gui",&error);
+
+  if (weed_plant_has_leaf(gui,"hidden")) {
+    int hidden=weed_get_boolean_value(gui,"hidden",&error);
+    if (hidden==WEED_TRUE) param->hidden|=HIDDEN_GUI;
+    else if (param->hidden&HIDDEN_GUI) param->hidden^=HIDDEN_GUI;
+  }
+}
 
 
 gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
@@ -1105,6 +1119,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     for (j=0;j<num_tok;j++) {
       if (!strncmp (array[j],"p",1)&&(pnum=atoi ((gchar *)(array[j]+1)))>=0&&pnum<rfx->num_params&&!used[pnum]) {
 	param=&rfx->params[pnum];
+	check_hidden_gui(param);
 	if (param->hidden||param->type==LIVES_PARAM_UNDISPLAYABLE) continue;
 	// parameter, eg. p1
 	if (!has_box) {
@@ -1162,6 +1177,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   // add any unused parameters
   for (i=0;i<rfx->num_params;i++) {
     rfx->params[i].changed=FALSE;
+    check_hidden_gui(&rfx->params[i]);
     if (rfx->params[i].hidden||rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
     if (!used[i]) {
       if (!chk_params) add_param_to_box (GTK_BOX (param_vbox),rfx,i,TRUE);

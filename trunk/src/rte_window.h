@@ -11,8 +11,7 @@ void rtew_set_keych (gint key, gboolean on);
 void rtew_set_keygr (gint key);
 void rtew_set_mode_radio (gint key, gint mode);
 void rtew_set_grab_button (gboolean on);
-void rtew_set_param_button (gint key, gint mode, gboolean on);
-void close_pwindow (gint key, gint mode, gboolean is_reinit);
+void redraw_pwindow (gint key, gint mode);
 void restore_pwindow (lives_rfx_t *rfx);
 void update_pwindow (gint key, gint i, GList *list);
 

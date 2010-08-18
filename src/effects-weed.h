@@ -55,8 +55,9 @@ void weed_call_deinit_func(weed_plant_t *instance);
 
 gboolean weed_init_effect(int hotkey); // hotkey starts at 1
 void weed_deinit_effect(int hotkey); // hotkey starts at 1
-void weed_free_instance (weed_plant_t *inst);
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
+void weed_instance_ref(weed_plant_t *inst);
+void weed_instance_unref(weed_plant_t *inst);
 gint weed_reinit_effect (weed_plant_t *inst);
 void weed_reinit_all(void);
 

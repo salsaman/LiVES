@@ -1516,7 +1516,16 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
     // TODO
     return;
   }
-  //update_visual_params(rfx,FALSE);
+
+  if (fx_dialog[1]!=NULL) {
+    lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+    if (!rfx->is_template) {
+      gint keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
+      gint modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+      if (keyw==effect_key&&modew==rte_key_getmode(effect_key))
+	update_visual_params(rfx,FALSE);
+    }
+  }
   weed_free(in_params);
 }
 

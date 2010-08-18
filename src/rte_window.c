@@ -70,7 +70,6 @@ void type_label_set_text (gint key, gint mode) {
     gtk_widget_set_sensitive(type_labels[idx],FALSE);
   }
   g_free(type);
-  gtk_widget_set_sensitive(param_buttons[idx],(rte_keymode_get_instance(key+1,mode)!=NULL));
 }
 
 
@@ -712,7 +711,12 @@ void on_params_clicked (GtkButton *button, gpointer user_data) {
   weed_plant_t *inst;
   lives_rfx_t *rfx;
 
-  if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) return;
+  if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
+    weed_plant_t *filter=rte_keymode_get_filter(key+1,mode);
+    if (filter==NULL) return;
+    inst=weed_instance_from_filter(filter);
+  }
+  else weed_instance_ref(inst);
 
   if (fx_dialog[1]!=NULL) {
     rfx=g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
@@ -1250,14 +1254,8 @@ void rtew_set_mode_radio (gint key, gint mode) {
 }
 
 
-void rtew_set_param_button (gint key, gint mode, gboolean on) {
-  int modes=rte_getmodespk();
-  gtk_widget_set_sensitive(param_buttons[key*modes+mode],on);
 
-}
-
-
-void close_pwindow (gint key, gint mode, gboolean is_reinit) {
+void redraw_pwindow (gint key, gint mode) {
   gint keyw=0,modew=0;
   GList *child_list;
   int i;
@@ -1270,26 +1268,20 @@ void close_pwindow (gint key, gint mode, gboolean is_reinit) {
       modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
     }
     if (rfx->is_template||(key==keyw&&mode==modew)) {
-      if (!is_reinit&&!rfx->is_template) {
-	// destroy window
-	gtk_widget_destroy(fx_dialog[1]);
-	on_paramwindow_cancel_clicked2(NULL,rfx);
-      }
-      else {
-	// or just rip out the contents
-	if (mainw->invis==NULL) mainw->invis=gtk_vbox_new(FALSE,0);
-	child_list=gtk_container_get_children(GTK_CONTAINER(GTK_DIALOG(fx_dialog[1])->vbox));
-	for (i=0;i<g_list_length(child_list);i++) {
-	  GtkWidget *widget=g_list_nth_data(child_list,i);
-	  if (widget!=GTK_DIALOG (fx_dialog[1])->action_area) {
-	    // we have to do this, because using gtk_widget_destroy() here can causes a crash [bug in gtk+ ???]
-	    gtk_widget_reparent (widget,mainw->invis);
-	  }
+      // rip out the contents
+      if (mainw->invis==NULL) mainw->invis=gtk_vbox_new(FALSE,0);
+      child_list=gtk_container_get_children(GTK_CONTAINER(GTK_DIALOG(fx_dialog[1])->vbox));
+      for (i=0;i<g_list_length(child_list);i++) {
+	GtkWidget *widget=g_list_nth_data(child_list,i);
+	if (widget!=GTK_DIALOG (fx_dialog[1])->action_area) {
+	  // we have to do this, because using gtk_widget_destroy() here 
+	  // can causes a crash [bug in gtk+ ???]
+	  gtk_widget_reparent (widget,mainw->invis);
 	}
-	if (child_list!=NULL) g_list_free(child_list);
-	on_paramwindow_cancel_clicked(NULL,NULL);
-	restore_pwindow(rfx);
       }
+      if (child_list!=NULL) g_list_free(child_list);
+      on_paramwindow_cancel_clicked(NULL,NULL);
+      restore_pwindow(rfx);
     }
   }
 }

@@ -2027,6 +2027,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
     cparam->max=0.;
     cparam->changed=FALSE;
     cparam->change_blocked=FALSE;
+    cparam->source=NULL;
 
 #ifdef DEBUG_RENDER_FX_P
     g_printerr("Got parameter %s\n",cparam->name);
@@ -2272,7 +2273,7 @@ void rfx_free(lives_rfx_t *rfx) {
       deinit_func=deinit_func_ptr_ptr[0];
       if (deinit_func!=NULL) (*deinit_func)(rfx->source);
     }
-    weed_free_instance(rfx->source);
+    weed_instance_unref(rfx->source);
   }
 }
 
@@ -2299,6 +2300,7 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
   dest->max=src->max;
   dest->step_size=src->step_size;
   dest->wrap=src->wrap;
+  dest->source=src->source;
   dest->list=NULL;
 
   switch (dest->type) {
@@ -2462,6 +2464,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
     rpar[i].wrap=FALSE;
     rpar[i].reinit=FALSE;
     rpar[i].change_blocked=FALSE;
+    rpar[i].source=wtmpl;
 
     if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS&&!(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) {
       rpar[i].hidden|=HIDDEN_MULTI;
@@ -2788,7 +2791,8 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   gchar *string;
   lives_rfx_t *rfx=g_malloc(sizeof(lives_rfx_t));
   rfx->is_template=FALSE;
-  if (weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_INSTANCE) filter=weed_get_plantptr_value(plant,"filter_class",&error);
+  if (weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_INSTANCE) 
+    filter=weed_get_plantptr_value(plant,"filter_class",&error);
   else {
     filter=plant;
     plant=weed_instance_from_filter(filter);

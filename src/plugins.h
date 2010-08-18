@@ -376,6 +376,8 @@ typedef struct {
 
   gboolean change_blocked;
 
+  void *source;
+
 } lives_param_t;
 
 

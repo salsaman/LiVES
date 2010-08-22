@@ -258,13 +258,6 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
           if(!rise)
             y_pos = y_text = height*top;
 
-          if(!in_channel) {
-            x_pos = y_pos = 0;
-            dwidth = width;
-            dheight = height;
-            b_alpha = 1.0;
-          }
-
           x_text = x_pos;
           y_text = y_pos;
           if (cent) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);

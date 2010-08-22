@@ -214,6 +214,12 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
       else nval=g_strdup_printf("%s%c",cval,(unsigned char)unicode); // append 1 char
       weed_free(cval);
       weed_set_string_value(mainw->rte_textparm,"value",nval);
+      if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	// if we are recording, add this change to our event_list
+	weed_plant_t *inst=weed_get_plantptr_value(mainw->rte_textparm,"host_instance",&error);
+	int param_number=weed_get_int_value(mainw->rte_textparm,"host_idx",&error);
+	rec_param_change(inst,param_number);
+      }
       g_free(nval);
       return TRUE;
     }

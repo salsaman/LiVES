@@ -5001,6 +5001,8 @@ weed_plant_t *get_textparm() {
 
       if (hint==WEED_HINT_TEXT) {
 	ret=in_params[i];
+	weed_set_int_value(ret,"host_idx",i);
+	weed_set_plantptr_value(ret,"host_instance",inst);
 	weed_free(in_params);
 	return ret;
       }

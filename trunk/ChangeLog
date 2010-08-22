@@ -5,6 +5,8 @@ Fix for ogg/theora decoding.
 Updates for lives_mkv_encoder.
 Fix regressions in some other encoders.
 Add new effect "puretext".
+Per key/mode effect defaults (in progress).
+Record paramater changes in text entry mode.
 Updated translation to Turkish.
 
 

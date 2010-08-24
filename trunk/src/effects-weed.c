@@ -904,11 +904,11 @@ void set_param_gui_readwrite (weed_plant_t *inst) {
 
 
 
-gint weed_reinit_effect (weed_plant_t *inst) {
+gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
   int error;
   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
 
-  weed_call_deinit_func(inst);
+  if (deinit_first) weed_call_deinit_func(inst);
 
   if (weed_plant_has_leaf(filter,"init_func")) {
     weed_init_f *init_func_ptr_ptr;
@@ -924,13 +924,14 @@ gint weed_reinit_effect (weed_plant_t *inst) {
       if (fx_dialog[1]!=NULL) {
 	// redraw GUI if necessary
 	rfx=g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
-	if (rfx->source==inst) {
+	if (rfx->source_type==LIVES_RFX_SOURCE_WEED&&rfx->source==inst) {
 	  gint keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
 	  gint modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
 	  redraw_pwindow(keyw,modew);
 	}
       }
     }
+    if (!deinit_first) weed_call_deinit_func(inst);
     return FILTER_INFO_REINITED;
   }
   return FILTER_NO_ERROR;
@@ -947,7 +948,7 @@ void weed_reinit_all(void) {
 	mainw->osc_block=TRUE;
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	if (enabled_in_channels(instance,FALSE)==0) continue;
-	weed_reinit_effect(instance);
+	weed_reinit_effect(instance,TRUE);
       }
     }
   }
@@ -1489,7 +1490,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     if ((rowstrides_changed&&(channel_flags&WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))||(((outwidth!=width)||(outheight!=height))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))) needs_reinit=TRUE;
   }
 
-  if (needs_reinit) if ((retval=weed_reinit_effect(inst))==FILTER_ERROR_COULD_NOT_REINIT) {
+  if (needs_reinit) if ((retval=weed_reinit_effect(inst,TRUE))==FILTER_ERROR_COULD_NOT_REINIT) {
     weed_free(in_tracks);
     weed_free(out_tracks);
     weed_free(in_channels);
@@ -3247,6 +3248,12 @@ void weed_generator_end (weed_plant_t *inst) {
   weed_call_deinit_func(inst);
   weed_instance_unref(inst);
 
+  // if the param window is already open, show any reinits now
+  if (fx_dialog[1]!=NULL) {
+    if (is_bg) redraw_pwindow(bg_generator_key,bg_generator_mode);
+    else redraw_pwindow(fg_generator_key,fg_generator_mode);
+  }
+
   if (is_bg) {
     key_to_instance[bg_generator_key][bg_generator_mode]=NULL;
     if (mainw->rte&(GU641<<bg_generator_key)) mainw->rte^=(GU641<<bg_generator_key);
@@ -3607,6 +3614,7 @@ gboolean weed_init_effect(int hotkey) {
     lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
     new_instance=rfx->source;
     weed_instance_ref(new_instance);
+    redraw_pwindow(hotkey,key_modes[hotkey]);
   }
   else {
     new_instance=weed_instance_from_filter(filter);
@@ -3765,6 +3773,12 @@ void weed_deinit_effect(int hotkey) {
   }
 
   weed_instance_unref(instance);
+
+  // if the param window is already open, show any reinits now
+  if (fx_dialog[1]!=NULL&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"key"))==hotkey&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"mode"))==key_modes[hotkey]) {
+    redraw_pwindow(hotkey,key_modes[hotkey]);
+  }
+
   key_to_instance[hotkey][key_modes[hotkey]]=NULL;
 
   if (was_transition&&!is_modeswitch) {

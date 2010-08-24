@@ -324,6 +324,15 @@ typedef enum {
 } lives_param_type_t;
 
 
+typedef enum {
+  LIVES_RFX_SOURCE_RFX=0,
+  LIVES_RFX_SOURCE_WEED
+} lives_rfx_source_t;
+
+
+
+
+
 typedef struct {
   // weed style part
   gchar *name;
@@ -378,6 +387,8 @@ typedef struct {
 
   void *source;
 
+  lives_rfx_source_t source_type;
+
 } lives_param_t;
 
 
@@ -420,6 +431,7 @@ typedef struct {
   GtkWidget *menuitem;  // the menu item which activates this effect
   gint num_params;
   lives_param_t *params;
+  lives_rfx_source_t source_type;
   void *source;  // points to the source (e.g. a weed_plant_t)
   void *extra;  // for future use */
   gchar delim[2];

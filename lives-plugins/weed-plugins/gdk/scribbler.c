@@ -79,26 +79,33 @@ static void plugin_free_buffer (guchar *pixels, gpointer data) {
 static char **fonts_available = NULL;
 static int num_fonts_available = 0;
 
-int scribbler_generator_init(weed_plant_t *inst) {
+static weed_plant_t *weed_parameter_get_gui(weed_plant_t *param) {
+  int error;
+  weed_plant_t *ptmpl=weed_get_plantptr_value(param,"template",&error);
+  return weed_parameter_template_get_gui(ptmpl);
+}
+
+
+int scribbler_init(weed_plant_t *inst) {
   int error;
 
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   weed_plant_t *pgui;
   int mode=weed_get_int_value(in_params[P_MODE],"value",&error);
 
-  pgui = weed_parameter_template_get_gui(in_params[P_BGALPHA]);
+  pgui = weed_parameter_get_gui(in_params[P_BGALPHA]);
   if (mode==0) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
   else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
 
-  pgui = weed_parameter_template_get_gui(in_params[P_BACKGROUND]);
+  pgui = weed_parameter_get_gui(in_params[P_BACKGROUND]);
   if (mode==0) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
   else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
 
-  pgui = weed_parameter_template_get_gui(in_params[P_FGALPHA]);
+  pgui = weed_parameter_get_gui(in_params[P_FGALPHA]);
   if (mode==2) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
   else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
 
-  pgui = weed_parameter_template_get_gui(in_params[P_FOREGROUND]);
+  pgui = weed_parameter_get_gui(in_params[P_FOREGROUND]);
   if (mode==2) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
   else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
 
@@ -393,13 +400,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     pgui=weed_parameter_template_get_gui(in_params[P_FGALPHA]);
     weed_set_int_value(pgui,"copy_value_to",P_BGALPHA);
 
-    filter_class=weed_filter_class_init("scribbler","Aleksej Penkov",1,0,NULL,&scribbler_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    filter_class=weed_filter_class_init("scribbler","Aleksej Penkov",1,0,&scribbler_init,&scribbler_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("scribbler_generator","Aleksej Penkov",1,0,&scribbler_generator_init,&scribbler_process,NULL,NULL,weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
+    filter_class=weed_filter_class_init("scribbler_generator","Aleksej Penkov",1,0,&scribbler_init,&scribbler_process,NULL,NULL,weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
     
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_set_double_value(filter_class,"target_fps",25.); // set reasonable default fps
 
     weed_set_int_value(plugin_info,"version",package_version);
 

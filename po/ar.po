@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-08-17 01:50+0100\n"
+"POT-Creation-Date: 2010-08-24 02:43+0100\n"
 "PO-Revision-Date: 2010-03-19 07:52+0000\n"
 "Last-Translator: عمرو رجائى(Amr) <amr.ragaee@gmail.com>\n"
 "Language-Team: Arabic <ar@li.org>\n"
@@ -4566,39 +4566,39 @@ msgstr ""
 msgid "unknown"
 msgstr "مجهول"
 
-#: src/effects-weed.c:2712
+#: src/effects-weed.c:2713
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:2793
+#: src/effects-weed.c:2794
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:2934
+#: src/effects-weed.c:2935
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:3633
+#: src/effects-weed.c:3641
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:3667
+#: src/effects-weed.c:3675
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4139
+#: src/effects-weed.c:4152
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4205
+#: src/effects-weed.c:4217
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
@@ -4700,47 +4700,47 @@ msgstr ""
 msgid "Set as default"
 msgstr "تعينه كافتراضي"
 
-#: src/paramwindow.c:886 src/rte_window.c:1167 src/omc-learn.c:1359
+#: src/paramwindow.c:886 src/rte_window.c:1166 src/omc-learn.c:1359
 msgid "Close _window"
 msgstr "غغلق النافذة"
 
-#: src/paramwindow.c:1177
+#: src/paramwindow.c:1201
 msgid "No parameters"
 msgstr ""
 
-#: src/paramwindow.c:1261
+#: src/paramwindow.c:1285
 msgid "Invalid parameter"
 msgstr ""
 
-#: src/paramwindow.c:1505
+#: src/paramwindow.c:1529
 msgid "LiVES: - Select Colour"
 msgstr ""
 
-#: src/paramwindow.c:1509
+#: src/paramwindow.c:1533
 msgid "Click to set the colour"
 msgstr ""
 
-#: src/paramwindow.c:1524
+#: src/paramwindow.c:1548
 msgid "Red"
 msgstr "أحمر"
 
-#: src/paramwindow.c:1532
+#: src/paramwindow.c:1556
 msgid "The red value (0 - 255)"
 msgstr ""
 
-#: src/paramwindow.c:1535
+#: src/paramwindow.c:1559
 msgid "Green"
 msgstr "أخضر"
 
-#: src/paramwindow.c:1542
+#: src/paramwindow.c:1566
 msgid "The green value (0 - 255)"
 msgstr ""
 
-#: src/paramwindow.c:1546
+#: src/paramwindow.c:1570
 msgid "Blue"
 msgstr "أزرق"
 
-#: src/paramwindow.c:1552
+#: src/paramwindow.c:1576
 msgid "The blue value (0 - 255)"
 msgstr ""
 
@@ -4905,7 +4905,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:2947
+#: src/plugins.c:2942
 #, c-format
 msgid "%s advanced settings"
 msgstr ""
@@ -6759,12 +6759,12 @@ msgstr ""
 msgid "resampling error..."
 msgstr ""
 
-#: src/rte_window.c:58 src/rte_window.c:567
+#: src/rte_window.c:58 src/rte_window.c:566
 #, c-format
 msgid "Type: %s"
 msgstr ""
 
-#: src/rte_window.c:87
+#: src/rte_window.c:86
 msgid ""
 "\n"
 "\n"
@@ -6774,7 +6774,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:119
+#: src/rte_window.c:118
 msgid ""
 "\n"
 "\n"
@@ -6782,19 +6782,19 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:121
+#: src/rte_window.c:120
 #, c-format
 msgid "Saving keymap to %s\n"
 msgstr ""
 
-#: src/rte_window.c:128
+#: src/rte_window.c:127
 #, c-format
 msgid ""
 "\n"
 "Updating keymap file %s..."
 msgstr ""
 
-#: src/rte_window.c:134
+#: src/rte_window.c:133
 #, c-format
 msgid ""
 "\n"
@@ -6804,12 +6804,12 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:181
+#: src/rte_window.c:180
 #, c-format
 msgid "Saving real time effect defaults to %s..."
 msgstr ""
 
-#: src/rte_window.c:186
+#: src/rte_window.c:185
 #, c-format
 msgid ""
 "\n"
@@ -6819,7 +6819,7 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:205
+#: src/rte_window.c:204
 #, c-format
 msgid ""
 "\n"
@@ -6829,7 +6829,7 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:240
+#: src/rte_window.c:239
 #, c-format
 msgid ""
 "Unable to read defaults file\n"
@@ -6837,12 +6837,12 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:245
+#: src/rte_window.c:244
 #, c-format
 msgid "Loading real time effect defaults from %s..."
 msgstr ""
 
-#: src/rte_window.c:272
+#: src/rte_window.c:271
 #, c-format
 msgid ""
 "\n"
@@ -6852,17 +6852,17 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:278
+#: src/rte_window.c:277
 #, c-format
 msgid "Loading generator default sizes from %s..."
 msgstr ""
 
-#: src/rte_window.c:356
+#: src/rte_window.c:355
 #, c-format
 msgid "Loading default keymap from %s..."
 msgstr ""
 
-#: src/rte_window.c:361
+#: src/rte_window.c:360
 #, c-format
 msgid ""
 "\n"
@@ -6872,38 +6872,38 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:399
+#: src/rte_window.c:398
 #, c-format
 msgid "Invalid line %d in %s\n"
 msgstr ""
 
-#: src/rte_window.c:437
+#: src/rte_window.c:436
 #, c-format
 msgid "Invalid key %d in %s\n"
 msgstr ""
 
-#: src/rte_window.c:445
+#: src/rte_window.c:444
 #, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:461
+#: src/rte_window.c:460
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key (%"
 "d) !\n"
 msgstr ""
 
-#: src/rte_window.c:467
+#: src/rte_window.c:466
 #, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr ""
 
-#: src/rte_window.c:485
+#: src/rte_window.c:484
 msgid "update required.\n"
 msgstr ""
 
-#: src/rte_window.c:493
+#: src/rte_window.c:492
 msgid ""
 "\n"
 "\n"
@@ -6911,40 +6911,40 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:540
+#: src/rte_window.c:539
 msgid "No Description"
 msgstr "لا وصف"
 
-#: src/rte_window.c:545
+#: src/rte_window.c:544
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr ""
 
-#: src/rte_window.c:559
+#: src/rte_window.c:558
 #, c-format
 msgid "Effect name: %s"
 msgstr ""
 
-#: src/rte_window.c:575
+#: src/rte_window.c:574
 #, c-format
 msgid "Plugin name: %s"
 msgstr ""
 
-#: src/rte_window.c:583
+#: src/rte_window.c:582
 #, c-format
 msgid "Author: %s"
 msgstr ""
 
-#: src/rte_window.c:591
+#: src/rte_window.c:590
 #, c-format
 msgid "Version: %d"
 msgstr ""
 
-#: src/rte_window.c:603
+#: src/rte_window.c:602
 msgid "Description: "
 msgstr "الوصف: "
 
-#: src/rte_window.c:784
+#: src/rte_window.c:783
 msgid ""
 "\n"
 "\n"
@@ -6953,65 +6953,65 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:830
+#: src/rte_window.c:829
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr ""
 
-#: src/rte_window.c:916
+#: src/rte_window.c:915
 msgid "LiVES: Real time effect mapping"
 msgstr ""
 
-#: src/rte_window.c:925 src/rte_window.c:983
+#: src/rte_window.c:924 src/rte_window.c:982
 msgid "Key grab"
 msgstr ""
 
-#: src/rte_window.c:940
+#: src/rte_window.c:939
 #, c-format
 msgid "Ctrl-%d"
 msgstr ""
 
-#: src/rte_window.c:949
+#: src/rte_window.c:948
 msgid "Key active"
 msgstr ""
 
-#: src/rte_window.c:988
+#: src/rte_window.c:987
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1007
+#: src/rte_window.c:1006
 msgid "_Clear all effects"
 msgstr ""
 
-#: src/rte_window.c:1026
+#: src/rte_window.c:1025
 msgid "Mode active"
 msgstr ""
 
-#: src/rte_window.c:1052 src/multitrack.c:7171
+#: src/rte_window.c:1051 src/multitrack.c:7171
 msgid "Info"
 msgstr "معلومات"
 
-#: src/rte_window.c:1053
+#: src/rte_window.c:1052
 msgid "Set Parameters"
 msgstr ""
 
-#: src/rte_window.c:1054
+#: src/rte_window.c:1053
 msgid "Clear"
 msgstr "امح"
 
-#: src/rte_window.c:1063
+#: src/rte_window.c:1062
 msgid "Effect name:"
 msgstr ""
 
-#: src/rte_window.c:1157
+#: src/rte_window.c:1156
 msgid "_Save as default keymap"
 msgstr ""
 
-#: src/rte_window.c:1162
+#: src/rte_window.c:1161
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:1405
+#: src/rte_window.c:1399
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

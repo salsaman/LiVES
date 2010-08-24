@@ -4186,7 +4186,7 @@ static void set_audio_filter_channel_values(lives_mt *mt) {
   
   mt->changed=mt->auto_changed=TRUE;
 
-  weed_reinit_effect(inst);
+  weed_reinit_effect(inst,TRUE);
   polymorph(mt,POLY_PARAMS);
 
 }

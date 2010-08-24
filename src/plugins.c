@@ -2025,9 +2025,11 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
     cparam->copy_to=-1;
     cparam->group=0;
     cparam->max=0.;
+    cparam->reinit=FALSE;
     cparam->changed=FALSE;
     cparam->change_blocked=FALSE;
     cparam->source=NULL;
+    cparam->source_type=LIVES_RFX_SOURCE_RFX;
 
 #ifdef DEBUG_RENDER_FX_P
     g_printerr("Got parameter %s\n",cparam->name);
@@ -2193,6 +2195,7 @@ void sort_rfx_array (lives_rfx_t *in, gint num) {
   rfx->min_frames=1;
   rfx->params=NULL;
   rfx->source=NULL;
+  rfx->source_type=LIVES_RFX_SOURCE_RFX;
   rfx->is_template=FALSE;
   rfx->extra=NULL;
 
@@ -2263,16 +2266,7 @@ void rfx_free(lives_rfx_t *rfx) {
   if (rfx->extra!=NULL) {
     free(rfx->extra);
   }
-  if (rfx->is_template) {
-    int error;
-    weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
-    if (weed_plant_has_leaf(filter,"deinit_func")) {
-      weed_deinit_f *deinit_func_ptr_ptr;
-      weed_deinit_f deinit_func;
-      weed_leaf_get(filter,"deinit_func",0,(void *)&deinit_func_ptr_ptr);
-      deinit_func=deinit_func_ptr_ptr[0];
-      if (deinit_func!=NULL) (*deinit_func)(rfx->source);
-    }
+  if (rfx->source_type==LIVES_RFX_SOURCE_WEED) {
     weed_instance_unref(rfx->source);
   }
 }
@@ -2301,6 +2295,8 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
   dest->step_size=src->step_size;
   dest->wrap=src->wrap;
   dest->source=src->source;
+  dest->reinit=src->reinit;
+  dest->source_type=src->source_type;
   dest->list=NULL;
 
   switch (dest->type) {
@@ -2465,6 +2461,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
     rpar[i].reinit=FALSE;
     rpar[i].change_blocked=FALSE;
     rpar[i].source=wtmpl;
+    rpar[i].source_type=LIVES_RFX_SOURCE_WEED;
 
     if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS&&!(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) {
       rpar[i].hidden|=HIDDEN_MULTI;
@@ -2510,6 +2507,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
       rpar[i].reinit=TRUE;
       if (!show_reinits) rpar[i].hidden|=HIDDEN_NEEDS_REINIT;
     }
+    else rpar[i].reinit=FALSE;
 
     ///////////////////////////////
 
@@ -2796,17 +2794,9 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   else {
     filter=plant;
     plant=weed_instance_from_filter(filter);
-    if (weed_plant_has_leaf(filter,"init_func")) {
-      weed_init_f *init_func_ptr_ptr;
-      weed_init_f init_func;
-      weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
-      init_func=init_func_ptr_ptr[0];
-      update_host_info(plant);
-      if (init_func!=NULL) (*init_func)(plant);
-    }
+    weed_reinit_effect(plant,FALSE);
     rfx->is_template=TRUE;
   }
-
 
   string=weed_get_string_value(filter,"name",&error);
   rfx->name=g_strdup(string);
@@ -2823,6 +2813,7 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   if (rfx->num_params>0) rfx->params=weed_params_to_rfx(rfx->num_params,plant,show_reinits);
   else rfx->params=NULL;
   rfx->source=(void *)plant;
+  rfx->source_type=LIVES_RFX_SOURCE_WEED;
   rfx->extra=NULL;
   return rfx;
 }

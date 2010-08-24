@@ -949,10 +949,17 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
 
 }
+
   
-static void check_hidden_gui(lives_param_t *param) {
+static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param) {
   int error;
   weed_plant_t *wtmpl,*gui;
+
+  if (param->reinit&&weed_get_int_value(inst,"refs",&error)==2) {
+    // effect is running and user is editing the params
+    param->hidden|=HIDDEN_NEEDS_REINIT;
+  }
+  else if (param->hidden&HIDDEN_NEEDS_REINIT) param->hidden^=HIDDEN_NEEDS_REINIT;
 
   if ((wtmpl=(weed_plant_t *)param->source)==NULL) return;
 
@@ -966,6 +973,7 @@ static void check_hidden_gui(lives_param_t *param) {
     else if (param->hidden&HIDDEN_GUI) param->hidden^=HIDDEN_GUI;
   }
 }
+
 
 
 gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
@@ -1119,7 +1127,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     for (j=0;j<num_tok;j++) {
       if (!strncmp (array[j],"p",1)&&(pnum=atoi ((gchar *)(array[j]+1)))>=0&&pnum<rfx->num_params&&!used[pnum]) {
 	param=&rfx->params[pnum];
-	check_hidden_gui(param);
+	if (rfx->source_type==LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source,param);
 	if (param->hidden||param->type==LIVES_PARAM_UNDISPLAYABLE) continue;
 	// parameter, eg. p1
 	if (!has_box) {
@@ -1177,7 +1185,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   // add any unused parameters
   for (i=0;i<rfx->num_params;i++) {
     rfx->params[i].changed=FALSE;
-    check_hidden_gui(&rfx->params[i]);
+    if (rfx->source_type==LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source,&rfx->params[i]);
     if (rfx->params[i].hidden||rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
     if (!used[i]) {
       if (!chk_params) add_param_to_box (GTK_BOX (param_vbox),rfx,i,TRUE);
@@ -1851,8 +1859,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
       weed_free(valis);
 
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-	weed_reinit_effect(rfx->source);
-	return;
+	weed_reinit_effect(rfx->source,FALSE);
       }
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
@@ -1883,11 +1890,8 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
   lives_param_t *param=&rfx->params[param_number];
   gdouble new_double,old_double=0.;
   gint new_int,old_int=0;
-  gboolean is_default=FALSE;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
-
-  if (rfx->status==RFX_STATUS_WEED&&rfx->is_template&&mainw->multitrack==NULL) is_default=TRUE;
 
   param->changed=TRUE;
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
@@ -1906,7 +1910,6 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
   if (param->dp>0) {
     set_double_param(param->value,(new_double=gtk_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton))));
-    if (is_default) return; // "host_default" is set when user clicks "OK"
 
     if (rfx->status==RFX_STATUS_WEED) {
       int error;
@@ -1936,7 +1939,6 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
   }
   else {
     set_int_param(param->value,(new_int=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton))));
-    if (is_default) return; // "host_default" is set when user clicks "OK"
 
     if (rfx->status==RFX_STATUS_WEED) {
       int error;
@@ -1975,8 +1977,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
       }
 
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-	weed_reinit_effect(rfx->source);
-	return;
+	weed_reinit_effect(rfx->source,FALSE);
       }
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
@@ -2128,11 +2129,8 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   GdkColor colr;
   GtkWidget *cbutton;
   weed_plant_t *copy_param=NULL;
-  gboolean is_default=FALSE;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
-
-  if (rfx->status==RFX_STATUS_WEED&&rfx->is_template&&mainw->multitrack==NULL) is_default=TRUE;
 
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
@@ -2151,7 +2149,6 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
 
   param->changed=TRUE;
 
-  if (is_default) return; // "host_default" is set when user clicks "OK"
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
@@ -2167,8 +2164,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
     }
 
     if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect(rfx->source);
-      return;
+      weed_reinit_effect(rfx->source,FALSE);
     }
   }
   if (new_red!=old_value.red&&param->onchange) {
@@ -2194,11 +2190,8 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   GdkColor colr;
   GtkWidget *cbutton;
   weed_plant_t *copy_param=NULL;
-  gboolean is_default=FALSE;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
-
-  if (rfx->status==RFX_STATUS_WEED&&rfx->is_template&&mainw->multitrack==NULL) is_default=TRUE;
 
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
@@ -2217,7 +2210,6 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
 
   param->changed=TRUE;
 
-  if (is_default) return;
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
@@ -2233,8 +2225,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
     }
 
     if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect(rfx->source);
-      return;
+      weed_reinit_effect(rfx->source,FALSE);
     }
   }
   if (new_green!=old_value.green&&param->onchange) {
@@ -2259,11 +2250,8 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   GdkColor colr;
   GtkWidget *cbutton;
   weed_plant_t *copy_param=NULL;
-  gboolean is_default=FALSE;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
-
-  if (rfx->status==RFX_STATUS_WEED&&rfx->is_template&&mainw->multitrack==NULL) is_default=TRUE;
 
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
@@ -2282,7 +2270,6 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
 
   param->changed=TRUE;
 
-  if (is_default) return;
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
@@ -2298,8 +2285,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
     }
 
     if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect(rfx->source);
-      return;
+      weed_reinit_effect(rfx->source,FALSE);
     }
   }
   if (new_blue!=old_value.blue&&param->onchange) {
@@ -2322,14 +2308,9 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGBA32_t old_value;
-  gboolean is_default=FALSE;
-
-  if (mainw->block_param_updates) return; // updates are blocked when we update visually
-
-
   gint new_alpha=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
 
-  if (rfx->status==RFX_STATUS_WEED&&rfx->is_template&&mainw->multitrack==NULL) is_default=TRUE;
+  if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
@@ -2339,7 +2320,6 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   get_colRGBA32_param(param->value,&old_value);
   
   param->changed=TRUE;
-  if (is_default) return;
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
 
@@ -2386,11 +2366,8 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (textwidget),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
   gchar *old_text=param->value;
-  gboolean is_default=FALSE;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
-
-  if (rfx->status==RFX_STATUS_WEED&&rfx->is_template&&mainw->multitrack==NULL) is_default=TRUE;
 
   param->changed=TRUE;
 
@@ -2406,7 +2383,6 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     param->value=g_strdup (gtk_entry_get_text (GTK_ENTRY (textwidget)));
   }
 
-  if (is_default) return; // "host_default" is set when user clicks "OK"
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
@@ -2439,8 +2415,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       }
 
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-	weed_reinit_effect(rfx->source);
-	return;
+	weed_reinit_effect(rfx->source,FALSE);
       }
       if (disp_string!=NULL) {
 	gulong blockfunc=(gulong)g_object_get_data(G_OBJECT(textwidget),"blockfunc");
@@ -2479,18 +2454,14 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
   lives_param_t *param=&rfx->params[param_number];
   gint old_index=get_int_param(param->value);
   gint new_index=lives_list_index(param->list,gtk_entry_get_text(entry));
-  gboolean is_default=FALSE;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
   if (new_index==-1) return;
 
-  if (rfx->status==RFX_STATUS_WEED&&rfx->is_template&&mainw->multitrack==NULL) is_default=TRUE;
-
   set_int_param(param->value,new_index);
   param->changed=TRUE;
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
-  if (is_default) return; // "host_default" is set when user clicks "OK"
 
   if (rfx->status==RFX_STATUS_WEED) {
     int error;
@@ -2503,9 +2474,8 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
 
       if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
       // if we are recording, add this change to our event_list
-      rec_param_change(inst,param_number);
-    }
-
+	rec_param_change(inst,param_number);
+      }
     
       if (mainw->multitrack!=NULL&&mainw->multitrack->track_index!=-1&&is_perchannel_multi(rfx,param_number)) index=mainw->multitrack->track_index;
       numvals=weed_leaf_num_elements(wparam,"value");
@@ -2522,9 +2492,9 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
       weed_free(valis);
       
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-	weed_reinit_effect(rfx->source);
-	return;
+	weed_reinit_effect(rfx->source,FALSE);
       }
+
       if (disp_string!=NULL) {
 	gulong blockfunc=(gulong)g_object_get_data(G_OBJECT(entry),"blockfunc");
 	g_signal_handler_block(entry,blockfunc);

@@ -72,7 +72,6 @@ static weed_plant_t *pb_loop_event,*pb_filter_map;
 
 static gboolean mainw_was_ready;
 
-
 ///////////////////////////////////////////////////////////////////
 
 static LIVES_INLINE gint mt_file_from_clip(lives_mt *mt, gint clip) {
@@ -419,6 +418,7 @@ static void save_mt_autoback(lives_mt *mt) {
   int fd;
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
   GtkWidget *dummyd;
+  lives_mt_poly_state_t poly_state;
 
   mt_desensitise(mt);
 
@@ -449,7 +449,10 @@ static void save_mt_autoback(lives_mt *mt) {
 
   g_free(asave_file);
 
+  poly_state=mt->poly_state;
+  if (mt->poly_state!=POLY_IN_OUT) mt->poly_state=POLY_NONE;
   mt_sensitise(mt);
+  mt->poly_state=poly_state;
 
   gtk_widget_destroy(dummyd);
 
@@ -929,6 +932,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
 
   idlefunc=mt->idlefunc;
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+  mt->idlefunc=0;
 
   if (width>eventbox->allocation.width-startx) width=eventbox->allocation.width-startx;
 
@@ -940,7 +944,6 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
       if (is_audio_eventbox(mt,eventbox)&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL) draw_aparams(mt,eventbox,mt->aparam_view_list,mt->avol_init_event,startx,width);
       if (mt->block_selected!=NULL) draw_block(mt,mt->block_selected,-1,-1);
       if (idlefunc>0) {
-	mt->idlefunc=0;
 	mt->idlefunc=mt_idle_add(mt);
       }
       return FALSE;
@@ -984,7 +987,6 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
   set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
 
   if (idlefunc>0) {
-    mt->idlefunc=0;
     mt->idlefunc=mt_idle_add(mt);
   }
   return FALSE;
@@ -1060,17 +1062,20 @@ static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
 		    G_CALLBACK (on_set_pvals_clicked),
 		    (gpointer)mt);
   
-  spinbutton_adj = gtk_adjustment_new (cur_time-fx_start_time, 0., fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
-
   if (!keep_scale) {
+    spinbutton_adj = gtk_adjustment_new (cur_time-fx_start_time, 0., fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
     mt->node_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
     gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
+    mt->node_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 0, 3);
+    g_signal_connect_after (GTK_OBJECT (mt->node_spinbutton), "value_changed",
+			    G_CALLBACK (on_node_spin_value_changed),
+			    (gpointer)mt);
+  
   }
   else {
-    gtk_range_set_adjustment(GTK_RANGE(mt->node_scale),GTK_ADJUSTMENT(spinbutton_adj));
+    //    gtk_range_set_adjustment(GTK_RANGE(mt->node_scale),GTK_ADJUSTMENT(spinbutton_adj));
   }
 
-  mt->node_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 0, 3);
   gtk_widget_show (mt->node_spinbutton);
   gtk_box_pack_start (GTK_BOX (hbox), mt->node_spinbutton, FALSE, TRUE, 0);
 
@@ -1082,10 +1087,6 @@ static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
   }
 
     
-  g_signal_connect_after (GTK_OBJECT (mt->node_spinbutton), "value_changed",
-			  G_CALLBACK (on_node_spin_value_changed),
-			  (gpointer)mt);
-  
   gtk_box_pack_start (GTK_BOX (hbox), mt->node_scale, TRUE, TRUE, 10);
   
 
@@ -1165,7 +1166,14 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
 }
 
 
-
+void redraw_mt_param_box(lives_mt *mt) {
+  gtk_widget_ref(mt->node_scale);
+  gtk_widget_ref(mt->node_spinbutton);
+  g_object_ref(gtk_range_get_adjustment(GTK_RANGE(mt->node_scale)));
+  gtk_widget_unparent(mt->node_scale);
+  gtk_widget_destroy(mt->fx_box);
+  add_mt_param_box(mt,TRUE);
+}
 
 
 
@@ -1191,7 +1199,6 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 
   if (event==NULL) return retval;
 
-
   opwidth=cfile->hsize;
   opheight=cfile->vsize;
   calc_maxspect(mt->play_width,mt->play_height,&opwidth,&opheight);
@@ -1203,12 +1210,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 
   if (mt->current_track<numtracks&&clips[mt->current_track]<1&&(mt->current_rfx==NULL||mt->init_event==NULL||mt->current_rfx->source==NULL||chindx==-1||!is_audio_channel_in(mt->current_rfx->source,chindx))) {
     if (track_index!=-1&&mt->fx_box!=NULL) {
-      gtk_widget_ref(mt->node_scale);
-      gtk_widget_ref(mt->node_spinbutton);
-      g_object_ref(gtk_range_get_adjustment(GTK_RANGE(mt->node_scale)));
-      gtk_widget_unparent(mt->node_scale);
-      gtk_widget_destroy(mt->fx_box);
-      add_mt_param_box(mt,TRUE);
+      redraw_mt_param_box(mt);
       retval=TRUE;
     }
     weed_free(clips);
@@ -1225,12 +1227,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 	  mt->inheight=mainw->files[clips[mt->current_track]]->vsize*opheight/cfile->vsize;
 	}
 	if (track_index==-1&&mt->fx_box!=NULL) {
-	  gtk_widget_ref(mt->node_scale);
-	  gtk_widget_ref(mt->node_spinbutton);
-	  g_object_ref(gtk_range_get_adjustment(GTK_RANGE(mt->node_scale)));
-	  gtk_widget_unparent(mt->node_scale);
-	  gtk_widget_destroy(mt->fx_box);
-	  add_mt_param_box(mt,TRUE);
+	  redraw_mt_param_box(mt);
 	  retval=TRUE;
 	}
 	break;
@@ -1240,12 +1237,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
   }
   weed_free(clips);
   if (track_index!=-1&&mt->track_index==-1&&mt->fx_box!=NULL) {
-    gtk_widget_ref(mt->node_scale);
-    gtk_widget_ref(mt->node_spinbutton);
-    g_object_ref(gtk_range_get_adjustment(GTK_RANGE(mt->node_scale)));
-    gtk_widget_unparent(mt->node_scale);
-    gtk_widget_destroy(mt->fx_box);
-    add_mt_param_box(mt,TRUE);
+    redraw_mt_param_box(mt);
     retval=TRUE;
   }
   return retval;
@@ -2376,8 +2368,13 @@ void mt_show_current_frame(lives_mt *mt) {
   gint actual_frame;
   weed_plant_t *frame_layer=mainw->frame_layer;
   gboolean internal_messaging=mainw->internal_messaging;
+  gboolean needs_idlefunc=FALSE;
 
-  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+    needs_idlefunc=TRUE;
+  }
 
   // show frame image in window
   if (!mt->mt_frame_preview) {
@@ -2403,7 +2400,6 @@ void mt_show_current_frame(lives_mt *mt) {
 
     mainw->xwin=0;
 
-    if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
     while (g_main_context_iteration(NULL,FALSE));
   
     mainw->sep_win=FALSE;
@@ -2543,8 +2539,7 @@ void mt_show_current_frame(lives_mt *mt) {
   GTK_RULER(mt->timeline)->position=ptr_time;
   gtk_widget_queue_draw(mt->timeline);
 
-  if (mt->idlefunc>0) {
-    mt->idlefunc=0;
+  if (needs_idlefunc) {
     mt->idlefunc=mt_idle_add(mt);
   }
 
@@ -4979,6 +4974,7 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->has_audio_file=FALSE;
 
   mt->fx_params_label=NULL;
+  mt->fx_box=NULL;
 
   mt->selected_filter=-1;
 
@@ -7912,6 +7908,8 @@ static track_rect *add_block_start_point (GtkWidget *eventbox, weed_timecode_t t
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
   track_rect *new_block=(track_rect *)g_malloc (sizeof(track_rect));
 
+  g_print("block is %p\n",block);
+
   new_block->next=new_block->prev=NULL;
   new_block->state=BLOCK_UNSELECTED;
   new_block->start_anchored=new_block->end_anchored=FALSE;
@@ -7955,6 +7953,7 @@ inline void add_block_end_point (GtkWidget *eventbox, weed_plant_t *event) {
   // here we add the end point to our last track_rect
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"block_last");
   block->end_event=event;
+  g_print("bl end at %lld\n",get_event_timecode(event));
 }
 
 static gboolean
@@ -10637,6 +10636,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
   gint olayer;
   gboolean has_effect=FALSE;
   gboolean has_params;
+  gboolean needs_idlefunc=FALSE;
   gboolean tab_set=FALSE;
   GtkWidget *bbox;
   weed_plant_t *prev_fm_event,*next_fm_event,*shortcut;
@@ -10702,7 +10702,11 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mt->apply_fx_button=NULL;
     gtk_widget_set_sensitive(mt->fx_edit,FALSE);
     gtk_widget_set_sensitive(mt->fx_delete,FALSE);
-    if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+    if (mt->idlefunc>0) {
+      g_source_remove(mt->idlefunc);
+      mt->idlefunc=0;
+      needs_idlefunc=TRUE;
+    }
     if (poly==POLY_PARAMS) { 
       while (g_main_context_iteration(NULL,FALSE));
     }
@@ -10710,8 +10714,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       mt->init_event=NULL;
       mt_show_current_frame(mt);
     }
-    if (mt->idlefunc>0) {
-      mt->idlefunc=0;
+    if (needs_idlefunc) {
       mt->idlefunc=mt_idle_add(mt);
     }
 
@@ -10937,6 +10940,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       on_paramwindow_cancel_clicked2(NULL,rfx);
     }
 
+    if (mt->fx_box!=NULL) gtk_widget_destroy(mt->fx_box);
+
     mt->fx_box=NULL;
     get_track_index(mt,tc);
 
@@ -10944,11 +10949,14 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
     if (mainw->playing_file<0) {
       if (mt->current_track>=0) {
-	if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+	if (mt->idlefunc>0) {
+	  g_source_remove(mt->idlefunc);
+	  mt->idlefunc=0;
+	  needs_idlefunc=TRUE;
+	}
 	show_preview(mt,q_gint64(tc+gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC,mt->fps));
 	on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
-	if (mt->idlefunc>0) {
-	  mt->idlefunc=0;
+	if (needs_idlefunc) {
 	  mt->idlefunc=mt_idle_add(mt);
 	}
       }
@@ -11442,8 +11450,13 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
   GtkWidget *insert_here,*avol;
   GtkWidget *menu=gtk_menu_new();
   gboolean has_something=FALSE;
+  gboolean needs_idlefunc=FALSE;
 
-  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+    needs_idlefunc=TRUE;
+  }
 
   mouse_select_end(NULL,mt);
 
@@ -11497,8 +11510,7 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
   }
   else gtk_widget_destroy(menu);
 
-  if (mt->idlefunc>0) {
-    mt->idlefunc=0;
+  if (needs_idlefunc) {
     mt->idlefunc=mt_idle_add(mt);
   }
 
@@ -11520,9 +11532,14 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
   int i;
   gint old_track=mt->current_track;
   gboolean got_track=FALSE;
+  gboolean needs_idlefunc=FALSE;
   weed_timecode_t tc,tcpp;
 
-  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+    needs_idlefunc=TRUE;
+  }
 
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
 
@@ -11614,8 +11631,7 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
   set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
   gtk_widget_set_sensitive(mt->mm_menuitem,TRUE);
 
-  if (mt->idlefunc>0) {
-    mt->idlefunc=0;
+  if (needs_idlefunc) {
     mt->idlefunc=mt_idle_add(mt);
   }
 
@@ -12242,6 +12258,7 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
 				    gpointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   gshort poly_state=mt->poly_state;
+  gboolean needs_idlefunc=FALSE;
 
   mt->opts.show_ctx=gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
 
@@ -12268,18 +12285,25 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
     gtk_widget_hide(mt->context_frame);
   }
 
+  // sometimes i really hate gtk+...
+  if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+    needs_idlefunc=TRUE;
+  }
   if (poly_state!=POLY_PARAMS) {
     polymorph(mt,POLY_NONE);
-    if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
-    while (g_main_context_iteration(NULL,FALSE));
-    if (mt->idlefunc>0) {
-      mt->idlefunc=0;
-      mt->idlefunc=mt_idle_add(mt);
-    }
+    if (poly_state==POLY_IN_OUT) while (g_main_context_iteration(NULL,FALSE));
     polymorph(mt,poly_state);
-
   }
   else polymorph(mt,POLY_PARAMS);
+
+  if (poly_state!=POLY_IN_OUT) while (g_main_context_iteration(NULL,FALSE));
+
+  if (needs_idlefunc) {
+    mt->idlefunc=mt_idle_add(mt);
+  }
+
 
   if (prefs->open_maximised) {
     gtk_window_maximize (GTK_WINDOW(mt->window));
@@ -13436,6 +13460,8 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
 
   rfx=weed_to_rfx(filter,FALSE);
   get_track_index(mt,tc);
+
+  // here we just check if we have any params to display
   has_params=make_param_box(NULL,rfx);
   rfx_free(rfx);
   g_free(rfx);
@@ -15007,7 +15033,6 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
   mainw->current_file=render_file;
 
   while (((direction==DIRECTION_POSITIVE&&(offset_start=q_gint64(last_tc-start_tc+offset_start_tc,mt->fps))<offset_end)||(direction==DIRECTION_NEGATIVE&&(offset_start=q_gint64(last_tc+offset_start_tc-start_tc,mt->fps))>=offset_end))) {
-
     numframes=0;
     clips=rep_clips=NULL;
     frames=rep_frames=NULL;
@@ -15019,7 +15044,9 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
       frames=weed_get_int_array(event,"frames",&error);
       shortcut1=event;
     }
-    else if (direction==DIRECTION_POSITIVE&&mainw->event_list!=NULL) shortcut1=get_last_event(mainw->event_list);
+    else if (direction==DIRECTION_POSITIVE&&mt->event_list!=NULL) {
+      shortcut1=get_last_event(mt->event_list);
+    }
 
     if (numframes<=track) {
       // TODO - memcheck
@@ -16094,7 +16121,7 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
   mt->opts.fx_auto_preview=FALSE; // we will preview anyway later, so don't do it twice
 
   mainw->block_param_updates=TRUE;
-  update_visual_params(mt->current_rfx,FALSE);
+  update_visual_params(mt->current_rfx,TRUE);
   mainw->block_param_updates=FALSE;
   mt->opts.fx_auto_preview=auto_prev;
 

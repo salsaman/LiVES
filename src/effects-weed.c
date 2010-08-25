@@ -930,6 +930,8 @@ gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
 	  redraw_pwindow(keyw,modew);
 	}
       }
+      if (mainw->multitrack!=NULL&&mainw->multitrack->fx_box!=NULL) 
+	redraw_mt_param_box(mainw->multitrack);
     }
     if (!deinit_first) weed_call_deinit_func(inst);
     return FILTER_INFO_REINITED;

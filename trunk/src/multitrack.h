@@ -805,6 +805,7 @@ void on_next_node_clicked  (GtkWidget *, gpointer mt);
 void on_prev_node_clicked  (GtkWidget *, gpointer mt);
 void on_del_node_clicked  (GtkWidget *, gpointer mt);
 void on_node_spin_value_changed (GtkSpinButton *, gpointer mt);
+void redraw_mt_param_box(lives_mt *);
 
 void on_frame_preview_clicked (GtkButton *, gpointer mt);
 void show_preview (lives_mt *, weed_timecode_t tc);

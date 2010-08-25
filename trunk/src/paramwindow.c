@@ -1128,7 +1128,8 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
       if (!strncmp (array[j],"p",1)&&(pnum=atoi ((gchar *)(array[j]+1)))>=0&&pnum<rfx->num_params&&!used[pnum]) {
 	param=&rfx->params[pnum];
 	if (rfx->source_type==LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source,param);
-	if (param->hidden||param->type==LIVES_PARAM_UNDISPLAYABLE) continue;
+	if ((param->hidden&&param->hidden!=HIDDEN_NEEDS_REINIT)||
+	    param->type==LIVES_PARAM_UNDISPLAYABLE) continue;
 	// parameter, eg. p1
 	if (!has_box) {
 	  hbox = gtk_hbox_new (TRUE, 0);
@@ -1186,7 +1187,8 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   for (i=0;i<rfx->num_params;i++) {
     rfx->params[i].changed=FALSE;
     if (rfx->source_type==LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source,&rfx->params[i]);
-    if (rfx->params[i].hidden||rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
+    if ((rfx->params[i].hidden&&rfx->params[i].hidden!=HIDDEN_NEEDS_REINIT)||
+	rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
     if (!used[i]) {
       if (!chk_params) add_param_to_box (GTK_BOX (param_vbox),rfx,i,TRUE);
       has_param=TRUE;
@@ -1287,7 +1289,6 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
   }
 
   param=&rfx->params[pnum];
-  if (param->hidden||param->type==LIVES_PARAM_UNDISPLAYABLE) return FALSE;
 
   name=g_strdup_printf ("%s",param->label);
   use_mnemonic=param->use_mnemonic;
@@ -1333,6 +1334,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       // store parameter so we know whose trigger to use
       g_object_set_data (G_OBJECT (checkbutton),"param_number",GINT_TO_POINTER (pnum));
       param->widgets[0]=checkbutton;
+      if (param->hidden) gtk_widget_set_sensitive(checkbutton,FALSE);
     }
     else {
       radiobutton=set_groups(rfx,param);
@@ -1392,6 +1394,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       // store parameter so we know whose trigger to use
       g_object_set_data (G_OBJECT (radiobutton),"param_number",GINT_TO_POINTER (pnum));
       param->widgets[0]=radiobutton;
+      if (param->hidden) gtk_widget_set_sensitive(radiobutton,FALSE);
       }
     break;
   case LIVES_PARAM_NUM :
@@ -1457,6 +1460,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     // store parameter so we know whose trigger to use
     g_object_set_data (G_OBJECT (spinbutton),"param_number",GINT_TO_POINTER (pnum));
     param->widgets[0]=spinbutton;
+    if (param->hidden) gtk_widget_set_sensitive(spinbutton,FALSE);
 
     if (add_slider) {
 #ifdef ENABLE_GIW
@@ -1607,6 +1611,14 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     param->widgets[2]=spinbutton_blue;
     //param->widgets[3]=spinbutton_alpha;
     param->widgets[4]=cbutton;
+
+    if (param->hidden) {
+      gtk_widget_set_sensitive(spinbutton_red,FALSE);
+      gtk_widget_set_sensitive(spinbutton_green,FALSE);
+      gtk_widget_set_sensitive(spinbutton_blue,FALSE);
+      //gtk_widget_set_sensitive(spinbutton_alpha,FALSE);
+      gtk_widget_set_sensitive(cbutton,FALSE);
+    }
     break;
 
   case LIVES_PARAM_STRING:
@@ -1627,6 +1639,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
     if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
       param->widgets[0] = textview = gtk_text_view_new ();
+      if (param->hidden) gtk_widget_set_sensitive(textview,FALSE);
       if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, textview, param->desc, NULL);
       textbuffer=gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
       g_object_set_data(G_OBJECT(textview),"textbuffer",(gpointer)textbuffer);
@@ -1640,6 +1653,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
     else {
       param->widgets[0]=entry=gtk_entry_new();
+      if (param->hidden) gtk_widget_set_sensitive(entry,FALSE);
       if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, entry, param->desc, NULL);
       gtk_entry_set_text (GTK_ENTRY (entry),txt);
       gtk_entry_set_max_length(GTK_ENTRY (entry),(gint)param->max);
@@ -1738,6 +1752,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     // store parameter so we know whose trigger to use
     g_object_set_data (G_OBJECT (GTK_COMBO(combo)->entry),"param_number",GINT_TO_POINTER (pnum));
     param->widgets[0]=combo;
+    if (param->hidden) gtk_widget_set_sensitive(combo,FALSE);
 
     break;
 
@@ -2905,8 +2920,8 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
       gint int_value=atoi (g_list_nth_data (plist,pnum++));
       if (param->change_blocked) break;
       set_int_param(param->value,int_value);
-
-      if (upd&&param->widgets[0]!=NULL&&GTK_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list)) gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(param->widgets[0])->entry),g_list_nth_data(param->list,int_value));
+      if (upd&&param->widgets[0]!=NULL&&GTK_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list))
+	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(param->widgets[0])->entry),g_list_nth_data(param->list,int_value));
       break;
     }
   default:
@@ -3008,7 +3023,7 @@ on_pwcolsel (GtkButton *button, lives_rfx_t *rfx)
 
 void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
   // update parameters visually from an rfx object
-  int i,error;
+  int i,j,error;
   weed_plant_t *inst=rfx->source;
   weed_plant_t **in_params,*in_param;
   int num_params=0;
@@ -3122,8 +3137,8 @@ void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
 	g_free(tmp);
 	g_free(tmp2);
 	set_param_from_list(list,&rfx->params[i],0,FALSE,TRUE);
-	for (i=0;i<numvals;i++) {
-	  weed_free(valss[i]);
+	for (j=0;j<numvals;j++) {
+	  weed_free(valss[j]);
 	}
 	weed_free(valss);
 	g_list_free_strings(list);
@@ -3228,6 +3243,7 @@ void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
 	  break;
 	  // TODO - other color spaces, e.g. RGBA24
 	}
+	break;
       } // hint
     }
   }

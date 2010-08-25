@@ -1010,6 +1010,10 @@ static gchar *mt_params_label(lives_mt *mt) {
   return ltext;
 }
 
+gdouble mt_get_effect_time(lives_mt *mt) {
+  return q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC,mt->fps)/U_SEC;
+}
+
 
 static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
   // here we add a GUI box which will hold effect parameters
@@ -1051,6 +1055,17 @@ static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
 
   gtk_box_pack_start (GTK_BOX (mt->fx_box), mt->fx_params_label, FALSE, FALSE, 0);
 
+  if (!keep_scale) {
+    spinbutton_adj = gtk_adjustment_new (cur_time-fx_start_time, 0., fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
+    mt->node_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
+    gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
+    mt->node_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 0, 3);
+    g_signal_connect_after (GTK_OBJECT (mt->node_spinbutton), "value_changed",
+			    G_CALLBACK (on_node_spin_value_changed),
+			    (gpointer)mt);
+  
+  }
+
   res=make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);
 
   hbox=gtk_hbox_new(FALSE,10);
@@ -1062,19 +1077,6 @@ static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
 		    G_CALLBACK (on_set_pvals_clicked),
 		    (gpointer)mt);
   
-  if (!keep_scale) {
-    spinbutton_adj = gtk_adjustment_new (cur_time-fx_start_time, 0., fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
-    mt->node_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
-    gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
-    mt->node_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 0, 3);
-    g_signal_connect_after (GTK_OBJECT (mt->node_spinbutton), "value_changed",
-			    G_CALLBACK (on_node_spin_value_changed),
-			    (gpointer)mt);
-  
-  }
-  else {
-    //    gtk_range_set_adjustment(GTK_RANGE(mt->node_scale),GTK_ADJUSTMENT(spinbutton_adj));
-  }
 
   gtk_widget_show (mt->node_spinbutton);
   gtk_box_pack_start (GTK_BOX (hbox), mt->node_spinbutton, FALSE, TRUE, 0);
@@ -1120,6 +1122,7 @@ static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
   
 
   gtk_widget_show_all(mt->fx_box);
+  mt->prev_fx_time=mt_get_effect_time(mt);
 
   return res;
 }
@@ -1171,7 +1174,12 @@ void redraw_mt_param_box(lives_mt *mt) {
   gtk_widget_ref(mt->node_spinbutton);
   g_object_ref(gtk_range_get_adjustment(GTK_RANGE(mt->node_scale)));
   gtk_widget_unparent(mt->node_scale);
-  gtk_widget_destroy(mt->fx_box);
+  gtk_widget_unparent(mt->node_spinbutton);
+
+  // work around a bug in gtk+
+  if (mt->invis==NULL) mt->invis=gtk_vbox_new(FALSE,0);
+  gtk_widget_reparent(mt->fx_box,mt->invis);
+
   add_mt_param_box(mt,TRUE);
 }
 
@@ -4949,6 +4957,8 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->did_backup=FALSE;
   mt->framedraw=NULL;
 
+  mt->invis=NULL;
+
   mt->audio_draws=NULL;
   mt->audio_vols=mt->audio_vols_back=NULL;
   mt->amixer=NULL;
@@ -6090,9 +6100,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->view_in_out = gtk_menu_item_new_with_mnemonic (_("Block _In/out points"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->view_in_out);
 
-  gtk_widget_add_accelerator (mt->view_in_out, "activate", mt->accel_group,
+  /*  gtk_widget_add_accelerator (mt->view_in_out, "activate", mt->accel_group,
                               GDK_i, 0,
-                              GTK_ACCEL_VISIBLE);
+                              GTK_ACCEL_VISIBLE); */
 
   gtk_widget_set_sensitive(mt->view_in_out,FALSE);
 
@@ -7908,8 +7918,6 @@ static track_rect *add_block_start_point (GtkWidget *eventbox, weed_timecode_t t
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
   track_rect *new_block=(track_rect *)g_malloc (sizeof(track_rect));
 
-  g_print("block is %p\n",block);
-
   new_block->next=new_block->prev=NULL;
   new_block->state=BLOCK_UNSELECTED;
   new_block->start_anchored=new_block->end_anchored=FALSE;
@@ -7953,7 +7961,6 @@ inline void add_block_end_point (GtkWidget *eventbox, weed_plant_t *event) {
   // here we add the end point to our last track_rect
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"block_last");
   block->end_event=event;
-  g_print("bl end at %lld\n",get_event_timecode(event));
 }
 
 static gboolean
@@ -10686,6 +10693,9 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     }
     mt->current_rfx=NULL;
     gtk_widget_destroy(mt->fx_box);
+
+    if (mt->invis!=NULL) gtk_widget_destroy(mt->invis);
+    mt->invis=NULL;
 
     if (mt->mt_frame_preview) {
       // put blank back in preview window
@@ -16047,6 +16057,8 @@ static weed_timecode_t get_prev_node_tc(lives_mt *mt, weed_timecode_t tc) {
   weed_plant_t *event;
   weed_timecode_t ev_tc;
 
+  if (pchain==NULL) return tc;
+
   for (i=0;i<num_params;i++) {
     event=pchain[i];
     while (event!=NULL&&(ev_tc=get_event_timecode(event))<tc) {
@@ -16064,6 +16076,8 @@ static weed_timecode_t get_next_node_tc(lives_mt *mt, weed_timecode_t tc) {
   weed_timecode_t next_tc=-1;
   weed_plant_t *event;
   weed_timecode_t ev_tc;
+
+  if (pchain==NULL) return tc;
 
   for (i=0;i<num_params;i++) {
     event=pchain[i];
@@ -16102,6 +16116,7 @@ on_frame_preview_clicked (GtkButton *button, gpointer user_data) {
 
 
 
+
 // apply the param changes and update widgets
 void
 on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
@@ -16123,6 +16138,13 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
   mainw->block_param_updates=TRUE;
   update_visual_params(mt->current_rfx,TRUE);
   mainw->block_param_updates=FALSE;
+  
+  if (mt->prev_fx_time==0.||tc==init_tc) {
+    redraw_mt_param_box(mt); // sensitise/desensitise reinit params
+  }
+
+  mt->prev_fx_time=mt_get_effect_time(mt);
+
   mt->opts.fx_auto_preview=auto_prev;
 
   if (get_prev_node_tc(mt,tc)>-1) gtk_widget_set_sensitive(mt->prev_node_button,TRUE);

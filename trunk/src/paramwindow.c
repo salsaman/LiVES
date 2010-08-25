@@ -955,8 +955,10 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param) {
   int error;
   weed_plant_t *wtmpl,*gui;
 
-  if (param->reinit&&weed_get_int_value(inst,"refs",&error)==2) {
-    // effect is running and user is editing the params
+  if (param->reinit&&(weed_get_int_value(inst,"refs",&error)==2||
+		      (mainw->multitrack!=NULL&&mainw->multitrack->fx_box!=NULL&&
+		       mt_get_effect_time(mainw->multitrack)>0.))) {
+    // effect is running and user is editing the params (or in multitrack at not at fx time 0.)
     param->hidden|=HIDDEN_NEEDS_REINIT;
   }
   else if (param->hidden&HIDDEN_NEEDS_REINIT) param->hidden^=HIDDEN_NEEDS_REINIT;
@@ -1685,6 +1687,8 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), (gpointer) rfx);
       }
       else {
+	if (mainw->multitrack!=NULL)
+	  g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), (gpointer) rfx);
 	blockfunc=g_signal_connect_after (G_OBJECT (textbuffer),"changed", G_CALLBACK (after_param_text_changed), (gpointer) rfx);
       }
       g_object_set_data(G_OBJECT(textbuffer),"blockfunc",(gpointer)blockfunc);
@@ -1700,6 +1704,8 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), (gpointer) rfx);
       }
       else {
+	if (mainw->multitrack!=NULL)
+	  g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), (gpointer) rfx);
 	blockfunc=g_signal_connect_after (G_OBJECT (entry),"changed", G_CALLBACK (after_param_text_changed), (gpointer) rfx);
       }
       g_object_set_data(G_OBJECT(entry),"blockfunc",(gpointer)blockfunc);
@@ -1841,7 +1847,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
   set_bool_param(param->value,(new_bool=gtk_toggle_button_get_active (togglebutton)));
-  param->changed=TRUE;
+
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
@@ -1894,6 +1900,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
+  param->changed=TRUE;
 }
 
 
@@ -1908,7 +1915,6 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
-  param->changed=TRUE;
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
@@ -2013,6 +2019,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
+  param->changed=TRUE;
 }
 
 
@@ -2162,7 +2169,6 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   cbutton=param->widgets[4];
   gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
 
-  param->changed=TRUE;
 
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
@@ -2192,6 +2198,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
+  param->changed=TRUE;
 }
 
 
@@ -2223,8 +2230,6 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   cbutton=param->widgets[4];
   gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
 
-  param->changed=TRUE;
-
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
@@ -2253,6 +2258,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
+  param->changed=TRUE;
 }
 
 void
@@ -2283,7 +2289,6 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   cbutton=param->widgets[4];
   gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
 
-  param->changed=TRUE;
 
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
@@ -2313,6 +2318,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
+  param->changed=TRUE;
 }
 
 
@@ -2334,7 +2340,6 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
 
   get_colRGBA32_param(param->value,&old_value);
   
-  param->changed=TRUE;
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
 
@@ -2355,11 +2360,20 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
+  param->changed=TRUE;
 }
 
 
 gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives_rfx_t *rfx) {
   GtkWidget *textwidget;
+
+  if (mainw->multitrack!=NULL) {
+    if (child!=NULL)
+      gtk_window_remove_accel_group(GTK_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
+    else
+      gtk_window_add_accel_group(GTK_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
+    return FALSE;
+  }
 
   if (hbox!=NULL) {
     if (mainw->textwidget_focus!=NULL) {
@@ -2384,7 +2398,6 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
-  param->changed=TRUE;
 
   if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
     GtkTextIter start_iter,end_iter;
@@ -2459,7 +2472,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
-
+  param->changed=TRUE;
 }
 
 
@@ -2475,7 +2488,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
   if (new_index==-1) return;
 
   set_int_param(param->value,new_index);
-  param->changed=TRUE;
+
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
@@ -2530,6 +2543,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
+  param->changed=TRUE;
 }
 
 

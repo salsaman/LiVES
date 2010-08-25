@@ -341,6 +341,7 @@ struct _mt {
   GtkWidget *insa_checkbutton;
   GtkWidget *snapo_checkbutton;
 
+  GtkWidget *invis;
 
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
@@ -568,6 +569,8 @@ struct _mt {
   GList *clip_labels;
 
   lives_amixer_t *amixer;
+
+  gdouble prev_fx_time;
 
 };  // lives_mt
 
@@ -806,6 +809,7 @@ void on_prev_node_clicked  (GtkWidget *, gpointer mt);
 void on_del_node_clicked  (GtkWidget *, gpointer mt);
 void on_node_spin_value_changed (GtkSpinButton *, gpointer mt);
 void redraw_mt_param_box(lives_mt *);
+gdouble mt_get_effect_time(lives_mt *);
 
 void on_frame_preview_clicked (GtkButton *, gpointer mt);
 void show_preview (lives_mt *, weed_timecode_t tc);

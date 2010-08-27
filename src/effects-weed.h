@@ -156,7 +156,7 @@ gint rte_get_numfilters(void);
 void free_key_defaults(gint key, gint mode);
 void apply_key_defaults(weed_plant_t *inst, gint key, gint mode);
 void write_key_defaults(int fd, gint key, gint mode);
-void read_key_defaults(int fd, int nparams, int key, int mode);
+void read_key_defaults(int fd, int nparams, int key, int mode, int version);
 void set_key_defaults(weed_plant_t *inst, gint key, gint mode);
 gboolean has_key_defaults(void);
 

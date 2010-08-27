@@ -6625,18 +6625,49 @@ void reset_frame_and_clip_index(void) {
 
 // key/mode parameter defaults
 
-void read_key_defaults(int fd, int nparams, int key, int mode) {
+void read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   // read default param values for key/mode from file 
-  int i;
+  int i,j,nvals;
   int idx=key_to_fx[key][mode];
+  ssize_t bytes;
   weed_plant_t *filter=weed_filters[idx];
   int xnparams=weed_leaf_num_elements(filter,"in_parameter_templates");
   weed_plant_t **key_defs=g_malloc(nparams*sizeof(weed_plant_t *));
+  weed_timecode_t tc;
 
   for (i=0;i<nparams;i++) {
     if (i<xnparams) {
       key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);
+      if (ver>1) {
+	// for future - read nvals
+	bytes=read(fd,&nvals,sizint);
+	if (bytes<sizint) {
+	  return;
+	}
+	bytes=read(fd,&tc,sizeof(weed_timecode_t));
+	if (bytes<sizeof(weed_timecode_t)) {
+	  return;
+	}
+      }
+
       weed_leaf_deserialise(fd,key_defs[i],"value",NULL);
+
+      if (ver>1) {
+	for (j=0;j<nvals;j++) {
+	  // for future - read timecodes
+	  weed_plant_t *plant=weed_plant_new(WEED_PLANT_PARAMETER);
+	  bytes=read(fd,&tc,sizeof(weed_timecode_t));
+	  if (bytes<sizeof(weed_timecode_t)) {
+	    return;
+	  }
+	  // discard excess values
+	  weed_leaf_deserialise(fd,plant,"value",NULL);
+	  weed_plant_free(plant);
+	}
+
+      }
+
+
     }
   }
   key_defaults[key][mode]=key_defs;

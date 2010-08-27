@@ -1,6 +1,6 @@
 // rte_window.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005
+// (c) G. Finch 2005 - 2010
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -73,17 +73,22 @@ void type_label_set_text (gint key, gint mode) {
 }
 
 
-void 
-on_rtei_ok_clicked (GtkButton *button, gpointer user_data) {
+void on_rtei_ok_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 }
+
 
 gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
   int i,j;
 
+  mainw->error=FALSE;
+
   // prompt for "are you sure ?"
-  if (user_data!=NULL) if (!do_warning_dialog_with_check_transient((_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n")),0,GTK_WINDOW(rte_window))) return FALSE;
+  if (user_data!=NULL) if (!do_warning_dialog_with_check_transient((_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n")),0,GTK_WINDOW(rte_window))) {
+      mainw->error=TRUE;
+      return FALSE;
+    }
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
     if (rte_window!=NULL) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(key_checks[i]),FALSE);
@@ -102,8 +107,43 @@ gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-gboolean 
-on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
+static void save_keymap2_file(gchar *kfname) {
+  int i,j;
+  int slen;
+  int version=1;
+  int modes=rte_getmodespk();
+  int kfd=creat(kfname,S_IRUSR|S_IWUSR);
+  gchar *msg;
+  gchar *hashname;
+
+  if (kfd==-1) {
+    msg=g_strdup_printf (_("\n\nUnable to write keymap file\n%s\nError code %d\n"),kfname,errno);
+    do_error_dialog_with_check_transient (msg,FALSE,0,GTK_WINDOW(rte_window));
+    g_free (msg);
+    d_print_failed();
+    return;
+  }
+
+  write(kfd,&version,sizint);
+
+  for (i=1;i<=prefs->rte_keys_virtual;i++) {
+    for (j=0;j<modes;j++) {
+      if (rte_keymode_valid(i,j,TRUE)) {
+	write(kfd,&i,sizint);
+	hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j)));
+	slen=strlen(hashname);
+	write(kfd,&slen,sizint);
+	write(kfd,hashname,slen);
+	g_free(hashname);
+	write_key_defaults(kfd,i-1,j);
+      }
+    }
+  }
+  close(kfd);
+}
+
+
+gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   // quick and dirty implementation
   int modes=rte_getmodespk();
   int i,j;
@@ -112,11 +152,15 @@ on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   GList *list=NULL;
   gboolean update=FALSE;
 
-  const gchar *keymap_file=g_strdup_printf("%s/%sdefault.keymap",capable->home_dir,LIVES_CONFIG_DIR);
+  gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
+  gchar *keymap_file2=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
 
   if (button!=NULL) {
-    if (!do_warning_dialog_with_check_transient((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,GTK_WINDOW(rte_window))) return FALSE;
-
+    if (!do_warning_dialog_with_check_transient((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,GTK_WINDOW(rte_window))) {
+      g_free(keymap_file2);
+      g_free(keymap_file);
+      return FALSE;
+    }
     d_print ((tmp=g_strdup_printf(_("Saving keymap to %s\n"),keymap_file)));
     g_free(tmp);
   }
@@ -135,6 +179,8 @@ on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free (msg);
       d_print_failed();
     }
+    g_free(keymap_file2);
+    g_free(keymap_file);
     return FALSE;
   }
 
@@ -145,7 +191,6 @@ on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
       for (j=0;j<modes;j++) {
 	if (rte_keymode_valid(i,j,TRUE)) {
 	  fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j))),kfile);
-	  save_key_defaults(kfile,i-1,j);
 	}
       }
     }
@@ -157,14 +202,25 @@ on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   }
 
   fclose (kfile);
+
+  // if we have default values, save as newer style
+  if (has_key_defaults()) {
+    save_keymap2_file(keymap_file2);
+  }
+  else unlink(keymap_file2);
+
+  g_free(keymap_file2);
+  g_free(keymap_file);
+
   d_print_done();
 
   return FALSE;
 }
 
 
-void
-on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+
+
+void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int fd,i;
   gint numfx;
   gchar *msg;
@@ -299,64 +355,68 @@ void load_rte_defs (void) {
 }
 
 
-static int parsekeydefs(GList *list, gint i, gint key, gint mode) {
-  gint count=0;
-  gchar *string,*tmp;
-  gchar *buff=g_strdup("");
+static void check_clear_all_button (void) {
+  int modes=rte_getmodespk();
+  int i,j;
+  gboolean hasone=FALSE;
 
-  if (i>=g_list_length(list)) return 0;
-
-  string=(gchar *)(g_list_nth_data(list,i));
-
-  if (strcmp(string,"keydefs")) return 0;
-
-  while (strcmp(string,"endkeydefs")) {
-    if (key>-1) {
-      tmp=g_strconcat(buff,string,NULL);
-      g_free(buff);
-      buff=tmp;
+  for (i=0;i<prefs->rte_keys_virtual;i++) {
+    for (j=modes-1;j>=0;j--) {
+      if (rte_keymode_valid(i+1,j,TRUE)) hasone=TRUE;
     }
-    count++;
   }
 
-  if (key>-1) {
-    // remove trailing newline
-    memset(buff+strlen(buff)-1,0,1);
-    read_key_defaults(key-1,mode,(unsigned char *)(buff+7));
-  }
-
-  g_free(buff);
-
-  return ++count;
+  gtk_widget_set_sensitive (GTK_WIDGET(clear_all_button), hasone);
 }
 
 
 
-
 gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
-  // quick and dirty implementation
   int modes=rte_getmodespk();
   int i;
-  FILE *kfile;
+  int kfd;
+  int version,nparams;
+  FILE *kfile=NULL;
   gchar *msg,*tmp;
   gint key,mode;
   gchar buff[65536];
-  size_t linelen;
+  size_t linelen,bytes,hlen;
   gchar *whole=g_strdup (""),*whole2;
   GList *list=NULL,*new_list=NULL;
   gchar *hashname,*hashname_new=NULL;
   gboolean notfound=FALSE;
+  gboolean has_error=FALSE;
+  gboolean eof=FALSE;
   gint update=0;
   gchar *line=NULL;
   gchar *whashname;
 
-  gchar *keymap_file=g_strdup_printf("%s/%sdefault.keymap",capable->home_dir,LIVES_CONFIG_DIR);
+  gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
+  gchar *keymap_file2=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
+
+  if ((kfd=open (keymap_file2,O_RDONLY))!=-1) {
+    g_free(keymap_file);
+    keymap_file=keymap_file2;
+  }
+  else {
+    g_free(keymap_file2);
+    keymap_file2=NULL;
+  }
 
   msg=g_strdup_printf(_("Loading default keymap from %s..."),keymap_file);
   d_print(msg);
   g_free(msg);
 
-  if (!(kfile=fopen (keymap_file,"r"))) {
+  if (keymap_file2!=NULL) {
+    if ((kfd=open(keymap_file,O_RDONLY))==-1) has_error=TRUE;
+  }
+  else {
+    if (!(kfile=fopen (keymap_file,"r"))) {
+      has_error=TRUE;
+    }
+  }
+
+  if (has_error) {
     msg=g_strdup_printf (_("\n\nUnable to read from keymap file\n%s\nError code %d\n"),keymap_file,errno);
     g_free(keymap_file);
     do_error_dialog_with_check_transient (msg,FALSE,0,GTK_WINDOW(rte_window));
@@ -365,78 +425,127 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     return FALSE;
   }
 
-  g_free(keymap_file);
+  on_clear_all_clicked(NULL,user_data);
+  if (mainw->error) {
+    mainw->error=FALSE;
+    d_print_cancelled();
+    return FALSE;
+  }
 
-  while (fgets(buff,65536,kfile)) {
-    if (buff!=NULL) {
-      line=(g_strchomp (g_strchug(buff)));
-      if ((linelen=strlen (line))) {
-	whole2=g_strconcat (whole,line,NULL);
-	if (whole2!=whole) g_free (whole);
-	whole=whole2;
-	if (linelen<(size_t)65535) {
-	  list=g_list_append (list, g_strdup (whole));
-	  g_free (whole);
-	  whole=g_strdup ("");
+  if (keymap_file2==NULL) {
+    while (fgets(buff,65536,kfile)) {
+      if (buff!=NULL) {
+	line=(g_strchomp (g_strchug(buff)));
+	if ((linelen=strlen (line))) {
+	  whole2=g_strconcat (whole,line,NULL);
+	  if (whole2!=whole) g_free (whole);
+	  whole=whole2;
+	  if (linelen<(size_t)65535) {
+	    list=g_list_append (list, g_strdup (whole));
+	    g_free (whole);
+	    whole=g_strdup ("");
+	  }
 	}
       }
     }
+    g_free (whole);
+    fclose (kfile);
+
+    if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 2")||!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
+    if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 3")) update=2;
   }
-  g_free (whole);
-  fclose (kfile);
+  else {
+    // read version
+    bytes=read(kfd,&version,sizint);
+    if (bytes<sizint) {
+      eof=TRUE;
+    }
+  }
 
-  on_clear_all_clicked(NULL,user_data);
 
-  if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 2")||!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
-  if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 3")) update=2;
-  
-  for (i=1;i<g_list_length(list);i++) {
-    gchar **array;
-    line=(gchar *)g_list_nth_data(list,i);
+  for (i=1;(keymap_file2==NULL&&i<g_list_length(list))||(keymap_file2!=NULL&&!eof);i++) {
+    if (keymap_file2==NULL) {
+      gchar **array;
+      line=(gchar *)g_list_nth_data(list,i);
     
-    if (get_token_count(line,'|')<2) {
-      d_print((tmp=g_strdup_printf(_("Invalid line %d in %s\n"),i,keymap_file)));
-      g_free(tmp);
-      continue;
-    }
-
-    array=g_strsplit (line,"|",-1);
-
-    if (!strcmp(array[0],"defaults")) {
-      g_strfreev(array);
-      array=g_strsplit(line,"|",2);
-      if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
-      prefs->fxdefsfile=g_strdup(array[1]);
-      g_strfreev(array);
-      continue;
-    }
-
-    if (!strcmp(array[0],"sizes")) {
-      g_strfreev(array);
-      array=g_strsplit(line,"|",2);
-      if (prefs->fxsizesfile!=NULL) g_free(prefs->fxsizesfile);
-      prefs->fxsizesfile=g_strdup(array[1]);
-      g_strfreev(array);
-      continue;
-    }
-
-    key=atoi(array[0]);
+      if (get_token_count(line,'|')<2) {
+	d_print((tmp=g_strdup_printf(_("Invalid line %d in %s\n"),i,keymap_file)));
+	g_free(tmp);
+	continue;
+      }
+      
+      array=g_strsplit (line,"|",-1);
+      
+      if (!strcmp(array[0],"defaults")) {
+	g_strfreev(array);
+	array=g_strsplit(line,"|",2);
+	if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
+	prefs->fxdefsfile=g_strdup(array[1]);
+	g_strfreev(array);
+	continue;
+      }
+      
+      if (!strcmp(array[0],"defaults")) {
+	g_strfreev(array);
+	array=g_strsplit(line,"|",2);
+	if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
+	prefs->fxdefsfile=g_strdup(array[1]);
+	g_strfreev(array);
+	continue;
+      }
+      
+      if (!strcmp(array[0],"sizes")) {
+	g_strfreev(array);
+	array=g_strsplit(line,"|",2);
+	if (prefs->fxsizesfile!=NULL) g_free(prefs->fxsizesfile);
+	prefs->fxsizesfile=g_strdup(array[1]);
+	g_strfreev(array);
+	continue;
+      }
+      
+      key=atoi(array[0]);
     
-    hashname=line+1+strlen(array[0]);
-    g_strfreev(array);
+      hashname=line+1+strlen(array[0]);
+      g_strfreev(array);
+      
+      if (update>0) {
+	if (update==1) hashname_new=g_strdup_printf("%d|Weed%s1\n",key,hashname);
+	if (update==2) hashname_new=g_strdup_printf("%d|Weed%s\n",key,hashname);
+	new_list=g_list_append(new_list,hashname_new);
+	continue;
+      }
+    }
+    else {
+      //read key and hashname
+      bytes=read(kfd,&key,sizint);
+      if (bytes<sizint) {
+	eof=TRUE;
+	break;
+      }
 
-    if (update>0) {
-      if (update==1) hashname_new=g_strdup_printf("%d|Weed%s1\n",key,hashname);
-      if (update==2) hashname_new=g_strdup_printf("%d|Weed%s\n",key,hashname);
-      new_list=g_list_append(new_list,hashname_new);
-      continue;
+      bytes=read(kfd,&hlen,sizint);
+      if (bytes<sizint) {
+	eof=TRUE;
+	break;
+      }
+
+      hashname=g_malloc(hlen+1);
+
+      bytes=read(kfd,hashname,hlen);
+      if (bytes<hlen) {
+	eof=TRUE;
+	g_free(hashname);
+	break;
+      }
+
+      memset(hashname+hlen,0,1);
     }
 
     if (key<1||key>prefs->rte_keys_virtual) {
       d_print((tmp=g_strdup_printf(_("Invalid key %d in %s\n"),key,keymap_file)));
       g_free(tmp);
       notfound=TRUE;
-      i+=parsekeydefs(list,i+1,-1,-1);
+      if (keymap_file2!=NULL) g_free(hashname);
       continue;
     }
 
@@ -444,28 +553,28 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       d_print((tmp=g_strdup_printf(_("Invalid effect %s in %s\n"),hashname,keymap_file)));
       g_free(tmp);
       notfound=TRUE;
-      i+=parsekeydefs(list,i+1,-1,-1);
+      if (keymap_file2!=NULL) g_free(hashname);
       continue;
     }
 
+    // ignore "Weed"
     whashname=hashname+4;
 
     if ((mode=weed_add_effectkey(key,whashname,TRUE))==-1) {
       // could not locate effect
       notfound=TRUE;
-      i+=parsekeydefs(list,i+1,-1,-1);
+      if (keymap_file2!=NULL) g_free(hashname);
       continue;
     }
+    if (keymap_file2!=NULL) g_free(hashname);
     if (mode==-2){
       d_print((tmp=g_strdup_printf(_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
       g_free(tmp);
-      i+=parsekeydefs(list,i+1,-1,-1);
       continue;
     }
     if (mode==-3){
       d_print((tmp=g_strdup_printf(_("Too many effects bound to key %d.\n"),key)));
       g_free(tmp);
-      i+=parsekeydefs(list,i+1,-1,-1);
       continue;
     }
     if (rte_window!=NULL) {
@@ -474,24 +583,45 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       type_label_set_text(key-1,mode);
     }
 
-    i+=parsekeydefs(list,i+1,key,mode);
+
+    if (keymap_file2!=NULL) {
+      // read param defaults
+      bytes=read(kfd,&nparams,sizint);
+      if (bytes<sizint) {
+	eof=TRUE;
+	break;
+      }
+      if (nparams>0) {
+	read_key_defaults(kfd,nparams,key-1,mode);
+      }
+    }
   }
 
-  g_list_free_strings(list);
-  g_list_free(list);
+  g_free(keymap_file);
 
-  if (update>0) {
-    d_print(_("update required.\n"));
-    on_save_keymap_clicked(NULL,new_list);
-    g_list_free_strings(new_list);
-    g_list_free(new_list);
-    on_load_keymap_clicked(NULL,NULL);
+  if (keymap_file2==NULL) {
+    g_list_free_strings(list);
+    g_list_free(list);
+
+    if (update>0) {
+      d_print(_("update required.\n"));
+      on_save_keymap_clicked(NULL,new_list);
+      g_list_free_strings(new_list);
+      g_list_free(new_list);
+      on_load_keymap_clicked(NULL,NULL);
+    }
+    else d_print_done();
   }
-  else d_print_done();
-    
-  if (notfound&&mainw->is_ready) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),0,GTK_WINDOW(rte_window));
+  else {
+    close(kfd);
+    d_print_done();
+  }
 
-  if (!mainw->is_ready) load_rte_defs();
+  if (mainw->is_ready) {
+    check_clear_all_button();
+    if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),0,GTK_WINDOW(rte_window));
+  }
+  else load_rte_defs();
 
   return FALSE;
 }
@@ -651,25 +781,9 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void check_clear_all_button (void) {
-  int modes=rte_getmodespk();
-  int i,j;
-  gboolean hasone=FALSE;
-
-  for (i=0;i<prefs->rte_keys_virtual;i++) {
-    for (j=modes-1;j>=0;j--) {
-      if (rte_keymode_valid(i+1,j,TRUE)) hasone=TRUE;
-    }
-  }
-
-  gtk_widget_set_sensitive (GTK_WIDGET(clear_all_button), hasone);
-}
 
 
-
-
-void 
-on_clear_clicked (GtkButton *button, gpointer user_data) {
+void on_clear_clicked (GtkButton *button, gpointer user_data) {
   // this is for the "delete" buttons, c.f. clear_all
 
   gint idx=GPOINTER_TO_INT(user_data);
@@ -715,6 +829,7 @@ void on_params_clicked (GtkButton *button, gpointer user_data) {
     weed_plant_t *filter=rte_keymode_get_filter(key+1,mode);
     if (filter==NULL) return;
     inst=weed_instance_from_filter(filter);
+    apply_key_defaults(inst,key,mode);
   }
   else weed_instance_ref(inst);
 
@@ -788,8 +903,7 @@ void do_mix_error(void) {
 
 
 
-void 
-fx_changed (GtkItem *item, gpointer user_data) {
+void fx_changed (GtkItem *item, gpointer user_data) {
   gint key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   gint key=(gint)(key_mode/modes);
@@ -1189,6 +1303,7 @@ GtkWidget * create_rte_window (void) {
   g_signal_connect (GTK_OBJECT (load_keymap_button), "clicked",
 		    G_CALLBACK (on_load_keymap_clicked),
 		    GINT_TO_POINTER(1));
+
   g_signal_connect (GTK_OBJECT (clear_all_button), "clicked",
 		    G_CALLBACK (on_clear_all_clicked),
 		    GINT_TO_POINTER(1));
@@ -1329,6 +1444,20 @@ void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   on_render_fx_pre_activate(NULL,rfx);
 
 }
+
+
+
+void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
+  gint key,mode;
+  if (mainw->textwidget_focus!=NULL) after_param_text_changed(mainw->textwidget_focus,rfx);
+
+  if (rfx->num_params>0) {
+    key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
+    mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+    set_key_defaults(rfx->source,key,mode);
+  }
+}
+
 
 
 

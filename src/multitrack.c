@@ -6100,9 +6100,9 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   mt->view_in_out = gtk_menu_item_new_with_mnemonic (_("Block _In/out points"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->view_in_out);
 
-  /*  gtk_widget_add_accelerator (mt->view_in_out, "activate", mt->accel_group,
-                              GDK_i, 0,
-                              GTK_ACCEL_VISIBLE); */
+  gtk_widget_add_accelerator (mt->view_in_out, "activate", mt->accel_group,
+                              GDK_n, 0,
+                              GTK_ACCEL_VISIBLE);
 
   gtk_widget_set_sensitive(mt->view_in_out,FALSE);
 

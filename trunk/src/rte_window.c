@@ -592,7 +592,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 	break;
       }
       if (nparams>0) {
-	read_key_defaults(kfd,nparams,key-1,mode);
+	read_key_defaults(kfd,nparams,key-1,mode,version);
       }
     }
   }

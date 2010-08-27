@@ -117,7 +117,7 @@ void restore_weed_instances(void);
 
 
 //////////////////////////////////////////////////////////
-// "WARNING !! key" here starts at 1, "mode" starts at 0
+// WARNING !! "key" here starts at 1, "mode" starts at 0
 
 gboolean rte_key_valid (gint key, gboolean is_userkey); // returns TRUE if there is a filter bound to active mode of hotkey
 gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey); // returns TRUE if a filter_class is bound to key/mode
@@ -154,10 +154,11 @@ gint rte_get_numfilters(void);
 // key starts at 0
 
 void free_key_defaults(gint key, gint mode);
-void apply_key_defaults(weed_plant_t *inst, weed_plant_t **defs);
-void read_key_defaults(gint key, gint mode, unsigned char *buff);
-void save_key_defaults(FILE *fd, gint key, gint mode);
+void apply_key_defaults(weed_plant_t *inst, gint key, gint mode);
+void write_key_defaults(int fd, gint key, gint mode);
+void read_key_defaults(int fd, int nparams, int key, int mode);
 void set_key_defaults(weed_plant_t *inst, gint key, gint mode);
+gboolean has_key_defaults(void);
 
 
 //////////////////////////////////////////////////////

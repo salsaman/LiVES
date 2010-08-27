@@ -1,6 +1,6 @@
 // rte_window.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005
+// (c) G. Finch 2005 - 2010
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -12,14 +12,15 @@ void rtew_set_keygr (gint key);
 void rtew_set_mode_radio (gint key, gint mode);
 void rtew_set_grab_button (gboolean on);
 void redraw_pwindow (gint key, gint mode);
-void restore_pwindow (lives_rfx_t *rfx);
+void restore_pwindow (lives_rfx_t *);
 void update_pwindow (gint key, gint i, GList *list);
 
 GtkWidget *rte_window;
 
 
-void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data);
-void rte_set_defs_cancel (GtkButton *button, lives_rfx_t *rfx);
-void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx);
+void rte_set_defs_activate (GtkMenuItem *m, gpointer user_data);
+void rte_set_defs_cancel (GtkButton *, lives_rfx_t *);
+void rte_set_defs_ok (GtkButton *, lives_rfx_t *);
+void rte_set_key_defs (GtkButton *, lives_rfx_t *);
 void on_save_rte_defs_activate (GtkMenuItem *, gpointer);
-gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data);
+gboolean on_clear_all_clicked (GtkButton *, gpointer user_data);

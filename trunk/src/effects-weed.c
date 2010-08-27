@@ -3623,7 +3623,7 @@ gboolean weed_init_effect(int hotkey) {
     // if it is a key effect, set key defaults
 
     if (hotkey<FX_KEYS_MAX_VIRTUAL&&key_defaults[hotkey][key_modes[hotkey]]!=NULL) {
-      apply_key_defaults(new_instance,key_defaults[hotkey][key_modes[hotkey]]);
+      apply_key_defaults(new_instance,hotkey,key_modes[hotkey]);
     }
   }
 
@@ -4821,6 +4821,8 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
 
   if (key_to_fx[key][mode]==-1) return FALSE;
 
+  free_key_defaults(key,mode);
+
   for (;mode<MAX_MODES_PER_KEY;mode++) {
 
     mainw->osc_block=TRUE;
@@ -4848,6 +4850,9 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
       rte_switch_keymode(key+1,mode,(tmp=make_weed_hashname
 				     (key_to_fx[key+1][mode+1])));
       g_free(tmp);
+
+      key_defaults[key][mode]=key_defaults[key][mode+1];
+      key_defaults[key][mode+1]=NULL;
     }
   }
 
@@ -6378,7 +6383,6 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem) {
 
 
 
-
 void write_filter_defaults (int fd, int idx) {
   gchar *hashname;
   weed_plant_t *filter=weed_filters[idx],**ptmpls;
@@ -6418,7 +6422,6 @@ void write_filter_defaults (int fd, int idx) {
   if (ptmpls!=NULL) weed_free(ptmpls);
 
 }
-
 
 
 
@@ -6622,30 +6625,37 @@ void reset_frame_and_clip_index(void) {
 
 // key/mode parameter defaults
 
-void read_key_defaults(gint key, gint mode, unsigned char *buff) {
-  // read default param values for key/mode from file (which is in buff)
-  int i=0;
+void read_key_defaults(int fd, int nparams, int key, int mode) {
+  // read default param values for key/mode from file 
+  int i;
   int idx=key_to_fx[key][mode];
   weed_plant_t *filter=weed_filters[idx];
-  int nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  int xnparams=weed_leaf_num_elements(filter,"in_parameter_templates");
   weed_plant_t **key_defs=g_malloc(nparams*sizeof(weed_plant_t *));
 
-  while (i<nparams) {
-    key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);
-    weed_leaf_deserialise(-1,key_defs[i],"value",&buff);
-    i++;
+  for (i=0;i<nparams;i++) {
+    if (i<xnparams) {
+      key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);
+      weed_leaf_deserialise(fd,key_defs[i],"value",NULL);
+    }
   }
   key_defaults[key][mode]=key_defs;
 }
 
 
-void apply_key_defaults(weed_plant_t *inst, weed_plant_t **defs) {
-  // apply key/mode param defaults
+
+
+void apply_key_defaults(weed_plant_t *inst, gint key, gint mode) {
+  // apply key/mode param defaults to a filter instance
   int i=0,error;
   int nparams=weed_leaf_num_elements(inst,"in_parameters");
+  weed_plant_t **defs;
   weed_plant_t **params;
 
   if (nparams==0) return;
+  defs=key_defaults[key][mode];
+
+  if (defs==NULL) return;
 
   params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
@@ -6658,50 +6668,40 @@ void apply_key_defaults(weed_plant_t *inst, weed_plant_t **defs) {
 
 
 
-void save_key_defaults(FILE *fd, gint key, gint mode) {
+void write_key_defaults(int fd, gint key, gint mode) {
   // save key/mode param defaults to file
-  weed_plant_t *filter=weed_filters[key_to_fx[key][mode]];
+  weed_plant_t *filter;
   weed_plant_t **key_defs;
-  unsigned char *buff,*ptr;
-  size_t memsize=0;
-  int i=0,j;
-  int ne;
-  int nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  int i,nparams=0;
 
-  if (nparams==0) return;
-  if ((key_defs=key_defaults[key][mode])==NULL) return;
-
-  // estimate memory needed
-  while (i<nparams) {
-    memsize+=64;
-    ne=weed_leaf_num_elements(key_defs[i],"value");
-    memsize+=ne;
-    for (j=0;j<ne;j++) memsize+=weed_leaf_element_size(key_defs[i],"value",j);
+  if ((key_defs=key_defaults[key][mode])==NULL) {
+    write (fd,&nparams,sizint);
+    return;
   }
 
-  buff=g_malloc(memsize);
-  g_snprintf((gchar *)buff,7,"%s","keydefs");
+  filter=weed_filters[key_to_fx[key][mode]];
+  nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  write (fd,&nparams,sizint);
 
-  i=0;
-  ptr=buff+7;
-
-  while (i<nparams) {
-    weed_leaf_serialise(-1,key_defs[i],"value",FALSE,&ptr);
+  for (i=0;i<nparams;i++) {
+    weed_leaf_serialise(fd,key_defs[i],"value",FALSE,NULL);
   }
-  g_snprintf((gchar *)ptr,12,"\n%s\n","endkeydefs");
 
-  fwrite(buff,1,ptr-buff+12,fd);
-  g_free(buff);
 }
 
 
 
 void free_key_defaults(gint key, gint mode) {
   // free key/mode param defaults
-  weed_plant_t *filter=weed_filters[key_to_fx[key][mode]];
+  weed_plant_t *filter;
   weed_plant_t **key_defs=key_defaults[key][mode];
   int i=0;
-  int nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  int nparams;
+
+  if (key_defs==NULL) return;
+
+  filter=weed_filters[key_to_fx[key][mode]];
+  nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
 
   while (i<nparams) {
     weed_plant_free(key_defs[i]);
@@ -6712,8 +6712,9 @@ void free_key_defaults(gint key, gint mode) {
 }
 
 
+
 void set_key_defaults(weed_plant_t *inst, gint key, gint mode) {
-  // copy key/mode param defaults
+  // copy key/mode param defaults from an instance
   weed_plant_t **key_defs,**params;
   int i=0,error;
   int nparams=weed_leaf_num_elements(inst,"in_parameters");
@@ -6735,3 +6736,17 @@ void set_key_defaults(weed_plant_t *inst, gint key, gint mode) {
   weed_free(params);
   key_defaults[key][mode]=key_defs;
 }
+
+
+
+gboolean has_key_defaults(void) {
+  // check if any key/mode has default parameters set
+  int i,j;
+  for (i=0;i<prefs->rte_keys_virtual;i++) {
+    for (j=0;j<MAX_MODES_PER_KEY;j++) {
+      if (key_defaults[i][j]!=NULL) return TRUE;
+    }
+  }
+  return FALSE;
+}
+

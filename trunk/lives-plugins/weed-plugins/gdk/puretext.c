@@ -1018,6 +1018,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     char *deftextfile;
 
+    int flags,error;
+
     // this section contains code
     // for configure fonts available
     num_fonts_available = 0;
@@ -1051,7 +1053,18 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     deftextfile=g_build_filename(g_get_home_dir(), "livestext.txt", NULL);
 
     in_params[P_TEXT]=weed_text_init("textfile","_Text file",deftextfile);
+    flags=0;
+    if (weed_plant_has_leaf(in_params[P_TEXT],"flags")) 
+      flags=weed_get_int_value(in_params[P_TEXT],"flags",&error);
+    flags|=WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
+    weed_set_int_value(in_params[P_TEXT],"flags",flags);
+
     in_params[P_MODE]=weed_string_list_init("mode","Effect _mode",0,modes);
+    flags=0;
+    if (weed_plant_has_leaf(in_params[P_MODE],"flags")) 
+      flags=weed_get_int_value(in_params[P_MODE],"flags",&error);
+    flags|=WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
+    weed_set_int_value(in_params[P_MODE],"flags",flags);
     in_params[P_END]=NULL;
 
     g_free(deftextfile);

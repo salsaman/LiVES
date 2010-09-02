@@ -6627,7 +6627,7 @@ void reset_frame_and_clip_index(void) {
 
 void read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   // read default param values for key/mode from file 
-  int i,j,nvals;
+  int i,j,nvals,nigns;
   int idx=key_to_fx[key][mode];
   ssize_t bytes;
   weed_plant_t *filter=weed_filters[idx];
@@ -6648,6 +6648,19 @@ void read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
 	if (bytes<sizeof(weed_timecode_t)) {
 	  return;
 	}
+	// read n ints (booleans)
+	bytes=read(fd,&nigns,sizint);
+	if (bytes<sizint) {
+	  return;
+	}
+	if (nigns>0) {
+	  int *igns=g_malloc(nigns*sizint);
+	  bytes=read(fd,&igns,nigns*sizint);
+	  g_free(igns);
+	  if (bytes<nigns*sizint) {
+	    return;
+	  }
+	}
       }
 
       weed_leaf_deserialise(fd,key_defs[i],"value",NULL);
@@ -6659,6 +6672,19 @@ void read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
 	  bytes=read(fd,&tc,sizeof(weed_timecode_t));
 	  if (bytes<sizeof(weed_timecode_t)) {
 	    return;
+	  }
+	  // read n ints (booleans)
+	  bytes=read(fd,&nigns,sizint);
+	  if (bytes<sizint) {
+	    return;
+	  }
+	  if (nigns>0) {
+	    int *igns=g_malloc(nigns*sizint);
+	    bytes=read(fd,&igns,nigns*sizint);
+	    g_free(igns);
+	    if (bytes<nigns*sizint) {
+	      return;
+	    }
 	  }
 	  // discard excess values
 	  weed_leaf_deserialise(fd,plant,"value",NULL);

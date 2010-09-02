@@ -464,8 +464,9 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
 
   for (i=1;(keymap_file2==NULL&&i<g_list_length(list))||(keymap_file2!=NULL&&!eof);i++) {
+    gchar **array;
+
     if (keymap_file2==NULL) {
-      gchar **array;
       line=(gchar *)g_list_nth_data(list,i);
     
       if (get_token_count(line,'|')<2) {
@@ -505,13 +506,14 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       
       key=atoi(array[0]);
     
-      hashname=line+1+strlen(array[0]);
+      hashname=g_strdup(array[1]);
       g_strfreev(array);
       
       if (update>0) {
 	if (update==1) hashname_new=g_strdup_printf("%d|Weed%s1\n",key,hashname);
 	if (update==2) hashname_new=g_strdup_printf("%d|Weed%s\n",key,hashname);
 	new_list=g_list_append(new_list,hashname_new);
+	g_free(hashname);
 	continue;
       }
     }
@@ -539,13 +541,19 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       }
 
       memset(hashname+hlen,0,1);
+
+      array=g_strsplit(hashname,"|",-1);
+      g_free(hashname);
+      hashname=g_strdup(array[0]);
+      g_strfreev(array);
+
     }
 
     if (key<1||key>prefs->rte_keys_virtual) {
       d_print((tmp=g_strdup_printf(_("Invalid key %d in %s\n"),key,keymap_file)));
       g_free(tmp);
       notfound=TRUE;
-      if (keymap_file2!=NULL) g_free(hashname);
+      g_free(hashname);
       continue;
     }
 
@@ -553,7 +561,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       d_print((tmp=g_strdup_printf(_("Invalid effect %s in %s\n"),hashname,keymap_file)));
       g_free(tmp);
       notfound=TRUE;
-      if (keymap_file2!=NULL) g_free(hashname);
+      g_free(hashname);
       continue;
     }
 
@@ -563,10 +571,12 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if ((mode=weed_add_effectkey(key,whashname,TRUE))==-1) {
       // could not locate effect
       notfound=TRUE;
-      if (keymap_file2!=NULL) g_free(hashname);
+      g_free(hashname);
       continue;
     }
-    if (keymap_file2!=NULL) g_free(hashname);
+
+    g_free(hashname);
+
     if (mode==-2){
       d_print((tmp=g_strdup_printf(_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
       g_free(tmp);

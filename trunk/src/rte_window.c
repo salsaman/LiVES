@@ -124,16 +124,16 @@ static void save_keymap2_file(gchar *kfname) {
     return;
   }
 
-  write(kfd,&version,sizint);
+  dummyvar=write(kfd,&version,sizint);
 
   for (i=1;i<=prefs->rte_keys_virtual;i++) {
     for (j=0;j<modes;j++) {
       if (rte_keymode_valid(i,j,TRUE)) {
-	write(kfd,&i,sizint);
+	dummyvar=write(kfd,&i,sizint);
 	hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j)));
 	slen=strlen(hashname);
-	write(kfd,&slen,sizint);
-	write(kfd,hashname,slen);
+	dummyvar=write(kfd,&slen,sizint);
+	dummyvar=write(kfd,hashname,slen);
 	g_free(hashname);
 	write_key_defaults(kfd,i-1,j);
       }

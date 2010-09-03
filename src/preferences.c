@@ -5170,7 +5170,6 @@ void
 on_prefs_apply_clicked(GtkButton *button, gpointer user_data)
 {
   gboolean needs_restart;
-  weed_plant_t *frame_layer;
 
   GtkTreeIter iter;
   GtkTreeModel *model;

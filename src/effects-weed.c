@@ -6732,13 +6732,13 @@ void write_key_defaults(int fd, gint key, gint mode) {
   int i,nparams=0;
 
   if ((key_defs=key_defaults[key][mode])==NULL) {
-    write (fd,&nparams,sizint);
+    dummyvar=write (fd,&nparams,sizint);
     return;
   }
 
   filter=weed_filters[key_to_fx[key][mode]];
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
-  write (fd,&nparams,sizint);
+  dummyvar=write (fd,&nparams,sizint);
 
   for (i=0;i<nparams;i++) {
     weed_leaf_serialise(fd,key_defs[i],"value",FALSE,NULL);

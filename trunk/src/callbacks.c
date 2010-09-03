@@ -3215,13 +3215,13 @@ void on_pause_clicked(void) {
 }
 
 
-
 void 
-on_encoder_entry_changed (GtkEntry *encoder_entry, gpointer ptr) {
+on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
   GList *encoder_capabilities=NULL;
   GList *ofmt_all=NULL;
   GList *ofmt=NULL;
-  gchar *new_encoder_name=g_strdup(gtk_entry_get_text(encoder_entry));
+
+  gchar *new_encoder_name = g_strdup(gtk_combo_box_get_active_text(combo));
   gchar *msg;
   gchar **array;
   int i;
@@ -3234,48 +3234,68 @@ on_encoder_entry_changed (GtkEntry *encoder_entry, gpointer ptr) {
   plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"finalise");
     
   if (!strcmp(new_encoder_name,mainw->any_string)) { 
-    GList *ofmt=NULL;
-    ofmt=g_list_append(ofmt,g_strdup(mainw->any_string));
-    combo_set_popdown_strings (GTK_COMBO (rdet->ofmt_combo), ofmt);
+    GList *ofmt = NULL;
+    ofmt = g_list_append(ofmt,g_strdup(mainw->any_string));
+
+    populate_combo_box(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt);
+
     g_list_free(ofmt);
     if (prefs->acodec_list!=NULL) {
       g_list_free_strings (prefs->acodec_list);
       g_list_free (prefs->acodec_list);
       prefs->acodec_list=NULL;
     }
-    prefs->acodec_list=g_list_append(prefs->acodec_list,g_strdup(mainw->any_string));
-    combo_set_popdown_strings (GTK_COMBO (rdet->acodec_combo), prefs->acodec_list);
+    prefs->acodec_list = g_list_append(prefs->acodec_list, g_strdup(mainw->any_string));
+
+    populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
+
     return;
   }
   
   clear_mainw_msg();
   // initialise new plugin
-  if ((dummy_list=plugin_request(PLUGIN_ENCODERS,new_encoder_name,"init"))==NULL) {
+  if ((dummy_list = plugin_request(PLUGIN_ENCODERS, new_encoder_name, "init")) == NULL) {
     if (strlen (mainw->msg)) {
-      msg=g_strdup_printf (_ ("\n\nThe '%s' plugin reports:\n%s\n"),new_encoder_name,mainw->msg);
+      msg = g_strdup_printf (_ ("\n\nThe '%s' plugin reports:\n%s\n"), new_encoder_name, mainw->msg);
     }
     else {
-      msg=g_strdup_printf (_ ("\n\nUnable to find the 'init' method in the %s plugin.\nThe plugin may be broken or not installed correctly."),new_encoder_name);
+      msg = g_strdup_printf (_ ("\n\nUnable to find the 'init' method in the %s plugin.\nThe plugin may be broken or not installed correctly."), new_encoder_name);
     }
     g_free(new_encoder_name);
 
-    if (rdet!=NULL) gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
-    else if (prefsw!=NULL) gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(prefsw->encoder_combo)->list));
+    if (rdet != NULL){
+        // FIXME: what to hide ?
+        //gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
+    }
+    else if (prefsw != NULL){
+        // FIXME: what to hide ?
+        //gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(prefsw->encoder_combo)->list));
+    }
 
-    if (mainw->is_ready) do_blocking_error_dialog (msg);
+    if (mainw->is_ready){
+        do_blocking_error_dialog (msg);
+    }
+
     g_free (msg);
-    if (prefsw!=NULL) {
-      g_signal_handler_block (GTK_ENTRY((GTK_COMBO(prefsw->encoder_combo))->entry),prefsw->encoder_name_fn);
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->encoder_combo))->entry),prefs->encoder.name);
-      g_signal_handler_unblock (GTK_ENTRY((GTK_COMBO(prefsw->encoder_combo))->entry),prefsw->encoder_name_fn);
+
+    if (prefsw != NULL) {
+      g_signal_handler_block(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
+      // ---
+      set_combo_box_active_string(GTK_COMBO_BOX(prefsw->encoder_combo), prefs->encoder.name);
+      // ---
+      g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
     }
-    if (rdet!=NULL) {
-      g_signal_handler_block (GTK_ENTRY((GTK_COMBO(rdet->encoder_combo))->entry),rdet->encoder_name_fn);
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->encoder_combo))->entry),rdet->encoder_name);
-      g_signal_handler_unblock (GTK_ENTRY((GTK_COMBO(rdet->encoder_combo))->entry),rdet->encoder_name_fn);
+
+    if (rdet != NULL) {
+      g_signal_handler_block(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+      // ---
+      set_combo_box_active_string(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
+      // ---
+      g_signal_handler_unblock(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
     }
-    dummy_list=plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"init");
-    if (dummy_list!=NULL) {
+
+    dummy_list = plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "init");
+    if (dummy_list != NULL) {
       g_list_free_strings(dummy_list);
       g_list_free(dummy_list);
     }
@@ -3288,28 +3308,38 @@ on_encoder_entry_changed (GtkEntry *encoder_entry, gpointer ptr) {
   g_free(new_encoder_name);
 
   if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_capabilities"))==NULL) {
-    if (rdet!=NULL) gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
+    if (rdet != NULL){
+        // FIXME: what to hide ?
+        // gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
+    }
     do_plugin_encoder_error(future_prefs->encoder.name);
+
     if (prefsw!=NULL) {
-      g_signal_handler_block (GTK_ENTRY((GTK_COMBO(prefsw->encoder_combo))->entry),prefsw->encoder_name_fn);
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->encoder_combo))->entry),prefs->encoder.name);
-      g_signal_handler_unblock (GTK_ENTRY((GTK_COMBO(prefsw->encoder_combo))->entry),prefsw->encoder_name_fn);
+      g_signal_handler_block(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
+      // ---
+      set_combo_box_active_string(GTK_COMBO_BOX(prefsw->encoder_combo), prefs->encoder.name);
+      // ---
+      g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
     }
+
     if (rdet!=NULL) {
-      g_signal_handler_block (GTK_ENTRY((GTK_COMBO(rdet->encoder_combo))->entry),rdet->encoder_name_fn);
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->encoder_combo))->entry),rdet->encoder_name);
-      g_signal_handler_unblock (GTK_ENTRY((GTK_COMBO(rdet->encoder_combo))->entry),rdet->encoder_name_fn);
+      g_signal_handler_block (GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+      // ---
+      set_combo_box_active_string(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
+      // ---
+      g_signal_handler_unblock (GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
     }
-    plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"init");
+
+    plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "init");
     g_snprintf(future_prefs->encoder.name,51,"%s",prefs->encoder.name);
     return;
   }
-  prefs->encoder.capabilities=atoi (g_list_nth_data (encoder_capabilities,0));
+  prefs->encoder.capabilities = atoi(g_list_nth_data(encoder_capabilities,0));
   g_list_free_strings (encoder_capabilities);
   g_list_free (encoder_capabilities);
 
   // fill list with new formats
-  if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_formats"))!=NULL) {
+  if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_formats"))!=NULL) {
     for (i=0;i<g_list_length(ofmt_all);i++) {
       if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
 	array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
@@ -3320,23 +3350,30 @@ on_encoder_entry_changed (GtkEntry *encoder_entry, gpointer ptr) {
 
     if (prefsw!=NULL) {
       // we have to block here, otherwise on_ofmt_changed gets called for every added entry !
-      g_signal_handler_block (GTK_COMBO (prefsw->ofmt_combo)->entry,prefsw->encoder_ofmt_fn);
-      combo_set_popdown_strings (GTK_COMBO (prefsw->ofmt_combo), ofmt);
-      g_signal_handler_unblock (GTK_COMBO (prefsw->ofmt_combo)->entry,prefsw->encoder_ofmt_fn);
+      g_signal_handler_block(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
+
+      populate_combo_box(GTK_COMBO_BOX(prefsw->ofmt_combo), ofmt);
+
+      g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
     }
+
     if (rdet!=NULL) {
       // we have to block here, otherwise on_ofmt_changed gets called for every added entry !
-      g_signal_handler_block (GTK_COMBO (rdet->ofmt_combo)->entry,rdet->encoder_ofmt_fn);
-      combo_set_popdown_strings (GTK_COMBO (rdet->ofmt_combo), ofmt);
-      g_signal_handler_unblock (GTK_COMBO (rdet->ofmt_combo)->entry,rdet->encoder_ofmt_fn);
+      g_signal_handler_block (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
+
+      populate_combo_box(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt);
+
+      g_signal_handler_unblock(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
     }
     
     g_list_free(ofmt);
 
     // set default (first) output type
     array=g_strsplit (g_list_nth_data (ofmt_all,0),"|",-1);
+
     if (rdet!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),array[1]);
+      set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo), array[1]);
+
       if (prefsw==NULL&&strcmp(prefs->encoder.name,future_prefs->encoder.name)) {
 	g_snprintf(prefs->encoder.name,51,"%s",future_prefs->encoder.name);
 	set_pref("encoder",prefs->encoder.name);
@@ -3347,10 +3384,11 @@ on_encoder_entry_changed (GtkEntry *encoder_entry, gpointer ptr) {
       rdet->encoder_name=g_strdup(prefs->encoder.name);
       gtk_widget_set_sensitive(rdet->okbutton,TRUE);
     }
+
     if (prefsw!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),array[1]);
+      set_combo_box_active_string(GTK_COMBO_BOX(prefsw->ofmt_combo), array[1]);
     }
-    on_encoder_ofmt_changed (NULL,rdet);
+    on_encoder_ofmt_changed (NULL, rdet);
     g_strfreev (array);
     if (ofmt_all!=NULL) {
       g_list_free_strings(ofmt_all);
@@ -8428,34 +8466,50 @@ void on_capture2_activate(void) {
 
 // TODO - move all encoder related stuff from here and plugins.c into encoders.c
 void 
-on_encoder_ofmt_changed (GtkEntry *fmt_entry, gpointer user_data) {
+on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
   // change encoder format in the encoder plugin
   gchar **array;
   GList *ofmt_all=NULL;
-  int i;
+  int i, counter;
   gchar *new_fmt;
-  render_details *rdet=(render_details *)user_data;
-  if (rdet==NULL) new_fmt=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry)));
-  else new_fmt=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry)));
-  if (!strlen (new_fmt)||!strcmp(new_fmt,mainw->any_string)) return;
+
+  render_details *rdet = (render_details *)user_data;
+
+  if (rdet == NULL){
+      new_fmt = g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(prefsw->ofmt_combo)));
+  }
+  else{
+      new_fmt = g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(rdet->ofmt_combo)));
+  }
+
+  if ( !strlen( new_fmt ) || !strcmp( new_fmt, mainw->any_string ) ){
+      return;
+  }
 
   if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_formats"))!=NULL) {
     // get details for the current format
+    counter = 0;
     for (i=0;i<g_list_length(ofmt_all);i++) {
       if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
 	array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
 	if (!strcmp(array[1],new_fmt)) {
 	  if (prefsw!=NULL) {
-	    g_signal_handler_block(GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),prefsw->encoder_ofmt_fn);
-	    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),array[0]);
-	    gtk_widget_queue_draw (GTK_COMBO(prefsw->ofmt_combo)->entry);
-	    g_signal_handler_unblock(GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),prefsw->encoder_ofmt_fn);
+	    g_signal_handler_block(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
+            gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->ofmt_combo), counter);
+
+	    // gtk_widget_queue_draw (GTK_COMBO(prefsw->ofmt_combo)->entry); FIXME: ???
+
+	    g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
 	  }
 	  if (rdet!=NULL) {
-	    g_signal_handler_block(GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),rdet->encoder_ofmt_fn);
-	    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),array[0]);
-	    gtk_widget_queue_draw (GTK_COMBO(rdet->ofmt_combo)->entry);
-	    g_signal_handler_unblock(GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),rdet->encoder_ofmt_fn);
+	    g_signal_handler_block(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
+
+            // TODO: switch to this line when rdet->ofmt_combo is gtk_combo_box
+            gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->ofmt_combo), counter);
+
+	    // gtk_widget_queue_draw (GTK_COMBO(rdet->ofmt_combo)->entry); FIXME: ???
+
+	    g_signal_handler_unblock(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
 	  }
 	  g_snprintf(future_prefs->encoder.of_name,51,"%s",array[0]);
 	  g_snprintf(future_prefs->encoder.of_desc,128,"%s",array[1]);
@@ -8465,6 +8519,7 @@ on_encoder_ofmt_changed (GtkEntry *fmt_entry, gpointer user_data) {
 	  break;
 	}
 	g_strfreev (array);
+	counter++;
       }
     }
     if (ofmt_all!=NULL) {
@@ -8486,10 +8541,12 @@ on_encoder_ofmt_changed (GtkEntry *fmt_entry, gpointer user_data) {
     set_acodec_list_from_allowed(prefsw,rdet);
   }
   else {
-    if (rdet!=NULL) gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
+    if (rdet!=NULL){
+        // FIXME: what to hide ?
+        //gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
+    }
     do_plugin_encoder_error(future_prefs->encoder.name);
   }
-
 }
 
 

@@ -141,8 +141,7 @@ on_rev_clipboard_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void 
-on_encoder_entry_changed                 (GtkEntry *encoder_entry, 
-					  gpointer ptr);
+on_encoder_entry_changed(GtkComboBox *combo, gpointer ptr);
 
 void 
 on_vid_playback_plugin_changed (GtkEntry *vpp_entry, gpointer user_data);
@@ -549,8 +548,7 @@ on_filesel_complex_ok_clicked                      (GtkButton *button,
 						   GtkEntry *entry);
 
 void 
-on_encoder_ofmt_changed                          (GtkEntry *entry, 
-						  gpointer user_data);
+on_encoder_ofmt_changed(GtkComboBox *combo, gpointer user_data);
 
 void
 on_ok_export_audio_clicked                      (GtkButton *button,

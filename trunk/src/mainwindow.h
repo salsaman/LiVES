@@ -303,6 +303,7 @@ typedef struct {
 #define PREFS_THEME_CHANGED (1<<0)
 #define PREFS_JACK_CHANGED (1<<1)
 #define PREFS_TEMPDIR_CHANGED (1<<2)
+  gboolean prefs_need_restart;
 
   // default sizes for when no file is loaded
   gint def_width;

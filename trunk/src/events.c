@@ -4735,8 +4735,7 @@ render_details *create_render_details (gint type) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
-  rdet->encoder_combo = gtk_combo_new ();
-  gtk_combo_disable_activate(GTK_COMBO(rdet->encoder_combo));
+  rdet->encoder_combo = gtk_combo_box_new();
 
   if (!specified) {
     rdet->encoder_name=g_strdup(mainw->any_string);
@@ -4747,13 +4746,13 @@ render_details *create_render_details (gint type) {
   }
 
   gtk_box_pack_start (GTK_BOX (top_vbox), rdet->encoder_combo, FALSE, FALSE, 10);
-  combo_set_popdown_strings (GTK_COMBO (rdet->encoder_combo), encoders);
-  gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(rdet->encoder_combo))->entry),FALSE);
-  rdet->encoder_name_fn=g_signal_connect_after (G_OBJECT (GTK_COMBO(rdet->encoder_combo)->entry), "changed", G_CALLBACK (on_encoder_entry_changed), rdet);
-  gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(rdet->encoder_combo))->entry),TRUE);
-  g_signal_handler_block(GTK_COMBO(rdet->encoder_combo)->entry,rdet->encoder_name_fn);
-  gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->encoder_combo))->entry),rdet->encoder_name);
-  g_signal_handler_unblock(GTK_COMBO(rdet->encoder_combo)->entry,rdet->encoder_name_fn);
+
+  populate_combo_box(GTK_COMBO_BOX(rdet->encoder_combo), encoders);
+
+  rdet->encoder_name_fn = g_signal_connect_after(GTK_COMBO_BOX(rdet->encoder_combo), "changed", G_CALLBACK(on_encoder_entry_changed), rdet);
+  g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
+  set_combo_box_active_string(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
+  g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
 
   if (encoders!=NULL) {
     g_list_free_strings (encoders);
@@ -4789,23 +4788,21 @@ render_details *create_render_details (gint type) {
   }
 
   label = gtk_label_new (_("    Output format           "));
-  rdet->ofmt_combo = gtk_combo_new ();
+  rdet->ofmt_combo = gtk_combo_box_new();
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  combo_set_popdown_strings (GTK_COMBO (rdet->ofmt_combo), ofmt);
+  populate_combo_box(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->ofmt_combo), 0);
   g_list_free_strings(ofmt);
   g_list_free(ofmt);
   
-  gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(rdet->ofmt_combo))->entry),FALSE);
-  rdet->encoder_ofmt_fn=g_signal_connect_after (G_OBJECT (GTK_COMBO(rdet->ofmt_combo)->entry), "changed", G_CALLBACK (on_encoder_ofmt_changed), rdet);
-  gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),TRUE);
+  rdet->encoder_ofmt_fn=g_signal_connect_after (GTK_COMBO_BOX(rdet->ofmt_combo), "changed", G_CALLBACK (on_encoder_ofmt_changed), rdet);
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (top_vbox), rdet->ofmt_combo, FALSE, FALSE, 10);
   
-  rdet->acodec_combo = gtk_combo_new ();
-  rdet->acodec_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(rdet->acodec_combo))->entry));
+  rdet->acodec_combo = gtk_combo_box_new ();
   alabel = gtk_label_new (_("    Audio format           "));
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(alabel, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -4813,9 +4810,6 @@ render_details *create_render_details (gint type) {
   gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (top_vbox), rdet->acodec_combo, FALSE, FALSE, 10);
   
-  gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(rdet->acodec_combo))->entry),FALSE);
-  gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(rdet->acodec_combo))->entry),TRUE);
-
   if (!specified) {
     // add "Any" string
     if (prefs->acodec_list!=NULL) {
@@ -4824,12 +4818,13 @@ render_details *create_render_details (gint type) {
       prefs->acodec_list=NULL;
     }
     prefs->acodec_list=g_list_append(prefs->acodec_list,g_strdup(mainw->any_string));
-    combo_set_popdown_strings (GTK_COMBO (rdet->acodec_combo), prefs->acodec_list);
+    populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->acodec_combo), 0);
   }
   else {
-    g_signal_handler_block(GTK_COMBO(rdet->ofmt_combo)->entry,rdet->encoder_ofmt_fn);
-    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rdet->ofmt_combo))->entry),prefs->encoder.of_name);
-    g_signal_handler_unblock(GTK_COMBO(rdet->ofmt_combo)->entry,rdet->encoder_ofmt_fn);
+    g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+    set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo), prefs->encoder.of_name);
+    g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
     check_encoder_restrictions(TRUE,FALSE);
     future_prefs->encoder.of_allowed_acodecs=prefs->encoder.of_allowed_acodecs;
@@ -4897,7 +4892,7 @@ render_details *create_render_details (gint type) {
     do_encoder_img_ftm_error(rdet);
   }
 
-  g_signal_connect_after (G_OBJECT (GTK_COMBO(rdet->acodec_combo)->entry), "changed", G_CALLBACK (rdet_acodec_changed), rdet);
+  g_signal_connect_after(GTK_COMBO_BOX(rdet->acodec_combo), "changed", G_CALLBACK (rdet_acodec_changed), rdet);
 
   return rdet;
 }

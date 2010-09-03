@@ -278,10 +278,11 @@ apply_prefs(gboolean skip_warn) {
   const gchar *def_image_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->image_dir_entry));
   const gchar *def_proj_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->proj_dir_entry));
   gchar tmpdir[256];
-  const gchar *theme=gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(prefsw->theme_combo))->entry));
-  const gchar *audp=gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(prefsw->audp_combo))->entry));
-  const gchar *audio_codec=gtk_entry_get_text(GTK_ENTRY(prefsw->acodec_entry));
-  const gchar *pb_quality=gtk_entry_get_text(GTK_ENTRY(prefsw->pbq_entry));
+  const gchar *theme = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->theme_combo) );
+  const gchar *audp = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->audp_combo) );
+  const gchar *audio_codec = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->acodec_combo) );
+  const gchar *pb_quality = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->pbq_combo) );
+
   gint pbq=PB_QUALITY_MED;
 
   gdouble default_fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_def_fps));
@@ -423,9 +424,6 @@ apply_prefs(gboolean skip_warn) {
 
   gchar *cdplay_device=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
-  g_free(resaudw);
-  resaudw=NULL;
-
   for (idx=0;idx<listlen&&strcmp(g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
 
   if (idx==listlen) future_prefs->encoder.audio_codec=0;
@@ -505,14 +503,15 @@ apply_prefs(gboolean skip_warn) {
       else {
 	g_snprintf(future_prefs->tmpdir,256,"%s",tmpdir);
 	msg=g_strdup (_ ("You have chosen to change the temporary directory.\nPlease make sure you have no other copies of LiVES open.\n\nIf you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\nAlternatively, press Cancel to restore the temporary directory to its original setting."));	
-	if (!skip_warn) {
-	  if (do_warning_dialog(msg)) {
-	    mainw->prefs_changed=PREFS_TEMPDIR_CHANGED;
-	    needs_restart=TRUE;
-	  }
-	  else {
-	    g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
-	  }}}
+        if (do_warning_dialog(msg)) {
+	  mainw->prefs_changed=PREFS_TEMPDIR_CHANGED;
+	  needs_restart=TRUE;
+	}
+	else {
+	  g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
+          gtk_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry), prefs->tmpdir);
+	}
+      }
       g_free (msg);
     }
   }
@@ -1103,10 +1102,10 @@ save_future_prefs(void) {
 
 
 void 
-rdet_acodec_changed (GtkEntry *acodec_entry, gpointer user_data) {
+rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data) {
   gint listlen=g_list_length (prefs->acodec_list);
   int idx;
-  const gchar *audio_codec=gtk_entry_get_text(acodec_entry);
+  const gchar *audio_codec = gtk_combo_box_get_active_text(acodec_combo);
   if (!strcmp(audio_codec,mainw->any_string)) return;
 
   for (idx=0;idx<listlen&&strcmp(g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
@@ -1140,16 +1139,16 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
   }
 
   if (future_prefs->encoder.of_allowed_acodecs==0) {
-    prefs->acodec_list=g_list_append (prefs->acodec_list, g_strdup(mainw->none_string));
+    prefs->acodec_list = g_list_append (prefs->acodec_list, g_strdup(mainw->none_string));
     future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[0]=AUDIO_CODEC_NONE;
 
     if (prefsw!=NULL) {
-      combo_set_popdown_strings (GTK_COMBO (prefsw->acodec_combo), prefs->acodec_list);
-      gtk_entry_set_text (GTK_ENTRY (prefsw->acodec_entry),mainw->none_string);
+      populate_combo_box(GTK_COMBO_BOX(prefsw->acodec_combo), prefs->acodec_list);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->acodec_combo), 0);
     }
     if (rdet!=NULL) {
-      combo_set_popdown_strings (GTK_COMBO (rdet->acodec_combo), prefs->acodec_list);
-      gtk_entry_set_text (GTK_ENTRY (rdet->acodec_entry),mainw->none_string);
+      populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->acodec_combo), 0);
     }
     return;
   }
@@ -1188,16 +1187,24 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
     prefs->acodec_list_to_format[count++]=AUDIO_CODEC_AMR_NB;
     if (future_prefs->encoder.audio_codec==AUDIO_CODEC_AMR_NB) is_allowed=TRUE;
   }
-  if (prefsw!=NULL) combo_set_popdown_strings (GTK_COMBO (prefsw->acodec_combo), prefs->acodec_list);
-  if (rdet!=NULL) combo_set_popdown_strings (GTK_COMBO (rdet->acodec_combo), prefs->acodec_list);
+  if (prefsw != NULL){
+    populate_combo_box(GTK_COMBO_BOX(prefsw->acodec_combo), prefs->acodec_list);
+  }
+  if (rdet != NULL){
+    populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
+  }
   if (!is_allowed) {
     future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[0];
   }
 
-  for (idx=0;idx<g_list_length (prefs->acodec_list);idx++) {
+  for (idx=0; idx < g_list_length(prefs->acodec_list); idx++) {
     if (prefs->acodec_list_to_format[idx]==future_prefs->encoder.audio_codec) {
-      if (prefsw!=NULL) gtk_entry_set_text (GTK_ENTRY (prefsw->acodec_entry),g_list_nth_data (prefs->acodec_list,idx));
-      if (rdet!=NULL) gtk_entry_set_text (GTK_ENTRY (rdet->acodec_entry),g_list_nth_data (prefs->acodec_list,idx));
+      if (prefsw!=NULL){
+        gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->acodec_combo), idx);
+      }
+      if (rdet!=NULL){
+        gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->acodec_combo), idx);
+      }
       break;
     }
   }
@@ -1285,17 +1292,19 @@ static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 
 
 
-static void on_audp_entry_changed (GtkWidget *audp_entry, gpointer ptr) {
-  const gchar *audp=gtk_entry_get_text (GTK_ENTRY (audp_entry));
+static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
+  const gchar *audp = gtk_combo_box_get_active_text(GTK_COMBO_BOX(audp_combo));
 
   if (!strlen(audp)||!strcmp(audp,prefsw->audp_name)) return;
 
   if (mainw->playing_file>-1) {
     do_aud_during_play_error();
-    g_signal_handler_block(audp_entry,prefsw->audp_entry_func);
-    gtk_entry_set_text(GTK_ENTRY(audp_entry),prefsw->audp_name);
-    gtk_widget_queue_draw(audp_entry);
-    g_signal_handler_unblock(audp_entry,prefsw->audp_entry_func);
+    g_signal_handler_block(audp_combo, prefsw->audp_entry_func);
+
+    set_combo_box_active_string(GTK_COMBO_BOX(audp_combo), prefsw->audp_name);
+
+    //gtk_widget_queue_draw(audp_entry);
+    g_signal_handler_unblock(audp_combo, prefsw->audp_entry_func);
     return;
   }
 
@@ -1322,7 +1331,7 @@ static void on_audp_entry_changed (GtkWidget *audp_entry, gpointer ptr) {
   }
 #endif
   g_free(prefsw->audp_name);
-  prefsw->audp_name=g_strdup(gtk_entry_get_text(GTK_ENTRY(audp_entry)));
+  prefsw->audp_name=g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(audp_combo)));
 
 }
 
@@ -1362,7 +1371,7 @@ static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str,
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(list)));
 
-    gtk_list_store_append(store, &iter);
+    gtk_list_store_insert(store, &iter, idx);
     gtk_list_store_set(store, &iter, LIST_ICON, pix, LIST_ITEM, str, LIST_NUM, idx, -1);
 }
 
@@ -1449,6 +1458,78 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
 }
 
 /*
+ * Function makes apply button sensitive
+ */
+static void apply_button_set_enabled(GtkWidget *widget, gpointer func_data)
+{
+   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), TRUE);
+   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), TRUE);
+   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), FALSE);
+}
+
+void populate_combo_box(GtkComboBox *combo, GList *data)
+{
+  gchar			*text;
+  GtkListStore		*store;
+  GtkTreeIter		iter;
+  GtkCellRenderer	*renderer;
+
+
+  GList *listrunner = g_list_first(data);
+
+  // Create tree store for the combo box
+  store = gtk_list_store_new(1, G_TYPE_STRING);
+
+  while (listrunner){
+    text = (gchar*)listrunner->data;
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, text, -1);
+
+    listrunner = g_list_next(listrunner);
+  }
+  gtk_combo_box_set_model(GTK_COMBO_BOX(combo), GTK_TREE_MODEL(store));
+  g_object_unref(G_OBJECT(store));
+
+  gtk_cell_layout_clear(GTK_CELL_LAYOUT (combo));
+
+  renderer = gtk_cell_renderer_text_new ();
+
+  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo), renderer, FALSE);
+
+  gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo), renderer, "text", 0, NULL);
+}
+
+/*
+ * Set active string to the combo box, if it is in the given list
+ */
+void set_combo_box_active_string(GtkComboBox *combo, gchar *active_str)
+{
+    gchar *text = NULL;
+    GtkTreeModel *model;
+    GtkTreeIter   iter;
+
+    model = gtk_combo_box_get_model( combo );
+
+    if ( gtk_tree_model_get_iter_first(model, &iter) ){
+	    do {
+            gtk_tree_model_get( model, &iter, 0, &text, -1 );
+            if (0 == g_ascii_strcasecmp(text, active_str)) {
+                gtk_combo_box_set_active_iter(combo, &iter);
+                
+                if (text)
+                    g_free(text);
+
+                break;
+            }
+            if (text)
+                g_free(text);
+        } while ( gtk_tree_model_iter_next(model, &iter) );
+    }
+}
+
+
+/*
  * Function creates preferences dialog 
  */
 _prefsw *create_prefs_dialog (void) {
@@ -1525,8 +1606,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *label44;
   GtkObject *spinbutton_def_fps_adj;
   GtkWidget *dialog_action_area8;
-  GtkWidget *okbutton5;
-  GtkWidget *applybutton;
   GtkWidget *dirbutton1;
   GtkWidget *dirbutton2;
   GtkWidget *dirbutton3;
@@ -1543,7 +1622,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *hbox31;
   GtkWidget *label126;
   GtkWidget *pp_combo;
-  GtkWidget *combo_entry4;
   GtkWidget *png;
   GtkWidget *frame;
   GtkWidget *label158;
@@ -1555,7 +1633,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *raw_midi_button;
 
   GtkWidget *label;
-  GtkWidget *combo;
   GtkWidget *eventbox;
 
 #ifdef ENABLE_OSC
@@ -1602,6 +1679,7 @@ _prefsw *create_prefs_dialog (void) {
   // Allocate memory for the preferences structure
   prefsw = (_prefsw*)(g_malloc(sizeof(_prefsw)));
   prefsw->right_shown = NULL;
+  mainw->prefs_need_restart = FALSE;
 
   // Create new modal dialog window and set some attributes
   prefsw->prefs_dialog = gtk_dialog_new ();
@@ -1639,11 +1717,6 @@ _prefsw *create_prefs_dialog (void) {
   // Create dialog table for the right panel controls placement
   dialog_table = gtk_table_new(1, 1, FALSE);
   gtk_widget_show(dialog_table);
-
-  /*dummy_scroll=gtk_scrolled_window_new(NULL, NULL);
-  gtk_widget_show(dummy_scroll);
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (dummy_scroll), dialog_table);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (dummy_scroll), GTK_POLICY_NEVER, GTK_POLICY_NEVER);*/
 
   // Create preferences list with invisible headers
   prefsw->prefs_list = gtk_tree_view_new();
@@ -1979,7 +2052,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox7);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox7, TRUE, TRUE, 20);
   // ---
-  prefsw->forcesmon = gtk_check_button_new ();
+  prefsw->forcesmon = gtk_check_button_new();
   eventbox = gtk_event_box_new();
   label = gtk_label_new_with_mnemonic(_("Force single monitor"));
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->forcesmon);
@@ -2086,7 +2159,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_box_pack_start(GTK_BOX(hbox2), hbox, TRUE, TRUE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mt_enter_defs), !prefs->mt_enter_prompt);
-  // ---
+
   prefsw->checkbutton_render_prompt = gtk_check_button_new();
   eventbox = gtk_event_box_new();
   label = gtk_label_new_with_mnemonic(_("Use these same _values for rendering a new clip"));
@@ -2576,49 +2649,43 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox);
   gtk_container_add (GTK_CONTAINER (vbox69), hbox);
 
-  combo = gtk_combo_new ();
-  gtk_tooltips_set_tip (mainw->tooltips, combo, (_("The preview quality for video playback - affects resizing")), NULL);
+  prefsw->pbq_combo = gtk_combo_box_new();
+  gtk_tooltips_set_tip (mainw->tooltips, prefsw->pbq_combo, (_("The preview quality for video playback - affects resizing")), NULL);
   
   label = gtk_label_new_with_mnemonic (_("Preview _quality"));
-  if (palette->style&STYLE_1) {
+  if (palette->style & STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_tooltips_copy(label,combo);
+  gtk_tooltips_copy(label, prefsw->pbq_combo);
   
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), combo, FALSE, FALSE, 10);
-  gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO (combo))->entry),FALSE);
-  gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(combo))->entry),TRUE);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->pbq_combo, FALSE, FALSE, 10);
   
   prefsw->pbq_list=NULL;
-
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("Low - can improve performance on slower machines")))); // translators - video quality, max len 50
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("Normal - recommended for most users"))));  // translators - video quality, max len 50
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines")))); // translators - video quality, max len 50
 
-  combo_set_popdown_strings (GTK_COMBO (combo), prefsw->pbq_list);
-
-  prefsw->pbq_entry=(GTK_COMBO(combo))->entry;
-  gtk_entry_set_width_chars (GTK_ENTRY (prefsw->pbq_entry),50);
+  populate_combo_box(GTK_COMBO_BOX(prefsw->pbq_combo), prefsw->pbq_list);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->pbq_combo), 0);
 
   gtk_widget_show (hbox);
-  gtk_widget_show (combo);
+  gtk_widget_show (prefsw->pbq_combo);
   gtk_widget_show (label);
 
   switch (prefs->pb_quality) {
   case PB_QUALITY_HIGH:
-    gtk_entry_set_text(GTK_ENTRY(prefsw->pbq_entry),g_list_nth_data(prefsw->pbq_list,2));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->pbq_combo), 2);
     break;
   case PB_QUALITY_MED:
-    gtk_entry_set_text(GTK_ENTRY(prefsw->pbq_entry),g_list_nth_data(prefsw->pbq_list,1));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->pbq_combo), 1);
   }
-
+  // ---
   hbox101 = gtk_hbox_new (TRUE, 0);
   gtk_widget_show (hbox101);
   gtk_box_pack_start (GTK_BOX (vbox69), hbox101, FALSE, FALSE, 0);
 
-  //prefsw->checkbutton_show_stats = gtk_check_button_new_with_mnemonic (_ ("_Show FPS statistics"));
   prefsw->checkbutton_show_stats = gtk_check_button_new();
   eventbox = gtk_event_box_new();
   label = gtk_label_new_with_mnemonic(_("_Show FPS statistics"));
@@ -2659,19 +2726,15 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox31), label126, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label126), GTK_JUSTIFY_LEFT);
   // ---
-  pp_combo = gtk_combo_new ();
-  gtk_widget_show (pp_combo);
+  pp_combo = gtk_combo_box_new();
   gtk_box_pack_start (GTK_BOX (hbox31), pp_combo, FALSE, FALSE, 20);
   // ---
-  combo_entry4 = GTK_COMBO (pp_combo)->entry;
-  gtk_editable_set_editable (GTK_EDITABLE(combo_entry4),FALSE);
-  gtk_widget_show (combo_entry4);
+  vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-so");
+  vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->none_string));
 
-  vid_playback_plugins=get_plugin_list (PLUGIN_VID_PLAYBACK,TRUE,NULL,"-so");
-  vid_playback_plugins=g_list_prepend (vid_playback_plugins,g_strdup(mainw->none_string));
-  combo_set_popdown_strings (GTK_COMBO (pp_combo), vid_playback_plugins);
-  g_list_free_strings (vid_playback_plugins);
-  g_list_free (vid_playback_plugins);
+  populate_combo_box(GTK_COMBO_BOX(pp_combo), vid_playback_plugins);
+
+  gtk_widget_show(pp_combo);
 
   advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
   gtk_widget_show (advbutton);
@@ -2681,15 +2744,17 @@ _prefsw *create_prefs_dialog (void) {
 		    G_CALLBACK (on_vpp_advanced_clicked),
 		    NULL);
 
-  if (mainw->vpp!=NULL) {
-    gtk_entry_set_text (GTK_ENTRY(combo_entry4),mainw->vpp->name);
+  if (mainw->vpp != NULL) {
+    set_combo_box_active_string(GTK_COMBO_BOX(pp_combo), mainw->vpp->name);
   }
   else {
-    gtk_entry_set_text (GTK_ENTRY(combo_entry4),mainw->none_string);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(pp_combo), 0);
     gtk_widget_set_sensitive (advbutton, FALSE);
   }
+  g_list_free_strings (vid_playback_plugins);
+  g_list_free (vid_playback_plugins);
 
-  g_signal_connect_after (G_OBJECT (combo_entry4), "changed", G_CALLBACK (after_vpp_changed), (gpointer) advbutton);
+  g_signal_connect_after (G_OBJECT (pp_combo), "changed", G_CALLBACK (after_vpp_changed), (gpointer) advbutton);
 
   label31 = gtk_label_new (_("VIDEO"));
   if (palette->style&STYLE_1) {
@@ -2722,7 +2787,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox10), label35, FALSE, FALSE, 20);
   gtk_label_set_justify (GTK_LABEL (label35), GTK_JUSTIFY_LEFT);
 
-
 #ifdef HAVE_PULSE_AUDIO
   audp = g_list_append (audp, g_strdup_printf("pulse audio (%s)",mainw->recommended_string));
   has_ap_rec=TRUE;
@@ -2743,12 +2807,11 @@ _prefsw *create_prefs_dialog (void) {
     audp = g_list_append (audp, g_strdup("mplayer"));
   }
 
-  prefsw->audp_combo = gtk_combo_new ();
-  combo_set_popdown_strings (GTK_COMBO (prefsw->audp_combo), audp);
+  prefsw->audp_combo = gtk_combo_box_new();
+  populate_combo_box(GTK_COMBO_BOX(prefsw->audp_combo), audp);
+
   gtk_box_pack_start (GTK_BOX (hbox10), prefsw->audp_combo, TRUE, TRUE, 20);
   gtk_widget_show(prefsw->audp_combo);
-
-  gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(prefsw->audp_combo))->entry),FALSE);
 
   has_ap_rec=FALSE;
 
@@ -2787,9 +2850,9 @@ _prefsw *create_prefs_dialog (void) {
   if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
     prefsw->audp_name=g_strdup(_ ("mplayer"));
   }
-
-  gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->audp_combo))->entry),prefsw->audp_name);
-
+  // ---
+  set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->audp_name);
+  //---
   hbox10 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox10);
   gtk_box_pack_start (GTK_BOX (vbox), hbox10, TRUE, TRUE, 6);
@@ -3131,8 +3194,8 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox11), label37, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label37), GTK_JUSTIFY_LEFT);
 
-  prefsw->encoder_combo = gtk_combo_new ();
-  gtk_box_pack_start (GTK_BOX (hbox11), prefsw->encoder_combo, FALSE, FALSE, 0);
+  prefsw->encoder_combo = gtk_combo_box_new();
+  gtk_box_pack_start(GTK_BOX(hbox11), prefsw->encoder_combo, FALSE, FALSE, 0);
 
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
@@ -3140,16 +3203,16 @@ _prefsw *create_prefs_dialog (void) {
     }
     else {
       encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
-      combo_set_popdown_strings (GTK_COMBO (prefsw->encoder_combo), encoders);
+      populate_combo_box(GTK_COMBO_BOX(prefsw->encoder_combo), encoders);
+      // ---
+      set_combo_box_active_string(GTK_COMBO_BOX(prefsw->encoder_combo), prefs->encoder.name);
+      // ---
       g_list_free_strings (encoders);
       g_list_free (encoders);
     }
   }
 
   gtk_widget_show(prefsw->encoder_combo);
-
-  gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(prefsw->encoder_combo))->entry),FALSE);
-  gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->encoder_combo))->entry),prefs->encoder.name);
 
   hseparator8 = gtk_hseparator_new ();
   gtk_widget_show (hseparator8);
@@ -3167,7 +3230,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_box_pack_start (GTK_BOX (hbox), label56, TRUE, FALSE, 0);
   
-  prefsw->ofmt_combo = gtk_combo_new ();
+  prefsw->ofmt_combo = gtk_combo_box_new();
 
   if (capable->has_encoder_plugins) {
     // reqest formats from the encoder plugin
@@ -3177,13 +3240,13 @@ _prefsw *create_prefs_dialog (void) {
 	  array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
 	  if (!strcmp(array[0],prefs->encoder.of_name)) {
 	    prefs->encoder.of_allowed_acodecs=atoi(array[2]);
-	  }
-	  ofmt=g_list_append(ofmt,g_strdup (array[1]));
+	  } 
+	  ofmt = g_list_append(ofmt, g_strdup(array[1]));
 	  g_strfreev (array);
 	}
       }
       w_memcpy (&future_prefs->encoder,&prefs->encoder,sizeof(_encoder));
-      combo_set_popdown_strings (GTK_COMBO (prefsw->ofmt_combo), ofmt);
+      populate_combo_box(GTK_COMBO_BOX(prefsw->ofmt_combo), ofmt);
       g_list_free_strings(ofmt);
       g_list_free(ofmt);
       g_list_free_strings(ofmt_all);
@@ -3198,30 +3261,25 @@ _prefsw *create_prefs_dialog (void) {
     add_fill_to_box (GTK_BOX (hbox));
     gtk_widget_show_all(hbox);
 
-    gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(prefsw->ofmt_combo))->entry),FALSE);
-    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->ofmt_combo))->entry),prefs->encoder.of_name);
+    set_combo_box_active_string(GTK_COMBO_BOX(prefsw->ofmt_combo), prefs->encoder.of_desc);
   
-    prefsw->acodec_combo = gtk_combo_new ();
-    prefsw->acodec_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(prefsw->acodec_combo))->entry));
+    prefsw->acodec_combo = gtk_combo_box_new();
     prefs->acodec_list=NULL;
 
-    set_acodec_list_from_allowed(prefsw,rdet);
+    set_acodec_list_from_allowed(prefsw, rdet);
 
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox, TRUE, TRUE, 0);
 
     label = gtk_label_new (_("Audio codec"));
-      if (palette->style&STYLE_1) {
-          gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
+    if (palette->style&STYLE_1) {
+        gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
     gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 10);
     
     gtk_box_pack_start (GTK_BOX (hbox), prefsw->acodec_combo, TRUE, TRUE, 10);
     add_fill_to_box (GTK_BOX (hbox));
     gtk_widget_show_all (hbox);
-
-    gtk_editable_set_editable (GTK_EDITABLE(prefsw->acodec_entry),FALSE);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->acodec_entry);
   }
 
   icon = g_strdup_printf("%s%s/pref_encoding.png", prefs->prefix_dir, ICON_DIR);
@@ -4187,30 +4245,28 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_start (GTK_BOX (hbox93), label94, FALSE, FALSE, 0);
    gtk_label_set_justify (GTK_LABEL (label94), GTK_JUSTIFY_LEFT);
    
-   prefsw->theme_combo = gtk_combo_new ();
+   prefsw->theme_combo = gtk_combo_box_new();
    
    // scan for themes
-   themes=get_plugin_list (PLUGIN_THEMES,TRUE,NULL,NULL);
-   themes=g_list_prepend (themes, g_strdup(mainw->none_string));
+   themes = get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL);
+   themes = g_list_prepend(themes, g_strdup(mainw->none_string));
    
-   combo_set_popdown_strings (GTK_COMBO (prefsw->theme_combo), themes);
+   populate_combo_box(GTK_COMBO_BOX(prefsw->theme_combo), themes);
 
-   g_list_free_strings (themes);
-   g_list_free (themes);
-   
    gtk_box_pack_start (GTK_BOX (hbox93), prefsw->theme_combo, FALSE, FALSE, 0);
    gtk_widget_show(prefsw->theme_combo);
    
-   gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(prefsw->theme_combo))->entry),FALSE);
-
-   if (strcasecmp(future_prefs->theme,"none")) {
-     theme=g_strdup(future_prefs->theme);
+   if (strcasecmp(future_prefs->theme, "none")) {
+     theme = g_strdup(future_prefs->theme);
    }
-   else theme=g_strdup(mainw->none_string);
-
-   gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(prefsw->theme_combo))->entry),theme);
+   else theme = g_strdup(mainw->none_string);
+   // ---
+   set_combo_box_active_string(GTK_COMBO_BOX(prefsw->theme_combo), theme);
+   //---
    g_free(theme);
-
+   g_list_free_strings (themes);
+   g_list_free (themes);
+   
   icon = g_strdup_printf("%s%s/pref_themes.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_themes = gdk_pixbuf_new_from_file(icon, NULL);
 
@@ -4297,7 +4353,6 @@ _prefsw *create_prefs_dialog (void) {
    
    prefsw->spinbutton_osc_udp = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
    gtk_widget_show (prefsw->spinbutton_osc_udp);
-   
    gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_osc_udp, FALSE, TRUE, 0);
    // ---
    prefsw->enable_OSC_start = gtk_check_button_new();
@@ -4759,7 +4814,6 @@ _prefsw *create_prefs_dialog (void) {
 #ifdef ALSA_MIDI
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (raw_midi_button),!prefs->use_alsa_midi);
 #endif
-
    hbox = gtk_hbox_new (FALSE, 0);
    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, TRUE, TRUE, 0);
    gtk_widget_show (hbox);
@@ -4889,21 +4943,27 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show (dialog_action_area8);
    gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area8), GTK_BUTTONBOX_END);
    
-   prefsw->cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+   // Preferences 'Revert' button
+   prefsw->cancelbutton = gtk_button_new_from_stock ("gtk-revert-to-saved");
    gtk_widget_show (prefsw->cancelbutton);
    gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
    GTK_WIDGET_SET_FLAGS (prefsw->cancelbutton, GTK_CAN_DEFAULT);
+   // Set 'Close' button as inactive since there is no changes yet
+   gtk_widget_set_sensitive(prefsw->cancelbutton, FALSE);
    
-   applybutton = gtk_button_new_from_stock ("gtk-apply");
-   gtk_widget_show (applybutton);
-   gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), applybutton, 0);
-   GTK_WIDGET_SET_FLAGS (applybutton, GTK_CAN_DEFAULT);
+   // Preferences 'Apply' button
+   prefsw->applybutton = gtk_button_new_from_stock ("gtk-apply");
+   gtk_widget_show (prefsw->applybutton);
+   gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
+   GTK_WIDGET_SET_FLAGS (prefsw->applybutton, GTK_CAN_DEFAULT);
+   // Set 'Apply' button as inactive since there is no changes yet
+   gtk_widget_set_sensitive(prefsw->applybutton, FALSE);
    
-   okbutton5 = gtk_button_new_from_stock ("gtk-ok");
-   gtk_widget_show (okbutton5);
-   gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), okbutton5, GTK_RESPONSE_OK);
-   GTK_WIDGET_SET_FLAGS (okbutton5, GTK_CAN_DEFAULT);
-   
+   // Preferences 'Close' button
+   prefsw->closebutton = gtk_button_new_from_stock ("gtk-close");
+   gtk_widget_show(prefsw->closebutton);
+   gtk_dialog_add_action_widget(GTK_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
+   GTK_WIDGET_SET_FLAGS (prefsw->closebutton, GTK_CAN_DEFAULT);
    
    g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->vid_load_dir_entry);
    g_signal_connect(dirbutton2, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->vid_save_dir_entry);
@@ -4911,14 +4971,128 @@ _prefsw *create_prefs_dialog (void) {
    g_signal_connect(dirbutton4, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->image_dir_entry);
    g_signal_connect(dirbutton5, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->proj_dir_entry);
    g_signal_connect(dirbutton6, "clicked", G_CALLBACK (on_filesel_complex_clicked),prefsw->tmpdir_entry);
-   
+
+   // Connect signals for 'Apply' button activity handling
+  g_signal_connect(GTK_OBJECT(prefsw->fs_max_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->recent_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->stop_screensaver_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->open_maximised_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->show_tool), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->mouse_scroll), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_ce_maxspect), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rb_startup_ce), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rb_startup_mt), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->forcesmon), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->mt_enter_prompt), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(mt_enter_defs), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_render_prompt), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_width), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_height), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_fps), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->backaudio_checkbutton), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->pertrack_checkbutton), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_undo_buf), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_mt_exit_render), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_ab_time), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_always), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_never), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_every), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->video_open_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_ocp), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->jpeg), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(png), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_auto_deint), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_concat_images), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->pbq_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_show_stats), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(pp_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->audp_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->audio_command_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_afollow), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_aclips), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rdesk_audio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rframes), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rfps), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->reffects), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rclips), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->raudio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rec_gb), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->encoder_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+    g_signal_connect(GTK_OBJECT(prefsw->ofmt_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+    g_signal_connect(GTK_OBJECT(prefsw->acodec_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_antialias), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rte_keys), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->vid_load_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->vid_save_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->audio_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->image_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->proj_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->tmpdir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_fps), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_fsize), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_fsize), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_save_set), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mplayer), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_rendered_fx), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_encoders), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_dup_set), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_clips), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_close), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_delete), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_shift), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_alter), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_adel), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_ashift), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_aalt), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_popup), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_discard_layout), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_achans), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_no_jack), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_dvgrab), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_yuv4m_open), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_backup_space), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_crash), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->check_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->ins_speed), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(ins_resample), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->check_xmms_pause), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->cdplay_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_def_fps), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->theme_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_bwidth), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_osc_udp), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->enable_OSC_start), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->enable_OSC), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_EDITABLE(prefsw->jack_tserver_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_tjack), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_master), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_client), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_tb_start), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_tb_client), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_EDITABLE(prefsw->jack_aserver_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_ajack), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_pwp), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_omc_js), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_EDITABLE(prefsw->omc_js_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_omc_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->alsa_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(raw_midi_button), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_EDITABLE(prefsw->omc_midi_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midicr), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midirpt), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+
+
    
    if (capable->has_encoder_plugins) {
-     prefsw->encoder_name_fn=g_signal_connect (GTK_OBJECT((GTK_COMBO(prefsw->encoder_combo))->entry),"changed",G_CALLBACK (on_encoder_entry_changed),NULL);
-     prefsw->encoder_ofmt_fn=g_signal_connect (GTK_OBJECT((GTK_COMBO(prefsw->ofmt_combo))->entry),"changed",G_CALLBACK (on_encoder_ofmt_changed),NULL);
+     prefsw->encoder_name_fn = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->encoder_combo)), "changed", G_CALLBACK(on_encoder_entry_changed), NULL);
+     // ---
+     prefsw->encoder_ofmt_fn = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->ofmt_combo)), "changed", G_CALLBACK(on_encoder_ofmt_changed), NULL);
    }
    
-   prefsw->audp_entry_func=g_signal_connect (GTK_OBJECT((GTK_COMBO(prefsw->audp_combo))->entry),"changed",G_CALLBACK (on_audp_entry_changed),NULL);
+   prefsw->audp_entry_func = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->audp_combo)), "changed", G_CALLBACK(on_audp_entry_changed), NULL);
 
 #ifdef ENABLE_OSC
    g_signal_connect (GTK_OBJECT (prefsw->enable_OSC), "toggled",
@@ -4926,15 +5100,15 @@ _prefsw *create_prefs_dialog (void) {
 		     (gpointer)prefsw->enable_OSC_start);
 #endif
    g_signal_connect (GTK_OBJECT (prefsw->cancelbutton), "clicked",
-		     G_CALLBACK (on_prefs_cancel_clicked),
+		     G_CALLBACK (on_prefs_revert_clicked),
 		     NULL);
    
    
-   g_signal_connect (GTK_OBJECT (okbutton5), "clicked",
-		     G_CALLBACK (on_prefs_ok_clicked),
+   g_signal_connect (GTK_OBJECT (prefsw->closebutton), "clicked",
+		     G_CALLBACK (on_prefs_close_clicked),
 		     NULL);
    
-   g_signal_connect (GTK_OBJECT (applybutton), "clicked",
+   g_signal_connect (GTK_OBJECT (prefsw->applybutton), "clicked",
 		     G_CALLBACK (on_prefs_apply_clicked),
 		     NULL);
    
@@ -4952,63 +5126,61 @@ _prefsw *create_prefs_dialog (void) {
 
 
 void
-on_preferences_activate               (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
+on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-  if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) {
+  if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(prefsw->prefs_dialog->window);
     return;
   }
-
-  prefsw=create_prefs_dialog();
+  prefsw = create_prefs_dialog();
   gtk_widget_show(prefsw->prefs_dialog);
-
 }
 
-
+/*!
+ * Closes preferences dialog window
+ */
 void
-on_prefs_ok_clicked                   (GtkButton       *button,
-				       gpointer         user_data)
+on_prefs_close_clicked(GtkButton *button, gpointer user_data)
 {
-  gboolean needs_restart;
-  gboolean dont_show_warnings=FALSE;
-  weed_plant_t *frame_layer;
-
-  if (user_data!=NULL) {
-    dont_show_warnings=TRUE;
+  if (prefs->acodec_list!=NULL) {
+    g_list_free_strings (prefs->acodec_list);
+    g_list_free (prefs->acodec_list);
   }
-  needs_restart=apply_prefs(dont_show_warnings);
+  prefs->acodec_list=NULL;
+  g_free(prefsw->audp_name);
 
-  frame_layer=mainw->frame_layer;
-  mainw->frame_layer=NULL;
-  mainw->frame_layer=frame_layer;
+  g_free(resaudw);
+  resaudw=NULL;
 
-  on_prefs_cancel_clicked(button,NULL);
+  on_cancel_button1_clicked(button, user_data);
 
-  if (needs_restart&&!dont_show_warnings) {
+  prefsw=NULL;
+
+  if (mainw->prefs_need_restart) {
     do_blocking_error_dialog(_("\nLiVES will now shut down. You need to restart it for the directory change to take effect.\nClick OK to continue.\n"));
     on_quit_activate (NULL,NULL);
   }
-  else {
-    if (mainw->prefs_changed&PREFS_THEME_CHANGED&&!dont_show_warnings) {
-      do_blocking_error_dialog(_("Theme changes will not take effect until the next time you start LiVES."));
-    }
-    if (mainw->prefs_changed&PREFS_JACK_CHANGED&&!dont_show_warnings) {
-      do_blocking_error_dialog(_("Jack options will not take effect until the next time you start LiVES."));
-    }
-    if (!dont_show_warnings) mainw->prefs_changed=0;
-  }
 }
 
+/*!
+ *
+ */
 void
-on_prefs_apply_clicked                   (GtkButton       *button,
-					  gpointer         user_data)
+on_prefs_apply_clicked(GtkButton *button, gpointer user_data)
 {
+  gboolean needs_restart;
+  weed_plant_t *frame_layer;
+
   GtkTreeIter iter;
   GtkTreeModel *model;
   GtkTreeSelection *selection;
   guint selected_idx;
+ 
+  // Applying preferences, so 'Apply' and 'Revert' buttons are getting disabled
+  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), TRUE);
 
   // Get currently selected row number
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
@@ -5022,10 +5194,25 @@ on_prefs_apply_clicked                   (GtkButton       *button,
     else
       selected_idx = LIST_ENTRY_MULTITRACK;
   }
-  //
-  on_prefs_ok_clicked (button, GINT_TO_POINTER (1));
-  on_preferences_activate (NULL, NULL);
-  //
+  // Apply preferences
+  needs_restart = apply_prefs(FALSE);
+  if (FALSE == mainw->prefs_need_restart){
+    mainw->prefs_need_restart = needs_restart;
+  }
+
+  if (needs_restart) {
+    do_blocking_error_dialog(_("For the directory change to take effect LiVES will restart when preferences dialog closes."));
+  }
+
+  if (mainw->prefs_changed & PREFS_THEME_CHANGED) {
+    do_blocking_error_dialog(_("Theme changes will not take effect until the next time you start LiVES."));
+  }
+
+  if (mainw->prefs_changed & PREFS_JACK_CHANGED) {
+    do_blocking_error_dialog(_("Jack options will not take effect until the next time you start LiVES."));
+  }
+
+  mainw->prefs_changed = 0;
   // Select row, that was previously selected
   select_pref_list_row(selected_idx);
 }
@@ -5059,48 +5246,44 @@ select_pref_list_row(guint selected_idx)
 }
 
 void
-on_prefs_cancel_clicked                   (GtkButton       *button,
-					   gpointer         user_data)
+on_prefs_revert_clicked(GtkButton *button, gpointer user_data)
 {
   int i;
-  if (future_prefs->vpp_argv!=NULL) {
-    for (i=0;future_prefs->vpp_argv[i]!=NULL;g_free(future_prefs->vpp_argv[i++]));
-    g_free(future_prefs->vpp_argv);
-    future_prefs->vpp_argv=NULL;
-  }
-  memset (future_prefs->vpp_name,0,64);
 
-  if (prefs->acodec_list!=NULL) {
+  if (future_prefs->vpp_argv != NULL) {
+    for ( i = 0; future_prefs->vpp_argv[i] != NULL; g_free(future_prefs->vpp_argv[i++]) );
+
+    g_free(future_prefs->vpp_argv);
+
+    future_prefs->vpp_argv = NULL;
+  }
+  memset(future_prefs->vpp_name, 0, 64);
+
+  if (prefs->acodec_list != NULL) {
     g_list_free_strings (prefs->acodec_list);
     g_list_free (prefs->acodec_list);
   }
-  prefs->acodec_list=NULL;
+  prefs->acodec_list = NULL;
 
-  if (prefsw->pbq_list!=NULL) g_list_free(prefsw->pbq_list);
-  prefsw->pbq_list=NULL;
+  if (prefsw->pbq_list != NULL) {
+    g_list_free(prefsw->pbq_list);
+  }
+  prefsw->pbq_list = NULL;
 
   g_free(prefsw->audp_name);
 
-  on_cancel_button1_clicked(button,prefsw);
+  on_cancel_button1_clicked(button, prefsw);
 
-  prefsw=NULL;
+  prefsw = NULL;
+
+  on_preferences_activate(NULL, NULL);
 }
 
 gboolean
-on_prefs_delete_event                  (GtkWidget       *widget,
-                                        GdkEvent        *event,
-                                        gpointer         user_data)
-
-
+on_prefs_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
-  if (prefs->acodec_list!=NULL) {
-    g_list_free_strings (prefs->acodec_list);
-    g_list_free (prefs->acodec_list);
-  }
-  prefs->acodec_list=NULL;
-  g_free(prefsw->audp_name);
-  on_cancel_button1_clicked(GTK_BUTTON (((_prefsw *)user_data)->cancelbutton),user_data);
-  prefsw=NULL;
+  on_prefs_close_clicked(GTK_BUTTON (((_prefsw *)user_data)->closebutton), user_data);
+
   return FALSE;
 }
 

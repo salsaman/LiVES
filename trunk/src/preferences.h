@@ -261,7 +261,6 @@ typedef struct {
 
 enum {
     LIST_ENTRY_GUI,
-    LIST_ENTRY_MULTITRACK,
     LIST_ENTRY_DECODING,
     LIST_ENTRY_PLAYBACK,
     LIST_ENTRY_RECORDING,
@@ -273,7 +272,8 @@ enum {
     LIST_ENTRY_THEMES,
     LIST_ENTRY_NET,
     LIST_ENTRY_JACK,
-    LIST_ENTRY_MIDI
+    LIST_ENTRY_MIDI,
+    LIST_ENTRY_MULTITRACK
 };
 
 enum {
@@ -294,10 +294,8 @@ typedef struct {
   gulong encoder_name_fn;
   GtkWidget *prefs_dialog;
   
-  // Added by AK
   GtkWidget *prefs_list;
   GtkWidget *prefs_table;
-  //
   GtkWidget *vbox_right_gui;
   GtkWidget *vbox_right_multitrack;
   GtkWidget *vbox_right_decoding;
@@ -314,10 +312,10 @@ typedef struct {
   GtkWidget *vbox_right_jack;
   GtkWidget *vbox_right_midi;
   GtkWidget *scrollw;
-  //
   GtkWidget *right_shown;
-
   GtkWidget *cancelbutton;
+  GtkWidget *applybutton;
+  GtkWidget *closebutton;
   GtkWidget *stop_screensaver_check;
   GtkWidget *open_maximised_check;
   GtkWidget *show_tool;
@@ -334,6 +332,7 @@ typedef struct {
   GtkWidget *tmpdir_entry;
   GtkWidget *cdplay_entry;
   GtkWidget *spinbutton_def_fps;
+  GtkWidget *pbq_combo;
   GtkWidget *ofmt_combo;
   GtkWidget *audp_combo;
   GtkWidget *rframes;
@@ -378,7 +377,6 @@ typedef struct {
   GtkWidget *mt_enter_prompt;
   GtkWidget *spinbutton_ocp;
   GtkWidget *acodec_combo;
-  GtkWidget *acodec_entry;
   GtkWidget *spinbutton_osc_udp;
   GtkWidget *spinbutton_rte_keys;
   GtkWidget *enable_OSC;
@@ -413,7 +411,6 @@ typedef struct {
   GtkWidget *checkbutton_auto_deint;
   GtkWidget *checkbutton_concat_images;
   GtkWidget *forcesmon;
-  GtkWidget *pbq_entry;
   GList *pbq_list;
   gchar *audp_name;
   gulong audp_entry_func;
@@ -429,6 +426,7 @@ typedef struct {
   GtkWidget *rb_startup_mt;
   GtkWidget *jack_int_label;
   GtkWidget *checkbutton_ce_maxspect;
+  gboolean needs_restart;
 } _prefsw;
 
 typedef struct {  // startup overrides from commandline
@@ -466,7 +464,7 @@ _future_prefs *future_prefs;
 _prefsw *prefsw;
 
 void set_acodec_list_from_allowed (_prefsw *, render_details *);
-void  rdet_acodec_changed (GtkEntry *acodec_entry, gpointer user_data);
+void  rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data);
 
 _prefsw* create_prefs_dialog (void);
 
@@ -474,14 +472,18 @@ gboolean on_prefs_delete_event (GtkWidget *, GdkEvent *, gpointer prefsw);
 
 void on_preferences_activate (GtkMenuItem *, gpointer);
 
-void on_prefs_ok_clicked (GtkButton *, gpointer);
+void on_prefs_close_clicked (GtkButton *, gpointer);
 
-void on_prefs_cancel_clicked (GtkButton *, gpointer);
+void on_prefs_revert_clicked (GtkButton *, gpointer);
 
 void set_vpp(gboolean set_in_prefs);
 
 void on_prefDomainChanged(GtkTreeSelection *, gpointer);
 
 void select_pref_list_row(guint);
+
+void populate_combo_box(GtkComboBox *combo, GList *data);
+
+void set_combo_box_active_string(GtkComboBox *combo, gchar *active_str);
 
 #endif

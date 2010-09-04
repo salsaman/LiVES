@@ -13452,7 +13452,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
 
   // add effect map event 
   init_events=get_init_events_before(event,mt->init_event,FALSE); // also deletes the effect
-  mainw->event_list=append_filter_map_event(mt->event_list,end_tc,init_events);
+  mt->event_list=append_filter_map_event(mt->event_list,end_tc,init_events);
   g_free(init_events);
 
   event=get_last_event(mt->event_list);

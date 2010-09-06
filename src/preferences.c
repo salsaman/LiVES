@@ -1211,17 +1211,18 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 }
 
 
-void after_vpp_changed (GtkEntry *vpp_entry, gpointer advbutton) {
-  int i;
+void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
+  gchar *newvpp=gtk_combo_box_get_active_text(GTK_COMBO_BOX(vpp_combo));
 
-  if (!g_strcasecmp(gtk_entry_get_text(vpp_entry),mainw->none_string)) {
+  if (!g_strcasecmp(newvpp,mainw->none_string)) {
     gtk_widget_set_sensitive (GTK_WIDGET(advbutton), FALSE);
   }
   else gtk_widget_set_sensitive (GTK_WIDGET(advbutton), TRUE);
 
-  g_snprintf (future_prefs->vpp_name,64,"%s",gtk_entry_get_text(GTK_ENTRY(vpp_entry)));
+  g_snprintf (future_prefs->vpp_name,64,"%s",newvpp);
 
   if (future_prefs->vpp_argv!=NULL) {
+    int i;
     for (i=0;future_prefs->vpp_argv[i]!=NULL;g_free(future_prefs->vpp_argv[i++]));
     g_free(future_prefs->vpp_argv);
     future_prefs->vpp_argv=NULL;
@@ -2649,7 +2650,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox);
   gtk_container_add (GTK_CONTAINER (vbox69), hbox);
 
-  prefsw->pbq_combo = gtk_combo_box_new();
+  prefsw->pbq_combo = gtk_combo_box_new_text();
   gtk_tooltips_set_tip (mainw->tooltips, prefsw->pbq_combo, (_("The preview quality for video playback - affects resizing")), NULL);
   
   label = gtk_label_new_with_mnemonic (_("Preview _quality"));
@@ -2726,7 +2727,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox31), label126, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label126), GTK_JUSTIFY_LEFT);
   // ---
-  pp_combo = gtk_combo_box_new();
+  pp_combo = gtk_combo_box_new_text();
   gtk_box_pack_start (GTK_BOX (hbox31), pp_combo, FALSE, FALSE, 20);
   // ---
   vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-so");
@@ -2807,7 +2808,7 @@ _prefsw *create_prefs_dialog (void) {
     audp = g_list_append (audp, g_strdup("mplayer"));
   }
 
-  prefsw->audp_combo = gtk_combo_box_new();
+  prefsw->audp_combo = gtk_combo_box_new_text();
   populate_combo_box(GTK_COMBO_BOX(prefsw->audp_combo), audp);
 
   gtk_box_pack_start (GTK_BOX (hbox10), prefsw->audp_combo, TRUE, TRUE, 20);
@@ -3194,7 +3195,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox11), label37, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label37), GTK_JUSTIFY_LEFT);
 
-  prefsw->encoder_combo = gtk_combo_box_new();
+  prefsw->encoder_combo = gtk_combo_box_new_text();
   gtk_box_pack_start(GTK_BOX(hbox11), prefsw->encoder_combo, FALSE, FALSE, 0);
 
   if (capable->has_encoder_plugins) {
@@ -3230,7 +3231,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_box_pack_start (GTK_BOX (hbox), label56, TRUE, FALSE, 0);
   
-  prefsw->ofmt_combo = gtk_combo_box_new();
+  prefsw->ofmt_combo = gtk_combo_box_new_text();
 
   if (capable->has_encoder_plugins) {
     // reqest formats from the encoder plugin
@@ -3263,7 +3264,7 @@ _prefsw *create_prefs_dialog (void) {
 
     set_combo_box_active_string(GTK_COMBO_BOX(prefsw->ofmt_combo), prefs->encoder.of_desc);
   
-    prefsw->acodec_combo = gtk_combo_box_new();
+    prefsw->acodec_combo = gtk_combo_box_new_text();
     prefs->acodec_list=NULL;
 
     set_acodec_list_from_allowed(prefsw, rdet);
@@ -4245,7 +4246,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_start (GTK_BOX (hbox93), label94, FALSE, FALSE, 0);
    gtk_label_set_justify (GTK_LABEL (label94), GTK_JUSTIFY_LEFT);
    
-   prefsw->theme_combo = gtk_combo_box_new();
+   prefsw->theme_combo = gtk_combo_box_new_text();
    
    // scan for themes
    themes = get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL);

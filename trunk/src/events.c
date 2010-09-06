@@ -4735,7 +4735,7 @@ render_details *create_render_details (gint type) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
-  rdet->encoder_combo = gtk_combo_box_new();
+  rdet->encoder_combo = gtk_combo_box_new_text();
 
   if (!specified) {
     rdet->encoder_name=g_strdup(mainw->any_string);
@@ -4788,7 +4788,7 @@ render_details *create_render_details (gint type) {
   }
 
   label = gtk_label_new (_("    Output format           "));
-  rdet->ofmt_combo = gtk_combo_box_new();
+  rdet->ofmt_combo = gtk_combo_box_new_text();
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
@@ -4802,7 +4802,7 @@ render_details *create_render_details (gint type) {
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (top_vbox), rdet->ofmt_combo, FALSE, FALSE, 10);
   
-  rdet->acodec_combo = gtk_combo_box_new ();
+  rdet->acodec_combo = gtk_combo_box_new_text ();
   alabel = gtk_label_new (_("    Audio format           "));
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(alabel, GTK_STATE_NORMAL, &palette->normal_fore);

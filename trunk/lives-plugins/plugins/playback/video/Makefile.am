@@ -44,6 +44,12 @@ yuv4mpeg_stream_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 SDL_la_CFLAGS = $(shared_cflags) $(CFLAGS_SDL)
 SDL_la_LDFLAGS = $(shared_ldflags) $(LDFLAGS_SDL)
 
-videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(vjack_output_libs) lives2lives_stream.la
+if IS_LINUX_GNU
+vloopback_libs = vloopback.la
+vloopback_la_CFLAGS = $(shared_cflags)
+vloopback_la_LDFLAGS = $(shared_ldflags)
+endif
+
+videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(vjack_output_libs) lives2lives_stream.la $(vloopback_libs)
 
 EXTRA_DIST = videoplugin.h

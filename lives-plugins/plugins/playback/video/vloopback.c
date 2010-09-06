@@ -9,8 +9,9 @@
 
 /////////////////////////////////////////////////////////////////
 
-static char plugin_version[64]="LiVES vloopback output client 0.1";
-static int palette_list[2];
+static char plugin_version[64]="LiVES vloopback output client 1.0";
+static int palette_list[3];
+static int clampings[2];
 static int mypalette;
 
 //////////////////////////////////////////////////////////////////
@@ -33,7 +34,7 @@ static char *vdevname;
 
 const char *module_check_init(void) {
   int ret;
-  if ( ( ret = system( "/sbin/lsmod | grep vloopback" ) ) == 256 ) {
+  if ( ( ret = system( "/sbin/lsmod | grep vloopback >/dev/null 2>&1" ) ) == 256 ) {
     fprintf (stderr, "vloopback output: vloopback module not found !\n");
     return "Vloopback module was not found.\nTry: sudo modprobe vloopback\n";
   }
@@ -75,18 +76,32 @@ special|fileread|0|\\n\
 
 
 int *get_palette_list(void) {
-  palette_list[0]=WEED_PALETTE_RGB24;
-  palette_list[1]=WEED_PALETTE_END;
+  palette_list[0]=WEED_PALETTE_UYVY;
+  palette_list[1]=WEED_PALETTE_RGB24;
+  palette_list[2]=WEED_PALETTE_END;
   return palette_list;
 }
 
 boolean set_palette (int palette) {
+  if (palette==WEED_PALETTE_UYVY) {
+    mypalette=palette;
+    return TRUE;
+  }
   if (palette==WEED_PALETTE_RGB24) {
     mypalette=palette;
     return TRUE;
   }
   // invalid palette
   return FALSE;
+}
+
+int *get_yuv_palette_clamping(int palette) {
+  if (palette==WEED_PALETTE_RGB24) clampings[0]=-1;
+  else {
+    clampings[0]=WEED_YUV_CLAMPING_CLAMPED;
+    clampings[1]=-1;
+  }
+  return clampings;
 }
 
 boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
@@ -96,9 +111,9 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   }
   else vdevname=strdup("/dev/video1");
 
-  vdevfd=open(vdevname, O_RDONLY);
+  vdevfd=open(vdevname, O_WRONLY);
 
-  if (vdevfd==1) {
+  if (vdevfd==-1) {
     fprintf (stderr, "vloopback output: cannot open %s\n",vdevname);
     return FALSE;
   }
@@ -108,14 +123,16 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     return FALSE;
   }
 
-  x_vidpic.palette=VIDEO_PALETTE_RGB24;
+  if (mypalette==WEED_PALETTE_RGB24) x_vidpic.palette=VIDEO_PALETTE_RGB24;
+  else if (mypalette==WEED_PALETTE_UYVY) x_vidpic.palette=VIDEO_PALETTE_UYVY;
 
   if( ioctl(vdevfd, VIDIOCSPICT, &x_vidpic) == -1) {
     fprintf (stderr, "vloopback output: cannot set palette for %s\n",vdevname);
     return FALSE;
   }
 
-  if( ioctl(vdevfd, VIDIOCGWIN, &x_vidpic) == -1) {
+
+  if( ioctl(vdevfd, VIDIOCGWIN, &x_vidwin) == -1) {
     fprintf (stderr, "vloopback output: cannot get dimensions for %s\n",vdevname);
     return FALSE;
   }
@@ -123,7 +140,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   x_vidwin.width=width;
   x_vidwin.height=height;
 
-  if( ioctl(vdevfd, VIDIOCSWIN, &x_vidpic) == -1) {
+  if( ioctl(vdevfd, VIDIOCSWIN, &x_vidwin) == -1) {
     fprintf (stderr, "vloopback output: cannot set dimensions for %s\n",vdevname);
     return FALSE;
   }
@@ -133,8 +150,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 
 
 boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
-  // hsize and vsize are in pixels (n-byte)
-  size_t frame_size=hsize*vsize*3,bytes;
+  // hsize and vsize are in [macro]pixels (n-byte)
+  size_t frame_size,bytes;
+
+  if (mypalette==WEED_PALETTE_UYVY) frame_size=hsize*vsize*4;
+  else frame_size=hsize*vsize*3;
 
   bytes=write(vdevfd,pixel_data[0],frame_size);
 

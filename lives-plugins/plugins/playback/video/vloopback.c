@@ -92,7 +92,7 @@ boolean set_palette (int palette) {
     mypalette=palette;
     return TRUE;
   }
-p  // invalid palette
+  // invalid palette
   return FALSE;
 }
 

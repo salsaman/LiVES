@@ -396,7 +396,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
   dummyvar=read(fd,&(mainw->vpp->YUV_subspace),sizint);
   dummyvar=read(fd,&(mainw->vpp->fwidth),sizint);
   dummyvar=read(fd,&(mainw->vpp->fheight),sizint);
-  mainw->vpp->fwidth=mainw->vpp->fheight=-1;
+  //mainw->vpp->fwidth=mainw->vpp->fheight=-1;
   dummyvar=read(fd,&(mainw->vpp->fixed_fpsd),sizdbl);
   dummyvar=read(fd,&(mainw->vpp->fixed_fps_numer),sizint);
   dummyvar=read(fd,&(mainw->vpp->fixed_fps_denom),sizint);

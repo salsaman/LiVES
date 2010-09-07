@@ -16,6 +16,7 @@ static int mypalette;
 
 //////////////////////////////////////////////////////////////////
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
@@ -64,7 +65,7 @@ const char *get_rfx (void) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-vdevname|Video _device|string|\"/dev/video1\" \\n\
+vdevname|Video _device|string|\"/dev/video1\"\\n\
 </params> \\n\
 <param_window> \\n\
 special|fileread|0|\\n\
@@ -91,7 +92,7 @@ boolean set_palette (int palette) {
     mypalette=palette;
     return TRUE;
   }
-  // invalid palette
+p  // invalid palette
   return FALSE;
 }
 
@@ -114,7 +115,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   vdevfd=open(vdevname, O_WRONLY);
 
   if (vdevfd==-1) {
-    fprintf (stderr, "vloopback output: cannot open %s\n",vdevname);
+    fprintf (stderr, "vloopback output: cannot open %s %s\n",vdevname,strerror(errno));
     return FALSE;
   }
 

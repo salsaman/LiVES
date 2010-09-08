@@ -1,16 +1,17 @@
-Version 1.3.5
--------------
+Version 1.3.5 (08 Sep 2010)
+---------------------------
 Add basic support for .srt and .sub subtitles. (salsaman & Penkov)
 Fix for ogg/theora decoding.
 Updates for lives_mkv_encoder.
 Fix regressions in some other encoders.
-Fix for multitrack insert.
+Fix for multitrack insert after undo.
 Add new effect "puretext".
 Per key/mode effect defaults.
 Changes to Preferences window (Kolga).
 Record parameter changes in text entry mode.
 Added vloopback playback module.
-Updated translation to Turkish.
+Updated translations to Brazilian Portuguese, Finnish, Japanese, Turkish and 
+Ukranian.
 
 
 

@@ -912,9 +912,14 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
       g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 			G_CALLBACK (on_paramwindow_cancel_clicked2),
 			rfx);
-      g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			G_CALLBACK (rte_set_key_defs),
-			rfx);
+      if (rfx->status==RFX_STATUS_SCRAP)
+	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+			  G_CALLBACK (on_paramwindow_cancel_clicked2),
+			  rfx);
+      else
+	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+			  G_CALLBACK (rte_set_key_defs),
+			  rfx);
       g_signal_connect (GTK_OBJECT (fx_dialog[n]), "delete_event",
 			G_CALLBACK (on_paramwindow_cancel_clicked2),
 			rfx);

@@ -1918,9 +1918,12 @@ void do_threaded_dialog(const gchar *text, gboolean has_cancel) {
   // in addition all calls to weed_set_* must be wrapped, as these can use the slice allocator
   // also weed_plant_new, weed_plant_free
 
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+
+  if (!prefs->show_threaded_dialog) return;
+
   thread_text=g_strdup(text);
   mainw->threaded_dialog=TRUE;
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   clear_mainw_msg();
   if (!has_cancel) pthread_create(&dthread,NULL,dth2,thread_text);
   else pthread_create(&dthread,NULL,dth2_with_cancel,thread_text);
@@ -1933,9 +1936,9 @@ void end_threaded_dialog(void) {
     pthread_join(dthread,NULL);
     if (thread_text!=NULL) g_free(thread_text);
     thread_text=NULL;
-    if (mainw->splash_window==NULL) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-    else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
   }
+  if (mainw->splash_window==NULL) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
   mainw->cancel_type=CANCEL_KILL;
   if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
   else gtk_widget_queue_draw(mainw->multitrack->window);

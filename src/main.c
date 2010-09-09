@@ -238,6 +238,7 @@ static gboolean pre_init(void) {
   palette=(_palette*)(g_malloc(sizeof(_palette)));
 
   prefs->show_gui=TRUE;
+  prefs->show_threaded_dialog=TRUE;
   prefs->sepwin_type=1;
   prefs->show_framecount=TRUE;
   prefs->audio_player=AUD_PLAYER_SOX;
@@ -1644,6 +1645,7 @@ void print_opthelp(void) {
   g_printerr("%s",_("-noset           : do not load any set on startup\n"));
   g_printerr("%s",_("-norecover       : force no-loading of crash recovery\n"));
   g_printerr("%s",_("-recover         : force loading of crash recovery\n"));
+  g_printerr("%s",_("-nothreaddialog  : avoid threaded dialogs\n"));
   g_printerr("%s",_("-nogui           : do not show the gui\n"));
   g_printerr("%s",_("-startup-ce      : start in clip editor mode\n"));
   g_printerr("%s",_("-startup-mt      : start in multitrack mode\n"));
@@ -1939,6 +1941,7 @@ int main (int argc, char *argv[]) {
         {"devicemap", 1, 0, 0},
 	{"recover", 0, 0, 0},
 	{"norecover", 0, 0, 0},
+	{"nothreaddialog", 0, 0, 0},
 	{"nogui", 0, 0, 0},
 	{"startup-ce", 0, 0, 0},
 	{"startup-mt", 0, 0, 0},
@@ -2029,6 +2032,11 @@ int main (int argc, char *argv[]) {
 	if (!strcmp(charopt,"nogui")) {
 	  // force headless mode
 	  prefs->show_gui=FALSE;
+	  continue;
+	}
+	if (!strcmp(charopt,"nogui")) {
+	  // disable threaded dialog
+	  prefs->show_threaded_dialog=FALSE;
 	  continue;
 	}
 #ifdef ENABLE_OSC

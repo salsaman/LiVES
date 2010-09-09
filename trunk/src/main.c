@@ -2034,7 +2034,7 @@ int main (int argc, char *argv[]) {
 	  prefs->show_gui=FALSE;
 	  continue;
 	}
-	if (!strcmp(charopt,"nogui")) {
+	if (!strcmp(charopt,"nothreaddialog")) {
 	  // disable threaded dialog
 	  prefs->show_threaded_dialog=FALSE;
 	  continue;

@@ -2476,7 +2476,7 @@ gboolean resample_clipboard(gdouble new_fps) {
     // clipboard->undo1_dbl will hold resampled fps
 
   }
-  cfile->old_frames=cfile->frames;
+
   mainw->no_switch_dprint=FALSE;
   return TRUE;
 }

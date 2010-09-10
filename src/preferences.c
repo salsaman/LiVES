@@ -1672,7 +1672,6 @@ _prefsw *create_prefs_dialog (void) {
   gboolean pfsm;
 
   gchar *theme;
-  gchar *ofmt_current=NULL;
 
   gboolean has_ap_rec = FALSE;
 
@@ -3242,7 +3241,6 @@ _prefsw *create_prefs_dialog (void) {
 	  array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
 	  if (!strcmp(array[0],prefs->encoder.of_name)) {
 	    prefs->encoder.of_allowed_acodecs=atoi(array[2]);
-	    ofmt_current=g_strdup(array[1]);
 	  } 
 	  ofmt = g_list_append(ofmt, g_strdup(array[1]));
 	  g_strfreev (array);
@@ -3264,8 +3262,7 @@ _prefsw *create_prefs_dialog (void) {
     add_fill_to_box (GTK_BOX (hbox));
     gtk_widget_show_all(hbox);
 
-    set_combo_box_active_string(GTK_COMBO_BOX(prefsw->ofmt_combo), ofmt_current);
-    if (ofmt_current!=NULL) g_free(ofmt_current);
+    set_combo_box_active_string(GTK_COMBO_BOX(prefsw->ofmt_combo), prefs->encoder.of_desc);
 
     prefsw->acodec_combo = gtk_combo_box_new_text();
     prefs->acodec_list=NULL;

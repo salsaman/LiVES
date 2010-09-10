@@ -8493,7 +8493,6 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
       if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
 	array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
 
-	// must match what is in preferences.c and events.c
 	if (!strcmp(array[1],new_fmt)) {
 	  if (prefsw!=NULL) {
 	    g_signal_handler_block(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);

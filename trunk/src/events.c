@@ -4483,7 +4483,6 @@ render_details *create_render_details (gint type) {
   GList *ofmt=NULL;
   int i;
   gchar **array;
-  gchar *ofmt_current=NULL;
 
   gboolean needs_new_encoder=FALSE;
 
@@ -4774,7 +4773,6 @@ render_details *create_render_details (gint type) {
 	    array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
 	    if (!strcmp(array[0],prefs->encoder.of_name)) {
 	      prefs->encoder.of_allowed_acodecs=atoi(array[2]);
-	      ofmt_current=g_strdup(array[1]);
 	    }
 	    ofmt=g_list_append(ofmt,g_strdup(array[1]));
 	    g_strfreev (array);
@@ -4796,8 +4794,7 @@ render_details *create_render_details (gint type) {
   }
 
   populate_combo_box(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt);
-  set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt_current);
-  if (ofmt_current!=NULL) g_free(ofmt_current);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->ofmt_combo), 0);
 
   g_list_free_strings(ofmt);
   g_list_free(ofmt);
@@ -4827,7 +4824,7 @@ render_details *create_render_details (gint type) {
   }
   else {
     g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
-    set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo), prefs->encoder.of_name);
+    set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo), prefs->encoder.of_desc);
     g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
     check_encoder_restrictions(TRUE,FALSE);

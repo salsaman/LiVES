@@ -1973,9 +1973,8 @@ on_cut_activate                       (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
-						gpointer         user_data)
+void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
+						     gpointer         user_data)
 {
   gchar *com;
   gchar *msg;
@@ -2004,19 +2003,33 @@ on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
 
+  mainw->no_switch_dprint=TRUE;
+  msg=g_strdup_printf (_ ("Pasting %d frames to new clip %s..."),cfile->frames,cfile->name);
+  d_print (msg);
+  g_free (msg);
+  mainw->no_switch_dprint=FALSE;
+
   com=g_strdup_printf("smogrify insert %s %s 0 1 %d %s %d 0 0 0 %.3f %d %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->frames, clipboard->handle, mainw->ccpd_with_sound, clipboard->fps, clipboard->arate, clipboard->achans, clipboard->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
   
+  cfile->nopreview=TRUE;
   dummyvar=system(com);
   // show a progress dialog, not cancellable
-  do_progress_dialog(TRUE,FALSE,_ ("Pasting"));
+  if (!do_progress_dialog(TRUE,TRUE,_ ("Pasting"))) {
+    g_free(com);
+    close_current_file(old_file);
+    return;
+  }
+  cfile->nopreview=FALSE;
+
   g_free(com);
-  
+
   if (mainw->ccpd_with_sound) {
     cfile->arate=clipboard->arate;
     cfile->arps=clipboard->arps;
     cfile->achans=clipboard->achans;
     cfile->asampsize=clipboard->asampsize;
     cfile->afilesize=clipboard->afilesize;
+    if (cfile->afilesize>0) d_print(_("...added audio..."));
   }
 
   // add entry to window menu
@@ -2025,9 +2038,10 @@ on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
   save_clip_values(current_file);
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
   switch_to_file((mainw->current_file=old_file),current_file);
-  msg=g_strdup_printf (_ ("Pasted %d frames to new clip.\n"),cfile->frames);
-  d_print (msg);
-  g_free (msg);
+  d_print_done();
+
+  mainw->last_dprint_file=old_file;
+  d_print(""); // force switchtext
 
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");

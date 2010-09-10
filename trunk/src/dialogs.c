@@ -1927,6 +1927,7 @@ void do_threaded_dialog(const gchar *text, gboolean has_cancel) {
   clear_mainw_msg();
   if (!has_cancel) pthread_create(&dthread,NULL,dth2,thread_text);
   else pthread_create(&dthread,NULL,dth2_with_cancel,thread_text);
+  sched_yield();
 }
 
 

@@ -2524,7 +2524,7 @@ create_cfile(void) {
   // any cfile (clip) initialisation goes in here
   cfile->menuentry=NULL;
   cfile->start=cfile->end=0;
-  cfile->frames=0;
+  cfile->old_frames=cfile->frames=0;
   g_snprintf(cfile->type,40,"%s",_ ("Unknown"));
   cfile->f_size=0l;
   cfile->achans=0;
@@ -2535,7 +2535,7 @@ create_cfile(void) {
   cfile->undoable=FALSE;
   cfile->redoable=FALSE;
   cfile->changed=FALSE;
-  cfile->hsize=cfile->vsize=0;
+  cfile->hsize=cfile->vsize=cfile->ohsize=cfile->ovsize=0;
   cfile->fps=cfile->pb_fps=prefs->default_fps;
   cfile->events[0]=NULL;
   cfile->insert_start=cfile->insert_end=0;

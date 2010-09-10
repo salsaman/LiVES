@@ -511,7 +511,8 @@ void d_print(const gchar *text) {
       gtk_text_buffer_insert(gtk_text_view_get_buffer (GTK_TEXT_VIEW (mainw->textview1)),&end_iter,switchtext,-1);
       g_free (switchtext);
     }
-    if (mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR) mainw->last_dprint_file=mainw->current_file;
+    if ((mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&
+	(!mainw->no_switch_dprint||mainw->current_file!=0)) mainw->last_dprint_file=mainw->current_file;
     gtk_text_buffer_get_end_iter(gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1)),&end_iter);
     mark=gtk_text_buffer_create_mark(gtk_text_view_get_buffer (GTK_TEXT_VIEW (mainw->textview1)),NULL,&end_iter,FALSE);
     gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW (mainw->textview1),mark);

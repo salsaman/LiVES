@@ -1323,10 +1323,14 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 
   mainw->osc_block=TRUE;
 
+  d_print("");
+
   if (menuitem!=NULL) {
     get_menu_text (mainw->undo,msg);
+    mainw->no_switch_dprint=TRUE;
     d_print(msg);
     d_print ("...");
+    mainw->no_switch_dprint=FALSE;
   }
 
   // TODO - maybe use a switch()
@@ -1629,7 +1633,9 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (menuitem!=NULL) {
+    mainw->no_switch_dprint=TRUE;
     d_print_done();
+    mainw->no_switch_dprint=FALSE;
   }
 
   if (cfile->undo_action==UNDO_RESAMPLE) {
@@ -1708,16 +1714,22 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
   gtk_widget_set_sensitive(mainw->undo,TRUE);
   gtk_widget_set_sensitive(mainw->redo,FALSE);
 
+  d_print("");
+
   if (menuitem!=NULL) {
     get_menu_text (mainw->redo,msg);
+    mainw->no_switch_dprint=TRUE;
     d_print(msg);
     d_print ("...");
+    mainw->no_switch_dprint=FALSE;
   }
 
   if (cfile->undo_action==UNDO_INSERT_SILENCE) {
     on_ins_silence_activate (NULL,NULL);
     mainw->osc_block=FALSE;
+    mainw->no_switch_dprint=TRUE;
     d_print_done();
+    mainw->no_switch_dprint=FALSE;
     sensitize();
     return;
   }
@@ -1911,7 +1923,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   mainw->current_file=current_file;
 
   //set all clipboard details
-  clipboard->frames=clipboard->end;
+  clipboard->frames=clipboard->old_frames=clipboard->end;
   clipboard->hsize=cfile->hsize;
   clipboard->vsize=cfile->vsize;
   clipboard->bpp=cfile->bpp;
@@ -2308,13 +2320,16 @@ on_insert_activate                    (GtkButton     *button,
   // if pref is set, resample clipboard video
   if (prefs->ins_resample&&cfile->fps!=clipboard->fps&&orig_frames>0) {
     cb_video_change=TRUE;
-    if (!resample_clipboard(cfile->fps)) return;
   }
+
+  d_print(""); // force switchtext
+  if (!resample_clipboard(cfile->fps)) return;
 
   if (mainw->fx1_bool&&(cfile->asampsize*cfile->arate*cfile->achans)) {
     times_to_insert=(times_to_insert*cfile->fps-cfile->frames)/clipboard->frames;
   }
   switch_to_file(0,current_file);
+
   if (cb_end>clipboard->frames) {
     cb_end=clipboard->frames;
   }
@@ -2341,7 +2356,6 @@ on_insert_activate                    (GtkButton     *button,
 
   if (!mainw->insert_after&&remainder_frames>0) {
     msg=g_strdup_printf(_ ("Inserting %d%s frames from the clipboard..."),remainder_frames,times_to_insert>1.?" remainder":"");
-    d_print(""); // force switchtext
     d_print(msg);
     g_free(msg);
 
@@ -2435,7 +2449,9 @@ on_insert_activate                    (GtkButton     *button,
     if (cb_video_change) {
       // desample clipboard video
       mainw->current_file=0;
+      mainw->no_switch_dprint=TRUE;
       on_undo_activate(NULL,NULL);
+      mainw->no_switch_dprint=FALSE;
       mainw->current_file=current_file;
     }
     
@@ -2571,10 +2587,12 @@ on_insert_activate                    (GtkButton     *button,
     }
   }
   else cfile->undo_action=UNDO_INSERT;
-  
+
   if (cb_video_change) {
     mainw->current_file=0;
+    mainw->no_switch_dprint=TRUE;
     on_undo_activate(NULL,NULL);
+    mainw->no_switch_dprint=FALSE;
     mainw->current_file=current_file;
   }
 

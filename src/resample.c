@@ -44,7 +44,8 @@ LIVES_INLINE weed_timecode_t q_dbl (gdouble in, gdouble fps) {
 
 LIVES_INLINE gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps) {
   gint res_frames;
-  return ((res_frames=(gint)((gdouble)in_frames/orig_fps*resampled_fps+.49999))<1)?1:res_frames;
+  if (resampled_fps<orig_fps) return ((res_frames=(gint)((gdouble)in_frames/orig_fps*resampled_fps))<1)?1:res_frames;
+  else return ((res_frames=(gint)((gdouble)in_frames/orig_fps*resampled_fps+.49999))<1)?1:res_frames;
 }
 
 /////////////////////////////////////////////////////
@@ -2400,27 +2401,36 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
 gboolean resample_clipboard(gdouble new_fps) {
   // resample the clipboard video - if we already did it once, it is
   // quicker the second time
-  gchar *msg;
+  gchar *msg,*com;
   gint current_file=mainw->current_file;
 
-  if (new_fps==clipboard->fps) return TRUE;
+  mainw->no_switch_dprint=TRUE;
 
-  if (clipboard->undo1_dbl==cfile->fps&&!prefs->conserve_space) {
-    gint old_frames=clipboard->old_frames;
+  if (clipboard->undo1_dbl==new_fps&&!prefs->conserve_space) {
+    gint new_frames;
     gdouble old_fps=clipboard->fps;
-    gchar *com;
-    
+
+    if (new_fps==clipboard->fps) {
+      mainw->no_switch_dprint=FALSE;
+      return TRUE;
+    }
+
     // we already resampled to this fps
+    new_frames=count_resampled_frames(clipboard->frames,clipboard->fps,new_fps);
+
     mainw->current_file=0;
-    com=g_strdup_printf("smogrify redo %s %d %d %s",cfile->handle,1,cfile->old_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+
+    // copy .mgk to .img_ext and .img_ext to .bak (i.e redo the resample)
+    com=g_strdup_printf("smogrify redo %s %d %d %s",cfile->handle,1,new_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     unlink(cfile->info_file);
     dummyvar=system(com);
     cfile->progress_start=1;
-    cfile->progress_end=cfile->old_frames;
+    cfile->progress_end=new_frames;
+    cfile->old_frames=cfile->frames;
     // show a progress dialog, not cancellable
     do_progress_dialog(TRUE,FALSE,_ ("Resampling clipboard video"));
     g_free(com);
-    cfile->frames=old_frames;
+    cfile->frames=new_frames;
     cfile->undo_action=UNDO_RESAMPLE;
     cfile->fps=cfile->undo1_dbl;
     cfile->undo1_dbl=old_fps;
@@ -2430,16 +2440,43 @@ gboolean resample_clipboard(gdouble new_fps) {
     mainw->current_file=current_file;
   }
   else {
-    clipboard->undo1_dbl=cfile->fps;
+    if (clipboard->undo1_dbl<clipboard->fps) {
+      gint old_frames=count_resampled_frames(clipboard->frames,clipboard->fps,clipboard->undo1_dbl);
+      mainw->current_file=0;
+      com=g_strdup_printf("smogrify undo %s %d %d %s",cfile->handle,old_frames+1,cfile->frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+      unlink(cfile->info_file);
+      dummyvar=system(com);
+      cfile->progress_start=old_frames+1;
+      cfile->progress_end=cfile->frames;
+      // show a progress dialog, not cancellable
+      do_progress_dialog(TRUE,FALSE,_ ("Resampling clipboard video"));
+      g_free(com);
+    }
+
+    // resample to cfile fps
+    mainw->current_file=current_file;
+    clipboard->undo1_dbl=new_fps;
+
+    if (new_fps==clipboard->fps) {
+      mainw->no_switch_dprint=FALSE;
+      return TRUE;
+    }
+
     mainw->current_file=0;
     on_resample_vid_ok(NULL,NULL);
     mainw->current_file=current_file;
-    if (clipboard->fps!=cfile->fps) {
+    if (clipboard->fps!=new_fps) {
       d_print (_ ("resampling error..."));
       mainw->error=1;
+      mainw->no_switch_dprint=FALSE;
       return FALSE;
     }
+    // clipboard->fps now holds new_fps, clipboard->undo1_dbl holds orig fps
+    // BUT we will later undo this, then clipboard->fps will hold orig fps, 
+    // clipboard->undo1_dbl will hold resampled fps
+
   }
-  clipboard->old_frames=clipboard->frames;
+  cfile->old_frames=cfile->frames;
+  mainw->no_switch_dprint=FALSE;
   return TRUE;
 }

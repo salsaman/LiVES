@@ -348,10 +348,13 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
+  mainw->current_file=new_file;
+
   filename=g_strdup_printf("%s/stream.yuv",prefs->tmpdir);
   mkfifo(filename,S_IRUSR|S_IWUSR);
 
   if (!open_yuv4m_inner(filename,fname,new_file,YUV4_TYPE_GENERIC,0)) {
+    close_current_file(old_file);
     g_free(filename);
     g_free(fname);
     return;

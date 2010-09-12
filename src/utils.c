@@ -1365,7 +1365,7 @@ get_play_times(void) {
       GTK_RULER (mainw->hruler)->upper=cfile->total_time;
       gtk_widget_queue_draw(mainw->hruler);
 
-      draw_little_bars();
+      draw_little_bars(cfile->pointer_time);
       if (mainw->playing_file==-1&&prefs->sepwin_type==1&&mainw->sep_win&&cfile->is_loaded) {
 	if (mainw->preview_box==NULL) {
 	  // create the preview box that shows frames
@@ -1440,6 +1440,11 @@ get_play_times(void) {
       gtk_widget_hide (mainw->raudbar);
     }
   }
+  else {
+    gdouble ptrtime=mainw->actual_frame>0?
+      calc_time_from_frame(mainw->current_file,mainw->actual_frame):0;
+    draw_little_bars(ptrtime);
+  }
   gtk_widget_queue_draw(mainw->video_draw);
   gtk_widget_queue_draw(mainw->laudio_draw);
   gtk_widget_queue_draw(mainw->raudio_draw);
@@ -1448,22 +1453,22 @@ get_play_times(void) {
 }
     
 
-void 
-draw_little_bars (void) {
-  //draw the vertical bars when we are not playing
+void draw_little_bars (gdouble ptrtime) {
+  //draw the vertical player bars
   gdouble allocheight=mainw->video_draw->allocation.height-prefs->bar_height;
-  gdouble offset=cfile->pointer_time/cfile->total_time*mainw->vidbar->allocation.width;
+  gdouble offset=ptrtime/cfile->total_time*mainw->vidbar->allocation.width;
   gint frame;
 
   if (!prefs->show_gui) return;
 
   if (pthread_mutex_trylock(&mainw->gtk_mutex)) return;
 
-  if (!(frame=calc_frame_from_time(mainw->current_file,cfile->pointer_time))) frame=cfile->frames;
+  if (!(frame=calc_frame_from_time(mainw->current_file,ptrtime)))
+   frame=cfile->frames;
 
   if (cfile->frames>0) {
-    if (frame>=cfile->start&&frame<=cfile->end) {
-      if (mainw->video_drawable!=NULL) {
+    if (mainw->video_drawable!=NULL) {
+      if (frame>=cfile->start&&frame<=cfile->end) {
 	gdk_draw_line (mainw->video_drawable,
 		       mainw->video_draw->style->black_gc,
 		       offset, 0,
@@ -1494,6 +1499,9 @@ draw_little_bars (void) {
       }
     }
   }
+
+  if (mainw->playing_file>-1) return;
+
   if (cfile->achans>0) {
     if (mainw->laudio_drawable!=NULL) {
       if ((frame>=cfile->start&&frame<=cfile->end)||mainw->loop) {

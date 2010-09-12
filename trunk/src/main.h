@@ -933,7 +933,7 @@ gint verhash (gchar *version);
 void set_undoable (const gchar *what, gboolean sensitive);
 void set_redoable (const gchar *what, gboolean sensitive);
 void zero_spinbuttons (void);
-void draw_little_bars (void);
+void draw_little_bars (gdouble ptrtime);
 void set_sel_label (GtkWidget *label);
 void clear_mainw_msg (void);
 gint get_token_count (const gchar *string, int delim);

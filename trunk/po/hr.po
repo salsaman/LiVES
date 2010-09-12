@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-09-11 14:22-0300\n"
+"POT-Creation-Date: 2010-09-11 14:39-0300\n"
 "PO-Revision-Date: 2010-06-09 04:41+0000\n"
 "Last-Translator: nafterburner <nafterburner@gmail.com>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -8752,8 +8752,9 @@ msgid "Despeckling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "Dream"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
@@ -8931,12 +8932,14 @@ msgid "Hue _end"
 msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _start"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue change"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -8944,8 +8947,9 @@ msgid "Hue end"
 msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue start"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Image overlay"
@@ -8988,8 +8992,9 @@ msgid "Making monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9005,8 +9010,9 @@ msgid "Negate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negating"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -9044,8 +9050,9 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
@@ -9087,8 +9094,9 @@ msgid "Resize All Frames"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "Rotate Clip"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
@@ -9105,12 +9113,14 @@ msgid "Saturation _end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation change"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Saturation end"
@@ -9121,8 +9131,9 @@ msgid "Saturation start"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "Sepia"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Shift horizontally"
@@ -9203,8 +9214,9 @@ msgid "Swirl s_tep"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -9328,8 +9340,9 @@ msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Fade start"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9462,8 +9475,9 @@ msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "_Random colour each frame"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9488,8 +9502,9 @@ msgid "_Sigma end"
 msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma start"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "_Skip ahead"
@@ -9554,8 +9569,9 @@ msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "_Wavemax"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -9636,8 +9652,9 @@ msgid "colour_filter"
 msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -9692,8 +9709,9 @@ msgid "frame_calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "gamma_change"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -9701,8 +9719,9 @@ msgid "gen_blank_frames"
 msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "gen_clip_from_image"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -9752,8 +9771,9 @@ msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -9804,8 +9824,9 @@ msgid "solarize"
 msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "spin"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -9813,8 +9834,9 @@ msgid "spread"
 msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "swirl"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
@@ -9846,8 +9868,9 @@ msgid "tunnel"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "wave"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/bin/smogrify:0
 msgid "Unable to open output file !"

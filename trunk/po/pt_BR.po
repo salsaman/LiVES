@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-09-11 14:22-0300\n"
+"POT-Creation-Date: 2010-09-11 14:39-0300\n"
 "PO-Revision-Date: 2010-08-22 04:07+0000\n"
 "Last-Translator: feen <Unknown>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -10399,12 +10399,14 @@ msgid "_Number of frames"
 msgstr "_Número de frames"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset X"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset Y"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Other Center"
@@ -10688,8 +10690,9 @@ msgid "hue_change"
 msgstr "hue_change"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Sobreposição de texto"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"

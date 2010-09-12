@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-09-11 14:22-0300\n"
+"POT-Creation-Date: 2010-09-11 14:39-0300\n"
 "PO-Revision-Date: 2010-05-14 21:38+0000\n"
 "Last-Translator: Marek Jędrzejewski <slomianowlosy@gmail.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -9445,8 +9445,9 @@ msgid "_Frames"
 msgstr "_Klatki"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "_Uruchom"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"

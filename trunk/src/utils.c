@@ -1441,8 +1441,8 @@ get_play_times(void) {
     }
   }
   else {
-    gdouble ptrtime=mainw->actual_frame>0?
-      calc_time_from_frame(mainw->current_file,mainw->actual_frame):0;
+    gdouble ptrtime=(mainw->actual_frame-.5)/cfile->fps;
+    if (ptrtime<0.) ptrtime=0.;
     draw_little_bars(ptrtime);
   }
   gtk_widget_queue_draw(mainw->video_draw);

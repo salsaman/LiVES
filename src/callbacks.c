@@ -3930,6 +3930,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   }
   else if (!check_for_lock_file(mainw->set_name,0)) {
     memset(mainw->set_name,0,1);
+    pthread_mutex_lock(&mainw->gtk_mutex);
+    d_print_failed();
+    pthread_mutex_unlock(&mainw->gtk_mutex);
     return TRUE;
   }
 

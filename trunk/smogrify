@@ -1805,7 +1805,7 @@ if (defined($ARGV[0])) {
 	    $from_handle=$handle;
 	    $curtmpdir=$linksdir;
 
-	    &insert_audio($asamps,$achans,$asigned,$aendian);
+	    &insert_audio($asamps,$achans,$asigned,$aendian,0);
 	
 	    $curtmpdir=$ocurtmpdir;
 	    $from_handle=$ofrom_handle;
@@ -2348,7 +2348,7 @@ if (defined($ARGV[0])) {
 	$end=$audio_end-$audio_start;
 	$start=0;
 	# insert_audio will insert silence at start
-	&insert_audio($asamps,$achans,$asigned,$aendian);
+	&insert_audio($asamps,$achans,$asigned,$aendian,1);
 	unlink $audio_out;
 	&append_silence(0,&align($audio_end*$arate*$align),$asamps,$achans,$asigned,$aendian);
 
@@ -2701,7 +2701,11 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "insert") {
-	# with_audio == 2 means undo delete audio
+	# with_audio: 0, no audio, 1 video and audio, 2 ONLY audio
+	# for 0 and 1, start, end, where are in frames; for 2, start,end,where are in seconds
+	# with -ve arate means insert silence [with_audio should be 1 or 2]
+	# with -ve times means undo cut/delete [source is same clip dir]
+
 	unlink "$curtmpdir/pause";
 	$img_ext=".".$ARGV[2];
 	$where=$ARGV[3];
@@ -2741,9 +2745,6 @@ if (defined($ARGV[0])) {
 	    $img_ext2=&get_img_ext("$tmpdir/$from_handle",$start);
 	    &insert;
 	}
-	else {
-	    $audio_from="$curtmpdir/audio.bak";
-	}
 
 	if ($with_audio) {
 	    $fps=$ARGV[11];
@@ -2753,26 +2754,33 @@ if (defined($ARGV[0])) {
 	    $asigned=$ARGV[15];
 	    $aendian=$ARGV[16];
 
-	    if ($undo_cut==0) {
-		$end/=$fps;
-		$start=($start-1.)/$fps;
+	    if (!$undo_cut) {
+		if ($with_audio<2) {
+		    $end/=$fps;
+		    $start=($start-1.)/$fps;
+		    $where/=$fps;
+		}
 
-		$where/=$fps;
 		if (-f "audio") {
 		    system("cp audio audio.bak");
 		    `sync;sync;sync`;
 		}
 	    }
-	    elsif ($with_audio<2) {
-                $end=-s "audio.bak";
+	    else {
+                $end=-s "$curtmpdir/audio.bak";
+		print "11end here is $end\n";
                 $end/=$arate*$achans*$asamps/8;
                 $start=0.;
-                $where/=$fps;
+		if ($with_audio<2) {
+		    $where/=$fps;
+		}
+		print "end here is $end\n";
 	    }
-	    &insert_audio($asamps,$achans,$asigned,$aendian);
+
+	    &insert_audio($asamps,$achans,$asigned,$aendian,$undo_cut);
 	}
 
-	if ($undo_cut==1) {
+	if ($undo_cut) {
 	    &clean_old;
 	}
 
@@ -3935,11 +3943,12 @@ sub clip_audio {
     my ($size)=($epos-$spos);
 
     if ($size>0) {
-	$fblocks=int($size/32);
-	$rblocks=$size-($fblocks*32);
 	unlink $audio_out;
-	system("dd if=$audio_in of=$audio_out bs=32 count=$fblocks skip=".int($spos/32)." >/dev/null 2>&1");
-	system("dd if=$audio_in of=$audio_out bs=1 count=$rblocks skip=".($spos+$fblocks*32)." seek=".($fblocks*32)." >/dev/null 2>&1");
+
+	$fdd_in=$audio_in;
+	$fdd_out=$audio_out;
+
+	&fast_dd($size,$spos,0);
     }
 
     `sync;sync;sync`;
@@ -4031,7 +4040,7 @@ sub insert_audio {
 
     #if $arate<0, we will insert silence
 
-    my ($xxsamps,$xxchans,$xxsigned,$xxendian)=@_;
+    my ($xxsamps,$xxchans,$xxsigned,$xxendian,$needstemp)=@_;
 
     if ($achans==0) {
 	return;
@@ -4045,7 +4054,7 @@ sub insert_audio {
 
     my ($audio_to)="$curtmpdir/audio";
     if (defined($from_handle)) {
-	if ($undo_cut>0) {
+	if ($undo_cut) {
 	    $audio_from="$tmpdir/$from_handle/audio.bak";
 	}
 	else {
@@ -4065,11 +4074,11 @@ sub insert_audio {
 
     $align=$achans*$asamps/8;
 
-    $spos=&align($arate*$align*$start);
+    $ospos=$spos=&align($arate*$align*$start);
     $oepos=$epos=&align($arate*$align*$end);
-    $wpos=&align($arate*$align*$where);
+    $owpos=$wpos=&align($arate*$align*$where);
 
-    if ($silence==0) {
+    if (!$silence) {
 	$fsize=&align(-s $audio_from);
 	if ($epos>$fsize) {
 	    $epos=$fsize;
@@ -4081,17 +4090,21 @@ sub insert_audio {
 
 
     # step 1 - move end to temp
-    $fsize=-s $audio_to;
-
-    my ($size)=$fsize-$wpos;
-    if ($size>0) {
-	$fblocks=int($size/32);
-	$rblocks=$size-($fblocks*32);
-	system("dd if=$audio_to of=$audio_temp bs=32 count=$fblocks skip=".int($wpos/32)." >/dev/null 2>&1");
-	system("dd if=$audio_to of=$audio_temp bs=1 count=$rblocks skip=".($wpos+$fblocks*32)." seek=".($fblocks*32)." >/dev/null 2>&1");
+    # we can omit this if not undo_cut as we have audio.bak
+    if ($needstemp) {
+	$fsize=-s $audio_to;
+	
+	my ($size)=$fsize-$wpos;
+	if ($size>0) {
+	    $fdd_in=$audio_to;
+	    $fdd_out=$audio_temp;
+	    
+	    &fast_dd($size,$wpos,0);
+	}
     }
 
     # step 2 - insert new section (possibly multiple times)
+    $audio_file=$audio_to;
 
 
     # pad with silence to insertion point
@@ -4113,14 +4126,13 @@ sub insert_audio {
 	if ($size>0) {
 	    if ($silence) {
 		$fsize=-s $audio_to;
-		$fsize=&align($fsize-$nwpos);
-		&append_silence($fsize,$fsize+$size,$xxsamps,$xxchans,$xxsigned,$xxendian);
+		$fsize=&align($fsize-$nwpos); #becomes offset
+		&append_silence($fsize,$nwpos+$size,$xxsamps,$xxchans,$xxsigned,$xxendian);
 	    }
 	    else {
-		$fblocks=int($size/32);
-		$rblocks=$size-($fblocks*32);
-		system("dd if=$xaudio_from of=$audio_to bs=32 count=$fblocks skip=".int($nspos/32)." seek=".int($nwpos/32)." >/dev/null 2>&1");
-		system("dd if=$xaudio_from of=$audio_to bs=1 count=$rblocks skip=".($nspos+$fblocks*32)." seek=".($nwpos+$fblocks*32)." >/dev/null 2>&1");
+		$fdd_in=$xaudio_from;
+		$fdd_out=$audio_to;
+		&fast_dd($size,$nspos,$nwpos);
 	    }
 	}
 	
@@ -4166,15 +4178,27 @@ sub insert_audio {
 ####################################################
 
     #step 3 - copy end back after insertion
-    $size=&align(-s $audio_temp);
-    if ($size>0) {
-	$fblocks=int($size/32);
-	$rblocks=$size-($fblocks*32);
-	system("dd if=$audio_temp of=$audio_to bs=32 count=$fblocks seek=".int(($nwpos)/32)." >/dev/null 2>&1");
-	system("dd if=$audio_temp of=$audio_to bs=1 count=$rblocks skip=".($fblocks*32)." seek=".($nwpos+$fblocks*32)." >/dev/null 2>&1");
+    if ($needstemp) {
+	$size=&align(-s $audio_temp);
+	if ($size>0) {
+	    $fdd_in=$audio_temp;
+	    $fdd_out=$audio_to;
+	    
+	    &fast_dd($size,0,$nwpos);
+	}
+	
+	unlink $audio_temp;
+    }
+    else {
+	# copy from audio.bak to output
+	my ($audio_bak)="$curtmpdir/audio.bak";
+	$fdd_in=$audio_bak;
+	$fdd_out=$audio_to;
+	$size=-s $audio_bak;
+	$size=&align($size-$owpos);
+	&fast_dd($size,$owpos,$nwpos);
     }
 
-    unlink $audio_temp;
     `sync;sync;sync`;
 }
 
@@ -4200,6 +4224,7 @@ sub cut_audio {
     unlink $audio_bak;
 
     if ($end==0.) {
+	#delete all audio
 	rename ($audio_in,$audio_bak);
     }
     else {
@@ -4224,20 +4249,20 @@ sub cut_audio {
 	my ($size)=$spos;
 	
 	if ($size>0) {
-	    $fblocks=int($size/32);
-	    $rblocks=$size-($fblocks*32);
-	    system("dd if=$audio_in of=$audio_temp bs=32 count=$fblocks >/dev/null 2>&1");
-	    system("dd if=$audio_in of=$audio_temp bs=1 count=$rblocks skip=".($fblocks*32)." seek=".($fblocks*32)." >/dev/null 2>&1");
+	    $fdd_in=$audio_in;
+	    $fdd_out=$audio_temp;
+
+	    &fast_dd($size,0,0);
 	}
 	
 	#step 2
 	$size=($epos-$spos);
 	
 	if ($size>0) {
-	    $fblocks=int($size/32);
-	    $rblocks=$size-($fblocks*32);
-	    system("dd if=$audio_in of=$audio_bak bs=32 skip=".int($spos/32)." count=$fblocks >/dev/null 2>&1");
-	    system("dd if=$audio_in of=$audio_bak bs=1 count=$rblocks skip=".($spos+$fblocks*32)." seek=".($fblocks*32)." >/dev/null 2>&1");
+	    $fdd_in=$audio_in;
+	    $fdd_out=$audio_bak;
+
+	    &fast_dd($size,$spos,0);
 	}
 	
 	
@@ -4247,10 +4272,10 @@ sub cut_audio {
 	$size=($epos-$spos);
 	
 	if ($size>0) {
-	    $fblocks=int($size/32);
-	    $rblocks=$size-($fblocks*32);
-	    system("dd if=$audio_in of=$audio_temp bs=32 count=$fblocks skip=".int($spos/32)." seek=".int($seekstart/32)." >/dev/null 2>&1");
-	    system("dd if=$audio_in of=$audio_temp bs=1 count=$rblocks skip=".($spos+$fblocks*32)." seek=".($seekstart+$fblocks*32)." >/dev/null 2>&1");
+	    $fdd_in=$audio_in;
+	    $fdd_out=$audio_temp;
+
+	    &fast_dd($size,$spos,$seekstart);
 	}
 	
 	# step 4
@@ -4258,7 +4283,6 @@ sub cut_audio {
 	rename "$audio_temp", "$audio_in";
     }
     `sync;sync;sync`;
-
 }
 
 
@@ -4284,19 +4308,20 @@ sub append_silence {
 	`touch $audio_file; chmod 600 $audio_file`;
     }
 
-    my ($fsize)= -s $audio_file;
+    my $fsize= -s $audio_file;
     $fsize=&align($fsize-$offset);
-    $size=&align($end-$fsize);
+    my $size=&align($end-$fsize);
 
     if ($size>0) {
 	if ($asigned==1) {
-	    $fblocks=int($size/32);
-	    $rblocks=$size-($fblocks*32);
-	    system("dd if=/dev/zero of=$audio_file bs=32 count=$fblocks seek=".int($fsize/32)." >/dev/null 2>&1");
-	    system("dd if=/dev/zero of=$audio_file bs=1 count=$rblocks seek=".($fsize+$fblocks*32)." >/dev/null 2>&1");
+	    $fdd_in="/dev/zero";
+	    $fdd_out=$audio_file;
+
+	    &fast_dd($size,0,$fsize);
 	}
 	else {
-	    open AUD,"+>$audio_file";
+	    `touch $audio_file`;
+	    open AUD,"+<$audio_file";
 	    seek AUD,-$offset,SEEK_END;
 	    if ($asamps==8) {
 		for ($i=0;$i<$size;$i++) {
@@ -5070,6 +5095,36 @@ sub rc_get {
     return $string;
 }
 
+
+sub fast_dd {
+    # copy size bytes from $fdd_in to $fdd_out - skip $skip bytes in input and $seek bytes in output
+    # no truncation is done
+    my ($size,$skip,$seek)=@_;
+
+    my $fblocks=int($size/512);
+    my $rbytes=$size-$fblocks*512;
+
+    my $data,$i;
+
+    open FFIN,"<$fdd_in";
+    seek FFIN,$skip,SEEK_START;
+
+    `touch $fdd_out`;
+
+    open FFOUT,"+<$fdd_out";
+    seek FFOUT,$seek,SEEK_START;
+
+    for ($i=0;$i<$fblocks;$i++) {
+	read FFIN,$data,512;
+	print FFOUT $data;
+    }
+
+    read FFIN,$data,$rbytes;
+    print FFOUT $data;
+
+    close FFOUT;
+    close FFIN;
+}
 
 
 sub count_frames {

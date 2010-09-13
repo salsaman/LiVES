@@ -1358,12 +1358,16 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 
     if (cfile->undo_action==UNDO_DELETE_AUDIO) {
       if (cfile->undo1_dbl==cfile->undo2_dbl&&cfile->undo1_dbl==0.) {
+	// undo delete_all_audio
 	reset_achans=cfile->undo_achans;
 	com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
       }
+      // undo delete selected audio
+      // (set with with_audio==2 [audio only],therfore start,end,where are is secs.; times==-1)
       else com=g_strdup_printf("smogrify insert %s %s %.8f 0. %.8f %s 2 0 0 0 0 %d %d %d %d %d -1",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->undo1_dbl,cfile->undo2_dbl-cfile->undo1_dbl, cfile->handle, cfile->arps, cfile->achans, cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
     }
     else {
+      // undo cut or delete (times to insert is -1)
       cfile->undo1_boolean&=mainw->ccpd_with_sound;
       com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d 0 0 %.3f %d %d %d %d %d -1",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->undo_start-1,cfile->undo_start,cfile->undo_end,cfile->handle, cfile->undo1_boolean, cfile->frames, cfile->fps, cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
 
@@ -2373,7 +2377,7 @@ on_insert_activate                    (GtkButton     *button,
     d_print(msg);
     g_free(msg);
 
-    com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, clipboard->frames-remainder_frames+1, clipboard->frames, clipboard->handle, 0, cfile->frames, hsize, vsize);
+    com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d %d %d %.3f %d %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, clipboard->frames-remainder_frames+1, clipboard->frames, clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), !(cfile->signed_endian&AFORM_BIG_ENDIAN));
     
     cfile->progress_start=1;
     cfile->progress_end=remainder_frames;
@@ -2505,7 +2509,7 @@ on_insert_activate                    (GtkButton     *button,
     d_print(msg);
     g_free(msg);
 
-    com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, 1, remainder_frames, clipboard->handle, 0, cfile->frames, hsize, vsize);
+    com=g_strdup_printf("smogrify insert %s %s %d %d %d %s %d %d %d %d %3f %d %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, 1, remainder_frames, clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), !(cfile->signed_endian&AFORM_BIG_ENDIAN ));
     
     cfile->progress_start=1;
     cfile->progress_end=remainder_frames;
@@ -9495,7 +9499,8 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
   cfile->undo2_dbl=end;
   end*=(gdouble)cfile->arate/(gdouble)cfile->arps;
 
-  com=g_strdup_printf("smogrify insert %s %s %.8f 0. %.8f %s 2 0 0 0 0 %d %d %d %d %d -1",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", start, end-start, cfile->handle, -cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), !(cfile->signed_endian&AFORM_BIG_ENDIAN));
+  // with_sound is 2 (audio only), therfore start, end, where, are in seconds. rate is -ve to indicate silence
+  com=g_strdup_printf("smogrify insert %s %s %.8f 0. %.8f %s 2 0 0 0 0 %d %d %d %d %d",cfile->handle, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", start, end-start, cfile->handle, -cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), !(cfile->signed_endian&AFORM_BIG_ENDIAN));
 
   unlink (cfile->info_file);
   dummyvar=system (com);

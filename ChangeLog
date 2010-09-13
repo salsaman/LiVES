@@ -1,6 +1,9 @@
-Version 1.3.7
--------------
+Version 1.3.7 (13 Sep 2010)
+---------------------------
 Fix regression in Insert Silence.
+Optimise audio insert/delete.
+Updated translation to Estonian.
+
 
 
 

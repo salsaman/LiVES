@@ -32,7 +32,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 # Do not change these except for testing !
 
 $background=1;
-$version="1.3.7-svn";
+$version="1.3.7";
 #$dyneversion="LIVES-20091209";
 
 
@@ -5098,7 +5098,7 @@ sub fast_dd {
 
     my $data,$i;
 
-    if ($size<0) return;
+    return if ($size<0);
 
     open FFIN,"<$fdd_in";
     seek FFIN,$skip,SEEK_START;

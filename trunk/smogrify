@@ -4078,16 +4078,6 @@ sub insert_audio {
     $oepos=$epos=&align($arate*$align*$end);
     $owpos=$wpos=&align($arate*$align*$where);
 
-    if (!$silence) {
-	$fsize=&align(-s $audio_from);
-	if ($epos>$fsize) {
-	    $epos=$fsize;
-	}
-	if ($spos>$epos) {
-	    $spos=$epos;
-	}
-    }
-
 
     # step 1 - move end to temp
     # we can omit this if not undo_cut as we have audio.bak
@@ -4192,11 +4182,13 @@ sub insert_audio {
     else {
 	# copy from audio.bak to output
 	my ($audio_bak)="$curtmpdir/audio.bak";
-	$fdd_in=$audio_bak;
-	$fdd_out=$audio_to;
 	$size=-s $audio_bak;
 	$size=&align($size-$owpos);
-	&fast_dd($size,$owpos,$nwpos);
+	if ($size>0) {
+	    $fdd_in=$audio_bak;
+	    $fdd_out=$audio_to;
+	    &fast_dd($size,$owpos,$nwpos);
+	}
     }
 
     `sync;sync;sync`;
@@ -5105,6 +5097,8 @@ sub fast_dd {
     my $rbytes=$size-$fblocks*512;
 
     my $data,$i;
+
+    if ($size<0) return;
 
     open FFIN,"<$fdd_in";
     seek FFIN,$skip,SEEK_START;

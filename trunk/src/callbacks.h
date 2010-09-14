@@ -707,6 +707,8 @@ gboolean storeclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType,
 
 gboolean nervous_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
+gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number);
+
 void on_save_set_activate (GtkMenuItem *, gpointer user_data);
 
 void on_save_set_ok (void);

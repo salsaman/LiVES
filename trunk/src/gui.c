@@ -2197,6 +2197,8 @@ create_LiVES (void)
 
   gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_n, 0, 0, g_cclosure_new (G_CALLBACK (nervous_callback),NULL,NULL));
 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_w, 0, 0, g_cclosure_new (G_CALLBACK (show_sync_callback),NULL,NULL));
+
   if (FN_KEYS>0) {
     gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F1, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (1),NULL));
     if (FN_KEYS>1) {

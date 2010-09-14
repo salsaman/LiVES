@@ -845,6 +845,8 @@ void save_file (gboolean existing, gchar *n_file_name) {
   struct stat filestat;
   time_t file_mtime=0;
 
+  gulong fsize;
+
   // new handling for save selection:
   // symlink images 1 - n to the encoded frames
   // symlinks are now created in /tmp (for dynebolic)
@@ -1466,6 +1468,13 @@ void save_file (gboolean existing, gchar *n_file_name) {
   if (not_cancelled) {
     mainw->no_switch_dprint=TRUE;
     d_print_done();
+
+    // get size of file and show it
+
+    fsize=sget_file_size(full_file_name);
+    mesg=g_strdup_printf(_("File size was %.2fMB\n"),(gdouble)fsize/1000000.);
+    d_print(mesg);
+    g_free(mesg);
 
     if (mainw->subt_save_file!=NULL) {
       save_subs_to_file(cfile,mainw->subt_save_file);

@@ -8241,7 +8241,51 @@ gboolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkM
 
 gboolean nervous_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number)
 {
+  if (mainw->multitrack!=NULL) return FALSE;
   mainw->nervous=!mainw->nervous;
+  return TRUE;
+}
+
+
+gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number)
+{
+  gdouble avsync;
+  gchar *msg;
+
+  gint last_dprint_file;
+
+  if (mainw->playing_file<0) return FALSE;
+
+  if (cfile->frames==0||cfile->achans==0) return FALSE;
+
+  if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+    if (mainw->jackd!=NULL&&mainw->jackd->in_use) avsync=(gdouble)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8;
+    else return FALSE;
+#else
+    return FALSE;
+#endif
+  }
+
+  if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed!=NULL&&mainw->pulsed->in_use) avsync=(gdouble)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8;
+    else return FALSE;
+#else
+    return FALSE;
+#endif
+  }
+  else return FALSE;
+
+  avsync-=(mainw->actual_frame-1.)/cfile->fps;
+
+  msg=g_strdup_printf(_("Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"),avsync,mainw->actual_frame,cfile->pb_fps);
+  last_dprint_file=mainw->last_dprint_file;
+  mainw->no_switch_dprint=TRUE;
+  d_print(msg);
+  mainw->no_switch_dprint=FALSE;
+  mainw->last_dprint_file=last_dprint_file;
+  g_free(msg);
   return TRUE;
 }
 

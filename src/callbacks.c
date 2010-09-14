@@ -8975,7 +8975,7 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
 
   aud_fade(mainw->current_file,startt,endt,startv,endv);
   audio_free_fnames();
-  sleep(2);
+  sleep(1);
   end_threaded_dialog();
   d_print_done();
 

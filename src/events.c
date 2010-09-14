@@ -3203,7 +3203,7 @@ gint render_events (gboolean reset) {
 	  cfile->arate=cfile->undo_arate;
 	  cfile->arps=cfile->undo_arps;
 	  cfile->asampsize=cfile->undo_asampsize;
-	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, NULL, NULL, atime*U_SEC, tc+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
+	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
 	}
       }
 
@@ -3245,7 +3245,8 @@ gint render_events (gboolean reset) {
 		cfile->arate=cfile->undo_arate;
 		cfile->arps=cfile->undo_arps;
 		cfile->asampsize=cfile->undo_asampsize;
-		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), tc+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
+
+		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
 		for (i=0;i<natracks;i++) {
 		  if (xaclips[i]>0) {
 		    xaseek[i]+=(tc/U_SEC+1./cfile->fps-atime)*xavel[i];

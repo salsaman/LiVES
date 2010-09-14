@@ -3102,6 +3102,13 @@ gint render_events (gboolean reset) {
     out_frame=(gint)((gdouble)(get_event_timecode (event)/U_SECL)*cfile->fps+1.);
     if (cfile->frames<out_frame) out_frame=cfile->frames+1;
     cfile->undo_start=out_frame;
+
+    // store this, because if the user previews and there is no audio file yet, achans will get reset
+    cfile->undo_achans=cfile->achans;
+    cfile->undo_arate=cfile->arate;
+    cfile->undo_arps=cfile->arps;
+    cfile->undo_asampsize=cfile->asampsize;
+
     clear_mainw_msg();
     mainw->filter_map=NULL;
     for (i=0;i<65536;i++) {
@@ -3192,6 +3199,10 @@ gint render_events (gboolean reset) {
       else {
 	if (has_audio&&!weed_plant_has_leaf(event,"audio_clips")) {
 	  // pad to end with silence
+	  cfile->achans=cfile->undo_achans;
+	  cfile->arate=cfile->undo_arate;
+	  cfile->arps=cfile->undo_arps;
+	  cfile->asampsize=cfile->undo_asampsize;
 	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, NULL, NULL, atime*U_SEC, tc+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
 	}
       }
@@ -3230,6 +3241,10 @@ gint render_events (gboolean reset) {
 	      }
 
 	      if (tc/U_SEC>atime) {
+		cfile->achans=cfile->undo_achans;
+		cfile->arate=cfile->undo_arate;
+		cfile->arps=cfile->undo_arps;
+		cfile->asampsize=cfile->undo_asampsize;
 		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), tc+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
 		for (i=0;i<natracks;i++) {
 		  if (xaclips[i]>0) {

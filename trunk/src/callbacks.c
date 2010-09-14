@@ -8962,6 +8962,11 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
 
   desensitize();
   do_threaded_dialog(_("Fading audio..."),FALSE);
+
+  pthread_mutex_lock(&mainw->gtk_mutex);
+  while (g_main_context_iteration(NULL,FALSE));
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+
   if (!prefs->conserve_space) {
     com=g_strdup_printf("smogrify backup_audio %s",cfile->handle);
     dummyvar=system(com);
@@ -8970,7 +8975,7 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
 
   aud_fade(mainw->current_file,startt,endt,startv,endv);
   audio_free_fnames();
-  sleep(5);
+  sleep(2);
   end_threaded_dialog();
   d_print_done();
 

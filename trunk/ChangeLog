@@ -4,7 +4,7 @@ Fix possible crash on startup bug.
 Further audio insert/delete optimisations.
 Fix bug - audio rendering can be affected by preview.
 Quantise audio rendering to output frame rate.
-
+Add key "w" to show a/v sync statistics.
 
 
 

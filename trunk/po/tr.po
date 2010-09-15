@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-09-13 10:27-0300\n"
+"POT-Creation-Date: 2010-09-15 11:53-0300\n"
 "PO-Revision-Date: 2010-07-08 16:09+0000\n"
 "Last-Translator: linuxseven <linuxseven@mynet.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -610,8 +610,8 @@ msgstr "kayıt %9d/%d"
 msgid "!rec %9d/%d"
 msgstr "!kayıt %9d/%d"
 
-#: src/main.c:3517 src/main.c:3518 src/gui.c:1937 src/gui.c:2920
-#: src/saveplay.c:1625
+#: src/main.c:3517 src/main.c:3518 src/gui.c:1937 src/gui.c:2922
+#: src/saveplay.c:1634
 msgid "Play"
 msgstr "Oynat"
 
@@ -629,12 +629,12 @@ msgid "Closed file %s\n"
 msgstr "Dosya kapandı %s\n"
 
 #: src/main.c:4131 src/gui.c:529 src/utils.c:2563 src/utils.c:2589
-#: src/saveplay.c:2594 src/multitrack.c:3839 src/multitrack.c:5308
+#: src/saveplay.c:2603 src/multitrack.c:3839 src/multitrack.c:5308
 msgid "_Undo"
 msgstr "_Geri Al"
 
 #: src/main.c:4132 src/gui.c:542 src/utils.c:2564 src/utils.c:2590
-#: src/saveplay.c:2595 src/multitrack.c:3860 src/multitrack.c:5331
+#: src/saveplay.c:2604 src/multitrack.c:3860 src/multitrack.c:5331
 msgid "_Redo"
 msgstr "_Yinele"
 
@@ -985,8 +985,8 @@ msgstr "Deinterlace uygula"
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
-#: src/interface.c:188 src/callbacks.c:7666 src/gui.c:2923 src/gui.c:3467
-#: src/saveplay.c:1628 src/saveplay.c:2237 src/dialogs.c:788 src/dialogs.c:789
+#: src/interface.c:188 src/callbacks.c:7666 src/gui.c:2925 src/gui.c:3469
+#: src/saveplay.c:1637 src/saveplay.c:2246 src/dialogs.c:788 src/dialogs.c:789
 #: src/dialogs.c:956 src/dialogs.c:957 src/framedraw.c:189
 #: src/multitrack.c:6810
 msgid "Preview"
@@ -1693,7 +1693,7 @@ msgstr "Ayarları sil"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr ""
 
-#: src/callbacks.c:1341 src/callbacks.c:9510
+#: src/callbacks.c:1341 src/callbacks.c:9559
 msgid "Insert Silence"
 msgstr "Sessiz ekle"
 
@@ -1732,8 +1732,8 @@ msgstr "Yineleniyor"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1887 src/saveplay.c:1002 src/saveplay.c:1120
-#: src/saveplay.c:1177 src/saveplay.c:2943
+#: src/callbacks.c:1887 src/saveplay.c:1004 src/saveplay.c:1122
+#: src/saveplay.c:1179 src/saveplay.c:2952
 msgid "Pulling frames from clip"
 msgstr "Klipten çerçeveler alınıyor"
 
@@ -1792,7 +1792,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2208 src/callbacks.c:9463
+#: src/callbacks.c:2208 src/callbacks.c:9512
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -1860,8 +1860,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2672 src/callbacks.c:8814 src/callbacks.c:9013
-#: src/callbacks.c:9073
+#: src/callbacks.c:2672 src/callbacks.c:8858 src/callbacks.c:9062
+#: src/callbacks.c:9122
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -1875,7 +1875,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2704 src/callbacks.c:9057
+#: src/callbacks.c:2704 src/callbacks.c:9106
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2146,7 +2146,7 @@ msgid "Opening audio"
 msgstr "Ses açılıyor"
 
 #: src/callbacks.c:5046 src/callbacks.c:5077 src/callbacks.c:6608
-#: src/callbacks.c:6639 src/callbacks.c:6677 src/callbacks.c:8754
+#: src/callbacks.c:6639 src/callbacks.c:6677 src/callbacks.c:8798
 msgid "Cancelling"
 msgstr "İptal ediliyor"
 
@@ -2155,8 +2155,8 @@ msgstr "İptal ediliyor"
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/callbacks.c:5102 src/callbacks.c:6698 src/callbacks.c:8771
-#: src/callbacks.c:9381
+#: src/callbacks.c:5102 src/callbacks.c:6698 src/callbacks.c:8815
+#: src/callbacks.c:9430
 msgid "Committing audio"
 msgstr ""
 
@@ -2201,7 +2201,7 @@ msgstr "Oynatma penceresini göster (s)"
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:5980 src/gui.c:3449
+#: src/callbacks.c:5980 src/gui.c:3451
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Oynatma Penceresi"
 
@@ -2218,11 +2218,11 @@ msgstr ""
 msgid "Audio volume (%.2f)"
 msgstr "Ses hacmi (%.2f)"
 
-#: src/callbacks.c:6183 src/callbacks.c:6184 src/gui.c:3369
+#: src/callbacks.c:6183 src/callbacks.c:6184 src/gui.c:3371
 msgid "Unmute the audio (z)"
 msgstr "Sesi kesme (z)"
 
-#: src/callbacks.c:6195 src/callbacks.c:6196 src/gui.c:1671 src/gui.c:3368
+#: src/callbacks.c:6195 src/callbacks.c:6196 src/gui.c:1671 src/gui.c:3370
 msgid "Mute the audio (z)"
 msgstr "Sesi kes (z)"
 
@@ -2342,7 +2342,12 @@ msgstr "İptal"
 msgid "Save Frame as %s..."
 msgstr ""
 
-#: src/callbacks.c:8312
+#: src/callbacks.c:8282
+#, c-format
+msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
+msgstr ""
+
+#: src/callbacks.c:8356
 msgid ""
 "\n"
 "\n"
@@ -2350,13 +2355,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:8383 src/callbacks.c:9299
+#: src/callbacks.c:8427 src/callbacks.c:9348
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
 msgstr ""
 
-#: src/callbacks.c:8394
+#: src/callbacks.c:8438
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2365,17 +2370,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:8399
+#: src/callbacks.c:8443
 msgid "External window was released.\n"
 msgstr ""
 
-#: src/callbacks.c:8420
+#: src/callbacks.c:8464
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
 
-#: src/callbacks.c:8440
+#: src/callbacks.c:8484
 #, c-format
 msgid ""
 "\n"
@@ -2385,19 +2390,19 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:8462
+#: src/callbacks.c:8506
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 
-#: src/callbacks.c:8605
+#: src/callbacks.c:8649
 msgid "Export Selected Audio as..."
 msgstr ""
 
-#: src/callbacks.c:8608
+#: src/callbacks.c:8652
 msgid "Export Audio as..."
 msgstr ""
 
-#: src/callbacks.c:8647
+#: src/callbacks.c:8691
 msgid ""
 "\n"
 "\n"
@@ -2406,118 +2411,118 @@ msgid ""
 "rate.\n"
 msgstr ""
 
-#: src/callbacks.c:8653
+#: src/callbacks.c:8697
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr ""
 
-#: src/callbacks.c:8658
+#: src/callbacks.c:8702
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr ""
 
-#: src/callbacks.c:8670
+#: src/callbacks.c:8714
 msgid "Exporting audio"
 msgstr "Ses dışa aktarılıyor"
 
-#: src/callbacks.c:8702
+#: src/callbacks.c:8746
 msgid "Append Audio File..."
 msgstr ""
 
-#: src/callbacks.c:8741
+#: src/callbacks.c:8785
 #, c-format
 msgid "Appending audio file %s..."
 msgstr ""
 
-#: src/callbacks.c:8748
+#: src/callbacks.c:8792
 msgid "Appending audio"
 msgstr "ses ekleniyor"
 
-#: src/callbacks.c:8787
+#: src/callbacks.c:8831
 msgid "Append Audio"
 msgstr "Ses ekle"
 
-#: src/callbacks.c:8842
+#: src/callbacks.c:8886
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8849
+#: src/callbacks.c:8893
 msgid "Trimming/Padding audio"
 msgstr "Ses Kırpılıyor/Dolgulanıyor"
 
-#: src/callbacks.c:8853
+#: src/callbacks.c:8897
 msgid "Trim/Pad Audio"
 msgstr "Ses Kırp/Dolgu"
 
-#: src/callbacks.c:8927
+#: src/callbacks.c:8971
 msgid "Fading audio in"
 msgstr ""
 
-#: src/callbacks.c:8928
+#: src/callbacks.c:8972
 msgid "Fade audio in"
 msgstr ""
 
-#: src/callbacks.c:8933
+#: src/callbacks.c:8977
 msgid "Fading audio out"
 msgstr ""
 
-#: src/callbacks.c:8934
+#: src/callbacks.c:8978
 msgid "Fade audio out"
 msgstr ""
 
-#: src/callbacks.c:8955
+#: src/callbacks.c:8999
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8957
+#: src/callbacks.c:9001
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8964
+#: src/callbacks.c:9008
 msgid "Fading audio..."
 msgstr ""
 
-#: src/callbacks.c:9042
+#: src/callbacks.c:9091
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
 "Are you sure ?"
 msgstr ""
 
-#: src/callbacks.c:9045
+#: src/callbacks.c:9094
 msgid "Deleting all audio..."
 msgstr "Tüm sesler siliniyor..."
 
-#: src/callbacks.c:9051
+#: src/callbacks.c:9100
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:9122
+#: src/callbacks.c:9171
 msgid "Deleting Audio"
 msgstr "Ses siliniyor"
 
-#: src/callbacks.c:9125
+#: src/callbacks.c:9174
 msgid "Delete Audio"
 msgstr "Sesi sil"
 
-#: src/callbacks.c:9409
+#: src/callbacks.c:9458
 msgid "Record new audio"
 msgstr "Yeni ses kaydet"
 
-#: src/callbacks.c:9491
+#: src/callbacks.c:9540
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:9507
+#: src/callbacks.c:9556
 msgid "Inserting Silence"
 msgstr ""
 
-#: src/callbacks.c:9600
+#: src/callbacks.c:9649
 #, c-format
 msgid ""
 "\n"
@@ -3289,11 +3294,11 @@ msgstr ""
 msgid "                                                            "
 msgstr "                                                            "
 
-#: src/gui.c:1921 src/gui.c:2918
+#: src/gui.c:1921 src/gui.c:2920
 msgid "First Frame"
 msgstr "İlk Kare"
 
-#: src/gui.c:1990 src/gui.c:2927
+#: src/gui.c:1990 src/gui.c:2929
 msgid "Last Frame"
 msgstr "Son Çerçeve"
 
@@ -3305,85 +3310,85 @@ msgstr ""
 msgid "The last selected frame in this clip"
 msgstr ""
 
-#: src/gui.c:2252
+#: src/gui.c:2254
 msgid "Starting...\n"
 msgstr "Başlatılıyor ...\n"
 
-#: src/gui.c:2793
+#: src/gui.c:2795
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 "    Kayıt durdurmak için 'q'  tuşuna bas. OYNATMA PENCERESİNİ KAPATMAYIN !   "
 
-#: src/gui.c:3170
+#: src/gui.c:3172
 msgid "Frame number to preview"
 msgstr "Önizleme için çerçeve sayısı"
 
-#: src/gui.c:3186
+#: src/gui.c:3188
 msgid "_Free"
 msgstr "_Serbest"
 
-#: src/gui.c:3191
+#: src/gui.c:3193
 msgid "Free choice of frame number"
 msgstr "Çerçeve sayısı özgür seçim"
 
-#: src/gui.c:3216
+#: src/gui.c:3218
 msgid "_Start"
 msgstr "_Başlat"
 
-#: src/gui.c:3221
+#: src/gui.c:3223
 msgid "Frame number is linked to start frame"
 msgstr ""
 
-#: src/gui.c:3247
+#: src/gui.c:3249
 msgid "_End"
 msgstr "_Son"
 
-#: src/gui.c:3252
+#: src/gui.c:3254
 msgid "Frame number is linked to end frame"
 msgstr ""
 
-#: src/gui.c:3278
+#: src/gui.c:3280
 msgid "_Pointer"
 msgstr "_İşaretçi"
 
-#: src/gui.c:3283
+#: src/gui.c:3285
 msgid "Frame number is linked to playback pointer"
 msgstr ""
 
-#: src/gui.c:3316
+#: src/gui.c:3318
 msgid "Rewind"
 msgstr "Geriye Sar"
 
-#: src/gui.c:3327 src/dialogs.c:363 src/dialogs.c:365 src/dialogs.c:1013
+#: src/gui.c:3329 src/dialogs.c:363 src/dialogs.c:365 src/dialogs.c:1013
 #: src/dialogs.c:1015
 msgid "Play all"
 msgstr "Tümünü oynat"
 
-#: src/gui.c:3338
+#: src/gui.c:3340
 msgid "Play Selection"
 msgstr "Seçimi oynat"
 
-#: src/gui.c:3350
+#: src/gui.c:3352
 msgid "Loop On/Off"
 msgstr "Döngüyü Aç/Kapat"
 
-#: src/gui.c:3408
+#: src/gui.c:3410
 msgid "Start _recording"
 msgstr "_Kaydı başlat"
 
-#: src/gui.c:3414
+#: src/gui.c:3416
 msgid "Stop _recording"
 msgstr "_Kaydı durdur"
 
-#: src/gui.c:3420
+#: src/gui.c:3422
 msgid "_Record Performance"
 msgstr "_Kayıt Performansı"
 
-#: src/gui.c:3496
+#: src/gui.c:3498
 msgid "Hide Play Window"
 msgstr "Oynatma Penceresini Gizle"
 
-#: src/gui.c:3753
+#: src/gui.c:3755
 msgid "Show Play Window"
 msgstr "Oynatma Penceresini Göster"
 
@@ -3622,7 +3627,7 @@ msgstr "%s açılıyor"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:191 src/saveplay.c:2931
+#: src/saveplay.c:191 src/saveplay.c:2940
 msgid " without sound"
 msgstr " sessiz"
 
@@ -3682,7 +3687,7 @@ msgstr ""
 msgid "Subtitles were saved as %s\n"
 msgstr ""
 
-#: src/saveplay.c:929
+#: src/saveplay.c:931
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3690,37 +3695,37 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:984
+#: src/saveplay.c:986
 msgid "selection"
 msgstr "seleksiyon"
 
-#: src/saveplay.c:1043 src/saveplay.c:1147
+#: src/saveplay.c:1045 src/saveplay.c:1149
 msgid "Linking selection"
 msgstr "seçimi bağlama"
 
-#: src/saveplay.c:1194
+#: src/saveplay.c:1196
 msgid " (with no sound)\n"
 msgstr " (sessiz)\n"
 
-#: src/saveplay.c:1202
+#: src/saveplay.c:1204
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1205
+#: src/saveplay.c:1207
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1307
+#: src/saveplay.c:1309
 msgid "Saving [can take a long time]"
 msgstr "Kaydetmek [Uzun bir zaman alabilir]"
 
-#: src/saveplay.c:1343
+#: src/saveplay.c:1345
 msgid "error.\n"
 msgstr "hata.\n"
 
-#: src/saveplay.c:1402
+#: src/saveplay.c:1404
 msgid ""
 "\n"
 "\n"
@@ -3730,24 +3735,29 @@ msgstr ""
 "\n"
 "Kodlama hatası - çıktı dosyası oluşturulamadı!\n"
 
-#: src/saveplay.c:1553
+#: src/saveplay.c:1475
+#, fuzzy, c-format
+msgid "File size was %.2fMB\n"
+msgstr "Dosya boyutu"
+
+#: src/saveplay.c:1562
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1557
+#: src/saveplay.c:1566
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1560
+#: src/saveplay.c:1569
 msgid "Recording performance..."
 msgstr "Kayıt performansı ..."
 
-#: src/saveplay.c:2397
+#: src/saveplay.c:2406
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Ortalama  FPS %.4f\n"
 
-#: src/saveplay.c:2403
+#: src/saveplay.c:2412
 msgid ""
 "\n"
 "\n"
@@ -3756,16 +3766,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2528
+#: src/saveplay.c:2537
 msgid "Unknown"
 msgstr "Bilinmeyen"
 
-#: src/saveplay.c:2623
+#: src/saveplay.c:2632
 #, c-format
 msgid "Untitled%d"
 msgstr "Adsız Belge%d"
 
-#: src/saveplay.c:2738
+#: src/saveplay.c:2747
 #, c-format
 msgid ""
 "\n"
@@ -3777,68 +3787,68 @@ msgstr ""
 "fps \n"
 "Ön tanımlılar Araçlar | Tercihler | Çeşitli menüsünden ayarlanabilir.\n"
 
-#: src/saveplay.c:2750
+#: src/saveplay.c:2759
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2766
+#: src/saveplay.c:2775
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2770 src/saveplay.c:3388
+#: src/saveplay.c:2779 src/saveplay.c:3397
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2774 src/saveplay.c:3392
+#: src/saveplay.c:2783 src/saveplay.c:3401
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2777 src/saveplay.c:3395
+#: src/saveplay.c:2786 src/saveplay.c:3404
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2785
+#: src/saveplay.c:2794
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Yorum: %s\n"
 
-#: src/saveplay.c:2861
+#: src/saveplay.c:2870
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2926
+#: src/saveplay.c:2935
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2962
+#: src/saveplay.c:2971
 msgid "Backing up"
 msgstr "Yedekleniyor"
 
-#: src/saveplay.c:2993
+#: src/saveplay.c:3002
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3299
+#: src/saveplay.c:3308
 #, c-format
 msgid "Restoring %s..."
 msgstr "Yeniden Yükleniyor %s..."
 
-#: src/saveplay.c:3318
+#: src/saveplay.c:3327
 msgid "Restoring"
 msgstr "Yeniden Yükleniyor"
 
-#: src/saveplay.c:3340
+#: src/saveplay.c:3349
 #, c-format
 msgid ""
 "\n"
@@ -3847,17 +3857,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3758
+#: src/saveplay.c:3767
 #, c-format
 msgid "rec %.2f MB"
 msgstr "kayıt %.2f MB"
 
-#: src/saveplay.c:3762
+#: src/saveplay.c:3771
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!kayıt %.2f MB"
 
-#: src/saveplay.c:3785
+#: src/saveplay.c:3794
 #, c-format
 msgid ""
 "\n"
@@ -3868,7 +3878,7 @@ msgstr ""
 "KAYIT DONDURULDU ÇÜNKÜ BOŞ DİSK ALANI DÜŞÜK %ld GB !\n"
 "Tercihler menüsünden kayıt durdurma seviyesi ayarlanabilir.\n"
 
-#: src/saveplay.c:3901
+#: src/saveplay.c:3910
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -3878,11 +3888,11 @@ msgstr ""
 "LiVES ın bir önceki çalışmasından dosyalar bulundu.\n"
 "Onları kurtarmak için istiyor musunuz?\n"
 
-#: src/saveplay.c:3914
+#: src/saveplay.c:3923
 msgid "Recovering files"
 msgstr "Dosyalar kurtarılıyor"
 
-#: src/saveplay.c:3918
+#: src/saveplay.c:3927
 msgid "Recovering files..."
 msgstr "Dosyalar kurtarılıyor..."
 
@@ -5057,7 +5067,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:2942
+#: src/plugins.c:2944
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s gelişmiş ayarlar"
@@ -5784,12 +5794,12 @@ msgstr ""
 msgid "_Apply Real Time Effects to Selection"
 msgstr ""
 
-#: src/rfx-builder.c:4700
+#: src/rfx-builder.c:4702
 #, c-format
 msgid "Loading rendered effect %s..."
 msgstr ""
 
-#: src/rfx-builder.c:4800
+#: src/rfx-builder.c:4803
 msgid ""
 "See: VJ - show VJ keys. Set the realtime effects, and then apply them here."
 msgstr ""

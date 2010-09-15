@@ -4659,6 +4659,8 @@ void add_rfx_effects(void) {
   rendered_fx[0].status=RFX_STATUS_WEED;
   rendered_fx[0].is_template=FALSE;
   rendered_fx[0].min_frames=1;
+  rendered_fx[0].source=NULL;
+  rendered_fx[0].source_type=LIVES_RFX_SOURCE_RFX;
 
   if (rfx_list_length) {
     gchar *plugin_name;
@@ -4750,6 +4752,7 @@ void add_rfx_effects(void) {
 	rfx->is_template=FALSE;
 	rfx->params=NULL;
 	rfx->source=NULL;
+	rfx->source_type=LIVES_RFX_SOURCE_RFX;
 	rfx->extra=NULL;
 	rfx->is_template=FALSE;
 	if (!check_rfx_for_lives (rfx)) rfx_slot_count--;

@@ -2236,6 +2236,8 @@ void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, gboolean full) {
   dest->num_in_channels=src->num_in_channels;
   dest->status=src->status;
   dest->props=src->props;
+  dest->source_type=src->source_type;
+  dest->source=src->source;
   dest->is_template=src->is_template;
   w_memcpy(dest->delim,src->delim,2);
   if (!full) return;
@@ -2266,7 +2268,7 @@ void rfx_free(lives_rfx_t *rfx) {
   if (rfx->extra!=NULL) {
     free(rfx->extra);
   }
-  if (rfx->source_type==LIVES_RFX_SOURCE_WEED) {
+  if (rfx->source_type==LIVES_RFX_SOURCE_WEED&&rfx->source!=NULL) {
     weed_instance_unref(rfx->source);
   }
 }

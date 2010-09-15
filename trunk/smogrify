@@ -32,7 +32,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 # Do not change these except for testing !
 
 $background=1;
-$version="1.3.8-svn";
+$version="1.3.8";
 #$dyneversion="LIVES-20091209";
 
 
@@ -4272,8 +4272,13 @@ sub cut_audio {
 	
 	# step 4
 	unlink $audio_in;
-	rename "$audio_temp", "$audio_in";
+	rename $audio_temp, $audio_in;
     }
+
+    if (-z $audio_in) {
+	unlink $audio_in;
+    }
+
     `sync;sync;sync`;
 }
 
@@ -5093,12 +5098,14 @@ sub fast_dd {
     # no truncation is done
     my ($size,$skip,$seek)=@_;
 
-    my $fblocks=int($size/512);
-    my $rbytes=$size-$fblocks*512;
+    return if ($size<0);
+
+    my $bs=4096; # block size
+
+    my $fblocks=int($size/$bs);
+    my $rbytes=$size-$fblocks*$bs;
 
     my $data,$i;
-
-    return if ($size<0);
 
     open FFIN,"<$fdd_in";
     seek FFIN,$skip,SEEK_START;
@@ -5109,12 +5116,18 @@ sub fast_dd {
     seek FFOUT,$seek,SEEK_START;
 
     for ($i=0;$i<$fblocks;$i++) {
-	read FFIN,$data,512;
+	read FFIN,$data,$bs;
 	print FFOUT $data;
     }
 
-    read FFIN,$data,$rbytes;
-    print FFOUT $data;
+    while ($rbytes>0) {
+	$bs/=2;
+	if ($rbytes>=$bs) {
+	    read FFIN,$data,$bs;
+	    print FFOUT $data;
+	    $rbytes-=$bs;
+	}
+    }
 
     close FFOUT;
     close FFIN;

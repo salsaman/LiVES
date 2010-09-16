@@ -3899,11 +3899,9 @@ void splash_end(void) {
     
   if (mainw->splash_window!=NULL) {
 
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    gtk_widget_destroy(mainw->splash_window);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-    
     end_threaded_dialog();
+    
+    gtk_widget_destroy(mainw->splash_window);
     
     mainw->splash_window=NULL;
   }

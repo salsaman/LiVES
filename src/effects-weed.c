@@ -4818,10 +4818,10 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
   gboolean was_started=FALSE;
   gint modekey=key;
   gchar *tmp;
-
+  
   if (key_to_fx[key][mode]==-1) return FALSE;
 
-  free_key_defaults(key,mode);
+  if (key<FX_KEYS_MAX_VIRTUAL) free_key_defaults(key,mode);
 
   for (;mode<MAX_MODES_PER_KEY;mode++) {
 
@@ -6751,9 +6751,13 @@ void write_key_defaults(int fd, gint key, gint mode) {
 void free_key_defaults(gint key, gint mode) {
   // free key/mode param defaults
   weed_plant_t *filter;
-  weed_plant_t **key_defs=key_defaults[key][mode];
+  weed_plant_t **key_defs;
   int i=0;
   int nparams;
+
+  if (key>=FX_KEYS_MAX_VIRTUAL||mode>=MAX_MODES_PER_KEY) return;
+
+  key_defs=key_defaults[key][mode];
 
   if (key_defs==NULL) return;
 

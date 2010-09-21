@@ -912,6 +912,9 @@ typedef struct {
 
   gchar *subt_save_file; // name of file to save subtitles to
 
+  gchar **fonts_array;
+  gint nfonts;
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

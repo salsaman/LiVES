@@ -350,6 +350,8 @@ lives_exit (void) {
 
   end_threaded_dialog();
 
+  if (mainw->fonts_array!=NULL) g_strfreev(mainw->fonts_array);
+
 #ifdef ENABLE_NLS
   if (trString!=NULL) g_free(trString);
 #endif

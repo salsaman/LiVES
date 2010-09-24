@@ -315,6 +315,26 @@ fi
 AM_CONDITIONAL(HAVE_SDL,$HAVE_SDL)
 AM_CONDITIONAL(FORCE_SDL,$FORCE_SDL)
 
+
+dnl check for gavl
+HAVE_GAVL=false
+PKG_CHECK_MODULES(GAVL,gavl >= 1.1.2,HAVE_GAVL=true,HAVE_GAVL=false)
+AC_SUBST(GAVL_CFLAGS)
+AC_SUBST(GAVL_LIBS)
+
+AM_CONDITIONAL(HAVE_GAVL,$HAVE_GAVL)
+
+
+dnl check for gmerlin-avdecoder
+HAVE_GMERLIN_AVDEC=false
+PKG_CHECK_MODULES(GMERLIN_AVDEC,gmerlin_avdec >= 1.0.3,HAVE_GMERLIN_AVDEC=true,HAVE_GMERLIN_AVDEC=false)
+AC_SUBST(GMERLIN_AVDEC_CFLAGS)
+AC_SUBST(GMERLIN_AVDEC_LIBS)
+
+AM_CONDITIONAL(HAVE_GMERLIN_AVDEC,$HAVE_GMERLIN_AVDEC)
+
+
+
 HAVE_MJPEGTOOLS=false
 AC_ARG_ENABLE( mjpegtools, [  --disable-mjpegtools    Disable mjpegtools (yuv4mpeg) support.] , disable_mjpegtools=yes)
 if test "x$disable_mjpegtools" != "xyes" ; then

@@ -48,6 +48,20 @@ endif
 #libzz_avformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVFORMAT_LIBS)
 #endif
 
-decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(avformat_libs) 
+
+if HAVE_GAVL
+if HAVE_GMERLIN_AVDEC
+
+gmerlin_libs = zz_gmerlin_decoder.la
+zz_gmerlin_decoder_la_SOURCES = gmerlin_decoder.c gmerlin_decoder.h
+zz_gmerlin_decoder_la_CFLAGS = $(shared_cflags) $(GAVL_CFLAGS) $(GMERLIN_AVDEC_CFLAGS)
+zz_gmerlin_decoder_la_LDFLAGS = $(shared_ldflags) $(GAVL_LIBS) $(GMERLIN_AVDEC_LIBS)
+
+endif
+endif
+
+
+
+decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(avformat_libs) $(gmerlin_libs)
 
 EXTRA_DIST = decplugin.h

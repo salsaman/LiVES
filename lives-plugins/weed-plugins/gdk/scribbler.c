@@ -256,7 +256,7 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
           if((num_fonts_available) && (fontnum >= 0) && (fontnum < num_fonts_available) && (fonts_available[fontnum]))
             pango_font_description_set_family(font, fonts_available[fontnum]);
 
-          pango_font_description_set_absolute_size(font, font_size*PANGO_SCALE);
+          pango_font_description_set_size(font, font_size*PANGO_SCALE);
 
           pango_layout_set_font_description(layout, font);
           pango_layout_set_text(layout, text, -1);

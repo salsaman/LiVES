@@ -336,18 +336,11 @@ static void setxypos(double dwidth, double dheight, double x, double y, int *x_t
 }
 
 
-static void rotate_text(cairo_t *cairo, PangoLayout *layout, int x_center, int y_center, double radians) {
-  cairo_translate (cairo, x_center, y_center);
-  cairo_rotate (cairo, radians);
-  
-  /* Inform Pango to re-layout the text with the new transformation */
-  pango_cairo_update_layout (cairo, layout);
-}
 
 
-    // set font size
-void set_font_size(PangoLayout *layout, PangoFontDescription *font, int font_size) {
-  pango_font_description_set_absolute_size(font, font_size*PANGO_SCALE);
+// set font size
+static void set_font_size(PangoLayout *layout, PangoFontDescription *font, int font_size) {
+  pango_font_description_set_size(font, font_size*PANGO_SCALE);
   pango_layout_set_font_description(layout, font);
 }
 
@@ -952,7 +945,7 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 	result = pl_pixbuf_to_channel(out_channel, pixbuf_new);
 	g_object_unref(pixbuf_new);
       }
-      cairo_destroy(cairo);
+
     }
     g_object_unref(pixmap);
   }

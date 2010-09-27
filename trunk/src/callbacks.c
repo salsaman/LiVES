@@ -4797,27 +4797,45 @@ on_ok_button1_clicked                  (GtkButton       *button,
 
   // open a file
 
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION((filesel=gtk_widget_get_toplevel(GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));
-  g_free(tmp);
-				 
-  end_fs_preview();
-
-  g_snprintf(mainw->vid_load_dir,256,"%s",file_name);
-  get_dirname(mainw->vid_load_dir);
-  fnames=gtk_file_selection_get_selections(GTK_FILE_SELECTION(filesel));
-  gtk_widget_destroy(filesel);
-  
-  mainw->fs_playarea=NULL;
-
-  gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
-
-  if (prefs->save_directories) {
-    set_pref ("vid_load_dir",(tmp=g_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
+  if (user_data==NULL) {
+    g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION((filesel=gtk_widget_get_toplevel(GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));
     g_free(tmp);
-  }
 
-  mainw->cancelled=CANCEL_NONE;
+    end_fs_preview();
+				 
+    g_snprintf(mainw->vid_load_dir,256,"%s",file_name);
+    get_dirname(mainw->vid_load_dir);
+    fnames=gtk_file_selection_get_selections(GTK_FILE_SELECTION(filesel));
+    gtk_widget_destroy(filesel);
+  
+    if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
+    else gtk_widget_queue_draw(mainw->multitrack->window);
+    while (g_main_context_iteration(NULL,FALSE));
+    
+    mainw->fs_playarea=NULL;
+
+    if (prefs->save_directories) {
+      set_pref ("vid_load_dir",(tmp=g_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
+      g_free(tmp);
+    }
+
+    mainw->cancelled=CANCEL_NONE;
+  }
+  else {
+    fnames=(gchar **)user_data;
+
+    if (mainw->multitrack!=NULL) {
+      if (mainw->multitrack->idlefunc>0) {
+	g_source_remove(mainw->multitrack->idlefunc);
+	mainw->multitrack->idlefunc=0;
+      }
+      mt_desensitise(mainw->multitrack);
+      gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
+      gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
+    }
+    
+    while (g_main_context_iteration(NULL,FALSE));
+  }
 
   if (fnames[0]!=NULL&&fnames[1]!=NULL) mainw->opening_multi=TRUE;
   mainw->img_concat_clip=-1;
@@ -4840,6 +4858,53 @@ on_ok_button1_clicked                  (GtkButton       *button,
   }
 
 }
+
+// files dragged onto target from outside - try to open them
+void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y, 
+		       GtkSelectionData *data, guint info, guint time, gpointer user_data) {
+  gchar *filelist=(gchar *)data->data,*nfilelist,**array,**fnames;
+  int nfiles,i;
+
+  if (filelist==NULL) {
+    gtk_drag_finish(dcon,FALSE,FALSE,time);
+    return;
+  }
+
+  if (mainw->multitrack!=NULL&&widget==mainw->multitrack->window) {
+    if (!GTK_WIDGET_SENSITIVE(mainw->multitrack->open_menu)) {
+      gtk_drag_finish(dcon,FALSE,FALSE,time);
+      return;
+    }
+  }
+  else {
+    if (!GTK_WIDGET_SENSITIVE(mainw->open)) {
+      gtk_drag_finish(dcon,FALSE,FALSE,time);
+      return;
+    }
+  }
+
+  nfilelist=subst(filelist,"file://","");
+
+  nfiles=get_token_count(nfilelist,'\n');
+  array=g_strsplit(nfilelist,"\n",nfiles);
+  g_free(nfilelist);
+
+  fnames=g_malloc((nfiles+1)*sizeof(char *));
+
+  for (i=0;i<nfiles;i++) {
+    fnames[i]=array[i];
+  }
+  fnames[i]=NULL;
+
+  on_ok_button1_clicked(NULL,(gpointer)fnames);
+
+  // fn will free array elements and fnames
+
+  g_free(array);
+
+  gtk_drag_finish(dcon,TRUE,FALSE,time);
+}
+
 
 
 void

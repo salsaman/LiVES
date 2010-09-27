@@ -69,6 +69,13 @@ static char **zargv;
 
 static gint xxwidth=0,xxheight=0;
 
+/* not static */
+GtkTargetEntry target_table[]  = {
+  { "STRING",                     GTK_TARGET_OTHER_APP, 0 },
+  { "text/uri-list",              GTK_TARGET_OTHER_APP, 0 },
+};
+
+
 /////////////////////////////////
 #ifdef NO_COMPILE // never compile this
 void tr_msg(void) {
@@ -412,6 +419,7 @@ static gboolean pre_init(void) {
   mainw->ccpd_with_sound=TRUE;
 
   mainw->loop=mainw->loop_cont=FALSE;
+  mainw->target_table=target_table;
 
   if (!strcasecmp(prefs->theme,"none")) return FALSE;
   return TRUE;

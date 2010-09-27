@@ -4750,12 +4750,11 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     if (pos<0.) pos=0.;
     time_to_string(mt,pos,TIMECODE_LENGTH);
   }
-
+  
 }
 
 
-
-lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
+ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
   GtkWidget *hseparator;
   GtkWidget *menubar;
   GtkWidget *btoolbar;
@@ -5026,6 +5025,12 @@ lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
     }
     else gtk_widget_modify_bg(mt->window, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
+
+  gtk_drag_dest_set(mt->window,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,GDK_ACTION_COPY|GDK_ACTION_MOVE|GDK_ACTION_LINK);
+
+  g_signal_connect (GTK_OBJECT (mt->window), "drag-data-received",
+		    G_CALLBACK (drag_from_outside),
+		    NULL);
 
   mt->top_vbox = gtk_vbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (mt->window), mt->top_vbox);

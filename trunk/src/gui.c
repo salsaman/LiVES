@@ -180,13 +180,6 @@ create_LiVES (void)
 
   gchar *tmp;
 
-  /*  GtkTargetList *targlist;
-  GtkTargetEntry targ;
-  targ.target=g_strdup ("drop");
-  targ.flags=0;
-  targ.info=123;
-  targlist=gtk_target_list_new (&targ,1);*/
-
   stop_closure=NULL;
   fullscreen_closure=NULL;
   dblsize_closure=NULL;
@@ -233,9 +226,12 @@ create_LiVES (void)
 
   //gtk_window_present(GTK_WINDOW(mainw->LiVES));
 
-  // testing...
-  //gtk_drag_dest_set (mainw->LiVES,GTK_DEST_DEFAULT_HIGHLIGHT|GTK_DEST_DEFAULT_DROP,&targ,1,GDK_ACTION_PRIVATE);
-  //gtk_drag_dest_set_target_list (mainw->LiVES,targlist);
+  gtk_drag_dest_set(mainw->LiVES,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,
+		    GDK_ACTION_COPY|GDK_ACTION_MOVE|GDK_ACTION_LINK);
+
+  g_signal_connect (GTK_OBJECT (mainw->LiVES), "drag-data-received",
+		    G_CALLBACK (drag_from_outside),
+		    NULL);
 
 
   if (capable->smog_version_correct) gtk_window_set_decorated(GTK_WINDOW(mainw->LiVES),prefs->open_decorated);
@@ -2149,6 +2145,7 @@ create_LiVES (void)
 
   mainw->message_box=gtk_vbox_new(FALSE, 0);
   gtk_widget_show (mainw->message_box);
+
 
   mainw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_ALWAYS);

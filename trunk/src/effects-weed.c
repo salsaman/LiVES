@@ -2708,7 +2708,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path) {
   g_printerr("Checking plugin %s\n",plugin_path);
 #endif
 
-#if 0 // local symbols override global symbols in the plugins
+#ifdef RTLD_DEEPBIND // local symbols override global symbols in the plugins
   // this may allow for non-static linking of libweed with
   if ((handle=dlopen(plugin_path,RTLD_LAZY|RTLD_DEEPBIND))) {
 #else

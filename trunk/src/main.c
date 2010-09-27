@@ -1308,8 +1308,6 @@ void do_start_messages(void) {
   else d_print(_ ("composite...NOT DETECTED..."));
   if (capable->has_sox) d_print(_ ("sox...detected\n"));
   else d_print(_ ("sox...NOT DETECTED\n"));
-  if (capable->has_xmms) d_print(_ ("xmms...detected..."));
-  else d_print(_ ("xmms...NOT DETECTED..."));
   if (capable->has_cdda2wav) d_print(_ ("cdda2wav...detected..."));
   else d_print(_ ("cdda2wav...NOT DETECTED..."));
   if (capable->has_jackd) d_print(_ ("jackd...detected..."));

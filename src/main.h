@@ -1040,4 +1040,5 @@ char *dummychar;
 
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
+
 #endif // #ifndef HAS_MAIN_H

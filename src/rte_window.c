@@ -376,11 +376,12 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   int i;
   int kfd;
   int version,nparams;
+  int hlen;
   FILE *kfile=NULL;
   gchar *msg,*tmp;
   gint key,mode;
   gchar buff[65536];
-  size_t linelen,bytes,hlen;
+  size_t linelen,bytes;
   gchar *whole=g_strdup (""),*whole2;
   GList *list=NULL,*new_list=NULL;
   gchar *hashname,*hashname_new=NULL;

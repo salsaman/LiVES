@@ -768,3 +768,6 @@ void on_lerrors_close_clicked (GtkButton *, gpointer);
 void on_lerrors_clear_clicked (GtkButton *, gpointer);
 void on_lerrors_delete_clicked (GtkButton *, gpointer);
 
+void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y, 
+		       GtkSelectionData *data, guint info, guint time, gpointer user_data);
+

@@ -915,6 +915,8 @@ typedef struct {
   gchar **fonts_array;
   gint nfonts;
 
+  GtkTargetEntry *target_table;
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

@@ -1268,6 +1268,12 @@ if (defined($ARGV[0])) {
 	}
 	&get_file_info;
 
+	$threads=`/bin/grep processor /proc/cpuinfo | wc -l`;
+	$threads=int($threads);
+	if ($threads==0) {
+	    $threads=1;
+	}
+
 	if ($type eq "jpeg" || $type eq "png") {
 	    $count=$frames;
 	}
@@ -1284,19 +1290,19 @@ if (defined($ARGV[0])) {
 	    if ($withsound eq "0") {
              #video only
 		if ($img_ext eq ".jpg") {
-		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo jpeg:quality=$quality -fps 100000 $ss $frames -noframedrop -ao null \"$file\" $extra_params </dev/null";
+		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo jpeg:quality=$quality -lavdopts o=threads=$threads -fps 100000 $ss $frames -noframedrop -ao null \"$file\" $extra_params </dev/null";
 		}
 		else {
-		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression:alpha -fps 100000 $ss $frames -noframedrop -ao null \"$file\" $extra_params </dev/null";
+		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression:alpha -lavdopts o=threads=$threads -fps 100000 $ss $frames -noframedrop -ao null \"$file\" $extra_params </dev/null";
 		}
 	    }
 	    elsif ($withsound eq "1") {
              #video and audio 
 		if ($img_ext eq ".jpg") {
-		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo jpeg:quality=$quality $ss -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
+		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo jpeg:quality=$quality $ss -lavdopts o=threads=$threads -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
 		}
 		else {
-		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression:alpha $ss -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
+		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression:alpha $ss -lavdopts o=threads=$threads -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
 		}
             }
             else {

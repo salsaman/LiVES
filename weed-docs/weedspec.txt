@@ -357,7 +357,7 @@ variants. This is documented in the Weed Utility Library spec. (TODO).
 
 == COMPILING A HOST WITH WEED ==
 
-A host wishing to use Weed should be linked with libweed, and #include
+A host wishing to use Weed should be linked (shared or static) with libweed, and #include
 <weed/weed.h> and <weed/weed-host.h>
 
 If the host makes use of the Weed Utility Library, it should also be *statically*
@@ -365,6 +365,12 @@ linked with libweed-utils, and #include <weed/weed-utils.h>
 
 Static linking is required, because the plugins may also link against
 this library, and they have their own versions of the core functions.
+
+N.B. this limitation may now be resolved with the use of dlopen with RTLD_DEEPBIND in the host - this needs testing.
+
+
+
+
 
 If the host wishes to use Weed effects, it should #include
 <weed/weed-effects.h>.

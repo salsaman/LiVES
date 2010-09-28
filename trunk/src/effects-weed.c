@@ -3636,6 +3636,9 @@ gboolean weed_init_effect(int hotkey) {
 
   update_host_info(new_instance);
 
+  // record the key so we know whose parameters to record later
+  weed_set_int_value(new_instance,"host_hotkey",hotkey);
+
   if (!gen_start) {
     if (weed_plant_has_leaf(filter,"init_func")) {
       weed_init_f *init_func_ptr_ptr;
@@ -3676,6 +3679,7 @@ gboolean weed_init_effect(int hotkey) {
     if (fg_modeswitch) mainw->num_tr_applied=0; // force to fg
 
     // TODO - be more descriptive with error
+    // FIXME - new_instance can be invalidated by weed_generator_start, do not reference it after here
     if (!weed_generator_start(new_instance)) {
       int weed_error;
       gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
@@ -3693,6 +3697,7 @@ gboolean weed_init_effect(int hotkey) {
     }
 
     // TODO - problem if modeswitch triggers playback
+    // hence we do not allow mixing of generators and non-gens on the same key
     if (fg_modeswitch) mainw->num_tr_applied=num_tr_applied;
     if (fg_generator_key!=-1) {
       mainw->rte|=(GU641<<fg_generator_key);
@@ -3703,6 +3708,7 @@ gboolean weed_init_effect(int hotkey) {
       if (rte_window!=NULL&&hotkey<prefs->rte_keys_virtual) rtew_set_keych(bg_generator_key,TRUE);
     }
   }
+
 
   if (rte_keys==hotkey) {
     mainw->rte_keys=rte_keys;
@@ -3718,7 +3724,6 @@ gboolean weed_init_effect(int hotkey) {
     pchains[hotkey]=filter_init_add_pchanges(mainw->event_list,new_instance,init_events[hotkey],ntracks);
     create_filter_map(); // we create filter_map event_t * array with ordered effects
     mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks,filter_map);
-    weed_set_int_value(new_instance,"host_hotkey",hotkey);
   }
 
   return TRUE;

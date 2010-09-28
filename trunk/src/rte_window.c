@@ -855,6 +855,10 @@ void on_params_clicked (GtkButton *button, gpointer user_data) {
   keyw=key;
   modew=mode;
   on_render_fx_pre_activate(NULL,rfx);
+
+  // record the key so we know whose parameters to record later
+  weed_set_int_value(rfx->source,"host_hotkey",key);
+
   g_object_set_data (G_OBJECT (fx_dialog[1]),"key",GINT_TO_POINTER (key));
   g_object_set_data (G_OBJECT (fx_dialog[1]),"mode",GINT_TO_POINTER (mode));
   g_object_set_data (G_OBJECT (fx_dialog[1]),"rfx",rfx);

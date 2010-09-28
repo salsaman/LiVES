@@ -1929,6 +1929,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this (pre)change to our event_list
+    // however, we need to use the actual instance and not the one generated for the rte_window
     rec_param_change((weed_plant_t *)rfx->source,param_number);
   }
 

@@ -709,7 +709,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 	  switch (f0rinfo.plugin_type) {
 	  case F0R_PLUGIN_TYPE_SOURCE:
-	    weed_set_double_value(filter_class,"target_fps",50.); // set reasonable default fps
+	    weed_set_double_value(filter_class,"target_fps",25.); // set reasonable default fps
 	  case F0R_PLUGIN_TYPE_FILTER:
 	    weed_set_voidptr_value(filter_class,"plugin_f0r_update",f0r_update);
 	    break;

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-09-27 18:39-0300\n"
+"POT-Creation-Date: 2010-09-28 09:06-0300\n"
 "PO-Revision-Date: 2010-06-30 09:14+0000\n"
 "Last-Translator: Liel Fridman <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -5129,22 +5129,22 @@ msgstr ""
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "%d רכיבי תכנה נטענו בהצלחה\n"
 
-#: src/effects-weed.c:3648
+#: src/effects-weed.c:3651
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "אירעה שגיאה בנסיון להתחלת המופע %s, קוד שגיאה %d\n"
 
-#: src/effects-weed.c:3682
+#: src/effects-weed.c:3686
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "אין אפשרות להפעיל את המחולל %s\n"
 
-#: src/effects-weed.c:4159
+#: src/effects-weed.c:4164
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "נכשל בנסיון להפעיל את המחולל %s\n"
 
-#: src/effects-weed.c:4224
+#: src/effects-weed.c:4229
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "נכשל בנסיון להפעיל את המחולל %s, שגיאה %d\n"
@@ -5249,7 +5249,7 @@ msgstr ""
 msgid "Set as default"
 msgstr "קביעה כברירת מחדל"
 
-#: src/paramwindow.c:888 src/rte_window.c:1291 src/omc-learn.c:1359
+#: src/paramwindow.c:888 src/rte_window.c:1295 src/omc-learn.c:1359
 msgid "Close _window"
 msgstr "סגירת _חלון"
 
@@ -7754,7 +7754,7 @@ msgstr "גרסה: %d"
 msgid "Description: "
 msgstr "תיאור: "
 
-#: src/rte_window.c:909
+#: src/rte_window.c:913
 msgid ""
 "\n"
 "\n"
@@ -7767,65 +7767,65 @@ msgstr ""
 "גרסה זו של LiVES לא מאפשרת ערבוב של מחוללים ולא־מחוללים באותו מקש.\n"
 "\n"
 
-#: src/rte_window.c:954
+#: src/rte_window.c:958
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "לא ניתן לאתר את האפקט %s\n"
 
-#: src/rte_window.c:1040
+#: src/rte_window.c:1044
 msgid "LiVES: Real time effect mapping"
 msgstr "LiVES: מיפוי אפקט בזמן אמת"
 
-#: src/rte_window.c:1049 src/rte_window.c:1107
+#: src/rte_window.c:1053 src/rte_window.c:1111
 msgid "Key grab"
 msgstr "קליטת מקש"
 
-#: src/rte_window.c:1064
+#: src/rte_window.c:1068
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:1073
+#: src/rte_window.c:1077
 msgid "Key active"
 msgstr "מקש פעיל"
 
-#: src/rte_window.c:1112
+#: src/rte_window.c:1116
 msgid "Grab keyboard for this effect key"
 msgstr "קליטת המקלדת עבור מקש אפקט זה"
 
-#: src/rte_window.c:1131
+#: src/rte_window.c:1135
 msgid "_Clear all effects"
 msgstr "_ניקוי כל האפקטים"
 
-#: src/rte_window.c:1150
+#: src/rte_window.c:1154
 msgid "Mode active"
 msgstr "מצב פעיל"
 
-#: src/rte_window.c:1176 src/multitrack.c:7182
+#: src/rte_window.c:1180 src/multitrack.c:7182
 msgid "Info"
 msgstr "מידע"
 
-#: src/rte_window.c:1177
+#: src/rte_window.c:1181
 msgid "Set Parameters"
 msgstr "קביעת פרמטרים"
 
-#: src/rte_window.c:1178
+#: src/rte_window.c:1182
 msgid "Clear"
 msgstr "ניקוי"
 
-#: src/rte_window.c:1187
+#: src/rte_window.c:1191
 msgid "Effect name:"
 msgstr "שם אפקט:"
 
-#: src/rte_window.c:1281
+#: src/rte_window.c:1285
 msgid "_Save as default keymap"
 msgstr "_שמירה כברירת מחדל של מפת מקשים"
 
-#: src/rte_window.c:1286
+#: src/rte_window.c:1290
 msgid "_Load default keymap"
 msgstr "_טעינת מפת מקשים המוגדרת כברירת מחדל"
 
-#: src/rte_window.c:1539
+#: src/rte_window.c:1543
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

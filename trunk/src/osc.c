@@ -1067,6 +1067,88 @@ void lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTim
 }
 
 
+void lives_osc_cb_clip_getframe(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *tmp;
+  if (status_socket==NULL) return;
+  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) lives_status_send ("0\n");
+  else {
+    lives_status_send ((tmp=g_strdup_printf ("%d\n",mainw->actual_frame)));
+    g_free(tmp);
+  }
+}
+
+
+void lives_osc_cb_clip_getfps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *tmp;
+  if (status_socket==NULL) return;
+  if (mainw->current_file<1) return;
+
+  if (mainw->current_file<0) lives_status_send ((tmp=g_strdup_printf ("%.3f\n",0.)));
+  else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=g_strdup_printf ("%.3f\n",cfile->fps)));
+  else lives_status_send ((tmp=g_strdup_printf ("%.3f\n",cfile->pb_fps)));
+  g_free(tmp);
+}
+
+
+void lives_osc_cb_get_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *tmp;
+  if (status_socket==NULL) return;
+  if (mainw->current_file<1) return;
+
+  if (mainw->current_file<0) lives_status_send ((tmp=g_strdup_printf ("%.4f\n",0.)));
+  else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=g_strdup_printf ("%.4f\n",1.)));
+  else lives_status_send ((tmp=g_strdup_printf ("%.4f\n",cfile->pb_fps/cfile->fps)));
+  g_free(tmp);
+}
+
+
+void lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *tmp;
+  if (status_socket==NULL) return;
+  if (mainw->current_file<1) return;
+
+  if (mainw->current_file<0||mainw->blend_file<0||mainw->files[mainw->blend_file]==NULL) 
+    lives_status_send ((tmp=g_strdup_printf ("%.4f\n",0.)));
+  else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=g_strdup_printf ("%.4f\n",1.)));
+  else lives_status_send ((tmp=g_strdup_printf ("%.4f\n",mainw->files[mainw->blend_file]->pb_fps/
+						mainw->files[mainw->blend_file]->fps)));
+  g_free(tmp);
+}
+
+
+void lives_osc_cb_bgclip_getframe(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *tmp;
+  if (status_socket==NULL) return;
+  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1||mainw->blend_file<0||
+      mainw->files[mainw->blend_file]==NULL) lives_status_send ("0\n");
+  else {
+    lives_status_send ((tmp=g_strdup_printf ("%d\n",mainw->files[mainw->blend_file]->frameno)));
+    g_free(tmp);
+  }
+}
+
+
+void lives_osc_cb_bgclip_getfps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *tmp;
+  if (status_socket==NULL) return;
+  if (mainw->current_file<1) return;
+  if (mainw->blend_file<0||mainw->files[mainw->blend_file]==NULL) lives_status_send ((tmp=g_strdup_printf ("%.3f\n",0.)));
+  else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=g_strdup_printf ("%.3f\n",mainw->files[mainw->blend_file]->fps)));
+  else lives_status_send ((tmp=g_strdup_printf ("%.3f\n",mainw->files[mainw->blend_file]->pb_fps)));
+  g_free(tmp);
+}
+
+
+void lives_osc_cb_get_playtime(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *tmp;
+  if (status_socket==NULL) return;
+  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return;
+
+  lives_status_send ((tmp=g_strdup_printf ("%.8f\n",(double)mainw->currticks/U_SEC)));
+  g_free(tmp);
+}
+
+
 void lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int frame;
@@ -2028,7 +2110,7 @@ static struct
   char	 *descr;
   char	 *name;
   void	 (*cb)(void *ctx, int len, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra);
-  int		 leave;
+  int		 leave; // leaf
 } osc_methods[] = 
   {
     { "/record/enable",		"enable",		lives_osc_record_start,			3	},	
@@ -2039,7 +2121,9 @@ static struct
     { "/video/play/backwards",		"backwards",		lives_osc_cb_play_backward,			36	},	
     { "/video/play/faster",		"faster",		lives_osc_cb_play_faster,			36	},	
     { "/clip/foreground/fps/faster",		"faster",		lives_osc_cb_play_faster,			61	},	
+    { "/clip/foreground/fps/get",		"get",		lives_osc_cb_clip_getfps,			61	},	
     { "/clip/background/fps/faster",		"faster",		lives_osc_cb_bgplay_faster,			63	},	
+    { "/clip/background/fps/get",		"get",		lives_osc_cb_bgclip_getfps,			61	},	
     { "/video/play/slower",		"slower",		lives_osc_cb_play_slower,			36	},	
     { "/clip/foreground/fps/slower",		"slower",		lives_osc_cb_play_slower,			61	},	
     { "/clip/background/fps/slower",		"slower",		lives_osc_cb_bgplay_slower,			63	},	
@@ -2048,11 +2132,16 @@ static struct
     { "/clip/background/fps/reset",		"reset",		lives_osc_cb_bgplay_reset,			63	},	
     { "/video/stop",		"stop",	        lives_osc_cb_stop,				5	},
     { "/video/fps/set",	       "set",	lives_osc_cb_set_fps,			40	},
+    { "/video/fps/get",	       "get",	lives_osc_cb_clip_getfps,			40	},
     { "/video/fps/ratio/set",	       "set",	lives_osc_cb_set_fps_ratio,			65	},
+    { "/video/fps/ratio/get",	       "get",	lives_osc_cb_get_fps_ratio,			65	},
+    { "/video/play/time/get",	       "get",	lives_osc_cb_get_playtime,			67	},
     { "/clip/foreground/fps/set",	"set",	lives_osc_cb_set_fps,			61	},
     { "/clip/background/fps/set",	"set",	lives_osc_cb_bgset_fps,			63	},
     { "/clip/foreground/fps/ratio/set",	"set",	lives_osc_cb_set_fps_ratio,			64	},
+    { "/clip/foreground/fps/ratio/get",	"get",	lives_osc_cb_get_fps_ratio,			64	},
     { "/clip/background/fps/ratio/set",	"set",	lives_osc_cb_bgset_fps_ratio,			66	},
+    { "/clip/background/fps/ratio/get",	"get",	lives_osc_cb_bgget_fps_ratio,			66	},
     { "/video/play/reverse",		"reverse",	lives_osc_cb_play_reverse,		36	},
     { "/clip/foreground/fps/reverse",	"reverse",	lives_osc_cb_play_reverse,		61	},
     { "/clip/background/fps/reverse",	"reverse",	lives_osc_cb_bgplay_reverse,		63	},
@@ -2117,7 +2206,9 @@ static struct
     { "/clip/count",	         "count",	        lives_osc_cb_clip_count,			1  },
     { "/clip/goto",	         "goto",	        lives_osc_cb_clip_goto,			1	},
     { "/clip/foreground/frame/set",	         "set",	        lives_osc_cb_clip_goto,			60	},
+    { "/clip/foreground/frame/get",	         "get",	        lives_osc_cb_clip_getframe,			60	},
     { "/clip/background/frame/set",	         "set",	        lives_osc_cb_bgclip_goto,			62	},
+    { "/clip/background/frame/get",	         "get",	        lives_osc_cb_bgclip_getframe,			62	},
     { "/clip/is_valid/get",	         "get",	        lives_osc_cb_clip_isvalid,			49	},
     { "/clip/select_all",	         "select_all",	        lives_osc_cb_clip_select_all,			1	},
     { "/clip/start/set",	 "set",	        lives_osc_cb_clip_set_start,			50	},
@@ -2138,11 +2229,11 @@ static struct
 
 static struct
 {
-  char *comment;
-  char *name;	
-  int  leave;
-  int  att; 
-  int  it;
+  char *comment; // leaf comment
+  char *name;  // leaf name
+  int  leave; // leaf number
+  int  att;  // attached to parent number
+  int  it; // ???
 } osc_cont[] = 
   {
     {	"/",	 	"",	                 2, -1,0   	},
@@ -2150,6 +2241,7 @@ static struct
     {	"/video/fps/",	 	"fps",	 40, 5,0   	},
     {	"/video/fps/ratio/",	 	"ratio",	 65, 40,0   	},
     {	"/video/play/ start video playback",	 	"play",	         36, 5,0   	},
+    {	"/video/play/time",	 	"time",	         67, 36,0   	},
     {	"/video/freeze/",	"freeze",        37, 5,0   	},
     {	"/clip/", 		"clip",		 1, -1,0	},
     {	"/clip/foreground/", 	"foreground",    47, 1,0	},

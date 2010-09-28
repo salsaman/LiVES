@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-09-27 18:39-0300\n"
+"POT-Creation-Date: 2010-09-28 09:06-0300\n"
 "PO-Revision-Date: 2010-03-28 17:11+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -5098,22 +5098,22 @@ msgstr ""
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Úspešne načítané %d Weed filtre\n"
 
-#: src/effects-weed.c:3648
+#: src/effects-weed.c:3651
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Nepodarilo sa spustiť inštanciu %s, kód chyby %d\n"
 
-#: src/effects-weed.c:3682
+#: src/effects-weed.c:3686
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nedá sa spustiť generátor %s\n"
 
-#: src/effects-weed.c:4159
+#: src/effects-weed.c:4164
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Nepodarilo sa spustiť generátor %s\n"
 
-#: src/effects-weed.c:4224
+#: src/effects-weed.c:4229
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nepodarilo sa spustiť generátor %s, chyba %d\n"
@@ -5218,7 +5218,7 @@ msgstr ""
 msgid "Set as default"
 msgstr "Nastaviť ako štandardné"
 
-#: src/paramwindow.c:888 src/rte_window.c:1291 src/omc-learn.c:1359
+#: src/paramwindow.c:888 src/rte_window.c:1295 src/omc-learn.c:1359
 msgid "Close _window"
 msgstr "Zavrieť okno"
 
@@ -7744,7 +7744,7 @@ msgstr "Verzia: %d"
 msgid "Description: "
 msgstr "Popis: "
 
-#: src/rte_window.c:909
+#: src/rte_window.c:913
 msgid ""
 "\n"
 "\n"
@@ -7758,65 +7758,65 @@ msgstr ""
 "rovnakej klávese.\n"
 "\n"
 
-#: src/rte_window.c:954
+#: src/rte_window.c:958
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVES nemohol nájsť efekt %s.\n"
 
-#: src/rte_window.c:1040
+#: src/rte_window.c:1044
 msgid "LiVES: Real time effect mapping"
 msgstr "LiVES: Zobrazenie efektu v reálnom čase"
 
-#: src/rte_window.c:1049 src/rte_window.c:1107
+#: src/rte_window.c:1053 src/rte_window.c:1111
 msgid "Key grab"
 msgstr "Zachytenie kláves"
 
-#: src/rte_window.c:1064
+#: src/rte_window.c:1068
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:1073
+#: src/rte_window.c:1077
 msgid "Key active"
 msgstr "Aktívne klávesy"
 
-#: src/rte_window.c:1112
+#: src/rte_window.c:1116
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1131
+#: src/rte_window.c:1135
 msgid "_Clear all effects"
 msgstr "_Vyčistiť všetky efekty"
 
-#: src/rte_window.c:1150
+#: src/rte_window.c:1154
 msgid "Mode active"
 msgstr "Aktívny mód"
 
-#: src/rte_window.c:1176 src/multitrack.c:7182
+#: src/rte_window.c:1180 src/multitrack.c:7182
 msgid "Info"
 msgstr "Informácia"
 
-#: src/rte_window.c:1177
+#: src/rte_window.c:1181
 msgid "Set Parameters"
 msgstr "Nastaviť parametre"
 
-#: src/rte_window.c:1178
+#: src/rte_window.c:1182
 msgid "Clear"
 msgstr "Zmazať"
 
-#: src/rte_window.c:1187
+#: src/rte_window.c:1191
 msgid "Effect name:"
 msgstr "Názov efektu:"
 
-#: src/rte_window.c:1281
+#: src/rte_window.c:1285
 msgid "_Save as default keymap"
 msgstr "_Uložiť ako predvolenú mapu kláves"
 
-#: src/rte_window.c:1286
+#: src/rte_window.c:1290
 msgid "_Load default keymap"
 msgstr "_Nahrať predvolenú mapu kláves"
 
-#: src/rte_window.c:1539
+#: src/rte_window.c:1543
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

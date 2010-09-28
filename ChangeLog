@@ -5,7 +5,7 @@ Added experimental gmerlin/gavl decoder plugin - needs testing.
 Fixed a possible crash when loading the default keymap.
 Fixed crash when recording parameters set from a parameter window.
 Removed startup warning for xmms not found.
-Set fps default to 50.0 for frei0r sources.
+Set fps default to 25.0 for frei0r sources.
 
 
 

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-09-27 18:39-0300\n"
+"POT-Creation-Date: 2010-09-28 09:06-0300\n"
 "PO-Revision-Date: 2010-03-12 20:59+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -4875,22 +4875,22 @@ msgstr ""
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:3648
+#: src/effects-weed.c:3651
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:3682
+#: src/effects-weed.c:3686
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4159
+#: src/effects-weed.c:4164
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4224
+#: src/effects-weed.c:4229
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
@@ -4996,7 +4996,7 @@ msgstr ""
 msgid "Set as default"
 msgstr "Als Vorgabewert setzen"
 
-#: src/paramwindow.c:888 src/rte_window.c:1291 src/omc-learn.c:1359
+#: src/paramwindow.c:888 src/rte_window.c:1295 src/omc-learn.c:1359
 msgid "Close _window"
 msgstr "Fenster _schließen"
 
@@ -7259,7 +7259,7 @@ msgstr ""
 msgid "Description: "
 msgstr "Beschreibung: "
 
-#: src/rte_window.c:909
+#: src/rte_window.c:913
 msgid ""
 "\n"
 "\n"
@@ -7268,65 +7268,65 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:954
+#: src/rte_window.c:958
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr ""
 
-#: src/rte_window.c:1040
+#: src/rte_window.c:1044
 msgid "LiVES: Real time effect mapping"
 msgstr ""
 
-#: src/rte_window.c:1049 src/rte_window.c:1107
+#: src/rte_window.c:1053 src/rte_window.c:1111
 msgid "Key grab"
 msgstr ""
 
-#: src/rte_window.c:1064
+#: src/rte_window.c:1068
 #, c-format
 msgid "Ctrl-%d"
 msgstr ""
 
-#: src/rte_window.c:1073
+#: src/rte_window.c:1077
 msgid "Key active"
 msgstr ""
 
-#: src/rte_window.c:1112
+#: src/rte_window.c:1116
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1131
+#: src/rte_window.c:1135
 msgid "_Clear all effects"
 msgstr ""
 
-#: src/rte_window.c:1150
+#: src/rte_window.c:1154
 msgid "Mode active"
 msgstr ""
 
-#: src/rte_window.c:1176 src/multitrack.c:7182
+#: src/rte_window.c:1180 src/multitrack.c:7182
 msgid "Info"
 msgstr "Information"
 
-#: src/rte_window.c:1177
+#: src/rte_window.c:1181
 msgid "Set Parameters"
 msgstr "Setzte Parameter"
 
-#: src/rte_window.c:1178
+#: src/rte_window.c:1182
 msgid "Clear"
 msgstr "Säubern"
 
-#: src/rte_window.c:1187
+#: src/rte_window.c:1191
 msgid "Effect name:"
 msgstr ""
 
-#: src/rte_window.c:1281
+#: src/rte_window.c:1285
 msgid "_Save as default keymap"
 msgstr ""
 
-#: src/rte_window.c:1286
+#: src/rte_window.c:1290
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:1539
+#: src/rte_window.c:1543
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

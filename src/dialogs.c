@@ -145,17 +145,34 @@ void add_warn_check (GtkBox *box, gint warn_mask_number) {
 
 
 
-//Warning dialog
-GtkWidget*
-create_warn_dialog (gint warn_mask_number) {
+//Warning or yes/no dialog
+static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transient, const gchar *text, lives_dialog_t diat) {
   GtkWidget *dialog2;
   GtkWidget *dialog_vbox2;
   GtkWidget *dialog_action_area2;
-  GtkWidget *warning_cancelbutton;
-  GtkWidget *warning_okbutton;
+  GtkWidget *warning_cancelbutton=NULL;
+  GtkWidget *warning_okbutton=NULL;
 
   dialog2 = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Warning !"));
+  switch (diat) {
+  case LIVES_DIALOG_WARN:
+    gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Warning !"));
+    mainw->warning_label = gtk_label_new (_("warning"));
+    warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, GTK_RESPONSE_CANCEL);
+    warning_okbutton = gtk_button_new_from_stock ("gtk-ok");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_OK);
+    break;
+  case LIVES_DIALOG_YESNO:
+    gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Question"));
+    mainw->warning_label = gtk_label_new (_("question"));
+    warning_cancelbutton = gtk_button_new_from_stock ("gtk-yes");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, GTK_RESPONSE_NO);
+    warning_okbutton = gtk_button_new_from_stock ("gtk-no");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_YES);
+    break;
+  }
+
   if (palette->style&STYLE_1) {
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog2),FALSE);
     gtk_widget_modify_bg(dialog2, GTK_STATE_NORMAL, &palette->normal_back);
@@ -165,11 +182,13 @@ create_warn_dialog (gint warn_mask_number) {
   gtk_window_set_position (GTK_WINDOW (dialog2), GTK_WIN_POS_CENTER);
   gtk_window_set_default_size (GTK_WINDOW (dialog2), 350, 200);
   gtk_window_set_deletable(GTK_WINDOW(dialog2), FALSE);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog2),transient);
+
+  gtk_label_set_text(GTK_LABEL(mainw->warning_label),text);
 
   dialog_vbox2 = GTK_DIALOG (dialog2)->vbox;
   gtk_widget_show (dialog_vbox2);
 
-  mainw->warning_label = gtk_label_new (_("warning"));
   gtk_widget_show (mainw->warning_label);
   gtk_box_pack_start (GTK_BOX (dialog_vbox2), mainw->warning_label, TRUE, TRUE, 0);
   gtk_label_set_justify (GTK_LABEL (mainw->warning_label), GTK_JUSTIFY_CENTER);
@@ -192,16 +211,10 @@ create_warn_dialog (gint warn_mask_number) {
   gtk_widget_show (dialog_action_area2);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area2), GTK_BUTTONBOX_END);
 
-  warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (warning_cancelbutton);
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, GTK_RESPONSE_CANCEL);
   GTK_WIDGET_SET_FLAGS (warning_cancelbutton, GTK_CAN_DEFAULT);
 
-  warning_okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (warning_okbutton);
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_OK);
-
-
 
   GTK_WIDGET_SET_FLAGS (warning_okbutton, GTK_CAN_DEFAULT);
   gtk_widget_grab_default (warning_okbutton);
@@ -239,10 +252,8 @@ do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number,
     return TRUE;
   }
 
-  mytext=g_strdup(text); // trans
-  warning=create_warn_dialog(warn_mask_number);
-  if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(warning),transient);
-  gtk_label_set_text(GTK_LABEL(mainw->warning_label),mytext);
+  mytext=g_strdup(text); // must copy this because of translation issues
+  warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_WARN);
   if (mytext!=NULL) g_free(mytext);
 
   response=gtk_dialog_run (GTK_DIALOG (warning));
@@ -250,6 +261,32 @@ do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number,
 
   while (g_main_context_iteration(NULL,FALSE));
   return (response==GTK_RESPONSE_OK);
+}
+
+
+gboolean do_yesno_dialog(const gchar *text) {
+  // show Yes/No, returns TRUE if Yes
+  GtkWidget *warning;
+  gint response=1;
+  gchar *mytext;
+  GtkWindow *transient;
+
+  if (!prefs->show_gui) {
+    transient=NULL;
+  } else {
+    if (mainw->multitrack==NULL) transient=GTK_WINDOW(mainw->LiVES);
+    else transient=GTK_WINDOW(mainw->multitrack->window);
+  }
+
+  mytext=g_strdup(text); // translation issues
+  warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_YESNO);
+  if (mytext!=NULL) g_free(mytext);
+
+  response=gtk_dialog_run (GTK_DIALOG (warning));
+  gtk_widget_destroy (warning);
+
+  while (g_main_context_iteration(NULL,FALSE));
+  return (response==GTK_RESPONSE_YES);
 }
 
 
@@ -1519,7 +1556,7 @@ void do_audio_import_error(void) {
 
 
 gboolean prompt_remove_layout_files(void) {
-  return (do_warning_dialog(_("\nDo you wish to remove the layout files associated with this set ?\nClick OK to remove them, or Cancel to leave them.\n(They will not be usable without the set).\n")));
+  return (do_yesno_dialog(_("\nDo you wish to remove the layout files associated with this set ?\n(They will not be usable without the set).\n")));
 }
 
 
@@ -2067,4 +2104,8 @@ gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext) {
   ret=do_warning_dialog(msg);
   g_free(msg);
   return ret;
+}
+
+gboolean do_move_tmpdir_dialog(void) {
+  return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n(If unsure, click Yes)\n"));
 }

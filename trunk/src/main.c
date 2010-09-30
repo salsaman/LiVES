@@ -3175,7 +3175,7 @@ void load_frame_image(gint frame, gint last_frame) {
   // - we should never call load_frame_image() if mainw->noswitch is TRUE
 
 
-  gchar *framecount=NULL;
+  gchar *framecount=NULL,*tmp;
   gboolean was_preview;
   gchar *fname_next=NULL,*info_file=NULL;
   int weed_error;
@@ -3854,7 +3854,9 @@ void load_frame_image(gint frame, gint last_frame) {
     gdk_pixbuf_unref(pixbuf);
     
 #ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,"");
+    // format is now msg|timecode|fgclip|fgframe|fgfps|
+    lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)(tmp=g_strdup_printf("|%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+    g_free(tmp);
 #endif
     if (framecount!=NULL) g_free(framecount);
     return;
@@ -3863,7 +3865,6 @@ void load_frame_image(gint frame, gint last_frame) {
   // record external window
   if (mainw->record_foreign) {
     GError *gerror=NULL;
-    gchar *tmp;
 
     if (mainw->rec_vid_frames==-1) gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
     else {

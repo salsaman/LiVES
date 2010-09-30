@@ -664,6 +664,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 gboolean do_warning_dialog(const gchar *text);
 gboolean do_warning_dialog_with_check(const gchar *text, gint warn_mask_number);
 gboolean do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number, GtkWindow *transient);
+gboolean do_yesno_dialog(const gchar *text);
 void do_error_dialog(const gchar *text);
 void do_error_dialog_with_check(const gchar *text, gint warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
@@ -729,6 +730,7 @@ gboolean do_existing_subs_warning(void);
 void do_invalid_subs_error(void);
 gboolean do_erase_subs_warning(void);
 gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext);
+gboolean do_move_tmpdir_dialog(void);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(const gchar *text, gboolean has_cancel);

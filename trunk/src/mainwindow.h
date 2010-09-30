@@ -84,7 +84,10 @@ typedef enum {
 } lives_toy_t;
 
 
-
+typedef enum {
+  LIVES_DIALOG_WARN,
+  LIVES_DIALOG_YESNO
+} lives_dialog_t;
 
 
 typedef struct {

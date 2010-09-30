@@ -123,9 +123,11 @@ lives_exit (void) {
     if (strcmp(future_prefs->tmpdir,prefs->tmpdir)) {
       // if we changed the tempdir, remove everything but sets from the old dir
       // create the new directory, and then move any sets over
-      com=g_strdup_printf("smogrify weed %s &",future_prefs->tmpdir);
-      dummyvar=system (com);
-      g_free (com);
+      if (do_move_tmpdir_dialog()) {
+	com=g_strdup_printf("smogrify weed %s &",future_prefs->tmpdir);
+	dummyvar=system (com);
+	g_free (com);
+      }
       g_snprintf(prefs->tmpdir,256,"%s",future_prefs->tmpdir);
     }
 

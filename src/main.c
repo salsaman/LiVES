@@ -3855,7 +3855,7 @@ void load_frame_image(gint frame, gint last_frame) {
     
 #ifdef ENABLE_OSC
     // format is now msg|timecode|fgclip|fgframe|fgfps|
-    lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)(tmp=g_strdup_printf("|%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+    lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)(tmp=g_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
     g_free(tmp);
 #endif
     if (framecount!=NULL) g_free(framecount);

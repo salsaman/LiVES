@@ -99,6 +99,7 @@ sub get_newmsg {
 	
 	last;
     }
+    $newmsg=substr($newmsg,0,length($newmsg)-1);
     chomp ($newmsg);
     return $newmsg;
 }

@@ -75,6 +75,8 @@ $timeout=1;
 `$sendOMC /lives/ping`;
 my $retmsg=&get_newmsg;
 
+print "got $retmsg\n";
+
 unless ($retmsg eq "pong") {
     print "Could not connect to LiVES\n";
     exit 2;
@@ -195,6 +197,8 @@ sub get_newmsg {
 	
 	last;
     }
+    # remove terminating NULL
+    $newmsg=substr($newmsg,0,length($newmsg)-1);
     chomp ($newmsg);
     return $newmsg;
 }

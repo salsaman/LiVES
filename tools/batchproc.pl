@@ -159,6 +159,8 @@ sub get_newmon {
 	
 	last;
     }
+    # remove terminating NULL
+    $newmsg=substr($newmsg,0,length($newmsg)-1);
     chomp ($newmsg);
     return $newmsg;
 }

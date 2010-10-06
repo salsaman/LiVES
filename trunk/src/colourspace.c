@@ -1144,7 +1144,7 @@ static void convert_yuv420p_to_rgb_frame(guchar **src, gint width, gint height, 
       // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
       // we know we can do this because Y must be even width
 
-      // implements mpeg style subsampling : TODO - jpeg and dvpal style
+      // implements jpeg style subsampling : TODO - mpeg and dvpal style
 
       y=*(s_y++);
       u=s_u[(j/opsize)/2];
@@ -1225,7 +1225,7 @@ static void convert_yuv420p_to_bgr_frame(guchar **src, gint width, gint height, 
       // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
       // we know we can do this because Y must be even width
 
-      // implements mpeg style subsampling : TODO - jpeg and dvpal style
+      // implements jpeg style subsampling : TODO - mpeg and dvpal style
 
       y=*(s_y++);
       u=s_u[(j/opsize)/2];
@@ -1568,7 +1568,7 @@ void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint r
       // mpeg style, Cb and Cr are co-located
       // convert 6 RGBRGB bytes to 4 UYVY bytes
 
-      // TODO: for jpeg use rgb2yuv and write alternate u and v
+      // TODO: for mpeg use rgb2yuv and write alternate u and v
 
       rgb2uyvy (rgbdata[j],rgbdata[j+1],rgbdata[j+2],rgbdata[j+ipsize],rgbdata[j+ipsize+1],rgbdata[j+ipsize+2],&u);
 
@@ -3973,7 +3973,7 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
 
   // output to planes
 
-  //TODO: handle jpeg and dvpal input
+  //TODO: handle mpeg and dvpal input
 
   // TESTED !
 
@@ -4031,7 +4031,7 @@ static void convert_quad_chroma_packed(guchar **src, int width, int height, guch
 
   // e.g: 420p to 888(8)
 
-  //TODO: handle jpeg and dvpal input
+  //TODO: handle mpeg and dvpal input
 
   // TESTED !
 
@@ -4057,7 +4057,7 @@ static void convert_quad_chroma_packed(guchar **src, int width, int height, guch
       // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
       // we know we can do this because Y must be even width
 
-      // implements mpeg style subsampling : TODO - jpeg and dvpal style
+      // implements jpeg style subsampling : TODO - mpeg and dvpal style
 
       dest[j]=*(s_y++);
       dest[j+opsize]=*(s_y++);

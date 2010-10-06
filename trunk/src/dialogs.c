@@ -1691,7 +1691,7 @@ void do_decoder_palette_error (void) {
 
 
 void do_vpp_fps_error (void) {
-  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),FALSE,0,GTK_WINDOW(prefsw->prefs_dialog));
+  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),FALSE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
 }
 
 

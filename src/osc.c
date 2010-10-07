@@ -1224,6 +1224,31 @@ void lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, O
   else sfile->start=frame;
 }
 
+
+
+void lives_osc_cb_clip_get_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int current_file=mainw->current_file;
+  int clip=current_file;
+  gchar *tmp;
+
+  file *sfile;
+
+  if (mainw->current_file<1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  sfile=mainw->files[clip];
+
+  lives_status_send ((tmp=g_strdup_printf ("%d",sfile->start)));
+  g_free(tmp);
+}
+
+
 void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
   int clip=current_file;
@@ -1257,6 +1282,50 @@ void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSC
 
 }
 
+void lives_osc_cb_clip_get_end(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int current_file=mainw->current_file;
+  int clip=current_file;
+  gchar *tmp;
+
+  file *sfile;
+
+  if (mainw->current_file<1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  sfile=mainw->files[clip];
+
+  lives_status_send ((tmp=g_strdup_printf ("%d",sfile->end)));
+  g_free(tmp);
+}
+
+
+void lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int current_file=mainw->current_file;
+  int clip=current_file;
+  gchar *tmp;
+
+  file *sfile;
+
+  if (mainw->current_file<1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  sfile=mainw->files[clip];
+
+  lives_status_send ((tmp=g_strdup_printf ("%d",sfile->frames)));
+  g_free(tmp);
+}
 
 void lives_osc_cb_clip_select_all(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
@@ -2036,8 +2105,8 @@ void lives_osc_cb_ping(void *context, int arglen, const void *vargs, OSCTimeTag 
 
 void lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar filename[OSC_STRING_SIZE];
-  int startframe;
-  int numframes;
+  float starttime=0.;
+  int numframes=0; // all frames by default
 
   int type=0;
 
@@ -2045,22 +2114,21 @@ void lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTim
 
   if (mainw->playing_file>-1) return;
 
-
-  if (!lives_osc_check_arguments (arglen,vargs,"sii",TRUE)) {
+  if (!lives_osc_check_arguments (arglen,vargs,"sfi",TRUE)) {
     type++;
-    if (!lives_osc_check_arguments (arglen,vargs,"si",TRUE)) {
-      if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) return;
+    if (!lives_osc_check_arguments (arglen,vargs,"sf",TRUE)) {
       type++;
+      if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) return;
     }
   }
   lives_osc_parse_string_argument(vargs,filename);
-  if (type>0) {
-    lives_osc_parse_int_argument(vargs,&startframe);
-    if (type>1) {
+  if (type<2) {
+    lives_osc_parse_float_argument(vargs,&starttime);
+    if (type<1) {
       lives_osc_parse_int_argument(vargs,&numframes);
     }
   }
-  deduce_file(filename,startframe,numframes);
+  deduce_file(filename,starttime,numframes);
 
 }
 
@@ -2127,7 +2195,7 @@ static struct
     { "/clip/foreground/fps/faster",		"faster",		lives_osc_cb_play_faster,			61	},	
     { "/clip/foreground/fps/get",		"get",		lives_osc_cb_clip_getfps,			61	},	
     { "/clip/background/fps/faster",		"faster",		lives_osc_cb_bgplay_faster,			63	},	
-    { "/clip/background/fps/get",		"get",		lives_osc_cb_bgclip_getfps,			61	},	
+    { "/clip/background/fps/get",		"get",		lives_osc_cb_bgclip_getfps,			63	},	
     { "/video/play/slower",		"slower",		lives_osc_cb_play_slower,			36	},	
     { "/clip/foreground/fps/slower",		"slower",		lives_osc_cb_play_slower,			61	},	
     { "/clip/background/fps/slower",		"slower",		lives_osc_cb_bgplay_slower,			63	},	
@@ -2214,9 +2282,12 @@ static struct
     { "/clip/background/frame/set",	         "set",	        lives_osc_cb_bgclip_goto,			62	},
     { "/clip/background/frame/get",	         "get",	        lives_osc_cb_bgclip_getframe,			62	},
     { "/clip/is_valid/get",	         "get",	        lives_osc_cb_clip_isvalid,			49	},
+    { "/clip/frames/count",	         "count",	        lives_osc_cb_clip_get_frames,			57	},
     { "/clip/select_all",	         "select_all",	        lives_osc_cb_clip_select_all,			1	},
     { "/clip/start/set",	 "set",	        lives_osc_cb_clip_set_start,			50	},
+    { "/clip/start/get",	 "get",	        lives_osc_cb_clip_get_start,			50	},
     { "/clip/end/set",	 "set",	        lives_osc_cb_clip_set_end,			51	},
+    { "/clip/end/get",	 "get",	        lives_osc_cb_clip_get_end,			51	},
     { "/clip/open/file",	 "file",	        lives_osc_cb_open_file,			33	},
     { "/output/fullscreen/enable",		"enable",	lives_osc_cb_fssepwin_enable,		28	},
       { "/output/fullscreen/disable",		"disable",	lives_osc_cb_fssepwin_disable,       	28	},
@@ -2260,6 +2331,7 @@ static struct
     {	"/clip/background/fps/",  "fps",    63, 48,0	},
     {	"/clip/background/fps/ratio/",  "ratio",    66, 63,0	},
     {	"/clip/is_valid/", 	"is_valid",      49, 1,0	},
+    {	"/clip/frames/", 	"frames",      57, 1,0	},
     {	"/clip/start/", 	"start",         50, 1,0	},
     {	"/clip/end/", 	        "end",           51, 1,0	},
     {	"/clip/select/", 	        "select",           54, 1,0	},
@@ -2362,7 +2434,7 @@ int lives_osc_attach_methods( lives_osc *o ) {
     OSCNewMethod( osc_methods[i].name, 
 		  o->leaves[ osc_methods[i].leave ],
 		  osc_methods[i].cb , 
-		  &(o->osc_args[0]),
+		  NULL, // this is the context which is reurned but it seems to be unused
 		  &(o->ris));
     
     
@@ -2381,7 +2453,8 @@ lives_osc* lives_osc_allocate(int port_id) {
 
   if (livesOSC==NULL) {
     o = (lives_osc*)g_malloc(sizeof(lives_osc));
-    o->osc_args = (osc_arg*)g_malloc(50 * sizeof(*o->osc_args));
+    //o->osc_args = (osc_arg*)g_malloc(50 * sizeof(*o->osc_args));
+    o->osc_args=NULL;
     o->rt.InitTimeMemoryAllocator = _lives_osc_time_malloc;
     o->rt.RealTimeMemoryAllocator = _lives_osc_rt_malloc;
     o->rt.receiveBufferSize = 1024;

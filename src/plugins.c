@@ -696,7 +696,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   vppa->dialog = gtk_dialog_new ();
 
-  if (prefsw!=NULL) gtk_widget_hide (prefsw->prefs_dialog);
+  //if (prefsw!=NULL) gtk_widget_hide (prefsw->prefs_dialog);
 
   gtk_window_set_position (GTK_WINDOW (vppa->dialog), GTK_WIN_POS_CENTER);
   if (!prefs->show_gui) {
@@ -977,7 +977,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
 
   if (handle==NULL) {
     gchar *msg=g_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
-    if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
     else do_error_dialog(msg);
     g_free (msg);
     g_free(plugname);
@@ -1012,7 +1012,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
 
   if ((pl_error=(*vpp->module_check_init)())!=NULL) {
     msg=g_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"),pl_error);
-    do_error_dialog_with_check_transient(msg,FALSE,0,GTK_WINDOW(prefsw->prefs_dialog));
+    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
     g_free(msg);
     dlclose (handle);
     g_free (vpp);
@@ -1024,7 +1024,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   if (!OK) {
     gchar *msg=g_strdup_printf (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
     set_pref ("vid_playback_plugin","none");
-    do_error_dialog_with_check_transient(msg,FALSE,0,GTK_WINDOW(prefsw->prefs_dialog));
+    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
     g_free (msg);
     close_vid_playback_plugin(vpp);
     g_free(plugname);

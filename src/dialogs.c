@@ -1682,7 +1682,7 @@ void do_nojack_rec_error(void) {
 }
 
 void do_vpp_palette_error (void) {
-  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"),FALSE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
 }
 
 void do_decoder_palette_error (void) {
@@ -1691,7 +1691,7 @@ void do_decoder_palette_error (void) {
 
 
 void do_vpp_fps_error (void) {
-  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),FALSE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
 }
 
 

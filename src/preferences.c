@@ -223,7 +223,7 @@ void set_vpp(gboolean set_in_prefs) {
 	mainw->vpp=vpp;
 	if (set_in_prefs) {
 	  set_pref ("vid_playback_plugin",mainw->vpp->name);
-	  if (!mainw->ext_playback) do_error_dialog (_ ("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"));
+	  if (!mainw->ext_playback) do_error_dialog_with_check_transient (_ ("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
 	}
       }
     }
@@ -844,11 +844,11 @@ apply_prefs(gboolean skip_warn) {
 #endif
 
   if (prefs->audio_player==AUD_PLAYER_JACK&&!capable->has_jackd) {
-    do_error_dialog(_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"));
+    do_error_dialog_with_check_transient(_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
   }
   else {
     if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,"jack")) {
-      do_error_dialog(_("\nSwitching audio players requires restart (jackd must not be running)\n"));
+      do_error_dialog_with_check_transient(_("\nSwitching audio players requires restart (jackd must not be running)\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
     }
 
     // switch to sox
@@ -870,7 +870,7 @@ apply_prefs(gboolean skip_warn) {
     // switch to pulse audio
     else if (!(strcmp (audio_player,"pulse"))&&prefs->audio_player!=AUD_PLAYER_PULSE) {
       if (!capable->has_pulse_audio) {
-	do_error_dialog(_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"));
+	do_error_dialog_with_check_transient(_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
       }
       else switch_aud_to_pulse();
     }

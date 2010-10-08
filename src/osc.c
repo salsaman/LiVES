@@ -27,7 +27,7 @@ void *notify_socket;
 
 static lives_osc *livesOSC=NULL;
 
-#define OSC_STRING_SIZE 255
+#define OSC_STRING_SIZE 256
 
 #define FX_MAX FX_KEYS_MAX_VIRTUAL-1
 
@@ -993,6 +993,18 @@ void lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag 
 
 }
 
+void lives_osc_cb_getname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (status_socket==NULL) return;
+  lives_status_send (PACKAGE_NAME);
+}
+
+
+void lives_osc_cb_getversion(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (status_socket==NULL) return;
+  lives_status_send (VERSION);
+}
+
+
 
 void lives_osc_cb_open_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar host[OSC_STRING_SIZE];
@@ -1303,6 +1315,79 @@ void lives_osc_cb_clip_get_end(void *context, int arglen, const void *vargs, OSC
   lives_status_send ((tmp=g_strdup_printf ("%d",sfile->end)));
   g_free(tmp);
 }
+
+void lives_osc_cb_clip_get_size(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int current_file=mainw->current_file;
+  int clip=current_file;
+  gchar *tmp;
+
+  file *sfile;
+
+  if (mainw->current_file<1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  sfile=mainw->files[clip];
+
+  lives_status_send ((tmp=g_strdup_printf ("%d|%d",sfile->hsize,sfile->vsize)));
+  g_free(tmp);
+}
+
+void lives_osc_cb_clip_get_name(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int current_file=mainw->current_file;
+  int clip=current_file;
+
+  file *sfile;
+
+  if (mainw->current_file<1) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  sfile=mainw->files[clip];
+
+  lives_status_send (sfile->name);
+}
+
+
+
+void lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int current_file=mainw->current_file;
+  int clip=current_file;
+  char name[OSC_STRING_SIZE];
+
+  file *sfile;
+
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"si",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"si",TRUE);
+    lives_osc_parse_string_argument(vargs,name);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"s",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"s",TRUE);
+    lives_osc_parse_string_argument(vargs,name);
+  }
+  else return;
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  sfile=mainw->files[clip];
+
+  on_rename_set_name(NULL,(gpointer)name);
+
+}
+
 
 
 void lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
@@ -2265,7 +2350,11 @@ static struct
     { "/clip/foreground/previous",		"previous",	lives_osc_cb_fgclip_select_previous,			47	},
     { "/clip/background/previous",		"previous",	lives_osc_cb_bgclip_select_previous,			48	},
     { "/lives/quit",	         "quit",	        lives_osc_cb_quit,			21	},
+    { "/lives/version/get",	         "get",	        lives_osc_cb_getversion,			24	},
     { "/app/quit",	         "quit",	           lives_osc_cb_quit,			22	},
+    { "/app/name",	         "name",	           lives_osc_cb_getname,			22	},
+    { "/app/name/get",	         "get",	           lives_osc_cb_getname,			23	},
+    { "/app/version/get",	         "get",	           lives_osc_cb_getversion,			25	},
     { "/quit",	         "quit",	        lives_osc_cb_quit,			2	},
     { "/reply_to",	         "reply_to",	 lives_osc_cb_open_status_socket,			2	},
     { "/lives/open_status_socket",	         "open_status_socket",	        lives_osc_cb_open_status_socket,			21	},
@@ -2288,6 +2377,9 @@ static struct
     { "/clip/start/get",	 "get",	        lives_osc_cb_clip_get_start,			50	},
     { "/clip/end/set",	 "set",	        lives_osc_cb_clip_set_end,			51	},
     { "/clip/end/get",	 "get",	        lives_osc_cb_clip_get_end,			51	},
+    { "/clip/size/get",	 "get",	        lives_osc_cb_clip_get_size,			58	},
+    { "/clip/name/get",	 "get",	        lives_osc_cb_clip_get_name,			59	},
+    { "/clip/name/set",	 "set",	        lives_osc_cb_clip_set_name,			59	},
     { "/clip/open/file",	 "file",	        lives_osc_cb_open_file,			33	},
     { "/output/fullscreen/enable",		"enable",	lives_osc_cb_fssepwin_enable,		28	},
       { "/output/fullscreen/disable",		"disable",	lives_osc_cb_fssepwin_disable,       	28	},
@@ -2336,6 +2428,8 @@ static struct
     {	"/clip/end/", 	        "end",           51, 1,0	},
     {	"/clip/select/", 	        "select",           54, 1,0	},
     {	"/clip/selection/", 	        "selection",           55, 1,0	},
+    {	"/clip/size/", 	        "size",           58, 1,0	},
+    {	"/clip/name/", 	        "name",           59, 1,0	},
     {	"/clipboard/", 		"clipboard",		 70, -1,0	},
     {	"/record/", 		"record",	 3, -1,0	},
     {	"/effect/" , 		"effect",	 4, -1,0	},
@@ -2354,8 +2448,11 @@ static struct
     {	"/effect_key/maxmode/" , 	"maxmode",	 45, 25,0	},
     {	"/effect_key/usermode/" , 	"usermode",	 56, 25,0	},
     {	"/lives/" , 		"lives",	 21, -1,0	},
+    {	"/lives/version" , 		"version",	 24, 21,0	},
     {	"/clipset/" , 		"clipset",	 35, -1,0	},
     {	"/app/" , 		"app",	         22, -1,0	},
+    {	"/app/name/" , 		"name",	         23, 22,0	},
+    {	"/app/version/" , 		"version",	         25, 22,0	},
     {	"/output/" , 	"output",	 27, -1,0	},
     {	"/output/fullscreen/" , 	"fullscreen",	 28, 27,0	},
     {	"/output/fps/" , 	        "fps",	 52, 27,0	},

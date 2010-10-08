@@ -6992,9 +6992,13 @@ on_rename_set_name                   (GtkButton       *button,
 				      gpointer         user_data)
 {
   gchar title[256];
-  g_snprintf(title,256,"%s",gtk_entry_get_text(GTK_ENTRY(renamew->entry)));
-  gtk_widget_destroy(renamew->dialog);
-  g_free(renamew);
+
+  if (user_data==NULL) {
+    g_snprintf(title,256,"%s",gtk_entry_get_text(GTK_ENTRY(renamew->entry)));
+    gtk_widget_destroy(renamew->dialog);
+    g_free(renamew);
+  }
+  else g_snprintf(title,256,"%s",(gchar *)user_data);
 
   if (!(strlen(title))) return;
 

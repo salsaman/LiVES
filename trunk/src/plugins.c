@@ -768,7 +768,10 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     nfps=get_token_count((gchar *)fps_list,'|');
     for (i=0;i<nfps;i++) {
       if (strlen(array[i])&&strcmp(array[i],"\n")) {
-	fps_list_strings=g_list_append (fps_list_strings, remove_trailing_zeroes(g_strtod(array[i],NULL)));
+	if (get_token_count(array[i],':')==0) {
+	  fps_list_strings=g_list_append (fps_list_strings, remove_trailing_zeroes(g_strtod(array[i],NULL)));
+	}
+	else fps_list_strings=g_list_append (fps_list_strings,g_strdup(array[i]));
       }
     }
 

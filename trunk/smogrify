@@ -489,11 +489,20 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "save_frame") {
+	my $hsize=-1;
+	my $vsize=-1;
+
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
 	$frame=$ARGV[2];
 	$name=&mkname($frame);
 	$nfile=$ARGV[3];
+	if (defined $ARGV[4]) {
+	    $hsize=$ARGV[4];
+	}
+	if (defined $ARGV[5]) {
+	    $vsize=$ARGV[5];
+	}
 	$statusfile="$curtmpdir/.status";
 
 	# check the file is writable
@@ -503,7 +512,20 @@ if (defined($ARGV[0])) {
 
 	$img_ext=&get_img_ext($curtmpdir,$frame);
 
-	system("$convert_command $curtmpdir/$name$img_ext \"$nfile\" >/dev/null 2>&1");
+	umask 0111;
+
+	if ($hsize==-1||$vsize==-1) {
+	    system("$convert_command $curtmpdir/$name$img_ext \"$nfile\" >/dev/null 2>&1");
+	}
+	else {
+	    if ($antialias eq "false") {
+		system("$convert_command +antialias $curtmpdir/$name$img_ext -scale $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1");
+	    }
+	    else {
+		system("$convert_command -antialias $curtmpdir/$name$img_ext -resize $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1");
+	    }
+	}
+
 	exit 0;
     }
 
@@ -995,7 +1017,6 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "play") {
-
 	$endian=&get_endian;
 
 	$fps=$ARGV[2];

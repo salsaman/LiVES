@@ -23,6 +23,9 @@
 #define LIVES_OSC_NOTIFY_PLAYBACK_STARTED 2 // sent when a/v playback starts or clip is switched
 #define LIVES_OSC_NOTIFY_PLAYBACK_STOPPED 3 // sent when a/v playback ends
 
+#define LIVES_OSC_NOTIFY_RECORD_STARTED 32 // sent when record starts (TODO)
+#define LIVES_OSC_NOTIFY_RECORD_STOPPED 33 // sent when record stops (TODO)
+
 #define LIVES_OSC_NOTIFY_QUIT 64 // sent when app quits
 
 #define LIVES_OSC_NOTIFY_CLIP_OPENED 128  // TODO - msg_string starts with new clip number

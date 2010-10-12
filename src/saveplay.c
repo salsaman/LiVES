@@ -2852,11 +2852,13 @@ wait_for_stop (const gchar *stop_command) {
 }
 
 
-gboolean
-save_frame(gint frame, const gchar *file_name) {
+gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, gint height) {
+  // save 1 frame as an image (uses imagemagick to convert)
+  // width==-1, height==-1 to use "natural" values
   gint result;
   gchar *com,*tmp;
   gchar full_file_name[256];
+  file *sfile=mainw->files[clip];
 
   if (strrchr(file_name,'.')==NULL) {
     g_snprintf(full_file_name,255,"%s.%s",file_name,prefs->image_ext);
@@ -2864,6 +2866,7 @@ save_frame(gint frame, const gchar *file_name) {
   else {
     g_snprintf(full_file_name,255,"%s",file_name);
   }
+  g_print("ok here2 %s\n",full_file_name);
 
   if (!check_file(full_file_name,TRUE)) return FALSE;
 
@@ -2871,11 +2874,11 @@ save_frame(gint frame, const gchar *file_name) {
   d_print(com);
   g_free(com);
 
-  if (cfile->clip_type==CLIP_TYPE_FILE) {
-    virtual_to_images(mainw->current_file,frame,frame,FALSE);
+  if (sfile->clip_type==CLIP_TYPE_FILE) {
+    virtual_to_images(clip,frame,frame,FALSE);
   }
 
-  com=g_strdup_printf("smogrify save_frame %s %d \"%s\"",cfile->handle,frame,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)));
+  com=g_strdup_printf("smogrify save_frame %s %d \"%s\" %d %d",sfile->handle,frame,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)),width,height);
   result=system(com);
   g_free(com);
   g_free(tmp);

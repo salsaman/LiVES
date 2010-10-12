@@ -4924,7 +4924,7 @@ ok_save_frame                  (GtkButton       *button,
   gtk_widget_queue_draw(mainw->LiVES);
   while (g_main_context_iteration(NULL,FALSE));
 
-  if (!save_frame(GPOINTER_TO_INT (frame),file_name)) return;
+  if (!save_frame(mainw->current_file,GPOINTER_TO_INT (frame),file_name,-1,-1)) return;
 
   g_snprintf(mainw->image_dir,256,"%s",file_name);
   get_dirname(mainw->image_dir);

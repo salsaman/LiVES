@@ -765,7 +765,7 @@ void get_handle_from_info_file(gint index);
 void create_cfile(void);
 void save_file (gboolean existing, gchar *n_file_name);
 void play_file (void);
-gboolean save_frame(gint frame, const gchar *filename);
+gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, gint height);
 void wait_for_stop (const gchar *stop_command);
 void save_clip_values(gint which_file);
 void add_to_recovery_file (const gchar *handle);
@@ -1015,6 +1015,9 @@ gboolean lives_osc_init(guint osc_udp_port);
 gint lives_osc_poll(gpointer data);
 void lives_osc_end(void);
 gboolean lives_osc_notify(int msgtype, const char *msgstring);
+void lives_osc_notify_success (const gchar *msg);
+void lives_osc_notify_failure (void);
+void lives_osc_notify_cancel (void);
 #include "osc_notify.h"
 #endif
 

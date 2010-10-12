@@ -2866,7 +2866,6 @@ gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, g
   else {
     g_snprintf(full_file_name,255,"%s",file_name);
   }
-  g_print("ok here2 %s\n",full_file_name);
 
   if (!check_file(full_file_name,TRUE)) return FALSE;
 

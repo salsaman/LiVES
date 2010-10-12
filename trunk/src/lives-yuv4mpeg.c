@@ -14,6 +14,7 @@
 #include "interface.h"
 #include "lives-yuv4mpeg.h"
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/file.h>
 #include <errno.h>
 

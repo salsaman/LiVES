@@ -2204,16 +2204,13 @@ gboolean check_file(const gchar *file_name, gboolean check_existing) {
     g_free(lfile_name);
     return FALSE;
   }
-  if (check) {
-    close(check);
-    if (!exists) {
-      unlink (lfile_name);
-    }
-    g_free(lfile_name);
-    return TRUE;
+
+  close(check);
+  if (!exists) {
+    unlink (lfile_name);
   }
   g_free(lfile_name);
-  return FALSE;
+  return TRUE;
 }
 
 

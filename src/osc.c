@@ -198,6 +198,12 @@ void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag
 
 }
 
+void lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (mainw->go_away) return lives_osc_notify_failure();
+  if (mainw->playing_file==-1&&mainw->current_file>0) on_playsel_activate(NULL,NULL);
+
+}
+
 void lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->current_file<0||((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||mainw->playing_file==-1)) if (mainw->playing_file==-1) lives_osc_notify_failure();
@@ -2503,6 +2509,7 @@ static struct
     { "/record/disable",	"disable",		lives_osc_record_stop,			3	},	
     { "/record/toggle",	        "toggle",		lives_osc_record_toggle,			3	},	
     { "/video/play",		"play",		lives_osc_cb_play,			5	},	
+    { "/video/selection/play",		"play",		lives_osc_cb_playsel,			46	},	
     { "/video/play/forwards",		"forwards",		lives_osc_cb_play_forward,			36	},	
     { "/video/play/backwards",		"backwards",		lives_osc_cb_play_backward,			36	},	
     { "/video/play/faster",		"faster",		lives_osc_cb_play_faster,			36	},	
@@ -2636,6 +2643,7 @@ static struct
   {
     {	"/",	 	"",	                 2, -1,0   	},
     {	"/video/",	 	"video",	 5, -1,0   	},
+    {	"/video/selection/",	 	"selection",	 46, 5,0   	},
     {	"/video/fps/",	 	"fps",	 40, 5,0   	},
     {	"/video/fps/ratio/",	 	"ratio",	 65, 40,0   	},
     {	"/video/play/ start video playback",	 	"play",	         36, 5,0   	},

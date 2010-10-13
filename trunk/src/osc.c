@@ -329,7 +329,8 @@ void lives_osc_cb_bgplay_reset (void *context, int arglen, const void *vargs, OS
 
 /* /video/stop */
 void lives_osc_cb_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (mainw->playing_file>-1) on_stop_activate(NULL,NULL);
+  if (mainw->playing_file>-1) on_stop_activate(NULL,NULL); // should send play stop event
+  else lives_osc_notify_failure();
 }
 
 

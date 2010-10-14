@@ -5559,7 +5559,7 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
       }
       if ((cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 	weed_plant_t *frame_layer=mainw->frame_layer;
-	load_frame_image (cfile->frameno,cfile->frameno);
+	load_frame_image (cfile->frameno);
 	mainw->frame_layer=frame_layer;
       }
     } else {
@@ -5630,7 +5630,7 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
 	  while (g_main_context_iteration (NULL,FALSE));
 	  if (mainw->play_window!=NULL&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 	    weed_plant_t *frame_layer=mainw->frame_layer;
-	    load_frame_image (cfile->frameno,cfile->frameno);
+	    load_frame_image (cfile->frameno);
 	    mainw->frame_layer=frame_layer;
 	  }
 	}
@@ -5661,7 +5661,7 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
       }
       if ((cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 	weed_plant_t *frame_layer=mainw->frame_layer;
-	load_frame_image (cfile->frameno,cfile->frameno);
+	load_frame_image (cfile->frameno);
 	mainw->frame_layer=frame_layer;
       }
     }
@@ -5755,7 +5755,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 	while (g_main_context_iteration (NULL,FALSE));
 	if (!(mainw->play_window==NULL)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 	  weed_plant_t *frame_layer=mainw->frame_layer;
-	  load_frame_image (cfile->frameno,cfile->frameno);
+	  load_frame_image (cfile->frameno);
 	  frame_layer=mainw->frame_layer;
 	}
       }
@@ -5938,7 +5938,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  while (g_main_context_iteration (NULL,FALSE));
 	  if (mainw->play_window!=NULL&&!mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 	    weed_plant_t *frame_layer=mainw->frame_layer;
-	    load_frame_image (cfile->frameno,cfile->frameno);
+	    load_frame_image (cfile->frameno);
 	    mainw->frame_layer=frame_layer;
 	  }
 	}
@@ -5992,7 +5992,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	hide_cursor(mainw->playarea->window);
 	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 	  weed_plant_t *frame_layer=mainw->frame_layer;
-	  load_frame_image (cfile->frameno,cfile->frameno);
+	  load_frame_image (cfile->frameno);
 	  mainw->frame_layer=frame_layer;
 	}
       }
@@ -8280,7 +8280,7 @@ gboolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkM
     mainw->deltaticks=0;
     if (!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
       weed_plant_t *frame_layer=mainw->frame_layer;
-      load_frame_image (cfile->frameno,cfile->last_frameno);
+      load_frame_image (cfile->frameno);
       mainw->frame_layer=frame_layer;
     }
   }

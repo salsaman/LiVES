@@ -2861,7 +2861,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
   // if we are in multitrack mode, we will just set up NULL layers and let the effects pull our frames
   if (mainw->multitrack!=NULL) {
     mainw->pchains=pchains;
-    load_frame_image (cfile->frameno,cfile->frameno);
+    load_frame_image (cfile->frameno);
     mainw->pchains=NULL;
   }
   else {
@@ -2900,7 +2900,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 	mainw->current_file=new_file;
 	mainw->aframeno=(gdouble)(aseek_tc/U_SEC)*cfile->fps;
 	mainw->pchains=pchains;
-	load_frame_image (cfile->frameno,cfile->frameno);
+	load_frame_image (cfile->frameno);
 	mainw->pchains=NULL;
 	if (mainw->playing_file>-1) while (g_main_context_iteration (NULL,FALSE));
 	mainw->current_file=current_file;
@@ -2917,7 +2917,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
       else cfile->frameno=mainw->frame_index[i-1];
       mainw->aframeno=(gdouble)(aseek_tc/U_SEC)*cfile->fps;
       mainw->pchains=pchains;
-      load_frame_image (cfile->frameno,cfile->frameno);
+      load_frame_image (cfile->frameno);
       mainw->pchains=NULL;
     }
   }

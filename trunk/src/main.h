@@ -809,7 +809,7 @@ gboolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t
 gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, int target_palette);
 GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, gint width, gint height, GdkInterpType interp);
 
-void load_frame_image(gint frame, gint last_frame);
+void load_frame_image(gint frame);
 void sensitize(void);
 void desensitize(void);
 void procw_desensitize(void);

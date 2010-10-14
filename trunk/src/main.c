@@ -3162,7 +3162,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 
 
 
-void load_frame_image(gint frame, gint last_frame) {
+void load_frame_image(gint frame) {
   // this is where we do the actual load/record of a playback frame
   // it is called every 1/fps from do_processing_dialog() in dialogs.c
 
@@ -4403,7 +4403,7 @@ void switch_to_file(gint old_file, gint new_file) {
 	    load_start_image(cfile->start);
 	    load_end_image(cfile->end);
 	  }
-	  load_frame_image(cfile->frameno,cfile->frameno);
+	  load_frame_image(cfile->frameno);
 	}
 	if (mainw->double_size) {
 	  frame_size_update();
@@ -4650,7 +4650,7 @@ void do_quick_switch (gint new_file) {
   // force loading of a frame from the new clip
   if (!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
     weed_plant_t *frame_layer=mainw->frame_layer;
-    load_frame_image (cfile->frameno,cfile->frameno);
+    load_frame_image (cfile->frameno);
     mainw->frame_layer=frame_layer;
   }
   mainw->switch_during_pb=FALSE;

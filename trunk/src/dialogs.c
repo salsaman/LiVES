@@ -603,7 +603,8 @@ gboolean process_one (gboolean visible) {
 
     // free playback
     new_ticks=mainw->currticks+mainw->deltaticks;
-    
+    cfile->last_frameno=cfile->frameno;
+
     show_frame=FALSE;
 
     cfile->frameno=calc_new_playback_position(mainw->current_file,mainw->startticks,&new_ticks);
@@ -626,7 +627,7 @@ gboolean process_one (gboolean visible) {
       }
 
 
-      if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)||force_show) {
+      if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
 	// time to show a new frame
 
 #ifdef ENABLE_JACK

@@ -146,6 +146,7 @@ gboolean lives_status_send (const gchar *msgstring) {
 
 gboolean lives_osc_notify (int msgnumber,const gchar *msgstring) {
   if (notify_socket==NULL) return FALSE;
+  if (!prefs->omc_events&&(msgnumber!=512&&msgnumber!=1024)) return FALSE;
   else {
     gchar *msg;
     gboolean retval;
@@ -329,7 +330,10 @@ void lives_osc_cb_bgplay_reset (void *context, int arglen, const void *vargs, OS
 
 /* /video/stop */
 void lives_osc_cb_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (mainw->playing_file>-1) on_stop_activate(NULL,NULL); // should send play stop event
+  if (mainw->playing_file>-1) {
+    on_stop_activate(NULL,NULL); // should send play stop event
+    lives_osc_notify_success(NULL);
+  }
   else lives_osc_notify_failure();
 }
 
@@ -1161,21 +1165,31 @@ void lives_osc_cb_open_notify_socket(void *context, int arglen, const void *varg
 
 void lives_osc_cb_close_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   lives_osc_close_status_socket();
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  lives_osc_notify_success(NULL);
 }
 
 
 void lives_osc_cb_notify_c(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int state;
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&state);
   if (state>0) {
     prefs->omc_noisy=TRUE;
     lives_osc_notify_success(NULL);
   }
   else prefs->omc_noisy=FALSE;
+}
+
+
+void lives_osc_cb_notify_e(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int state;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&state);
+  if (state>0) {
+    prefs->omc_events=TRUE;
+  }
+  else prefs->omc_events=FALSE;
+  lives_osc_notify_success(NULL);
 }
 
 
@@ -2602,6 +2616,7 @@ static struct
     { "/notify_to",	         "notify_to",	   lives_osc_cb_open_notify_socket,			2	},
     { "/lives/open_notify_socket",	         "open_notify_socket",	        lives_osc_cb_open_notify_socket,			21	},
     { "/notify/confirmations/set",	         "set",	        lives_osc_cb_notify_c,			101	},
+    { "/notify/events/set",	         "set",	        lives_osc_cb_notify_e,			102	},
     { "/clip/count",	         "count",	        lives_osc_cb_clip_count,			1  },
     { "/clip/goto",	         "goto",	        lives_osc_cb_clip_goto,			1	},
     { "/clip/foreground/frame/set",	         "set",	        lives_osc_cb_clip_goto,			60	},
@@ -2700,6 +2715,7 @@ static struct
     {	"/clip/open/",   		"open",		 33, 1,0	},
     {	"/notify/",   		"notify",		 100, -1,0	},
     {	"/notify/confirmations/",   		"confirmations",		 101, 100,0	},
+    {	"/notify/events/",   		"events",		 102, 100,0	},
     {	NULL,			NULL,		0, -1,0		},
   };
 

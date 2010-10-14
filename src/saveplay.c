@@ -1950,6 +1950,7 @@ void play_file (void) {
 
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED,"");
+    lives_osc_notify_success(NULL);
 #endif
     
     // add a timer for the keyboard and other realtime events (osc, midi, joystick, etc)

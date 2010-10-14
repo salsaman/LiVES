@@ -133,8 +133,8 @@ typedef struct {
   gboolean osc_udp_started;
   guint osc_udp_port;
 
-  // not used yet
-  gboolean omc_noisy;
+  gboolean omc_noisy; // send success/fail
+  gboolean omc_events; // send other events
 
   gshort startup_phase; // -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
   const gchar *wm; //window manager name

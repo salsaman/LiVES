@@ -2164,6 +2164,8 @@ void set_main_title(const gchar *file, gint untitled) {
   }
 
   gtk_window_set_title (GTK_WINDOW (mainw->LiVES), title);
+  if (mainw->playing_file==-1&&mainw->play_window!=NULL) gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+
   g_free(title);
 }
 
@@ -3660,10 +3662,7 @@ void load_frame_image(gint frame) {
 
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(fx_layer_copy,"width",&weed_error),weed_get_int_value(fx_layer_copy,"height",&weed_error),mainw->currticks-mainw->stream_ticks,pd_array,NULL)) {
-	if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
-	mainw->stream_ticks=-1;
-	mainw->ext_playback=FALSE;
-	mainw->ext_keyboard=FALSE;
+	vid_playback_plugin_exit();
       }
       weed_free(pd_array);
       
@@ -3770,10 +3769,7 @@ void load_frame_image(gint frame) {
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(fx_layer_copy,"width",&weed_error),weed_get_int_value(fx_layer_copy,"height",&weed_error),mainw->currticks-mainw->stream_ticks,(pd_array=weed_get_voidptr_array(fx_layer_copy,"pixel_data",&weed_error)),NULL)) {
-	if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
-	mainw->stream_ticks=-1;
-	mainw->ext_playback=FALSE;
-	mainw->ext_keyboard=FALSE;
+	vid_playback_plugin_exit();
       }
       g_free(pd_array);
 
@@ -4631,6 +4627,14 @@ void do_quick_switch (gint new_file) {
 
   if (mainw->fs||(mainw->faded&&mainw->double_size)||mainw->multitrack!=NULL) {
     mainw->current_file=new_file;
+    if (!mainw->sep_win) {
+      if (cfile->menuentry!=NULL) {
+	gchar title[256];
+	get_menu_text(cfile->menuentry,title);
+	set_main_title(title,0);
+      }
+      else set_main_title(cfile->file_name,0);
+    }
   }
   else {
     // force update of labels, prevent widgets becoming sensitized
@@ -4671,6 +4675,7 @@ void do_quick_switch (gint new_file) {
     load_frame_image (cfile->frameno);
     mainw->frame_layer=frame_layer;
   }
+
   mainw->switch_during_pb=FALSE;
   mainw->osc_block=osc_block;
 }

@@ -5609,6 +5609,7 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
 
 	if (mainw->ext_playback) {
 	  vid_playback_plugin_exit();
+	  
 	}
 
 	if (mainw->opwx>-1) {
@@ -5886,15 +5887,6 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	    }
 	  }
 	  if (mainw->fs&&!mainw->faded) {
-	    if (mainw->ext_playback&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
-	      // fixed o/p size for stream
-	      if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
-		mainw->vpp->fwidth=cfile->hsize;
-		mainw->vpp->fheight=cfile->vsize;
-	      }
-	      mainw->pwidth=mainw->vpp->fwidth;
-	      mainw->pheight=mainw->vpp->fheight;
-	    }
 	    resize(1);
 	  }
 	  else {
@@ -5926,6 +5918,12 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  }
 	  mainw->pwidth=mainw->vpp->fwidth;
 	  mainw->pheight=mainw->vpp->fheight;
+
+	  if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
+	    gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
+	    unfade_background();
+	  }
+
 	  resize_play_window();
 	}
 	

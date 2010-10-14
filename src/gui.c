@@ -3441,12 +3441,8 @@ make_play_window(void) {
   if (mainw->multitrack==NULL) gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
   else gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->multitrack->accel_group);
 
-  if (prefs->sepwin_type==0) {
-    gtk_window_set_title(GTK_WINDOW(mainw->play_window),gtk_window_get_title(GTK_WINDOW(mainw->LiVES)));
-  }
-  else {
-    gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
-  }
+  if (mainw->playing_file>-1)  gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
+  else gtk_window_set_title(GTK_WINDOW(mainw->play_window),gtk_window_get_title(GTK_WINDOW(mainw->LiVES)));
 
   gtk_widget_modify_bg (mainw->play_window, GTK_STATE_NORMAL, &palette->normal_back);
 
@@ -3667,6 +3663,11 @@ void resize_play_window (void) {
 	  mainw->pwidth=mainw->vpp->fwidth;
 	  mainw->pheight=mainw->vpp->fheight;
 	  fixed_size=TRUE;
+
+	  gtk_window_unfullscreen(GTK_WINDOW(mainw->play_window));
+
+	  if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
+
 	  gtk_window_resize (GTK_WINDOW (mainw->play_window), mainw->pwidth, mainw->pheight);
 	  gtk_widget_queue_resize (mainw->play_window);
 	}

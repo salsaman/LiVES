@@ -206,6 +206,9 @@ typedef struct {
   gboolean rec_desktop_audio;
 
   gboolean show_gui;
+  gboolean show_splash;
+  gboolean show_playwin;
+
   gboolean osc_start;
 
   gboolean show_threaded_dialog;

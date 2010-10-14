@@ -245,6 +245,8 @@ static gboolean pre_init(void) {
   palette=(_palette*)(g_malloc(sizeof(_palette)));
 
   prefs->show_gui=TRUE;
+  prefs->show_splash=TRUE;
+  prefs->show_playwin=TRUE;
   prefs->show_threaded_dialog=TRUE;
   prefs->sepwin_type=1;
   prefs->show_framecount=TRUE;
@@ -1661,6 +1663,8 @@ void print_opthelp(void) {
   g_printerr("%s",_("-recover         : force loading of crash recovery\n"));
   g_printerr("%s",_("-nothreaddialog  : avoid threaded dialogs\n"));
   g_printerr("%s",_("-nogui           : do not show the gui\n"));
+  g_printerr("%s",_("-nosplash        : do not show the splash window\n"));
+  g_printerr("%s",_("-noplaywin       : do not show the play window\n"));
   g_printerr("%s",_("-startup-ce      : start in clip editor mode\n"));
   g_printerr("%s",_("-startup-mt      : start in multitrack mode\n"));
 #ifdef ENABLE_OSC
@@ -1691,7 +1695,7 @@ static gboolean lives_startup(gpointer data) {
   gchar *tmp;
 
   if (!mainw->foreign) {
-    splash_init();
+    if (prefs->show_splash) splash_init();
     print_notice();
   }
 
@@ -1957,6 +1961,8 @@ int main (int argc, char *argv[]) {
 	{"norecover", 0, 0, 0},
 	{"nothreaddialog", 0, 0, 0},
 	{"nogui", 0, 0, 0},
+	{"nosplash", 0, 0, 0},
+	{"noplaywin", 0, 0, 0},
 	{"startup-ce", 0, 0, 0},
 	{"startup-mt", 0, 0, 0},
 	{"debug", 0, 0, 0},
@@ -2046,6 +2052,16 @@ int main (int argc, char *argv[]) {
 	if (!strcmp(charopt,"nogui")) {
 	  // force headless mode
 	  prefs->show_gui=FALSE;
+	  continue;
+	}
+	if (!strcmp(charopt,"nosplash")) {
+	  // do not show splash
+	  prefs->show_splash=FALSE;
+	  continue;
+	}
+	if (!strcmp(charopt,"noplaywin")) {
+	  // do not show the play window
+	  prefs->show_playwin=FALSE;
 	  continue;
 	}
 	if (!strcmp(charopt,"nothreaddialog")) {

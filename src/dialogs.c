@@ -30,6 +30,7 @@ static gboolean accelerators_swapped;
 static gint frames_done;
 static gint disp_frames_done;
 static gint64 last_display_ticks=0;  // ticks when last display happened (fixed)
+static gboolean force_show;
 
 static gint64 last_open_check_ticks;
 
@@ -605,7 +606,8 @@ gboolean process_one (gboolean visible) {
     new_ticks=mainw->currticks+mainw->deltaticks;
     
     oframeno=cfile->last_frameno=cfile->frameno;
-    show_frame=FALSE;
+    show_frame=force_show;
+    force_show=FALSE;
 
     cfile->frameno=calc_new_playback_position(mainw->current_file,mainw->startticks,&new_ticks);
     
@@ -627,7 +629,7 @@ gboolean process_one (gboolean visible) {
       }
 
 
-      if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
+      if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)) {
 	// time to show a new frame
 
 #ifdef ENABLE_JACK
@@ -780,6 +782,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   last_display_ticks=0;
   shown_paused_frames=FALSE;
   est_time=-1.;
+  force_show=TRUE;  // force first frame always to be shown
 
   mainw->cevent_tc=0;
 

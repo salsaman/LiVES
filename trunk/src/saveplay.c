@@ -1766,6 +1766,7 @@ void play_file (void) {
     if (mainw->play_window!=NULL) {
       hide_cursor (mainw->play_window->window);
       gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+      gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
     }
   
     if (!mainw->foreign&&!mainw->sep_win) {
@@ -2180,10 +2181,7 @@ void play_file (void) {
   if (!mainw->foreign&&prefs->midisynch) dummyvar=system ("midistop");
 
   if (mainw->ext_playback) {
-    if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
-    mainw->stream_ticks=-1;
-    mainw->ext_playback=FALSE;
-    mainw->ext_keyboard=FALSE;
+    vid_playback_plugin_exit();
   }
   // we could have started by playing a generator, which could've been closed
   if (mainw->files[current_file]==NULL) current_file=mainw->current_file;
@@ -2363,6 +2361,8 @@ void play_file (void) {
 	  mainw->noswitch=TRUE;
 	  while (g_main_context_iteration (NULL,FALSE));
 	  mainw->noswitch=FALSE;
+	  if (mainw->playing_file==-1&&mainw->play_window!=NULL)
+	    gtk_window_set_title(GTK_WINDOW(mainw->play_window),gtk_window_get_title(GTK_WINDOW(mainw->LiVES)));
 	}
 	if (mainw->play_window!=NULL) {
 	  gtk_window_present (GTK_WINDOW (mainw->play_window));

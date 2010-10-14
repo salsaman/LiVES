@@ -719,7 +719,7 @@ gboolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, 
     }
   }
   if (mainw->current_file>0&&cfile->play_paused&&!mainw->noswitch) {
-    load_frame_image (cfile->frameno,cfile->last_frameno);
+    load_frame_image (cfile->frameno);
   }
   return TRUE;
 }

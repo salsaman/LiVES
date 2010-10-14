@@ -633,6 +633,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->ksnoop=gtk_key_snooper_install (key_snooper, NULL);
 
   prefs->omc_noisy=FALSE;
+  prefs->omc_events=TRUE;
+
   if (!ign_opts->ign_osc) {
     prefs->osc_udp_started=FALSE;
     prefs->osc_udp_port=0;

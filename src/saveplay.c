@@ -2581,7 +2581,7 @@ create_cfile(void) {
   if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;
 
-  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
+  cfile->bpp=(cfile->img_type==IMG_TYPE_JPEG)?24:32;
   cfile->deinterlace=FALSE;
 
   cfile->play_paused=FALSE;
@@ -2779,7 +2779,10 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
     if (cfile->bpp!=32) cfile->bpp=24; // assume RGB24  *** TODO - check
     mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
   }
-    
+
+  // set new bpp
+  cfile->bpp=(cfile->img_type==IMG_TYPE_JPEG)?24:32;
+
   if (cfile->achans==0) {
     mesg=g_strdup_printf (_ ("%s none\n"),mesg1);
   }
@@ -3219,7 +3222,7 @@ gboolean read_headers(const gchar *file_name) {
 
   cfile->frames=atoi(array[4]);
 
-  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
+  cfile->bpp=(cfile->img_type==IMG_TYPE_JPEG)?24:32;
   
   if (pieces>4&&array[5]!=NULL) {
     g_snprintf (cfile->title,256,"%s",g_strchomp (g_strchug ((array[4]))));

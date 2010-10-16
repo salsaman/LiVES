@@ -3900,6 +3900,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   FILE *rfile;
   gboolean last_was_normal_file=FALSE;
   gboolean is_scrap;
+  gboolean did_set_check=FALSE;
   const lives_clip_data_t *cdata=NULL;
 
   splash_end();
@@ -4032,6 +4033,12 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	mainw->was_set=TRUE;
 	g_snprintf(mainw->set_name,256,"%s",array[0]);
 	g_strfreev(array);
+
+	if (!did_set_check&&!check_for_lock_file(mainw->set_name,0)) {
+	  do_set_locked_warning(mainw->set_name);
+	  did_set_check=TRUE;
+	}
+
 	pthread_mutex_unlock(&mainw->gtk_mutex);
       }
       last_was_normal_file=TRUE;

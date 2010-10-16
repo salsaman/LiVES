@@ -731,6 +731,7 @@ void do_invalid_subs_error(void);
 gboolean do_erase_subs_warning(void);
 gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext);
 gboolean do_move_tmpdir_dialog(void);
+void do_set_locked_warning (const gchar *setname);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(const gchar *text, gboolean has_cancel);

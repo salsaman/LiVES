@@ -2111,3 +2111,10 @@ gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext) {
 gboolean do_move_tmpdir_dialog(void) {
   return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n(If unsure, click Yes)\n"));
 }
+
+void do_set_locked_warning (const gchar *setname) {
+  gchar *msg=g_strdup_printf(_("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking OK to continue\n."),setname);
+  do_error_dialog(msg);
+  g_free(msg);
+}
+

@@ -100,10 +100,10 @@ extern "C"
 /* YUV sampling types */
 // see http://www.mir.com/DMG/chroma.html
 #define WEED_YUV_SAMPLING_DEFAULT   0
-#define WEED_YUV_SAMPLING_JPEG  0   // jpeg/mpeg1 - samples centered horizontally: 0.5, 2.5 etc.
-#define WEED_YUV_SAMPLING_MPEG   1 // mpeg2 - samples aligned horizontally: 0,2,4 etc;
-#define WEED_YUV_SAMPLING_DVPAL  2 // separated Cb and Cr
-#define WEED_YUV_SAMPLING_DVNTSC  3 // not used - only for 411 planar
+#define WEED_YUV_SAMPLING_JPEG  0   ///< jpeg/mpeg1 - samples centered horizontally: 0.5, 2.5 etc.
+#define WEED_YUV_SAMPLING_MPEG   1 ///< mpeg2 - samples aligned horizontally: 0,2,4 etc;
+#define WEED_YUV_SAMPLING_DVPAL  2 ///< separated Cb and Cr
+#define WEED_YUV_SAMPLING_DVNTSC  3 ///< not used - only for 411 planar
 
 /* YUV clamping types */
 #define WEED_YUV_CLAMPING_CLAMPED 0

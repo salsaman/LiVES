@@ -138,6 +138,9 @@ typedef int (*weed_deinit_f) (weed_plant_t *filter_instance);
 typedef void (*weed_display_f)(weed_plant_t *parameter);
 typedef int (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_t *out_value);
 
+  /* prototype here */
+  weed_plant_t *weed_setup (weed_bootstrap_f weed_boot);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

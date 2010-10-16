@@ -115,12 +115,25 @@ if test x$PKG_CONFIG = xno; then
 fi
 
 # Check for doxygen
-AC_PATH_PROG(DOXYGEN, doxygens, no)
-AM_CONDITIONAL(HAVE_DOXYGEN, test x$DOXYGEN != xno)
+DOXYGEN=no
+
+AC_ARG_ENABLE( doxygen, [  --disable-doxygen     Disable doxygen documentation.] , disable_doxygen=yes)
+
+if test "x$disable_doxygen" != "xyes" ; then
+
+AC_PATH_PROG(DOXYGEN, doxygen, no)
 
 if test x$DOXYGEN = xno; then
    echo "Cannot find doxygen, will not build sourcecode documentation"
 fi
+
+else
+   echo "Doxygen documentation disabled, not checking"
+fi
+
+AM_CONDITIONAL(HAVE_DOXYGEN, test x$DOXYGEN != xno)
+
+
 
 dnl OSC
 HAVE_OSC=true

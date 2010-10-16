@@ -18,13 +18,14 @@ docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
 sharedir = $(prefix)/share
 
 if HAVE_DOXYGEN
-docs/doxygen:
+docs-doxygen:
 	$(DOXYGEN) LiVES.doxygen
 else
-docs:
+docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
+#NOTE - if packaging libweed separately, weed-docs should go in libweed/Makefile.am
 doc_DATA = lives-plugins/marcos-encoders/README.multi_encoder AUTHORS BUGS ChangeLog FEATURES GETTING.STARTED README OMC/lives-OMC.txt RFX/LiVES-Perl.odt  RFX/rfxbuilder.odt RFX/RFX.spec weed-docs/weedspec.txt weed-docs/weedevents.txt docs/clip_format.txt
 
 EXTRA_DIST = \
@@ -59,8 +60,15 @@ installdirs:
 	mkdir -p $(DESTDIR)$(sharedir)/applications/ \
 	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/ \
 	mkdir -p $(DESTDIR)$(sharedir)/resources/
+
+install-data-local:
+	make docs-doxygen
 if HAVE_DOXYGEN
-	mkdir -p $(DESTDIR)$(docdir)/html
+	mkdir -p $(DESTDIR)$(docdir)/html/LiVES
+	cp -rf $(srcdir)/docs/doxygen/html/* $(DESTDIR)$(docdir)/html/LiVES
+#NOTE - if packaging libweed separately, this should go in libweed/Makefile.am
+	mkdir -p $(DESTDIR)$(docdir)/html/libweed
+	cp -rf $(srcdir)/weed-docs/doxygen/html/* $(DESTDIR)$(docdir)/html/libweed
 endif
 
 install-exec-local:
@@ -79,9 +87,6 @@ install-exec-local:
 	cp -f $(srcdir)/menu-entries/lives.xpm $(DESTDIR)$(sharedir)/pixmaps/
 
 	$(top_srcdir)/po/update_with_plugins.sh install $(PACKAGE) $(prefix) $(DESTDIR)
-if HAVE_DOXYGEN
-	cp -rf $(srcdir)/docs/doxygen/html $(DESTDIR)$(docdir)
-endif
 
 install-exec-hook:
 	$(LN_S) $(DESTDIR)$(bindir)/lives-exe $(DESTDIR)$(bindir)/lives

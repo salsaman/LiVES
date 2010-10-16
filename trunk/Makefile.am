@@ -60,7 +60,7 @@ installdirs:
 	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/ \
 	mkdir -p $(DESTDIR)$(sharedir)/resources/
 if HAVE_DOXYGEN
-	mkdir -p $(DESTDIR)$docdir/html
+	mkdir -p $(DESTDIR)$(docdir)/html
 endif
 
 install-exec-local:
@@ -80,7 +80,7 @@ install-exec-local:
 
 	$(top_srcdir)/po/update_with_plugins.sh install $(PACKAGE) $(prefix) $(DESTDIR)
 if HAVE_DOXYGEN
-	cp -ryf $(srcdir)/docs/doxygen/html $(DESTDIR)$(docdir)
+	cp -rf $(srcdir)/docs/doxygen/html $(DESTDIR)$(docdir)
 endif
 
 install-exec-hook:

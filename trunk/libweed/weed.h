@@ -117,7 +117,7 @@ struct weed_data {
 
 typedef int64_t weed_timecode_t;
 
-  /* this is fixed for ever, set in bootstrap_func */
+  /** this is fixed for ever, set in bootstrap_func */
 typedef int (*weed_default_getter_f)(weed_plant_t *plant, const char *key, int idx, void *value);
 
   /* host and plugin functions, may be changed depending on API level */

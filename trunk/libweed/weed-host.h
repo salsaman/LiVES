@@ -57,7 +57,7 @@ extern "C"
 #endif /* __cplusplus */
 
 /* Plant types */
-#define WEED_PLANT_UNKNOWN 0 // used for host deserialisation only
+#define WEED_PLANT_UNKNOWN 0 ///< used for host deserialisation only
 
 /* Caller Types */
 #define WEED_CALLER_HOST 0

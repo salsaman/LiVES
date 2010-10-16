@@ -1644,18 +1644,42 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
   GList *encoder_capabilities=NULL;
   GList *list=encoders,*listnext;
   int caps;
+  char *blacklist[]={
+    NULL
+  };
 
   if (!strcmp(img_ext,"jpg")) return encoders; // jpeg is the default
 
   while (list!=NULL) {
+    gboolean skip=FALSE;
+    int i=0;
+
     listnext=list->next;
+
+    while (blacklist[i++]!=NULL) {
+      if (strlen(list->data)==strlen(blacklist[i])&&!strcmp(list->data,blacklist[i])) {
+	// skip blacklisted encoders
+	g_free(list->data);
+	encoders=g_list_delete_link(encoders,list);
+	skip=TRUE;
+	break;
+      }
+      i++;
+    }
+    if (skip) {
+      list=listnext;
+      continue;
+    }
+
     if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,list->data,"get_capabilities"))==NULL) {
+      g_free(list->data);
       encoders=g_list_delete_link(encoders,list);
     }
     else {
       caps=atoi (g_list_nth_data (encoder_capabilities,0));
       
       if (!(caps&CAN_ENCODE_PNG)&&!strcmp(img_ext,"png")) {
+	g_free(list->data);
 	encoders=g_list_delete_link(encoders,list);
       }
 

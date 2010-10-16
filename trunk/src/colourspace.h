@@ -35,13 +35,12 @@ typedef struct {
 // these functions should be used in future
 gboolean convert_layer_palette(weed_plant_t *layer, int outpl, int op_clamping);
 gboolean convert_layer_palette_with_sampling(weed_plant_t *layer, int outpl, int out_sampling);
-gboolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma);
+gboolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma); ///< not used
 void resize_layer (weed_plant_t *layer, int width, int height, int interp);
 void create_empty_pixel_data(weed_plant_t *layer);
 GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer);
 gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *);
 
-// to layers.c
 weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer);
 void weed_layer_free (weed_plant_t *layer);
 weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current_palette);

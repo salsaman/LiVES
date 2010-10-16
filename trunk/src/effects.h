@@ -7,7 +7,7 @@
 #include "../libweed/weed.h"
 #include "effects-weed.h"
 
-gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview); // defined as extern in paramwindow.c
+gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview); ///< defined as extern in paramwindow.c
 
 void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx);
 
@@ -23,14 +23,14 @@ gint  realfx_progress (gboolean reset);
 
 gboolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
 
-gboolean grabkeys_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); // for accel groups
-gboolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data); // for widgets
+gboolean grabkeys_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
+gboolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data); ///< for widgets
 
-gboolean rte_on_off_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); // for accel groups
-gboolean rte_on_off_callback_hook (GtkToggleButton *, gpointer user_data); // for widgets
+gboolean rte_on_off_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
+gboolean rte_on_off_callback_hook (GtkToggleButton *, gpointer user_data); ///< for widgets
 
-gboolean rtemode_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); // for accel groups
-gboolean rtemode_callback_hook (GtkToggleButton *, gpointer user_data); // for widgets
+gboolean rtemode_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
+gboolean rtemode_callback_hook (GtkToggleButton *, gpointer user_data); ///< for widgets
 
 gboolean swap_fg_bg_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 

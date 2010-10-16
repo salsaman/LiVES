@@ -2780,9 +2780,6 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
     mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
   }
 
-  // set new bpp
-  cfile->bpp=(cfile->img_type==IMG_TYPE_JPEG)?24:32;
-
   if (cfile->achans==0) {
     mesg=g_strdup_printf (_ ("%s none\n"),mesg1);
   }
@@ -3415,6 +3412,9 @@ restore_file(const gchar *file_name) {
 
   cfile->is_loaded=TRUE;
   current_file=mainw->current_file;
+
+  // set new bpp
+  cfile->bpp=(cfile->img_type==IMG_TYPE_JPEG)?24:32;
 
   save_clip_values(current_file);
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);

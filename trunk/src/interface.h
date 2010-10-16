@@ -19,7 +19,7 @@ GtkWidget* create_dialog3 (const gchar *text, gboolean is_blocking, gint warning
 GtkWidget* create_opensel_dialog (void);
 GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt_resize);
 
-void widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deinterlace, gint preview_type);  // for fileselector preview
+void widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deinterlace, gint preview_type);  ///< for fileselector preview
 
 gboolean do_audio_choice_dialog(short startup_phase);
 

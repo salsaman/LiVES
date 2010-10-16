@@ -6,19 +6,19 @@
 
 #define RFX_BUILDER "build-lives-rfx-plugin"
 
-// must match whatever is in RFX_BUILDER
+/// must match whatever is in RFX_BUILDER
 #define RFX_VERSION "1.7"
 
-// this definition must match with smogrify
+/// this definition must match with smogrify
 #define RFX_BUILDER_MULTI "build-lives-rfx-plugin-multi"
 
-// default script extension when saving
+/// default script extension when saving
 #define RFXBUILDER_SCRIPT_SUFFIX "script"
 
-// length in chars of G_MAXFLOAT (for display only)
+/// length in chars of G_MAXFLOAT (for display only)
 #define MAXFLOATLEN 11
 
-// length in chars of G_MAXINT (for display only)
+/// length in chars of G_MAXINT (for display only)
 #define MAXINTLEN strlen(g_strdup_printf("%d",G_MAXINT))
 
 // advanced menu entries
@@ -34,21 +34,21 @@ void on_export_rfx_activate (GtkMenuItem *, gpointer status);
 
 // the builder window
 
-// maximum requirements
+/// maximum requirements
 #define RFXBUILD_MAX_REQ 128
 
-// maximum parameters
+/// maximum parameters
 #define RFXBUILD_MAX_PARAMS 32
 
-// maximum parameter window hints
+/// maximum parameter window hints
 #define RFXBUILD_MAX_PARAMW_HINTS 512
 
-// max table rows :
-// this should be set to the largest of the previous maxima
+/// max table rows :
+/// this should be set to the largest of the previous maxima
 #define RFXBUILD_MAX_TROWS 512
 
 
-// maximum decimal places allowed (should correspond to precision of a "float")
+/// maximum decimal places allowed (should correspond to precision of a "float")
 #define RFXBUILD_MAX_DP 16
 typedef struct {
   gint when;
@@ -182,18 +182,18 @@ typedef struct {
   gint num_reqs;
   gint onum_reqs;
 
-  lives_param_t *params;   // store our parameters
-  lives_param_t *copy_params;   // store our parameters while editing
-  gint num_params; // upper limit is RFXBUILD_MAX_PARAMS-1
+  lives_param_t *params;   ///< store our parameters
+  lives_param_t *copy_params;   ///< store our parameters while editing
+  gint num_params; ///< upper limit is RFXBUILD_MAX_PARAMS-1
   gint onum_params;
 
   gchar *paramw_hints[RFXBUILD_MAX_PARAMS];
-  gint num_paramw_hints;  // upper limit is RFXBUILD_MAX_PARAMW_HINTS-1
+  gint num_paramw_hints;  ///< upper limit is RFXBUILD_MAX_PARAMW_HINTS-1
   gint onum_paramw_hints;
 
   rfx_trigger_t *triggers;
-  rfx_trigger_t *copy_triggers; // store triggers while editing
-  gint num_triggers;   // upper limit is RFXBUILD_MAX_PARAMS, 0 == init
+  rfx_trigger_t *copy_triggers; ///< store triggers while editing
+  gint num_triggers;   ///< upper limit is RFXBUILD_MAX_PARAMS, 0 == init
   gint onum_triggers;
 
   gboolean has_init_trigger;
@@ -268,7 +268,7 @@ void on_script_status_changed (GtkEntry *, gpointer combo);
 void on_export_rfx_ok (GtkButton *, gchar *script_name);
 void on_import_rfx_ok (GtkButton *, gpointer status);
 
-// add dynamic menu entries
+/// add dynamic menu entries
 void add_rfx_effects(void);
 
 // utility functions

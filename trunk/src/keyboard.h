@@ -18,7 +18,7 @@ guint16 cached_mod;
 #define key_down2 116
 
 
-// smooth key repeat for some keys
+/// smooth key repeat for some keys
 gboolean key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data);
 
 gboolean 
@@ -61,11 +61,10 @@ gboolean fade_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpoi
 #define KEY_RPT_INTERVAL 4
 
 
-/* default MIDI checks per keyboard cycle (i.e. normally x checks per 4 ms - raw MIDI only) */
+/** default MIDI checks per keyboard cycle (i.e. normally x checks per 4 ms - raw MIDI only) */
 /* can be over-ridden in prefs */
-
 #define DEF_MIDI_CHECK_RATE 1000
 
 
-/* allowed non-reads between reads (raw MIDI only) */
+/** allowed non-reads between reads (raw MIDI only) */
 #define DEF_MIDI_RPT 1000

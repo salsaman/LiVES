@@ -13,14 +13,14 @@ typedef struct {
   gchar bgcolour[256];
   gboolean stop_screensaver;
   gboolean open_maximised;
-  gchar theme[64];  // the theme name
+  gchar theme[64];  ///< the theme name
 
   gshort pb_quality;
 #define PB_QUALITY_LOW 1
-#define PB_QUALITY_MED 2  // default
+#define PB_QUALITY_MED 2  ///< default
 #define PB_QUALITY_HIGH 3
 
-  _encoder encoder; // from main.h
+  _encoder encoder; ///< from main.h
 
   gshort audio_player;
 #define AUD_PLAYER_SOX 1
@@ -28,12 +28,12 @@ typedef struct {
 #define AUD_PLAYER_JACK 3
 #define AUD_PLAYER_PULSE 4
 
-  // frame quantisation type
+  /// frame quantisation type
   gshort q_type;
 #define Q_FILL 1
 #define Q_SMOOTH 1
 
-  gchar tmpdir[256];  // kept in locale encoding
+  gchar tmpdir[256];  ///< kept in locale encoding
 
   // TODO - also use cur_vid_load_dir, etc.
   // utf8 encoding
@@ -55,7 +55,7 @@ typedef struct {
 #define WARN_MASK_FPS (1<<0)
 #define WARN_MASK_FSIZE (1<<1)
 
-  // no longer used
+  /// no longer used
 #define WARN_MASK_SAVE_QUALITY (1<<2)
 
 #define WARN_MASK_SAVE_SET (1<<3)
@@ -98,7 +98,7 @@ typedef struct {
   gchar effect_command[256];
   gchar video_open_command[256];
   gchar audio_play_command[256];
-  gchar cdplay_device[256];  // locale encoding
+  gchar cdplay_device[256];  ///< locale encoding
   gdouble default_fps;
   gint bar_height;
   gboolean pause_effect_during_preview;
@@ -133,12 +133,12 @@ typedef struct {
   gboolean osc_udp_started;
   guint osc_udp_port;
 
-  gboolean omc_noisy; // send success/fail
-  gboolean omc_events; // send other events
+  gboolean omc_noisy; ///< send success/fail
+  gboolean omc_events; ///< send other events
 
-  gshort startup_phase; // -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
-  const gchar *wm; //window manager name
-  gint ocp; // open_compression_percent : get/set in prefs
+  gshort startup_phase; ///< -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
+  const gchar *wm; ///<window manager name
+  gint ocp; ///< open_compression_percent : get/set in prefs
 
   gboolean antialias;
 
@@ -147,14 +147,14 @@ typedef struct {
   gshort rte_keys_virtual;
 
   guint jack_opts;
-#define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   // jack can start/stop
-#define JACK_OPTS_TRANSPORT_MASTER (1<<1)  // transport master
-#define JACK_OPTS_START_TSERVER (1<<2)     // start transport server
-#define JACK_OPTS_NOPLAY_WHEN_PAUSED (1<<3) // play audio even when transport paused
-#define JACK_OPTS_START_ASERVER (1<<4)     // start audio server
-#define JACK_OPTS_TIMEBASE_START (1<<5)    // jack sets play start position
-#define JACK_OPTS_TIMEBASE_CLIENT (1<<6)    // full timebase client
-#define JACK_OPTS_TIMEBASE_MASTER (1<<7)   // timebase master (not implemented yet)
+#define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   ///< jack can start/stop
+#define JACK_OPTS_TRANSPORT_MASTER (1<<1)  ///< transport master
+#define JACK_OPTS_START_TSERVER (1<<2)     ///< start transport server
+#define JACK_OPTS_NOPLAY_WHEN_PAUSED (1<<3) ///< play audio even when transport paused
+#define JACK_OPTS_START_ASERVER (1<<4)     ///< start audio server
+#define JACK_OPTS_TIMEBASE_START (1<<5)    ///< jack sets play start position
+#define JACK_OPTS_TIMEBASE_CLIENT (1<<6)    ///< full timebase client
+#define JACK_OPTS_TIMEBASE_MASTER (1<<7)   ///< timebase master (not implemented yet)
 
   gchar jack_tserver[256];
   gchar jack_aserver[256];
@@ -171,9 +171,9 @@ typedef struct {
 #define AUDIO_OPTS_FOLLOW_FPS (1<<1)
 
   gboolean event_window_show_frame_events;
-  gboolean crash_recovery; // TRUE==maintain mainw->recovery file
+  gboolean crash_recovery; ///< TRUE==maintain mainw->recovery file
 
-  gboolean show_rdet; // show render details (frame size, encoder type) before saving to file
+  gboolean show_rdet; ///< show render details (frame size, encoder type) before saving to file
 
   gboolean move_effects;
 
@@ -200,8 +200,8 @@ typedef struct {
   gboolean ar_clipset;
   gboolean ar_layout;
 
-  gchar ar_clipset_name[128]; // utf8 (not converted)
-  gchar ar_layout_name[128];  // utf8 (not converted)
+  gchar ar_clipset_name[128]; ///< utf8 (not converted)
+  gchar ar_layout_name[128];  ///< utf8 (not converted)
 
   gboolean rec_desktop_audio;
 
@@ -215,7 +215,7 @@ typedef struct {
 
   gboolean collate_images;
 
-  gint virt_height; // n screens vert.
+  gint virt_height; ///< n screens vert.
 
   gboolean concat_images;
 
@@ -237,8 +237,8 @@ typedef struct {
 #define OMC_DEV_FORCE_RAW_MIDI 1<<2
   guint omc_dev_opts;
 
-  gchar omc_js_fname[256];  // utf8
-  gchar omc_midi_fname[256]; // utf8
+  gchar omc_js_fname[256];  ///< utf8
+  gchar omc_midi_fname[256]; ///< utf8
   
   gboolean mouse_scroll_clips;
 
@@ -293,7 +293,7 @@ enum {
 #define PREF_WIN_HEIGHT 640
 
 
-// prefs window
+/// prefs window
 typedef struct {
   gulong encoder_ofmt_fn;
   gulong encoder_name_fn;
@@ -434,7 +434,8 @@ typedef struct {
   gboolean needs_restart;
 } _prefsw;
 
-typedef struct {  // startup overrides from commandline
+/// startup overrides from commandline
+typedef struct {
   gboolean ign_clipset;
   gboolean ign_osc;
   gboolean ign_jackopts;
@@ -445,7 +446,7 @@ typedef struct {  // startup overrides from commandline
 typedef struct {
   gchar tmpdir[256];
   gchar theme[64];
-  gchar vpp_name[64]; // new video playback plugin
+  gchar vpp_name[64]; ///< new video playback plugin
   gint vpp_fixed_fps_numer;
   gint vpp_fixed_fps_denom;
   gdouble vpp_fixed_fpsd;

@@ -7,10 +7,10 @@
 #ifndef _HAS_OMC_LEARN_H
 #define _HAS_OMC_LEARN_H
 
-/* max number of macros */
+/** max number of macros */
 #define N_OMC_MACROS 32
 
-/* floating point precision */
+/** floating point precision */
 #define OMC_FP_FIX 4
 
 // OMC device interfaces
@@ -38,13 +38,13 @@ void midi_close(void);
 /* parameter types */
 #define OMC_PARAM_INT 1
 #define OMC_PARAM_DOUBLE 2
-#define OMC_PARAM_SPECIAL 128 // can be int or double, depending on effect type
+#define OMC_PARAM_SPECIAL 128 ///< can be int or double, depending on effect type
 
 typedef struct {
-  gchar *msg;   // OSC message
-  gchar *macro_text;  // macro text
-  gchar *info_text;  // descriptive text
-  gchar *stype_tags;   // setter type tags
+  gchar *msg;   ///< OSC message
+  gchar *macro_text;  ///< macro text
+  gchar *info_text;  ///< descriptive text
+  gchar *stype_tags;   ///< setter type tags
 
   gint nparams;
 
@@ -67,24 +67,24 @@ typedef struct {
 
 
 typedef struct {
-  gchar *srch; // string to match
-  gint macro; // macro number this is linked to (or -1)
+  gchar *srch; ///< string to match
+  gint macro; ///< macro number this is linked to (or -1)
 
-  gint nvars; // number of params
-  gint *offs0; // offs to add to params before scale
-  gdouble *scale; // scale for params
-  gint *offs1; // offs to add to params after scale
+  gint nvars; ///< number of params
+  gint *offs0; ///< offs to add to params before scale
+  gdouble *scale; ///< scale for params
+  gint *offs1; ///< offs to add to params after scale
 
-  gint *min; // min values of params
-  gint *max; // max values of params
+  gint *min; ///< min values of params
+  gint *max; ///< max values of params
 
-  gboolean *matchp; // do we need to match this pval ?
-  gint *matchi; // match value
+  gboolean *matchp; ///< do we need to match this pval ?
+  gint *matchi; ///< match value
 
   // enumerated by number of params in target macro
-  gint *map; // reverse mapping to params of OSC message
-  gint *fvali; // mapping to fixed ints
-  gdouble *fvald; // mapping to fixed doubles
+  gint *map; ///< reverse mapping to params of OSC message
+  gint *fvali; ///< mapping to fixed ints
+  gdouble *fvald; ///< mapping to fixed doubles
 
 
   ///////////////////////// following this is not saved/loaded
@@ -145,11 +145,11 @@ enum {
 #define OMC_MIDI_PITCH_BEND 132
 #define OMC_MIDI_PGM_CHANGE 133
 
-// start learning MIDI inputs
+/// start learning MIDI inputs
 void on_midi_learn_activate (GtkMenuItem *, gpointer);
 
-// process a string (i.e. convert to an OSC message and pass to OSC subsys)
-// only need to set omclw if learn is TRUE
+/// process a string (i.e. convert to an OSC message and pass to OSC subsys)
+/// only need to set omclw if learn is TRUE
 void omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw);
 
 
@@ -165,7 +165,7 @@ void on_midi_load_activate (GtkMenuItem *, gpointer);
 #define OSC_BUF_SIZE 1024
 #define OSC_MAX_TYPETAGS 64 
 
-// decode learnt behaviours
+/// decode learnt behaviours
 OSCbuf *omc_learner_decode(gint type, gint index, const gchar *string);
 
 

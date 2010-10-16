@@ -4,7 +4,7 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-// filter apply errors
+/// filter apply errors
 typedef enum {
   FILTER_NO_ERROR=0,
   FILTER_ERROR_MISSING_LAYER=1,
@@ -34,8 +34,8 @@ gchar *make_weed_hashname(int filter_idx);
 int weed_get_idx_for_hashname (const gchar *hashname, gboolean fullname);
 gint enabled_in_channels (weed_plant_t *plant, gboolean count_repeats);
 gint enabled_out_channels (weed_plant_t *plant, gboolean count_repeats);
-weed_plant_t *get_enabled_channel (weed_plant_t *inst, gint which, gboolean is_in); // for FILTER_INST
-weed_plant_t *get_mandatory_channel (weed_plant_t *filter, gint which, gboolean is_in); // for FILTER_CLASS
+weed_plant_t *get_enabled_channel (weed_plant_t *inst, gint which, gboolean is_in); ///< for FILTER_INST
+weed_plant_t *get_mandatory_channel (weed_plant_t *filter, gint which, gboolean is_in); ///< for FILTER_CLASS
 gboolean weed_filter_is_resizer(weed_plant_t *filt);
 gboolean weed_instance_is_resizer(weed_plant_t *filt);
 
@@ -53,8 +53,8 @@ gboolean has_usable_palette(weed_plant_t *chantmpl);
 
 void weed_call_deinit_func(weed_plant_t *instance);
 
-gboolean weed_init_effect(int hotkey); // hotkey starts at 1
-void weed_deinit_effect(int hotkey); // hotkey starts at 1
+gboolean weed_init_effect(int hotkey); ///< hotkey starts at 1
+void weed_deinit_effect(int hotkey); ///< hotkey starts at 1
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
 void weed_instance_ref(weed_plant_t *inst);
 void weed_instance_unref(weed_plant_t *inst);
@@ -73,7 +73,7 @@ gboolean is_perchannel_multiw(weed_plant_t *param);
 gboolean has_perchannel_multiw(weed_plant_t *filter);
 
 
-// parameter interpolation
+/// parameter interpolation
 gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
 gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
 
@@ -83,7 +83,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem);
 
 
-// record a parameter value change in our event_list
+/// record a parameter value change in our event_list
 void rec_param_change(weed_plant_t *inst, int pnum);
 
 weed_plant_t *get_textparm();
@@ -91,13 +91,13 @@ weed_plant_t *get_textparm();
 void weed_set_blend_factor(int hotkey);
 gint weed_get_blend_factor(int hotkey);
 
-void weed_memory_init(void); // call weed_init() with mem functions
+void weed_memory_init(void); ///< call weed_init() with mem functions
 
-void weed_load_all (void); // load effects
-void weed_unload_all(void); // unload all effects
-int get_next_free_key(void); // next free "key" for the multitrack system
+void weed_load_all (void); ///< load effects
+void weed_unload_all(void); ///< unload all effects
+int get_next_free_key(void); ///< next free "key" for the multitrack system
 
-void weed_deinit_all(void); // deinit all active effects
+void weed_deinit_all(void); ///< deinit all active effects
 
 weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight, void ***pchains);
 lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc);
@@ -111,7 +111,7 @@ gboolean weed_playback_gen_start (void);
 void weed_bg_generator_end (weed_plant_t *inst);
 
 
-// for multitrack
+/// for multitrack
 void backup_weed_instances(void);
 void restore_weed_instances(void);
 
@@ -119,26 +119,26 @@ void restore_weed_instances(void);
 //////////////////////////////////////////////////////////
 // WARNING !! "key" here starts at 1, "mode" starts at 0
 
-gboolean rte_key_valid (gint key, gboolean is_userkey); // returns TRUE if there is a filter bound to active mode of hotkey
-gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey); // returns TRUE if a filter_class is bound to key/mode
-gint rte_keymode_get_filter_idx(gint key, gint mode); // returns filter_class index of key/mode (or -1 if no filter bound)
-gchar *rte_keymode_get_filter_name (gint key, gint mode); // returns name of filter_class bound to key/mode (or "")
-gchar *rte_keymode_get_plugin_name(gint key, gint mode); // returns name of plugin package containing filter_class (or "")
-gchar *rte_keymode_get_type (gint key, gint mode); // returns a string filter/instance type (or "")
-weed_plant_t *rte_keymode_get_instance(gint key, gint mode); // returns filter_instance bound to key/mode (or NULL)
-weed_plant_t *rte_keymode_get_filter(gint key, gint mode); // returns filter_class bound to key/mode (or NULL)
+gboolean rte_key_valid (gint key, gboolean is_userkey); ///< returns TRUE if there is a filter bound to active mode of hotkey
+gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey); ///< returns TRUE if a filter_class is bound to key/mode
+gint rte_keymode_get_filter_idx(gint key, gint mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
+gchar *rte_keymode_get_filter_name (gint key, gint mode); ///< returns name of filter_class bound to key/mode (or "")
+gchar *rte_keymode_get_plugin_name(gint key, gint mode); ///< returns name of plugin package containing filter_class (or "")
+gchar *rte_keymode_get_type (gint key, gint mode); ///< returns a string filter/instance type (or "")
+weed_plant_t *rte_keymode_get_instance(gint key, gint mode); ///< returns filter_instance bound to key/mode (or NULL)
+weed_plant_t *rte_keymode_get_filter(gint key, gint mode); ///< returns filter_class bound to key/mode (or NULL)
 
-gboolean weed_delete_effectkey (gint key, gint mode); // unbinds a filter_class from a key/mode
-int weed_add_effectkey (gint key, const gchar *hashname, gboolean fullname); // bind a filter_class to key/mode using its hashname
+gboolean weed_delete_effectkey (gint key, gint mode); ///< unbinds a filter_class from a key/mode
+int weed_add_effectkey (gint key, const gchar *hashname, gboolean fullname); ///< bind a filter_class to key/mode using its hashname
 
-int weed_add_effectkey_by_idx (gint key, int idx); // see description
+int weed_add_effectkey_by_idx (gint key, int idx); ///< see description
 
-int rte_key_getmode (gint key); // returns current active mode for a key (or -1)
-int rte_key_getmaxmode(gint key); // returns highest mode which is set
+int rte_key_getmode (gint key); ///< returns current active mode for a key (or -1)
+int rte_key_getmaxmode(gint key); ///< returns highest mode which is set
 
-gboolean rte_key_setmode (gint key, gint newmode); // set mode for a given key; if key==0 then the active key is used
+gboolean rte_key_setmode (gint key, gint newmode); ///< set mode for a given key; if key==0 then the active key is used
 
-// returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
+///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
 gint rte_switch_keymode (gint key, gint mode, const gchar *hashname);
 
 
@@ -196,7 +196,7 @@ void weed_add_plant_flags (weed_plant_t *plant, int flags);
 
 void update_host_info (weed_plant_t *inst);
 
-// add default filler values to a parameter or pchange.
+/// add default filler values to a parameter or pchange.
 void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum, int hint, int index);
 
 

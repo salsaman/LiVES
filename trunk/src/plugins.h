@@ -22,10 +22,10 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
 #define PLUGIN_VID_PLAYBACK "playback/video"
 
 
-// smogrify handles the directory differently for themes
+/// smogrify handles the directory differently for themes
 #define PLUGIN_THEMES "themes"
 
-// uses WEED_PLUGIN_PATH
+/// uses WEED_PLUGIN_PATH
 #define PLUGIN_EFFECTS_WEED "weed"
 #define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
 
@@ -37,7 +37,7 @@ GList *plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_na
 GList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, gboolean allow_blanks);
 
 
-// video playback plugins
+/// video playback plugins
 typedef gboolean (*plugin_keyfunc) (gboolean down, guint16 unicode, guint16 keymod);
 
 typedef struct {
@@ -166,22 +166,22 @@ typedef enum {
 
 // seek_flags is a bitmap
 
-  // good
+  /// good
 #define LIVES_SEEK_FAST (1<<0)
 
-  // not so good
+  /// not so good
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
 
 typedef struct {
-  gchar *URI; // the URI of this cdata
+  gchar *URI; ///< the URI of this cdata
 
-  gint nclips; // number of clips (titles) in container
-  gchar container_name[512]; // name of container, e.g. "ogg" or NULL
+  gint nclips; ///< number of clips (titles) in container
+  gchar container_name[512]; ///< name of container, e.g. "ogg" or NULL
 
-  // plugin should init this to 0 if URI changes
-  gint current_clip; // current clip number in container (starts at 0, MUST be <= nclips) [rw host]
+  /// plugin should init this to 0 if URI changes
+  gint current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
   // video data
   gint width;
@@ -189,26 +189,26 @@ typedef struct {
   gint64 nframes;
   lives_interlace_t interlace;
 
-  // x and y offsets of picture within frame
-  // for primary pixel plane
+  /// x and y offsets of picture within frame
+  /// for primary pixel plane
   gint offs_x;
   gint offs_y;
   gint frame_width;
   gint frame_height;
 
-  gfloat par; // pixel aspect ratio
+  gfloat par; ///< pixel aspect ratio
 
   gfloat fps;
 
   int *palettes;
 
-  // plugin should init this to palettes[0] if URI changes
-  int current_palette;  // current palette [rw host]; must be contained in palettes
+  /// plugin should init this to palettes[0] if URI changes
+  int current_palette;  ///< current palette [rw host]; must be contained in palettes
   
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
-  gchar video_name[512]; // name of video codec, e.g. "theora" or NULL
+  gchar video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
   gint arate;
@@ -216,11 +216,11 @@ typedef struct {
   gint asamps;
   gboolean asigned;
   gboolean ainterleaf;
-  gchar audio_name[512]; // name of audio codec, e.g. "vorbis" or NULL
+  gchar audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
 
   int seek_flag;
 
-  void *priv; // private data for demuxer/decoder - host should not touch this
+  void *priv; ///< private data for demuxer/decoder - host should not touch this
 
 } lives_clip_data_t;
 
@@ -228,25 +228,24 @@ typedef struct {
 
 typedef struct {
   // playback
-  gchar *name; // plugin name
-  void *handle; // may be shared between several instances
+  gchar *name; ///< plugin name
+  void *handle; ///< may be shared between several instances
 
   // mandatory
   const char *(*version) (void);
 
-  // call first time with NULL cdata
-  // subsequent calls should re-use cdata
-  // set cdata->current_clip > 0 to get data for clip n (0 <= n < cdata->nclips)
-  // we can also set cdata->current_palette (must be in list cdata->palettes[])
-
-  // if URI changes, current_clip and current_palette are reset by plugin
-
+  /// call first time with NULL cdata
+  /// subsequent calls should re-use cdata
+  /// set cdata->current_clip > 0 to get data for clip n (0 <= n < cdata->nclips)
+  /// we can also set cdata->current_palette (must be in list cdata->palettes[])
+  ///
+  /// if URI changes, current_clip and current_palette are reset by plugin
   lives_clip_data_t *(*get_clip_data)(char *URI, lives_clip_data_t *cdata);
 
-  // frame starts at 0 in these functions
+  /// frame starts at 0 in these functions
   gboolean (*get_frame)(const lives_clip_data_t *, int64_t frame, void **pixel_data);
 
-  // call this for each cdata before unloading the module
+  /// call this for each cdata before unloading the module
   void (*clip_data_free)(lives_clip_data_t *);
 
   // optional
@@ -284,28 +283,28 @@ LIVES_INLINE gboolean decplugin_supports_palette (const lives_decoder_t *dplug, 
 // RFX plugins
 
 
-// external rendered fx plugins (RFX plugins)
+/// external rendered fx plugins (RFX plugins)
 #define PLUGIN_RENDERED_EFFECTS_BUILTIN "effects/rendered/"
 
-// in the home directory
+/// in the home directory
 #define PLUGIN_RENDERED_EFFECTS_CUSTOM "plugins/effects/rendered/custom/"
 #define PLUGIN_RENDERED_EFFECTS_TEST "plugins/effects/rendered/test/"
 
-// rfx scripts for the SDK
+/// rfx scripts for the SDK
 #define PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS "effects/RFXscripts/"
 
-// in the home directory
+/// in the home directory
 #define PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS "plugins/effects/RFXscripts/custom/"
 #define PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS "plugins/effects/RFXscripts/test/"
 
-// scraps are passed between programs to generate param windows
+/// scraps are passed between programs to generate param windows
 #define PLUGIN_RFX_SCRAP ""
 
 
-// max number of display widgets per parameter (currently 5 for RGBA spinbuttons + colorbutton)
+/// max number of display widgets per parameter (currently 5 for RGBA spinbuttons + colorbutton)
 #define MAX_PARAM_WIDGETS 5
 
-// length of max string (not including terminating NULL) for LiVES-perl
+/// length of max string (not including terminating NULL) for LiVES-perl
 #define RFX_MAXSTRINGLEN 1024
 
 
@@ -359,16 +358,16 @@ typedef struct {
   gint group;
   lives_param_type_t type;
 
-  gint dp;  //decimals, 0 for int and bool
-  void *value;  // current value(s)
+  gint dp;  ///<decimals, 0 for int and bool
+  void *value;  ///< current value(s)
 
   gdouble min;
-  gdouble max; // for string this is max characters
+  gdouble max; ///< for string this is max characters
 
-  void *def; // default values
-  GList *list; // for string list (choices)
+  void *def; ///< default values
+  GList *list; ///< for string list (choices)
 
-  // multivalue type - single value, multi value, or per channel
+  /// multivalue type - single value, multi value, or per channel
   gshort multi;
 #define PVAL_MULTI_NONE 0
 #define PVAL_MULTI_ANY 1
@@ -377,9 +376,9 @@ typedef struct {
   //--------------------------------------------------
   // extras for LiVES
 
-  // TODO - change to GtkWidget **widgets, terminated with a NULL
-  GtkWidget *widgets[MAX_PARAM_WIDGETS]; // widgets which hold value/RGBA settings
-  gboolean onchange; // is there a trigger ?
+  /// TODO - change to GtkWidget **widgets, terminated with a NULL
+  GtkWidget *widgets[MAX_PARAM_WIDGETS]; ///< widgets which hold value/RGBA settings
+  gboolean onchange; ///< is there a trigger ?
 
   gboolean changed;
 
@@ -393,34 +392,34 @@ typedef struct {
 
 
 typedef enum {
-  RFX_STATUS_BUILTIN=0, // factory presets
-  RFX_STATUS_CUSTOM=1, // custom effects in the custom menu
-  RFX_STATUS_TEST=2, // test effects in the advanced menu
-  RFX_STATUS_ANY=3, // indicates free choice of statuses
-  RFX_STATUS_WEED=4, // indicates an internal RFX, created from a weed instance
-  RFX_STATUS_SCRAP=5, // used for parsing RFX scraps from external apps
+  RFX_STATUS_BUILTIN=0, ///< factory presets
+  RFX_STATUS_CUSTOM=1, ///< custom effects in the custom menu
+  RFX_STATUS_TEST=2, ///< test effects in the advanced menu
+  RFX_STATUS_ANY=3, ///< indicates free choice of statuses
+  RFX_STATUS_WEED=4, ///< indicates an internal RFX, created from a weed instance
+  RFX_STATUS_SCRAP=5, ///< used for parsing RFX scraps from external apps
 
   // these are only used when prompting for a name
-  RFX_STATUS_COPY=128, // indicates a copy operation to test
-  RFX_STATUS_RENAME=129 // indicates a copy operation to test
+  RFX_STATUS_COPY=128, ///< indicates a copy operation to test
+  RFX_STATUS_RENAME=129 ///< indicates a copy operation to test
 } lives_rfx_status_t;
 
 
 
 
 typedef struct {
-  gchar *name;  // the name of the executable (so we can run it !)
-  gchar *menu_text; // for Weed, this is the filter_class "name"
-  gchar *action_desc; // for Weed "Applying $s"
-  gint min_frames; // for Weed, 1
+  gchar *name;  ///< the name of the executable (so we can run it !)
+  gchar *menu_text; ///< for Weed, this is the filter_class "name"
+  gchar *action_desc; ///< for Weed "Applying $s"
+  gint min_frames; ///< for Weed, 1
   gint num_in_channels;
   lives_rfx_status_t status;
 
 
   guint32 props;
-#define RFX_PROPS_SLOW        0x0001  // hint to GUI
-#define RFX_PROPS_MAY_RESIZE  0x0002 // is a tool
-#define RFX_PROPS_BATCHG      0x0004 // is a batch generator
+#define RFX_PROPS_SLOW        0x0001  ///< hint to GUI
+#define RFX_PROPS_MAY_RESIZE  0x0002 ///< is a tool
+#define RFX_PROPS_BATCHG      0x0004 ///< is a batch generator
 
 
 #define RFX_PROPS_RESERVED1   0x1000
@@ -428,12 +427,12 @@ typedef struct {
 #define RFX_PROPS_RESERVED3   0x4000
 #define RFX_PROPS_AUTO_BUILT  0x8000
 
-  GtkWidget *menuitem;  // the menu item which activates this effect
+  GtkWidget *menuitem;  ///< the menu item which activates this effect
   gint num_params;
   lives_param_t *params;
   lives_rfx_source_t source_type;
-  void *source;  // points to the source (e.g. a weed_plant_t)
-  void *extra;  // for future use */
+  void *source;  ///< points to the source (e.g. a weed_plant_t)
+  void *extra;  ///< for future use
   gchar delim[2];
   gboolean is_template;
 
@@ -459,10 +458,10 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full);
 
 
 typedef struct {
-  GList *list; // list of filter_idx from which user can delegate
-  gint delegate; // offset in list of current delegate
-  gulong func; // menuitem activation function for current delegate
-  lives_rfx_t *rfx; // pointer to rfx for current delegate (or NULL)
+  GList *list; ///< list of filter_idx from which user can delegate
+  gint delegate; ///< offset in list of current delegate
+  gulong func; ///< menuitem activation function for current delegate
+  lives_rfx_t *rfx; ///< pointer to rfx for current delegate (or NULL)
 } lives_fx_candidate_t;
 
 // filter types which can have candidates
@@ -484,20 +483,19 @@ void set_double_param(void *value, gdouble );
 void set_colRGB24_param(void *value, gshort red, gshort green, gshort blue);
 void set_colRGBA32_param(void *value, gshort red, gshort green, gshort blue, gshort alpha);
 
-// return an array of parameter values
+/// return an array of parameter values
 void **store_rfx_params (lives_rfx_t *);
 void set_rfx_params_from_store (lives_rfx_t *rfx, void **store);
 void rfx_params_store_free (lives_rfx_t *, void **store);
 
-// 
 GList *array_to_string_list (gchar **array, gint offset, gint len);
 
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits);
 
 gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx);
 
-////////////////////////////////////////////////////////////
-// video playback plugin window - fixed part
+//////////////////////////////////////////////////////////////////////////////////////////
+/// video playback plugin window - fixed part
 typedef struct {
   _vid_playback_plugin *plugin;
   GtkWidget *dialog;
@@ -511,6 +509,6 @@ typedef struct {
 _vppaw *on_vpp_advanced_clicked (GtkButton *, gpointer);
 
 
-// for realtime effects, see effects-weed.h
+/// for realtime effects, see effects-weed.h
 
 #endif

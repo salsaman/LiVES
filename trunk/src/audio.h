@@ -11,16 +11,16 @@
 #define SAMPLE_MAX_16BIT_N  32768.0f
 #define SAMPLE_MAX_16BITI  32768
 
-//sign swapping
+///sign swapping
 #define SWAP_U_TO_S 1
 #define SWAP_S_TO_U 2
 
-//endian swapping
+///endian swapping
 #define SWAP_X_TO_L 1
 #define SWAP_L_TO_X 2
 
 
-// defaults for when not specifed
+/// defaults for when not specifed
 # define DEFAULT_AUDIO_RATE 44100
 # define DEFAULT_AUDIO_CHANS 2
 # define DEFAULT_AUDIO_SAMPS 16
@@ -28,24 +28,24 @@
 # define DEFAULT_AUDIO_SIGNED16 !(AFORM_UNSIGNED)
 
 
-// TODO ** - make configurable - audio buffer size for rendering
+/// TODO ** - make configurable - audio buffer size for rendering
 #define MAX_AUDIO_MEM 8*1024*1024
 
-// chunk size for interpolate/effect cycle
+/// chunk size for interpolate/effect cycle
 #define RENDER_BLOCK_SIZE 1024
 
-// size of silent block in bytes
+/// size of silent block in bytes
 #define SILENCE_BLOCK_SIZE 65536
 
-// chunk size for audio buffer reads
+/// chunk size for audio buffer reads
 #define READ_BLOCK_SIZE 4096
 
-// buffer size for realtime audio
+/// buffer size for realtime audio
 #define XSAMPLES 128000
 
 
-/////////////////////////
-// asynch msging
+/////////////////////////////////////
+/// asynch msging
 
 
 #define ASERVER_CMD_PROCESSED 0
@@ -67,7 +67,7 @@ typedef struct {
 } audio_buffer_t;
 
 
-////////////////////////////
+//////////////////////////////////////////
 
 typedef enum lives_audio_loop {
   AUDIO_LOOP_NONE,
@@ -90,7 +90,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 
 void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsigned long src_skip, int is_unsigned, float vol);
 
-long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol); // returns frames output
+long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol); ///< returns frames output
 
 long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol);
 
@@ -98,7 +98,7 @@ long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate)
 
 long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf);
 
-void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv); // fade in/fade out
+void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv); ///< fade in/fade out
 
 
 #define RECA_WINDOW_GRAB 1
@@ -107,12 +107,12 @@ void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble
 
 
 #ifdef ENABLE_JACK
-void jack_rec_audio_to_clip(gint fileno, gint oldfileno, gshort rec_type);  // record from external source to clip
+void jack_rec_audio_to_clip(gint fileno, gint oldfileno, gshort rec_type);  ///< record from external source to clip
 void jack_rec_audio_end(void);
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-void pulse_rec_audio_to_clip(gint fileno, gint oldfileno, gshort rec_type);  // record from external source to clip
+void pulse_rec_audio_to_clip(gint fileno, gint oldfileno, gshort rec_type);  ///< record from external source to clip
 void pulse_rec_audio_end(void);
 #endif
 

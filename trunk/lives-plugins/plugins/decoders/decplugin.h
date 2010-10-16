@@ -41,22 +41,22 @@ typedef enum {
   LIVES_INTERLACE_TOP_FIRST=2
 } lives_interlace_t;
 
-  // good
+  /// good
 #define LIVES_SEEK_FAST (1<<0)
 
-  // not so good
+  /// not so good
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
 
 typedef struct {
-  char *URI; // the URI of this cdata
+  char *URI; ///< the URI of this cdata
 
-  int nclips; // number of clips (titles) in container
-  char container_name[512]; // name of container, e.g. "ogg" or NULL
+  int nclips; ///< number of clips (titles) in container
+  char container_name[512]; ///< name of container, e.g. "ogg" or NULL
 
-  // plugin should init this to 0 if URI changes
-  int current_clip; // current clip number in container (starts at 0, MUST be <= nclips) [rw host]
+  /// plugin should init this to 0 if URI changes
+  int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
   // video data
   int width;
@@ -64,26 +64,26 @@ typedef struct {
   int64_t nframes;
   lives_interlace_t interlace;
 
-  // x and y offsets of picture within frame
-  // for primary pixel plane
+  /// x and y offsets of picture within frame
+  /// for primary pixel plane
   int offs_x;
   int offs_y;
   int frame_width;
   int frame_height;
 
-  float par; // pixel aspect ratio
+  float par; ///< pixel aspect ratio
 
   float fps;
 
   int *palettes;
 
-  // plugin should init this to palettes[0] if URI changes
-  int current_palette;  // current palette [rw host]; must be contained in palettes
+  /// plugin should init this to palettes[0] if URI changes
+  int current_palette;  ///< current palette [rw host]; must be contained in palettes
   
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
-  char video_name[512]; // name of video codec, e.g. "theora" or NULL
+  char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
   int arate;
@@ -91,11 +91,11 @@ typedef struct {
   int asamps;
   boolean asigned;
   boolean ainterleaf;
-  char audio_name[512]; // name of audio codec, e.g. "vorbis" or NULL
+  char audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
 
-  int seek_flag; // bitmap of seek properties
+  int seek_flag; ///< bitmap of seek properties
 
-  void *priv; // private data for demuxer/decoder
+  void *priv; ///< private data for demuxer/decoder
 
 } lives_clip_data_t;
 
@@ -105,16 +105,17 @@ typedef struct {
 const char *version(void);
 
 
-// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes) 
-// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
-// plugin may or may not check current_palette to see if it is valid
+/// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes) 
+/// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
+///
+/// plugin may or may not check current_palette to see if it is valid
 
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *clip_data);
 
-// frame starts at 0
+/// frame starts at 0
 boolean get_frame(const lives_clip_data_t *cdata, int64_t frame, void **pixel_data);
 
-// free clip data - this should be called for each instance before unloading the module
+/// free clip data - this should be called for each instance before unloading the module
 void clip_data_free(lives_clip_data_t *);
 
 
@@ -139,7 +140,7 @@ void module_unload(void);
 
 
 
-  /// bitstream functions from vlc
+  // bitstream functions from vlc
 
 
 
@@ -149,7 +150,7 @@ void module_unload(void);
     uint8_t *p;
     uint8_t *p_end;
     
-    ssize_t  i_left;    /* i_count number of available bits */
+    ssize_t  i_left;    /**< i_count number of available bits */
   } bs_t;
   
   static inline void bs_init( bs_t *s, const void *p_data, size_t i_data )

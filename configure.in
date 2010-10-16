@@ -115,7 +115,7 @@ if test x$PKG_CONFIG = xno; then
 fi
 
 # Check for doxygen
-AC_PATH_PROG(DOXYGEN, doxygen, no)
+AC_PATH_PROG(DOXYGEN, doxygens, no)
 AM_CONDITIONAL(HAVE_DOXYGEN, test x$DOXYGEN != xno)
 
 if test x$DOXYGEN = xno; then

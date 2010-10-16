@@ -77,6 +77,7 @@ char **get_font_list(void) {
           qsort(font_list, num, sizeof(char *), font_cmp);
         }
       }
+      g_free(pff);
     }
   }
   return font_list;

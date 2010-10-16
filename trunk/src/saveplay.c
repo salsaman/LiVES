@@ -1297,6 +1297,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
   g_free (fps_string);
 
   g_free(extra_params);
+  extra_params=NULL;
 
   mainw->effects_paused=FALSE;
   cfile->nokeep=TRUE;
@@ -1367,7 +1368,6 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	g_object_unref(mainw->optextview);
       }
 
-      if (extra_params!=NULL) g_free(extra_params);
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1408,7 +1408,6 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	g_object_unref(mainw->optextview);
       }
 
-      if (extra_params!=NULL) g_free(extra_params);
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;

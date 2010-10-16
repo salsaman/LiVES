@@ -1077,7 +1077,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     
       g_signal_connect (GTK_OBJECT (savebutton), "clicked",
 			G_CALLBACK (on_save_textview_clicked),
-			mainw->optextview);
+			textwindow->textview);
     }
     else {
       gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);

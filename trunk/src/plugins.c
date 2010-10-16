@@ -2977,6 +2977,9 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
 
     rfx->menu_text=(vbox==NULL?g_strdup_printf(_("%s advanced settings"),prefs->encoder.of_desc):g_strdup(""));
     rfx->is_template=FALSE;
+
+    rfx->source=NULL;
+    rfx->source_type=LIVES_RFX_SOURCE_RFX;
       
     render_fx_get_params(rfx,rfx_scrapname,RFX_STATUS_SCRAP);
 

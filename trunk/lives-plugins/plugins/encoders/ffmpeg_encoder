@@ -7,12 +7,13 @@
 
 
 #######################################################################
-# LiVES ffmpeg plugin v2.1
+# LiVES ffmpeg plugin v2.6
 # v 2.1 - add experimental 3gp support
 # v 2.2 - format changed in ffmpeg from image to image2, update
 # v 2.3 add youtube and flv formats
 # v 2.4 allow encoding of .png images
 # v 2.5 add threading support and experimental webm encoding
+# v 2.6 made threading support optional because of instability problems; versioning string changed in ffmpeg
 
 #######################################################################
 
@@ -27,7 +28,7 @@ else {
 
 
 if ($command eq "version") {
-    print "ffmpeg encoder plugin v2.5\n";
+    print "ffmpeg encoder plugin v2.6\n";
     exit 0;
 }
 
@@ -109,6 +110,7 @@ if ($command eq "get_rfx") {
 	    print "<params>\n";
 	    print "mp3|Use _mp3 audio codec|bool|1|1\n";
 	    print "mp3lame|Use mp3_lame audio codec|bool|0|1\n";
+	    print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|";
 	    print "</params>\n";
 
 	}
@@ -125,7 +127,7 @@ if ($command eq "encode") {
     # encode
     $encoder_command="ffmpeg";
 
-    $ffver=`ffmpeg 2>&1|grep libavformat`;
+    $ffver=`ffmpeg 2>&1|grep libavformat | grep -v configuration`;
 
     $ffver=(split(/\./,$ffver))[0];
 
@@ -133,8 +135,7 @@ if ($command eq "encode") {
 
     $usemp3=$ARGV[13];
     $usemp3lame=$ARGV[14];
-
-    $ncpus=&get_num_procs;
+    $nthreads=$ARGV[15];
 
     if ($otype eq "") {
 	$otype="divx";
@@ -230,11 +231,18 @@ if ($command eq "encode") {
 	}
     }
     else {
-	if ($ffver>=52) {
-	    $syscom="$encoder_command -threads $ncpus -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
+	if ($nthreads>1) {
+	    $threads=" -threads $nthreads";
 	}
 	else {
-	    $syscom="$encoder_command -threads $ncpus -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
+	    $threads="";
+	}
+
+	if ($ffver>=52) {
+	    $syscom="$encoder_command $threads -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
+	}
+	else {
+	    $syscom="$encoder_command $threads -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
 	}
     }
 

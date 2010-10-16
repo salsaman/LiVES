@@ -2,6 +2,8 @@
 
 AUTOMAKE_OPTIONS = 1.7
 
+DOXYGEN = @DOXYGEN@
+
 if ENABLE_OSC
 OSC_SUBDIRS = libOSC
 endif
@@ -14,6 +16,14 @@ PACKAGE_CAPITALISED = LiVES
 
 docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
 sharedir = $(prefix)/share
+
+if HAVE_DOXYGEN
+docs/doxygen:
+	$(DOXYGEN) LiVES.doxygen
+else
+docs:
+	@echo "Doxygen not installed, skipping sourcecode documentation"
+endif
 
 doc_DATA = lives-plugins/marcos-encoders/README.multi_encoder AUTHORS BUGS ChangeLog FEATURES GETTING.STARTED README OMC/lives-OMC.txt RFX/LiVES-Perl.odt  RFX/rfxbuilder.odt RFX/RFX.spec weed-docs/weedspec.txt weed-docs/weedevents.txt docs/clip_format.txt
 
@@ -36,6 +46,7 @@ EXTRA_DIST = \
 	INSTALL \
 	menu-entries/LiVES.desktop \
 	menu-entries/lives.xpm \
+	LiVES.doxygen \
 	$(doc_DATA)
 
 
@@ -48,8 +59,9 @@ installdirs:
 	mkdir -p $(DESTDIR)$(sharedir)/applications/ \
 	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/ \
 	mkdir -p $(DESTDIR)$(sharedir)/resources/
-
-
+if HAVE_DOXYGEN
+	mkdir -p $(DESTDIR)$docdir/html
+endif
 
 install-exec-local:
 	rm -rf $(DESTDIR)$(bindir)/lives
@@ -67,12 +79,12 @@ install-exec-local:
 	cp -f $(srcdir)/menu-entries/lives.xpm $(DESTDIR)$(sharedir)/pixmaps/
 
 	$(top_srcdir)/po/update_with_plugins.sh install $(PACKAGE) $(prefix) $(DESTDIR)
-
-
+if HAVE_DOXYGEN
+	cp -ryf $(srcdir)/docs/doxygen/html $(DESTDIR)$(docdir)
+endif
 
 install-exec-hook:
 	$(LN_S) $(DESTDIR)$(bindir)/lives-exe $(DESTDIR)$(bindir)/lives
-
 
 
 uninstall-local:

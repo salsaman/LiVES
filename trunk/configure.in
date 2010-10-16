@@ -110,10 +110,17 @@ AC_PATH_PROGS(PERL, perl perl5)
 
 # Check for pkg-config
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-if test $PKG_CONFIG = no; then
+if test x$PKG_CONFIG = xno; then
    AC_MSG_ERROR([Cannot find pkg-config, make sure it is installed and in your PATH])
 fi
 
+# Check for doxygen
+AC_PATH_PROG(DOXYGEN, doxygen, no)
+AM_CONDITIONAL(HAVE_DOXYGEN, test x$DOXYGEN != xno)
+
+if test x$DOXYGEN = xno; then
+   echo "Cannot find doxygen, will not build sourcecode documentation"
+fi
 
 dnl OSC
 HAVE_OSC=true
@@ -314,24 +321,6 @@ fi
 
 AM_CONDITIONAL(HAVE_SDL,$HAVE_SDL)
 AM_CONDITIONAL(FORCE_SDL,$FORCE_SDL)
-
-
-dnl check for gavl
-HAVE_GAVL=false
-PKG_CHECK_MODULES(GAVL,gavl >= 1.1.2,HAVE_GAVL=true,HAVE_GAVL=false)
-AC_SUBST(GAVL_CFLAGS)
-AC_SUBST(GAVL_LIBS)
-
-AM_CONDITIONAL(HAVE_GAVL,$HAVE_GAVL)
-
-
-dnl check for gmerlin-avdecoder
-HAVE_GMERLIN_AVDEC=false
-PKG_CHECK_MODULES(GMERLIN_AVDEC,gmerlin_avdec >= 1.0.3,HAVE_GMERLIN_AVDEC=true,HAVE_GMERLIN_AVDEC=false)
-AC_SUBST(GMERLIN_AVDEC_CFLAGS)
-AC_SUBST(GMERLIN_AVDEC_LIBS)
-
-AM_CONDITIONAL(HAVE_GMERLIN_AVDEC,$HAVE_GMERLIN_AVDEC)
 
 
 

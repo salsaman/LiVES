@@ -9,7 +9,18 @@
 
 # see the Weed spec for more details
 
+DOXYGEN = @DOXYGEN@
 
+install-data-local:
+	make docs-doxygen
+
+if HAVE_DOXYGEN
+docs-doxygen:
+	$(DOXYGEN) libweed.doxygen
+else
+docs-doxygen:
+	@echo "Doxygen not installed, skipping sourcecode documentation"
+endif
 
 WEED_SO_VERSION = 0:3:0
 
@@ -24,6 +35,8 @@ extra_ldflags = -fPIC -DPIC
 
 extra_cflags = -fPIC -DPIC
 endif
+
+EXTRA_DIST = libweed.doxygen
 
 lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la libweed-plugin-utils.la
 
@@ -57,6 +70,7 @@ libweed_utils_la_LDFLAGS = -O3 $(extra_ldflags) -version-info $(WEED_SO_VERSION)
 libweed_plugin_utils_la_CFLAGS = -O3 $(extra_cflags)
 
 libweed_plugin_utils_la_LDFLAGS = -O3 $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static
+
 
 
 install-exec-hook:

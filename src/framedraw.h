@@ -14,40 +14,40 @@
 #define MAX_PRE_Y 240
 
 
-// call this to add framedraw widget to an hbox
+/// call this to add framedraw widget to an hbox
 void
 widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_preview_button, gint width, gint height);
 
-// redraw when exposed/frame number changes
+/// redraw when exposed/frame number changes
 void framedraw_redraw (lives_special_framedraw_rect_t *, gboolean reload_image, GdkPixbuf *);
 
-// callback for widgets
+/// callback for widgets
 void after_framedraw_widget_changed (GtkWidget *, lives_special_framedraw_rect_t *);
 
 
-// activate the image for clicks and draws
+/// activate the image for clicks and draws
 void framedraw_connect(lives_special_framedraw_rect_t *, gint width, gint height, lives_rfx_t *);
-// connect spinbutton to preview
+/// connect spinbutton to preview
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *, lives_rfx_t *);
 
-// add "reset values" button
+/// add "reset values" button
 void framedraw_add_reset(GtkVBox *, lives_special_framedraw_rect_t *);
 
-// add explanatory label
+/// add explanatory label
 void framedraw_add_label(GtkVBox *box);
 
 
-// reload and redraw the frame
+/// reload and redraw the frame
 void load_framedraw_image(GdkPixbuf *);
-void load_rfx_preview(lives_rfx_t *rfx); // rfx preview
+void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 
-// just redraw the frame
+/// just redraw the frame
 void redraw_framedraw_image(void);
 
-// change the frame number
+/// change the frame number
 void after_framedraw_frame_spinbutton_changed (GtkSpinButton *, lives_special_framedraw_rect_t *);
 
-// reset button
+/// reset button
 void on_framedraw_reset_clicked (GtkButton *, lives_special_framedraw_rect_t *);
 
 

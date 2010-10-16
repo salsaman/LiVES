@@ -20,53 +20,54 @@
 
 // hardware related prefs
 
-// fraction of a second quantisation for event timing; these two must match, and must be multiples of 10>=1000000 !
-// >10**8 is not recommended, since we sometimes store seconds in a gdouble
+/// fraction of a second quantisation for event timing; must match U_SECL, and must be a multiple of 10>=1000000
+///
+/// >10**8 is not recommended, since we sometimes store seconds in a gdouble
 #define U_SEC 100000000.
 #define U_SECL (gint64)100000000
-#define U_SEC_RATIO (U_SECL/1000000) // how many U_SECs (ticks) in a microsecond
+#define U_SEC_RATIO (U_SECL/1000000) ///< how many U_SECs (ticks) in a microsecond
 
 // parameters for resizing the image frames, and for capture
 // TODO - make prefs
 #define V_RESIZE_ADJUST 36
 #define H_RESIZE_ADJUST 22
 
-// vert displacement up from center for sepwin (actual value is half this)
+/// vert displacement up from center for sepwin (actual value is half this)
 #define SEPWIN_VADJUST 200
 
-// default size for generators
+/// default size for generators
 #define DEF_GEN_WIDTH 640
 #define DEF_GEN_HEIGHT 480
 
-// number of function keys
+/// number of function keys
 #define FN_KEYS 12
 
-// FX keys, 1 - 9 normally
+/// FX keys, 1 - 9 normally
 #define FX_KEYS_PHYSICAL 9
 
-// must be >= FX_KEYS_PHYSICAL, and <=64 (number of bits in a 64bit int mask)
-// (max number of keys accesible through rte window or via OSC)
+/// must be >= FX_KEYS_PHYSICAL, and <=64 (number of bits in a 64bit int mask)
+/// (max number of keys accesible through rte window or via OSC)
 #define FX_KEYS_MAX_VIRTUAL 64
 
-// the rest of the keys are accessible through the multitrack renderer (must, be > FX_KEYS_MAX_VIRTUAL)
+/// the rest of the keys are accessible through the multitrack renderer (must, be > FX_KEYS_MAX_VIRTUAL)
 #define FX_KEYS_MAX 65536
 
 #define EFFECT_NONE 0
 #define GU641 ((guint64)1)
 
 
-// max ext_cntl + 1
+/// max ext_cntl + 1
 #define MAX_EXT_CNTL 2
 
-// external control types
+/// external control types
 typedef enum {
-  EXT_CNTL_NONE=-1, // not used
+  EXT_CNTL_NONE=-1, ///< not used
   EXT_CNTL_JS=0,
   EXT_CNTL_MIDI=1
 } lives_ext_cntl_t;
 
 
-// timebase sources
+/// timebase sources
 typedef enum {
   LIVES_TIME_SOURCE_NONE=0,
   LIVES_TIME_SOURCE_SYSTEM,
@@ -89,17 +90,16 @@ typedef enum {
   LIVES_DIALOG_YESNO
 } lives_dialog_t;
 
-
+/// set in set_palette_colours()
 typedef struct {
-  // set in set_palette_colours()
   gint style;
-#define STYLE_PLAIN 0 // no theme (theme 'none')
-#define STYLE_1 1<<0 // turn on theming if set
-#define STYLE_2 1<<1 // colour the spinbuttons on the front page if set
-#define STYLE_3 1<<2 // style is lightish - allow themeing of widgets with dark text, otherwise use menu bg
-#define STYLE_4 1<<3 // coloured bg for poly window in mt
-#define STYLE_5 1<<4 // drop down menu text col. in mt
-#define STYLE_6 1<<4 // separator col. in mt
+#define STYLE_PLAIN 0 ///< no theme (theme 'none')
+#define STYLE_1 1<<0 ///< turn on theming if set
+#define STYLE_2 1<<1 ///< colour the spinbuttons on the front page if set
+#define STYLE_3 1<<2 ///< style is lightish - allow themeing of widgets with dark text, otherwise use menu bg
+#define STYLE_4 1<<3 ///< coloured bg for poly window in mt
+#define STYLE_5 1<<4 ///< drop down menu text col. in mt
+#define STYLE_6 1<<4 ///< separator col. in mt
 
   GdkColor white;
   GdkColor black;
@@ -138,17 +138,17 @@ typedef struct {
 } lives_mgeometry_t;
 
 
-// where do we add the builtin tools in the tools menu
+/// where do we add the builtin tools in the tools menu
 #define RFX_TOOL_MENU_POSN 2
 
-// mainw->
+/// mainw->
 typedef struct {
   gchar msg[512];
 
   // files
   gint current_file;
   gint first_free_file;
-  file *files[MAX_FILES+1]; // +1 for the clipboard
+  file *files[MAX_FILES+1]; ///< +1 for the clipboard
   gchar vid_load_dir[256];
   gchar vid_save_dir[256];
   gchar audio_dir[256];
@@ -160,10 +160,10 @@ typedef struct {
   gint cap_number;
   gint clips_available;
 
-  // hash table of clips in menu order
+  /// hash table of clips in menu order
   GList *cliplist;
 
-  // sets
+  /// sets
   gchar set_name[256];
 
   // playback
@@ -175,17 +175,17 @@ typedef struct {
   gboolean loop_cont;
   gboolean ping_pong;
   gboolean mute;
-  gboolean must_resize; // fixed playback size in gui; playback plugins have their own fwidth and fheight
+  gboolean must_resize; ///< fixed playback size in gui; playback plugins have their own fwidth and fheight
   gint audio_start;
   gint audio_end;
 
-  gboolean ext_playback; // using external video playback plugin
-  gboolean ext_keyboard; // keyboard codes must be polled from video playback plugin
+  gboolean ext_playback; ///< using external video playback plugin
+  gboolean ext_keyboard; ///< keyboard codes must be polled from video playback plugin
 
   gint ptr_x;
   gint ptr_y;
 
-  gdouble fps_measure; // show fps stats after playback
+  gdouble fps_measure; ///< show fps stats after playback
 
 
   // flags
@@ -193,10 +193,10 @@ typedef struct {
   gboolean ccpd_with_sound;
   gboolean selwidth_locked;
   gboolean is_ready;
-  gboolean opening_loc;  // opening location (streaming)
+  gboolean opening_loc;  ///< opening location (streaming)
   gboolean dvgrab_preview;
   gboolean switch_during_pb;
-  gboolean clip_switched; // for recording - did we switch clips ?
+  gboolean clip_switched; ///< for recording - did we switch clips ?
   gboolean record;
 
   gboolean in_fs_preview;
@@ -206,8 +206,8 @@ typedef struct {
 
   lives_cancel_type_t cancel_type;
 
-  weed_plant_t *event_list; // current event_list, for recording
-  weed_plant_t *stored_event_list; // stored mt -> clip editor
+  weed_plant_t *event_list; ///< current event_list, for recording
+  weed_plant_t *stored_event_list; ///< stored mt -> clip editor
   gboolean stored_event_list_changed;
   gboolean stored_layout_save_all_vals;
   gchar stored_layout_name[256];
@@ -219,8 +219,8 @@ typedef struct {
 
   gshort endian;
 
-  gint pwidth; // playback width in RGB pixels
-  gint pheight; // playback height
+  gint pwidth; ///< playback width in RGB pixels
+  gint pheight; ///< playback height
 
   lives_whentostop_t whentostop;
 
@@ -235,7 +235,7 @@ typedef struct {
   gboolean is_rendering;
   gboolean resizing;
 
-  gboolean foreign;  // for external window capture
+  gboolean foreign;  ///< for external window capture
   gboolean record_foreign;
   gboolean t_hidden;
 
@@ -248,7 +248,7 @@ typedef struct {
   gint foreign_height;
   gint foreign_bpp;
 
-  // some VJ effects
+  /// some VJ effects
   gboolean nervous;
 
   lives_rfx_t *rendered_fx;
@@ -264,22 +264,22 @@ typedef struct {
   gboolean last_transition_ins_frames;
 
 
-  guint64 rte; // current max for VJ mode == 64 effects on fg clip
+  guint64 rte; ///< current max for VJ mode == 64 effects on fg clip
 
   guint last_grabable_effect;
-  guint rte_keys; // which effect is bound to keyboard
-  gint num_tr_applied; // number of transitions active
-  gdouble blend_factor; // keyboard control parameter
+  guint rte_keys; ///< which effect is bound to keyboard
+  gint num_tr_applied; ///< number of transitions active
+  gdouble blend_factor; ///< keyboard control parameter
   
   gint blend_file;
   gint last_blend_file;
 
-  gint scrap_file; // we throw odd sized frames here when recording in real time; used if a source is a generator or stream
+  gint scrap_file; ///< we throw odd sized frames here when recording in real time; used if a source is a generator or stream
 
-  // which number file we are playing (or -1)
+  /// which number file we are playing (or -1)
   gint playing_file;
 
-  gint pre_src_file; // file we were editing before any ext input started
+  gint pre_src_file; ///< file we were editing before any ext input started
 
   gint scr_width;
   gint scr_height;
@@ -295,7 +295,7 @@ typedef struct {
   gint sel_start;
   gshort sel_move;
 
-  // which bar should we move ?
+  /// which bar should we move ?
 #define SEL_MOVE_START 1
 #define SEL_MOVE_END 2
 #define SEL_MOVE_AUTO 3
@@ -308,11 +308,11 @@ typedef struct {
 #define PREFS_TEMPDIR_CHANGED (1<<2)
   gboolean prefs_need_restart;
 
-  // default sizes for when no file is loaded
+  /// default sizes for when no file is loaded
   gint def_width;
   gint def_height;
 
-  // for the framedraw preview - TODO use lives_framedraw_t array
+  /// for the framedraw preview - TODO use lives_framedraw_t array
   gint framedraw_frame;
 
 
@@ -324,58 +324,60 @@ typedef struct {
   gboolean leave_files;
   gboolean was_set;
 
-  // extra parameters for opening special files
+  /// extra parameters for opening special files
   gchar *file_open_params;
   gboolean open_deint;
 
   gint last_dprint_file;
   gboolean no_switch_dprint;
 
-  // actual frame being displayed
+  /// actual frame being displayed
   gint actual_frame;
 
-  // and the audio 'frame' for when we are looping
+  /// and the audio 'frame' for when we are looping
   gdouble aframeno;
 
   // ticks are measured in 1/U_SEC of a second (by defalt a tick is 10 nano seconds)
 
   // for the internal player
-  gdouble period; // == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
-  gint64 startticks; // effective ticks when last frame was (should have been) displayed
-  gint64 timeout_ticks; // incremented if effect/rendering is paused/previewed
-  gint64 origsecs; // playback start seconds - subtracted from all other ticks to keep numbers smaller
-  gint64 origusecs; // usecs at start of playback - ditto
-  gint64 offsetticks; // offset for external transport
-  gint64 currticks; // current playback ticks (relative)
-  gint64 deltaticks; // deltaticks for scratching
-  gint64 firstticks; // ticks when audio started playing (for non-realtime audio plugins)
-  gint64 stream_ticks;  // ticks since first frame sent to playback plugin
+  gdouble period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
+  gint64 startticks; ///< effective ticks when last frame was (should have been) displayed
+  gint64 timeout_ticks; ///< incremented if effect/rendering is paused/previewed
+  gint64 origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
+  gint64 origusecs; ///< usecs at start of playback - ditto
+  gint64 offsetticks; ///< offset for external transport
+  gint64 currticks; ///< current playback ticks (relative)
+  gint64 deltaticks; ///< deltaticks for scratching
+  gint64 firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
+  gint64 stream_ticks;  ///< ticks since first frame sent to playback plugin
 
-  gboolean size_warn; // warn the user that incorrectly sized frames were found
-  gboolean noswitch; // set to TRUE during frame load/display operation. If TRUE we should not switch clips, 
-                     // close the current clip, or call load_frame_image()
+  gboolean size_warn; ///< warn the user that incorrectly sized frames were found
+
+  /// set to TRUE during frame load/display operation. If TRUE we should not switch clips, 
+  /// close the current clip, or call load_frame_image()
+  gboolean noswitch; 
   gint new_clip;
 
-  gint aud_file_to_kill; // # of audio file to kill on crash
+  gint aud_file_to_kill; ///< # of audio file to kill on crash
 
-  gboolean reverse_pb; // used in osc.c
+  gboolean reverse_pb; ///< used in osc.c
 
-  // TODO - make this a mutex and more finely grained : things we need to block are (clip switches, clip closure, effects on/off, etc)
+  /// TODO - make this a mutex and more finely grained : things we need to block are (clip switches, clip closure, effects on/off, etc)
   gboolean osc_block;
 
-  gboolean osc_auto; // bypass user choices automatically
+  gboolean osc_auto; ///< bypass user choices automatically
 
-  // encode width and height set externally
+  /// encode width and height set externally
   gint osc_enc_width;
   gint osc_enc_height;
 
 
-  // fixed fps playback; usually fixed_fpsd==0.
+  /// fixed fps playback; usually fixed_fpsd==0.
   gint fixed_fps_numer;
   gint fixed_fps_denom;
-  gdouble fixed_fpsd; // <=0. means free playback
+  gdouble fixed_fpsd; ///< <=0. means free playback
 
-  // video playback plugin was updated; write settings to a file
+  /// video playback plugin was updated; write settings to a file
   gboolean write_vpp_file;
 
   volatile gshort scratch;
@@ -384,7 +386,7 @@ typedef struct {
 #define SCRATCH_FWD 1
 #define SCRATCH_JUMP 2
 
-  // internal fx
+  /// internal fx
   gboolean internal_messaging;
   gint (*progress_fn) (gboolean reset);
 
@@ -452,13 +454,13 @@ typedef struct {
   gboolean mouse_blocked;
   gboolean hrule_blocked;
 
-  // stored clips
+  /// stored clips
   gint clipstore[FN_KEYS-1];
 
-  // GdkGC (graphics context)
+  /// GdkGC (graphics context)
   GdkGC *gc;
 
-  // key function for autorepeat ctrl-arrows
+  /// key function for autorepeat ctrl-arrows
   guint ksnoop;
 
   lives_mt *multitrack;
@@ -598,31 +600,31 @@ typedef struct {
   GtkWidget *mt_menu;
   GtkWidget *troubleshoot;
 
-  // for the fileselection preview
+  /// for the fileselection preview
   GtkWidget *fs_playarea;
   GtkWidget *fs_playframe;
 
-  // for the framedraw special widget - TODO - use a sub-struct
-  GtkWidget *framedraw; // the eventbox
-  GtkWidget *framedraw_reset; // the 'redraw' button
-  GtkWidget *framedraw_preview; // the 'redraw' button
-  GtkWidget *framedraw_spinbutton; // the frame number button
-  GtkWidget *framedraw_scale; // the slider
-  GtkWidget *framedraw_image; // the image
-  GtkWidget *fd_frame; // surrounding frame widget
+  /// for the framedraw special widget - TODO - use a sub-struct
+  GtkWidget *framedraw; ///< the eventbox
+  GtkWidget *framedraw_reset; ///< the 'redraw' button
+  GtkWidget *framedraw_preview; ///< the 'redraw' button
+  GtkWidget *framedraw_spinbutton; ///< the frame number button
+  GtkWidget *framedraw_scale; ///< the slider
+  GtkWidget *framedraw_image; ///< the image
+  GtkWidget *fd_frame; ///< surrounding frame widget
 
-  GdkPixmap *framedraw_orig_pixmap; // the original frame pixmap
-  GdkPixmap *framedraw_copy_pixmap; // the altered frame pixmap
-  GdkBitmap *framedraw_bitmap; // and its mask
-  GdkGC *framedraw_bitmapgc;  // the GC for the bitmap
-  GdkGC *framedraw_colourgc;  // the GC for the pixmap, we can draw in colours !
+  GdkPixmap *framedraw_orig_pixmap; ///< the original frame pixmap
+  GdkPixmap *framedraw_copy_pixmap; ///< the altered frame pixmap
+  GdkBitmap *framedraw_bitmap; ///< and its mask
+  GdkGC *framedraw_bitmapgc;  ///< the GC for the bitmap
+  GdkGC *framedraw_colourgc;  ///< the GC for the pixmap, we can draw in colours !
 
   // bars here -> actually text above bars
   GtkWidget *vidbar;
   GtkWidget *laudbar;
   GtkWidget *raudbar;
 
-#define MAIN_SPIN_SPACER 52 // pixel spacing for start/end spins for clip and multitrack editors
+#define MAIN_SPIN_SPACER 52 ///< pixel spacing for start/end spins for clip and multitrack editors
   GtkWidget *spinbutton_end;
   GtkWidget *spinbutton_start;
 
@@ -696,7 +698,7 @@ typedef struct {
   GtkWidget *vol_label;
 
   // menubar buttons
-  GtkWidget *btoolbar; // button toolbar - clip editor
+  GtkWidget *btoolbar; ///< button toolbar - clip editor
   GtkWidget *m_sepwinbutton;
   GtkWidget *m_playbutton;
   GtkWidget *m_stopbutton;
@@ -764,20 +766,20 @@ typedef struct {
 
   GtkWidget *resize_menuitem;
 
-  gboolean only_close; // only close clips - do not exit
+  gboolean only_close; ///< only close clips - do not exit
 
 #ifdef ENABLE_JACK
-  jack_driver_t *jackd; // jack audio playback device
-  jack_driver_t *jackd_read; // jack audio recorder device
+  jack_driver_t *jackd; ///< jack audio playback device
+  jack_driver_t *jackd_read; ///< jack audio recorder device
 #define RT_AUDIO
 #else
-  void *jackd;  // dummy
-  void *jackd_read; // dummy
+  void *jackd;  ///< dummy
+  void *jackd_read; ///< dummy
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  pulse_driver_t *pulsed; // pulse audio playback device
-  pulse_driver_t *pulsed_read; // pulse audio recorder device
+  pulse_driver_t *pulsed; ///< pulse audio playback device
+  pulse_driver_t *pulsed_read; ///< pulse audio recorder device
 #define RT_AUDIO
 #else
   void *pulsed;
@@ -785,47 +787,47 @@ typedef struct {
 #endif
 
   // layouts
-  GtkTextBuffer *layout_textbuffer; // stores layout errors
-  GList *affected_layouts_map; // map of layouts with errors
-  GList *current_layouts_map; // map of all layouts for set
+  GtkTextBuffer *layout_textbuffer; ///< stores layout errors
+  GList *affected_layouts_map; ///< map of layouts with errors
+  GList *current_layouts_map; ///< map of all layouts for set
 
-  // list of pairs of marks in affected_layouts_map, text between them should be deleted when 
-  // stored_layout is deleted
+  /// list of pairs of marks in affected_layouts_map, text between them should be deleted when 
+  /// stored_layout is deleted
   GList *affected_layout_marks;
 
-  // immediately (to be) affected layout maps
+  /// immediately (to be) affected layout maps
   GList *xlays;
 
-  gchar *recovery_file;  // the filename of our recover file
+  gchar *recovery_file;  ///< the filename of our recover file
   gboolean leave_recovery;
 
-  gboolean unordered_blocks; // are we recording unordered blocks ?
+  gboolean unordered_blocks; ///< are we recording unordered blocks ?
 
-  gboolean no_exit; // if TRUE, do not exit after saving set
+  gboolean no_exit; ///< if TRUE, do not exit after saving set
 
-  mt_opts multi_opts; // some multitrack options that survive between mt calls
+  mt_opts multi_opts; ///< some multitrack options that survive between mt calls
 
   gint rec_aclip;
   gdouble rec_avel;
   gdouble rec_aseek;
 
-  gpointer do_not_free; // mess with memory so that g_object_unref can be forced not to free() the pixel_data
+  gpointer do_not_free; ///< mess with memory so that g_object_unref can be forced not to free() the pixel_data
   GMemVTable alt_vtable;
   void (*free_fn)(gpointer);
 
-  pthread_mutex_t gtk_mutex;  // gtk drawing mutex - used by the threaded dialog
-  pthread_mutex_t interp_mutex;  // interpolation mutex - parameter interpolation must be single threaded
+  pthread_mutex_t gtk_mutex;  ///< gtk drawing mutex - used by the threaded dialog
+  pthread_mutex_t interp_mutex;  ///< interpolation mutex - parameter interpolation must be single threaded
 
-  pthread_mutex_t abuf_mutex;  // used to synch audio buffer request count - shared between audio and video threads
+  pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
 
-  lives_fx_candidate_t fx_candidates[MAX_FX_CANDIDATE_TYPES]; // effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
+  lives_fx_candidate_t fx_candidates[MAX_FX_CANDIDATE_TYPES]; ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
 
-  GList *cached_list;  // cache of preferences or file header file (or NULL)
+  GList *cached_list;  ///< cache of preferences or file header file (or NULL)
   FILE *clip_header;
 
-  gfloat volume; // audio volume level (for jack)
+  gfloat volume; ///< audio volume level (for jack)
 
-  int aud_rec_fd; // fd of file we are recording audio to
+  int aud_rec_fd; ///< fd of file we are recording audio to
   gdouble rec_end_time;
   long rec_samples;
   gdouble rec_fps;
@@ -835,34 +837,34 @@ typedef struct {
   gint rec_asamps;
   gint rec_signed_endian;
 
-  gboolean suppress_dprint; // tidy up, e.g. by blocking "switched to file..." and "closed file..." messages
-  gchar *any_string;  // localised text saying "Any", for encoder and output format
-  gchar *none_string;  // localised text saying "None", for playback plugin name, etc.
-  gchar *recommended_string;  // localised text saying "recommended", for encoder and output format
-  gchar *disabled_string;  // localised text saying "disabled !", for playback plugin name, etc.
-  gchar *cl_string; // localised text saying "*The current layout*", for layout warnings
+  gboolean suppress_dprint; ///< tidy up, e.g. by blocking "switched to file..." and "closed file..." messages
+  gchar *any_string;  ///< localised text saying "Any", for encoder and output format
+  gchar *none_string;  ///< localised text saying "None", for playback plugin name, etc.
+  gchar *recommended_string;  ///< localised text saying "recommended", for encoder and output format
+  gchar *disabled_string;  ///< localised text saying "disabled !", for playback plugin name, etc.
+  gchar *cl_string; ///< localised text saying "*The current layout*", for layout warnings
 
-  gint opening_frames; // count of frames so far opened, updated after preview (currently)
+  gint opening_frames; ///< count of frames so far opened, updated after preview (currently)
 
-  gboolean show_procd; // override showing of "processing..." dialog
+  gboolean show_procd; ///< override showing of "processing..." dialog
 
-  gboolean block_param_updates; // block visual param changes from updating real values
-  gboolean no_interp; // block interpolation (for single frame previews)
+  gboolean block_param_updates; ///< block visual param changes from updating real values
+  gboolean no_interp; ///< block interpolation (for single frame previews)
 
-  gdouble fd_scale; // framedraw scale (image scaling downsize factor)
+  gdouble fd_scale; ///< framedraw scale (image scaling downsize factor)
 
-  weed_timecode_t cevent_tc; // timecode of currently processing event
+  weed_timecode_t cevent_tc; ///< timecode of currently processing event
 
-  gboolean opening_multi; // flag to indicate multiple file selection
+  gboolean opening_multi; ///< flag to indicate multiple file selection
 
-  gboolean record_paused; // pause during recording
-  gboolean record_starting; // start recording at next frame
+  gboolean record_paused; ///< pause during recording
+  gboolean record_starting; ///< start recording at next frame
 
-  gint img_concat_clip;  // when opening multiple, image files can get concatenated here (prefs->concat_images)
+  gint img_concat_clip;  ///< when opening multiple, image files can get concatenated here (prefs->concat_images)
 
-  GdkGC *general_gc;  // used for colour drawing
+  GdkGC *general_gc;  ///< used for colour drawing
 
-  // rendered generators
+  /// rendered generators
   gboolean gen_to_clipboard;
   gboolean is_generating;
 
@@ -872,12 +874,12 @@ typedef struct {
 
   _vid_playback_plugin *vpp;
 
-  // multi-head support
+  /// multi-head support
   gint nmonitors;
   lives_mgeometry_t *mgeom;
 
 
-  // external control inputs
+  /// external control inputs
   gboolean ext_cntl[MAX_EXT_CNTL];
 
   #ifdef ALSA_MIDI
@@ -885,9 +887,9 @@ typedef struct {
   int alsa_midi_port;
   #endif
 
-  weed_plant_t *rte_textparm; // send keyboard input to this paramter (usually NULL)
+  weed_plant_t *rte_textparm; ///< send keyboard input to this paramter (usually NULL)
 
-  gint write_abuf; // audio buffer number to write to (for multitrack)
+  gint write_abuf; ///< audio buffer number to write to (for multitrack)
   volatile gint abufs_to_fill;
 
   GtkWidget *splash_window;
@@ -896,24 +898,24 @@ typedef struct {
 
   gboolean recoverable_layout;
 
-  gboolean soft_debug; // for testing
+  gboolean soft_debug; ///< for testing
 
-  // encoder text output
+  /// encoder text output
   GIOChannel *iochan;
   GtkTextView *optextview;
 
-  // error signalling during decoder plugin "rip_audio"
+  /// error signalling during decoder plugin "rip_audio"
   pthread_t sig_pid;
   gchar *sig_file;
 
-  // decoders
+  /// decoders
   gboolean decoders_loaded;
   GList *decoder_list;
 
   gboolean go_away;
-  gboolean debug; // debug crashes and asserts
+  gboolean debug; ///< debug crashes and asserts
 
-  gchar *subt_save_file; // name of file to save subtitles to
+  gchar *subt_save_file; ///< name of file to save subtitles to
 
   gchar **fonts_array;
   gint nfonts;
@@ -946,7 +948,7 @@ typedef struct {
 
 _merge_opts* merge_opts;
 
-// note, we can only have two of these currently, one for rendered effects, one for real time effects
+/// note, we can only have two of these currently, one for rendered effects, one for real time effects
 GtkWidget *fx_dialog[2];
 
 

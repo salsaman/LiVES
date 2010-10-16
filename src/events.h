@@ -17,7 +17,7 @@ weed_plant_t *append_filter_map_event (weed_plant_t *event_list, weed_timecode_t
 weed_plant_t *append_param_change_event (weed_plant_t *event_list, weed_timecode_t tc, gint pnum, weed_plant_t *param, void *init_event, void **pchain) WARN_UNUSED;
 weed_plant_t *append_marker_event (weed_plant_t *event_list, weed_timecode_t tc, int marker_type) WARN_UNUSED;
 
-/* will either insert or replace */
+/** will either insert or replace */
 weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames, weed_plant_t **shortcut) WARN_UNUSED;
 void insert_audio_event_at(weed_plant_t *event_list,weed_plant_t *event, gint track, gint clipnum, gdouble time, gdouble vel);
 void remove_audio_for_track (weed_plant_t *event, int track);
@@ -27,13 +27,13 @@ void remove_frame_from_event (weed_plant_t *event_list, weed_plant_t *event, gin
 void remove_end_blank_frames (weed_plant_t *event_list);
 void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_event);
 
-weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc); // RT playback
+weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc); ///< RT playback
 void event_list_close_start_gap (weed_plant_t *event_list);
 void event_list_add_track (weed_plant_t *event_list, gint layer);
 void event_list_free (weed_plant_t *event_list);
-void event_list_replace_events (weed_plant_t *event_list, weed_plant_t *new_event_list); //replace events in event_list with events in new_event_list
-weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event_list); // called during quantisation 
-gint count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc); // if all_events is FALSE we only count FRAME events
+void event_list_replace_events (weed_plant_t *event_list, weed_plant_t *new_event_list); ///<replace events in event_list with events in new_event_list
+weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event_list); ///< called during quantisation 
+gint count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc); ///< if all_events is FALSE we only count FRAME events
 
 gboolean event_list_to_block (weed_plant_t *event_list, gint num_events);
 gdouble event_list_get_end_secs (weed_plant_t *event_list);
@@ -134,8 +134,8 @@ render_details *create_render_details (gint type);
 ////////////////////////////////////////////////////////////////
 /// rendering
 
-gboolean render_to_clip (gboolean new_clip); // render to clip
-gboolean start_render_effect_events (weed_plant_t *event_list); // render to clip
+gboolean render_to_clip (gboolean new_clip); ///< render to clip
+gboolean start_render_effect_events (weed_plant_t *event_list); ///< render to clip
 
 
 // effect insertion/updating
@@ -181,9 +181,9 @@ gboolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event);
 void free_pchains(gint key);
 
 // audio
-int get_audio_frame_clip (weed_plant_t *event, int layer); // returns clip number for track layer (layer==-1 is backing audio)
-double get_audio_frame_vel (weed_plant_t *event, int layer); // returns velocity for track layer (layer==-1 is backing audio)
-double get_audio_frame_seek (weed_plant_t *event, int layer); // returns velocity for track layer (layer==-1 is backing audio)
+int get_audio_frame_clip (weed_plant_t *event, int layer); ///< returns clip number for track layer (layer==-1 is backing audio)
+double get_audio_frame_vel (weed_plant_t *event, int layer); ///< returns velocity for track layer (layer==-1 is backing audio)
+double get_audio_frame_seek (weed_plant_t *event, int layer); ///< returns velocity for track layer (layer==-1 is backing audio)
 
 
 // playback

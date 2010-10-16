@@ -57,8 +57,9 @@ void param_demarshall (lives_rfx_t *rfx, GList *plist, gboolean with_min_max, gb
 gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean with_min_max, gboolean upd);
 GList *argv_to_marshalled_list (lives_rfx_t *rfx, gint argc, gchar **argv);
 
-// object should have g_set_object_data "param_number" set to parameter number
-// (0 based, -ve for init onchanges)
+/// object should have g_set_object_data "param_number" set to parameter number
+///
+/// (0 based, -ve for init onchanges)
 void do_onchange (GObject *object, lives_rfx_t *);
 
 

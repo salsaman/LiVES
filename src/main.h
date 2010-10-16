@@ -63,20 +63,20 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <signal.h>
 #include <assert.h>
 
-// don't change this unless the backend is changed as well
-// i.e. $GUI_BOOTSTRAP_FILE in smogrify
+/// don't change this unless the backend is changed as well
+/// i.e. $GUI_BOOTSTRAP_FILE in smogrify
 #define BOOTSTRAP_NAME "/tmp/.smogrify"
 
-// max files is actually 1 more than this, since file 0 is the clipboard
+/// max files is actually 1 more than this, since file 0 is the clipboard
 #define MAX_FILES 65535
 
-// this must match AC_PREFIX_DEFAULT in configure.in
-// TODO - when lives-plugins is a separate package, use pkg-config to get PREFIX and remove PREFIX_DEFAULT
+/// this must match AC_PREFIX_DEFAULT in configure.in
+/// TODO - when lives-plugins is a separate package, use pkg-config to get PREFIX and remove PREFIX_DEFAULT
 #ifndef PREFIX_DEFAULT
 #define PREFIX_DEFAULT "/usr"
 #endif
 
-// if --prefix= was not set, this is set to "NONE"
+/// if --prefix= was not set, this is set to "NONE"
 #ifndef PREFIX
 #define PREFIX PREFIX_DEFAULT
 #endif
@@ -110,17 +110,17 @@ POSSIBILITY OF SUCH DAMAGES.
 #endif
 #endif
 
-// LiVES will show a warning if this (MBytes) is exceeded on load
-// (can be overridden in prefs)
+/// LiVES will show a warning if this (MBytes) is exceeded on load
+/// (can be overridden in prefs)
 #define WARN_FILE_SIZE 500
 
-// maximum fps we will allow (gdouble)
-// TODO - make pref
+/// maximum fps we will allow (gdouble)
+/// TODO - make pref
 #define FPS_MAX 200.
 
 #define ENABLE_DVD_GRAB
 
-#define FP_BITS 16 // max fp bits [apparently 16 is faster]
+#define FP_BITS 16 /// max fp bits [apparently 16 is faster]
 
 #ifdef HAVE_MJPEGTOOLS
 #define HAVE_YUV4MPEG
@@ -146,8 +146,8 @@ POSSIBILITY OF SUCH DAMAGES.
 
 
 
-// this struct is used only when physically resampling frames on the disk
-// we create an array of these and write them to the disk
+/// this struct is used only when physically resampling frames on the disk
+/// we create an array of these and write them to the disk
 typedef struct {
   gint value;
   gint64 reltime;
@@ -184,8 +184,8 @@ typedef struct {
 
 
 typedef union {
-  float **floatbuf; // float data - for jack
-  short *int16buf; // 16 bit int - for pulse audio
+  float **floatbuf; ///< float data - for jack
+  short *int16buf; ///< 16 bit int - for pulse audio
 } adata;
 
 
@@ -196,18 +196,18 @@ typedef struct {
 
   weed_timecode_t start_tc;
 
-  volatile size_t start_sample;  // current read posn
+  volatile size_t start_sample;  ///< current read posn
 
   adata data;
 
-  volatile size_t samples_filled; // number of samples filled (usable)
-  size_t sample_space; // total space
+  volatile size_t samples_filled; ///< number of samples filled (usable)
+  size_t sample_space; ///< total space
 } lives_audio_buf_t;
 
 
 
 
-// need this for event_list_t *
+/// need this for event_list_t *
 #include "events.h"
 
 
@@ -228,22 +228,22 @@ typedef enum {
   UNDO_INSERT_SILENCE,
   UNDO_NEW_AUDIO,
 
-  // resample/resize and resample audio for encoding
+  /// resample/resize and resample audio for encoding
   UNDO_ATOMIC_RESAMPLE_RESIZE,
 
-  // resample/reorder/resize/apply effects
+  /// resample/reorder/resize/apply effects
   UNDO_RENDER,
 
   UNDO_FADE_AUDIO,
 
-  // record audio to selection
+  /// record audio to selection
   UNDO_REC_AUDIO,
 
   UNDO_INSERT_WITH_AUDIO
 } lives_undo_t;
 
 
-// which stream end should cause playback to finish ?
+/// which stream end should cause playback to finish ?
 typedef enum {
   NEVER_STOP=0,
   STOP_ON_VID_END,
@@ -251,70 +251,70 @@ typedef enum {
 } lives_whentostop_t;
 
 
-// cancel reason
+/// cancel reason
 typedef enum {
-  // no cancel
+  /// no cancel
   CANCEL_NONE=0,
 
-  // user pressed stop
+  /// user pressed stop
   CANCEL_USER=1,
 
-  // cancel but keep opening
+  /// cancel but keep opening
   CANCEL_NO_PROPOGATE=2,
 
-  // effect processing finished during preview
+  /// effect processing finished during preview
   CANCEL_PREVIEW_FINISHED=3,
 
-  // application quit
+  /// application quit
   CANCEL_APP_QUIT=4,
 
-  // ran out of preview frames
+  /// ran out of preview frames
   CANCEL_NO_MORE_PREVIEW=5,
 
-  // image could not be captured
+  /// image could not be captured
   CANCEL_CAPTURE_ERROR=6,
 
-  // event_list completed
+  /// event_list completed
   CANCEL_EVENT_LIST_END=7,
 
-  // video playback completed
+  /// video playback completed
   CANCEL_VID_END=8,
 
-  // generator was stopped
+  /// generator was stopped
   CANCEL_GENERATOR_END=9,
 
-  // user pressed 'Keep'
+  /// user pressed 'Keep'
   CANCEL_KEEP=10,
 
-  // video playback completed
+  /// video playback completed
   CANCEL_AUD_END=11,
 
-  // cancelled because of error
+  /// cancelled because of error
   CANCEL_ERROR=12,
 
-  // cancelled and paused
+  /// cancelled and paused
   CANCEL_USER_PAUSED=13,
 
-  // special cancel for TV toy
+  /// special cancel for TV toy
   CANCEL_KEEP_LOOPING=100
 
 } lives_cancel_t;
 
 
 typedef enum {
-  CANCEL_KILL=0,  // normal - kill background processes working on current clip
-  CANCEL_SOFT     // just cancel in GUI (for keep, etc)
+  CANCEL_KILL=0,  ///< normal - kill background processes working on current clip
+  CANCEL_SOFT     ///< just cancel in GUI (for keep, etc)
 } lives_cancel_type_t;
 
 
 
 
 typedef enum {
-  CLIP_TYPE_DISK, // imported video, broken into frames
+  CLIP_TYPE_DISK, ///< imported video, broken into frames
   CLIP_TYPE_YUV4MPEG,
   CLIP_TYPE_GENERATOR,
-  CLIP_TYPE_FILE, // unimported video, not or partially broken in frames
-  CLIP_TYPE_LIVES2LIVES // type for LiVES to LiVES streaming
+  CLIP_TYPE_FILE, ///< unimported video, not or partially broken in frames
+  CLIP_TYPE_LIVES2LIVES ///< type for LiVES to LiVES streaming
 } lives_clip_type_t;
 
 
@@ -350,19 +350,18 @@ typedef struct {
 
 #include "pangotext.h"
 
-typedef struct {                // corresponds to one clip in the GUI
-  // cfile - one clip
-  //
+/// corresponds to one clip in the GUI
+typedef struct {
   // basic info (saved during backup)
   gint bpp;
   gdouble fps;
-  gint hsize; // in pixels (NOT macropixels !)
+  gint hsize; ///< in pixels (NOT macropixels !)
   gint vsize;
-  gint arps; // audio sample rate
-  guint signed_endian; // bitfield
+  gint arps; ///< audio sample rate
+  guint signed_endian; ///< bitfield
 
-  gint arate; // audio playback rate
-  gint64 unique_id;    // this and the handle can be used to uniquely id a file
+  gint arate; ///< audio playback rate
+  gint64 unique_id;    ///< this and the handle can be used to uniquely id a file
   gint achans;
   gint asampsize;
 
@@ -374,7 +373,7 @@ typedef struct {                // corresponds to one clip in the GUI
   gchar keywords[256];
   ////////////////
 
-  gint interlace; // interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
+  gint interlace; ///< interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
 
   // extended info (not saved)
   gint header_version;
@@ -383,7 +382,7 @@ typedef struct {                // corresponds to one clip in the GUI
 
   gint rowstride;
 
-  // the processing window
+  /// the processing window
   process *proc_ptr;
 
   gchar handle[256];
@@ -391,10 +390,10 @@ typedef struct {                // corresponds to one clip in the GUI
   gint ovsize;
   glong f_size;
   glong afilesize;
-  gint old_frames; // for deordering, etc.
-  gchar file_name[256]; // input file
+  gint old_frames; ///< for deordering, etc.
+  gchar file_name[256]; ///< input file
   gchar info_file[256];
-  gchar name[256];  // the display name
+  gchar name[256];  ///< the display name
   gchar save_file_name[256];
   gchar type[40];
   gint start;
@@ -418,12 +417,12 @@ typedef struct {                // corresponds to one clip in the GUI
   gboolean opening_only_audio;
   gboolean opening_loc;
   gboolean restoring;
-  gboolean is_loaded;  // should we continue loading if we come back to this clip
+  gboolean is_loaded;  ///< should we continue loading if we come back to this clip
 
-  // don't show preview/pause buttons on processing
+  /// don't show preview/pause buttons on processing
   gboolean nopreview;
 
-  // don't show the 'keep' button - e.g. for operations which resize frames
+  /// don't show the 'keep' button - e.g. for operations which resize frames
   gboolean nokeep;
 
   // various times; total time is calculated as the gint64est of video, laudio and raudio
@@ -444,7 +443,7 @@ typedef struct {                // corresponds to one clip in the GUI
 
 
   // events 
-  event *events[1];  //for block resampler
+  event *events[1];  ///<for block resampler
 
   weed_plant_t *event_list;
   weed_plant_t *event_list_back;
@@ -453,7 +452,7 @@ typedef struct {                // corresponds to one clip in the GUI
   GList *layout_map;
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  //undo
+  ///undo
   lives_undo_t undo_action;
 
   gint undo_start;
@@ -475,32 +474,33 @@ typedef struct {                // corresponds to one clip in the GUI
   gboolean undo2_boolean;
   gboolean undo3_boolean;
 
-  gint undo_arate; // audio playback rate
+  gint undo_arate; ///< audio playback rate
   guint undo_signed_endian;
   gint undo_achans;
   gint undo_asampsize;
-  gint undo_arps; // audio sample rate
+  gint undo_arps; ///< audio sample rate
 
   lives_clip_type_t clip_type;
 
-  void *ext_src; // points to opaque source for non-disk types
+  void *ext_src; ///< points to opaque source for non-disk types
 
-  int *frame_index; // index of frames for CLIP_TYPE_FILE
-  // >0 means corresponding frame within original clip
-  // -1 means corresponding image file (equivalent to CLIP_TYPE_DISK)
-  // size must be >= frames, MUST be contiguous in memory
+  /// index of frames for CLIP_TYPE_FILE
+  /// >0 means corresponding frame within original clip
+  /// -1 means corresponding image file (equivalent to CLIP_TYPE_DISK)
+  /// size must be >= frames, MUST be contiguous in memory
+  int *frame_index;
 
-  int *frame_index_back; // for undo
+  int *frame_index_back; ///< for undo
 
-  gint fx_frame_pump; // rfx frame pump for virtual clips (CLIP_TYPE_FILE)
+  gint fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
-#define FX_FRAME_PUMP_VAL 100 // how many frames at a time to pump to rfx
+#define FX_FRAME_PUMP_VAL 100 ///< how many frames at a time to pump to rfx
 
-#define IMG_BUFF_SIZE 4096 // chunk size for reading images
+#define IMG_BUFF_SIZE 4096 ///< chunk size for reading images
 
-  gboolean ratio_fps; // if the fps was set by a ratio
+  gboolean ratio_fps; ///< if the fps was set by a ratio
 
-  glong aseek_pos; // audio seek posn. (bytes) for when we switch clips
+  glong aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
 
   // decoder data
 
@@ -511,7 +511,7 @@ typedef struct {                // corresponds to one clip in the GUI
 
   lives_image_type_t img_type;
 
-  // layout map for the current layout
+  /// layout map for the current layout
   gint stored_layout_frame;
   gint stored_layout_idx;
   gdouble stored_layout_audio;
@@ -546,10 +546,10 @@ typedef struct {
   gboolean has_xwininfo;
   gboolean has_gdb;
 
-  // home directory - default location for config file - locale encoding
+  /// home directory - default location for config file - locale encoding
   gchar home_dir[256];
 
-  // used for returning startup messages from the backend
+  /// used for returning startup messages from the backend
   gchar startup_msg[256];
 
   // plugins
@@ -567,7 +567,7 @@ typedef struct {
 } capability;
 
 
-// some shared structures
+/// some shared structures
 capability *capable;
 
 #ifdef HAVE_JACK_JACK_H
@@ -597,7 +597,7 @@ mainwindow *mainw;
 struct timeval tv;
 
 
-// type sizes
+/// type sizes
 size_t sizint, sizdbl, sizshrt;
 
 
@@ -629,7 +629,7 @@ typedef enum {
 
 
 typedef enum {
-  LIVES_CURSOR_NORMAL=0,  // must be zero
+  LIVES_CURSOR_NORMAL=0,  ///< must be zero
   LIVES_CURSOR_BLOCK,
   LIVES_CURSOR_AUDIO_BLOCK,
   LIVES_CURSOR_BUSY,
@@ -813,7 +813,7 @@ void load_frame_image(gint frame);
 void sensitize(void);
 void desensitize(void);
 void procw_desensitize(void);
-void close_current_file (gint file_to_switch_to);  // close current file, and try to switch to file_to_switch_to
+void close_current_file (gint file_to_switch_to);  ///< close current file, and try to switch to file_to_switch_to
 void get_next_free_file(void);
 void switch_to_file(gint old_file, gint new_file);
 void do_quick_switch (gint new_file);
@@ -881,7 +881,7 @@ guint get_signed_endian (gboolean is_signed, gboolean little_endian);
 void fullscreen_internal(void);
 void unhide_cursor(GdkWindow *window);
 void hide_cursor(GdkWindow *window);
-void set_alwaysontop(GtkWidget *window, gboolean ontop); // TODO - use for playwin
+void set_alwaysontop(GtkWidget *window, gboolean ontop); ///< TODO - use for playwin
 void colour_equal(GdkColor *c1, const GdkColor *c2);
 void switch_to_int_player(void);
 void switch_to_mplayer(void);
@@ -891,7 +891,7 @@ gboolean switch_aud_to_pulse(void);
 void switch_aud_to_mplayer(void);
 void prepare_to_play_foreign(void);
 gboolean after_foreign_play(void);
-gboolean check_file(const gchar *file_name, gboolean check_exists);  // check if file exists
+gboolean check_file(const gchar *file_name, gboolean check_exists);  ///< check if file exists
 gboolean check_dir_access (const gchar *dir);
 gulong get_file_size(int fd);
 gulong sget_file_size(const gchar *name);
@@ -903,9 +903,9 @@ void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data);
 void show_manual_section (const gchar *lang, const gchar *section);
 
 LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame);
-LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time);  // nearest frame start
-LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time); // nearest frame end
-LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time); // nearest frame mid
+LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time);  ///< nearest frame start
+LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time); ///< nearest frame end
+LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time); ///< nearest frame mid
 
 gboolean check_for_ratio_fps (gdouble fps);
 gdouble get_ratio_fps(const gchar *string);
@@ -974,11 +974,6 @@ void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window);
 gchar *text_view_get_text(GtkTextView *textview);
 void text_view_set_text(GtkTextView *textview, const gchar *text);
 
-
-
-// effects.c
-void invalidate_pixel_buffers (void); // TODO - exterminate !
-
 // plugins.c
 GList *get_external_window_hints(lives_rfx_t *rfx);
 gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio);
@@ -1041,7 +1036,7 @@ char *dummychar;
 #define L2U8(String) ( g_locale_to_utf8 (String,-1,NULL,NULL,NULL) ) 
 
 
-#define PREFS_TIMEOUT 10000000 // 10 seconds // TODO !
+#define PREFS_TIMEOUT 10000000 ///< 10 seconds // TODO !
 
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 

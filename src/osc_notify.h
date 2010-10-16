@@ -19,20 +19,20 @@
 #ifndef _HAS_OSC_NOTIFY_H
 #define _HAS_OSC_NOTIFY_H
 
-#define LIVES_OSC_NOTIFY_FRAME_SYNCH 1 // sent when a frame is displayed
-#define LIVES_OSC_NOTIFY_PLAYBACK_STARTED 2 // sent when a/v playback starts or clip is switched
-#define LIVES_OSC_NOTIFY_PLAYBACK_STOPPED 3 // sent when a/v playback ends
+#define LIVES_OSC_NOTIFY_FRAME_SYNCH 1 ///< sent when a frame is displayed
+#define LIVES_OSC_NOTIFY_PLAYBACK_STARTED 2 ///< sent when a/v playback starts or clip is switched
+#define LIVES_OSC_NOTIFY_PLAYBACK_STOPPED 3 ///< sent when a/v playback ends
 
-#define LIVES_OSC_NOTIFY_RECORD_STARTED 32 // sent when record starts (TODO)
-#define LIVES_OSC_NOTIFY_RECORD_STOPPED 33 // sent when record stops (TODO)
+#define LIVES_OSC_NOTIFY_RECORD_STARTED 32 ///< sent when record starts (TODO)
+#define LIVES_OSC_NOTIFY_RECORD_STOPPED 33 ///< sent when record stops (TODO)
 
-#define LIVES_OSC_NOTIFY_QUIT 64 // sent when app quits
+#define LIVES_OSC_NOTIFY_QUIT 64 ///< sent when app quits
 
-#define LIVES_OSC_NOTIFY_CLIP_OPENED 128  // TODO - msg_string starts with new clip number
+#define LIVES_OSC_NOTIFY_CLIP_OPENED 128  ///< TODO - msg_string starts with new clip number
 #define LIVES_OSC_NOTIFY_CLIP_CLOSED 129
 
 
-#define LIVES_OSC_NOTIFY_CLIPSET_OPENED 256 //msg_string starts with setname
+#define LIVES_OSC_NOTIFY_CLIPSET_OPENED 256 ///<msg_string starts with setname
 #define LIVES_OSC_NOTIFY_CLIPSET_SAVED 257
 
 
@@ -40,6 +40,6 @@
 #define LIVES_OSC_NOTIFY_FAILED 1024
 #define LIVES_OSC_NOTIFY_CANCELLED 2048
 
-#define LIVES_OSC_NOTIFY_MODE_CHANGED 4096 //mode changed to clip editor or to multitrack
+#define LIVES_OSC_NOTIFY_MODE_CHANGED 4096 ///<mode changed to clip editor or to multitrack
 
 #endif

@@ -17,14 +17,14 @@
 #include <jack/jack.h>
 #include <jack/transport.h>
 
-gboolean lives_jack_init (void); /* start up server on LiVES init */
-gboolean lives_jack_poll(gpointer data); /* poll function to check transport state */
+gboolean lives_jack_init (void); /** start up server on LiVES init */
+gboolean lives_jack_poll(gpointer data); /** poll function to check transport state */
 void lives_jack_end (void);
 
 int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *pos, void *arg);
 
-void jack_pb_start (void); /* start playback transport master */
-void jack_pb_stop (void); /* pause playback transport master */
+void jack_pb_start (void); /** start playback transport master */
+void jack_pb_stop (void); /** pause playback transport master */
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -48,58 +48,58 @@ typedef jack_nframes_t nframes_t;
 #define JackTStopped 1026
 
 typedef struct {
-  gint      dev_idx;                      /* id of this device ??? */ 
-  glong     sample_out_rate;                   /* samples(frames) per second */
-  glong     sample_in_rate;                   /* samples(frames) per second */
-  gulong    num_input_channels;            /* number of input channels(1 is mono, 2 stereo etc..) */
-  gulong    num_output_channels;           /* number of output channels(1 is mono, 2 stereo etc..) */
+  gint      dev_idx;                      /**< id of this device ??? */ 
+  glong     sample_out_rate;                   /**< samples(frames) per second */
+  glong     sample_in_rate;                   /**< samples(frames) per second */
+  gulong    num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */
+  gulong    num_output_channels;           /**< number of output channels(1 is mono, 2 stereo etc..) */
   gulong    bytes_per_channel;
 
-  gulong    latencyMS;                     /* latency in ms between writing and actual audio output of the written data */
+  gulong    latencyMS;                     /**< latency in ms between writing and actual audio output of the written data */
 
-  gulong    buffer_size;                   /* number of bytes in the buffer allocated for processing data in process_audio() */
+  gulong    buffer_size;                   /**< number of bytes in the buffer allocated for processing data in process_audio() */
 
-  guchar* sound_buffer; // transformed data
+  guchar* sound_buffer; ///< transformed data
 
-  gulong    num_calls;                     /* count of process_audio() calls */
+  gulong    num_calls;                     /**< count of process_audio() calls */
   gulong    chunk_size;
 
-  jack_port_t*     output_port[JACK_MAX_OUTPUT_PORTS]; /* output ports */
-  jack_port_t*     input_port[JACK_MAX_INPUT_PORTS]; /* input ports */
-  jack_client_t*   client;                        /* pointer to jack client */
+  jack_port_t*     output_port[JACK_MAX_OUTPUT_PORTS]; /**< output ports */
+  jack_port_t*     input_port[JACK_MAX_INPUT_PORTS]; /**< input ports */
+  jack_client_t*   client;                        /**< pointer to jack client */
 
-  gchar             **jack_port_name;              /* user given strings for the port names, can be NULL */
-  unsigned int     jack_port_name_count;          /* the number of port names given */
-  gulong    jack_port_flags;               /* flags to be passed to jack when opening the output ports */
+  gchar             **jack_port_name;              /**< user given strings for the port names, can be NULL */
+  unsigned int     jack_port_name_count;          /**< the number of port names given */
+  gulong    jack_port_flags;               /**< flags to be passed to jack when opening the output ports */
 
-  audio_buffer_t*    aPlayPtr;                      /* pointer to the current audio file */
+  audio_buffer_t*    aPlayPtr;                      /**< pointer to the current audio file */
   lives_audio_loop_t loop;
 
   jack_transport_state_t state;
 
-  float     volume[JACK_MAX_OUTPUT_PORTS];      // amount volume, 1.0 is full volume
+  float     volume[JACK_MAX_OUTPUT_PORTS];      ///< amount volume, 1.0 is full volume
 
-  gboolean          in_use;                        /* true if this device is currently in use */
+  gboolean          in_use;                        /**< true if this device is currently in use */
   gboolean mute;
 
-  volatile aserver_message_t   *msgq;          /* linked list of messages we are sending to the callback process */
+  volatile aserver_message_t   *msgq;          /**< linked list of messages we are sending to the callback process */
 
-  int fd;                  /* if >0 we are playing from a file */
-  gboolean is_opening; // TRUE if file is opening (audiodump.pcm)
+  int fd;                  /**< if >0 we are playing from a file */
+  gboolean is_opening; ///< TRUE if file is opening (audiodump.pcm)
   off_t seek_pos;
   off_t seek_end;
   gboolean usigned;
   gboolean reverse_endian;
 
-  lives_whentostop_t *whentostop; // pointer to mainw->whentostop
-  volatile lives_cancel_t *cancelled; // pointer to mainw->cancelled
+  lives_whentostop_t *whentostop; ///< pointer to mainw->whentostop
+  volatile lives_cancel_t *cancelled; ///< pointer to mainw->cancelled
 
   /* variables used for trying to restart the connection to jack */
-  gboolean             jackd_died;                    /* true if jackd has died and we should try to restart it */
+  gboolean             jackd_died;                    /**< true if jackd has died and we should try to restart it */
   struct timeval   last_reconnect_attempt;
 
-  gboolean play_when_stopped; // if we should play audio even when jack transport is stopped
-  gint64 audio_ticks; // ticks when we did the last seek, used to calculate current ticks from audio
+  gboolean play_when_stopped; ///< if we should play audio even when jack transport is stopped
+  gint64 audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
   gulong frames_written;
 
   gint out_chans_available;
@@ -107,7 +107,7 @@ typedef struct {
 
   gboolean is_paused;
 
-  gboolean is_output; // is output FROM host to jack
+  gboolean is_output; ///< is output FROM host to jack
 
   gboolean is_silent;
 
@@ -129,25 +129,25 @@ typedef struct {
 
 ////////////////////////////////////////////////////////////////////////////
 
-jack_driver_t *jack_get_driver(gint dev_idx, gboolean is_output); // get driver
+jack_driver_t *jack_get_driver(gint dev_idx, gboolean is_output); ///< get driver
 
-int jack_audio_init(void); // init jack for host output
-int jack_audio_read_init(void); // init jack for host input
+int jack_audio_init(void); ///< init jack for host output
+int jack_audio_read_init(void); ///< init jack for host input
 
-int jack_open_device(jack_driver_t *); // open device for host output
-int jack_open_device_read(jack_driver_t *); // open device for host input
+int jack_open_device(jack_driver_t *); ///< open device for host output
+int jack_open_device_read(jack_driver_t *); ///< open device for host input
 
-int jack_driver_activate (jack_driver_t *); // activate for host playback
-int jack_read_driver_activate (jack_driver_t *); // activate for host recording
+int jack_driver_activate (jack_driver_t *); ///< activate for host playback
+int jack_read_driver_activate (jack_driver_t *); ///< activate for host recording
 
 void jack_close_device(jack_driver_t*);
 
 
 // utils
-volatile aserver_message_t *jack_get_msgq(jack_driver_t *); // pull last msg from msgq, or return NULL
-gint64 lives_jack_get_time(jack_driver_t *, gboolean absolute); // get time from jack, in 10^-8 seconds
-void jack_audio_seek_frame (jack_driver_t *, gint frame); // seek to (video) frame
-long jack_audio_seek_bytes (jack_driver_t *, long bytes); // seek to byte position
+volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
+gint64 lives_jack_get_time(jack_driver_t *, gboolean absolute); ///< get time from jack, in 10^-8 seconds
+void jack_audio_seek_frame (jack_driver_t *, gint frame); ///< seek to (video) frame
+long jack_audio_seek_bytes (jack_driver_t *, long bytes); ///< seek to byte position
 
 void jack_get_rec_avals(jack_driver_t *);
 

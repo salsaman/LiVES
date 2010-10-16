@@ -27,9 +27,9 @@ typedef struct lives_subtitle_t _lives_subtitle_t;
 typedef struct {
   double start_time;
   double end_time;
-  lives_subtitle_style_t *style; // for future use
+  lives_subtitle_style_t *style; ///< for future use
   long textpos;
-  _lives_subtitle_t *prev; // for future use
+  _lives_subtitle_t *prev; ///< for future use
   _lives_subtitle_t *next;
 } lives_subtitle_t;
 
@@ -40,8 +40,8 @@ typedef struct {
   char *text;
   double last_time;
   lives_subtitle_t *index;
-  lives_subtitle_t *current; // pointer to current entry in index
-  int offset; // offset in frames (default 0)
+  lives_subtitle_t *current; ///< pointer to current entry in index
+  int offset; ///< offset in frames (default 0)
 } lives_subtitles_t;
 
 

@@ -12,8 +12,8 @@
 
 #include "../libweed/weed.h"
 
+/// resample audio window
 typedef struct __resaudw {
-  // resample audio window
   GtkWidget *dialog;
   GtkWidget *entry_arate;
   GtkWidget *entry_achans;
@@ -39,7 +39,7 @@ LIVES_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps);
 LIVES_INLINE weed_timecode_t q_dbl (gdouble in, gdouble fps);
 
 
-weed_plant_t *quantise_events (weed_plant_t *in_list, gdouble new_fps, gboolean allow_gap); // quantise frame events for a single clip
+weed_plant_t *quantise_events (weed_plant_t *in_list, gdouble new_fps, gboolean allow_gap); ///< quantise frame events for a single clip
 
 ///////////////////////////////////////////////////////
 gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps);
@@ -47,21 +47,22 @@ gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled
 /////////////////////////////////////////
 
 // GUI functions
-// window change speed from Tools menu
+/// window change speed from Tools menu
 void create_new_pb_speed (gshort type);
 
-// resample audio window
+/// resample audio window
+///
+/// type 1 : show current and new, 
+/// type 2 : show new
 _resaudw* create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox);
-// type 1 : show current and new
-// type 2 : show new
 
 void on_change_speed_activate (GtkMenuItem *, gpointer);
 void on_change_speed_ok_clicked (GtkButton *, gpointer);
 
 gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, gint asigned);
 gint reorder_frames(void);
-gint deorder_frames(gint old_framecount, gboolean leave_bak); // leave bak is a special mode for the clipboard
+gint deorder_frames(gint old_framecount, gboolean leave_bak); ///< leave_bak is a special mode for the clipboard
 
-gboolean resample_clipboard(gdouble new_fps); // call this to resample clipboard video
+gboolean resample_clipboard(gdouble new_fps); ///< call this to resample clipboard video
 
 #endif

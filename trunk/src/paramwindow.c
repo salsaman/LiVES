@@ -501,7 +501,7 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     if (weed_plant_has_leaf(filter,"host_fps")) def_fps=weed_get_double_value(filter,"host_fps",&error);
     else if (weed_plant_has_leaf(filter,"target_fps")) def_fps=weed_get_double_value(filter,"target_fps",&error);
     
-    if (def_fps==0.) def_fps=FPS_MAX;
+    if (def_fps==0.) def_fps=prefs->default_fps;
     
     spinbutton_adj = gtk_adjustment_new (def_fps, 1., FPS_MAX, 1., 10., 0.);
     spinbuttonf = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1., 3);

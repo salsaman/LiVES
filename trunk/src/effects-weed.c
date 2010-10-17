@@ -4010,8 +4010,7 @@ gboolean weed_generator_start (weed_plant_t *inst) {
     if (weed_plant_has_leaf(filter,"host_fps")) cfile->pb_fps=cfile->fps=weed_get_double_value(filter,"host_fps",&error);
     else if (weed_plant_has_leaf(filter,"target_fps")) cfile->pb_fps=cfile->fps=weed_get_double_value(filter,"target_fps",&error);
     else {
-      if (!mainw->record||!(prefs->rec_opts&REC_EFFECTS)) cfile->fps=cfile->pb_fps=FPS_MAX; // play as fast as we can
-      else cfile->pb_fps=cfile->fps=prefs->default_fps; // unless we are recording
+      cfile->pb_fps=cfile->fps=prefs->default_fps;
     }
   }
 

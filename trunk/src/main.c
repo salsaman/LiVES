@@ -106,7 +106,6 @@ void catch_sigint(int signum) {
 	else {
 	  g_printerr("%s",_("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
 	}
-      
 	if (mainw->debug) {
 	  g_on_error_stack_trace(capable->myname_full);
 	}
@@ -768,7 +767,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->recoverable_layout=FALSE;
 
-  mainw->debug=FALSE;
   mainw->soft_debug=FALSE;
 
   mainw->iochan=NULL;
@@ -882,6 +880,8 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->ce_maxspect=get_boolean_pref("ce_maxspect");;
 
     prefs->rec_stop_gb=get_int_pref("rec_stop_gb");
+
+    if (prefs->max_modes_per_key==0) prefs->max_modes_per_key=8;
 
     //////////////////////////////////////////////////////////////////
 
@@ -1667,6 +1667,7 @@ void print_opthelp(void) {
   g_printerr("%s",_("-noplaywin       : do not show the play window\n"));
   g_printerr("%s",_("-startup-ce      : start in clip editor mode\n"));
   g_printerr("%s",_("-startup-mt      : start in multitrack mode\n"));
+  g_printerr("%s",_("-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is 8)\n"));
 #ifdef ENABLE_OSC
   g_printerr("%s",_("-oscstart <port> : start OSC listener on UDP port <port>\n"));
   g_printerr("%s",_("-nooscstart      : do not start OSC listener\n"));
@@ -1966,6 +1967,7 @@ int main (int argc, char *argv[]) {
 	{"startup-ce", 0, 0, 0},
 	{"startup-mt", 0, 0, 0},
 	{"debug", 0, 0, 0},
+	{"fxmodesmax", 1, 0, 0},
 #ifdef ENABLE_OSC
 	{"oscstart", 1, 0, 0},
 	{"nooscstart", 0, 0, 0},
@@ -1978,6 +1980,9 @@ int main (int argc, char *argv[]) {
       int option_index=0;
       const char *charopt;
       int c;
+
+      prefs->max_modes_per_key=0;
+      mainw->debug=FALSE;
 
       while (1) {
 	c=getopt_long_only(argc,argv,"",longopts,&option_index);
@@ -2067,6 +2072,13 @@ int main (int argc, char *argv[]) {
 	if (!strcmp(charopt,"nothreaddialog")) {
 	  // disable threaded dialog
 	  prefs->show_threaded_dialog=FALSE;
+	  continue;
+	}
+	if (!strcmp(charopt,"fxmodesmax")&&optarg!=NULL) {
+	  // set number of fx modes
+	  prefs->max_modes_per_key=atoi(optarg);
+	  if (prefs->max_modes_per_key<1) prefs->max_modes_per_key=1;
+	  ign_opts.ign_osc=TRUE;
 	  continue;
 	}
 #ifdef ENABLE_OSC

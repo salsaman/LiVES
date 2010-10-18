@@ -284,8 +284,6 @@ gchar *weed_category_to_text(int cat, gboolean plural) {
 #define MAX_WEED_FILTERS 65536
 #define MAX_WEED_INSTANCES 65536
 
-#define MAX_MODES_PER_KEY 8
-
 // store keys so we now eg, which rte mask entry to xor when deiniting
 static int fg_generator_key;
 static int bg_generator_key;
@@ -308,10 +306,10 @@ static gint fg_generator_clip;
 static weed_plant_t *weed_filters[MAX_WEED_FILTERS]; // array of filter_classes
 
 // each 'hotkey' controls n instances, selectable as 'modes' or banks
-static weed_plant_t *key_to_instance[FX_KEYS_MAX][MAX_MODES_PER_KEY];
-static weed_plant_t *key_to_instance_copy[FX_KEYS_MAX][1]; // copy for preview during rendering
+static weed_plant_t **key_to_instance[FX_KEYS_MAX];
+static weed_plant_t **key_to_instance_copy[FX_KEYS_MAX]; // copy for preview during rendering
 
-static int key_to_fx[FX_KEYS_MAX][MAX_MODES_PER_KEY];
+static int *key_to_fx[FX_KEYS_MAX];
 static int key_modes[FX_KEYS_MAX];
 
 // count of how many filters we have loaded
@@ -320,7 +318,7 @@ static gint num_weed_filters;
 static gchar *hashnames[MAX_WEED_FILTERS];
 
 // per key/mode parameter defaults
-weed_plant_t **key_defaults[FX_KEYS_MAX_VIRTUAL][MAX_MODES_PER_KEY];
+weed_plant_t ***key_defaults[FX_KEYS_MAX_VIRTUAL];
 
 /////////////////// LiVES event system /////////////////
 
@@ -2841,12 +2839,23 @@ void weed_load_all (void) {
   bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
 
   for (i=0;i<FX_KEYS_MAX;i++) {
+    if (i<FX_KEYS_MAX_VIRTUAL) key_to_instance[i]=g_malloc(prefs->max_modes_per_key*sizeof(weed_plant_t *));
+    else key_to_instance[i]=g_malloc(sizeof(weed_plant_t *));
+
+    if (i<FX_KEYS_MAX_VIRTUAL) key_to_fx[i]=g_malloc(prefs->max_modes_per_key*sizint);
+    else key_to_fx[i]=g_malloc(sizint);
+
+    if (i<FX_KEYS_MAX_VIRTUAL) key_defaults[i]=g_malloc(prefs->max_modes_per_key*sizeof(weed_plant_t **));
+
     key_modes[i]=0;  // current active mode of each key
     filter_map[i]=NULL; // maps effects in order of application for multitrack rendering
-    for (j=0;j<MAX_MODES_PER_KEY;j++) {
-      if (i<FX_KEYS_MAX_VIRTUAL) key_defaults[i][j]=NULL;
-      key_to_instance[i][j]=NULL;
-      key_to_fx[i][j]=-1;
+    for (j=0;j<prefs->max_modes_per_key;j++) {
+      if (i<FX_KEYS_MAX_VIRTUAL||j==0) {
+	if (i<FX_KEYS_MAX_VIRTUAL) key_defaults[i][j]=NULL;
+	key_to_instance[i][j]=NULL;
+	key_to_fx[i][j]=-1;
+      }
+      else break;
     }
   }
   filter_map[FX_KEYS_MAX+1]=NULL;
@@ -2891,7 +2900,7 @@ void weed_load_all (void) {
       plugin_name=g_list_nth_data(weed_plugin_list,plugin_idx);
       plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
       load_weed_plugin(plugin_name,plugin_path);
-      g_free(g_list_nth_data(weed_plugin_list,plugin_idx));
+      g_free(plugin_name);
       weed_plugin_list=g_list_delete_link(weed_plugin_list,g_list_nth(weed_plugin_list,plugin_idx));
       plugin_idx--;
       listlen--;
@@ -3060,9 +3069,10 @@ void weed_unload_all(void) {
   for (i=0;i<num_weed_filters;i++) {
 
     if (i<FX_KEYS_MAX_VIRTUAL) {
-      for (j=0;j<MAX_MODES_PER_KEY;j++) {
+      for (j=0;j<prefs->max_modes_per_key;j++) {
 	if (key_defaults[i][j]!=NULL) free_key_defaults(i,j);
       }
+      g_free(key_defaults[i]);
     }
 
     filter=weed_filters[i];
@@ -3102,6 +3112,8 @@ void weed_unload_all(void) {
 
   for (i=0;i<MAX_WEED_FILTERS;i++) {
     if (hashnames[i]!=NULL) g_free(hashnames[i]);
+    g_free(key_to_fx[i]);
+    g_free(key_to_instance[i]);
   }
 
   pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -4832,10 +4844,10 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
 
   if (key<FX_KEYS_MAX_VIRTUAL) free_key_defaults(key,mode);
 
-  for (;mode<MAX_MODES_PER_KEY;mode++) {
+  for (;mode<prefs->max_modes_per_key;mode++) {
 
     mainw->osc_block=TRUE;
-    if (mode==MAX_MODES_PER_KEY-1||key_to_fx[key][mode+1]==-1) {
+    if (mode==prefs->max_modes_per_key-1||key_to_fx[key][mode+1]==-1) {
       if (key_to_instance[key][mode]!=NULL) {
 	was_started=TRUE;
 	if (key_modes[key]==mode) modekey=-key-1;
@@ -4891,7 +4903,7 @@ gboolean rte_key_valid (int key, gboolean is_userkey) {
 }
 
 gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey) {
-  if (key<1||(is_userkey&&key>FX_KEYS_MAX_VIRTUAL)||key>FX_KEYS_MAX||mode<0||mode>=MAX_MODES_PER_KEY) return FALSE;
+  if (key<1||(is_userkey&&key>FX_KEYS_MAX_VIRTUAL)||key>FX_KEYS_MAX||mode<0||mode>=prefs->max_modes_per_key) return FALSE;
   if (key_to_fx[--key][mode]==-1) return FALSE;
   return TRUE;
 }
@@ -4909,7 +4921,7 @@ int rte_key_getmaxmode (gint key) {
 
   key--;
 
-  for (i=0;i<MAX_MODES_PER_KEY;i++) {
+  for (i=0;i<prefs->max_modes_per_key;i++) {
     if (key_to_fx[key][i]==-1) return i;
   }
   return 0;
@@ -4982,7 +4994,7 @@ gchar *rte_keymode_get_plugin_name(gint key, gint mode) {
 
 
 G_GNUC_PURE int rte_getmodespk (void) {
-  return MAX_MODES_PER_KEY;
+  return prefs->max_modes_per_key;
 }
 
 G_GNUC_PURE gint rte_bg_gen_key (void) {
@@ -5072,7 +5084,7 @@ gboolean rte_key_setmode (gint key, gint newmode) {
 
   if (newmode==-1) {
     // cycle forwards
-    if (oldmode==MAX_MODES_PER_KEY-1||key_to_fx[key][oldmode+1]==-1) {
+    if (oldmode==prefs->max_modes_per_key-1||key_to_fx[key][oldmode+1]==-1) {
       newmode=0;
     }
     else {
@@ -5084,13 +5096,13 @@ gboolean rte_key_setmode (gint key, gint newmode) {
     // cycle backwards
     newmode=key_modes[key]-1;
     if (newmode<0) {
-      for (newmode=MAX_MODES_PER_KEY-1;newmode>=0;newmode--) {
+      for (newmode=prefs->max_modes_per_key-1;newmode>=0;newmode--) {
 	if (key_to_fx[key][newmode]!=-1) break;
       }
     }
   }
 
-  if (newmode<0||newmode>=MAX_MODES_PER_KEY) return FALSE;
+  if (newmode<0||newmode>=prefs->max_modes_per_key) return FALSE;
 
   if (key_to_fx[key][newmode]==-1) return FALSE;
 
@@ -5155,7 +5167,7 @@ int weed_add_effectkey_by_idx (gint key, int idx) {
 
   key--;
 
-  for (i=0;i<MAX_MODES_PER_KEY;i++) {
+  for (i=0;i<prefs->max_modes_per_key;i++) {
     if (key_to_fx[key][i]!=-1) {
       if (enabled_in_channels(weed_filters[key_to_fx[key][i]],FALSE)==0) has_gen=TRUE;
       else has_non_gen=TRUE;
@@ -6764,7 +6776,7 @@ void free_key_defaults(gint key, gint mode) {
   int i=0;
   int nparams;
 
-  if (key>=FX_KEYS_MAX_VIRTUAL||mode>=MAX_MODES_PER_KEY) return;
+  if (key>=FX_KEYS_MAX_VIRTUAL||mode>=prefs->max_modes_per_key) return;
 
   key_defs=key_defaults[key][mode];
 
@@ -6813,7 +6825,7 @@ gboolean has_key_defaults(void) {
   // check if any key/mode has default parameters set
   int i,j;
   for (i=0;i<prefs->rte_keys_virtual;i++) {
-    for (j=0;j<MAX_MODES_PER_KEY;j++) {
+    for (j=0;j<prefs->max_modes_per_key;j++) {
       if (key_defaults[i][j]!=NULL) return TRUE;
     }
   }

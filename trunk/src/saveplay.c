@@ -4303,7 +4303,7 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
 
   rewrite_recovery_file();
 
-  if (retval&&!mainw->recoverable_layout) do_after_crash_warning();
+  if (!mainw->recoverable_layout) do_after_crash_warning();
 
   return retval;
 }

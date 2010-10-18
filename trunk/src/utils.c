@@ -1,8 +1,8 @@
-/// utils.c
-/// LiVES
-/// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl>
-/// released under the GNU GPL 3 or later
-/// see file ../COPYING or www.gnu.org for licensing details
+// utils.c
+// LiVES
+// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl>
+// released under the GNU GPL 3 or later
+// see file ../COPYING or www.gnu.org for licensing details
 
 
 #include <unistd.h>
@@ -24,7 +24,7 @@
 static gboolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 
-/// special allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
+// special allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
 void lives_free(gpointer ptr) {
   (*mainw->free_fn)(ptr);
 }
@@ -114,7 +114,7 @@ LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame) {
 }
 
 LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time) {
-  /// return the nearest frame (rounded) for a given time, max is cfile->frames
+  // return the nearest frame (rounded) for a given time, max is cfile->frames
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
   frame=(gint)(time*mainw->files[filenum]->fps+1.49999);
@@ -122,8 +122,8 @@ LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time) {
 }
 
 LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time) {
-  /// return the nearest frame (rounded) for a given time
-  /// allow max (frames+1)
+  // return the nearest frame (rounded) for a given time
+  // allow max (frames+1)
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
   frame=(gint)(time*mainw->files[filenum]->fps+1.49999);
@@ -131,8 +131,8 @@ LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time) {
 }
 
 LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
-  /// return the nearest frame (floor) for a given time
-  /// allow max (frames+1)
+  // return the nearest frame (floor) for a given time
+  // allow max (frames+1)
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
   frame=(gint)(time*mainw->files[filenum]->fps+1.);
@@ -144,7 +144,7 @@ LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
 
 
 static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_frame) {
-  /// return FALSE if audio stops playback
+  // return FALSE if audio stops playback
 
 #ifdef RT_AUDIO
   guint64 atc;
@@ -196,31 +196,31 @@ static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_f
 
 
 gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
-  /// returns a frame number (floor) using sfile->last_frameno and ntc-otc
-  /// takes into account looping modes
+  // returns a frame number (floor) using sfile->last_frameno and ntc-otc
+  // takes into account looping modes
 
-  /// the range is first_frame -> last_frame
+  // the range is first_frame -> last_frame
 
-  /// which is generally 1 -> sfile->frames, unless we are playing a selection
+  // which is generally 1 -> sfile->frames, unless we are playing a selection
 
-  /// in case the frame is out of range and playing, returns 0 and sets mainw->cancelled 
+  // in case the frame is out of range and playing, returns 0 and sets mainw->cancelled 
 
-  /// ntc is adjusted backwards to timecode of the new frame
-
-
-  /// the basic operation is quite simple, given the time difference between the last frame and 
-  /// now, we calculate the new frame from the current fps and then ensure it is in the range
-  /// first_frame -> last_frame
-
-  /// Complications arise because we have ping-pong loop mode where the the play direction 
-  /// alternates - here we need to determine how many times we have reached the start or end 
-  /// play point. This is similar to the winding number in topological calculations.
-
-  /// caller should check return value of ntc, and if it differs from otc, show the frame
+  // ntc is adjusted backwards to timecode of the new frame
 
 
-  /// note we also calculate the audio "frame" and position for realtime audio players
-  /// this is done so we can check here if audio limits stopped playback
+  // the basic operation is quite simple, given the time difference between the last frame and 
+  // now, we calculate the new frame from the current fps and then ensure it is in the range
+  // first_frame -> last_frame
+
+  // Complications arise because we have ping-pong loop mode where the the play direction 
+  // alternates - here we need to determine how many times we have reached the start or end 
+  // play point. This is similar to the winding number in topological calculations.
+
+  // caller should check return value of ntc, and if it differs from otc, show the frame
+
+
+  // note we also calculate the audio "frame" and position for realtime audio players
+  // this is done so we can check here if audio limits stopped playback
 
 
   gint64 dtc=*ntc-otc;
@@ -239,18 +239,18 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
   if (sfile==NULL) return 0;
 
-  /// calculate audio "frame"
+  // calculate audio "frame"
   if (mainw->playing_file==fileno) {
 #ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {
-      /// get seek_pos from jack
+      // get seek_pos from jack
       mainw->aframeno=lives_jack_get_pos(mainw->jackd)/cfile->fps+1.;
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    /// request for another audio buffer - used only during mt playback
+    // request for another audio buffer - used only during mt playback
     if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==fileno) {
-      /// get seek_pos from pulse
+      // get seek_pos from pulse
       mainw->aframeno=lives_pulse_get_pos(mainw->pulsed)/cfile->fps+1.;
     }
 #endif
@@ -285,13 +285,13 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
   if (mainw->playing_file==fileno) {
 
     if (mainw->noframedrop) {
-      /// if noframedrop is set, we may not skip any frames
-      /// - the usual situation is that we are allowed to skip frames
+      // if noframedrop is set, we may not skip any frames
+      // - the usual situation is that we are allowed to skip frames
       if (nframe>cframe) nframe=cframe+1;
       else if (nframe<cframe) nframe=cframe-1;
     }
 
-    /// check if video stopped playback
+    // check if video stopped playback
     if (nframe<first_frame||nframe>last_frame) {
       if (mainw->whentostop==STOP_ON_VID_END) {
 	mainw->cancelled=CANCEL_VID_END;
@@ -300,7 +300,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
     }
 
 
-    /// check if audio stopped playback
+    // check if audio stopped playback
 #ifdef RT_AUDIO
     if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0&&sfile->frames>0) {
       if (!check_for_audio_stop(fileno,first_frame,last_frame)) {
@@ -313,7 +313,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
   
   if (sfile->frames==0) return 0;
 
-  /// get our frame back to within bounds
+  // get our frame back to within bounds
   
   nframe-=first_frame;
 
@@ -337,20 +337,20 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
   nframe%=(last_frame-first_frame+1);
 
   if (fps<0) {
-    /// backwards
+    // backwards
     if (dir==1) {
-      /// even winding
+      // even winding
       if (!mainw->ping_pong) {
-	/// loop
+	// loop
 	if (nframe<0) nframe+=last_frame+1;
 	else nframe+=first_frame;
 	if (nframe>cframe&&mainw->playing_file==fileno&&mainw->loop_cont&&!mainw->loop) {
-	  /// resync audio at end of loop section (playing backwards)
+	  // resync audio at end of loop section (playing backwards)
 	  do_resync=TRUE;
 	}
       }
       else {
-	nframe+=last_frame; /// normal
+	nframe+=last_frame; // normal
 	if (nframe>last_frame) {
 	  nframe=last_frame-(nframe-last_frame);
 	  if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
@@ -359,36 +359,36 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
       }
     }
     else {
-      /// odd winding
+      // odd winding
       nframe=ABS(nframe)+first_frame;
       if (mainw->ping_pong) {
-	/// bounce
+	// bounce
 	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
       }
     }
   }
   else {
-    /// forwards
+    // forwards
     nframe+=first_frame;
     if (dir==1) {
-      /// odd winding
+      // odd winding
       if (mainw->ping_pong) {
-	/// bounce
+	// bounce
 	nframe=last_frame-(nframe-(first_frame-1));
 	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
       }
     }
     else if (mainw->playing_sel&&!mainw->ping_pong&&mainw->playing_file==fileno&&nframe<cframe&&mainw->loop_cont&&!mainw->loop) {
-      /// resync audio at start of loop selection
+      // resync audio at start of loop selection
       if (nframe<first_frame) {
 	nframe=last_frame-(first_frame-nframe)+1;
       }
       do_resync=TRUE;
     }
     if (nframe<first_frame) {
-      /// scratch or transport backwards
+      // scratch or transport backwards
       if (mainw->ping_pong) {
 	nframe=first_frame;
 	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
@@ -410,7 +410,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
       resync_audio(nframe);
       if (is_jump) mainw->video_seek_ready=TRUE;
       if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
-	/// we check for audio stop here, but the seek may not have happened yet
+	// we check for audio stop here, but the seek may not have happened yet
 	if (!check_for_audio_stop(fileno,first_frame,last_frame)) {
 	  mainw->cancelled=CANCEL_AUD_END;
 	  return 0;
@@ -427,8 +427,8 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
 
 void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
-  /// calculate maxspect (maximum size which maintains aspect ratio)
-  /// of cwidth, cheight - given restrictions rwidth * rheight
+  // calculate maxspect (maximum size which maintains aspect ratio)
+  // of cwidth, cheight - given restrictions rwidth * rheight
 
   gdouble aspect;
 
@@ -437,13 +437,13 @@ void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
   aspect=(gdouble)*cwidth/(gdouble)*cheight;
 
   if ((gdouble)rheight*aspect<=rwidth) {
-    /// bound by rheight
+    // bound by rheight
     *cheight=rheight;
     *cwidth=((gdouble)rheight*aspect+.5);
     if (*cwidth>rwidth) *cwidth=rwidth;
   }
   else {
-    /// bound by rwidth
+    // bound by rwidth
     *cwidth=rwidth;
     *cheight=((gdouble)rwidth/aspect+.5);
     if (*cheight>rheight) *cheight=rheight;
@@ -453,7 +453,7 @@ void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
 
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 
 void init_clipboard(void) {
@@ -461,23 +461,23 @@ void init_clipboard(void) {
   gchar *com;
 
   if (clipboard==NULL) {
-    /// here is where we create the clipboard
-    /// use get_new_handle(clipnumber,name);
+    // here is where we create the clipboard
+    // use get_new_handle(clipnumber,name);
     if (!get_new_handle(0,"clipboard")) {
       mainw->error=TRUE;
       return;
     }
   }
   else if (clipboard->frames>0) { 
-    /// clear old clipboard
-    /// need to set current file to 0 before monitoring progress
+    // clear old clipboard
+    // need to set current file to 0 before monitoring progress
     mainw->current_file=0;
     com=g_strdup_printf("smogrify delete_all %s",clipboard->handle);
     unlink(clipboard->info_file);
     dummyvar=system(com);
     cfile->progress_start=cfile->start;
     cfile->progress_end=cfile->end;
-    /// show a progress dialog, not cancellable
+    // show a progress dialog, not cancellable
     do_progress_dialog(TRUE,FALSE,_ ("Clearing the clipboard"));
     g_free(com);
   }
@@ -523,7 +523,7 @@ void d_print(const gchar *text) {
 
 
 gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current) {
-  /// potentially add a layout map error to the layout textbuffer
+  // potentially add a layout map error to the layout textbuffer
   GtkTextIter end_iter;
   gchar *text,*name2;
   gchar **array;
@@ -720,7 +720,7 @@ void clear_lmap_errors(void) {
 
 
 gboolean check_for_lock_file(const gchar *set_name, gint type) {
-  /// check for lock file
+  // check for lock file
   int info_fd;
   gchar *msg=NULL;
   size_t bytes;
@@ -805,11 +805,11 @@ gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
 
 
 gboolean check_frame_count(gint idx) {
-  /// check number of frames is correct
+  // check number of frames is correct
   gchar *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
 
   if (!g_file_test(frame,G_FILE_TEST_EXISTS)) {
-    /// not enough frames
+    // not enough frames
     g_free(frame);
     return FALSE;
   }
@@ -817,7 +817,7 @@ gboolean check_frame_count(gint idx) {
 
   frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
   if (g_file_test(frame,G_FILE_TEST_EXISTS)) {
-    /// too many frames
+    // too many frames
     g_free(frame);
     return FALSE;
   }
@@ -829,7 +829,7 @@ gboolean check_frame_count(gint idx) {
 
 
 void get_frame_count(gint idx) {
-  /// sets mainw->files[idx]->frames with current framecount
+  // sets mainw->files[idx]->frames with current framecount
   gint info_fd;
   size_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
@@ -855,7 +855,7 @@ void get_frame_count(gint idx) {
 
 void
 get_next_free_file(void) {
-  /// get next free file slot, or -1 if we are full
+  // get next free file slot, or -1 if we are full
   while ((mainw->first_free_file!=-1)&&mainw->files[mainw->first_free_file]!=NULL) {
     mainw->first_free_file++;
     if (mainw->first_free_file>=MAX_FILES) mainw->first_free_file=-1;
@@ -866,8 +866,8 @@ get_next_free_file(void) {
 void
 get_dirname(gchar *filename) {
   gchar *tmp;
-  /// get directory name from a file
-  ///filename should point to gchar[256]
+  // get directory name from a file
+  //filename should point to gchar[256]
   g_snprintf (filename,256,"%s%s",(tmp=g_path_get_dirname (filename)),G_DIR_SEPARATOR_S);
   g_free(tmp);
 
@@ -886,8 +886,8 @@ get_dirname(gchar *filename) {
 
 void
 get_basename(gchar *filename) {
-  /// get basename from a file
-  ///filename should point to gchar[256]
+  // get basename from a file
+  //filename should point to gchar[256]
   gchar *tmp=g_path_get_basename(filename);
   g_snprintf (filename,256,"%s",tmp);
   g_free(tmp);
@@ -895,8 +895,8 @@ get_basename(gchar *filename) {
 
 void
 get_filename(gchar *filename, gboolean strip_dir) {
-  /// get filename (part without extension) of a file
-  ///filename should point to gchar[256]
+  // get filename (part without extension) of a file
+  //filename should point to gchar[256]
   gchar **array;
   if (strip_dir) get_basename(filename);
   array=g_strsplit(filename,".",-1);
@@ -926,10 +926,10 @@ gchar *ensure_extension(const gchar *fname, const gchar *ext) {
 
 
 gboolean ensure_isdir(gchar *fname) {
-  /// ensure dirname ends in a single dir separator
-  /// fname should be gchar[256]
+  // ensure dirname ends in a single dir separator
+  // fname should be gchar[256]
 
-  /// returns TRUE if fname was altered
+  // returns TRUE if fname was altered
 
   size_t slen=strlen(fname);
   size_t offs=slen-1;
@@ -959,9 +959,9 @@ get_location(const gchar *exe, gchar *val, gint maxlen) {
 
 
 gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
-  /// replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
-  /// used for layout.map file
-  /// return value should be g_free()'d
+  // replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
+  // used for layout.map file
+  // return value should be g_free()'d
   gchar *string=g_strdup(entry);;
 
   if (fwd) {
@@ -999,7 +999,7 @@ void remove_layout_files(GList *map) {
 	is_current=FALSE;
 	maplen=strlen(map->data);
 	
-	/// remove from mainw->current_layouts_map
+	// remove from mainw->current_layouts_map
 	cmap=mainw->current_layouts_map;
 	while (cmap!=NULL) {
 	  cmap_next=cmap->next;
@@ -1022,7 +1022,7 @@ void remove_layout_files(GList *map) {
 	g_free(com);
 	
 	if (!strncmp(fname,prefs->tmpdir,strlen(prefs->tmpdir))) {
-	  /// is in tmpdir, safe to remove parents
+	  // is in tmpdir, safe to remove parents
 	  com=g_strdup_printf("touch %s/noremove >/dev/null 2>&1",prefs->tmpdir);
 	  dummyvar=system(com);
 	  g_free(com);
@@ -1038,7 +1038,7 @@ void remove_layout_files(GList *map) {
 	  g_free(com);
 	}
 	
-	/// remove from mainw->files[]->layout_map
+	// remove from mainw->files[]->layout_map
 	for (i=1;i<=MAX_FILES;i++) {
 	  if (mainw->files[i]!=NULL) {
 	    if (mainw->files[i]->layout_map!=NULL) {
@@ -1046,7 +1046,7 @@ void remove_layout_files(GList *map) {
 	      while (lmap!=NULL) {
 		lmap_next=lmap->next;
 		if (!strncmp(lmap->data,map->data,maplen)) {
-		  /// remove matching entry
+		  // remove matching entry
 		  if (lmap->prev!=NULL) lmap->prev->next=lmap_next;
 		  else mainw->files[i]->layout_map=lmap_next;
 		  if (lmap->next!=NULL) lmap_next->prev=lmap->prev;
@@ -1075,7 +1075,7 @@ void remove_layout_files(GList *map) {
     map=map_next;
   }
 
-  /// save updated layout.map
+  // save updated layout.map
   save_layout_map(NULL,NULL,NULL,NULL);
   
 }
@@ -1084,9 +1084,9 @@ void remove_layout_files(GList *map) {
 
 void
 get_play_times(void) {
-  /// update the on-screen timer bars,
-  /// and if we are not playing,
-  /// get play times for video, audio channels, and total (longest) time
+  // update the on-screen timer bars,
+  // and if we are not playing,
+  // get play times for video, audio channels, and total (longest) time
   gchar *tmpstr;
   gdouble offset=0;
   gdouble offset_left=0;
@@ -1105,7 +1105,7 @@ get_play_times(void) {
   if (mainw->laudio_drawable==NULL||mainw->raudio_drawable==NULL) return;
 
 
-  /// draw timer bars
+  // draw timer bars
   allocwidth=mainw->video_draw->allocation.width;
   allocheight=mainw->video_draw->allocation.height;
 
@@ -1225,7 +1225,7 @@ get_play_times(void) {
     }
   }
 
-  /// playback cursors
+  // playback cursors
   if (mainw->playing_file>-1) {
     if (cfile->frames>0) {
       offset=(mainw->actual_frame-.5)/cfile->fps;
@@ -1246,7 +1246,7 @@ get_play_times(void) {
 			 prefs->bar_height);
 	}
       
-	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { /// light style
+	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  gdk_draw_line (mainw->video_drawable,
 			 mainw->video_draw->style->black_gc,
 			 offset, prefs->bar_height,
@@ -1294,7 +1294,7 @@ get_play_times(void) {
 			 prefs->bar_height);
 	}
       
-	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { /// light style
+	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  gdk_draw_line (mainw->laudio_drawable,
 			 mainw->laudio_draw->style->black_gc,
 			 offset, prefs->bar_height,
@@ -1328,7 +1328,7 @@ get_play_times(void) {
 	  }
 	  
 	  
-	  if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { /// light style
+	  if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	    gdk_draw_line (mainw->raudio_drawable,
 			   mainw->raudio_draw->style->black_gc,
 			   offset, prefs->bar_height,
@@ -1353,7 +1353,7 @@ get_play_times(void) {
   
   if (mainw->playing_file==-1||(mainw->switch_during_pb&&!mainw->faded)) {
     if (cfile->total_time>0.) {
-      /// set the range of the timeline
+      // set the range of the timeline
       if (!cfile->opening_loc) {
 	gtk_widget_show (mainw->hruler);
       }
@@ -1368,10 +1368,10 @@ get_play_times(void) {
       draw_little_bars(cfile->pointer_time);
       if (mainw->playing_file==-1&&prefs->sepwin_type==1&&mainw->sep_win&&cfile->is_loaded) {
 	if (mainw->preview_box==NULL) {
-	  /// create the preview box that shows frames
+	  // create the preview box that shows frames
 	  make_preview_box();
 	}
-	/// and add it the play window
+	// and add it the play window
 	if (mainw->preview_box->parent==NULL&&cfile->clip_type==CLIP_TYPE_DISK&&!mainw->is_rendering) {
 	  gtk_widget_queue_draw(mainw->play_window);
 	  gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
@@ -1454,7 +1454,7 @@ get_play_times(void) {
     
 
 void draw_little_bars (gdouble ptrtime) {
-  ///draw the vertical player bars
+  //draw the vertical player bars
   gdouble allocheight=mainw->video_draw->allocation.height-prefs->bar_height;
   gdouble offset=ptrtime/cfile->total_time*mainw->vidbar->allocation.width;
   gint frame;
@@ -1483,7 +1483,7 @@ void draw_little_bars (gdouble ptrtime) {
 		       prefs->bar_height);
       }
       
-      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { /// light style
+      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	gdk_draw_line (mainw->video_drawable,
 		       mainw->video_draw->style->black_gc,
 		       offset, prefs->bar_height,
@@ -1519,7 +1519,7 @@ void draw_little_bars (gdouble ptrtime) {
 		       prefs->bar_height);
       }
       
-      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { /// light style
+      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	gdk_draw_line (mainw->laudio_drawable,
 		       mainw->laudio_draw->style->black_gc,
 		       offset, prefs->bar_height,
@@ -1552,7 +1552,7 @@ void draw_little_bars (gdouble ptrtime) {
 	}
 	
 	
-	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { /// light style
+	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  gdk_draw_line (mainw->raudio_drawable,
 			 mainw->raudio_draw->style->black_gc,
 			 offset, prefs->bar_height,
@@ -1576,7 +1576,7 @@ void draw_little_bars (gdouble ptrtime) {
 
 
 void get_total_time (file *file) {
-  /// get times (video, left and right audio)
+  // get times (video, left and right audio)
 
   file->laudio_time=file->raudio_time=file->video_time=file->total_time=0.;
 
@@ -1610,14 +1610,14 @@ void get_total_time (file *file) {
 
 void 
 find_when_to_stop (void) {
-  /// work out when to stop playing
-  ///
-  /// ---------------
-  ///        no loop              loop to fit                 loop cont
-  ///        -------              -----------                 ---------
-  /// a>v    stop on video end    stop on audio end           no stop
-  /// v>a    stop on video end    stop on video end           no stop
-  /// generator start - not playing : stop on vid_end, unless pure audio;
+  // work out when to stop playing
+  //
+  // ---------------
+  //        no loop              loop to fit                 loop cont
+  //        -------              -----------                 ---------
+  // a>v    stop on video end    stop on audio end           no stop
+  // v>a    stop on video end    stop on video end           no stop
+  // generator start - not playing : stop on vid_end, unless pure audio;
   if (cfile->clip_type==CLIP_TYPE_GENERATOR||mainw->aud_rec_fd!=-1) mainw->whentostop=STOP_ON_VID_END;
   else if (mainw->multitrack!=NULL&&cfile->frames>0) mainw->whentostop=STOP_ON_VID_END;
   else if (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE) mainw->whentostop=NEVER_STOP;
@@ -1625,7 +1625,7 @@ find_when_to_stop (void) {
   else if (cfile->opening_audio) mainw->whentostop=STOP_ON_VID_END;
   else if (mainw->loop_cont&&!mainw->preview) mainw->whentostop=NEVER_STOP;
   else if (cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)<MAX (cfile->laudio_time,cfile->raudio_time))) mainw->whentostop=STOP_ON_AUD_END;
-  else mainw->whentostop=STOP_ON_VID_END; /// tada...
+  else mainw->whentostop=STOP_ON_VID_END; // tada...
 }
 
 
@@ -1634,16 +1634,16 @@ find_when_to_stop (void) {
 
 void 
 minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height) {
-  /// we will use trigonometry to calculate the smallest difference between a given
-  /// aspect ratio and the actual frame size. If the delta is smaller than current 
-  /// we set the height and width
+  // we will use trigonometry to calculate the smallest difference between a given
+  // aspect ratio and the actual frame size. If the delta is smaller than current 
+  // we set the height and width
   gint cw=width[0];
   gint ch=height[0];
 
   gint real_width,real_height;
   gulong delta,current_delta;
 
-  /// minimise d[(x-x1)^2 + (y-y1)^2]/d[x1], to get approximate values
+  // minimise d[(x-x1)^2 + (y-y1)^2]/d[x1], to get approximate values
   gint calc_width=(gint)((vsize+aspect*hsize)*aspect/(aspect*aspect+1.));
 
   int i;
@@ -1653,7 +1653,7 @@ minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vs
 #ifdef DEBUG_ASPECT
   g_printerr ("aspect %.8f : width %d height %d is best fit\n",aspect,calc_width,(gint)(calc_width/aspect));
 #endif
-  /// use the block size to find the nearest allowed size
+  // use the block size to find the nearest allowed size
   for (i=-1;i<2;i++) {
     real_width=(gint)(calc_width/hblock+i)*hblock;
     real_height=(gint)(real_width/aspect/vblock+.5)*vblock;
@@ -1661,7 +1661,7 @@ minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vs
 
 
     if (real_width%hblock!=0||real_height%vblock!=0||ABS((gdouble)real_width/(gdouble)real_height-aspect)>ASPECT_ALLOWANCE) {
-      /// encoders can be fussy, so we need to fit both aspect ratio and blocksize      
+      // encoders can be fussy, so we need to fit both aspect ratio and blocksize      
       while (1) {
 	real_width=((int)(real_width/hblock)+1)*hblock;
 	real_height=(int)((gdouble)real_width/aspect+.5);
@@ -1712,7 +1712,7 @@ hide_cursor(GdkWindow *window) {
   GdkColor bg = { 0, 0, 0, 0 };
 
   if (hidden_cursor==NULL) {
-    ///make the cursor invisible in playback windows
+    //make the cursor invisible in playback windows
     source = gdk_bitmap_create_from_data (NULL, cursor_bits,
 					  1, 1);
     mask = gdk_bitmap_create_from_data (NULL, cursormask_bits,
@@ -1921,10 +1921,10 @@ switch_aud_to_mplayer(void) {
 
 void
 prepare_to_play_foreign(void) {
-  /// here we are going to 'play' a captured external window
+  // here we are going to 'play' a captured external window
   gint new_file=mainw->first_free_file;
 
-  /// create a new 'file' to play into
+  // create a new 'file' to play into
   if (!get_new_handle(new_file,NULL)) {
     return;
   }
@@ -1959,15 +1959,15 @@ prepare_to_play_foreign(void) {
   gtk_widget_show (mainw->playarea);
   while (g_main_context_iteration(NULL,FALSE));
 
-  /// size must be exact, must not be larger than play window or we end up with nothing
+  // size must be exact, must not be larger than play window or we end up with nothing
   mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST+2;
   mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST+2;
 
   cfile->hsize=mainw->pwidth;
   cfile->vsize=mainw->pheight;
 
-  /// for some strange reason we now have to do this twice...and now it doesn't
-  /// always work
+  // for some strange reason we now have to do this twice...and now it doesn't
+  // always work
   gtk_socket_add_id(GTK_SOCKET(mainw->playarea),mainw->foreign_id);
   gtk_socket_add_id(GTK_SOCKET(mainw->playarea),mainw->foreign_id);
   while (g_main_context_iteration(NULL,FALSE));
@@ -2002,7 +2002,7 @@ prepare_to_play_foreign(void) {
 
 gboolean
 after_foreign_play(void) {
-  /// read details from capture file
+  // read details from capture file
   int capture_fd;
   gchar *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,getpid());
   gchar capbuf[256];
@@ -2015,7 +2015,7 @@ after_foreign_play(void) {
   gchar **array;
   gchar file_name[256];
 
-  /// assume for now we only get one clip passed back
+  // assume for now we only get one clip passed back
   if ((capture_fd=open(capfile,O_RDONLY))>-1) {
     memset(capbuf,0,256);
     if ((length=read(capture_fd,capbuf,256))) {
@@ -2058,7 +2058,7 @@ after_foreign_play(void) {
 	    get_next_free_file();
 	  }
 	  else {
-	    /// cancelled cleanup
+	    // cancelled cleanup
 	    new_frames=0;
 	    close_current_file(old_file);
 	  }
@@ -2072,7 +2072,7 @@ after_foreign_play(void) {
   }
 
   if (new_frames==0) {
-    /// nothing captured; or cancelled
+    // nothing captured; or cancelled
     g_free(capfile);
     return FALSE;
   }
@@ -2139,8 +2139,8 @@ LIVES_INLINE gboolean int_array_contains_value(int *array, int num_elems, int va
 
 void 
 reset_clip_menu (void) {
-  /// sometimes the clip menu gets messed up, e.g. after reloading a set.
-  /// This function will clean up the 'x's and so on.
+  // sometimes the clip menu gets messed up, e.g. after reloading a set.
+  // This function will clean up the 'x's and so on.
 
   int i;
   GtkWidget *active_image=NULL;
@@ -2175,10 +2175,10 @@ gboolean check_file(const gchar *file_name, gboolean check_existing) {
   int check;
   gboolean exists=FALSE;
   gchar *msg;
-  /// file_name should be in utf8
+  // file_name should be in utf8
   gchar *lfile_name=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL);
 
-  /// check if file exists
+  // check if file exists
   if (g_file_test (lfile_name, G_FILE_TEST_EXISTS)) {
     if (check_existing) {
       msg=g_strdup_printf (_ ("\n%s\nalready exists.\n\nOverwrite ?\n"),file_name);
@@ -2192,7 +2192,7 @@ gboolean check_file(const gchar *file_name, gboolean check_existing) {
     check=open(lfile_name,O_RDWR);
     exists=TRUE;
   }
-  /// if not, check if we can write to it
+  // if not, check if we can write to it
   else {
     check=open(lfile_name,O_CREAT|O_EXCL|O_RDWR,S_IRUSR|S_IWUSR);
   }
@@ -2216,10 +2216,10 @@ gboolean check_file(const gchar *file_name, gboolean check_existing) {
 
 gboolean 
 check_dir_access (const gchar *dir) {
-  /// if a directory exists, make sure it is readable and writable
-  /// otherwise create it and then check
+  // if a directory exists, make sure it is readable and writable
+  // otherwise create it and then check
 
-  /// dir is in locale encoding
+  // dir is in locale encoding
 
   gboolean exists=g_file_test (dir, G_FILE_TEST_EXISTS);
   gchar *com;
@@ -2285,7 +2285,7 @@ void show_manual_section (const gchar *lang, const gchar *section) {
 
 gulong
 get_file_size(int fd) {
-  /// get the size of file fd
+  // get the size of file fd
   struct stat filestat;
   fstat(fd,&filestat);
   return (gulong)(filestat.st_size);
@@ -2293,7 +2293,7 @@ get_file_size(int fd) {
 
 gulong
 sget_file_size(const gchar *name) {
-  /// get the size of file fd
+  // get the size of file fd
   struct stat filestat;
   int fd;
 
@@ -2310,11 +2310,11 @@ sget_file_size(const gchar *name) {
 
 
 void reget_afilesize (int fileno) {
-  /// re-get the audio file size
+  // re-get the audio file size
   gchar *afile;
   file *sfile=mainw->files[fileno];
 
-  if (mainw->multitrack!=NULL) return; /// otherwise achans gets set to 0...
+  if (mainw->multitrack!=NULL) return; // otherwise achans gets set to 0...
 
   if (!sfile->opening) afile=g_strdup_printf ("%s/%s/audio",prefs->tmpdir,sfile->handle);
   else afile=g_strdup_printf ("%s/%s/audiodump.pcm",prefs->tmpdir,sfile->handle);
@@ -2347,17 +2347,17 @@ colour_equal(GdkColor *c1, const GdkColor *c2) {
 
 gboolean
 create_event_space(gint length) {
-  /// try to create desired events
-  /// if we run out of memory, all events requested are freed, and we return FALSE
-  /// otherwise we return TRUE
+  // try to create desired events
+  // if we run out of memory, all events requested are freed, and we return FALSE
+  // otherwise we return TRUE
 
-  /// NOTE: this is the OLD event system, it's only used for reordering in the clip editor
+  // NOTE: this is the OLD event system, it's only used for reordering in the clip editor
 
   if (cfile->events[0]!=NULL) {
     g_free(cfile->events[0]);
   }
   if ((cfile->events[0]=(event *)(g_try_malloc(sizeof(event)*length)))==NULL) {
-    /// memory overflow
+    // memory overflow
     return FALSE;
   }
   memset(cfile->events[0],0,length*sizeof(event));
@@ -2367,8 +2367,8 @@ create_event_space(gint length) {
 
 
 gint lives_list_index (GList *list, const gchar *data) {
-  /// find data in list, GTK's version is broken
-  /// well, actually not broken - but we need to use strcmp
+  // find data in list, GTK's version is broken
+  // well, actually not broken - but we need to use strcmp
 
   int i;
   gint len;
@@ -2542,7 +2542,7 @@ verhash (gchar *version) {
 
 
 
-/// TODO - move into undo.c
+// TODO - move into undo.c
 void 
 set_undoable (const gchar *what, gboolean sensitive) {
   if (mainw->current_file>-1) {
@@ -2607,7 +2607,7 @@ set_sel_label (GtkWidget *sel_label) {
   else {
     tstr=g_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-calc_time_from_frame (mainw->current_file,cfile->start));
     frstr=g_strdup_printf ("%d",cfile->end-cfile->start+1);
-    gtk_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL))); /// note to translators - try to keep the text of the middle part the same length, by deleing "-" if necessary
+    gtk_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL))); // note to translators - try to keep the text of the middle part the same length, by deleing "-" if necessary
     g_free(sy);
     g_free(sz);
 
@@ -2626,7 +2626,7 @@ LIVES_INLINE void g_list_free_strings(GList *slist) {
   if (list==NULL) return;
   while (list!=NULL) {
     if (list->data!=NULL) {
-      ///g_printerr("free %s\n",list->data);
+      //g_printerr("free %s\n",list->data);
       g_free(list->data);
     }
     list=list->next;
@@ -2686,7 +2686,7 @@ gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
   g_free(keystr_start);
   g_free(keystr_end);
 
-  if (strlen(buff)>0) memset(buff+strlen(buff)-1,0,1); /// remove trailing newline
+  if (strlen(buff)>0) memset(buff+strlen(buff)-1,0,1); // remove trailing newline
 
   return g_strdup(buff);
 }
@@ -2711,17 +2711,17 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     lives_header=g_strdup_printf("%s/%s/header.lives",prefs->tmpdir,mainw->files[which]->handle);
     old_header=g_strdup_printf("%s/%s/header",prefs->tmpdir,mainw->files[which]->handle);
     
-    /// TODO - remove this some time before 2038
+    // TODO - remove this some time before 2038
     if (!stat(old_header,&mystat)) old_time=mystat.st_mtime;
     if (!stat(lives_header,&mystat)) new_time=mystat.st_mtime;
     g_free(old_header);
     
     if (old_time>new_time) {
       g_free(lives_header);
-      return FALSE; /// clip has been edited by an older version of LiVES
+      return FALSE; // clip has been edited by an older version of LiVES
     }
   }
-  ///////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////
 
   switch (what) {
   case CLIP_DETAILS_HEADER_VERSION:
@@ -2877,7 +2877,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
   case CLIP_DETAILS_ASIGNED:
     *(gint *)retval=0;
     if (mainw->files[which]->header_version==0) *(gint *)retval=atoi(val);
-    if (*(gint *)retval==0&&(!strcasecmp(val,"false"))) *(gint *)retval=1; /// unsigned
+    if (*(gint *)retval==0&&(!strcasecmp(val,"false"))) *(gint *)retval=1; // unsigned
     break;
   case CLIP_DETAILS_PB_FRAMENO:
     *(gint *)retval=atoi(val);
@@ -3062,7 +3062,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
 
 GList *get_set_list(const gchar *dir) {
-  /// get list of sets in top level dir
+  // get list of sets in top level dir
   GList *setlist=NULL;
   DIR *tldir,*subdir;
   struct dirent *tdirent,*subdirent;
@@ -3119,7 +3119,7 @@ gboolean check_for_ratio_fps (gdouble fps) {
   gchar *test_fps_string2=g_strdup_printf ("%.8f",fps);
   
   if (strcmp (test_fps_string1,test_fps_string2)) {
-    /// got a ratio
+    // got a ratio
     ratio_fps=TRUE;
   }
   else {
@@ -3133,7 +3133,7 @@ gboolean check_for_ratio_fps (gdouble fps) {
 
 
 gdouble get_ratio_fps(const gchar *string) {
-  /// return a ratio (8dp) fps from a string with format num:denom
+  // return a ratio (8dp) fps from a string with format num:denom
   gdouble fps;
   gchar *fps_string;
   gchar **array=g_strsplit(string,":",2);
@@ -3163,7 +3163,7 @@ gchar *remove_trailing_zeroes(gdouble val) {
 
 
 guint get_signed_endian (gboolean is_signed, gboolean little_endian) {
-  /// asigned TRUE == signed, FALSE == unsigned
+  // asigned TRUE == signed, FALSE == unsigned
 
 
   if (is_signed) {
@@ -3206,8 +3206,8 @@ get_token_count (const gchar *string, int delim) {
 
 
 gchar *subst (const gchar *string, const gchar *from, const gchar *to) {
-  /// return a string with all occurrences of from replaced with to
-  /// return value should be freed after use
+  // return a string with all occurrences of from replaced with to
+  // return value should be freed after use
   gchar *ret=g_strdup(string),*first;
   gchar *search=ret;
 
@@ -3227,7 +3227,7 @@ gchar *subst (const gchar *string, const gchar *from, const gchar *to) {
 
 
 void combo_set_popdown_strings (GtkCombo *combo, GList *list) {
-  /// this avoids an assert in some versions of GTK+ when list==NULL
+  // this avoids an assert in some versions of GTK+ when list==NULL
   GList *empty_list=NULL;
   empty_list=g_list_append (empty_list,"");
   if (list==NULL) gtk_combo_set_popdown_strings (combo,empty_list);
@@ -3412,8 +3412,8 @@ void adjustment_configure(GtkAdjustment *adjustment,
 
 
 gulong get_fs_free(const gchar *dir) {
-  /// get free space in bytes for volume containing directory dir
-  /// return 0 if we cannot create/write to dir
+  // get free space in bytes for volume containing directory dir
+  // return 0 if we cannot create/write to dir
 
   gulong bytes;
 
@@ -3461,7 +3461,7 @@ LIVES_INLINE gint get_interp_value(gshort quality) {
 
 
 LIVES_INLINE GList *g_list_move_to_first(GList *list, GList *item) {
-  /// move item to first in list
-  GList *xlist=g_list_remove_link(list,item); /// item becomes standalone list
-  return g_list_concat(item,xlist); /// concat rest of list after item
+  // move item to first in list
+  GList *xlist=g_list_remove_link(list,item); // item becomes standalone list
+  return g_list_concat(item,xlist); // concat rest of list after item
 }

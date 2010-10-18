@@ -1,10 +1,10 @@
-/// colourspace.h
-/// LiVES
-/// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
-/// Released under the GPL 3 or later
-/// see file ../COPYING for licensing details
+// colourspace.h
+// LiVES
+// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
+// Released under the GPL 3 or later
+// see file ../COPYING for licensing details
 
-/// code for palette conversions
+// code for palette conversions
 
 /*
 
@@ -24,11 +24,11 @@
  *
  */
 
-/// *
-/// TODO - some palette conversions to and from ARGB32,
-///      - resizing of single plane (including bicubic)
-///      - external plugins for palette conversion, resizing
-///      - handle Y'UV and BT709 as well as (current) YCbCr.
+// *
+// TODO - some palette conversions to and from ARGB32,
+//      - resizing of single plane (including bicubic)
+//      - external plugins for palette conversion, resizing
+//      - handle Y'UV and BT709 as well as (current) YCbCr.
 
 #include <math.h>
 
@@ -42,14 +42,14 @@
 
 
 inline G_GNUC_CONST int gdk_rowstride_value (int rowstride) {
-  /// from gdk-pixbuf.c
+  // from gdk-pixbuf.c
   /* Always align rows to 32-bit boundaries */
   return (rowstride + 3) & ~3;
 }
 
 
 inline G_GNUC_CONST int gdk_last_rowstride_value (int width, int nchans) {
-  /// from gdk pixbuf docs
+  // from gdk pixbuf docs
   return width*(((nchans<<3)+7)>>3);
 }
 
@@ -66,7 +66,7 @@ inline G_GNUC_CONST guchar CLAMP0255(gint32 a)
 
 /* precomputed tables */
 
-/// generic
+// generic
 static gint *Y_R;
 static gint *Y_G;
 static gint *Y_B;
@@ -78,7 +78,7 @@ static gint *Cr_G;
 static gint *Cr_B;
 
 
-/// clamped Y'CbCr
+// clamped Y'CbCr
 static gint Y_Rc[256];
 static gint Y_Gc[256];
 static gint Y_Bc[256];
@@ -90,7 +90,7 @@ static gint Cr_Gc[256];
 static gint Cr_Bc[256];
 
 
-/// unclamped Y'CbCr
+// unclamped Y'CbCr
 static gint Y_Ru[256];
 static gint Y_Gu[256];
 static gint Y_Bu[256];
@@ -105,7 +105,7 @@ static gint conv_RY_inited = 0;
 
 
 
-/// generic
+// generic
 static gint *RGB_Y;
 static gint *R_Cr;
 static gint *G_Cb;
@@ -113,14 +113,14 @@ static gint *G_Cr;
 static gint *B_Cb;
 
 
-/// unclamped Y'CbCr
+// unclamped Y'CbCr
 static gint RGB_Yc[256];
 static gint R_Crc[256];
 static gint G_Cbc[256];
 static gint G_Crc[256];
 static gint B_Cbc[256];
 
-/// clamped Y'CbCr
+// clamped Y'CbCr
 static gint RGB_Yu[256];
 static gint R_Cru[256];
 static gint G_Cbu[256];
@@ -133,32 +133,32 @@ static gint conv_YR_inited = 0;
 static short min_Y,max_Y,min_UV,max_UV;
 
 
-/// averaging
+// averaging
 static guchar *cavg;
 static guchar cavgc[256][256];
 static guchar cavgu[256][256];
 static int avg_inited = 0;
 
-/// clamping and subspace converters
+// clamping and subspace converters
 
-/// generic
+// generic
 static guchar *Y_to_Y;
 static guchar *U_to_U;
 static guchar *V_to_V;
 
-/// same subspace, clamped to unclamped
+// same subspace, clamped to unclamped
 static guchar Yclamped_to_Yunclamped[256];
 static guchar UVclamped_to_UVunclamped[256];
 
 
-/// same subspace, unclamped to clamped
+// same subspace, unclamped to clamped
 static guchar Yunclamped_to_Yclamped[256];
 static guchar UVunclamped_to_UVclamped[256];
 
 static gint conv_YY_inited=0;
 
 
-/// gamma correction
+// gamma correction
 
 unsigned char gamma_lut[256];
 double current_gamma=-1.;
@@ -181,59 +181,59 @@ double current_gamma=-1.;
 static void init_RGB_to_YUV_tables(void) {
   gint i;
 
-  /// Digital Y'UV proper [ITU-R BT.601-5] for digital NTSC
-  /// uses Kr = 0.299 and Kb = 0.114
-  /// offs U,V = 128
+  // Digital Y'UV proper [ITU-R BT.601-5] for digital NTSC
+  // uses Kr = 0.299 and Kb = 0.114
+  // offs U,V = 128
 
-  /// (I call this subspace YUV_SUBSPACE_YCBCR)
+  // (I call this subspace YUV_SUBSPACE_YCBCR)
 
-  /// this is used for e.g. theora encoding, and I think for video cards
+  // this is used for e.g. theora encoding, and I think for video cards
 
 
 
 
   
-  /// I have found slightly different (maybe more accurate for luma) values quoted elsewhere:
+  // I have found slightly different (maybe more accurate for luma) values quoted elsewhere:
 
-  /// Kr == 0.2989, Kb == 0.1145
-  /// offs U,V = 127.5
+  // Kr == 0.2989, Kb == 0.1145
+  // offs U,V = 127.5
 
-  /// these values seem to give pretty good results
+  // these values seem to give pretty good results
 
-  /// I think this may be what jpeg/JFIF uses
+  // I think this may be what jpeg/JFIF uses
 
-  /// I might experiment with different values for this subspace
-  /// so it should only be used for internal conversions to and from YUV
-
-
-
-
-  /// Finally, different values are used for hdtv, I call this subspace YUV_SUBSPACE_BT709
-
-  /// Kb = 0.0722
-  /// Kr = 0.2126
-
-
-
-  /// converting from one subspace to another is not recommended.
+  // I might experiment with different values for this subspace
+  // so it should only be used for internal conversions to and from YUV
 
 
 
 
+  // Finally, different values are used for hdtv, I call this subspace YUV_SUBSPACE_BT709
 
-  /// These values are for what I call YUV_SUBSPACE_CBCR
-  /// this should be the default for all external sources, unless they specify otherwise
+  // Kb = 0.0722
+  // Kr = 0.2126
 
-  /// clamped Y'CbCr
-  /// actually we scale and offset to unclamped during the calculation
+
+
+  // converting from one subspace to another is not recommended.
+
+
+
+
+
+  // These values are for what I call YUV_SUBSPACE_CBCR
+  // this should be the default for all external sources, unless they specify otherwise
+
+  // clamped Y'CbCr
+  // actually we scale and offset to unclamped during the calculation
 
   for (i = 0; i < 256; i++) {
     Y_Rc[i] = myround(0.299 * (gdouble)i 
-		      * 219./255. * (1<<FP_BITS));   /// Kr 
+		      * 219./255. * (1<<FP_BITS));   // Kr 
     Y_Gc[i] = myround(0.587 * (gdouble)i 
-		      * 219./255. * (1<<FP_BITS));   /// Kb
+		      * 219./255. * (1<<FP_BITS));   // Kb
     Y_Bc[i] = myround((0.114 * (gdouble)i 
-		       /// here we add the 16 which goes into all components
+		       // here we add the 16 which goes into all components
 		       * 219./255. + 16.) * (1<<FP_BITS));
 
     Cb_Bc[i] = myround(-0.168736 * (gdouble)i 
@@ -284,18 +284,18 @@ static void init_RGB_to_YUV_tables(void) {
 
 
 
-  /// These values are for an experimental YCbCr
+  // These values are for an experimental YCbCr
 
-  /// clamped Y'CbCr
-  /// actually we scale and offset to unclamped
+  // clamped Y'CbCr
+  // actually we scale and offset to unclamped
 
   for (i = 0; i < 256; i++) {
     Y_Rc[i] = myround(0.2989 * (gdouble)i 
-		      * 219./255. * (1<<FP_BITS));   /// Kr 
+		      * 219./255. * (1<<FP_BITS));   // Kr 
     Y_Gc[i] = myround(0.5866 * (gdouble)i 
-		      * 219./255. * (1<<FP_BITS));   /// Kb
+		      * 219./255. * (1<<FP_BITS));   // Kb
     Y_Bc[i] = myround((0.1145 * (gdouble)i 
-		       * 219./255. + 16) * (1<<FP_BITS));  /// here we add the 16 which goes into all components
+		       * 219./255. + 16) * (1<<FP_BITS));  // here we add the 16 which goes into all components
 
     Cb_Bc[i] = myround(-0.168774704 * (gdouble)i 
 		       * 224./255. * (1<<FP_BITS));
@@ -346,12 +346,12 @@ static void init_RGB_to_YUV_tables(void) {
 
 
 static void init_YUV_to_RGB_tables(void) {
-  /// tables here are currently for Y'CbCr only 
-  /// TODO - add tables for BT.709
+  // tables here are currently for Y'CbCr only 
+  // TODO - add tables for BT.709
 
   gint i;
 
-  /// These values are for what I call YUV_SUBSPACE_YCBCR
+  // These values are for what I call YUV_SUBSPACE_YCBCR
 
   /* clip Y values under 16 */
   for (i = 0; i < 17; i++) {
@@ -373,36 +373,36 @@ static void init_YUV_to_RGB_tables(void) {
     B_Cbc[i] = 0;
   }
   for (i = 17; i < 240; i++) {
-    R_Crc[i] = myround(1.402 * ((((gdouble)i-16.)/224.*255.)-128.) * (1<<FP_BITS)); /// 2*(1-Kr)
+    R_Crc[i] = myround(1.402 * ((((gdouble)i-16.)/224.*255.)-128.) * (1<<FP_BITS)); // 2*(1-Kr)
     G_Crc[i] = myround(-0.714136 * ((((gdouble)i-16.)/224.*255.)-128.)  * (1<<FP_BITS));
     G_Cbc[i] = myround(-0.344136 * ((((gdouble)i-16.)/224.*255.)-128.) * (1<<FP_BITS));
-    B_Cbc[i] = myround(1.772 * ((((gdouble)i-16.)/224.*255.)-128.) * (1<<FP_BITS)); /// 2*(1-Kb)
+    B_Cbc[i] = myround(1.772 * ((((gdouble)i-16.)/224.*255.)-128.) * (1<<FP_BITS)); // 2*(1-Kb)
   }
   /* clip Cb/Cr values above 240 */	 
   for (i = 240; i < 256; i++) {
-    R_Crc[i] = myround(1.402 * 127. * (1<<FP_BITS)); /// 2*(1-Kr)
+    R_Crc[i] = myround(1.402 * 127. * (1<<FP_BITS)); // 2*(1-Kr)
     G_Crc[i] = myround(-0.714136 * 127.  * (1<<FP_BITS));
     G_Cbc[i] = myround(-0.344136 * 127. * (1<<FP_BITS));
-    B_Cbc[i] = myround(1.772 * 127. * (1<<FP_BITS)); /// 2*(1-Kb)
+    B_Cbc[i] = myround(1.772 * 127. * (1<<FP_BITS)); // 2*(1-Kb)
   }
 
 
 
-  /// unclamped Y'CbCr
+  // unclamped Y'CbCr
   for (i = 0; i <= 255; i++) {
     RGB_Yu[i] = i * (1<<FP_BITS);
   }
 
   for (i = 0; i <= 255; i++) {
-    R_Cru[i] = myround(1.402 * ((gdouble)(i)-128.)) * (1<<FP_BITS); /// 2*(1-Kr)
-    G_Cru[i] = myround(-0.714136 * ((gdouble)(i)-128.)) * (1<<FP_BITS); /// 
+    R_Cru[i] = myround(1.402 * ((gdouble)(i)-128.)) * (1<<FP_BITS); // 2*(1-Kr)
+    G_Cru[i] = myround(-0.714136 * ((gdouble)(i)-128.)) * (1<<FP_BITS); // 
     G_Cbu[i] = myround(-0.344136 * ((gdouble)(i)-128.)) * (1<<FP_BITS);
-    B_Cbu[i] = myround(1.772 * ((gdouble)(i)-128.)) * (1<<FP_BITS); /// 2*(1-Kb)
+    B_Cbu[i] = myround(1.772 * ((gdouble)(i)-128.)) * (1<<FP_BITS); // 2*(1-Kb)
   }
 
 
 
-  /// These values are for an experimental subspace
+  // These values are for an experimental subspace
 
   /*
 
@@ -426,17 +426,17 @@ static void init_YUV_to_RGB_tables(void) {
     B_Cbc[i] = 0;
   }
   for (i = 17; i < 240; i++) {
-    R_Crc[i] = myround(1.4022 * ((((gdouble)i-16.)/224.*255.)-127.5) * (1<<FP_BITS)); /// 2*(1-Kr)
+    R_Crc[i] = myround(1.4022 * ((((gdouble)i-16.)/224.*255.)-127.5) * (1<<FP_BITS)); // 2*(1-Kr)
     G_Crc[i] = myround(-0.714486158 * ((((gdouble)i-16.)/224.*255.)-127.5)  * (1<<FP_BITS));
     G_Cbc[i] = myround(-0.345686158 * ((((gdouble)i-16.)/224.*255.)-127.5) * (1<<FP_BITS));
-    B_Cbc[i] = myround(1.7712 * ((((gdouble)i-16.)/224.*255.)-127.5) * (1<<FP_BITS)); /// 2*(1-Kb)
+    B_Cbc[i] = myround(1.7712 * ((((gdouble)i-16.)/224.*255.)-127.5) * (1<<FP_BITS)); // 2*(1-Kb)
   }
 
   for (i = 240; i < 256; i++) {
-    R_Crc[i] = myround(1.4022 * 127.5 * (1<<FP_BITS)); /// 2*(1-Kr)
+    R_Crc[i] = myround(1.4022 * 127.5 * (1<<FP_BITS)); // 2*(1-Kr)
     G_Crc[i] = myround(-0.714486158 * 127.5  * (1<<FP_BITS));
     G_Cbc[i] = myround(-0.345686158 * 127.5 * (1<<FP_BITS));
-    B_Cbc[i] = myround(1.7712 * 127.5 * (1<<FP_BITS)); /// 2*(1-Kb)
+    B_Cbc[i] = myround(1.7712 * 127.5 * (1<<FP_BITS)); // 2*(1-Kb)
   }
 
 
@@ -447,10 +447,10 @@ static void init_YUV_to_RGB_tables(void) {
   }
 
   for (i = 0; i <= 255; i++) {
-    R_Cru[i] = myround(1.4022 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); /// 2*(1-Kr)
-    G_Cru[i] = myround(-0.714486158 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); /// 
+    R_Cru[i] = myround(1.4022 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); // 2*(1-Kr)
+    G_Cru[i] = myround(-0.714486158 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); // 
     G_Cbu[i] = myround(-0.345686158 * ((gdouble)(i)-127.5)) * (1<<FP_BITS);
-    B_Cbu[i] = myround(1.7712 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); /// 2*(1-Kb)
+    B_Cbu[i] = myround(1.7712 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); // 2*(1-Kb)
   }
   */
 
@@ -462,7 +462,7 @@ static void init_YUV_to_RGB_tables(void) {
 static void init_YUV_to_YUV_tables (void) {
   int i;
 
-  /// init clamped -> unclamped, same subspace
+  // init clamped -> unclamped, same subspace
   for (i=0;i<17;i++) {
     Yclamped_to_Yunclamped[i]=0;
   }
@@ -501,7 +501,7 @@ static void init_average(void) {
       a=(short)(x-128);
       b=(short)(y-128);
       if ((c=(a+b-((a*b)>>8)+128))>240) c=240;
-      cavgc[x][y]=(guchar)(c>16?c:16);         /// this is fine because headroom==footroom==16
+      cavgc[x][y]=(guchar)(c>16?c:16);         // this is fine because headroom==footroom==16
       if ((c=(a+b-((a*b)>>8)+128))>255) c=255;
       cavgu[x][y]=(guchar)(c>0?c:0);
     }
@@ -511,8 +511,8 @@ static void init_average(void) {
 
 
 static void set_conversion_arrays(int clamping, int subspace) {
-  /// set conversion arrays for RGB <-> YUV, also min/max YUV values
-  /// depending on clamping and subspace
+  // set conversion arrays for RGB <-> YUV, also min/max YUV values
+  // depending on clamping and subspace
 
   switch (subspace) {
   case WEED_YUV_SUBSPACE_YUV:
@@ -578,8 +578,8 @@ static void set_conversion_arrays(int clamping, int subspace) {
 
 
 static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int oclamping, int osubspace) {
-  /// get conversion arrays for YUV -> YUV depending on in/out clamping and subspace
-  /// currently only clamped <-> unclamped conversions are catered for, subspace conversions are not yet done
+  // get conversion arrays for YUV -> YUV depending on in/out clamping and subspace
+  // currently only clamped <-> unclamped conversions are catered for, subspace conversions are not yet done
 
   if (!conv_YY_inited) init_YUV_to_YUV_tables();
 
@@ -591,17 +591,17 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
     case WEED_YUV_SUBSPACE_YCBCR:
     case WEED_YUV_SUBSPACE_YUV:
       if (iclamping==WEED_YUV_CLAMPING_CLAMPED) {
-	///Y'CbCr clamped -> Y'CbCr unclamped
+	//Y'CbCr clamped -> Y'CbCr unclamped
 	Y_to_Y=Yclamped_to_Yunclamped;
 	U_to_U=V_to_V=UVclamped_to_UVunclamped;
       }
       else {
-	///Y'CbCr unclamped -> Y'CbCr clamped
+	//Y'CbCr unclamped -> Y'CbCr clamped
 	Y_to_Y=Yunclamped_to_Yclamped;
 	U_to_U=V_to_V=UVunclamped_to_UVclamped;
       }
       break;
-      /// TODO - other subspaces
+      // TODO - other subspaces
     default:
       g_print("Invalid YUV subspace conversion\n");
     }
@@ -611,17 +611,17 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
     case WEED_YUV_SUBSPACE_BT709:
     case WEED_YUV_SUBSPACE_YUV:
       if (iclamping==WEED_YUV_CLAMPING_CLAMPED) {
-	///BT.709 clamped -> BT.709 unclamped
+	//BT.709 clamped -> BT.709 unclamped
 	Y_to_Y=Yclamped_to_Yunclamped;
 	U_to_U=V_to_V=UVclamped_to_UVunclamped;
       }
       else {
-	///BT.709 unclamped -> BT.709 clamped
+	//BT.709 unclamped -> BT.709 clamped
 	Y_to_Y=Yunclamped_to_Yclamped;
 	U_to_U=V_to_V=UVunclamped_to_UVclamped;
       }
       break;
-      /// TODO - other subspaces
+      // TODO - other subspaces
     default:
       g_print("Invalid YUV subspace conversion\n");
     }
@@ -633,8 +633,8 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 
 
 
-///////////////////////////////////////
-/// pixel conversions
+//////////////////////////
+// pixel conversions
 
 static inline void rgb2yuv (guchar r0, guchar g0, guchar b0, guchar *y, guchar *u, guchar *v) {
   register short a;
@@ -755,13 +755,13 @@ static inline void yuyv_2_yuv422 (yuyv_macropixel *yuyv, guchar *y0, guchar *u0,
 
 
 static inline guchar avg_chroma (size_t x, size_t y) {
-  /// cavg == cavgc for clamped, cavgu for unclamped
+  // cavg == cavgc for clamped, cavgu for unclamped
   return *(cavg+(x<<8)+y);
 }
 
 
-/////////////////////////////////////////////////////////////////////////
-///utilities
+/////////////////////////////////////////////////
+//utilities
 
 inline gboolean weed_palette_is_alpha_palette(int pal) {
   return (pal>=1024&&pal<2048)?TRUE:FALSE;
@@ -779,7 +779,7 @@ inline gint weed_palette_get_numplanes(int pal) {
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV411||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888||pal==WEED_PALETTE_AFLOAT||pal==WEED_PALETTE_A8||pal==WEED_PALETTE_A1||pal==WEED_PALETTE_RGBFLOAT||pal==WEED_PALETTE_RGBAFLOAT) return 1;
   if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) return 3;
   if (pal==WEED_PALETTE_YUVA4444P) return 4;
-  return 0; /// unknown palette
+  return 0; // unknown palette
 }
 
 inline gboolean weed_palette_is_valid_palette(int pal) {
@@ -796,7 +796,7 @@ inline gint weed_palette_get_bits_per_macropixel(int pal) {
   if (pal==WEED_PALETTE_A1) return 1;
   if (pal==WEED_PALETTE_RGBFLOAT) return (3*sizeof(float));
   if (pal==WEED_PALETTE_RGBAFLOAT) return (4*sizeof(float));
-  return 0; /// unknown palette
+  return 0; // unknown palette
 }
 
 
@@ -815,7 +815,7 @@ inline gboolean weed_palette_has_alpha_channel(int pal) {
 }
 
 inline gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
-  /// return ratio of plane[n] width/plane[0] width; 
+  // return ratio of plane[n] width/plane[0] width; 
   if (plane==0) return 1.0;
   if (plane==1||plane==2) {
     if (pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P) return 1.0;
@@ -828,7 +828,7 @@ inline gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
 }
 
 inline gdouble weed_palette_get_plane_ratio_vertical(int pal, int plane) {
-  /// return ratio of plane[n] height/plane[n] height
+  // return ratio of plane[n] height/plane[n] height
   if (plane==0) return 1.0;
   if (plane==1||plane==2) {
     if (pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_YUV422P) return 1.0;
@@ -841,12 +841,12 @@ inline gdouble weed_palette_get_plane_ratio_vertical(int pal, int plane) {
 }
 
 gboolean weed_palette_is_lower_quality(int p1, int p2) {
-  /// return TRUE if p1 is lower quality than p2
-  /// we don't yet handle float palettes, or RGB or alpha properly
+  // return TRUE if p1 is lower quality than p2
+  // we don't yet handle float palettes, or RGB or alpha properly
 
-  /// currently only works well for YUV palettes
+  // currently only works well for YUV palettes
 
-  if ((weed_palette_is_alpha_palette(p1)&&!weed_palette_is_alpha_palette(p2))||(weed_palette_is_alpha_palette(p2)&&!weed_palette_is_alpha_palette(p1))) return TRUE; /// invalid conversion
+  if ((weed_palette_is_alpha_palette(p1)&&!weed_palette_is_alpha_palette(p2))||(weed_palette_is_alpha_palette(p2)&&!weed_palette_is_alpha_palette(p1))) return TRUE; // invalid conversion
 
   if (weed_palette_is_rgb_palette(p1)&&weed_palette_is_rgb_palette(p2)) return FALSE;
 
@@ -877,7 +877,7 @@ gboolean weed_palette_is_lower_quality(int p1, int p2) {
   case WEED_PALETTE_A8:
     if (p1==WEED_PALETTE_A1) return TRUE;
   }
-  return FALSE; /// TODO
+  return FALSE; // TODO
 }
 
 
@@ -959,8 +959,8 @@ gchar *weed_palette_get_name_full(int pal, int clamped, int subspace) {
 
 
 
-/////////////////////////////////////////////////////////////////////////////////////
-/// just as an example: 1.0 == RGB(A), 0.5 == compressed to 50%, etc
+/////////////////////////////////////////////////////////
+// just as an example: 1.0 == RGB(A), 0.5 == compressed to 50%, etc
 
 gdouble weed_palette_get_compression_ratio (int pal) {
   int nplanes=weed_palette_get_numplanes(pal);
@@ -968,7 +968,7 @@ gdouble weed_palette_get_compression_ratio (int pal) {
   int i,pbits;
 
   if (!weed_palette_is_valid_palette(pal)) return 0.;
-  if (weed_palette_is_alpha_palette(pal)) return 0.; /// invalid for alpha palettes
+  if (weed_palette_is_alpha_palette(pal)) return 0.; // invalid for alpha palettes
   for (i=0;i<nplanes;i++) {
     pbits=weed_palette_get_bits_per_macropixel(pal)/weed_palette_get_pixels_per_macropixel(pal);
     tbits+=pbits*weed_palette_get_plane_ratio_vertical(pal,i)*weed_palette_get_plane_ratio_horizontal(pal,i);
@@ -980,7 +980,7 @@ gdouble weed_palette_get_compression_ratio (int pal) {
 
 
 
-///////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////
 
 #define BLACK_THRESH 20
 
@@ -1015,8 +1015,8 @@ gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf) {
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-/// frame conversions
+///////////////////////////////////////////////////////////
+// frame conversions
 
 static void convert_yuv888_to_rgb_frame(guchar *src, gint hsize, gint vsize, gint orowstride, guchar *dest, gboolean add_alpha, gboolean clamped) {
   register int x,y;
@@ -1108,7 +1108,7 @@ static void convert_yuva8888_to_bgra_frame(guchar *src, gint hsize, gint vsize, 
 
 
 static void convert_yuv420p_to_rgb_frame(guchar **src, gint width, gint height, gint orowstride, guchar *dest, gboolean add_alpha, gboolean is_422, int sample_type, gboolean clamped) {
-  /// TODO - handle dvpal in sampling type
+  // TODO - handle dvpal in sampling type
   register int i,j;
   guchar *s_y=src[0],*s_u=src[1],*s_v=src[2];
   gboolean chroma=FALSE;
@@ -1141,10 +1141,10 @@ static void convert_yuv420p_to_rgb_frame(guchar **src, gint width, gint height, 
     dest-=opsize;
 
     for (j=opsize2;j<widthx;j+=opsize2) {
-      /// process two pixels at a time, and we average the first colour pixel with the last from the previous 2
-      /// we know we can do this because Y must be even width
+      // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+      // we know we can do this because Y must be even width
 
-      /// implements jpeg style subsampling : TODO - mpeg and dvpal style
+      // implements jpeg style subsampling : TODO - mpeg and dvpal style
 
       y=*(s_y++);
       u=s_u[(j/opsize)/2];
@@ -1162,8 +1162,8 @@ static void convert_yuv420p_to_rgb_frame(guchar **src, gint width, gint height, 
       if (add_alpha) dest[j+3]=dest[j+7]=255;
 
       if (!is_422&&!chroma&&i>0) {
-	/// pass 2
-	/// average two src rows
+	// pass 2
+	// average two src rows
 	dest[j-widthx]=(dest[j-widthx]+dest[j])/2;
 	dest[j+1-widthx]=(dest[j+1-widthx]+dest[j+1])/2;
 	dest[j+2-widthx]=(dest[j+2-widthx]+dest[j+2])/2;
@@ -1174,7 +1174,7 @@ static void convert_yuv420p_to_rgb_frame(guchar **src, gint width, gint height, 
     }
     if (!is_422&&chroma) {
       if (i>0) {
-	/// TODO
+	// TODO
 	dest[j-opsize-widthx]=(dest[j-opsize-widthx]+dest[j-opsize])/2;
 	dest[j-opsize+1-widthx]=(dest[j-opsize+1-widthx]+dest[j-opsize+1])/2;
 	dest[j-opsize+2-widthx]=(dest[j-opsize+2-widthx]+dest[j-opsize+2])/2;
@@ -1189,7 +1189,7 @@ static void convert_yuv420p_to_rgb_frame(guchar **src, gint width, gint height, 
 
 
 static void convert_yuv420p_to_bgr_frame(guchar **src, gint width, gint height, gint orowstride, guchar *dest, gboolean add_alpha, gboolean is_422, int sample_type, gboolean clamped) {
-  /// TODO - handle dvpal in sampling type
+  // TODO - handle dvpal in sampling type
   register int i,j;
   guchar *s_y=src[0],*s_u=src[1],*s_v=src[2];
   gboolean chroma=FALSE;
@@ -1222,10 +1222,10 @@ static void convert_yuv420p_to_bgr_frame(guchar **src, gint width, gint height, 
     dest-=opsize;
 
     for (j=opsize2;j<widthx;j+=opsize2) {
-      /// process two pixels at a time, and we average the first colour pixel with the last from the previous 2
-      /// we know we can do this because Y must be even width
+      // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+      // we know we can do this because Y must be even width
 
-      /// implements jpeg style subsampling : TODO - mpeg and dvpal style
+      // implements jpeg style subsampling : TODO - mpeg and dvpal style
 
       y=*(s_y++);
       u=s_u[(j/opsize)/2];
@@ -1243,8 +1243,8 @@ static void convert_yuv420p_to_bgr_frame(guchar **src, gint width, gint height, 
       if (add_alpha) dest[j+3]=dest[j+7]=255;
 
       if (!is_422&&!chroma&&i>0) {
-	/// pass 2
-	/// average two src rows
+	// pass 2
+	// average two src rows
 	dest[j-widthx]=(dest[j-widthx]+dest[j])/2;
 	dest[j+1-widthx]=(dest[j+1-widthx]+dest[j+1])/2;
 	dest[j+2-widthx]=(dest[j+2-widthx]+dest[j+2])/2;
@@ -1255,7 +1255,7 @@ static void convert_yuv420p_to_bgr_frame(guchar **src, gint width, gint height, 
     }
     if (!is_422&&chroma) {
       if (i>0) {
-	/// TODO
+	// TODO
 	dest[j-opsize-widthx]=(dest[j-opsize-widthx]+dest[j-opsize])/2;
 	dest[j-opsize+1-widthx]=(dest[j-opsize+1-widthx]+dest[j-opsize+1])/2;
 	dest[j-opsize+2-widthx]=(dest[j-opsize+2-widthx]+dest[j-opsize+2])/2;
@@ -1270,7 +1270,7 @@ static void convert_yuv420p_to_bgr_frame(guchar **src, gint width, gint height, 
 
 
 void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, uyvy_macropixel *u, gboolean has_alpha, gboolean clamped) {
-  /// for odd sized widths, cut the rightmost pixel
+  // for odd sized widths, cut the rightmost pixel
   gint hs3,ipsize=3,ipsize2;
   guchar *end=rgbdata+(rowstride*vsize)-5;
   register int i;
@@ -1293,7 +1293,7 @@ void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint row
 
   for (;rgbdata<end;rgbdata+=rowstride) {
     for (i=0;i<hs3;i+=ipsize2) {
-      /// convert 6 RGBRGB bytes to 4 UYVY bytes
+      // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2uyvy (rgbdata[i],rgbdata[i+1],rgbdata[i+2],rgbdata[i+x],rgbdata[i+y],rgbdata[i+z],u++);
     }
   }
@@ -1301,7 +1301,7 @@ void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint row
 
 
 static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, yuyv_macropixel *u, gboolean has_alpha, gboolean clamped) {
-  /// for odd sized widths, cut the rightmost pixel
+  // for odd sized widths, cut the rightmost pixel
   gint hs3,ipsize=3,ipsize2;
   guchar *end=rgbdata+(rowstride*vsize)-5;
   register int i;
@@ -1324,7 +1324,7 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   for (;rgbdata<end;rgbdata+=rowstride) {
     for (i=0;i<hs3;i+=ipsize2) {
-      /// convert 6 RGBRGB bytes to 4 YUYV bytes
+      // convert 6 RGBRGB bytes to 4 YUYV bytes
       rgb2yuyv (rgbdata[i],rgbdata[i+1],rgbdata[i+2],rgbdata[i+x],rgbdata[i+y],rgbdata[i+z],u++);
     }
   }
@@ -1332,7 +1332,7 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
 
 static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, uyvy_macropixel *u, gboolean has_alpha, gboolean clamped) {
-  /// for odd sized widths, cut the rightmost pixel
+  // for odd sized widths, cut the rightmost pixel
   gint hs3,ipsize=3,ipsize2;
   guchar *end=rgbdata+(rowstride*vsize)-5;
   register int i;
@@ -1355,7 +1355,7 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   for (;rgbdata<end;rgbdata+=rowstride) {
     for (i=0;i<hs3;i+=ipsize2) {
-      /// convert 6 RGBRGB bytes to 4 UYVY bytes
+      // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2uyvy (rgbdata[i+2],rgbdata[i+1],rgbdata[i],rgbdata[i+z],rgbdata[i+y],rgbdata[i+x],u++);
     }
   }
@@ -1363,7 +1363,7 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
 
 static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, yuyv_macropixel *u, gboolean has_alpha, gboolean clamped) {
-  /// for odd sized widths, cut the rightmost pixel
+  // for odd sized widths, cut the rightmost pixel
   gint hs3,ipsize=3,ipsize2;
 
   guchar *end=rgbdata+(rowstride*vsize)-5;
@@ -1387,7 +1387,7 @@ static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   for (;rgbdata<end;rgbdata+=rowstride) {
     for (i=0;i<hs3;i+=ipsize2) {
-      /// convert 6 RGBRGB bytes to 4 UYVY bytes
+      // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2yuyv (rgbdata[i+2],rgbdata[i+1],rgbdata[i],rgbdata[i+z],rgbdata[i+y],rgbdata[i+x],u++);
     }
   }
@@ -1492,7 +1492,7 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 
 static void convert_bgr_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, guchar **yuvp, gboolean in_has_alpha, gboolean out_has_alpha, gboolean clamped) {
 
-  /// TESTED !
+  // TESTED !
 
   int ipsize=3;
   int iwidth;
@@ -1530,8 +1530,8 @@ static void convert_bgr_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
 
 void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, guchar **dest, gboolean is_422, gboolean has_alpha, int samtype, gboolean clamped) {
-  /// for odd sized widths, cut the rightmost pixel
-  /// TODO - handle different out sampling types
+  // for odd sized widths, cut the rightmost pixel
+  // TODO - handle different out sampling types
   gint hs3;
 
   guchar *y,*Cb,*Cr;
@@ -1549,7 +1549,7 @@ void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint r
 
   if (has_alpha) ipsize=4;
 
-  /// ensure width and height are both divisible by two
+  // ensure width and height are both divisible by two
   hsize=(hsize>>1)<<1;
   vsize=(vsize>>1)<<1;
 
@@ -1565,10 +1565,10 @@ void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint r
 
   for (i=0;i<vsize;i++) {
     for (j=0;j<hs3;j+=ipsize2) {
-      /// mpeg style, Cb and Cr are co-located
-      /// convert 6 RGBRGB bytes to 4 UYVY bytes
+      // mpeg style, Cb and Cr are co-located
+      // convert 6 RGBRGB bytes to 4 UYVY bytes
 
-      /// TODO: for mpeg use rgb2yuv and write alternate u and v
+      // TODO: for mpeg use rgb2yuv and write alternate u and v
 
       rgb2uyvy (rgbdata[j],rgbdata[j+1],rgbdata[j+2],rgbdata[j+ipsize],rgbdata[j+ipsize+1],rgbdata[j+ipsize+2],&u);
 
@@ -1578,7 +1578,7 @@ void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint r
       *(Cr++)=u.v0;
 
       if (!is_422&&chroma_row&&i>0) {
-	/// average two rows
+	// average two rows
 	Cb[-1-hhsize]=avg_chroma(Cb[-1],Cb[-1-hhsize]);
 	Cr[-1-hhsize]=avg_chroma(Cr[-1],Cr[-1-hhsize]);
       }
@@ -1597,8 +1597,8 @@ void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint r
 
 
 static void convert_bgr_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, guchar **dest, gboolean is_422, gboolean has_alpha, int samtype, gboolean clamped) {
-  /// for odd sized widths, cut the rightmost pixel
-  /// TODO - handle different out sampling types
+  // for odd sized widths, cut the rightmost pixel
+  // TODO - handle different out sampling types
   gint hs3;
 
   guchar *y,*Cb,*Cr;
@@ -1615,7 +1615,7 @@ static void convert_bgr_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize,
 
   if (has_alpha) ipsize=4;
 
-  /// ensure width and height are both divisible by two
+  // ensure width and height are both divisible by two
   hsize=(hsize>>1)<<1;
   vsize=(vsize>>1)<<1;
   size=hsize*vsize;
@@ -1629,7 +1629,7 @@ static void convert_bgr_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize,
   hs3=(hsize*ipsize)-(ipsize2-1);
   for (i=0;i<vsize;i++) {
     for (j=0;j<hs3;j+=ipsize2) {
-      /// convert 6 RGBRGB bytes to 4 UYVY bytes
+      // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2uyvy (rgbdata[j+2],rgbdata[j+1],rgbdata[j],rgbdata[j+ipsize+2],rgbdata[j+ipsize+1],rgbdata[j+ipsize],&u);
 
       *(y++)=u.y0;
@@ -1638,7 +1638,7 @@ static void convert_bgr_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize,
       *(Cr++)=u.v0;
 
       if (!is_422&&chroma_row&&i>0) {
-	/// average two rows
+	// average two rows
 	Cb[-1-hhsize]=avg_chroma(Cb[-1],Cb[-1-hhsize]);
 	Cr[-1-hhsize]=avg_chroma(Cr[-1],Cr[-1-hhsize]);
       }
@@ -1656,7 +1656,7 @@ static void convert_bgr_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize,
 
 
 static void convert_yuv422p_to_uyvy_frame(guchar **src, int width, int height, guchar *dest) {
-  /// TODO - handle different in sampling types
+  // TODO - handle different in sampling types
   guchar *src_y=src[0];
   guchar *src_u=src[1];
   guchar *src_v=src[2];
@@ -1672,7 +1672,7 @@ static void convert_yuv422p_to_uyvy_frame(guchar **src, int width, int height, g
 
 
 static void convert_yuv422p_to_yuyv_frame(guchar **src, int width, int height, guchar *dest) {
-  /// TODO - handle different in sampling types
+  // TODO - handle different in sampling types
 
   guchar *src_y=src[0];
   guchar *src_u=src[1];
@@ -1689,8 +1689,8 @@ static void convert_yuv422p_to_yuyv_frame(guchar **src, int width, int height, g
 
 
 static void convert_rgb_to_yuv411_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, yuv411_macropixel *u, gboolean has_alpha, gboolean clamped) {
-  /// for odd sized widths, cut the rightmost one, two or three pixels. Widths should be divisible by 4.
-  /// TODO - handle different out sampling types
+  // for odd sized widths, cut the rightmost one, two or three pixels. Widths should be divisible by 4.
+  // TODO - handle different out sampling types
   gint hs3=(int)(hsize>>2)*12,ipstep=12;
 
   guchar *end;
@@ -1720,7 +1720,7 @@ static void convert_rgb_to_yuv411_frame(guchar *rgbdata, gint hsize, gint vsize,
 
   for (;rgbdata<end;rgbdata+=rowstride) {
     for (i=0;i<hs3;i+=ipstep) {
-      /// convert 12 RGBRGBRGBRGB bytes to 6 UYYVYY bytes
+      // convert 12 RGBRGBRGBRGB bytes to 6 UYYVYY bytes
       rgb2_411 (rgbdata[i],rgbdata[i+1],rgbdata[i+2],rgbdata[i+x],rgbdata[i+y],rgbdata[i+z],rgbdata[i+a],rgbdata[i+b],rgbdata[i+c],rgbdata[i+d],rgbdata[i+e],rgbdata[i+f],u++);
     }
   }
@@ -1728,8 +1728,8 @@ static void convert_rgb_to_yuv411_frame(guchar *rgbdata, gint hsize, gint vsize,
 
 
 static void convert_bgr_to_yuv411_frame(guchar *rgbdata, gint hsize, gint vsize, gint rowstride, yuv411_macropixel *u, gboolean has_alpha, gboolean clamped) {
-  /// for odd sized widths, cut the rightmost one, two or three pixels
-  /// TODO - handle different out sampling types
+  // for odd sized widths, cut the rightmost one, two or three pixels
+  // TODO - handle different out sampling types
   gint hs3=(int)(hsize>>2)*12,ipstep=12;
 
   guchar *end;
@@ -1759,7 +1759,7 @@ static void convert_bgr_to_yuv411_frame(guchar *rgbdata, gint hsize, gint vsize,
 
   for (;rgbdata<end;rgbdata+=rowstride) {
     for (i=0;i<hs3;i+=ipstep) {
-      /// convert 12 RGBRGBRGBRGB bytes to 6 UYYVYY bytes
+      // convert 12 RGBRGBRGBRGB bytes to 6 UYYVYY bytes
       rgb2_411 (rgbdata[i+2],rgbdata[i+1],rgbdata[i],rgbdata[i+z],rgbdata[i+y],rgbdata[i+x],rgbdata[i+c],rgbdata[i+b],rgbdata[i+a],rgbdata[i+f],rgbdata[i+e],rgbdata[i+d],u++);
     }
   }
@@ -1860,7 +1860,7 @@ static void convert_yuv420_to_uyvy_frame(guchar **src, int width, int height, uy
   int hwidth=width>>1;
   gboolean chroma=TRUE;
 
-  /// TODO - handle different in sampling types
+  // TODO - handle different in sampling types
 
   y=src[0];
   u=src[1];
@@ -1926,7 +1926,7 @@ static void convert_yuv420_to_yuyv_frame(guchar **src, int width, int height, yu
   int hwidth=width>>1;
   gboolean chroma=TRUE;
 
-  /// TODO - handle different in sampling types
+  // TODO - handle different in sampling types
   
   y=src[0];
   u=src[1];
@@ -2038,11 +2038,11 @@ static void convert_yuv_planar_to_uyvy_frame(guchar **src, int width, int height
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (x=0;x<size;x++) {
-    /// subsample two u pixels
+    // subsample two u pixels
     uyvy->u0=avg_chroma(u[0],u[1]);
     u+=2;
     uyvy->y0=*(y++);
-    /// subsample 2 v pixels
+    // subsample 2 v pixels
     uyvy->v0=avg_chroma(v[0],v[1]);
     v+=2;
     uyvy->y1=*(y++);
@@ -2074,9 +2074,9 @@ static void convert_yuv_planar_to_yuyv_frame(guchar **src, int width, int height
 
 
 static void convert_combineplanes_frame(guchar **src, int width, int height, guchar *dest, gboolean in_alpha, gboolean out_alpha) {
-  /// turn 3 or 4 planes into packed pixels, src and dest can have alpha
+  // turn 3 or 4 planes into packed pixels, src and dest can have alpha
 
-  /// e.g yuv444(4)p to yuv888(8)
+  // e.g yuv444(4)p to yuv888(8)
 
   int size=width*height;
 
@@ -2124,13 +2124,13 @@ static void convert_yuvp_to_yuvap_frame(guchar **src, int width, int height, guc
 
 
 static void convert_yuvp_to_yuv420_frame(guchar **src, int width, int height, guchar **dest, gboolean clamped) {
-  /// halve the chroma samples vertically and horizontally, with sub-sampling
+  // halve the chroma samples vertically and horizontally, with sub-sampling
 
-  /// convert 444p to 420p
+  // convert 444p to 420p
 
-  /// TODO - handle different output sampling types
+  // TODO - handle different output sampling types
 
-  /// y-plane should be copied before entering here
+  // y-plane should be copied before entering here
 
   register int i,j;
   guchar *d_u,*d_v,*s_u=src[1],*s_v=src[2];
@@ -2150,17 +2150,17 @@ static void convert_yuvp_to_yuv420_frame(guchar **src, int width, int height, gu
     for (j=0;j<hwidth;j++) {
 
       if (!chroma) {
-	/// pass 1, copy row
-	/// average two dest pixels
+	// pass 1, copy row
+	// average two dest pixels
 	d_u[j]=avg_chroma(s_u[j*2],s_u[j*2+1]);
 	d_v[j]=avg_chroma(s_v[j*2],s_v[j*2+1]);
       }
       else {
-	/// pass 2
-	/// average two dest pixels
+	// pass 2
+	// average two dest pixels
 	x_u=avg_chroma(s_u[j*2],s_u[j*2+1]);
 	x_v=avg_chroma(s_v[j*2],s_v[j*2+1]);
-	/// average two dest rows
+	// average two dest rows
 	d_u[j]=avg_chroma(d_u[j],x_u);
 	d_v[j]=avg_chroma(d_v[j],x_v);
       }
@@ -2177,23 +2177,23 @@ static void convert_yuvp_to_yuv420_frame(guchar **src, int width, int height, gu
 
 
 static void convert_yuvp_to_yuv411_frame(guchar **src, int width, int height, yuv411_macropixel *yuv, gboolean clamped) {
-  /// quarter the chroma samples horizontally, with sub-sampling
+  // quarter the chroma samples horizontally, with sub-sampling
 
-  /// convert 444p to 411 packed
-  /// TODO - handle different output sampling types
+  // convert 444p to 411 packed
+  // TODO - handle different output sampling types
 
   register int i,j;
   guchar *s_y=src[0],*s_u=src[1],*s_v=src[2];
   register short x_u,x_v;
 
-  int widtha=(width>>1)<<1; /// cut rightmost odd bytes
+  int widtha=(width>>1)<<1; // cut rightmost odd bytes
   int cbytes=width-widtha;
 
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   for (i=0;i<height;i++) {
     for (j=0;j<widtha;j+=4) {
-      /// average four dest pixels
+      // average four dest pixels
       yuv->u2=avg_chroma(s_u[0],s_u[1]);
       x_u=avg_chroma(s_u[2],s_u[3]);
       yuv->u2=avg_chroma(yuv->u2,x_u);
@@ -2219,7 +2219,7 @@ static void convert_yuvp_to_yuv411_frame(guchar **src, int width, int height, yu
 
 
 static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int height, guchar **dest, gboolean add_alpha) {
-  /// TODO - avg_chroma
+  // TODO - avg_chroma
 
   int size=width*height;
   register int x;
@@ -2243,7 +2243,7 @@ static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int hei
 
 
 static void convert_yuyv_to_yuvp_frame(yuyv_macropixel *yuyv, int width, int height, guchar **dest, gboolean add_alpha) {
-  /// TODO - subsampling
+  // TODO - subsampling
 
   int size=width*height;
   register int x;
@@ -2270,8 +2270,8 @@ static void convert_uyvy_to_yuv888_frame(uyvy_macropixel *uyvy, int width, int h
   int size=width*height;
   register int x;
 
-  /// double chroma horizontally, no subsampling
-  /// no subsampling : TODO
+  // double chroma horizontally, no subsampling
+  // no subsampling : TODO
 
   for (x=0;x<size;x++) {
     *(yuv++)=uyvy->y0;
@@ -2291,7 +2291,7 @@ static void convert_yuyv_to_yuv888_frame(yuyv_macropixel *yuyv, int width, int h
   int size=width*height;
   register int x;
 
-  /// no subsampling : TODO
+  // no subsampling : TODO
 
   for (x=0;x<size;x++) {
     *(yuv++)=yuyv->y0;
@@ -2308,9 +2308,9 @@ static void convert_yuyv_to_yuv888_frame(yuyv_macropixel *yuyv, int width, int h
 
 
 static void convert_uyvy_to_yuv420_frame(uyvy_macropixel *uyvy, int width, int height, guchar **yuv, gboolean clamped) {
-  /// subsample vertically
+  // subsample vertically
 
-  /// TODO - handle different sampling types
+  // TODO - handle different sampling types
 
   register int j;
 
@@ -2350,9 +2350,9 @@ static void convert_uyvy_to_yuv420_frame(uyvy_macropixel *uyvy, int width, int h
 
 
 static void convert_yuyv_to_yuv420_frame(yuyv_macropixel *yuyv, int width, int height, guchar **yuv, gboolean clamped) {
-  /// subsample vertically
+  // subsample vertically
 
-  /// TODO - handle different sampling types
+  // TODO - handle different sampling types
 
   register int j;
 
@@ -2392,7 +2392,7 @@ static void convert_yuyv_to_yuv420_frame(yuyv_macropixel *yuyv, int width, int h
 
 
 static void convert_uyvy_to_yuv411_frame(uyvy_macropixel *uyvy, int width, int height, yuv411_macropixel *yuv, gboolean clamped) {
-  /// subsample chroma horizontally
+  // subsample chroma horizontally
 
   uyvy_macropixel *end=uyvy+width*height;
   register int x;
@@ -2422,9 +2422,9 @@ static void convert_uyvy_to_yuv411_frame(uyvy_macropixel *uyvy, int width, int h
 
 
 static void convert_yuyv_to_yuv411_frame(yuyv_macropixel *yuyv, int width, int height, yuv411_macropixel *yuv, gboolean clamped) {
-  /// subsample chroma horizontally
+  // subsample chroma horizontally
 
-  /// TODO - handle different sampling types
+  // TODO - handle different sampling types
 
   yuyv_macropixel *end=yuyv+width*height;
   register int x;
@@ -2453,15 +2453,15 @@ static void convert_yuyv_to_yuv411_frame(yuyv_macropixel *yuyv, int width, int h
 }
 
 static void convert_yuv888_to_yuv420_frame(guchar *yuv8, int width, int height, guchar **yuv4, gboolean src_alpha, gboolean clamped) {
-  /// subsample vertically and horizontally
+  // subsample vertically and horizontally
 
-  /// 
+  // 
 
-  /// yuv888(8) packed to 420p
+  // yuv888(8) packed to 420p
 
-  /// TODO - handle different sampling types
+  // TODO - handle different sampling types
 
-  /// TESTED !
+  // TESTED !
 
   register int j;
   register short x_u,x_v;
@@ -2513,7 +2513,7 @@ static void convert_yuv888_to_yuv420_frame(guchar *yuv8, int width, int height, 
 
 
 static void convert_uyvy_to_yuv422_frame(uyvy_macropixel *uyvy, int width, int height, guchar **yuv) {
-  int size=width*height; /// y is twice this, u and v are equal
+  int size=width*height; // y is twice this, u and v are equal
 
   guchar *y=yuv[0];
   guchar *u=yuv[1];
@@ -2530,7 +2530,7 @@ static void convert_uyvy_to_yuv422_frame(uyvy_macropixel *uyvy, int width, int h
 }
 
 static void convert_yuyv_to_yuv422_frame(yuyv_macropixel *yuyv, int width, int height, guchar **yuv) {
-  int size=width*height; /// y is twice this, u and v are equal
+  int size=width*height; // y is twice this, u and v are equal
 
   guchar *y=yuv[0];
   guchar *u=yuv[1];
@@ -2549,11 +2549,11 @@ static void convert_yuyv_to_yuv422_frame(yuyv_macropixel *yuyv, int width, int h
 
 static void convert_yuv888_to_yuv422_frame(guchar *yuv8, int width, int height, guchar **yuv4, gboolean has_alpha, gboolean clamped) {
 
-  /// 888(8) packed to 422p
+  // 888(8) packed to 422p
 
-  /// TODO - handle different sampling types
+  // TODO - handle different sampling types
 
-  int size=width*height; /// y is equal this, u and v are half, chroma subsampled horizontally
+  int size=width*height; // y is equal this, u and v are half, chroma subsampled horizontally
 
   guchar *y=yuv4[0];
   guchar *u=yuv4[1];
@@ -2631,14 +2631,14 @@ static void convert_yuv888_to_yuyv_frame(guchar *yuv, int width, int height, yuy
 
 
 static void convert_yuv888_to_yuv411_frame(guchar *yuv8, int width, int height, yuv411_macropixel *yuv411, gboolean has_alpha) {
-  /// yuv 888(8) packed to yuv411. Chroma pixels are averaged.
+  // yuv 888(8) packed to yuv411. Chroma pixels are averaged.
 
-  /// TODO - handle different sampling types
+  // TODO - handle different sampling types
 
   guchar *end=yuv8+width*height;
   register int x;
   size_t ipsize=3;
-  int widtha=(width>>1)<<1; /// cut rightmost odd bytes
+  int widtha=(width>>1)<<1; // cut rightmost odd bytes
   int cbytes=width-widtha;
 
   if (has_alpha) ipsize=4;
@@ -2682,7 +2682,7 @@ static void convert_yuv411_to_rgb_frame(yuv411_macropixel *yuv411, int width, in
   psize2=psize<<1;
 
   while (yuv411<end) {
-    /// write 2 RGB pixels
+    // write 2 RGB pixels
     if (add_alpha) dest[3]=dest[7]=255;
 
     uyvy.y0=yuv411[0].y0;
@@ -2693,9 +2693,9 @@ static void convert_yuv411_to_rgb_frame(yuv411_macropixel *yuv411, int width, in
     dest+=psize2;
 
     for (j=1;j<width;j++) {
-      /// convert 6 yuv411 bytes to 4 rgb(a) pixels
+      // convert 6 yuv411 bytes to 4 rgb(a) pixels
 
-      /// average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
+      // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
       y1=yuv411[j-1].y3;
@@ -2703,14 +2703,14 @@ static void convert_yuv411_to_rgb_frame(yuv411_macropixel *yuv411, int width, in
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
 
-      /// now we have 1/2, 1/2
+      // now we have 1/2, 1/2
 
-      /// average last pixel again to get 1/4, 1/2
+      // average last pixel again to get 1/4, 1/2
 
       q_u=avg_chroma(h_u,yuv411[j-1].u2);
       q_v=avg_chroma(h_v,yuv411[j-1].v2);
 
-      /// average again to get 1/8, 3/8
+      // average again to get 1/8, 3/8
 
       u=avg_chroma(q_u,yuv411[j-1].u2);
       v=avg_chroma(q_v,yuv411[j-1].v2);
@@ -2724,17 +2724,17 @@ static void convert_yuv411_to_rgb_frame(yuv411_macropixel *yuv411, int width, in
 
       dest+=psize2;
 
-      /// set first 2 RGB pixels of this block
+      // set first 2 RGB pixels of this block
    
       y0=yuv411[j].y0;
       y1=yuv411[j].y1;
       
-      /// avg to get 3/4, 1/2
+      // avg to get 3/4, 1/2
 
       q_u=avg_chroma(h_u,yuv411[j].u2);
       q_v=avg_chroma(h_v,yuv411[j].v2);
 
-      /// average again to get 5/8, 7/8
+      // average again to get 5/8, 7/8
 
       u=avg_chroma(q_u,yuv411[j-1].u2);
       v=avg_chroma(q_v,yuv411[j-1].v2);
@@ -2750,7 +2750,7 @@ static void convert_yuv411_to_rgb_frame(yuv411_macropixel *yuv411, int width, in
       dest+=psize2;
 
     }
-    /// write last 2 pixels
+    // write last 2 pixels
 
     if (add_alpha) dest[3]=dest[7]=255;
 
@@ -2790,7 +2790,7 @@ static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, in
   psize2=psize<<1;
 
   while (yuv411<end) {
-    /// write 2 RGB pixels
+    // write 2 RGB pixels
     if (add_alpha) dest[3]=dest[7]=255;
 
     uyvy.y0=yuv411[0].y0;
@@ -2801,9 +2801,9 @@ static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, in
     dest+=psize2;
 
     for (j=1;j<width;j++) {
-      /// convert 6 yuv411 bytes to 4 rgb(a) pixels
+      // convert 6 yuv411 bytes to 4 rgb(a) pixels
 
-      /// average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
+      // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
       y1=yuv411[j-1].y3;
@@ -2811,14 +2811,14 @@ static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, in
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
 
-      /// now we have 1/2, 1/2
+      // now we have 1/2, 1/2
 
-      /// average last pixel again to get 1/4, 1/2
+      // average last pixel again to get 1/4, 1/2
 
       q_u=avg_chroma(h_u,yuv411[j-1].u2);
       q_v=avg_chroma(h_v,yuv411[j-1].v2);
 
-      /// average again to get 1/8, 3/8
+      // average again to get 1/8, 3/8
 
       u=avg_chroma(q_u,yuv411[j-1].u2);
       v=avg_chroma(q_v,yuv411[j-1].v2);
@@ -2832,17 +2832,17 @@ static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, in
 
       dest+=psize2;
 
-      /// set first 2 RGB pixels of this block
+      // set first 2 RGB pixels of this block
    
       y0=yuv411[j].y0;
       y1=yuv411[j].y1;
       
-      /// avg to get 3/4, 1/2
+      // avg to get 3/4, 1/2
 
       q_u=avg_chroma(h_u,yuv411[j].u2);
       q_v=avg_chroma(h_v,yuv411[j].v2);
 
-      /// average again to get 5/8, 7/8
+      // average again to get 5/8, 7/8
 
       u=avg_chroma(q_u,yuv411[j-1].u2);
       v=avg_chroma(q_v,yuv411[j-1].v2);
@@ -2858,7 +2858,7 @@ static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, in
       dest+=psize2;
 
     }
-    /// write last 2 pixels
+    // write last 2 pixels
 
     if (add_alpha) dest[3]=dest[7]=255;
 
@@ -2887,10 +2887,10 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
   psize2=psize<<1;
 
   while (yuv411<end) {
-    /// write 2 RGB pixels
+    // write 2 RGB pixels
     if (add_alpha) dest[3]=dest[7]=255;
 
-    /// write first 2 pixels
+    // write first 2 pixels
     dest[0]=yuv411[0].y0;
     dest[1]=yuv411[0].u2;
     dest[2]=yuv411[0].v2;
@@ -2902,9 +2902,9 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
     dest+=psize;
 
     for (j=1;j<width;j++) {
-      /// convert 6 yuv411 bytes to 4 rgb(a) pixels
+      // convert 6 yuv411 bytes to 4 rgb(a) pixels
 
-      /// average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
+      // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
       y1=yuv411[j-1].y3;
@@ -2912,14 +2912,14 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
 
-      /// now we have 1/2, 1/2
+      // now we have 1/2, 1/2
 
-      /// average last pixel again to get 1/4, 1/2
+      // average last pixel again to get 1/4, 1/2
 
       q_u=avg_chroma(h_u,yuv411[j-1].u2);
       q_v=avg_chroma(h_v,yuv411[j-1].v2);
 
-      /// average again to get 1/8, 3/8
+      // average again to get 1/8, 3/8
 
       u=avg_chroma(q_u,yuv411[j-1].u2);
       v=avg_chroma(q_v,yuv411[j-1].v2);
@@ -2941,17 +2941,17 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
 
       dest+=psize;
 
-      /// set first 2 RGB pixels of this block
+      // set first 2 RGB pixels of this block
    
       y0=yuv411[j].y0;
       y1=yuv411[j].y1;
       
-      /// avg to get 3/4, 1/2
+      // avg to get 3/4, 1/2
 
       q_u=avg_chroma(h_u,yuv411[j].u2);
       q_v=avg_chroma(h_v,yuv411[j].v2);
 
-      /// average again to get 5/8, 7/8
+      // average again to get 5/8, 7/8
 
       u=avg_chroma(q_u,yuv411[j-1].u2);
       v=avg_chroma(q_v,yuv411[j-1].v2);
@@ -2974,7 +2974,7 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
       dest+=psize;
 
     }
-    /// write last 2 pixels
+    // write last 2 pixels
 
     if (add_alpha) dest[3]=dest[7]=255;
 
@@ -3007,7 +3007,7 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
-    /// write first 2 pixels
+    // write first 2 pixels
     *(d_y++)=yuv411[0].y0;
     *(d_u++)=yuv411[0].u2;
     *(d_v++)=yuv411[0].v2;
@@ -3019,9 +3019,9 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
     if (add_alpha) *(d_a++)=255;
 
     for (j=1;j<width;j++) {
-      /// convert 6 yuv411 bytes to 4 rgb(a) pixels
+      // convert 6 yuv411 bytes to 4 rgb(a) pixels
 
-      /// average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
+      // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
       y1=yuv411[j-1].y3;
@@ -3029,14 +3029,14 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
 
-      /// now we have 1/2, 1/2
+      // now we have 1/2, 1/2
 
-      /// average last pixel again to get 1/4, 1/2
+      // average last pixel again to get 1/4, 1/2
 
       q_u=avg_chroma(h_u,yuv411[j-1].u2);
       q_v=avg_chroma(h_v,yuv411[j-1].v2);
 
-      /// average again to get 1/8, 3/8
+      // average again to get 1/8, 3/8
 
       u=avg_chroma(q_u,yuv411[j-1].u2);
       v=avg_chroma(q_v,yuv411[j-1].v2);
@@ -3054,17 +3054,17 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
       *(d_v++)=v;
       if (add_alpha) *(d_a++)=255;
 
-      /// set first 2 RGB pixels of this block
+      // set first 2 RGB pixels of this block
    
       y0=yuv411[j].y0;
       y1=yuv411[j].y1;
       
-      /// avg to get 3/4, 1/2
+      // avg to get 3/4, 1/2
 
       q_u=avg_chroma(h_u,yuv411[j].u2);
       q_v=avg_chroma(h_v,yuv411[j].v2);
 
-      /// average again to get 5/8, 7/8
+      // average again to get 5/8, 7/8
 
       u=avg_chroma(q_u,yuv411[j-1].u2);
       v=avg_chroma(q_v,yuv411[j-1].v2);
@@ -3083,7 +3083,7 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
       if (add_alpha) *(d_a++)=255;
 
     }
-    /// write last 2 pixels
+    // write last 2 pixels
     *(d_y++)=yuv411[j-1].y2;
     *(d_u++)=yuv411[j-1].u2;
     *(d_v++)=yuv411[j-1].v2;
@@ -3108,7 +3108,7 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
-    /// write first uyvy pixel
+    // write first uyvy pixel
     uyvy->u0=yuv411->u2;
     uyvy->y0=yuv411->y0;
     uyvy->v0=yuv411->v2;
@@ -3117,9 +3117,9 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
     uyvy++;
 
     for (j=1;j<width;j++) {
-      /// convert 6 yuv411 bytes to 2 uyvy macro pixels
+      // convert 6 yuv411 bytes to 2 uyvy macro pixels
 
-      /// average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
+      // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
       y1=yuv411[j-1].y3;
@@ -3127,9 +3127,9 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
 
-      /// now we have 1/2, 1/2
+      // now we have 1/2, 1/2
 
-      /// average last pixel again to get 1/4
+      // average last pixel again to get 1/4
 
       u=avg_chroma(h_u,yuv411[j-1].u2);
       v=avg_chroma(h_v,yuv411[j-1].v2);
@@ -3141,12 +3141,12 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
 
       uyvy++;
 
-      /// average last pixel again to get 3/4
+      // average last pixel again to get 3/4
 
       u=avg_chroma(h_u,yuv411[j].u2);
       v=avg_chroma(h_v,yuv411[j].v2);
 
-      /// set first uyvy macropixel of this block
+      // set first uyvy macropixel of this block
    
       y0=yuv411[j].y0;
       y1=yuv411[j].y1;
@@ -3158,7 +3158,7 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
 
       uyvy++;
     }
-    /// write last uyvy macro pixel
+    // write last uyvy macro pixel
     uyvy->u0=yuv411[j-1].u2;
     uyvy->y0=yuv411[j-1].y2;
     uyvy->v0=yuv411[j-1].v2;
@@ -3180,7 +3180,7 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
-    /// write first yuyv pixel
+    // write first yuyv pixel
     yuyv->y0=yuv411->y0;
     yuyv->u0=yuv411->u2;
     yuyv->y1=yuv411->y1;
@@ -3189,9 +3189,9 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
     yuyv++;
 
     for (j=1;j<width;j++) {
-      /// convert 6 yuv411 bytes to 2 yuyv macro pixels
+      // convert 6 yuv411 bytes to 2 yuyv macro pixels
 
-      /// average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
+      // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
       y1=yuv411[j-1].y3;
@@ -3199,9 +3199,9 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
 
-      /// now we have 1/2, 1/2
+      // now we have 1/2, 1/2
 
-      /// average last pixel again to get 1/4
+      // average last pixel again to get 1/4
 
       u=avg_chroma(h_u,yuv411[j-1].u2);
       v=avg_chroma(h_v,yuv411[j-1].v2);
@@ -3213,12 +3213,12 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
 
       yuyv++;
 
-      /// average last pixel again to get 3/4
+      // average last pixel again to get 3/4
 
       u=avg_chroma(h_u,yuv411[j].u2);
       v=avg_chroma(h_v,yuv411[j].v2);
 
-      /// set first yuyv macropixel of this block
+      // set first yuyv macropixel of this block
    
       y0=yuv411[j].y0;
       y1=yuv411[j].y1;
@@ -3230,7 +3230,7 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
 
       yuyv++;
     }
-    /// write last yuyv macro pixel
+    // write last yuyv macro pixel
     yuyv->y0=yuv411[j-1].y2;
     yuyv->u0=yuv411[j-1].u2;
     yuyv->y1=yuv411[j-1].y3;
@@ -3256,16 +3256,16 @@ static void convert_yuv411_to_yuv422_frame(yuv411_macropixel *yuv411, int width,
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
-    /// write first 2 y and 1 uv pixel
+    // write first 2 y and 1 uv pixel
     *(d_y++)=yuv411->y0;
     *(d_y++)=yuv411->y1;
     *(d_u++)=yuv411->u2;
     *(d_v++)=yuv411->v2;
 
     for (j=1;j<width;j++) {
-      /// convert 6 yuv411 bytes to 2 yuyv macro pixels
+      // convert 6 yuv411 bytes to 2 yuyv macro pixels
 
-      /// average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
+      // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       *(d_y++)=yuv411[j-1].y2;
       *(d_y++)=yuv411[j-1].y3;
@@ -3273,14 +3273,14 @@ static void convert_yuv411_to_yuv422_frame(yuv411_macropixel *yuv411, int width,
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
 
-      /// now we have 1/2, 1/2
+      // now we have 1/2, 1/2
 
-      /// average last pixel again to get 1/4
+      // average last pixel again to get 1/4
 
       *(d_u++)=avg_chroma(h_u,yuv411[j-1].u2);
       *(d_v++)=avg_chroma(h_v,yuv411[j-1].v2);
 
-      /// average first pixel to get 3/4
+      // average first pixel to get 3/4
 
       *(d_y++)=yuv411[j].y0;
       *(d_y++)=yuv411[j].y1;
@@ -3289,7 +3289,7 @@ static void convert_yuv411_to_yuv422_frame(yuv411_macropixel *yuv411, int width,
       *(d_v++)=avg_chroma(h_v,yuv411[j].v2);
 
     }
-    /// write last pixels
+    // write last pixels
     *(d_y++)=yuv411[j-1].y2;
     *(d_y++)=yuv411[j-1].y3;
     *(d_u++)=yuv411[j-1].u2;
@@ -3326,7 +3326,7 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (yuv411<end) {
-    /// write first 2 y and 1 uv pixel
+    // write first 2 y and 1 uv pixel
     *(d_y++)=yuv411->y0;
     *(d_y++)=yuv411->y1;
 
@@ -3343,9 +3343,9 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
     }
 
     for (j=1;j<width;j++) {
-      /// convert 6 yuv411 bytes to 2 yuyv macro pixels
+      // convert 6 yuv411 bytes to 2 yuyv macro pixels
 
-      /// average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
+      // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       *(d_y++)=yuv411[j-1].y2;
       *(d_y++)=yuv411[j-1].y3;
@@ -3353,9 +3353,9 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
 
-      /// now we have 1/2, 1/2
+      // now we have 1/2, 1/2
 
-      /// average last pixel again to get 1/4
+      // average last pixel again to get 1/4
 
       u=avg_chroma(h_u,yuv411[j-1].u2);
       v=avg_chroma(h_v,yuv411[j-1].v2);
@@ -3369,7 +3369,7 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
 	*d_v=avg_chroma(*d_v,v);
       }
 
-      /// average first pixel to get 3/4
+      // average first pixel to get 3/4
 
       *(d_y++)=yuv411[j].y0;
       *(d_y++)=yuv411[j].y1;
@@ -3388,7 +3388,7 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
 
     }
 
-    /// write last pixels
+    // write last pixels
     *(d_y++)=yuv411[j-1].y2;
     *(d_y++)=yuv411[j-1].y3;
 
@@ -3416,7 +3416,7 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
 
 
 static void convert_yuv420_to_yuv411_frame(guchar **src, gint hsize, gint vsize, yuv411_macropixel *dest, gboolean is_422, gboolean clamped) {
-  /// TODO -handle various sampling types
+  // TODO -handle various sampling types
 
   register int i=0,j;
   guchar *y,*u,*v,*end;
@@ -3424,7 +3424,7 @@ static void convert_yuv420_to_yuv411_frame(guchar **src, gint hsize, gint vsize,
 
   size_t qwidth,hwidth;
 
-  /// TODO - handle different in sampling types
+  // TODO - handle different in sampling types
   
   y=src[0];
   u=src[1];
@@ -3466,7 +3466,7 @@ static void convert_yuv420_to_yuv411_frame(guchar **src, gint hsize, gint vsize,
 
 static void convert_splitplanes_frame(guchar *src, int width, int height, guchar **dest, gboolean src_alpha, gboolean dest_alpha) {
 
-  /// convert 888(8) packed to 444(4)P planar
+  // convert 888(8) packed to 444(4)P planar
   size_t size=width*height;
   int ipsize=3;
 
@@ -3492,22 +3492,22 @@ static void convert_splitplanes_frame(guchar *src, int width, int height, guchar
 
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-/// RGB palette conversions
+/////////////////////////////////////////////////////////////////
+// RGB palette conversions
 
 static void convert_swap3_frame (guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest) {
-  /// swap 3 byte palette
+  // swap 3 byte palette
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*3)&&(orowstride==irowstride)) {
-    /// quick version
+    // quick version
 #ifdef ENABLE_OIL
     oil_rgb2bgr(dest,src,width*height);
 #else
     for (;src<end;src+=3) {
-      *(dest++)=src[2]; /// red
-      *(dest++)=src[1]; /// green
-      *(dest++)=src[0]; /// blue
+      *(dest++)=src[2]; // red
+      *(dest++)=src[1]; // green
+      *(dest++)=src[0]; // blue
     }
 #endif
   }
@@ -3517,9 +3517,9 @@ static void convert_swap3_frame (guchar *src, int width, int height, int irowstr
     orowstride-=width3;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width3;i+=3) {
-	*(dest++)=src[i+2]; /// red
-	*(dest++)=src[i+1]; /// green
-	*(dest++)=src[i]; /// blue
+	*(dest++)=src[i+2]; // red
+	*(dest++)=src[i+1]; // green
+	*(dest++)=src[i]; // blue
       }
       dest+=orowstride;
     }
@@ -3528,16 +3528,16 @@ static void convert_swap3_frame (guchar *src, int width, int height, int irowstr
 
 
 static void convert_swap4_frame (guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest) {
-  /// swap 4 byte palette
+  // swap 4 byte palette
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*4)&&(orowstride==irowstride)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=4) {
-      *(dest++)=src[3]; /// alpha
-      *(dest++)=src[2]; /// red
-      *(dest++)=src[1]; /// green
-      *(dest++)=src[0]; /// blue
+      *(dest++)=src[3]; // alpha
+      *(dest++)=src[2]; // red
+      *(dest++)=src[1]; // green
+      *(dest++)=src[0]; // blue
     }
   }
   else {
@@ -3546,10 +3546,10 @@ static void convert_swap4_frame (guchar *src, int width, int height, int irowstr
     orowstride-=width4;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width4;i+=4) {
-	*(dest++)=src[i+3]; /// alpha
-	*(dest++)=src[i+2]; /// red
-	*(dest++)=src[i+1]; /// green
-	*(dest++)=src[i]; /// blue
+	*(dest++)=src[i+3]; // alpha
+	*(dest++)=src[i+2]; // red
+	*(dest++)=src[i+1]; // green
+	*(dest++)=src[i]; // blue
       }
       dest+=orowstride;
     }
@@ -3558,16 +3558,16 @@ static void convert_swap4_frame (guchar *src, int width, int height, int irowstr
 
 
 static void convert_swap3addpost_frame(guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest) {
-  /// swap 3 bytes, add post alpha
+  // swap 3 bytes, add post alpha
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*3)&&(orowstride==width*4)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=3) {
-      *(dest++)=src[2]; /// red
-      *(dest++)=src[1]; /// green
-      *(dest++)=src[0]; /// blue
-      *(dest++)=255; /// alpha
+      *(dest++)=src[2]; // red
+      *(dest++)=src[1]; // green
+      *(dest++)=src[0]; // blue
+      *(dest++)=255; // alpha
     }
   }
   else {
@@ -3576,10 +3576,10 @@ static void convert_swap3addpost_frame(guchar *src, int width, int height, int i
     orowstride-=width*4;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width3;i+=3) {
-	*(dest++)=src[i+2]; /// red
-	*(dest++)=src[i+1]; /// green
-	*(dest++)=src[i]; /// blue
-	*(dest++)=255; /// alpha
+	*(dest++)=src[i+2]; // red
+	*(dest++)=src[i+1]; // green
+	*(dest++)=src[i]; // blue
+	*(dest++)=255; // alpha
       }
       dest+=orowstride;
     }
@@ -3588,16 +3588,16 @@ static void convert_swap3addpost_frame(guchar *src, int width, int height, int i
 
 
 static void convert_swap3addpre_frame(guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest) {
-  /// swap 3 bytes, add pre alpha
+  // swap 3 bytes, add pre alpha
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*3)&&(orowstride==width*4)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=3) {
-      *(dest++)=255; /// alpha
-      *(dest++)=src[2]; /// red
-      *(dest++)=src[1]; /// green
-      *(dest++)=src[0]; /// blue
+      *(dest++)=255; // alpha
+      *(dest++)=src[2]; // red
+      *(dest++)=src[1]; // green
+      *(dest++)=src[0]; // blue
     }
   }
   else {
@@ -3606,10 +3606,10 @@ static void convert_swap3addpre_frame(guchar *src, int width, int height, int ir
     orowstride-=width*4;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width3;i+=3) {
-	*(dest++)=255; /// alpha
-	*(dest++)=src[i+2]; /// red
-	*(dest++)=src[i+1]; /// green
-	*(dest++)=src[i]; /// blue
+	*(dest++)=255; // alpha
+	*(dest++)=src[i+2]; // red
+	*(dest++)=src[i+1]; // green
+	*(dest++)=src[i]; // blue
       }
       dest+=orowstride;
     }
@@ -3618,16 +3618,16 @@ static void convert_swap3addpre_frame(guchar *src, int width, int height, int ir
 
 
 static void convert_swap3postalpha_frame(guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest) {
-  /// swap 3 bytes, leave alpha
+  // swap 3 bytes, leave alpha
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*4)&&(orowstride==irowstride)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=4) {
-      *(dest++)=src[2]; /// red
-      *(dest++)=src[1]; /// green
-      *(dest++)=src[0]; /// blue
-      *(dest++)=src[3]; /// alpha
+      *(dest++)=src[2]; // red
+      *(dest++)=src[1]; // green
+      *(dest++)=src[0]; // blue
+      *(dest++)=src[3]; // alpha
     }
   }
   else {
@@ -3636,10 +3636,10 @@ static void convert_swap3postalpha_frame(guchar *src, int width, int height, int
     orowstride-=width4;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width4;i+=4) {
-	*(dest++)=src[i+2]; /// red
-	*(dest++)=src[i+1]; /// green
-	*(dest++)=src[i]; /// blue
-	*(dest++)=src[i+3]; /// alpha
+	*(dest++)=src[i+2]; // red
+	*(dest++)=src[i+1]; // green
+	*(dest++)=src[i]; // blue
+	*(dest++)=src[i+3]; // alpha
       }
       dest+=orowstride;
     }
@@ -3647,19 +3647,19 @@ static void convert_swap3postalpha_frame(guchar *src, int width, int height, int
 }
 
 static void convert_addpost_frame(guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest) {
-  /// add post alpha
+  // add post alpha
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*3)&&(orowstride==width*4)) {
-    /// quick version
+    // quick version
 #ifdef ENABLE_OIL
     oil_rgb2rgba(dest,src,width*height);
 #else
     for (;src<end;src+=3) {
-      *(dest++)=src[0]; /// r
-      *(dest++)=src[1]; /// g
-      *(dest++)=src[2]; /// b
-      *(dest++)=255; /// alpha
+      *(dest++)=src[0]; // r
+      *(dest++)=src[1]; // g
+      *(dest++)=src[2]; // b
+      *(dest++)=255; // alpha
     }
 #endif
   }
@@ -3669,10 +3669,10 @@ static void convert_addpost_frame(guchar *src, int width, int height, int irowst
     orowstride-=width*4;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width3;i+=3) {
-	*(dest++)=src[i]; /// r
-	*(dest++)=src[i+1]; /// g
-	*(dest++)=src[i+2]; /// b
-	*(dest++)=255; /// alpha
+	*(dest++)=src[i]; // r
+	*(dest++)=src[i+1]; // g
+	*(dest++)=src[i+2]; // b
+	*(dest++)=255; // alpha
       }
       dest+=orowstride;
     }
@@ -3681,16 +3681,16 @@ static void convert_addpost_frame(guchar *src, int width, int height, int irowst
 
 
 static void convert_addpre_frame(guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest) {
-  /// add pre alpha
+  // add pre alpha
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*3)&&(orowstride==width*4)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=3) {
-      *(dest++)=255; /// alpha
-      *(dest++)=src[0]; /// r
-      *(dest++)=src[1]; /// g
-      *(dest++)=src[2]; /// b
+      *(dest++)=255; // alpha
+      *(dest++)=src[0]; // r
+      *(dest++)=src[1]; // g
+      *(dest++)=src[2]; // b
     }
   }
   else {
@@ -3699,10 +3699,10 @@ static void convert_addpre_frame(guchar *src, int width, int height, int irowstr
     orowstride-=width*4;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width3;i+=3) {
-	*(dest++)=255; /// alpha
-	*(dest++)=src[i]; /// r
-	*(dest++)=src[i+1]; /// g
-	*(dest++)=src[i+2]; /// b
+	*(dest++)=255; // alpha
+	*(dest++)=src[i]; // r
+	*(dest++)=src[i+1]; // g
+	*(dest++)=src[i+2]; // b
       }
       dest+=orowstride;
     }
@@ -3711,15 +3711,15 @@ static void convert_addpre_frame(guchar *src, int width, int height, int irowstr
 
 
 static void convert_swap3delpost_frame(guchar *src,int width,int height, int irowstride, int orowstride, guchar *dest) {
-  /// swap 3 bytes, delete post alpha
+  // swap 3 bytes, delete post alpha
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*4)&&(orowstride==width*3)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=4) {
-      *(dest++)=src[2]; /// red
-      *(dest++)=src[1]; /// green
-      *(dest++)=src[0]; /// blue
+      *(dest++)=src[2]; // red
+      *(dest++)=src[1]; // green
+      *(dest++)=src[0]; // blue
     }
   }
   else {
@@ -3728,9 +3728,9 @@ static void convert_swap3delpost_frame(guchar *src,int width,int height, int iro
     orowstride-=width*3;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width4;i+=4) {
-	*(dest++)=src[i+2]; /// red
-	*(dest++)=src[i+1]; /// green
-	*(dest++)=src[i]; /// blue
+	*(dest++)=src[i+2]; // red
+	*(dest++)=src[i+1]; // green
+	*(dest++)=src[i]; // blue
       }
       dest+=orowstride;
     }
@@ -3739,15 +3739,15 @@ static void convert_swap3delpost_frame(guchar *src,int width,int height, int iro
 
 
 static void convert_delpost_frame(guchar *src,int width,int height, int irowstride, int orowstride, guchar *dest) {
-  /// delete post alpha
+  // delete post alpha
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*4)&&(orowstride==width*3)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=4) {
-      *(dest++)=src[0]; /// r
-      *(dest++)=src[1]; /// g
-      *(dest++)=src[2]; /// b
+      *(dest++)=src[0]; // r
+      *(dest++)=src[1]; // g
+      *(dest++)=src[2]; // b
     }
   }
   else {
@@ -3756,9 +3756,9 @@ static void convert_delpost_frame(guchar *src,int width,int height, int irowstri
     orowstride-=width*3;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width4;i+=4) {
-	*(dest++)=src[i]; /// r
-	*(dest++)=src[i+1]; /// g
-	*(dest++)=src[i+2]; /// b
+	*(dest++)=src[i]; // r
+	*(dest++)=src[i+1]; // g
+	*(dest++)=src[i+2]; // b
       }
       dest+=orowstride;
     }
@@ -3767,17 +3767,17 @@ static void convert_delpost_frame(guchar *src,int width,int height, int irowstri
 
 
 static void convert_delpre_frame(guchar *src,int width,int height, int irowstride, int orowstride, guchar *dest) {
-  /// delete pre alpha
+  // delete pre alpha
   guchar *end=src+height*irowstride;
 
   src++;
 
   if ((irowstride==width*4)&&(orowstride==width*3)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=4) {
-      *(dest++)=src[0]; /// r
-      *(dest++)=src[1]; /// g
-      *(dest++)=src[2]; /// b
+      *(dest++)=src[0]; // r
+      *(dest++)=src[1]; // g
+      *(dest++)=src[2]; // b
     }
   }
   else {
@@ -3786,9 +3786,9 @@ static void convert_delpre_frame(guchar *src,int width,int height, int irowstrid
     orowstride-=width*3;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width4;i+=4) {
-	*(dest++)=src[i]; /// r
-	*(dest++)=src[i+1]; /// g
-	*(dest++)=src[i+2]; /// b
+	*(dest++)=src[i]; // r
+	*(dest++)=src[i+1]; // g
+	*(dest++)=src[i+2]; // b
       }
       dest+=orowstride;
     }
@@ -3797,15 +3797,15 @@ static void convert_delpre_frame(guchar *src,int width,int height, int irowstrid
 
 
 static void convert_delpreswap3_frame(guchar *src,int width,int height, int irowstride, int orowstride, guchar *dest) {
-  /// delete pre alpha, swap last 3
+  // delete pre alpha, swap last 3
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*4)&&(orowstride==width*3)) {
-    /// quick version
+    // quick version
     for (;src<end;src+=4) {
-      *(dest++)=src[3]; /// red
-      *(dest++)=src[2]; /// green
-      *(dest++)=src[1]; /// blue
+      *(dest++)=src[3]; // red
+      *(dest++)=src[2]; // green
+      *(dest++)=src[1]; // blue
     }
   }
   else {
@@ -3814,9 +3814,9 @@ static void convert_delpreswap3_frame(guchar *src,int width,int height, int irow
     orowstride-=width*3;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width4;i+=4) {
-	*(dest++)=src[i+3]; /// red
-	*(dest++)=src[i+2]; /// green
-	*(dest++)=src[i+1]; /// blue
+	*(dest++)=src[i+3]; // red
+	*(dest++)=src[i+2]; // green
+	*(dest++)=src[i+1]; // blue
       }
       dest+=orowstride;
     }
@@ -3824,11 +3824,11 @@ static void convert_delpreswap3_frame(guchar *src,int width,int height, int irow
 }
 
 static void convert_swapprepost_frame (guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest, gboolean alpha_first) {
-  /// swap first and last bytes in a 4 byte palette
+  // swap first and last bytes in a 4 byte palette
   guchar *end=src+height*irowstride;
 
   if ((irowstride==width*4)&&(orowstride==irowstride)) {
-    /// quick version
+    // quick version
     if (alpha_first) {
       for (;src<end;src+=4) {
 	*(dest++)=src[1];
@@ -3873,8 +3873,8 @@ static void convert_swapprepost_frame (guchar *src, int width, int height, int i
 }
 
 
-///////////////////////////////////////
-/// genric YUV
+//////////////////////////
+// genric YUV
 
 static void convert_swab_frame(guchar *src, int width, int height, guchar *dest) {
   register int i;
@@ -3890,11 +3890,11 @@ static void convert_swab_frame(guchar *src, int width, int height, guchar *dest)
 
 
 static void convert_halve_chroma(guchar **src, int width, int height, guchar **dest, gboolean clamped) {
-  /// width and height here are width and height of src *chroma* planes, in bytes
+  // width and height here are width and height of src *chroma* planes, in bytes
   
-  /// halve the chroma samples vertically, with sub-sampling, e.g. 422p to 420p
+  // halve the chroma samples vertically, with sub-sampling, e.g. 422p to 420p
 
-  /// TODO : handle different sampling methods in and out
+  // TODO : handle different sampling methods in and out
 
   register int i,j;
   guchar *d_u=dest[1],*d_v=dest[2],*s_u=src[1],*s_v=src[2];
@@ -3906,13 +3906,13 @@ static void convert_halve_chroma(guchar **src, int width, int height, guchar **d
     for (j=0;j<width;j++) {
 
       if (!chroma) {
-	/// pass 1, copy row
+	// pass 1, copy row
 	w_memcpy(d_u,s_u,width);
 	w_memcpy(d_v,s_v,width);
       }
       else {
-	/// pass 2
-	/// average two dest rows
+	// pass 2
+	// average two dest rows
 	d_u[j]=avg_chroma(d_u[j],s_u[j]);
 	d_v[j]=avg_chroma(d_v[j],s_v[j]);
       }
@@ -3929,11 +3929,11 @@ static void convert_halve_chroma(guchar **src, int width, int height, guchar **d
 
 
 static void convert_double_chroma(guchar **src, int width, int height, guchar **dest, gboolean clamped) {
-  /// width and height here are width and height of src *chroma* planes, in bytes
+  // width and height here are width and height of src *chroma* planes, in bytes
   
-  /// double two chroma planes vertically, with interpolation: eg: 420p to 422p
+  // double two chroma planes vertically, with interpolation: eg: 420p to 422p
 
-  /// TODO - handle different sampling methods in and out
+  // TODO - handle different sampling methods in and out
 
   register int i,j;
   guchar *d_u=dest[1],*d_v=dest[2],*s_u=src[1],*s_v=src[2];
@@ -3949,8 +3949,8 @@ static void convert_double_chroma(guchar **src, int width, int height, guchar **
       w_memcpy(d_v,s_v,width);
 
       if (!chroma&&i>0) {
-	/// pass 2
-	/// average two src rows
+	// pass 2
+	// average two src rows
 	d_u[j-width]=avg_chroma(d_u[j-width],s_u[j]);
 	d_v[j-width]=avg_chroma(d_v[j-width],s_v[j]);
       }
@@ -3967,15 +3967,15 @@ static void convert_double_chroma(guchar **src, int width, int height, guchar **
 
 
 static void convert_quad_chroma(guchar **src, int width, int height, guchar **dest, gboolean add_alpha, gboolean clamped) {
-  /// width and height here are width and height of dest chroma planes, in bytes
+  // width and height here are width and height of dest chroma planes, in bytes
   
-  /// double the chroma samples vertically and horizontally, with interpolation, eg. 420p to 444p
+  // double the chroma samples vertically and horizontally, with interpolation, eg. 420p to 444p
 
-  /// output to planes
+  // output to planes
 
-  ///TODO: handle mpeg and dvpal input
+  //TODO: handle mpeg and dvpal input
 
-  /// TESTED !
+  // TESTED !
 
   register int i,j;
   guchar *d_u=dest[1],*d_v=dest[2],*s_u=src[1],*s_v=src[2];
@@ -3986,7 +3986,7 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
   height>>=1;
   width>>=1;
 
-  /// for this algorithm, we assume chroma samples are aligned like mpeg
+  // for this algorithm, we assume chroma samples are aligned like mpeg
 
   for (i=0;i<height2;i++) {
     d_u[0]=d_u[1]=s_u[0];
@@ -3997,8 +3997,8 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
       d_u[j-1]=avg_chroma(d_u[j-1],d_u[j]);
       d_v[j-1]=avg_chroma(d_v[j-1],d_v[j]);
       if (!chroma&&i>0) {
-	/// pass 2
-	/// average two src rows (e.g 2 with 1, 4 with 3, ... etc thus row 1 becomes average of chroma rows 0 and 1, etc.)
+	// pass 2
+	// average two src rows (e.g 2 with 1, 4 with 3, ... etc thus row 1 becomes average of chroma rows 0 and 1, etc.)
 	d_u[j-width2]=avg_chroma(d_u[j-width2],d_u[j]);
 	d_v[j-width2]=avg_chroma(d_v[j-width2],d_v[j]);
 	d_u[j-1-width2]=avg_chroma(d_u[j-1-width2],d_u[j-1]);
@@ -4024,16 +4024,16 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
 
 
 static void convert_quad_chroma_packed(guchar **src, int width, int height, guchar *dest, gboolean add_alpha, gboolean clamped) {
-  /// width and height here are width and height of dest chroma planes, in bytes
-  /// stretch (double) the chroma samples vertically and horizontally, with interpolation
+  // width and height here are width and height of dest chroma planes, in bytes
+  // stretch (double) the chroma samples vertically and horizontally, with interpolation
 
-  /// ouput to packed pixels
+  // ouput to packed pixels
 
-  /// e.g: 420p to 888(8)
+  // e.g: 420p to 888(8)
 
-  ///TODO: handle mpeg and dvpal input
+  //TODO: handle mpeg and dvpal input
 
-  /// TESTED !
+  // TESTED !
 
   register int i,j;
   guchar *s_y=src[0],*s_u=src[1],*s_v=src[2];
@@ -4054,10 +4054,10 @@ static void convert_quad_chroma_packed(guchar **src, int width, int height, guch
     dest[opsize]=*(s_y++);
 
     for (j=opsize2;j<widthx;j+=opsize2) {
-      /// process two pixels at a time, and we average the first colour pixel with the last from the previous 2
-      /// we know we can do this because Y must be even width
+      // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+      // we know we can do this because Y must be even width
 
-      /// implements jpeg style subsampling : TODO - mpeg and dvpal style
+      // implements jpeg style subsampling : TODO - mpeg and dvpal style
 
       dest[j]=*(s_y++);
       dest[j+opsize]=*(s_y++);
@@ -4068,8 +4068,8 @@ static void convert_quad_chroma_packed(guchar **src, int width, int height, guch
       dest[j-opsize+1]=avg_chroma(dest[j-opsize+1],dest[j+1]);
       dest[j-opsize+2]=avg_chroma(dest[j-opsize+2],dest[j+2]);
       if (!chroma&&i>0) {
-	/// pass 2
-	/// average two src rows
+	// pass 2
+	// average two src rows
 	dest[j+1-widthx]=avg_chroma(dest[j+1-widthx],dest[j+1]);
 	dest[j+2-widthx]=avg_chroma(dest[j+2-widthx],dest[j+2]);
 	dest[j-opsize+1-widthx]=avg_chroma(dest[j-opsize+1-widthx],dest[j-opsize+1]);
@@ -4090,14 +4090,14 @@ static void convert_quad_chroma_packed(guchar **src, int width, int height, guch
 }
 
 static void convert_double_chroma_packed(guchar **src, int width, int height, guchar *dest, gboolean add_alpha, gboolean clamped) {
-  /// width and height here are width and height of dest chroma planes, in bytes
-  /// double the chroma samples horizontally, with interpolation
+  // width and height here are width and height of dest chroma planes, in bytes
+  // double the chroma samples horizontally, with interpolation
 
-  /// output to packed pixels
+  // output to packed pixels
 
-  /// e.g 422p to 888(8)
+  // e.g 422p to 888(8)
 
-  ///TODO: handle non-dvntsc in
+  //TODO: handle non-dvntsc in
 
   register int i,j;
   guchar *s_y=src[0],*s_u=src[1],*s_v=src[2];
@@ -4116,10 +4116,10 @@ static void convert_double_chroma_packed(guchar **src, int width, int height, gu
     if (add_alpha) dest[3]=dest[opsize+3]=255;
     dest[opsize]=*(s_y++);
     for (j=opsize2;j<widthx;j+=opsize2) {
-      /// dvntsc style - chroma is aligned with luma
+      // dvntsc style - chroma is aligned with luma
       
-      /// process two pixels at a time, and we average the first colour pixel with the last from the previous 2
-      /// we know we can do this because Y must be even width
+      // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+      // we know we can do this because Y must be even width
       dest[j]=*(s_y++);
       dest[j+opsize]=*(s_y++);
       if (add_alpha) dest[j+opsize-1]=dest[j+opsize2-1]=255;
@@ -4139,8 +4139,8 @@ static void convert_double_chroma_packed(guchar **src, int width, int height, gu
 
 
 void switch_yuv_clamping_and_subspace (weed_plant_t *layer, int oclamping, int osubspace) {
-  /// currently subspace conversions are not performed - TODO
-  /// we assume subspace Y'CbCr
+  // currently subspace conversions are not performed - TODO
+  // we assume subspace Y'CbCr
   int error;
   int iclamping=weed_get_int_value(layer,"YUV_clamping",&error);
   int isubspace=weed_get_int_value(layer,"YUV_subspace",&error);
@@ -4307,12 +4307,12 @@ void switch_yuv_clamping_and_subspace (weed_plant_t *layer, int oclamping, int o
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 
 
 void create_empty_pixel_data(weed_plant_t *layer) {
-  /// width, height are src size in (macro) pixels
-  /// warning, width and height may be adjusted
+  // width, height are src size in (macro) pixels
+  // warning, width and height may be adjusted
 
   int error;
   int palette=weed_get_int_value(layer,"current_palette",&error);
@@ -4403,7 +4403,7 @@ void create_empty_pixel_data(weed_plant_t *layer) {
     break;
   case WEED_PALETTE_YUV411:
     weed_set_int_value(layer,"width",width);
-    rowstride=width*6; /// a macro-pixel is 6 bytes, and contains 4 real pixels
+    rowstride=width*6; // a macro-pixel is 6 bytes, and contains 4 real pixels
     pixel_data=(guchar *)calloc(width*height*3,2);
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
     weed_set_int_value(layer,"rowstrides",rowstride);
@@ -4445,30 +4445,30 @@ void create_empty_pixel_data(weed_plant_t *layer) {
 
 
 gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype, gboolean oclamping, int osubspace) {
-  /// here we will not handle RGB float palettes (wait for libabl for that...)
-  /// but we will convert to/from the 5 other RGB palettes and 10 YUV palettes
-  /// giving a total of 15*14=210 conversions
-  ///
-  /// number coded so far 180
-  /// ~85% complete
+  // here we will not handle RGB float palettes (wait for libabl for that...)
+  // but we will convert to/from the 5 other RGB palettes and 10 YUV palettes
+  // giving a total of 15*14=210 conversions
+  //
+  // number coded so far 180
+  // ~85% complete
 
-  /// some conversions to and from ARGB and to and from yuv411 are missing
+  // some conversions to and from ARGB and to and from yuv411 are missing
 
-  /// NOTE - if converting to YUV411, we cut pixels so (RGB) width is divisible by 4
-  ///        if converting to other YUV, we cut pixels so (RGB) width is divisible by 2
-  ///        if converting to YUV420 or YVU420, we cut pixels so height is divisible by 2
+  // NOTE - if converting to YUV411, we cut pixels so (RGB) width is divisible by 4
+  //        if converting to other YUV, we cut pixels so (RGB) width is divisible by 2
+  //        if converting to YUV420 or YVU420, we cut pixels so height is divisible by 2
 
-  ///        currently chroma is assumed centred between luma
-  /// osamtype, subspace and clamping currently only work for default values
+  //        currently chroma is assumed centred between luma
+  // osamtype, subspace and clamping currently only work for default values
 
 
-  ///       TODO: allow plugin candidates/delegates
+  //       TODO: allow plugin candidates/delegates
 
-  /// - original palette "pixel_data" is free()d
+  // - original palette "pixel_data" is free()d
 
-  /// returns FALSE if the palette conversion fails
+  // returns FALSE if the palette conversion fails
 
-  /// layer must not be NULL
+  // layer must not be NULL
 
   guchar *gusrc=NULL,**gusrc_array=NULL,*gudest,**gudest_array,*tmp;
   int width,height,orowstride,irowstride;
@@ -4487,7 +4487,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
   if (weed_plant_has_leaf(layer,"YUV_subspace")) isubspace=weed_get_int_value(layer,"YUV_subspace",&error);
   else isubspace=WEED_YUV_SUBSPACE_YUV;
 
-  ///#define DEBUG_PCONV
+  //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   gchar *tmp2,*tmp3;
   g_print("converting palette %s(%s - %d) to %s(%s - %d)\n",weed_palette_get_name(inpl),(tmp2=g_strdup(weed_yuv_clamping_get_name(!iclamped))),!iclamped,weed_palette_get_name(outpl),(tmp3=g_strdup(weed_yuv_clamping_get_name(!oclamping))),!oclamping);
@@ -4590,7 +4590,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_bgr_to_yuv420_frame(gusrc,width,height,irowstride,gudest_array,FALSE,FALSE,osamtype,oclamping);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -4692,7 +4692,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_rgb_to_yuv420_frame(gusrc,width,height,irowstride,gudest_array,FALSE,TRUE,osamtype,oclamping);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -4793,7 +4793,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_rgb_to_yuv420_frame(gusrc,width,height,irowstride,gudest_array,FALSE,FALSE,WEED_YUV_SAMPLING_DEFAULT,oclamping);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -4895,7 +4895,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_bgr_to_yuv420_frame(gusrc,width,height,irowstride,gudest_array,FALSE,TRUE,osamtype,oclamping);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -5043,7 +5043,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_yuvp_to_yuv420_frame(gusrc_array,width,height,gudest_array,iclamped);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -5147,7 +5147,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_yuvp_to_yuv420_frame(gusrc_array,width,height,gudest_array,iclamped);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -5257,7 +5257,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_uyvy_to_yuv420_frame((uyvy_macropixel *)gusrc,width,height,gudest_array,iclamped);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -5359,7 +5359,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_yuyv_to_yuv420_frame((yuyv_macropixel *)gusrc,width,height,gudest_array,iclamped);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -5425,7 +5425,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_yuv888_to_bgr_frame(gusrc,width,height,orowstride,gudest,TRUE,iclamped);
       break;
     case WEED_PALETTE_YVU420P:
-      /// convert to YUV420P, then fall through
+      // convert to YUV420P, then fall through
     case WEED_PALETTE_YUV420P:
       weed_set_int_value(layer,"current_palette",outpl);
       create_empty_pixel_data(layer);
@@ -5433,7 +5433,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_yuv888_to_yuv420_frame(gusrc,width,height,gudest_array,FALSE,iclamped);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -5527,7 +5527,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       convert_yuv888_to_yuv420_frame(gusrc,width,height,gudest_array,TRUE,iclamped);
       weed_free(gudest_array);
       weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
-      ///weed_set_int_value(layer,"YUV_sampling",osamtype);
+      //weed_set_int_value(layer,"YUV_sampling",osamtype);
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer,"current_palette",outpl);
@@ -5563,7 +5563,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
     }
     break;
   case WEED_PALETTE_YVU420P:
-    /// swap u and v planes, then fall through to YUV420P
+    // swap u and v planes, then fall through to YUV420P
     gusrc_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
     tmp=gusrc_array[1];
     gusrc_array[1]=gusrc_array[2];
@@ -5656,7 +5656,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 	weed_set_voidptr_array(layer,"pixel_data",3,(void **)gusrc_array);
 	weed_free(gusrc_array);
       }
-      /// fall through
+      // fall through
     case WEED_PALETTE_YUV420P:
       weed_set_int_value(layer,"current_palette",outpl);
       gusrc_array=NULL;
@@ -5927,7 +5927,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
   else {
     weed_set_int_value(layer,"YUV_clamping",oclamping?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED);
     if (weed_palette_is_rgb_palette(inpl)) {
-      /// TODO - bt709
+      // TODO - bt709
       weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
     }
     if (!weed_plant_has_leaf(layer,"YUV_sampling")) weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT);
@@ -5939,7 +5939,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
   }
 
   if ((outpl==WEED_PALETTE_YVU420P&&inpl!=WEED_PALETTE_YVU420P&&inpl!=WEED_PALETTE_YUV420P)) {
-    /// swap u and v planes
+    // swap u and v planes
     guchar **pd_array=(guchar **)weed_get_voidptr_array(layer,"pixel_data",&error);
     guchar *tmp=pd_array[1];
     pd_array[1]=pd_array[2];
@@ -5955,7 +5955,7 @@ gboolean convert_layer_palette (weed_plant_t *layer, int outpl, int op_clamping)
   return convert_layer_palette_full(layer,outpl,WEED_YUV_SAMPLING_DEFAULT,op_clamping==WEED_YUV_CLAMPING_CLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 
 
 GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette) {
@@ -5997,7 +5997,7 @@ GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette) {
 
 
 static inline GdkPixbuf *gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width, int height, guchar *buf) {
-  /// we can cheat if our buffer is correctly sized
+  // we can cheat if our buffer is correctly sized
   GdkPixbuf *pixbuf;
   int channels=has_alpha?4:3;
   int rowstride=gdk_rowstride_value(width*channels);
@@ -6092,8 +6092,8 @@ GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
 
 
 inline gboolean weed_palette_is_resizable(int pal) {
-  /// in future we may also have resize candidates/delegates for other palettes
-  /// we will need to check for these
+  // in future we may also have resize candidates/delegates for other palettes
+  // we will need to check for these
 
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) return TRUE;
   return FALSE;
@@ -6102,16 +6102,16 @@ inline gboolean weed_palette_is_resizable(int pal) {
 
 
 void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
-  /// resize a layer
+  // resize a layer
 
-  /// TODO ** - see if there is a resize plugin candidate/delegate which supports this palette : this allows e.g libabl or a hardware rescaler
+  // TODO ** - see if there is a resize plugin candidate/delegate which supports this palette : this allows e.g libabl or a hardware rescaler
 
-  /// NOTE: a) a good single plane resizer is needed for YUV compressed and alpha palettes
-  ///       b) there is as yet no float palette resizer
+  // NOTE: a) a good single plane resizer is needed for YUV compressed and alpha palettes
+  //       b) there is as yet no float palette resizer
 
-  /// IMPORTANT: for yuv palettes except YUV888 and YUVA8888 the palette will be converted to YUV(A)888(8) depending on whether it has alpha or not
+  // IMPORTANT: for yuv palettes except YUV888 and YUVA8888 the palette will be converted to YUV(A)888(8) depending on whether it has alpha or not
 
-  /// "current_palette" should therefore be checked on return
+  // "current_palette" should therefore be checked on return
 
   int error;
   GdkPixbuf *pixbuf,*new_pixbuf=NULL;
@@ -6123,12 +6123,12 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
   int oheight=weed_get_int_value(layer,"height",&error);
   guchar *pd;
 
-  if (owidth==width&&oheight==height) return; /// no resize needed
+  if (owidth==width&&oheight==height) return; // no resize needed
 
   if (weed_palette_is_yuv_palette(palette)&&(palette!=WEED_PALETTE_YUV888&&palette!=WEED_PALETTE_YUVA8888)) {
-    /// we should always convert to unclamped values before resizing
+    // we should always convert to unclamped values before resizing
     gint oclamping=WEED_YUV_CLAMPING_UNCLAMPED;
-    width*=weed_palette_get_pixels_per_macropixel(palette); /// desired width is in macropixels
+    width*=weed_palette_get_pixels_per_macropixel(palette); // desired width is in macropixels
 
     if (weed_palette_has_alpha_channel(palette)) {
       convert_layer_palette(layer,WEED_PALETTE_YUVA8888,oclamping);
@@ -6180,15 +6180,15 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
 
 
 gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
-  /// turn a GdkPixbuf into a Weed layer
+  // turn a GdkPixbuf into a Weed layer
 
-  /// a "layer" is CHANNEL type plant which is not created from a plugin CHANNEL_TEMPLATE. When we pass this to a plugin, we need to adjust it depending 
-  /// on the plugin's CHANNEL_TEMPLATE to which we will assign it
+  // a "layer" is CHANNEL type plant which is not created from a plugin CHANNEL_TEMPLATE. When we pass this to a plugin, we need to adjust it depending 
+  // on the plugin's CHANNEL_TEMPLATE to which we will assign it
 
-  /// e.g.: memory may need aligning afterwards for particular plugins which set channel template flags:
-  /// memory may need aligning, layer palette may need changing, layer may need resizing
+  // e.g.: memory may need aligning afterwards for particular plugins which set channel template flags:
+  // memory may need aligning, layer palette may need changing, layer may need resizing
 
-  /// return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should not be free()d !
+  // return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should not be free()d !
 
   int rowstride=gdk_pixbuf_get_rowstride(pixbuf);
   int width=gdk_pixbuf_get_width(pixbuf);
@@ -6211,8 +6211,8 @@ gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
     return TRUE;
   }
 
-  /// this part is needed because layers always have a memory size height*rowstride, whereas gdkpixbuf can have
-  /// a shorter last row
+  // this part is needed because layers always have a memory size height*rowstride, whereas gdkpixbuf can have
+  // a shorter last row
 
   pixel_data=calloc(height*rowstride,1);
 
@@ -6229,8 +6229,8 @@ gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
 
 
 
-/////////////////////////////////////////////////////////
-/// TODO - move into layers.c
+//////////////////////////////////////
+// TODO - move into layers.c
 
 
 weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current_palette) {
@@ -6248,12 +6248,12 @@ weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current
 
 
 weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
-  /// copy source slayer to dest dlayer
-  /// for a newly created layer, this is a deep copy, since the pixel_data array is also copied
+  // copy source slayer to dest dlayer
+  // for a newly created layer, this is a deep copy, since the pixel_data array is also copied
 
-  /// for an existing dlayer, we copy pixel_data by reference
+  // for an existing dlayer, we copy pixel_data by reference
 
-  /// if dlayer is NULL, we return a new plant, otherwise we return dlayer
+  // if dlayer is NULL, we return a new plant, otherwise we return dlayer
 
   int pd_elements,error;
   void **pd_array,**pixel_data;
@@ -6270,7 +6270,7 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
   }
   else layer=dlayer;
 
-  ///! now copy relevant leaves
+  // now copy relevant leaves
   height=weed_get_int_value(slayer,"height",&error);
   width=weed_get_int_value(slayer,"width",&error);
   palette=weed_get_int_value(slayer,"current_palette",&error);

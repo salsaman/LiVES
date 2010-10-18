@@ -125,6 +125,8 @@ lives_exit (void) {
       // create the new directory, and then move any sets over
       end_threaded_dialog();
       if (do_move_tmpdir_dialog()) {
+	do_do_not_close_d();
+	while (g_main_context_iteration(NULL,FALSE));
 	com=g_strdup_printf("smogrify weed %s &",future_prefs->tmpdir);
 	dummyvar=system (com);
 	g_free (com);

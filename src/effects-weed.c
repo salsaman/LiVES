@@ -2842,6 +2842,8 @@ void weed_load_all (void) {
     if (i<FX_KEYS_MAX_VIRTUAL) key_to_instance[i]=g_malloc(prefs->max_modes_per_key*sizeof(weed_plant_t *));
     else key_to_instance[i]=g_malloc(sizeof(weed_plant_t *));
 
+    key_to_instance_copy[i]=g_malloc(sizeof(weed_plant_t *));
+
     if (i<FX_KEYS_MAX_VIRTUAL) key_to_fx[i]=g_malloc(prefs->max_modes_per_key*sizint);
     else key_to_fx[i]=g_malloc(sizint);
 
@@ -3114,6 +3116,7 @@ void weed_unload_all(void) {
     if (hashnames[i]!=NULL) g_free(hashnames[i]);
     g_free(key_to_fx[i]);
     g_free(key_to_instance[i]);
+    g_free(key_to_instance_copy[i]);
   }
 
   pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -4844,10 +4847,10 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
 
   if (key<FX_KEYS_MAX_VIRTUAL) free_key_defaults(key,mode);
 
-  for (;mode<prefs->max_modes_per_key;mode++) {
+  for (;mode<(key<FX_KEYS_MAX_VIRTUAL?prefs->max_modes_per_key:1);mode++) {
 
     mainw->osc_block=TRUE;
-    if (mode==prefs->max_modes_per_key-1||key_to_fx[key][mode+1]==-1) {
+    if (key>=FX_KEYS_MAX_VIRTUAL||mode==prefs->max_modes_per_key-1||key_to_fx[key][mode+1]==-1) {
       if (key_to_instance[key][mode]!=NULL) {
 	was_started=TRUE;
 	if (key_modes[key]==mode) modekey=-key-1;
@@ -4867,7 +4870,7 @@ gboolean weed_delete_effectkey (gint key, gint mode) {
       }
       break; // quit the loop
     }
-    else {
+    else if (key<FX_KEYS_MAX_VIRTUAL) {
       rte_switch_keymode(key+1,mode,(tmp=make_weed_hashname
 				     (key_to_fx[key+1][mode+1])));
       g_free(tmp);
@@ -4903,7 +4906,7 @@ gboolean rte_key_valid (int key, gboolean is_userkey) {
 }
 
 gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey) {
-  if (key<1||(is_userkey&&key>FX_KEYS_MAX_VIRTUAL)||key>FX_KEYS_MAX||mode<0||mode>=prefs->max_modes_per_key) return FALSE;
+  if (key<1||(is_userkey&&key>FX_KEYS_MAX_VIRTUAL)||key>FX_KEYS_MAX||mode<0||mode>=(key<FX_KEYS_MAX_VIRTUAL?prefs->max_modes_per_key:1)) return FALSE;
   if (key_to_fx[--key][mode]==-1) return FALSE;
   return TRUE;
 }
@@ -4921,7 +4924,7 @@ int rte_key_getmaxmode (gint key) {
 
   key--;
 
-  for (i=0;i<prefs->max_modes_per_key;i++) {
+  for (i=0;i<(key<FX_KEYS_MAX_VIRTUAL?prefs->max_modes_per_key:1);i++) {
     if (key_to_fx[key][i]==-1) return i;
   }
   return 0;

@@ -519,7 +519,6 @@ guint mt_idle_add(lives_mt *mt) {
 
 void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-  gboolean rlay=mainw->recoverable_layout;
 
   if (button!=NULL) {
     gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));

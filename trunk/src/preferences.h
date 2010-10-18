@@ -433,6 +433,7 @@ typedef struct {
   GtkWidget *rb_startup_mt;
   GtkWidget *jack_int_label;
   GtkWidget *checkbutton_ce_maxspect;
+  GtkWidget *temp_label;
   gboolean needs_restart;
 } _prefsw;
 

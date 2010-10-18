@@ -167,9 +167,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   case LIVES_DIALOG_YESNO:
     gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Question"));
     mainw->warning_label = gtk_label_new (_("question"));
-    warning_cancelbutton = gtk_button_new_from_stock ("gtk-yes");
+    warning_cancelbutton = gtk_button_new_from_stock ("gtk-no");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, GTK_RESPONSE_NO);
-    warning_okbutton = gtk_button_new_from_stock ("gtk-no");
+    warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_YES);
     break;
   }

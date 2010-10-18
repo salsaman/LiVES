@@ -262,6 +262,23 @@ void set_vpp(gboolean set_in_prefs) {
 
 
 
+static void set_temp_label_text(GtkLabel *label) {
+  gdouble free_gb=(gdouble)get_fs_free(future_prefs->tmpdir)/1000000000.;
+  gchar *tmpx1,*tmpx2;
+  char *markup;
+
+  // tranlsation string is auto-freed() 
+  tmpx1=g_strdup(_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n\nTip: avoid setting it inside /tmp, since frequently /tmp is cleared on system shutdown."));
+  tmpx2=g_strdup_printf(_("\n\n\n(Free space = %.2f GB)"),free_gb);
+
+  markup = g_markup_printf_escaped ("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s",tmpx1,tmpx2);
+  gtk_label_set_markup (GTK_LABEL (label), markup);
+  g_free (markup);
+  g_free(tmpx1);
+  g_free(tmpx2);
+}
+
+
 
 
 gboolean 
@@ -502,6 +519,10 @@ apply_prefs(gboolean skip_warn) {
       }
       else {
 	g_snprintf(future_prefs->tmpdir,256,"%s",tmpdir);
+	set_temp_label_text(GTK_LABEL(prefsw->temp_label));
+	gtk_widget_queue_draw(prefsw->temp_label);
+	while (g_main_context_iteration(NULL,FALSE)); // update prefs window before showing confirmation box
+
 	msg=g_strdup (_ ("You have chosen to change the temporary directory.\nPlease make sure you have no other copies of LiVES open.\n\nIf you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\nAlternatively, press Cancel to restore the temporary directory to its original setting."));	
         if (do_warning_dialog(msg)) {
 	  mainw->prefs_changed=PREFS_TEMPDIR_CHANGED;
@@ -1530,6 +1551,8 @@ void set_combo_box_active_string(GtkComboBox *combo, gchar *active_str)
 }
 
 
+
+
 /*
  * Function creates preferences dialog 
  */
@@ -1668,7 +1691,7 @@ _prefsw *create_prefs_dialog (void) {
 
   int i;
 
-  gint nmonitors = mainw->nmonitors;
+  gint nmonitors = mainw->nmonitors; ///< number of screen monitors
   gboolean pfsm;
 
   gchar *theme;
@@ -3147,7 +3170,7 @@ _prefsw *create_prefs_dialog (void) {
   hbox5 = gtk_hbox_new (FALSE,0);
   gtk_widget_show (hbox5);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox5, TRUE, TRUE, 0);
-  
+
   label = gtk_label_new_with_mnemonic (_("Pause recording if free disk space falls below"));
   if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -3405,6 +3428,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_misc_set_alignment (GTK_MISC (label52), 0, 0.5);
   
   label43 = gtk_label_new (_("      Temp directory (do not remove) "));
+
   if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label43, GTK_STATE_NORMAL, &palette->normal_fore);
   }
@@ -3424,18 +3448,23 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_tooltips_set_tip (mainw->tooltips, prefsw->vid_load_dir_entry, _("The default directory for loading video clips from"), NULL);
 
+  label = gtk_label_new ("");
 
-  label = gtk_label_new (_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n\nTip: avoid setting it inside /tmp, since frequently /tmp is cleared on system shutdown."));
+  set_temp_label_text(GTK_LABEL(label));
+
   if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
+
   gtk_widget_show (label);
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 3, 5, 7,
 		    (GtkAttachOptions) (GTK_FILL),
 		    (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.65);
+ 
+  prefsw->temp_label=label;
+ 
   // get from prefs
   gtk_entry_set_text(GTK_ENTRY(prefsw->vid_load_dir_entry),prefs->def_vid_load_dir);
   

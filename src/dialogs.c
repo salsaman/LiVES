@@ -2118,3 +2118,22 @@ void do_set_locked_warning (const gchar *setname) {
   g_free(msg);
 }
 
+
+void do_do_not_close_d (void) {
+  gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
+  GtkWidget *err_box=create_dialog3(msg,FALSE,0);
+  GtkWindow *transient;
+
+  g_free(msg);
+  if (!prefs->show_gui) {
+    transient=NULL;
+  } else {
+    if (mainw->multitrack==NULL) transient=GTK_WINDOW(mainw->LiVES);
+    else transient=GTK_WINDOW(mainw->multitrack->window);
+  }
+  if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
+  gtk_widget_show(err_box);
+  gtk_window_present (GTK_WINDOW (err_box));
+  gdk_window_raise (err_box->window);
+}
+

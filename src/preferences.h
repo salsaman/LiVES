@@ -262,6 +262,8 @@ typedef struct {
   gboolean autoload_subs;
 
   glong rec_stop_gb;
+
+  guint max_modes_per_key; ///< maximum effect modes per key
 } _prefs;
 
 enum {

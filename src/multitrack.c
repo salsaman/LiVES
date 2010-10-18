@@ -533,7 +533,7 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   unlink(eload_file);
   g_free(eload_file);
 
-  if (rlay) do_after_crash_warning();
+  do_after_crash_warning();
 
 }
 

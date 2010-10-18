@@ -137,10 +137,20 @@ if ($command eq "encode") {
     $usemp3lame=$ARGV[14];
     $nthreads=$ARGV[15];
 
+    $vid_length=($end-$start+1)/$fps;
+
+    $err=">/dev/null 2>&1";
+    if (defined($DEBUG_ENCODERS)) {
+	$err="1>&2";
+    }
+
     if ($otype eq "") {
 	$otype="divx";
 	&rc_set("output_type",$otype);
     }
+
+    $ncpus=&get_num_procs;
+
 
     # default seems to be divx
     $vcodec="";
@@ -174,7 +184,7 @@ if ($command eq "encode") {
 	    $audio_com.=" -acodec copy";
 	}
 	elsif ($aq==5) {
-	    $audio_com.=" -acodec aac";
+	    $audio_com.=" -acodec aac -strict experimental";
 	}
 	elsif ($aq==6) {
 	    $audio_com.=" -acodec amr_nb";
@@ -206,13 +216,6 @@ if ($command eq "encode") {
 
     }
     
-    $vid_length=($end-$start+1)/$fps;
-
-    $err=">/dev/null 2>&1";
-    if (defined($DEBUG_ENCODERS)) {
-	$err="1>&2";
-    }
-
     # unfortunately this does not work yet...
     if ($otype eq "theora") {
 	$syscom="ffmpeg2theora -o \"$nfile\" -f image2 -i %8d$img_ext $audio_com -d off $err";
@@ -221,13 +224,11 @@ if ($command eq "encode") {
 	$passfile="passfile";
 	for $pass (1,2) {
 	    $syscom="$encoder_command -strict 1 -pass $pass -passfile $passfile -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
-	    if ($pass==1) {
 		if (defined($DEBUG_ENCODERS)) {
 		    print STDERR "ffmpeg_encoder command is: $syscom\n";
 		}
 		
 		system ($syscom);
-	    }
 	}
     }
     else {
@@ -263,6 +264,7 @@ if ($command eq "clear") {
     # note that encoding could have been stopped at any time
     chdir $curtmpdir;
 
+    unlink "temp.vid";
 
     unlink "passfile";
     &sig_complete;

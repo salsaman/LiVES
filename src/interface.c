@@ -1111,6 +1111,9 @@ void add_to_winmenu(void) {
 
   cfile->menuentry = gtk_image_menu_item_new_with_label((tmp=g_path_get_basename(cfile->name)));
   g_free(tmp);
+#ifdef HAVE_GTK_VERSION216
+  gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(cfile->menuentry),TRUE);
+#endif
   gtk_widget_show (cfile->menuentry);
   gtk_container_add (GTK_CONTAINER (mainw->winmenu), cfile->menuentry);
 
@@ -1119,8 +1122,8 @@ void add_to_winmenu(void) {
                       G_CALLBACK (switch_clip_activate),
                       NULL);
 
-  if (!cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK) {
-    active_image = gtk_image_new_from_stock ("gtk-close", GTK_ICON_SIZE_MENU);
+  if (!cfile->opening&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+    active_image = gtk_image_new_from_stock ("gtk-cancel", GTK_ICON_SIZE_MENU);
   }
   else {
     active_image = gtk_image_new_from_stock ("gtk-yes", GTK_ICON_SIZE_MENU);

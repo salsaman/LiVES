@@ -81,6 +81,8 @@ if ($command eq "get_formats") {
     print "x264_br_1080p|x264 blu-ray 1080p PAL (Experimental)|32|size=1920x1080,fps=25|mpg|\n"; # NTSC 1024p
     print "x264_br_720p|x264 blu-ray 720p NTSC (Experimental)|32|size=1280x720,fps=60000:1001|mpg|\n"; # 720p
     print "x264_br_720p|x264 blu-ray 720p PAL (Experimental)|32|size=1280x720,fps=50000:1001|mpg|\n"; # 720p
+    print "x264_br_720p|x264 blu-ray 720p 30 fps NTSC (Experimental)|32|size=1280x720,fps=30|mpg|\n"; # 720p
+    print "x264_br_720p|x264 blu-ray 720p 24/25 fps PAL (Experimental)|32|size=1280x720,fps=24;25|mpg|\n"; # 720p
 
     exit 0;
 }
@@ -152,7 +154,15 @@ if ($command eq "encode") {
 	$syscom="x264 --frames $end --crf 12 --threads auto --preset veryslow --tune animation $queuefile --fps $fps -o \"$ofile\"";
     }
     else {
-	$syscom="x264 --frames $end --crf 16 --threads auto --preset veryslow --tune film --weightp 0 --bframes 3 --nal-hrd vbr --vbv-maxrate 40000 --vbv-bufsize 30000 --level 4.1 --keyint 24 --b-pyramid strict --slices 4 --aud --colorprim \"bt709\" --transfer \"bt709\" --colormatrix \"bt709\" --sar 1:1 $queuefile --fps $fps -o \"$ofile\"";
+	if ($fps<=30 && $otype eq "x264_br_720p") {
+	    # do we need this for 1024p ?
+	    $fi=" --fake-interlaced";
+	}
+	else {
+	    $fi="";
+	}
+
+	$syscom="x264 --frames $end $fi --crf 16 --threads auto --preset veryslow --tune film --weightp 0 --bframes 3 --nal-hrd vbr --vbv-maxrate 40000 --vbv-bufsize 30000 --level 4.1 --keyint 24 --b-pyramid strict --slices 4 --aud --colorprim \"bt709\" --transfer \"bt709\" --colormatrix \"bt709\" --sar 1:1 $queuefile --fps $fps -o \"$ofile\"";
     }
 
     print STDERR "Processing queue with:\n$syscom\n";

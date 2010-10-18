@@ -1204,7 +1204,7 @@ GtkWidget * create_rte_window (void) {
       // fill names of our effects
       fx_idx=0;
       list=name_type_list;
-
+      
       while (list!=NULL) {
 	weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname(g_list_nth_data(hash_list,fx_idx),FALSE));
 	if ((enabled_in_channels(filter,FALSE)>1&&!has_video_chans_in(filter,FALSE))||(weed_plant_has_leaf(filter,"host_menu_hide")&&weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_TRUE)) {
@@ -1226,11 +1226,11 @@ GtkWidget * create_rte_window (void) {
 	list = list->next;
 	fx_idx++;
       }
-
+      
       gtk_entry_set_text (GTK_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
       g_free(tmp);
       gtk_entry_set_editable (GTK_ENTRY (combo_entries[idx]), FALSE);
-
+      
       hbox = gtk_hbox_new (FALSE, 12);
       gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 

@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+gtk_def =
+
 if ENABLE_OSC
 osc_INCLUDES=-I $(top_srcdir)/libOSC
 endif
@@ -96,7 +98,11 @@ pulse_SOURCES=pulse.c pulse.h
 endif
 
 if HAVE_GTK_VERSION214
-gtk_def=-DHAVE_GTK_NICE_VERSION=1
+gtk_def += -DHAVE_GTK_NICE_VERSION=1
+endif
+
+if HAVE_GTK_VERSION216
+gtk_def += -DHAVE_GTK_VERSION216=1
 endif
 
 

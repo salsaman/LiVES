@@ -62,7 +62,7 @@ static gint end=0;
 
 static gboolean theme_expected;
 
-static  _ign_opts ign_opts;
+static _ign_opts ign_opts;
 
 static int zargc;
 static char **zargv;

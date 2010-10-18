@@ -1,14 +1,21 @@
 Version 1.3.11
 --------------
 Implemented drag and drop of media files into gui.
-Added experimental gmerlin/gavl decoder plugin - needs testing.
 Fixed a possible crash when loading the default keymap.
 Fixed crash when recording parameters set from a parameter window.
 Removed startup warning for xmms not found.
-Set fps default to 25.0 for frei0r sources.
-Add OSC commands: /clip/foreground/frame/get, /clip/background/frame/get, /video/play/time/get, 
-	/clip/foreground/fps/get, /clip/background/fps/get, /video/fps/get, /video/fps/ratio/get, 
-	/clip/foreground/fps/ratio/get, /clip/background/fps/ratio/get
+Set fps default to 25.0 for frei0r sources, use default_fps for others.
+Added several new OSC commands.
+Minor improvements for non-local playback plugins.
+Started adding doxygen documentation.
+Fix crash after encoding fails (regression).
+Updates for breakage in ffmpeg_encoder.
+Add pkg-config files for libweed, add weed_setup() prototype, and bump version number to 0.4.0.
+Add startup option "-fxmodesmax"
+Fix -debug mode.
+Added new encoder format to x264_encoder (h264/aac/mp4 super high quality).
+Updates to x264 blu-ray format.
+Increase gtk+ recommended version to 2.16 or higher.
 
 
 

@@ -1693,7 +1693,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 10);
       g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)textbuffer);
 
-      if (rfx->status!=RFX_STATUS_WEED) {
+      if (rfx->status!=RFX_STATUS_WEED&&mainw->multitrack==NULL) {
 	blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), (gpointer) rfx);
       }
       else {

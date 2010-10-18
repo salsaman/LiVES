@@ -3176,11 +3176,9 @@ gint render_events (gboolean reset) {
 
 	weed_free(clip_index);
 	weed_free(frame_index);
-	
 
 	if (layer!=NULL) {
 	  layer_palette=weed_layer_get_palette(layer);
-	  
 	  if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
 	  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
 
@@ -3279,7 +3277,7 @@ gint render_events (gboolean reset) {
 	  if (next_tc<next_out_tc||next_tc-next_out_tc<next_out_tc-tc) break;
 	}
 	else if (next_out_tc>tc) break;
-	
+
 	if (cfile->old_frames>0) g_snprintf(oname,256,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,out_frame);
 	// sig_progress...
 	g_snprintf (mainw->msg,256,"%d",progress++);
@@ -3474,7 +3472,6 @@ gboolean start_render_effect_events (weed_plant_t *event_list) {
   gtk_widget_set_sensitive (mainw->undo, FALSE);
 
   cfile->undo_action=UNDO_RENDER;
-
   // play back the file as fast as possible, each time calling render_events()
   if ((!do_progress_dialog(TRUE,TRUE,"Rendering")&&mainw->cancelled!=CANCEL_KEEP)||mainw->error) {
     mainw->cancel_type=CANCEL_KILL;

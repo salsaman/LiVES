@@ -1794,15 +1794,13 @@ void lives_osc_cb_rte_setmode(void *context, int arglen, const void *vargs, OSCT
   int effect_key;
   int mode;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&mode);
-  if (effect_key<1||effect_key>FX_MAX||mode<1||mode>rte_getmodespk()) return;
+  if (effect_key<1||effect_key>=FX_KEYS_MAX_VIRTUAL||mode<1||mode>rte_getmodespk()) return lives_osc_notify_failure();
   if (!mainw->osc_block) rte_key_setmode (effect_key,mode-1);
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  lives_osc_notify_success(NULL);
 }
 
 
@@ -1810,28 +1808,24 @@ void lives_osc_cb_rte_setmode(void *context, int arglen, const void *vargs, OSCT
 void lives_osc_cb_rte_nextmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>=FX_KEYS_MAX_VIRTUAL) return lives_osc_notify_failure();
   if (!mainw->osc_block) rte_key_setmode (effect_key,-1);
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  lives_osc_notify_success(NULL);
 }
 
 
 void lives_osc_cb_rte_prevmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>=FX_KEYS_MAX_VIRTUAL) return lives_osc_notify_failure();
   if (!mainw->osc_block) rte_key_setmode (effect_key,-2);
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  lives_osc_notify_success(NULL);
 }
 
 

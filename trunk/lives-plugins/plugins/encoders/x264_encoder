@@ -10,7 +10,9 @@
 
 
 #######################################################################
-# LiVES x264 plugin v0.3
+# LiVES x264 plugin v0.4
+
+$queuefile="264stream.y4m";
 
 #######################################################################
 
@@ -28,7 +30,7 @@ else {
 
 
 if ($command eq "version") {
-    print "x264 encoder plugin v0.03\n";
+    print "x264 encoder plugin v0.4\n";
     exit 0;
 }
 
@@ -47,7 +49,7 @@ if ($command eq "init") {
 	print "mplayer was not found. Please install it and try again.";
 	exit 1;
     }
-    
+
     # end init code
     print "initialised\n";
     exit 0;
@@ -74,6 +76,7 @@ if ($command eq "get_formats") {
    # audio types are: 0 - cannot encode audio, 1 - can encode using
     #  mp3, 2 - can encode using pcm, 3 - can encode using pcm and mp3
     
+    print "mp4|h264/aac/mp4 (super high quality mp4)|32|none|mp4|\n";
     print "x264_br_1080p|x264 blu-ray 1080p NTSC (Experimental)|32|size=1920x1080,fps=24000:1001;24|mpg|\n"; # NTSC 1024p
     print "x264_br_1080p|x264 blu-ray 1080p PAL (Experimental)|32|size=1920x1080,fps=25|mpg|\n"; # NTSC 1024p
     print "x264_br_720p|x264 blu-ray 720p NTSC (Experimental)|32|size=1280x720,fps=60000:1001|mpg|\n"; # 720p
@@ -94,7 +97,7 @@ if ($command eq "encode") {
     }
 
     if ($audiofile ne "" && &location("ffmpeg") eq "") {
-	print STDERR "You must install ffmpeg in order to encode with audio.\n";
+	print STDERR "You must install ffmpeg with libfaac support in order to encode with audio.\n";
 	&sig_complete;
 	exit 1;
     }
@@ -106,43 +109,70 @@ if ($command eq "encode") {
 	$err="1>&2";
     }
 
-    $fifofile="264stream.y4m";
-    unlink $fifofile;
+    $ncpus=&get_num_procs;
 
-    $syscom="mplayer -frames $end mf://*$img_ext -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$fifofile $err </dev/null";
+    $threads=$ncpus;
 
-    print STDERR "Running stream to fifo with command:\n$syscom\n";
 
-    system($syscom);
+    unlink $queuefile;
+
+    $mf_ver=&rc_get("mplayer_mf_version");
+
+
+    if ($mf_ver==1) {
+	if ($img_ext eq ".png") {
+	    $syscom="mplayer -frames $end -mf on -mf type=png -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
+	}
+	else {
+	    $syscom="mplayer -frames $end -mf on -mf  h=$vsize:w=$hsize:type=jpg -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
+	}
+    }
+    else {
+	if ($img_ext eq ".png") {
+	    $syscom="mplayer -frames $end -mf fps=$fps:type=png mf://*.png -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
+	}
+	else {
+	    $syscom="mplayer -frames $end -mf fps=$fps:type=jpg mf://*".$img_ext." -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
+	}
+
+    }
+
+    print STDERR "Running stream to queue with command:\n$syscom\n";
+
+    system("$syscom $err");
 
 
     $ofile = $nfile;
 
     if ($audiofile ne "") {
-	$ofile="output.264";
+	$ofile="temp.264";
     }
 
-    $syscom="x264 --frames $end --crf 16 --threads auto --preset veryslow --tune film --weightp 0 --bframes 3 --nal-hrd vbr --vbv-maxrate 40000 --vbv-bufsize 30000 --level 4.1 --keyint 24 --b-pyramid strict --slices 4 --aud --colorprim \"bt709\" --transfer \"bt709\" --colormatrix \"bt709\" --sar 1:1 $fifofile --fps $fps -o \"$ofile\" $err";
+    if ($otype eq "mp4") {
+	$syscom="x264 --frames $end --crf 12 --threads auto --preset veryslow --tune animation $queuefile --fps $fps -o \"$ofile\"";
+    }
+    else {
+	$syscom="x264 --frames $end --crf 16 --threads auto --preset veryslow --tune film --weightp 0 --bframes 3 --nal-hrd vbr --vbv-maxrate 40000 --vbv-bufsize 30000 --level 4.1 --keyint 24 --b-pyramid strict --slices 4 --aud --colorprim \"bt709\" --transfer \"bt709\" --colormatrix \"bt709\" --sar 1:1 $queuefile --fps $fps -o \"$ofile\"";
+    }
 
-    print STDERR "Processing fifo with:\n$syscom\n";
+    print STDERR "Processing queue with:\n$syscom\n";
 
-    system($syscom);
+    system("$syscom $err");
 
 
     if ($audiofile ne "") {
 
-	$syscom="ffmpeg -i audiodump.wav -ab 192000 temp.aac $err";
+	$syscom="nohup ffmpeg -i audiodump.wav -acodec aac -strict experimental -ab 192k -ar 44100 -threads $threads temp.aac";
 	
 	print STDERR "Encoding audio with:\n$syscom\n";
 
-	system($syscom);
+	system("$syscom $err");
 
-	$syscom="MP4Box -fps $fps -add output.264 -add temp.aac \"$nfile\" $err";
-
+	$syscom="MP4Box -fps $fps -add $ofile -add temp.aac \"$nfile\"";
 	
 	print STDERR "Muxing with:\n$syscom\n";
 	
-	system($syscom);
+	system("$syscom $err");
 
     }
 
@@ -156,12 +186,13 @@ if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
 
-    $fifofile="264stream.yvm";
-    unlink $fifofile;
+    unlink $queuefile;
 
     unlink "output.264";
 
     unlink "temp.aac";
+
+    unlink "nohup.out";
 
     &sig_complete;
     exit 0;
@@ -194,3 +225,11 @@ sub get_format_request {
     return 7; # clipped wav, clipped frames
 }
 
+
+sub get_num_procs {
+    my $result=`cat /proc/cpuinfo|grep processor`;
+
+    $result=(split (/\n/,$result))[-1];
+    $result=(split (/: /,$result))[1];
+    return ++$result;
+}

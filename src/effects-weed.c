@@ -4985,6 +4985,7 @@ gchar *rte_keymode_get_plugin_name(gint key, gint mode) {
   filter=weed_filters[key_to_fx[key][mode]];
   plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
   name=weed_get_string_value(plugin_info,"name",&error);
+  // do this so we can g_free() instead of weed_free();
   retval=g_strdup(name);
   weed_free(name);
   return retval;

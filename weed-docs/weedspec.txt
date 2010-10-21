@@ -91,7 +91,10 @@ added WEED_FILTER_PROCESS_LAST
 Clarified meaning of YUV_subspace
 
 22/09/10 salsaman
-Clarified YUV_subsampling, changed value of default.
+Clarified YUV_subsampling, *changed value of default*.
+
+21/10/10 salsaman
+Clarified text about plugin data and icon directories.
 
 
 (C) Gabriel "Salsaman" Finch 2005 - 2010
@@ -1345,12 +1348,12 @@ should be searched for each entry. The directories should be searched
 in order, first to last, and any effects with duplicate Hashnames may
 be ignored. [See hashnames, below].
 
-Icons for each filter may be placed in an icons subdirectory. E.g: if
-WEED_PLUGIN_PATH is set to /usr/lib/weed, then
-/usr/lib/weed/<app>/icons/ would contain icons for plugins in /usr/lib/weed/<app>/
+Icons for each filter may be placed in a /icons subdirectory.
 
-Data files for each filter may be placed in a data subdirectory. E.g:
-/usr/lib/weed/<app>/data/ would contain data files for plugins in /usr/lib/weed/<app>/
+Redonly data files for each filter may be placed in a /data subdirectory.
+The host must run all plugin functions from within the directory above it, so that the plugin can easily 
+find its data files as data/file. In case the plugin needs to write to a file, it should either request a directory 
+location from the user (as a parameter), or else use (a subdirectory of) /tmp.
 
 Note: There is no need for API versioning of the weed directories themselves, as the
 weed_bootstrap system takes care of different Weed API versions.

@@ -1295,10 +1295,164 @@ void lives_osc_cb_bgclip_getfps(void *context, int arglen, const void *vargs, OS
 }
 
 
+void lives_osc_cb_getmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (status_socket==NULL) return;
+
+  if (mainw->multitrack!=NULL) lives_status_send("1");
+  else lives_status_send("0");
+}
+
+
+
+
+void lives_osc_cb_setmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  const char *tmp;
+  int mode;
+  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&mode);
+  }
+
+  if (mode==1&&mainw->multitrack==NULL) on_multitrack_activate(NULL,NULL);
+  else if (mainw->multitrack!=NULL) multitrack_delete(mainw->multitrack,FALSE);
+
+  if (mainw->multitrack!=NULL) tmp="1";
+  else tmp="0";
+
+  lives_osc_notify_success(tmp);
+ }
+
+
+void lives_osc_cb_clearlay(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (mainw->playing_file>-1||mainw->preview||mainw->is_processing||mainw->multitrack==NULL) return lives_osc_notify_failure();
+  wipe_layout(mainw->multitrack);
+  return lives_osc_notify_success(NULL);
+}
+
+
+void lives_osc_cb_blockcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  char *tmp;
+  int nblocks;
+  int track;
+  if (mainw->multitrack==NULL) return lives_osc_notify_failure();
+
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&track);
+
+  nblocks=mt_get_block_count(mainw->multitrack,track);
+
+  tmp=g_strdup_printf("%d",nblocks);
+  lives_status_send(tmp);
+  g_free(tmp);
+
+}
+
+
+void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int track;
+  float time;
+  int clip;
+  int opt;
+
+  gchar *tmp;
+
+  if (mainw->playing_file>-1||mainw->preview||mainw->is_processing||mainw->multitrack==NULL) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"ifii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ifii",TRUE);
+    lives_osc_parse_int_argument(vargs,&track);
+    lives_osc_parse_float_argument(vargs,&time);
+    lives_osc_parse_int_argument(vargs,&clip);
+    lives_osc_parse_int_argument(vargs,&opt);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"ifi",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ifi",TRUE);
+    lives_osc_parse_int_argument(vargs,&track);
+    lives_osc_parse_float_argument(vargs,&time);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+  else return lives_osc_notify_failure();
+
+  if (clip<1||mainw->files[clip]==NULL||clip==mainw->current_file||clip==mainw->scrap_file) 
+    return lives_osc_notify_failure();
+
+  // set ins pt, set sel clip, set sel track
+
+  if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
+    mt_tl_move(mainw->multitrack,time-GTK_RULER(mainw->multitrack->timeline)->position);
+    mainw->multitrack->clip_selected=clip;
+    mt_clip_select(mainw->multitrack,TRUE);
+    mainw->multitrack->current_track=track;
+    track_select(mainw->multitrack);
+    multitrack_insert(NULL,NULL);
+    mt_tl_move(mainw->multitrack,-GTK_RULER(mainw->multitrack->timeline)->position);
+  }
+  else return lives_osc_notify_failure();
+
+  tmp=g_strdup_printf("%d|%d",mainw->multitrack->current_track, 
+		      mt_get_last_block_number(mainw->multitrack, mainw->multitrack->current_track));
+
+  lives_osc_notify_success(tmp);
+  g_free(tmp);
+
+}
+
+
+void lives_osc_cb_blockstget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int track;
+  int nblock;
+  double sttime;
+  gchar *tmp;
+  if (mainw->multitrack==NULL) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&track);
+    lives_osc_parse_int_argument(vargs,&nblock);
+  }
+
+  if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
+    sttime=mt_get_block_sttime(mainw->multitrack,track,nblock);
+    if (sttime<0.) return lives_osc_notify_failure();
+    tmp=g_strdup_printf("%.8f",sttime);
+    lives_status_send(tmp);
+    g_free(tmp);
+  }
+  return lives_osc_notify_failure(); ///< invalid track
+}
+
+
+void lives_osc_cb_blockenget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int track;
+  int nblock;
+  double entime;
+  gchar *tmp;
+  if (mainw->multitrack==NULL) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&track);
+    lives_osc_parse_int_argument(vargs,&nblock);
+  }
+
+  if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
+    entime=mt_get_block_entime(mainw->multitrack,track,nblock);
+    if (entime<0.) return lives_osc_notify_failure();
+    tmp=g_strdup_printf("%.8f",entime);
+    lives_status_send(tmp);
+    g_free(tmp);
+  }
+  return lives_osc_notify_failure(); ///< invalid track
+}
+
+
+
 void lives_osc_cb_get_playtime(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar *tmp;
   if (status_socket==NULL) return;
-  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return;
+  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return lives_osc_notify_failure();
 
   lives_status_send ((tmp=g_strdup_printf ("%.8f",(double)mainw->currticks/U_SEC)));
   g_free(tmp);
@@ -2535,6 +2689,8 @@ static struct
     { "/video/stop",		"stop",	        lives_osc_cb_stop,				5	},
     { "/video/fps/set",	       "set",	lives_osc_cb_set_fps,			40	},
     { "/video/fps/get",	       "get",	lives_osc_cb_clip_getfps,			40	},
+    { "/lives/mode/set",	       "set",	lives_osc_cb_setmode,			103	},
+    { "/lives/mode/get",	       "get",	lives_osc_cb_getmode,			103	},
     { "/video/fps/ratio/set",	       "set",	lives_osc_cb_set_fps_ratio,			65	},
     { "/video/fps/ratio/get",	       "get",	lives_osc_cb_get_fps_ratio,			65	},
     { "/video/play/time/get",	       "get",	lives_osc_cb_get_playtime,			67	},
@@ -2630,13 +2786,18 @@ static struct
     { "/clip/name/set",	 "set",	        lives_osc_cb_clip_set_name,			59	},
     { "/clip/open/file",	 "file",	        lives_osc_cb_open_file,			33	},
     { "/output/fullscreen/enable",		"enable",	lives_osc_cb_fssepwin_enable,		28	},
-      { "/output/fullscreen/disable",		"disable",	lives_osc_cb_fssepwin_disable,       	28	},
-      { "/output/fps/set",		"set",	lives_osc_cb_op_fps_set,       	52	},
-      { "/output/nodrop/enable",		"enable",	lives_osc_cb_op_nodrope,       	30	},
-      { "/output/nodrop/disable",		"disable",	lives_osc_cb_op_nodropd,       	30	},
-      { "/clip/foreground/background/swap",		"swap",	lives_osc_cb_swap,       	53	},
-      { "/clipset/load",		"load",	lives_osc_cb_loadset,       	35	},
-      { "/clipset/save",		"save",	lives_osc_cb_saveset,       	35	},
+    { "/output/fullscreen/disable",		"disable",	lives_osc_cb_fssepwin_disable,       	28	},
+    { "/output/fps/set",		"set",	lives_osc_cb_op_fps_set,       	52	},
+    { "/output/nodrop/enable",		"enable",	lives_osc_cb_op_nodrope,       	30	},
+    { "/output/nodrop/disable",		"disable",	lives_osc_cb_op_nodropd,       	30	},
+    { "/clip/foreground/background/swap",		"swap",	lives_osc_cb_swap,       	53	},
+    { "/clipset/load",		"load",	lives_osc_cb_loadset,       	35	},
+    { "/clipset/save",		"save",	lives_osc_cb_saveset,       	35	},
+    { "/layout/clear",		"clear",	lives_osc_cb_clearlay,       	104	},
+    { "/block/count",		"count",	lives_osc_cb_blockcount,       	105	},
+    { "/block/insert",		"insert",	lives_osc_cb_blockinsert,       	105	},
+    { "/block/start/time/get",		"get",	lives_osc_cb_blockstget,       	111	},
+    { "/block/end/time/get",		"get",	lives_osc_cb_blockenget,       	112	},
     
     { NULL,					NULL,		NULL,							0	},
   };
@@ -2698,6 +2859,7 @@ static struct
     {	"/effect_key/usermode/" , 	"usermode",	 56, 25,0	},
     {	"/lives/" , 		"lives",	 21, -1,0	},
     {	"/lives/version" , 		"version",	 24, 21,0	},
+    {	"/lives/mode" , 		"mode",	 103, 21,0	},
     {	"/clipset/" , 		"clipset",	 35, -1,0	},
     {	"/app/" , 		"app",	         22, -1,0	},
     {	"/app/name/" , 		"name",	         23, 22,0	},
@@ -2710,6 +2872,12 @@ static struct
     {	"/notify/",   		"notify",		 100, -1,0	},
     {	"/notify/confirmations/",   		"confirmations",		 101, 100,0	},
     {	"/notify/events/",   		"events",		 102, 100,0	},
+    {	"/layout/",   		"layout",		 104, -1,0	},
+    {	"/block/",   		"block",		 105, -1,0	},
+    {	"/block/start/",   		"start",		 106, 105,0	},
+    {	"/block/start/time/",   		"start",		 111, 106,0	},
+    {	"/block/end/",   		"end",		 107, 105,0	},
+    {	"/block/end/time/",   		"end",		 112, 107,0	},
     {	NULL,			NULL,		0, -1,0		},
   };
 

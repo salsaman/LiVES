@@ -1253,7 +1253,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 
 
 
-static void track_select (lives_mt *mt) {
+void track_select (lives_mt *mt) {
   int i;
   GtkWidget *labelbox,*ahbox,*eventbox,*oeventbox,*checkbutton=NULL;
   gint hidden=0;
@@ -18566,6 +18566,36 @@ void remove_markers(weed_plant_t *event_list) {
 
 
 
+void wipe_layout(lives_mt *mt) {
+ if (mt->idlefunc>0) {
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
+  d_print(_("Layout was wiped.\n"));
+
+  close_scrap_file();
+
+  recover_layout_cancelled(NULL,NULL);
+
+  if (strlen(mt->layout_name)>0&&!strcmp(mt->layout_name,prefs->ar_layout_name)) {
+    set_pref("ar_layout","");
+    memset(prefs->ar_layout_name,0,1);
+    prefs->ar_layout=FALSE;
+  }
+  
+  event_list_free(mt->event_list);
+  mt->event_list=NULL;
+
+  event_list_free_undos(mt);
+
+  mt_clear_timeline(mt);
+
+  mt->idlefunc=mt_idle_add(mt);
+}
+
+
+
 
 void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
@@ -18625,27 +18655,7 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
   // wipe
-
-  d_print(_("Layout was wiped.\n"));
-
-  close_scrap_file();
-
-  recover_layout_cancelled(NULL,NULL);
-
-  if (strlen(mt->layout_name)>0&&!strcmp(mt->layout_name,prefs->ar_layout_name)) {
-    set_pref("ar_layout","");
-    memset(prefs->ar_layout_name,0,1);
-    prefs->ar_layout=FALSE;
-  }
-  
-  event_list_free(mt->event_list);
-  mt->event_list=NULL;
-
-  event_list_free_undos(mt);
-
-  mt_clear_timeline(mt);
-
-  mt->idlefunc=mt_idle_add(mt);
+  wipe_layout(mt);
 
 }
 
@@ -19626,4 +19636,105 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 
 void on_mt_showkeys_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do_mt_keys_window();
+}
+
+
+// remote API helpers
+
+gboolean mt_track_is_video(lives_mt *mt, int ntrack) {
+  if (ntrack>=0&&mt->video_draws!=NULL&&ntrack<g_list_length(mt->video_draws)) return TRUE;
+  return FALSE;
+}
+
+
+gboolean mt_track_is_audio(lives_mt *mt, int ntrack) {
+  if (ntrack<=0&&mt->audio_draws!=NULL&&ntrack>=-(g_list_length(mt->audio_draws))) return TRUE;
+  return FALSE;
+}
+
+/*
+gboolean mt_track_is_valid(lives_mt *mt, int itrack) {
+  if (!mt_track_is_video(itrack)&&!mt_track_is_audio(itrack)) return FALSE;
+  return TRUE;
+  }*/
+
+static GtkWidget *get_eventbox_for_track(lives_mt *mt, int ntrack) {
+  GtkWidget *eventbox;
+  if (mt_track_is_video(mt,ntrack)) {
+    eventbox=(GtkWidget *)g_list_nth_data(mt->video_draws, ntrack);
+  }
+  else if (mt_track_is_audio(mt,ntrack)) {
+    eventbox=(GtkWidget *)g_list_nth_data(mt->audio_draws, 1-ntrack);
+  }
+  else return NULL;
+  return eventbox;
+}
+
+
+gint mt_get_last_block_number(lives_mt *mt, int ntrack) {
+  int count=0;
+  track_rect *block,*lastblock;
+  GtkWidget *eventbox=get_eventbox_for_track(mt,ntrack);
+  if (eventbox==NULL) return -1; //<invalid track
+  lastblock=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"block_last");
+  if (lastblock==NULL) return -1; ///< no blocks in track
+  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  while(block!=NULL) {
+    if (block==lastblock) break;
+    block=block->next;
+    count++;
+  }
+
+  return count;
+}
+
+
+
+gint mt_get_block_count(lives_mt *mt, int ntrack) {
+  int count=0;
+  track_rect *block,*lastblock;
+  GtkWidget *eventbox=get_eventbox_for_track(mt,ntrack);
+  if (eventbox==NULL) return -1; //<invalid track
+  lastblock=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"block_last");
+  if (lastblock==NULL) return -1; ///< no blocks in track
+  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  while(block!=NULL) {
+    if (block==lastblock) break;
+    block=block->next;
+    count++;
+  }
+
+  return count;
+}
+
+
+static track_rect *get_nth_block_for_track(lives_mt *mt, int itrack, int iblock) {
+  int count=0;
+  track_rect *block;
+  GtkWidget *eventbox=get_eventbox_for_track(mt,itrack);
+  if (eventbox==NULL) return NULL; //<invalid track
+  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  while(block!=NULL) {
+    if (count==iblock) return block;
+    block=block->next;
+    count++;
+  }
+
+  return NULL; ///<invalid block
+}
+
+
+/// return time in seconds of first frame event in block
+gdouble mt_get_block_sttime(lives_mt *mt, int ntrack, int iblock) {
+  track_rect *block=get_nth_block_for_track(mt,ntrack,iblock);
+  if (block==NULL) return -1; ///< invalid track or block number
+  return (gdouble)get_event_timecode(block->start_event)/U_SEC;
+}
+
+
+/// return time in seconds of last frame event in block, + event duration
+gdouble mt_get_block_entime(lives_mt *mt, int ntrack, int iblock) {
+  track_rect *block=get_nth_block_for_track(mt,ntrack,iblock);
+  if (block==NULL) return -1; ///< invalid track or block number
+  return (gdouble)get_event_timecode(block->end_event)/U_SEC+1./mt->fps;
 }

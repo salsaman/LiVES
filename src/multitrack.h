@@ -738,6 +738,10 @@ void on_insgap_cur_activate (GtkMenuItem *, gpointer mt);
 void on_split_activate (GtkMenuItem *, gpointer mt);
 void scroll_tracks (lives_mt *, gint top_track);
 gboolean track_arrow_pressed (GtkWidget *ahbox, GdkEventButton *, gpointer mt);
+void track_select (lives_mt *); ///< must call after setting mt->current_track
+gboolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
+gboolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
+
 
 // track mouse movement
 gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *, gpointer mt);
@@ -764,6 +768,13 @@ void in_anchor_toggled (GtkToggleButton *, gpointer mt);
 void out_anchor_toggled (GtkToggleButton *, gpointer mt);
 void avel_reverse_toggled (GtkToggleButton *, gpointer mt);
 void avel_spin_changed (GtkSpinButton *, gpointer mt);
+
+// block API functions
+gint mt_get_last_block_number(lives_mt *, int ntrack); ///< get index of last inserted (wallclock time) block for track
+gint mt_get_block_count(lives_mt *, int ntrack); ///< count blocks in track
+gdouble mt_get_block_sttime(lives_mt *, int ntrack, int iblock); /// get timeline start time of block
+gdouble mt_get_block_entime(lives_mt *, int ntrack, int iblock); /// get timeline end time of block
+
 
 // timeline functions
 void mt_tl_move(lives_mt *, gdouble pos_rel);
@@ -848,6 +859,8 @@ GList *load_layout_map(void);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
 void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gchar *dir);
+
+void wipe_layout(lives_mt *);
 
 void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name);
 

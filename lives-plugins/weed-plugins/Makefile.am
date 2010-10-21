@@ -70,3 +70,9 @@ fxpluginslib_LTLIBRARIES = alien_overlay.la \
 	xeffect.la \
 	$(frei0r_libs) \
 	$(libvis_libs)
+
+EXTRA_DIST=data/* icons/*
+
+install-data-local:
+	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
+	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)

@@ -2905,9 +2905,9 @@ void weed_load_all (void) {
 
   pthread_mutex_lock(&mainw->gtk_mutex);
   weed_p_path=getenv("WEED_PLUGIN_PATH");
-  if (weed_p_path==NULL) weed_p_path=g_strdup("");
-  weed_plugin_path=g_strdup(weed_p_path);
-  g_free(weed_p_path);
+  if (weed_p_path==NULL) weed_plugin_path=g_strdup("");
+  else weed_plugin_path=g_strdup(weed_p_path);
+
   if (strstr(weed_plugin_path,lives_weed_plugin_path)==NULL) {
     gchar *tmp=g_strconcat(strcmp(weed_plugin_path,"")?":":"",lives_weed_plugin_path,NULL);
     g_free(weed_plugin_path);
@@ -2933,28 +2933,26 @@ void weed_load_all (void) {
       if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3)) {
 	plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
 	load_weed_plugin(plugin_name,plugin_path,dirs[i]);
+	g_free(plugin_name);
 	g_free(plugin_path);
 	weed_plugin_list=g_list_delete_link(weed_plugin_list,g_list_nth(weed_plugin_list,plugin_idx));
 	plugin_idx--;
 	listlen--;
       }
-      g_free(plugin_name);
       pthread_mutex_unlock(&mainw->gtk_mutex);
 
     }
-    
+
     // get 1 level of subdirs
     for (subdir_idx=0;subdir_idx<listlen;subdir_idx++) {
       pthread_mutex_lock(&mainw->gtk_mutex);
       subdir_name=g_list_nth_data(weed_plugin_list,subdir_idx);
       subdir_path=g_strdup_printf("%s/%s",dirs[i],subdir_name);
       if (!g_file_test(subdir_path, G_FILE_TEST_IS_DIR)||!strcmp(subdir_name,"icons")||!strcmp(subdir_name,"data")) {
-	g_free(subdir_name);
 	g_free(subdir_path);
 	pthread_mutex_unlock(&mainw->gtk_mutex);
 	continue;
       }
-      g_free(subdir_name);
       weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,"so");
       
       for (plugin_idx=0;plugin_idx<g_list_length(weed_plugin_sublist);plugin_idx++) {

@@ -22,6 +22,8 @@ endif
 
 fxpluginslib_LTLIBRARIES = gdk_fast_resize.la compositor.la videowall.la scribbler.la puretext.la $(vjack_libs) 
 
+EXTRA_DIST=data/* icons/*
 
-
-
+install-data-local:
+	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
+	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)

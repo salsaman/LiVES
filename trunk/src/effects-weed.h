@@ -53,6 +53,7 @@ gboolean has_usable_palette(weed_plant_t *chantmpl);
 
 void weed_call_deinit_func(weed_plant_t *instance);
 
+gchar *cd_to_plugin_dir(weed_plant_t *filter);
 gboolean weed_init_effect(int hotkey); ///< hotkey starts at 1
 void weed_deinit_effect(int hotkey); ///< hotkey starts at 1
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);

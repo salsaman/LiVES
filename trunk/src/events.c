@@ -2987,13 +2987,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
       inst=rte_keymode_get_instance(key+1,0);
       num_params=num_in_params(inst,TRUE,TRUE);
       if (num_params>0) {
-	if (weed_plant_has_leaf(filter,"deinit_func")) {
-	  weed_deinit_f *deinit_func_ptr_ptr;
-	  weed_deinit_f deinit_func;
-	  weed_leaf_get(filter,"deinit_func",0,(void *)&deinit_func_ptr_ptr);
-	  deinit_func=deinit_func_ptr_ptr[0];
-	  if (deinit_func!=NULL) (*deinit_func)(inst);
-	}
+	weed_call_deinit_func(inst);
 	if (weed_plant_has_leaf(next_event,"in_parameters")) {
 	  source_params=(weed_plant_t **)weed_get_voidptr_array(next_event,"in_parameters",&error);
 	  in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
@@ -3014,7 +3008,12 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 	  init_func=init_func_ptr_ptr[0];
 	  set_param_gui_readwrite(inst);
 	  update_host_info(inst);
-	  if (init_func!=NULL) (*init_func)(inst);
+	  if (init_func!=NULL) {
+	    gchar *cwd=cd_to_plugin_dir(filter);
+	    (*init_func)(inst);
+	    dummyvar=chdir(cwd);
+	    g_free(cwd);
+	  }
 	  set_param_gui_readonly(inst);
 	}
       }
@@ -3365,13 +3364,7 @@ gint render_events (gboolean reset) {
       inst=rte_keymode_get_instance(key+1,0);
       num_params=num_in_params(inst,TRUE,TRUE);
       if (num_params>0) {
-	if (weed_plant_has_leaf(filter,"deinit_func")) {
-	  weed_deinit_f *deinit_func_ptr_ptr;
-	  weed_deinit_f deinit_func;
-	  weed_leaf_get(filter,"deinit_func",0,(void *)&deinit_func_ptr_ptr);
-	  deinit_func=deinit_func_ptr_ptr[0];
-	  if (deinit_func!=NULL) (*deinit_func)(inst);
-	}
+	weed_call_deinit_func(inst);
 	source_params=(weed_plant_t **)weed_get_voidptr_array(event,"in_parameters",&weed_error);
 	in_params=weed_get_plantptr_array(inst,"in_parameters",&weed_error);
 	for (i=0;i<num_params;i++) {
@@ -3385,7 +3378,12 @@ gint render_events (gboolean reset) {
 	  init_func=init_func_ptr_ptr[0];
 	  set_param_gui_readwrite(inst);
 	  update_host_info(inst);
-	  if (init_func!=NULL) (*init_func)(inst);
+	  if (init_func!=NULL) {
+	    gchar *cwd=cd_to_plugin_dir(filter);
+	    (*init_func)(inst);
+	    dummyvar=chdir(cwd);
+	    g_free(cwd);
+	  }
 	  set_param_gui_readonly(inst);
 	}
 	if (weed_plant_has_leaf(event,"in_parameters")) {

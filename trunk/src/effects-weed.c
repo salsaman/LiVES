@@ -900,24 +900,42 @@ void set_param_gui_readwrite (weed_plant_t *inst) {
   }
 }
 
-
+/// change directory to plugin installation dir so it can find any data files
+///
+/// returns copy of current directory (before directory change) which should be freed after use 
+gchar *cd_to_plugin_dir(weed_plant_t *filter) {
+  char cwd[PATH_MAX];
+  int error;
+  weed_plant_t *plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
+  char *dcwd;
+  char *ppath=weed_get_string_value(plugin_info,"plugin_path",&error);
+  dcwd=getcwd(cwd,PATH_MAX);
+  dummyvar=chdir(ppath);
+  return g_strdup(cwd);
+}
 
 gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
   int error;
   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
+  gchar *cwd;
 
   if (deinit_first) weed_call_deinit_func(inst);
+
 
   if (weed_plant_has_leaf(filter,"init_func")) {
     weed_init_f *init_func_ptr_ptr;
     weed_init_f init_func;
     weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
     init_func=init_func_ptr_ptr[0];
+    cwd=cd_to_plugin_dir(filter);
     if (init_func!=NULL) {
       lives_rfx_t *rfx;
       set_param_gui_readwrite(inst);
       update_host_info(inst);
-      if ((*init_func)(inst)!=WEED_NO_ERROR) return FILTER_ERROR_COULD_NOT_REINIT;
+      if ((*init_func)(inst)!=WEED_NO_ERROR) {
+	dummyvar=chdir(cwd);
+	return FILTER_ERROR_COULD_NOT_REINIT;
+      }
       set_param_gui_readonly(inst);
       if (fx_dialog[1]!=NULL) {
 	// redraw GUI if necessary
@@ -932,6 +950,8 @@ gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
 	redraw_mt_param_box(mainw->multitrack);
     }
     if (!deinit_first) weed_call_deinit_func(inst);
+    dummyvar=chdir(cwd);
+    g_free(cwd);
     return FILTER_INFO_REINITED;
   }
   return FILTER_NO_ERROR;
@@ -1922,13 +1942,18 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 	weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
 	init_func=init_func_ptr_ptr[0];
 	if (init_func!=NULL) {
+	  gchar *cwd=cd_to_plugin_dir(filter);
 	  set_param_gui_readwrite(instance);
 	  update_host_info(instance);
 	  if ((*init_func)(instance)!=WEED_NO_ERROR) {
 	    key_to_instance[key][key_modes[key]]=NULL;
+	    dummyvar=chdir(cwd);
+	    g_free(cwd);
 	    return FILTER_ERROR_COULD_NOT_REINIT;
 	  }
 	  set_param_gui_readonly(instance);
+	  dummyvar=chdir(cwd);
+	  g_free(cwd);
 	}
       }
       retval=FILTER_INFO_REINITED;
@@ -2197,14 +2222,9 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
 static int check_weed_plugin_info (weed_plant_t *plugin_info) {
   // verify the plugin_info returned from the plugin
   // TODO - print descriptive errors
-  weed_plant_t *host_info;
-  int error;
-
   if (!weed_plant_has_leaf(plugin_info,"host_info")) return -1;
   if (!weed_plant_has_leaf(plugin_info,"version")) return -2;
   if (!weed_plant_has_leaf(plugin_info,"filters")) return -3;
-  host_info=weed_get_plantptr_value(plugin_info,"host_info",&error);
-
   return weed_leaf_num_elements(plugin_info,"filters");
 }
 
@@ -2683,7 +2703,7 @@ static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
 
 
 
-static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path) {
+static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir) {
   gchar *filter_name;
   weed_setup_f setup_fn;
   weed_bootstrap_f bootstrap=(weed_bootstrap_f)&weed_bootstrap_func;
@@ -2697,6 +2717,10 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path) {
   int i;
   gchar *string,*filter_type;
   GtkWidget *menuitem;
+  char cwd[PATH_MAX];
+  char *dchar;
+
+  dchar=getcwd(cwd,PATH_MAX);
 
   key++;
 
@@ -2724,20 +2748,25 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path) {
       
       // if we use the plugin, we must not free the plugin_info, since the plugin has a reference to this
       
+      // chdir to plugin dir, in case it needs to load data
+      dummyvar=chdir(dir);
+
       plugin_info=(*setup_fn)(bootstrap);
       if (plugin_info==NULL||(filters_in_plugin=check_weed_plugin_info(plugin_info))<1) {
 	g_printerr ("error loading plugin %s\n",plugin_path);
 	if (plugin_info!=NULL) weed_plant_free(plugin_info);
 	dlclose (handle);
+	dummyvar=chdir(cwd);
 	return;
       }
     
       weed_set_voidptr_value(plugin_info,"handle",handle);
       weed_set_string_value(plugin_info,"name",plugin_name); // for hashname
+      weed_set_string_value(plugin_info,"plugin_path",dir);
       weed_add_plant_flags(plugin_info,WEED_LEAF_READONLY_PLUGIN);
       
       filters=weed_get_plantptr_array(plugin_info,"filters",&error);
-      
+
       while (idx<MAX_WEED_FILTERS&&mode<filters_in_plugin-1) {
 	mode++;
 	filter_name=weed_get_string_value(filters[mode],"name",&error);
@@ -2797,6 +2826,8 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path) {
     }
   }
   else g_printerr(_("Info: Unable to load plugin %s\nError was: %s\n"),plugin_path,dlerror());
+
+  dummyvar=chdir(cwd);
 
   // TODO - add any rendered effects to fx submenu
 }
@@ -2877,7 +2908,6 @@ void weed_load_all (void) {
   if (weed_p_path==NULL) weed_p_path=g_strdup("");
   weed_plugin_path=g_strdup(weed_p_path);
   g_free(weed_p_path);
-  if (weed_plugin_path==NULL) weed_plugin_path=g_strdup("");
   if (strstr(weed_plugin_path,lives_weed_plugin_path)==NULL) {
     gchar *tmp=g_strconcat(strcmp(weed_plugin_path,"")?":":"",lives_weed_plugin_path,NULL);
     g_free(weed_plugin_path);
@@ -2893,20 +2923,22 @@ void weed_load_all (void) {
 
   for (i=0;i<numdirs;i++) {
     // get list of all files
-    weed_plugin_list=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,dirs[i],"so");
+    weed_plugin_list=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,dirs[i],NULL);
     listlen=g_list_length(weed_plugin_list);
     
     // parse twice, first we get the plugins, then 1 level of subdirs
     for (plugin_idx=0;plugin_idx<listlen;plugin_idx++) {
       pthread_mutex_lock(&mainw->gtk_mutex);
       plugin_name=g_list_nth_data(weed_plugin_list,plugin_idx);
-      plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
-      load_weed_plugin(plugin_name,plugin_path);
+      if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3)) {
+	plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
+	load_weed_plugin(plugin_name,plugin_path,dirs[i]);
+	g_free(plugin_path);
+	weed_plugin_list=g_list_delete_link(weed_plugin_list,g_list_nth(weed_plugin_list,plugin_idx));
+	plugin_idx--;
+	listlen--;
+      }
       g_free(plugin_name);
-      weed_plugin_list=g_list_delete_link(weed_plugin_list,g_list_nth(weed_plugin_list,plugin_idx));
-      plugin_idx--;
-      listlen--;
-      g_free(plugin_path);
       pthread_mutex_unlock(&mainw->gtk_mutex);
 
     }
@@ -2928,7 +2960,7 @@ void weed_load_all (void) {
       for (plugin_idx=0;plugin_idx<g_list_length(weed_plugin_sublist);plugin_idx++) {
 	plugin_name=g_list_nth_data(weed_plugin_sublist,plugin_idx);
 	plugin_path=g_strdup_printf("%s/%s",subdir_path,plugin_name);
-	load_weed_plugin(plugin_name,plugin_path);
+	load_weed_plugin(plugin_name,plugin_path,subdir_path);
 	g_free(plugin_name);
 	g_free(plugin_path);
       }
@@ -3086,8 +3118,11 @@ void weed_unload_all(void) {
 
     if (handle!=NULL&&prefs->startup_phase==0) {
       if ((desetup_fn=dlsym (handle,"weed_desetup"))!=NULL) {
+	gchar *cwd=cd_to_plugin_dir(filter);
 	// call weed_desetup()
 	(*desetup_fn)();
+	dummyvar=chdir(cwd);
+	g_free(cwd);
       }
 
       pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -3658,6 +3693,7 @@ gboolean weed_init_effect(int hotkey) {
     if (weed_plant_has_leaf(filter,"init_func")) {
       weed_init_f *init_func_ptr_ptr;
       weed_init_f init_func;
+      gchar *cwd=cd_to_plugin_dir(filter);
       weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
       init_func=init_func_ptr_ptr[0];
       if (init_func!=NULL&&(error=(*init_func)(new_instance))!=WEED_NO_ERROR) {
@@ -3670,6 +3706,8 @@ gboolean weed_init_effect(int hotkey) {
 	weed_instance_unref(new_instance);
 	key_to_instance[hotkey][key_modes[hotkey]]=NULL;
 	if (is_trans) mainw->num_tr_applied--;
+	dummyvar=chdir(cwd);
+	g_free(cwd);
 	return FALSE;
       }
     }
@@ -3753,7 +3791,12 @@ void weed_call_deinit_func(weed_plant_t *instance) {
     weed_deinit_f deinit_func;
     weed_leaf_get(filter,"deinit_func",0,(void *)&deinit_func_ptr_ptr);
     deinit_func=deinit_func_ptr_ptr[0];
-    if (deinit_func!=NULL) (*deinit_func)(instance);
+    if (deinit_func!=NULL) {
+      gchar *cwd=cd_to_plugin_dir(filter);
+      (*deinit_func)(instance);
+      dummyvar=chdir(cwd);
+      g_free(cwd);
+    }
   }
 }
 
@@ -3881,13 +3924,14 @@ void weed_deinit_all(void) {
 
 weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t *channel,**out_channels;
-  int num_channels;
   weed_plant_t *filter;
+  weed_plant_t *chantmpl;
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
+  int num_channels;
   int error;
   int palette;
-  weed_plant_t *chantmpl;
+  gchar *cwd;
 
   if (inst==NULL) return NULL;
   if ((num_channels=weed_leaf_num_elements(inst,"out_channels"))==0) return NULL;
@@ -3922,7 +3966,10 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   filter=weed_get_plantptr_value(inst,"filter_class",&error);
   weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
   process_func=process_func_ptr_ptr[0];
+  cwd=cd_to_plugin_dir(filter);
   process_func(inst,tc);
+  dummyvar=chdir(cwd);
+  g_free(cwd);
 
   return channel;
 }
@@ -4167,7 +4214,12 @@ gboolean weed_playback_gen_start (void) {
 	  weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
 	  init_func=init_func_ptr_ptr[0];
 	  update_host_info(inst);
-	  if (init_func!=NULL) error=(*init_func)(inst);
+	  if (init_func!=NULL) {
+	    gchar *cwd=cd_to_plugin_dir(filter);
+	    error=(*init_func)(inst);
+	    dummyvar=chdir(cwd);
+	    g_free(cwd);
+	  }
 	}
       }
       if (error!=WEED_NO_ERROR) {
@@ -4230,7 +4282,12 @@ gboolean weed_playback_gen_start (void) {
 	    weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
 	    init_func=init_func_ptr_ptr[0];
 	    update_host_info(inst);
-	    if (init_func!=NULL) error=(*init_func)(inst);
+	    if (init_func!=NULL) {
+	      gchar *cwd=cd_to_plugin_dir(filter);
+	      error=(*init_func)(inst);
+	      dummyvar=chdir(cwd);
+	      g_free(cwd);
+	    }
 	  }
 	}
       }
@@ -4500,9 +4557,10 @@ char *get_weed_display_string (weed_plant_t *inst, int pnum) {
   // TODO - for setting defaults, we will need to create params
   char *disp_string;
   weed_plant_t *param=weed_inst_in_param(inst,pnum,FALSE);
-  weed_plant_t *ptmpl,*gui;
+  weed_plant_t *ptmpl,*gui,*filter;
   int error;
   weed_display_f display_func;
+  gchar *cwd;
 
   if (param==NULL) return NULL;
 
@@ -4514,7 +4572,11 @@ char *get_weed_display_string (weed_plant_t *inst, int pnum) {
   display_func=weed_get_voidptr_value(gui,"display_func",&error);
 
   weed_leaf_set_flags(gui,"display_value",(weed_leaf_get_flags(gui,"display_value")|WEED_LEAF_READONLY_PLUGIN)^WEED_LEAF_READONLY_PLUGIN);
+  filter=weed_get_plantptr_value(inst,"filter_class",&error);
+  cwd=cd_to_plugin_dir(filter);
   (*display_func)(param);
+  dummyvar=chdir(cwd);
+  g_free(cwd);
   weed_leaf_set_flags(gui,"display_value",(weed_leaf_get_flags(gui,"display_value")|WEED_LEAF_READONLY_PLUGIN));
 
   if (!weed_plant_has_leaf(gui,"display_value")) return NULL;
@@ -5615,7 +5677,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
     gboolean needs_more;
     gboolean more_available;
     weed_interpolate_f interpolate_func;
-    weed_plant_t *calc_param=weed_plant_new(WEED_PLANT_PARAMETER);
+    weed_plant_t *calc_param=weed_plant_new(WEED_PLANT_PARAMETER),*filter;
+    gchar *cwd;
 
     // setup our calc_param (return result)
     weed_set_plantptr_value(calc_param,"template",wtmpl);
@@ -5641,8 +5704,12 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
     
     weed_add_plant_flags(calc_param,WEED_LEAF_READONLY_PLUGIN);
     interpolate_func=weed_get_voidptr_value(wtmpl,"interpolate_func",&error);
+    filter=weed_get_plantptr_value(inst,"filter_class",&error);
+    cwd=cd_to_plugin_dir(filter);
     needs_more=(*interpolate_func)(param_array,calc_param);
-    
+    dummyvar=chdir(cwd);
+    g_free(cwd);
+
     if (needs_more==WEED_FALSE||!more_available) {
       // got an accurate result from 2 points
       weed_leaf_copy(param,"value",calc_param,"value");

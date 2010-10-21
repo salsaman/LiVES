@@ -200,7 +200,7 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
   // allow_nonex to allow non-executable files (e.g. libs)
   // filter_ext can be non-NULL to filter for files ending .filter_ext
 
-  // TODO - use numbers for plugin_type ?
+  // TODO - use enum for plugin_type
 
   gchar *com,*tmp;
   GList *pluglist;

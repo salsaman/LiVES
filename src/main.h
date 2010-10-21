@@ -136,7 +136,11 @@ POSSIBILITY OF SUCH DAMAGES.
 #define LIVES_INLINE
 #endif
 
+#include <limits.h>
 
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 #ifdef __GNUC__
 #  define WARN_UNUSED  __attribute__((warn_unused_result))

@@ -1,6 +1,6 @@
 Quick example:
 
-sh: sendOSC -h localhost 9999
+sh: sendOSC -h localhost 49999
 
 /video/play
 /clip/select 2

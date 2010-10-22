@@ -1,9 +1,9 @@
 #N canvas 484 166 450 300 10;
 #X obj 165 249 sendOSC;
-#X msg 50 191 connect 127.0.0.1 9999;
+#X msg 50 191 connect 127.0.0.1 49999;
 #X msg 48 148 disconnect;
 #X obj 260 203 print;
-#X msg 122 34 send /lives/open_notify_socket 127.0.0.1 9997;
+#X msg 122 34 send /lives/open_notify_socket 127.0.0.1 49997;
 #X msg 180 71 send /video/play;
 #X obj 259 160 netreceive 9997 1;
 #X msg 191 108 send /video/stop;

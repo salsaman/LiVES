@@ -9406,7 +9406,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
     mainw->preview_box=NULL;
   }
-  
+
   if (mainw->play_window!=NULL) {
     g_signal_handlers_block_matched(mainw->play_window,G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED,0,0,0,(gpointer)expose_play_window,NULL);
     g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
@@ -9421,7 +9421,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   if (cfile->achans>0&&prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
     do_mt_no_jack_error(WARN_MASK_MT_NO_JACK);
   }
-
 
   if (prefs->gui_monitor!=0) {
     gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-multi->window->allocation.width)/2;
@@ -9440,17 +9439,17 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
 
   if (transfer_focus) gtk_window_present(GTK_WINDOW(multi->window));
 
-#ifdef ENABLE_OSC
-  lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_MT)));
-  g_free(tmp);
-#endif
-
   if (multi->idlefunc==0) {
     multi->idlefunc=mt_idle_add(multi);
   }
 
   mainw_was_ready=mainw->is_ready;
   mainw->is_ready=TRUE;
+
+#ifdef ENABLE_OSC
+  lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_MT)));
+  g_free(tmp);
+#endif
 
   return TRUE;
 }
@@ -15113,7 +15112,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
     rep_frames[track]=frame;
 
     // TODO - memcheck
-    mt->event_list=insert_frame_event_at (mt->event_list,last_tc,numframes,rep_clips,rep_frames,&shortcut1);
+    mt->event_list=insert_frame_event_at (mt->event_list,q_gint64(last_tc,mt->fps),numframes,rep_clips,rep_frames,&shortcut1);
 
     if (rep_clips!=clips&&rep_clips!=NULL) g_free(rep_clips);
     if (rep_frames!=frames&&rep_frames!=NULL) g_free(rep_frames);
@@ -18567,17 +18566,23 @@ void remove_markers(weed_plant_t *event_list) {
 
 
 void wipe_layout(lives_mt *mt) {
+  g_print("clr3x done\n");
+
  if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
   }
+  g_print("clr4x done\n");
 
   d_print(_("Layout was wiped.\n"));
+  g_print("clr5x done\n");
 
   close_scrap_file();
+  g_print("clr3z done\n");
 
   recover_layout_cancelled(NULL,NULL);
 
+  g_print("clr2 done\n");
   if (strlen(mt->layout_name)>0&&!strcmp(mt->layout_name,prefs->ar_layout_name)) {
     set_pref("ar_layout","");
     memset(prefs->ar_layout_name,0,1);
@@ -18586,12 +18591,16 @@ void wipe_layout(lives_mt *mt) {
   
   event_list_free(mt->event_list);
   mt->event_list=NULL;
+  g_print("clr3 done\n");
 
   event_list_free_undos(mt);
+  g_print("clr4 done\n");
 
   mt_clear_timeline(mt);
+  g_print("clr5 done\n");
 
   mt->idlefunc=mt_idle_add(mt);
+  g_print("clr done\n");
 }
 
 

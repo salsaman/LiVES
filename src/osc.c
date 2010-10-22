@@ -20,6 +20,7 @@
 #include "effects.h"
 #include "support.h"
 #include "rte_window.h"
+#include "resample.h"
 
 
 void *status_socket;
@@ -1306,7 +1307,6 @@ void lives_osc_cb_getmode(void *context, int arglen, const void *vargs, OSCTimeT
 
 
 void lives_osc_cb_setmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  const char *tmp;
   int mode;
   if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) return lives_osc_notify_failure();
 
@@ -1315,15 +1315,12 @@ void lives_osc_cb_setmode(void *context, int arglen, const void *vargs, OSCTimeT
     lives_osc_parse_int_argument(vargs,&mode);
   }
 
+  // these two will send a status changed message
   if (mode==1&&mainw->multitrack==NULL) on_multitrack_activate(NULL,NULL);
-  else if (mainw->multitrack!=NULL) multitrack_delete(mainw->multitrack,FALSE);
-
-  if (mainw->multitrack!=NULL) tmp="1";
-  else tmp="0";
-
-  lives_osc_notify_success(tmp);
- }
-
+  else if (mode==0&&mainw->multitrack!=NULL) multitrack_delete(mainw->multitrack,FALSE);
+  if (mainw->multitrack!=NULL) lives_osc_notify_success("1");
+  else lives_osc_notify_success("0");
+}
 
 void lives_osc_cb_clearlay(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->playing_file>-1||mainw->preview||mainw->is_processing||mainw->multitrack==NULL) return lives_osc_notify_failure();
@@ -1381,12 +1378,13 @@ void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCT
   // set ins pt, set sel clip, set sel track
 
   if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
+    time=q_gint64(time,mainw->multitrack->fps); // quantise to mt fps
     mt_tl_move(mainw->multitrack,time-GTK_RULER(mainw->multitrack->timeline)->position);
-    mainw->multitrack->clip_selected=clip;
+    mainw->multitrack->clip_selected=clip-1;
     mt_clip_select(mainw->multitrack,TRUE);
     mainw->multitrack->current_track=track;
     track_select(mainw->multitrack);
-    multitrack_insert(NULL,NULL);
+    multitrack_insert(NULL,mainw->multitrack);
     mt_tl_move(mainw->multitrack,-GTK_RULER(mainw->multitrack->timeline)->position);
   }
   else return lives_osc_notify_failure();
@@ -1419,6 +1417,7 @@ void lives_osc_cb_blockstget(void *context, int arglen, const void *vargs, OSCTi
     tmp=g_strdup_printf("%.8f",sttime);
     lives_status_send(tmp);
     g_free(tmp);
+    return;
   }
   return lives_osc_notify_failure(); ///< invalid track
 }
@@ -1443,6 +1442,7 @@ void lives_osc_cb_blockenget(void *context, int arglen, const void *vargs, OSCTi
     tmp=g_strdup_printf("%.8f",entime);
     lives_status_send(tmp);
     g_free(tmp);
+    return;
   }
   return lives_osc_notify_failure(); ///< invalid track
 }
@@ -2875,9 +2875,9 @@ static struct
     {	"/layout/",   		"layout",		 104, -1,0	},
     {	"/block/",   		"block",		 105, -1,0	},
     {	"/block/start/",   		"start",		 106, 105,0	},
-    {	"/block/start/time/",   		"start",		 111, 106,0	},
+    {	"/block/start/time/",   		"time",		 111, 106,0	},
     {	"/block/end/",   		"end",		 107, 105,0	},
-    {	"/block/end/time/",   		"end",		 112, 107,0	},
+    {	"/block/end/time/",   		"time",		 112, 107,0	},
     {	NULL,			NULL,		0, -1,0		},
   };
 
@@ -3147,7 +3147,7 @@ gboolean lives_osc_init(guint udp_port) {
 gboolean lives_osc_poll(gpointer data) {
   // data is always NULL
   // must return TRUE
-  if (!mainw->osc_block&&mainw->multitrack==NULL&&livesOSC!=NULL) lives_osc_get_packet(livesOSC);
+  if (!mainw->osc_block&&livesOSC!=NULL) lives_osc_get_packet(livesOSC);
   return TRUE;
 }
 

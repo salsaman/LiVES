@@ -7,9 +7,9 @@
 
 // this is a system for monitoring LiVES using OSC
 
-// for example, LiVES can be started like: lives -oscstart 9999
-// a client can then connect to UDP port 9999, and can ask LiVES to open a notify socket on UDP port 9997
-//   sendOSC -host localhost 9999 /lives/open_notify_socket,9997
+// for example, LiVES can be started like: lives -oscstart 49999
+// a client can then connect to UDP port 49999, and can ask LiVES to open a notify socket on UDP port 49997
+//   sendOSC -host localhost 49999 /lives/open_notify_socket,49997
 //
 // LiVES will then send messages of the form:
 //   msg_number|msg_string 

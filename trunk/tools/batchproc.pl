@@ -18,9 +18,9 @@ use IO::Socket::UNIX;
 
 
 $remote_host="localhost";
-$remote_port=9999; #command port to app
-$local_port=9998; #status port from app
-$monitor_port=9997; #monitor port from app
+$remote_port=49999; #command port to app
+$local_port=49998; #status port from app
+$monitor_port=49997; #monitor port from app
 
 if (defined($ARGV[0])) {
     $cmd=$ARGV[0];

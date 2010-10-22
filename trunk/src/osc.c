@@ -1247,6 +1247,27 @@ void lives_osc_cb_clip_getfps(void *context, int arglen, const void *vargs, OSCT
 }
 
 
+void lives_osc_cb_clip_get_ifps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *tmp;
+  file *sfile;
+  int clip=mainw->current_file;
+
+  if (status_socket==NULL) return;
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clip);
+  }
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
+
+  sfile=mainw->files[clip];
+  if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=g_strdup_printf ("%.3f",sfile->fps)));
+  else lives_status_send ((tmp=g_strdup_printf ("%.3f",sfile->pb_fps)));
+  g_free(tmp);
+}
+
+
 void lives_osc_cb_get_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar *tmp;
   if (status_socket==NULL) return;
@@ -1378,13 +1399,15 @@ void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCT
   // set ins pt, set sel clip, set sel track
 
   if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
-    time=q_gint64(time,mainw->multitrack->fps); // quantise to mt fps
+    time=q_dbl(time,mainw->multitrack->fps)/U_SEC;
     mt_tl_move(mainw->multitrack,time-GTK_RULER(mainw->multitrack->timeline)->position);
     mainw->multitrack->clip_selected=clip-1;
     mt_clip_select(mainw->multitrack,TRUE);
     mainw->multitrack->current_track=track;
     track_select(mainw->multitrack);
     multitrack_insert(NULL,mainw->multitrack);
+    //    mt_do_autotransition(mainw->multitrack, mainw->multitrack->current_track, 
+    //		      mt_get_last_block_number(mainw->multitrack, mainw->multitrack->current_track));
     mt_tl_move(mainw->multitrack,-GTK_RULER(mainw->multitrack->timeline)->position);
   }
   else return lives_osc_notify_failure();
@@ -2784,6 +2807,7 @@ static struct
     { "/clip/size/get",	 "get",	        lives_osc_cb_clip_get_size,			58	},
     { "/clip/name/get",	 "get",	        lives_osc_cb_clip_get_name,			59	},
     { "/clip/name/set",	 "set",	        lives_osc_cb_clip_set_name,			59	},
+    { "/clip/fps/get",	 "get",	        lives_osc_cb_clip_get_ifps,			113	},
     { "/clip/open/file",	 "file",	        lives_osc_cb_open_file,			33	},
     { "/output/fullscreen/enable",		"enable",	lives_osc_cb_fssepwin_enable,		28	},
     { "/output/fullscreen/disable",		"disable",	lives_osc_cb_fssepwin_disable,       	28	},
@@ -2821,6 +2845,7 @@ static struct
     {	"/video/play/time",	 	"time",	         67, 36,0   	},
     {	"/video/freeze/",	"freeze",        37, 5,0   	},
     {	"/clip/", 		"clip",		 1, -1,0	},
+    {	"/clip/fps/", 		"fps",		 113, 1,0	},
     {	"/clip/foreground/", 	"foreground",    47, 1,0	},
     {	"/clip/foreground/valid/", 	"valid",    80, 1,0	},
     {	"/clip/foreground/background/",  "background",    53, 47,0	},

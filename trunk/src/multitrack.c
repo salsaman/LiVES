@@ -4127,6 +4127,7 @@ static void apply_avol_filter(lives_mt *mt) {
     if (slist!=NULL) g_list_free(slist);
     mt->current_fx=current_fx;
     mt->init_event=old_mt_init;
+
     mt->did_backup=did_backup;
 
     if (mt->aparam_view_list!=NULL) {
@@ -19746,4 +19747,130 @@ gdouble mt_get_block_entime(lives_mt *mt, int ntrack, int iblock) {
   track_rect *block=get_nth_block_for_track(mt,ntrack,iblock);
   if (block==NULL) return -1; ///< invalid track or block number
   return (gdouble)get_event_timecode(block->end_event)/U_SEC+1./mt->fps;
+}
+
+
+
+////////////////////////////////////
+// autotransitions
+//
+// done in a hurry for a demo - FIXME !
+
+
+void mt_do_autotransition(lives_mt *mt, int track, int iblock) {
+  track_rect *block,*oblock;
+  weed_timecode_t sttc,endtc=0;
+
+  block=get_nth_block_for_track(mt,track,iblock);
+  if (block==NULL) return;
+
+  sttc=get_event_timecode(block->start_event);
+
+  if (track==1) {
+    // find oblock on track 0, apply trans from iblock start to oblock end
+    oblock=get_block_from_time((GtkWidget *)g_list_nth_data(mt->video_draws,0),(gdouble)sttc/U_SEC,mt);
+    if (oblock==NULL) return;
+    endtc=get_event_timecode(oblock->end_event)+U_SEC/mt->fps;
+    
+
+  }
+  else if (track==0&&g_list_length(mt->video_draws)>1) {
+    // find oblock on track 0, apply trans from iblock start to oblock end
+    oblock=get_block_from_time((GtkWidget *)g_list_nth_data(mt->video_draws,1),(gdouble)sttc/U_SEC,mt);
+    if (oblock==NULL) return;
+    endtc=get_event_timecode(oblock->end_event)+U_SEC/mt->fps;
+
+  }
+  else return;
+
+  if (g_list_length(mt->video_draws)>1) {
+    gdouble region_start=mt->region_start;
+    gdouble region_end=mt->region_end;
+    GList *slist=g_list_copy(mt->selected_tracks);
+    int current_fx=mt->current_fx;
+    weed_plant_t *old_mt_init=mt->init_event;
+    gboolean did_backup=mt->did_backup;
+
+    if (!did_backup&&mt->idlefunc>0) {
+      g_source_remove(mt->idlefunc);
+      mt->idlefunc=0;
+    }
+
+    mt->region_start=sttc/U_SEC;
+    mt->region_end=endtc/U_SEC;
+    if (mt->selected_tracks!=NULL) {
+      g_list_free(mt->selected_tracks);
+      mt->selected_tracks=NULL;
+    }
+    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(0));
+    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(1));
+
+    mt->current_fx=weed_get_idx_for_hashname("simple_blendchroma blend",FALSE);
+
+    if (mt->current_fx!=-1) {
+      weed_plant_t *deinit_event;
+      weed_plant_t *oparam;
+      weed_plant_t *stevent,*enevent;
+      int error;
+      int tparam=0; // TODO
+
+      mt->did_backup=TRUE;
+      mt_add_region_effect(NULL,mt);
+
+      // set param values
+      stevent=weed_plant_new(WEED_PLANT_EVENT);
+      weed_set_int_value(stevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
+      weed_set_int64_value(stevent,"timecode",sttc);
+      weed_set_int_value(stevent,"index",tparam);
+      weed_set_int_value(stevent,"index",track==1?0:255); // TODO - get type and min/max
+      weed_set_voidptr_value(stevent,"init_event",mt->init_event);
+      weed_set_voidptr_value(stevent,"prev_change",NULL);
+      weed_add_plant_flags(stevent,WEED_LEAF_READONLY_PLUGIN);
+
+      enevent=weed_plant_new(WEED_PLANT_EVENT);
+      weed_set_int_value(enevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
+      weed_set_int64_value(enevent,"timecode",sttc);
+      weed_set_int_value(enevent,"index",tparam);
+      weed_set_int_value(enevent,"index",track==1?255:0); // TODO - get type and min/max
+      weed_set_voidptr_value(enevent,"init_event",mt->init_event);
+      weed_set_voidptr_value(enevent,"next_change",NULL);
+      weed_set_voidptr_value(enevent,"prev_change",stevent);
+      weed_add_plant_flags(enevent,WEED_LEAF_READONLY_PLUGIN);
+
+      weed_set_voidptr_value(stevent,"next_change",enevent);
+
+      insert_param_change_event_at(mt->event_list,block->start_event,stevent);
+      insert_param_change_event_at(mt->event_list,oblock->end_event,enevent);
+
+      // delete orig pchange and replace with new
+      oparam=weed_get_voidptr_value(mt->init_event,"in_parameters",&error);
+      delete_event(mt->event_list,oparam);
+      deinit_event=weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
+      weed_set_voidptr_value(mt->init_event,"in_parameters",stevent);
+      weed_set_voidptr_value(deinit_event,"in_parameters",stevent);
+
+      pchain[0]=(void *)stevent;
+
+    }
+
+    mt->region_start=region_start;
+    mt->region_end=region_end;
+    g_list_free(mt->selected_tracks);
+    mt->selected_tracks=g_list_copy(slist);
+    if (slist!=NULL) g_list_free(slist);
+    mt->current_fx=current_fx;
+    mt->init_event=old_mt_init;
+
+    mt->did_backup=did_backup;
+    if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+
+    return;
+  }
+
+
+
+
+
+
+
 }

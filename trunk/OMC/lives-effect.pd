@@ -1,6 +1,6 @@
 #N canvas 210 168 674 390 10;
 #X obj 141 307 sendOSC;
-#X msg 78 192 connect 127.0.0.1 9999;
+#X msg 78 192 connect 127.0.0.1 49999;
 #X msg 20 154 disconnect;
 #X msg 141 20 send /video/play;
 #X msg 175 60 send /video/stop;

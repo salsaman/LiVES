@@ -92,7 +92,7 @@
 #X msg 101 354 send /effect_key/count;
 #X obj 67 566 r OSClives;
 #X msg 86 423 send /app/open_status_socket 192.168.0.143 7777;
-#X msg 185 480 connect 127.0.0.1 9999;
+#X msg 185 480 connect 127.0.0.1 49999;
 #X text 5 36 PASSADOR DE CLIPs;
 #X text 4 6 INTERFACE CONTROLADORA - LIVES - MIDI;
 #X obj 863 122 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0

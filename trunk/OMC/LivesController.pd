@@ -25,7 +25,7 @@
 #X msg 37 183 send /lives/swap \$1;
 #N canvas 0 22 506 415 OSC 1;
 #X obj 81 281 sendOSC;
-#X msg 104 204 connect 192.168.0.148 9999;
+#X msg 104 204 connect 192.168.0.148 49999;
 #X msg 50 161 send /lives/quit;
 #X obj 46 331 print OSCin;
 #X obj 46 310 dumpOSC 7777;

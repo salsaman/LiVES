@@ -8,7 +8,7 @@
 
 
 # syntax is autolives.pl host cmd_port status_port
-# e.g. autolives.pl localhost 9999 9998
+# e.g. autolives.pl localhost 49999 49998
 # or just autolives.pl to use defaults 
 
 if (&location("sendOSC") eq "") {
@@ -21,8 +21,8 @@ use IO::Socket::UNIX;
 
 
 $remote_host="localhost";
-$remote_port=9999; #command port to app
-$local_port=9998; #status port from app
+$remote_port=49999; #command port to app
+$local_port=49998; #status port from app
 
 if (defined($ARGV[0])) {
     $remote_host=$ARGV[0];

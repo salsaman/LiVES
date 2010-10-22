@@ -742,6 +742,8 @@ void track_select (lives_mt *); ///< must call after setting mt->current_track
 gboolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
 gboolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
 
+void mt_do_autotransition(lives_mt *, int track, int iblock); ///< done in a hurry, FIXME
+
 
 // track mouse movement
 gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *, gpointer mt);

@@ -572,6 +572,9 @@ struct _mt {
 
   gdouble prev_fx_time;
 
+  gboolean block_tl_move; ///< set to TRUE to block moving timeline (prevents loops with the node spinbutton)
+  gboolean block_node_spin; ///< set to TRUE to block moving node spinner (prevents loops with the timeline)
+
 };  // lives_mt
 
 

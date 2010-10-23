@@ -1066,7 +1066,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     if (enabled_in_channels(filter,FALSE)==2&&get_transition_param(filter)!=-1) {
       // add in/out for multitrack transition
       transition_add_in_out(GTK_BOX(param_vbox),rfx,(mainw->multitrack->opts.pertrack_audio));
-      trans_in_out_pressed(rfx,TRUE);
+      //trans_in_out_pressed(rfx,TRUE);
     }
   }
 

@@ -106,7 +106,7 @@ if ($p3) {
 </loop>
 
 <post>
-unlink <mask.png blank.png output.png resize.png resize2.png>;
+unlink <mask.png resize.png resize2.png>;
 </post>
 
 <onchange>

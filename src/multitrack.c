@@ -1380,7 +1380,7 @@ void track_select (lives_mt *mt) {
       }
       if (mt->current_track>=0){
 	set_params_unchanged(mt->current_rfx);
-	show_preview(mt,tc);
+	mt_show_current_frame(mt);
       }
       if (mt->fx_params_label!=NULL) {
 	gchar *ltext=mt_params_label(mt);
@@ -2581,7 +2581,11 @@ void mt_tl_move(lives_mt *mt, gdouble pos_rel) {
   }
 
   gtk_widget_queue_draw(mt->timeline);
-  if (mt->init_event!=NULL&&mt->poly_state==POLY_PARAMS) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),pos-get_event_timecode(mt->init_event)/U_SEC);
+  if (mt->init_event!=NULL&&mt->poly_state==POLY_PARAMS&&!mt->block_node_spin) {
+    mt->block_tl_move=TRUE;
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),pos-get_event_timecode(mt->init_event)/U_SEC);
+    mt->block_tl_move=FALSE;
+  }
   time_to_string (mt,pos,TIMECODE_LENGTH);
 
   if (pos>mt->region_end-1./mt->fps) gtk_widget_set_sensitive(mt->tc_to_rs,FALSE);
@@ -4931,6 +4935,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   mt->current_fx=-1;
   mt->putative_block=NULL;
   mt->specific_event=NULL;
+
+  mt->block_tl_move=FALSE;
+  mt->block_node_spin=FALSE;
 
   mt->last_fx_type=MT_LAST_FX_NONE;
 
@@ -9845,13 +9852,6 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
 
 
 
-void show_preview (lives_mt *mt, weed_timecode_t tc) {
-
-  mt_show_current_frame(mt);
-
-  return;
-}
-
 
 void
 in_out_start_changed (GtkWidget *widget, gpointer user_data) {
@@ -10968,8 +10968,10 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	  mt->idlefunc=0;
 	  needs_idlefunc=TRUE;
 	}
-	show_preview(mt,q_gint64(tc+gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC,mt->fps));
+	mt_show_current_frame(mt);
+	mt->block_tl_move=TRUE;
 	on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
+	mt->block_tl_move=FALSE;
 	if (needs_idlefunc) {
 	  mt->idlefunc=mt_idle_add(mt);
 	}
@@ -16111,28 +16113,21 @@ static gboolean is_node_tc(lives_mt *mt, weed_timecode_t tc) {
 
 
 
-void
-on_frame_preview_clicked (GtkButton *button, gpointer user_data) {
-  lives_mt *mt=(lives_mt *)user_data;
-  weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
-  show_preview(mt,tc);
-}
-
-
-
-
 // apply the param changes and update widgets
 void
 on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
 				      gpointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   weed_timecode_t init_tc=get_event_timecode(mt->init_event);
-  weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(spinbutton)*U_SEC+init_tc,mt->fps);
+  weed_timecode_t otc=gtk_spin_button_get_value(spinbutton)*U_SEC+init_tc;
+  weed_timecode_t tc=q_gint64(otc,mt->fps);
   gdouble timesecs;
   gboolean auto_prev=mt->opts.fx_auto_preview;
 
-  interpolate_params(mt->current_rfx->source,pchain,tc);
+  g_object_freeze_notify(G_OBJECT(spinbutton));
 
+  interpolate_params(mt->current_rfx->source,pchain,tc);
+  
   set_params_unchanged(mt->current_rfx);
 
   get_track_index(mt,tc);
@@ -16163,13 +16158,18 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
   }
   else gtk_widget_set_sensitive(mt->del_node_button,FALSE);
 
-  timesecs=tc/U_SEC;
-  mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
+  if (!mt->block_tl_move) {
+    timesecs=otc/U_SEC;
+    mt->block_node_spin=TRUE;
+    mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
+    mt->block_node_spin=FALSE;
+  }
 
   if (mt->current_track>=0) {
-    if (mt->opts.fx_auto_preview) show_preview(mt,tc); // see, I told you !
-    if (mainw->play_window!=NULL) mt_show_current_frame(mt); // show full preview in play window
+    if (mt->opts.fx_auto_preview||mainw->play_window!=NULL) mt_show_current_frame(mt);
   }
+
+  g_object_thaw_notify(G_OBJECT(spinbutton));
 }
 
 // node buttons
@@ -16179,7 +16179,7 @@ void on_next_node_clicked  (GtkWidget *button, gpointer user_data) {
   weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+init_tc,mt->fps);
   weed_timecode_t next_tc=get_next_node_tc(mt,tc);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),(next_tc-init_tc)/U_SEC);
-  if (mt->current_track>=0) show_preview(mt,next_tc);
+  if (mt->current_track>=0) mt_show_current_frame(mt);
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
 }
 
@@ -16190,7 +16190,7 @@ void on_prev_node_clicked  (GtkWidget *button, gpointer user_data) {
   weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+init_tc,mt->fps);
   weed_timecode_t prev_tc=get_prev_node_tc(mt,tc);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),(prev_tc-init_tc)/U_SEC);
-  if (mt->current_track>=0) show_preview(mt,prev_tc);
+  if (mt->current_track>=0) mt_show_current_frame(mt);
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
 }
 
@@ -16250,11 +16250,12 @@ void on_del_node_clicked  (GtkWidget *button, gpointer user_data) {
   d_print(text);
   g_free(text);
   g_free(filter_name);
+  mt->block_tl_move=TRUE;
   on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),(gpointer)mt);
+  mt->block_tl_move=FALSE;
   gtk_widget_set_sensitive(mt->del_node_button,FALSE);
   if (mt->current_track>=0) {
-    show_preview(mt,tc);  // show fx preview in gui
-    if (mainw->play_window!=NULL) mt_show_current_frame(mt); // show full preview in play window
+    mt_show_current_frame(mt);
   }
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
 
@@ -16338,7 +16339,7 @@ void activate_mt_preview(lives_mt *mt) {
   if (mt->poly_state==POLY_PARAMS) {
     if (mt->opts.fx_auto_preview) {
       mainw->no_interp=TRUE; // no interpolation - parameter is in an uncommited state
-      show_preview(mt,q_gint64(GTK_RULER(mt->timeline)->position*U_SEC,mt->fps));
+      mt_show_current_frame(mt);
       mainw->no_interp=FALSE;
     }
     if (mt->apply_fx_button!=NULL) gtk_widget_set_sensitive(mt->apply_fx_button,TRUE);
@@ -16459,8 +16460,7 @@ void on_set_pvals_clicked  (GtkWidget *button, gpointer user_data) {
   }
 
   if (mt->current_track>=0) {
-    show_preview(mt,tc);  // show fx preview in gui
-    if (mainw->play_window!=NULL) mt_show_current_frame(mt); // show full preview in play window
+    mt_show_current_frame(mt); // show full preview in play window
   }
 
   mt->changed=mt->auto_changed=TRUE;

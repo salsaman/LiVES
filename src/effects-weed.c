@@ -2959,7 +2959,6 @@ void weed_load_all (void) {
 	plugin_name=g_list_nth_data(weed_plugin_sublist,plugin_idx);
 	plugin_path=g_strdup_printf("%s/%s",subdir_path,plugin_name);
 	load_weed_plugin(plugin_name,plugin_path,subdir_path);
-	g_free(plugin_name);
 	g_free(plugin_path);
       }
       if (weed_plugin_sublist!=NULL) {

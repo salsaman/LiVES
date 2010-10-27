@@ -422,6 +422,9 @@ static gboolean pre_init(void) {
   mainw->loop=mainw->loop_cont=FALSE;
   mainw->target_table=target_table;
 
+  prefs->max_modes_per_key=0;
+  mainw->debug=FALSE;
+
   if (!strcasecmp(prefs->theme,"none")) return FALSE;
   return TRUE;
 
@@ -1158,6 +1161,10 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #endif
 
+
+      //prefs->atrans_fx=-1;
+      prefs->atrans_fx=weed_get_idx_for_hashname("simple_blendchroma blend",FALSE);
+
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)) {
 	splash_end();
 	// get initial tempdir
@@ -1294,7 +1301,7 @@ static void lives_init(_ign_opts *ign_opts) {
     gtk_widget_modify_bg (mainw->t_forward, GTK_STATE_PRELIGHT, &palette->fade_colour);
     gtk_widget_modify_bg (mainw->t_back, GTK_STATE_PRELIGHT, &palette->fade_colour);
     gtk_widget_modify_bg (mainw->t_infobutton, GTK_STATE_PRELIGHT, &palette->fade_colour);
-
+    
 
   }
 }
@@ -1936,6 +1943,7 @@ int main (int argc, char *argv[]) {
 
   g_set_application_name("LiVES");
 
+
   // format is:
   // lives [opts] [filename [start_time] [frames]]
 
@@ -1980,9 +1988,6 @@ int main (int argc, char *argv[]) {
       int option_index=0;
       const char *charopt;
       int c;
-
-      prefs->max_modes_per_key=0;
-      mainw->debug=FALSE;
 
       while (1) {
 	c=getopt_long_only(argc,argv,"",longopts,&option_index);
@@ -3286,7 +3291,7 @@ void load_frame_image(gint frame) {
 	gint fg_file=mainw->current_file;
 	gint fg_frame=mainw->actual_frame;
 	gint bg_file=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file?mainw->blend_file:-1;
-	gint bg_frame=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file?mainw->files[mainw->blend_file]->frameno:0;
+	gint bg_frame=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL?mainw->files[mainw->blend_file]->frameno:0;
 	int numframes;
 	int *clips,*frames;
 	weed_plant_t *event_list;

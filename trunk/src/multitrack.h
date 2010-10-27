@@ -575,6 +575,8 @@ struct _mt {
   gboolean block_tl_move; ///< set to TRUE to block moving timeline (prevents loops with the node spinbutton)
   gboolean block_node_spin; ///< set to TRUE to block moving node spinner (prevents loops with the timeline)
 
+  gboolean is_atrans; /// < force some visual changes when applying autotrans
+
 };  // lives_mt
 
 
@@ -745,7 +747,7 @@ void track_select (lives_mt *); ///< must call after setting mt->current_track
 gboolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
 gboolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
 
-void mt_do_autotransition(lives_mt *, int track, int iblock); ///< done in a hurry, FIXME
+void mt_do_autotransition(lives_mt *, track_rect *block);
 
 
 // track mouse movement

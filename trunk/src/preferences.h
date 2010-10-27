@@ -264,6 +264,10 @@ typedef struct {
   glong rec_stop_gb;
 
   guint max_modes_per_key; ///< maximum effect modes per key
+
+  // autotransitioning in mt
+  gint atrans_fx;
+
 } _prefs;
 
 enum {

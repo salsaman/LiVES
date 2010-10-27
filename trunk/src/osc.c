@@ -191,58 +191,73 @@ void lives_osc_close_notify_socket (void) {
 
 
 ///////////////////////////////////// CALLBACKS FOR OSC ////////////////////////////////////////
-
+// TODO - handle clipboard playback
 
 /* /video/play */
 void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure();
+  mainw->osc_auto=TRUE; ///< request early notifiction of success
   if (mainw->playing_file==-1&&mainw->current_file>0) on_playall_activate(NULL,NULL);
-
+  mainw->osc_auto=FALSE;
 }
 
 void lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure();
-  if (mainw->playing_file==-1&&mainw->current_file>0) on_playsel_activate(NULL,NULL);
-
+  if (mainw->playing_file==-1&&mainw->current_file>0) {
+    mainw->osc_auto=TRUE; ///< request early notifiction of success
+    if (mainw->multitrack==NULL) on_playsel_activate(NULL,NULL);
+    else multitrack_play_sel(NULL, mainw->multitrack);
+    mainw->osc_auto=FALSE; ///< request early notifiction of success
+  }
 }
 
 void lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->current_file<0||((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||mainw->playing_file==-1)) if (mainw->playing_file==-1) lives_osc_notify_failure();
   dirchange_callback(NULL,NULL,0,0,GINT_TO_POINTER(TRUE));
+  lives_osc_notify_success(NULL);
 
 }
 
 
 void lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file||mainw->playing_file==-1) if (mainw->playing_file==-1) lives_osc_notify_failure();
 
   if (mainw->current_file<0||(mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) if (mainw->playing_file==-1) lives_osc_notify_failure();
 
   mainw->files[mainw->blend_file]->pb_fps=-mainw->files[mainw->blend_file]->pb_fps;
-                                                                                                                                                                                                                       
+                                                                                                                          
+  lives_osc_notify_success(NULL);
+                                                                                             
 }
 
 
 void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (mainw->go_away) lives_osc_notify_failure(); // not ready to play y
+  if (mainw->go_away) lives_osc_notify_failure(); // not ready to play yet
 
   if (mainw->current_file<0||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) if (mainw->playing_file==1) lives_osc_notify_failure();
 
   if (mainw->playing_file==-1&&mainw->current_file>0) {
+    mainw->osc_auto=TRUE; ///< request early notifiction of success
     on_playall_activate(NULL,NULL);
+    mainw->osc_auto=FALSE;
   }
   else if (mainw->current_file>0) {
     if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,0,GINT_TO_POINTER(TRUE));
     if (cfile->play_paused) freeze_callback(NULL,NULL,0,0,NULL);
+    lives_osc_notify_success(NULL);
   }
+  else lives_osc_notify_failure();
 
 }
 
 
 void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (mainw->current_file<0||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
@@ -253,47 +268,57 @@ void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, O
   else if (mainw->current_file>0) {
     if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) dirchange_callback(NULL,NULL,0,0,GINT_TO_POINTER(TRUE));
     if (cfile->play_paused) freeze_callback(NULL,NULL,0,0,NULL);
+    lives_osc_notify_success(NULL);
   }
+  else lives_osc_notify_failure();
 
 }
 
 
 void lives_osc_cb_play_faster (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
   on_faster_pressed(NULL,GINT_TO_POINTER(1));
+  lives_osc_notify_success(NULL);
 
 }
 
 
 void lives_osc_cb_bgplay_faster (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
   on_faster_pressed(NULL,GINT_TO_POINTER(2));
+  lives_osc_notify_success(NULL);
 
 }
 
 
 void lives_osc_cb_play_slower (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (mainw->playing_file==-1) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
   on_slower_pressed(NULL,GINT_TO_POINTER(1));
+  lives_osc_notify_success(NULL);
 
 }
 
 
 void lives_osc_cb_bgplay_slower (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (mainw->playing_file==-1) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return;
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
   on_slower_pressed(NULL,GINT_TO_POINTER(2));
+  lives_osc_notify_success(NULL);
 
 }
 
@@ -301,21 +326,24 @@ void lives_osc_cb_bgplay_slower (void *context, int arglen, const void *vargs, O
 
 void lives_osc_cb_play_reset (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (mainw->playing_file==-1) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
   fps_reset_callback(NULL,NULL,0,0,NULL);
   if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,0,GINT_TO_POINTER(TRUE));
   if (cfile->play_paused) freeze_callback(NULL,NULL,0,0,NULL);
 
+  lives_osc_notify_success(NULL);
 
 }
 
 
 void lives_osc_cb_bgplay_reset (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (mainw->playing_file==-1) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return;
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
   if (mainw->files[mainw->blend_file]->play_paused) {
     mainw->files[mainw->blend_file]->play_paused=FALSE;
@@ -323,6 +351,7 @@ void lives_osc_cb_bgplay_reset (void *context, int arglen, const void *vargs, OS
 
   if (mainw->files[mainw->blend_file]->pb_fps>=0.) mainw->files[mainw->blend_file]->pb_fps=mainw->files[mainw->blend_file]->fps;
   else mainw->files[mainw->blend_file]->pb_fps=-mainw->files[mainw->blend_file]->fps;
+  lives_osc_notify_success(NULL);
 
 }
 
@@ -342,16 +371,18 @@ void lives_osc_cb_stop(void *context, int arglen, const void *vargs, OSCTimeTag 
 void lives_osc_cb_set_fps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gint fpsi;
   gfloat fps;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (lives_osc_check_arguments (arglen,vargs,"i",TRUE)) {
     lives_osc_parse_int_argument(vargs,&fpsi);
     fps=(float)fpsi;
   }
   else {
-    if (!lives_osc_check_arguments (arglen,vargs,"f",TRUE)) return;
+    if (!lives_osc_check_arguments (arglen,vargs,"f",TRUE)) return lives_osc_notify_failure();
     lives_osc_parse_float_argument(vargs,&fps);
   }
 
   if (mainw->playing_file>-1) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(gdouble)(fps));
+  lives_osc_notify_success(NULL);
 
 }
 
@@ -360,19 +391,20 @@ void lives_osc_cb_bgset_fps(void *context, int arglen, const void *vargs, OSCTim
   gint fpsi;
   gfloat fps;
 
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",TRUE)) {
     lives_osc_parse_int_argument(vargs,&fpsi);
     fps=(float)fpsi;
   }
   else {
-    if (!lives_osc_check_arguments (arglen,vargs,"f",TRUE)) return;
+    if (!lives_osc_check_arguments (arglen,vargs,"f",TRUE)) return lives_osc_notify_failure();
     lives_osc_parse_float_argument(vargs,&fps);
   }
 
   mainw->files[mainw->blend_file]->pb_fps=(gdouble)fps;
-
+  lives_osc_notify_success(NULL);
 }
 
 
@@ -380,16 +412,18 @@ void lives_osc_cb_bgset_fps(void *context, int arglen, const void *vargs, OSCTim
 void lives_osc_cb_set_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gint fpsi;
   gfloat fps;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (lives_osc_check_arguments (arglen,vargs,"i",TRUE)) {
     lives_osc_parse_int_argument(vargs,&fpsi);
     fps=(float)fpsi;
   }
   else {
-    if (!lives_osc_check_arguments (arglen,vargs,"f",TRUE)) return;
+    if (!lives_osc_check_arguments (arglen,vargs,"f",TRUE)) return lives_osc_notify_failure();
     lives_osc_parse_float_argument(vargs,&fps);
   }
 
   if (mainw->playing_file>-1) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(gdouble)(fps)*mainw->files[mainw->playing_file]->fps);
+  lives_osc_notify_success(NULL);
 
 }
 
@@ -397,15 +431,16 @@ void lives_osc_cb_set_fps_ratio(void *context, int arglen, const void *vargs, OS
 void lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gint fpsi;
   gfloat fps;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return;
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",TRUE)) {
     lives_osc_parse_int_argument(vargs,&fpsi);
     fps=(float)fpsi;
   }
   else {
-    if (!lives_osc_check_arguments (arglen,vargs,"f",TRUE)) return;
+    if (!lives_osc_check_arguments (arglen,vargs,"f",TRUE)) return lives_osc_notify_failure();
     lives_osc_parse_float_argument(vargs,&fps);
   }
 
@@ -434,7 +469,7 @@ void lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTimeTa
   int effect_key;
   gchar effect_name[OSC_STRING_SIZE];
 
-  if (!lives_osc_check_arguments (arglen,vargs,"is",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"is",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_string_argument(vargs,effect_name);
   if (!mainw->osc_block) weed_add_effectkey(effect_key,effect_name,FALSE); // allow partial matches
@@ -445,7 +480,8 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
 
   int effect_key;
   gint grab=mainw->last_grabable_effect;
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
 
   if (!(mainw->rte&(GU641<<(effect_key-1)))) {
@@ -458,7 +494,8 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
 void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   if (mainw->rte&(GU641<<(effect_key-1))) {
     if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(effect_key));
@@ -470,7 +507,8 @@ void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTi
 void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(effect_key));
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
@@ -484,9 +522,9 @@ void lives_osc_cb_fgclip_set(void *context, int arglen, const void *vargs, OSCTi
   // switch fg clip
 
   int clip;
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&clip);
 
   if (clip>0&&clip<MAX_FILES-1) {
@@ -506,17 +544,17 @@ void lives_osc_cb_fgclip_set(void *context, int arglen, const void *vargs, OSCTi
       }
     }
   }
-  if (prefs->omc_noisy) lives_osc_notify_failure();
+  lives_osc_notify_failure();
 }
 
 
 void lives_osc_cb_bgclip_set(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
-  // switch fg clip
+  // switch bg clip
 
   int clip;
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&clip);
 
   if (clip>0&&clip<MAX_FILES-1) {
@@ -530,27 +568,27 @@ void lives_osc_cb_bgclip_set(void *context, int arglen, const void *vargs, OSCTi
       return;
     }
   }
-  if (prefs->omc_noisy) lives_osc_notify_failure();
+  lives_osc_notify_failure();
 }
 
 
 void lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
   // switch fg clip
   int clip,i;
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&clip);
 
-  if (clip<1||mainw->cliplist==NULL) return;
+  if (clip<1||mainw->cliplist==NULL) return lives_osc_notify_failure();
 
   if (mainw->scrap_file!=-1&&clip>=mainw->scrap_file) clip++;
 
-  if (clip>g_list_length(mainw->cliplist)) return;
+  if (clip>g_list_length(mainw->cliplist)) return lives_osc_notify_failure();
 
   i=GPOINTER_TO_INT(g_list_nth_data(mainw->cliplist,clip-1));
     
-  if (i==mainw->current_file) return;
+  if (i==mainw->current_file) return lives_osc_notify_failure();
   if (mainw->playing_file>0) {
     mainw->pre_src_file=i;
     mainw->new_clip=i;
@@ -564,7 +602,7 @@ void lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OS
       return;
     }
   }
-  if (prefs->omc_noisy) lives_osc_notify_failure();
+  lives_osc_notify_failure();
 }
 
 
@@ -573,22 +611,22 @@ void lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OS
 void lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
   // switch bg clip
   int clip,i;
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure(); // etc
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&clip);
 
-  if (clip<1||mainw->cliplist==NULL) return;
+  if (clip<1||mainw->cliplist==NULL) return lives_osc_notify_failure();
 
   if (mainw->scrap_file!=-1&&clip>=mainw->scrap_file) clip++;
 
-  if (clip>g_list_length(mainw->cliplist)) return;
+  if (clip>g_list_length(mainw->cliplist)) return lives_osc_notify_failure();
 
-  if (mainw->num_tr_applied<1) return;
+  if (mainw->num_tr_applied<1) return lives_osc_notify_failure();
 
   i=GPOINTER_TO_INT(g_list_nth_data(mainw->cliplist,clip-1));
     
-  if (i==mainw->blend_file) return;
+  if (i==mainw->blend_file) return lives_osc_notify_failure();
 
   mainw->blend_file=i;
 
@@ -604,31 +642,31 @@ void lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OS
 
 
 
-void lives_osc_cb_fgclip_close(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_clip_close(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
   int noaudio=0;
   int clipno=mainw->current_file;
   gint current_file=clipno;
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&noaudio);
   }
-  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
-    return;
+  else if (mainw->multitrack!=NULL||!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->multitrack!=NULL&&clipno==mainw->multitrack->render_file)) return lives_osc_notify_failure();
 
   if (clipno==current_file) current_file=-1;
 
   mainw->current_file=clipno;
 
   close_current_file(current_file);
-  // no notify - will send closed event
+  return lives_osc_notify_success(NULL);
 }
 
 
@@ -641,9 +679,9 @@ void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCT
   gint start,end,current_file=clipno;
   gboolean ccpd;
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
@@ -655,10 +693,10 @@ void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCT
     lives_osc_parse_int_argument(vargs,&noaudio);
   }
   else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
   start=cfile->start;
@@ -680,9 +718,7 @@ void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCT
 
   mainw->current_file=current_file;
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  lives_osc_notify_success(NULL);
 
 }
 
@@ -695,9 +731,9 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
   gint current_file=clipno;
   gboolean ccpd;
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
@@ -709,10 +745,10 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
     lives_osc_parse_int_argument(vargs,&noaudio);
   }
   else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
 
@@ -726,9 +762,7 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
 
   mainw->current_file=current_file;
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  lives_osc_notify_success(NULL);
 }
 
 
@@ -742,9 +776,10 @@ void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OS
   gint current_file=clipno;
   gboolean ccpd;
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
@@ -756,10 +791,10 @@ void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OS
     lives_osc_parse_int_argument(vargs,&noaudio);
   }
   else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
 
@@ -788,9 +823,10 @@ void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs,
   gint current_file=clipno;
   gboolean ccpd;
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
@@ -802,10 +838,10 @@ void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs,
     lives_osc_parse_int_argument(vargs,&noaudio);
   }
   else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
 
@@ -831,18 +867,19 @@ void lives_osc_cb_clipbd_paste(void *context, int arglen, const void *vargs, OSC
   int noaudio=0;
   gboolean ccpd;
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (clipboard==NULL) return;
+  if (clipboard==NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&noaudio);
   }
   else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
   ccpd=mainw->ccpd_with_sound;
@@ -870,9 +907,10 @@ void lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, O
   gint current_file=clipno;
 
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
@@ -890,12 +928,12 @@ void lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, O
     lives_osc_parse_int_argument(vargs,&noaudio);
   }
   else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
-  if (times==0||times<-1) return;
+  if (times==0||times<-1) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
 
@@ -928,9 +966,10 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
   gint current_file=clipno;
 
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
@@ -948,12 +987,12 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
     lives_osc_parse_int_argument(vargs,&noaudio);
   }
   else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return;
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
-  if (times==0||times<-1) return;
+  if (times==0||times<-1) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
 
@@ -983,8 +1022,9 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
 void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip and reset framenumber
 
-  if (mainw->playing_file<1||mainw->preview||mainw->is_processing) return;
-  if (!lives_osc_check_arguments (arglen,vargs,"i",FALSE)) return;
+  if (mainw->playing_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (!lives_osc_check_arguments (arglen,vargs,"i",FALSE)) return lives_osc_notify_failure();
 
   lives_osc_cb_fgclip_select(context,arglen,vargs,when,ra);
 
@@ -1003,15 +1043,17 @@ void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs
 void lives_osc_cb_bgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip and reset framenumber
 
-  if (mainw->playing_file<1||mainw->preview||mainw->is_processing) return;
-  if (!lives_osc_check_arguments (arglen,vargs,"i",FALSE)) return;
+  if (mainw->playing_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  if (!lives_osc_check_arguments (arglen,vargs,"i",FALSE)) return lives_osc_notify_failure();
 
   lives_osc_cb_bgclip_select(context,arglen,vargs,when,ra);
 
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return;
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
   if (mainw->files[mainw->blend_file]->pb_fps>0.||(mainw->files[mainw->blend_file]->play_paused&&mainw->files[mainw->blend_file]->freeze_fps>0.)) mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->last_frameno=1;
   else mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->last_frameno=mainw->files[mainw->blend_file]->frames;
+  lives_osc_notify_success(NULL);
 }
 
 
@@ -1020,7 +1062,8 @@ void lives_osc_cb_bgclip_retrigger (void *context, int arglen, const void *vargs
 void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   nextclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(1));
 
@@ -1036,8 +1079,9 @@ void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *varg
 void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   nextclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(2));
 
@@ -1054,7 +1098,8 @@ void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *varg
 void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   
   prevclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(1));
 
@@ -1071,9 +1116,10 @@ void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *
 void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return; // TODO
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL) return;
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL) return lives_osc_notify_failure();
 
   prevclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(2));
 
@@ -1092,7 +1138,7 @@ void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *
 
 void lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
   mainw->only_close=mainw->no_exit=FALSE;
   mainw->leave_recovery=FALSE;
@@ -1123,15 +1169,15 @@ void lives_osc_cb_open_status_socket(void *context, int arglen, const void *varg
   int port;
 
   if (!lives_osc_check_arguments (arglen,vargs,"si",TRUE)) {
-    if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+    if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
     g_snprintf (host,OSC_STRING_SIZE,"localhost");
   }
   else lives_osc_parse_string_argument(vargs,host);
   lives_osc_parse_int_argument(vargs,&port);
 
-  if (notify_socket!=NULL) {
+  if (status_socket!=NULL) {
     g_printerr("Status socket already opened !\n");
-    return;
+    return lives_osc_notify_failure();
   }
 
   if (!(status_socket=OpenHTMSocket (host,port,TRUE))) g_printerr ("Unable to open status socket !\n");
@@ -1207,12 +1253,13 @@ void lives_osc_cb_clip_count(void *context, int arglen, const void *vargs, OSCTi
 void lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int frame;
-  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return;
+  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&frame);
 
-  if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) return;
+  if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   cfile->last_frameno=cfile->frameno=frame;
 
@@ -1221,6 +1268,7 @@ void lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTim
     resync_audio(frame);
   }
 #endif
+  lives_osc_notify_success(NULL);
 }
 
 
@@ -1238,7 +1286,7 @@ void lives_osc_cb_clip_getframe(void *context, int arglen, const void *vargs, OS
 void lives_osc_cb_clip_getfps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar *tmp;
   if (status_socket==NULL) return;
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
 
   if (mainw->current_file<0) lives_status_send ((tmp=g_strdup_printf ("%.3f",0.)));
   else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=g_strdup_printf ("%.3f",cfile->fps)));
@@ -1271,7 +1319,7 @@ void lives_osc_cb_clip_get_ifps(void *context, int arglen, const void *vargs, OS
 void lives_osc_cb_get_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar *tmp;
   if (status_socket==NULL) return;
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
 
   if (mainw->current_file<0) lives_status_send ((tmp=g_strdup_printf ("%.4f",0.)));
   else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=g_strdup_printf ("%.4f",1.)));
@@ -1283,7 +1331,7 @@ void lives_osc_cb_get_fps_ratio(void *context, int arglen, const void *vargs, OS
 void lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar *tmp;
   if (status_socket==NULL) return;
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
 
   if (mainw->current_file<0||mainw->blend_file<0||mainw->files[mainw->blend_file]==NULL) 
     lives_status_send ((tmp=g_strdup_printf ("%.4f",0.)));
@@ -1309,7 +1357,7 @@ void lives_osc_cb_bgclip_getframe(void *context, int arglen, const void *vargs, 
 void lives_osc_cb_bgclip_getfps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar *tmp;
   if (status_socket==NULL) return;
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
   if (mainw->blend_file<0||mainw->files[mainw->blend_file]==NULL) lives_status_send ((tmp=g_strdup_printf ("%.3f",0.)));
   else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=g_strdup_printf ("%.3f",mainw->files[mainw->blend_file]->fps)));
   else lives_status_send ((tmp=g_strdup_printf ("%.3f",mainw->files[mainw->blend_file]->pb_fps)));
@@ -1406,8 +1454,6 @@ void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCT
     mainw->multitrack->current_track=track;
     track_select(mainw->multitrack);
     multitrack_insert(NULL,mainw->multitrack);
-    //    mt_do_autotransition(mainw->multitrack, mainw->multitrack->current_track, 
-    //		      mt_get_last_block_number(mainw->multitrack, mainw->multitrack->current_track));
     mt_tl_move(mainw->multitrack,-GTK_RULER(mainw->multitrack->timeline)->position);
   }
   else return lives_osc_notify_failure();
@@ -1485,14 +1531,15 @@ void lives_osc_cb_get_playtime(void *context, int arglen, const void *vargs, OSC
 void lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int frame;
-  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return;
+  if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return;
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&frame);
 
-  if (frame<1||frame>mainw->files[mainw->blend_file]->frames||(mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) return;
+  if (frame<1||frame>mainw->files[mainw->blend_file]->frames||(mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->files[mainw->blend_file]->last_frameno=mainw->files[mainw->blend_file]->frameno=frame;
 
@@ -1513,6 +1560,7 @@ void lives_osc_cb_bgclip_get_current(void *context, int arglen, const void *varg
   gchar *tmp;
 
   if (status_socket==NULL) return;
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   lives_status_send ((tmp=g_strdup_printf ("%d",mainw->blend_file<0?0:mainw->blend_file)));
   g_free(tmp);
 
@@ -1527,7 +1575,8 @@ void lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, O
 
   file *sfile;
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
@@ -1538,13 +1587,13 @@ void lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, O
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&frame);
   }
-  else return;
+  else return lives_osc_notify_failure();
 
-  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
   sfile=mainw->files[clip];
 
-  if (frame<1||(sfile->clip_type!=CLIP_TYPE_DISK&&sfile->clip_type!=CLIP_TYPE_FILE)) return;
+  if (frame<1||(sfile->clip_type!=CLIP_TYPE_DISK&&sfile->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   if (frame>sfile->frames) frame=sfile->frames;
 
@@ -1567,14 +1616,15 @@ void lives_osc_cb_clip_get_start(void *context, int arglen, const void *vargs, O
 
   file *sfile;
 
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&clip);
   }
 
-  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
   sfile=mainw->files[clip];
 
@@ -1590,7 +1640,8 @@ void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSC
 
   file *sfile;
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
@@ -1601,13 +1652,13 @@ void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSC
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&frame);
   }
-  else return;
+  else return lives_osc_notify_failure();
 
-  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
   sfile=mainw->files[clip];
 
-  if (frame<1||(sfile->clip_type!=CLIP_TYPE_DISK&&sfile->clip_type!=CLIP_TYPE_FILE)) return;
+  if (frame<1||(sfile->clip_type!=CLIP_TYPE_DISK&&sfile->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   if (frame>sfile->frames) frame=sfile->frames;
 
@@ -1628,14 +1679,15 @@ void lives_osc_cb_clip_get_end(void *context, int arglen, const void *vargs, OSC
 
   file *sfile;
 
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&clip);
   }
 
-  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
   sfile=mainw->files[clip];
 
@@ -1650,14 +1702,14 @@ void lives_osc_cb_clip_get_size(void *context, int arglen, const void *vargs, OS
 
   file *sfile;
 
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&clip);
   }
 
-  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
   sfile=mainw->files[clip];
 
@@ -1671,14 +1723,16 @@ void lives_osc_cb_clip_get_name(void *context, int arglen, const void *vargs, OS
 
   file *sfile;
 
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&clip);
   }
+  else if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
   sfile=mainw->files[clip];
 
@@ -1694,7 +1748,7 @@ void lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs, OS
 
   file *sfile;
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"si",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"si",TRUE);
@@ -1702,12 +1756,13 @@ void lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs, OS
     lives_osc_parse_int_argument(vargs,&clip);
   }
   else if (lives_osc_check_arguments (arglen,vargs,"s",FALSE)) { 
+    if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
     lives_osc_check_arguments (arglen,vargs,"s",TRUE);
     lives_osc_parse_string_argument(vargs,name);
   }
-  else return;
+  else return lives_osc_notify_failure();
 
-  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
   sfile=mainw->files[clip];
 
@@ -1728,14 +1783,16 @@ void lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, 
 
   file *sfile;
 
-  if (mainw->current_file<1) return;
+  if (mainw->current_file<1) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&clip);
   }
+  else if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return;
+
+  if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
   sfile=mainw->files[clip];
 
@@ -1754,6 +1811,7 @@ void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, 
   file *sfile;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"is",FALSE)) {
     if (!lives_osc_check_arguments (arglen,vargs,"iis",FALSE)) {
@@ -1770,6 +1828,7 @@ void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, 
       }
       else {
 	lives_osc_check_arguments (arglen,vargs,"isii",TRUE);
+	if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 	lives_osc_parse_int_argument(vargs,&frame);
 	lives_osc_parse_string_argument(vargs,fname);
 	lives_osc_parse_int_argument(vargs,&width);
@@ -1784,6 +1843,7 @@ void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, 
     }
   }
   else {
+    if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
     lives_osc_check_arguments (arglen,vargs,"is",TRUE);
     lives_osc_parse_int_argument(vargs,&frame);
     lives_osc_parse_string_argument(vargs,fname);
@@ -1805,8 +1865,8 @@ void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, 
 
 void lives_osc_cb_clip_select_all(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return;
-  if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||!cfile->frames) return;
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
+  if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||!cfile->frames) return lives_osc_notify_failure();
 
   on_select_all_activate (NULL,NULL);
 
@@ -1823,7 +1883,9 @@ void lives_osc_cb_clip_isvalid(void *context, int arglen, const void *vargs, OSC
   lives_osc_check_arguments (arglen,vargs,"i",TRUE);
   lives_osc_parse_int_argument(vargs,&clip);
 
-  if (clip>0&&clip<MAX_FILES&&mainw->files[clip]!=NULL) lives_status_send ("1");
+  if (clip==mainw->scrap_file) return lives_osc_notify_failure();
+
+  if (clip>0&&clip<MAX_FILES&&mainw->files[clip]!=NULL&&!(mainw->multitrack!=NULL&&clip==mainw->multitrack->render_file)) lives_status_send ("1");
   else lives_status_send ("0");
 
 }
@@ -1877,22 +1939,29 @@ void lives_osc_cb_fssepwin_disable(void *context, int arglen, const void *vargs,
 }
 
 void lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-
-  // TODO - make float, show messages
   int fps;
+  float fpsf;
   gdouble fpsd;
   gchar *tmp;
 
-  if (mainw->fixed_fpsd>0.) return;
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
-  lives_osc_parse_int_argument(vargs,&fps);
-  fpsd=(gdouble)(fps*1.);
-  if (fps>0&&fpsd<=FPS_MAX) {
+  if (mainw->fixed_fpsd>0.) return lives_osc_notify_failure();
+  if (!lives_osc_check_arguments (arglen,vargs,"f",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&fps);
+    fpsd=(gdouble)(fps*1.);
+  }
+  else {
+    lives_osc_check_arguments (arglen,vargs,"f",FALSE);
+    lives_osc_parse_float_argument(vargs,&fpsf);
+    fpsd=(gdouble)fpsf;
+  }
+  if (fpsd>0.&&fpsd<=FPS_MAX) {
     mainw->fixed_fpsd=fpsd;
     d_print ((tmp=g_strdup_printf (_("Syncing to external framerate of %.8f frames per second.\n"),fpsd)));
     g_free(tmp);
   }
-  else if (fps==0) mainw->fixed_fpsd=-1.;
+  else if (fpsd==0.) mainw->fixed_fpsd=-1.; ///< 0. to release
+  else lives_osc_notify_failure();
   if (prefs->omc_noisy) {
     gchar *msg=g_strdup_printf("%.3f",fpsd);
     lives_osc_notify_success(msg);
@@ -1902,7 +1971,7 @@ void lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OSCTi
 
 
 void lives_osc_cb_freeze(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (mainw->playing_file<1) return;
+  if (mainw->playing_file<1) return lives_osc_notify_failure();
 
   if (!mainw->osc_block) {
     freeze_callback(NULL,NULL,0,0,NULL);
@@ -1936,11 +2005,11 @@ void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OS
   char fname[OSC_STRING_SIZE];
 
 
-  if (mainw->playing_file>-1||mainw->current_file<1) return;
+  if (mainw->playing_file>-1||mainw->current_file<1) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"sii",FALSE)) { 
     if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) 
-      return;
+      return lives_osc_notify_failure();
     lives_osc_parse_string_argument(vargs,fname);
     mainw->osc_enc_width=mainw->osc_enc_height=0;
   }
@@ -1954,6 +2023,7 @@ void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OS
   if (cfile->frames==0) {
     // TODO
     on_export_audio_activate (NULL,NULL);
+    lives_osc_notify_success(NULL);
     return;
   }
 
@@ -1961,6 +2031,7 @@ void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OS
 
   mainw->osc_auto=TRUE;
   save_file(TRUE,fname);
+  lives_osc_notify_success(NULL);
   mainw->osc_auto=FALSE;
 
 }
@@ -2023,9 +2094,9 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
   float valuesf[4];
   double valuesd[4];
   
-  if (!weed_plant_has_leaf(inst,"in_parameters")) return;
+  if (!weed_plant_has_leaf(inst,"in_parameters")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(inst,"in_parameters");
-  if (pnum>=nparams) return;
+  if (pnum>=nparams) return lives_osc_notify_failure();
   
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   
@@ -2036,7 +2107,7 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
   switch (hint) {
   case WEED_HINT_INTEGER:
     if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) {
-      if (!lives_osc_check_arguments (arglen,vargs,"iif",FALSE)) return;
+      if (!lives_osc_check_arguments (arglen,vargs,"iif",FALSE)) return lives_osc_notify_failure();
       // we wanted an int but we got a float
       //so we will round to the nearest value
       lives_osc_check_arguments (arglen,vargs,"iif",TRUE);
@@ -2071,7 +2142,7 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
     
   case WEED_HINT_FLOAT:
     if (!lives_osc_check_arguments (arglen,vargs,"iif",FALSE)) {
-      if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) return;
+      if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) return lives_osc_notify_failure();
       // we wanted a float but we got an int, we can convert
       lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
       lives_osc_parse_int_argument(vargs,&valuei);
@@ -2106,7 +2177,7 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
     case WEED_COLORSPACE_RGB:
       if (weed_leaf_seed_type(tparamtmpl,"default")==WEED_SEED_INT) {
 	if (!lives_osc_check_arguments (arglen,vargs,"iiiii",FALSE)) {
-	  if (!lives_osc_check_arguments (arglen,vargs,"iifff",FALSE)) return;
+	  if (!lives_osc_check_arguments (arglen,vargs,"iifff",FALSE)) return lives_osc_notify_failure();
 	  // we wanted ints but we got floats
 	  lives_osc_check_arguments (arglen,vargs,"iifff",TRUE);
 	  lives_osc_parse_int_argument(vargs,&valuei);
@@ -2141,7 +2212,7 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
 	
       }
       else {
-	if (!lives_osc_check_arguments (arglen,vargs,"iifff",TRUE)) return;
+	if (!lives_osc_check_arguments (arglen,vargs,"iifff",TRUE)) return lives_osc_notify_failure();
 	lives_osc_parse_int_argument(vargs,&valuei);
 	lives_osc_parse_int_argument(vargs,&valuei);
 	lives_osc_parse_float_argument(vargs,&valuesf[0]);
@@ -2167,11 +2238,11 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
       break;
     default:
       // TODO
-      return;
+      return lives_osc_notify_failure();
     }
   default:
     // TODO
-    return;
+    return lives_osc_notify_failure();
   }
 
   if (prefs->omc_noisy) {
@@ -2200,17 +2271,17 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
   int effect_key;
   int pnum;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
   osc_header_len=8; // hdr len might be longer for arrays
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
 
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
   if (!mainw->osc_block) setfx(effect_key,pnum,arglen,vargs);
-
+  else lives_osc_notify_failure();
 }
 
 
@@ -2225,13 +2296,13 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
 
   weed_plant_t *inst;
   
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
   osc_header_len=8; // hdr len might be longer for arrays
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
 
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
   inst=rte_keymode_get_instance(effect_key,rte_key_getmode(effect_key));
@@ -2239,6 +2310,7 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
   i=get_nth_simple_param(inst,pnum);
 
   if (i!=-1 && !mainw->osc_block) setfx(effect_key,i,arglen,vargs);
+  else lives_osc_notify_failure();
 
 }
 
@@ -2256,11 +2328,11 @@ void lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, 
 
   gchar *msg;
   
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
 
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
@@ -2293,19 +2365,19 @@ void lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *vargs,
 
   gchar *msg;
   
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
 
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
 
   i=get_nth_simple_param(filter,pnum);
 
-  if (i==-1) return;
+  if (i==-1) return lives_osc_notify_failure();
 
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
 
@@ -2347,19 +2419,19 @@ void lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *vargs,
 
   gchar *msg;
   
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
 
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
  
   i=get_nth_simple_param(filter,pnum);
 
-  if (i==-1) return;
+  if (i==-1) return lives_osc_notify_failure();
 
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
 
@@ -2399,19 +2471,19 @@ void lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *vargs,
 
   gchar *msg;
   
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
 
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
 
   i=get_nth_simple_param(filter,pnum);
 
-  if (i==-1) return;
+  if (i==-1) return lives_osc_notify_failure();
 
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
 
@@ -2454,19 +2526,19 @@ void lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *varg
 
   gchar *msg;
   
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
 
-  if (effect_key<1||effect_key>FX_MAX) return;
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
 
-  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return;
+  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
-  if (pnum>=nparams) return;
+  if (pnum>=nparams) return lives_osc_notify_failure();
   
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
   
@@ -2496,7 +2568,7 @@ void lives_osc_cb_rte_getmode(void *context, int arglen, const void *vargs, OSCT
   int effect_key;
   if (status_socket==NULL) return;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
 
   if (effect_key<1||effect_key>FX_MAX) {
@@ -2518,10 +2590,10 @@ void lives_osc_cb_rte_get_keyfxname(void *context, int arglen, const void *vargs
 
   if (status_socket==NULL) return;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&mode);
-  if (effect_key<1||effect_key>FX_MAX||mode<1||mode>rte_getmodespk()) return;
+  if (effect_key<1||effect_key>FX_MAX||mode<1||mode>rte_getmodespk()) return lives_osc_notify_failure();
   lives_status_send ((tmp=g_strdup_printf ("%s",rte_keymode_get_filter_name (effect_key,mode-1))));
   g_free(tmp);
 }
@@ -2565,7 +2637,7 @@ void lives_osc_cb_rte_getusermode(void *context, int arglen, const void *vargs, 
   if (status_socket==NULL) return;
 
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
   lives_osc_parse_int_argument(vargs,&effect_key);
@@ -2584,22 +2656,30 @@ void lives_osc_cb_rte_getusermode(void *context, int arglen, const void *vargs, 
 
 
 void lives_osc_cb_swap(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
- swap_fg_bg_callback (NULL,NULL,0,0,NULL);
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  swap_fg_bg_callback (NULL,NULL,0,0,NULL);
+  lives_osc_notify_success(NULL);
 }
 
 
 void lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
- record_toggle_callback (NULL,NULL,0,0,GINT_TO_POINTER((gint)TRUE));
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  record_toggle_callback (NULL,NULL,0,0,GINT_TO_POINTER((gint)TRUE));
+  lives_osc_notify_success(NULL);
  // TODO - send record start and record stop events
 }
 
 
 void lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
- record_toggle_callback (NULL,NULL,0,0,GINT_TO_POINTER((gint)FALSE));
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+  record_toggle_callback (NULL,NULL,0,0,GINT_TO_POINTER((gint)FALSE));
+  lives_osc_notify_success(NULL);
 }
 
 void lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   record_toggle_callback (NULL,NULL,0,0,GINT_TO_POINTER(!mainw->record));
+  lives_osc_notify_success(NULL);
 }
 
 
@@ -2616,15 +2696,15 @@ void lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTim
 
   int type=0;
 
-  if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return;
+  if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"sfi",TRUE)) {
     type++;
     if (!lives_osc_check_arguments (arglen,vargs,"sf",TRUE)) {
       type++;
-      if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) return;
+      if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) return lives_osc_notify_failure();
     }
   }
   lives_osc_parse_string_argument(vargs,filename);
@@ -2635,6 +2715,7 @@ void lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTim
     }
   }
   deduce_file(filename,starttime,numframes);
+  lives_osc_notify_success(NULL);
 
 }
 
@@ -2642,20 +2723,21 @@ void lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTim
 void lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar setname[OSC_STRING_SIZE];
 
-  if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return;
+  if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
-  if (strlen(mainw->set_name)>0) return;
+  if (strlen(mainw->set_name)>0) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
   lives_osc_parse_string_argument(vargs,setname);
 
   g_snprintf(mainw->set_name,256,"%s",setname);
 
   on_load_set_ok(NULL,GINT_TO_POINTER((gint)FALSE));
+  lives_osc_notify_success(NULL);
 
 
 }
@@ -2664,12 +2746,12 @@ void lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTimeT
 void lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar setname[OSC_STRING_SIZE];
 
-  if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return;
+  if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) {
-    return;
+    return lives_osc_notify_failure();
   }
 
   lives_osc_parse_string_argument(vargs,setname);
@@ -2678,6 +2760,8 @@ void lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeT
     on_save_set_activate(NULL,setname);
     mainw->only_close=FALSE;
   }
+  lives_osc_notify_success(NULL);
+
 }
 
 
@@ -2750,7 +2834,7 @@ static struct
     { "/effect_key/usermode/get",		"get",	lives_osc_cb_rte_getusermode,		        56	},
     { "/clip/encode_as",		"encode_as",	lives_osc_cb_clip_encodeas,			1	},
     { "/clip/select",		"select",	lives_osc_cb_fgclip_select,			1	},
-    { "/clip/close",		"close",	lives_osc_cb_fgclip_close,	  		        1	},
+    { "/clip/close",		"close",	lives_osc_cb_clip_close,	  		        1	},
     { "/clip/copy",		"copy",	lives_osc_cb_fgclip_copy,	  		        1	},
     { "/clip/selection/copy",		"copy",	lives_osc_cb_fgclipsel_copy,	  		        55	},
     { "/clip/selection/cut",		"cut",	lives_osc_cb_fgclipsel_cut,	  		        55	},

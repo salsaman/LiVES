@@ -86,7 +86,11 @@ static LIVES_INLINE gint mt_clip_from_file(lives_mt *mt, gint file) {
   return -1;
 }
 
-
+/// return track number for a given block
+///
+static LIVES_INLINE int get_track_for_block(track_rect *block) {
+  return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));  
+}
 
 static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
   weed_plant_t *event=get_first_event(event_list);
@@ -3137,7 +3141,11 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 	}
 	gtk_container_set_border_width (GTK_CONTAINER (xeventbox), 5);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (box), xeventbox, FALSE, FALSE, 0);
+
+	// pack a/v transitions first
+	if (get_transition_param(filter)==-1||!has_video_chans_in(filter,FALSE)) 
+	  gtk_box_pack_end (GTK_BOX (box), xeventbox, FALSE, FALSE, 0);
+	else gtk_box_pack_start (GTK_BOX (box), xeventbox, FALSE, FALSE, 0);
 	
 	g_signal_connect (GTK_OBJECT (xeventbox), "button_press_event",
 			  G_CALLBACK (filter_ebox_pressed),
@@ -4938,6 +4946,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->block_tl_move=FALSE;
   mt->block_node_spin=FALSE;
+
+  mt->is_atrans=FALSE;
 
   mt->last_fx_type=MT_LAST_FX_NONE;
 
@@ -13474,6 +13484,8 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
     apply_avol_filter(mt);
   }
 
+  if (mt->is_atrans) return;
+
   rfx=weed_to_rfx(filter,FALSE);
   get_track_index(mt,tc);
 
@@ -13558,7 +13570,7 @@ void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
   end_event=get_frame_event_at(mt->event_list,end_tc,start_event,TRUE);
 
   add_effect_inner(mt,numtracks,tracks,1,&tracks[0],start_event,end_event);
-  if (menuitem==NULL) {
+  if (menuitem==NULL&&!mt->is_atrans) {
     g_free(tracks);
     return;
   }
@@ -13584,7 +13596,7 @@ void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
     break;
   }
   g_free(tracks);
-  text=g_strdup_printf(_("Added %s %s to %s from %.4f to %.4f\n"),tname,filter_name,track_desc,start_tc/U_SEC,end_tc/U_SEC);
+  text=g_strdup_printf(_("Added %s %s to %s from %.4f to %.4f\n"),tname,filter_name,track_desc,start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
   d_print(text);
   g_free(text);
   g_free(filter_name);
@@ -13613,7 +13625,7 @@ void mt_add_block_effect (GtkMenuItem *menuitem, gpointer user_data) {
   add_effect_inner(mt,1,&selected_track,1,&selected_track,start_event,end_event);
 
   filter_name=weed_filter_get_name(mt->current_fx);
-  text=g_strdup_printf(_("Added effect %s to track %s from %.4f to %.4f\n"),filter_name,(tmp=get_track_name(mt,selected_track,mt->aud_track_selected)),start_tc/U_SEC,end_tc/U_SEC);
+  text=g_strdup_printf(_("Added effect %s to track %s from %.4f to %.4f\n"),filter_name,(tmp=get_track_name(mt,selected_track,mt->aud_track_selected)),start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
   g_free(tmp);
   d_print(text);
   g_free(text);
@@ -14840,6 +14852,8 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
     }
   }
 
+  if (prefs->atrans_fx!=-1) mt_do_autotransition(mt, block);
+
   mt->did_backup=did_backup;
 
   if (!resize_timeline(mt)) {
@@ -15016,7 +15030,6 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
   track_rect *new_block=NULL,*new_ablock=NULL;
   gchar *text;
   weed_timecode_t orig_st=offset_start,orig_end=offset_end;
-  weed_timecode_t tl=q_dbl(1./mt->fps,mt->fps);
   GtkWidget *aeventbox=NULL;
   gdouble aseek;
   gdouble end_secs;
@@ -15035,7 +15048,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
   if (direction==DIRECTION_POSITIVE) {
     // fill in blank frames in a gap
     if (mt->event_list!=NULL&&(last_frame_event=get_last_frame_event(mt->event_list))!=NULL) time=get_event_timecode(last_frame_event);
-    mt->event_list=add_blank_frames_up_to(mt->event_list,last_frame_event,q_gint64(start_tc-tl,mt->fps),mt->fps);
+    mt->event_list=add_blank_frames_up_to(mt->event_list,last_frame_event,q_gint64(start_tc-1./mt->fps,mt->fps),mt->fps);
   }
 
   mainw->current_file=filenum;
@@ -15115,7 +15128,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
     rep_frames[track]=frame;
 
     // TODO - memcheck
-    mt->event_list=insert_frame_event_at (mt->event_list,q_gint64(last_tc,mt->fps),numframes,rep_clips,rep_frames,&shortcut1);
+    mt->event_list=insert_frame_event_at (mt->event_list,last_tc,numframes,rep_clips,rep_frames,&shortcut1);
 
     if (rep_clips!=clips&&rep_clips!=NULL) g_free(rep_clips);
     if (rep_frames!=frames&&rep_frames!=NULL) g_free(rep_frames);
@@ -15150,10 +15163,10 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
     if (clips!=NULL) weed_free(clips);
     if (frames!=NULL) weed_free(frames);
     
-    if (direction==DIRECTION_POSITIVE) last_tc+=tl;
+    if (direction==DIRECTION_POSITIVE) last_tc+=U_SEC/mt->fps;
     else {
-      if (last_tc<tl) break;
-      last_tc-=tl;
+      if (last_tc<U_SEC/mt->fps) break;
+      last_tc-=U_SEC/mt->fps;
     }
     last_tc=q_gint64(last_tc,mt->fps);
     if (sfile->event_list==NULL) if ((direction==DIRECTION_POSITIVE&&(++frame>sfile->frames))||(direction==DIRECTION_NEGATIVE&&(--frame<1))) {
@@ -15169,7 +15182,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
       if (cfile->achans>0&&sfile->achans>0&&mt->opts.insert_audio&&mt->opts.pertrack_audio) {
 	weed_plant_t *shortcut2=get_next_frame_event(shortcut1);
 	if (shortcut2==NULL) {
-	  mt->event_list=insert_blank_frame_event_at(mt->event_list,q_gint64(last_tc,mt->fps),&shortcut1);
+	  mt->event_list=insert_blank_frame_event_at(mt->event_list,last_tc,&shortcut1);
 	}
 	else shortcut1=shortcut2;
 	insert_audio_event_at(mt->event_list,shortcut1,track,filenum,0.,0.);
@@ -15182,7 +15195,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
       if (cfile->achans>0&&sfile->achans>0&&mt->opts.insert_audio&&mt->opts.pertrack_audio) {
 	weed_plant_t *shortcut2=get_next_frame_event(shortcut1);
 	if (shortcut2==NULL) {
-	  mt->event_list=insert_blank_frame_event_at(mt->event_list,q_gint64(last_tc,mt->fps),&shortcut1);
+	  mt->event_list=insert_blank_frame_event_at(mt->event_list,last_tc,&shortcut1);
 	}
 	else shortcut1=shortcut2;
       }
@@ -19648,6 +19661,35 @@ void on_mt_showkeys_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do_mt_keys_window();
 }
 
+static GtkWidget *get_eventbox_for_track(lives_mt *mt, int ntrack) {
+  GtkWidget *eventbox;
+  if (mt_track_is_video(mt,ntrack)) {
+    eventbox=(GtkWidget *)g_list_nth_data(mt->video_draws, ntrack);
+  }
+  else if (mt_track_is_audio(mt,ntrack)) {
+    eventbox=(GtkWidget *)g_list_nth_data(mt->audio_draws, 1-ntrack);
+  }
+  else return NULL;
+  return eventbox;
+}
+
+
+static track_rect *get_nth_block_for_track(lives_mt *mt, int itrack, int iblock) {
+  int count=0;
+  track_rect *block;
+  GtkWidget *eventbox=get_eventbox_for_track(mt,itrack);
+  if (eventbox==NULL) return NULL; //<invalid track
+  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  while(block!=NULL) {
+    if (count==iblock) return block;
+    block=block->next;
+    count++;
+  }
+
+  return NULL; ///<invalid block
+}
+
+
 
 // remote API helpers
 
@@ -19667,19 +19709,6 @@ gboolean mt_track_is_valid(lives_mt *mt, int itrack) {
   if (!mt_track_is_video(itrack)&&!mt_track_is_audio(itrack)) return FALSE;
   return TRUE;
   }*/
-
-static GtkWidget *get_eventbox_for_track(lives_mt *mt, int ntrack) {
-  GtkWidget *eventbox;
-  if (mt_track_is_video(mt,ntrack)) {
-    eventbox=(GtkWidget *)g_list_nth_data(mt->video_draws, ntrack);
-  }
-  else if (mt_track_is_audio(mt,ntrack)) {
-    eventbox=(GtkWidget *)g_list_nth_data(mt->audio_draws, 1-ntrack);
-  }
-  else return NULL;
-  return eventbox;
-}
-
 
 gint mt_get_last_block_number(lives_mt *mt, int ntrack) {
   int count=0;
@@ -19718,22 +19747,6 @@ gint mt_get_block_count(lives_mt *mt, int ntrack) {
 }
 
 
-static track_rect *get_nth_block_for_track(lives_mt *mt, int itrack, int iblock) {
-  int count=0;
-  track_rect *block;
-  GtkWidget *eventbox=get_eventbox_for_track(mt,itrack);
-  if (eventbox==NULL) return NULL; //<invalid track
-  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
-  while(block!=NULL) {
-    if (count==iblock) return block;
-    block=block->next;
-    count++;
-  }
-
-  return NULL; ///<invalid block
-}
-
-
 /// return time in seconds of first frame event in block
 gdouble mt_get_block_sttime(lives_mt *mt, int ntrack, int iblock) {
   track_rect *block=get_nth_block_for_track(mt,ntrack,iblock);
@@ -19754,123 +19767,231 @@ gdouble mt_get_block_entime(lives_mt *mt, int ntrack, int iblock) {
 ////////////////////////////////////
 // autotransitions
 //
-// done in a hurry for a demo - FIXME !
 
 
-void mt_do_autotransition(lives_mt *mt, int track, int iblock) {
-  track_rect *block,*oblock;
+
+void mt_do_autotransition(lives_mt *mt, track_rect *block) {
+  // prefs->atrans_track0 should be the output track (usually the lower of the two)
+
+  track_rect *oblock=NULL;
   weed_timecode_t sttc,endtc=0;
+  int nvids=g_list_length(mt->video_draws);
 
-  block=get_nth_block_for_track(mt,track,iblock);
-  if (block==NULL) return;
+  gdouble region_start=mt->region_start;
+  gdouble region_end=mt->region_end;
+  GList *slist;
+  int current_fx=mt->current_fx;
+  weed_plant_t *old_mt_init=mt->init_event;
+  gboolean did_backup=mt->did_backup;
+
+  weed_plant_t *deinit_event;
+  weed_plant_t *oparam;
+  weed_plant_t *stevent,*enevent;
+  weed_plant_t *filter;
+  weed_plant_t **ptmpls;
+  weed_plant_t *ptm;
+
+  int error;
+  int tparam;
+  int param_hint;
+  int track;
+  int i;
+
+  if (block==NULL) return;  ///<invalid block
+
+  filter=get_weed_filter(prefs->atrans_fx);
+  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return; ///<filter has no in parameters
+
+  tparam=get_transition_param(filter);
+  if (tparam==-1) return; ///< filter has no transition parameter
+
+  ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+  ptm=ptmpls[tparam];
+  param_hint=weed_get_int_value(ptm,"hint",&error);
+
+  mt->current_fx=prefs->atrans_fx;
 
   sttc=get_event_timecode(block->start_event);
 
-  if (track==1) {
-    // find oblock on track 0, apply trans from iblock start to oblock end
-    oblock=get_block_from_time((GtkWidget *)g_list_nth_data(mt->video_draws,0),(gdouble)sttc/U_SEC,mt);
-    if (oblock==NULL) return;
-    endtc=get_event_timecode(oblock->end_event)+U_SEC/mt->fps;
+  track=get_track_for_block(block);
+
+  // part 1 - transition in
+
+  slist=g_list_copy(mt->selected_tracks);
+  
+  if (mt->selected_tracks!=NULL) {
+    g_list_free(mt->selected_tracks);
+    mt->selected_tracks=NULL;
+  }
+
+  for (i=0;i<nvids;i++) {
+    if (i==track) continue; ///< cannot transition with self !
+    oblock=get_block_from_time((GtkWidget *)g_list_nth_data(mt->video_draws,i),
+			       (gdouble)sttc/U_SEC+0.5/mt->fps,mt);
     
-
-  }
-  else if (track==0&&g_list_length(mt->video_draws)>1) {
-    // find oblock on track 0, apply trans from iblock start to oblock end
-    oblock=get_block_from_time((GtkWidget *)g_list_nth_data(mt->video_draws,1),(gdouble)sttc/U_SEC,mt);
-    if (oblock==NULL) return;
-    endtc=get_event_timecode(oblock->end_event)+U_SEC/mt->fps;
-
-  }
-  else return;
-
-  if (g_list_length(mt->video_draws)>1) {
-    gdouble region_start=mt->region_start;
-    gdouble region_end=mt->region_end;
-    GList *slist=g_list_copy(mt->selected_tracks);
-    int current_fx=mt->current_fx;
-    weed_plant_t *old_mt_init=mt->init_event;
-    gboolean did_backup=mt->did_backup;
-
-    if (!did_backup&&mt->idlefunc>0) {
-      g_source_remove(mt->idlefunc);
-      mt->idlefunc=0;
+    if (oblock!=NULL) {
+      if (get_event_timecode(oblock->end_event)<=get_event_timecode(block->end_event)) {
+	endtc=q_gint64(get_event_timecode(oblock->end_event)+U_SEC/mt->fps,mt->fps);
+	break;
+      }
+      else oblock=NULL;
     }
+  }
 
+  if (!did_backup&&mt->idlefunc>0) {
+    // freeze auto backups
+    g_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
+  mt->is_atrans=TRUE; ///< force some visual changes
+
+  if (oblock!=NULL) {
+    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(track));
+    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(i));
+
+    mt->did_backup=TRUE;
     mt->region_start=sttc/U_SEC;
     mt->region_end=endtc/U_SEC;
-    if (mt->selected_tracks!=NULL) {
-      g_list_free(mt->selected_tracks);
-      mt->selected_tracks=NULL;
+    mt_add_region_effect(NULL, mt);
+    
+    stevent=weed_plant_new(WEED_PLANT_EVENT);
+    weed_set_int_value(stevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
+    weed_set_int64_value(stevent,"timecode",sttc);
+    weed_set_int_value(stevent,"index",tparam);
+    
+    weed_set_voidptr_value(stevent,"init_event",mt->init_event);
+    weed_set_voidptr_value(stevent,"prev_change",NULL);
+    weed_add_plant_flags(stevent,WEED_LEAF_READONLY_PLUGIN);
+
+    enevent=weed_plant_new(WEED_PLANT_EVENT);
+    weed_set_int_value(enevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
+    weed_set_int64_value(enevent,"timecode",sttc);
+    weed_set_int_value(enevent,"index",tparam);
+  
+    weed_set_voidptr_value(enevent,"init_event",mt->init_event);
+    weed_set_voidptr_value(enevent,"next_change",NULL);
+    weed_set_voidptr_value(enevent,"prev_change",stevent);
+    weed_add_plant_flags(enevent,WEED_LEAF_READONLY_PLUGIN);
+
+    weed_set_voidptr_value(stevent,"next_change",enevent);
+
+    if (param_hint==WEED_HINT_INTEGER) {
+      int min=weed_get_int_value(ptm,"min",&error);
+      int max=weed_get_int_value(ptm,"max",&error);
+      weed_set_int_value(stevent,"value",i<track?min:max);
+      weed_set_int_value(enevent,"value",i<track?max:min);
     }
-    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(0));
-    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(1));
-
-    mt->current_fx=weed_get_idx_for_hashname("simple_blendchroma blend",FALSE);
-
-    if (mt->current_fx!=-1) {
-      weed_plant_t *deinit_event;
-      weed_plant_t *oparam;
-      weed_plant_t *stevent,*enevent;
-      int error;
-      int tparam=0; // TODO
-
-      mt->did_backup=TRUE;
-      mt_add_region_effect(NULL,mt);
-
-      // set param values
-      stevent=weed_plant_new(WEED_PLANT_EVENT);
-      weed_set_int_value(stevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
-      weed_set_int64_value(stevent,"timecode",sttc);
-      weed_set_int_value(stevent,"index",tparam);
-      weed_set_int_value(stevent,"index",track==1?0:255); // TODO - get type and min/max
-      weed_set_voidptr_value(stevent,"init_event",mt->init_event);
-      weed_set_voidptr_value(stevent,"prev_change",NULL);
-      weed_add_plant_flags(stevent,WEED_LEAF_READONLY_PLUGIN);
-
-      enevent=weed_plant_new(WEED_PLANT_EVENT);
-      weed_set_int_value(enevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
-      weed_set_int64_value(enevent,"timecode",sttc);
-      weed_set_int_value(enevent,"index",tparam);
-      weed_set_int_value(enevent,"index",track==1?255:0); // TODO - get type and min/max
-      weed_set_voidptr_value(enevent,"init_event",mt->init_event);
-      weed_set_voidptr_value(enevent,"next_change",NULL);
-      weed_set_voidptr_value(enevent,"prev_change",stevent);
-      weed_add_plant_flags(enevent,WEED_LEAF_READONLY_PLUGIN);
-
-      weed_set_voidptr_value(stevent,"next_change",enevent);
-
-      insert_param_change_event_at(mt->event_list,block->start_event,stevent);
-      insert_param_change_event_at(mt->event_list,oblock->end_event,enevent);
-
-      // delete orig pchange and replace with new
-      oparam=weed_get_voidptr_value(mt->init_event,"in_parameters",&error);
-      delete_event(mt->event_list,oparam);
-      deinit_event=weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
-      weed_set_voidptr_value(mt->init_event,"in_parameters",stevent);
-      weed_set_voidptr_value(deinit_event,"in_parameters",stevent);
-
-      pchain[0]=(void *)stevent;
-
+    else {
+      double min=weed_get_double_value(ptm,"min",&error);
+      double max=weed_get_double_value(ptm,"max",&error);
+      weed_set_double_value(stevent,"value",i<track?min:max);
+      weed_set_double_value(enevent,"value",i<track?max:min);
     }
 
-    mt->region_start=region_start;
-    mt->region_end=region_end;
+    insert_param_change_event_at(mt->event_list,block->start_event,stevent);
+    insert_param_change_event_at(mt->event_list,oblock->end_event,enevent);
+
+    // delete orig pchange and replace with new
+    oparam=weed_get_voidptr_value(mt->init_event,"in_parameters",&error);
+    delete_event(mt->event_list,oparam);
+    deinit_event=weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
+    weed_set_voidptr_value(mt->init_event,"in_parameters",stevent);
+    weed_set_voidptr_value(deinit_event,"in_parameters",stevent);
+
+  }
+
+  // part 2, check if there is a transition out
+
+  oblock=NULL;
+  endtc=q_gint64(get_event_timecode(block->end_event)+U_SEC/mt->fps,mt->fps);
+
+  if (mt->selected_tracks!=NULL) {
     g_list_free(mt->selected_tracks);
-    mt->selected_tracks=g_list_copy(slist);
-    if (slist!=NULL) g_list_free(slist);
-    mt->current_fx=current_fx;
-    mt->init_event=old_mt_init;
+    mt->selected_tracks=NULL;
+  }
 
-    mt->did_backup=did_backup;
-    if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  for (i=0;i<nvids;i++) {
+    if (i==track) continue; ///< cannot transition with self !
+    oblock=get_block_from_time((GtkWidget *)g_list_nth_data(mt->video_draws,i),
+			       (gdouble)endtc/U_SEC+0.5/mt->fps,mt);
 
-    return;
+    if (oblock!=NULL) {
+      sttc=get_event_timecode(oblock->start_event);
+      if (sttc<get_event_timecode(block->start_event)) oblock=NULL;
+      else break;
+    }
   }
 
 
+  if (oblock!=NULL) {
+    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(track));
+    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(i));
 
+    mt->did_backup=TRUE;
+    mt->region_start=sttc/U_SEC;
+    mt->region_end=endtc/U_SEC;
+    mt_add_region_effect(NULL, mt);
 
+    stevent=weed_plant_new(WEED_PLANT_EVENT);
+    weed_set_int_value(stevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
+    weed_set_int64_value(stevent,"timecode",sttc);
+    weed_set_int_value(stevent,"index",tparam);
 
+    weed_set_voidptr_value(stevent,"init_event",mt->init_event);
+    weed_set_voidptr_value(stevent,"prev_change",NULL);
+    weed_add_plant_flags(stevent,WEED_LEAF_READONLY_PLUGIN);
 
+    enevent=weed_plant_new(WEED_PLANT_EVENT);
+    weed_set_int_value(enevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
+    weed_set_int64_value(enevent,"timecode",sttc);
+    weed_set_int_value(enevent,"index",tparam);
+  
+    weed_set_voidptr_value(enevent,"init_event",mt->init_event);
+    weed_set_voidptr_value(enevent,"next_change",NULL);
+    weed_set_voidptr_value(enevent,"prev_change",stevent);
+    weed_add_plant_flags(enevent,WEED_LEAF_READONLY_PLUGIN);
+
+    weed_set_voidptr_value(stevent,"next_change",enevent);
+
+    if (param_hint==WEED_HINT_INTEGER) {
+      int min=weed_get_int_value(ptm,"min",&error);
+      int max=weed_get_int_value(ptm,"max",&error);
+      weed_set_int_value(stevent,"value",i<track?max:min);
+      weed_set_int_value(enevent,"value",i<track?min:max);
+    }
+    else {
+      double min=weed_get_double_value(ptm,"min",&error);
+      double max=weed_get_double_value(ptm,"max",&error);
+      weed_set_double_value(stevent,"value",i<track?max:min);
+      weed_set_double_value(enevent,"value",i<track?min:max);
+    }
+
+    insert_param_change_event_at(mt->event_list,oblock->start_event,stevent);
+    insert_param_change_event_at(mt->event_list,block->end_event,enevent);
+
+    // delete orig pchange and replace with new
+    oparam=weed_get_voidptr_value(mt->init_event,"in_parameters",&error);
+    delete_event(mt->event_list,oparam);
+    deinit_event=weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
+    weed_set_voidptr_value(mt->init_event,"in_parameters",stevent);
+    weed_set_voidptr_value(deinit_event,"in_parameters",stevent);
+
+  }
+
+  mt->is_atrans=FALSE;
+  mt->region_start=region_start;
+  mt->region_end=region_end;
+  g_list_free(mt->selected_tracks);
+  mt->selected_tracks=g_list_copy(slist);
+  if (slist!=NULL) g_list_free(slist);
+  mt->current_fx=current_fx;
+  mt->init_event=old_mt_init;
+
+  weed_free(ptmpls);
+
+  mt->did_backup=did_backup;
+  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
 }
+

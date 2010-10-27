@@ -1162,8 +1162,8 @@ static void lives_init(_ign_opts *ign_opts) {
 #endif
 
 
-      //prefs->atrans_fx=-1;
-      prefs->atrans_fx=weed_get_idx_for_hashname("simple_blendchroma blend",FALSE);
+      prefs->atrans_fx=-1;
+      //prefs->atrans_fx=weed_get_idx_for_hashname("simple_blendchroma blend",FALSE);
 
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)) {
 	splash_end();

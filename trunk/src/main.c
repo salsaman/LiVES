@@ -3291,7 +3291,7 @@ void load_frame_image(gint frame) {
 	gint fg_file=mainw->current_file;
 	gint fg_frame=mainw->actual_frame;
 	gint bg_file=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL?mainw->blend_file:-1;
-	gint bg_frame=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file?mainw->files[mainw->blend_file]->frameno:0;
+	gint bg_frame=bg_file>0&&bg_file!=mainw->current_file?mainw->files[bg_file]->frameno:0;
 	int numframes;
 	int *clips,*frames;
 	weed_plant_t *event_list;

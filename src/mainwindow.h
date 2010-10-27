@@ -920,7 +920,7 @@ typedef struct {
   gchar **fonts_array;
   gint nfonts;
 
-  GtkTargetEntry *target_table;
+  GtkTargetEntry *target_table; ///< drag and drop target table
 
 } mainwindow;
 

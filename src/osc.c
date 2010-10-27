@@ -1404,8 +1404,13 @@ void lives_osc_cb_blockcount(void *context, int arglen, const void *vargs, OSCTi
   int track;
   if (mainw->multitrack==NULL) return lives_osc_notify_failure();
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
-  lives_osc_parse_int_argument(vargs,&track);
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) {
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&track);
+  }
+  else if (lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    track=mainw->multitrack->current_track;
+  } else return lives_osc_notify_failure();
 
   nblocks=mt_get_block_count(mainw->multitrack,track);
 
@@ -1417,8 +1422,6 @@ void lives_osc_cb_blockcount(void *context, int arglen, const void *vargs, OSCTi
 
 
 void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  int track;
-  float time;
   int clip;
   int opt;
 
@@ -1426,17 +1429,13 @@ void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCT
 
   if (mainw->playing_file>-1||mainw->preview||mainw->is_processing||mainw->multitrack==NULL) return lives_osc_notify_failure();
 
-  if (lives_osc_check_arguments (arglen,vargs,"ifii",FALSE)) { 
-    lives_osc_check_arguments (arglen,vargs,"ifii",TRUE);
-    lives_osc_parse_int_argument(vargs,&track);
-    lives_osc_parse_float_argument(vargs,&time);
+  if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
     lives_osc_parse_int_argument(vargs,&clip);
     lives_osc_parse_int_argument(vargs,&opt);
   }
-  else if (lives_osc_check_arguments (arglen,vargs,"ifi",FALSE)) { 
-    lives_osc_check_arguments (arglen,vargs,"ifi",TRUE);
-    lives_osc_parse_int_argument(vargs,&track);
-    lives_osc_parse_float_argument(vargs,&time);
+  else if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
     lives_osc_parse_int_argument(vargs,&clip);
   }
   else return lives_osc_notify_failure();
@@ -1444,19 +1443,9 @@ void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCT
   if (clip<1||mainw->files[clip]==NULL||clip==mainw->current_file||clip==mainw->scrap_file) 
     return lives_osc_notify_failure();
 
-  // set ins pt, set sel clip, set sel track
-
-  if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
-    time=q_dbl(time,mainw->multitrack->fps)/U_SEC;
-    mt_tl_move(mainw->multitrack,time-GTK_RULER(mainw->multitrack->timeline)->position);
-    mainw->multitrack->clip_selected=clip-1;
-    mt_clip_select(mainw->multitrack,TRUE);
-    mainw->multitrack->current_track=track;
-    track_select(mainw->multitrack);
-    multitrack_insert(NULL,mainw->multitrack);
-    mt_tl_move(mainw->multitrack,-GTK_RULER(mainw->multitrack->timeline)->position);
-  }
-  else return lives_osc_notify_failure();
+  mainw->multitrack->clip_selected=clip-1;
+  mt_clip_select(mainw->multitrack,TRUE);
+  multitrack_insert(NULL,mainw->multitrack);
 
   tmp=g_strdup_printf("%d|%d",mainw->multitrack->current_track, 
 		      mt_get_last_block_number(mainw->multitrack, mainw->multitrack->current_track));
@@ -1465,6 +1454,70 @@ void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCT
   g_free(tmp);
 
 }
+
+void lives_osc_cb_mtctimeset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  float time;
+  gchar *msg;
+
+  if (mainw->playing_file>-1||mainw->preview||mainw->is_processing||mainw->multitrack==NULL) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"f",TRUE)) { 
+    lives_osc_parse_float_argument(vargs,&time);
+  }
+  else return lives_osc_notify_failure();
+
+  if (time<0.) return lives_osc_notify_failure();
+
+  time=q_dbl(time,mainw->multitrack->fps)/U_SEC;
+  mt_tl_move(mainw->multitrack,time-GTK_RULER(mainw->multitrack->timeline)->position);
+
+  msg=g_strdup_printf("%.8f",GTK_RULER(mainw->multitrack->timeline)->position);
+  lives_osc_notify_success(msg);
+  g_free(msg);
+}
+
+void lives_osc_cb_mtctimeget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *msg;
+
+  if (mainw->multitrack==NULL) return lives_osc_notify_failure();
+
+  msg=g_strdup_printf("%.8f",GTK_RULER(mainw->multitrack->timeline)->position);
+  lives_status_send(msg);
+  g_free(msg);
+}
+
+void lives_osc_cb_mtctrackset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int track;
+  gchar *msg;
+
+  if (mainw->playing_file>-1||mainw->preview||mainw->is_processing||mainw->multitrack==NULL) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",TRUE)) { 
+    lives_osc_parse_int_argument(vargs,&track);
+  }
+  else return lives_osc_notify_failure();
+
+  if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
+    mainw->multitrack->current_track=track;
+    track_select(mainw->multitrack);
+    msg=g_strdup_printf("%d",track);
+    lives_osc_notify_success(msg);
+    g_free(msg);
+  }
+  else return lives_osc_notify_failure();
+}
+
+
+void lives_osc_cb_mtctrackget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar *msg;
+  if (mainw->multitrack==NULL) return lives_osc_notify_failure();
+  
+  msg=g_strdup_printf("%d",mainw->multitrack->current_track);
+  lives_status_send(msg);
+  g_free(msg);
+
+}
+
 
 
 void lives_osc_cb_blockstget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
@@ -1479,6 +1532,11 @@ void lives_osc_cb_blockstget(void *context, int arglen, const void *vargs, OSCTi
     lives_osc_parse_int_argument(vargs,&track);
     lives_osc_parse_int_argument(vargs,&nblock);
   }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",TRUE)) { 
+    track=mainw->multitrack->current_track;
+    lives_osc_parse_int_argument(vargs,&nblock);
+  }
+  else return lives_osc_notify_failure();
 
   if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
     sttime=mt_get_block_sttime(mainw->multitrack,track,nblock);
@@ -1504,6 +1562,11 @@ void lives_osc_cb_blockenget(void *context, int arglen, const void *vargs, OSCTi
     lives_osc_parse_int_argument(vargs,&track);
     lives_osc_parse_int_argument(vargs,&nblock);
   }
+  else if (lives_osc_check_arguments (arglen,vargs,"i",TRUE)) { 
+    track=mainw->multitrack->current_track;
+    lives_osc_parse_int_argument(vargs,&nblock);
+  }
+  else return lives_osc_notify_failure();
 
   if (mt_track_is_video(mainw->multitrack,track)||mt_track_is_audio(mainw->multitrack,track)) {
     entime=mt_get_block_entime(mainw->multitrack,track,nblock);
@@ -2906,6 +2969,10 @@ static struct
     { "/block/insert",		"insert",	lives_osc_cb_blockinsert,       	105	},
     { "/block/start/time/get",		"get",	lives_osc_cb_blockstget,       	111	},
     { "/block/end/time/get",		"get",	lives_osc_cb_blockenget,       	112	},
+    { "/mt/time/get",		"get",	lives_osc_cb_mtctimeget,       	201	},
+    { "/mt/time/set",		"set",	lives_osc_cb_mtctimeset,       	201	},
+    { "/mt/ctrack/get",		"get",	lives_osc_cb_mtctrackget,       	201	},
+    { "/mt/ctrack/set",		"set",	lives_osc_cb_mtctrackset,       	201	},
     
     { NULL,					NULL,		NULL,							0	},
   };
@@ -2987,6 +3054,9 @@ static struct
     {	"/block/start/time/",   		"time",		 111, 106,0	},
     {	"/block/end/",   		"end",		 107, 105,0	},
     {	"/block/end/time/",   		"time",		 112, 107,0	},
+    {	"/mt/",   		"mt",		 200, -1,0	},
+    {	"/mt/ctime/",   		"ctime",		 201, 200,0	},
+    {	"/mt/ctrack/",   		"ctrack",		 202, 200,0	},
     {	NULL,			NULL,		0, -1,0		},
   };
 

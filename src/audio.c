@@ -748,9 +748,13 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   long tot_frames=0l;
 
+  int render_block_size=RENDER_BLOCK_SIZE;
+
   if (out_achans==0) return 0l;
 
   if (!storedfdsset) audio_reset_stored_fnames();
+
+  if (mainw->multitrack==NULL) render_block_size*=100;
 
   if (to_file>-1) {
     // prepare outfile stuff
@@ -909,11 +913,11 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     float_buffer[i]=g_malloc(xsamples*sizeof(float));
   }
 
-  finish_buff=g_malloc(RENDER_BLOCK_SIZE*out_achans*out_asamps);
+  finish_buff=g_malloc(render_block_size*out_achans*out_asamps);
 
   for (i=0;i<nfiles;i++) {
     for (c=0;c<out_achans;c++) {
-      chunk_float_buffer[i*out_achans+c]=g_malloc(RENDER_BLOCK_SIZE*sizeof(float));
+      chunk_float_buffer[i*out_achans+c]=g_malloc(render_block_size*sizeof(float));
     }
   }
 
@@ -977,10 +981,10 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
     // now we send small chunks at a time to the audio vol/pan effect
     shortcut=NULL;
-    blocksize=RENDER_BLOCK_SIZE;
+    blocksize=render_block_size;
 
-    for (i=0;i<xsamples;i+=RENDER_BLOCK_SIZE) {
-      if (i+RENDER_BLOCK_SIZE>xsamples) blocksize=xsamples-i;
+    for (i=0;i<xsamples;i+=render_block_size) {
+      if (i+render_block_size>xsamples) blocksize=xsamples-i;
 
       for (track=0;track<nfiles;track++) {
 	for (c=0;c<out_achans;c++) {

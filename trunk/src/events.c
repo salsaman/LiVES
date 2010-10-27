@@ -3095,6 +3095,9 @@ gint render_events (gboolean reset) {
 
   int track,mytrack;
 
+  gchar *blabel=NULL;
+  gchar *nlabel;
+
   if (reset) {
     progress=frame=1;
     event=cfile->next_event;
@@ -3120,6 +3123,8 @@ gint render_events (gboolean reset) {
   }
 
   if (mainw->effects_paused) return 1;
+
+  nlabel=g_strdup(_("Rendering audio..."));
 
   if (event!=NULL) {
     eventnext=get_next_event(event);
@@ -3200,7 +3205,21 @@ gint render_events (gboolean reset) {
 	  cfile->arate=cfile->undo_arate;
 	  cfile->arps=cfile->undo_arps;
 	  cfile->asampsize=cfile->undo_asampsize;
+	  if (cfile->proc_ptr!=NULL) {
+	    blabel=g_strdup(gtk_label_get_text(GTK_LABEL(cfile->proc_ptr->label)));
+	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),nlabel);
+	    gtk_widget_queue_draw(cfile->proc_ptr->processing);
+	    while (g_main_context_iteration(NULL,FALSE));
+	  }
+
 	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
+
+	  if (cfile->proc_ptr!=NULL) {
+	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
+	    g_free(blabel);
+	    gtk_widget_queue_draw(cfile->proc_ptr->processing);
+	    while (g_main_context_iteration(NULL,FALSE));
+	  }
 	}
       }
 
@@ -3243,7 +3262,22 @@ gint render_events (gboolean reset) {
 		cfile->arps=cfile->undo_arps;
 		cfile->asampsize=cfile->undo_asampsize;
 
+		if (cfile->proc_ptr!=NULL) {
+		  blabel=g_strdup(gtk_label_get_text(GTK_LABEL(cfile->proc_ptr->label)));
+		  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),nlabel);
+		  gtk_widget_queue_draw(cfile->proc_ptr->processing);
+		  while (g_main_context_iteration(NULL,FALSE));
+		}
+
 		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
+
+		if (cfile->proc_ptr!=NULL) {
+		  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
+		  g_free(blabel);
+		  gtk_widget_queue_draw(cfile->proc_ptr->processing);
+		  while (g_main_context_iteration(NULL,FALSE));
+		}
+
 		for (i=0;i<natracks;i++) {
 		  if (xaclips[i]>0) {
 		    xaseek[i]+=(q_gint64(tc,cfile->fps)/U_SEC+1./cfile->fps-atime)*xavel[i];
@@ -3438,7 +3472,8 @@ gint render_events (gboolean reset) {
     mainw->filter_map=NULL;
   }
 
- return 1;
+  g_free(nlabel);
+  return 1;
 }
 
 

@@ -395,6 +395,11 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
   gchar *keymap_file2=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
 
+  int *def_modes;
+
+  def_modes=(int *)g_malloc(prefs->rte_keys_virtual*sizint);
+  for (i=0;i<prefs->rte_keys_virtual;i++) def_modes[i]=-1;
+
   if ((kfd=open (keymap_file2,O_RDONLY))!=-1) {
     g_free(keymap_file);
     keymap_file=keymap_file2;
@@ -423,6 +428,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     do_error_dialog_with_check_transient (msg,FALSE,0,GTK_WINDOW(rte_window));
     g_free (msg);
     d_print_failed();
+    g_free(def_modes);
     return FALSE;
   }
 
@@ -430,6 +436,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   if (mainw->error) {
     mainw->error=FALSE;
     d_print_cancelled();
+    g_free(def_modes);
     return FALSE;
   }
 
@@ -558,6 +565,9 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       continue;
     }
 
+    def_modes[key-1]++;
+
+
     if (strncmp(hashname,"Weed",4)||strlen(hashname)<5) {
       d_print((tmp=g_strdup_printf(_("Invalid effect %s in %s\n"),hashname,keymap_file)));
       g_free(tmp);
@@ -571,6 +581,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if ((mode=weed_add_effectkey(key,whashname,TRUE))==-1) {
       // could not locate effect
+      d_print((tmp=g_strdup_printf(_("Unknown effect %s in %s\n"),whashname,keymap_file)));
       notfound=TRUE;
       g_free(hashname);
       continue;
@@ -603,7 +614,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 	break;
       }
       if (nparams>0) {
-	read_key_defaults(kfd,nparams,key-1,mode,version);
+	read_key_defaults(kfd,nparams,key-1,def_modes[key-1],version);
       }
     }
   }
@@ -633,6 +644,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),0,GTK_WINDOW(rte_window));
   }
   else load_rte_defs();
+  g_free(def_modes);
 
   return FALSE;
 }

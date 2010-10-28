@@ -6549,14 +6549,14 @@ void read_filter_defaults(int fd) {
 
     g_free(buf);
 
-    if (i>=num_weed_filters) continue;
-
     ptmpls=NULL;
 
-    filter=weed_filters[i];
- 
-    num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
-    if (num_params>0) ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+    if (i<num_weed_filters) {
+      filter=weed_filters[i];
+      num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
+      if (num_params>0) ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+    }
+    else num_params=0;
 
     bytes=read(fd,&ntoread,sizint);
     if (bytes<sizint) {
@@ -6571,6 +6571,11 @@ void read_filter_defaults(int fd) {
       }
       if (pnum<num_params) {
 	weed_leaf_deserialise(fd,ptmpls[pnum],"host_default",NULL);
+      }
+      else {
+	weed_plant_t *dummyplant=weed_plant_new(WEED_PLANT_UNKNOWN);
+	weed_leaf_deserialise(fd,dummyplant,"host_default",NULL);
+	weed_plant_free(dummyplant);
       }
     }
     buf=g_malloc(strlen("\n"));

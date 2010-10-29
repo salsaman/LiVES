@@ -1055,18 +1055,23 @@ static gboolean add_mt_param_box(lives_mt *mt) {
 			fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
   g_signal_handler_unblock(mt->node_spinbutton,mt->node_adj_func);
 
-
   res=make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);
 
-  mt->fx_params_label=gtk_label_new(ltext);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(mt->fx_params_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  if (!res) {
+    mt->fx_params_label=gtk_label_new(ltext);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(mt->fx_params_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    gtk_box_pack_start (GTK_BOX (mt->fx_box), mt->fx_params_label, FALSE, FALSE, 0);
   }
-
-  gtk_box_pack_start (GTK_BOX (mt->fx_box), mt->fx_params_label, FALSE, FALSE, 0);
+  else gtk_label_set_text(GTK_LABEL(mt->fx_label),ltext);
   g_free(ltext);
 
   gtk_widget_show_all(mt->fx_base_box);
+
+  if (res) gtk_widget_show(mt->fx_contents_box);
+  else gtk_widget_hide(mt->fx_contents_box);
+
   mt->prev_fx_time=mt_get_effect_time(mt);
   return res;
 }
@@ -1113,11 +1118,6 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
 }
 
 
-void redraw_mt_param_box(lives_mt *mt) {
-  add_mt_param_box(mt);
-}
-
-
 
 static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
   // set mt->track_index to the in_channel index of mt->current_track in "in_tracks" in mt->init_event
@@ -1152,7 +1152,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 
   if (mt->current_track<numtracks&&clips[mt->current_track]<1&&(mt->current_rfx==NULL||mt->init_event==NULL||mt->current_rfx->source==NULL||chindx==-1||!is_audio_channel_in(mt->current_rfx->source,chindx))) {
     if (track_index!=-1&&mt->fx_box!=NULL) {
-      redraw_mt_param_box(mt);
+      add_mt_param_box(mt);
       retval=TRUE;
     }
     weed_free(clips);
@@ -1169,7 +1169,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 	  mt->inheight=mainw->files[clips[mt->current_track]]->vsize*opheight/cfile->vsize;
 	}
 	if (track_index==-1&&mt->fx_box!=NULL) {
-	  redraw_mt_param_box(mt);
+	  add_mt_param_box(mt);
 	  retval=TRUE;
 	}
 	break;
@@ -1179,7 +1179,7 @@ static gboolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
   }
   weed_free(clips);
   if (track_index!=-1&&mt->track_index==-1&&mt->fx_box!=NULL) {
-    redraw_mt_param_box(mt);
+    add_mt_param_box(mt);
     retval=TRUE;
   }
   return retval;
@@ -2730,7 +2730,7 @@ static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, 
     mt->nb_label=gtk_label_new(_("\n\nNo clips loaded.\n"));
     break;
   case NB_ERROR_NOTRANS:
-    mt->nb_label=gtk_label_new(_("\n\nYou must select two video tracks\nand a time region\nto apply transitions.\n"));
+    mt->nb_label=gtk_label_new(_("You must select two video tracks\nand a time region\nto apply transitions.\n\nAlternately, you can enable autotransitions from the Effects menu\nand create an overlap on two tracks."));
     break;
   case NB_ERROR_NOCOMP:
     mt->nb_label=gtk_label_new(_("\n\nYou must select at least one video track\nand a time region\nto apply compositors.\n"));
@@ -6960,11 +6960,12 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
   label=gtk_label_new (_("Params."));
-  mt->fx_base_box = gtk_vbox_new (FALSE, 0);
+  hbox = gtk_hbox_new (FALSE, 0);
 
-  gtk_container_add (GTK_CONTAINER (mt->nb), mt->fx_base_box);
+
+  gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 6), label);
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),mt->fx_base_box), 
+  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), 
 			GTK_STATE_NORMAL, &palette->normal_fore);
 
 
@@ -6972,8 +6973,17 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   // params contents
 
+  mt->fx_base_box = gtk_vbox_new (FALSE, 0);
+  gtk_widget_ref(mt->fx_base_box);
+
+  mt->fx_contents_box=gtk_vbox_new(FALSE,10);
+
+  gtk_box_pack_end (GTK_BOX (mt->fx_base_box), mt->fx_contents_box, FALSE, FALSE, 0);
+
+
   hbox=gtk_hbox_new(FALSE,10);
-  gtk_box_pack_end (GTK_BOX (mt->fx_base_box), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_end (GTK_BOX (mt->fx_contents_box), hbox, FALSE, FALSE, 0);
+
   mt->apply_fx_button = gtk_button_new_with_mnemonic (_("_Apply"));
   gtk_box_pack_start (GTK_BOX (hbox), mt->apply_fx_button, FALSE, FALSE, 0);
   
@@ -7010,8 +7020,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   
 
   hbox=gtk_hbox_new(FALSE,10);
-  gtk_box_pack_end (GTK_BOX (mt->fx_base_box), hbox, FALSE, FALSE, 0);
-
+  gtk_box_pack_end (GTK_BOX (mt->fx_contents_box), hbox, FALSE, FALSE, 0);
 
   mt->del_node_button = gtk_button_new_with_mnemonic (_("_Del. node"));
   gtk_box_pack_end (GTK_BOX (hbox), mt->del_node_button, FALSE, FALSE, 0);
@@ -7038,22 +7047,12 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
   
 
+  mt->fx_label=gtk_label_new("");
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(mt->fx_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  gtk_box_pack_end (GTK_BOX (hbox), mt->fx_label, FALSE, FALSE, 20);
 
 
   set_mt_title(mt);
@@ -7931,6 +7930,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   gtk_widget_destroy(mt->in_out_box);
   gtk_widget_destroy(mt->clip_scroll);
+  gtk_widget_destroy(mt->fx_base_box);
 
   g_list_free(mt->tl_marks);
 
@@ -10803,6 +10803,9 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     }
     mt->current_rfx=NULL;
     gtk_widget_destroy(mt->fx_box);
+    mt->fx_box=NULL;
+
+    gtk_container_remove (GTK_CONTAINER(mt->poly_box),mt->fx_base_box);
 
     if (mt->mt_frame_preview) {
       // put blank back in preview window
@@ -11040,6 +11043,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     break;
   case (POLY_PARAMS):
     set_poly_tab(mt,POLY_PARAMS);
+
+    gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_base_box,TRUE,TRUE,0);
 
     filter=get_weed_filter(mt->current_fx);
     mt->current_rfx=weed_to_rfx(filter,FALSE);
@@ -13594,6 +13599,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
+  mt_show_current_frame(mt);
 }
 
 
@@ -16263,10 +16269,9 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
   }
 
   if (mt->prev_fx_time==0.||tc==init_tc) {
-    redraw_mt_param_box(mt); // sensitise/desensitise reinit params
+    add_mt_param_box(mt); // sensitise/desensitise reinit params
   }
-
-  mt->prev_fx_time=mt_get_effect_time(mt);
+  else mt->prev_fx_time=mt_get_effect_time(mt);
 
   if (mt->current_track>=0) {
     if (mt->opts.fx_auto_preview||mainw->play_window!=NULL) mt_show_current_frame(mt);

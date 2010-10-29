@@ -254,7 +254,9 @@ struct _mt {
   GtkWidget *spinbutton_end;
   GtkWidget *tl_hbox;
   GtkWidget *fx_base_box;
+  GtkWidget *fx_contents_box;
   GtkWidget *fx_box;
+  GtkWidget *fx_label;
   GtkWidget *param_inner_box;
   GtkWidget *param_box;
   GtkWidget *next_node_button;
@@ -829,7 +831,6 @@ void on_next_node_clicked  (GtkWidget *, gpointer mt);
 void on_prev_node_clicked  (GtkWidget *, gpointer mt);
 void on_del_node_clicked  (GtkWidget *, gpointer mt);
 void on_node_spin_value_changed (GtkSpinButton *, gpointer mt);
-void redraw_mt_param_box(lives_mt *);
 gdouble mt_get_effect_time(lives_mt *);
 
 void on_frame_preview_clicked (GtkButton *, gpointer mt);

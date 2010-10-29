@@ -2055,18 +2055,21 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
     for (i=0;i<num_inst;i++) {
       init_event=init_events[i];
       if (mainw->playing_file==-1&&mainw->multitrack!=NULL&&mainw->multitrack->current_rfx!=NULL&&mainw->multitrack->init_event!=NULL) {
-	deinit_event=(weed_plant_t *)weed_get_voidptr_value(mainw->multitrack->init_event,"deinit_event",&error);
-	if (tc>=get_event_timecode(mainw->multitrack->init_event)&&tc<=get_event_timecode(deinit_event)) {
-	  // we are previewing an effect in multitrack - use current unapplied values
-	  // and display only the currently selected filter
-	  void **pchain=mt_get_pchain();
-	  instance=mainw->multitrack->current_rfx->source;
-	  // interpolation can be switched of by setting mainw->no_interp
-	  if (!mainw->no_interp&&pchain!=NULL) {
-	    interpolate_params(instance,pchain,tc); // interpolate parameters for preview
+	if (mainw->multitrack->current_rfx->source_type==LIVES_RFX_SOURCE_WEED&&
+	    mainw->multitrack->current_rfx->source!=NULL) {
+	  deinit_event=(weed_plant_t *)weed_get_voidptr_value(mainw->multitrack->init_event,"deinit_event",&error);
+	  if (tc>=get_event_timecode(mainw->multitrack->init_event)&&tc<=get_event_timecode(deinit_event)) {
+	    // we are previewing an effect in multitrack - use current unapplied values
+	    // and display only the currently selected filter
+	    void **pchain=mt_get_pchain();
+	    instance=mainw->multitrack->current_rfx->source;
+	    // interpolation can be switched of by setting mainw->no_interp
+	    if (!mainw->no_interp&&pchain!=NULL) {
+	      interpolate_params(instance,pchain,tc); // interpolate parameters for preview
+	    }
+	    filter_error=weed_apply_instance (instance,mainw->multitrack->init_event,layers,0,0,tc);
+	    break;
 	  }
-	  filter_error=weed_apply_instance (instance,mainw->multitrack->init_event,layers,0,0,tc);
-	  break;
 	}
       }
 
@@ -3780,6 +3783,30 @@ gboolean weed_init_effect(int hotkey) {
 }
 
 
+
+
+
+ void weed_call_init_func(weed_plant_t *inst) {
+   int error;
+   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
+   if (weed_plant_has_leaf(filter,"init_func")) {
+     weed_init_f *init_func_ptr_ptr;
+     weed_init_f init_func;
+     weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
+     init_func=init_func_ptr_ptr[0];
+     update_host_info(inst);
+     if (init_func!=NULL) {
+       gchar *cwd=cd_to_plugin_dir(filter);
+       error=(*init_func)(inst);
+       dummyvar=chdir(cwd);
+       g_free(cwd);
+     }
+   }
+ }
+
+
+
+
 void weed_call_deinit_func(weed_plant_t *instance) {
   int error;
   weed_plant_t *filter=weed_get_plantptr_value(instance,"filter_class",&error);
@@ -4272,20 +4299,7 @@ gboolean weed_playback_gen_start (void) {
       }
       else {
 	if (!was_started) {
-	  filter=weed_get_plantptr_value(inst,"filter_class",&weed_error);
-	  if (weed_plant_has_leaf(filter,"init_func")) {
-	    weed_init_f *init_func_ptr_ptr;
-	    weed_init_f init_func;
-	    weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
-	    init_func=init_func_ptr_ptr[0];
-	    update_host_info(inst);
-	    if (init_func!=NULL) {
-	      gchar *cwd=cd_to_plugin_dir(filter);
-	      error=(*init_func)(inst);
-	      dummyvar=chdir(cwd);
-	      g_free(cwd);
-	    }
-	  }
+	  weed_call_init_func(inst);
 	}
       }
       

@@ -2376,11 +2376,30 @@ void mt_show_current_frame(lives_mt *mt) {
 	backup_host_tags(mt->event_list,curr_tc);
       }
 
+      // pass quickly through events_list, switching on and off effects an interpolating at current time
       get_audio_and_effects_state_at(mt->event_list,mt->pb_start_event,FALSE,mt->exact_preview);
+
+      // if we are previewing a specific effect we also need to init it
+      if (mt->current_rfx!=NULL&&mt->init_event!=NULL) {
+	if (mt->current_rfx->source_type==LIVES_RFX_SOURCE_WEED&&mt->current_rfx->source!=NULL) {
+	  weed_plant_t *inst=(weed_plant_t *)mt->current_rfx->source;
+	  weed_call_init_func(inst);
+	}
+      }
+
       process_events(mt->pb_start_event,0);
       mainw->internal_messaging=internal_messaging;
       mainw->current_file=current_file;
       deinit_render_effects();
+
+      // if we are previewing an effect we now need to deinit it
+      if (mainw->multitrack->current_rfx!=NULL&&mainw->multitrack->init_event!=NULL) {
+	if (mt->current_rfx->source_type==LIVES_RFX_SOURCE_WEED&&mt->current_rfx->source!=NULL) {
+	  weed_plant_t *inst=(weed_plant_t *)mt->current_rfx->source;
+	  weed_call_deinit_func(inst);
+	}
+      }
+
       if (is_rendering) {
 	restore_weed_instances();
 	restore_host_tags(mt->event_list,curr_tc);
@@ -8958,6 +8977,7 @@ fx_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data)
 	case FX_ORD_BEFORE:
 	  mt_backup(mt,MT_UNDO_FILTER_MAP_CHANGE,NULL);
 	  move_init_in_filter_map(mt,mt->event_list,mt->fm_edit_event,osel,mt->selected_init_event,mt->current_track,FALSE);
+	  mt->did_backup=FALSE;
 	  break;
 	case FX_ORD_AFTER:
 	  if (init_event_is_process_last(mt->selected_init_event)) {
@@ -8970,6 +8990,7 @@ fx_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data)
 	  }
 	  mt_backup(mt,MT_UNDO_FILTER_MAP_CHANGE,NULL);
 	  move_init_in_filter_map(mt,mt->event_list,mt->fm_edit_event,osel,mt->selected_init_event,mt->current_track,TRUE);
+	  mt->did_backup=FALSE;
 	  break;
 
 	default:
@@ -11047,6 +11068,12 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_base_box,TRUE,TRUE,0);
 
     filter=get_weed_filter(mt->current_fx);
+
+    if (mt->current_rfx!=NULL) {
+      rfx_free(mt->current_rfx);
+      g_free(mt->current_rfx);
+    }
+
     mt->current_rfx=weed_to_rfx(filter,FALSE);
 
     tc=get_event_timecode(mt->init_event);
@@ -16235,6 +16262,18 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
 
   g_object_freeze_notify(G_OBJECT(spinbutton));
 
+  if (!mt->block_tl_move) {
+    timesecs=otc/U_SEC;
+    mt->block_node_spin=TRUE;
+    mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
+    mt->block_node_spin=FALSE;
+  }
+
+  if (mt->prev_fx_time==0.||tc==init_tc) {
+    add_mt_param_box(mt); // sensitise/desensitise reinit params
+  }
+  else mt->prev_fx_time=mt_get_effect_time(mt);
+
   interpolate_params(mt->current_rfx->source,pchain,tc);
   
   set_params_unchanged(mt->current_rfx);
@@ -16260,18 +16299,6 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
     gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
   }
   else gtk_widget_set_sensitive(mt->del_node_button,FALSE);
-
-  if (!mt->block_tl_move) {
-    timesecs=otc/U_SEC;
-    mt->block_node_spin=TRUE;
-    mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
-    mt->block_node_spin=FALSE;
-  }
-
-  if (mt->prev_fx_time==0.||tc==init_tc) {
-    add_mt_param_box(mt); // sensitise/desensitise reinit params
-  }
-  else mt->prev_fx_time=mt_get_effect_time(mt);
 
   if (mt->current_track>=0) {
     if (mt->opts.fx_auto_preview||mainw->play_window!=NULL) mt_show_current_frame(mt);

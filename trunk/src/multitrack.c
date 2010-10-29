@@ -4702,7 +4702,7 @@ static void mt_set_atrans_effect (GtkMenuItem *menuitem, gpointer user_data) {
 
   // set pref
   atrans_hash=make_weed_hashname(prefs->atrans_fx,FALSE);
-  set_pref("current_atrans",atrans_hash);
+  set_pref("current_autotrans",atrans_hash);
   g_free(atrans_hash);
 }
 

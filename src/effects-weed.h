@@ -51,6 +51,7 @@ gint weed_filter_subcategorise (weed_plant_t *pl, int category, gboolean count_o
 gchar *weed_category_to_text(int cat, gboolean plural);
 gboolean has_usable_palette(weed_plant_t *chantmpl);
 
+void weed_call_init_func(weed_plant_t *instance);
 void weed_call_deinit_func(weed_plant_t *instance);
 
 gchar *cd_to_plugin_dir(weed_plant_t *filter);

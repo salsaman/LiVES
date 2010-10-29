@@ -2835,6 +2835,7 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   else {
     filter=plant;
     plant=weed_instance_from_filter(filter);
+    // init and deinit the effect to allow the plugin to hide parameters, etc.
     weed_reinit_effect(plant,FALSE);
     rfx->is_template=TRUE;
   }

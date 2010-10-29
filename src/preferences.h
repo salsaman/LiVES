@@ -267,6 +267,7 @@ typedef struct {
 
   // autotransitioning in mt
   gint atrans_fx;
+  gchar def_autotrans[256];
 
 } _prefs;
 

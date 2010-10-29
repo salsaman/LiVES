@@ -338,7 +338,10 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
   int i;
   gchar *msg;
 
-  if (!g_file_test(vpp_file,G_FILE_TEST_EXISTS)) return;
+  if (!g_file_test(vpp_file,G_FILE_TEST_EXISTS)) {
+    g_free(vpp_file);
+    return;
+  }
 
   msg=g_strdup_printf(_("Loading video playback plugin defaults from %s..."),vpp_file);
   d_print(msg);
@@ -360,6 +363,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
   if (strcmp(msg,buf)) {
     g_free(msg);
     d_print_file_error_failed();
+    g_free(vpp_file);
     return;
   }
   g_free(msg);
@@ -371,6 +375,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
 
   if (strcmp(buf,mainw->vpp->name)) {
     d_print_failed();
+    g_free(vpp_file);
     return;
   }
 

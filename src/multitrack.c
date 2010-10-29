@@ -1018,7 +1018,7 @@ gdouble mt_get_effect_time(lives_mt *mt) {
 }
 
 
-static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
+static gboolean add_mt_param_box(lives_mt *mt) {
   // here we add a GUI box which will hold effect parameters
 
   // if we set keep_scale to TRUE, the current time slider is kept
@@ -1027,9 +1027,6 @@ static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
   // returns TRUE if we have any parameters
 
   weed_plant_t *deinit_event;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkObject *spinbutton_adj;
   gdouble fx_start_time,fx_end_time;
   gchar *ltext;
   weed_timecode_t tc;
@@ -1044,89 +1041,33 @@ static gboolean add_mt_param_box(lives_mt *mt, gboolean keep_scale) {
   fx_start_time=tc/U_SEC;
   fx_end_time=get_event_timecode(deinit_event)/U_SEC;
 
+  if (mt->fx_box!=NULL) {
+    gtk_widget_destroy(mt->fx_box);
+  }
+
   mt->fx_box=gtk_vbox_new(FALSE,0);
-  gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_box,TRUE,TRUE,0);
+  gtk_box_pack_end(GTK_BOX(mt->fx_base_box),mt->fx_box,TRUE,TRUE,0);
 
   ltext=mt_params_label(mt);
 
-  mt->fx_params_label=gtk_label_new(ltext);
-  g_free(ltext);
+  g_signal_handler_block(mt->node_spinbutton,mt->node_adj_func);
+  adjustment_configure (GTK_ADJUSTMENT(mt->node_adj), cur_time-fx_start_time, 0., 
+			fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
+  g_signal_handler_unblock(mt->node_spinbutton,mt->node_adj_func);
 
+
+  res=make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);
+
+  mt->fx_params_label=gtk_label_new(ltext);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(mt->fx_params_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_box_pack_start (GTK_BOX (mt->fx_box), mt->fx_params_label, FALSE, FALSE, 0);
+  g_free(ltext);
 
-  if (!keep_scale) {
-    spinbutton_adj = gtk_adjustment_new (cur_time-fx_start_time, 0., fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
-    mt->node_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
-    gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
-    mt->node_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 0, 3);
-    g_signal_connect_after (GTK_OBJECT (mt->node_spinbutton), "value_changed",
-			    G_CALLBACK (on_node_spin_value_changed),
-			    (gpointer)mt);
-  
-  }
-
-  res=make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);
-
-  hbox=gtk_hbox_new(FALSE,10);
-  gtk_box_pack_end (GTK_BOX (mt->fx_box), hbox, FALSE, FALSE, 0);
-  mt->apply_fx_button = gtk_button_new_with_mnemonic (_("_Apply"));
-  gtk_box_pack_start (GTK_BOX (hbox), mt->apply_fx_button, FALSE, FALSE, 0);
-  
-  g_signal_connect (GTK_OBJECT (mt->apply_fx_button), "clicked",
-		    G_CALLBACK (on_set_pvals_clicked),
-		    (gpointer)mt);
-  
-
-  gtk_widget_show (mt->node_spinbutton);
-  gtk_box_pack_start (GTK_BOX (hbox), mt->node_spinbutton, FALSE, TRUE, 0);
-
-  label=gtk_label_new(_("Time"));
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-    
-  gtk_box_pack_start (GTK_BOX (hbox), mt->node_scale, TRUE, TRUE, 10);
-  
-
-  hbox=gtk_hbox_new(FALSE,10);
-  gtk_box_pack_end (GTK_BOX (mt->fx_box), hbox, FALSE, FALSE, 0);
-
-
-  mt->del_node_button = gtk_button_new_with_mnemonic (_("_Del. node"));
-  gtk_box_pack_end (GTK_BOX (hbox), mt->del_node_button, FALSE, FALSE, 0);
-  gtk_widget_set_sensitive(mt->del_node_button,FALSE);
-  
-  g_signal_connect (GTK_OBJECT (mt->del_node_button), "clicked",
-		    G_CALLBACK (on_del_node_clicked),
-		    (gpointer)mt);
-  
-  mt->next_node_button = gtk_button_new_with_mnemonic (_("_Next node"));
-  gtk_box_pack_end (GTK_BOX (hbox), mt->next_node_button, FALSE, FALSE, 0);
-  gtk_widget_set_sensitive(mt->next_node_button,FALSE);
-
-  g_signal_connect (GTK_OBJECT (mt->next_node_button), "clicked",
-		    G_CALLBACK (on_next_node_clicked),
-		    (gpointer)mt);
-  
-  mt->prev_node_button = gtk_button_new_with_mnemonic (_("_Prev node"));
-  gtk_box_pack_end (GTK_BOX (hbox), mt->prev_node_button, FALSE, FALSE, 0);
-  gtk_widget_set_sensitive(mt->prev_node_button,FALSE);
-  
-  g_signal_connect (GTK_OBJECT (mt->prev_node_button), "clicked",
-		    G_CALLBACK (on_prev_node_clicked),
-		    (gpointer)mt);
-  
-
-  gtk_widget_show_all(mt->fx_box);
+  gtk_widget_show_all(mt->fx_base_box);
   mt->prev_fx_time=mt_get_effect_time(mt);
-
   return res;
 }
 
@@ -1173,17 +1114,7 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
 
 
 void redraw_mt_param_box(lives_mt *mt) {
-  gtk_widget_ref(mt->node_scale);
-  gtk_widget_ref(mt->node_spinbutton);
-  g_object_ref(gtk_range_get_adjustment(GTK_RANGE(mt->node_scale)));
-  gtk_widget_unparent(mt->node_scale);
-  gtk_widget_unparent(mt->node_spinbutton);
-
-  // work around a bug in gtk+
-  if (mt->invis==NULL) mt->invis=gtk_vbox_new(FALSE,0);
-  gtk_widget_reparent(mt->fx_box,mt->invis);
-
-  add_mt_param_box(mt,TRUE);
+  add_mt_param_box(mt);
 }
 
 
@@ -4748,8 +4679,32 @@ static gboolean timecode_string_validate(GtkEntry *entry, lives_mt *mt) {
   return TRUE;
 }
 
+static gboolean on_mt_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+  mt_quit_activate(NULL,user_data);
+  return FALSE;
+}
 
 
+static void cmi_set_inactive(GtkWidget *widget, gpointer data) {
+  if (widget==data) return;
+  g_object_freeze_notify(G_OBJECT(widget));
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget),FALSE);
+  g_object_thaw_notify(G_OBJECT(widget));
+}
+
+static void mt_set_atrans_effect (GtkMenuItem *menuitem, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  gchar *atrans_hash;
+
+  if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem))) return;
+  gtk_container_foreach(GTK_CONTAINER(mt->submenu_atransfx),cmi_set_inactive,menuitem);
+  prefs->atrans_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
+
+  // set pref
+  atrans_hash=make_weed_hashname(prefs->atrans_fx,FALSE);
+  set_pref("current_atrans",atrans_hash);
+  g_free(atrans_hash);
+}
 
 
 static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpointer user_data) {
@@ -4772,6 +4727,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   GtkWidget *btoolbar;
   GtkWidget *menu_hbox;
   GtkWidget *menuitem;
+  GtkWidget *menuitem2;
   GtkWidget *menuitemsep;
   GtkWidget *menuitem_menu;
   GtkWidget *menuitem_menu2;
@@ -4972,8 +4928,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->did_backup=FALSE;
   mt->framedraw=NULL;
-
-  mt->invis=NULL;
 
   mt->audio_draws=NULL;
   mt->audio_vols=mt->audio_vols_back=NULL;
@@ -5591,6 +5545,21 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
   gtk_widget_set_sensitive (separator, FALSE);
 
+
+  mt->atrans_menuitem = gtk_menu_item_new_with_mnemonic (_("Select _autotransition effect..."));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->atrans_menuitem);
+
+  mt->submenu_atransfx=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->atrans_menuitem), mt->submenu_atransfx);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(mt->submenu_atransfx, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+  separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
+
   mt->fx_edit = gtk_menu_item_new_with_mnemonic (_("View/_Edit selected effect"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->fx_edit);
   gtk_widget_set_sensitive(mt->fx_edit,FALSE);
@@ -5764,12 +5733,29 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
       else if (enabled_in_channels(filter,FALSE)==2&&enabled_out_channels(filter,FALSE)==1) {
 	// add all transitions to submenus
 	menuitem = gtk_image_menu_item_new_with_label (fname);
+	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
 	if (get_transition_param(filter)==-1) gtk_container_add (GTK_CONTAINER (submenu_menu11), menuitem);
 	else {
-	  if (has_video_chans_in(filter,FALSE)) gtk_container_add (GTK_CONTAINER (submenu_menu10), menuitem);
+	  if (has_video_chans_in(filter,FALSE)) {
+	    /// the autotransitions menu
+	    menuitem2 = gtk_check_menu_item_new_with_label (fname);
+	    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==i);
+	    g_object_set_data(G_OBJECT(menuitem2),"idx",GINT_TO_POINTER(i));
+
+	    g_signal_connect (GTK_OBJECT (menuitem2), "activate",
+			      G_CALLBACK (mt_set_atrans_effect),
+			      (gpointer)mt);
+
+
+	    if (!strcmp(fname,prefs->def_autotrans)) {
+	      gtk_menu_shell_prepend(GTK_MENU_SHELL(mt->submenu_atransfx),menuitem2);
+	    }
+	    else gtk_menu_shell_append(GTK_MENU_SHELL(mt->submenu_atransfx),menuitem2);
+	    /// apply block effect menu
+	    gtk_container_add (GTK_CONTAINER (submenu_menu10), menuitem);
+	  }
 	  else gtk_container_add (GTK_CONTAINER (submenu_menu12), menuitem);
 	}
-	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			  G_CALLBACK (mt_add_region_effect),
 			  (gpointer)mt);
@@ -5777,6 +5763,18 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
       g_free(fname);
     }
   }
+
+
+  /// None autotransition
+  menuitem2 = gtk_check_menu_item_new_with_label (mainw->none_string);
+  g_object_set_data(G_OBJECT(menuitem2),"idx",GINT_TO_POINTER(-1));
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==-1);
+  gtk_menu_shell_prepend(GTK_MENU_SHELL(mt->submenu_atransfx),menuitem2);
+
+  g_signal_connect (GTK_OBJECT (menuitem2), "activate",
+		    G_CALLBACK (mt_set_atrans_effect),
+		    (gpointer)mt);
+
 
   // Tracks
 
@@ -6882,6 +6880,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   label=gtk_label_new (_("Clips"));
 
+
+
   // prepare polymorph box
   mt->poly_box = gtk_vbox_new (FALSE, 0);
 
@@ -6960,11 +6960,100 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
   label=gtk_label_new (_("Params."));
-  hbox = gtk_hbox_new (FALSE, 0);
+  mt->fx_base_box = gtk_vbox_new (FALSE, 0);
 
-  gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
+  gtk_container_add (GTK_CONTAINER (mt->nb), mt->fx_base_box);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 6), label);
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),mt->fx_base_box), 
+			GTK_STATE_NORMAL, &palette->normal_fore);
+
+
+
+
+  // params contents
+
+  hbox=gtk_hbox_new(FALSE,10);
+  gtk_box_pack_end (GTK_BOX (mt->fx_base_box), hbox, FALSE, FALSE, 0);
+  mt->apply_fx_button = gtk_button_new_with_mnemonic (_("_Apply"));
+  gtk_box_pack_start (GTK_BOX (hbox), mt->apply_fx_button, FALSE, FALSE, 0);
+  
+  g_signal_connect (GTK_OBJECT (mt->apply_fx_button), "clicked",
+		    G_CALLBACK (on_set_pvals_clicked),
+		    (gpointer)mt);
+  
+
+  mt->node_adj = gtk_adjustment_new (0., 0., 0., 1./mt->fps, 10./mt->fps, 0.);
+
+  mt->node_scale=gtk_hscale_new(GTK_ADJUSTMENT(mt->node_adj));
+  gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
+  mt->node_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (mt->node_adj), 0, 3);
+
+  mt->node_adj_func=g_signal_connect_after (GTK_OBJECT (mt->node_spinbutton), "value_changed",
+					    G_CALLBACK (on_node_spin_value_changed),
+					    (gpointer)mt);
+  
+
+  gtk_widget_show (mt->node_spinbutton);
+  gtk_box_pack_start (GTK_BOX (hbox), mt->node_spinbutton, FALSE, TRUE, 0);
+
+  label=gtk_label_new(_("Time"));
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+    
+  gtk_widget_show(mt->node_scale);
+  gtk_widget_show(hbox);
+  gtk_box_pack_start (GTK_BOX (hbox), mt->node_scale, TRUE, TRUE, 10);
+  
+
+  hbox=gtk_hbox_new(FALSE,10);
+  gtk_box_pack_end (GTK_BOX (mt->fx_base_box), hbox, FALSE, FALSE, 0);
+
+
+  mt->del_node_button = gtk_button_new_with_mnemonic (_("_Del. node"));
+  gtk_box_pack_end (GTK_BOX (hbox), mt->del_node_button, FALSE, FALSE, 0);
+  gtk_widget_set_sensitive(mt->del_node_button,FALSE);
+  
+  g_signal_connect (GTK_OBJECT (mt->del_node_button), "clicked",
+		    G_CALLBACK (on_del_node_clicked),
+		    (gpointer)mt);
+  
+  mt->next_node_button = gtk_button_new_with_mnemonic (_("_Next node"));
+  gtk_box_pack_end (GTK_BOX (hbox), mt->next_node_button, FALSE, FALSE, 0);
+  gtk_widget_set_sensitive(mt->next_node_button,FALSE);
+
+  g_signal_connect (GTK_OBJECT (mt->next_node_button), "clicked",
+		    G_CALLBACK (on_next_node_clicked),
+		    (gpointer)mt);
+  
+  mt->prev_node_button = gtk_button_new_with_mnemonic (_("_Prev node"));
+  gtk_box_pack_end (GTK_BOX (hbox), mt->prev_node_button, FALSE, FALSE, 0);
+  gtk_widget_set_sensitive(mt->prev_node_button,FALSE);
+  
+  g_signal_connect (GTK_OBJECT (mt->prev_node_button), "clicked",
+		    G_CALLBACK (on_prev_node_clicked),
+		    (gpointer)mt);
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   set_mt_title(mt);
@@ -7901,12 +7990,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
 
 
-gboolean
-on_mt_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-  mt_quit_activate(NULL,user_data);
-  return FALSE;
-}
-
 static void locate_avol_init_event(lives_mt *mt, weed_plant_t *event_list, int avol_fx) {
   // once we have detected or assigned our audio volume effect, we search for a FILTER_INIT event for it
   // this becomes our mt->avol_init_event
@@ -8766,12 +8849,25 @@ void add_video_track_front (GtkMenuItem *menuitem, gpointer user_data) {
 void on_mt_fx_edit_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int npch,i,error;
+  int num_in_tracks;
+  int *in_tracks;
   void **pchainx;
   gchar *fhash;
 
   if (mt->selected_init_event==NULL) return;
 
   mt->init_event=mt->selected_init_event;
+
+  mt->track_index=-1;
+
+  if ((num_in_tracks=weed_leaf_num_elements(mt->init_event,"in_tracks"))>0) {
+    in_tracks=weed_get_int_array(mt->init_event,"in_tracks",&error);
+    // set track_index (for special widgets)
+    for (i=0;i<num_in_tracks;i++) {
+      if (mt->current_track==in_tracks[i]) mt->track_index=i;
+    }
+    weed_free(in_tracks);
+  }
 
   fhash=weed_get_string_value(mt->init_event,"filter",&error);
   mt->current_fx=weed_get_idx_for_hashname(fhash,TRUE);
@@ -8847,7 +8943,7 @@ fx_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data)
 
   mt->selected_init_event=g_object_get_data(G_OBJECT(eventbox),"init_event");
 
-  if (event->type!=GDK_BUTTON_PRESS) {
+  if (event->type==GDK_2BUTTON_PRESS) {
     // double click
     mt->moving_fx=NULL;
     if (mainw->playing_file==-1) on_mt_fx_edit_activate(NULL,mt);
@@ -8880,7 +8976,7 @@ fx_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data)
 	  break;
 	}
       }
-
+      
       mt->selected_init_event=osel;
       mt->fx_order=FX_ORD_NONE;
       polymorph(mt,POLY_FX_STACK);
@@ -10708,9 +10804,6 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mt->current_rfx=NULL;
     gtk_widget_destroy(mt->fx_box);
 
-    if (mt->invis!=NULL) gtk_widget_destroy(mt->invis);
-    mt->invis=NULL;
-
     if (mt->mt_frame_preview) {
       // put blank back in preview window
       gtk_widget_ref (mainw->playarea);
@@ -10723,7 +10816,6 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mouse_mode_context(mt); // reset context box text
     mt->last_fx_type=MT_LAST_FX_NONE;
     mt->fx_box=NULL;
-    mt->apply_fx_button=NULL;
     gtk_widget_set_sensitive(mt->fx_edit,FALSE);
     gtk_widget_set_sensitive(mt->fx_delete,FALSE);
     if (mt->idlefunc>0) {
@@ -10969,7 +11061,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mt->fx_box=NULL;
     get_track_index(mt,tc);
 
-    has_params=add_mt_param_box(mt,FALSE);
+    mt->prev_fx_time=0; // force redraw in node_spin_val_changed
+    has_params=add_mt_param_box(mt);
 
     if (mainw->playing_file<0) {
       if (mt->current_track>=0) {
@@ -10978,7 +11071,6 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	  mt->idlefunc=0;
 	  needs_idlefunc=TRUE;
 	}
-	mt_show_current_frame(mt);
 	mt->block_tl_move=TRUE;
 	on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
 	mt->block_tl_move=FALSE;
@@ -12013,7 +12105,7 @@ void animate_multitrack (lives_mt *mt) {
 // menuitem callbacks
 
 
-gboolean multitrack_end (GtkMenuItem *menuitem, gpointer user_data) {
+static gboolean multitrack_end (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   return multitrack_delete (mt,!(prefs->warning_mask&WARN_MASK_EXIT_MT)||menuitem==NULL);
 }
@@ -13524,8 +13616,6 @@ weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *st
   weed_set_double_value(event_list,"fps",fps);
   return event_list;
 }
-
-
 
 
 void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
@@ -16151,12 +16241,6 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
   update_visual_params(mt->current_rfx,TRUE);
   mainw->block_param_updates=FALSE;
   
-  if (mt->prev_fx_time==0.||tc==init_tc) {
-    redraw_mt_param_box(mt); // sensitise/desensitise reinit params
-  }
-
-  mt->prev_fx_time=mt_get_effect_time(mt);
-
   mt->opts.fx_auto_preview=auto_prev;
 
   if (get_prev_node_tc(mt,tc)>-1) gtk_widget_set_sensitive(mt->prev_node_button,TRUE);
@@ -16177,6 +16261,12 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
     mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
     mt->block_node_spin=FALSE;
   }
+
+  if (mt->prev_fx_time==0.||tc==init_tc) {
+    redraw_mt_param_box(mt); // sensitise/desensitise reinit params
+  }
+
+  mt->prev_fx_time=mt_get_effect_time(mt);
 
   if (mt->current_track>=0) {
     if (mt->opts.fx_auto_preview||mainw->play_window!=NULL) mt_show_current_frame(mt);
@@ -17385,6 +17475,7 @@ static void remove_atrack_from_list(int track) {
     if (atoi(array[0])==track) {
       atrack_list=g_list_remove(atrack_list,entry);
       g_strfreev(array);
+      g_free(entry);
       return;
     }
     g_strfreev(array);
@@ -19784,15 +19875,16 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   weed_plant_t *old_mt_init=mt->init_event;
   gboolean did_backup=mt->did_backup;
 
-  weed_plant_t *deinit_event;
-  weed_plant_t *oparam;
+  //weed_plant_t *deinit_event;
   weed_plant_t *stevent,*enevent;
   weed_plant_t *filter;
   weed_plant_t **ptmpls;
   weed_plant_t *ptm;
+  weed_plant_t **oparams;
 
   int error;
   int tparam;
+  int nparams;
   int param_hint;
   int track;
   int i;
@@ -19855,18 +19947,18 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     mt->region_end=endtc/U_SEC;
     mt_add_region_effect(NULL, mt);
     
-    stevent=weed_plant_new(WEED_PLANT_EVENT);
-    weed_set_int_value(stevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
-    weed_set_int64_value(stevent,"timecode",sttc);
-    weed_set_int_value(stevent,"index",tparam);
-    
-    weed_set_voidptr_value(stevent,"init_event",mt->init_event);
-    weed_set_voidptr_value(stevent,"prev_change",NULL);
-    weed_add_plant_flags(stevent,WEED_LEAF_READONLY_PLUGIN);
+    nparams=weed_leaf_num_elements(mt->init_event,"in_parameters");
+    oparams=(weed_plant_t **)weed_get_voidptr_array(mt->init_event,"in_parameters",&error);
+
+    for (i=0;i<nparams;i++) {
+      if (weed_get_int_value(oparams[i],"index",&error)==tparam) break;
+    }
+
+    stevent=oparams[i];
 
     enevent=weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(enevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
-    weed_set_int64_value(enevent,"timecode",sttc);
+    weed_set_int64_value(enevent,"timecode",endtc);
     weed_set_int_value(enevent,"index",tparam);
   
     weed_set_voidptr_value(enevent,"init_event",mt->init_event);
@@ -19889,15 +19981,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
       weed_set_double_value(enevent,"value",i<track?max:min);
     }
 
-    insert_param_change_event_at(mt->event_list,block->start_event,stevent);
     insert_param_change_event_at(mt->event_list,oblock->end_event,enevent);
-
-    // delete orig pchange and replace with new
-    oparam=weed_get_voidptr_value(mt->init_event,"in_parameters",&error);
-    delete_event(mt->event_list,oparam);
-    deinit_event=weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
-    weed_set_voidptr_value(mt->init_event,"in_parameters",stevent);
-    weed_set_voidptr_value(deinit_event,"in_parameters",stevent);
+    weed_free(oparams);
 
   }
 
@@ -19933,18 +20018,18 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     mt->region_end=endtc/U_SEC;
     mt_add_region_effect(NULL, mt);
 
-    stevent=weed_plant_new(WEED_PLANT_EVENT);
-    weed_set_int_value(stevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
-    weed_set_int64_value(stevent,"timecode",sttc);
-    weed_set_int_value(stevent,"index",tparam);
+    nparams=weed_leaf_num_elements(mt->init_event,"in_parameters");
+    oparams=(weed_plant_t **)weed_get_voidptr_array(mt->init_event,"in_parameters",&error);
 
-    weed_set_voidptr_value(stevent,"init_event",mt->init_event);
-    weed_set_voidptr_value(stevent,"prev_change",NULL);
-    weed_add_plant_flags(stevent,WEED_LEAF_READONLY_PLUGIN);
+    for (i=0;i<nparams;i++) {
+      if (weed_get_int_value(oparams[i],"index",&error)==tparam) break;
+    }
+
+    stevent=oparams[i];
 
     enevent=weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(enevent,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
-    weed_set_int64_value(enevent,"timecode",sttc);
+    weed_set_int64_value(enevent,"timecode",get_event_timecode(block->end_event));
     weed_set_int_value(enevent,"index",tparam);
   
     weed_set_voidptr_value(enevent,"init_event",mt->init_event);
@@ -19967,16 +20052,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
       weed_set_double_value(enevent,"value",i<track?min:max);
     }
 
-    insert_param_change_event_at(mt->event_list,oblock->start_event,stevent);
     insert_param_change_event_at(mt->event_list,block->end_event,enevent);
-
-    // delete orig pchange and replace with new
-    oparam=weed_get_voidptr_value(mt->init_event,"in_parameters",&error);
-    delete_event(mt->event_list,oparam);
-    deinit_event=weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
-    weed_set_voidptr_value(mt->init_event,"in_parameters",stevent);
-    weed_set_voidptr_value(deinit_event,"in_parameters",stevent);
-
+    weed_free(oparams);
   }
 
   mt->is_atrans=FALSE;

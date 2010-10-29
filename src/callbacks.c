@@ -4184,6 +4184,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
       }
       else {
+	g_free(subfname);
 	subfname=g_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
 	if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
 	  subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);

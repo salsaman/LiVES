@@ -130,7 +130,7 @@ static void save_keymap2_file(gchar *kfname) {
     for (j=0;j<modes;j++) {
       if (rte_keymode_valid(i,j,TRUE)) {
 	dummyvar=write(kfd,&i,sizint);
-	hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j)));
+	hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE));
 	slen=strlen(hashname);
 	dummyvar=write(kfd,&slen,sizint);
 	dummyvar=write(kfd,hashname,slen);
@@ -190,7 +190,7 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     for (i=1;i<=prefs->rte_keys_virtual;i++) {
       for (j=0;j<modes;j++) {
 	if (rte_keymode_valid(i,j,TRUE)) {
-	  fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j))),kfile);
+	  fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)),kfile);
 	}
       }
     }
@@ -456,7 +456,6 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 	}
       }
     }
-    g_free (whole);
     fclose (kfile);
 
     if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 2")||!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
@@ -470,6 +469,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
   }
 
+  g_free (whole);
 
   for (i=1;(keymap_file2==NULL&&i<g_list_length(list))||(keymap_file2!=NULL&&!eof);i++) {
     gchar **array;

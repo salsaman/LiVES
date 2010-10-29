@@ -3390,13 +3390,14 @@ void adjustment_configure(GtkAdjustment *adjustment,
 		     gdouble step_increment,
 		     gdouble page_increment,
 		     gdouble page_size) {
+  g_object_freeze_notify (G_OBJECT(adjustment));
 
 #ifdef HAVE_GTK_NICE_VERSION
   gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
+  g_object_thaw_notify (G_OBJECT(adjustment));
   return;
 #else
 
-  g_object_freeze_notify (G_OBJECT(adjustment));
 
   adjustment->upper=upper;
   adjustment->lower=lower;

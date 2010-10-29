@@ -224,6 +224,8 @@ struct _mt {
   GtkWidget *fx_region_2v;
   GtkWidget *fx_region_2a;
   GtkWidget *fx_region_3;
+  GtkWidget *atrans_menuitem;
+  GtkWidget *submenu_atransfx;
   GtkWidget *move_fx;
   GtkWidget *mm_menuitem;
   GtkWidget *mm_move;
@@ -251,6 +253,7 @@ struct _mt {
   GtkWidget *spinbutton_start;
   GtkWidget *spinbutton_end;
   GtkWidget *tl_hbox;
+  GtkWidget *fx_base_box;
   GtkWidget *fx_box;
   GtkWidget *param_inner_box;
   GtkWidget *param_box;
@@ -341,14 +344,13 @@ struct _mt {
   GtkWidget *insa_checkbutton;
   GtkWidget *snapo_checkbutton;
 
-  GtkWidget *invis;
-
   GtkObject *spinbutton_in_adj;
   GtkObject *spinbutton_out_adj;
 
   GdkCursor *cursor;
 
   GtkObject *hadjustment;
+  GtkObject *node_adj;
 
   GList *audio_draws; ///< list of audio boxes, 0 == backing audio, 1 == track 0 audio, etc.
 
@@ -388,6 +390,8 @@ struct _mt {
   gulong seltrack_func;
 
   gulong tc_func;
+
+  gulong node_adj_func;
 
   weed_plant_t *event_list;
 
@@ -648,15 +652,13 @@ typedef struct {
 //////////////////////////////////////////////////////////////////
 
 // setup functions
-gboolean on_multitrack_activate (GtkMenuItem *, weed_plant_t *); ///< widget callback to create the multitrack window
+
 lives_mt *multitrack (weed_plant_t *, gint orig_file, gdouble fps); ///< create and return lives_mt struct
-void mt_init_tracks (lives_mt *, gboolean set_min_max);  ///< add basic tracks, or set tracks from an event_list
+void mt_init_tracks (lives_mt *, gboolean set_min_max);  ///< add basic tracks, or set tracks from mt->event_list
+gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list); ///< menuitem callback
 
-
-// delete functions
-gboolean on_mt_delete_event (GtkWidget *, GdkEvent *, gpointer mt);
-gboolean multitrack_delete (lives_mt *, gboolean save); ///< free the lives_mt struct
-gboolean multitrack_end (GtkMenuItem *, gpointer mt);
+// delete function
+gboolean multitrack_delete (lives_mt *, gboolean save);
 
 // morph the poly window
 void polymorph (lives_mt *, lives_mt_poly_state_t poly);
@@ -747,7 +749,7 @@ void track_select (lives_mt *); ///< must call after setting mt->current_track
 gboolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
 gboolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
 
-void mt_do_autotransition(lives_mt *, track_rect *block);
+void mt_do_autotransition(lives_mt *, track_rect *block); ///< call this on a block to apply autotransition on it
 
 
 // track mouse movement

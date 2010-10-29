@@ -98,6 +98,7 @@ giw_vslider_get_type ()
 	(GtkObjectInitFunc) giw_vslider_init,
 	/*(GtkArgSetFunc)*/ NULL,
 	/*(GtkArgGetFunc)*/ NULL,
+	NULL
       };
 
       vslider_type = gtk_type_unique (gtk_widget_get_type (), &vslider_info);

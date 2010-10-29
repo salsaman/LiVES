@@ -118,6 +118,7 @@ giw_knob_get_type ()
 	(GtkObjectInitFunc) giw_knob_init,
 	/*(GtkArgSetFunc)*/ NULL,
 	/*(GtkArgGetFunc)*/ NULL,
+	NULL
       };
 
       knob_type = gtk_type_unique (gtk_widget_get_type (), &knob_info);

@@ -75,6 +75,7 @@ giw_led_get_type ()
 	(GtkObjectInitFunc) giw_led_init,
 	/*(GtkArgSetFunc)*/ NULL,
 	/*(GtkArgGetFunc)*/ NULL,
+	NULL
       };
 
       led_type = gtk_type_unique (gtk_widget_get_type (), &led_info);

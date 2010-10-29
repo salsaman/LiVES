@@ -30,8 +30,8 @@ typedef enum {
 
 weed_plant_t *get_weed_filter(int filter_idx);
 gchar *weed_filter_get_name(int filter_idx);
-gchar *make_weed_hashname(int filter_idx);
-int weed_get_idx_for_hashname (const gchar *hashname, gboolean fullname);
+gchar *make_weed_hashname(int filter_idx, gboolean fullname) WARN_UNUSED;  ///< fullname includes author and version
+int weed_get_idx_for_hashname (const gchar *hashname, gboolean fullname); ///< fullname includes author and version
 gint enabled_in_channels (weed_plant_t *plant, gboolean count_repeats);
 gint enabled_out_channels (weed_plant_t *plant, gboolean count_repeats);
 weed_plant_t *get_enabled_channel (weed_plant_t *inst, gint which, gboolean is_in); ///< for FILTER_INST

@@ -886,6 +886,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     if (prefs->max_modes_per_key==0) prefs->max_modes_per_key=8;
 
+    get_pref("def_autotrans",prefs->def_autotrans,256);
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -1161,9 +1163,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #endif
 
-
-      prefs->atrans_fx=-1;
-      //prefs->atrans_fx=weed_get_idx_for_hashname("simple_blendchroma blend",FALSE);
+      get_pref("current_autotrans",buff,256);
+      if (strlen(buff)==0) prefs->atrans_fx=-1;
+      else prefs->atrans_fx=weed_get_idx_for_hashname(buff,FALSE);
 
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)) {
 	splash_end();

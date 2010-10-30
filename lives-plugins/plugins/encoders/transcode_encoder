@@ -28,9 +28,10 @@ else {
 # 1.4 changed pref audio_encode_quality to encoder_acodec
 # 1.5 updated to transcode 1.0.1
 # 1.6 allow encoding of png; update --use_rgb to -V rgb
+# 1.7 set options to enable/disable flip and swap
 
 if ($command eq "version") {
-    print "transcode encoder plugin v1.6\n";
+    print "transcode encoder plugin v1.7\n";
     exit 0;
 }
 
@@ -83,6 +84,35 @@ if ($command eq "get_formats") {
 }
 
 
+if ($command eq "get_rfx") {
+    # nice example of how to give the user a choice of options
+
+    # mandatory section
+    print "<define>\n";
+    print "|1.7\n";
+    print "</define>\n";
+    
+    # mandatory section
+    print "<language_code>\n";
+    print "0xF0\n";
+    print "</language_code>\n";
+    
+    # optional section
+    print "<params>\n";
+    print "flip|_Flip images vertically|bool|1|0\n";
+    print "swap|_Swap Red/Blue channels|bool|1|0\n";
+    print "</params>\n";
+    
+    print "<paramwindow>\n";
+    print "layout|\"Adjust these values if the resulting video comes out wrong\"|\n";
+    print "layout|\$p0|\n";
+    print "layout|\$p1|\n";
+    print "</paramwindow>\n";
+
+
+}
+
+
 
 if ($command eq "encode") {
     # encode
@@ -94,6 +124,24 @@ if ($command eq "encode") {
     print OUT "IART $author\n";
     print OUT "ICMT $comment\n";
     close OUT;
+
+    $flip=$ARGV[13];
+    $swap=$ARGV[14];
+
+    if ($flip) {
+	$flipopt=" -z";
+    }
+    else {
+	$flipopt="";
+    }
+
+    if ($swap) {
+	$swapopt=" -k";
+    }
+    else {
+	$swapopt="";
+    }
+
 
     # make a list of the frames to encode
     unlink "list";
@@ -157,30 +205,30 @@ if ($command eq "encode") {
 	if (-f $audiofile) {
 	    if (&rc_get("encoder_acodec")==1) {
 		#pcm encoding
-		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x1 -z -k --avi_comments comments $err";
+		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x1 $flipopt $swapopt --avi_comments comments $err";
 	    }
 	    else {
 		# mp3 encoding
-		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x55 -z -k --avi_comments comments $err";
+		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x55 $flipopt $swapopt --avi_comments comments $err";
 	    }
 	}
 	else {
-	    $syscom="$encoder_command -i list -V rgb24 -x imlist,null -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x1 -z -k --avi_comments comments $err";
+	    $syscom="$encoder_command -i list -V rgb24 -x imlist,null -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y ffmpeg -F $otype -N 0x1 $flipopt $swapopt --avi_comments comments $err";
 	}
     }
     else {
 	if (-f $audiofile) {
 	    if (&rc_get("encoder_acodec")==1) {
 		#pcm encoding
-		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x1 -z -k --avi_comments comments $err";
+		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x1 $flipopt $swapopt --avi_comments comments $err";
 	    }
 	    else {
 		# mp3 encoding
-		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x55 -z -k --avi_comments comments $err";
+		$syscom="$encoder_command -i list -x imlist,raw -p $audiofile -V rgb24 -e $arate,$asamps,$achans -E $arate,$asamps,$achans -g $hsize"."x$vsize -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x55 $flipopt $swapopt --avi_comments comments $err";
 	    }
 	}
 	else {
-	    $syscom="$encoder_command -i list -x imlist,null -g $hsize"."x$vsize -V rgb24 -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x1 -z -k --avi_comments comments $err";
+	    $syscom="$encoder_command -i list -x imlist,null -g $hsize"."x$vsize -V rgb24 -f $fps --export_fps $fps -o \"$nfile\" -y $otype -N 0x1 $flipopt $swapopt --avi_comments comments $err";
 	}
     }
     

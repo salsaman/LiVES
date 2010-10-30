@@ -112,7 +112,7 @@ struct _GiwKnobClass
 
 GtkWidget*     giw_knob_new                    (GtkAdjustment *adjustment);
 GtkWidget*     giw_knob_new_with_adjustment    (gdouble value, gdouble lower, gdouble upper);
-guint          giw_knob_get_type               (void);
+GtkType        giw_knob_get_type               (void);
 gdouble        giw_knob_get_value              (GiwKnob *knob);
 void           giw_knob_set_value              (GiwKnob *knob, gdouble value);
 void           giw_knob_set_adjustment         (GiwKnob *knob, GtkAdjustment *adjustment);

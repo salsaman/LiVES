@@ -590,6 +590,7 @@ struct _mt {
 
 typedef struct {
   lives_mt_undo_t action;
+  weed_timecode_t tc;
   void *extra;
   size_t data_len; ///< including this mt_undo
 } mt_undo;

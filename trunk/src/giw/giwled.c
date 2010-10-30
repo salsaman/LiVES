@@ -59,14 +59,14 @@ static guint giw_led_signals[LAST_SIGNAL] = { 0 };
 * Widget's Functions *
 *********************/
 
-guint
+GtkType
 giw_led_get_type ()
 {
-  static guint led_type = 0;
+  static GtkType led_type = 0;
 
   if (!led_type)
     {
-      GtkTypeInfo led_info =
+      static const GtkTypeInfo led_info =
       {
 	"GiwLed",
 	sizeof (GiwLed),
@@ -75,10 +75,10 @@ giw_led_get_type ()
 	(GtkObjectInitFunc) giw_led_init,
 	/*(GtkArgSetFunc)*/ NULL,
 	/*(GtkArgGetFunc)*/ NULL,
-	NULL
+	(GtkClassInitFunc) NULL,
       };
 
-      led_type = gtk_type_unique (gtk_widget_get_type (), &led_info);
+      led_type = gtk_type_unique (gtk_widget_get_type() , &led_info);
     }
 
   return led_type;

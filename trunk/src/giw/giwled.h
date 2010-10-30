@@ -64,7 +64,7 @@ struct _GiwLedClass
 
 
 GtkWidget*     giw_led_new                    (void);
-guint          giw_led_get_type               (void);
+GtkType        giw_led_get_type               (void);
 void           giw_led_set_mode               (GiwLed *led, guint8 mode);    
 guint8         giw_led_get_mode               (GiwLed *led);    
 void           giw_led_set_colors             (GiwLed *led, GdkColor on_color, GdkColor off_color);

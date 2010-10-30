@@ -88,7 +88,7 @@ struct _GiwVSliderClass
 
 GtkWidget*     giw_vslider_new                    (GtkAdjustment *adjustment);
 GtkWidget*     giw_vslider_new_with_adjustment    (gdouble value, gdouble lower, gdouble upper);
-guint          giw_vslider_get_type               (void);
+GtkType        giw_vslider_get_type               (void);
 void           giw_vslider_set_value              (GiwVSlider *vslider, gdouble value);   
 gdouble        giw_vslider_get_value              (GiwVSlider *vslider);   
 GtkAdjustment *giw_vslider_get_adjustment         (GiwVSlider *vslider);

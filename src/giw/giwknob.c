@@ -102,14 +102,14 @@ void knob_calculate_title_sizes(GiwKnob *knob);
 * Widget's Functions * 
 *********************/
 
-guint
+GtkType
 giw_knob_get_type ()
 {
-  static guint knob_type = 0;
+  static GtkType knob_type = 0;
 
   if (!knob_type)
     {
-      GtkTypeInfo knob_info =
+      static const GtkTypeInfo knob_info =
       {
 	"GiwKnob",
 	sizeof (GiwKnob),
@@ -118,7 +118,7 @@ giw_knob_get_type ()
 	(GtkObjectInitFunc) giw_knob_init,
 	/*(GtkArgSetFunc)*/ NULL,
 	/*(GtkArgGetFunc)*/ NULL,
-	NULL
+	(GtkClassInitFunc) NULL,
       };
 
       knob_type = gtk_type_unique (gtk_widget_get_type (), &knob_info);

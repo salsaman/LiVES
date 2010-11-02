@@ -49,6 +49,6 @@ endif
 #endif
 
 
-decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(avformat_libs) $(gmerlin_libs)
+decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs)
 
 EXTRA_DIST = decplugin.h

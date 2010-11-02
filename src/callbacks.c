@@ -312,6 +312,7 @@ lives_exit (void) {
     g_list_free_strings(mainw->current_layouts_map);
     g_list_free(mainw->current_layouts_map);
     pthread_mutex_unlock(&mainw->gtk_mutex);
+    mainw->current_layouts_map=NULL;
   }
 
   if (capable->smog_version_correct) {

@@ -77,7 +77,7 @@ int sover_process (weed_plant_t *inst, weed_timecode_t timecode) {
 
   int transval;
   int dirn;
-  int mvlower;
+  int mvlower,mvupper;
   int bound;
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);

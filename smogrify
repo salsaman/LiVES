@@ -1523,7 +1523,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-	    system("mplayer -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1");
+	    system("mplayer -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1</dev/null");
 	    exit 0;
 	}
 

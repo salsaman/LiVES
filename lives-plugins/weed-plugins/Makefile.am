@@ -24,11 +24,16 @@ if HAVE_VISUAL
 libvis_libs = libvis.la
 libvis_la_LDFLAGS = @VISUAL_LIBS@ $(AM_LDFLAGS)
 libvis_la_CFLAGS =  @VISUAL_CFLAGS@ $(AM_CFLAGS)
+libvispluginslibdir = $(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/libvisual
+libvispluginslib_LTLIBRARIES = $(libvis_libs)
 endif
 
 if HAVE_FREI0R
 frei0r_libs = frei0r.la
 frei0r_la_LDFLAGS = -ldl $(AM_LDFLAGS)
+frei0r_la_CFLAGS = $(AM_CFLAGS)
+frei0rpluginslibdir = $(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/frei0r
+frei0rpluginslib_LTLIBRARIES = $(frei0r_libs)
 endif
 
 
@@ -67,12 +72,14 @@ fxpluginslib_LTLIBRARIES = alien_overlay.la \
 	tvpic.la \
 	vertigo.la \
 	warpTV.la \
-	xeffect.la \
-	$(frei0r_libs) \
-	$(libvis_libs)
+	xeffect.la
 
 EXTRA_DIST=data/* icons/*
 
 install-data-local:
 	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
 	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)
+
+install-exec-local:
+	rm -rf $(DESTDIR)$(fxpluginslibdir)/*
+

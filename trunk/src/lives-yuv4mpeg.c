@@ -15,7 +15,6 @@
 #include "lives-yuv4mpeg.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <errno.h>
 
 static int yuvout,hsize_out,vsize_out;
@@ -23,7 +22,6 @@ static int yuvout,hsize_out,vsize_out;
 
 // lists of cards in use
 static GList *fw_cards=NULL;
-static GList *tv_cards=NULL;
 
 
 static lives_yuv4m_t *lives_yuv4mpeg_alloc (void) {
@@ -229,7 +227,7 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
   if (yuv4mpeg->name!=NULL) g_free(yuv4mpeg->name);
 
   if (yuv4mpeg->type==YUV4_TYPE_FW) fw_cards=g_list_remove(fw_cards,GINT_TO_POINTER(yuv4mpeg->cardno));
-  if (yuv4mpeg->type==YUV4_TYPE_TV) tv_cards=g_list_remove(tv_cards,GINT_TO_POINTER(yuv4mpeg->cardno));
+  if (yuv4mpeg->type==YUV4_TYPE_TV) mainw->videodevs=g_list_remove(mainw->videodevs,GINT_TO_POINTER(yuv4mpeg->cardno));
 
 
 }
@@ -482,18 +480,6 @@ lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
 
 
 
-static gboolean check_dev_busy(gchar *devstr) {
-  int ret;
-  int fd=open(devstr,O_RDONLY|O_NONBLOCK);
-  if (fd==-1) return FALSE;
-  ret=flock(fd,LOCK_EX|LOCK_NB);
-  close(fd);
-  if (ret==-1) return FALSE;
-  return TRUE;
-}
-
-
-
 
 //////////////////////////////////////////////////////////////
 
@@ -565,9 +551,8 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   cardno=(gint)mainw->fx1_val;
   chanstr=g_strdup_printf("%d",(gint)mainw->fx2_val);
 
-  gtk_widget_destroy(card_dialog);
-
-  if (g_list_find(tv_cards,GINT_TO_POINTER(cardno))) {
+  if (g_list_find(mainw->videodevs,GINT_TO_POINTER(cardno))) {
+    gtk_widget_destroy(card_dialog);
     do_card_in_use_error();
     g_free(chanstr);
     g_free(fifofile);
@@ -578,6 +563,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   fname=g_strdup_printf(_("TV card %d"),cardno);
 
   if (!get_new_handle(new_file,fname)) {
+    gtk_widget_destroy(card_dialog);
     g_free(chanstr);
     g_free(fifofile);
     g_free(fname);
@@ -588,6 +574,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   devstr=g_strdup_printf("/dev/video%d",cardno);
 
   if (!check_dev_busy(devstr)) {
+    gtk_widget_destroy(card_dialog);
     do_dev_busy_error(fname);
     g_free(devstr);
     g_free(chanstr);
@@ -597,7 +584,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
-  tv_cards=g_list_append(tv_cards,GINT_TO_POINTER(cardno));
+  mainw->videodevs=g_list_append(mainw->videodevs,GINT_TO_POINTER(cardno));
 
   mainw->current_file=new_file;
 
@@ -629,6 +616,8 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     g_free(outfmt);
 
   }
+  gtk_widget_destroy(card_dialog);
+  g_free(tvcardw);
 
   dummyvar=system(com);
   g_free(com);
@@ -638,7 +627,6 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     g_free(chanstr);
     g_free(fifofile);
     g_free(devstr);
-    g_free(tvcardw);
     return;
   }
 			       
@@ -651,8 +639,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   g_free(chanstr);
   g_free(devstr);
   g_free(fifofile);
-  g_free(tvcardw);
-  
+    
 }
 
 

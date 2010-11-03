@@ -315,10 +315,11 @@ typedef enum {
 
 typedef enum {
   CLIP_TYPE_DISK, ///< imported video, broken into frames
-  CLIP_TYPE_YUV4MPEG,
-  CLIP_TYPE_GENERATOR,
+  CLIP_TYPE_YUV4MPEG, ///< yuv4mpeg stream
+  CLIP_TYPE_GENERATOR, ///< frames from generator plugin
   CLIP_TYPE_FILE, ///< unimported video, not or partially broken in frames
-  CLIP_TYPE_LIVES2LIVES ///< type for LiVES to LiVES streaming
+  CLIP_TYPE_LIVES2LIVES, ///< type for LiVES to LiVES streaming
+  CLIP_TYPE_VIDEODEV  ///< frames from video device
 } lives_clip_type_t;
 
 
@@ -904,6 +905,7 @@ gulong sget_file_size(const gchar *name);
 gulong get_fs_free(const gchar *dir);
 gboolean ensure_isdir(gchar *fname);
 gchar *ensure_extension(const gchar *fname, const gchar *ext) WARN_UNUSED;
+gboolean check_dev_busy(gchar *devstr);
 void activate_url_inner(const gchar *link);
 void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data);
 void show_manual_section (const gchar *lang, const gchar *section);

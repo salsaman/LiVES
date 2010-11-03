@@ -60,6 +60,7 @@ gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 gdouble weed_palette_get_plane_ratio_vertical(int pal, int plane);
 gboolean weed_palette_is_lower_quality(int p1, int p2);
 gboolean weed_palette_is_resizable(int pal);
+gdouble weed_palette_get_compression_ratio (int pal);
 
 gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf);
 

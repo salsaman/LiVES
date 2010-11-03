@@ -14,7 +14,8 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/statvfs.h>  
+#include <sys/statvfs.h>
+#include <sys/file.h>
 
 #include "main.h"
 #include "support.h"
@@ -2250,6 +2251,17 @@ check_dir_access (const gchar *dir) {
 }
 
 
+gboolean check_dev_busy(gchar *devstr) {
+  int ret;
+  int fd=open(devstr,O_RDONLY|O_NONBLOCK);
+  if (fd==-1) return FALSE;
+  ret=flock(fd,LOCK_EX|LOCK_NB);
+  close(fd);
+  if (ret==-1) return FALSE;
+  return TRUE;
+}
+
+
 
 void activate_url_inner(const gchar *link) {
 #ifdef HAVE_GTK_NICE_VERSION
@@ -3466,3 +3478,5 @@ LIVES_INLINE GList *g_list_move_to_first(GList *list, GList *item) {
   GList *xlist=g_list_remove_link(list,item); // item becomes standalone list
   return g_list_concat(item,xlist); // concat rest of list after item
 }
+
+

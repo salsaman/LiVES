@@ -808,6 +808,8 @@ static void lives_init(_ign_opts *ign_opts) {
   if (mainw->fonts_array!=NULL)
     while (mainw->fonts_array[mainw->nfonts++]!=NULL);
 
+  mainw->videodevs=NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());

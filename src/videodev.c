@@ -6,64 +6,62 @@
 //#define TEST_V4L_IN
 #ifdef TEST_V4L_IN
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <linux/videodev.h>
-#include <sys/ioctl.h>
+
 
 #include "support.h"
 #include "main.h"
-
-
-
+#include "../libweed/weed-palettes.h"
+#include "../libvideo/libvideo.h"
 
 /// grab frames during playback
 
+typedef struct {
+  struct video_device *vdev;
+  struct device_info *i;
+  struct capture_device *c;
+  int current_palette;
+} lives_vdev_t;
 
-void weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile) {
-  lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)(sfile->ext_src);
-  int error;
 
-  pthread_t y4thread;
-  struct timeval otv;
-  int64_t ntime=0,stime;
+gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile) {
+  int error,ret;
+  void *ptr;
+  lives_vdev_t *ldev=sfile->ext_src;
+  int size;
 
   weed_set_int_value(layer,"width",sfile->hsize);
   weed_set_int_value(layer,"height",sfile->vsize);
-  weed_set_int_value(layer,"current_palette",WEED_PALETTE_YUV420P);
+  weed_set_int_value(layer,"current_palette",ldev->current_palette);
   weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
+  weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_MPEG);
 
   create_empty_pixel_data(layer);
 
-  if((*(ldev->c->actions->start_capture))(ldev->vdev)!=0){
-    (ldev->c->actions->free_capture)(v);
+  if ((*ldev->c->actions->start_capture)(ldev->vdev)!=0){
+    (*ldev->c->actions->free_capture)(ldev->vdev);
     free_capture_device(ldev->vdev);
     close_device(ldev->vdev);
-    printf("Cant start capture");
-    return -1;
+    g_printerr("Cant start capture");
+    return FALSE;
   }
 
   if((ptr = (*ldev->c->actions->dequeue_buffer)(ldev->vdev, &size)) != NULL) {
     //do something useful with frame at 'd' of size 'size'
-
-    copy_planar_to_pixel_data(d,pixel_data,ldev->current_palette,sfile->hsize,sfile->vsize);
+    void **pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+    copy_planar_to_pixel_data(ptr,pixel_data,ldev->current_palette,sfile->hsize,sfile->vsize);
 
     //when finished put the buffer back
     //Put buffer
     (*ldev->c->actions->enqueue_buffer)(ldev->vdev);
   } else {
     g_printerr("Cant get buffer ");
-    break;
+    (*ldev->c->actions->stop_capture)(ldev->vdev);
+    return FALSE;
   }
 
-  ret = ldev->cap->actions->stop_capture(ldev->vdev);
+  ret = (*ldev->c->actions->stop_capture)(ldev->vdev);
 
-  weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_MPEG);
-
-  return;
+  return TRUE;
 }
 
 
@@ -73,32 +71,27 @@ void weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile) {
 
 /// get devnumber from user and open it to a new clip
 
-typedef struct {
-  struct video_device *vdev;
-  struct device_info *i
-} lives_vdev_t;
-
-static gboolean open_vdev_inner(int new_file, int devno, int chan) {
+static gboolean open_vdev_inner(gchar *filename, int new_file, int devno, int chan) {
   // create a virtual clip
   int nbuffs=4;
+  int num,denom;
 
   int old_file=mainw->current_file;
-  int j,k;
   int std=0;
 
-  int fmts[]={RGB24;BGR24;RGB32;BGR32;YUV32;UYVY;VYUY;YUV422P;YUV420;YVU420};
+  int fmts[]={RGB24,BGR24,RGB32,BGR32,YUV32,UYVY,VYUY,YUV422P,YUV420,YVU420};
   int fmts_nb=10, ret;
 
-  lives_ldev_t *ldev=(lives_ldev_t *)g_malloc(sizeof(lives_ldev_t));
+  lives_vdev_t *ldev=(lives_vdev_t *)g_malloc(sizeof(lives_vdev_t));
 
   cfile->clip_type=CLIP_TYPE_VIDEODEV;
 
   // open dev
-  lvdev->vdev = open_device(filename);
+  ldev->vdev = open_device(filename);
 
   //check return value and take appropriate action
-  if (lvdev->vdev==NULL) {
-    fprintf (stderr, "vdev input: cannot open %s %s\n",filename);
+  if (ldev->vdev==NULL) {
+    g_printerr ("vdev input: cannot open %s\n",filename);
     g_free(ldev);
     return FALSE;
   }
@@ -107,42 +100,43 @@ static gboolean open_vdev_inner(int new_file, int devno, int chan) {
 
   // std can be WEBCAM, PAL, SECAM or NTSC
 
-  lvdev->c = init_capture_device(lvdev->vdev, DEF_GEN_WIDTH, DEF_GEN_HEIGHT , chan, std, nbuffs);
-  if(lvdev->c==NULL) {
+  ldev->c = init_capture_device(ldev->vdev, DEF_GEN_WIDTH, DEF_GEN_HEIGHT , chan, std, nbuffs);
+  if(ldev->c==NULL) {
     fprintf(stderr,"Error initialising device.\n");
-    close_device(lvdev->vdev);
+    close_device(ldev->vdev);
     return FALSE;
   }
   
   ret = ldev->c->actions->set_cap_param(ldev->vdev, fmts, fmts_nb);
   if(ret!=0) {
     fprintf(stderr,"Error setting caps.\n");
-    close_device(lvdev->vdev);
+    close_device(ldev->vdev);
     return FALSE;
   }
 
   cfile->hsize=ldev->c->width;
   cfile->vsize=ldev->c->height;
 
-  ldev->current_palette=libvidp_to_weedp(c->palette);
+  ldev->current_palette=libvidp_to_weedp(ldev->c->palette);
 
   ret = ldev->c->actions->get_frame_interval(ldev->vdev, &num, &denom);
   if(ret!=0) {
     fprintf(stderr,"Error getting fps.\n");
-    close_device(lvdev->vdev);
+    close_device(ldev->vdev);
     return FALSE;
   }
 
   if (num!=1) {
+    gchar *fps_string;
     cfile->ratio_fps=TRUE;
     cfile->fps=(gdouble)denom/(gdouble)num;
-    fps_string=g_strdup_printf("%.8f",fps);
+    fps_string=g_strdup_printf("%.8f",cfile->fps);
     cfile->fps=g_strtod(fps_string,NULL);
     g_free(fps_string);
   }
   else cfile->fps=(gdouble)denom;
 
-  cfile->ext_src=lvdev;
+  cfile->ext_src=ldev;
 
   cfile->bpp = weed_palette_get_compression_ratio(ldev->current_palette) * 
     weed_palette_has_alpha_channel(ldev->current_palette)?32:24;
@@ -197,7 +191,7 @@ on_openvdev_activate                      (GtkMenuItem     *menuitem,
 
   gtk_widget_destroy(card_dialog);
 
-  if (g_list_find(tv_cards,GINT_TO_POINTER(devno))) {
+  if (g_list_find(mainw->videodevs,GINT_TO_POINTER(devno))) {
     do_card_in_use_error();
     return;
   }
@@ -215,13 +209,13 @@ on_openvdev_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
-  tv_cards=g_list_append(tv_cards,GINT_TO_POINTER(devno));
+  mainw->videodevs=g_list_append(mainw->videodevs,GINT_TO_POINTER(devno));
 
   mainw->current_file=new_file;
 
   cfile->deinterlace=mainw->open_deint;
 
-  if (!open_vdev_inner(new_file,devno,chan)) {
+  if (!open_vdev_inner(fname,new_file,devno,chan)) {
     g_free(fname);
     close_current_file(old_file);
     return;

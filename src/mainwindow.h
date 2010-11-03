@@ -922,6 +922,8 @@ typedef struct {
 
   GtkTargetEntry *target_table; ///< drag and drop target table
 
+  GList *videodevs;
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

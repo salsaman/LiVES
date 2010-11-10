@@ -6142,7 +6142,7 @@ gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t 
 
   if (filter_idx<0||filter_idx>=num_weed_filters) return g_strdup("");
 
-  if (hashnames[filter_idx]!=NULL) return g_strdup(hashnames[filter_idx]);
+  if (hashnames[filter_idx]!=NULL&&fullname) return g_strdup(hashnames[filter_idx]);
 
   filter=weed_filters[filter_idx];
 

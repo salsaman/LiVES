@@ -77,6 +77,7 @@ fxpluginslib_LTLIBRARIES = alien_overlay.la \
 EXTRA_DIST=data/* icons/*
 
 install-data-local:
+	mkdir -p $(DESTDIR)$(fxpluginslibdir)
 	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
 	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)
 

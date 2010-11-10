@@ -25,5 +25,6 @@ fxpluginslib_LTLIBRARIES = gdk_fast_resize.la compositor.la videowall.la scribbl
 EXTRA_DIST=data/* icons/*
 
 install-data-local:
+	mkdir -p $(DESTDIR)$(fxpluginslibdir)
 	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
 	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)

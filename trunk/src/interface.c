@@ -1971,6 +1971,67 @@ static void rb_tvcarddef_toggled(GtkToggleButton *tbut, gpointer user_data) {
 
 
 
+GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
+  // create a dialog with combo box selector
+
+  // type 1 == 1 combo box
+
+  GtkWidget *combo_dialog;
+  GtkWidget *dialog_vbox;
+  GtkWidget *label;
+
+  gchar *label_text=NULL;
+
+  combo_dialog = gtk_dialog_new ();
+  if (type==1) {
+    gtk_window_set_title (GTK_WINDOW (combo_dialog), _("LiVES:- Select input device"));
+  }
+
+  gtk_window_set_position (GTK_WINDOW (combo_dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_modal (GTK_WINDOW (combo_dialog), TRUE);
+
+  gtk_container_set_border_width (GTK_CONTAINER (combo_dialog), 10);
+  //gtk_window_set_default_size (GTK_WINDOW (combo_dialog), 300, 200);
+
+  if (!prefs->show_gui) {
+    if (type==1) {
+      gtk_window_set_transient_for(GTK_WINDOW(combo_dialog),GTK_WINDOW(mainw->LiVES));
+    }
+    else {
+      gtk_window_set_transient_for(GTK_WINDOW(combo_dialog),GTK_WINDOW(mainw->multitrack->window));
+    }
+  }
+
+  if (palette->style&STYLE_1) {
+    gtk_dialog_set_has_separator(GTK_DIALOG(combo_dialog),FALSE);
+    gtk_widget_modify_bg (combo_dialog, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  dialog_vbox = GTK_DIALOG (combo_dialog)->vbox;
+  gtk_widget_show (dialog_vbox);
+
+  if (type==1) {
+    label_text=g_strdup(_("Select input device:"));
+  }
+
+  label = gtk_label_new (label_text);
+  if (label_text!=NULL) g_free(label_text);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
+  gtk_widget_show (label);
+
+
+
+
+
+
+  return combo_dialog;
+
+
+}
 
 
 GtkWidget*

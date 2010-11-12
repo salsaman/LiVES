@@ -113,8 +113,9 @@ giw_CFLAGS=-DENABLE_GIW=1
 endif
 
 
-#if ENABLE_VIDEODEV
-#libvideo_libs= -l../libvideo/libvideo.a
+#if ENABLE_UNICAP
+unicap_CFLAGS=-I$(includedir)/unicap
+unicap_LDADD=-lunicap
 #endif
 
 
@@ -152,7 +153,7 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	startup.c startup.h \
 	pangotext.c pangotext.h \
-	videodev.c \
+	videodev.c videodev.h \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES) \
@@ -160,12 +161,12 @@ lives_exe_SOURCES = \
 
 lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_slice_LDADD) $(giw_LDADD) \
-	../libweed/libweed-utils.la $(libvideo_libs)
+	../libweed/libweed-utils.la $(unicap_LDADD)
 
 lives_exe_LDFLAGS = -O3
 
 AM_CFLAGS = -O3  -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) \
-	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS)  -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
+	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 

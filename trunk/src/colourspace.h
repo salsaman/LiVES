@@ -38,6 +38,7 @@ gboolean convert_layer_palette_with_sampling(weed_plant_t *layer, int outpl, int
 gboolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma); ///< not used
 void resize_layer (weed_plant_t *layer, int width, int height, int interp);
 void create_empty_pixel_data(weed_plant_t *layer);
+void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette);
 GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer);
 gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *);
 
@@ -58,10 +59,13 @@ gint weed_palette_get_pixels_per_macropixel(int pal);
 gint weed_palette_get_numplanes(int pal);
 gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 gdouble weed_palette_get_plane_ratio_vertical(int pal, int plane);
-gboolean weed_palette_is_lower_quality(int p1, int p2);
+gboolean weed_palette_is_lower_quality(int p1, int p2);  ///< return TRUE if p1 is lower quality than p2
 gboolean weed_palette_is_resizable(int pal);
 gdouble weed_palette_get_compression_ratio (int pal);
 
+int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace, int *sspace);
+
+#define BLACK_THRESH 20 ///< if R,G and B values are all <= this, we consider it a "black" pixel
 gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf);
 
 
@@ -69,3 +73,4 @@ const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);
 const char *weed_yuv_subspace_get_name(int subspace);
 gchar *weed_palette_get_name_full(int pal, int clamped, int subspace);
+

@@ -154,16 +154,6 @@ _encoder;
 
 // decoder plugins
 
-
-
-
-
-typedef enum {
-  LIVES_INTERLACE_NONE=0,
-  LIVES_INTERLACE_BOTTOM_FIRST=1,
-  LIVES_INTERLACE_TOP_FIRST=2
-} lives_interlace_t;
-
 // seek_flags is a bitmap
 
   /// good

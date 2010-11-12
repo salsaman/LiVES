@@ -978,11 +978,76 @@ gdouble weed_palette_get_compression_ratio (int pal) {
 }
 
 
+//////////////////////////////////////////////////////////////
+
+int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace, int *sspace) {
+  // TODO - this is probably wrong for some formats and needs testing/verifying with various devices
+  // fourcc colorcodes are a nasty mess, and should be avoided whenever possible
+
+  // data from http://www.fourcc.org
+
+  switch (fourcc) {
+
+    // RGB formats
+
+  case 0x00000000: // BI_RGB
+  case 0x32424752: // RGB
+  case 0x32776173: // raw
+    if (bpp==24) return WEED_PALETTE_BGR24;
+    if (bpp==32) return WEED_PALETTE_BGRA32;
+    break;
+  case 0x41424752: // RGBA
+    if (bpp==32) return WEED_PALETTE_RGBA32;
+    break;
+
+
+    // YUV packed formats
+
+  case 0x56595549: // IUYV
+    if (interlace!=NULL) *interlace=LIVES_INTERLACE_TOP_FIRST;   // could be bottom first also
+    return WEED_PALETTE_UYVY;
+  case 0x31555949: // IYU1
+  case 0x31313459: // Y411
+    return WEED_PALETTE_YUV411;
+  case 0x32555949: // IYU2
+    return WEED_PALETTE_YUV888;
+  case 0x43594448: // HDYC
+    if (sspace!=NULL) *sspace=WEED_YUV_SUBSPACE_BT709;
+    return WEED_PALETTE_UYVY;
+  case 0x564E5955: // UYNV 	
+  case 0x59565955: // UYVY
+  case 0x32323459: // Y422
+    return WEED_PALETTE_UYVY;
+  case 0x32595559: // YUY2
+  case 0x56595559: // YUYV
+  case 0x564E5559: // YUNV
+    return WEED_PALETTE_YUYV;
+  case 0x30303859: // Y800
+  case 0x20203859: // Y8
+    // set YUV subspace as a hint
+    if (sspace!=NULL) *sspace=WEED_YUV_SUBSPACE_YCBCR;
+    return WEED_PALETTE_A8;
+
+
+    // YUV planar formats
+
+  case 0x32315659: // YV12
+    return WEED_PALETTE_YVU420P;
+  case 0x30323449: // I420
+  case 0x56555949: // IYUV
+    return WEED_PALETTE_YUV420P;
+
+    // no match
+  default:
+    return WEED_PALETTE_END;
+  }
+  return WEED_PALETTE_END;
+}
+
 
 
 /////////////////////////////////////////////
 
-#define BLACK_THRESH 20
 
 gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf) {
   gint width=gdk_pixbuf_get_width(pixbuf);
@@ -1009,9 +1074,35 @@ gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf) {
 }
   
 
+void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette) {
+  // convert contiguous memory block planes to planar data
+  // size is the byte size of the Y plane (width*height in pixels)
 
-
-
+  switch (palette) {
+  case WEED_PALETTE_YUV444P:
+    w_memcpy(pixel_data[0],data,size);
+    w_memcpy(pixel_data[1],data+size,size);
+    w_memcpy(pixel_data[2],data+size*2,size);
+    break;
+  case WEED_PALETTE_YUVA4444P:
+    w_memcpy(pixel_data[0],data,size);
+    w_memcpy(pixel_data[1],data+size,size);
+    w_memcpy(pixel_data[2],data+size*2,size);
+    w_memcpy(pixel_data[3],data+size*2,size);
+    break;
+  case WEED_PALETTE_YUV422P:
+    w_memcpy(pixel_data[0],data,size);
+    w_memcpy(pixel_data[1],data+size,size/2);
+    w_memcpy(pixel_data[2],data+size*3/2,size/2);
+    break;
+  case WEED_PALETTE_YUV420P:
+  case WEED_PALETTE_YVU420P:
+    w_memcpy(pixel_data[0],data,size);
+    w_memcpy(pixel_data[1],data+size,size/4);
+    w_memcpy(pixel_data[2],data+size*5/4,size/4);
+    break;
+  }
+}
 
 
 

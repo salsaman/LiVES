@@ -353,6 +353,13 @@ typedef struct {
 } lives_colRGBA32_t;
 
 
+typedef enum {
+  LIVES_INTERLACE_NONE=0,
+  LIVES_INTERLACE_BOTTOM_FIRST=1,
+  LIVES_INTERLACE_TOP_FIRST=2
+} lives_interlace_t;
+
+
 #include "pangotext.h"
 
 /// corresponds to one clip in the GUI
@@ -378,7 +385,7 @@ typedef struct {
   gchar keywords[256];
   ////////////////
 
-  gint interlace; ///< interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
+  lives_interlace_t interlace; ///< interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
 
   // extended info (not saved)
   gint header_version;

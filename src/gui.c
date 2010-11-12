@@ -343,6 +343,15 @@ create_LiVES (void)
 
 
   mainw->add_live_menu = gtk_menu_item_new_with_mnemonic (_("_Add Live Input"));
+
+#ifdef TEST_UNICAP
+  gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->add_live_menu);
+  gtk_widget_show (mainw->add_live_menu);
+
+  g_signal_connect (GTK_OBJECT (mainw->add_live_menu), "activate",
+		    G_CALLBACK (on_open_vdev_activate),
+		    NULL);
+#else
 #ifdef HAVE_YUV4MPEG
   if (capable->has_mplayer) {
     gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->add_live_menu);
@@ -374,6 +383,7 @@ create_LiVES (void)
 		      G_CALLBACK (on_live_tvcard_activate),
 		      NULL);
   }
+#endif
 #endif
 
   mainw->recent_menu = gtk_menu_item_new_with_mnemonic (_("_Recent Files..."));

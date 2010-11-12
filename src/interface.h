@@ -121,6 +121,7 @@ typedef struct {
 
 
 aud_dialog_t *create_audfade_dialog (gint type);
+GtkWidget *create_combo_dialog (gint type, gpointer user_data);
 
 _commentsw *commentsw;
 _xranw *xranw;

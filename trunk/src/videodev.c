@@ -3,40 +3,75 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_UNICAP
 
 #include "support.h"
 #include "main.h"
+
+#ifdef HAVE_UNICAP
+#define DEBUG_UNICAP
+
 #include "videodev.h"
+#include "interface.h"
 #include "../libweed/weed-palettes.h"
 #include "../libweed/weed-host.h"
 
 #include <unicap/unicap.h>
 
-typedef struct {
-  unicap_handle_t handle;
-  unicap_data_buffer_t buffer;
-  int current_palette;
-} lives_vdev_t;
-
-
-#define MAX_DEVICES 1024
-#define MAX_FORMATS 1024
-
 ////////////////////////////////////////////////////
 
 
-gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile) {
+static gboolean lives_wait_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, gdouble timeout) {
+  int64_t stime,dtime,timer;
+  struct timeval otv;
+  unicap_status_t status;
+  int ncount;
+
+  timer=timeout*1000000.;
+
+  gettimeofday(&otv,NULL);
+  stime=otv.tv_sec*1000000+otv.tv_usec;
+
+  while (1) {
+    status=unicap_poll_buffer(ldev->handle,&ncount);
+
+#ifdef DEBUG_UNICAP
+    if (status!=STATUS_SUCCESS) g_printerr("Unicap poll failed with status %d\n",status);
+#endif
+
+    if (ncount>0) {
+      if (!SUCCESS (unicap_wait_buffer (ldev->handle, buff))) return FALSE;
+      return TRUE;
+    }
+
+    gettimeofday(&otv,NULL);
+    dtime=otv.tv_sec*1000000+otv.tv_usec;
+
+    if (dtime-stime>timer) return FALSE;
+
+    g_usleep(prefs->sleep_time);
+    while (g_main_context_iteration(NULL,FALSE));
+  }
+
+  return FALSE;
+}
+
+
+
+
+
+
+gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble timeoutsecs) {
   lives_vdev_t *ldev=sfile->ext_src;
-  unicap_data_buffer_t *returned_buffer;
+  unicap_data_buffer_t *returned_buffer=NULL;
   void **pixel_data;
   int error,rowstride;
   
   weed_set_int_value(layer,"width",sfile->hsize);
   weed_set_int_value(layer,"height",sfile->vsize);
   weed_set_int_value(layer,"current_palette",ldev->current_palette);
-  weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
-  weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_MPEG);
+  weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR); // TODO - handle bt.709
+  weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT); // TODO - use ldev->YUV_sampling
+  weed_set_int_value(layer,"YUV_clamping",ldev->YUV_clamping);
 
   create_empty_pixel_data(layer);
   unicap_start_capture (ldev->handle); 
@@ -52,13 +87,20 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile) {
 
   // TODO - we should use 2 buffers to prevent long waits here
   unicap_queue_buffer (ldev->handle, &ldev->buffer);
-  if (!SUCCESS (unicap_wait_buffer (ldev->handle, &returned_buffer))||returned_buffer!=&ldev->buffer) {
-    if (returned_buffer!=&ldev->buffer) {
+  // TODO - timeout here if not loaded
+
+  if (!lives_wait_buffer(ldev, &returned_buffer, timeoutsecs)||returned_buffer!=&ldev->buffer) {
+    if (returned_buffer!=NULL&&returned_buffer!=&ldev->buffer) {
       // should never happen
       free(returned_buffer->data);
       free(returned_buffer);
     }
     g_printerr("Failed to wait for buffer!\n");
+    if (weed_palette_get_numplanes(ldev->current_palette)==1) {
+      ldev->buffer.data=NULL;
+    }
+    unicap_stop_capture (ldev->handle);
+    //unicap_dequeue_buffer (ldev->handle, &returned_buffer);
     return FALSE;
   }
 
@@ -71,9 +113,11 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile) {
       free(returned_buffer);
     }
   }
+  else ldev->buffer.data=NULL;
 
   // TODO - keep capture going until we have a new frame ready
   unicap_stop_capture (ldev->handle);
+  //unicap_dequeue_buffer (ldev->handle, &returned_buffer);
 
   return TRUE;
 }
@@ -104,11 +148,13 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
     // TODO - check if we need to free format->sizes
 
-    // TODO - prefer non-interlaced, YCbCr
-    cpal=fourccp_to_weedp(format->fourcc,format->bpp,NULL,NULL);
+    // TODO - prefer non-interlaced, YCbCr for YUV
+    cpal=fourccp_to_weedp(format->fourcc,format->bpp,NULL,NULL,NULL,NULL);
 
     if (cpal==WEED_PALETTE_END||weed_palette_is_alpha_palette(cpal)) {
-      g_printerr("Unusable palette with fourcc %xd",format->fourcc);
+#ifdef DEBUG_UNICAP
+      g_printerr("Unusable palette with fourcc 0x%x  ",format->fourcc);
+#endif
       continue;
     }
 
@@ -179,13 +225,9 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
 static gboolean open_vdev_inner(unicap_device_t *device) {
   // create a virtual clip
-  int old_file=mainw->current_file;
-  int new_file;
   lives_vdev_t *ldev=(lives_vdev_t *)g_malloc(sizeof(lives_vdev_t));
   const unicap_format_t formats[MAX_FORMATS];
   unicap_format_t *format;
-
-  cfile->clip_type=CLIP_TYPE_VIDEODEV;
 
   // open dev
   unicap_open(&ldev->handle, device);
@@ -209,7 +251,13 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
   format->buffer_type = UNICAP_BUFFER_TYPE_USER;
 
   // ignore YUV subspace for now
-  ldev->current_palette=fourccp_to_weedp(format->fourcc, format->bpp, &cfile->interlace, NULL);
+  ldev->current_palette=fourccp_to_weedp(format->fourcc, format->bpp, &cfile->interlace, 
+					 &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
+
+#ifdef DEBUG_UNICAP
+  g_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n",format->fourcc,
+	     weed_palette_get_name(ldev->current_palette));
+#endif
 
   if (!SUCCESS (unicap_set_format (ldev->handle, format))) {
     g_printerr("Error setting format.\n");
@@ -228,27 +276,22 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
     ldev->buffer.data = g_malloc (format->buffer_size);
     ldev->buffer.buffer_size = format->buffer_size;
   }
+  else ldev->buffer.data=NULL;
 
   cfile->bpp = format->bpp;
-
-  cfile->start=cfile->end=cfile->frames=1;
-
-  cfile->is_loaded=TRUE;
-
-  add_to_winmenu();
-
-  switch_to_file((mainw->current_file=old_file),new_file);
 
   return TRUE;
 }
 
 
+void lives_vdev_free(lives_vdev_t *ldev) {
+    unicap_close(ldev->handle);
+    if (ldev->buffer.data!=NULL) g_free(ldev->buffer.data);
+}
 
 
 
-
-
-void on_openvdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gint devno=0;
 
   gint new_file=mainw->first_free_file;
@@ -258,7 +301,8 @@ void on_openvdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gchar *tmp;
   gchar *fname;
-  gchar **devarray;
+
+  GList *devlist=NULL;
 
   GtkWidget *card_dialog;
 
@@ -273,26 +317,21 @@ void on_openvdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
        dev_count++)
     {
       status = unicap_enumerate_devices (NULL, &devices[dev_count], dev_count);
-      if (SUCCESS (status))
-        printf ("%d: %s\n", dev_count, devices[dev_count].identifier);
-      else
+      if (!SUCCESS (status))
         break;
     }
 
   if (dev_count == 0) {
-    do_no_in_devs_error();
+    do_no_in_vdevs_error();
     return;
   }
 
-  devarray=g_malloc((dev_count+1)*sizeof(char *));
-  for (i=0;i<dev_count;i++) {
-    devarray[i]=devices[i].identifier; // consider strings as const
-  }
-  devarray[i]=NULL;
+  for (i=0;i<dev_count;i++) devlist=g_list_append(devlist,devices[i].identifier);
 
   mainw->fx1_val=0;
-  card_dialog=create_combo_dialog(1,(gpointer)devarray);
-  g_free(devarray);
+  mainw->open_deint=FALSE;
+  card_dialog=create_combo_dialog(1,(gpointer)devlist);
+  g_list_free(devlist);
 
   response=gtk_dialog_run(GTK_DIALOG(card_dialog));
   if (response==GTK_RESPONSE_CANCEL) {
@@ -313,17 +352,25 @@ void on_openvdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   mainw->current_file=new_file;
 
-  cfile->deinterlace=mainw->open_deint;
-
   if (!open_vdev_inner(&devices[devno])) {
     g_free(fname);
     close_current_file(old_file);
     return;
   }
-			       
+
+  if (cfile->interlace!=LIVES_INTERLACE_NONE&&prefs->auto_deint) cfile->deinterlace=TRUE; ///< auto deinterlace
+  if (!cfile->deinterlace) cfile->deinterlace=mainw->open_deint; ///< user can also force deinterlacing
+
+  cfile->clip_type=CLIP_TYPE_VIDEODEV;
+  cfile->start=cfile->end=cfile->frames=1;
+  cfile->is_loaded=TRUE;
+  add_to_winmenu();
+
   g_snprintf(cfile->type,40,"%s",fname);
 
   d_print ((tmp=g_strdup_printf (_("Opened device %s"),devices[devno].identifier)));
+
+  switch_to_file((mainw->current_file=old_file),new_file);
 
   g_free(tmp);
   g_free(fname);

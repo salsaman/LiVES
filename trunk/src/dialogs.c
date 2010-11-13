@@ -2094,7 +2094,6 @@ void do_invalid_subs_error(void) {
   do_error_dialog(_("\nLiVES currently only supports subtitles of type .srt and .sub.\n"));
 }
 
-
 gboolean do_erase_subs_warning(void) {
   return do_warning_dialog(_("\nErase all subtitles from this clip.\nAre you sure ?\n"));
 }
@@ -2118,6 +2117,9 @@ void do_set_locked_warning (const gchar *setname) {
   g_free(msg);
 }
 
+void do_no_in_vdevs_error(void) {
+  do_error_dialog(_("\nNo video input devices could be found.\n"));
+}
 
 void do_do_not_close_d (void) {
   gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));

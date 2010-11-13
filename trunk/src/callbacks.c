@@ -30,6 +30,10 @@
 #include "lives-yuv4mpeg.h"
 #endif
 
+#ifdef HAVE_UNICAP
+#include "videodev.h"
+#endif
+
 static gchar file_name[32768];
 
 gboolean
@@ -149,9 +153,17 @@ lives_exit (void) {
 	  // close all open clips, except for ones we want to retain
 
 #ifdef HAVE_YUV4MPEG
-	  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG) {
+	  if (mainw->files[i]->clip_type==CLIP_TYPE_YUV4MPEG) {
 	    pthread_mutex_lock(&mainw->gtk_mutex);
 	    lives_yuv_stream_stop_read(mainw->files[i]->ext_src);
+	    g_free (mainw->files[i]->ext_src);
+	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	  }
+#endif
+#ifdef HAVE_UNICAP
+	  if (mainw->files[i]->clip_type==CLIP_TYPE_VIDEODEV) {
+	    pthread_mutex_lock(&mainw->gtk_mutex);
+	    lives_vdev_free(mainw->files[i]->ext_src);
 	    g_free (mainw->files[i]->ext_src);
 	    pthread_mutex_unlock(&mainw->gtk_mutex);
 	  }
@@ -4393,7 +4405,7 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
   
   if (cfile->frames>0) {
     // type
-    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp)\n"),cfile->type,(tmp=g_strdup(cfile->clip_type==CLIP_TYPE_YUV4MPEG?(_("buffered")):(cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp);
+    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp)\n"),cfile->type,(tmp=g_strdup((cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):(cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp);
     g_free(tmp);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview24)),buff, -1);
     // fps
@@ -7426,8 +7438,7 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
 }
 
 
-gint
-expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
+gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
   GdkRegion *reg;
   GdkRectangle rect;
 
@@ -7452,7 +7463,21 @@ expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
       rect.height=gdk_pixbuf_get_height(GDK_PIXBUF (mainw->imframe));
     }
 
-    gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->imframe),rect.x,rect.y,rect.x,rect.y,rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
+    if (mainw->current_file>0&&cfile!=NULL&&
+	(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
+      if (mainw->camframe==NULL) {
+	GError *error=NULL;
+	gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
+	mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
+	if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+	g_free(tmp);
+      }
+      gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->camframe),rect.x,rect.y,rect.x,rect.y,rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
+    }
+    else {
+      gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->imframe),rect.x,rect.y,rect.x,rect.y,rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
+    }
+
     unblock_expose();
     g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
     mainw->pw_exp_is_blocked=FALSE;

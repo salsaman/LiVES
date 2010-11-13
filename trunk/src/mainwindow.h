@@ -474,6 +474,7 @@ typedef struct {
   GtkWidget *frame2;
   GtkWidget *playframe;
   GdkPixbuf *imframe;
+  GdkPixbuf *camframe;
   GdkPixbuf *imsep;
   GtkWidget *LiVES;
   GtkWidget *open;

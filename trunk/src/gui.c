@@ -26,6 +26,10 @@
 #include "lives-yuv4mpeg.h"
 #endif
 
+#ifdef HAVE_UNICAP
+#include "videodev.h"
+#endif
+
 
 // closures for keys for fade/unfade background
 static GClosure *stop_closure;
@@ -152,10 +156,12 @@ create_LiVES (void)
   GtkWidget *t_label;
   GtkWidget *label;
 
+#ifndef HAVE_UNICAP
 #ifdef HAVE_YUV4MPEG
   GtkWidget *submenu;
   GtkWidget *menuitem;
 #endif 
+#endif
 
   GtkObject *spinbutton_pb_fps_adj;
   GtkObject *spinbutton_adj;
@@ -3493,7 +3499,6 @@ make_play_window(void) {
   resize_play_window();
   if (mainw->play_window==NULL) return;
 
-
   if ((mainw->current_file==-1||(!cfile->is_loaded&&!mainw->preview)||(cfile->frames==0&&(mainw->multitrack==NULL||mainw->playing_file==-1)))&&mainw->imframe!=NULL) {
     gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->imframe),0,0,0,0,-1,-1,GDK_RGB_DITHER_NONE,0,0);
   }
@@ -3524,8 +3529,12 @@ make_play_window(void) {
   }
   else {
     // be careful, the user could switch out of sepwin here !
-      if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) g_source_remove(mainw->multitrack->idlefunc);
+    if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) g_source_remove(mainw->multitrack->idlefunc);
     mainw->noswitch=TRUE;
+
+    g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+    mainw->pw_exp_is_blocked=TRUE;
+
     while (g_main_context_iteration(NULL,FALSE));
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
       mainw->multitrack->idlefunc=0;
@@ -3537,12 +3546,6 @@ make_play_window(void) {
     if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->play_window->allocation.width)/2, (mainw->scr_height-mainw->play_window->allocation.height)/2);
     gtk_widget_queue_draw(mainw->play_window);
   }
-
-
-
-
-
-
 
 }
 

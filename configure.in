@@ -115,7 +115,6 @@ if test x$PKG_CONFIG = xno; then
 fi
 
 # Check for doxygen
-DOXYGEN=no
 
 AC_ARG_ENABLE( doxygen, [  --disable-doxygen     Disable doxygen documentation.] , disable_doxygen=yes)
 
@@ -129,6 +128,7 @@ fi
 
 else
    echo "Doxygen documentation disabled, not checking"
+   DOXYGEN=no
 fi
 
 AM_CONDITIONAL(HAVE_DOXYGEN, test x$DOXYGEN != xno)
@@ -357,6 +357,19 @@ AC_SUBST(MJPEGTOOLS_LIBS)
 fi
 
 AM_CONDITIONAL(HAVE_MJPEGTOOLS,$HAVE_MJPEGTOOLS)
+
+
+HAVE_UNICAP=false
+AC_ARG_ENABLE( unicap, [  --disable-unicap    Disable unicap support.] , disable_unicap=yes)
+if test "x$disable_unicap" != "xyes" ; then
+
+dnl check for unicap
+PKG_CHECK_MODULES(UNICAP,libunicap,HAVE_UNICAP=true,HAVE_UNICAP=false)
+AC_SUBST(UNICAP_CFLAGS)
+AC_SUBST(UNICAP_LIBS)
+fi
+
+AM_CONDITIONAL(HAVE_UNICAP,$HAVE_UNICAP)
 
 
 HAVE_LIBDV=false

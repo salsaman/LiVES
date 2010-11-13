@@ -980,21 +980,35 @@ gdouble weed_palette_get_compression_ratio (int pal) {
 
 //////////////////////////////////////////////////////////////
 
-int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace, int *sspace) {
+int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace, int *sampling, 
+		      int *sspace, int *clamping) {
   // TODO - this is probably wrong for some formats and needs testing/verifying with various devices
   // fourcc colorcodes are a nasty mess, and should be avoided whenever possible
 
   // data from http://www.fourcc.org
+
+  if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_CLAMPED;
+  if (interlace!=NULL) *interlace=LIVES_INTERLACE_NONE;
+  if (sspace!=NULL) *sspace=WEED_YUV_SUBSPACE_YCBCR;
+  if (sampling!=NULL) *sampling=WEED_YUV_SAMPLING_DEFAULT;
 
   switch (fourcc) {
 
     // RGB formats
 
   case 0x00000000: // BI_RGB
-  case 0x32424752: // RGB
-  case 0x32776173: // raw
+  case 0x32776172: // raw2
+  case 0x32524742: // BGR3
+  case 0x33524742: // BGR3
+  case 0x34524742: // BGR4
     if (bpp==24) return WEED_PALETTE_BGR24;
     if (bpp==32) return WEED_PALETTE_BGRA32;
+    break;
+  case 0x32424752: // RGB2
+  case 0x33424752: // RGB3
+  case 0x34424752: // RGB4
+    if (bpp==24) return WEED_PALETTE_RGB24;
+    if (bpp==32) return WEED_PALETTE_RGBA32;
     break;
   case 0x41424752: // RGBA
     if (bpp==32) return WEED_PALETTE_RGBA32;
@@ -1017,25 +1031,62 @@ int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace
   case 0x564E5955: // UYNV 	
   case 0x59565955: // UYVY
   case 0x32323459: // Y422
+  case 0x76757963: // cyuv - ???
     return WEED_PALETTE_UYVY;
   case 0x32595559: // YUY2
   case 0x56595559: // YUYV
   case 0x564E5559: // YUNV
+  case 0x31313259: // Y211 - ???
     return WEED_PALETTE_YUYV;
+  case 0x59455247: // grey
   case 0x30303859: // Y800
   case 0x20203859: // Y8
-    // set YUV subspace as a hint
-    if (sspace!=NULL) *sspace=WEED_YUV_SUBSPACE_YCBCR;
     return WEED_PALETTE_A8;
 
 
     // YUV planar formats
-
+  case 0x41565559: // YUVA
+    return WEED_PALETTE_YUVA4444P;
+    break;
+  case 0x34343449: // I444
+    return WEED_PALETTE_YUV444P;
+    break;
+  case 0x50323234: // 422P ??
+    return WEED_PALETTE_YUV422P;
+    break;
   case 0x32315659: // YV12
     return WEED_PALETTE_YVU420P;
   case 0x30323449: // I420
   case 0x56555949: // IYUV
+  case 0x32315559: // YU12 ??
     return WEED_PALETTE_YUV420P;
+
+  case 0x3032344a: // J420
+    if (!clamping) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    return WEED_PALETTE_YUV420P;
+  case 0x3232344a: // J422
+    if (!clamping) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    return WEED_PALETTE_YUV422P;
+  case 0x3434344a: // J444
+    if (!clamping) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    return WEED_PALETTE_YUV444P;
+
+
+    // known formats we cannot use
+  case 0x50424752: // RGBP - palettised RGB
+  case 0x4f424752: // RGB0 - 15 or 16 bit RGB
+  case 0x51424752: // RGBQ - 15 or 16 bit RGB
+  case 0x52424752: // RGBR - ???
+
+  case 0x3231564e: // NV12 - planar Y, packed UV
+  case 0x30313276: // v210 - 10 bit 422, packed
+
+  case 0x39565559: // YUV9 - 410 planar palette
+  case 0x30313449: // I410 - 410 planar palette
+
+  case 0x31313449: // I411 - 411 planar palette
+  case 0x30343449: // I440 - 440 planar palette
+  case 0x30343450: // J440 - 440 planar palette unclamped
 
     // no match
   default:

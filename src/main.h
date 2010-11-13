@@ -81,6 +81,8 @@ POSSIBILITY OF SUCH DAMAGES.
 #define PREFIX PREFIX_DEFAULT
 #endif
 
+#define HAVE_UNICAP 1
+
 #define DOC_DIR "/share/doc/lives-"
 
 #define THEME_DIR "/share/lives/themes/"
@@ -519,7 +521,7 @@ typedef struct {
   gchar mime_type[256];
 
 
-  gboolean deinterlace;
+  gboolean deinterlace; ///< auto deinterlace
 
   lives_image_type_t img_type;
 
@@ -744,6 +746,7 @@ gboolean do_erase_subs_warning(void);
 gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext);
 gboolean do_move_tmpdir_dialog(void);
 void do_set_locked_warning (const gchar *setname);
+void do_no_in_vdevs_error(void);
 void do_do_not_close_d (void);
 
 gboolean process_one (gboolean visible);

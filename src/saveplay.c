@@ -2307,7 +2307,7 @@ void play_file (void) {
 	mainw->noswitch=FALSE;
 	unblock_expose();
       }
-      if (mainw->current_file>-1&&cfile->is_loaded&&cfile->frames>0&&!mainw->is_rendering&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+      if (mainw->current_file>-1&&cfile->is_loaded&&cfile->frames>0&&!mainw->is_rendering&&(cfile->clip_type!=CLIP_TYPE_GENERATOR)) {
 	if (mainw->preview_box==NULL) {
 	  // create the preview in the sepwin
 	  make_preview_box();
@@ -2329,36 +2329,18 @@ void play_file (void) {
 	if (mainw->multitrack==NULL) {
 	  mainw->playing_file=-2;
 	  resize_play_window();
-	  // needed - block expose events to main window when we resize sepwin
-	  if (cfile->is_loaded&&cfile->frames>0&&cfile->clip_type==CLIP_TYPE_DISK&&!mainw->is_rendering) {
-	    block_expose();
-	    mainw->noswitch=TRUE;
-	    while (g_main_context_iteration (NULL,FALSE));
-	    gtk_widget_queue_draw (mainw->preview_box);
-	    gtk_widget_queue_resize (mainw->preview_box);
-	    while (g_main_context_iteration (NULL,FALSE));
-	    mainw->noswitch=FALSE;
-	    unblock_expose();
-	  }
-	  else {
-	    // opening preview - put the blank frame back in...
-	    // force signal unblocked
-	    g_signal_handlers_block_matched(mainw->play_window,G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED,0,0,0,(gpointer)expose_play_window,NULL);
-	    g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
-	    mainw->pw_exp_is_blocked=FALSE;
-	    gtk_widget_queue_draw (mainw->play_window);
-	    gtk_widget_queue_resize (mainw->play_window);
-	    block_expose();
-	    mainw->noswitch=TRUE;
-	    while (g_main_context_iteration (NULL,FALSE));
-	    mainw->noswitch=FALSE;
-	    unblock_expose();
-	  }
 	  mainw->playing_file=-1;
 
 	  gtk_widget_queue_draw (mainw->LiVES);
 	  mainw->noswitch=TRUE;
+
+	  g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+	  mainw->pw_exp_is_blocked=TRUE;
+
 	  while (g_main_context_iteration (NULL,FALSE));
+
+	  load_preview_image(FALSE);
+
 	  mainw->noswitch=FALSE;
 	  if (mainw->playing_file==-1&&mainw->play_window!=NULL)
 	    gtk_window_set_title(GTK_WINDOW(mainw->play_window),gtk_window_get_title(GTK_WINDOW(mainw->LiVES)));

@@ -50,6 +50,10 @@
 #include "lives-yuv4mpeg.h"
 #endif
 
+#ifdef HAVE_UNICAP
+#include "videodev.h"
+#endif
+
 #include <getopt.h>
 
 ////////////////////////////////
@@ -810,6 +814,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->videodevs=NULL;
 
+  mainw->camframe=NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -2281,6 +2286,10 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->open_yuv4m, TRUE);
 #endif
 
+#ifdef HAVE_UNICAP
+  gtk_widget_set_sensitive (mainw->add_live_menu, TRUE);
+#endif
+
   gtk_widget_set_sensitive (mainw->select_new, mainw->current_file>0&&(cfile->insert_start>0));
   gtk_widget_set_sensitive (mainw->select_last, mainw->current_file>0&&(cfile->undo_start>0));
   gtk_widget_set_sensitive (mainw->lock_selwidth, mainw->current_file>0&&cfile->frames>0);
@@ -2348,6 +2357,9 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->open_device_menu, FALSE);
 #ifdef HAVE_YUV4MPEG
   gtk_widget_set_sensitive (mainw->open_yuv4m, FALSE);
+#endif
+#ifdef HAVE_UNICAP
+  gtk_widget_set_sensitive (mainw->add_live_menu, FALSE);
 #endif
   gtk_widget_set_sensitive (mainw->recent_menu, FALSE);
   gtk_widget_set_sensitive (mainw->restore, FALSE);
@@ -2487,6 +2499,18 @@ void load_start_image(gint frame) {
 
   if (mainw->multitrack!=NULL) return;
 
+  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+    if (mainw->camframe==NULL) {
+      GError *error=NULL;
+      gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
+      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      g_free(tmp);
+    }
+    gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->camframe);
+    return;
+  }
+
   if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     pthread_mutex_lock(&mainw->gtk_mutex);
     if (!(mainw->imframe==NULL)) {
@@ -2579,6 +2603,18 @@ void load_end_image(gint frame) {
 
   if (mainw->multitrack!=NULL) return;
 
+  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+    if (mainw->camframe==NULL) {
+      GError *error=NULL;
+      gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
+      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      g_free(tmp);
+    }
+    gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->camframe);
+    return;
+  }
+
   if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     pthread_mutex_lock(&mainw->gtk_mutex);
     if (!(mainw->imframe==NULL)) {
@@ -2662,15 +2698,48 @@ void load_end_image(gint frame) {
 
 
 
-void 
-load_preview_image(gboolean update_always) {
+void load_preview_image(gboolean update_always) {
   // this is for the sepwin preview
   // update_always==TRUE = update widgets from mainw->preview_frame
   GdkPixbuf *pixbuf=NULL;
   gint preview_frame;
 
+  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+    if (mainw->camframe==NULL) {
+      GError *error=NULL;
+      gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
+      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      g_free(tmp);
+    }
+    pixbuf=gdk_pixbuf_scale_simple(mainw->camframe,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+    if (mainw->preview_frame>cfile->frames) {
+      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+      mainw->pw_exp_is_blocked=TRUE;
+    }
+    gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image),pixbuf);
+    gdk_pixbuf_unref(pixbuf);
+    mainw->preview_frame=1;
+    g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1,1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1);
+    g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
+    gtk_widget_queue_resize(mainw->preview_box);
+    return;
+  }
+
   if (!cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
+    if (mainw->preview_frame>cfile->frames) {
+      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+      mainw->pw_exp_is_blocked=TRUE;
+    }
     gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL);
+    mainw->preview_frame=0;
+    g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0,0);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0);
+    g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
+    gtk_widget_queue_resize(mainw->preview_box);
     return;
   }
 
@@ -3013,6 +3082,13 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 #ifdef HAVE_YUV4MPEG
   case CLIP_TYPE_YUV4MPEG:
     weed_layer_set_from_yuv4m(layer,sfile);
+    if (sfile->deinterlace) deinterlace_frame(layer,tc);
+    mainw->osc_block=FALSE;
+    return TRUE;
+#endif
+#ifdef HAVE_UNICAP
+  case CLIP_TYPE_VIDEODEV:
+    weed_layer_set_from_lvdev(layer,sfile,1.1/cfile->pb_fps);
     if (sfile->deinterlace) deinterlace_frame(layer,tc);
     mainw->osc_block=FALSE;
     return TRUE;
@@ -4076,6 +4152,13 @@ void close_current_file(gint file_to_switch_to) {
 #endif
     }
 
+    if (cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+#ifdef HAVE_YUV4MPEG
+      lives_vdev_free(cfile->ext_src);
+      g_free (cfile->ext_src);
+#endif
+    }
+
     g_free(cfile);
     cfile=NULL;
 
@@ -4326,9 +4409,13 @@ void switch_to_file(gint old_file, gint new_file) {
       }
     }
     // and resize it
-    load_preview_image(FALSE);
     resize_play_window();
+    load_preview_image(FALSE);
     gtk_widget_queue_resize(mainw->preview_box);
+
+    g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+    mainw->pw_exp_is_blocked=TRUE;
+
     while (g_main_context_iteration (NULL,FALSE));
   }
   

@@ -1979,8 +1979,16 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   GtkWidget *combo_dialog;
   GtkWidget *dialog_vbox;
   GtkWidget *label;
+  GtkWidget *combo;
+  GtkWidget *okbutton;
+  GtkWidget *cancelbutton;
+  GtkWidget *dialog_action_area;
 
   gchar *label_text=NULL;
+
+  GList *list=(GList *)user_data;
+
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
 
   combo_dialog = gtk_dialog_new ();
   if (type==1) {
@@ -1990,7 +1998,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   gtk_window_set_position (GTK_WINDOW (combo_dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_modal (GTK_WINDOW (combo_dialog), TRUE);
 
-  gtk_container_set_border_width (GTK_CONTAINER (combo_dialog), 10);
+  gtk_container_set_border_width (GTK_CONTAINER (combo_dialog), 20);
   //gtk_window_set_default_size (GTK_WINDOW (combo_dialog), 300, 200);
 
   if (!prefs->show_gui) {
@@ -2023,10 +2031,33 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
   gtk_widget_show (label);
 
+  combo = gtk_combo_box_new_text();
 
+  populate_combo_box(GTK_COMBO_BOX(combo), list);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), combo, TRUE, TRUE, 20);
+  gtk_widget_show (combo);
 
+  dialog_action_area = GTK_DIALOG (combo_dialog)->action_area;
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (combo_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              GDK_Escape, 0, 0);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (combo_dialog), okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default (okbutton);
+
+  gtk_window_add_accel_group (GTK_WINDOW (combo_dialog), accel_group);
 
   return combo_dialog;
 

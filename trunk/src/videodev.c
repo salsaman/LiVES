@@ -8,7 +8,7 @@
 #include "main.h"
 
 #ifdef HAVE_UNICAP
-//#define DEBUG_UNICAP
+#define DEBUG_UNICAP
 
 #include "videodev.h"
 #include "interface.h"
@@ -200,7 +200,9 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
     if (cpal==WEED_PALETTE_END||weed_palette_is_alpha_palette(cpal)) {
 #ifdef DEBUG_UNICAP
-      g_printerr("Unusable palette with fourcc 0x%x  ",format->fourcc);
+      // set format to try and get more data
+      unicap_set_format (ldev->handle, format);
+      g_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n",format->fourcc,format->bpp,format->size.width,format->size.height,(int)format->buffer_size);
 #endif
       continue;
     }
@@ -286,10 +288,13 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
     return FALSE;
   }
 
+  unicap_lock_stream(ldev->handle);
+
   format=lvdev_get_best_format(formats, ldev, WEED_PALETTE_END, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
   
   if(format==NULL) {
     g_printerr("No useful formats found.\n");
+    unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
     g_free(ldev);
     return FALSE;
@@ -319,6 +324,7 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
 
   if (!SUCCESS (unicap_set_format (ldev->handle, format))) {
     g_printerr("Error setting format.\n");
+    unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
     g_free(ldev);
     return FALSE;
@@ -347,7 +353,9 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
 
 
 void lives_vdev_free(lives_vdev_t *ldev) {
+  if (ldev==NULL) return;
   unicap_stop_capture (ldev->handle);
+  unicap_unlock_stream(ldev->handle);
   unicap_close(ldev->handle);
   if (ldev->buffer1.data!=NULL) g_free(ldev->buffer1.data);
   if (ldev->buffer2.data!=NULL) g_free(ldev->buffer2.data);
@@ -376,7 +384,6 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   mainw->open_deint=FALSE;
 
-
  // get device list
   for (dev_count = 0; SUCCESS (status) && (dev_count < MAX_DEVICES);
        dev_count++)
@@ -391,24 +398,42 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
-  for (i=0;i<dev_count;i++) devlist=g_list_append(devlist,devices[i].identifier);
+  for (i=0;i<dev_count;i++) {
+    if (!unicap_is_stream_locked(&devices[i])) {
+      devlist=g_list_prepend(devlist,devices[i].identifier);
+    }
+  }
+
+  if (devlist==NULL) {
+    do_locked_in_vdevs_error();
+    return;
+  }
 
   mainw->fx1_val=0;
   mainw->open_deint=FALSE;
   card_dialog=create_combo_dialog(1,(gpointer)devlist);
+  response=gtk_dialog_run(GTK_DIALOG(card_dialog));
   g_list_free(devlist);
 
-  response=gtk_dialog_run(GTK_DIALOG(card_dialog));
   if (response==GTK_RESPONSE_CANCEL) {
     gtk_widget_destroy(card_dialog);
     return;
   }
 
-  devno=(gint)mainw->fx1_val;
-
   gtk_widget_destroy(card_dialog);
 
-  fname=g_strdup_printf("%s",devices[devno].device);
+  for (i=dev_count-1;i>=0;i--) {
+    if (!unicap_is_stream_locked(&devices[i])) {
+      if (mainw->fx1_val==0) {
+	devno=i;
+	break;
+      }
+    }
+    mainw->fx1_val--;
+  }
+
+  if (devices[devno].device!=NULL) fname=g_strdup_printf("%s",devices[devno].device);
+  else fname=g_strdup_printf("%s",devices[devno].identifier);
 
   if (!get_new_handle(new_file,fname)) {
     g_free(fname);
@@ -416,8 +441,14 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   mainw->current_file=new_file;
+  cfile->clip_type=CLIP_TYPE_VIDEODEV;
+
+  d_print(""); ///< force switchtext
 
   if (!open_vdev_inner(&devices[devno])) {
+    gchar *msg=g_strdup_printf(_("Unable to open device %s\n"),fname);
+    d_print(msg);
+    g_free(msg);
     g_free(fname);
     close_current_file(old_file);
     return;
@@ -426,7 +457,6 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (cfile->interlace!=LIVES_INTERLACE_NONE&&prefs->auto_deint) cfile->deinterlace=TRUE; ///< auto deinterlace
   if (!cfile->deinterlace) cfile->deinterlace=mainw->open_deint; ///< user can also force deinterlacing
 
-  cfile->clip_type=CLIP_TYPE_VIDEODEV;
   cfile->start=cfile->end=cfile->frames=1;
   cfile->is_loaded=TRUE;
   add_to_winmenu();

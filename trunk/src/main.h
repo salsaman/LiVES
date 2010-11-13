@@ -747,6 +747,7 @@ gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext);
 gboolean do_move_tmpdir_dialog(void);
 void do_set_locked_warning (const gchar *setname);
 void do_no_in_vdevs_error(void);
+void do_locked_in_vdevs_error(void);
 void do_do_not_close_d (void);
 
 gboolean process_one (gboolean visible);

@@ -348,7 +348,7 @@ create_LiVES (void)
   }
 
 
-  mainw->add_live_menu = gtk_menu_item_new_with_mnemonic (_("_Add Live Input"));
+  mainw->add_live_menu = gtk_menu_item_new_with_mnemonic (_("_Add Live Input..."));
 
 #ifdef HAVE_UNICAP
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->add_live_menu);

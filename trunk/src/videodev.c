@@ -3,7 +3,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef TEST_UNICAP
+#ifdef HAVE_UNICAP
 
 #include "support.h"
 #include "main.h"

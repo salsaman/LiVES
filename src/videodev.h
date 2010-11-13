@@ -9,7 +9,11 @@
 
 typedef struct {
   unicap_handle_t handle;
-  unicap_data_buffer_t buffer;
+  int fileno; ///< lives clip number
+  int buffer_type; ///< system or user
+  volatile int buffer_ready;
+  unicap_data_buffer_t buffer1;
+  unicap_data_buffer_t buffer2;
   int current_palette;
   int YUV_sampling;
   int YUV_subspace;

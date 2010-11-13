@@ -8,7 +8,7 @@
 #include "main.h"
 
 #ifdef HAVE_UNICAP
-#define DEBUG_UNICAP
+//#define DEBUG_UNICAP
 
 #include "videodev.h"
 #include "interface.h"
@@ -20,7 +20,8 @@
 ////////////////////////////////////////////////////
 
 
-static gboolean lives_wait_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, gdouble timeout) {
+static gboolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, gdouble timeout) {
+  // wait for USER type buffer
   int64_t stime,dtime,timer;
   struct timeval otv;
   unicap_status_t status;
@@ -38,8 +39,7 @@ static gboolean lives_wait_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buf
     if (status!=STATUS_SUCCESS) g_printerr("Unicap poll failed with status %d\n",status);
 #endif
 
-    if (ncount>0) {
-      g_printerr("got a count\n");
+    if (ncount>=0) {
       if (!SUCCESS (unicap_wait_buffer (ldev->handle, buff))) return FALSE;
       return TRUE;
     }
@@ -58,6 +58,51 @@ static gboolean lives_wait_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buf
 
 
 
+static gboolean lives_wait_system_buffer(lives_vdev_t *ldev, gdouble timeout) {
+  // wait for SYSTEM type buffer
+  int64_t stime,dtime,timer;
+  struct timeval otv;
+
+  timer=timeout*1000000.;
+
+  gettimeofday(&otv,NULL);
+  stime=otv.tv_sec*1000000+otv.tv_usec;
+
+  while (ldev->buffer_ready==0) {
+    gettimeofday(&otv,NULL);
+    dtime=otv.tv_sec*1000000+otv.tv_usec;
+
+    if (dtime-stime>timer) return FALSE;
+
+    g_usleep(prefs->sleep_time);
+    while (g_main_context_iteration(NULL,FALSE));
+  }
+
+  return TRUE;
+}
+
+
+
+
+static void new_frame_cb (unicap_event_t event, unicap_handle_t handle,
+			  unicap_data_buffer_t * buffer, void *usr_data) {
+  lives_vdev_t *ldev=(lives_vdev_t *)usr_data;
+  if (mainw->playing_file==-1||(mainw->playing_file!=ldev->fileno&&mainw->blend_file!=ldev->fileno)) {
+    ldev->buffer_ready=0;
+    return;
+  }
+
+  if (ldev->buffer_ready!=1) {
+    w_memcpy(ldev->buffer1.data,buffer->data,ldev->buffer1.buffer_size);
+    ldev->buffer_ready=1;
+  }
+  else {
+    w_memcpy(ldev->buffer2.data,buffer->data,ldev->buffer2.buffer_size);
+    ldev->buffer_ready=2;
+  }
+
+}
+
 
 
 
@@ -65,8 +110,9 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
   lives_vdev_t *ldev=sfile->ext_src;
   unicap_data_buffer_t *returned_buffer=NULL;
   void **pixel_data;
-  int error,rowstride;
-  
+  void *odata=ldev->buffer1.data;
+  int error;
+
   weed_set_int_value(layer,"width",sfile->hsize);
   weed_set_int_value(layer,"height",sfile->vsize);
   weed_set_int_value(layer,"current_palette",ldev->current_palette);
@@ -75,50 +121,50 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
   weed_set_int_value(layer,"YUV_clamping",ldev->YUV_clamping);
 
   create_empty_pixel_data(layer);
-  unicap_start_capture (ldev->handle); 
 
-  // for planar palettes we can use pixel_data directly
-  if (weed_palette_get_numplanes(ldev->current_palette)==1) {
-    rowstride=weed_get_int_value(layer,"rowstrides",&error);
-    pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-    ldev->buffer.data=pixel_data[0];
-    ldev->buffer.buffer_size=rowstride*sfile->vsize;
-    weed_free(pixel_data);
-  }
+  if (ldev->buffer_type==UNICAP_BUFFER_TYPE_USER) {
 
-  // TODO - we should use 2 buffers to prevent long waits here
-  unicap_queue_buffer (ldev->handle, &ldev->buffer);
-  // TODO - timeout here if not loaded
-
-  if (!lives_wait_buffer(ldev, &returned_buffer, timeoutsecs)||returned_buffer!=&ldev->buffer) {
-    if (returned_buffer!=NULL&&returned_buffer!=&ldev->buffer) {
-      // should never happen
-      free(returned_buffer->data);
-      free(returned_buffer);
-    }
-    g_printerr("Failed to wait for buffer!\n");
     if (weed_palette_get_numplanes(ldev->current_palette)==1) {
-      ldev->buffer.data=NULL;
+      ldev->buffer1.data=weed_get_voidptr_value(layer,"pixel_data",&error);
     }
-    unicap_stop_capture (ldev->handle);
-    //unicap_dequeue_buffer (ldev->handle, &returned_buffer);
-    return FALSE;
+
+    unicap_queue_buffer (ldev->handle, &ldev->buffer1);
+    
+    if (!lives_wait_user_buffer(ldev, &returned_buffer, timeoutsecs)) {
+#ifdef DEBUG_UNICAP
+      g_printerr("Failed to wait for user buffer!\n");
+      unicap_stop_capture (ldev->handle);
+      unicap_dequeue_buffer (ldev->handle, &returned_buffer);
+      unicap_start_capture (ldev->handle);
+#endif
+      ldev->buffer1.data=odata;
+      return FALSE;
+    }
   }
+  else {
+    // wait for callback to fill buffer
+    if (!lives_wait_system_buffer(ldev,timeoutsecs)) {
+#ifdef DEBUG_UNICAP
+      g_printerr("Failed to wait for system buffer!\n");
+#endif
+    }
+    if (ldev->buffer_ready==1) returned_buffer=&ldev->buffer1;
+    else returned_buffer=&ldev->buffer2;
+  }
+
+  pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
   if (weed_palette_get_numplanes(ldev->current_palette)>1) {
-    pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
     pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize*sfile->vsize, ldev->current_palette);
-    if (returned_buffer!=&ldev->buffer) {
-      // should never happen
-      free(returned_buffer->data);
-      free(returned_buffer);
-    }
   }
-  else ldev->buffer.data=NULL;
+  else {
+    int rowstride=weed_get_int_value(layer,"rowstrides",&error);
+    w_memcpy(pixel_data[0], returned_buffer->data, rowstride*sfile->vsize);
+  }
 
-  // TODO - keep capture going until we have a new frame ready
-  unicap_stop_capture (ldev->handle);
-  //unicap_dequeue_buffer (ldev->handle, &returned_buffer);
+  weed_free(pixel_data);
+
+  ldev->buffer1.data=odata;
 
   return TRUE;
 }
@@ -249,7 +295,18 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
     return FALSE;
   }
 
-  format->buffer_type = UNICAP_BUFFER_TYPE_USER;
+  if (!(format->buffer_types&UNICAP_BUFFER_TYPE_USER)) {
+    // have to use system buffer type
+    format->buffer_type = UNICAP_BUFFER_TYPE_SYSTEM;
+
+    // set a callback for new frame
+    unicap_register_callback (ldev->handle, UNICAP_EVENT_NEW_FRAME, (unicap_callback_t) new_frame_cb, 
+			      (void *) ldev);
+
+  }
+  else format->buffer_type = UNICAP_BUFFER_TYPE_USER;
+
+  ldev->buffer_type = format->buffer_type;
 
   // ignore YUV subspace for now
   ldev->current_palette=fourccp_to_weedp(format->fourcc, format->bpp, &cfile->interlace, 
@@ -272,22 +329,28 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
 
   cfile->ext_src=ldev;
 
-  if (weed_palette_get_numplanes(ldev->current_palette)>1) {
-    // TODO - needs freeing
-    ldev->buffer.data = g_malloc (format->buffer_size);
-    ldev->buffer.buffer_size = format->buffer_size;
-  }
-  else ldev->buffer.data=NULL;
+  ldev->buffer1.data = g_malloc (format->buffer_size);
+  ldev->buffer1.buffer_size = format->buffer_size;
+
+  ldev->buffer2.data = g_malloc (format->buffer_size);
+  ldev->buffer2.buffer_size = format->buffer_size;
+
+  ldev->buffer_ready=0;
+  ldev->fileno=mainw->current_file;
 
   cfile->bpp = format->bpp;
+
+  unicap_start_capture (ldev->handle); 
 
   return TRUE;
 }
 
 
 void lives_vdev_free(lives_vdev_t *ldev) {
-    unicap_close(ldev->handle);
-    if (ldev->buffer.data!=NULL) g_free(ldev->buffer.data);
+  unicap_stop_capture (ldev->handle);
+  unicap_close(ldev->handle);
+  if (ldev->buffer1.data!=NULL) g_free(ldev->buffer1.data);
+  if (ldev->buffer2.data!=NULL) g_free(ldev->buffer2.data);
 }
 
 
@@ -313,7 +376,8 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   mainw->open_deint=FALSE;
 
-  // get device list
+
+ // get device list
   for (dev_count = 0; SUCCESS (status) && (dev_count < MAX_DEVICES);
        dev_count++)
     {
@@ -375,6 +439,7 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   g_free(tmp);
   g_free(fname);
+
 }
 
 

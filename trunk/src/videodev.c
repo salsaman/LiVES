@@ -39,6 +39,7 @@ static gboolean lives_wait_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buf
 #endif
 
     if (ncount>0) {
+      g_printerr("got a count\n");
       if (!SUCCESS (unicap_wait_buffer (ldev->handle, buff))) return FALSE;
       return TRUE;
     }

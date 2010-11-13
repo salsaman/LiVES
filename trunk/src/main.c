@@ -4153,7 +4153,7 @@ void close_current_file(gint file_to_switch_to) {
     }
 
     if (cfile->clip_type==CLIP_TYPE_VIDEODEV) {
-#ifdef HAVE_YUV4MPEG
+#ifdef HAVE_UNICAP
       lives_vdev_free(cfile->ext_src);
       g_free (cfile->ext_src);
 #endif

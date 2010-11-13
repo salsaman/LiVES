@@ -2499,7 +2499,7 @@ void load_start_image(gint frame) {
 
   if (mainw->multitrack!=NULL) return;
 
-  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+  if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
@@ -2511,7 +2511,8 @@ void load_start_image(gint frame) {
     return;
   }
 
-  if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
+  if (mainw->current_file<0||cfile==NULL||frame<1||frame>cfile->frames||
+      (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     pthread_mutex_lock(&mainw->gtk_mutex);
     if (!(mainw->imframe==NULL)) {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->imframe);
@@ -2603,7 +2604,7 @@ void load_end_image(gint frame) {
 
   if (mainw->multitrack!=NULL) return;
 
-  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+  if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
@@ -2615,7 +2616,8 @@ void load_end_image(gint frame) {
     return;
   }
 
-  if (frame<1||frame>cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
+  if (mainw->current_file<0||cfile==NULL||frame<1||frame>cfile->frames||
+      (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     pthread_mutex_lock(&mainw->gtk_mutex);
     if (!(mainw->imframe==NULL)) {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->imframe);
@@ -3088,7 +3090,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 #endif
 #ifdef HAVE_UNICAP
   case CLIP_TYPE_VIDEODEV:
-    weed_layer_set_from_lvdev(layer,sfile,1.1/cfile->pb_fps);
+    weed_layer_set_from_lvdev(layer,sfile,4./cfile->pb_fps);
     if (sfile->deinterlace) deinterlace_frame(layer,tc);
     mainw->osc_block=FALSE;
     return TRUE;

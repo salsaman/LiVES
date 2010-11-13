@@ -1109,7 +1109,7 @@ void add_to_winmenu(void) {
   GtkWidget *active_image;
   gchar *tmp;
 
-  cfile->menuentry = gtk_image_menu_item_new_with_label((tmp=g_path_get_basename(cfile->name)));
+  cfile->menuentry = gtk_image_menu_item_new_with_label(cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(cfile->name)):(tmp=g_strdup(cfile->name)));
   g_free(tmp);
 #ifdef HAVE_GTK_VERSION216
   gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(cfile->menuentry),TRUE);
@@ -1970,6 +1970,12 @@ static void rb_tvcarddef_toggled(GtkToggleButton *tbut, gpointer user_data) {
 }
 
 
+static void after_dialog_combo_changed (GtkWidget *combo, gpointer user_data) {
+  GList *list=(GList *)user_data;
+  gchar *etext=gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
+  mainw->fx1_val=lives_list_index(list,etext);
+}
+
 
 GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   // create a dialog with combo box selector
@@ -2036,8 +2042,14 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   populate_combo_box(GTK_COMBO_BOX(combo), list);
   gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 
+  g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (after_dialog_combo_changed), list);
+
   gtk_box_pack_start (GTK_BOX (dialog_vbox), combo, TRUE, TRUE, 20);
   gtk_widget_show (combo);
+
+  if (type==1) {
+    add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
+  }
 
   dialog_action_area = GTK_DIALOG (combo_dialog)->action_area;
   gtk_widget_show (dialog_action_area);

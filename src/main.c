@@ -2180,7 +2180,7 @@ void set_main_title(const gchar *file, gint untitled) {
 	title=g_strdup_printf(_("LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"),LiVES_VERSION,(tmp=g_path_get_basename(file)),cfile->hsize,cfile->vsize,cfile->fps);
       }
       else {
-	title=g_strdup_printf(_ ("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,(tmp=g_path_get_basename(file)),cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
+	title=g_strdup_printf(_ ("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(file)):(tmp=g_strdup(file)),cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
       }
       g_free(tmp);
     }

@@ -502,7 +502,7 @@ void d_print(const gchar *text) {
     if (mainw->current_file!=mainw->last_dprint_file&&mainw->current_file!=0&&mainw->multitrack==NULL&&(mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&!mainw->no_switch_dprint) {
       gchar *switchtext,*tmp;
       if (mainw->current_file>0) {
-	switchtext=g_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),(tmp=g_path_get_basename(cfile->name)));
+	switchtext=g_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(cfile->name)):(tmp=g_strdup(cfile->name)));
 	g_free(tmp);
       }
       else {

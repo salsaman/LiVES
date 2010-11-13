@@ -2121,6 +2121,10 @@ void do_no_in_vdevs_error(void) {
   do_error_dialog(_("\nNo video input devices could be found.\n"));
 }
 
+void do_locked_in_vdevs_error(void) {
+  do_error_dialog(_("\nAll video input devices are already in use.\n"));
+}
+
 void do_do_not_close_d (void) {
   gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
   GtkWidget *err_box=create_dialog3(msg,FALSE,0);

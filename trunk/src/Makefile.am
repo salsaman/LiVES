@@ -31,6 +31,7 @@ INCLUDES = \
 	-I $(top_srcdir) \
 	$(osc_INCLUDES) \
 	@MJPEGTOOLS_CFLAGS@ \
+	@UNICAP_CFLAGS@ \
 	@GTK_CFLAGS@ \
 	@X11_CFLAGS@ \
 	$(darwin_INCLUDES)
@@ -41,6 +42,11 @@ bin_PROGRAMS = lives-exe
 if HAVE_MJPEGTOOLS
 yuv4mpeg_SOURCES=lives-yuv4mpeg.c lives-yuv4mpeg.h
 yuv4mpeg_CFLAGS = -DHAVE_MJPEGTOOLS=1
+endif
+
+if HAVE_UNICAP
+unicap_SOURCES=videodev.c videodev.h
+unicap_CFLAGS = -DHAVE_UNICAP=1
 endif
 
 if ENABLE_OSC
@@ -113,12 +119,6 @@ giw_CFLAGS=-DENABLE_GIW=1
 endif
 
 
-#if ENABLE_UNICAP
-unicap_CFLAGS=-I$(includedir)/unicap
-unicap_LDADD=-lunicap
-#endif
-
-
 lives_exe_SOURCES = \
 	main.c\
 	support.c support.h \
@@ -153,7 +153,7 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	startup.c startup.h \
 	pangotext.c pangotext.h \
-	videodev.c videodev.h \
+	$(unicap_SOURCES) \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES) \
@@ -161,7 +161,7 @@ lives_exe_SOURCES = \
 
 lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_slice_LDADD) $(giw_LDADD) \
-	../libweed/libweed-utils.la $(unicap_LDADD)
+	../libweed/libweed-utils.la @UNICAP_LIBS@
 
 lives_exe_LDFLAGS = -O3
 

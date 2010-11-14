@@ -2286,10 +2286,6 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->open_yuv4m, TRUE);
 #endif
 
-#ifdef HAVE_UNICAP
-  gtk_widget_set_sensitive (mainw->add_live_menu, TRUE);
-#endif
-
   gtk_widget_set_sensitive (mainw->select_new, mainw->current_file>0&&(cfile->insert_start>0));
   gtk_widget_set_sensitive (mainw->select_last, mainw->current_file>0&&(cfile->undo_start>0));
   gtk_widget_set_sensitive (mainw->lock_selwidth, mainw->current_file>0&&cfile->frames>0);
@@ -2358,9 +2354,9 @@ void desensitize(void) {
 #ifdef HAVE_YUV4MPEG
   gtk_widget_set_sensitive (mainw->open_yuv4m, FALSE);
 #endif
-#ifdef HAVE_UNICAP
+
   gtk_widget_set_sensitive (mainw->add_live_menu, FALSE);
-#endif
+
   gtk_widget_set_sensitive (mainw->recent_menu, FALSE);
   gtk_widget_set_sensitive (mainw->restore, FALSE);
   gtk_widget_set_sensitive (mainw->clear_ds, FALSE);
@@ -2413,7 +2409,6 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->import_proj, FALSE);
   gtk_widget_set_sensitive (mainw->recaudio_sel,FALSE);
   gtk_widget_set_sensitive (mainw->mt_menu,FALSE);
-  gtk_widget_set_sensitive (mainw->add_live_menu,FALSE);
 
   if (mainw->current_file>=0&&(mainw->playing_file==-1||mainw->foreign)) {
     if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {

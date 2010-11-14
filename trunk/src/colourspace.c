@@ -999,7 +999,7 @@ int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace
   case 0x00000000: // BI_RGB
   case 0x32776172: // raw2
   case 0x32524742: // BGR3
-  case 0x33524742: // BGR3
+  case 0x33524742: // BGR3 - tested and OK
   case 0x34524742: // BGR4
     if (bpp==24) return WEED_PALETTE_BGR24;
     if (bpp==32) return WEED_PALETTE_BGRA32;
@@ -1034,11 +1034,12 @@ int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace
   case 0x76757963: // cyuv - ???
     return WEED_PALETTE_UYVY;
   case 0x32595559: // YUY2
-  case 0x56595559: // YUYV
+  case 0x56595559: // YUYV - tested and OK
   case 0x564E5559: // YUNV
   case 0x31313259: // Y211 - ???
     return WEED_PALETTE_YUYV;
   case 0x59455247: // grey
+    if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
   case 0x30303859: // Y800
   case 0x20203859: // Y8
     return WEED_PALETTE_A8;
@@ -1062,13 +1063,13 @@ int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace
     return WEED_PALETTE_YUV420P;
 
   case 0x3032344a: // J420
-    if (!clamping) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV420P;
   case 0x3232344a: // J422
-    if (!clamping) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV422P;
   case 0x3434344a: // J444
-    if (!clamping) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV444P;
 
 

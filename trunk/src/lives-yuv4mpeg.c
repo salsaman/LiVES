@@ -232,7 +232,7 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
 
 }
 
-#define YUV4_F_TIME 100000 // micro-seconds to wait to get stream header
+#define YUV4_F_TIME 2000000 // micro-seconds to wait to get stream header
 
 
 void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {

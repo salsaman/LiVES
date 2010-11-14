@@ -156,12 +156,10 @@ create_LiVES (void)
   GtkWidget *t_label;
   GtkWidget *label;
 
-#ifndef HAVE_UNICAP
-#ifdef HAVE_YUV4MPEG
+#if defined (HAVE_YUV4MPEG) || defined (HAVE_UNICAP)
   GtkWidget *submenu;
   GtkWidget *menuitem;
 #endif 
-#endif
 
   GtkObject *spinbutton_pb_fps_adj;
   GtkObject *spinbutton_adj;
@@ -347,29 +345,33 @@ create_LiVES (void)
     gtk_widget_show (mainw->open_loc);
   }
 
-
   mainw->add_live_menu = gtk_menu_item_new_with_mnemonic (_("_Add Live Input..."));
 
-#ifdef HAVE_UNICAP
+#if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->add_live_menu);
   gtk_widget_show (mainw->add_live_menu);
 
-  g_signal_connect (GTK_OBJECT (mainw->add_live_menu), "activate",
-		    G_CALLBACK (on_open_vdev_activate),
-		    NULL);
-#else
-#ifdef HAVE_YUV4MPEG
+#ifndef HAVE_UNICAP
   if (capable->has_mplayer) {
-    gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->add_live_menu);
+#endif
+
     submenu=gtk_menu_new();
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->add_live_menu), submenu);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_bg(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
     }
-
-    gtk_widget_show (mainw->add_live_menu);
     gtk_widget_show (submenu);
-    
+
+#ifdef HAVE_UNICAP
+  menuitem = gtk_menu_item_new_with_mnemonic (_("Add Live _Unicap Device"));
+  gtk_container_add (GTK_CONTAINER (submenu), menuitem);
+  gtk_widget_show (menuitem);
+  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		    G_CALLBACK (on_open_vdev_activate),
+		    NULL);
+#endif
+
+#ifdef HAVE_YUV4MPEG
     if (capable->has_dvgrab) {
       menuitem = gtk_menu_item_new_with_mnemonic (_("Add Live _Firewire Device"));
       gtk_container_add (GTK_CONTAINER (submenu), menuitem);
@@ -378,9 +380,8 @@ create_LiVES (void)
       g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			G_CALLBACK (on_live_fw_activate),
 			NULL);
-
-
     }
+
     menuitem = gtk_menu_item_new_with_mnemonic (_("Add Live _TV Device"));
     gtk_container_add (GTK_CONTAINER (submenu), menuitem);
     gtk_widget_show (menuitem);
@@ -388,9 +389,13 @@ create_LiVES (void)
     g_signal_connect (GTK_OBJECT (menuitem), "activate",
 		      G_CALLBACK (on_live_tvcard_activate),
 		      NULL);
-  }
+
+#ifndef HAVE_UNICAP
+  } // if (capable->has_mplayer)
 #endif
+
 #endif
+#endif // defined HAVE_UNICAP || defined HAVE_YUV4MPEG
 
   mainw->recent_menu = gtk_menu_item_new_with_mnemonic (_("_Recent Files..."));
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->recent_menu);

@@ -996,14 +996,16 @@ int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace
 
     // RGB formats
 
-  case 0x00000000: // BI_RGB
-  case 0x32776172: // raw2
   case 0x32524742: // BGR3
   case 0x33524742: // BGR3 - tested and OK
   case 0x34524742: // BGR4
     if (bpp==24) return WEED_PALETTE_BGR24;
     if (bpp==32) return WEED_PALETTE_BGRA32;
     break;
+
+  case 0x00000000: // BI_RGB - RGB or BGR ???
+  case 0x32776172: // raw2 - RGB or BGR ???
+
   case 0x32424752: // RGB2
   case 0x33424752: // RGB3
   case 0x34424752: // RGB4

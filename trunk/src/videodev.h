@@ -18,6 +18,7 @@ typedef struct {
   int YUV_sampling;
   int YUV_subspace;
   int YUV_clamping;
+  gboolean is_really_grey; ///< for greyscale we lie and say it is YUV444P (i.e we add U and V planes)
 } lives_vdev_t;
 
 

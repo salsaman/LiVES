@@ -113,7 +113,8 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
   void *odata=ldev->buffer1.data;
   int error;
 
-  weed_set_int_value(layer,"width",sfile->hsize);
+  weed_set_int_value(layer,"width",sfile->hsize/
+		     weed_palette_get_pixels_per_macropixel(ldev->current_palette));
   weed_set_int_value(layer,"height",sfile->vsize);
   weed_set_int_value(layer,"current_palette",ldev->current_palette);
   weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR); // TODO - handle bt.709
@@ -159,7 +160,14 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
   }
   else {
     int rowstride=weed_get_int_value(layer,"rowstrides",&error);
-    w_memcpy(pixel_data[0], returned_buffer->data, rowstride*sfile->vsize);
+    size_t bsize=rowstride*sfile->vsize;
+    if (bsize>returned_buffer->buffer_size) {
+#ifdef DEBUG_UNICAP
+      //g_printerr("Warning - returned buffer size too small !\n");
+#endif
+      bsize=returned_buffer->buffer_size;
+    }
+    w_memcpy(pixel_data[0], returned_buffer->data, bsize);
   }
 
   weed_free(pixel_data);
@@ -221,7 +229,9 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
       if (width>=format->min_size.width && height>=format->min_size.height) {
 	if (format->h_stepping>0&&format->v_stepping>0) {
-
+#ifdef DEBUG_UNICAP
+	  g_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",format->h_stepping,format->v_stepping,format->min_size.width,format->min_size.height,format->max_size.width,format->max_size.height);
+#endif
 	  // can set exact size (within stepping limits)
 	  format->size.width=(int)(((double)width+(double)format->h_stepping/2.)
 				   /(double)format->h_stepping) * format->h_stepping;
@@ -241,13 +251,22 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 	else {
 	  // array of sizes supported
 	  // step through sizes
+#ifdef DEBUG_UNICAP
+	  g_printerr("Checking array sizes\n");
+#endif
 	  for (i=0;i<format->size_count;i++) {
+#ifdef DEBUG_UNICAP
+	    g_printerr("entry %d:%d x %d\n",i,format->sizes[i].width,format->sizes[i].height);
+#endif
 	    if (format->sizes[i].width>bestw&&format->sizes[i].height>besth&&
 		(i==format->size_count-1||bestw<width||besth<height)) {
 	      // this format supports a better size match
 	      bestw=format->size.width=format->sizes[i].width;
 	      besth=format->size.height=format->sizes[i].height;
 	      f=format_count;
+#ifdef DEBUG_UNICAP
+	  g_printerr("Size is best so far\n");
+#endif
 	    }
 	  }
 	}
@@ -328,6 +347,27 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
     unicap_close(ldev->handle);
     g_free(ldev);
     return FALSE;
+  }
+
+
+  if (format->buffer_size!=format->size.width*format->size.height*weed_palette_get_bits_per_macropixel(ldev->current_palette)/weed_palette_get_pixels_per_macropixel(ldev->current_palette)/8) {
+    int wwidth=format->size.width,awidth;
+    int wheight=format->size.height,aheight;
+    // something went wrong setting the size - the buffer is wrongly sized
+#ifdef DEBUG_UNICAP
+    g_printerr("Unicap buffer size is wrong, resetting it.\n");
+#endif
+    // get the size again
+
+    unicap_get_format(ldev->handle,format);
+    awidth=format->size.width;
+    aheight=format->size.height;
+
+#ifdef DEBUG_UNICAP
+    g_printerr("Wanted frame size %d x %d, got %d x %d\n",wwidth,wheight,awidth,aheight);
+#endif
+
+    format->buffer_size=format->size.width*format->size.height*weed_palette_get_bits_per_macropixel(ldev->current_palette)/weed_palette_get_pixels_per_macropixel(ldev->current_palette)/8;
   }
 
   cfile->hsize=format->size.width;
@@ -463,7 +503,7 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   g_snprintf(cfile->type,40,"%s",fname);
 
-  d_print ((tmp=g_strdup_printf (_("Opened device %s"),devices[devno].identifier)));
+  d_print ((tmp=g_strdup_printf (_("Opened device %s\n"),devices[devno].identifier)));
 
   switch_to_file((mainw->current_file=old_file),new_file);
 

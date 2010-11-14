@@ -536,7 +536,7 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   unlink(eload_file);
   g_free(eload_file);
 
-  do_after_crash_warning();
+  if (button!=NULL) do_after_crash_warning();
 
 }
 
@@ -18722,23 +18722,18 @@ void remove_markers(weed_plant_t *event_list) {
 
 
 void wipe_layout(lives_mt *mt) {
-  g_print("clr3x done\n");
 
  if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
   }
-  g_print("clr4x done\n");
 
   d_print(_("Layout was wiped.\n"));
-  g_print("clr5x done\n");
 
   close_scrap_file();
-  g_print("clr3z done\n");
 
   recover_layout_cancelled(NULL,NULL);
 
-  g_print("clr2 done\n");
   if (strlen(mt->layout_name)>0&&!strcmp(mt->layout_name,prefs->ar_layout_name)) {
     set_pref("ar_layout","");
     memset(prefs->ar_layout_name,0,1);
@@ -18747,16 +18742,12 @@ void wipe_layout(lives_mt *mt) {
   
   event_list_free(mt->event_list);
   mt->event_list=NULL;
-  g_print("clr3 done\n");
 
   event_list_free_undos(mt);
-  g_print("clr4 done\n");
 
   mt_clear_timeline(mt);
-  g_print("clr5 done\n");
 
   mt->idlefunc=mt_idle_add(mt);
-  g_print("clr done\n");
 }
 
 

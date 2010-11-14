@@ -125,7 +125,7 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
 
   if (ldev->buffer_type==UNICAP_BUFFER_TYPE_USER) {
 
-    if (weed_palette_get_numplanes(ldev->current_palette)==1) {
+    if (weed_palette_get_numplanes(ldev->current_palette)==1||ldev->is_really_grey) {
       ldev->buffer1.data=weed_get_voidptr_value(layer,"pixel_data",&error);
     }
 
@@ -155,19 +155,28 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
 
   pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
-  if (weed_palette_get_numplanes(ldev->current_palette)>1) {
+  if (weed_palette_get_numplanes(ldev->current_palette)>1&&!ldev->is_really_grey) {
     pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize*sfile->vsize, ldev->current_palette);
   }
   else {
-    int rowstride=weed_get_int_value(layer,"rowstrides",&error);
-    size_t bsize=rowstride*sfile->vsize;
-    if (bsize>returned_buffer->buffer_size) {
+    if (ldev->buffer_type==UNICAP_BUFFER_TYPE_SYSTEM) {
+      int rowstride=weed_get_int_value(layer,"rowstrides",&error);
+      size_t bsize=rowstride*sfile->vsize;
+      if (bsize>returned_buffer->buffer_size) {
 #ifdef DEBUG_UNICAP
-      //g_printerr("Warning - returned buffer size too small !\n");
+	g_printerr("Warning - returned buffer size too small !\n");
 #endif
-      bsize=returned_buffer->buffer_size;
+	bsize=returned_buffer->buffer_size;
+      }
+      w_memcpy(pixel_data[0], returned_buffer->data, bsize);
     }
-    w_memcpy(pixel_data[0], returned_buffer->data, bsize);
+  }
+
+  if (ldev->is_really_grey) {
+    // y contains our greyscale data
+    // set u and v planes to 128
+    memset(pixel_data[1],128,sfile->hsize*sfile->vsize);
+    memset(pixel_data[2],128,sfile->hsize*sfile->vsize);
   }
 
   weed_free(pixel_data);
@@ -387,6 +396,13 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
   cfile->bpp = format->bpp;
 
   unicap_start_capture (ldev->handle); 
+
+  // if it is greyscale, we will add fake U and V planes
+  if (ldev->current_palette==WEED_PALETTE_A8) {
+    ldev->current_palette=WEED_PALETTE_YUV444P;
+    ldev->is_really_grey=TRUE;
+  }
+  else ldev->is_really_grey=FALSE;
 
   return TRUE;
 }

@@ -48,11 +48,11 @@ gboolean lives_jack_init (void) {
 #endif
 	*/
 
-	// some brainless jack developer decided it would be a good idea to remove the -Z option from jackd
-	// and break backwards compatibility for exisitng apps.
+	// oops - jack removed the -Z option from jackd
+	// and broke backwards compatibility for existing apps...
 
 #ifndef IS_DARWIN
-	com=g_strdup_printf("echo \"%s -r -d alsa\">%s",jackd_loc,prefs->jack_aserver);
+	com=g_strdup_printf("echo \"%s -d alsa\">%s",jackd_loc,prefs->jack_aserver);
 #else
 #ifdef IS_SOLARIS
 	// use OSS on Solaris

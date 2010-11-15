@@ -5,11 +5,11 @@ LIBS=
 videopluginslibdir = $(libdir)/$(PACKAGE)/plugins/playback/video
 
 if IS_DARWIN
-shared_ldflags = -O3 -dynamiclib -module -avoid-version --tag=disable-static
+shared_ldflags =  -dynamiclib -module -avoid-version --tag=disable-static
 shared_cflags = -fno-common
 else
-shared_ldflags = -O3 -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
-shared_cflags = -O3 -fPIC -DPIC
+shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
+shared_cflags =  -fPIC -DPIC
 endif
 
 if HAVE_SDL

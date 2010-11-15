@@ -5,10 +5,17 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#include "../../../libweed/weed-plugin.h"
+#ifdef HAVE_SYSTEM_WEED
+#include "weed/weed.h"
+#include "weed/weed-palettes.h"
+#include "weed/weed-effects.h"
+#include "weed/weed-plugin.h"
+#else
+#include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
+#include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-plugin.h"
+#endif
 
 ///////////////////////////////////////////////////////////////////
 
@@ -19,8 +26,13 @@ static int package_version=1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "../../../libweed/weed-utils.h" // optional
-#include "../../../libweed/weed-plugin-utils.h" // optional
+#ifdef HAVE_SYSTEM_WEED
+#include "weed/weed-utils.h" // optional
+#include "weed/weed-plugin-utils.h" // optional
+#else
+#include "../../libweed/weed-utils.h" // optional
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
 
 /////////////////////////////////////////////////////////////
 // gdk stuff for resizing

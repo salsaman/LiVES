@@ -52,6 +52,13 @@ gboolean do_tempdir_query(void) {
     }
     dirname=g_strdup(gtk_entry_get_text(GTK_ENTRY(tdentry->entry)));
 
+    if (strcmp(dirname+strlen(dirname)-1,G_DIR_SEPARATOR)) {
+      tmp=g_strdup_printf("%s%s",dirname,G_DIR_SEPARATOR);
+      g_free(dirname);
+      dirname=tmp;
+    }
+
+    // TODO - use PATH_MAX from <limits.h> generally
     if (strlen(dirname)>255) {
       do_blocking_error_dialog(_("Directory name is too long !"));
       g_free(dirname);
@@ -435,7 +442,8 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
 
   if (!noskip) {
     GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_REMOVE,GTK_ICON_SIZE_LARGE_TOOLBAR);
-    label=gtk_label_new(_("Skipped")); // translators - as in "skipped test"
+    // TRANSLATORS - as in "skipped test"
+    label=gtk_label_new(_("Skipped"));
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
@@ -451,7 +459,8 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
 
 
 static gboolean pass_test(GtkWidget *table, gint row) {
-  GtkWidget *label=gtk_label_new(_("Passed"));  // translators - as in "passed test"
+  // TRANSLATORS - as in "passed test"
+  GtkWidget *label=gtk_label_new(_("Passed"));
   GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_APPLY,GTK_ICON_SIZE_LARGE_TOOLBAR);
 
   if (palette->style&STYLE_1) {
@@ -482,7 +491,8 @@ static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   
-  label=gtk_label_new(_("Failed"));  // translators - as in "failed test"
+  // TRANSLATORS - as in "failed test"
+  label=gtk_label_new(_("Failed"));
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);

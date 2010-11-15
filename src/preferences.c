@@ -4436,6 +4436,13 @@ _prefsw *create_prefs_dialog (void) {
    }
    gtk_widget_show (label);
    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, 10);
+
+   prefsw->jack_tserver_entry = gtk_entry_new ();
+   prefsw->checkbutton_start_tjack = gtk_check_button_new();
+   prefsw->checkbutton_jack_master = gtk_check_button_new();
+   prefsw->checkbutton_jack_client = gtk_check_button_new();
+   prefsw->checkbutton_jack_tb_start = gtk_check_button_new();
+   prefsw->checkbutton_jack_tb_client = gtk_check_button_new();
    
 #ifndef ENABLE_JACK_TRANSPORT
    label = gtk_label_new (_("LiVES must be compiled with jack/transport.h and jack/jack.h present to use jack transport"));
@@ -4456,7 +4463,6 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show (label);
    gtk_box_pack_start (GTK_BOX (hbox1), label, FALSE, FALSE, 10);
 
-   prefsw->jack_tserver_entry = gtk_entry_new ();
    gtk_entry_set_max_length(GTK_ENTRY(prefsw->jack_tserver_entry),255);
 
    gtk_entry_set_text(GTK_ENTRY(prefsw->jack_tserver_entry),prefs->jack_tserver);
@@ -4467,7 +4473,6 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_start (GTK_BOX (hbox1), prefsw->jack_tserver_entry, FALSE, FALSE, 0);
    gtk_tooltips_set_tip (mainw->tooltips, prefsw->jack_tserver_entry, _("The name of the jack server which can control LiVES transport"), NULL);
 
-   prefsw->checkbutton_start_tjack = gtk_check_button_new();
    eventbox = gtk_event_box_new();
    label = gtk_label_new_with_mnemonic(_("Start _server on LiVES startup"));
    gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_start_tjack);
@@ -4490,7 +4495,6 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show (hbox2);
    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox2, TRUE, TRUE, 0);
    // ---
-   prefsw->checkbutton_jack_master = gtk_check_button_new();
    eventbox = gtk_event_box_new();
    label = gtk_label_new_with_mnemonic(_("Jack transport _master (start and stop)"));
    gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_master);
@@ -4509,7 +4513,6 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_master),(future_prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER)?TRUE:FALSE);
    // ---
-   prefsw->checkbutton_jack_client = gtk_check_button_new();
    eventbox = gtk_event_box_new();
    label = gtk_label_new_with_mnemonic(_("Jack transport _client (start and stop)"));
    gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_client);
@@ -4532,7 +4535,6 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox3, TRUE, TRUE, 0);
    add_fill_to_box(GTK_BOX(hbox3));
    // ---
-   prefsw->checkbutton_jack_tb_start = gtk_check_button_new();
    eventbox = gtk_event_box_new();
    label = gtk_label_new_with_mnemonic(_("Jack transport sets start position"));
    gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_tb_start);
@@ -4558,7 +4560,6 @@ _prefsw *create_prefs_dialog (void) {
 			   G_CALLBACK (after_jack_client_toggled),
 			   NULL);
    // ---
-   prefsw->checkbutton_jack_tb_client = gtk_check_button_new();
    eventbox = gtk_event_box_new();
    label = gtk_label_new_with_mnemonic(_("Jack transport timebase slave"));
    gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_tb_client);
@@ -5093,28 +5094,41 @@ _prefsw *create_prefs_dialog (void) {
    g_signal_connect(GTK_OBJECT(prefsw->spinbutton_def_fps), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->theme_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->spinbutton_bwidth), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+#ifdef ENABLE_OSC
    g_signal_connect(GTK_OBJECT(prefsw->spinbutton_osc_udp), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->enable_OSC_start), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->enable_OSC), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+#endif
+
+#ifndef ENABLE_JACK_TRANSPORT
    g_signal_connect(GTK_EDITABLE(prefsw->jack_tserver_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_tjack), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_master), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_client), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_tb_start), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_tb_client), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+#endif
+
+#ifdef ENABLE_JACK
    g_signal_connect(GTK_EDITABLE(prefsw->jack_aserver_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_ajack), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_pwp), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+#endif
+
+#ifdef ENABLE_OSC
+#ifdef OMC_JS_IMPL
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_omc_js), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_EDITABLE(prefsw->omc_js_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+#endif
+#ifdef OMC_MIDI_IMPL
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_omc_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->alsa_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(raw_midi_button), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_EDITABLE(prefsw->omc_midi_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midicr), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midirpt), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-
-
+#endif
+#endif
    
    if (capable->has_encoder_plugins) {
      prefsw->encoder_name_fn = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->encoder_combo)), "changed", G_CALLBACK(on_encoder_entry_changed), NULL);

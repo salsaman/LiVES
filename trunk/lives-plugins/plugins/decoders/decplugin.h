@@ -16,8 +16,11 @@ extern "C"
 #include <sys/types.h>
 
 // palettes, etc.
-#include "../../../libweed/weed-palettes.h"
-
+#ifdef HAVE_SYSTEM_WEED
+#include "weed/weed-palettes.h"
+#else
+#include "../../../../libweed/weed-palettes.h"
+#endif
 
 #ifdef IS_DARWIN
 #ifndef lseek64

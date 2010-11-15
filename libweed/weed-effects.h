@@ -51,10 +51,6 @@
 #include <weed/weed.h>
 #endif
 
-#ifndef __WEED_PALETTES_H__
-#include <weed/weed-palettes.h>
-#endif
-
 #ifdef __cplusplus
 extern "C"
 {

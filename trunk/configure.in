@@ -497,6 +497,49 @@ fi
 fi
 AM_CONDITIONAL(ENABLE_LDVGRAB,$HAVE_LDVGRAB)
 
+
+PKG_CHECK_MODULES(WEED, libweed >= 0.4.0, HAVE_SYSTEM_WEED=true, HAVE_SYSTEM_WEED=false)
+
+AC_SUBST(WEED_CFLAGS)
+AC_SUBST(WEED_LIBS)
+
+AM_CONDITIONAL(HAVE_SYSTEM_WEED,$HAVE_SYSTEM_WEED)
+
+
+PKG_CHECK_MODULES(WEED_SLICE, libweed_slice >= 0.4.0, HAVE_SYSTEM_WEED_SLICE=true, HAVE_SYSTEM_WEED_SLICE=false)
+
+if test "$HAVE_SYSTEM_WEED_SLICE" == "true"; then
+HAVE_SYSTEM_WEED=true
+fi
+
+dnl CFLAGS will be the same
+AC_SUBST(WEED_SLICE_LIBS)
+
+AM_CONDITIONAL(HAVE_SYSTEM_WEED_SLICE,$HAVE_SYSTEM_WEED_SLICE)
+
+if test "$HAVE_SYSTEM_WEED" == "false"; then
+WEED_MAKEFILES=libweed/Makefile
+fi
+
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 0.4.0, HAVE_SYSTEM_WEED_UTILS=true, HAVE_SYSTEM_WEED_UTILS=false)
+
+AC_SUBST(WEED_UTILS_CFLAGS)
+AC_SUBST(WEED_UTILS_LIBS)
+
+AM_CONDITIONAL(HAVE_SYSTEM_WEED_UTILS,$HAVE_SYSTEM_WEED_UTILS)
+
+
+PKG_CHECK_MODULES(WEED_PLUGIN_UTILS, libweed-plugin-utils >= 0.4.0, HAVE_SYSTEM_WEED_PLUGIN_UTILS=true, HAVE_SYSTEM_WEED_PLUGIN_UTILS=false)
+
+AC_SUBST(WEED_PLUGIN_UTILS_CFLAGS)
+AC_SUBST(WEED_PLUGIN_UTILS_LIBS)
+
+AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN_UTILS,$HAVE_SYSTEM_WEED_PLUGIN_UTILS)
+
+
+
+
+
 # find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in
 AC_OUTPUT([ 
 libOSC/Makefile
@@ -525,7 +568,7 @@ lives-plugins/themes/editor/Makefile
 lives-plugins/themes/crayons/Makefile
 lives-plugins/themes/crayons-bright/Makefile
 lives-plugins/themes/Makefile
-lives-plugins/weed-plugins/Makefile
+$WEED_MAKEFILES
 lives-plugins/weed-plugins/gdk/Makefile
 lives-plugins/marcos-encoders/Makefile
 ])

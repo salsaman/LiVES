@@ -11,7 +11,11 @@ endif
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config.h.in \
                        stamp-h.in config.log config.cache config.status
 
-SUBDIRS = $(OSC_SUBDIRS) intl libweed src m4 lives-plugins po resources
+if !HAVE_SYSTEM_WEED
+WEED_SUBDIRS=libweed
+endif
+
+SUBDIRS = $(OSC_SUBDIRS) intl $(WEED_SUBDIRS) src m4 lives-plugins po resources
 PACKAGE_CAPITALISED = LiVES
 
 docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
@@ -70,6 +74,11 @@ if HAVE_DOXYGEN
 	mkdir -p $(DESTDIR)$(docdir)/html/libweed
 	cp -rf $(srcdir)/weed-docs/doxygen/html/* $(DESTDIR)$(docdir)/html/libweed
 endif
+	mkdir -p $(DESTDIR)$(sharedir)/applications/
+	cp -f $(srcdir)/menu-entries/LiVES.desktop $(DESTDIR)$(sharedir)/applications/
+	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/
+	cp -f $(srcdir)/menu-entries/lives.xpm $(DESTDIR)$(sharedir)/pixmaps/
+
 
 install-exec-local:
 	rm -rf $(DESTDIR)$(bindir)/lives
@@ -81,11 +90,6 @@ install-exec-local:
 	cp -f $(srcdir)/build-lives-rfx-plugin-multi $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi
 	cp -f $(srcdir)/default.keymap $(DESTDIR)$(datadir)/$(PACKAGE)/
 	$(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi builtin $(DESTDIR)$(datadir) $(DESTDIR)$(libdir) $(DESTDIR)$(bindir)
-	mkdir -p $(DESTDIR)$(sharedir)/applications/
-	cp -f $(srcdir)/menu-entries/LiVES.desktop $(DESTDIR)$(sharedir)/applications/
-	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/
-	cp -f $(srcdir)/menu-entries/lives.xpm $(DESTDIR)$(sharedir)/pixmaps/
-
 	$(top_srcdir)/po/update_with_plugins.sh install $(PACKAGE) $(prefix) $(DESTDIR)
 
 install-exec-hook:

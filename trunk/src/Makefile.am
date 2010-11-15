@@ -91,11 +91,20 @@ endif
 
 
 if DISABLE_GLSLICE
-libweed_slice_LDADD = ../libweed/libweed.la
+if HAVE_SYSTEM_WEED
+libweed_LDADD = @WEED_LIBS@
+libweed_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1
 else
-libweed_slice_LDADD = ../libweed/libweed_slice.la
+libweed_LDADD = ../libweed/libweed.la
 endif
-
+else
+if HAVE_SYSTEM_WEED
+libweed_LDADD = @WEED_SLICE_LIBS@
+libweed_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1
+else
+libweed_LDADD = ../libweed/libweed_slice.la
+endif
+endif
 
 if HAVE_PULSE_AUDIO
 pulse_LDADD=@PULSE_LIBS@
@@ -160,11 +169,12 @@ lives_exe_SOURCES = \
 	$(giw_SOURCES)
 
 lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_slice_LDADD) $(giw_LDADD) \
+	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_LDADD) $(giw_LDADD) \
 	../libweed/libweed-utils.la @UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) \
-	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
+	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) \
+	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 

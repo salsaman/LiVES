@@ -1592,11 +1592,11 @@ void do_no_decoder_error(const gchar *fname) {
 
 
 static void do_extra_jack_warning(void) {
-  do_blocking_error_dialog(_("\nDear user, the jack developers decided to remove the -Z option from jackd.\nPlease check your ~/.jackdrc file and remove this option if present.\nAlternately use pulseaudio instead by starting LiVES with: lives -aplayer pulse\n"));
+  do_blocking_error_dialog(_("\nDear user, the jack developers decided to remove the -Z option from jackd.\nPlease check your ~/.jackdrc file and remove this option if present.\nAlternately restart LiVES and select a different audio player in Preferences.\n"));
 }
 
 void do_jack_noopen_warn(void) {
-  do_blocking_error_dialog(_("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\nand also that the soundcard is not in use by another program\nor alternately, start up LiVES with:\nlives -jackopts 0\nand then adjust your jack options in Preferences | Jack Integration.\n"));
+  do_blocking_error_dialog(_("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\nand also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"));
   if (prefs->startup_phase!=2) do_extra_jack_warning();
 }
 

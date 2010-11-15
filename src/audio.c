@@ -11,10 +11,15 @@
 #include "effects-weed.h"
 #include "support.h"
 
+#ifdef HAVE_SYSTEM_WEED
+#include "weed/weed.h"
+#include "weed/weed-host.h"
+#include "weed/weed-palettes.h"
+#else
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
 #include "../libweed/weed-palettes.h"
-
+#endif
 
 
 // keep first 16 audio_in filesysten handles open

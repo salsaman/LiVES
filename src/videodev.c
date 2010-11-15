@@ -12,8 +12,14 @@
 
 #include "videodev.h"
 #include "interface.h"
+
+#ifdef HAVE_SYSTEM_WEED
+#include "weed/weed-palettes.h"
+#include "weed/weed-host.h"
+#else
 #include "../libweed/weed-palettes.h"
 #include "../libweed/weed-host.h"
+#endif
 
 #include <unicap/unicap.h>
 

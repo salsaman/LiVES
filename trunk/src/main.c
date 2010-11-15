@@ -1217,6 +1217,8 @@ static void lives_init(_ign_opts *ign_opts) {
 	    if (prefs->startup_phase==2) {
 	      do_jack_noopen_warn2();
 	    }
+	    future_prefs->jack_opts=0; // jack is causing hassle, get rid of it
+	    set_int_pref("jack_opts",0);
 	    lives_exit();
 	  }
 	}

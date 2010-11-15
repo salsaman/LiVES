@@ -14,6 +14,9 @@ shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-stati
 shared_cflags =  -fPIC -DPIC
 endif
 
+if HAVE_SYSTEM_WEED
+shared_cflags = $(shared_cflags) -DHAVE_SYSTEM_WEED=1
+endif
 
 if HAVE_LIBDV
 dv_libs = dv_decoder.la

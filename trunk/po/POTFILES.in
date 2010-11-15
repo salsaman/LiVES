@@ -29,4 +29,5 @@ src/colourspace.c
 src/cvirtual.c
 src/omc-learn.c
 src/pangotext.c
+src/videodev.c
 

@@ -52,8 +52,8 @@ gboolean do_tempdir_query(void) {
     }
     dirname=g_strdup(gtk_entry_get_text(GTK_ENTRY(tdentry->entry)));
 
-    if (strcmp(dirname+strlen(dirname)-1,G_DIR_SEPARATOR)) {
-      tmp=g_strdup_printf("%s%s",dirname,G_DIR_SEPARATOR);
+    if (strcmp(dirname+strlen(dirname)-1,G_DIR_SEPARATOR_S)) {
+      gchar *tmp=g_strdup_printf("%s%s",dirname,G_DIR_SEPARATOR_S);
       g_free(dirname);
       dirname=tmp;
     }

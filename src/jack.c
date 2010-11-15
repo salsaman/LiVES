@@ -34,6 +34,7 @@ gboolean lives_jack_init (void) {
       gchar jackd_loc[512];
       get_location("jackd",jackd_loc,512);
       if (strlen(jackd_loc)) {
+	/*
 #ifndef IS_DARWIN
 	com=g_strdup_printf("echo \"%s -Z -r -d alsa\">%s",jackd_loc,prefs->jack_aserver);
 #else
@@ -43,6 +44,22 @@ gboolean lives_jack_init (void) {
 #else
 	// use coreaudio on Darwin
 	com=g_strdup_printf("echo \"%s -Z -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
+#endif
+#endif
+	*/
+
+	// some brainless jack developer decided it would be a good idea to remove the -Z option from jackd
+	// and break backwards compatibility for exisitng apps.
+
+#ifndef IS_DARWIN
+	com=g_strdup_printf("echo \"%s -r -d alsa\">%s",jackd_loc,prefs->jack_aserver);
+#else
+#ifdef IS_SOLARIS
+	// use OSS on Solaris
+	com=g_strdup_printf("echo \"%s -d oss\">%s",jackd_loc,prefs->jack_aserver);
+#else
+	// use coreaudio on Darwin
+	com=g_strdup_printf("echo \"%s -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
 #endif
 #endif
 	dummyvar=system(com);

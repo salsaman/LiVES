@@ -49,9 +49,10 @@ unicap_SOURCES=videodev.c videodev.h
 unicap_CFLAGS = -DHAVE_UNICAP=1
 endif
 
+
 if ENABLE_OSC
 osc_SOURCES=osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
-osc_LDADD=-L$(top_builddir)/libOSC/ -lOSC -L$(top_builddir)/libOSC/client/ -lOSC_client
+osc_LDADD=-L$(top_builddir)/libOSC/ -lOSC -L$(top_builddir)/libOSC/client/ -lOSC_client -lm
 osc_CFLAGS = -DENABLE_OSC=1
 endif
 
@@ -70,7 +71,6 @@ jack_LDADD=-ljack
 if ENABLE_JACK_TRANSPORT
 jack_CFLAGS += -DENABLE_JACK_TRANSPORT
 endif
-
 endif
 
 

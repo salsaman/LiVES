@@ -708,6 +708,7 @@ static inline void yuv2rgb (guchar y, guchar u, guchar v, guchar *r, guchar *g, 
 static inline void uyvy2rgb (uyvy_macropixel *uyvy, guchar *r0, guchar *g0, guchar *b0, guchar *r1, guchar *g1, guchar *b1) {
   yuv2rgb(uyvy->y0,uyvy->u0,uyvy->v0,r0,g0,b0);
   yuv2rgb(uyvy->y1,uyvy->u0,uyvy->v0,r1,g1,b1);
+  if (uyvy->y0>240||uyvy->u0>240||uyvy->v0>240||uyvy->y1>240) g_printerr("got unclamped !\n");
 }
 
 

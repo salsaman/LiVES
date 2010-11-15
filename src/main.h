@@ -585,10 +585,6 @@ typedef struct {
 capability *capable;
 
 #ifdef HAVE_JACK_JACK_H
-
-#ifdef HAVE_JACK_TRANSPORT_H
-#endif
-
 #include "jack.h"
 #endif
 

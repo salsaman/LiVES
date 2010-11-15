@@ -261,20 +261,37 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 	  // array of sizes supported
 	  // step through sizes
 #ifdef DEBUG_UNICAP
-	  g_printerr("Checking array sizes\n");
+	  g_printerr("Checking %d array sizes\n",format->size_count);
 #endif
+
+	  if (format->size_count==0) {
+	    // only one size we can use, this is it...
+
+	    if ((format->size.width>bestw||format->size.height>besth)&&(bestw<width||besth<height)) {
+	      // this format supports a better size match
+	      bestw=format->size.width=format->size.width;
+	      besth=format->size.height=format->size.height;
+	      f=format_count;
+#ifdef DEBUG_UNICAP
+	      g_printerr("Size is best so far\n");
+#endif
+	    }
+	    continue;
+	  }
+	  
+	  // array of sizes
 	  for (i=0;i<format->size_count;i++) {
 #ifdef DEBUG_UNICAP
 	    g_printerr("entry %d:%d x %d\n",i,format->sizes[i].width,format->sizes[i].height);
 #endif
 	    if (format->sizes[i].width>bestw&&format->sizes[i].height>besth&&
-		(i==format->size_count-1||bestw<width||besth<height)) {
+		(bestw<width||besth<height)) {
 	      // this format supports a better size match
 	      bestw=format->size.width=format->sizes[i].width;
 	      besth=format->size.height=format->sizes[i].height;
 	      f=format_count;
 #ifdef DEBUG_UNICAP
-	  g_printerr("Size is best so far\n");
+	      g_printerr("Size is best so far\n");
 #endif
 	    }
 	  }
@@ -440,18 +457,20 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   mainw->open_deint=FALSE;
 
- // get device list
-  for (dev_count = 0; SUCCESS (status) && (dev_count < MAX_DEVICES);
-       dev_count++)
-    {
-      status = unicap_enumerate_devices (NULL, &devices[dev_count], dev_count);
-      if (!SUCCESS (status))
-        break;
-    }
+  status = unicap_reenumerate_devices (&dev_count);
 
   if (dev_count == 0) {
     do_no_in_vdevs_error();
     return;
+  }
+
+ // get device list
+  for (i = 0; SUCCESS (status) && (dev_count < MAX_DEVICES); i++) {
+    status = unicap_enumerate_devices (NULL, &devices[i], i);
+    if (!SUCCESS (status)) {
+      g_printerr("Failed to get list of devices\n");
+      break;
+    }
   }
 
   for (i=0;i<dev_count;i++) {

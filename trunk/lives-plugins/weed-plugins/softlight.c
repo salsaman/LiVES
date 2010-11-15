@@ -7,10 +7,17 @@
 
 // thanks to Chris Yates for the idea
 
+#ifdef HAVE_SYSTEM_WEED
+#include "weed/weed.h"
+#include "weed/weed-palettes.h"
+#include "weed/weed-effects.h"
+#include "weed/weed-plugin.h"
+#else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
 #include "../../libweed/weed-plugin.h"
+#endif
 
 #include <inttypes.h>
 
@@ -23,8 +30,13 @@ static int package_version=1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#ifdef HAVE_SYSTEM_WEED
+#include "weed/weed-utils.h" // optional
+#include "weed/weed-plugin-utils.h" // optional
+#else
 #include "../../libweed/weed-utils.h" // optional
 #include "../../libweed/weed-plugin-utils.h" // optional
+#endif
 
 /////////////////////////////////////////////////////////////
 

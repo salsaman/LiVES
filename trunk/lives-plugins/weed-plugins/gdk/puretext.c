@@ -387,6 +387,14 @@ static void letter_data_free(sdata_t *sdata) {
   sdata->letter_data=NULL;
 }
 
+static void rotate_text(cairo_t *cairo, PangoLayout *layout, int x_center, int y_center, double radians) {
+ cairo_translate (cairo, x_center, y_center);
+ cairo_rotate (cairo, radians);
+
+ /* Inform Pango to re-layout the text with the new transformation */
+ pango_cairo_update_layout (cairo, layout);
+}
+
 
 static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *cairo, PangoLayout *layout, 
 		     PangoFontDescription *font, int width, int height) {

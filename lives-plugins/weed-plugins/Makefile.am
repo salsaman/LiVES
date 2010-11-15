@@ -22,6 +22,7 @@ weed_CFLAGS = -DHAVE_SYSTEM_WEED
 else
 AM_LDFLAGS = $(shared_ldflags) ../../libweed/libweed-utils.la ../../libweed/libweed-plugin-utils.la
 endif
+
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math
 AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math
 

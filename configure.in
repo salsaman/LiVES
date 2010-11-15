@@ -165,7 +165,7 @@ dnl check for jack
 
 dnl PKG_CHECK_MODULES(JACK, [jack >= 0.100.0], HAVE_JACK=true, HAVE_JACK=false)
 
-AC_CHECK_LIB(jack,jack_get_client_name)
+AC_CHECK_LIB(libjack,jack_get_client_name)
 if test "x$ac_cv_lib_jack_jack_get_client_name" = "xyes"; then
 AC_CHECK_HEADERS(jack/jack.h, HAVE_JACK=true, HAVE_JACK=false)
 

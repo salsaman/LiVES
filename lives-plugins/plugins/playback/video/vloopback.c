@@ -20,6 +20,7 @@ static int mypalette;
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <linux/videodev.h>
 #include <sys/ioctl.h>
@@ -33,13 +34,113 @@ static char *vdevname;
 
 //////////////////////////////////////////////
 
+
+static int file_filter( const struct dirent *a )
+{
+   int match = 0;
+   
+   // match: 'videoXY' where X = {0..9} and Y = {0..9}
+   if( !strncmp( a->d_name, "video", 5 ) )
+   {
+      if( strlen( a->d_name ) > 5 )
+      {
+	 if( ( a->d_name[5] >= '0' ) && ( a->d_name[5] <= '9' ) ) // match
+							      // the 'X'
+	 {
+	    match = 1;
+	 }
+	 
+	 if( strlen( a->d_name ) > 6 )
+	 {
+	    match = 0;
+	    
+	    if( ( a->d_name[6] >= '0' ) && ( a->d_name[6] <= '9' ) )
+	    {
+	       match = 1;
+	    }
+	 }
+	 
+	 if( strlen( a->d_name ) > 7 )
+	 {
+	    match = 0;
+	 }
+      }
+   }
+   
+   return match;
+}
+
+
+#define MAX_DEVICES 64
+
+static char **get_vloopback_devices(void) {
+   char devname[256];
+   struct dirent **namelist;
+   int n;
+   int fd;
+   int i=-1;
+   int ndevices=0;
+   struct video_capability v4lcap;
+   char **devnames=malloc(MAX_DEVICES * sizeof(char *));
+   
+   devnames[0]=NULL;
+
+   n = scandir( "/dev", &namelist, file_filter, alphasort );
+   if( n < 0 ) return devnames;
+   
+   while( ++i < n && ndevices < MAX_DEVICES-1 ) {
+     sprintf( devname, "/dev/%s", namelist[i]->d_name );
+
+     if( ( fd = open( devname, O_RDONLY | O_NONBLOCK ) ) == -1 ) {
+       // could not open device
+       continue;
+     }
+      
+     if( ioctl( fd, VIDIOCGCAP, &v4lcap ) < 0 ) {
+       // not a video device
+       close( fd );
+       continue;
+     }
+
+     // is it vloopback ?
+     if (strstr(v4lcap.name,"loopback")==NULL) continue;
+
+      if( (v4lcap.type & VID_TYPE_CAPTURE ) ) {
+	// is an output device
+	close( fd );
+	continue;
+      }
+
+      close( fd );
+      devnames[ndevices++]=strdup(devname);
+      //fprintf(stderr,"got %s\n",devname);
+   }
+   devnames[ndevices]=NULL;
+
+   i=0;
+   while( i < n ) free(namelist[i++]);
+   free (namelist);
+
+   return devnames;
+}
+
+
+
+///////////////////////////////////////////////////
+
+
 const char *module_check_init(void) {
-  int ret;
-  if ( ( ret = system( "/sbin/lsmod | grep vloopback >/dev/null 2>&1" ) ) == 256 ) {
-    fprintf (stderr, "vloopback output: vloopback module not found !\n");
-    return "Vloopback module was not found.\nTry: sudo modprobe vloopback\n";
+  char **vdevs = get_vloopback_devices();
+  int i=0;
+
+  if (vdevs[0]==NULL) {
+    free(vdevs);
+    return "No vloopback devices were found\nTry: sudo modprobe vloopback\n";
   }
   
+  while (vdevs[i]!=NULL) free(vdevs[i++]);
+  free( vdevs );
+
   return NULL;
 }
 
@@ -48,31 +149,54 @@ const char *version (void) {
 }
 
 const char *get_description (void) {
-  return "The vloopback playback plugin makes LiVES appear as a video device in /dev.\nThis is an experimental plugin\n";
+  return "The vloopback playback plugin makes LiVES appear as a video device in /dev.\n";
 }
 
 uint64_t get_capabilities (int palette) {
   return 0;
 }
 
+const char rfx[32768];
 
 const char *get_rfx (void) {
-  return \
-"<define>\\n\
+  char **vdevs = get_vloopback_devices();
+  char devstr[30000];
+  int i=0;
+
+  if (vdevs[0]==NULL) {
+    free(vdevs);
+    return "No vloopback devices were found\nTry: sudo modprobe vloopback\n";
+  }
+  
+  memset( devstr, 0, 1 );
+
+  while (vdevs[i]!=NULL) {
+    snprintf(devstr,30000,"%s%s|",devstr,vdevs[i]);
+    free(vdevs[i++]);
+  }
+  free( vdevs );
+
+  snprintf((char *)rfx,32768,"%s%s%s",
+	  "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-vdevname|Video _device|string|\"/dev/video1\"\\n\
+vdevname|Video _device|string_list|0|",
+	  devstr,
+	  "\\n\
 </params> \\n\
 <param_window> \\n\
-special|fileread|0|\\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
-";
+"
+	  );
+
+  return rfx;
+
 }
 
 
@@ -106,11 +230,23 @@ int *get_yuv_palette_clamping(int palette) {
 }
 
 boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+  int i=0,idx=0;
+  char **vdevs;
 
-  if (argc>0) {
-    vdevname=strdup(argv[0]);
+  vdevfd=-1;
+
+  if (argc>0) idx=atoi(argv[0]);
+
+  vdevs = get_vloopback_devices();
+  if (vdevs[idx]!=NULL) {
+    vdevname=strdup(vdevs[idx]);
   }
-  else vdevname=strdup("/dev/video1");
+  else vdevname=NULL;
+  
+  while (vdevs[i]!=NULL) free(vdevs[i++]);
+  free( vdevs );
+  
+  if (vdevname==NULL) return FALSE;
 
   vdevfd=open(vdevname, O_WRONLY);
 
@@ -169,7 +305,7 @@ boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void 
 
 void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   int xval=0;
-  xval=close(vdevfd);
-  free(vdevname);
+  if (vdevfd!=-1) xval=close(vdevfd);
+  if (vdevname!=NULL) free(vdevname);
 }
 

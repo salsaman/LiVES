@@ -9,7 +9,7 @@
 
 /////////////////////////////////////////////////////////////////
 
-static char plugin_version[64]="LiVES vloopback output client 1.0";
+static char plugin_version[64]="LiVES vloopback output client 1.0.1";
 static int palette_list[3];
 static int clampings[2];
 static int mypalette;
@@ -71,7 +71,7 @@ static int file_filter( const struct dirent *a )
 }
 
 
-#define MAX_DEVICES 64
+#define MAX_DEVICES 65
 
 static char **get_vloopback_devices(void) {
    char devname[256];
@@ -83,12 +83,13 @@ static char **get_vloopback_devices(void) {
    struct video_capability v4lcap;
    char **devnames=malloc(MAX_DEVICES * sizeof(char *));
    
-   devnames[0]=NULL;
+   for (i=0;i<MAX_DEVICES;devnames[i++]=NULL);
 
    n = scandir( "/dev", &namelist, file_filter, alphasort );
    if( n < 0 ) return devnames;
    
-   while( ++i < n && ndevices < MAX_DEVICES-1 ) {
+   
+   for(i=0; i < n && ndevices < MAX_DEVICES-1; i++ ) {
      sprintf( devname, "/dev/%s", namelist[i]->d_name );
 
      if( ( fd = open( devname, O_RDONLY | O_NONBLOCK ) ) == -1 ) {
@@ -117,8 +118,7 @@ static char **get_vloopback_devices(void) {
    }
    devnames[ndevices]=NULL;
 
-   i=0;
-   while( i < n ) free(namelist[i++]);
+   for( i=0; i < n; free(namelist[i++]) );
    free (namelist);
 
    return devnames;

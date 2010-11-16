@@ -1227,7 +1227,7 @@ void vid_playback_plugin_exit (void) {
   mainw->stream_ticks=-1;
   mainw->ext_keyboard=FALSE;
 
-  if (mainw->fs&&mainw->sep_win) gtk_window_fullscreen(GTK_WINDOW(mainw->play_window));
+  if (mainw->playing_file>-1&&mainw->fs&&mainw->sep_win) gtk_window_fullscreen(GTK_WINDOW(mainw->play_window));
   gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
 }
 

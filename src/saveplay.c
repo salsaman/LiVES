@@ -1771,7 +1771,11 @@ void play_file (void) {
     if (mainw->play_window!=NULL) {
       hide_cursor (mainw->play_window->window);
       gtk_widget_set_app_paintable(mainw->play_window,TRUE);
-      gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
+      if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) 
+	gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
+      else gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
+      if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+      mainw->pw_exp_is_blocked=TRUE;
     }
   
     if (!mainw->foreign&&!mainw->sep_win) {
@@ -2309,6 +2313,8 @@ void play_file (void) {
       if (!GTK_WIDGET_VISIBLE (mainw->play_window)) {
 	block_expose();
 	mainw->noswitch=TRUE;
+	g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+	mainw->pw_exp_is_blocked=TRUE;
 	while (g_main_context_iteration (NULL,FALSE));
 	mainw->noswitch=FALSE;
 	unblock_expose();
@@ -2323,14 +2329,8 @@ void play_file (void) {
 	  mainw->opwx=mainw->opwy=-1;
 	  mainw->preview_frame=0;
 	}
-	if (mainw->multitrack==NULL) {
-	  load_preview_image(FALSE);
-	  if (mainw->preview_box->parent==NULL) {
-	    // and add it to the play window, and force a WM redraw
-	    gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
-	  }
-	}
       }
+
       if (mainw->play_window!=NULL) {
 	if (mainw->multitrack==NULL) {
 	  mainw->playing_file=-2;

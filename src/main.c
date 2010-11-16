@@ -2711,7 +2711,7 @@ void load_preview_image(gboolean update_always) {
   GdkPixbuf *pixbuf=NULL;
   gint preview_frame;
 
-  if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+  if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
@@ -2735,12 +2735,12 @@ void load_preview_image(gboolean update_always) {
     return;
   }
 
-  if (!cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
+  if (mainw->current_file<0||cfile==NULL||!cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     if (mainw->preview_frame>cfile->frames) {
       g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
       mainw->pw_exp_is_blocked=TRUE;
     }
-    gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL);
+    gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe);
     mainw->preview_frame=0;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
     gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0,0);

@@ -68,6 +68,7 @@ jack_CFLAGS = -DENABLE_JACK
 jack_SOURCES = jack.c jack.h
 jack_LDADD=-ljack
 
+
 if ENABLE_JACK_TRANSPORT
 jack_CFLAGS += -DENABLE_JACK_TRANSPORT
 endif

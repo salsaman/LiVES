@@ -5924,9 +5924,6 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 
 	make_play_window();
 
-	if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-	mainw->pw_exp_is_blocked=TRUE;
-     
 	if (mainw->ext_playback&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
 	  // fixed o/p size for stream
 	  if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
@@ -5944,14 +5941,19 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  resize_play_window();
 	}
 	
+	if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+	mainw->pw_exp_is_blocked=TRUE;
+     
 	
-	if (mainw->play_window!=NULL) {
+	if (mainw->play_window!=NULL&&GDK_IS_WINDOW(mainw->play_window->window)) {
 	  hide_cursor(mainw->play_window->window);
 	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
 	}
 	if (cfile->frames==1||cfile->play_paused) {
 	  while (g_main_context_iteration (NULL,FALSE));
-	  if (mainw->play_window!=NULL&&!mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+	  if (mainw->play_window!=NULL&&GDK_IS_WINDOW(mainw->play_window->window)&&
+	      !mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||
+							  cfile->clip_type==CLIP_TYPE_FILE)) {
 	    weed_plant_t *frame_layer=mainw->frame_layer;
 	    load_frame_image (cfile->frameno);
 	    mainw->frame_layer=frame_layer;

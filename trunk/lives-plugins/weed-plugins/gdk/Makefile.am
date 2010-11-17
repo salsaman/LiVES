@@ -16,7 +16,7 @@ if HAVE_SYSTEM_WEED
 AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ @WEED_UTILS_LIBS@ @WEED_PLUGIN_UTILS_LIBS@
 weed_CFLAGS = -DHAVE_SYSTEM_WEED
 else
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ ../../libweed/libweed-utils.la ../../libweed/libweed-plugin-utils.la
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ ../../../libweed/libweed-utils.la ../../../libweed/libweed-plugin-utils.la
 endif
 
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@ -ffast-math

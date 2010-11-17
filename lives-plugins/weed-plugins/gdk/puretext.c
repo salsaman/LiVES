@@ -11,10 +11,10 @@
 #include "weed/weed-effects.h"
 #include "weed/weed-plugin.h"
 #else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#include "../../libweed/weed-plugin.h"
+#include "../../../libweed/weed.h"
+#include "../../../libweed/weed-palettes.h"
+#include "../../../libweed/weed-effects.h"
+#include "../../../libweed/weed-plugin.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -30,8 +30,8 @@ static int package_version=2; // version of this package
 #include "weed/weed-utils.h" // optional
 #include "weed/weed-plugin-utils.h" // optional
 #else
-#include "../../libweed/weed-utils.h" // optional
-#include "../../libweed/weed-plugin-utils.h" // optional
+#include "../../../libweed/weed-utils.h" // optional
+#include "../../../libweed/weed-plugin-utils.h" // optional
 #endif
 
 /////////////////////////////////////////////////////////////

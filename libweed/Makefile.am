@@ -13,6 +13,7 @@ DOXYGEN = @DOXYGEN@
 
 install-data-local:
 	make docs-doxygen
+	mkdir -p $(DESTDIR)$(libdir)/pkgconfig/
 	cp -f libweed*.pc $(DESTDIR)$(libdir)/pkgconfig/
 
 if HAVE_DOXYGEN

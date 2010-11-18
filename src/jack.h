@@ -59,10 +59,10 @@ typedef struct {
 
   gulong    buffer_size;                   /**< number of bytes in the buffer allocated for processing data in process_audio() */
 
-  guchar* sound_buffer; ///< transformed data
+  guchar* sound_buffer; ///< transformed data - deprecated
 
   gulong    num_calls;                     /**< count of process_audio() calls */
-  gulong    chunk_size;
+  gulong    chunk_size;  ///< deprecated
 
   jack_port_t*     output_port[JACK_MAX_OUTPUT_PORTS]; /**< output ports */
   jack_port_t*     input_port[JACK_MAX_INPUT_PORTS]; /**< input ports */
@@ -72,7 +72,6 @@ typedef struct {
   unsigned int     jack_port_name_count;          /**< the number of port names given */
   gulong    jack_port_flags;               /**< flags to be passed to jack when opening the output ports */
 
-  audio_buffer_t*    aPlayPtr;                      /**< pointer to the current audio file */
   lives_audio_loop_t loop;
 
   jack_transport_state_t state;
@@ -84,8 +83,8 @@ typedef struct {
 
   volatile aserver_message_t   *msgq;          /**< linked list of messages we are sending to the callback process */
 
-  int fd;                  /**< if >0 we are playing from a file */
-  gboolean is_opening; ///< TRUE if file is opening (audiodump.pcm)
+  int fd;                  /**< if >0 we are playing from a file - deprecated */
+
   off_t seek_pos;
   off_t seek_end;
   gboolean usigned;

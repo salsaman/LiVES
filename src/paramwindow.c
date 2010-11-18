@@ -41,6 +41,7 @@
 extern gboolean do_effect (lives_rfx_t *, gboolean is_preview); //effects.c in LiVES
 extern void on_realfx_activate (GtkMenuItem *, gpointer rfx); // effects.c in LiVES
 
+GtkWidget *fx_dialog[2];
 
 // TODO -
 // use list of these in case we have multiple windows open

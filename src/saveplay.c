@@ -1689,6 +1689,7 @@ void play_file (void) {
   cfile->play_paused=FALSE;
   mainw->period=U_SEC/cfile->pb_fps;
 
+  audio_cache_init();
 
   if (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]==NULL) mainw->blend_file=-1;
 
@@ -1850,8 +1851,6 @@ void play_file (void) {
 	  mainw->jackd->sample_in_rate=cfile->arate;
 	  mainw->jackd->usigned=!asigned;
 	  mainw->jackd->seek_end=cfile->afilesize;
-	  if (cfile->opening) mainw->jackd->is_opening=TRUE;
-	  else mainw->jackd->is_opening=FALSE;
 	  
 	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd->reverse_endian=TRUE;
 	  else mainw->jackd->reverse_endian=FALSE;
@@ -2177,6 +2176,8 @@ void play_file (void) {
 
   if (com!=NULL) g_free(com);
   mainw->actual_frame=0;
+
+  audio_cache_end();
 
 #ifdef ENABLE_OSC
   lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED,"");

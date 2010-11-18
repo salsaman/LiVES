@@ -929,7 +929,7 @@ typedef struct {
 
 GdkCursor *hidden_cursor;
 
-_palette *palette;
+extern _palette *palette;
 
 typedef struct {
   gulong ins_frame_function;
@@ -949,10 +949,10 @@ typedef struct {
 
 } _merge_opts;
 
-_merge_opts* merge_opts;
+extern _merge_opts* merge_opts;
 
 /// note, we can only have two of these currently, one for rendered effects, one for real time effects
-GtkWidget *fx_dialog[2];
+extern GtkWidget *fx_dialog[2];
 
 
 

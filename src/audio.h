@@ -12,12 +12,12 @@
 #define SAMPLE_MAX_16BITI  32768
 
 ///sign swapping
-#define SWAP_U_TO_S 1
-#define SWAP_S_TO_U 2
+#define SWAP_U_TO_S 1 ///< unsigned to signed
+#define SWAP_S_TO_U 2 ///< signed to unsigned
 
 ///endian swapping
-#define SWAP_X_TO_L 1
-#define SWAP_L_TO_X 2
+#define SWAP_X_TO_L 1  ///< other to local
+#define SWAP_L_TO_X 2 ///< local to other
 
 
 /// defaults for when not specifed
@@ -61,10 +61,75 @@ typedef struct _aserver_message_t {
 } aserver_message_t;
 
 
+
+typedef enum {
+  LIVES_NOP_OPERATION=0,
+  LIVES_READ_OPERATION,
+  LIVES_WRITE_OPERATION,
+  LIVES_CONVERT_OPERATION
+} lives_operation_t;
+
+
+
+
 typedef struct {
-  guchar* data;
-  size_t  size;
-} audio_buffer_t;
+  lives_operation_t operation; // read, write, or convert [readonly by server]
+  volatile gboolean is_ready; // [readwrite all]
+  gboolean eof; ///< did we read EOF ?  [readonly by client]
+  int fileno; // [readonly by server]
+
+  // readonly by server:
+  
+  // use one or other
+  off_t seek; 
+  weed_timecode_t start_tc;
+
+  double arate;
+
+  size_t bytesize; // file in/out length in bytes [write by server in case of eof]
+
+  gboolean in_interleaf;
+  gboolean out_interleaf;
+
+  int in_achans; ///< channels for _filebuffer side
+  int out_achans; ///< channels for buffer* side
+  int in_asamps; // set to -val for float
+  int out_asamps; // set to -val for float
+  int swap_sign;
+  int swap_endian;
+  double shrink_factor;  ///< resampling ratio
+
+  size_t samp_space; ///< buffer space in samples (* by sizeof(type) to get bytesize) [if interleaf, also * by chans]
+
+  
+  // in or out buffers
+  uint8_t **buffer8; ///< sample data in 8 bit format (or NULL)
+  short   **buffer16; ///< sample data in 16 bit format (or NULL)
+  int32_t **buffer24; ///< sample data in 24 bit format (or NULL)
+  int32_t **buffer32; ///< sample data in 32 bit format (or NULL)
+  float   **bufferf; ///< sample data in float format (or NULL)
+
+  
+  // ring buffer 
+  size_t samples_filled; ///< number of samples filled (readonly client)
+  size_t start_sample; ///< used for reading (readonly server)
+
+
+  // private fields (used by server)
+  uint8_t *_filebuffer; ///< raw data to/from file - can be cast to int16_t
+  size_t _cbytesize; ///< current _filebuffer bytesize; if this changes we need to realloc _filebuffer
+  size_t _csamp_space; ///< current sample buffer size in single channel samples  
+  int _fd; ///< file descriptor
+  int _cfileno; ///< current fileno
+  int _cseek;  ///< current seek pos
+  int _cachans; ///< current output channels
+  int _cin_interleaf;
+  int _cout_interleaf;
+  int _casamps; ///< current out_asamps
+
+  volatile gboolean die;  ///< set to TRUE to shut down thread
+
+} lives_audio_buf_t;
 
 
 //////////////////////////////////////////
@@ -133,5 +198,8 @@ void free_pulse_audio_buffers(void);
 
 void audio_free_fnames(void);
 
+lives_audio_buf_t *audio_cache_init (void);
+void audio_cache_end (void);
+lives_audio_buf_t *audio_cache_get_buffer(void);
 
 #endif

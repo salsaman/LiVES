@@ -65,6 +65,13 @@
 #include <getopt.h>
 
 ////////////////////////////////
+capability *capable;
+_palette *palette;
+size_t sizint, sizdbl, sizshrt;
+mainwindow *mainw;
+
+
+//////////////////////////////////////////
 
 static gboolean no_recover=FALSE,auto_recover=FALSE;
 static gboolean upgrade_error=FALSE;
@@ -4611,8 +4618,6 @@ void do_quick_switch (gint new_file) {
         else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate;
 	mainw->jackd->usigned=!asigned;
 	mainw->jackd->seek_end=mainw->files[new_file]->afilesize;
-	if (mainw->files[new_file]->opening) mainw->jackd->is_opening=TRUE;
-	else mainw->jackd->is_opening=FALSE;
 
 	if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd->reverse_endian=TRUE;
 	else mainw->jackd->reverse_endian=FALSE;
@@ -4623,9 +4628,7 @@ void do_quick_switch (gint new_file) {
 	// tell jack server to open audio file and start playing it
 
 	jack_message.command=ASERVER_CMD_FILE_OPEN;
-	if (mainw->files[new_file]->opening) {
-          mainw->jackd->is_opening=TRUE;
-        }
+
         jack_message.data=g_strdup_printf("%d",new_file);
 
 	jack_message2.command=ASERVER_CMD_FILE_SEEK;

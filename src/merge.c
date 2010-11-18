@@ -26,7 +26,7 @@
 #include "resample.h"
 #include "support.h"
 
-
+_merge_opts* merge_opts;
 
 void create_merge_dialog (void) {
   GtkWidget *dialog_vbox;

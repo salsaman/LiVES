@@ -1592,7 +1592,7 @@ void do_no_decoder_error(const gchar *fname) {
 
 
 static void do_extra_jack_warning(void) {
-  do_blocking_error_dialog(_("\nDear user, the jack developers decided to remove the -Z option from jackd.\nPlease check your ~/.jackdrc file and remove this option if present.\nAlternately restart LiVES and select a different audio player in Preferences.\n"));
+  do_blocking_error_dialog(_("\nDear user, the jack developers decided to remove the -Z option from jackd.\nPlease check your ~/.jackdrc file and remove this option if present.\nAlternately, select a different audio player in Preferences.\n"));
 }
 
 void do_jack_noopen_warn(void) {

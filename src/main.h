@@ -189,29 +189,6 @@ typedef struct {
 // see weed event spec. for more info
 
 
-typedef union {
-  float **floatbuf; ///< float data - for jack
-  short *int16buf; ///< 16 bit int - for pulse audio
-} adata;
-
-
-typedef struct {
-
-  int achans;
-  int arate;
-
-  weed_timecode_t start_tc;
-
-  volatile size_t start_sample;  ///< current read posn
-
-  adata data;
-
-  volatile size_t samples_filled; ///< number of samples filled (usable)
-  size_t sample_space; ///< total space
-} lives_audio_buf_t;
-
-
-
 
 /// need this for event_list_t *
 #include "events.h"
@@ -582,7 +559,7 @@ typedef struct {
 
 
 /// some shared structures
-capability *capable;
+extern capability *capable;
 
 #ifdef HAVE_JACK_JACK_H
 #include "jack.h"
@@ -599,7 +576,7 @@ capability *capable;
 #include "keyboard.h"
 #include "preferences.h"
 
-mainwindow *mainw;
+extern mainwindow *mainw;
 
 
 // internal player clock
@@ -608,7 +585,7 @@ struct timeval tv;
 
 
 /// type sizes
-size_t sizint, sizdbl, sizshrt;
+extern size_t sizint, sizdbl, sizshrt;
 
 
 

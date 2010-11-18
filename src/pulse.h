@@ -22,6 +22,12 @@
 #define LIVES_PA_BUFF_TARGET 4096
 
 typedef struct {
+  size_t size;
+  void *data;
+} audio_buffer_t;
+
+
+typedef struct {
   pa_threaded_mainloop *mloop;
   pa_context *con;
   pa_stream *pstream;

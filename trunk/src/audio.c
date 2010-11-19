@@ -1557,6 +1557,7 @@ void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact) {
     mainw->pulsed->abufs[i]->out_achans=achans;
     mainw->pulsed->abufs[i]->arate=arate;
     mainw->pulsed->abufs[i]->samp_space=XSAMPLES/prefs->num_rtaudiobufs;  // samp_space here is in stereo samples
+    mainw->pulsed->abufs[i]->buffer16=g_malloc(sizeof(short *));
     mainw->pulsed->abufs[i]->buffer16[0]=g_malloc(XSAMPLES/prefs->num_rtaudiobufs*achans*sizeof(short));
   }
 #endif
@@ -1599,6 +1600,7 @@ void free_pulse_audio_buffers(void) {
   for (i=0;i<prefs->num_rtaudiobufs;i++) {
     if (mainw->pulsed->abufs[i]!=NULL) {
       g_free(mainw->pulsed->abufs[i]->buffer16[0]);
+      g_free(mainw->pulsed->abufs[i]->buffer16);
       g_free(mainw->pulsed->abufs[i]);
     }
   }

@@ -1689,7 +1689,7 @@ void play_file (void) {
   cfile->play_paused=FALSE;
   mainw->period=U_SEC/cfile->pb_fps;
 
-  if (audio_player==AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE) audio_cache_init();
+  if (audio_player==AUD_PLAYER_JACK) audio_cache_init();
 
   if (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]==NULL) mainw->blend_file=-1;
 
@@ -2186,7 +2186,7 @@ void play_file (void) {
   if (com!=NULL) g_free(com);
   mainw->actual_frame=0;
 
-  if (audio_player==AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE) audio_cache_end();
+  if (audio_player==AUD_PLAYER_JACK) audio_cache_end();
 
 #ifdef ENABLE_OSC
   lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED,"");

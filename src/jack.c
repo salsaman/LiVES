@@ -1181,6 +1181,7 @@ int jack_audio_init(void) {
     jackd->num_output_channels=2;
     jackd->play_when_stopped=FALSE;
     jackd->mute=FALSE;
+    jackd->is_silent=FALSE;
     jackd->out_chans_available=0;
     jackd->is_output=TRUE;
     jackd->read_abuf=-1;

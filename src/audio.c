@@ -1041,11 +1041,11 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
   }
 
   for (i=0;i<out_achans*nfiles;i++) {
-    g_free(float_buffer[i]);
+    if (float_buffer[i]!=NULL) g_free(float_buffer[i]);
   }
 
-  g_free(finish_buff);
-  g_free(holding_buff);
+  if (finish_buff!=NULL) g_free(finish_buff);
+  if (holding_buff!=NULL) g_free(holding_buff);
 
   // close files
   for (track=0;track<nfiles;track++) {
@@ -1053,7 +1053,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (track>=NSTOREDFDS) close (in_fd[track]);
     }
     for (c=0;c<out_achans;c++) {
-      g_free(chunk_float_buffer[track*out_achans+c]);
+      if (chunk_float_buffer[track*out_achans+c]!=NULL) g_free(chunk_float_buffer[track*out_achans+c]);
     }
   }
 

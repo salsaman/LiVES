@@ -55,14 +55,7 @@ typedef struct {
   gulong    num_output_channels;           /**< number of output channels(1 is mono, 2 stereo etc..) */
   gulong    bytes_per_channel;
 
-  gulong    latencyMS;                     /**< latency in ms between writing and actual audio output of the written data */
-
-  gulong    buffer_size;                   /**< number of bytes in the buffer allocated for processing data in process_audio() */
-
-  guchar* sound_buffer; ///< transformed data - deprecated
-
   gulong    num_calls;                     /**< count of process_audio() calls */
-  gulong    chunk_size;  ///< deprecated
 
   jack_port_t*     output_port[JACK_MAX_OUTPUT_PORTS]; /**< output ports */
   jack_port_t*     input_port[JACK_MAX_INPUT_PORTS]; /**< input ports */

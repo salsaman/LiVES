@@ -223,6 +223,16 @@ void jack_get_rec_avals(jack_driver_t *jackd) {
   }
 }
 
+static void jack_set_rec_avals(jack_driver_t *jackd, gboolean is_forward) {
+  // record direction change
+  mainw->rec_aclip=jackd->playing_file;
+  if (mainw->rec_aclip!=-1) {
+    mainw->rec_avel=ABS(afile->pb_fps/afile->fps);
+    if (!is_forward) mainw->rec_avel=-mainw->rec_avel;
+    mainw->rec_aseek=(gdouble)jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+  }
+}
+
 
 static void push_cache_buffer (lives_audio_buf_t *cache_buffer, jack_driver_t *jackd, 
 			       size_t in_bytes, size_t nframes, double shrink_factor) {
@@ -239,7 +249,7 @@ static void push_cache_buffer (lives_audio_buf_t *cache_buffer, jack_driver_t *j
   
   cache_buffer->shrink_factor = shrink_factor;
   
-  cache_buffer->swap_sign = 0;
+  cache_buffer->swap_sign = jackd->usigned;
   cache_buffer->swap_endian = jackd->reverse_endian?SWAP_X_TO_L:0;
   
   cache_buffer->samp_space=nframes;
@@ -337,8 +347,6 @@ static int audio_process (nframes_t nframes, void *arg) {
 
   if (cache_buffer!=NULL && cache_buffer->in_achans>0 && !cache_buffer->is_ready ) wait_cache_buffer=TRUE;
 
-  //if (nframes != jackd->chunk_size) jackd->chunk_size = nframes;
-
   jackd->state=jack_transport_query (jackd->client, &pos);
 
 #ifdef DEBUG_AJACK
@@ -395,25 +403,24 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  if ((shrink_factor=(gfloat)in_frames/(gfloat)jackFramesAvailable)<0.f) {
 	    // reverse playback
 	    if ((jackd->seek_pos-=in_bytes)<0) {
+	      // reached beginning backwards
+
 	      if (jackd->loop==AUDIO_LOOP_NONE) {
 		if (*jackd->whentostop==STOP_ON_AUD_END) {
 		  *jackd->cancelled=CANCEL_AUD_END;
 		}
 		jackd->in_use=FALSE;
-		mainw->rec_aclip=jackd->playing_file;
-		mainw->rec_avel=-afile->pb_fps/afile->fps;
-		mainw->rec_aseek=(gdouble)jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+		jack_set_rec_avals(jackd,FALSE);
 	      }
 	      else {
 		if (jackd->loop==AUDIO_LOOP_PINGPONG) {
 		  jackd->sample_in_rate=-jackd->sample_in_rate;
 		  shrink_factor=-shrink_factor;
 		  jackd->seek_pos=0;
+		  jack_set_rec_avals(jackd,TRUE);
 		}
 		else jackd->seek_pos=jackd->seek_end-in_bytes;
-		mainw->rec_aclip=jackd->playing_file;
-		mainw->rec_avel=-afile->pb_fps/afile->fps;
-		mainw->rec_aseek=(gdouble)jackd->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+		jack_set_rec_avals(jackd,FALSE);
 	      }
 	    }
 	  }
@@ -450,6 +457,8 @@ static int audio_process (nframes_t nframes, void *arg) {
 		gboolean eof=cache_buffer->eof;
 
 		if (eof) {
+		  // reached the end, forwards
+
 		  if (*jackd->whentostop==STOP_ON_AUD_END) {
 		    jackd->in_use=FALSE;
 		    *jackd->cancelled=CANCEL_AUD_END;
@@ -458,26 +467,16 @@ static int audio_process (nframes_t nframes, void *arg) {
 		    if (jackd->loop==AUDIO_LOOP_PINGPONG) {
 		      jackd->sample_in_rate=-jackd->sample_in_rate;
 		      jackd->seek_pos-=in_bytes; // TODO
-		      mainw->rec_aclip=jackd->playing_file;
-		      mainw->rec_avel=-afile->pb_fps/afile->fps;
-		      mainw->rec_aseek=(gdouble)jackd->seek_pos/
-			(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+		      jack_set_rec_avals(jackd,FALSE);
 		    }
 		    else {
 		      if (jackd->loop!=AUDIO_LOOP_NONE) {
 			jackd->seek_pos=0;
-			g_print("seek back to 0\n");
-			mainw->rec_aclip=jackd->playing_file;
-			mainw->rec_avel=-afile->pb_fps/afile->fps;
-			mainw->rec_aseek=(gdouble)jackd->seek_pos/
-			  (gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+			jack_set_rec_avals(jackd,TRUE);
 		      }
 		      else {
 			jackd->in_use=FALSE;
-			mainw->rec_aclip=jackd->playing_file;
-			mainw->rec_avel=-afile->pb_fps/afile->fps;
-			mainw->rec_aseek=(gdouble)jackd->seek_pos/
-			  (gdouble)(afile->arate*afile->achans*afile->asampsize/8);
+			jack_set_rec_avals(jackd,TRUE);
 		      }
 		    }
 		  }
@@ -648,8 +647,6 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   holding_buff=malloc(frames_out*afile->achans*afile->asampsize/8);
 
-  if (nframes != jackd->chunk_size) jackd->chunk_size = nframes;
-
   for (i=0;i<jackd->num_input_channels;i++) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
   }
@@ -672,31 +669,6 @@ static int audio_read (nframes_t nframes, void *arg) {
   return 0;
 }
 
-
-static int jack_get_bufsize (nframes_t nframes, void *arg) {
-  // This is only called by the reader now - TODO
-
-  jack_driver_t* jackd = (jack_driver_t*)arg;
-  unsigned long buffer_required;
-  //g_printerr("the maximum buffer size is now %lu frames\n", (long)nframes);
-
-  /* make sure the callback routine has adequate memory for the nframes it will get */
-  /* ie. Buffer_size < (bytes we already wrote + bytes we are going to write in this loop) */
-  /* frames * 2 bytes in 16 bits * X channels of output */
-  buffer_required = nframes * sizeof(short) * jackd->num_output_channels;
-  if(jackd->buffer_size < buffer_required) {
-    //g_printerr("expanding buffer from jackd->buffer_size == %ld, to %ld\n",jackd->buffer_size, buffer_required);
-    jackd->buffer_size = buffer_required;
-    jackd->sound_buffer = realloc(jackd->sound_buffer, jackd->buffer_size);
-
-    /* if we don't have a buffer then error out */
-    if(jackd->sound_buffer==NULL) {
-      return 1;
-    }
-  }
-
-  return 0;
-}
 
 
 int jack_get_srate (nframes_t nframes, void *arg) {
@@ -751,9 +723,6 @@ void jack_close_device(jack_driver_t* jackd) {
   
   jack_reset_driver(jackd);
   jackd->client=NULL;
-  free(jackd->sound_buffer);
-  jackd->sound_buffer=NULL;
-  jackd->buffer_size=0;
   
   jackd->is_active=FALSE;
 
@@ -788,10 +757,6 @@ int jack_open_device(jack_driver_t *jackd) {
   
   struct timeval otv;
   int64_t ntime=0,stime;
-
-  /* zero out the buffer pointer and the size of the buffer */
-  jackd->sound_buffer=NULL;
-  jackd->buffer_size=0;
 
   jackd->is_active=FALSE;
 
@@ -877,10 +842,6 @@ int jack_open_device_read(jack_driver_t *jackd) {
   jack_status_t status;
   int i;
 
-  /* zero out the buffer pointer and the size of the buffer */
-  jackd->sound_buffer=NULL;
-  jackd->buffer_size=0;
-
   /* set up an error handler */
   jack_set_error_function(jack_error_func);
   jackd->client=NULL;
@@ -922,9 +883,6 @@ int jack_open_device_read(jack_driver_t *jackd) {
     jackd->in_chans_available++;
   }
   
-  /* setup a buffer size callback */
-  jack_set_buffer_size_callback(jackd->client, jack_get_bufsize, jackd);
-
   /* tell the JACK server to call `srate()' whenever
      the sample rate of the system changes. */
   jack_set_sample_rate_callback(jackd->client, jack_get_srate, jackd);
@@ -933,9 +891,6 @@ int jack_open_device_read(jack_driver_t *jackd) {
      it ever shuts down, either entirely, or if it
      just decides to stop calling us. */
   jack_on_shutdown(jackd->client, jack_shutdown, jackd);
-
-  /* set the initial buffer size */
-  jack_get_bufsize(jack_get_buffer_size(jackd->client), jackd);
 
   // set process callback and start
   jack_set_process_callback (jackd->client, audio_read, jackd);  
@@ -1221,7 +1176,6 @@ int jack_audio_init(void) {
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
-    jackd->chunk_size=0;
     jackd->jackd_died=FALSE;
     gettimeofday(&jackd->last_reconnect_attempt, 0);
     jackd->num_output_channels=2;
@@ -1253,7 +1207,6 @@ int jack_audio_read_init(void) {
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
-    jackd->chunk_size=0;
     jackd->jackd_died=FALSE;
     gettimeofday(&jackd->last_reconnect_attempt, 0);
     jackd->num_input_channels=2;

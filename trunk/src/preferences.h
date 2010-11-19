@@ -446,7 +446,6 @@ typedef struct {
 typedef struct {
   gboolean ign_clipset;
   gboolean ign_osc;
-  gboolean ign_jackopts;
   gboolean ign_aplayer;
   gboolean ign_stmode;
 } _ign_opts;

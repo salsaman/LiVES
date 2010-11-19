@@ -357,6 +357,9 @@ static gboolean pre_init(void) {
   }
 #endif
 
+  future_prefs->jack_opts=get_int_pref("jack_opts");
+  prefs->jack_opts=future_prefs->jack_opts;
+
   prefs->gui_monitor=0;
   prefs->play_monitor=0;
 
@@ -954,11 +957,6 @@ static void lives_init(_ign_opts *ign_opts) {
 	prefs->warn_file_size=WARN_FILE_SIZE;
       }
 
-      future_prefs->jack_opts=get_int_pref("jack_opts");
-      if (!ign_opts->ign_jackopts) {
-	prefs->jack_opts=future_prefs->jack_opts;
-      }
-
       prefs->rte_keys_virtual=get_int_pref("rte_keys_virtual");
       if (prefs->rte_keys_virtual<FX_KEYS_PHYSICAL) prefs->rte_keys_virtual=FX_KEYS_PHYSICAL;
       if (prefs->rte_keys_virtual>FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual=FX_KEYS_MAX_VIRTUAL;
@@ -1207,8 +1205,8 @@ static void lives_init(_ign_opts *ign_opts) {
 	  if (!do_audio_choice_dialog(prefs->startup_phase)) {
 	    lives_exit();
 	  }
-	  if (prefs->audio_player==AUD_PLAYER_JACK) prefs->jack_opts=JACK_OPTS_START_ASERVER;
-	  else prefs->jack_opts=0;
+	  if (prefs->audio_player==AUD_PLAYER_JACK) future_prefs->jack_opts=prefs->jack_opts=JACK_OPTS_START_ASERVER;
+	  else future_prefs->jack_opts=prefs->jack_opts=0;
 	  set_int_pref("jack_opts",prefs->jack_opts);
 
 	}
@@ -1227,7 +1225,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	    else splash_msg(_("Connecting to jack transport server..."),.8);
 	  }
 	  if (!lives_jack_init()) {
-	    if (prefs->jack_opts&JACK_OPTS_START_ASERVER||prefs->jack_opts&JACK_OPTS_START_TSERVER) do_jack_noopen_warn();
+	    if ((prefs->jack_opts&JACK_OPTS_START_ASERVER)||(prefs->jack_opts&JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
 	    else do_jack_noopen_warn3();
 	    if (prefs->startup_phase==2) {
 	      do_jack_noopen_warn2();
@@ -1247,19 +1245,19 @@ static void lives_init(_ign_opts *ign_opts) {
 
 	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||mainw->jackd==NULL)&&prefs->startup_phase==0) {
 #ifdef HAVE_PULSE_AUDIO
-	      gchar *otherbit=g_strdup(_(" or \"lives -aplayer pulse\""));
+	      gchar *otherbit="\"lives -aplayer pulse\".";
 #else
-	      gchar *otherbit=g_strdup("");
+	      gchar *otherbit="\"lives -aplayer sox\".";
 #endif
-	      g_printerr("%s%s\n\n",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with: \"lives -aplayer sox\""),otherbit);
-	      g_free(otherbit);
+	      g_printerr("%s%s\n\n",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with: "),otherbit);
 	    }
 
 	    if (mainw->jackd==NULL) {
-	      do_jack_noopen_warn();
+	      do_jack_noopen_warn3();
 	      if (prefs->startup_phase==2) {
 		do_jack_noopen_warn2();
 	      }
+	      else do_jack_noopen_warn4();
 	      lives_exit();
 	    }
 
@@ -1927,7 +1925,7 @@ int main (int argc, char *argv[]) {
   ssize_t mynsize;
   gchar fbuff[512];
 
-  ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_jackopts=ign_opts.ign_aplayer=ign_opts.ign_stmode=FALSE;
+  ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_aplayer=ign_opts.ign_stmode=FALSE;
 
 #ifdef ENABLE_OIL
   oil_init();
@@ -2132,7 +2130,6 @@ int main (int argc, char *argv[]) {
 	if (!strcmp(charopt,"jackopts")&&optarg!=NULL) {
 	  // override jackopts in config file
 	  prefs->jack_opts=atoi(optarg);
-	  ign_opts.ign_jackopts=TRUE;
 	  continue;
 	}
 #endif

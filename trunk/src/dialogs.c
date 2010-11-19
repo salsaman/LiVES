@@ -1602,7 +1602,18 @@ void do_jack_noopen_warn(void) {
 
 
 void do_jack_noopen_warn3(void) {
-  do_blocking_error_dialog(_("\nUnable to connect to jack transport. Please start jack before starting LiVES\n"));
+  do_blocking_error_dialog(_("\nUnable to connect to jack server. Please start jack before starting LiVES\n"));
+}
+
+void do_jack_noopen_warn4(void) {
+#ifdef HAVE_PULSE_AUDIO
+  gchar *otherbit="\"lives -aplayer pulse\"";
+#else
+  gchar *otherbit="\"lives -aplayer sox\"";
+#endif
+  gchar *msg=g_strdup_printf(_("\nAlternatively, try to start lives with:\n%s\n"),otherbit);
+  do_blocking_error_dialog(msg);
+  g_free(msg);
 }
 
 

@@ -1536,7 +1536,7 @@ void play_file (void) {
   gchar *tmpfilename=NULL;
 #endif
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
+  if (audio_player!=AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
   else mainw->aud_file_to_kill=-1;
 
 
@@ -1666,7 +1666,7 @@ void play_file (void) {
 
   mute=mainw->mute;
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+  if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) {
     if (cfile->achans==0||mainw->is_rendering) mainw->mute=TRUE;
     if (mainw->mute&&!cfile->opening_only_audio) arate=arate?-arate:-1;
   }
@@ -1689,7 +1689,7 @@ void play_file (void) {
   cfile->play_paused=FALSE;
   mainw->period=U_SEC/cfile->pb_fps;
 
-  audio_cache_init();
+  if (audio_player==AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE) audio_cache_init();
 
   if (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]==NULL) mainw->blend_file=-1;
 
@@ -1728,10 +1728,15 @@ void play_file (void) {
 
   gtk_widget_set_sensitive (mainw->m_playselbutton, FALSE);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
-  gtk_widget_set_sensitive (mainw->m_mutebutton, (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE||mainw->multitrack!=NULL));
+  gtk_widget_set_sensitive (mainw->m_mutebutton, (audio_player==AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE||
+						  mainw->multitrack!=NULL));
 
-  gtk_widget_set_sensitive (mainw->m_loopbutton, (!cfile->achans||mainw->mute||mainw->multitrack!=NULL||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&mainw->current_file>0);
-  gtk_widget_set_sensitive (mainw->loop_continue, (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&mainw->current_file>0);
+  gtk_widget_set_sensitive (mainw->m_loopbutton, (!cfile->achans||mainw->mute||mainw->multitrack!=NULL||
+						  mainw->loop_cont||audio_player==AUD_PLAYER_JACK||
+						  audio_player==AUD_PLAYER_PULSE)&&mainw->current_file>0);
+  gtk_widget_set_sensitive (mainw->loop_continue, (!cfile->achans||mainw->mute||mainw->loop_cont||
+						   audio_player==AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE)
+			    &&mainw->current_file>0);
 
   if (cfile->frames==0&&mainw->multitrack==NULL) {
     if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
@@ -1966,7 +1971,9 @@ void play_file (void) {
     mainw->kb_timer=gtk_timeout_add (KEY_RPT_INTERVAL,&plugin_poll_keyboard,NULL);
 
 #ifdef ENABLE_JACK
-    if (mainw->event_list!=NULL&&!mainw->record&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&!(mainw->preview&&mainw->is_processing&&!(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
+    if (mainw->event_list!=NULL&&!mainw->record&&audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
+	!(mainw->preview&&mainw->is_processing&&
+	  !(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
       // if playing an event list, we switch to audio memory buffer mode
       if (mainw->multitrack!=NULL) init_jack_audio_buffers(cfile->achans,cfile->arate,exact_preview);
       else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
@@ -1974,7 +1981,9 @@ void play_file (void) {
     }
 #endif    
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->event_list!=NULL&&!mainw->record&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&!(mainw->preview&&mainw->is_processing&&!(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
+    if (mainw->event_list!=NULL&&!mainw->record&&audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
+	!(mainw->preview&&mainw->is_processing&&
+	  !(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
       // if playing an event list, we switch to audio memory buffer mode
       if (mainw->multitrack!=NULL) init_pulse_audio_buffers(cfile->achans,cfile->arate,exact_preview);
       else init_pulse_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
@@ -1993,7 +2002,7 @@ void play_file (void) {
 	if (has_audio_buffers) {
 
 #ifdef ENABLE_JACK
-	  if (prefs->audio_player==AUD_PLAYER_JACK) {
+	  if (audio_player==AUD_PLAYER_JACK) {
 	    int i;
 	    mainw->write_abuf=0;
 	    
@@ -2017,7 +2026,7 @@ void play_file (void) {
 	  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	  if (prefs->audio_player==AUD_PLAYER_PULSE) {
+	  if (audio_player==AUD_PLAYER_PULSE) {
 	    int i;
 	    mainw->write_abuf=0;
 	    
@@ -2047,7 +2056,7 @@ void play_file (void) {
 
 	// reset audio buffers
 #ifdef ENABLE_JACK
-	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+	if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 	  // must do this before deinit fx
 	  pthread_mutex_lock(&mainw->abuf_mutex);
 	  mainw->jackd->read_abuf=-1;
@@ -2055,7 +2064,7 @@ void play_file (void) {
 	}
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+	if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
 	  // must do this before deinit fx
 	  pthread_mutex_lock(&mainw->abuf_mutex);
 	  mainw->pulsed->read_abuf=-1;
@@ -2078,7 +2087,7 @@ void play_file (void) {
 
 	// reset audio read buffers
 #ifdef ENABLE_JACK
-	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+	if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 	  // must do this before deinit fx
 	  pthread_mutex_lock(&mainw->abuf_mutex);
 	  mainw->jackd->read_abuf=-1;
@@ -2086,7 +2095,7 @@ void play_file (void) {
 	}
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+	if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
 	  // must do this before deinit fx
 	  pthread_mutex_lock(&mainw->abuf_mutex);
 	  mainw->pulsed->read_abuf=-1;
@@ -2117,7 +2126,7 @@ void play_file (void) {
   mainw->video_seek_ready=FALSE;
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+  if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 
     if (mainw->foreign&&mainw->jackd_read!=NULL) jack_rec_audio_end();
 
@@ -2141,7 +2150,7 @@ void play_file (void) {
   else {
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+  if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
 
     if (mainw->foreign&&mainw->pulsed_read!=NULL) pulse_rec_audio_end();
 
@@ -2177,7 +2186,7 @@ void play_file (void) {
   if (com!=NULL) g_free(com);
   mainw->actual_frame=0;
 
-  audio_cache_end();
+  if (audio_player==AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE) audio_cache_end();
 
 #ifdef ENABLE_OSC
   lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED,"");
@@ -2280,7 +2289,7 @@ void play_file (void) {
   }
 
   mainw->loop=oloop;
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) mainw->mute=mute;
+  if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->mute=mute;
 
   if (!mainw->preview||!cfile->opening) {
     sensitize();
@@ -2420,7 +2429,7 @@ void play_file (void) {
   }
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+  if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
     while (jack_get_msgq(mainw->jackd)!=NULL);
     mainw->jackd->in_use=FALSE;
 
@@ -2433,7 +2442,7 @@ void play_file (void) {
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+  if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
     while (pulse_get_msgq(mainw->pulsed)!=NULL);
     mainw->pulsed->in_use=FALSE;
 

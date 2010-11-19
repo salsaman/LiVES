@@ -4593,7 +4593,7 @@ void do_quick_switch (gint new_file) {
 #ifdef ENABLE_JACK
   if (mainw->jackd!=NULL) {
       while (jack_get_msgq(mainw->jackd)!=NULL);
-      if (mainw->jackd->fd>0) {
+      if (mainw->jackd->playing_file>0) {
 	  jack_message.command=ASERVER_CMD_FILE_CLOSE;
           jack_message.data=NULL;
 	  jack_message.next=NULL;

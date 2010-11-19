@@ -2133,7 +2133,7 @@ void play_file (void) {
     if (!mainw->preview&&!mainw->foreign) jack_pb_stop();
 
     // tell jack client to close audio file
-    if (mainw->jackd->fd>0) {
+    if (mainw->jackd->playing_file>0) {
       while (jack_get_msgq(mainw->jackd)!=NULL);
       jack_message.command=ASERVER_CMD_FILE_CLOSE;
       jack_message.data=NULL;

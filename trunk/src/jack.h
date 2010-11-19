@@ -83,8 +83,6 @@ typedef struct {
 
   volatile aserver_message_t   *msgq;          /**< linked list of messages we are sending to the callback process */
 
-  int fd;                  /**< if >0 we are playing from a file - deprecated */
-
   off_t seek_pos;
   off_t seek_end;
   gboolean usigned;

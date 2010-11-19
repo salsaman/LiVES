@@ -1218,7 +1218,6 @@ int jack_audio_init(void) {
     for (j=0;j<JACK_MAX_OUTPUT_PORTS;j++) jackd->volume[j]=1.0f;
     jackd->state=JackTClosed;
     jackd->sample_out_rate=jackd->sample_in_rate=0;
-    jackd->fd=-1;
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
@@ -1251,7 +1250,6 @@ int jack_audio_read_init(void) {
     for (j=0;j<JACK_MAX_INPUT_PORTS;j++) jackd->volume[j]=1.0f;
     jackd->state=JackTClosed;
     jackd->sample_out_rate=jackd->sample_in_rate=0;
-    jackd->fd=-1;
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;

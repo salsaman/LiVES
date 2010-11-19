@@ -1249,7 +1249,7 @@ static void lives_init(_ign_opts *ign_opts) {
 #else
 	      gchar *otherbit="\"lives -aplayer sox\".";
 #endif
-	      g_printerr("%s%s\n\n",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with: "),otherbit);
+	      g_printerr("%s%s\n\n",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with either \"lives -jackopts 16\", or "),otherbit);
 	    }
 
 	    if (mainw->jackd==NULL) {

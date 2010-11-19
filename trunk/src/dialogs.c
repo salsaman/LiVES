@@ -1611,7 +1611,7 @@ void do_jack_noopen_warn4(void) {
 #else
   gchar *otherbit="\"lives -aplayer sox\"";
 #endif
-  gchar *msg=g_strdup_printf(_("\nAlternatively, try to start lives with either:\nlives -jackopts 16, or\n%s\n"),otherbit);
+  gchar *msg=g_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),otherbit);
   do_blocking_error_dialog(msg);
   g_free(msg);
 }

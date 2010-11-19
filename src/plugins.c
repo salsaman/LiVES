@@ -1262,7 +1262,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
   gboolean calc_aspect=FALSE;
   gchar aspect_buffer[512];
   gint hblock=2,vblock=2;
-  int i,r;
+  int i,r,val;
   GList *ofmt_all=NULL;
   gboolean sizer=FALSE;
 
@@ -1455,7 +1455,38 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	continue;
       }
       
-      
+      if (!strncmp (checks[r],"minw=",5)) {
+	array=g_strsplit(checks[r],"=",2);
+	val=atoi(array[1]);
+	if (width<val) width=val;
+	g_strfreev(array);
+	continue;
+      }
+
+      if (!strncmp (checks[r],"minh=",5)) {
+	array=g_strsplit(checks[r],"=",2);
+	val=atoi(array[1]);
+	if (height<val) height=val;
+	g_strfreev(array);
+	continue;
+      }
+
+      if (!strncmp (checks[r],"maxh=",5)) {
+	array=g_strsplit(checks[r],"=",2);
+	val=atoi(array[1]);
+	if (height>val) height=val;
+	g_strfreev(array);
+	continue;
+      }
+
+      if (!strncmp (checks[r],"maxw=",5)) {
+	array=g_strsplit(checks[r],"=",2);
+	val=atoi(array[1]);
+	if (width>val) width=val;
+	g_strfreev(array);
+	continue;
+      }
+
       
       if (!strncmp (checks[r],"asigned=",8)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
 	array=g_strsplit(checks[r],"=",2);
@@ -1576,6 +1607,17 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
     if (sizer) allow_aspect_override=FALSE;
     
   }
+
+
+
+  // if we have min or max size, make sure we fit within that
+
+
+
+
+
+
+
 
 
   if (((width!=owidth||height!=oheight)&&width*height>0)||(best_fps_delta>0.)||(best_arate_delta>0&&best_arate>0)||best_arate<0||asigned!=0) {

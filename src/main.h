@@ -706,6 +706,7 @@ void do_no_decoder_error(const gchar *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
 void do_jack_noopen_warn3(void);
+void do_jack_noopen_warn4(void);
 void do_file_perm_error(const gchar *file_name);
 void do_dir_perm_error(const gchar *dir_name);
 void do_encoder_img_ftm_error(render_details *rdet);

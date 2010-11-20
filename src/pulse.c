@@ -194,9 +194,14 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	  pulsed->playing_file=-1;
 	}
 	else {
-	  if (pulsed->aPlayPtr->data!=NULL) g_free(pulsed->aPlayPtr->data);
-	  if (nbytes>0) pulsed->aPlayPtr->data=g_malloc(nbytes*100);
-	  else (pulsed->aPlayPtr->data)=NULL;
+	  if (nbytes>0) {
+	    pulsed->aPlayPtr->data=realloc(pulsed->aPlayPtr->data,nbytes*100);
+	    pulsed->aPlayPtr->size=nbytes*100;
+	  }
+	  else {
+	    (pulsed->aPlayPtr->data)=NULL;
+	    pulsed->aPlayPtr->size=0;
+	  }
 	  pulsed->seek_pos=0;
 	  pulsed->playing_file=new_file;
 	  pulsed->audio_ticks=mainw->currticks;

@@ -1991,6 +1991,7 @@ void play_file (void) {
     }
 #endif    
 
+    mainw->abufs_to_fill=0;
 
     //play until stopped or a stream finishes
     do {

@@ -2849,12 +2849,13 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 
   if ((next_frame_event=get_next_frame_event (next_event))!=NULL) {
     next_tc=get_event_timecode (next_frame_event);
-    if (!mainw->fs&&prefs->show_framecount) {
-      cfile->pb_fps=U_SEC/(next_tc-tc);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-    }
     // drop frame if it is too far behind
     if (mainw->playing_file>-1&&!mainw->noframedrop&&next_tc<=curr_tc) break;
+    if (!mainw->fs&&prefs->show_framecount) {
+      g_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+      g_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+    }
   }
 
   mainw->num_tracks=weed_leaf_num_elements (next_event,"clips");
@@ -3108,7 +3109,7 @@ gint render_events (gboolean reset) {
   if (reset) {
     progress=frame=1;
     event=cfile->next_event;
-    out_frame=(gint)((gdouble)(get_event_timecode (event)/U_SECL)*cfile->fps+1.);
+    out_frame=(gint)((gdouble)(get_event_timecode (event)/U_SECL)*cfile->fps+mainw->play_start);
     if (cfile->frames<out_frame) out_frame=cfile->frames+1;
     cfile->undo_start=out_frame;
 
@@ -3124,7 +3125,7 @@ gint render_events (gboolean reset) {
       xaclips[i]=-1;
       xaseek[i]=xavel[i]=0;
     }
-    atime=0.;
+    atime=(gdouble)(out_frame-1.)/cfile->fps;
     has_audio=FALSE;
     return 1;
   }
@@ -3311,7 +3312,7 @@ gint render_events (gboolean reset) {
 
 	if (pixbuf==NULL) break;
 	if (next_frame_event==NULL&&is_blank) break; // don't render final blank frame
-	next_out_tc=(weed_timecode_t)((out_frame-1.)/cfile->fps*U_SEC); // calculate tc of next out frame
+	next_out_tc=(weed_timecode_t)((out_frame-mainw->play_start)/cfile->fps*U_SEC); // calculate tc of next out frame
 	
 	if (next_frame_event!=NULL) {
 	  if (next_tc<next_out_tc||next_tc-next_out_tc<next_out_tc-tc) break;
@@ -3524,6 +3525,7 @@ gboolean start_render_effect_events (weed_plant_t *event_list) {
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     cfile->pb_fps=old_pb_fps;
+    cfile->frames=cfile->old_frames;
     mainw->internal_messaging=FALSE;
     mainw->resizing=FALSE;
     cfile->next_event=NULL;
@@ -3907,7 +3909,10 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       break;
     case RENDER_CHOICE_SAME_CLIP:
       if (!render_to_clip (FALSE)) render_choice=RENDER_CHOICE_PREVIEW;
-      else close_scrap_file();
+      else {
+	close_scrap_file();
+	d_print_done();
+      }
       mainw->is_rendering=FALSE;
       break;
     case RENDER_CHOICE_MULTITRACK:

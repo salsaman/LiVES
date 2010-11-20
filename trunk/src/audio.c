@@ -1388,6 +1388,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   static double *aseeks=NULL,*avels=NULL;
 
   gboolean is_cont=FALSE;
+  if (abuf==NULL) return;
 
   abuf->samples_filled=0; // write fill level of buffer
   abuf->start_sample=0; // read level

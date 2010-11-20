@@ -4636,10 +4636,10 @@ void do_quick_switch (gint new_file) {
         mainw->jackd->msgq=&jack_message;
         mainw->jackd->in_use=TRUE;
 
-     if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-       mainw->jackd->is_paused=mainw->files[new_file]->play_paused;
-       mainw->jackd->is_silent=FALSE;
-     }
+	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	  mainw->jackd->is_paused=mainw->files[new_file]->play_paused;
+	  mainw->jackd->is_silent=FALSE;
+	}
 
        mainw->rec_aclip=new_file;
        mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
@@ -4705,10 +4705,10 @@ void do_quick_switch (gint new_file) {
         mainw->pulsed->msgq=&pulse_message;
         mainw->pulsed->in_use=TRUE;
 
-     if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-       mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
-       mainw->pulsed->is_silent=FALSE;
-     }
+	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	  mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
+	  mainw->pulsed->is_silent=FALSE;
+	}
 
        mainw->rec_aclip=new_file;
        mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;

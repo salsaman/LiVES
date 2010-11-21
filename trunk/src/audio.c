@@ -903,12 +903,17 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   max_aud_mem=max_aud_mem/out_achans/nfiles; // max mem per channel/track
 
-  bytes_to_read=tsamples*(sizeof(float)); // eg. 120 (20 samples)
+  // we use float here because our audio effects use float
+  // tsamples is total samples (30 in this example)
+ÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇ  bytes_to_read=tsamples*(sizeof(float)); // eg. 120 (30 samples)
 
+  // how many segments do we need to read all bytes ?
   max_segments=(int)((gdouble)bytes_to_read/(gdouble)max_aud_mem+1.); // max segments (rounded up) [e.g ceil(120/45)==3]
+
+  // then, how many bytes per segment
   aud_buffer=bytes_to_read/max_segments;  // estimate of buffer size (e.g. 120/3 = 40)
 
-  zsamples=(int)(aud_buffer/sizeof(float)+.5); // ensure whole number of samples (e.g 40 == 10 samples)
+  zsamples=(int)(aud_buffer/sizeof(float)+.5); // ensure whole number of samples (e.g 40 == 10 samples), round up
 
   xsamples=zsamples+(tsamples-(max_segments*zsamples)); // e.g 30 - 3 * 10 == 0
 

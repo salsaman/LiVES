@@ -3112,7 +3112,6 @@ gint render_events (gboolean reset) {
     out_frame=(gint)((gdouble)(get_event_timecode (event)/U_SECL)*cfile->fps+mainw->play_start);
     if (cfile->frames<out_frame) out_frame=cfile->frames+1;
     cfile->undo_start=out_frame;
-
     // store this, because if the user previews and there is no audio file yet, achans will get reset
     cfile->undo_achans=cfile->achans;
     cfile->undo_arate=cfile->arate;
@@ -3829,6 +3828,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
   GtkWidget *elist_dialog;
 
   gint dh,dw,dar,das,dac,dse;
+  gint oplay_start;
   gdouble df;
 
   gboolean new_clip=FALSE;
@@ -3854,6 +3854,9 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
   if (add_deinit&&!mainw->record_paused) mainw->event_list=add_filter_deinit_events (mainw->event_list); // add deinit events for any effects that are left on
 
   if (add_deinit) event_list_close_gaps (mainw->event_list);
+
+  // need to retain play_start for rendering to same clip
+  oplay_start=mainw->play_start;
 
   do {
     e_rec_dialog=events_rec_dialog();
@@ -3895,6 +3898,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
 	  prefs->mt_def_signed_endian=cfile->signed_endian;
 	}
       }
+      mainw->play_start=1;   ///< new clip frames always start  at 1
       if (!render_to_clip (TRUE)) render_choice=RENDER_CHOICE_PREVIEW;
       else close_scrap_file();
       prefs->mt_def_width=dw;
@@ -3908,6 +3912,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       new_clip=TRUE;
       break;
     case RENDER_CHOICE_SAME_CLIP:
+      mainw->play_start=oplay_start;  ///< same clip frames start where recording started
       if (!render_to_clip (FALSE)) render_choice=RENDER_CHOICE_PREVIEW;
       else {
 	close_scrap_file();

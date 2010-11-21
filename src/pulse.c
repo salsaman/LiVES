@@ -174,9 +174,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
   if (xbytes>nbytes) xbytes=nbytes;
 
-  if (!mainw->is_ready||pulsed==NULL||(mainw->playing_file==-1&&pulsed->msgq==NULL)) {
-    if (!pulsed->is_silent) sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
-    pulsed->is_silent=TRUE;
+  if (!mainw->is_ready||pulsed==NULL||(mainw->playing_file==-1&&pulsed->msgq==NULL)||nbytes>1000000) {
+    sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
     //g_print("pt a1 %ld\n",nframes);
     return;
   }
@@ -194,18 +193,24 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	  pulsed->playing_file=-1;
 	}
 	else {
-	  if (nbytes>0) {
-	    pulsed->aPlayPtr->data=realloc(pulsed->aPlayPtr->data,nbytes*100);
-	    pulsed->aPlayPtr->size=nbytes*100;
-	  }
-	  else {
-	    (pulsed->aPlayPtr->data)=NULL;
-	    pulsed->aPlayPtr->size=0;
-	  }
 	  pulsed->seek_pos=0;
 	  pulsed->playing_file=new_file;
 	  pulsed->audio_ticks=mainw->currticks;
 	  pulsed->frames_written=0;
+	  if (nbytes>0) {
+	    g_print("mallocing %ld\n",nbytes*100);
+	    if (nbytes>0) {
+	      // delay creating for now, just op silence
+	      pulsed->aPlayPtr->data=realloc(pulsed->aPlayPtr->data,nbytes*100);
+	      memset(pulsed->aPlayPtr->data,0,nbytes*100);
+	      pulsed->aPlayPtr->size=nbytes*100;
+	    }
+	    else {
+	      free(pulsed->aPlayPtr->data);
+	      pulsed->aPlayPtr->data=NULL;
+	      pulsed->aPlayPtr->size=0;
+	    }
+	  }
 	}
 	g_free(filename);
       }
@@ -258,8 +263,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
     if (!pulsed->in_use||((pulsed->fd<0||pulsed->seek_pos<0.)&&pulsed->read_abuf<0)||pulsed->is_paused) {
 
-      if (!pulsed->is_silent) sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
-      pulsed->is_silent=TRUE;
+      sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
 
       if (!pulsed->is_paused) pulsed->frames_written+=nframes;
       if (pulsed->seek_pos<0.&&pulsed->playing_file>-1&&afile!=NULL) {
@@ -269,8 +273,6 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       //g_print("pt a3\n");
       return;
     }
-
-    pulsed->is_silent=FALSE;
 
     if (G_LIKELY(pulseFramesAvailable>0&&(pulsed->read_abuf>-1||
 					  (pulsed->aPlayPtr!=NULL&&pulsed->aPlayPtr->data!=NULL
@@ -329,14 +331,12 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 		  pulsed->seek_pos-=in_bytes;
 		}
 		else {
-		  seek=0;
-		  pulsed->seek_pos=seek;
+		  pulsed->seek_pos=0;
 		}
 	      }
 	    }
-	    if (!pulsed->is_silent) sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
-							 (pulsed->out_asamps>>3),xbytes);
-	    pulsed->is_silent=TRUE;
+	    sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
+				 (pulsed->out_asamps>>3),xbytes);
 	    pulsed->frames_written+=nframes;
 	    //g_print("pt a4\n");
 	    return;
@@ -389,9 +389,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
 	if (!pulsed->in_use||in_bytes==0) {
 	  // reached end of audio with no looping
-	  if (!pulsed->is_silent) sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
-						       (pulsed->out_asamps>>3),xbytes);
-	  pulsed->is_silent=TRUE;
+	  sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
+			       (pulsed->out_asamps>>3),xbytes);
 	  if (!pulsed->is_paused) pulsed->frames_written+=nframes;
 	  if (pulsed->seek_pos<0.&&pulsed->playing_file>-1&&afile!=NULL) {
 	    pulsed->seek_pos+=nframes*afile->achans*afile->asampsize/8;
@@ -473,8 +472,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	    pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
 	  }
 	  else {
-	    if (!pulsed->is_silent) sample_silence_pulse(pulsed,xbytes,xbytes);
-	    pulsed->is_silent=TRUE;
+	    sample_silence_pulse(pulsed,xbytes,xbytes);
 	  }
 	}
 	nbytes-=xbytes;
@@ -489,17 +487,15 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       g_printerr("buffer underrun of %ld frames\n", pulseFramesAvailable);
 #endif
       xbytes=pa_stream_writable_size(pstream);
-      if (!pulsed->is_silent) sample_silence_pulse(pulsed,pulseFramesAvailable*pulsed->out_achans
-						   *(pulsed->out_asamps>>3),xbytes);
-      pulsed->is_silent=TRUE;
+      sample_silence_pulse(pulsed,pulseFramesAvailable*pulsed->out_achans
+			   *(pulsed->out_asamps>>3),xbytes);
     }
   }
   else {
 #ifdef DEBUG_PULSE
     g_printerr("PAUSED or STOPPED or CLOSED, outputting silence\n");
 #endif
-    if (!pulsed->is_silent) sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
-    pulsed->is_silent=TRUE;
+    sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
     //g_print("pt a6\n");
   }
   //g_print("pt a7\n");

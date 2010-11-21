@@ -755,7 +755,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   int render_block_size=RENDER_BLOCK_SIZE;
 
-  if (out_achans==0) return 0l;
+  if (out_achans*nfiles==0) return 0l;
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
@@ -1040,9 +1040,10 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     tot_frames+=frames_out;
   }
 
-  for (i=0;i<out_achans*nfiles;i++) {
-    if (float_buffer[i]!=NULL) g_free(float_buffer[i]);
-  }
+  if (float_buffer!=NULL)
+    for (i=0;i<out_achans*nfiles;i++) {
+      if (float_buffer[i]!=NULL) g_free(float_buffer[i]);
+    }
 
   if (finish_buff!=NULL) g_free(finish_buff);
   if (holding_buff!=NULL) g_free(holding_buff);

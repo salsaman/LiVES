@@ -92,8 +92,6 @@ typedef struct {
 
   gboolean is_output; ///< is output FROM host to jack
 
-  gboolean is_silent;
-
   gint playing_file;
 
   lives_audio_buf_t **abufs;

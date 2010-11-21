@@ -4707,7 +4707,6 @@ void do_quick_switch (gint new_file) {
 
 	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 	  mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
-	  mainw->pulsed->is_silent=FALSE;
 	}
 
        mainw->rec_aclip=new_file;

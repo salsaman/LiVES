@@ -151,328 +151,335 @@ static short *shortbuffer=NULL;
 
 static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // PULSE AUDIO calls this periodically to get the next audio buffer
-  static float old_volume=-1.;
-  pulse_driver_t* pulsed = (pulse_driver_t*)arg;
 
-  gulong nframes=nbytes/pulsed->out_achans/(pulsed->out_asamps>>3);
+  // note: unlike with jack, we have to actually write something with pa_stream_write, even if silent
+  // - otherwise the buffer size just increases
 
-  aserver_message_t *msg;
-
-  long seek,xseek;
-  int new_file;
-  gchar *filename;
-  gboolean from_memory=FALSE;
-
-  guchar *buffer;
-  size_t xbytes=pa_stream_writable_size(pstream);
-
-  gboolean needs_free=FALSE;
-
-  size_t offs=0;
-
-  pa_volume_t pavol;
-
-  if (xbytes>nbytes) xbytes=nbytes;
-
-  if (!mainw->is_ready||pulsed==NULL||(mainw->playing_file==-1&&pulsed->msgq==NULL)||nbytes>1000000) {
-    sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
-    //g_print("pt a1 %ld\n",nframes);
-    return;
-  }
-
-  while ((msg=(aserver_message_t *)pulsed->msgq)!=NULL) {
-    switch (msg->command) {
-    case ASERVER_CMD_FILE_OPEN:
-      new_file=atoi(msg->data);
-      if (pulsed->playing_file!=new_file) {
-	if (pulsed->is_opening) filename=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,mainw->files[new_file]->handle);
-	else filename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,mainw->files[new_file]->handle);
-	pulsed->fd=open(filename,O_RDONLY);
-	if (pulsed->fd==-1) {
-	  g_printerr("pulsed: error opening %s\n",filename);
-	  pulsed->playing_file=-1;
-	}
-	else {
-	  pulsed->seek_pos=0;
-	  pulsed->playing_file=new_file;
-	  pulsed->audio_ticks=mainw->currticks;
-	  pulsed->frames_written=0;
-	  if (nbytes>0) {
-	    g_print("mallocing %ld\n",nbytes*100);
-	    if (nbytes>0) {
-	      // delay creating for now, just op silence
-	      pulsed->aPlayPtr->data=realloc(pulsed->aPlayPtr->data,nbytes*100);
-	      memset(pulsed->aPlayPtr->data,0,nbytes*100);
-	      pulsed->aPlayPtr->size=nbytes*100;
-	    }
-	    else {
-	      free(pulsed->aPlayPtr->data);
-	      pulsed->aPlayPtr->data=NULL;
-	      pulsed->aPlayPtr->size=0;
-	    }
-	  }
-	}
-	g_free(filename);
-      }
-      break;
-    case ASERVER_CMD_FILE_CLOSE:
-      if (pulsed->fd>=0) close(pulsed->fd);
-      pulsed->fd=-1;
-      if (pulsed->aPlayPtr->data!=NULL) g_free(pulsed->aPlayPtr->data);
-      pulsed->aPlayPtr->data=NULL;
-      pulsed->aPlayPtr->size=0;
-      pulsed->playing_file=-1;
-      break;
-    case ASERVER_CMD_FILE_SEEK:
-      if (pulsed->fd<0) break;
-      xseek=seek=atol(msg->data);
-      if (seek<0.) xseek=0.;
-      if (!pulsed->mute) {
-	lseek(pulsed->fd,xseek,SEEK_SET);
-      }
-      pulsed->seek_pos=seek;
-      pulsed->audio_ticks=mainw->currticks;
-      pulsed->frames_written=0;
-      break;
-    default:
-      msg->data=NULL;
-    }
-    if (msg->data!=NULL) g_free(msg->data);
-    msg->command=ASERVER_CMD_PROCESSED;
-    if (msg->next==NULL) pulsed->msgq=NULL;
-    else pulsed->msgq = msg->next;
-  }
-  if (pulsed->chunk_size!=nbytes) pulsed->chunk_size = nbytes;
-
-  pulsed->state=pa_context_get_state(pulsed->con);
-
-  if (pulsed->state==PA_CONTEXT_READY) {
-    gulong pulseFramesAvailable = nframes;
-    gulong inputFramesAvailable;
-    gulong numFramesToWrite;
-    glong in_frames=0;
-    gulong in_bytes=0;
-    gfloat shrink_factor=1.f;
-    int swap_sign;
-
-#ifdef DEBUG_PULSE
-    g_printerr("playing... pulseFramesAvailable = %ld\n", pulseFramesAvailable);
-#endif
-
-    pulsed->num_calls++;
-
-    if (!pulsed->in_use||((pulsed->fd<0||pulsed->seek_pos<0.)&&pulsed->read_abuf<0)||pulsed->is_paused) {
-
-      sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
-
-      if (!pulsed->is_paused) pulsed->frames_written+=nframes;
-      if (pulsed->seek_pos<0.&&pulsed->playing_file>-1&&afile!=NULL) {
-	pulsed->seek_pos+=nframes*afile->achans*afile->asampsize/8;
-	if (pulsed->seek_pos>=0) pulse_audio_seek_bytes(pulsed,pulsed->seek_pos);
-      }
-      //g_print("pt a3\n");
-      return;
-    }
-
-    if (G_LIKELY(pulseFramesAvailable>0&&(pulsed->read_abuf>-1||
-					  (pulsed->aPlayPtr!=NULL&&pulsed->aPlayPtr->data!=NULL
-					   &&pulsed->in_achans>0)))) {
-
-      if (mainw->playing_file>-1&&pulsed->read_abuf>-1) {
-	// playing back from memory buffers instead of from file
-	// this is used in multitrack
-	from_memory=TRUE;
-
-	numFramesToWrite=pulseFramesAvailable;
-	pulsed->frames_written+=numFramesToWrite;
-	pulseFramesAvailable-=numFramesToWrite;
-
-      }
-      else {
-	if (G_LIKELY(pulsed->fd>=0)) {
-	  pulsed->aPlayPtr->size=0;
-	  in_bytes=ABS((in_frames=((gdouble)pulsed->in_arate/(gdouble)pulsed->out_arate*
-				   (gdouble)pulseFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))
-	    *pulsed->in_achans*(pulsed->in_asamps>>3);
-	  //g_print("in bytes=%ld %ld %ld %ld %d %d\n",in_bytes,pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable,pulsed->in_achans,pulsed->in_asamps);
-	  if ((shrink_factor=(gfloat)in_frames/(gfloat)pulseFramesAvailable)<0.f) {
-	    // reverse playback
-	    if ((pulsed->seek_pos-=in_bytes)<0) {
-	      if (pulsed->loop==AUDIO_LOOP_NONE) {
-		if (*pulsed->whentostop==STOP_ON_AUD_END) {
-		  *pulsed->cancelled=CANCEL_AUD_END;
-		}
-		pulsed->in_use=FALSE;
-		pulse_set_rec_avals(pulsed,FALSE);
-	      }
-	      else {
-		if (pulsed->loop==AUDIO_LOOP_PINGPONG) {
-		  pulsed->in_arate=-pulsed->in_arate;
-		  shrink_factor=-shrink_factor;
-		  pulsed->seek_pos=0;
-		  pulse_set_rec_avals(pulsed,TRUE);
-		}
-		else pulsed->seek_pos=pulsed->seek_end-in_bytes;
-		pulse_set_rec_avals(pulsed,FALSE);
-	      }
-	    }
-	    // rewind by in_bytes
-	    lseek(pulsed->fd,pulsed->seek_pos,SEEK_SET);
-	  }
-	  if (pulsed->mute) {
-	    if (shrink_factor>0.f) pulsed->seek_pos+=in_bytes;
-	    if (pulsed->seek_pos>=pulsed->seek_end) {
-	      if (*pulsed->whentostop==STOP_ON_AUD_END) {
-		*pulsed->cancelled=CANCEL_AUD_END;
-	      }
-	      else {
-		if (pulsed->loop==AUDIO_LOOP_PINGPONG) {
-		  pulsed->in_arate=-pulsed->in_arate;
-		  pulsed->seek_pos-=in_bytes;
-		}
-		else {
-		  pulsed->seek_pos=0;
-		}
-	      }
-	    }
-	    sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
-				 (pulsed->out_asamps>>3),xbytes);
-	    pulsed->frames_written+=nframes;
-	    //g_print("pt a4\n");
-	    return;
-	  }
-	  else {
-	    gboolean loop_restart;
-	    do {
-	      loop_restart=FALSE;
-	      if (in_bytes>0) {
-		// playing from a file
-		if (!(*pulsed->cancelled)&&ABS(shrink_factor)<=100.f) {
-		  if ((pulsed->aPlayPtr->size=read(pulsed->fd,pulsed->aPlayPtr->data,in_bytes))==0) {
-		    if (*pulsed->whentostop==STOP_ON_AUD_END) {
-		      *pulsed->cancelled=CANCEL_AUD_END;
-		    }
-		    else {
-		      loop_restart=TRUE;
-		      if (pulsed->loop==AUDIO_LOOP_PINGPONG) {
-			pulsed->in_arate=-pulsed->in_arate;
-			lseek(pulsed->fd,(pulsed->seek_pos-=in_bytes),SEEK_SET);
-			pulse_set_rec_avals(pulsed,FALSE);
-		      }
-		      else {
-			if (pulsed->loop!=AUDIO_LOOP_NONE) {
-			  seek=0;
-			  lseek(pulsed->fd,(pulsed->seek_pos=seek),SEEK_SET);
-			  pulse_set_rec_avals(pulsed,TRUE);
-			}
-			else {
-			  pulsed->in_use=FALSE;
-			  loop_restart=FALSE;
-			  pulse_set_rec_avals(pulsed,TRUE);
-			}
-		      }
-		    }
-		  }
-		  else {
-		    if (shrink_factor<0.f) {
-		      // reverse play - rewind again by in_bytes
-		      lseek(pulsed->fd,pulsed->seek_pos,SEEK_SET);
-		    }
-		    else pulsed->seek_pos+=pulsed->aPlayPtr->size;
-		  }
-		}
-	      }
-	    } while (loop_restart);
-	  }
-	}
+   // note also, the buffer size can, and does, change on each call, making it inefficient to use ringbuffers
 
 
-	if (!pulsed->in_use||in_bytes==0) {
-	  // reached end of audio with no looping
-	  sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
-			       (pulsed->out_asamps>>3),xbytes);
-	  if (!pulsed->is_paused) pulsed->frames_written+=nframes;
-	  if (pulsed->seek_pos<0.&&pulsed->playing_file>-1&&afile!=NULL) {
-	    pulsed->seek_pos+=nframes*afile->achans*afile->asampsize/8;
-	    if (pulsed->seek_pos>=0) pulse_audio_seek_bytes(pulsed,pulsed->seek_pos);
-	  }
-	  //g_print("pt a5 %d %d\n",pulsed->in_use,in_bytes);
-	  return;
-	}
-	
-	inputFramesAvailable = pulsed->aPlayPtr->size / (pulsed->in_achans * (pulsed->in_asamps>>3));
-#ifdef DEBUG_PULSE
-	g_printerr("%ld inputFramesAvailable == %ld, %ld, %ld %ld,pulseFramesAvailable == %ld\n", pulsed->aPlayPtr->size, inputFramesAvailable, in_frames, pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable);
-#endif
-	buffer = pulsed->aPlayPtr->data;
-    
-	numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable/ABS(shrink_factor)+.001));
-    
-#ifdef DEBUG_PULSE
-	g_printerr("inputFramesAvailable after conversion %d\n",(gulong)((gdouble)inputFramesAvailable/shrink_factor+.001));
-	g_printerr("nframes == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nframes, pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
-#endif
-	
-	swap_sign=afile->signed_endian&AFORM_UNSIGNED;
-	
-	if (pulsed->in_asamps==pulsed->out_asamps&&shrink_factor==1.&&pulsed->in_achans==pulsed->out_achans&&!pulsed->reverse_endian&&!swap_sign) {
-	  // no transformation needed
-	  pulsed->sound_buffer=buffer;
-	}
-	else {
-	  pulsed->sound_buffer=g_malloc0(pulsed->chunk_size);
-	  
-	  if (pulsed->in_asamps==8) {
-	    sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, swap_sign?SWAP_U_TO_S:0);
-	  }
-	  else {
-	    sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian?SWAP_X_TO_L:0, swap_sign?SWAP_U_TO_S:0);
-	  }
-	}
-	
-	pulsed->frames_written+=numFramesToWrite;
-	pulseFramesAvailable-=numFramesToWrite;
-	
-#ifdef DEBUG_PULSE
-	g_printerr("pulseFramesAvailable == %ld\n", pulseFramesAvailable);
-#endif
-      }
-  
-      // playback from memory or file
-      
-      if (mainw->volume!=old_volume) {
-	pa_operation *pa_op;
-	pavol=pa_sw_volume_from_linear(mainw->volume);
-	pa_cvolume_set(&out_vol,pulsed->out_achans,pavol);
-	pa_op=pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&out_vol,NULL,NULL);
-	pa_operation_unref(pa_op);
-	old_volume=mainw->volume;
-      }
-      
-      
-      while (nbytes>0) {
-	if (nbytes<xbytes) xbytes=nbytes;
-	
-	if (!from_memory) {
-	  if (xbytes/pulsed->out_achans/(pulsed->out_asamps>>3)<=numFramesToWrite&&offs==0) {
-	    buffer=pulsed->sound_buffer;
-	  }
-	  else {
-	    buffer=g_malloc(xbytes);
-	    w_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
-	    offs+=xbytes;
-	    needs_free=TRUE;
-	  }
-	  pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:pulse_buff_free,0,PA_SEEK_RELATIVE);
-	}
-	else {
-	  if (pulsed->read_abuf>-1&&!pulsed->mute) {
-	    shortbuffer=g_malloc0(xbytes);
-	    sample_move_abuf_int16(shortbuffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
-	    pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
-	  }
-	  else {
-	    sample_silence_pulse(pulsed,xbytes,xbytes);
+   static float old_volume=-1.;
+   pulse_driver_t* pulsed = (pulse_driver_t*)arg;
+
+   gulong nframes=nbytes/pulsed->out_achans/(pulsed->out_asamps>>3);
+
+   aserver_message_t *msg;
+
+   long seek,xseek;
+   int new_file;
+   gchar *filename;
+   gboolean from_memory=FALSE;
+
+   guchar *buffer;
+   size_t xbytes=pa_stream_writable_size(pstream);
+
+   gboolean needs_free=FALSE;
+
+   size_t offs=0;
+
+   pa_volume_t pavol;
+
+   if (xbytes>nbytes) xbytes=nbytes;
+
+   if (!mainw->is_ready||pulsed==NULL||(mainw->playing_file==-1&&pulsed->msgq==NULL)||nbytes>1000000) {
+     sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
+     //g_print("pt a1 %ld\n",nframes);
+     return;
+   }
+
+   while ((msg=(aserver_message_t *)pulsed->msgq)!=NULL) {
+     switch (msg->command) {
+     case ASERVER_CMD_FILE_OPEN:
+       new_file=atoi(msg->data);
+       if (pulsed->playing_file!=new_file) {
+	 if (pulsed->is_opening) filename=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,mainw->files[new_file]->handle);
+	 else filename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,mainw->files[new_file]->handle);
+	 pulsed->fd=open(filename,O_RDONLY);
+	 if (pulsed->fd==-1) {
+	   g_printerr("pulsed: error opening %s\n",filename);
+	   pulsed->playing_file=-1;
+	 }
+	 else {
+	   pulsed->seek_pos=0;
+	   pulsed->playing_file=new_file;
+	   pulsed->audio_ticks=mainw->currticks;
+	   pulsed->frames_written=0;
+	   if (nbytes>0) {
+	     g_print("mallocing %ld\n",nbytes*100);
+	     if (nbytes>0) {
+	       // delay creating for now, just op silence
+	       pulsed->aPlayPtr->data=realloc(pulsed->aPlayPtr->data,nbytes*100);
+	       memset(pulsed->aPlayPtr->data,0,nbytes*100);
+	       pulsed->aPlayPtr->size=nbytes*100;
+	     }
+	     else {
+	       free(pulsed->aPlayPtr->data);
+	       pulsed->aPlayPtr->data=NULL;
+	       pulsed->aPlayPtr->size=0;
+	     }
+	   }
+	 }
+	 g_free(filename);
+       }
+       break;
+     case ASERVER_CMD_FILE_CLOSE:
+       if (pulsed->fd>=0) close(pulsed->fd);
+       pulsed->fd=-1;
+       if (pulsed->aPlayPtr->data!=NULL) g_free(pulsed->aPlayPtr->data);
+       pulsed->aPlayPtr->data=NULL;
+       pulsed->aPlayPtr->size=0;
+       pulsed->playing_file=-1;
+       break;
+     case ASERVER_CMD_FILE_SEEK:
+       if (pulsed->fd<0) break;
+       xseek=seek=atol(msg->data);
+       if (seek<0.) xseek=0.;
+       if (!pulsed->mute) {
+	 lseek(pulsed->fd,xseek,SEEK_SET);
+       }
+       pulsed->seek_pos=seek;
+       pulsed->audio_ticks=mainw->currticks;
+       pulsed->frames_written=0;
+       break;
+     default:
+       msg->data=NULL;
+     }
+     if (msg->data!=NULL) g_free(msg->data);
+     msg->command=ASERVER_CMD_PROCESSED;
+     if (msg->next==NULL) pulsed->msgq=NULL;
+     else pulsed->msgq = msg->next;
+   }
+   if (pulsed->chunk_size!=nbytes) pulsed->chunk_size = nbytes;
+
+   pulsed->state=pa_context_get_state(pulsed->con);
+
+   if (pulsed->state==PA_CONTEXT_READY) {
+     gulong pulseFramesAvailable = nframes;
+     gulong inputFramesAvailable;
+     gulong numFramesToWrite;
+     glong in_frames=0;
+     gulong in_bytes=0;
+     gfloat shrink_factor=1.f;
+     int swap_sign;
+
+ #ifdef DEBUG_PULSE
+     g_printerr("playing... pulseFramesAvailable = %ld\n", pulseFramesAvailable);
+ #endif
+
+     pulsed->num_calls++;
+
+     if (!pulsed->in_use||((pulsed->fd<0||pulsed->seek_pos<0.)&&pulsed->read_abuf<0)||pulsed->is_paused) {
+
+       sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
+
+       if (!pulsed->is_paused) pulsed->frames_written+=nframes;
+       if (pulsed->seek_pos<0.&&pulsed->playing_file>-1&&afile!=NULL) {
+	 pulsed->seek_pos+=nframes*afile->achans*afile->asampsize/8;
+	 if (pulsed->seek_pos>=0) pulse_audio_seek_bytes(pulsed,pulsed->seek_pos);
+       }
+       //g_print("pt a3\n");
+       return;
+     }
+
+     if (G_LIKELY(pulseFramesAvailable>0&&(pulsed->read_abuf>-1||
+					   (pulsed->aPlayPtr!=NULL&&pulsed->aPlayPtr->data!=NULL
+					    &&pulsed->in_achans>0)))) {
+
+       if (mainw->playing_file>-1&&pulsed->read_abuf>-1) {
+	 // playing back from memory buffers instead of from file
+	 // this is used in multitrack
+	 from_memory=TRUE;
+
+	 numFramesToWrite=pulseFramesAvailable;
+	 pulsed->frames_written+=numFramesToWrite;
+	 pulseFramesAvailable-=numFramesToWrite;
+
+       }
+       else {
+	 if (G_LIKELY(pulsed->fd>=0)) {
+	   pulsed->aPlayPtr->size=0;
+	   in_bytes=ABS((in_frames=((gdouble)pulsed->in_arate/(gdouble)pulsed->out_arate*
+				    (gdouble)pulseFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))
+	     *pulsed->in_achans*(pulsed->in_asamps>>3);
+	   //g_print("in bytes=%ld %ld %ld %ld %d %d\n",in_bytes,pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable,pulsed->in_achans,pulsed->in_asamps);
+	   if ((shrink_factor=(gfloat)in_frames/(gfloat)pulseFramesAvailable)<0.f) {
+	     // reverse playback
+	     if ((pulsed->seek_pos-=in_bytes)<0) {
+	       if (pulsed->loop==AUDIO_LOOP_NONE) {
+		 if (*pulsed->whentostop==STOP_ON_AUD_END) {
+		   *pulsed->cancelled=CANCEL_AUD_END;
+		 }
+		 pulsed->in_use=FALSE;
+		 pulse_set_rec_avals(pulsed,FALSE);
+	       }
+	       else {
+		 if (pulsed->loop==AUDIO_LOOP_PINGPONG) {
+		   pulsed->in_arate=-pulsed->in_arate;
+		   shrink_factor=-shrink_factor;
+		   pulsed->seek_pos=0;
+		   pulse_set_rec_avals(pulsed,TRUE);
+		 }
+		 else pulsed->seek_pos=pulsed->seek_end-in_bytes;
+		 pulse_set_rec_avals(pulsed,FALSE);
+	       }
+	     }
+	     // rewind by in_bytes
+	     lseek(pulsed->fd,pulsed->seek_pos,SEEK_SET);
+	   }
+	   if (pulsed->mute) {
+	     if (shrink_factor>0.f) pulsed->seek_pos+=in_bytes;
+	     if (pulsed->seek_pos>=pulsed->seek_end) {
+	       if (*pulsed->whentostop==STOP_ON_AUD_END) {
+		 *pulsed->cancelled=CANCEL_AUD_END;
+	       }
+	       else {
+		 if (pulsed->loop==AUDIO_LOOP_PINGPONG) {
+		   pulsed->in_arate=-pulsed->in_arate;
+		   pulsed->seek_pos-=in_bytes;
+		 }
+		 else {
+		   pulsed->seek_pos=0;
+		 }
+	       }
+	     }
+	     sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
+				  (pulsed->out_asamps>>3),xbytes);
+	     pulsed->frames_written+=nframes;
+	     //g_print("pt a4\n");
+	     return;
+	   }
+	   else {
+	     gboolean loop_restart;
+	     do {
+	       loop_restart=FALSE;
+	       if (in_bytes>0) {
+		 // playing from a file
+		 if (!(*pulsed->cancelled)&&ABS(shrink_factor)<=100.f) {
+		   if ((pulsed->aPlayPtr->size=read(pulsed->fd,pulsed->aPlayPtr->data,in_bytes))==0) {
+		     if (*pulsed->whentostop==STOP_ON_AUD_END) {
+		       *pulsed->cancelled=CANCEL_AUD_END;
+		     }
+		     else {
+		       loop_restart=TRUE;
+		       if (pulsed->loop==AUDIO_LOOP_PINGPONG) {
+			 pulsed->in_arate=-pulsed->in_arate;
+			 lseek(pulsed->fd,(pulsed->seek_pos-=in_bytes),SEEK_SET);
+			 pulse_set_rec_avals(pulsed,FALSE);
+		       }
+		       else {
+			 if (pulsed->loop!=AUDIO_LOOP_NONE) {
+			   seek=0;
+			   lseek(pulsed->fd,(pulsed->seek_pos=seek),SEEK_SET);
+			   pulse_set_rec_avals(pulsed,TRUE);
+			 }
+			 else {
+			   pulsed->in_use=FALSE;
+			   loop_restart=FALSE;
+			   pulse_set_rec_avals(pulsed,TRUE);
+			 }
+		       }
+		     }
+		   }
+		   else {
+		     if (shrink_factor<0.f) {
+		       // reverse play - rewind again by in_bytes
+		       lseek(pulsed->fd,pulsed->seek_pos,SEEK_SET);
+		     }
+		     else pulsed->seek_pos+=pulsed->aPlayPtr->size;
+		   }
+		 }
+	       }
+	     } while (loop_restart);
+	   }
+	 }
+
+
+	 if (!pulsed->in_use||in_bytes==0) {
+	   // reached end of audio with no looping
+	   sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
+				(pulsed->out_asamps>>3),xbytes);
+	   if (!pulsed->is_paused) pulsed->frames_written+=nframes;
+	   if (pulsed->seek_pos<0.&&pulsed->playing_file>-1&&afile!=NULL) {
+	     pulsed->seek_pos+=nframes*afile->achans*afile->asampsize/8;
+	     if (pulsed->seek_pos>=0) pulse_audio_seek_bytes(pulsed,pulsed->seek_pos);
+	   }
+	   //g_print("pt a5 %d %d\n",pulsed->in_use,in_bytes);
+	   return;
+	 }
+
+	 inputFramesAvailable = pulsed->aPlayPtr->size / (pulsed->in_achans * (pulsed->in_asamps>>3));
+ #ifdef DEBUG_PULSE
+	 g_printerr("%ld inputFramesAvailable == %ld, %ld, %ld %ld,pulseFramesAvailable == %ld\n", pulsed->aPlayPtr->size, inputFramesAvailable, in_frames, pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable);
+ #endif
+	 buffer = pulsed->aPlayPtr->data;
+
+	 numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable/ABS(shrink_factor)+.001));
+
+ #ifdef DEBUG_PULSE
+	 g_printerr("inputFramesAvailable after conversion %d\n",(gulong)((gdouble)inputFramesAvailable/shrink_factor+.001));
+	 g_printerr("nframes == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nframes, pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
+ #endif
+
+	 swap_sign=afile->signed_endian&AFORM_UNSIGNED;
+
+	 if (pulsed->in_asamps==pulsed->out_asamps&&shrink_factor==1.&&pulsed->in_achans==pulsed->out_achans&&!pulsed->reverse_endian&&!swap_sign) {
+	   // no transformation needed
+	   pulsed->sound_buffer=buffer;
+	 }
+	 else {
+	   pulsed->sound_buffer=g_malloc0(pulsed->chunk_size);
+
+	   if (pulsed->in_asamps==8) {
+	     sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, swap_sign?SWAP_U_TO_S:0);
+	   }
+	   else {
+	     sample_move_d16_d16((short*)pulsed->sound_buffer, (short*)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian?SWAP_X_TO_L:0, swap_sign?SWAP_U_TO_S:0);
+	   }
+	 }
+
+	 pulsed->frames_written+=numFramesToWrite;
+	 pulseFramesAvailable-=numFramesToWrite;
+
+ #ifdef DEBUG_PULSE
+	 g_printerr("pulseFramesAvailable == %ld\n", pulseFramesAvailable);
+ #endif
+       }
+
+       // playback from memory or file
+
+       if (mainw->volume!=old_volume) {
+	 pa_operation *pa_op;
+	 pavol=pa_sw_volume_from_linear(mainw->volume);
+	 pa_cvolume_set(&out_vol,pulsed->out_achans,pavol);
+	 pa_op=pa_context_set_sink_input_volume(pulsed->con,pa_stream_get_index(pulsed->pstream),&out_vol,NULL,NULL);
+	 pa_operation_unref(pa_op);
+	 old_volume=mainw->volume;
+       }
+
+
+       while (nbytes>0) {
+	 if (nbytes<xbytes) xbytes=nbytes;
+
+	 if (!from_memory) {
+	   if (xbytes/pulsed->out_achans/(pulsed->out_asamps>>3)<=numFramesToWrite&&offs==0) {
+	     buffer=pulsed->sound_buffer;
+	   }
+	   else {
+	     buffer=g_malloc(xbytes);
+	     w_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
+	     offs+=xbytes;
+	     needs_free=TRUE;
+	   }
+	   pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:pulse_buff_free,0,PA_SEEK_RELATIVE);
+	 }
+	 else {
+	   if (pulsed->read_abuf>-1&&!pulsed->mute) {
+	     shortbuffer=g_malloc0(xbytes);
+	     sample_move_abuf_int16(shortbuffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
+	     pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
+	   }
+	   else {
+	     sample_silence_pulse(pulsed,xbytes,xbytes);
 	  }
 	}
 	nbytes-=xbytes;
@@ -647,7 +654,6 @@ int pulse_audio_init(void) {
   pulsed.out_achans=2;
   pulsed.out_asamps=16;
   pulsed.mute=FALSE;
-  pulsed.is_silent=FALSE;
   pulsed.out_chans_available=PULSE_MAX_OUTPUT_CHANS;
   pulsed.is_output=TRUE;
   pulsed.read_abuf=-1;

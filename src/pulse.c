@@ -204,20 +204,9 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   pulsed->playing_file=new_file;
 	   pulsed->audio_ticks=mainw->currticks;
 	   pulsed->frames_written=0;
-	   if (nbytes>0) {
-	     g_print("mallocing %ld\n",nbytes*100);
-	     if (nbytes>0) {
-	       // delay creating for now, just op silence
-	       pulsed->aPlayPtr->data=realloc(pulsed->aPlayPtr->data,nbytes*100);
-	       memset(pulsed->aPlayPtr->data,0,nbytes*100);
-	       pulsed->aPlayPtr->size=nbytes*100;
-	     }
-	     else {
-	       free(pulsed->aPlayPtr->data);
-	       pulsed->aPlayPtr->data=NULL;
-	       pulsed->aPlayPtr->size=0;
-	     }
-	   }
+	   pulsed->aPlayPtr->data=realloc(pulsed->aPlayPtr->data,nbytes*100);
+	   memset(pulsed->aPlayPtr->data,0,nbytes*100);
+	   pulsed->aPlayPtr->size=nbytes*100;
 	 }
 	 g_free(filename);
        }

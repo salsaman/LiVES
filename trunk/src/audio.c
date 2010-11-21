@@ -1040,7 +1040,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     tot_frames+=frames_out;
   }
 
-  if (float_buffer!=NULL)
+  if (xsamples>0)
     for (i=0;i<out_achans*nfiles;i++) {
       if (float_buffer[i]!=NULL) g_free(float_buffer[i]);
     }

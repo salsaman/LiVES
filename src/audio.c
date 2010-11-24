@@ -755,7 +755,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   int render_block_size=RENDER_BLOCK_SIZE;
 
-  if (out_achans*nfiles==0) return 0l;
+  if (out_achans*nfiles*tsamples==0) return 0l;
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
@@ -905,7 +905,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   // we use float here because our audio effects use float
   // tsamples is total samples (30 in this example)
-ÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇÇ  bytes_to_read=tsamples*(sizeof(float)); // eg. 120 (30 samples)
+  bytes_to_read=tsamples*(sizeof(float)); // eg. 120 (30 samples)
 
   // how many segments do we need to read all bytes ?
   max_segments=(int)((gdouble)bytes_to_read/(gdouble)max_aud_mem+1.); // max segments (rounded up) [e.g ceil(120/45)==3]
@@ -915,7 +915,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   zsamples=(int)(aud_buffer/sizeof(float)+.5); // ensure whole number of samples (e.g 40 == 10 samples), round up
 
-  xsamples=zsamples+(tsamples-(max_segments*zsamples)); // e.g 30 - 3 * 10 == 0
+  xsamples=zsamples+(tsamples-(max_segments*zsamples)); // e.g 10 + 30 - 3 * 10 == 10
 
   holding_buff=(short *)g_malloc(xsamples*sizeof(short)*out_achans);
   

@@ -1,24 +1,28 @@
 Version 1.3.11
 --------------
-Implemented drag and drop of media files into gui.
+Added new encoder formats to x264_encoder (h264/aac/mp4 super high quality) and DivX Plus HD.
 Implemented autotransition in multitrack.
+Added unicap device support.
+Implemented drag and drop of media files into gui.
+Updates to x264/blu-ray format.
+Added audio caching to jack audio player.
 Fixed a possible crash when loading the default keymap.
 Fixed crash when recording parameters set from a parameter window.
 Removed startup warning for xmms not found.
 Set fps default to 25.0 for frei0r sources, use default_fps for others.
 Added several new OSC commands.
-Added unicap device support.
 Minor improvements for non-local playback plugins.
-Started adding doxygen documentation.
+Updates for vloopback output plugin.
 Fix crash after encoding fails (regression).
 Updates for breakage in ffmpeg_encoder and transcode_encoder.
 Add pkg-config files for libweed, add weed_setup() prototype, and bump version number to 0.4.0.
+Started adding doxygen documentation.
 Add startup option "-fxmodesmax"
 Fix -debug mode.
-Added new encoder format to x264_encoder (h264/aac/mp4 super high quality).
-Updates to x264 blu-ray format.
 Increase gtk+ recommended version to 2.16 or higher.
 Various minor fixes and updates.
+
+
 
 
 

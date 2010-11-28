@@ -278,6 +278,11 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     f0r_param_color_t valcol;
     f0r_param_position_t valpos;
 
+#ifdef CAN_GET_DEF
+  f0r_instance_t f0r_inst;
+  f0r_get_param_value_f f0r_get_param_value=NULL;
+#endif
+
     // quick and dirty fix for 64bit systems
     char *fpp=getenv("FREI0R_PLUGIN_DIR");
     if (fpp!=NULL) vdir2=fpp;
@@ -607,7 +612,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      case F0R_PARAM_BOOL:
 		vald=0.;
 #ifdef CAN_GET_DEF
-		f0r_get_param_value(inst,&vald,pnum);
+		f0r_get_param_value(f0r_inst,(void **)&vald,pnum);
 #endif
 		in_params[wnum]=weed_switch_init((char *)pinfo.name,label,(int)vald);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
@@ -616,7 +621,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      case F0R_PARAM_DOUBLE:
 		vald=0.;
 #ifdef CAN_GET_DEF
-		f0r_get_param_value(inst,&vald,pnum);
+		f0r_get_param_value(f0r_inst,(void **)&vald,pnum);
 #endif
 		in_params[wnum]=weed_float_init((char *)pinfo.name,label,vald,0.,1.);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
@@ -628,7 +633,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      case F0R_PARAM_COLOR:
 		valcol.r=valcol.g=valcol.b=0.;
 #ifdef CAN_GET_DEF
-		f0r_get_param_value(inst,&valcol,pnum);
+		f0r_get_param_value(f0r_inst,(void **)&valcol,pnum);
 #endif
 		in_params[wnum]=weed_colRGBd_init((char *)pinfo.name,label,valcol.r,valcol.g,valcol.b);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
@@ -637,7 +642,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      case F0R_PARAM_POSITION:
 		valpos.x=valpos.y=0.;
 #ifdef CAN_GET_DEF
-		f0r_get_param_value(inst,&valpos,pnum);
+		f0r_get_param_value(f0r_inst,(void **)&valpos,pnum);
 #endif
 		in_params[wnum]=weed_float_init((char *)pinfo.name,label,valpos.x,0.,1.);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
@@ -655,7 +660,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		break;
 	      case F0R_PARAM_STRING:
 #ifdef CAN_GET_DEF
-		f0r_get_param_value(inst,&valch,pnum);
+		f0r_get_param_value(f0r_inst,(void **)&valch,pnum);
 #else
 		valch=strdup("Frei0r");
 #endif

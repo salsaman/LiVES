@@ -1063,7 +1063,7 @@ static gboolean add_mt_param_box(lives_mt *mt) {
 
   res=make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);
 
-  if (!res) {
+  if (!res||mt->fx_params_label==NULL) {
     mt->fx_params_label=gtk_label_new(ltext);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(mt->fx_params_label, GTK_STATE_NORMAL, &palette->normal_fore);

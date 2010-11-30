@@ -2290,7 +2290,7 @@ gint enabled_in_channels (weed_plant_t *plant, gboolean count_repeats) {
   weed_plant_t **channels=NULL;
   gint enabled=0;
   int num_channels,i,error;
-  gboolean is_template=(weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_CLASS);
+  gboolean is_template=WEED_PLANT_IS_FILTER_CLASS(plant);
 
   if (is_template) {
     if (!weed_plant_has_leaf(plant,"in_channel_templates")) return 0;
@@ -2330,7 +2330,7 @@ gint enabled_out_channels (weed_plant_t *plant, gboolean count_repeats) {
   weed_plant_t **channels=NULL;
   gint enabled=0;
   int num_channels,i,error;
-  gboolean is_template=(weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_CLASS);
+  gboolean is_template=WEED_PLANT_IS_FILTER_CLASS(plant);
 
   if (is_template) {
     num_channels=weed_leaf_num_elements(plant,"out_channel_templates");

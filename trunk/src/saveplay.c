@@ -418,7 +418,20 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       // we must set this before calling add_file_info
       cfile->opening=TRUE;
       mainw->opening_frames=-1;
-      add_file_info (cfile->handle,FALSE);
+
+      if (!add_file_info (cfile->handle,FALSE)) {
+	close_current_file(old_file);
+	mainw->noswitch=FALSE;
+	if (mainw->multitrack!=NULL) {
+	  mainw->multitrack->pb_start_event=mt_pb_start_event;
+	  mainw->multitrack->has_audio_file=mt_has_audio_file;
+	}
+	if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
+	mainw->file_open_params=NULL;
+	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	return;
+      }
+
       if (frames>0&&cfile->frames>frames) cfile->end=cfile->undo_end=cfile->frames=frames;
       
       // be careful, here we switch from mainw->opening_loc to cfile->opening_loc
@@ -2642,7 +2655,7 @@ get_new_handle (gint index, const gchar *name) {
 
 
 
-void add_file_info(const gchar *check_handle, gboolean aud_only) {
+gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
   // file information has been retrieved, set struct cfile with details
   // contained in mainw->msg. We do this twice, once before opening the file, once again after.
   // The first time, frames and afilesize may not be correct.
@@ -2653,6 +2666,8 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
   gchar *test_fps_string2;
 
   if (check_handle!=NULL) {
+    if (mainw->msg==NULL||get_token_count(mainw->msg,'|')==1) return FALSE;
+
     array=g_strsplit(mainw->msg,"|",-1);
     
     // sanity check handle against status file
@@ -2695,7 +2710,7 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
     g_strfreev(array);
   }
 
-  if (aud_only) return;
+  if (aud_only) return TRUE;
 
   test_fps_string1=g_strdup_printf ("%.3f00000",cfile->fps);
   test_fps_string2=g_strdup_printf ("%.8f",cfile->fps);
@@ -2717,7 +2732,7 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
   if (cfile->frames<=0) {
     if (cfile->afilesize==0l&&cfile->is_loaded) {
       // we got no video or audio...
-      return;
+      return FALSE;
     }
     cfile->start=cfile->end=cfile->undo_start=cfile->undo_end=0;
   }
@@ -2768,7 +2783,7 @@ void add_file_info(const gchar *check_handle, gboolean aud_only) {
     }
 
   }
-  if (cfile->opening) return;
+  if (cfile->opening) return TRUE;
 
   if (cfile->bpp==256) {
     mesg1=g_strdup_printf(_ ("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->fps);

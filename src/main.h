@@ -744,7 +744,7 @@ void d_print_file_error_failed(void);
 void do_text_window (const gchar *title, const gchar *text);
 
 // saveplay.c
-void add_file_info(const gchar *check_handle, gboolean aud_only);
+gboolean add_file_info(const gchar *check_handle, gboolean aud_only);
 void save_file_comments (int fileno);
 void reget_afilesize (int fileno);
 void deduce_file(const gchar *filename, gdouble start_time, gint end);

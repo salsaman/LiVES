@@ -81,6 +81,14 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
     audio_resampled=TRUE;
   }
 
+  else {
+    cfile->undo1_int=cfile->arate;
+    cfile->undo2_int=cfile->achans;
+    cfile->undo3_int=cfile->asampsize;
+    cfile->undo4_int=cfile->arps;
+    cfile->undo1_uint=cfile->signed_endian;
+  }
+
   if (fps_denom>0) {
     fps=(fps_num*1.)/(fps_denom*1.);
   }
@@ -133,13 +141,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  mainw->resizing=FALSE;
 	  g_free(msg);
 	  cfile->undo_action=UNDO_ATOMIC_RESAMPLE_RESIZE;
-	  if (!audio_resampled) {
-	    cfile->undo1_int=cfile->arate;
-	    cfile->undo2_int=cfile->achans;
-	    cfile->undo3_int=cfile->asampsize;
-	    cfile->undo4_int=cfile->arps;
-	    cfile->undo1_uint=cfile->signed_endian;
-	  }
+
 	  cfile->hsize=width;
 	  cfile->vsize=height;
 	  
@@ -316,13 +318,6 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
     // just in case we missed anything...
     
     set_undoable (_ ("Resample/Resize"),TRUE);
-    if (!audio_resampled) {
-      cfile->undo1_int=cfile->arate;
-      cfile->undo2_int=cfile->achans;
-      cfile->undo3_int=cfile->asampsize;
-      cfile->undo4_int=cfile->arps;
-      cfile->undo1_uint=cfile->signed_endian;
-    }
     if (!video_resized) {
       cfile->ohsize=cfile->hsize;
       cfile->ovsize=cfile->vsize;

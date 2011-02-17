@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-01-20 19:50-0300\n"
+"POT-Creation-Date: 2011-02-17 20:44-0300\n"
 "PO-Revision-Date: 2010-06-30 09:14+0000\n"
 "Last-Translator: Liel Fridman <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -649,7 +649,7 @@ msgid "_Redo"
 msgstr "ב_צע שוב"
 
 #: src/main.c:4300 src/interface.c:639 src/gui.c:2112 src/preferences.c:2214
-#: src/resample.c:1749
+#: src/resample.c:1744
 msgid "Video"
 msgstr "וידאו"
 
@@ -1099,7 +1099,7 @@ msgstr "שקופיות"
 msgid "Events"
 msgstr "אירועים"
 
-#: src/interface.c:661 src/resample.c:1704
+#: src/interface.c:661 src/resample.c:1699
 msgid "Audio"
 msgstr "שמע"
 
@@ -1784,7 +1784,7 @@ msgstr ""
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "כעת אורך הוידאו הוא %d שקופיות ב־%.3f שקופיות לשנייה.\n"
 
-#: src/callbacks.c:1684 src/resample.c:613 src/resample.c:2442
+#: src/callbacks.c:1684 src/resample.c:608 src/resample.c:2437
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "לוח הגזירים נדגם מחדש ל־%d שקופיות.\n"
@@ -2223,10 +2223,10 @@ msgid "A video editor and VJ program."
 msgstr "עורך וידאו ותוכנת VJ."
 
 #: src/callbacks.c:4586
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "LiVES Version %s\n"
-"(c) G. Finch (salsaman) 2002-2010\n"
+"(c) G. Finch (salsaman) %s\n"
 "\n"
 "Released under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\n"
 "LiVES is distributed WITHOUT WARRANTY\n"
@@ -4305,11 +4305,11 @@ msgstr ""
 "אנו ממליצים על ההגדרות הבאות:\n"
 "\n"
 
-#: src/dialogs.c:1284 src/dialogs.c:1381 src/resample.c:763
+#: src/dialogs.c:1284 src/dialogs.c:1381 src/resample.c:758
 msgid ", signed"
 msgstr ", רשום"
 
-#: src/dialogs.c:1285 src/dialogs.c:1382 src/resample.c:766
+#: src/dialogs.c:1285 src/dialogs.c:1382 src/resample.c:761
 msgid ", unsigned"
 msgstr ", לא רשום"
 
@@ -7330,25 +7330,25 @@ msgstr "שרת הOSC הופעל בפותחת הUDP %d\n"
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "לא ניתן להפעיל את שרת הOSC/UDP בפותחה %d \n"
 
-#: src/resample.c:114 src/resample.c:263
+#: src/resample.c:122 src/resample.c:265
 #, c-format
 msgid "Resizing frames 1 to %d"
 msgstr "משנה את גודל השקופיות 1 עד %d"
 
-#: src/resample.c:288 src/resample.c:308
+#: src/resample.c:290 src/resample.c:310
 msgid "Resize"
 msgstr "שינוי גודל"
 
-#: src/resample.c:318
+#: src/resample.c:320
 msgid "Resample/Resize"
 msgstr "דגימה מחדש"
 
-#: src/resample.c:610
+#: src/resample.c:605
 #, c-format
 msgid "Length of video is now %d frames.\n"
 msgstr "אורך הוידאו כעת הינו %d שקופיות.\n"
 
-#: src/resample.c:675
+#: src/resample.c:670
 msgid ""
 "\n"
 "\n"
@@ -7358,162 +7358,162 @@ msgstr ""
 "\n"
 "הקצב החדש חייב להיות גדול מ0\n"
 
-#: src/resample.c:719 src/resample.c:727
+#: src/resample.c:714 src/resample.c:722
 msgid "Resampling audio"
 msgstr "דגימת שמע מחדש"
 
-#: src/resample.c:744
+#: src/resample.c:739
 msgid "LiVES was unable to resample the audio as requested.\n"
 msgstr "ל־LiVES לא הייתה אפשרות לדגום מחדש את השמע כפי שבוקש.\n"
 
-#: src/resample.c:746 src/resample.c:750
+#: src/resample.c:741 src/resample.c:745
 msgid "Resample Audio"
 msgstr "דגימת שמע מחדש"
 
-#: src/resample.c:758
+#: src/resample.c:753
 #, c-format
 msgid "Audio was resampled to %d Hz, %d channels, %d bit"
 msgstr "השמע נדגם מחדש ל%d ׁHz, %d ערוצים ו%d סיביות"
 
-#: src/resample.c:771
+#: src/resample.c:766
 msgid ", little-endian"
 msgstr ", שימוש בנפח קטן"
 
-#: src/resample.c:774
+#: src/resample.c:769
 msgid ", big-endian"
 msgstr ", שימוש בנפח גדול"
 
-#: src/resample.c:948
+#: src/resample.c:943
 #, c-format
 msgid "Resampling video at %.8f frames per second..."
 msgstr "דוגם את הוידאו מחדש ב%.8f שקופיות לשנייה"
 
-#: src/resample.c:951
+#: src/resample.c:946
 #, c-format
 msgid "Resampling video at %.3f frames per second..."
 msgstr "דוגם את הוידאו מחדש ב%.3f שקופיות לשנייה..."
 
-#: src/resample.c:982
+#: src/resample.c:977
 msgid "Reordering error !\n"
 msgstr "שגיאת סידור מחדש !\n"
 
-#: src/resample.c:993
+#: src/resample.c:988
 msgid "Resample"
 msgstr "דגימה מחדש"
 
-#: src/resample.c:1117
+#: src/resample.c:1112
 msgid "LiVES: - Resample Audio"
 msgstr "LiVES: דגימת שמע מחדש"
 
-#: src/resample.c:1120
+#: src/resample.c:1115
 msgid "LiVES: - Insert Silence"
 msgstr "LiVES: - הוספת שקט"
 
-#: src/resample.c:1123
+#: src/resample.c:1118
 msgid "LiVES: - New Clip Audio"
 msgstr "LiVES: - קטע שמע חדש"
 
-#: src/resample.c:1126
+#: src/resample.c:1121
 msgid "LiVES: - External Clip Settings"
 msgstr "LiVES: - הגדרות קטע חיצוני"
 
-#: src/resample.c:1164 src/resample.c:1434
+#: src/resample.c:1159 src/resample.c:1429
 msgid "Rate (Hz) "
 msgstr "קצב (Hz) "
 
-#: src/resample.c:1185
+#: src/resample.c:1180
 msgid "         Channels "
 msgstr "         ערוצים "
 
-#: src/resample.c:1205
+#: src/resample.c:1200
 msgid "        Sample Size "
 msgstr "        גודל דגימה "
 
-#: src/resample.c:1244 src/resample.c:1548
+#: src/resample.c:1239 src/resample.c:1543
 msgid "Signed"
 msgstr "חתום"
 
-#: src/resample.c:1271 src/resample.c:1582
+#: src/resample.c:1266 src/resample.c:1577
 msgid "Unsigned"
 msgstr "לא חתום"
 
-#: src/resample.c:1318 src/resample.c:1635
+#: src/resample.c:1313 src/resample.c:1630
 msgid "Little Endian"
 msgstr "Little Endian"
 
-#: src/resample.c:1345 src/resample.c:1667
+#: src/resample.c:1340 src/resample.c:1662
 msgid "Big Endian"
 msgstr "Big Endian"
 
-#: src/resample.c:1370
+#: src/resample.c:1365
 msgid "Current"
 msgstr "נוכחי"
 
-#: src/resample.c:1402
+#: src/resample.c:1397
 msgid "_Enable audio"
 msgstr "_הפעלת שמע"
 
-#: src/resample.c:1433
+#: src/resample.c:1428
 msgid "_Rate (Hz) "
 msgstr "_תדר "
 
-#: src/resample.c:1461
+#: src/resample.c:1456
 msgid "    _Channels "
 msgstr "    _ערוצים "
 
-#: src/resample.c:1462
+#: src/resample.c:1457
 msgid "    Channels "
 msgstr "    ערוצים "
 
-#: src/resample.c:1495
+#: src/resample.c:1490
 msgid "    _Sample Size "
 msgstr "    גודל _דגימה "
 
-#: src/resample.c:1496
+#: src/resample.c:1491
 msgid "    Sample Size "
 msgstr "    גודל דגימה "
 
-#: src/resample.c:1705
+#: src/resample.c:1700
 msgid "New"
 msgstr "חדש"
 
-#: src/resample.c:1734
+#: src/resample.c:1729
 msgid "_Frames Per Second "
 msgstr "_שקופיות לשנייה "
 
-#: src/resample.c:1776
+#: src/resample.c:1771
 msgid "Record for maximum:  "
 msgstr "זמן הקלטה מקסימלי:  "
 
-#: src/resample.c:1799
+#: src/resample.c:1794
 msgid " hours  "
 msgstr " שעות  "
 
-#: src/resample.c:1812
+#: src/resample.c:1807
 msgid " minutes  "
 msgstr " דקות  "
 
-#: src/resample.c:1825
+#: src/resample.c:1820
 msgid " seconds  "
 msgstr " שניות  "
 
-#: src/resample.c:1846
+#: src/resample.c:1841
 msgid "Unlimited"
 msgstr "בלתי־מוגבל"
 
-#: src/resample.c:1874
+#: src/resample.c:1869
 msgid "Click OK to begin recording, or Cancel to quit."
 msgstr "יש ללחוץ על אישור כדי להתחיל בהקלטה, או על ביטול כדי לצאת"
 
-#: src/resample.c:1983
+#: src/resample.c:1978
 msgid "LiVES: - Change playback speed"
 msgstr "LiVES: - שינוי מהירות הנגינה"
 
-#: src/resample.c:1986
+#: src/resample.c:1981
 msgid "LiVES: - Resample Video"
 msgstr "LiVES: - דגימת וידאו מחדש"
 
-#: src/resample.c:2007
+#: src/resample.c:2002
 #, c-format
 msgid ""
 "\n"
@@ -7530,7 +7530,7 @@ msgstr ""
 "נא להכניס את מהירות הנגינה הרצויה\n"
 "ב _שקופיות"
 
-#: src/resample.c:2010
+#: src/resample.c:2005
 #, c-format
 msgid ""
 "\n"
@@ -7547,15 +7547,15 @@ msgstr ""
 "נא להכניס את הקצב ש_נדגם מחדש\n"
 "בשקופיות לשנייה"
 
-#: src/resample.c:2036
+#: src/resample.c:2031
 msgid "OR enter the desired clip length in _seconds"
 msgstr "או להכניס את אורך הקטע הרצוי ב_שניות"
 
-#: src/resample.c:2059
+#: src/resample.c:2054
 msgid "Change the _audio speed as well"
 msgstr "שינוי מהירות ה_שמע בנוסף"
 
-#: src/resample.c:2172
+#: src/resample.c:2167
 msgid ""
 "\n"
 "Speeding up the clip will cause missing frames in some multitrack layouts.\n"
@@ -7565,7 +7565,7 @@ msgstr ""
 "העלאת מהירות הקטע תגרום לשקופיות חסרות בפריסות מרובות־רצועות מסוימות.\n"
 "האם לשנות את המהירות?\n"
 
-#: src/resample.c:2189
+#: src/resample.c:2184
 msgid ""
 "\n"
 "Speeding up the clip will cause missing audio in some multitrack layouts.\n"
@@ -7575,7 +7575,7 @@ msgstr ""
 "העלאת מהירות הקטע תגרום לשמע חסר בפריסות מרובות־רצועות מסוימות.\n"
 "האם לשנות את המהירות ?\n"
 
-#: src/resample.c:2204
+#: src/resample.c:2199
 msgid ""
 "\n"
 "Changing the speed will cause frames to shift some multitrack layouts.\n"
@@ -7585,7 +7585,7 @@ msgstr ""
 "שינוי המהירות יזיז את השקופיות בפריסות מרובות־רצועות מסוימות.\n"
 "האם להמשיך ?\n"
 
-#: src/resample.c:2218
+#: src/resample.c:2213
 msgid ""
 "\n"
 "Changing the speed will cause audio to shift some multitrack layouts.\n"
@@ -7595,33 +7595,33 @@ msgstr ""
 "שינוי המהירות יזיז את השמע בפריסות מרובות־רצועות מסוימות.\n"
 "האם להמשיך ?\n"
 
-#: src/resample.c:2264
+#: src/resample.c:2259
 msgid "Speed Change"
 msgstr "שינוי מהירות"
 
-#: src/resample.c:2273
+#: src/resample.c:2268
 #, c-format
 msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr "מהירות הנגינה שונתה ל%.3f שקופיות לשנייה והשמע שונה ל %d Hz.\n"
 
-#: src/resample.c:2276
+#: src/resample.c:2271
 #, c-format
 msgid "Changed playback speed to %.3f frames per second.\n"
 msgstr "מהירות הנגינה שונתה ל%.3f שקופיות לשנייה.\n"
 
-#: src/resample.c:2331
+#: src/resample.c:2326
 msgid "Resampling video"
 msgstr "דוגם מחדש וידאו"
 
-#: src/resample.c:2338 src/resample.c:2436 src/resample.c:2457
+#: src/resample.c:2333 src/resample.c:2431 src/resample.c:2452
 msgid "Resampling clipboard video"
 msgstr "דוגם מחדש את הוידאו הנמצא בלוח הגזירים"
 
-#: src/resample.c:2343
+#: src/resample.c:2338
 msgid "Reordering frames"
 msgstr "מסדר מחדש שקופיות"
 
-#: src/resample.c:2352
+#: src/resample.c:2347
 msgid ""
 "\n"
 "\n"
@@ -7631,11 +7631,11 @@ msgstr ""
 "\n"
 "ל־LiVES לא הייתה אפשרות לסדר מחדש את השקופיות"
 
-#: src/resample.c:2395
+#: src/resample.c:2390
 msgid "Deordering frames"
 msgstr "יוצר אי־סדר בשקופיות"
 
-#: src/resample.c:2474
+#: src/resample.c:2469
 msgid "resampling error..."
 msgstr "שגיאת דגימה מחדש"
 

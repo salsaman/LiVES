@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-01-20 19:50-0300\n"
+"POT-Creation-Date: 2011-02-17 20:44-0300\n"
 "PO-Revision-Date: 2010-03-20 20:52+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -641,7 +641,7 @@ msgid "_Redo"
 msgstr "_Refazer"
 
 #: src/main.c:4300 src/interface.c:639 src/gui.c:2112 src/preferences.c:2214
-#: src/resample.c:1749
+#: src/resample.c:1744
 msgid "Video"
 msgstr "Vídeo"
 
@@ -1050,7 +1050,7 @@ msgstr "Frames"
 msgid "Events"
 msgstr "Eventos"
 
-#: src/interface.c:661 src/resample.c:1704
+#: src/interface.c:661 src/resample.c:1699
 msgid "Audio"
 msgstr "Áudio"
 
@@ -1709,7 +1709,7 @@ msgstr ""
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "O comprimento do vídeo é agora %d frames a %.3f FPS.\n"
 
-#: src/callbacks.c:1684 src/resample.c:613 src/resample.c:2442
+#: src/callbacks.c:1684 src/resample.c:608 src/resample.c:2437
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "Área de transferência resampleada para %d frames.\n"
@@ -2135,7 +2135,7 @@ msgstr ""
 #, c-format
 msgid ""
 "LiVES Version %s\n"
-"(c) G. Finch (salsaman) 2002-2010\n"
+"(c) G. Finch (salsaman) %s\n"
 "\n"
 "Released under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\n"
 "LiVES is distributed WITHOUT WARRANTY\n"
@@ -4213,11 +4213,11 @@ msgstr ""
 "LiVES recomenda as configurações a seguir:\n"
 "\n"
 
-#: src/dialogs.c:1284 src/dialogs.c:1381 src/resample.c:763
+#: src/dialogs.c:1284 src/dialogs.c:1381 src/resample.c:758
 msgid ", signed"
 msgstr ""
 
-#: src/dialogs.c:1285 src/dialogs.c:1382 src/resample.c:766
+#: src/dialogs.c:1285 src/dialogs.c:1382 src/resample.c:761
 msgid ", unsigned"
 msgstr ""
 
@@ -7279,25 +7279,25 @@ msgstr "Servidor OSC iniciado na porta UDP %d\n"
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Não foi possivel iniciar servidor OSC/UDP na porta %d \n"
 
-#: src/resample.c:114 src/resample.c:263
+#: src/resample.c:122 src/resample.c:265
 #, c-format
 msgid "Resizing frames 1 to %d"
 msgstr "Redimensionando frames 1 até %d"
 
-#: src/resample.c:288 src/resample.c:308
+#: src/resample.c:290 src/resample.c:310
 msgid "Resize"
 msgstr "Redimensionar"
 
-#: src/resample.c:318
+#: src/resample.c:320
 msgid "Resample/Resize"
 msgstr "Resamplear/Redimensionar"
 
-#: src/resample.c:610
+#: src/resample.c:605
 #, c-format
 msgid "Length of video is now %d frames.\n"
 msgstr "Comprimento do vídeo é agora de %d frames.\n"
 
-#: src/resample.c:675
+#: src/resample.c:670
 msgid ""
 "\n"
 "\n"
@@ -7307,162 +7307,162 @@ msgstr ""
 "\n"
 "A nova taxa deve ser maior que 0\n"
 
-#: src/resample.c:719 src/resample.c:727
+#: src/resample.c:714 src/resample.c:722
 msgid "Resampling audio"
 msgstr "Resampleando áudio"
 
-#: src/resample.c:744
+#: src/resample.c:739
 msgid "LiVES was unable to resample the audio as requested.\n"
 msgstr "LiVES não conseguiu resamplear o áudio como requisitado.\n"
 
-#: src/resample.c:746 src/resample.c:750
+#: src/resample.c:741 src/resample.c:745
 msgid "Resample Audio"
 msgstr "Resamplear Áudio"
 
-#: src/resample.c:758
+#: src/resample.c:753
 #, c-format
 msgid "Audio was resampled to %d Hz, %d channels, %d bit"
 msgstr "Áudio resampleado a %d Hz, %d canais, %d bit"
 
-#: src/resample.c:771
+#: src/resample.c:766
 msgid ", little-endian"
 msgstr ""
 
-#: src/resample.c:774
+#: src/resample.c:769
 msgid ", big-endian"
 msgstr ""
 
-#: src/resample.c:948
+#: src/resample.c:943
 #, c-format
 msgid "Resampling video at %.8f frames per second..."
 msgstr "Resampleando vídeo a %.8f frames por segundo..."
 
-#: src/resample.c:951
+#: src/resample.c:946
 #, c-format
 msgid "Resampling video at %.3f frames per second..."
 msgstr "Resampleando vídeo a %.3f frames por segundo..."
 
-#: src/resample.c:982
+#: src/resample.c:977
 msgid "Reordering error !\n"
 msgstr "Erro de reordenação!\n"
 
-#: src/resample.c:993
+#: src/resample.c:988
 msgid "Resample"
 msgstr "Resamplear"
 
-#: src/resample.c:1117
+#: src/resample.c:1112
 msgid "LiVES: - Resample Audio"
 msgstr "LiVES: - Resamplear Áudio"
 
-#: src/resample.c:1120
+#: src/resample.c:1115
 msgid "LiVES: - Insert Silence"
 msgstr "LiVES: - Inserir Silêncio"
 
-#: src/resample.c:1123
+#: src/resample.c:1118
 msgid "LiVES: - New Clip Audio"
 msgstr "LiVES: - Novo Clip de Áudio"
 
-#: src/resample.c:1126
+#: src/resample.c:1121
 msgid "LiVES: - External Clip Settings"
 msgstr "LiVES: - Configurações Externas de Clipe"
 
-#: src/resample.c:1164 src/resample.c:1434
+#: src/resample.c:1159 src/resample.c:1429
 msgid "Rate (Hz) "
 msgstr "Taxa (Hz) "
 
-#: src/resample.c:1185
+#: src/resample.c:1180
 msgid "         Channels "
 msgstr "         Canais "
 
-#: src/resample.c:1205
+#: src/resample.c:1200
 msgid "        Sample Size "
 msgstr "        Tamanho da Amostra "
 
-#: src/resample.c:1244 src/resample.c:1548
+#: src/resample.c:1239 src/resample.c:1543
 msgid "Signed"
 msgstr ""
 
-#: src/resample.c:1271 src/resample.c:1582
+#: src/resample.c:1266 src/resample.c:1577
 msgid "Unsigned"
 msgstr "Não assinado"
 
-#: src/resample.c:1318 src/resample.c:1635
+#: src/resample.c:1313 src/resample.c:1630
 msgid "Little Endian"
 msgstr ""
 
-#: src/resample.c:1345 src/resample.c:1667
+#: src/resample.c:1340 src/resample.c:1662
 msgid "Big Endian"
 msgstr ""
 
-#: src/resample.c:1370
+#: src/resample.c:1365
 msgid "Current"
 msgstr "Atual"
 
-#: src/resample.c:1402
+#: src/resample.c:1397
 msgid "_Enable audio"
 msgstr "Habilitar áudio [_e]"
 
-#: src/resample.c:1433
+#: src/resample.c:1428
 msgid "_Rate (Hz) "
 msgstr "Taxa (Hz) (_r) "
 
-#: src/resample.c:1461
+#: src/resample.c:1456
 msgid "    _Channels "
 msgstr "    _Canais "
 
-#: src/resample.c:1462
+#: src/resample.c:1457
 msgid "    Channels "
 msgstr "    Canais "
 
-#: src/resample.c:1495
+#: src/resample.c:1490
 msgid "    _Sample Size "
 msgstr "    Tamanho da Amo_stra "
 
-#: src/resample.c:1496
+#: src/resample.c:1491
 msgid "    Sample Size "
 msgstr "    Tamanho da amostra "
 
-#: src/resample.c:1705
+#: src/resample.c:1700
 msgid "New"
 msgstr "Novo"
 
-#: src/resample.c:1734
+#: src/resample.c:1729
 msgid "_Frames Per Second "
 msgstr "_Frames por segundo (FPS) "
 
-#: src/resample.c:1776
+#: src/resample.c:1771
 msgid "Record for maximum:  "
 msgstr "Gravar para máximo:  "
 
-#: src/resample.c:1799
+#: src/resample.c:1794
 msgid " hours  "
 msgstr " horass  "
 
-#: src/resample.c:1812
+#: src/resample.c:1807
 msgid " minutes  "
 msgstr " minutos  "
 
-#: src/resample.c:1825
+#: src/resample.c:1820
 msgid " seconds  "
 msgstr " segundos  "
 
-#: src/resample.c:1846
+#: src/resample.c:1841
 msgid "Unlimited"
 msgstr "Ilimitado"
 
-#: src/resample.c:1874
+#: src/resample.c:1869
 msgid "Click OK to begin recording, or Cancel to quit."
 msgstr "Clique OK para começar a gravar ou Cancelar para sair."
 
-#: src/resample.c:1983
+#: src/resample.c:1978
 msgid "LiVES: - Change playback speed"
 msgstr "Tocar"
 
-#: src/resample.c:1986
+#: src/resample.c:1981
 msgid "LiVES: - Resample Video"
 msgstr "LiVES: - Resamplear Vídeo"
 
-#: src/resample.c:2007
+#: src/resample.c:2002
 #, c-format
 msgid ""
 "\n"
@@ -7479,7 +7479,7 @@ msgstr ""
 "Por favor digite o framerate desejado\n"
 "em _frames por segundo"
 
-#: src/resample.c:2010
+#: src/resample.c:2005
 #, c-format
 msgid ""
 "\n"
@@ -7496,15 +7496,15 @@ msgstr ""
 "Por favor digite o framerate desejado para _resamplear\n"
 "em frames por segundo"
 
-#: src/resample.c:2036
+#: src/resample.c:2031
 msgid "OR enter the desired clip length in _seconds"
 msgstr "OU entre a duração do arquivo em _segundos"
 
-#: src/resample.c:2059
+#: src/resample.c:2054
 msgid "Change the _audio speed as well"
 msgstr "Mudar _a velocidade do áudio também"
 
-#: src/resample.c:2172
+#: src/resample.c:2167
 msgid ""
 "\n"
 "Speeding up the clip will cause missing frames in some multitrack layouts.\n"
@@ -7515,7 +7515,7 @@ msgstr ""
 "layouts multipista.\n"
 "Tem certeza que quer mudar a velocidade?\n"
 
-#: src/resample.c:2189
+#: src/resample.c:2184
 msgid ""
 "\n"
 "Speeding up the clip will cause missing audio in some multitrack layouts.\n"
@@ -7526,7 +7526,7 @@ msgstr ""
 "layouts multipista.\n"
 "Tem certeza que quer mudar a velocidade?\n"
 
-#: src/resample.c:2204
+#: src/resample.c:2199
 msgid ""
 "\n"
 "Changing the speed will cause frames to shift some multitrack layouts.\n"
@@ -7536,7 +7536,7 @@ msgstr ""
 "Mudar a velocidade vai mover alguns layouts multipista.\n"
 "Tem certeza que quer continuar?\n"
 
-#: src/resample.c:2218
+#: src/resample.c:2213
 msgid ""
 "\n"
 "Changing the speed will cause audio to shift some multitrack layouts.\n"
@@ -7546,33 +7546,33 @@ msgstr ""
 "Mudar a velocidade vai mover o áudio em alguns layouts multipista.\n"
 "Tem certeza que quer continuar?\n"
 
-#: src/resample.c:2264
+#: src/resample.c:2259
 msgid "Speed Change"
 msgstr "Mudança de Velocidade"
 
-#: src/resample.c:2273
+#: src/resample.c:2268
 #, c-format
 msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr "Velocidade de execução modificada para %.3f fps e áudio para %d Hz.\n"
 
-#: src/resample.c:2276
+#: src/resample.c:2271
 #, c-format
 msgid "Changed playback speed to %.3f frames per second.\n"
 msgstr "Velocidade de execução modificada para %.3f fps.\n"
 
-#: src/resample.c:2331
+#: src/resample.c:2326
 msgid "Resampling video"
 msgstr "Resampleando vídeo"
 
-#: src/resample.c:2338 src/resample.c:2436 src/resample.c:2457
+#: src/resample.c:2333 src/resample.c:2431 src/resample.c:2452
 msgid "Resampling clipboard video"
 msgstr "Resampleando vídeo da area de transferência"
 
-#: src/resample.c:2343
+#: src/resample.c:2338
 msgid "Reordering frames"
 msgstr "Reordenando frames"
 
-#: src/resample.c:2352
+#: src/resample.c:2347
 msgid ""
 "\n"
 "\n"
@@ -7582,11 +7582,11 @@ msgstr ""
 "\n"
 "LiVES foi incapaz de reordenar os frames."
 
-#: src/resample.c:2395
+#: src/resample.c:2390
 msgid "Deordering frames"
 msgstr "Desordenando frames"
 
-#: src/resample.c:2474
+#: src/resample.c:2469
 msgid "resampling error..."
 msgstr "erro de sampling..."
 

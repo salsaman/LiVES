@@ -6,12 +6,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
-"Report-Msgid-Bugs-To: "
-"http://www.sourceforge.net/tracker/?group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-11-19 13:38-0300\n"
+"Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
+"group_id=64341&atid=507139\n"
+"POT-Creation-Date: 2011-02-17 20:44-0300\n"
 "PO-Revision-Date: 2010-11-28 15:10+0000\n"
 "Last-Translator: Hiroshi Tagawa <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -31,8 +32,8 @@ msgstr ""
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
-"Please report this bug at "
-"http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
+"Please report this bug at http://sourceforge.net/tracker/?"
+"group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
 
@@ -260,7 +261,8 @@ msgstr ""
 
 #: src/main.c:1685
 msgid "Where: filename is the name of a media file or backup file.\n"
-msgstr "ファイル名は、メディアファイルもしくはバックアップファイルの名前です。\n"
+msgstr ""
+"ファイル名は、メディアファイルもしくはバックアップファイルの名前です。\n"
 
 #: src/main.c:1686
 msgid "start_time : filename start time in seconds\n"
@@ -362,8 +364,7 @@ msgstr "-devicemap <mapname>          : autoload devicemap\n"
 
 #: src/main.c:1717
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
-msgstr ""
-"-debug            : try to debug crashes (requires 'gdb' installed)\n"
+msgstr "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 
 #: src/main.c:1734 src/gui.c:1008
 msgid "Starting GUI..."
@@ -381,7 +382,8 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"要求したテーマを指定できませんでした。テーマが下記のディレクトリにインストールされていることを確認して下さい。\n"
+"要求したテーマを指定できませんでした。テーマが下記のディレクトリにインストー"
+"ルされていることを確認して下さい。\n"
 "%s/%s\n"
 "(~/.livesで指定する<prefix_dir>の値を変更する必要があるかもしれません)\n"
 
@@ -479,8 +481,8 @@ msgid ""
 "install one or other of these, and try again.\n"
 msgstr ""
 "\n"
-"LiVESは現在のところ正しく動作するために'mplayer'または'sox'を必要とします。いずれかひとつもしくは両方をインストールして、再び試して下さ"
-"い。\n"
+"LiVESは現在のところ正しく動作するために'mplayer'または'sox'を必要とします。い"
+"ずれかひとつもしくは両方をインストールして、再び試して下さい。\n"
 
 #: src/main.c:1801
 msgid ""
@@ -489,7 +491,8 @@ msgid ""
 "LiVES more fully.\n"
 msgstr ""
 "\n"
-"LiVESは'mplayer'を検出できませんでした。LiVESをより完全に使うには、mplayerをインストールするとよいでしょう。\n"
+"LiVESは'mplayer'を検出できませんでした。LiVESをより完全に使うには、mplayerを"
+"インストールするとよいでしょう。\n"
 
 #: src/main.c:1804
 msgid ""
@@ -498,8 +501,8 @@ msgid ""
 "magick if you want to use rendered effects.\n"
 msgstr ""
 "\n"
-"LiVESは'convert'を検出できませんでした。描画イフェクトを使いたい場合は、convertおよびimage-"
-"magickをインストールして下さい。\n"
+"LiVESは'convert'を検出できませんでした。描画イフェクトを使いたい場合は、"
+"convertおよびimage-magickをインストールして下さい。\n"
 
 #: src/main.c:1807
 msgid ""
@@ -508,8 +511,8 @@ msgid ""
 "image-magick if you want to use the merge function.\n"
 msgstr ""
 "\n"
-"LiVESは'composite'を検出できませんでした。マージ機能を使いたい場合は、compositeおよびimage-"
-"magickをインストールして下さい。\n"
+"LiVESは'composite'を検出できませんでした。マージ機能を使いたい場合は、"
+"compositeおよびimage-magickをインストールして下さい。\n"
 
 #: src/main.c:1810
 msgid ""
@@ -518,7 +521,8 @@ msgid ""
 "should install 'sox'.\n"
 msgstr ""
 "\n"
-"LiVESはsoxを探すことができませんでした。いくつかの音声機能は使えません。soxをインストールして下さい。\n"
+"LiVESはsoxを探すことができませんでした。いくつかの音声機能は使えません。soxを"
+"インストールして下さい。\n"
 
 #: src/main.c:1813
 #, c-format
@@ -578,7 +582,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:3657 src/main.c:3658 src/gui.c:1954 src/gui.c:2940
-#: src/saveplay.c:1639
+#: src/saveplay.c:1652
 msgid "Play"
 msgstr "再生"
 
@@ -596,17 +600,17 @@ msgid "Closed file %s\n"
 msgstr "ファイル「%s」を閉じました\n"
 
 #: src/main.c:4273 src/gui.c:546 src/utils.c:2572 src/utils.c:2598
-#: src/saveplay.c:2601 src/multitrack.c:3806 src/multitrack.c:5313
+#: src/saveplay.c:2615 src/multitrack.c:3806 src/multitrack.c:5313
 msgid "_Undo"
 msgstr "アンドゥ(_U)"
 
 #: src/main.c:4274 src/gui.c:559 src/utils.c:2573 src/utils.c:2599
-#: src/saveplay.c:2602 src/multitrack.c:3827 src/multitrack.c:5336
+#: src/saveplay.c:2616 src/multitrack.c:3827 src/multitrack.c:5336
 msgid "_Redo"
 msgstr "リドゥ(_R)"
 
 #: src/main.c:4300 src/interface.c:639 src/gui.c:2112 src/preferences.c:2214
-#: src/resample.c:1749
+#: src/resample.c:1744
 msgid "Video"
 msgstr "ビデオ"
 
@@ -628,7 +632,8 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"音声プレーヤーをmplayerに設定していなければ、LiVESは開いているクリップを変更できません。\n"
+"音声プレーヤーをmplayerに設定していなければ、LiVESは開いているクリップを変更"
+"できません。\n"
 "「設定」の再生オプションを調整して、再試行して下さい。\n"
 
 #: src/startup.c:19
@@ -904,10 +909,12 @@ msgstr "デインタレースを適用する"
 
 #: src/interface.c:156
 msgid "If this is set, frames will be deinterlaced as they are imported."
-msgstr "これが指定されていると、フレームがインポートされたときにはデインタレースされます。"
+msgstr ""
+"これが指定されていると、フレームがインポートされたときにはデインタレースされ"
+"ます。"
 
 #: src/interface.c:188 src/callbacks.c:7769 src/gui.c:2943 src/gui.c:3483
-#: src/saveplay.c:1642 src/saveplay.c:2264 src/dialogs.c:827 src/dialogs.c:828
+#: src/saveplay.c:1655 src/saveplay.c:2278 src/dialogs.c:827 src/dialogs.c:828
 #: src/dialogs.c:995 src/dialogs.c:996 src/framedraw.c:189
 #: src/multitrack.c:6859
 msgid "Preview"
@@ -1008,7 +1015,7 @@ msgstr "フレーム"
 msgid "Events"
 msgstr "イベント"
 
-#: src/interface.c:661 src/resample.c:1704
+#: src/interface.c:661 src/resample.c:1699
 msgid "Audio"
 msgstr "音声"
 
@@ -1123,7 +1130,8 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"ストリームを開くために、mplayerの正しいライブラリがコンパイルされていることを確認して下さい。\n"
+"ストリームを開くために、mplayerの正しいライブラリがコンパイルされていることを"
+"確認して下さい。\n"
 "また、設定|ストリーミングで、バンド幅の設定を確認して下さい。\n"
 "\n"
 
@@ -1156,7 +1164,8 @@ msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
 msgstr ""
-"このプロジェクトをエキスポートするために、クリップセットの名前を入力しなければなりません。\n"
+"このプロジェクトをエキスポートするために、クリップセットの名前を入力しなけれ"
+"ばなりません。\n"
 "またそれはプロジェクト名としても利用されます。\n"
 
 #: src/interface.c:1786
@@ -1167,7 +1176,8 @@ msgid ""
 msgstr ""
 "ようこそLiVESに！\n"
 "このスタートアップウィザードをご案内します\n"
-"そうすることは、このアプリケーションから最大限に活用することができます。最初のインストール。\n"
+"そうすることは、このアプリケーションから最大限に活用することができます。最初"
+"のインストール。\n"
 
 #: src/interface.c:1793
 msgid ""
@@ -1180,7 +1190,8 @@ msgstr ""
 "\n"
 "最初にすべての場合LiVESするための作業ディレクトリを選択する必要がある。\n"
 "これはディスクの空き容量をたっぷり使ってディレクトリにする必要があります。\n"
-"注：多くのシステムでは、/tmpのシャットダウン時なので、それで作成することは避けれることがあります/tmpにクリアされます。\n"
+"注：多くのシステムでは、/tmpのシャットダウン時なので、それで作成することは避"
+"けれることがあります/tmpにクリアされます。\n"
 
 #: src/interface.c:1813
 msgid "LiVES: - Rename Clip"
@@ -1584,10 +1595,13 @@ msgid ""
 msgstr ""
 "\n"
 "セット %s は既に存在しています。\n"
-"このプロジェクトをインポートするためには、既存のセットを消去するか名前を変えて下さい。\n"
+"このプロジェクトをインポートするためには、既存のセットを消去するか名前を変え"
+"て下さい。\n"
 "ファイル|セットのリロード から操作できます。セット名 %s を指定して下さい。\n"
-"さらに ファイル|全てのクリップを閉じて保存 し、新しいセット名を指定するか、破棄します。\n"
-"いったんこの作業を行えば、新しいプロジェクトをインポートできるようになります。\n"
+"さらに ファイル|全てのクリップを閉じて保存 し、新しいセット名を指定するか、破"
+"棄します。\n"
+"いったんこの作業を行えば、新しいプロジェクトをインポートできるようになりま"
+"す。\n"
 
 #: src/callbacks.c:937
 #, c-format
@@ -1665,7 +1679,7 @@ msgstr ""
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "ビデオの長さは現在%dフレームです(%.3fフレーム毎秒)。\n"
 
-#: src/callbacks.c:1684 src/resample.c:613 src/resample.c:2442
+#: src/callbacks.c:1684 src/resample.c:608 src/resample.c:2437
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "クリップボードは%dフレームにリサンプリングされました。\n"
@@ -1679,8 +1693,8 @@ msgstr "リドゥします"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "%dから%d%sフレームをクリップボードにコピーします..."
 
-#: src/callbacks.c:1907 src/saveplay.c:1010 src/saveplay.c:1128
-#: src/saveplay.c:1185 src/saveplay.c:2952
+#: src/callbacks.c:1907 src/saveplay.c:1023 src/saveplay.c:1141
+#: src/saveplay.c:1198 src/saveplay.c:2968
 msgid "Pulling frames from clip"
 msgstr "クリップからフレームを抽出"
 
@@ -1741,7 +1755,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 "\n"
-"挿入することによって、マルチトラックレイアウトでフレームにずれが生じるでしょう。\n"
+"挿入することによって、マルチトラックレイアウトでフレームにずれが生じるでしょ"
+"う。\n"
 "続けても構いませんか?\n"
 
 #: src/callbacks.c:2228 src/callbacks.c:9615
@@ -1751,7 +1766,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 "\n"
-"挿入することによって、マルチトラックレイアウトで音声にずれが生じるでしょう。\n"
+"挿入することによって、マルチトラックレイアウトで音声にずれが生じるでしょ"
+"う。\n"
 "続けても構いませんか?\n"
 
 #: src/callbacks.c:2315 src/callbacks.c:2329
@@ -1887,8 +1903,10 @@ msgid ""
 "(To cancel, press 'r' or click on Play|Record Performance again before you "
 "play.)\n"
 msgstr ""
-"記録の準備ができました。再生中にコントロール・キーとカーソルキーを使って、動作を記録して下さい。\n"
-"(キャンセルするには、'r'キーを押すか、再生を始める前に 再生|動作を記録 を再度クリックして下さい。\n"
+"記録の準備ができました。再生中にコントロール・キーとカーソルキーを使って、動"
+"作を記録して下さい。\n"
+"(キャンセルするには、'r'キーを押すか、再生を始める前に 再生|動作を記録 を再度"
+"クリックして下さい。\n"
 
 #: src/callbacks.c:3192
 msgid "Record cancelled.\n"
@@ -1923,12 +1941,13 @@ msgstr ""
 #: src/callbacks.c:3682
 #, c-format
 msgid ""
-"Saving the set will cause copies of all loaded clips to remain on the "
-"disk%s.\n"
+"Saving the set will cause copies of all loaded clips to remain on the disk"
+"%s.\n"
 "\n"
 "Please press 'Cancel' if that is not what you want.\n"
 msgstr ""
-"セットを保存すると、ロードされている全てのクリップがディスク %s にコピーされます。\n"
+"セットを保存すると、ロードされている全てのクリップがディスク %s にコピーされ"
+"ます。\n"
 "\n"
 "もしそれを望まないのであれば、'キャンセル'を押してください。\n"
 
@@ -1960,7 +1979,8 @@ msgid ""
 "Click OK to proceed.\n"
 msgstr ""
 "LiVESはディスクスペースを回復しようとしています。\n"
-"もしこのマシンで他のLiVESプログラムを走らせているならば、このプログラムだけを動作させるようにして下さい。\n"
+"もしこのマシンで他のLiVESプログラムを走らせているならば、このプログラムだけを"
+"動作させるようにして下さい。\n"
 "OKをクリックすると先に進みます。\n"
 
 #: src/callbacks.c:4272
@@ -2097,10 +2117,10 @@ msgid "A video editor and VJ program."
 msgstr "A video editor and VJ program."
 
 #: src/callbacks.c:4586
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "LiVES Version %s\n"
-"(c) G. Finch (salsaman) 2002-2010\n"
+"(c) G. Finch (salsaman) %s\n"
 "\n"
 "Released under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\n"
 "LiVES is distributed WITHOUT WARRANTY\n"
@@ -2137,7 +2157,8 @@ msgid ""
 "."
 msgstr ""
 "\n"
-"新しい音声をロードすることによって、マルチトラックにおいて音声の消去が生じます。\n"
+"新しい音声をロードすることによって、マルチトラックにおいて音声の消去が生じま"
+"す。\n"
 "続けても構いませんか?"
 
 #: src/callbacks.c:5110
@@ -2205,11 +2226,11 @@ msgstr "再生ウィンドウを表示する (s)"
 msgid "Play in separate window (s)"
 msgstr "独立したウィンドウで再生 (s)"
 
-#: src/callbacks.c:5937 src/gui.c:3697 src/saveplay.c:1781
+#: src/callbacks.c:5937 src/gui.c:3697 src/saveplay.c:1794
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:6066 src/gui.c:3465 src/saveplay.c:1782 src/plugins.c:1231
+#: src/callbacks.c:6066 src/gui.c:3465 src/saveplay.c:1795 src/plugins.c:1231
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - 再生ウィンドウ"
 
@@ -2242,7 +2263,7 @@ msgstr "クリップボードを反転します..."
 msgid "Reversing clipboard"
 msgstr "クリップボードを反転"
 
-#: src/callbacks.c:6489 src/saveplay.c:682
+#: src/callbacks.c:6489 src/saveplay.c:695
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
@@ -2408,7 +2429,8 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 "\n"
-"外部ウィンドウをキャプチャしました。幅=%d, 高さ=%d, bpp=%d. *リサイズしてはいけません*\n"
+"外部ウィンドウをキャプチャしました。幅=%d, 高さ=%d, bpp=%d. *リサイズしてはい"
+"けません*\n"
 "\n"
 "'q'キーで終了。\n"
 "(標準設定の%.3fフレーム毎秒を使います)\n"
@@ -2436,7 +2458,8 @@ msgstr ""
 "\n"
 "\n"
 "音声再生の速度はこのクリップに合わせて変更されます。\n"
-"新しい速度でエクスポートするには'OK'をクリック。元の速度でエクスポートするには'キャンセル'をクリックして下さい。\n"
+"新しい速度でエクスポートするには'OK'をクリック。元の速度でエクスポートするに"
+"は'キャンセル'をクリックして下さい。\n"
 
 #: src/callbacks.c:8800
 #, c-format
@@ -2579,7 +2602,9 @@ msgstr "クリップボード [ %d フレーム ]       選択箇所 [ %d フレ
 #, c-format
 msgid ""
 "Merge Clipboard [ %d Frames (resampled) ]       With Selection [ %d Frames ]"
-msgstr "クリップボード [ %d フレーム (リサンプリング後)]       選択箇所 [ %d フレーム ]をマージ"
+msgstr ""
+"クリップボード [ %d フレーム (リサンプリング後)]       選択箇所 [ %d フレー"
+"ム ]をマージ"
 
 #: src/merge.c:142
 msgid "Align _Starts"
@@ -3176,7 +3201,9 @@ msgstr "リアルタイムエフェクトのデフォルトを保存(_D)"
 msgid ""
 "Save real time effect defaults so they will be restored each time you use "
 "LiVES."
-msgstr "リアルタイムエフェクトをデフォルトとして保存します。毎回、LiVESの起動時に復元します。"
+msgstr ""
+"リアルタイムエフェクトをデフォルトとして保存します。毎回、LiVESの起動時に復元"
+"します。"
 
 #: src/gui.c:1475
 msgid "_Reset all playback speeds and positions"
@@ -3185,7 +3212,8 @@ msgstr "全ての再生スピードを位置をリセット(_R)"
 #: src/gui.c:1478
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
-msgstr "全ての再生位置をフレーム1にリセットし、全てのフレーム再生レートをリセットする"
+msgstr ""
+"全ての再生位置をフレーム1にリセットし、全てのフレーム再生レートをリセットする"
 
 #: src/gui.c:1480
 msgid "_MIDI/joystick interface"
@@ -3352,7 +3380,9 @@ msgstr "開始しています...\n"
 
 #: src/gui.c:2813
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
-msgstr "    記録を停止するには'q'を押して下さい。「再生ウィンドウを覆ってはいけません！」   "
+msgstr ""
+"    記録を停止するには'q'を押して下さい。「再生ウィンドウを覆ってはいけませ"
+"ん！」   "
 
 #: src/gui.c:3190
 msgid "Frame number to preview"
@@ -3461,7 +3491,9 @@ msgstr "（空白）"
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
 "updated accordingly\n"
-msgstr "セット名は %s から %s に変更されました。それに伴いレイアウトがアップデートされています。\n"
+msgstr ""
+"セット名は %s から %s に変更されました。それに伴いレイアウトがアップデートさ"
+"れています。\n"
 
 #: src/utils.c:553
 #, c-format
@@ -3686,7 +3718,7 @@ msgstr " フレーム ] ----------"
 msgid "Examining file header"
 msgstr "ファイルヘッダを検査"
 
-#: src/saveplay.c:186 src/saveplay.c:543
+#: src/saveplay.c:186 src/saveplay.c:556
 #, c-format
 msgid "Opening %s"
 msgstr "%sを開きます"
@@ -3696,7 +3728,7 @@ msgstr "%sを開きます"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "%sを開きます。開始時刻%.2f秒、%dフレーム"
 
-#: src/saveplay.c:197 src/saveplay.c:2940
+#: src/saveplay.c:197 src/saveplay.c:2956
 msgid " without sound"
 msgstr " 音声なし"
 
@@ -3705,7 +3737,7 @@ msgstr " 音声なし"
 msgid "Opening audio for %s"
 msgstr "音声 %s を開く"
 
-#: src/saveplay.c:431
+#: src/saveplay.c:444
 #, c-format
 msgid ""
 "\n"
@@ -3718,16 +3750,17 @@ msgid ""
 msgstr ""
 "\n"
 "LiVESは今のところ大きなファイルサイズに最適化されていません。\n"
-"より小さいファイルで始めるか、「ファイル選択を開く」オプションを利用するとよいでしょう。\n"
+"より小さいファイルで始めるか、「ファイル選択を開く」オプションを利用するとよ"
+"いでしょう。\n"
 "(ファイルサイズ=%.2fMB)\n"
 "\n"
 "続けますか ?"
 
-#: src/saveplay.c:444
+#: src/saveplay.c:457
 msgid " - please be patient."
 msgstr " - 我慢して下さい。"
 
-#: src/saveplay.c:659
+#: src/saveplay.c:672
 msgid ""
 "\n"
 "\n"
@@ -3739,7 +3772,7 @@ msgstr ""
 "LiVESは、音声もしくはビデオを抽出できませんでした。\n"
 "詳細はターミナル・ウィンドウを開いて確認して下さい。\n"
 
-#: src/saveplay.c:662
+#: src/saveplay.c:675
 msgid ""
 "\n"
 "\n"
@@ -3749,7 +3782,7 @@ msgstr ""
 "\n"
 "このファイルを開くにはmplayerをインストールする必要があります。\n"
 
-#: src/saveplay.c:665
+#: src/saveplay.c:678
 msgid ""
 "\n"
 "\n"
@@ -3761,12 +3794,12 @@ msgstr ""
 "ツール|属性|デコーディング で、\n"
 "「ビデオを開くコマンド」の設定を確認して下さい。\n"
 
-#: src/saveplay.c:788
+#: src/saveplay.c:801
 #, c-format
 msgid "Subtitles were saved as %s\n"
 msgstr ""
 
-#: src/saveplay.c:937
+#: src/saveplay.c:950
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3778,37 +3811,39 @@ msgstr ""
 "\n"
 "それでも続けますか ?"
 
-#: src/saveplay.c:992
+#: src/saveplay.c:1005
 msgid "selection"
 msgstr "選択"
 
-#: src/saveplay.c:1051 src/saveplay.c:1155
+#: src/saveplay.c:1064 src/saveplay.c:1168
 msgid "Linking selection"
 msgstr "リンクの選択"
 
-#: src/saveplay.c:1202
+#: src/saveplay.c:1215
 msgid " (with no sound)\n"
 msgstr " (音声なし)\n"
 
-#: src/saveplay.c:1210
+#: src/saveplay.c:1223
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
-msgstr "フレーム%dから%d%sを\"%s\"として保存 : エンコーダ = %s : フォーマット = %s..."
+msgstr ""
+"フレーム%dから%d%sを\"%s\"として保存 : エンコーダ = %s : フォーマット = %s..."
 
-#: src/saveplay.c:1213
+#: src/saveplay.c:1226
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
-msgstr "フレーム1から%d%sを\"%s\"として保存 : エンコーダ = %s : フォーマット = %s..."
+msgstr ""
+"フレーム1から%d%sを\"%s\"として保存 : エンコーダ = %s : フォーマット = %s..."
 
-#: src/saveplay.c:1316
+#: src/saveplay.c:1329
 msgid "Saving [can take a long time]"
 msgstr "保存 [しばらく時間がかかるかもしれません]"
 
-#: src/saveplay.c:1352
+#: src/saveplay.c:1365
 msgid "error.\n"
 msgstr "エラー。\n"
 
-#: src/saveplay.c:1410
+#: src/saveplay.c:1423
 msgid ""
 "\n"
 "\n"
@@ -3818,29 +3853,29 @@ msgstr ""
 "\n"
 "エンコーダエラー - 出力ファイルは作成されませんでした !\n"
 
-#: src/saveplay.c:1480
+#: src/saveplay.c:1493
 #, c-format
 msgid "File size was %.2fMB\n"
 msgstr ""
 
-#: src/saveplay.c:1567
+#: src/saveplay.c:1580
 msgid "recording aborted by preview.\n"
 msgstr "プレビューにより記録は中止されました。\n"
 
-#: src/saveplay.c:1571
+#: src/saveplay.c:1584
 msgid "recording aborted by clipboard playback.\n"
 msgstr "クリップボードの再生により記録は中止されました。\n"
 
-#: src/saveplay.c:1574
+#: src/saveplay.c:1587
 msgid "Recording performance..."
 msgstr "演奏を記録します..."
 
-#: src/saveplay.c:2404
+#: src/saveplay.c:2418
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "平均のFPSは%.4fです\n"
 
-#: src/saveplay.c:2410
+#: src/saveplay.c:2424
 msgid ""
 "\n"
 "\n"
@@ -3854,16 +3889,16 @@ msgstr ""
 "ツール--->全てをリサイズ、によって、\n"
 "全てのフレームを現在のサイズにリサイズして下さい。\n"
 
-#: src/saveplay.c:2535
+#: src/saveplay.c:2549
 msgid "Unknown"
 msgstr "不明"
 
-#: src/saveplay.c:2630
+#: src/saveplay.c:2644
 #, c-format
 msgid "Untitled%d"
 msgstr "無題%d"
 
-#: src/saveplay.c:2745
+#: src/saveplay.c:2761
 #, c-format
 msgid ""
 "\n"
@@ -3874,12 +3909,12 @@ msgstr ""
 "再生速度が指定されていないか無効です ! %.3ffpsの標準設定を使います. \n"
 "標準値は「ツール|属性|その他」で指定できます。\n"
 
-#: src/saveplay.c:2757
+#: src/saveplay.c:2773
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "再生速度は音声に合わせて%.3fフレーム毎秒に合わせられました\n"
 
-#: src/saveplay.c:2773
+#: src/saveplay.c:2789
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -3888,7 +3923,7 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d *bpp=グレースケール* fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:2777 src/saveplay.c:3397
+#: src/saveplay.c:2793 src/saveplay.c:3413
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -3897,49 +3932,49 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d bpp=%d fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:2781 src/saveplay.c:3401
+#: src/saveplay.c:2797 src/saveplay.c:3417
 #, c-format
 msgid "%s none\n"
 msgstr "%s なし\n"
 
-#: src/saveplay.c:2784 src/saveplay.c:3404
+#: src/saveplay.c:2800 src/saveplay.c:3420
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d チャンネル %d bps\n"
 
-#: src/saveplay.c:2792
+#: src/saveplay.c:2808
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - コメント: %s\n"
 
-#: src/saveplay.c:2870
+#: src/saveplay.c:2886
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "フレーム%dを%sとして保存..."
 
-#: src/saveplay.c:2935
+#: src/saveplay.c:2951
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "%sから%sへバックアップします"
 
-#: src/saveplay.c:2971
+#: src/saveplay.c:2987
 msgid "Backing up"
 msgstr "バックアップします"
 
-#: src/saveplay.c:3002
+#: src/saveplay.c:3018
 msgid "performance data was backed up..."
 msgstr "演奏データをバックアップしました..."
 
-#: src/saveplay.c:3308
+#: src/saveplay.c:3324
 #, c-format
 msgid "Restoring %s..."
 msgstr "%sをリストアします..."
 
-#: src/saveplay.c:3327
+#: src/saveplay.c:3343
 msgid "Restoring"
 msgstr "リストアします"
 
-#: src/saveplay.c:3349
+#: src/saveplay.c:3365
 #, c-format
 msgid ""
 "\n"
@@ -3952,17 +3987,17 @@ msgstr ""
 "このファイル%sは壊れています。\n"
 "LiVESはリストアできませんでした。\n"
 
-#: src/saveplay.c:3770
+#: src/saveplay.c:3786
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3774
+#: src/saveplay.c:3790
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3797
+#: src/saveplay.c:3813
 #, c-format
 msgid ""
 "\n"
@@ -3970,7 +4005,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3914
+#: src/saveplay.c:3930
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -3980,11 +4015,11 @@ msgstr ""
 "LiVESを前回起動した際のファイルを発見しました。\n"
 "回復を試みますか?\n"
 
-#: src/saveplay.c:3927
+#: src/saveplay.c:3943
 msgid "Recovering files"
 msgstr "ファイルを回復"
 
-#: src/saveplay.c:3931
+#: src/saveplay.c:3947
 msgid "Recovering files..."
 msgstr ""
 
@@ -4105,7 +4140,8 @@ msgid ""
 msgstr ""
 "音声のリサンプリングはこのフォーマットでなければいけません。\n"
 "'sox'をインストールするか、\n"
-"「ツール|属性|エンコーディング」で他のエンコーダフォーマットに変更して下さい。\n"
+"「ツール|属性|エンコーディング」で他のエンコーダフォーマットに変更して下さ"
+"い。\n"
 
 #: src/dialogs.c:1251
 msgid ""
@@ -4146,11 +4182,11 @@ msgstr ""
 "LiVESは次の設定を推奨します:\n"
 "\n"
 
-#: src/dialogs.c:1284 src/dialogs.c:1381 src/resample.c:763
+#: src/dialogs.c:1284 src/dialogs.c:1381 src/resample.c:758
 msgid ", signed"
 msgstr "符号付き"
 
-#: src/dialogs.c:1285 src/dialogs.c:1382 src/resample.c:766
+#: src/dialogs.c:1285 src/dialogs.c:1382 src/resample.c:761
 msgid ", unsigned"
 msgstr "符号なし"
 
@@ -4189,7 +4225,8 @@ msgstr "ビデオを%d×%d画素にリサイズします\n"
 
 #: src/dialogs.c:1322
 msgid "disable audio, since the target encoder cannot encode audio\n"
-msgstr "音声を無効にします。ターゲットエンコーダは音声をエンコードできません。\n"
+msgstr ""
+"音声を無効にします。ターゲットエンコーダは音声をエンコードできません。\n"
 
 #: src/dialogs.c:1378
 msgid "LiVES must:\n"
@@ -4273,9 +4310,11 @@ msgid ""
 "You should only click OK if you understand what you are doing, otherwise, "
 "click Cancel."
 msgstr ""
-"yubmpegストリームを開くときは、先にfifoファイルを作成し、yuv4mpegフレームを書き込んでおかねばなりません。\n"
+"yubmpegストリームを開くときは、先にfifoファイルを作成し、yuv4mpegフレームを書"
+"き込んでおかねばなりません。\n"
 "LiVESはフレームを受け取らないとハングしてしまうでしょう。\n"
-"何をしようとしているかを正しく理解している場合のみOKをクリックし、そうでない場合はキャンセルをクリックして下さい。"
+"何をしようとしているかを正しく理解している場合のみOKをクリックし、そうでない"
+"場合はキャンセルをクリックして下さい。"
 
 #: src/dialogs.c:1504
 msgid "Show Keys"
@@ -4395,7 +4434,9 @@ msgstr "メッセージの履歴"
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your ~/.lives file"
-msgstr "アップグレード/インストールした後は、~/.livesの中の<prefix_dir>を調整する必要があるでしょう。"
+msgstr ""
+"アップグレード/インストールした後は、~/.livesの中の<prefix_dir>を調整する必要"
+"があるでしょう。"
 
 #: src/dialogs.c:1549
 #, c-format
@@ -4422,7 +4463,8 @@ msgid ""
 msgstr ""
 "音声のタイプがわかりません。\n"
 "\n"
-" (ファイル名は .mp3, .ogg, .wav, .mod, .xm または .it で終わるものでなければなりません)"
+" (ファイル名は .mp3, .ogg, .wav, .mod, .xm または .it で終わるものでなければ"
+"なりません)"
 
 #: src/dialogs.c:1556
 msgid "failed (unknown type)\n"
@@ -4487,7 +4529,8 @@ msgstr ""
 "を発見できません。\n"
 "もしこのファイルを移動したのであれば、それをコピーして元の位置に戻し、\n"
 "'OK'をクリックして再度、試して下さい。\n"
-"そうでない場合は、キャンセルをクリックしてファイルのロードをスキップして下さい。\n"
+"そうでない場合は、キャンセルをクリックしてファイルのロードをスキップして下さ"
+"い。\n"
 
 #: src/dialogs.c:1588
 #, c-format
@@ -4610,7 +4653,8 @@ msgstr "もしくは、もう少し小さな値を入力してください。\n"
 
 #: src/dialogs.c:1651
 msgid "Try again from the clip editor, try closing some other applications\n"
-msgstr "他のアプリケーションを終了させて、クリップエディタから再試行して下さい。\n"
+msgstr ""
+"他のアプリケーションを終了させて、クリップエディタから再試行して下さい。\n"
 
 #: src/dialogs.c:1652
 msgid "Try closing some other applications\n"
@@ -4621,13 +4665,16 @@ msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
 msgstr ""
-"マルチトラックは音声チャネル無しを設定しました。しかしこのレイアウトには音声があります。\n"
+"マルチトラックは音声チャネル無しを設定しました。しかしこのレイアウトには音声"
+"があります。\n"
 "ツールメニューから音声設定を調整して下さい。\n"
 
 #: src/dialogs.c:1667
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
-msgstr "現在のレイアウトには音声があります。したがって、音声チャネルはゼロにできません。\n"
+msgstr ""
+"現在のレイアウトには音声があります。したがって、音声チャネルはゼロにできませ"
+"ん。\n"
 
 #: src/dialogs.c:1671
 msgid ""
@@ -4642,7 +4689,8 @@ msgid ""
 "another system, or from an older version of LiVES).\n"
 "Should I try to repair the disk copy of the layout ?\n"
 msgstr ""
-"レイアウトでエラーが生じました(他のシステムや、LiVESの古いバージョンからの移行が原因かもしれません)。\n"
+"レイアウトでエラーが生じました(他のシステムや、LiVESの古いバージョンからの移"
+"行が原因かもしれません)。\n"
 "レイアウトのディスクコピーを回復してみますか?\n"
 
 #: src/dialogs.c:1679
@@ -5331,14 +5379,17 @@ msgid ""
 "disabled during plugin use !\n"
 msgstr ""
 "\n"
-"警告! ビデオ再生プラグインがキープロセスを送ることができません。プラグインの利用中はキーボードを使わないで下さい!\n"
+"警告! ビデオ再生プラグインがキープロセスを送ることができません。プラグインの"
+"利用中はキーボードを使わないで下さい!\n"
 
 #: src/plugins.c:1201
 #, c-format
 msgid ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
 "***\n"
-msgstr "*** 再生に %s プラグインを使います。パレットタイプは %d ( %s ) を使います。 ***\n"
+msgstr ""
+"*** 再生に %s プラグインを使います。パレットタイプは %d ( %s ) を使います。 "
+"***\n"
 
 #: src/plugins.c:1244
 #, c-format
@@ -5348,7 +5399,8 @@ msgid ""
 "%s%s%s\n"
 "or change the value of <lib_dir> in ~/.lives\n"
 msgstr ""
-"LiVESはエンコーダ・プラグインを見つけられませんでした。以下にインストールされているプラグインを確認して下さい。\n"
+"LiVESはエンコーダ・プラグインを見つけられませんでした。以下にインストールされ"
+"ているプラグインを確認して下さい。\n"
 "%s%s%s\n"
 "もしくは、~/.lives における <lib_dir> の値を変更して下さい。\n"
 
@@ -5360,10 +5412,12 @@ msgid ""
 "%s%s%s\n"
 "or switch to another plugin using Tools|Preferences|Encoding\n"
 msgstr ""
-"LiVESは、エンコーダプラグイン '%s' から反応を受け取ることができませんでした。\n"
+"LiVESは、エンコーダプラグイン '%s' から反応を受け取ることができませんでし"
+"た。\n"
 "以下にプラグインが正しくインストールされているかどうか確認して下さい。\n"
 "%s%s%s\n"
-"もしくは、ツール|設定|エンコーディング により他のプラグインに変更してください。\n"
+"もしくは、ツール|設定|エンコーディング により他のプラグインに変更してくださ"
+"い。\n"
 
 #: src/plugins.c:1633
 msgid "Unable to resize, please install imageMagick\n"
@@ -5522,7 +5576,8 @@ msgstr "パラメータ(_P)..."
 
 #: src/rfx-builder.c:404
 msgid "Set up parameters used in pre/loop/post/trigger code. Optional."
-msgstr "プリ/ループ/ポスト/トリガの各コードで使用するパラメータを指定。(オプション)"
+msgstr ""
+"プリ/ループ/ポスト/トリガの各コードで使用するパラメータを指定。(オプション)"
 
 #: src/rfx-builder.c:410
 msgid "Parameter _Window Hints..."
@@ -5573,7 +5628,8 @@ msgid ""
 "Set trigger code for when the parameter window is shown, or when a parameter "
 "is changed. Optional (except for Utilities)."
 msgstr ""
-"パラメータウィンドウが表示されたとき、またはパラメータが変更されたときに実行するトリガコードを指定する。(ユーティリティ以外はオプション)"
+"パラメータウィンドウが表示されたとき、またはパラメータが変更されたときに実行"
+"するトリガコードを指定する。(ユーティリティ以外はオプション)"
 
 #: src/rfx-builder.c:576
 #, c-format
@@ -5688,7 +5744,9 @@ msgstr "ラベル(_L):    "
 msgid ""
 "Label to be shown by the parameter. An underscore represents mnemonic "
 "accelerator."
-msgstr "パラメータとして表示されるラベル。アンダースコアはキーボードアクセラレータを表します。"
+msgstr ""
+"パラメータとして表示されるラベル。アンダースコアはキーボードアクセラレータを"
+"表します。"
 
 #: src/rfx-builder.c:1948
 msgid "Button _Group: "
@@ -5733,7 +5791,8 @@ msgstr "     ステップサイズ:   "
 #: src/rfx-builder.c:2173
 msgid ""
 "How much the parameter is adjusted when the spinbutton arrows are pressed."
-msgstr "スピンボタンの矢印が押されたときに、どのくらいパラメータが調節されるか。"
+msgstr ""
+"スピンボタンの矢印が押されたときに、どのくらいパラメータが調節されるか。"
 
 #: src/rfx-builder.c:2183
 msgid "_Wrap: "
@@ -5955,7 +6014,8 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"重複したパラメータ名を発見しました。パラメータ名はプラグイン内部で一意でなければなりません。\n"
+"重複したパラメータ名を発見しました。パラメータ名はプラグイン内部で一意でなけ"
+"ればなりません。\n"
 "\n"
 
 #: src/rfx-builder.c:3274
@@ -6254,10 +6314,12 @@ msgid ""
 "Tip: avoid setting it inside /tmp, since frequently /tmp is cleared on "
 "system shutdown."
 msgstr ""
-"一時ディレクトリは、クリップやセットを開いたり格納したりするLiVESの作業ディレクトリです。\n"
+"一時ディレクトリは、クリップやセットを開いたり格納したりするLiVESの作業ディレ"
+"クトリです。\n"
 "十分に空きスペースのあるディスクパーティションに配置すべです。\n"
 "\n"
-"ティップス: /tmp に設定するのは避けましょう。システムのシャットダウン時にしばしば削除されるからです。"
+"ティップス: /tmp に設定するのは避けましょう。システムのシャットダウン時にしば"
+"しば削除されるからです。"
 
 #: src/preferences.c:272
 #, c-format
@@ -6299,9 +6361,11 @@ msgstr ""
 "一時ディレクトリの変更を選択しました。\n"
 "他のLiVESが起動していないことを確認して下さい。\n"
 "\n"
-"もし他のLiVESが起動しているときは、OKを押す*前*に、そのアプリケーションを終了させて下さい。\n"
+"もし他のLiVESが起動しているときは、OKを押す*前*に、そのアプリケーションを終了"
+"させて下さい。\n"
 "\n"
-"あるいは、一時ディレクトリの指定をもとの設定に戻すために、キャンセルを押して下さい。"
+"あるいは、一時ディレクトリの指定をもとの設定に戻すために、キャンセルを押して"
+"下さい。"
 
 #: src/preferences.c:868
 msgid ""
@@ -6310,7 +6374,8 @@ msgid ""
 "See http://jackaudio.org\n"
 msgstr ""
 "\n"
-"音声プレーヤを jack に変更できません。 - jackd は先にインストールされていなければなりません。\n"
+"音声プレーヤを jack に変更できません。 - jackd は先にインストールされていなけ"
+"ればなりません。\n"
 "http://jackaudio.org を参照して下さい。\n"
 
 #: src/preferences.c:872
@@ -6487,7 +6552,8 @@ msgstr "オープン/レンダリング圧縮                  "
 
 #: src/preferences.c:2520
 msgid " %     ( lower = slower, larger files; for jpeg, higher quality )"
-msgstr " %     (低くする = 遅くなる、ファイルサイズは大きくなる; jpegの場合、高品質)"
+msgstr ""
+" %     (低くする = 遅くなる、ファイルサイズは大きくなる; jpegの場合、高品質)"
 
 #: src/preferences.c:2533
 msgid "Default image format          "
@@ -6511,7 +6577,9 @@ msgstr "可能ならインスタントオープンを利用して下さい。"
 
 #: src/preferences.c:2602
 msgid "Enable instant opening of some file types using decoder plugins"
-msgstr "デコーダープラグインを使って、いくつかのファイルタイプにはインスタントオープンを有効にする"
+msgstr ""
+"デコーダープラグインを使って、いくつかのファイルタイプにはインスタントオープ"
+"ンを有効にする"
 
 #: src/preferences.c:2607
 msgid "Enable automatic deinterlacing when possible"
@@ -6668,7 +6736,8 @@ msgid ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
 msgstr ""
-"\"バーチャル\"リアルタイム・エフェクト・キーの数。リアルタイム・エフェクト・ウィンドウやネットワーク(OSC)を介してコントロールされます。"
+"\"バーチャル\"リアルタイム・エフェクト・キーの数。リアルタイム・エフェクト・"
+"ウィンドウやネットワーク(OSC)を介してコントロールされます。"
 
 #: src/preferences.c:3375
 msgid "      Video load directory (default)      "
@@ -6727,7 +6796,9 @@ msgstr "ディレクトリ"
 msgid ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
-msgstr "クリップボードのフレームレートが選択箇所のフレームレートと合わない場合は警告する(_f)"
+msgstr ""
+"クリップボードのフレームレートが選択箇所のフレームレートと合わない場合は警告"
+"する(_f)"
 
 #: src/preferences.c:3651
 msgid "Warn on Open if file _size exceeds "
@@ -6749,7 +6820,8 @@ msgstr ""
 
 #: src/preferences.c:3722
 msgid "Show a warning if no _rendered effects are found at startup."
-msgstr "開始時にレンダリングエフェクトが見つからなかったときに警告を表示する(_r)"
+msgstr ""
+"開始時にレンダリングエフェクトが見つからなかったときに警告を表示する(_r)"
 
 #: src/preferences.c:3741
 msgid "Show a warning if no _encoder plugins are found at startup."
@@ -6761,7 +6833,9 @@ msgstr "同じセット名が入力されたときに警告を表示する(_d)"
 
 #: src/preferences.c:3779
 msgid "When a set is loaded, warn if clips are missing from _layouts."
-msgstr "セットがロードされたときに、クリップがレイアウトから失われるときには警告する。"
+msgstr ""
+"セットがロードされたときに、クリップがレイアウトから失われるときには警告す"
+"る。"
 
 #: src/preferences.c:3799
 msgid "Warn if a clip used in a layout is about to be closed."
@@ -6797,12 +6871,16 @@ msgstr ""
 
 #: src/preferences.c:3951
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
-msgstr "マルチトラックモードを抜けるときにレイアウトが保存されていないときは警告する。"
+msgstr ""
+"マルチトラックモードを抜けるときにレイアウトが保存されていないときは警告す"
+"る。"
 
 #: src/preferences.c:3970
 msgid ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
-msgstr "マルチトラックモードに音声チャネルが無いのに音声付きレイアウトがロードされるときには警告する。"
+msgstr ""
+"マルチトラックモードに音声チャネルが無いのに音声付きレイアウトがロードされる"
+"ときには警告する。"
 
 #: src/preferences.c:3989
 msgid ""
@@ -6824,7 +6902,8 @@ msgstr "マルチトラックがバックアップスペースに足りないと
 
 #: src/preferences.c:4069
 msgid "Show a warning advising cleaning of disk space after a crash."
-msgstr "表示する警告がクラッシュした後、ディスクスペースの清掃アドバイスを行います。"
+msgstr ""
+"表示する警告がクラッシュした後、ディスクスペースの清掃アドバイスを行います。"
 
 #. TRANSLATORS: please keep this string short
 #: src/preferences.c:4090
@@ -6891,7 +6970,9 @@ msgstr "ダウンロードバンド幅 (Kb/s)       "
 
 #: src/preferences.c:4340
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
-msgstr "OMCを利用するには、\"configure --disable-OSC\"無しでLiVESをコンパイルしなければなりません。"
+msgstr ""
+"OMCを利用するには、\"configure --disable-OSC\"無しでLiVESをコンパイルしなけれ"
+"ばなりません。"
 
 #: src/preferences.c:4354
 msgid "OMC remote control enabled"
@@ -6919,8 +7000,8 @@ msgid ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
 msgstr ""
-"Jackトランスポートを使うには、jack/transport.h と jack/jack.h "
-"が存在する条件でLiVESをコンパイルしなければなりません。"
+"Jackトランスポートを使うには、jack/transport.h と jack/jack.h が存在する条件"
+"でLiVESをコンパイルしなければなりません。"
 
 #: src/preferences.c:4459
 msgid "Jack _transport config file"
@@ -6960,13 +7041,17 @@ msgstr "Jack音声"
 
 #: src/preferences.c:4616
 msgid "LiVES must be compiled with jack/jack.h present to use jack audio"
-msgstr "Jack音声を使うためにはLiVESはjack/jack.hと共にコンパイルされなければなりません。"
+msgstr ""
+"Jack音声を使うためにはLiVESはjack/jack.hと共にコンパイルされなければなりませ"
+"ん。"
 
 #: src/preferences.c:4623
 msgid ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
-msgstr "jackオーディオを使うには、再生タブで音声プレーヤーを\"jack\"に指定しなければなりません。"
+msgstr ""
+"jackオーディオを使うには、再生タブで音声プレーヤーを\"jack\"に指定しなければ"
+"なりません。"
 
 #: src/preferences.c:4634
 msgid "Jack _audio server config file"
@@ -7049,7 +7134,9 @@ msgstr "MIDIチェックレート"
 msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
-msgstr "キーボードによるMIDIチェックの数。この数を増やすとMIDIの反応が向上しますが、再生が遅くなるかもしれません。"
+msgstr ""
+"キーボードによるMIDIチェックの数。この数を増やすとMIDIの反応が向上しますが、"
+"再生が遅くなるかもしれません。"
 
 #: src/preferences.c:4916
 msgid "MIDI repeat"
@@ -7076,7 +7163,8 @@ msgid ""
 "Click OK to continue.\n"
 msgstr ""
 "\n"
-"LiVESはいまからシャットダウンします。ディレクトリを変更するには再起動が必要です。\n"
+"LiVESはいまからシャットダウンします。ディレクトリを変更するには再起動が必要で"
+"す。\n"
 "OKのクリックで続けます。\n"
 
 #: src/preferences.c:5247
@@ -7086,13 +7174,11 @@ msgid ""
 msgstr ""
 
 #: src/preferences.c:5251
-msgid ""
-"Theme changes will not take effect until the next time you start LiVES."
+msgid "Theme changes will not take effect until the next time you start LiVES."
 msgstr "この変更は次にLiVESを起動するときまで影響を与えません。"
 
 #: src/preferences.c:5255
-msgid ""
-"Jack options will not take effect until the next time you start LiVES."
+msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr "Jackオプションは、次にLiVESを開始するときまで効果を得ません。"
 
 #: src/osc.c:2030
@@ -7119,25 +7205,25 @@ msgstr "OSCサーバーをUDPポート %d で開始しました。\n"
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "ポート%d番のOSC/UDPサーバを起動できません。 \n"
 
-#: src/resample.c:114 src/resample.c:263
+#: src/resample.c:122 src/resample.c:265
 #, c-format
 msgid "Resizing frames 1 to %d"
 msgstr "フレーム1を %d にリサイズ"
 
-#: src/resample.c:288 src/resample.c:308
+#: src/resample.c:290 src/resample.c:310
 msgid "Resize"
 msgstr "リサイズ"
 
-#: src/resample.c:318
+#: src/resample.c:320
 msgid "Resample/Resize"
 msgstr "リサンプル/リサイズ"
 
-#: src/resample.c:610
+#: src/resample.c:605
 #, c-format
 msgid "Length of video is now %d frames.\n"
 msgstr "現在、ビデオの長さは %d フレームです。\n"
 
-#: src/resample.c:675
+#: src/resample.c:670
 msgid ""
 "\n"
 "\n"
@@ -7147,162 +7233,162 @@ msgstr ""
 "\n"
 "新しいレートは0より大きくなければなりません。\n"
 
-#: src/resample.c:719 src/resample.c:727
+#: src/resample.c:714 src/resample.c:722
 msgid "Resampling audio"
 msgstr "音声のリサンプリング"
 
-#: src/resample.c:744
+#: src/resample.c:739
 msgid "LiVES was unable to resample the audio as requested.\n"
 msgstr "LiVESは要求された音声のリサンプリングを実施できません。\n"
 
-#: src/resample.c:746 src/resample.c:750
+#: src/resample.c:741 src/resample.c:745
 msgid "Resample Audio"
 msgstr "音声のリサンプリング"
 
-#: src/resample.c:758
+#: src/resample.c:753
 #, c-format
 msgid "Audio was resampled to %d Hz, %d channels, %d bit"
 msgstr "音声は %d Hz、 %d チャンネル、%d ビットでリサンプリングされました。"
 
-#: src/resample.c:771
+#: src/resample.c:766
 msgid ", little-endian"
 msgstr "リトル・エンディアン"
 
-#: src/resample.c:774
+#: src/resample.c:769
 msgid ", big-endian"
 msgstr "ビッグ・エンディアン"
 
-#: src/resample.c:948
+#: src/resample.c:943
 #, c-format
 msgid "Resampling video at %.8f frames per second..."
 msgstr "%.8f フレーム毎秒でビデオをリサンプリング..."
 
-#: src/resample.c:951
+#: src/resample.c:946
 #, c-format
 msgid "Resampling video at %.3f frames per second..."
 msgstr "%.3f フレーム毎秒でビデオをリサンプリング..."
 
-#: src/resample.c:982
+#: src/resample.c:977
 msgid "Reordering error !\n"
 msgstr "リオーダリング・エラー !\n"
 
-#: src/resample.c:993
+#: src/resample.c:988
 msgid "Resample"
 msgstr "リサンプリング"
 
-#: src/resample.c:1117
+#: src/resample.c:1112
 msgid "LiVES: - Resample Audio"
 msgstr "LiVES: - 音声のリサンプリング"
 
-#: src/resample.c:1120
+#: src/resample.c:1115
 msgid "LiVES: - Insert Silence"
 msgstr "LiVES: - 無音声の挿入"
 
-#: src/resample.c:1123
+#: src/resample.c:1118
 msgid "LiVES: - New Clip Audio"
 msgstr "LiVES: - 新しい音声クリップ"
 
-#: src/resample.c:1126
+#: src/resample.c:1121
 msgid "LiVES: - External Clip Settings"
 msgstr "LiVES: - 外部クリップ設定"
 
-#: src/resample.c:1164 src/resample.c:1434
+#: src/resample.c:1159 src/resample.c:1429
 msgid "Rate (Hz) "
 msgstr "レート (Hz) "
 
-#: src/resample.c:1185
+#: src/resample.c:1180
 msgid "         Channels "
 msgstr "         チャンネル "
 
-#: src/resample.c:1205
+#: src/resample.c:1200
 msgid "        Sample Size "
 msgstr "        サンプルサイズ "
 
-#: src/resample.c:1244 src/resample.c:1548
+#: src/resample.c:1239 src/resample.c:1543
 msgid "Signed"
 msgstr "符号付き"
 
-#: src/resample.c:1271 src/resample.c:1582
+#: src/resample.c:1266 src/resample.c:1577
 msgid "Unsigned"
 msgstr "符号なし"
 
-#: src/resample.c:1318 src/resample.c:1635
+#: src/resample.c:1313 src/resample.c:1630
 msgid "Little Endian"
 msgstr "リトル・エンディアン"
 
-#: src/resample.c:1345 src/resample.c:1667
+#: src/resample.c:1340 src/resample.c:1662
 msgid "Big Endian"
 msgstr "ビッグ・エンディアン"
 
-#: src/resample.c:1370
+#: src/resample.c:1365
 msgid "Current"
 msgstr "現在"
 
-#: src/resample.c:1402
+#: src/resample.c:1397
 msgid "_Enable audio"
 msgstr "音声の有効化"
 
-#: src/resample.c:1433
+#: src/resample.c:1428
 msgid "_Rate (Hz) "
 msgstr "レート(Hz) "
 
-#: src/resample.c:1461
+#: src/resample.c:1456
 msgid "    _Channels "
 msgstr "    チャンネル "
 
-#: src/resample.c:1462
+#: src/resample.c:1457
 msgid "    Channels "
 msgstr "    チャンネル "
 
-#: src/resample.c:1495
+#: src/resample.c:1490
 msgid "    _Sample Size "
 msgstr "    サンプルサイズ "
 
-#: src/resample.c:1496
+#: src/resample.c:1491
 msgid "    Sample Size "
 msgstr "    サンプルサイズ "
 
-#: src/resample.c:1705
+#: src/resample.c:1700
 msgid "New"
 msgstr "新規"
 
-#: src/resample.c:1734
+#: src/resample.c:1729
 msgid "_Frames Per Second "
 msgstr "フレーム毎秒 "
 
-#: src/resample.c:1776
+#: src/resample.c:1771
 msgid "Record for maximum:  "
 msgstr "最大レコード:  "
 
-#: src/resample.c:1799
+#: src/resample.c:1794
 msgid " hours  "
 msgstr " 時間  "
 
-#: src/resample.c:1812
+#: src/resample.c:1807
 msgid " minutes  "
 msgstr " 分  "
 
-#: src/resample.c:1825
+#: src/resample.c:1820
 msgid " seconds  "
 msgstr " 秒  "
 
-#: src/resample.c:1846
+#: src/resample.c:1841
 msgid "Unlimited"
 msgstr "無制限"
 
-#: src/resample.c:1874
+#: src/resample.c:1869
 msgid "Click OK to begin recording, or Cancel to quit."
 msgstr "記録の開始にはOKを、やめるにはキャンセルをクリック"
 
-#: src/resample.c:1983
+#: src/resample.c:1978
 msgid "LiVES: - Change playback speed"
 msgstr "LiVES: - 再生速度の変更"
 
-#: src/resample.c:1986
+#: src/resample.c:1981
 msgid "LiVES: - Resample Video"
 msgstr "LiVES: - ビデオのリサンプリング"
 
-#: src/resample.c:2007
+#: src/resample.c:2002
 #, c-format
 msgid ""
 "\n"
@@ -7319,7 +7405,7 @@ msgstr ""
 "要求する再生スピードをフレーム毎秒の数値で\n"
 "入力してください(_f)"
 
-#: src/resample.c:2010
+#: src/resample.c:2005
 #, c-format
 msgid ""
 "\n"
@@ -7336,15 +7422,15 @@ msgstr ""
 "要求するリサンプリングレートをフレーム毎秒の数値で\n"
 "入力してください(_r)"
 
-#: src/resample.c:2036
+#: src/resample.c:2031
 msgid "OR enter the desired clip length in _seconds"
 msgstr "もしくは、クリップの長さを秒単位で入力して下さい(_s)"
 
-#: src/resample.c:2059
+#: src/resample.c:2054
 msgid "Change the _audio speed as well"
 msgstr "音声スピードも変更"
 
-#: src/resample.c:2172
+#: src/resample.c:2167
 msgid ""
 "\n"
 "Speeding up the clip will cause missing frames in some multitrack layouts.\n"
@@ -7354,7 +7440,7 @@ msgstr ""
 "速度を上げるとマルチトラックレイアウトでフレームを失う原因になります。\n"
 "速度を変更しますか?\n"
 
-#: src/resample.c:2189
+#: src/resample.c:2184
 msgid ""
 "\n"
 "Speeding up the clip will cause missing audio in some multitrack layouts.\n"
@@ -7364,17 +7450,18 @@ msgstr ""
 "速度を上げるとマルチトラックレイアウトで音声を失う原因になります。\n"
 "速度を変更しますか?\n"
 
-#: src/resample.c:2204
+#: src/resample.c:2199
 msgid ""
 "\n"
 "Changing the speed will cause frames to shift some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
 "\n"
-"速度を変更するとマルチトラックレイアウトでフレームがずれる原因になります。。\n"
+"速度を変更するとマルチトラックレイアウトでフレームがずれる原因になりま"
+"す。。\n"
 "続けますか?\n"
 
-#: src/resample.c:2218
+#: src/resample.c:2213
 msgid ""
 "\n"
 "Changing the speed will cause audio to shift some multitrack layouts.\n"
@@ -7384,34 +7471,33 @@ msgstr ""
 "速度を変更するとマルチトラックレイアウトで音声がずれる原因になります。。\n"
 "続けますか?\n"
 
-#: src/resample.c:2264
+#: src/resample.c:2259
 msgid "Speed Change"
 msgstr "スピード変更"
 
-#: src/resample.c:2273
+#: src/resample.c:2268
 #, c-format
-msgid ""
-"Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
+msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr "再生スピードを　%.3f フレーム毎秒および音声 %d Hz に変更しました。\n"
 
-#: src/resample.c:2276
+#: src/resample.c:2271
 #, c-format
 msgid "Changed playback speed to %.3f frames per second.\n"
 msgstr "再生スピードを　%.3f フレーム毎秒に変更しました。\n"
 
-#: src/resample.c:2331
+#: src/resample.c:2326
 msgid "Resampling video"
 msgstr "ビデオをリサンプリングします"
 
-#: src/resample.c:2338 src/resample.c:2436 src/resample.c:2457
+#: src/resample.c:2333 src/resample.c:2431 src/resample.c:2452
 msgid "Resampling clipboard video"
 msgstr "クリップボードビデオをリサンプリングします"
 
-#: src/resample.c:2343
+#: src/resample.c:2338
 msgid "Reordering frames"
 msgstr "フレームを並べ換えます"
 
-#: src/resample.c:2352
+#: src/resample.c:2347
 msgid ""
 "\n"
 "\n"
@@ -7421,11 +7507,11 @@ msgstr ""
 "\n"
 "LiVESはフレームを並べ換えられませんでした。"
 
-#: src/resample.c:2395
+#: src/resample.c:2390
 msgid "Deordering frames"
 msgstr "フレームを再び並べ換えます"
 
-#: src/resample.c:2474
+#: src/resample.c:2469
 msgid "resampling error..."
 msgstr "リサンプリングエラー..."
 
@@ -7607,7 +7693,9 @@ msgstr ""
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key "
 "(%d) !\n"
-msgstr "このバージョンのLiVESは同じキーでジェネレーターと非ジェネレーターを混ぜることができません。(%d)\n"
+msgstr ""
+"このバージョンのLiVESは同じキーでジェネレーターと非ジェネレーターを混ぜること"
+"ができません。(%d)\n"
 
 #: src/rte_window.c:603
 #, c-format
@@ -7673,7 +7761,8 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"このバージョンのLiVESは同じキーでジェネレーターと非ジェネレーターを混ぜることができません。\n"
+"このバージョンのLiVESは同じキーでジェネレーターと非ジェネレーターを混ぜること"
+"ができません。\n"
 "\n"
 
 #: src/rte_window.c:975
@@ -7754,7 +7843,8 @@ msgstr ""
 #: src/lives-yuv4mpeg.c:202
 #, c-format
 msgid "Video dimensions: %d x %d are invalid. Stream cannot be opened"
-msgstr "ビデオのディメンジョン %d x %d は無効です。ストリームをオープンできません。"
+msgstr ""
+"ビデオのディメンジョン %d x %d は無効です。ストリームをオープンできません。"
 
 #: src/lives-yuv4mpeg.c:210
 #, c-format
@@ -8103,8 +8193,8 @@ msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
 "audio rate %d, audio sample size %d, %s.\n"
 msgstr ""
-"マルチトラックの値を %.3f fps、フレームサイズ %d x %d 、音声チャネル %d 、音声レート %d, 音声のサンプルサイズ %d, %s "
-"に設定\n"
+"マルチトラックの値を %.3f fps、フレームサイズ %d x %d 、音声チャネル %d 、音"
+"声レート %d, 音声のサンプルサイズ %d, %s に設定\n"
 
 #: src/multitrack.c:4212
 msgid "invalid event list. Failed.\n"
@@ -8853,13 +8943,17 @@ msgstr "タイムラインにマークできる"
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
-msgstr "音声 %.4f から %.4f を挿入(クリップ %s の時間 %.4f から %.4f までを、バックグラウンド音声に挿入)\n"
+msgstr ""
+"音声 %.4f から %.4f を挿入(クリップ %s の時間 %.4f から %.4f までを、バックグ"
+"ラウンド音声に挿入)\n"
 
 #: src/multitrack.c:15359
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
-msgstr "フレーム %d から %d を挿入(クリップ %s からトラック %s に挿入。時間は %.4f から %.4f まで)\n"
+msgstr ""
+"フレーム %d から %d を挿入(クリップ %s からトラック %s に挿入。時間は %.4f か"
+"ら %.4f まで)\n"
 
 #: src/multitrack.c:15864
 #, c-format
@@ -9326,7 +9420,8 @@ msgstr "パラメータ値のセット　<key> <pnum> = <value>"
 
 #: src/omc-learn.c:1476
 msgid "Set <value> of pth (numerical) parameter for effect key <key>."
-msgstr "エフェクトキー <key>　に対するp番目の(数値)パラメータを <value> にセット"
+msgstr ""
+"エフェクトキー <key>　に対するp番目の(数値)パラメータを <value> にセット"
 
 #: src/omc-learn.c:1480
 msgid "Switch foreground to next clip"
@@ -9916,7 +10011,6 @@ msgid "Overlaying text on"
 msgstr "オーバレイテキストの適用、"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
 msgstr "写真・静止画"
 
@@ -10100,7 +10194,6 @@ msgid "Tunneling"
 msgstr "トンネルの適用、"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
 msgstr ""
 
@@ -10149,8 +10242,6 @@ msgstr "黒を透過色"
 msgid "_Bottom"
 msgstr "ボトム(_B)"
 
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Calculate"
 msgstr "計算(_C)"
@@ -10524,7 +10615,6 @@ msgid "enhance"
 msgstr "強調"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
 msgstr "全て"
 
@@ -10776,7 +10866,6 @@ msgstr "$error"
 #~ msgid "Pau_se"
 #~ msgstr "ポーズ(_s)"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "%s\n"
@@ -10790,7 +10879,6 @@ msgstr "$error"
 #~ "\n"
 #~ "本当に閉じていい ?"
 
-#, c-format
 #~ msgid "Pasted %d frames to new clip.\n"
 #~ msgstr "%dフレームを新しいクリップに貼り付けます。\n"
 
@@ -10798,8 +10886,8 @@ msgstr "$error"
 #~ "This operation requires resizing of frames. Please install 'convert' from "
 #~ "the Image-magick package, and then restart LiVES.\n"
 #~ msgstr ""
-#~ "この操作はフレームのリサイズを必要とします。Image-"
-#~ "magickのパッケージから'convert'をインストールして、LiVESを再起動して下さい。\n"
+#~ "この操作はフレームのリサイズを必要とします。Image-magickのパッケージか"
+#~ "ら'convert'をインストールして、LiVESを再起動して下さい。\n"
 
 #~ msgid ""
 #~ "Click on a Window to Capture it\n"
@@ -10811,23 +10899,24 @@ msgstr "$error"
 #~ msgid "failed (permission denied)\n"
 #~ msgstr "失敗(許可がありません)\n"
 
-#, c-format
 #~ msgid "resample audio to %d Hz\n"
 #~ msgstr "音声を%dHzへリサンプリングします。\n"
 
 #~ msgid ""
 #~ "\n"
 #~ "\n"
-#~ "Welcome to LiVES. If this is your first time using LiVES, please check all "
-#~ "the\n"
-#~ "Preferences using Control-P. In particular make sure the temporary directory "
-#~ "is located somewhere with plenty of diskspace.\n"
+#~ "Welcome to LiVES. If this is your first time using LiVES, please check "
+#~ "all the\n"
+#~ "Preferences using Control-P. In particular make sure the temporary "
+#~ "directory is located somewhere with plenty of diskspace.\n"
 #~ "Have fun !\n"
 #~ msgstr ""
 #~ "\n"
 #~ "\n"
-#~ "LiVESへようこそ。もしはじめてLiVESを使うのであれば、Control-Pを使って全ての属性を確認してみて下さい。\n"
-#~ "とくに、一時ディレクトリが十分なディスクスペースのある場所に 設定されていることを確かめて下さい。 楽しくやりましょう !\n"
+#~ "LiVESへようこそ。もしはじめてLiVESを使うのであれば、Control-Pを使って全て"
+#~ "の属性を確認してみて下さい。\n"
+#~ "とくに、一時ディレクトリが十分なディスクスペースのある場所に 設定されてい"
+#~ "ることを確かめて下さい。 楽しくやりましょう !\n"
 
 #~ msgid "Warning - no more effect slots left !\n"
 #~ msgstr "警告 - イフェクトスロットが空いていません !\n"
@@ -10842,7 +10931,8 @@ msgstr "$error"
 #~ msgstr "既存のファイルを保存するときに品質のロスについて警告する(_q)"
 
 #~ msgid "Show a warning if _mplayer is not found when LiVES is started."
-#~ msgstr "LiVESが起動したときにmplayerを検出しなかった場合には警告を表示する(_w)"
+#~ msgstr ""
+#~ "LiVESが起動したときにmplayerを検出しなかった場合には警告を表示する(_w)"
 
 #~ msgid ""
 #~ "\n"
@@ -10865,7 +10955,8 @@ msgstr "$error"
 #~ msgstr ""
 #~ "\n"
 #~ "\n"
-#~ "クラッシュしたことを報告する際には、OS、ディストリビューション、LiVESのバージョンを含む詳細を報告してください。"
+#~ "クラッシュしたことを報告する際には、OS、ディストリビューション、LiVESの"
+#~ "バージョンを含む詳細を報告してください。"
 
 #~ msgid ""
 #~ "and if possible obtain a backtrace using gdb.\n"
@@ -10908,22 +10999,20 @@ msgstr "$error"
 #~ "transport client, 2 = jack transport master, 4 = start jack transport "
 #~ "server, 8 = pause audio when video paused, 16 = start jack audio server] "
 #~ msgstr ""
-#~ "-jackopts <opts> : optsはjack開始時オプションのビットマップです。[1 = jack トランスポート・クライアント, 2 = "
-#~ "jack トランスポート・マスター, 4 = jack トランスポート・サーバを起動, 8 = ビデオが停止したときにオーディオも停止, 16 = "
-#~ "jack オーディオ・サーバを起動] "
+#~ "-jackopts <opts> : optsはjack開始時オプションのビットマップです。[1 = "
+#~ "jack トランスポート・クライアント, 2 = jack トランスポート・マスター, 4 = "
+#~ "jack トランスポート・サーバを起動, 8 = ビデオが停止したときにオーディオも"
+#~ "停止, 16 = jack オーディオ・サーバを起動] "
 
 #~ msgid "or sox\n"
 #~ msgstr "またはsox\n"
 
-#, c-format
 #~ msgid "autoloading set %s..."
 #~ msgstr "セット %s の自動ロード..."
 
-#, c-format
 #~ msgid "Use _%s audio player"
 #~ msgstr "_%s オーディオプレイヤーを使う。"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "%s\n"
@@ -10939,7 +11028,6 @@ msgstr "$error"
 #~ msgid "Undoing audio"
 #~ msgstr "オーディオのアンドゥ"
 
-#, c-format
 #~ msgid ""
 #~ "LiVES Version %s\n"
 #~ "(c) G. Finch (salsaman) 2002-2008\n"
@@ -10954,7 +11042,8 @@ msgstr "$error"
 #~ "LiVES Version %s\n"
 #~ "(c) G. Finch (salsaman) 2002-2008\n"
 #~ "\n"
-#~ "GPL 3もしくはそれ以降のライセンスによりリリースされています (http://www.gnu.org/licenses/gpl.txt)\n"
+#~ "GPL 3もしくはそれ以降のライセンスによりリリースされています (http://www."
+#~ "gnu.org/licenses/gpl.txt)\n"
 #~ "LiVESの配布において「いかなる保証も行いません」\n"
 #~ "\n"
 #~ "連絡先:\n"
@@ -10967,20 +11056,22 @@ msgstr "$error"
 #~ msgid "Encode Clip _As..."
 #~ msgstr "クリップを別名でエンコード..."
 
-#, c-format
 #~ msgid ""
 #~ "Before starting LiVES, you need to choose an audio player.\n"
-#~ "Jack is recommended, but may prevent LiVES from starting on some systems.\n"
-#~ "If LiVES will not start with jack, you can restart and try with %s instead.\n"
+#~ "Jack is recommended, but may prevent LiVES from starting on some "
+#~ "systems.\n"
+#~ "If LiVES will not start with jack, you can restart and try with %s "
+#~ "instead.\n"
 #~ msgstr ""
 #~ "LiVESを開始する前に、音声プレーヤーを選択する必要gああります。\n"
-#~ "Jackが推奨されていますが、システムによってはLiVES開始の障害になるかもしれません。\n"
-#~ "もしjackとLiVESを動作させられないときは、代わりに %s を試して再起動して下さい。\n"
+#~ "Jackが推奨されていますが、システムによってはLiVES開始の障害になるかもしれ"
+#~ "ません。\n"
+#~ "もしjackとLiVESを動作させられないときは、代わりに %s を試して再起動して下"
+#~ "さい。\n"
 
 #~ msgid "recovering files..."
 #~ msgstr "ファイルを回復..."
 
-#, c-format
 #~ msgid "Use an audio rate of %d Hz\n"
 #~ msgstr "音声レートは %d Hzを使います。\n"
 
@@ -11009,17 +11100,19 @@ msgstr "$error"
 #~ msgstr "音声フィルター"
 
 #~ msgid ""
-#~ "Use ctrl and <- arrows -> to move through clip. Press 'r' before playing to "
-#~ "record changes."
-#~ msgstr "クリップ中を移動するには、コントロール・キーと矢印キーを使用して下さい。変更を記録するには、再生前に'r'を押してください。"
+#~ "Use ctrl and <- arrows -> to move through clip. Press 'r' before playing "
+#~ "to record changes."
+#~ msgstr ""
+#~ "クリップ中を移動するには、コントロール・キーと矢印キーを使用して下さい。変"
+#~ "更を記録するには、再生前に'r'を押してください。"
 
 #~ msgid "You need to install dvgrab to use this option."
 #~ msgstr "このオプションを使うには、dvgrab をインストールする必要があります。"
 
 #~ msgid ""
 #~ "\n"
-#~ "Unable to start up jack. Please ensure that alsa is set up correctly on your "
-#~ "machine\n"
+#~ "Unable to start up jack. Please ensure that alsa is set up correctly on "
+#~ "your machine\n"
 #~ "and also that the soundcard is not in use by another program.\n"
 #~ msgstr ""
 #~ "\n"
@@ -11028,7 +11121,8 @@ msgstr "$error"
 
 #~ msgid ""
 #~ "\n"
-#~ "Alternately, you can restart LiVES and select \"sox\" as the audio player\n"
+#~ "Alternately, you can restart LiVES and select \"sox\" as the audio "
+#~ "player\n"
 #~ msgstr ""
 #~ "\n"
 #~ "もしくは、LiVESを再起動し、音声プレーヤーとして\"sox\"を選択して下さい。\n"
@@ -11097,10 +11191,10 @@ msgstr "$error"
 #~ msgstr ""
 #~ "\n"
 #~ "このセットに関連付けられたレイアウトファイルを削除しますか?\n"
-#~ "削除するなら　OK　を、そのまま残すのであればキャンセルをクリックして下さい。\n"
+#~ "削除するなら　OK　を、そのまま残すのであればキャンセルをクリックして下さ"
+#~ "い。\n"
 #~ "(ただしセット無しでは利用できません)\n"
 
-#, c-format
 #~ msgid "Succesfully loaded %d Weed filters\n"
 #~ msgstr "%d ウィードフィルターを正しくロードしました。\n"
 
@@ -11108,8 +11202,11 @@ msgstr "$error"
 #~ msgstr "音声 (jack音声プレーヤーが必要)"
 
 #~ msgid ""
-#~ "Warn if multitrack has audio channels, and your audio player is not \"jack\"."
-#~ msgstr "マルチトラックが音声チャネルを持ち、音声プレーヤーが\"jack\"でないときには警告する。"
+#~ "Warn if multitrack has audio channels, and your audio player is not \"jack"
+#~ "\"."
+#~ msgstr ""
+#~ "マルチトラックが音声チャネルを持ち、音声プレーヤーが\"jack\"でないときには"
+#~ "警告する。"
 
 #~ msgid "Play audio even when _paused"
 #~ msgstr "停止中に音声を再生"
@@ -11163,11 +11260,9 @@ msgstr "$error"
 #~ msgid "Jack transport _client"
 #~ msgstr "Jackトランスポートクライアント(_c)"
 
-#, c-format
 #~ msgid "Opened yuv4mpeg stream on %sstream.yuv"
 #~ msgstr "%s stream.yuv でyuv4mpegストリームをオープン"
 
-#, c-format
 #~ msgid "Unable to open yuv4mpeg stream %s\n"
 #~ msgstr "yuv4mpegストリーム %s をオープンできません。\n"
 
@@ -11181,7 +11276,8 @@ msgstr "$error"
 #~ msgstr ""
 #~ "\n"
 #~ "\n"
-#~ "ストリームをオープンできません。フレームレートが固定レートと適合しません。\n"
+#~ "ストリームをオープンできません。フレームレートが固定レートと適合しませ"
+#~ "ん。\n"
 
 #~ msgid "Show frame preview"
 #~ msgstr "フレームプレビューを表示"
@@ -11201,7 +11297,6 @@ msgstr "$error"
 #~ msgid "_Snap mode: Off"
 #~ msgstr "スナップモード: オフ(_S)"
 
-#, c-format
 #~ msgid ""
 #~ " size=%dx%d bpp=%d fps=%.3f\n"
 #~ "Audio: "
@@ -11267,7 +11362,6 @@ msgstr "$error"
 #~ msgid "Single click on an effect to select it.\n"
 #~ msgstr "エフェクトのシングルクリックで選択\n"
 
-#, c-format
 #~ msgid "Time region %.3f to %.3f selected.\n"
 #~ msgstr "時間領域 %.3f から %.3f が選択されました。\n"
 

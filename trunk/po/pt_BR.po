@@ -1,12 +1,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: LiVES\n"
-"Report-Msgid-Bugs-To: "
-"http://www.sourceforge.net/tracker/?group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2010-11-19 13:38-0300\n"
+"Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
+"group_id=64341&atid=507139\n"
+"POT-Creation-Date: 2011-02-17 20:44-0300\n"
 "PO-Revision-Date: 2010-10-24 23:39+0000\n"
 "Last-Translator: Gustavo Guidorizzi <Unknown>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -28,14 +29,14 @@ msgstr ""
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
-"Please report this bug at "
-"http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
+"Please report this bug at http://sourceforge.net/tracker/?"
+"group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
 "\n"
 "Infelizmente o LiVES travou.\n"
-"Por favor, reporte este bug em "
-"http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
+"Por favor, reporte este bug em http://sourceforge.net/tracker/?"
+"group_id=64341&atid=507139\n"
 "Obrigado. Os dados podem ser recuperados se você reiniciar o LiVes.\n"
 
 #: src/main.c:119
@@ -264,8 +265,8 @@ msgstr ""
 "Traduzido por VJ pixel.\n"
 "Caso encontre erros, tenha sugestões para a tradução ou queira ajudar na "
 "documentação do LiVES, entre em contato: pixel(em)estudiolivre.org\n"
-"Para informações sobre multimídia em software livre acesse "
-"http://estudiolivre.org\n"
+"Para informações sobre multimídia em software livre acesse http://"
+"estudiolivre.org\n"
 "\n"
 
 #: src/main.c:1684
@@ -346,8 +347,7 @@ msgstr ""
 
 #: src/main.c:1703
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
-msgstr ""
-"-oscstart <port> : iniciar monitoramento de OSC na porta UDP <port>\n"
+msgstr "-oscstart <port> : iniciar monitoramento de OSC na porta UDP <port>\n"
 
 #: src/main.c:1704
 msgid "-nooscstart      : do not start OSC listener\n"
@@ -612,7 +612,7 @@ msgid "!rec %9d/%d"
 msgstr "!grv %9d/%d"
 
 #: src/main.c:3657 src/main.c:3658 src/gui.c:1954 src/gui.c:2940
-#: src/saveplay.c:1639
+#: src/saveplay.c:1652
 msgid "Play"
 msgstr "Tocar"
 
@@ -630,17 +630,17 @@ msgid "Closed file %s\n"
 msgstr "Arquivo %s fechado\n"
 
 #: src/main.c:4273 src/gui.c:546 src/utils.c:2572 src/utils.c:2598
-#: src/saveplay.c:2601 src/multitrack.c:3806 src/multitrack.c:5313
+#: src/saveplay.c:2615 src/multitrack.c:3806 src/multitrack.c:5313
 msgid "_Undo"
 msgstr "Desfazer [_U]"
 
 #: src/main.c:4274 src/gui.c:559 src/utils.c:2573 src/utils.c:2599
-#: src/saveplay.c:2602 src/multitrack.c:3827 src/multitrack.c:5336
+#: src/saveplay.c:2616 src/multitrack.c:3827 src/multitrack.c:5336
 msgid "_Redo"
 msgstr "_Refazer"
 
 #: src/main.c:4300 src/interface.c:639 src/gui.c:2112 src/preferences.c:2214
-#: src/resample.c:1749
+#: src/resample.c:1744
 msgid "Video"
 msgstr "Vídeo"
 
@@ -998,7 +998,7 @@ msgstr ""
 "importados."
 
 #: src/interface.c:188 src/callbacks.c:7769 src/gui.c:2943 src/gui.c:3483
-#: src/saveplay.c:1642 src/saveplay.c:2264 src/dialogs.c:827 src/dialogs.c:828
+#: src/saveplay.c:1655 src/saveplay.c:2278 src/dialogs.c:827 src/dialogs.c:828
 #: src/dialogs.c:995 src/dialogs.c:996 src/framedraw.c:189
 #: src/multitrack.c:6859
 msgid "Preview"
@@ -1100,7 +1100,7 @@ msgstr "Frames"
 msgid "Events"
 msgstr "Eventos"
 
-#: src/interface.c:661 src/resample.c:1704
+#: src/interface.c:661 src/resample.c:1699
 msgid "Audio"
 msgstr "Áudio"
 
@@ -1761,7 +1761,7 @@ msgstr "Apagar quadros em excesso"
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "O comprimento do vídeo é agora %d frames a %.3f FPS.\n"
 
-#: src/callbacks.c:1684 src/resample.c:613 src/resample.c:2442
+#: src/callbacks.c:1684 src/resample.c:608 src/resample.c:2437
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "Área de transferência resampleada para %d frames.\n"
@@ -1775,8 +1775,8 @@ msgstr "Refazendo"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Copiando frames %d até %d%s para a área de transferência..."
 
-#: src/callbacks.c:1907 src/saveplay.c:1010 src/saveplay.c:1128
-#: src/saveplay.c:1185 src/saveplay.c:2952
+#: src/callbacks.c:1907 src/saveplay.c:1023 src/saveplay.c:1141
+#: src/saveplay.c:1198 src/saveplay.c:2968
 msgid "Pulling frames from clip"
 msgstr "Pegando frames do clipe"
 
@@ -2026,8 +2026,8 @@ msgstr ""
 #: src/callbacks.c:3682
 #, c-format
 msgid ""
-"Saving the set will cause copies of all loaded clips to remain on the "
-"disk%s.\n"
+"Saving the set will cause copies of all loaded clips to remain on the disk"
+"%s.\n"
 "\n"
 "Please press 'Cancel' if that is not what you want.\n"
 msgstr ""
@@ -2196,18 +2196,18 @@ msgstr ""
 "\n"
 "Você deve ter recebido uma cópia da Licença Pública Geral do GNU \n"
 "junto com este programa; se não, escreva para a Free Software \n"
-"Foundation, Inc., no endereço 59 Temple Place, Suite 330, Boston, MA 02111-"
-"1307 USA.\n"
+"Foundation, Inc., no endereço 59 Temple Place, Suite 330, Boston, MA "
+"02111-1307 USA.\n"
 
 #: src/callbacks.c:4564
 msgid "A video editor and VJ program."
 msgstr "Um editor de video e programa de VJ."
 
 #: src/callbacks.c:4586
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "LiVES Version %s\n"
-"(c) G. Finch (salsaman) 2002-2010\n"
+"(c) G. Finch (salsaman) %s\n"
 "\n"
 "Released under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\n"
 "LiVES is distributed WITHOUT WARRANTY\n"
@@ -2314,11 +2314,11 @@ msgstr "Mostrar janela do tocador (s)"
 msgid "Play in separate window (s)"
 msgstr "Tocar em janela separada (s)"
 
-#: src/callbacks.c:5937 src/gui.c:3697 src/saveplay.c:1781
+#: src/callbacks.c:5937 src/gui.c:3697 src/saveplay.c:1794
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:6066 src/gui.c:3465 src/saveplay.c:1782 src/plugins.c:1231
+#: src/callbacks.c:6066 src/gui.c:3465 src/saveplay.c:1795 src/plugins.c:1231
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Tocador"
 
@@ -2351,7 +2351,7 @@ msgstr "Invertendo área de trabalho..."
 msgid "Reversing clipboard"
 msgstr "Invertendo área de trabalho"
 
-#: src/callbacks.c:6489 src/saveplay.c:682
+#: src/callbacks.c:6489 src/saveplay.c:695
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Carregado arquivo de legenda: %s\n"
@@ -3812,7 +3812,7 @@ msgstr " frames ] ----------"
 msgid "Examining file header"
 msgstr "Examinando cabeçalho do arquivo"
 
-#: src/saveplay.c:186 src/saveplay.c:543
+#: src/saveplay.c:186 src/saveplay.c:556
 #, c-format
 msgid "Opening %s"
 msgstr "Abrindo %s"
@@ -3822,7 +3822,7 @@ msgstr "Abrindo %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Abrindo %s tempo inicial %.2f seg. frames %d"
 
-#: src/saveplay.c:197 src/saveplay.c:2940
+#: src/saveplay.c:197 src/saveplay.c:2956
 msgid " without sound"
 msgstr " sem som"
 
@@ -3831,7 +3831,7 @@ msgstr " sem som"
 msgid "Opening audio for %s"
 msgstr "Abrindo áudio para %s"
 
-#: src/saveplay.c:431
+#: src/saveplay.c:444
 #, c-format
 msgid ""
 "\n"
@@ -3850,11 +3850,11 @@ msgstr ""
 "\n"
 "Tem certeza que quer continuar?"
 
-#: src/saveplay.c:444
+#: src/saveplay.c:457
 msgid " - please be patient."
 msgstr " - por favor tenha paciência."
 
-#: src/saveplay.c:659
+#: src/saveplay.c:672
 msgid ""
 "\n"
 "\n"
@@ -3866,7 +3866,7 @@ msgstr ""
 "LiVES não conseguiu extrair nem vídeo nem áudio deste arquivo.\n"
 "Por favor verifique a janela de terminal para mais detalhes.\n"
 
-#: src/saveplay.c:662
+#: src/saveplay.c:675
 msgid ""
 "\n"
 "\n"
@@ -3876,7 +3876,7 @@ msgstr ""
 "\n"
 "Talvez seja necessário ter o mplayer para abrir este arquivo.\n"
 
-#: src/saveplay.c:665
+#: src/saveplay.c:678
 msgid ""
 "\n"
 "\n"
@@ -3888,12 +3888,12 @@ msgstr ""
 "Por favor confira as configurações de 'Comando de abertura de vídeo' em\n"
 "'Ferramentas | Preferências | Decodificação'\n"
 
-#: src/saveplay.c:788
+#: src/saveplay.c:801
 #, c-format
 msgid "Subtitles were saved as %s\n"
 msgstr "Legendas foram salvas em %s\n"
 
-#: src/saveplay.c:937
+#: src/saveplay.c:950
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3905,39 +3905,39 @@ msgstr ""
 "\n"
 "Tem certeza que quer continuar?"
 
-#: src/saveplay.c:992
+#: src/saveplay.c:1005
 msgid "selection"
 msgstr "seleção"
 
-#: src/saveplay.c:1051 src/saveplay.c:1155
+#: src/saveplay.c:1064 src/saveplay.c:1168
 msgid "Linking selection"
 msgstr "Ligando seleção"
 
-#: src/saveplay.c:1202
+#: src/saveplay.c:1215
 msgid " (with no sound)\n"
 msgstr " (sem som)\n"
 
-#: src/saveplay.c:1210
+#: src/saveplay.c:1223
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 "Salvando frames %d até %d%s como \"%s\" : codificador = %s : formato = %s..."
 
-#: src/saveplay.c:1213
+#: src/saveplay.c:1226
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "Salvando frames 1 até %d%s como \"%s\" : codificador %s : formato = %s..."
 
-#: src/saveplay.c:1316
+#: src/saveplay.c:1329
 msgid "Saving [can take a long time]"
 msgstr "Salvando [pode levar muito tempo]"
 
-#: src/saveplay.c:1352
+#: src/saveplay.c:1365
 msgid "error.\n"
 msgstr "erro.\n"
 
-#: src/saveplay.c:1410
+#: src/saveplay.c:1423
 msgid ""
 "\n"
 "\n"
@@ -3947,29 +3947,29 @@ msgstr ""
 "\n"
 "Erro de codificador -  arquivo de saída não foi criado!\n"
 
-#: src/saveplay.c:1480
+#: src/saveplay.c:1493
 #, c-format
 msgid "File size was %.2fMB\n"
 msgstr ""
 
-#: src/saveplay.c:1567
+#: src/saveplay.c:1580
 msgid "recording aborted by preview.\n"
 msgstr "gravação cancelada pela visualização.\n"
 
-#: src/saveplay.c:1571
+#: src/saveplay.c:1584
 msgid "recording aborted by clipboard playback.\n"
 msgstr "gravação cancelada pela visualização.\n"
 
-#: src/saveplay.c:1574
+#: src/saveplay.c:1587
 msgid "Recording performance..."
 msgstr "Gravando performance..."
 
-#: src/saveplay.c:2404
+#: src/saveplay.c:2418
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "FPS médio era %.4f\n"
 
-#: src/saveplay.c:2410
+#: src/saveplay.c:2424
 msgid ""
 "\n"
 "\n"
@@ -3983,16 +3983,16 @@ msgstr ""
 "Vá em 'Ferramentas | Redimensionar Todos'\n"
 "e redimensione todos frames para o tamanho atual.\n"
 
-#: src/saveplay.c:2535
+#: src/saveplay.c:2549
 msgid "Unknown"
 msgstr "Desconhecido"
 
-#: src/saveplay.c:2630
+#: src/saveplay.c:2644
 #, c-format
 msgid "Untitled%d"
 msgstr "Untitled%d"
 
-#: src/saveplay.c:2745
+#: src/saveplay.c:2761
 #, c-format
 msgid ""
 "\n"
@@ -4004,13 +4004,13 @@ msgstr ""
 "FPS.\n"
 "O padrão pode ser ajustado em 'Ferramentas | Preferências | Misc'.\n"
 
-#: src/saveplay.c:2757
+#: src/saveplay.c:2773
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Velocidade de execução ajustada para %.3f fps para se encaixar no áudio.\n"
 
-#: src/saveplay.c:2773
+#: src/saveplay.c:2789
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4019,7 +4019,7 @@ msgstr ""
 "Frames=%d tipo=%s tamanho=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Áudio:"
 
-#: src/saveplay.c:2777 src/saveplay.c:3397
+#: src/saveplay.c:2793 src/saveplay.c:3413
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4028,49 +4028,49 @@ msgstr ""
 "Frames=%d tipo=%s tamanho=%dx%d bpp=%d fps=%.3f\n"
 "Áudio:"
 
-#: src/saveplay.c:2781 src/saveplay.c:3401
+#: src/saveplay.c:2797 src/saveplay.c:3417
 #, c-format
 msgid "%s none\n"
 msgstr "%s nenhum\n"
 
-#: src/saveplay.c:2784 src/saveplay.c:3404
+#: src/saveplay.c:2800 src/saveplay.c:3420
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d canal(is) %d bps\n"
 
-#: src/saveplay.c:2792
+#: src/saveplay.c:2808
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Comentário: %s\n"
 
-#: src/saveplay.c:2870
+#: src/saveplay.c:2886
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Salvando frame %d de %s..."
 
-#: src/saveplay.c:2935
+#: src/saveplay.c:2951
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Fazendo backup de %s até %s"
 
-#: src/saveplay.c:2971
+#: src/saveplay.c:2987
 msgid "Backing up"
 msgstr "Fazendo backup"
 
-#: src/saveplay.c:3002
+#: src/saveplay.c:3018
 msgid "performance data was backed up..."
 msgstr "backup concluído dos dados da performance..."
 
-#: src/saveplay.c:3308
+#: src/saveplay.c:3324
 #, c-format
 msgid "Restoring %s..."
 msgstr "Restaurando %s..."
 
-#: src/saveplay.c:3327
+#: src/saveplay.c:3343
 msgid "Restoring"
 msgstr "Restaurando"
 
-#: src/saveplay.c:3349
+#: src/saveplay.c:3365
 #, c-format
 msgid ""
 "\n"
@@ -4083,17 +4083,17 @@ msgstr ""
 "O arquivo %s está corrompido.\n"
 "LiVES não pode restaurá-lo.\n"
 
-#: src/saveplay.c:3770
+#: src/saveplay.c:3786
 #, c-format
 msgid "rec %.2f MB"
 msgstr "grv %.2f MB"
 
-#: src/saveplay.c:3774
+#: src/saveplay.c:3790
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!grv %.2f MB"
 
-#: src/saveplay.c:3797
+#: src/saveplay.c:3813
 #, c-format
 msgid ""
 "\n"
@@ -4101,7 +4101,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3914
+#: src/saveplay.c:3930
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4111,11 +4111,11 @@ msgstr ""
 "Arquivos de uma execução anterior do LiVES foram encontrados.\n"
 "Quer tentar recuperá-los?\n"
 
-#: src/saveplay.c:3927
+#: src/saveplay.c:3943
 msgid "Recovering files"
 msgstr "Recuperando arquivos"
 
-#: src/saveplay.c:3931
+#: src/saveplay.c:3947
 msgid "Recovering files..."
 msgstr "Recuperando arquivos..."
 
@@ -4279,11 +4279,11 @@ msgstr ""
 "LiVES recomenda as configurações a seguir:\n"
 "\n"
 
-#: src/dialogs.c:1284 src/dialogs.c:1381 src/resample.c:763
+#: src/dialogs.c:1284 src/dialogs.c:1381 src/resample.c:758
 msgid ", signed"
 msgstr ", assinado"
 
-#: src/dialogs.c:1285 src/dialogs.c:1382 src/resample.c:766
+#: src/dialogs.c:1285 src/dialogs.c:1382 src/resample.c:761
 msgid ", unsigned"
 msgstr ", não-assinalado"
 
@@ -4775,8 +4775,7 @@ msgstr "ou insira um valor menos.\n"
 
 #: src/dialogs.c:1651
 msgid "Try again from the clip editor, try closing some other applications\n"
-msgstr ""
-"Tente novamente do editor de clipes, tente fechar outros aplicativos\n"
+msgstr "Tente novamente do editor de clipes, tente fechar outros aplicativos\n"
 
 #: src/dialogs.c:1652
 msgid "Try closing some other applications\n"
@@ -4865,8 +4864,8 @@ msgstr ""
 "\n"
 "A gravação de áudio só pode ser feito usando\n"
 "os tocadores \"jack\" ou o \"pulse audio\".\n"
-"Você pode precisar selecionar um desses em "
-"Ferramentas/Preferências/Reprodução.\n"
+"Você pode precisar selecionar um desses em Ferramentas/Preferências/"
+"Reprodução.\n"
 
 #: src/dialogs.c:1703
 msgid "Video playback plugin failed to initialise palette !\n"
@@ -4874,8 +4873,7 @@ msgstr "O plugin de execução de vídeo falhou em iniciar a palheta!\n"
 
 #: src/dialogs.c:1707
 msgid "Decoder plugin failed to initialise palette !\n"
-msgstr ""
-"O plugin de decodificação de áudio falhou em inicializar a palheta!\n"
+msgstr "O plugin de decodificação de áudio falhou em inicializar a palheta!\n"
 
 #: src/dialogs.c:1712
 msgid "Unable to set framerate of video plugin\n"
@@ -7103,8 +7101,7 @@ msgstr "Velocidade de download (Kb/s)       "
 
 #: src/preferences.c:4340
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
-msgstr ""
-"LiVES deve ser compilado sem \"configure --disable-OSC\" para usar OMC"
+msgstr "LiVES deve ser compilado sem \"configure --disable-OSC\" para usar OMC"
 
 #: src/preferences.c:4354
 msgid "OMC remote control enabled"
@@ -7307,14 +7304,12 @@ msgid ""
 msgstr ""
 
 #: src/preferences.c:5251
-msgid ""
-"Theme changes will not take effect until the next time you start LiVES."
+msgid "Theme changes will not take effect until the next time you start LiVES."
 msgstr ""
 "Mudanças de tema só surtirão efeito na próxima vez que o LiVES foi iniciado."
 
 #: src/preferences.c:5255
-msgid ""
-"Jack options will not take effect until the next time you start LiVES."
+msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 "As opções do jack só surtirão efeito da próxima vez que o LiVES for iniciado."
 
@@ -7342,25 +7337,25 @@ msgstr "Servidor OSC iniciado na porta UDP %d\n"
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Não foi possivel iniciar servidor OSC/UDP na porta %d \n"
 
-#: src/resample.c:114 src/resample.c:263
+#: src/resample.c:122 src/resample.c:265
 #, c-format
 msgid "Resizing frames 1 to %d"
 msgstr "Redimensionando frames 1 até %d"
 
-#: src/resample.c:288 src/resample.c:308
+#: src/resample.c:290 src/resample.c:310
 msgid "Resize"
 msgstr "Redimensionar"
 
-#: src/resample.c:318
+#: src/resample.c:320
 msgid "Resample/Resize"
 msgstr "Resamplear/Redimensionar"
 
-#: src/resample.c:610
+#: src/resample.c:605
 #, c-format
 msgid "Length of video is now %d frames.\n"
 msgstr "Comprimento do vídeo é agora de %d frames.\n"
 
-#: src/resample.c:675
+#: src/resample.c:670
 msgid ""
 "\n"
 "\n"
@@ -7370,162 +7365,162 @@ msgstr ""
 "\n"
 "A nova taxa deve ser maior que 0\n"
 
-#: src/resample.c:719 src/resample.c:727
+#: src/resample.c:714 src/resample.c:722
 msgid "Resampling audio"
 msgstr "Resampleando áudio"
 
-#: src/resample.c:744
+#: src/resample.c:739
 msgid "LiVES was unable to resample the audio as requested.\n"
 msgstr "LiVES não conseguiu resamplear o áudio como requisitado.\n"
 
-#: src/resample.c:746 src/resample.c:750
+#: src/resample.c:741 src/resample.c:745
 msgid "Resample Audio"
 msgstr "Resamplear Áudio"
 
-#: src/resample.c:758
+#: src/resample.c:753
 #, c-format
 msgid "Audio was resampled to %d Hz, %d channels, %d bit"
 msgstr "Áudio resampleado a %d Hz, %d canais, %d bit"
 
-#: src/resample.c:771
+#: src/resample.c:766
 msgid ", little-endian"
 msgstr ", little-endian"
 
-#: src/resample.c:774
+#: src/resample.c:769
 msgid ", big-endian"
 msgstr ", big-endian"
 
-#: src/resample.c:948
+#: src/resample.c:943
 #, c-format
 msgid "Resampling video at %.8f frames per second..."
 msgstr "Resampleando vídeo a %.8f frames por segundo..."
 
-#: src/resample.c:951
+#: src/resample.c:946
 #, c-format
 msgid "Resampling video at %.3f frames per second..."
 msgstr "Resampleando vídeo a %.3f frames por segundo..."
 
-#: src/resample.c:982
+#: src/resample.c:977
 msgid "Reordering error !\n"
 msgstr "Erro de reordenação!\n"
 
-#: src/resample.c:993
+#: src/resample.c:988
 msgid "Resample"
 msgstr "Resamplear"
 
-#: src/resample.c:1117
+#: src/resample.c:1112
 msgid "LiVES: - Resample Audio"
 msgstr "LiVES: - Resamplear Áudio"
 
-#: src/resample.c:1120
+#: src/resample.c:1115
 msgid "LiVES: - Insert Silence"
 msgstr "LiVES: - Inserir Silêncio"
 
-#: src/resample.c:1123
+#: src/resample.c:1118
 msgid "LiVES: - New Clip Audio"
 msgstr "LiVES: - Novo Clip de Áudio"
 
-#: src/resample.c:1126
+#: src/resample.c:1121
 msgid "LiVES: - External Clip Settings"
 msgstr "LiVES: - Configurações Externas de Clipe"
 
-#: src/resample.c:1164 src/resample.c:1434
+#: src/resample.c:1159 src/resample.c:1429
 msgid "Rate (Hz) "
 msgstr "Taxa (Hz) "
 
-#: src/resample.c:1185
+#: src/resample.c:1180
 msgid "         Channels "
 msgstr "         Canais "
 
-#: src/resample.c:1205
+#: src/resample.c:1200
 msgid "        Sample Size "
 msgstr "        Tamanho da Amostra "
 
-#: src/resample.c:1244 src/resample.c:1548
+#: src/resample.c:1239 src/resample.c:1543
 msgid "Signed"
 msgstr "Assinalado"
 
-#: src/resample.c:1271 src/resample.c:1582
+#: src/resample.c:1266 src/resample.c:1577
 msgid "Unsigned"
 msgstr "Não-assinalado"
 
-#: src/resample.c:1318 src/resample.c:1635
+#: src/resample.c:1313 src/resample.c:1630
 msgid "Little Endian"
 msgstr "Little Endian"
 
-#: src/resample.c:1345 src/resample.c:1667
+#: src/resample.c:1340 src/resample.c:1662
 msgid "Big Endian"
 msgstr "Big Endian"
 
-#: src/resample.c:1370
+#: src/resample.c:1365
 msgid "Current"
 msgstr "Atual"
 
-#: src/resample.c:1402
+#: src/resample.c:1397
 msgid "_Enable audio"
 msgstr "Habilitar áudio [_e]"
 
-#: src/resample.c:1433
+#: src/resample.c:1428
 msgid "_Rate (Hz) "
 msgstr "Taxa (Hz) (_r) "
 
-#: src/resample.c:1461
+#: src/resample.c:1456
 msgid "    _Channels "
 msgstr "    _Canais "
 
-#: src/resample.c:1462
+#: src/resample.c:1457
 msgid "    Channels "
 msgstr "    Canais "
 
-#: src/resample.c:1495
+#: src/resample.c:1490
 msgid "    _Sample Size "
 msgstr "    Tamanho da Amo_stra "
 
-#: src/resample.c:1496
+#: src/resample.c:1491
 msgid "    Sample Size "
 msgstr "    Tamanho da amostra "
 
-#: src/resample.c:1705
+#: src/resample.c:1700
 msgid "New"
 msgstr "Novo"
 
-#: src/resample.c:1734
+#: src/resample.c:1729
 msgid "_Frames Per Second "
 msgstr "_Frames por segundo (FPS) "
 
-#: src/resample.c:1776
+#: src/resample.c:1771
 msgid "Record for maximum:  "
 msgstr "Gravar para máximo:  "
 
-#: src/resample.c:1799
+#: src/resample.c:1794
 msgid " hours  "
 msgstr " horass  "
 
-#: src/resample.c:1812
+#: src/resample.c:1807
 msgid " minutes  "
 msgstr " minutos  "
 
-#: src/resample.c:1825
+#: src/resample.c:1820
 msgid " seconds  "
 msgstr " segundos  "
 
-#: src/resample.c:1846
+#: src/resample.c:1841
 msgid "Unlimited"
 msgstr "Ilimitado"
 
-#: src/resample.c:1874
+#: src/resample.c:1869
 msgid "Click OK to begin recording, or Cancel to quit."
 msgstr "Clique OK para começar a gravar ou Cancelar para sair."
 
-#: src/resample.c:1983
+#: src/resample.c:1978
 msgid "LiVES: - Change playback speed"
 msgstr "Tocar"
 
-#: src/resample.c:1986
+#: src/resample.c:1981
 msgid "LiVES: - Resample Video"
 msgstr "LiVES: - Resamplear Vídeo"
 
-#: src/resample.c:2007
+#: src/resample.c:2002
 #, c-format
 msgid ""
 "\n"
@@ -7542,7 +7537,7 @@ msgstr ""
 "Por favor digite o framerate desejado\n"
 "em _frames por segundo"
 
-#: src/resample.c:2010
+#: src/resample.c:2005
 #, c-format
 msgid ""
 "\n"
@@ -7559,15 +7554,15 @@ msgstr ""
 "Por favor digite o framerate desejado para _resamplear\n"
 "em frames por segundo"
 
-#: src/resample.c:2036
+#: src/resample.c:2031
 msgid "OR enter the desired clip length in _seconds"
 msgstr "OU entre a duração do arquivo em _segundos"
 
-#: src/resample.c:2059
+#: src/resample.c:2054
 msgid "Change the _audio speed as well"
 msgstr "Mudar _a velocidade do áudio também"
 
-#: src/resample.c:2172
+#: src/resample.c:2167
 msgid ""
 "\n"
 "Speeding up the clip will cause missing frames in some multitrack layouts.\n"
@@ -7578,7 +7573,7 @@ msgstr ""
 "layouts multipista.\n"
 "Tem certeza que quer mudar a velocidade?\n"
 
-#: src/resample.c:2189
+#: src/resample.c:2184
 msgid ""
 "\n"
 "Speeding up the clip will cause missing audio in some multitrack layouts.\n"
@@ -7589,7 +7584,7 @@ msgstr ""
 "layouts multipista.\n"
 "Tem certeza que quer mudar a velocidade?\n"
 
-#: src/resample.c:2204
+#: src/resample.c:2199
 msgid ""
 "\n"
 "Changing the speed will cause frames to shift some multitrack layouts.\n"
@@ -7599,7 +7594,7 @@ msgstr ""
 "Mudar a velocidade vai mover alguns layouts multipista.\n"
 "Tem certeza que quer continuar?\n"
 
-#: src/resample.c:2218
+#: src/resample.c:2213
 msgid ""
 "\n"
 "Changing the speed will cause audio to shift some multitrack layouts.\n"
@@ -7609,35 +7604,33 @@ msgstr ""
 "Mudar a velocidade vai mover o áudio em alguns layouts multipista.\n"
 "Tem certeza que quer continuar?\n"
 
-#: src/resample.c:2264
+#: src/resample.c:2259
 msgid "Speed Change"
 msgstr "Mudança de Velocidade"
 
-#: src/resample.c:2273
+#: src/resample.c:2268
 #, c-format
-msgid ""
-"Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
-msgstr ""
-"Velocidade de execução modificada para %.3f fps e áudio para %d Hz.\n"
+msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
+msgstr "Velocidade de execução modificada para %.3f fps e áudio para %d Hz.\n"
 
-#: src/resample.c:2276
+#: src/resample.c:2271
 #, c-format
 msgid "Changed playback speed to %.3f frames per second.\n"
 msgstr "Velocidade de execução modificada para %.3f fps.\n"
 
-#: src/resample.c:2331
+#: src/resample.c:2326
 msgid "Resampling video"
 msgstr "Resampleando vídeo"
 
-#: src/resample.c:2338 src/resample.c:2436 src/resample.c:2457
+#: src/resample.c:2333 src/resample.c:2431 src/resample.c:2452
 msgid "Resampling clipboard video"
 msgstr "Resampleando vídeo da area de transferência"
 
-#: src/resample.c:2343
+#: src/resample.c:2338
 msgid "Reordering frames"
 msgstr "Reordenando frames"
 
-#: src/resample.c:2352
+#: src/resample.c:2347
 msgid ""
 "\n"
 "\n"
@@ -7647,11 +7640,11 @@ msgstr ""
 "\n"
 "LiVES foi incapaz de reordenar os frames."
 
-#: src/resample.c:2395
+#: src/resample.c:2390
 msgid "Deordering frames"
 msgstr "Desordenando frames"
 
-#: src/resample.c:2474
+#: src/resample.c:2469
 msgid "resampling error..."
 msgstr "erro de sampling..."
 
@@ -10149,7 +10142,6 @@ msgid "Overlaying text on"
 msgstr "Sobrepondo texto em"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
 msgstr "Foto"
 
@@ -10333,7 +10325,6 @@ msgid "Tunneling"
 msgstr "Tunelizando"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
 msgstr ""
 
@@ -10382,8 +10373,6 @@ msgstr "_Branco é transparente"
 msgid "_Bottom"
 msgstr "_Base"
 
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Calculate"
 msgstr "_Calcular"
@@ -10757,7 +10746,6 @@ msgid "enhance"
 msgstr "realce"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
 msgstr "cada"
 
@@ -11053,29 +11041,27 @@ msgstr "$error"
 #~ msgid "Starting GUI...\n"
 #~ msgstr "Iniciando GUI...\n"
 
-#, c-format
 #~ msgid "autoloading set %s..."
 #~ msgstr "carregando automaticamente set %s..."
 
 #~ msgid "Pau_se"
 #~ msgstr "Pau_sa"
 
-#, c-format
 #~ msgid ""
 #~ "Before starting LiVES, you need to choose an audio player.\n"
-#~ "Jack is recommended, but may prevent LiVES from starting on some systems.\n"
-#~ "If LiVES will not start with jack, you can restart and try with %s instead.\n"
+#~ "Jack is recommended, but may prevent LiVES from starting on some "
+#~ "systems.\n"
+#~ "If LiVES will not start with jack, you can restart and try with %s "
+#~ "instead.\n"
 #~ msgstr ""
 #~ "Antes de iniciar o LiVES, você deve escolher um player de áudio.\n"
 #~ "Jack é recomendado, mas pode prevenir o LiVES de iniciar em alguns "
 #~ "sistemas.\n"
 #~ "Se LiVES não iniciar com jack, você pode reiniciar e tentar o  %s.\n"
 
-#, c-format
 #~ msgid "Use _%s audio player"
 #~ msgstr "Usar o reprodutor de áudio _%s"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "%s\n"
@@ -11089,7 +11075,6 @@ msgstr "$error"
 #~ "\n"
 #~ "Deseja realmente fechar?"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "%s\n"
@@ -11106,7 +11091,6 @@ msgstr "$error"
 #~ msgid "Undoing audio"
 #~ msgstr "Desfazendo áudio"
 
-#, c-format
 #~ msgid "Pasted %d frames to new clip.\n"
 #~ msgstr "Copiados %d frames para um novo clipe.\n"
 
@@ -11117,7 +11101,6 @@ msgstr "$error"
 #~ "Esta operação requer redimensionamento de frames. Por favor instale "
 #~ "'convert' do pacote ImageMagick, e reinicie o LiVES.\n"
 
-#, c-format
 #~ msgid ""
 #~ "LiVES Version %s\n"
 #~ "(c) G. Finch (salsaman) 2002-2008\n"
@@ -11158,8 +11141,8 @@ msgstr "$error"
 #~ msgstr "Codific_ar Clipe Como..."
 
 #~ msgid ""
-#~ "Use ctrl and <- arrows -> to move through clip. Press 'r' before playing to "
-#~ "record changes."
+#~ "Use ctrl and <- arrows -> to move through clip. Press 'r' before playing "
+#~ "to record changes."
 #~ msgstr ""
 #~ "Use ctrl e <-- setas --> para mover através do clipe. Aperte 'R' antes de "
 #~ "tocar para gravar suas mudanças."
@@ -11170,11 +11153,9 @@ msgstr "$error"
 #~ msgid "recovering files..."
 #~ msgstr "recuperando arquivos..."
 
-#, c-format
 #~ msgid "Use an audio rate of %d Hz\n"
 #~ msgstr "Usar taxa de áudio de %d Hz\n"
 
-#, c-format
 #~ msgid "resample audio to %d Hz\n"
 #~ msgstr "resamplear áudio para %d Hz\n"
 
@@ -11204,7 +11185,8 @@ msgstr "$error"
 #~ "esquerda\n"
 #~ "ctrl-seta-direita            move o cursor da linha de tempo 1 segundo à "
 #~ "direita\n"
-#~ "shift-seta-esquerda     move o cursor da linha de tempo 1 frame à esquerda\n"
+#~ "shift-seta-esquerda     move o cursor da linha de tempo 1 frame à "
+#~ "esquerda\n"
 #~ "shift-seta-direita          move o cursor da linha de tempo 1 frame à "
 #~ "direita\n"
 #~ "ctrl-seta-acima            move a faixa atual para cima\n"
@@ -11214,8 +11196,8 @@ msgstr "$error"
 #~ "ctrl-espaço                  seleciona/deseleciona a faixa atual\n"
 #~ "ctrl-mais                     zoom in\n"
 #~ "ctrl-menos                  zoom out\n"
-#~ "m                                 fazer uma marca na linha de tempo (durante "
-#~ "a execução)\n"
+#~ "m                                 fazer uma marca na linha de tempo "
+#~ "(durante a execução)\n"
 #~ "w                                 voltar para o início\n"
 #~ "\n"
 #~ "Para outros atalhos, veja os menus.\n"
@@ -11223,10 +11205,10 @@ msgstr "$error"
 #~ msgid ""
 #~ "\n"
 #~ "\n"
-#~ "Welcome to LiVES. If this is your first time using LiVES, please check all "
-#~ "the\n"
-#~ "Preferences using Control-P. In particular make sure the temporary directory "
-#~ "is located somewhere with plenty of diskspace.\n"
+#~ "Welcome to LiVES. If this is your first time using LiVES, please check "
+#~ "all the\n"
+#~ "Preferences using Control-P. In particular make sure the temporary "
+#~ "directory is located somewhere with plenty of diskspace.\n"
 #~ "Have fun !\n"
 #~ msgstr ""
 #~ "\n"
@@ -11267,8 +11249,8 @@ msgstr "$error"
 #~ "\n"
 #~ "\n"
 #~ "Só é possível gravar áudio usando o reprodutir de áudio JACK.\n"
-#~ "Você pode precisar selecionar esta ferramenta em  "
-#~ "Ferramentas/Preferências/Execução.\n"
+#~ "Você pode precisar selecionar esta ferramenta em  Ferramentas/"
+#~ "Preferências/Execução.\n"
 
 #~ msgid "convertor"
 #~ msgstr "conversor"
@@ -11294,7 +11276,6 @@ msgstr "$error"
 #~ msgid "Audio Filters"
 #~ msgstr "Filtros de Áudio"
 
-#, c-format
 #~ msgid "Succesfully loaded %d Weed filters\n"
 #~ msgstr "%d filtros Weed carregados com sucesso\n"
 
@@ -11344,9 +11325,11 @@ msgstr "$error"
 #~ "Avisar se o  _mplayer não for encontrado quando o LiVES for iniciado."
 
 #~ msgid ""
-#~ "Warn if multitrack has audio channels, and your audio player is not \"jack\"."
+#~ "Warn if multitrack has audio channels, and your audio player is not \"jack"
+#~ "\"."
 #~ msgstr ""
-#~ "Avisar se multipista tem canais de áudio e o tocador de áudio não é \"JACK\"."
+#~ "Avisar se multipista tem canais de áudio e o tocador de áudio não é \"JACK"
+#~ "\"."
 
 #~ msgid "Jack transport _master"
 #~ msgstr "Transporte _mestre do jack"
@@ -11357,7 +11340,6 @@ msgstr "$error"
 #~ msgid "Play audio even when _paused"
 #~ msgstr "Tocar áudio quando _pausado"
 
-#, c-format
 #~ msgid "Unable to open yuv4mpeg stream %s\n"
 #~ msgstr "Impossível abrir stream yuv4mpeg %s\n"
 
@@ -11370,11 +11352,9 @@ msgstr "$error"
 #~ "\n"
 #~ "Impossível abrir stream, framerate não esta fixa.\n"
 
-#, c-format
 #~ msgid "Opened yuv4mpeg stream on %sstream.yuv"
 #~ msgstr "Abrir stream yuv4mpeg em %sstream.yuv"
 
-#, c-format
 #~ msgid ""
 #~ " size=%dx%d bpp=%d fps=%.3f\n"
 #~ "Audio: "
@@ -11463,7 +11443,6 @@ msgstr "$error"
 #~ msgid "No effects here"
 #~ msgstr "Sem efeitos aqui"
 
-#, c-format
 #~ msgid "Time region %.3f to %.3f selected.\n"
 #~ msgstr "Região de tempo %.3f até %.3f selecionada.\n"
 
@@ -11529,8 +11508,8 @@ msgstr "$error"
 
 #~ msgid ""
 #~ "\n"
-#~ "Unable to start up jack. Please ensure that alsa is set up correctly on your "
-#~ "machine\n"
+#~ "Unable to start up jack. Please ensure that alsa is set up correctly on "
+#~ "your machine\n"
 #~ "and also that the soundcard is not in use by another program.\n"
 #~ msgstr ""
 #~ "\n"
@@ -11540,7 +11519,8 @@ msgstr "$error"
 
 #~ msgid ""
 #~ "\n"
-#~ "Alternately, you can restart LiVES and select \"sox\" as the audio player\n"
+#~ "Alternately, you can restart LiVES and select \"sox\" as the audio "
+#~ "player\n"
 #~ msgstr ""
 #~ "\n"
 #~ "Alternaticamente, você pode reiniciar o LiVES e selecioar \"sox\" como "

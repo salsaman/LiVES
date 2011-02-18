@@ -245,7 +245,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   
   while (vdevs[i]!=NULL) free(vdevs[i++]);
   free( vdevs );
-  
+
   if (vdevname==NULL) return FALSE;
 
   vdevfd=open(vdevname, O_WRONLY);
@@ -281,7 +281,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     fprintf (stderr, "vloopback output: cannot set dimensions for %s\n",vdevname);
     return FALSE;
   }
-
   return TRUE;
 }
 

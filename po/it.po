@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-17 20:44-0300\n"
+"POT-Creation-Date: 2011-02-17 23:53-0300\n"
 "PO-Revision-Date: 2010-10-14 12:45+0000\n"
 "Last-Translator: LoReNicolò <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -10169,8 +10169,9 @@ msgid "Hue start"
 msgstr "Inizio tinta"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Image overlay"
-msgstr ""
+msgstr "Sovrapposizione Testo"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -10249,8 +10250,9 @@ msgid "Number of _frames"
 msgstr "Numero di _fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Overlaying an image onto video"
-msgstr ""
+msgstr "Sovrapponendo il testo su"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -10440,8 +10442,9 @@ msgid "Tunneling"
 msgstr "Creazione di un tunnel in corso"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Use _Natural Size"
-msgstr ""
+msgstr "Usa la dimensione _Naturale dell'immagine"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Use _Natural image size"
@@ -10573,8 +10576,9 @@ msgid "_Image File"
 msgstr "File _Immagine"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "_Image"
-msgstr ""
+msgstr "File _Immagine"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -10906,8 +10910,9 @@ msgid "hue_change"
 msgstr "cambiamento_tinta"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Sovrapposizione Testo"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"

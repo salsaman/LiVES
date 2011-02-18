@@ -80,7 +80,7 @@ fxpluginslib_LTLIBRARIES = alien_overlay.la \
 	warpTV.la \
 	xeffect.la
 
-EXTRA_DIST=data/* icons/*
+EXTRA_DIST=data icons
 
 install-data-local:
 	mkdir -p $(DESTDIR)$(fxpluginslibdir)

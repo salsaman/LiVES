@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-17 20:44-0300\n"
+"POT-Creation-Date: 2011-02-17 23:53-0300\n"
 "PO-Revision-Date: 2010-11-28 15:10+0000\n"
 "Last-Translator: Hiroshi Tagawa <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -9923,8 +9923,9 @@ msgid "Hue start"
 msgstr "ヒュー開始"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Image overlay"
-msgstr ""
+msgstr "テキスト・オーバーレイ"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -10003,8 +10004,9 @@ msgid "Number of _frames"
 msgstr "フレーム数"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Overlaying an image onto video"
-msgstr ""
+msgstr "オーバレイテキストの適用、"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -10194,8 +10196,9 @@ msgid "Tunneling"
 msgstr "トンネルの適用、"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Use _Natural Size"
-msgstr ""
+msgstr "自然な画像サイズを使用"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Use _Natural image size"
@@ -10327,8 +10330,9 @@ msgid "_Image File"
 msgstr "画像ファイル"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "_Image"
-msgstr ""
+msgstr "画像ファイル"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -10659,8 +10663,9 @@ msgid "hue_change"
 msgstr "ヒュー"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "テキスト・オーバーレイ"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"

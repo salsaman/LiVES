@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-17 20:44-0300\n"
+"POT-Creation-Date: 2011-02-17 23:53-0300\n"
 "PO-Revision-Date: 2010-04-11 02:27+0000\n"
 "Last-Translator: AJenbo <anders@jenbo.dk>\n"
 "Language-Team: Danish <da@li.org>\n"
@@ -10069,12 +10069,24 @@ msgid "wave"
 msgstr "_Wavemax"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "Unable to open output file !"
 msgstr ""
+"\n"
+"\n"
+"Kunne ikke åbne fil\n"
+"%s\n"
+"Fejlkode %d\n"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES could not write to $nfile."
 msgstr ""
+"\n"
+"\n"
+"Kunne ikke åbne fil\n"
+"%s\n"
+"Fejlkode %d\n"
 
 #: /usr/bin/smogrify:0
 msgid "Unable to locate the program $rfx_builder_multi"
@@ -10085,8 +10097,14 @@ msgid "This does not appear to be a valid video or image file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was unable to open it."
 msgstr ""
+"\n"
+"\n"
+"Kunne ikke åbne fil\n"
+"%s\n"
+"Fejlkode %d\n"
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."
@@ -10101,8 +10119,14 @@ msgid "This does not appear to be a valid backup file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was not able to open the file"
 msgstr ""
+"\n"
+"\n"
+"Kunne ikke åbne fil\n"
+"%s\n"
+"Fejlkode %d\n"
 
 #: /usr/bin/smogrify:0
 msgid "$file"

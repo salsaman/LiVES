@@ -1,5 +1,5 @@
-Version 1.3.11
---------------
+Version 1.4.0 (17 Feb 2011) - a.k.a 1.3.11
+------------------------------------------
 Added new encoder formats to x264_encoder (h264/aac/mp4 super high quality) and DivX Plus HD.
 Implemented autotransition in multitrack.
 Added unicap device support.
@@ -18,9 +18,11 @@ Updates for breakage in ffmpeg_encoder and transcode_encoder.
 Add pkg-config files for libweed, add weed_setup() prototype, and bump version number to 0.4.0.
 Started adding doxygen documentation.
 Add startup option "-fxmodesmax"
+Add support for FREIOR_PATH environment variable.
 Fix -debug mode.
 Increase gtk+ recommended version to 2.16 or higher.
 Various minor fixes and updates.
+Updated translations to Arabic, Brazilian Portuguese, Croatian, French, Italian, Japanese, Russian, Spanish, Turkish and Ukrainian.
 
 
 

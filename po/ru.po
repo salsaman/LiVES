@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-17 23:53-0300\n"
+"POT-Creation-Date: 2011-02-18 13:07-0300\n"
 "PO-Revision-Date: 2010-12-06 00:51+0000\n"
 "Last-Translator: Alexey Ivanov <alexey.ivanes@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -9198,8 +9198,9 @@ msgid "Colorizing"
 msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycle"
-msgstr ""
+msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -9207,8 +9208,9 @@ msgid "Colour cycling"
 msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filter"
-msgstr ""
+msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
@@ -9216,8 +9218,9 @@ msgid "Colour filtering"
 msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Colour replace"
-msgstr ""
+msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
@@ -9299,8 +9302,9 @@ msgstr "Отмена"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "Fade _end"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
@@ -9491,8 +9495,9 @@ msgid "Making monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9719,8 +9724,9 @@ msgid "Swirl s_tep"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirling"
@@ -9804,8 +9810,9 @@ msgid "_Bottom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Calculate"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -9863,8 +9870,9 @@ msgid "_First frame"
 msgstr "Первый кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Flash for"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -10172,12 +10180,14 @@ msgid "colorize"
 msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "colour_filter"
-msgstr ""
+msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "Вставка тишины"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -10231,8 +10241,9 @@ msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "frame_calculator"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy

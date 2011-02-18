@@ -72,7 +72,14 @@ if HAVE_DOXYGEN
 	cp -rf $(srcdir)/docs/doxygen/html/* $(DESTDIR)$(docdir)/html/LiVES
 #NOTE - if packaging libweed separately, this should go in libweed/Makefile.am
 	mkdir -p $(DESTDIR)$(docdir)/html/libweed
+
+
+if HAVE_SYSTEM_WEED
+
+else
 	cp -rf $(srcdir)/weed-docs/doxygen/html/* $(DESTDIR)$(docdir)/html/libweed
+endif
+
 endif
 	mkdir -p $(DESTDIR)$(sharedir)/applications/
 	cp -f $(srcdir)/menu-entries/LiVES.desktop $(DESTDIR)$(sharedir)/applications/

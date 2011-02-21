@@ -50,7 +50,7 @@ $fps=$p3;
 </pre>
 
 <loop>
-`$convert_command -size $p0!x$p1! xc:black $out`;
+`$convert_command -size $p0!x$p1! xc:black +matte $out`;
 $nwidth=$p0;$nheight=$p1;
 </loop>
 

@@ -52,7 +52,7 @@ $cstring=&RGB24_to_string($p4_red,$p4_green,$p4_blue);
 </pre>
 
 <loop>
-`$convert_command -size $p0!x$p1! xc:$cstring $out`;
+`$convert_command -size $p0!x$p1! xc:$cstring +matte $out`;
 $nwidth=$p0;$nheight=$p1;
 </loop>
 

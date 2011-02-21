@@ -2809,6 +2809,7 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
     d_print(mesg);
     g_free(mesg);
   }
+  return TRUE;
 }
 
 

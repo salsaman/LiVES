@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-18 13:07-0300\n"
+"POT-Creation-Date: 2011-02-20 20:43-0300\n"
 "PO-Revision-Date: 2010-12-21 19:53+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -1850,7 +1850,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Копіювання кадрів з %d до %d%s до буфера даних…"
 
 #: src/callbacks.c:1907 src/saveplay.c:1023 src/saveplay.c:1141
-#: src/saveplay.c:1198 src/saveplay.c:2968
+#: src/saveplay.c:1198 src/saveplay.c:2969
 msgid "Pulling frames from clip"
 msgstr "Отримання кадрів з кліпу"
 
@@ -3908,7 +3908,7 @@ msgstr "Відкриття %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Відкриття %s час початку — %.2f с, %d кадрів"
 
-#: src/saveplay.c:197 src/saveplay.c:2956
+#: src/saveplay.c:197 src/saveplay.c:2957
 msgid " without sound"
 msgstr " без звуку"
 
@@ -4112,7 +4112,7 @@ msgstr ""
 "%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:2793 src/saveplay.c:3413
+#: src/saveplay.c:2793 src/saveplay.c:3414
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4121,12 +4121,12 @@ msgstr ""
 "Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:2797 src/saveplay.c:3417
+#: src/saveplay.c:2797 src/saveplay.c:3418
 #, c-format
 msgid "%s none\n"
 msgstr "%s немає\n"
 
-#: src/saveplay.c:2800 src/saveplay.c:3420
+#: src/saveplay.c:2800 src/saveplay.c:3421
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Гц %d каналів %d б/с\n"
@@ -4136,34 +4136,34 @@ msgstr "%s %d Гц %d каналів %d б/с\n"
 msgid " - Comment: %s\n"
 msgstr " - Коментар: %s\n"
 
-#: src/saveplay.c:2886
+#: src/saveplay.c:2887
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Збереження кадру %d як %s..."
 
-#: src/saveplay.c:2951
+#: src/saveplay.c:2952
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Створення резервної копії %s на %s"
 
-#: src/saveplay.c:2987
+#: src/saveplay.c:2988
 msgid "Backing up"
 msgstr "Створення резервної копії"
 
-#: src/saveplay.c:3018
+#: src/saveplay.c:3019
 msgid "performance data was backed up..."
 msgstr "було створено резервну копію записаних даних…"
 
-#: src/saveplay.c:3324
+#: src/saveplay.c:3325
 #, c-format
 msgid "Restoring %s..."
 msgstr "Відновлення %s…"
 
-#: src/saveplay.c:3343
+#: src/saveplay.c:3344
 msgid "Restoring"
 msgstr "Відновлення"
 
-#: src/saveplay.c:3365
+#: src/saveplay.c:3366
 #, c-format
 msgid ""
 "\n"
@@ -4176,17 +4176,17 @@ msgstr ""
 "Дані у файлі %s пошкоджено.\n"
 "LiVES не вдалося відновити їх.\n"
 
-#: src/saveplay.c:3786
+#: src/saveplay.c:3787
 #, c-format
 msgid "rec %.2f MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:3790
+#: src/saveplay.c:3791
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!зап %.2f МБ"
 
-#: src/saveplay.c:3813
+#: src/saveplay.c:3814
 #, c-format
 msgid ""
 "\n"
@@ -4199,7 +4199,7 @@ msgstr ""
 "Параметри призупинки запису можна встановити за допомогою діалогового вікна "
 "«Параметри».\n"
 
-#: src/saveplay.c:3930
+#: src/saveplay.c:3931
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4209,11 +4209,11 @@ msgstr ""
 "Було знайдено файли від попереднього запуску LiVES.\n"
 "Бажаєте, щоб програма спробувала їх відновити?\n"
 
-#: src/saveplay.c:3943
+#: src/saveplay.c:3944
 msgid "Recovering files"
 msgstr "Відновлення файлів"
 
-#: src/saveplay.c:3947
+#: src/saveplay.c:3948
 msgid "Recovering files..."
 msgstr "Відновлення файлів…"
 

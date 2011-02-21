@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-18 13:07-0300\n"
+"POT-Creation-Date: 2011-02-20 20:43-0300\n"
 "PO-Revision-Date: 2010-10-26 14:50+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -1623,7 +1623,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
 #: src/callbacks.c:1907 src/saveplay.c:1023 src/saveplay.c:1141
-#: src/saveplay.c:1198 src/saveplay.c:2968
+#: src/saveplay.c:1198 src/saveplay.c:2969
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -3514,7 +3514,7 @@ msgstr ""
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:197 src/saveplay.c:2956
+#: src/saveplay.c:197 src/saveplay.c:2957
 msgid " without sound"
 msgstr ""
 
@@ -3672,19 +3672,19 @@ msgid ""
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2793 src/saveplay.c:3413
+#: src/saveplay.c:2793 src/saveplay.c:3414
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2797 src/saveplay.c:3417
+#: src/saveplay.c:2797 src/saveplay.c:3418
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2800 src/saveplay.c:3420
+#: src/saveplay.c:2800 src/saveplay.c:3421
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
@@ -3694,34 +3694,34 @@ msgstr ""
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2886
+#: src/saveplay.c:2887
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2951
+#: src/saveplay.c:2952
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2987
+#: src/saveplay.c:2988
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:3018
+#: src/saveplay.c:3019
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3324
+#: src/saveplay.c:3325
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3343
+#: src/saveplay.c:3344
 msgid "Restoring"
 msgstr ""
 
-#: src/saveplay.c:3365
+#: src/saveplay.c:3366
 #, c-format
 msgid ""
 "\n"
@@ -3730,17 +3730,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3786
+#: src/saveplay.c:3787
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3790
+#: src/saveplay.c:3791
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3813
+#: src/saveplay.c:3814
 #, c-format
 msgid ""
 "\n"
@@ -3748,18 +3748,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3930
+#: src/saveplay.c:3931
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:3943
+#: src/saveplay.c:3944
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:3947
+#: src/saveplay.c:3948
 msgid "Recovering files..."
 msgstr ""
 
@@ -9013,8 +9013,9 @@ msgid "Fade _end"
 msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Fade"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
@@ -9130,12 +9131,14 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _end"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -9403,8 +9406,9 @@ msgid "Step per _Frame"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl _start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl s_tep"
@@ -9529,13 +9533,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "_Fade level"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Fade start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9667,8 +9673,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "_Random colour each frame"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9693,8 +9700,9 @@ msgid "_Sigma end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
@@ -9844,8 +9852,9 @@ msgid "colour_filter"
 msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -9912,8 +9921,9 @@ msgid "gen_blank_frames"
 msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "gen_clip_from_image"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -10043,8 +10053,9 @@ msgid "transition_checkerboard"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "transition_fade2"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "transition_splice"

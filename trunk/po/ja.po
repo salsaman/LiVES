@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-18 13:07-0300\n"
+"POT-Creation-Date: 2011-02-20 20:43-0300\n"
 "PO-Revision-Date: 2010-11-28 15:10+0000\n"
 "Last-Translator: Hiroshi Tagawa <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -1694,7 +1694,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "%dから%d%sフレームをクリップボードにコピーします..."
 
 #: src/callbacks.c:1907 src/saveplay.c:1023 src/saveplay.c:1141
-#: src/saveplay.c:1198 src/saveplay.c:2968
+#: src/saveplay.c:1198 src/saveplay.c:2969
 msgid "Pulling frames from clip"
 msgstr "クリップからフレームを抽出"
 
@@ -3728,7 +3728,7 @@ msgstr "%sを開きます"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "%sを開きます。開始時刻%.2f秒、%dフレーム"
 
-#: src/saveplay.c:197 src/saveplay.c:2956
+#: src/saveplay.c:197 src/saveplay.c:2957
 msgid " without sound"
 msgstr " 音声なし"
 
@@ -3923,7 +3923,7 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d *bpp=グレースケール* fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:2793 src/saveplay.c:3413
+#: src/saveplay.c:2793 src/saveplay.c:3414
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -3932,12 +3932,12 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d bpp=%d fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:2797 src/saveplay.c:3417
+#: src/saveplay.c:2797 src/saveplay.c:3418
 #, c-format
 msgid "%s none\n"
 msgstr "%s なし\n"
 
-#: src/saveplay.c:2800 src/saveplay.c:3420
+#: src/saveplay.c:2800 src/saveplay.c:3421
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d チャンネル %d bps\n"
@@ -3947,34 +3947,34 @@ msgstr "%s %d Hz %d チャンネル %d bps\n"
 msgid " - Comment: %s\n"
 msgstr " - コメント: %s\n"
 
-#: src/saveplay.c:2886
+#: src/saveplay.c:2887
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "フレーム%dを%sとして保存..."
 
-#: src/saveplay.c:2951
+#: src/saveplay.c:2952
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "%sから%sへバックアップします"
 
-#: src/saveplay.c:2987
+#: src/saveplay.c:2988
 msgid "Backing up"
 msgstr "バックアップします"
 
-#: src/saveplay.c:3018
+#: src/saveplay.c:3019
 msgid "performance data was backed up..."
 msgstr "演奏データをバックアップしました..."
 
-#: src/saveplay.c:3324
+#: src/saveplay.c:3325
 #, c-format
 msgid "Restoring %s..."
 msgstr "%sをリストアします..."
 
-#: src/saveplay.c:3343
+#: src/saveplay.c:3344
 msgid "Restoring"
 msgstr "リストアします"
 
-#: src/saveplay.c:3365
+#: src/saveplay.c:3366
 #, c-format
 msgid ""
 "\n"
@@ -3987,17 +3987,17 @@ msgstr ""
 "このファイル%sは壊れています。\n"
 "LiVESはリストアできませんでした。\n"
 
-#: src/saveplay.c:3786
+#: src/saveplay.c:3787
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3790
+#: src/saveplay.c:3791
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3813
+#: src/saveplay.c:3814
 #, c-format
 msgid ""
 "\n"
@@ -4005,7 +4005,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:3930
+#: src/saveplay.c:3931
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4015,11 +4015,11 @@ msgstr ""
 "LiVESを前回起動した際のファイルを発見しました。\n"
 "回復を試みますか?\n"
 
-#: src/saveplay.c:3943
+#: src/saveplay.c:3944
 msgid "Recovering files"
 msgstr "ファイルを回復"
 
-#: src/saveplay.c:3947
+#: src/saveplay.c:3948
 msgid "Recovering files..."
 msgstr ""
 

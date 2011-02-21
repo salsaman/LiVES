@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-20 20:43-0300\n"
+"POT-Creation-Date: 2011-02-21 06:15-0300\n"
 "PO-Revision-Date: 2010-12-06 00:51+0000\n"
 "Last-Translator: Alexey Ivanov <alexey.ivanes@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -9448,8 +9448,9 @@ msgid "Hue change"
 msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy

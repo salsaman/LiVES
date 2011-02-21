@@ -96,14 +96,14 @@ if HAVE_SYSTEM_WEED
 libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
 libweed_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1
 else
-libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la $(abs_top_srcdir)/libweed/weed-utils.la
+libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la $(abs_top_srcdir)/libweed/libweed-utils.la
 endif
 else
 if HAVE_SYSTEM_WEED
 libweed_LDADD = @WEED_SLICE_LIBS@ @WEED_UTILS_LIBS@
 libweed_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1
 else
-libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/weed-utils.la
+libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
 endif
 endif
 

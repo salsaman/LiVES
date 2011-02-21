@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-02-20 20:43-0300\n"
+"POT-Creation-Date: 2011-02-21 06:15-0300\n"
 "PO-Revision-Date: 2010-10-26 14:50+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -8879,8 +8879,9 @@ msgid "Charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "Checkerboard"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "Checkerboarding"
@@ -8934,8 +8935,9 @@ msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Cycle _Step"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
@@ -9146,12 +9148,14 @@ msgid "Hue change"
 msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Image overlay"
@@ -9308,8 +9312,9 @@ msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "S_tart %"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
@@ -9411,12 +9416,14 @@ msgid "Swirl _start"
 msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl s_tep"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirling"
@@ -9502,8 +9509,9 @@ msgid "_Calculate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "_Cycle Start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Decrease Contrast"
@@ -9658,18 +9666,21 @@ msgid "_Point size"
 msgstr "Veličina datoteke"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius end"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#, fuzzy
 msgid "_Radius"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9696,8 +9707,9 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma end"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -9730,8 +9742,9 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "_Start Value"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "_Start amount"
@@ -9790,8 +9803,9 @@ msgid "_X End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_X Start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9807,8 +9821,9 @@ msgid "_Y End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Y Start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -10045,12 +10060,14 @@ msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "transition_bwthresh"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "transition_checkerboard"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
@@ -10058,8 +10075,9 @@ msgid "transition_fade2"
 msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "transition_splice"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy

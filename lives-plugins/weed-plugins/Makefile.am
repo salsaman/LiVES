@@ -2,6 +2,7 @@
 
 LIBS =
 
+#NOTE - install-exec-local MUST go in the first subdir !!
 SUBDIRS = gdk
 
 fxpluginslibdir = $(libdir)/$(PACKAGE)/plugins/effects/realtime/weed
@@ -86,7 +87,4 @@ install-data-local:
 	mkdir -p $(DESTDIR)$(fxpluginslibdir)
 	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
 	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)
-
-install-exec-local:
-	rm -rf $(DESTDIR)$(fxpluginslibdir)/*
 

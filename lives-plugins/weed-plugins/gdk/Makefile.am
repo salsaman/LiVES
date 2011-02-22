@@ -34,3 +34,6 @@ install-data-local:
 	mkdir -p $(DESTDIR)$(fxpluginslibdir)
 	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
 	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)
+
+install-exec-local:
+	rm -rf $(DESTDIR)$(fxpluginslibdir)/*

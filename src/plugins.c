@@ -709,10 +709,8 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   vppa->dialog = gtk_dialog_new ();
 
-  //if (prefsw!=NULL) gtk_widget_hide (prefsw->prefs_dialog);
-
   gtk_window_set_position (GTK_WINDOW (vppa->dialog), GTK_WIN_POS_CENTER);
-  if (!prefs->show_gui) {
+  if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
   }
   gtk_window_set_modal (GTK_WINDOW (vppa->dialog), TRUE);
@@ -776,7 +774,6 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     vppa->fps_entry=(GTK_COMBO(combo))->entry;
 
     gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO (combo))->entry),FALSE);
-    //gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(combo))->entry),TRUE);
     
     nfps=get_token_count((gchar *)fps_list,'|');
     for (i=0;i<nfps;i++) {
@@ -822,7 +819,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     
     spinbutton_adj = gtk_adjustment_new (tmpvpp->fwidth>0?tmpvpp->fwidth:DEF_VPP_HSIZE, 4., 100000, 4, 4, 0.);
     vppa->spinbuttonw = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 4, 0);
-    //gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbuttonw)->entry)), TRUE);
+
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),vppa->spinbuttonw);
     gtk_box_pack_start (GTK_BOX (hbox), vppa->spinbuttonw, FALSE, FALSE, 10);
     gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (vppa->spinbuttonw),GTK_UPDATE_IF_VALID);
@@ -837,7 +834,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     
     spinbutton_adj = gtk_adjustment_new (tmpvpp->fheight>0?tmpvpp->fheight:DEF_VPP_VSIZE, 4., 100000, 4, 4, 0.);
     vppa->spinbuttonh = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 4, 0);
-    //gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbuttonw)->entry)), TRUE);
+
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),vppa->spinbuttonh);
     gtk_box_pack_start (GTK_BOX (hbox), vppa->spinbuttonh, FALSE, FALSE, 10);
     gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (vppa->spinbuttonh),GTK_UPDATE_IF_VALID);

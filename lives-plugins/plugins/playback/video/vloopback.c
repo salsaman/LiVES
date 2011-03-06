@@ -9,7 +9,7 @@
 
 /////////////////////////////////////////////////////////////////
 
-static char plugin_version[64]="LiVES vloopback output client 1.0.1";
+static char plugin_version[64]="LiVES vloopback output client 1.0.2";
 static int palette_list[3];
 static int clampings[2];
 static int mypalette;
@@ -88,7 +88,7 @@ static char **get_vloopback_devices(void) {
    n = scandir( "/dev", &namelist, file_filter, alphasort );
    if( n < 0 ) return devnames;
    
-   
+    
    for(i=0; i < n && ndevices < MAX_DEVICES-1; i++ ) {
      sprintf( devname, "/dev/%s", namelist[i]->d_name );
 
@@ -161,6 +161,7 @@ const char rfx[32768];
 const char *get_rfx (void) {
   char **vdevs = get_vloopback_devices();
   char devstr[30000];
+  size_t slen=0;
   int i=0;
 
   if (vdevs[0]==NULL) {
@@ -171,7 +172,8 @@ const char *get_rfx (void) {
   memset( devstr, 0, 1 );
 
   while (vdevs[i]!=NULL) {
-    snprintf(devstr,30000,"%s%s|",devstr,vdevs[i]);
+    snprintf(devstr+slen,30000-slen,"%s|",vdevs[i]);
+    slen+=strlen(vdevs[i])+1;
     free(vdevs[i++]);
   }
   free( vdevs );

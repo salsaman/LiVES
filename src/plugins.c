@@ -711,7 +711,11 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_window_set_position (GTK_WINDOW (vppa->dialog), GTK_WIN_POS_CENTER);
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
+    if (prefsw!=NULL) gtk_window_set_transient_for(GTK_WINDOW(fileselection),GTK_WINDOW(prefsw->prefs_dialog));
+    else {
+      if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fileselection),GTK_WINDOW(mainw->LiVES));
+      else gtk_window_set_transient_for(GTK_WINDOW(fileselection),GTK_WINDOW(mainw->multitrack->window));
+    }
   }
   gtk_window_set_modal (GTK_WINDOW (vppa->dialog), TRUE);
 

@@ -824,7 +824,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   if (menuitem!=NULL) {
     // activated from the menu for a rendered effect
-    if (!prefs->show_gui) {
+    if (prefs->show_gui) {
       if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[n]),GTK_WINDOW(mainw->LiVES));
       else gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[n]),GTK_WINDOW(mainw->multitrack->window));
     }

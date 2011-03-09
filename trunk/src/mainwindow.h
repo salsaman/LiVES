@@ -925,6 +925,8 @@ typedef struct {
 
   GList *videodevs;
 
+  gchar vpp_defs_file[PATH_MAX];
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

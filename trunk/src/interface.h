@@ -130,8 +130,6 @@ _entryw *locw;
 _insertw *insertw;
 text_window *textwindow;
 
-gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, GtkWidget *extra);
-
 
 #define MAX_FADE_SECS 30.
 

@@ -645,6 +645,8 @@ void make_preview_box (void);
 void add_to_playframe (void);
 GtkWidget* create_cdtrack_dialog (gint type, gpointer user_data);
 GtkTextView *create_output_textview(void);
+gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, GtkWidget *extra);
+
 
 // dialogs.c
 gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar *text);

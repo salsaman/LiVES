@@ -833,6 +833,11 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->videodevs=NULL;
 
   mainw->camframe=NULL;
+
+  if (!ign_opts->ign_vppdefs)
+    g_snprintf(mainw->vpp_defs_file,PATH_MAX,"%s/%svpp_defaults",capable->home_dir,LIVES_CONFIG_DIR);
+
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -1714,6 +1719,7 @@ void print_opthelp(void) {
   g_printerr("%s",_(" or sox\n"));
 #endif
   g_printerr("%s",_("-devicemap <mapname>          : autoload devicemap\n"));
+  g_printerr("%s",_("-vppdefaults <file>          : load video playback plugin defaults from <file> (Note: only sets the settings, not the plugin type)\n"));
   g_printerr("%s",_("-debug            : try to debug crashes (requires 'gdb' installed)\n"));
 
   g_printerr("%s","\n");
@@ -1925,7 +1931,7 @@ int main (int argc, char *argv[]) {
   ssize_t mynsize;
   gchar fbuff[512];
 
-  ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_aplayer=ign_opts.ign_stmode=FALSE;
+  ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_aplayer=ign_opts.ign_stmode=ign_opts.ign_vppdefs=FALSE;
 
 #ifdef ENABLE_OIL
   oil_init();
@@ -1990,6 +1996,7 @@ int main (int argc, char *argv[]) {
 	{"set", 1, 0, 0},
 	{"noset", 0, 0, 0},
         {"devicemap", 1, 0, 0},
+        {"vppdefaults", 1, 0, 0},
 	{"recover", 0, 0, 0},
 	{"norecover", 0, 0, 0},
 	{"nothreaddialog", 0, 0, 0},
@@ -2049,6 +2056,12 @@ int main (int argc, char *argv[]) {
         if (!strcmp(charopt,"devicemap")&&optarg!=NULL) {
           // force devicemap loading
           on_midi_load_activate(NULL, optarg);
+          continue;
+        }
+        if (!strcmp(charopt,"vppdefaults")&&optarg!=NULL) {
+          // load alternate vpp file
+	  g_snprintf(mainw->vpp_defs_file,PATH_MAX,"%s",optarg);
+	  ign_opts.ign_vppdefs=TRUE;
           continue;
         }
 	if (!strcmp(charopt,"aplayer")) {

@@ -448,6 +448,7 @@ typedef struct {
   gboolean ign_osc;
   gboolean ign_aplayer;
   gboolean ign_stmode;
+  gboolean ign_vppdefs;
 } _ign_opts;
 
 typedef struct {

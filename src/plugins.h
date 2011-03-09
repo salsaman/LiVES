@@ -102,9 +102,9 @@ typedef struct {
 
 _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean using);
 void vid_playback_plugin_exit (void);
-void close_vid_playback_plugin(_vid_playback_plugin *vpp);
-void save_vpp_defaults(_vid_playback_plugin *vpp);
-void load_vpp_defaults(_vid_playback_plugin *vpp);
+void close_vid_playback_plugin(_vid_playback_plugin *);
+void save_vpp_defaults(_vid_playback_plugin *, gchar *file);
+void load_vpp_defaults(_vid_playback_plugin *, gchar *file);
 
 
 // encoder plugins

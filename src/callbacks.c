@@ -111,7 +111,11 @@ lives_exit (void) {
 
     if (mainw->vpp!=NULL&&!mainw->only_close) {
       if (!mainw->leave_recovery) {
-	if (mainw->write_vpp_file) save_vpp_defaults(mainw->vpp);
+	if (mainw->write_vpp_file) {
+	  gchar *vpp_file=g_strdup_printf("%s/%svpp_defaults",
+					  capable->home_dir,LIVES_CONFIG_DIR);
+	  save_vpp_defaults(mainw->vpp,vpp_file);
+	}
       }
       close_vid_playback_plugin(mainw->vpp);
     }
@@ -1028,7 +1032,10 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
   unlink((tmp=g_filename_from_utf8(proj_file,-1,NULL,NULL,NULL)));
   g_free(tmp);
 
-  if (!check_file(proj_file,TRUE)) return;
+  if (!check_file(proj_file,TRUE)) {
+    g_free(proj_file);
+    return;
+  }
 
   msg=g_strdup_printf(_("Exporting project %s..."),proj_file);
   d_print(msg);

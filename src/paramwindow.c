@@ -761,6 +761,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   if (menuitem==NULL) {
     no_process=TRUE;
     is_realtime=TRUE;
+    n=1;
   }
   else if (rfx->status!=RFX_STATUS_WEED) {
     do_onchange_init(rfx);
@@ -810,12 +811,14 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     }
   }
 
-  fx_dialog[is_realtime?1:0] = gtk_dialog_new ();
+  fx_dialog[n] = gtk_dialog_new ();
   txt=g_strdup_printf ("LiVES: - %s",_(rfx->menu_text));
-  gtk_window_set_title (GTK_WINDOW (fx_dialog[is_realtime?1:0]), txt);
+  gtk_window_set_title (GTK_WINDOW (fx_dialog[n]), txt);
   g_free (txt);
 
-  if (is_realtime) n=1;
+  if (prefs->gui_monitor!=0) {
+    gtk_window_set_screen(GTK_WINDOW(fx_dialog[n]),mainw->mgeom[prefs->gui_monitor-1].screen);
+  }
 
   if (rfx->status==RFX_STATUS_WEED&&rfx->is_template) is_defaults=TRUE;
 

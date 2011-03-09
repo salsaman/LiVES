@@ -250,7 +250,7 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
 // video plugins
 
 
-void save_vpp_defaults(_vid_playback_plugin *vpp) {
+void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   // format is:
   // nbytes (string) : LiVES vpp defaults file version 2\n
   // for each video playback plugin:
@@ -274,7 +274,6 @@ void save_vpp_defaults(_vid_playback_plugin *vpp) {
   // n bytes string param value
 
   int fd;
-  gchar *vpp_file=g_strdup_printf("%s/%svpp_defaults",capable->home_dir,LIVES_CONFIG_DIR);
   gint32 len;
   const gchar *version;
   int i;
@@ -284,7 +283,6 @@ void save_vpp_defaults(_vid_playback_plugin *vpp) {
 
   if (mainw->vpp==NULL) {
     unlink(vpp_file);
-    g_free(vpp_file);
     return;
   }
 
@@ -292,7 +290,6 @@ void save_vpp_defaults(_vid_playback_plugin *vpp) {
     msg=g_strdup_printf (_("\n\nUnable to write video playback plugin defaults file\n%s\nError code %d\n"),vpp_file,errno);
     g_printerr ("%s",msg);
     g_free (msg);
-    g_free(vpp_file);
     return;
   }
 
@@ -332,14 +329,12 @@ void save_vpp_defaults(_vid_playback_plugin *vpp) {
   }
 
   close(fd);
-  g_free(vpp_file);
 
 }
 
 
-void load_vpp_defaults(_vid_playback_plugin *vpp) {
+void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   int fd;
-  gchar *vpp_file=g_strdup_printf("%s/%svpp_defaults",capable->home_dir,LIVES_CONFIG_DIR);
   gint32 len;
   const gchar *version;
   gchar buf[512];
@@ -347,7 +342,6 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
   gchar *msg;
 
   if (!g_file_test(vpp_file,G_FILE_TEST_EXISTS)) {
-    g_free(vpp_file);
     return;
   }
 
@@ -359,7 +353,6 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
     msg=g_strdup_printf (_("unable to read file\n%s\nError code %d\n"),vpp_file,errno);
     d_print (msg);
     g_free (msg);
-    g_free(vpp_file);
     return;
   }
 
@@ -371,7 +364,6 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
   if (strcmp(msg,buf)) {
     g_free(msg);
     d_print_file_error_failed();
-    g_free(vpp_file);
     return;
   }
   g_free(msg);
@@ -383,7 +375,6 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
 
   if (strcmp(buf,mainw->vpp->name)) {
     d_print_failed();
-    g_free(vpp_file);
     return;
   }
 
@@ -398,7 +389,6 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
     do_error_dialog(msg);
     g_free(msg);
     unlink(vpp_file);
-    g_free(vpp_file);
     d_print_failed();
     return;
   }
@@ -435,8 +425,6 @@ void load_vpp_defaults(_vid_playback_plugin *vpp) {
   mainw->vpp->extra_argv[i]=NULL;
 
   close(fd);
-  g_free(vpp_file);
-
   d_print_done();
 
 }
@@ -528,6 +516,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 
     if (mainw->vpp->fixed_fpsd>0.&&(mainw->fixed_fpsd>0.||!((*mainw->vpp->set_fps) (mainw->vpp->fixed_fpsd)))) {
       do_vpp_fps_error();
+      mainw->error=TRUE;
       mainw->vpp->fixed_fpsd=-1.;
       mainw->vpp->fixed_fps_numer=0;
     }
@@ -545,6 +534,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	      mainw->vpp->palette=pal_list[i];
 	      if (!(*vpp->set_palette)(vpp->palette)) {
 		do_vpp_palette_error();
+		mainw->error=TRUE;
 	      }
 
 	      if (vpp->set_yuv_palette_clamping!=NULL) (*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
@@ -557,6 +547,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	      mainw->vpp->palette=pal_list[i];
 	      if (!(*vpp->set_palette)(vpp->palette)) {
 		do_vpp_palette_error();
+		mainw->error=TRUE;
 	      }
 	      if (vpp->set_yuv_palette_clamping!=NULL) (*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
 	    }
@@ -656,11 +647,38 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
       vpp->extra_argc=0;
     }
   }
-  on_vppa_cancel_clicked(button,user_data);
+  if (button!=NULL&&!mainw->error) on_vppa_cancel_clicked(button,user_data);
+  if (button!=NULL) mainw->error=FALSE;
 }
 
 
+void on_vppa_save_clicked (GtkButton *button, gpointer user_data) {
+  _vppaw *vppw=(_vppaw *)user_data;
+  _vid_playback_plugin *vpp=vppw->plugin;
+  gchar *save_file;
+  gchar *msg;
 
+  // apply
+  mainw->error=FALSE;
+  on_vppa_ok_clicked(NULL,user_data);
+  if (mainw->error) {
+    mainw->error=FALSE;
+    return;
+  }
+
+  // get filename
+  save_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL);
+  if (save_file==NULL) return;
+
+  // save
+  msg=g_strdup_printf(_("Saving playback plugin defaults to %s..."),save_file);
+  d_print(msg);
+  g_free(msg);
+  save_vpp_defaults(vpp, save_file);
+  d_print_done();
+  g_free(save_file);
+
+}
 
 
 _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
@@ -670,6 +688,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *combo;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
+  GtkWidget *savebutton;
   GtkObject *spinbutton_adj;
 
   gchar *title;
@@ -717,6 +736,11 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
       else gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(mainw->multitrack->window));
     }
   }
+
+  if (prefs->gui_monitor!=0) {
+    gtk_window_set_screen(GTK_WINDOW(vppa->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
+  }
+
   gtk_window_set_modal (GTK_WINDOW (vppa->dialog), TRUE);
 
   if (palette->style&STYLE_1) {
@@ -924,7 +948,12 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+
+  savebutton = gtk_button_new_from_stock ("gtk-save-as");
+  gtk_widget_show (savebutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), savebutton, 1);
+  GTK_WIDGET_SET_FLAGS (savebutton, GTK_CAN_DEFAULT);
+  gtk_tooltips_set_tip (mainw->tooltips, savebutton, _("Save settings to an alternate file.\n"), NULL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
@@ -935,6 +964,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 		    G_CALLBACK (on_vppa_cancel_clicked),
 		    vppa);
 
+  g_signal_connect (GTK_OBJECT (savebutton), "clicked",
+		    G_CALLBACK (on_vppa_save_clicked),
+		    vppa);
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		    G_CALLBACK (on_vppa_ok_clicked),
@@ -1170,7 +1202,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
     gint fheight=vpp->fheight;
 
     mainw->vpp=vpp;
-    load_vpp_defaults(vpp);
+    load_vpp_defaults(vpp, mainw->vpp_defs_file);
     if (fixed_fpsd<0.) vpp->fixed_fpsd=fixed_fpsd;
     if (fwidth<0) vpp->fwidth=fwidth;
     if (fheight<0) vpp->fheight=fheight;

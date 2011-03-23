@@ -8370,7 +8370,7 @@ gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
   if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-    if (mainw->jackd!=NULL&&mainw->jackd->in_use) avsync=(gdouble)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8;
+    if (mainw->jackd!=NULL&&mainw->jackd->in_use) avsync=(gdouble)mainw->jackd->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8;
     else return FALSE;
 #else
     return FALSE;

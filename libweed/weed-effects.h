@@ -42,7 +42,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2010 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2011 */
 
 #ifndef __WEED_EFFECTS_H__
 #define __WEED_EFFECTS_H__
@@ -87,7 +87,10 @@ extern "C"
 #define WEED_FILTER_NON_REALTIME    (1<<0)
 #define WEED_FILTER_IS_CONVERTER    (1<<1)
 #define WEED_FILTER_HINT_IS_STATELESS (1<<2)
-#define WEED_FILTER_HINT_IS_POINT_EFFECT (1<<3)
+#define WEED_FILTER_HINT_IS_POINT_EFFECT (1<<3) // deprecated !!
+
+/* API version 132 */
+#define WEED_FILTER_HINT_MAY_THREAD (1<<5)
 
 /* API version 131 */
 #define WEED_FILTER_PROCESS_LAST (1<<4)
@@ -102,10 +105,6 @@ extern "C"
 #define WEED_CHANNEL_CAN_DO_INPLACE           (1<<2)
 #define WEED_CHANNEL_SIZE_CAN_VARY            (1<<3)
 #define WEED_CHANNEL_PALETTE_CAN_VARY         (1<<4)
-
-/* API version 110 */
-// deprecated ! use WEED_FILTER_PROCESS_LAST instead
-#define WEED_CHANNEL_FOLLOWS_OUTPUT           (1<<5)
 
 /* Parameter flags */
 #define WEED_PARAMETER_REINIT_ON_VALUE_CHANGE (1<<0)

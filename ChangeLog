@@ -1,12 +1,16 @@
-Version 1.4.2
--------------
+Version 1.4.2 (26 Mar 2011)
+--------------------------
 Restore missing rte plugins which were omitted from the last release. *
 Fix device listing for vloopback output plugin. *
 Add new omc commands: /lives/constant/value/get, /video/loop/set, 
 	/video/loop/get, /video/pingpong/set, 
 	/video/pingpong/get *
 Handle saving and restoring of alternate video playback plugin settings.
-Force showing of vpp advanced and parameter dialogs on GUI screen. *
+Try to force showing of vpp advanced and parameter dialogs on GUI screen. *
+Add weed filter hint WEED_FILTER_HINT_MAY_THREAD, deprecate WEED_FILTER_HINT_IS_POINT_EFFECT.
+Remove WEED_CHANNEL_FOLLOWS_OUTPUT.
+Update libweed to 0.5.0
+Updated translations to Simplified Chinese and Hungarian.
 
 
 

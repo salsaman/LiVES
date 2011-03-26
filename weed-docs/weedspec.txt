@@ -96,6 +96,8 @@ Clarified YUV_subsampling, *changed value of default*.
 21/10/10 salsaman
 Clarified text about plugin data and icon directories.
 
+17/03/11 salsaman
+Switched WEED_FILTER_HINT_IS_POINT_EFFECT to WEED_FILTER_HINT_NO_THREADING
 
 (C) Gabriel "Salsaman" Finch 2005 - 2010
 
@@ -796,6 +798,12 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
  any memory buffers in the deinit_func.
 
 '''Optional leaves for channel plants with video''': [[BR]]
+
+ * "offset" : WEED_SEED_INT : host can achieve multithreading by splitting destination frames into slices, calling the 
+   	      		      process_func several times with different "offset"s and reduced height in the 
+			      destination channel. Offset is the number of rows offset of "pixel_data" in the destination 
+			      frame(s). This should never be used for generators, or if the plugin sets 
+			      WEED_FILTER_HINT_NO_THREADING.
 
  * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio
                                                of the pixel of the image (pixel aspect ratio 
@@ -1517,10 +1525,14 @@ Palette numbers >=2048 are reserved for custom palettes.
    bit can be set. Used for compatibility with other plugin architectures.
 
 
- * WEED_FILTER_HINT_IS_POINT_EFFECT[[BR]]
-   This is optional; if there is a direct one-to-one mapping between pixels in the
-   in channel(s) and pixels in the out channel(s), then this flag bit can be
-   set, to allow parallel processing of the pixel_data on multithreaded systems.
+ * WEED_FILTER_HINT_NO_THREADING[BR]]
+   Hosts can achieve threading by splitting the destination frame(s) into 
+   slices, setting "offset" for those channels, and calling process_func 
+   multiple times with the same timestamp. If there is some reason the host 
+   should not do this, eg. the full destination frame is needed then this flag 
+   should be set to WEED_TRUE. Note that the dest. frames will never be split 
+   for generators (filters which have no input video frames), so this flag is 
+   unneccesary in that case.
 
 
  * WEED_FILTER_PROCESS_LAST[[BR]]

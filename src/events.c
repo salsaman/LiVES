@@ -758,8 +758,8 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gbo
 
 	if (add) {
 	  gchar *fhash;
-	  weed_plant_t *filter,*ctmpl;
-	  int k,l,cflags;
+	  weed_plant_t *filter;
+	  int k,l,tflags;
 	  // add before any "process_last" events
 	  k=j;
 	  while (k>0) {
@@ -771,14 +771,11 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gbo
 	    fhash=weed_get_string_value(init_events[k],"filter",&error);
 	    filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
 	    weed_free(fhash);
-	    if (weed_plant_has_leaf(filter,"in_channel_templates")) {
-	      ctmpl=weed_get_plantptr_value(filter,"in_channel_templates",&error);
-	      if (weed_plant_has_leaf(ctmpl,"flags")) {
-		cflags=weed_get_int_value(ctmpl,"flags",&error);
-		if (cflags&WEED_CHANNEL_FOLLOWS_OUTPUT) {
-		  // add before any "follows output" filters
-		  continue;
-		}
+	    if (weed_plant_has_leaf(filter,"flags")) {
+	      tflags=weed_get_int_value(filter,"flags",&error);
+	      if (tflags&WEED_FILTER_PROCESS_LAST) {
+		// add before any "process_last" filters
+		continue;
 	      }
 	    }
 	    k++;

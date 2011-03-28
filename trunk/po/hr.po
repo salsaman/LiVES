@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-03-26 11:46-0300\n"
+"POT-Creation-Date: 2011-03-26 21:52-0300\n"
 "PO-Revision-Date: 2010-10-26 14:50+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -9614,8 +9614,9 @@ msgid "_Frames"
 msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"

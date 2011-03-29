@@ -56,6 +56,16 @@ int posterise_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   for (i=1;i<levels;i++) levmask+=128>>i;
 
+  // new threading arch
+  if (weed_plant_has_leaf(out_channel,"offset")) {
+    int offset=weed_get_int_value(out_channel,"offset",&error);
+    int dheight=weed_get_int_value(out_channel,"height",&error);
+
+    src+=offset*irowstride;
+    dst+=offset*orowstride;
+    end=src+dheight*irowstride;
+  }
+
   for (;src<end;src+=irowstride) {
     for (i=0;i<width;i++) {
       dst[i]=src[i]&levmask;
@@ -76,7 +86,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
     weed_plant_t *in_params[]={weed_integer_init("levels","Colour _levels",1,1,8),NULL};
     
-    weed_plant_t *filter_class=weed_filter_class_init("posterise","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&posterise_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("posterise","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&posterise_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     

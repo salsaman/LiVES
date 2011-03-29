@@ -9584,7 +9584,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   }
 
 
-  if ((prefs->gui_monitor!=0||mainw->nmonitors<=1)&&prefs->open_maximised) {
+  if ((prefs->gui_monitor!=0||capable->nmonitors<=1)&&prefs->open_maximised) {
     gtk_window_maximize (GTK_WINDOW(multi->window));
   }
 

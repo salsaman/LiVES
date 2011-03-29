@@ -269,6 +269,8 @@ typedef struct {
   gint atrans_fx;
   gchar def_autotrans[256];
 
+  gint nfx_threads;
+
 } _prefs;
 
 enum {
@@ -355,6 +357,7 @@ typedef struct {
   GtkWidget *rdesk_audio;
   GtkWidget *encoder_combo;
   GtkWidget *checkbutton_antialias;
+  GtkWidget *checkbutton_threads;
   GtkWidget *checkbutton_warn_fps;
   GtkWidget *checkbutton_warn_mplayer;
   GtkWidget *checkbutton_warn_save_set;
@@ -391,6 +394,7 @@ typedef struct {
   GtkWidget *acodec_combo;
   GtkWidget *spinbutton_osc_udp;
   GtkWidget *spinbutton_rte_keys;
+  GtkWidget *spinbutton_nfx_threads;
   GtkWidget *enable_OSC;
   GtkWidget *enable_OSC_start;
   GtkWidget *jack_tserver_entry;
@@ -471,6 +475,9 @@ typedef struct {
   gboolean osc_start;
   gint startup_interface;
   guint jack_opts;
+
+  gint nfx_threads;
+
 } _future_prefs;
 
 _prefs *prefs;

@@ -555,6 +555,10 @@ typedef struct {
 
   gboolean has_stderr;
 
+  gint nmonitors;
+
+  gint ncpus;
+
 } capability;
 
 

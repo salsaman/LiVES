@@ -152,6 +152,20 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
   blend2=(255-blend_factor)*2;
   blendneg2=(blend_factor-128)*2;
 
+  // new threading arch
+  if (weed_plant_has_leaf(out_channel,"offset")) {
+    int offset=weed_get_int_value(out_channel,"offset",&error);
+    int dheight=weed_get_int_value(out_channel,"height",&error);
+
+    src1+=offset*irowstride1;
+    end=src1+dheight*irowstride1;
+
+    src2+=offset*irowstride2;
+
+    dst+=offset*orowstride;
+
+  }
+
   for (;src1<end;src1+=irowstride1) {
     for (j=0;j<width;j+=3) {
       switch (type) {
@@ -296,28 +310,28 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
     weed_plant_t *in_params1[]={weed_integer_init("amount","Blend _amount",128,0,255),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("blend_multiply","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&mpy_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("blend_multiply","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&mpy_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
 
     weed_set_boolean_value(in_params1[0],"transition",WEED_TRUE);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("blend_screen","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&screen_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
+    filter_class=weed_filter_class_init("blend_screen","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&screen_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("blend_darken","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&darken_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
+    filter_class=weed_filter_class_init("blend_darken","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&darken_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("blend_lighten","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&lighten_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
+    filter_class=weed_filter_class_init("blend_lighten","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&lighten_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("blend_overlay","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&overlay_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
+    filter_class=weed_filter_class_init("blend_overlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&overlay_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("blend_dodge","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&dodge_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
+    filter_class=weed_filter_class_init("blend_dodge","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&dodge_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("blend_burn","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&burn_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
+    filter_class=weed_filter_class_init("blend_burn","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&burn_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params1),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);

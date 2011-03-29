@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-03-26 21:52-0300\n"
+"POT-Creation-Date: 2011-03-28 20:31-0300\n"
 "PO-Revision-Date: 2010-10-24 23:39+0000\n"
 "Last-Translator: Gustavo Guidorizzi <Unknown>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -5086,125 +5086,125 @@ msgstr ""
 "\n"
 "Nenhum frame foi gerado.\n"
 
-#: src/effects-weed.c:238
+#: src/effects-weed.c:244
 msgid "generator"
 msgstr "gerador"
 
-#: src/effects-weed.c:239
+#: src/effects-weed.c:245
 msgid "Generators"
 msgstr "Geradores"
 
-#: src/effects-weed.c:241
+#: src/effects-weed.c:247
 msgid "transition"
 msgstr "transição"
 
-#: src/effects-weed.c:242
+#: src/effects-weed.c:248
 msgid "Transitions"
 msgstr "Transições"
 
-#: src/effects-weed.c:244
+#: src/effects-weed.c:250
 msgid "effect"
 msgstr "efeito"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects-weed.c:245 src/preferences.c:3365
+#: src/effects-weed.c:251 src/preferences.c:3365
 msgid "Effects"
 msgstr "Efeitos"
 
-#: src/effects-weed.c:247
+#: src/effects-weed.c:253
 msgid "utility"
 msgstr "utilitário"
 
-#: src/effects-weed.c:248
+#: src/effects-weed.c:254
 msgid "Utilities"
 msgstr "Utilitários"
 
-#: src/effects-weed.c:250
+#: src/effects-weed.c:256
 msgid "compositor"
 msgstr "compositor"
 
-#: src/effects-weed.c:251
+#: src/effects-weed.c:257
 msgid "Compositors"
 msgstr "Compositores"
 
-#: src/effects-weed.c:253
+#: src/effects-weed.c:259
 msgid "tap"
 msgstr "tap"
 
-#: src/effects-weed.c:254
+#: src/effects-weed.c:260
 msgid "Taps"
 msgstr "Torneiras"
 
-#: src/effects-weed.c:256
+#: src/effects-weed.c:262
 msgid "splitter"
 msgstr "divisor"
 
-#: src/effects-weed.c:257
+#: src/effects-weed.c:263
 msgid "Splitters"
 msgstr "Divisores"
 
-#: src/effects-weed.c:259
+#: src/effects-weed.c:265
 msgid "converter"
 msgstr "conversor"
 
-#: src/effects-weed.c:260
+#: src/effects-weed.c:266
 msgid "Converters"
 msgstr "Conversores"
 
-#: src/effects-weed.c:265
+#: src/effects-weed.c:271
 msgid "audio/video"
 msgstr "áudio/vídeo"
 
-#: src/effects-weed.c:266
+#: src/effects-weed.c:272
 msgid "Audio/Video Transitions"
 msgstr "Transições de Áudio e Vídeo"
 
-#: src/effects-weed.c:268
+#: src/effects-weed.c:274
 msgid "video only"
 msgstr "só vídeo"
 
-#: src/effects-weed.c:269
+#: src/effects-weed.c:275
 msgid "Video only Transitions"
 msgstr "Ver apenas Transições"
 
-#: src/effects-weed.c:271 src/multitrack.c:9307
+#: src/effects-weed.c:277 src/multitrack.c:9307
 msgid "audio only"
 msgstr "áudio apenas"
 
-#: src/effects-weed.c:272
+#: src/effects-weed.c:278
 msgid "Audio only Transitions"
 msgstr "Transições apenas de Áudio"
 
-#: src/effects-weed.c:274 src/effects-weed.c:277 src/multitrack.c:16601
+#: src/effects-weed.c:280 src/effects-weed.c:283 src/multitrack.c:16601
 msgid "audio"
 msgstr "áudio"
 
-#: src/effects-weed.c:275
+#: src/effects-weed.c:281
 msgid "Audio Mixers"
 msgstr "Mixers de Áudio"
 
-#: src/effects-weed.c:278
+#: src/effects-weed.c:284
 msgid "Audio Effects"
 msgstr "Efeitos de Áudio"
 
-#: src/effects-weed.c:280
+#: src/effects-weed.c:286
 msgid "audio volume controller"
 msgstr "controle do volume de áudio"
 
-#: src/effects-weed.c:281
+#: src/effects-weed.c:287
 msgid "Audio Volume Controllers"
 msgstr "Controles do Volume de Áudio"
 
-#: src/effects-weed.c:285 src/plugins.c:2032
+#: src/effects-weed.c:291 src/plugins.c:2032
 msgid "unknown"
 msgstr "desconhecido"
 
-#: src/effects-weed.c:2752
+#: src/effects-weed.c:2850
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Erro: plugin %s não tem a função weed_setup().\n"
 
-#: src/effects-weed.c:2838
+#: src/effects-weed.c:2936
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5213,27 +5213,27 @@ msgstr ""
 "Info: Impossível carregar plugin %s\n"
 "Erro: %s\n"
 
-#: src/effects-weed.c:2992
+#: src/effects-weed.c:3090
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:3709
+#: src/effects-weed.c:3807
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Falha ao iniciar instância %s, erro %d\n"
 
-#: src/effects-weed.c:3747
+#: src/effects-weed.c:3845
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Impossível iniciar gerador %s\n"
 
-#: src/effects-weed.c:4262
+#: src/effects-weed.c:4360
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Falha ao iniciar gerador %s\n"
 
-#: src/effects-weed.c:4319
+#: src/effects-weed.c:4417
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Falha ao iniciar gerador %s, erro %d\n"

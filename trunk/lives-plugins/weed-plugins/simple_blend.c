@@ -1,6 +1,6 @@
 // simple_blend.c
 // weed plugin
-// (c) G. Finch (salsaman) 2005
+// (c) G. Finch (salsaman) 2005 - 2011
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -147,6 +147,20 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
   blend_factor=(unsigned char)bf;
   blendneg=blend_factor^0xFF;
   
+
+  // new threading arch
+  if (weed_plant_has_leaf(out_channel,"offset")) {
+    int offset=weed_get_int_value(out_channel,"offset",&error);
+    int dheight=weed_get_int_value(out_channel,"height",&error);
+
+    src1+=offset*irowstride1;
+    end=src1+dheight*irowstride1;
+
+    src2+=offset*irowstride2;
+
+    dst+=offset*orowstride;
+  }
+
   for (;src1<end;src1+=irowstride1) {
     for (j=0;j<width;j+=3) {
       switch (type) {
@@ -212,20 +226,20 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *in_params1[]={weed_integer_init("amount","Blend _amount",128,0,255),NULL};
     weed_plant_t *in_params2[]={weed_integer_init("threshold","luma _threshold",64,0,255),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("chroma blend","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,&common_init,&chroma_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("chroma blend","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&chroma_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
 
     weed_set_boolean_value(in_params1[0],"transition",WEED_TRUE);
     weed_set_boolean_value(in_params2[0],"transition",WEED_TRUE);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("luma overlay","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,&common_init,&lumo_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),in_params2,NULL);
+    filter_class=weed_filter_class_init("luma overlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&lumo_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),in_params2,NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("luma underlay","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,&common_init,&lumu_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params2),NULL);
+    filter_class=weed_filter_class_init("luma underlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&lumu_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params2),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("negative luma overlay","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,&common_init,&nlumo_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params2),NULL);
+    filter_class=weed_filter_class_init("negative luma overlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&nlumo_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params2),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);

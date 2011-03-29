@@ -64,6 +64,14 @@
 
 #include <getopt.h>
 
+
+#ifdef IS_DARWIN
+#include <mach/mach.h>
+#include <mach/processor_info.h>
+#include <mach/mach_host.h>
+#endif
+
+
 ////////////////////////////////
 capability *capable;
 _palette *palette;
@@ -157,7 +165,7 @@ void get_monitors(void) {
 
   dlist=dislist=gdk_display_manager_list_displays(gdk_display_manager_get());
 
-  mainw->nmonitors=0;
+  capable->nmonitors=0;
 
   // for each display get list of screens
 
@@ -168,15 +176,15 @@ void get_monitors(void) {
     nscreens=gdk_display_get_n_screens(disp);
     for (i=0;i<nscreens;i++) {
       screen=gdk_display_get_screen(disp,i);
-      mainw->nmonitors+=gdk_screen_get_n_monitors(screen);
+      capable->nmonitors+=gdk_screen_get_n_monitors(screen);
     }
     dlist=dlist->next;
   }
 
-  if (prefs->force_single_monitor) mainw->nmonitors=1; // force for clone mode
+  if (prefs->force_single_monitor) capable->nmonitors=1; // force for clone mode
 
-  if (mainw->nmonitors>1) {
-    mainw->mgeom=(lives_mgeometry_t *)g_malloc(mainw->nmonitors*sizeof(lives_mgeometry_t));
+  if (capable->nmonitors>1) {
+    mainw->mgeom=(lives_mgeometry_t *)g_malloc(capable->nmonitors*sizeof(lives_mgeometry_t));
     dlist=dislist;
 
     while (dlist!=NULL) {
@@ -370,7 +378,7 @@ static gboolean pre_init(void) {
 
   get_monitors();
 
-  if (mainw->nmonitors>1) {
+  if (capable->nmonitors>1) {
 
     get_pref("monitors",buff,256);
 
@@ -387,8 +395,8 @@ static gboolean pre_init(void) {
 
     if (prefs->gui_monitor<1) prefs->gui_monitor=1;
     if (prefs->play_monitor<0) prefs->play_monitor=0;
-    if (prefs->gui_monitor>mainw->nmonitors) prefs->gui_monitor=mainw->nmonitors;
-    if (prefs->play_monitor>mainw->nmonitors) prefs->play_monitor=mainw->nmonitors;
+    if (prefs->gui_monitor>capable->nmonitors) prefs->gui_monitor=capable->nmonitors;
+    if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
   }
 
 
@@ -918,6 +926,11 @@ static void lives_init(_ign_opts *ign_opts) {
 
     get_pref("def_autotrans",prefs->def_autotrans,256);
 
+    prefs->nfx_threads=get_int_pref("nfx_threads");
+    if (prefs->nfx_threads==0) prefs->nfx_threads=capable->ncpus;
+    future_prefs->nfx_threads=prefs->nfx_threads;
+
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -1365,7 +1378,10 @@ void do_start_messages(void) {
   g_snprintf(mainw->msg,512,_ ("\n\nWindow manager reports as \"%s\"; "),prefs->wm);
   d_print(mainw->msg);
 
-  g_snprintf(mainw->msg,512,_("number of monitors detected: %d\n"),mainw->nmonitors);
+  g_snprintf(mainw->msg,512,_("number of monitors detected: %d\n"),capable->nmonitors);
+  d_print(mainw->msg);
+
+  g_snprintf(mainw->msg,512,_("Number of CPUs detected: %d\n"),capable->ncpus);
   d_print(mainw->msg);
 
   g_snprintf(mainw->msg,512,_ ("Temp directory is %s\n"),prefs->tmpdir);
@@ -1505,11 +1521,19 @@ capability *get_capabilities (void) {
   gchar **array;
   
   gchar buffer[8192];
-  FILE *bootfile;
+  FILE *bootfile,*tfile;
   gchar string[256];
   int err;
   gint numtok;
   gchar *tmp;
+  size_t len;
+
+#ifdef IS_DARWIN
+  processor_info_array_t processorInfo;
+  mach_msg_type_number_t numProcessorInfo;
+  natural_t numProcessors = 0U;
+  kern_return_t err;
+#endif
 
   capable=(capability *)g_malloc(sizeof(capability));
 
@@ -1673,6 +1697,23 @@ capability *get_capabilities (void) {
       capable->has_midistartstop=TRUE;
     }
   }
+
+  capable->ncpus=0;
+
+#ifdef IS_DARWIN  
+  err = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numProcessors, &processorInfo, &numProcessorInfo);
+  capable->ncpus=(gint)numProcessors;
+#else
+
+  tfile=popen("cat /proc/cpuinfo 2>/dev/null | grep processor 2>/dev/null | wc -l 2>/dev/null","r");
+  len=fread((void *)buffer,1,1024,tfile);
+  pclose(tfile);
+
+  memset(buffer+len,0,1);
+  capable->ncpus=atoi(buffer);
+#endif
+
+  if (capable->ncpus==0) capable->ncpus=1;
 
   return capable;
 }

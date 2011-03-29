@@ -94,6 +94,18 @@ int alien_over_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   old_pixel_data=sdata->old_pixel_data;
+
+  // new threading arch
+  /*  if (weed_plant_has_leaf(out_channel,"offset")) {
+    int offset=weed_get_int_value(out_channel,"offset",&error);
+    int dheight=weed_get_int_value(out_channel,"height",&error);
+
+    src+=offset*irowstride;
+    dst+=offset*orowstride;
+    end=src+dheight*irowstride;
+    old_pixel_data+=width*offset;
+    }*/
+
   for (;src<end;src+=irowstride) {
     for (j=0;j<width;j++) {
       if (sdata->inited) {
@@ -126,7 +138,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
     
-    weed_plant_t *filter_class=weed_filter_class_init("alien overlay","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,&alien_over_init,&alien_over_process,&alien_over_deinit,in_chantmpls,out_chantmpls,NULL,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("alien overlay","salsaman",1,0,&alien_over_init,&alien_over_process,&alien_over_deinit,in_chantmpls,out_chantmpls,NULL,NULL);
     
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     

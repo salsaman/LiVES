@@ -56,6 +56,16 @@ int ccorect_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   unsigned int r,g,b;
 
+  // new threading arch
+  if (weed_plant_has_leaf(out_channel,"offset")) {
+    int offset=weed_get_int_value(out_channel,"offset",&error);
+    int dheight=weed_get_int_value(out_channel,"height",&error);
+
+    src+=offset*irowstride;
+    dst+=offset*orowstride;
+    end=src+dheight*irowstride;
+  }
+
   for (;src<end;src+=irowstride) {
     for (i=0;i<width;i+=3) {
       if (palette==WEED_PALETTE_BGR24) {
@@ -93,7 +103,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_params[]={weed_float_init("red","_Red factor",1.0,0.0,2.0),weed_float_init("green","_Green factor",1.0,0.0,2.0),weed_float_init("blue","_Blue factor",1.0,0.0,2.0),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("colour correction","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,NULL,&ccorect_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("colour correction","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&ccorect_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

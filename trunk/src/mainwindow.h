@@ -876,7 +876,6 @@ typedef struct {
   _vid_playback_plugin *vpp;
 
   /// multi-head support
-  gint nmonitors;
   lives_mgeometry_t *mgeom;
 
 

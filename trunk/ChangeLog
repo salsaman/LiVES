@@ -1,3 +1,16 @@
+Version 1.4.3
+-------------
+Add support for spacial multithreading in effects plugins.
+Fix antialias option in Preferences (regression). *
+
+
+
+
+
+
+
+
+
 Version 1.4.2 (26 Mar 2011)
 --------------------------
 Restore missing rte plugins which were omitted from the last release. *

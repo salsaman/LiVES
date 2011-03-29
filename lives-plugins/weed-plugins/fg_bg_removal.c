@@ -202,6 +202,16 @@ int common_process (int type, weed_plant_t *inst, weed_timecode_t timestamp) {
   int inplace=(src==dest);
   register int j;
 
+  // new threading arch
+  if (weed_plant_has_leaf(out_channel,"offset")) {
+    int offset=weed_get_int_value(out_channel,"offset",&error);
+    int dheight=weed_get_int_value(out_channel,"height",&error);
+
+    src+=offset*irowstride;
+    dest+=offset*orowstride;
+    end=src+dheight*irowstride;
+  }
+
   in_param=weed_get_plantptr_value(inst,"in_parameters",&error);
   bf=weed_get_int_value(in_param,"value",&error);
   luma_threshold=(uint8_t)bf;
@@ -270,16 +280,16 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
     
     weed_plant_t *in_params[]={weed_integer_init("threshold","_Threshold",64,0,255),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("fg_bg_removal type 1","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,&common_init,&t1_process,&common_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("fg_bg_removal type 1","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&t1_process,&common_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
     
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     // we must clone the arrays for the next filter
-    filter_class=weed_filter_class_init("fg_bg_removal type 2","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,&common_init,&t2_process,&common_deinit,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
+    filter_class=weed_filter_class_init("fg_bg_removal type 2","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&t2_process,&common_deinit,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     // we must clone the arrays for the next filter
-    filter_class=weed_filter_class_init("fg_bg_removal type 3","salsaman",1,WEED_FILTER_HINT_IS_POINT_EFFECT,&common_init,&t3_process,&common_deinit,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
+    filter_class=weed_filter_class_init("fg_bg_removal type 3","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&t3_process,&common_deinit,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     
     weed_set_int_value(plugin_info,"version",package_version);

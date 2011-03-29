@@ -60,6 +60,8 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 
   int sy;
 
+  int offset=0,dheight=height;
+
   register int x,y;
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
@@ -78,7 +80,14 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   offsx*=width;
   offsy*=height;
 
-  for (y=0;y<height;y++) {
+  // new threading arch
+  if (weed_plant_has_leaf(out_channel,"offset")) {
+    offset=weed_get_int_value(out_channel,"offset",&error);
+    dheight=weed_get_int_value(out_channel,"height",&error);
+    dst+=offset*orowstride;
+  }
+
+  for (y=offset;y<dheight;y++) {
     dy=(int)((double)y-offsy)/scale+offsy;
     sy=dy*irowstride;
     dr=y*orowstride;
@@ -103,7 +112,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_params[]={weed_float_init("scale","_Scale",1.,1.,16.),weed_float_init("xoffs","_X offset",0.5,0.,1.),weed_float_init("yoffs","_Y offset",0.5,0.,1.),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("targeted zoom","salsaman",1,0,NULL,&tzoom_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("targeted zoom","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&tzoom_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
 
     weed_plant_t *gui=weed_filter_class_get_gui(filter_class);
 

@@ -304,7 +304,9 @@ apply_prefs(gboolean skip_warn) {
 
   gdouble default_fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_def_fps));
   gboolean pause_xmms=FALSE;
-  gboolean antialias=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->stop_screensaver_check));
+  gboolean antialias=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_antialias));
+  gboolean fx_threads=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_threads));
+  gint nfx_threads=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
   gboolean stop_screensaver=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->stop_screensaver_check));
   gboolean open_maximised=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->open_maximised_check));
   gboolean fs_maximised=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->fs_max_check));
@@ -549,6 +551,13 @@ apply_prefs(gboolean skip_warn) {
     set_boolean_pref("antialias",antialias);
   }
 
+  // fx_threads
+  if (!fx_threads) nfx_threads=1;
+  if (prefs->nfx_threads!=nfx_threads) {
+    future_prefs->nfx_threads=nfx_threads;
+    set_int_pref("nfx_threads",nfx_threads);
+  }
+
   // open maximised
   if (prefs->open_maximised!=open_maximised) {
     prefs->open_maximised=open_maximised;
@@ -570,7 +579,7 @@ apply_prefs(gboolean skip_warn) {
     get_monitors();
   }
 
-  if (mainw->nmonitors>1) {
+  if (capable->nmonitors>1) {
     if (gui_monitor!=prefs->gui_monitor||play_monitor!=prefs->play_monitor) {
       gchar *str=g_strdup_printf("%d,%d",gui_monitor,play_monitor);
       set_pref("monitors",str);
@@ -596,7 +605,7 @@ apply_prefs(gboolean skip_warn) {
 	}
 	
 	
-	if ((prefs->gui_monitor!=0||mainw->nmonitors<=1)&&prefs->open_maximised) {
+	if ((prefs->gui_monitor!=0||capable->nmonitors<=1)&&prefs->open_maximised) {
 	  gtk_window_maximize (GTK_WINDOW(mainw->multitrack->window));
 	}
       }
@@ -1489,6 +1498,12 @@ static void apply_button_set_enabled(GtkWidget *widget, gpointer func_data)
    gtk_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), FALSE);
 }
 
+// toggle sets other widget sensitive/insensitive
+static void toggle_set_sensitive(GtkWidget *widget, gpointer func_data)
+{
+  gtk_widget_set_sensitive(GTK_WIDGET(func_data), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+}
+
 void populate_combo_box(GtkComboBox *combo, GList *data)
 {
   gchar			*text;
@@ -1691,7 +1706,7 @@ _prefsw *create_prefs_dialog (void) {
 
   int i;
 
-  gint nmonitors = mainw->nmonitors; ///< number of screen monitors
+  gint nmonitors = capable->nmonitors; ///< number of screen monitors
   gboolean pfsm;
 
   gchar *theme;
@@ -1990,12 +2005,12 @@ _prefsw *create_prefs_dialog (void) {
   get_monitors();
   prefs->force_single_monitor=pfsm;
 
-  if (mainw->nmonitors!=nmonitors) {
+  if (capable->nmonitors!=nmonitors) {
 
     prefs->gui_monitor=0;
     prefs->play_monitor=0;
 
-    if (mainw->nmonitors>1) {
+    if (capable->nmonitors>1) {
       gchar buff[256];
       get_pref("monitors",buff,256);
       
@@ -2012,8 +2027,8 @@ _prefsw *create_prefs_dialog (void) {
       
       if (prefs->gui_monitor<1) prefs->gui_monitor=1;
       if (prefs->play_monitor<0) prefs->play_monitor=0;
-      if (prefs->gui_monitor>mainw->nmonitors) prefs->gui_monitor=mainw->nmonitors;
-      if (prefs->play_monitor>mainw->nmonitors) prefs->play_monitor=mainw->nmonitors;
+      if (prefs->gui_monitor>capable->nmonitors) prefs->gui_monitor=capable->nmonitors;
+      if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
     }
   }
   // ---
@@ -2035,7 +2050,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox6);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox6, TRUE, TRUE, 20);
   // ---
-  spinbutton_adj = gtk_adjustment_new (prefs->gui_monitor, 1, mainw->nmonitors, 1, 1, 0);
+  spinbutton_adj = gtk_adjustment_new (prefs->gui_monitor, 1, capable->nmonitors, 1, 1, 0);
   prefsw->spinbutton_gmoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   label = gtk_label_new (_ (" monitor number for LiVES interface"));
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->spinbutton_gmoni);
@@ -2050,7 +2065,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox6), hbox, FALSE, TRUE, 0);
   // ---
-  spinbutton_adj = gtk_adjustment_new (prefs->play_monitor, 0, mainw->nmonitors==1?0:mainw->nmonitors, 1, 1, 0);
+  spinbutton_adj = gtk_adjustment_new (prefs->play_monitor, 0, capable->nmonitors==1?0:capable->nmonitors, 1, 1, 0);
   prefsw->spinbutton_pmoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   label = gtk_label_new (_ (" monitor number for playback"));
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->spinbutton_pmoni);
@@ -2096,7 +2111,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_tooltips_set_tip (mainw->tooltips, prefsw->forcesmon, (_("Force single monitor mode")), NULL);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->forcesmon), prefs->force_single_monitor);
   // ---
-  if (mainw->nmonitors<=1) {
+  if (capable->nmonitors<=1) {
     gtk_widget_set_sensitive(prefsw->spinbutton_gmoni,FALSE);
     gtk_widget_set_sensitive(prefsw->spinbutton_pmoni,FALSE);
   }
@@ -3357,6 +3372,50 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_rte_keys, FALSE, TRUE, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_rte_keys);
   gtk_tooltips_set_tip (mainw->tooltips, prefsw->spinbutton_rte_keys, _("The number of \"virtual\" real time effect keys. They can be controlled through the real time effects window, or via network (OSC)."), NULL);
+
+
+
+  prefsw->checkbutton_threads = gtk_check_button_new();
+  eventbox = gtk_event_box_new();
+  label = gtk_label_new_with_mnemonic(_("Use _threads where possible when applying effects"));
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_threads);
+  gtk_container_add(GTK_CONTAINER(eventbox), label);
+  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_threads);
+  if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_threads, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  gtk_widget_show_all(hbox);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, 10);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_threads), future_prefs->nfx_threads>1);
+  //
+  hbox = gtk_hbox_new (FALSE,0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, TRUE, TRUE, 0);
+
+
+  label = gtk_label_new_with_mnemonic (_("Number of _threads"));
+  if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+  gtk_widget_show (label);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+
+  spinbutton_adj = gtk_adjustment_new (future_prefs->nfx_threads, 2., 65536, 1, 1, 0);
+  
+  prefsw->spinbutton_nfx_threads = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
+  gtk_widget_show (prefsw->spinbutton_nfx_threads);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_nfx_threads, FALSE, TRUE, 0);
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_nfx_threads);
+
+
+  if (future_prefs->nfx_threads==1) gtk_widget_set_sensitive(prefsw->spinbutton_nfx_threads,FALSE);
+
 
   icon = g_strdup_printf("%s%s/pref_effects.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_effects = gdk_pixbuf_new_from_file(icon, NULL);
@@ -5052,10 +5111,15 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->raudio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rec_gb), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->encoder_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-    g_signal_connect(GTK_OBJECT(prefsw->ofmt_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-    g_signal_connect(GTK_OBJECT(prefsw->acodec_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->ofmt_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->acodec_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_antialias), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rte_keys), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rte_keys), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+		   NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_threads), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_threads), "toggled", GTK_SIGNAL_FUNC(toggle_set_sensitive), 
+		   (gpointer)prefsw->spinbutton_nfx_threads);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_nfx_threads), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->vid_load_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->vid_save_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->audio_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);

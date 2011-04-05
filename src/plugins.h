@@ -117,8 +117,7 @@ typedef struct {
   gchar name[51];
   guint32 audio_codec;
   // must match with the "acodec" GList in interface.c
-
-  // TODO ** - fixme (change to bitmap, add raw pcm)
+  // and bitmaps in the encder plugins
 
 #define AUDIO_CODEC_MP3 0
 #define AUDIO_CODEC_PCM 1
@@ -127,6 +126,7 @@ typedef struct {
 #define AUDIO_CODEC_AC3 4
 #define AUDIO_CODEC_AAC 5
 #define AUDIO_CODEC_AMR_NB 6
+#define AUDIO_CODEC_RAW 7
 
 #define AUDIO_CODEC_MAX 31
   //

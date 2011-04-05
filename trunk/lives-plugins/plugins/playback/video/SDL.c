@@ -98,7 +98,7 @@ fsover|Over-ride fullscreen setting (for debugging)|bool|0|0 \\n\
 }
 
 
-int *get_palette_list(void) {
+const int *get_palette_list(void) {
   // return palettes in order of preference, ending with WEED_PALETTE_END
   palette_list[0]=WEED_PALETTE_UYVY8888;
   palette_list[1]=WEED_PALETTE_YUYV8888;
@@ -126,7 +126,7 @@ boolean set_palette (int palette) {
 }
 
 
-int *get_yuv_palette_clamping(int palette) {
+const int *get_yuv_palette_clamping(int palette) {
   if (palette==WEED_PALETTE_RGB24) clampings[0]=-1;
   else {
     clampings[0]=WEED_YUV_CLAMPING_CLAMPED;

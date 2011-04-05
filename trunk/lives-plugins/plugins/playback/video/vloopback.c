@@ -202,7 +202,7 @@ vdevname|Video _device|string_list|0|",
 }
 
 
-int *get_palette_list(void) {
+const int *get_palette_list(void) {
   palette_list[0]=WEED_PALETTE_UYVY;
   palette_list[1]=WEED_PALETTE_RGB24;
   palette_list[2]=WEED_PALETTE_END;
@@ -222,7 +222,7 @@ boolean set_palette (int palette) {
   return FALSE;
 }
 
-int *get_yuv_palette_clamping(int palette) {
+const int *get_yuv_palette_clamping(int palette) {
   if (palette==WEED_PALETTE_RGB24) clampings[0]=-1;
   else {
     clampings[0]=WEED_YUV_CLAMPING_CLAMPED;

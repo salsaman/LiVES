@@ -1,5 +1,5 @@
 // LiVES - LiVES stream engine
-// (c) G. Finch 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2008 - 2011 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -174,14 +174,14 @@ const char *get_description (void) {
   return "The LiVES 2 LiVES stream plugin allows streaming to another copy of LiVES.\n";
 }
 
-int *get_palette_list(void) {
+const int *get_palette_list(void) {
   palette_list[0]=WEED_PALETTE_YUV420P;
   palette_list[1]=WEED_PALETTE_RGB24;
   palette_list[2]=WEED_PALETTE_END;
   return palette_list;
 }
 
-int *get_yuv_palette_clamping(int palette) {
+const int *get_yuv_palette_clamping(int palette) {
   if (palette==WEED_PALETTE_YUV420P) {
     clampings[0]=WEED_YUV_CLAMPING_UNCLAMPED;
     clampings[1]=WEED_YUV_CLAMPING_CLAMPED;

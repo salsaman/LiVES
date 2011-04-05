@@ -37,7 +37,7 @@ const char *get_description (void);  ///< optional
 const char *get_rfx (void);  ///< optional
 
 /// plugin send list of palettes, in order of preference
-int *get_palette_list(void);
+const int *get_palette_list(void);
 
 /// host sets the palette used
 boolean set_palette (int palette);
@@ -91,13 +91,13 @@ boolean send_keycodes (keyfunc);
 // optional functions for yuv palettes
 
 /// plugin send list of palette sampling types, in order of preference (optional); -1 terminates list
-int *get_yuv_palette_sampling (int palette);
+const int *get_yuv_palette_sampling (int palette);
 
 /// plugin send list of palette clamping types, in order of preference (optional); -1 terminates list
-int *get_yuv_palette_clamping (int palette);
+const int *get_yuv_palette_clamping (int palette);
 
 /// plugin send list of palette subspace types, in order of preference (optional); -1 terminates list
-int *get_yuv_palette_subspace (int palette);
+const int *get_yuv_palette_subspace (int palette);
 
 /// host sets the palette sampling (optional)
 boolean set_yuv_palette_sampling (int sampling_type);
@@ -107,6 +107,13 @@ boolean set_yuv_palette_clamping (int clamping_type);
 
 /// host sets the palette subspace (optional)
 boolean set_yuv_palette_subspace (int subspace_type);
+
+// optional - supported audio streams :: defined in lives/src/plugins.h
+const int *get_audio_fmts();
+
+// ...may be expanded in the future to specify rates, #channels, sample size
+// signed/endian [get_raw_audio_fmts ?] 
+
 
 #ifdef __cplusplus
 }

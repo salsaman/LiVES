@@ -193,7 +193,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   int dummyvar;
   const char *outfile;
   char cmd[8192];
-  int audio=0;
+  int audio=0,afd;
 
   if (mypalette==WEED_PALETTE_END) {
     fprintf(stderr,"oggstream plugin error: No palette was set !\n");
@@ -226,10 +226,17 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   snprintf(cmd,8192,"ffmpeg2theora -f yuv4m -o %s/video.ogv %s/stream.fifo 2>/dev/null&",tmpdir,tmpdir);
   dummyvar=system(cmd);
 
+  make_path("audio.stream");
+  afd=open(xfile,O_RDONLY);
+  if (afd!=-1) {
+    audio=1;
+    close(afd);
+  }
+
   if (audio) {
     snprintf(cmd,8192,"oggTranscode %s/video.ogv %s/video2.ogv 2>/dev/null&",tmpdir,tmpdir); 
     dummyvar=system(cmd);
-    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2.ogv %s/audio.ogg 2>/dev/null&",outfile,tmpdir,tmpdir);
+    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2.ogv %s/audio.stream 2>/dev/null&",outfile,tmpdir,tmpdir);
     dummyvar=system(cmd);
   }
   else {

@@ -31,6 +31,7 @@ endif
 
 if HAVE_MJPEGTOOLS
 YUV4MPEG_libs = yuv4mpeg_stream.la
+oggstream_libs = oggstream.la
 endif
 
 if ENABLE_VJACK
@@ -45,6 +46,9 @@ lives2lives_stream_la_LDFLAGS = $(shared_ldflags)
 yuv4mpeg_stream_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags) $(weed_cflags)
 yuv4mpeg_stream_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 
+oggstream_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags) $(weed_cflags)
+oggstream_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
+
 SDL_la_CFLAGS = $(shared_cflags) $(CFLAGS_SDL) $(weed_cflags)
 SDL_la_LDFLAGS = $(shared_ldflags) $(LDFLAGS_SDL)
 
@@ -54,6 +58,6 @@ vloopback_la_CFLAGS = $(shared_cflags) $(weed_cflags)
 vloopback_la_LDFLAGS = $(shared_ldflags)
 endif
 
-videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(vjack_output_libs) lives2lives_stream.la $(vloopback_libs)
+videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(vjack_output_libs) lives2lives_stream.la $(vloopback_libs)
 
 EXTRA_DIST = videoplugin.h

@@ -3705,7 +3705,16 @@ void resize_play_window (void) {
 	  xwinid=mainw->xwin;
 	}
 
-	if (mainw->ext_playback&&mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+	if (mainw->ext_playback) {
+	  stop_audio_stream();
+	  if (mainw->vpp->exit_screen!=NULL) {
+	    (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+	  }
+	}
+
+	if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE) {
+	  start_audio_stream();
+	}
 
 	if ((mainw->vpp->init_screen==NULL)||((*mainw->vpp->init_screen)(mainw->pwidth,mainw->pheight*(fixed_size?1:prefs->virt_height),fullscreen,xwinid,mainw->vpp->extra_argc,mainw->vpp->extra_argv))) {
 	  mainw->ext_playback=TRUE;

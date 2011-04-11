@@ -4,6 +4,9 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include "main.h"
 #include "audio.h"
 #include "events.h"
@@ -2023,4 +2026,80 @@ void audio_cache_end (void) {
 
 lives_audio_buf_t *audio_cache_get_buffer(void) {
   return cache_buffer;
+}
+
+
+
+////////////////////////////////////////
+// audio streaming
+
+static int astream_pid=0;
+
+gboolean start_audio_stream(void) {
+  gchar *astream_name=NULL;
+
+  // playback plugin wants an audio stream - so fork and run the stream
+  // player
+  //astream_name=g_strdup_printf("/tmp/audiostream.%d",getpid());
+  astream_name=g_build_filename(prefs->tmpdir,"livesaudio.stream",NULL);
+  mkfifo(astream_name,S_IRUSR|S_IWUSR);
+
+  astream_pid=fork();
+
+  if (!astream_pid) {
+    // mkfifo and play until killed
+    gchar *playername=g_strdup_printf("%sstreamer.pl",prefs->aplayer);
+    gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+    gchar *ascom;
+    gint arate=44100;
+    
+    g_free(playername);
+    
+    if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+      arate=mainw->pulsed->out_arate;
+      // TODO - chans, samps, signed, endian
+      
+#endif
+    }
+    
+    ascom=g_strdup_printf("%s play %d %s %d",astreamer,mainw->vpp->audio_codec,astream_name,arate);
+    
+    g_free(astream_name);
+    g_free(astreamer);
+
+    setsid(); // create new session id
+    
+    // block here until killed
+    dummyvar=system(ascom);
+    _exit(0);                    
+  }
+  return TRUE;
+}
+
+
+
+void stop_audio_stream(void) {
+  if (astream_pid>0) {
+    // if we were streaming audio, kill it
+    gchar *playername=g_strdup_printf("%sstreamer.pl",prefs->aplayer);
+    gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+    gchar *ascom=g_strdup_printf("%s cleanup %d",astreamer,mainw->vpp->audio_codec);
+    //astream_name=g_strdup_printf("/tmp/audiostream.%d",getpid());
+    gchar *astream_name=g_build_filename(prefs->tmpdir,"livesaudio.stream",NULL);
+
+    pid_t pgid=getpgid(astream_pid);
+
+    g_free(astreamer);
+    g_free(playername);
+
+    kill(-pgid,9);
+    unlink(astream_name);
+    g_free(astream_name);
+
+    dummyvar=system(ascom);
+    g_free(ascom);
+  }
+
+
 }

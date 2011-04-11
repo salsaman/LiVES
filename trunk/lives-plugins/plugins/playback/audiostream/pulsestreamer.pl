@@ -5,29 +5,37 @@
 
 # (C) G. Finch 2011 - released under GPL v3 or higher
 
-# first get the name of the audio device
-
 
 if (!defined($ARGV[0])) {exit 1;}
 
 my $command=$ARGV[0];
 
 
+if ($command eq "get_formats") {
+    # list of formats separated by |
+    # see lives/src/plugins.h for values
+    print "3"; # vorbis
+    exit 0;
+}
+
 
 if ($command eq "play") {
     my $result;
     
-    my $outfifo=$ARGV[1];
-    my $oformat=$ARGV[2];
+    my $format=$ARGV[1];
+    my $outfifo=$ARGV[2];
+    my $arate=$ARGV[3];
 
-    my $arate=44100;
+    if ($format!=3) {
+	exit 2; # unsupported format
+    }
 
-    system("pactl -l | grep \"Monitor Source:\" > /tmp/livesquery");
+    system("pactl list | grep \"Monitor Source:\" > /tmp/livesquery");
     if (defined(open IN,"</tmp/livesquery")) {
 	read IN,$result,256;
     }
     else {
-	exit 2;
+	exit 3; # general error
     }
     
     close IN;
@@ -36,16 +44,20 @@ if ($command eq "play") {
     my $device=(split(/: /,$result))[1];
     chomp($device);
 
-
 # audio formats taken from lives/src/plugins.h
     if ($format==3) {
 	#vorbis
 
-	$com="pacat -r -d $device | sox -t raw -r $arate -s -L -b 16 -c 2 - -t vorbis $outfifo";
-
-	system("mkfifo $outfifo");
+	$com="pacat --latency-msec=10 --process-time-msec=10 -r -d $device | sox -t raw -r $arate -s -L -b 16 -c 2 - -t vorbis $outfifo";
 	system($com);
 
     }
 }
 
+
+if ($command eq "cleanup") {
+    # do any cleanup
+    unlink("/tmp/livesquery");
+
+
+}

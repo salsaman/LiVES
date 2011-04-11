@@ -399,7 +399,6 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   dummyvar=read(fd,&(mainw->vpp->YUV_subspace),sizint);
   dummyvar=read(fd,&(mainw->vpp->fwidth),sizint);
   dummyvar=read(fd,&(mainw->vpp->fheight),sizint);
-  //mainw->vpp->fwidth=mainw->vpp->fheight=-1;
   dummyvar=read(fd,&(mainw->vpp->fixed_fpsd),sizdbl);
   dummyvar=read(fd,&(mainw->vpp->fixed_fps_numer),sizint);
   dummyvar=read(fd,&(mainw->vpp->fixed_fps_denom),sizint);
@@ -530,6 +529,9 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	      if (mainw->vpp->exit_screen!=NULL) {
 		(*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	      }
+
+	      stop_audio_stream();
+
 	      mainw->stream_ticks=-1;
 	      mainw->vpp->palette=pal_list[i];
 	      if (!(*vpp->set_palette)(vpp->palette)) {
@@ -538,6 +540,10 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	      }
 
 	      if (vpp->set_yuv_palette_clamping!=NULL) (*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
+
+	      if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE) {
+		start_audio_stream();
+	      }
 
 	      if (vpp->init_screen!=NULL) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,0,vpp->extra_argc,vpp->extra_argv);
@@ -987,6 +993,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
   if (vpp!=NULL) {
     if (vpp==mainw->vpp) {
       if (mainw->ext_playback&&mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+      stop_audio_stream();
       mainw->stream_ticks=-1;
       mainw->vpp=NULL;
     }
@@ -1086,10 +1093,10 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   vpp->get_yuv_palette_clamping=dlsym (handle,"get_yuv_palette_clamping");
   vpp->set_yuv_palette_clamping=dlsym (handle,"set_yuv_palette_clamping");
   vpp->send_keycodes=dlsym (handle,"send_keycodes");
+  vpp->get_audio_fmts=dlsym (handle,"get_audio_fmts");
   vpp->init_screen=dlsym (handle,"init_screen");
   vpp->exit_screen=dlsym (handle,"exit_screen");
   vpp->module_unload=dlsym (handle,"module_unload");
-
 
   vpp->YUV_sampling=0;
   vpp->YUV_subspace=0;
@@ -1111,6 +1118,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
     }
   }
 
+  vpp->audio_codec=AUDIO_CODEC_NONE;
   vpp->capabilities=(*vpp->get_capabilities)(vpp->palette);
 
   if (vpp->capabilities&VPP_CAN_RESIZE) {
@@ -1194,6 +1202,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
     }
   }
 
+  if (vpp->get_audio_fmts!=NULL&&mainw->is_ready) vpp->audio_codec=get_best_audio(vpp);
+
   if (!using) return vpp;
 
   if (!mainw->is_ready) {
@@ -1255,6 +1265,7 @@ void vid_playback_plugin_exit (void) {
   // external plugin
   if (mainw->ext_playback) {
     if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+    stop_audio_stream();
     mainw->ext_playback=FALSE;
   }
   mainw->stream_ticks=-1;
@@ -1263,6 +1274,62 @@ void vid_playback_plugin_exit (void) {
   if (mainw->playing_file>-1&&mainw->fs&&mainw->sep_win) gtk_window_fullscreen(GTK_WINDOW(mainw->play_window));
   gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
 }
+
+
+gint64 get_best_audio(_vid_playback_plugin *vpp) {
+  // find best audio from video plugin list, matching with audiostream plugins
+  int *fmts,*sfmts;
+  int ret=AUDIO_CODEC_NONE;
+  int i,j=0,nfmts;
+  size_t rlen;
+  gchar *astreamer,*com,*playername;
+  gchar buf[1024];
+  gchar **array;
+  FILE *rfile;
+
+  if (vpp!=NULL&&vpp->get_audio_fmts!=NULL) {
+    fmts=(*vpp->get_audio_fmts)();
+
+    // make audiostream plugin name
+    playername=g_strdup_printf("%sstreamer.pl",prefs->aplayer);
+    astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+    g_free(playername);
+
+    // create sfmts array and nfmts
+
+    com=g_strdup_printf("%s get_formats",astreamer);
+    g_free(astreamer);
+
+    rfile=popen(com,"r");
+    rlen=fread(buf,1,1023,rfile);
+    pclose(rfile);
+    memset(buf+rlen,0,1);
+    g_free(com);
+
+    nfmts=get_token_count(buf,'|');
+    array=g_strsplit(buf,"|",nfmts);
+    sfmts=g_malloc(nfmts*sizint);
+
+    for (i=0;i<nfmts;i++) {
+      if (array[i]!=NULL&&strlen(array[i])>0) sfmts[j++]=atoi(array[i]);
+    }
+
+    nfmts=j;
+    g_strfreev(array);
+
+    for (i=0;fmts[i]!=-1;i++) {
+      // traverse video list and see if audiostreamer supports each one
+      if (int_array_contains_value(sfmts,nfmts,fmts[i])) {
+	ret=fmts[i];
+	break;
+      }
+    }
+    g_free(sfmts);
+  }
+
+  return ret;
+}
+
 
 ///////////////////////
 // encoder plugins

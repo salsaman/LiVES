@@ -1764,6 +1764,9 @@ gboolean switch_aud_to_jack(void) {
     gtk_widget_show(mainw->vol_label);
     gtk_widget_show (mainw->recaudio_submenu);
 
+    if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
+      mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
+
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed_read!=NULL) {
       pulse_close_client(mainw->pulsed_read);
@@ -1779,6 +1782,11 @@ gboolean switch_aud_to_jack(void) {
   }
   prefs->audio_player=AUD_PLAYER_JACK;
   set_pref("audio_player","jack");
+  g_snprintf(prefs->aplayer,512,"%s","jack");
+
+  if (mainw->is_ready&&mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
+    mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
+
   return TRUE;
 #endif
   return FALSE;
@@ -1807,6 +1815,11 @@ gboolean switch_aud_to_pulse(void) {
 
       prefs->audio_player=AUD_PLAYER_PULSE;
       set_pref("audio_player","pulse");
+      g_snprintf(prefs->aplayer,512,"%s","pulse");
+
+      if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
+	mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
+
     }
     
 #ifdef ENABLE_JACK
@@ -1833,11 +1846,15 @@ void switch_aud_to_sox(void) {
   prefs->audio_player=AUD_PLAYER_SOX;
   get_pref_default("sox_command",prefs->audio_play_command,256);
   set_pref("audio_player","sox");
+  g_snprintf(prefs->aplayer,512,"%s","sox");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
     gtk_widget_hide(mainw->vol_toolitem);
     gtk_widget_hide(mainw->vol_label);
     gtk_widget_hide (mainw->recaudio_submenu);
+    
+    if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
+      mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
   }
 
 #ifdef ENABLE_JACK
@@ -1884,11 +1901,15 @@ switch_aud_to_mplayer(void) {
   prefs->audio_player=AUD_PLAYER_MPLAYER;
   get_pref_default("mplayer_audio_command",prefs->audio_play_command,256);
   set_pref("audio_player","mplayer");
+  g_snprintf(prefs->aplayer,512,"%s","mplayer");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
     gtk_widget_hide(mainw->vol_toolitem);
     gtk_widget_hide(mainw->vol_label);
     gtk_widget_hide (mainw->recaudio_submenu);
+
+    if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
+      mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
   }
 
 #ifdef ENABLE_JACK

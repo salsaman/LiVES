@@ -202,4 +202,7 @@ lives_audio_buf_t *audio_cache_init (void);
 void audio_cache_end (void);
 lives_audio_buf_t *audio_cache_get_buffer(void);
 
+gboolean start_audio_stream(void);
+void stop_audio_stream(void);
+
 #endif

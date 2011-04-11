@@ -109,7 +109,7 @@ boolean set_yuv_palette_clamping (int clamping_type);
 boolean set_yuv_palette_subspace (int subspace_type);
 
 // optional - supported audio streams :: defined in lives/src/plugins.h
-const int *get_audio_fmts();
+const int *get_audio_fmts(void);
 
 // ...may be expanded in the future to specify rates, #channels, sample size
 // signed/endian [get_raw_audio_fmts ?] 

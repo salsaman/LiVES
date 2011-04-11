@@ -1549,7 +1549,7 @@ void play_file (void) {
   gchar *tmpfilename=NULL;
 #endif
 
-  if (audio_player!=AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
+  if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
   else mainw->aud_file_to_kill=-1;
 
 
@@ -2251,6 +2251,7 @@ void play_file (void) {
 
     return;
   }
+
 
   gtk_widget_hide(mainw->playarea);
 

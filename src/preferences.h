@@ -28,6 +28,8 @@ typedef struct {
 #define AUD_PLAYER_JACK 3
 #define AUD_PLAYER_PULSE 4
 
+  gchar aplayer[512]; // name, eg. "jack","pulse","sox","mplayer"
+
   /// frame quantisation type
   gshort q_type;
 #define Q_FILL 1

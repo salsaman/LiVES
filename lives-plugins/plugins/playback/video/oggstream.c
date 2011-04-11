@@ -120,7 +120,7 @@ uint64_t get_capabilities (int palette) {
 
 
 const int *get_audio_fmts() {
-  // this is not yet documented, but is an optional function to get a list of audio formats. If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called audio.stream, in one of the supported formats
+  // this is not yet documented, but is an optional function to get a list of audio formats. If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream, in one of the supported formats
   aforms[0]=3; // vorbis - see src/plugins.h
   aforms[1]=-1; // end
 
@@ -207,14 +207,12 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     outfile="-";
   }
 
-
   make_path("video.ogv");
   unlink(xfile);
   make_path("video2.ogv");
   unlink(xfile);
   make_path("stream.fifo");
   unlink(xfile);
-
 
   make_path("stream.fifo");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // raw yuv4m
@@ -226,21 +224,22 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   snprintf(cmd,8192,"ffmpeg2theora -f yuv4m -o %s/video.ogv %s/stream.fifo 2>/dev/null&",tmpdir,tmpdir);
   dummyvar=system(cmd);
 
-  make_path("audio.stream");
-  afd=open(xfile,O_RDONLY);
+  make_path("livesaudio.stream");
+
+  afd=open(xfile,O_RDONLY|O_NONBLOCK);
   if (afd!=-1) {
     audio=1;
     close(afd);
   }
 
   if (audio) {
-    snprintf(cmd,8192,"oggTranscode %s/video.ogv %s/video2.ogv 2>/dev/null&",tmpdir,tmpdir); 
+    snprintf(cmd,8192,"oggTranscode %s/video.ogv %s/video2.ogv &",tmpdir,tmpdir); 
     dummyvar=system(cmd);
-    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2.ogv %s/audio.stream 2>/dev/null&",outfile,tmpdir,tmpdir);
+    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2.ogv %s/livesaudio.stream &",outfile,tmpdir,tmpdir);
     dummyvar=system(cmd);
   }
   else {
-    snprintf(cmd,8192,"oggTranscode %s/video.ogv \"%s\" 2>/dev/null&",tmpdir,outfile); 
+    snprintf(cmd,8192,"oggTranscode %s/video.ogv \"%s\" &",tmpdir,outfile); 
     dummyvar=system(cmd);
   }
   // open fifo for writing
@@ -310,11 +309,20 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
     close(new_fd);
   }
 
+  // TODO - *** only kill our child processes
   dummyvar=system("killall -9 ffmpeg2theora 2>/dev/null");
   dummyvar=system("killall -9 OggTranscode 2>/dev/null");
   dummyvar=system("killall -9 OggJoin 2>/dev/null");
 
+  make_path("video.ogv");
+  unlink(xfile);
+  make_path("video2.ogv");
+  unlink(xfile);
+  make_path("stream.fifo");
+  unlink(xfile);
+
 }
+
 
 
 void module_unload(void) {

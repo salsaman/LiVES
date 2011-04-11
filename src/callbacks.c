@@ -71,6 +71,7 @@ lives_exit (void) {
       gtk_timeout_remove (mainw->kb_timer);
       if (mainw->ext_playback) {
 	if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+	stop_audio_stream();
 	mainw->stream_ticks=-1;
       }
       

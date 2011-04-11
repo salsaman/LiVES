@@ -20,7 +20,7 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
 #define PLUGIN_ENCODERS "encoders"
 #define PLUGIN_DECODERS "decoders"
 #define PLUGIN_VID_PLAYBACK "playback/video"
-
+#define PLUGIN_AUDIO_STREAM "playback/audiostream"
 
 /// smogrify handles the directory differently for themes
 #define PLUGIN_THEMES "themes"
@@ -73,6 +73,13 @@ typedef struct {
   int (*set_yuv_palette_clamping) (int palette);
   int (*set_yuv_palette_subspace) (int palette);
 
+  // audio streaming
+  int *(*get_audio_fmts)(void);
+
+  guint32 audio_codec;
+  // must match with the "acodec" GList in interface.c
+  // and bitmaps in the encder plugins, with this one addition:
+
   guint64 capabilities;
 
 #define VPP_CAN_RESIZE    1<<0
@@ -103,6 +110,7 @@ typedef struct {
 _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean using);
 void vid_playback_plugin_exit (void);
 void close_vid_playback_plugin(_vid_playback_plugin *);
+gint64 get_best_audio(_vid_playback_plugin *);
 void save_vpp_defaults(_vid_playback_plugin *, gchar *file);
 void load_vpp_defaults(_vid_playback_plugin *, gchar *file);
 
@@ -117,7 +125,7 @@ typedef struct {
   gchar name[51];
   guint32 audio_codec;
   // must match with the "acodec" GList in interface.c
-  // and bitmaps in the encder plugins
+  // and bitmaps in the encoder plugins
 
 #define AUDIO_CODEC_MP3 0
 #define AUDIO_CODEC_PCM 1

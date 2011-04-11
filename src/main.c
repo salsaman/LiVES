@@ -277,6 +277,7 @@ static gboolean pre_init(void) {
   prefs->sepwin_type=1;
   prefs->show_framecount=TRUE;
   prefs->audio_player=AUD_PLAYER_SOX;
+  g_snprintf(prefs->aplayer,512,"%s","sox");
   prefs->open_decorated=TRUE;
 
   prefs->lamp_buttons=TRUE;
@@ -343,10 +344,12 @@ static gboolean pre_init(void) {
     prefs->audio_player=AUD_PLAYER_JACK;
   if (!strcmp(buff,"pulse"))
     prefs->audio_player=AUD_PLAYER_PULSE;
-  
+  g_snprintf(prefs->aplayer,512,"%s",buff);
+
 #ifdef HAVE_PULSE_AUDIO
   if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_pulse_audio) {
     prefs->audio_player=AUD_PLAYER_PULSE;
+    g_snprintf(prefs->aplayer,512,"%s","pulse");
     set_pref("audio_player","pulse");
   }
   else {
@@ -357,6 +360,7 @@ static gboolean pre_init(void) {
 #ifdef ENABLE_JACK
     if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_jackd) {
       prefs->audio_player=AUD_PLAYER_JACK;
+      g_snprintf(prefs->aplayer,512,"%s","jack");
       set_pref("audio_player","jack");
     }
 #endif
@@ -1330,6 +1334,8 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->startup_phase=100;
     }
 
+    if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
+
     // toolbar buttons
     gtk_widget_modify_bg (mainw->tb_hbox, GTK_STATE_NORMAL, &palette->fade_colour);
     gtk_widget_modify_bg (mainw->toolbar, GTK_STATE_NORMAL, &palette->fade_colour);
@@ -2122,6 +2128,7 @@ int main (int argc, char *argv[]) {
 	  if (!strcmp(buff,"jack")) {
 #ifdef ENABLE_JACK
 	    prefs->audio_player=AUD_PLAYER_JACK;
+	    g_snprintf(prefs->aplayer,512,"%s","jack");
 	    set_pref("audio_player","jack");
 	    apl_valid=TRUE;
 #endif
@@ -2130,6 +2137,7 @@ int main (int argc, char *argv[]) {
 #ifdef HAVE_PULSE_AUDIO
 	    prefs->audio_player=AUD_PLAYER_PULSE;
 	    set_pref("audio_player","pulse");
+	    g_snprintf(prefs->aplayer,512,"%s","pulse");
 	    apl_valid=TRUE;
 #endif
 	  }

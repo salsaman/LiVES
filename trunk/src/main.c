@@ -934,6 +934,7 @@ static void lives_init(_ign_opts *ign_opts) {
     if (prefs->nfx_threads==0) prefs->nfx_threads=capable->ncpus;
     future_prefs->nfx_threads=prefs->nfx_threads;
 
+    prefs->stream_audio_out=get_boolean_pref("stream_audio_out");
 
     //////////////////////////////////////////////////////////////////
 

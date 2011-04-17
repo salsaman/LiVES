@@ -159,6 +159,8 @@ typedef struct {
 _encoder;
 
 
+extern const char *anames[AUDIO_CODEC_MAX];
+
 
 // decoder plugins
 

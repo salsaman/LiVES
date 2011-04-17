@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2010
+// (c) G. Finch 2004 - 2011
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -311,6 +311,7 @@ apply_prefs(gboolean skip_warn) {
   gboolean open_maximised=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->open_maximised_check));
   gboolean fs_maximised=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->fs_max_check));
   gboolean show_recent=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->recent_check));
+  gboolean stream_audio_out=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
 
   gboolean warn_fps=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
   gboolean warn_save_set=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
@@ -618,6 +619,11 @@ apply_prefs(gboolean skip_warn) {
   if (prefs->show_player_stats!=show_player_stats) {
     prefs->show_player_stats=show_player_stats;
     set_boolean_pref("show_player_stats",show_player_stats);
+  }
+
+  if (prefs->stream_audio_out!=stream_audio_out) {
+    prefs->stream_audio_out=stream_audio_out;
+    set_boolean_pref("stream_audio_out",stream_audio_out);
   }
 
   // show recent
@@ -1365,6 +1371,21 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
   prefsw->audp_name=g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(audp_combo)));
 
 }
+
+
+void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
+  if (vpp->audio_codec!=AUDIO_CODEC_NONE) {
+    if (prefs->stream_audio_out) {
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
+      gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,TRUE);
+    }
+  }
+  else {
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),FALSE);
+    gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,FALSE);
+  }
+}
+
 
 /*
  * Initialize preferences dialog list
@@ -2794,6 +2815,27 @@ _prefsw *create_prefs_dialog (void) {
   g_list_free (vid_playback_plugins);
 
   g_signal_connect_after (G_OBJECT (pp_combo), "changed", G_CALLBACK (after_vpp_changed), (gpointer) advbutton);
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox69), hbox, FALSE, FALSE, 0);
+
+  prefsw->checkbutton_stream_audio = gtk_check_button_new();
+  eventbox = gtk_event_box_new();
+  label = gtk_label_new_with_mnemonic(_("Stream audio"));
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_stream_audio);
+  gtk_container_add(GTK_CONTAINER(eventbox), label);
+  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_stream_audio);
+  if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_stream_audio, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_stream_audio, (_("Stream audio to playback plugin")), NULL);
+
+  prefsw_set_astream_settings(mainw->vpp);
 
   label31 = gtk_label_new (_("VIDEO"));
   if (palette->style&STYLE_1) {

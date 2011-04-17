@@ -3712,7 +3712,7 @@ void resize_play_window (void) {
 	  }
 	}
 
-	if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE) {
+	if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE&&prefs->stream_audio_out) {
 	  start_audio_stream();
 	}
 

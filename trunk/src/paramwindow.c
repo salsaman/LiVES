@@ -898,7 +898,8 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     okbutton = gtk_button_new_with_mnemonic (_("Set as default"));
     if (!has_param) gtk_widget_set_sensitive(okbutton,FALSE);
     cancelbutton = gtk_button_new_with_mnemonic (_("Close _window"));
-    gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
+    if (rfx->status==RFX_STATUS_WEED)
+      gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
     gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
     gtk_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
 				GDK_Escape, 0, 0);
@@ -906,14 +907,21 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   }
 
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_widget_grab_default (okbutton);
+
+  if (okbutton->parent!=NULL) {
+    GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    gtk_widget_grab_default (okbutton);
+  }
 
   gtk_widget_show_all (fx_dialog[n]);
 
   if (no_process&&!is_defaults) {
     if (!is_realtime) {
-      g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+      if (okbutton->parent!=NULL)
+	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+			  G_CALLBACK (on_paramwindow_cancel_clicked),
+			  rfx);
+      g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 			G_CALLBACK (on_paramwindow_cancel_clicked),
 			rfx);
       g_signal_connect (GTK_OBJECT (fx_dialog[n]), "delete_event",

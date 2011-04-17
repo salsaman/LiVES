@@ -2062,6 +2062,14 @@ gboolean start_audio_stream(void) {
       
 #endif
     }
+
+    if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+      arate=mainw->jackd->sample_out_rate;
+      // TODO - chans, samps, signed, endian
+      
+#endif
+    }
     
     ascom=g_strdup_printf("%s play %d %s %d",astreamer,mainw->vpp->audio_codec,astream_name,arate);
     

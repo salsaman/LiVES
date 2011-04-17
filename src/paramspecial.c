@@ -258,6 +258,7 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
     gtk_tooltips_copy(eventbox,checkbutton);
     label=gtk_label_new_with_mnemonic (_("Maintain _Aspect Ratio"));
 
+
     gtk_container_add(GTK_CONTAINER(eventbox),label);
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),
@@ -307,6 +308,8 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
       gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());
       gtk_box_pack_start(GTK_BOX(box),buttond,FALSE,FALSE,10);
       gtk_box_reorder_child(GTK_BOX(box),buttond,epos); // insert after label, before textbox
+
+      if (!GTK_WIDGET_IS_SENSITIVE(GTK_WIDGET(param->widgets[0]))) gtk_widget_set_sensitive(buttond,FALSE);
 
       g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)param->widgets[0]);
     }

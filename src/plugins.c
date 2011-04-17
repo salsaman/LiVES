@@ -29,6 +29,8 @@
 #include "rfx-builder.h"
 #include "paramwindow.h"
 
+const char *anames[AUDIO_CODEC_MAX]={"mp3","pcm","mp2","vorbis","AC3","AAC","AMR_NB","raw",""};
+
 static gboolean list_plugins;
 
 
@@ -541,7 +543,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 
 	      if (vpp->set_yuv_palette_clamping!=NULL) (*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
 
-	      if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE) {
+	      if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE&&prefs->stream_audio_out) {
 		start_audio_stream();
 	      }
 
@@ -1203,6 +1205,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   }
 
   if (vpp->get_audio_fmts!=NULL&&mainw->is_ready) vpp->audio_codec=get_best_audio(vpp);
+
+  if (prefsw!=NULL) prefsw_set_astream_settings(vpp);
 
   if (!using) return vpp;
 

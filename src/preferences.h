@@ -1,6 +1,6 @@
 // preferences.h
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2010
+// (c) G. Finch 2004 - 2011
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -273,6 +273,8 @@ typedef struct {
 
   gint nfx_threads;
 
+  gboolean stream_audio_out;
+
 } _prefs;
 
 enum {
@@ -445,6 +447,7 @@ typedef struct {
   GtkWidget *jack_int_label;
   GtkWidget *checkbutton_ce_maxspect;
   GtkWidget *temp_label;
+  GtkWidget *checkbutton_stream_audio;
   gboolean needs_restart;
 } _prefsw;
 
@@ -507,6 +510,8 @@ void select_pref_list_row(guint);
 
 void populate_combo_box(GtkComboBox *combo, GList *data);
 
-void set_combo_box_active_string(GtkComboBox *combo, gchar *active_str);
+void set_combo_box_active_string(GtkComboBox *, gchar *active_str);
+
+void prefsw_set_astream_settings(_vid_playback_plugin *);
 
 #endif

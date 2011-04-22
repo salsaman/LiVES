@@ -1264,6 +1264,9 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
     future_prefs->vpp_argv=NULL;
   }
   future_prefs->vpp_argc=0;
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
+
 }
 
 
@@ -1369,6 +1372,81 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
 #endif
   g_free(prefsw->audp_name);
   prefsw->audp_name=g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(audp_combo)));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
+}
+
+
+static void stream_audio_toggled(GtkToggleButton *togglebutton,
+			  gpointer  user_data) {
+  // if audio streaming is enabled, check requisites
+
+
+  if (gtk_toggle_button_get_active(togglebutton)) {
+    // init vpp, get audio codec, check requisites
+    _vid_playback_plugin *tmpvpp;
+    guint32 orig_acodec=AUDIO_CODEC_NONE;
+
+    // get current audio player
+    const gchar *audp = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->audp_combo) );
+    gchar *current_player=g_strdup(prefs->aplayer);
+
+    if (!strncmp(audp,"mplayer",7)) g_snprintf(prefs->aplayer,512,"mplayer");
+    else if (!strncmp(audp,"jack",4)) g_snprintf(prefs->aplayer,512,"jack");
+    else if (!strncmp(audp,"sox",3)) g_snprintf(prefs->aplayer,512,"sox");
+    else if (!strncmp(audp,"pulse audio",11)) g_snprintf(prefs->aplayer,512,"pulse");
+
+    if (strlen(future_prefs->vpp_name)) {
+      if ((tmpvpp=open_vid_playback_plugin (future_prefs->vpp_name, FALSE))==NULL) return;
+    }
+    else {
+      tmpvpp=mainw->vpp;
+      orig_acodec=mainw->vpp->audio_codec;
+      get_best_audio(mainw->vpp); // check again because audio player may differ
+    }
+
+    // restore current player
+    g_snprintf(prefs->aplayer,512,"%s",current_player);
+    g_free(current_player);
+
+    if (tmpvpp->audio_codec!=AUDIO_CODEC_NONE) {
+      // make audiostream plugin name
+      char buf[1024];
+      gchar *com;
+      FILE *rfile;
+      size_t rlen;
+
+      gchar *playername=g_strdup_printf("%sstreamer.pl",prefs->aplayer);
+      gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+      g_free(playername);
+      
+      com=g_strdup_printf("%s check",astreamer);
+      g_free(astreamer);
+      
+      rfile=popen(com,"r");
+      rlen=fread(buf,1,1023,rfile);
+      pclose(rfile);
+      memset(buf+rlen,0,1);
+      g_free(com);
+
+      if (rlen>0) {
+	gtk_toggle_button_set_active(togglebutton, FALSE);
+	do_error_dialog_with_check_transient 
+	  (buf,TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
+      }
+    }
+
+    if (tmpvpp!=NULL) {
+      if (tmpvpp!=mainw->vpp) {
+	// close the temp current vpp
+	close_vid_playback_plugin(tmpvpp);
+      }
+      else {
+	// restore current codec
+	mainw->vpp->audio_codec=orig_acodec;
+      }
+    }
+
+  }
 
 }
 
@@ -2836,6 +2914,9 @@ _prefsw *create_prefs_dialog (void) {
   gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_stream_audio, (_("Stream audio to playback plugin")), NULL);
 
   prefsw_set_astream_settings(mainw->vpp);
+
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", GTK_SIGNAL_FUNC(stream_audio_toggled), NULL);
+
 
   label31 = gtk_label_new (_("VIDEO"));
   if (palette->style&STYLE_1) {

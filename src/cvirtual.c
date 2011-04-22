@@ -225,6 +225,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
       if (update_progress) {
 	// sig_progress...
 	g_snprintf (mainw->msg,256,"%d",progress++);
+	while (g_main_context_iteration(NULL,FALSE));
       }
     }
     pthread_mutex_unlock(&mainw->gtk_mutex);

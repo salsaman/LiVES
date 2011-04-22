@@ -3787,6 +3787,11 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   cliplist=mainw->cliplist;
 
   while (cliplist!=NULL) {
+
+    pthread_mutex_lock(&mainw->gtk_mutex);
+    while (g_main_context_iteration(NULL,FALSE));
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+
     i=GPOINTER_TO_INT(cliplist->data);
     if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)) {
       if ((tmp=strrchr(mainw->files[i]->handle,'/'))!=NULL) {
@@ -3985,11 +3990,16 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
   while (1) {
 
+    pthread_mutex_lock(&mainw->gtk_mutex);
+    while (g_main_context_iteration(NULL,FALSE));
+
     if (mainw->cached_list!=NULL) {
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
       mainw->cached_list=NULL;
     }
+
+    pthread_mutex_unlock(&mainw->gtk_mutex);
 
     if (orderfile==NULL) {
       // old style (pre 0.9.6)

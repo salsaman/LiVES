@@ -45,6 +45,8 @@ static gchar *thread_text=NULL;
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (U_SECL/10l)
 
+static volatile gboolean dlg_thread_ready=FALSE;
+
 void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data)
 {
   GtkWidget *tbutton;
@@ -1755,6 +1757,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
   if (!pthread_islocked) {
     g_free(procw);
+    dlg_thread_ready=TRUE;
     return; // parent process finished already
   }
 
@@ -1858,6 +1861,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   if (!pthread_islocked) {
     gtk_widget_destroy(procw->processing);
     g_free(procw);
+    dlg_thread_ready=TRUE;
     return;
   }
 
@@ -1865,7 +1869,8 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
 
   gtk_widget_queue_draw(procw->processing);
-  gdk_flush ();
+
+  //gdk_flush ();
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
 
@@ -1873,6 +1878,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   gettimeofday(&tv, NULL);
   sttime=tv.tv_sec*1000000+tv.tv_usec;
 
+  dlg_thread_ready=TRUE;
 
   while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER&&mainw->cancelled!=CANCEL_KEEP&&pthread_islocked) {
     // mutex locked
@@ -1888,7 +1894,8 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     }
 
     gtk_widget_queue_draw(procw->processing);
-    gdk_flush ();
+
+    //gdk_flush ();
 
     // unlock mutex
     pthread_mutex_unlock(&mainw->gtk_mutex);
@@ -1904,7 +1911,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   }
 
   gtk_widget_destroy(procw->processing);
-  gdk_flush ();
+  //gdk_flush ();
 
   g_free(procw);
 
@@ -1980,9 +1987,20 @@ void do_threaded_dialog(const gchar *text, gboolean has_cancel) {
   thread_text=g_strdup(text);
   mainw->threaded_dialog=TRUE;
   clear_mainw_msg();
+  dlg_thread_ready=FALSE;
+  while (g_main_context_iteration(NULL,FALSE));
+
   if (!has_cancel) pthread_create(&dthread,NULL,dth2,thread_text);
   else pthread_create(&dthread,NULL,dth2_with_cancel,thread_text);
-  sched_yield();
+  while (!dlg_thread_ready) {
+    g_usleep(prefs->sleep_time);
+    sched_yield();
+  }
+
+  pthread_mutex_lock(&mainw->gtk_mutex);
+  while (g_main_context_iteration(NULL,FALSE));
+  pthread_mutex_unlock(&mainw->gtk_mutex);
+
 }
 
 
@@ -1998,6 +2016,7 @@ void end_threaded_dialog(void) {
   mainw->cancel_type=CANCEL_KILL;
   if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
   else gtk_widget_queue_draw(mainw->multitrack->window);
+  while (g_main_context_iteration(NULL,FALSE));
 }
 
 

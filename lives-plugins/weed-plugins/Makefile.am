@@ -44,7 +44,8 @@ frei0rpluginslib_LTLIBRARIES = $(frei0r_libs)
 endif
 
 
-fxpluginslib_LTLIBRARIES = alien_overlay.la \
+fxpluginslib_LTLIBRARIES = RGBdelay.la \
+	alien_overlay.la \
 	audio_transition.la \
 	audio_volume.la \
 	bump2d.la \

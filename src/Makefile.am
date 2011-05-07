@@ -129,6 +129,11 @@ giw_CFLAGS=-DENABLE_GIW=1
 endif
 
 
+if HAVE_LIBv4l1
+v4l1_LDADD=-lv4l1
+endif
+
+
 lives_exe_SOURCES = \
 	main.c\
 	support.c support.h \
@@ -170,7 +175,7 @@ lives_exe_SOURCES = \
 	$(giw_SOURCES)
 
 lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_LDADD) $(giw_LDADD) \
+	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_LDADD) $(giw_LDADD) $(libv4l_LDADD) \
 	@UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) \

@@ -339,8 +339,9 @@ inline static int font_compare(const void *p1, const void *p2) {
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
+  weed_plant_t **clone1,**clone2;
 
-  static char *def_fonts[] = {"serif", NULL};
+  char *def_fonts[] = {"serif", NULL};
   if (plugin_info!=NULL) {
     char *modes[]={"foreground only","foreground and background","background only",NULL};
     // removed palettes with alpha channel
@@ -416,8 +417,10 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("scribbler_generator","Aleksej Penkov",1,0,&scribbler_init,&scribbler_process,NULL,NULL,weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
-    
+    filter_class=weed_filter_class_init("scribbler_generator","Aleksej Penkov",1,0,&scribbler_init,&scribbler_process,NULL,NULL,(clone1=weed_clone_plants(out_chantmpls)),(clone2=weed_clone_plants(in_params)),NULL);
+    weed_free(clone1);
+    weed_free(clone2);
+
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     weed_set_double_value(filter_class,"target_fps",25.); // set reasonable default fps
 

@@ -2,8 +2,14 @@ Version 1.4.3
 -------------
 Add support for spacial multithreading in effects plugins.
 Fix antialias option in Preferences (regression). *
+Fix buttons in Frame Calculator (regression). *
+Add new oggstream playback plugin.
+Add new realtime effects: RGB_delay and YUV_delay
 
 
+
+
+* = backported to 1.3.12 (stable version)
 
 
 

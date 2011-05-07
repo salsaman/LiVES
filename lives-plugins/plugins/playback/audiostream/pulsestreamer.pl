@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # perl program to take audio output from pulseaudio, convert it to the 
-# specified format, and output it to stdout
+# specified format, and output it to $outfifo
 
 # (C) G. Finch 2011 - released under GPL v3 or higher
 
@@ -15,6 +15,15 @@ if ($command eq "get_formats") {
     # list of formats separated by |
     # see lives/src/plugins.h for values
     print "3"; # vorbis
+    exit 0;
+}
+
+if ($command eq "check") {
+    my ($location)=`which pacat 2>/dev/null`;
+    if ($location=="") {
+	print "Audio streaming with pulseaudio requires pacat\n";
+	exit 1;
+    }
     exit 0;
 }
 

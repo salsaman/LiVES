@@ -371,6 +371,10 @@ fi
 
 AM_CONDITIONAL(HAVE_UNICAP,$HAVE_UNICAP)
 
+dnl Check of -lv4l1
+AC_CHECK_LIB(v4l1,v4l1_ioctl)
+AM_CONDITIONAL(HAVE_LIBv4l1,$HAVE_LIBv4l1)
+
 
 HAVE_LIBDV=false
 dnl check for libdv

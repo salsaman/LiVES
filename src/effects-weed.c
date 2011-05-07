@@ -961,6 +961,10 @@ gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
 	  redraw_pwindow(keyw,modew);
 	}
       }
+
+      // redraw set defs window
+
+
     }
     if (!deinit_first) weed_call_deinit_func(inst);
     dummyvar=chdir(cwd);
@@ -1596,6 +1600,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       }
 
       weed_set_plantptr_array(xinst[j],"out_channels",nchannels,xchannels);
+      g_free(xchannels);
 
       procvals[j].inst=xinst[j];
       procvals[j].tc=tc; // use same timecode for all slices
@@ -1621,7 +1626,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       for (i=0;i<nchannels;i++) {
 	weed_plant_free(xchannels[i]);
       }
-      g_free(xchannels);
+      weed_free(xchannels);
       weed_plant_free(xinst[j]);
 
       if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;

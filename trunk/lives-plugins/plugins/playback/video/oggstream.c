@@ -187,13 +187,14 @@ boolean set_fps (double in_fps) {
   return TRUE;
 }
 
+static int audio;
 
 
 boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
   int dummyvar;
   const char *outfile;
   char cmd[8192];
-  int audio=0,afd;
+  int afd;
 
   if (mypalette==WEED_PALETTE_END) {
     fprintf(stderr,"oggstream plugin error: No palette was set !\n");
@@ -231,6 +232,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     audio=1;
     close(afd);
   }
+  else audio=0;
 
   if (audio) {
     snprintf(cmd,8192,"oggTranscode %s/video.ogv %s/video2.ogv &",tmpdir,tmpdir); 
@@ -312,7 +314,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   // TODO - *** only kill our child processes
   dummyvar=system("killall -9 ffmpeg2theora 2>/dev/null");
   dummyvar=system("killall -9 OggTranscode 2>/dev/null");
-  dummyvar=system("killall -9 OggJoin 2>/dev/null");
+  while ((dummyvar=system("killall -9 OggJoin 2>/dev/null")));
 
   make_path("video.ogv");
   unlink(xfile);

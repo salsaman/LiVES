@@ -274,6 +274,8 @@ int t3_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
+  weed_plant_t **clone1,**clone2,**clone3;
+
   if (plugin_info!=NULL) {
     int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,palette_list),NULL};
@@ -285,12 +287,19 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     // we must clone the arrays for the next filter
-    filter_class=weed_filter_class_init("fg_bg_removal type 2","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&t2_process,&common_deinit,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
+    filter_class=weed_filter_class_init("fg_bg_removal type 2","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&t2_process,&common_deinit,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params)),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_free(clone1);
+    weed_free(clone2);
+    weed_free(clone3);
+
 
     // we must clone the arrays for the next filter
-    filter_class=weed_filter_class_init("fg_bg_removal type 3","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&t3_process,&common_deinit,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),weed_clone_plants(in_params),NULL);
+    filter_class=weed_filter_class_init("fg_bg_removal type 3","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&common_init,&t3_process,&common_deinit,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params)),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_free(clone1);
+    weed_free(clone2);
+    weed_free(clone3);
     
     weed_set_int_value(plugin_info,"version",package_version);
     init_RGB_to_YCbCr_tables();

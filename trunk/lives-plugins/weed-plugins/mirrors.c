@@ -112,6 +112,8 @@ int mirrorxy_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
+  weed_plant_t **clone1,**clone2;
+
   if (plugin_info!=NULL) {
     int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
 
@@ -121,11 +123,15 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class=weed_filter_class_init("mirrorx","salsaman",1,0,NULL,&mirrorx_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     
-    filter_class=weed_filter_class_init("mirrory","salsaman",1,0,NULL,&mirrory_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),NULL,NULL);
+    filter_class=weed_filter_class_init("mirrory","salsaman",1,0,NULL,&mirrory_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),NULL,NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_free(clone1);
+    weed_free(clone2);
 
-    filter_class=weed_filter_class_init("mirrorxy","salsaman",1,0,NULL,&mirrorxy_process,NULL,weed_clone_plants(in_chantmpls),weed_clone_plants(out_chantmpls),NULL,NULL);
+    filter_class=weed_filter_class_init("mirrorxy","salsaman",1,0,NULL,&mirrorxy_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),NULL,NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_free(clone1);
+    weed_free(clone2);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

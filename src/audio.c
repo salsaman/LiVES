@@ -2070,7 +2070,7 @@ gboolean start_audio_stream(void) {
       
 #endif
     }
-    
+
     ascom=g_strdup_printf("%s play %d %s %d",astreamer,mainw->vpp->audio_codec,astream_name,arate);
     
     g_free(astream_name);
@@ -2110,4 +2110,11 @@ void stop_audio_stream(void) {
   }
 
 
+}
+
+
+void clear_audio_stream(void) {
+  gchar *astream_name=g_build_filename(prefs->tmpdir,"livesaudio.stream",NULL);
+  unlink(astream_name);
+  g_free(astream_name);
 }

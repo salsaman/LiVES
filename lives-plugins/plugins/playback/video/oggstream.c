@@ -311,10 +311,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
     close(new_fd);
   }
 
-  // TODO - *** only kill our child processes
-  dummyvar=system("killall -9 ffmpeg2theora 2>/dev/null");
-  dummyvar=system("killall -9 OggTranscode 2>/dev/null");
-  while ((dummyvar=system("killall -9 OggJoin 2>/dev/null")));
+  dummyvar=system("pkill -g 0 -P 1");
 
   make_path("video.ogv");
   unlink(xfile);

@@ -18,6 +18,7 @@
 #include "stream.h"
 #include "startup.h"
 
+
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
 #endif
@@ -3675,6 +3676,7 @@ void resize_play_window (void) {
       // init the playback plugin, unless there is a possibility of wrongly sized frames (i.e. during a preview)
       if (mainw->vpp!=NULL&&(!mainw->preview||mainw->multitrack!=NULL)) {
 	gboolean fixed_size=FALSE;
+
 	gdk_window_get_pointer (gdk_get_default_root_window (), &mainw->ptr_x, &mainw->ptr_y, NULL);
 	if (prefs->play_monitor!=0) mainw->ptr_x=mainw->ptr_y=-1;
 	if (mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
@@ -3711,10 +3713,15 @@ void resize_play_window (void) {
 	    (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	  }
 	}
+	  g_print("vals %d and %d\n",mainw->vpp->audio_codec,prefs->stream_audio_out);
 
 	if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE&&prefs->stream_audio_out) {
 	  start_audio_stream();
 	}
+	else {
+	  clear_audio_stream();
+	}
+
 
 	if ((mainw->vpp->init_screen==NULL)||((*mainw->vpp->init_screen)(mainw->pwidth,mainw->pheight*(fixed_size?1:prefs->virt_height),fullscreen,xwinid,mainw->vpp->extra_argc,mainw->vpp->extra_argv))) {
 	  mainw->ext_playback=TRUE;

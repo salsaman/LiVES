@@ -20,7 +20,7 @@ if ($command eq "get_formats") {
 
 if ($command eq "check") {
     my ($location)=`which pacat 2>/dev/null`;
-    if ($location=="") {
+    if ($location eq "") {
 	print "Audio streaming with pulseaudio requires pacat\n";
 	exit 1;
     }

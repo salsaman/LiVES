@@ -21,7 +21,7 @@ if ($command eq "get_formats") {
 
 if ($command eq "check") {
     my ($location)=`which jack-stdout 2>/dev/null`;
-    if ($location=="") {
+    if ($location eq "") {
 	print "Audio streaming with jack requires jack-stdout\nSee: http://gareus.org/oss/jackstdio/start\n";
 	exit 1;
     }

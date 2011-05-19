@@ -204,5 +204,6 @@ lives_audio_buf_t *audio_cache_get_buffer(void);
 
 gboolean start_audio_stream(void);
 void stop_audio_stream(void);
+void clear_audio_stream(void);
 
 #endif

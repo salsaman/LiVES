@@ -26,7 +26,7 @@ vjack_libs = vjack_rcv.la
 vjack_rcv_la_LDFLAGS = -ljack $(AM_LDFLAGS)
 endif
 
-fxpluginslib_LTLIBRARIES = gdk_fast_resize.la compositor.la videowall.la scribbler.la puretext.la $(vjack_libs) 
+fxpluginslib_LTLIBRARIES = gdk_fast_resize.la compositor.la videowall.la scribbler.la puretext.la mask_overlay.la $(vjack_libs) 
 
 EXTRA_DIST=data icons
 

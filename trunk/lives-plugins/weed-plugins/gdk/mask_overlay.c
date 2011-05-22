@@ -65,13 +65,57 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
   double xscale=(double)iwidth/(double)owidth;
   double yscale=(double)iheight/(double)oheight;
 
+  double xscale2,yscale2;
+
   int psize=3;
+
+  int top=-1,bot=-1,left=-1,right=-1,tline,xwidth=0;
+  double xpos=0.,ypos=0.;
 
   register int i,j;
 
   if (has_alpha) psize=4;
 
+  if (mode==1) {
+    // get bounds
+
+    for (i=0;i<oheight;i++) {
+      for (j=0;j<owidth;j++) {
+	if ( *(pdata + (int)(i * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
+	  if (top==-1) top=i;
+	  if (j<left||left==-1) left=j;
+	  if (j>right) right=j;
+	  if (i>bot) bot=i;
+	}
+      }
+    }
+
+    // get width (ignoring non-black)
+
+    tline=(top+bot)>>1;
+
+    for (j=0;j<owidth;j++) {
+      if ( *(pdata + (int)(tline * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) xwidth++;
+    }
+    
+    yscale2=(double)oheight/(double)(bot-top);
+    xscale2=(double)owidth/(double)xwidth;
+
+    // map center row as template for other rows
+    for (j=0;j<owidth;j++) {
+      if ( *(pdata + (int)(tline * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
+	// map front frame
+	xmap[tline*owidth+j]=(int)xpos;
+	xpos+=xscale2;
+      }
+      else {
+	xmap[tline*owidth+j]=-1;
+      }
+    }
+  }
+
   for (i=0;i<oheight;i++) {
+
     for (j=0;j<owidth;j++) {
       if ( *(pdata + (int)(i * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
 	// map front frame
@@ -81,6 +125,10 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
 	  xmap[i*owidth+j]=j;
 	  ymap[i*owidth+j]=i;
 	}
+	else {
+	  xmap[i*owidth+j]=xmap[tline*owidth+j];
+	  ymap[i*owidth+j]=(int)ypos;
+	}
 
       }
       else {
@@ -89,6 +137,7 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
       }
 
     }
+    if (i>=top) ypos+=yscale2;
   }
 
 }
@@ -103,7 +152,7 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
 int masko_init(weed_plant_t *inst) {
   struct _sdata *sdata;
   int video_height,video_width,video_area;
-  int error;
+  int error,mode;
   weed_plant_t *in_channel,**in_params;
   GdkPixbuf *pbuf;
   GError *gerr=NULL;
@@ -138,11 +187,12 @@ int masko_init(weed_plant_t *inst) {
   // load image, then get luma values and scale
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   mfile=weed_get_string_value(in_params[0],"value",&error);
+  mode=weed_get_int_value(in_params[1],"value",&error);
 
   pbuf=gdk_pixbuf_new_from_file(mfile,&gerr);
 
 
-  make_mask(pbuf,0,video_width,video_height,sdata->xmap,sdata->ymap);
+  make_mask(pbuf,mode,video_width,video_height,sdata->xmap,sdata->ymap);
 
   gdk_pixbuf_unref(pbuf);
   weed_free(mfile);

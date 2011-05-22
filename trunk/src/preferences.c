@@ -1452,7 +1452,7 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
 
 
 void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
-  if (vpp->audio_codec!=AUDIO_CODEC_NONE) {
+  if (vpp==NULL||vpp->audio_codec!=AUDIO_CODEC_NONE) {
     if (prefs->stream_audio_out) {
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
       gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,TRUE);

@@ -4672,7 +4672,7 @@ on_fs_preview_clicked                  (GtkButton       *button,
   // file selector preview
   gchar *com;
   unsigned int xwin=0;
-  gint preview_frames=200;
+  gint preview_frames=1000000000;
   gint preview_type=GPOINTER_TO_INT (user_data);
   gdouble start_time=0.;
   FILE *ifile=NULL;
@@ -4707,7 +4707,7 @@ on_fs_preview_clicked                  (GtkButton       *button,
     gchar **array;
     gchar *tmp;
  
-    preview_frames=500;
+    preview_frames=1000000000;
 
     clear_mainw_msg();
     

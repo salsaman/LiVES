@@ -2833,7 +2833,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
   
   int error,reason,idx=num_weed_filters;
 
-  weed_plant_t *plugin_info,**filters;
+  weed_plant_t *plugin_info,**filters,*filter;
   void *handle;
   int filters_in_plugin;
   int mode=-1,kmode=0;
@@ -2854,7 +2854,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 #endif
 
 #ifdef RTLD_DEEPBIND // local symbols override global symbols in the plugins
-  // this may allow for non-static linking of libweed with
+  // this may allow for non-static linking of libweed with the plugins
   if ((handle=dlopen(plugin_path,RTLD_LAZY|RTLD_DEEPBIND))) {
 #else
   if ((handle=dlopen(plugin_path,RTLD_LAZY))) {
@@ -2876,7 +2876,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 
       plugin_info=(*setup_fn)(bootstrap);
       if (plugin_info==NULL||(filters_in_plugin=check_weed_plugin_info(plugin_info))<1) {
-	g_printerr ("error loading plugin %s\n",plugin_path);
+	g_printerr (_("No usable filters found in plugin %s\n"),plugin_path);
 	if (plugin_info!=NULL) weed_plant_free(plugin_info);
 	dlclose (handle);
 	dummyvar=chdir(cwd);
@@ -2914,12 +2914,16 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	    if (key<FX_KEYS_PHYSICAL) d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",filter_name,plugin_name,key+1,kmode+1));
 	    else d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\", no key assigned\n",filter_name,plugin_name));
 #endif
+
+	    filter=weed_filters[idx];
 	    
 	    // we start with all optional channels disabled (unless forced to use them)
-	    set_in_channel_palettes (idx,enabled_in_channels(weed_filters[idx],FALSE));
+	    set_in_channel_palettes (idx,enabled_in_channels(filter,FALSE));
 	    set_out_channel_palettes (idx,1);
 	    
-	    if (!weed_plant_has_leaf(weed_filters[idx],"host_menu_hide")) {
+	    // skip hidden channels
+	    if (!weed_plant_has_leaf(filter,"host_menu_hide")||
+		(weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_FALSE)) {
 	      if (key<FX_KEYS_PHYSICAL) {
 		key_to_fx[key][kmode]=idx;
 	      }
@@ -2929,16 +2933,17 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	      gtk_widget_show(menuitem);
 	      g_free(string);
 	      g_free(filter_type);
+	      
 	      gtk_container_add (GTK_CONTAINER (mainw->rte_defs), menuitem);
 	      
 	      g_signal_connect (GTK_OBJECT (menuitem), "activate",
 				G_CALLBACK (rte_set_defs_activate),
 				GINT_TO_POINTER(idx));
-	      
-	      kmode++;
 	    }
-	    idx++;
+	      
+	    kmode++;
 	  }
+	    idx++;
 	}
 #ifdef DEBUG_WEED
 	else g_printerr(g_strdup_printf("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n",filter_name,plugin_name,reason));

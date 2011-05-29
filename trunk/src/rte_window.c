@@ -11,9 +11,11 @@
 #ifdef HAVE_SYSTEM_WEED
 #include "weed/weed.h"
 #include "weed/weed-host.h"
+#include "weed/weed-effects.h"
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
+#include "../libweed/weed-effects.h"
 #endif
 
 #include "main.h"
@@ -1224,7 +1226,8 @@ GtkWidget * create_rte_window (void) {
       
       while (list!=NULL) {
 	weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname(g_list_nth_data(hash_list,fx_idx),FALSE));
-	if ((enabled_in_channels(filter,FALSE)>1&&!has_video_chans_in(filter,FALSE))||(weed_plant_has_leaf(filter,"host_menu_hide")&&weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_TRUE)) {
+	int filter_flags=weed_get_int_value(filter,"flags",&error);
+	if ((enabled_in_channels(filter,FALSE)>1&&!has_video_chans_in(filter,FALSE))||(weed_plant_has_leaf(filter,"host_menu_hide")&&weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_TRUE)||(filter_flags&WEED_FILTER_IS_CONVERTER)) {
 	  list = list->next;
 	  fx_idx++;
 	  continue; // skip audio transitions and hidden entries

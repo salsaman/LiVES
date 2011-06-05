@@ -1083,6 +1083,7 @@ void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, gint t
 	      k+=2;
 	    }
 	  }
+
 	  weed_set_int_array(event,"audio_clips",num_aclips-2,new_aclips);
 	  weed_set_double_array(event,"audio_seeks",num_aclips-2,new_aseeks);
 	  g_free(new_aclips);
@@ -1096,6 +1097,7 @@ void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, gint t
 	aclips[i+1]=clipnum;
 	aseeks[i]=seek;
 	aseeks[i+1]=arv;
+
 	weed_set_int_array(event,"audio_clips",num_aclips,aclips);
 	weed_set_double_array(event,"audio_seeks",num_aclips,aseeks);
 	weed_free(aseeks);

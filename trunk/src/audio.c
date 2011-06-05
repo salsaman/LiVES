@@ -62,7 +62,7 @@ void audio_free_fnames(void) {
 
 
 
-inline void sample_silence_dS (float *dst, unsigned long nsamples) {
+LIVES_INLINE void sample_silence_dS (float *dst, unsigned long nsamples) {
   memset(dst,0,nsamples*sizeof(float));
 }
 
@@ -2040,46 +2040,46 @@ gboolean start_audio_stream(void) {
 
   // playback plugin wants an audio stream - so fork and run the stream
   // player
-  //astream_name=g_strdup_printf("/tmp/audiostream.%d",getpid());
-  astream_name=g_build_filename(prefs->tmpdir,"livesaudio.stream",NULL);
+  gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
+  astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
   mkfifo(astream_name,S_IRUSR|S_IWUSR);
+
+  g_free(astname);
 
   astream_pid=fork();
 
   if (!astream_pid) {
     // mkfifo and play until killed
-    gchar *playername=g_strdup_printf("%sstreamer.pl",prefs->aplayer);
+    const gchar *playername="audiostreamer.pl";
     gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
-    gchar *ascom;
-    gint arate=44100;
-    
-    g_free(playername);
+    char *arate=NULL;
     
     if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      arate=mainw->pulsed->out_arate;
+      arate=g_strdup_printf("%d",(int)mainw->pulsed->out_arate);
       // TODO - chans, samps, signed, endian
-      
+
+      mainw->pulsed->astream_fd=open(astream_name,O_WRONLY|O_NONBLOCK);
 #endif
     }
 
     if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      arate=mainw->jackd->sample_out_rate;
+      arate=g_strdup_printf("%d",(int)mainw->jackd->sample_out_rate);
       // TODO - chans, samps, signed, endian
       
+      mainw->jackd->astream_fd=open(astream_name,O_WRONLY|O_NONBLOCK);
 #endif
     }
-
-    ascom=g_strdup_printf("%s play %d %s %d",astreamer,mainw->vpp->audio_codec,astream_name,arate);
-    
-    g_free(astream_name);
-    g_free(astreamer);
 
     setsid(); // create new session id
     
     // block here until killed
-    dummyvar=system(ascom);
+    dummyvar=execl(astreamer,"play",mainw->vpp->audio_codec,astream_name,arate,NULL);
+    g_free(astream_name);
+    g_free(astreamer);
+    g_free(arate);
+
     _exit(0);                    
   }
   return TRUE;
@@ -2090,23 +2090,36 @@ gboolean start_audio_stream(void) {
 void stop_audio_stream(void) {
   if (astream_pid>0) {
     // if we were streaming audio, kill it
-    gchar *playername=g_strdup_printf("%sstreamer.pl",prefs->aplayer);
+    const gchar *playername="audiostreamer.pl";
+    gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
     gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
-    gchar *ascom=g_strdup_printf("%s cleanup %d",astreamer,mainw->vpp->audio_codec);
-    //astream_name=g_strdup_printf("/tmp/audiostream.%d",getpid());
-    gchar *astream_name=g_build_filename(prefs->tmpdir,"livesaudio.stream",NULL);
+
+    gchar *astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
 
     pid_t pgid=getpgid(astream_pid);
 
-    g_free(astreamer);
-    g_free(playername);
+    g_free(astname);
+
+    if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+      close(mainw->pulsed->astream_fd);
+      mainw->pulsed->astream_fd=-1;
+#endif
+    }
+    if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+      close(mainw->jackd->astream_fd);
+      mainw->jackd->astream_fd=-1;
+#endif
+    }
 
     kill(-pgid,9);
     unlink(astream_name);
     g_free(astream_name);
 
-    dummyvar=system(ascom);
-    g_free(ascom);
+    dummyvar=execl(astreamer,"cleanup",mainw->vpp->audio_codec,NULL);
+    g_free(astreamer);
+
   }
 
 
@@ -2114,7 +2127,19 @@ void stop_audio_stream(void) {
 
 
 void clear_audio_stream(void) {
-  gchar *astream_name=g_build_filename(prefs->tmpdir,"livesaudio.stream",NULL);
+  gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
+  gchar *astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
   unlink(astream_name);
+  g_free(astname);
   g_free(astream_name);
 }
+
+
+
+LIVES_INLINE void audio_stream(void *buff, size_t nbytes, int fd) {
+  if (fd!=-1) dummyvar=write(fd,buff,nbytes);
+}
+
+
+
+

@@ -110,6 +110,8 @@ typedef struct {
   lives_audio_buf_t **abufs;
   volatile gint read_abuf;
 
+  volatile int astream_fd;
+
 } jack_driver_t;
 
 

@@ -140,6 +140,7 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
   while (nbytes>0) {
     if (nbytes<xbytes) xbytes=nbytes;
     buff=g_malloc0(xbytes);
+    audio_stream(buff,xbytes,pdriver->astream_fd);
     pa_stream_write(pdriver->pstream,buff,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
     nbytes-=xbytes;
   }
@@ -459,12 +460,14 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     offs+=xbytes;
 	     needs_free=TRUE;
 	   }
+	   audio_stream(buffer,xbytes,pulsed->astream_fd);
 	   pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:pulse_buff_free,0,PA_SEEK_RELATIVE);
 	 }
 	 else {
 	   if (pulsed->read_abuf>-1&&!pulsed->mute) {
 	     shortbuffer=g_malloc0(xbytes);
 	     sample_move_abuf_int16(shortbuffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
+	     audio_stream(shortbuffer,xbytes,pulsed->astream_fd);
 	     pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
 	   }
 	   else {
@@ -486,7 +489,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       sample_silence_pulse(pulsed,pulseFramesAvailable*pulsed->out_achans
 			   *(pulsed->out_asamps>>3),xbytes);
     }
-  }
+   }
   else {
 #ifdef DEBUG_PULSE
     g_printerr("PAUSED or STOPPED or CLOSED, outputting silence\n");
@@ -635,6 +638,7 @@ int pulse_audio_init(void) {
   pulsed.msgq=NULL;
   pulsed.num_calls=0;
   pulsed.chunk_size=0;
+  pulsed.astream_fd=-1;
   pulsed.pulsed_died=FALSE;
   pulsed.aPlayPtr=(audio_buffer_t *)g_malloc(sizeof(audio_buffer_t));
   pulsed.aPlayPtr->data=NULL;
@@ -669,6 +673,7 @@ int pulse_audio_read_init(void) {
   pulsed_reader.msgq=NULL;
   pulsed_reader.num_calls=0;
   pulsed_reader.chunk_size=0;
+  pulsed_reader.astream_fd=-1;
   pulsed_reader.pulsed_died=FALSE;
   gettimeofday(&pulsed_reader.last_reconnect_attempt, 0);
   pulsed_reader.in_achans=2;

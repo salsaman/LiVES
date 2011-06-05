@@ -1,6 +1,6 @@
 // jack.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2010
+// (c) G. Finch 2005 - 2011
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -15,6 +15,17 @@
 #define afile mainw->files[jackd->playing_file]
 
 static jack_client_t *jack_transport_client;
+
+static unsigned char *zero_buff=NULL;
+static size_t zero_buff_count=0;
+
+static void check_zero_buff(size_t check_size) {
+  if (check_size>zero_buff_count) {
+    zero_buff=g_realloc(zero_buff,check_size);
+    memset(zero_buff+zero_buff_count,0,check_size-zero_buff_count);
+    zero_buff_count=check_size;
+  }
+}
 
 gboolean lives_jack_init (void) {
   gchar *jt_client=g_strdup_printf("LiVES-%d",getpid());
@@ -282,6 +293,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   gboolean from_memory=FALSE;
   gboolean wait_cache_buffer=FALSE;
   lives_audio_buf_t *cache_buffer=NULL;
+  size_t nbytes;
 
 #ifdef DEBUG_AJACK
   g_printerr("nframes %ld, sizeof(float) == %d\n", (long)nframes, sizeof(float));
@@ -373,6 +385,12 @@ static int audio_process (nframes_t nframes, void *arg) {
       /* output silence if nothing is being outputted */
       if (!jackd->is_silent) for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
       jackd->is_silent=TRUE;
+
+      // external streaming
+      nbytes=nframes*4;
+      check_zero_buff(nbytes);
+      audio_stream(zero_buff,nbytes,jackd->astream_fd);
+
       if (!jackd->is_paused) jackd->frames_written+=nframes;
       if (jackd->seek_pos<0.&&jackd->playing_file>-1&&afile!=NULL) {
 	jackd->seek_pos+=nframes*afile->achans*afile->asampsize/8;
@@ -447,6 +465,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 	    if (!wait_cache_buffer) push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
 
 	    for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
+
+	    // external streaming
+	    nbytes=nframes*4;
+	    check_zero_buff(nbytes);
+	    audio_stream(zero_buff,nbytes,jackd->astream_fd);
+
 	    jackd->frames_written+=nframes;
 	    return 0;
 	  }
@@ -491,6 +515,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  // reached end of audio with no looping
 	  for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
 	  jackd->is_silent=TRUE;
+
+	  // external streaming
+	  nbytes=nframes*4;
+	  check_zero_buff(nbytes);
+	  audio_stream(zero_buff,nbytes,jackd->astream_fd);
+
 	  if (!jackd->is_paused) jackd->frames_written+=nframes;
 	  if (jackd->seek_pos<0.&&jackd->playing_file>-1&&afile!=NULL) {
 	    jackd->seek_pos+=nframes*afile->achans*afile->asampsize/8;
@@ -522,19 +552,38 @@ static int audio_process (nframes_t nframes, void *arg) {
       
       if ( !from_memory && numFramesToWrite > 0 ) {
 	if (((gint)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
-	if (cache_buffer->bufferf!=NULL)
-
+	if (cache_buffer->bufferf!=NULL) {
 	  for (i=0;i<jackd->num_output_channels;i++) {
 	    sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite, jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, vol);
 	  }
-
+	  // TODO *** - handle case where jack output channels != 2
+	  nbytes=numFramesToWrite*4;
+	  audio_stream(cache_buffer->buffer16[0],nbytes,jackd->astream_fd);
+	}
+	else {
+	  for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
+	  
+	  // external streaming
+	  nbytes=numFramesToWrite*4;
+	  check_zero_buff(nbytes);
+	  audio_stream(zero_buff,nbytes,jackd->astream_fd);
+	}
       }
       else {
 	if (jackd->read_abuf>-1&&!jackd->mute) {
 	  sample_move_abuf_float(out_buffer,jackd->num_output_channels,nframes,jackd->sample_out_rate,vol);
+
+	  // TODO *** - handle channels != 2
+	  nbytes=nframes*4;
+	  audio_stream(out_buffer,nbytes,jackd->astream_fd);
 	}
 	else {
 	  for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
+	  
+	  // external streaming
+	  nbytes=nframes*4;
+	  check_zero_buff(nbytes);
+	  audio_stream(zero_buff,nbytes,jackd->astream_fd);
 	}
       }
     }
@@ -556,6 +605,11 @@ static int audio_process (nframes_t nframes, void *arg) {
       g_printerr("buffer underrun of %ld frames\n", jackFramesAvailable);
 #endif
       for(i = 0 ; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i] + (nframes - jackFramesAvailable), jackFramesAvailable);
+
+      // external streaming
+      nbytes=jackFramesAvailable*4;
+      check_zero_buff(nbytes);
+      audio_stream(zero_buff,nbytes,jackd->astream_fd);
     }
 
   }
@@ -567,6 +621,12 @@ static int audio_process (nframes_t nframes, void *arg) {
     /* output silence if nothing is being outputted */
     for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
     jackd->is_silent=TRUE;
+
+    // external streaming
+    nbytes=nframes*4;
+    check_zero_buff(nbytes);
+    audio_stream(zero_buff,nbytes,jackd->astream_fd);
+
     /* if we were told to reset then zero out some variables */
     /* and transition to STOPPED */
     if(jackd->state == JackTReset) {
@@ -1176,6 +1236,7 @@ int jack_audio_init(void) {
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
+    //jackd->astream_file=NULL;
     jackd->jackd_died=FALSE;
     gettimeofday(&jackd->last_reconnect_attempt, 0);
     jackd->num_output_channels=2;
@@ -1208,6 +1269,7 @@ int jack_audio_read_init(void) {
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
+    //jackd->astream_file=NULL;
     jackd->jackd_died=FALSE;
     gettimeofday(&jackd->last_reconnect_attempt, 0);
     jackd->num_input_channels=2;

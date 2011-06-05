@@ -237,14 +237,12 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   else audio=0;
 
   if (audio) {
-    printf("pt a \n");
     snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &",tmpdir,mypid,tmpdir,mypid); 
     dummyvar=system(cmd);
     snprintf(cmd,8192,"oggJoin \"%s\" %s/video2-%d.ogv %s/livesaudio-%d.stream &",outfile,tmpdir,mypid,tmpdir,mypid);
     dummyvar=system(cmd);
   }
   else {
-    printf("pt a2 %s %d\n",xfile,errno);
     snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv \"%s\" &",tmpdir,mypid,outfile); 
     dummyvar=system(cmd);
   }

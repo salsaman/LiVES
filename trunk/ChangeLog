@@ -1,10 +1,11 @@
 Version 1.4.3
 -------------
+Fix important bug with audio shifting when leaving/rentering multitrack mode. *
 Add support for spacial multithreading in effects plugins.
 Fix antialias option in Preferences (regression). *
 Fix buttons in Frame Calculator (regression). *
 Add new oggstream playback plugin.
-Add new realtime effects: RGB_delay and YUV_delay
+Add new realtime effects: RGB_delay, YUV_delay and mask_overlay.
 
 
 

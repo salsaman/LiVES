@@ -3713,7 +3713,6 @@ void resize_play_window (void) {
 	    (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	  }
 	}
-	  g_print("vals %d and %d\n",mainw->vpp->audio_codec,prefs->stream_audio_out);
 
 	if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE&&prefs->stream_audio_out) {
 	  start_audio_stream();

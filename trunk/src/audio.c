@@ -2036,52 +2036,87 @@ lives_audio_buf_t *audio_cache_get_buffer(void) {
 static int astream_pid=0;
 
 gboolean start_audio_stream(void) {
+  const gchar *playername="audiostreamer.pl";
   gchar *astream_name=NULL;
+  gchar *astream_name_out=NULL;
 
   // playback plugin wants an audio stream - so fork and run the stream
   // player
   gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
+  gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",getpid());
+
+  gchar *astreamer;
+
+  gchar *com;
+
+  int arate=0;
+
+  int afd;
+
   astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
   mkfifo(astream_name,S_IRUSR|S_IWUSR);
 
+  astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
+
   g_free(astname);
+  g_free(astname_out);
 
-  astream_pid=fork();
-
-  if (!astream_pid) {
-    // mkfifo and play until killed
-    const gchar *playername="audiostreamer.pl";
-    gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
-    char *arate=NULL;
-    
     if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      arate=g_strdup_printf("%d",(int)mainw->pulsed->out_arate);
+      arate=(int)mainw->pulsed->out_arate;
       // TODO - chans, samps, signed, endian
-
-      mainw->pulsed->astream_fd=open(astream_name,O_WRONLY|O_NONBLOCK);
 #endif
     }
 
     if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      arate=g_strdup_printf("%d",(int)mainw->jackd->sample_out_rate);
+      arate=(int)mainw->jackd->sample_out_rate;
       // TODO - chans, samps, signed, endian
       
-      mainw->jackd->astream_fd=open(astream_name,O_WRONLY|O_NONBLOCK);
 #endif
     }
 
+    astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+    com=g_strdup_printf("%s play %d \"%s\" \"%s\" %d",astreamer,mainw->vpp->audio_codec,astream_name,astream_name_out,arate);
+
+  astream_pid=fork();
+
+  if (!astream_pid) {
+    // mkfifo and play until killed
+    
     setsid(); // create new session id
     
     // block here until killed
-    dummyvar=execl(astreamer,"play",mainw->vpp->audio_codec,astream_name,arate,NULL);
-    g_free(astream_name);
-    g_free(astreamer);
-    g_free(arate);
+
+    dummyvar=system(com);
 
     _exit(0);                    
   }
+
+  while (1) {
+    afd=open(astream_name,O_WRONLY|O_SYNC);
+    if (afd!=-1) break;
+    g_usleep(prefs->sleep_time);
+  }
+
+
+  if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+    mainw->pulsed->astream_fd=afd;
+#endif
+  }
+
+  if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+    mainw->jackd->astream_fd=afd;
+#endif
+  }
+
+  g_free(astreamer);
+  g_free(com);
+  g_free(astream_name);
+  g_free(astream_name_out);
+
   return TRUE;
 }
 
@@ -2092,13 +2127,18 @@ void stop_audio_stream(void) {
     // if we were streaming audio, kill it
     const gchar *playername="audiostreamer.pl";
     gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
+    gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",getpid());
     gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
 
     gchar *astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
+    gchar *astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
+
+    gchar *com;
 
     pid_t pgid=getpgid(astream_pid);
 
     g_free(astname);
+    g_free(astname_out);
 
     if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
@@ -2117,8 +2157,12 @@ void stop_audio_stream(void) {
     unlink(astream_name);
     g_free(astream_name);
 
-    dummyvar=execl(astreamer,"cleanup",mainw->vpp->audio_codec,NULL);
+    // astreamer should remove cooked stream
+    com=g_strdup_printf("%s cleanup %d \"%s\"",astreamer,mainw->vpp->audio_codec,astream_name_out);
+    dummyvar=system(com);
     g_free(astreamer);
+    g_free(com);
+    g_free(astream_name_out);
 
   }
 
@@ -2127,17 +2171,25 @@ void stop_audio_stream(void) {
 
 
 void clear_audio_stream(void) {
+  // remove raw and cooked streams
   gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
   gchar *astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
+  gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",getpid());
+  gchar *astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
   unlink(astream_name);
+  unlink(astream_name_out);
   g_free(astname);
   g_free(astream_name);
+  g_free(astname_out);
+  g_free(astream_name_out);
 }
 
 
 
 LIVES_INLINE void audio_stream(void *buff, size_t nbytes, int fd) {
-  if (fd!=-1) dummyvar=write(fd,buff,nbytes);
+  if (fd!=-1) {
+    dummyvar=write(fd,buff,nbytes);
+  }
 }
 
 

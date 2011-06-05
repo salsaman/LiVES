@@ -61,8 +61,8 @@ yuv4m_t *yuv4mpeg_alloc (void) {
 
 
 
-static void make_path(const char *fname) {
-  snprintf(xfile,4096,"%s/%s",tmpdir,fname);
+static void make_path(const char *fname, int pid, const char *ext) {
+  snprintf(xfile,4096,"%s/%s-%d.%s",tmpdir,fname,pid,ext);
 }
 
 
@@ -104,7 +104,7 @@ const char *version (void) {
 }
 
 const char *get_description (void) {
-  return "The oggstream plugin provides realtime encoding to ogg/theora/vorbis format.\nIt requires ffmpeg2theora, oggTranscode and oggJoin.\nThe output file can be sent to a pipe or a file.\n";
+  return "The oggstream plugin provides realtime encoding to ogg/theora/vorbis format.\nIt requires ffmpeg2theora, oggTranscode and oggJoin.\nThe output file can be sent to a pipe or a file.\nNB: oggTranscode can be downloaded as part of oggvideotools 0.8a\nhttp://sourceforge.net/projects/oggvideotools/files/\n";
 }
 
 const int *get_palette_list(void) {
@@ -169,7 +169,7 @@ boolean set_palette (int palette) {
 }
 
 const char * get_fps_list (int palette) {
-  return "24|24000:1001|25|30000:1001|30|60";
+  return "12|16|20|24|24000:1001|25|30000:1001|30|60";
 }
 
 
@@ -188,13 +188,15 @@ boolean set_fps (double in_fps) {
 }
 
 static int audio;
-
+#include <errno.h>
 
 boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
   int dummyvar;
   const char *outfile;
   char cmd[8192];
   int afd;
+
+  int mypid=getpid();
 
   if (mypalette==WEED_PALETTE_END) {
     fprintf(stderr,"oggstream plugin error: No palette was set !\n");
@@ -208,24 +210,24 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     outfile="-";
   }
 
-  make_path("video.ogv");
+  make_path("video",mypid,"ogv");
   unlink(xfile);
-  make_path("video2.ogv");
+  make_path("video2",mypid,"ogv");
   unlink(xfile);
-  make_path("stream.fifo");
+  make_path("stream",mypid,"fifo");
   unlink(xfile);
 
-  make_path("stream.fifo");
+  make_path("stream",mypid,"fifo");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // raw yuv4m
-  make_path("video.ogv");
+  make_path("video",mypid,"ogv");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // raw ogg stream
-  make_path("video2.ogv");
+  make_path("video2",mypid,"ogv");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // corrected ogg stream
 
-  snprintf(cmd,8192,"ffmpeg2theora -f yuv4m -o %s/video.ogv %s/stream.fifo 2>/dev/null&",tmpdir,tmpdir);
+  snprintf(cmd,8192,"ffmpeg2theora -f yuv4m -o %s/video-%d.ogv %s/stream-%d.fifo 2>/dev/null&",tmpdir,mypid,tmpdir,mypid);
   dummyvar=system(cmd);
 
-  make_path("livesaudio.stream");
+  make_path("livesaudio",mypid,"stream");
 
   afd=open(xfile,O_RDONLY|O_NONBLOCK);
   if (afd!=-1) {
@@ -235,18 +237,20 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   else audio=0;
 
   if (audio) {
-    snprintf(cmd,8192,"oggTranscode %s/video.ogv %s/video2.ogv &",tmpdir,tmpdir); 
+    printf("pt a \n");
+    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &",tmpdir,mypid,tmpdir,mypid); 
     dummyvar=system(cmd);
-    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2.ogv %s/livesaudio.stream &",outfile,tmpdir,tmpdir);
+    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2-%d.ogv %s/livesaudio-%d.stream &",outfile,tmpdir,mypid,tmpdir,mypid);
     dummyvar=system(cmd);
   }
   else {
-    snprintf(cmd,8192,"oggTranscode %s/video.ogv \"%s\" &",tmpdir,outfile); 
+    printf("pt a2 %s %d\n",xfile,errno);
+    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv \"%s\" &",tmpdir,mypid,outfile); 
     dummyvar=system(cmd);
   }
   // open fifo for writing
 
-  make_path("stream.fifo");
+  make_path("stream",mypid,"fifo");
   yuv4mpeg->fd=open(xfile,O_WRONLY);
   dup2(yuv4mpeg->fd,1);
   close(yuv4mpeg->fd);
@@ -301,6 +305,7 @@ boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **re
 
 void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   int dummyvar;
+  int mypid=getpid();
 
   y4m_fini_stream_info(&(yuv4mpeg->streaminfo));
   y4m_fini_frame_info(&(yuv4mpeg->frameinfo));
@@ -313,11 +318,11 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 
   dummyvar=system("pkill -g 0 -P 1");
 
-  make_path("video.ogv");
+  make_path("video",mypid,"ogv");
   unlink(xfile);
-  make_path("video2.ogv");
+  make_path("video2",mypid,"ogv");
   unlink(xfile);
-  make_path("stream.fifo");
+  make_path("stream",mypid,"fifo");
   unlink(xfile);
 
 }

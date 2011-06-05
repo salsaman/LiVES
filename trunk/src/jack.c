@@ -556,9 +556,41 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  for (i=0;i<jackd->num_output_channels;i++) {
 	    sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite, jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, vol);
 	  }
-	  // TODO *** - handle case where jack output channels != 2
-	  nbytes=numFramesToWrite*4;
-	  audio_stream(cache_buffer->buffer16[0],nbytes,jackd->astream_fd);
+
+	  if (jackd->astream_fd!=-1) {
+	    unsigned char *xbuf=(unsigned char *)cache_buffer->buffer16[0];
+	    // audio streaming if enabled
+	    nbytes=numFramesToWrite*4;
+
+	    if (jackd->num_output_channels!=2) {
+	      // need to remap channels to stereo (assumed for now)
+	      size_t bysize=4,tsize=0;
+	      unsigned char *inbuf=(unsigned char *)cache_buffer->buffer16[0];
+	      xbuf=g_malloc(nbytes);
+	      
+	      if (jackd->num_output_channels==1) bysize=2;
+	      while (nbytes>0) {
+		memcpy(xbuf+tsize,inbuf,bysize);
+		tsize+=bysize;
+		nbytes-=bysize;
+		if (bysize==2) {
+		  // duplicate mono channel
+		  memcpy(xbuf+tsize,inbuf,bysize);
+		  tsize+=bysize;
+		  nbytes-=bysize;
+		  inbuf+=bysize;
+		}
+		else {
+		  // or skip extra channels
+		  inbuf+=jackd->num_output_channels*4;
+		}
+	      }
+	      nbytes=numFramesToWrite*4;
+	    }
+	    audio_stream(xbuf,nbytes,jackd->astream_fd);
+	    if (xbuf!=(unsigned char *)cache_buffer->buffer16[0]) g_free(xbuf);
+	  }
+
 	}
 	else {
 	  for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
@@ -573,9 +605,39 @@ static int audio_process (nframes_t nframes, void *arg) {
 	if (jackd->read_abuf>-1&&!jackd->mute) {
 	  sample_move_abuf_float(out_buffer,jackd->num_output_channels,nframes,jackd->sample_out_rate,vol);
 
-	  // TODO *** - handle channels != 2
-	  nbytes=nframes*4;
-	  audio_stream(out_buffer,nbytes,jackd->astream_fd);
+	  if (jackd->astream_fd!=-1) {
+	    // audio streaming if enabled
+	    unsigned char *xbuf=(unsigned char *)out_buffer;
+	    nbytes=numFramesToWrite*4;
+
+	    if (jackd->num_output_channels!=2) {
+	      // need to remap channels to stereo (assumed for now)
+	      size_t bysize=4,tsize=0;
+	      unsigned char *inbuf=(unsigned char *)out_buffer;
+	      xbuf=g_malloc(nbytes);
+	      
+	      if (jackd->num_output_channels==1) bysize=2;
+	      while (nbytes>0) {
+		memcpy(xbuf+tsize,inbuf,bysize);
+		tsize+=bysize;
+		nbytes-=bysize;
+		if (bysize==2) {
+		  // duplicate mono channel
+		  memcpy(xbuf+tsize,inbuf,bysize);
+		  tsize+=bysize;
+		  nbytes-=bysize;
+		  inbuf+=bysize;
+		}
+		else {
+		  // or skip extra channels
+		  inbuf+=jackd->num_output_channels*4;
+		}
+	      }
+	      nbytes=numFramesToWrite*4;
+	    }
+	    audio_stream(xbuf,nbytes,jackd->astream_fd);
+	    if (xbuf!=(unsigned char *)out_buffer) g_free(xbuf);
+	  }
 	}
 	else {
 	  for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);

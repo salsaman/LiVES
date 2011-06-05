@@ -346,6 +346,7 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
   // only FRAME events are moved, other event types retain the same timecodes
 
   weed_plant_t *out_list;
+  weed_plant_t *last_audio_event=NULL;
   weed_plant_t *event,*last_frame_event,*penultimate_frame_event,*next_frame_event,*shortcut=NULL;
   weed_timecode_t out_tc=0,in_tc=-1,nearest_tc=LONG_MAX;
   gboolean is_first=TRUE;
@@ -354,7 +355,7 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
   int numframes=0;
   weed_timecode_t tl=q_dbl(1./qfps,qfps);
   int error;
-  gboolean needs_audio=FALSE;
+  gboolean needs_audio=FALSE,add_audio=FALSE;
   int *aclips=NULL;
   double *aseeks=NULL;
   int num_aclips=0;
@@ -412,18 +413,14 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
 
     // now we are dealing with a FRAME event
     if (event!=NULL) {
-      if (weed_plant_has_leaf(event,"audio_clips")) {
+      if (last_audio_event!=event&&weed_plant_has_leaf(event,"audio_clips")) {
+	last_audio_event=event;
 	needs_audio=TRUE;
 	if (aclips!=NULL) weed_free(aclips);
 	if (aseeks!=NULL) weed_free(aseeks);
 	num_aclips=weed_leaf_num_elements(event,"audio_clips");
 	aclips=weed_get_int_array(event,"audio_clips",&error);
 	aseeks=weed_get_double_array(event,"audio_seeks",&error);
-	if (error==WEED_ERROR_MEMORY_ALLOCATION) {
-	  do_memory_error_dialog();
-	  event_list_free(out_list);
-	  return NULL;
-	}
       }
       in_tc=get_event_timecode (event);
       if ((next_frame_event=get_next_frame_event(event))!=NULL) {
@@ -450,6 +447,7 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
       numframes=weed_leaf_num_elements(event,"clips");
       out_clips=weed_get_int_array(event,"clips",&error);
       out_frames=weed_get_int_array(event,"frames",&error);
+      if (last_audio_event==event&&needs_audio) add_audio=TRUE;
       if (error==WEED_ERROR_MEMORY_ALLOCATION) {
 	do_memory_error_dialog();
 	event_list_free(out_list);
@@ -473,6 +471,7 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
 	    numframes=weed_leaf_num_elements(event,"clips");
 	    out_clips=weed_get_int_array(event,"clips",&error);
 	    out_frames=weed_get_int_array(event,"frames",&error);
+	    if (last_audio_event==event&&needs_audio) add_audio=TRUE;
 	    if (error==WEED_ERROR_MEMORY_ALLOCATION) {
 	      do_memory_error_dialog();
 	      event_list_free(out_list);
@@ -486,10 +485,10 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
 	    event_list_free(out_list);
 	    return NULL;
 	  }
-	  if (needs_audio) {
+	  if (add_audio) {
 	    weed_set_int_array(shortcut,"audio_clips",num_aclips,aclips);
 	    weed_set_double_array(shortcut,"audio_seeks",num_aclips,aseeks);
-	    needs_audio=FALSE;
+	    needs_audio=add_audio=FALSE;
 	  }
 	  nearest_tc=LONG_MAX;
 	  if (is_first) {

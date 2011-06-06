@@ -488,28 +488,30 @@ gboolean process_one (gboolean visible) {
 #endif
 
     
+    if (!mainw->ext_playback||(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
     // get time from soundcard
 
+
 #ifdef ENABLE_JACK
-    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
-      if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-	if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
-	else mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
-	time_source=LIVES_TIME_SOURCE_SOUNDCARD;
+      if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
+	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
+	  if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
+	  else mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
+	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
+	}
       }
-    }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
-      if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-	if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
-	else mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
-	time_source=LIVES_TIME_SOURCE_SOUNDCARD;
+      if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
+	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
+	  if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
+	  else mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
+	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
+	}
       }
-    }
 #endif
-
+    }
     if (time_source==LIVES_TIME_SOURCE_NONE) {
       // get time from system clock
       gettimeofday(&tv, NULL);

@@ -30,7 +30,7 @@ if ($command eq "play") {
 
     # TODO - channels, samps, signed, endian
 
-    system("mkfifo $outfifo");
+    #system("mkfifo $outfifo");
 
 
     #create outfifo; host should have already created infifo
@@ -39,7 +39,12 @@ if ($command eq "play") {
     # audio formats taken from lives/src/plugins.h
     if ($format==3) {
 	#vorbis
-	system("sox -t raw -r $arate -s -L -b 16 -c 2 $infifo -t vorbis $outfifo");
+	unless (`which oggenc 2>/dev/null` eq "") { 
+	    system("oggenc -r --ignorelength -R $arate -B 16 -C 2 -o $outfifo $infifo");
+	}
+	else {
+	    system("sox -t raw -r $arate -s -L -b 16 -c 2 $infifo -t vorbis $outfifo");
+	}
     }
     else {
 	exit 2;

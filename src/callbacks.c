@@ -25,6 +25,7 @@
 #include "events.h"
 #include "audio.h"
 #include "cvirtual.h"
+#include "paramwindow.h"
 
 #ifdef HAVE_YUV4MPEG
 #include "lives-yuv4mpeg.h"
@@ -404,6 +405,10 @@ void on_fileread_clicked (GtkFileChooser *fch, gpointer user_data) {
 
   if (GTK_IS_ENTRY(tentry)) gtk_entry_set_text(GTK_ENTRY(tentry),(tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)));
   else gtk_text_buffer_set_text (GTK_TEXT_BUFFER(tentry), (tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)), -1);
+
+  // force update to be recognized
+  if (g_object_get_data(G_OBJECT(tentry),"rfx")!=NULL) 
+    after_param_text_changed(tentry,g_object_get_data(G_OBJECT(tentry),"rfx"));
 
   g_free(tmp);
   g_free(text);

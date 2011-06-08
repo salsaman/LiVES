@@ -1713,7 +1713,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 10);
       g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)textbuffer);
 
-      if (rfx->status!=RFX_STATUS_WEED&&mainw->multitrack==NULL) {
+      if (rfx->status!=RFX_STATUS_WEED) {
 	blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), (gpointer) rfx);
       }
       else {
@@ -1725,6 +1725,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
       // store parameter so we know whose trigger to use
       g_object_set_data (G_OBJECT (textbuffer),"param_number",GINT_TO_POINTER (pnum));
+      g_object_set_data (G_OBJECT (textbuffer),"rfx",rfx);
     }
     else {
       if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
@@ -1742,6 +1743,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       
       // store parameter so we know whose trigger to use
       g_object_set_data (G_OBJECT (entry),"param_number",GINT_TO_POINTER (pnum));
+      g_object_set_data (G_OBJECT (entry),"rfx",rfx);
     }
 
     break;

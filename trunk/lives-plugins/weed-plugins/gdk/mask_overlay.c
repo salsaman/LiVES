@@ -191,10 +191,17 @@ int masko_init(weed_plant_t *inst) {
 
   pbuf=gdk_pixbuf_new_from_file(mfile,&gerr);
 
+  if (gerr!=NULL) {
+    weed_free(sdata->xmap);
+    weed_free(sdata->ymap);
+    g_object_unref(gerr);
+    sdata->xmap=sdata->ymap=NULL;
+  }
+  else {
+    make_mask(pbuf,mode,video_width,video_height,sdata->xmap,sdata->ymap);
+    gdk_pixbuf_unref(pbuf);
+  }
 
-  make_mask(pbuf,mode,video_width,video_height,sdata->xmap,sdata->ymap);
-
-  gdk_pixbuf_unref(pbuf);
   weed_free(mfile);
   weed_free(in_params);
 
@@ -211,8 +218,8 @@ int masko_deinit(weed_plant_t *inst) {
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
 
-  weed_free(sdata->xmap);
-  weed_free(sdata->ymap);
+  if (sdata->xmap!=NULL) weed_free(sdata->xmap);
+  if (sdata->ymap!=NULL) weed_free(sdata->ymap);
   weed_free(sdata);
 
   return WEED_NO_ERROR;
@@ -243,6 +250,9 @@ int masko_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_BGRA32||palette==WEED_PALETTE_ARGB32||palette==WEED_PALETTE_YUVA8888) psize=4;
 
+  sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
+
+  if (sdata->xmap==NULL||sdata->ymap==NULL) return WEED_NO_ERROR;
 
   dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
   src0=weed_get_voidptr_value(in_channels[0],"pixel_data",&error);
@@ -251,8 +261,6 @@ int masko_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   orow=weed_get_int_value(out_channel,"rowstrides",&error);
   irow0=weed_get_int_value(in_channels[0],"rowstrides",&error);
   irow1=weed_get_int_value(in_channels[1],"rowstrides",&error);
-
-  sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel,"offset")) {

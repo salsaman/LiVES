@@ -372,7 +372,7 @@ fi
 AM_CONDITIONAL(HAVE_UNICAP,$HAVE_UNICAP)
 
 dnl Check of -lv4l1
-AC_CHECK_LIB(v4l1,v4l1_ioctl)
+AC_CHECK_HEADERS(linux/videodev.h, HAVE_LIBv4l1=true, HAVE_LIBv4l1=false)
 AM_CONDITIONAL(HAVE_LIBv4l1,$HAVE_LIBv4l1)
 
 

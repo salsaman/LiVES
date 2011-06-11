@@ -4145,13 +4145,14 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
     d_u[0]=d_u[1]=s_u[0];
     d_v[0]=d_v[1]=s_v[0];
     for (j=2;j<width2;j+=2) {
-      d_u[j]=d_u[j+1]=s_u[(j>>1)];
-      d_v[j]=d_v[j+1]=s_v[(j>>1)];
+      d_u[j+1]=d_u[j]=s_u[(j>>1)];
+      d_v[j+1]=d_v[j]=s_v[(j>>1)];
       d_u[j-1]=avg_chroma(d_u[j-1],d_u[j]);
       d_v[j-1]=avg_chroma(d_v[j-1],d_v[j]);
       if (!chroma&&i>0) {
 	// pass 2
-	// average two src rows (e.g 2 with 1, 4 with 3, ... etc thus row 1 becomes average of chroma rows 0 and 1, etc.)
+	// average two src rows (e.g 2 with 1, 4 with 3, ... etc) for odd dst rows
+	// thus dst row 1 becomes average of src chroma rows 0 and 1, etc.)
 	d_u[j-width2]=avg_chroma(d_u[j-width2],d_u[j]);
 	d_v[j-width2]=avg_chroma(d_v[j-width2],d_v[j]);
 	d_u[j-1-width2]=avg_chroma(d_u[j-1-width2],d_u[j-1]);

@@ -3513,15 +3513,19 @@ static weed_plant_t **weed_channels_create (weed_plant_t *filter, gboolean in) {
     for (j=0;j<num_repeats;j++) {
       channels[ccount]=weed_plant_new(WEED_PLANT_CHANNEL);
       weed_set_plantptr_value(channels[ccount],"template",chantmpls[i]);
-      weed_set_int_value(channels[ccount],"current_palette",(pal=weed_get_int_value(chantmpls[i],"current_palette",&error)));
 
-      if (weed_palette_is_yuv_palette(pal)) {
-	if (!(weed_plant_has_leaf(chantmpls[i],"YUV_subspace"))||weed_get_int_value(chantmpls[i],"YUV_subspace",&error)==WEED_YUV_SUBSPACE_YUV) {
-	  // set to default for LiVES
-	  weed_set_int_value(channels[ccount],"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
-	}
-	else {
-	  weed_set_int_value(channels[ccount],"YUV_subspace",weed_get_int_value(chantmpls[i],"YUV_subspace",&error));
+      if (weed_plant_has_leaf(chantmpls[i],"current_palette")) {
+	// audio only channels dont have a "current_palette" !
+	weed_set_int_value(channels[ccount],"current_palette",(pal=weed_get_int_value(chantmpls[i],"current_palette",&error)));
+	
+	if (weed_palette_is_yuv_palette(pal)) {
+	  if (!(weed_plant_has_leaf(chantmpls[i],"YUV_subspace"))||weed_get_int_value(chantmpls[i],"YUV_subspace",&error)==WEED_YUV_SUBSPACE_YUV) {
+	    // set to default for LiVES
+	    weed_set_int_value(channels[ccount],"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
+	  }
+	  else {
+	    weed_set_int_value(channels[ccount],"YUV_subspace",weed_get_int_value(chantmpls[i],"YUV_subspace",&error));
+	  }
 	}
       }
 

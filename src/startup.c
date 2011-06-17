@@ -104,6 +104,7 @@ gboolean do_tempdir_query(void) {
   g_free (com);
 
   set_pref("tempdir",prefs->tmpdir);
+  set_pref("session_tempdir",prefs->tmpdir);
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
 

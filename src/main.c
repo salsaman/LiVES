@@ -1741,6 +1741,7 @@ void print_opthelp(void) {
   g_printerr("%s","\n");
   g_printerr("%s",_("opts can be:\n"));
   g_printerr("%s",_("-help            : show this help text and exit\n"));
+  g_printerr("%s",_("-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"));
   g_printerr("%s",_("-set <setname>   : autoload clip set setname\n"));
   g_printerr("%s",_("-noset           : do not load any set on startup\n"));
   g_printerr("%s",_("-norecover       : force no-loading of crash recovery\n"));
@@ -2041,6 +2042,7 @@ int main (int argc, char *argv[]) {
     else {
       struct option longopts[] = {
 	{"aplayer", 1, 0, 0},
+	{"tmpdir", 1, 0, 0},
 	{"set", 1, 0, 0},
 	{"noset", 0, 0, 0},
         {"devicemap", 1, 0, 0},
@@ -2085,6 +2087,13 @@ int main (int argc, char *argv[]) {
 	if (!strcmp(charopt,"recover")) {
 	  // auto recovery
 	  auto_recover=TRUE;
+	  continue;
+	}
+	if (!strcmp(charopt,"tmpdir")) {
+	  // override tempdir setting
+	  g_snprintf(prefs->tmpdir,256,"%s",optarg);
+	  g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
+	  set_pref("session_tempdir",prefs->tmpdir);
 	  continue;
 	}
 	if (!strcmp(charopt,"noset")) {
@@ -4435,6 +4444,9 @@ void switch_to_file(gint old_file, gint new_file) {
     if (old_file*new_file) mainw->preview_frame=0;
     if (old_file!=-1) {
       if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&(mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
+	gchar menutext[32768];
+	get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
+
 	if (!mainw->files[old_file]->opening) {
 	  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[old_file]->menuentry), NULL);
 	}
@@ -4443,6 +4455,7 @@ void switch_to_file(gint old_file, gint new_file) {
 	  gtk_widget_show (active_image);
 	  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[old_file]->menuentry), active_image);
 	}
+	set_menu_text(mainw->files[old_file]->menuentry,menutext,FALSE);
       }
       gtk_widget_set_sensitive (mainw->select_new, (cfile->insert_start>0));
       gtk_widget_set_sensitive (mainw->select_last, (cfile->undo_start>0));
@@ -4506,7 +4519,10 @@ void switch_to_file(gint old_file, gint new_file) {
     }
     gtk_widget_show (active_image);
     if (cfile->menuentry!=NULL) {
+      gchar menutext[32768];
+      get_menu_text_long(cfile->menuentry,menutext);
       gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (cfile->menuentry), active_image);
+      set_menu_text(cfile->menuentry,menutext,FALSE);
     }
     if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
      reget_afilesize (mainw->current_file);

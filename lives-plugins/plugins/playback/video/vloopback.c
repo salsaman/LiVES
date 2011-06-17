@@ -22,7 +22,15 @@ static int mypalette;
 #include <fcntl.h>
 #include <dirent.h>
 #include <unistd.h>
+
+#if v4l1_INCFILE == 2
+#include <libv4l1-videodev.h>
+#else
+#if v4l1_INCFILE == 1
 #include <linux/videodev.h>
+#endif
+#endif
+
 #include <sys/ioctl.h>
 
 static struct video_window x_vidwin;

@@ -1,3 +1,17 @@
+Version 1.4.5
+-------------
+Add -tmpdir startup option.
+Fix PAL formats in x264 encoder. *
+
+
+
+Version 1.4.4 (13 June 2011)
+----------------------------
+Fix compilation problem for missing linux/videodev.h
+
+
+
+
 Version 1.4.3 (11 June 2011)
 ----------------------------
 Fix important bug with audio shifting when leaving/re-entering multitrack mode. *

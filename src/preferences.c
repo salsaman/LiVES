@@ -504,16 +504,16 @@ apply_prefs(gboolean skip_warn) {
     }
   }
 
-  if (strcmp(tmpdir+strlen(tmpdir)-1,"/")) {
-    g_strappend(tmpdir,256,"/");
-  }
-
-  get_dirname(tmpdir);
+  ensure_isdir(tmpdir);
+  ensure_isdir(prefs->tmpdir);
+  ensure_isdir(future_prefs->tmpdir);
 
   if (strcmp(prefs->tmpdir,tmpdir)||strcmp (future_prefs->tmpdir,tmpdir)) {
     if (g_file_test (tmpdir, G_FILE_TEST_EXISTS)&&(strlen (tmpdir)<10||strncmp (tmpdir+strlen (tmpdir)-10,"/livestmp/",10))) g_strappend (tmpdir,256,"livestmp/");
+
     if (strcmp(prefs->tmpdir,tmpdir)||strcmp (future_prefs->tmpdir,tmpdir)) {
       gchar *msg;
+
       if (!check_dir_access (tmpdir)) {
 	tmp=g_filename_to_utf8(tmpdir,-1,NULL,NULL,NULL);
 	msg=g_strdup_printf (_ ("Unable to create or write to the new temporary directory.\nYou may need to create it as the root user first, e.g:\n\nmkdir %s; chmod 777 %s\n\nThe directory will not be changed now.\n"),tmp,tmp);

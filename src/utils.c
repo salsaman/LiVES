@@ -2166,6 +2166,7 @@ reset_clip_menu (void) {
 
   int i;
   GtkWidget *active_image=NULL;
+  gchar menutext[32768];
 
   for (i=1;i<=MAX_FILES;i++) {
     if (!(mainw->files[i]==NULL)) {
@@ -2184,7 +2185,9 @@ reset_clip_menu (void) {
 	gtk_widget_show (active_image);
       }
       if (mainw->files[i]->menuentry!=NULL) {
+	get_menu_text_long(mainw->files[i]->menuentry,menutext);
 	gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[i]->menuentry), active_image);
+	set_menu_text(mainw->files[i]->menuentry,menutext,FALSE);
 	gtk_widget_queue_draw(mainw->files[i]->menuentry);
       }
     }

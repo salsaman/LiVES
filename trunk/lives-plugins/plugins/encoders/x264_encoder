@@ -78,13 +78,13 @@ if ($command eq "get_formats") {
     
     print "mp4|h264/aac/mp4 (super high quality mp4)|32|none|mp4|\n";
     print "divx+|DivX Plus HD|32|fps=24;24000:1001;25;30000:1001;30,hblock=8,vblock=8,minw=320,minh=240,maxw=1920,maxh=1024|mkv|\n";
-    print "divx+|DivX Plus HD high framerate|32|fps=50;60000:1001;60,hblock=8,vblock=8,minw=320,minh=240,maxw=1280,maxh=720|mkv|\n";
+    print "divxh+|DivX Plus HD high framerate|32|fps=50;60000:1001;60,hblock=8,vblock=8,minw=320,minh=240,maxw=1280,maxh=720|mkv|\n";
     print "x264_br_1080p|x264 blu-ray 1080p NTSC (Experimental)|32|size=1920x1080,fps=24000:1001;24|mpg|\n"; # NTSC 1080p
-    print "x264_br_1080p|x264 blu-ray 1080p PAL (Experimental)|32|size=1920x1080,fps=25|mpg|\n"; # PAL 1080p
+    print "x264_br_1080pp|x264 blu-ray 1080p PAL (Experimental)|32|size=1920x1080,fps=25|mpg|\n"; # PAL 1080p
     print "x264_br_720p|x264 blu-ray 720p NTSC (Experimental)|32|size=1280x720,fps=60000:1001|mpg|\n"; # 720p
-    print "x264_br_720p|x264 blu-ray 720p PAL (Experimental)|32|size=1280x720,fps=50000:1001|mpg|\n"; # 720p
+    print "x264_br_720pp|x264 blu-ray 720p PAL (Experimental)|32|size=1280x720,fps=50000:1001|mpg|\n"; # 720p
     print "x264_br_720p|x264 blu-ray 720p 30 fps NTSC (Experimental)|32|size=1280x720,fps=30|mpg|\n"; # 720p
-    print "x264_br_720p|x264 blu-ray 720p 24/25 fps PAL (Experimental)|32|size=1280x720,fps=24;25|mpg|\n"; # 720p
+    print "x264_br_720pp|x264 blu-ray 720p 24/25 fps PAL (Experimental)|32|size=1280x720,fps=24;25|mpg|\n"; # 720p
 
     exit 0;
 }
@@ -94,7 +94,7 @@ if ($command eq "get_formats") {
 if ($command eq "encode") {
     # encode 
 
-    if ($otype eq "divx+" && &location("mkvmerge") eq "") {
+    if (($otype eq "divx+" ||$otype eq "divxh+") && &location("mkvmerge") eq "") {
 	print STDERR "You must install mkvmerge in order to create this file.\nTry installing the mkvtoolnix package.\n";
 	&sig_complete;
 	exit 1;
@@ -156,11 +156,11 @@ if ($command eq "encode") {
     if ($otype eq "mp4") {
 	$syscom="x264 --frames $end --crf 12 --threads auto --preset veryslow --tune animation $queuefile --fps $fps -o \"$ofile\"";
     }
-    elsif ($otype eq "divx+") {
+    elsif ($otype eq "divx+" || $otype eq "divxh+") {
 	$syscom="x264 --frames $end --no-mixed-refs --no-weightb --weightp 0 --ref 2 --threads auto --trellis 0 --vbv-maxrate=20000 --vbv-bufsize=25000 --level 40 --bframes 3 --keyint ".($fps*4.)." $queuefile --fps $fps -o \"$ofile\"";
     }
     else {
-	if ($fps<=30 && $otype eq "x264_br_720p") {
+	if ($fps<=30 && ($otype eq "x264_br_720p" || $otype eq "x264_br_720pp")) {
 	    # do we need this for 1024p ?
 	    $fi=" --fake-interlaced";
 	}
@@ -183,7 +183,7 @@ if ($command eq "encode") {
 
 	system("$syscom $err");
 
-	if ($otype ne "divx+") {
+	if ($otype ne "divx+" && $otype ne "divxh+") {
 	    $syscom="MP4Box -fps $fps -add $ofile -add temp.aac \"$nfile\"";
 	}
 	else {
@@ -196,7 +196,7 @@ if ($command eq "encode") {
 
     }
     else {
-	if ($otype ne "divx+") {
+	if ($otype ne "divx+" && $otype ne "divxh+") {
 	    $syscom="MP4Box -fps $fps -add $ofile -add temp.aac \"$nfile\"";
 	}
 	else {

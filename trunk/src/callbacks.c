@@ -143,6 +143,7 @@ lives_exit (void) {
       }
       g_snprintf(prefs->tmpdir,256,"%s",future_prefs->tmpdir);
     }
+    else if (!mainw->only_close) g_snprintf(future_prefs->tmpdir,256,"NULL");
 
     if (mainw->leave_files) {
       gchar *msg;

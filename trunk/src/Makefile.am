@@ -129,11 +129,6 @@ giw_CFLAGS=-DENABLE_GIW=1
 endif
 
 
-if HAVE_LIBv4l1
-v4l1_LDADD=-lv4l1
-endif
-
-
 lives_exe_SOURCES = \
 	main.c\
 	support.c support.h \

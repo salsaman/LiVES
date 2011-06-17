@@ -32,7 +32,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 # Do not change these except for testing !
 
 $background=1;
-$version="1.4.3";
+$version="1.4.5-svn";
 #$dyneversion="LIVES-20091209";
 
 
@@ -51,8 +51,17 @@ $home=$ENV{"HOME"};
 if (defined($ARGV[0])) {
     $command=$ARGV[0];
 
-    unless ($command eq "report"||$command eq "version") {
-	$tmpdir=&rc_get("tempdir");
+    unless ($command eq "version") {
+	my ($rcfile)=$home."/".$rc_filename;
+	if (-f $rcfile) {
+	    $tmpdir=&rc_get("session_tempdir");
+	    if ($tmpdir eq ""||$command eq "report") {
+		$tmpdir=&rc_get("tempdir");
+		$priority=1;
+		&rc_set("session_tempdir",$tmpdir);
+		$priority=0;
+	    }
+	}
     }
 
     if (!caller||$command eq "save"||$command eq "plugin_clear") {
@@ -5034,6 +5043,16 @@ sub rc_set {
 	$found=0;
 	while (<IN>) {
 	    $string=$_;
+	    if ($string=~/^#.*/) {
+		#ignore comments
+		print OUT $string;
+		next;
+	    }
+	    if ($priority==2) {
+		print OUT "\n<$key>\n$value\n</$key>";
+		$found=1;
+		$priority=1;
+	    }
 	    if ($found==0||$part==1) {
 		if ($part==1||$_=~ /^(<$key>)/) {
 		    if ($skip_if_exist==1) {
@@ -5046,7 +5065,7 @@ sub rc_set {
 		    if ($part==0) {
 			$part=1;
 			if ($delpref==0) {
-			    print OUT "$1$2\n$value\n</$key>\n";
+			    print OUT "$1$2\n$value\n</$key>";
 			}
 			else {
 			    #$date=&get_current_date;
@@ -5071,7 +5090,13 @@ sub rc_set {
 	    }
 	}
 	if ($found==0&&$delpref==0) {
-	    print OUT "\n<$key>\n$value\n</$key>\n";
+	    if ($priority==1) {
+		$priority=2;
+		&rc_set($key,$value);
+	    }
+	    else {
+		print OUT "\n<$key>\n$value\n</$key>\n";
+	    }
 	}
     }
     close IN;

@@ -78,7 +78,7 @@ else {
 }
 
 
-$builder_version="1.4.3";
+$builder_version="1.4.5-svn";
 
 if ($in_channels==0&&$properties&0x0004) {
     #batch mode generator

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-06-16 23:12-0300\n"
+"POT-Creation-Date: 2011-06-17 14:18-0300\n"
 "PO-Revision-Date: 2010-06-30 09:14+0000\n"
 "Last-Translator: Liel Fridman <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -663,7 +663,7 @@ msgstr "_ביטול"
 msgid "_Redo"
 msgstr "ב_צע שוב"
 
-#: src/main.c:4372 src/interface.c:639 src/gui.c:2113 src/preferences.c:2330
+#: src/main.c:4372 src/interface.c:639 src/gui.c:2113 src/preferences.c:2328
 #: src/resample.c:1743
 msgid "Video"
 msgstr "וידאו"
@@ -1313,7 +1313,7 @@ msgstr "שם האוסף "
 msgid "Use def_aults"
 msgstr "שימוש בברי_רות המחדל"
 
-#: src/interface.c:1945 src/interface.c:2301 src/preferences.c:2879
+#: src/interface.c:1945 src/interface.c:2301 src/preferences.c:2877
 msgid "_Advanced"
 msgstr "_מתקדם"
 
@@ -1404,7 +1404,7 @@ msgstr "גובה"
 msgid "Driver"
 msgstr "מנהל התקן"
 
-#: src/interface.c:2453 src/preferences.c:3391
+#: src/interface.c:2453 src/preferences.c:3389
 msgid "Output format"
 msgstr "סוג קובץ פלט"
 
@@ -5133,7 +5133,7 @@ msgid "effect"
 msgstr "אפקט"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects-weed.c:251 src/preferences.c:3549
+#: src/effects-weed.c:251 src/preferences.c:3547
 msgid "Effects"
 msgstr "אפקטים"
 
@@ -6514,7 +6514,7 @@ msgstr ""
 "\n"
 "התיקייה לא תשתנה כעת.\n"
 
-#: src/preferences.c:531
+#: src/preferences.c:529
 msgid ""
 "You have chosen to change the temporary directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
@@ -6532,7 +6532,7 @@ msgstr ""
 "\n"
 "לחילופין, ניתן ללחוץ על ביטול כדי לשחזר את התיקייה הזמנית להגדרתה המקורית."
 
-#: src/preferences.c:885
+#: src/preferences.c:883
 msgid ""
 "\n"
 "Unable to switch audio players to jack - jackd must be installed first.\n"
@@ -6542,7 +6542,7 @@ msgstr ""
 "לא ניתן להחליף את נגן השמע לjack - jackd חייב להיות מותקן קודם.\n"
 "למידע נוסף, ניתן להיכנס לאתר http://jackaudio.org\n"
 
-#: src/preferences.c:889
+#: src/preferences.c:887
 msgid ""
 "\n"
 "Switching audio players requires restart (jackd must not be running)\n"
@@ -6550,7 +6550,7 @@ msgstr ""
 "\n"
 "החלפת נגן השמע מחייבת הפעלה מחדש (אסור שjackd ירוץ)\n"
 
-#: src/preferences.c:911
+#: src/preferences.c:909
 msgid ""
 "\n"
 "Unable to switch audio players to pulse audio\n"
@@ -6562,67 +6562,67 @@ msgstr ""
 "חובה להתקין את pulseaudio קודם.\n"
 "למידע נוסף: http://www.pulseaudio.org\n"
 
-#: src/preferences.c:1194
+#: src/preferences.c:1192
 msgid "PCM (highest quality; largest files)"
 msgstr "PCM(האיכות הגבוהה ביותר; הקבצים הגדולים ביותר)"
 
-#: src/preferences.c:1827
+#: src/preferences.c:1825
 msgid "LiVES: - Preferences"
 msgstr "LiVES: - העדפות"
 
-#: src/preferences.c:1900
+#: src/preferences.c:1898
 msgid "Open file selection maximised"
 msgstr "פתיחת בחירת קובץ בגודל מלא"
 
-#: src/preferences.c:1919
+#: src/preferences.c:1917
 msgid "Show recent files in the File menu"
 msgstr "הצגת הקבצים האחרונים בתפריט הקובץ"
 
-#: src/preferences.c:1942
+#: src/preferences.c:1940
 msgid "Stop screensaver on playback    "
 msgstr "הפסקת שומר המסך בעת נגינה    "
 
-#: src/preferences.c:1961
+#: src/preferences.c:1959
 msgid "Open main window maximised"
 msgstr "פתיחת החלון הראשי בגודל מלא"
 
-#: src/preferences.c:1984
+#: src/preferences.c:1982
 msgid "Show toolbar when background is blanked"
 msgstr "הצגת סרגל הכלים כשהרקע ריק"
 
-#: src/preferences.c:2003
+#: src/preferences.c:2001
 msgid "Allow mouse wheel to switch clips"
 msgstr "מתן אפשרות  להחלפת קטעים באמצעות גלגלת העכבר"
 
-#: src/preferences.c:2026
+#: src/preferences.c:2024
 msgid "Shrink previews to fit in interface"
 msgstr ""
 
-#: src/preferences.c:2047
+#: src/preferences.c:2045
 msgid "Startup mode:"
 msgstr "מצב עלייה:"
 
-#: src/preferences.c:2058
+#: src/preferences.c:2056
 msgid "_Clip editor"
 msgstr "_עורך קטעים"
 
-#: src/preferences.c:2078
+#: src/preferences.c:2076
 msgid "_Multitrack mode"
 msgstr "_מצב מרובה רצועות"
 
-#: src/preferences.c:2143
+#: src/preferences.c:2141
 msgid "Multi-head support"
 msgstr "תמיכה בריבוי צגים"
 
-#: src/preferences.c:2156
+#: src/preferences.c:2154
 msgid " monitor number for LiVES interface"
 msgstr " מספר צגים עבור הממשק של LiVES"
 
-#: src/preferences.c:2171
+#: src/preferences.c:2169
 msgid " monitor number for playback"
 msgstr " מספר צגים לנגינה"
 
-#: src/preferences.c:2184
+#: src/preferences.c:2182
 #, fuzzy
 msgid ""
 "A setting of 0 means use all available monitors (only works with some "
@@ -6631,287 +6631,287 @@ msgstr ""
 "הגדרה כ־0 משמעותה שימוש בכל הצגים הזמינים\n"
 "(עובד רק עם תוספי נגינה מסויימים)"
 
-#: src/preferences.c:2197
+#: src/preferences.c:2195
 msgid "Force single monitor"
 msgstr "הכרחת שימוש בצג בודד"
 
-#: src/preferences.c:2212
+#: src/preferences.c:2210
 msgid "Force single monitor mode"
 msgstr "הכרחת מצב צג בודד"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2233
+#: src/preferences.c:2231
 msgid "GUI"
 msgstr "מנשק"
 
-#: src/preferences.c:2247
+#: src/preferences.c:2245
 msgid "When entering Multitrack mode:"
 msgstr "כאשר נכנסים למצב המרובה־רצועות:"
 
-#: src/preferences.c:2266
+#: src/preferences.c:2264
 msgid "_Prompt me for width, height, fps and audio settings"
 msgstr "_מתן אפשרות לקבוע  רוחב, גובה, שקופיות לשנייה והגדרות שמע"
 
-#: src/preferences.c:2285
+#: src/preferences.c:2283
 msgid "_Always use the following values:"
 msgstr "_שימוש בערכים הבאים:"
 
-#: src/preferences.c:2305
+#: src/preferences.c:2303
 msgid "Use these same _values for rendering a new clip"
 msgstr "שימוש באותם _ערכים עבור עיבוד הוידאו והשמע לקטע חדש"
 
-#: src/preferences.c:2343
+#: src/preferences.c:2341
 msgid "_Width           "
 msgstr "_רוחב           "
 
-#: src/preferences.c:2359
+#: src/preferences.c:2357
 msgid "          _Height      "
 msgstr "          _גובה      "
 
-#: src/preferences.c:2376
+#: src/preferences.c:2374
 #, fuzzy
 msgid "          _FPS"
 msgstr "          _שקופיות לשנייה      "
 
-#: src/preferences.c:2402
+#: src/preferences.c:2400
 msgid "Enable backing audio track"
 msgstr "הצגת רצועת מוזיקת רקע"
 
-#: src/preferences.c:2422
+#: src/preferences.c:2420
 msgid "Audio track per video track"
 msgstr "רצועת שמע לכל רצועת וידאו"
 
-#: src/preferences.c:2452
+#: src/preferences.c:2450
 msgid "    _Undo buffer size (MB)    "
 msgstr "    _ביטול גודל החוצץ (מ\"ב)    "
 
-#: src/preferences.c:2468
+#: src/preferences.c:2466
 msgid "_Exit multitrack mode after rendering"
 msgstr "_יציאה ממצב מרובה־רצועות אחרי עיבוד תמונה ושמע"
 
-#: src/preferences.c:2489
+#: src/preferences.c:2487
 msgid "Auto backup layouts"
 msgstr "גיבוי פריסות אוטומטי"
 
-#: src/preferences.c:2499
+#: src/preferences.c:2497
 msgid "_Every"
 msgstr "_בכל"
 
-#: src/preferences.c:2516
+#: src/preferences.c:2514
 msgid "seconds"
 msgstr "שניות"
 
-#: src/preferences.c:2535
+#: src/preferences.c:2533
 msgid "After every _change"
 msgstr "לאחר כל _שינוי"
 
-#: src/preferences.c:2554
+#: src/preferences.c:2552
 msgid "_Never"
 msgstr "_לעולם לא"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2588
+#: src/preferences.c:2586
 msgid "Multitrack/Render"
 msgstr "ריבוי רצועות\\עיבוד תמונה ושמע"
 
-#: src/preferences.c:2604
+#: src/preferences.c:2602
 msgid "Video open command             "
 msgstr "פקודת פתיחת הוידאו             "
 
-#: src/preferences.c:2624
+#: src/preferences.c:2622
 msgid "Open/render compression                  "
 msgstr "פתיחה\\עיבוד דחיסה                  "
 
-#: src/preferences.c:2636
+#: src/preferences.c:2634
 msgid " %     ( lower = slower, larger files; for jpeg, higher quality )"
 msgstr ""
 " % ( נמוך יותר = איטי יותר, קבצים גדולים יותר; ל־jpeg, איכות גבוהה יותר )"
 
-#: src/preferences.c:2649
+#: src/preferences.c:2647
 msgid "Default image format          "
 msgstr "ברירת המחדל של סוג התמונה          "
 
-#: src/preferences.c:2658
+#: src/preferences.c:2656
 msgid "_jpeg"
 msgstr "_jpeg"
 
-#: src/preferences.c:2673
+#: src/preferences.c:2671
 msgid "_png"
 msgstr "_png"
 
-#: src/preferences.c:2693
+#: src/preferences.c:2691
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
 msgstr "עמרי"
 
-#: src/preferences.c:2707
+#: src/preferences.c:2705
 msgid "Use instant opening when possible"
 msgstr "שימוש בפתיחה מיידית כשהדבר אפשרי"
 
-#: src/preferences.c:2718
+#: src/preferences.c:2716
 msgid "Enable instant opening of some file types using decoder plugins"
 msgstr "אפשור פתיחה מיידית של סוגי קבצים מסויימים בעזרת תוספים למפענח"
 
-#: src/preferences.c:2723
+#: src/preferences.c:2721
 msgid "Enable automatic deinterlacing when possible"
 msgstr "אפשור פירוק אוטומטי כשהדבר אפשרי"
 
-#: src/preferences.c:2735
+#: src/preferences.c:2733
 msgid "Automatically deinterlace frames when a plugin suggests it"
 msgstr "אפשור פירוק שקופיות כאשר תוסף מבקש זאת"
 
-#: src/preferences.c:2748
+#: src/preferences.c:2746
 msgid "When opening multiple files, concatenate images into one clip"
 msgstr "בפתיחת קבצים מרובים, יש לאחד את התמונות לקטע אחד"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2769
+#: src/preferences.c:2767
 msgid "Decoding"
 msgstr "פענוח"
 
-#: src/preferences.c:2793
+#: src/preferences.c:2791
 msgid "The preview quality for video playback - affects resizing"
 msgstr "איכות תצוגת נגינת הוידאו - משפיע על שינויי גודל"
 
-#: src/preferences.c:2795
+#: src/preferences.c:2793
 msgid "Preview _quality"
 msgstr "_איכות תצוגה"
 
-#: src/preferences.c:2806
+#: src/preferences.c:2804
 msgid "Low - can improve performance on slower machines"
 msgstr "נמוך - יכול לשפר את הביצועים במחשבים איטיים יותר"
 
-#: src/preferences.c:2807
+#: src/preferences.c:2805
 msgid "Normal - recommended for most users"
 msgstr "רגיל - מומלץ לרוב המשתמשים"
 
-#: src/preferences.c:2808
+#: src/preferences.c:2806
 msgid "High - can improve quality on very fast machines"
 msgstr "גבוה - יכול לשפר את האיכות במחשבים מהירים מאד"
 
-#: src/preferences.c:2831
+#: src/preferences.c:2829
 msgid "_Show FPS statistics"
 msgstr "הצגת נתונים סטטיסטיים לגבי השקופיות לשנייה"
 
-#: src/preferences.c:2861
+#: src/preferences.c:2859
 msgid "_Plugin"
 msgstr "_תוסף"
 
-#: src/preferences.c:2905
+#: src/preferences.c:2903
 #, fuzzy
 msgid "Stream audio"
 msgstr "דגימת שמע מחדש"
 
-#: src/preferences.c:2916
+#: src/preferences.c:2914
 #, fuzzy
 msgid "Stream audio to playback plugin"
 msgstr "מספר השקופיות מקושר למצביע הנגינה"
 
-#: src/preferences.c:2923
+#: src/preferences.c:2921
 msgid "VIDEO"
 msgstr "וידאו"
 
-#: src/preferences.c:2946
+#: src/preferences.c:2944
 msgid "_Player"
 msgstr "_נגן"
 
-#: src/preferences.c:2984
+#: src/preferences.c:2982
 msgid "(See also the Jack Integration tab for jack startup options)"
 msgstr ""
 
-#: src/preferences.c:3015
+#: src/preferences.c:3013
 msgid "mplayer"
 msgstr "mplayer"
 
-#: src/preferences.c:3025
+#: src/preferences.c:3023
 msgid "Audio play _command"
 msgstr "_פקודת נגינת שמע"
 
-#: src/preferences.c:3043
+#: src/preferences.c:3041
 msgid "- internal -"
 msgstr "- פנימי -"
 
-#: src/preferences.c:3055
+#: src/preferences.c:3053
 msgid "Audio follows video _rate/direction"
 msgstr "התאמת השמע ל_קצב\\כיוון הוידאו"
 
-#: src/preferences.c:3076
+#: src/preferences.c:3074
 msgid "Audio follows _clip switches"
 msgstr "התאמת השמע למיתוג _קטעים"
 
-#: src/preferences.c:3094
+#: src/preferences.c:3092
 msgid "AUDIO"
 msgstr "שמע"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3108
+#: src/preferences.c:3106
 msgid "Playback"
 msgstr "נגינה"
 
-#: src/preferences.c:3120
+#: src/preferences.c:3118
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
 msgstr ""
 
-#: src/preferences.c:3148
+#: src/preferences.c:3146
 msgid "      What to record when 'r' is pressed   "
 msgstr "      מה להקליט כאשר 'r' נלחץ   "
 
-#: src/preferences.c:3162
+#: src/preferences.c:3160
 msgid "_Frame changes"
 msgstr "שינויי _שקופיות"
 
-#: src/preferences.c:3190
+#: src/preferences.c:3188
 msgid "F_PS changes"
 msgstr "שינויי ש_קופיות לשנייה"
 
-#: src/preferences.c:3224
+#: src/preferences.c:3222
 msgid "_Real time effects"
 msgstr "אפקטים בזמן _אמת"
 
-#: src/preferences.c:3248
+#: src/preferences.c:3246
 msgid "_Clip switches"
 msgstr "החלפה בין _קטעים"
 
-#: src/preferences.c:3276
+#: src/preferences.c:3274
 msgid "_Audio (requires jack or pulse audio player)"
 msgstr "_שמע (אפשרות זו מחייבת את נגן השמע jack או pulse )"
 
-#: src/preferences.c:3314
+#: src/preferences.c:3312
 msgid "Pause recording if free disk space falls below"
 msgstr ""
 
-#: src/preferences.c:3328
+#: src/preferences.c:3326
 msgid "GB"
 msgstr "ג\"ב"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3339
+#: src/preferences.c:3337
 msgid "Recording"
 msgstr "מקליט"
 
-#: src/preferences.c:3353
+#: src/preferences.c:3351
 msgid "      Encoder                  "
 msgstr "      מקודד                  "
 
-#: src/preferences.c:3438
+#: src/preferences.c:3436
 msgid "Audio codec"
 msgstr "מקודד שמע"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3453
+#: src/preferences.c:3451
 msgid "Encoding"
 msgstr "מקודד"
 
-#: src/preferences.c:3465
+#: src/preferences.c:3463
 msgid "Use _antialiasing when resizing"
 msgstr "שימוש ב_החלקת עקומות בעת שינויי גודל"
 
-#: src/preferences.c:3486
+#: src/preferences.c:3484
 msgid "Number of _real time effect keys"
 msgstr "מספר מקשי אפקטים בזמן _אמת"
 
-#: src/preferences.c:3499
+#: src/preferences.c:3497
 msgid ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
@@ -6919,150 +6919,150 @@ msgstr ""
 "מספר מקשים \"מדומים\" של אפקטים בזמן אמת. ניתן לשלוט בהם דרך חלון האפקטים "
 "בזמן אמת, או דרך הרשת (OSC)."
 
-#: src/preferences.c:3505
+#: src/preferences.c:3503
 msgid "Use _threads where possible when applying effects"
 msgstr ""
 
-#: src/preferences.c:3527
+#: src/preferences.c:3525
 #, fuzzy
 msgid "Number of _threads"
 msgstr "מספר _שקופיות"
 
-#: src/preferences.c:3559
+#: src/preferences.c:3557
 msgid "      Video load directory (default)      "
 msgstr "      תיקיית טעינת וידאו (ברירת מחדל)      "
 
-#: src/preferences.c:3570
+#: src/preferences.c:3568
 msgid "      Video save directory (default) "
 msgstr "      תיקיית שמירת וידאו (ברירת מחדל) "
 
-#: src/preferences.c:3581
+#: src/preferences.c:3579
 msgid "      Audio load directory (default) "
 msgstr "      תיקיית טעינת שמע (ברירת מחדל) "
 
-#: src/preferences.c:3592
+#: src/preferences.c:3590
 msgid "      Image directory (default) "
 msgstr "      תיקיית תמונה (ברירת מחדל) "
 
-#: src/preferences.c:3603
+#: src/preferences.c:3601
 msgid "      Backup/Restore directory (default) "
 msgstr "      גיבוי\\שחזור תיקייה (ברירת מחדל) "
 
-#: src/preferences.c:3614
+#: src/preferences.c:3612
 msgid "      Temp directory (do not remove) "
 msgstr "      תיקייה זמנית (אין להסירה) "
 
-#: src/preferences.c:3633
+#: src/preferences.c:3631
 msgid "The default directory for loading video clips from"
 msgstr "תיקיית ברירת המחדל ממנה טוענים קטעים"
 
-#: src/preferences.c:3662
+#: src/preferences.c:3660
 msgid "The default directory for saving encoded clips to"
 msgstr "תיקיית ברירת המחדל לשמירת קטעים מקודדים."
 
-#: src/preferences.c:3674
+#: src/preferences.c:3672
 msgid "The default directory for loading and saving audio"
 msgstr "תיקיית ברירת המחדל לטעינת ושמירת שמע"
 
-#: src/preferences.c:3686
+#: src/preferences.c:3684
 msgid "The default directory for saving frameshots to"
 msgstr "תיקיית ברירת המחדל לשמירת תצלומי שקופיות"
 
-#: src/preferences.c:3698
+#: src/preferences.c:3696
 msgid "The default directory for backing up/restoring single clips"
 msgstr "תיקיית ברירת המחדל לגיבוי\\שחזור קטעים בודדים"
 
-#: src/preferences.c:3710
+#: src/preferences.c:3708
 msgid "LiVES working directory."
 msgstr "תיקיית העבודה של LiVES."
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3786
+#: src/preferences.c:3784
 msgid "Directories"
 msgstr "תיקיות"
 
-#: src/preferences.c:3812
+#: src/preferences.c:3810
 msgid ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
 msgstr "אזהרה בהוספה\\מיזוג אם קצב ה_שקופיות לא מתאים לקצב של הבחירה"
 
-#: src/preferences.c:3835
+#: src/preferences.c:3833
 msgid "Warn on Open if file _size exceeds "
 msgstr "הצגת אזהרה בפתיחה אם _גודל הקובץ עובר את "
 
-#: src/preferences.c:3858
+#: src/preferences.c:3856
 msgid " MB"
 msgstr " מ\"ב"
 
-#: src/preferences.c:3868
+#: src/preferences.c:3866
 msgid "Show a warning before saving a se_t"
 msgstr "הצגת אזהרה לפני שמירת א_וסף"
 
-#: src/preferences.c:3887
+#: src/preferences.c:3885
 msgid ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
 msgstr ""
 
-#: src/preferences.c:3906
+#: src/preferences.c:3904
 msgid "Show a warning if no _rendered effects are found at startup."
 msgstr "הצגת אזהרה אם לא נמצאו אפקטים _מוכנים בהפעלה."
 
-#: src/preferences.c:3925
+#: src/preferences.c:3923
 msgid "Show a warning if no _encoder plugins are found at startup."
 msgstr "הצגת אזהרה אם לא נמצאו תוספים _למקודד בהפעלה."
 
-#: src/preferences.c:3944
+#: src/preferences.c:3942
 msgid "Show a warning if a _duplicate set name is entered."
 msgstr "הצגת אזהרה אם ישנה _כפילות בשם האוסף שהוכנס."
 
-#: src/preferences.c:3963
+#: src/preferences.c:3961
 msgid "When a set is loaded, warn if clips are missing from _layouts."
 msgstr "הצגת אזהרה לגבי קטעים חסרים ב_פריסות כשאוסף נטען."
 
-#: src/preferences.c:3983
+#: src/preferences.c:3981
 msgid "Warn if a clip used in a layout is about to be closed."
 msgstr "הצגת אזהרה אם קטע שנמצא באחת הפריסות עומד להיסגר."
 
-#: src/preferences.c:4002
+#: src/preferences.c:4000
 msgid "Warn if frames used in a layout are about to be deleted."
 msgstr "הצגת אזהרה אם שקופיות הנמצאות בשימוש ע\"י פריסה עומדות להימחק."
 
-#: src/preferences.c:4021
+#: src/preferences.c:4019
 msgid "Warn if frames used in a layout are about to be shifted."
 msgstr "הצגת אזהרה אם שקופיות הנמצאות בשימוש ע\"י פריסה עומדים לזוז."
 
-#: src/preferences.c:4040
+#: src/preferences.c:4038
 msgid "Warn if frames used in a layout are about to be altered."
 msgstr "הצגת אזהרה אם השקופיות הנמצאות בשימוש ע\"י פריסה עומדות להשתנות."
 
-#: src/preferences.c:4059
+#: src/preferences.c:4057
 msgid "Warn if audio used in a layout is about to be deleted."
 msgstr "הצגת אזהרה אם שמע הנמצא בשימוש ע\"י פריסה עומד להימחק."
 
-#: src/preferences.c:4078
+#: src/preferences.c:4076
 msgid "Warn if audio used in a layout is about to be shifted."
 msgstr "הצגת אזהרה אם שמע הנמצא בשימוש בפריסה עומד לזוז."
 
-#: src/preferences.c:4097
+#: src/preferences.c:4095
 msgid "Warn if audio used in a layout is about to be altered."
 msgstr "הצגת אזהרה אם שמע הנמצא בשימוש בפריסה עומד להשתנות."
 
-#: src/preferences.c:4116
+#: src/preferences.c:4114
 msgid "Popup layout errors after clip changes."
 msgstr ""
 
-#: src/preferences.c:4135
+#: src/preferences.c:4133
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
 msgstr "הצגת אזהרה אם הפריסה לא נשמרה בעת יציאה ממצב ריבוי הרצועות"
 
-#: src/preferences.c:4154
+#: src/preferences.c:4152
 msgid ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
 msgstr "הצגת אזהרה אם ריבוי הרצועות אינו מכיל ערוצי שמע, ופריסה עם שמע נטענה."
 
-#: src/preferences.c:4173
+#: src/preferences.c:4171
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
@@ -7070,241 +7070,241 @@ msgstr ""
 "הזהר אם ריבוי הרצועות מכיל ערוצי שמע ונגן השמע שלך אינו \"jack\" או \"pulse "
 "audio\"."
 
-#: src/preferences.c:4192
+#: src/preferences.c:4190
 msgid "Show info message after importing from firewire device."
 msgstr "הצגת הודעת מידע אחרי ייבוא מהתקן firewire"
 
-#: src/preferences.c:4213
+#: src/preferences.c:4211
 msgid "Show a warning before opening a yuv4mpeg stream (advanced)."
 msgstr "הצגת אזהרה לפני פתיחת זרימת yuv4mpeg (מתקדם)."
 
-#: src/preferences.c:4234
+#: src/preferences.c:4232
 msgid "Show a warning when multitrack is low on backup space."
 msgstr "הצגת אזהרה כשריבוי הרצועות דל בשטח גיבוי."
 
-#: src/preferences.c:4253
+#: src/preferences.c:4251
 msgid "Show a warning advising cleaning of disk space after a crash."
 msgstr "הצג אזהרה מייעץ ניקוי שטח דיסק לאחר התרסקות."
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4274
+#: src/preferences.c:4272
 msgid "Warnings"
 msgstr "אזהרות"
 
-#: src/preferences.c:4286
+#: src/preferences.c:4284
 msgid "Midi synch (requires the files midistart and midistop)"
 msgstr "סינכרון Midi (מחייב את הקבצים midistart ו־midistop)"
 
-#: src/preferences.c:4310
+#: src/preferences.c:4308
 msgid "When inserting/merging frames:  "
 msgstr "כאשר מוסיפים\\ממזגים שקופיות:  "
 
-#: src/preferences.c:4320
+#: src/preferences.c:4318
 msgid "_Speed Up/Slow Down Insertion"
 msgstr "_האצה\\האטה של התוספת"
 
-#: src/preferences.c:4336
+#: src/preferences.c:4334
 msgid "_Resample Insertion"
 msgstr "_דגימת התוספת מחדש"
 
-#: src/preferences.c:4353
+#: src/preferences.c:4351
 msgid "Pause xmms during audio playback"
 msgstr "השהיית xmms בזמן נגינת שמע"
 
-#: src/preferences.c:4376
+#: src/preferences.c:4374
 msgid "CD device           "
 msgstr "התקן תקליטורים           "
 
-#: src/preferences.c:4393
+#: src/preferences.c:4391
 msgid "LiVES: Choose CD device"
 msgstr "LiVES: בחירת התקן תקליטורים"
 
-#: src/preferences.c:4415
+#: src/preferences.c:4413
 msgid "LiVES can load audio tracks from this CD"
 msgstr "LiVES יכול לטעון רצועות שמע מתקליטור זה"
 
-#: src/preferences.c:4421
+#: src/preferences.c:4419
 msgid "Default FPS        "
 msgstr "ברירת מחדל של שקופיות לשנייה        "
 
-#: src/preferences.c:4434
+#: src/preferences.c:4432
 msgid "Frames per second to use when none is specified"
 msgstr "מספר שקופיות לשנייה לשימוש כאשר לא סופק אחר"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4440
+#: src/preferences.c:4438
 msgid "Misc"
 msgstr "שונות"
 
-#: src/preferences.c:4454
+#: src/preferences.c:4452
 msgid "New theme:           "
 msgstr "ערכת נושא חדשה:           "
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4488
+#: src/preferences.c:4486
 msgid "Themes"
 msgstr "ערכות נושא"
 
-#: src/preferences.c:4502
+#: src/preferences.c:4500
 msgid "Download bandwidth (Kb/s)       "
 msgstr "רוחב פס הורדה (ק\"ב\\שנייה)       "
 
-#: src/preferences.c:4524
+#: src/preferences.c:4522
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
 msgstr "חובה להדר את LiVES בלי \"configure --disable-OSC\" כדי להשתמש ב־OMC"
 
-#: src/preferences.c:4538
+#: src/preferences.c:4536
 msgid "OMC remote control enabled"
 msgstr "שליטה מרחוק על OMC מאופשרת"
 
-#: src/preferences.c:4558
+#: src/preferences.c:4556
 msgid "UDP port       "
 msgstr "פותחת UDP       "
 
-#: src/preferences.c:4574
+#: src/preferences.c:4572
 msgid "Start OMC on startup"
 msgstr "הפעלת OMC בהפעלת LiVES"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4607
+#: src/preferences.c:4605
 msgid "Streaming/Networking"
 msgstr "זרימה\\רשת"
 
-#: src/preferences.c:4617
+#: src/preferences.c:4615
 msgid "Jack transport"
 msgstr "העברת Jack"
 
-#: src/preferences.c:4632
+#: src/preferences.c:4630
 msgid ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
 msgstr ""
 "חובה להדר את LiVES עם jack/transport.h וjack\\jack.h כדי להשתמש בהעברת Jack"
 
-#: src/preferences.c:4643
+#: src/preferences.c:4641
 msgid "Jack _transport config file"
 msgstr "קובץ הגדרות _תעבורת Jack"
 
-#: src/preferences.c:4658
+#: src/preferences.c:4656
 msgid "The name of the jack server which can control LiVES transport"
 msgstr "שם שרת ה־Jack שיכול לשלוט על התעבורה של LiVES."
 
-#: src/preferences.c:4661 src/preferences.c:4842
+#: src/preferences.c:4659 src/preferences.c:4840
 msgid "Start _server on LiVES startup"
 msgstr "הפעלת ה_שרת בהפעלת LiVES"
 
-#: src/preferences.c:4683
+#: src/preferences.c:4681
 msgid "Jack transport _master (start and stop)"
 msgstr ""
 
-#: src/preferences.c:4701
+#: src/preferences.c:4699
 msgid "Jack transport _client (start and stop)"
 msgstr ""
 
-#: src/preferences.c:4723
+#: src/preferences.c:4721
 msgid "Jack transport sets start position"
 msgstr ""
 
-#: src/preferences.c:4748
+#: src/preferences.c:4746
 msgid "Jack transport timebase slave"
 msgstr ""
 
-#: src/preferences.c:4769
+#: src/preferences.c:4767
 msgid "(See also Playback -> Audio follows video rate/direction)"
 msgstr ""
 
-#: src/preferences.c:4792
+#: src/preferences.c:4790
 msgid "Jack audio"
 msgstr "שמע Jack"
 
-#: src/preferences.c:4800
+#: src/preferences.c:4798
 msgid "LiVES must be compiled with jack/jack.h present to use jack audio"
 msgstr "חובה להדר את LiVES עם jack\\jack.h כדי להשתמש בשמע jack"
 
-#: src/preferences.c:4807
+#: src/preferences.c:4805
 msgid ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
 msgstr "מחובתך לקבוע את נגן השמע ל\"jack\" בלשונית הנגינה כדי להשתמש בשמע jack"
 
-#: src/preferences.c:4818
+#: src/preferences.c:4816
 msgid "Jack _audio server config file"
 msgstr "קובץ הגדרות שרת ה_שמע Jack"
 
-#: src/preferences.c:4834
+#: src/preferences.c:4832
 msgid "The name of the jack server for audio"
 msgstr "שם שרת הjack לשמע"
 
-#: src/preferences.c:4861
+#: src/preferences.c:4859
 msgid "Play audio even when transport is _paused"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4887
+#: src/preferences.c:4885
 msgid "Jack Integration"
 msgstr "שילוב עם Jack"
 
-#: src/preferences.c:4896
+#: src/preferences.c:4894
 msgid "Events to respond to:"
 msgstr "אירועים להגבה:"
 
-#: src/preferences.c:4907
+#: src/preferences.c:4905
 msgid "_Joystick events"
 msgstr "אירועי _מוט היגוי"
 
-#: src/preferences.c:4928
+#: src/preferences.c:4926
 msgid "_Joystick device"
 msgstr "התקן _מוט היגוי"
 
-#: src/preferences.c:4943
+#: src/preferences.c:4941
 msgid "The joystick device, e.g. /dev/input/js0"
 msgstr "התקן מוט ההיגוי, לדוגמה /dev/input/js0"
 
-#: src/preferences.c:4950
+#: src/preferences.c:4948
 msgid "LiVES: Choose joystick device"
 msgstr "LiVES: בחירת התקן מוט היגוי"
 
-#: src/preferences.c:4965
+#: src/preferences.c:4963
 msgid "_MIDI events"
 msgstr "אירועי _MIDI"
 
-#: src/preferences.c:4991
+#: src/preferences.c:4989
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
 msgstr "יצירת ערוץ MIDI ב־ALSA שאליו יכולים להתחבר התקני MIDI אחרים"
 
-#: src/preferences.c:4992
+#: src/preferences.c:4990
 msgid "Use _ALSA MIDI (recommended)"
 msgstr "שימוש ב־MIDI של _ALSA"
 
-#: src/preferences.c:5011
+#: src/preferences.c:5009
 msgid "Use _raw MIDI"
 msgstr "שימוש ב־MIDI לא דחוס"
 
-#: src/preferences.c:5024
+#: src/preferences.c:5022
 msgid "Read directly from the MIDI device"
 msgstr "קריאה ישירות מהתקן ה־MIDI"
 
-#: src/preferences.c:5036
+#: src/preferences.c:5034
 msgid "_MIDI device"
 msgstr "התקן _MIDI"
 
-#: src/preferences.c:5051
+#: src/preferences.c:5049
 msgid "The MIDI device, e.g. /dev/input/midi0"
 msgstr "התקן הMIDI, לדוגמה /dev/input/midi0"
 
-#: src/preferences.c:5058
+#: src/preferences.c:5056
 msgid "LiVES: Choose MIDI device"
 msgstr "LiVES: בחירת התקן MIDI"
 
-#: src/preferences.c:5074
+#: src/preferences.c:5072
 msgid "Advanced"
 msgstr "מתקדם"
 
-#: src/preferences.c:5085
+#: src/preferences.c:5083
 msgid "MIDI check _rate"
 msgstr "_תדר בדיקת MIDI"
 
-#: src/preferences.c:5098
+#: src/preferences.c:5096
 msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
@@ -7312,24 +7312,24 @@ msgstr ""
 "מספר בדיקות MIDI לכל נקישת מקלדת. העלאת התדר אולי תגרום לשיפור תגובות הMIDI, "
 "אבל עלולה להאט את הנגינה."
 
-#: src/preferences.c:5100
+#: src/preferences.c:5098
 msgid "MIDI repeat"
 msgstr "ביצוע חוזר של MIDI"
 
-#: src/preferences.c:5113
+#: src/preferences.c:5111
 msgid "Number of non-reads allowed between succesive reads."
 msgstr "מספר אי־קריאות מותר בין קריאות מוצלחות"
 
-#: src/preferences.c:5119
+#: src/preferences.c:5117
 msgid "(Warning: setting this value too high can slow down playback.)"
 msgstr "(אזהרה: הגדלה מוגזמת של ערך זה עלולה להאט את הנגינה.)"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5141
+#: src/preferences.c:5139
 msgid "MIDI/Joystick learner"
 msgstr "לומד MIDI\\מוט היגוי"
 
-#: src/preferences.c:5395
+#: src/preferences.c:5393
 msgid ""
 "\n"
 "LiVES will now shut down. You need to restart it for the directory change to "
@@ -7340,17 +7340,17 @@ msgstr ""
 "LiVES יכבה עכשיו. יש צורך להפעילו מחדש כדי ששינוי התיקייה יחול.\n"
 "נא ללחוץ על אישור.\n"
 
-#: src/preferences.c:5437
+#: src/preferences.c:5435
 msgid ""
 "For the directory change to take effect LiVES will restart when preferences "
 "dialog closes."
 msgstr ""
 
-#: src/preferences.c:5441
+#: src/preferences.c:5439
 msgid "Theme changes will not take effect until the next time you start LiVES."
 msgstr "שינויי ערכת הנושא לא ישפיעו עד הפעלת LiVES הבאה."
 
-#: src/preferences.c:5445
+#: src/preferences.c:5443
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr "אפשרויות הJack לא יישתנו עד ההפעלה הבאה של LiVES."
 

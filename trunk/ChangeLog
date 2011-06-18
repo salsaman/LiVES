@@ -2,6 +2,7 @@ Version 1.4.5
 -------------
 Add -tmpdir startup option.
 Fix PAL formats in x264 encoder. *
+Add fewer blank lines to ~/.lives file. *
 
 
 

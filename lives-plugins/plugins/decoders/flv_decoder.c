@@ -110,8 +110,6 @@ typedef struct {
 } lives_flv_priv_t;
 
 
-static int lives_palettes[2];
-
 ////////////////////////////////////////////////////////////////////////////
 
 static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
@@ -251,15 +249,17 @@ static void detach_stream (lives_clip_data_t *cdata) {
   cdata->seek_flag=0;
 
   if (priv->ctx!=NULL) {
-    avcodec_flush_buffers (priv->ctx);
     avcodec_close(priv->ctx);
     av_free(priv->ctx);
   }
+
   if (priv->picture!=NULL) av_free(priv->picture);
 
   priv->ctx=NULL;
   priv->codec=NULL;
   priv->picture=NULL;
+
+  if (cdata->palettes!=NULL) free(cdata->palettes);
 
   close(priv->fd);
 }
@@ -670,7 +670,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
   if (ctx->colorspace==AVCOL_SPC_BT709) cdata->YUV_subspace=WEED_YUV_SUBSPACE_BT709;
 
-  cdata->palettes=lives_palettes;
+  cdata->palettes=(int *)malloc(2*sizeof(int));
 
   cdata->palettes[0]=pix_fmt_to_palette(ctx->pix_fmt,&cdata->YUV_clamping);
   cdata->palettes[1]=WEED_PALETTE_END;
@@ -773,7 +773,7 @@ static lives_clip_data_t *init_cdata (void) {
   priv->codec=NULL;
   priv->picture=NULL;
 
-  avcodec_init();
+  cdata->palettes=NULL;
   
   return cdata;
 }

@@ -521,7 +521,6 @@ apply_prefs(gboolean skip_warn) {
 	do_blocking_error_dialog (msg);
       }
       else {
-	,0
 	g_snprintf(future_prefs->tmpdir,256,"%s",tmpdir);
 	set_temp_label_text(GTK_LABEL(prefsw->temp_label));
 	gtk_widget_queue_draw(prefsw->temp_label);

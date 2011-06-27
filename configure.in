@@ -345,6 +345,28 @@ AM_CONDITIONAL(HAVE_SDL,$HAVE_SDL)
 AM_CONDITIONAL(FORCE_SDL,$FORCE_SDL)
 
 
+HAVE_AVCODEC=false
+HAVE_AVFORMAT=false
+
+AC_ARG_ENABLE( ffmpeg, [  --disable-ffmpeg            Disable ffmpeg (avcodec) support.] , disable_ffmpeg=yes)
+if test "x$disable_ffmpeg" != "xyes" ; then
+
+dnl check for avcodec, avformat
+
+PKG_CHECK_MODULES(LIBAVCODEC,libavcodec,HAVE_AVCODEC=true,HAVE_AVCODEC=false)
+AC_SUBST(LIBAVCODEC_CFLAGS)
+AC_SUBST(LIBAVCODEC_LIBS)
+
+PKG_CHECK_MODULES(LIBAVFORMAT,libavformat,HAVE_AVFORMAT=true,HAVE_AVFORMAT=false)
+AC_SUBST(LIBAVFORMAT_CFLAGS)
+AC_SUBST(LIBAVFORMAT_LIBS)
+
+fi
+
+AM_CONDITIONAL(HAVE_AVCODEC,$HAVE_AVCODEC)
+AM_CONDITIONAL(HAVE_AVFORMAT,$HAVE_AVFORMAT)
+
+
 
 HAVE_MJPEGTOOLS=false
 AC_ARG_ENABLE( mjpegtools, [  --disable-mjpegtools    Disable mjpegtools (yuv4mpeg) support.] , disable_mjpegtools=yes)

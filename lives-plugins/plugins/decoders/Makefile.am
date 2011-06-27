@@ -41,17 +41,20 @@ endif
 endif
 
 
-##experimental, does not work too well (fps and duration are often wrong; cannot seek to exact frame)
-#if HAVE_AVFORMAT
-#AVFORMAT_CFLAGS = -I /usr/include
-#AVFORMAT_LIBS = -pthread -lavformat -lavcodec -lz -lbz2 -lfaac -lfaad -lmp3lame -lopencore-amrnb -lopencore-amrwb -ltheoraenc -ltheoradec -logg -lvpx -lx264 -lm -ljack -lX11 -lXext -lXfixes -lasound -ldl -lavutil
-#avformat_libs = libzz_avformat_decoder.la
-#libzz_avformat_decoder_la_SOURCES = avformat_decoder.c avformat_decoder.h
-#libzz_avformat_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(AVFORMAT_CFLAGS)
-#libzz_avformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVFORMAT_LIBS)
-#endif
+
+if HAVE_AVFORMAT
+if HAVE_AVCODEC
+flv_libs = flv_decoder.la
+FLVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
+FLVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
+flv_decoder_la_SOURCES = flv_decoder.c #flv_decoder.h
+flv_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(FLVDEC_CFLAGS)
+flv_decoder_la_LDFLAGS = $(shared_ldflags) $(FLVDEC_LIBS)
+endif
+endif
 
 
-decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs)
+
+decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs)
 
 EXTRA_DIST = decplugin.h

@@ -1944,7 +1944,6 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile) {
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
 
-    //#define DEBUG_DECPLUG
 #ifdef DEBUG_DECPLUG
     g_print("trying decoder %s\n",dpsys->name);
 #endif

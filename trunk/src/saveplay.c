@@ -654,6 +654,10 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	subtitles_init(cfile,subfname,subtype);
 	g_free(subfname);
       }
+      else {
+	g_free(isubfname);
+	isubfname=NULL;
+      }
     }
   }
 

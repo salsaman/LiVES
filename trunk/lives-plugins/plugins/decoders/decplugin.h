@@ -71,14 +71,14 @@ typedef struct {
   /// for primary pixel plane
   int offs_x;
   int offs_y;
-  int frame_width;
+  int frame_width;  ///< frame is the surrounding part, including any black border (>=width)
   int frame_height;
 
-  float par; ///< pixel aspect ratio
+  float par; ///< pixel aspect ratio (sample width / sample height)
 
   float fps;
 
-  int *palettes;
+  int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END 
 
   /// plugin should init this to palettes[0] if URI changes
   int current_palette;  ///< current palette [rw host]; must be contained in palettes
@@ -112,6 +112,8 @@ const char *version(void);
 /// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
 ///
 /// plugin may or may not check current_palette to see if it is valid
+
+// should be threadsafe, and clip_data should be freed with clip_data_free() when no longer required
 
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *clip_data);
 

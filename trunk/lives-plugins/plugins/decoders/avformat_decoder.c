@@ -381,12 +381,17 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	    if (cdata->par==0) cdata->par=1;
 
 	    cdata->fps=cc->time_base.den/cc->time_base.num;
+	    
+	    if (ctx->ticks_per_frame==2) {
+	      // needs checking
+	      cdata->fps/=2.;
+	      cdata->interlace=LIVES_INTERLACE_BOTTOM;
+	    }
 
-	    fprintf(stderr,"fps is %.4f %ld\n",cdata->fps,s->nb_frames);
+	    fprintf(stderr,"fps is %.4f\n",cdata->fps);
 
-	    cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
-
-	    if (cdata->fps==1000.&&s->nb_frames>1) cdata->nframes=s->nb_frames;
+	    //cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
+	    //if (cdata->fps==1000.&&s->nb_frames>1) cdata->nframes=s->nb_frames;
 
 	    priv->vstream=i;
 

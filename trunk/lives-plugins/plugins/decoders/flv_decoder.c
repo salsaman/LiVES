@@ -22,8 +22,6 @@ const char *plugin_version="LiVES flv decoder version 0.1";
 
 #include <libavcodec/avcodec.h>
 
-#define INBUF_SIZE 4096000
-
 ////////////////////////////////////////////////////
 
 // system header flags
@@ -281,8 +279,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   size_t offs=0;
   double num_val,fps,lasttimestamp=-1.;
 
-  uint8_t inbuf[INBUF_SIZE + FF_INPUT_BUFFER_PADDING_SIZE];
-
   AVCodec *codec=NULL;
   AVCodecContext *ctx;
 
@@ -321,6 +317,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->input_position=4+((header[5]&0xFF)<<24)+((header[6]&0xFF)<<16)+((header[7]&0xFF)<<8)+((header[8]&0xFF));
 
   cdata->fps=0.;
+  cdata->width=cdata->frame_width=cdata->height=cdata->frame_height=0;
+  cdata->offs_x=cdata->offs_y=0;
+
+  cdata->arate=0;
+  cdata->achans=0;
+  cdata->asamps=16;
 
   pack=(lives_flv_pack_t *)malloc(sizeof(lives_flv_pack_t));
 
@@ -480,12 +482,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  if (!hasaudio) {
-    cdata->arate=0;
-    cdata->achans=0;
-    cdata->asamps=16;
-  }
-
   if (!haskeyframes) {
     // cant seek, so not good
     fprintf(stderr, "flv_decoder: non-seekable file %s\n",cdata->URI);
@@ -554,7 +550,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       got_vstream=TRUE;
 
       vcodec = flags & FLV_VIDEO_CODECID_MASK;
-
 
       // let avcodec do some of the work now
 
@@ -635,13 +630,14 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   lives_flv_parse_pack_header(cdata,pack);
 
+  pack->data=malloc(pack->size-priv->pack_offset);
+
   if (priv->pack_offset!=0) lseek(priv->fd,priv->pack_offset,SEEK_CUR);
 
-  memset(inbuf + INBUF_SIZE, 0, FF_INPUT_BUFFER_PADDING_SIZE);
-
   av_init_packet(&priv->avpkt);
-  priv->avpkt.size=read (priv->fd, inbuf, INBUF_SIZE);
-  priv->avpkt.data = inbuf;
+  priv->avpkt.size=read (priv->fd, pack->data, pack->size-priv->pack_offset);
+  priv->input_position+=pack->size+4;
+  priv->avpkt.data = pack->data;
 
   priv->picture = avcodec_alloc_frame();
 
@@ -651,6 +647,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
+  free(pack->data);
   free(pack);
 
   if (!got_picture) {
@@ -658,8 +655,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     detach_stream(cdata);
     return FALSE;
   }
-
-  priv->input_position+=pack->size+4;
 
   cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
   if (ctx->color_range==AVCOL_RANGE_MPEG) cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;

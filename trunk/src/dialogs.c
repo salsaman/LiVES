@@ -156,9 +156,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   GtkWidget *warning_cancelbutton=NULL;
   GtkWidget *warning_okbutton=NULL;
 
-  dialog2 = gtk_dialog_new ();
   switch (diat) {
   case LIVES_DIALOG_WARN:
+    dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Warning !"));
     mainw->warning_label = gtk_label_new (_("warning"));
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
@@ -167,6 +167,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
+    dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Question"));
     mainw->warning_label = gtk_label_new (_("question"));
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-no");
@@ -181,11 +182,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_widget_modify_bg(dialog2, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_modal (GTK_WINDOW (dialog2), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog2), GTK_WIN_POS_CENTER);
-  gtk_window_set_default_size (GTK_WINDOW (dialog2), 350, 200);
+  //gtk_window_set_position (GTK_WINDOW (dialog2), GTK_WIN_POS_CENTER);
+  //gtk_window_set_default_size (GTK_WINDOW (dialog2), 350, 200);
   gtk_window_set_deletable(GTK_WINDOW(dialog2), FALSE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog2),transient);
 
   gtk_label_set_text(GTK_LABEL(mainw->warning_label),text);
 

@@ -3087,7 +3087,6 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
     else {
       if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&frame<=sfile->frames&&sfile->frame_index[frame-1]>=0) {
 	lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
-
 	if (target_palette!=dplug->cdata->current_palette) {
 	  // try to switch palette
 	  if (decplugin_supports_palette(dplug,target_palette)) {
@@ -4964,7 +4963,7 @@ resize (gdouble scale) {
     }
   }
 
-  if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&!cfile->opening) {
+  if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       load_start_image(cfile->start);

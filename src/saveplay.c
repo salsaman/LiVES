@@ -226,6 +226,10 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	if (frames>0&&cfile->frames>frames) cfile->frames=frames;
 	
+	cfile->start=1;
+	cfile->end=cfile->frames;
+	create_frame_index(mainw->current_file,TRUE,cfile->fps*(start==0?0:start-1),frames==0?cfile->frames:frames);
+
 	cfile->arate=cfile->arps=cdata->arate;
 	cfile->achans=cdata->achans;
 	cfile->asampsize=cdata->asamps;
@@ -251,6 +255,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 	  gchar *afile=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
 	  msgstr=g_strdup_printf(_("Opening audio for %s"),file_name);
+
+	  if (mainw->playing_file==-1) resize(1);
 
 	  mainw->cancelled=CANCEL_NONE;
 
@@ -299,7 +305,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  }
 
 	  cfile->opening_only_audio=TRUE;
-	  do_threaded_dialog(msgstr,TRUE);
+	  if (mainw->playing_file==-1) do_threaded_dialog(msgstr,TRUE);
 
 	  (dplug->decoder->rip_audio)(cdata,afile,(cfile->fps*start+.5),frames,NULL);
 
@@ -345,6 +351,10 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    g_free(tmp);
 	    tmp=NULL;
 	    
+	    // if we have a quick-opening file, display the first and last frames now
+	    // for some codecs this can be helpful since we can locate the last frame while audio is loading
+	    if (cfile->clip_type==CLIP_TYPE_FILE&&mainw->playing_file==-1) resize(1);
+
 	    msgstr=g_strdup_printf(_("Opening audio"),file_name);
 	    if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
 	      // user cancelled or switched to another clip
@@ -388,7 +398,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
     
     if (cfile->ext_src!=NULL) {
-      create_frame_index(mainw->current_file,TRUE,cfile->fps*(start==0?0:start-1),frames==0?cfile->frames:frames);
       if (mainw->open_deint) {
 	// override what the plugin says
 	cfile->deinterlace=TRUE;
@@ -489,7 +498,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       do_quick_switch (current_file);
     }
     else {
-      switch_to_file((mainw->current_file=old_file),current_file);
+      switch_to_file((mainw->current_file=(cfile->clip_type!=CLIP_TYPE_FILE)?old_file:current_file),current_file);
     }
 
     cfile->opening=TRUE;

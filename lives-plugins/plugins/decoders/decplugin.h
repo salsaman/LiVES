@@ -141,7 +141,7 @@ void module_unload(void);
 #define MK_FOURCC(a, b, c, d) ((a<<24)|(b<<16)|(c<<8)|d)
 
 
-
+#define ABS(a) ((a)>=0.?(a):-(a))
 
 
 

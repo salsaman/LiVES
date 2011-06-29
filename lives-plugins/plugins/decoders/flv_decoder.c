@@ -95,6 +95,19 @@ typedef struct {
 } lives_flv_pack_t;
 
 
+
+// TODO - this is a lazy implementation - for speed we should use bi-directional skip-lists
+
+typedef struct _index_entry index_entry;
+
+struct _index_entry {
+  index_entry *next; ///< ptr to next entry
+  int32_t dts;    ///< max dts for this keyframe
+  int64_t offs;  ///< offset in file
+};
+
+
+
 typedef struct {
   int fd;
   int pack_offset;
@@ -105,6 +118,10 @@ typedef struct {
   AVFrame *picture;
   AVPacket avpkt;
   int64_t last_frame;
+  index_entry *idxhh;  ///< head of head list (always first frame)
+  index_entry *idxht; ///< tail of head list
+  index_entry *idxth; ///< head of tail list
+  int tdts; ///< exact dts of idxth
 } lives_flv_priv_t;
 
 
@@ -157,14 +174,49 @@ static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
 }
 
 
+//////////////////////////////////////////////////////////////////
+
+static void index_free(index_entry *idx) {
+  index_entry *cidx=idx,*next;
+
+  while (cidx!=NULL) {
+    next=cidx->next;
+    free(cidx);
+    cidx=next;
+  }
+}
+
+
+
 //////////////////////////////////////////////
 
 /// here we assume that pts of interframes > pts of previous keyframe
 // should be true for most formats (except eg. dirac)
 
+// we further assume that pts == dts for all frames
+
 static int64_t get_pos_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_flv_priv_t *priv=cdata->priv;
+  int dtsh,dtst,tdist,hdist;
   return priv->data_start;  // for testing
+
+
+  // see which is nearest - the tail of the head list or the head of the tail list
+  if (priv->idxht==NULL) dtsh=0; // no head list, therefore the last entry is dts 0
+  else {
+    index_entry *idx=priv->idxht;
+    dtsh=idx->dts;
+  }
+
+  // if no tail list, the first entry is the last dts in the file
+  if (priv->idxth==NULL) dtst=(int)((double)(cdata->nframes-1.)*1000./cdata->fps);
+  else dtst=priv->tdst;
+
+  hdist=ABS(pts-dtsh);
+  tdist=ABS(pts-dtst);
+
+
+
 }
 
 
@@ -184,8 +236,6 @@ static int get_last_dts(int fd) {
 
   if (read (fd, data, 4) < 4) return -1;
   dts=((data[3]&0xFF)<<24)+((data[0]&0xFF)<<16)+((data[1]&0xFF)<<8)+(data[2]&0xFF); // milliseconds
-
-  printf("got vals %d and %d\n",tagsize,dts);
 
   return dts;
 }
@@ -257,6 +307,14 @@ static void detach_stream (lives_clip_data_t *cdata) {
   priv->codec=NULL;
   priv->picture=NULL;
 
+  if (priv->idxhh!=NULL) index_free(priv->idxhh);
+  if (priv->idxth!=NULL&&priv->idxth!=priv->idxht) index_free(priv->idxth);
+
+  priv->idxhh=NULL;
+  priv->idxht=NULL;
+  priv->idxth=NULL;
+
+
   if (cdata->palettes!=NULL) free(cdata->palettes);
 
   close(priv->fd);
@@ -323,6 +381,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->arate=0;
   cdata->achans=0;
   cdata->asamps=16;
+
+  priv->idxhh=NULL;
+  priv->idxht=NULL;
+  priv->idxth=NULL;
 
   pack=(lives_flv_pack_t *)malloc(sizeof(lives_flv_pack_t));
 

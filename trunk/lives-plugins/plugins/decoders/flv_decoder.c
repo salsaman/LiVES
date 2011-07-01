@@ -102,8 +102,9 @@ typedef struct _index_entry index_entry;
 
 struct _index_entry {
   index_entry *next; ///< ptr to next entry
-  int32_t dts;    ///< max dts for this keyframe
-  int64_t offs;  ///< offset in file
+  int32_t dts; ///< dts of keyframe
+  int32_t dts_max;    ///< max dts for this keyframe
+  uint64_t offs;  ///< offset in file
 };
 
 
@@ -117,12 +118,14 @@ typedef struct {
   AVCodecContext *ctx;
   AVFrame *picture;
   AVPacket avpkt;
-  int64_t last_frame;
+  int64_t last_frame; ///< last frame displayed
   index_entry *idxhh;  ///< head of head list (always first frame)
   index_entry *idxht; ///< tail of head list
   index_entry *idxth; ///< head of tail list
-  int tdts; ///< exact dts of idxth
 } lives_flv_priv_t;
+
+index_entry *index_upto(const lives_clip_data_t *, int pts);
+index_entry *index_downto(const lives_clip_data_t *, int pts);
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -173,95 +176,25 @@ static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
     }
 }
 
-
-//////////////////////////////////////////////////////////////////
-
-static void index_free(index_entry *idx) {
-  index_entry *cidx=idx,*next;
-
-  while (cidx!=NULL) {
-    next=cidx->next;
-    free(cidx);
-    cidx=next;
-  }
-}
-
-
-
 //////////////////////////////////////////////
 
-/// here we assume that pts of interframes > pts of previous keyframe
-// should be true for most formats (except eg. dirac)
 
-// we further assume that pts == dts for all frames
-
-static int64_t get_pos_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
-  lives_flv_priv_t *priv=cdata->priv;
-  int dtsh,dtst,tdist,hdist;
-  return priv->data_start;  // for testing
-
-
-  // see which is nearest - the tail of the head list or the head of the tail list
-  if (priv->idxht==NULL) dtsh=0; // no head list, therefore the last entry is dts 0
-  else {
-    index_entry *idx=priv->idxht;
-    dtsh=idx->dts;
-  }
-
-  // if no tail list, the first entry is the last dts in the file
-  if (priv->idxth==NULL) dtst=(int)((double)(cdata->nframes-1.)*1000./cdata->fps);
-  else dtst=priv->tdst;
-
-  hdist=ABS(pts-dtsh);
-  tdist=ABS(pts-dtst);
-
-
-
+static int frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
+  return (int)((double)(frame)*1000./cdata->fps);
 }
 
-
-
-
-
-static int get_last_dts(int fd) {
-  int tagsize;
-  int dts;
-  unsigned char data[4];
-
-  lseek(fd,-4,SEEK_END);
-  if (read (fd, data, 4) < 4) return -1;
-  tagsize=((data[0]&0xFF)<<24)+((data[1]&0xFF)<<16)+((data[2]&0xFF)<<8)+(data[3]&0xFF);
-
-  lseek(fd,-tagsize,SEEK_END);
-
-  if (read (fd, data, 4) < 4) return -1;
-  dts=((data[3]&0xFF)<<24)+((data[0]&0xFF)<<16)+((data[1]&0xFF)<<8)+(data[2]&0xFF); // milliseconds
-
-  return dts;
+static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
+  return (int64_t)((double)dts/1000.*cdata->fps+.5);
 }
-
-//////////////////////////////////////////////
-
-static int amf_get_string(unsigned char *inp, char *buf, size_t size) {
-  size_t len=(inp[0]<<8)+inp[1];
-
-  if (len>=size) {
-    memset(buf,0,1);
-    return -1;
-  }
-
-  memcpy(buf,inp+2,len);
-  memset(buf+len,0,1);
-  return len+2;
-}
-
-
 
 static double getfloat64(unsigned char *data) {
   int64_t v=(((int64_t)(data[0]&0xFF)<<56)+((int64_t)(data[1]&0xFF)<<48)+((int64_t)(data[2]&0xFF)<<40)+((int64_t)(data[3]&0xFF)<<32)+((int64_t)(data[4]&0xFF)<<24)+((int64_t)(data[5]&0xFF)<<16)+((int64_t)(data[6]&0XFF)<<8)+(int64_t)(data[7]&0xFF));
   return ldexp(((v&((1LL<<52)-1)) + (1LL<<52)) * (v>>63|1), (v>>52&0x7FF)-1075);
 }
 
+
+
+//////////////////////////////////////////////////////////////////
 
 static boolean lives_flv_parse_pack_header(const lives_clip_data_t *cdata, lives_flv_pack_t *pack) {
   lives_flv_priv_t *priv=cdata->priv;
@@ -290,6 +223,305 @@ static boolean lives_flv_parse_pack_header(const lives_clip_data_t *cdata, lives
   return TRUE;
 }
 
+
+static int32_t get_last_tagsize(const lives_clip_data_t *cdata) {
+  lives_flv_priv_t *priv=cdata->priv;
+  unsigned char data[4];
+
+  if (read (priv->fd, data, 4) < 4) return -1;
+  return ((data[0]&0xFF)<<24)+((data[1]&0xFF)<<16)+((data[2]&0xFF)<<8)+(data[3]&0xFF);
+}
+
+
+
+static off_t get_last_packet_pos(const lives_clip_data_t *cdata) {
+  lives_flv_priv_t *priv=cdata->priv;
+  int32_t tagsize;
+  off_t offs=lseek(priv->fd,-4,SEEK_END);
+
+  tagsize=get_last_tagsize(cdata);
+
+  return offs-tagsize;
+}
+
+
+static int get_last_video_dts(const lives_clip_data_t *cdata) {
+  lives_flv_priv_t *priv=cdata->priv;
+  lives_flv_pack_t pack;
+  int delta,tagsize;
+  unsigned char flags;
+  off_t offs;
+
+  priv->input_position=get_last_packet_pos(cdata);
+
+  while (1) {
+    if (!lives_flv_parse_pack_header(cdata,&pack)) return -1;
+    delta=-15;
+    if (pack.type==FLV_TAG_TYPE_VIDEO) {
+      if (read (priv->fd, &flags, 1) < 1) return -1;
+      if (!((flags & 0xF0)==0x50)) break;
+      delta-=1;
+    }
+    // rewind to previous packet
+    offs=lseek(priv->fd,delta,SEEK_CUR);
+    if (offs<=0) return -1;
+    tagsize=get_last_tagsize(cdata);
+    priv->input_position-=15+tagsize;
+  }
+  return pack.dts;
+}
+
+
+static boolean is_keyframe(int fd) {
+  unsigned char data[2];
+
+  // read 6 bytes
+  if (read (fd, data, 2) < 2) return FALSE;
+
+  if ((data[0]&0xF0)==0x10) return TRUE;
+
+  if ((data[0]&0xF0)==0x50 && data[1]==0) return TRUE; // TODO *** - h264 ? may need to seek to next video frame
+
+  return FALSE;
+}
+
+
+/////////////////////////////////////////////////////
+
+static void index_free(index_entry *idx) {
+  index_entry *cidx=idx,*next;
+
+  while (cidx!=NULL) {
+    next=cidx->next;
+    free(cidx);
+    cidx=next;
+  }
+}
+
+
+
+/// here we assume that pts of interframes > pts of previous keyframe
+// should be true for most formats (except eg. dirac)
+
+// we further assume that pts == dts for all frames
+
+
+static index_entry *index_walk(index_entry *idx, int pts) {
+  while(idx!=NULL) {
+    if (pts>=idx->dts&&pts<=idx->dts_max) return idx;
+    idx=idx->next;
+  }
+  /// oops. something went wrong
+  return NULL; 
+}
+
+
+index_entry *index_upto(const lives_clip_data_t *cdata, int pts) {
+  lives_flv_priv_t *priv=cdata->priv;
+  lives_flv_pack_t pack;
+  index_entry *nidx=priv->idxht,*oldht=nidx;
+  int last_dts=frame_to_dts(cdata,cdata->nframes-1);
+
+  if (nidx==NULL) priv->input_position=priv->data_start;
+  else priv->input_position=nidx->offs;
+
+  while (1) {
+    if (!lives_flv_parse_pack_header(cdata,&pack)) return NULL;
+
+    if (pack.dts>(last_dts>>1)||(priv->idxth!=NULL&&pack.dts>=priv->idxth->dts)) {
+      // handle case where we cross the mid point, or head and tail list have met
+      if (priv->idxth!=NULL&&pack.dts>=priv->idxth->dts) {
+	// two lists are now contiguous; swap pointers to indicate this; update old head-tail and return it
+
+	// we found no keyframes between idxht and idxth, so therefore extend idxht
+	priv->idxht->dts_max=priv->idxth->dts-1;
+	nidx=priv->idxht; // this is the value we will return
+
+	// cross the pointers
+	priv->idxht=index_walk(priv->idxht,last_dts*2/3);
+	priv->idxth=index_walk(priv->idxhh,last_dts*1/3);
+
+	return nidx;
+      }
+
+      // we crossed the mid point but head list is too short
+      return index_downto(cdata,pts); // index from head of tail list down to pts
+    }
+
+
+
+    // TODO *** - for non-avc, may need to find next non-control video packet
+
+
+    if (pack.type==FLV_TAG_TYPE_VIDEO) {
+      if (is_keyframe(priv->fd)) {
+	// add new keyframe
+	nidx=(index_entry *)malloc(sizeof(index_entry));
+	nidx->offs=priv->input_position-11;
+	nidx->dts=nidx->dts_max=pack.dts;
+	nidx->next=NULL;
+	if (priv->idxht!=NULL) {
+	  oldht=priv->idxht;
+	  oldht->dts_max=pack.dts-1;
+	  oldht->next=nidx;
+	}
+	else priv->idxhh=nidx;
+    
+	priv->idxht=nidx;
+      }
+
+      if (pack.dts==pts) {
+	// result is current keyframe
+	break;
+      }
+      if (pack.dts>pts) {
+	// result is previous keyframe
+	nidx=oldht;
+	break;
+      }
+
+    }
+
+    // get next packet
+    priv->input_position+=pack.size+4;
+
+  }
+
+  return nidx;
+}
+
+
+
+index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
+  int32_t tagsize;
+  lives_flv_priv_t *priv=cdata->priv;
+  lives_flv_pack_t pack;
+  int delta;
+  index_entry *nidx=priv->idxth;
+  int last_dts=frame_to_dts(cdata,cdata->nframes-1);
+
+  if (nidx==NULL) priv->input_position=get_last_packet_pos(cdata);
+  else {
+    lseek(priv->fd,nidx->offs-4,SEEK_SET);
+    tagsize=get_last_tagsize(cdata);
+    priv->input_position=nidx->offs-4-tagsize;
+  }
+
+  while (1) {
+    if (!lives_flv_parse_pack_header(cdata,&pack)) return NULL;
+
+    if (pack.dts<=(last_dts>>1)||(priv->idxht!=NULL&&pack.dts<=priv->idxht->dts_max)) {
+      // handle case where we cross the mid point, or head and tail list have met
+      if (priv->idxht!=NULL&&pack.dts<=priv->idxht->dts_max) {
+	// two lists are now contiguous; swap pointers to indicate this; update old head-tail and return it
+
+	// we found no keyframes between idxth (or last_dts) and idxht, so therefore extend idxht
+	if (priv->idxth!=NULL) priv->idxht->dts_max=priv->idxth->dts-1;
+	else priv->idxht->dts_max=last_dts;
+	nidx=priv->idxht; // this is the value we will return
+
+	// cross the pointers
+	priv->idxht=index_walk(priv->idxht,last_dts*2/3);
+	priv->idxth=index_walk(priv->idxhh,last_dts*1/3);
+
+	return nidx;
+      }
+
+      // we crossed the mid point but head list is too short
+      return index_upto(cdata,pts); // index from tail of head list up to pts
+    }
+
+
+    if (pack.type!=FLV_TAG_TYPE_VIDEO||(pack.type==FLV_TAG_TYPE_VIDEO&&!is_keyframe(priv->fd))) {
+      // get previous packet
+      delta=-15;
+      if (pack.type==FLV_TAG_TYPE_VIDEO) delta-=2;
+      lseek(priv->fd,delta,SEEK_CUR);
+      tagsize=get_last_tagsize(cdata);
+      priv->input_position-=15+tagsize;
+      continue;
+    }
+
+    // TODO *** - for non-avc, may need to find next non-control video packet
+
+    // add keyframe
+    nidx=(index_entry *)malloc(sizeof(index_entry));
+    nidx->offs=priv->input_position-11;
+    nidx->dts=pack.dts;
+    if (priv->idxth!=NULL) {
+      nidx->dts_max=priv->idxth->dts-1;
+      nidx->next=priv->idxth;
+    }
+    else {
+      nidx->dts_max=frame_to_dts(cdata,cdata->nframes)-1;
+      nidx->next=NULL;
+    }
+    
+    priv->idxth=nidx;
+    if (nidx->dts<=pts) break; // found what we were looking for
+
+    lseek(priv->fd,-17,SEEK_CUR);
+    tagsize=get_last_tagsize(cdata);
+    priv->input_position-=15+tagsize;
+
+  }
+
+  return nidx;
+}
+
+
+
+
+static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
+  lives_flv_priv_t *priv=cdata->priv;
+  int ldts;
+  index_entry *idxhh=priv->idxhh;
+  index_entry *idxth=priv->idxth;
+  index_entry *idxht=priv->idxht;
+
+  if (idxht!=NULL&&pts>=idxht->dts&&pts<=idxht->dts_max) return idxht;
+  if (idxth!=NULL&&pts>=idxth->dts&&pts<=idxth->dts_max) return idxth;
+  if (idxhh!=NULL&&pts<=idxhh->dts_max) return idxhh;
+
+  if (idxht!=NULL&&idxth!=NULL&&idxht->dts>idxth->dts) {
+    // list is complete, pointers are to 1/3 and 2/3 points (swapped to indicate complete)
+    if (pts<idxth->dts) return index_walk(idxhh->next,pts); // in first 1/3
+    if (pts<idxht->dts) return index_walk(idxth->next,pts); // in second 1/3
+    return index_walk(idxht->next,pts); // in last 1/3
+  }
+
+  ldts=frame_to_dts(cdata,cdata->nframes-1)>>1;
+
+  if (pts<=ldts) {
+    // in first half
+    if (idxhh!=NULL&&pts<idxht->dts) return index_walk(idxhh->next,pts); // somewhere in head list
+    return index_upto(cdata,pts); // index from tail of head list up to pts
+  }
+
+  // in second half
+  if (idxth!=NULL&&pts>idxth->dts_max) return index_walk(idxth->next,pts);
+  else return index_downto(cdata,pts);
+
+
+}
+
+
+//////////////////////////////////////////////
+
+static int amf_get_string(unsigned char *inp, char *buf, size_t size) {
+  size_t len=(inp[0]<<8)+inp[1];
+
+  if (len>=size) {
+    memset(buf,0,1);
+    return -1;
+  }
+
+  memcpy(buf,inp+2,len);
+  memset(buf+len,0,1);
+  return len+2;
+}
+
+
 static void detach_stream (lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_flv_priv_t *priv=cdata->priv;
@@ -307,8 +539,9 @@ static void detach_stream (lives_clip_data_t *cdata) {
   priv->codec=NULL;
   priv->picture=NULL;
 
+  if (priv->idxth!=NULL&&(priv->idxht==NULL||(priv->idxth->dts>priv->idxht->dts))) 
+    index_free(priv->idxth);
   if (priv->idxhh!=NULL) index_free(priv->idxhh);
-  if (priv->idxth!=NULL&&priv->idxth!=priv->idxht) index_free(priv->idxth);
 
   priv->idxhh=NULL;
   priv->idxht=NULL;
@@ -325,7 +558,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
 static boolean attach_stream(lives_clip_data_t *cdata) {
   // open the file and get a handle
   lives_flv_priv_t *priv=cdata->priv;
-  lives_flv_pack_t *pack;
+  lives_flv_pack_t pack;
   char header[FLV_PROBE_SIZE];
   char buffer[FLV_META_SIZE];
   unsigned char flags;
@@ -386,44 +619,38 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->idxht=NULL;
   priv->idxth=NULL;
 
-  pack=(lives_flv_pack_t *)malloc(sizeof(lives_flv_pack_t));
-
-  if (!lives_flv_parse_pack_header(cdata,pack)) {
-    free(pack);
+  if (!lives_flv_parse_pack_header(cdata,&pack)) {
     close(priv->fd);
     return FALSE;
   }
 
-  if (pack->type!=FLV_TAG_TYPE_META) {
-    free(pack);
+  if (pack.type!=FLV_TAG_TYPE_META) {
     close(priv->fd);
     return FALSE;
   }
 
   // first packet should be metadata
 
-  if (pack->size<19) {
+  if (pack.size<19) {
     fprintf(stderr, "flv_decoder: invalid metadata for %s\n",cdata->URI);
-    free(pack);
     close(priv->fd);
     return FALSE;
   }
 
-  pack->data=malloc(pack->size);
-  if (read (priv->fd, pack->data, pack->size) < pack->size) {
+  pack.data=malloc(pack.size);
+  if (read (priv->fd, pack.data, pack.size) < pack.size) {
     fprintf(stderr, "flv_decoder: error in metadata for %s\n",cdata->URI);
-    free(pack->data);
-    free(pack);
+    free(pack.data);
     close(priv->fd);
     return FALSE;
   }
 
-  priv->input_position+=pack->size+4; // 4 bytes for backwards size
+  priv->input_position+=pack.size+4; // 4 bytes for backwards size
 
-  while (offs<pack->size-2) {
+  while (offs<pack.size-2) {
     if (in_array&&key==NULL) type=AMF_DATA_TYPE_STRING;
     else {
-      type=(int)(pack->data[offs]&0xFF);
+      type=(int)(pack.data[offs]&0xFF);
       offs++;
     }
 
@@ -437,7 +664,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     case AMF_DATA_TYPE_STRING:
     case AMF_DATA_TYPE_LONG_STRING:
     case AMF_DATA_TYPE_OBJECT:
-      size=amf_get_string(pack->data+offs, buffer, FLV_META_SIZE);
+      size=amf_get_string(pack.data+offs, buffer, FLV_META_SIZE);
       if (size<=0) size=10000000;
       offs+=size;
       if (!gotmeta) {
@@ -474,6 +701,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 #ifdef DEBUG
       fprintf(stderr,"array\n");
 #endif
+
+      // TODO *** - check for "keyframes" (2 arrays, "filepositions", "times") and "seekPoints" (timestamps in ms)
+
+
       offs+=4; // max array elem
       if (key!=NULL) free(key);
       key=NULL;
@@ -481,7 +712,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       break;
 
     case AMF_DATA_TYPE_NUMBER:
-      num_val = getfloat64(&pack->data[offs]);
+      num_val = getfloat64(&pack.data[offs]);
 #ifdef DEBUG
       fprintf(stderr,"%f\n",num_val);
 #endif
@@ -489,6 +720,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       offs+=8;
 
       if (!strcmp(key,"framerate")) cdata->fps=num_val;
+      if (!strcmp(key,"videoframerate")) cdata->fps=num_val;
       if (!strcmp(key,"audiosamplerate")) cdata->arate=num_val;
       if (!strcmp(key,"audiosamplesize")) cdata->asamps=num_val;
       if (!strcmp(key,"lasttimestamp")) lasttimestamp=num_val;
@@ -500,7 +732,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       break;
       
     case AMF_DATA_TYPE_BOOL:
-      num_val = (int)((pack->data[offs]&0xFF));
+      num_val = (int)((pack.data[offs]&0xFF));
 #ifdef DEBUG
       fprintf(stderr,"%s\n",((int)num_val==1)?"true":"false");
 #endif
@@ -535,11 +767,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   }
 
-  free(pack->data);
+  free(pack.data);
 
   if (!gotmeta) {
     fprintf(stderr, "flv_decoder: no metadata found for %s\n",cdata->URI);
-    free(pack);
     close(priv->fd);
     return FALSE;
   }
@@ -547,9 +778,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   if (!haskeyframes) {
     // cant seek, so not good
     fprintf(stderr, "flv_decoder: non-seekable file %s\n",cdata->URI);
-    free(pack);
-    close(priv->fd);
-    return FALSE;
+    //close(priv->fd);
+    //return FALSE;
   }
 
   cdata->seek_flag=LIVES_SEEK_FAST|LIVES_SEEK_NEEDS_CALCULATION;
@@ -564,48 +794,50 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   // now we get the stream data
   while (!got_astream || !got_vstream) {
     do {
-      if (!lives_flv_parse_pack_header(cdata,pack)) {
-	free(pack);
+      if (!lives_flv_parse_pack_header(cdata,&pack)) {
 	close(priv->fd);
 	return FALSE;
       }
-      if (pack->size==0) priv->input_position+=4; // backwards size
-    } while (pack->size==0);
+      if (pack.size==0) priv->input_position+=4; // backwards size
+    } while (pack.size==0);
     
   
-    pack->data=malloc(8);  // we only need at most 8 bytes here
-    if (read (priv->fd, pack->data, 8) < 8) {
+    pack.data=malloc(8);  // we only need at most 8 bytes here
+    if (read (priv->fd, pack.data, 8) < 8) {
       fprintf(stderr, "flv_decoder: error in stream header for %s\n",cdata->URI);
-      free(pack->data);
-      free(pack);
+      free(pack.data);
       close(priv->fd);
       return FALSE;
     }
 
-    priv->input_position+=pack->size+4;
+    priv->input_position+=pack.size+4;
 
     // audio just for info
-    if (pack->type==FLV_TAG_TYPE_AUDIO) {
-      flags=pack->data[0];
+    if (pack.type==FLV_TAG_TYPE_AUDIO) {
+      flags=pack.data[0];
       sprintf(cdata->audio_name,"%s","pcm"); // TODO
       got_astream=TRUE;
     }
 
     // only care about video here
 
-    if (pack->type==FLV_TAG_TYPE_VIDEO) {
-      flags=pack->data[0];
-      priv->data_start=priv->input_position-pack->size-4-11;
+    if (pack.type==FLV_TAG_TYPE_VIDEO) {
+      flags=pack.data[0];
 
-      if ((flags & 0xf0) == 0x50) { // video info / command frame
-	free(pack->data);
+      if ((flags & 0xF0)==0x50) { // video info / command frame
+	free(pack.data);
 	continue;
       }
 
+      priv->data_start=priv->input_position-pack.size-4-11;
+
+      // TODO - need to check for NALU for h264 ?
+
+
+
       if (got_vstream) {
 	fprintf(stderr,"flv_decoder: got duplicate video stream in %s\n",cdata->URI);
-	free(pack->data);
-	free(pack);
+	free(pack.data);
 	close(priv->fd);
 	return FALSE;
       }
@@ -623,35 +855,35 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	priv->pack_offset=1;
 	break;
       case FLV_CODECID_SCREEN: sprintf(cdata->video_name,"%s","flashsv"); 
-	codec = avcodec_find_decoder(CODEC_ID_FLASHSV);
+	//codec = avcodec_find_decoder(CODEC_ID_FLASHSV);
 	priv->pack_offset=1; // *** needs checking
 	break;
       case FLV_CODECID_SCREEN2: sprintf(cdata->video_name,"%s","flashsv2"); 
-	codec = avcodec_find_decoder(CODEC_ID_FLASHSV2);
+	//codec = avcodec_find_decoder(CODEC_ID_FLASHSV2);
 	priv->pack_offset=1; // *** needs checking
 	break;
       case FLV_CODECID_VP6   : sprintf(cdata->video_name,"%s","vp6f"); 
-	cdata->offs_x=(pack->data[1]&0X0F)>>1; // divide by 2 for offset
-	cdata->offs_y=(pack->data[1]&0XF0)>>5; // divide by 2 for offset
-	if (cdata->width==0) cdata->width=pack->data[7]*16-cdata->offs_x*2;
-	if (cdata->height==0) cdata->height=pack->data[6]*16-cdata->offs_y*2;
+	cdata->offs_x=(pack.data[1]&0X0F)>>1; // divide by 2 for offset
+	cdata->offs_y=(pack.data[1]&0XF0)>>5; // divide by 2 for offset
+	if (cdata->width==0) cdata->width=pack.data[7]*16-cdata->offs_x*2;
+	if (cdata->height==0) cdata->height=pack.data[6]*16-cdata->offs_y*2;
 	codec = avcodec_find_decoder(CODEC_ID_VP6F);
 	priv->pack_offset=2;
 	break;
       case FLV_CODECID_VP6A  :
 	sprintf(cdata->video_name,"%s","vp6a");
-	cdata->offs_x=(pack->data[1]&0X0F)>>1; // divide by 2 for offset
-	cdata->offs_y=(pack->data[1]&0XF0)>>5; // divide by 2 for offset
-	if (cdata->width==0) cdata->width=pack->data[7]*16-cdata->offs_x*2;
-	if (cdata->height==0) cdata->height=pack->data[6]*16-cdata->offs_y*2;
-	codec = avcodec_find_decoder(CODEC_ID_VP6A);
+	cdata->offs_x=(pack.data[1]&0X0F)>>1; // divide by 2 for offset
+	cdata->offs_y=(pack.data[1]&0XF0)>>5; // divide by 2 for offset
+	if (cdata->width==0) cdata->width=pack.data[7]*16-cdata->offs_x*2;
+	if (cdata->height==0) cdata->height=pack.data[6]*16-cdata->offs_y*2;
+	//codec = avcodec_find_decoder(CODEC_ID_VP6A);
 	priv->pack_offset=2; /// *** needs checking
 	break;
       case FLV_CODECID_H264:
 	// broken....
 	sprintf(cdata->video_name,"%s","h264");
 	//codec = avcodec_find_decoder(CODEC_ID_H264);
-	priv->pack_offset=0;  /// *** 
+	priv->pack_offset=6;  /// (may be 5 or 6) 
 	break;
       default:
 	fprintf(stderr,"flv_decoder: unknown video stream type (%d) in %s\n",vcodec,cdata->URI);
@@ -661,7 +893,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
     }
 
-    free(pack->data);
+    free(pack.data);
 
   }
 
@@ -674,7 +906,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   if (!codec) {
     if (strlen(cdata->video_name)>0) 
       fprintf(stderr, "flv_decoder: Could not find avcodec codec for video type %s\n",cdata->video_name);
-    free(pack);
     detach_stream(cdata);
     return FALSE;
   }
@@ -682,7 +913,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   ctx = avcodec_alloc_context();
   if (avcodec_open(ctx, codec) < 0) {
     fprintf(stderr, "flv_decoder: Could not open avcodec context\n");
-    free(pack);
     detach_stream(cdata);
     return FALSE;
   }
@@ -690,16 +920,17 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   // re-scan with avcodec; priv->data_start holds video data start position
   priv->input_position=priv->data_start;
 
-  lives_flv_parse_pack_header(cdata,pack);
+  lives_flv_parse_pack_header(cdata,&pack);
 
-  pack->data=malloc(pack->size-priv->pack_offset);
+  pack.data=malloc(pack.size-priv->pack_offset+FF_INPUT_BUFFER_PADDING_SIZE);
 
   if (priv->pack_offset!=0) lseek(priv->fd,priv->pack_offset,SEEK_CUR);
 
   av_init_packet(&priv->avpkt);
-  priv->avpkt.size=read (priv->fd, pack->data, pack->size-priv->pack_offset);
-  priv->input_position+=pack->size+4;
-  priv->avpkt.data = pack->data;
+  priv->avpkt.size=read (priv->fd, pack.data, pack.size-priv->pack_offset);
+  memset(pack.data+priv->avpkt.size,0,FF_INPUT_BUFFER_PADDING_SIZE);
+  priv->input_position+=pack.size+4;
+  priv->avpkt.data = pack.data;
 
   priv->picture = avcodec_alloc_frame();
 
@@ -709,8 +940,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
-  free(pack->data);
-  free(pack);
+  free(pack.data);
 
   if (!got_picture) {
     fprintf(stderr,"flv_decoder: could not get picture.\n");
@@ -779,7 +1009,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   if (cdata->width*cdata->height==0) return FALSE;
 
-  ldts=get_last_dts(priv->fd);
+  ldts=get_last_video_dts(cdata);
 
   if (ldts==-1) {
     fprintf(stderr, "flv_decoder: could not read last dts\n");
@@ -787,7 +1017,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  cdata->nframes=(int64_t)((double)ldts/1000.*cdata->fps+1.5);
+  cdata->nframes=dts_to_frame(cdata,ldts)+1;
 
 #ifdef DEBUG
   fprintf(stderr,"fps is %.4f %ld\n",cdata->fps,cdata->nframes);
@@ -893,6 +1123,9 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->frame_width=cdata->width+cdata->offs_x*2;
   cdata->frame_height=cdata->height+cdata->offs_y*2;
 
+  // TODO - check this = spec suggests we should cut right and bottom
+  cdata->offs_x=cdata->offs_y=0;
+
   ////////////////////////////////////////////////////////////////////
 
   cdata->asigned=TRUE;
@@ -907,76 +1140,87 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_data) {
   // seek to frame,
 
-  int64_t target_pts=(double)tframe*cdata->fps*1000.;
-  int64_t pos;
+  int64_t target_pts=frame_to_dts(cdata,tframe);
+  int64_t nextframe=tframe;
   lives_flv_priv_t *priv=cdata->priv;
-  lives_flv_pack_t *pack;
+  lives_flv_pack_t pack;
   int height=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->frame_width;
+  int rescan_limit=16;  // pick some arbitrary value
   boolean got_picture=FALSE;
-  unsigned char *dst,*src;
+  unsigned char *dst,*src,flags;
+  index_entry *idx;
   register int i,p;
 
 
   if (tframe!=priv->last_frame) {
 
-    if ((pos=get_pos_for_pts(cdata,target_pts)>-1)) priv->input_position=pos;
+    if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
 
-    // if frame is not in index:
-    // jump to highest kframe before target (a), or lowest after target (b)
-    // (b) - parse backwards until we find kframe <= target, noting kframes as we go
-    // (a) - parse forwards until we get to pts, noting kframes; jump back to target's kframe
+      if ((idx=get_idx_for_pts(cdata,target_pts))!=NULL) {
+	priv->input_position=idx->offs;
+	nextframe=dts_to_frame(cdata,idx->dts);
+      }
+      else priv->input_position=priv->data_start;  // for testing
+      
+      // we are now at the kframe before or at target - parse packets until we hit target
+      
+      avcodec_flush_buffers (priv->ctx);
 
-
-
-    // we are now at the kframe before or at target - parse packets until we hit target
-
-    avcodec_flush_buffers (priv->ctx);
-
-    pack=(lives_flv_pack_t *)malloc(sizeof(lives_flv_pack_t));
-
+    }
+    else {
+      nextframe=priv->last_frame+1;
+    }
 
     // do this until we reach target frame //////////////
 
-    // skip_idct and skip_frame. ???
+    do {
 
-    priv->input_position=priv->data_start;
+      // skip_idct and skip_frame. ???
 
-    if (!lives_flv_parse_pack_header(cdata,pack)) {
-      free(pack);
-      return FALSE;
-    }
+      if (!lives_flv_parse_pack_header(cdata,&pack)) return FALSE;
 
-    pack->data=malloc(pack->size-priv->pack_offset);
+      priv->input_position+=pack.size+4;
 
-    if (priv->pack_offset!=0) lseek(priv->fd,priv->pack_offset,SEEK_CUR);
+      if (pack.type!=FLV_TAG_TYPE_VIDEO) continue;
 
-    priv->avpkt.size=read (priv->fd, pack->data, pack->size-priv->pack_offset);
-    priv->avpkt.data = pack->data;
+      if (read (priv->fd, &flags, 1) < 1) return FALSE;
 
-    priv->input_position+=pack->size-priv->pack_offset+4;
+      if ((flags & 0xF0)==0x50) { // video info / command frame
+	continue;
+      }
 
-    priv->ctx->width=dstwidth;
-    priv->ctx->height=height;
+      pack.data=malloc(pack.size-priv->pack_offset+FF_INPUT_BUFFER_PADDING_SIZE);
 
-    while (!got_picture) {
-      int len;
+      if (priv->pack_offset!=1) lseek(priv->fd,priv->pack_offset-1,SEEK_CUR);
+
+      priv->avpkt.size=read (priv->fd, pack.data, pack.size-priv->pack_offset);
+      memset(pack.data+priv->avpkt.size,0,FF_INPUT_BUFFER_PADDING_SIZE);
+      priv->avpkt.data = pack.data;
+
+      priv->ctx->width=dstwidth;
+      priv->ctx->height=height;
+
+      got_picture=FALSE;
+
+      while (!got_picture) {
+	int len;
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-      len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+	len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-      len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+	len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
-      priv->avpkt.size-=len;
-      priv->avpkt.data+=len;
+	priv->avpkt.size-=len;
+	priv->avpkt.data+=len;
 
-      if (!got_picture&&priv->avpkt.size<=0) return FALSE;
+	if (!got_picture&&priv->avpkt.size<=0) return FALSE;
 
-    }
+      }
 
-    free(pack->data);
+      free(pack.data);
+      nextframe++;
+    } while (nextframe<=tframe);
 
     /////////////////////////////////////////////////////
-
-    free(pack);
 
   }
   

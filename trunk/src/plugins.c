@@ -126,8 +126,8 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   pieces=get_token_count (buffer,delim[0]);
   array=g_strsplit(buffer,delim,pieces);
   for (i=0;i<pieces;i++) {
-    if ((buf=g_strdup(array[i]))!=NULL) {
-      buf=(g_strchomp (g_strchug(buf)));
+    if (array[i]!=NULL) {
+      buf=g_strdup(g_strchomp (g_strchug(array[i])));
       if (strlen (buf)||allow_blanks) {
 	list=g_list_append (list, buf);
       }
@@ -2026,7 +2026,7 @@ void unload_decoder_plugins(void) {
 lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
   lives_decoder_sys_t *dplug;
 
-  gchar *plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
+  gchar *plugname;
   gboolean OK=TRUE;
   const gchar *err;
 
@@ -2039,6 +2039,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
 
   dplug->name=NULL;
 
+  plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
   dplug->handle=dlopen(plugname,RTLD_LAZY);
   g_free (plugname);
 

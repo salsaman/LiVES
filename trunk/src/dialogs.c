@@ -175,6 +175,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_YES);
     break;
+  default:
+    return NULL;
+    break;
   }
 
   if (palette->style&STYLE_1) {

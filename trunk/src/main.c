@@ -1528,18 +1528,20 @@ capability *get_capabilities (void) {
   gchar **array;
   
   gchar buffer[8192];
-  FILE *bootfile,*tfile;
+  FILE *bootfile;
   gchar string[256];
   int err;
   gint numtok;
   gchar *tmp;
-  size_t len;
 
 #ifdef IS_DARWIN
   processor_info_array_t processorInfo;
   mach_msg_type_number_t numProcessorInfo;
   natural_t numProcessors = 0U;
-  kern_return_t err;
+  kern_return_t kerr;
+#else
+  size_t len;
+  FILE *tfile;
 #endif
 
   capable=(capability *)g_malloc(sizeof(capability));
@@ -1708,7 +1710,7 @@ capability *get_capabilities (void) {
   capable->ncpus=0;
 
 #ifdef IS_DARWIN  
-  err = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numProcessors, &processorInfo, &numProcessorInfo);
+  kerr = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numProcessors, &processorInfo, &numProcessorInfo);
   capable->ncpus=(gint)numProcessors;
 #else
 

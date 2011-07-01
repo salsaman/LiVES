@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-06-28 01:02-0300\n"
+"POT-Creation-Date: 2011-06-28 22:21-0300\n"
 "PO-Revision-Date: 2010-11-09 20:35+0000\n"
 "Last-Translator: zeugma <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -514,7 +514,7 @@ msgstr ""
 "\n"
 "Teşekkür ederim.\n"
 
-#: src/main.c:1847 src/dialogs.c:1244
+#: src/main.c:1847 src/dialogs.c:1246
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -611,22 +611,22 @@ msgstr "LiVES-%s: <%s> %dx%d : %d çerçeveler %d bpp %.3f fps"
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Dosya Yok>"
 
-#: src/main.c:3515
+#: src/main.c:3514
 #, c-format
 msgid "rec %9d/%d"
 msgstr "kayıt %9d/%d"
 
-#: src/main.c:3517
+#: src/main.c:3516
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!kayıt %9d/%d"
 
-#: src/main.c:3729 src/main.c:3730 src/gui.c:1955 src/gui.c:2941
-#: src/saveplay.c:1656
+#: src/main.c:3728 src/main.c:3729 src/gui.c:1955 src/gui.c:2941
+#: src/saveplay.c:1665
 msgid "Play"
 msgstr "Oynat"
 
-#: src/main.c:4095
+#: src/main.c:4094
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -634,35 +634,35 @@ msgstr ""
 "LiVES görüntü yakalanamadı\n"
 "\n"
 
-#: src/main.c:4179
+#: src/main.c:4178
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Dosya kapandı %s\n"
 
-#: src/main.c:4345 src/gui.c:547 src/utils.c:2596 src/utils.c:2622
-#: src/saveplay.c:2620 src/multitrack.c:3806 src/multitrack.c:5313
+#: src/main.c:4344 src/gui.c:547 src/utils.c:2596 src/utils.c:2622
+#: src/saveplay.c:2629 src/multitrack.c:3806 src/multitrack.c:5313
 msgid "_Undo"
 msgstr "_Geri Al"
 
-#: src/main.c:4346 src/gui.c:560 src/utils.c:2597 src/utils.c:2623
-#: src/saveplay.c:2621 src/multitrack.c:3827 src/multitrack.c:5336
+#: src/main.c:4345 src/gui.c:560 src/utils.c:2597 src/utils.c:2623
+#: src/saveplay.c:2630 src/multitrack.c:3827 src/multitrack.c:5336
 msgid "_Redo"
 msgstr "_Yinele"
 
-#: src/main.c:4372 src/interface.c:639 src/gui.c:2113 src/preferences.c:2328
+#: src/main.c:4371 src/interface.c:639 src/gui.c:2113 src/preferences.c:2328
 #: src/resample.c:1743
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4373 src/interface.c:658 src/gui.c:2132
+#: src/main.c:4372 src/interface.c:658 src/gui.c:2132
 msgid "Left Audio"
 msgstr "Sol Ses"
 
-#: src/main.c:4374 src/gui.c:2150
+#: src/main.c:4373 src/gui.c:2150
 msgid "Right Audio"
 msgstr "Sağ ses"
 
-#: src/main.c:4419
+#: src/main.c:4418
 msgid ""
 "\n"
 "\n"
@@ -997,8 +997,8 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:188 src/callbacks.c:7793 src/gui.c:2944 src/gui.c:3484
-#: src/saveplay.c:1659 src/saveplay.c:2283 src/dialogs.c:831 src/dialogs.c:832
-#: src/dialogs.c:999 src/dialogs.c:1000 src/framedraw.c:189
+#: src/saveplay.c:1668 src/saveplay.c:2292 src/dialogs.c:833 src/dialogs.c:834
+#: src/dialogs.c:1001 src/dialogs.c:1002 src/framedraw.c:189
 #: src/multitrack.c:6859
 msgid "Preview"
 msgstr "Önizleme"
@@ -1015,7 +1015,7 @@ msgstr ""
 msgid "Click here to _Preview the video"
 msgstr "video _önizleme için buraya tıklayın"
 
-#: src/interface.c:294 src/dialogs.c:1776
+#: src/interface.c:294 src/dialogs.c:1778
 msgid "LiVES: - Processing..."
 msgstr "LiVES: - İşleniyor..."
 
@@ -1032,7 +1032,7 @@ msgstr ""
 "Lütfen Bekleyin"
 
 #: src/interface.c:336 src/callbacks.c:7565 src/callbacks.c:7597
-#: src/dialogs.c:1809
+#: src/dialogs.c:1811
 msgid ""
 "\n"
 "Please Wait"
@@ -1044,7 +1044,7 @@ msgstr ""
 msgid "Show details"
 msgstr "Ayrıntıları göster"
 
-#: src/interface.c:402 src/dialogs.c:1827
+#: src/interface.c:402 src/dialogs.c:1829
 msgid "_Enough"
 msgstr "_Yeterli"
 
@@ -1638,11 +1638,8 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:809
-#, c-format
 msgid ""
-"The current copy of\n"
-"%s\n"
-"has not been saved or backed up.\n"
+"Changes made to this clip have not been saved or backed up.\n"
 "\n"
 "Really close it ?"
 msgstr ""
@@ -1754,8 +1751,8 @@ msgstr "Yineleniyor"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1921 src/saveplay.c:1027 src/saveplay.c:1145
-#: src/saveplay.c:1202 src/saveplay.c:2974
+#: src/callbacks.c:1921 src/saveplay.c:1036 src/saveplay.c:1154
+#: src/saveplay.c:1211 src/saveplay.c:2983
 msgid "Pulling frames from clip"
 msgstr "Klipten çerçeveler alınıyor"
 
@@ -2163,7 +2160,7 @@ msgstr ""
 msgid "Opening audio %s, type %s..."
 msgstr ""
 
-#: src/callbacks.c:5151 src/saveplay.c:348
+#: src/callbacks.c:5151 src/saveplay.c:358
 msgid "Opening audio"
 msgstr "Ses açılıyor"
 
@@ -2223,11 +2220,11 @@ msgstr "Oynatma penceresini göster (s)"
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:5961 src/gui.c:3699 src/saveplay.c:1798
+#: src/callbacks.c:5961 src/gui.c:3699 src/saveplay.c:1807
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:6090 src/gui.c:3466 src/saveplay.c:1799 src/plugins.c:1279
+#: src/callbacks.c:6090 src/gui.c:3466 src/saveplay.c:1808 src/plugins.c:1279
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Oynatma Penceresi"
 
@@ -2260,7 +2257,7 @@ msgstr ""
 msgid "Reversing clipboard"
 msgstr ""
 
-#: src/callbacks.c:6513 src/saveplay.c:699
+#: src/callbacks.c:6513 src/saveplay.c:708
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Yüklenen altyazı dosyası: %s\n"
@@ -3391,8 +3388,8 @@ msgstr ""
 msgid "Rewind"
 msgstr "Geriye Sar"
 
-#: src/gui.c:3348 src/dialogs.c:403 src/dialogs.c:405 src/dialogs.c:1056
-#: src/dialogs.c:1058
+#: src/gui.c:3348 src/dialogs.c:405 src/dialogs.c:407 src/dialogs.c:1058
+#: src/dialogs.c:1060
 msgid "Play all"
 msgstr "Tümünü oynat"
 
@@ -3649,7 +3646,7 @@ msgstr " çerçeve ] ----------"
 msgid "Examining file header"
 msgstr "Dosya başlığı incelenmesi"
 
-#: src/saveplay.c:186 src/saveplay.c:556
+#: src/saveplay.c:186 src/saveplay.c:565
 #, c-format
 msgid "Opening %s"
 msgstr "%s açılıyor"
@@ -3659,16 +3656,16 @@ msgstr "%s açılıyor"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:197 src/saveplay.c:2962
+#: src/saveplay.c:197 src/saveplay.c:2971
 msgid " without sound"
 msgstr " sessiz"
 
-#: src/saveplay.c:253
+#: src/saveplay.c:257
 #, c-format
 msgid "Opening audio for %s"
 msgstr ""
 
-#: src/saveplay.c:444
+#: src/saveplay.c:453
 #, c-format
 msgid ""
 "\n"
@@ -3680,11 +3677,11 @@ msgid ""
 "Are you sure you wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:457
+#: src/saveplay.c:466
 msgid " - please be patient."
 msgstr ""
 
-#: src/saveplay.c:676
+#: src/saveplay.c:685
 msgid ""
 "\n"
 "\n"
@@ -3692,7 +3689,7 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/saveplay.c:679
+#: src/saveplay.c:688
 msgid ""
 "\n"
 "\n"
@@ -3702,7 +3699,7 @@ msgstr ""
 "\n"
 "Dosyayı açmak için mplayer yüklemeniz gerekebilir.\n"
 
-#: src/saveplay.c:682
+#: src/saveplay.c:691
 msgid ""
 "\n"
 "\n"
@@ -3714,12 +3711,12 @@ msgstr ""
 "Lütfen Araçlar | Tercihler | Çözücü menüsündeki\n"
 "video ayarlarını kontrol edin.\n"
 
-#: src/saveplay.c:805
+#: src/saveplay.c:814
 #, c-format
 msgid "Subtitles were saved as %s\n"
 msgstr ""
 
-#: src/saveplay.c:954
+#: src/saveplay.c:963
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3727,37 +3724,37 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:1009
+#: src/saveplay.c:1018
 msgid "selection"
 msgstr "seleksiyon"
 
-#: src/saveplay.c:1068 src/saveplay.c:1172
+#: src/saveplay.c:1077 src/saveplay.c:1181
 msgid "Linking selection"
 msgstr "seçimi bağlama"
 
-#: src/saveplay.c:1219
+#: src/saveplay.c:1228
 msgid " (with no sound)\n"
 msgstr " (sessiz)\n"
 
-#: src/saveplay.c:1227
+#: src/saveplay.c:1236
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1230
+#: src/saveplay.c:1239
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1333
+#: src/saveplay.c:1342
 msgid "Saving [can take a long time]"
 msgstr "Kaydetmek [Uzun bir zaman alabilir]"
 
-#: src/saveplay.c:1369
+#: src/saveplay.c:1378
 msgid "error.\n"
 msgstr "hata.\n"
 
-#: src/saveplay.c:1427
+#: src/saveplay.c:1436
 msgid ""
 "\n"
 "\n"
@@ -3767,29 +3764,29 @@ msgstr ""
 "\n"
 "Kodlama hatası - çıktı dosyası oluşturulamadı!\n"
 
-#: src/saveplay.c:1497
+#: src/saveplay.c:1506
 #, c-format
 msgid "File size was %.2fMB\n"
 msgstr "Dosya  boyutu %.2fMB  oldu\n"
 
-#: src/saveplay.c:1584
+#: src/saveplay.c:1593
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1588
+#: src/saveplay.c:1597
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1591
+#: src/saveplay.c:1600
 msgid "Recording performance..."
 msgstr "Kayıt performansı ..."
 
-#: src/saveplay.c:2423
+#: src/saveplay.c:2432
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Ortalama  FPS %.4f\n"
 
-#: src/saveplay.c:2429
+#: src/saveplay.c:2438
 msgid ""
 "\n"
 "\n"
@@ -3798,16 +3795,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2554
+#: src/saveplay.c:2563
 msgid "Unknown"
 msgstr "Bilinmeyen"
 
-#: src/saveplay.c:2649
+#: src/saveplay.c:2658
 #, c-format
 msgid "Untitled%d"
 msgstr "Adsız Belge%d"
 
-#: src/saveplay.c:2766
+#: src/saveplay.c:2775
 #, c-format
 msgid ""
 "\n"
@@ -3819,12 +3816,12 @@ msgstr ""
 "fps \n"
 "Ön tanımlılar Araçlar | Tercihler | Çeşitli menüsünden ayarlanabilir.\n"
 
-#: src/saveplay.c:2778
+#: src/saveplay.c:2787
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2794
+#: src/saveplay.c:2803
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -3833,7 +3830,7 @@ msgstr ""
 "Çerçeveler=%d tipi=%s boyut=%dx%d *bpp=Gri tonlama* fps=%.3f\n"
 "Ses:"
 
-#: src/saveplay.c:2798 src/saveplay.c:3419
+#: src/saveplay.c:2807 src/saveplay.c:3428
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -3842,49 +3839,49 @@ msgstr ""
 "Çerçeveler=%d tipi=%s boyut=%dx%d bpp=%d fps=%.3f\n"
 "Ses:"
 
-#: src/saveplay.c:2802 src/saveplay.c:3423
+#: src/saveplay.c:2811 src/saveplay.c:3432
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2805 src/saveplay.c:3426
+#: src/saveplay.c:2814 src/saveplay.c:3435
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d kanal %d bps\n"
 
-#: src/saveplay.c:2813
+#: src/saveplay.c:2822
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Yorum: %s\n"
 
-#: src/saveplay.c:2892
+#: src/saveplay.c:2901
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:2957
+#: src/saveplay.c:2966
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:2993
+#: src/saveplay.c:3002
 msgid "Backing up"
 msgstr "Yedekleniyor"
 
-#: src/saveplay.c:3024
+#: src/saveplay.c:3033
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3330
+#: src/saveplay.c:3339
 #, c-format
 msgid "Restoring %s..."
 msgstr "Yeniden Yükleniyor %s..."
 
-#: src/saveplay.c:3349
+#: src/saveplay.c:3358
 msgid "Restoring"
 msgstr "Yeniden Yükleniyor"
 
-#: src/saveplay.c:3371
+#: src/saveplay.c:3380
 #, c-format
 msgid ""
 "\n"
@@ -3893,17 +3890,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3792
+#: src/saveplay.c:3801
 #, c-format
 msgid "rec %.2f MB"
 msgstr "kayıt %.2f MB"
 
-#: src/saveplay.c:3796
+#: src/saveplay.c:3805
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!kayıt %.2f MB"
 
-#: src/saveplay.c:3819
+#: src/saveplay.c:3828
 #, c-format
 msgid ""
 "\n"
@@ -3914,7 +3911,7 @@ msgstr ""
 "KAYIT DONDURULDU ÇÜNKÜ BOŞ DİSK ALANI DÜŞÜK %ld GB !\n"
 "Tercihler menüsünden kayıt durdurma seviyesi ayarlanabilir.\n"
 
-#: src/saveplay.c:3936
+#: src/saveplay.c:3945
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -3924,11 +3921,11 @@ msgstr ""
 "LiVES ın bir önceki çalışmasından dosyalar bulundu.\n"
 "Onları kurtarmak için istiyor musunuz?\n"
 
-#: src/saveplay.c:3949
+#: src/saveplay.c:3958
 msgid "Recovering files"
 msgstr "Dosyalar kurtarılıyor"
 
-#: src/saveplay.c:3953
+#: src/saveplay.c:3962
 msgid "Recovering files..."
 msgstr "Dosyalar kurtarılıyor..."
 
@@ -3944,19 +3941,19 @@ msgstr "LiVES: - Uyarı !"
 msgid "warning"
 msgstr "uyarı"
 
-#: src/dialogs.c:170
+#: src/dialogs.c:171
 msgid "LiVES: - Question"
 msgstr ""
 
-#: src/dialogs.c:171
+#: src/dialogs.c:172
 msgid "question"
 msgstr ""
 
-#: src/dialogs.c:357
+#: src/dialogs.c:359
 msgid "Audio players cannot be switched during playback."
 msgstr ""
 
-#: src/dialogs.c:362
+#: src/dialogs.c:364
 msgid ""
 "\n"
 "\n"
@@ -3968,21 +3965,21 @@ msgstr ""
 "LiVES Bu işlemi yetersiz hafıza nedeniyle gerçekleştiremedi.\n"
 "Lütfen önce diğer bazı uygulamaları kapatarak deneyin.\n"
 
-#: src/dialogs.c:442
+#: src/dialogs.c:444
 #, c-format
 msgid ""
 "\n"
 "%d%% done. Time remaining: %u sec\n"
 msgstr ""
 
-#: src/dialogs.c:707
+#: src/dialogs.c:709
 #, c-format
 msgid ""
 "\n"
 "%d/%d frames opened. Time remaining %u sec.\n"
 msgstr ""
 
-#: src/dialogs.c:708
+#: src/dialogs.c:710
 #, c-format
 msgid ""
 "\n"
@@ -3991,7 +3988,7 @@ msgstr ""
 "\n"
 "%d/%d çerçeve açıldı.\n"
 
-#: src/dialogs.c:712
+#: src/dialogs.c:714
 #, c-format
 msgid ""
 "\n"
@@ -4000,7 +3997,7 @@ msgstr ""
 "\n"
 "%d çerçeve açıldı.\n"
 
-#: src/dialogs.c:1172
+#: src/dialogs.c:1174
 #, c-format
 msgid ""
 "\n"
@@ -4009,7 +4006,7 @@ msgstr ""
 "\n"
 "Kalan süre:% d saniye"
 
-#: src/dialogs.c:1227
+#: src/dialogs.c:1229
 #, c-format
 msgid ""
 "\n"
@@ -4020,7 +4017,7 @@ msgstr ""
 "Üzgünüz, LiVES bir seferde sadece d% dosya açabilirsiniz \n"
 "Lütfen bir dosyayı kapatın ve yeniden deneyin."
 
-#: src/dialogs.c:1234
+#: src/dialogs.c:1236
 #, c-format
 msgid ""
 "LiVES was unable to write to its temporary directory.\n"
@@ -4039,7 +4036,7 @@ msgstr ""
 "\n"
 "Lütfen bu dizine yazabilir olduğuna emin olun."
 
-#: src/dialogs.c:1250
+#: src/dialogs.c:1252
 msgid ""
 "Audio resampling is required for this format.\n"
 "Please install 'sox'\n"
@@ -4050,7 +4047,7 @@ msgstr ""
 "veya Araçlar | Tercihler | Kodlayıcı  menüsünden başka kodlama biçimini "
 "ayarlayın.\n"
 
-#: src/dialogs.c:1255
+#: src/dialogs.c:1257
 msgid ""
 "\n"
 "\n"
@@ -4058,13 +4055,13 @@ msgid ""
 "Please set the audio codec in Tools|Preferences|Encoding\n"
 msgstr ""
 
-#: src/dialogs.c:1260
+#: src/dialogs.c:1262
 msgid ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 msgstr ""
 
-#: src/dialogs.c:1267 src/dialogs.c:1350
+#: src/dialogs.c:1269 src/dialogs.c:1352
 #, c-format
 msgid ""
 "\n"
@@ -4072,75 +4069,75 @@ msgid ""
 "Due to restrictions in the %s format\n"
 msgstr ""
 
-#: src/dialogs.c:1284
+#: src/dialogs.c:1286
 msgid ""
 "LiVES recommends the following settings:\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:1288 src/dialogs.c:1385 src/resample.c:757
+#: src/dialogs.c:1290 src/dialogs.c:1387 src/resample.c:757
 msgid ", signed"
 msgstr ", Imzalandı"
 
-#: src/dialogs.c:1289 src/dialogs.c:1386 src/resample.c:760
+#: src/dialogs.c:1291 src/dialogs.c:1388 src/resample.c:760
 msgid ", unsigned"
 msgstr ", imzasız"
 
-#: src/dialogs.c:1294
+#: src/dialogs.c:1296
 #, c-format
 msgid "Use an audio rate of %d Hz%s\n"
 msgstr ""
 
-#: src/dialogs.c:1301
+#: src/dialogs.c:1303
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:1305
+#: src/dialogs.c:1307
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:1310 src/dialogs.c:1413
+#: src/dialogs.c:1312 src/dialogs.c:1415
 #, c-format
 msgid "Set video size to %d x %d pixels\n"
 msgstr "%d x %d piksel için dosya boyutu ayarla\n"
 
-#: src/dialogs.c:1318 src/dialogs.c:1412
+#: src/dialogs.c:1320 src/dialogs.c:1414
 msgid ""
 "\n"
 "You may wish to:\n"
 msgstr ""
 
-#: src/dialogs.c:1321 src/dialogs.c:1404
+#: src/dialogs.c:1323 src/dialogs.c:1406
 #, c-format
 msgid "resize video to %d x %d pixels\n"
 msgstr "%d x %d piksel için dosya boyutu\n"
 
-#: src/dialogs.c:1326
+#: src/dialogs.c:1328
 msgid "disable audio, since the target encoder cannot encode audio\n"
 msgstr ""
 
-#: src/dialogs.c:1382
+#: src/dialogs.c:1384
 msgid "LiVES must:\n"
 msgstr "LiVES gerekli:\n"
 
-#: src/dialogs.c:1390
+#: src/dialogs.c:1392
 #, c-format
 msgid "resample audio to %d Hz%s\n"
 msgstr ""
 
-#: src/dialogs.c:1396
+#: src/dialogs.c:1398
 #, c-format
 msgid "resample video to %.3f frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:1400
+#: src/dialogs.c:1402
 #, c-format
 msgid "resample video to %d:%d frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:1419
+#: src/dialogs.c:1421
 msgid ""
 "\n"
 "You will be able to undo these changes afterwards.\n"
@@ -4149,14 +4146,14 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:1422
+#: src/dialogs.c:1424
 msgid ""
 "\n"
 "Changes applied to the selection will not be permanent.\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:1442
+#: src/dialogs.c:1444
 msgid ""
 "\n"
 "\n"
@@ -4165,7 +4162,7 @@ msgid ""
 "Try recording for just a selection of the file."
 msgstr ""
 
-#: src/dialogs.c:1450
+#: src/dialogs.c:1452
 msgid ""
 "The playback speed (fps), or the audio rate\n"
 " of the clipboard does not match\n"
@@ -4176,7 +4173,7 @@ msgid ""
 "Please press Cancel to abort the insert, or OK to continue."
 msgstr ""
 
-#: src/dialogs.c:1458
+#: src/dialogs.c:1460
 msgid ""
 "When opening a yuvmpeg stream, you should first create a fifo file and then "
 "write yuv4mpeg frames to it.\n"
@@ -4185,11 +4182,11 @@ msgid ""
 "click Cancel."
 msgstr ""
 
-#: src/dialogs.c:1508
+#: src/dialogs.c:1510
 msgid "Show Keys"
 msgstr "Kısayol Tuşları Göster"
 
-#: src/dialogs.c:1509
+#: src/dialogs.c:1511
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -4231,11 +4228,11 @@ msgid ""
 "g                             ping pong loops\n"
 msgstr ""
 
-#: src/dialogs.c:1517
+#: src/dialogs.c:1519
 msgid "Multitrack Keys"
 msgstr "Çoklu parça kip tuşları"
 
-#: src/dialogs.c:1518
+#: src/dialogs.c:1520
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "\n"
@@ -4257,17 +4254,17 @@ msgid ""
 "For other keys, see the menus.\n"
 msgstr ""
 
-#: src/dialogs.c:1534
+#: src/dialogs.c:1536
 msgid "Message History"
 msgstr "Mesaj geçmişi"
 
-#: src/dialogs.c:1548
+#: src/dialogs.c:1550
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your ~/.lives file"
 msgstr ""
 
-#: src/dialogs.c:1553
+#: src/dialogs.c:1555
 #, c-format
 msgid ""
 "\n"
@@ -4278,7 +4275,7 @@ msgid ""
 "or change the value of <lib_dir> in ~/.lives\n"
 msgstr ""
 
-#: src/dialogs.c:1559
+#: src/dialogs.c:1561
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
@@ -4288,18 +4285,18 @@ msgstr ""
 "\n"
 " (Dosya adları ile sona ermelidir .mp3,. .ogg, .wav,. .mod, .xm veya .it)"
 
-#: src/dialogs.c:1560
+#: src/dialogs.c:1562
 msgid "failed (unknown type)\n"
 msgstr "başarısız (Bilinmeyen tip)\n"
 
-#: src/dialogs.c:1565
+#: src/dialogs.c:1567
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
 "(They will not be usable without the set).\n"
 msgstr ""
 
-#: src/dialogs.c:1570
+#: src/dialogs.c:1572
 #, c-format
 msgid ""
 "\n"
@@ -4308,7 +4305,7 @@ msgid ""
 "Click Cancel to pick a new name.\n"
 msgstr ""
 
-#: src/dialogs.c:1577
+#: src/dialogs.c:1579
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -4316,7 +4313,7 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:1581
+#: src/dialogs.c:1583
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -4324,7 +4321,7 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:1585
+#: src/dialogs.c:1587
 #, c-format
 msgid ""
 "\n"
@@ -4336,7 +4333,7 @@ msgid ""
 "Otherwise click cancel to skip loading this file.\n"
 msgstr ""
 
-#: src/dialogs.c:1592
+#: src/dialogs.c:1594
 #, c-format
 msgid ""
 "\n"
@@ -4346,7 +4343,7 @@ msgid ""
 "The clip could not be loaded.\n"
 msgstr ""
 
-#: src/dialogs.c:1599
+#: src/dialogs.c:1601
 msgid ""
 "\n"
 "Dear user, the jack developers decided to remove the -Z option from jackd.\n"
@@ -4354,7 +4351,7 @@ msgid ""
 "Alternately, select a different audio player in Preferences.\n"
 msgstr ""
 
-#: src/dialogs.c:1603
+#: src/dialogs.c:1605
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -4363,13 +4360,13 @@ msgid ""
 "Automatic jack startup will be disabled now.\n"
 msgstr ""
 
-#: src/dialogs.c:1609
+#: src/dialogs.c:1611
 msgid ""
 "\n"
 "Unable to connect to jack server. Please start jack before starting LiVES\n"
 msgstr ""
 
-#: src/dialogs.c:1618
+#: src/dialogs.c:1620
 #, c-format
 msgid ""
 "\n"
@@ -4380,13 +4377,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:1625
+#: src/dialogs.c:1627
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
 msgstr ""
 
-#: src/dialogs.c:1630
+#: src/dialogs.c:1632
 #, c-format
 msgid ""
 "\n"
@@ -4396,7 +4393,7 @@ msgid ""
 "It is recommended to increase it to at least %d MB"
 msgstr ""
 
-#: src/dialogs.c:1636
+#: src/dialogs.c:1638
 #, c-format
 msgid ""
 "\n"
@@ -4405,7 +4402,7 @@ msgid ""
 "Click OK to delete them, Cancel to leave them on the disk.\n"
 msgstr ""
 
-#: src/dialogs.c:1643
+#: src/dialogs.c:1645
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -4413,7 +4410,7 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:1647
+#: src/dialogs.c:1649
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -4421,63 +4418,63 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:1651
+#: src/dialogs.c:1653
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
 msgstr ""
 
-#: src/dialogs.c:1653
+#: src/dialogs.c:1655
 msgid "or enter a smaller value.\n"
 msgstr ""
 
-#: src/dialogs.c:1655
+#: src/dialogs.c:1657
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr ""
 
-#: src/dialogs.c:1656
+#: src/dialogs.c:1658
 msgid "Try closing some other applications\n"
 msgstr ""
 
-#: src/dialogs.c:1667
+#: src/dialogs.c:1669
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
 msgstr ""
 
-#: src/dialogs.c:1671
+#: src/dialogs.c:1673
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr ""
 
-#: src/dialogs.c:1675
+#: src/dialogs.c:1677
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
 
-#: src/dialogs.c:1679
+#: src/dialogs.c:1681
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
 "Should I try to repair the disk copy of the layout ?\n"
 msgstr ""
 
-#: src/dialogs.c:1683
+#: src/dialogs.c:1685
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
 msgstr ""
 
-#: src/dialogs.c:1689
+#: src/dialogs.c:1691
 msgid ""
 "\n"
 "\n"
 "Audio rate must be greater than 0.\n"
 msgstr ""
 
-#: src/dialogs.c:1693
+#: src/dialogs.c:1695
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -4485,14 +4482,14 @@ msgid ""
 "Are you sure you wish to view it ?\n"
 msgstr ""
 
-#: src/dialogs.c:1698
+#: src/dialogs.c:1700
 msgid ""
 "\n"
 "\n"
 "You must install 'dvgrab' to use this function.\n"
 msgstr ""
 
-#: src/dialogs.c:1703
+#: src/dialogs.c:1705
 msgid ""
 "\n"
 "\n"
@@ -4501,25 +4498,25 @@ msgid ""
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
 
-#: src/dialogs.c:1707
+#: src/dialogs.c:1709
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:1711
+#: src/dialogs.c:1713
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:1716
+#: src/dialogs.c:1718
 msgid "Unable to set framerate of video plugin\n"
 msgstr ""
 
-#: src/dialogs.c:1721
+#: src/dialogs.c:1723
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:1733
+#: src/dialogs.c:1735
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -4528,23 +4525,23 @@ msgid ""
 "echo %d > /proc/sys/net/core/rmem_max\n"
 msgstr ""
 
-#: src/dialogs.c:2068
+#: src/dialogs.c:2070
 msgid "cancelled.\n"
 msgstr "iptal edildi.\n"
 
-#: src/dialogs.c:2075
+#: src/dialogs.c:2077
 msgid "failed.\n"
 msgstr "başarısız.\n"
 
-#: src/dialogs.c:2082
+#: src/dialogs.c:2084
 msgid "done.\n"
 msgstr "tamam.\n"
 
-#: src/dialogs.c:2086
+#: src/dialogs.c:2088
 msgid "error in file. Failed.\n"
 msgstr "Başarısız . dosyada hata\n"
 
-#: src/dialogs.c:2091
+#: src/dialogs.c:2093
 #, c-format
 msgid ""
 "\n"
@@ -4553,7 +4550,7 @@ msgid ""
 "Please check the file permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:2098
+#: src/dialogs.c:2100
 #, c-format
 msgid ""
 "\n"
@@ -4562,7 +4559,7 @@ msgid ""
 "Please check the directory permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:2106
+#: src/dialogs.c:2108
 #, c-format
 msgid ""
 "\n"
@@ -4570,13 +4567,13 @@ msgid ""
 "Please select another encoder from the list.\n"
 msgstr ""
 
-#: src/dialogs.c:2115
+#: src/dialogs.c:2117
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
-#: src/dialogs.c:2120
+#: src/dialogs.c:2122
 #, c-format
 msgid ""
 "\n"
@@ -4586,27 +4583,27 @@ msgid ""
 "- Check if the device actually exists.\n"
 msgstr ""
 
-#: src/dialogs.c:2127
+#: src/dialogs.c:2129
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
 "Do you wish to overwrite the existing subtitles ?\n"
 msgstr ""
 
-#: src/dialogs.c:2131
+#: src/dialogs.c:2133
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type .srt and .sub.\n"
 msgstr ""
 
-#: src/dialogs.c:2135
+#: src/dialogs.c:2137
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:2141
+#: src/dialogs.c:2143
 #, c-format
 msgid ""
 "\n"
@@ -4615,14 +4612,14 @@ msgid ""
 "or OK to continue and save as type \"%s\"\n"
 msgstr ""
 
-#: src/dialogs.c:2148
+#: src/dialogs.c:2150
 msgid ""
 "\n"
 "Do you wish to move the current clip sets to the new directory ?\n"
 "(If unsure, click Yes)\n"
 msgstr ""
 
-#: src/dialogs.c:2152
+#: src/dialogs.c:2154
 #, c-format
 msgid ""
 "\n"
@@ -4633,19 +4630,19 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:2158
+#: src/dialogs.c:2160
 msgid ""
 "\n"
 "No video input devices could be found.\n"
 msgstr ""
 
-#: src/dialogs.c:2162
+#: src/dialogs.c:2164
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
 msgstr ""
 
-#: src/dialogs.c:2166
+#: src/dialogs.c:2168
 msgid ""
 "\n"
 "\n"

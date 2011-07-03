@@ -4538,8 +4538,8 @@ void add_rfx_effects(void) {
     gtk_container_remove (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
     gtk_container_remove (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
     if (mainw->rte_separator!=NULL) {
-      gtk_widget_destroy (mainw->rte_separator);
-      mainw->rte_separator=NULL;
+      //gtk_widget_destroy (mainw->rte_separator);
+      //mainw->rte_separator=NULL;
     }
     gtk_widget_destroy (mainw->custom_effects_separator);
     gtk_widget_destroy (mainw->custom_utilities_separator);
@@ -4557,8 +4557,8 @@ void add_rfx_effects(void) {
     }
     pthread_mutex_lock(&mainw->gtk_mutex);
     if (mainw->rte_separator!=NULL) {
-      gtk_widget_destroy (mainw->rte_separator);
-      mainw->rte_separator=NULL;
+      //gtk_widget_destroy (mainw->rte_separator);
+      //mainw->rte_separator=NULL;
       gtk_container_remove (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_submenu);
       gtk_container_remove (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
       gtk_container_remove (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
@@ -4796,9 +4796,18 @@ void add_rfx_effects(void) {
   sort_rfx_array (rendered_fx,rfx_slot_count);
   g_free (rendered_fx);
 
+  if (mainw->rte_separator==NULL) {
+    mainw->rte_separator=gtk_menu_item_new();
+    gtk_widget_set_sensitive (mainw->rte_separator, FALSE);
+    gtk_widget_show (mainw->rte_separator);
+    
+    gtk_container_add (GTK_CONTAINER (mainw->effects_menu), mainw->rte_separator);
+  }
+
   menuitem = gtk_menu_item_new_with_mnemonic (mainw->rendered_fx[0].menu_text);
   gtk_widget_show (menuitem);
-  gtk_container_add (GTK_CONTAINER (mainw->effects_menu), menuitem);
+  // prepend before mainw->rte_separator
+  gtk_menu_shell_prepend (GTK_MENU_SHELL (mainw->effects_menu), menuitem);
   gtk_widget_set_sensitive (menuitem, FALSE);
   gtk_tooltips_set_tip (mainw->tooltips, menuitem,_("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."), NULL);
   
@@ -4813,11 +4822,6 @@ void add_rfx_effects(void) {
   mainw->rendered_fx[0].menuitem=menuitem;
   mainw->rendered_fx[0].num_in_channels=1;
   
-  mainw->rte_separator=gtk_menu_item_new();
-  gtk_widget_set_sensitive (mainw->rte_separator, FALSE);
-  gtk_widget_show (mainw->rte_separator);
-
-  gtk_container_add (GTK_CONTAINER (mainw->effects_menu), mainw->rte_separator);
   gtk_container_add (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_submenu);
   
   mainw->custom_effects_separator = gtk_menu_item_new ();

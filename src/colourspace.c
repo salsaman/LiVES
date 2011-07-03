@@ -4292,6 +4292,56 @@ static void convert_double_chroma_packed(guchar **src, int width, int height, gu
 
 
 
+void switch_yuv_sampling(weed_plant_t *layer) {
+  int error;
+  int sampling=weed_get_int_value(layer,"YUV_sampling",&error);
+  int clamping=weed_get_int_value(layer,"YUV_clamping",&error);
+  int subspace=weed_get_int_value(layer,"YUV_subspace",&error);
+  int palette=weed_get_int_value(layer,"current_palette",&error);
+  int width=(weed_get_int_value(layer,"width",&error)>>1);
+  int height=(weed_get_int_value(layer,"height",&error)>>1);
+  unsigned char **pixel_data,*dst;
+
+  register int i,j,k;
+
+  if (palette!=WEED_PALETTE_YUV420P) return;
+
+  pixel_data=(unsigned char **)weed_get_voidptr_array(layer,"pixel_data",&error);
+
+  set_conversion_arrays(clamping,subspace);
+
+  if (sampling==WEED_YUV_SAMPLING_MPEG) {
+    // jpeg is located centrally between Y, mpeg(2) and some flv are located on the left Y
+    // so here we just set dst[0]=avg(src[0],src[1]), dst[1]=avg(src[1],src[2]), etc.
+    // the last value is repeated once
+
+    width--;
+    for (k=1;k<3;k++) {
+      dst=pixel_data[k];
+      for (j=0;j<height;j++) {
+	for (i=0;i<width;i++) dst[i]=avg_chroma(dst[i],dst[i+1]);
+	dst[i]=dst[i-1];
+	dst+=width+1;
+      }
+    }
+    weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_JPEG);
+  }
+  else if (sampling==WEED_YUV_SAMPLING_JPEG) {
+    for (k=1;k<3;k++) {
+      dst=pixel_data[k];
+      for (j=0;j<height;j++) {
+	for (i=width-1;i>0;i--) dst[i]=avg_chroma(dst[i],dst[i-1]);
+	dst[0]=dst[1];
+	dst+=width;
+      }
+    }  
+    weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_MPEG);
+  }
+  weed_free(pixel_data);
+}
+
+
+
 void switch_yuv_clamping_and_subspace (weed_plant_t *layer, int oclamping, int osubspace) {
   // currently subspace conversions are not performed - TODO
   // we assume subspace Y'CbCr
@@ -4659,10 +4709,16 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 
   if (inpl==outpl) {
 #ifdef DEBUG_PCONV
-  g_printerr("not converting palette\n");
+    g_printerr("not converting palette\n");
 #endif
-  if (!weed_palette_is_yuv_palette(inpl)||(isamtype==osamtype&&(isubspace==osubspace||(osubspace!=WEED_YUV_SUBSPACE_BT709&&osubspace!=WEED_YUV_SUBSPACE_BT709)))) return TRUE;
-    g_printerr("Switch sampling types or subspace: conversion not yet written !\n");
+    if (!weed_palette_is_yuv_palette(inpl)||(isamtype==osamtype&&
+					     (isubspace==osubspace||(osubspace!=WEED_YUV_SUBSPACE_BT709)))) return TRUE;
+    if (inpl==WEED_PALETTE_YUV420P&&((isamtype==WEED_YUV_SAMPLING_JPEG&&osamtype==WEED_YUV_SAMPLING_MPEG)||(isamtype==WEED_YUV_SAMPLING_MPEG&&osamtype==WEED_YUV_SAMPLING_JPEG))) { 
+      switch_yuv_sampling(layer);
+    }
+    else
+      g_printerr("Switch sampling types (%d %d) or subspace(%d %d): (%d) conversion not yet written !\n",
+		 isamtype,osamtype,isubspace,osubspace,inpl);
     return TRUE;
   }
 

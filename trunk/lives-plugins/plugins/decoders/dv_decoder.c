@@ -214,7 +214,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     cdata->width=360;
     cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
     cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
-    cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT; // TODO - may be different for PAL/NTSC
+    cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
     break;
   case WEED_PALETTE_RGB24:
     cdata->width=720;

@@ -790,15 +790,14 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	continue;
       }
 
-      priv->data_start=priv->input_position-pack.size-4-11;
 
       if (got_vstream) {
 	fprintf(stderr,"flv_decoder: got duplicate video stream in %s\n",cdata->URI);
 	free(pack.data);
-	close(priv->fd);
-	return FALSE;
+	continue;
       }
       got_vstream=TRUE;
+      priv->data_start=priv->input_position-pack.size-4-11;
 
       vcodec = flags & FLV_VIDEO_CODECID_MASK;
 
@@ -1210,7 +1209,53 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   return cdata;
 }
 
+static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
+  unsigned char *dst=idst;
+  register int i;
 
+  for (i=0;i<npixels;i++) {
+    switch (pal) {
+    case WEED_PALETTE_RGBA32:
+    case WEED_PALETTE_BGRA32:
+      dst[0]=dst[1]=dst[2]=0;
+      dst[3]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_ARGB32:
+      dst[1]=dst[2]=dst[3]=0;
+      dst[0]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_UYVY8888:
+      dst[1]=dst[3]=y_black;
+      dst[0]=dst[2]=128;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUYV8888:
+      dst[0]=dst[2]=y_black;
+      dst[1]=dst[3]=128;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUV888:
+      dst[0]=y_black;
+      dst[1]=dst[2]=128;
+      dst+=3;
+      break;
+    case WEED_PALETTE_YUVA8888:
+      dst[0]=y_black;
+      dst[1]=dst[2]=128;
+      dst[3]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUV411:
+      dst[0]=dst[3]=128;
+      dst[1]=dst[2]=dst[4]=dst[5]=y_black;
+      dst+=6;
+    default: break;
+    }
+  }
+  return idst-dst;
+}
 
 
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_data) {
@@ -1220,10 +1265,14 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
   int64_t nextframe=0;
   lives_flv_priv_t *priv=cdata->priv;
   lives_flv_pack_t pack;
-  int height=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->frame_width;
+  int height=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
+  int btop=cdata->offs_y,bbot=height-1-btop;
+  int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
   int rescan_limit=16;  // pick some arbitrary value
+  int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
   boolean got_picture=FALSE;
   unsigned char *dst,*src,flags;
+  unsigned char black[4]={0,0,0,255};
   index_entry *idx;
   register int i,p;
 
@@ -1291,6 +1340,18 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
       got_picture=FALSE;
 
+      if ((pack.data[0] & FLV_VIDEO_CODECID_MASK)==FLV_CODECID_VP6A) {
+	priv->ctx->extradata[0] = pack.data[1];
+      }
+
+      if (nextframe<tframe&&(pack.data[0] & FLV_VIDEO_CODECID_MASK)==FLV_CODECID_H263
+	  &&(pack.data[0] & FLV_VIDEO_FRAMETYPE_MASK)==0x03) {
+	// disposable intra-frame
+	free(pack.data);
+	nextframe++;
+	continue;
+      }
+
       if (nextframe==tframe) priv->ctx->skip_frame=AVDISCARD_DEFAULT;
 
       while (!got_picture) {
@@ -1315,27 +1376,76 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
   }
   
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) nplanes=3;
-  else if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) dstwidth*=3;
-  else if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32) dstwidth*=4;
+  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
+    nplanes=3;
+    black[0]=y_black;
+    black[1]=black[2]=128;
+  }
+  else if (pal==WEED_PALETTE_YUVA4444P) {
+    nplanes=4;
+    black[0]=y_black;
+    black[1]=black[2]=128;
+    black[3]=255;
+  }
+  
+  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+
+  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+
+  if (pal==WEED_PALETTE_YUV411) psize=6;
+
+  if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+
+  dstwidth*=psize;
 
   for (p=0;p<nplanes;p++) {
       dst=pixel_data[p];
       src=priv->picture->data[p];
 
       for (i=0;i<height;i++) {
-	  memcpy(dst,src,dstwidth);
+	if (i<btop||i>bbot) {
+	  // top or bottom border, copy black row
+	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	    memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+	    dst+=dstwidth+(bleft+bright)*psize;
+	  }
+	  else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+	  continue;
+	}
 
-	  dst+=dstwidth;
-	  src+=priv->picture->linesize[p];
+	if (bleft>0) {
+	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	    memset(dst,black[p],bleft*psize);
+	    dst+=bleft*psize;
+	  }
+	  else dst+=write_black_pixel(dst,pal,bleft,y_black);
+	}
+
+	memcpy(dst,src,dstwidth);
+	dst+=dstwidth;
+
+	if (bright>0) {
+	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	    memset(dst,black[p],bright*psize);
+	    dst+=bright*psize;
+	  }
+	  else dst+=write_black_pixel(dst,pal,bright,y_black);
+	}
+
+	src+=priv->picture->linesize[p];
       }
-      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) dstwidth>>=1;
-      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) height>>=1;
+      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
+	dstwidth>>=1;
+	bleft>>=1;
+	bright>>=1;
+      }
+      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
+	height>>=1;
+	btop>>=1;
+	bbot>>=1;
+      }
   }
   
-
-  priv->last_frame=tframe;
-
   return TRUE;
 }
 

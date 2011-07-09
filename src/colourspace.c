@@ -107,6 +107,30 @@ static gint Cb_Bu[256];
 static gint Cr_Ru[256];
 static gint Cr_Gu[256];
 static gint Cr_Bu[256];
+
+// clamped BT.701
+static gint HY_Rc[256];
+static gint HY_Gc[256];
+static gint HY_Bc[256];
+static gint HCb_Rc[256];
+static gint HCb_Gc[256];
+static gint HCb_Bc[256];
+static gint HCr_Rc[256];
+static gint HCr_Gc[256];
+static gint HCr_Bc[256];
+
+
+// unclamped BT.701
+static gint HY_Ru[256];
+static gint HY_Gu[256];
+static gint HY_Bu[256];
+static gint HCb_Ru[256];
+static gint HCb_Gu[256];
+static gint HCb_Bu[256];
+static gint HCr_Ru[256];
+static gint HCr_Gu[256];
+static gint HCr_Bu[256];
+
 static gint conv_RY_inited = 0;
 
 
@@ -120,19 +144,26 @@ static gint *G_Cr;
 static gint *B_Cb;
 
 
-// unclamped Y'CbCr
+// clamped Y'CbCr
 static gint RGB_Yc[256];
 static gint R_Crc[256];
 static gint G_Cbc[256];
 static gint G_Crc[256];
 static gint B_Cbc[256];
 
-// clamped Y'CbCr
+// unclamped Y'CbCr
 static gint RGB_Yu[256];
 static gint R_Cru[256];
 static gint G_Cbu[256];
 static gint G_Cru[256];
 static gint B_Cbu[256];
+
+// clamped BT.701
+static gint HRGB_Yc[256];
+static gint HR_Crc[256];
+static gint HG_Cbc[256];
+static gint HG_Crc[256];
+static gint HB_Cbc[256];
 
 static gint conv_YR_inited = 0;
 
@@ -194,45 +225,8 @@ static void init_RGB_to_YUV_tables(void) {
 
   // (I call this subspace YUV_SUBSPACE_YCBCR)
 
-  // this is used for e.g. theora encoding, and I think for video cards
+  // this is used for e.g. theora encoding, and for most video cards
 
-
-
-
-  
-  // I have found slightly different (maybe more accurate for luma) values quoted elsewhere:
-
-  // Kr == 0.2989, Kb == 0.1145
-  // offs U,V = 127.5
-
-  // these values seem to give pretty good results
-
-  // I think this may be what jpeg/JFIF uses
-
-  // I might experiment with different values for this subspace
-  // so it should only be used for internal conversions to and from YUV
-
-
-
-
-  // Finally, different values are used for hdtv, I call this subspace YUV_SUBSPACE_BT709
-
-  // Kb = 0.0722
-  // Kr = 0.2126
-
-
-
-  // converting from one subspace to another is not recommended.
-
-
-
-
-
-  // These values are for what I call YUV_SUBSPACE_CBCR
-  // this should be the default for all external sources, unless they specify otherwise
-
-  // clamped Y'CbCr
-  // actually we scale and offset to unclamped during the calculation
 
   for (i = 0; i < 256; i++) {
     Y_Rc[i] = myround(0.299 * (gdouble)i 
@@ -284,67 +278,67 @@ static void init_RGB_to_YUV_tables(void) {
   }
 
 
+  // Different values are used for hdtv, I call this subspace YUV_SUBSPACE_BT709
+
+  // Kb = 0.0722
+  // Kr = 0.2126
 
 
 
-  /*
+  // converting from one subspace to another is not recommended.
 
-
-
-  // These values are for an experimental YCbCr
-
-  // clamped Y'CbCr
-  // actually we scale and offset to unclamped
 
   for (i = 0; i < 256; i++) {
-    Y_Rc[i] = myround(0.2989 * (gdouble)i 
-		      * 219./255. * (1<<FP_BITS));   // Kr 
-    Y_Gc[i] = myround(0.5866 * (gdouble)i 
-		      * 219./255. * (1<<FP_BITS));   // Kb
-    Y_Bc[i] = myround((0.1145 * (gdouble)i 
-		       * 219./255. + 16) * (1<<FP_BITS));  // here we add the 16 which goes into all components
+    HY_Rc[i] = myround(0.183 * (gdouble)i 
+		      * (1<<FP_BITS));   // Kr 
+    HY_Gc[i] = myround(0.614 * (gdouble)i 
+		      * (1<<FP_BITS));   // Kb
+    HY_Bc[i] = myround((0.062 * (gdouble)i 
+		       // here we add the 16 which goes into all components
+		        + 16.) * (1<<FP_BITS));
 
-    Cb_Bc[i] = myround(-0.168774704 * (gdouble)i 
-		       * 224./255. * (1<<FP_BITS));
-    Cb_Gc[i] = myround(-0.331225296 * (gdouble)i 
-		       * 224./255. * (1<<FP_BITS));
-    Cb_Rc[i] = myround((0.500 * (gdouble)i 
-			* 224./255. + 127.5) * (1<<FP_BITS));
+    HCb_Bc[i] = myround(-0.101 * (gdouble)i 
+		        * (1<<FP_BITS));
+    HCb_Gc[i] = myround(-0.339 * (gdouble)i 
+		       * (1<<FP_BITS));
+    HCb_Rc[i] = myround((0.439 * (gdouble)i 
+		        + 128.) * (1<<FP_BITS));
     
-    Cr_Bc[i] = myround(0.500 * (gdouble)i 
-		       * 224./255. * (1<<FP_BITS));
-    Cr_Gc[i] = myround(-0.418342604 * (gdouble)i 
-		       * 224./255. * (1<<FP_BITS));
-    Cr_Rc[i] = myround((-0.081657396 * (gdouble)i 
-		       * 224./255. + 127.5) * (1<<FP_BITS));
+    HCr_Bc[i] = myround(0.439 * (gdouble)i 
+		       * (1<<FP_BITS));
+    HCr_Gc[i] = myround(-0.399 * (gdouble)i 
+		       * (1<<FP_BITS));
+    HCr_Rc[i] = myround((-0.040 * (gdouble)i 
+		       + 128.) * (1<<FP_BITS));
   }
 
 
   for (i = 0; i < 256; i++) {
-    Y_Ru[i] = myround(0.2989 * (gdouble)i
+    HY_Ru[i] = myround(0.213 * (gdouble)i 
+		      * (1<<FP_BITS));   // Kr 
+    HY_Gu[i] = myround(0.715 * (gdouble)i 
+		      * (1<<FP_BITS));   // Kb
+    HY_Bu[i] = myround(0.0722 * (gdouble)i 
 		      * (1<<FP_BITS));
-    Y_Gu[i] = myround(0.5866 * (gdouble)i 
-		      * (1<<FP_BITS));
-    Y_Bu[i] = myround(0.1145 * (gdouble)i 
-                      * (1<<FP_BITS));
 
+    HCb_Bu[i] = myround(-0.115 * (gdouble)i 
+		        * (1<<FP_BITS));
+    HCb_Gu[i] = myround(-0.4542 * (gdouble)i 
+		       * (1<<FP_BITS));
+    HCb_Ru[i] = myround((0.5 * (gdouble)i 
+		        + 128.) * (1<<FP_BITS));
     
-    Cb_Bu[i] = myround(-0.168774704 * (gdouble)i 
+    HCr_Bu[i] = myround(0.5 * (gdouble)i 
 		       * (1<<FP_BITS));
-    Cb_Gu[i] = myround(-0.331225296 * (gdouble)i 
+    HCr_Gu[i] = myround(-0.4542 * (gdouble)i 
 		       * (1<<FP_BITS));
-    Cb_Ru[i] = myround((0.500 * (gdouble)i
-			+ 127.5) * (1<<FP_BITS));
+    HCr_Ru[i] = myround((-0.4554 * (gdouble)i 
+		       + 128.) * (1<<FP_BITS));
 
-    Cr_Bu[i] = myround(0.500 * (gdouble)i
-		       * (1<<FP_BITS));
-    Cr_Gu[i] = myround(-0.418342604 * (gdouble)i 
-		       * (1<<FP_BITS));
-    Cr_Ru[i] = myround((-0.081657396 * (gdouble)i 
-		       + 127.5) * (1<<FP_BITS));
   }
 
-  */
+
+
 
   conv_RY_inited = 1;
 }
@@ -409,57 +403,45 @@ static void init_YUV_to_RGB_tables(void) {
 
 
 
-  // These values are for an experimental subspace
-
-  /*
 
 
+  // These values are for what I call YUV_SUBSPACE_BT709
+
+  /* clip Y values under 16 */
   for (i = 0; i < 17; i++) {
-    RGB_Yc[i] = 0;
+    HRGB_Yc[i] = 0;
   }
   for (i = 17; i < 235; i++) {
-    RGB_Yc[i] = myround(((gdouble)i-16.)/219.*255. * (1<<FP_BITS));
+    HRGB_Yc[i] = myround(((gdouble)i-16.) * 1.164 * (1<<FP_BITS));
   }
-
+  /* clip Y values above 235 */
   for (i = 235; i < 256; i++) {
-    RGB_Yc[i] = myround(235./219.*255. * (1<<FP_BITS));
+    HRGB_Yc[i] = myround(235. * 1.164 * (1<<FP_BITS));
   }
   
-
+  /* clip Cb/Cr values below 16 */	 
   for (i = 0; i < 17; i++) {
-    R_Crc[i] = 0;
-    G_Crc[i] = 0;
-    G_Cbc[i] = 0;
-    B_Cbc[i] = 0;
+    HR_Crc[i] = 0;
+    HG_Crc[i] = 0;
+    HG_Cbc[i] = 0;
+    HB_Cbc[i] = 0;
   }
   for (i = 17; i < 240; i++) {
-    R_Crc[i] = myround(1.4022 * ((((gdouble)i-16.)/224.*255.)-127.5) * (1<<FP_BITS)); // 2*(1-Kr)
-    G_Crc[i] = myround(-0.714486158 * ((((gdouble)i-16.)/224.*255.)-127.5)  * (1<<FP_BITS));
-    G_Cbc[i] = myround(-0.345686158 * ((((gdouble)i-16.)/224.*255.)-127.5) * (1<<FP_BITS));
-    B_Cbc[i] = myround(1.7712 * ((((gdouble)i-16.)/224.*255.)-127.5) * (1<<FP_BITS)); // 2*(1-Kb)
+    HR_Crc[i] = myround(1.793 * (((gdouble)i-16.)-128.) * (1<<FP_BITS)); // 2*(1-Kr)
+    HG_Crc[i] = myround(-0.533 * (((gdouble)i-16.)-128.)  * (1<<FP_BITS));
+    HG_Cbc[i] = myround(-0.213 * (((gdouble)i-16.)-128.) * (1<<FP_BITS));
+    HB_Cbc[i] = myround(2.112 * (((gdouble)i-16.)-128.) * (1<<FP_BITS)); // 2*(1-Kb)
   }
-
+  /* clip Cb/Cr values above 240 */	 
   for (i = 240; i < 256; i++) {
-    R_Crc[i] = myround(1.4022 * 127.5 * (1<<FP_BITS)); // 2*(1-Kr)
-    G_Crc[i] = myround(-0.714486158 * 127.5  * (1<<FP_BITS));
-    G_Cbc[i] = myround(-0.345686158 * 127.5 * (1<<FP_BITS));
-    B_Cbc[i] = myround(1.7712 * 127.5 * (1<<FP_BITS)); // 2*(1-Kb)
+    HR_Crc[i] = myround(1.793 * 127. * (1<<FP_BITS)); // 2*(1-Kr)
+    HG_Crc[i] = myround(-0.213 * 127.  * (1<<FP_BITS));
+    HG_Cbc[i] = myround(-0.533 * 127. * (1<<FP_BITS));
+    HB_Cbc[i] = myround(2.112 * 127. * (1<<FP_BITS)); // 2*(1-Kb)
   }
 
+  // no unclamped for bt.709
 
-
-
-  for (i = 0; i <= 255; i++) {
-    RGB_Yu[i] = i * (1<<FP_BITS);
-  }
-
-  for (i = 0; i <= 255; i++) {
-    R_Cru[i] = myround(1.4022 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); // 2*(1-Kr)
-    G_Cru[i] = myround(-0.714486158 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); // 
-    G_Cbu[i] = myround(-0.345686158 * ((gdouble)(i)-127.5)) * (1<<FP_BITS);
-    B_Cbu[i] = myround(1.7712 * ((gdouble)(i)-127.5)) * (1<<FP_BITS); // 2*(1-Kb)
-  }
-  */
 
   conv_YR_inited = 1;
 }
@@ -524,7 +506,6 @@ static void set_conversion_arrays(int clamping, int subspace) {
   switch (subspace) {
   case WEED_YUV_SUBSPACE_YUV:
   case WEED_YUV_SUBSPACE_YCBCR:
-  case WEED_YUV_SUBSPACE_BT709:
     if (clamping==WEED_YUV_CLAMPING_CLAMPED) {
       Y_R=Y_Rc;
       Y_G=Y_Gc;
@@ -566,6 +547,27 @@ static void set_conversion_arrays(int clamping, int subspace) {
       B_Cb=B_Cbu;
     }
     break;
+  case WEED_YUV_SUBSPACE_BT709:
+    //untested
+      Y_R=HY_Rc;
+      Y_G=HY_Gc;
+      Y_B=HY_Bc;
+      
+      Cb_R=HCb_Rc;
+      Cb_G=HCb_Gc;
+      Cb_B=HCb_Bc;
+      
+      Cr_R=HCr_Rc;
+      Cr_G=HCr_Gc;
+      Cr_B=HCr_Bc;
+      
+      RGB_Y=HRGB_Yc;
+      
+      R_Cr=HR_Crc;
+      G_Cr=HG_Crc;
+      G_Cb=HG_Cbc;
+      B_Cb=HB_Cbc;
+      break;
   }
 
   if (!avg_inited) init_average();
@@ -4690,6 +4692,14 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 
   if (weed_plant_has_leaf(layer,"YUV_subspace")) isubspace=weed_get_int_value(layer,"YUV_subspace",&error);
   else isubspace=WEED_YUV_SUBSPACE_YUV;
+
+  if (osubspace==WEED_YUV_SUBSPACE_BT709&&oclamping==WEED_YUV_CLAMPING_UNCLAMPED) {
+    g_printerr("Warning - bt709 unclamped output not supported !");
+  }
+
+  if (isubspace==WEED_YUV_SUBSPACE_BT709&&iclamped==WEED_YUV_CLAMPING_UNCLAMPED) {
+    g_printerr("Warning - bt709 unclamped input not supported !");
+  }
 
   //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV

@@ -1,6 +1,6 @@
 // ldvinterface.c
 // LiVES
-// (c) G. Finch 2006 <salsaman@xs4all.nl>
+// (c) G. Finch 2006-2011 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -33,7 +33,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
 
   dvgrabw->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   dvgrabw->playing=FALSE;
-  gtk_window_set_title (GTK_WINDOW (dvgrabw->window), ("LiVES: DVGrab"));
+  gtk_window_set_title (GTK_WINDOW (dvgrabw->window), (_("LiVES: DVGrab")));
   gtk_container_set_border_width (GTK_CONTAINER (dvgrabw->window), 20);
 
   gtk_window_set_modal (GTK_WINDOW (dvgrabw->window), TRUE);
@@ -53,7 +53,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   hbox = gtk_hbox_new (FALSE,10);
   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,10);
 
-  label=gtk_label_new_with_mnemonic("Save _directory :");
+  label=gtk_label_new_with_mnemonic(_("Save _directory :"));
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -65,7 +65,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   g_free(tmp);
   gtk_entry_set_editable(GTK_ENTRY(direntry),FALSE);
 
-  buttond = gtk_file_chooser_button_new("Save directory",GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+  buttond = gtk_file_chooser_button_new(_("Save directory"),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());
   gtk_label_set_mnemonic_widget(GTK_LABEL(label),buttond);
 
@@ -76,7 +76,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   hbox = gtk_hbox_new (FALSE,10);
   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,10);
 
-  label=gtk_label_new_with_mnemonic("File_name:");
+  label=gtk_label_new_with_mnemonic(_("File_name:"));
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);

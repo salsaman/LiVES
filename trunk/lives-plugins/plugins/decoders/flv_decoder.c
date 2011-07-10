@@ -69,6 +69,54 @@ static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
     }
 }
 
+
+
+/* can enable this later to handle pix_fmt (35) - YUVA4204P */
+/*
+static void convert_quad_chroma(guchar *src, int width, int height, guchar *dest) {
+  // width and height here are width and height of dest chroma planes, in bytes
+  
+  // double the chroma samples vertically and horizontally, with interpolation, eg. 420p to 444p
+
+  // output to planes
+
+  register int i,j;
+  guchar *d_u=dest,*s_u=src;
+  gboolean chroma=FALSE;
+  int height2=height;
+  int width2=width;
+
+  height>>=1;
+  width>>=1;
+
+  // for this algorithm, we assume chroma samples are aligned like mpeg
+
+  for (i=0;i<height2;i++) {
+    d_u[0]=d_u[1]=s_u[0];
+    for (j=2;j<width2;j+=2) {
+      d_u[j+1]=d_u[j]=s_u[(j>>1)];
+      d_u[j-1]=avg_chroma(d_u[j-1],d_u[j]);
+      if (!chroma&&i>0) {
+	// pass 2
+	// average two src rows (e.g 2 with 1, 4 with 3, ... etc) for odd dst rows
+	// thus dst row 1 becomes average of src chroma rows 0 and 1, etc.)
+	d_u[j-width2]=avg_chroma(d_u[j-width2],d_u[j]);
+	d_u[j-1-width2]=avg_chroma(d_u[j-1-width2],d_u[j-1]);
+      }
+    }
+    if (!chroma&&i>0) {
+      d_u[j-1-width2]=avg_chroma(d_u[j-1-width2],d_u[j-1]);
+    }
+    if (chroma) {
+      s_u+=width;
+    }
+    chroma=!chroma;
+    d_u+=width2;
+  }
+}
+
+*/
+
 //////////////////////////////////////////////
 
 
@@ -474,7 +522,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   char header[FLV_PROBE_SIZE];
   char buffer[FLV_META_SIZE];
   unsigned char flags,avctype;
-  int type,size,vcodec,ldts;
+  int type,size,vcodec=0,ldts;
   boolean gotmeta=FALSE,in_array=FALSE;
   boolean haskeyframes=FALSE,canseekend=FALSE,hasaudio;
   boolean got_astream=FALSE,got_vstream=FALSE;
@@ -485,9 +533,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   AVCodec *codec=NULL;
   AVCodecContext *ctx;
 
-  boolean got_picture=FALSE,is_avc=FALSE,got_avcextradata=FALSE;
+  boolean got_picture=FALSE,got_avcextradata=FALSE;
 
-#define DEBUG
+  //#define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"\n");
 #endif
@@ -536,162 +584,162 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  if (pack.type!=FLV_TAG_TYPE_META) {
-    close(priv->fd);
-    return FALSE;
-  }
+  if (pack.type==FLV_TAG_TYPE_META) {
+    // first packet should be metadata, but not always
 
-  // first packet should be metadata
-
-  if (pack.size<19) {
-    fprintf(stderr, "flv_decoder: invalid metadata for %s\n",cdata->URI);
-    close(priv->fd);
-    return FALSE;
-  }
-
-  pack.data=malloc(pack.size);
-  if (read (priv->fd, pack.data, pack.size) < pack.size) {
-    fprintf(stderr, "flv_decoder: error in metadata for %s\n",cdata->URI);
-    free(pack.data);
-    close(priv->fd);
-    return FALSE;
-  }
-
-  priv->input_position+=pack.size+4; // 4 bytes for backwards size
-
-  while (offs<pack.size-2) {
-    if (in_array&&key==NULL) type=AMF_DATA_TYPE_STRING;
-    else {
-      type=(int)(pack.data[offs]&0xFF);
-      offs++;
-    }
-
-    switch (type) {
-    case AMF_DATA_TYPE_NULL:
-    case AMF_DATA_TYPE_UNDEFINED:
-    case AMF_DATA_TYPE_UNSUPPORTED:
-      break; //these take up no additional space
-
-
-    case AMF_DATA_TYPE_STRING:
-    case AMF_DATA_TYPE_LONG_STRING:
-    case AMF_DATA_TYPE_OBJECT:
-      size=amf_get_string(pack.data+offs, buffer, FLV_META_SIZE);
-      if (size<=0) size=10000000;
-      offs+=size;
-      if (!gotmeta) {
-	if (!strcmp(buffer, "onMetaData")) {
-	  gotmeta=TRUE;
-	}
-      }
-
-      // deal with string
-      if (key!=NULL) {
-	free(key);
-	key=NULL;
-#ifdef DEBUG
-	fprintf(stderr,"%s\n",buffer);
-#endif
-
-	// read eoo
-	if (!in_array) offs++;
-      }
-      else {
-	key=strdup(buffer);
-#ifdef DEBUG
-	fprintf(stderr,"%s:",key);
-#endif
-      }
-      break;
-
-    case AMF_DATA_TYPE_MIXEDARRAY:
-#ifdef DEBUG
-      fprintf(stderr,"mixed");
-#endif
-      in_array=TRUE;
-    case AMF_DATA_TYPE_ARRAY:
-#ifdef DEBUG
-      fprintf(stderr,"array\n");
-#endif
-
-      // TODO *** - check for "keyframes" (2 arrays, "filepositions", "times") and "seekPoints" (timestamps in ms)
-
-
-      offs+=4; // max array elem
-      if (key!=NULL) free(key);
-      key=NULL;
-      //eoo++;
-      break;
-
-    case AMF_DATA_TYPE_NUMBER:
-      num_val = getfloat64(&pack.data[offs]);
-#ifdef DEBUG
-      fprintf(stderr,"%f\n",num_val);
-#endif
-
-      offs+=8;
-
-      if (!strcmp(key,"framerate")) cdata->fps=num_val;
-      if (!strcmp(key,"videoframerate")) cdata->fps=num_val;
-      if (!strcmp(key,"audiosamplerate")) cdata->arate=num_val;
-      if (!strcmp(key,"audiosamplesize")) cdata->asamps=num_val;
-      if (!strcmp(key,"lasttimestamp")) lasttimestamp=num_val;
-      if (!strcmp(key,"height")) cdata->height=num_val;
-      if (!strcmp(key,"width")) cdata->width=num_val;
-
-      if (key!=NULL) free(key);
-      key=NULL;
-      break;
-      
-    case AMF_DATA_TYPE_BOOL:
-      num_val = (int)((pack.data[offs]&0xFF));
-#ifdef DEBUG
-      fprintf(stderr,"%s\n",((int)num_val==1)?"true":"false");
-#endif
-
-      offs+=1;
-
-      if (!strcmp(key,"hasKeyframes")&&num_val==1.) haskeyframes=TRUE;
-      else if (!strcmp(key,"canSeekToEnd")&&num_val==1.) canseekend=TRUE;
-      else if (!strcmp(key,"hasAudio")&&num_val==0.) hasaudio=FALSE;
-      if (!strcmp(key,"stereo")&&num_val==1.) cdata->achans=2;
-
-      if (key!=NULL) free(key);
-      key=NULL;
-
-      break;
-
-    case AMF_DATA_TYPE_DATE:
-      offs+=10;
-      if (key!=NULL) free(key);
-      key=NULL;
-#ifdef DEBUG
-      fprintf(stderr,"\n");
-#endif
-      break;
-      
-    default:
-      if (key!=NULL) free(key);
-      key=NULL;
-      break;
-
-    }
-
-  }
-
-  free(pack.data);
-
-  if (!gotmeta) {
-    fprintf(stderr, "flv_decoder: no metadata found for %s\n",cdata->URI);
-    close(priv->fd);
-    return FALSE;
-  }
-
-  /*  if (!haskeyframes) {
-      fprintf(stderr, "flv_decoder: non-seekable file %s\n",cdata->URI);
+    if (pack.size<19) {
+      fprintf(stderr, "flv_decoder: invalid metadata for %s\n",cdata->URI);
       close(priv->fd);
       return FALSE;
-      } */
+    }
+
+    pack.data=malloc(pack.size);
+    if (read (priv->fd, pack.data, pack.size) < pack.size) {
+      fprintf(stderr, "flv_decoder: error in metadata for %s\n",cdata->URI);
+      free(pack.data);
+      close(priv->fd);
+      return FALSE;
+    }
+
+    priv->input_position+=pack.size+4; // 4 bytes for backwards size
+
+    while (offs<pack.size-2) {
+      if (in_array&&key==NULL) type=AMF_DATA_TYPE_STRING;
+      else {
+	type=(int)(pack.data[offs]&0xFF);
+	offs++;
+      }
+
+      switch (type) {
+      case AMF_DATA_TYPE_NULL:
+      case AMF_DATA_TYPE_UNDEFINED:
+      case AMF_DATA_TYPE_UNSUPPORTED:
+	break; //these take up no additional space
+
+
+      case AMF_DATA_TYPE_STRING:
+      case AMF_DATA_TYPE_LONG_STRING:
+      case AMF_DATA_TYPE_OBJECT:
+	size=amf_get_string(pack.data+offs, buffer, FLV_META_SIZE);
+	if (size<=0) size=10000000;
+	offs+=size;
+	if (!gotmeta) {
+	  if (!strcmp(buffer, "onMetaData")) {
+	    gotmeta=TRUE;
+	  }
+	}
+
+	// deal with string
+	if (key!=NULL) {
+	  free(key);
+	  key=NULL;
+#ifdef DEBUG
+	  fprintf(stderr,"%s\n",buffer);
+#endif
+
+	  // read eoo
+	  if (!in_array) offs++;
+	}
+	else {
+	  key=strdup(buffer);
+#ifdef DEBUG
+	  fprintf(stderr,"%s:",key);
+#endif
+	}
+	break;
+
+      case AMF_DATA_TYPE_MIXEDARRAY:
+#ifdef DEBUG
+	fprintf(stderr,"mixed");
+#endif
+	in_array=TRUE;
+      case AMF_DATA_TYPE_ARRAY:
+#ifdef DEBUG
+	fprintf(stderr,"array\n");
+#endif
+
+	// TODO *** - check for "keyframes" (2 arrays, "filepositions", "times") and "seekPoints" (timestamps in ms)
+
+
+	offs+=4; // max array elem
+	if (key!=NULL) free(key);
+	key=NULL;
+	//eoo++;
+	break;
+
+      case AMF_DATA_TYPE_NUMBER:
+	num_val = getfloat64(&pack.data[offs]);
+#ifdef DEBUG
+	fprintf(stderr,"%f\n",num_val);
+#endif
+
+	offs+=8;
+
+	if (!strcmp(key,"framerate")) cdata->fps=num_val;
+	if (!strcmp(key,"videoframerate")) cdata->fps=num_val;
+	if (!strcmp(key,"audiosamplerate")) cdata->arate=num_val;
+	if (!strcmp(key,"audiosamplesize")) cdata->asamps=num_val;
+	if (!strcmp(key,"lasttimestamp")) lasttimestamp=num_val;
+	if (!strcmp(key,"height")) cdata->height=num_val;
+	if (!strcmp(key,"width")) cdata->width=num_val;
+
+	if (key!=NULL) free(key);
+	key=NULL;
+	break;
+      
+      case AMF_DATA_TYPE_BOOL:
+	num_val = (int)((pack.data[offs]&0xFF));
+#ifdef DEBUG
+	fprintf(stderr,"%s\n",((int)num_val==1)?"true":"false");
+#endif
+
+	offs+=1;
+
+	if (!strcmp(key,"hasKeyframes")&&num_val==1.) haskeyframes=TRUE;
+	else if (!strcmp(key,"canSeekToEnd")&&num_val==1.) canseekend=TRUE;
+	else if (!strcmp(key,"hasAudio")&&num_val==0.) hasaudio=FALSE;
+	if (!strcmp(key,"stereo")&&num_val==1.) cdata->achans=2;
+
+	if (key!=NULL) free(key);
+	key=NULL;
+
+	break;
+
+      case AMF_DATA_TYPE_DATE:
+	offs+=10;
+	if (key!=NULL) free(key);
+	key=NULL;
+#ifdef DEBUG
+	fprintf(stderr,"\n");
+#endif
+	break;
+      
+      default:
+	if (key!=NULL) free(key);
+	key=NULL;
+	break;
+
+      }
+
+    }
+
+    free(pack.data);
+
+    if (!gotmeta) {
+      fprintf(stderr, "flv_decoder: no metadata found for %s\n",cdata->URI);
+      close(priv->fd);
+      return FALSE;
+    }
+
+    /*  if (!haskeyframes) {
+	fprintf(stderr, "flv_decoder: non-seekable file %s\n",cdata->URI);
+	close(priv->fd);
+	return FALSE;
+	} */
+
+
+  }
+  else priv->input_position-=11;
 
   cdata->seek_flag=LIVES_SEEK_FAST|LIVES_SEEK_NEEDS_CALCULATION;
 
@@ -792,7 +840,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
       if (got_vstream) {
+#ifdef DEBUG
 	fprintf(stderr,"flv_decoder: got duplicate video stream in %s\n",cdata->URI);
+#endif
 	free(pack.data);
 	continue;
       }
@@ -811,11 +861,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	priv->pack_offset=1;
 	break;
       case FLV_CODECID_SCREEN: sprintf(cdata->video_name,"%s","flashsv"); 
-	//codec = avcodec_find_decoder(CODEC_ID_FLASHSV);
+	codec = avcodec_find_decoder(CODEC_ID_FLASHSV);
 	priv->pack_offset=1;
 	break;
       case FLV_CODECID_SCREEN2: sprintf(cdata->video_name,"%s","flashsv2"); 
-	//codec = avcodec_find_decoder(CODEC_ID_FLASHSV2);
+	codec = avcodec_find_decoder(CODEC_ID_FLASHSV2);
 	priv->pack_offset=1;
 	break;
       case FLV_CODECID_VP6   : sprintf(cdata->video_name,"%s","vp6f"); 
@@ -846,7 +896,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	sprintf(cdata->video_name,"%s","h264");
 	codec = avcodec_find_decoder(CODEC_ID_H264);
 	priv->pack_offset=5;
-	is_avc=TRUE;
 	break;
       default:
 	fprintf(stderr,"flv_decoder: unknown video stream type (%d) in %s\n",vcodec,cdata->URI);
@@ -886,7 +935,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   lives_flv_parse_pack_header(cdata,&pack);
 
-  if (is_avc) {
+  if (vcodec==FLV_CODECID_H264) {
     // check for extradata
     while (1) {
 
@@ -1041,7 +1090,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->palettes[1]=WEED_PALETTE_END;
 
   if (cdata->palettes[0]==WEED_PALETTE_END) {
-    fprintf(stderr, "flv_decoder: Could not find a usable palette for %s\n",cdata->URI);
+    fprintf(stderr, "flv_decoder: Could not find a usable palette for (%d) %s\n",ctx->pix_fmt,cdata->URI);
     detach_stream(cdata);
     return FALSE;
   }
@@ -1066,6 +1115,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   if (ctx->time_base.den>0&&ctx->time_base.num>0) {
     fps=(double)ctx->time_base.den/(double)ctx->time_base.num;
     if (fps!=1000.) cdata->fps=fps;
+  }
+
+  if (cdata->fps==0.&&ctx->time_base.num==0) {
+    // not sure about this
+    if (ctx->time_base.den==1) cdata->fps=12.;
   }
 
   if (cdata->fps==0.||cdata->fps==1000.) {
@@ -1156,6 +1210,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   // should be thread-safe
 
+  lives_flv_priv_t *priv;
 
 
   if (cdata!=NULL&&cdata->current_clip>0) {
@@ -1198,8 +1253,10 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->frame_width=cdata->width+cdata->offs_x*2;
   cdata->frame_height=cdata->height+cdata->offs_y*2;
 
+  priv=cdata->priv;
   // TODO - check this = spec suggests we should cut right and bottom
-  cdata->offs_x=cdata->offs_y=0;
+  if (priv->ctx->width==cdata->frame_width) cdata->offs_x=0;
+  if (priv->ctx->height==cdata->frame_height) cdata->offs_y=0;
 
   ////////////////////////////////////////////////////////////////////
 
@@ -1258,15 +1315,15 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 }
 
 
-boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_data) {
+boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
 
   int64_t target_pts=frame_to_dts(cdata,tframe);
   int64_t nextframe=0;
   lives_flv_priv_t *priv=cdata->priv;
   lives_flv_pack_t pack;
-  int height=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
-  int btop=cdata->offs_y,bbot=height-1-btop;
+  int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
+  int btop=cdata->offs_y,bbot=xheight-1-btop;
   int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
   int rescan_limit=16;  // pick some arbitrary value
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
@@ -1279,6 +1336,44 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 #ifdef DEBUG_KFRAMES
   fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
 #endif
+
+  // calc frame width and height, including any border
+
+  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
+    nplanes=3;
+    black[0]=y_black;
+    black[1]=black[2]=128;
+  }
+  else if (pal==WEED_PALETTE_YUVA4444P) {
+    nplanes=4;
+    black[0]=y_black;
+    black[1]=black[2]=128;
+    black[3]=255;
+  }
+  
+  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+
+  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+
+  if (pal==WEED_PALETTE_YUV411) psize=6;
+
+  if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+
+  dstwidth*=psize;
+
+  if (cdata->frame_height > cdata->height && height == cdata->height) {
+    // host ignores vertical border
+    btop=0;
+    xheight=cdata->height;
+    bbot=xheight-1;
+  }
+
+  if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+    // host ignores horizontal border
+    bleft=bright=0;
+  }
+
+  ////////////////////////////////////////////////////////////////////
 
   if (tframe!=priv->last_frame) {
 
@@ -1308,6 +1403,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
     priv->last_frame=tframe;
 
+
     // do this until we reach target frame //////////////
 
     do {
@@ -1334,9 +1430,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
       memset(pack.data+priv->avpkt.size,0,FF_INPUT_BUFFER_PADDING_SIZE);
       priv->avpkt.data = pack.data;
       priv->avpkt.dts=priv->avpkt.pts=pack.dts;
-
-      priv->ctx->width=dstwidth;
-      priv->ctx->height=height;
 
       got_picture=FALSE;
 
@@ -1376,74 +1469,52 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
   }
   
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
-    nplanes=3;
-    black[0]=y_black;
-    black[1]=black[2]=128;
-  }
-  else if (pal==WEED_PALETTE_YUVA4444P) {
-    nplanes=4;
-    black[0]=y_black;
-    black[1]=black[2]=128;
-    black[3]=255;
-  }
-  
-  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
-
-  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
-
-  if (pal==WEED_PALETTE_YUV411) psize=6;
-
-  if (pal==WEED_PALETTE_A1) dstwidth>>=3;
-
-  dstwidth*=psize;
-
   for (p=0;p<nplanes;p++) {
-      dst=pixel_data[p];
-      src=priv->picture->data[p];
+    dst=pixel_data[p];
+    src=priv->picture->data[p];
 
-      for (i=0;i<height;i++) {
-	if (i<btop||i>bbot) {
-	  // top or bottom border, copy black row
-	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	    memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-	    dst+=dstwidth+(bleft+bright)*psize;
-	  }
-	  else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
-	  continue;
+    for (i=0;i<xheight;i++) {
+      if (i<btop||i>bbot) {
+	// top or bottom border, copy black row
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+	  dst+=dstwidth+(bleft+bright)*psize;
 	}
+	else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+	continue;
+      }
 
-	if (bleft>0) {
-	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	    memset(dst,black[p],bleft*psize);
-	    dst+=bleft*psize;
-	  }
-	  else dst+=write_black_pixel(dst,pal,bleft,y_black);
+      if (bleft>0) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],bleft*psize);
+	  dst+=bleft*psize;
 	}
+	else dst+=write_black_pixel(dst,pal,bleft,y_black);
+      }
 
-	memcpy(dst,src,dstwidth);
-	dst+=dstwidth;
+      memcpy(dst,src,dstwidth);
+      dst+=dstwidth;
 
-	if (bright>0) {
-	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	    memset(dst,black[p],bright*psize);
-	    dst+=bright*psize;
-	  }
-	  else dst+=write_black_pixel(dst,pal,bright,y_black);
+      if (bright>0) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],bright*psize);
+	  dst+=bright*psize;
 	}
+	else dst+=write_black_pixel(dst,pal,bright,y_black);
+      }
 
-	src+=priv->picture->linesize[p];
-      }
-      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
-	dstwidth>>=1;
-	bleft>>=1;
-	bright>>=1;
-      }
-      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
-	height>>=1;
-	btop>>=1;
-	bbot>>=1;
-      }
+      src+=priv->picture->linesize[p];
+    }
+    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
+      dstwidth>>=1;
+      bleft>>=1;
+      bright>>=1;
+    }
+    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
+      xheight>>=1;
+      btop>>=1;
+      bbot>>=1;
+    }
   }
   
   return TRUE;

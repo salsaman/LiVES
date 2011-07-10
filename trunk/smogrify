@@ -275,6 +275,7 @@ if (defined($ARGV[0])) {
 
 	&rc_set_if_not_set("instant_open","true");
 	&rc_set_if_not_set("auto_deinterlace","true");
+	&rc_set_if_not_set("auto_cut_borders","false");
 
 	&rc_set_if_not_set("mt_undo_buf",32);
 	&rc_set_if_not_set("mt_enter_prompt","true");

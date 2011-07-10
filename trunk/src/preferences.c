@@ -341,6 +341,7 @@ apply_prefs(gboolean skip_warn) {
   gboolean midisynch=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->check_midi));
   gboolean instant_open=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
   gboolean auto_deint=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_auto_deint));
+  gboolean auto_nobord=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_nobord));
   gboolean concat_images=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_concat_images));
   gboolean ins_speed=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->ins_speed));
   gboolean show_player_stats=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_show_stats));
@@ -673,6 +674,11 @@ apply_prefs(gboolean skip_warn) {
   // auto deinterlace
   if (prefs->auto_deint!=auto_deint) {
     set_boolean_pref("auto_deinterlace",(prefs->auto_deint=auto_deint));
+  }
+
+  // auto border cut
+  if (prefs->auto_nobord!=auto_nobord) {
+    set_boolean_pref("auto_cut_borders",(prefs->auto_nobord=auto_nobord));
   }
 
   // concat images
@@ -1728,7 +1734,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *hbox94;
   GtkWidget *hbox101;
   GtkWidget *label37;
-  GtkWidget *hseparator8;
   GtkWidget *hbox115;
   GtkWidget *label56;
   GtkWidget *label94;
@@ -1756,7 +1761,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *dirimage4;
   GtkWidget *dirimage5;
   GtkWidget *dirimage6;
-  GtkWidget *hseparator13;
   GtkWidget *hbox31;
   GtkWidget *label126;
   GtkWidget *pp_combo;
@@ -2715,9 +2719,17 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
   gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_instant_open, (_("Enable instant opening of some file types using decoder plugins")), NULL);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_instant_open),prefs->instant_open);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+
   // ---
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
+  // ---
+
   prefsw->checkbutton_auto_deint = gtk_check_button_new();
   eventbox = gtk_event_box_new();
+
   label = gtk_label_new_with_mnemonic(_("Enable automatic deinterlacing when possible"));
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_auto_deint);
   gtk_container_add(GTK_CONTAINER(eventbox), label);
@@ -2732,14 +2744,41 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_auto_deint),prefs->auto_deint);
   gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_auto_deint, (_("Automatically deinterlace frames when a plugin suggests it")), NULL);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+
+
   // ---
-  hseparator13 = gtk_hseparator_new ();
-  gtk_widget_show (hseparator13);
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
+  // ---
+
+  prefsw->checkbutton_nobord = gtk_check_button_new();
+  eventbox = gtk_event_box_new();
+
+  label = gtk_label_new_with_mnemonic(_("Ignore blank borders when possible"));
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_nobord);
+  gtk_container_add(GTK_CONTAINER(eventbox), label);
+  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_nobord);
   if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(hseparator13, GTK_STATE_NORMAL, &palette->normal_back);
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hseparator13, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_nobord, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_nobord),prefs->auto_nobord);
+  gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_nobord, (_("Clip any blank borders from frames where possible")), NULL);
+  gtk_widget_show_all(hbox);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+
+  // ---
+  hseparator = gtk_hseparator_new ();
+  gtk_widget_show (hseparator);
+  if (palette->style&STYLE_1) {
+      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hseparator, TRUE, TRUE, 0);
   // ---
   prefsw->checkbutton_concat_images = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -2755,7 +2794,7 @@ _prefsw *create_prefs_dialog (void) {
   hbox = gtk_hbox_new(FALSE, 0);
   gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_concat_images, FALSE, FALSE, 5);
   gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_concat_images),prefs->concat_images);
@@ -2845,12 +2884,12 @@ _prefsw *create_prefs_dialog (void) {
 
   add_fill_to_box(GTK_BOX(hbox101));
   // ---
-  hseparator13 = gtk_hseparator_new ();
-  gtk_widget_show (hseparator13);
+  hseparator = gtk_hseparator_new ();
+  gtk_widget_show (hseparator);
   if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(hseparator13, GTK_STATE_NORMAL, &palette->normal_back);
+      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_box_pack_start (GTK_BOX (vbox69), hseparator13, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox69), hseparator, TRUE, TRUE, 0);
   // ---
   hbox31 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox31);
@@ -3136,12 +3175,12 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, TRUE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rdesk_audio),prefs->rec_desktop_audio);
   // ---
-  hseparator8 = gtk_hseparator_new ();
-  gtk_widget_show (hseparator8);
+  hseparator = gtk_hseparator_new ();
+  gtk_widget_show (hseparator);
   if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(hseparator8, GTK_STATE_NORMAL, &palette->normal_back);
+      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hseparator8, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hseparator, TRUE, TRUE, 0);
   // ---
   label37 = gtk_label_new (_("      What to record when 'r' is pressed   "));
   if (palette->style&STYLE_1) {
@@ -3298,12 +3337,12 @@ _prefsw *create_prefs_dialog (void) {
       gtk_widget_set_sensitive (label, FALSE);
   }
   // ---
-  hseparator8 = gtk_hseparator_new ();
-  gtk_widget_show (hseparator8);
+  hseparator = gtk_hseparator_new ();
+  gtk_widget_show (hseparator);
   if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(hseparator8, GTK_STATE_NORMAL, &palette->normal_back);
+      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hseparator8, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hseparator, TRUE, TRUE, 0);
   // ---
   hbox5 = gtk_hbox_new (FALSE,0);
   gtk_widget_show (hbox5);
@@ -3376,12 +3415,12 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_widget_show(prefsw->encoder_combo);
 
-  hseparator8 = gtk_hseparator_new ();
-  gtk_widget_show (hseparator8);
+  hseparator = gtk_hseparator_new ();
+  gtk_widget_show (hseparator);
   if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(hseparator8, GTK_STATE_NORMAL, &palette->normal_back);
+      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hseparator8, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hseparator, TRUE, TRUE, 0);
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox, TRUE, TRUE, 0);
@@ -5219,6 +5258,7 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(png), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_auto_deint), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_nobord), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_concat_images), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->pbq_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_show_stats), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);

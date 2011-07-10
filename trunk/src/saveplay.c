@@ -220,8 +220,15 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	get_mime_type(cfile->type,40,cdata);
 	
-	cfile->hsize=cdata->frame_width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
-	cfile->vsize=cdata->frame_height;
+	if (!prefs->auto_nobord) {
+	  cfile->hsize=cdata->frame_width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+	  cfile->vsize=cdata->frame_height;
+	}
+	else {
+	  cfile->hsize=cdata->width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+	  cfile->vsize=cdata->height;
+	}
+
 	cfile->frames=cdata->nframes;
 	
 	if (frames>0&&cfile->frames>frames) cfile->frames=frames;

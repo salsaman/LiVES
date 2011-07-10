@@ -491,7 +491,7 @@ int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t st
 
 
 
-boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_data) {
+boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return width, height and pixel_data
 
   // tframe starts at 0
@@ -500,8 +500,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
   uint8_t fbuffer[priv->frame_size];
   
-  int rowstrides[1];
-
   int64_t frame=tframe;
   off64_t bytes=frame*priv->frame_size;
   
@@ -514,15 +512,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
   
   switch (cdata->current_palette) {
   case WEED_PALETTE_RGB24:
-    rowstrides[0]=cdata->width*3;
     dv_decode_full_frame(priv->dv_dec,fbuffer,e_dv_color_rgb,(uint8_t **)pixel_data,rowstrides);
     break;
   case WEED_PALETTE_BGR24:
-    rowstrides[0]=cdata->width*3;
     dv_decode_full_frame(priv->dv_dec,fbuffer,e_dv_color_bgr0,(uint8_t **)pixel_data,rowstrides);
     break;
   case WEED_PALETTE_YUYV8888:
-    rowstrides[0]=cdata->width*4; // 4 bytes per macropixel
     dv_decode_full_frame(priv->dv_dec,fbuffer,e_dv_color_yuv,(uint8_t **)pixel_data,rowstrides);
     break;
   default:

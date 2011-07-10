@@ -837,7 +837,7 @@ void get_dirac_cdata(lives_clip_data_t *cdata, SchroDecoder *schrodec) {
  cdata->frame_height=sformat->height;
 
  cdata->width=sformat->clean_width;
- cdata->height=sformat->clean_height;
+ cdata->height=(sformat->clean_height>>1)<<1;
  
 
  if (sformat->interlaced) {
@@ -2447,7 +2447,7 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
 }
 
 
-boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_data) {
+boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
@@ -2556,7 +2556,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
     
     //printf("cf %ld and %ld\n",tframe,priv->last_frame);
 
-    if (tframe>priv->last_frame&&(tframe-priv->last_frame<=max_frame_diff||(kframe==priv->last_kframe&&priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA))) {
+    if (tframe>priv->last_frame&&(tframe-priv->last_frame<=max_frame_diff||
+				  (kframe==priv->last_kframe&&priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA))) {
       // same keyframe as last time, or next frame; we can continue where we left off
       cont=TRUE;
       priv->skip=tframe-priv->last_frame-1;
@@ -2631,13 +2632,13 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
     
     for (i=0;i<mheight;i++) {
       memcpy(pixel_data[0],y,opriv->y_width);
-      pixel_data[0]+=opriv->y_width;
+      pixel_data[0]+=rowstrides[0];
       y+=yuv.y_stride;
       if (yuv.y_height==yuv.uv_height||crow) {
 	memcpy(pixel_data[1],u,opriv->uv_width);
 	memcpy(pixel_data[2],v,opriv->uv_width);
-	pixel_data[1]+=opriv->uv_width;
-	pixel_data[2]+=opriv->uv_width;
+	pixel_data[1]+=rowstrides[1];
+	pixel_data[2]+=rowstrides[2];
 	u+=yuv.uv_stride;
 	v+=yuv.uv_stride;
       }

@@ -1014,6 +1014,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       prefs->instant_open=get_boolean_pref("instant_open");
       prefs->auto_deint=get_boolean_pref("auto_deinterlace");
+      prefs->auto_nobord=get_boolean_pref("auto_cut_borders");
 
       if (!ign_opts->ign_clipset) {
 	get_pref("ar_clipset",prefs->ar_clipset_name,128);
@@ -3022,14 +3023,16 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
 
     if (sfile->subt->text!=NULL) {
       gchar *tmp;
-      render_text_to_layer(layer,(tmp=g_strdup_printf(" %s ",sfile->subt->text)),sfont,size,LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
+      render_text_to_layer(layer,(tmp=g_strdup_printf(" %s ",sfile->subt->text)),sfont,size,
+			   LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
       g_free(tmp);
     }
 }
 
 
 
-gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, int target_palette) {
+gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
+			     int target_palette) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
@@ -3043,12 +3046,12 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
   int error;
   int clip=weed_get_int_value(layer,"clip",&error);
   int frame=weed_get_int_value(layer,"frame",&error);
+  int clip_type;
+  int *rowstrides;
   GdkPixbuf *pixbuf=NULL;
   gboolean do_not_free=TRUE;
   weed_plant_t *vlayer;
   void **pixel_data;
-  int clip_type;
-
   file *sfile=NULL;
 
   mainw->osc_block=TRUE;
@@ -3087,7 +3090,8 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
       return load_from_scrap_file(layer,frame);
     }
     else {
-      if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&frame<=sfile->frames&&sfile->frame_index[frame-1]>=0) {
+      if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&
+	  frame<=sfile->frames&&sfile->frame_index[frame-1]>=0) {
 	lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
 	if (target_palette!=dplug->cdata->current_palette) {
 	  // try to switch palette
@@ -3097,7 +3101,11 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	    dplug->cdata=(*dplug->decoder->get_clip_data)(dplug->cdata->URI,dplug->cdata);
 	  }
 	  else {
-	    if (dplug->cdata->current_palette!=dplug->cdata->palettes[0]&&((weed_palette_is_rgb_palette(target_palette)&&weed_palette_is_rgb_palette(dplug->cdata->palettes[0]))||(weed_palette_is_yuv_palette(target_palette)&&weed_palette_is_yuv_palette(dplug->cdata->palettes[0])))) {
+	    if (dplug->cdata->current_palette!=dplug->cdata->palettes[0]&&
+		((weed_palette_is_rgb_palette(target_palette)&&
+		  weed_palette_is_rgb_palette(dplug->cdata->palettes[0]))||
+		 (weed_palette_is_yuv_palette(target_palette)&&
+		  weed_palette_is_yuv_palette(dplug->cdata->palettes[0])))) {
 	      dplug->cdata->current_palette=dplug->cdata->palettes[0];
 	      dplug->cdata=(*dplug->decoder->get_clip_data)(dplug->cdata->URI,dplug->cdata);
 	    }
@@ -3116,13 +3124,17 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	create_empty_pixel_data(layer);
 
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+	rowstrides=weed_get_int_array(layer,"rowstrides",&error);
 
-	(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),pixel_data);
+	(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),
+				     rowstrides,sfile->vsize,pixel_data);
 
-	g_free(pixel_data);
+	weed_free(pixel_data);
+	weed_free(rowstrides);
 
         // deinterlace
-	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) deinterlace_frame(layer,tc);
+	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) 
+	  deinterlace_frame(layer,tc);
 
         // render subtitles from file
 	if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
@@ -3130,7 +3142,10 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	  int palette=dplug->cdata->current_palette;
 
 	  // convert to RGB(A) or leave as BGR(A)
-	  if (palette!=WEED_PALETTE_RGB24&&palette!=WEED_PALETTE_RGBA32&&palette!=WEED_PALETTE_BGR24&&palette!=WEED_PALETTE_BGRA32) convert_layer_palette(layer,weed_palette_has_alpha_channel(palette)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32,0);
+	  if (palette!=WEED_PALETTE_RGB24&&palette!=WEED_PALETTE_RGBA32&&
+	      palette!=WEED_PALETTE_BGR24&&palette!=WEED_PALETTE_BGRA32) 
+	    convert_layer_palette(layer,weed_palette_has_alpha_channel(palette)?
+				  WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32,0);
 	  
 	  // TODO - alpha channel will be lost
 	  xtime=(double)(frame-1)/sfile->fps;
@@ -3229,7 +3244,8 @@ gboolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_
 }
 
 
-GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, gint width, gint height, GdkInterpType interp) {
+GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, 
+				   gint width, gint height, GdkInterpType interp) {
   // return a correctly sized GdkPixbuf (RGB24 for jpeg, RGBA32 for png) for the given clip and frame
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
   // image_ext is used if the source is an image file (eg. "jpg" or "png")

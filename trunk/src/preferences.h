@@ -225,6 +225,7 @@ typedef struct {
 
   gboolean instant_open;
   gboolean auto_deint;
+  gboolean auto_nobord;
 
   gint gui_monitor;
   gint play_monitor;
@@ -429,6 +430,7 @@ typedef struct {
   GtkWidget *checkbutton_render_prompt;
   GtkWidget *checkbutton_instant_open;
   GtkWidget *checkbutton_auto_deint;
+  GtkWidget *checkbutton_nobord;
   GtkWidget *checkbutton_concat_images;
   GtkWidget *forcesmon;
   GList *pbq_list;

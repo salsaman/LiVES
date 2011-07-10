@@ -9518,6 +9518,10 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
       gtk_widget_hide (multi->poly_box);
       gtk_widget_queue_resize(multi->nb_label);
     }
+    if (!mainw->has_custom_gens) {
+      gtk_widget_hide(mainw->custom_gens_menu);
+      gtk_widget_hide(mainw->custom_gens_submenu);
+    }
     gtk_widget_hide (mainw->LiVES);
   }
 

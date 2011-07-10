@@ -7995,7 +7995,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   if (prefs->show_gui&&prefs->open_maximised) {
     gtk_window_unmaximize (GTK_WINDOW(mainw->LiVES));
   }
-  
 
   while (g_main_context_iteration(NULL,FALSE));
 

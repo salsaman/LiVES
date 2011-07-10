@@ -3947,7 +3947,6 @@ void splash_end(void) {
   }
 
   if (prefs->startup_interface==STARTUP_MT&&mainw->multitrack==NULL) on_multitrack_activate(NULL,NULL);
-  while (g_main_context_iteration(NULL,FALSE));
 
 }
 

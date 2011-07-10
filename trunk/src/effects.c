@@ -249,13 +249,16 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   mainw->resizing=FALSE;
   cfile->nokeep=FALSE;
   cfile->fx_frame_pump=0;
-  cfile->changed=TRUE;
-  gtk_widget_set_sensitive (mainw->undo, TRUE);
-  if (rfx->num_in_channels>0) cfile->undoable=TRUE;
-  cfile->pb_fps=old_pb_fps;
-  mainw->internal_messaging=FALSE;
-  if (rfx->num_in_channels>0) gtk_widget_set_sensitive (mainw->select_last, TRUE);
-  if (rfx->num_in_channels>0) set_undoable (_ (rfx->menu_text),TRUE);
+
+  if (!mainw->gen_to_clipboard) {
+    gtk_widget_set_sensitive (mainw->undo, TRUE);
+    if (rfx->num_in_channels>0) cfile->undoable=TRUE;
+    cfile->pb_fps=old_pb_fps;
+    mainw->internal_messaging=FALSE;
+    if (rfx->num_in_channels>0) gtk_widget_set_sensitive (mainw->select_last, TRUE);
+    if (rfx->num_in_channels>0) set_undoable (_ (rfx->menu_text),TRUE);
+  }
+
   mainw->show_procd=TRUE;
   
   if (rfx->props&RFX_PROPS_MAY_RESIZE||rfx->num_in_channels==0) {
@@ -308,91 +311,81 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     mainw->keep_pre=FALSE;
   }
 
-  if (rfx->num_in_channels!=2) {
-
-    if (rfx->num_in_channels==0) {
-      if (rfx->props&RFX_PROPS_BATCHG) {
-	// batch mode generators need some extra processing
-	gchar *imgdir=g_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
-	gint img_file=mainw->current_file;
+  if (rfx->num_in_channels==0) {
+    if (rfx->props&RFX_PROPS_BATCHG) {
+      // batch mode generators need some extra processing
+      gchar *imgdir=g_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
+      gint img_file=mainw->current_file;
+      
+      mainw->suppress_dprint=TRUE;
+      open_file_sel(imgdir,0,0);
+      g_free(imgdir);
+      new_file=mainw->current_file;
+      
+      if (new_file!=img_file) {
+	mainw->current_file=img_file;
 	
-	mainw->suppress_dprint=TRUE;
-	open_file_sel(imgdir,0,0);
-	g_free(imgdir);
-	new_file=mainw->current_file;
+	g_snprintf(mainw->files[new_file]->name,256,"%s",cfile->name);
+	g_snprintf(mainw->files[new_file]->file_name,256,"%s",cfile->file_name);
+	set_menu_text(mainw->files[new_file]->menuentry,cfile->name,FALSE);
 	
-	if (new_file!=img_file) {
-	  mainw->current_file=img_file;
-	
-	  g_snprintf(mainw->files[new_file]->name,256,"%s",cfile->name);
-	  g_snprintf(mainw->files[new_file]->file_name,256,"%s",cfile->file_name);
-	  set_menu_text(mainw->files[new_file]->menuentry,cfile->name,FALSE);
-	  
-	  mainw->files[new_file]->fps=mainw->files[new_file]->pb_fps=cfile->fps;
-	}
-	else got_no_frames=TRUE;
-
-	close_current_file(current_file);
-	mainw->suppress_dprint=FALSE;
-	
-	if (!got_no_frames) mainw->current_file=new_file;
-	}
+	mainw->files[new_file]->fps=mainw->files[new_file]->pb_fps=cfile->fps;
       }
-      else {
-	gchar *tfile=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,cfile->frames,prefs->image_ext);
-
-	if (!g_file_test (tfile, G_FILE_TEST_EXISTS)) {
-	  get_frame_count(mainw->current_file);
-	  cfile->end=cfile->frames;
-	}
-	g_free(tfile);
-      }
-
-      if (got_no_frames||cfile->frames==0) {
-	mainw->is_generating=FALSE;
-	if (!mainw->cancelled) {
-	  do_error_dialog(_("\nNo frames were generated.\n"));
-	  d_print_failed();
-	}
-	else d_print_cancelled();
-	if (!got_no_frames) {
-	  mainw->suppress_dprint=TRUE;
-	  close_current_file(current_file);
-	  mainw->suppress_dprint=FALSE;
-	}
-	mainw->last_dprint_file=ldfile;
-	mainw->no_switch_dprint=FALSE;
-	if (mainw->multitrack!=NULL) mainw->current_file=mainw->multitrack->render_file;
-	return FALSE;
-      }
+      else got_no_frames=TRUE;
+      
+      close_current_file(current_file);
+      mainw->suppress_dprint=FALSE;
+      
+      if (!got_no_frames) mainw->current_file=new_file;
     }
-  
-    if (rfx->num_in_channels!=0||mainw->gen_to_clipboard) {
-      if (rfx->num_in_channels==0) {
+    else {
+      gchar *tfile=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,cfile->frames,prefs->image_ext);
 
-	// here we will copy all values to the clipboard, including the handle
-	// then close the current file without deleting the frames
-
-	init_clipboard();
-
-	w_memcpy(clipboard,cfile,sizeof(file));
-	cfile->is_loaded=TRUE;
-	mainw->suppress_dprint=TRUE;
-	mainw->only_close=TRUE;
-
-	close_current_file(current_file);
-
-	mainw->suppress_dprint=FALSE;
-	mainw->only_close=FALSE;
-
-	mainw->current_file=0;
-
-	mainw->untitled_number--;
-
+      if (!g_file_test (tfile, G_FILE_TEST_EXISTS)) {
+	get_frame_count(mainw->current_file);
+	cfile->end=cfile->frames;
       }
-      if (cfile->undo_action==UNDO_RESIZABLE) mainw->current_file=0; // force a resize
-      if (current_file!=-1) switch_to_file (mainw->current_file,current_file);
-      else mainw->current_file=-1;
+      g_free(tfile);
+    }
+
+    if (got_no_frames||cfile->frames==0) {
+      mainw->is_generating=FALSE;
+      if (!mainw->cancelled) {
+	do_error_dialog(_("\nNo frames were generated.\n"));
+	d_print_failed();
+      }
+      else d_print_cancelled();
+      if (!got_no_frames) {
+	mainw->suppress_dprint=TRUE;
+	close_current_file(current_file);
+	mainw->suppress_dprint=FALSE;
+      }
+      mainw->last_dprint_file=ldfile;
+      mainw->no_switch_dprint=FALSE;
+      if (mainw->multitrack!=NULL) mainw->current_file=mainw->multitrack->render_file;
+      return FALSE;
+    }
+
+    if (mainw->gen_to_clipboard) {
+      // here we will copy all values to the clipboard, including the handle
+      // then close the current file without deleting the frames
+      
+      init_clipboard();
+      
+      w_memcpy(clipboard,cfile,sizeof(file));
+      cfile->is_loaded=TRUE;
+      mainw->suppress_dprint=TRUE;
+      mainw->only_close=TRUE;
+      
+      close_current_file(current_file);
+      
+      mainw->suppress_dprint=FALSE;
+      mainw->only_close=FALSE;
+      
+      new_file=current_file;
+
+      mainw->untitled_number--;
+      
     }
     else {
       if (!(rfx->props&RFX_PROPS_BATCHG)) {
@@ -408,25 +401,29 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	}
 
       }
-      cfile->changed=TRUE;
-      if (mainw->multitrack==NULL) switch_to_file ((mainw->current_file=0),new_file);
-      else {
-	mainw->current_file=mainw->multitrack->render_file;
-	mainw->pre_src_file=-1;
-      }
       
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif
     }
-
-
     mainw->is_generating=FALSE;
-    
-    d_print_done();
-    mainw->no_switch_dprint=FALSE;
-    mainw->last_dprint_file=ldfile;
-    return TRUE;
+  }
+
+  if (!mainw->gen_to_clipboard) cfile->changed=TRUE;
+  if (mainw->multitrack==NULL) {
+    if (new_file!=-1) switch_to_file ((mainw->current_file=0),new_file);
+  }
+  else {
+    mainw->current_file=mainw->multitrack->render_file;
+    mainw->pre_src_file=-1;
+  }
+
+  d_print_done();
+  mainw->no_switch_dprint=FALSE;
+  mainw->gen_to_clipboard=FALSE;
+  mainw->last_dprint_file=ldfile;
+  
+  return TRUE;
 }
 
 

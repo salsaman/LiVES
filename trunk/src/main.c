@@ -2003,10 +2003,11 @@ int main (int argc, char *argv[]) {
   textdomain (GETTEXT_PACKAGE);
 #endif
 
-  gtk_set_locale ();
   putenv ("LC_NUMERIC=C");
 
   gtk_init (&argc, &argv);
+
+  g_log_set_always_fatal (0);
   theme_expected=pre_init();
 
   mainw->foreign=FALSE;

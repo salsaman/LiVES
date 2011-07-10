@@ -1737,17 +1737,18 @@ void do_rmem_max_error (gint size) {
   g_free(msg);
 }
 
-
+static process *procw=NULL;
 
 static void dth2_inner (void *arg, gboolean has_cancel) {
   GtkWidget *dialog_vbox1;
   GtkWidget *vbox2;
   GtkWidget *vbox3;
-  process *procw=(process*)(g_malloc(sizeof(process)));
   gchar tmp_label[256];
   gboolean pthread_islocked=TRUE;
   gdouble timesofar,sttime;
   gint progress;
+
+  procw->processing=NULL;
 
   // mutex lock
   do {
@@ -1760,12 +1761,9 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   } while (pthread_mutex_trylock(&mainw->gtk_mutex));
 
   if (!pthread_islocked) {
-    g_free(procw);
     dlg_thread_ready=TRUE;
     return; // parent process finished already
   }
-
-
 
   procw->processing = gtk_dialog_new ();
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
@@ -1914,11 +1912,6 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     } while (pthread_mutex_trylock(&mainw->gtk_mutex));
   }
 
-  gtk_widget_destroy(procw->processing);
-  //gdk_flush ();
-
-  g_free(procw);
-
   // unlock mutex
   if (pthread_islocked) pthread_mutex_unlock(&mainw->gtk_mutex);
 
@@ -1994,6 +1987,8 @@ void do_threaded_dialog(const gchar *text, gboolean has_cancel) {
   dlg_thread_ready=FALSE;
   while (g_main_context_iteration(NULL,FALSE));
 
+  procw=(process*)(g_malloc(sizeof(process)));
+
   if (!has_cancel) pthread_create(&dthread,NULL,dth2,thread_text);
   else pthread_create(&dthread,NULL,dth2_with_cancel,thread_text);
   while (!dlg_thread_ready) {
@@ -2015,12 +2010,18 @@ void end_threaded_dialog(void) {
     if (thread_text!=NULL) g_free(thread_text);
     thread_text=NULL;
   }
-  if (mainw->splash_window==NULL) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  if (procw!=NULL) {
+    if (procw->processing!=NULL) gtk_widget_destroy(procw->processing);
+    g_free(procw);
+    procw=NULL;
+  }
+  if (mainw->splash_window==NULL) {
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
+    else gtk_widget_queue_draw(mainw->multitrack->window);
+  }
   else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
   mainw->cancel_type=CANCEL_KILL;
-  if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
-  else gtk_widget_queue_draw(mainw->multitrack->window);
-  while (g_main_context_iteration(NULL,FALSE));
 }
 
 

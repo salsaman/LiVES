@@ -4509,10 +4509,6 @@ void add_rfx_effects(void) {
 
   gint rfx_builtin_list_length=0,rfx_custom_list_length=0,rfx_test_list_length=0,rfx_list_length=0;
 
-  gboolean has_custom_tools=FALSE;
-  gboolean has_custom_gens=FALSE;
-  gboolean has_custom_utilities=FALSE;
-
   lives_rfx_t *rfx=NULL;
   lives_rfx_t *rendered_fx;
 
@@ -4522,6 +4518,10 @@ void add_rfx_effects(void) {
   GtkWidget *menuitem;
 
   int i,plugin_idx,rfx_slot_count=1;
+
+  mainw->has_custom_tools=FALSE;
+  mainw->has_custom_gens=FALSE;
+  mainw->has_custom_utilities=FALSE;
 
   // exterminate...all...menuentries....
   // TODO - account for case where we only have apply_realtime (i.e add 1 to builtin count)
@@ -5026,11 +5026,11 @@ void add_rfx_effects(void) {
 	case RFX_STATUS_CUSTOM:
 	  if (rfx->min_frames>=0) {
 	    gtk_container_add (GTK_CONTAINER (mainw->custom_tools_menu), menuitem);
-	    has_custom_tools=TRUE;
+	    mainw->has_custom_tools=TRUE;
 	  }
 	  else {
 	    gtk_container_add (GTK_CONTAINER (mainw->custom_utilities_menu), menuitem);
-	    has_custom_utilities=TRUE;
+	    mainw->has_custom_utilities=TRUE;
 	  }
 	  break;
 	case RFX_STATUS_TEST:
@@ -5077,7 +5077,7 @@ void add_rfx_effects(void) {
 	  break;
 	case RFX_STATUS_CUSTOM:
 	  gtk_container_add (GTK_CONTAINER (mainw->custom_gens_menu), menuitem);
-	  has_custom_gens=TRUE;
+	  mainw->has_custom_gens=TRUE;
 	  break;
 	case RFX_STATUS_TEST:
 	  gtk_container_add (GTK_CONTAINER (mainw->run_test_rfx_menu), menuitem);
@@ -5103,7 +5103,7 @@ void add_rfx_effects(void) {
 
 
   pthread_mutex_lock(&mainw->gtk_mutex);
-  if (has_custom_tools||has_custom_utilities) {
+  if (mainw->has_custom_tools||mainw->has_custom_utilities) {
     gtk_widget_show(mainw->custom_tools_separator);
     gtk_widget_show(mainw->custom_tools_menu);
     gtk_widget_show(mainw->custom_tools_submenu);
@@ -5113,8 +5113,8 @@ void add_rfx_effects(void) {
     gtk_widget_hide(mainw->custom_tools_menu);
     gtk_widget_hide(mainw->custom_tools_submenu);
   }
-  if (has_custom_utilities) {
-    if (has_custom_tools) {
+  if (mainw->has_custom_utilities) {
+    if (mainw->has_custom_tools) {
       gtk_widget_show(mainw->custom_utilities_separator);
     }
     else {
@@ -5127,7 +5127,7 @@ void add_rfx_effects(void) {
     gtk_widget_hide(mainw->custom_utilities_menu);
     gtk_widget_hide(mainw->custom_utilities_submenu);
   }
-  if (has_custom_gens) {
+  if (mainw->has_custom_gens) {
     gtk_widget_show(mainw->custom_gens_menu);
     gtk_widget_show(mainw->custom_gens_submenu);
   }

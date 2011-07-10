@@ -908,6 +908,10 @@ typedef struct {
   pthread_t sig_pid;
   gchar *sig_file;
 
+  gboolean has_custom_tools;
+  gboolean has_custom_gens;
+  gboolean has_custom_utilities;
+
   /// decoders
   gboolean decoders_loaded;
   GList *decoder_list;

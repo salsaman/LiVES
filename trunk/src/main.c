@@ -849,6 +849,9 @@ static void lives_init(_ign_opts *ign_opts) {
   if (!ign_opts->ign_vppdefs)
     g_snprintf(mainw->vpp_defs_file,PATH_MAX,"%s/%svpp_defaults",capable->home_dir,LIVES_CONFIG_DIR);
 
+  mainw->has_custom_tools=FALSE;
+  mainw->has_custom_gens=FALSE;
+  mainw->has_custom_utilities=FALSE;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 

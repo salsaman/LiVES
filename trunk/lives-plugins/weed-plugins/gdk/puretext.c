@@ -241,7 +241,7 @@ static size_t get_ascii_word_length(char *text) {
 
 static size_t get_utf8_word_length(char *text) {
   // get length in words (non-spaces)
-  register size_t toffs;
+  register size_t toffs=0;
   int count=0;
   gboolean isaspace=TRUE;
 

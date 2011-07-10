@@ -225,7 +225,8 @@ int common_process (int type, weed_plant_t *inst, weed_timecode_t timestamp) {
     for (j=0;j<width-2;j+=3) {
 
       luma=calc_luma (&src[j]);
-      av_luma=(uint8_t)((double)luma/(double)sdata->av_count+(double)(av_luma_data[j/3]*sdata->av_count)/(double)(++sdata->av_count));
+      av_luma=(uint8_t)((double)luma/(double)sdata->av_count+(double)(av_luma_data[j/3]*sdata->av_count)/(double)(sdata->av_count+1));
+      sdata->av_count++;
       av_luma_data[j/3]=av_luma;
       if (ABS(luma-av_luma)<(luma_threshold)) {
 	switch (type) {

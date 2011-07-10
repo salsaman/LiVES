@@ -14622,8 +14622,8 @@ void mt_sensitise (lives_mt *mt) {
   else if (mt->audio_draws!=NULL) eventbox=mt->audio_draws->data;
 
   if (eventbox!=NULL) {
-    gtk_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=(gulong)NULL);
-    gtk_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=(gulong)NULL);
+    gtk_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
+    gtk_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
   }
 
   gtk_widget_set_sensitive (mt->change_vals,TRUE);

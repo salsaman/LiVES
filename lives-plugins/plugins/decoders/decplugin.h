@@ -118,7 +118,7 @@ const char *version(void);
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *clip_data);
 
 /// frame starts at 0
-boolean get_frame(const lives_clip_data_t *cdata, int64_t frame, void **pixel_data);
+  boolean get_frame(const lives_clip_data_t *cdata, int64_t frame, int *rowstrides, int height, void **pixel_data);
 
 /// free clip data - this should be called for each instance before unloading the module
 void clip_data_free(lives_clip_data_t *);

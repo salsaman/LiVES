@@ -6,6 +6,7 @@ Fix bug to add fewer blank lines to ~/.lives file. *
 Do not show "Loaded subtitles" message when subtitles are not loaded. *
 Instant opening of some .flv files.
 Move correct pointer (start or end) when the timeline is clicked in longer files. *
+Add video fade in/out effect.
 
 
 

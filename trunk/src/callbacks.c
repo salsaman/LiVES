@@ -370,10 +370,9 @@ lives_exit (void) {
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
   pthread_mutex_unlock(&mainw->gtk_mutex);
+  //end_threaded_dialog(); - gtk+ hangs, just let it die
 
   unload_decoder_plugins();
-
-  end_threaded_dialog();
 
   if (mainw->fonts_array!=NULL) g_strfreev(mainw->fonts_array);
 
@@ -8009,7 +8008,7 @@ on_mouse_sel_start           (GtkWidget       *widget,
     
     else {
       if (!mainw->selwidth_locked) {
-	if (mainw->sel_start<cfile->end&&((mainw->sel_start-cfile->start)*(mainw->sel_start-cfile->start)<=(cfile->end-mainw->sel_start)*(cfile->end-mainw->sel_start)||(mainw->sel_start<cfile->start))) {
+	if ((mainw->sel_start<cfile->end&&((mainw->sel_start-cfile->start)<=(cfile->end-mainw->sel_start)))||mainw->sel_start<cfile->start) {
 	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
 	  mainw->sel_move=SEL_MOVE_START;
 	}

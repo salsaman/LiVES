@@ -1,0 +1,78 @@
+Script file generated from LiVES
+
+<define>
+|1.7
+</define>
+
+<name>
+fade_in_out
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Fade video in or out|Fading video|2|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+fcol|Fade _colour|colRGB24|0|0|0|
+fin|Fade _in|bool|1|1|
+fout|Fade _out|bool|0|1|
+</params>
+
+<param_window>
+layout|p0|
+layout|hseparator|
+layout|p1|p2|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+#make overlay frame
+$cstring=&RGB24_to_string($p0_red,$p0_green,$p0_blue);
+`$convert_command -size $width!x$height! xc:$cstring fade$img_ext`;
+
+#initial value
+my $fval=0.;
+
+#change in fade value per frame
+my $fstep=100./($end-$start);
+
+if ($p1) {
+	$fval=100.;
+	$fstep=-$fstep;
+}
+</pre>
+
+<loop>
+# blend fade image with frame, by amount $fval
+system("$composite_command -compose plus -dissolve ".int($fval)." fade$img_ext -size $width!x$height! $in $out");
+
+#increase or decrease fade amount
+$fval+=$fstep;
+</loop>
+
+<post>
+unlink <"fade$img_ext">;
+</post>
+
+<onchange>
+</onchange>
+

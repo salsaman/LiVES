@@ -5793,7 +5793,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     }
   }
 
-
   /// None autotransition
   menuitem2 = gtk_check_menu_item_new_with_label (mainw->none_string);
   g_object_set_data(G_OBJECT(menuitem2),"idx",GINT_TO_POINTER(-1));

@@ -5044,6 +5044,7 @@ sub rc_set {
 	$found=0;
 	while (<IN>) {
 	    $string=$_;
+	    last if $string eq "";
 	    if ($string=~/^#.*/) {
 		#ignore comments
 		print OUT $string;
@@ -5066,9 +5067,11 @@ sub rc_set {
 		    if ($part==0) {
 			$part=1;
 			if ($delpref==0) {
-			    print OUT "$1\n$value\n</$key>\n";
+			    #update existing value
+			    print OUT "<$key>\n$value\n</$key>\n";
 			}
 			else {
+			    #delete
 			    #$date=&get_current_date;
 			    #print OUT "# $key deleted by $GUI_NAME $date\n";
 			}

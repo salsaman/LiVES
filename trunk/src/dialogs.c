@@ -185,8 +185,6 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_widget_modify_bg(dialog2, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  //gtk_window_set_position (GTK_WINDOW (dialog2), GTK_WIN_POS_CENTER);
-  //gtk_window_set_default_size (GTK_WINDOW (dialog2), 350, 200);
   gtk_window_set_deletable(GTK_WINDOW(dialog2), FALSE);
 
   gtk_label_set_text(GTK_LABEL(mainw->warning_label),text);
@@ -1739,34 +1737,20 @@ void do_rmem_max_error (gint size) {
 
 static process *procw=NULL;
 
-static void dth2_inner (void *arg, gboolean has_cancel) {
+
+
+
+static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
+
   GtkWidget *dialog_vbox1;
   GtkWidget *vbox2;
   GtkWidget *vbox3;
   gchar tmp_label[256];
-  gboolean pthread_islocked=TRUE;
-  gdouble timesofar,sttime;
-  gint progress;
-
-  procw->processing=NULL;
-
-  // mutex lock
-  do {
-    if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
-      pthread_islocked=FALSE;
-      break;
-    }
-    sched_yield();
-    g_usleep(prefs->sleep_time);
-  } while (pthread_mutex_trylock(&mainw->gtk_mutex));
-
-  if (!pthread_islocked) {
-    dlg_thread_ready=TRUE;
-    return; // parent process finished already
-  }
+ 
+  procw=(process*)(g_malloc(sizeof(process)));
 
   procw->processing = gtk_dialog_new ();
-  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_container_set_border_width (GTK_CONTAINER (procw->processing), 10);
   gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
   
@@ -1793,7 +1777,7 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
   gtk_widget_show (vbox3);
   gtk_box_pack_start (GTK_BOX (vbox2), vbox3, TRUE, TRUE, 0);
 
-  g_snprintf(tmp_label,256,"%s...\n",(gchar *)arg);
+  g_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = gtk_label_new (tmp_label);
   gtk_widget_show (procw->label);
   gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
@@ -1846,35 +1830,37 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
     mainw->cancel_type=CANCEL_SOFT;
   }
 
-  while (!mainw->is_ready&&pthread_islocked) {
-    // mutex unlock
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-    do {
-      // wait to get lock again
-      if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
-	pthread_islocked=FALSE;
-	break;
-      }
-      sched_yield();
-      g_usleep(prefs->sleep_time);
-    } while (pthread_mutex_trylock(&mainw->gtk_mutex));
-  }
-
-  if (!pthread_islocked) {
-    gtk_widget_destroy(procw->processing);
-    g_free(procw);
-    dlg_thread_ready=TRUE;
-    return;
-  }
 
   gtk_window_set_resizable (GTK_WINDOW (procw->processing), FALSE);
-  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
 
   gtk_widget_queue_draw(procw->processing);
 
-  //gdk_flush ();
-
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
+
+}
+
+
+
+
+static void dth2_inner (void) {
+   gboolean pthread_islocked=TRUE;
+  gdouble timesofar,sttime;
+  gint progress;
+
+  // mutex lock
+  do {
+    if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
+      pthread_islocked=FALSE;
+      break;
+    }
+    sched_yield();
+    g_usleep(prefs->sleep_time);
+  } while (pthread_mutex_trylock(&mainw->gtk_mutex));
+
+  if (!pthread_islocked) {
+    dlg_thread_ready=TRUE;
+    return; // parent process finished already
+  }
 
   disp_frames_done=0;
   gettimeofday(&tv, NULL);
@@ -1897,8 +1883,6 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
     gtk_widget_queue_draw(procw->processing);
 
-    //gdk_flush ();
-
     // unlock mutex
     pthread_mutex_unlock(&mainw->gtk_mutex);
     do {
@@ -1920,12 +1904,12 @@ static void dth2_inner (void *arg, gboolean has_cancel) {
 
 
 static void *dth2 (void *arg) {
-  dth2_inner(arg,FALSE);
+  dth2_inner();
   return NULL;
 }
 
 static void *dth2_with_cancel (void *arg) {
-  dth2_inner(arg,TRUE);
+  dth2_inner();
   if ((mainw->cancelled==CANCEL_USER||mainw->cancelled==CANCEL_KEEP)&&mainw->sig_pid>0) {
     
     while (!g_file_test(mainw->sig_file,G_FILE_TEST_EXISTS)) {
@@ -1960,7 +1944,7 @@ static void *splash_prog (void *arg) {
 
 
  
-void do_threaded_dialog(const gchar *text, gboolean has_cancel) {
+void do_threaded_dialog(gchar *trans_text, gboolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
   //
@@ -1977,20 +1961,26 @@ void do_threaded_dialog(const gchar *text, gboolean has_cancel) {
   // in addition all calls to weed_set_* must be wrapped, as these can use the slice allocator
   // also weed_plant_new, weed_plant_free
 
+  // WARNING: if trans_text is a translated string, it will be autoamtically freed by translations inside this function
+
+  gchar *copy_text=g_strdup(trans_text);
+
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
   if (!prefs->show_threaded_dialog) return;
 
-  thread_text=g_strdup(text);
   mainw->threaded_dialog=TRUE;
   clear_mainw_msg();
   dlg_thread_ready=FALSE;
+
+  create_threaded_dialog(copy_text, has_cancel);
+  g_free(copy_text);
+
   while (g_main_context_iteration(NULL,FALSE));
 
-  procw=(process*)(g_malloc(sizeof(process)));
+  if (!has_cancel) pthread_create(&dthread,NULL,dth2,NULL);
+  else pthread_create(&dthread,NULL,dth2_with_cancel,NULL);
 
-  if (!has_cancel) pthread_create(&dthread,NULL,dth2,thread_text);
-  else pthread_create(&dthread,NULL,dth2_with_cancel,thread_text);
   while (!dlg_thread_ready) {
     g_usleep(prefs->sleep_time);
     sched_yield();
@@ -2012,15 +2002,18 @@ void end_threaded_dialog(void) {
   }
   if (procw!=NULL) {
     if (procw->processing!=NULL) gtk_widget_destroy(procw->processing);
-    g_free(procw);
-    procw=NULL;
   }
   if (mainw->splash_window==NULL) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
     else gtk_widget_queue_draw(mainw->multitrack->window);
+    while (g_main_context_iteration(NULL,FALSE));
   }
   else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
+  if (procw!=NULL) {
+    g_free(procw);
+    procw=NULL;
+  }
   mainw->cancel_type=CANCEL_KILL;
 }
 

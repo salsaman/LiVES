@@ -1119,7 +1119,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     else if (type==9||type==8) {
       gtk_window_set_title (GTK_WINDOW (resaudw->dialog), _("LiVES: - External Clip Settings"));
     }
-    gtk_window_set_position (GTK_WINDOW (resaudw->dialog), GTK_WIN_POS_CENTER);
+    gtk_window_set_position (GTK_WINDOW (resaudw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
     gtk_window_set_modal (GTK_WINDOW (resaudw->dialog), TRUE);
 
     if (prefs->show_gui) {
@@ -1979,7 +1979,7 @@ create_new_pb_speed (gshort type)
   else if (type==2) {
     gtk_window_set_title (GTK_WINDOW (new_pb_speed), _("LiVES: - Resample Video"));
   }
-  gtk_window_set_position (GTK_WINDOW (new_pb_speed), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (new_pb_speed), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (new_pb_speed), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (new_pb_speed), 300, 200);
 

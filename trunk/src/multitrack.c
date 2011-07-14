@@ -7498,7 +7498,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     mainw->unordered_blocks=FALSE;
   }
 
-  gtk_widget_reparent (mainw->scrolledwindow,mt->vpaned);
+  add_message_scroller(mt->vpaned);
 
   gtk_widget_set_size_request (mt->window, scr_width-MT_BORDER_WIDTH, -1);
 
@@ -7844,8 +7844,11 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   if (mt->clip_labels!=NULL) g_list_free(mt->clip_labels);
 
-  gtk_widget_show(mainw->scrolledwindow);
-  gtk_widget_reparent (mainw->scrolledwindow,mainw->message_box);
+  // gtk_widget_reparent broke in gtk+...
+  //gtk_widget_show(mainw->scrolledwindow);
+  //gtk_widget_reparent (mainw->scrolledwindow,mainw->message_box);
+
+  add_message_scroller(mainw->message_box);
 
   if (prefs->show_gui) {
     if (gtk_window_has_toplevel_focus(GTK_WINDOW(mt->window))) transfer_focus=TRUE;
@@ -7991,14 +7994,11 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   mainw->last_dprint_file=-1;
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
   
-  if (prefs->show_gui&&prefs->open_maximised) {
-    gtk_window_unmaximize (GTK_WINDOW(mainw->LiVES));
-  }
-
   while (g_main_context_iteration(NULL,FALSE));
 
   if (prefs->show_gui&&prefs->open_maximised) {
     gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
+    gtk_widget_queue_draw(mainw->LiVES);
   }
 
   if (mt->file_selected!=-1) {

@@ -215,7 +215,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
   gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Choose an audio player"));
 
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
 
   if (palette->style&STYLE_1) {
@@ -562,7 +562,7 @@ gboolean do_startup_tests(gboolean tshoot) {
   }
 
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
 
   if (palette->style&STYLE_1) {
@@ -914,7 +914,7 @@ void do_startup_interface_query(void) {
   gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Choose the startup interface"));
 
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
 
   if (palette->style&STYLE_1) {

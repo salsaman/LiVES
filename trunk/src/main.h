@@ -731,7 +731,7 @@ void do_locked_in_vdevs_error(void);
 void do_do_not_close_d (void);
 
 gboolean process_one (gboolean visible);
-void do_threaded_dialog(const gchar *text, gboolean has_cancel);
+void do_threaded_dialog(gchar *translated_text, gboolean has_cancel);
 void end_threaded_dialog(void);
 void response_ok (GtkButton *button, gpointer user_data);
 void response_cancel (GtkButton *button, gpointer user_data);
@@ -835,6 +835,7 @@ void frame_size_update(void);
 void splash_init(void);
 void splash_end(void);
 void splash_msg(const gchar *msg, gdouble pct);
+void add_message_scroller(GtkWidget *conter);
 
 // utils.c
 #ifdef IS_IRIX

@@ -82,7 +82,7 @@ create_fileselection (const gchar *title, gint preview_type, gpointer free_on_ca
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (fileselection), 10);
-  gtk_window_set_position (GTK_WINDOW (fileselection), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (fileselection), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (fileselection), TRUE);
 
   if (prefs->show_gui) {
@@ -294,7 +294,7 @@ process * create_processing (const gchar *text) {
   gtk_window_set_title (GTK_WINDOW (procw->processing), _("LiVES: - Processing..."));
   if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
   else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
-  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER_ALWAYS);
 
   dialog_vbox1 = GTK_DIALOG (procw->processing)->vbox;
   gtk_widget_show (dialog_vbox1);
@@ -499,7 +499,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
   fileinfo *filew=(fileinfo*)(g_malloc(sizeof(fileinfo)));
 
   filew->info_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_position (GTK_WINDOW (filew->info_window), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (filew->info_window), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (filew->info_window), TRUE);
 
   if (palette->style&STYLE_1) {
@@ -827,7 +827,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
   }
 
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (dialog), 450, 300);
 
   dialog_vbox = GTK_DIALOG (dialog)->vbox;
@@ -909,7 +909,7 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
   dialog3 = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog3), "LiVES");
   if (is_blocking) gtk_window_set_modal (GTK_WINDOW (dialog3), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog3), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog3), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (dialog3), 350, 200);
   if (mainw!=NULL) {
     if (palette->style&STYLE_1) {
@@ -1017,7 +1017,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   textwindow->dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (textwindow->dialog), (tmp=g_strconcat ("LiVES: - ",mytitle,NULL)));
   g_free(tmp);
-  gtk_window_set_position (GTK_WINDOW (textwindow->dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (textwindow->dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (textwindow->dialog), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (textwindow->dialog), 600, 400);
 
@@ -1179,7 +1179,7 @@ create_insert_dialog (void)
   insertw->insert_dialog = gtk_dialog_new ();
   gtk_window_add_accel_group (GTK_WINDOW (insertw->insert_dialog), accel_group);
   gtk_window_set_title (GTK_WINDOW (insertw->insert_dialog), _("LiVES: - Insert"));
-  gtk_window_set_position (GTK_WINDOW (insertw->insert_dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (insertw->insert_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (insertw->insert_dialog), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (insertw->insert_dialog), 300, 200);
   if (palette->style&STYLE_1) {
@@ -1478,7 +1478,7 @@ create_opensel_dialog (void)
 
   opensel_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (opensel_dialog), _("LiVES: - Open Selection"));
-  gtk_window_set_position (GTK_WINDOW (opensel_dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (opensel_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (opensel_dialog), TRUE);
 
   if (prefs->show_gui) {
@@ -1609,7 +1609,7 @@ create_location_dialog (void)
     else gtk_window_set_transient_for(GTK_WINDOW(locw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  gtk_window_set_position (GTK_WINDOW (locw->dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (locw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (locw->dialog), TRUE);
 
   gtk_window_set_default_size (GTK_WINDOW (locw->dialog), 300, 200);
@@ -1736,7 +1736,7 @@ _entryw* create_rename_dialog (gint type) {
 
   renamew->dialog = gtk_dialog_new ();
 
-  gtk_window_set_position (GTK_WINDOW (renamew->dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (renamew->dialog), GTK_WIN_POS_CENTER_ALWAYS);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) {
@@ -2001,7 +2001,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
     gtk_window_set_title (GTK_WINDOW (combo_dialog), _("LiVES:- Select input device"));
   }
 
-  gtk_window_set_position (GTK_WINDOW (combo_dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (combo_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (combo_dialog), TRUE);
 
   gtk_container_set_border_width (GTK_CONTAINER (combo_dialog), 20);
@@ -2138,7 +2138,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_window_set_title (GTK_WINDOW (cd_dialog), _("LiVES:- Device details"));
   }
 
-  gtk_window_set_position (GTK_WINDOW (cd_dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (cd_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (cd_dialog), TRUE);
 
   gtk_container_set_border_width (GTK_CONTAINER (cd_dialog), 10);
@@ -2593,7 +2593,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
     gtk_window_set_title (GTK_WINDOW (audd->dialog), _("LiVES:- Fade Audio Out"));
   }
 
-  gtk_window_set_position (GTK_WINDOW (audd->dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (audd->dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (audd->dialog), TRUE);
 
   gtk_container_set_border_width (GTK_CONTAINER (audd->dialog), 10);
@@ -2763,7 +2763,7 @@ create_rp_dialog (void)
     gtk_widget_modify_bg (xranw->rp_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_position (GTK_WINDOW (xranw->rp_dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (xranw->rp_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (xranw->rp_dialog), TRUE);
 
   gtk_container_set_border_width (GTK_CONTAINER (xranw->rp_dialog), 10);
@@ -2938,7 +2938,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
   commentsw->comments_dialog = gtk_dialog_new ();
   gtk_container_set_border_width (GTK_CONTAINER (commentsw->comments_dialog), 10);
   gtk_window_set_title (GTK_WINDOW (commentsw->comments_dialog), _("LiVES: - File Comments (optional)"));
-  gtk_window_set_position (GTK_WINDOW (commentsw->comments_dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (commentsw->comments_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (commentsw->comments_dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(commentsw->comments_dialog),GTK_WINDOW(mainw->LiVES));
@@ -3253,7 +3253,7 @@ _entryw* create_cds_dialog (gint type) {
   }
 
   gtk_window_set_modal (GTK_WINDOW (cdsw->dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (cdsw->dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (cdsw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (cdsw->dialog), 350, 200);
 
   if (prefs->show_gui) {
@@ -3411,7 +3411,7 @@ void do_layout_recover_dialog(void) {
   GtkWidget *mdialog=gtk_dialog_new ();
 
   gtk_window_set_title (GTK_WINDOW (mdialog), _("LiVES: recover layout ?"));
-  gtk_window_set_position (GTK_WINDOW (mdialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (mdialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (mdialog), 450, 200);
 
   if (prefs->show_gui) {

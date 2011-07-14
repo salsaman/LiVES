@@ -37,7 +37,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_container_set_border_width (GTK_CONTAINER (dvgrabw->window), 20);
 
   gtk_window_set_modal (GTK_WINDOW (dvgrabw->window), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dvgrabw->window), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dvgrabw->window), GTK_WIN_POS_CENTER_ALWAYS);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(dvgrabw->window, GTK_STATE_NORMAL, &palette->normal_back);
   }

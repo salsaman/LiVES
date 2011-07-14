@@ -736,7 +736,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   vppa->dialog = gtk_dialog_new ();
 
-  gtk_window_set_position (GTK_WINDOW (vppa->dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (vppa->dialog), GTK_WIN_POS_CENTER_ALWAYS);
   if (prefs->show_gui) {
     if (prefsw!=NULL) gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(prefsw->prefs_dialog));
     else {

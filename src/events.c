@@ -2030,7 +2030,7 @@ GtkWidget *events_rec_dialog (void) {
 
   e_rec_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (e_rec_dialog), _("LiVES: - Events recorded"));
-  gtk_window_set_position (GTK_WINDOW (e_rec_dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (e_rec_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (e_rec_dialog), TRUE);
   if (palette->style&STYLE_1) {
     gtk_dialog_set_has_separator(GTK_DIALOG(e_rec_dialog),FALSE);

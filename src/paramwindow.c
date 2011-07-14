@@ -823,7 +823,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   if (rfx->status==RFX_STATUS_WEED&&rfx->is_template) is_defaults=TRUE;
 
   gtk_container_set_border_width (GTK_CONTAINER (fx_dialog[n]), 20);
-  gtk_window_set_position (GTK_WINDOW (fx_dialog[n]), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (fx_dialog[n]), GTK_WIN_POS_CENTER_ALWAYS);
 
   if (menuitem!=NULL) {
     // activated from the menu for a rendered effect

@@ -131,7 +131,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   else {
     gtk_window_set_title (GTK_WINDOW (rfxbuilder->dialog), _("LiVES: - Edit Test RFX"));
   }
-  gtk_window_set_position (GTK_WINDOW (rfxbuilder->dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (rfxbuilder->dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (rfxbuilder->dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
@@ -714,7 +714,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_widget_show (dialog);
 
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
@@ -1143,7 +1143,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Properties"));
   gtk_widget_show (dialog);
 
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
@@ -1873,7 +1873,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   else {
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Edit RFX Parameter"));
   }
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
@@ -2592,7 +2592,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   else {
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Edit RFX Parameter Window Hint"));
   }
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
@@ -2863,7 +2863,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   else {
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Edit RFX Trigger"));
   }
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
@@ -2975,7 +2975,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   dialog = gtk_dialog_new ();
   gtk_widget_show (dialog);
 
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
@@ -4232,7 +4232,7 @@ gchar *prompt_for_script_name(const gchar *sname, gshort status) {
   }
   dialog = gtk_dialog_new ();
 
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }

@@ -72,6 +72,44 @@ load_theme (void) {
   }
 }
 
+void add_message_scroller(GtkWidget *conter) {
+  GtkTextBuffer *tbuff=NULL;
+
+  if (mainw->textview1!=NULL) {
+    tbuff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
+    g_object_ref(tbuff);
+    gtk_widget_destroy(mainw->textview1);
+  }
+
+  if (mainw->scrolledwindow!=NULL) {
+    gtk_widget_destroy(mainw->scrolledwindow);
+  }
+
+  mainw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_ALWAYS);
+  gtk_widget_show (mainw->scrolledwindow);
+
+  gtk_container_add (GTK_CONTAINER(conter), mainw->scrolledwindow);
+
+  mainw->textview1 = gtk_text_view_new ();
+  gtk_widget_show (mainw->textview1);
+  gtk_container_add (GTK_CONTAINER (mainw->scrolledwindow), mainw->textview1);
+
+  if (tbuff!=NULL) {
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(mainw->textview1),tbuff);
+    g_object_unref(tbuff);
+  }
+
+  gtk_widget_set_size_request (mainw->textview1, -1, 50);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (mainw->textview1), FALSE);
+  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (mainw->textview1), GTK_WRAP_WORD);
+  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (mainw->textview1), FALSE);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_base(mainw->textview1, GTK_STATE_NORMAL, &palette->info_base);
+    gtk_widget_modify_text(mainw->textview1, GTK_STATE_NORMAL, &palette->info_text);
+  }
+}
 
 
 
@@ -2167,27 +2205,11 @@ create_LiVES (void)
 
   mainw->message_box=gtk_vbox_new(FALSE, 0);
   gtk_widget_show (mainw->message_box);
-
-
-  mainw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_ALWAYS);
-  gtk_widget_show (mainw->scrolledwindow);
-
-  gtk_box_pack_start (GTK_BOX (mainw->message_box), mainw->scrolledwindow, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->message_box, TRUE, TRUE, 0);
 
-  mainw->textview1 = gtk_text_view_new ();
-  gtk_widget_show (mainw->textview1);
-  gtk_container_add (GTK_CONTAINER (mainw->scrolledwindow), mainw->textview1);
-  gtk_widget_set_size_request (mainw->textview1, -1, 50);
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (mainw->textview1), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (mainw->textview1), GTK_WRAP_WORD);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (mainw->textview1), FALSE);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_base(mainw->textview1, GTK_STATE_NORMAL, &palette->info_base);
-    gtk_widget_modify_text(mainw->textview1, GTK_STATE_NORMAL, &palette->info_text);
-  }
+  mainw->textview1=NULL;
+  mainw->scrolledwindow=NULL;
+  add_message_scroller(mainw->message_box);
 
   // accel keys
   gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Page_Up, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (prevclip_callback),NULL,NULL));
@@ -3458,7 +3480,7 @@ make_play_window(void) {
   } 
   
   mainw->play_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_position(GTK_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ON_PARENT);
+  gtk_window_set_position(GTK_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
 
   if (mainw->multitrack==NULL) gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
   else gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->multitrack->accel_group);

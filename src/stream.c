@@ -1111,7 +1111,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
 
   pandhw->dialog = gtk_dialog_new ();
 
-  gtk_window_set_position (GTK_WINDOW (pandhw->dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_position (GTK_WINDOW (pandhw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(pandhw->dialog),GTK_WINDOW(mainw->LiVES));
   }

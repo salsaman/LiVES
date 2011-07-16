@@ -112,6 +112,13 @@ void add_message_scroller(GtkWidget *conter) {
 }
 
 
+void make_custom_submenus(void) {
+  mainw->custom_gens_submenu = gtk_menu_item_new_with_mnemonic (_ ("_Custom Generators"));
+  mainw->custom_effects_submenu = gtk_menu_item_new_with_mnemonic (_ ("_Custom Effects"));
+  mainw->custom_tools_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Tools"));
+  mainw->custom_utilities_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Utilities"));
+}
+
 
 void 
 create_LiVES (void)
@@ -977,7 +984,6 @@ create_LiVES (void)
     gtk_widget_modify_bg(mainw->effects_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  mainw->custom_effects_submenu = gtk_menu_item_new_with_mnemonic (_ ("_Custom Effects"));
   mainw->custom_effects_menu=NULL;
 
   mainw->run_test_rfx_submenu=gtk_menu_item_new_with_mnemonic (_("_Run Test Rendered Effect/Tool/Generator..."));
@@ -1016,24 +1022,21 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->resample_video);
   gtk_widget_set_sensitive (mainw->resample_video, FALSE);
 
-  mainw->utilities_submenu = gtk_menu_item_new_with_mnemonic (_("_Utilities"));
   mainw->utilities_menu=NULL;
+  mainw->utilities_submenu = gtk_menu_item_new_with_mnemonic (_("_Utilities"));
   gtk_widget_show (mainw->utilities_submenu);
 
-  mainw->custom_tools_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Tools"));
   mainw->custom_tools_menu=NULL;
 
-  mainw->custom_utilities_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Utilities"));
   mainw->custom_utilities_menu=NULL;
 
   mainw->custom_tools_separator = gtk_menu_item_new ();
   gtk_widget_set_sensitive (mainw->custom_tools_separator, FALSE);
 
-  mainw->gens_submenu = gtk_menu_item_new_with_mnemonic (_("_Generate"));
   mainw->gens_menu=NULL;
+  mainw->gens_submenu = gtk_menu_item_new_with_mnemonic (_("_Generate"));
   gtk_widget_show (mainw->gens_submenu);
 
-  mainw->custom_gens_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Generators"));
   mainw->custom_gens_menu=NULL;
 
   // add RFX plugins
@@ -1048,8 +1051,8 @@ create_LiVES (void)
   }
 
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->utilities_submenu);
-  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->custom_tools_separator);
-  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->custom_tools_submenu);
+  //gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->custom_tools_separator);
+  //gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->custom_tools_submenu);
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->gens_submenu);
 
   separator26 = gtk_menu_item_new ();

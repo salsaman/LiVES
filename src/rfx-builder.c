@@ -4492,11 +4492,9 @@ GList *get_script_list (gshort status) {
 
 
 
-
-
-
-
-
+static void remove_from_parent(GtkWidget *widget) {
+  gtk_container_remove(GTK_CONTAINER(widget->parent),widget);
+}
 
 
 void add_rfx_effects(void) {
@@ -4519,6 +4517,8 @@ void add_rfx_effects(void) {
 
   int i,plugin_idx,rfx_slot_count=1;
 
+  int rc_child=0;
+
   mainw->has_custom_tools=FALSE;
   mainw->has_custom_gens=FALSE;
   mainw->has_custom_utilities=FALSE;
@@ -4527,57 +4527,43 @@ void add_rfx_effects(void) {
   // TODO - account for case where we only have apply_realtime (i.e add 1 to builtin count)
   if (mainw->num_rendered_effects_builtin) {
     for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) {
-      if (mainw->rendered_fx[i].menuitem!=NULL) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
-	gtk_widget_destroy(mainw->rendered_fx[i].menuitem);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+      if (mainw->rendered_fx!=NULL) {
+	if (mainw->rendered_fx[i].menuitem!=NULL) {
+	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  remove_from_parent(mainw->rendered_fx[i].menuitem);
+	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	}
       }
     }
     pthread_mutex_lock(&mainw->gtk_mutex);
-    gtk_container_remove (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_submenu);
-    gtk_container_remove (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
-    gtk_container_remove (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
     if (mainw->rte_separator!=NULL) {
-      //gtk_widget_destroy (mainw->rte_separator);
-      //mainw->rte_separator=NULL;
+      remove_from_parent (mainw->custom_effects_separator);
+      remove_from_parent (mainw->custom_effects_menu);
+      remove_from_parent (mainw->custom_effects_submenu);
+      remove_from_parent (mainw->custom_gens_menu);
+      remove_from_parent (mainw->custom_gens_submenu);
+      remove_from_parent (mainw->gens_menu);
+      remove_from_parent (mainw->custom_utilities_separator);
+      remove_from_parent (mainw->custom_utilities_menu);
+      remove_from_parent (mainw->custom_utilities_submenu);
+      remove_from_parent (mainw->custom_tools_menu);
+      remove_from_parent (mainw->utilities_menu);
+      remove_from_parent (mainw->run_test_rfx_menu);
     }
-    gtk_widget_destroy (mainw->custom_effects_separator);
-    gtk_widget_destroy (mainw->custom_utilities_separator);
     gtk_widget_queue_draw(mainw->effects_menu);
     while (g_main_context_iteration(NULL,FALSE));
     pthread_mutex_unlock(&mainw->gtk_mutex);
 
-    rfx_free_all();
-  }
-  else {
-    if (mainw->rendered_fx!=NULL&&mainw->rendered_fx[0].menuitem!=NULL) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
-      gtk_widget_destroy(mainw->rendered_fx[0].menuitem);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
-    }
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    if (mainw->rte_separator!=NULL) {
-      //gtk_widget_destroy (mainw->rte_separator);
-      //mainw->rte_separator=NULL;
-      gtk_container_remove (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_submenu);
-      gtk_container_remove (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
-      gtk_container_remove (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
-    }
-    gtk_widget_queue_draw(mainw->effects_menu);
-    while (g_main_context_iteration(NULL,FALSE));
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    if (mainw->rendered_fx!=NULL) rfx_free_all();
   }
 
   mainw->num_rendered_effects_builtin=mainw->num_rendered_effects_custom=mainw->num_rendered_effects_test=0;
 
-  // the advanced menu entry
-  if (mainw->run_test_rfx_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    gtk_widget_destroy(mainw->run_test_rfx_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-  }
 
   pthread_mutex_lock(&mainw->gtk_mutex);
+
+  make_custom_submenus();
+
   mainw->run_test_rfx_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
   if (palette->style&STYLE_1) {
@@ -4586,14 +4572,6 @@ void add_rfx_effects(void) {
   gtk_widget_show(mainw->run_test_rfx_menu);
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
-
-
-  // custom effects menu subentries
-  if (mainw->custom_effects_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    gtk_widget_destroy(mainw->custom_effects_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-  }
 
   pthread_mutex_lock(&mainw->gtk_mutex);
 
@@ -4604,14 +4582,6 @@ void add_rfx_effects(void) {
   }
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
-
-
-  // custom tools
-  if (mainw->custom_tools_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    gtk_widget_destroy(mainw->custom_tools_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-  }
 
   pthread_mutex_lock(&mainw->gtk_mutex);
 
@@ -4871,6 +4841,7 @@ void add_rfx_effects(void) {
 	break;
       case RFX_STATUS_CUSTOM:
 	gtk_container_add (GTK_CONTAINER (mainw->custom_effects_menu), menuitem);
+	rc_child++;
 	break;
       case RFX_STATUS_TEST:
 	gtk_container_add (GTK_CONTAINER (mainw->run_test_rfx_menu), menuitem);
@@ -4908,7 +4879,7 @@ void add_rfx_effects(void) {
 
   pthread_mutex_lock(&mainw->gtk_mutex);
   // custom effects
-  if (mainw->num_rendered_effects_custom) {
+  if (rc_child>0) {
     gtk_widget_show (mainw->custom_effects_separator);
     gtk_widget_show (mainw->custom_effects_menu);
     gtk_widget_show (mainw->custom_effects_submenu);
@@ -4920,20 +4891,6 @@ void add_rfx_effects(void) {
   }
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
-  // tools
-  if (mainw->utilities_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    gtk_widget_destroy(mainw->utilities_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-  }
-
-  if (mainw->gens_menu!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    gtk_widget_destroy(mainw->gens_menu);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-  }
-
-
   pthread_mutex_lock(&mainw->gtk_mutex);
   mainw->utilities_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->utilities_submenu), mainw->utilities_menu);
@@ -4942,7 +4899,7 @@ void add_rfx_effects(void) {
   }
 
   if (mainw->custom_tools_menu!=NULL) {
-    gtk_widget_destroy(mainw->custom_tools_menu);
+    remove_from_parent(mainw->custom_tools_menu);
   }
 
   mainw->custom_tools_menu=gtk_menu_new();
@@ -4959,10 +4916,6 @@ void add_rfx_effects(void) {
   }
 
 
-  if (mainw->custom_gens_menu!=NULL) {
-    gtk_widget_destroy(mainw->custom_gens_menu);
-  }
-
   mainw->custom_gens_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_gens_submenu), mainw->custom_gens_menu);
   if (palette->style&STYLE_1) {
@@ -4972,10 +4925,6 @@ void add_rfx_effects(void) {
   gtk_container_add (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
 
 
-
-  if (mainw->custom_utilities_menu!=NULL) {
-    gtk_widget_destroy(mainw->custom_utilities_menu);
-  }
 
   mainw->custom_utilities_separator=gtk_menu_item_new();
   gtk_widget_set_sensitive (mainw->custom_utilities_separator, FALSE);

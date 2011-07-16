@@ -632,12 +632,6 @@ typedef enum {
 
 // some useful functions
 
-//gui.c
-void  create_LiVES (void);
-void enable_record (void);
-void toggle_record (void);
-void disable_record (void);
-
 // interface.c
 process* create_processing (const gchar *text);
 void add_to_winmenu(void);
@@ -823,10 +817,13 @@ void set_palette_colours (void);
 void set_main_title(const gchar *filename, gint or_untitled_number);
 void set_record (void);
 
-// main.c - in progress
-weed_plant_t *weed_layer_new_from_video(gint fnum, gint frame);
-
 //gui.c
+//gui.c
+void  create_LiVES (void);
+void enable_record (void);
+void toggle_record (void);
+void disable_record (void);
+void make_custom_submenus(void);
 void fade_background(void);
 void unfade_background(void);
 void block_expose (void);

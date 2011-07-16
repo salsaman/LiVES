@@ -2473,6 +2473,7 @@ void rfx_free_all (void) {
     rfx_free(&mainw->rendered_fx[i]);
   }
   g_free(mainw->rendered_fx);
+  mainw->rendered_fx=NULL;
 }
 
 

@@ -115,7 +115,6 @@ void add_message_scroller(GtkWidget *conter) {
 void make_custom_submenus(void) {
   mainw->custom_gens_submenu = gtk_menu_item_new_with_mnemonic (_ ("_Custom Generators"));
   mainw->custom_effects_submenu = gtk_menu_item_new_with_mnemonic (_ ("_Custom Effects"));
-  mainw->custom_tools_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Tools"));
   mainw->custom_utilities_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Utilities"));
 }
 
@@ -1044,6 +1043,8 @@ create_LiVES (void)
   mainw->custom_gens_menu=NULL;
   mainw->rendered_fx=NULL;
 
+  mainw->custom_tools_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Tools"));
+
   if (!mainw->foreign&&capable->smog_version_correct) {
     splash_msg(_("Loading rendered effect plugins..."),.2);
     add_rfx_effects();
@@ -1051,8 +1052,8 @@ create_LiVES (void)
   }
 
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->utilities_submenu);
-  //gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->custom_tools_separator);
-  //gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->custom_tools_submenu);
+  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->custom_tools_separator);
+  gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->custom_tools_submenu);
   gtk_container_add (GTK_CONTAINER (mainw->tools_menu), mainw->gens_submenu);
 
   separator26 = gtk_menu_item_new ();

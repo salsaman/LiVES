@@ -2985,13 +2985,13 @@ void weed_load_all (void) {
 
   num_weed_filters=0;
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   lives_weed_plugin_path=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN);
 
 #ifdef DEBUG_WEED
   g_printerr("In weed init\n");
 #endif
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   // danger Will Robinson !
   fg_gen_to_start=fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
@@ -3031,7 +3031,7 @@ void weed_load_all (void) {
     hashnames[i]=NULL;
   }
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   weed_p_path=getenv("WEED_PLUGIN_PATH");
   if (weed_p_path==NULL) weed_plugin_path=g_strdup("");
   else weed_plugin_path=g_strdup(weed_p_path);
@@ -3047,7 +3047,7 @@ void weed_load_all (void) {
   // first we parse the weed_plugin_path
   numdirs=get_token_count(weed_plugin_path,':');
   dirs=g_strsplit(weed_plugin_path,":",-1);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   for (i=0;i<numdirs;i++) {
     // get list of all files
@@ -3056,7 +3056,7 @@ void weed_load_all (void) {
     
     // parse twice, first we get the plugins, then 1 level of subdirs
     for (plugin_idx=0;plugin_idx<listlen;plugin_idx++) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       plugin_name=g_list_nth_data(weed_plugin_list,plugin_idx);
       if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3)) {
 	plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
@@ -3067,18 +3067,18 @@ void weed_load_all (void) {
 	plugin_idx--;
 	listlen--;
       }
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
 
     }
 
     // get 1 level of subdirs
     for (subdir_idx=0;subdir_idx<listlen;subdir_idx++) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       subdir_name=g_list_nth_data(weed_plugin_list,subdir_idx);
       subdir_path=g_strdup_printf("%s/%s",dirs[i],subdir_name);
       if (!g_file_test(subdir_path, G_FILE_TEST_IS_DIR)||!strcmp(subdir_name,"icons")||!strcmp(subdir_name,"data")) {
 	g_free(subdir_path);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	continue;
       }
       weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,"so");
@@ -3094,23 +3094,23 @@ void weed_load_all (void) {
 	g_list_free(weed_plugin_sublist);
       }
       g_free(subdir_path);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
     if (weed_plugin_list!=NULL) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_list_free_strings(weed_plugin_list);
       g_list_free(weed_plugin_list);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
   }
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   g_strfreev(dirs);
   g_free(weed_plugin_path);
 
   msg=g_strdup_printf(_ ("Successfully loaded %d Weed filters\n"),num_weed_filters);
   d_print(msg);
   g_free(msg);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
 }
 
@@ -3141,10 +3141,10 @@ void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"in_channel_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"in_channel_templates",&error);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
       weed_free(plants);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
   }
 
@@ -3154,10 +3154,10 @@ void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"out_channel_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"out_channel_templates",&error);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
       weed_free(plants);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
   }
 
@@ -3166,7 +3166,7 @@ void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"in_parameter_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       for (i=0;i<nitems;i++) {
 	if (weed_plant_has_leaf(plants[i],"gui")) {
 	  gui=(weed_get_plantptr_value(plants[i],"gui",&error));
@@ -3183,7 +3183,7 @@ void weed_filter_free(weed_plant_t *filter) {
 	weed_plant_free(plants[i]);
       }
       weed_free(plants);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
   }
 
@@ -3193,25 +3193,25 @@ void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"out_parameter_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       for (i=0;i<nitems;i++) {
 	if (weed_plant_has_leaf(plants[i],"gui")) weed_plant_free(weed_get_plantptr_value(plants[i],"gui",&error));
 	weed_plant_free(plants[i]);
       }
       weed_free(plants);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
   }
 
 
   // free gui
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   if (weed_plant_has_leaf(filter,"gui")) weed_plant_free(weed_get_plantptr_value(filter,"gui",&error));
 
 
   // free filter
   weed_plant_free(filter);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 }
 
 
@@ -3222,7 +3222,7 @@ void weed_unload_all(void) {
   weed_desetup_f desetup_fn;
   GList *pinfo=NULL,*xpinfo;
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   mainw->num_tr_applied=0;
   weed_deinit_all();
   for (i=0;i<num_weed_filters;i++) {
@@ -3250,15 +3250,15 @@ void weed_unload_all(void) {
 	g_free(cwd);
       }
 
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       dlclose(handle);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       handle=NULL;
       weed_set_voidptr_value(plugin_info,"handle",handle);
     }
     weed_filter_free(filter);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
+    threaded_dialog_spin();
   }
 
   xpinfo=pinfo;
@@ -3279,7 +3279,7 @@ void weed_unload_all(void) {
     g_free(key_to_instance_copy[i]);
   }
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
 }
 

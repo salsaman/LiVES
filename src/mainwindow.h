@@ -816,7 +816,7 @@ typedef struct {
   GMemVTable alt_vtable;
   void (*free_fn)(gpointer);
 
-  pthread_mutex_t gtk_mutex;  ///< gtk drawing mutex - used by the threaded dialog
+  pthread_mutex_t gtk_mutex;  ///< gtk drawing mutex - no longer used
   pthread_mutex_t interp_mutex;  ///< interpolation mutex - parameter interpolation must be single threaded
 
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads

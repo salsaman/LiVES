@@ -1,6 +1,6 @@
 // dialogs.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2010
+// (c) G. Finch 2003 - 2011
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -38,9 +38,6 @@ static gboolean force_show;
 
 static gdouble est_time;
 
-
-static pthread_t dthread;
-static gchar *thread_text=NULL;
 
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (U_SECL/10l)
@@ -1738,8 +1735,6 @@ void do_rmem_max_error (gint size) {
 static process *procw=NULL;
 
 
-
-
 static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   GtkWidget *dialog_vbox1;
@@ -1840,107 +1835,42 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 }
 
 
+static gdouble sttime;
 
 
-static void dth2_inner (void) {
-   gboolean pthread_islocked=TRUE;
-  gdouble timesofar,sttime;
+void threaded_dialog_spin (void) {
+  gdouble timesofar;
   gint progress;
 
-  // mutex lock
-  do {
-    if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
-      pthread_islocked=FALSE;
-      break;
-    }
-    sched_yield();
-    g_usleep(prefs->sleep_time);
-  } while (pthread_mutex_trylock(&mainw->gtk_mutex));
-
-  if (!pthread_islocked) {
-    dlg_thread_ready=TRUE;
-    return; // parent process finished already
+  if (mainw->splash_window!=NULL) {
+    do_splash_progress();
+    return;
   }
 
-  disp_frames_done=0;
-  gettimeofday(&tv, NULL);
-  sttime=tv.tv_sec*1000000+tv.tv_usec;
+  if (procw==NULL) return;
 
-  dlg_thread_ready=TRUE;
-
-  while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER&&mainw->cancelled!=CANCEL_KEEP&&pthread_islocked) {
-    // mutex locked
-    if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
-      // pulse the progress bar
-      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(procw->progressbar));
-    }
-    else {
-      // show fraction
-      gettimeofday(&tv, NULL);
-      timesofar=(gdouble)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
-      disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
-    }
-
-    gtk_widget_queue_draw(procw->processing);
-
-    // unlock mutex
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-    do {
-      // wait to get mutex again
-      if (!mainw->threaded_dialog||mainw->cancelled==CANCEL_USER) {
-	pthread_islocked=FALSE;
-	break;
-      }
-      sched_yield();
-      g_usleep(prefs->sleep_time);
-    } while (pthread_mutex_trylock(&mainw->gtk_mutex));
+  if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
+      strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
+    // pulse the progress bar
+    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(procw->progressbar));
+  }
+  else {
+    // show fraction
+    gettimeofday(&tv, NULL);
+    timesofar=(gdouble)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
+    disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
   }
 
-  // unlock mutex
-  if (pthread_islocked) pthread_mutex_unlock(&mainw->gtk_mutex);
-
+  gtk_widget_queue_draw(procw->processing);
+  while (g_main_context_iteration(NULL,FALSE));
 }
 
 
 
-static void *dth2 (void *arg) {
-  dth2_inner();
+void *splash_prog (void) {
+  gtk_progress_bar_pulse(GTK_PROGRESS_BAR(mainw->splash_progress));
   return NULL;
 }
-
-static void *dth2_with_cancel (void *arg) {
-  dth2_inner();
-  if ((mainw->cancelled==CANCEL_USER||mainw->cancelled==CANCEL_KEEP)&&mainw->sig_pid>0) {
-    
-    while (!g_file_test(mainw->sig_file,G_FILE_TEST_EXISTS)) {
-      g_usleep(prefs->sleep_time);
-    }
-
-    pthread_kill(mainw->sig_pid,SIGUSR1);
-  }
-  return NULL;
-}
-
-
-
-
-static void *splash_prog (void *arg) {
-  while (mainw->threaded_dialog&&mainw->cancelled!=CANCEL_USER) {
-    if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
-      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(mainw->splash_progress));
-      while (g_main_context_iteration(NULL,FALSE));
-      pthread_mutex_unlock(&mainw->gtk_mutex);
-    }
-    sched_yield();
-    g_usleep(prefs->sleep_time);
-  }
-  return NULL;
-}
-
-
-
-
-
 
 
  
@@ -1948,58 +1878,27 @@ void do_threaded_dialog(gchar *trans_text, gboolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
   //
-  // WARNING: excercise *extreme caution* after calling this;
-  // in the main thread, all drawing operations MUST be surrounded by:
-  // 
-  // pthread_mutex_lock(&mainw->gtk_mutex);
-  // ...
-  // pthread_mutex_unlock(&mainw->gtk_mutex);
-  // 
-  // otherwise the app can crash very badly !
-
-
-  // in addition all calls to weed_set_* must be wrapped, as these can use the slice allocator
-  // also weed_plant_new, weed_plant_free
-
   // WARNING: if trans_text is a translated string, it will be autoamtically freed by translations inside this function
 
   gchar *copy_text=g_strdup(trans_text);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
-  if (!prefs->show_threaded_dialog) return;
+  gettimeofday(&tv, NULL);
+  sttime=tv.tv_sec*1000000+tv.tv_usec;
 
   mainw->threaded_dialog=TRUE;
   clear_mainw_msg();
-  dlg_thread_ready=FALSE;
 
   create_threaded_dialog(copy_text, has_cancel);
   g_free(copy_text);
 
   while (g_main_context_iteration(NULL,FALSE));
-
-  if (!has_cancel) pthread_create(&dthread,NULL,dth2,NULL);
-  else pthread_create(&dthread,NULL,dth2_with_cancel,NULL);
-
-  while (!dlg_thread_ready) {
-    g_usleep(prefs->sleep_time);
-    sched_yield();
-  }
-
-  pthread_mutex_lock(&mainw->gtk_mutex);
-  while (g_main_context_iteration(NULL,FALSE));
-  pthread_mutex_unlock(&mainw->gtk_mutex);
-
 }
 
 
+
 void end_threaded_dialog(void) {
-  if (mainw->threaded_dialog) {
-    mainw->threaded_dialog=FALSE;
-    pthread_join(dthread,NULL);
-    if (thread_text!=NULL) g_free(thread_text);
-    thread_text=NULL;
-  }
   if (procw!=NULL) {
     if (procw->processing!=NULL) gtk_widget_destroy(procw->processing);
   }
@@ -2007,7 +1906,6 @@ void end_threaded_dialog(void) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
     else gtk_widget_queue_draw(mainw->multitrack->window);
-    while (g_main_context_iteration(NULL,FALSE));
   }
   else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
   if (procw!=NULL) {
@@ -2015,28 +1913,17 @@ void end_threaded_dialog(void) {
     procw=NULL;
   }
   mainw->cancel_type=CANCEL_KILL;
+  mainw->threaded_dialog=FALSE;
+  while (g_main_context_iteration(NULL,FALSE));
 }
 
 
 
 
 void do_splash_progress(void) {
-  // calling this causes splash screen progress to pulse
-  // until end_threaded_dialog() is called
-  //
-  // WARNING: excercise *extreme caution* after calling this;
-  // in the main thread, all drawing operations MUST be surrounded by:
-  // 
-  // pthread_mutex_lock(&mainw->gtk_mutex);
-  // ...
-  // pthread_mutex_unlock(&mainw->gtk_mutex);
-  // 
-  // otherwise the app can crash very badly !
-  thread_text=NULL;
-
   mainw->threaded_dialog=TRUE;
   lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window->window);
-  pthread_create(&dthread,NULL,splash_prog,NULL);
+  splash_prog();
 }
 
 

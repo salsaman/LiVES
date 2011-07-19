@@ -101,7 +101,7 @@ static LIVES_INLINE int get_track_for_block(track_rect *block) {
 static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
   weed_plant_t *event=get_first_event(event_list);
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   weed_set_int_value(event_list,"width",cfile->hsize);
   weed_set_int_value(event_list,"height",cfile->vsize);
@@ -136,21 +136,17 @@ static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list
     g_free(avols);
   }
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
-
   if (mem==NULL&&fd<0) return;
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   weed_plant_serialise(fd,event_list,mem);
   while (event!=NULL) {
     if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_voidptr_value(event,"event_id",(void *)event);
     weed_plant_serialise(fd,event,mem);
     event=get_next_event(event);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-    sched_yield();
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
   }
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+
 }
 
 
@@ -2114,17 +2110,17 @@ static void rerenumber_clips(gchar *lfile) {
       lmap=mainw->files[i]->layout_map;
       while (lmap!=NULL) {
 	if (!strncmp(lmap->data,lfile,strlen(lfile))) {
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  array=g_strsplit(lmap->data,"|",-1);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  rnc=atoi(array[1]);
 	  
 	  renumbered_clips[rnc]=i;
 
 	  lfps[i]=strtod(array[3],NULL);
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  g_strfreev(array);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	}
 	lmap=lmap->next;
       }
@@ -11766,9 +11762,9 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
 
       // we need to call this to warp the pointer, but gtk+ behaves like a PITA
       if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_main_context_iteration(NULL,FALSE);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
 #endif
     }
 
@@ -17134,7 +17130,7 @@ static gchar *rec_error_add(gchar *ebuf, gchar *msg, int num, weed_timecode_t tc
 
   elist_errors++;
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   if (tc==-1) new=g_strdup(msg); // missing timecode
   else {
     if (num==-1) new=g_strdup_printf("%s at timecode %"PRId64"\n",msg,tc);
@@ -17147,7 +17143,7 @@ static gchar *rec_error_add(gchar *ebuf, gchar *msg, int num, weed_timecode_t tc
 #endif
   g_free(ebuf);
   g_free(new);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   return tmp;
 } 
 
@@ -17607,11 +17603,6 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
   // The checking done is quite sophisticated, and can correct many errors in badly-formed event_lists
 
-  // note we need to make extensive use of the gtk_mutex, as we are also showing the
-  // threaded dialog (setting and freeing of weed parameters makes use of the slice allocator
-  // which appears to be not thread-safe)
-
-
   weed_plant_t *event=get_first_event(event_list),*event_next;
   weed_timecode_t tc=0,last_tc=0;
   gchar *ebuf=g_strdup("");
@@ -17677,9 +17668,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
     }
     tc=get_event_timecode(event);
     tc=q_gint64(tc+U_SEC/(2.*fps)-1,fps);
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     weed_set_int64_value(event,"timecode",tc);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     if (!weed_get_plant_type(event)==WEED_PLANT_EVENT) {
       ebuf=rec_error_add(ebuf,"Invalid plant type",weed_get_plant_type(event),tc);
       delete_event(event_list,event);
@@ -17751,10 +17742,10 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		      }
 		    }
 		  }
-		  pthread_mutex_lock(&mainw->gtk_mutex);
+		  threaded_dialog_spin();
 		  weed_free(inct);
 		  weed_free(ctmpls);
-		  pthread_mutex_unlock(&mainw->gtk_mutex);
+		  threaded_dialog_spin();
 		  if (!was_deleted) {
 		    num_ctmpls=weed_leaf_num_elements(filter,"out_channel_templates");
 		    num_outct=weed_leaf_num_elements(event,"out_count");
@@ -17802,9 +17793,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 				  else force_backing_tracks=1;
 				}
 			      }
-			      pthread_mutex_lock(&mainw->gtk_mutex);
+			      threaded_dialog_spin();
 			      weed_free(trax);
-			      pthread_mutex_unlock(&mainw->gtk_mutex);
+			      threaded_dialog_spin();
 			      ntracks=weed_leaf_num_elements(event,"out_tracks");
 			      trax=weed_get_int_array(event,"out_tracks",&error);
 			      for (i=0;i<ntracks;i++) {
@@ -17824,9 +17815,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 				  else force_backing_tracks=1;
 				}
 			      }
-			      pthread_mutex_lock(&mainw->gtk_mutex);
+			      threaded_dialog_spin();
 			      weed_free(trax);
-			      pthread_mutex_unlock(&mainw->gtk_mutex);
+			      threaded_dialog_spin();
 			    }
 			  }
 			  // all tests passed
@@ -17856,9 +17847,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	    was_deleted=TRUE;
 	    if (mt!=NULL) mt->layout_prompt=TRUE;
 	  }
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  weed_free(filter_hash);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  if (!was_deleted) {
 	    host_tag=get_next_tt_key(trans_table)+FX_KEYS_MAX_VIRTUAL+1;
 	    if (host_tag==-1) {
@@ -17867,10 +17858,10 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	      return FALSE;
 	    }
 	    host_tag_s=g_strdup_printf("%d",host_tag);
-	    pthread_mutex_lock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    weed_set_string_value(event,"host_tag",host_tag_s);
 	    g_free(host_tag_s);
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    event_id=weed_get_voidptr_value(event,"event_id",&error);
 	    trans_table[(idx=host_tag-FX_KEYS_MAX_VIRTUAL-1)].in=event_id;
 	    trans_table[idx].out=event;
@@ -17883,10 +17874,10 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		pchains[idx][i]=event;
 		in_pchanges[i]=NULL;
 	      }
-	      pthread_mutex_lock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	      weed_set_voidptr_array(event,"in_parameters",num_params,in_pchanges); // set all to NULL, we will re-fill as we go along
 	      g_free(in_pchanges);
-	      pthread_mutex_unlock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	    }
 	  }
 	}
@@ -17909,20 +17900,20 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  was_deleted=TRUE;
 	}
 	else {
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  weed_set_voidptr_value(init_event,"deinit_event",event);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 
 	  host_tag_s=weed_get_string_value(init_event,"host_tag",&error);
 	  host_tag=atoi(host_tag_s);
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  weed_free(host_tag_s);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  trans_table[(idx=host_tag-FX_KEYS_MAX_VIRTUAL-1)].in=NULL;
 	  if (idx<free_tt_key) free_tt_key=idx;
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  weed_set_voidptr_value(event,"init_event",init_event);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  check_filter_map=TRUE;
 	  last_deinit_tc=tc;
 
@@ -17935,16 +17926,16 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		if (!WEED_EVENT_IS_FILTER_INIT(pchains[idx][i])) in_pchanges[i]=pchains[idx][i];
 		else in_pchanges[i]=NULL;
 	      }
-	      pthread_mutex_lock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	      weed_set_voidptr_array(event,"in_parameters",num_params,in_pchanges); // set array to last param_changes
 	      g_free(in_pchanges);
 	      g_free(pchains[idx]);
-	      pthread_mutex_unlock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	    }
 	  }
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  weed_free(filter_hash);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	}
       }
       break;
@@ -17967,7 +17958,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  else new_init_events[i]=NULL;
 	}
 	new_init_events=remove_nulls_from_filter_map(new_init_events,&num_init_events);
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	if (new_init_events==NULL) weed_set_voidptr_value(event,"init_events",NULL);
 	else {
 	  weed_set_voidptr_array(event,"init_events",num_init_events,new_init_events);
@@ -17981,12 +17972,12 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  g_free(new_init_events);
 	}
 	weed_free(init_events);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
       else {
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	weed_set_voidptr_value(event,"init_events",NULL);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
       if (last_filter_map!=NULL) {
 	if (compare_filter_maps(last_filter_map,event,-1000000)) {
@@ -18062,9 +18053,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 			// all checks passed
 			host_tag_s=weed_get_string_value(init_event,"host_tag",&error);
 			host_tag=atoi(host_tag_s);
-			pthread_mutex_lock(&mainw->gtk_mutex);
+			threaded_dialog_spin();
 			weed_free(host_tag_s);
-			pthread_mutex_unlock(&mainw->gtk_mutex);
+			threaded_dialog_spin();
 			idx=host_tag-FX_KEYS_MAX_VIRTUAL-1;
 			if (pchains[idx][pnum]==init_event) {
 			  orig_pchanges=weed_get_voidptr_array(init_event,"in_parameters",&error);
@@ -18073,32 +18064,32 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 			    if (orig_pchanges[i]==NULL&&i==pnum) in_pchanges[i]=(void *)event;
 			    else in_pchanges[i]=orig_pchanges[i];
 			  }
-			  pthread_mutex_lock(&mainw->gtk_mutex);
+			  threaded_dialog_spin();
 			  weed_set_voidptr_array(init_event,"in_parameters",num_params,in_pchanges);
 			  g_free(in_pchanges);
 			  g_free(orig_pchanges);
 			  weed_set_voidptr_value(event,"prev_change",NULL);
-			  pthread_mutex_unlock(&mainw->gtk_mutex);
+			  threaded_dialog_spin();
 			}
 			else {
-			  pthread_mutex_lock(&mainw->gtk_mutex);
+			  threaded_dialog_spin();
 			  weed_set_voidptr_value(pchains[idx][pnum],"next_change",event);
 			  weed_set_voidptr_value(event,"prev_change",pchains[idx][pnum]);
-			  pthread_mutex_unlock(&mainw->gtk_mutex);
+			  threaded_dialog_spin();
 			}
-			pthread_mutex_lock(&mainw->gtk_mutex);
+			threaded_dialog_spin();
 			weed_set_voidptr_value(event,"next_change",NULL);
 			weed_set_voidptr_value(event,"init_event",init_event);
-			pthread_mutex_unlock(&mainw->gtk_mutex);
+			threaded_dialog_spin();
 			pchains[idx][pnum]=event;
 		      }}}
-		  pthread_mutex_lock(&mainw->gtk_mutex);
+		  threaded_dialog_spin();
 		  weed_free(ptmpls);
-		  pthread_mutex_unlock(&mainw->gtk_mutex);
+		  threaded_dialog_spin();
 		}
-		pthread_mutex_lock(&mainw->gtk_mutex);
+		threaded_dialog_spin();
 		weed_free(filter_hash);
-		pthread_mutex_unlock(&mainw->gtk_mutex);
+		threaded_dialog_spin();
 	      }}}}}
       break;
     case WEED_EVENT_HINT_FRAME:
@@ -18109,10 +18100,10 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
       }
       else {
 	if (!weed_plant_has_leaf(event,"clips")) {
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  weed_set_int_value(event,"clips",-1);
 	  weed_set_int_value(event,"frames",0);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  ebuf=rec_error_add(ebuf,"Frame event missing clips at",-1,tc);
 	}
 
@@ -18166,7 +18157,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	}
 
 	if (last_valid_frame==0) {
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  g_free(new_clip_index);
 	  g_free(new_frame_index);
 	  new_clip_index=g_malloc(sizint);
@@ -18176,11 +18167,11 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  num_tracks=1;
 	  weed_set_int_array(event,"clips",num_tracks,new_clip_index);
 	  weed_set_int_array(event,"frames",num_tracks,new_frame_index);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	}
 	else {
 	  if (last_valid_frame<num_tracks) {
-	    pthread_mutex_lock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    weed_free(clip_index);
 	    weed_free(frame_index);
 	    clip_index=weed_malloc(last_valid_frame*sizint);
@@ -18192,23 +18183,23 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	    num_tracks=last_valid_frame;
 	    weed_set_int_array(event,"clips",num_tracks,clip_index);
 	    weed_set_int_array(event,"frames",num_tracks,frame_index);
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	  }
 	  else {
-	    pthread_mutex_lock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    weed_set_int_array(event,"clips",num_tracks,new_clip_index);
 	    weed_set_int_array(event,"frames",num_tracks,new_frame_index);
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	  }
 	}
 
 
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	g_free(new_clip_index);
 	weed_free(clip_index);
 	g_free(new_frame_index);
 	weed_free(frame_index);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 
 	if (weed_plant_has_leaf(event,"audio_clips")) {
 	  // check audio clips
@@ -18225,12 +18216,12 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	      weed_leaf_delete(event,"audio_seeks");
 	    }
 	    else {
-	      pthread_mutex_lock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	      aclip_index=weed_get_int_array(event,"audio_clips",&error);
 	      aseek_index=weed_get_double_array(event,"audio_seeks",&error);
 	      new_aclip_index=g_malloc(num_atracks*sizint);
 	      new_aseek_index=g_malloc(num_atracks*sizdbl);
-	      pthread_mutex_unlock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	      j=0;
 	      for (i=0;i<num_atracks;i+=2) {
 		if (aclip_index[i+1]>0) {
@@ -18269,23 +18260,23 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		}
 	      }
 	      if (j==0) {
-		pthread_mutex_lock(&mainw->gtk_mutex);
+		threaded_dialog_spin();
 		weed_leaf_delete(event,"audio_clips");
 		weed_leaf_delete(event,"audio_seeks");
-		pthread_mutex_unlock(&mainw->gtk_mutex);
+		threaded_dialog_spin();
 	      }
 	      else {
-		pthread_mutex_lock(&mainw->gtk_mutex);
+		threaded_dialog_spin();
 		weed_set_int_array(event,"audio_clips",j,new_aclip_index);
 		weed_set_double_array(event,"audio_seeks",j,new_aseek_index);
-		pthread_mutex_unlock(&mainw->gtk_mutex);
+		threaded_dialog_spin();
 	      }
-	      pthread_mutex_lock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	      weed_free(aclip_index);
 	      weed_free(aseek_index);
 	      g_free(new_aclip_index);
 	      g_free(new_aseek_index);
-	      pthread_mutex_unlock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	    }
 	  }
 	}
@@ -18605,12 +18596,12 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   mt->auto_changed=mt->changed=mainw->recoverable_layout;
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   while (g_main_context_iteration(NULL,FALSE));
   mt->idlefunc=mt_idle_add(mt);
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
 
   // event list loaded, now we set the pointers for filter_map (init_events), param_change (init_events and param chains), filter_deinit (init_events)

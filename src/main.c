@@ -1199,9 +1199,9 @@ static void lives_init(_ign_opts *ign_opts) {
       // replace any multi choice effects with their delegates
       replace_with_delegates();
 
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       load_default_keymap();
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
 
       prefs->audio_opts=get_int_pref("audio_opts");
 #ifdef ENABLE_JACK
@@ -2601,21 +2601,21 @@ void load_start_image(gint frame) {
 
   if (mainw->current_file<0||cfile==NULL||frame<1||frame>cfile->frames||
       (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     if (!(mainw->imframe==NULL)) {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->imframe);
     }
     else {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),NULL);
     }
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     return;
   }
 
   tc=((frame-1.))/cfile->fps*U_SECL;
 
   if (!prefs->ce_maxspect||mainw->double_size) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -2631,13 +2631,13 @@ void load_start_image(gint frame) {
 	gdk_pixbuf_unref(start_pixbuf);
       }
     }
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     return;
   }
 
   mainw->noswitch=TRUE;
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   do {
     width=cfile->hsize;
@@ -2672,7 +2672,7 @@ void load_start_image(gint frame) {
     while (g_main_context_iteration(NULL,FALSE));
   } while (rwidth!=mainw->image272->allocation.width||rheight!=mainw->image272->allocation.height);
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
 
   mainw->noswitch=noswitch;
@@ -2706,14 +2706,14 @@ void load_end_image(gint frame) {
 
   if (mainw->current_file<0||cfile==NULL||frame<1||frame>cfile->frames||
       (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     if (!(mainw->imframe==NULL)) {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->imframe);
     }
     else {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),NULL);
     }
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     return;
   }
 
@@ -2721,7 +2721,7 @@ void load_end_image(gint frame) {
   tc=((frame-1.))/cfile->fps*U_SECL;
 
   if (!prefs->ce_maxspect||mainw->double_size) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -2738,13 +2738,13 @@ void load_end_image(gint frame) {
 	gdk_pixbuf_unref(end_pixbuf);
       }
     }
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     return;
   }
 
   mainw->noswitch=TRUE;
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   do {
     width=cfile->hsize;
     height=cfile->vsize;
@@ -2779,7 +2779,7 @@ void load_end_image(gint frame) {
     while (g_main_context_iteration(NULL,FALSE));
   } while (rwidth!=mainw->image273->allocation.width||rheight!=mainw->image273->allocation.height);
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   mainw->noswitch=noswitch;
 
 
@@ -3272,10 +3272,10 @@ GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext
   weed_plant_free(layer);
   if (pixbuf!=NULL&&(gdk_pixbuf_get_width(pixbuf)!=width||gdk_pixbuf_get_height(pixbuf)!=height)) {
     GdkPixbuf *pixbuf2;
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
     gdk_pixbuf_unref(pixbuf);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     pixbuf=pixbuf2;
   }
   return pixbuf;
@@ -4127,9 +4127,9 @@ void load_frame_image(gint frame) {
 GdkPixbuf *lives_scale_simple (GdkPixbuf *pixbuf, gint width, gint height) {
   GdkPixbuf *pixbuf2;
   gint interp=get_interp_value(prefs->pb_quality);
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   return pixbuf2;
 }
 

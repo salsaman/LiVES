@@ -102,13 +102,11 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
       return buflen+btoread;
     }
     else {
-      if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
-	weed_plant_t *frame_layer=mainw->frame_layer;
-	mainw->frame_layer=NULL;
-	while (g_main_context_iteration(NULL,FALSE));
-	mainw->frame_layer=frame_layer;
-	pthread_mutex_unlock(&mainw->gtk_mutex);
-      }
+      weed_plant_t *frame_layer=mainw->frame_layer;
+      mainw->frame_layer=NULL;
+      while (g_main_context_iteration(NULL,FALSE));
+      mainw->frame_layer=frame_layer;
+      threaded_dialog_spin();
       if (mainw->cancelled) return buflen+btoread;
       g_usleep(prefs->sleep_time);
     }
@@ -140,13 +138,11 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
   do {
     ret=lives_stream_in(lstream->handle,buflen,buf,0);
     if (ret==-1) {
-      if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
-	weed_plant_t *frame_layer=mainw->frame_layer;
-	mainw->frame_layer=NULL;
-	while (g_main_context_iteration(NULL,FALSE));
-	mainw->frame_layer=frame_layer;
-	pthread_mutex_unlock(&mainw->gtk_mutex);
-      }
+      weed_plant_t *frame_layer=mainw->frame_layer;
+      mainw->frame_layer=NULL;
+      while (g_main_context_iteration(NULL,FALSE));
+      mainw->frame_layer=frame_layer;
+      threaded_dialog_spin();
       if (mainw->cancelled) {
 	return -1;
       }
@@ -179,13 +175,11 @@ static gboolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, 
       copied=lives_stream_in(lstream->handle,buflen,buf,bfsize);
       if (copied==-2) return FALSE;
       if (copied==-1) {
-	if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
-	  weed_plant_t *frame_layer=mainw->frame_layer;
-	  mainw->frame_layer=NULL;
-	  while (g_main_context_iteration(NULL,FALSE));
-	  mainw->frame_layer=frame_layer;
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
-	}
+	weed_plant_t *frame_layer=mainw->frame_layer;
+	mainw->frame_layer=NULL;
+	while (g_main_context_iteration(NULL,FALSE));
+	mainw->frame_layer=frame_layer;
+	threaded_dialog_spin();
 	if (mainw->cancelled) return TRUE;
 	g_usleep(prefs->sleep_time);
       }

@@ -51,7 +51,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   gchar *com;
   gchar buffer[65536];
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   outfile=g_strdup_printf ("%s/.smogplugin.%d",prefs->tmpdir,getpid());
   com=g_strconcat (command," >",outfile,NULL);
@@ -82,35 +82,35 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
       }
     }
     g_free (outfile);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     return list;
   }
   g_free (com);
   if (!g_file_test (outfile, G_FILE_TEST_EXISTS)) {
     g_free (outfile);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     return NULL;
   }
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   while ((outfile_fd=open(outfile,O_RDONLY))==-1&&(count-->0||list_plugins)) {
     g_usleep (prefs->sleep_time);
   }
   
   if (!count) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     g_printerr (_("Plugin timed out on message %s\n"),command);
     g_free (outfile);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     return list;
   }
   
   bytes=read (outfile_fd,&buffer,65535);
   close (outfile_fd);
   unlink (outfile);
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   g_free (outfile);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   memset (buffer+bytes,0,1);
 
 #ifdef DEBUG_PLUGINS
@@ -134,9 +134,9 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
       else g_free(buf);
     }
   }
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   g_strfreev (array);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   return list;
 }
 
@@ -193,9 +193,9 @@ plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const
   else com=g_strdup (request);
   list_plugins=FALSE;
   reslist=get_plugin_result (com,delim,allow_blanks);
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   g_free(com);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   return reslist;
 }
 
@@ -240,9 +240,9 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
   }
   list_plugins=TRUE;
   pluglist=get_plugin_result (com,"|",FALSE);
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   g_free(com);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   return pluglist;
 }
 
@@ -2189,7 +2189,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
     return;
   }
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   rfx->num_params=g_list_length (parameter_list);
   rfx->params=g_malloc (rfx->num_params*sizeof(lives_param_t));
   
@@ -2337,7 +2337,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
   }
   g_list_free_strings (parameter_list);
   g_list_free (parameter_list);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 }
 
 

@@ -732,9 +732,9 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
   int lockpid;
 
   unlink(info_file);
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   dummyvar=system(com);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   g_free(com);
 
   clear_mainw_msg();
@@ -748,9 +748,9 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
 
       if (type==0) {
 	msg=g_strdup_printf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"),set_name);
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	do_error_dialog(msg);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
       else if (type==1) {
 	msg=g_strdup_printf(_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"),set_name);
@@ -1462,8 +1462,6 @@ void draw_little_bars (gdouble ptrtime) {
 
   if (!prefs->show_gui) return;
 
-  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return;
-
   if (!(frame=calc_frame_from_time(mainw->current_file,ptrtime)))
    frame=cfile->frames;
 
@@ -1570,7 +1568,7 @@ void draw_little_bars (gdouble ptrtime) {
       }
     }
   }
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 }
 
 
@@ -2682,9 +2680,9 @@ void cache_file_contents(const gchar *filename) {
 
   if (!(hfile=fopen(filename,"r"))) return;
   while (fgets(buff,65536,hfile)!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     mainw->cached_list=g_list_append(mainw->cached_list,g_strdup(buff));
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
   }
   fclose(hfile);
 }
@@ -2861,22 +2859,22 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     val=g_malloc(maxlen);
     memset(val,0,maxlen);
     
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     if (system(com)) {
       tempdir_warning();
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_free(com);
       return FALSE;
     }
     
     vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getpid());
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     do {
       if (!(valfile=fopen(vfile,"r"))) {
 	if (!(mainw==NULL)) {
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  while (g_main_context_iteration(NULL,FALSE));
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	}
 	g_usleep(prefs->sleep_time);
 	timeout--;
@@ -3278,10 +3276,10 @@ void
 get_border_size (GtkWidget *win, gint *bx, gint *by) {
   GdkRectangle rect;
   gint wx,wy;
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   gdk_window_get_frame_extents (GDK_WINDOW (win->window),&rect);
   gdk_window_get_origin (GDK_WINDOW (win->window), &wx, &wy);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   bx[0]=wx-rect.x;
   by[0]=wy-rect.y;
 }

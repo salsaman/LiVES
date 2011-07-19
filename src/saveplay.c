@@ -34,12 +34,6 @@
 #include "cvirtual.h"
 
 
-jmp_buf riperror;
-
-static void catch_sigusr(int signum) {
-  longjmp(riperror,1);
-}
-
 void save_clip_values(gint which) {
   gint asigned;
   gint endian;
@@ -102,20 +96,20 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
 
   if (mainw->opening_loc) return do_progress_dialog(TRUE,TRUE,_ ("Examining file header"));
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   clear_mainw_msg();
   
   while (!(infofile=fopen(cfile->info_file,"r"))) {
     while (g_main_context_iteration (NULL,FALSE));
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     g_usleep(prefs->sleep_time);
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
   }
   
   dummychar=fgets(mainw->msg,512,infofile);
   fclose(infofile);
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   return TRUE;
 }
 
@@ -153,6 +147,39 @@ void open_file (const gchar *file_name) {
   // this function should be called to open a whole file
   open_file_sel(file_name,0.,0);
 }
+
+
+
+static gboolean rip_audio_cancelled(gint old_file, weed_plant_t *mt_pb_start_event, 
+				    gboolean mt_has_audio_file) {
+
+  if (mainw->cancelled==CANCEL_KEEP) {
+    // user clicked "enough"
+    mainw->cancelled=CANCEL_NONE;
+    return TRUE;
+  }
+
+  end_threaded_dialog();
+
+  d_print("\n");
+  d_print_cancelled();
+  close_current_file(old_file);
+  
+  mainw->noswitch=FALSE;
+
+  if (mainw->multitrack!=NULL) {
+    mainw->multitrack->pb_start_event=mt_pb_start_event;
+    mainw->multitrack->has_audio_file=mt_has_audio_file;
+  }
+
+  if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
+  mainw->file_open_params=NULL;
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  return FALSE;
+}
+
+
+
 
 void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   gchar *com;
@@ -245,20 +272,9 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 	if (cfile->achans>0&&(dplug->decoder->rip_audio)!=NULL&&withsound==1) {
 	  // call rip_audio() in the decoder plugin
-
-	  // since this function blocks, we need to take some special measures to allow cancel
-
-	  // we will set mainw->sig_pid, this will cause a cancel in the threaded window
-	  // to send sigusr1 to us; this has the effect of a) killing the decoder plugin
-	  // b) calling catch_sigusr in this thread - we then do a longjmp() back here
-
-	  // the threaded dialog will wait until mainw->sig_file exists before sending
-	  // sigusr1. This allows the plugin time to complete its immediate setup
-
 	  // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup()
 
-
-	  struct sigaction sact;
+	  gboolean has_more_audio=FALSE;
 
 	  gchar *afile=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
 	  msgstr=g_strdup_printf(_("Opening audio for %s"),file_name);
@@ -267,68 +283,30 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 	  mainw->cancelled=CANCEL_NONE;
 
-	  sact.sa_handler=catch_sigusr;
-	  sact.sa_flags=SA_NODEFER;
-	  sigemptyset(&sact.sa_mask);
-	  
-	  sigaction (SIGUSR1, &sact, NULL);
-
-	  mainw->sig_pid=pthread_self();
-	  mainw->sig_file=g_strdup(afile);
-
-	  if (setjmp(riperror)) {
-	    // catch sigusr from threaded dialog cancel and then longjmp here
-	    signal(SIGUSR1,SIG_IGN);
-	    mainw->sig_pid=0;
-	    g_free(mainw->sig_file);
-	    mainw->sig_file=NULL;
-
-	    end_threaded_dialog();
-
-	    if (dplug->decoder->rip_audio_cleanup!=NULL) {
-	      (dplug->decoder->rip_audio_cleanup)(cdata);
-	    }
-
-	    if (mainw->cancelled==CANCEL_KEEP) {
-	      // user clicked "enough"
-	      mainw->cancelled=CANCEL_NONE;
-	      goto pt1;
-	    }
-
-	    d_print("\n");
-	    d_print_cancelled();
-	    close_current_file(old_file);
-
-	    mainw->noswitch=FALSE;
-	    if (mainw->multitrack!=NULL) {
-	      mainw->multitrack->pb_start_event=mt_pb_start_event;
-	      mainw->multitrack->has_audio_file=mt_has_audio_file;
-	    }
-	    if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
-	    mainw->file_open_params=NULL;
-	    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	    g_free(afile);
-	    return;
-	  }
-
 	  cfile->opening_only_audio=TRUE;
 	  if (mainw->playing_file==-1) do_threaded_dialog(msgstr,TRUE);
 
-	  (dplug->decoder->rip_audio)(cdata,afile,(cfile->fps*start+.5),frames,NULL);
+	  // TODO *** - do this in blocks
+	  do {
+	    (dplug->decoder->rip_audio)(cdata,afile,(cfile->fps*start+.5),frames,NULL);
+	    threaded_dialog_spin();
+	  } while (mainw->cancelled==CANCEL_NONE && has_more_audio);
 
 	  if (dplug->decoder->rip_audio_cleanup!=NULL) {
 	    (dplug->decoder->rip_audio_cleanup)(cdata);
 	  }
 
+	  if (mainw->cancelled!=CANCEL_NONE) {
+	    if (!rip_audio_cancelled(old_file,mt_pb_start_event,mt_has_audio_file)) {
+	      g_free(afile);
+	      return;
+	    }
+	  }
+
 	  end_threaded_dialog();
 	  g_free(msgstr);
 
-      pt1:
 	  cfile->opening_only_audio=FALSE;
-	  signal(SIGUSR1,SIG_IGN);
-	  mainw->sig_pid=0;
-	  g_free(mainw->sig_file);
-	  mainw->sig_file=NULL;
 	  g_free(afile);
 	}
 	else {
@@ -3145,7 +3123,7 @@ gboolean read_headers(const gchar *file_name) {
       pieces=get_token_count (buff,'|');
 
       if (pieces>3) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	array=g_strsplit(buff,"|",pieces);
 	
 	cfile->f_size=strtol(array[1],NULL,10);
@@ -3153,7 +3131,7 @@ gboolean read_headers(const gchar *file_name) {
 	if (!strcmp(array[3],"jpg")) cfile->img_type=IMG_TYPE_JPEG;
 	else cfile->img_type=IMG_TYPE_PNG;
 	g_strfreev(array);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
 
       cache_file_contents(lives_header);
@@ -3964,11 +3942,9 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 
   do_threaded_dialog(_("Recovering files"),FALSE);
 
-  // mutex lock
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   d_print(_("Recovering files..."));
-  pthread_mutex_unlock(&mainw->gtk_mutex);
-  // mutex unlock
+  threaded_dialog_spin();
 
   mainw->suppress_dprint=TRUE;
 
@@ -3976,24 +3952,23 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
     is_scrap=FALSE;
 
     if (mainw->cached_list!=NULL) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       mainw->cached_list=NULL;
     }
 
     if (fgets(buff,256,rfile)==NULL) {
       gint current_file=mainw->current_file;
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       d_print_done();
       if (last_was_normal_file&&mainw->multitrack==NULL) {
 	switch_to_file((mainw->current_file=0),current_file);
       }
       reset_clip_menu();
       while (g_main_context_iteration(NULL,FALSE));
-      pthread_mutex_unlock(&mainw->gtk_mutex);
-      // mutex unlock
+      threaded_dialog_spin();
       break;
     }
 
@@ -4063,7 +4038,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       }
       if (strstr(buffptr,"/clips/")) {
 	gchar **array;
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	array=g_strsplit(buffptr,"/clips/",-1);
 	mainw->was_set=TRUE;
 	g_snprintf(mainw->set_name,256,"%s",array[0]);
@@ -4074,13 +4049,13 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	  did_set_check=TRUE;
 	}
 
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
       last_was_normal_file=TRUE;
       mainw->current_file=new_file;
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       cfile=(file *)(g_malloc(sizeof(file)));
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_snprintf(cfile->handle,256,"%s",buffptr);
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
@@ -4100,14 +4075,14 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (load_frame_index(mainw->current_file)) {
 	gboolean next=FALSE;
 	while (1) {
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  if ((cdata=get_decoder_cdata(cfile))==NULL) {
 	    if (mainw->error) {
 	      if (do_original_lost_warning(cfile->file_name)) {
 		
 		// TODO ** - show layout errors
 		
-		pthread_mutex_unlock(&mainw->gtk_mutex);
+		threaded_dialog_spin();
 		continue;
 	      }
 	    }
@@ -4116,7 +4091,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	    }
 	    next=TRUE;
 	  }
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  break;
 	}
 	if (next) {
@@ -4141,15 +4116,15 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   
       if (!is_scrap) {
 	// read the playback fps, play frame, and name
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	open_set_file (mainw->set_name,++clipnum);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	
 	if (mainw->cached_list!=NULL) {
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  g_list_free_strings(mainw->cached_list);
 	  g_list_free(mainw->cached_list);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  mainw->cached_list=NULL;
 	}
 	
@@ -4159,8 +4134,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
 	
 	// add to clip menu
-	// mutex lock
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	add_to_winmenu();
 	get_next_free_file();
 	cfile->start=cfile->frames>0?1:0;
@@ -4184,12 +4158,11 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	  mainw->current_file=current_file;
 	}
 	
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	
 #ifdef ENABLE_OSC
 	lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif
-	// mutex unlock
       }
       else {
 	mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));

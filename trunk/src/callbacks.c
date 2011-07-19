@@ -51,21 +51,21 @@ lives_exit (void) {
     gchar *com;
 
     if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       stored_event_list_free_all(FALSE);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_source_remove(mainw->multitrack->idlefunc);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
     if (mainw->multitrack!=NULL&&!mainw->only_close) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       if (mainw->multitrack->undo_mem!=NULL) g_free(mainw->multitrack->undo_mem);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
     if (mainw->playing_file>-1) {
@@ -125,9 +125,9 @@ lives_exit (void) {
     if (!mainw->leave_recovery) {
       unlink(mainw->recovery_file);
       // hide the main window
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       while (g_main_context_iteration (NULL,FALSE));
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
     if (strcmp(future_prefs->tmpdir,prefs->tmpdir)) {
@@ -148,10 +148,10 @@ lives_exit (void) {
     if (mainw->leave_files) {
       gchar *msg;
       msg=g_strdup_printf(_("Saving as set %s..."),mainw->set_name);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       d_print(msg);
       g_free(msg);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
     for (i=0;i<=MAX_FILES;i++) {
@@ -161,55 +161,55 @@ lives_exit (void) {
 
 #ifdef HAVE_YUV4MPEG
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_YUV4MPEG) {
-	    pthread_mutex_lock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    lives_yuv_stream_stop_read(mainw->files[i]->ext_src);
 	    g_free (mainw->files[i]->ext_src);
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	  }
 #endif
 #ifdef HAVE_UNICAP
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_VIDEODEV) {
-	    pthread_mutex_lock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    lives_vdev_free(mainw->files[i]->ext_src);
 	    g_free (mainw->files[i]->ext_src);
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	  }
 #endif
 	  com=g_strdup_printf("smogrify close %s",mainw->files[i]->handle);
 	  dummyvar=system(com);
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  g_free(com);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	}
 	else {
 	  // or just clean them up
 	  com=g_strdup_printf("smogrify clear_tmp_files %s",mainw->files[i]->handle);
 	  dummyvar=system(com);
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  g_free(com);
 	  if (mainw->files[i]->frame_index!=NULL) {
 	    save_frame_index(i);
 	  }
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	}
 	if (!mainw->only_close) {
 	  if (mainw->files[i]->frame_index!=NULL) {
-	    pthread_mutex_lock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    g_free(mainw->files[i]->frame_index);
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    mainw->files[i]->frame_index=NULL;
 	  }
 
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
-	    pthread_mutex_lock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    close_decoder_plugin(mainw->files[i]->ext_src);
-	    pthread_mutex_unlock(&mainw->gtk_mutex);
+	    threaded_dialog_spin();
 	    mainw->files[i]->ext_src=NULL;
 	  }
 
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  g_free(mainw->files[i]);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  mainw->files[i]=NULL;
 	}
       }
@@ -220,40 +220,40 @@ lives_exit (void) {
       if (!g_file_test(set_layout_dir,G_FILE_TEST_IS_DIR)) {
 	com=g_strdup_printf("/bin/rm -r %s/%s/ 2>/dev/null",prefs->tmpdir,mainw->set_name);
 	dummyvar=system(com);
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	g_free(com);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
       else {
 	com=g_strdup_printf("/bin/rm -r %s/%s/clips 2>/dev/null",prefs->tmpdir,mainw->set_name);
 	dummyvar=system(com);
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	g_free(com);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	com=g_strdup_printf("/bin/rm %s/%s/order 2>/dev/null",prefs->tmpdir,mainw->set_name);
 	dummyvar=system(com);
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	g_free(com);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_free(set_layout_dir);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
     if (strlen(mainw->set_name)) {
       gchar *set_lock_file=g_strdup_printf("%s/%s/lock.%d",prefs->tmpdir,mainw->set_name,getpid());
       unlink(set_lock_file);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_free(set_lock_file);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
 
     for (i=1;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {
 	mainw->current_file=i;
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	if (cfile->event_list_back!=NULL) event_list_free (cfile->event_list_back);
 	if (cfile->event_list!=NULL) event_list_free (cfile->event_list);
 
@@ -277,7 +277,7 @@ lives_exit (void) {
 
 	cfile->layout_map=NULL;
 
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
     }
 
@@ -287,9 +287,9 @@ lives_exit (void) {
       for (i=1;i<=MAX_FILES;i++) {
 	if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
 	  mainw->current_file=i;
-	  pthread_mutex_lock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	  close_current_file(0);
-	  pthread_mutex_unlock(&mainw->gtk_mutex);
+	  threaded_dialog_spin();
 	}
       }
       mainw->suppress_dprint=FALSE;
@@ -300,11 +300,11 @@ lives_exit (void) {
       mainw->only_close=FALSE;
       prefs->crash_recovery=TRUE;
 
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       if (mainw->current_file>-1) sensitize();
       gtk_widget_queue_draw(mainw->LiVES);
       d_print_done();
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       end_threaded_dialog();
 
       if (mainw->multitrack!=NULL) {
@@ -320,17 +320,17 @@ lives_exit (void) {
 
     save_future_prefs();
     if (mainw->sep_win&&(mainw->playing_file>-1||prefs->sepwin_type==1)) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       kill_play_window();
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
   }
 
   if (mainw->current_layouts_map!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     g_list_free_strings(mainw->current_layouts_map);
     g_list_free(mainw->current_layouts_map);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     mainw->current_layouts_map=NULL;
   }
 
@@ -347,17 +347,17 @@ lives_exit (void) {
   }
 
   if (mainw->multitrack!=NULL) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     event_list_free_undos(mainw->multitrack);
     
     if (mainw->multitrack->event_list!=NULL) {
       event_list_free(mainw->multitrack->event_list);
       mainw->multitrack->event_list=NULL;
     }
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
   }
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
   if (prefs->fxsizesfile!=NULL) g_free(prefs->fxsizesfile);
   g_free(mainw->recovery_file);
@@ -369,7 +369,7 @@ lives_exit (void) {
   g_free(mainw->cl_string);
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   //end_threaded_dialog(); - gtk+ hangs, just let it die
 
   unload_decoder_plugins();
@@ -1137,7 +1137,7 @@ on_restore_ok_clicked                  (GtkButton       *button,
 void mt_memory_free(void) {
   int i;
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   mainw->multitrack->no_expose=TRUE;
 
@@ -1165,7 +1165,7 @@ void mt_memory_free(void) {
 
   recover_layout_cancelled(NULL,NULL);
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 }
 
 
@@ -3793,9 +3793,9 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   while (cliplist!=NULL) {
 
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     while (g_main_context_iteration(NULL,FALSE));
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
 
     i=GPOINTER_TO_INT(cliplist->data);
     if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)) {
@@ -3956,11 +3956,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   const lives_clip_data_t *cdata=NULL;
   guint img_type;
 
-  // mutex lock
-  pthread_mutex_lock(&mainw->gtk_mutex);
-  while (g_main_context_iteration(NULL,FALSE));
-  pthread_mutex_unlock(&mainw->gtk_mutex);
-  // mutex unlock
+  threaded_dialog_spin();
 
   if (!strlen(mainw->set_name)) {
     g_snprintf(set_name,128,"%s",gtk_entry_get_text(GTK_ENTRY(renamew->entry)));
@@ -3972,9 +3968,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   }
   else if (!check_for_lock_file(mainw->set_name,0)) {
     memset(mainw->set_name,0,1);
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     d_print_failed();
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     return TRUE;
   }
 
@@ -3994,17 +3990,14 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   mainw->suppress_dprint=TRUE;
 
   while (1) {
-
-    pthread_mutex_lock(&mainw->gtk_mutex);
-    while (g_main_context_iteration(NULL,FALSE));
-
+    threaded_dialog_spin();
     if (mainw->cached_list!=NULL) {
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
       mainw->cached_list=NULL;
     }
 
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
 
     if (orderfile==NULL) {
       // old style (pre 0.9.6)
@@ -4040,35 +4033,31 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       mainw->current_file=current_file;
 
       if (last_file>0) {
-	// mutex lock
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	switch_to_file (current_file,last_file);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
-	// mutex unlock
+	threaded_dialog_spin();
       }
 
       if (clipnum==0) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\n"),mainw->set_name);
 	memset (mainw->set_name,0,1);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
       }
       else {
-	// mutex lock
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	reset_clip_menu();
 	gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
-	// mutex unlock
 	msg=g_strdup_printf (_ ("%d clips were recovered from set (%s).\n"),clipnum,mainw->set_name);
 	recover_layout_map(clipnum);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 
 #ifdef ENABLE_OSC
 	lives_osc_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED,mainw->set_name);
 #endif
 
       }
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       d_print (msg);
       g_free (msg);
       if (mainw->multitrack==NULL) {
@@ -4087,7 +4076,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	mt_sensitise(mainw->multitrack);
 	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       return TRUE;
     }
 
@@ -4095,10 +4084,10 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (prefs->crash_recovery&&!added_recovery) {
       gchar *recovery_entry=g_strdup_printf("%s/*",mainw->set_name);
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       add_to_recovery_file(recovery_entry);
       g_free(recovery_entry);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       added_recovery=TRUE;
     }
 
@@ -4106,14 +4095,14 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       // newer style (0.9.6+)
       gchar *clipdir=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->msg);
       if (!g_file_test(clipdir,G_FILE_TEST_IS_DIR)) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	g_free(clipdir);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	continue;
       }
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_free(clipdir);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       if ((new_file=mainw->first_free_file)==-1) {
 	mainw->suppress_dprint=FALSE;
 	end_threaded_dialog();
@@ -4135,11 +4124,11 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
       // lock the set
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       com=g_strdup_printf("/bin/touch %s/%s/lock.%d",prefs->tmpdir,mainw->set_name,getpid());
       dummyvar=system(com);
       g_free(com);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
     //create a new cfile and fill in the details
@@ -4156,14 +4145,14 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       gboolean next=FALSE;
       cfile->img_type=img_type; // ignore value from read_headers
       while (1) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	if ((cdata=get_decoder_cdata(cfile))==NULL) {
 	  if (mainw->error) {
 	    if (do_original_lost_warning(cfile->file_name)) {
 
 	      // TODO ** - show layout errors
 
-	      pthread_mutex_unlock(&mainw->gtk_mutex);
+	      threaded_dialog_spin();
 	      continue;
 	    }
 	  }
@@ -4173,13 +4162,13 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  next=TRUE;
 	}
 
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	break;
       }
       if (next) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	g_free(cfile);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	mainw->first_free_file=mainw->current_file;
 	continue;
       }
@@ -4189,9 +4178,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (cfile->ext_src!=NULL) {
       if (!check_clip_integrity(cfile,cdata)) {
-	pthread_mutex_lock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	g_free(cfile);
-	pthread_mutex_unlock(&mainw->gtk_mutex);
+	threaded_dialog_spin();
 	mainw->first_free_file=mainw->current_file;
 	continue;
       }
@@ -4206,15 +4195,15 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     open_set_file (mainw->set_name,++clipnum);
 
     if (mainw->cached_list!=NULL) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       mainw->cached_list=NULL;
     }
 
     if (prefs->autoload_subs) {
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
       subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
       if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
 	subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
@@ -4227,15 +4216,14 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	}
       }
       g_free(subfname);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
     }
 
     get_total_time (cfile);
     if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*cfile->asampsize/8);
 
     // add to clip menu
-    // mutex lock
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     add_to_winmenu();
     get_next_free_file();
     cfile->start=cfile->frames>0?1:0;
@@ -4252,19 +4240,17 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       mt_clip_select(mainw->multitrack,TRUE);
     }
 
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-    // mutex unlock
+    threaded_dialog_spin();
 
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif
-    sched_yield();
   }
 
   
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   reset_clip_menu();
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) {
     mainw->current_file=mainw->multitrack->render_file;
@@ -7260,7 +7246,6 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
     eh=mainw->video_draw->allocation.height;
   }
 
-  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return FALSE;
   block_expose();
 
   if (mainw->video_drawable!=NULL) {
@@ -7295,7 +7280,6 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 		  ex, ey,
 		  ew, eh);
   
-  pthread_mutex_unlock(&mainw->gtk_mutex);
   unblock_expose();
   return FALSE;
   
@@ -7324,7 +7308,6 @@ expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
     eh=mainw->laudio_draw->allocation.height;
   }
 
-  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return FALSE;
   block_expose();
 
   if (mainw->laudio_drawable!=NULL) {
@@ -7359,7 +7342,6 @@ expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
 		  ex, ey,
 		  ew, eh);
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
   unblock_expose();
   return FALSE;
 }
@@ -7388,7 +7370,6 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
     eh=mainw->raudio_draw->allocation.height;
   }
 
-  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return FALSE;
   block_expose();
 
   if (mainw->raudio_drawable!=NULL) {
@@ -7422,7 +7403,6 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
 		  ex, ey,
 		  ex, ey,
 		  ew, eh);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
   
   unblock_expose();
   return FALSE;
@@ -9133,9 +9113,9 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
   desensitize();
   do_threaded_dialog(_("Fading audio..."),FALSE);
 
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   while (g_main_context_iteration(NULL,FALSE));
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
 
   if (!prefs->conserve_space) {
     com=g_strdup_printf("smogrify backup_audio %s",cfile->handle);

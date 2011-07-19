@@ -727,6 +727,7 @@ void do_do_not_close_d (void);
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *translated_text, gboolean has_cancel);
 void end_threaded_dialog(void);
+void threaded_dialog_spin (void);
 void response_ok (GtkButton *button, gpointer user_data);
 void response_cancel (GtkButton *button, gpointer user_data);
 void pump_io_chan(GIOChannel *iochan);

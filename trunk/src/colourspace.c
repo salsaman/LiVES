@@ -6221,9 +6221,9 @@ static inline GdkPixbuf *gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has
   GdkPixbuf *pixbuf;
   int channels=has_alpha?4:3;
   int rowstride=gdk_rowstride_value(width*channels);
-  pthread_mutex_lock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   pixbuf=gdk_pixbuf_new_from_data (buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, lives_free_buffer, NULL);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  threaded_dialog_spin();
   return pixbuf;
 }
 
@@ -6369,9 +6369,9 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
   case WEED_PALETTE_BGRA32:
   case WEED_PALETTE_YUVA8888:
     pixbuf=layer_to_pixbuf(layer);
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     new_pixbuf=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     pd=gdk_pixbuf_get_pixels(new_pixbuf);
     if (new_pixbuf!=NULL) {
       weed_set_int_value(layer,"width",(nwidth=gdk_pixbuf_get_width(new_pixbuf)));

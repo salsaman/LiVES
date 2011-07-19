@@ -185,7 +185,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
 
     if (sfile->frame_index[i-1]>=0) {
 
-      pthread_mutex_lock(&mainw->gtk_mutex);
+      threaded_dialog_spin();
 
       while (g_main_context_iteration(NULL,FALSE));
 
@@ -228,9 +228,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
 	while (g_main_context_iteration(NULL,FALSE));
       }
     }
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-
-    sched_yield();
+    threaded_dialog_spin();
 
     sync();
 
@@ -347,9 +345,9 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
   if (sfile==NULL||sfile->frame_index==NULL) return;
 
   for (i=0;i<oldframes;i++) {
-    pthread_mutex_lock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
     while (g_main_context_iteration(NULL,FALSE));
-    pthread_mutex_unlock(&mainw->gtk_mutex);
+    threaded_dialog_spin();
 
     if ((i<sfile->frames&&sfile->frame_index[i]!=-1)||i>=sfile->frames) {
       if (sfile->img_type==IMG_TYPE_JPEG) {

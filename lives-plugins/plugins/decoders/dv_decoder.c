@@ -373,7 +373,7 @@ int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t st
 
   // do this last so host knows we are ready
   if (fname!=NULL) {
-    if ((priv->audio_fd=open(fname,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR))==-1) {
+    if ((priv->audio_fd=open(fname,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR))==-1) {
       fprintf(stderr, "dv_decoder: unable to open output %s\n",fname);
       return 0;
     }

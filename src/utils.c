@@ -1373,7 +1373,7 @@ get_play_times(void) {
 	  make_preview_box();
 	}
 	// and add it the play window
-	if (mainw->preview_box->parent==NULL&&cfile->clip_type==CLIP_TYPE_DISK&&!mainw->is_rendering) {
+	if (mainw->preview_box->parent==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
 	  gtk_widget_queue_draw(mainw->play_window);
 	  gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
 	}

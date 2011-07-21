@@ -275,7 +275,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup()
 
 	  int64_t stframe=cfile->fps*start+.5;
-	  int64_t maxframe=stframe+frames;
+	  int64_t maxframe=stframe+(frames==0)?cfile->frames:frames;
 	  int64_t nframes=AUDIO_FRAMES_TO_READ;
 	  gchar *afile=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
 
@@ -289,11 +289,12 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  if (mainw->playing_file==-1) do_threaded_dialog(msgstr,TRUE);
 
 	  do {
+	    if (stframe+nframes>maxframe) nframes=maxframe-stframe;
+	    if (nframes<=0) break;
 	    (dplug->decoder->rip_audio)(cdata,afile,stframe,nframes,NULL);
 	    threaded_dialog_spin();
 	    stframe+=nframes;
-	    if (stframe+nframes>maxframe) nframes=maxframe-stframe;
-	  } while (mainw->cancelled==CANCEL_NONE && stframe<maxframe);
+	  } while (mainw->cancelled==CANCEL_NONE);
 
 	  if (dplug->decoder->rip_audio_cleanup!=NULL) {
 	    (dplug->decoder->rip_audio_cleanup)(cdata);
@@ -2337,6 +2338,7 @@ void play_file (void) {
     else {
       // or resize it back to single size
       if (!GTK_WIDGET_VISIBLE (mainw->play_window)) {
+
 	block_expose();
 	mainw->noswitch=TRUE;
 	g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);

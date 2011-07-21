@@ -3484,6 +3484,7 @@ make_play_window(void) {
   } 
   
   mainw->play_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
   gtk_window_set_position(GTK_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
 
   if (mainw->multitrack==NULL) gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
@@ -3564,8 +3565,10 @@ make_play_window(void) {
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) g_source_remove(mainw->multitrack->idlefunc);
     mainw->noswitch=TRUE;
 
-    g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-    mainw->pw_exp_is_blocked=TRUE;
+    if (mainw->current_file>-1) {
+      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
+      mainw->pw_exp_is_blocked=TRUE;
+    }
 
     while (g_main_context_iteration(NULL,FALSE));
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
@@ -3578,6 +3581,10 @@ make_play_window(void) {
     if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->play_window->allocation.width)/2, (mainw->scr_height-mainw->play_window->allocation.height)/2);
     gtk_widget_queue_draw(mainw->play_window);
   }
+
+  g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
+		    G_CALLBACK (on_mouse_scroll),
+		    NULL);
 
 }
 

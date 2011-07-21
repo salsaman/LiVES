@@ -7453,7 +7453,7 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
   }
 
   reg=event->region;
-  
+
   gdk_region_get_clipbox(reg,&rect);
 
   if ((mainw->multitrack==NULL||mainw->multitrack->sepwin_pixbuf==NULL)&&(mainw->current_file==-1||!cfile->is_loaded||(cfile->clip_type!=CLIP_TYPE_FILE&&cfile->clip_type!=CLIP_TYPE_DISK))&&mainw->imframe!=NULL) {
@@ -7894,7 +7894,7 @@ on_mouse_scroll           (GtkWidget       *widget,
 
   if (!prefs->mouse_scroll_clips||mainw->noswitch) return FALSE;
 
-  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))&&(mainw->multitrack!=NULL||mainw->playing_file==-1||mainw->play_window==NULL||!gtk_window_is_active(GTK_WINDOW(mainw->play_window)))) return FALSE;
+  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))&&(mainw->multitrack!=NULL||(mainw->playing_file==-1&&(mainw->play_window==NULL||!gtk_window_is_active(GTK_WINDOW(mainw->play_window)))))) return FALSE;
 
   kstate=event->state;
 

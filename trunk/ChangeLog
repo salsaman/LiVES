@@ -1,7 +1,7 @@
 Version 1.4.5
 -------------
 Add -tmpdir startup option.
-Stop PAL formats changing to NTSC in x264 encoder. *
+Stop PAL formats reverting to NTSC in x264 encoder. *
 Fix bug to add fewer blank lines to ~/.lives file. *
 Do not show "Loaded subtitles" message when subtitles are not loaded. *
 Instant opening of some .flv files.
@@ -10,6 +10,7 @@ Add video fade in/out effect.
 Fix frames being cut after applying effects in virtual clips. *
 Clean up code for rendered effects post-processing. *
 Clean up code for dynamic menu building.
+Front end stability fixes.
 
 
 

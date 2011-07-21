@@ -179,7 +179,7 @@ static gboolean rip_audio_cancelled(gint old_file, weed_plant_t *mt_pb_start_eve
 }
 
 
-
+#define AUDIO_FRAMES_TO_READ 100
 
 void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   gchar *com;
@@ -274,9 +274,11 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  // call rip_audio() in the decoder plugin
 	  // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup()
 
-	  gboolean has_more_audio=FALSE;
-
+	  int64_t stframe=cfile->fps*start+.5;
+	  int64_t maxframe=stframe+frames;
+	  int64_t nframes=AUDIO_FRAMES_TO_READ;
 	  gchar *afile=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
+
 	  msgstr=g_strdup_printf(_("Opening audio for %s"),file_name);
 
 	  if (mainw->playing_file==-1) resize(1);
@@ -286,11 +288,12 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  cfile->opening_only_audio=TRUE;
 	  if (mainw->playing_file==-1) do_threaded_dialog(msgstr,TRUE);
 
-	  // TODO *** - do this in blocks
 	  do {
-	    (dplug->decoder->rip_audio)(cdata,afile,(cfile->fps*start+.5),frames,NULL);
+	    (dplug->decoder->rip_audio)(cdata,afile,stframe,nframes,NULL);
 	    threaded_dialog_spin();
-	  } while (mainw->cancelled==CANCEL_NONE && has_more_audio);
+	    stframe+=nframes;
+	    if (stframe+nframes>maxframe) nframes=maxframe-stframe;
+	  } while (mainw->cancelled==CANCEL_NONE && stframe<maxframe);
 
 	  if (dplug->decoder->rip_audio_cleanup!=NULL) {
 	    (dplug->decoder->rip_audio_cleanup)(cdata);

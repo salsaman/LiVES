@@ -546,7 +546,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 
   if (read (priv->fd, header, FLV_PROBE_SIZE) < FLV_PROBE_SIZE) {
+    // for example, might be a directory
+#ifdef DEBUG
     fprintf(stderr, "flv_decoder: unable to read header for %s\n",cdata->URI);
+#endif
     close(priv->fd);
     return FALSE;
   }

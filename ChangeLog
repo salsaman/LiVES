@@ -11,6 +11,7 @@ Fix frames being cut after applying effects in virtual clips. *
 Clean up code for rendered effects post-processing. *
 Clean up code for dynamic menu building.
 Front end stability fixes.
+Mouse scroll now switches clips in the play window too.
 
 
 

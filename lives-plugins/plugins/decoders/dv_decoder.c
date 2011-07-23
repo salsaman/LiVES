@@ -309,10 +309,10 @@ void rip_audio_cleanup(const lives_clip_data_t *cdata) {
 int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t stframe, int64_t nframes, 
 		   unsigned char **abuff) {
   // rip audio from (video) frame stframe, length nframes (video) frames from cdata
-  // to file fname
+  // to file fname *
 
-   // if nframes==0, rip all audio
-
+  // if nframes==0, rip all audio
+  // stframe starts at 0
 
 
   // (output seems to be always 16bit per sample
@@ -327,7 +327,7 @@ int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t st
 
   // return number of samples written
 
-  // if fname is NULL we write to abuff instead (unless abuff is NULL)
+  // * if fname is NULL we write to abuff instead (unless abuff is NULL)
 
 
   int i,ch,channels,samples,samps_out;
@@ -345,7 +345,7 @@ int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t st
   if (fname==NULL&&abuff==NULL) return 0;
 
   if (nframes==0) nframes=cdata->nframes;
-  if (nframes>cdata->nframes) nframes=cdata->nframes;
+  if (nframes+stframe>cdata->nframes) nframes=cdata->nframes-stframe;
 
   xframes=nframes;
 

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-07-23 04:02-0300\n"
+"POT-Creation-Date: 2011-07-23 09:09-0300\n"
 "PO-Revision-Date: 2009-12-27 23:30+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Telugu <te@li.org>\n"
@@ -9952,8 +9952,9 @@ msgid "every"
 msgstr "_ఎప్పుడు కాదు"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "చట్రంలు"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"

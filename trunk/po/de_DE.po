@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-07-23 04:02-0300\n"
+"POT-Creation-Date: 2011-07-23 09:09-0300\n"
 "PO-Revision-Date: 2011-06-03 07:11+0000\n"
 "Last-Translator: Dominik Dehning <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -10365,8 +10365,9 @@ msgid "every"
 msgstr "Jeder"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "Audio ausblenden"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"

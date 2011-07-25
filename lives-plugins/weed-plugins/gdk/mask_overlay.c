@@ -65,11 +65,11 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
   double xscale=(double)iwidth/(double)owidth;
   double yscale=(double)iheight/(double)oheight;
 
-  double xscale2,yscale2;
+  double xscale2=xscale,yscale2=yscale;
 
   int psize=3;
 
-  int top=-1,bot=-1,left=-1,right=-1,tline,xwidth=0;
+  int top=-1,bot=-1,left=-1,right=-1,tline=0,xwidth=0;
   double xpos=0.,ypos=0.;
 
   register int i,j;

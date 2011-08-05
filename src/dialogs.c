@@ -739,7 +739,7 @@ gboolean process_one (gboolean visible) {
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0&&cfile->progress_start+frames_done>=cfile->fx_frame_pump) {
       gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
       if (vend>cfile->progress_end) vend=cfile->progress_end;
-      if (vend>cfile->fx_frame_pump) {
+      if (vend>=cfile->fx_frame_pump) {
 	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend,FALSE);
 	cfile->fx_frame_pump=vend;
       }
@@ -835,7 +835,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0) {
       gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
       if (vend>cfile->progress_end) vend=cfile->progress_end;
-      if (vend>cfile->fx_frame_pump) {
+      if (vend>=cfile->fx_frame_pump) {
 	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend,FALSE);
 	cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
       }

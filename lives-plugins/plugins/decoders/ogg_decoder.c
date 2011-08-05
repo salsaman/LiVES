@@ -2405,10 +2405,6 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
 #ifdef HAVE_THEORA
       if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
 	
-	if (priv->cframe==priv->last_kframe) {
-	  priv->ignore_packets=FALSE; // reached kframe before target, start decoding packets
-	}
-	
 	if (!priv->ignore_packets) {
 	  yuv_buffer *yuv=yuvbuffer;
 	  ogg_theora_read(cdata,&opriv->op,yuv);
@@ -2439,6 +2435,7 @@ static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boole
       
       sched_yield();
     }
+    priv->ignore_packets=FALSE; // start decoding packets
 
     cont=FALSE;
   }
@@ -2572,15 +2569,24 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
 	  //fprintf(stderr,"starting from found gpos %ld\n",granulepos);
 	
 	  xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+
+
+	  get_bounds_for((lives_clip_data_t *)cdata,xkframe-1,&ppos_lower,&ppos_upper);
+	  granulepos=ogg_seek((lives_clip_data_t *)cdata,xkframe-1,ppos_lower,ppos_upper,FALSE);
+	  //fprintf(stderr,"starting from found gpos %ld\n",granulepos);
+	
+	  xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
+
+
+
 	  priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift); // cframe will be the next frame we decode
 	  //printf("xkframe is %ld %ld\n",xkframe,priv->cframe);
 	}
 	else {
 	  priv->cframe=kframe;
 	  priv->input_position=priv->cpagepos;
-	  //printf("SEEK TO %ld\n",priv->cpagepos);
+	  printf("SEEK TO %ld\n",priv->cpagepos);
 	}
-	//1671
 
 	if (priv->input_position==priv->vstream->data_start) {
 	  priv->cframe=kframe=priv->kframe_offset;

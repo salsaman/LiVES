@@ -2173,7 +2173,7 @@ on_insert_activate                    (GtkButton     *button,
     clipboard_signed=!(clipboard->signed_endian&AFORM_UNSIGNED);
     clipboard_endian=!(clipboard->signed_endian&AFORM_BIG_ENDIAN);
 
-    if ((cfile->achans*cfile->arps*cfile->asampsize>0)&&(cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian||cfile->arate!=clipboard->arate)) {
+    if ((cfile->achans*cfile->arps*cfile->asampsize>0)&&(cfile->achans!=clipboard->achans||(cfile->arps!=clipboard->arps&&clipboard->achans>0)||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian||cfile->arate!=clipboard->arate)) {
       if (!(capable->has_sox)) {
 	if (cfile->arps!=clipboard->arps) {
 	  do_error_dialog(_ ("LiVES cannot insert because the audio rates do not match.\nPlease install 'sox', and try again."));
@@ -2273,7 +2273,7 @@ on_insert_activate                    (GtkButton     *button,
     gtk_widget_destroy(insertw->insert_dialog);
     while (g_main_context_iteration (NULL,FALSE));
     g_free(insertw);
-    if ((cfile->fps!=clipboard->fps&&orig_frames>0)||(cfile->arps!=clipboard->arps&&with_sound)) {
+    if ((cfile->fps!=clipboard->fps&&orig_frames>0)||(cfile->arps!=clipboard->arps&&clipboard->achans>0&&with_sound)) {
       if (!do_clipboard_fps_warning()) {
 	mainw->error=TRUE;
 	return;
@@ -2314,7 +2314,7 @@ on_insert_activate                    (GtkButton     *button,
       with_sound=FALSE;
     }
     else {
-      if ((cfile->achans*cfile->arps*cfile->asampsize>0)&&(cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian||cfile->arate!=clipboard->arate)) {
+      if ((cfile->achans*cfile->arps*cfile->asampsize>0)&&clipboard->achans>0&&(cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian||cfile->arate!=clipboard->arate)) {
 
 	cb_audio_change=TRUE;
 
@@ -2334,7 +2334,7 @@ on_insert_activate                    (GtkButton     *button,
 	  }
 	}
 
-	if (cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian) {
+	if (clipboard->achans>0&&(cfile->achans!=clipboard->achans||cfile->arps!=clipboard->arps||cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian)) {
 	  unlink (clipboard->info_file);
 	  com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d",clipboard->handle,clipboard->arps,clipboard->achans,clipboard->asampsize,clipboard_signed,clipboard_endian,cfile->arps,cfile->achans,cfile->asampsize,cfile_signed,cfile_endian);
 	  dummyvar=system (com);
@@ -2344,7 +2344,7 @@ on_insert_activate                    (GtkButton     *button,
 	  g_free (com);
 	}
       
-	if (clipboard->afilesize==0l) {
+	if (clipboard->achans>0&&clipboard->afilesize==0l) {
 	  if (prefs->conserve_space) {
 	    // oops...
 	    clipboard->achans=clipboard->arate=clipboard->asampsize=0;
@@ -2626,7 +2626,7 @@ on_insert_activate                    (GtkButton     *button,
 
   if (with_sound) {
     cfile->undo_action=UNDO_INSERT_WITH_AUDIO;
-    if (cb_audio_change&&!prefs->conserve_space) {
+    if (cb_audio_change&&!prefs->conserve_space&&clipboard->achans>0) {
       unlink (clipboard->info_file);
       mainw->current_file=0;
       com=g_strdup_printf ("smogrify undo_audio %s",clipboard->handle);

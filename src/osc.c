@@ -205,6 +205,12 @@ static const gchar *get_omc_const(const gchar *cname) {
   if (!strcmp(cname,"LIVES_MODE_CLIPEDIT")) return "0";
   if (!strcmp(cname,"LIVES_MODE_MULTITRACK")) return "1";
 
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_INTEGER")) return "1";
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_FLOAT")) return "2";
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_BOOL")) return "3";
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_STRING")) return "4";
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_COLOR")) return "5";
+
   lives_osc_notify_failure();
 
   return "";
@@ -2178,6 +2184,34 @@ void lives_osc_cb_op_nodropd(void *context, int arglen, const void *vargs, OSCTi
 
 }
 
+void lives_osc_cb_fx_list(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  char *retval="",*tmp;
+  GList *names=weed_get_all_names(3),*xnames=names;
+
+  while (xnames!=NULL) {
+    if (retval!=NULL) {
+      tmp=g_malloc(strlen(retval)+2);
+      sprintf(tmp,"%s,",retval);
+    }
+    else tmp=strdup(retval);
+    g_free(retval);
+
+    retval=g_malloc(strlen(tmp)+strlen(names->data)+1);
+    sprintf(retval,"%s%s",tmp,(char *)names->data);
+    g_free(tmp);
+    xnames=xnames->next;
+  }
+
+  lives_status_send(retval);
+
+  if (retval!=NULL)
+    g_free(retval);
+  if (names!=NULL) {
+    g_list_free_strings(names);
+    g_list_free(names);
+  }
+
+}
 
 void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char fname[OSC_STRING_SIZE];
@@ -2438,6 +2472,51 @@ static void setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
 
 
 
+void lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  weed_plant_t *inst;
+  weed_plant_t **in_params;
+  weed_plant_t *tparam;
+  weed_plant_t *tparamtmpl;
+  int hint,error;
+  int nparams;
+  int effect_key;
+  int pnum;
+
+  const gchar *retval;
+
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
+  osc_header_len=8;
+
+  lives_osc_parse_int_argument(vargs,&effect_key);
+  lives_osc_parse_int_argument(vargs,&pnum);
+
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
+  //g_print("key %d pnum %d",effect_key,pnum);
+
+  inst=rte_keymode_get_instance(effect_key,rte_key_getmode(effect_key));
+
+  if (!weed_plant_has_leaf(inst,"in_parameters")) return lives_osc_notify_failure();
+  nparams=weed_leaf_num_elements(inst,"in_parameters");
+  if (pnum>=nparams) return lives_osc_notify_failure();
+  
+  in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  
+  tparam=in_params[pnum];
+  tparamtmpl=weed_get_plantptr_value(tparam,"template",&error);
+  hint=weed_get_int_value(tparamtmpl,"hint",&error);
+
+  switch (hint) {
+  case WEED_HINT_INTEGER: retval=get_omc_const("LIVES_PARAM_TYPE_INT"); break;
+  case WEED_HINT_FLOAT: retval=get_omc_const("LIVES_PARAM_TYPE_FLOAT"); break;
+  case WEED_HINT_TEXT: retval=get_omc_const("LIVES_PARAM_TYPE_STRING"); break;
+  case WEED_HINT_SWITCH: retval=get_omc_const("LIVES_PARAM_TYPE_BOOL"); break;
+  case WEED_HINT_COLOR: retval=get_omc_const("LIVES_PARAM_TYPE_COLOR"); break;
+  default: return lives_osc_notify_failure();
+  }
+
+  lives_status_send (retval);
+}
+
 
 
 
@@ -2513,6 +2592,32 @@ void lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
 
   count=count_simple_params(filter);
+
+  msg=g_strdup_printf("%d",count);
+  lives_status_send(msg);
+  g_free(msg);
+}
+
+
+void lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+
+  int effect_key;
+  int count;
+
+  weed_plant_t *inst;
+
+  gchar *msg;
+  
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
+
+  lives_osc_parse_int_argument(vargs,&effect_key);
+
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
+  //g_print("key %d pnum %d",effect_key,pnum);
+
+  inst=rte_keymode_get_instance(effect_key,rte_key_getmode(effect_key));
+
+  count=enabled_in_channels(inst, TRUE);
 
   msg=g_strdup_printf("%d",count);
   lives_status_send(msg);
@@ -2994,6 +3099,7 @@ static struct
     { "/clip/foreground/fps/reverse",	"reverse",	lives_osc_cb_play_reverse,		61	},
     { "/clip/background/fps/reverse",	"reverse",	lives_osc_cb_bgplay_reverse,		63	},
     { "/video/freeze/toggle",		"toggle", lives_osc_cb_freeze,		37	},
+    { "/effects/realtime/list",		"list",	lives_osc_cb_fx_list,			114	},
     { "/effect_key/map",		"map",	lives_osc_cb_fx_map,			25	},
     { "/effect_key/map/clear",		"clear",	lives_osc_cb_fx_map_clear,			32	},
     { "/effect_key/reset",		"reset",	lives_osc_cb_fx_reset,			25	},
@@ -3002,12 +3108,15 @@ static struct
     { "/effect_key/toggle",		"toggle",	lives_osc_cb_fx_toggle,		        25	},
     { "/effect_key/count",		"count",	lives_osc_cb_rte_count,		        25	},
     { "/effect_key/parameter/value/set",		"set",	lives_osc_cb_rte_setparam,		        42	},
+    { "/effect_key/parameter/type/get",		"get",	lives_osc_cb_rte_getparamtype,		        68	},
     { "/effect_key/nparameter/count",		"count",	lives_osc_cb_rte_nparamcount,		        91	},
     { "/effect_key/nparameter/value/set",		"set",	lives_osc_cb_rte_setnparam,		        92	},
+    //{ "/effect_key/nparameter/value/get",		"get",	lives_osc_cb_rte_getnparam,		        92	},
     { "/effect_key/nparameter/min/get",		"get",	lives_osc_cb_rte_getnparammin,		        93	},
     { "/effect_key/nparameter/max/get",		"get",	lives_osc_cb_rte_getnparammax,		        94	},
     { "/effect_key/nparameter/default/get",		"get",	lives_osc_cb_rte_getnparamdef,		        95	},
     { "/effect_key/nparameter/is_transition/get",		"get",	lives_osc_cb_rte_getnparamtrans,		        96	},
+    { "/effect_key/inchannels/active/get",		"get",	lives_osc_cb_rte_getnchannels,		        131	},
     { "/effect_key/mode/set",		"set",	lives_osc_cb_rte_setmode,		        43	},
     { "/effect_key/mode/get",		"get",	lives_osc_cb_rte_getmode,		        43	},
     { "/effect_key/mode/next",		"next",	lives_osc_cb_rte_nextmode,		        43	},
@@ -3141,17 +3250,21 @@ static struct
     {	"/clip/name/", 	        "name",           59, 1,0	},
     {	"/clipboard/", 		"clipboard",		 70, -1,0	},
     {	"/record/", 		"record",	 3, -1,0	},
-    {	"/effect/" , 		"effect",	 4, -1,0	},
+    {	"/effects/" , 		"effects",	 4, -1,0	},
+    {	"/effects/realtime/" , 		"realtime",	 114, 4,0	},
     {	"/effect_key/" , 		"effect_key",	 25, -1,0	},
+    {	"/effect_key/inchannels/" , 	"inchannels",	 130, 25,0	},
+    {	"/effect_key/inchannels/active/" , 	"active",	 131, 130,0	},
     {	"/effect_key/parameter/" , 	"parameter",	 41, 25,0	},
     {	"/effect_key/parameter/value/" ,"value",	 42, 41,0	},
-    {	"/effect_key/nparameter/" , 	"nparameter",	 91, 25,0	},
+    {	"/effect_key/parameter/type/" ,"type",	 68, 41,0	},
+   {	"/effect_key/nparameter/" , 	"nparameter",	 91, 25,0	},
     {	"/effect_key/nparameter/value/" ,"value",	 92, 91,0	},
     {	"/effect_key/nparameter/min/" ,"min",	 93, 91,0	},
     {	"/effect_key/nparameter/max/" ,"max",	 94, 91,0	},
     {	"/effect_key/nparameter/default/" ,"default",	 95, 91,0	},
     {	"/effect_key/nparameter/is_transition/" ,"is_transition", 96, 91,0  },
-    {	"/effect_key/map/" , 		"map",	 32, 25,0	},
+     {	"/effect_key/map/" , 		"map",	 32, 25,0	},
     {	"/effect_key/mode/" , 		"mode",	 43, 25,0	},
     {	"/effect_key/name/" , 		"name",	 44, 25,0	},
     {	"/effect_key/maxmode/" , 	"maxmode",	 45, 25,0	},

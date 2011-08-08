@@ -2781,7 +2781,9 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($with_audio<2) {
-	    $img_ext2=&get_img_ext("$tmpdir/$from_handle",$start);
+	    if (!$undo_cut) {
+		$img_ext2=&get_img_ext("$tmpdir/$from_handle",$start);
+	    }
 	    &insert;
 	}
 
@@ -2807,13 +2809,11 @@ if (defined($ARGV[0])) {
 	    }
 	    else {
                 $end=-s "$curtmpdir/audio.bak";
-		print "11end here is $end\n";
                 $end/=$arate*$achans*$asamps/8;
                 $start=0.;
 		if ($with_audio<2) {
 		    $where/=$fps;
 		}
-		print "end here is $end\n";
 	    }
 
 	    &insert_audio($asamps,$achans,$asigned,$aendian,$undo_cut);
@@ -2901,7 +2901,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if ($img_ext eq ".png") {
-		$convert_command.=" -alpha On";
+		$convert_command.=" -alpha Background";
 	    }
 
 	    $fps=0;
@@ -3308,7 +3308,7 @@ sub insert {
     my $conv_command=$convert_command;
 
     if ($img_ext2 eq ".jpg" && $img_ext eq ".png") {
-	$conv_command.=" -alpha On";
+	$conv_command.=" -alpha Background";
     }
 
     my $quick_copy=-1;
@@ -3349,7 +3349,7 @@ sub insert {
 	    $to=&mkname($nwhere+$i-$nstart+1);
 
 	    if ($undo_cut==1) {
-		system("/bin/cp $fromdir/$from.bak $curtmpdir/$to$img_ext 2>/dev/null");
+		rename "$fromdir/$from.bak","$curtmpdir/$to$img_ext";
 	    }
 	    else {
 		while (! -f "$fromdir/$from$img_ext2") {
@@ -4498,14 +4498,16 @@ sub open_single_image {
     `sync;sync;sync`;
 
     if ($img_ext eq ".png") {
-	$conv_command.=" -alpha On";
+	$conv_command.=" -alpha Background";
     }
 
     if ($antialias eq "false") {
 	system("$conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
+	print("xx $conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
     }
     else {
 	system("$conv_command \"$file\" -resize $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext >/dev/null 2>&1");
+	print("yy $conv_command \"$file\" -resize $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext >/dev/null 2>&1");
     }
 
     #convert gives multiple frames for e.g. animated gif
@@ -4614,7 +4616,7 @@ sub fill_and_redo_frames {
     chdir $curtmpdir;
 
     if ($img_ext eq ".png") {
-	$conv_command.=" -alpha On";
+	$conv_command.=" -alpha Background";
     }
     
     for ($i=1;$i<=$end;$i++) {

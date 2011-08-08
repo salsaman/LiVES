@@ -4503,11 +4503,9 @@ sub open_single_image {
 
     if ($antialias eq "false") {
 	system("$conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
-	print("xx $conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
     }
     else {
 	system("$conv_command \"$file\" -resize $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext >/dev/null 2>&1");
-	print("yy $conv_command \"$file\" -resize $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext >/dev/null 2>&1");
     }
 
     #convert gives multiple frames for e.g. animated gif

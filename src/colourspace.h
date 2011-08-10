@@ -70,6 +70,8 @@ int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace
 gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf);
 
 
+void gdk_pixbuf_set_opaque(GdkPixbuf *pixbuf);
+
 const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);
 const char *weed_yuv_subspace_get_name(int subspace);

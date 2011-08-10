@@ -2934,6 +2934,8 @@ static void pbsize_set(GdkPixbufLoader *pbload, gint width, gint height, gpointe
 
 #endif
 
+
+
 GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint height, const gchar *img_ext, GError **gerror) {
 
   GdkPixbuf *pixbuf;
@@ -2975,7 +2977,6 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
   if (!gdk_pixbuf_loader_close(pbload,gerror)) return NULL;
 
   pixbuf=g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
-
   g_object_unref(pbload);
 
 # else
@@ -2983,6 +2984,11 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
   pixbuf=gdk_pixbuf_new_from_file_at_scale(fname,width,height,FALSE,gerror);
 
 #endif
+
+  /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to
+     hence reset it back to opaque */
+  if (gdk_pixbuf_get_has_alpha(pixbuf)) gdk_pixbuf_set_opaque(pixbuf);
+
   return pixbuf;
 
 }

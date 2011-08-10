@@ -6320,6 +6320,22 @@ inline gboolean weed_palette_is_resizable(int pal) {
 }
 
 
+void gdk_pixbuf_set_opaque(GdkPixbuf *pixbuf) {
+  unsigned char *pdata=gdk_pixbuf_get_pixels(pixbuf);
+  int row=gdk_pixbuf_get_rowstride(pixbuf);
+  int height=gdk_pixbuf_get_height(pixbuf);
+  register int i,j;
+  for (i=0;i<height;i++) {
+    for (j=3;j<row;j+=4) {
+      pdata[j]=255;
+    }
+    pdata+=row;
+  }
+}
+
+
+
+
 
 void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
   // resize a layer

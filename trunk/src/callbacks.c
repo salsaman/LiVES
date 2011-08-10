@@ -3966,12 +3966,20 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     g_free(renamew);
     renamew=NULL;
   }
-  else if (!check_for_lock_file(mainw->set_name,0)) {
-    memset(mainw->set_name,0,1);
-    threaded_dialog_spin();
-    d_print_failed();
-    threaded_dialog_spin();
-    return TRUE;
+  else {
+    gchar *setdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+    if (!g_file_test(setdir,G_FILE_TEST_IS_DIR)) {
+      msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),mainw->set_name);
+      memset (mainw->set_name,0,1);
+      threaded_dialog_spin();
+    }
+    if (!check_for_lock_file(mainw->set_name,0)) {
+      memset(mainw->set_name,0,1);
+      threaded_dialog_spin();
+      d_print_failed();
+      threaded_dialog_spin();
+      return TRUE;
+    }
   }
 
   g_snprintf (mainw->msg,256,"none");
@@ -3983,7 +3991,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   }
   g_free(msg);
 
-  ordfile=g_strdup_printf("%s/%s/order",prefs->tmpdir,mainw->set_name);
+  ordfile=g_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
   orderfile=fopen(ordfile,"r");
   g_free(ordfile);
 
@@ -4083,7 +4091,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     mainw->was_set=TRUE;
 
     if (prefs->crash_recovery&&!added_recovery) {
-      gchar *recovery_entry=g_strdup_printf("%s/*",mainw->set_name);
+      gchar *recovery_entry=g_build_filename(mainw->set_name,"*",NULL);
       threaded_dialog_spin();
       add_to_recovery_file(recovery_entry);
       g_free(recovery_entry);
@@ -4093,7 +4101,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (orderfile!=NULL) {
       // newer style (0.9.6+)
-      gchar *clipdir=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->msg);
+      gchar *clipdir=g_build_filename(prefs->tmpdir,mainw->msg,NULL);
       if (!g_file_test(clipdir,G_FILE_TEST_IS_DIR)) {
 	threaded_dialog_spin();
 	g_free(clipdir);

@@ -99,7 +99,10 @@ Clarified text about plugin data and icon directories.
 17/03/11 salsaman
 Switched WEED_FILTER_HINT_IS_POINT_EFFECT to WEED_FILTER_HINT_NO_THREADING
 
-(C) Gabriel "Salsaman" Finch 2005 - 2010
+6/08/11 salsaman
+Corrected spelling error WEED_HINT_INT -> WEED_HINT_INTEGER
+
+(C) Gabriel "Salsaman" Finch 2005 - 2011
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -1383,7 +1386,7 @@ name, filter name, author and filter version.
    convert unknown parameter types. These parameter types may or may not
    have "min" and "max". They will have at least "name" and "default" leaves.
 
- * WEED_HINT_INT
+ * WEED_HINT_INTEGER
 
  * WEED_HINT_FLOAT
 

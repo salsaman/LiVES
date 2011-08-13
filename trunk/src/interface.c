@@ -1837,12 +1837,35 @@ _entryw* create_rename_dialog (gint type) {
 
 
   if (type==3) {
+    GtkListStore *store;
+    GtkEntryCompletion *completion;
+    GList *xlist;
+
     set_combo=gtk_combo_new();
     renamew->setlist=get_set_list(prefs->tmpdir);
     combo_set_popdown_strings(GTK_COMBO(set_combo),renamew->setlist);
     renamew->entry=(GTK_COMBO(set_combo))->entry;
     gtk_widget_show (set_combo);
     gtk_box_pack_start (GTK_BOX (hbox19), set_combo, TRUE, TRUE, 0);
+
+    xlist=renamew->setlist;
+    store = gtk_list_store_new (1, G_TYPE_STRING);
+
+    while (xlist != NULL) {
+      GtkTreeIter iter;
+      gtk_list_store_append (store, &iter);
+      gtk_list_store_set (store, &iter, 0, (gchar *)xlist->data, -1);
+      xlist=xlist->next;
+    }
+    
+    completion = gtk_entry_completion_new ();
+    gtk_entry_completion_set_model (completion, (GtkTreeModel *)store);
+    gtk_entry_completion_set_text_column (completion, 0);
+    gtk_entry_completion_set_inline_completion (completion, TRUE);
+    gtk_entry_completion_set_popup_set_width (completion, TRUE);
+    gtk_entry_completion_set_popup_completion (completion, TRUE);
+    gtk_entry_completion_set_popup_single_match(completion,FALSE);
+    gtk_entry_set_completion (GTK_ENTRY (renamew->entry), completion);
   }
   else {
     renamew->entry = gtk_entry_new_with_max_length (type==6?255:128);

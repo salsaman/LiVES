@@ -1,7 +1,17 @@
 Version 1.4.6
 -------------
-Fix hang when applying effect to a single frame in a virtual clip.
+Fix hang when applying effect to a single frame in a virtual clip. *
 Fix decoding for some ogg/theora files with broken keyframes.
+Add OMC commands: /effect/realtime/name/get, /effect_key/inchannels/active/get, 
+	/effect_key/nparameter/value/get, /effect_key/nparameter/name/get
+	/effect_key/parameter/type/get, /effect_key/parameter/value/get, /effect_key/parameter/colorspace/get,
+	/effect_key/parameter/name/get, /effect_key/parameter/count,
+
+	/effect_key/parameter/min/get, /effect_key/parameter/max/get, /effect_key/parameter/default/get, 
+	/effect_key/parameter/flags/get, /effect_key/parameter/value/count, -/effect_key/parameter/value/set-
+	/effect_key/parameter/is_transition/get
+	LIVES_TRUE, LIVES_FALSE
+
 
 
 

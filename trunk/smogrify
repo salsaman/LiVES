@@ -2901,7 +2901,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if ($img_ext eq ".png") {
-		$convert_command.=" -alpha Background";
+		$convert_command.=" -alpha on";
 	    }
 
 	    $fps=0;
@@ -3308,7 +3308,7 @@ sub insert {
     my $conv_command=$convert_command;
 
     if ($img_ext2 eq ".jpg" && $img_ext eq ".png") {
-	$conv_command.=" -alpha Background";
+	$conv_command.=" -alpha on";
     }
 
     my $quick_copy=-1;
@@ -4447,6 +4447,8 @@ sub open_images {
 
 
 sub byfile {
+    # sort files in numerical-alpha order
+
     #thanks to dominus !
     my @a = split /(\d+)/, $a;
     my @b = split /(\d+)/, $b;
@@ -4498,7 +4500,7 @@ sub open_single_image {
     `sync;sync;sync`;
 
     if ($img_ext eq ".png") {
-	$conv_command.=" -alpha Background";
+	$conv_command.=" -alpha on";
     }
 
     if ($antialias eq "false") {
@@ -4614,7 +4616,7 @@ sub fill_and_redo_frames {
     chdir $curtmpdir;
 
     if ($img_ext eq ".png") {
-	$conv_command.=" -alpha Background";
+	$conv_command.=" -alpha on";
     }
     
     for ($i=1;$i<=$end;$i++) {

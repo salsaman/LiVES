@@ -2388,7 +2388,7 @@ void lives_osc_cb_rte_prevmode(void *context, int arglen, const void *vargs, OSC
 ///////////////////////////////////////////////////////////////
 
 
-static gboolean setfx (gint effect_key, gint pnum, int arglen, const void *vargs) {
+static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs) {
   int valuei;
   float valuef;
   int error,i;
@@ -2398,7 +2398,7 @@ static gboolean setfx (gint effect_key, gint pnum, int arglen, const void *vargs
   weed_plant_t *tparamtmpl;
   int hint,cspace;
   int nparams;
-  int nargs,x=0;
+  int x=0;
   int maxi_r=255,maxi_g=255,maxi_b=255,maxi_a=255,mini_r=0,mini_g=0,mini_b=0,mini_a=0,mini,maxi;
   double maxd_r=1.,maxd_g=1.,maxd_b=1.,maxd_a=1.,mind_r=0.,mind_g=0.,mind_b=0.,mind_a=0.,mind,maxd;
   gchar values[OSC_STRING_SIZE];
@@ -2410,10 +2410,6 @@ static gboolean setfx (gint effect_key, gint pnum, int arglen, const void *vargs
   nparams=weed_leaf_num_elements(inst,"in_parameters");
   if (pnum>=nparams) return FALSE;
   
-  /* get number of args, subtract 2 (effect_key and param number) */
-  nargs=lives_osc_get_num_arguments(vargs)-2;
-  if (nargs==0) return FALSE;
-
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   
   tparam=in_params[pnum];
@@ -2431,9 +2427,6 @@ static gboolean setfx (gint effect_key, gint pnum, int arglen, const void *vargs
 
   /* get header pattern (type tags) */
   pattern=g_strdup(((char *)vargs)+3); // skip comma,int,int
-
-  lives_osc_parse_int_argument(vargs,&valuei);
-  lives_osc_parse_int_argument(vargs,&valuei);
 
   switch (hint) {
   case WEED_HINT_INTEGER:
@@ -3040,8 +3033,7 @@ void lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs,
 
   const gchar *retval;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3085,8 +3077,7 @@ void lives_osc_cb_rte_getnparamtype(void *context, int arglen, const void *vargs
 
   const gchar *retval;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3126,8 +3117,7 @@ void lives_osc_cb_rte_getparamcspace(void *context, int arglen, const void *varg
 
   const gchar *retval;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3170,8 +3160,7 @@ void lives_osc_cb_rte_countparamvals(void *context, int arglen, const void *varg
 
   gchar *retval;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3217,8 +3206,7 @@ void lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs
 
   gchar *retval;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3257,8 +3245,7 @@ void lives_osc_cb_rte_getparamname(void *context, int arglen, const void *vargs,
 
   gchar *retval;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3295,8 +3282,7 @@ void lives_osc_cb_rte_getnparamname(void *context, int arglen, const void *vargs
 
   gchar *retval;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8;
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3327,10 +3313,14 @@ void lives_osc_cb_rte_getnparamname(void *context, int arglen, const void *vargs
 void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
-  int pnum;
+  int pnum,nargs;
 
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8; // hdr len might be longer for arrays
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
+
+  nargs=lives_osc_get_num_arguments(vargs)-2;
+  if (nargs<3) return lives_osc_notify_failure();
+
+  osc_header_len=pad4(nargs+1); // add comma
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3339,7 +3329,7 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
   //g_print("key %d pnum %d",effect_key,pnum);
 
   if (!mainw->osc_block) {
-    if (!setfx(effect_key,pnum,arglen,vargs)) return lives_osc_notify_failure();
+    if (!setfx(effect_key,pnum,nargs-2,vargs)) return lives_osc_notify_failure();
   }
   else lives_osc_notify_failure();
 }
@@ -3349,15 +3339,19 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
 void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
-  int pnum,i;
+  int pnum,i,nargs;
 
   // pick pnum which is numeric single valued, non-reinit
   // i.e. simple numeric parameter
 
   weed_plant_t *inst;
   
-  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) return lives_osc_notify_failure();
-  osc_header_len=8; // hdr len might be longer for arrays
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
+
+  nargs=lives_osc_get_num_arguments(vargs)-2;
+  if (nargs<3) return lives_osc_notify_failure();
+
+  osc_header_len=pad4(nargs+1); // add comma
 
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3371,7 +3365,7 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
   i=get_nth_simple_param(inst,pnum);
 
   if (i!=-1 && !mainw->osc_block) {
-    if (!setfx(effect_key,i,arglen,vargs)) return lives_osc_notify_failure();
+    if (!setfx(effect_key,i,nargs-2,vargs)) return lives_osc_notify_failure();
   }
   else lives_osc_notify_failure();
 
@@ -3387,7 +3381,6 @@ void lives_osc_cb_rte_paramcount(void *context, int arglen, const void *vargs, O
   gchar *msg;
   
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
-
   lives_osc_parse_int_argument(vargs,&effect_key);
 
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
@@ -3419,7 +3412,6 @@ void lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, 
   gchar *msg;
   
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
-
   lives_osc_parse_int_argument(vargs,&effect_key);
 
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
@@ -3447,12 +3439,10 @@ void lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *vargs,
   gchar *msg;
   
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
-
   lives_osc_parse_int_argument(vargs,&effect_key);
 
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
-
   inst=rte_keymode_get_instance(effect_key,rte_key_getmode(effect_key));
   if (inst==NULL) return lives_osc_notify_failure();
 
@@ -3476,7 +3466,6 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
   gchar *msg;
   
   if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
-
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
 
@@ -3516,7 +3505,6 @@ void lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, 
   gchar *msg;
   
   if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
-
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
 

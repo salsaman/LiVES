@@ -76,6 +76,7 @@ int get_transition_param(weed_plant_t *filter);
 int get_master_vol_param(weed_plant_t *filter);
 gboolean is_perchannel_multiw(weed_plant_t *param);
 gboolean has_perchannel_multiw(weed_plant_t *filter);
+gboolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl);
 
 
 /// parameter interpolation

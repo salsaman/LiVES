@@ -591,29 +591,63 @@ gboolean has_audio_chans_out(weed_plant_t *filter, gboolean count_opt) {
 }
 
 
+gboolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl) {
+  /** see if param has variable elements, using the strictest check */
+  weed_plant_t **chans,*ctmpl;
+  int error,i;
+  int flags=weed_get_int_value(ptmpl,"flags",&error);
+  int nchans;
+
+  if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS) return TRUE;
+
+  if (!(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) return FALSE;
+
+  if (!weed_plant_has_leaf(inst,"in_channels")
+      ||(nchans=weed_leaf_num_elements(inst,"in_channels"))==0)
+    return FALSE;
+
+  chans=weed_get_plantptr_array(inst,"in_channels",&error);
+
+  for (i=0;i<nchans;i++) {
+    if (weed_plant_has_leaf(chans[i],"disabled")&&
+	weed_get_boolean_value(chans[i],"disabled",&error)==WEED_TRUE) continue; //ignore disabled channels
+    ctmpl=weed_get_plantptr_value(chans[i],"template",&error);
+    if (weed_plant_has_leaf(ctmpl,"max_repeats")&&weed_get_int_value(ctmpl,"max_repeats",&error)!=1) {
+      weed_free(chans);
+      return TRUE;
+    }
+  }
+
+  weed_free(chans);
+  return FALSE;
+
+}
+
+
 
 
 static void create_filter_map (void) {
-  // here we create an effect map which defines the order in which effects are applied to a frame stack
-  // this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
-  // keys are applied here from smallest (ctrl-1) to largest (virtual key ctrl-FX_KEYS_MAX_VIRTUAL)
+  /** here we create an effect map which defines the order in which effects are applied to a frame stack
+  * this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
+  * keys are applied here from smallest (ctrl-1) to largest (virtual key ctrl-FX_KEYS_MAX_VIRTUAL)
 
-  // this is transformed into filter_map which holds init_events 
-  // these pointers are then stored in a filter_map event
+  * this is transformed into filter_map which holds init_events 
+  * these pointers are then stored in a filter_map event
 
-  // what we actually point to are the init_events for the effects. The init_events are stored when we 
-  // init an effect
+  * what we actually point to are the init_events for the effects. The init_events are stored when we 
+  * init an effect
 
-  // during rendering we read the filter_map event, and retrieve the new key, which is at that time 
-  // held in the 
-  // "host_tag" property of the init_event, and we apply our effects
-  // (which are then bound to virtual keys >=FX_KEYS_MAX_VIRTUAL)
+  * during rendering we read the filter_map event, and retrieve the new key, which is at that time 
+  * held in the 
+  * "host_tag" property of the init_event, and we apply our effects
+  * (which are then bound to virtual keys >=FX_KEYS_MAX_VIRTUAL)
 
-  // [note] that we can do cool things, like mapping the same instance multiple times (though it will always
-  // apply itself to the same in/out tracks
+  * [note] that we can do cool things, like mapping the same instance multiple times (though it will always
+  * apply itself to the same in/out tracks
 
-  // we don't need to worry about free()ing init_events, since they will be free'd 
-  // when the instance is deinited
+  * we don't need to worry about free()ing init_events, since they will be free'd 
+  * when the instance is deinited
+  */
 
   int count=0,i;
   weed_plant_t *inst;
@@ -4479,7 +4513,8 @@ gboolean is_hidden_param(weed_plant_t *plant, int i) {
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) filter=weed_get_plantptr_value(plant,"filter_class",&error);
   else filter=plant;
 
-  if (weed_plant_has_leaf(filter,"in_parameter_templates")) num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
+  if (weed_plant_has_leaf(filter,"in_parameter_templates")) 
+    num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
 
   if (num_params==0) return TRUE;
 
@@ -4489,7 +4524,9 @@ gboolean is_hidden_param(weed_plant_t *plant, int i) {
 
   if (weed_plant_has_leaf(wtmpl,"flags")) flags=weed_get_int_value(wtmpl,"flags",&error);
   if (weed_plant_has_leaf(wtmpl,"gui")) gui=weed_get_plantptr_value(wtmpl,"gui",&error);
-  if (!(flags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)&&(gui==NULL||(!weed_plant_has_leaf(gui,"hidden")||weed_get_boolean_value(gui,"hidden",&error)==WEED_FALSE))) {
+  if (!(flags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)
+      &&(gui==NULL||(!weed_plant_has_leaf(gui,"hidden")
+		     ||weed_get_boolean_value(gui,"hidden",&error)==WEED_FALSE))) {
     if (gui!=NULL) {
       if (weed_plant_has_leaf(gui,"copy_value_to")) {
 	int copyto=weed_get_int_value(gui,"copy_value_to",&error);
@@ -4502,7 +4539,10 @@ gboolean is_hidden_param(weed_plant_t *plant, int i) {
 	  if (weed_plant_has_leaf(wtmpl2,"flags")) flags2=weed_get_int_value(wtmpl2,"flags",&error);
 	  param_hint=weed_get_int_value(wtmpl,"hint",&error);
 	  param_hint2=weed_get_int_value(wtmpl2,"hint",&error);
-	  if (param_hint==param_hint2&&((flags2&WEED_PARAMETER_VARIABLE_ELEMENTS)||weed_leaf_num_elements(wtmpl,"default")==weed_leaf_num_elements(wtmpl2,"default"))) {
+	  if (param_hint==param_hint2
+	      &&((flags2&WEED_PARAMETER_VARIABLE_ELEMENTS)
+		 ||(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL&&flags2&WEED_PARAMETER_ELEMENT_PER_CHANNEL)
+		 ||weed_leaf_num_elements(wtmpl,"default")==weed_leaf_num_elements(wtmpl2,"default"))) {
 	    if (!(flags2&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)) {
 	      visible=TRUE;
 	    }}}}}}
@@ -4521,7 +4561,8 @@ int get_transition_param(weed_plant_t *filter) {
   num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
   for (i=0;i<num_params;i++) {
-    if (weed_plant_has_leaf(in_ptmpls[i],"transition")&&weed_get_boolean_value(in_ptmpls[i],"transition",&error)==WEED_TRUE) {
+    if (weed_plant_has_leaf(in_ptmpls[i],"transition")&&
+	weed_get_boolean_value(in_ptmpls[i],"transition",&error)==WEED_TRUE) {
       weed_free(in_ptmpls);
       return i;
     }
@@ -4540,7 +4581,8 @@ int get_master_vol_param(weed_plant_t *filter) {
   num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
   for (i=0;i<num_params;i++) {
-    if (weed_plant_has_leaf(in_ptmpls[i],"is_volume_master")&&weed_get_boolean_value(in_ptmpls[i],"is_volume_master",&error)==WEED_TRUE) {
+    if (weed_plant_has_leaf(in_ptmpls[i],"is_volume_master")&&
+	weed_get_boolean_value(in_ptmpls[i],"is_volume_master",&error)==WEED_TRUE) {
       weed_free(in_ptmpls);
       return i;
     }

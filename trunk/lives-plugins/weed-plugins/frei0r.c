@@ -174,7 +174,7 @@ static void weed_params_to_frei0r_params (weed_plant_t *inst, weed_plant_t **in_
       break;
     case WEED_HINT_TEXT:
       string=weed_get_string_value(in_params[i],"value",&error);
-      (*f0r_set_param_value)(f0rinst,(f0r_param_t)string,pnum);
+      (*f0r_set_param_value)(f0rinst,(f0r_param_t)&string,pnum);
       weed_free(string);
       break;
     }

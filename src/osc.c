@@ -2447,8 +2447,8 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  g_free(valuesi);
 	  return FALSE;
 	}
-	mini=weed_get_int_value(tparamtmpl,"minimum",&error);
-	maxi=weed_get_int_value(tparamtmpl,"maximum",&error);
+	mini=weed_get_int_value(tparamtmpl,"min",&error);
+	maxi=weed_get_int_value(tparamtmpl,"max",&error);
       
 	if (valuesi[x]<mini) valuesi[x]=mini;
 	if (valuesi[x]>maxi) valuesi[x]=maxi;
@@ -2522,8 +2522,8 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  g_free(valuesd);
 	  return FALSE;
 	}
-	mind=weed_get_double_value(tparamtmpl,"minimum",&error);
-	maxd=weed_get_double_value(tparamtmpl,"maximum",&error);
+	mind=weed_get_double_value(tparamtmpl,"min",&error);
+	maxd=weed_get_double_value(tparamtmpl,"max",&error);
       
 	if (valuesd[x]<mind) valuesd[x]=mind;
 	if (valuesd[x]>maxd) valuesd[x]=maxd;
@@ -2605,17 +2605,17 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
       if (weed_leaf_seed_type(tparamtmpl,"default")==WEED_SEED_INT) {
 	// RGB, int type
 	int *valuesi=g_malloc(nargs*sizint);
-	int nmins=weed_leaf_num_elements(tparamtmpl,"minimum");
-	int nmaxs=weed_leaf_num_elements(tparamtmpl,"maximum");
+	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
+	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	int *minis=NULL,*maxis=NULL;
 
 	// get min and max values - 3 possibilities: 1 value, 3 values or N values
 
 	if (nmins==1) {
-	  mini_r=mini_g=mini_b=weed_get_int_value(tparamtmpl,"minimum",&error);
+	  mini_r=mini_g=mini_b=weed_get_int_value(tparamtmpl,"min",&error);
 	}
 	else {
-	  minis=weed_get_int_array(tparamtmpl,"minimum",&error);
+	  minis=weed_get_int_array(tparamtmpl,"min",&error);
 	  if (nmins==3) {
 	    mini_r=minis[0];
 	    mini_g=minis[1];
@@ -2625,10 +2625,10 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	}
 
 	if (nmaxs==1) {
-	  maxi_r=maxi_g=maxi_b=weed_get_int_value(tparamtmpl,"maximum",&error);
+	  maxi_r=maxi_g=maxi_b=weed_get_int_value(tparamtmpl,"max",&error);
 	}
 	else {
-	  maxis=weed_get_int_array(tparamtmpl,"maximum",&error);
+	  maxis=weed_get_int_array(tparamtmpl,"max",&error);
 	  if (nmaxs==3) {
 	    maxi_r=maxis[0];
 	    maxi_g=maxis[1];
@@ -2695,17 +2695,17 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
       else {
 	// RGB, float type
 	double *valuesd=g_malloc(nargs*sizdbl);
-	int nmins=weed_leaf_num_elements(tparamtmpl,"minimum");
-	int nmaxs=weed_leaf_num_elements(tparamtmpl,"maximum");
+	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
+	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	double *minds=NULL,*maxds=NULL;
 
 	// get min and max values - 3 possibilities: 1 value, 3 values or N values
 
 	if (nmins==1) {
-	  mind_r=mind_g=mind_b=weed_get_double_value(tparamtmpl,"minimum",&error);
+	  mind_r=mind_g=mind_b=weed_get_double_value(tparamtmpl,"min",&error);
 	}
 	else {
-	  minds=weed_get_double_array(tparamtmpl,"minimum",&error);
+	  minds=weed_get_double_array(tparamtmpl,"min",&error);
 	  if (nmins==3) {
 	    mind_r=minds[0];
 	    mind_g=minds[1];
@@ -2715,10 +2715,10 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	}
 
 	if (nmaxs==1) {
-	  maxd_r=maxd_g=maxd_b=weed_get_double_value(tparamtmpl,"maximum",&error);
+	  maxd_r=maxd_g=maxd_b=weed_get_double_value(tparamtmpl,"max",&error);
 	}
 	else {
-	  maxds=weed_get_double_array(tparamtmpl,"maximum",&error);
+	  maxds=weed_get_double_array(tparamtmpl,"max",&error);
 	  if (nmaxs==3) {
 	    maxd_r=maxds[0];
 	    maxd_g=maxds[1];
@@ -2795,17 +2795,17 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
       if (weed_leaf_seed_type(tparamtmpl,"default")==WEED_SEED_INT) {
 	// RGBA, int type
 	int *valuesi=g_malloc(nargs*sizint);
-	int nmins=weed_leaf_num_elements(tparamtmpl,"minimum");
-	int nmaxs=weed_leaf_num_elements(tparamtmpl,"maximum");
+	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
+	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	int *minis=NULL,*maxis=NULL;
 
 	// get min and max values - 3 possibilities: 1 value, 4 values or N values
 
 	if (nmins==1) {
-	  mini_r=mini_g=mini_b=mini_a=weed_get_int_value(tparamtmpl,"minimum",&error);
+	  mini_r=mini_g=mini_b=mini_a=weed_get_int_value(tparamtmpl,"min",&error);
 	}
 	else {
-	  minis=weed_get_int_array(tparamtmpl,"minimum",&error);
+	  minis=weed_get_int_array(tparamtmpl,"min",&error);
 	  if (nmins==4) {
 	    mini_r=minis[0];
 	    mini_g=minis[1];
@@ -2816,10 +2816,10 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	}
 
 	if (nmaxs==1) {
-	  maxi_r=maxi_g=maxi_b=maxi_a=weed_get_int_value(tparamtmpl,"maximum",&error);
+	  maxi_r=maxi_g=maxi_b=maxi_a=weed_get_int_value(tparamtmpl,"max",&error);
 	}
 	else {
-	  maxis=weed_get_int_array(tparamtmpl,"maximum",&error);
+	  maxis=weed_get_int_array(tparamtmpl,"max",&error);
 	  if (nmaxs==4) {
 	    maxi_r=maxis[0];
 	    maxi_g=maxis[1];
@@ -2891,17 +2891,17 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
       else {
 	// RGBA, float type
 	double *valuesd=g_malloc(nargs*sizdbl);
-	int nmins=weed_leaf_num_elements(tparamtmpl,"minimum");
-	int nmaxs=weed_leaf_num_elements(tparamtmpl,"maximum");
+	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
+	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	double *minds=NULL,*maxds=NULL;
 
 	// get min and max values - 3 possibilities: 1 value, 3 values or N values
 
 	if (nmins==1) {
-	  mind_r=mind_g=mind_b=mind_a=weed_get_double_value(tparamtmpl,"minimum",&error);
+	  mind_r=mind_g=mind_b=mind_a=weed_get_double_value(tparamtmpl,"min",&error);
 	}
 	else {
-	  minds=weed_get_double_array(tparamtmpl,"minimum",&error);
+	  minds=weed_get_double_array(tparamtmpl,"min",&error);
 	  if (nmins==4) {
 	    mind_r=minds[0];
 	    mind_g=minds[1];
@@ -2912,10 +2912,10 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	}
 
 	if (nmaxs==1) {
-	  maxd_r=maxd_g=maxd_b=mind_a=weed_get_double_value(tparamtmpl,"maximum",&error);
+	  maxd_r=maxd_g=maxd_b=mind_a=weed_get_double_value(tparamtmpl,"max",&error);
 	}
 	else {
-	  maxds=weed_get_double_array(tparamtmpl,"maximum",&error);
+	  maxds=weed_get_double_array(tparamtmpl,"max",&error);
 	  if (nmaxs==4) {
 	    maxd_r=maxds[0];
 	    maxd_g=maxds[1];
@@ -3464,7 +3464,7 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
   weed_plant_t *ptmpl;
 
   gchar *msg;
-  
+
   if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3475,6 +3475,7 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
+
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
   if (pnum>=nparams) return lives_osc_notify_failure();
 
@@ -3482,9 +3483,9 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
 
   ptmpl=in_ptmpls[pnum];
 
-  nvals=weed_leaf_num_elements(ptmpl,"minimum");
+  nvals=weed_leaf_num_elements(ptmpl,"min");
 
-  msg=lives_osc_format_result(ptmpl,"minimum",0,nvals);
+  msg=lives_osc_format_result(ptmpl,"min",0,nvals);
 
   lives_status_send(msg);
   g_free(msg);
@@ -3521,8 +3522,9 @@ void lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, 
 
   ptmpl=in_ptmpls[pnum];
 
-  nvals=weed_leaf_num_elements(ptmpl,"maximum");
-  msg=lives_osc_format_result(ptmpl,"maximum",0,nvals);
+  nvals=weed_leaf_num_elements(ptmpl,"max");
+
+  msg=lives_osc_format_result(ptmpl,"max",0,nvals);
 
   lives_status_send(msg);
   g_free(msg);
@@ -3737,11 +3739,11 @@ void lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *vargs,
   hint=weed_get_int_value(ptmpl,"hint",&error);
 
   if (hint==WEED_HINT_INTEGER) {
-    vali=weed_get_int_value(ptmpl,"minimum",&error);
+    vali=weed_get_int_value(ptmpl,"min",&error);
     msg=g_strdup_printf("%d",vali);
   }
   else {
-    vald=weed_get_double_value(ptmpl,"minimum",&error);
+    vald=weed_get_double_value(ptmpl,"min",&error);
     msg=g_strdup_printf("%f",vald);
   }
   lives_status_send(msg);
@@ -3791,11 +3793,11 @@ void lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *vargs,
   hint=weed_get_int_value(ptmpl,"hint",&error);
 
   if (hint==WEED_HINT_INTEGER) {
-    vali=weed_get_int_value(ptmpl,"maximum",&error);
+    vali=weed_get_int_value(ptmpl,"max",&error);
     msg=g_strdup_printf("%d",vali);
   }
   else {
-    vald=weed_get_double_value(ptmpl,"maximum",&error);
+    vald=weed_get_double_value(ptmpl,"max",&error);
     msg=g_strdup_printf("%f",vald);
   }
   lives_status_send(msg);

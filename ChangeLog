@@ -8,11 +8,11 @@ Add OMC commands: /effect/realtime/name/get, /effect_key/inchannels/active/get,
 	/effect_key/parameter/name/get, /effect_key/parameter/count,
 
 	/effect_key/parameter/min/get, /effect_key/parameter/max/get, /effect_key/parameter/default/get, 
-	/effect_key/parameter/flags/get, /effect_key/parameter/value/count, -/effect_key/parameter/value/set-
+	/effect_key/parameter/flags/get, /effect_key/parameter/value/count, /effect_key/parameter/value/set
 	/effect_key/parameter/is_transition/get
 	LIVES_TRUE, LIVES_FALSE
 
-
+	- which require active effect ?
 
 
 

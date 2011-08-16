@@ -60,7 +60,7 @@ typedef void (*f0r_update_f)(f0r_instance_t instance, double time, const uint32_
 typedef void (*f0r_update2_f)(f0r_instance_t instance, double time, const uint32_t *inframe1, const uint32_t *inframe2, const uint32_t *inframe3, uint32_t *outframe);
 typedef void (*f0r_set_param_value_f)(f0r_instance_t *instance, f0r_param_t *param, int param_index);
 
-#if FREI0R_MAJOR_VERSION > 1 || FREI0R_MINOR_VERSION > 1
+#if FREI0R_MAJOR_VERSION >1 || FREI0R_MINOR_VERSION > 1
 #define CAN_GET_DEF
 typedef void (*f0r_get_param_value_f)(f0r_instance_t *instance, f0r_param_t *param, int param_index);
 #endif
@@ -246,7 +246,7 @@ int frei0r_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info;
-  if (FREI0R_MAJOR_VERSION!=1||FREI0R_MINOR_VERSION!=1) return NULL;
+  if (FREI0R_MAJOR_VERSION<1||FREI0R_MINOR_VERSION<1) return NULL;
 
   plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
@@ -406,6 +406,10 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 	  if (!strncmp(dirent->d_name,"..",strlen(dirent->d_name))) continue;
 	  
+	  // broken plugins
+	  if (!strcmp(dirent->d_name,"curves.so")) continue;
+	  if (!strcmp(dirent->d_name,"scanline0r.so")) continue;
+
 	  snprintf(plugin_name,MAX_PATH,"%s",dirent->d_name);
 
 	  snprintf(plug1,MAX_PATH,"%s/%s",dir1,plugin_name);

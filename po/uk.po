@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-10 22:03-0300\n"
+"POT-Creation-Date: 2011-08-15 23:00-0300\n"
 "PO-Revision-Date: 2011-06-06 16:02+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -872,7 +872,7 @@ msgstr "Вико_ристовувати звуковий програвач Sox"
 msgid "Use _mplayer audio player"
 msgstr "В_икористовувати звуковий програвач mplayer"
 
-#: src/startup.c:403 src/startup.c:592 src/interface.c:1892
+#: src/startup.c:403 src/startup.c:592 src/interface.c:1915
 msgid "_Next"
 msgstr "_Далі"
 
@@ -1149,7 +1149,7 @@ msgstr "Розмір у байтах"
 msgid "Total time"
 msgstr "Загальний час"
 
-#: src/interface.c:620 src/interface.c:2412
+#: src/interface.c:620 src/interface.c:2435
 msgid "FPS"
 msgstr "кадрів/с"
 
@@ -1363,204 +1363,204 @@ msgstr "Нова назва "
 msgid "Set name "
 msgstr "Встановити назву "
 
-#: src/interface.c:1942
+#: src/interface.c:1965
 msgid "Use def_aults"
 msgstr "Використовувати т_ипові"
 
-#: src/interface.c:1945 src/interface.c:2301 src/preferences.c:2916
+#: src/interface.c:1968 src/interface.c:2324 src/preferences.c:2916
 msgid "_Advanced"
 msgstr "Д_одатково"
 
-#: src/interface.c:2001
+#: src/interface.c:2024
 msgid "LiVES:- Select input device"
 msgstr "LiVES: Вибір пристрою вхідних даних"
 
-#: src/interface.c:2028
+#: src/interface.c:2051
 msgid "Select input device:"
 msgstr "Виберіть пристрій вхідних даних:"
 
-#: src/interface.c:2126
+#: src/interface.c:2149
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- Завантаження композиції з КД"
 
-#: src/interface.c:2129
+#: src/interface.c:2152
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LiVES:- Вибір частини або глави DVD"
 
-#: src/interface.c:2132
+#: src/interface.c:2155
 msgid "LiVES:- Select VCD Title"
 msgstr "LiVES:- Вибір заголовка VCD"
 
-#: src/interface.c:2135
+#: src/interface.c:2158
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- Зміна максимальної кількості видимих доріжок"
 
-#: src/interface.c:2138
+#: src/interface.c:2161
 msgid "LiVES:- Device details"
 msgstr "LiVES:- Параметри пристроїв"
 
-#: src/interface.c:2169
+#: src/interface.c:2192
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "Доріжка, яку слід завантажити (з %s)"
 
-#: src/interface.c:2172
+#: src/interface.c:2195
 msgid "DVD Title"
 msgstr "Частина DVD"
 
-#: src/interface.c:2175
+#: src/interface.c:2198
 msgid "VCD Title"
 msgstr "Частина VCD"
 
-#: src/interface.c:2178
+#: src/interface.c:2201
 msgid "Maximum number of tracks to display"
 msgstr "Максимальна кількість доріжок для показу"
 
-#: src/interface.c:2181
+#: src/interface.c:2204
 msgid "Device:        /dev/video"
 msgstr "Пристрій:        /dev/video"
 
-#: src/interface.c:2184
+#: src/interface.c:2207
 msgid "Device:        fw:"
 msgstr "Пристрій:        fw:"
 
-#: src/interface.c:2224
+#: src/interface.c:2247
 msgid "Chapter  "
 msgstr "Частина  "
 
-#: src/interface.c:2225
+#: src/interface.c:2248
 msgid "Channel  "
 msgstr "Канал  "
 
-#: src/interface.c:2249
+#: src/interface.c:2272
 msgid "Audio ID  "
 msgstr "Ідент. звуку  "
 
-#: src/interface.c:2317
+#: src/interface.c:2340
 msgid "Input number"
 msgstr "Кількість входів"
 
-#: src/interface.c:2342
+#: src/interface.c:2365
 msgid "Use default width, height and FPS"
 msgstr "Використовувати типову ширину, висоту і частоту кадрів"
 
-#: src/interface.c:2382
+#: src/interface.c:2405
 msgid "Width"
 msgstr "Ширина"
 
-#: src/interface.c:2397
+#: src/interface.c:2420
 msgid "Height"
 msgstr "Висота"
 
-#: src/interface.c:2434
+#: src/interface.c:2457
 msgid "Driver"
 msgstr "Драйвер"
 
-#: src/interface.c:2453 src/preferences.c:3428
+#: src/interface.c:2476 src/preferences.c:3428
 msgid "Output format"
 msgstr "Формат виводу"
 
-#: src/interface.c:2590
+#: src/interface.c:2613
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- Поступове наростання гучності"
 
-#: src/interface.c:2593
+#: src/interface.c:2616
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- Поступове зменшення гучності"
 
-#: src/interface.c:2619
+#: src/interface.c:2642
 msgid "Fade in over  "
 msgstr "Наростання завершується після  "
 
-#: src/interface.c:2620
+#: src/interface.c:2643
 msgid "first"
 msgstr "перших"
 
-#: src/interface.c:2623
+#: src/interface.c:2646
 msgid "Fade out over  "
 msgstr "Зменшення завершується після  "
 
-#: src/interface.c:2624
+#: src/interface.c:2647
 msgid "last"
 msgstr "останній"
 
-#: src/interface.c:2661
+#: src/interface.c:2684
 msgid "seconds."
 msgstr "секунд."
 
-#: src/interface.c:2686
+#: src/interface.c:2709
 msgid "selection."
 msgstr "позначеного."
 
-#: src/interface.c:2752
+#: src/interface.c:2775
 msgid "LiVES: - Play Random Music"
 msgstr "LiVES: - Відтворення випадкових композицій"
 
-#: src/interface.c:2780
+#: src/interface.c:2803
 msgid "Number of Tracks Requested:    "
 msgstr "Бажана кількість доріжок:    "
 
-#: src/interface.c:2803
+#: src/interface.c:2826
 msgid "Directory:"
 msgstr "Каталог:"
 
-#: src/interface.c:2829
+#: src/interface.c:2852
 msgid "Include subdirectories"
 msgstr "Включити підкаталоги"
 
-#: src/interface.c:2857
+#: src/interface.c:2880
 msgid "Minimum File Size (MB)         "
 msgstr "Мінімальний розмір файлів (у МБ)         "
 
-#: src/interface.c:2877
+#: src/interface.c:2900
 msgid "Maximum File Size (MB)        "
 msgstr "Максимальний розмір файлів (у МБ)        "
 
-#: src/interface.c:2940
+#: src/interface.c:2963
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - Коментарі до файла (необов’язкові)"
 
-#: src/interface.c:2960
+#: src/interface.c:2983
 msgid "Title/Name : "
 msgstr "Заголовок/Назва: "
 
-#: src/interface.c:2971
+#: src/interface.c:2994
 msgid "Author/Artist : "
 msgstr "Автор/Виконавець: "
 
-#: src/interface.c:2982
+#: src/interface.c:3005
 msgid "Comments : "
 msgstr "Коментарі: "
 
-#: src/interface.c:3018
+#: src/interface.c:3041
 msgid "_Options"
 msgstr "П_араметри"
 
-#: src/interface.c:3038
+#: src/interface.c:3061
 msgid "Save subtitles to file"
 msgstr "Зберегти субтитри до файла"
 
-#: src/interface.c:3068
+#: src/interface.c:3091
 msgid "Subtitle file"
 msgstr "Файл субтитрів"
 
-#: src/interface.c:3074
+#: src/interface.c:3097
 msgid "Browse..."
 msgstr "Вибрати..."
 
-#: src/interface.c:3151
+#: src/interface.c:3174
 msgid "LiVES: choose a directory"
 msgstr "LiVES: вибір каталогу"
 
-#: src/interface.c:3154
+#: src/interface.c:3177
 msgid "LiVES: choose a file"
 msgstr "LiVES: вибір файла"
 
-#: src/interface.c:3249
+#: src/interface.c:3272
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES: - Скасування/Відкидання/Збереження"
 
-#: src/interface.c:3269
+#: src/interface.c:3292
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1570,7 +1570,7 @@ msgstr ""
 "Поточне компонування не було збережено.\n"
 "Що слід робити програмі?\n"
 
-#: src/interface.c:3272
+#: src/interface.c:3295
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1580,7 +1580,7 @@ msgstr ""
 "Поточне компонування було змінено з часу останнього збереження.\n"
 "Що слід робити програмі?\n"
 
-#: src/interface.c:3276
+#: src/interface.c:3299
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1590,7 +1590,7 @@ msgstr ""
 "Можна зберегти поточний набір кліпів.\n"
 "Що слід робити програмі?\n"
 
-#: src/interface.c:3277
+#: src/interface.c:3300
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1598,7 +1598,7 @@ msgstr ""
 "Поточний набір кліпів не було збережено.\n"
 "Що слід робити програмі?\n"
 
-#: src/interface.c:3281
+#: src/interface.c:3304
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1606,7 +1606,7 @@ msgstr ""
 "Поточне компонування не було збережено.\n"
 "Що слід робити програмі?\n"
 
-#: src/interface.c:3284
+#: src/interface.c:3307
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
 "What would you like to do ?\n"
@@ -1614,7 +1614,7 @@ msgstr ""
 "Поточне компонування не було збережено з часу попереднього зберігання.\n"
 "Що слід робити програмі?\n"
 
-#: src/interface.c:3289
+#: src/interface.c:3312
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
@@ -1623,7 +1623,7 @@ msgstr ""
 "Ймовірно, вам варто виконати обробку перед виходом з режиму роботи з "
 "декількома доріжками.\n"
 
-#: src/interface.c:3292
+#: src/interface.c:3315
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
@@ -1633,43 +1633,43 @@ msgstr ""
 "Поточне компонування містить створені кадри, отже його неможливо зберегти.\n"
 "Що слід робити програмі?"
 
-#: src/interface.c:3315
+#: src/interface.c:3338
 msgid "Clip set _name"
 msgstr "_Назва набору кліпів"
 
-#: src/interface.c:3327
+#: src/interface.c:3350
 msgid "_Auto reload next time"
 msgstr "_Автоматично перезавантажити наступного разу"
 
-#: src/interface.c:3383 src/interface.c:3394
+#: src/interface.c:3406 src/interface.c:3417
 msgid "_Wipe layout"
 msgstr "Ви_терти компонування"
 
-#: src/interface.c:3384
+#: src/interface.c:3407
 msgid "_Ignore changes"
 msgstr "_Ігнорувати зміни"
 
-#: src/interface.c:3385
+#: src/interface.c:3408
 msgid "_Delete clip set"
 msgstr "Ви_лучити набір кліпів"
 
-#: src/interface.c:3386
+#: src/interface.c:3409
 msgid "_Delete layout"
 msgstr "Ви_лучити компонування"
 
-#: src/interface.c:3392
+#: src/interface.c:3415
 msgid "_Save layout"
 msgstr "_Зберегти компонування"
 
-#: src/interface.c:3393
+#: src/interface.c:3416
 msgid "_Save clip set"
 msgstr "_Зберегти набір кліпів"
 
-#: src/interface.c:3413
+#: src/interface.c:3436
 msgid "LiVES: recover layout ?"
 msgstr "LiVES: відновити компонування?"
 
-#: src/interface.c:3428
+#: src/interface.c:3451
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
@@ -5414,17 +5414,17 @@ msgstr "Регулятори гучності"
 msgid "unknown"
 msgstr "невідомий"
 
-#: src/effects-weed.c:2865
+#: src/effects-weed.c:2899
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Помилка: у додатку %s не визначено функції weed_setup().\n"
 
-#: src/effects-weed.c:2879
+#: src/effects-weed.c:2913
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr "У додатку %s не знайдено придатних до використання фільтрів\n"
 
-#: src/effects-weed.c:2956
+#: src/effects-weed.c:2990
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5433,27 +5433,27 @@ msgstr ""
 "Інформація: не вдалося завантажити додаток %s\n"
 "Повідомлення про помилку: %s\n"
 
-#: src/effects-weed.c:3110
+#: src/effects-weed.c:3144
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Успішно завантажено %d фільтрів Weed\n"
 
-#: src/effects-weed.c:3831
+#: src/effects-weed.c:3865
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Не вдалося запустити екземпляр %s, код помилки: %d\n"
 
-#: src/effects-weed.c:3869
+#: src/effects-weed.c:3903
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Не вдалося запустити породжувач %s\n"
 
-#: src/effects-weed.c:4384
+#: src/effects-weed.c:4418
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Не вдалося запустити породжувач %s\n"
 
-#: src/effects-weed.c:4441
+#: src/effects-weed.c:4475
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Не вдалося запустити породжувач %s, помилка: %d\n"
@@ -7629,26 +7629,26 @@ msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 "Параметри Jack набудуть чинності лише під час наступного запуску LiVES."
 
-#: src/osc.c:2150
+#: src/osc.c:2252
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "Синхронізація зовнішньої частоти кадрів у %.8f кадрів на секунду.\n"
 
-#: src/osc.c:3840
+#: src/osc.c:4547
 msgid "Cannot initialize OSC receiver\n"
 msgstr "Не вдалося ініціалізувати отримувач даних OSC\n"
 
-#: src/osc.c:3864
+#: src/osc.c:4571
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "ПОПЕРЕДЖЕННЯ: Не вдалося запустити сервер OSC на порту UDP %d\n"
 
-#: src/osc.c:3869
+#: src/osc.c:4576
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "Запущено сервер OSC на порту UDP %d\n"
 
-#: src/osc.c:3983
+#: src/osc.c:4690
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Не вдалося запустити сервер OSC/UDP на порту %d \n"

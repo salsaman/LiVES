@@ -691,12 +691,13 @@ be altered by the host.
       channel_template is 0, otherwise it is 1.
 
       If "max_repeats" is present, the number of repeats may be changed
-      [reduced] after init() and between processing calls without the need to re-initialise the
+      [reduced] by the host after init() and between processing calls without the need to re-initialise the
       plugin. In all other cases, a change in the number of channels requires
       the plugin to be re-initialised. 
       The number of channels may only be altered [reduced] by setting
       "disabled" to WEED_TRUE for one or more channels created from
-      this template. This is allowed even if the template is not marked "optional".
+      this template. This is allowed even if the template is not marked "optional" - though in the latter case the number 
+      of non-disabled repeats must always be at least 1.
 
  * Every filter can have its internal data stored in leaves
  inside this plant, and host MUST NOT change their values or make them

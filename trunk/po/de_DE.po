@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-10 22:03-0300\n"
+"POT-Creation-Date: 2011-08-15 23:00-0300\n"
 "PO-Revision-Date: 2011-06-03 07:11+0000\n"
 "Last-Translator: Dominik Dehning <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -837,7 +837,7 @@ msgstr "Benutze _SoX Audioplayer"
 msgid "Use _mplayer audio player"
 msgstr "Benutze _MPlayer Audioplayer"
 
-#: src/startup.c:403 src/startup.c:592 src/interface.c:1892
+#: src/startup.c:403 src/startup.c:592 src/interface.c:1915
 msgid "_Next"
 msgstr "_Nächste"
 
@@ -1097,7 +1097,7 @@ msgstr "Bytegröße"
 msgid "Total time"
 msgstr "Gesamtzeit"
 
-#: src/interface.c:620 src/interface.c:2412
+#: src/interface.c:620 src/interface.c:2435
 msgid "FPS"
 msgstr "BPS (Bilder pro Sekunde)"
 
@@ -1314,204 +1314,204 @@ msgstr "Neuer Name "
 msgid "Set name "
 msgstr "Name für das Set "
 
-#: src/interface.c:1942
+#: src/interface.c:1965
 msgid "Use def_aults"
 msgstr ""
 
-#: src/interface.c:1945 src/interface.c:2301 src/preferences.c:2916
+#: src/interface.c:1968 src/interface.c:2324 src/preferences.c:2916
 msgid "_Advanced"
 msgstr "_Erweitert"
 
-#: src/interface.c:2001
+#: src/interface.c:2024
 msgid "LiVES:- Select input device"
 msgstr ""
 
-#: src/interface.c:2028
+#: src/interface.c:2051
 msgid "Select input device:"
 msgstr ""
 
-#: src/interface.c:2126
+#: src/interface.c:2149
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES: - Lade CD Titel"
 
-#: src/interface.c:2129
+#: src/interface.c:2152
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LiVES: - Auswahl des DVD Titels/Kapitels"
 
-#: src/interface.c:2132
+#: src/interface.c:2155
 msgid "LiVES:- Select VCD Title"
 msgstr "LiVES: - Auswahl des VCD Titels"
 
-#: src/interface.c:2135
+#: src/interface.c:2158
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- Maximale Anzahl der angezeigten Tracks ändern"
 
-#: src/interface.c:2138
+#: src/interface.c:2161
 msgid "LiVES:- Device details"
 msgstr ""
 
-#: src/interface.c:2169
+#: src/interface.c:2192
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "Zu ladende Spur (von %s)"
 
-#: src/interface.c:2172
+#: src/interface.c:2195
 msgid "DVD Title"
 msgstr "DVD Titel"
 
-#: src/interface.c:2175
+#: src/interface.c:2198
 msgid "VCD Title"
 msgstr "VCD Titel"
 
-#: src/interface.c:2178
+#: src/interface.c:2201
 msgid "Maximum number of tracks to display"
 msgstr "Maximale Anzahl der angezeigten Tracks"
 
-#: src/interface.c:2181
+#: src/interface.c:2204
 msgid "Device:        /dev/video"
 msgstr ""
 
-#: src/interface.c:2184
+#: src/interface.c:2207
 msgid "Device:        fw:"
 msgstr ""
 
-#: src/interface.c:2224
+#: src/interface.c:2247
 msgid "Chapter  "
 msgstr "Kapitel  "
 
-#: src/interface.c:2225
+#: src/interface.c:2248
 msgid "Channel  "
 msgstr ""
 
-#: src/interface.c:2249
+#: src/interface.c:2272
 msgid "Audio ID  "
 msgstr "Audio ID  "
 
-#: src/interface.c:2317
+#: src/interface.c:2340
 msgid "Input number"
 msgstr ""
 
-#: src/interface.c:2342
+#: src/interface.c:2365
 msgid "Use default width, height and FPS"
 msgstr ""
 
-#: src/interface.c:2382
+#: src/interface.c:2405
 msgid "Width"
 msgstr ""
 
-#: src/interface.c:2397
+#: src/interface.c:2420
 msgid "Height"
 msgstr ""
 
-#: src/interface.c:2434
+#: src/interface.c:2457
 msgid "Driver"
 msgstr ""
 
-#: src/interface.c:2453 src/preferences.c:3428
+#: src/interface.c:2476 src/preferences.c:3428
 msgid "Output format"
 msgstr "Ausgabeformat"
 
-#: src/interface.c:2590
+#: src/interface.c:2613
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- Audio einblenden"
 
-#: src/interface.c:2593
+#: src/interface.c:2616
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- Audio ausblenden"
 
-#: src/interface.c:2619
+#: src/interface.c:2642
 msgid "Fade in over  "
 msgstr "Eiblenden über  "
 
-#: src/interface.c:2620
+#: src/interface.c:2643
 msgid "first"
 msgstr "Erste(r)"
 
-#: src/interface.c:2623
+#: src/interface.c:2646
 msgid "Fade out over  "
 msgstr "Ausblenden über  "
 
-#: src/interface.c:2624
+#: src/interface.c:2647
 msgid "last"
 msgstr "letzter"
 
-#: src/interface.c:2661
+#: src/interface.c:2684
 msgid "seconds."
 msgstr "Sekunden."
 
-#: src/interface.c:2686
+#: src/interface.c:2709
 msgid "selection."
 msgstr "Auswahl."
 
-#: src/interface.c:2752
+#: src/interface.c:2775
 msgid "LiVES: - Play Random Music"
 msgstr "LiVES: - Musik im Zufallmodus abspielen"
 
-#: src/interface.c:2780
+#: src/interface.c:2803
 msgid "Number of Tracks Requested:    "
 msgstr "Anzahl der angeforderten Titel:    "
 
-#: src/interface.c:2803
+#: src/interface.c:2826
 msgid "Directory:"
 msgstr "Verzeichnis:"
 
-#: src/interface.c:2829
+#: src/interface.c:2852
 msgid "Include subdirectories"
 msgstr "Unterverzeichisse miteinbeziehen"
 
-#: src/interface.c:2857
+#: src/interface.c:2880
 msgid "Minimum File Size (MB)         "
 msgstr "Minimale Dateigröße (MB)         "
 
-#: src/interface.c:2877
+#: src/interface.c:2900
 msgid "Maximum File Size (MB)        "
 msgstr "Maximale Dateigröße (MB)        "
 
-#: src/interface.c:2940
+#: src/interface.c:2963
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - Dateikommentar (optional)"
 
-#: src/interface.c:2960
+#: src/interface.c:2983
 msgid "Title/Name : "
 msgstr "Titel/Name: "
 
-#: src/interface.c:2971
+#: src/interface.c:2994
 msgid "Author/Artist : "
 msgstr "Autor/Künstler: "
 
-#: src/interface.c:2982
+#: src/interface.c:3005
 msgid "Comments : "
 msgstr "Anmerkungen: "
 
-#: src/interface.c:3018
+#: src/interface.c:3041
 msgid "_Options"
 msgstr ""
 
-#: src/interface.c:3038
+#: src/interface.c:3061
 msgid "Save subtitles to file"
 msgstr "Untertitel in Datei speichern"
 
-#: src/interface.c:3068
+#: src/interface.c:3091
 msgid "Subtitle file"
 msgstr ""
 
-#: src/interface.c:3074
+#: src/interface.c:3097
 msgid "Browse..."
 msgstr ""
 
-#: src/interface.c:3151
+#: src/interface.c:3174
 msgid "LiVES: choose a directory"
 msgstr "LiVES: Wählen sie ein Verzeichniss"
 
-#: src/interface.c:3154
+#: src/interface.c:3177
 msgid "LiVES: choose a file"
 msgstr "LiVES: Wählen sie eine Datei"
 
-#: src/interface.c:3249
+#: src/interface.c:3272
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES:- Abrechen/Verwerfen/Speichern"
 
-#: src/interface.c:3269
+#: src/interface.c:3292
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1521,7 +1521,7 @@ msgstr ""
 "Das aktuelle Layout wurde nicht gespeichert.\n"
 "Was möchten sie tun?\n"
 
-#: src/interface.c:3272
+#: src/interface.c:3295
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1531,7 +1531,7 @@ msgstr ""
 "Das aktuelle Layout wurde nach der letzten Änderung nicht gespeichert.\n"
 "Was möchten sie tun?\n"
 
-#: src/interface.c:3276
+#: src/interface.c:3299
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1541,7 +1541,7 @@ msgstr ""
 "Der aktuelle Clip kann gespeichert werden.\n"
 "Was möchten sie tun?\n"
 
-#: src/interface.c:3277
+#: src/interface.c:3300
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1549,7 +1549,7 @@ msgstr ""
 "Der aktuelle Clip wurde nicht gespeichert.\n"
 "Was möchten sie tun?\n"
 
-#: src/interface.c:3281
+#: src/interface.c:3304
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1557,7 +1557,7 @@ msgstr ""
 "Das aktuelle Layout wurde nicht gespeichert.\n"
 "Was möchten sie tun?\n"
 
-#: src/interface.c:3284
+#: src/interface.c:3307
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
 "What would you like to do ?\n"
@@ -1566,7 +1566,7 @@ msgstr ""
 "wurde.\n"
 "Was möchten Sie tun ?\n"
 
-#: src/interface.c:3289
+#: src/interface.c:3312
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
@@ -1575,7 +1575,7 @@ msgstr ""
 "werden.\n"
 "Sie sollten es rendern, bevor Sie den Mehrspur-Modus verlassen.\n"
 
-#: src/interface.c:3292
+#: src/interface.c:3315
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
@@ -1586,43 +1586,43 @@ msgstr ""
 "werden.\n"
 "Was möchten Sie tun?"
 
-#: src/interface.c:3315
+#: src/interface.c:3338
 msgid "Clip set _name"
 msgstr "Clip set _name"
 
-#: src/interface.c:3327
+#: src/interface.c:3350
 msgid "_Auto reload next time"
 msgstr "Beim nächsten mal _automatisch neu laden"
 
-#: src/interface.c:3383 src/interface.c:3394
+#: src/interface.c:3406 src/interface.c:3417
 msgid "_Wipe layout"
 msgstr "Layout _verwerfen"
 
-#: src/interface.c:3384
+#: src/interface.c:3407
 msgid "_Ignore changes"
 msgstr "Änderungen _ignorieren"
 
-#: src/interface.c:3385
+#: src/interface.c:3408
 msgid "_Delete clip set"
 msgstr "Clip Set _löschen"
 
-#: src/interface.c:3386
+#: src/interface.c:3409
 msgid "_Delete layout"
 msgstr "Layout _löschen"
 
-#: src/interface.c:3392
+#: src/interface.c:3415
 msgid "_Save layout"
 msgstr "Layout _speichern"
 
-#: src/interface.c:3393
+#: src/interface.c:3416
 msgid "_Save clip set"
 msgstr "Clip Set _speichern"
 
-#: src/interface.c:3413
+#: src/interface.c:3436
 msgid "LiVES: recover layout ?"
 msgstr "LiVES: Layout wiederherstellen?"
 
-#: src/interface.c:3428
+#: src/interface.c:3451
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
@@ -4960,44 +4960,44 @@ msgstr ""
 msgid "unknown"
 msgstr "unbekannt"
 
-#: src/effects-weed.c:2865
+#: src/effects-weed.c:2899
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:2879
+#: src/effects-weed.c:2913
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:2956
+#: src/effects-weed.c:2990
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3110
+#: src/effects-weed.c:3144
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:3831
+#: src/effects-weed.c:3865
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:3869
+#: src/effects-weed.c:3903
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4384
+#: src/effects-weed.c:4418
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4441
+#: src/effects-weed.c:4475
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
@@ -6918,28 +6918,28 @@ msgstr ""
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 
-#: src/osc.c:2150
+#: src/osc.c:2252
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 "Synchronisiere gemäß der externen Bildgeschwindigkeit von %.8f Bildern pro "
 "Sekunde.\n"
 
-#: src/osc.c:3840
+#: src/osc.c:4547
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:3864
+#: src/osc.c:4571
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:3869
+#: src/osc.c:4576
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:3983
+#: src/osc.c:4690
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Kann OSC/UDP Server auf Kanal %d nicht starten \n"

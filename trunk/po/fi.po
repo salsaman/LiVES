@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-10 22:03-0300\n"
+"POT-Creation-Date: 2011-08-15 23:00-0300\n"
 "PO-Revision-Date: 2010-08-25 20:43+0000\n"
 "Last-Translator: Jussi Aalto <jta_l10n@dnainternet.net>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -810,7 +810,7 @@ msgstr "Käytä _sox-äänisoitinta"
 msgid "Use _mplayer audio player"
 msgstr "Käytä _mplayer-äänisoitinta"
 
-#: src/startup.c:403 src/startup.c:592 src/interface.c:1892
+#: src/startup.c:403 src/startup.c:592 src/interface.c:1915
 msgid "_Next"
 msgstr "_Seuraava"
 
@@ -1063,7 +1063,7 @@ msgstr "Tavukoko"
 msgid "Total time"
 msgstr "Kokonaisaika"
 
-#: src/interface.c:620 src/interface.c:2412
+#: src/interface.c:620 src/interface.c:2435
 msgid "FPS"
 msgstr "FPS"
 
@@ -1251,205 +1251,205 @@ msgstr "Uusi nimi "
 msgid "Set name "
 msgstr "Leikesarjan nimi "
 
-#: src/interface.c:1942
+#: src/interface.c:1965
 msgid "Use def_aults"
 msgstr ""
 
-#: src/interface.c:1945 src/interface.c:2301 src/preferences.c:2916
+#: src/interface.c:1968 src/interface.c:2324 src/preferences.c:2916
 msgid "_Advanced"
 msgstr "L_isäasetukset"
 
-#: src/interface.c:2001
+#: src/interface.c:2024
 #, fuzzy
 msgid "LiVES:- Select input device"
 msgstr "LiVES: Valitse tiedosto"
 
-#: src/interface.c:2028
+#: src/interface.c:2051
 msgid "Select input device:"
 msgstr ""
 
-#: src/interface.c:2126
+#: src/interface.c:2149
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- Lataa CD-kappale"
 
-#: src/interface.c:2129
+#: src/interface.c:2152
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr ""
 
-#: src/interface.c:2132
+#: src/interface.c:2155
 msgid "LiVES:- Select VCD Title"
 msgstr ""
 
-#: src/interface.c:2135
+#: src/interface.c:2158
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr ""
 
-#: src/interface.c:2138
+#: src/interface.c:2161
 msgid "LiVES:- Device details"
 msgstr "LiVES:- Laitteen tiedot"
 
-#: src/interface.c:2169
+#: src/interface.c:2192
 #, c-format
 msgid "Track to load (from %s)"
 msgstr ""
 
-#: src/interface.c:2172
+#: src/interface.c:2195
 msgid "DVD Title"
 msgstr ""
 
-#: src/interface.c:2175
+#: src/interface.c:2198
 msgid "VCD Title"
 msgstr ""
 
-#: src/interface.c:2178
+#: src/interface.c:2201
 msgid "Maximum number of tracks to display"
 msgstr ""
 
-#: src/interface.c:2181
+#: src/interface.c:2204
 msgid "Device:        /dev/video"
 msgstr "Laite:        /dev/video"
 
-#: src/interface.c:2184
+#: src/interface.c:2207
 msgid "Device:        fw:"
 msgstr "Laite:        fw:"
 
-#: src/interface.c:2224
+#: src/interface.c:2247
 msgid "Chapter  "
 msgstr ""
 
-#: src/interface.c:2225
+#: src/interface.c:2248
 msgid "Channel  "
 msgstr "Kanava  "
 
-#: src/interface.c:2249
+#: src/interface.c:2272
 msgid "Audio ID  "
 msgstr ""
 
-#: src/interface.c:2317
+#: src/interface.c:2340
 msgid "Input number"
 msgstr ""
 
-#: src/interface.c:2342
+#: src/interface.c:2365
 msgid "Use default width, height and FPS"
 msgstr ""
 
-#: src/interface.c:2382
+#: src/interface.c:2405
 msgid "Width"
 msgstr "Leveys"
 
-#: src/interface.c:2397
+#: src/interface.c:2420
 msgid "Height"
 msgstr "Korkeus"
 
-#: src/interface.c:2434
+#: src/interface.c:2457
 msgid "Driver"
 msgstr ""
 
-#: src/interface.c:2453 src/preferences.c:3428
+#: src/interface.c:2476 src/preferences.c:3428
 msgid "Output format"
 msgstr "Tallennusmuoto"
 
-#: src/interface.c:2590
+#: src/interface.c:2613
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- Häivytys äänen alkuun"
 
-#: src/interface.c:2593
+#: src/interface.c:2616
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- Häivytys äänen loppuun"
 
-#: src/interface.c:2619
+#: src/interface.c:2642
 msgid "Fade in over  "
 msgstr "Häivytä alusta  "
 
-#: src/interface.c:2620
+#: src/interface.c:2643
 msgid "first"
 msgstr "ensimmäiset"
 
-#: src/interface.c:2623
+#: src/interface.c:2646
 msgid "Fade out over  "
 msgstr "Häivytä lopusta  "
 
-#: src/interface.c:2624
+#: src/interface.c:2647
 msgid "last"
 msgstr "viimeiset"
 
-#: src/interface.c:2661
+#: src/interface.c:2684
 msgid "seconds."
 msgstr "sekuntia."
 
-#: src/interface.c:2686
+#: src/interface.c:2709
 msgid "selection."
 msgstr "valinta."
 
-#: src/interface.c:2752
+#: src/interface.c:2775
 msgid "LiVES: - Play Random Music"
 msgstr ""
 
-#: src/interface.c:2780
+#: src/interface.c:2803
 msgid "Number of Tracks Requested:    "
 msgstr ""
 
-#: src/interface.c:2803
+#: src/interface.c:2826
 msgid "Directory:"
 msgstr "Kansio:"
 
-#: src/interface.c:2829
+#: src/interface.c:2852
 msgid "Include subdirectories"
 msgstr "Sisällytä alikansiot"
 
-#: src/interface.c:2857
+#: src/interface.c:2880
 msgid "Minimum File Size (MB)         "
 msgstr "Tiedoston minimikoko (Mt)         "
 
-#: src/interface.c:2877
+#: src/interface.c:2900
 msgid "Maximum File Size (MB)        "
 msgstr "Tiedoston maksimikoko (Mt)        "
 
-#: src/interface.c:2940
+#: src/interface.c:2963
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - Tiedoston kommentit (valinnainen)"
 
-#: src/interface.c:2960
+#: src/interface.c:2983
 msgid "Title/Name : "
 msgstr "Otsikko/Nimi : "
 
-#: src/interface.c:2971
+#: src/interface.c:2994
 msgid "Author/Artist : "
 msgstr "Tekijä/esittäjä : "
 
-#: src/interface.c:2982
+#: src/interface.c:3005
 msgid "Comments : "
 msgstr "Kommentit : "
 
-#: src/interface.c:3018
+#: src/interface.c:3041
 msgid "_Options"
 msgstr ""
 
-#: src/interface.c:3038
+#: src/interface.c:3061
 msgid "Save subtitles to file"
 msgstr "Tallenna tekstitykset tiedostoon"
 
-#: src/interface.c:3068
+#: src/interface.c:3091
 msgid "Subtitle file"
 msgstr "Tekstitystiedosto"
 
-#: src/interface.c:3074
+#: src/interface.c:3097
 msgid "Browse..."
 msgstr ""
 
-#: src/interface.c:3151
+#: src/interface.c:3174
 msgid "LiVES: choose a directory"
 msgstr "LiVES: valitse kansio"
 
-#: src/interface.c:3154
+#: src/interface.c:3177
 msgid "LiVES: choose a file"
 msgstr "LiVES: valitse tiedosto"
 
-#: src/interface.c:3249
+#: src/interface.c:3272
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES: - Peru/Hylkää/Tallenna"
 
-#: src/interface.c:3269
+#: src/interface.c:3292
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1459,7 +1459,7 @@ msgstr ""
 "Nykyistä asettelua ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:3272
+#: src/interface.c:3295
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1469,7 +1469,7 @@ msgstr ""
 "Nykyistä asettelua on muutettu viime tallennuksen jälkeen.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:3276
+#: src/interface.c:3299
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1479,7 +1479,7 @@ msgstr ""
 "Nykyinen leikesarja voidaan tallentaa.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:3277
+#: src/interface.c:3300
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1487,7 +1487,7 @@ msgstr ""
 "Nykyistä leikesarjaa ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:3281
+#: src/interface.c:3304
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1495,62 +1495,62 @@ msgstr ""
 "Nykyistä asettelua ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:3284
+#: src/interface.c:3307
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
 
-#: src/interface.c:3289
+#: src/interface.c:3312
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
 msgstr ""
 
-#: src/interface.c:3292
+#: src/interface.c:3315
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
 "What do you wish to do ?"
 msgstr ""
 
-#: src/interface.c:3315
+#: src/interface.c:3338
 msgid "Clip set _name"
 msgstr "Leikesarjan _nimi"
 
-#: src/interface.c:3327
+#: src/interface.c:3350
 msgid "_Auto reload next time"
 msgstr "Lataa _automaattisesti uudelleen seuraavalla kerralla"
 
-#: src/interface.c:3383 src/interface.c:3394
+#: src/interface.c:3406 src/interface.c:3417
 msgid "_Wipe layout"
 msgstr "_Poista asettelu"
 
-#: src/interface.c:3384
+#: src/interface.c:3407
 msgid "_Ignore changes"
 msgstr "_Hylkää muutokset"
 
-#: src/interface.c:3385
+#: src/interface.c:3408
 msgid "_Delete clip set"
 msgstr "_Poista leikesarja"
 
-#: src/interface.c:3386
+#: src/interface.c:3409
 msgid "_Delete layout"
 msgstr "_Poista asettelu"
 
-#: src/interface.c:3392
+#: src/interface.c:3415
 msgid "_Save layout"
 msgstr "_Tallenna asettelu"
 
-#: src/interface.c:3393
+#: src/interface.c:3416
 msgid "_Save clip set"
 msgstr "_Tallenna leikesarja"
 
-#: src/interface.c:3413
+#: src/interface.c:3436
 msgid "LiVES: recover layout ?"
 msgstr "LiVES: palautetaanko asettelu?"
 
-#: src/interface.c:3428
+#: src/interface.c:3451
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
@@ -4880,17 +4880,17 @@ msgstr ""
 msgid "unknown"
 msgstr "tuntematon"
 
-#: src/effects-weed.c:2865
+#: src/effects-weed.c:2899
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Virhe: %s-liitännäinen ei sisällä weed_setup()-toimintoa.\n"
 
-#: src/effects-weed.c:2879
+#: src/effects-weed.c:2913
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:2956
+#: src/effects-weed.c:2990
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -4899,27 +4899,27 @@ msgstr ""
 "Info: Liitännäistä %s ei voitu ladata\n"
 "Virheilmoitus oli: %s\n"
 
-#: src/effects-weed.c:3110
+#: src/effects-weed.c:3144
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Ladattu onnistuneesti %d Weed-suodatinta\n"
 
-#: src/effects-weed.c:3831
+#: src/effects-weed.c:3865
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:3869
+#: src/effects-weed.c:3903
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4384
+#: src/effects-weed.c:4418
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4441
+#: src/effects-weed.c:4475
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
@@ -6888,26 +6888,26 @@ msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 "Jack-asetukset tulevat voimaan vasta seuraavalla LiVEsin käynnistyskerralla."
 
-#: src/osc.c:2150
+#: src/osc.c:2252
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:3840
+#: src/osc.c:4547
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:3864
+#: src/osc.c:4571
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:3869
+#: src/osc.c:4576
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:3983
+#: src/osc.c:4690
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""

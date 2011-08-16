@@ -3973,6 +3973,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       memset (mainw->set_name,0,1);
       threaded_dialog_spin();
     }
+    g_free(setdir);
     if (!check_for_lock_file(mainw->set_name,0)) {
       memset(mainw->set_name,0,1);
       threaded_dialog_spin();

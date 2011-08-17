@@ -2230,6 +2230,7 @@ _prefsw *create_prefs_dialog (void) {
 
   icon = g_strdup_printf("%s%s/pref_gui.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_gui = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_gui, _("GUI"), LIST_ENTRY_GUI);
@@ -2585,6 +2586,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
   icon = g_strdup_printf("%s%s/pref_multitrack.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_multitrack = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_multitrack, _("Multitrack/Render"), LIST_ENTRY_MULTITRACK);
@@ -2801,6 +2803,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
   icon = g_strdup_printf("%s%s/pref_decoding.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_decoding = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_decoding, _("Decoding"), LIST_ENTRY_DECODING);
@@ -3140,6 +3143,7 @@ _prefsw *create_prefs_dialog (void) {
 
   icon = g_strdup_printf("%s%s/pref_playback.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_playback = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_playback, _("Playback"), LIST_ENTRY_PLAYBACK);
@@ -3371,6 +3375,7 @@ _prefsw *create_prefs_dialog (void) {
 
   icon = g_strdup_printf("%s%s/pref_record.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_recording = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_recording, _("Recording"), LIST_ENTRY_RECORDING);
@@ -3485,6 +3490,7 @@ _prefsw *create_prefs_dialog (void) {
 
   icon = g_strdup_printf("%s%s/pref_encoding.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_encoding = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_encoding, _("Encoding"), LIST_ENTRY_ENCODING);
@@ -3581,6 +3587,7 @@ _prefsw *create_prefs_dialog (void) {
 
   icon = g_strdup_printf("%s%s/pref_effects.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_effects = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_effects, _("Effects"), LIST_ENTRY_EFFECTS);
@@ -3748,6 +3755,7 @@ _prefsw *create_prefs_dialog (void) {
 
    // get from prefs
    gtk_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry),(tmp=g_filename_to_utf8(future_prefs->tmpdir,-1,NULL,NULL,NULL)));
+   g_free(tmp);
    
    dirbutton1 = gtk_button_new ();
    gtk_widget_show (dirbutton1);
@@ -3818,6 +3826,7 @@ _prefsw *create_prefs_dialog (void) {
    
   icon = g_strdup_printf("%s%s/pref_directory.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_directories = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_directories, _("Directories"), LIST_ENTRY_DIRECTORIES);
@@ -4306,6 +4315,7 @@ _prefsw *create_prefs_dialog (void) {
 
   icon = g_strdup_printf("%s%s/pref_warning.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_warnings = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
@@ -4472,6 +4482,7 @@ _prefsw *create_prefs_dialog (void) {
    
   icon = g_strdup_printf("%s%s/pref_misc.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_misc = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
@@ -4520,6 +4531,7 @@ _prefsw *create_prefs_dialog (void) {
    
   icon = g_strdup_printf("%s%s/pref_themes.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_themes = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes"), LIST_ENTRY_THEMES);
@@ -4639,6 +4651,7 @@ _prefsw *create_prefs_dialog (void) {
    
   icon = g_strdup_printf("%s%s/pref_net.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_net = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_net, _("Streaming/Networking"), LIST_ENTRY_NET);
@@ -4919,6 +4932,7 @@ _prefsw *create_prefs_dialog (void) {
 
   icon = g_strdup_printf("%s%s/pref_jack.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_jack = gdk_pixbuf_new_from_file(icon, NULL);
+  g_free(icon);
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_jack, _("Jack Integration"), LIST_ENTRY_JACK);
@@ -5173,6 +5187,7 @@ _prefsw *create_prefs_dialog (void) {
 
    icon = g_strdup_printf("%s%s/pref_midi.png", prefs->prefix_dir, ICON_DIR);
    pixbuf_midi = gdk_pixbuf_new_from_file(icon, NULL);
+   g_free(icon);
 
    /* TRANSLATORS: please keep this string short */
    prefs_add_to_list(prefsw->prefs_list, pixbuf_midi, _("MIDI/Joystick learner"), LIST_ENTRY_MIDI);

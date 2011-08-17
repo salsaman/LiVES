@@ -407,21 +407,34 @@ void update_host_info (weed_plant_t *inst) {
 weed_plant_t *get_enabled_channel (weed_plant_t *inst, gint which, gboolean is_in) {
   // plant is a filter_instance
   // "which" starts at 0
-  int i=0,error;
+  int i=0,error,nchans=3;
   weed_plant_t **channels;
   weed_plant_t *retval;
 
   if (!WEED_PLANT_IS_FILTER_INSTANCE(inst)) return NULL;
 
-  if (is_in) channels=weed_get_plantptr_array(inst,"in_channels",&error);
-  else channels=weed_get_plantptr_array(inst,"out_channels",&error);
-
-  if (channels==NULL) return NULL;
-  while (which>-1) {
-    if (!weed_plant_has_leaf(channels[i],"disabled")||weed_get_boolean_value(channels[i],"disabled",&error)==WEED_FALSE) which--;
-    i++;
+  if (is_in) {
+    if (!weed_plant_has_leaf(inst,"in_channels")) return NULL;
+    channels=weed_get_plantptr_array(inst,"in_channels",&error);
+    nchans=weed_leaf_num_elements(inst,"in_channels");
   }
-  retval=channels[i-1];
+  else {
+    if (!weed_plant_has_leaf(inst,"out_channels")) return NULL;
+    channels=weed_get_plantptr_array(inst,"out_channels",&error);
+    nchans=weed_leaf_num_elements(inst,"out_channels");
+  }
+
+  if (channels==NULL||nchans==0) return NULL;
+
+  while (1) {
+    if (!weed_plant_has_leaf(channels[i],"disabled")||weed_get_boolean_value(channels[i],"disabled",&error)==WEED_FALSE) which--;
+    if (which<0) break;
+    if (++i>=nchans) {
+      weed_free(channels);
+      return NULL;
+    }
+  }
+  retval=channels[i];
   weed_free(channels);
   return retval;
 }
@@ -2302,7 +2315,9 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   for (i=0;layers[i]!=NULL;i++) {
     if ((pdata=weed_get_voidptr_value(layers[i],"pixel_data",&error))!=NULL||(weed_get_int_value(layers[i],"frame",&error)!=0&&(mainw->playing_file>-1||mainw->multitrack==NULL||mainw->multitrack->current_rfx==NULL||(mainw->multitrack->init_event==NULL||tc<get_event_timecode(mainw->multitrack->init_event)||tc>get_event_timecode((weed_plant_t *)weed_get_voidptr_value(mainw->multitrack->init_event,"deinit_event",&error)))))) {
       if (output!=-1) {
-	void **pixel_data=weed_get_voidptr_array(layers[i],"pixel_data",&error);
+	void **pixel_data;
+	if (!weed_plant_has_leaf(layers[i],"pixel_data")) continue;
+	pixel_data=weed_get_voidptr_array(layers[i],"pixel_data",&error);
 	if (pixel_data!=NULL) {
 	  int j;
 	  int numplanes=weed_leaf_num_elements(layers[i],"pixel_data");

@@ -264,6 +264,7 @@ static gboolean pre_init(void) {
   mainw->splash_window=NULL;
 
   mainw->threaded_dialog=FALSE;
+  clear_mainw_msg();
 
   // check the backend is there, get some system details and prefs
   capable=get_capabilities();
@@ -594,6 +595,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->resizing=FALSE;
   mainw->switch_during_pb=FALSE;
   mainw->playing_sel=FALSE;
+  mainw->aframeno=0;
   if (G_BYTE_ORDER==G_LITTLE_ENDIAN) {
     mainw->endian=0;
   }

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-16 23:47-0300\n"
+"POT-Creation-Date: 2011-08-17 21:50-0300\n"
 "PO-Revision-Date: 2010-01-17 09:42+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -7224,21 +7224,21 @@ msgstr "Změny nastavení jack se projeví po restartu LiVES."
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "Synchronizace s externí frekvencí %.8f snímků za sekundu.\n"
 
-#: src/osc.c:4546
+#: src/osc.c:4557
 msgid "Cannot initialize OSC receiver\n"
 msgstr "Nelze inicializovat OSC přijímač\n"
 
-#: src/osc.c:4570
+#: src/osc.c:4581
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "UPOZORNĚNÍ: Nelze spusti OSC server na UDP portu %d\n"
 
-#: src/osc.c:4575
+#: src/osc.c:4586
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "Spuštěn OSC server na UDP portu %d\n"
 
-#: src/osc.c:4689
+#: src/osc.c:4700
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Nelze spustit OSC/UDP server na portu %d \n"

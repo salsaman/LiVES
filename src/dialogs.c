@@ -1904,7 +1904,9 @@ void end_threaded_dialog(void) {
   }
   if (mainw->splash_window==NULL) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-    if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
+    if (mainw->multitrack==NULL) { 
+      if (mainw->is_ready) gtk_widget_queue_draw(mainw->LiVES);
+    }
     else gtk_widget_queue_draw(mainw->multitrack->window);
   }
   else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);

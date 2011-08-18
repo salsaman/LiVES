@@ -150,6 +150,7 @@ int vertigo_deinit(weed_plant_t *inst) {
 
   if (sdata != NULL) {
     weed_free(sdata->buffer);
+    weed_free(sdata);
   }
   return WEED_NO_ERROR;
 }

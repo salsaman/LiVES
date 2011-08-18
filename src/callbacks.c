@@ -4133,15 +4133,14 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
       // lock the set
-      threaded_dialog_spin();
       com=g_strdup_printf("/bin/touch %s/%s/lock.%d",prefs->tmpdir,mainw->set_name,getpid());
       dummyvar=system(com);
       g_free(com);
-      threaded_dialog_spin();
     }
 
     //create a new cfile and fill in the details
     create_cfile();
+    threaded_dialog_spin();
     img_type=cfile->img_type;
 
     // get file details

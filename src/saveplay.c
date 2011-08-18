@@ -4060,12 +4060,12 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       mainw->current_file=new_file;
       threaded_dialog_spin();
       cfile=(file *)(g_malloc(sizeof(file)));
-      threaded_dialog_spin();
       g_snprintf(cfile->handle,256,"%s",buffptr);
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
       //create a new cfile and fill in the details
       create_cfile();
+      threaded_dialog_spin();
 
       if (!is_scrap) {
 	// get file details

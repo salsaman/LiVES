@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-16 23:47-0300\n"
+"POT-Creation-Date: 2011-08-17 21:50-0300\n"
 "PO-Revision-Date: 2010-02-20 19:59+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Galician <gl@li.org>\n"
@@ -6629,21 +6629,21 @@ msgstr ""
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:4546
+#: src/osc.c:4557
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:4570
+#: src/osc.c:4581
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:4575
+#: src/osc.c:4586
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:4689
+#: src/osc.c:4700
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""

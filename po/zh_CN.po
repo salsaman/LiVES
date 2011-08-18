@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-16 23:47-0300\n"
+"POT-Creation-Date: 2011-08-17 21:50-0300\n"
 "PO-Revision-Date: 2011-03-13 04:07+0000\n"
 "Last-Translator: 英华 <wantinghard@gmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -6815,21 +6815,21 @@ msgstr "Jack 选项在您下次启动 LiVES 时才会生效。"
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:4546
+#: src/osc.c:4557
 msgid "Cannot initialize OSC receiver\n"
 msgstr "无法初始化 OSC 接收器\n"
 
-#: src/osc.c:4570
+#: src/osc.c:4581
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "警告：无法在 UDP 端口 %d 上启动 OSC 服务器\n"
 
-#: src/osc.c:4575
+#: src/osc.c:4586
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "已在 UDP 端口 %d 上启动 OSC 服务器\n"
 
-#: src/osc.c:4689
+#: src/osc.c:4700
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "无法在端口 %d 上启动 OSC/UDP 服务器 \n"

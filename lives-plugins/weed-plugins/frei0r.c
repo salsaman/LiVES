@@ -730,7 +730,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		if (in_params!=NULL) weed_free(in_params);
 		if (rfx_strings!=NULL) {
 		  int j;
-		  for (j=0;j<pnum;j++) free(rfx_strings[j]);
+		  for (j=0;j<pnum;j++) weed_free(rfx_strings[j]);
 		  weed_free(rfx_strings);
 		}
 		continue;
@@ -755,7 +755,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    weed_set_string_value(gui,"layout_scheme","RFX");
 	    weed_set_string_value(gui,"rfx_delim","|");
 	    weed_set_string_array(gui,"rfx_strings",f0rinfo.num_params,rfx_strings);
-	    for (wnum=0;wnum<f0rinfo.num_params;wnum++) free(rfx_strings[wnum]);
+	    for (wnum=0;wnum<f0rinfo.num_params;wnum++) weed_free(rfx_strings[wnum]);
 	    weed_free(rfx_strings);
 	    rfx_strings=NULL;
 	  }

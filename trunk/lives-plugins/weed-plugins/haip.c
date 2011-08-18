@@ -94,6 +94,7 @@ int haip_deinit(weed_plant_t *inst) {
   int error;
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
+  weed_free(sdata->wt);
   weed_free(sdata->px);
   weed_free(sdata->py);
   weed_free(sdata);

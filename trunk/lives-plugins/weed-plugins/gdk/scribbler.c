@@ -227,17 +227,19 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     // if not inplace, copy in pixel_data to out pixel_data
     void *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
     void *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
-    int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
-    int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
-    if (irowstride==orowstride&&irowstride==width*3) {
-      weed_memcpy(dst,src,width*3*height);
-    }
-    else {
-      register int i;
-      for (i=0;i<height;i++) {
-	weed_memcpy(dst,src,width*3);
-	dst+=orowstride;
-	src+=irowstride;
+    if (dst!=src) {
+      int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
+      int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
+      if (irowstride==orowstride&&irowstride==width*3) {
+	weed_memcpy(dst,src,width*3*height);
+      }
+      else {
+	register int i;
+	for (i=0;i<height;i++) {
+	  weed_memcpy(dst,src,width*3);
+	  dst+=orowstride;
+	  src+=irowstride;
+	}
       }
     }
   }

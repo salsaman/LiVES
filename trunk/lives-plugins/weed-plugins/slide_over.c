@@ -103,15 +103,22 @@ int sover_process (weed_plant_t *inst, weed_timecode_t timecode) {
     weed_set_int_value(inst,"plugin_direction",dirn);
   }
 
+  // upper is src1, lower is src2
+  // if mvupper, src1 moves, otherwise it stays fixed
+  // if mvlower, src2 moves, otherwise it stays fixed
+  
+  // direction tells which way bound moves
+  // bound is dividing line between src1 and src2
+
   switch (dirn) {
   case 3:
     // top to bottom
-    bound=(float)height*(1.-transval/255.);
-    if (mvupper) src1+=irowstride1*(height-bound);
+    bound=(float)height*(1.-transval/255.); // how much of src1 to show
+    if (mvupper) src1+=irowstride1*(height-bound); // if mvupper, slide a part off the top
     for (j=0;j<bound;j++) {
       weed_memcpy(dst,src1,width*3);
       src1+=irowstride1;
-      if (!mvlower) src2+=irowstride2;
+      if (!mvlower) src2+=irowstride2; // if !mvlower, cover part of src2
       dst+=orowstride;
     }
     for (j=bound;j<height;j++) {
@@ -123,8 +130,8 @@ int sover_process (weed_plant_t *inst, weed_timecode_t timecode) {
   case 4:
     // bottom to top
     bound=(float)height*(transval/255.);
-    if (mvlower) src2+=irowstride2*(height-bound);
-    if (!mvupper) src1+=irowstride1*(height-bound);
+    if (mvlower) src2+=irowstride2*(height-bound); // if mvlower we slide in src2 from the top
+    if (!mvupper) src1+=irowstride1*bound;
     for (j=0;j<bound;j++) {
       weed_memcpy(dst,src2,width*3);
       src2+=irowstride2;
@@ -140,8 +147,8 @@ int sover_process (weed_plant_t *inst, weed_timecode_t timecode) {
     // left to right
     bound=(float)width*(1.-transval/255.);
     for (j=0;j<height;j++) {
-      weed_memcpy(dst+bound*3,src2+bound*3*!mvlower,(width-bound)*3);
       weed_memcpy(dst,src1+(width-bound)*3*mvupper,bound*3);
+      weed_memcpy(dst+bound*3,src2+bound*3*!mvlower,(width-bound)*3);
       src1+=irowstride1;
       src2+=irowstride2;
       dst+=orowstride;

@@ -734,6 +734,8 @@ int puretext_init(weed_plant_t *inst) {
 
   sdata->letter_data=NULL;
 
+  sdata->mode=1;
+
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
   return WEED_NO_ERROR;
@@ -746,6 +748,7 @@ int puretext_deinit(weed_plant_t *inst) {
   sdata_t *sdata=(sdata_t *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
   if (sdata!=NULL) {
+    if (sdata->letter_data!=NULL) letter_data_free(sdata);
     if (sdata->text!=NULL) free(sdata->text);
     free(sdata);
   }
@@ -790,15 +793,14 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   pt_subst_t *xsubst;
 
+  weed_free(in_params); // must weed free because we got an array
+
   if (mode!=sdata->mode) {
     sdata->timer=-1.;
     sdata->mode=mode;
     sdata->alarm_time=0.;
     if (sdata->letter_data!=NULL) letter_data_free(sdata);
   }
-
-  weed_free(in_params); // must weed free because we got an array
-
 
   // set timer data and alarm status
   if (sdata->timer==-1.||tc<sdata->last_tc) {
@@ -819,7 +821,7 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   sdata->count=0;
 
-  if (in_channel!=out_channel&&in_channel!=NULL) {
+  if (dst!=src&&src!=NULL) {
     // if not inplace, copy in pixel_data to out pixel_data
     if (irowstride==orowstride&&irowstride==width*3) {
       weed_memcpy(dst,src,width*3*height);
@@ -963,6 +965,8 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 						  -1, -1);
 	result = pl_pixbuf_to_channel(out_channel, pixbuf_new);
 	g_object_unref(pixbuf_new);
+
+	cairo_destroy(cairo);
       }
 
     }

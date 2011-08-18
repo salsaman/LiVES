@@ -2404,6 +2404,8 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
   gchar values[OSC_STRING_SIZE];
   char *pattern;
   
+  if (nargs<=0) return FALSE; // must set at least one value
+
   if (inst==NULL) return FALSE; // error: effect is not active
 
   if (!weed_plant_has_leaf(inst,"in_parameters")) return FALSE;
@@ -2573,6 +2575,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  g_free(valuess);
 	  return FALSE;
 	}
+
 	x++;
       }
 
@@ -2601,6 +2604,8 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
       if (nargs%3 != 0) return FALSE; //nargs must be a multiple of 3
+
+      g_print("nargs is XXX %d\n",nargs);
 
       if (weed_leaf_seed_type(tparamtmpl,"default")==WEED_SEED_INT) {
 	// RGB, int type
@@ -2642,7 +2647,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 
 	  // get next 3 values
 	  for (i=0;i<4;i++) {
-	    if (pattern[x]=='f') {
+	    if (pattern[x+i]=='f') {
 	      // we wanted int but we got floats
 	      lives_osc_parse_float_argument(vargs,&valuef);
 	      valuesi[x+i]=myround(valuef);
@@ -2653,25 +2658,25 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  }
 
 	  if (nmins<=3) {
-	    if (valuesi[0]<mini_r) valuesi[0]=mini_r;
-	    if (valuesi[1]<mini_g) valuesi[1]=mini_g;
-	    if (valuesi[2]<mini_b) valuesi[2]=mini_b;
+	    if (valuesi[x]<mini_r) valuesi[x]=mini_r;
+	    if (valuesi[x+1]<mini_g) valuesi[x+1]=mini_g;
+	    if (valuesi[x+2]<mini_b) valuesi[x+2]=mini_b;
 	  }
 	  else {
-	    if (valuesi[0]<minis[x+i])   valuesi[0]=minis[x+i];
-	    if (valuesi[1]<minis[x+i+1]) valuesi[1]=minis[x+i+1];
-	    if (valuesi[2]<minis[x+i+2]) valuesi[2]=minis[x+i+2];
+	    if (valuesi[x]<minis[x])   valuesi[x]=minis[x];
+	    if (valuesi[x+1]<minis[x+1]) valuesi[x+1]=minis[x+1];
+	    if (valuesi[x+2]<minis[x+2]) valuesi[x+2]=minis[x+2];
 	  }
 
 	  if (nmaxs<=3) {
-	    if (valuesi[0]>maxi_r) valuesi[0]=maxi_r;
-	    if (valuesi[1]>maxi_g) valuesi[1]=maxi_g;
-	    if (valuesi[2]>maxi_b) valuesi[2]=maxi_b;
+	    if (valuesi[x]>maxi_r) valuesi[x]=maxi_r;
+	    if (valuesi[x+1]>maxi_g) valuesi[x+1]=maxi_g;
+	    if (valuesi[x+2]>maxi_b) valuesi[x+2]=maxi_b;
 	  }
 	  else {
-	    if (valuesi[0]>maxis[x+i])   valuesi[0]=maxis[x+i];
-	    if (valuesi[1]>maxis[x+i+1]) valuesi[1]=maxis[x+i+1];
-	    if (valuesi[2]>maxis[x+i+2]) valuesi[2]=maxis[x+i+2];
+	    if (valuesi[x]>maxis[x+i])   valuesi[x]=maxis[x+i];
+	    if (valuesi[x+1]>maxis[x+1]) valuesi[x+1]=maxis[x+1];
+	    if (valuesi[x+2]>maxis[x+2]) valuesi[x+2]=maxis[x+2];
 	  }
 	  x+=3;
 	}
@@ -2682,6 +2687,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	}
 	
 	weed_set_int_array(tparam,"value",nargs,valuesi);
+	g_free(valuesi);
 	
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
@@ -2690,7 +2696,6 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	
 	if (nmins>3) g_free(minis);
 	if (nmaxs>3) g_free(maxis);
-
       }
       else {
 	// RGB, float type
@@ -2698,6 +2703,8 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
 	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	double *minds=NULL,*maxds=NULL;
+
+	g_print("nargsxx=%d\n",nargs);
 
 	// get min and max values - 3 possibilities: 1 value, 3 values or N values
 
@@ -2732,7 +2739,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 
 	  // get next 3 values
 	  for (i=0;i<4;i++) {
-	    if (pattern[x]=='i') {
+	    if (pattern[x+i]=='i') {
 	      // we wanted float but we got floats
 	      lives_osc_parse_int_argument(vargs,&valuei);
 	      valuesd[x+i]=(double)valuei;
@@ -2744,25 +2751,25 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  }
 
 	  if (nmins<=3) {
-	    if (valuesd[0]<mind_r) valuesd[0]=mind_r;
-	    if (valuesd[1]<mind_g) valuesd[1]=mind_g;
-	    if (valuesd[2]<mind_b) valuesd[2]=mind_b;
+	    if (valuesd[x]<mind_r) valuesd[x]=mind_r;
+	    if (valuesd[x+1]<mind_g) valuesd[x+1]=mind_g;
+	    if (valuesd[x+2]<mind_b) valuesd[x+2]=mind_b;
 	  }
 	  else {
-	    if (valuesd[0]<minds[x+i])   valuesd[0]=minds[x+i];
-	    if (valuesd[1]<minds[x+i+1]) valuesd[1]=minds[x+i+1];
-	    if (valuesd[2]<minds[x+i+2]) valuesd[2]=minds[x+i+2];
+	    if (valuesd[x]<minds[x])   valuesd[x]=minds[x];
+	    if (valuesd[x+1]<minds[x+1]) valuesd[x+1]=minds[x+1];
+	    if (valuesd[x+2]<minds[x+2]) valuesd[x+2]=minds[x+2];
 	  }
 
 	  if (nmaxs<=3) {
-	    if (valuesd[0]>maxd_r) valuesd[0]=maxd_r;
-	    if (valuesd[1]>maxd_g) valuesd[1]=maxd_g;
-	    if (valuesd[2]>maxd_b) valuesd[2]=maxd_b;
+	    if (valuesd[x]>maxd_r) valuesd[x]=maxd_r;
+	    if (valuesd[x+1]>maxd_g) valuesd[x+1]=maxd_g;
+	    if (valuesd[x+2]>maxd_b) valuesd[x+2]=maxd_b;
 	  }
 	  else {
-	    if (valuesd[0]>maxds[x+i])   valuesd[0]=maxds[x+i];
-	    if (valuesd[1]>maxds[x+i+1]) valuesd[1]=maxds[x+i+1];
-	    if (valuesd[2]>maxds[x+i+2]) valuesd[2]=maxds[x+i+2];
+	    if (valuesd[x]>maxds[x])   valuesd[x]=maxds[x];
+	    if (valuesd[x+1]>maxds[x+1]) valuesd[x+1]=maxds[x+1];
+	    if (valuesd[x+2]>maxds[x+2]) valuesd[x+2]=maxds[x+2];
 	  }
 	  x+=3;
 	}
@@ -2771,8 +2778,10 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
 	}
-
+	g_print("ok here\n");
 	weed_set_double_array(tparam,"value",nargs,valuesd);
+	g_free(valuesd);
+	g_print("ok here2\n");
 	
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
@@ -2845,29 +2854,29 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  }
 
 	  if (nmins<=3) {
-	    if (valuesi[0]<mini_r) valuesi[0]=mini_r;
-	    if (valuesi[1]<mini_g) valuesi[1]=mini_g;
-	    if (valuesi[2]<mini_b) valuesi[2]=mini_b;
-	    if (valuesi[3]<mini_a) valuesi[3]=mini_a;
+	    if (valuesi[x]<mini_r) valuesi[x]=mini_r;
+	    if (valuesi[x+1]<mini_g) valuesi[x+1]=mini_g;
+	    if (valuesi[x+2]<mini_b) valuesi[x+2]=mini_b;
+	    if (valuesi[x+3]<mini_a) valuesi[x+3]=mini_a;
 	  }
 	  else {
-	    if (valuesi[0]<minis[x+i])   valuesi[0]=minis[x+i];
-	    if (valuesi[1]<minis[x+i+1]) valuesi[1]=minis[x+i+1];
-	    if (valuesi[2]<minis[x+i+2]) valuesi[2]=minis[x+i+2];
-	    if (valuesi[3]<minis[x+i+3]) valuesi[3]=minis[x+i+3];
+	    if (valuesi[x]<minis[x])   valuesi[x]=minis[x];
+	    if (valuesi[x+1]<minis[x+1]) valuesi[x+1]=minis[x+1];
+	    if (valuesi[x+2]<minis[x+2]) valuesi[x+2]=minis[x+2];
+	    if (valuesi[x+3]<minis[x+3]) valuesi[x+3]=minis[x+3];
 	  }
 
 	  if (nmaxs<=4) {
-	    if (valuesi[0]>maxi_r) valuesi[0]=maxi_r;
-	    if (valuesi[1]>maxi_g) valuesi[1]=maxi_g;
-	    if (valuesi[2]>maxi_b) valuesi[2]=maxi_b;
-	    if (valuesi[3]>maxi_a) valuesi[3]=maxi_a;
+	    if (valuesi[x]>maxi_r) valuesi[x]=maxi_r;
+	    if (valuesi[x+1]>maxi_g) valuesi[x+1]=maxi_g;
+	    if (valuesi[x+2]>maxi_b) valuesi[x+2]=maxi_b;
+	    if (valuesi[x+3]>maxi_a) valuesi[x+3]=maxi_a;
 	  }
 	  else {
-	    if (valuesi[0]>maxis[x+i])   valuesi[0]=maxis[x+i];
-	    if (valuesi[1]>maxis[x+i+1]) valuesi[1]=maxis[x+i+1];
-	    if (valuesi[2]>maxis[x+i+2]) valuesi[2]=maxis[x+i+2];
-	    if (valuesi[3]>maxis[x+i+3]) valuesi[3]=maxis[x+i+3];
+	    if (valuesi[x]>maxis[x])   valuesi[x]=maxis[x];
+	    if (valuesi[x+1]>maxis[x+1]) valuesi[x+1]=maxis[x+1];
+	    if (valuesi[x+2]>maxis[x+2]) valuesi[x+2]=maxis[x+2];
+	    if (valuesi[x+3]>maxis[x+3]) valuesi[x+3]=maxis[x+3];
 	  }
 	  x+=4;
 	}
@@ -2878,7 +2887,8 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	}
 	
 	weed_set_int_array(tparam,"value",nargs,valuesi);
-	
+	g_free(valuesi);
+
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
@@ -2942,29 +2952,29 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  }
 
 	  if (nmins<=4) {
-	    if (valuesd[0]<mind_r) valuesd[0]=mind_r;
-	    if (valuesd[1]<mind_g) valuesd[1]=mind_g;
-	    if (valuesd[2]<mind_b) valuesd[2]=mind_b;
-	    if (valuesd[3]<mind_a) valuesd[3]=mind_a;
+	    if (valuesd[x]<mind_r) valuesd[x]=mind_r;
+	    if (valuesd[x+1]<mind_g) valuesd[x+1]=mind_g;
+	    if (valuesd[x+2]<mind_b) valuesd[x+2]=mind_b;
+	    if (valuesd[x+3]<mind_a) valuesd[x+3]=mind_a;
 	  }
 	  else {
-	    if (valuesd[0]<minds[x+i])   valuesd[0]=minds[x+i];
-	    if (valuesd[1]<minds[x+i+1]) valuesd[1]=minds[x+i+1];
-	    if (valuesd[2]<minds[x+i+2]) valuesd[2]=minds[x+i+2];
-	    if (valuesd[3]<minds[x+i+3]) valuesd[3]=minds[x+i+3];
+	    if (valuesd[x]<minds[x])   valuesd[x]=minds[x];
+	    if (valuesd[x+1]<minds[x+1]) valuesd[x+1]=minds[x+1];
+	    if (valuesd[x+2]<minds[x+2]) valuesd[x+2]=minds[x+2];
+	    if (valuesd[x+3]<minds[x+3]) valuesd[x+3]=minds[x+3];
 	  }
 
 	  if (nmaxs<=4) {
-	    if (valuesd[0]>maxd_r) valuesd[0]=maxd_r;
-	    if (valuesd[1]>maxd_g) valuesd[1]=maxd_g;
-	    if (valuesd[2]>maxd_b) valuesd[2]=maxd_b;
-	    if (valuesd[3]>maxd_a) valuesd[3]=maxd_a;
+	    if (valuesd[x]>maxd_r) valuesd[x]=maxd_r;
+	    if (valuesd[x+1]>maxd_g) valuesd[x+1]=maxd_g;
+	    if (valuesd[x+2]>maxd_b) valuesd[x+2]=maxd_b;
+	    if (valuesd[x+3]>maxd_a) valuesd[x+3]=maxd_a;
 	  }
 	  else {
-	    if (valuesd[0]>maxds[x+i])   valuesd[0]=maxds[x+i];
-	    if (valuesd[1]>maxds[x+i+1]) valuesd[1]=maxds[x+i+1];
-	    if (valuesd[2]>maxds[x+i+2]) valuesd[2]=maxds[x+i+2];
-	    if (valuesd[3]>maxds[x+i+3]) valuesd[3]=maxds[x+i+3];
+	    if (valuesd[x]>maxds[x])   valuesd[x]=maxds[x];
+	    if (valuesd[x+1]>maxds[x+1]) valuesd[x+1]=maxds[x+1];
+	    if (valuesd[x+2]>maxds[x+2]) valuesd[x+2]=maxds[x+2];
+	    if (valuesd[x+3]>maxds[x+3]) valuesd[x+3]=maxds[x+3];
 	  }
 	  x+=4;
 	}
@@ -2975,6 +2985,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	}
 
 	weed_set_double_array(tparam,"value",nargs,valuesd);
+	g_free(valuesd);
 	
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
@@ -3135,16 +3146,19 @@ void lives_osc_cb_rte_getparamcspace(void *context, int arglen, const void *varg
   tparamtmpl=in_ptmpls[pnum];
 
   hint=weed_get_int_value(tparamtmpl,"hint",&error);
-  weed_free(in_ptmpls);
 
-  if (hint!=WEED_HINT_COLOR) lives_status_send("0");
-
+  if (hint!=WEED_HINT_COLOR) {
+    weed_free(in_ptmpls);
+    return lives_osc_notify_failure();
+  }
   cspace=weed_get_int_value(tparamtmpl,"colorspace",&error);
 
   if (cspace==WEED_COLORSPACE_RGB) retval=get_omc_const("LIVES_COLORSPACE_RGB");
   else retval=get_omc_const("LIVES_COLORSPACE_RGBA");
 
   lives_status_send (retval);
+  weed_free(in_ptmpls);
+
 }
 
 
@@ -3173,8 +3187,9 @@ void lives_osc_cb_rte_countparamvals(void *context, int arglen, const void *varg
 
   if (!weed_plant_has_leaf(inst,"in_parameters")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(inst,"in_parameters");
+
   if (pnum>=nparams) return lives_osc_notify_failure();
-  
+
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   
   tparam=in_params[pnum];
@@ -3182,7 +3197,7 @@ void lives_osc_cb_rte_countparamvals(void *context, int arglen, const void *varg
   hint=weed_get_int_value(tparamtmpl,"hint",&error);
   weed_free(in_params);
 
-  nvals=weed_leaf_num_elements(inst,"value");
+  nvals=weed_leaf_num_elements(tparam,"value");
 
   if (hint==WEED_HINT_COLOR) {
     cspace=weed_get_int_value(tparamtmpl,"colorspace",&error);
@@ -3317,7 +3332,7 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
 
   if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
-  nargs=lives_osc_get_num_arguments(vargs)-2;
+  nargs=lives_osc_get_num_arguments(vargs);
   if (nargs<3) return lives_osc_notify_failure();
 
   osc_header_len=pad4(nargs+1); // add comma
@@ -3332,6 +3347,7 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
     if (!setfx(effect_key,pnum,nargs-2,vargs)) return lives_osc_notify_failure();
   }
   else lives_osc_notify_failure();
+
 }
 
 
@@ -3348,7 +3364,7 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
   
   if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 
-  nargs=lives_osc_get_num_arguments(vargs)-2;
+  nargs=lives_osc_get_num_arguments(vargs);
   if (nargs<3) return lives_osc_notify_failure();
 
   osc_header_len=pad4(nargs+1); // add comma
@@ -4231,7 +4247,7 @@ static struct
     { "/effect_key/parameter/name/get",		"get",	lives_osc_cb_rte_getparamname,		        71	},
     { "/effect_key/nparameter/name/get",		"get",	lives_osc_cb_rte_getnparamname,		        72	},
     { "/effect_key/parameter/colorspace/get",		"get",	lives_osc_cb_rte_getparamcspace,		        73	},
-    { "/effect_key/parameter/flags/get",		"get",	lives_osc_cb_rte_getparamflags,		        73	},
+    { "/effect_key/parameter/flags/get",		"get",	lives_osc_cb_rte_getparamflags,		        74	},
     { "/effect_key/parameter/min/get",		"get",	lives_osc_cb_rte_getparammin,		        75	},
     { "/effect_key/parameter/max/get",		"get",	lives_osc_cb_rte_getparammax,		        76	},
     { "/effect_key/parameter/default/get",		"get",	lives_osc_cb_rte_getparamdef,		        77	},

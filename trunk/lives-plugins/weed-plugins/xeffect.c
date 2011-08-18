@@ -86,7 +86,7 @@ int xeffect_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   src+=irowstride;
   dst+=orowstride;
-  width-=2;
+  width-=4;
 
   for (;src<end;src+=irowstride) {
     for (i=3;i<width;i+=3) {
@@ -94,7 +94,7 @@ int xeffect_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       nbr=0;
       for (j=-irowstride;j<=irowstride;j+=irowstride) {
 	for (k=-3;k<4;k+=3) {
-	  if ((j!=0||k!=0)&&ABS (calc_luma (&src[j+k])-myluma)>threshold) nbr++;
+	  if ((j!=0||k!=0)&&ABS (calc_luma (&src[j+i+k])-myluma)>threshold) nbr++;
 	}
       }
       if (nbr<2||nbr>5) {

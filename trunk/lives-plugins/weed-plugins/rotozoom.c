@@ -89,12 +89,6 @@ int rotozoom_init (weed_plant_t *inst) {
   weed_set_int_value(inst,"plugin_path",0);
   weed_set_int_value(inst,"plugin_zpath",0);
 
-  /*
-  inst->num_in_parameters=2;
-  inst->in_parameters=malloc(2*sizeof(weed_parameter_t));
-  inst->in_parameters[0]=weed_plugin_info_integer_init("Zoom (squared)",1000000,1000000,32768*32768);
-  inst->in_parameters[1]=weed_plugin_info_init_switch_param("Auto zoom",1);*/
-
   return WEED_NO_ERROR;
 }
 
@@ -112,6 +106,8 @@ int rotozoom_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   int path=weed_get_int_value(inst,"plugin_path",&error);
   int zpath=weed_get_int_value(inst,"plugin_zpath",&error);
+  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  int autozoom;
 
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
@@ -122,19 +118,21 @@ int rotozoom_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   width = weed_get_int_value(in_channel,"width",&error);
   height = weed_get_int_value(in_channel,"height",&error);
 
-  //weed_get_boolean_value(inst->in_parameters[1],"value",&val);
+  autozoom=weed_get_boolean_value(in_params[1],"value",&error);
 
-  if (1) {
-    zoom=roto2[zpath];
+  if (autozoom==WEED_TRUE) {
     weed_set_int_value(inst,"plugin_zpath",(zpath + 1) & 255);
   }
   else {
-    //weed_get_int_value(inst->in_parameters[0],"value",&zoom);
-    //zoom=(int)sqrt(zoom*1.);
+    zpath=weed_get_int_value(in_params[0],"value",&error);
+    weed_set_int_value(inst,"plugin_zpath",zpath);
   }
+  zoom=roto2[zpath];
 
   draw_tile(roto[path], roto[(path + 128) & 0xFF],zoom,src,dst,width,height);
   weed_set_int_value(inst,"plugin_path",(path - 1) & 255);
+
+  weed_free(in_params);
 
   return WEED_NO_ERROR;
 }
@@ -146,12 +144,12 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     int i;
-    int palette_list[]={WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_END};
+    int palette_list[]={WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_YUVA8888,WEED_PALETTE_END};
     
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    
-    weed_plant_t *filter_class=weed_filter_class_init("rotozoom","effectTV",1,0,&rotozoom_init,&rotozoom_process,&rotozoom_deinit,in_chantmpls,out_chantmpls,NULL,NULL);
+    weed_plant_t *in_params[]={weed_integer_init("zoom","_Zoom value",128,0,255),weed_switch_init("autozoom","_Auto zoom",WEED_TRUE),NULL};
+    weed_plant_t *filter_class=weed_filter_class_init("rotozoom","effectTV",1,0,&rotozoom_init,&rotozoom_process,&rotozoom_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
     
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     

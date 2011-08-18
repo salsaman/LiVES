@@ -14,6 +14,8 @@ Add OMC commands: /effect/realtime/name/get, /effect_key/inchannels/active/get,
 
 	- which require active effect ?
 
+Compatibility fixes for frei0r 1.2.
+
 
 
 

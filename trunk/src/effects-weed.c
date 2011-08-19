@@ -1624,8 +1624,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     pthread_t dthreads[MAX_FX_THREADS];
     weed_plant_t *xinst[MAX_FX_THREADS];
 
-    channel=get_enabled_channel(inst,0,FALSE);
-    height=0;
+    height=weed_get_int_value(out_channels[0],"height",&error);
 
     for (j=0;j<prefs->nfx_threads;j++) {
       // each thread needs its own copy of the output channels, so it can have its own "offset" and "height"

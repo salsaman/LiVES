@@ -2120,7 +2120,7 @@ static void convert_yuv_planar_to_rgb_frame(guchar **src, int width, int height,
   guchar *y=src[0];
   guchar *u=src[1];
   guchar *v=src[2];
-  guchar *a=src[3];
+  guchar *a=NULL;
 
   size_t opstep=3,rowstride;
   register int i,j;
@@ -2130,6 +2130,8 @@ static void convert_yuv_planar_to_rgb_frame(guchar **src, int width, int height,
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (out_alpha) opstep=4;
+
+  if (in_alpha) a=src[3];
 
   rowstride=orowstride-width*opstep;
 
@@ -2153,7 +2155,7 @@ static void convert_yuv_planar_to_bgr_frame(guchar **src, int width, int height,
   guchar *y=src[0];
   guchar *u=src[1];
   guchar *v=src[2];
-  guchar *a=src[3];
+  guchar *a=NULL;
 
   size_t opstep=3,rowstride;
   register int i,j;
@@ -2163,6 +2165,7 @@ static void convert_yuv_planar_to_bgr_frame(guchar **src, int width, int height,
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (out_alpha) opstep=4;
+  if (in_alpha) a=src[3];
 
   rowstride=orowstride-width*opstep;
 
@@ -2238,9 +2241,11 @@ static void convert_combineplanes_frame(guchar **src, int width, int height, guc
   guchar *y=src[0];
   guchar *u=src[1];
   guchar *v=src[2];
-  guchar *a=src[3];
+  guchar *a=NULL;
 
   register int x;
+
+  if (in_alpha) a=src[3];
 
   for (x=0;x<size;x++) {
     *(dest++)=*(y++);

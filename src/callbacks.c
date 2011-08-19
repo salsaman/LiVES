@@ -50,22 +50,18 @@ lives_exit (void) {
     int i;
     gchar *com;
 
+    threaded_dialog_spin();
+
     if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
-      threaded_dialog_spin();
       stored_event_list_free_all(FALSE);
-      threaded_dialog_spin();
     }
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
-      threaded_dialog_spin();
-      g_source_remove(mainw->multitrack->idlefunc);
-      threaded_dialog_spin();
+       g_source_remove(mainw->multitrack->idlefunc);
     }
 
     if (mainw->multitrack!=NULL&&!mainw->only_close) {
-      threaded_dialog_spin();
-      if (mainw->multitrack->undo_mem!=NULL) g_free(mainw->multitrack->undo_mem);
-      threaded_dialog_spin();
+       if (mainw->multitrack->undo_mem!=NULL) g_free(mainw->multitrack->undo_mem);
     }
 
     if (mainw->playing_file>-1) {
@@ -94,6 +90,9 @@ lives_exit (void) {
       }
     }
     
+    // prevent crash in threaded dialog
+    mainw->current_file=-1;
+
     if (!mainw->only_close) {
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
@@ -148,10 +147,8 @@ lives_exit (void) {
     if (mainw->leave_files) {
       gchar *msg;
       msg=g_strdup_printf(_("Saving as set %s..."),mainw->set_name);
-      threaded_dialog_spin();
       d_print(msg);
       g_free(msg);
-      threaded_dialog_spin();
     }
 
     for (i=0;i<=MAX_FILES;i++) {
@@ -161,27 +158,24 @@ lives_exit (void) {
 
 #ifdef HAVE_YUV4MPEG
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_YUV4MPEG) {
-	    threaded_dialog_spin();
 	    lives_yuv_stream_stop_read(mainw->files[i]->ext_src);
 	    g_free (mainw->files[i]->ext_src);
-	    threaded_dialog_spin();
 	  }
 #endif
 #ifdef HAVE_UNICAP
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_VIDEODEV) {
-	    threaded_dialog_spin();
 	    lives_vdev_free(mainw->files[i]->ext_src);
 	    g_free (mainw->files[i]->ext_src);
-	    threaded_dialog_spin();
 	  }
 #endif
+	  threaded_dialog_spin();
 	  com=g_strdup_printf("smogrify close %s",mainw->files[i]->handle);
 	  dummyvar=system(com);
-	  threaded_dialog_spin();
 	  g_free(com);
 	  threaded_dialog_spin();
 	}
 	else {
+	  threaded_dialog_spin();
 	  // or just clean them up
 	  com=g_strdup_printf("smogrify clear_tmp_files %s",mainw->files[i]->handle);
 	  dummyvar=system(com);
@@ -190,27 +184,22 @@ lives_exit (void) {
 	  if (mainw->files[i]->frame_index!=NULL) {
 	    save_frame_index(i);
 	  }
-	  threaded_dialog_spin();
 	}
 	if (!mainw->only_close) {
 	  if (mainw->files[i]->frame_index!=NULL) {
-	    threaded_dialog_spin();
 	    g_free(mainw->files[i]->frame_index);
-	    threaded_dialog_spin();
 	    mainw->files[i]->frame_index=NULL;
 	  }
 
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	    threaded_dialog_spin();
 	    close_decoder_plugin(mainw->files[i]->ext_src);
-	    threaded_dialog_spin();
 	    mainw->files[i]->ext_src=NULL;
 	  }
 
-	  threaded_dialog_spin();
 	  g_free(mainw->files[i]);
-	  threaded_dialog_spin();
 	  mainw->files[i]=NULL;
+	  threaded_dialog_spin();
 	}
       }
     }
@@ -229,22 +218,17 @@ lives_exit (void) {
 	dummyvar=system(com);
 	threaded_dialog_spin();
 	g_free(com);
-	threaded_dialog_spin();
 	com=g_strdup_printf("/bin/rm %s/%s/order 2>/dev/null",prefs->tmpdir,mainw->set_name);
 	dummyvar=system(com);
 	threaded_dialog_spin();
 	g_free(com);
-	threaded_dialog_spin();
       }
-      threaded_dialog_spin();
       g_free(set_layout_dir);
-      threaded_dialog_spin();
     }
 
     if (strlen(mainw->set_name)) {
       gchar *set_lock_file=g_strdup_printf("%s/%s/lock.%d",prefs->tmpdir,mainw->set_name,getpid());
       unlink(set_lock_file);
-      threaded_dialog_spin();
       g_free(set_lock_file);
       threaded_dialog_spin();
     }
@@ -287,7 +271,6 @@ lives_exit (void) {
       for (i=1;i<=MAX_FILES;i++) {
 	if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||mainw->files[i]->clip_type==CLIP_TYPE_FILE)&&(mainw->multitrack==NULL||i!=mainw->multitrack->render_file)) {
 	  mainw->current_file=i;
-	  threaded_dialog_spin();
 	  close_current_file(0);
 	  threaded_dialog_spin();
 	}

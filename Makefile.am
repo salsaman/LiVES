@@ -41,6 +41,7 @@ EXTRA_DIST = \
 	tools/batchproc.pl \
 	tools/monitorlives.pl \
 	tools/set_shuffle.pl \
+	tools/lives-rte-test.pl \
 	po/pxgettext \
 	po/make_rfx_builtin_list.pl \
 	po/update_with_plugins.sh \

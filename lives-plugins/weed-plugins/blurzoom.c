@@ -76,7 +76,7 @@ typedef struct _sdata {
 
 
 static RGB32 *palette;
-static RGB32 palettes[COLORS*PATTERN>256?COLORS*PATTERN:256];
+static RGB32 palettes[256];
 
 #define VIDEO_HWIDTH (buf_width/2)
 #define VIDEO_HHEIGHT (buf_height/2)
@@ -209,6 +209,11 @@ static void makePalette(int pal)
   
 #define DELTA (255/(COLORS/2-1))
   
+  for (i=0;i<256;i++) {
+    palettes[i]=0;
+  }
+
+
   for(i=0; i<COLORS/2; i++) {
     if (pal==WEED_PALETTE_RGBA32) {
       palettes[COLORS*2+i] = i*DELTA;

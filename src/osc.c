@@ -2605,8 +2605,6 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
     case WEED_COLORSPACE_RGB:
       if (nargs%3 != 0) return FALSE; //nargs must be a multiple of 3
 
-      g_print("nargs is XXX %d\n",nargs);
-
       if (weed_leaf_seed_type(tparamtmpl,"default")==WEED_SEED_INT) {
 	// RGB, int type
 	int *valuesi=g_malloc(nargs*sizint);
@@ -2646,7 +2644,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	while (pattern[x]!=0) {
 
 	  // get next 3 values
-	  for (i=0;i<4;i++) {
+	  for (i=0;i<3;i++) {
 	    if (pattern[x+i]=='f') {
 	      // we wanted int but we got floats
 	      lives_osc_parse_float_argument(vargs,&valuef);
@@ -2699,13 +2697,10 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
       }
       else {
 	// RGB, float type
-	double *valuesd=g_malloc(nargs*sizdbl);
+	double *valuesd=g_malloc(nargs*sizeof(double));
 	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
 	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	double *minds=NULL,*maxds=NULL;
-
-	g_print("nargsxx=%d\n",nargs);
-
 	// get min and max values - 3 possibilities: 1 value, 3 values or N values
 
 	if (nmins==1) {
@@ -2738,7 +2733,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	while (pattern[x]!=0) {
 
 	  // get next 3 values
-	  for (i=0;i<4;i++) {
+	  for (i=0;i<3;i++) {
 	    if (pattern[x+i]=='i') {
 	      // we wanted float but we got floats
 	      lives_osc_parse_int_argument(vargs,&valuei);
@@ -2778,10 +2773,8 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
 	}
-	g_print("ok here\n");
 	weed_set_double_array(tparam,"value",nargs,valuesd);
 	g_free(valuesd);
-	g_print("ok here2\n");
 	
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
@@ -2842,7 +2835,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	while (pattern[x]!=0) {
 
 	  // get next 4 values
-	  for (i=0;i<5;i++) {
+	  for (i=0;i<4;i++) {
 	    if (pattern[x]=='f') {
 	      // we wanted int but we got floats
 	      lives_osc_parse_float_argument(vargs,&valuef);
@@ -2939,7 +2932,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 	while (pattern[x]!=0) {
 
 	  // get next 4 values
-	  for (i=0;i<5;i++) {
+	  for (i=0;i<4;i++) {
 	    if (pattern[x]=='i') {
 	      // we wanted float but we got floats
 	      lives_osc_parse_int_argument(vargs,&valuei);
@@ -3586,9 +3579,11 @@ void lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, 
     nvals=weed_leaf_num_elements(ptmpl,"default");
     if (nvals>0)
       msg=lives_osc_format_result(ptmpl,"default",0,nvals);
-    else
+    else {
       // default can have 0 values if param has variable elements; in this case we use "new_default"
+      nvals=weed_leaf_num_elements(ptmpl,"new_default");
       msg=lives_osc_format_result(ptmpl,"new_default",0,nvals);
+    }
   }
 
   lives_status_send(msg);

@@ -34,8 +34,8 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int num_versions=1; // number of different weed api versions supported
+static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -96,15 +96,20 @@ static void getenv_piece(char * target, size_t tlen, char *envvar, int num) {
 
 int frei0r_init (weed_plant_t *inst) {
   weed_plant_t *out_channel,*filter;
-  int error,height,width;
+  int error,height,width,cpalette;
   f0r_instance_t f0r_inst;
   f0r_construct_f f0r_construct;
 
   filter=weed_get_plantptr_value(inst,"filter_class",&error);
 
   out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
-  width=weed_get_int_value(out_channel,"rowstrides",&error)>>2;
+  width=weed_get_int_value(out_channel,"rowstrides",&error);
   height=weed_get_int_value(out_channel,"height",&error);
+  cpalette=weed_get_int_value(out_channel,"current_palette",&error);
+
+  if (cpalette==WEED_PALETTE_UYVY||cpalette==WEED_PALETTE_YUYV) width>>=1;
+  else width>>=2;
+
 
   f0r_construct=weed_get_voidptr_value(filter,"plugin_f0r_construct",&error);
 
@@ -408,7 +413,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  
 	  // broken plugins
 	  if (!strcmp(dirent->d_name,"curves.so")) continue;
-	  if (!strcmp(dirent->d_name,"scanline0r.so")) continue;
 
 	  snprintf(plugin_name,MAX_PATH,"%s",dirent->d_name);
 
@@ -527,7 +531,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  }
 
 	  out_chantmpls=weed_malloc(2*sizeof(weed_plant_t *));
-	  out_chantmpls[0]=weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
+	  out_chantmpls[0]=weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
 	  weed_set_int_value(out_chantmpls[0],"hstep",8);
 	  weed_set_int_value(out_chantmpls[0],"vstep",8);
 	  weed_set_int_value(out_chantmpls[0],"maxwidth",2048);
@@ -541,7 +545,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    break;
 	  case F0R_PLUGIN_TYPE_FILTER:
 	    in_chantmpls=weed_malloc(2*sizeof(weed_plant_t *));
-	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
+	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[0],"hstep",8);
 	    weed_set_int_value(in_chantmpls[0],"vstep",8);
 	    weed_set_int_value(in_chantmpls[0],"maxwidth",2048);
@@ -551,14 +555,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    break;
 	  case F0R_PLUGIN_TYPE_MIXER2:
 	    in_chantmpls=weed_malloc(3*sizeof(weed_plant_t *));
-	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
+	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[0],"hstep",8);
 	    weed_set_int_value(in_chantmpls[0],"vstep",8);
 	    weed_set_int_value(in_chantmpls[0],"maxwidth",2048);
 	    weed_set_int_value(in_chantmpls[0],"maxheight",2048);
 	    weed_set_int_value(in_chantmpls[0],"alignment",16);
 	    
-	    in_chantmpls[1]=weed_channel_template_init("in channel 1",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
+	    in_chantmpls[1]=weed_channel_template_init("in channel 1",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[1],"hstep",8);
 	    weed_set_int_value(in_chantmpls[1],"vstep",8);
 	    weed_set_int_value(in_chantmpls[1],"maxwidth",2048);
@@ -568,21 +572,21 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    break;
 	  case F0R_PLUGIN_TYPE_MIXER3:
 	    in_chantmpls=weed_malloc(4*sizeof(weed_plant_t *));
-	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
+	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[0],"hstep",8);
 	    weed_set_int_value(in_chantmpls[0],"vstep",8);
 	    weed_set_int_value(in_chantmpls[0],"maxwidth",2048);
 	    weed_set_int_value(in_chantmpls[0],"maxheight",2048);
 	    weed_set_int_value(in_chantmpls[0],"alignment",16);
 	    
-	    in_chantmpls[1]=weed_channel_template_init("in channel 1",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
+	    in_chantmpls[1]=weed_channel_template_init("in channel 1",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[1],"hstep",8);
 	    weed_set_int_value(in_chantmpls[1],"vstep",8);
 	    weed_set_int_value(in_chantmpls[1],"maxwidth",2048);
 	    weed_set_int_value(in_chantmpls[1],"maxheight",2048);
 	    weed_set_int_value(in_chantmpls[1],"alignment",16);
 	    
-	    in_chantmpls[2]=weed_channel_template_init("in channel 2",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
+	    in_chantmpls[2]=weed_channel_template_init("in channel 2",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[2],"hstep",8);
 	    weed_set_int_value(in_chantmpls[2],"vstep",8);
 	    weed_set_int_value(in_chantmpls[2],"maxwidth",2048);

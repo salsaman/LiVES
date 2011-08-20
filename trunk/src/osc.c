@@ -163,7 +163,8 @@ gboolean lives_status_send (const gchar *msgstring) {
 
 gboolean lives_osc_notify (int msgnumber,const gchar *msgstring) {
   if (notify_socket==NULL) return FALSE;
-  if (!prefs->omc_events&&(msgnumber!=512&&msgnumber!=1024)) return FALSE;
+  if (!prefs->omc_events&&(msgnumber!=LIVES_OSC_NOTIFY_SUCCESS
+			   &&msgnumber!=LIVES_OSC_NOTIFY_FAILED)) return FALSE;
   else {
     gchar *msg;
     gboolean retval;
@@ -187,10 +188,12 @@ void lives_osc_notify_failure (void) {
     lives_osc_notify(LIVES_OSC_NOTIFY_FAILED,NULL);
 }
 
+/* unused */
+/*
 void lives_osc_notify_cancel (void) {
   if (prefs->omc_noisy);
   lives_osc_notify(LIVES_OSC_NOTIFY_CANCELLED,NULL);
-}
+  }*/
 
 
 
@@ -214,21 +217,36 @@ static const gchar *get_omc_const(const gchar *cname) {
   if (!strcmp(cname,"LIVES_MODE_CLIPEDIT")) return "0";
   if (!strcmp(cname,"LIVES_MODE_MULTITRACK")) return "1";
 
-  if (!strcmp(cname,"LIVES_PARAM_TYPE_INTEGER")) return "1";
-  if (!strcmp(cname,"LIVES_PARAM_TYPE_FLOAT")) return "2";
-  if (!strcmp(cname,"LIVES_PARAM_TYPE_BOOL")) return "3";
-  if (!strcmp(cname,"LIVES_PARAM_TYPE_STRING")) return "4";
-  if (!strcmp(cname,"LIVES_PARAM_TYPE_COLOR")) return "5";
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_INTEGER")) 
+    return QUOTEME(WEED_HINT_INTEGER);
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_FLOAT")) 
+    return QUOTEME(WEED_HINT_FLOAT);
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_BOOL")) 
+    return QUOTEME(WEED_HINT_SWITCH);
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_STRING")) 
+    return QUOTEME(WEED_HINT_TEXT);
+  if (!strcmp(cname,"LIVES_PARAM_TYPE_COLOR")) 
+    return QUOTEME(WEED_HINT_COLOR);
 
-  if (!strcmp(cname,"LIVES_COLORSPACE_RGB")) return "1";
-  if (!strcmp(cname,"LIVES_COLORSPACE_RGBA")) return "2";
+  if (!strcmp(cname,"LIVES_COLORSPACE_RGB")) 
+    return QUOTEME(WEED_COLORSPACE_RGB);
+  if (!strcmp(cname,"LIVES_COLORSPACE_RGBA")) 
+    return QUOTEME(WEED_COLORSPACE_RGBA);
 
-  if (!strcmp(cname,"TRUE")) return "1";
-  if (!strcmp(cname,"FALSE")) return "0";
+  if (!strcmp(cname,"TRUE")) return QUOTEME(TRUE);
+  if (!strcmp(cname,"FALSE")) return QUOTEME(FALSE);
 
-  if (!strcmp(cname,"LIVES_PARAM_FLAGS_REINIT_ON_VALUE_CHANGE")) return "1";
-  if (!strcmp(cname,"LIVES_PARAM_FLAGS_VARIABLE_ELEMENTS")) return "2";
-  if (!strcmp(cname,"LIVES_PARAM_FLAGS_ELEMENT_PER_CHANNEL")) return "4";
+  if (!strcmp(cname,"LIVES_PARAM_FLAGS_REINIT_ON_VALUE_CHANGE")) 
+    return QUOTEME(WEED_PARAMETER_FLAGS_REINIT_ON_VALUE_CHANGE);
+  if (!strcmp(cname,"LIVES_PARAM_FLAGS_VARIABLE_ELEMENTS"))
+    return QUOTEME(WEED_PARAMETER_FLAGS_VARIABLE_ELEMENTS);
+  if (!strcmp(cname,"LIVES_PARAM_FLAGS_ELEMENT_PER_CHANNEL"))
+    return QUOTEME(WEED_PARAMETER_FLAGS_ELEMENT_PER_CHANNEL);
+
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_SUCCESS")) 
+    return QUOTEME(LIVES_OSC_NOTIFY_SUCCESS);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_FAILED")) 
+    return QUOTEME(LIVES_OSC_NOTIFY_FAILED);
 
   lives_osc_notify_failure();
 

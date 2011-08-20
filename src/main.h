@@ -63,6 +63,8 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <signal.h>
 #include <assert.h>
 
+#define QUOTEME(x) #x
+
 /// don't change this unless the backend is changed as well
 /// i.e. $GUI_BOOTSTRAP_FILE in smogrify
 #define BOOTSTRAP_NAME "/tmp/.smogrify"

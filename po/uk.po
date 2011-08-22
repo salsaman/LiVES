@@ -6,18 +6,18 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
-"Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
+"Report-Msgid-Bugs-To: "
+"http://www.sourceforge.net/tracker/?group_id=64341&atid=507139\n"
 "POT-Creation-Date: 2011-08-17 21:50-0300\n"
-"PO-Revision-Date: 2011-06-06 16:02+0000\n"
+"PO-Revision-Date: 2011-08-18 15:18+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
-"Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-06-11 20:28+0000\n"
-"X-Generator: Launchpad (build 13175)\n"
+"X-Launchpad-Export-Date: 2011-08-21 20:42+0000\n"
+"X-Generator: Launchpad (build 13697)\n"
+"Language: uk\n"
 
 #: src/main.c:110
 msgid ""
@@ -37,14 +37,14 @@ msgstr ""
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
-"Please report this bug at http://sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
+"Please report this bug at "
+"http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
 "\n"
 "На жаль, роботу LiVES було завершено у аварійному режимі.\n"
-"Будь ласка, повідомте про це на адресу http://sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
+"Будь ласка, повідомте про це на адресу "
+"http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
 "Дякуємо. Відновити дані можна буде після перезапуску LiVES.\n"
 
 #: src/main.c:127
@@ -314,11 +314,15 @@ msgstr "параметри можуть бути такими:\n"
 
 #: src/main.c:1751
 msgid "-help            : show this help text and exit\n"
-msgstr "-help               : показати текст цієї довідки і завершити роботу\n"
+msgstr ""
+"-help               : показати текст цієї довідки і завершити роботу\n"
 
 #: src/main.c:1752
-msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
+msgid ""
+"-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
+"-tmpdir <тимч. каталог>: використовувати інший робочий каталог (наприклад "
+"/var/ramdisk)\n"
 
 #: src/main.c:1753
 msgid "-set <setname>   : autoload clip set setname\n"
@@ -328,7 +332,8 @@ msgstr ""
 
 #: src/main.c:1754
 msgid "-noset           : do not load any set on startup\n"
-msgstr "-noset              : не завантажувати жодного набору після запуску\n"
+msgstr ""
+"-noset              : не завантажувати жодного набору після запуску\n"
 
 #: src/main.c:1755
 msgid "-norecover       : force no-loading of crash recovery\n"
@@ -364,7 +369,8 @@ msgstr "-startup-ce      : запустити у режимі редактора
 
 #: src/main.c:1762
 msgid "-startup-mt      : start in multitrack mode\n"
-msgstr "-startup-mt      : запустити у режимі роботи з декількома доріжками\n"
+msgstr ""
+"-startup-mt      : запустити у режимі роботи з декількома доріжками\n"
 
 #: src/main.c:1763
 msgid ""
@@ -958,7 +964,8 @@ msgstr ""
 
 #: src/startup.c:825
 msgid "You may wish to add jpeg output support to mplayer"
-msgstr "Вам варто додати підтримку виведення у форматі jpeg до пакунка mplayer"
+msgstr ""
+"Вам варто додати підтримку виведення у форматі jpeg до пакунка mplayer"
 
 #: src/startup.c:841
 msgid "Checking for \"convert\" presence"
@@ -979,8 +986,8 @@ msgstr ""
 "\n"
 "\n"
 "    Натисніть кнопку «Скасувати», щоб завершити роботу і встановити всі "
-"додаткові компоненти, а бо натисніть кнопку «Далі», щоб продовжити "
-"роботу    \n"
+"додаткові компоненти, а бо натисніть кнопку «Далі», щоб продовжити роботу    "
+"\n"
 
 #: src/startup.c:901
 msgid ""
@@ -1184,7 +1191,8 @@ msgstr ""
 
 #: src/interface.c:846
 msgid "<------------- (Check the box to use the size recommendation)"
-msgstr "<------------- (Позначте, щоб було використано рекомендований розмір)"
+msgstr ""
+"<------------- (Позначте, щоб було використано рекомендований розмір)"
 
 #: src/interface.c:877
 msgid "Keep _my settings"
@@ -1279,8 +1287,8 @@ msgstr ""
 "\n"
 "Щоб відкрити потік даних, вам слід переконатися, що mplayer зібрано з "
 "підтримкою відповідних бібліотек.\n"
-"Крім того, вам слід встановити ширину каналу даних у вікні Параметри|"
-"Потокові дані\n"
+"Крім того, вам слід встановити ширину каналу даних у вікні "
+"Параметри|Потокові дані\n"
 "\n"
 
 #: src/interface.c:1635
@@ -1731,17 +1739,15 @@ msgstr ""
 "Ви справді бажаєте його закрити?"
 
 #: src/callbacks.c:808
-#, fuzzy
 msgid ""
 "Changes made to this clip have not been saved or backed up.\n"
 "\n"
 "Really close it ?"
 msgstr ""
-"Не було збережено поточної копії\n"
-"%s\n"
-"або створено резервну копію.\n"
+"Зміни, внесені до цього кліпу не було збережено у основному файлі або "
+"резервній копії.\n"
 "\n"
-"Закрити попри це?"
+"Закрити кліп попри це?"
 
 #: src/callbacks.c:926
 msgid ""
@@ -2121,8 +2127,8 @@ msgstr ""
 #: src/callbacks.c:3695
 #, c-format
 msgid ""
-"Saving the set will cause copies of all loaded clips to remain on the disk"
-"%s.\n"
+"Saving the set will cause copies of all loaded clips to remain on the "
+"disk%s.\n"
 "\n"
 "Please press 'Cancel' if that is not what you want.\n"
 msgstr ""
@@ -2142,6 +2148,9 @@ msgid ""
 "No clips were recovered for set (%s).\n"
 "Please check the spelling of the set name and try again.\n"
 msgstr ""
+"Не було відновлено жодного кліпу у наборі (%s).\n"
+"Будь ласка, перевірте, чи правильно вказано назву набору і повторіть "
+"спробу.\n"
 
 #: src/callbacks.c:3988
 #, c-format
@@ -2287,8 +2296,8 @@ msgid ""
 "along with this program; if not, write to the Free Software\n"
 "Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
 msgstr ""
-"Ця програма є вільним програмним забезпеченням; ви можете поширювати її і/"
-"або змінювати її за умов дотримання GNU General Public License у тому "
+"Ця програма є вільним програмним забезпеченням; ви можете поширювати її "
+"і/або змінювати її за умов дотримання GNU General Public License у тому "
 "вигляді, у якому її оприлюднено Free Software Foundation; версії 3 цієї "
 "ліцензії, або (за потреби) будь-якої пізнішої версії\n"
 "\n"
@@ -2320,8 +2329,8 @@ msgstr ""
 "LiVES, версія %s\n"
 "© G. Finch (salsaman), %s\n"
 "\n"
-"Випущено за умов дотримання GPL 3 або пізнішої версії (http://www.gnu.org/"
-"licenses/gpl.txt)\n"
+"Випущено за умов дотримання GPL 3 або пізнішої версії "
+"(http://www.gnu.org/licenses/gpl.txt)\n"
 "LiVES розповсюджується БЕЗ ЖОДНИХ ГАРАНТІЙ\n"
 "\n"
 "Зв’язатися з автором можна за адресою:\n"
@@ -2803,8 +2812,8 @@ msgstr "Об’єднання буфера [ %d кадрів ]       з позн
 msgid ""
 "Merge Clipboard [ %d Frames (resampled) ]       With Selection [ %d Frames ]"
 msgstr ""
-"Об’єднання буфера [ %d кадрів (змінена дискретизація) ]       з позначеним "
-"[ %d кадрів ]"
+"Об’єднання буфера [ %d кадрів (змінена дискретизація) ]       з позначеним [ "
+"%d кадрів ]"
 
 #: src/merge.c:142
 msgid "Align _Starts"
@@ -2857,9 +2866,8 @@ msgid "Merge done.\n"
 msgstr "Об’єднання завершено.\n"
 
 #: src/gui.c:116
-#, fuzzy
 msgid "_Custom Generators"
-msgstr "Нетипові і_нструменти створення"
+msgstr "_Нетипові породжувачі"
 
 #: src/gui.c:117
 msgid "_Custom Effects"
@@ -3239,7 +3247,8 @@ msgstr "Обрізати/Доповнити звукову доріжку до _
 
 #: src/gui.c:1214
 msgid "Trim/Pad Audio from Beginning to _Play Start"
-msgstr "Обрізати/Доповнити звукову доріжку від початку до позиції _відтворення"
+msgstr ""
+"Обрізати/Доповнити звукову доріжку від початку до позиції _відтворення"
 
 #: src/gui.c:1219
 msgid "_Delete Audio..."
@@ -4132,8 +4141,8 @@ msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
-"Кадрів=%d тип=%s розмір=%dx%d *глибина кольорів=тони сірого* частота кадрів="
-"%.3f\n"
+"Кадрів=%d тип=%s розмір=%dx%d *глибина кольорів=тони сірого* частота "
+"кадрів=%.3f\n"
 "Звукові дані:"
 
 #: src/saveplay.c:2797 src/saveplay.c:3418
@@ -4374,8 +4383,8 @@ msgstr ""
 "\n"
 "Цей інструмент кодування або формат не придатний до використання бажаного "
 "кодування звукових даних.\n"
-"Будь ласка, змініть кодек для звукових даних за допомогою меню «Інструменти|"
-"Параметри|Кодування»\n"
+"Будь ласка, змініть кодек для звукових даних за допомогою меню "
+"«Інструменти|Параметри|Кодування»\n"
 
 #: src/dialogs.c:1257
 msgid ""
@@ -4421,12 +4430,14 @@ msgstr "Використовувати частоту дискретизації
 #: src/dialogs.c:1298
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
-msgstr "Встановлення частоти кадрів відео у значення %.3f кадрів на секунду\n"
+msgstr ""
+"Встановлення частоти кадрів відео у значення %.3f кадрів на секунду\n"
 
 #: src/dialogs.c:1302
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
-msgstr "Встановлення частоти кадрів відео у значення %d:%d кадрів на секунду\n"
+msgstr ""
+"Встановлення частоти кадрів відео у значення %d:%d кадрів на секунду\n"
 
 #: src/dialogs.c:1307 src/dialogs.c:1410
 #, c-format
@@ -4716,8 +4727,8 @@ msgid ""
 msgstr ""
 "Вибачте, невідомий тип звукових даних.\n"
 "\n"
-" (Програма може працювати з даними у файлах .mp3, .ogg, .wav, .mod, .xm або ."
-"it)"
+" (Програма може працювати з даними у файлах .mp3, .ogg, .wav, .mod, .xm або "
+".it)"
 
 #: src/dialogs.c:1557
 msgid "failed (unknown type)\n"
@@ -4973,8 +4984,8 @@ msgid ""
 msgstr ""
 "Попереднє прослуховування у режимі з декількома доріжками доступне лише\n"
 "за використання звукових програвачів «Jack» або «PulseAudio».\n"
-"Змінити програвач можна за допомогою вкладки Інструменти|Параметри|"
-"Відтворення."
+"Змінити програвач можна за допомогою вкладки "
+"Інструменти|Параметри|Відтворення."
 
 #: src/dialogs.c:1676
 msgid ""
@@ -5038,8 +5049,8 @@ msgstr ""
 "\n"
 "Запис звуку можливий лише за використання звукових серверів\n"
 "«Jack» або «PulseAudio».\n"
-"Вам варто вибрати один з цих серверів на вкладці «Інструменти/Параметри/"
-"Відтворення».\n"
+"Вам варто вибрати один з цих серверів на вкладці "
+"«Інструменти/Параметри/Відтворення».\n"
 
 #: src/dialogs.c:1704
 msgid "Video playback plugin failed to initialise palette !\n"
@@ -6984,13 +6995,12 @@ msgid "Automatically deinterlace frames when a plugin suggests it"
 msgstr "Автоматично усувати черезрядковість, якщо це пропонує додаток"
 
 #: src/preferences.c:2761
-#, fuzzy
 msgid "Ignore blank borders when possible"
-msgstr "За можливості, користуватися негайним відкриттям"
+msgstr "Якщо можна, ігнорувати порожні поля"
 
 #: src/preferences.c:2773
 msgid "Clip any blank borders from frames where possible"
-msgstr ""
+msgstr "Якщо можна, вирізати всі порожні поля з кадрів"
 
 #: src/preferences.c:2787
 msgid "When opening multiple files, concatenate images into one clip"
@@ -7587,7 +7597,8 @@ msgstr "Повторення MIDI"
 
 #: src/preferences.c:5164
 msgid "Number of non-reads allowed between succesive reads."
-msgstr "Кількість тактів відсутності сигналу між двома послідовними сигналами."
+msgstr ""
+"Кількість тактів відсутності сигналу між двома послідовними сигналами."
 
 #: src/preferences.c:5170
 msgid "(Warning: setting this value too high can slow down playback.)"
@@ -7621,11 +7632,13 @@ msgstr ""
 "після закриття діалогового вікна налаштування."
 
 #: src/preferences.c:5494
-msgid "Theme changes will not take effect until the next time you start LiVES."
+msgid ""
+"Theme changes will not take effect until the next time you start LiVES."
 msgstr "Зміна теми набуде чинності лише під час наступного запуску LiVES."
 
 #: src/preferences.c:5498
-msgid "Jack options will not take effect until the next time you start LiVES."
+msgid ""
+"Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 "Параметри Jack набудуть чинності лише під час наступного запуску LiVES."
 
@@ -7687,7 +7700,8 @@ msgstr "Зміна дискретизації звукових даних"
 
 #: src/resample.c:738
 msgid "LiVES was unable to resample the audio as requested.\n"
-msgstr "LiVES не вдалося змінити дискретизацію звукових даних бажаним чином.\n"
+msgstr ""
+"LiVES не вдалося змінити дискретизацію звукових даних бажаним чином.\n"
 
 #: src/resample.c:740 src/resample.c:744
 msgid "Resample Audio"
@@ -7929,7 +7943,8 @@ msgstr "Зміна швидкості"
 
 #: src/resample.c:2267
 #, c-format
-msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
+msgid ""
+"Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr ""
 "Швидкість відтворення змінено на %3f кадрів на секунду, а частоту звукових "
 "даних на %d Гц.\n"
@@ -9638,7 +9653,8 @@ msgstr "Виявлено %d помилок.\n"
 #: src/multitrack.c:18668
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
-msgstr "Частоту кадрів багатодоріжкової області встановлено у значення %.3f\n"
+msgstr ""
+"Частоту кадрів багатодоріжкової області встановлено у значення %.3f\n"
 
 #: src/multitrack.c:19595
 msgid "LiVES: Multitrack audio mixer"
@@ -10307,9 +10323,8 @@ msgid "Enhancing"
 msgstr "Покращення"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "_Колір спалаху"
+msgstr "_Кольорова зміна освітленості"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -10317,28 +10332,24 @@ msgid "Fade _end"
 msgstr "_Кінцеве згасання"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "_Кінцеве згасання"
+msgstr "_Освітлення"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "Поступове зменшення гучності"
+msgstr "З_гасання"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade video in or out"
-msgstr "Поступове зменшення гучності"
+msgstr "Поступове підвищення або зниження освітленості відео"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
 msgstr "Згасання"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fading video"
-msgstr "Зміна дискретизації відео"
+msgstr "Зміна освітленості відео"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
@@ -10549,6 +10560,7 @@ msgid "Overlaying text on"
 msgstr "Накладання тексту"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
 msgstr "Фотоспалах"
 
@@ -10732,6 +10744,7 @@ msgid "Tunneling"
 msgstr "Тунелювання"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
 msgstr "Використовувати по_чатковий розмір"
 
@@ -10780,6 +10793,8 @@ msgstr "_Чорний є прозорим"
 msgid "_Bottom"
 msgstr "Ни_жньої частини"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Calculate"
 msgstr "_Обчислити"
@@ -11153,13 +11168,13 @@ msgid "enhance"
 msgstr "покращення"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
 msgstr "кожні"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "Поступове зменшення гучності"
+msgstr "fade_in_out"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -11397,506 +11412,3 @@ msgstr "Помилка $plugin_name:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Manual start of jackd required. Please make sure jackd is running, \n"
-#~ "or else change the value of <jack_opts> in ~/.lives to 16\n"
-#~ "and restart LiVES.\n"
-#~ "\n"
-#~ "Alternatively, try to start lives with: lives -aplayer sox\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Потрібно запустити jackd вручну. Будь ласка, переконайтеся, що jackd "
-#~ "запущено, \n"
-#~ "або змініть значення <jack_opts> у ~/.lives на 16\n"
-#~ "і перезапустіть LiVES.\n"
-#~ "\n"
-#~ "Крім того, ви можете запустити lives командою: lives -aplayer sox\n"
-#~ "\n"
-
-#~ msgid "xmms...detected..."
-#~ msgstr "xmms…виявлено…"
-
-#~ msgid "xmms...NOT DETECTED..."
-#~ msgstr "xmms…НЕ ВИЯВЛЕНО…"
-
-#~ msgid "Help with _translating"
-#~ msgstr "Допомогти з п_ерекладом"
-
-#~ msgid "audio mixer"
-#~ msgstr "аудіомікшер"
-
-#~ msgid "audio filter"
-#~ msgstr "аудіофільтр"
-
-#~ msgid "Audio Filters"
-#~ msgstr "Аудіофільтри"
-
-#~ msgid "You need to install dvgrab to use this option."
-#~ msgstr "Для користування цим пунктом вам слід встановити dvgrab."
-
-#~ msgid ""
-#~ "Use ctrl and <- arrows -> to move through clip. Press 'r' before playing "
-#~ "to record changes."
-#~ msgstr ""
-#~ "Для пересування кліпом натискайте ctrl + <- стрілочки ->. Перемикання між "
-#~ "відтворенням та записом можна здійснювати натисканням клавіші «r»."
-
-#~ msgid "Pau_se"
-#~ msgstr "Приз_упинити"
-
-#~ msgid "Auto preview"
-#~ msgstr "Автоперегляд"
-
-#~ msgid "Mouse mode is: Move\n"
-#~ msgstr "Режим миші: пересування\n"
-
-#~ msgid "clips can be moved around.\n"
-#~ msgstr "кліпи можна пересувати.\n"
-
-#~ msgid "Mouse mode is: Select.\n"
-#~ msgstr "Режим миші: позначення.\n"
-
-#~ msgid "Drag with mouse on timeline\n"
-#~ msgstr "Натисніть кнопку миші і перетягніть вказівник лінійкою запису,\n"
-
-#~ msgid "to select tracks and time.\n"
-#~ msgstr "щоб позначити доріжки і часові ділянки.\n"
-
-#~ msgid "_Snap mode: On"
-#~ msgstr "Режим п_рилипання: увімкнути"
-
-#~ msgid "_Snap mode: Off"
-#~ msgstr "Режим п_рилипання: вимкнути"
-
-#~ msgid "Insert with audio"
-#~ msgstr "Вставити зі звуком"
-
-#~ msgid "Insert without audio"
-#~ msgstr "Вставити без звуку"
-
-#~ msgid "Snap Mode: O_ff"
-#~ msgstr "Режим прилипання: ви_мкнути"
-
-#~ msgid "Snap mode: O_n"
-#~ msgstr "Режим прилипання: _увімкнути"
-
-#~ msgid "You can click and drag below the timeline\n"
-#~ msgstr ""
-#~ "Ви можете натиснути кнопку миші і перетягнути вказівник лінійкою запису\n"
-
-#~ msgid "Click on another effect,\n"
-#~ msgstr "Натисніть на пункті іншого ефекту,\n"
-
-#~ msgid "and the selected one will be inserted\n"
-#~ msgstr "а позначений ефект було вставлено\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Please release the note\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Please release the note\n"
-#~ "\n"
-
-#~ msgid "Undoing audio"
-#~ msgstr "Скасування звуку"
-
-#~ msgid "_Encode Clip"
-#~ msgstr "За_кодувати кліп"
-
-#~ msgid "Encode Clip _As..."
-#~ msgstr "Закодувати кліп _як…"
-
-#~ msgid "Pasted %d frames to new clip.\n"
-#~ msgstr "До нового кліпу вставлено %d кадрів.\n"
-
-#~ msgid "recovering files..."
-#~ msgstr "відновлення файлів…"
-
-#~ msgid "audio/video transition"
-#~ msgstr "перехід звуку/зображення"
-
-#~ msgid "video only transition"
-#~ msgstr "перехід лише зображення"
-
-#~ msgid "audio only transition"
-#~ msgstr "перехід лише звуку"
-
-#~ msgid "          _FPS      "
-#~ msgstr "          _Частота кадрів      "
-
-#~ msgid ""
-#~ "\n"
-#~ "%s\n"
-#~ "has not been saved or backed up.\n"
-#~ "\n"
-#~ "Really close it ?"
-#~ msgstr ""
-#~ "\n"
-#~ "%s\n"
-#~ "не було збережено, також не створено резервної копії.\n"
-#~ "\n"
-#~ "Ви справді бажаєте його закрити?"
-
-#~ msgid ""
-#~ "LiVES Version %s\n"
-#~ "(c) G. Finch (salsaman) 2002-2010\n"
-#~ "\n"
-#~ "Released under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\n"
-#~ "LiVES is distributed WITHOUT WARRANTY\n"
-#~ "\n"
-#~ "Contact the author at:\n"
-#~ "salsaman@xs4all.nl\n"
-#~ "Homepage: http://lives.sourceforge.net"
-#~ msgstr ""
-#~ "LiVES версії %s\n"
-#~ "(c) G. Finch (salsaman) 2002-2010\n"
-#~ "\n"
-#~ "Випущено за умов дотримання GPL 3 або пізнішої версії (http://www.gnu.org/"
-#~ "licenses/gpl.txt)\n"
-#~ "LiVES розповсюджується без ЖОДНИХ ГАРАНТІЙ\n"
-#~ "\n"
-#~ "Зв’язатися з автором можна за такою адресою:\n"
-#~ "salsaman@xs4all.nl\n"
-#~ "Домашня сторінка проекту: http://lives.sourceforge.net"
-
-#~ msgid "Warning - no more effect slots left !\n"
-#~ msgstr "Попередження: вичерпано об’єм списку ефектів!\n"
-
-#~ msgid "Timecode"
-#~ msgstr "Часовий відлік"
-
-#~ msgid ""
-#~ "You can use the following keys to control the multitrack window:-\n"
-#~ "\n"
-#~ "ctrl-left-arrow              move timeline cursor left 1 second\n"
-#~ "ctrl-right-arrow            move timeline cursor right 1 second\n"
-#~ "shift-left-arrow            move timeline cursor left 1 frame\n"
-#~ "shift-right-arrow          move timeline cursor right 1 frame\n"
-#~ "ctrl-up-arrow               move current track up\n"
-#~ "ctrl-down-arrow           move current track down\n"
-#~ "ctrl-page-up                select next clip\n"
-#~ "ctrl-page-down            select previous clip\n"
-#~ "ctrl-space                    select/deselect current track\n"
-#~ "ctrl-plus                       zoom in\n"
-#~ "ctrl-minus                    zoom out\n"
-#~ "m                                 make a mark on the timeline (during "
-#~ "playback)\n"
-#~ "w                                 rewind to play start.\n"
-#~ "\n"
-#~ "For other keys, see the menus.\n"
-#~ msgstr ""
-#~ "Для керування діями у вікні багатодоріжкового режиму ви можете "
-#~ "скористатися такими клавішами:\n"
-#~ "\n"
-#~ "ctrl-стрілка-ліворуч      пересунути курсор лінійки запису на 1 секунду "
-#~ "ліворуч\n"
-#~ "ctrl-стрілка-праворуч   пересунути курсор лінійки запису на 1 секунду "
-#~ "праворуч\n"
-#~ "shift-стрілка-ліворуч    пересунути курсор лінійки запису на 1 кадр "
-#~ "ліворуч\n"
-#~ "shift-стрілка-праворуч пересунути курсор лінійки запису на 1 кадр "
-#~ "праворуч\n"
-#~ "ctrl-стрілка-вгору         пересунути поточну доріжку вгору\n"
-#~ "ctrl-стрілка-вниз           пересунути поточну доріжку вниз\n"
-#~ "ctrl-page-up                   позначити наступний кліп\n"
-#~ "ctrl-page-down              позначити попередній кліп\n"
-#~ "ctrl-пробіл                     позначити/зняти позначення з поточної "
-#~ "доріжки\n"
-#~ "ctrl-плюс                       збільшити\n"
-#~ "ctrl-мінус                       зменшити\n"
-#~ "m                                   зробити позначку на лінійці запису "
-#~ "(під час відтворення)\n"
-#~ "w                                   повернутися на початок відтворення.\n"
-#~ "\n"
-#~ "Інші комбінації клавіш наведено в меню.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Welcome to LiVES. If this is your first time using LiVES, please check "
-#~ "all the\n"
-#~ "Preferences using Control-P. In particular make sure the temporary "
-#~ "directory is located somewhere with plenty of diskspace.\n"
-#~ "Have fun !\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Ласкаво просимо до LiVES. Якщо ви користуєтеся LiVES вперше, будь ласка, "
-#~ "ознайомтеся з параметрами\n"
-#~ "програми за допомогою натискання комбінації клавіш Ctrl-P. Зокрема, "
-#~ "переконайтеся, що тимчасову теку розташовано на диску, де достатньо "
-#~ "вільного місця.\n"
-#~ "Приємної роботи!\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Do you wish to remove the layout files associated with this set ?\n"
-#~ "Click OK to remove them, or Cancel to leave them.\n"
-#~ "(They will not be usable without the set).\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Бажаєте вилучити файли компонування, пов’язані з цим набором?\n"
-#~ "Натисніть кнопку «Гаразд», щоб  вилучити їх, або «Скасувати», щоб не "
-#~ "вилучати файли.\n"
-#~ "(Без набору їх зберігання втрачає зміст).\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Unable to start up jack. Please ensure that alsa is set up correctly on "
-#~ "your machine\n"
-#~ "and also that the soundcard is not in use by another program.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Не вдалося запустити Jack. Будь ласка, переконайтеся, що у вашій системі "
-#~ "належним чином налаштовано ALSA і\n"
-#~ "що звуковою карткою не користується стороння програма.\n"
-
-#~ msgid ""
-#~ "A setting of 0 means use all available monitors\n"
-#~ "(only works with some playback plugins)."
-#~ msgstr ""
-#~ "Значення 0 означає «використовувати всі доступні монітори»\n"
-#~ "(працює лише з деякими додатками відтворення)."
-
-#~ msgid "Warn about loss of _quality when saving to an existing file"
-#~ msgstr "Попереджати про втрату _якості під час збереження існуючого файла"
-
-#~ msgid "Show a warning if _mplayer is not found when LiVES is started."
-#~ msgstr ""
-#~ "Показувати попередження, як_що під час запуску LiVES не буде знайдено "
-#~ "mplayer."
-
-#~ msgid "Jack transport _master"
-#~ msgstr "_Джерело передавання даних Jack"
-
-#~ msgid "Jack transport _client"
-#~ msgstr "_Клієнт передавання даних Jack"
-
-#~ msgid "Play audio even when _paused"
-#~ msgstr "Відтворювати звук, навіть якщо п_ризупинено відео"
-
-#~ msgid "Unable to open yuv4mpeg stream %s\n"
-#~ msgstr "Не вдалося відкрити потік даних yuv4mpeg %s\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Unable to open stream, framerate does not match fixed rate.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Не вдалося відкрити потік даних, частота кадрів не збігається з "
-#~ "фіксованою.\n"
-
-#~ msgid "Opened yuv4mpeg stream on %sstream.yuv"
-#~ msgstr "Відкрито потік yuv4mpeg у %sstream.yuv"
-
-#~ msgid ""
-#~ " size=%dx%d bpp=%d fps=%.3f\n"
-#~ "Audio: "
-#~ msgstr ""
-#~ " розміри=%dx%d глибина кольору=%d частота кадрів=%.3f\n"
-#~ "Звукові дані: "
-
-#~ msgid "Double click on a block to select it.\n"
-#~ msgstr "Двічі клацніть лівою кнопкою миші на блоці, щоб позначити його.\n"
-
-#~ msgid "Show frame preview"
-#~ msgstr "Показати попередній перегляд кадрів"
-
-#~ msgid "Single click on timeline to select a frame.\n"
-#~ msgstr ""
-#~ "Клацніть лівою кнопкою миші на лінійці запису, щоб позначити кадр.\n"
-
-#~ msgid "Double click on timeline to select a block.\n"
-#~ msgstr ""
-#~ "Двічі клацніть лівою кнопкою миші на лінійці запису, щоб позначити блок.\n"
-
-#~ msgid "Clips can be dragged onto the timeline.\n"
-#~ msgstr "Кліпи можна просто перетягувати на лінійку запису.\n"
-
-#~ msgid "_Retain width, height and audio values in saved layouts"
-#~ msgstr "З_берігати дані про ширину, висоту та параметри звуку компонуваннях"
-
-#~ msgid "Drag the time slider to where you\n"
-#~ msgstr "Перетягніть повзунок часу у позицію, де ви\n"
-
-#~ msgid "want to set effect parameters\n"
-#~ msgstr "бажаєте встановити параметри ефектів\n"
-
-#~ msgid "Time region %.3f to %.3f selected.\n"
-#~ msgstr "Позначено ділянку часу від %.3f до %.3f.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Now move the stick to the opposite position and click OK\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Тепер пересуньте позначку у протилежну позицію і натисніть кнопку "
-#~ "«Гаразд»\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Please set the control to its minimum value and click OK\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Будь ласка, встановіть регулятор у мінімальне значення і натисніть кнопку "
-#~ "«Гаразд»\n"
-#~ "\n"
-
-#~ msgid "Sync lock off.\n"
-#~ msgstr "Синхронізацію вимкнено.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "You must select two video tracks\n"
-#~ "and a time region\n"
-#~ "to apply transitions.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Для застосування переходів\n"
-#~ "вам слід позначити дві відеодоріжки\n"
-#~ "і ділянку за часом.\n"
-
-#~ msgid "_Snap to overlap"
-#~ msgstr "При_липання до перекриття"
-
-#~ msgid "Single click on an effect to select it.\n"
-#~ msgstr "Один раз клацніть на позначці ефекту, щоб позначити ефект.\n"
-
-#~ msgid "Double click on an effect to edit it.\n"
-#~ msgstr "Двічі клацніть на позначці ефекту, щоб змінити його параметри.\n"
-
-#~ msgid "Right click on an effect for context menu.\n"
-#~ msgstr ""
-#~ "Клацанням правою кнопкою миші на позначці ефекту можна викликати "
-#~ "контекстне меню.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Effect order can be changed at FILTER MAPS:"
-#~ msgstr ""
-#~ "\n"
-#~ "Порядок застосування ефектів можна змінити у КАРТАХ ЕФЕКТІВ:"
-
-#~ msgid "- select an effect, then use the INSERT BEFORE"
-#~ msgstr "- позначте ефект, а потім скористайтеся кнопкою ВСТАВИТИ ПЕРЕД"
-
-#~ msgid " or \"lives -aplayer pulse\""
-#~ msgstr " або «lives -aplayer pulse»"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Manual start of jackd required. Please make sure jackd is running, \n"
-#~ "or else change the value of <jack_opts> in ~/.lives to 16\n"
-#~ "and restart LiVES.\n"
-#~ "\n"
-#~ "Alternatively, try to start lives with: \"lives -aplayer sox\""
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Потрібно запустити jackd вручну. Будь ласка, переконайтеся, що jackd "
-#~ "запущено, \n"
-#~ "або змініть значення <jack_opts> у ~/.lives на 16\n"
-#~ "і перезапустіть LiVES.\n"
-#~ "\n"
-#~ "Крім того, ви можете запустити lives командою: «lives -aplayer sox»\n"
-#~ "\n"
-#~ "\""
-
-#~ msgid "LiVES: - Choose working directory"
-#~ msgstr "LiVES: - Вибір робочого каталогу"
-
-#~ msgid "_Add Live Input"
-#~ msgstr "_Додати потік даних"
-
-#~ msgid ""
-#~ "Recording was paused because free disk space is below %ld GB.\n"
-#~ "Record stop level can be set in Preferences.\n"
-#~ msgstr ""
-#~ "Запис було призупинено, оскільки на диску залишилося менше %ld ГБ "
-#~ "вільного місця.\n"
-#~ "Параметри призупинки запису можна встановити за допомогою діалогового "
-#~ "вікна «Параметри».\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Unable to start up jack. Please ensure that alsa is set up correctly on "
-#~ "your machine\n"
-#~ "and also that the soundcard is not in use by another program\n"
-#~ "or alternately, start up LiVES with:\n"
-#~ "lives -jackopts 0\n"
-#~ "and then adjust your jack options in Preferences | Jack Integration.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Не вдалося запустити Jack Будь ласка, переконайтеся, що у вашій системі "
-#~ "належним чином налаштовано ALSA і\n"
-#~ "що звуковою карткою не користується стороння програма або запустіть LiVES "
-#~ "командою:\n"
-#~ "lives -jackopts 0\n"
-#~ "а потім вкажіть ваші значення параметрів jack за допомогою пункту "
-#~ "налаштувань Параметри | Інтеграція з Jack.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Unable to connect to jack transport. Please start jack before starting "
-#~ "LiVES\n"
-#~ "or alternately, start up LiVES with:\n"
-#~ "lives -jackopts 0\n"
-#~ "and then adjust your jack options in Preferences | Jack Integration.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Не вдалося встановити зв’язок з сервером передавання даних jack. Будь "
-#~ "ласка, запустіть jack перед запуском LiVES\n"
-#~ "або запустіть LiVES за допомогою команди:\n"
-#~ "lives -jackopts 0\n"
-#~ "а потім вкажіть ваші значення параметрів jack за допомогою пункту "
-#~ "налаштувань Параметри | Інтеграція з Jack.\n"
-
-#~ msgid "Opened device %s"
-#~ msgstr "Відкрито пристрій %s"
-
-#~ msgid ""
-#~ "\n"
-#~ "Alternatively, try to start lives with:\n"
-#~ "%s\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Крім того, можна спробувати запустити lives за допомогою команди:\n"
-#~ "%s\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Manual start of jackd required. Please make sure jackd is running, \n"
-#~ "or else change the value of <jack_opts> in ~/.lives to 16\n"
-#~ "and restart LiVES.\n"
-#~ "\n"
-#~ "Alternatively, try to start lives with: "
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "jackd слід запустити вручну. Будь ласка, переконайтеся, що jackd \n"
-#~ "запущено, або змініть значення <jack_opts> у ~/.lives на 16\n"
-#~ "і перезапустіть LiVES.\n"
-#~ "\n"
-#~ "Крім того, ви можете запустити lives командою: "

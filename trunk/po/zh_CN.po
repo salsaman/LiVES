@@ -6,18 +6,18 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
-"Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
+"Report-Msgid-Bugs-To: "
+"http://www.sourceforge.net/tracker/?group_id=64341&atid=507139\n"
 "POT-Creation-Date: 2011-08-17 21:50-0300\n"
-"PO-Revision-Date: 2011-03-13 04:07+0000\n"
+"PO-Revision-Date: 2011-08-18 11:58+0000\n"
 "Last-Translator: 英华 <wantinghard@gmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-03-19 16:36+0000\n"
-"X-Generator: Launchpad (build 12617)\n"
+"X-Launchpad-Export-Date: 2011-08-21 20:41+0000\n"
+"X-Generator: Launchpad (build 13697)\n"
+"Language: \n"
 
 #: src/main.c:110
 msgid ""
@@ -32,14 +32,13 @@ msgstr ""
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
-"Please report this bug at http://sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
+"Please report this bug at "
+"http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
 "\n"
 "很不幸 LiVES 崩溃了。\n"
-"请到 http://sourceforge.net/tracker/?group_id=64341&atid=507139 提交 bug，谢"
-"谢。\n"
+"请到 http://sourceforge.net/tracker/?group_id=64341&atid=507139 提交 bug，谢谢。\n"
 "重启 LiVES 之后应该可以恢复。\n"
 
 #: src/main.c:127
@@ -241,9 +240,9 @@ msgid "number of monitors detected: %d\n"
 msgstr "检测到的显视器数量：%d\n"
 
 #: src/main.c:1397
-#, fuzzy, c-format
+#, c-format
 msgid "Number of CPUs detected: %d\n"
-msgstr "检测到的显视器数量：%d\n"
+msgstr ""
 
 #: src/main.c:1400
 #, c-format
@@ -307,7 +306,8 @@ msgid "-help            : show this help text and exit\n"
 msgstr "-help            : 显示此帮助文字并退出\n"
 
 #: src/main.c:1752
-msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
+msgid ""
+"-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 
 #: src/main.c:1753
@@ -383,9 +383,9 @@ msgid ""
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
-"-jackopts <opts>    : opts 是比特型  jack 启动选项 [1 = jack transport "
-"client, 2 = jack transport master, 4 = start jack transport server, 8 = "
-"pause audio when video paused, 16 = start jack audio server] \n"
+"-jackopts <opts>    : opts 是比特型  jack 启动选项 [1 = jack transport client, 2 = "
+"jack transport master, 4 = start jack transport server, 8 = pause audio when "
+"video paused, 16 = start jack audio server] \n"
 
 #: src/main.c:1776
 msgid " or sox\n"
@@ -543,8 +543,7 @@ msgid ""
 "magick if you want to use rendered effects.\n"
 msgstr ""
 "\n"
-"LiVES 无法定位 'convert'。您可以安装 convert 和 image-magick 来使用渲染效"
-"果。\n"
+"LiVES 无法定位 'convert'。您可以安装 convert 和 image-magick 来使用渲染效果。\n"
 
 #: src/main.c:1870
 msgid ""
@@ -553,8 +552,7 @@ msgid ""
 "image-magick if you want to use the merge function.\n"
 msgstr ""
 "\n"
-"LiVES 无法定位 'composite'。您需要安装 composite 和 image-magick 来使用融合功"
-"能。\n"
+"LiVES 无法定位 'composite'。您需要安装 composite 和 image-magick 来使用融合功能。\n"
 
 #: src/main.c:1873
 msgid ""
@@ -764,8 +762,7 @@ msgid ""
 "before running LiVES.\n"
 "\n"
 msgstr ""
-",但您的系统中没有安装 jackd 音频系统。您可能得在运行 LIVES 前安装 jackd 音"
-"频。\n"
+",但您的系统中没有安装 jackd 音频系统。您可能得在运行 LIVES 前安装 jackd 音频。\n"
 "\n"
 
 #: src/startup.c:183
@@ -975,7 +972,7 @@ msgstr "这是简单的编辑任务或 VJ 们的最佳选择\n"
 
 #: src/startup.c:982
 msgid "Start in _Multitrack mode"
-msgstr ""
+msgstr "多轨道模式启动(_M)"
 
 #: src/startup.c:1002
 msgid ""
@@ -1272,8 +1269,7 @@ msgstr ""
 "\n"
 "首先，您需要为 LiVES 选择一个工作目录。\n"
 "这个目录应该有足够的剩余空间。\n"
-"注意，很多系统上，/tmp 在关机时会被清除，因此不建议您将工作目录放在 /tmp "
-"下。\n"
+"注意，很多系统上，/tmp 在关机时会被清除，因此不建议您将工作目录放在 /tmp 下。\n"
 
 #: src/interface.c:1813
 msgid "LiVES: - Rename Clip"
@@ -1527,8 +1523,8 @@ msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
 msgstr ""
-"目前的剪辑集尚未保存。\n"
-"你要什么做什么？\n"
+"目前的剪辑尚未保存。\n"
+"你打算保存吗？\n"
 
 #: src/interface.c:3304
 msgid ""
@@ -1536,7 +1532,7 @@ msgid ""
 "What would you like to do ?\n"
 msgstr ""
 "当前的布局尚未保存。\n"
-"你要什么做什么？\n"
+"你打算保存吗？\n"
 
 #: src/interface.c:3307
 msgid ""
@@ -1662,17 +1658,11 @@ msgstr ""
 "确实要关闭吗？"
 
 #: src/callbacks.c:808
-#, fuzzy
 msgid ""
 "Changes made to this clip have not been saved or backed up.\n"
 "\n"
 "Really close it ?"
 msgstr ""
-"\n"
-"%s\n"
-"还没有保存或者备份。\n"
-"\n"
-"确实要关闭吗？"
 
 #: src/callbacks.c:926
 msgid ""
@@ -1718,7 +1708,7 @@ msgstr "导出工程为%s..."
 
 #: src/callbacks.c:1053
 msgid "Exporting project"
-msgstr "出口项目"
+msgstr "导出工程"
 
 #: src/callbacks.c:1069
 msgid "Restore .lv1 file"
@@ -1795,7 +1785,7 @@ msgstr "正在将%d 到 %d%s 帧拷贝到剪贴板……"
 #: src/callbacks.c:1920 src/saveplay.c:1025 src/saveplay.c:1143
 #: src/saveplay.c:1200 src/saveplay.c:2973
 msgid "Pulling frames from clip"
-msgstr ""
+msgstr "从剪辑中抽取帧"
 
 #: src/callbacks.c:1946
 msgid "Copying to the clipboard"
@@ -2013,8 +2003,8 @@ msgstr ""
 #: src/callbacks.c:3695
 #, c-format
 msgid ""
-"Saving the set will cause copies of all loaded clips to remain on the disk"
-"%s.\n"
+"Saving the set will cause copies of all loaded clips to remain on the "
+"disk%s.\n"
 "\n"
 "Please press 'Cancel' if that is not what you want.\n"
 msgstr ""
@@ -2716,9 +2706,8 @@ msgid "Merge done.\n"
 msgstr "合并完成。\n"
 
 #: src/gui.c:116
-#, fuzzy
 msgid "_Custom Generators"
-msgstr "自定义生成(_G)"
+msgstr ""
 
 #: src/gui.c:117
 msgid "_Custom Effects"
@@ -6261,9 +6250,8 @@ msgid "_Plugin"
 msgstr "插件(_P)"
 
 #: src/preferences.c:2945
-#, fuzzy
 msgid "Stream audio"
-msgstr "正在重采样音频"
+msgstr ""
 
 #: src/preferences.c:2956
 msgid "Stream audio to playback plugin"
@@ -6385,9 +6373,8 @@ msgid "Use _threads where possible when applying effects"
 msgstr ""
 
 #: src/preferences.c:3570
-#, fuzzy
 msgid "Number of _threads"
-msgstr "帧数(_F)"
+msgstr ""
 
 #: src/preferences.c:3603
 msgid "      Video load directory (default)      "
@@ -6803,11 +6790,13 @@ msgid ""
 msgstr "为使目录更改生效，LiVES 将在关闭首选项对话框后重新启动。"
 
 #: src/preferences.c:5494
-msgid "Theme changes will not take effect until the next time you start LiVES."
+msgid ""
+"Theme changes will not take effect until the next time you start LiVES."
 msgstr "主题的更改只有在您下次启动 LiVES 时才会生效。"
 
 #: src/preferences.c:5498
-msgid "Jack options will not take effect until the next time you start LiVES."
+msgid ""
+"Jack options will not take effect until the next time you start LiVES."
 msgstr "Jack 选项在您下次启动 LiVES 时才会生效。"
 
 #: src/osc.c:2252
@@ -7078,7 +7067,8 @@ msgstr "更改速度"
 
 #: src/resample.c:2267
 #, c-format
-msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
+msgid ""
+"Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr "已将播放速度更改为 %.3f 帧每秒， 音频更改为 %d Hz。\n"
 
 #: src/resample.c:2270
@@ -9155,14 +9145,12 @@ msgid "Blanking"
 msgstr "擦除中"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _height"
-msgstr "帧高(_H)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "帧高(_H)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
@@ -9231,28 +9219,24 @@ msgid "Checkerboard"
 msgstr "跳棋盘"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboarding"
-msgstr "跳棋盘"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _over selection"
-msgstr "插入到选区后（_A）"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _under selection"
-msgstr "插入到选区后（_A）"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
 msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorizing"
-msgstr "加彩色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Colour cycle"
@@ -9295,18 +9279,16 @@ msgid "Despeckle"
 msgstr "去斑"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "Despeckling"
-msgstr "去斑"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "Dream"
 msgstr "梦幻特效"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dreamifying"
-msgstr "梦幻特效"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9326,9 +9308,8 @@ msgid "Emboss"
 msgstr "凸起"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "Embossing"
-msgstr "凸起"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End _Alpha:"
@@ -9351,39 +9332,33 @@ msgid "Enhancing"
 msgstr "增强中"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "填充色(_F)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Fade _end"
-msgstr "色调终点(_E)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "色调终点(_E)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "淡出音频"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade video in or out"
-msgstr "淡出音频"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
 msgstr "淡入淡出"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fading video"
-msgstr "正在重采样视频"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
@@ -9394,9 +9369,8 @@ msgid "Fina_l frame"
 msgstr "终止帧(_L)"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "Flash _colour"
-msgstr "填充色(_F)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
@@ -9419,14 +9393,12 @@ msgid "Frame _height"
 msgstr "帧高(_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr "正在将%d 到 %d%s 帧拷贝到剪贴板……"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr "正在将%d 到 %d%s 帧拷贝到剪贴板……"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _width"
@@ -9457,9 +9429,8 @@ msgid "Generate clip from image"
 msgstr "由图像生成剪辑"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "正在生成标题帧"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Generate title frames"
@@ -9474,9 +9445,8 @@ msgid "Generating clip from image"
 msgstr "正在由图像生成剪辑"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generating coloured frames"
-msgstr "正在生成标题帧"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Generating title frames"
@@ -9551,14 +9521,12 @@ msgid "Making monochrome"
 msgstr "变黑白"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "旋转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulating"
-msgstr "旋转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
@@ -9569,9 +9537,8 @@ msgid "Negate"
 msgstr "放弃"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negating"
-msgstr "放弃"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -9602,37 +9569,33 @@ msgid "Overlaying text on"
 msgstr "将文本重叠到"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
 msgstr "照片/静止"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "粘贴"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilating"
-msgstr "粘贴"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
 msgstr "色调分离"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterizing"
-msgstr "色调分离"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
-#, fuzzy
 msgid "Random zoom"
-msgstr "随机缩放"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
-#, fuzzy
 msgid "Random zooming"
-msgstr "随机缩放"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Reduce noise"
@@ -9643,9 +9606,8 @@ msgid "Reduction radius"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Replacing colours in"
-msgstr "音频重采样剪贴板"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "Resize All Frames"
@@ -9661,9 +9623,8 @@ msgstr "旋转"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "S_tart %"
-msgstr "起始(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Saturation _end"
@@ -9714,9 +9675,8 @@ msgid "Solarize"
 msgstr "曝光过度化"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarizing"
-msgstr "曝光过度化"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
@@ -9727,14 +9687,12 @@ msgid "Spinning"
 msgstr "正在旋转"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splice"
-msgstr "分隔器"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splicing"
-msgstr "分隔器"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
@@ -9745,16 +9703,14 @@ msgid "Spreading"
 msgstr "扩散"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "起始值(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Step per _Frame"
-msgstr "起始帧"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl _start"
@@ -9769,9 +9725,8 @@ msgid "Swirl"
 msgstr "漩涡"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirling"
-msgstr "漩涡"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
@@ -9794,10 +9749,10 @@ msgid "Tunnel"
 msgstr "隧道"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "Tunneling"
-msgstr "隧道"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
 msgstr "使用自身尺寸(_N)"
@@ -9848,6 +9803,8 @@ msgid "_Bottom"
 msgstr "底部(_B)"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Calculate"
 msgstr "计算(_C)"
 
@@ -9878,9 +9835,8 @@ msgid "_End Size Y:"
 msgstr "结束 Y 尺寸(_E)："
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_End amount"
-msgstr "结束色(_E)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9889,9 +9845,8 @@ msgstr "淡入淡出级别(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "色调起点"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9903,9 +9858,8 @@ msgid "_First frame"
 msgstr "首帧(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "填充色(_F)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -9923,14 +9877,12 @@ msgid "_Frames"
 msgstr "帧(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "填充色(_F)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "_Horizontal segments"
-msgstr "平移"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Image File"
@@ -9958,9 +9910,8 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_Link start and end colours"
-msgstr "调整起点和终点(_A)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "_Max zoom x 10"
@@ -9971,9 +9922,8 @@ msgid "_Middle"
 msgstr "中间(_M)"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "_Midtone"
-msgstr "中间(_M)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Negate"
@@ -10007,14 +9957,12 @@ msgid "_Point size"
 msgstr "点尺寸(_P)"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "半径(_R)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius start"
-msgstr "半径(_R)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
@@ -10045,19 +9993,16 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "大端"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma start"
-msgstr "伽马值起点(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "已跳过"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
@@ -10068,9 +10013,8 @@ msgid "_Source Colour"
 msgstr "源色(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "_Splice"
-msgstr "分隔器"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -10084,15 +10028,13 @@ msgid "_Start Value"
 msgstr "起始值(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_Start amount"
-msgstr "起始值(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Stroke colour"
-msgstr "起始色(_S)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "_Target Colour"
@@ -10108,23 +10050,20 @@ msgid "_Time (seconds)"
 msgstr "时间(秒)(_T)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "_Top left is clipboard"
-msgstr "正在拷贝到剪贴板……"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Top"
 msgstr "顶部(_T)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "_Vertical segments"
-msgstr "竖直移动"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "_Wavemax"
-msgstr "波浪线"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -10190,14 +10129,12 @@ msgid "brightness_change"
 msgstr "更改亮度(_C)"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-#, fuzzy
 msgid "charcoal"
-msgstr "碳笔"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "加彩色"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "colour_filter"
@@ -10220,9 +10157,8 @@ msgid "deinterlace"
 msgstr "反交错"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "despeckle"
-msgstr "去斑"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "dream"
@@ -10241,13 +10177,13 @@ msgid "enhance"
 msgstr "增强"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
 msgstr "每隔"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "淡出音频"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -10270,19 +10206,16 @@ msgid "gamma_change"
 msgstr "更改伽马值(_C)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "空帧(_F)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "gen_clip_from_image"
-msgstr "由图像生成剪辑"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "色彩替换(_R)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
@@ -10301,9 +10234,8 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "旋转"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
@@ -10314,29 +10246,24 @@ msgid "negate"
 msgstr "负片"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "noisify"
-msgstr "加噪声"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "正常化"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "photo_still"
-msgstr "照片/静止"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "粘贴"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "posterize"
-msgstr "色调分离"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -10375,9 +10302,8 @@ msgid "skip_forwards"
 msgstr "快进(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "曝光过度化"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
@@ -10388,38 +10314,32 @@ msgid "spread"
 msgstr "速度"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "漩涡"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "过渡"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "transition_checkerboard"
-msgstr "跳棋盘"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "transition_fade2"
-msgstr "过渡"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "过渡"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "trim_frames"
-msgstr "画面"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"
@@ -10500,106 +10420,3 @@ msgstr "$plugin_name 失败："
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#~ msgid ""
-#~ "\n"
-#~ "Unfortunately LiVES crashed.\n"
-#~ "Please report this bug at http://www.sourceforge.net/projects/lives/\n"
-#~ "Thanks.\n"
-#~ "Recovery should be possible if you restart LiVES.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "很不幸， LiVES 已经崩溃。\n"
-#~ "请把这个错误提交到 http://www.sourceforge.net/projects/lives/\n"
-#~ "谢谢您。\n"
-#~ "如果您重新启动 LiVES 或许可以恢复。\n"
-
-#~ msgid "xmms...NOT DETECTED..."
-#~ msgstr "xmms...未发现..."
-
-#~ msgid "xmms...detected..."
-#~ msgstr "xmms...发现..."
-
-#~ msgid "Pau_se"
-#~ msgstr "暂停(_S)"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Manual start of jackd required. Please make sure jackd is running, \n"
-#~ "or else change the value of <jack_opts> in ~/.lives to 16\n"
-#~ "and restart LiVES.\n"
-#~ "\n"
-#~ "Alternatively, try to start lives with: lives -aplayer sox\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "需要手动开启 jackd。请确保 jackd 已运行。 \n"
-#~ "或将 ~/.lives 中的 <jack_opts> 改为 16\n"
-#~ "然后重启 LiVES。\n"
-#~ "\n"
-#~ "或者， 这样启动LiVES： lives -aplayer sox\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "When reporting crashes, please include details of your operating system, "
-#~ "distribution, the LiVES version ("
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "当报告崩溃时，请在报告中包括您的操作系统，发行版和 LiVES 的版本的细节 ("
-
-#~ msgid ""
-#~ "and if possible obtain a backtrace using gdb.\n"
-#~ "\n"
-#~ "\n"
-#~ "\n"
-#~ msgstr ""
-#~ "如果可能的话，可以用 gdb 回溯一下函数调用栈。\n"
-#~ "\n"
-#~ "\n"
-#~ "\n"
-
-#~ msgid "Audio Filters"
-#~ msgstr "音频过滤器"
-
-#~ msgid "Undoing audio"
-#~ msgstr "撤消音频"
-
-#~ msgid "_Encode Clip"
-#~ msgstr "_编码剪辑"
-
-#~ msgid "Help with _translating"
-#~ msgstr "帮助_翻译"
-
-#~ msgid "recovering files..."
-#~ msgstr "康复档案..."
-
-#~ msgid " or \"lives -aplayer pulse\""
-#~ msgstr " 或\"lives -aplayer pulse\""
-
-#~ msgid "You need to install dvgrab to use this option."
-#~ msgstr "您需要安装dvgrab使用此选项。"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Manual start of jackd required. Please make sure jackd is running, \n"
-#~ "or else change the value of <jack_opts> in ~/.lives to 16\n"
-#~ "and restart LiVES.\n"
-#~ "\n"
-#~ "Alternatively, try to start lives with: \"lives -aplayer sox\""
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "需要手动启动jackd。请确保jackd正在运行中。\n"
-#~ "或者将 ~/.lives文件夹下<jack_opts>的值改为16\n"
-#~ "然后重启LiVES。\n"
-#~ "\n"
-#~ "或者，试着用\"lives -aplayer sox\"命令运行lives。"
-
-#~ msgid "Pasted %d frames to new clip.\n"
-#~ msgstr "粘贴第%d 帧到剪辑。\n"

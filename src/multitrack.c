@@ -8012,7 +8012,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   if (prefs->show_gui&&prefs->open_maximised) {
     gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
-    gtk_widget_queue_draw(mainw->LiVES);
   }
 
 

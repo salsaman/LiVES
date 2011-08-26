@@ -103,7 +103,7 @@ void add_message_scroller(GtkWidget *conter) {
   tbuff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
   if (tbuff!=NULL && all_text!=NULL) {
     gtk_text_buffer_set_text(tbuff,all_text,-1);
-    //g_free(all_text);
+    g_free(all_text);
   }
 
   gtk_widget_set_size_request (mainw->textview1, -1, 50);

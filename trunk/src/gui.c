@@ -74,10 +74,15 @@ load_theme (void) {
 
 void add_message_scroller(GtkWidget *conter) {
   GtkTextBuffer *tbuff=NULL;
+  gchar *all_text=NULL;
+  GtkTextIter start_iter;
+  GtkTextIter end_iter;
 
   if (mainw->textview1!=NULL) {
     tbuff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
-    g_object_ref(tbuff);
+    gtk_text_buffer_get_start_iter(tbuff,&start_iter);
+    gtk_text_buffer_get_end_iter(tbuff,&end_iter);
+    all_text=gtk_text_buffer_get_text(tbuff,&start_iter,&end_iter,TRUE);
     gtk_widget_destroy(mainw->textview1);
   }
 
@@ -95,9 +100,10 @@ void add_message_scroller(GtkWidget *conter) {
   gtk_widget_show (mainw->textview1);
   gtk_container_add (GTK_CONTAINER (mainw->scrolledwindow), mainw->textview1);
 
-  if (tbuff!=NULL) {
-    gtk_text_view_set_buffer(GTK_TEXT_VIEW(mainw->textview1),tbuff);
-    g_object_unref(tbuff);
+  tbuff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
+  if (tbuff!=NULL && all_text!=NULL) {
+    gtk_text_buffer_set_text(tbuff,all_text,-1);
+    //g_free(all_text);
   }
 
   gtk_widget_set_size_request (mainw->textview1, -1, 50);

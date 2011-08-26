@@ -275,7 +275,7 @@ typedef struct {
   gint nfx_threads;
 
   gboolean stream_audio_out;
-
+  gboolean unstable_fx;
 } _prefs;
 
 enum {

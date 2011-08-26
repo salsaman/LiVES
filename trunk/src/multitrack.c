@@ -3049,18 +3049,27 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
   GtkWidget *xeventbox,*vbox,*label;
   gchar *txt;
   gint nfilts=rte_get_numfilters();
-  int i;
+  int i,error;
   gint cat,subcat;
+  gchar *tmp;
 
   for (i=0;i<nfilts;i++) {
     weed_plant_t *filter=get_weed_filter(i);
     if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
 
       if (enabled_in_channels(filter,TRUE)==ninchans&&enabled_out_channels(filter,FALSE)==1) {
-	txt=weed_filter_get_name(i);
+	if (weed_plant_has_leaf(filter,"plugin_unstable")&&
+	    weed_get_boolean_value(filter,"plugin_unstable",&error)==WEED_TRUE) {
+	  if (!prefs->unstable_fx) continue;
+	  tmp=weed_filter_get_name(i);
+	  txt=g_strdup_printf(_("%s [unstable]"),tmp);
+	  g_free(tmp);
+	}
+	else txt=weed_filter_get_name(i);
+
 	cat=weed_filter_categorise(filter,enabled_in_channels(filter,TRUE),enabled_out_channels(filter,FALSE));
 	if ((subcat=weed_filter_subcategorise(filter,cat,(cat==5)))!=0) {
-	  gchar *tmp=g_strdup_printf("%s (%s)",txt,weed_category_to_text(subcat,FALSE));
+	  tmp=g_strdup_printf("%s (%s)",txt,weed_category_to_text(subcat,FALSE));
 	  g_free(txt);
 	  txt=tmp;
 	}
@@ -4807,7 +4816,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   GtkObject *vadjustment;
   GtkObject *spinbutton_adj;
   gint num_filters;
-  int i;
+  int i,error;
   gchar *cname,*tname,*msg;
 
   gchar buff[32768];
@@ -5723,17 +5732,26 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     weed_plant_t *filter=get_weed_filter(i);
     if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
       GtkWidget *menuitem;
-      gchar *fname=weed_filter_get_name(i);
+      gchar *fname=weed_filter_get_name(i),*fxname;
+      if (weed_plant_has_leaf(filter,"plugin_unstable")&&
+	  weed_get_boolean_value(filter,"plugin_unstable",&error)==WEED_TRUE) {
+	if (!prefs->unstable_fx) {
+	  weed_free(fname);
+	  continue;
+	}
+	fxname=g_strdup_printf(_("%s [unstable]"),fname);
+      }
+      else fxname=g_strdup(fname);
 
       if (enabled_in_channels(filter,TRUE)>2&&enabled_out_channels(filter,FALSE)==1) {
 	// add all compositor effects to submenus
-	menuitem = gtk_image_menu_item_new_with_label (fname);
+	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	gtk_container_add (GTK_CONTAINER (submenu_menu), menuitem);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			  G_CALLBACK (mt_add_block_effect),
 			  (gpointer)mt);
-	menuitem = gtk_image_menu_item_new_with_label (fname);
+	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	gtk_container_add (GTK_CONTAINER (submenu_menu5), menuitem);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
@@ -5742,13 +5760,13 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
       }
       else if (enabled_in_channels(filter,FALSE)==1&&enabled_out_channels(filter,FALSE)==1) {
 	// add all filter effects to submenus
-	menuitem = gtk_image_menu_item_new_with_label (fname);
+	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	gtk_container_add (GTK_CONTAINER (submenu_menu), menuitem);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			  G_CALLBACK (mt_add_block_effect),
 			  (gpointer)mt);
-	menuitem = gtk_image_menu_item_new_with_label (fname);
+	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	gtk_container_add (GTK_CONTAINER (submenu_menu3), menuitem);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
@@ -5757,13 +5775,13 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
       }
       else if (enabled_in_channels(filter,FALSE)==2&&enabled_out_channels(filter,FALSE)==1) {
 	// add all transitions to submenus
-	menuitem = gtk_image_menu_item_new_with_label (fname);
+	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
 	if (get_transition_param(filter)==-1) gtk_container_add (GTK_CONTAINER (submenu_menu11), menuitem);
 	else {
 	  if (has_video_chans_in(filter,FALSE)) {
 	    /// the autotransitions menu
-	    menuitem2 = gtk_check_menu_item_new_with_label (fname);
+	    menuitem2 = gtk_check_menu_item_new_with_label (fxname);
 	    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==i);
 	    g_object_set_data(G_OBJECT(menuitem2),"idx",GINT_TO_POINTER(i));
 
@@ -5786,6 +5804,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 			  (gpointer)mt);
       }
       g_free(fname);
+      g_free(fxname);
     }
   }
 
@@ -7988,7 +8007,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
   reset_clip_menu();
   mainw->last_dprint_file=-1;
-  d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
   
   while (g_main_context_iteration(NULL,FALSE));
 
@@ -7996,6 +8014,10 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
     gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
     gtk_widget_queue_draw(mainw->LiVES);
   }
+
+
+  while (g_main_context_iteration(NULL,FALSE));
+  d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
 
   if (mt->file_selected!=-1) {
     switch_to_file ((mainw->current_file=0),mt->file_selected);

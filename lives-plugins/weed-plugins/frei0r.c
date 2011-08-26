@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+#include <unistd.h>
 
 ///////////////////////////////////////////////////////////////////
 
@@ -306,6 +307,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     char *valch;
     f0r_param_color_t valcol;
     f0r_param_position_t valpos;
+    int is_unstable;
 
 #ifdef CAN_GET_DEF
   f0r_instance_t f0r_inst;
@@ -313,6 +315,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 #endif
 
     char *fpp=getenv("FREI0R_PATH");
+
+#ifndef DEBUG
+    int new_stdout=dup(1);
+    int new_stderr=dup(2);
+
+    close(1);
+    close(2);
+#endif
     if (fpp!=NULL) {
       vdirval=10;
     }
@@ -411,9 +421,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 	  if (!strncmp(dirent->d_name,"..",strlen(dirent->d_name))) continue;
 	  
-	  // broken plugins
-	  if (!strcmp(dirent->d_name,"curves.so")) continue;
-
 	  snprintf(plugin_name,MAX_PATH,"%s",dirent->d_name);
 
 	  snprintf(plug1,MAX_PATH,"%s/%s",dir1,plugin_name);
@@ -471,7 +478,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    dlclose(handle);
 	    continue;
 	  }
-	  
+
+	  is_unstable=0;
+
 	  (*f0r_init)();
 	  (*f0r_get_plugin_info)(&f0rinfo);
 	  
@@ -666,8 +675,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		vald=0.;
 #ifdef CAN_GET_DEF
 		f0r_get_param_value(f0r_inst,(void **)&vald,pnum);
+		if (vald!=0.&&vald!=1.) {
+		  fprintf(stderr,"Warning, frei0r plugin %s by %s sets bad default value (%f) for boolean parameter %s.\nThis plugin may be unstable !\n",f0rinfo.name,f0rinfo.author,vald,pinfo.name);
+		  is_unstable=1;
+		}
+		if (vald<=0.5) vald=0.;
+		else vald=1.;
 #endif
-		in_params[wnum]=weed_switch_init((char *)pinfo.name,label,(int)vald);
+		in_params[wnum]=weed_switch_init((char *)pinfo.name,label,vald==0.?WEED_FALSE:WEED_TRUE);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		if (num_weed_params>f0rinfo.num_params) sprintf(rfx_strings[pnum],"layout|p%d|",wnum);
 		break;
@@ -675,6 +690,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		vald=0.;
 #ifdef CAN_GET_DEF
 		f0r_get_param_value(f0r_inst,(void **)&vald,pnum);
+
+		if (vald<0.||vald>1.) {
+		  fprintf(stderr,"Warning, frei0r plugin %s by %s sets bad default value (%f) for parameter %s.\nThis plugin may be unstable !\n",f0rinfo.name,f0rinfo.author,vald,pinfo.name);
+		  is_unstable=1;
+		  if (vald<0.) vald=0.;
+		  if (vald>1.) vald=1.;
+		}
+
 #endif
 		in_params[wnum]=weed_float_init((char *)pinfo.name,label,vald,0.,1.);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
@@ -687,6 +710,28 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		valcol.r=valcol.g=valcol.b=0.;
 #ifdef CAN_GET_DEF
 		f0r_get_param_value(f0r_inst,(void **)&valcol,pnum);
+
+		if (valcol.r<0.||valcol.r>1.) {
+		  fprintf(stderr,"Warning, frei0r plugin %s by %s sets bad default value red (%f) for parameter %s.\nThis plugin may be unstable !\n",f0rinfo.name,f0rinfo.author,vald,pinfo.name);
+		  is_unstable=1;
+		  if (valcol.r<0.) valcol.r=0.;
+		  if (valcol.r>1.) valcol.r=1.;
+		}
+
+		if (valcol.g<0.||valcol.g>1.) {
+		  fprintf(stderr,"Warning, frei0r plugin %s by %s sets bad default value green (%f) for parameter %s.\nThis plugin may be unstable !\n",f0rinfo.name,f0rinfo.author,vald,pinfo.name);
+		  is_unstable=1;
+		  if (valcol.g<0.) valcol.g=0.;
+		  if (valcol.g>1.) valcol.g=1.;
+		}
+
+		if (valcol.b<0.||valcol.b>1.) {
+		  fprintf(stderr,"Warning, frei0r plugin %s by %s sets bad default value blue (%f) for parameter %s.\nThis plugin may be unstable !\n",f0rinfo.name,f0rinfo.author,vald,pinfo.name);
+		  is_unstable=1;
+		  if (valcol.b<0.) valcol.b=0.;
+		  if (valcol.b>1.) valcol.b=1.;
+		}
+
 #endif
 		in_params[wnum]=weed_colRGBd_init((char *)pinfo.name,label,valcol.r,valcol.g,valcol.b);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
@@ -696,6 +741,19 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		valpos.x=valpos.y=0.;
 #ifdef CAN_GET_DEF
 		f0r_get_param_value(f0r_inst,(void **)&valpos,pnum);
+		if (valpos.x<0.||valpos.x>1.) {
+		  fprintf(stderr,"Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\nThis plugin may be unstable !\n",f0rinfo.name,f0rinfo.author,vald,pinfo.name);
+		  is_unstable=1;
+		  if (valpos.x<0.) valpos.x=0.;
+		  if (valpos.x>1.) valpos.x=1.;
+		}
+
+		if (valpos.y<0.||valpos.y>1.) {
+		  fprintf(stderr,"Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\nThis plugin may be unstable !\n",f0rinfo.name,f0rinfo.author,vald,pinfo.name);
+		  is_unstable=1;
+		  if (valpos.y<0.) valpos.y=0.;
+		  if (valpos.y>1.) valpos.y=1.;
+		}
 #endif
 		in_params[wnum]=weed_float_init((char *)pinfo.name,label,valpos.x,0.,1.);
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
@@ -718,7 +776,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		valch=strdup("Frei0r");
 #endif
 		in_params[wnum]=weed_text_init((char *)pinfo.name,label,valch);
+#ifndef CAN_GET_DEF
 		free(valch);
+#endif
 		weed_set_string_value(in_params[wnum],"description",(char *)pinfo.explanation);
 		if (num_weed_params>f0rinfo.num_params) sprintf(rfx_strings[pnum],"layout|p%d|",wnum);
 		break;
@@ -753,6 +813,10 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  pversion=f0rinfo.major_version*1000+f0rinfo.minor_version;
 
 	  filter_class=weed_filter_class_init(weed_name,(char *)f0rinfo.author,pversion,0,&frei0r_init,&frei0r_process,&frei0r_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+
+	  if (is_unstable) {
+	    weed_set_boolean_value(filter_class,"plugin_unstable",WEED_TRUE);
+	  }
 
 	  if (num_weed_params>f0rinfo.num_params) {
 	    gui=weed_filter_class_get_gui(filter_class);
@@ -797,6 +861,11 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       }
     // end frei0r dirs
     if (curvdir!=NULL) closedir(curvdir);
+
+#ifndef DEBUG
+    dup2(new_stdout,1);
+    dup2(new_stderr,2);
+#endif
 
     if (num_filters==0) return NULL;
     weed_set_int_value(plugin_info,"version",package_version);

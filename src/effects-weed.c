@@ -2944,6 +2944,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	if (!(reason=check_for_lives(filters[mode],idx))) {
 	  gboolean dup=FALSE;
 	  weed_filters[idx]=filters[mode];
+
 	  num_weed_filters++;
 	  hashnames[idx]=make_weed_hashname(idx,TRUE);
 	  for (i=0;i<idx;i++) {
@@ -2988,7 +2989,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 				G_CALLBACK (rte_set_defs_activate),
 				GINT_TO_POINTER(idx));
 	    }
-	      
+
 	    kmode++;
 	  }
 	    idx++;
@@ -5525,7 +5526,12 @@ GList *weed_get_all_names (gshort list_type) {
     case 2:
       // name and type
       filter_type=weed_filter_get_type(i);
-      string=g_strdup_printf("%s (%s)",filter_name,filter_type);
+
+      if (weed_plant_has_leaf(weed_filters[i],"plugin_unstable")&&
+	  weed_get_boolean_value(weed_filters[i],"plugin_unstable",&error)==WEED_TRUE) {
+	string=g_strdup_printf(_("%s [unstable] (%s)"),filter_name,filter_type);
+      }
+      else string=g_strdup_printf("%s (%s)",filter_name,filter_type);
       list=g_list_append(list,(gpointer)string);
       g_free(filter_type);
       break;
@@ -6375,7 +6381,7 @@ int weed_get_idx_for_hashname (const gchar *hashname, gboolean fullname) {
   return -1;
 }
 
-weed_plant_t *get_weed_filter(int idx) {
+ weed_plant_t *get_weed_filter(int idx) {
   if (idx>-1&&idx<num_weed_filters) return weed_filters[idx];
   return NULL;
 }

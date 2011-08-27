@@ -58,7 +58,7 @@ my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
 $s->add($ip1);
 
 
-$timeout=10;
+$timeout=2;
 
 
 
@@ -102,221 +102,212 @@ for ($j=0;;$j++) {
 	last;
     }
     else {
-#	next if ($retmsg eq "compositorcompositor");
+	next unless ($retmsg=~ /^frei0rFrei0r/);
+	print "testing $retmsg\n";
 
-#	$ready=0;
-#	if ($retmsg eq "colorkeycolour key") {
-	    $ready=1;
-#	}
-
-	next if (!$ready);
-
-	if (1||$retmsg=~ /^frei0rFrei0r:/) {
-	    print "testing $retmsg\n";
-
-	    # map to key 1 and enable it
-	    `$sendOMC /effect_key/map/clear`;
-	    `$sendOMC /effect_key/map,1,"$retmsg"`;
-	    `$sendOMC /effect_key/enable,1`;
-	    
-	    #if trans, set bg
-	    `$sendOMC /effect_key/inchannels/active/get,1`;
-	    $nchans=&get_newmsg;
-	    if ($nchans==2) {
-		`$sendOMC /clip/background/select,2`;
-	    }
-
-	    #print("number of active in channels is $nchans\n");
-
-
-	    #test each parameter in turn - get value, set to min, max, default
-	    `$sendOMC /effect_key/parameter/count,1`;
-	    $nparms=&get_newmsg;
-
-	    #print "Effect has $nparms params\n";
-
-	    if ($nparms>20) {
-		$nparms=20;
-	    }
-
-#	    &sleep200;
-
-	    for ($i=0;$i<$nparms;$i++) {
-		`$sendOMC /effect_key/parameter/name/get,1,$i`;
-		$pname=&get_newmsg;
-		print ("Testing param $i, $pname\n");
-
-		`$sendOMC /effect_key/parameter/type/get,1,$i`;
-		$ptype=&get_newmsg;
-		if ($ptype==1) {
-		    $ptname="int";
-		}
-		if ($ptype==2) {
-		    $ptname="float";
-		}
-		if ($ptype==3) {
-		    $ptname="bool";
-		}
-		if ($ptype==4) {
-		    $ptname="string";
-		}
-		if ($ptype==5) {
-		    $ptname="colour";
-		}
-
-		print("param type is $ptname\n");
-
-		`$sendOMC /effect_key/parameter/default/get,1,$i`;
-		$pdef=&get_newmsg;
-
-		print("default value is $pdef\n");
-
-		# set to min, max, def; bool on/off; text "LiVES test"
-
-		if ($ptype != 3 && $ptype != 4) {
-		    `$sendOMC /effect_key/parameter/min/get,1,$i`;
-		    $pmin=&get_newmsg;
-		    
-		    print("min value is $pmin\n");
-
-		    `$sendOMC /effect_key/parameter/max/get,1,$i`;
-		    $pmax=&get_newmsg;
-		    
-		    print("max value is $pmax\n");
-
-		    if ($pdef<$pmin || $pdef > $pmax) {
-			#print ("DEFAULT OUT OF RANGE ($pdef) $retmsg: $pname\n");
-		    }
-
-
-		    #set to min
-
-
-
-		}
-
-		#check nvalues in param
-		`$sendOMC /effect_key/parameter/value/count,1,$i`;
-		$pnvals=&get_newmsg;
-		print("nvalues is $pnvals\n");
-
-		if ($pnvals!=1) {
-		    print "not testing ARRAY\n";
-		    exit 0;
-		    next;
-
-		}
-
-
-		if ($ptype==5) {
-		    #colour
-		    `$sendOMC /effect_key/parameter/colorspace/get,1,$i`;
-		    $csp=&get_newmsg;
-		    print("CSP is $csp\n");
-
-		    $test=(split/,/,$pmin)[1];
-
-		    if ($test eq "") {
-			print "min needs expand\n";
-
-			if ($csp==1) {
-			    $pmin="$pmin,$pmin,$pmin";
-			}
-			else {
-			    $pmin="$pmin,$pmin,$pmin,$pmin";
-			}
-
-		    }
-
-		    $test=(split/,/,$pmax)[1];
-
-		    if ($test eq "") {
-			print "max needs expand\n";
-
-			if ($csp==1) {
-			    $pmax="$pmax,$pmax,$pmax";
-			}
-			else {
-			    $pmax="$pmax,$pmax,$pmax,$pmax";
-			}
-
-		    }
-
-		    $test=(split/,/,$pdef)[1];
-
-		    if ($test eq "") {
-			print "def needs expand\n";
-
-			if ($csp==1) {
-			    $pdef="$pdef,$pdef,$pdef";
-			}
-			else {
-			    $pdef="$pdef,$pdef,$pdef,$pdef";
-			}
-
-		    }
-
-		}
-
-
-		# set to first value
-		if ($ptype==3) {
-		    #bool
-		    $pmin=!$pdef;
-		}
-
-		if ($ptype==4) {
-		    #string
-		    $pmin="\"hello \\\"world\\\"!\"";
-		    if ($pdef eq "") {
-			$pdef="\" \"";
-		    }
-		}
-
-
-		`$sendOMC /effect_key/parameter/value/set,1,$i,$pmin`;
-
-		`$sendOMC /effect_key/parameter/value/get,1,$i`;
-		$pval=&get_newmsg;
-		    
-		print("set to first value: $pval\n");
-
-
-		# set to second value
-
-		if ($ptype==1||$ptype==2||$ptype==5) {
-		    `$sendOMC /effect_key/parameter/value/set,1,$i,$pmax`;
-		    
-
-		    `$sendOMC /effect_key/parameter/value/get,1,$i`;
-		    $pval=&get_newmsg;
-		    
-		    print("set to second value: $pval\n");
-		}
-
-
-
-
-		# reset to def. value
-
-		`$sendOMC /effect_key/parameter/value/set,1,$i,$pdef`;
-
-		`$sendOMC /effect_key/parameter/value/get,1,$i`;
-		$pval=&get_newmsg;
-		    
-		print("reset to def value: $pval\n");
-
-
-		# sleep 0.2 seconds
-	    }
-
-
-	    #deactivate fx
-	    `$sendOMC /effect_key/disable,1`;
-
+	# map to key 1 and enable it
+	`$sendOMC /effect_key/map/clear`;
+	`$sendOMC /effect_key/map,1,"$retmsg"`;
+	`$sendOMC /effect_key/enable,1`;
+	
+	#if trans, set bg
+	`$sendOMC /effect_key/inchannels/active/get,1`;
+	$nchans=&get_newmsg;
+	if ($nchans==2) {
+	    `$sendOMC /clip/background/select,2`;
 	}
+	
+	#print("number of active in channels is $nchans\n");
+	
+
+	#test each parameter in turn - get value, set to min, max, default
+	`$sendOMC /effect_key/parameter/count,1`;
+	$nparms=&get_newmsg;
+	
+	#print "Effect has $nparms params\n";
+	
+	if ($nparms>20) {
+	    $nparms=20;
+	}
+	
+#	    &sleep200;
+	
+	for ($i=0;$i<$nparms;$i++) {
+	    `$sendOMC /effect_key/parameter/name/get,1,$i`;
+	    $pname=&get_newmsg;
+	    print ("Testing param $i, $pname\n");
+	    
+	    `$sendOMC /effect_key/parameter/type/get,1,$i`;
+	    $ptype=&get_newmsg;
+	    if ($ptype==1) {
+		$ptname="int";
+	    }
+	    if ($ptype==2) {
+		$ptname="float";
+	    }
+	    if ($ptype==3) {
+		$ptname="bool";
+	    }
+	    if ($ptype==4) {
+		$ptname="string";
+	    }
+	    if ($ptype==5) {
+		$ptname="colour";
+	    }
+	    
+	    print("param type is $ptname\n");
+	    
+	    `$sendOMC /effect_key/parameter/default/get,1,$i`;
+	    $pdef=&get_newmsg;
+	    
+	    print("default value is $pdef\n");
+	    
+	    # set to min, max, def; bool on/off; text "LiVES test"
+	    
+	    if ($ptype != 3 && $ptype != 4) {
+		`$sendOMC /effect_key/parameter/min/get,1,$i`;
+		$pmin=&get_newmsg;
+		
+		print("min value is $pmin\n");
+		
+		`$sendOMC /effect_key/parameter/max/get,1,$i`;
+		$pmax=&get_newmsg;
+		
+		print("max value is $pmax\n");
+		
+		if ($pdef<$pmin || $pdef > $pmax) {
+		    #print ("DEFAULT OUT OF RANGE ($pdef) $retmsg: $pname\n");
+		}
+		
+		
+		#set to min
+		
+		
+		
+	    }
+	    
+	    #check nvalues in param
+	    `$sendOMC /effect_key/parameter/value/count,1,$i`;
+	    $pnvals=&get_newmsg;
+	    print("nvalues is $pnvals\n");
+	    
+	    if ($pnvals!=1) {
+		print "not testing ARRAY\n";
+		exit 0;
+		next;
+		
+	    }
+	    
+	    
+	    if ($ptype==5) {
+		#colour
+		`$sendOMC /effect_key/parameter/colorspace/get,1,$i`;
+		$csp=&get_newmsg;
+		print("CSP is $csp\n");
+		
+		$test=(split/,/,$pmin)[1];
+		
+		if ($test eq "") {
+		    print "min needs expand\n";
+		    
+		    if ($csp==1) {
+			$pmin="$pmin,$pmin,$pmin";
+		    }
+		    else {
+			$pmin="$pmin,$pmin,$pmin,$pmin";
+		    }
+		    
+		}
+		
+		$test=(split/,/,$pmax)[1];
+		
+		if ($test eq "") {
+		    print "max needs expand\n";
+		    
+		    if ($csp==1) {
+			$pmax="$pmax,$pmax,$pmax";
+		    }
+		    else {
+			$pmax="$pmax,$pmax,$pmax,$pmax";
+		    }
+		    
+		}
+		
+		$test=(split/,/,$pdef)[1];
+		
+		if ($test eq "") {
+		    print "def needs expand\n";
+		    
+		    if ($csp==1) {
+			$pdef="$pdef,$pdef,$pdef";
+		    }
+		    else {
+			$pdef="$pdef,$pdef,$pdef,$pdef";
+		    }
+		    
+		}
+		
+	    }
+	    
+	    
+	    # set to first value
+	    if ($ptype==3) {
+		#bool
+		$pmin=!$pdef;
+	    }
+	    
+	    if ($ptype==4) {
+		#string
+		$pmin="\"hello \\\"world\\\"!\"";
+		if ($pdef eq "") {
+		    $pdef="\" \"";
+		}
+	    }
+	    
+	    
+	    `$sendOMC /effect_key/parameter/value/set,1,$i,$pmin`;
+	    
+	    `$sendOMC /effect_key/parameter/value/get,1,$i`;
+	    $pval=&get_newmsg;
+	    
+	    print("set to first value: $pval\n");
+	    
+	    
+	    # set to second value
+	    
+	    if ($ptype==1||$ptype==2||$ptype==5) {
+		`$sendOMC /effect_key/parameter/value/set,1,$i,$pmax`;
+		
+		
+		`$sendOMC /effect_key/parameter/value/get,1,$i`;
+		$pval=&get_newmsg;
+		
+		print("set to second value: $pval\n");
+	    }
+	    
+	    
+	    
+	    
+	    # reset to def. value
+	    
+	    `$sendOMC /effect_key/parameter/value/set,1,$i,$pdef`;
+	    
+	    `$sendOMC /effect_key/parameter/value/get,1,$i`;
+	    $pval=&get_newmsg;
+	    
+	    print("reset to def value: $pval\n");
+	    
+	    
+	    # sleep 0.2 seconds
+	}
+	
+	
+	#deactivate fx
+	`$sendOMC /effect_key/disable,1`;
+	
     }
 }
+
 
 
 #clear mapping
@@ -363,5 +354,5 @@ sub location {
 
 sub sleep200 {
 # sleep for 200 ms
-    select(undef, undef, undef, 2.);
+    select(undef, undef, undef, 0.2);
 }

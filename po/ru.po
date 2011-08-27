@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-25 22:57-0300\n"
+"POT-Creation-Date: 2011-08-27 14:44-0300\n"
 "PO-Revision-Date: 2011-08-18 11:56+0000\n"
 "Last-Translator: Alexey Ivanov <alexey.ivanes@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -3386,7 +3386,7 @@ msgstr "_О Программе"
 msgid "Rewind to start (w)"
 msgstr ""
 
-#: src/gui.c:1693 src/multitrack.c:14707
+#: src/gui.c:1693 src/multitrack.c:14706
 msgid "Play all (p)"
 msgstr "Воспроизвести все (P)"
 
@@ -4858,7 +4858,7 @@ msgstr ""
 msgid "Video only Transitions"
 msgstr ""
 
-#: src/effects-weed.c:277 src/multitrack.c:9323
+#: src/effects-weed.c:277 src/multitrack.c:9322
 msgid "audio only"
 msgstr ""
 
@@ -4866,7 +4866,7 @@ msgstr ""
 msgid "Audio only Transitions"
 msgstr ""
 
-#: src/effects-weed.c:280 src/effects-weed.c:283 src/multitrack.c:16621
+#: src/effects-weed.c:280 src/effects-weed.c:283 src/multitrack.c:16620
 msgid "audio"
 msgstr "аудио"
 
@@ -7802,7 +7802,7 @@ msgid ""
 "It cannot be loaded.\n"
 msgstr ""
 
-#: src/multitrack.c:4599 src/multitrack.c:4607 src/multitrack.c:18752
+#: src/multitrack.c:4599 src/multitrack.c:4607 src/multitrack.c:18751
 msgid "Layout was wiped.\n"
 msgstr ""
 
@@ -7871,7 +7871,7 @@ msgstr ""
 msgid "Ignore selection limits when inserting"
 msgstr ""
 
-#: src/multitrack.c:5465 src/multitrack.c:14706
+#: src/multitrack.c:5465 src/multitrack.c:14705
 msgid "_Play from Timeline Position"
 msgstr ""
 
@@ -8118,11 +8118,11 @@ msgstr ""
 msgid "Select _overlap"
 msgstr ""
 
-#: src/multitrack.c:6818 src/multitrack.c:12465
+#: src/multitrack.c:6818 src/multitrack.c:12464
 msgid "Expanded View (d)"
 msgstr ""
 
-#: src/multitrack.c:6820 src/multitrack.c:12472
+#: src/multitrack.c:6820 src/multitrack.c:12471
 msgid "Compact View (d)"
 msgstr ""
 
@@ -8198,7 +8198,7 @@ msgstr "Конечный кадр"
 msgid "Scroll"
 msgstr "Прокрутка"
 
-#: src/multitrack.c:8020
+#: src/multitrack.c:8019
 msgid ""
 "\n"
 "==============================\n"
@@ -8208,156 +8208,156 @@ msgstr ""
 "==============================\n"
 "Перешли на Clip режиме редактирования\n"
 
-#: src/multitrack.c:8180
+#: src/multitrack.c:8179
 msgid "Timeline (seconds)"
 msgstr "Сроки (в секундах)"
 
-#: src/multitrack.c:8587
+#: src/multitrack.c:8586
 msgid " Backing audio"
 msgstr ""
 
-#: src/multitrack.c:8590
+#: src/multitrack.c:8589
 #, c-format
 msgid " Layer %d audio"
 msgstr ""
 
-#: src/multitrack.c:8597
+#: src/multitrack.c:8596
 msgid "Show/hide audio details"
 msgstr ""
 
-#: src/multitrack.c:8614 src/multitrack.c:8822
+#: src/multitrack.c:8613 src/multitrack.c:8821
 #, c-format
 msgid "Layer %d audio"
 msgstr ""
 
-#: src/multitrack.c:8777
+#: src/multitrack.c:8776
 msgid "Select track"
 msgstr "Выберите трек"
 
-#: src/multitrack.c:8780
+#: src/multitrack.c:8779
 msgid "Show/hide audio"
 msgstr ""
 
-#: src/multitrack.c:8786
+#: src/multitrack.c:8785
 #, c-format
 msgid "Video %d"
 msgstr ""
 
-#: src/multitrack.c:8814 src/multitrack.c:8850
+#: src/multitrack.c:8813 src/multitrack.c:8849
 #, c-format
 msgid "%s (layer %d)"
 msgstr ""
 
-#: src/multitrack.c:8823
+#: src/multitrack.c:8822
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:8946
+#: src/multitrack.c:8945
 msgid "LiVES: Selected effect"
 msgstr "LiVES: Выбранный эффекта"
 
-#: src/multitrack.c:8953
+#: src/multitrack.c:8952
 msgid "_View/Edit this effect"
 msgstr ""
 
-#: src/multitrack.c:8956
+#: src/multitrack.c:8955
 msgid "_View this effect"
 msgstr "_Открыть этот эффект"
 
-#: src/multitrack.c:8964
+#: src/multitrack.c:8963
 msgid "_Delete this effect"
 msgstr "_Удалить этот эффект"
 
-#: src/multitrack.c:9015
+#: src/multitrack.c:9014
 msgid "Cannot insert after this effect"
 msgstr ""
 
-#: src/multitrack.c:9044
+#: src/multitrack.c:9043
 msgid "This effect cannot be moved"
 msgstr ""
 
-#: src/multitrack.c:9090
+#: src/multitrack.c:9089
 #, c-format
 msgid "  %d to %d selected  "
 msgstr ""
 
-#: src/multitrack.c:9093 src/multitrack.c:9329
+#: src/multitrack.c:9092 src/multitrack.c:9328
 #, c-format
 msgid "%.2f sec."
 msgstr ""
 
-#: src/multitrack.c:9300
+#: src/multitrack.c:9299
 #, c-format
 msgid "%d frames"
 msgstr "%d кадров"
 
-#: src/multitrack.c:9592
+#: src/multitrack.c:9591
 msgid ""
 "\n"
 "==============================\n"
 "Switched to Multitrack mode\n"
 msgstr ""
 
-#: src/multitrack.c:11155
+#: src/multitrack.c:11154
 msgid "Drag the time slider to where you"
 msgstr ""
 
-#: src/multitrack.c:11156
+#: src/multitrack.c:11155
 msgid "want to set effect parameters"
 msgstr ""
 
-#: src/multitrack.c:11157
+#: src/multitrack.c:11156
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr ""
 
-#: src/multitrack.c:11158
+#: src/multitrack.c:11157
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
 "Nodes can be deleted."
 msgstr ""
 
-#: src/multitrack.c:11161
+#: src/multitrack.c:11160
 msgid "Effect has no parameters.\n"
 msgstr ""
 
-#: src/multitrack.c:11245
+#: src/multitrack.c:11244
 #, c-format
 msgid "%s output"
 msgstr ""
 
-#: src/multitrack.c:11251
+#: src/multitrack.c:11250
 #, c-format
 msgid "layer %d"
 msgstr "слой %d"
 
-#: src/multitrack.c:11253
+#: src/multitrack.c:11252
 msgid "audio track"
 msgstr "звуковая дорожка"
 
-#: src/multitrack.c:11254
+#: src/multitrack.c:11253
 #, c-format
 msgid "%s to %s"
 msgstr "%s по %s"
 
-#: src/multitrack.c:11305
+#: src/multitrack.c:11304
 msgid "_Prev filter map"
 msgstr ""
 
-#: src/multitrack.c:11315
+#: src/multitrack.c:11314
 msgid "Insert _before"
 msgstr ""
 
-#: src/multitrack.c:11323
+#: src/multitrack.c:11322
 msgid "Insert _after"
 msgstr ""
 
-#: src/multitrack.c:11336
+#: src/multitrack.c:11335
 msgid "_Next filter map"
 msgstr ""
 
-#: src/multitrack.c:11350
+#: src/multitrack.c:11349
 msgid ""
 "\n"
 "\n"
@@ -8369,163 +8369,163 @@ msgstr ""
 "Не влияет на текущий трек,\n"
 "текущее время.\n"
 
-#: src/multitrack.c:11362
+#: src/multitrack.c:11361
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:11369
+#: src/multitrack.c:11368
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:11377
+#: src/multitrack.c:11376
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
 msgstr ""
 
-#: src/multitrack.c:11573
+#: src/multitrack.c:11572
 msgid "LiVES: Selected block/frame"
 msgstr "LiVES: Выбранный блок / кадр"
 
-#: src/multitrack.c:11579
+#: src/multitrack.c:11578
 msgid "_Delete this block"
 msgstr "_Удалить этот блок"
 
-#: src/multitrack.c:11588
+#: src/multitrack.c:11587
 msgid "_Split block here"
 msgstr ""
 
-#: src/multitrack.c:11596
+#: src/multitrack.c:11595
 msgid "List _effects here"
 msgstr ""
 
-#: src/multitrack.c:11605 src/multitrack.c:11679
+#: src/multitrack.c:11604 src/multitrack.c:11678
 #, c-format
 msgid "_Adjust %s"
 msgstr ""
 
-#: src/multitrack.c:11619
+#: src/multitrack.c:11618
 msgid "_Select this block"
 msgstr "_Выберите этот блок"
 
-#: src/multitrack.c:11652
+#: src/multitrack.c:11651
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Выбранный кадр"
 
-#: src/multitrack.c:11660
+#: src/multitrack.c:11659
 msgid "_Insert here"
 msgstr "_Вставьте здесь"
 
-#: src/multitrack.c:11666
+#: src/multitrack.c:11665
 msgid "_Insert audio here"
 msgstr "_Вставьте аудио здесь"
 
-#: src/multitrack.c:13064
+#: src/multitrack.c:13063
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13098
+#: src/multitrack.c:13097
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13296
+#: src/multitrack.c:13295
 #, c-format
 msgid "Undid %s\n"
 msgstr ""
 
-#: src/multitrack.c:13492
+#: src/multitrack.c:13491
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:13518
+#: src/multitrack.c:13517
 msgid "Multitrack details"
 msgstr ""
 
-#: src/multitrack.c:13530
+#: src/multitrack.c:13529
 msgid ""
 "\n"
 " (variable)"
 msgstr ""
 
-#: src/multitrack.c:13750 src/multitrack.c:16600 src/multitrack.c:16612
+#: src/multitrack.c:13749 src/multitrack.c:16599 src/multitrack.c:16611
 #, c-format
 msgid "track %s"
 msgstr "путь %s"
 
-#: src/multitrack.c:13755 src/multitrack.c:16605
+#: src/multitrack.c:13754 src/multitrack.c:16604
 #, c-format
 msgid "tracks %s and %s"
 msgstr ""
 
-#: src/multitrack.c:13761 src/multitrack.c:16615
+#: src/multitrack.c:13760 src/multitrack.c:16614
 msgid "selected tracks"
 msgstr "выбранных композиций"
 
-#: src/multitrack.c:13765
+#: src/multitrack.c:13764
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13794
+#: src/multitrack.c:13793
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13985
+#: src/multitrack.c:13984
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr ""
 
-#: src/multitrack.c:14046
+#: src/multitrack.c:14045
 msgid "Cleaning up..."
 msgstr "Очистка..."
 
-#: src/multitrack.c:14699
+#: src/multitrack.c:14698
 msgid "_Pause"
 msgstr "_Приостановить"
 
-#: src/multitrack.c:14700
+#: src/multitrack.c:14699
 msgid "Pause (p)"
 msgstr "Пауза (p)"
 
-#: src/multitrack.c:14840
+#: src/multitrack.c:14839
 msgid "Press 'm' during playback"
 msgstr ""
 
-#: src/multitrack.c:14841
+#: src/multitrack.c:14840
 msgid "to make a mark on the timeline"
 msgstr ""
 
-#: src/multitrack.c:15131
+#: src/multitrack.c:15130
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15379
+#: src/multitrack.c:15378
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15884
+#: src/multitrack.c:15883
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
 "selected.\n"
 msgstr ""
 
-#: src/multitrack.c:15888
+#: src/multitrack.c:15887
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -8533,117 +8533,117 @@ msgstr ""
 "Выберите одну или несколько композиций\n"
 "создать регионе.\n"
 
-#: src/multitrack.c:15890
+#: src/multitrack.c:15889
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "%d видеодорожек выбран.\n"
 
-#: src/multitrack.c:15892
+#: src/multitrack.c:15891
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
 msgstr ""
 
-#: src/multitrack.c:15899
+#: src/multitrack.c:15898
 msgid ""
 "Single click on an effect\n"
 "to select it."
 msgstr ""
 
-#: src/multitrack.c:15900
+#: src/multitrack.c:15899
 msgid ""
 "Double click on an effect\n"
 "to edit it."
 msgstr ""
 
-#: src/multitrack.c:15901
+#: src/multitrack.c:15900
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
 msgstr ""
 
-#: src/multitrack.c:15903
+#: src/multitrack.c:15902
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr ""
 
-#: src/multitrack.c:15910
+#: src/multitrack.c:15909
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:15911
+#: src/multitrack.c:15910
 msgid "or INSERT AFTER buttons to move it."
 msgstr ""
 
-#: src/multitrack.c:15947
+#: src/multitrack.c:15946
 msgid ""
 "You can click and drag\n"
 "below the timeline"
 msgstr ""
 
-#: src/multitrack.c:15948
+#: src/multitrack.c:15947
 msgid "to select a time region.\n"
 msgstr ""
 
-#: src/multitrack.c:16182 src/multitrack.c:16195
+#: src/multitrack.c:16181 src/multitrack.c:16194
 msgid "Click on another effect,"
 msgstr ""
 
-#: src/multitrack.c:16183 src/multitrack.c:16196
+#: src/multitrack.c:16182 src/multitrack.c:16195
 msgid ""
 "and the selected one\n"
 "will be inserted"
 msgstr ""
 
-#: src/multitrack.c:16184
+#: src/multitrack.c:16183
 msgid "after it.\n"
 msgstr "после него.\n"
 
-#: src/multitrack.c:16197
+#: src/multitrack.c:16196
 msgid "before it.\n"
 msgstr "pered nim.\n"
 
-#: src/multitrack.c:16427
+#: src/multitrack.c:16426
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16623
+#: src/multitrack.c:16622
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:17039 src/multitrack.c:18524
+#: src/multitrack.c:17038 src/multitrack.c:18523
 msgid "_Autoreload each time"
 msgstr ""
 
-#: src/multitrack.c:17110
+#: src/multitrack.c:17109
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr ""
 
-#: src/multitrack.c:18432
+#: src/multitrack.c:18431
 msgid "clips and frames"
 msgstr "клипы и кадры"
 
-#: src/multitrack.c:18436
+#: src/multitrack.c:18435
 msgid "clips"
 msgstr "Клипы"
 
-#: src/multitrack.c:18439
+#: src/multitrack.c:18438
 msgid "frames"
 msgstr "кадров"
 
-#: src/multitrack.c:18449
+#: src/multitrack.c:18448
 msgid ""
 "\n"
 "Auto reload layout.\n"
 msgstr ""
 
-#: src/multitrack.c:18452
+#: src/multitrack.c:18451
 #, c-format
 msgid ""
 "%s\n"
@@ -8651,68 +8651,68 @@ msgid ""
 "Therefore it could not be loaded properly.\n"
 msgstr ""
 
-#: src/multitrack.c:18575
+#: src/multitrack.c:18574
 msgid "auto backup"
 msgstr ""
 
-#: src/multitrack.c:18578
+#: src/multitrack.c:18577
 #, c-format
 msgid ""
 "\n"
 "Unable to load layout file %s\n"
 msgstr ""
 
-#: src/multitrack.c:18594
+#: src/multitrack.c:18593
 #, c-format
 msgid "Loading layout from %s..."
 msgstr ""
 
-#: src/multitrack.c:18614
+#: src/multitrack.c:18613
 #, c-format
 msgid "Got %d events...processing..."
 msgstr ""
 
-#: src/multitrack.c:18630
+#: src/multitrack.c:18629
 msgid "Checking and rebuilding event list"
 msgstr ""
 
-#: src/multitrack.c:18657
+#: src/multitrack.c:18656
 #, c-format
 msgid "%d errors detected.\n"
 msgstr ""
 
-#: src/multitrack.c:18690
+#: src/multitrack.c:18689
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:19617
+#: src/multitrack.c:19616
 msgid "LiVES: Multitrack audio mixer"
 msgstr ""
 
-#: src/multitrack.c:19654
+#: src/multitrack.c:19653
 msgid "_Reset values"
 msgstr "_Сброс значений"
 
-#: src/multitrack.c:19658
+#: src/multitrack.c:19657
 msgid "_Close mixer"
 msgstr "_Закрыть смеситель"
 
-#: src/multitrack.c:19700
+#: src/multitrack.c:19699
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:19706
+#: src/multitrack.c:19705
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:19745
+#: src/multitrack.c:19744
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:19751
+#: src/multitrack.c:19750
 msgid "Adjust all layer audio values to the same value"
 msgstr ""
 
@@ -9075,8 +9075,9 @@ msgid "Opened device %s\n"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "180 _degrees             "
-msgstr ""
+msgstr "Устройство чтения           "
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "90 degrees _Anticlockwise"
@@ -9135,16 +9136,19 @@ msgid "Blank _Colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "Blank frames"
-msgstr ""
+msgstr "клипы и кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "Blanking"
-msgstr ""
+msgstr "Резервное сохранение"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Block _height"
-msgstr ""
+msgstr "_Высота"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Block _width"
@@ -9167,12 +9171,14 @@ msgid "Brightness _end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _start"
-msgstr ""
+msgstr "Выровнить начало (_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness change"
-msgstr ""
+msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Brightness end"
@@ -9217,16 +9223,19 @@ msgid "Checkerboard"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "Checkerboarding"
-msgstr ""
+msgstr "Записывается"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Clipboard _over selection"
-msgstr ""
+msgstr "Вставить _за выделеннием"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Clipboard _under selection"
-msgstr ""
+msgstr "Вставить _за выделеннием"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -9265,12 +9274,14 @@ msgid "Cycle _Step"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+#, fuzzy
 msgid "Deinterlace"
-msgstr ""
+msgstr "Устранить чересстрочную развёртку"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+#, fuzzy
 msgid "Deinterlacing"
-msgstr ""
+msgstr "Устранить чересстрочную развёртку"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckle"
@@ -9322,16 +9333,18 @@ msgid "End pos_Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "Enhance"
-msgstr ""
+msgstr "Отмена"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 msgid "Enhancing"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _colour"
-msgstr ""
+msgstr "Изменить исходящий звук"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -9339,32 +9352,37 @@ msgid "Fade _end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _in"
-msgstr ""
+msgstr "Изменить входящий звук"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _out"
-msgstr ""
+msgstr "Изменить исходящий звук"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade video in or out"
-msgstr ""
+msgstr "Изменить исходящий звук"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fading video"
-msgstr ""
+msgstr "Изменение входящего звука"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "Fina_l frame"
-msgstr ""
+msgstr "Конечный кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Flash _colour"
@@ -9387,20 +9405,23 @@ msgid "Frame _Colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Frame _height"
-msgstr ""
+msgstr "Размер кадра"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr ""
+msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Frame _in frame position of top frame..."
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Frame _width"
-msgstr ""
+msgstr "Размер кадра"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
@@ -9439,16 +9460,18 @@ msgid "Generating blank frames"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generating clip from image"
-msgstr ""
+msgstr "Очищение изображений кадра"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "Generating coloured frames"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generating title frames"
-msgstr ""
+msgstr "Вставка тишины"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -9463,12 +9486,14 @@ msgid "Hue _end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _start"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue change"
-msgstr ""
+msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Hue end"
@@ -9535,8 +9560,9 @@ msgid "Negate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negating"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -9555,8 +9581,9 @@ msgid "Normalizing"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Number of _frames"
-msgstr ""
+msgstr "    Число кадров, которые будут открыты"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Overlaying an image onto video"
@@ -9575,16 +9602,18 @@ msgid "Pixilate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilating"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "Posterizing"
-msgstr ""
+msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -9603,25 +9632,29 @@ msgid "Reduction radius"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Replacing colours in"
-msgstr ""
+msgstr "Повторный выбор буфера обмена звука"
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
+#, fuzzy
 msgid "Resize All Frames"
-msgstr ""
+msgstr "_Масштабировать все кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotate Clip"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "Rotating"
-msgstr ""
+msgstr "Вставить"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "S_tart %"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Saturation _end"
@@ -9664,8 +9697,9 @@ msgid "Shrinking/Expanding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "Skip forward"
-msgstr ""
+msgstr "Слушать Вперед"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Solarize"
@@ -9696,8 +9730,9 @@ msgid "Spread"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spreading"
-msgstr ""
+msgstr "Остановить запись"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Step _Value"
@@ -9706,8 +9741,9 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "Step per _Frame"
-msgstr ""
+msgstr "    _Рама"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl _start"
@@ -9746,8 +9782,9 @@ msgid "Tunnel"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "Tunneling"
-msgstr ""
+msgstr "Отмена"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
@@ -9803,8 +9840,9 @@ msgid "_Calculate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "_Cycle Start"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Decrease Contrast"
@@ -9829,8 +9867,9 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "_End amount"
-msgstr ""
+msgstr "Конечный кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9848,8 +9887,9 @@ msgid "_Fill colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_First frame"
-msgstr ""
+msgstr "Первый кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Flash for"
@@ -9867,8 +9907,9 @@ msgid "_Frames per second"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Frames"
-msgstr ""
+msgstr "Кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Hold for"
@@ -9879,8 +9920,9 @@ msgid "_Horizontal segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "_Image File"
-msgstr ""
+msgstr "_Файл"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Image"
@@ -9926,8 +9968,9 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "_Number of frames"
-msgstr ""
+msgstr "    Число кадров, которые будут открыты"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -9947,8 +9990,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Point size"
-msgstr ""
+msgstr "_Указатель"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "_Radius end"
@@ -9975,12 +10019,14 @@ msgid "_Randomness"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Right"
-msgstr ""
+msgstr "_Высота"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "_Rotate Selection by"
-msgstr ""
+msgstr "Вырез_ать выбора"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
@@ -9991,16 +10037,19 @@ msgid "_Sigma end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma start"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Skip ahead"
-msgstr ""
+msgstr "Пропущено"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "_Skip"
-msgstr ""
+msgstr "Пропущено"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "_Source Colour"
@@ -10012,18 +10061,21 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "_Start Colour"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "_Start Value"
-msgstr ""
+msgstr "Стартовый кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "_Start amount"
-msgstr ""
+msgstr "Стартовый кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -10040,12 +10092,14 @@ msgid "_Text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Time (seconds)"
-msgstr ""
+msgstr "Сроки (в секундах)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "_Top left is clipboard"
-msgstr ""
+msgstr "Копировать в буфер обмена"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Top"
@@ -10077,8 +10131,9 @@ msgid "_X End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_X Start"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -10094,8 +10149,9 @@ msgid "_Y End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Y Start"
-msgstr ""
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -10111,8 +10167,9 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "blank_frames"
-msgstr ""
+msgstr "кадров"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
@@ -10147,8 +10204,9 @@ msgid "cycle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+#, fuzzy
 msgid "deinterlace"
-msgstr ""
+msgstr "Устранить чересстрочную развёртку"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "despeckle"
@@ -10167,12 +10225,14 @@ msgid "emboss"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "enhance"
-msgstr ""
+msgstr "Отмена"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "every"
-msgstr ""
+msgstr "_Каждый"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "fade_in_out"
@@ -10263,8 +10323,9 @@ msgid "randomzoom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
+#, fuzzy
 msgid "resize"
-msgstr ""
+msgstr "Размер"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "rotate"
@@ -10291,8 +10352,9 @@ msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "skip_forwards"
-msgstr ""
+msgstr "Слушать Вперед"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "solarize"
@@ -10315,24 +10377,28 @@ msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "transition_bwthresh"
-msgstr ""
+msgstr "Переходы состояний"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "transition_checkerboard"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "transition_fade2"
-msgstr ""
+msgstr "Переходы состояний"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "transition_splice"
-msgstr ""
+msgstr "Переходы состояний"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "trim_frames"
-msgstr ""
+msgstr "кадров"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"
@@ -10411,5 +10477,6 @@ msgid "$plugin_name failed:"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "$error"
-msgstr ""
+msgstr "ошибки.\n"

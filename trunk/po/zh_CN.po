@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-25 22:57-0300\n"
+"POT-Creation-Date: 2011-08-27 14:44-0300\n"
 "PO-Revision-Date: 2011-08-18 11:58+0000\n"
 "Last-Translator: 英华 <wantinghard@gmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -3341,7 +3341,7 @@ msgstr "关于(_A)"
 msgid "Rewind to start (w)"
 msgstr "倒带启动 (w)"
 
-#: src/gui.c:1693 src/multitrack.c:14707
+#: src/gui.c:1693 src/multitrack.c:14706
 msgid "Play all (p)"
 msgstr "播放所有 (p)"
 
@@ -4823,7 +4823,7 @@ msgstr ""
 msgid "Video only Transitions"
 msgstr ""
 
-#: src/effects-weed.c:277 src/multitrack.c:9323
+#: src/effects-weed.c:277 src/multitrack.c:9322
 msgid "audio only"
 msgstr ""
 
@@ -4831,7 +4831,7 @@ msgstr ""
 msgid "Audio only Transitions"
 msgstr ""
 
-#: src/effects-weed.c:280 src/effects-weed.c:283 src/multitrack.c:16621
+#: src/effects-weed.c:280 src/effects-weed.c:283 src/multitrack.c:16620
 msgid "audio"
 msgstr "音频"
 
@@ -7776,7 +7776,7 @@ msgstr ""
 "此布局中的声道数 (%d) 对 LiVES 无效。\n"
 "无法加载。\n"
 
-#: src/multitrack.c:4599 src/multitrack.c:4607 src/multitrack.c:18752
+#: src/multitrack.c:4599 src/multitrack.c:4607 src/multitrack.c:18751
 msgid "Layout was wiped.\n"
 msgstr "布局已擦除。\n"
 
@@ -7845,7 +7845,7 @@ msgstr "清除时间线上的标记(_M)"
 msgid "Ignore selection limits when inserting"
 msgstr "在插入时忽略选区限制"
 
-#: src/multitrack.c:5465 src/multitrack.c:14706
+#: src/multitrack.c:5465 src/multitrack.c:14705
 msgid "_Play from Timeline Position"
 msgstr "从时间线位置开始播放(_P)"
 
@@ -8092,11 +8092,11 @@ msgstr "选择时间线选区是否捕获到所选轨道的重叠处"
 msgid "Select _overlap"
 msgstr "选择重叠(_O)"
 
-#: src/multitrack.c:6818 src/multitrack.c:12465
+#: src/multitrack.c:6818 src/multitrack.c:12464
 msgid "Expanded View (d)"
 msgstr "扩展视图(d)"
 
-#: src/multitrack.c:6820 src/multitrack.c:12472
+#: src/multitrack.c:6820 src/multitrack.c:12471
 msgid "Compact View (d)"
 msgstr "紧凑视图(d)"
 
@@ -8172,7 +8172,7 @@ msgstr "结尾帧"
 msgid "Scroll"
 msgstr "滚动"
 
-#: src/multitrack.c:8020
+#: src/multitrack.c:8019
 msgid ""
 "\n"
 "==============================\n"
@@ -8182,91 +8182,91 @@ msgstr ""
 "==============================\n"
 "已切换到剪辑编辑方式\n"
 
-#: src/multitrack.c:8180
+#: src/multitrack.c:8179
 msgid "Timeline (seconds)"
 msgstr "时间线(秒)"
 
-#: src/multitrack.c:8587
+#: src/multitrack.c:8586
 msgid " Backing audio"
 msgstr ""
 
-#: src/multitrack.c:8590
+#: src/multitrack.c:8589
 #, c-format
 msgid " Layer %d audio"
 msgstr " 层 %d 音频"
 
-#: src/multitrack.c:8597
+#: src/multitrack.c:8596
 msgid "Show/hide audio details"
 msgstr "显示/隐藏音频细节"
 
-#: src/multitrack.c:8614 src/multitrack.c:8822
+#: src/multitrack.c:8613 src/multitrack.c:8821
 #, c-format
 msgid "Layer %d audio"
 msgstr "层 %d 的音频"
 
-#: src/multitrack.c:8777
+#: src/multitrack.c:8776
 msgid "Select track"
 msgstr "选择轨道"
 
-#: src/multitrack.c:8780
+#: src/multitrack.c:8779
 msgid "Show/hide audio"
 msgstr "显示/隐藏音频"
 
-#: src/multitrack.c:8786
+#: src/multitrack.c:8785
 #, c-format
 msgid "Video %d"
 msgstr "视频 %d"
 
-#: src/multitrack.c:8814 src/multitrack.c:8850
+#: src/multitrack.c:8813 src/multitrack.c:8849
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s (层 %d)"
 
-#: src/multitrack.c:8823
+#: src/multitrack.c:8822
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:8946
+#: src/multitrack.c:8945
 msgid "LiVES: Selected effect"
 msgstr "LiVES：已选特效"
 
-#: src/multitrack.c:8953
+#: src/multitrack.c:8952
 msgid "_View/Edit this effect"
 msgstr "查看/编辑此特效(_V)"
 
-#: src/multitrack.c:8956
+#: src/multitrack.c:8955
 msgid "_View this effect"
 msgstr "查看此特效(_V)"
 
-#: src/multitrack.c:8964
+#: src/multitrack.c:8963
 msgid "_Delete this effect"
 msgstr "删除此特效(_D)"
 
-#: src/multitrack.c:9015
+#: src/multitrack.c:9014
 msgid "Cannot insert after this effect"
 msgstr "无法在此特效后插入"
 
-#: src/multitrack.c:9044
+#: src/multitrack.c:9043
 msgid "This effect cannot be moved"
 msgstr "此特效无法移除"
 
-#: src/multitrack.c:9090
+#: src/multitrack.c:9089
 #, c-format
 msgid "  %d to %d selected  "
 msgstr "  已选择 %d 到 %d  "
 
-#: src/multitrack.c:9093 src/multitrack.c:9329
+#: src/multitrack.c:9092 src/multitrack.c:9328
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f 秒"
 
-#: src/multitrack.c:9300
+#: src/multitrack.c:9299
 #, c-format
 msgid "%d frames"
 msgstr "%d 帧"
 
-#: src/multitrack.c:9592
+#: src/multitrack.c:9591
 msgid ""
 "\n"
 "==============================\n"
@@ -8276,65 +8276,65 @@ msgstr ""
 "==============================\n"
 "已切换到多轨道模式\n"
 
-#: src/multitrack.c:11155
+#: src/multitrack.c:11154
 msgid "Drag the time slider to where you"
 msgstr "将时间滑块拖到您"
 
-#: src/multitrack.c:11156
+#: src/multitrack.c:11155
 msgid "want to set effect parameters"
 msgstr "想要设置特效参数的地方"
 
-#: src/multitrack.c:11157
+#: src/multitrack.c:11156
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr "设置参数，然后点击“应用”\n"
 
-#: src/multitrack.c:11158
+#: src/multitrack.c:11157
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
 "Nodes can be deleted."
 msgstr ""
 
-#: src/multitrack.c:11161
+#: src/multitrack.c:11160
 msgid "Effect has no parameters.\n"
 msgstr "特效没有参数。\n"
 
-#: src/multitrack.c:11245
+#: src/multitrack.c:11244
 #, c-format
 msgid "%s output"
 msgstr "%s 输出"
 
-#: src/multitrack.c:11251
+#: src/multitrack.c:11250
 #, c-format
 msgid "layer %d"
 msgstr "层 %d"
 
-#: src/multitrack.c:11253
+#: src/multitrack.c:11252
 msgid "audio track"
 msgstr "音轨"
 
-#: src/multitrack.c:11254
+#: src/multitrack.c:11253
 #, c-format
 msgid "%s to %s"
 msgstr "%s 到 %s"
 
-#: src/multitrack.c:11305
+#: src/multitrack.c:11304
 msgid "_Prev filter map"
 msgstr ""
 
-#: src/multitrack.c:11315
+#: src/multitrack.c:11314
 msgid "Insert _before"
 msgstr "插入前面(_B)"
 
-#: src/multitrack.c:11323
+#: src/multitrack.c:11322
 msgid "Insert _after"
 msgstr "插入后面(_A)"
 
-#: src/multitrack.c:11336
+#: src/multitrack.c:11335
 msgid "_Next filter map"
 msgstr ""
 
-#: src/multitrack.c:11350
+#: src/multitrack.c:11349
 msgid ""
 "\n"
 "\n"
@@ -8346,156 +8346,156 @@ msgstr ""
 "当前轨道、当前时刻\n"
 "无特效。\n"
 
-#: src/multitrack.c:11362
+#: src/multitrack.c:11361
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:11369
+#: src/multitrack.c:11368
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:11377
+#: src/multitrack.c:11376
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
 msgstr ""
 
-#: src/multitrack.c:11573
+#: src/multitrack.c:11572
 msgid "LiVES: Selected block/frame"
 msgstr ""
 
-#: src/multitrack.c:11579
+#: src/multitrack.c:11578
 msgid "_Delete this block"
 msgstr ""
 
-#: src/multitrack.c:11588
+#: src/multitrack.c:11587
 msgid "_Split block here"
 msgstr ""
 
-#: src/multitrack.c:11596
+#: src/multitrack.c:11595
 msgid "List _effects here"
 msgstr "在此列出效果(_E)"
 
-#: src/multitrack.c:11605 src/multitrack.c:11679
+#: src/multitrack.c:11604 src/multitrack.c:11678
 #, c-format
 msgid "_Adjust %s"
 msgstr "调整 %s(_A)"
 
-#: src/multitrack.c:11619
+#: src/multitrack.c:11618
 msgid "_Select this block"
 msgstr ""
 
-#: src/multitrack.c:11652
+#: src/multitrack.c:11651
 msgid "LiVES: Selected frame"
 msgstr "LiVES：已选择的帧"
 
-#: src/multitrack.c:11660
+#: src/multitrack.c:11659
 msgid "_Insert here"
 msgstr "在此插入(_I)"
 
-#: src/multitrack.c:11666
+#: src/multitrack.c:11665
 msgid "_Insert audio here"
 msgstr "在此插入音频(_I)"
 
-#: src/multitrack.c:13064
+#: src/multitrack.c:13063
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13098
+#: src/multitrack.c:13097
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13296
+#: src/multitrack.c:13295
 #, c-format
 msgid "Undid %s\n"
 msgstr ""
 
-#: src/multitrack.c:13492
+#: src/multitrack.c:13491
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:13518
+#: src/multitrack.c:13517
 msgid "Multitrack details"
 msgstr "多轨道细节"
 
-#: src/multitrack.c:13530
+#: src/multitrack.c:13529
 msgid ""
 "\n"
 " (variable)"
 msgstr ""
 
-#: src/multitrack.c:13750 src/multitrack.c:16600 src/multitrack.c:16612
+#: src/multitrack.c:13749 src/multitrack.c:16599 src/multitrack.c:16611
 #, c-format
 msgid "track %s"
 msgstr "轨道 %s"
 
-#: src/multitrack.c:13755 src/multitrack.c:16605
+#: src/multitrack.c:13754 src/multitrack.c:16604
 #, c-format
 msgid "tracks %s and %s"
 msgstr "轨道 %s 和 %s"
 
-#: src/multitrack.c:13761 src/multitrack.c:16615
+#: src/multitrack.c:13760 src/multitrack.c:16614
 msgid "selected tracks"
 msgstr "已选择的轨道"
 
-#: src/multitrack.c:13765
+#: src/multitrack.c:13764
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13794
+#: src/multitrack.c:13793
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13985
+#: src/multitrack.c:13984
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr ""
 
-#: src/multitrack.c:14046
+#: src/multitrack.c:14045
 msgid "Cleaning up..."
 msgstr "正在清理..."
 
-#: src/multitrack.c:14699
+#: src/multitrack.c:14698
 msgid "_Pause"
 msgstr "暂停(_P)"
 
-#: src/multitrack.c:14700
+#: src/multitrack.c:14699
 msgid "Pause (p)"
 msgstr "暂停(p)"
 
-#: src/multitrack.c:14840
+#: src/multitrack.c:14839
 msgid "Press 'm' during playback"
 msgstr "在播放过程中按“m”键"
 
-#: src/multitrack.c:14841
+#: src/multitrack.c:14840
 msgid "to make a mark on the timeline"
 msgstr "要在时间线上做标记"
 
-#: src/multitrack.c:15131
+#: src/multitrack.c:15130
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15379
+#: src/multitrack.c:15378
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15884
+#: src/multitrack.c:15883
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
@@ -8504,7 +8504,7 @@ msgstr ""
 "时间区段 %.3f 到 %.3f\n"
 "已选择。\n"
 
-#: src/multitrack.c:15888
+#: src/multitrack.c:15887
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -8512,12 +8512,12 @@ msgstr ""
 "选择一条或多条轨道\n"
 "来创建一个区段。\n"
 
-#: src/multitrack.c:15890
+#: src/multitrack.c:15889
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "已选择了 %d 条视频轨道。\n"
 
-#: src/multitrack.c:15892
+#: src/multitrack.c:15891
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -8525,7 +8525,7 @@ msgstr ""
 "双击时间线来\n"
 "取消时间区段选择。"
 
-#: src/multitrack.c:15899
+#: src/multitrack.c:15898
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -8533,7 +8533,7 @@ msgstr ""
 "单击某个效果来\n"
 "选中它。"
 
-#: src/multitrack.c:15900
+#: src/multitrack.c:15899
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -8541,7 +8541,7 @@ msgstr ""
 "双击某个效果\n"
 "进行编辑。"
 
-#: src/multitrack.c:15901
+#: src/multitrack.c:15900
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -8549,13 +8549,13 @@ msgstr ""
 "右击某个效果来\n"
 "打开环境菜单。\n"
 
-#: src/multitrack.c:15903
+#: src/multitrack.c:15902
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr ""
 
-#: src/multitrack.c:15910
+#: src/multitrack.c:15909
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
@@ -8563,11 +8563,11 @@ msgstr ""
 "您可以选择一个特效，\n"
 "然后使用 插入前面"
 
-#: src/multitrack.c:15911
+#: src/multitrack.c:15910
 msgid "or INSERT AFTER buttons to move it."
 msgstr "或 插入后面 按钮来移动它。"
 
-#: src/multitrack.c:15947
+#: src/multitrack.c:15946
 msgid ""
 "You can click and drag\n"
 "below the timeline"
@@ -8575,15 +8575,15 @@ msgstr ""
 "您可以点击拖动\n"
 "时间线下方"
 
-#: src/multitrack.c:15948
+#: src/multitrack.c:15947
 msgid "to select a time region.\n"
 msgstr "以选择一个时间区段。\n"
 
-#: src/multitrack.c:16182 src/multitrack.c:16195
+#: src/multitrack.c:16181 src/multitrack.c:16194
 msgid "Click on another effect,"
 msgstr "点击另一个效果，"
 
-#: src/multitrack.c:16183 src/multitrack.c:16196
+#: src/multitrack.c:16182 src/multitrack.c:16195
 msgid ""
 "and the selected one\n"
 "will be inserted"
@@ -8591,46 +8591,46 @@ msgstr ""
 "和所选的这个\n"
 "将被插入"
 
-#: src/multitrack.c:16184
+#: src/multitrack.c:16183
 msgid "after it.\n"
 msgstr "在它之后。\n"
 
-#: src/multitrack.c:16197
+#: src/multitrack.c:16196
 msgid "before it.\n"
 msgstr "在它之前。\n"
 
-#: src/multitrack.c:16427
+#: src/multitrack.c:16426
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "已移除效果 %s 的参数值，于时间 %.4f\n"
 
-#: src/multitrack.c:16623
+#: src/multitrack.c:16622
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:17039 src/multitrack.c:18524
+#: src/multitrack.c:17038 src/multitrack.c:18523
 msgid "_Autoreload each time"
 msgstr "每次都自动重载(_A)"
 
-#: src/multitrack.c:17110
+#: src/multitrack.c:17109
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "将布局保存到 %s\n"
 
-#: src/multitrack.c:18432
+#: src/multitrack.c:18431
 msgid "clips and frames"
 msgstr "剪辑和帧"
 
-#: src/multitrack.c:18436
+#: src/multitrack.c:18435
 msgid "clips"
 msgstr "剪辑"
 
-#: src/multitrack.c:18439
+#: src/multitrack.c:18438
 msgid "frames"
 msgstr "画面"
 
-#: src/multitrack.c:18449
+#: src/multitrack.c:18448
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -8638,7 +8638,7 @@ msgstr ""
 "\n"
 "自动重载布局。\n"
 
-#: src/multitrack.c:18452
+#: src/multitrack.c:18451
 #, c-format
 msgid ""
 "%s\n"
@@ -8649,11 +8649,11 @@ msgstr ""
 "有些 %s 在布局 %s 中找不到\n"
 "因此不能正确加载。\n"
 
-#: src/multitrack.c:18575
+#: src/multitrack.c:18574
 msgid "auto backup"
 msgstr "自动备份"
 
-#: src/multitrack.c:18578
+#: src/multitrack.c:18577
 #, c-format
 msgid ""
 "\n"
@@ -8662,57 +8662,57 @@ msgstr ""
 "\n"
 "无法加载布局文件 %s\n"
 
-#: src/multitrack.c:18594
+#: src/multitrack.c:18593
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "正在从 %s 加载布局..."
 
-#: src/multitrack.c:18614
+#: src/multitrack.c:18613
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "收到 %d 个事件...处理中..."
 
-#: src/multitrack.c:18630
+#: src/multitrack.c:18629
 msgid "Checking and rebuilding event list"
 msgstr "正在检测和重新构建事件列表"
 
-#: src/multitrack.c:18657
+#: src/multitrack.c:18656
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "检测到 %d 项错误。\n"
 
-#: src/multitrack.c:18690
+#: src/multitrack.c:18689
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:19617
+#: src/multitrack.c:19616
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES：多轨音频混音器"
 
-#: src/multitrack.c:19654
+#: src/multitrack.c:19653
 msgid "_Reset values"
 msgstr "重设值(_R)"
 
-#: src/multitrack.c:19658
+#: src/multitrack.c:19657
 msgid "_Close mixer"
 msgstr "关闭混音器(_C)"
 
-#: src/multitrack.c:19700
+#: src/multitrack.c:19699
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:19706
+#: src/multitrack.c:19705
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:19745
+#: src/multitrack.c:19744
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:19751
+#: src/multitrack.c:19750
 msgid "Adjust all layer audio values to the same value"
 msgstr "将所有层的音频值调整为相同值"
 
@@ -9156,8 +9156,9 @@ msgid "Blanking"
 msgstr "擦除中"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Block _height"
-msgstr ""
+msgstr "帧高(_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Block _width"
@@ -9230,24 +9231,28 @@ msgid "Checkerboard"
 msgstr "跳棋盘"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "Checkerboarding"
-msgstr ""
+msgstr "跳棋盘"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Clipboard _over selection"
-msgstr ""
+msgstr "插入到选区后（_A）"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Clipboard _under selection"
-msgstr ""
+msgstr "插入到选区后（_A）"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
 msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorizing"
-msgstr ""
+msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Colour cycle"
@@ -9290,16 +9295,18 @@ msgid "Despeckle"
 msgstr "去斑"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+#, fuzzy
 msgid "Despeckling"
-msgstr ""
+msgstr "去斑"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "Dream"
 msgstr "梦幻特效"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "Dreamifying"
-msgstr ""
+msgstr "梦幻特效"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9319,8 +9326,9 @@ msgid "Emboss"
 msgstr "凸起"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#, fuzzy
 msgid "Embossing"
-msgstr ""
+msgstr "凸起"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End _Alpha:"
@@ -9343,33 +9351,39 @@ msgid "Enhancing"
 msgstr "增强中"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _colour"
-msgstr ""
+msgstr "帧色(_C)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "Fade _end"
-msgstr ""
+msgstr "色调终点(_E)"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _in"
-msgstr ""
+msgstr "淡入音频"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _out"
-msgstr ""
+msgstr "淡出音频"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade video in or out"
-msgstr ""
+msgstr "淡出音频"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
 msgstr "淡入淡出"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fading video"
-msgstr ""
+msgstr "正在重采样视频"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
@@ -9380,8 +9394,9 @@ msgid "Fina_l frame"
 msgstr "终止帧(_L)"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "Flash _colour"
-msgstr ""
+msgstr "填充色(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
@@ -9404,8 +9419,9 @@ msgid "Frame _height"
 msgstr "帧高(_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr ""
+msgstr "正在将%d 到 %d%s 帧拷贝到剪贴板……"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Frame _in frame position of top frame..."
@@ -9440,8 +9456,9 @@ msgid "Generate clip from image"
 msgstr "由图像生成剪辑"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generate coloured frames"
-msgstr ""
+msgstr "正在生成标题帧"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Generate title frames"
@@ -9456,8 +9473,9 @@ msgid "Generating clip from image"
 msgstr "正在由图像生成剪辑"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generating coloured frames"
-msgstr ""
+msgstr "正在生成标题帧"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Generating title frames"
@@ -9536,8 +9554,9 @@ msgid "Modulate (BSH)"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulating"
-msgstr ""
+msgstr "旋转"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
@@ -9548,8 +9567,9 @@ msgid "Negate"
 msgstr "放弃"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negating"
-msgstr ""
+msgstr "放弃"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -9588,24 +9608,28 @@ msgid "Pixilate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilating"
-msgstr ""
+msgstr "粘贴"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
 msgstr "色调分离"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "Posterizing"
-msgstr ""
+msgstr "色调分离"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+#, fuzzy
 msgid "Random zoom"
-msgstr ""
+msgstr "随机缩放"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+#, fuzzy
 msgid "Random zooming"
-msgstr ""
+msgstr "随机缩放"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Reduce noise"
@@ -9616,8 +9640,9 @@ msgid "Reduction radius"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Replacing colours in"
-msgstr ""
+msgstr "音频重采样剪贴板"
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "Resize All Frames"
@@ -9633,8 +9658,9 @@ msgstr "旋转"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "S_tart %"
-msgstr ""
+msgstr "起始(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Saturation _end"
@@ -9685,8 +9711,9 @@ msgid "Solarize"
 msgstr "曝光过度化"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarizing"
-msgstr ""
+msgstr "曝光过度化"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
@@ -9697,8 +9724,9 @@ msgid "Spinning"
 msgstr "正在旋转"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splice"
-msgstr ""
+msgstr "分隔器"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "Splicing"
@@ -9713,14 +9741,16 @@ msgid "Spreading"
 msgstr "扩散"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Step _Value"
-msgstr ""
+msgstr "起始值(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "Step per _Frame"
-msgstr ""
+msgstr "起始帧"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl _start"
@@ -9735,8 +9765,9 @@ msgid "Swirl"
 msgstr "漩涡"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirling"
-msgstr ""
+msgstr "漩涡"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
@@ -9759,8 +9790,9 @@ msgid "Tunnel"
 msgstr "隧道"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "Tunneling"
-msgstr ""
+msgstr "隧道"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
@@ -9842,8 +9874,9 @@ msgid "_End Size Y:"
 msgstr "结束 Y 尺寸(_E)："
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "_End amount"
-msgstr ""
+msgstr "结束色(_E)"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9852,8 +9885,9 @@ msgstr "淡入淡出级别(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Fade start"
-msgstr ""
+msgstr "色调起点"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9888,8 +9922,9 @@ msgid "_Hold for"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "_Horizontal segments"
-msgstr ""
+msgstr "平移"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Image File"
@@ -9917,8 +9952,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "_Link start and end colours"
-msgstr ""
+msgstr "调整起点和终点(_A)"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "_Max zoom x 10"
@@ -9929,8 +9965,9 @@ msgid "_Middle"
 msgstr "中间(_M)"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "_Midtone"
-msgstr ""
+msgstr "中间(_M)"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Negate"
@@ -9964,12 +10001,14 @@ msgid "_Point size"
 msgstr "点尺寸(_P)"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius end"
-msgstr ""
+msgstr "半径(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius start"
-msgstr ""
+msgstr "半径(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
@@ -10000,16 +10039,19 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma end"
-msgstr ""
+msgstr "大端"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma start"
-msgstr ""
+msgstr "伽马值起点(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Skip ahead"
-msgstr ""
+msgstr "已跳过"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
@@ -10020,8 +10062,9 @@ msgid "_Source Colour"
 msgstr "源色(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "_Splice"
-msgstr ""
+msgstr "分隔器"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -10035,13 +10078,15 @@ msgid "_Start Value"
 msgstr "起始值(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "_Start amount"
-msgstr ""
+msgstr "起始值(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Stroke colour"
-msgstr ""
+msgstr "起始色(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "_Target Colour"
@@ -10057,20 +10102,23 @@ msgid "_Time (seconds)"
 msgstr "时间(秒)(_T)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "_Top left is clipboard"
-msgstr ""
+msgstr "正在拷贝到剪贴板……"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Top"
 msgstr "顶部(_T)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "_Vertical segments"
-msgstr ""
+msgstr "竖直移动"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "_Wavemax"
-msgstr ""
+msgstr "波浪线"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -10136,12 +10184,14 @@ msgid "brightness_change"
 msgstr "更改亮度(_C)"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+#, fuzzy
 msgid "charcoal"
-msgstr ""
+msgstr "碳笔"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "colorize"
-msgstr ""
+msgstr "加彩色"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "colour_filter"
@@ -10164,8 +10214,9 @@ msgid "deinterlace"
 msgstr "反交错"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+#, fuzzy
 msgid "despeckle"
-msgstr ""
+msgstr "去斑"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "dream"
@@ -10212,16 +10263,19 @@ msgid "gamma_change"
 msgstr "更改伽马值(_C)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#, fuzzy
 msgid "gen_blank_frames"
-msgstr ""
+msgstr "空帧(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "gen_clip_from_image"
-msgstr ""
+msgstr "由图像生成剪辑"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "gen_coloured_frames"
-msgstr ""
+msgstr "色彩替换(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
@@ -10252,24 +10306,28 @@ msgid "negate"
 msgstr "负片"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "noisify"
-msgstr ""
+msgstr "加噪声"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "normalize"
-msgstr ""
+msgstr "正常化"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "photo_still"
-msgstr ""
+msgstr "照片/静止"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "pixilate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "posterize"
-msgstr ""
+msgstr "色调分离"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -10308,8 +10366,9 @@ msgid "skip_forwards"
 msgstr "快进(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "solarize"
-msgstr ""
+msgstr "曝光过度化"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
@@ -10320,32 +10379,38 @@ msgid "spread"
 msgstr "速度"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "swirl"
-msgstr ""
+msgstr "漩涡"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "transition_bwthresh"
-msgstr ""
+msgstr "过渡"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "transition_checkerboard"
-msgstr ""
+msgstr "跳棋盘"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "transition_fade2"
-msgstr ""
+msgstr "过渡"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "transition_splice"
-msgstr ""
+msgstr "过渡"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "trim_frames"
-msgstr ""
+msgstr "画面"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"

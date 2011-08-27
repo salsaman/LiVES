@@ -1,10 +1,13 @@
-Version 1.4.6
--------------
+Version 1.4.6 (27 Aug 2011)
+---------------------------
 Fix hang when applying effect to a single frame in a virtual clip. *
 Fix decoding for some ogg/theora files with broken keyframes.
 Add several new OMC commands.
 Compatibility fixes for frei0r 1.2.
 Various minor fixes.
+
+
+
 
 
 

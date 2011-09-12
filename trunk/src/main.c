@@ -2673,6 +2673,11 @@ void load_start_image(gint frame) {
     gtk_widget_queue_resize(mainw->image272);
 
     while (g_main_context_iteration(NULL,FALSE));
+    if (mainw->current_file==-1) {
+      // user may close file
+      load_start_image(0);
+      return;
+    }
   } while (rwidth!=mainw->image272->allocation.width||rheight!=mainw->image272->allocation.height);
 
   threaded_dialog_spin();
@@ -2780,6 +2785,11 @@ void load_end_image(gint frame) {
     gtk_widget_queue_resize(mainw->image273);
 
     while (g_main_context_iteration(NULL,FALSE));
+    if (mainw->current_file==-1) {
+      // user may close file
+      load_end_image(0);
+      return;
+    }
   } while (rwidth!=mainw->image273->allocation.width||rheight!=mainw->image273->allocation.height);
 
   threaded_dialog_spin();

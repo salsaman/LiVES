@@ -1302,6 +1302,19 @@ if (defined($ARGV[0])) {
 	}
 	&get_file_info;
 
+	$aformnew="";
+	if ($asamps==32) {
+	    # cannot handle this yet, need to resample to s16
+	    if ($endian==1) {
+		$aformnew="-format s16le";
+	    }
+	    else {
+		$aformnew="-format s16be";
+	    }
+	    $asamps=16;
+	}
+
+
 	$threads=`/bin/grep processor /proc/cpuinfo | wc -l`;
 	$threads=int($threads);
 	if ($threads==0) {
@@ -1333,15 +1346,15 @@ if (defined($ARGV[0])) {
 	    elsif ($withsound eq "1") {
              #video and audio 
 		if ($img_ext eq ".jpg") {
-		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo jpeg:quality=$quality $ss -lavdopts o=threads=$threads -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
+		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo jpeg:quality=$quality $ss -lavdopts o=threads=$threads -noframedrop $frames -ao pcm:fast$wavhead $channs $aformnew -mc 0  \"$file\" $extra_params </dev/null";
 		}
 		else {
-		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression:alpha $ss -lavdopts o=threads=$threads -noframedrop $frames -ao pcm:fast$wavhead $channs -mc 0  \"$file\" $extra_params </dev/null";
+		    $syscom=$mplay_command . " -quiet $band -osdlevel 0 -vo png:z=$compression:alpha $ss -lavdopts o=threads=$threads -noframedrop $frames -ao pcm:fast$wavhead $channs $aformnew -mc 0  \"$file\" $extra_params </dev/null";
 		}
             }
             else {
              #audio only 
-		$syscom=$mplay_command . " -quiet $band -vo null $ss $frames -ao pcm:fast$wavhead $channs -mc 0 \"$file\" $extra_params </dev/null";
+		$syscom=$mplay_command . " -quiet $band -vo null $ss $frames -ao pcm:fast$wavhead $aformnew $channs -mc 0 \"$file\" $extra_params </dev/null";
             }
 	    
 	    if (defined($DEBUG_OPEN)) {
@@ -1495,6 +1508,12 @@ if (defined($ARGV[0])) {
 	    $is_audio=$ARGV[5];
 	}
 	&get_file_info;
+
+	if ($asamps==32) {
+	    # cant handle this yet, so we will resample on open
+	    $asamps=16;
+	}
+
 	&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
 	exit 0;
     }
@@ -3661,11 +3680,15 @@ sub get_file_info {
 	    $asamps=(split(" ",$asamps))[5];
 	    chomp($asamps);
 
-	    if ($asamps =~ /^s/) {
+	    if ($asamps =~ /^f/) {
+		$asamps=32;
+		$signed=1;
+	    }
+	    elsif ($asamps =~ /^s/) {
 		$asamps=substr($asamps,1,-1);
 		$signed=1;
 	    }
-	    if ($asamps =~ /^u/) {
+	    elsif ($asamps =~ /^u/) {
 		$asamps=substr($asamps,1,-1);
 		$signed=0;
 	    }

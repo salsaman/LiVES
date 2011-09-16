@@ -532,21 +532,24 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 		(*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	      }
 
+#ifdef RT_AUDIO
 	      stop_audio_stream();
-
+#endif
 	      mainw->stream_ticks=-1;
 	      mainw->vpp->palette=pal_list[i];
 	      if (!(*vpp->set_palette)(vpp->palette)) {
 		do_vpp_palette_error();
 		mainw->error=TRUE;
+
 	      }
 
 	      if (vpp->set_yuv_palette_clamping!=NULL) (*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
 
+#ifdef RT_AUDIO
 	      if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE&&prefs->stream_audio_out) {
 		start_audio_stream();
 	      }
-
+#endif
 	      if (vpp->init_screen!=NULL) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,0,vpp->extra_argc,vpp->extra_argv);
 	      }
@@ -995,7 +998,9 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
   if (vpp!=NULL) {
     if (vpp==mainw->vpp) {
       if (mainw->ext_playback&&mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+#ifdef RT_AUDIO
       stop_audio_stream();
+#endif
       mainw->stream_ticks=-1;
       mainw->vpp=NULL;
     }
@@ -1269,7 +1274,9 @@ void vid_playback_plugin_exit (void) {
   // external plugin
   if (mainw->ext_playback) {
     if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+#ifdef RT_AUDIO
     stop_audio_stream();
+#endif
     mainw->ext_playback=FALSE;
   }
   mainw->stream_ticks=-1;

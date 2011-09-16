@@ -3745,21 +3745,23 @@ void resize_play_window (void) {
 	  fullscreen=FALSE;
 	  xwinid=mainw->xwin;
 	}
-
 	if (mainw->ext_playback) {
+#ifdef RT_AUDIO
 	  stop_audio_stream();
+#endif
 	  if (mainw->vpp->exit_screen!=NULL) {
 	    (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	  }
 	}
 
+#ifdef RT_AUDIO
 	if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE&&prefs->stream_audio_out) {
 	  start_audio_stream();
 	}
 	else {
 	  clear_audio_stream();
 	}
-
+#endif
 
 	if ((mainw->vpp->init_screen==NULL)||((*mainw->vpp->init_screen)(mainw->pwidth,mainw->pheight*(fixed_size?1:prefs->virt_height),fullscreen,xwinid,mainw->vpp->extra_argc,mainw->vpp->extra_argv))) {
 	  mainw->ext_playback=TRUE;

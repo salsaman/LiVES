@@ -1,3 +1,16 @@
+Version 1.4.7
+-------------
+Complete translation to Japanese (Takashi Sakamoto and others).
+Fix broken opening of float audio. *
+Instant opening of asf (eg. wmv) files.
+
+
+
+
+
+
+
+
 Version 1.4.6 (27 Aug 2011)
 ---------------------------
 Fix hang when applying effect to a single frame in a virtual clip. *

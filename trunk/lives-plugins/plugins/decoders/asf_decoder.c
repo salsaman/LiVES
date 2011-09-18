@@ -12,8 +12,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <endian.h>
+#include <sys/stat.h>
 
-const char *plugin_version="LiVES asf decoder version 0.1";
+const char *plugin_version="LiVES asf/wmv decoder version 1.0";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -199,11 +200,8 @@ static void get_str16_nolen(unsigned char *inbuf, int len, char *buf, int buf_si
 
 static boolean check_eof(const lives_clip_data_t *cdata) {
   lives_asf_priv_t *priv=cdata->priv;
-#warning implement check_eof
-  // TODO - check if priv->input_position >= filesize
-
+  if (priv->input_position>=priv->filesize) return TRUE;
   return FALSE;
-  
 }
 
 
@@ -635,7 +633,11 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
       
 	  rsize++;
 	}else if(asf->packet_replic_size!=0){
-	  // TODO - could also be EOF in DO_2_BITS
+	  if (check_eof(cdata)) {
+	    // could also be EOF in DO_2_BITS
+	    fprintf(stderr, "asf_decoder: EOF");
+	    return -2;
+	  }
 	  fprintf(stderr, "unexpected packet_replic_size of %d\n", asf->packet_replic_size);
 	  return -1;
 	}
@@ -868,6 +870,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   int16_t vidindex=-1;
 
+  struct stat sb;
 
 #ifdef DEBUG
   fprintf(stderr,"\n");
@@ -932,6 +935,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   for (i=0;i<128;i++) dar[i].num=dar[i].den=0;
 
+  fstat(priv->fd,&sb);
+  priv->filesize=sb.st_size;
+ 
   for(;;) {
     int64_t gpos=priv->input_position;
 
@@ -1330,12 +1336,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	if (!got_vidst) {
 	  if (priv->st->codec->extradata_size && (priv->st->codec->bits_per_coded_sample <= 8)) {
 	    priv->st->codec->palctrl = av_mallocz(sizeof(AVPaletteControl));
-#warning add bswap_32
+
 # if __BYTE_ORDER == __BIG_ENDIAN
 	    for (i = 0; i < FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE)/4; i++)
 	      
-	      // TODO *** - bswap_32
-	      priv->st->codec->palctrl->palette[i] = bswap_32(((uint32_t*)priv->st->codec->extradata)[i]);
+	      priv->st->codec->palctrl->palette[i] = get_le32int((uint8_t *)(((uint32_t*)&priv->st->codec->extradata)[i]));
 #else
 	    memcpy(priv->st->codec->palctrl->palette, priv->st->codec->extradata,
 		   FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE));

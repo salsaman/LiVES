@@ -1106,6 +1106,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   if (cdata->width==0) cdata->width=ctx->width-cdata->offs_x*2;
   if (cdata->height==0) cdata->height=ctx->height-cdata->offs_y*2;
   
+  if (cdata->width*cdata->height==0) {
+    fprintf(stderr, "flv_decoder: invalid width and height (%d X %d)\n",cdata->width,cdata->height);
+    detach_stream(cdata);
+    return FALSE;
+  }
 
 #ifdef DEBUG
   fprintf(stderr,"using palette %d, size %d x %d\n",
@@ -1137,9 +1142,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
   }
 
-   priv->last_frame=-1;
-
-  if (cdata->width*cdata->height==0) return FALSE;
+  priv->last_frame=-1;
 
   ldts=get_last_video_dts(cdata);
 

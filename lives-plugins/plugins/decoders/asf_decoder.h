@@ -511,6 +511,7 @@ typedef struct {
   int64_t frame_dts;
   boolean black_fill;
   size_t def_packet_size;
+  off_t filesize;
   ASFContext *asf;
   AVFormatContext *s;
   AVCodecContext *ctx;

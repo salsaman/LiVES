@@ -1379,6 +1379,58 @@ name, filter name, author and filter version.
 
 == WEED FLAGS AND TYPES ==
 
+
+==== Boolean values ====
+
+  * WEED_TRUE 1
+
+  * WEED_FALSE 0
+
+
+
+==== Plant types ====
+
+  * WEED_PLANT_HOST_INFO          
+
+  * WEED_PLANT_PLUGIN_INFO        
+
+  * WEED_PLANT_FILTER_CLASS       
+
+  * WEED_PLANT_CHANNEL_TEMPLATE   
+
+  * WEED_PLANT_PARAMETER_TEMPLATE 
+
+  * WEED_PLANT_FILTER_INSTANCE    
+
+  * WEED_PLANT_CHANNEL            
+
+  * WEED_PLANT_PARAMETER          
+
+  * WEED_PLANT_GUI                
+
+  * WEED_PLANT_EVENT              
+
+  * WEED_PLANT_EVENT_LIST         
+
+
+==== Seed types ====
+
+ * WEED_SEED_INT        1
+
+ * WEED_SEED_DOUBLE     2
+
+ * WEED_SEED_BOOLEAN    3
+
+ * WEED_SEED_STRING     4
+
+ * WEED_SEED_INT64      5
+
+ * WEED_SEED_VOIDPTR    65 
+
+ * WEED_SEED_PLANTPTR   66
+
+
+
 ==== Weed parameter hints ====
 
  * WEED_HINT_UNSPECIFIED
@@ -1681,6 +1733,23 @@ clamping types >=512 are reserved for custom clampings.
    conversion factors than Y'CbCr digital/ananlog (Kr=0.2125, Kb=0.0721, UV offset 128)
 
 subspace types >=512 are reserved for custom subspaces.
+
+
+==== Weed errors ====
+
+ *  WEED_NO_ERROR				0
+
+ *  WEED_ERROR_MEMORY_ALLOCATION		1
+
+ *  WEED_ERROR_LEAF_READONLY			2
+
+ *  WEED_ERROR_NOSUCH_ELEMENT[[BR]]
+
+ *  WEED_ERROR_NOSUCH_LEAF[[BR]]
+
+ *  WEED_ERROR_WRONG_SEED_TYPE[[BR]]
+
+
 
 ==== Filter errors ====
 

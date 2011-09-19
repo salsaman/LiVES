@@ -2212,8 +2212,10 @@ OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
     if (omacro.ptypes[i]==OMC_PARAM_SPECIAL) {
       write_fx_tag(string,nfixed,mnode,&omacro,typetags);
     }
-    if (omacro.ptypes[i]==OMC_PARAM_INT) g_strappend(typetags,OSC_MAX_TYPETAGS,"i");
-    else g_strappend(typetags,OSC_MAX_TYPETAGS,"f");
+    else {
+      if (omacro.ptypes[i]==OMC_PARAM_INT) g_strappend(typetags,OSC_MAX_TYPETAGS,"i");
+      else g_strappend(typetags,OSC_MAX_TYPETAGS,"f");
+    }
   }
 
   OSC_writeAddressAndTypes(&obuf,omacro.msg,typetags);

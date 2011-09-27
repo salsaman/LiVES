@@ -3612,6 +3612,8 @@ sub get_file_info {
     $frames=0;
     $asamps=0;
 
+    $endian="";
+
     # try to force language to English
     $mplay_command="LANGUAGE=en LANG=en ";
 
@@ -3691,6 +3693,16 @@ sub get_file_info {
 	    elsif ($asamps =~ /^u/) {
 		$asamps=substr($asamps,1,-1);
 		$signed=0;
+	    }
+
+	    $audend=substr($asamps,-2,2);
+
+	    if ($audend eq "le") {
+		# le
+		$endian=1; 
+	    }
+	    elsif ($audend eq "be") {
+		$endian=0;
 	    }
 
 	    if (! -f $file_ident) {return;};
@@ -3870,7 +3882,9 @@ sub get_file_info {
 	}
     }
 
-    $endian=&get_endian; # assume audio endian matches machine endian
+    if ($endian eq "") {
+	$endian=&get_endian; # assume audio endian matches machine endian
+    }
 
     # get file size
     if ($f_size==0) {

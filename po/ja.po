@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-27 14:44-0300\n"
+"POT-Creation-Date: 2011-09-28 21:24-0300\n"
 "PO-Revision-Date: 2011-08-18 12:08+0000\n"
 "Last-Translator: Shushi Kurose <md81bird@hitaki.net>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -603,22 +603,22 @@ msgstr "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <ファイル未設定>"
 
-#: src/main.c:3545
+#: src/main.c:3555
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3547
+#: src/main.c:3557
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3759 src/main.c:3760 src/gui.c:2003 src/gui.c:2973
+#: src/main.c:3769 src/main.c:3770 src/gui.c:2003 src/gui.c:2973
 #: src/saveplay.c:1654
 msgid "Play"
 msgstr "再生"
 
-#: src/main.c:4125
+#: src/main.c:4135
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -626,35 +626,35 @@ msgstr ""
 "LiVESはこの画像をキャプチャできませんでした\n"
 "\n"
 
-#: src/main.c:4209
+#: src/main.c:4219
 #, c-format
 msgid "Closed file %s\n"
 msgstr "ファイル「%s」を閉じました\n"
 
-#: src/main.c:4375 src/gui.c:597 src/utils.c:2594 src/utils.c:2620
+#: src/main.c:4385 src/gui.c:597 src/utils.c:2594 src/utils.c:2620
 #: src/saveplay.c:2619 src/multitrack.c:3811 src/multitrack.c:5318
 msgid "_Undo"
 msgstr "アンドゥ(_U)"
 
-#: src/main.c:4376 src/gui.c:610 src/utils.c:2595 src/utils.c:2621
+#: src/main.c:4386 src/gui.c:610 src/utils.c:2595 src/utils.c:2621
 #: src/saveplay.c:2620 src/multitrack.c:3832 src/multitrack.c:5341
 msgid "_Redo"
 msgstr "リドゥ(_R)"
 
-#: src/main.c:4402 src/interface.c:639 src/gui.c:2161 src/preferences.c:2333
+#: src/main.c:4412 src/interface.c:639 src/gui.c:2161 src/preferences.c:2335
 #: src/resample.c:1743
 msgid "Video"
 msgstr "ビデオ"
 
-#: src/main.c:4403 src/interface.c:658 src/gui.c:2180
+#: src/main.c:4413 src/interface.c:658 src/gui.c:2180
 msgid "Left Audio"
 msgstr "左音声"
 
-#: src/main.c:4404 src/gui.c:2198
+#: src/main.c:4414 src/gui.c:2198
 msgid "Right Audio"
 msgstr "右音声"
 
-#: src/main.c:4449
+#: src/main.c:4459
 msgid ""
 "\n"
 "\n"
@@ -1303,7 +1303,7 @@ msgstr "セットの名前 "
 msgid "Use def_aults"
 msgstr "デフォルトを使用(_A)"
 
-#: src/interface.c:1968 src/interface.c:2324 src/preferences.c:2919
+#: src/interface.c:1968 src/interface.c:2324 src/preferences.c:2921
 msgid "_Advanced"
 msgstr "詳細(_A)"
 
@@ -1392,7 +1392,7 @@ msgstr "高さ"
 msgid "Driver"
 msgstr "ドライバ"
 
-#: src/interface.c:2476 src/preferences.c:3433
+#: src/interface.c:2476 src/preferences.c:3435
 msgid "Output format"
 msgstr "出力フォーマット"
 
@@ -2346,7 +2346,7 @@ msgstr "独立したウィンドウで再生 (s)"
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - ストリーミング"
 
-#: src/callbacks.c:6066 src/gui.c:3499 src/saveplay.c:1797 src/plugins.c:1279
+#: src/callbacks.c:6066 src/gui.c:3499 src/saveplay.c:1797 src/plugins.c:1286
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - 再生ウィンドウ"
 
@@ -3573,7 +3573,7 @@ msgstr "動作を記録(_R)"
 msgid "Hide Play Window"
 msgstr "再生ウィンドウを隠す"
 
-#: src/gui.c:3834
+#: src/gui.c:3836
 msgid "Show Play Window"
 msgstr "再生ウィンドウの表示"
 
@@ -5134,7 +5134,7 @@ msgid "effect"
 msgstr "エフェクト"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects-weed.c:251 src/preferences.c:3593
+#: src/effects-weed.c:251 src/preferences.c:3595
 msgid "Effects"
 msgstr "エフェクト"
 
@@ -5222,7 +5222,7 @@ msgstr "音声ボリューム・コントローラー"
 msgid "Audio Volume Controllers"
 msgstr "音声ボリューム・コントローラー"
 
-#: src/effects-weed.c:291 src/plugins.c:2103
+#: src/effects-weed.c:291 src/plugins.c:2110
 msgid "unknown"
 msgstr "不明"
 
@@ -5336,11 +5336,11 @@ msgstr "%s : サイズ"
 msgid "New size (pixels)"
 msgstr "新しいサイズ (ピクセル)"
 
-#: src/paramwindow.c:560 src/plugins.c:850
+#: src/paramwindow.c:560 src/plugins.c:853
 msgid "_Width"
 msgstr "幅(_W)"
 
-#: src/paramwindow.c:586 src/plugins.c:865
+#: src/paramwindow.c:586 src/plugins.c:868
 msgid "_Height"
 msgstr "高さ(_H)"
 
@@ -5489,32 +5489,32 @@ msgstr ""
 "「ツール | 設定 | 再生 | 再生プラグイン(高度)」\n"
 "\n"
 
-#: src/plugins.c:682
+#: src/plugins.c:685
 #, c-format
 msgid "Saving playback plugin defaults to %s..."
 msgstr ""
 
-#: src/plugins.c:797
+#: src/plugins.c:800
 msgid "Fixed framerate for plugin.\n"
 msgstr "プラグインにフレームレートを固定\n"
 
-#: src/plugins.c:799
+#: src/plugins.c:802
 msgid "_FPS"
 msgstr "FPS(_F)"
 
-#: src/plugins.c:891
+#: src/plugins.c:894
 msgid "Colourspace input to the plugin.\n"
 msgstr "プラグインに入力されるカラースペース\n"
 
-#: src/plugins.c:893
+#: src/plugins.c:896
 msgid "_Colourspace"
 msgstr "カラースペース(_C)"
 
-#: src/plugins.c:964
+#: src/plugins.c:967
 msgid "Save settings to an alternate file.\n"
 msgstr ""
 
-#: src/plugins.c:1037
+#: src/plugins.c:1042
 #, c-format
 msgid ""
 "\n"
@@ -5527,7 +5527,7 @@ msgstr ""
 "再生プラグイン %s を開けません。\n"
 "エラーは　%s\n"
 
-#: src/plugins.c:1072
+#: src/plugins.c:1077
 #, c-format
 msgid ""
 "Video playback plugin failed to initialise.\n"
@@ -5536,7 +5536,7 @@ msgstr ""
 "映像プラグインを初期化できません。\n"
 "エラー: %s\n"
 
-#: src/plugins.c:1083
+#: src/plugins.c:1088
 #, c-format
 msgid ""
 "\n"
@@ -5551,7 +5551,7 @@ msgstr ""
 "必須の機能がありません。\n"
 "利用することができません。\n"
 
-#: src/plugins.c:1244
+#: src/plugins.c:1249
 msgid ""
 "\n"
 "Warning ! Video playback plugin will not send key presses. Keyboard may be "
@@ -5561,7 +5561,7 @@ msgstr ""
 "警告! 映像プラグインはキー操作を送信できません。プラグインの利用中はキーボー"
 "ドが無効になります!\n"
 
-#: src/plugins.c:1248
+#: src/plugins.c:1253
 #, c-format
 msgid ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
@@ -5570,7 +5570,7 @@ msgstr ""
 "*** 再生に %s プラグインを使います。パレットタイプは %d ( %s ) を使います。 "
 "***\n"
 
-#: src/plugins.c:1348
+#: src/plugins.c:1355
 #, c-format
 msgid ""
 "LiVES was unable to find its encoder plugins. Please make sure you have the "
@@ -5583,7 +5583,7 @@ msgstr ""
 "%s%s%s\n"
 "もしくは、~/.lives における <lib_dir> の値を変更して下さい。\n"
 
-#: src/plugins.c:1355
+#: src/plugins.c:1362
 #, c-format
 msgid ""
 "LiVES did not receive a response from the encoder plugin called '%s'.\n"
@@ -5597,11 +5597,11 @@ msgstr ""
 "もしくは、「ツール | 設定 | エンコーディング」で他のプラグインに変更してくだ"
 "さい。\n"
 
-#: src/plugins.c:1737
+#: src/plugins.c:1744
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "リサイズできません。ImageMagickをインストールして下さい。\n"
 
-#: src/plugins.c:2047
+#: src/plugins.c:2054
 #, c-format
 msgid ""
 "\n"
@@ -5614,7 +5614,7 @@ msgstr ""
 "再生デコーダプラグイン %s を開けません。\n"
 "エラーは %s\n"
 
-#: src/plugins.c:2068
+#: src/plugins.c:2075
 #, c-format
 msgid ""
 "\n"
@@ -5629,16 +5629,16 @@ msgstr ""
 "必須の機能がありません。\n"
 "利用することができません。\n"
 
-#: src/plugins.c:2108
+#: src/plugins.c:2115
 msgid "/unknown"
 msgstr "/不明"
 
-#: src/plugins.c:2134
+#: src/plugins.c:2141
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "%sのロードに失敗しました。トランジションはリサイズされません。\n"
 
-#: src/plugins.c:3139
+#: src/plugins.c:3146
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s 高度な設定"
@@ -6512,7 +6512,7 @@ msgstr ""
 "\n"
 "（空き領域 %.2f GB）"
 
-#: src/preferences.c:520
+#: src/preferences.c:522
 #, c-format
 msgid ""
 "Unable to create or write to the new temporary directory.\n"
@@ -6529,7 +6529,7 @@ msgstr ""
 "\n"
 "とする必要があります。今の時点では、ディレクトリは変わりません。\n"
 
-#: src/preferences.c:530
+#: src/preferences.c:532
 msgid ""
 "You have chosen to change the temporary directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
@@ -6549,7 +6549,7 @@ msgstr ""
 "あるいは、一時ディレクトリの指定をもとの設定に戻すために、キャンセルを押して"
 "下さい。"
 
-#: src/preferences.c:889
+#: src/preferences.c:891
 msgid ""
 "\n"
 "Unable to switch audio players to jack - jackd must be installed first.\n"
@@ -6560,7 +6560,7 @@ msgstr ""
 "必要があります。\n"
 "http://jackaudio.orgを参照してください。\n"
 
-#: src/preferences.c:893
+#: src/preferences.c:895
 msgid ""
 "\n"
 "Switching audio players requires restart (jackd must not be running)\n"
@@ -6568,7 +6568,7 @@ msgstr ""
 "\n"
 "音声プレーヤーの変更は、再起動が必要です(jackd が動作していてはいけません)\n"
 
-#: src/preferences.c:915
+#: src/preferences.c:917
 msgid ""
 "\n"
 "Unable to switch audio players to pulse audio\n"
@@ -6580,67 +6580,67 @@ msgstr ""
 "ルされている必要があります。\n"
 "http://www.pulseaudio.orgを参照してください。\n"
 
-#: src/preferences.c:1198
+#: src/preferences.c:1200
 msgid "PCM (highest quality; largest files)"
 msgstr "PCM (再高品質、最大ファイルサイズ)"
 
-#: src/preferences.c:1829
+#: src/preferences.c:1831
 msgid "LiVES: - Preferences"
 msgstr "LiVES: - 設定"
 
-#: src/preferences.c:1902
+#: src/preferences.c:1904
 msgid "Open file selection maximised"
 msgstr "ファイル選択を最大化して開く"
 
-#: src/preferences.c:1921
+#: src/preferences.c:1923
 msgid "Show recent files in the File menu"
 msgstr "最近使ったファイルをファイルメニューに表示"
 
-#: src/preferences.c:1944
+#: src/preferences.c:1946
 msgid "Stop screensaver on playback    "
 msgstr "再生時にスクリーンセーバーを停止    "
 
-#: src/preferences.c:1963
+#: src/preferences.c:1965
 msgid "Open main window maximised"
 msgstr "起動時にメインウィンドウを最大化"
 
-#: src/preferences.c:1986
+#: src/preferences.c:1988
 msgid "Show toolbar when background is blanked"
 msgstr "バックグラウンドなしの場合にツールバーを表示"
 
-#: src/preferences.c:2005
+#: src/preferences.c:2007
 msgid "Allow mouse wheel to switch clips"
 msgstr "マウスホイールでクリップを切り替える"
 
-#: src/preferences.c:2028
+#: src/preferences.c:2030
 msgid "Shrink previews to fit in interface"
 msgstr "プレビューを画面に合わせて調整"
 
-#: src/preferences.c:2049
+#: src/preferences.c:2051
 msgid "Startup mode:"
 msgstr "起動時のウィンドウ"
 
-#: src/preferences.c:2060
+#: src/preferences.c:2062
 msgid "_Clip editor"
 msgstr "クリップエディタ(_C)"
 
-#: src/preferences.c:2080
+#: src/preferences.c:2082
 msgid "_Multitrack mode"
 msgstr "マルチトラック(M)"
 
-#: src/preferences.c:2145
+#: src/preferences.c:2147
 msgid "Multi-head support"
 msgstr "マルチヘッドのサポート"
 
-#: src/preferences.c:2158
+#: src/preferences.c:2160
 msgid " monitor number for LiVES interface"
 msgstr " LiVES画面のモニタ数"
 
-#: src/preferences.c:2173
+#: src/preferences.c:2175
 msgid " monitor number for playback"
 msgstr " 再生モニタ数"
 
-#: src/preferences.c:2186
+#: src/preferences.c:2188
 msgid ""
 "A setting of 0 means use all available monitors (only works with some "
 "playback plugins)."
@@ -6648,233 +6648,233 @@ msgstr ""
 "0 に設定すると利用可能なすべてのモニタを使用します(一部のプレイバックプラグイ"
 "ンのみ動作)。"
 
-#: src/preferences.c:2199
+#: src/preferences.c:2201
 msgid "Force single monitor"
 msgstr "シングルモニタにする"
 
-#: src/preferences.c:2214
+#: src/preferences.c:2216
 msgid "Force single monitor mode"
 msgstr "シングルモニタモードにする"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2236
+#: src/preferences.c:2238
 msgid "GUI"
 msgstr "GUI"
 
-#: src/preferences.c:2250
+#: src/preferences.c:2252
 msgid "When entering Multitrack mode:"
 msgstr "マルチトラックモードに入るとき:"
 
-#: src/preferences.c:2269
+#: src/preferences.c:2271
 msgid "_Prompt me for width, height, fps and audio settings"
 msgstr "幅、高さ、fps、音声の設定を求める(_P)"
 
-#: src/preferences.c:2288
+#: src/preferences.c:2290
 msgid "_Always use the following values:"
 msgstr "常に次の値を使う(_A):"
 
-#: src/preferences.c:2308
+#: src/preferences.c:2310
 msgid "Use these same _values for rendering a new clip"
 msgstr "新しいクリップのレンダリングにこれらの同じ値を使う(_v)"
 
-#: src/preferences.c:2346
+#: src/preferences.c:2348
 msgid "_Width           "
 msgstr "幅(_W)           "
 
-#: src/preferences.c:2362
+#: src/preferences.c:2364
 msgid "          _Height      "
 msgstr "          高さ(_H)      "
 
-#: src/preferences.c:2379
+#: src/preferences.c:2381
 msgid "          _FPS"
 msgstr "          FPS(_F)"
 
-#: src/preferences.c:2405
+#: src/preferences.c:2407
 msgid "Enable backing audio track"
 msgstr "逆行音声トラックを有効にする"
 
-#: src/preferences.c:2425
+#: src/preferences.c:2427
 msgid "Audio track per video track"
 msgstr "音声/映像トラック"
 
-#: src/preferences.c:2455
+#: src/preferences.c:2457
 msgid "    _Undo buffer size (MB)    "
 msgstr "    アンドゥバッファのサイズ(_U) (MB)    "
 
-#: src/preferences.c:2471
+#: src/preferences.c:2473
 msgid "_Exit multitrack mode after rendering"
 msgstr "レンダリング後にマルチトラックモードを終了(_E)"
 
-#: src/preferences.c:2492
+#: src/preferences.c:2494
 msgid "Auto backup layouts"
 msgstr ""
 
-#: src/preferences.c:2502
+#: src/preferences.c:2504
 msgid "_Every"
 msgstr "_すべての"
 
-#: src/preferences.c:2519
+#: src/preferences.c:2521
 msgid "seconds"
 msgstr "秒"
 
-#: src/preferences.c:2538
+#: src/preferences.c:2540
 msgid "After every _change"
 msgstr "すべての変更を_行った後"
 
-#: src/preferences.c:2557
+#: src/preferences.c:2559
 msgid "_Never"
 msgstr "しない(_N)"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2592
+#: src/preferences.c:2594
 msgid "Multitrack/Render"
 msgstr "マルチトラック/レンダリング"
 
-#: src/preferences.c:2608
+#: src/preferences.c:2610
 msgid "Video open command             "
 msgstr "映像を開くコマンド             "
 
-#: src/preferences.c:2628
+#: src/preferences.c:2630
 msgid "Open/render compression                  "
 msgstr "映像の圧縮率（展開/レンダリング時）                  "
 
-#: src/preferences.c:2640
+#: src/preferences.c:2642
 msgid " %     ( lower = slower, larger files; for jpeg, higher quality )"
 msgstr ""
 " % （値を低くすると処理に時間がかかりファイルサイズも大きくなりますが、JPEGの"
 "場合は画質が上がります）"
 
-#: src/preferences.c:2653
+#: src/preferences.c:2655
 msgid "Default image format          "
 msgstr "デフォルトの画像フォーマット          "
 
-#: src/preferences.c:2662
+#: src/preferences.c:2664
 msgid "_jpeg"
 msgstr "_jpeg"
 
-#: src/preferences.c:2677
+#: src/preferences.c:2679
 msgid "_png"
 msgstr ""
 
-#: src/preferences.c:2697
+#: src/preferences.c:2699
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
 msgstr ""
 "（どの画像フォーマットが使用可能かどうか、「ヘルプ|トラブルシュート」で確認し"
 "てください）"
 
-#: src/preferences.c:2711
+#: src/preferences.c:2713
 msgid "Use instant opening when possible"
 msgstr "可能な場合にインスタントオープンを使用"
 
-#: src/preferences.c:2722
+#: src/preferences.c:2724
 msgid "Enable instant opening of some file types using decoder plugins"
 msgstr ""
 "デコーダープラグインを使って、いくつかのファイルタイプにはインスタントオープ"
 "ンを有効にする"
 
-#: src/preferences.c:2735
+#: src/preferences.c:2737
 msgid "Enable automatic deinterlacing when possible"
 msgstr "可能な場合に自動デインターレースを有効にする"
 
-#: src/preferences.c:2747
+#: src/preferences.c:2749
 msgid "Automatically deinterlace frames when a plugin suggests it"
 msgstr "プラグインの提案するときは自動的にフレームのデインターレースを行う"
 
-#: src/preferences.c:2761
+#: src/preferences.c:2763
 msgid "Ignore blank borders when possible"
 msgstr ""
 
-#: src/preferences.c:2773
+#: src/preferences.c:2775
 msgid "Clip any blank borders from frames where possible"
 msgstr ""
 
-#: src/preferences.c:2787
+#: src/preferences.c:2789
 msgid "When opening multiple files, concatenate images into one clip"
 msgstr "複数ファイルを開くとき、画像を一つのクリップに結合する"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2809
+#: src/preferences.c:2811
 msgid "Decoding"
 msgstr "デコーディング"
 
-#: src/preferences.c:2833
+#: src/preferences.c:2835
 msgid "The preview quality for video playback - affects resizing"
 msgstr "映像のプレビュー品質 - リサイズに影響"
 
-#: src/preferences.c:2835
+#: src/preferences.c:2837
 msgid "Preview _quality"
 msgstr "プレビュー品質(_Q)"
 
-#: src/preferences.c:2846
+#: src/preferences.c:2848
 msgid "Low - can improve performance on slower machines"
 msgstr "低 - 遅いマシンで性能が向上します"
 
-#: src/preferences.c:2847
+#: src/preferences.c:2849
 msgid "Normal - recommended for most users"
 msgstr "通常 - 多くのユーザに推奨"
 
-#: src/preferences.c:2848
+#: src/preferences.c:2850
 msgid "High - can improve quality on very fast machines"
 msgstr "高 - 速いマシンで品質が向上します"
 
-#: src/preferences.c:2871
+#: src/preferences.c:2873
 msgid "_Show FPS statistics"
 msgstr "FPS統計を表示する(_S)"
 
-#: src/preferences.c:2901
+#: src/preferences.c:2903
 msgid "_Plugin"
 msgstr "プラグイン(_P)"
 
-#: src/preferences.c:2945
+#: src/preferences.c:2947
 msgid "Stream audio"
 msgstr ""
 
-#: src/preferences.c:2956
+#: src/preferences.c:2958
 msgid "Stream audio to playback plugin"
 msgstr ""
 
-#: src/preferences.c:2963
+#: src/preferences.c:2965
 msgid "VIDEO"
 msgstr "映像"
 
-#: src/preferences.c:2986
+#: src/preferences.c:2988
 msgid "_Player"
 msgstr "プレーヤー(_P)"
 
-#: src/preferences.c:3024
+#: src/preferences.c:3026
 msgid "(See also the Jack Integration tab for jack startup options)"
 msgstr "(JACKサーバ統合タブで、JACKサーバの起動オプションを変更できます)"
 
-#: src/preferences.c:3055
+#: src/preferences.c:3057
 msgid "mplayer"
 msgstr "mplayer"
 
-#: src/preferences.c:3065
+#: src/preferences.c:3067
 msgid "Audio play _command"
 msgstr "音声再生コマンド(_C)"
 
-#: src/preferences.c:3083
+#: src/preferences.c:3085
 msgid "- internal -"
 msgstr "- 内部 -"
 
-#: src/preferences.c:3095
+#: src/preferences.c:3097
 msgid "Audio follows video _rate/direction"
 msgstr "音声を映像のフレームレート/方向に合わせる(JACKのみ)(_R)"
 
-#: src/preferences.c:3116
+#: src/preferences.c:3118
 msgid "Audio follows _clip switches"
 msgstr "音声をクリップスイッチに合わせる(JACKのみ)(_C)"
 
-#: src/preferences.c:3134
+#: src/preferences.c:3136
 msgid "AUDIO"
 msgstr "音声"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3149
+#: src/preferences.c:3151
 msgid "Playback"
 msgstr "再生"
 
-#: src/preferences.c:3161
+#: src/preferences.c:3163
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
@@ -6882,65 +6882,65 @@ msgstr ""
 "外部ウィンドウをキャプチャーするとき、音声も記録する(_X)\n"
 "(JACKサーバかPulseAudioサーバが必要)"
 
-#: src/preferences.c:3189
+#: src/preferences.c:3191
 msgid "      What to record when 'r' is pressed   "
 msgstr "      ’r’が押されたときに記録するもの   "
 
-#: src/preferences.c:3203
+#: src/preferences.c:3205
 msgid "_Frame changes"
 msgstr "フレーム変更(_F)"
 
-#: src/preferences.c:3231
+#: src/preferences.c:3233
 msgid "F_PS changes"
 msgstr "FPSの変更(_P)"
 
-#: src/preferences.c:3265
+#: src/preferences.c:3267
 msgid "_Real time effects"
 msgstr "リアルタイム・エフェクト(_R)"
 
-#: src/preferences.c:3289
+#: src/preferences.c:3291
 msgid "_Clip switches"
 msgstr "クリップスイッチ(_C)"
 
-#: src/preferences.c:3317
+#: src/preferences.c:3319
 msgid "_Audio (requires jack or pulse audio player)"
 msgstr "音声 (JACKサーバかPulseAudioサーバが必要)(_A)"
 
-#: src/preferences.c:3355
+#: src/preferences.c:3357
 msgid "Pause recording if free disk space falls below"
 msgstr ""
 
-#: src/preferences.c:3369
+#: src/preferences.c:3371
 msgid "GB"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3381
+#: src/preferences.c:3383
 msgid "Recording"
 msgstr "記録"
 
-#: src/preferences.c:3395
+#: src/preferences.c:3397
 msgid "      Encoder                  "
 msgstr "      エンコーダ                  "
 
-#: src/preferences.c:3480
+#: src/preferences.c:3482
 msgid "Audio codec"
 msgstr "音声コーデック"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3496
+#: src/preferences.c:3498
 msgid "Encoding"
 msgstr "エンコーディング"
 
-#: src/preferences.c:3508
+#: src/preferences.c:3510
 msgid "Use _antialiasing when resizing"
 msgstr "リサイズ時にアンチエイリアシングを使用する(_a)"
 
-#: src/preferences.c:3529
+#: src/preferences.c:3531
 msgid "Number of _real time effect keys"
 msgstr "リアルタイム・エフェクト・キーの数(_r)"
 
-#: src/preferences.c:3542
+#: src/preferences.c:3544
 msgid ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
@@ -6948,68 +6948,68 @@ msgstr ""
 "\"バーチャル\"リアルタイム・エフェクト・キーの数。リアルタイム・エフェクト・"
 "ウィンドウやネットワーク(OSC)を介してコントロールされます。"
 
-#: src/preferences.c:3548
+#: src/preferences.c:3550
 msgid "Use _threads where possible when applying effects"
 msgstr ""
 
-#: src/preferences.c:3570
+#: src/preferences.c:3572
 msgid "Number of _threads"
 msgstr ""
 
-#: src/preferences.c:3603
+#: src/preferences.c:3605
 msgid "      Video load directory (default)      "
 msgstr "      ビデオ・ロード・ディレクトリ (デフォルト)      "
 
-#: src/preferences.c:3614
+#: src/preferences.c:3616
 msgid "      Video save directory (default) "
 msgstr "      ビデオ・セーブ・ディレクトリ (デフォルト) "
 
-#: src/preferences.c:3625
+#: src/preferences.c:3627
 msgid "      Audio load directory (default) "
 msgstr "      音声ロード・ディレクトリ (デフォルト) "
 
-#: src/preferences.c:3636
+#: src/preferences.c:3638
 msgid "      Image directory (default) "
 msgstr "      画像ディレクトリ (デフォルト) "
 
-#: src/preferences.c:3647
+#: src/preferences.c:3649
 msgid "      Backup/Restore directory (default) "
 msgstr "      バックアップ/リストア・ディレクトリ (デフォルト) "
 
-#: src/preferences.c:3658
+#: src/preferences.c:3660
 msgid "      Temp directory (do not remove) "
 msgstr "      一時ディレクトリ (削除不可能) "
 
-#: src/preferences.c:3677
+#: src/preferences.c:3679
 msgid "The default directory for loading video clips from"
 msgstr "映像クリップを読み込むデフォルトディレクトリ"
 
-#: src/preferences.c:3706
+#: src/preferences.c:3708
 msgid "The default directory for saving encoded clips to"
 msgstr "エンコードしたクリップを書き込むデフォルトディレクトリ"
 
-#: src/preferences.c:3718
+#: src/preferences.c:3720
 msgid "The default directory for loading and saving audio"
 msgstr "音声をロード/セーブするデフォルトディレクトリ"
 
-#: src/preferences.c:3730
+#: src/preferences.c:3732
 msgid "The default directory for saving frameshots to"
 msgstr "フレームショットをセーブするデフォルトディレクトリ"
 
-#: src/preferences.c:3742
+#: src/preferences.c:3744
 msgid "The default directory for backing up/restoring single clips"
 msgstr "シングルクリップをバックアップ/リストアするデフォルトディレクトリ"
 
-#: src/preferences.c:3754
+#: src/preferences.c:3756
 msgid "LiVES working directory."
 msgstr "LiVES作業ディレクトリ"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3832
+#: src/preferences.c:3834
 msgid "Directories"
 msgstr "ディレクトリ"
 
-#: src/preferences.c:3858
+#: src/preferences.c:3860
 msgid ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
@@ -7017,19 +7017,19 @@ msgstr ""
 "クリップボードのフレームレートが選択範囲のフレームレートと合わない場合に警告"
 "(_F)"
 
-#: src/preferences.c:3881
+#: src/preferences.c:3883
 msgid "Warn on Open if file _size exceeds "
 msgstr "ファイルサイズが次を超えるときに警告する(_S) "
 
-#: src/preferences.c:3904
+#: src/preferences.c:3906
 msgid " MB"
 msgstr " MB"
 
-#: src/preferences.c:3914
+#: src/preferences.c:3916
 msgid "Show a warning before saving a se_t"
 msgstr "セットを保存する前に警告を表示する(_T)"
 
-#: src/preferences.c:3933
+#: src/preferences.c:3935
 msgid ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
@@ -7037,70 +7037,70 @@ msgstr ""
 "起動時にmplayer, sox, composite, convertの各コマンドを検出できないときに警告"
 "を表示する(_M)"
 
-#: src/preferences.c:3952
+#: src/preferences.c:3954
 msgid "Show a warning if no _rendered effects are found at startup."
 msgstr "開始時にレンダリングエフェクトが見つからないときに警告を表示する(_R)"
 
-#: src/preferences.c:3971
+#: src/preferences.c:3973
 msgid "Show a warning if no _encoder plugins are found at startup."
 msgstr "開始時にエンコーダプラグインが見つからないときに警告を表示する(_E)"
 
-#: src/preferences.c:3990
+#: src/preferences.c:3992
 msgid "Show a warning if a _duplicate set name is entered."
 msgstr "同じセット名が入力されたときに警告を表示する(_D)"
 
-#: src/preferences.c:4009
+#: src/preferences.c:4011
 msgid "When a set is loaded, warn if clips are missing from _layouts."
 msgstr ""
 "セットがロードされたときに、クリップがレイアウトから失われるときに警告する"
 "(_L)"
 
-#: src/preferences.c:4029
+#: src/preferences.c:4031
 msgid "Warn if a clip used in a layout is about to be closed."
 msgstr "レイアウトで使われているクリップが閉じられるときには警告する。"
 
-#: src/preferences.c:4048
+#: src/preferences.c:4050
 msgid "Warn if frames used in a layout are about to be deleted."
 msgstr "レイアウトで使われているフレームが削除されるときには警告する。"
 
-#: src/preferences.c:4067
+#: src/preferences.c:4069
 msgid "Warn if frames used in a layout are about to be shifted."
 msgstr "レイアウトで使われているフレームが移動するときには警告する。"
 
-#: src/preferences.c:4086
+#: src/preferences.c:4088
 msgid "Warn if frames used in a layout are about to be altered."
 msgstr "レイアウトで使われているフレームが変化するときには警告する。"
 
-#: src/preferences.c:4105
+#: src/preferences.c:4107
 msgid "Warn if audio used in a layout is about to be deleted."
 msgstr "レイアウトで使われている音声が削除されるときには警告する。"
 
-#: src/preferences.c:4124
+#: src/preferences.c:4126
 msgid "Warn if audio used in a layout is about to be shifted."
 msgstr "レイアウトで使われている音声が移動するときには警告する。"
 
-#: src/preferences.c:4143
+#: src/preferences.c:4145
 msgid "Warn if audio used in a layout is about to be altered."
 msgstr "レイアウトで使われている音声が変化するときには警告する。"
 
-#: src/preferences.c:4162
+#: src/preferences.c:4164
 msgid "Popup layout errors after clip changes."
 msgstr ""
 
-#: src/preferences.c:4181
+#: src/preferences.c:4183
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
 msgstr ""
 "マルチトラックモードを抜けるときにレイアウトが保存されていないときは警告す"
 "る。"
 
-#: src/preferences.c:4200
+#: src/preferences.c:4202
 msgid ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
 msgstr ""
 "マルチトラックモードに音声チャネルが無いのに音声付きレイアウトがロードされる"
 "ときには警告する。"
 
-#: src/preferences.c:4219
+#: src/preferences.c:4221
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
@@ -7108,116 +7108,116 @@ msgstr ""
 "複数のトラックが音声チャンネルを持っている場合はJACKサーバかPulseAudioサーバ"
 "を使うよう警告する"
 
-#: src/preferences.c:4238
+#: src/preferences.c:4240
 msgid "Show info message after importing from firewire device."
 msgstr "Firewireデバイスからのインポート後に情報メッセージを表示する"
 
-#: src/preferences.c:4259
+#: src/preferences.c:4261
 msgid "Show a warning before opening a yuv4mpeg stream (advanced)."
 msgstr "yuv4mpegストリームを開く前に警告を出す(高度)"
 
-#: src/preferences.c:4280
+#: src/preferences.c:4282
 msgid "Show a warning when multitrack is low on backup space."
 msgstr "マルチトラックが空き容量より足りない場合に警告を表示する"
 
-#: src/preferences.c:4299
+#: src/preferences.c:4301
 msgid "Show a warning advising cleaning of disk space after a crash."
 msgstr ""
 "表示する警告がクラッシュした後、ディスクスペースの清掃アドバイスを行います。"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4321
+#: src/preferences.c:4323
 msgid "Warnings"
 msgstr "警告"
 
-#: src/preferences.c:4333
+#: src/preferences.c:4335
 msgid "Midi synch (requires the files midistart and midistop)"
 msgstr ""
 "MMC（MIDI Machine Control）を送信する（midistartおよびmidistopファイルが必要"
 "です）"
 
-#: src/preferences.c:4357
+#: src/preferences.c:4359
 msgid "When inserting/merging frames:  "
 msgstr "フレームの挿入とマージをするときの処理:  "
 
-#: src/preferences.c:4367
+#: src/preferences.c:4369
 msgid "_Speed Up/Slow Down Insertion"
 msgstr "スピードアップ/スローダウンして挿入(_S)"
 
-#: src/preferences.c:4383
+#: src/preferences.c:4385
 msgid "_Resample Insertion"
 msgstr "リサンプリングして挿入(_R)"
 
-#: src/preferences.c:4400
+#: src/preferences.c:4402
 msgid "Pause xmms during audio playback"
 msgstr "音声再生時にxmmsを一時停止する"
 
-#: src/preferences.c:4423
+#: src/preferences.c:4425
 msgid "CD device           "
 msgstr "CDデバイス           "
 
-#: src/preferences.c:4440
+#: src/preferences.c:4442
 msgid "LiVES: Choose CD device"
 msgstr "LiVES: CDデバイスの選択"
 
-#: src/preferences.c:4462
+#: src/preferences.c:4464
 msgid "LiVES can load audio tracks from this CD"
 msgstr "LiVESはこのCDから音声トラックをロードする"
 
-#: src/preferences.c:4468
+#: src/preferences.c:4470
 msgid "Default FPS        "
 msgstr "デフォルトのFPS        "
 
-#: src/preferences.c:4481
+#: src/preferences.c:4483
 msgid "Frames per second to use when none is specified"
 msgstr "何も指定しないときのフレーム毎秒"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4488
+#: src/preferences.c:4490
 msgid "Misc"
 msgstr "その他"
 
-#: src/preferences.c:4502
+#: src/preferences.c:4504
 msgid "New theme:           "
 msgstr "新しいテーマ:           "
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4537
+#: src/preferences.c:4539
 msgid "Themes"
 msgstr "テーマ"
 
-#: src/preferences.c:4551
+#: src/preferences.c:4553
 msgid "Download bandwidth (Kb/s)       "
 msgstr "ダウンロードバンド幅 (Kb/s)       "
 
-#: src/preferences.c:4573
+#: src/preferences.c:4575
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
 msgstr ""
 "OMCを利用するには、\"configure --disable-OSC\"無しでLiVESをコンパイルしなけれ"
 "ばなりません。"
 
-#: src/preferences.c:4587
+#: src/preferences.c:4589
 msgid "OMC remote control enabled"
 msgstr "OMCリモートコントロールを有効にする"
 
-#: src/preferences.c:4607
+#: src/preferences.c:4609
 msgid "UDP port       "
 msgstr "UDPポート       "
 
-#: src/preferences.c:4623
+#: src/preferences.c:4625
 msgid "Start OMC on startup"
 msgstr "起動時にOMCを開始する"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4657
+#: src/preferences.c:4659
 msgid "Streaming/Networking"
 msgstr "ストリーミング/ネットワーク"
 
-#: src/preferences.c:4667
+#: src/preferences.c:4669
 msgid "Jack transport"
 msgstr "JACKトランスポート機能"
 
-#: src/preferences.c:4682
+#: src/preferences.c:4684
 msgid ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
@@ -7225,49 +7225,49 @@ msgstr ""
 "JACKサウンドサーバのトランスポート機能を使うには、jack/transport.h と jack/"
 "jack.h を使ってLiVESをコンパイルする必要があります"
 
-#: src/preferences.c:4693
+#: src/preferences.c:4695
 msgid "Jack _transport config file"
 msgstr "JACKサーバの設定ファイル(_T)"
 
-#: src/preferences.c:4708
+#: src/preferences.c:4710
 msgid "The name of the jack server which can control LiVES transport"
 msgstr "LiVESのトランスポートを制御するJACKサーバの名前"
 
-#: src/preferences.c:4711 src/preferences.c:4892
+#: src/preferences.c:4713 src/preferences.c:4894
 msgid "Start _server on LiVES startup"
 msgstr "LiVES起動時にJACKサーバを起動(_S)"
 
-#: src/preferences.c:4733
+#: src/preferences.c:4735
 msgid "Jack transport _master (start and stop)"
 msgstr "JACKトランスポート機能のマスターとなる(_M)"
 
-#: src/preferences.c:4751
+#: src/preferences.c:4753
 msgid "Jack transport _client (start and stop)"
 msgstr "JACKトランスポート機能のクライアントとなる(_C)"
 
-#: src/preferences.c:4773
+#: src/preferences.c:4775
 msgid "Jack transport sets start position"
 msgstr "JACKトランスポート機能にスタート位置を合わせる"
 
-#: src/preferences.c:4798
+#: src/preferences.c:4800
 msgid "Jack transport timebase slave"
 msgstr "JACKトランスポート機能に時間を合わせる"
 
-#: src/preferences.c:4819
+#: src/preferences.c:4821
 msgid "(See also Playback -> Audio follows video rate/direction)"
 msgstr ""
 
-#: src/preferences.c:4842
+#: src/preferences.c:4844
 msgid "Jack audio"
 msgstr "JACK音声機能"
 
-#: src/preferences.c:4850
+#: src/preferences.c:4852
 msgid "LiVES must be compiled with jack/jack.h present to use jack audio"
 msgstr ""
 "JACKサーバの音声機能を使うためには、jack/jack.hを使ってLiVESをコンパイルする"
 "必要があります"
 
-#: src/preferences.c:4857
+#: src/preferences.c:4859
 msgid ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
@@ -7275,85 +7275,85 @@ msgstr ""
 "JACk音声機能を使うには「設定 | 再生」の音声で、プレイヤーを\"jack\"に指定する"
 "必要があります"
 
-#: src/preferences.c:4868
+#: src/preferences.c:4870
 msgid "Jack _audio server config file"
 msgstr "JACKサーバの設定ファイル(_A)"
 
-#: src/preferences.c:4884
+#: src/preferences.c:4886
 msgid "The name of the jack server for audio"
 msgstr "音声入出力に使うJACKサーバの名前"
 
-#: src/preferences.c:4911
+#: src/preferences.c:4913
 msgid "Play audio even when transport is _paused"
 msgstr "JACKトランスポート機能が停止しても音声の再生を続けます(_P)"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4938
+#: src/preferences.c:4940
 msgid "Jack Integration"
 msgstr "JACKサーバ統合"
 
-#: src/preferences.c:4947
+#: src/preferences.c:4949
 msgid "Events to respond to:"
 msgstr "反応するイベント"
 
-#: src/preferences.c:4958
+#: src/preferences.c:4960
 msgid "_Joystick events"
 msgstr "ジョイスティックイベント(_J)"
 
-#: src/preferences.c:4979
+#: src/preferences.c:4981
 msgid "_Joystick device"
 msgstr "ジョイスティックデバイス(_J)"
 
-#: src/preferences.c:4994
+#: src/preferences.c:4996
 msgid "The joystick device, e.g. /dev/input/js0"
 msgstr "ジョイスティックデバイス /dev/input/js0"
 
-#: src/preferences.c:5001
+#: src/preferences.c:5003
 msgid "LiVES: Choose joystick device"
 msgstr "LiVES: ジョイスティックデバイスの選択"
 
-#: src/preferences.c:5016
+#: src/preferences.c:5018
 msgid "_MIDI events"
 msgstr "MIDI イベント(_M)"
 
-#: src/preferences.c:5042
+#: src/preferences.c:5044
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
 msgstr ""
 "MIDIデバイスを接続するために、ALSAシーケンサ機能にMIDIポートを作成します"
 
-#: src/preferences.c:5043
+#: src/preferences.c:5045
 msgid "Use _ALSA MIDI (recommended)"
 msgstr "ALSAシーケンサ機能を利用(_A) (推奨)"
 
-#: src/preferences.c:5062
+#: src/preferences.c:5064
 msgid "Use _raw MIDI"
 msgstr "raw MIDIを利用(_R)"
 
-#: src/preferences.c:5075
+#: src/preferences.c:5077
 msgid "Read directly from the MIDI device"
 msgstr "MIDIデバイスに対応するノードから直接信号を取得します"
 
-#: src/preferences.c:5087
+#: src/preferences.c:5089
 msgid "_MIDI device"
 msgstr "MIDI デバイス(_M)"
 
-#: src/preferences.c:5102
+#: src/preferences.c:5104
 msgid "The MIDI device, e.g. /dev/input/midi0"
 msgstr "MIDIデバイス 例) /dev/input/midi0"
 
-#: src/preferences.c:5109
+#: src/preferences.c:5111
 msgid "LiVES: Choose MIDI device"
 msgstr "LiVES: MIDIデバイスの選択"
 
-#: src/preferences.c:5125
+#: src/preferences.c:5127
 msgid "Advanced"
 msgstr "詳細"
 
-#: src/preferences.c:5136
+#: src/preferences.c:5138
 msgid "MIDI check _rate"
 msgstr "MIDIチェックレート(_R)"
 
-#: src/preferences.c:5149
+#: src/preferences.c:5151
 msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
@@ -7361,24 +7361,24 @@ msgstr ""
 "キーボードによるMIDIチェックの数。この数を増やすとMIDIの反応が向上しますが、"
 "再生が遅くなるかもしれません。"
 
-#: src/preferences.c:5151
+#: src/preferences.c:5153
 msgid "MIDI repeat"
 msgstr "MIDIリピート"
 
-#: src/preferences.c:5164
+#: src/preferences.c:5166
 msgid "Number of non-reads allowed between succesive reads."
 msgstr "連続するリードにおける非リードの数"
 
-#: src/preferences.c:5170
+#: src/preferences.c:5172
 msgid "(Warning: setting this value too high can slow down playback.)"
 msgstr "(警告: 高い値を設定すると、再生が遅くなります)"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5193
+#: src/preferences.c:5195
 msgid "MIDI/Joystick learner"
 msgstr "MIDI/ジョイスティック登録"
 
-#: src/preferences.c:5448
+#: src/preferences.c:5450
 msgid ""
 "\n"
 "LiVES will now shut down. You need to restart it for the directory change to "
@@ -7390,7 +7390,7 @@ msgstr ""
 "す。\n"
 "OKのクリックで続けます。\n"
 
-#: src/preferences.c:5490
+#: src/preferences.c:5492
 msgid ""
 "For the directory change to take effect LiVES will restart when preferences "
 "dialog closes."
@@ -7398,11 +7398,11 @@ msgstr ""
 "ディレクトリの変更を適用するため、LiVESは設定ダイアログを閉じると再起動しま"
 "す。"
 
-#: src/preferences.c:5494
+#: src/preferences.c:5496
 msgid "Theme changes will not take effect until the next time you start LiVES."
 msgstr "この変更は次にLiVESを起動するときまで影響を与えません。"
 
-#: src/preferences.c:5498
+#: src/preferences.c:5500
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 "JACKサーバに関するオプションは、次にLiVESを開始するときまで変更が反映されませ"
@@ -9745,7 +9745,7 @@ msgstr "p番号"
 msgid "fps_ratio"
 msgstr "fps比率(_R)"
 
-#: src/omc-learn.c:2326 src/omc-learn.c:2435
+#: src/omc-learn.c:2328 src/omc-learn.c:2437
 #, c-format
 msgid ""
 "\n"
@@ -9760,12 +9760,12 @@ msgstr ""
 "\n"
 "エラーコード %d\n"
 
-#: src/omc-learn.c:2334
+#: src/omc-learn.c:2336
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr "デバイスマップをファイル %s　に保存..."
 
-#: src/omc-learn.c:2393
+#: src/omc-learn.c:2395
 #, c-format
 msgid ""
 "\n"
@@ -9778,7 +9778,7 @@ msgstr ""
 "ファイルのパースエラー\n"
 "%s\n"
 
-#: src/omc-learn.c:2400
+#: src/omc-learn.c:2402
 #, c-format
 msgid ""
 "\n"
@@ -9791,7 +9791,7 @@ msgstr ""
 "無効なバージョンのファイル\n"
 "%s\n"
 
-#: src/omc-learn.c:2430
+#: src/omc-learn.c:2432
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr "デバイスマップをファイル %s からロード中..."

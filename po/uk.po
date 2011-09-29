@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-08-27 14:44-0300\n"
+"POT-Creation-Date: 2011-09-28 21:24-0300\n"
 "PO-Revision-Date: 2011-08-18 15:18+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -653,22 +653,22 @@ msgstr "LiVES-%s: <%s> %dx%d : %d кадрів %d бітів/пк %.3f кд/с"
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <файла не вказано>"
 
-#: src/main.c:3545
+#: src/main.c:3555
 #, c-format
 msgid "rec %9d/%d"
 msgstr "зап %9d/%d"
 
-#: src/main.c:3547
+#: src/main.c:3557
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!зап %9d/%d"
 
-#: src/main.c:3759 src/main.c:3760 src/gui.c:2003 src/gui.c:2973
+#: src/main.c:3769 src/main.c:3770 src/gui.c:2003 src/gui.c:2973
 #: src/saveplay.c:1654
 msgid "Play"
 msgstr "Пуск"
 
-#: src/main.c:4125
+#: src/main.c:4135
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -676,35 +676,35 @@ msgstr ""
 "LiVES не вдалося захопити це зображення.\n"
 "\n"
 
-#: src/main.c:4209
+#: src/main.c:4219
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Закритий файл %s\n"
 
-#: src/main.c:4375 src/gui.c:597 src/utils.c:2594 src/utils.c:2620
+#: src/main.c:4385 src/gui.c:597 src/utils.c:2594 src/utils.c:2620
 #: src/saveplay.c:2619 src/multitrack.c:3811 src/multitrack.c:5318
 msgid "_Undo"
 msgstr "В_ернути"
 
-#: src/main.c:4376 src/gui.c:610 src/utils.c:2595 src/utils.c:2621
+#: src/main.c:4386 src/gui.c:610 src/utils.c:2595 src/utils.c:2621
 #: src/saveplay.c:2620 src/multitrack.c:3832 src/multitrack.c:5341
 msgid "_Redo"
 msgstr "Повт_орити"
 
-#: src/main.c:4402 src/interface.c:639 src/gui.c:2161 src/preferences.c:2333
+#: src/main.c:4412 src/interface.c:639 src/gui.c:2161 src/preferences.c:2335
 #: src/resample.c:1743
 msgid "Video"
 msgstr "Відео"
 
-#: src/main.c:4403 src/interface.c:658 src/gui.c:2180
+#: src/main.c:4413 src/interface.c:658 src/gui.c:2180
 msgid "Left Audio"
 msgstr "Лівий канал звуку"
 
-#: src/main.c:4404 src/gui.c:2198
+#: src/main.c:4414 src/gui.c:2198
 msgid "Right Audio"
 msgstr "Правий канал звуку"
 
-#: src/main.c:4449
+#: src/main.c:4459
 msgid ""
 "\n"
 "\n"
@@ -1369,7 +1369,7 @@ msgstr "Встановити назву "
 msgid "Use def_aults"
 msgstr "Використовувати т_ипові"
 
-#: src/interface.c:1968 src/interface.c:2324 src/preferences.c:2919
+#: src/interface.c:1968 src/interface.c:2324 src/preferences.c:2921
 msgid "_Advanced"
 msgstr "Д_одатково"
 
@@ -1458,7 +1458,7 @@ msgstr "Висота"
 msgid "Driver"
 msgstr "Драйвер"
 
-#: src/interface.c:2476 src/preferences.c:3433
+#: src/interface.c:2476 src/preferences.c:3435
 msgid "Output format"
 msgstr "Формат виводу"
 
@@ -2423,7 +2423,7 @@ msgstr "Відтворити у окремому вікні (s)"
 msgid "LiVES: - Streaming"
 msgstr "LiVES — Обробка потокових даних"
 
-#: src/callbacks.c:6066 src/gui.c:3499 src/saveplay.c:1797 src/plugins.c:1279
+#: src/callbacks.c:6066 src/gui.c:3499 src/saveplay.c:1797 src/plugins.c:1286
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Вікно відтворення"
 
@@ -3658,7 +3658,7 @@ msgstr "_Виконати запис"
 msgid "Hide Play Window"
 msgstr "Приховати вікно відтворення"
 
-#: src/gui.c:3834
+#: src/gui.c:3836
 msgid "Show Play Window"
 msgstr "Показати вікно відтворення"
 
@@ -5324,7 +5324,7 @@ msgid "effect"
 msgstr "ефект"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects-weed.c:251 src/preferences.c:3593
+#: src/effects-weed.c:251 src/preferences.c:3595
 msgid "Effects"
 msgstr "Ефекти"
 
@@ -5412,7 +5412,7 @@ msgstr "регулятор гучності"
 msgid "Audio Volume Controllers"
 msgstr "Регулятори гучності"
 
-#: src/effects-weed.c:291 src/plugins.c:2103
+#: src/effects-weed.c:291 src/plugins.c:2110
 msgid "unknown"
 msgstr "невідомий"
 
@@ -5530,11 +5530,11 @@ msgstr "%s: розмір"
 msgid "New size (pixels)"
 msgstr "Новий розмір (у пікселях):"
 
-#: src/paramwindow.c:560 src/plugins.c:850
+#: src/paramwindow.c:560 src/plugins.c:853
 msgid "_Width"
 msgstr "_Ширина"
 
-#: src/paramwindow.c:586 src/plugins.c:865
+#: src/paramwindow.c:586 src/plugins.c:868
 msgid "_Height"
 msgstr "_Висота"
 
@@ -5684,32 +5684,32 @@ msgstr ""
 " Інструменти|Параметри|Відтворення|Додаткові параметри відтворення\n"
 "\n"
 
-#: src/plugins.c:682
+#: src/plugins.c:685
 #, c-format
 msgid "Saving playback plugin defaults to %s..."
 msgstr "Збереження типових параметрів додатка відтворення до %s…"
 
-#: src/plugins.c:797
+#: src/plugins.c:800
 msgid "Fixed framerate for plugin.\n"
 msgstr "Фіксована частота кадрів для додатка.\n"
 
-#: src/plugins.c:799
+#: src/plugins.c:802
 msgid "_FPS"
 msgstr "_Частота кадрів"
 
-#: src/plugins.c:891
+#: src/plugins.c:894
 msgid "Colourspace input to the plugin.\n"
 msgstr "Вхідний простір кольорів для додатка.\n"
 
-#: src/plugins.c:893
+#: src/plugins.c:896
 msgid "_Colourspace"
 msgstr "_Простір кольорів"
 
-#: src/plugins.c:964
+#: src/plugins.c:967
 msgid "Save settings to an alternate file.\n"
 msgstr "Зберегти параметри до іншого файла.\n"
 
-#: src/plugins.c:1037
+#: src/plugins.c:1042
 #, c-format
 msgid ""
 "\n"
@@ -5722,7 +5722,7 @@ msgstr ""
 "Не вдалося відкрити додаток відтворення %s\n"
 "Помилка: %s\n"
 
-#: src/plugins.c:1072
+#: src/plugins.c:1077
 #, c-format
 msgid ""
 "Video playback plugin failed to initialise.\n"
@@ -5731,7 +5731,7 @@ msgstr ""
 "Не вдалося ініціалізувати додаток відтворення.\n"
 "Помилка: %s\n"
 
-#: src/plugins.c:1083
+#: src/plugins.c:1088
 #, c-format
 msgid ""
 "\n"
@@ -5746,7 +5746,7 @@ msgstr ""
 "не передбачено обов’язкової функції.\n"
 "Його використання неможливе.\n"
 
-#: src/plugins.c:1244
+#: src/plugins.c:1249
 msgid ""
 "\n"
 "Warning ! Video playback plugin will not send key presses. Keyboard may be "
@@ -5757,7 +5757,7 @@ msgstr ""
 "натискання клавіш. Під час користування додатком клавіатурні скорочення може "
 "бути вимкнено!\n"
 
-#: src/plugins.c:1248
+#: src/plugins.c:1253
 #, c-format
 msgid ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
@@ -5766,7 +5766,7 @@ msgstr ""
 "*** Використання додатка %s для повноекранного відтворення призведе до "
 "використання типу палітри %d ( %s ). ***\n"
 
-#: src/plugins.c:1348
+#: src/plugins.c:1355
 #, c-format
 msgid ""
 "LiVES was unable to find its encoder plugins. Please make sure you have the "
@@ -5779,7 +5779,7 @@ msgstr ""
 "%s%s%s\n"
 "або змініть значення параметра <lib_dir> у ~/.lives\n"
 
-#: src/plugins.c:1355
+#: src/plugins.c:1362
 #, c-format
 msgid ""
 "LiVES did not receive a response from the encoder plugin called '%s'.\n"
@@ -5793,11 +5793,11 @@ msgstr ""
 "або перемкніть програму на використання іншого додатка за допомогою вкладки "
 "«Інструменти|Параметри|Кодування»\n"
 
-#: src/plugins.c:1737
+#: src/plugins.c:1744
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "Зміна розмірів неможлива, будь ласка, встановіть imageMagick\n"
 
-#: src/plugins.c:2047
+#: src/plugins.c:2054
 #, c-format
 msgid ""
 "\n"
@@ -5810,7 +5810,7 @@ msgstr ""
 "Не вдалося відкрити додаток декодування %s\n"
 "Помилка: %s\n"
 
-#: src/plugins.c:2068
+#: src/plugins.c:2075
 #, c-format
 msgid ""
 "\n"
@@ -5825,16 +5825,16 @@ msgstr ""
 "немає обов’язкової функції.\n"
 "Його використання неможливе.\n"
 
-#: src/plugins.c:2108
+#: src/plugins.c:2115
 msgid "/unknown"
 msgstr "/невідомо"
 
-#: src/plugins.c:2134
+#: src/plugins.c:2141
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Не вдалося завантажити %s, при переходах зміна розмірів неможлива.\n"
 
-#: src/plugins.c:3139
+#: src/plugins.c:3146
 #, c-format
 msgid "%s advanced settings"
 msgstr "Додаткові параметри %s"
@@ -6721,7 +6721,7 @@ msgstr ""
 "\n"
 "(Вільно = %.2f ГБ)"
 
-#: src/preferences.c:520
+#: src/preferences.c:522
 #, c-format
 msgid ""
 "Unable to create or write to the new temporary directory.\n"
@@ -6739,7 +6739,7 @@ msgstr ""
 "\n"
 "Зараз каталог змінено не буде.\n"
 
-#: src/preferences.c:530
+#: src/preferences.c:532
 msgid ""
 "You have chosen to change the temporary directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
@@ -6759,7 +6759,7 @@ msgstr ""
 "Ви також можете натиснути кнопку «Скасувати», щоб відновити початкову адресу "
 "каталогу тимчасових файлів."
 
-#: src/preferences.c:889
+#: src/preferences.c:891
 msgid ""
 "\n"
 "Unable to switch audio players to jack - jackd must be installed first.\n"
@@ -6770,7 +6770,7 @@ msgstr ""
 "jackd.\n"
 "Див. http://jackaudio.org\n"
 
-#: src/preferences.c:893
+#: src/preferences.c:895
 msgid ""
 "\n"
 "Switching audio players requires restart (jackd must not be running)\n"
@@ -6779,7 +6779,7 @@ msgstr ""
 "Перемикання інструментів відтворення звуку вимагає перезапуску програми "
 "(доведеться запустити jackd)\n"
 
-#: src/preferences.c:915
+#: src/preferences.c:917
 msgid ""
 "\n"
 "Unable to switch audio players to pulse audio\n"
@@ -6791,67 +6791,67 @@ msgstr ""
 "Слід спочатку встановити PulseAudio\n"
 "Див. http://www.pulseaudio.org\n"
 
-#: src/preferences.c:1198
+#: src/preferences.c:1200
 msgid "PCM (highest quality; largest files)"
 msgstr "PCM (найвища якість, найбільші файли)"
 
-#: src/preferences.c:1829
+#: src/preferences.c:1831
 msgid "LiVES: - Preferences"
 msgstr "LiVES: - Параметри"
 
-#: src/preferences.c:1902
+#: src/preferences.c:1904
 msgid "Open file selection maximised"
 msgstr "Відкривати частини файлів максимізованими"
 
-#: src/preferences.c:1921
+#: src/preferences.c:1923
 msgid "Show recent files in the File menu"
 msgstr "Показувати нещодавні файли у меню «Файл»"
 
-#: src/preferences.c:1944
+#: src/preferences.c:1946
 msgid "Stop screensaver on playback    "
 msgstr "Зупиняти зберігач екрана на час відтворення    "
 
-#: src/preferences.c:1963
+#: src/preferences.c:1965
 msgid "Open main window maximised"
 msgstr "Відкривати вікно максимізованим"
 
-#: src/preferences.c:1986
+#: src/preferences.c:1988
 msgid "Show toolbar when background is blanked"
 msgstr "Показувати панель, якщо тло спорожнено"
 
-#: src/preferences.c:2005
+#: src/preferences.c:2007
 msgid "Allow mouse wheel to switch clips"
 msgstr "Дозволити перемикання між кліпами коліщатком миші"
 
-#: src/preferences.c:2028
+#: src/preferences.c:2030
 msgid "Shrink previews to fit in interface"
 msgstr "Стискати перегляд відповідно до розмірів інтерфейсу"
 
-#: src/preferences.c:2049
+#: src/preferences.c:2051
 msgid "Startup mode:"
 msgstr "Початковий режим:"
 
-#: src/preferences.c:2060
+#: src/preferences.c:2062
 msgid "_Clip editor"
 msgstr "_Редактор кліпів"
 
-#: src/preferences.c:2080
+#: src/preferences.c:2082
 msgid "_Multitrack mode"
 msgstr "Режим _декількох доріжок"
 
-#: src/preferences.c:2145
+#: src/preferences.c:2147
 msgid "Multi-head support"
 msgstr "Підтримка роботи з декількома моніторами"
 
-#: src/preferences.c:2158
+#: src/preferences.c:2160
 msgid " monitor number for LiVES interface"
 msgstr " кількість моніторів для інтерфейсу LiVES"
 
-#: src/preferences.c:2173
+#: src/preferences.c:2175
 msgid " monitor number for playback"
 msgstr " кількість моніторів для відтворення"
 
-#: src/preferences.c:2186
+#: src/preferences.c:2188
 msgid ""
 "A setting of 0 means use all available monitors (only works with some "
 "playback plugins)."
@@ -6859,235 +6859,235 @@ msgstr ""
 "У разі встановлення значення 0 буде використано всі доступні монітори "
 "(працює не з усіма додатками відтворення)."
 
-#: src/preferences.c:2199
+#: src/preferences.c:2201
 msgid "Force single monitor"
 msgstr "Примусово на одному моніторі"
 
-#: src/preferences.c:2214
+#: src/preferences.c:2216
 msgid "Force single monitor mode"
 msgstr "Режим примусової роботи на одному моніторі"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2236
+#: src/preferences.c:2238
 msgid "GUI"
 msgstr "Інтерфейс"
 
-#: src/preferences.c:2250
+#: src/preferences.c:2252
 msgid "When entering Multitrack mode:"
 msgstr "Після входу до режиму декількох доріжок:"
 
-#: src/preferences.c:2269
+#: src/preferences.c:2271
 msgid "_Prompt me for width, height, fps and audio settings"
 msgstr "_Запитати про ширину, висоту, частоту кадрів та параметри звуку"
 
-#: src/preferences.c:2288
+#: src/preferences.c:2290
 msgid "_Always use the following values:"
 msgstr "_Завжди використовувати такі значення:"
 
-#: src/preferences.c:2308
+#: src/preferences.c:2310
 msgid "Use these same _values for rendering a new clip"
 msgstr "Використовувати ці з_начення для обробки нових кліпів"
 
-#: src/preferences.c:2346
+#: src/preferences.c:2348
 msgid "_Width           "
 msgstr "_Ширина           "
 
-#: src/preferences.c:2362
+#: src/preferences.c:2364
 msgid "          _Height      "
 msgstr "          _Висота      "
 
-#: src/preferences.c:2379
+#: src/preferences.c:2381
 msgid "          _FPS"
 msgstr "          _Частота кадрів"
 
-#: src/preferences.c:2405
+#: src/preferences.c:2407
 msgid "Enable backing audio track"
 msgstr "Увімкнути резервне копіювання звукової доріжки"
 
-#: src/preferences.c:2425
+#: src/preferences.c:2427
 msgid "Audio track per video track"
 msgstr "Кількість звукових доріжок на відеодоріжку"
 
-#: src/preferences.c:2455
+#: src/preferences.c:2457
 msgid "    _Undo buffer size (MB)    "
 msgstr "    Розмір _буфера скасування (у МБ)    "
 
-#: src/preferences.c:2471
+#: src/preferences.c:2473
 msgid "_Exit multitrack mode after rendering"
 msgstr "Ви_йти з багато доріжкового режиму після обробки"
 
-#: src/preferences.c:2492
+#: src/preferences.c:2494
 msgid "Auto backup layouts"
 msgstr "Автоматичне створення копій компонування"
 
-#: src/preferences.c:2502
+#: src/preferences.c:2504
 msgid "_Every"
 msgstr "_Кожні"
 
-#: src/preferences.c:2519
+#: src/preferences.c:2521
 msgid "seconds"
 msgstr "секунд"
 
-#: src/preferences.c:2538
+#: src/preferences.c:2540
 msgid "After every _change"
 msgstr "Після к_ожної зміни"
 
-#: src/preferences.c:2557
+#: src/preferences.c:2559
 msgid "_Never"
 msgstr "_Ніколи"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2592
+#: src/preferences.c:2594
 msgid "Multitrack/Render"
 msgstr "Доріжки/Обробка"
 
-#: src/preferences.c:2608
+#: src/preferences.c:2610
 msgid "Video open command             "
 msgstr "Команда відкриття відео             "
 
-#: src/preferences.c:2628
+#: src/preferences.c:2630
 msgid "Open/render compression                  "
 msgstr "Стискання відкриття/обробки                  "
 
-#: src/preferences.c:2640
+#: src/preferences.c:2642
 msgid " %     ( lower = slower, larger files; for jpeg, higher quality )"
 msgstr ""
 " %     ( менше значення = повільніше, більші файли; для jpeg — вища якість )"
 
-#: src/preferences.c:2653
+#: src/preferences.c:2655
 msgid "Default image format          "
 msgstr "Типовий формат зображень          "
 
-#: src/preferences.c:2662
+#: src/preferences.c:2664
 msgid "_jpeg"
 msgstr "_jpeg"
 
-#: src/preferences.c:2677
+#: src/preferences.c:2679
 msgid "_png"
 msgstr "_png"
 
-#: src/preferences.c:2697
+#: src/preferences.c:2699
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
 msgstr ""
 "(Скористайтеся пунктом меню «Довідка/Усування вад», щоб переглянути список "
 "підтримуваних форматів зображень)"
 
-#: src/preferences.c:2711
+#: src/preferences.c:2713
 msgid "Use instant opening when possible"
 msgstr "За можливості, користуватися негайним відкриттям"
 
-#: src/preferences.c:2722
+#: src/preferences.c:2724
 msgid "Enable instant opening of some file types using decoder plugins"
 msgstr ""
 "Увімкнути негайне відкриття файлів деяких типів за допомогою додатків "
 "декодування"
 
-#: src/preferences.c:2735
+#: src/preferences.c:2737
 msgid "Enable automatic deinterlacing when possible"
 msgstr "За можливості, увімкнути автоматичне усування черезрядковості"
 
-#: src/preferences.c:2747
+#: src/preferences.c:2749
 msgid "Automatically deinterlace frames when a plugin suggests it"
 msgstr "Автоматично усувати черезрядковість, якщо це пропонує додаток"
 
-#: src/preferences.c:2761
+#: src/preferences.c:2763
 msgid "Ignore blank borders when possible"
 msgstr "Якщо можна, ігнорувати порожні поля"
 
-#: src/preferences.c:2773
+#: src/preferences.c:2775
 msgid "Clip any blank borders from frames where possible"
 msgstr "Якщо можна, вирізати всі порожні поля з кадрів"
 
-#: src/preferences.c:2787
+#: src/preferences.c:2789
 msgid "When opening multiple files, concatenate images into one clip"
 msgstr "Якщо буде відкрито декілька зображень, об’єднати їх у один кліп"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2809
+#: src/preferences.c:2811
 msgid "Decoding"
 msgstr "Декодування"
 
-#: src/preferences.c:2833
+#: src/preferences.c:2835
 msgid "The preview quality for video playback - affects resizing"
 msgstr ""
 "Якість попереднього перегляду відтворення відео (впливає на зміну розмірів)"
 
-#: src/preferences.c:2835
+#: src/preferences.c:2837
 msgid "Preview _quality"
 msgstr "_Якість перегляду"
 
-#: src/preferences.c:2846
+#: src/preferences.c:2848
 msgid "Low - can improve performance on slower machines"
 msgstr "Низька — може покращити швидкодію на повільних комп’ютерах"
 
-#: src/preferences.c:2847
+#: src/preferences.c:2849
 msgid "Normal - recommended for most users"
 msgstr "Звичайна — рекомендована для більшості користувачів"
 
-#: src/preferences.c:2848
+#: src/preferences.c:2850
 msgid "High - can improve quality on very fast machines"
 msgstr "Висока — може покращити якість на дуже швидких комп’ютерах"
 
-#: src/preferences.c:2871
+#: src/preferences.c:2873
 msgid "_Show FPS statistics"
 msgstr "П_оказувати дані щодо частоти кадрів"
 
-#: src/preferences.c:2901
+#: src/preferences.c:2903
 msgid "_Plugin"
 msgstr "_Додаток"
 
-#: src/preferences.c:2945
+#: src/preferences.c:2947
 msgid "Stream audio"
 msgstr "Потоковий звук"
 
-#: src/preferences.c:2956
+#: src/preferences.c:2958
 msgid "Stream audio to playback plugin"
 msgstr "Додаток відтворення потокового звуку"
 
-#: src/preferences.c:2963
+#: src/preferences.c:2965
 msgid "VIDEO"
 msgstr "ВІДЕО"
 
-#: src/preferences.c:2986
+#: src/preferences.c:2988
 msgid "_Player"
 msgstr "П_рогравач"
 
-#: src/preferences.c:3024
+#: src/preferences.c:3026
 msgid "(See also the Jack Integration tab for jack startup options)"
 msgstr ""
 "(Додаткові параметри запуску Jack можна знайти на вкладці «Інтеграція з "
 "Jack»)"
 
-#: src/preferences.c:3055
+#: src/preferences.c:3057
 msgid "mplayer"
 msgstr "mplayer"
 
-#: src/preferences.c:3065
+#: src/preferences.c:3067
 msgid "Audio play _command"
 msgstr "_Команда відтворення звуку"
 
-#: src/preferences.c:3083
+#: src/preferences.c:3085
 msgid "- internal -"
 msgstr "- вбудована -"
 
-#: src/preferences.c:3095
+#: src/preferences.c:3097
 msgid "Audio follows video _rate/direction"
 msgstr "Параметри звуку змінюються за _частотою/напрямком відтворення відео"
 
-#: src/preferences.c:3116
+#: src/preferences.c:3118
 msgid "Audio follows _clip switches"
 msgstr "Параметри звуку змінюються за перемиканням _кліпів"
 
-#: src/preferences.c:3134
+#: src/preferences.c:3136
 msgid "AUDIO"
 msgstr "ЗВУК"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3149
+#: src/preferences.c:3151
 msgid "Playback"
 msgstr "Відтворення"
 
-#: src/preferences.c:3161
+#: src/preferences.c:3163
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
@@ -7095,65 +7095,65 @@ msgstr ""
 "Записувати звук під час захоплення відео з з_овнішнього вікна\n"
 " (потрібен сервер Jack або PulseAudio)"
 
-#: src/preferences.c:3189
+#: src/preferences.c:3191
 msgid "      What to record when 'r' is pressed   "
 msgstr "      Джерело даних для запису після натискання клавіші «r»   "
 
-#: src/preferences.c:3203
+#: src/preferences.c:3205
 msgid "_Frame changes"
 msgstr "З_мінюється номер кадру"
 
-#: src/preferences.c:3231
+#: src/preferences.c:3233
 msgid "F_PS changes"
 msgstr "Змі_нюється частота кадрів"
 
-#: src/preferences.c:3265
+#: src/preferences.c:3267
 msgid "_Real time effects"
 msgstr "Ефекти _реального часу"
 
-#: src/preferences.c:3289
+#: src/preferences.c:3291
 msgid "_Clip switches"
 msgstr "П_еремикання кліпів"
 
-#: src/preferences.c:3317
+#: src/preferences.c:3319
 msgid "_Audio (requires jack or pulse audio player)"
 msgstr "_Звукові дані (потрібен сервер Jack або PulseAudio)"
 
-#: src/preferences.c:3355
+#: src/preferences.c:3357
 msgid "Pause recording if free disk space falls below"
 msgstr "Призупинити запис, якщо на диску залишилося менше"
 
-#: src/preferences.c:3369
+#: src/preferences.c:3371
 msgid "GB"
 msgstr "ГБ"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3381
+#: src/preferences.c:3383
 msgid "Recording"
 msgstr "Запис"
 
-#: src/preferences.c:3395
+#: src/preferences.c:3397
 msgid "      Encoder                  "
 msgstr "      Кодувальник                  "
 
-#: src/preferences.c:3480
+#: src/preferences.c:3482
 msgid "Audio codec"
 msgstr "Аудіокодек"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3496
+#: src/preferences.c:3498
 msgid "Encoding"
 msgstr "Кодування"
 
-#: src/preferences.c:3508
+#: src/preferences.c:3510
 msgid "Use _antialiasing when resizing"
 msgstr "Використовувати під час зміни розмірів з_гладжування"
 
-#: src/preferences.c:3529
+#: src/preferences.c:3531
 msgid "Number of _real time effect keys"
 msgstr "Кількість клавіш ефектів _реального часу"
 
-#: src/preferences.c:3542
+#: src/preferences.c:3544
 msgid ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
@@ -7162,69 +7162,69 @@ msgstr ""
 "можна або за допомогою вікна ефектів реального часу, або за допомогою мережі "
 "(OSC)."
 
-#: src/preferences.c:3548
+#: src/preferences.c:3550
 msgid "Use _threads where possible when applying effects"
 msgstr "_Розподілене виконання під час застосування ефектів"
 
-#: src/preferences.c:3570
+#: src/preferences.c:3572
 msgid "Number of _threads"
 msgstr "Кількість _потоків"
 
-#: src/preferences.c:3603
+#: src/preferences.c:3605
 msgid "      Video load directory (default)      "
 msgstr "      Каталог завантаження відео (типовий)      "
 
-#: src/preferences.c:3614
+#: src/preferences.c:3616
 msgid "      Video save directory (default) "
 msgstr "      Каталог збереження відео (типовий) "
 
-#: src/preferences.c:3625
+#: src/preferences.c:3627
 msgid "      Audio load directory (default) "
 msgstr "      Каталог завантаження звукових даних (типовий) "
 
-#: src/preferences.c:3636
+#: src/preferences.c:3638
 msgid "      Image directory (default) "
 msgstr "      Каталог зображень (типовий) "
 
-#: src/preferences.c:3647
+#: src/preferences.c:3649
 msgid "      Backup/Restore directory (default) "
 msgstr "      Каталог резервних копій/Відновлення (типовий) "
 
-#: src/preferences.c:3658
+#: src/preferences.c:3660
 msgid "      Temp directory (do not remove) "
 msgstr "      Каталог тимчасових файлів (не вилучати) "
 
-#: src/preferences.c:3677
+#: src/preferences.c:3679
 msgid "The default directory for loading video clips from"
 msgstr "Типовий каталог, з якого завантажуватимуться відеокліпи"
 
-#: src/preferences.c:3706
+#: src/preferences.c:3708
 msgid "The default directory for saving encoded clips to"
 msgstr "Типовий каталог, до якого зберігатимуться закодовані кліпи"
 
-#: src/preferences.c:3718
+#: src/preferences.c:3720
 msgid "The default directory for loading and saving audio"
 msgstr "Типовий каталог для збереження та завантаження звукових даних"
 
-#: src/preferences.c:3730
+#: src/preferences.c:3732
 msgid "The default directory for saving frameshots to"
 msgstr "Типовий каталог, до якого зберігатимуться зображення кадрів"
 
-#: src/preferences.c:3742
+#: src/preferences.c:3744
 msgid "The default directory for backing up/restoring single clips"
 msgstr ""
 "Типовий каталог для створення резервних копій або відновлення окремих кліпів"
 
-#: src/preferences.c:3754
+#: src/preferences.c:3756
 msgid "LiVES working directory."
 msgstr "Робочий каталог LiVES."
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3832
+#: src/preferences.c:3834
 msgid "Directories"
 msgstr "Каталоги"
 
-#: src/preferences.c:3858
+#: src/preferences.c:3860
 msgid ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
@@ -7232,19 +7232,19 @@ msgstr ""
 "Попереджати під час вставки/об’єднання, якщо _частота кадрів у буфері даних "
 "не збігається з частотою кадрів позначеного"
 
-#: src/preferences.c:3881
+#: src/preferences.c:3883
 msgid "Warn on Open if file _size exceeds "
 msgstr "Попереджати під час відкриття, якщо _розмір перевищує "
 
-#: src/preferences.c:3904
+#: src/preferences.c:3906
 msgid " MB"
 msgstr " МБ"
 
-#: src/preferences.c:3914
+#: src/preferences.c:3916
 msgid "Show a warning before saving a se_t"
 msgstr "Показувати попередження перед збереженням _набору"
 
-#: src/preferences.c:3933
+#: src/preferences.c:3935
 msgid ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
@@ -7252,76 +7252,76 @@ msgstr ""
 "Показувати попередження, як_що під час запуску LiVES не буде знайдено "
 "mplayer, sox, composite або convert."
 
-#: src/preferences.c:3952
+#: src/preferences.c:3954
 msgid "Show a warning if no _rendered effects are found at startup."
 msgstr ""
 "Показувати попередження, якщо при запуску у системі не буде знайдено ефектів "
 "_обробки."
 
-#: src/preferences.c:3971
+#: src/preferences.c:3973
 msgid "Show a warning if no _encoder plugins are found at startup."
 msgstr ""
 "Показувати попередження, якщо при запуску у системі не буде знайдено "
 "_додатків кодування."
 
-#: src/preferences.c:3990
+#: src/preferences.c:3992
 msgid "Show a warning if a _duplicate set name is entered."
 msgstr "Показувати попередження, якщо буде введено _дублікат назви набору."
 
-#: src/preferences.c:4009
+#: src/preferences.c:4011
 msgid "When a set is loaded, warn if clips are missing from _layouts."
 msgstr ""
 "Під час завантаження набору попереджати про те, що не вдалося знайти кліпів "
 "_компонувань."
 
-#: src/preferences.c:4029
+#: src/preferences.c:4031
 msgid "Warn if a clip used in a layout is about to be closed."
 msgstr "Попередження про намір закрити кліп, використаний у компонуванні."
 
-#: src/preferences.c:4048
+#: src/preferences.c:4050
 msgid "Warn if frames used in a layout are about to be deleted."
 msgstr "Попередження про вилучення кадрів, використаних у компонуванні."
 
-#: src/preferences.c:4067
+#: src/preferences.c:4069
 msgid "Warn if frames used in a layout are about to be shifted."
 msgstr "Попередження про пересування кадрів, використаних у компонуванні."
 
-#: src/preferences.c:4086
+#: src/preferences.c:4088
 msgid "Warn if frames used in a layout are about to be altered."
 msgstr "Попередження про заміну кадрів, використаних у компонуванні."
 
-#: src/preferences.c:4105
+#: src/preferences.c:4107
 msgid "Warn if audio used in a layout is about to be deleted."
 msgstr ""
 "Попередження про вилучення звукових даних, використаних у компонуванні."
 
-#: src/preferences.c:4124
+#: src/preferences.c:4126
 msgid "Warn if audio used in a layout is about to be shifted."
 msgstr ""
 "Попередження про пересування звукових даних, використаних у компонуванні."
 
-#: src/preferences.c:4143
+#: src/preferences.c:4145
 msgid "Warn if audio used in a layout is about to be altered."
 msgstr "Попередження про заміну звукових даних, використаних у компонуванні."
 
-#: src/preferences.c:4162
+#: src/preferences.c:4164
 msgid "Popup layout errors after clip changes."
 msgstr "Контекстні підказки про помилки компонування після змін у кліпі."
 
-#: src/preferences.c:4181
+#: src/preferences.c:4183
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
 msgstr ""
 "Попереджати про те, що компонування не було збережено під час завершення "
 "роботи у багатодоріжковому режимі."
 
-#: src/preferences.c:4200
+#: src/preferences.c:4202
 msgid ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
 msgstr ""
 "Попереджати про завантаження компонування зі звуковими доріжками у "
 "багатодоріжковому режимі без звуку."
 
-#: src/preferences.c:4219
+#: src/preferences.c:4221
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
@@ -7329,118 +7329,118 @@ msgstr ""
 "Попереджати, якщо у багатодоріжковому режимі є звукові канали, а програвачем "
 "звуку не є «jack» або «PulseAudio»."
 
-#: src/preferences.c:4238
+#: src/preferences.c:4240
 msgid "Show info message after importing from firewire device."
 msgstr "Показувати сповіщення після імпортування даних пристрою firewire."
 
-#: src/preferences.c:4259
+#: src/preferences.c:4261
 msgid "Show a warning before opening a yuv4mpeg stream (advanced)."
 msgstr "Показувати попередження перед відкриттям потоку yuv4mpeg."
 
-#: src/preferences.c:4280
+#: src/preferences.c:4282
 msgid "Show a warning when multitrack is low on backup space."
 msgstr ""
 "Показувати попередження про вичерпання простору для резервування у "
 "багатодоріжковому режимі."
 
-#: src/preferences.c:4299
+#: src/preferences.c:4301
 msgid "Show a warning advising cleaning of disk space after a crash."
 msgstr ""
 "Показувати після аварійного завершення діалогове вікно з пропозицією "
 "звільнити місце на диску."
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4321
+#: src/preferences.c:4323
 msgid "Warnings"
 msgstr "Попередження"
 
-#: src/preferences.c:4333
+#: src/preferences.c:4335
 msgid "Midi synch (requires the files midistart and midistop)"
 msgstr "MIDI-синхронізація (потрібні файли midistart і midistop)"
 
-#: src/preferences.c:4357
+#: src/preferences.c:4359
 msgid "When inserting/merging frames:  "
 msgstr "Вставка/Об’єднання кадрів:  "
 
-#: src/preferences.c:4367
+#: src/preferences.c:4369
 msgid "_Speed Up/Slow Down Insertion"
 msgstr "При_швидшити/Сповільнити вставлене"
 
-#: src/preferences.c:4383
+#: src/preferences.c:4385
 msgid "_Resample Insertion"
 msgstr "_Змінити частоту кадрів у вставленому"
 
-#: src/preferences.c:4400
+#: src/preferences.c:4402
 msgid "Pause xmms during audio playback"
 msgstr "Pause xmms during audio playback"
 
-#: src/preferences.c:4423
+#: src/preferences.c:4425
 msgid "CD device           "
 msgstr "Пристрій КД           "
 
-#: src/preferences.c:4440
+#: src/preferences.c:4442
 msgid "LiVES: Choose CD device"
 msgstr "LiVES: Вибір пристрою КД"
 
-#: src/preferences.c:4462
+#: src/preferences.c:4464
 msgid "LiVES can load audio tracks from this CD"
 msgstr "LiVES може завантажувати звукові композиції з цього КД"
 
-#: src/preferences.c:4468
+#: src/preferences.c:4470
 msgid "Default FPS        "
 msgstr "Типово кд/с        "
 
-#: src/preferences.c:4481
+#: src/preferences.c:4483
 msgid "Frames per second to use when none is specified"
 msgstr ""
 "Кількість кадрів на секунду, яку слід використовувати, якщо кількість не "
 "визначено"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4488
+#: src/preferences.c:4490
 msgid "Misc"
 msgstr "Інше"
 
-#: src/preferences.c:4502
+#: src/preferences.c:4504
 msgid "New theme:           "
 msgstr "Нова тема:           "
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4537
+#: src/preferences.c:4539
 msgid "Themes"
 msgstr "Теми"
 
-#: src/preferences.c:4551
+#: src/preferences.c:4553
 msgid "Download bandwidth (Kb/s)       "
 msgstr "Ширина каналу звантаження (кб/с)       "
 
-#: src/preferences.c:4573
+#: src/preferences.c:4575
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
 msgstr ""
 "Для використання OMC LiVES має бути зібрано без \"configure --disable-OSC\""
 
-#: src/preferences.c:4587
+#: src/preferences.c:4589
 msgid "OMC remote control enabled"
 msgstr "Увімкнено віддалене керування OMC"
 
-#: src/preferences.c:4607
+#: src/preferences.c:4609
 msgid "UDP port       "
 msgstr "Порт UDP       "
 
-#: src/preferences.c:4623
+#: src/preferences.c:4625
 msgid "Start OMC on startup"
 msgstr "Вмикати OMC під час запуску програми"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4657
+#: src/preferences.c:4659
 msgid "Streaming/Networking"
 msgstr "Потокові дані/Мережа"
 
-#: src/preferences.c:4667
+#: src/preferences.c:4669
 msgid "Jack transport"
 msgstr "Передавання даних Jack"
 
-#: src/preferences.c:4682
+#: src/preferences.c:4684
 msgid ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
@@ -7448,51 +7448,51 @@ msgstr ""
 "Щоб мати змогу використовувати передавання даних Jack, LiVES має бути "
 "зібрано з файлами заголовків jack/transport.h та jack/jack.h"
 
-#: src/preferences.c:4693
+#: src/preferences.c:4695
 msgid "Jack _transport config file"
 msgstr "Файл налаштування _передавання даних Jack"
 
-#: src/preferences.c:4708
+#: src/preferences.c:4710
 msgid "The name of the jack server which can control LiVES transport"
 msgstr "Назва сервера Jack, який може керувати передавання даних LiVES"
 
-#: src/preferences.c:4711 src/preferences.c:4892
+#: src/preferences.c:4713 src/preferences.c:4894
 msgid "Start _server on LiVES startup"
 msgstr "Запускати с_ервер при запуску LiVES"
 
-#: src/preferences.c:4733
+#: src/preferences.c:4735
 msgid "Jack transport _master (start and stop)"
 msgstr "С_ервер передавання даних Jack (запуск і зупинка)"
 
-#: src/preferences.c:4751
+#: src/preferences.c:4753
 msgid "Jack transport _client (start and stop)"
 msgstr "_Клієнт передавання даних Jack (запуск і зупинка)"
 
-#: src/preferences.c:4773
+#: src/preferences.c:4775
 msgid "Jack transport sets start position"
 msgstr "Початкову позицію встановлює передавання Jack"
 
-#: src/preferences.c:4798
+#: src/preferences.c:4800
 msgid "Jack transport timebase slave"
 msgstr "Допоміжний засіб відліку часу передавання Jack"
 
-#: src/preferences.c:4819
+#: src/preferences.c:4821
 msgid "(See also Playback -> Audio follows video rate/direction)"
 msgstr ""
 "(Див. також «Відтворення -> Параметри звуку змінюються з частотою/напрямком "
 "відтворення відео»)"
 
-#: src/preferences.c:4842
+#: src/preferences.c:4844
 msgid "Jack audio"
 msgstr "Звук Jack"
 
-#: src/preferences.c:4850
+#: src/preferences.c:4852
 msgid "LiVES must be compiled with jack/jack.h present to use jack audio"
 msgstr ""
 "Щоб мати змогу скористатися звуковим сервером Jack, вам слід зібрати LiVES з "
 "jack/jack.h"
 
-#: src/preferences.c:4857
+#: src/preferences.c:4859
 msgid ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
@@ -7500,85 +7500,85 @@ msgstr ""
 "Щоб скористатися звуковими можливостями Jack, вам СЛІД вказати звуковий "
 "програвач «jack» на вкладці «Відтворення»"
 
-#: src/preferences.c:4868
+#: src/preferences.c:4870
 msgid "Jack _audio server config file"
 msgstr "Фа_йл налаштування звукового сервера Jack"
 
-#: src/preferences.c:4884
+#: src/preferences.c:4886
 msgid "The name of the jack server for audio"
 msgstr "Назва звукового сервера Jack"
 
-#: src/preferences.c:4911
+#: src/preferences.c:4913
 msgid "Play audio even when transport is _paused"
 msgstr "Відтворювати звук, навіть якщо передавання пр_изупинено"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4938
+#: src/preferences.c:4940
 msgid "Jack Integration"
 msgstr "Інтеграція з Jack"
 
-#: src/preferences.c:4947
+#: src/preferences.c:4949
 msgid "Events to respond to:"
 msgstr "Події, на які слід реагувати:"
 
-#: src/preferences.c:4958
+#: src/preferences.c:4960
 msgid "_Joystick events"
 msgstr "Події д_жойстика"
 
-#: src/preferences.c:4979
+#: src/preferences.c:4981
 msgid "_Joystick device"
 msgstr "Пристрій _джойстика"
 
-#: src/preferences.c:4994
+#: src/preferences.c:4996
 msgid "The joystick device, e.g. /dev/input/js0"
 msgstr "Пристрій джойстика, наприклад, /dev/input/js0"
 
-#: src/preferences.c:5001
+#: src/preferences.c:5003
 msgid "LiVES: Choose joystick device"
 msgstr "LiVES: Вибір пристрою джойстика"
 
-#: src/preferences.c:5016
+#: src/preferences.c:5018
 msgid "_MIDI events"
 msgstr "П_одії MIDI"
 
-#: src/preferences.c:5042
+#: src/preferences.c:5044
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
 msgstr ""
 "Створити порт MIDI ALSA, з яким можна буде з’єднувати інші MIDI-пристрої"
 
-#: src/preferences.c:5043
+#: src/preferences.c:5045
 msgid "Use _ALSA MIDI (recommended)"
 msgstr "Вико_ристати MIDI ALSA (рекомендовано)"
 
-#: src/preferences.c:5062
+#: src/preferences.c:5064
 msgid "Use _raw MIDI"
 msgstr "Використовувати MIDI б_ез обробки"
 
-#: src/preferences.c:5075
+#: src/preferences.c:5077
 msgid "Read directly from the MIDI device"
 msgstr "Читання безпосередньо з пристрою MIDI"
 
-#: src/preferences.c:5087
+#: src/preferences.c:5089
 msgid "_MIDI device"
 msgstr "Пр_истрій MIDI"
 
-#: src/preferences.c:5102
+#: src/preferences.c:5104
 msgid "The MIDI device, e.g. /dev/input/midi0"
 msgstr "Пристрій MIDI, наприклад, /dev/input/midi0"
 
-#: src/preferences.c:5109
+#: src/preferences.c:5111
 msgid "LiVES: Choose MIDI device"
 msgstr "LiVES: Вибір пристрою MIDI"
 
-#: src/preferences.c:5125
+#: src/preferences.c:5127
 msgid "Advanced"
 msgstr "Додатково"
 
-#: src/preferences.c:5136
+#: src/preferences.c:5138
 msgid "MIDI check _rate"
 msgstr "_Частота перевірки MIDI"
 
-#: src/preferences.c:5149
+#: src/preferences.c:5151
 msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
@@ -7587,26 +7587,26 @@ msgstr ""
 "значення може покращити інтерактивність MIDI, але може сповільнити "
 "відтворення."
 
-#: src/preferences.c:5151
+#: src/preferences.c:5153
 msgid "MIDI repeat"
 msgstr "Повторення MIDI"
 
-#: src/preferences.c:5164
+#: src/preferences.c:5166
 msgid "Number of non-reads allowed between succesive reads."
 msgstr "Кількість тактів відсутності сигналу між двома послідовними сигналами."
 
-#: src/preferences.c:5170
+#: src/preferences.c:5172
 msgid "(Warning: setting this value too high can slow down playback.)"
 msgstr ""
 "(Попередження: визначення занадто великих значень може уповільнити "
 "відтворення.)"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5193
+#: src/preferences.c:5195
 msgid "MIDI/Joystick learner"
 msgstr "Навчання MIDI/джойстика"
 
-#: src/preferences.c:5448
+#: src/preferences.c:5450
 msgid ""
 "\n"
 "LiVES will now shut down. You need to restart it for the directory change to "
@@ -7618,7 +7618,7 @@ msgstr ""
 "щоб зміна каталогів набула чинності.\n"
 "Натисніть «Гаразд», щоб програма завершила роботу.\n"
 
-#: src/preferences.c:5490
+#: src/preferences.c:5492
 msgid ""
 "For the directory change to take effect LiVES will restart when preferences "
 "dialog closes."
@@ -7626,11 +7626,11 @@ msgstr ""
 "Щоб зміни у розташуванні каталогів набули чинності, LiVES буде перезапущено "
 "після закриття діалогового вікна налаштування."
 
-#: src/preferences.c:5494
+#: src/preferences.c:5496
 msgid "Theme changes will not take effect until the next time you start LiVES."
 msgstr "Зміна теми набуде чинності лише під час наступного запуску LiVES."
 
-#: src/preferences.c:5498
+#: src/preferences.c:5500
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 "Параметри Jack набудуть чинності лише під час наступного запуску LiVES."
@@ -10001,7 +10001,7 @@ msgstr "pnum"
 msgid "fps_ratio"
 msgstr "fps_ratio"
 
-#: src/omc-learn.c:2326 src/omc-learn.c:2435
+#: src/omc-learn.c:2328 src/omc-learn.c:2437
 #, c-format
 msgid ""
 "\n"
@@ -10016,12 +10016,12 @@ msgstr ""
 "%s\n"
 "Код помилки: %d\n"
 
-#: src/omc-learn.c:2334
+#: src/omc-learn.c:2336
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr "Збереження карти відображення пристроїв до файла %s…"
 
-#: src/omc-learn.c:2393
+#: src/omc-learn.c:2395
 #, c-format
 msgid ""
 "\n"
@@ -10034,7 +10034,7 @@ msgstr ""
 "Помилка під час обробки файла\n"
 "%s\n"
 
-#: src/omc-learn.c:2400
+#: src/omc-learn.c:2402
 #, c-format
 msgid ""
 "\n"
@@ -10047,7 +10047,7 @@ msgstr ""
 "Некоректна версія у файлі\n"
 "%s\n"
 
-#: src/omc-learn.c:2430
+#: src/omc-learn.c:2432
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr "Завантаження карти відображення пристрої з файла %s…"

@@ -7635,7 +7635,7 @@ on_preview_clicked                     (GtkButton       *button,
       // set vid player to int, and audio player to sox
       
       if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
-	switch_aud_to_sox();
+	switch_aud_to_sox(FALSE);
       }
       if (!cfile->opening_only_audio) {
 	mainw->toy_type=LIVES_TOY_NONE;
@@ -7748,7 +7748,7 @@ on_preview_clicked                     (GtkButton       *button,
     if (user_data==NULL) mainw->cancelled=CANCEL_NONE;
 
     if (oaudp==AUD_PLAYER_MPLAYER&&prefs->audio_player!=oaudp) {
-      switch_aud_to_mplayer();
+      switch_aud_to_mplayer(FALSE);
     }
 
     cfile->start=ostart;

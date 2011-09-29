@@ -884,10 +884,10 @@ void set_alwaysontop(GtkWidget *window, gboolean ontop); ///< TODO - use for pla
 void colour_equal(GdkColor *c1, const GdkColor *c2);
 void switch_to_int_player(void);
 void switch_to_mplayer(void);
-void switch_aud_to_sox(void);
+void switch_aud_to_sox(gboolean set_pref);
 gboolean switch_aud_to_jack(void);
 gboolean switch_aud_to_pulse(void);
-void switch_aud_to_mplayer(void);
+void switch_aud_to_mplayer(gboolean set_pref);
 void prepare_to_play_foreign(void);
 gboolean after_foreign_play(void);
 gboolean check_file(const gchar *file_name, gboolean check_exists);  ///< check if file exists

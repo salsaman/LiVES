@@ -2138,11 +2138,11 @@ int main (int argc, char *argv[]) {
 	  g_snprintf(buff,256,"%s",optarg);
 	  // override aplayer default
 	  if (!strcmp(buff,"sox")) {
-	    switch_aud_to_sox();
+	    switch_aud_to_sox(TRUE);
 	    apl_valid=TRUE;
 	  }
 	  if (!strcmp(buff,"mplayer")) {
-	    switch_aud_to_mplayer();
+	    switch_aud_to_mplayer(TRUE);
 	    apl_valid=TRUE;
 	  }
 	  if (!strcmp(buff,"jack")) {

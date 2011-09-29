@@ -83,17 +83,17 @@ gboolean lives_pulse_init (short startup_phase) {
 
     if (!mainw->foreign) {
       if (startup_phase==0&&capable->has_sox) {
-	do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"));
-	switch_aud_to_sox();
+	do_error_dialog_with_check(_("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"),WARN_MASK_NO_PULSE_CONNECT);
+	switch_aud_to_sox(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT);
       }
       else if (startup_phase==0&&capable->has_mplayer) {
-	do_error_dialog(_("\nUnable to connect to pulse audio server.\nFalling back to mplayer audio player.\nYou can change this in Preferences/Playback.\n"));
-	switch_aud_to_mplayer();
+	do_error_dialog_with_check(_("\nUnable to connect to pulse audio server.\nFalling back to mplayer audio player.\nYou can change this in Preferences/Playback.\n"),WARN_MASK_NO_PULSE_CONNECT);
+	switch_aud_to_mplayer(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT);
       }
       else {
 	msg=g_strdup(_("\nUnable to connect to pulse audio server.\n"));
-	if (startup_phase==0) {
-	  do_error_dialog(msg);
+	if (startup_phase!=2) {
+	  do_blocking_error_dialog(msg);
 	}
 	else {
 	  msg2=g_strdup_printf("%s%s",msg,_("LiVES will exit and you can choose another audio player.\n"));

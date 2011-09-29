@@ -337,6 +337,7 @@ apply_prefs(gboolean skip_warn) {
   gboolean warn_layout_popup=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_popup));
   gboolean warn_mt_backup_space=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space));
   gboolean warn_after_crash=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash));
+  gboolean warn_no_pulse=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
 
   gboolean midisynch=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->check_midi));
   gboolean instant_open=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
@@ -466,7 +467,7 @@ apply_prefs(gboolean skip_warn) {
   }
 
 
-  warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*WARN_MASK_NO_ENCODERS+!warn_layout_missing_clips*WARN_MASK_LAYOUT_MISSING_CLIPS+!warn_duplicate_set*WARN_MASK_DUPLICATE_SET+!warn_layout_close*WARN_MASK_LAYOUT_CLOSE_FILE+!warn_layout_delete*WARN_MASK_LAYOUT_DELETE_FRAMES+!warn_layout_shift*WARN_MASK_LAYOUT_SHIFT_FRAMES+!warn_layout_alter*WARN_MASK_LAYOUT_ALTER_FRAMES+!warn_discard_layout*WARN_MASK_EXIT_MT+!warn_after_dvgrab*WARN_MASK_AFTER_DVGRAB+!warn_mt_achans*WARN_MASK_MT_ACHANS+!warn_mt_no_jack*WARN_MASK_MT_NO_JACK+!warn_layout_adel*WARN_MASK_LAYOUT_DELETE_AUDIO+!warn_layout_ashift*WARN_MASK_LAYOUT_SHIFT_AUDIO+!warn_layout_aalt*WARN_MASK_LAYOUT_ALTER_AUDIO+!warn_layout_popup*WARN_MASK_LAYOUT_POPUP+!warn_yuv4m_open*WARN_MASK_OPEN_YUV4M+!warn_mt_backup_space*WARN_MASK_MT_BACKUP_SPACE+!warn_after_crash*WARN_MASK_CLEAN_AFTER_CRASH;
+  warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*WARN_MASK_NO_ENCODERS+!warn_layout_missing_clips*WARN_MASK_LAYOUT_MISSING_CLIPS+!warn_duplicate_set*WARN_MASK_DUPLICATE_SET+!warn_layout_close*WARN_MASK_LAYOUT_CLOSE_FILE+!warn_layout_delete*WARN_MASK_LAYOUT_DELETE_FRAMES+!warn_layout_shift*WARN_MASK_LAYOUT_SHIFT_FRAMES+!warn_layout_alter*WARN_MASK_LAYOUT_ALTER_FRAMES+!warn_discard_layout*WARN_MASK_EXIT_MT+!warn_after_dvgrab*WARN_MASK_AFTER_DVGRAB+!warn_mt_achans*WARN_MASK_MT_ACHANS+!warn_mt_no_jack*WARN_MASK_MT_NO_JACK+!warn_layout_adel*WARN_MASK_LAYOUT_DELETE_AUDIO+!warn_layout_ashift*WARN_MASK_LAYOUT_SHIFT_AUDIO+!warn_layout_aalt*WARN_MASK_LAYOUT_ALTER_AUDIO+!warn_layout_popup*WARN_MASK_LAYOUT_POPUP+!warn_yuv4m_open*WARN_MASK_OPEN_YUV4M+!warn_mt_backup_space*WARN_MASK_MT_BACKUP_SPACE+!warn_after_crash*WARN_MASK_CLEAN_AFTER_CRASH+!warn_no_pulse*WARN_MASK_NO_PULSE_CONNECT;
 
   if (warn_mask!=prefs->warning_mask) {
     prefs->warning_mask=warn_mask;
@@ -897,18 +898,21 @@ apply_prefs(gboolean skip_warn) {
 
     // switch to sox
     if (!(strcmp(audio_player,"sox"))&&prefs->audio_player!=AUD_PLAYER_SOX) {
-      switch_aud_to_sox();
+      switch_aud_to_sox(TRUE);
     }
     
     // switch to jack
     else if (!(strcmp(audio_player,"jack"))&&prefs->audio_player!=AUD_PLAYER_JACK) {
       // may fail
-      if (!switch_aud_to_jack()) do_jack_noopen_warn();
+      if (!switch_aud_to_jack()) {
+	do_jack_noopen_warn();
+	set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->orig_audp_name);
+      }
     }
     
     // switch to mplayer audio
     else if (!(strcmp (audio_player,"mplayer"))&&prefs->audio_player!=AUD_PLAYER_MPLAYER) {
-      switch_aud_to_mplayer();
+      switch_aud_to_mplayer(TRUE);
     }
 
     // switch to pulse audio
@@ -916,7 +920,12 @@ apply_prefs(gboolean skip_warn) {
       if (!capable->has_pulse_audio) {
 	do_error_dialog_with_check_transient(_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
       }
-      else switch_aud_to_pulse();
+      else {
+	if (!switch_aud_to_pulse()) {
+	  // revert text
+	  set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->orig_audp_name);
+	}
+      }
     }
 
 
@@ -3058,6 +3067,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   // ---
   set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->audp_name);
+  prefsw->orig_audp_name=g_strdup(prefsw->audp_name);
   //---
   hbox10 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox10);
@@ -4315,6 +4325,27 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_after_crash), !(prefs->warning_mask&WARN_MASK_CLEAN_AFTER_CRASH));
 
+   // ---
+   prefsw->checkbutton_warn_no_pulse = gtk_check_button_new();
+   eventbox = gtk_event_box_new();
+   label = gtk_label_new_with_mnemonic(_("Show a warning if unable to connect to pulseaudio player."));
+   gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_warn_no_pulse);
+   gtk_container_add(GTK_CONTAINER(eventbox), label);
+   g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_warn_no_pulse);
+   if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+   }
+   hbox = gtk_hbox_new(FALSE, 0);
+   gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_warn_no_pulse, FALSE, FALSE, 5);
+   gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
+   gtk_widget_show_all(hbox);
+   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
+   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_no_pulse), !(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT));
+   // ---
+
   icon = g_strdup_printf("%s%s/pref_warning.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_warnings = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
@@ -5331,6 +5362,7 @@ _prefsw *create_prefs_dialog (void) {
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_yuv4m_open), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_backup_space), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_crash), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_no_pulse), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->check_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(prefsw->ins_speed), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
    g_signal_connect(GTK_OBJECT(ins_resample), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
@@ -5438,6 +5470,7 @@ on_prefs_close_clicked(GtkButton *button, gpointer user_data)
   }
   prefs->acodec_list=NULL;
   g_free(prefsw->audp_name);
+  g_free(prefsw->orig_audp_name);
 
   g_free(resaudw);
   resaudw=NULL;
@@ -5484,6 +5517,12 @@ on_prefs_apply_clicked(GtkButton *button, gpointer user_data)
   }
   // Apply preferences
   needs_restart = apply_prefs(FALSE);
+
+  // do this again in case anything was changed or reverted
+  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), TRUE);
+
   if (FALSE == mainw->prefs_need_restart){
     mainw->prefs_need_restart = needs_restart;
   }
@@ -5559,6 +5598,7 @@ on_prefs_revert_clicked(GtkButton *button, gpointer user_data)
   prefsw->pbq_list = NULL;
 
   g_free(prefsw->audp_name);
+  g_free(prefsw->orig_audp_name);
 
   on_cancel_button1_clicked(button, prefsw);
 

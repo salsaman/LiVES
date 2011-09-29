@@ -1840,10 +1840,10 @@ gboolean switch_aud_to_pulse(void) {
 
 
 
-void switch_aud_to_sox(void) {
+void switch_aud_to_sox(gboolean set_in_prefs) {
   prefs->audio_player=AUD_PLAYER_SOX;
   get_pref_default("sox_command",prefs->audio_play_command,256);
-  set_pref("audio_player","sox");
+  if (set_in_prefs) set_pref("audio_player","sox");
   g_snprintf(prefs->aplayer,512,"%s","sox");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
@@ -1885,7 +1885,7 @@ void switch_aud_to_sox(void) {
 
 
 void
-switch_aud_to_mplayer(void) {
+switch_aud_to_mplayer(gboolean set_in_prefs) {
   int i;
   for (i=1;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL) {
@@ -1898,7 +1898,7 @@ switch_aud_to_mplayer(void) {
   
   prefs->audio_player=AUD_PLAYER_MPLAYER;
   get_pref_default("mplayer_audio_command",prefs->audio_play_command,256);
-  set_pref("audio_player","mplayer");
+  if (set_in_prefs) set_pref("audio_player","mplayer");
   g_snprintf(prefs->aplayer,512,"%s","mplayer");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {

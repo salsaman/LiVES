@@ -297,8 +297,11 @@ do_error_dialog(const gchar *text) {
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,FALSE,0,NULL);
   } else {
-    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
-    else do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
+    if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(prefsw->prefs_dialog));
+    else {
+      if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
+      else do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
+    }
   }
 }
 

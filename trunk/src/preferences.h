@@ -96,6 +96,7 @@ typedef struct {
 
 #define WARN_MASK_CLEAN_AFTER_CRASH (1<<24)
 
+#define WARN_MASK_NO_PULSE_CONNECT (1<<25)
 
   gchar effect_command[256];
   gchar video_open_command[256];
@@ -380,6 +381,7 @@ typedef struct {
   GtkWidget *checkbutton_warn_layout_popup;
   GtkWidget *checkbutton_warn_discard_layout;
   GtkWidget *checkbutton_warn_after_dvgrab;
+  GtkWidget *checkbutton_warn_no_pulse;
   GtkWidget *checkbutton_show_stats;
   GtkWidget *check_xmms_pause;
   GtkWidget *checkbutton_warn_fsize;
@@ -435,6 +437,7 @@ typedef struct {
   GtkWidget *forcesmon;
   GList *pbq_list;
   gchar *audp_name;
+  gchar *orig_audp_name;
   gulong audp_entry_func;
   GtkWidget *checkbutton_omc_js;
   GtkWidget *checkbutton_omc_midi;

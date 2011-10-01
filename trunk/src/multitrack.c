@@ -7872,7 +7872,15 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
     unblock_expose();
   }
 
-  gtk_widget_hide(mt->window);
+  gtk_window_remove_accel_group (GTK_WINDOW (mt->window), mt->accel_group);
+
+  if (mainw->play_window!=NULL) {
+    gtk_window_remove_accel_group (GTK_WINDOW (mainw->play_window), mt->accel_group);
+    gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
+  }
+
+  g_object_unref(mt->accel_group);
+
 
   // put buttons back in mainw->menubar
   mt_swap_play_pause(mt,FALSE);
@@ -7981,13 +7989,6 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   g_list_free(mt->tl_marks);
 
   gtk_widget_destroy (mt->window);
-
-  if (mainw->play_window!=NULL) {
-    gtk_window_remove_accel_group (GTK_WINDOW (mainw->play_window), mt->accel_group);
-    gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
-  }
-
-  g_object_unref(mt->accel_group);
 
   mainw->multitrack=NULL;
   mainw->event_list=NULL;

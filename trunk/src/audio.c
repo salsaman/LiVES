@@ -1304,7 +1304,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
   // optionally: gets audio state at audio frame prior to st_event, sets atstate[0].tc
   // and initialises audio buffers
 
-
+  mainw->filter_map=NULL;
 
   fill_tc=get_event_timecode(st_event);
 

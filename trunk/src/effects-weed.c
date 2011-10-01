@@ -1915,7 +1915,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     }
 
     if (!inplace) {
-      float *abuf=g_malloc(nchans*nsamps*sizeof(float));
+      float *abuf=g_malloc0(nchans*nsamps*sizeof(float));
       weed_set_int_value(channel,"audio_data_length",nsamps);
       weed_set_voidptr_value(channel,"audio_data",abuf);
     }
@@ -2249,7 +2249,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	  if (pchains!=NULL&&pchains[key]!=NULL) {
 	    interpolate_params(instance,pchains[key],tc); // interpolate parameters during playback
 	  }
-	  filter_error=weed_apply_instance (instance,(weed_plant_t *)init_events[i],layers,0,0,tc);
+	  filter_error=weed_apply_instance (instance,init_event,layers,0,0,tc);
 	  //if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
 	}
       }

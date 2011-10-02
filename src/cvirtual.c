@@ -184,6 +184,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
     if (i>sfile->frames) break;
 
     if (sfile->frame_index[i-1]>=0) {
+      oname=NULL;
 
       threaded_dialog_spin();
 
@@ -192,22 +193,14 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
       pixbuf=pull_gdk_pixbuf_at_size(sfileno,i,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png",q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
       
       if (sfile->img_type==IMG_TYPE_JPEG) {
-	gchar *qstr=g_strdup_printf("%d",(100-prefs->ocp));
 	oname=g_strdup_printf("%s/%s/%08d.jpg",prefs->tmpdir,sfile->handle,i);
-	gdk_pixbuf_save (pixbuf, oname, "jpeg", &error,"quality", qstr, NULL);
-	g_free(qstr);
-	g_free(oname);
       }
       else if (sfile->img_type==IMG_TYPE_PNG) {
-	gchar *cstr=g_strdup_printf("%d",(gint)((gdouble)(prefs->ocp+5.)/10.));
 	oname=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i);
-	gdk_pixbuf_save (pixbuf, oname, "png", &error, "compression", cstr, NULL);
-	g_free(cstr);
-	g_free(oname);
       }
-      else {
-	//gdk_pixbuf_save_to_callback(...);
-      }
+
+      lives_pixbuf_save (pixbuf, oname, sfile->img_type, 100-prefs->ocp, &error);
+      if (oname!=NULL) g_free(oname);
 
       if (error!=NULL) {
 	g_printerr("err was %s\n",error->message);
@@ -218,7 +211,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
       if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
       pixbuf=NULL;
 
-      // another thread may have called check_if_non_virtual
+      // another thread may have called check_if_non_virtual - TODO : use a mutex
       if (sfile->frame_index==NULL) break;
       sfile->frame_index[i-1]=-1;
 

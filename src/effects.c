@@ -487,15 +487,8 @@ gint realfx_progress (gboolean reset) {
 
   g_snprintf(oname,256,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
 
-  if (cfile->img_type==IMG_TYPE_JPEG) {
-    gdk_pixbuf_save (pixbuf, oname, "jpeg", &error,"quality", "100", NULL);
-  }
-  else if (cfile->img_type==IMG_TYPE_PNG) {
-    gdk_pixbuf_save (pixbuf, oname, "png", &error, NULL);
-  }
-  else {
-    //gdk_pixbuf_save_to_callback(...);
-  }
+  lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, &error);
+
   gdk_pixbuf_unref (pixbuf);
   
 

@@ -2628,7 +2628,9 @@ void load_start_image(gint frame) {
     }
     weed_plant_free(layer);
   
-    if (GDK_IS_PIXBUF(start_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+    if (GDK_IS_PIXBUF(start_pixbuf)) {
+      gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+    }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
 	gdk_pixbuf_unref(start_pixbuf);
@@ -2653,6 +2655,8 @@ void load_start_image(gint frame) {
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
 
+    
+
     if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
@@ -2661,7 +2665,9 @@ void load_start_image(gint frame) {
     }
     weed_plant_free(layer);
   
-    if (GDK_IS_PIXBUF(start_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+    if (GDK_IS_PIXBUF(start_pixbuf)) {
+      gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+    }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
 	gdk_pixbuf_unref(start_pixbuf);
@@ -2740,7 +2746,9 @@ void load_end_image(gint frame) {
     }
     weed_plant_free(layer);
   
-    if (GDK_IS_PIXBUF(end_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+    if (GDK_IS_PIXBUF(end_pixbuf)) {
+      gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+    }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
 	gdk_pixbuf_unref(end_pixbuf);
@@ -2773,7 +2781,9 @@ void load_end_image(gint frame) {
 
     weed_plant_free(layer);
   
-    if (GDK_IS_PIXBUF(end_pixbuf)) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+    if (GDK_IS_PIXBUF(end_pixbuf)) {
+      gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+    }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
 	gdk_pixbuf_unref(end_pixbuf);
@@ -2892,6 +2902,7 @@ void load_preview_image(gboolean update_always) {
     weed_plant_free(layer);
   }
   gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), pixbuf);
+
 
   if (update_always) {
     // set spins from current frame
@@ -4117,17 +4128,10 @@ void load_frame_image(gint frame) {
       g_snprintf(fname,256,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
       do {
 	if (gerror!=NULL) g_error_free(gerror);
-	gerror=NULL;
-	if (!strcmp (prefs->image_ext,"jpg")) {
-	  gdk_pixbuf_save (pixbuf, fname, "jpeg", &gerror,"quality", "100", NULL);
-	}
-	else if (!strcmp (prefs->image_ext,"png")) {
-	  gdk_pixbuf_save (pixbuf, fname, "png", &gerror, NULL);
-	}
-	else {
-	  //gdk_pixbuf_save_to_callback(...);
-	}
-      } while (gerror!=NULL); // TODO ** - check for disk space error
+	if (!strcmp(prefs->image_ext,"jpg")) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, &gerror);
+	else if (!strcmp(prefs->image_ext,"png")) 
+	  lives_pixbuf_save(pixbuf, fname, IMG_TYPE_PNG, 100, &gerror);
+      } while (gerror!=NULL);
       gdk_pixbuf_unref(pixbuf);
       cfile->frames=frame;
     }
@@ -4141,6 +4145,29 @@ void load_frame_image(gint frame) {
   }
   if (framecount!=NULL) g_free(framecount);
 }
+
+
+/** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
+
+GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, GError **gerrorptr) {
+  // TODO ** - check for disk space errors
+
+  if (imgtype==IMG_TYPE_JPEG) {
+    gchar *qstr=g_strdup_printf("%d",quality);
+    gdk_pixbuf_save (pixbuf, fname, "jpeg", gerrorptr, "quality", qstr, NULL);
+    g_free(qstr);
+  }
+  else if (imgtype==IMG_TYPE_PNG) {
+    gchar *cstr=g_strdup_printf("%d",(gint)((100.-(gdouble)quality+5.)/10.));
+    gdk_pixbuf_save (pixbuf, fname, "png", gerrorptr, "compression", cstr, NULL);
+    g_free(cstr);
+  }
+  else {
+    //gdk_pixbuf_save_to_callback(...);
+  }
+  return *gerrorptr;
+}
+
 
 
 GdkPixbuf *lives_scale_simple (GdkPixbuf *pixbuf, gint width, gint height) {

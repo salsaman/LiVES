@@ -803,6 +803,7 @@ void load_preview_image(gboolean update_always);
 gboolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
 gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, int target_palette);
 GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, gint width, gint height, GdkInterpType interp);
+GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, GError **gerrorptr);
 
 void load_frame_image(gint frame);
 void sensitize(void);

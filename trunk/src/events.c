@@ -3324,21 +3324,12 @@ gint render_events (gboolean reset) {
 	if (prefs->ocp==-1) prefs->ocp=get_int_pref ("open_compression_percent");
 
 	if (cfile->img_type==IMG_TYPE_JPEG) {
-	  gchar *qstr=g_strdup_printf("%d",(100-prefs->ocp));
 	  if (cfile->old_frames==0) g_snprintf(oname,256,"%s/%s/%08d.jpg",prefs->tmpdir,cfile->handle,out_frame);
-
-	  gdk_pixbuf_save (pixbuf, oname, "jpeg", &error,"quality", qstr, NULL);
-	  g_free(qstr);
 	}
 	else if (cfile->img_type==IMG_TYPE_PNG) {
-	  gchar *cstr=g_strdup_printf("%d",(gint)((gdouble)(prefs->ocp+5.)/10.));
 	  if (cfile->old_frames==0) g_snprintf(oname,256,"%s/%s/%08d.png",prefs->tmpdir,cfile->handle,out_frame);
-	  gdk_pixbuf_save (pixbuf, oname, "png", &error, "compression", cstr, NULL);
-	  g_free(cstr);
 	}
-	else {
-	  //gdk_pixbuf_save_to_callback(...);
-	}
+	lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100-prefs->ocp, &error);
 
 	cfile->undo_end=out_frame;
 	if (out_frame>cfile->frames) cfile->frames=out_frame;

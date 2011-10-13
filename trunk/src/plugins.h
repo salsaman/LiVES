@@ -270,7 +270,7 @@ typedef struct {
 
 
 
-const lives_clip_data_t *get_decoder_cdata(file *);
+const lives_clip_data_t *get_decoder_cdata(file *, GList *disabled);
 void close_decoder_plugin (lives_decoder_t *);
 lives_decoder_sys_t *open_decoder_plugin(const gchar *plname);
 void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *);
@@ -507,6 +507,7 @@ typedef struct {
 } _vppaw;
 
 _vppaw *on_vpp_advanced_clicked (GtkButton *, gpointer);
+void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data);
 
 
 /// for realtime effects, see effects-weed.h

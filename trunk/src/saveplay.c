@@ -239,7 +239,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     if (!strcmp(prefs->image_ext,"png")) cfile->img_type=IMG_TYPE_PNG;
 
     if (prefs->instant_open) {
-      cdata=get_decoder_cdata(cfile);
+      cdata=get_decoder_cdata(cfile,prefs->disabled_decoders);
       if (cfile->ext_src!=NULL) {
 	lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
 	cfile->opening=TRUE;
@@ -4081,7 +4081,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	gboolean next=FALSE;
 	while (1) {
 	  threaded_dialog_spin();
-	  if ((cdata=get_decoder_cdata(cfile))==NULL) {
+	  if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
 	    if (mainw->error) {
 	      if (do_original_lost_warning(cfile->file_name)) {
 		

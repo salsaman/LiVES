@@ -3502,3 +3502,70 @@ LIVES_INLINE GList *g_list_move_to_first(GList *list, GList *item) {
 }
 
 
+GList *g_list_delete_string(GList *list, char *string) {
+  // remove string from list, using strcmp
+
+  GList *xlist=list;
+  while (xlist!=NULL) {
+    if (!strcmp((char *)xlist->data,string)) {
+      if (xlist->prev!=NULL) xlist->prev->next=xlist->next;
+      else list=xlist->next;
+      if (xlist->next!=NULL) xlist->next->prev=xlist->prev;
+      xlist->next=xlist->prev=NULL;
+      g_free(xlist->data);
+      g_list_free(xlist);
+      return list;
+    }
+    xlist=xlist->next;
+  }
+  return list;
+}
+
+
+GList *g_list_copy_strings(GList *list) {
+  // copy a list, copying the strings too
+
+  GList *xlist=NULL,*olist=list;
+
+  while (olist!=NULL) {
+    xlist=g_list_append(xlist,g_strdup((gchar *)olist->data));
+    olist=olist->next;
+  }
+
+  return xlist;
+}
+
+
+
+
+gboolean string_lists_differ(GList *alist, GList *blist) {
+  // compare 2 lists of strings and see if they are different (ignoring ordering)
+  // for long lists this would be quicker if we sorted the lists first; however this function 
+  // is designed to deal with short lists only
+
+
+  GList *plist;
+
+  if (g_list_length(alist)!=g_list_length(blist)) return TRUE; // check the simple case first
+
+  // run through alist and see if we have a mismatch
+
+  plist=alist;
+  while (plist!=NULL) {
+    GList *qlist=blist;
+    gboolean matched=FALSE;
+    while (qlist!=NULL) {
+      if (!(strcmp((char *)plist->data,(char *)qlist->data))) {
+	matched=TRUE;
+	break;
+      }
+      qlist=qlist->next;
+    }
+    if (!matched) return TRUE;
+    plist=plist->next;
+  }
+
+  // since both lists were of the same length, there is no need to check blist
+
+  return FALSE;
+}

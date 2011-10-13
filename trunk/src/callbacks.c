@@ -357,6 +357,11 @@ lives_exit (void) {
 
   unload_decoder_plugins();
 
+  if (prefs->disabled_decoders!=NULL) {
+    g_list_free_strings(prefs->disabled_decoders);
+    g_list_free(prefs->disabled_decoders);
+  }
+
   if (mainw->fonts_array!=NULL) g_strfreev(mainw->fonts_array);
 
 #ifdef ENABLE_NLS
@@ -4137,7 +4142,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       cfile->img_type=img_type; // ignore value from read_headers
       while (1) {
 	threaded_dialog_spin();
-	if ((cdata=get_decoder_cdata(cfile))==NULL) {
+	if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
 	  if (mainw->error) {
 	    if (do_original_lost_warning(cfile->file_name)) {
 
@@ -6107,9 +6112,7 @@ on_fade_activate               (GtkMenuItem     *menuitem,
 
 
 
-void on_boolean_toggled(GtkMenuItem     *menuitem,
-			gpointer         user_data)
-{
+void on_boolean_toggled(GtkObject *obj, gpointer user_data) {
   gboolean *ppref=(gboolean *)user_data;
   *ppref=!*ppref;
 }

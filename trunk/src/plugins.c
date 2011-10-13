@@ -692,6 +692,9 @@ void on_vppa_save_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
+
+
+
 _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *dialog_vbox;
   GtkWidget *hbox;
@@ -1876,7 +1879,7 @@ LIVES_INLINE gboolean decplugin_supports_palette (const lives_decoder_t *dplug, 
 
 
 
-GList *load_decoders(void) {
+static GList *load_decoders(void) {
   lives_decoder_sys_t *dplug;
   gchar *decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
   GList *dlist=NULL;
@@ -1901,13 +1904,7 @@ GList *load_decoders(void) {
 
 
 
-
-
-
-
-
-
-const lives_clip_data_t *get_decoder_cdata(file *sfile) {
+const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
   // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
   // the file
   // NULL is returned if no decoder plugin recognises the file - then we
@@ -1950,6 +1947,11 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile) {
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
+
+    if (lives_list_index(disabled,dpsys->name)!=-1) {
+      decoder_plugin=decoder_plugin->next;
+      continue;
+    }
 
 #ifdef DEBUG_DECPLUG
     g_print("trying decoder %s\n",dpsys->name);
@@ -2128,6 +2130,191 @@ void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata) {
 
 
 
+static void dpa_ok_clicked (GtkWidget *button, gpointer user_data) {
+  gtk_widget_destroy(gtk_widget_get_toplevel(button));
+
+  if (prefsw!=NULL) {
+    gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    gdk_window_raise(prefsw->prefs_dialog->window);
+    if (string_lists_differ(future_prefs->disabled_decoders,future_prefs->disabled_decoders_new))
+      apply_button_set_enabled(NULL,NULL);
+  }
+
+  if (future_prefs->disabled_decoders!=NULL) {
+    g_list_free_strings(future_prefs->disabled_decoders);
+    g_list_free(future_prefs->disabled_decoders);
+  }
+
+  future_prefs->disabled_decoders=future_prefs->disabled_decoders_new;
+
+}
+
+
+static void dpa_cancel_clicked (GtkWidget *button, gpointer user_data) {
+  gtk_widget_destroy(gtk_widget_get_toplevel(button));
+
+  if (prefsw!=NULL) {
+    gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    gdk_window_raise(prefsw->prefs_dialog->window);
+  }
+
+  if (future_prefs->disabled_decoders_new!=NULL) {
+    g_list_free_strings(future_prefs->disabled_decoders_new);
+    g_list_free(future_prefs->disabled_decoders_new);
+  }
+
+
+}
+
+static void on_dpa_cb_toggled(GtkToggleButton *button, gchar *decname) {
+  if (!gtk_toggle_button_get_active(button))
+    // unchecked is disabled
+    future_prefs->disabled_decoders_new=g_list_append(future_prefs->disabled_decoders_new,g_strdup(decname));
+  else 
+    future_prefs->disabled_decoders_new=g_list_delete_string(future_prefs->disabled_decoders_new,decname);
+}
+
+
+void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
+  GtkWidget *hbox;
+  GtkWidget *vbox;
+  GtkWidget *checkbutton;
+  GtkWidget *eventbox;
+  GtkWidget *scrolledwindow;
+  GtkWidget *label;
+  GtkWidget *dialog;
+  GtkWidget *dialog_vbox;
+  GtkWidget *cancelbutton;
+  GtkWidget *okbutton;
+
+  gchar *title,*ltext;
+
+  GList *decoder_plugin;
+
+  gchar *decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
+
+
+  if (!mainw->decoders_loaded) {
+    mainw->decoder_list=load_decoders();
+    mainw->decoders_loaded=TRUE;
+  }
+
+  decoder_plugin=mainw->decoder_list;
+
+  dialog = gtk_dialog_new ();
+
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
+  if (prefs->show_gui) {
+    if (prefsw!=NULL) gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(prefsw->prefs_dialog));
+    else {
+      if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+      else gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
+    }
+  }
+
+  if (prefs->gui_monitor!=0) {
+    gtk_window_set_screen(GTK_WINDOW(dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
+  }
+
+  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+
+  if (palette->style&STYLE_1) {
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    gtk_widget_modify_bg (dialog, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);
+
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
+
+  title=g_strdup(_("LiVES: - Decoder Plugins"));
+  gtk_window_set_title (GTK_WINDOW (dialog), title);
+  g_free(title);
+
+  dialog_vbox = GTK_DIALOG (dialog)->vbox;
+
+  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
+  gtk_widget_show (scrolledwindow);
+
+  gtk_container_add (GTK_CONTAINER(dialog_vbox), scrolledwindow);
+
+  vbox = gtk_vbox_new (FALSE, 0);
+  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(GTK_BIN(scrolledwindow)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(GTK_BIN(scrolledwindow)->child, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  
+  label=gtk_label_new(_("Enabled Video Decoders (uncheck to disable)"));
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+  gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 10);
+
+  while (decoder_plugin!=NULL) {
+    lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+
+    checkbutton=gtk_check_button_new();
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),
+				 lives_list_index(future_prefs->disabled_decoders,dpsys->name)==-1);
+
+    g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
+			    G_CALLBACK (on_dpa_cb_toggled),
+			    dpsys->name);
+
+
+    eventbox = gtk_event_box_new();
+    ltext=g_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
+    label=gtk_label_new(ltext);
+    g_free(ltext);
+
+    gtk_label_set_mnemonic_widget(GTK_LABEL(label), checkbutton);
+    gtk_container_add(GTK_CONTAINER(eventbox), label);
+    g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", 
+		     G_CALLBACK(label_act_toggle), checkbutton);
+
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+
+    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+
+    decoder_plugin=decoder_plugin->next;
+  }
+
+
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+
+  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
+		    G_CALLBACK (dpa_cancel_clicked),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+		    G_CALLBACK (dpa_ok_clicked),
+		    NULL);
+
+  gtk_widget_show_all(dialog);
+  gtk_window_present (GTK_WINDOW (dialog));
+  gdk_window_raise(dialog->window);
+
+  future_prefs->disabled_decoders_new=g_list_copy_strings(future_prefs->disabled_decoders);
+
+  g_free(decplugdir);
+}
 
 ///////////////////////////////////////////////////////
 // rfx plugin functions

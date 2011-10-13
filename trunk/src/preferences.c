@@ -23,9 +23,13 @@
 #include "omc-learn.h"
 #endif
 
-void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
+static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
   if (prefs->osc_udp_started) return;
-  gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (t1))||gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (t2)));
+  gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,gtk_toggle_button_get_active (t1)||gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (t2)));
+}
+
+static void instopen_toggled (GtkToggleButton *t1, GtkWidget *button) {
+  gtk_widget_set_sensitive (button,gtk_toggle_button_get_active (t1));
 }
 
 
@@ -88,6 +92,30 @@ void get_pref_utf8(const gchar *key, gchar *val, gint maxlen) {
   tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL);
   g_snprintf(val,maxlen,"%s",tmp);
   g_free(tmp);
+}
+
+
+
+GList *get_list_pref(const gchar *key) {
+  // get a list of values from a preference
+  gchar **array;
+  gchar buf[65536];
+  int nvals,i;
+
+  GList *retlist=NULL;
+
+  get_pref(key,buf,65535);
+  if (!strlen(buf)) return NULL;
+
+  nvals=get_token_count(buf,'\n');
+  array=g_strsplit(buf,"\n",-1);
+  for (i=0;i<nvals;i++) {
+    retlist=g_list_append(retlist,g_strdup(array[i]));
+  }
+
+  g_strfreev(array);
+
+  return retlist;
 }
 
 
@@ -203,6 +231,32 @@ set_boolean_pref(const gchar *key, gboolean value) {
   }
   g_free(com);
 }
+
+
+
+void set_list_pref(const char *key, GList *values) {
+  // set pref from a list of values
+  GList *xlist=values;
+  gchar *string=NULL,*tmp;
+
+  while (xlist!=NULL) {
+    if (string==NULL) string=g_strdup((gchar *)xlist->data);
+    else {
+      tmp=g_strdup_printf("%s\n%s",string,(gchar *)xlist->data);
+      g_free(string);
+      string=tmp;
+    }
+    xlist=xlist->next;
+  }
+
+  if (string==NULL) string=g_strdup("");
+
+  set_pref(key,string);
+
+  g_free(string);
+}
+
+
 
 
 
@@ -543,6 +597,17 @@ apply_prefs(gboolean skip_warn) {
       g_free (msg);
     }
   }
+
+  // disabled_decoders
+  if (string_lists_differ(prefs->disabled_decoders,future_prefs->disabled_decoders)) {
+    if (prefs->disabled_decoders!=NULL) {
+      g_list_free_strings(prefs->disabled_decoders);
+      g_list_free(prefs->disabled_decoders);
+    }
+    prefs->disabled_decoders=g_list_copy_strings(future_prefs->disabled_decoders);
+    set_list_pref("disabled_decoders",prefs->disabled_decoders);
+  }
+
 
   // stop xscreensaver
   if (prefs->stop_screensaver!=stop_screensaver) {
@@ -1607,7 +1672,7 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
 /*
  * Function makes apply button sensitive
  */
-static void apply_button_set_enabled(GtkWidget *widget, gpointer func_data)
+void apply_button_set_enabled(GtkWidget *widget, gpointer func_data)
 {
    gtk_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), TRUE);
    gtk_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), TRUE);
@@ -2734,6 +2799,21 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_instant_open),prefs->instant_open);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
 
+
+  // advanced instant opening
+  advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
+  gtk_widget_show (advbutton);
+  gtk_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, 40);
+
+  g_signal_connect (GTK_OBJECT (advbutton), "clicked",
+		    G_CALLBACK (on_decplug_advanced_clicked),
+		    NULL);
+
+  gtk_widget_set_sensitive(advbutton,prefs->instant_open);
+
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", GTK_SIGNAL_FUNC(instopen_toggled), advbutton);
+
+
   // ---
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
@@ -3857,7 +3937,7 @@ _prefsw *create_prefs_dialog (void) {
 
    gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw), prefsw->vbox_right_warnings);
 
-   // Appli theme background to scrolled window
+   // Apply theme background to scrolled window
    if (palette->style&STYLE_1) {
      gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw)->child, GTK_STATE_NORMAL, &palette->normal_fore);
      gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw)->child, GTK_STATE_NORMAL, &palette->normal_back);
@@ -5454,6 +5534,9 @@ on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data)
     gdk_window_raise(prefsw->prefs_dialog->window);
     return;
   }
+
+  future_prefs->disabled_decoders=g_list_copy_strings(prefs->disabled_decoders);
+
   prefsw = create_prefs_dialog();
   gtk_widget_show(prefsw->prefs_dialog);
 }
@@ -5474,6 +5557,11 @@ on_prefs_close_clicked(GtkButton *button, gpointer user_data)
 
   g_free(resaudw);
   resaudw=NULL;
+
+  if (future_prefs->disabled_decoders!=NULL) {
+    g_list_free_strings (future_prefs->disabled_decoders);
+    g_list_free (future_prefs->disabled_decoders);
+  }
 
   on_cancel_button1_clicked(button, user_data);
 
@@ -5600,11 +5688,23 @@ on_prefs_revert_clicked(GtkButton *button, gpointer user_data)
   g_free(prefsw->audp_name);
   g_free(prefsw->orig_audp_name);
 
+  if (future_prefs->disabled_decoders != NULL) {
+    g_list_free_strings (future_prefs->disabled_decoders);
+    g_list_free (future_prefs->disabled_decoders);
+  }
+
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,prefsw->prefs_dialog->window);
+  while (g_main_context_iteration(NULL,FALSE)); // force busy cursor
+
   on_cancel_button1_clicked(button, prefsw);
+
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+  while (g_main_context_iteration(NULL,FALSE)); // force busy cursor
 
   prefsw = NULL;
 
   on_preferences_activate(NULL, NULL);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 
 gboolean

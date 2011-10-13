@@ -186,6 +186,14 @@ get_double_pref(const gchar *key) {
   return strtod(buffer,NULL);
 }
 
+void
+delete_pref(const gchar *key) {
+  gchar *com=g_strdup_printf("smogrify delete_pref %s",key);
+  if (system(com)) {
+    tempdir_warning();
+  }
+  g_free(com);
+}
 
 void
 set_pref(const gchar *key, const gchar *value) {
@@ -605,7 +613,8 @@ apply_prefs(gboolean skip_warn) {
       g_list_free(prefs->disabled_decoders);
     }
     prefs->disabled_decoders=g_list_copy_strings(future_prefs->disabled_decoders);
-    set_list_pref("disabled_decoders",prefs->disabled_decoders);
+    if (prefs->disabled_decoders!=NULL) set_list_pref("disabled_decoders",prefs->disabled_decoders);
+    else delete_pref("disabled_decoders");
   }
 
 

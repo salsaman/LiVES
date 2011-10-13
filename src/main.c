@@ -942,6 +942,8 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->stream_audio_out=get_boolean_pref("stream_audio_out");
 
     prefs->unstable_fx=FALSE;
+
+    prefs->disabled_decoders=get_list_pref("disabled_decoders");
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

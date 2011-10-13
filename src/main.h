@@ -863,11 +863,13 @@ void get_pref_default(const gchar *key, gchar *val, gint maxlen);
 gboolean get_boolean_pref(const gchar *key);
 gdouble get_double_pref(const gchar *key);
 gint get_int_pref(const gchar *key);
+GList *get_list_pref(const gchar *key);
 void get_location(const gchar *exe, gchar *val, gint maxlen);
 void set_pref (const gchar *key, const gchar *value);
 void set_boolean_pref(const gchar *key, gboolean value);
 void set_double_pref(const gchar *key, gdouble value);
 void set_int_pref(const gchar *key, gboolean value);
+void set_list_pref(const char *key, GList *values);
 gboolean apply_prefs(gboolean skip_warnings);
 void save_future_prefs(void);
 void set_menu_text(GtkWidget *menu, const gchar *text, gboolean use_mnemonic);
@@ -950,6 +952,9 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 LIVES_INLINE gint get_interp_value(gshort quality);
 LIVES_INLINE GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
+GList *g_list_delete_string(GList *, char *string) WARN_UNUSED;
+GList *g_list_copy_strings(GList *list);
+gboolean string_lists_differ(GList *, GList *);
 
 
 GList *get_set_list(const gchar *dir);

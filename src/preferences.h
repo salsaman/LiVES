@@ -277,6 +277,8 @@ typedef struct {
 
   gboolean stream_audio_out;
   gboolean unstable_fx;
+
+  GList *disabled_decoders;
 } _prefs;
 
 enum {
@@ -488,6 +490,9 @@ typedef struct {
 
   gint nfx_threads;
 
+  GList *disabled_decoders;
+  GList *disabled_decoders_new;
+
 } _future_prefs;
 
 _prefs *prefs;
@@ -518,5 +523,7 @@ void populate_combo_box(GtkComboBox *combo, GList *data);
 void set_combo_box_active_string(GtkComboBox *, gchar *active_str);
 
 void prefsw_set_astream_settings(_vid_playback_plugin *);
+
+void apply_button_set_enabled(GtkWidget *widget, gpointer func_data);
 
 #endif

@@ -1,9 +1,9 @@
 Version 1.4.7
 -------------
 Complete translation to Japanese (Takashi Sakamoto and others).
-Fix broken opening of float audio. *
+Fix broken opening of float and reverse endian audio. *
 Instant opening of asf (eg. wmv) files.
-
+Implement enable/disable of individual decoder plugins in Preferences.
 
 
 

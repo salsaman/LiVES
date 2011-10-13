@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-const char *plugin_version="LiVES flv decoder version 0.1";
+const char *plugin_version="LiVES flv decoder version 1.0";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H

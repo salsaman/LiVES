@@ -866,6 +866,7 @@ gint get_int_pref(const gchar *key);
 GList *get_list_pref(const gchar *key);
 void get_location(const gchar *exe, gchar *val, gint maxlen);
 void set_pref (const gchar *key, const gchar *value);
+void delete_pref (const gchar *key);
 void set_boolean_pref(const gchar *key, gboolean value);
 void set_double_pref(const gchar *key, gdouble value);
 void set_int_pref(const gchar *key, gboolean value);

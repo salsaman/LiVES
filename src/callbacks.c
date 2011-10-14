@@ -4583,7 +4583,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
         "\n"
         "You should have received a copy of the GNU General Public License\n"
         "along with this program; if not, write to the Free Software\n"
-        "Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"));
+        "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"));
 
   gchar *comments= g_strdup(_("A video editor and VJ program."));
 

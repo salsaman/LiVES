@@ -2054,6 +2054,7 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
     cfile->achans=clipboard->achans;
     cfile->asampsize=clipboard->asampsize;
     cfile->afilesize=clipboard->afilesize;
+    cfile->signed_endian=clipboard->signed_endian;
     if (cfile->afilesize>0) d_print(_("...added audio..."));
   }
 

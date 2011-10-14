@@ -55,7 +55,7 @@ LIVES_INLINE gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdou
 
 /////////////////////////////////////////////////////
 
-gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, gint asigned) {
+gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, gint asigned, gboolean swap_endian) {
   // do a block atomic: resample audio, then resample video/resize or joint resample/resize
 
   gchar *com,*msg=NULL;
@@ -67,7 +67,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
   reorder_leave_back=FALSE;
 
-  if (asigned!=0||(arate>0&&arate!=cfile->arate)) {
+  if (asigned!=0||(arate>0&&arate!=cfile->arate)||swap_endian) {
     cfile->undo1_int=arate;
     cfile->undo2_int=cfile->achans;
     cfile->undo3_int=cfile->asampsize;
@@ -75,6 +75,11 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
     if (asigned==1&&(cfile->signed_endian&AFORM_UNSIGNED)==AFORM_UNSIGNED) cfile->undo1_uint^=AFORM_UNSIGNED;
     else if (asigned==2&&(cfile->signed_endian&AFORM_UNSIGNED)!=AFORM_UNSIGNED) cfile->undo1_uint|=AFORM_UNSIGNED;
+
+    if (swap_endian) {
+      if (cfile->signed_endian&AFORM_BIG_ENDIAN) cfile->undo1_uint^=AFORM_BIG_ENDIAN;
+      else cfile->undo1_uint|=AFORM_BIG_ENDIAN;
+    }
 
     on_resaudio_ok_clicked (NULL,NULL);
     if (mainw->error) return FALSE;

@@ -3286,16 +3286,25 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
   render_details *rdet=(render_details *)ptr;
   GList *dummy_list;
 
-  if (!strlen (new_encoder_name)) return;
+  if (!strlen (new_encoder_name)) {
+    g_free(new_encoder_name);
+    return;
+  }
 
-  // finalise old plugin
-  plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"finalise");
-    
   if (!strcmp(new_encoder_name,mainw->any_string)) { 
     GList *ofmt = NULL;
     ofmt = g_list_append(ofmt,g_strdup(mainw->any_string));
 
+    g_signal_handler_block(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+    // ---
+    set_combo_box_active_string(GTK_COMBO_BOX(rdet->encoder_combo), mainw->any_string);
+    // ---
+    g_signal_handler_unblock(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+
     populate_combo_box(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt);
+    g_signal_handler_block (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
+    set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo),mainw->any_string);
+    g_signal_handler_unblock (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
 
     g_list_free(ofmt);
     if (prefs->acodec_list!=NULL) {
@@ -3307,8 +3316,17 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
 
     populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
 
+    set_combo_box_active_string(GTK_COMBO_BOX(rdet->acodec_combo),mainw->any_string);
+
+    g_free(new_encoder_name);
+  
+    rdet->enc_changed=FALSE;
+
     return;
   }
+
+  // finalise old plugin
+  plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"finalise");
   
   clear_mainw_msg();
   // initialise new plugin

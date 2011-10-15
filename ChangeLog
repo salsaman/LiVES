@@ -1,5 +1,5 @@
-Version 1.4.7
--------------
+Version 1.4.7 (15 Oct 2011)
+---------------------------
 Instant opening of asf (wmv) files.
 Fix broken opening of float and reverse endian audio. *
 Implement enable/disable of individual decoder plugins in Preferences.

@@ -454,7 +454,8 @@ static gboolean pre_init(void) {
   mainw->volume=1.f;
   mainw->ccpd_with_sound=TRUE;
 
-  mainw->loop=mainw->loop_cont=FALSE;
+  mainw->loop=TRUE;
+  mainw->loop_cont=FALSE;
   mainw->target_table=target_table;
 
   prefs->max_modes_per_key=0;

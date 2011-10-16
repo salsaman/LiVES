@@ -1653,7 +1653,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
   }
 
-  if (cfile->undo_action==UNDO_INSERT||cfile->undo_action==UNDO_INSERT_WITH_AUDIO||cfile->undo_action==UNDO_MERGE||cfile->undo_action==UNDO_APPEND_AUDIO||cfile->undo_action==UNDO_NEW_AUDIO) {
+  if (cfile->undo_action==UNDO_INSERT||cfile->undo_action==UNDO_INSERT_WITH_AUDIO||cfile->undo_action==UNDO_MERGE||cfile->undo_action==UNDO_NEW_AUDIO) {
     cfile->redoable=FALSE;
   }
 
@@ -1825,7 +1825,7 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
     save_clip_values(mainw->current_file);
   }
 
-  if (cfile->undo_action==UNDO_REC_AUDIO||cfile->undo_action==UNDO_FADE_AUDIO||cfile->undo_action==UNDO_TRIM_AUDIO) {
+  if (cfile->undo_action==UNDO_REC_AUDIO||cfile->undo_action==UNDO_FADE_AUDIO||cfile->undo_action==UNDO_TRIM_AUDIO||cfile->undo_action==UNDO_APPEND_AUDIO) {
     com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
     unlink(cfile->info_file);
     dummyvar=system(com);

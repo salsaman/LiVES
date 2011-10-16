@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-10-14 19:36-0300\n"
+"POT-Creation-Date: 2011-10-15 10:33-0300\n"
 "PO-Revision-Date: 2011-08-18 12:12+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -9031,8 +9031,9 @@ msgid "Adjusting contrast of"
 msgstr "Kontrastı ayarla"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "Adjusting noise on"
-msgstr ""
+msgstr "Kontrastı ayarla"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -9075,8 +9076,9 @@ msgid "Block _height"
 msgstr "Çerçeve _yüksekliği"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Block _width"
-msgstr ""
+msgstr "Çerçeve _yüksekliği"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
@@ -9093,12 +9095,14 @@ msgid "Border _Colour"
 msgstr "Çerçeve _Rengi"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _end"
-msgstr ""
+msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _start"
-msgstr ""
+msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
@@ -9106,12 +9110,14 @@ msgid "Brightness change"
 msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness end"
-msgstr ""
+msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness start"
-msgstr ""
+msgstr "Değişiklikleri Yoksay"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
@@ -9177,8 +9183,9 @@ msgid "Colour cycle"
 msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycling"
-msgstr ""
+msgstr "Renklendir"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
@@ -9200,8 +9207,9 @@ msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Cycle _Step"
-msgstr ""
+msgstr "_X Başlangıcı"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
@@ -9349,24 +9357,28 @@ msgid "Frame _in frame position of clipboard..."
 msgstr "Çerçeveler%d panodan%s ekleniyor..."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr ""
+msgstr "Çerçeveler%d panodan%s ekleniyor..."
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _width"
 msgstr "Çerçeve _genişliği"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr ""
+msgstr "_Süre (saniye)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _end"
-msgstr ""
+msgstr "_Çerçeve değişiklikleri"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _start"
-msgstr ""
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -9419,8 +9431,9 @@ msgid "Horizontal shifting"
 msgstr "Dikey kaydırma"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _end"
-msgstr ""
+msgstr "Kaybol"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -9463,8 +9476,9 @@ msgid "Jumble"
 msgstr "Karıştırma"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+#, fuzzy
 msgid "Jumbling"
-msgstr ""
+msgstr "Karıştırma"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Keep _Centered"
@@ -9537,8 +9551,9 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "Yapıştırılıyor"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
@@ -9597,28 +9612,33 @@ msgid "Saturation _end"
 msgstr "Geçiş _İçeri"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "Geçiş _İçeri"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation change"
-msgstr ""
+msgstr "Geçiş _İçeri"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation end"
-msgstr ""
+msgstr "Geçiş _İçeri"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation start"
-msgstr ""
+msgstr "Geçiş _İçeri"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
 msgstr "Sepya"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#, fuzzy
 msgid "Shift horizontally"
-msgstr ""
+msgstr "Dikey çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
@@ -9671,8 +9691,9 @@ msgid "Spreading"
 msgstr "Boşluk"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Step _Value"
-msgstr ""
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
@@ -9682,8 +9703,9 @@ msgid "Step per _Frame"
 msgstr "    _Çerçeve"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl _start"
-msgstr ""
+msgstr "Girdap"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -9806,13 +9828,15 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "_End amount"
-msgstr ""
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "_Fade level"
-msgstr ""
+msgstr "Kaybol"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -9822,16 +9846,18 @@ msgstr "_Yarı çap başlangıcı"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Fill colour"
-msgstr ""
+msgstr "Çerçeve _Rengi"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_First frame"
 msgstr "_İlk çerçeve"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Flash for"
-msgstr ""
+msgstr "Çerçeve _Rengi"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -9854,8 +9880,9 @@ msgid "_Hold for"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "_Horizontal segments"
-msgstr ""
+msgstr "Dikey kaydırma"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Image File"
@@ -9969,8 +9996,9 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma end"
-msgstr ""
+msgstr "_Başlat"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -10173,8 +10201,9 @@ msgid "every"
 msgstr "her"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "Kaybol"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -10231,8 +10260,9 @@ msgid "jumble"
 msgstr "Karıştırma"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "modulate"
-msgstr ""
+msgstr "Döndürme"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
@@ -10256,8 +10286,9 @@ msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "Yapıştırılıyor"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "posterize"
@@ -10276,16 +10307,18 @@ msgid "rotate"
 msgstr "çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "saturation_change"
-msgstr ""
+msgstr "Geçiş _İçeri"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
 msgstr "kahverengi tonu"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#, fuzzy
 msgid "shift_horizontal"
-msgstr ""
+msgstr "Dikey çevir"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy

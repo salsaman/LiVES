@@ -32,7 +32,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 # Do not change these except for testing !
 
 $background=1;
-$version="1.4.7";
+$version="1.4.8-svn";
 #$dyneversion="LIVES-20091209";
 
 
@@ -2374,21 +2374,25 @@ if (defined($ARGV[0])) {
 
 	# resample $audio_out (if required)
 	unless ($arate==$nrate&&$achans==$nchans&&$asamps==$nsamps&&$nsigned==$signed&&$nendian==$endian) {
-	    $audio_in=$audio_out;
-	    $audio_out=$audio_bak;
-	    &resample_audio;
-	    unlink $audio_in;
-	    rename $audio_out,$audio_in;
-	    $audio_out=$audio_in;
+	    $audio_in=$audio_out; #audio.new
+	    $audio_out=$audio_bak; #audio.bak
+	    &resample_audio; # audio.new -> audio.bak
+	    unlink $audio_in; #audio.new
+	    rename $audio_out,$audio_in;  #audio.bak -> audio.new
+	    $audio_out=$audio_in; #audio.new
 	}
 
-	system("cat audio $audio_out > audiodump");
+	system("/bin/cp -f audio audio.bak");
 
-	unlink $audio_out;
+	# cat audio audio.new -> audiodump
+	system("/bin/cat audio $audio_out > audiodump");
+
+	unlink $audio_out; #audio.new
 	$fsize=-s "audiodump";
 	&sig_complete($fsize);
 	exit 0;
     }
+
 
 
     if ($command eq "trim_audio") {
@@ -2552,7 +2556,7 @@ if (defined($ARGV[0])) {
 		$audio_out="$curtmpdir/audio.bak";
 		rename $audio_in,$audio_out;
 		&append_silence(0,$aud_end-$audsize,$asamps,$achans,$asigned,$aendian,$audio_in);
-		`cat $audio_out>>$audio_in`;
+		`/bin/cat $audio_out>>$audio_in`;
 		unlink $audio_out;
 	    }
 	}
@@ -3085,7 +3089,7 @@ sub check_for_stop {
 
 sub get_pgid {
     #get process group for a given pid
-    my $pgidstr=`cat /proc/$target_pid/stat`;
+    my $pgidstr=`/bin/cat /proc/$target_pid/stat`;
     my $pgid=(split(" ",$pgidstr))[4];
     return $pgid;
 }
@@ -3604,7 +3608,6 @@ sub get_formats {
 
 
 sub get_file_info {
-    $af_size=0;
     $count=0;
     $bpp=24;  # default if none is found
     $fps=0; # let the front-end handle this if we can't get it ;-)
@@ -4727,42 +4730,78 @@ sub mp3_open {
 	return;
     }
 
-    $arate=44100;
-    $achans=2;
-    $asamps=16;
+    $file=$audio_in;
+    $is_audio=1;
 
-    $asigned=1;
-    if ($asamps==8) {
-	$asigned=0;
+    &get_file_info;
+
+    $asigned=$signed;
+    $aendian=$endian;
+
+    if ($arate==0&&$achans==0&&$asamps==0) {
+	# TODO - find way to read these
+	# have to assume these for now
+	$arate=44100;
+	$achans=2;
+	$asamps=16;
+
+	$asigned=1;
+	if ($asamps==8) {
+	    $asigned=0;
+	}
+	$aendian=&get_endian;
     }
-    $aendian=&get_endian;
-    $f_size=-s $audio_in;
+
+    if ($f_size==0) {
+	$f_size= -s $audio_in;
+    }
+
 }
 
 
 sub ogg_open {
+    $f_size=0;
+
     if (-f $audio_in) {
 	unlink $audio_in;
     }
     
-    system("ogg123 -d wav -f $audio_in \"$file\" >/dev/null 2>&1");
-    $f_size= -s $audiofile;
+    unless (&location("ogg123") eq "") {
+	system("ogg123 -d wav -f $audio_in \"$file\" >/dev/null 2>&1");
+	$f_size= -s $audiofile;
+    }
 
     if ($f_size==0) {
 	&othera_open;
 	return;
     }
 
-    # values are assumed here
-    $arate=44100;
-    $achans=2;
-    $asamps=16;
+    $file=$audio_in;
+    $is_audio=1;
 
-    $asigned=1;
-    if ($asamps==8) {
-	$asigned=0;
+    &get_file_info;
+
+    $asigned=$signed;
+    $aendian=$endian;
+
+    if ($arate==0&&$achans==0&&$asamps==0) {
+	# TODO - find way to read these
+	# have to assume these for now
+	$arate=44100;
+	$achans=2;
+	$asamps=16;
+
+	$asigned=1;
+	if ($asamps==8) {
+	    $asigned=0;
+	}
+	$aendian=&get_endian;
     }
-    $aendian=&get_endian;
+
+    if ($f_size==0) {
+	$f_size= -s $audio_in;
+    }
+
 }
 
 
@@ -4775,14 +4814,14 @@ sub wav_open {
     }
     
     system("cp \"$file\" $audio_in");
-    system("$mplay_command -frames 0 $audio_in > $curtmpfile 2>/dev/null </dev/null");
-    
-    @info2=split / /, `grep AUDIO: $curtmpfile`;
-    unlink $curtmpfile;
-    $arate=$info2[1];
-    $achans=$info2[3];
-    $asamps=$info2[5];
 
+    $file=$audio_in;
+    $is_audio=1;
+
+    &get_file_info;
+
+    $asigned=$signed;
+    $aendian=$endian;
 
     if ($arate==0&&$achans==0&&$asamps==0) {
 	# TODO - find way to read these
@@ -4790,16 +4829,17 @@ sub wav_open {
 	$arate=44100;
 	$achans=2;
 	$asamps=16;
-    }
-    
-    # and it seems we *must* assume these...
-    $asigned=1;
-    if ($asamps==8) {
-	$asigned=0;
-    }
-    $aendian=&get_endian;
 
-    $f_size= -s $audio_in;
+	$asigned=1;
+	if ($asamps==8) {
+	    $asigned=0;
+	}
+	$aendian=&get_endian;
+    }
+
+    if ($f_size==0) {
+	$f_size= -s $audio_in;
+    }
 }
 
 
@@ -4813,7 +4853,33 @@ sub othera_open {
     $format=&get_mplayer_format;
 
     system(&rc_get("video_open_command") . " -quiet \"$file\" -ao pcm:waveheader:file=$audio_in $format >/dev/null 2>&1 </dev/null");
-    $f_size=-s $audio_in;
+
+    $file=$audio_in;
+    $is_audio=1;
+
+    &get_file_info;
+
+    $asigned=$signed;
+    $aendian=$endian;
+
+    if ($arate==0&&$achans==0&&$asamps==0) {
+	# TODO - find way to read these
+	# have to assume these for now
+	$arate=44100;
+	$achans=2;
+	$asamps=16;
+
+	$asigned=1;
+	if ($asamps==8) {
+	    $asigned=0;
+	}
+	$aendian=&get_endian;
+    }
+
+    if ($f_size==0) {
+	$f_size= -s $audio_in;
+    }
+
 }
 
 

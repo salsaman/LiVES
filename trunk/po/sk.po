@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-10-14 19:36-0300\n"
+"POT-Creation-Date: 2011-10-15 10:33-0300\n"
 "PO-Revision-Date: 2011-08-18 12:03+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -10190,8 +10190,9 @@ msgid "Photo/still"
 msgstr "Fotka/nehybný"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "Vložiť"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
@@ -10506,8 +10507,9 @@ msgid "_Image File"
 msgstr "_Súbor"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "_Image"
-msgstr ""
+msgstr "_Súbor"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -10804,8 +10806,9 @@ msgid "every"
 msgstr "každý"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "Stíšiť zvuk"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -10848,8 +10851,9 @@ msgid "hue_change"
 msgstr "zmena_odtieňa"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Prekryť textom"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
@@ -10881,8 +10885,9 @@ msgid "photo_still"
 msgstr "Fotka/nehybný"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "Vložiť"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy

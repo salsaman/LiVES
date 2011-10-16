@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-10-14 19:36-0300\n"
+"POT-Creation-Date: 2011-10-15 10:33-0300\n"
 "PO-Revision-Date: 2011-08-18 11:57+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Romanian <ro@li.org>\n"
@@ -8848,8 +8848,9 @@ msgid "Blanking"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Block _height"
-msgstr ""
+msgstr "Dimensiune cadru"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Block _width"
@@ -8868,12 +8869,14 @@ msgid "Border _Colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _end"
-msgstr ""
+msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _start"
-msgstr ""
+msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
@@ -8881,12 +8884,14 @@ msgid "Brightness change"
 msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness end"
-msgstr ""
+msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness start"
-msgstr ""
+msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
@@ -8939,8 +8944,9 @@ msgid "Colorize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorizing"
-msgstr ""
+msgstr "Redimensionare"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Colour cycle"
@@ -9033,8 +9039,9 @@ msgid "Enhance"
 msgstr "Renunță"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "Enhancing"
-msgstr ""
+msgstr "Renunță"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade _colour"
@@ -9124,8 +9131,9 @@ msgid "Gamma _start"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma change"
-msgstr ""
+msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "Generate blank frames"
@@ -9261,8 +9269,9 @@ msgid "Normalize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "Normalizing"
-msgstr ""
+msgstr "Redimensionare"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -9290,8 +9299,9 @@ msgid "Pixilating"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "Posterize"
-msgstr ""
+msgstr "Redimensionare"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -9385,8 +9395,9 @@ msgid "Solarize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarizing"
-msgstr ""
+msgstr "Redimensionare"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
@@ -9561,8 +9572,9 @@ msgid "_Fill colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_First frame"
-msgstr ""
+msgstr "Cadre"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Flash for"
@@ -9576,8 +9588,9 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "_Frames per second"
-msgstr ""
+msgstr "secunde."
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
@@ -9828,16 +9841,18 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "blank_frames"
-msgstr ""
+msgstr "Cadre"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "brightness_change"
-msgstr ""
+msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "charcoal"
@@ -9933,8 +9948,9 @@ msgid "gen_text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "hue_change"
-msgstr ""
+msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "image_overlay"
@@ -9973,8 +9989,9 @@ msgid "pixilate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "posterize"
-msgstr ""
+msgstr "Redimensionare"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -10050,8 +10067,9 @@ msgid "transition_splice"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "trim_frames"
-msgstr ""
+msgstr "Cadre"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"
@@ -10062,8 +10080,11 @@ msgid "wave"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "Unable to open output file !"
 msgstr ""
+"LiVES nu a putut pentru a capta această imagine\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 #, fuzzy

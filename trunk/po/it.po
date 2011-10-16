@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-10-14 19:36-0300\n"
+"POT-Creation-Date: 2011-10-15 10:33-0300\n"
 "PO-Revision-Date: 2011-08-18 12:01+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -10969,8 +10969,9 @@ msgid "every"
 msgstr "ogni"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "Diminuisci dissolvenza audio"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -11013,8 +11014,9 @@ msgid "hue_change"
 msgstr "cambiamento_tinta"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Sovrapposizione Testo"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"

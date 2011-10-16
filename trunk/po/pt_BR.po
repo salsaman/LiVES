@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-10-14 19:36-0300\n"
+"POT-Creation-Date: 2011-10-15 10:33-0300\n"
 "PO-Revision-Date: 2011-08-18 12:03+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -10611,12 +10611,14 @@ msgid "_Number of frames"
 msgstr "_Número de frames"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset X"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Offset Y"
-msgstr ""
+msgstr "+ offset1"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Other Center"
@@ -10860,8 +10862,9 @@ msgid "every"
 msgstr "cada"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "Fade out do áudio"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -10904,8 +10907,9 @@ msgid "hue_change"
 msgstr "hue_change"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Sobreposição de texto"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"

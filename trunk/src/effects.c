@@ -203,7 +203,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   }
   g_free(tmp);
 
-  if (cfile->clip_type==CLIP_TYPE_FILE) {
+  if (cfile->clip_type==CLIP_TYPE_FILE&&rfx->status!=RFX_STATUS_WEED) {
     // pull a batch of frames for the backend to start processing
     cfile->fx_frame_pump=cfile->start;
   }
@@ -287,8 +287,9 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     else {
       int error;
       weed_plant_t *first_out=get_enabled_channel(rfx->source,0,FALSE);
-      cfile->hsize=weed_get_int_value(first_out,"width",&error);
-      cfile->vsize=weed_get_int_value(first_out,"height",&error);
+      weed_plant_t *first_ot=weed_get_plantptr_value(first_out,"template",&error);
+      cfile->hsize=weed_get_int_value(first_ot,"host_width",&error);
+      cfile->vsize=weed_get_int_value(first_ot,"host_height",&error);
     }
 
     if (rfx->num_in_channels>0) {
@@ -464,6 +465,15 @@ gint realfx_progress (gboolean reset) {
   g_snprintf (mainw->msg,256,"%d",i);
   // load, effect, save frame
 
+  // skip resizing virtual frames
+  if (resize_instance!=NULL&&is_virtual_frame(mainw->current_file,i)) {
+    if (++i>cfile->end) {
+      mainw->internal_messaging=FALSE;
+      g_snprintf(mainw->msg,9,"completed");
+    }
+    return 1;
+  }
+
   layer=weed_plant_new(WEED_PLANT_CHANNEL);
   weed_set_int_value(layer,"clip",mainw->current_file);
   weed_set_int_value(layer,"frame",i);
@@ -495,7 +505,7 @@ gint realfx_progress (gboolean reset) {
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     cfile->frame_index[i-1]=-1;
   }
-
+  
   if (++i>cfile->end) {
     com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->start,cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     dummyvar=system (com);

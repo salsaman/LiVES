@@ -3179,7 +3179,7 @@ gint render_events (gboolean reset) {
 	  layers[i]=NULL;
 	  
 	  layer=weed_apply_effects(layers,mainw->filter_map,tc,0,0,pchains);
-	  
+
 	  for (i=0;layers[i]!=NULL;i++) if (layer!=layers[i]) weed_plant_free(layers[i]);
 	  g_free(layers);
 	}

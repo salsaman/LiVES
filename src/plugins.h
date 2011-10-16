@@ -184,7 +184,7 @@ typedef struct {
   gint current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
   // video data
-  gint width;
+  gint width; // width and height of picture in frame
   gint height;
   gint64 nframes;
   lives_interlace_t interlace;
@@ -193,7 +193,7 @@ typedef struct {
   /// for primary pixel plane
   gint offs_x;
   gint offs_y;
-  gint frame_width;
+  gint frame_width; // frame width and height are the size of the outer frame
   gint frame_height;
 
   gfloat par; ///< pixel aspect ratio

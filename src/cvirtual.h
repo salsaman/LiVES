@@ -23,4 +23,6 @@ gboolean check_if_non_virtual(gint fileno);
 
 void restore_frame_index_back (gint sfileno);
 
+gboolean is_virtual_frame(int sfileno, int frame);
+
 LIVES_INLINE gint count_virtual_frames(int *findex, int size);

@@ -368,3 +368,11 @@ int *frame_index_copy(int *findex, gint nframes) {
 
   return findexc;
 }
+
+
+gboolean is_virtual_frame(int sfileno, int frame) {
+  file *sfile=mainw->files[sfileno];
+  if (sfile->frame_index==NULL) return FALSE;
+  if (sfile->frame_index[frame-1]!=-1) return TRUE;
+  return FALSE;
+}

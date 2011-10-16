@@ -49,6 +49,7 @@
 #include "paramwindow.h"
 #include "stream.h"
 #include "startup.h"
+#include "cvirtual.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -3148,8 +3149,8 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	    }
 	  }
 	}
-	width=sfile->hsize/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
-	height=sfile->vsize;
+	width=dplug->cdata->frame_width/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
+	height=dplug->cdata->frame_height;
 	weed_set_int_value(layer,"width",width);
 	weed_set_int_value(layer,"height",height);
 	weed_set_int_value(layer,"current_palette",dplug->cdata->current_palette);
@@ -3734,13 +3735,17 @@ void load_frame_image(gint frame) {
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
 	  weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
 	  if (img_ext==NULL) img_ext=(cfile->img_type==IMG_TYPE_JPEG?g_strdup("jpg"):g_strdup("png"));
-	  if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks,cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
+	  if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks,
+				  cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
 	    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
 	    mainw->frame_layer=NULL;
 	  }
 	}
 
-	if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&(mainw->multitrack==NULL||(!mainw->multitrack->is_rendering&&!mainw->is_generating)))||((!mainw->is_rendering||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))&&mainw->preview&&mainw->frame_layer==NULL)) {
+	if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&
+	     (mainw->multitrack==NULL||(!mainw->multitrack->is_rendering&&!mainw->is_generating)))||
+	    ((!mainw->is_rendering||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))&&
+	     mainw->preview&&mainw->frame_layer==NULL)) {
 	  // preview ended
 	  if (!cfile->opening) mainw->cancelled=CANCEL_NO_MORE_PREVIEW;
 	  if (mainw->cancelled) {
@@ -3842,8 +3847,12 @@ void load_frame_image(gint frame) {
     // Finally we may want to end up with another GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL and we are in full screen mode).
     // We also need a GdkPixbuf if we are saving to the scrap_file (for now).
 
-    if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
-      if ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&(weed_get_int_value(mainw->frame_layer,"width",&weed_error)*weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize) {
+    if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&
+	!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
+      if (is_virtual_frame(mainw->current_file,mainw->actual_frame)||
+	  ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&
+	   (weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
+	    weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize)) {
 	if ((mainw->rte!=0||mainw->is_rendering)&&(mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)) {
 	  mainw->frame_layer=on_rte_apply (mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
 	}

@@ -51,18 +51,32 @@ flv_decoder_la_SOURCES = flv_decoder.c flv_decoder.h
 flv_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(FLVDEC_CFLAGS)
 flv_decoder_la_LDFLAGS = $(shared_ldflags) $(FLVDEC_LIBS)
 
-#in progress
 asf_libs = asf_decoder.la
 ASFDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 ASFDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
 asf_decoder_la_SOURCES = asf_decoder.c asf_decoder.h
 asf_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(ASFDEC_CFLAGS)
 asf_decoder_la_LDFLAGS = $(shared_ldflags) $(ASFDEC_LIBS)
+
+
+#in progress
+
+#does not work - unable to parse video pckets
+
+#avi_libs = avi_decoder.la
+#AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
+#AVIDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
+#avi_decoder_la_SOURCES = avi_decoder.c avi_decoder.h
+#avi_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(AVIDEC_CFLAGS)
+#avi_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
+
+
+
 endif
 endif
 
 
 
-decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs)
+decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) #$(avi_libs)
 
 EXTRA_DIST = decplugin.h

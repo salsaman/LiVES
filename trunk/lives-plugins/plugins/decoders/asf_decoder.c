@@ -1221,13 +1221,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       }
 
 
-
       if (type == LIVES_MEDIA_TYPE_AUDIO) {
 	priv->st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
 	snprintf(cdata->audio_name,16,"unknown");
 
       } else if (type == LIVES_MEDIA_TYPE_VIDEO) {
-	priv->st->codec->codec_type = CODEC_TYPE_VIDEO;
+	priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
 	if (vidindex!=-1&&vidindex!=priv->st->id) {
 	  fprintf(stderr, "asf_decoder: unhandled multiple vidstreams %d and %d in %s\n",vidindex,priv->st->id,cdata->URI);
 	  got_vidst=TRUE;

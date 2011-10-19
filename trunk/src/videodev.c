@@ -127,7 +127,7 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
   weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT); // TODO - use ldev->YUV_sampling
   weed_set_int_value(layer,"YUV_clamping",ldev->YUV_clamping);
 
-  create_empty_pixel_data(layer);
+  create_empty_pixel_data(layer,TRUE);
 
   if (ldev->buffer_type==UNICAP_BUFFER_TYPE_USER) {
 

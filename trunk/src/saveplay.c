@@ -1021,7 +1021,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
       cfile->progress_start=1;
-      cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
+      cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->end);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
       virtual_to_images(mainw->current_file,cfile->start,cfile->end,TRUE);
       end_threaded_dialog();
@@ -1139,7 +1139,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
       cfile->progress_start=1;
-      cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
+      cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->end);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
       virtual_to_images(mainw->current_file,cfile->start,cfile->end,TRUE);
       end_threaded_dialog();
@@ -1196,7 +1196,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
       cfile->progress_start=1;
-      cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
+      cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->frames);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
       virtual_to_images(mainw->current_file,1,cfile->frames,TRUE);
       end_threaded_dialog();
@@ -2969,7 +2969,7 @@ backup_file(const gchar *file_name) {
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     mainw->cancelled=CANCEL_NONE;
     cfile->progress_start=1;
-    cfile->progress_end=count_virtual_frames(cfile->frame_index,cfile->frames);
+    cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->frames);
     do_threaded_dialog(_("Pulling frames from clip"),TRUE);
     virtual_to_images(mainw->current_file,1,cfile->frames,TRUE);
     end_threaded_dialog();
@@ -3555,6 +3555,8 @@ gboolean open_scrap_file (void) {
 gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
   // load raw frame data from scrap file
 
+  // this will also set cfile width and height - for letterboxing etc.
+
   // return FALSE if the frame does not exist/we are unable to read it
 
 
@@ -3671,8 +3673,6 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
 gint save_to_scrap_file (weed_plant_t *layer) {
   // returns frame number
-  // TODO - handle errors, like out of disk space...
-
 
   // dump the raw frame data to a file
 

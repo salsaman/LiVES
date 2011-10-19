@@ -814,7 +814,6 @@ void get_next_free_file(void);
 void switch_to_file(gint old_file, gint new_file);
 void do_quick_switch (gint new_file);
 void resize (gdouble scale);
-GdkPixbuf *lives_scale_simple (GdkPixbuf *, gint width, gint height);
 gboolean read_file_details(const gchar *file_name, gboolean only_check_for_audio);
 void do_start_messages(void);
 void set_palette_colours (void);

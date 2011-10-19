@@ -58,7 +58,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   char *ext=rindex(cdata->URI,'.');
 
-  if (ext==NULL||(strncmp(ext,".dv",3)&&!strncmp(ext,".avi",4))) return FALSE;
+  if (ext==NULL||(strncmp(ext,".dv",3)&&strncmp(ext,".avi",4))) return FALSE;
+
+  if (!strncmp(ext,".avi",4)) {
+    //needs further analysis
+    return FALSE;
+  }
 
   if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
     fprintf(stderr, "dv_decoder: unable to open %s\n",cdata->URI);

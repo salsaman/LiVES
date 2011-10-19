@@ -509,6 +509,7 @@ typedef struct {
   int64_t hdr_start;  ///< file offset of current asf packet
   int64_t start_dts;  ///< first video dts
   int64_t frame_dts;
+  boolean have_start_dts;
   boolean black_fill;
   size_t def_packet_size;
   off_t filesize;

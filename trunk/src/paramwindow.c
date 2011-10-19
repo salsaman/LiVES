@@ -581,7 +581,8 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     g_signal_connect_after (GTK_OBJECT (spinbuttonw), "value_changed",
 			    G_CALLBACK (gen_width_changed),
 			    tmpl);
-    gen_width_changed(GTK_SPIN_BUTTON(spinbuttonw),NULL);
+    weed_leaf_delete(tmpl,"host_width"); // force a reset
+    gen_width_changed(GTK_SPIN_BUTTON(spinbuttonw),tmpl);
 
     label=gtk_label_new_with_mnemonic(_("_Height"));
     if (palette->style&STYLE_1) {
@@ -606,7 +607,8 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     g_signal_connect_after (GTK_OBJECT (spinbuttonh), "value_changed",
 			    G_CALLBACK (gen_height_changed),
 			    tmpl);
-    gen_height_changed(GTK_SPIN_BUTTON(spinbuttonh),NULL);
+    weed_leaf_delete(tmpl,"host_height"); // force a reset
+    gen_height_changed(GTK_SPIN_BUTTON(spinbuttonh),tmpl);
 
   }
 

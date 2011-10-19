@@ -675,7 +675,7 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 	printf("got vid fragment in packet !\n");
 #endif
 
-	if (asf->packet_key_frame&&asf->packet_frag_offset==0) {
+	if (asf->packet_key_frame&&asf->packet_frag_offset==0&&priv->have_start_dts) {
 	  priv->kframe=add_keyframe(cdata,priv->hdr_start,priv->fragnum,asf->packet_frag_timestamp-priv->start_dts);
 #ifdef DEBUG
 	  printf("and is keyframe !\n");
@@ -1956,6 +1956,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->data_start=priv->input_position;
 
+  priv->start_dts=0; // will reset this later
+  priv->have_start_dts=FALSE; // cannot add keyframes until we know offset of start_dts
+
   // re-scan with avcodec; priv->data_start holds video data start position
   priv->input_position=priv->data_start;
   lseek(priv->fd,priv->input_position,SEEK_SET);
@@ -2047,6 +2050,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 
   pts=priv->start_dts=priv->frame_dts;
+  priv->have_start_dts=TRUE;
 
 #ifdef DEBUG
   printf("first pts is %ld\n",pts);

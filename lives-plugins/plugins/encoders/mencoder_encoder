@@ -29,7 +29,7 @@ else {
 
 
 if ($command eq "version") {
-    print "mencoder encoder plugin v1.91\n";
+    print "mencoder encoder plugin v1.92\n";
     exit 0;
 }
 
@@ -68,11 +68,14 @@ if ($command eq "get_formats") {
    # return format_name|display_name|audio_types|restrictions|extension|
 
    # audio types are: 0 - cannot encode audio, 1 - can encode using
-   #  mp3, 2 - can encode using pcm, 4 - can encode using mp2, 8 - vorbis
+   #  mp3, 2 - can encode using pcm, 3 - can encode using pcm and mp3
+   # 4 - mp2, 8 - vorbis, 16 - AC3, 32 - AAC, 64 - AMR-NB, 128 - raw, 256 = wma2
 
    print "mjpeg|mjpg|2|none|avi|\n";
    print "ffv1|ffv1 (lossless)|2|none|avi|\n";
    print "kvcd|kvcd (experimental)|4|arate=32000;44100;48000,fps=24;25;30,aspect=352:240,hblock=16,vblock=16|mpg|\n";
+   print "flv|flv|41|arate=44100;22050;11025|flv|\n";
+   print "wmv2|wmv2/wma2/asf|256|arate=44100;22050;11025|wmv|\n";
    
    exit 0;
 }
@@ -108,7 +111,7 @@ if ($command eq "encode") {
     # set the codec
     $vcodec="mjpeg";
     
-    if ($otype eq "mpeg4" || $otype eq "mpeg2video" || $otype eq "ffv1") {
+    if ($otype eq "mpeg4" || $otype eq "mpeg2video" || $otype eq "ffv1" || $otype eq "flv" || $otype eq "wmv2") {
 	$vcodec=$otype;
     }
 
@@ -166,13 +169,30 @@ if ($command eq "encode") {
     }
     system($syscom);
 
+    #audio
     $audio_com="";
     unless ($audiofile eq "") {
-	$audio_com=" -oac copy -audiofile " . $audiofile;
+	if ($aq==2) {
+	    $audio_com="-audiofile ".$audiofile." -oac copy";
+	}
+	elsif ($aq==4) {
+	    $audio_com="-audiofile ".$audiofile." -oac lavc -lavcopts acodec=mp2";
+	}
+	elsif ($aq==128) {
+	    $audio_com="-audiofile ".$audiofile." -oac lavc -lavcopts acodec=wmav2";
+	}
     }
 
-    if ($otype eq "mjpeg" || $otype eq "ffv1") {
-	$syscom=$encoder_command . " -mc 0 -o \"$nfile\" $audio_com -ovc copy -noskip -ofps $fps $tmpvid -info comment=\"$comment\":name=\"$title\":artist=\"$author\" $err";
+    # muxing
+    if ($otype eq "flv") {
+	$lavfopts="-of lavf -lavfopts format=flv";
+    }
+    if ($otype eq "wmv3") {
+	$lavfopts="-of lavf -lavfopts format=asf";
+    }
+
+    if ($otype eq "mjpeg" || $otype eq "ffv1" || $otype eq "flv" || $otype eq "wmv2") {
+	$syscom=$encoder_command . " -mc 0 -o \"$nfile\" -ovc copy -noskip -ofps $fps $tmpvid $audio_com $lavfopts -info comment=\"$comment\":name=\"$title\":artist=\"$author\" $err";
     }
     elsif ($otype eq "kvcd") {
 	$abitrate=112;
@@ -180,7 +200,7 @@ if ($command eq "encode") {
 	$inter_matrix="16,18,20,22,24,26,28,30,18,20,22,24,26,28,30,32,20,22,24,26,28,30,32,34,22,24,26,30,32,32,34,36,24,26,28,32,34,34,36,38,26,28,30,32,34,36,38,40,28,30,32,34,36,38,42,42,30,32,34,36,38,40,42,44";
 	$scale="scale=352:240";
 
-	$syscom="$encoder_command $tmpvid -mc 0 -of mpeg -ovc lavc -oac lavc -lavcopts acodec=mp2:abitrate=$abitrate:vcodec=mpeg1video:keyint=".int($fps).":mbd=1:vrc_minrate=64:vrc_maxrate=3000:vrc_buf_size=320:aspect=4/3:intra_matrix=$matrix:inter_matrix=$inter_matrix -vf $scale -o \"$nfile\"";
+	$syscom="$encoder_command $tmpvid -mc 0 -of mpeg -ovc lavc $audio_com:abitrate=$abitrate:vcodec=mpeg1video:keyint=".int($fps).":mbd=1:vrc_minrate=64:vrc_maxrate=3000:vrc_buf_size=320:aspect=4/3:intra_matrix=$matrix:inter_matrix=$inter_matrix -vf $scale -o \"$nfile\"";
 
     }
     if (defined($DEBUG_ENCODERS)) {

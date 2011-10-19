@@ -2382,7 +2382,9 @@ if (defined($ARGV[0])) {
 	    $audio_out=$audio_in; #audio.new
 	}
 
-	system("/bin/cp -f audio audio.bak");
+	unless (&rc_get("conserve_space") eq "true") {
+	    &backup_audio;
+	}
 
 	# cat audio audio.new -> audiodump
 	system("/bin/cat audio $audio_out > audiodump");

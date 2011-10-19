@@ -831,7 +831,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
       weed_set_int_value(layer,"height",lstream->vsize);
       weed_set_int_value(layer,"current_palette",lstream->palette);
       weed_set_int_value(layer,"YUV_clamping",lstream->YUV_clamping);
-      create_empty_pixel_data(layer);
+      create_empty_pixel_data(layer,FALSE);
     }
 
     pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);

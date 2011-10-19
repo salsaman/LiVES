@@ -124,8 +124,8 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext);
 typedef struct {
   gchar name[51];
   guint32 audio_codec;
-  // must match with the "acodec" GList in interface.c
-  // and bitmaps in the encoder plugins
+  // match with bitmaps in the encoder plugins
+  // and also anames array in plugins.c (see below)
 
 #define AUDIO_CODEC_MP3 0
 #define AUDIO_CODEC_PCM 1
@@ -134,7 +134,8 @@ typedef struct {
 #define AUDIO_CODEC_AC3 4
 #define AUDIO_CODEC_AAC 5
 #define AUDIO_CODEC_AMR_NB 6
-#define AUDIO_CODEC_RAW 7
+#define AUDIO_CODEC_RAW 7       // reserved
+#define AUDIO_CODEC_WMA2 8
 
 #define AUDIO_CODEC_MAX 31
   //
@@ -159,6 +160,7 @@ typedef struct {
 _encoder;
 
 
+// defined in plugins.c for the whole app
 extern const char *anames[AUDIO_CODEC_MAX];
 
 

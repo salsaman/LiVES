@@ -37,7 +37,8 @@ gboolean convert_layer_palette(weed_plant_t *layer, int outpl, int op_clamping);
 gboolean convert_layer_palette_with_sampling(weed_plant_t *layer, int outpl, int out_sampling);
 gboolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma); ///< not used
 void resize_layer (weed_plant_t *layer, int width, int height, int interp);
-void create_empty_pixel_data(weed_plant_t *layer);
+void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, int nheight);
+void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill);
 void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette);
 GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer);
 gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *);

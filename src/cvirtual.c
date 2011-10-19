@@ -18,11 +18,11 @@
 #include "resample.h"
 
 
-
-LIVES_INLINE gint count_virtual_frames(int *findex, int size) {
+/** count virtual frames between start and end (inclusive) */
+LIVES_INLINE gint count_virtual_frames(int *findex, int start, int end) {
   register int i;
   gint count=0;
-  for (i=0;i<size;i++) if (findex[i]!=-1) count++;
+  for (i=start-1;i<end;i++) if (findex[i]!=-1) count++;
   return count;
 }
 

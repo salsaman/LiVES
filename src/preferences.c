@@ -1284,36 +1284,15 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
     prefs->acodec_list_to_format[count++]=AUDIO_CODEC_PCM;
     if (future_prefs->encoder.audio_codec==AUDIO_CODEC_PCM) is_allowed=TRUE;
   }
-  if (future_prefs->encoder.of_allowed_acodecs&(1<<AUDIO_CODEC_MP3)) {
-    prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup("mp3"));
-    prefs->acodec_list_to_format[count++]=AUDIO_CODEC_MP3;
-    if (future_prefs->encoder.audio_codec==AUDIO_CODEC_MP3) is_allowed=TRUE;
+
+  for (idx=2;strlen(anames[idx]);idx++) {
+    if (future_prefs->encoder.of_allowed_acodecs&(1<<idx)) {
+      prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup(anames[idx]));
+      prefs->acodec_list_to_format[count++]=idx;
+      if (future_prefs->encoder.audio_codec==idx) is_allowed=TRUE;
+    }
   }
-  if (future_prefs->encoder.of_allowed_acodecs&(1<<AUDIO_CODEC_MP2)) {
-    prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup("mp2"));
-    prefs->acodec_list_to_format[count++]=AUDIO_CODEC_MP2;
-    if (future_prefs->encoder.audio_codec==AUDIO_CODEC_MP2) is_allowed=TRUE;
-  }
-  if (future_prefs->encoder.of_allowed_acodecs&(1<<AUDIO_CODEC_VORBIS)) {
-    prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup("vorbis"));
-    prefs->acodec_list_to_format[count++]=AUDIO_CODEC_VORBIS;
-    if (future_prefs->encoder.audio_codec==AUDIO_CODEC_VORBIS) is_allowed=TRUE;
-  }
-  if (future_prefs->encoder.of_allowed_acodecs&(1<<AUDIO_CODEC_AC3)) {
-    prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup("ac3"));
-    prefs->acodec_list_to_format[count++]=AUDIO_CODEC_AC3;
-    if (future_prefs->encoder.audio_codec==AUDIO_CODEC_AC3) is_allowed=TRUE;
-  }
-  if (future_prefs->encoder.of_allowed_acodecs&(1<<AUDIO_CODEC_AAC)) {
-    prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup("aac"));
-    prefs->acodec_list_to_format[count++]=AUDIO_CODEC_AAC;
-    if (future_prefs->encoder.audio_codec==AUDIO_CODEC_AAC) is_allowed=TRUE;
-  }
-  if (future_prefs->encoder.of_allowed_acodecs&(1<<AUDIO_CODEC_AMR_NB)) {
-    prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup("amr_nb"));
-    prefs->acodec_list_to_format[count++]=AUDIO_CODEC_AMR_NB;
-    if (future_prefs->encoder.audio_codec==AUDIO_CODEC_AMR_NB) is_allowed=TRUE;
-  }
+
   if (prefsw != NULL){
     populate_combo_box(GTK_COMBO_BOX(prefsw->acodec_combo), prefs->acodec_list);
   }

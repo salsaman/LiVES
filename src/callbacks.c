@@ -1904,7 +1904,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     mainw->cancelled=CANCEL_NONE;
     cfile->progress_start=1;
-    cfile->progress_end=end-start+1;
+    cfile->progress_end=count_virtual_frames(cfile->frame_index,start,end);
     do_threaded_dialog(_("Pulling frames from clip"),TRUE);
     virtual_to_images(mainw->current_file,start,end,TRUE);
     end_threaded_dialog();
@@ -4447,7 +4447,7 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
       g_snprintf(buff,512,"\n  %d",cfile->frames);
 
       if (cfile->frame_index!=NULL) {
-	gint fvirt=count_virtual_frames(cfile->frame_index,cfile->frames);
+	gint fvirt=count_virtual_frames(cfile->frame_index,1,cfile->frames);
 	gchar *tmp=g_strdup_printf(_("\n(%d virtual)"),fvirt);
 	g_strappend(buff,512,tmp);
 	g_free(tmp);

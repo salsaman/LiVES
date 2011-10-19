@@ -1,5 +1,10 @@
 Version 1.4.8
 -------------
+Fix bugs in append_audio (regression). *
+Set default back to "loop video to fit audio".
+Optimise resizing for virtual clips.
+Add new encoder formats flv and wmv2/wma to mencoder_encoder.
+Fix missing audio for kvcd encoding.
 
 
 

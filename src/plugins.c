@@ -29,7 +29,7 @@
 #include "rfx-builder.h"
 #include "paramwindow.h"
 
-const char *anames[AUDIO_CODEC_MAX]={"mp3","pcm","mp2","vorbis","AC3","AAC","AMR_NB","raw",""};
+const char *anames[AUDIO_CODEC_MAX]={"mp3","pcm","mp2","vorbis","AC3","AAC","AMR_NB","raw","wma2",""};
 
 static gboolean list_plugins;
 

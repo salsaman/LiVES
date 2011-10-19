@@ -674,7 +674,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   layer=weed_plant_new(WEED_PLANT_CHANNEL);
   weed_set_int_value(layer,"clip",mainw->blend_file);
   weed_set_int_value(layer,"frame",blend_file->frameno);
-  if (!pull_frame(layer,mainw->files[mainw->blend_file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
+  if (!pull_frame(layer,blend_file->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
     weed_plant_free(layer);
     layer=NULL;
   }

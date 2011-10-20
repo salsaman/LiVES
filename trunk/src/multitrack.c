@@ -3939,23 +3939,27 @@ void mt_backup(lives_mt *mt, gint undo_type, weed_timecode_t tc) {
     break;
   case MT_UNDO_FILTER_MAP_CHANGE:
     undo->tc=tc;
+    break;
   default:
-    add_markers(mt,mt->event_list);
-    if ((space_needed=estimate_space(mt,undo_type)+sizeof(mt_undo))>
-	((size_t)(prefs->mt_undo_buf*1024*1024)-mt->undo_buffer_used)) {
-      if (!make_backup_space(mt,space_needed)) {
-	remove_markers(mt->event_list);
-	do_mt_backup_space_error(mt,(gint)((space_needed*3)>>20));
-	return;
-      }
-      memblock=(unsigned char *)(mt->undo_mem+mt->undo_buffer_used+sizeof(mt_undo));
-    }
-    undo->data_len=space_needed;
-    memblock=(unsigned char *)(mt->undo_mem+mt->undo_buffer_used+sizeof(mt_undo));
-    save_event_list_inner(NULL,0,mt->event_list,&memblock);
-    remove_markers(mt->event_list);
     break;
   }
+
+  add_markers(mt,mt->event_list);
+  if ((space_needed=estimate_space(mt,undo_type)+sizeof(mt_undo))>
+      ((size_t)(prefs->mt_undo_buf*1024*1024)-mt->undo_buffer_used)) {
+    if (!make_backup_space(mt,space_needed)) {
+      remove_markers(mt->event_list);
+      do_mt_backup_space_error(mt,(gint)((space_needed*3)>>20));
+      return;
+    }
+    memblock=(unsigned char *)(mt->undo_mem+mt->undo_buffer_used+sizeof(mt_undo));
+  }
+
+  undo->data_len=space_needed;
+  memblock=(unsigned char *)(mt->undo_mem+mt->undo_buffer_used+sizeof(mt_undo));
+  save_event_list_inner(NULL,0,mt->event_list,&memblock);
+  remove_markers(mt->event_list);
+
   memcpy(mt->undo_mem+mt->undo_buffer_used,undo,sizeof(mt_undo));
   mt->undos=g_list_append(mt->undos,mt->undo_mem+mt->undo_buffer_used);
   mt->undo_buffer_used+=space_needed;
@@ -13198,6 +13202,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     memblock=(unsigned char *)(last_undo)+sizeof(mt_undo);
     mem_end=memblock+last_undo->data_len-sizeof(mt_undo);
     mt->event_list=load_event_list_inner(mt,-1,FALSE,NULL,&memblock,mem_end);
+    g_print("pt a1y\n");
 
     if (!event_list_rectify(mt,mt->event_list)) {
       event_list_free(mt->event_list);

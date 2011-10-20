@@ -2310,7 +2310,7 @@ void mt_show_current_frame(lives_mt *mt) {
   gboolean is_rendering=mainw->is_rendering;
   weed_timecode_t curr_tc;
   gint actual_frame;
-  weed_plant_t *frame_layer=mainw->frame_layer;
+  weed_plant_t *frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
   gboolean internal_messaging=mainw->internal_messaging;
   gboolean needs_idlefunc=FALSE;
 
@@ -2433,7 +2433,8 @@ void mt_show_current_frame(lives_mt *mt) {
 
     pixbuf=layer_to_pixbuf(mainw->frame_layer);
     weed_plant_free(mainw->frame_layer);
-  
+    mainw->frame_layer=NULL;
+
     if (mainw->play_window!=NULL&&GDK_IS_WINDOW (mainw->play_window->window)) {
       if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
 	gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);

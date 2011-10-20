@@ -97,6 +97,18 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
       xstart=xend=-bw;
     }
 
+    // new threading arch
+    if (weed_plant_has_leaf(out_channel,"offset")) {
+      int offset=weed_get_int_value(out_channel,"offset",&error);
+      int dheight=weed_get_int_value(out_channel,"height",&error);
+      
+      src1+=offset*irowstride1;
+      end=src1+dheight*irowstride1;
+      
+      src2+=offset*irowstride2;
+      
+      dst+=offset*orowstride;
+    }
 
     for (;src1<end;src1+=irowstride1) {
       for (j=0;j<width;j+=3) {
@@ -139,7 +151,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_params1[]={weed_float_init("start","_Start",0.666667,0.,1.),weed_radio_init("sym","Make s_ymmetrical",1,1),weed_radio_init("usend","Use _end value",0,1),weed_float_init("end","_End",0.333333,0.,1.),weed_switch_init("vert","Split _horizontally",0),weed_float_init("borderw","Border _width",0.,0.,0.5),weed_colRGBi_init("borderc","Border _colour",0,0,0),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("triple split","salsaman",1,0,NULL,&tsplit_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("triple split","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&tsplit_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
 
     weed_plant_t *gui=weed_filter_class_get_gui(filter_class);
     char *rfx_strings[]={"layout|p0|","layout|p1|","layout|p2|p3|","layout|p4|","layout|hseparator|"};

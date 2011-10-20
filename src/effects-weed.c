@@ -4459,6 +4459,9 @@ gboolean weed_playback_gen_start (void) {
 
 
   if (bg_gen_to_start!=-1) {
+
+    if (mainw->blend_file==-1) return TRUE; // for example if transition was swapped for filter in mapper
+
     if (enabled_in_channels(weed_filters[key_to_fx[bg_gen_to_start][key_modes[bg_gen_to_start]]],FALSE)==0) { // check is still gen
       if (key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]]==NULL) {
 	// restart bg generator

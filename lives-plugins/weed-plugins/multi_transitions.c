@@ -159,6 +159,21 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
     yy=(int)(hwidth/(float)psize*bf+.5)*psize;
   }
 
+  // new threading arch
+  if (weed_plant_has_leaf(out_channel,"offset")) {
+    int offset=weed_get_int_value(out_channel,"offset",&error);
+    int dheight=weed_get_int_value(out_channel,"height",&error);
+
+    src1+=offset*irowstride1;
+    end=src1+dheight*irowstride1;
+
+    src2+=offset*irowstride2;
+
+    dst+=offset*orowstride;
+
+    i+=offset;
+  }
+
   for (;src1<end;src1+=irowstride1) {
     for (j=0;j<width;j+=psize) {
       switch (type) {
@@ -252,13 +267,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
     weed_plant_t *in_params1[]={weed_float_init("amount","_Transition",0.,0.,1.),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("iris rectangle","salsaman",1,WEED_FILTER_HINT_IS_STATELESS,NULL,irisr_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("iris rectangle","salsaman",1,WEED_FILTER_HINT_IS_STATELESS|WEED_FILTER_HINT_MAY_THREAD,NULL,irisr_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
 
     weed_set_boolean_value(in_params1[0],"transition",WEED_TRUE);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("iris circle","salsaman",1,WEED_FILTER_HINT_IS_STATELESS,NULL,irisc_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params1)),NULL);
+    filter_class=weed_filter_class_init("iris circle","salsaman",1,WEED_FILTER_HINT_IS_STATELESS|WEED_FILTER_HINT_MAY_THREAD,NULL,irisc_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params1)),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     weed_free(clone1);
     weed_free(clone2);
@@ -267,7 +282,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_set_int_value(out_chantmpls[0],"flags",0);
 
-    filter_class=weed_filter_class_init("4 way split","salsaman",1,WEED_FILTER_HINT_IS_STATELESS,NULL,fourw_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params1)),NULL);
+    filter_class=weed_filter_class_init("4 way split","salsaman",1,WEED_FILTER_HINT_IS_STATELESS|WEED_FILTER_HINT_MAY_THREAD,NULL,fourw_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params1)),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     weed_free(clone1);
     weed_free(clone2);
@@ -276,7 +291,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_set_int_value(out_chantmpls[0],"flags",WEED_CHANNEL_CAN_DO_INPLACE|WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
     
-    filter_class=weed_filter_class_init("dissolve","salsaman",1,WEED_FILTER_HINT_IS_STATELESS,dissolve_init,dissolve_process,dissolve_deinit,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params1)),NULL);
+    filter_class=weed_filter_class_init("dissolve","salsaman",1,WEED_FILTER_HINT_IS_STATELESS|WEED_FILTER_HINT_MAY_THREAD,dissolve_init,dissolve_process,dissolve_deinit,(clone1=weed_clone_plants(in_chantmpls)),(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params1)),NULL);
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
     weed_free(clone1);
     weed_free(clone2);

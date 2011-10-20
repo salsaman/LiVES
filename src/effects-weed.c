@@ -2277,7 +2277,6 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   int output=-1;
   int clip;
   void *pdata;
-  gboolean got_pdata=TRUE;
 
   if (mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview)) {
     // rendering from multitrack
@@ -2322,13 +2321,13 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  for (j=0;j<numplanes;j++) if (pixel_data[j]!=NULL) g_free(pixel_data[j]);
 	  weed_free(pixel_data);
 	}
-	else got_pdata=FALSE;
       }
       else output=i;
     }
   }
 
-  if (output==-1||!got_pdata) {
+  if (output==-1) {
+    // blank frame - e.g. for multitrack
     weed_plant_t *layer=weed_layer_new(opwidth>4?opwidth:4,opheight>4?opheight:4,NULL,WEED_PALETTE_RGB24);
     create_empty_pixel_data(layer,TRUE);
     return layer;

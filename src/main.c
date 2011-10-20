@@ -4983,6 +4983,7 @@ void do_quick_switch (gint new_file) {
   // force loading of a frame from the new clip
   if (!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
     weed_plant_t *frame_layer=mainw->frame_layer;
+    mainw->frame_layer=NULL;
     load_frame_image (cfile->frameno);
     mainw->frame_layer=frame_layer;
   }

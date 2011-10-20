@@ -6719,6 +6719,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     weed_free(new_pixel_data);
     weed_set_voidptr_array(layer,"pixel_data",nplanes,pixel_data);
     weed_free(pixel_data);
+    weed_free(irowstrides);
     weed_set_int_value(layer,"width",width);
     weed_set_int_value(layer,"height",height);
     return;
@@ -6939,6 +6940,9 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
 
   for (i=0;i<nplanes;i++) if (pixel_data[i]!=NULL) free(pixel_data[i]);
   weed_free(pixel_data);
+  weed_free(new_pixel_data);
+  weed_free(irowstrides);
+  weed_free(rowstrides);
 
 }
 
@@ -7074,16 +7078,22 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
 
 void weed_layer_free (weed_plant_t *layer) {
   int i,error;
-  int pd_elements=weed_leaf_num_elements(layer,"pixel_data");
+  int pd_elements;
   void **pixel_data;
 
+  if (layer==NULL) return;
+
   if (weed_plant_has_leaf(layer,"pixel_data")) {
-    pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-    
-    for (i=0;i<pd_elements;i++) {
-      g_free(pixel_data[i]);
+    pd_elements=weed_leaf_num_elements(layer,"pixel_data");
+    if (pd_elements>0) {
+      pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+      if (pixel_data!=NULL) {
+	for (i=0;i<pd_elements;i++) {
+	  if (pixel_data[i]!=NULL) g_free(pixel_data[i]);
+	}
+	weed_free(pixel_data);
+      }
     }
-    weed_free(pixel_data);
   }
   weed_plant_free(layer);
 }

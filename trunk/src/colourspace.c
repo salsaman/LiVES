@@ -6733,11 +6733,10 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
   case WEED_PALETTE_YUV888:
-    height-=offs_y;
     width*=3;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*3;
     src=pixel_data[0];
-    for (i=offs_y;i<height;i++) {
+    for (i=0;i<height;i++) {
       w_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
@@ -6750,11 +6749,10 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
   case WEED_PALETTE_YUVA8888:
   case WEED_PALETTE_UYVY:
   case WEED_PALETTE_YUYV:
-    height-=offs_y;
     width*=4;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*4;
     src=pixel_data[0];
-    for (i=offs_y;i<height;i++) {
+    for (i=0;i<height;i++) {
       w_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
@@ -6762,7 +6760,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
 
   case WEED_PALETTE_YUV411:
-    height-=offs_y*2;
     width*=6;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*6;
     src=pixel_data[0];
@@ -6774,7 +6771,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
 
   case WEED_PALETTE_YUV444P:
-    height-=offs_y*2;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x;
     src=pixel_data[0];
     for (i=0;i<height;i++) {
@@ -6799,7 +6795,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
 
   case WEED_PALETTE_YUVA4444P:
-    height-=offs_y*2;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x;
     src=pixel_data[0];
     for (i=0;i<height;i++) {
@@ -6831,7 +6826,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
 
   case WEED_PALETTE_YUV422P:
-    height-=offs_y*2;
     width*=4;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x;
     src=pixel_data[0];
@@ -6860,7 +6854,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
 
   case WEED_PALETTE_YUV420P:
   case WEED_PALETTE_YVU420P:
-    height-=offs_y*2;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x;
     src=pixel_data[0];
     for (i=0;i<height;i++) {
@@ -6889,7 +6882,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
 
   case WEED_PALETTE_RGBFLOAT:
-    height-=offs_y*2;
     width*=3*sizeof(float);
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*3*sizeof(float);
     src=pixel_data[0];
@@ -6901,7 +6893,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
 
   case WEED_PALETTE_RGBAFLOAT:
-    height-=offs_y*2;
     width*=4*sizeof(float);
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*4*sizeof(float);
     src=pixel_data[0];
@@ -6913,7 +6904,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
 
   case WEED_PALETTE_AFLOAT:
-    height-=offs_y*2;
     width*=sizeof(float);
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*sizeof(float);
     src=pixel_data[0];
@@ -6925,7 +6915,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
 
   case WEED_PALETTE_A8:
-    height-=offs_y*2;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+offs_x;
     src=pixel_data[0];
     for (i=0;i<height;i++) {
@@ -6937,7 +6926,6 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
 
     // assume offs_x and width is a multiple of 8
   case WEED_PALETTE_A1:
-    height-=offs_y*2;
     width>>=3;
     dst=new_pixel_data[0]+offs_y*rowstrides[0]+(offs_x>>3);
     src=pixel_data[0];

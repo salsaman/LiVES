@@ -3901,7 +3901,8 @@ void load_frame_image(gint frame) {
       lb_width=cfile->hsize;
       lb_height=cfile->vsize;
 
-      if (mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview)&&mainw->clip_index[0]>-1) {
+      if (mainw->multitrack==NULL&&mainw->is_rendering&&
+	  !(cfile->proc_ptr!=NULL&&mainw->preview)&&mainw->clip_index[0]>-1) {
 	if (mainw->clip_index[0]==mainw->scrap_file&&mainw->num_tracks==1) {
 	  // scrap file playback - use original clip size
 	  lb_width=weed_get_int_value(mainw->frame_layer,"width",&weed_error);

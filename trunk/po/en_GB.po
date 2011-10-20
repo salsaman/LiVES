@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-10-18 22:55-0300\n"
+"POT-Creation-Date: 2011-10-19 20:07-0300\n"
 "PO-Revision-Date: 2011-08-18 12:08+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -612,22 +612,22 @@ msgstr "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <No File>"
 
-#: src/main.c:3573
+#: src/main.c:3580
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3575
+#: src/main.c:3582
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3791 src/main.c:3792 src/gui.c:2003 src/gui.c:2973
+#: src/main.c:3798 src/main.c:3799 src/gui.c:2003 src/gui.c:2973
 #: src/saveplay.c:1654
 msgid "Play"
 msgstr "Play"
 
-#: src/main.c:4168
+#: src/main.c:4200
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -635,35 +635,35 @@ msgstr ""
 "LiVES was unable to capture this image\n"
 "\n"
 
-#: src/main.c:4264
+#: src/main.c:4296
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Closed file %s\n"
 
-#: src/main.c:4430 src/gui.c:597 src/utils.c:2594 src/utils.c:2620
+#: src/main.c:4462 src/gui.c:597 src/utils.c:2594 src/utils.c:2620
 #: src/saveplay.c:2619 src/multitrack.c:3811 src/multitrack.c:5318
 msgid "_Undo"
 msgstr "_Undo"
 
-#: src/main.c:4431 src/gui.c:610 src/utils.c:2595 src/utils.c:2621
+#: src/main.c:4463 src/gui.c:610 src/utils.c:2595 src/utils.c:2621
 #: src/saveplay.c:2620 src/multitrack.c:3832 src/multitrack.c:5341
 msgid "_Redo"
 msgstr "_Redo"
 
-#: src/main.c:4457 src/interface.c:639 src/gui.c:2161 src/preferences.c:2397
+#: src/main.c:4489 src/interface.c:639 src/gui.c:2161 src/preferences.c:2397
 #: src/resample.c:1748
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4458 src/interface.c:658 src/gui.c:2180
+#: src/main.c:4490 src/interface.c:658 src/gui.c:2180
 msgid "Left Audio"
 msgstr "Left Audio"
 
-#: src/main.c:4459 src/gui.c:2198
+#: src/main.c:4491 src/gui.c:2198
 msgid "Right Audio"
 msgstr "Right Audio"
 
-#: src/main.c:4504
+#: src/main.c:4536
 msgid ""
 "\n"
 "\n"
@@ -5143,17 +5143,17 @@ msgstr "Audio Volume Controllers"
 msgid "unknown"
 msgstr "unknown"
 
-#: src/effects-weed.c:2913
+#: src/effects-weed.c:2915
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Error: plugin %s has no weed_setup() function.\n"
 
-#: src/effects-weed.c:2927
+#: src/effects-weed.c:2929
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3005
+#: src/effects-weed.c:3007
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5162,32 +5162,32 @@ msgstr ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 
-#: src/effects-weed.c:3159
+#: src/effects-weed.c:3161
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Successfully loaded %d Weed filters\n"
 
-#: src/effects-weed.c:3880
+#: src/effects-weed.c:3882
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Failed to start instance %s, error code %d\n"
 
-#: src/effects-weed.c:3918
+#: src/effects-weed.c:3920
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Unable to start generator %s\n"
 
-#: src/effects-weed.c:4433
+#: src/effects-weed.c:4435
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Failed to start generator %s\n"
 
-#: src/effects-weed.c:4490
+#: src/effects-weed.c:4492
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Failed to start generator %s, error %d\n"
 
-#: src/effects-weed.c:5532
+#: src/effects-weed.c:5534
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -5257,27 +5257,27 @@ msgstr "New size (pixels)"
 msgid "_Width"
 msgstr "_Width"
 
-#: src/paramwindow.c:586 src/plugins.c:871
+#: src/paramwindow.c:587 src/plugins.c:871
 msgid "_Height"
 msgstr "_Height"
 
-#: src/paramwindow.c:657
+#: src/paramwindow.c:659
 msgid "Generate to _Clipboard"
 msgstr "Generate to _Clipboard"
 
-#: src/paramwindow.c:662
+#: src/paramwindow.c:664
 msgid "Generate frames to the clipboard"
 msgstr "Generate frames to the clipboard"
 
-#: src/paramwindow.c:678
+#: src/paramwindow.c:680
 msgid "Generate to _New Clip"
 msgstr "Generate to _New Clip"
 
-#: src/paramwindow.c:683
+#: src/paramwindow.c:685
 msgid "Generate frames to a new clip"
 msgstr "Generate frames to a new clip"
 
-#: src/paramwindow.c:799
+#: src/paramwindow.c:801
 #, c-format
 msgid ""
 "\n"
@@ -5288,51 +5288,51 @@ msgstr ""
 "You must select at least %d frames to use this effect.\n"
 "\n"
 
-#: src/paramwindow.c:891 src/paramwindow.c:898
+#: src/paramwindow.c:893 src/paramwindow.c:900
 msgid "Set as default"
 msgstr "Set as default"
 
-#: src/paramwindow.c:900 src/rte_window.c:1315 src/omc-learn.c:1366
+#: src/paramwindow.c:902 src/rte_window.c:1315 src/omc-learn.c:1366
 msgid "Close _window"
 msgstr "Close _window"
 
-#: src/paramwindow.c:1235
+#: src/paramwindow.c:1237
 msgid "No parameters"
 msgstr "No parameters"
 
-#: src/paramwindow.c:1319
+#: src/paramwindow.c:1321
 msgid "Invalid parameter"
 msgstr "Invalid parameter"
 
-#: src/paramwindow.c:1565
+#: src/paramwindow.c:1567
 msgid "LiVES: - Select Colour"
 msgstr "LiVES: - Select Colour"
 
-#: src/paramwindow.c:1569
+#: src/paramwindow.c:1571
 msgid "Click to set the colour"
 msgstr "Click to set the colour"
 
-#: src/paramwindow.c:1584
+#: src/paramwindow.c:1586
 msgid "Red"
 msgstr "Red"
 
-#: src/paramwindow.c:1592
+#: src/paramwindow.c:1594
 msgid "The red value (0 - 255)"
 msgstr "The red value (0 - 255)"
 
-#: src/paramwindow.c:1595
+#: src/paramwindow.c:1597
 msgid "Green"
 msgstr "Green"
 
-#: src/paramwindow.c:1602
+#: src/paramwindow.c:1604
 msgid "The green value (0 - 255)"
 msgstr "The green value (0 - 255)"
 
-#: src/paramwindow.c:1606
+#: src/paramwindow.c:1608
 msgid "Blue"
 msgstr "Blue"
 
-#: src/paramwindow.c:1612
+#: src/paramwindow.c:1614
 msgid "The blue value (0 - 255)"
 msgstr "The blue value (0 - 255)"
 

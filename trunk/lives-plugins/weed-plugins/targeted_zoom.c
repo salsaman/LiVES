@@ -45,8 +45,8 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
-  int width=weed_get_int_value(out_channel,"width",&error);
-  int height=weed_get_int_value(out_channel,"height",&error);
+  int width=weed_get_int_value(in_channel,"width",&error);
+  int height=weed_get_int_value(in_channel,"height",&error);
 
   int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
   int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
@@ -84,7 +84,6 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   if (weed_plant_has_leaf(out_channel,"offset")) {
     offset=weed_get_int_value(out_channel,"offset",&error);
     dheight=weed_get_int_value(out_channel,"height",&error);
-    dst+=offset*orowstride;
   }
 
   for (y=offset;y<dheight;y++) {

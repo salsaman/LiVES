@@ -1060,6 +1060,84 @@ static void *thread_process_func(void *arg) {
 }
 
 
+static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant_t **out_channels, weed_timecode_t tc) {
+  // split output(s) into horizontal slices
+  int offset=0;
+  int dheight,height;
+  int nthreads=0;
+  int error;
+  gboolean got_invalid=FALSE;
+
+  int nchannels=weed_leaf_num_elements(inst,"out_channels");
+
+  struct _procvals procvals[MAX_FX_THREADS];
+  pthread_t dthreads[MAX_FX_THREADS];
+
+  weed_plant_t *xinst[MAX_FX_THREADS];
+  weed_plant_t **xchannels;
+
+  register int i,j;
+
+  height=weed_get_int_value(out_channels[0],"height",&error);
+
+  for (j=0;j<prefs->nfx_threads;j++) {
+    // each thread needs its own copy of the output channels, so it can have its own "offset" and "height"
+    // therefore it also needs its own copy of inst
+    // but note that "pixel_data" always points to the same memory buffer(s)
+    
+    xinst[j]=weed_plant_copy(inst);
+    xchannels=g_malloc(nchannels*sizeof(weed_plant_t *));
+    
+    for (i=0;i<nchannels;i++) {
+      xchannels[i]=weed_plant_copy(out_channels[i]);
+      height=weed_get_int_value(xchannels[i],"height",&error);
+      dheight=(int)((double)height/(double)prefs->nfx_threads);
+      if (dheight<2) dheight=2; // must have a minimum height of 2
+      offset=dheight*j;
+      weed_set_int_value(xchannels[i],"offset",offset);
+      if (j==prefs->nfx_threads-1) dheight=height-(dheight*j);
+      weed_set_int_value(xchannels[i],"height",dheight);
+    }
+    
+    weed_set_plantptr_array(xinst[j],"out_channels",nchannels,xchannels);
+    g_free(xchannels);
+    
+    procvals[j].inst=xinst[j];
+    procvals[j].tc=tc; // use same timecode for all slices
+    
+    if (offset>=height) break;
+    
+    // start a thread for processing
+    pthread_create(&dthreads[j],NULL,thread_process_func,&procvals[j]);
+    nthreads++; // actual number of threads used
+  }
+  
+  // wait for threads to finish
+  for (j=0;j<prefs->nfx_threads;j++) {
+    void *tretval;
+    int retval=WEED_NO_ERROR;
+    
+    if (j<nthreads) {
+      pthread_join(dthreads[j],&tretval);
+      retval=GPOINTER_TO_INT((gpointer)tretval);
+    }
+    
+    xchannels=weed_get_plantptr_array(xinst[j],"out_channels",&error);
+    for (i=0;i<nchannels;i++) {
+      weed_plant_free(xchannels[i]);
+    }
+    weed_free(xchannels);
+    weed_plant_free(xinst[j]);
+    
+    if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
+  }
+  
+  if (got_invalid) return FILTER_ERROR_MUST_RELOAD;
+
+  return FILTER_NO_ERROR;
+}
+
+
 
 lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc) {
   // here we:
@@ -1110,7 +1188,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   gboolean rowstrides_changed;
   int nchr;
   int *layer_rows=NULL,*channel_rows;
-  gint retval=FILTER_NO_ERROR;
+  lives_filter_error_t retval=FILTER_NO_ERROR;
   int *mand;
   int maxinwidth=4,maxinheight=4;
   int oclamping,iclamping;
@@ -1610,92 +1688,22 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && weed_plant_has_leaf(filter,"flags")) 
     filter_flags=weed_get_int_value(filter,"flags",&error);
 
-  if (filter_flags&WEED_FILTER_HINT_MAY_THREAD) {
-    // split output(s) into horizontal slices
-    int offset=0;
-    int dheight;
-    int nthreads=0;
-    gboolean got_invalid=FALSE;
-    weed_plant_t **xchannels;
-    int nchannels=weed_leaf_num_elements(inst,"out_channels");
-
-    struct _procvals procvals[MAX_FX_THREADS];
-    pthread_t dthreads[MAX_FX_THREADS];
-    weed_plant_t *xinst[MAX_FX_THREADS];
-
-    height=weed_get_int_value(out_channels[0],"height",&error);
-
-    for (j=0;j<prefs->nfx_threads;j++) {
-      // each thread needs its own copy of the output channels, so it can have its own "offset" and "height"
-      // therefore it also needs its own copy of inst
-      // but note that "pixel_data" always points to the same memory buffer(s)
-
-      xinst[j]=weed_plant_copy(inst);
-      xchannels=g_malloc(nchannels*sizeof(weed_plant_t *));
-
-      for (i=0;i<nchannels;i++) {
-	xchannels[i]=weed_plant_copy(out_channels[i]);
-	height=weed_get_int_value(xchannels[i],"height",&error);
-	dheight=(int)((double)height/(double)prefs->nfx_threads);
-	if (dheight<2) dheight=2; // must have a minimum height of 2
-	offset=dheight*j;
-	weed_set_int_value(xchannels[i],"offset",offset);
-	if (j==prefs->nfx_threads-1) dheight=height-(dheight*j);
-	weed_set_int_value(xchannels[i],"height",dheight);
-      }
-
-      weed_set_plantptr_array(xinst[j],"out_channels",nchannels,xchannels);
-      g_free(xchannels);
-
-      procvals[j].inst=xinst[j];
-      procvals[j].tc=tc; // use same timecode for all slices
-
-      if (offset>=height) break;
-
-      // start a thread for processing
-      pthread_create(&dthreads[j],NULL,thread_process_func,&procvals[j]);
-      nthreads++; // actual number of threads used
-    }
-
-    // wait for threads to finish
-    for (j=0;j<prefs->nfx_threads;j++) {
-      void *tretval;
-      int retval=WEED_NO_ERROR;
-
-      if (j<nthreads) {
-	pthread_join(dthreads[j],&tretval);
-	retval=GPOINTER_TO_INT((gpointer)tretval);
-      }
-
-      xchannels=weed_get_plantptr_array(xinst[j],"out_channels",&error);
-      for (i=0;i<nchannels;i++) {
-	weed_plant_free(xchannels[i]);
-      }
-      weed_free(xchannels);
-      weed_plant_free(xinst[j]);
-
-      if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
-    }
-
-    if (got_invalid) {
-      weed_free(in_tracks);
-      weed_free(out_tracks);
-      weed_free(in_channels);
-      weed_free(out_channels);
-      return FILTER_ERROR_MUST_RELOAD;
-    }
-  }
+  if (filter_flags&WEED_FILTER_HINT_MAY_THREAD) retval=process_func_threaded(inst,out_channels,tc);
   else {
     // normal single threaded version
+    int ret;
     weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
     process_func=process_func_ptr_ptr[0];
-    if ((*process_func)(inst,tc)==WEED_ERROR_PLUGIN_INVALID) {
-      weed_free(in_tracks);
-      weed_free(out_tracks);
-      weed_free(in_channels);
-      weed_free(out_channels);
-      return FILTER_ERROR_MUST_RELOAD;
-    }
+    ret=(*process_func)(inst,tc);
+    if (ret==WEED_ERROR_PLUGIN_INVALID) retval=FILTER_ERROR_MUST_RELOAD;
+  }
+
+  if (retval==FILTER_ERROR_MUST_RELOAD) {
+    weed_free(in_tracks);
+    weed_free(out_tracks);
+    weed_free(in_channels);
+    weed_free(out_channels);
+    return retval;
   }
 
   // now we write our out channels back to layers, leaving the palettes and sizes unchanged
@@ -4135,6 +4143,7 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   int num_channels;
   int error;
   int palette;
+  int filter_flags=0;
   gchar *cwd;
 
   if (inst==NULL) return NULL;
@@ -4144,7 +4153,6 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
     weed_free(out_channels);
     return NULL;
   }
-  weed_free(out_channels);
 
   chantmpl=weed_get_plantptr_value(channel,"template",&error);
   palette=weed_get_int_value(chantmpl,"current_palette",&error);
@@ -4168,10 +4176,22 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   weed_set_double_value(inst,"fps",cfile->pb_fps);
 
   filter=weed_get_plantptr_value(inst,"filter_class",&error);
-  weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
-  process_func=process_func_ptr_ptr[0];
   cwd=cd_to_plugin_dir(filter);
-  process_func(inst,tc);
+
+  // see if we can multithread
+  if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && weed_plant_has_leaf(filter,"flags")) 
+    filter_flags=weed_get_int_value(filter,"flags",&error);
+
+  if (filter_flags&WEED_FILTER_HINT_MAY_THREAD) process_func_threaded(inst,out_channels,tc);
+  else {
+    // normal single threaded version
+    weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
+    process_func=process_func_ptr_ptr[0];
+    (*process_func)(inst,tc);
+  }
+
+  weed_free(out_channels);
+
   dummyvar=chdir(cwd);
   g_free(cwd);
 

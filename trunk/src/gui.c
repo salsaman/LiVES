@@ -976,6 +976,12 @@ create_LiVES (void)
 
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),prefs->show_subtitles);
 
+  mainw->letter = gtk_check_menu_item_new_with_mnemonic (_("Letterbox mode"));
+  gtk_widget_show (mainw->letter);
+  gtk_container_add (GTK_CONTAINER (menuitem13_menu), mainw->letter);
+
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),prefs->letterbox);
+
   effects = gtk_menu_item_new_with_mnemonic (_ ("Effect_s"));
   gtk_widget_show (effects);
   gtk_container_add (GTK_CONTAINER (mainw->menubar), effects);
@@ -2483,6 +2489,9 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (mainw->showsubs), "activate",
                       G_CALLBACK (on_boolean_toggled),
                       &prefs->show_subtitles);
+  g_signal_connect (GTK_OBJECT (mainw->letter), "activate",
+                      G_CALLBACK (on_boolean_toggled),
+                      &prefs->letterbox);
   g_signal_connect (GTK_OBJECT (mainw->aload_subs), "activate",
                       G_CALLBACK (on_boolean_toggled),
                       &prefs->autoload_subs);

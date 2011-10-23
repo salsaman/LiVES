@@ -646,6 +646,7 @@ void add_to_playframe (void);
 GtkWidget* create_cdtrack_dialog (gint type, gpointer user_data);
 GtkTextView *create_output_textview(void);
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, GtkWidget *extra);
+void add_suffix_check(GtkBox *box);
 
 
 // dialogs.c
@@ -657,7 +658,8 @@ gboolean do_yesno_dialog(const gchar *text);
 void do_error_dialog(const gchar *text);
 void do_error_dialog_with_check(const gchar *text, gint warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
-void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking,gint warn_mask_number, GtkWindow *transient);
+void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking,gint warn_mask_number, 
+					  GtkWindow *transient);
 void add_warn_check (GtkBox *box, gint warn_mask_number);
 void do_memory_error_dialog (void);
 void too_many_files(void);
@@ -672,8 +674,10 @@ gboolean do_comments_dialog (file *sfile, gchar *filename);
 void do_auto_dialog(const gchar *text, gint type);
 void do_encoder_acodec_error (void);
 void do_encoder_sox_error(void);
-gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean swap_endian, gboolean anr, gboolean ignore_fps);
-gboolean do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean swap_endian, gboolean anr);
+gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, 
+			      gint asigned, gboolean swap_endian, gboolean anr, gboolean ignore_fps);
+gboolean do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, 
+				     gint arate, gint asigned, gboolean swap_endian, gboolean anr, gboolean save_all);
 void do_keys_window (void);
 void do_mt_keys_window (void);
 void do_messages_window (void);
@@ -758,7 +762,7 @@ gboolean get_new_handle(gint index, const gchar *name);
 gboolean get_temp_handle(gint index, gboolean create);
 void get_handle_from_info_file(gint index);
 void create_cfile(void);
-void save_file (gboolean existing, gchar *n_file_name);
+void save_file (int clip, int start, int end, const char *filename);
 void play_file (void);
 gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, gint height);
 void wait_for_stop (const gchar *stop_command);
@@ -770,7 +774,7 @@ void recover_layout_map(gint numclips);
 const gchar *get_deinterlace_string(void);
 
 // saveplay.c backup
-void backup_file(const gchar *filename);
+void backup_file(int clip, int start, int end, const gchar *filename);
 gint save_event_frames(void);
 void write_headers (file *file);
 
@@ -801,9 +805,12 @@ void load_end_image(gint frame);
 void load_preview_image(gboolean update_always);
 
 gboolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
-gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, int target_palette);
-GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, gint width, gint height, GdkInterpType interp);
-GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, GError **gerrorptr);
+gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, 
+			     int width, int height, int target_palette);
+GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, 
+				   gint width, gint height, GdkInterpType interp);
+GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
+			   int quality, GError **gerrorptr);
 
 void load_frame_image(gint frame);
 void sensitize(void);
@@ -917,7 +924,8 @@ void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight);
 gchar *remove_trailing_zeroes(gdouble val);
 void toggle_button_toggle (GtkToggleButton *tbutton);
 void remove_layout_files(GList *lmap);
-gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current);
+gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, 
+			gint clipno, gint frameno, gdouble atime, gboolean affects_current);
 void clear_lmap_errors(void);
 gboolean prompt_remove_layout_files(void);
 gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes);
@@ -931,7 +939,8 @@ gboolean int_array_contains_value(int *array, int num_elems, int value);
 gboolean check_for_lock_file(const gchar *set_name, gint type);
 void g_list_free_strings(GList *list);
 void gtk_tooltips_copy(GtkWidget *dest, GtkWidget *source);
-void adjustment_configure(GtkAdjustment *adjustment, gdouble value, gdouble lower, gdouble upper, gdouble step_increment, gdouble page_increment, gdouble page_size);
+void adjustment_configure(GtkAdjustment *adjustment, gdouble value, gdouble lower, gdouble upper, 
+			  gdouble step_increment, gdouble page_increment, gdouble page_size);
 gboolean create_event_space(gint length_in_eventsb);
 void add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *file_open_params);
 gint verhash (gchar *version);
@@ -982,7 +991,7 @@ void text_view_set_text(GtkTextView *textview, const gchar *text);
 
 // plugins.c
 GList *get_external_window_hints(lives_rfx_t *rfx);
-gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio);
+gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio, gboolean save_all);
 
 //callbacks.c
 void lives_exit (void);

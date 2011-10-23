@@ -2330,7 +2330,6 @@ void lives_osc_cb_fx_getname(void *context, int arglen, const void *vargs, OSCTi
 void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char fname[OSC_STRING_SIZE];
 
-
   if (mainw->playing_file>-1||mainw->current_file<1) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"sii",FALSE)) { 
@@ -2353,10 +2352,8 @@ void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OS
     return;
   }
 
-  mainw->save_all=TRUE;
-
   mainw->osc_auto=TRUE;
-  save_file(TRUE,fname);
+  save_file(mainw->current_file,1,cfile->frames,fname);
   lives_osc_notify_success(NULL);
   mainw->osc_auto=FALSE;
 

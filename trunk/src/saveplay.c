@@ -835,38 +835,44 @@ get_handle_from_info_file(gint index) {
 
 
 
-void save_file (gboolean existing, gchar *n_file_name) {
-  // if existing is TRUE, we are saving under the existing file_name
-  gint arate;
+void save_file (int clip, int start, int end, const char *filename) {
+  // save clip from frame start to frame end
+  file *sfile=mainw->files[clip],*nfile=NULL;
+
+  gdouble aud_start=0.,aud_end=0.;
+
+  const char *n_file_name;
+  gchar *fps_string;
+  gchar *extra_params=g_strdup("");
+  gchar *redir=g_strdup("1>&2 2>/dev/null");
+  gchar *new_stderr_name=NULL;
   gchar *mesg,*bit,*tmp;
   gchar *com;
   gchar *full_file_name=NULL;
-  gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
-  gboolean not_cancelled;
 
-  gint current_file=mainw->current_file;
-  gdouble aud_start=0.,aud_end=0.;
-  gchar *fps_string;
-
-  gchar *extra_params=g_strdup("");
-
-  gint startframe=1;
-
-  gboolean safe_symlinks=prefs->safe_symlinks;
-
-  gchar *redir=g_strdup("1>&2 2>/dev/null");
   int new_stderr=-1;
+  gint startframe=1;
+  gint current_file=mainw->current_file;
+  gint asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
+  gint arate;
+  gint new_file=-1;
 
   GError *gerr=NULL;
-
-  gchar *new_stderr_name=NULL;
-
-  gboolean output_exists=FALSE;
 
   struct stat filestat;
   time_t file_mtime=0;
 
   gulong fsize;
+
+  GtkWidget *hbox;
+
+  gboolean safe_symlinks=prefs->safe_symlinks;
+  gboolean not_cancelled;
+  gboolean output_exists=FALSE;
+  gboolean existing=FALSE;
+  gboolean save_all=FALSE;
+
+  if (start==1&&end==sfile->frames) save_all=TRUE;
 
   // new handling for save selection:
   // symlink images 1 - n to the encoded frames
@@ -895,7 +901,24 @@ void save_file (gboolean existing, gchar *n_file_name) {
   }
 
   // get file extension
-  check_encoder_restrictions (TRUE,FALSE);
+  check_encoder_restrictions (TRUE,FALSE,save_all);
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  mainw->fx1_bool=TRUE;
+  add_suffix_check(GTK_BOX(hbox));
+  gtk_widget_show_all(hbox);
+
+  if (filename==NULL) {
+    n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
+    if (n_file_name==NULL||!strlen(n_file_name)) return;
+    g_snprintf(mainw->vid_save_dir,256,"%s",n_file_name);
+    get_dirname(mainw->vid_save_dir);
+    if (prefs->save_directories) {
+      set_pref ("vid_save_dir",(tmp=g_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
+      g_free(tmp);
+    }
+  }
+  else n_file_name=filename;
 
   //append default extension (if necessary)
   if (!strlen (prefs->encoder.of_def_ext)) {
@@ -905,7 +928,10 @@ void save_file (gboolean existing, gchar *n_file_name) {
     }
   }
   else {
-    if (mainw->fx1_bool&&(strlen(n_file_name)<=strlen(prefs->encoder.of_def_ext)||strncmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext)-1,".",1)||strcmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext),prefs->encoder.of_def_ext))) {
+    if (mainw->fx1_bool&&(strlen(n_file_name)<=strlen(prefs->encoder.of_def_ext)||
+			  strncmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext)-1,".",1)||
+			  strcmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext),
+				 prefs->encoder.of_def_ext))) {
       full_file_name=g_strconcat(n_file_name,".",prefs->encoder.of_def_ext,NULL);
     }
   }
@@ -928,11 +954,11 @@ void save_file (gboolean existing, gchar *n_file_name) {
       g_free(extra_params);
       return;
     }
-    cfile->orig_file_name=FALSE;
-    if (!strlen (cfile->comment)) {
-      g_snprintf (cfile->comment,251,"Created with LiVES");
+    sfile->orig_file_name=FALSE;
+    if (!strlen (sfile->comment)) {
+      g_snprintf (sfile->comment,251,"Created with LiVES");
     }
-    if (!do_comments_dialog(cfile,full_file_name)) {
+    if (!do_comments_dialog(sfile,full_file_name)) {
 	g_free(full_file_name);
 	if (rdet!=NULL) {
 	  gtk_widget_destroy (rdet->dialog);
@@ -948,7 +974,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	return;
     }
   }
-  else if (!mainw->osc_auto&&cfile->orig_file_name) {
+  else if (!mainw->osc_auto&&sfile->orig_file_name) {
     gchar *warn=g_strdup(_ ("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
     if (!do_warning_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
 	g_free(warn);
@@ -971,21 +997,13 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
 
 
-  if (cfile->arate*cfile->achans) {
-    if (!mainw->save_all) {
-      aud_start=calc_time_from_frame (current_file,mainw->files[current_file]->start)*mainw->files[current_file]->arps/mainw->files[current_file]->arate;
-      aud_end=calc_time_from_frame (current_file,mainw->files[current_file]->end+1)*mainw->files[current_file]->arps/mainw->files[current_file]->arate;
-    }
-    else {
-      aud_start=calc_time_from_frame (mainw->current_file,1)*cfile->arps/cfile->arate;
-      aud_end=calc_time_from_frame (mainw->current_file,cfile->frames+1)*cfile->arps/cfile->arate;
-    }
+  if (sfile->arate*sfile->achans) {
+    aud_start=calc_time_from_frame (clip,start*sfile->arps/sfile->arate);
+    aud_end=calc_time_from_frame (clip,(end+1)*sfile->arps/sfile->arate);
   }
 
-
-  if (!mainw->save_all&&!safe_symlinks) {
+  if (!save_all&&!safe_symlinks) {
     // we are saving a selection - make symlinks in tempdir
-    gint new_file;
 
     if ((new_file=mainw->first_free_file)==-1) {
       too_many_files();
@@ -1018,12 +1036,12 @@ void save_file (gboolean existing, gchar *n_file_name) {
       return;
     }
 
-    if (cfile->clip_type==CLIP_TYPE_FILE) {
+    if (sfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
       cfile->progress_start=1;
-      cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->end);
+      cfile->progress_end=count_virtual_frames(sfile->frame_index,start,end);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      virtual_to_images(mainw->current_file,cfile->start,cfile->end,TRUE);
+      virtual_to_images(clip,start,end,TRUE);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE) {
@@ -1045,29 +1063,34 @@ void save_file (gboolean existing, gchar *n_file_name) {
 
     mainw->effects_paused=FALSE;
 
-    mainw->current_file=new_file;
-    cfile->hsize=mainw->files[current_file]->hsize;
-    cfile->vsize=mainw->files[current_file]->vsize;
-    cfile->progress_start=cfile->start=1;
-    cfile->progress_end=cfile->frames=cfile->end=mainw->files[current_file]->end-mainw->files[current_file]->start+1;
-    cfile->fps=mainw->files[current_file]->fps;
-    cfile->arps=mainw->files[current_file]->arps;
-    cfile->arate=mainw->files[current_file]->arate;
-    cfile->achans=mainw->files[current_file]->achans;
-    cfile->asampsize=mainw->files[current_file]->asampsize;
-    cfile->img_type=mainw->files[current_file]->img_type;
+    nfile=mainw->files[new_file];
+    nfile->hsize=sfile->hsize;
+    nfile->vsize=sfile->vsize;
+    cfile->progress_start=nfile->start=1;
+    cfile->progress_end=nfile->frames=nfile->end=end-start+1;
+    nfile->fps=sfile->fps;
+    nfile->arps=sfile->arps;
+    nfile->arate=sfile->arate;
+    nfile->achans=sfile->achans;
+    nfile->asampsize=sfile->asampsize;
+    nfile->signed_endian=sfile->signed_endian;
+    nfile->img_type=sfile->img_type;
 
-    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d %s",cfile->handle,mainw->files[current_file]->start,mainw->files[current_file]->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN),mainw->files[current_file]->handle);
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d %s",nfile->handle,start,end,aud_start,aud_end,nfile->arate,nfile->achans,nfile->asampsize,!(nfile->signed_endian&AFORM_UNSIGNED),!(nfile->signed_endian&AFORM_BIG_ENDIAN),sfile->handle);
 
-    unlink(cfile->info_file);
+    unlink(nfile->info_file);
     dummyvar=system(com);
     g_free(com);
+
+    // TODO - eliminate this
+    mainw->current_file=new_file;
 
     if (!(do_progress_dialog(TRUE,TRUE,_ ("Linking selection")))) {
       dummyvar=system (g_strdup_printf("smogrify close %s",cfile->handle));
       g_free (cfile);
       cfile=NULL;
-      if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
+      if (mainw->first_free_file==-1||mainw->first_free_file>new_file) 
+	mainw->first_free_file=new_file;
       mainw->current_file=current_file;
       sensitize();
       d_print_cancelled();
@@ -1085,26 +1108,29 @@ void save_file (gboolean existing, gchar *n_file_name) {
       return;
     }
 
-    aud_start=calc_time_from_frame (mainw->current_file,1)*cfile->arps/cfile->arate;
-    aud_end=calc_time_from_frame (mainw->current_file,cfile->frames+1)*cfile->arps/cfile->arate;
+    aud_start=calc_time_from_frame (new_file,1)*nfile->arps/nfile->arate;
+    aud_end=calc_time_from_frame (new_file,nfile->frames+1)*nfile->arps/nfile->arate;
+
   }
+  else mainw->current_file=clip; // for encoder restns
 
   if (rdet!=NULL) rdet->is_encoding=TRUE;
 
-  if (!check_encoder_restrictions(FALSE,FALSE)) {
-    if (!mainw->save_all&&!safe_symlinks) {
-      dummyvar=system ((com=g_strdup_printf("smogrify close %s",cfile->handle)));
+
+  if (!check_encoder_restrictions(FALSE,FALSE,save_all)) {
+    if (!save_all&&!safe_symlinks) {
+      dummyvar=system ((com=g_strdup_printf("smogrify close %s",nfile->handle)));
       g_free(com);
-      g_free (cfile);
-      cfile=NULL;
-      if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
-      switch_to_file (mainw->current_file,current_file);
+      g_free (nfile);
+      mainw->files[new_file]=NULL;
+      if (mainw->first_free_file==-1||new_file) mainw->first_free_file=new_file;
     }
-    else if (!mainw->save_all&&safe_symlinks) {
-      com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
+    else if (!save_all&&safe_symlinks) {
+      com=g_strdup_printf("smogrify clear_symlinks %s",nfile->handle);
       dummyvar=system (com);
       g_free (com);
     }
+    mainw->current_file=current_file;
     sensitize();
     d_print_cancelled();
     if (rdet!=NULL) {
@@ -1118,6 +1144,7 @@ void save_file (gboolean existing, gchar *n_file_name) {
     g_free(extra_params);
     if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
     mainw->subt_save_file=NULL;
+    mainw->current_file=current_file;
     return;
   }
 
@@ -1131,17 +1158,18 @@ void save_file (gboolean existing, gchar *n_file_name) {
   }
 
 
-  if (!mainw->save_all&&safe_symlinks) {
+  if (!save_all&&safe_symlinks) {
     // we are saving a selection - make symlinks in /tmp
 
     startframe=-1;
 
-    if (cfile->clip_type==CLIP_TYPE_FILE) {
+    if (sfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
       cfile->progress_start=1;
-      cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->end);
+      cfile->progress_end=count_virtual_frames(sfile->frame_index,start,end);
+
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      virtual_to_images(mainw->current_file,cfile->start,cfile->end,TRUE);
+      virtual_to_images(clip,start,end,TRUE);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE) {
@@ -1161,16 +1189,19 @@ void save_file (gboolean existing, gchar *n_file_name) {
       }
     }
 
-    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d",cfile->handle,cfile->start,cfile->end,aud_start,aud_end,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d",sfile->handle,start,end,aud_start,aud_end,sfile->arate,sfile->achans,sfile->asampsize,!(sfile->signed_endian&AFORM_UNSIGNED),!(sfile->signed_endian&AFORM_BIG_ENDIAN));
 
-    unlink(cfile->info_file);
+    unlink(sfile->info_file);
     dummyvar=system(com);
     g_free(com);
+
+    mainw->current_file=clip;
 
     if (!(do_progress_dialog(TRUE,TRUE,_ ("Linking selection")))) {
       com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
       dummyvar=system (com);
       g_free (com);
+      mainw->current_file=current_file;
       sensitize();
       d_print_cancelled();
       if (rdet!=NULL) {
@@ -1187,18 +1218,18 @@ void save_file (gboolean existing, gchar *n_file_name) {
       return;
     }
 
-    aud_start=calc_time_from_frame (mainw->current_file,1)*cfile->arps/cfile->arate;
-    aud_end=calc_time_from_frame (mainw->current_file,cfile->frames+1)*cfile->arps/cfile->arate;
+    aud_start=calc_time_from_frame (clip,1)*sfile->arps/sfile->arate;
+    aud_end=calc_time_from_frame (clip,end-start+1)*sfile->arps/sfile->arate;
   }
 
 
-  if (mainw->save_all) {
-    if (cfile->clip_type==CLIP_TYPE_FILE) {
+  if (save_all) {
+    if (sfile->clip_type==CLIP_TYPE_FILE) {
       mainw->cancelled=CANCEL_NONE;
       cfile->progress_start=1;
-      cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->frames);
+      cfile->progress_end=count_virtual_frames(sfile->frame_index,1,sfile->frames);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      virtual_to_images(mainw->current_file,1,cfile->frames,TRUE);
+      virtual_to_images(clip,1,sfile->frames,TRUE);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE) {
@@ -1206,12 +1237,13 @@ void save_file (gboolean existing, gchar *n_file_name) {
 	g_free(extra_params);
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
+	mainw->current_file=current_file;
 	return;
       }
     }
   }
 
-  arate=cfile->arate;
+  arate=sfile->arate;
 
   if (!mainw->save_with_sound||prefs->encoder.of_allowed_acodecs==0) {
     bit=g_strdup(_ (" (with no sound)\n"));
@@ -1221,30 +1253,32 @@ void save_file (gboolean existing, gchar *n_file_name) {
     bit=g_strdup("\n");
   }
 
-  if (!mainw->save_all) {
-    mesg=g_strdup_printf(_ ("Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."),mainw->files[current_file]->start,mainw->files[current_file]->end,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
+  if (!save_all) {
+    mesg=g_strdup_printf(_ ("Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."),
+			 start,end,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
   } // end selection
   else {
-    mesg=g_strdup_printf(_ ("Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."),cfile->frames,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
+    mesg=g_strdup_printf(_ ("Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."),
+			 sfile->frames,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
   }
   g_free (bit);
   
-  if (!cfile->ratio_fps) {
-    fps_string=g_strdup_printf ("%.3f",cfile->fps);
+  if (!sfile->ratio_fps) {
+    fps_string=g_strdup_printf ("%.3f",sfile->fps);
   }
   else {
-    fps_string=g_strdup_printf ("%.8f",cfile->fps);
+    fps_string=g_strdup_printf ("%.8f",sfile->fps);
   }
 
 
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end);
+      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",sfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
       g_free(tmp);
     }
     else {
-      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end);
+      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,sfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
       g_free(tmp);
     }
     g_free(extra_params);
@@ -1252,15 +1286,24 @@ void save_file (gboolean existing, gchar *n_file_name) {
     g_free(com);
 
     if (extra_params==NULL) {
-      if (!mainw->save_all&&safe_symlinks) {
-	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
+      if (!save_all&&safe_symlinks) {
+	com=g_strdup_printf("smogrify clear_symlinks %s",nfile->handle);
 	dummyvar=system (com);
 	g_free (com);
+      }
+      if (!save_all&&!safe_symlinks) {
+	dummyvar=system ((com=g_strdup_printf("smogrify close %s",nfile->handle)));
+	g_free(com);
+	g_free(nfile);
+	mainw->files[new_file]=NULL;
+	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
+	  mainw->first_free_file=new_file;
       }
       gtk_widget_destroy(fx_dialog[1]);
       fx_dialog[1]=NULL;
       g_free(mesg);
       g_free(fps_string);
+      mainw->current_file=current_file;
       sensitize();
       d_print_cancelled();
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
@@ -1305,6 +1348,10 @@ void save_file (gboolean existing, gchar *n_file_name) {
     file_mtime=filestat.st_mtime;
   }
   g_free(tmp);
+
+  // if startframe is -ve, we will use the links created for safe_symlinks - in /tmp
+  // for non-safe symlinks, cfile will be our new links file
+  // for save_all, cfile will be sfile
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
     com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
@@ -1367,20 +1414,21 @@ void save_file (gboolean existing, gchar *n_file_name) {
       d_print(_ ("error.\n"));
       mainw->no_switch_dprint=FALSE;
       g_free(full_file_name);
-      if (!mainw->save_all&&!safe_symlinks) {
+      if (!save_all&&!safe_symlinks) {
 	dummyvar=system ((com=g_strdup_printf("smogrify close %s",cfile->handle)));
 	g_free(com);
 	g_free (cfile);
 	cfile=NULL;
-	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
-	switch_to_file (mainw->current_file,current_file);
+	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
+	  mainw->first_free_file=mainw->current_file;
       }
-      else if (!mainw->save_all&&safe_symlinks) {
+      else if (!save_all&&safe_symlinks) {
 	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
 	dummyvar=system (com);
 	g_free (com);
       }
 
+      mainw->current_file=current_file;
       do_blocking_error_dialog(mesg);
       g_free (mesg);
 
@@ -1408,18 +1456,19 @@ void save_file (gboolean existing, gchar *n_file_name) {
       d_print_failed();
       mainw->no_switch_dprint=FALSE;
       g_free(full_file_name);
-      if (!mainw->save_all&&!safe_symlinks) {
+      if (!save_all&&!safe_symlinks) {
 	dummyvar=system ((com=g_strdup_printf("smogrify close %s",cfile->handle)));
 	g_free(com);
 	g_free (cfile);
 	cfile=NULL;
 	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
-	switch_to_file (mainw->current_file,current_file);
+	mainw->current_file=current_file;
       }
-      else if (!mainw->save_all&&safe_symlinks) {
+      else if (!save_all&&safe_symlinks) {
 	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
 	dummyvar=system (com);
 	g_free (com);
+	mainw->current_file=current_file;
       }
 
       do_blocking_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
@@ -1435,36 +1484,38 @@ void save_file (gboolean existing, gchar *n_file_name) {
     }
     g_free(tmp);
 
-    if (mainw->save_all) {
-      g_snprintf(cfile->save_file_name,255,"%s",full_file_name);
-      cfile->changed=FALSE;
+    if (save_all) {
+      g_snprintf(sfile->save_file_name,255,"%s",full_file_name);
+      sfile->changed=FALSE;
 
       // save was successful
-      cfile->f_size=sget_file_size (full_file_name);
+      sfile->f_size=sget_file_size (full_file_name);
 
-      if (cfile->is_untitled) {
-	cfile->is_untitled=FALSE;
+      if (sfile->is_untitled) {
+	sfile->is_untitled=FALSE;
       }
-      if (!cfile->was_renamed) {
-	set_menu_text(cfile->menuentry,full_file_name,FALSE);
-	g_snprintf(cfile->name,255,"%s",full_file_name);
+      if (!sfile->was_renamed) {
+	set_menu_text(sfile->menuentry,full_file_name,FALSE);
+	g_snprintf(sfile->name,255,"%s",full_file_name);
       }
       set_main_title(cfile->name,0);
       add_to_recent (full_file_name,0.,0,NULL);
     }
     else {
       if (!safe_symlinks) {
-	dummyvar=system ((com=g_strdup_printf("smogrify close %s",cfile->handle)));
+	dummyvar=system ((com=g_strdup_printf("smogrify close %s",nfile->handle)));
 	g_free(com);
-	g_free (cfile);
-	cfile=NULL;
-	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
-	switch_to_file (mainw->current_file,current_file);
+	g_free (nfile);
+	nfile=NULL;
+	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
+	  mainw->first_free_file=new_file;
+	mainw->current_file=current_file;
       }
       else {
 	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
 	dummyvar=system (com);
 	g_free (com);
+	mainw->current_file=current_file;
       }
     }
   }
@@ -1497,20 +1548,23 @@ void save_file (gboolean existing, gchar *n_file_name) {
     g_free(mesg);
 
     if (mainw->subt_save_file!=NULL) {
-      save_subs_to_file(cfile,mainw->subt_save_file);
+      save_subs_to_file(sfile,mainw->subt_save_file);
       g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
     }
 
     mainw->no_switch_dprint=FALSE;
 #ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,(mesg=g_strdup_printf("encode %d \"%s\"",mainw->current_file,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)))));
+    lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,
+		     (mesg=g_strdup_printf("encode %d \"%s\"",clip,
+					   (tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)))));
     g_free(tmp);
     g_free(mesg);
 #endif
 
   }
   g_free(full_file_name);
+  mainw->current_file=current_file;
   sensitize();
 
 }
@@ -2915,15 +2969,16 @@ gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, g
 }
 
 
-void
-backup_file(const gchar *file_name) {
+void backup_file(int clip, int start, int end, const gchar *file_name) {
   gchar *com,*tmp;
   gchar title[256];
   gchar **array;
   gchar full_file_name[256];
   gint withsound=1;
   gboolean with_perf=FALSE;
-  gint backup_start,backup_end;
+  gint current_file=mainw->current_file;
+
+  file *sfile=mainw->files[clip];
 
   if (strrchr(file_name,'.')==NULL) {
     g_snprintf(full_file_name,255,"%s.lv1",file_name);
@@ -2935,24 +2990,12 @@ backup_file(const gchar *file_name) {
   // check if file exists
   if (!check_file(full_file_name,TRUE)) return;
 
-  if (mainw->save_all) {
-    backup_start=1;
-    backup_end=cfile->frames;
-    if (backup_end<backup_start) {
-      backup_start=backup_end;
-    }
-  }
-  else {
-    backup_start=cfile->start;
-    backup_end=cfile->end;
-  }
-
   // create header files
-  write_headers(cfile); // for pre LiVES 0.9.6
-  save_clip_values(mainw->current_file); // new style (0.9.6+)
+  write_headers(sfile); // for pre LiVES 0.9.6
+  save_clip_values(clip); // new style (0.9.6+)
 
   //...and backup
-  get_menu_text(cfile->menuentry,title);
+  get_menu_text(sfile->menuentry,title);
   com=g_strdup_printf(_ ("Backing up %s to %s"),title,full_file_name);
   d_print(com);
   g_free(com);
@@ -2964,14 +3007,14 @@ backup_file(const gchar *file_name) {
 
   d_print("...");
   cfile->progress_start=1;
-  cfile->progress_end=cfile->frames;
+  cfile->progress_end=sfile->frames;
 
-  if (cfile->clip_type==CLIP_TYPE_FILE) {
+  if (sfile->clip_type==CLIP_TYPE_FILE) {
     mainw->cancelled=CANCEL_NONE;
     cfile->progress_start=1;
-    cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->frames);
+    cfile->progress_end=count_virtual_frames(sfile->frame_index,1,sfile->frames);
     do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-    virtual_to_images(mainw->current_file,1,cfile->frames,TRUE);
+    virtual_to_images(clip,1,sfile->frames,TRUE);
     end_threaded_dialog();
 
     if (mainw->cancelled!=CANCEL_NONE) {
@@ -2983,7 +3026,11 @@ backup_file(const gchar *file_name) {
     }
   }
 
-  com=g_strdup_printf("smogrify backup %s %d %d %d \"%s\"",cfile->handle,withsound,backup_start,backup_end,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)));
+  com=g_strdup_printf("smogrify backup %s %d %d %d \"%s\"",sfile->handle,withsound,start,end,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)));
+
+  // TODO
+  mainw->current_file=clip;
+
   unlink (cfile->info_file);
   cfile->nopreview=TRUE;
   dummyvar=system(com);
@@ -3007,11 +3054,14 @@ backup_file(const gchar *file_name) {
 
     save_clip_values(mainw->current_file);
 
+    mainw->current_file=current_file;
     return;
   }
 
   cfile->nopreview=FALSE;
   g_free(com);
+
+  mainw->current_file=current_file;
 
   if (mainw->error) {
     do_error_dialog(mainw->msg);
@@ -3024,20 +3074,20 @@ backup_file(const gchar *file_name) {
   }
 
   array=g_strsplit(mainw->msg,"|",3);
-  cfile->f_size=strtol(array[1],NULL,10);
+  sfile->f_size=strtol(array[1],NULL,10);
   g_strfreev(array);
 
-  g_snprintf(cfile->file_name,255,"%s",full_file_name);
-  if (!cfile->was_renamed) {
-    g_snprintf(cfile->name,255,"%s",full_file_name);
+  g_snprintf(sfile->file_name,255,"%s",full_file_name);
+  if (!sfile->was_renamed) {
+    g_snprintf(sfile->name,255,"%s",full_file_name);
     set_main_title(cfile->name,0);
-    set_menu_text(cfile->menuentry,full_file_name,FALSE);
+    set_menu_text(sfile->menuentry,full_file_name,FALSE);
   }
   add_to_recent (full_file_name,0.,0,NULL);
 
-  cfile->changed=FALSE;
+  sfile->changed=FALSE;
   // set is_untitled to stop users from saving with a .lv1 extension
-  cfile->is_untitled=TRUE;
+  sfile->is_untitled=TRUE;
   d_print_done();
 }
 

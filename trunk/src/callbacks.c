@@ -692,40 +692,19 @@ on_stop_clicked (GtkMenuItem     *menuitem,
 
 void
 on_save_as_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *fileselection;
 
   if (cfile->frames==0) {
     on_export_audio_activate (NULL,NULL);
     return;
   }
 
-  while (g_main_context_iteration(NULL,FALSE));
-
-  mainw->save_all=TRUE;
-  fileselection = create_fileselection (_ ("Select File"),3,NULL);
-
-  if (strlen(mainw->vid_save_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->vid_save_dir);
-  }
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_button3_clicked),NULL);
-  gtk_widget_show (fileselection);
+  save_file(mainw->current_file,1,cfile->frames,NULL);
 }
 
 
 void
 on_save_selection_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *fileselection;
-
-  while (g_main_context_iteration(NULL,FALSE));
-
-  mainw->save_all=FALSE;
-
-  fileselection = create_fileselection ("Select File",3,NULL);
-  if (strlen(mainw->vid_save_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->vid_save_dir);
-  }
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_button3_clicked),NULL);
-  gtk_widget_show (fileselection);
+  save_file(mainw->current_file,cfile->start,cfile->end,NULL);
 }
 
 
@@ -1094,8 +1073,7 @@ on_backup_ok_clicked                  (GtkButton       *button,
   gtk_widget_queue_draw(mainw->LiVES);
   while (g_main_context_iteration(NULL,FALSE));
 
-  mainw->save_all=TRUE;
-  backup_file(file_name);
+  backup_file(mainw->current_file,1,cfile->frames,file_name);
 
   g_snprintf(mainw->proj_save_dir,256,"%s",file_name);
   get_dirname (mainw->proj_save_dir);
@@ -5479,27 +5457,6 @@ on_button3_clicked                     (GtkButton       *button,
     }
   }
   g_free(com);
-}
-
-
-
-void
-on_ok_button3_clicked                  (GtkButton       *button,
-                                        gpointer         user_data)
-{   // save as
-  gchar n_file_name[256];
-  gchar *tmp;
-
-  g_snprintf(n_file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
-  g_free(tmp);
-  g_snprintf(mainw->vid_save_dir,256,"%s",n_file_name);
-  get_dirname(mainw->vid_save_dir);
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  if (prefs->save_directories) {
-    set_pref ("vid_save_dir",(tmp=g_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
-    g_free(tmp);
-  }
-  save_file(FALSE,n_file_name);
 }
 
 

@@ -69,6 +69,11 @@ void add_suffix_check(GtkBox *box) {
 GtkWidget*
 create_fileselection (const gchar *title, gint preview_type, gpointer free_on_cancel)
 {
+  // 1 - video and audio open
+  // preview type 2 is export audio
+  // preview_type 3 was save_file, no longer used (deprecated)
+
+
   GtkWidget *fileselection;
   GtkWidget *ok_button;
   GtkWidget *cancel_button;
@@ -108,23 +113,14 @@ create_fileselection (const gchar *title, gint preview_type, gpointer free_on_ca
 
   gtk_widget_grab_focus (fileselection);
   
-  // preview types here are
-  // 1 - video and audio open
-  // 2 - audio open
-  // 3 - save file
-
-
   if (preview_type==1||preview_type==2) widget_add_preview(GTK_BOX (GTK_FILE_SELECTION(fileselection)->main_vbox),GTK_BOX (GTK_FILE_SELECTION (fileselection)->action_area),GTK_BOX(GTK_FILE_SELECTION(fileselection)->main_vbox),preview_type);
-  else if (preview_type==3) {
-    mainw->fx1_bool=TRUE;
-    add_suffix_check(GTK_BOX (GTK_FILE_SELECTION (fileselection)->action_area));
-  }
-
   g_signal_connect (cancel_button, "clicked",G_CALLBACK (on_cancel_button1_clicked),free_on_cancel);
 
   gtk_widget_show_all (fileselection);
   return fileselection;
 }
+
+
 
 static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
   GtkWidget *hbox=gtk_hbox_new (FALSE, 0);
@@ -242,6 +238,7 @@ static gboolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpoin
 
   gtk_widget_destroy(arrow);
 
+  // remove this signal because its user_data is invalid
   if (g_signal_handler_is_connected (ahbox, arrow_id)) {
     g_signal_handler_disconnect (ahbox, arrow_id);
   }

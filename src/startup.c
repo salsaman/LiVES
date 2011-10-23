@@ -47,7 +47,6 @@ gboolean do_tempdir_query(void) {
     response=gtk_dialog_run(GTK_DIALOG(tdentry->dialog));
 
     if (response==GTK_RESPONSE_CANCEL) {
-      g_free(tdentry);
       return FALSE;
     }
     dirname=g_strdup(gtk_entry_get_text(GTK_ENTRY(tdentry->entry)));

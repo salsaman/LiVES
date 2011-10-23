@@ -3620,7 +3620,7 @@ gboolean render_to_clip (gboolean new_clip) {
       do {
 	rdet->suggestion_followed=FALSE;
 	if ((response=gtk_dialog_run(GTK_DIALOG(rdet->dialog)))==GTK_RESPONSE_OK) if (rdet->enc_changed) {
-	    check_encoder_restrictions(FALSE,TRUE);
+	    check_encoder_restrictions(FALSE,TRUE,TRUE);
 	}
       } while (rdet->suggestion_followed);
 
@@ -4880,7 +4880,7 @@ render_details *create_render_details (gint type) {
     set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo), prefs->encoder.of_desc);
     g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
-    check_encoder_restrictions(TRUE,FALSE);
+    check_encoder_restrictions(TRUE,FALSE,TRUE);
     future_prefs->encoder.of_allowed_acodecs=prefs->encoder.of_allowed_acodecs;
     set_acodec_list_from_allowed(NULL,rdet);
     

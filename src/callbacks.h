@@ -228,11 +228,6 @@ on_button3_clicked                     (GtkButton       *button,
                                         gpointer         user_data);
 
 void
-on_ok_button3_clicked                  (GtkButton       *button,
-                                        gpointer         user_data);
-
-
-void
 on_full_screen_pressed (GtkButton *button,
 			gpointer user_data);
 

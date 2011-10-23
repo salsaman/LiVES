@@ -319,7 +319,6 @@ typedef struct {
   /////////////////////////////////////////////////
 
   // end of static-ish info
-  gboolean save_all;
   gchar first_info_file[256];
   gboolean leave_files;
   gboolean was_set;
@@ -543,6 +542,7 @@ typedef struct {
   GtkWidget *sticky;
   GtkWidget *showfct;
   GtkWidget *showsubs;
+  GtkWidget *letter;
   GtkWidget *aload_subs;
   GtkWidget *load_subs;
   GtkWidget *erase_subs;

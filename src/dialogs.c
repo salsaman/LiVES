@@ -1355,7 +1355,7 @@ gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num
 
 
 gboolean 
-do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean swap_endian, gboolean anr) {
+do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean swap_endian, gboolean anr, gboolean save_all) {
   gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
   gchar *msg2=g_strdup ("");
   gchar *msg3=g_strdup ("");
@@ -1432,7 +1432,7 @@ do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, 
     else anr=FALSE;
   }
   msg_a=g_strconcat (msg1,msg2,msg3,msg4,msg5,msg6,msg7,NULL);
-  if (mainw->save_all) {
+  if (save_all) {
     msg_b=g_strdup (_ ("\nYou will be able to undo these changes afterwards.\n\nClick `OK` to proceed, `Cancel` to abort.\n\n"));
   }
   else {

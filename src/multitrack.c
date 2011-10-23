@@ -9381,7 +9381,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
       rdet->suggestion_followed=FALSE;
       if ((response=gtk_dialog_run(GTK_DIALOG(rdet->dialog)))==GTK_RESPONSE_OK) {
 	if (rdet->enc_changed) {
-	  check_encoder_restrictions(FALSE,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
+	  check_encoder_restrictions(FALSE,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)),TRUE);
 	}
       }
     } while (rdet->suggestion_followed);
@@ -19150,7 +19150,7 @@ void mt_change_vals_activate (GtkMenuItem *menuitem, gpointer user_data) {
     rdet->suggestion_followed=FALSE;
     if ((response=gtk_dialog_run(GTK_DIALOG(rdet->dialog)))==GTK_RESPONSE_OK) {
       if (rdet->enc_changed) {
-	check_encoder_restrictions(FALSE,FALSE);
+	check_encoder_restrictions(FALSE,FALSE,TRUE);
       }
     }
   } while (rdet->suggestion_followed);

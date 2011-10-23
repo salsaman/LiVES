@@ -580,7 +580,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->record_foreign=FALSE;
   mainw->play_window=NULL;
   mainw->opwx=mainw->opwy=-1;
-  mainw->save_all=TRUE;
   mainw->frame_layer=NULL;
   mainw->in_fs_preview=FALSE;
   mainw->effects_paused=FALSE;
@@ -947,7 +946,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->disabled_decoders=get_list_pref("disabled_decoders");
 
-    prefs->letterbox=TRUE;
+    prefs->letterbox=FALSE;
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -4044,6 +4043,10 @@ void load_frame_image(gint frame) {
 			lb_height,mainw->vpp->fwidth/
 			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
 			mainw->vpp->fheight);
+
+	
+
+
 	convert_layer_palette(mainw->frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
       }
 

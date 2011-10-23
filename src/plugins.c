@@ -1368,7 +1368,7 @@ do_plugin_encoder_error(const gchar *plugin_name) {
 }
 
 
-gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio) {
+gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio, gboolean save_all) {
   gchar **checks;
   gchar **array=NULL;
   gchar **array2;
@@ -1802,7 +1802,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       return FALSE;
     }
 
-    if (mainw->osc_auto||do_encoder_restrict_dialog (width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,swap_endian,allow_aspect_override)) {
+    if (mainw->osc_auto||do_encoder_restrict_dialog (width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,swap_endian,allow_aspect_override,save_all)) {
       if (!mainw->fx1_bool&&mainw->osc_enc_width==0) {
 	width=owidth;
 	height=oheight;

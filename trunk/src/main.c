@@ -287,6 +287,8 @@ static gboolean pre_init(void) {
   prefs->autoload_subs=TRUE;
   prefs->show_subtitles=TRUE;
 
+  prefs->letterbox=FALSE;
+
   if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
     g_snprintf(prefs->theme,64,"none");
     return FALSE;
@@ -946,7 +948,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->disabled_decoders=get_list_pref("disabled_decoders");
 
-    prefs->letterbox=FALSE;
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

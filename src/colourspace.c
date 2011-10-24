@@ -1554,7 +1554,7 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
   int iwidth;
   guchar *end=rgbdata+(rowstride*vsize);
   register int i;
-  guchar in_alpha=255,*u_alpha;
+  guchar in_alpha=255;
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
@@ -1563,7 +1563,6 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
   if (in_has_alpha) ipsize=4;
 
   if (out_has_alpha) opsize=4;
-  else u_alpha=NULL;
 
   hsize=(hsize>>1)<<1;
   iwidth=hsize*ipsize;
@@ -1620,7 +1619,7 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
   int iwidth;
   guchar *end=rgbdata+(rowstride*vsize);
   register int i;
-  guchar in_alpha=255,*u_alpha;
+  guchar in_alpha=255;
 
   if (G_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
 
@@ -1629,7 +1628,6 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
   if (in_has_alpha) ipsize=4;
 
   if (out_has_alpha) opsize=4;
-  else u_alpha=NULL;
 
   hsize=(hsize>>1)<<1;
   iwidth=hsize*ipsize;
@@ -1693,7 +1691,6 @@ void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint r
   uyvy_macropixel u;
   register int i,j;
   gboolean chroma_row=TRUE;
-  int size;
 
   int ipsize=3,ipsize2;
   size_t hhsize;
@@ -1707,8 +1704,6 @@ void convert_rgb_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize, gint r
   // ensure width and height are both divisible by two
   hsize=(hsize>>1)<<1;
   vsize=(vsize>>1)<<1;
-
-  size=hsize*vsize;
 
   y=dest[0];
   Cb=dest[1];
@@ -1757,7 +1752,6 @@ static void convert_bgr_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize,
   gint hs3;
 
   guchar *y,*Cb,*Cr;
-  gint size;
   uyvy_macropixel u;
   register int i,j;
   gint chroma_row=TRUE;
@@ -1773,7 +1767,6 @@ static void convert_bgr_to_yuv420_frame(guchar *rgbdata, gint hsize, gint vsize,
   // ensure width and height are both divisible by two
   hsize=(hsize>>1)<<1;
   vsize=(vsize>>1)<<1;
-  size=hsize*vsize;
 
   y=dest[0];
   Cb=dest[1];
@@ -3035,7 +3028,7 @@ static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, in
 
 
 static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width, int height, guchar *dest, gboolean add_alpha, gboolean clamped) {
-  size_t psize=3,psize2;
+  size_t psize=3;
   register int j;
   yuv411_macropixel *end=yuv411+width*height;
   guchar u,v,h_u,h_v,q_u,q_v,y0,y1;
@@ -3043,8 +3036,6 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) psize=4;
-
-  psize2=psize<<1;
 
   while (yuv411<end) {
     // write 2 RGB pixels
@@ -3157,7 +3148,7 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
 static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, int height, guchar **dest, gboolean add_alpha, gboolean clamped) {
   register int j;
   yuv411_macropixel *end=yuv411+width*height;
-  guchar u,v,h_u,h_v,q_u,q_v,y0,y1;
+  guchar u,v,h_u,h_v,q_u,q_v,y0;
 
   guchar *d_y=dest[0];
   guchar *d_u=dest[1];
@@ -3184,7 +3175,6 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
       // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
-      y1=yuv411[j-1].y3;
 
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
@@ -3217,7 +3207,6 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
       // set first 2 RGB pixels of this block
    
       y0=yuv411[j].y0;
-      y1=yuv411[j].y1;
       
       // avg to get 3/4, 1/2
 
@@ -3263,7 +3252,7 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
 static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, int height, uyvy_macropixel *uyvy, gboolean clamped) {
   register int j;
   yuv411_macropixel *end=yuv411+width*height;
-  guchar u,v,h_u,h_v,y0,y1;
+  guchar u,v,h_u,h_v,y0;
 
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
@@ -3282,7 +3271,6 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
       // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
-      y1=yuv411[j-1].y3;
 
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
@@ -3309,7 +3297,6 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
       // set first uyvy macropixel of this block
    
       y0=yuv411[j].y0;
-      y1=yuv411[j].y1;
       
       uyvy->u0=u;
       uyvy->y0=y0;
@@ -3335,7 +3322,7 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
 static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, int height, yuyv_macropixel *yuyv, gboolean clamped) {
   register int j;
   yuv411_macropixel *end=yuv411+width*height;
-  guchar u,v,h_u,h_v,y0,y1;
+  guchar u,v,h_u,h_v,y0;
 
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
@@ -3354,7 +3341,6 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
       // average first 2 RGB pixels of this block and last 2 RGB pixels of previous block
 
       y0=yuv411[j-1].y2;
-      y1=yuv411[j-1].y3;
 
       h_u=avg_chroma(yuv411[j-1].u2,yuv411[j].u2);
       h_v=avg_chroma(yuv411[j-1].v2,yuv411[j].v2);
@@ -3381,7 +3367,6 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
       // set first yuyv macropixel of this block
    
       y0=yuv411[j].y0;
-      y1=yuv411[j].y1;
       
       yuyv->y0=y0;
       yuyv->u0=u;
@@ -6432,7 +6417,6 @@ gboolean convert_layer_palette (weed_plant_t *layer, int outpl, int op_clamping)
 GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette) {
   GdkPixbuf *pixbuf;
   guchar *pixels;
-  gint rowstride;
   size_t size;
 
   switch (palette) {
@@ -6440,7 +6424,6 @@ GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette) {
   case WEED_PALETTE_BGR24:
     pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, width, height);
     pixels=gdk_pixbuf_get_pixels (pixbuf);
-    rowstride=gdk_pixbuf_get_rowstride(pixbuf);
     size=width*3*(height-1)+gdk_last_rowstride_value(width,3);
     memset(pixels,0,size);
     break;
@@ -6448,14 +6431,12 @@ GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette) {
   case WEED_PALETTE_BGRA32:
     pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
     pixels=gdk_pixbuf_get_pixels (pixbuf);
-    rowstride=gdk_pixbuf_get_rowstride(pixbuf);
     size=width*4*(height-1)+gdk_last_rowstride_value(width,4);
     memset(pixels,0,size);
     break;
   case WEED_PALETTE_ARGB32:
     pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
     pixels=gdk_pixbuf_get_pixels (pixbuf);
-    rowstride=gdk_pixbuf_get_rowstride(pixbuf);
     size=width*4*(height-1)+gdk_last_rowstride_value(width,4);
     memset(pixels,0,size);
     break;
@@ -6603,12 +6584,10 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
   int error;
   GdkPixbuf *pixbuf,*new_pixbuf=NULL;
   int palette=weed_get_int_value(layer,"current_palette",&error);
-  gint n_channels=4;
   gint nwidth=0,nheight=0,rowstride=0;
 
   int owidth=weed_get_int_value(layer,"width",&error);
   int oheight=weed_get_int_value(layer,"height",&error);
-  guchar *pd;
 
   if (owidth==width&&oheight==height) return; // no resize needed
 
@@ -6630,7 +6609,6 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
   case WEED_PALETTE_YUV888:
-    n_channels=3;
   case WEED_PALETTE_ARGB32:
   case WEED_PALETTE_RGBA32:
   case WEED_PALETTE_BGRA32:
@@ -6639,7 +6617,6 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
     threaded_dialog_spin();
     new_pixbuf=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
     threaded_dialog_spin();
-    pd=gdk_pixbuf_get_pixels(new_pixbuf);
     if (new_pixbuf!=NULL) {
       weed_set_int_value(layer,"width",(nwidth=gdk_pixbuf_get_width(new_pixbuf)));
       weed_set_int_value(layer,"height",(nheight=gdk_pixbuf_get_height(new_pixbuf)));

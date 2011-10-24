@@ -120,9 +120,7 @@ gdouble jack_transport_get_time(void) {
 #ifdef ENABLE_JACK_TRANSPORT
   jack_nframes_t srate; 
   jack_position_t pos;
-  jack_transport_state_t jacktstate;
 
-  jacktstate=jack_transport_query (jack_transport_client, &pos);
   srate=jack_get_sample_rate(jack_transport_client);
   return (gdouble)pos.frame/(gdouble)srate;
 #endif

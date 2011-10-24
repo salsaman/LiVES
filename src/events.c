@@ -618,14 +618,12 @@ weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timec
 weed_plant_t *get_filter_map_after(weed_plant_t *event, gint ctrack) {
   // get filter_map following event; if ctrack!=-1000000 then we ignore filter maps with no in_track/out_track == ctrack
   void **init_events;
-  gboolean has_in,has_out;
   int error,num_init_events,i;
   weed_plant_t *init_event;
 
   while (event!=NULL) {
     if (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP) {
       if (ctrack==-1000000) return event;
-      has_in=has_out=FALSE;
       if (!weed_plant_has_leaf(event,"init_events")) {
 	event=get_next_event(event);
 	continue;
@@ -2015,7 +2013,6 @@ gint get_render_choice (void) {
 GtkWidget *events_rec_dialog (void) {
   GtkWidget *e_rec_dialog;
   GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
   GtkWidget *vbox;
   GtkWidget *hbox;
   GtkWidget *eventbox;
@@ -2213,7 +2210,6 @@ GtkWidget *events_rec_dialog (void) {
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
 
-  dialog_action_area = GTK_DIALOG (e_rec_dialog)->action_area;
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   gtk_dialog_add_action_widget (GTK_DIALOG (e_rec_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -2797,7 +2793,6 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
   char *key_string;
   void *init_event;
   weed_plant_t *next_frame_event,*return_event;
-  int num_elems=0;
   int i;
   char *filter_name;
   int new_file;
@@ -3045,7 +3040,6 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 
   case WEED_EVENT_HINT_FILTER_MAP:
     mainw->filter_map=next_event;
-    if (weed_plant_has_leaf(next_event,"init_events")) num_elems=weed_leaf_num_elements(next_event,"init_events");
 #ifdef DEBUG_EVENTS
     g_print ("got new effect map with %d keys\n",num_elems);
 #endif

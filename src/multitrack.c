@@ -1195,7 +1195,6 @@ void track_select (lives_mt *mt) {
   GtkWidget *labelbox,*ahbox,*eventbox,*oeventbox,*checkbutton=NULL;
   gint hidden=0;
   weed_timecode_t tc;
-  gdouble pos;
 
   if (cfile->achans>0) {
     for (i=0;i<g_list_length(mt->audio_draws);i++) {
@@ -1213,9 +1212,8 @@ void track_select (lives_mt *mt) {
 	  if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->select_track),FALSE);
 	  gtk_widget_set_sensitive(mt->select_track,FALSE);
 	  gtk_widget_set_sensitive(mt->cback_audio,FALSE);
-	  if (mt->is_ready) pos=GTK_RULER (mt->timeline)->position;
-	  else pos=0.;
-	  gtk_widget_set_sensitive (mt->audio_insert, mt->file_selected>0&&mainw->files[mt->file_selected]->achans>0&&mainw->files[mt->file_selected]->laudio_time>0.);
+	  gtk_widget_set_sensitive (mt->audio_insert, mt->file_selected>0&&
+				    mainw->files[mt->file_selected]->achans>0&&mainw->files[mt->file_selected]->laudio_time>0.);
 	  gtk_widget_set_sensitive (mt->insert, FALSE);
 	  if (mt->poly_state==POLY_FX_STACK) polymorph(mt,POLY_FX_STACK);
 	}
@@ -1260,8 +1258,6 @@ void track_select (lives_mt *mt) {
 	  if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->select_track),TRUE);
 	  else on_seltrack_activate(GTK_MENU_ITEM(mt->select_track),mt);
 	}
-	if (mt->is_ready) pos=GTK_RULER (mt->timeline)->position;
-	else pos=0.;
 	gtk_widget_set_sensitive (mt->insert, mt->file_selected>0&&mainw->files[mt->file_selected]->frames>0);
 	gtk_widget_set_sensitive (mt->adjust_start_end, mt->file_selected>0);
 	gtk_widget_set_sensitive (mt->audio_insert, FALSE);
@@ -1393,14 +1389,11 @@ on_mt_timeline_scroll           (GtkWidget       *widget,
   // scroll timeline up/down with mouse wheel
   lives_mt *mt=(lives_mt *)user_data;
 
-  guint kstate;
   gint cval;
 
   if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->multitrack->window))) return FALSE;
 
   cval=GTK_ADJUSTMENT(GTK_RANGE(mt->scrollbar)->adjustment)->value;
-
-  kstate=event->state;
 
   if (event->direction==GDK_SCROLL_UP) {
     if (--cval<0) return FALSE;;
@@ -8299,10 +8292,9 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     int *aclips;
     double *aseeks;
     gboolean shown_audio_warn=FALSE;
-    file *afile;
 
     GtkWidget *audio_draw;
-
+    
     GList *slist;
 
     if (mt->avol_fx!=-1) locate_avol_init_event(mt,mt->event_list,mt->avol_fx);
@@ -8427,7 +8419,6 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	  aseeks=weed_get_double_array(event,"audio_seeks",&error);
 	  for (i=0;i<num_aclips;i+=2) {
 	    if (aclips[i+1]>0) {
-	      afile=mainw->files[renumbered_clips[aclips[i+1]]];
 	      if (cfile->achans==0) {
 		if (!shown_audio_warn) {
 		  shown_audio_warn=TRUE;
@@ -10572,7 +10563,7 @@ void avel_spin_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   double new_avel=gtk_spin_button_get_value(spinbutton);
   double aseek=get_audio_frame_seek(block->start_event,track);
   int aclip=get_audio_frame_clip(block->start_event,track);
-  weed_timecode_t new_end_tc,old_tl_tc,start_tc,new_tl_tc,new_start_tc,min_tc;
+  weed_timecode_t new_end_tc,old_tl_tc,start_tc,new_tl_tc,min_tc;
   weed_plant_t *new_end_event,*new_start_event;
   gdouble orig_end_val,orig_start_val;
   gboolean was_adjusted=FALSE;
@@ -10637,9 +10628,6 @@ void avel_spin_changed (GtkSpinButton *spinbutton, gpointer user_data) {
     }
     return;
   }
-
-  // end is anchored, move start
-  new_start_tc=q_gint64(orig_end_val*U_SEC-(orig_end_val*U_SEC-start_tc)/new_avel,mt->fps);
 
   // move start point (if we can)
   min_tc=0;
@@ -10799,9 +10787,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
   int filenum;
   track_rect *block=mt->block_selected;
   weed_timecode_t offset_end=0;
-  weed_plant_t *filter,*deinit_event;
+  weed_plant_t *filter;
   weed_timecode_t tc;
-  gdouble fx_start_time,fx_end_time;
   int error;
   GtkWidget *eventbox,*xeventbox,*yeventbox,*label,*vbox;
   gdouble secs;
@@ -11121,10 +11108,6 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mt->current_rfx=weed_to_rfx(filter,FALSE);
 
     tc=get_event_timecode(mt->init_event);
-    deinit_event=weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
-
-    fx_start_time=tc/U_SEC;
-    fx_end_time=get_event_timecode(deinit_event)/U_SEC;
 
     if (fx_dialog[1]!=NULL) {
       lives_rfx_t *rfx=g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
@@ -14247,7 +14230,6 @@ void on_split_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
   track_rect *block;
   gdouble timesecs=GTK_RULER (mt->timeline)->position;
   gboolean did_backup=mt->did_backup;
-  weed_timecode_t tc;
 
   if (mt->selected_tracks==NULL) return;
 
@@ -14257,8 +14239,6 @@ void on_split_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   if (!did_backup) mt_backup(mt,MT_UNDO_SPLIT_MULTI,0);
-
-  tc=q_gint64(timesecs*U_SEC,mt->fps);
 
   while (selt!=NULL) {
     track=GPOINTER_TO_INT(selt->data);
@@ -15195,11 +15175,10 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
   gint track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
   weed_timecode_t last_tc=0,offset_start_tc,start_tc,last_offset;
   int *clips=NULL,*frames=NULL,*rep_clips,*rep_frames,error;
-  weed_timecode_t time=0;
   weed_plant_t *last_frame_event=NULL;
   weed_plant_t *event,*shortcut1=NULL,*shortcut2=NULL;
   int frame=((gdouble)(offset_start/U_SEC)*mt->fps+1.4999);
-  track_rect *new_block=NULL,*new_ablock=NULL;
+  track_rect *new_block=NULL;
   gchar *text;
   weed_timecode_t orig_st=offset_start,orig_end=offset_end;
   GtkWidget *aeventbox=NULL;
@@ -15219,7 +15198,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
 
   if (direction==DIRECTION_POSITIVE) {
     // fill in blank frames in a gap
-    if (mt->event_list!=NULL&&(last_frame_event=get_last_frame_event(mt->event_list))!=NULL) time=get_event_timecode(last_frame_event);
+    if (mt->event_list!=NULL) last_frame_event=get_last_frame_event(mt->event_list);
     mt->event_list=add_blank_frames_up_to(mt->event_list,last_frame_event,q_gint64(start_tc-1./mt->fps,mt->fps),mt->fps);
   }
 
@@ -15316,7 +15295,7 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
 	      aseek=(gdouble)(frame-1.)/sfile->fps;
 
 	      insert_audio_event_at(mt->event_list,shortcut1,track,filenum,aseek,1.);
-	      new_ablock=add_block_start_point (aeventbox,last_tc,filenum,offset_start,shortcut1,TRUE);
+	      add_block_start_point (aeventbox,last_tc,filenum,offset_start,shortcut1,TRUE);
 	    }
 	    else {
 	      weed_plant_t *nframe;

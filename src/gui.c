@@ -213,7 +213,6 @@ create_LiVES (void)
 #endif 
 
   GtkObject *spinbutton_pb_fps_adj;
-  GtkObject *spinbutton_adj;
 
   GtkWidget *new_test_rfx;
   GtkWidget *edit_test_rfx;
@@ -1754,8 +1753,6 @@ create_LiVES (void)
     mainw->m_loopbutton = gtk_menu_item_new ();
     mainw->m_mutebutton = gtk_menu_item_new ();
   }
-
-  spinbutton_adj = gtk_adjustment_new (1., 0., 1., 0.01, 0.1, 0.);
 
   mainw->vol_label=GTK_WIDGET(gtk_tool_item_new());
   label=gtk_label_new(_("Volume"));

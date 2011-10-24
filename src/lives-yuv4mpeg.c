@@ -342,7 +342,6 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // start "playing" but open frames in yuv4mpeg format on stdin
 
   gint old_file=mainw->current_file,new_file=mainw->first_free_file;
-  lives_yuv4m_t *yuv4mpeg;
   gchar *tmp;
   gchar *filename;
   gchar *fname;
@@ -383,8 +382,6 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
   d_print ((tmp=g_strdup_printf (_("Opened yuv4mpeg stream on %s"),filename)));
   g_free(tmp);
   g_free(filename);
-
-  yuv4mpeg=cfile->ext_src;
 
   d_print(_("Audio: "));
 

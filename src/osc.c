@@ -4626,9 +4626,6 @@ void lives_osc_dump()
 /* get a packet */
 static int lives_osc_get_packet(lives_osc *o) {
   //OSCTimeTag tag;
-  struct timeval tv;
-  tv.tv_sec=0;
-  tv.tv_usec = 0;
   
   /* see if there is something to read , this is effectivly NetworkPacketWaiting */
   // if(ioctl( o->sockfd, FIONREAD, &bytes,0 ) == -1) return 0;

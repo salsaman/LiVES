@@ -156,7 +156,6 @@ giw_led_destroy (GtkObject *object)
 static void
 giw_led_realize (GtkWidget *widget)
 {
-  GiwLed *led;
   GdkWindowAttr attributes;
   gint attributes_mask;
 
@@ -164,7 +163,6 @@ giw_led_realize (GtkWidget *widget)
   g_return_if_fail (GIW_IS_LED (widget));
 
   GTK_WIDGET_SET_FLAGS (widget, GTK_REALIZED);
-  led = GIW_LED (widget);
 
   attributes.x = widget->allocation.x;
   attributes.y = widget->allocation.y;

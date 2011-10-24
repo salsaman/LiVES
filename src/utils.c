@@ -729,8 +729,6 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
   gchar *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,getpid());
   gchar *com=g_strdup_printf("smogrify check_for_lock \"%s\" %s %d >%s",set_name,capable->myname,getpid(),info_file);
 
-  int lockpid;
-
   unlink(info_file);
   threaded_dialog_spin();
   dummyvar=system(com);
@@ -744,7 +742,6 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
     if ((bytes=read(info_fd,mainw->msg,256))>0) {
       close(info_fd);
       memset(mainw->msg+bytes,0,1);
-      lockpid=atoi(mainw->msg);
 
       if (type==0) {
 	msg=g_strdup_printf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"),set_name);

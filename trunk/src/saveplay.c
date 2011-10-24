@@ -1592,8 +1592,6 @@ void play_file (void) {
   gint loop=0;
   gboolean mute;
 
-  gint gen_file=-1;
-
   GClosure *freeze_closure;
   gshort audio_player=prefs->audio_player;
 
@@ -2495,10 +2493,6 @@ void play_file (void) {
   if (mainw->cancelled==CANCEL_APP_QUIT) on_quit_activate (NULL,NULL);
 
   // end record performance
-
-  if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
-    gen_file=mainw->current_file;
-  }
 
 #ifdef ENABLE_JACK
   if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {

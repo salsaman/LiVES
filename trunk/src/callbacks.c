@@ -5759,7 +5759,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 	  weed_plant_t *frame_layer=mainw->frame_layer;
 	  mainw->frame_layer=NULL;
 	  load_frame_image (cfile->frameno);
-	  frame_layer=mainw->frame_layer;
+	  mainw->frame_layer=frame_layer;
 	}
       }
     }
@@ -9561,7 +9561,6 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
 {
   gdouble start=0,end=0;
   gchar *com,*msg;
-  gint asigned,aendian;
   gboolean has_lmap_error=FALSE;
 
   if (menuitem==NULL) {
@@ -9645,9 +9644,6 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
   reget_afilesize(mainw->current_file);
   get_play_times();
   cfile->changed=TRUE;
-
-  asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
-  aendian=cfile->signed_endian&AFORM_BIG_ENDIAN;
 
   save_clip_values(mainw->current_file);
 

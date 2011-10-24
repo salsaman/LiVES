@@ -2415,7 +2415,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
   gchar tstring[512];
-  int nnodes,i,macro,nvars,type=0,supertype,j,idx=-1;
+  int nnodes,i,macro,nvars,supertype,j,idx=-1;
   gchar *srch;
   gchar *msg;
 
@@ -2517,13 +2517,11 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       supertype=js_msg_type(srch);
     case OMC_JS_BUTTON:
     case OMC_JS_AXIS:
-      type=supertype;
       idx=js_index(srch);
       break;
 #endif
 #ifdef OMC_MIDI_IMPL
     case OMC_MIDI:
-      type=midi_msg_type(srch);
       idx=-1;
 
       // cut first value (supertype) as we will be added back in match_node_new

@@ -895,8 +895,6 @@ void do_startup_interface_query(void) {
   GSList *radiobutton_group = NULL;
   gchar *txt1,*txt2,*txt3,*msg;
 
-  gint response;
-
   txt1=g_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
   txt2=g_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
   txt3=g_strdup(_("\n\nThe default can always be changed later from Preferences.\n"));
@@ -1024,8 +1022,6 @@ void do_startup_interface_query(void) {
 
 
   gtk_widget_show_all(dialog);
-
-  response=gtk_dialog_run(GTK_DIALOG(dialog));
 
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radiobutton1))) future_prefs->startup_interface=prefs->startup_interface=STARTUP_MT;
   

@@ -736,6 +736,9 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   gboolean has_param;
 
+
+  // TODO - remove this and check in rfx / realfx activate
+
   if (rfx->num_in_channels>0) {
     if (menuitem!=NULL&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
       if (!do_layout_alter_frames_warning()) {

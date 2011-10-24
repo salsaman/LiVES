@@ -1039,7 +1039,6 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   int i;
   int *palette_list;
   _vid_playback_plugin *vpp;
-  gboolean needs_restart=FALSE;
 
   if (handle==NULL) {
     gchar *msg=g_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
@@ -1258,8 +1257,6 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   d_print (msg);
   g_free (msg);
   g_free(plugname);
-
-  if (mainw->ext_playback) needs_restart=TRUE;
 
   while (mainw->noswitch) {
     g_usleep(prefs->sleep_time);

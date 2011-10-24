@@ -968,9 +968,7 @@ gchar *cd_to_plugin_dir(weed_plant_t *filter) {
   char cwd[PATH_MAX];
   int error;
   weed_plant_t *plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
-  char *dcwd;
   char *ppath=weed_get_string_value(plugin_info,"plugin_path",&error);
-  dcwd=getcwd(cwd,PATH_MAX);
   dummyvar=chdir(ppath);
   weed_free(ppath);
   return g_strdup(cwd);
@@ -2554,7 +2552,6 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   gint chans_out_mand=0;
   gint chans_out_opt_max=0;
   gint achans_in_mand=0,achans_out_mand=0;
-  gboolean is_generator;
   gboolean is_audio=FALSE;
 
   int error,flags=0;
@@ -2605,8 +2602,6 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (num_elements>0) weed_free(array);
   if (chans_in_mand>2) return 8; // we dont handle mixers yet...
   if (achans_in_mand>0&&chans_in_mand>0) return 13; // can't yet handle effects that need both audio and video
-
-  is_generator=(chans_in_mand==0);
 
   // count number of mandatory and optional out_channels
   if (!weed_plant_has_leaf(filter,"out_channel_templates")) num_elements=0;
@@ -2898,9 +2893,6 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
   gchar *string,*filter_type;
   GtkWidget *menuitem;
   char cwd[PATH_MAX];
-  char *dchar;
-
-  dchar=getcwd(cwd,PATH_MAX);
 
   key++;
 
@@ -3457,8 +3449,6 @@ void weed_generator_end (weed_plant_t *inst) {
   gboolean is_bg=FALSE;
   gint current_file=mainw->current_file,pre_src_file=mainw->pre_src_file;
   gboolean clip_switched=mainw->clip_switched;
-  weed_plant_t *filter;
-  int error;
 
   if (inst==NULL) {
     g_printerr("  WARNING: inst was NULL !    ");
@@ -3484,7 +3474,6 @@ void weed_generator_end (weed_plant_t *inst) {
     }
   }
 
-  filter=weed_get_plantptr_value(inst,"filter_class",&error);
   weed_call_deinit_func(inst);
   weed_instance_unref(inst);
 

@@ -2019,7 +2019,7 @@ int main (int argc, char *argv[]) {
 
   gtk_init (&argc, &argv);
 
-  g_log_set_always_fatal (0);
+  // g_log_set_always_fatal (0);
   theme_expected=pre_init();
 
   mainw->foreign=FALSE;

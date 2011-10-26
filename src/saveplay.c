@@ -843,7 +843,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   const char *n_file_name;
   gchar *fps_string;
-  gchar *extra_params=g_strdup("");
+  gchar *extra_params=NULL;
   gchar *redir=g_strdup("1>&2 2>/dev/null");
   gchar *new_stderr_name=NULL;
   gchar *mesg,*bit,*tmp;
@@ -894,7 +894,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 	rdet=NULL;
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
-	g_free(extra_params);
 	return;
       }
     }
@@ -951,7 +950,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
       }
-      g_free(extra_params);
       return;
     }
     sfile->orig_file_name=FALSE;
@@ -968,7 +966,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 	  if (resaudw!=NULL) g_free(resaudw);
 	  resaudw=NULL;
 	}
-	g_free(extra_params);
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
 	return;
@@ -989,7 +986,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 	}
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
-	g_free(extra_params);
 	return;
     }
     g_free(warn);
@@ -1017,7 +1013,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       }
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
-      g_free(extra_params);
       return;
     }
 
@@ -1032,7 +1027,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       }
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
-      g_free(extra_params);
       return;
     }
 
@@ -1054,7 +1048,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 	  if (resaudw!=NULL) g_free(resaudw);
 	  resaudw=NULL;
 	}
-	g_free(extra_params);
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
 	return;
@@ -1076,7 +1069,9 @@ void save_file (int clip, int start, int end, const char *filename) {
     nfile->signed_endian=sfile->signed_endian;
     nfile->img_type=sfile->img_type;
 
-    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d %s",nfile->handle,start,end,aud_start,aud_end,nfile->arate,nfile->achans,nfile->asampsize,!(nfile->signed_endian&AFORM_UNSIGNED),!(nfile->signed_endian&AFORM_BIG_ENDIAN),sfile->handle);
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d %s",nfile->handle,
+			 start,end,aud_start,aud_end,nfile->arate,nfile->achans,nfile->asampsize,
+			 !(nfile->signed_endian&AFORM_UNSIGNED),!(nfile->signed_endian&AFORM_BIG_ENDIAN),sfile->handle);
 
     unlink(nfile->info_file);
     dummyvar=system(com);
@@ -1102,7 +1097,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
       }
-      g_free(extra_params);
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1141,7 +1135,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       if (resaudw!=NULL) g_free(resaudw);
       resaudw=NULL;
     }
-    g_free(extra_params);
     if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
     mainw->subt_save_file=NULL;
     mainw->current_file=current_file;
@@ -1182,14 +1175,15 @@ void save_file (int clip, int start, int end, const char *filename) {
 	  if (resaudw!=NULL) g_free(resaudw);
 	  resaudw=NULL;
 	}
-	g_free(extra_params);
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
 	return;
       }
     }
 
-    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d",sfile->handle,start,end,aud_start,aud_end,sfile->arate,sfile->achans,sfile->asampsize,!(sfile->signed_endian&AFORM_UNSIGNED),!(sfile->signed_endian&AFORM_BIG_ENDIAN));
+    com=g_strdup_printf ("smogrify link_frames %s %d %d %.8f %.8f %d %d %d %d %d",sfile->handle,
+			 start,end,aud_start,aud_end,sfile->arate,sfile->achans,sfile->asampsize,
+			 !(sfile->signed_endian&AFORM_UNSIGNED),!(sfile->signed_endian&AFORM_BIG_ENDIAN));
 
     unlink(sfile->info_file);
     dummyvar=system(com);
@@ -1212,7 +1206,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 	if (resaudw!=NULL) g_free(resaudw);
 	resaudw=NULL;
       }
-      g_free(extra_params);
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1234,7 +1227,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       
       if (mainw->cancelled!=CANCEL_NONE) {
 	mainw->cancelled=CANCEL_USER;
-	g_free(extra_params);
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
 	mainw->current_file=current_file;
@@ -1274,14 +1266,19 @@ void save_file (int clip, int start, int end, const char *filename) {
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",sfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
+      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
+			  sfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,
+			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
       g_free(tmp);
     }
     else {
-      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,sfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
+      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->lib_dir,
+			  PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,sfile->handle,
+			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
       g_free(tmp);
     }
-    g_free(extra_params);
     extra_params=plugin_run_param_window(com,NULL,NULL);
     g_free(com);
 
@@ -1354,17 +1351,25 @@ void save_file (int clip, int start, int end, const char *filename) {
   // for save_all, cfile will be sfile
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
+    com=g_strdup_printf("smogrify save %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",
+			cfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,
+			prefs->encoder.name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
+			asigned,aud_start,aud_end,(extra_params==NULL)?"":extra_params,redir);
     g_free(tmp);
   }
   else {
     // for native plugins we go via the plugin
-    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,asigned,aud_start,aud_end,extra_params,redir);
+    com=g_strdup_printf("%s%s%s/%s save %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",prefs->lib_dir,
+			PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,
+			fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
+			asigned,aud_start,aud_end,(extra_params==NULL?"":extra_params),redir);
     g_free(tmp);
   }
   g_free (fps_string);
 
-  g_free(extra_params);
+  if (extra_params!=NULL) g_free(extra_params);
   extra_params=NULL;
 
   mainw->effects_paused=FALSE;
@@ -1399,10 +1404,12 @@ void save_file (int clip, int start, int end, const char *filename) {
   cfile->nokeep=FALSE;
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-    com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,1,cfile->frames,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name);
+    com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,1,cfile->frames,prefs->lib_dir,
+			PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name);
   }
   else {
-    com=g_strdup_printf("%s%s%s/%s plugin_clear %s %d %d \"\" %s \"\"",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,1,cfile->frames,PLUGIN_ENCODERS);
+    com=g_strdup_printf("%s%s%s/%s plugin_clear %s %d %d \"\" %s \"\"",prefs->lib_dir,
+			PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,cfile->handle,1,cfile->frames,PLUGIN_ENCODERS);
   }
 
   dummyvar=system(com);
@@ -1461,16 +1468,16 @@ void save_file (int clip, int start, int end, const char *filename) {
 	g_free(com);
 	g_free (cfile);
 	cfile=NULL;
-	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
-	mainw->current_file=current_file;
+	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
+	  mainw->first_free_file=mainw->current_file;
       }
       else if (!save_all&&safe_symlinks) {
 	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
 	dummyvar=system (com);
 	g_free (com);
-	mainw->current_file=current_file;
       }
 
+      mainw->current_file=current_file;
       do_blocking_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
 
       if (mainw->iochan!=NULL) {

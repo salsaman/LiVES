@@ -80,6 +80,7 @@ typedef struct __commentsw {
   GtkWidget *title_entry;
   GtkWidget *author_entry;
   GtkWidget *comment_entry;
+  GtkWidget *letterbox_checkbutton;
   GtkWidget *subt_checkbutton;
   GtkWidget *subt_entry;
 } _commentsw;

@@ -965,13 +965,14 @@ void set_param_gui_readwrite (weed_plant_t *inst) {
 ///
 /// returns copy of current directory (before directory change) which should be freed after use 
 gchar *cd_to_plugin_dir(weed_plant_t *filter) {
-  char cwd[PATH_MAX];
+  char cwd[PATH_MAX],*ret;
   int error;
   weed_plant_t *plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
   char *ppath=weed_get_string_value(plugin_info,"plugin_path",&error);
+  ret=g_strdup(getcwd(cwd,PATH_MAX));
   dummyvar=chdir(ppath);
   weed_free(ppath);
-  return g_strdup(cwd);
+  return ret;
 }
 
 gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {

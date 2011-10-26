@@ -3051,6 +3051,48 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
     // options
 
+
+
+    commentsw->letterbox_checkbutton = gtk_check_button_new ();
+    //if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, checkbutton, param->desc, NULL);
+    eventbox=gtk_event_box_new();
+    //gtk_tooltips_copy(eventbox,checkbutton);
+    label=gtk_label_new_with_mnemonic (_("Use letterboxing instead of resizing"));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),commentsw->letterbox_checkbutton);
+    
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      commentsw->letterbox_checkbutton);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+
+    if (sfile->subt==NULL) {
+      gtk_widget_set_sensitive(commentsw->letterbox_checkbutton,FALSE);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(commentsw->letterbox_checkbutton),FALSE);
+    }
+    else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(commentsw->letterbox_checkbutton),TRUE);
+
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), commentsw->letterbox_checkbutton, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+    gtk_widget_show_all (hbox);
+    
+    
+    //g_signal_connect (buttond, "clicked",G_CALLBACK (boolean_act_ch_menuitem),mainw->letter);
+
+
+
+
+
+
+
+
+
     commentsw->subt_checkbutton = gtk_check_button_new ();
     //if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, checkbutton, param->desc, NULL);
     eventbox=gtk_event_box_new();

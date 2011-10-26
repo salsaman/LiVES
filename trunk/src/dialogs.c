@@ -178,7 +178,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   }
 
   if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog2),FALSE);
+    //gtk_dialog_set_has_separator(GTK_DIALOG(dialog2),FALSE);
     gtk_widget_modify_bg(dialog2, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
@@ -1771,7 +1771,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   
   gtk_widget_show(procw->processing);
 
-  if (mainw->is_ready) gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
+  gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_window_set_title (GTK_WINDOW (procw->processing), _("LiVES: - Processing..."));
 
   if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
@@ -1797,25 +1797,25 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   gtk_widget_show (procw->label);
   gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label, FALSE, FALSE, 0);
-  if (mainw->is_ready) gtk_widget_modify_fg(procw->label, GTK_STATE_NORMAL, &palette->normal_fore);
+  gtk_widget_modify_fg(procw->label, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_label_set_justify (GTK_LABEL (procw->label), GTK_JUSTIFY_LEFT);
 
   procw->progressbar = gtk_progress_bar_new ();
   gtk_widget_show (procw->progressbar);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->progressbar, FALSE, FALSE, 0);
-  if (mainw->is_ready) gtk_widget_modify_fg(procw->progressbar, GTK_STATE_NORMAL, &palette->normal_fore);
+  gtk_widget_modify_fg(procw->progressbar, GTK_STATE_NORMAL, &palette->normal_fore);
 
   procw->label2 = gtk_label_new (_("\nPlease Wait"));
   gtk_widget_show (procw->label2);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label2, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (procw->label2), GTK_JUSTIFY_CENTER);
-  if (mainw->is_ready) gtk_widget_modify_fg(procw->label2, GTK_STATE_NORMAL, &palette->normal_fore);
+  gtk_widget_modify_fg(procw->label2, GTK_STATE_NORMAL, &palette->normal_fore);
 
   procw->label3 = gtk_label_new (NULL);
   gtk_widget_show (procw->label3);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label3, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (procw->label3), GTK_JUSTIFY_CENTER);
-  if (mainw->is_ready) gtk_widget_modify_fg(procw->label3, GTK_STATE_NORMAL, &palette->normal_fore);
+  gtk_widget_modify_fg(procw->label3, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
 
   if (has_cancel) {

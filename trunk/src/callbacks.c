@@ -62,6 +62,7 @@ lives_exit (void) {
 
     if (mainw->multitrack!=NULL&&!mainw->only_close) {
        if (mainw->multitrack->undo_mem!=NULL) g_free(mainw->multitrack->undo_mem);
+       mainw->multitrack->undo_mem=NULL;
     }
 
     if (mainw->playing_file>-1) {

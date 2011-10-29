@@ -208,7 +208,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     cfile->fx_frame_pump=cfile->start;
   }
   else cfile->fx_frame_pump=0;
-  g_print("pt aa\n");
+
   if (!do_progress_dialog(TRUE,TRUE,effectstring)||mainw->error) {
     mainw->last_dprint_file=ldfile;
     do_rfx_cleanup(rfx);

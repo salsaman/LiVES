@@ -386,9 +386,10 @@ void write_backup_layout_numbering(lives_mt *mt) {
 
 
 static void renumber_from_backup_layout_numbering(lives_mt *mt) {
-  int fd,count=1,vari,offs=0;
+  int fd,count=1,vari,clipn,offs=0;
   gdouble vard;
   gchar *aload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  char buf[256];
 
   if (prefs->startup_interface==STARTUP_MT) count++;
 
@@ -396,13 +397,19 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
   if (fd!=-1) {
     while (1) {
-      if (read(fd,&vari,sizint)>0) {
-	renumbered_clips[vari+offs]=count;
-	if (read(fd,&vard,sizdbl)>0) {
+      if (read(fd,&clipn,sizint)==sizint) {
+	if (read(fd,&vard,sizdbl)==sizdbl) {
 	  lfps[count]=vard;
-	  if (read(fd,&vari,sizint)>0) {
-	    // skip the handle
-	    lseek(fd,vari,SEEK_CUR);
+
+	  if (read(fd,&vari,sizint)==sizint) {
+	    // compare the handle - assume clip ordering has not changed
+	    if (vari>256) vari=256;
+	    if (read(fd,buf,vari)==vari) {
+	      while (mainw->files[clipn+offs]!=NULL&&strcmp(mainw->files[clipn+offs]->handle,buf)) offs++;
+	      if (mainw->files[clipn+offs]==NULL) break;
+	      renumbered_clips[clipn+offs]=count;
+	    }
+	    else break;
 	  }
 	  else break;
 	}
@@ -2077,7 +2084,7 @@ static void renumber_clips(void) {
 }
 
 
-static void rerenumber_clips(gchar *lfile) {
+static void rerenumber_clips(const char *lfile) {
   // we loaded an event_list, now we match clip numbers in event_list with our current clips, using the layout map file
   // the renumbering is used for translations in event_list_rectify
   // in mt_init_tracks we alter the clip numbers in the event_list
@@ -2100,17 +2107,23 @@ static void rerenumber_clips(gchar *lfile) {
   }
 
   if (lfile!=NULL) {
+    // lfile is supplied layout file name
     for (i=1;i<=MAX_FILES&&mainw->files[i]!=NULL;i++) {
       lmap=mainw->files[i]->layout_map;
       while (lmap!=NULL) {
+
+	// lmap->data starts with layout name
 	if (!strncmp(lmap->data,lfile,strlen(lfile))) {
 	  threaded_dialog_spin();
 	  array=g_strsplit(lmap->data,"|",-1);
 	  threaded_dialog_spin();
+
+	  // piece 2 is the clip number
 	  rnc=atoi(array[1]);
 	  
 	  renumbered_clips[rnc]=i;
 
+	  // original fps
 	  lfps[i]=strtod(array[3],NULL);
 	  threaded_dialog_spin();
 	  g_strfreev(array);
@@ -3698,16 +3711,16 @@ static void on_grav_mode_changed (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (menuitem==(GtkMenuItem *)mt->grav_normal) {
-    gtk_tool_button_set_label(mt->grav_menuitem,_("_Gravity: Normal"));
+    gtk_tool_button_set_label(GTK_TOOL_BUTTON(mt->grav_menuitem),_("_Gravity: Normal"));
     mt->opts.grav_mode=GRAV_MODE_NORMAL;
   }
   else if (menuitem==(GtkMenuItem *)mt->grav_left) {
-    gtk_tool_button_set_label(mt->grav_menuitem,_("_Gravity: Left"));
+    gtk_tool_button_set_label(GTK_TOOL_BUTTON(mt->grav_menuitem),_("_Gravity: Left"));
     mt->opts.grav_mode=GRAV_MODE_LEFT;
   }
 
   if (menuitem==(GtkMenuItem *)mt->grav_right) {
-    gtk_tool_button_set_label(mt->grav_menuitem,_("_Gravity: Right"));
+    gtk_tool_button_set_label(GTK_TOOL_BUTTON(mt->grav_menuitem),_("_Gravity: Right"));
     mt->opts.grav_mode=GRAV_MODE_RIGHT;
     set_menu_text(mt->remove_first_gaps,_("Close _last gap(s) in selected tracks/time"),TRUE);
   }
@@ -11571,13 +11584,14 @@ void do_block_context (lives_mt *mt, GdkEventButton *event, track_rect *block) {
     gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   
-  delete_block = gtk_menu_item_new_with_mnemonic (_("_Delete this block"));
-  gtk_container_add (GTK_CONTAINER (menu), delete_block);
-  if (mt->is_rendering) gtk_widget_set_sensitive(delete_block,FALSE);
+  selblock = gtk_menu_item_new_with_mnemonic (_("_Select this block"));
+  gtk_container_add (GTK_CONTAINER (menu), selblock);
 
-  g_signal_connect (GTK_OBJECT (delete_block), "activate",
-		    G_CALLBACK (delete_block_cb),
+  g_signal_connect (GTK_OBJECT (selblock), "activate",
+		    G_CALLBACK (selblock_cb),
 		    (gpointer)mt);
+
+
   
   if (block->ordered) { // TODO
     split_here = gtk_menu_item_new_with_mnemonic (_("_Split block here"));
@@ -11611,11 +11625,13 @@ void do_block_context (lives_mt *mt, GdkEventButton *event, track_rect *block) {
 
   }
 
-  selblock = gtk_menu_item_new_with_mnemonic (_("_Select this block"));
-  gtk_container_add (GTK_CONTAINER (menu), selblock);
 
-  g_signal_connect (GTK_OBJECT (selblock), "activate",
-		    G_CALLBACK (selblock_cb),
+  delete_block = gtk_menu_item_new_with_mnemonic (_("_Delete this block"));
+  gtk_container_add (GTK_CONTAINER (menu), delete_block);
+  if (mt->is_rendering) gtk_widget_set_sensitive(delete_block,FALSE);
+
+  g_signal_connect (GTK_OBJECT (delete_block), "activate",
+		    G_CALLBACK (delete_block_cb),
 		    (gpointer)mt);
 
   gtk_widget_show_all (menu);
@@ -13656,6 +13672,8 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   rfx_free(rfx);
   g_free(rfx);
 
+  mt_tl_move(mt,start_tc/U_SEC);
+
   if (has_params) {
     polymorph(mt,POLY_PARAMS);
     gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
@@ -15630,8 +15648,18 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
     for (i=offset_start;i<=offset_end;i++) {
       secs=((gdouble)i/ebox->allocation.width*tl_span+mt->tl_min-offset_startd)*vel;
       secs+=seek;
-      ypos=ABS(get_float_audio_val_at_time(fnum,secs,chnum,cfile->achans)); // not sure if this is right...
-      gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,(1.-ypos)/2.*ebox->allocation.height,i,(1.+ypos)/2.*ebox->allocation.height);
+      ypos=ABS(get_float_audio_val_at_time(fnum,secs,chnum,cfile->achans));
+      if (chnum==0)
+	gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,
+		      ebox->allocation.height,i,(1.-ypos)*ebox->allocation.height);
+      else if (chnum==1)
+	gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,
+		      0,i,ypos*ebox->allocation.height);
+      else
+	gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,
+		      (1.-ypos)/2.*ebox->allocation.height,i,(1.+ypos)/2.*ebox->allocation.height);
+
+
     }
     block=block->next;
   }

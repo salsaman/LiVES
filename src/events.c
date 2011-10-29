@@ -3970,7 +3970,9 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
   int error;
   register int i,j;
 
-  float *matrix[ntracks];
+  double *matrix[ntracks+nbtracks];
+
+  ntracks+=nbtracks;
 
   if (shortcut==NULL||*shortcut==NULL) stored_fmap=NULL;
 
@@ -3999,9 +4001,8 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
     if (fmap==*shortcut) fmap=stored_fmap;
   }
 
-
   for (i=0;i<ntracks;i++) {
-    matrix[i]=(float *)g_malloc(ntracks*sizeof(float));
+    matrix[i]=(double *)g_malloc(ntracks*sizeof(double));
     for (j=0;j<ntracks;j++) {
       matrix[i][j]=0.;
     }
@@ -4012,8 +4013,10 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
   if (fmap!=NULL) {
     // here we look at all init_events in fmap. If any have "host_audio_transition" set, then
     // we we look at the 2 in channels. We first multiply matrix[t0][...] by trans
-    // then we add matrix[t1][...]*(1.0 - trans) to matrix[t0][...]
+    // then we add matrix[t1][...]*(1.0 - trans) to matrix[t3][...]
     // where trans is the normalised value of the transition parameter
+    // t3 is the output channel, this is usually the same track as t0
+    // thus each row in the matrix represents the contribution from each layer (track)
     if (weed_plant_has_leaf(fmap,"init_events")) {
       weed_plant_t **iev=(weed_plant_t **)weed_get_voidptr_array(fmap,"init_events",&error);
       gint nins=weed_leaf_num_elements(fmap,"init_events");
@@ -4065,6 +4068,9 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
     }
   }
   
+
+  // now we select as visibility, whichever row is the first layer to have a non-blank frame
+
   for (i=0;i<nxtracks;i++) {
     if (clips[i]>=0&&frames[i]>0) {
       got=i+nbtracks;
@@ -4076,7 +4082,7 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
   weed_free(frames);
 
   if (got==-1) {
-    // all frames blank
+    // all frames blank - backing audio only
     for (i=0;i<ntracks;i++) {
       if (i>=nbtracks) vis[i]=0.;
       g_free(matrix[i]);
@@ -4085,8 +4091,7 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
   }
 
   for (i=nbtracks;i<ntracks;i++) {
-    if (i<=nxtracks) vis[i]=matrix[got][i];
-    else vis[i]=0.;
+    vis[i]=matrix[got][i];
   }
 
   for (i=0;i<ntracks;i++) {

@@ -57,7 +57,7 @@ if ($command eq "get_capabilities") {
     # bit 1 - unused
     # bit 2 - can encode png
     # bit 3 - not pure perl
-    print "4\n";
+    print "5\n";
     exit 0;
 }
 
@@ -74,16 +74,45 @@ if ($command eq "get_formats") {
    print "mjpeg|mjpg|2|none|avi|\n";
    print "ffv1|ffv1 (lossless)|2|none|avi|\n";
    print "kvcd|kvcd (experimental)|4|arate=32000;44100;48000,fps=24;25;30,aspect=352:240,hblock=16,vblock=16|mpg|\n";
-   print "flv|flv|41|arate=44100;22050;11025|flv|\n";
+   print "flv|flv|1|arate=44100;22050;11025|flv|\n";
    print "wmv2|wmv2/wma2/asf|256|arate=44100;22050;11025|wmv|\n";
    
    exit 0;
+}
+
+if ($command eq "get_rfx") {
+    # nice example of how to give the user a choice of options
+
+    if ($otype eq "flv") {
+	$aq=&rc_get("encoder_acodec");
+	if ($aq==0) {
+	    # mandatory section
+	    print "<define>\n";
+	    print "|1.7\n";
+	    print "</define>\n";
+	    
+	    # mandatory section
+	    print "<language_code>\n";
+	    print "0xF0\n";
+	    print "</language_code>\n";
+	    
+	    # optional section
+	    print "<params>\n";
+	    print "mp3|Use _mp3 audio codec|bool|1|1\n";
+	    print "mp3lame|Use mp3_lame audio codec|bool|0|1\n";
+	    print "</params>\n";
+
+	}
+    }
 }
 
 
 
 if ($command eq "encode") {
     # encode 
+
+    $usemp3=$ARGV[13];
+    $usemp3lame=$ARGV[14];
 
     $encoder_command="mencoder";
 
@@ -172,7 +201,15 @@ if ($command eq "encode") {
     #audio
     $audio_com="";
     unless ($audiofile eq "") {
-	if ($aq==2) {
+	if ($aq==0) {
+	    if ($usemp3lame) {
+		$audio_com.="-audiofile ".$audiofile." -oac lavc -lavcopts acodec=libmp3lame";
+	    }
+	    else {
+		$audio_com.="-audiofile ".$audiofile." -oac lavc -lavcopts acodec=mp3";
+	    }
+	}
+	elsif ($aq==2) {
 	    $audio_com="-audiofile ".$audiofile." -oac copy";
 	}
 	elsif ($aq==4) {

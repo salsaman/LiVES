@@ -1080,6 +1080,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     // TODO - eliminate this
     mainw->current_file=new_file;
 
+    cfile->nopreview=TRUE;
     if (!(do_progress_dialog(TRUE,TRUE,_ ("Linking selection")))) {
       dummyvar=system (g_strdup_printf("smogrify close %s",cfile->handle));
       g_free (cfile);
@@ -1104,7 +1105,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     aud_start=calc_time_from_frame (new_file,1)*nfile->arps/nfile->arate;
     aud_end=calc_time_from_frame (new_file,nfile->frames+1)*nfile->arps/nfile->arate;
-
+    cfile->nopreview=FALSE;
   }
   else mainw->current_file=clip; // for encoder restns
 
@@ -1191,10 +1192,12 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     mainw->current_file=clip;
 
+    cfile->nopreview=TRUE;
     if (!(do_progress_dialog(TRUE,TRUE,_ ("Linking selection")))) {
       com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
       dummyvar=system (com);
       g_free (com);
+      cfile->nopreview=FALSE;
       mainw->current_file=current_file;
       sensitize();
       d_print_cancelled();
@@ -1213,6 +1216,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     aud_start=calc_time_from_frame (clip,1)*sfile->arps/sfile->arate;
     aud_end=calc_time_from_frame (clip,end-start+1)*sfile->arps/sfile->arate;
+    cfile->nopreview=FALSE;
   }
 
 
@@ -1446,6 +1450,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
+      sensitize();
       return;
     }
     g_free (mesg);
@@ -1487,6 +1492,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
+      sensitize();
       return;
     }
     g_free(tmp);
@@ -1513,7 +1519,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	dummyvar=system ((com=g_strdup_printf("smogrify close %s",nfile->handle)));
 	g_free(com);
 	g_free (nfile);
-	nfile=NULL;
+	mainw->files[new_file]=NULL;
 	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
 	  mainw->first_free_file=new_file;
 	mainw->current_file=current_file;

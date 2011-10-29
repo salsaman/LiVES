@@ -1279,15 +1279,11 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
     }
     return;
   }
-  if (future_prefs->encoder.of_allowed_acodecs&(1<<AUDIO_CODEC_PCM)) {
-    prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup(_ ("PCM (highest quality; largest files)")));
-    prefs->acodec_list_to_format[count++]=AUDIO_CODEC_PCM;
-    if (future_prefs->encoder.audio_codec==AUDIO_CODEC_PCM) is_allowed=TRUE;
-  }
-
-  for (idx=2;strlen(anames[idx]);idx++) {
+  for (idx=0;strlen(anames[idx]);idx++) {
     if (future_prefs->encoder.of_allowed_acodecs&(1<<idx)) {
-      prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup(anames[idx]));
+      if (idx==AUDIO_CODEC_PCM) prefs->acodec_list=g_list_append (prefs->acodec_list,
+								  g_strdup(_ ("PCM (highest quality; largest files)")));
+      else prefs->acodec_list=g_list_append (prefs->acodec_list,g_strdup(anames[idx]));
       prefs->acodec_list_to_format[count++]=idx;
       if (future_prefs->encoder.audio_codec==idx) is_allowed=TRUE;
     }

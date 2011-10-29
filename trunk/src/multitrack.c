@@ -13672,7 +13672,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   rfx_free(rfx);
   g_free(rfx);
 
-  mt_tl_move(mt,start_tc/U_SEC);
+  mt_tl_move(mt,start_tc/U_SEC-GTK_RULER (mt->timeline)->position);
 
   if (has_params) {
     polymorph(mt,POLY_PARAMS);

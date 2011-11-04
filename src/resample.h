@@ -1,6 +1,6 @@
 // resample.h
 // LiVES
-// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2011 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -59,8 +59,9 @@ _resaudw* create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 void on_change_speed_activate (GtkMenuItem *, gpointer);
 void on_change_speed_ok_clicked (GtkButton *, gpointer);
 
-gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, gint asigned, gboolean swap_endian);
-gint reorder_frames(void);
+gboolean auto_resample_resize (gint width, gint height, gdouble fps, gint fps_num, 
+			       gint fps_denom, gint arate, gint asigned, gboolean swap_endian);
+gint reorder_frames(int rwidth, int rheight);
 gint deorder_frames(gint old_framecount, gboolean leave_bak); ///< leave_bak is a special mode for the clipboard
 
 gboolean resample_clipboard(gdouble new_fps); ///< call this to resample clipboard video

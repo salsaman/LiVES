@@ -1,6 +1,6 @@
 // interface.c
 // LiVES
-// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl>
+// (c) G. Finch 2003 - 2011 <salsaman@xs4all.nl>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -31,12 +31,18 @@ extern void mt_change_disp_tracks_ok (GtkButton *, gpointer user_data);
 static gulong arrow_id; // works around a known bug in gobject
 
 
-void add_suffix_check(GtkBox *box) {
+void add_suffix_check(GtkBox *box, const gchar *ext) {
 
   GtkWidget *hbox;
   GtkWidget *checkbutton = gtk_check_button_new ();
   GtkWidget *eventbox=gtk_event_box_new();
-  GtkWidget *label=gtk_label_new_with_mnemonic (_ ("Let LiVES set the _file extension"));
+  GtkWidget *label;
+  if (ext==NULL) label=gtk_label_new_with_mnemonic (_ ("Let LiVES set the _file extension"));
+  else {
+    gchar *txt=g_strdup_printf(_ ("Let LiVES set the _file extension (.%s)"),ext);
+    label=gtk_label_new_with_mnemonic (txt);
+    g_free(txt);
+  }
 
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
 
@@ -796,6 +802,18 @@ create_info_window (gint audio_channels, gboolean is_mt) {
   return filew;
 }
 
+static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
+  GtkToggleButton *cb=(GtkToggleButton *)user_data;
+
+  if (!gtk_toggle_button_get_active(t)) {
+    gtk_widget_set_sensitive(cb,FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cb),FALSE);
+  }
+  else {
+    gtk_widget_set_sensitive(cb,TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cb),prefs->enc_letterbox);
+  }
+}
 
 
 
@@ -808,9 +826,11 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
   GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
-  GtkWidget *checkbutton;
+  GtkWidget *checkbutton=NULL;
+  GtkWidget *checkbutton2;
   GtkWidget *label;
   GtkWidget *hbox;
+  GtkWidget *eventbox;
 
   dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Encoding options"));
@@ -839,22 +859,78 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
 
   if (opt_resize) {      
     checkbutton = gtk_check_button_new ();
-    if (text2!=NULL) label=gtk_label_new_with_mnemonic (_ ("<------------- (Check the box to resize as suggested)"));
-    else label=gtk_label_new_with_mnemonic (_ ("<------------- (Check the box to use the size recommendation)"));
+    if (text2!=NULL) label=gtk_label_new_with_mnemonic (_ ("<------------- (Check the box to re_size as suggested)"));
+    else label=gtk_label_new_with_mnemonic (_ ("<------------- (Check the box to use the _size recommendation)"));
+    eventbox=gtk_event_box_new();
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      checkbutton);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
+
     hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, TRUE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-    g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
-		      G_CALLBACK (on_boolean_toggled),
-		      &mainw->fx1_bool);
+    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+    gtk_widget_show_all (hbox);
+    
+    g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
+			    G_CALLBACK (on_boolean_toggled),
+			    &mainw->fx1_bool);
+
   }
   else if (text2==NULL) mainw->fx1_bool=TRUE;
+
+
+
+  if (text2!=NULL&&(mainw->fx1_bool||opt_resize)) {
+    checkbutton2 = gtk_check_button_new ();
+    gtk_tooltips_set_tip (mainw->tooltips, checkbutton2, _("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."), NULL);
+    eventbox=gtk_event_box_new();
+    gtk_tooltips_copy(eventbox,checkbutton2);
+    label=gtk_label_new_with_mnemonic (_("Use _letterboxing to maintain aspect ratio (optional)"));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton2);
+    
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      checkbutton2);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+
+    if (opt_resize) {
+      gtk_widget_set_sensitive(checkbutton2,FALSE);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton2),FALSE);
+    }
+    else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton2),prefs->enc_letterbox);
+
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), checkbutton2, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+    gtk_widget_show_all (hbox);
+    
+    g_signal_connect_after (GTK_OBJECT (checkbutton2), "toggled",
+			    G_CALLBACK (on_boolean_toggled),
+			    &prefs->enc_letterbox);
+
+
+    if (opt_resize) 
+      g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
+			      G_CALLBACK (on_resizecb_toggled),
+			      checkbutton2);
+
+
+  }
+
 
   dialog_action_area = GTK_DIALOG (dialog)->action_area;
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
@@ -3052,52 +3128,11 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
     // options
 
 
-
-    commentsw->letterbox_checkbutton = gtk_check_button_new ();
-    //if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, checkbutton, param->desc, NULL);
-    eventbox=gtk_event_box_new();
-    //gtk_tooltips_copy(eventbox,checkbutton);
-    label=gtk_label_new_with_mnemonic (_("Use letterboxing instead of resizing"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),commentsw->letterbox_checkbutton);
-    
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      commentsw->letterbox_checkbutton);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-
-    if (sfile->subt==NULL) {
-      gtk_widget_set_sensitive(commentsw->letterbox_checkbutton,FALSE);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(commentsw->letterbox_checkbutton),FALSE);
-    }
-    else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(commentsw->letterbox_checkbutton),TRUE);
-
-    hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), commentsw->letterbox_checkbutton, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    gtk_widget_show_all (hbox);
-    
-    
-    //g_signal_connect (buttond, "clicked",G_CALLBACK (boolean_act_ch_menuitem),mainw->letter);
-
-
-
-
-
-
-
-
-
     commentsw->subt_checkbutton = gtk_check_button_new ();
     //if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, checkbutton, param->desc, NULL);
     eventbox=gtk_event_box_new();
     //gtk_tooltips_copy(eventbox,checkbutton);
-    label=gtk_label_new_with_mnemonic (_("Save subtitles to file"));
+    label=gtk_label_new_with_mnemonic (_("Save _subtitles to file"));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),commentsw->subt_checkbutton);
     
     gtk_container_add(GTK_CONTAINER(eventbox),label);

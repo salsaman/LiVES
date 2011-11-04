@@ -1903,20 +1903,51 @@ if (defined($ARGV[0])) {
 	    chdir $curtmpdir;
 	    $end=$ARGV[2];
 
-	    my $width=$ARGV[3];
-	    my $height=$ARGV[4];
+	    my $iwidth=$ARGV[3];
+	    my $iheight=$ARGV[4];
 
 	    $img_ext=".".$ARGV[5];
 
 	    $resize_ext=".mgk";
 
+	    my $letterbox=0;
+
+	    if (defined($ARGV[6]) && $ARGV[6]>0) {
+		# letterboxen - next values are image-in-frame size
+		$letterbox=1;
+		$owidth=$iwidth;
+		$oheight=$iheight;
+		$iwidth=$ARGV[6];
+		$iheight=$ARGV[7];
+		$in_ext=$resize_ext;
+		$out_ext=$img_ext;
+	    }
+
+	    &clean_old;
+
 	    for ($i=1;$i<=$end;$i++) {
 		$name=&mkname($i);
-		&resize_frame($name,$width,$height);
+		
+		`/bin/cp -f $name$img_ext $name.bak`;
+
+		if ($iwidth>0 && $iheight>0) {
+		    &resize_frame($name,$iwidth,$iheight);
+		}
+
+		if ($letterbox) {
+		    &letterbox_frame($name,abs($iwidth),abs($iheight),$owidth,$oheight);
+		}
+
 		&sig_progress($i);
 	    }
+
+
 	    $start=1;
-	    &mv_mgk;
+
+	    unless ($letterbox) {
+		&mv_mgk;
+	    }
+
 	    &sig_complete;
 	    exit 0;
 	}
@@ -2053,12 +2084,26 @@ if (defined($ARGV[0])) {
 	    $old_end=$ARGV[7];
 	}
 
+	$letterbox=0;
+
+	if (defined $ARGV[8] && $ARGV[8]!=0) {
+	    #letterbox size
+	    $letterbox=1;
+	    $owidth=$newwidth;
+	    $oheight=$newheight;
+
+	    $newwidth=$ARGV[8];
+	    $newheight=$ARGV[9];
+	    $in_ext=".mgk";
+	    $out_ext=$img_ext;
+	}
+
 	$newframe=-1;
 	$event_file="$curtmpdir/event.frames";
 	$resize_ext=".tmp";
 	chdir $curtmpdir;
 
-	unless ($leave_bak==1) {
+	unless ($leave_bak==1||$letterbox) {
 	    &clean_old;
 	}
 
@@ -2076,19 +2121,33 @@ if (defined($ARGV[0])) {
 		    if (-f "$curtmpdir/$from$img_ext") {
 			$to=&mkname($count);
 
-			if (defined $newwidth && defined $newheight && $newwidth*$newheight > 0) {
+			if ($newwidth > 0 && $newheight > 0) {
 			    &resize_frame($from,$newwidth,$newheight);
-			    unlink "$to.mgk";
-			    rename "$from$resize_ext","$to.mgk";
+			    `/bin/mv -f $from$resize_ext $to.mgk`;
 			}
 			else {
-			    # we don't preview here...
-			    unless ($from eq $to) {
-				`/bin/cp $from$img_ext $to.mgk`;
+			    unless (($from eq $to) || $letterbox) {
+				`/bin/cp -f $from$img_ext $to.mgk`;
 			    }
 			}
-		    }
 
+#now resized are in .mgk
+			if ($letterbox) {
+			    if ($leave_bak) {
+				#letterboxing was done with resize
+				unless ($from eq $to) {
+				    `/bin/cp -f $from$img_ext $to$img_ext`;
+				    `/bin/cp -f $from.mgk $to.mgk`;
+				}
+			    }
+			    else {
+				# make $to.mgk $to.img_ext
+				&letterbox_frame($to,abs($newwidth),abs($newheight),$owidth,$oheight);
+			    }
+#lb are in .img
+			}
+
+		    }
 		    $count++;
 		}
 		&sig_progress($fcount++);
@@ -2104,7 +2163,9 @@ if (defined($ARGV[0])) {
 	$new_count=--$count;
 	$end=$count;
 
-	&mv_mgk;
+	unless ($letterbox) {
+	    &mv_mgk;
+	}
 
 	if ($end<$old_end) {
 	    for ($i=$end+1;$i<=$old_end;$i++) {
@@ -2281,6 +2342,10 @@ if (defined($ARGV[0])) {
 	    $start=$ARGV[2];
 	    $end=$ARGV[3];
 	    $img_ext=".".$ARGV[4];
+	    if (defined($ARGV[5])) {
+		$leave_bak=$ARGV[5];
+	    }
+
 	    &mv_mgk;
 	    &sig_complete;
 	    exit 0;
@@ -3267,7 +3332,7 @@ sub undo_audio {
 
 sub backup_audio {
     &clean_old;
-    `/bin/cp $curtmpdir/audio $curtmpdir/audio.bak >/dev/null 2>&1`;
+    `/bin/cp -f $curtmpdir/audio $curtmpdir/audio.bak >/dev/null 2>&1`;
 }
 
 
@@ -3359,7 +3424,7 @@ sub insert {
 	$to=&mkname($i+$frames_to_move);
 	if ($i<=($num_frames-$frames_to_move)&&!$undo_cut&&-f "$curtmpdir/$from$img_ext") {
 	    # this frame will get overwritten, so back it up
-	    system("/bin/cp $curtmpdir/$from$img_ext $curtmpdir/$from.bak");
+	    system("/bin/cp -f $curtmpdir/$from$img_ext $curtmpdir/$from.bak");
 	}
 	rename "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext";
 	&sig_progress($num_frames-$i);
@@ -3405,7 +3470,7 @@ sub insert {
 		}
 
 		if ($quick_copy==1) {
-		    system("/bin/cp $fromdir/$from$img_ext2 $curtmpdir/$to$img_ext >/dev/null 2>&1");
+		    system("/bin/cp -f $fromdir/$from$img_ext2 $curtmpdir/$to$img_ext >/dev/null 2>&1");
 		}
 		else {
 		    if ($antialias eq "false") {
@@ -3460,6 +3525,36 @@ sub resize_frame {
     else {
 	system("$convert_command -size $width"."x$height $name$input_ext -resize $width!x$height! $name$resize_ext >/dev/null 2>&1");
     }
+}
+
+
+
+sub letterbox_frame {
+    my ($name,$iwidth,$iheight,$owidth,$oheight)=@_;
+
+# frame is at size $iwidth x $iheight (if known, or 0)
+# from name is $name$input_ext, to name is $name$output_ext
+# center overlay frame in black rect size $owidth x $oheight
+
+    my $from="$name$in_ext";
+    my $to="$name$out_ext";
+
+    # make a background frame
+    if (!defined($bgcolour)) {
+	$bgcolour="#000000";
+    }
+    
+    system("$convert_command -size $owidth!x$oheight! xc:$bgcolour blank.jpg >/dev/null 2>&1");
+
+
+    # overlay frame
+    $xstart=int(($owidth-$iwidth)/2);
+    $ystart=int(($oheight-$iheight)/2);
+    
+    system("$composite_command -compose plus -dissolve 100 -geometry $iwidth!x$iheight!+$xstart!+$ystart! $from blank.jpg $to >/dev/null 2>&1");
+
+    unlink "blank.jpg";
+
 }
 
 
@@ -3539,6 +3634,8 @@ sub trim_frame {
 	system("$convert_command -antialias -size $width"."x$height $name$input_ext -crop $nwidth!x$nheight!+$x+$y $name$resize_ext >/dev/null 2>&1");
     }
 }
+
+
 
 sub trim_center {
     my ($name,$width,$height)=@_;
@@ -4681,7 +4778,7 @@ sub fill_and_redo_frames {
 	}
 
 	unless ($fromname eq $name) {
-	    system("/bin/cp $fromname$img_ext $name$img_ext");
+	    system("/bin/cp -f $fromname$img_ext $name$img_ext");
 	}
 	&sig_progress($i);
     }

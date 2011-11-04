@@ -1,6 +1,6 @@
 // effects-weed.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2010 (salsaman@xs4all.nl)
+// (c) G. Finch 2005 - 2011 (salsaman@xs4all.nl)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -2160,6 +2160,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   for (i=0;i<ntracks;i++) {
     layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
+
     in_abuf=g_malloc(nchans*nsf);
     for (j=0;j<nchans;j++) {
       w_memcpy((char *)in_abuf+(j*nsf),abuf[i*nchans+j],nsf);

@@ -1279,6 +1279,8 @@ gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num
 
   GtkWidget *prep_dialog;
 
+  mainw->fx1_bool=FALSE;
+
   if (swap_endian||(asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)||(fps>0.&&fps!=rdet->fps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=rdet->fps)||(!anr&&(rdet->width!=width||rdet->height!=height)&&height*width>0)||(arate!=rdet->arate&&arate>0)) {
     g_free (msg2);
     msg2=g_strdup (_ ("LiVES recommends the following settings:\n\n"));

@@ -948,6 +948,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->disabled_decoders=get_list_pref("disabled_decoders");
 
+    prefs->enc_letterbox=FALSE;
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

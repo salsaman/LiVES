@@ -277,7 +277,8 @@ typedef struct {
 
   gboolean stream_audio_out;
   gboolean unstable_fx;
-  gboolean letterbox;
+  gboolean letterbox; ///< playback with letterbox
+  gboolean enc_letterbox; ///< encode with letterbox
 
   GList *disabled_decoders;
 } _prefs;

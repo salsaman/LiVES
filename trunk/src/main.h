@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl) 2003 - 2010
+// (c) G. Finch (salsaman@xs4all.nl) 2003 - 2011
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -646,7 +646,7 @@ void add_to_playframe (void);
 GtkWidget* create_cdtrack_dialog (gint type, gpointer user_data);
 GtkTextView *create_output_textview(void);
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, GtkWidget *extra);
-void add_suffix_check(GtkBox *box);
+void add_suffix_check(GtkBox *box, const gchar *ext);
 
 
 // dialogs.c

@@ -1,6 +1,6 @@
 // saveplay.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2010
+// (c) G. Finch 2003 - 2011
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -904,12 +904,14 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   hbox = gtk_hbox_new (FALSE, 0);
   mainw->fx1_bool=TRUE;
-  add_suffix_check(GTK_BOX(hbox));
+  add_suffix_check(GTK_BOX(hbox),prefs->encoder.of_def_ext);
   gtk_widget_show_all(hbox);
 
   if (filename==NULL) {
-    n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
-    if (n_file_name==NULL||!strlen(n_file_name)) return;
+    do {
+      n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
+      if (n_file_name==NULL) return;
+    } while (!strlen(n_file_name));
     g_snprintf(mainw->vid_save_dir,256,"%s",n_file_name);
     get_dirname(mainw->vid_save_dir);
     if (prefs->save_directories) {
@@ -1087,8 +1089,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       cfile=NULL;
       if (mainw->first_free_file==-1||mainw->first_free_file>new_file) 
 	mainw->first_free_file=new_file;
-      mainw->current_file=current_file;
-      sensitize();
+      switch_to_file(mainw->current_file,current_file);
       d_print_cancelled();
       if (rdet!=NULL) {
 	gtk_widget_destroy (rdet->dialog);
@@ -1125,8 +1126,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       dummyvar=system (com);
       g_free (com);
     }
-    mainw->current_file=current_file;
-    sensitize();
+    switch_to_file(mainw->current_file,current_file);
     d_print_cancelled();
     if (rdet!=NULL) {
       gtk_widget_destroy (rdet->dialog);
@@ -1138,7 +1138,6 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
     if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
     mainw->subt_save_file=NULL;
-    mainw->current_file=current_file;
     return;
   }
 
@@ -1198,8 +1197,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       dummyvar=system (com);
       g_free (com);
       cfile->nopreview=FALSE;
-      mainw->current_file=current_file;
-      sensitize();
+      switch_to_file(mainw->current_file,current_file);
       d_print_cancelled();
       if (rdet!=NULL) {
 	gtk_widget_destroy (rdet->dialog);
@@ -1233,7 +1231,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	mainw->cancelled=CANCEL_USER;
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
-	mainw->current_file=current_file;
+	switch_to_file(mainw->current_file,current_file);
 	return;
       }
     }
@@ -1304,8 +1302,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       fx_dialog[1]=NULL;
       g_free(mesg);
       g_free(fps_string);
-      mainw->current_file=current_file;
-      sensitize();
+      switch_to_file(mainw->current_file,current_file);
       d_print_cancelled();
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
@@ -1439,7 +1436,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	g_free (com);
       }
 
-      mainw->current_file=current_file;
+      switch_to_file(mainw->current_file,current_file);
       do_blocking_error_dialog(mesg);
       g_free (mesg);
 
@@ -1482,7 +1479,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	g_free (com);
       }
 
-      mainw->current_file=current_file;
+      switch_to_file(mainw->current_file,current_file);
       do_blocking_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
 
       if (mainw->iochan!=NULL) {
@@ -1498,6 +1495,31 @@ void save_file (int clip, int start, int end, const char *filename) {
     g_free(tmp);
 
     if (save_all) {
+
+      if (prefs->enc_letterbox) {
+	// replace letterboxed frames with maxspect frames
+	int iwidth=sfile->ohsize;
+	int iheight=sfile->ovsize;
+
+	com=g_strdup_printf("smogrify mv_mgk %s %d %d %s 1",sfile->handle,1,sfile->frames,
+			    sfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+
+	unlink(sfile->info_file);
+	dummyvar=system(com);
+
+	do_progress_dialog(TRUE,FALSE,_ ("Clearing letterbox"));
+
+	calc_maxspect(sfile->hsize,sfile->vsize,&iwidth,&iheight);
+
+	sfile->hsize=iwidth;
+	sfile->vsize=iheight;
+
+	save_clip_value(clip,CLIP_DETAILS_WIDTH,&sfile->hsize);
+	save_clip_value(clip,CLIP_DETAILS_HEIGHT,&sfile->vsize);
+      }
+
+
+
       g_snprintf(sfile->save_file_name,255,"%s",full_file_name);
       sfile->changed=FALSE;
 
@@ -1522,16 +1544,16 @@ void save_file (int clip, int start, int end, const char *filename) {
 	mainw->files[new_file]=NULL;
 	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
 	  mainw->first_free_file=new_file;
-	mainw->current_file=current_file;
       }
       else {
 	com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
 	dummyvar=system (com);
 	g_free (com);
-	mainw->current_file=current_file;
       }
     }
   }
+
+  switch_to_file(mainw->current_file,current_file);
 
   if (mainw->iochan!=NULL) {
     gchar *logfile=g_strdup_printf("%sencoder_log_%d_%d.txt",prefs->tmpdir,getuid(),getgid());
@@ -1577,8 +1599,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   }
   g_free(full_file_name);
-  mainw->current_file=current_file;
-  sensitize();
+
 
 }
 
@@ -4024,7 +4045,6 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
     if (fgets(buff,256,rfile)==NULL) {
       gint current_file=mainw->current_file;
       threaded_dialog_spin();
-      d_print_done();
       if (last_was_normal_file&&mainw->multitrack==NULL) {
 	switch_to_file((mainw->current_file=0),current_file);
       }

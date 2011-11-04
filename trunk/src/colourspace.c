@@ -1,6 +1,6 @@
 // colourspace.h
 // LiVES
-// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2011 <salsaman@xs4all.nl>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -6692,6 +6692,11 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
   int oheight=weed_get_int_value(layer,"height",&error);
 
   if (owidth==width&&oheight==height) return; // no resize needed
+
+  if (width<=0||height<=0) {
+    g_printerr("unable to scale layer to %d x %d for palette %d\n",width,height,palette);
+    return;
+  }
 
   if (weed_palette_is_yuv_palette(palette)&&(palette!=WEED_PALETTE_YUV888&&palette!=WEED_PALETTE_YUVA8888)) {
     // we should always convert to unclamped values before resizing

@@ -1,6 +1,6 @@
 // resample.c
 // LiVES
-// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2011 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -107,7 +107,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
 	// we will have more frames...
 	// ...do resize first
-	if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1) {
+	if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1||prefs->enc_letterbox) {
 	  cfile->ohsize=cfile->hsize;
 	  cfile->ovsize=cfile->vsize;
 
@@ -115,8 +115,21 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	    cfile->fx_frame_pump=1;
 	  }
 
-	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
-	  
+	  if (!prefs->enc_letterbox)
+	    com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+	  else {
+	    int iwidth=cfile->hsize,iheight=cfile->vsize;
+	    calc_maxspect(width,height,&iwidth,&iheight);
+
+	    if (iwidth==cfile->hsize&&iheight==cfile->vsize) {
+	      iwidth=-iwidth;
+	      iheight=-iheight;
+	    }
+
+	    reorder_leave_back=TRUE;
+	    com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s %d %d",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
+	  }
+
 	  cfile->progress_start=1;
 	  cfile->progress_end=cfile->frames;
 	  
@@ -130,6 +143,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  rs_builtin=TRUE;
 	}
 	else {
+	  // use resize plugin
 	  int error;
 	  weed_plant_t *first_out;
 	  weed_plant_t *ctmpl;
@@ -142,6 +156,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  weed_set_int_value(ctmpl,"host_height",height);
 	}
 	
+	cfile->nokeep=TRUE;
+
 	if ((rs_builtin&&!do_progress_dialog(TRUE,TRUE,msg))||(!rs_builtin&&!on_realfx_activate_inner(1,resize_rfx))) {
 	  mainw->resizing=FALSE;
 	  g_free(msg);
@@ -155,6 +171,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  cfile->undo_end=cfile->frames;
 	  cfile->fx_frame_pump=0;
 	  on_undo_activate(NULL,NULL);
+	  cfile->nokeep=FALSE;
 	  return FALSE;
 	}
 	g_free(msg);
@@ -176,7 +193,11 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
 	// special "cheat" mode for LiVES
 	reorder_leave_back=TRUE;
-	    
+
+	reorder_width=width;
+	reorder_height=height;
+
+	mainw->resizing=TRUE;
 	on_resample_vid_ok (NULL,NULL);
 
 	reorder_leave_back=FALSE;
@@ -226,8 +247,14 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
       cfile->undo_start=1;
       cfile->undo_end=cfile->frames;
       
+      reorder_width=width;
+      reorder_height=height;
+
       on_resample_vid_ok (NULL,NULL);
       
+      reorder_width=reorder_height=0;
+      reorder_leave_back=FALSE;
+
       if (audio_resampled) cfile->undo_action=UNDO_ATOMIC_RESAMPLE_RESIZE;
       if (mainw->error) {
 	on_undo_activate(NULL,NULL);
@@ -246,15 +273,27 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
       cfile->undo_start=1;
       cfile->undo_end=cfile->frames;
 
-      if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1) {
+      if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1||prefs->enc_letterbox) {
 	// use builtin resize
 
 	if (cfile->clip_type==CLIP_TYPE_FILE) {
 	  cfile->fx_frame_pump=1;
 	}
 
-	com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
-	
+	if (!prefs->enc_letterbox)
+	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+	else {
+	  int iwidth=cfile->hsize,iheight=cfile->vsize;
+	  calc_maxspect(width,height,&iwidth,&iheight);
+
+	  if (iwidth==cfile->hsize&&iheight==cfile->vsize) {
+	    iwidth=-iwidth;
+	    iheight=-iheight;
+	  }
+
+	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s %d %d",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
+	}
+
 	cfile->progress_start=1;
 	cfile->progress_end=cfile->frames;
 	
@@ -284,6 +323,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	weed_set_int_value(ctmpl,"host_height",height);
       }
 
+      cfile->nokeep=TRUE;
+
       if ((rs_builtin&&!do_progress_dialog(TRUE,TRUE,msg))||(!rs_builtin&&!on_realfx_activate_inner(1,resize_rfx))) {
 	mainw->resizing=FALSE;
 	if (msg!=NULL) g_free(msg);
@@ -296,6 +337,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	}
 	cfile->fx_frame_pump=0;
 	on_undo_activate (NULL,NULL);
+	cfile->nokeep=FALSE;
 	return FALSE;
       }
 
@@ -556,7 +598,7 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
 //////////////////////////////////////////////////////////////////
 
 
-static void on_reorder_activate (void) {
+static void on_reorder_activate (int rwidth, int rheight) {
   gchar *msg;
   gboolean has_lmap_error=FALSE;
 
@@ -578,7 +620,7 @@ static void on_reorder_activate (void) {
 
   //  we  do the reorder in reorder_frames()
   // this will clear event_list and set it in event_list_back
-  if ((cfile->frames=reorder_frames())<0) {
+  if ((cfile->frames=reorder_frames(rwidth,rheight))<0) {
     // reordering error
     if (!(cfile->undo_action==UNDO_RESAMPLE)) {
      cfile->frames=-cfile->frames;
@@ -963,7 +1005,7 @@ on_resample_vid_ok (GtkButton *button, GtkEntry *entry)
   cfile->undo_action=UNDO_RESAMPLE;
   // REORDER
   // this calls reorder_frames, which sets event_list_back==event_list, and clears event_list
-  on_reorder_activate();
+  on_reorder_activate(reorder_width,reorder_height);
   
   if (cfile->frames<=0||mainw->cancelled!=CANCEL_NONE) {
     // reordering error...
@@ -2299,15 +2341,30 @@ on_change_speed_ok_clicked                (GtkButton *button,
 
 
 
-gint
-reorder_frames(void) {
+gint reorder_frames(int rwidth, int rheight) {
   int new_frames=cfile->old_frames;
   int cur_frames=cfile->frames;
   gchar **array;
   gchar *com;
 
-  if (reorder_width*reorder_height==0) com=g_strdup_printf("smogrify reorder %s %s %d 0 0 %d %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,reorder_leave_back,cfile->frames);
-  else com=g_strdup_printf("smogrify reorder %s %s %d %d %d 0 %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,reorder_width,reorder_height,cfile->frames);
+  if (rwidth*rheight==0) com=g_strdup_printf("smogrify reorder %s %s %d 0 0 %d %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,reorder_leave_back,cfile->frames);
+  else {
+    if (!prefs->enc_letterbox) {
+      com=g_strdup_printf("smogrify reorder %s %s %d %d %d 0 %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,cfile->frames);
+    }
+    else {
+      int iwidth=cfile->hsize,iheight=cfile->vsize;
+      calc_maxspect(rwidth,rheight,&iwidth,&iheight);
+
+      if (iwidth==cfile->hsize&&iheight==cfile->vsize) {
+	iwidth=-iwidth;
+	iheight=-iheight;
+      }
+  
+      com=g_strdup_printf("smogrify reorder %s %s %d %d %d %d %d %d %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,reorder_leave_back,cfile->frames,iwidth,iheight);
+    }
+  }
+
   cfile->frames=0;
 
   cfile->progress_start=1;
@@ -2362,6 +2419,7 @@ reorder_frames(void) {
       new_frames=cfile->frames;
     }
   }
+
   return new_frames;
 }
 

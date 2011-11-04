@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl>
+// (c) G. Finch 2003 - 2011 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -434,6 +434,19 @@ void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
   gdouble aspect;
 
   if (*cwidth<=0||*cheight<=0||rwidth<=0||rheight<=0) return;
+
+  if (*cwidth>rwidth) {
+    // image too wide shrink it
+    aspect=(gdouble)rwidth/(gdouble)(*cwidth);
+    *cwidth=rwidth;
+    *cheight=(gdouble)(*cheight)*aspect;
+  }
+  if (*cheight>rheight) {
+    // image too tall shrink it
+    aspect=(gdouble)rheight/(gdouble)(*cheight);
+    *cheight=rheight;
+    *cwidth=(gdouble)(*cwidth)*aspect;
+  }
 
   aspect=(gdouble)*cwidth/(gdouble)*cheight;
 

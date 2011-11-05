@@ -474,7 +474,7 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
   for (i = 0; SUCCESS (status) && (dev_count < MAX_DEVICES); i++) {
     status = unicap_enumerate_devices (NULL, &devices[i], i);
     if (!SUCCESS (status)) {
-      g_printerr("Failed to get list of devices\n");
+      if (i==0) g_printerr("Failed to get list of devices\n");
       break;
     }
   }

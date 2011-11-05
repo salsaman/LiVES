@@ -803,7 +803,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
 }
 
 static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
-  GtkToggleButton *cb=(GtkToggleButton *)user_data;
+  GtkWidget *cb=(GtkWidget *)user_data;
 
   if (!gtk_toggle_button_get_active(t)) {
     gtk_widget_set_sensitive(cb,FALSE);

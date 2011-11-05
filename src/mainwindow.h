@@ -441,6 +441,8 @@ typedef struct {
   gulong hnd_id;
   gulong loop_cont_func;
   gulong mute_audio_func;
+  gulong fullscreen_cb_func;
+  gulong sepwin_cb_func;
 
   // for jack transport
   gboolean jack_can_stop;

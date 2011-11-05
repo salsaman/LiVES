@@ -2477,9 +2477,9 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (mainw->stop), "activate",
                       G_CALLBACK (on_stop_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->full_screen), "activate",
-                      G_CALLBACK (on_full_screen_activate),
-                      NULL);
+  mainw->fullscreen_cb_func=g_signal_connect (GTK_OBJECT (mainw->full_screen), "activate",
+					      G_CALLBACK (on_full_screen_activate),
+					      NULL);
   g_signal_connect (GTK_OBJECT (mainw->sw_sound), "activate",
                       G_CALLBACK (on_boolean_toggled),
 		    &mainw->save_with_sound); // TODO - make pref
@@ -2498,9 +2498,9 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (mainw->dsize), "activate",
                       G_CALLBACK (on_double_size_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->sepwin), "activate",
-                      G_CALLBACK (on_sepwin_activate),
-                      NULL);
+  mainw->sepwin_cb_func=g_signal_connect (GTK_OBJECT (mainw->sepwin), "activate",
+					  G_CALLBACK (on_sepwin_activate),
+					  NULL);
   g_signal_connect (GTK_OBJECT (mainw->fade), "activate",
                       G_CALLBACK (on_fade_activate),
                       NULL);

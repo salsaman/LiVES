@@ -338,7 +338,7 @@ create_LiVES (void)
                               GDK_o, GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  mainw->open_sel = gtk_menu_item_new_with_mnemonic (_("O_pen File Selection..."));
+  mainw->open_sel = gtk_menu_item_new_with_mnemonic (_("O_pen Part of File..."));
 
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->open_sel);
 
@@ -348,7 +348,7 @@ create_LiVES (void)
                               GDK_l, GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  mainw->open_vcd_menu = gtk_menu_item_new_with_mnemonic (_("Import Selection from _dvd/vcd..."));
+  mainw->open_vcd_menu = gtk_menu_item_new_with_mnemonic (_("Import from _dvd/vcd..."));
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->open_vcd_menu);
   mainw->open_vcd_submenu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->open_vcd_menu), mainw->open_vcd_submenu);
@@ -356,13 +356,13 @@ create_LiVES (void)
     gtk_widget_modify_bg(mainw->open_vcd_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  mainw->open_dvd = gtk_menu_item_new_with_mnemonic (_("Import Selection from _dvd"));
+  mainw->open_dvd = gtk_menu_item_new_with_mnemonic (_("Import from _dvd"));
   gtk_container_add (GTK_CONTAINER (mainw->open_vcd_submenu), mainw->open_dvd);
 
-  mainw->open_vcd = gtk_menu_item_new_with_mnemonic (_("Import Selection from _vcd"));
+  mainw->open_vcd = gtk_menu_item_new_with_mnemonic (_("Import from _vcd"));
   gtk_container_add (GTK_CONTAINER (mainw->open_vcd_submenu), mainw->open_vcd);
 
-  mainw->open_device_menu = gtk_menu_item_new_with_mnemonic (_("_Import from Device"));
+  mainw->open_device_menu = gtk_menu_item_new_with_mnemonic (_("_Import from Firewire"));
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->open_device_menu);
   mainw->open_device_submenu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->open_device_menu), mainw->open_device_submenu);
@@ -395,7 +395,7 @@ create_LiVES (void)
     gtk_widget_show (mainw->open_loc);
   }
 
-  mainw->add_live_menu = gtk_menu_item_new_with_mnemonic (_("_Add Live Input..."));
+  mainw->add_live_menu = gtk_menu_item_new_with_mnemonic (_("_Add Webcam/TV card..."));
 
 #if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->add_live_menu);
@@ -413,7 +413,7 @@ create_LiVES (void)
     gtk_widget_show (submenu);
 
 #ifdef HAVE_UNICAP
-  menuitem = gtk_menu_item_new_with_mnemonic (_("Add Live _Unicap Device"));
+  menuitem = gtk_menu_item_new_with_mnemonic (_("Add _Unicap Device"));
   gtk_container_add (GTK_CONTAINER (submenu), menuitem);
   gtk_widget_show (menuitem);
   g_signal_connect (GTK_OBJECT (menuitem), "activate",
@@ -432,7 +432,7 @@ create_LiVES (void)
 			NULL);
     }
 
-    menuitem = gtk_menu_item_new_with_mnemonic (_("Add Live _TV Device"));
+    menuitem = gtk_menu_item_new_with_mnemonic (_("Add _TV Device"));
     gtk_container_add (GTK_CONTAINER (submenu), menuitem);
     gtk_widget_show (menuitem);
 

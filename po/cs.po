@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-03 06:44-0300\n"
+"POT-Creation-Date: 2011-11-05 14:50-0300\n"
 "PO-Revision-Date: 2011-08-18 12:09+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -615,7 +615,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:3800 src/main.c:3801 src/gui.c:2006 src/gui.c:2979
-#: src/saveplay.c:1746
+#: src/saveplay.c:1740
 msgid "Play"
 msgstr "Přehrát"
 
@@ -632,18 +632,18 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "Zavřený soubor %s\n"
 
-#: src/main.c:4469 src/gui.c:596 src/utils.c:2591 src/utils.c:2617
-#: src/saveplay.c:2707 src/multitrack.c:3819 src/multitrack.c:5330
+#: src/main.c:4469 src/gui.c:596 src/utils.c:2604 src/utils.c:2630
+#: src/saveplay.c:2701 src/multitrack.c:3819 src/multitrack.c:5330
 msgid "_Undo"
 msgstr "_Zpět"
 
-#: src/main.c:4470 src/gui.c:609 src/utils.c:2592 src/utils.c:2618
-#: src/saveplay.c:2708 src/multitrack.c:3840 src/multitrack.c:5353
+#: src/main.c:4470 src/gui.c:609 src/utils.c:2605 src/utils.c:2631
+#: src/saveplay.c:2702 src/multitrack.c:3840 src/multitrack.c:5353
 msgid "_Redo"
 msgstr "_Znovu"
 
 #: src/main.c:4496 src/interface.c:642 src/gui.c:2164 src/preferences.c:2393
-#: src/resample.c:1775
+#: src/resample.c:1790
 msgid "Video"
 msgstr "Video"
 
@@ -954,7 +954,7 @@ msgstr ""
 "importovány."
 
 #: src/interface.c:190 src/callbacks.c:7749 src/gui.c:2982 src/gui.c:3523
-#: src/saveplay.c:1749 src/saveplay.c:2373 src/dialogs.c:831 src/dialogs.c:832
+#: src/saveplay.c:1743 src/saveplay.c:2367 src/dialogs.c:831 src/dialogs.c:832
 #: src/dialogs.c:999 src/dialogs.c:1000 src/framedraw.c:189
 #: src/multitrack.c:6896
 msgid "Preview"
@@ -1056,7 +1056,7 @@ msgstr "Snímků"
 msgid "Events"
 msgstr "Události"
 
-#: src/interface.c:664 src/resample.c:1730
+#: src/interface.c:664 src/resample.c:1745
 msgid "Audio"
 msgstr "Zvuk"
 
@@ -1089,7 +1089,7 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:896
-msgid "Use _letterboxing to maintain aspect ratio"
+msgid "Use _letterboxing to maintain aspect ratio (optional)"
 msgstr ""
 
 #: src/interface.c:950
@@ -1718,7 +1718,7 @@ msgstr ""
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "Délka videa je momentálně %d snímků při %.3f snímků za sekundu\n"
 
-#: src/callbacks.c:1664 src/resample.c:639 src/resample.c:2483
+#: src/callbacks.c:1664 src/resample.c:654 src/resample.c:2499
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "Schránka byla převzorkována na %d snímků\n"
@@ -1732,8 +1732,8 @@ msgstr "Opakuji"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Kopírování snímků %d do %d%s do schránky ..."
 
-#: src/callbacks.c:1887 src/saveplay.c:1039 src/saveplay.c:1167
-#: src/saveplay.c:1230 src/saveplay.c:3050
+#: src/callbacks.c:1887 src/saveplay.c:1039 src/saveplay.c:1164
+#: src/saveplay.c:1226 src/saveplay.c:3044
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -2255,11 +2255,11 @@ msgstr "Zobraz hrací okno (s)"
 msgid "Play in separate window (s)"
 msgstr "Přehraj v odděleném okně (s)"
 
-#: src/callbacks.c:5923 src/gui.c:3744 src/saveplay.c:1888
+#: src/callbacks.c:5923 src/gui.c:3744 src/saveplay.c:1882
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:6054 src/gui.c:3505 src/saveplay.c:1889 src/plugins.c:1286
+#: src/callbacks.c:6054 src/gui.c:3505 src/saveplay.c:1883 src/plugins.c:1286
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Přehrávací okno"
 
@@ -2703,28 +2703,33 @@ msgstr "_Soubor"
 msgid "_Open File/Directory"
 msgstr "_Otevřít soubor/adresář"
 
-#: src/gui.c:341 src/multitrack.c:5097
-msgid "O_pen File Selection..."
-msgstr "_Otevřít soubor..."
+#: src/gui.c:341
+#, fuzzy
+msgid "O_pen Part of File..."
+msgstr "_Poslední soubory..."
 
 #: src/gui.c:345 src/multitrack.c:5105
 msgid "Open _Location/Stream..."
 msgstr "_Otevřít  umístění/stream..."
 
-#: src/gui.c:351 src/multitrack.c:5115
-msgid "Import Selection from _dvd/vcd..."
+#: src/gui.c:351
+#, fuzzy
+msgid "Import from _dvd/vcd..."
 msgstr "Importovat výběr z _dvd/vcd..."
 
-#: src/gui.c:359 src/multitrack.c:5124
-msgid "Import Selection from _dvd"
+#: src/gui.c:359
+#, fuzzy
+msgid "Import from _dvd"
 msgstr "Importovat výběr z _dvd"
 
-#: src/gui.c:362 src/multitrack.c:5134
-msgid "Import Selection from _vcd"
-msgstr "Importovat výběr z _vcd"
+#: src/gui.c:362
+#, fuzzy
+msgid "Import from _vcd"
+msgstr "Importovat ze zařízení"
 
-#: src/gui.c:365 src/multitrack.c:5150
-msgid "_Import from Device"
+#: src/gui.c:365
+#, fuzzy
+msgid "_Import from Firewire"
 msgstr "Importovat ze zařízení"
 
 #: src/gui.c:373 src/multitrack.c:5159
@@ -2736,11 +2741,11 @@ msgid "Import from _Firewire Device (hdv)"
 msgstr "Importovat z _Firewire zařízení (hdvú"
 
 #: src/gui.c:398
-msgid "_Add Live Input..."
+msgid "_Add Webcam/TV card..."
 msgstr ""
 
 #: src/gui.c:416
-msgid "Add Live _Unicap Device"
+msgid "Add _Unicap Device"
 msgstr ""
 
 #: src/gui.c:426
@@ -2748,7 +2753,7 @@ msgid "Add Live _Firewire Device"
 msgstr ""
 
 #: src/gui.c:435
-msgid "Add Live _TV Device"
+msgid "Add _TV Device"
 msgstr ""
 
 #: src/gui.c:450 src/multitrack.c:5190
@@ -3485,11 +3490,11 @@ msgstr "Schovat přehrávací okno"
 msgid "Show Play Window"
 msgstr "Zobrazit přehrávací okno"
 
-#: src/utils.c:482
+#: src/utils.c:495
 msgid "Clearing the clipboard"
 msgstr "Mazání schránky"
 
-#: src/utils.c:505
+#: src/utils.c:518
 #, c-format
 msgid ""
 "\n"
@@ -3500,7 +3505,7 @@ msgstr ""
 "==============================\n"
 "Přepnuto na klip %s\n"
 
-#: src/utils.c:509
+#: src/utils.c:522
 msgid ""
 "\n"
 "==============================\n"
@@ -3510,11 +3515,11 @@ msgstr ""
 "==============================\n"
 "Přehození na prázdný klip\n"
 
-#: src/utils.c:544
+#: src/utils.c:557
 msgid "(blank)"
 msgstr ""
 
-#: src/utils.c:546
+#: src/utils.c:559
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
@@ -3523,7 +3528,7 @@ msgstr ""
 "Jméno setu bylo změněno z %s na %s. Související rozložení budou "
 "aktualizovány\n"
 
-#: src/utils.c:553
+#: src/utils.c:566
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
@@ -3532,7 +3537,7 @@ msgstr ""
 "Klip %s schází v tomto setu.\n"
 "Je vyžadován tímto rozložením:\n"
 
-#: src/utils.c:557
+#: src/utils.c:570
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
@@ -3541,7 +3546,7 @@ msgstr ""
 "Klip %s byl uzavřen.\n"
 "Je vyžadován tímto rozložením:\n"
 
-#: src/utils.c:562
+#: src/utils.c:575
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
@@ -3550,7 +3555,7 @@ msgstr ""
 "Snímky v klipu %s byly posunuty.\n"
 "Tato rozvržení budou ovlivněny:\n"
 
-#: src/utils.c:567
+#: src/utils.c:580
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
@@ -3559,7 +3564,7 @@ msgstr ""
 "Snímky z klipu %s byly smazány.\n"
 "Tato rozvržení budou ovlivněna:\n"
 
-#: src/utils.c:572
+#: src/utils.c:585
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
@@ -3568,7 +3573,7 @@ msgstr ""
 "Zvuk byl smazán z klipu %s.\n"
 "Tato rozvržení budou ovlivněna:\n"
 
-#: src/utils.c:577
+#: src/utils.c:590
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
@@ -3577,7 +3582,7 @@ msgstr ""
 "Zvuk v klipu %s byl posunut.\n"
 "Tato rozvržení budou ovlivněna:\n"
 
-#: src/utils.c:582
+#: src/utils.c:595
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
@@ -3586,7 +3591,7 @@ msgstr ""
 "Zvuk v klipu %s byl upraven.\n"
 "Tato rozvržení budou ovlivněna:\n"
 
-#: src/utils.c:587
+#: src/utils.c:600
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
@@ -3595,7 +3600,7 @@ msgstr ""
 "Snímky v klipu %s byly upraveny.\n"
 "Tato rozvržení budou ovlivněna:\n"
 
-#: src/utils.c:747
+#: src/utils.c:760
 #, c-format
 msgid ""
 "Set %s\n"
@@ -3603,7 +3608,7 @@ msgid ""
 "by another copy of LiVES.\n"
 msgstr ""
 
-#: src/utils.c:753
+#: src/utils.c:766
 #, c-format
 msgid ""
 "\n"
@@ -3614,7 +3619,7 @@ msgstr ""
 "Sestava %s je souběžně používána jinou kopií LiVES.\n"
 "Vyberte jiné jméno.\n"
 
-#: src/utils.c:777
+#: src/utils.c:790
 msgid ""
 "\n"
 "Set names may not be blank.\n"
@@ -3622,7 +3627,7 @@ msgstr ""
 "\n"
 "Jméno souboru nesmí být prázdné\n"
 
-#: src/utils.c:781
+#: src/utils.c:794
 #, c-format
 msgid ""
 "\n"
@@ -3631,7 +3636,7 @@ msgstr ""
 "\n"
 "Jméno nesmí obsahovat mezery nebo znaky%s.\n"
 
-#: src/utils.c:793
+#: src/utils.c:806
 #, c-format
 msgid ""
 "\n"
@@ -3642,68 +3647,68 @@ msgstr ""
 "Sestava %s již existuje.\n"
 "Prosím vyberte jiné jméno.\n"
 
-#: src/utils.c:1013
+#: src/utils.c:1026
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "Odstraňuji rozložení %s\n"
 
-#: src/utils.c:1386
+#: src/utils.c:1399
 msgid "Video [opening...]"
 msgstr "Video [otevírání...]"
 
-#: src/utils.c:1390
+#: src/utils.c:1403
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Video  [%.2f sek]"
 
-#: src/utils.c:1394
+#: src/utils.c:1407
 msgid "(Undefined)"
 msgstr "(Nepopsané)"
 
-#: src/utils.c:1397
+#: src/utils.c:1410
 msgid "(No video)"
 msgstr "(Žádné video)"
 
-#: src/utils.c:1404
+#: src/utils.c:1417
 msgid "(No audio)"
 msgstr "(Žádný zvuk)"
 
-#: src/utils.c:1409
+#: src/utils.c:1422
 msgid "Mono  [opening...]"
 msgstr "Mono  [otevírání...]"
 
-#: src/utils.c:1412
+#: src/utils.c:1425
 msgid "Left Audio [opening...]"
 msgstr "Levý kanál zvuku  [otevírání...]"
 
-#: src/utils.c:1417
+#: src/utils.c:1430
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Mono [%.2f sec]"
 
-#: src/utils.c:1420
+#: src/utils.c:1433
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Levý kanál zvuku   [%.2f sek]"
 
-#: src/utils.c:1428
+#: src/utils.c:1441
 msgid "Right Audio [opening...]"
 msgstr "Pravý kanál zvuku  [otevírání...]"
 
-#: src/utils.c:1431
+#: src/utils.c:1444
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Pravý kanál zvuku  [%.2f sek]"
 
-#: src/utils.c:1890
+#: src/utils.c:1903
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVES nemůže při načítání klipů přepnout na mplayer."
 
-#: src/utils.c:2074
+#: src/utils.c:2087
 msgid "Cleaning up clip"
 msgstr "Vyčištění klipu"
 
-#: src/utils.c:2204
+#: src/utils.c:2217
 #, c-format
 msgid ""
 "\n"
@@ -3718,25 +3723,25 @@ msgstr ""
 "\n"
 "přemazat ?\n"
 
-#: src/utils.c:2584 src/utils.c:2610 src/multitrack.c:3812
+#: src/utils.c:2597 src/utils.c:2623 src/multitrack.c:3812
 #, c-format
 msgid "_Undo %s"
 msgstr "_Vrátit %s"
 
-#: src/utils.c:2585 src/utils.c:2611 src/multitrack.c:3834
+#: src/utils.c:2598 src/utils.c:2624 src/multitrack.c:3834
 #, c-format
 msgid "_Redo %s"
 msgstr "_Opakovat %s"
 
-#: src/utils.c:2636
+#: src/utils.c:2649
 msgid "-------------Selection------------"
 msgstr "---------------Výběr--------------"
 
-#: src/utils.c:2641
+#: src/utils.c:2654
 msgid " sec ] ----------Selection---------- [ "
 msgstr " sek ] ----------výběr---------- [ "
 
-#: src/utils.c:2641
+#: src/utils.c:2654
 msgid " frames ] ----------"
 msgstr " snímků ] ----------"
 
@@ -3754,7 +3759,7 @@ msgstr "Otvírání%s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Otvírání%s začátek %.2f sek. snímků %d"
 
-#: src/saveplay.c:224 src/saveplay.c:3038
+#: src/saveplay.c:224 src/saveplay.c:3032
 msgid " without sound"
 msgstr " bez zvuku"
 
@@ -3840,33 +3845,33 @@ msgstr ""
 msgid "selection"
 msgstr "výběr"
 
-#: src/saveplay.c:1086 src/saveplay.c:1198
+#: src/saveplay.c:1086 src/saveplay.c:1195
 msgid "Linking selection"
 msgstr "Spojuji výběr"
 
-#: src/saveplay.c:1247
+#: src/saveplay.c:1243
 msgid " (with no sound)\n"
 msgstr " (bez zvuku)\n"
 
-#: src/saveplay.c:1255
+#: src/saveplay.c:1251
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr "Ukládání snímků %d do %d%s jako \"%s\" : enkoder = %s : formát = %s..."
 
-#: src/saveplay.c:1259
+#: src/saveplay.c:1255
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr "Ukládání snímků 1 do %d%s jako \"%s\" : enkoder = %s : formát = %s..."
 
-#: src/saveplay.c:1389
+#: src/saveplay.c:1384
 msgid "Saving [can take a long time]"
 msgstr "Ukládám [může to chvíli trvat]"
 
-#: src/saveplay.c:1427
+#: src/saveplay.c:1422
 msgid "error.\n"
 msgstr "chyba.\n"
 
-#: src/saveplay.c:1488
+#: src/saveplay.c:1483
 msgid ""
 "\n"
 "\n"
@@ -3876,34 +3881,34 @@ msgstr ""
 "\n"
 "Chyba enkoderu - výstupní soubor nebyl vytvořen !\n"
 
-#: src/saveplay.c:1515
+#: src/saveplay.c:1510
 #, fuzzy
 msgid "Clearing letterbox"
 msgstr "Mazání schránky"
 
-#: src/saveplay.c:1586
+#: src/saveplay.c:1581
 #, c-format
 msgid "File size was %.2fMB\n"
 msgstr ""
 
-#: src/saveplay.c:1674
+#: src/saveplay.c:1668
 msgid "recording aborted by preview.\n"
 msgstr "nahrávání přerušeno náhledem.\n"
 
-#: src/saveplay.c:1678
+#: src/saveplay.c:1672
 msgid "recording aborted by clipboard playback.\n"
 msgstr "nahrávání přerušeno přehráváním náhledu.\n"
 
-#: src/saveplay.c:1681
+#: src/saveplay.c:1675
 msgid "Recording performance..."
 msgstr "Nahrávání produkce..."
 
-#: src/saveplay.c:2514
+#: src/saveplay.c:2508
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Průměrná hodnota FPS byla %.4f\n"
 
-#: src/saveplay.c:2520
+#: src/saveplay.c:2514
 msgid ""
 "\n"
 "\n"
@@ -3917,16 +3922,16 @@ msgstr ""
 "Klikněte na Nástroje--->Změnit velikost všech snímků \n"
 "a změňte všechny velikost všech snímků na současnou hodnotu.\n"
 
-#: src/saveplay.c:2641
+#: src/saveplay.c:2635
 msgid "Unknown"
 msgstr "Neznámé"
 
-#: src/saveplay.c:2736
+#: src/saveplay.c:2730
 #, c-format
 msgid "Untitled%d"
 msgstr "Bez jména%d"
 
-#: src/saveplay.c:2853
+#: src/saveplay.c:2847
 #, c-format
 msgid ""
 "\n"
@@ -3938,14 +3943,14 @@ msgstr ""
 "(snímků za sekundu). \n"
 "Výchozí hodnoty lze nastavit v Nástroje | Předvolby | Různé\n"
 
-#: src/saveplay.c:2865
+#: src/saveplay.c:2859
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Rychlost přehrávání byla upravena na %.3f snímků za sekundu, aby odpovídal "
 "zvuku.\n"
 
-#: src/saveplay.c:2881
+#: src/saveplay.c:2875
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -3954,7 +3959,7 @@ msgstr ""
 "Snímky=%d typ=%s velikost=%dx%d *bpp=Šedá škála* snímků za sekundu  =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:2885 src/saveplay.c:3502
+#: src/saveplay.c:2879 src/saveplay.c:3496
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -3963,49 +3968,49 @@ msgstr ""
 "Snímků=%d typ=%s velikost=%dx%d bpp=%d snímků za sekundu =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:2889 src/saveplay.c:3506
+#: src/saveplay.c:2883 src/saveplay.c:3500
 #, c-format
 msgid "%s none\n"
 msgstr "%s nic\n"
 
-#: src/saveplay.c:2892 src/saveplay.c:3509
+#: src/saveplay.c:2886 src/saveplay.c:3503
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d kanál(ů) %d bps\n"
 
-#: src/saveplay.c:2900
+#: src/saveplay.c:2894
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Komentář: %s\n"
 
-#: src/saveplay.c:2979
+#: src/saveplay.c:2973
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Uložení snímků %d jako %s..."
 
-#: src/saveplay.c:3033
+#: src/saveplay.c:3027
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "zZálohování %s jako %s"
 
-#: src/saveplay.c:3073
+#: src/saveplay.c:3067
 msgid "Backing up"
 msgstr "Zálohuji"
 
-#: src/saveplay.c:3107
+#: src/saveplay.c:3101
 msgid "performance data was backed up..."
 msgstr "data byly zazálohovány"
 
-#: src/saveplay.c:3413
+#: src/saveplay.c:3407
 #, c-format
 msgid "Restoring %s..."
 msgstr "Obnovování %s..."
 
-#: src/saveplay.c:3432
+#: src/saveplay.c:3426
 msgid "Restoring"
 msgstr "Obnovování"
 
-#: src/saveplay.c:3454
+#: src/saveplay.c:3448
 #, c-format
 msgid ""
 "\n"
@@ -4018,17 +4023,17 @@ msgstr ""
 "Soubor %s je poškozen.\n"
 "LiVES ho nemohl obnovit.\n"
 
-#: src/saveplay.c:3875
+#: src/saveplay.c:3869
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3879
+#: src/saveplay.c:3873
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3902
+#: src/saveplay.c:3896
 #, c-format
 msgid ""
 "\n"
@@ -4036,7 +4041,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:4019
+#: src/saveplay.c:4013
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4046,11 +4051,11 @@ msgstr ""
 "Byly nalezeny soubory z předchozího spuštění LiVES.\n"
 "Pokusit se o jejich obnovení?\n"
 
-#: src/saveplay.c:4032
+#: src/saveplay.c:4026
 msgid "Recovering files"
 msgstr "Obnovuji soubory"
 
-#: src/saveplay.c:4035
+#: src/saveplay.c:4029
 msgid "Recovering files..."
 msgstr ""
 
@@ -4212,19 +4217,19 @@ msgstr ""
 "LiVES doporučuje následující nastavení:\n"
 "\n"
 
-#: src/dialogs.c:1291 src/dialogs.c:1397 src/resample.c:789
+#: src/dialogs.c:1291 src/dialogs.c:1397 src/resample.c:804
 msgid ", signed"
 msgstr ", označeno"
 
-#: src/dialogs.c:1292 src/dialogs.c:1398 src/resample.c:792
+#: src/dialogs.c:1292 src/dialogs.c:1398 src/resample.c:807
 msgid ", unsigned"
 msgstr ", neoznačeno"
 
-#: src/dialogs.c:1296 src/dialogs.c:1402 src/resample.c:797
+#: src/dialogs.c:1296 src/dialogs.c:1402 src/resample.c:812
 msgid ", little-endian"
 msgstr ", malý endian"
 
-#: src/dialogs.c:1297 src/dialogs.c:1403 src/resample.c:800
+#: src/dialogs.c:1297 src/dialogs.c:1403 src/resample.c:815
 msgid ", big-endian"
 msgstr ", velký endian"
 
@@ -7188,25 +7193,25 @@ msgstr "Spuštěn OSC server na UDP portu %d\n"
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Nelze spustit OSC/UDP server na portu %d \n"
 
-#: src/resample.c:139 src/resample.c:297
+#: src/resample.c:140 src/resample.c:309
 #, c-format
 msgid "Resizing frames 1 to %d"
 msgstr "Měním velikost snímků od 1 do %d"
 
-#: src/resample.c:322 src/resample.c:342
+#: src/resample.c:336 src/resample.c:357
 msgid "Resize"
 msgstr "Změna velikosti"
 
-#: src/resample.c:352
+#: src/resample.c:367
 msgid "Resample/Resize"
 msgstr "Převzorkování/Změnit velikost"
 
-#: src/resample.c:636
+#: src/resample.c:651
 #, c-format
 msgid "Length of video is now %d frames.\n"
 msgstr "Délka videa je nyní %d snímků.\n"
 
-#: src/resample.c:701
+#: src/resample.c:716
 msgid ""
 "\n"
 "\n"
@@ -7216,154 +7221,154 @@ msgstr ""
 "\n"
 "Nový poměr(rate) musí být větší než 0\n"
 
-#: src/resample.c:745 src/resample.c:753
+#: src/resample.c:760 src/resample.c:768
 msgid "Resampling audio"
 msgstr "Převzorkování zvuku"
 
-#: src/resample.c:770
+#: src/resample.c:785
 msgid "LiVES was unable to resample the audio as requested.\n"
 msgstr "LiVES nebyl schopen převzorkovat zvuk.\n"
 
-#: src/resample.c:772 src/resample.c:776
+#: src/resample.c:787 src/resample.c:791
 msgid "Resample Audio"
 msgstr "Převzorkovat zvuk"
 
-#: src/resample.c:784
+#: src/resample.c:799
 #, c-format
 msgid "Audio was resampled to %d Hz, %d channels, %d bit"
 msgstr "Zvuk byl převzorkován na %d Hz, %d kanálů, %d bitů"
 
-#: src/resample.c:974
+#: src/resample.c:989
 #, c-format
 msgid "Resampling video at %.8f frames per second..."
 msgstr "Převzorkování videa na %.3f snímků za vteřinu..."
 
-#: src/resample.c:977
+#: src/resample.c:992
 #, c-format
 msgid "Resampling video at %.3f frames per second..."
 msgstr "Převzorkování videa na %.3f snímků za vteřinu..."
 
-#: src/resample.c:1008
+#: src/resample.c:1023
 msgid "Reordering error !\n"
 msgstr ""
 
-#: src/resample.c:1019
+#: src/resample.c:1034
 msgid "Resample"
 msgstr "Převzorkovat"
 
-#: src/resample.c:1143
+#: src/resample.c:1158
 msgid "LiVES: - Resample Audio"
 msgstr "LiVES: - Převzorkovat zvuk"
 
-#: src/resample.c:1146
+#: src/resample.c:1161
 msgid "LiVES: - Insert Silence"
 msgstr "LiVES: - Vsunout ticho"
 
-#: src/resample.c:1149
+#: src/resample.c:1164
 msgid "LiVES: - New Clip Audio"
 msgstr "LiVES: - Nový zvukový klip"
 
-#: src/resample.c:1152
+#: src/resample.c:1167
 msgid "LiVES: - External Clip Settings"
 msgstr "LiVES: - Nastavení externího klipu"
 
-#: src/resample.c:1190 src/resample.c:1460
+#: src/resample.c:1205 src/resample.c:1475
 msgid "Rate (Hz) "
 msgstr "Poměr (Rate v Hertzích) "
 
-#: src/resample.c:1211
+#: src/resample.c:1226
 msgid "         Channels "
 msgstr "         Kanálů "
 
-#: src/resample.c:1231
+#: src/resample.c:1246
 msgid "        Sample Size "
 msgstr "        Velikost vzorku "
 
-#: src/resample.c:1270 src/resample.c:1574
+#: src/resample.c:1285 src/resample.c:1589
 msgid "Signed"
 msgstr "Označeno"
 
-#: src/resample.c:1297 src/resample.c:1608
+#: src/resample.c:1312 src/resample.c:1623
 msgid "Unsigned"
 msgstr "Neoznačeno"
 
-#: src/resample.c:1344 src/resample.c:1661
+#: src/resample.c:1359 src/resample.c:1676
 msgid "Little Endian"
 msgstr "Little Endian"
 
-#: src/resample.c:1371 src/resample.c:1693
+#: src/resample.c:1386 src/resample.c:1708
 msgid "Big Endian"
 msgstr "Big Endian"
 
-#: src/resample.c:1396
+#: src/resample.c:1411
 msgid "Current"
 msgstr "Současný"
 
-#: src/resample.c:1428
+#: src/resample.c:1443
 msgid "_Enable audio"
 msgstr "P_ovolit zvuk"
 
-#: src/resample.c:1459
+#: src/resample.c:1474
 msgid "_Rate (Hz) "
 msgstr "_Frekvence (Hz) "
 
-#: src/resample.c:1487
+#: src/resample.c:1502
 msgid "    _Channels "
 msgstr "    _Kanály "
 
-#: src/resample.c:1488
+#: src/resample.c:1503
 msgid "    Channels "
 msgstr "    Kanály "
 
-#: src/resample.c:1521
+#: src/resample.c:1536
 msgid "    _Sample Size "
 msgstr "    _Velikost vzorku "
 
-#: src/resample.c:1522
+#: src/resample.c:1537
 msgid "    Sample Size "
 msgstr "    Velikost vzorku "
 
-#: src/resample.c:1731
+#: src/resample.c:1746
 msgid "New"
 msgstr "Nový"
 
-#: src/resample.c:1760
+#: src/resample.c:1775
 msgid "_Frames Per Second "
 msgstr "_Snímků za sekundu "
 
-#: src/resample.c:1802
+#: src/resample.c:1817
 msgid "Record for maximum:  "
 msgstr "Nahrát maximálně:  "
 
-#: src/resample.c:1825
+#: src/resample.c:1840
 msgid " hours  "
 msgstr " hodin  "
 
-#: src/resample.c:1838
+#: src/resample.c:1853
 msgid " minutes  "
 msgstr " minut  "
 
-#: src/resample.c:1851
+#: src/resample.c:1866
 msgid " seconds  "
 msgstr " sekund  "
 
-#: src/resample.c:1872
+#: src/resample.c:1887
 msgid "Unlimited"
 msgstr "Neomezené"
 
-#: src/resample.c:1900
+#: src/resample.c:1915
 msgid "Click OK to begin recording, or Cancel to quit."
 msgstr "Kliněte na OK pro nahrávání, Zrušit pro ukončení."
 
-#: src/resample.c:2009
+#: src/resample.c:2024
 msgid "LiVES: - Change playback speed"
 msgstr "LiVES: - Změnit rychlost přehrávání"
 
-#: src/resample.c:2012
+#: src/resample.c:2027
 msgid "LiVES: - Resample Video"
 msgstr "LiVES: - Převzorkovat video"
 
-#: src/resample.c:2033
+#: src/resample.c:2048
 #, c-format
 msgid ""
 "\n"
@@ -7374,7 +7379,7 @@ msgid ""
 "in _frames per second"
 msgstr ""
 
-#: src/resample.c:2036
+#: src/resample.c:2051
 #, c-format
 msgid ""
 "\n"
@@ -7385,15 +7390,15 @@ msgid ""
 "in frames per second"
 msgstr ""
 
-#: src/resample.c:2062
+#: src/resample.c:2077
 msgid "OR enter the desired clip length in _seconds"
 msgstr ""
 
-#: src/resample.c:2085
+#: src/resample.c:2100
 msgid "Change the _audio speed as well"
 msgstr ""
 
-#: src/resample.c:2198
+#: src/resample.c:2213
 msgid ""
 "\n"
 "Speeding up the clip will cause missing frames in some multitrack layouts.\n"
@@ -7404,7 +7409,7 @@ msgstr ""
 "rozloženích.\n"
 "Opravdu změnit rychlost ?\n"
 
-#: src/resample.c:2215
+#: src/resample.c:2230
 msgid ""
 "\n"
 "Speeding up the clip will cause missing audio in some multitrack layouts.\n"
@@ -7414,7 +7419,7 @@ msgstr ""
 "Zrychlení klipu způsobí chybějící zvuk v některých vícestopých rozloženích.\n"
 "Opravdu změnit rychlost ?\n"
 
-#: src/resample.c:2230
+#: src/resample.c:2245
 msgid ""
 "\n"
 "Changing the speed will cause frames to shift some multitrack layouts.\n"
@@ -7424,7 +7429,7 @@ msgstr ""
 "Změna rychlosti způsobí posun snímků v některých vícestopých rozloženích.\n"
 "Opravdu pokračovat?\n"
 
-#: src/resample.c:2244
+#: src/resample.c:2259
 msgid ""
 "\n"
 "Changing the speed will cause audio to shift some multitrack layouts.\n"
@@ -7434,34 +7439,34 @@ msgstr ""
 "Změna rychlosti způsobí posun zvuku v některých vícestopých rozvrženích.\n"
 "Opravdu pokračovat ?\n"
 
-#: src/resample.c:2290
+#: src/resample.c:2305
 msgid "Speed Change"
 msgstr "Změna rychlosti"
 
-#: src/resample.c:2299
+#: src/resample.c:2314
 #, c-format
 msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr ""
 "Změna rychlosti playbacku na %.3f rámečků za sekundu a zvuku na %d Hz.\n"
 
-#: src/resample.c:2302
+#: src/resample.c:2317
 #, c-format
 msgid "Changed playback speed to %.3f frames per second.\n"
 msgstr "Změna rychlosti playbacku na %.3f rámečků za sekundu\n"
 
-#: src/resample.c:2372
+#: src/resample.c:2387
 msgid "Resampling video"
 msgstr "Převzorkování videa"
 
-#: src/resample.c:2379 src/resample.c:2477 src/resample.c:2498
+#: src/resample.c:2394 src/resample.c:2493 src/resample.c:2514
 msgid "Resampling clipboard video"
 msgstr "Převzorkování videa ze schránky"
 
-#: src/resample.c:2384
+#: src/resample.c:2399
 msgid "Reordering frames"
 msgstr "Přeskupení snímků"
 
-#: src/resample.c:2393
+#: src/resample.c:2408
 msgid ""
 "\n"
 "\n"
@@ -7471,11 +7476,11 @@ msgstr ""
 "\n"
 "LiVES nemohl přeskupit snímky"
 
-#: src/resample.c:2436
+#: src/resample.c:2452
 msgid "Deordering frames"
 msgstr "Srovnávání rámečků"
 
-#: src/resample.c:2515
+#: src/resample.c:2531
 msgid "resampling error..."
 msgstr "chyba při převzorkování..."
 
@@ -8205,6 +8210,26 @@ msgstr "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 #: src/multitrack.c:5080
 msgid "_Open..."
 msgstr ""
+
+#: src/multitrack.c:5097
+msgid "O_pen File Selection..."
+msgstr "_Otevřít soubor..."
+
+#: src/multitrack.c:5115
+msgid "Import Selection from _dvd/vcd..."
+msgstr "Importovat výběr z _dvd/vcd..."
+
+#: src/multitrack.c:5124
+msgid "Import Selection from _dvd"
+msgstr "Importovat výběr z _dvd"
+
+#: src/multitrack.c:5134
+msgid "Import Selection from _vcd"
+msgstr "Importovat výběr z _vcd"
+
+#: src/multitrack.c:5150
+msgid "_Import from Device"
+msgstr "Importovat ze zařízení"
 
 #: src/multitrack.c:5176
 msgid "_Close the selected clip"

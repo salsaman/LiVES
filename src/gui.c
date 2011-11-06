@@ -3931,6 +3931,7 @@ void splash_init(void) {
   gtk_box_pack_start (GTK_BOX (vbox), mainw->splash_label, TRUE, TRUE, 0);
 
   mainw->splash_progress = gtk_progress_bar_new ();
+  gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(mainw->splash_progress),.01);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(mainw->splash_progress, GTK_STATE_NORMAL, &palette->normal_fore);

@@ -932,6 +932,8 @@ typedef struct {
 
   gchar vpp_defs_file[PATH_MAX];
 
+  int log_fd;
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

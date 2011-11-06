@@ -2586,6 +2586,22 @@ verhash (gchar *version) {
 
 
 
+#ifdef ALLOW_LOG
+void lives_log(const char *what) {
+  char *lives_log_file=g_strdup_printf("%s/%s",prefs->tmpdir,LIVES_LOG_FILE);
+  if (mainw->log_fd<0) mainw->log_fd=open(lives_log_file,O_WRONLY|O_CREAT,S_IRUSER|S_IWUSER);
+  if (mainw->log_fd!=-1) {
+    char *msg=g_strdup("%s|%d|",what,mainw->current_file);
+    write (mainw->log_fd,msg,strlen(msg));
+    g_free(msg);
+  }
+  g_free(lives_log_file);
+}
+#endif
+
+
+
+
 // TODO - move into undo.c
 void 
 set_undoable (const gchar *what, gboolean sensitive) {
@@ -2611,6 +2627,12 @@ set_undoable (const gchar *what, gboolean sensitive) {
   gtk_widget_hide(mainw->redo);
   gtk_widget_show(mainw->undo);
   gtk_widget_set_sensitive (mainw->undo,sensitive);
+
+#ifdef ALLOW_LOG
+  lives_log(what);
+#endif
+
+
 }
 
 void 

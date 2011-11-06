@@ -858,6 +858,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->has_custom_gens=FALSE;
   mainw->has_custom_utilities=FALSE;
 
+  mainw->log_fd=-2;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -1961,6 +1963,8 @@ static gboolean lives_startup(gpointer data) {
     set_main_title(NULL,0);
   }
 
+  splash_end();
+
   if (prefs->crash_recovery&&!no_recover) got_files=check_for_recovery_files(auto_recover);
 
   if (!mainw->foreign&&!got_files&&prefs->ar_clipset) {
@@ -1979,8 +1983,6 @@ static gboolean lives_startup(gpointer data) {
 #ifdef ENABLE_OSC
   if (prefs->osc_start) prefs->osc_udp_started=lives_osc_init(prefs->osc_udp_port);
 #endif
-
-  splash_end();
 
   if (mainw->recoverable_layout) do_layout_recover_dialog();
 

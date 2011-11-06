@@ -152,7 +152,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #  define WARN_UNUSED
 #endif
 
-
+#ifdef ALLOW_LOG
+#define LIVES_LOG "lives.log"
+#endif
 
 /// this struct is used only when physically resampling frames on the disk
 /// we create an array of these and write them to the disk

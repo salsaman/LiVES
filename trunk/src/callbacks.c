@@ -3973,8 +3973,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
   msg=g_strdup_printf(_("Loading clips from set %s"),mainw->set_name);
   if (!skip_threaded_dialog&&prefs->show_gui) {
-    if (mainw->splash_window==NULL) do_threaded_dialog(msg,FALSE);
-    else do_splash_progress();
+    do_threaded_dialog(msg,FALSE);
   }
   g_free(msg);
 
@@ -3991,8 +3990,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       g_list_free(mainw->cached_list);
       mainw->cached_list=NULL;
     }
-
-    threaded_dialog_spin();
 
     if (orderfile==NULL) {
       // old style (pre 0.9.6)
@@ -4072,6 +4069,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
       threaded_dialog_spin();
+      if (!skip_threaded_dialog) end_threaded_dialog();
       return TRUE;
     }
 
@@ -4082,7 +4080,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       threaded_dialog_spin();
       add_to_recovery_file(recovery_entry);
       g_free(recovery_entry);
-      threaded_dialog_spin();
       added_recovery=TRUE;
     }
 
@@ -4090,17 +4087,16 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       // newer style (0.9.6+)
       gchar *clipdir=g_build_filename(prefs->tmpdir,mainw->msg,NULL);
       if (!g_file_test(clipdir,G_FILE_TEST_IS_DIR)) {
-	threaded_dialog_spin();
 	g_free(clipdir);
-	threaded_dialog_spin();
 	continue;
       }
-      threaded_dialog_spin();
       g_free(clipdir);
       threaded_dialog_spin();
       if ((new_file=mainw->first_free_file)==-1) {
 	mainw->suppress_dprint=FALSE;
-	end_threaded_dialog();
+
+	if (!skip_threaded_dialog) end_threaded_dialog();
+
 	too_many_files();
 
 	if (mainw->multitrack!=NULL) {
@@ -4131,6 +4127,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     // get file details
     read_headers(".");
+    threaded_dialog_spin();
 
     // if the clip has a frame_index file, then it is CLIP_TYPE_FILE
     // and we must load the frame_index and locate a suitable decoder plugin
@@ -4146,7 +4143,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
 	      // TODO ** - show layout errors
 
-	      threaded_dialog_spin();
 	      continue;
 	    }
 	  }
@@ -4156,13 +4152,10 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  next=TRUE;
 	}
 
-	threaded_dialog_spin();
 	break;
       }
       if (next) {
-	threaded_dialog_spin();
 	g_free(cfile);
-	threaded_dialog_spin();
 	mainw->first_free_file=mainw->current_file;
 	continue;
       }
@@ -4172,9 +4165,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (cfile->ext_src!=NULL) {
       if (!check_clip_integrity(cfile,cdata)) {
-	threaded_dialog_spin();
 	g_free(cfile);
-	threaded_dialog_spin();
 	mainw->first_free_file=mainw->current_file;
 	continue;
       }
@@ -4187,17 +4178,15 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     // read the plaback fps, play frame, and name
     open_set_file (mainw->set_name,++clipnum);
+    threaded_dialog_spin();
 
     if (mainw->cached_list!=NULL) {
-      threaded_dialog_spin();
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
-      threaded_dialog_spin();
       mainw->cached_list=NULL;
     }
 
     if (prefs->autoload_subs) {
-      threaded_dialog_spin();
       subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
       if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
 	subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
@@ -4240,7 +4229,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif
   }
-
   
   threaded_dialog_spin();
   reset_clip_menu();

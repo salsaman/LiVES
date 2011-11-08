@@ -21,10 +21,12 @@
 #include "resample.h"
 #include "effects-weed.h"
 #include "support.h"
+#include "paramwindow.h"
 
 static lives_special_aspect_t aspect;
 static lives_special_framedraw_rect_t framedraw;
 static GList *fileread;
+static GList *passwd_widgets;
 
 // TODO - rewrite all of this more sensibly
 
@@ -41,6 +43,7 @@ init_special (void) {
   framedraw.added=FALSE;
   mergealign.start_param=mergealign.end_param=-1;
   mergealign.start_widget=mergealign.end_widget=NULL;
+  passwd_widgets=NULL;
   fileread=NULL;
 }
 
@@ -153,6 +156,13 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
   else if (!strcmp (array[0],"fileread")) {
     fileread=g_list_append(fileread,GINT_TO_POINTER(atoi(array[1])));
   }
+  else if (!strcmp (array[0],"password")) {
+    int idx=atoi(array[1]);
+    passwd_widgets=g_list_append(passwd_widgets,GINT_TO_POINTER(idx));
+
+    // ensure we get an entry and not a text_view
+    if ((gint)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(gdouble)RFX_TEXT_MAGIC;
+  }
 
   g_strfreev (array);
   return extra_width;
@@ -173,6 +183,11 @@ void fd_tweak(lives_rfx_t *rfx) {
 
 void fd_connect_spinbutton(lives_rfx_t *rfx) {
   framedraw_connect_spinbutton(&framedraw,rfx);
+}
+
+
+static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
+  gtk_entry_set_visibility(GTK_ENTRY(entry),gtk_toggle_button_get_active(b));
 }
 
 
@@ -197,94 +212,96 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),0.);
     g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
-  if (num==framedraw.xend_param) {
-    framedraw.xend_widget=param->widgets[0];
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
-    g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
-  }
-  if (num==framedraw.yend_param) {
-    framedraw.yend_widget=param->widgets[0];
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
-    g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
-  }
-  if (framedraw.xstart_widget!=NULL&&framedraw.ystart_widget!=NULL&&framedraw.xend_widget!=NULL&&framedraw.yend_widget!=NULL&&!framedraw.added) {
-    if (mainw->multitrack==NULL) {
-      framedraw_connect(&framedraw,cfile->hsize,cfile->vsize,rfx); // turn passive preview->active
-      framedraw_add_reset(GTK_VBOX(GTK_WIDGET(pbox)),&framedraw);
+  if (mainw->current_file>-1) {
+    if (num==framedraw.xend_param) {
+      framedraw.xend_widget=param->widgets[0];
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
+      g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
     }
-    else {
-      mainw->framedraw_image=mainw->image274;
-      
-      // create a blank bitmap mask
-      if (mainw->framedraw_bitmap!=NULL) {
-	gdk_pixmap_unref (mainw->framedraw_bitmap);
+    if (num==framedraw.yend_param) {
+      framedraw.yend_widget=param->widgets[0];
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
+      g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
+  }
+    if (framedraw.xstart_widget!=NULL&&framedraw.ystart_widget!=NULL&&framedraw.xend_widget!=NULL&&framedraw.yend_widget!=NULL&&!framedraw.added) {
+      if (mainw->multitrack==NULL) {
+	framedraw_connect(&framedraw,cfile->hsize,cfile->vsize,rfx); // turn passive preview->active
+	framedraw_add_reset(GTK_VBOX(GTK_WIDGET(pbox)),&framedraw);
       }
-      
-      mainw->framedraw_bitmap = gdk_pixmap_new (NULL, cfile->hsize, cfile->vsize, 1);
-      framedraw_add_label(GTK_VBOX(GTK_WIDGET(pbox)));
-      
-      if (mainw->framedraw_bitmapgc!=NULL) {
-	g_object_unref (mainw->framedraw_bitmapgc);
+      else {
+	mainw->framedraw_image=mainw->image274;
+	
+	// create a blank bitmap mask
+	if (mainw->framedraw_bitmap!=NULL) {
+	  gdk_pixmap_unref (mainw->framedraw_bitmap);
+	}
+	
+	mainw->framedraw_bitmap = gdk_pixmap_new (NULL, cfile->hsize, cfile->vsize, 1);
+	framedraw_add_label(GTK_VBOX(GTK_WIDGET(pbox)));
+	
+	if (mainw->framedraw_bitmapgc!=NULL) {
+	  g_object_unref (mainw->framedraw_bitmapgc);
+	}
+	
+	if (mainw->framedraw_bitmap!=NULL) mainw->framedraw_bitmapgc=gdk_gc_new (mainw->framedraw_bitmap);
+	
       }
-      
-      if (mainw->framedraw_bitmap!=NULL) mainw->framedraw_bitmapgc=gdk_gc_new (mainw->framedraw_bitmap);
-      
+      framedraw.added=TRUE;
     }
-    framedraw.added=TRUE;
-  }
-  
-  if (num==aspect.width_param) {
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
-    aspect.width_func=g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed",
-					      G_CALLBACK (after_aspect_width_changed),
-					      NULL);
-    aspect.width_widget=param->widgets[0];
-  }
-  if (num==aspect.height_param) {
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
-    aspect.height_func=g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed",
-					       G_CALLBACK (after_aspect_height_changed),
+    
+    
+    if (num==aspect.width_param) {
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
+      aspect.width_func=g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed",
+						G_CALLBACK (after_aspect_width_changed),
+						NULL);
+      aspect.width_widget=param->widgets[0];
+    }
+    if (num==aspect.height_param) {
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
+      aspect.height_func=g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed",
+						 G_CALLBACK (after_aspect_height_changed),
 						 NULL);
       
-    box = gtk_hbox_new (FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (GTK_WIDGET (pbox)), box, TRUE, FALSE, 0);
+      box = gtk_hbox_new (FALSE, 10);
+      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (pbox)), box, TRUE, FALSE, 0);
       
-
-
-
-    checkbutton = gtk_check_button_new ();
-    gtk_tooltips_set_tip (mainw->tooltips, checkbutton, (_("Maintain aspect ratio of original frame")), NULL);
-    eventbox=gtk_event_box_new();
-    gtk_tooltips_copy(eventbox,checkbutton);
-    label=gtk_label_new_with_mnemonic (_("Maintain _Aspect Ratio"));
-
-
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      checkbutton);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      
+      
+      
+      checkbutton = gtk_check_button_new ();
+      gtk_tooltips_set_tip (mainw->tooltips, checkbutton, (_("Maintain aspect ratio of original frame")), NULL);
+      eventbox=gtk_event_box_new();
+      gtk_tooltips_copy(eventbox,checkbutton);
+      label=gtk_label_new_with_mnemonic (_("Maintain _Aspect Ratio"));
+      
+      
+      gtk_container_add(GTK_CONTAINER(eventbox),label);
+      g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+			G_CALLBACK (label_act_toggle),
+			checkbutton);
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      }
+      
+      gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
+      
+      hbox = gtk_hbox_new (FALSE, 10);
+      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
+      add_fill_to_box(GTK_BOX(hbox));
+      gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
+      gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+      add_fill_to_box(GTK_BOX(hbox));
+      GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), TRUE);
+      aspect.checkbutton=checkbutton;
+      aspect.height_widget=param->widgets[0];
     }
-
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-
-    hbox = gtk_hbox_new (FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
-    add_fill_to_box(GTK_BOX(hbox));
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    add_fill_to_box(GTK_BOX(hbox));
-    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), TRUE);
-    aspect.checkbutton=checkbutton;
-    aspect.height_widget=param->widgets[0];
+    if (num==mergealign.start_param) mergealign.start_widget=param->widgets[0];
+    if (num==mergealign.end_param) mergealign.end_widget=param->widgets[0];
   }
-  if (num==mergealign.start_param) mergealign.start_widget=param->widgets[0];
-  if (num==mergealign.end_param) mergealign.end_widget=param->widgets[0];
-
 
   slist=fileread;
   while (slist!=NULL) {
@@ -316,7 +333,58 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
 
     slist=slist->next;
   }
+
+
+  // password fields
+
+  slist=passwd_widgets;
+  while (slist!=NULL) {
+    if (num==GPOINTER_TO_INT(slist->data)) {
+      box=(GTK_WIDGET(param->widgets[0])->parent);
+
+      while (!GTK_IS_VBOX(box)) {
+	box=box->parent;
+	if (box==NULL) continue;
+      }
+
+      hbox = gtk_hbox_new (FALSE, 10);
+      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (box)), hbox, FALSE, FALSE, 10);
+      
+      eventbox=gtk_event_box_new();
+      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (hbox)), eventbox, FALSE, FALSE, 10);
+      label=gtk_label_new (_("Display Password"));
+
+      checkbutton = gtk_check_button_new ();
+      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (hbox)), checkbutton, FALSE, FALSE, 10);
+      gtk_button_set_focus_on_click (GTK_BUTTON(checkbutton),FALSE);
+
+      gtk_container_add(GTK_CONTAINER(eventbox),label);
+      g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+			G_CALLBACK (label_act_toggle),
+			checkbutton);
+
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      }
+
+      if (!GTK_WIDGET_IS_SENSITIVE(GTK_WIDGET(param->widgets[0]))) gtk_widget_set_sensitive(checkbutton,FALSE);
+      gtk_widget_show_all(hbox);
+
+      g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
+			      G_CALLBACK (passwd_toggle_vis),
+			      (gpointer)param->widgets[0]);
+
+
+
+      gtk_entry_set_visibility(GTK_ENTRY(param->widgets[0]),FALSE);
+
+    }
+    slist=slist->next;
+  }
 }
+
 
 
 void after_aspect_width_changed (GtkSpinButton *spinbutton, gpointer user_data) {
@@ -406,6 +474,9 @@ void special_cleanup (void) {
   mainw->framedraw_preview=NULL;
 
   if (framedraw.extra_params!=NULL) g_free(framedraw.extra_params);
+
+  if (fileread!=NULL) g_list_free(fileread);
+  if (passwd_widgets!=NULL) g_list_free(passwd_widgets);
 
   framedraw.added=FALSE;
 }

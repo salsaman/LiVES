@@ -1135,7 +1135,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
       if (!strncmp (g_list_nth_data (hints,i),lstring,7)) {
 	layout=g_list_append (layout,g_strdup((gchar *)g_list_nth_data (hints,i)+7));
       }
-      else if (!strncmp (g_list_nth_data (hints,i),sstring,8)&&mainw->current_file>0) {
+      else if (!strncmp (g_list_nth_data (hints,i),sstring,8)) {
 	add_to_special((gchar *)g_list_nth_data (hints,i)+8,rfx);
       }
     }
@@ -1804,12 +1804,10 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
   }
   
-  if (mainw->current_file>0) {
-    // see if there were any 'special' hints
-    //mainw->block_param_updates=FALSE; // need to keep blocked until last param widget has been created
-    check_for_special (param,pnum,GTK_BOX(GTK_WIDGET(box)->parent),rfx);
-    //mainw->block_param_updates=TRUE;
-  }
+  // see if there were any 'special' hints
+  //mainw->block_param_updates=FALSE; // need to keep blocked until last param widget has been created
+  check_for_special (param,pnum,GTK_BOX(GTK_WIDGET(box)->parent),rfx);
+  //mainw->block_param_updates=TRUE;
 
   g_free (name);
   return was_num;

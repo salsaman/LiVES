@@ -1928,7 +1928,7 @@ void play_file (void) {
   mainw->last_blend_file=-1;
 
   // show the framebar
-  if (mainw->multitrack==NULL&&(prefs->show_framecount&&(!mainw->fs||(prefs->gui_monitor!=prefs->play_monitor&&mainw->sep_win!=0))&&((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening))) {
+  if (mainw->multitrack==NULL&&(prefs->show_framecount&&(!mainw->fs||(prefs->gui_monitor!=prefs->play_monitor&&mainw->sep_win!=0)||(mainw->vpp!=NULL&&mainw->sep_win&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))&&((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening))) {
     gtk_widget_show(mainw->framebar);
   }
 

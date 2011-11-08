@@ -39,8 +39,8 @@ if ($command eq "play") {
     # audio formats taken from lives/src/plugins.h
     if ($format==3) {
 	#vorbis
-	unless (`which oggenc 2>/dev/null` eq "") { 
-	    system("oggenc -r --ignorelength -R $arate -B 16 -C 2 -o $outfifo $infifo");
+	unless (`which oggenc 2>/dev/null` eq "") {
+	    system("oggenc -r --ignorelength -R $arate -B 16 -C 2 -m 32 -M 256 -o $outfifo $infifo");
 	}
 	else {
 	    system("sox -t raw -r $arate -s -L -b 16 -c 2 $infifo -t vorbis $outfifo");

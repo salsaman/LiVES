@@ -2586,7 +2586,7 @@ verhash (gchar *version) {
 
 
 
-#ifdef ALLOW_LOG
+#ifdef PRODUCE_LOG
 void lives_log(const char *what) {
   char *lives_log_file=g_strdup_printf("%s/%s",prefs->tmpdir,LIVES_LOG_FILE);
   if (mainw->log_fd<0) mainw->log_fd=open(lives_log_file,O_WRONLY|O_CREAT,S_IRUSER|S_IWUSER);
@@ -2628,7 +2628,7 @@ set_undoable (const gchar *what, gboolean sensitive) {
   gtk_widget_show(mainw->undo);
   gtk_widget_set_sensitive (mainw->undo,sensitive);
 
-#ifdef ALLOW_LOG
+#ifdef PRODUCE_LOG
   lives_log(what);
 #endif
 

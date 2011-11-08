@@ -152,7 +152,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #  define WARN_UNUSED
 #endif
 
-#ifdef ALLOW_LOG
+#ifdef PRODUCE_LOG
 #define LIVES_LOG "lives.log"
 #endif
 

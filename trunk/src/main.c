@@ -3942,24 +3942,26 @@ void load_frame_image(gint frame) {
 	vid_playback_plugin_exit();
       }
       weed_free(pd_array);
-      
-      if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
-      mainw->frame_layer=NULL;
-      mainw->noswitch=noswitch;
 
-      if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&mainw->current_file!=mainw->scrap_file) get_play_times();
-      if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
-      if (framecount!=NULL) g_free(framecount);
-
+      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {      
+	if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
+	mainw->frame_layer=NULL;
+	mainw->noswitch=noswitch;
+	
+	if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&mainw->current_file!=mainw->scrap_file) get_play_times();
+	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
+	if (framecount!=NULL) g_free(framecount);
+	
 #ifdef ENABLE_OSC
-    // format is now msg|timecode|fgclip|fgframe|fgfps|
-    lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
-		     (tmp=g_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
-					  mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
-    g_free(tmp);
+	// format is now msg|timecode|fgclip|fgframe|fgfps|
+	lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
+			 (tmp=g_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+	g_free(tmp);
 #endif
-      
-      return;
+	
+	return;
+      }
     }
 
     if ((mainw->multitrack==NULL&&mainw->double_size&&(!prefs->ce_maxspect||mainw->sep_win))||
@@ -4065,27 +4067,33 @@ void load_frame_image(gint frame) {
 	vid_playback_plugin_exit();
       }
       g_free(pd_array);
-      mainw->noswitch=noswitch;
 
-      if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
-	  mainw->current_file!=mainw->scrap_file) get_play_times();
-      if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
-      if (framecount!=NULL) g_free(framecount);
+      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
+	mainw->noswitch=noswitch;
+
+	if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
+	    mainw->current_file!=mainw->scrap_file) get_play_times();
+	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
+	if (framecount!=NULL) g_free(framecount);
       
 #ifdef ENABLE_OSC
-    // format is now msg|timecode|fgclip|fgframe|fgfps|
-    lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
-		     (tmp=g_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
-					  mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
-    g_free(tmp);
+	// format is now msg|timecode|fgclip|fgframe|fgfps|
+	lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
+			 (tmp=g_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+	g_free(tmp);
 #endif
-
-      return;
+	
+	return;
+      }
     }
-
   
     ////////////////////////////////////////////////////////
     
+    // local display - either we are playing with no playback plugin, or else the playback plugin has no 
+    // local display of its own
+
+
     layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
     if (cfile->img_type==IMG_TYPE_JPEG||!weed_palette_has_alpha_channel(layer_palette)) cpal=WEED_PALETTE_RGB24;

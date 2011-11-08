@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -16,6 +17,7 @@ static int mypalette=WEED_PALETTE_END;
 static int palette_list[2];
 
 static int clampings[3];
+static int myclamp;
 
 static char plugin_version[64]="LiVES ogg/theora/vorbis stream engine version 1.0";
 
@@ -46,6 +48,9 @@ typedef struct {
   int hsize;
   int vsize;
   y4m_ratio_t fps;
+  int bufn;
+  int bufc;
+  uint8_t ***framebuf;
 } yuv4m_t;
 
 
@@ -64,6 +69,54 @@ yuv4m_t *yuv4mpeg_alloc (void) {
 static void make_path(const char *fname, int pid, const char *ext) {
   snprintf(xfile,4096,"%s/%s-%d.%s",tmpdir,fname,pid,ext);
 }
+
+static uint8_t **blankframe;
+
+
+
+
+static uint8_t **make_blankframe(size_t size, boolean clear) {
+  uint8_t **planes;
+
+  planes=(uint8_t **)malloc(3*sizeof(uint8_t *));
+
+  if (!planes) return NULL;
+
+  planes[0]=(uint8_t *)malloc(size);
+
+  if (!planes[0]) {
+    free(planes);
+    return NULL;
+  }
+
+  if (clear) {
+    if (myclamp==WEED_YUV_CLAMPING_CLAMPED) memset(planes[0],16,size);
+    else memset(planes[0],1,size);
+  }
+
+  size>>=2;
+
+  planes[1]=(uint8_t *)malloc(size);
+  if (!planes[1]) {
+    free(planes[0]);
+    free(planes);
+    return NULL;
+  }
+
+  if (clear) memset (planes[1],129,size);
+
+  planes[2]=(uint8_t *)malloc(size);
+  if (!planes[2]) {
+    free(planes[1]);
+    free(planes[0]);
+    free(planes);
+    return NULL;
+  }
+  if (clear) memset (planes[2],128,size);
+
+  return planes;
+}
+
 
 
 
@@ -94,6 +147,8 @@ const char *module_check_init(void) {
   memset(buf+ret,0,1);
 
   tmpdir=strdup(buf);
+
+  blankframe=NULL;
 
   return NULL;
 }
@@ -138,8 +193,10 @@ const char *get_rfx (void) {
 </language_code>\\n\
 <params> \\n\
 output|Output _file|string|/tmp/output.ogv|1024|\\n\
+syncd|A/V Sync _delay (seconds)|num2|4.|0.|20.|\\n\
 </params> \\n\
 <param_window> \\n\
+special|password|5|\\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
@@ -155,6 +212,14 @@ const int *get_yuv_palette_clamping(int palette) {
   else clampings[0]=-1;
   return clampings;
 }
+
+
+
+boolean set_yuv_palette_clamping(int clamping_type) {
+  myclamp=clamping_type;
+  return TRUE;
+}
+
 
 
 boolean set_palette (int palette) {
@@ -195,8 +260,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   const char *outfile;
   char cmd[8192];
   int afd;
+  int i;
 
   int mypid=getpid();
+
+  double syncd=0;
 
   if (mypalette==WEED_PALETTE_END) {
     fprintf(stderr,"oggstream plugin error: No palette was set !\n");
@@ -210,12 +278,26 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     outfile="-";
   }
 
+  if (argc>1) {
+    syncd=strtod(argv[1],NULL);
+  }
+
   make_path("video",mypid,"ogv");
   unlink(xfile);
   make_path("video2",mypid,"ogv");
   unlink(xfile);
   make_path("stream",mypid,"fifo");
   unlink(xfile);
+
+  yuv4mpeg->bufn=(int)(syncd*yuv4mpeg->fps.n+.5);
+  if (syncd==0) yuv4mpeg->bufn=0;
+  if (yuv4mpeg->bufn>0) {
+    yuv4mpeg->bufc=1;
+    yuv4mpeg->framebuf=(uint8_t ***)malloc(yuv4mpeg->bufn*sizeof(uint8_t **));
+    if (!yuv4mpeg->framebuf) return FALSE;
+    for (i=0;i<yuv4mpeg->bufn;i++) yuv4mpeg->framebuf[i]=NULL;
+  }
+  else yuv4mpeg->bufc=0;
 
   make_path("stream",mypid,"fifo");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // raw yuv4m
@@ -246,16 +328,19 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv \"%s\" &",tmpdir,mypid,outfile); 
     dummyvar=system(cmd);
   }
-  // open fifo for writing
+
+  // open first fifo for writing
 
   make_path("stream",mypid,"fifo");
   yuv4mpeg->fd=open(xfile,O_WRONLY);
-  dup2(yuv4mpeg->fd,1);
-  close(yuv4mpeg->fd);
+
   ov_vsize=ov_hsize=0;
 
   y4m_si_set_framerate(&(yuv4mpeg->streaminfo),yuv4mpeg->fps);
   y4m_si_set_interlace(&(yuv4mpeg->streaminfo), Y4M_ILACE_NONE);
+
+  if (blankframe!=NULL) free(blankframe);
+  blankframe=NULL;
 
   //y4m_log_stream_info(LOG_INFO, "lives-yuv4mpeg", &(yuv4mpeg->streaminfo));
   return TRUE;
@@ -268,7 +353,9 @@ boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void 
 }
 
 boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **return_data) {
-  int i;
+  int i,z;
+  size_t fsize;
+  register int j;
 
   if ((ov_hsize!=hsize||ov_vsize!=vsize)) {
     //start new stream
@@ -277,17 +364,70 @@ boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **ret
     
     y4m_si_set_sampleaspect(&(yuv4mpeg->streaminfo), yuv4mpeg->sar);
     
-    i = y4m_write_stream_header(1, &(yuv4mpeg->streaminfo));
+    i = y4m_write_stream_header(yuv4mpeg->fd, &(yuv4mpeg->streaminfo));
 
     if (i != Y4M_OK) return FALSE;
 
     ov_hsize=hsize;
     ov_vsize=vsize;
+
+    if (yuv4mpeg->bufn>0) {
+      yuv4mpeg->bufc=1; // reset delay (for now)
+
+      for (i=0;i<yuv4mpeg->bufn;i++) {
+	if (yuv4mpeg->framebuf[i]!=NULL) {
+	  for (j=0;j<3;j++) {
+	    free(yuv4mpeg->framebuf[i][j]);
+	  }
+	  free(yuv4mpeg->framebuf[i]);
+	  yuv4mpeg->framebuf[i]=NULL;
+	}
+      }
+
+      if (blankframe!=NULL) free(blankframe);
+      blankframe=NULL;
+    }
+
   }
 
 
-  i = y4m_write_frame(1, &(yuv4mpeg->streaminfo),
-  		&(yuv4mpeg->frameinfo), (uint8_t **)pixel_data);
+  if (yuv4mpeg->bufn==0) {
+    // no sync delay
+    i = y4m_write_frame(yuv4mpeg->fd, &(yuv4mpeg->streaminfo),
+			&(yuv4mpeg->frameinfo), (uint8_t **)pixel_data);
+  }
+  else {
+    // write frame to next slot in buffer
+    z=yuv4mpeg->bufc-1;
+    fsize=hsize*vsize;
+
+    if (yuv4mpeg->framebuf[z]==NULL) {
+      // blank to output
+      yuv4mpeg->framebuf[z]=make_blankframe(fsize,FALSE);
+      if (yuv4mpeg->framebuf[z]==NULL) return FALSE;
+
+      if (blankframe==NULL) blankframe=make_blankframe(fsize,FALSE);
+      if (blankframe==NULL) return FALSE; // oom
+
+      i = y4m_write_frame(yuv4mpeg->fd, &(yuv4mpeg->streaminfo),
+			  &(yuv4mpeg->frameinfo), blankframe);
+    }
+    else {
+      // old frame to op
+      i = y4m_write_frame(yuv4mpeg->fd, &(yuv4mpeg->streaminfo),
+			  &(yuv4mpeg->frameinfo), (uint8_t **)yuv4mpeg->framebuf[z]);
+    }
+
+    for (j=0;j<3;j++) {
+      memcpy(yuv4mpeg->framebuf[z][j],pixel_data[j],fsize);
+      if (j==0) fsize>>=2;
+    }
+
+    yuv4mpeg->bufc++;
+    if (yuv4mpeg->bufc>yuv4mpeg->bufn) yuv4mpeg->bufc=1;
+
+  }
+
   if (i != Y4M_OK) return FALSE;
 
 
@@ -305,13 +445,14 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   int dummyvar;
   int mypid=getpid();
 
+  int i,j;
+
   y4m_fini_stream_info(&(yuv4mpeg->streaminfo));
   y4m_fini_frame_info(&(yuv4mpeg->frameinfo));
 
   if (yuv4mpeg->fd!=-1) {
-    int new_fd=open("/dev/null",O_WRONLY);
-    dup2(new_fd,1);
-    close(new_fd);
+    close(yuv4mpeg->fd);
+    yuv4mpeg->fd=-1;
   }
 
   dummyvar=system("pkill -g 0 -P 1");
@@ -322,6 +463,29 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   unlink(xfile);
   make_path("stream",mypid,"fifo");
   unlink(xfile);
+
+  if (blankframe!=NULL) free(blankframe);
+  blankframe=NULL;
+
+  if (yuv4mpeg->bufc!=0) {
+    if (yuv4mpeg->bufc<0) {
+      yuv4mpeg->bufn=-yuv4mpeg->bufc-1;
+    }
+
+    if (yuv4mpeg->framebuf!=NULL) {
+      for (i=0;i<yuv4mpeg->bufn;i++) {
+	if (yuv4mpeg->framebuf[i]!=NULL) {
+	  for (j=0;j<3;j++) {
+	    free(yuv4mpeg->framebuf[i][j]);
+	  }
+	  free(yuv4mpeg->framebuf[i]);
+	}
+      }
+      free(yuv4mpeg->framebuf);
+    }
+  }
+
+
 
 }
 

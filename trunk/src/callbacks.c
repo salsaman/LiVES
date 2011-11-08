@@ -6412,12 +6412,17 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar filename[512];
   gchar *subfname,*isubfname,*com,*tmp;
   lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
+  gchar *lfile_name;
 
   if (cfile->subt!=NULL) if (!do_existing_subs_warning()) return;
 
   // try to repaint the screen, as it may take a few seconds to get a directory listing
   while (g_main_context_iteration(NULL,FALSE));
-  subfile=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
+
+  if (strlen(mainw->vid_load_dir)) {
+    subfile=choose_file(mainw->vid_load_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
+  }
+  else subfile=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
 
   if (subfile==NULL) return; // cancelled
 
@@ -6426,20 +6431,26 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   get_filename(filename,FALSE); // strip extension
   isubfname=g_strdup_printf("%s.srt",filename);
-  if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
-    subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
+  lfile_name=g_filename_from_utf8(isubfname,-1,NULL,NULL,NULL);
+
+  if (g_file_test(lfile_name,G_FILE_TEST_EXISTS)) {
+    subfname=g_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
     subtype=SUBTITLE_TYPE_SRT;
   }
   else {
     g_free(isubfname);
+    g_free(lfile_name);
     isubfname=g_strdup_printf("%s.sub",filename);
+    lfile_name=g_filename_from_utf8(isubfname,-1,NULL,NULL,NULL);
+
     if (g_file_test(isubfname,G_FILE_TEST_EXISTS)) {
-      subfname=g_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
+      subfname=g_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
       subtype=SUBTITLE_TYPE_SUB;
     }
     else {
       g_free(isubfname);
       do_invalid_subs_error();
+      g_free(lfile_name);
       return;
     }
   }
@@ -6450,7 +6461,7 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
     subtitles_free(cfile);
   }
 
-  com=g_strdup_printf("/bin/cp \"%s\" %s",isubfname,subfname);
+  com=g_strdup_printf("/bin/cp \"%s\" %s",lfile_name,subfname);
   dummyvar=system(com);
   g_free(com);
 
@@ -6464,6 +6475,7 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   d_print(tmp);
   g_free(tmp);
   g_free(isubfname);
+  g_free(lfile_name);
 }
 
 

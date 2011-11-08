@@ -26,6 +26,7 @@ Changes
 - Describe how width and height are passed back to host.
 - Add "special|fileread"
 - Added note about differing input image types
+- Add "special|password"
 
 TODO: 	- change rectdemask to use proportion, to match other framedraws
 	- split into RFX layout and RFX plugin components
@@ -474,7 +475,7 @@ The mergealign special widget links together two num type parameters. It has two
 
 Special type "fileread" - 1 string parameter : the linked string parameter should point to a file to which the user has read permissions 
 
-
+Special type "password" - 1 string parameter : the host may hide/obscure the input to this string
 
 
 <properties> [optional]

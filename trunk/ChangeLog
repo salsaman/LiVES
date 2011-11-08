@@ -1,5 +1,6 @@
 Version 1.4.8
 -------------
+Implement streaming output to icecast server.
 Optimise resizing for virtual clips.
 Implement letterbox mode for fullscreen playback.
 Fix bugs in append_audio (regression). *
@@ -10,6 +11,7 @@ Fix missing audio for kvcd encoding.
 Various minor fixes.
 
 
+	
 
 
 

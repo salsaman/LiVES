@@ -26,6 +26,11 @@ typedef int boolean;
 #define TRUE 1
 #define FALSE 0
 
+#ifndef ABS
+#define ABS(a) (a>0?a:-a)
+#endif
+
+// Warning - CPU_BITS macro evaluates only at runtime (uses sizeof)
 #define CPU_BITS ((sizeof(void *))<<3)
 
 // all playback modules need to implement these functions, unless they are marked (optional)
@@ -60,6 +65,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 /// unresized data (VPP_CAN_RETURN) or set it back to NULL if you can't
 ///
 /// hsize and vsize are width and height of the pixel data (in macropixels)
+/// no extra padding (rowstrides) is allowed
 boolean render_frame (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data);
 
 /// destroy the screen, return mouse to original posn., allow the host GUI to take over (optional)

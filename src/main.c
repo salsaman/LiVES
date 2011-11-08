@@ -3609,7 +3609,9 @@ void load_frame_image(gint frame) {
 	}
       }
       
-      if ((!mainw->fs||prefs->play_monitor!=prefs->gui_monitor)&&prefs->show_framecount) {
+      if ((!mainw->fs||prefs->play_monitor!=prefs->gui_monitor||
+	   (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))
+	  &&prefs->show_framecount) {
 	gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),framecount);
       }
       g_free(framecount);
@@ -4166,7 +4168,9 @@ void load_frame_image(gint frame) {
 
     if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 
-    else if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&mainw->current_file!=mainw->scrap_file) 
+    else if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor||
+			     (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))&&
+			     mainw->current_file!=mainw->scrap_file) 
       get_play_times();
     
     gdk_pixbuf_unref(pixbuf);

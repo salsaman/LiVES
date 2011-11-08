@@ -5510,166 +5510,167 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
   if (mainw->playing_file>-1){
     if (mainw->fs) {
       // switch TO full screen during pb
-      if (mainw->multitrack==NULL&&(!mainw->sep_win||prefs->play_monitor==prefs->gui_monitor)) {
-	if (!mainw->faded) {
-	  fade_background();
-	}
-	
-	fullscreen_internal();
-	gtk_widget_hide(mainw->framebar);
+      if (mainw->multitrack==NULL&&(!mainw->sep_win||prefs->play_monitor==prefs->gui_monitor)&&!(mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))) {
+      if (!mainw->faded) {
+	fade_background();
       }
-
-      if (mainw->sep_win) {
-	if (prefs->sepwin_type==1) {
-	  resize_play_window();
-	}
-	else {
-	  kill_play_window();
-	  make_play_window();
-	  if (mainw->play_window!=NULL) {
-	    hide_cursor(mainw->play_window->window);
-	    gtk_widget_set_app_paintable(mainw->play_window,TRUE);
-	  }
-	}
-	if (cfile->frames==1||cfile->play_paused) {
-	  while (g_main_context_iteration (NULL,FALSE));
-	}
-      }
-      if (mainw->ext_playback&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
-	// fixed o/p size for stream
-	if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
-	  mainw->vpp->fwidth=cfile->hsize;
-	  mainw->vpp->fheight=cfile->vsize;
-	}
-	mainw->pwidth=mainw->vpp->fwidth;
-	mainw->pheight=mainw->vpp->fheight;
-      }
-      if ((cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-	weed_plant_t *frame_layer=mainw->frame_layer;
-	mainw->frame_layer=NULL;
-	load_frame_image (cfile->frameno);
-	mainw->frame_layer=frame_layer;
-      }
-    } else {
-      if (mainw->multitrack==NULL) {
-	// switch FROM fullscreen during pb
-	gtk_widget_show(mainw->frame1);
-	gtk_widget_show(mainw->frame2);
-	gtk_widget_show(mainw->eventbox3);
-	gtk_widget_show(mainw->eventbox4);
-	
-	if (prefs->show_framecount) {
-	  gtk_widget_show(mainw->framebar);
-	}
-	
-	gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
-	
-	gtk_widget_set_sensitive(mainw->fade,TRUE);
-	gtk_widget_set_sensitive(mainw->dsize,TRUE);
-	
-	gtk_widget_show(mainw->t_bckground);
-	gtk_widget_show(mainw->t_double);
-
-	resize(1);
-	if (mainw->multitrack==NULL) {
-	  if (cfile->is_loaded) {
-	    load_start_image (cfile->start);
-	    load_end_image (cfile->end);
-	  }
-	  else {
-	    load_start_image (0);
-	    load_end_image (0);
-	  }
-	}
-      }
-
-      if (mainw->sep_win) {
-	// separate window
-
-	// multi monitors don't like this it seems, breaks the window
-	gtk_window_unfullscreen(GTK_WINDOW(mainw->play_window));
-
-	if (!mainw->faded) {
-	  unfade_background();
-	}
-
+      
+      fullscreen_internal();
+      gtk_widget_hide(mainw->framebar);
+    }
+    
+    if (mainw->sep_win) {
+      if (prefs->sepwin_type==1) {
 	resize_play_window();
-
-	if (mainw->ext_playback) {
-	  vid_playback_plugin_exit();
-	  
-	}
-
-	if (mainw->opwx>-1) {
-	  //opwx and opwy were stored when we first switched to full screen
-	  gtk_window_move (GTK_WINDOW (mainw->play_window), mainw->opwx, mainw->opwy);
-	  mainw->opwx=-1;
-	  mainw->opwy=-1;
-	}
-	else {
-	  // non-sticky
-	  kill_play_window();
-	  make_play_window();
-	  if (mainw->play_window!=NULL) {
-	    hide_cursor(mainw->play_window->window);
-	    gtk_widget_set_app_paintable(mainw->play_window,TRUE);
-	  }
-	}
-	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)) {
-	  while (g_main_context_iteration (NULL,FALSE));
-	  if (mainw->play_window!=NULL&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-	    weed_plant_t *frame_layer=mainw->frame_layer;
-	    mainw->frame_layer=NULL;
-	    load_frame_image (cfile->frameno);
-	    mainw->frame_layer=frame_layer;
-	  }
-	}
       }
       else {
-	if (mainw->multitrack==NULL) {
-	// in-frame window
-	  while (g_main_context_iteration(NULL,FALSE));
-	  
-	  mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
-	  mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
-	  
-	  // double size
-	  if (mainw->double_size) {
-	    resize(2);
-	    mainw->pheight*=2;
-	    mainw->pheight++;
-	    mainw->pwidth*=2;
-	    mainw->pwidth+=2;
-	  }
+	kill_play_window();
+	make_play_window();
+	if (mainw->play_window!=NULL) {
+	  hide_cursor(mainw->play_window->window);
+	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
 	}
-	if (!mainw->faded) {
-	  unfade_background();
+      }
+      if (cfile->frames==1||cfile->play_paused) {
+	while (g_main_context_iteration (NULL,FALSE));
+      }
+    }
+
+    if (mainw->ext_playback&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
+      // fixed o/p size for stream
+      if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
+	mainw->vpp->fwidth=cfile->hsize;
+	mainw->vpp->fheight=cfile->vsize;
+      }
+      mainw->pwidth=mainw->vpp->fwidth;
+      mainw->pheight=mainw->vpp->fheight;
+    }
+    if ((cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+      weed_plant_t *frame_layer=mainw->frame_layer;
+      mainw->frame_layer=NULL;
+      load_frame_image (cfile->frameno);
+      mainw->frame_layer=frame_layer;
+    }
+  } else {
+    if (mainw->multitrack==NULL) {
+      // switch FROM fullscreen during pb
+      gtk_widget_show(mainw->frame1);
+      gtk_widget_show(mainw->frame2);
+      gtk_widget_show(mainw->eventbox3);
+      gtk_widget_show(mainw->eventbox4);
+	
+      if (prefs->show_framecount) {
+	gtk_widget_show(mainw->framebar);
+      }
+	
+      gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
+	
+      gtk_widget_set_sensitive(mainw->fade,TRUE);
+      gtk_widget_set_sensitive(mainw->dsize,TRUE);
+	
+      gtk_widget_show(mainw->t_bckground);
+      gtk_widget_show(mainw->t_double);
+
+      resize(1);
+      if (mainw->multitrack==NULL) {
+	if (cfile->is_loaded) {
+	  load_start_image (cfile->start);
+	  load_end_image (cfile->end);
 	}
 	else {
-	  gtk_frame_set_label(GTK_FRAME(mainw->playframe), "");
-	}
-      }
-      if ((cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-	weed_plant_t *frame_layer=mainw->frame_layer;
-	mainw->frame_layer=NULL;
-	load_frame_image (cfile->frameno);
-	mainw->frame_layer=frame_layer;
-      }
-    }
-  }
-  else {
-    if (mainw->multitrack==NULL) {
-      if (mainw->playing_file==-1) {
-	if (mainw->fs) {
-	  gtk_widget_set_sensitive(mainw->fade,FALSE);
-	  gtk_widget_set_sensitive(mainw->dsize,FALSE);
-	} else {
-	  gtk_widget_set_sensitive(mainw->fade,TRUE);
-	  gtk_widget_set_sensitive(mainw->dsize,TRUE);
+	  load_start_image (0);
+	  load_end_image (0);
 	}
       }
     }
+
+    if (mainw->sep_win) {
+      // separate window
+
+      // multi monitors don't like this it seems, breaks the window
+      gtk_window_unfullscreen(GTK_WINDOW(mainw->play_window));
+
+      if (!mainw->faded) {
+	unfade_background();
+      }
+
+      resize_play_window();
+
+      if (mainw->ext_playback) {
+	vid_playback_plugin_exit();
+	  
+      }
+
+      if (mainw->opwx>-1) {
+	//opwx and opwy were stored when we first switched to full screen
+	gtk_window_move (GTK_WINDOW (mainw->play_window), mainw->opwx, mainw->opwy);
+	mainw->opwx=-1;
+	mainw->opwy=-1;
+      }
+      else {
+	// non-sticky
+	kill_play_window();
+	make_play_window();
+	if (mainw->play_window!=NULL) {
+	  hide_cursor(mainw->play_window->window);
+	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+	}
+      }
+      if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)) {
+	while (g_main_context_iteration (NULL,FALSE));
+	if (mainw->play_window!=NULL&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+	  weed_plant_t *frame_layer=mainw->frame_layer;
+	  mainw->frame_layer=NULL;
+	  load_frame_image (cfile->frameno);
+	  mainw->frame_layer=frame_layer;
+	}
+      }
+    }
+    else {
+      if (mainw->multitrack==NULL) {
+	// in-frame window
+	while (g_main_context_iteration(NULL,FALSE));
+	  
+	mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
+	mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
+	  
+	// double size
+	if (mainw->double_size) {
+	  resize(2);
+	  mainw->pheight*=2;
+	  mainw->pheight++;
+	  mainw->pwidth*=2;
+	  mainw->pwidth+=2;
+	}
+      }
+      if (!mainw->faded) {
+	unfade_background();
+      }
+      else {
+	gtk_frame_set_label(GTK_FRAME(mainw->playframe), "");
+      }
+    }
+    if ((cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+      weed_plant_t *frame_layer=mainw->frame_layer;
+      mainw->frame_layer=NULL;
+      load_frame_image (cfile->frameno);
+      mainw->frame_layer=frame_layer;
+    }
   }
+}
+ else {
+   if (mainw->multitrack==NULL) {
+     if (mainw->playing_file==-1) {
+       if (mainw->fs) {
+	 gtk_widget_set_sensitive(mainw->fade,FALSE);
+	 gtk_widget_set_sensitive(mainw->dsize,FALSE);
+       } else {
+	 gtk_widget_set_sensitive(mainw->fade,TRUE);
+	 gtk_widget_set_sensitive(mainw->dsize,TRUE);
+       }
+     }
+   }
+ }
 }
 
 
@@ -5744,7 +5745,8 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
       }
       if (cfile->frames==1||cfile->play_paused) {
 	while (g_main_context_iteration (NULL,FALSE));
-	if (!(mainw->play_window==NULL)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+	if (!(mainw->play_window==NULL)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||
+							    cfile->clip_type==CLIP_TYPE_FILE)) {
 	  weed_plant_t *frame_layer=mainw->frame_layer;
 	  mainw->frame_layer=NULL;
 	  load_frame_image (cfile->frameno);
@@ -5862,7 +5864,9 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  if (prefs->show_framecount&&((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening)) {
 	    gtk_widget_show(mainw->framebar);
 	  }
-	  if (!mainw->faded&&mainw->fs&&prefs->play_monitor!=prefs->gui_monitor&&prefs->play_monitor>0) {
+	  if ((!mainw->faded&&mainw->fs&&((prefs->play_monitor!=prefs->gui_monitor&&prefs->play_monitor>0)))||
+					 (mainw->fs&&mainw->vpp!=NULL&&
+					  !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))) {
 	    unfade_background();
 	    gtk_widget_show(mainw->frame1);
 	    gtk_widget_show(mainw->frame2);
@@ -5877,7 +5881,8 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	      load_end_image (0);
 	    }
 	  }
-	  if (mainw->fs&&!mainw->faded) {
+	  if (mainw->fs&&(!mainw->faded||(mainw->vpp!=NULL&&
+					  !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))) {
 	    resize(1);
 	  }
 	  else {
@@ -5912,6 +5917,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	    unfade_background();
 	  }
 
+	  resize(1);
 	  resize_play_window();
 	}
 	
@@ -5982,7 +5988,9 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	kill_play_window();
 	if (mainw->multitrack==NULL) add_to_playframe();
 	hide_cursor(mainw->playarea->window);
-	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)&&
+	    !mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||
+			       cfile->clip_type==CLIP_TYPE_FILE)) {
 	  weed_plant_t *frame_layer=mainw->frame_layer;
 	  mainw->frame_layer=NULL;
 	  load_frame_image (cfile->frameno);
@@ -7205,7 +7213,11 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
   gint width;
 
-  if (!prefs->show_gui||mainw->multitrack!=NULL||(mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||prefs->play_monitor==0)&&mainw->playing_file>-1)||mainw->foreign) {
+  if (!prefs->show_gui||mainw->multitrack!=NULL||
+      (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
+		   prefs->play_monitor==0)&&mainw->playing_file>-1&&
+       !(mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))||
+      mainw->foreign) {
     return FALSE;
   }
 
@@ -7267,7 +7279,11 @@ expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
   gint width;
 
-  if (!prefs->show_gui||mainw->multitrack!=NULL||(mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||prefs->play_monitor==0)&&mainw->playing_file>-1)||mainw->foreign) {
+  if (!prefs->show_gui||mainw->multitrack!=NULL||
+      (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
+		   prefs->play_monitor==0)&&mainw->playing_file>-1&&
+       !(mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))||
+      mainw->foreign) {
     return FALSE;
   }
 
@@ -7329,7 +7345,11 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
   gint width;
 
-  if (!prefs->show_gui||mainw->multitrack!=NULL||(mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||prefs->play_monitor==0)&&mainw->playing_file>-1)||mainw->foreign) {
+  if (!prefs->show_gui||mainw->multitrack!=NULL||
+      (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
+		   prefs->play_monitor==0)&&mainw->playing_file>-1&&
+       !(mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))||
+      mainw->foreign) {
     return FALSE;
   }
 

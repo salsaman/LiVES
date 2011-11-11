@@ -504,6 +504,7 @@ void module_unload(void) {
   if (yuv4mpeg!=NULL) {
     free (yuv4mpeg);
   }
+  yuv4mpeg=NULL;
 }
 
 

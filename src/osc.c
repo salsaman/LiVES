@@ -1450,9 +1450,7 @@ void lives_osc_cb_open_notify_socket(void *context, int arglen, const void *varg
   }
 
   if (!(notify_socket=OpenHTMSocket (host,port,TRUE))) g_printerr ("Unable to open notify socket !\n");
-  else if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  prefs->omc_noisy=FALSE; // default for confirms is OFF
 
 }
 
@@ -2167,7 +2165,7 @@ void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, 
   if (frame<1||frame>sfile->frames||(sfile->clip_type!=CLIP_TYPE_DISK&&sfile->clip_type!=CLIP_TYPE_FILE)) 
     return lives_osc_notify_failure();
 
-  retval=save_frame(clip,frame,fname,width,height);
+  retval=save_frame(clip,frame,fname,width,height,TRUE);
 
   if (retval) lives_osc_notify_success(NULL);
   else lives_osc_notify_failure();

@@ -1,23 +1,21 @@
-# Estonian translation for lives
-# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
+# Uyghur translation for lives
+# Copyright (c) 2011 Rosetta Contributors and Canonical Ltd 2011
 # This file is distributed under the same license as the lives package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
-"Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-09 20:20-0300\n"
-"PO-Revision-Date: 2011-08-18 12:02+0000\n"
-"Last-Translator: Tarmo Ilves <tarmo.ilves.001@mail.ee>\n"
-"Language-Team: Estonian <et@li.org>\n"
-"Language: et\n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2011-11-06 17:56-0300\n"
+"PO-Revision-Date: 2011-11-07 04:09+0000\n"
+"Last-Translator: Gheyret T.Kenji <Unknown>\n"
+"Language-Team: Uyghur <ug@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-08-21 20:42+0000\n"
-"X-Generator: Launchpad (build 13697)\n"
+"X-Launchpad-Export-Date: 2011-11-08 11:04+0000\n"
+"X-Generator: Launchpad (build 14231)\n"
 
 #: src/main.c:111
 msgid ""
@@ -32,15 +30,10 @@ msgstr ""
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
-"Please report this bug at http://sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
+"Please report this bug at "
+"http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
-"\n"
-"Kahjuks LiVES jooksis kokku.\n"
-"Palun teatage sellest veast aadressil http://sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
-"Aitäh. Peaks olema võimalik progress taastada LiVES-i taaskäivitusel.\n"
 
 #: src/main.c:128
 msgid ""
@@ -49,18 +42,12 @@ msgid ""
 "When reporting crashes, please include details of your operating system, "
 "distribution, and the LiVES version ("
 msgstr ""
-"\n"
-"\n"
-"Vigadest teatades, palun lisage infot oma operatsioonisüsteemist, jaotusest "
-"ja LiVES-i versioonist ("
 
 #: src/main.c:131
 msgid ""
 "and any information shown below:\n"
 "\n"
 msgstr ""
-"ja mis tahes allpool esitatud teave:\n"
-"\n"
 
 #: src/main.c:135
 msgid ""
@@ -68,49 +55,46 @@ msgid ""
 "information.\n"
 "\n"
 msgstr ""
-"Palun installeerige gdb ja käivitage LiVES -debug sättega, et koguda rohkem "
-"infot.\n"
-"\n"
 
 #: src/main.c:143
 msgid "Preserving set.\n"
-msgstr "Valiku säilitamine.\n"
+msgstr ""
 
 #: src/main.c:493
 msgid "Resizing"
-msgstr "Mõõtmete muutmine"
+msgstr ""
 
 #: src/main.c:500
 msgid "_Resize All Frames"
-msgstr "_kõikide kaadrite suuruse muutmine"
+msgstr ""
 
 #: src/main.c:761
 msgid "Any"
-msgstr "Kõik"
+msgstr "خالىغان"
 
 #: src/main.c:762
 msgid "None"
-msgstr "Pole"
+msgstr "يوق"
 
 #: src/main.c:763
 msgid "recommended"
-msgstr "soovitatav"
+msgstr "تەۋسىيە قىلغان"
 
 #: src/main.c:764
 msgid "disabled !"
-msgstr "keelatud !"
+msgstr "چەكلەنگەن!"
 
 #: src/main.c:765
 msgid "**The current layout**"
-msgstr "**Praegune skeem**"
+msgstr ""
 
 #: src/main.c:1209
 msgid "Loading realtime effect plugins..."
-msgstr "Laen reaalaja efektide pluginaid..."
+msgstr ""
 
 #: src/main.c:1262
 msgid "Starting jack audio server..."
-msgstr "Heli serveri jack käivitamine..."
+msgstr ""
 
 #: src/main.c:1264
 msgid "Starting jack transport server..."
@@ -133,7 +117,7 @@ msgstr ""
 
 #: src/main.c:1316
 msgid "Starting pulse audio server..."
-msgstr "Heli serveri pulse käivitamine..."
+msgstr ""
 
 #: src/main.c:1379
 msgid "Checking optional dependencies:"
@@ -141,35 +125,35 @@ msgstr ""
 
 #: src/main.c:1380
 msgid "mplayer...detected..."
-msgstr "mplayer...tuvastatud..."
+msgstr ""
 
 #: src/main.c:1381
 msgid "mplayer...NOT DETECTED..."
-msgstr "mplayer...ei tuvastatud..."
+msgstr ""
 
 #: src/main.c:1382
 msgid "convert...detected..."
-msgstr "konverdi...tuvastatud..."
+msgstr ""
 
 #: src/main.c:1383
 msgid "convert...NOT DETECTED..."
-msgstr "konversioon...ei tuvastatud..."
+msgstr ""
 
 #: src/main.c:1384
 msgid "composite...detected..."
-msgstr "komposiit...tuvastatud.."
+msgstr ""
 
 #: src/main.c:1385
 msgid "composite...NOT DETECTED..."
-msgstr "komposiit...ei tuvastatud..."
+msgstr ""
 
 #: src/main.c:1386
 msgid "sox...detected\n"
-msgstr "sox...tuvastatud\n"
+msgstr ""
 
 #: src/main.c:1387
 msgid "sox...NOT DETECTED\n"
-msgstr "sox...ei tuvastatud\n"
+msgstr ""
 
 #: src/main.c:1388
 msgid "cdda2wav...detected..."
@@ -292,7 +276,8 @@ msgid "-help            : show this help text and exit\n"
 msgstr ""
 
 #: src/main.c:1763
-msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
+msgid ""
+"-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 
 #: src/main.c:1764
@@ -548,46 +533,46 @@ msgstr ""
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3804 src/main.c:3805 src/gui.c:2006 src/gui.c:2979
-#: src/saveplay.c:1748
+#: src/main.c:3802 src/main.c:3803 src/gui.c:2006 src/gui.c:2979
+#: src/saveplay.c:1740
 msgid "Play"
-msgstr "Esita"
+msgstr "قوي"
 
-#: src/main.c:4227
+#: src/main.c:4209
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/main.c:4323
+#: src/main.c:4305
 #, c-format
 msgid "Closed file %s\n"
 msgstr ""
 
-#: src/main.c:4489 src/gui.c:596 src/utils.c:2620 src/utils.c:2652
-#: src/saveplay.c:2709 src/multitrack.c:3827 src/multitrack.c:5338
+#: src/main.c:4471 src/gui.c:596 src/utils.c:2620 src/utils.c:2652
+#: src/saveplay.c:2701 src/multitrack.c:3827 src/multitrack.c:5338
 msgid "_Undo"
-msgstr "Võta _tagasi"
+msgstr "يېنىۋال(_U)"
 
-#: src/main.c:4490 src/gui.c:609 src/utils.c:2621 src/utils.c:2653
-#: src/saveplay.c:2710 src/multitrack.c:3848 src/multitrack.c:5361
+#: src/main.c:4472 src/gui.c:609 src/utils.c:2621 src/utils.c:2653
+#: src/saveplay.c:2702 src/multitrack.c:3848 src/multitrack.c:5361
 msgid "_Redo"
-msgstr "_Taasta"
+msgstr "قايتىلا(_R)"
 
-#: src/main.c:4516 src/interface.c:642 src/gui.c:2164 src/preferences.c:2398
+#: src/main.c:4498 src/interface.c:642 src/gui.c:2164 src/preferences.c:2393
 #: src/resample.c:1790
 msgid "Video"
-msgstr "Video"
+msgstr "سىن"
 
-#: src/main.c:4517 src/interface.c:661 src/gui.c:2183
+#: src/main.c:4499 src/interface.c:661 src/gui.c:2183
 msgid "Left Audio"
-msgstr ""
+msgstr "سول ئۈن"
 
-#: src/main.c:4518 src/gui.c:2201
+#: src/main.c:4500 src/gui.c:2201
 msgid "Right Audio"
-msgstr ""
+msgstr "ئوڭ ئۈن"
 
-#: src/main.c:4563
+#: src/main.c:4545
 msgid ""
 "\n"
 "\n"
@@ -716,19 +701,19 @@ msgstr ""
 
 #: src/startup.c:402 src/startup.c:591 src/interface.c:1988
 msgid "_Next"
-msgstr ""
+msgstr "كېيىنكى(_N)"
 
 #: src/startup.c:446
 msgid "Skipped"
-msgstr ""
+msgstr "ئاتلاپ ئۆتتى"
 
 #: src/startup.c:463
 msgid "Passed"
-msgstr ""
+msgstr "ئۆتتى"
 
 #: src/startup.c:495
 msgid "Failed"
-msgstr ""
+msgstr "مەغلۇپ بولدى"
 
 #: src/startup.c:557
 msgid "LiVES: - Testing Configuration"
@@ -857,7 +842,7 @@ msgstr ""
 
 #: src/startup.c:1016
 msgid "_Finish"
-msgstr ""
+msgstr "تاماملا(_F)"
 
 #: src/interface.c:40
 msgid "Let LiVES set the _file extension"
@@ -876,12 +861,12 @@ msgstr ""
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
-#: src/interface.c:190 src/callbacks.c:7769 src/gui.c:2982 src/gui.c:3523
-#: src/saveplay.c:1751 src/saveplay.c:2375 src/dialogs.c:831 src/dialogs.c:832
+#: src/interface.c:190 src/callbacks.c:7749 src/gui.c:2982 src/gui.c:3523
+#: src/saveplay.c:1743 src/saveplay.c:2367 src/dialogs.c:831 src/dialogs.c:832
 #: src/dialogs.c:999 src/dialogs.c:1000 src/framedraw.c:189
 #: src/multitrack.c:6905
 msgid "Preview"
-msgstr "Eelvaade"
+msgstr "ئالدىن كۆزەت"
 
 #: src/interface.c:211
 msgid "Click here to _Preview any selected video, image or audio file"
@@ -908,18 +893,18 @@ msgid ""
 "Remember to switch off effects (ctrl-0) afterwards !"
 msgstr ""
 
-#: src/interface.c:339 src/callbacks.c:7541 src/callbacks.c:7573
+#: src/interface.c:339 src/callbacks.c:7521 src/callbacks.c:7553
 #: src/dialogs.c:1810
 msgid ""
 "\n"
 "Please Wait"
 msgstr ""
 "\n"
-"Palun oota"
+"سەل ساقلاڭ"
 
 #: src/interface.c:382
 msgid "Show details"
-msgstr "Näita üksikasju"
+msgstr "تەپسىلاتىنى كۆرسەت"
 
 #: src/interface.c:405 src/dialogs.c:1828
 msgid "_Enough"
@@ -927,39 +912,39 @@ msgstr ""
 
 #: src/interface.c:406 src/framedraw.c:247
 msgid "_Preview"
-msgstr "_Eelvaade"
+msgstr "ئالدىن كۆزەت(_P)"
 
 #: src/interface.c:408
 msgid "Paus_e"
 msgstr ""
 
-#: src/interface.c:409 src/callbacks.c:7570
+#: src/interface.c:409 src/callbacks.c:7550
 msgid "Pause/_Enough"
 msgstr ""
 
 #: src/interface.c:436
 msgid "_Cancel"
-msgstr "_Katkesta"
+msgstr "ئەمەلدىن قالدۇر(_C)"
 
 #: src/interface.c:586
 msgid "Format"
-msgstr "Vorming"
+msgstr "پىچىمى"
 
 #: src/interface.c:595
 msgid "Frame size"
-msgstr "Raami suurus"
+msgstr "كاندۇك چوڭلۇقى"
 
 #: src/interface.c:604
 msgid "File size"
-msgstr "Failisuurus"
+msgstr "ھۆججەت چوڭلۇقى"
 
 #: src/interface.c:605
 msgid "Byte size"
-msgstr ""
+msgstr "بايت چوڭلۇقى"
 
 #: src/interface.c:614 src/interface.c:687 src/interface.c:737
 msgid "Total time"
-msgstr "Aeg kokku"
+msgstr "ئومۇمىي ۋاقىت"
 
 #: src/interface.c:623 src/interface.c:2508
 msgid "FPS"
@@ -967,15 +952,15 @@ msgstr "FPS"
 
 #: src/interface.c:632
 msgid "Frames"
-msgstr "Raamid"
+msgstr "كاندۇكلار"
 
 #: src/interface.c:633
 msgid "Events"
-msgstr "Sündmused"
+msgstr "ھادىسە"
 
 #: src/interface.c:664 src/resample.c:1745
 msgid "Audio"
-msgstr "Heli"
+msgstr "ئۈن"
 
 #: src/interface.c:705 src/interface.c:755
 msgid "Rate/size"
@@ -983,7 +968,7 @@ msgstr ""
 
 #: src/interface.c:764
 msgid "Right audio"
-msgstr ""
+msgstr "ئوڭ ئۈن"
 
 #: src/interface.c:836
 msgid "LiVES: - Encoding options"
@@ -1023,15 +1008,15 @@ msgstr ""
 
 #: src/interface.c:1048
 msgid "Show _Details"
-msgstr "Näita _detailisi"
+msgstr ""
 
 #: src/interface.c:1142
 msgid "_Close Window"
-msgstr "_Sulge aken"
+msgstr "كۆزنەك ياپ(_C)"
 
 #: src/interface.c:1146
 msgid "_Save to file"
-msgstr ""
+msgstr "ھۆججەتكە ساقلا(_S)"
 
 #: src/interface.c:1254
 msgid "LiVES: - Insert"
@@ -1151,20 +1136,20 @@ msgstr ""
 
 #: src/interface.c:1896
 msgid "New name "
-msgstr "Uus nimi "
+msgstr "يېڭى ئات "
 
 #: src/interface.c:1899
 msgid "Set name "
-msgstr ""
+msgstr "ئاتىنى بەلگىلەش "
 
 #: src/interface.c:2038
 msgid "Use def_aults"
-msgstr ""
+msgstr "كۆڭۈلدىكىلەرنى ئىشلەت"
 
-#: src/interface.c:2041 src/interface.c:2397 src/preferences.c:2793
-#: src/preferences.c:2999
+#: src/interface.c:2041 src/interface.c:2397 src/preferences.c:2788
+#: src/preferences.c:2994
 msgid "_Advanced"
-msgstr "_Laiendatud"
+msgstr "ئالىي(_A)"
 
 #: src/interface.c:2097
 msgid "LiVES:- Select input device"
@@ -1221,11 +1206,11 @@ msgstr ""
 
 #: src/interface.c:2320
 msgid "Chapter  "
-msgstr ""
+msgstr "باب  "
 
 #: src/interface.c:2321
 msgid "Channel  "
-msgstr ""
+msgstr "قانال  "
 
 #: src/interface.c:2345
 msgid "Audio ID  "
@@ -1241,19 +1226,19 @@ msgstr ""
 
 #: src/interface.c:2478
 msgid "Width"
-msgstr ""
+msgstr "كەڭلىك"
 
 #: src/interface.c:2493
 msgid "Height"
-msgstr ""
+msgstr "ئېگىزلىك"
 
 #: src/interface.c:2530
 msgid "Driver"
-msgstr ""
+msgstr "قوزغاتقۇ"
 
-#: src/interface.c:2549 src/preferences.c:3514
+#: src/interface.c:2549 src/preferences.c:3509
 msgid "Output format"
-msgstr "Väljundi vorming"
+msgstr ""
 
 #: src/interface.c:2686
 msgid "LiVES:- Fade Audio In"
@@ -1269,7 +1254,7 @@ msgstr ""
 
 #: src/interface.c:2716
 msgid "first"
-msgstr "esimene"
+msgstr "بىرىنچى"
 
 #: src/interface.c:2719
 msgid "Fade out over  "
@@ -1277,11 +1262,11 @@ msgstr ""
 
 #: src/interface.c:2720
 msgid "last"
-msgstr "viimane"
+msgstr "ئاخىرقى"
 
 #: src/interface.c:2757
 msgid "seconds."
-msgstr "sekundit."
+msgstr ""
 
 #: src/interface.c:2782
 msgid "selection."
@@ -1297,7 +1282,7 @@ msgstr ""
 
 #: src/interface.c:2899
 msgid "Directory:"
-msgstr "Kataloog:"
+msgstr "مۇندەرىجە:"
 
 #: src/interface.c:2925
 msgid "Include subdirectories"
@@ -1305,11 +1290,11 @@ msgstr ""
 
 #: src/interface.c:2953
 msgid "Minimum File Size (MB)         "
-msgstr "Miinimum faili suurus (MB)         "
+msgstr ""
 
 #: src/interface.c:2973
 msgid "Maximum File Size (MB)        "
-msgstr "Maksimum faili suurus (MB)        "
+msgstr ""
 
 #: src/interface.c:3036
 msgid "LiVES: - File Comments (optional)"
@@ -1329,7 +1314,7 @@ msgstr ""
 
 #: src/interface.c:3114
 msgid "_Options"
-msgstr ""
+msgstr "تاللانما(_O)"
 
 #: src/interface.c:3135
 msgid "Save _subtitles to file"
@@ -1341,7 +1326,7 @@ msgstr ""
 
 #: src/interface.c:3171
 msgid "Browse..."
-msgstr ""
+msgstr "كۆز يۈگۈرت…"
 
 #: src/interface.c:3248
 msgid "LiVES: choose a directory"
@@ -1457,11 +1442,11 @@ msgstr ""
 
 #: src/callbacks.c:463 src/callbacks.c:493
 msgid "Select File"
-msgstr "Vali fail"
+msgstr "ھۆججەت تاللا"
 
 #: src/callbacks.c:741 src/callbacks.c:775
 msgid "This file"
-msgstr "See fail"
+msgstr ""
 
 #: src/callbacks.c:742
 msgid ""
@@ -1562,7 +1547,7 @@ msgstr ""
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr ""
 
-#: src/callbacks.c:1341 src/callbacks.c:9662
+#: src/callbacks.c:1341 src/callbacks.c:9642
 msgid "Insert Silence"
 msgstr ""
 
@@ -1601,8 +1586,8 @@ msgstr ""
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1887 src/saveplay.c:1047 src/saveplay.c:1172
-#: src/saveplay.c:1234 src/saveplay.c:3052
+#: src/callbacks.c:1887 src/saveplay.c:1039 src/saveplay.c:1164
+#: src/saveplay.c:1226 src/saveplay.c:3044
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -1612,7 +1597,7 @@ msgstr ""
 
 #: src/callbacks.c:1974
 msgid "Cut"
-msgstr "Lõika"
+msgstr "كەس"
 
 #: src/callbacks.c:2011
 #, c-format
@@ -1621,7 +1606,7 @@ msgstr ""
 
 #: src/callbacks.c:2021
 msgid "Pasting"
-msgstr "Kleebi"
+msgstr ""
 
 #: src/callbacks.c:2037
 msgid "...added audio..."
@@ -1656,7 +1641,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2209 src/callbacks.c:9615
+#: src/callbacks.c:2209 src/callbacks.c:9595
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -1691,7 +1676,7 @@ msgstr ""
 
 #: src/callbacks.c:2388 src/callbacks.c:2441 src/callbacks.c:2520
 msgid "Inserting"
-msgstr "Lisan"
+msgstr ""
 
 #: src/callbacks.c:2415
 #, c-format
@@ -1705,7 +1690,7 @@ msgstr ""
 
 #: src/callbacks.c:2587
 msgid "Insert"
-msgstr "Lisa"
+msgstr "قىستۇر"
 
 #: src/callbacks.c:2649
 msgid ""
@@ -1721,8 +1706,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2673 src/callbacks.c:8962 src/callbacks.c:9166
-#: src/callbacks.c:9226
+#: src/callbacks.c:2673 src/callbacks.c:8942 src/callbacks.c:9146
+#: src/callbacks.c:9206
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -1736,7 +1721,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2705 src/callbacks.c:9210
+#: src/callbacks.c:2705 src/callbacks.c:9190
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -1750,11 +1735,11 @@ msgstr ""
 
 #: src/callbacks.c:2772
 msgid "Deleting"
-msgstr "Kustutamine"
+msgstr "ئۆچۈرۈۋاتىدۇ"
 
 #: src/callbacks.c:2847
 msgid "Delete"
-msgstr "Kustuta"
+msgstr "ئۆچۈر"
 
 #: src/callbacks.c:2868
 msgid ""
@@ -1762,6 +1747,9 @@ msgid ""
 "\n"
 "Selection is locked.\n"
 msgstr ""
+"\n"
+"\n"
+"تاللاش قۇلۇپلانغان\n"
 
 #: src/callbacks.c:3168
 msgid ""
@@ -1796,8 +1784,8 @@ msgstr ""
 #: src/callbacks.c:3681
 #, c-format
 msgid ""
-"Saving the set will cause copies of all loaded clips to remain on the disk"
-"%s.\n"
+"Saving the set will cause copies of all loaded clips to remain on the "
+"disk%s.\n"
 "\n"
 "Please press 'Cancel' if that is not what you want.\n"
 msgstr ""
@@ -1899,6 +1887,8 @@ msgid ""
 "\n"
 "  Unknown"
 msgstr ""
+"\n"
+"  نامەلۇم"
 
 #: src/callbacks.c:4451 src/callbacks.c:4465
 msgid "unsigned"
@@ -1965,7 +1955,7 @@ msgid ""
 "You need to install mplayer to be able to preview this file.\n"
 msgstr ""
 
-#: src/callbacks.c:5020 src/callbacks.c:6618
+#: src/callbacks.c:5020 src/callbacks.c:6610
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -1982,22 +1972,22 @@ msgstr ""
 msgid "Opening audio"
 msgstr ""
 
-#: src/callbacks.c:5123 src/callbacks.c:5154 src/callbacks.c:6688
-#: src/callbacks.c:6719 src/callbacks.c:6757 src/callbacks.c:8902
+#: src/callbacks.c:5123 src/callbacks.c:5154 src/callbacks.c:6680
+#: src/callbacks.c:6711 src/callbacks.c:6749 src/callbacks.c:8882
 msgid "Cancelling"
-msgstr "Tühistamine"
+msgstr "ئەمەلدىن قالدۇرۇۋاتىدۇ"
 
-#: src/callbacks.c:5173 src/callbacks.c:6792
+#: src/callbacks.c:5173 src/callbacks.c:6784
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/callbacks.c:5179 src/callbacks.c:6778 src/callbacks.c:8919
-#: src/callbacks.c:9534
+#: src/callbacks.c:5179 src/callbacks.c:6770 src/callbacks.c:8899
+#: src/callbacks.c:9514
 msgid "Committing audio"
 msgstr ""
 
-#: src/callbacks.c:5186 src/callbacks.c:6799
+#: src/callbacks.c:5186 src/callbacks.c:6791
 msgid "New Audio"
 msgstr ""
 
@@ -2018,150 +2008,150 @@ msgstr ""
 msgid "Fullscreen playback off (f)"
 msgstr ""
 
-#: src/callbacks.c:5705 src/gui.c:1835
+#: src/callbacks.c:5704 src/gui.c:1835
 msgid "Double size (d)"
 msgstr ""
 
-#: src/callbacks.c:5710
+#: src/callbacks.c:5709
 msgid "Single size (d)"
 msgstr ""
 
-#: src/callbacks.c:5829 src/callbacks.c:5830
+#: src/callbacks.c:5827 src/callbacks.c:5828
 msgid "Hide the play window (s)"
 msgstr ""
 
-#: src/callbacks.c:5839 src/gui.c:1684
+#: src/callbacks.c:5837 src/gui.c:1684
 msgid "Show the play window (s)"
 msgstr ""
 
-#: src/callbacks.c:5840 src/gui.c:1826
+#: src/callbacks.c:5838 src/gui.c:1826
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:5916 src/gui.c:3744 src/saveplay.c:1890
+#: src/callbacks.c:5911 src/gui.c:3744 src/saveplay.c:1882
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:6050 src/gui.c:3505 src/saveplay.c:1891 src/plugins.c:1286
+#: src/callbacks.c:6042 src/gui.c:3505 src/saveplay.c:1883 src/plugins.c:1286
 msgid "LiVES: - Play Window"
 msgstr ""
 
-#: src/callbacks.c:6135
+#: src/callbacks.c:6127
 msgid "Switch continuous looping off (o)"
 msgstr ""
 
-#: src/callbacks.c:6142 src/gui.c:1731
+#: src/callbacks.c:6134 src/gui.c:1731
 msgid "Switch continuous looping on (o)"
 msgstr ""
 
-#: src/callbacks.c:6210
+#: src/callbacks.c:6202
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr ""
 
-#: src/callbacks.c:6251 src/callbacks.c:6252 src/gui.c:3428
+#: src/callbacks.c:6243 src/callbacks.c:6244 src/gui.c:3428
 msgid "Unmute the audio (z)"
 msgstr ""
 
-#: src/callbacks.c:6263 src/callbacks.c:6264 src/gui.c:1742 src/gui.c:3427
+#: src/callbacks.c:6255 src/callbacks.c:6256 src/gui.c:1742 src/gui.c:3427
 msgid "Mute the audio (z)"
 msgstr ""
 
-#: src/callbacks.c:6397
+#: src/callbacks.c:6389
 msgid "Reversing clipboard..."
 msgstr ""
 
-#: src/callbacks.c:6406
+#: src/callbacks.c:6398
 msgid "Reversing clipboard"
 msgstr ""
 
-#: src/callbacks.c:6482 src/saveplay.c:705
+#: src/callbacks.c:6474 src/saveplay.c:697
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
 
-#: src/callbacks.c:6551
+#: src/callbacks.c:6543
 msgid "Subtitles were erased.\n"
 msgstr ""
 
-#: src/callbacks.c:6563 src/callbacks.c:6835
+#: src/callbacks.c:6555 src/callbacks.c:6827
 msgid "Select Audio File"
 msgstr ""
 
-#: src/callbacks.c:6579
+#: src/callbacks.c:6571
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 
-#: src/callbacks.c:6647
+#: src/callbacks.c:6639
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr ""
 
-#: src/callbacks.c:6652
+#: src/callbacks.c:6644
 #, c-format
 msgid "CD track %d"
 msgstr ""
 
-#: src/callbacks.c:6681
+#: src/callbacks.c:6673
 msgid "Opening CD track..."
 msgstr ""
 
-#: src/callbacks.c:6711 src/callbacks.c:6752
+#: src/callbacks.c:6703 src/callbacks.c:6744
 msgid "Error loading CD track\n"
 msgstr ""
 
-#: src/callbacks.c:6887
+#: src/callbacks.c:6879
 msgid "Selecting tracks"
 msgstr ""
 
-#: src/callbacks.c:6943
+#: src/callbacks.c:6935
 msgid "layout errors"
 msgstr ""
 
-#: src/callbacks.c:6952
+#: src/callbacks.c:6944
 msgid "Close _Window"
 msgstr ""
 
-#: src/callbacks.c:6963
+#: src/callbacks.c:6955
 msgid "Clear _Errors"
 msgstr ""
 
-#: src/callbacks.c:6974
+#: src/callbacks.c:6966
 msgid "_Delete affected layouts"
 msgstr ""
 
-#: src/callbacks.c:7529 src/callbacks.c:7555
+#: src/callbacks.c:7509 src/callbacks.c:7535
 msgid "Resume"
-msgstr "Jätka"
+msgstr "داۋاملاشتۇر"
 
-#: src/callbacks.c:7530
+#: src/callbacks.c:7510
 msgid ""
 "\n"
 "Paused\n"
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:7531 src/callbacks.c:7561
+#: src/callbacks.c:7511 src/callbacks.c:7541
 msgid "paused..."
 msgstr ""
 
-#: src/callbacks.c:7540 src/callbacks.c:7571
+#: src/callbacks.c:7520 src/callbacks.c:7551
 msgid "Pause"
-msgstr "Paus"
+msgstr "ۋاقىتلىق توختا"
 
-#: src/callbacks.c:7542 src/callbacks.c:7574
+#: src/callbacks.c:7522 src/callbacks.c:7554
 msgid "resumed..."
 msgstr ""
 
-#: src/callbacks.c:7557
+#: src/callbacks.c:7537
 msgid "Keep"
-msgstr "Säilita"
+msgstr "تەگمە"
 
-#: src/callbacks.c:7558
+#: src/callbacks.c:7538
 msgid "Enough"
 msgstr ""
 
-#: src/callbacks.c:7559
+#: src/callbacks.c:7539
 msgid ""
 "\n"
 "Paused\n"
@@ -2169,21 +2159,21 @@ msgid ""
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:7572
+#: src/callbacks.c:7552
 msgid "Cancel"
-msgstr "Katkesta"
+msgstr "ئەمەلدىن قالدۇرۇش"
 
-#: src/callbacks.c:8125
+#: src/callbacks.c:8105
 #, c-format
 msgid "Save Frame as %s..."
 msgstr ""
 
-#: src/callbacks.c:8386
+#: src/callbacks.c:8366
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:8460
+#: src/callbacks.c:8440
 msgid ""
 "\n"
 "\n"
@@ -2191,13 +2181,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:8531 src/callbacks.c:9452
+#: src/callbacks.c:8511 src/callbacks.c:9432
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
 msgstr ""
 
-#: src/callbacks.c:8542
+#: src/callbacks.c:8522
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2206,17 +2196,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:8547
+#: src/callbacks.c:8527
 msgid "External window was released.\n"
 msgstr ""
 
-#: src/callbacks.c:8568
+#: src/callbacks.c:8548
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
 
-#: src/callbacks.c:8588
+#: src/callbacks.c:8568
 #, c-format
 msgid ""
 "\n"
@@ -2226,19 +2216,19 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:8610
+#: src/callbacks.c:8590
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 
-#: src/callbacks.c:8753
+#: src/callbacks.c:8733
 msgid "Export Selected Audio as..."
 msgstr ""
 
-#: src/callbacks.c:8756
+#: src/callbacks.c:8736
 msgid "Export Audio as..."
 msgstr ""
 
-#: src/callbacks.c:8795
+#: src/callbacks.c:8775
 msgid ""
 "\n"
 "\n"
@@ -2247,118 +2237,118 @@ msgid ""
 "rate.\n"
 msgstr ""
 
-#: src/callbacks.c:8801
+#: src/callbacks.c:8781
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr ""
 
-#: src/callbacks.c:8806
+#: src/callbacks.c:8786
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr ""
 
-#: src/callbacks.c:8818
+#: src/callbacks.c:8798
 msgid "Exporting audio"
 msgstr ""
 
-#: src/callbacks.c:8850
+#: src/callbacks.c:8830
 msgid "Append Audio File..."
 msgstr ""
 
-#: src/callbacks.c:8889
+#: src/callbacks.c:8869
 #, c-format
 msgid "Appending audio file %s..."
 msgstr ""
 
-#: src/callbacks.c:8896
+#: src/callbacks.c:8876
 msgid "Appending audio"
 msgstr ""
 
-#: src/callbacks.c:8935
+#: src/callbacks.c:8915
 msgid "Append Audio"
 msgstr ""
 
-#: src/callbacks.c:8990
+#: src/callbacks.c:8970
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:8997
+#: src/callbacks.c:8977
 msgid "Trimming/Padding audio"
 msgstr ""
 
-#: src/callbacks.c:9001
+#: src/callbacks.c:8981
 msgid "Trim/Pad Audio"
 msgstr ""
 
-#: src/callbacks.c:9075
+#: src/callbacks.c:9055
 msgid "Fading audio in"
 msgstr ""
 
-#: src/callbacks.c:9076
+#: src/callbacks.c:9056
 msgid "Fade audio in"
 msgstr ""
 
-#: src/callbacks.c:9081
+#: src/callbacks.c:9061
 msgid "Fading audio out"
 msgstr ""
 
-#: src/callbacks.c:9082
+#: src/callbacks.c:9062
 msgid "Fade audio out"
 msgstr ""
 
-#: src/callbacks.c:9103
+#: src/callbacks.c:9083
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:9105
+#: src/callbacks.c:9085
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:9112
+#: src/callbacks.c:9092
 msgid "Fading audio..."
 msgstr ""
 
-#: src/callbacks.c:9195
+#: src/callbacks.c:9175
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
 "Are you sure ?"
 msgstr ""
 
-#: src/callbacks.c:9198
+#: src/callbacks.c:9178
 msgid "Deleting all audio..."
 msgstr ""
 
-#: src/callbacks.c:9204
+#: src/callbacks.c:9184
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:9275
+#: src/callbacks.c:9255
 msgid "Deleting Audio"
 msgstr ""
 
-#: src/callbacks.c:9278
+#: src/callbacks.c:9258
 msgid "Delete Audio"
 msgstr ""
 
-#: src/callbacks.c:9562
+#: src/callbacks.c:9542
 msgid "Record new audio"
 msgstr ""
 
-#: src/callbacks.c:9643
+#: src/callbacks.c:9623
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:9659
+#: src/callbacks.c:9639
 msgid "Inserting Silence"
 msgstr ""
 
-#: src/callbacks.c:9749
+#: src/callbacks.c:9729
 #, c-format
 msgid ""
 "\n"
@@ -2368,7 +2358,7 @@ msgstr ""
 #: src/support.c:77 src/support.c:101
 #, c-format
 msgid "Couldn't find pixmap file: %s"
-msgstr "Ei suuda leida väljundkaardi (pixmap) faili %s!"
+msgstr ""
 
 #: src/merge.c:87
 msgid "LiVES: - Merge"
@@ -2449,7 +2439,7 @@ msgstr ""
 
 #: src/gui.c:324 src/multitrack.c:5075
 msgid "_File"
-msgstr "_Fail"
+msgstr "ھۆججەت(_F)"
 
 #: src/gui.c:335 src/multitrack.c:5098
 msgid "_Open File/Directory"
@@ -2549,7 +2539,7 @@ msgstr ""
 
 #: src/gui.c:585 src/multitrack.c:5328
 msgid "_Edit"
-msgstr "_Redigeeri"
+msgstr "تەھرىر(_E)"
 
 #: src/gui.c:627
 msgid "_MULTITRACK mode"
@@ -2577,7 +2567,7 @@ msgstr ""
 
 #: src/gui.c:687
 msgid "_Delete Selection"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/gui.c:705
 msgid "Decouple _Video from Audio"
@@ -2585,7 +2575,7 @@ msgstr ""
 
 #: src/gui.c:715
 msgid "_Select..."
-msgstr "_Vali..."
+msgstr "تاللا(_S)…"
 
 #: src/gui.c:728
 msgid "Select _All Frames"
@@ -2617,7 +2607,7 @@ msgstr ""
 
 #: src/gui.c:773
 msgid "_Invert Selection"
-msgstr "_Pööra valik"
+msgstr "ئەكسىچە تاللا(_I)"
 
 #: src/gui.c:781
 msgid "_Lock Selection Width"
@@ -2625,7 +2615,7 @@ msgstr ""
 
 #: src/gui.c:786 src/multitrack.c:5475
 msgid "_Play"
-msgstr "_Esita"
+msgstr "قوي(_P)"
 
 #: src/gui.c:797
 msgid "_Play All"
@@ -2641,7 +2631,7 @@ msgstr ""
 
 #: src/gui.c:834 src/multitrack.c:5504
 msgid "_Stop"
-msgstr "_Peata"
+msgstr "توختا (&S)"
 
 #: src/gui.c:847 src/multitrack.c:5514
 msgid "Re_wind"
@@ -2649,7 +2639,7 @@ msgstr ""
 
 #: src/gui.c:877 src/multitrack.c:5529
 msgid "_Full Screen"
-msgstr "_Täisekraan"
+msgstr "پۈتۈن ئېكران(_F)"
 
 #: src/gui.c:886
 msgid "_Double Size"
@@ -2677,7 +2667,7 @@ msgstr ""
 
 #: src/gui.c:936 src/multitrack.c:5553
 msgid "_Mute"
-msgstr "_Tumm"
+msgstr "ئۈنسىز(_M)"
 
 #: src/gui.c:950 src/multitrack.c:5566
 msgid "Separate Window 'S_ticky' Mode"
@@ -2709,7 +2699,7 @@ msgstr ""
 
 #: src/gui.c:1004 src/multitrack.c:6058
 msgid "_Tools"
-msgstr "_Tööriistad"
+msgstr "قوراللار(_T)"
 
 #: src/gui.c:1007
 msgid "Tools are applied to complete clips."
@@ -2729,11 +2719,11 @@ msgstr ""
 
 #: src/gui.c:1036
 msgid "_Utilities"
-msgstr "Üldkas_utatavad"
+msgstr "قوراللار(_U)"
 
 #: src/gui.c:1047 src/multitrack.c:6097
 msgid "_Generate"
-msgstr "_Genereeri"
+msgstr "قۇر(_G)"
 
 #: src/gui.c:1057
 msgid "Custom _Tools"
@@ -2757,11 +2747,11 @@ msgstr ""
 
 #: src/gui.c:1099 src/multitrack.c:6068
 msgid "_Preferences..."
-msgstr ""
+msgstr "پارامېتىرلار(_P)..."
 
 #: src/gui.c:1110
 msgid "_Audio"
-msgstr ""
+msgstr "ئۈن(_A)"
 
 #: src/gui.c:1121
 msgid "Load _New Audio for Clip..."
@@ -2857,7 +2847,7 @@ msgstr ""
 
 #: src/gui.c:1288
 msgid "_Info"
-msgstr "_Info"
+msgstr "ئۇچۇر(_I)"
 
 #: src/gui.c:1299
 msgid "Show Clip _Info"
@@ -2889,7 +2879,7 @@ msgstr ""
 
 #: src/gui.c:1356
 msgid "A_dvanced"
-msgstr "_Eriline"
+msgstr ""
 
 #: src/gui.c:1368
 msgid "_RFX Effects/Tools/Utilities"
@@ -2958,7 +2948,7 @@ msgstr ""
 
 #: src/gui.c:1486
 msgid "_VJ"
-msgstr "_VJ"
+msgstr ""
 
 #: src/gui.c:1497
 msgid "Real Time _Effect Mapping"
@@ -3021,7 +3011,7 @@ msgstr ""
 
 #: src/gui.c:1585
 msgid "_None"
-msgstr "_Puudub"
+msgstr "يوق(_N)"
 
 #: src/gui.c:1595
 msgid "_Mad Frames"
@@ -3033,7 +3023,7 @@ msgstr ""
 
 #: src/gui.c:1610 src/multitrack.c:6299
 msgid "_Help"
-msgstr "_Abi"
+msgstr "ياردەم(_H)"
 
 #: src/gui.c:1621 src/multitrack.c:6318
 msgid "_Manual (opens in browser)"
@@ -3061,11 +3051,11 @@ msgstr ""
 
 #: src/gui.c:1655 src/multitrack.c:6352
 msgid "_Troubleshoot"
-msgstr ""
+msgstr "مەسىلە ھەل قىل(_T)"
 
 #: src/gui.c:1659 src/multitrack.c:6356
 msgid "_About"
-msgstr "_Lähemalt"
+msgstr "ھەققىدە(_A)"
 
 #: src/gui.c:1690
 msgid "Rewind to start (w)"
@@ -3085,7 +3075,7 @@ msgstr ""
 
 #: src/gui.c:1758
 msgid "Volume"
-msgstr "Helitugevus"
+msgstr "ئاۋاز مىقدارى"
 
 #: src/gui.c:1786
 msgid "Audio volume (1.00)"
@@ -3136,15 +3126,15 @@ msgstr ""
 
 #: src/gui.c:1959
 msgid "                                                            "
-msgstr "                                                            "
+msgstr ""
 
 #: src/gui.c:1990 src/gui.c:2977
 msgid "First Frame"
-msgstr ""
+msgstr "بىرىنچى كاندۇك"
 
 #: src/gui.c:2059 src/gui.c:2986
 msgid "Last Frame"
-msgstr ""
+msgstr "ئاخىرقى كاندۇك"
 
 #: src/gui.c:2078
 msgid "The first selected frame in this clip"
@@ -3156,7 +3146,7 @@ msgstr ""
 
 #: src/gui.c:2308
 msgid "Starting...\n"
-msgstr ""
+msgstr "باشلاۋاتىدۇ…\n"
 
 #: src/gui.c:2852
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
@@ -3168,7 +3158,7 @@ msgstr ""
 
 #: src/gui.c:3245
 msgid "_Free"
-msgstr "_Vaba"
+msgstr "ئەركىن(_F)"
 
 #: src/gui.c:3250
 msgid "Free choice of frame number"
@@ -3176,7 +3166,7 @@ msgstr ""
 
 #: src/gui.c:3275
 msgid "_Start"
-msgstr "_Alusta"
+msgstr "باشلا(_S)"
 
 #: src/gui.c:3280
 msgid "Frame number is linked to start frame"
@@ -3200,7 +3190,7 @@ msgstr ""
 
 #: src/gui.c:3375
 msgid "Rewind"
-msgstr "Tagasikerimine"
+msgstr "كەينىگە"
 
 #: src/gui.c:3386 src/dialogs.c:403 src/dialogs.c:405 src/dialogs.c:1056
 #: src/dialogs.c:1058
@@ -3432,12 +3422,12 @@ msgstr ""
 #: src/utils.c:2613 src/utils.c:2645 src/multitrack.c:3820
 #, c-format
 msgid "_Undo %s"
-msgstr "_Võta tagasi %s"
+msgstr ""
 
 #: src/utils.c:2614 src/utils.c:2646 src/multitrack.c:3842
 #, c-format
 msgid "_Redo %s"
-msgstr "_Tee uuesti %s"
+msgstr ""
 
 #: src/utils.c:2671
 msgid "-------------Selection------------"
@@ -3455,17 +3445,17 @@ msgstr ""
 msgid "Examining file header"
 msgstr ""
 
-#: src/saveplay.c:213 src/saveplay.c:562
+#: src/saveplay.c:213 src/saveplay.c:554
 #, c-format
 msgid "Opening %s"
-msgstr "Avamine %s"
+msgstr "%s نى ئېچىۋاتىدۇ"
 
 #: src/saveplay.c:216
 #, c-format
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:224 src/saveplay.c:3040
+#: src/saveplay.c:224 src/saveplay.c:3032
 msgid " without sound"
 msgstr ""
 
@@ -3490,7 +3480,7 @@ msgstr ""
 msgid " - please be patient."
 msgstr ""
 
-#: src/saveplay.c:682
+#: src/saveplay.c:674
 msgid ""
 "\n"
 "\n"
@@ -3498,14 +3488,14 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/saveplay.c:685
+#: src/saveplay.c:677
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer to open this file.\n"
 msgstr ""
 
-#: src/saveplay.c:688
+#: src/saveplay.c:680
 msgid ""
 "\n"
 "\n"
@@ -3513,12 +3503,12 @@ msgid ""
 "Tools|Preferences|Decoding\n"
 msgstr ""
 
-#: src/saveplay.c:811
+#: src/saveplay.c:803
 #, c-format
 msgid "Subtitles were saved as %s\n"
 msgstr ""
 
-#: src/saveplay.c:985
+#: src/saveplay.c:977
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3526,70 +3516,70 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:1030
+#: src/saveplay.c:1022
 msgid "selection"
-msgstr "valik"
+msgstr ""
 
-#: src/saveplay.c:1094 src/saveplay.c:1203
+#: src/saveplay.c:1086 src/saveplay.c:1195
 msgid "Linking selection"
 msgstr ""
 
-#: src/saveplay.c:1251
+#: src/saveplay.c:1243
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:1259
+#: src/saveplay.c:1251
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1263
+#: src/saveplay.c:1255
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1392
+#: src/saveplay.c:1384
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1430
+#: src/saveplay.c:1422
 msgid "error.\n"
 msgstr ""
 
-#: src/saveplay.c:1491
+#: src/saveplay.c:1483
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1518
+#: src/saveplay.c:1510
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:1589
+#: src/saveplay.c:1581
 #, c-format
 msgid "File size was %.2fMB\n"
 msgstr ""
 
-#: src/saveplay.c:1676
+#: src/saveplay.c:1668
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1680
+#: src/saveplay.c:1672
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1683
+#: src/saveplay.c:1675
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:2516
+#: src/saveplay.c:2508
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:2522
+#: src/saveplay.c:2514
 msgid ""
 "\n"
 "\n"
@@ -3598,16 +3588,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2643
+#: src/saveplay.c:2635
 msgid "Unknown"
-msgstr "Tundmatu"
+msgstr "نامەلۇم"
 
-#: src/saveplay.c:2738
+#: src/saveplay.c:2730
 #, c-format
 msgid "Untitled%d"
-msgstr "Pealkirjata%d"
+msgstr ""
 
-#: src/saveplay.c:2855
+#: src/saveplay.c:2847
 #, c-format
 msgid ""
 "\n"
@@ -3615,68 +3605,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2867
+#: src/saveplay.c:2859
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2883
+#: src/saveplay.c:2875
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2887 src/saveplay.c:3504
+#: src/saveplay.c:2879 src/saveplay.c:3496
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2891 src/saveplay.c:3508
+#: src/saveplay.c:2883 src/saveplay.c:3500
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2894 src/saveplay.c:3511
+#: src/saveplay.c:2886 src/saveplay.c:3503
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2902
+#: src/saveplay.c:2894
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2981
+#: src/saveplay.c:2973
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:3035
+#: src/saveplay.c:3027
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:3075
+#: src/saveplay.c:3067
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:3109
+#: src/saveplay.c:3101
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3415
+#: src/saveplay.c:3407
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3434
+#: src/saveplay.c:3426
 msgid "Restoring"
-msgstr "Taastamine"
+msgstr ""
 
-#: src/saveplay.c:3456
+#: src/saveplay.c:3448
 #, c-format
 msgid ""
 "\n"
@@ -3685,17 +3675,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3877
+#: src/saveplay.c:3869
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3881
+#: src/saveplay.c:3873
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3904
+#: src/saveplay.c:3896
 #, c-format
 msgid ""
 "\n"
@@ -3703,18 +3693,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:4021
+#: src/saveplay.c:4013
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:4034
+#: src/saveplay.c:4026
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:4037
+#: src/saveplay.c:4029
 msgid "Recovering files..."
 msgstr ""
 
@@ -3728,7 +3718,7 @@ msgstr ""
 
 #: src/dialogs.c:160
 msgid "warning"
-msgstr "hoiatus"
+msgstr "ئاگاھلاندۇرۇش"
 
 #: src/dialogs.c:168
 msgid "LiVES: - Question"
@@ -3736,7 +3726,7 @@ msgstr ""
 
 #: src/dialogs.c:169
 msgid "question"
-msgstr ""
+msgstr "سوئال"
 
 #: src/dialogs.c:357
 msgid "Audio players cannot be switched during playback."
@@ -4305,7 +4295,7 @@ msgstr ""
 
 #: src/dialogs.c:1989
 msgid "done.\n"
-msgstr "tehtud.\n"
+msgstr ""
 
 #: src/dialogs.c:1993
 msgid "error in file. Failed.\n"
@@ -4485,16 +4475,16 @@ msgstr ""
 
 #: src/effects-weed.c:248
 msgid "Transitions"
-msgstr "Siirded"
+msgstr "ئالماشتۇر"
 
 #: src/effects-weed.c:250
 msgid "effect"
-msgstr "efekt"
+msgstr "ئۈنۈم"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects-weed.c:251 src/preferences.c:3674
+#: src/effects-weed.c:251 src/preferences.c:3669
 msgid "Effects"
-msgstr "Efektid"
+msgstr "ئۈنۈملەر"
 
 #: src/effects-weed.c:253
 msgid "utility"
@@ -4502,7 +4492,7 @@ msgstr ""
 
 #: src/effects-weed.c:254
 msgid "Utilities"
-msgstr "Tööriistad"
+msgstr "قوراللار"
 
 #: src/effects-weed.c:256
 msgid "compositor"
@@ -4522,7 +4512,7 @@ msgstr ""
 
 #: src/effects-weed.c:262
 msgid "splitter"
-msgstr "eraldaja"
+msgstr ""
 
 #: src/effects-weed.c:263
 msgid "Splitters"
@@ -4562,7 +4552,7 @@ msgstr ""
 
 #: src/effects-weed.c:280 src/effects-weed.c:283 src/multitrack.c:16664
 msgid "audio"
-msgstr "audio"
+msgstr "ئۈن"
 
 #: src/effects-weed.c:281
 msgid "Audio Mixers"
@@ -4582,7 +4572,7 @@ msgstr ""
 
 #: src/effects-weed.c:291 src/plugins.c:2124
 msgid "unknown"
-msgstr "teadmata"
+msgstr "نامەلۇم"
 
 #: src/effects-weed.c:2916
 #, c-format
@@ -4643,19 +4633,19 @@ msgstr ""
 msgid "    _Frame"
 msgstr ""
 
-#: src/paramspecial.c:273
+#: src/paramspecial.c:261
 msgid "Maintain aspect ratio of original frame"
 msgstr ""
 
-#: src/paramspecial.c:276
+#: src/paramspecial.c:264
 msgid "Maintain _Aspect Ratio"
 msgstr ""
 
-#: src/paramspecial.c:324
+#: src/paramspecial.c:312
 msgid "LiVES: Select file"
 msgstr ""
 
-#: src/paramspecial.c:355
+#: src/paramspecial.c:344
 msgid "Display Password"
 msgstr ""
 
@@ -4698,11 +4688,11 @@ msgstr ""
 
 #: src/paramwindow.c:560 src/plugins.c:856
 msgid "_Width"
-msgstr "_Laius"
+msgstr ""
 
 #: src/paramwindow.c:587 src/plugins.c:871
 msgid "_Height"
-msgstr "_Kõrgus"
+msgstr ""
 
 #: src/paramwindow.c:659
 msgid "Generate to _Clipboard"
@@ -4730,11 +4720,11 @@ msgstr ""
 
 #: src/paramwindow.c:896 src/paramwindow.c:903
 msgid "Set as default"
-msgstr "Sea vaikeväärtuseks"
+msgstr "كۆڭۈلدىكى قىممەتكە تەڭشە"
 
 #: src/paramwindow.c:905 src/rte_window.c:1315 src/omc-learn.c:1366
 msgid "Close _window"
-msgstr "Sulge aken"
+msgstr ""
 
 #: src/paramwindow.c:1240
 msgid "No parameters"
@@ -4754,7 +4744,7 @@ msgstr ""
 
 #: src/paramwindow.c:1589
 msgid "Red"
-msgstr "Punane"
+msgstr "قىزىل"
 
 #: src/paramwindow.c:1597
 msgid "The red value (0 - 255)"
@@ -4762,7 +4752,7 @@ msgstr ""
 
 #: src/paramwindow.c:1600
 msgid "Green"
-msgstr "Roheline"
+msgstr "يېشىل"
 
 #: src/paramwindow.c:1607
 msgid "The green value (0 - 255)"
@@ -4770,7 +4760,7 @@ msgstr ""
 
 #: src/paramwindow.c:1611
 msgid "Blue"
-msgstr "Sinine"
+msgstr "كۆك"
 
 #: src/paramwindow.c:1617
 msgid "The blue value (0 - 255)"
@@ -4969,7 +4959,7 @@ msgstr ""
 
 #: src/rfx-builder.c:155
 msgid "Type:"
-msgstr "Tüüp:"
+msgstr "تىپى:"
 
 #: src/rfx-builder.c:169
 msgid "Effect -"
@@ -4993,7 +4983,7 @@ msgstr ""
 
 #: src/rfx-builder.c:244
 msgid "Name:          "
-msgstr ""
+msgstr "ئاتى:          "
 
 #: src/rfx-builder.c:255
 msgid "The name of the plugin. No spaces allowed."
@@ -5001,7 +4991,7 @@ msgstr ""
 
 #: src/rfx-builder.c:263
 msgid "Version:       "
-msgstr ""
+msgstr "نەشرى:       "
 
 #: src/rfx-builder.c:276
 msgid "The script version."
@@ -5009,7 +4999,7 @@ msgstr ""
 
 #: src/rfx-builder.c:280
 msgid "    Author:       "
-msgstr ""
+msgstr "    ئاپتور:       "
 
 #: src/rfx-builder.c:291
 msgid "The script author."
@@ -5058,7 +5048,7 @@ msgstr ""
 
 #: src/rfx-builder.c:392
 msgid "_Properties..."
-msgstr "_Omadused..."
+msgstr ""
 
 #: src/rfx-builder.c:395
 msgid "Set properties for the plugin. Optional."
@@ -5082,7 +5072,7 @@ msgstr ""
 
 #: src/rfx-builder.c:423
 msgid "Language code:"
-msgstr "Keele kood:"
+msgstr ""
 
 #: src/rfx-builder.c:441
 msgid "Language for pre/loop/post/triggers. Optional."
@@ -5162,11 +5152,11 @@ msgstr ""
 
 #: src/rfx-builder.c:804
 msgid "Move _Up"
-msgstr "Liiguta ü_les"
+msgstr "يۇقىرىغا(_U)"
 
 #: src/rfx-builder.c:808
 msgid "Move _Down"
-msgstr "Liiguta _alla"
+msgstr "تۆۋەنگە(_D)"
 
 #: src/rfx-builder.c:1143
 msgid "LiVES: - RFX Properties"
@@ -5207,7 +5197,7 @@ msgstr ""
 
 #: src/rfx-builder.c:1899
 msgid "_Name:    "
-msgstr ""
+msgstr "ئاتى(_N):    "
 
 #: src/rfx-builder.c:1915
 msgid "Name of the parameter, must be unique in the plugin."
@@ -5215,7 +5205,7 @@ msgstr ""
 
 #: src/rfx-builder.c:1924
 msgid "_Label:    "
-msgstr ""
+msgstr "ئەن(_L):    "
 
 #: src/rfx-builder.c:1940
 msgid ""
@@ -5233,7 +5223,7 @@ msgstr ""
 
 #: src/rfx-builder.c:1969
 msgid "_Type:         "
-msgstr ""
+msgstr "تىپى(_T):         "
 
 #: src/rfx-builder.c:1991
 msgid "Parameter type (select from list)."
@@ -5249,7 +5239,7 @@ msgstr ""
 
 #: src/rfx-builder.c:2075
 msgid "_Default: "
-msgstr ""
+msgstr "كۆڭۈلدىكى(_D) "
 
 #: src/rfx-builder.c:2116
 msgid "_Minimum value: "
@@ -5286,11 +5276,11 @@ msgstr ""
 
 #: src/rfx-builder.c:2441
 msgid "Minimum value: "
-msgstr ""
+msgstr "ئەڭ كىچىك قىممىتى: "
 
 #: src/rfx-builder.c:2442
 msgid "Maximum value: "
-msgstr ""
+msgstr "ئەڭ چوڭ قىممىتى: "
 
 #: src/rfx-builder.c:2527
 msgid "Default _Red:  "
@@ -5326,7 +5316,7 @@ msgstr ""
 
 #: src/rfx-builder.c:2642
 msgid "Keyword:         "
-msgstr ""
+msgstr "ھالقىلىق سۆز:         "
 
 #: src/rfx-builder.c:2671
 msgid "Special Type:         "
@@ -5618,15 +5608,15 @@ msgstr ""
 
 #: src/rfx-builder.c:4229 src/rfx-builder.c:4384 src/rfx-builder.c:4452
 msgid "Builtin"
-msgstr "Sisseehitatud"
+msgstr "ئىچكى"
 
 #: src/rfx-builder.c:4230 src/rfx-builder.c:4386 src/rfx-builder.c:4456
 msgid "Custom"
-msgstr "Kohandatud"
+msgstr "ئىختىيارى"
 
 #: src/rfx-builder.c:4231 src/rfx-builder.c:4460
 msgid "Test"
-msgstr "Testi"
+msgstr "سىناق"
 
 #: src/rfx-builder.c:4256
 msgid "LiVES: - Copy RFX Script"
@@ -5654,11 +5644,11 @@ msgstr ""
 
 #: src/rfx-builder.c:4293
 msgid "Script name: "
-msgstr ""
+msgstr "قوليازما نامى: "
 
 #: src/rfx-builder.c:4325
 msgid "New name: "
-msgstr ""
+msgstr "يېڭى ئات: "
 
 #: src/rfx-builder.c:4328
 msgid "New script name: "
@@ -5766,767 +5756,767 @@ msgstr ""
 msgid "PCM (highest quality; largest files)"
 msgstr ""
 
-#: src/preferences.c:1894
+#: src/preferences.c:1889
 msgid "LiVES: - Preferences"
 msgstr ""
 
-#: src/preferences.c:1967
+#: src/preferences.c:1962
 msgid "Open file selection maximised"
 msgstr ""
 
-#: src/preferences.c:1986
+#: src/preferences.c:1981
 msgid "Show recent files in the File menu"
 msgstr ""
 
-#: src/preferences.c:2009
+#: src/preferences.c:2004
 msgid "Stop screensaver on playback    "
 msgstr ""
 
-#: src/preferences.c:2028
+#: src/preferences.c:2023
 msgid "Open main window maximised"
 msgstr ""
 
-#: src/preferences.c:2051
+#: src/preferences.c:2046
 msgid "Show toolbar when background is blanked"
 msgstr ""
 
-#: src/preferences.c:2070
+#: src/preferences.c:2065
 msgid "Allow mouse wheel to switch clips"
 msgstr ""
 
-#: src/preferences.c:2093
+#: src/preferences.c:2088
 msgid "Shrink previews to fit in interface"
 msgstr ""
 
-#: src/preferences.c:2114
+#: src/preferences.c:2109
 msgid "Startup mode:"
 msgstr ""
 
-#: src/preferences.c:2125
+#: src/preferences.c:2120
 msgid "_Clip editor"
 msgstr ""
 
-#: src/preferences.c:2145
+#: src/preferences.c:2140
 msgid "_Multitrack mode"
 msgstr ""
 
-#: src/preferences.c:2210
+#: src/preferences.c:2205
 msgid "Multi-head support"
 msgstr ""
 
-#: src/preferences.c:2223
+#: src/preferences.c:2218
 msgid " monitor number for LiVES interface"
 msgstr ""
 
-#: src/preferences.c:2238
+#: src/preferences.c:2233
 msgid " monitor number for playback"
 msgstr ""
 
-#: src/preferences.c:2251
+#: src/preferences.c:2246
 msgid ""
 "A setting of 0 means use all available monitors (only works with some "
 "playback plugins)."
 msgstr ""
 
-#: src/preferences.c:2264
+#: src/preferences.c:2259
 msgid "Force single monitor"
 msgstr ""
 
-#: src/preferences.c:2279
+#: src/preferences.c:2274
 msgid "Force single monitor mode"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2301
+#: src/preferences.c:2296
 msgid "GUI"
-msgstr "GUI"
+msgstr ""
 
-#: src/preferences.c:2315
+#: src/preferences.c:2310
 msgid "When entering Multitrack mode:"
 msgstr ""
 
-#: src/preferences.c:2334
+#: src/preferences.c:2329
 msgid "_Prompt me for width, height, fps and audio settings"
 msgstr ""
 
-#: src/preferences.c:2353
+#: src/preferences.c:2348
 msgid "_Always use the following values:"
 msgstr ""
 
-#: src/preferences.c:2373
+#: src/preferences.c:2368
 msgid "Use these same _values for rendering a new clip"
 msgstr ""
 
-#: src/preferences.c:2411
+#: src/preferences.c:2406
 msgid "_Width           "
 msgstr ""
 
-#: src/preferences.c:2427
+#: src/preferences.c:2422
 msgid "          _Height      "
 msgstr ""
 
-#: src/preferences.c:2444
+#: src/preferences.c:2439
 msgid "          _FPS"
 msgstr ""
 
-#: src/preferences.c:2470
+#: src/preferences.c:2465
 msgid "Enable backing audio track"
 msgstr ""
 
-#: src/preferences.c:2490
+#: src/preferences.c:2485
 msgid "Audio track per video track"
 msgstr ""
 
-#: src/preferences.c:2520
+#: src/preferences.c:2515
 msgid "    _Undo buffer size (MB)    "
 msgstr ""
 
-#: src/preferences.c:2536
+#: src/preferences.c:2531
 msgid "_Exit multitrack mode after rendering"
 msgstr ""
 
-#: src/preferences.c:2557
+#: src/preferences.c:2552
 msgid "Auto backup layouts"
 msgstr ""
 
-#: src/preferences.c:2567
+#: src/preferences.c:2562
 msgid "_Every"
 msgstr ""
 
-#: src/preferences.c:2584
+#: src/preferences.c:2579
 msgid "seconds"
-msgstr "sekundid"
+msgstr "سېكۇنت"
 
-#: src/preferences.c:2603
+#: src/preferences.c:2598
 msgid "After every _change"
 msgstr ""
 
-#: src/preferences.c:2622
+#: src/preferences.c:2617
 msgid "_Never"
-msgstr "_Mitte kunagi"
+msgstr "ھەرگىز(_N)"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2657
+#: src/preferences.c:2652
 msgid "Multitrack/Render"
 msgstr ""
 
-#: src/preferences.c:2673
+#: src/preferences.c:2668
 msgid "Video open command             "
 msgstr ""
 
-#: src/preferences.c:2693
+#: src/preferences.c:2688
 msgid "Open/render compression                  "
 msgstr ""
 
-#: src/preferences.c:2705
+#: src/preferences.c:2700
 msgid " %     ( lower = slower, larger files; for jpeg, higher quality )"
 msgstr ""
 
-#: src/preferences.c:2718
+#: src/preferences.c:2713
 msgid "Default image format          "
 msgstr ""
 
-#: src/preferences.c:2727
+#: src/preferences.c:2722
 msgid "_jpeg"
-msgstr "_jpeg"
+msgstr ""
 
-#: src/preferences.c:2742
+#: src/preferences.c:2737
 msgid "_png"
-msgstr "_png"
+msgstr ""
 
-#: src/preferences.c:2762
+#: src/preferences.c:2757
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
 msgstr ""
 
-#: src/preferences.c:2776
+#: src/preferences.c:2771
 msgid "Use instant opening when possible"
 msgstr ""
 
-#: src/preferences.c:2787
+#: src/preferences.c:2782
 msgid "Enable instant opening of some file types using decoder plugins"
 msgstr ""
 
-#: src/preferences.c:2815
+#: src/preferences.c:2810
 msgid "Enable automatic deinterlacing when possible"
 msgstr ""
 
-#: src/preferences.c:2827
+#: src/preferences.c:2822
 msgid "Automatically deinterlace frames when a plugin suggests it"
 msgstr ""
 
-#: src/preferences.c:2841
+#: src/preferences.c:2836
 msgid "Ignore blank borders when possible"
 msgstr ""
 
-#: src/preferences.c:2853
+#: src/preferences.c:2848
 msgid "Clip any blank borders from frames where possible"
 msgstr ""
 
-#: src/preferences.c:2867
+#: src/preferences.c:2862
 msgid "When opening multiple files, concatenate images into one clip"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2889
+#: src/preferences.c:2884
 msgid "Decoding"
 msgstr ""
 
-#: src/preferences.c:2913
+#: src/preferences.c:2908
 msgid "The preview quality for video playback - affects resizing"
 msgstr ""
 
-#: src/preferences.c:2915
+#: src/preferences.c:2910
 msgid "Preview _quality"
 msgstr ""
 
-#: src/preferences.c:2926
+#: src/preferences.c:2921
 msgid "Low - can improve performance on slower machines"
 msgstr ""
 
-#: src/preferences.c:2927
+#: src/preferences.c:2922
 msgid "Normal - recommended for most users"
 msgstr ""
 
-#: src/preferences.c:2928
+#: src/preferences.c:2923
 msgid "High - can improve quality on very fast machines"
 msgstr ""
 
-#: src/preferences.c:2951
+#: src/preferences.c:2946
 msgid "_Show FPS statistics"
 msgstr ""
 
-#: src/preferences.c:2981
+#: src/preferences.c:2976
 msgid "_Plugin"
 msgstr ""
 
-#: src/preferences.c:3025
+#: src/preferences.c:3020
 msgid "Stream audio"
 msgstr ""
 
-#: src/preferences.c:3036
+#: src/preferences.c:3031
 msgid "Stream audio to playback plugin"
 msgstr ""
 
-#: src/preferences.c:3043
+#: src/preferences.c:3038
 msgid "VIDEO"
-msgstr "VIDEO"
+msgstr ""
 
-#: src/preferences.c:3066
+#: src/preferences.c:3061
 msgid "_Player"
 msgstr ""
 
-#: src/preferences.c:3104
+#: src/preferences.c:3099
 msgid "(See also the Jack Integration tab for jack startup options)"
 msgstr ""
 
-#: src/preferences.c:3135
+#: src/preferences.c:3130
 msgid "mplayer"
-msgstr "mplayer"
+msgstr ""
 
-#: src/preferences.c:3146
+#: src/preferences.c:3141
 msgid "Audio play _command"
 msgstr ""
 
-#: src/preferences.c:3164
+#: src/preferences.c:3159
 msgid "- internal -"
 msgstr ""
 
-#: src/preferences.c:3176
+#: src/preferences.c:3171
 msgid "Audio follows video _rate/direction"
 msgstr ""
 
-#: src/preferences.c:3197
+#: src/preferences.c:3192
 msgid "Audio follows _clip switches"
 msgstr ""
 
-#: src/preferences.c:3215
+#: src/preferences.c:3210
 msgid "AUDIO"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3230
+#: src/preferences.c:3225
 msgid "Playback"
-msgstr "Taasesitus"
+msgstr "قويۇش"
 
-#: src/preferences.c:3242
+#: src/preferences.c:3237
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
 msgstr ""
 
-#: src/preferences.c:3270
+#: src/preferences.c:3265
 msgid "      What to record when 'r' is pressed   "
 msgstr ""
 
-#: src/preferences.c:3284
+#: src/preferences.c:3279
 msgid "_Frame changes"
 msgstr ""
 
-#: src/preferences.c:3312
+#: src/preferences.c:3307
 msgid "F_PS changes"
 msgstr ""
 
-#: src/preferences.c:3346
+#: src/preferences.c:3341
 msgid "_Real time effects"
 msgstr ""
 
-#: src/preferences.c:3370
+#: src/preferences.c:3365
 msgid "_Clip switches"
 msgstr ""
 
-#: src/preferences.c:3398
+#: src/preferences.c:3393
 msgid "_Audio (requires jack or pulse audio player)"
 msgstr ""
 
-#: src/preferences.c:3436
+#: src/preferences.c:3431
 msgid "Pause recording if free disk space falls below"
 msgstr ""
 
-#: src/preferences.c:3450
+#: src/preferences.c:3445
 msgid "GB"
-msgstr ""
+msgstr "گىگابايت"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3462
+#: src/preferences.c:3457
 msgid "Recording"
-msgstr "Salvestamine"
+msgstr "خاتىرىلەۋاتىدۇ"
 
-#: src/preferences.c:3476
+#: src/preferences.c:3471
 msgid "      Encoder                  "
 msgstr ""
 
-#: src/preferences.c:3561
+#: src/preferences.c:3556
 msgid "Audio codec"
-msgstr ""
+msgstr "ئاۋاز كودېك"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3577
+#: src/preferences.c:3572
 msgid "Encoding"
-msgstr "Kodeering"
+msgstr "كودلاش"
 
-#: src/preferences.c:3589
+#: src/preferences.c:3584
 msgid "Use _antialiasing when resizing"
 msgstr ""
 
-#: src/preferences.c:3610
+#: src/preferences.c:3605
 msgid "Number of _real time effect keys"
 msgstr ""
 
-#: src/preferences.c:3623
+#: src/preferences.c:3618
 msgid ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
 msgstr ""
 
-#: src/preferences.c:3629
+#: src/preferences.c:3624
 msgid "Use _threads where possible when applying effects"
 msgstr ""
 
-#: src/preferences.c:3651
+#: src/preferences.c:3646
 msgid "Number of _threads"
 msgstr ""
 
-#: src/preferences.c:3684
+#: src/preferences.c:3679
 msgid "      Video load directory (default)      "
 msgstr ""
 
-#: src/preferences.c:3695
+#: src/preferences.c:3690
 msgid "      Video save directory (default) "
 msgstr ""
 
-#: src/preferences.c:3706
+#: src/preferences.c:3701
 msgid "      Audio load directory (default) "
 msgstr ""
 
-#: src/preferences.c:3717
+#: src/preferences.c:3712
 msgid "      Image directory (default) "
 msgstr ""
 
-#: src/preferences.c:3728
+#: src/preferences.c:3723
 msgid "      Backup/Restore directory (default) "
 msgstr ""
 
-#: src/preferences.c:3739
+#: src/preferences.c:3734
 msgid "      Temp directory (do not remove) "
 msgstr ""
 
-#: src/preferences.c:3758
+#: src/preferences.c:3753
 msgid "The default directory for loading video clips from"
 msgstr ""
 
-#: src/preferences.c:3787
+#: src/preferences.c:3782
 msgid "The default directory for saving encoded clips to"
 msgstr ""
 
-#: src/preferences.c:3799
+#: src/preferences.c:3794
 msgid "The default directory for loading and saving audio"
 msgstr ""
 
-#: src/preferences.c:3811
+#: src/preferences.c:3806
 msgid "The default directory for saving frameshots to"
 msgstr ""
 
-#: src/preferences.c:3823
+#: src/preferences.c:3818
 msgid "The default directory for backing up/restoring single clips"
 msgstr ""
 
-#: src/preferences.c:3835
+#: src/preferences.c:3830
 msgid "LiVES working directory."
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3913
+#: src/preferences.c:3908
 msgid "Directories"
-msgstr "Kataloogid"
+msgstr "مۇندەرىجىلەر"
 
-#: src/preferences.c:3939
+#: src/preferences.c:3934
 msgid ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
 msgstr ""
 
-#: src/preferences.c:3962
+#: src/preferences.c:3957
 msgid "Warn on Open if file _size exceeds "
 msgstr ""
 
-#: src/preferences.c:3985
+#: src/preferences.c:3980
 msgid " MB"
-msgstr " MB"
+msgstr " مېگابايت"
 
-#: src/preferences.c:3995
+#: src/preferences.c:3990
 msgid "Show a warning before saving a se_t"
 msgstr ""
 
-#: src/preferences.c:4014
+#: src/preferences.c:4009
 msgid ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
 msgstr ""
 
-#: src/preferences.c:4033
+#: src/preferences.c:4028
 msgid "Show a warning if no _rendered effects are found at startup."
 msgstr ""
 
-#: src/preferences.c:4052
+#: src/preferences.c:4047
 msgid "Show a warning if no _encoder plugins are found at startup."
 msgstr ""
 
-#: src/preferences.c:4071
+#: src/preferences.c:4066
 msgid "Show a warning if a _duplicate set name is entered."
 msgstr ""
 
-#: src/preferences.c:4090
+#: src/preferences.c:4085
 msgid "When a set is loaded, warn if clips are missing from _layouts."
 msgstr ""
 
-#: src/preferences.c:4110
+#: src/preferences.c:4105
 msgid "Warn if a clip used in a layout is about to be closed."
 msgstr ""
 
-#: src/preferences.c:4129
+#: src/preferences.c:4124
 msgid "Warn if frames used in a layout are about to be deleted."
 msgstr ""
 
-#: src/preferences.c:4148
+#: src/preferences.c:4143
 msgid "Warn if frames used in a layout are about to be shifted."
 msgstr ""
 
-#: src/preferences.c:4167
+#: src/preferences.c:4162
 msgid "Warn if frames used in a layout are about to be altered."
 msgstr ""
 
-#: src/preferences.c:4186
+#: src/preferences.c:4181
 msgid "Warn if audio used in a layout is about to be deleted."
 msgstr ""
 
-#: src/preferences.c:4205
+#: src/preferences.c:4200
 msgid "Warn if audio used in a layout is about to be shifted."
 msgstr ""
 
-#: src/preferences.c:4224
+#: src/preferences.c:4219
 msgid "Warn if audio used in a layout is about to be altered."
 msgstr ""
 
-#: src/preferences.c:4243
+#: src/preferences.c:4238
 msgid "Popup layout errors after clip changes."
 msgstr ""
 
-#: src/preferences.c:4262
+#: src/preferences.c:4257
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
 msgstr ""
 
-#: src/preferences.c:4281
+#: src/preferences.c:4276
 msgid ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
 msgstr ""
 
-#: src/preferences.c:4300
+#: src/preferences.c:4295
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
 msgstr ""
 
-#: src/preferences.c:4319
+#: src/preferences.c:4314
 msgid "Show info message after importing from firewire device."
 msgstr ""
 
-#: src/preferences.c:4340
+#: src/preferences.c:4335
 msgid "Show a warning before opening a yuv4mpeg stream (advanced)."
 msgstr ""
 
-#: src/preferences.c:4361
+#: src/preferences.c:4356
 msgid "Show a warning when multitrack is low on backup space."
 msgstr ""
 
-#: src/preferences.c:4380
+#: src/preferences.c:4375
 msgid "Show a warning advising cleaning of disk space after a crash."
 msgstr ""
 
-#: src/preferences.c:4400
+#: src/preferences.c:4395
 msgid "Show a warning if unable to connect to pulseaudio player."
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4423
+#: src/preferences.c:4418
 msgid "Warnings"
-msgstr "Hoiatused"
+msgstr "ئاگاھلاندۇرۇش"
 
-#: src/preferences.c:4435
+#: src/preferences.c:4430
 msgid "Midi synch (requires the files midistart and midistop)"
 msgstr ""
 
-#: src/preferences.c:4459
+#: src/preferences.c:4454
 msgid "When inserting/merging frames:  "
 msgstr ""
 
-#: src/preferences.c:4469
+#: src/preferences.c:4464
 msgid "_Speed Up/Slow Down Insertion"
 msgstr ""
 
-#: src/preferences.c:4485
+#: src/preferences.c:4480
 msgid "_Resample Insertion"
 msgstr ""
 
-#: src/preferences.c:4502
+#: src/preferences.c:4497
 msgid "Pause xmms during audio playback"
 msgstr ""
 
-#: src/preferences.c:4525
+#: src/preferences.c:4520
 msgid "CD device           "
 msgstr ""
 
-#: src/preferences.c:4542
+#: src/preferences.c:4537
 msgid "LiVES: Choose CD device"
 msgstr ""
 
-#: src/preferences.c:4564
+#: src/preferences.c:4559
 msgid "LiVES can load audio tracks from this CD"
 msgstr ""
 
-#: src/preferences.c:4570
+#: src/preferences.c:4565
 msgid "Default FPS        "
 msgstr ""
 
-#: src/preferences.c:4583
+#: src/preferences.c:4578
 msgid "Frames per second to use when none is specified"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4590
+#: src/preferences.c:4585
 msgid "Misc"
-msgstr "Muud"
+msgstr "ئارىلاش"
 
-#: src/preferences.c:4604
+#: src/preferences.c:4599
 msgid "New theme:           "
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4639
+#: src/preferences.c:4634
 msgid "Themes"
-msgstr "Teemad"
+msgstr "ئۆرنەكلەر"
 
-#: src/preferences.c:4653
+#: src/preferences.c:4648
 msgid "Download bandwidth (Kb/s)       "
 msgstr ""
 
-#: src/preferences.c:4675
+#: src/preferences.c:4670
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
 msgstr ""
 
-#: src/preferences.c:4689
+#: src/preferences.c:4684
 msgid "OMC remote control enabled"
 msgstr ""
 
-#: src/preferences.c:4709
+#: src/preferences.c:4704
 msgid "UDP port       "
 msgstr ""
 
-#: src/preferences.c:4725
+#: src/preferences.c:4720
 msgid "Start OMC on startup"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4759
+#: src/preferences.c:4754
 msgid "Streaming/Networking"
 msgstr ""
 
-#: src/preferences.c:4769
+#: src/preferences.c:4764
 msgid "Jack transport"
 msgstr ""
 
-#: src/preferences.c:4784
+#: src/preferences.c:4779
 msgid ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
 msgstr ""
 
-#: src/preferences.c:4795
+#: src/preferences.c:4790
 msgid "Jack _transport config file"
 msgstr ""
 
-#: src/preferences.c:4810
+#: src/preferences.c:4805
 msgid "The name of the jack server which can control LiVES transport"
 msgstr ""
 
-#: src/preferences.c:4813 src/preferences.c:4994
+#: src/preferences.c:4808 src/preferences.c:4989
 msgid "Start _server on LiVES startup"
 msgstr ""
 
-#: src/preferences.c:4835
+#: src/preferences.c:4830
 msgid "Jack transport _master (start and stop)"
 msgstr ""
 
-#: src/preferences.c:4853
+#: src/preferences.c:4848
 msgid "Jack transport _client (start and stop)"
 msgstr ""
 
-#: src/preferences.c:4875
+#: src/preferences.c:4870
 msgid "Jack transport sets start position"
 msgstr ""
 
-#: src/preferences.c:4900
+#: src/preferences.c:4895
 msgid "Jack transport timebase slave"
 msgstr ""
 
-#: src/preferences.c:4921
+#: src/preferences.c:4916
 msgid "(See also Playback -> Audio follows video rate/direction)"
 msgstr ""
 
-#: src/preferences.c:4944
+#: src/preferences.c:4939
 msgid "Jack audio"
 msgstr ""
 
-#: src/preferences.c:4952
+#: src/preferences.c:4947
 msgid "LiVES must be compiled with jack/jack.h present to use jack audio"
 msgstr ""
 
-#: src/preferences.c:4959
+#: src/preferences.c:4954
 msgid ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
 msgstr ""
 
-#: src/preferences.c:4970
+#: src/preferences.c:4965
 msgid "Jack _audio server config file"
 msgstr ""
 
-#: src/preferences.c:4986
+#: src/preferences.c:4981
 msgid "The name of the jack server for audio"
 msgstr ""
 
-#: src/preferences.c:5013
+#: src/preferences.c:5008
 msgid "Play audio even when transport is _paused"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5040
+#: src/preferences.c:5035
 msgid "Jack Integration"
 msgstr ""
 
-#: src/preferences.c:5049
+#: src/preferences.c:5044
 msgid "Events to respond to:"
 msgstr ""
 
-#: src/preferences.c:5060
+#: src/preferences.c:5055
 msgid "_Joystick events"
 msgstr ""
 
-#: src/preferences.c:5081
+#: src/preferences.c:5076
 msgid "_Joystick device"
 msgstr ""
 
-#: src/preferences.c:5096
+#: src/preferences.c:5091
 msgid "The joystick device, e.g. /dev/input/js0"
 msgstr ""
 
-#: src/preferences.c:5103
+#: src/preferences.c:5098
 msgid "LiVES: Choose joystick device"
 msgstr ""
 
-#: src/preferences.c:5118
+#: src/preferences.c:5113
 msgid "_MIDI events"
 msgstr ""
 
-#: src/preferences.c:5144
+#: src/preferences.c:5139
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
 msgstr ""
 
-#: src/preferences.c:5145
+#: src/preferences.c:5140
 msgid "Use _ALSA MIDI (recommended)"
 msgstr ""
 
-#: src/preferences.c:5164
+#: src/preferences.c:5159
 msgid "Use _raw MIDI"
 msgstr ""
 
-#: src/preferences.c:5177
+#: src/preferences.c:5172
 msgid "Read directly from the MIDI device"
 msgstr ""
 
-#: src/preferences.c:5189
+#: src/preferences.c:5184
 msgid "_MIDI device"
 msgstr ""
 
-#: src/preferences.c:5204
+#: src/preferences.c:5199
 msgid "The MIDI device, e.g. /dev/input/midi0"
 msgstr ""
 
-#: src/preferences.c:5211
+#: src/preferences.c:5206
 msgid "LiVES: Choose MIDI device"
 msgstr ""
 
-#: src/preferences.c:5227
+#: src/preferences.c:5222
 msgid "Advanced"
-msgstr "Muu"
+msgstr "ئالىي"
 
-#: src/preferences.c:5238
+#: src/preferences.c:5233
 msgid "MIDI check _rate"
 msgstr ""
 
-#: src/preferences.c:5251
+#: src/preferences.c:5246
 msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
 msgstr ""
 
-#: src/preferences.c:5253
+#: src/preferences.c:5248
 msgid "MIDI repeat"
 msgstr ""
 
-#: src/preferences.c:5266
+#: src/preferences.c:5261
 msgid "Number of non-reads allowed between succesive reads."
 msgstr ""
 
-#: src/preferences.c:5272
+#: src/preferences.c:5267
 msgid "(Warning: setting this value too high can slow down playback.)"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5295
+#: src/preferences.c:5290
 msgid "MIDI/Joystick learner"
 msgstr ""
 
-#: src/preferences.c:5560
+#: src/preferences.c:5555
 msgid ""
 "\n"
 "LiVES will now shut down. You need to restart it for the directory change to "
@@ -6534,18 +6524,20 @@ msgid ""
 "Click OK to continue.\n"
 msgstr ""
 
-#: src/preferences.c:5608
+#: src/preferences.c:5603
 msgid ""
 "For the directory change to take effect LiVES will restart when preferences "
 "dialog closes."
 msgstr ""
 
-#: src/preferences.c:5612
-msgid "Theme changes will not take effect until the next time you start LiVES."
+#: src/preferences.c:5607
+msgid ""
+"Theme changes will not take effect until the next time you start LiVES."
 msgstr ""
 
-#: src/preferences.c:5616
-msgid "Jack options will not take effect until the next time you start LiVES."
+#: src/preferences.c:5611
+msgid ""
+"Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 
 #: src/osc.c:2270
@@ -6579,7 +6571,7 @@ msgstr ""
 
 #: src/resample.c:336 src/resample.c:357
 msgid "Resize"
-msgstr "Suuruse muutmine"
+msgstr "چوڭلۇقىنى ئۆزگەرت"
 
 #: src/resample.c:367
 msgid "Resample/Resize"
@@ -6654,11 +6646,11 @@ msgstr ""
 
 #: src/resample.c:1226
 msgid "         Channels "
-msgstr ""
+msgstr "         قانال "
 
 #: src/resample.c:1246
 msgid "        Sample Size "
-msgstr ""
+msgstr "        ئەۋرىشكە چوڭلۇقى "
 
 #: src/resample.c:1285 src/resample.c:1589
 msgid "Signed"
@@ -6666,7 +6658,7 @@ msgstr ""
 
 #: src/resample.c:1312 src/resample.c:1623
 msgid "Unsigned"
-msgstr ""
+msgstr "ئىمزاسىز"
 
 #: src/resample.c:1359 src/resample.c:1676
 msgid "Little Endian"
@@ -6678,7 +6670,7 @@ msgstr ""
 
 #: src/resample.c:1411
 msgid "Current"
-msgstr "Päevakajaline"
+msgstr "نۆۋەتتىكى"
 
 #: src/resample.c:1443
 msgid "_Enable audio"
@@ -6694,7 +6686,7 @@ msgstr ""
 
 #: src/resample.c:1503
 msgid "    Channels "
-msgstr ""
+msgstr "    قانال "
 
 #: src/resample.c:1536
 msgid "    _Sample Size "
@@ -6702,11 +6694,11 @@ msgstr ""
 
 #: src/resample.c:1537
 msgid "    Sample Size "
-msgstr ""
+msgstr "    ئەۋرىشكە چوڭلۇقى "
 
 #: src/resample.c:1746
 msgid "New"
-msgstr "Uus"
+msgstr "يېڭى"
 
 #: src/resample.c:1775
 msgid "_Frames Per Second "
@@ -6718,19 +6710,19 @@ msgstr ""
 
 #: src/resample.c:1840
 msgid " hours  "
-msgstr ""
+msgstr " سائەت  "
 
 #: src/resample.c:1853
 msgid " minutes  "
-msgstr ""
+msgstr " مىنۇت  "
 
 #: src/resample.c:1866
 msgid " seconds  "
-msgstr ""
+msgstr " سېكۇنت  "
 
 #: src/resample.c:1887
 msgid "Unlimited"
-msgstr "Pealkirjata"
+msgstr "چەكسىز"
 
 #: src/resample.c:1915
 msgid "Click OK to begin recording, or Cancel to quit."
@@ -6808,7 +6800,8 @@ msgstr ""
 
 #: src/resample.c:2314
 #, c-format
-msgid "Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
+msgid ""
+"Changed playback speed to %.3f frames per second and audio to %d Hz.\n"
 msgstr ""
 
 #: src/resample.c:2317
@@ -6846,7 +6839,7 @@ msgstr ""
 #: src/rte_window.c:65 src/rte_window.c:726
 #, c-format
 msgid "Type: %s"
-msgstr ""
+msgstr "تىپى: %s"
 
 #: src/rte_window.c:95
 msgid ""
@@ -7002,7 +6995,7 @@ msgstr ""
 
 #: src/rte_window.c:699
 msgid "No Description"
-msgstr "Kirjeldus puudub"
+msgstr "چۈشەندۈرۈشى يوق"
 
 #: src/rte_window.c:704
 #, c-format
@@ -7022,7 +7015,7 @@ msgstr ""
 #: src/rte_window.c:742
 #, c-format
 msgid "Author: %s"
-msgstr "Autor: %s"
+msgstr "ئاپتور: ‎%s"
 
 #: src/rte_window.c:750
 #, c-format
@@ -7031,7 +7024,7 @@ msgstr ""
 
 #: src/rte_window.c:762
 msgid "Description: "
-msgstr "Kirjeldus: "
+msgstr "چۈشەندۈرۈش: "
 
 #: src/rte_window.c:932
 msgid ""
@@ -7078,7 +7071,7 @@ msgstr ""
 
 #: src/rte_window.c:1199 src/multitrack.c:7362
 msgid "Info"
-msgstr "Andmed"
+msgstr "ئۇچۇرى"
 
 #: src/rte_window.c:1200
 msgid "Set Parameters"
@@ -7086,7 +7079,7 @@ msgstr ""
 
 #: src/rte_window.c:1201
 msgid "Clear"
-msgstr "Puhasta"
+msgstr "تازىلا"
 
 #: src/rte_window.c:1210
 msgid "Effect name:"
@@ -7148,7 +7141,7 @@ msgstr ""
 
 #: src/lives-yuv4mpeg.c:389
 msgid "none\n"
-msgstr ""
+msgstr "يوق\n"
 
 #: src/lives-yuv4mpeg.c:392
 #, c-format
@@ -7217,7 +7210,7 @@ msgstr ""
 #: src/multitrack.c:1363 src/multitrack.c:2894
 #, c-format
 msgid "Source: %s"
-msgstr ""
+msgstr "مەنبە: %s"
 
 #: src/multitrack.c:1366 src/multitrack.c:2896
 msgid "Right click for context menu.\n"
@@ -7423,7 +7416,7 @@ msgstr ""
 #: src/multitrack.c:3795
 #, c-format
 msgid "Delete %s"
-msgstr ""
+msgstr "%s نى ئۆچۈر"
 
 #: src/multitrack.c:3799
 msgid "Insert block"
@@ -7501,7 +7494,7 @@ msgstr ""
 
 #: src/multitrack.c:5088
 msgid "_Open..."
-msgstr ""
+msgstr "ئاچ(_O)…"
 
 #: src/multitrack.c:5105
 msgid "O_pen File Selection..."
@@ -7649,7 +7642,7 @@ msgstr ""
 
 #: src/multitrack.c:5958
 msgid "Se_lection"
-msgstr "_Valik"
+msgstr "تاللا(_L)"
 
 #: src/multitrack.c:5968
 msgid "_Select Current Track"
@@ -7677,7 +7670,7 @@ msgstr ""
 
 #: src/multitrack.c:6014
 msgid "_Copy..."
-msgstr "_Kopeeri..."
+msgstr "كۆچۈر(_C)…"
 
 #: src/multitrack.c:6024
 msgid "_Timecode to region start"
@@ -7701,7 +7694,7 @@ msgstr ""
 
 #: src/multitrack.c:6118
 msgid "_Render"
-msgstr "_Genereerimine"
+msgstr ""
 
 #: src/multitrack.c:6128
 msgid "_Render all to new clip"
@@ -7721,7 +7714,7 @@ msgstr ""
 
 #: src/multitrack.c:6166
 msgid "_View"
-msgstr "_Vaade"
+msgstr "كۆرۈنۈش(_V)"
 
 #: src/multitrack.c:6184
 msgid "Block _In/out points"
@@ -7737,7 +7730,7 @@ msgstr ""
 
 #: src/multitrack.c:6208
 msgid "Compact view"
-msgstr "Tihe vaade"
+msgstr ""
 
 #: src/multitrack.c:6216
 msgid "Maximum tracks to display..."
@@ -7852,11 +7845,11 @@ msgstr ""
 
 #: src/multitrack.c:7062
 msgid "_Apply"
-msgstr "_Rakenda"
+msgstr "قوللان(_A)"
 
 #: src/multitrack.c:7084
 msgid "Time"
-msgstr ""
+msgstr "ۋاقىت"
 
 #: src/multitrack.c:7100
 msgid "_Del. node"
@@ -7904,7 +7897,7 @@ msgstr ""
 
 #: src/multitrack.c:7498
 msgid "Scroll"
-msgstr "Kerib"
+msgstr "سىيرىش"
 
 #: src/multitrack.c:8053
 msgid ""
@@ -8044,7 +8037,7 @@ msgstr ""
 #: src/multitrack.c:11277
 #, c-format
 msgid "%s to %s"
-msgstr "%s kuni %s"
+msgstr ""
 
 #: src/multitrack.c:11328
 msgid "_Prev filter map"
@@ -8188,11 +8181,11 @@ msgstr ""
 
 #: src/multitrack.c:14081
 msgid "Cleaning up..."
-msgstr "Puhastamine..."
+msgstr "تازىلاۋاتىدۇ…"
 
 #: src/multitrack.c:14733
 msgid "_Pause"
-msgstr "_Peata"
+msgstr "ۋاقىتلىق توختا(_P)"
 
 #: src/multitrack.c:14734
 msgid "Pause (p)"
@@ -8334,7 +8327,7 @@ msgstr ""
 
 #: src/multitrack.c:18443
 msgid "frames"
-msgstr "kaadrit"
+msgstr "كاندۇك"
 
 #: src/multitrack.c:18453
 msgid ""
@@ -8455,28 +8448,28 @@ msgstr ""
 
 #: src/omc-learn.c:557
 msgid "data"
-msgstr "andmed"
+msgstr ""
 
 #: src/omc-learn.c:560
 msgid "velocity"
-msgstr "kiirus"
+msgstr "تېزلىك"
 
 #: src/omc-learn.c:561
 msgid "note"
-msgstr "märkus"
+msgstr "ئىزاھ"
 
 #: src/omc-learn.c:563 src/omc-learn.c:722 src/omc-learn.c:1095
 #: src/omc-learn.c:1578
 msgid "value"
-msgstr "väärtus"
+msgstr "قىممىتى"
 
 #: src/omc-learn.c:565
 msgid "state"
-msgstr "maakond"
+msgstr ""
 
 #: src/omc-learn.c:677
 msgid "variable"
-msgstr "muutuja"
+msgstr "ئۆزگەرگۈچى"
 
 #: src/omc-learn.c:989
 msgid "Vars."
@@ -8523,7 +8516,7 @@ msgstr "x"
 
 #: src/omc-learn.c:1112
 msgid "range"
-msgstr "vahemik"
+msgstr ""
 
 #: src/omc-learn.c:1131
 msgid "+ offset1"
@@ -8553,7 +8546,7 @@ msgstr ""
 
 #: src/omc-learn.c:1354
 msgid "_Delete all"
-msgstr "_Kustuta kõik"
+msgstr ""
 
 #: src/omc-learn.c:1407
 msgid "Start video playback"
@@ -8715,15 +8708,15 @@ msgstr "fps"
 #: src/omc-learn.c:1544 src/omc-learn.c:1550 src/omc-learn.c:1556
 #: src/omc-learn.c:1563 src/omc-learn.c:1599 src/omc-learn.c:1606
 msgid "key"
-msgstr "klahv"
+msgstr "ئاچقۇچ"
 
 #: src/omc-learn.c:1570
 msgid "pnum"
-msgstr "pnum"
+msgstr ""
 
 #: src/omc-learn.c:1585
 msgid "fps_ratio"
-msgstr "fps_ratio"
+msgstr ""
 
 #: src/omc-learn.c:2328 src/omc-learn.c:2437
 #, c-format
@@ -8799,17 +8792,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "Adjust contrast"
-msgstr "Kontrasti muutmine"
+msgstr "ئاق-قارىلىقىنى تەڭشەش"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "Adjusting contrast of"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "Adjusting noise on"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -8832,37 +8823,32 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blanking"
-msgstr "Tühjendamine"
+msgstr "ئۆچۈرۈۋاتىدۇ"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _height"
-msgstr "_Kõrgus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "_Kõrgus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
-msgstr "Pehmendus"
+msgstr "گۇڭگا"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "Bluring"
-msgstr "Pehmendus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Border _Colour"
@@ -8916,95 +8902,83 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Charcoal"
-msgstr "Söejoonistus"
+msgstr "كاربون قەلەم"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "Checkerboard"
-msgstr "Malelaud"
+msgstr "شاھمات تاختىسى"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboarding"
-msgstr "Malelaud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _over selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _under selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
-msgstr "Värvi"
+msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorizing"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlace"
-msgstr "Kihilisuse kõrvaldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlacing"
-msgstr "Kihilisuse eemaldamine"
+msgstr "Deinterlacing"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckle"
-msgstr "Punktitasandus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "Despeckling"
-msgstr "Punktitasandus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "Dream"
-msgstr "Unelemismuusika"
+msgstr "Dream مۇزىكىسى"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dreamifying"
-msgstr "Unelemismuusika"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9013,21 +8987,19 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "Edge detect"
-msgstr "Servade tuvastamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "Edge detecting"
-msgstr "Servade tuvastamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
-msgstr "Reljeefne"
+msgstr "تاللىغاننى ئۆچۈر"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "Embossing"
-msgstr "Reljeefne"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End _Alpha:"
@@ -9043,33 +9015,28 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 msgid "Enhance"
-msgstr "Arenda"
+msgstr "كۈچەيتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhancing"
-msgstr "Arenda"
+msgstr "كۈچەيتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Fade _end"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade video in or out"
@@ -9077,21 +9044,19 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
-msgstr "Hajumine"
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fading video"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "Fina_l frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Flash _colour"
@@ -9099,26 +9064,23 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
-msgstr "Vertikaalselt peegeldamine"
+msgstr "تىك ئايلاندۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
-#, fuzzy
 msgid "Flop horizontally"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frame Calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _height"
-msgstr "Raami suurus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Frame _in frame position of clipboard..."
@@ -9129,32 +9091,28 @@ msgid "Frame _in frame position of top frame..."
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _width"
-msgstr "Raami suurus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma change"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Generate clip from image"
@@ -9169,9 +9127,8 @@ msgid "Generate title frames"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generating blank frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Generating clip from image"
@@ -9194,14 +9151,12 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "Hue change"
@@ -9212,9 +9167,8 @@ msgid "Hue end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Image overlay"
@@ -9253,31 +9207,28 @@ msgid "L_eft"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "Making monochrome"
-msgstr "Ühevärviline"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Modulate (BSH)"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulating"
-msgstr "Pööramine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
-msgstr "Ühevärviline"
+msgstr "رەڭسىز"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "Negate"
-msgstr "Negatiiv"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negating"
-msgstr "Negatiiv"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -9289,11 +9240,11 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 msgid "Normalize"
-msgstr "Normaliseerimine"
+msgstr "نورماللاشتۇرۇش"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 msgid "Normalizing"
-msgstr "Normaalseks tegemine"
+msgstr "نورماللاشتۇرۇۋاتىدۇ"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Number of _frames"
@@ -9308,27 +9259,25 @@ msgid "Overlaying text on"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "Kleebi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilating"
-msgstr "Kleebi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
-msgstr "Posterdamine"
+msgstr "تەشۋىق ۋارىقى"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterizing"
-msgstr "Posterdamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -9351,24 +9300,21 @@ msgid "Replacing colours in"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
-#, fuzzy
 msgid "Resize All Frames"
-msgstr "_kõikide kaadrite suuruse muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "Rotate Clip"
-msgstr "Pööramine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotating"
-msgstr "Pööramine"
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "S_tart %"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Saturation _end"
@@ -9392,17 +9338,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
-msgstr "Seepia"
+msgstr "رەڭ ئال"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "Shift horizontally"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Shift vertically"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Shrink/Expand"
@@ -9414,25 +9358,23 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Skip forward"
-msgstr "Edasikerimine"
+msgstr "تېز ئالدىغا ماڭدۇرۇش"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Solarize"
-msgstr "Ülesäritus"
+msgstr "نۇر ئۆتكۈزۈش"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarizing"
-msgstr "Ülesäritus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
-msgstr "Spinn"
+msgstr "ئايلاندۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "Spinning"
-msgstr "Spinn"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "Splice"
@@ -9444,16 +9386,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
-msgstr "Hajuta"
+msgstr "ياي"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spreading"
-msgstr "Hajutamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
@@ -9462,23 +9403,20 @@ msgid "Step per _Frame"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "Pööris"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl s_tep"
-msgstr "Pööris"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl"
-msgstr "Pööris"
+msgstr "قاينام"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirling"
-msgstr "Pööris"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
@@ -9498,13 +9436,13 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "Tunnel"
-msgstr "Tunnel"
+msgstr "تەشمە"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "Tunneling"
-msgstr "Tunnel"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
 msgstr ""
@@ -9523,7 +9461,7 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Wave"
-msgstr "Laine"
+msgstr "دولقۇنسىمان سىزىق"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Waving"
@@ -9535,9 +9473,8 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "_Background Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Background colour"
@@ -9553,21 +9490,21 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Bottom"
-msgstr "_Alumine"
+msgstr "ئاستى(_B)"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Calculate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "_Cycle Start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Decrease Contrast"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
@@ -9576,9 +9513,8 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_End Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size X:"
@@ -9589,21 +9525,18 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_End amount"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "_Raadius"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9611,9 +9544,8 @@ msgid "_Fill colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_First frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Flash for"
@@ -9621,19 +9553,18 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
-msgstr "_Kirjatüüp"
+msgstr "خەت نۇسخا(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Frames per second"
-msgstr "sekundid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Frames"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Hold for"
@@ -9644,19 +9575,16 @@ msgid "_Horizontal segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Image File"
-msgstr "_Fail"
+msgstr "سۈرەت ھۆججىتى(_I)"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "_Image"
-msgstr "_Fail"
+msgstr "سۈرەت(_I)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Increase Contrast"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size X:"
@@ -9688,9 +9616,8 @@ msgid "_Midtone"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "_Negate"
-msgstr "Negatiiv"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
@@ -9707,35 +9634,31 @@ msgid "_Offset Y"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Other Center"
-msgstr "_Muud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_Other"
-msgstr "_Muud"
+msgstr "باشقا(_O)"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Point size"
-msgstr "Failisuurus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "_Raadius"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius start"
-msgstr "_Raadius"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "_Radius"
-msgstr "_Raadius"
+msgstr "رادىئۇس(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -9749,40 +9672,35 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Right"
-msgstr "_Paremal"
+msgstr "ئوڭ(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "_Rotate Selection by"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "_Jäta vahele"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
-msgstr "_Jäta vahele"
+msgstr "ئۆتكۈزۈۋەت(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_Splice"
@@ -9790,42 +9708,36 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_Start Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "_Start Value"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_Start amount"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Stroke colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Text"
-msgstr "_Tekst"
+msgstr "تېكىست(_T)"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Time (seconds)"
-msgstr "sekundid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Top left is clipboard"
@@ -9833,16 +9745,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Top"
-msgstr "_Ülemine"
+msgstr "بېشى(_T)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "_Wavemax"
-msgstr "Laine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -9851,21 +9762,19 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "_Wrap Around"
-msgstr "_Lõppu (või algusese) jõudmisel otsingut ei katkestata\""
+msgstr "باشتىن باشلاپ ئىزدە(_W)"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_X Center"
-msgstr "_Muud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_X Start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9873,18 +9782,16 @@ msgid "_X offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Y Center"
-msgstr "_Muud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Y Start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -9900,9 +9807,8 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "blank_frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
@@ -9913,75 +9819,65 @@ msgid "brightness_change"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-#, fuzzy
 msgid "charcoal"
-msgstr "Söejoonistus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "colour_replace"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "contrast"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
-msgstr "ringle"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "deinterlace"
-msgstr "Kihilisuse kõrvaldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "despeckle"
-msgstr "Punktitasandus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "dream"
-msgstr "Unelemismuusika"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "edge_detect"
-msgstr "Servade tuvastamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "emboss"
-msgstr "Reljeefne"
+msgstr "قاپارتما"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "enhance"
-msgstr "Arenda"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
-msgstr "iga"
+msgstr "ھەر"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
-msgstr "fc"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "flip"
@@ -10000,9 +9896,8 @@ msgid "gamma_change"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "gen_clip_from_image"
@@ -10029,42 +9924,36 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "Pööramine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "monochrome"
-msgstr "Ühevärviline"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "negate"
-msgstr "Negatiiv"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "Normaliseerimine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "Kleebi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "posterize"
-msgstr "Posterdamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -10072,92 +9961,79 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "resize"
-msgstr "muuda suurust"
+msgstr "چوڭلۇقىنى ئۆزگەرت"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "rotate"
-msgstr "pööramine"
+msgstr "چۆرگىلەت"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
-msgstr "seepia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "shift_horizontal"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "shift_vertical"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "Edasikerimine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "Ülesäritus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
-msgstr ""
+msgstr "spin"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "spread"
-msgstr "Hajuta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "Pööris"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "transition_checkerboard"
-msgstr "Malelaud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "transition_fade2"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "trim_frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "tunnel"
-msgstr "Tunnel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "wave"
@@ -10213,7 +10089,7 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Please install it first."
-msgstr ""
+msgstr "ئالدى بىلەن ئۇنى ئورنىتىڭ."
 
 #: /usr/bin/smogrify:0
 msgid "You must set the CD device first in Preferences."
@@ -10229,7 +10105,7 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "$plugin_name failed:"
-msgstr ""
+msgstr "$plugin_name  مەغلۇپ بولدى:"
 
 #: /usr/bin/smogrify:0
 msgid "$error"

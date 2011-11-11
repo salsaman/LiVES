@@ -766,7 +766,7 @@ void get_handle_from_info_file(gint index);
 void create_cfile(void);
 void save_file (int clip, int start, int end, const char *filename);
 void play_file (void);
-gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, gint height);
+gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, gint height, gboolean auto_overwrite);
 void wait_for_stop (const gchar *stop_command);
 void save_clip_values(gint which_file);
 void add_to_recovery_file (const gchar *handle);

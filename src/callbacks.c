@@ -4932,7 +4932,7 @@ ok_save_frame                  (GtkButton       *button,
   gtk_widget_queue_draw(mainw->LiVES);
   while (g_main_context_iteration(NULL,FALSE));
 
-  if (!save_frame(mainw->current_file,GPOINTER_TO_INT (frame),file_name,-1,-1)) return;
+  if (!save_frame(mainw->current_file,GPOINTER_TO_INT (frame),file_name,-1,-1,FALSE)) return;
 
   g_snprintf(mainw->image_dir,256,"%s",file_name);
   get_dirname(mainw->image_dir);
@@ -5867,6 +5867,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  if ((!mainw->faded&&mainw->fs&&((prefs->play_monitor!=prefs->gui_monitor&&prefs->play_monitor>0)))||
 					 (mainw->fs&&mainw->vpp!=NULL&&
 					  !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))) {
+	    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
 	    unfade_background();
 	    gtk_widget_show(mainw->frame1);
 	    gtk_widget_show(mainw->frame2);
@@ -5881,8 +5882,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	      load_end_image (0);
 	    }
 	  }
-	  if (mainw->fs&&(!mainw->faded||(mainw->vpp!=NULL&&
-					  !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))) {
+	  if (mainw->fs&&!mainw->faded) {
 	    resize(1);
 	  }
 	  else {

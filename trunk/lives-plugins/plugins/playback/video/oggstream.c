@@ -193,7 +193,7 @@ const char *get_rfx (void) {
 </language_code>\\n\
 <params> \\n\
 output|Output _file|string|/tmp/output.ogv|1024|\\n\
-syncd|A/V Sync _delay (seconds)|num2|4.|0.|20.|\\n\
+syncd|A/V Sync _delay (seconds)|num2|0.|0.|20.|\\n\
 </params> \\n\
 <param_window> \\n\
 special|password|5|\\n\
@@ -495,6 +495,7 @@ void module_unload(void) {
   if (yuv4mpeg!=NULL) {
     free (yuv4mpeg);
   }
+  yuv4mpeg=NULL;
 }
 
 

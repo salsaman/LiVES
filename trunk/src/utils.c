@@ -3308,10 +3308,8 @@ void
 get_border_size (GtkWidget *win, gint *bx, gint *by) {
   GdkRectangle rect;
   gint wx,wy;
-  threaded_dialog_spin();
   gdk_window_get_frame_extents (GDK_WINDOW (win->window),&rect);
   gdk_window_get_origin (GDK_WINDOW (win->window), &wx, &wy);
-  threaded_dialog_spin();
   bx[0]=wx-rect.x;
   by[0]=wy-rect.y;
 }

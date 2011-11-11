@@ -1212,7 +1212,6 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   }
 
   if (vpp->get_audio_fmts!=NULL&&mainw->is_ready) vpp->audio_codec=get_best_audio(vpp);
-
   if (prefsw!=NULL) prefsw_set_astream_settings(vpp);
 
   if (!using) return vpp;
@@ -1289,11 +1288,14 @@ void vid_playback_plugin_exit (void) {
 
 gint64 get_best_audio(_vid_playback_plugin *vpp) {
   // find best audio from video plugin list, matching with audiostream plugins
+
+  // i.e. cross-check video list with astreamer list
+
   int *fmts,*sfmts;
   int ret=AUDIO_CODEC_NONE;
   int i,j=0,nfmts;
   size_t rlen;
-  gchar *astreamer,*com,*playername;
+  gchar *astreamer,*com,*msg;
   gchar buf[1024];
   gchar **array;
   FILE *rfile;
@@ -1302,14 +1304,11 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
     fmts=(*vpp->get_audio_fmts)();
 
     // make audiostream plugin name
-    playername=g_strdup_printf("%sstreamer.pl",prefs->aplayer);
-    astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
-    g_free(playername);
+    astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
 
     // create sfmts array and nfmts
 
     com=g_strdup_printf("%s get_formats",astreamer);
-    g_free(astreamer);
 
     rfile=popen(com,"r");
     rlen=fread(buf,1,1023,rfile);
@@ -1331,11 +1330,49 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
     for (i=0;fmts[i]!=-1;i++) {
       // traverse video list and see if audiostreamer supports each one
       if (int_array_contains_value(sfmts,nfmts,fmts[i])) {
+
+	com=g_strdup_printf("%s check %d",astreamer,fmts[i]);
+
+	rfile=popen(com,"r");
+	rlen=fread(buf,1,1023,rfile);
+	pclose(rfile);
+	memset(buf+rlen,0,1);
+	g_free(com);
+
+	if (strlen(buf)>0) {
+	  if (i==0&&prefsw!=NULL) { 
+	    do_error_dialog_with_check_transient 
+	      (buf,TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
+	    msg=g_strdup_printf(_("Audio stream unable to use preferred format '%s'\n"),anames[fmts[i]]);
+	    d_print(msg);
+	    g_free(msg);
+	  }
+	  continue;
+	}
+
+	if (i>0&&prefsw!=NULL) { 
+	  msg=g_strdup_printf(_("Using format '%s' instead.\n"),anames[fmts[i]]);
+	  d_print(msg);
+	  g_free(msg);
+	}
 	ret=fmts[i];
 	break;
       }
     }
+
+    if (fmts[i]==-1) {
+      //none suitable, stick with first
+      for (i=0;fmts[i]!=-1;i++) {
+	// traverse video list and see if audiostreamer supports each one
+	if (int_array_contains_value(sfmts,nfmts,fmts[i])) {
+	  ret=fmts[i];
+	  break;
+	}
+      }
+    }
+
     g_free(sfmts);
+    g_free(astreamer);
   }
 
   return ret;

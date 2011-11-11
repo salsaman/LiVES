@@ -1314,13 +1314,19 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 
 
 void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
-  gchar *newvpp=gtk_combo_box_get_active_text(GTK_COMBO_BOX(vpp_combo));
+  const gchar *newvpp=gtk_combo_box_get_active_text(GTK_COMBO_BOX(vpp_combo));
+  _vid_playback_plugin *tmpvpp;
 
   if (!g_strcasecmp(newvpp,mainw->none_string)) {
     gtk_widget_set_sensitive (GTK_WIDGET(advbutton), FALSE);
   }
-  else gtk_widget_set_sensitive (GTK_WIDGET(advbutton), TRUE);
+  else {
+    gtk_widget_set_sensitive (GTK_WIDGET(advbutton), TRUE);
 
+    // will call set_astream_settings
+    if ((tmpvpp=open_vid_playback_plugin (newvpp, FALSE))==NULL) return;
+    close_vid_playback_plugin(tmpvpp);
+  }
   g_snprintf (future_prefs->vpp_name,64,"%s",newvpp);
 
   if (future_prefs->vpp_argv!=NULL) {
@@ -1452,15 +1458,6 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
     _vid_playback_plugin *tmpvpp;
     guint32 orig_acodec=AUDIO_CODEC_NONE;
 
-    // get current audio player
-    const gchar *audp = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->audp_combo) );
-    gchar *current_player=g_strdup(prefs->aplayer);
-
-    if (!strncmp(audp,"mplayer",7)) g_snprintf(prefs->aplayer,512,"mplayer");
-    else if (!strncmp(audp,"jack",4)) g_snprintf(prefs->aplayer,512,"jack");
-    else if (!strncmp(audp,"sox",3)) g_snprintf(prefs->aplayer,512,"sox");
-    else if (!strncmp(audp,"pulse audio",11)) g_snprintf(prefs->aplayer,512,"pulse");
-
     if (strlen(future_prefs->vpp_name)) {
       if ((tmpvpp=open_vid_playback_plugin (future_prefs->vpp_name, FALSE))==NULL) return;
     }
@@ -1470,10 +1467,6 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
       get_best_audio(mainw->vpp); // check again because audio player may differ
     }
 
-    // restore current player
-    g_snprintf(prefs->aplayer,512,"%s",current_player);
-    g_free(current_player);
-
     if (tmpvpp->audio_codec!=AUDIO_CODEC_NONE) {
       // make audiostream plugin name
       char buf[1024];
@@ -1481,11 +1474,9 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
       FILE *rfile;
       size_t rlen;
 
-      gchar *playername=g_strdup_printf("%sstreamer.pl",prefs->aplayer);
-      gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
-      g_free(playername);
+      gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
       
-      com=g_strdup_printf("%s check",astreamer);
+      com=g_strdup_printf("%s check %d",astreamer,tmpvpp->audio_codec);
       g_free(astreamer);
       
       rfile=popen(com,"r");
@@ -1496,8 +1487,6 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
 
       if (rlen>0) {
 	gtk_toggle_button_set_active(togglebutton, FALSE);
-	do_error_dialog_with_check_transient 
-	  (buf,TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
       }
     }
 
@@ -1518,11 +1507,10 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
 
 
 void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
+
   if (vpp==NULL||vpp->audio_codec!=AUDIO_CODEC_NONE) {
-    if (prefs->stream_audio_out) {
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
-      gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,TRUE);
-    }
+    gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,TRUE);
+    //gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
   }
   else {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),FALSE);
@@ -1878,6 +1866,8 @@ _prefsw *create_prefs_dialog (void) {
 
   GdkGeometry hints;
 
+  g_print("pt a1\n");
+
   // Allocate memory for the preferences structure
   prefsw = (_prefsw*)(g_malloc(sizeof(_prefsw)));
   prefsw->right_shown = NULL;
@@ -2194,6 +2184,7 @@ _prefsw *create_prefs_dialog (void) {
       if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
     }
   }
+  g_print("pt a122222\n");
   // ---
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -2389,6 +2380,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
   gtk_widget_show (vbox);
   gtk_container_add (GTK_CONTAINER (frame), vbox);
+  g_print("pt a1333333\n");
   
   label = gtk_label_new (_("Video"));
   if (palette->style&STYLE_1) {
@@ -2557,6 +2549,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   gtk_box_pack_start (GTK_BOX (hbox5), label, FALSE, TRUE, 0);
   // ---
+  g_print("pt a144444\n");
   prefsw->mt_autoback_every = gtk_radio_button_new(autoback_group);
   autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_every));
   label = gtk_label_new_with_mnemonic(_("_Every"));
@@ -2659,6 +2652,48 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->vbox_right_decoding = gtk_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_decoding), 20);
+
+
+  // ---
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
+  // ---
+
+
+  prefsw->checkbutton_instant_open = gtk_check_button_new();
+  eventbox = gtk_event_box_new();
+  label = gtk_label_new_with_mnemonic(_("Use instant opening when possible"));
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_instant_open);
+  gtk_container_add(GTK_CONTAINER(eventbox), label);
+  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_instant_open);
+  if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_instant_open, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_instant_open, (_("Enable instant opening of some file types using decoder plugins")), NULL);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_instant_open),prefs->instant_open);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+
+
+  // advanced instant opening
+  advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
+  gtk_widget_show (advbutton);
+  gtk_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, 40);
+
+  g_signal_connect (GTK_OBJECT (advbutton), "clicked",
+		    G_CALLBACK (on_decplug_advanced_clicked),
+		    NULL);
+
+  gtk_widget_set_sensitive(advbutton,prefs->instant_open);
+
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", GTK_SIGNAL_FUNC(instopen_toggled), advbutton);
+
+
+
 
   hbox109 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox109);
@@ -2766,43 +2801,16 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
   // ---
-  prefsw->checkbutton_instant_open = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Use instant opening when possible"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_instant_open);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_instant_open);
-  if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_instant_open, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_instant_open, (_("Enable instant opening of some file types using decoder plugins")), NULL);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_instant_open),prefs->instant_open);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
 
 
-  // advanced instant opening
-  advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
-  gtk_widget_show (advbutton);
-  gtk_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, 40);
-
-  g_signal_connect (GTK_OBJECT (advbutton), "clicked",
-		    G_CALLBACK (on_decplug_advanced_clicked),
-		    NULL);
-
-  gtk_widget_set_sensitive(advbutton,prefs->instant_open);
-
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", GTK_SIGNAL_FUNC(instopen_toggled), advbutton);
 
 
-  // ---
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
-  // ---
+
+
+
+  g_print("pt a1666666\n");
+
+
 
   prefsw->checkbutton_auto_deint = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3034,6 +3042,7 @@ _prefsw *create_prefs_dialog (void) {
 
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", GTK_SIGNAL_FUNC(stream_audio_toggled), NULL);
 
+  g_print("pt a1777777777777\n");
 
   label31 = gtk_label_new (_("VIDEO"));
   if (palette->style&STYLE_1) {
@@ -3481,9 +3490,7 @@ _prefsw *create_prefs_dialog (void) {
 
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
-    if ((encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL))==NULL) {
-    }
-    else {
+    if ((encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL))!=NULL) {
       encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
       populate_combo_box(GTK_COMBO_BOX(prefsw->encoder_combo), encoders);
       // ---
@@ -4388,6 +4395,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show_all(hbox);
    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_after_crash), !(prefs->warning_mask&WARN_MASK_CLEAN_AFTER_CRASH));
+  g_print("pt a1xxxx\n");
 
    // ---
    prefsw->checkbutton_warn_no_pulse = gtk_check_button_new();
@@ -5505,6 +5513,7 @@ _prefsw *create_prefs_dialog (void) {
    g_list_free (audp);
 
    on_prefDomainChanged(selection,NULL);
+  g_print("pt a12\n");
 
    return prefsw;
 }

@@ -2023,7 +2023,7 @@ int main (int argc, char *argv[]) {
 
   gtk_init (&argc, &argv);
 
-  // g_log_set_always_fatal (0);
+  g_log_set_always_fatal (0);
   theme_expected=pre_init();
 
   mainw->foreign=FALSE;
@@ -2191,7 +2191,7 @@ int main (int argc, char *argv[]) {
 	  continue;
 	}
 	if (!strcmp(charopt,"nothreaddialog")) {
-	  // disable threaded dialog
+	  // disable threaded dialog (does nothing now)
 	  prefs->show_threaded_dialog=FALSE;
 	  continue;
 	}
@@ -3936,6 +3936,9 @@ void load_frame_image(gint frame) {
 
       convert_layer_palette(mainw->frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
       
+      // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+      compact_rowstrides(mainw->frame_layer);
+
       pd_array=weed_get_voidptr_array(mainw->frame_layer,"pixel_data",&weed_error);
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
@@ -4060,6 +4063,9 @@ void load_frame_image(gint frame) {
       }
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
+
+      // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+      compact_rowstrides(mainw->frame_layer);
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(mainw->frame_layer,"width",&weed_error),
 				       weed_get_int_value(mainw->frame_layer,"height",&weed_error),

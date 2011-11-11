@@ -6669,6 +6669,43 @@ void gdk_pixbuf_set_opaque(GdkPixbuf *pixbuf) {
 
 
 
+void compact_rowstrides(weed_plant_t *layer) {
+  // remove any extra padding after the image data
+  int error;
+  int *rowstrides=weed_get_int_array(layer,"rowstrides",&error);
+  int pal=weed_get_int_value(layer,"current_palette",&error);
+  int width=weed_get_int_value(layer,"width",&error);
+  int height=weed_get_int_value(layer,"height",&error);
+  int xheight;
+  int crow=width*weed_palette_get_bits_per_macropixel(pal)/8;
+  int cxrow;
+  int nplanes=weed_palette_get_numplanes(pal);
+  register int i,j;
+
+  void **pixel_data,*npixel_data;
+
+  for (i=0;i<nplanes;i++) {
+    cxrow=crow*weed_palette_get_plane_ratio_horizontal(pal,i);
+    if (cxrow!=rowstrides[i]) {
+      // nth plane has extra padding
+      pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+      xheight=height*weed_palette_get_plane_ratio_vertical(pal,i);
+      npixel_data=g_try_malloc(cxrow*xheight);
+      if (npixel_data==NULL) return;
+      for (j=0;j<xheight;j++) {
+	w_memcpy(npixel_data+j*cxrow,pixel_data[i]+j*rowstrides[i],cxrow);
+      }
+      g_free(pixel_data[i]);
+      pixel_data[i]=npixel_data;
+      weed_set_voidptr_array(layer,"pixel_data",nplanes,pixel_data);
+      weed_free(pixel_data);
+    }
+  }
+
+  weed_free(rowstrides);
+}
+
+
 
 
 void resize_layer (weed_plant_t *layer, int width, int height, int interp) {

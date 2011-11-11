@@ -617,7 +617,6 @@ if (defined($ARGV[0])) {
     if ($command eq "list_plugins") {
 	# prefix_dir pref should be set first
 	# plugins are returned in sort() order
-
 	my $allow_nonex=$ARGV[1];
 	my $allow_subdirs=$ARGV[2];
 	my $plugindir=$ARGV[3];

@@ -544,6 +544,14 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	return;
       }
     }
+
+
+
+
+
+
+  loading:
+
     // 'entry point' when we switch back
     
     // spin until loading is complete
@@ -1878,7 +1886,7 @@ void play_file (void) {
     if (mainw->play_window!=NULL) {
       hide_cursor (mainw->play_window->window);
       gtk_widget_set_app_paintable(mainw->play_window,TRUE);
-      if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) 
+      if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs) 
 	gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
       else gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
       if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
@@ -2953,7 +2961,7 @@ wait_for_stop (const gchar *stop_command) {
 }
 
 
-gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, gint height) {
+gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, gint height, gboolean allow_over) {
   // save 1 frame as an image (uses imagemagick to convert)
   // width==-1, height==-1 to use "natural" values
   gint result;
@@ -2968,7 +2976,7 @@ gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, g
     g_snprintf(full_file_name,255,"%s",file_name);
   }
 
-  if (!check_file(full_file_name,TRUE)) return FALSE;
+  if (!check_file(full_file_name,!allow_over)) return FALSE;
 
   com=g_strdup_printf(_ ("Saving frame %d as %s..."),frame,full_file_name);
   d_print(com);

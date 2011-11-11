@@ -3038,6 +3038,8 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
   gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_stream_audio, (_("Stream audio to playback plugin")), NULL);
 
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
+
   prefsw_set_astream_settings(mainw->vpp);
 
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", GTK_SIGNAL_FUNC(stream_audio_toggled), NULL);

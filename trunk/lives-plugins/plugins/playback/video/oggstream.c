@@ -196,7 +196,6 @@ output|Output _file|string|/tmp/output.ogv|1024|\\n\
 syncd|A/V Sync _delay (seconds)|num2|0.|0.|20.|\\n\
 </params> \\n\
 <param_window> \\n\
-special|password|5|\\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
@@ -243,7 +242,7 @@ boolean set_fps (double in_fps) {
     yuv4mpeg->fps=y4m_fps_NTSC_FILM;
     return TRUE;
   }
-  if (in_fps>=23.97&&in_fps<23.9701) {
+  if (in_fps>=29.97&&in_fps<29.9701) {
     yuv4mpeg->fps=y4m_fps_NTSC;
     return TRUE;
   }

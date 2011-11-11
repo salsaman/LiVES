@@ -103,6 +103,7 @@ static uint8_t **make_blankframe(size_t size, boolean clear) {
     return NULL;
   }
 
+  // yes i know....129....well some encoders may ignore "black frames" @ start
   if (clear) memset (planes[1],129,size);
 
   planes[2]=(uint8_t *)malloc(size);
@@ -159,7 +160,7 @@ const char *version (void) {
 }
 
 const char *get_description (void) {
-  return "The icecast_output plugin provides realtime encoding\n to an icecast2 server in ogg/theora/vorbis format.\nIt requires ffmpeg2theora, oggTranscode, oggfwd and oggJoin.\nTry first with small frame sizes and low fps.\nClick the Advanced button to edit the settings.\nNB: oggTranscode can be downloaded as part of oggvideotools 0.8a\nhttp://sourceforge.net/projects/oggvideotools/files/\n";
+  return "The icecast_output plugin provides realtime encoding\n to an icecast2 server in ogg/theora/vorbis format.\nIt requires ffmpeg2theora, oggTranscode, oggfwd and oggJoin.\nTry first with small frame sizes and low fps.\nNB: oggTranscode can be downloaded as part of oggvideotools 0.8a\nhttp://sourceforge.net/projects/oggvideotools/files/\n";
 }
 
 const int *get_palette_list(void) {
@@ -175,7 +176,7 @@ uint64_t get_capabilities (int palette) {
 
 
 const int *get_audio_fmts() {
-  // this is not yet documented, but is an optional function to get a list of audio formats. If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream, in one of the supported formats
+  // this is not yet documented in the manual, but is an optional function to get a list of audio formats. If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream, in one of the supported formats
   aforms[0]=3; // vorbis - see src/plugins.h
   aforms[1]=-1; // end
 
@@ -237,7 +238,7 @@ boolean set_palette (int palette) {
 }
 
 const char * get_fps_list (int palette) {
-  return "12|16|20|24|24000:1001|25|30000:1001|30|60";
+  return "12|8|10|16|20|24|24000:1001|25|30000:1001|30|50|60";
 }
 
 
@@ -246,7 +247,7 @@ boolean set_fps (double in_fps) {
     yuv4mpeg->fps=y4m_fps_NTSC_FILM;
     return TRUE;
   }
-  if (in_fps>=23.97&&in_fps<23.9701) {
+  if (in_fps>=29.97&&in_fps<29.9701) {
     yuv4mpeg->fps=y4m_fps_NTSC;
     return TRUE;
   }

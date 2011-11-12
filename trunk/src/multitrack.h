@@ -913,6 +913,9 @@ void mt_clip_select (lives_mt *, gboolean scroll);
 void mt_delete_clips(lives_mt *, gint file);
 void mt_init_clips (lives_mt *, gint orig_file, gboolean add);
 
+// key shortcuts
+gboolean mt_prevclip (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
+gboolean mt_nextclip (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
 
 typedef enum {
   /* default to warn about */

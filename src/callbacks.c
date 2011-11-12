@@ -4037,7 +4037,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	threaded_dialog_spin();
       }
       else {
-	threaded_dialog_spin();
 	reset_clip_menu();
 	gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
 	msg=g_strdup_printf (_ ("%d clips were recovered from set (%s).\n"),clipnum,mainw->set_name);
@@ -4222,8 +4221,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       while (g_main_context_iteration(NULL,FALSE));
       mt_clip_select(mainw->multitrack,TRUE);
     }
-
-    threaded_dialog_spin();
 
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");

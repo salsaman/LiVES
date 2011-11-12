@@ -755,6 +755,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->ctx=ctx = avcodec_alloc_context();
 
+  sprintf(cdata->audio_name,"none");
+
   // now we get the stream data
   while (!got_astream || !got_vstream) {
     do {

@@ -2044,10 +2044,6 @@ gboolean start_audio_stream(void) {
   gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
   gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",getpid());
 
-  gchar *astreamer;
-
-  gchar *com;
-
   int arate=0;
 
   int afd;
@@ -2075,15 +2071,17 @@ gboolean start_audio_stream(void) {
 #endif
     }
 
-    astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
-    com=g_strdup_printf("%s play %d \"%s\" \"%s\" %d",astreamer,mainw->vpp->audio_codec,astream_name,astream_name_out,arate);
 
   astream_pid=fork();
 
   if (!astream_pid) {
     // mkfifo and play until killed
+    gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+    gchar *com=g_strdup_printf("%s play %d \"%s\" \"%s\" %d",astreamer,mainw->vpp->audio_codec,astream_name,astream_name_out,arate);
     
     setsid(); // create new session id
+
+    g_free(astreamer);
     
     // block here until killed
 
@@ -2111,8 +2109,6 @@ gboolean start_audio_stream(void) {
 #endif
   }
 
-  g_free(astreamer);
-  g_free(com);
   g_free(astream_name);
   g_free(astream_name_out);
 

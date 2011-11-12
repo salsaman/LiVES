@@ -6974,6 +6974,10 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   // poly clip scroll
   mt->clip_scroll = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_ref (mt->clip_scroll);
+  gtk_widget_set_events (mt->clip_scroll, GDK_SCROLL_MASK);
+  g_signal_connect (GTK_OBJECT (mt->clip_scroll), "scroll_event",
+                      G_CALLBACK (on_mouse_scroll),
+                      mt);
 
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->clip_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
 

@@ -550,7 +550,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 
 
-  loading:
+    //  loading:
 
     // 'entry point' when we switch back
     

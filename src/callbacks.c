@@ -7888,7 +7888,17 @@ on_mouse_scroll           (GtkWidget       *widget,
 
   if (!prefs->mouse_scroll_clips||mainw->noswitch) return FALSE;
 
-  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))&&(mainw->multitrack!=NULL||(mainw->playing_file==-1&&(mainw->play_window==NULL||!gtk_window_is_active(GTK_WINDOW(mainw->play_window)))))) return FALSE;
+  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))&&
+      ((mainw->multitrack!=NULL&&!(widget==mainw->multitrack->clip_scroll))||
+       (mainw->multitrack==NULL&&mainw->playing_file==-1
+	&&(mainw->play_window==NULL||!gtk_window_is_active(GTK_WINDOW(mainw->play_window)))))) return FALSE;
+  
+  if (mainw->multitrack!=NULL) {
+    if (event->direction==GDK_SCROLL_UP) mt_prevclip(NULL,NULL,0,0,user_data);
+    else if (event->direction==GDK_SCROLL_DOWN) mt_nextclip(NULL,NULL,0,0,user_data);
+    return FALSE;
+  }
+
 
   kstate=event->state;
 

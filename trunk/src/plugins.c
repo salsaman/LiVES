@@ -943,8 +943,20 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   // extra params
 
   if (tmpvpp->get_rfx!=NULL) {
+    GtkWidget *vbox=gtk_vbox_new (FALSE, 0);
+    GtkWidget *scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+    gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V/2);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_widget_show (scrolledwindow);
+    
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
+
+    gtk_widget_show (vbox);
+    gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
+
     com=g_strdup_printf("echo -e \"%s\"",(*tmpvpp->get_rfx)());
-    plugin_run_param_window(com,GTK_VBOX(dialog_vbox),&(vppa->rfx));
+
+    plugin_run_param_window(com,GTK_VBOX(vbox),&(vppa->rfx));
     g_free(com);
     if (tmpvpp->extra_argv!=NULL&&tmpvpp->extra_argc>0) {
       // update with defaults

@@ -29,7 +29,6 @@ static gdouble audio_start;
 static gboolean accelerators_swapped;
 static gint frames_done;
 static gint disp_frames_done;
-static gint64 last_display_ticks=0;  // ticks when last display happened (fixed)
 
 static gint64 last_open_check_ticks;
 
@@ -625,13 +624,18 @@ gboolean process_one (gboolean visible) {
       // for realtime players, we did this in calc_new_playback_position()
       if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
 	mainw->aframeno=(gint64)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
-	if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:cfile->laudio_time*cfile->fps)))) {
+	if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:
+							   cfile->laudio_time*cfile->fps)))) {
 	  mainw->firstticks=mainw->startticks-mainw->deltaticks;
 	}
       }
 
 
-      if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||(mainw->fixed_fpsd>0.&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&(mainw->currticks-last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)||force_show) {
+      if ((mainw->fixed_fpsd<=0.&&show_frame&&(mainw->vpp==NULL||
+					       mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))||
+	  (mainw->fixed_fpsd>0.&&(mainw->currticks-mainw->last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||
+	  (mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&
+	   (mainw->currticks-mainw->last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)||force_show) {
 	// time to show a new frame
 
 #ifdef ENABLE_JACK
@@ -649,7 +653,14 @@ gboolean process_one (gboolean visible) {
 
 	// load and display the new frame
 	load_frame_image(cfile->frameno);
-	last_display_ticks=mainw->currticks;
+	if (mainw->last_display_ticks==0) mainw->last_display_ticks=mainw->currticks;
+	else {
+	  if (mainw->vpp!=NULL&&mainw->ext_playback&&mainw->vpp->fixed_fpsd>0.) 
+	    mainw->last_display_ticks+=U_SEC/mainw->vpp->fixed_fpsd;
+	  else if (mainw->fixed_fpsd>0.) 
+	    mainw->last_display_ticks+=U_SEC/mainw->fixed_fpsd;
+	  else mainw->last_display_ticks=mainw->currticks;
+	}
 	force_show=FALSE;
       }
 
@@ -782,7 +793,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   audio_start=mainw->play_start;
   if (visible) accelerators_swapped=FALSE;
   frames_done=disp_frames_done=0;
-  last_display_ticks=0;
+  mainw->last_display_ticks=0;
   shown_paused_frames=FALSE;
   est_time=-1.;
   force_show=TRUE;

@@ -2894,7 +2894,9 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
   int i;
   gchar *string,*filter_type;
   GtkWidget *menuitem;
-  char cwd[PATH_MAX];
+  char cwd[PATH_MAX],*pwd;
+
+  pwd=getcwd(cwd,PATH_MAX);
 
   key++;
 
@@ -2923,8 +2925,8 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
       // if we use the plugin, we must not free the plugin_info, since the plugin has a reference to this
       
       // chdir to plugin dir, in case it needs to load data
-      dummyvar=chdir(dir);
 
+      dummyvar=chdir(dir);
       plugin_info=(*setup_fn)(bootstrap);
       if (plugin_info==NULL||(filters_in_plugin=check_weed_plugin_info(plugin_info))<1) {
 	g_printerr (_("No usable filters found in plugin %s\n"),plugin_path);

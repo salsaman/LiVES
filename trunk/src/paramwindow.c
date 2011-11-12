@@ -2401,6 +2401,10 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
 
 
 gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives_rfx_t *rfx) {
+  // for non realtime effects
+  // we don't usually want to run the trigger every single time the user presses a key in a text widget
+  // so we only update when the user clicks OK or focusses out of the widget
+
   GtkWidget *textwidget;
 
   if (mainw->multitrack!=NULL) {
@@ -2408,7 +2412,10 @@ gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, live
       gtk_window_remove_accel_group(GTK_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
     else
       gtk_window_add_accel_group(GTK_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
-    return FALSE;
+
+    // effects and generators make their own arrangements to be updated in multitrack
+    // rfx scraps don't  (for example vpp advanced in prefs)
+    if (rfx->status!=RFX_STATUS_SCRAP) return FALSE;
   }
 
   if (hbox!=NULL) {

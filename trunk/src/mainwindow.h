@@ -349,6 +349,7 @@ typedef struct {
   gint64 deltaticks; ///< deltaticks for scratching
   gint64 firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
   gint64 stream_ticks;  ///< ticks since first frame sent to playback plugin
+  gint64 last_display_ticks; /// currticks when last display was shown (used for fixed fps)
 
   gboolean size_warn; ///< warn the user that incorrectly sized frames were found
 

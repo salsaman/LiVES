@@ -914,7 +914,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->arate=0;
   cdata->achans=0;
   cdata->asamps=0;
-  snprintf(cdata->audio_name,16,"none");
+  sprintf(cdata->audio_name,"none");
 
   priv->idx=NULL;
 

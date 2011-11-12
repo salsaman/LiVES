@@ -2811,7 +2811,29 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 
   tc=get_event_timecode (next_event);
 
-  if (mainw->playing_file!=-1&&tc>curr_tc) return next_event;
+  if (mainw->playing_file!=-1&&tc>curr_tc) {
+    // next event is in our future
+    if (mainw->multitrack!=NULL&&mainw->last_display_ticks>0) {
+      if ((mainw->fixed_fpsd>0.&&(curr_tc-mainw->last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||
+	  (mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&
+	   (curr_tc-mainw->last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
+	// ...but playing at fixed fps, which is faster than mt fps
+	mainw->pchains=pchains;
+	load_frame_image (cfile->last_frameno>=1?cfile->last_frameno:cfile->start);
+	if (mainw->last_display_ticks==0) mainw->last_display_ticks=curr_tc;
+	else {
+	  if (mainw->vpp!=NULL&&mainw->ext_playback&&mainw->vpp->fixed_fpsd>0.) 
+	    mainw->last_display_ticks+=U_SEC/mainw->vpp->fixed_fpsd;
+	  else if (mainw->fixed_fpsd>0.) 
+	    mainw->last_display_ticks+=U_SEC/mainw->fixed_fpsd;
+	  else mainw->last_display_ticks=curr_tc;
+	}
+	mainw->pchains=NULL;
+      }
+    }
+
+    return next_event;
+  }
 
   aseek_tc+=(weed_timecode_t)((gdouble)(tc-mainw->cevent_tc)*stored_avel);
   mainw->cevent_tc=tc;
@@ -2862,9 +2884,22 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 
   // if we are in multitrack mode, we will just set up NULL layers and let the effects pull our frames
   if (mainw->multitrack!=NULL) {
-    mainw->pchains=pchains;
-    load_frame_image (cfile->frameno);
-    mainw->pchains=NULL;
+    if ((mainw->fixed_fpsd<=0.&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))
+	||(mainw->fixed_fpsd>0.&&(curr_tc-mainw->last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||
+	(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&
+	 (curr_tc-mainw->last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
+      mainw->pchains=pchains;
+      load_frame_image (cfile->frameno);
+      if (mainw->last_display_ticks==0) mainw->last_display_ticks=curr_tc;
+      else {
+	if (mainw->vpp!=NULL&&mainw->ext_playback&&mainw->vpp->fixed_fpsd>0.) 
+	  mainw->last_display_ticks+=U_SEC/mainw->vpp->fixed_fpsd;
+	else if (mainw->fixed_fpsd>0.) 
+	  mainw->last_display_ticks+=U_SEC/mainw->fixed_fpsd;
+	else mainw->last_display_ticks=curr_tc;
+      }
+      mainw->pchains=NULL;
+    }
   }
   else {
     if (mainw->num_tracks>1) {
@@ -2907,9 +2942,9 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 	if (mainw->playing_file>-1) while (g_main_context_iteration (NULL,FALSE));
 	mainw->current_file=current_file;
       }
-      weed_free(mainw->clip_index);
-      weed_free(mainw->frame_index);
-      mainw->clip_index=mainw->frame_index=NULL;
+      //weed_free(mainw->clip_index);
+      //weed_free(mainw->frame_index);
+      //mainw->clip_index=mainw->frame_index=NULL;
       break;
     }
     else {
@@ -2923,9 +2958,9 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
       mainw->pchains=NULL;
     }
   }
-  weed_free(mainw->clip_index);
-  weed_free(mainw->frame_index);
-  mainw->clip_index=mainw->frame_index=NULL;
+  //weed_free(mainw->clip_index);
+  //weed_free(mainw->frame_index);
+  //mainw->clip_index=mainw->frame_index=NULL;
   if (mainw->playing_file>-1) while (g_main_context_iteration(NULL,FALSE));
   cfile->next_event=get_next_event(next_event);
   break;

@@ -1465,8 +1465,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 	priv->avpkt.size-=len;
 	priv->avpkt.data+=len;
 
-	if (!got_picture&&priv->avpkt.size<=0) return FALSE;
-
+	if (!got_picture&&priv->avpkt.size<=0) {
+	  free(pack.data);
+	  return FALSE;
+	}
       }
 
       free(pack.data);

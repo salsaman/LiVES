@@ -1613,6 +1613,7 @@ void free_pulse_audio_buffers(void) {
       g_free(mainw->pulsed->abufs[i]);
     }
   }
+  g_free(mainw->pulsed->abufs);
 #endif
 }
 
@@ -2137,13 +2138,13 @@ void stop_audio_stream(void) {
 
     if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      close(mainw->pulsed->astream_fd);
+      if (mainw->pulsed->astream_fd>-1) close(mainw->pulsed->astream_fd);
       mainw->pulsed->astream_fd=-1;
 #endif
     }
     if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      close(mainw->jackd->astream_fd);
+      if (mainw->jackd->astream_fd>-1) close(mainw->jackd->astream_fd);
       mainw->jackd->astream_fd=-1;
 #endif
     }

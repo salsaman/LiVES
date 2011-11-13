@@ -212,7 +212,6 @@ lives_exit (void) {
 	dummyvar=system(com);
 	threaded_dialog_spin();
 	g_free(com);
-	threaded_dialog_spin();
       }
       else {
 	com=g_strdup_printf("/bin/rm -r %s/%s/clips 2>/dev/null",prefs->tmpdir,mainw->set_name);
@@ -311,10 +310,8 @@ lives_exit (void) {
   }
 
   if (mainw->current_layouts_map!=NULL) {
-    threaded_dialog_spin();
     g_list_free_strings(mainw->current_layouts_map);
     g_list_free(mainw->current_layouts_map);
-    threaded_dialog_spin();
     mainw->current_layouts_map=NULL;
   }
 
@@ -322,8 +319,10 @@ lives_exit (void) {
     if (capable->has_encoder_plugins) plugin_request("encoders",prefs->encoder.name,"finalise");
 
     weed_unload_all();
+    threaded_dialog_spin();
 
     rfx_free_all();
+    threaded_dialog_spin();
 
 #ifdef ENABLE_OSC
     if (prefs->osc_udp_started) lives_osc_end();
@@ -331,17 +330,14 @@ lives_exit (void) {
   }
 
   if (mainw->multitrack!=NULL) {
-    threaded_dialog_spin();
     event_list_free_undos(mainw->multitrack);
     
     if (mainw->multitrack->event_list!=NULL) {
       event_list_free(mainw->multitrack->event_list);
       mainw->multitrack->event_list=NULL;
     }
-    threaded_dialog_spin();
   }
 
-  threaded_dialog_spin();
   if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
   if (prefs->fxsizesfile!=NULL) g_free(prefs->fxsizesfile);
   g_free(mainw->recovery_file);
@@ -352,11 +348,10 @@ lives_exit (void) {
   g_free(mainw->recommended_string);
   g_free(mainw->cl_string);
 
-  if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
-  threaded_dialog_spin();
-  //end_threaded_dialog(); - gtk+ hangs, just let it die
-
   unload_decoder_plugins();
+
+  end_threaded_dialog();
+  if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
 
   if (prefs->disabled_decoders!=NULL) {
     g_list_free_strings(prefs->disabled_decoders);

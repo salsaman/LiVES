@@ -35,6 +35,9 @@ void *notify_socket;
 
 static lives_osc *livesOSC=NULL;
 
+
+static gboolean via_shortcut=FALSE;
+
 #define OSC_STRING_SIZE 256
 
 #define FX_MAX FX_KEYS_MAX_VIRTUAL-1
@@ -705,7 +708,9 @@ void lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTimeTa
 }
 
 void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  // if via_shortcut and not playing, we ignore unless a generator starts (which starts playback)
 
+  int count;
   int effect_key;
   gint grab=mainw->last_grabable_effect;
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -713,6 +718,12 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
   lives_osc_parse_int_argument(vargs,&effect_key);
 
   if (!(mainw->rte&(GU641<<(effect_key-1)))) {
+    if (mainw->playing_file==-1&&via_shortcut) {
+      weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+      if (filter==NULL) return lives_osc_notify_failure();
+      count=enabled_in_channels(filter, FALSE);
+      if (count!=0) return lives_osc_notify_failure(); // is no generator
+    }
     if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(effect_key));
   }
   mainw->last_grabable_effect=grab;
@@ -733,11 +744,20 @@ void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTi
 
 
 void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  // if not playing and via_shortcut, see if fx key points to generator
 
+  int count;
   int effect_key;
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
+
+  if (!(mainw->rte&(GU641<<(effect_key-1)))&&mainw->playing_file==-1&&via_shortcut) {
+    weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+    if (filter==NULL) return lives_osc_notify_failure();
+    count=enabled_in_channels(filter, FALSE);
+    if (count!=0) return lives_osc_notify_failure(); // is no generator
+  }
   if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(effect_key));
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
@@ -2058,8 +2078,6 @@ void lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs, OS
   int clip=current_file;
   char name[OSC_STRING_SIZE];
 
-  file *sfile;
-
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"si",FALSE)) { 
@@ -2075,9 +2093,11 @@ void lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs, OS
 
   if (clip<1||clip>MAX_FILES||mainw->files[clip]==NULL) return lives_osc_notify_failure();
 
-  sfile=mainw->files[clip];
-
+  mainw->current_file=clip;
   on_rename_set_name(NULL,(gpointer)name);
+
+  if (clip==current_file) set_main_title(name,0);
+  else mainw->current_file=current_file;
 
   if (prefs->omc_noisy) {
     lives_osc_notify_success(name);
@@ -4673,7 +4693,9 @@ gboolean lives_osc_act(OSCbuf *obuf) {
   
   OSCAcceptPacket(packet);
 
+  via_shortcut=TRUE;
   OSCBeProductiveWhileWaiting();
+  via_shortcut=FALSE;
 
   return TRUE;
 }

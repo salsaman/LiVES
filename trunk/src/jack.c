@@ -97,7 +97,7 @@ gboolean lives_jack_init (void) {
   jack_activate(jack_transport_client);
   jack_set_sync_timeout(jack_transport_client,5000000); // seems to not work
   jack_set_sync_callback (jack_transport_client, lives_start_ready_callback, NULL);
-  gtk_timeout_add(KEY_RPT_INTERVAL,&lives_jack_poll,NULL);
+  mainw->jack_trans_poll=TRUE;
 #else
   jack_client_close (jack_transport_client);
   jack_transport_client=NULL;
@@ -161,7 +161,7 @@ static void jack_transport_check_state (void) {
 }
 #endif
 
-gboolean lives_jack_poll(gpointer data) {
+gboolean lives_jack_poll(void) {
   // data is always NULL
   // must return TRUE
 #ifdef ENABLE_JACK_TRANSPORT

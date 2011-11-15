@@ -151,6 +151,8 @@ const char *module_check_init(void) {
 
   blankframe=NULL;
 
+  dummyvar=dummyvar; // keep compiler happy
+
   return NULL;
 }
 
@@ -238,7 +240,7 @@ boolean set_palette (int palette) {
 }
 
 const char * get_fps_list (int palette) {
-  return "12|8|10|16|20|24|24000:1001|25|30000:1001|30|50|60";
+  return "12|16|8|4|2|1|20|24|24000:1001|25|30000:1001|30|60";
 }
 
 
@@ -349,6 +351,8 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 
   if (blankframe!=NULL) free(blankframe);
   blankframe=NULL;
+
+  dummyvar=dummyvar; // keep compiler happy
 
   //y4m_log_stream_info(LOG_INFO, "lives-yuv4mpeg", &(yuv4mpeg->streaminfo));
   return TRUE;
@@ -495,6 +499,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
     }
   }
 
+  dummyvar=dummyvar; // keep compiler happy
 
 
 }

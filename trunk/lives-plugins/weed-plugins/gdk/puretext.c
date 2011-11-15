@@ -855,7 +855,6 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
     gdk_pixbuf_render_pixmap_and_mask(pixbuf, &pixmap, NULL, alpha_threshold);
     if(pixmap) {
       cairo_t *cairo = gdk_cairo_create(pixmap);
-      gboolean result;
       if(cairo) {
 	PangoContext *ctx=pango_cairo_create_context(cairo);
 	// TODO - get real offset of start in bytes
@@ -963,7 +962,7 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 						  0, 0,			\
 						  0, 0,			\
 						  -1, -1);
-	result = pl_pixbuf_to_channel(out_channel, pixbuf_new);
+	pl_pixbuf_to_channel(out_channel, pixbuf_new);
 	g_object_unref(pixbuf_new);
 
 	cairo_destroy(cairo);

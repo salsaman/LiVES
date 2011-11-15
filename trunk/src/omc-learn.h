@@ -150,7 +150,7 @@ void on_midi_learn_activate (GtkMenuItem *, gpointer);
 
 /// process a string (i.e. convert to an OSC message and pass to OSC subsys)
 /// only need to set omclw if learn is TRUE
-void omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw);
+gboolean omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw);
 
 
 

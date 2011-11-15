@@ -533,8 +533,6 @@ static int setup_tracks(lives_clip_data_t *cdata) {
   uint8_t isubminor;
 #endif
 
-  uint32_t iprof,ilevel;
-
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv;
 
@@ -690,8 +688,8 @@ static int setup_tracks(lives_clip_data_t *cdata) {
 
       imajor=dirac_uint( &bs ); /* major_version */
       iminor=dirac_uint( &bs ); /* minor_version */
-      iprof=dirac_uint( &bs ); /* profile */
-      ilevel=dirac_uint( &bs ); /* level */
+      //iprof=dirac_uint( &bs ); /* profile */
+      //ilevel=dirac_uint( &bs ); /* level */
 
       priv->vstream->version=imajor*1000000+iminor*1000;
 
@@ -1069,14 +1067,14 @@ static int64_t find_last_theora_frame (lives_clip_data_t *cdata, lives_in_stream
   int64_t page_pos, start_pos;
   int64_t this_frame=0, last_frame = -1;
   int64_t this_kframe=0;
-  int64_t pos1,pos2,serialno;
+  int64_t pos1,pos2;
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv;
 
   pos1=vstream->data_start;
   pos2=opriv->total_bytes;
-  serialno=vstream->stream_id;
+  //serialno=vstream->stream_id;
 
   start_pos = pos2 - BYTES_TO_READ;
 
@@ -1403,14 +1401,14 @@ This is for dirac only. */
 static int64_t find_last_sync_frame (lives_clip_data_t *cdata, lives_in_stream *vstream) {
   int64_t page_pos, last_page_pos = -1, start_pos;
   int64_t this_frame=-1;
-  int64_t pos1,pos2,serialno;
+  int64_t pos1,pos2;
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv;
 
   pos1=vstream->data_start;
   pos2=opriv->total_bytes;
-  serialno=vstream->stream_id;
+  //serialno=vstream->stream_id;
 
   start_pos = pos2 - BYTES_TO_READ;
 
@@ -2464,8 +2462,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
   boolean cont=FALSE;
   int max_frame_diff;
   int64_t granulepos=0;
-  static int64_t last_cframe;
-
   int64_t ppos_lower=-1,ppos_upper=-1;
 
   static index_entry *fidx=NULL;
@@ -2592,7 +2588,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
 	  priv->cframe=kframe=priv->kframe_offset;
 	}
 
-	last_cframe=priv->cframe;
 	priv->skip=tframe-priv->cframe;
 	//printf("skip is %ld - %ld = %ld\n",tframe,priv->cframe,priv->skip);
       }

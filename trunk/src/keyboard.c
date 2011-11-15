@@ -1,6 +1,6 @@
 // keyboard.c
 // LiVES
-// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2011 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -25,10 +25,78 @@
 #endif
 
 
+static void handle_omc_events(void) {
+  // check for external controller events
+
+#ifdef OMC_MIDI_IMPL
+  gint midi_check_rate;
+  gboolean gotone;
+#endif
+
+  int i;
+
+#ifdef OMC_JS_IMPL
+    if (mainw->ext_cntl[EXT_CNTL_JS]) {
+      gchar *string=js_mangle();
+      if (string!=NULL) {
+	omc_process_string(OMC_JS,string,FALSE,NULL);
+	g_free(string);
+	string=NULL;
+      }
+    }
+#endif // OMC_JS_IMPL
+    
+#ifdef OMC_MIDI_IMPL
+    midi_check_rate=prefs->midi_check_rate;
+#ifdef ALSA_MIDI
+    if (prefs->use_alsa_midi) midi_check_rate=1; // because we loop for events in midi_mangle()
+#endif
+    if (mainw->ext_cntl[EXT_CNTL_MIDI]) {
+      do {
+	gotone=FALSE;
+	for (i=0;i<midi_check_rate;i++) {
+	  gchar *string=midi_mangle();
+	  if (string!=NULL) {
+	    omc_process_string(OMC_MIDI,string,FALSE,NULL);
+	    g_free(string);
+	    string=NULL;
+#ifdef ALSA_MIDI
+	    if (prefs->use_alsa_midi) gotone=TRUE;
+#endif
+	  }
+	}
+      } while (gotone);
+    }
+#endif // OMC_MIDI_IMPL
+}
+
+
+
+
+
+gboolean ext_triggers_poll(gpointer data) {
+  // check for external controller events
+#ifdef ENABLE_JACK
+#ifdef ENABLE_JACK_TRANSPORT
+  if (mainw->jack_trans_poll) lives_jack_poll(); // check for jack transport start
+#endif
+#endif
+
+#ifdef ENABLE_OSC
+  handle_omc_events(); // check for playback start triggered by js, MIDI, etc.
+#endif
+
+  return TRUE;
+}
+
+
+
 gboolean 
 key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data) {
   // this gets called for every keypress - check for cached keys
-  guint modifiers = gtk_accelerator_get_default_mod_mask ();
+  guint modifiers;
+  handle_omc_events();
+  modifiers = gtk_accelerator_get_default_mod_mask ();
   return pl_key_function ((event->type==GDK_KEY_PRESS),event->keyval,event->state&modifiers      );
 }
 
@@ -36,8 +104,7 @@ key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data) {
 gboolean 
 plugin_poll_keyboard (gpointer data) {
   static int last_kb_time=0,current_kb_time;
-  static int loop_count=0;
-  int i;
+
   // this is a function which should be called periodically during playback.
   // If a video playback plugin has control of the keyboard 
   // (e.g fullscreen video playback plugins)
@@ -45,11 +112,6 @@ plugin_poll_keyboard (gpointer data) {
 
   // as of LiVES 1.1.0, this is now called 10 times faster to provide lower latency for
   // OSC and external controllers
-
-#ifdef OMC_MIDI_IMPL
-  gint midi_check_rate;
-  gboolean gotone;
-#endif
 
   if (mainw->ext_keyboard) {
     //let plugin call pl_key_function itself, with any keycodes it has received
@@ -61,7 +123,6 @@ plugin_poll_keyboard (gpointer data) {
   // we also auto-repeat our cached keys
   if (cached_key&&current_kb_time-last_kb_time>KEY_RPT_INTERVAL*10) {
     last_kb_time=current_kb_time;
-    loop_count=0;
     gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key,cached_mod);
   }
 
@@ -72,52 +133,19 @@ plugin_poll_keyboard (gpointer data) {
   if (prefs->osc_udp_started) lives_osc_poll(NULL);
 #endif
 
+
+  if (!mainw->is_processing||(mainw->multitrack!=NULL&&mainw->playing_file==mainw->multitrack->render_file&&!mainw->multitrack->is_rendering)) {
+
   // check jack transport state
 #ifdef ENABLE_JACK
 #ifdef ENABLE_JACK_TRANSPORT
-  if (!mainw->is_processing||(mainw->multitrack!=NULL&&mainw->playing_file==mainw->multitrack->render_file&&!mainw->multitrack->is_rendering)) {
-    lives_jack_poll(NULL);
-  }
+    if (mainw->jack_trans_poll) lives_jack_poll(); // check for jack transport start
 #endif
 #endif
 
-  // check for external controller events
-#ifdef ENABLE_OSC
-#ifdef OMC_JS_IMPL
-  if (mainw->ext_cntl[EXT_CNTL_JS]) {
-    gchar *string=js_mangle();
-    if (string!=NULL) {
-      omc_process_string(OMC_JS,string,FALSE,NULL);
-      g_free(string);
-      string=NULL;
-    }
-  }
-#endif // OMC_JS_IMPL
+    handle_omc_events();
 
-#ifdef OMC_MIDI_IMPL
-  midi_check_rate=prefs->midi_check_rate;
-#ifdef ALSA_MIDI
-  if (prefs->use_alsa_midi) midi_check_rate=1; // because we loop for events in midi_mangle()
-#endif
-  if (mainw->ext_cntl[EXT_CNTL_MIDI]) {
-    do {
-      gotone=FALSE;
-      for (i=0;i<midi_check_rate;i++) {
-	gchar *string=midi_mangle();
-	if (string!=NULL) {
-	  omc_process_string(OMC_MIDI,string,FALSE,NULL);
-	  g_free(string);
-	  string=NULL;
-#ifdef ALSA_MIDI
-	  if (prefs->use_alsa_midi) gotone=TRUE;
-#endif
-	}
-      }
-    } while (gotone);
   }
-#endif // OMC_MIDI_IMPL
-
-#endif // ENABLE_OSC
   return TRUE;
 }
 

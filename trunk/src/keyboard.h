@@ -18,6 +18,9 @@ guint16 cached_mod;
 #define key_down2 116
 
 
+gboolean ext_triggers_poll(gpointer); ///< poll for external playback start
+
+
 /// smooth key repeat for some keys
 gboolean key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data);
 

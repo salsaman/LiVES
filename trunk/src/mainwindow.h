@@ -935,6 +935,8 @@ typedef struct {
 
   int log_fd;
 
+  gboolean jack_trans_poll;
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

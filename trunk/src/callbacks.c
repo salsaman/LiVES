@@ -7007,7 +7007,11 @@ on_rename_set_name                   (GtkButton       *button,
 
   set_menu_text(cfile->menuentry,title,FALSE);
   g_snprintf (cfile->name,256,"%s",title);
-  set_main_title(title,0);
+
+  if (user_data==NULL) {
+    set_main_title(title,0);
+  }
+
   save_clip_value(mainw->current_file,CLIP_DETAILS_CLIPNAME,&cfile->name);
   cfile->was_renamed=TRUE;
 }

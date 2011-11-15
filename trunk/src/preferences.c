@@ -1866,8 +1866,6 @@ _prefsw *create_prefs_dialog (void) {
 
   GdkGeometry hints;
 
-  g_print("pt a1\n");
-
   // Allocate memory for the preferences structure
   prefsw = (_prefsw*)(g_malloc(sizeof(_prefsw)));
   prefsw->right_shown = NULL;
@@ -2184,7 +2182,6 @@ _prefsw *create_prefs_dialog (void) {
       if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
     }
   }
-  g_print("pt a122222\n");
   // ---
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -2380,7 +2377,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
   gtk_widget_show (vbox);
   gtk_container_add (GTK_CONTAINER (frame), vbox);
-  g_print("pt a1333333\n");
   
   label = gtk_label_new (_("Video"));
   if (palette->style&STYLE_1) {
@@ -2549,7 +2545,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   gtk_box_pack_start (GTK_BOX (hbox5), label, FALSE, TRUE, 0);
   // ---
-  g_print("pt a144444\n");
   prefsw->mt_autoback_every = gtk_radio_button_new(autoback_group);
   autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_every));
   label = gtk_label_new_with_mnemonic(_("_Every"));
@@ -2802,16 +2797,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
   // ---
 
-
-
-
-
-
-
-  g_print("pt a1666666\n");
-
-
-
   prefsw->checkbutton_auto_deint = gtk_check_button_new();
   eventbox = gtk_event_box_new();
 
@@ -3043,8 +3028,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw_set_astream_settings(mainw->vpp);
 
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", GTK_SIGNAL_FUNC(stream_audio_toggled), NULL);
-
-  g_print("pt a1777777777777\n");
 
   label31 = gtk_label_new (_("VIDEO"));
   if (palette->style&STYLE_1) {
@@ -4397,7 +4380,6 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show_all(hbox);
    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_after_crash), !(prefs->warning_mask&WARN_MASK_CLEAN_AFTER_CRASH));
-  g_print("pt a1xxxx\n");
 
    // ---
    prefsw->checkbutton_warn_no_pulse = gtk_check_button_new();
@@ -5515,7 +5497,6 @@ _prefsw *create_prefs_dialog (void) {
    g_list_free (audp);
 
    on_prefDomainChanged(selection,NULL);
-  g_print("pt a12\n");
 
    return prefsw;
 }

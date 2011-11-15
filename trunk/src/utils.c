@@ -193,6 +193,21 @@ static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_f
 }
 
 
+static void calc_aframeno(void) {
+#ifdef ENABLE_JACK
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {
+    // get seek_pos from jack
+    mainw->aframeno=lives_jack_get_pos(mainw->jackd)/cfile->fps+1.;
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==fileno) {
+    // get seek_pos from pulse
+    mainw->aframeno=lives_pulse_get_pos(mainw->pulsed)/cfile->fps+1.;
+  }
+#endif
+}
+
 
 
 
@@ -240,28 +255,12 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
   if (sfile==NULL) return 0;
 
-  // calculate audio "frame"
-  if (mainw->playing_file==fileno) {
-#ifdef ENABLE_JACK
-    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {
-      // get seek_pos from jack
-      mainw->aframeno=lives_jack_get_pos(mainw->jackd)/cfile->fps+1.;
-    }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    // request for another audio buffer - used only during mt playback
-    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==fileno) {
-      // get seek_pos from pulse
-      mainw->aframeno=lives_pulse_get_pos(mainw->pulsed)/cfile->fps+1.;
-    }
-#endif
-  }
-
 
   cframe=sfile->last_frameno;
 
   if (fps==0.) {
     *ntc=otc;
+    calc_aframeno();
     return cframe;
   }
 
@@ -272,6 +271,11 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
   nframe=cframe+(gint)((gdouble)dtc/U_SEC*fps+(fps>0?.5:-.5));
 
   if (nframe==cframe||mainw->foreign) return nframe;
+
+  // calculate audio "frame"
+  if (mainw->playing_file==fileno) {
+    calc_aframeno();
+  }
 
   if (mainw->playing_file==fileno) {
     last_frame=(mainw->playing_sel&&!mainw->is_rendering)?sfile->end:mainw->play_end;

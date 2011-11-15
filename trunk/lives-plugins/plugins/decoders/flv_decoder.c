@@ -465,6 +465,7 @@ static int flv_get_extradata(lives_clip_data_t *cdata, int size) {
   if (priv->ctx->extradata==NULL) return AVERROR(ENOMEM);
   priv->ctx->extradata_size = size;
   dummy=read(priv->fd, priv->ctx->extradata, priv->ctx->extradata_size);
+  dummy=dummy; // keep compiler happy
   return 0;
 }
 
@@ -524,11 +525,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   unsigned char flags,avctype;
   int type,size,vcodec=0,ldts;
   boolean gotmeta=FALSE,in_array=FALSE;
-  boolean haskeyframes=FALSE,canseekend=FALSE,hasaudio;
+  boolean hasaudio;
   boolean got_astream=FALSE,got_vstream=FALSE;
   char *key=NULL;
   size_t offs=0;
-  double num_val,fps,lasttimestamp=-1.;
+  double num_val,fps;
 
   AVCodec *codec=NULL;
   AVCodecContext *ctx;
@@ -682,7 +683,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	if (!strcmp(key,"videoframerate")) cdata->fps=num_val;
 	if (!strcmp(key,"audiosamplerate")) cdata->arate=num_val;
 	if (!strcmp(key,"audiosamplesize")) cdata->asamps=num_val;
-	if (!strcmp(key,"lasttimestamp")) lasttimestamp=num_val;
+	//if (!strcmp(key,"lasttimestamp")) lasttimestamp=num_val;
 	if (!strcmp(key,"height")) cdata->height=num_val;
 	if (!strcmp(key,"width")) cdata->width=num_val;
 
@@ -698,10 +699,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 	offs+=1;
 
-	if (!strcmp(key,"hasKeyframes")&&num_val==1.) haskeyframes=TRUE;
-	else if (!strcmp(key,"canSeekToEnd")&&num_val==1.) canseekend=TRUE;
-	else if (!strcmp(key,"hasAudio")&&num_val==0.) hasaudio=FALSE;
-	if (!strcmp(key,"stereo")&&num_val==1.) cdata->achans=2;
+	//if (!strcmp(key,"hasKeyframes")&&num_val==1.) haskeyframes=TRUE;
+	//else if (!strcmp(key,"canSeekToEnd")&&num_val==1.) canseekend=TRUE;
+	if (!strcmp(key,"hasAudio")&&num_val==0.) hasaudio=FALSE;
+	else if (!strcmp(key,"stereo")&&num_val==1.) cdata->achans=2;
 
 	if (key!=NULL) free(key);
 	key=NULL;
@@ -1014,7 +1015,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     int len;
 
     // this does not work for h264 and I dont know why not !!!!!!!!!!!!!!!!!!!!
-#if LIBAVCODEC_VERSION_MAJOR >= 53
+#if LIBAVCODEC_VERSION_MAJOR >= 52
     len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
     len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );

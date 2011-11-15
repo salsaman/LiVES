@@ -1,9 +1,10 @@
 Version 1.4.8
 -------------
-Implement streaming output to icecast server.
 Optimise resizing for virtual clips.
 Implement letterbox mode for fullscreen playback.
 Improvements to oggstream output plugin.
+Playback start may now be triggered by joystick or MIDI.
+Implement (experimental) streaming output to icecast server.
 Fix bugs in append_audio (regression). *
 Fix undo/redo effect in multitrack (regression) *
 Set default back to "loop video to fit audio".

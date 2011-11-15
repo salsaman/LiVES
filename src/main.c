@@ -860,6 +860,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->log_fd=-2;
 
+  mainw->last_display_ticks=0;
+
+  mainw->jack_trans_poll=FALSE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -1989,6 +1992,9 @@ static gboolean lives_startup(gpointer data) {
   if (!prefs->show_gui&&prefs->startup_interface==STARTUP_CE) mainw->is_ready=TRUE;
 
   mainw->go_away=FALSE;
+
+  gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+
   return FALSE;
 }
 
@@ -3025,8 +3031,7 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
 
 #endif
 
-  /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to
-     hence reset it back to opaque */
+  /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to hence reset it back to opaque */
   if (gdk_pixbuf_get_has_alpha(pixbuf)) gdk_pixbuf_set_opaque(pixbuf);
 
   return pixbuf;
@@ -4028,6 +4033,8 @@ void load_frame_image(gint frame) {
 
       // - this is also used if we are letterboxing to fullscreen
 
+      weed_plant_t *frame_layer;
+
       layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
       interp=get_interp_value(prefs->pb_quality);
@@ -4037,11 +4044,20 @@ void load_frame_image(gint frame) {
 		     mainw->vpp->fheight,interp);
       }
     
-      convert_layer_palette(mainw->frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
+      if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
+	  weed_palette_is_rgb_palette(layer_palette) && 
+	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) {
+	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
+	// so copy layer and convert, retaining original
+	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+      }
+      else frame_layer=mainw->frame_layer;
 
-      pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
+      convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
+
+      pwidth=weed_get_int_value(frame_layer,"width",&weed_error)*
 	weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
-      pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error)*
+      pheight=weed_get_int_value(frame_layer,"height",&weed_error)*
 	weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
 
       if (mainw->fs&&(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
@@ -4050,7 +4066,7 @@ void load_frame_image(gint frame) {
       }
 
       if (mainw->vpp->fwidth!=pwidth||mainw->vpp->fheight!=pheight||lb_width!=0) {
-	letterbox_layer(mainw->frame_layer,lb_width/
+	letterbox_layer(frame_layer,lb_width/
 			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
 			lb_height,mainw->vpp->fwidth/
 			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
@@ -4059,22 +4075,26 @@ void load_frame_image(gint frame) {
 	
 
 
-	convert_layer_palette(mainw->frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
+	convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
       }
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-      compact_rowstrides(mainw->frame_layer);
+      compact_rowstrides(frame_layer);
 
-      if (!(*mainw->vpp->render_frame)(weed_get_int_value(mainw->frame_layer,"width",&weed_error),
-				       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
+				       weed_get_int_value(frame_layer,"height",&weed_error),
 				       mainw->currticks-mainw->stream_ticks,
-				       (pd_array=weed_get_voidptr_array(mainw->frame_layer,"pixel_data",&weed_error)),
+				       (pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error)),
 				       NULL)) {
 	vid_playback_plugin_exit();
       }
       g_free(pd_array);
+
+      if (frame_layer!=mainw->frame_layer) {
+	weed_layer_free(frame_layer);
+      }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
 	mainw->noswitch=noswitch;

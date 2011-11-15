@@ -1175,7 +1175,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   weed_plant_t **in_channels,**out_channels,*channel,*chantmpl;
   int frame;
   int inwidth,inheight,inpalette,outpalette,channel_flags,filter_flags=0;
-  int palette,cpalette,isubspace;
+  int palette,cpalette;
   int outwidth,outheight;
   gboolean needs_reinit=FALSE,inplace=FALSE;
   int incwidth,incheight,numplanes=0,width,height;
@@ -1190,7 +1190,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   lives_filter_error_t retval=FILTER_NO_ERROR;
   int *mand;
   int maxinwidth=4,maxinheight=4;
-  int oclamping,iclamping;
+  int iclamping,oclamping,osampling,osubspace;
   int clip;
   int num_ctmpl,num_inc;
   weed_plant_t **in_ctmpls;
@@ -1463,12 +1463,15 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     if (weed_plant_has_leaf(layer,"YUV_clamping")) iclamping=(weed_get_int_value(layer,"YUV_clamping",&error));
     else iclamping=WEED_YUV_CLAMPING_CLAMPED;
 
-    // TODO - convert subspace if necessary
-    if (weed_plant_has_leaf(layer,"YUV_subspace")) isubspace=(weed_get_int_value(layer,"YUV_subspace",&error));
-    else isubspace=WEED_YUV_SUBSPACE_YUV;
+    if (weed_plant_has_leaf(chantmpl,"YUV_sampling")) osampling=(weed_get_int_value(layer,"YUV_sampling",&error));
+    else osampling=WEED_YUV_SAMPLING_DEFAULT;
+
+    if (weed_plant_has_leaf(chantmpl,"YUV_subspace")) osubspace=(weed_get_int_value(chantmpl,"YUV_subspace",&error));
+    else osubspace=WEED_YUV_SUBSPACE_YCBCR;
 
     if (weed_get_int_value(layer,"current_palette",&error)!=inpalette||oclamping!=iclamping) {
-      if (!convert_layer_palette(layer,inpalette,oclamping)) {
+      if (!convert_layer_palette_full(layer,inpalette,
+				      osampling,oclamping,osubspace)) {
 	weed_free(in_tracks);
 	weed_free(out_tracks);
 	weed_free(in_channels);
@@ -1998,7 +2001,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   int flags=0;
 
-  int xnsamps,xnchans,xarate,xaint;
+  //  int xnsamps,xnchans,xarate,xaint;
 
   int ntracks=weed_leaf_num_elements(init_event,"in_tracks");
 
@@ -2049,10 +2052,10 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 	ctmpl=weed_get_plantptr_value(channel,"template",&error);
 	if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&weed_get_int_value(ctmpl,"audio_data_length",&error)!=nsamps)||(weed_plant_has_leaf(ctmpl,"audio_channels")&&weed_get_int_value(ctmpl,"audio_channels",&error)!=nchans)||(weed_plant_has_leaf(ctmpl,"audio_rate")&&weed_get_int_value(ctmpl,"audio_rate",&error)!=arate)||(weed_plant_has_leaf(ctmpl,"audio_interleaf")&&weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint)) {
 	  can_reinit=FALSE;
-	  xnsamps=weed_get_int_value(channel,"audio_data_length",&error);
-	  xnchans=weed_get_int_value(channel,"audio_channels",&error);
-	  xarate=weed_get_int_value(channel,"audio_rate",&error);
-	  xaint=weed_get_boolean_value(channel,"audio_interleaf",&error);
+	  //xnsamps=weed_get_int_value(channel,"audio_data_length",&error);
+	  //xnchans=weed_get_int_value(channel,"audio_channels",&error);
+	  //xarate=weed_get_int_value(channel,"audio_rate",&error);
+	  //xaint=weed_get_boolean_value(channel,"audio_interleaf",&error);
 	  break;
 	}
       }
@@ -2067,10 +2070,10 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 	  ctmpl=weed_get_plantptr_value(channel,"template",&error);
 	  if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&weed_get_int_value(ctmpl,"audio_data_length",&error)!=nsamps)||(weed_plant_has_leaf(ctmpl,"audio_channels")&&weed_get_int_value(ctmpl,"audio_channels",&error)!=nchans)||(weed_plant_has_leaf(ctmpl,"audio_rate")&&weed_get_int_value(ctmpl,"audio_rate",&error)!=arate)||(weed_plant_has_leaf(ctmpl,"audio_interleaf")&&weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint)) {
 	    can_reinit=FALSE;
-	    xnsamps=weed_get_int_value(channel,"audio_data_length",&error);
-	    xnchans=weed_get_int_value(channel,"audio_channels",&error);
-	    xarate=weed_get_int_value(channel,"audio_rate",&error);
-	    xaint=weed_get_boolean_value(channel,"audio_interleaf",&error);
+	    //xnsamps=weed_get_int_value(channel,"audio_data_length",&error);
+	    //xnchans=weed_get_int_value(channel,"audio_channels",&error);
+	    //xarate=weed_get_int_value(channel,"audio_rate",&error);
+	    //xaint=weed_get_boolean_value(channel,"audio_interleaf",&error);
 	    break;
 	  }
 	}
@@ -2932,7 +2935,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	g_printerr (_("No usable filters found in plugin %s\n"),plugin_path);
 	if (plugin_info!=NULL) weed_plant_free(plugin_info);
 	dlclose (handle);
-	dummyvar=chdir(cwd);
+	dummyvar=chdir(pwd);
 	return;
       }
     
@@ -3009,7 +3012,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
   }
   else g_printerr(_("Info: Unable to load plugin %s\nError was: %s\n"),plugin_path,dlerror());
 
-  dummyvar=chdir(cwd);
+  dummyvar=chdir(pwd);
 
   // TODO - add any rendered effects to fx submenu
 }

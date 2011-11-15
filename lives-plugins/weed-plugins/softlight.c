@@ -86,7 +86,7 @@ static int softlight_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int irowstride,orowstride;
   uint8_t *src,*dst,*end;
   int row0,row1,sum,scale=384,mix=192;
-  int yinv,ymin,ymax,nplanes;
+  int ymin,ymax,nplanes;
   register int i;
 
   // get the Y planes
@@ -109,12 +109,10 @@ static int softlight_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   orowstride-=width;
 
   if (clamping==WEED_YUV_CLAMPING_UNCLAMPED) {
-    yinv=255;
     ymin=0;
     ymax=255;
   }
   else {
-    yinv=251;
     ymin=16;
     ymax=235;
   }

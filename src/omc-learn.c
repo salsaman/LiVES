@@ -820,11 +820,10 @@ static void on_omc_combo_entry_changed (GtkEntry *macro_entry, gpointer ptr) {
     if (!strcmp(macro_text,omc_macros[i].macro_text)) break;
   }
 
-  if (i>0) {
-    mnode->macro=i;
-    omc_learn_link_params(mnode);
-    omc_macro_row_add_params(mnode,row,omclw);
-  }
+  mnode->macro=i;
+  omc_learn_link_params(mnode);
+  omc_macro_row_add_params(mnode,row,omclw);
+
 }
 
 
@@ -1870,7 +1869,7 @@ lives_omc_match_node_t *omc_learn(const gchar *string, gint str_type, gint idx, 
 
   // the str_type is one of JS_AXIS, JS_BUTTON, MIDI_CONTROLLER, MIDI_KEY, etc.
 
-  // idx is -1, excpet for JS_BUTTON and JS_AXIS where it can be used
+  // idx is -1, except for JS_BUTTON and JS_AXIS where it can be used
 
   // the string is first transformed into
   // signifier and value
@@ -1969,7 +1968,6 @@ lives_omc_match_node_t *omc_learn(const gchar *string, gint str_type, gint idx, 
     break;
   case OMC_JS_BUTTON:
     // display note and allow it to be matched
-    nfixed=3;
     mnode=omc_match_sig(str_type,idx,string);
      
     if (mnode==NULL||mnode->macro==-1) {
@@ -1988,17 +1986,24 @@ lives_omc_match_node_t *omc_learn(const gchar *string, gint str_type, gint idx, 
 
 
 
+// here we process a string which is formed of (supertype) (type) [(idx)] [(values)]
+// eg "val_for_js js_button idx_1  1"  => "2 3 1
 
+// in learn mode we store the sting + its meaning
 
+// in playback mode, we match the string with our database, and then convert/append the variables
 
-
-void omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw) {
+gboolean omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw) {
   // only need to set omclw if learn is TRUE
+  
+  // returns TRUE if we learn new, or if we carry out an action
+  // retruns FALSE otherwise
 
+  gboolean ret=FALSE;
   int type=0,idx=-1;
   lives_omc_match_node_t *mnode;
 
-  if (string==NULL)  return;
+  if (string==NULL)  return FALSE;
 
   switch (supertype) {
   case OMC_JS:
@@ -2018,15 +2023,38 @@ void omc_process_string(gint supertype, const gchar *string, gboolean learn, omc
     if (learn) {
       // pass to learner
       mnode=omc_learn(string,type,idx,omclw);
-      if (mnode!=NULL) omc_node_list=g_slist_append(omc_node_list,mnode);
+      if (mnode!=NULL) {
+	ret=TRUE;
+	omc_node_list=g_slist_append(omc_node_list,mnode);
+      }
     }
     else {
       OSCbuf *oscbuf=omc_learner_decode(supertype,idx,string);
-      //g_print("decode str %s\n",string);
-      if (oscbuf!=NULL) lives_osc_act(oscbuf);
+
+      // if not playing, the only commands we allow are:
+      // /video/play
+      // /clip/foreground/retrigger
+      // and enabling a generator
+
+      // basically only messages which will trigger start of playback
+
+
+      // further checks are performed when enabling/toggling an effect to see whether it is a generator
+
+      if (oscbuf!=NULL) {
+	if (mainw->playing_file==-1
+	    &&strcmp(oscbuf->buffer,"/video/play")
+	    &&strcmp(oscbuf->buffer,"/clip/foreground/retrigger")
+	    &&strcmp(oscbuf->buffer,"/effect_key/enable")
+	    &&strcmp(oscbuf->buffer,"/effect_key/toggle")
+	    ) return FALSE;
+	
+	lives_osc_act(oscbuf);
+	ret=TRUE;
+      }
     }
   }
-  
+  return ret;
 }
 
 

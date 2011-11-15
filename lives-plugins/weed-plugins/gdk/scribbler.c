@@ -264,7 +264,6 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
           PangoFontDescription *font;
           double x_pos, y_pos;
           double x_text, y_text;
-          gboolean result;
 
           font = pango_font_description_new();
           if((num_fonts_available) && (fontnum >= 0) && (fontnum < num_fonts_available) && (fonts_available[fontnum]))
@@ -314,7 +313,7 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
               0, 0,\
               0, 0,\
               -1, -1);
-          result = pl_pixbuf_to_channel(out_channel, pixbuf_new);
+          pl_pixbuf_to_channel(out_channel, pixbuf_new);
           g_object_unref(pixbuf_new);
           g_object_unref(layout);
           pango_font_description_free(font);

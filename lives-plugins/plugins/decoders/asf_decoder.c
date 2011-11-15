@@ -409,7 +409,7 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
   uint32_t packet_length, padsize;
   unsigned char buffer[8];
   uint8_t num;
-  uint16_t duration;
+  //uint16_t duration;
   int rsize;
   int streamid;
   int pack_fill=0;
@@ -501,7 +501,7 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
       }
       priv->input_position+=2;
       
-      duration = get_le16int(buffer);
+      //duration = get_le16int(buffer);
       
       // rsize has at least 11 bytes which have to be present
       
@@ -1031,7 +1031,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       }
       
       priv->input_position+=8;
-      priv->asf->hdr.send_time          = get_le64int(buffer);   // seems to be the duration
+      // seems to be the duration
+      priv->asf->hdr.send_time = get_le64int(buffer);
 
 #ifdef DEBUG
       fprintf(stderr,"hdr says send time is %ld\n",priv->asf->hdr.send_time);
@@ -1103,11 +1104,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
     } else if (!guidcmp(&g, &lives_asf_stream_header)) {
       enum LiVESMediaType type;
-      int type_specific_size, sizeX;
-      uint64_t total_size;
+      int sizeX;
+      //uint64_t total_size;
       unsigned int tag1;
       int64_t pos1, pos2, start_time;
-      int test_for_ext_stream_audio, is_dvr_ms_audio=0;
+      int test_for_ext_stream_audio;
 
       pos1 = priv->input_position;
 
@@ -1169,7 +1170,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       
       priv->input_position+=8;
 
-      total_size = get_le64int(buffer);
+      //      total_size = get_le64int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
 	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
@@ -1179,7 +1180,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       
       priv->input_position+=4;
 
-      type_specific_size = get_le32int(buffer);
+      //type_specific_size = get_le32int(buffer);
       
       lseek(priv->fd, 4, SEEK_CUR);
       priv->input_position+=4;
@@ -1205,7 +1206,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	
 	if (!guidcmp(&g, &lives_asf_ext_stream_audio_stream)) {
 	  type = LIVES_MEDIA_TYPE_AUDIO;
-	  is_dvr_ms_audio=1;
+	  //is_dvr_ms_audio=1;
 	  get_guid(priv->fd, &g);
 	  priv->input_position+=sizeof(lives_asf_guid);
 
@@ -1557,7 +1558,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       }
   
     } else if (!guidcmp(&g, &lives_asf_metadata_header)) {
-      int n, stream_num, name_len, value_len, value_type, value_num;
+      int n, stream_num, name_len, value_len, value_num;
 
       if (read(priv->fd,buffer,2)<2) {
 	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
@@ -1603,7 +1604,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	  
 	priv->input_position+=2;
 	
-	value_type= get_le16int(buffer);
+	//value_type= get_le16int(buffer);
 
 	if (read(priv->fd,buffer,4)<4) {
 	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
@@ -1635,8 +1636,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	  
 	value_num= get_le16int(buffer);
 
-	//url_fskip(pb, value_len - 2);
-	
+	// check this
+	priv->input_position+=value_len-2;
+	lseek(priv->fd, value_len+2, SEEK_CUR);
+
+
 	if(stream_num<128){
 	  if     (!strcmp(name, "AspectRatioX")) dar[stream_num].num= 
 						   value_num;
@@ -1651,7 +1655,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       }
     } else if (!guidcmp(&g, &lives_asf_ext_stream_header)) {
       int ext_len, payload_ext_ct, stream_ct;
-      uint32_t ext_d, leak_rate, stream_num;
+      uint32_t leak_rate, stream_num;
       unsigned int stream_languageid_index;
 
       lseek(priv->fd, 16, SEEK_CUR); // startime, endtime
@@ -1780,7 +1784,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	      
 	priv->input_position+=2;
 	      
-	ext_d=get_le16int(buffer);
+	//ext_d=get_le16int(buffer);
 	      
 	if (read(priv->fd,buffer,4)<4) {
 	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
@@ -1841,7 +1845,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       priv->input_position+=name_len;
 
       for(i=0;i<count;i++){
-	int64_t pres_time;
+	//	int64_t pres_time;
 	int name_len;
 	
 	lseek(priv->fd, 8, SEEK_CUR);
@@ -1855,7 +1859,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     
 	priv->input_position+=8;
 
-	pres_time = get_le64int(buffer); // presentation time
+	//pres_time = get_le64int(buffer); // presentation time
 	
 	lseek(priv->fd, 10, SEEK_CUR);
 	priv->input_position+=10;
@@ -2030,7 +2034,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-#if LIBAVCODEC_VERSION_MAJOR >= 53
+#if LIBAVCODEC_VERSION_MAJOR >= 52
   len=avcodec_decode_video2(vidst->codec, priv->picture, &got_picture, &priv->avpkt );
 #else 
   len=avcodec_decode_video(vidst->codec, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );

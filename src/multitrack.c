@@ -2404,6 +2404,7 @@ void mt_show_current_frame(lives_mt *mt) {
 	}
       }
 
+      mainw->last_display_ticks=0;
       process_events(mt->pb_start_event,0);
       mainw->internal_messaging=internal_messaging;
       mainw->current_file=current_file;

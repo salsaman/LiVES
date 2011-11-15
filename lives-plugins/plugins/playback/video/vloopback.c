@@ -316,5 +316,6 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   int xval=0;
   if (vdevfd!=-1) xval=close(vdevfd);
   if (vdevname!=NULL) free(vdevname);
+  xval=xval;
 }
 

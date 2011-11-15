@@ -653,7 +653,7 @@ gboolean process_one (gboolean visible) {
 
 	// load and display the new frame
 	load_frame_image(cfile->frameno);
-	if (mainw->last_display_ticks==0) mainw->last_display_ticks=mainw->currticks;
+	if (1||mainw->last_display_ticks==0) mainw->last_display_ticks=mainw->currticks;
 	else {
 	  if (mainw->vpp!=NULL&&mainw->ext_playback&&mainw->vpp->fixed_fpsd>0.) 
 	    mainw->last_display_ticks+=U_SEC/mainw->vpp->fixed_fpsd;
@@ -729,26 +729,31 @@ gboolean process_one (gboolean visible) {
 	shown_paused_frames=mainw->effects_paused;
       }
 
-      else if (visible&&cfile->proc_ptr->frames_done>=cfile->progress_start&&cfile->proc_ptr->frames_done<=cfile->progress_end&&cfile->progress_end>0&&!mainw->effects_paused) {
-	if (progress_count++>=PROG_LOOP_VAL) {
-
-	  gettimeofday(&tv, NULL);
-	  mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	  timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
-
-	  disp_fraction(cfile->proc_ptr->frames_done,cfile->progress_start,cfile->progress_end,timesofar,cfile->proc_ptr);
-	  progress_count=0;
-	}
-      }
       else {
-	if (progress_count++>=PROG_LOOP_VAL) {
-	  gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
-	  progress_count=0;
+	if (visible&&cfile->proc_ptr->frames_done>=cfile->progress_start) {
+	  // display progress fraction or pulse bar
+	  if (cfile->proc_ptr->frames_done<=cfile->progress_end&&cfile->progress_end>0&&!mainw->effects_paused) {
+	    if (progress_count++>=PROG_LOOP_VAL) {
+	      
+	      gettimeofday(&tv, NULL);
+	      mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+	      timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
+	      
+	      disp_fraction(cfile->proc_ptr->frames_done,cfile->progress_start,cfile->progress_end,timesofar,cfile->proc_ptr);
+	      progress_count=0;
+	    }
+	  }
+	  else {
+	    if (progress_count++>=PROG_LOOP_VAL) {
+	      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
+	      progress_count=0;
+	    }
+	  }
 	}
       }
     }
-    frames_done=cfile->proc_ptr->frames_done;
 
+    frames_done=cfile->proc_ptr->frames_done;
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0&&cfile->progress_start+frames_done>=cfile->fx_frame_pump) {
       gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
@@ -991,7 +996,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       }
     }
     // else call realtime effect pass
-    else (*mainw->progress_fn)(FALSE);
+    else {
+      (*mainw->progress_fn)(FALSE);
+      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
+    }
 
 #ifdef DEBUG
     g_print("msg %s\n",mainw->msg);

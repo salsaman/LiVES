@@ -741,13 +741,9 @@ giw_knob_adjustment_value_changed (GtkAdjustment *adjustment,
 void           
 giw_knob_set_title (GiwKnob *knob, gchar *str)
 {
-  GtkWidget *widget;
-
   g_return_if_fail (knob != NULL);
   g_return_if_fail (GIW_IS_KNOB (knob));
     
-  widget=GTK_WIDGET(knob);
-  
   knob->title_str=g_strdup(str); // Duplicate the string, after this, str can be freed
   
   knob_build_title(knob);

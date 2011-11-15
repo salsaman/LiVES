@@ -150,6 +150,8 @@ const char *module_check_init(void) {
 
   blankframe=NULL;
 
+  dummyvar=dummyvar; // keep compiler happy
+
   return NULL;
 }
 
@@ -233,7 +235,7 @@ boolean set_palette (int palette) {
 }
 
 const char * get_fps_list (int palette) {
-  return "12|16|20|24|24000:1001|25|30000:1001|30|60";
+  return "12|16|8|4|2|1|20|24|24000:1001|25|30000:1001|30|60";
 }
 
 
@@ -301,13 +303,13 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   make_path("stream",mypid,"fifo");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // raw yuv4m
   make_path("video",mypid,"ogv");
-  mkfifo(xfile,S_IRUSR|S_IWUSR); // raw ogg stream
+  //mkfifo(xfile,S_IRUSR|S_IWUSR); // raw ogg stream
   make_path("video2",mypid,"ogv");
-  mkfifo(xfile,S_IRUSR|S_IWUSR); // corrected ogg stream
+  mkfifo(xfile,S_IRUSR|S_IWUSR); // corrected ogg stream (saved or muxed)
 
-  snprintf(cmd,8192,"ffmpeg2theora -f yuv4m -o %s/video-%d.ogv %s/stream-%d.fifo 2>/dev/null&",tmpdir,mypid,tmpdir,mypid);
-  dummyvar=system(cmd);
-
+  snprintf(cmd,8192,"ffmpeg2theora --noaudio --nosync -e 10000 -f yuv4m -F %d:%d -o %s/video-%d.ogv %s/stream-%d.fifo&",(int)yuv4mpeg->fps.n,(int)yuv4mpeg->fps.d,tmpdir,mypid,tmpdir,mypid);
+  //dummyvar=system(cmd);
+  printf("cmd is %s\n",cmd);
   make_path("livesaudio",mypid,"stream");
 
   afd=open(xfile,O_RDONLY|O_NONBLOCK);
@@ -325,13 +327,13 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   }
   else {
     snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv \"%s\" &",tmpdir,mypid,outfile); 
-    dummyvar=system(cmd);
+    //dummyvar=system(cmd);
   }
 
   // open first fifo for writing
 
   make_path("stream",mypid,"fifo");
-  yuv4mpeg->fd=open(xfile,O_WRONLY);
+  yuv4mpeg->fd=open(xfile,O_WRONLY|O_SYNC|O_CREAT,S_IWUSR|S_IRUSR);
 
   ov_vsize=ov_hsize=0;
 
@@ -340,6 +342,8 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 
   if (blankframe!=NULL) free(blankframe);
   blankframe=NULL;
+
+  dummyvar=dummyvar; // keep compiler happy
 
   //y4m_log_stream_info(LOG_INFO, "lives-yuv4mpeg", &(yuv4mpeg->streaminfo));
   return TRUE;
@@ -365,8 +369,9 @@ boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **ret
     
     i = y4m_write_stream_header(yuv4mpeg->fd, &(yuv4mpeg->streaminfo));
 
-    if (i != Y4M_OK) return FALSE;
-
+    if (i != Y4M_OK) {
+      return FALSE;
+    }
     ov_hsize=hsize;
     ov_vsize=vsize;
 
@@ -394,6 +399,7 @@ boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **ret
     // no sync delay
     i = y4m_write_frame(yuv4mpeg->fd, &(yuv4mpeg->streaminfo),
 			&(yuv4mpeg->frameinfo), (uint8_t **)pixel_data);
+    
   }
   else {
     // write frame to next slot in buffer
@@ -403,10 +409,14 @@ boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **ret
     if (yuv4mpeg->framebuf[z]==NULL) {
       // blank to output
       yuv4mpeg->framebuf[z]=make_blankframe(fsize,FALSE);
-      if (yuv4mpeg->framebuf[z]==NULL) return FALSE;
+      if (yuv4mpeg->framebuf[z]==NULL) {
+	return FALSE;
+      }
 
       if (blankframe==NULL) blankframe=make_blankframe(fsize,FALSE);
-      if (blankframe==NULL) return FALSE; // oom
+      if (blankframe==NULL) {
+	return FALSE; // oom
+      }
 
       i = y4m_write_frame(yuv4mpeg->fd, &(yuv4mpeg->streaminfo),
 			  &(yuv4mpeg->frameinfo), blankframe);
@@ -427,8 +437,9 @@ boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **ret
 
   }
 
-  if (i != Y4M_OK) return FALSE;
-
+  if (i != Y4M_OK) {
+    return FALSE;
+  }
 
   return TRUE;
 }
@@ -484,6 +495,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
     }
   }
 
+  dummyvar=dummyvar; // keep compiler happy
 
 
 }

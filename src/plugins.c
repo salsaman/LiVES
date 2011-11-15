@@ -515,7 +515,9 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
       mainw->vpp->fixed_fps_numer=0;
     }
 
-    if (mainw->vpp->fixed_fpsd>0.&&(mainw->fixed_fpsd>0.||!((*mainw->vpp->set_fps) (mainw->vpp->fixed_fpsd)))) {
+    if (mainw->vpp->fixed_fpsd>0.&&(mainw->fixed_fpsd>0.||
+				    (mainw->vpp->set_fps!=NULL&&
+				     !((*mainw->vpp->set_fps) (mainw->vpp->fixed_fpsd))))) {
       do_vpp_fps_error();
       mainw->error=TRUE;
       mainw->vpp->fixed_fpsd=-1.;
@@ -1250,7 +1252,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   if (vpp->set_yuv_palette_clamping!=NULL) (*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
 
   if (vpp->get_fps_list!=NULL) {
-    if (mainw->fixed_fpsd>0.||(vpp->fixed_fpsd>0.&&!((*vpp->set_fps) (vpp->fixed_fpsd)))) {
+    if (mainw->fixed_fpsd>0.||(vpp->fixed_fpsd>0.&&vpp->set_fps!=NULL&&
+			       !((*vpp->set_fps) (vpp->fixed_fpsd)))) {
       do_vpp_fps_error();
       vpp->fixed_fpsd=-1.;
       vpp->fixed_fps_numer=0;

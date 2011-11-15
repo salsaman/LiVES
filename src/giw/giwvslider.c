@@ -430,7 +430,6 @@ giw_vslider_button_release (GtkWidget        *widget,
 			GdkEventButton   *event)
 {
   GiwVSlider *vslider;
-  gint x, y;
   
   g_return_val_if_fail (widget != NULL, FALSE);
   g_return_val_if_fail (GIW_IS_VSLIDER (widget), FALSE);
@@ -441,8 +440,8 @@ giw_vslider_button_release (GtkWidget        *widget,
   if (vslider->mouse_policy==GIW_VSLIDER_MOUSE_DISABLED) return(FALSE);
   
   // Get the position inside the vslider
-  x=event->x-vslider->x;
-  y=event->y-vslider->y;
+  //x=event->x-vslider->x;
+  //y=event->y-vslider->y;
   
   if (vslider->button == event->button){
     // If the mouse policy is to update delayed, it's time to update the value (the button was released)
@@ -470,7 +469,7 @@ giw_vslider_motion_notify (GtkWidget        *widget,
 			GdkEventMotion   *event)
 {
   GiwVSlider *vslider;
-  gint x, y;
+  gint y;
   gdouble new_value;
   
   g_return_val_if_fail (widget != NULL, FALSE);
@@ -482,7 +481,7 @@ giw_vslider_motion_notify (GtkWidget        *widget,
   if (vslider->mouse_policy==GIW_VSLIDER_MOUSE_DISABLED) return(FALSE);
       
   // Get the position inside the vslider
-  x=event->x-vslider->x;
+  //x=event->x-vslider->x;
   y=event->y-vslider->y;
   
   // If the mouse policy is to update automatically, change the value now if it's valid

@@ -31,6 +31,59 @@ typedef struct {
 } yuv411_macropixel;
 
 
+
+
+typedef struct {
+  void *src;
+  gint hsize;
+  gint vsize;
+  gint irowstrides[4];
+  gint orowstrides[4];
+  void *dest;
+  gboolean in_alpha;
+  gboolean out_alpha;
+  gboolean in_clamped;
+  gboolean out_clamped;
+  int in_subspace;
+  int out_subspace;
+  int in_sampling;
+  int out_sampling;
+  gboolean alpha_first;
+  int thread_id;
+} lives_cc_params;
+
+
+// internal thread fns - data points to a lives_cc_params struct
+void *convert_rgb_to_uyvy_frame_thread(void *data);
+void *convert_bgr_to_uyvy_frame_thread(void *data);
+void *convert_rgb_to_yuyv_frame_thread(void *data);
+void *convert_bgr_to_yuyv_frame_thread(void *data);
+
+void *convert_rgb_to_yuv_frame_thread(void *data);
+void *convert_bgr_to_yuv_frame_thread(void *data);
+
+void *convert_uyvy_to_rgb_frame_thread(void *data);
+void *convert_uyvy_to_bgr_frame_thread(void *data);
+void *convert_yuyv_to_rgb_frame_thread(void *data);
+void *convert_yuyv_to_bgr_frame_thread(void *data);
+
+
+void *convert_swap3_frame_thread(void *data);
+void *convert_swap4_frame_thread(void *data);
+void *convert_swap3addpost_frame_thread(void *data);
+void *convert_swap3addpre_frame_thread(void *data);
+void *convert_swap3postalpha_frame_thread(void *data);
+void *convert_addpre_frame_thread(void *data);
+void *convert_swap3delpost_frame_thread(void *data);
+void *convert_delpost_frame_thread(void *data);
+void *convert_delpre_frame_thread(void *data);
+void *convert_delpreswap3_frame_thread(void *data);
+void *convert_swapprepost_frame_thread(void *data);
+
+void *convert_swab_frame_thread(void *data);
+
+
+
 ///////////////////////////////////////
 // these functions should be used in future
 gboolean convert_layer_palette(weed_plant_t *layer, int outpl, int op_clamping);

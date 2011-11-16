@@ -55,6 +55,8 @@
 #define EFFECT_NONE 0
 #define GU641 ((guint64)1)
 
+#define MAX_FX_THREADS 65536
+
 
 /// max ext_cntl + 1
 #define MAX_EXT_CNTL 2

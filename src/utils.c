@@ -193,7 +193,7 @@ static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_f
 }
 
 
-static void calc_aframeno(void) {
+static void calc_aframeno(gint fileno) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {
     // get seek_pos from jack
@@ -260,7 +260,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
   if (fps==0.) {
     *ntc=otc;
-    calc_aframeno();
+    calc_aframeno(fileno);
     return cframe;
   }
 
@@ -274,7 +274,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
   // calculate audio "frame"
   if (mainw->playing_file==fileno) {
-    calc_aframeno();
+    calc_aframeno(fileno);
   }
 
   if (mainw->playing_file==fileno) {

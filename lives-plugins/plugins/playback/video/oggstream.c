@@ -303,13 +303,13 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   make_path("stream",mypid,"fifo");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // raw yuv4m
   make_path("video",mypid,"ogv");
-  //mkfifo(xfile,S_IRUSR|S_IWUSR); // raw ogg stream
+  mkfifo(xfile,S_IRUSR|S_IWUSR); // raw ogg stream
   make_path("video2",mypid,"ogv");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // corrected ogg stream (saved or muxed)
 
   snprintf(cmd,8192,"ffmpeg2theora --noaudio --nosync -e 10000 -f yuv4m -F %d:%d -o %s/video-%d.ogv %s/stream-%d.fifo&",(int)yuv4mpeg->fps.n,(int)yuv4mpeg->fps.d,tmpdir,mypid,tmpdir,mypid);
-  //dummyvar=system(cmd);
-  printf("cmd is %s\n",cmd);
+  dummyvar=system(cmd);
+  //printf("cmd is %s\n",cmd);
   make_path("livesaudio",mypid,"stream");
 
   afd=open(xfile,O_RDONLY|O_NONBLOCK);
@@ -327,7 +327,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   }
   else {
     snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv \"%s\" &",tmpdir,mypid,outfile); 
-    //dummyvar=system(cmd);
+    dummyvar=system(cmd);
   }
 
   // open first fifo for writing

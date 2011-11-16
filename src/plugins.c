@@ -98,7 +98,6 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   }
   
   if (!count) {
-    threaded_dialog_spin();
     g_printerr (_("Plugin timed out on message %s\n"),command);
     g_free (outfile);
     threaded_dialog_spin();
@@ -110,7 +109,6 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   unlink (outfile);
   threaded_dialog_spin();
   g_free (outfile);
-  threaded_dialog_spin();
   memset (buffer+bytes,0,1);
 
 #ifdef DEBUG_PLUGINS
@@ -134,7 +132,6 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
       else g_free(buf);
     }
   }
-  threaded_dialog_spin();
   g_strfreev (array);
   threaded_dialog_spin();
   return list;
@@ -193,7 +190,6 @@ plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const
   else com=g_strdup (request);
   list_plugins=FALSE;
   reslist=get_plugin_result (com,delim,allow_blanks);
-  threaded_dialog_spin();
   g_free(com);
   threaded_dialog_spin();
   return reslist;
@@ -240,7 +236,6 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
   }
   list_plugins=TRUE;
   pluglist=get_plugin_result (com,"|",FALSE);
-  threaded_dialog_spin();
   g_free(com);
   threaded_dialog_spin();
   return pluglist;

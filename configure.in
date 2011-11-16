@@ -447,7 +447,7 @@ AM_CONDITIONAL(HAVE_VORBIS,$HAVE_VORBIS)
 
 HAVE_DIRAC=false
 dnl check for dirac
-echo Checking for Dirac (schroedinger)...
+echo "Checking for Dirac (schroedinger)..."
 PKG_CHECK_MODULES(DIRAC,schroedinger-1.0,HAVE_DIRAC=true,HAVE_DIRAC=false)
 AC_SUBST(DIRAC_CFLAGS)
 AC_SUBST(DIRAC_LIBS)

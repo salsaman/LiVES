@@ -103,7 +103,6 @@ read_file_details(const gchar *file_name, gboolean is_audio) {
     while (g_main_context_iteration (NULL,FALSE));
     threaded_dialog_spin();
     g_usleep(prefs->sleep_time);
-    threaded_dialog_spin();
   }
   
   dummychar=fgets(mainw->msg,512,infofile);
@@ -3214,7 +3213,6 @@ gboolean read_headers(const gchar *file_name) {
       pieces=get_token_count (buff,'|');
 
       if (pieces>3) {
-	threaded_dialog_spin();
 	array=g_strsplit(buff,"|",pieces);
 	
 	cfile->f_size=strtol(array[1],NULL,10);
@@ -3222,11 +3220,14 @@ gboolean read_headers(const gchar *file_name) {
 	if (!strcmp(array[3],"jpg")) cfile->img_type=IMG_TYPE_JPEG;
 	else cfile->img_type=IMG_TYPE_PNG;
 	g_strfreev(array);
-	threaded_dialog_spin();
       }
+
+      threaded_dialog_spin();
 
       cache_file_contents(lives_header);
       g_free(lives_header);
+
+      threaded_dialog_spin();
 
       get_clip_value(mainw->current_file,CLIP_DETAILS_HEADER_VERSION,&cfile->header_version,16);
       get_clip_value(mainw->current_file,CLIP_DETAILS_BPP,&cfile->bpp,0);
@@ -4033,26 +4034,23 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 
   do_threaded_dialog(_("Recovering files"),FALSE);
 
-  threaded_dialog_spin();
   d_print(_("Recovering files..."));
   threaded_dialog_spin();
 
   mainw->suppress_dprint=TRUE;
 
   while (1) {
+    threaded_dialog_spin();
     is_scrap=FALSE;
 
     if (mainw->cached_list!=NULL) {
-      threaded_dialog_spin();
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
-      threaded_dialog_spin();
       mainw->cached_list=NULL;
     }
 
     if (fgets(buff,256,rfile)==NULL) {
       gint current_file=mainw->current_file;
-      threaded_dialog_spin();
       if (last_was_normal_file&&mainw->multitrack==NULL) {
 	switch_to_file((mainw->current_file=0),current_file);
       }
@@ -4172,7 +4170,6 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 		
 		// TODO ** - show layout errors
 		
-		threaded_dialog_spin();
 		continue;
 	      }
 	    }

@@ -589,6 +589,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if ((mode=weed_add_effectkey(key,whashname,TRUE))==-1) {
       // could not locate effect
       d_print((tmp=g_strdup_printf(_("Unknown effect %s in %s\n"),whashname,keymap_file)));
+      g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
       continue;

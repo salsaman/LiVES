@@ -28,8 +28,6 @@ typedef enum {
 } lives_filter_error_t;
 
 
-#define MAX_FX_THREADS 65536
-
 
 weed_plant_t *get_weed_filter(int filter_idx);
 gchar *weed_filter_get_name(int filter_idx);

@@ -1074,6 +1074,9 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
   weed_plant_t *xinst[MAX_FX_THREADS];
   weed_plant_t **xchannels;
+  weed_plant_t *ctmpl;
+
+  int minh;
 
   register int i,j;
 
@@ -1090,9 +1093,21 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     for (i=0;i<nchannels;i++) {
       xchannels[i]=weed_plant_copy(out_channels[i]);
       height=weed_get_int_value(xchannels[i],"height",&error);
-      dheight=(int)((double)height/(double)prefs->nfx_threads);
-      if (dheight<2) dheight=2; // must have a minimum height of 2
+
+      ctmpl=weed_get_plantptr_value(out_channels[i],"template",&error);
+      if (weed_plant_has_leaf(ctmpl,"vstep")) 
+	minh=weed_get_int_value(ctmpl,"vstep",&error);
+      else minh=4;
+
+      if (minh<4) minh=4;
+
+      dheight=CEIL((double)height/(double)prefs->nfx_threads,minh);
+
       offset=dheight*j;
+
+      if ((height-offset)<minh) break;
+      if ((height-offset-dheight)<minh) dheight=height-offset;
+
       weed_set_int_value(xchannels[i],"offset",offset);
       if (j==prefs->nfx_threads-1) dheight=height-(dheight*j);
       weed_set_int_value(xchannels[i],"height",dheight);

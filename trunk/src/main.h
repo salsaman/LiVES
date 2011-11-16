@@ -1058,4 +1058,8 @@ char *dummychar;
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
 
+// round up to next multiple of b
+#define CEIL(a,b) ((int)(((double)a+(double)b-.000000001)/((double)b))*b)
+
+
 #endif // #ifndef HAS_MAIN_H

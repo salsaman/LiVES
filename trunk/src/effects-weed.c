@@ -3048,7 +3048,6 @@ void weed_load_all (void) {
 #ifdef DEBUG_WEED
   g_printerr("In weed init\n");
 #endif
-  threaded_dialog_spin();
 
   // danger Will Robinson !
   fg_gen_to_start=fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
@@ -3135,7 +3134,6 @@ void weed_load_all (void) {
       subdir_path=g_strdup_printf("%s/%s",dirs[i],subdir_name);
       if (!g_file_test(subdir_path, G_FILE_TEST_IS_DIR)||!strcmp(subdir_name,"icons")||!strcmp(subdir_name,"data")) {
 	g_free(subdir_path);
-	threaded_dialog_spin();
 	continue;
       }
       weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,"so");
@@ -3154,13 +3152,11 @@ void weed_load_all (void) {
       threaded_dialog_spin();
     }
     if (weed_plugin_list!=NULL) {
-      threaded_dialog_spin();
       g_list_free_strings(weed_plugin_list);
       g_list_free(weed_plugin_list);
-      threaded_dialog_spin();
     }
   }
-  threaded_dialog_spin();
+
   g_strfreev(dirs);
   g_free(weed_plugin_path);
 
@@ -3198,10 +3194,8 @@ void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"in_channel_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"in_channel_templates",&error);
-      threaded_dialog_spin();
       for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
       weed_free(plants);
-      threaded_dialog_spin();
     }
   }
 
@@ -3211,10 +3205,8 @@ void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"out_channel_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"out_channel_templates",&error);
-      threaded_dialog_spin();
       for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
       weed_free(plants);
-      threaded_dialog_spin();
     }
   }
 
@@ -3223,7 +3215,6 @@ void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"in_parameter_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-      threaded_dialog_spin();
       for (i=0;i<nitems;i++) {
 	if (weed_plant_has_leaf(plants[i],"gui")) {
 	  gui=(weed_get_plantptr_value(plants[i],"gui",&error));
@@ -3240,7 +3231,6 @@ void weed_filter_free(weed_plant_t *filter) {
 	weed_plant_free(plants[i]);
       }
       weed_free(plants);
-      threaded_dialog_spin();
     }
   }
 
@@ -3256,19 +3246,16 @@ void weed_filter_free(weed_plant_t *filter) {
 	weed_plant_free(plants[i]);
       }
       weed_free(plants);
-      threaded_dialog_spin();
     }
   }
 
 
   // free gui
-  threaded_dialog_spin();
   if (weed_plant_has_leaf(filter,"gui")) weed_plant_free(weed_get_plantptr_value(filter,"gui",&error));
 
 
   // free filter
   weed_plant_free(filter);
-  threaded_dialog_spin();
 }
 
 
@@ -3279,7 +3266,6 @@ void weed_unload_all(void) {
   weed_desetup_f desetup_fn;
   GList *pinfo=NULL,*xpinfo;
 
-  threaded_dialog_spin();
   mainw->num_tr_applied=0;
   weed_deinit_all();
   for (i=0;i<num_weed_filters;i++) {
@@ -3307,15 +3293,12 @@ void weed_unload_all(void) {
 	g_free(cwd);
       }
 
-      threaded_dialog_spin();
       dlclose(handle);
       threaded_dialog_spin();
       handle=NULL;
       weed_set_voidptr_value(plugin_info,"handle",handle);
     }
     weed_filter_free(filter);
-    threaded_dialog_spin();
-    threaded_dialog_spin();
   }
 
   xpinfo=pinfo;

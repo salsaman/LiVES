@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-15 23:46-0300\n"
+"POT-Creation-Date: 2011-11-16 04:37-0300\n"
 "PO-Revision-Date: 2011-09-18 02:25+0000\n"
 "Last-Translator: pp/bs <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -569,12 +569,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr ""
 
-#: src/main.c:4509 src/gui.c:596 src/utils.c:2627 src/utils.c:2659
+#: src/main.c:4509 src/gui.c:596 src/utils.c:2623 src/utils.c:2655
 #: src/saveplay.c:2709 src/multitrack.c:3828 src/multitrack.c:5339
 msgid "_Undo"
 msgstr "_Cofnij"
 
-#: src/main.c:4510 src/gui.c:609 src/utils.c:2628 src/utils.c:2660
+#: src/main.c:4510 src/gui.c:609 src/utils.c:2624 src/utils.c:2656
 #: src/saveplay.c:2710 src/multitrack.c:3849 src/multitrack.c:5362
 msgid "_Redo"
 msgstr "_Powtórz"
@@ -3456,15 +3456,15 @@ msgstr ""
 msgid "Right Audio [%.2f sec]"
 msgstr ""
 
-#: src/utils.c:1910
+#: src/utils.c:1907
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr ""
 
-#: src/utils.c:2094
+#: src/utils.c:2091
 msgid "Cleaning up clip"
 msgstr ""
 
-#: src/utils.c:2224
+#: src/utils.c:2221
 #, c-format
 msgid ""
 "\n"
@@ -3474,25 +3474,25 @@ msgid ""
 "Overwrite ?\n"
 msgstr ""
 
-#: src/utils.c:2620 src/utils.c:2652 src/multitrack.c:3821
+#: src/utils.c:2616 src/utils.c:2648 src/multitrack.c:3821
 #, c-format
 msgid "_Undo %s"
 msgstr "_Cofnij %s"
 
-#: src/utils.c:2621 src/utils.c:2653 src/multitrack.c:3843
+#: src/utils.c:2617 src/utils.c:2649 src/multitrack.c:3843
 #, c-format
 msgid "_Redo %s"
 msgstr "_Ponów %s"
 
-#: src/utils.c:2678
+#: src/utils.c:2674
 msgid "-------------Selection------------"
 msgstr ""
 
-#: src/utils.c:2683
+#: src/utils.c:2679
 msgid " sec ] ----------Selection---------- [ "
 msgstr ""
 
-#: src/utils.c:2683
+#: src/utils.c:2679
 msgid " frames ] ----------"
 msgstr ""
 

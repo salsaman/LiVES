@@ -2345,14 +2345,13 @@ sget_file_size(const gchar *name) {
   struct stat filestat;
   int fd;
 
-  if ((fd=open(name,O_RDONLY))>-1) {
-    close (fd);
-  }
-  else {
+  if ((fd=open(name,O_RDONLY))==-1) {
     return (guint)0;
   }
 
-  stat(name,&filestat);
+  fstat(fd,&filestat);
+  close(fd);
+
   return (gulong)(filestat.st_size);
 }
 
@@ -2716,7 +2715,6 @@ void cache_file_contents(const gchar *filename) {
 
   if (!(hfile=fopen(filename,"r"))) return;
   while (fgets(buff,65536,hfile)!=NULL) {
-    threaded_dialog_spin();
     mainw->cached_list=g_list_append(mainw->cached_list,g_strdup(buff));
     threaded_dialog_spin();
   }
@@ -2904,13 +2902,12 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     }
     
     vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getpid());
-    threaded_dialog_spin();
+
     do {
       if (!(valfile=fopen(vfile,"r"))) {
 	if (!(mainw==NULL)) {
 	  threaded_dialog_spin();
 	  while (g_main_context_iteration(NULL,FALSE));
-	  threaded_dialog_spin();
 	}
 	g_usleep(prefs->sleep_time);
 	timeout--;

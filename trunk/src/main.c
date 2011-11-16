@@ -863,6 +863,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->last_display_ticks=0;
 
   mainw->jack_trans_poll=FALSE;
+
+  mainw->pw_exp_is_blocked=TRUE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());

@@ -3921,16 +3921,11 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   com=g_strdup_printf("smogrify build_rfx_plugins builtinx %s%s%s %s%s%s %s/bin",prefs->prefix_dir,PLUGIN_SCRIPTS_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,prefs->prefix_dir);
   dummyvar=system(com);
   g_free(com);
-  threaded_dialog_spin();
   d_print (_ ("custom...")); 
-  threaded_dialog_spin();
   dummyvar=system("smogrify build_rfx_plugins custom");
-  threaded_dialog_spin();
   d_print (_("test...")); 
-  threaded_dialog_spin();
   dummyvar=system("smogrify build_rfx_plugins test");
 
-  threaded_dialog_spin();
   d_print(_("rebuilding dynamic menu entries..."));
   while (g_main_context_iteration(NULL,FALSE));
   threaded_dialog_spin();
@@ -4529,7 +4524,6 @@ void add_rfx_effects(void) {
     for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) {
       if (mainw->rendered_fx!=NULL) {
 	if (mainw->rendered_fx[i].menuitem!=NULL) {
-	  threaded_dialog_spin();
 	  remove_from_parent(mainw->rendered_fx[i].menuitem);
 	  threaded_dialog_spin();
 	}
@@ -4570,34 +4564,21 @@ void add_rfx_effects(void) {
     gtk_widget_modify_bg(mainw->run_test_rfx_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show(mainw->run_test_rfx_menu);
-  threaded_dialog_spin();
-
-
-  threaded_dialog_spin();
 
   mainw->custom_effects_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_effects_submenu), mainw->custom_effects_menu);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mainw->custom_effects_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
-  threaded_dialog_spin();
-
-
-  threaded_dialog_spin();
 
   mainw->custom_tools_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_tools_submenu), mainw->custom_tools_menu);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
-  threaded_dialog_spin();
-
-
-
 
 
   // scan rendered effect directories
-  threaded_dialog_spin();
   rfx_custom_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_CUSTOM,FALSE,NULL,NULL);
   rfx_custom_list_length=g_list_length(rfx_custom_list);
 
@@ -4611,6 +4592,8 @@ void add_rfx_effects(void) {
     rfx_builtin_list_length=g_list_length(rfx_builtin_list);
   }
   rfx_list_length=rfx_builtin_list_length+rfx_custom_list_length+rfx_test_list_length;
+
+  threaded_dialog_spin();
     
   rendered_fx=(lives_rfx_t *)g_malloc ((rfx_list_length+1)*sizeof(lives_rfx_t));
   
@@ -4618,7 +4601,6 @@ void add_rfx_effects(void) {
   rendered_fx[0].name=g_strdup("realtime_fx");
   rendered_fx[0].menu_text=g_strdup (_("_Apply Real Time Effects to Selection"));
   rendered_fx[0].action_desc=g_strdup ("Applying Current Real Time Effects to");
-  threaded_dialog_spin();
 
   rendered_fx[0].props=0;
   rendered_fx[0].num_params=0;
@@ -4665,7 +4647,6 @@ void add_rfx_effects(void) {
       }
       
       plugin_name=g_strdup(g_list_nth_data(rfx_list,plugin_idx-offset));
-      threaded_dialog_spin();
 
       if (mainw->splash_window!=NULL) {
 	splash_msg((tmp=g_strdup_printf(_("Loading rendered effect %s..."),plugin_name)),.2);
@@ -4675,12 +4656,12 @@ void add_rfx_effects(void) {
 #ifdef DEBUG_RENDER_FX
       g_print("Checking plugin %s\n",plugin_name);
 #endif
-      threaded_dialog_spin();
+
       if ((define=plugin_request_by_line(type,plugin_name,"get_define"))==NULL) {
 #ifdef DEBUG_RENDER_FX
       g_print("No get_define in %s\n",plugin_name);
 #endif
-      threaded_dialog_spin();
+
       continue;
       }
       def=g_strdup(g_list_nth_data(define,0));
@@ -4692,7 +4673,6 @@ void add_rfx_effects(void) {
 	g_print("Invalid get_define in %s\n",plugin_name);
 #endif
 	g_free(def);
-	threaded_dialog_spin();
 	continue;
       }
       if (strcmp(def+1,RFX_VERSION)) {
@@ -4700,13 +4680,10 @@ void add_rfx_effects(void) {
 	g_print("Invalid version %s instead of %s in %s\n",def+1,RFX_VERSION,plugin_name);
 #endif
 	g_free(def);
-	threaded_dialog_spin();
 	continue;
       }
-      threaded_dialog_spin();
       memset(def+1,0,1);
       
-      threaded_dialog_spin();
       if ((description=plugin_request_common (type,plugin_name,"get_description",def,TRUE))!=NULL&&(props=plugin_request_common (type,plugin_name,"get_capabilities",def,FALSE))!=NULL&&g_list_length(description)>3) {
 	rfx=&rendered_fx[rfx_slot_count++];
 	rfx->name=g_strdup(plugin_name);
@@ -4738,10 +4715,8 @@ void add_rfx_effects(void) {
 	description=NULL;
       }
       g_free(def);
-      threaded_dialog_spin();
     }
 
-    threaded_dialog_spin();
     if (rfx_builtin_list!=NULL) {
       g_list_free_strings (rfx_builtin_list);
       g_list_free (rfx_builtin_list);
@@ -4755,7 +4730,6 @@ void add_rfx_effects(void) {
       g_list_free (rfx_test_list);
     }
     g_free(type);
-    threaded_dialog_spin();
   }
 
   rfx_slot_count--;
@@ -4826,7 +4800,6 @@ void add_rfx_effects(void) {
       }
       
     if (!(rfx->props&RFX_PROPS_MAY_RESIZE)&&rfx->min_frames>=0&&rfx->num_in_channels==1) {
-      threaded_dialog_spin();
       // add resizing effects to tools menu later
       g_snprintf (txt,61,"_%s",_(rfx->menu_text));
       if (rfx->num_params) g_strappend (txt,64,"...");
@@ -4869,13 +4842,12 @@ void add_rfx_effects(void) {
       }
       if (rfx->min_frames>=0) gtk_widget_set_sensitive(menuitem,FALSE);
       rfx->menuitem=menuitem;
-      threaded_dialog_spin();
     }
   }
 
 
-
   threaded_dialog_spin();
+
   // custom effects
   if (rc_child>0) {
     gtk_widget_show (mainw->custom_effects_separator);
@@ -4887,9 +4859,7 @@ void add_rfx_effects(void) {
     gtk_widget_hide (mainw->custom_effects_menu);
     gtk_widget_hide (mainw->custom_effects_submenu);
   }
-  threaded_dialog_spin();
 
-  threaded_dialog_spin();
   mainw->utilities_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->utilities_submenu), mainw->utilities_menu);
   if (palette->style&STYLE_1) {
@@ -5043,12 +5013,12 @@ void add_rfx_effects(void) {
 			    (gpointer)rfx);
 	}
       }
-      threaded_dialog_spin();
     }
   }
 
 
   threaded_dialog_spin();
+
   if (mainw->has_custom_tools||mainw->has_custom_utilities) {
     gtk_widget_show(mainw->custom_tools_separator);
     gtk_widget_show(mainw->custom_tools_menu);
@@ -5082,7 +5052,6 @@ void add_rfx_effects(void) {
     gtk_widget_hide(mainw->custom_gens_submenu);
   }
   if (mainw->current_file>0&&mainw->playing_file==-1) sensitize();
-  threaded_dialog_spin();
 
 }
 

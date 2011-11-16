@@ -260,8 +260,6 @@ lives_exit (void) {
 	}
 
 	cfile->layout_map=NULL;
-
-	threaded_dialog_spin();
       }
     }
 
@@ -287,7 +285,6 @@ lives_exit (void) {
       if (mainw->current_file>-1) sensitize();
       gtk_widget_queue_draw(mainw->LiVES);
       d_print_done();
-      threaded_dialog_spin();
       end_threaded_dialog();
 
       if (mainw->multitrack!=NULL) {
@@ -3957,7 +3954,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     g_free(setdir);
     if (!check_for_lock_file(mainw->set_name,0)) {
       memset(mainw->set_name,0,1);
-      threaded_dialog_spin();
       d_print_failed();
       threaded_dialog_spin();
       return TRUE;
@@ -3979,7 +3975,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   mainw->suppress_dprint=TRUE;
 
   while (1) {
-    threaded_dialog_spin();
+    if (!skip_threaded_dialog&&prefs->show_gui) {
+      threaded_dialog_spin();
+    }
     if (mainw->cached_list!=NULL) {
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);

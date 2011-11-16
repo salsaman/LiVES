@@ -3098,6 +3098,9 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_widget_hide(prefsw->jack_int_label);
 
+
+  prefsw->audp_name=NULL;
+
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
     prefsw->audp_name=g_strdup_printf("pulse audio (%s)",mainw->recommended_string);
@@ -3124,7 +3127,8 @@ _prefsw *create_prefs_dialog (void) {
     prefsw->audp_name=g_strdup(_ ("mplayer"));
   }
   // ---
-  set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->audp_name);
+  if (prefsw->audp_name!=NULL) 
+    set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->audp_name);
   prefsw->orig_audp_name=g_strdup(prefsw->audp_name);
   //---
   hbox10 = gtk_hbox_new (FALSE, 0);

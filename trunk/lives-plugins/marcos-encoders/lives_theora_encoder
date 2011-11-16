@@ -25,8 +25,9 @@ See my vids at http://amv.reimeika.ca !
 version = '0.1.7'
 convert = 'convert'
 mplayer = 'mplayer'
-theora_encoder = 'encoder_example'
+theora_encoder  = 'encoder_example'
 theora_encoder2 = 'theora_encoder_example'
+theora_encoder3 = 'theora_encode'
     
 sox = 'sox'
 identify = 'identify'
@@ -381,6 +382,9 @@ def do_encode():
     if which(theora_encoder2) != '':
         theora_encoder = theora_encoder2
 
+    if which(theora_encoder3) != '':
+        theora_encoder = theora_encoder3
+
     fpsnum = fps.split('/')[0]
     fpsden = fps.split('/')[1]
     mplayer_opts = '-mf type=%s:fps=%s ' % (ext[1:],
@@ -521,10 +525,11 @@ def is_installed(prog):
     if wprog == '':
         if prog == theora_encoder:
             if which(theora_encoder2) == '':
-                print theora_encoder + ' or ' + theora_encoder2 + ': command not found'
-                raise SystemExit, 1
+                if which(theora_encoder3) == '':
+                    print theora_encoder + ' or ' + theora_encoder2 + ' or ' + theora_encoder3 + ': command not found'
+                    raise SystemExit, 1
         else:
-            if prog != theora_encoder2:
+            if prog != theora_encoder2 and prog != theora_encoder3:
                 print prog + ': command not found'
                 raise SystemExit, 1
         
@@ -582,7 +587,7 @@ if __name__ == '__main__':
     else:
         quiet = False
 
-    for i in [mplayer, theora_encoder, theora_encoder2, sox, convert, identify]:
+    for i in [mplayer, theora_encoder, theora_encoder2, theora_encoder3, sox, convert, identify]:
         is_installed(i)
     if '-C' in opts: raise SystemExit
 

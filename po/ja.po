@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-16 16:14-0300\n"
+"POT-Creation-Date: 2011-11-16 22:04-0300\n"
 "PO-Revision-Date: 2011-09-09 01:15+0000\n"
 "Last-Translator: Takashi Sakamoto <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -5371,17 +5371,17 @@ msgstr "音声ボリュームコントローラー"
 msgid "unknown"
 msgstr "不明"
 
-#: src/effects-weed.c:2921
+#: src/effects-weed.c:2936
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "エラー: プラグイン %s に weed_setup() がありません。\n"
 
-#: src/effects-weed.c:2935
+#: src/effects-weed.c:2950
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr "プラグイン %s に使うことのできないフィルターが見つかりました\n"
 
-#: src/effects-weed.c:3013
+#: src/effects-weed.c:3028
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5390,32 +5390,32 @@ msgstr ""
 "情報: プラグイン %s を読み込みできませんでした。\n"
 "エラー: %s\n"
 
-#: src/effects-weed.c:3163
+#: src/effects-weed.c:3178
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "%d Weedフィルターの読み込みに成功しました\n"
 
-#: src/effects-weed.c:3868
+#: src/effects-weed.c:3883
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "インスタンス %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:3906
+#: src/effects-weed.c:3921
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "ジェネレーター%sを開始できません。\n"
 
-#: src/effects-weed.c:4433
+#: src/effects-weed.c:4448
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "ジェネレーター %s を開始できません。\n"
 
-#: src/effects-weed.c:4493
+#: src/effects-weed.c:4508
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "ジェネレーター %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:5535
+#: src/effects-weed.c:5550
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [不安定] (%s)"
@@ -5524,7 +5524,7 @@ msgstr ""
 msgid "Set as default"
 msgstr "デフォルトに設定"
 
-#: src/paramwindow.c:905 src/rte_window.c:1316 src/omc-learn.c:1365
+#: src/paramwindow.c:905 src/rte_window.c:1351 src/omc-learn.c:1365
 msgid "Close _window"
 msgstr "ウィンドウを閉じる(_W)"
 
@@ -7915,7 +7915,7 @@ msgstr "フレームを再び並べ換えます"
 msgid "resampling error..."
 msgstr "リサンプリングエラー..."
 
-#: src/rte_window.c:65 src/rte_window.c:727
+#: src/rte_window.c:65 src/rte_window.c:762
 #, c-format
 msgid "Type: %s"
 msgstr "タイプ: %s"
@@ -8048,12 +8048,12 @@ msgstr ""
 msgid "Loading generator default sizes from %s..."
 msgstr "ジェネレーターのデフォルトサイズを %s から読み込み中..."
 
-#: src/rte_window.c:419
+#: src/rte_window.c:438
 #, c-format
 msgid "Loading default keymap from %s..."
 msgstr "デフォルトキーマップを %s から読み込み中..."
 
-#: src/rte_window.c:433
+#: src/rte_window.c:452
 #, c-format
 msgid ""
 "\n"
@@ -8068,27 +8068,27 @@ msgstr ""
 "\n"
 "エラーコード %d\n"
 
-#: src/rte_window.c:488
+#: src/rte_window.c:507
 #, c-format
 msgid "Invalid line %d in %s\n"
 msgstr "無効な行 %d : %s\n"
 
-#: src/rte_window.c:568
+#: src/rte_window.c:587
 #, c-format
 msgid "Invalid key %d in %s\n"
 msgstr "無効なキー %d : %s\n"
 
-#: src/rte_window.c:579
+#: src/rte_window.c:601
 #, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/rte_window.c:591
+#: src/rte_window.c:618
 #, c-format
 msgid "Unknown effect %s in %s\n"
 msgstr "不明なエフェクト %s が %sにあります\n"
 
-#: src/rte_window.c:601
+#: src/rte_window.c:633
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key "
@@ -8097,16 +8097,16 @@ msgstr ""
 "このバージョンのLiVESは、同じキー(%d)でジェネレーターと非ジェネレーターを混ぜ"
 "ることができません！\n"
 
-#: src/rte_window.c:606
+#: src/rte_window.c:643
 #, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr "キー %d に結びつけられたエフェクトが多すぎます。\n"
 
-#: src/rte_window.c:637
+#: src/rte_window.c:672
 msgid "update required.\n"
 msgstr "アップデートが必要です。\n"
 
-#: src/rte_window.c:652
+#: src/rte_window.c:687
 msgid ""
 "\n"
 "\n"
@@ -8118,40 +8118,40 @@ msgstr ""
 "いくつかのエフェクトが指定できません。\n"
 "\n"
 
-#: src/rte_window.c:700
+#: src/rte_window.c:735
 msgid "No Description"
 msgstr "説明なし"
 
-#: src/rte_window.c:705
+#: src/rte_window.c:740
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr "LiVES: %s の情報"
 
-#: src/rte_window.c:719
+#: src/rte_window.c:754
 #, c-format
 msgid "Effect name: %s"
 msgstr "エフェクト名: %s"
 
-#: src/rte_window.c:735
+#: src/rte_window.c:770
 #, c-format
 msgid "Plugin name: %s"
 msgstr "プラグイン名: %s"
 
-#: src/rte_window.c:743
+#: src/rte_window.c:778
 #, c-format
 msgid "Author: %s"
 msgstr "作者: %s"
 
-#: src/rte_window.c:751
+#: src/rte_window.c:786
 #, c-format
 msgid "Version: %d"
 msgstr "バージョン: %d"
 
-#: src/rte_window.c:763
+#: src/rte_window.c:798
 msgid "Description: "
 msgstr "説明: "
 
-#: src/rte_window.c:933
+#: src/rte_window.c:968
 msgid ""
 "\n"
 "\n"
@@ -8165,65 +8165,65 @@ msgstr ""
 "とができません。\n"
 "\n"
 
-#: src/rte_window.c:978
+#: src/rte_window.c:1013
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVESはエフェクト %s を指定できません。\n"
 
-#: src/rte_window.c:1064
+#: src/rte_window.c:1099
 msgid "LiVES: Real time effect mapping"
 msgstr "LiVES: リアルタイムエフェクトマッピング"
 
-#: src/rte_window.c:1073 src/rte_window.c:1131
+#: src/rte_window.c:1108 src/rte_window.c:1166
 msgid "Key grab"
 msgstr "キーの割り当て"
 
-#: src/rte_window.c:1088
+#: src/rte_window.c:1123
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:1097
+#: src/rte_window.c:1132
 msgid "Key active"
 msgstr "キーアクティブ"
 
-#: src/rte_window.c:1136
+#: src/rte_window.c:1171
 msgid "Grab keyboard for this effect key"
 msgstr "キーボードをこのエフェクトキーに割り当て"
 
-#: src/rte_window.c:1155
+#: src/rte_window.c:1190
 msgid "_Clear all effects"
 msgstr "全エフェクトのクリア(_C)"
 
-#: src/rte_window.c:1174
+#: src/rte_window.c:1209
 msgid "Mode active"
 msgstr "モードアクティブ"
 
-#: src/rte_window.c:1200 src/multitrack.c:7367
+#: src/rte_window.c:1235 src/multitrack.c:7367
 msgid "Info"
 msgstr "情報"
 
-#: src/rte_window.c:1201
+#: src/rte_window.c:1236
 msgid "Set Parameters"
 msgstr "パラメータセット"
 
-#: src/rte_window.c:1202
+#: src/rte_window.c:1237
 msgid "Clear"
 msgstr "クリア"
 
-#: src/rte_window.c:1211
+#: src/rte_window.c:1246
 msgid "Effect name:"
 msgstr "エフェクト名:"
 
-#: src/rte_window.c:1306
+#: src/rte_window.c:1341
 msgid "_Save as default keymap"
 msgstr "デフォルトキーマップとして保存(_S)"
 
-#: src/rte_window.c:1311
+#: src/rte_window.c:1346
 msgid "_Load default keymap"
 msgstr "デフォルトキーマップの読み込み(_L)"
 
-#: src/rte_window.c:1564
+#: src/rte_window.c:1599
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

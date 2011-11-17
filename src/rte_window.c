@@ -378,11 +378,35 @@ static void check_clear_all_button (void) {
 
 
 
+
+static gboolean read_perkey_defaults(int kfd, int key, int mode, int version) {
+  gboolean ret=TRUE;
+  int nparams;
+  size_t bytes=read(kfd,&nparams,sizint);
+
+  if (nparams>65536) {
+    g_printerr("Too many params, file is probably broken.\n");
+    return FALSE;
+  }
+
+  if (bytes<sizint) {
+    return FALSE;
+  }
+
+  if (nparams>0) {
+    ret=read_key_defaults(kfd,nparams,key,mode,version);
+  }
+  return ret;
+}
+
+
+
+
 gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
   int i;
   int kfd;
-  int version,nparams;
+  int version;
   int hlen;
   FILE *kfile=NULL;
   gchar *msg,*tmp;
@@ -566,20 +590,30 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (key<1||key>prefs->rte_keys_virtual) {
       d_print((tmp=g_strdup_printf(_("Invalid key %d in %s\n"),key,keymap_file)));
+      g_printerr(tmp);
       g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
+      if (keymap_file2!=NULL) {
+	// read param defaults
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+      }
       continue;
     }
 
     def_modes[key-1]++;
 
-
     if (strncmp(hashname,"Weed",4)||strlen(hashname)<5) {
       d_print((tmp=g_strdup_printf(_("Invalid effect %s in %s\n"),hashname,keymap_file)));
+      g_printerr(tmp);
       g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
+      if (keymap_file2!=NULL) {
+	// read param defaults
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+      }
+      def_modes[key-1]--;
       continue;
     }
 
@@ -589,9 +623,15 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if ((mode=weed_add_effectkey(key,whashname,TRUE))==-1) {
       // could not locate effect
       d_print((tmp=g_strdup_printf(_("Unknown effect %s in %s\n"),whashname,keymap_file)));
+      g_printerr(tmp);
       g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
+      if (keymap_file2!=NULL) {
+	// read param defaults
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+      }
+      def_modes[key-1]--;
       continue;
     }
 
@@ -599,12 +639,24 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (mode==-2){
       d_print((tmp=g_strdup_printf(_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
+      g_printerr(tmp);
       g_free(tmp);
+      if (keymap_file2!=NULL) {
+	// read param defaults
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+      }
+      def_modes[key-1]--;
       continue;
     }
     if (mode==-3){
       d_print((tmp=g_strdup_printf(_("Too many effects bound to key %d.\n"),key)));
+      g_printerr(tmp);
       g_free(tmp);
+      if (keymap_file2!=NULL) {
+	// read param defaults
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+      }
+      def_modes[key-1]--;
       continue;
     }
     if (rte_window!=NULL) {
@@ -613,17 +665,9 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       type_label_set_text(key-1,mode);
     }
 
-
     if (keymap_file2!=NULL) {
       // read param defaults
-      bytes=read(kfd,&nparams,sizint);
-      if (bytes<sizint) {
-	eof=TRUE;
-	break;
-      }
-      if (nparams>0) {
-	read_key_defaults(kfd,nparams,key-1,def_modes[key-1],version);
-      }
+      if (!read_perkey_defaults(kfd,key-1,def_modes[key-1],version)) break;
     }
   }
 

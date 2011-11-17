@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-16 16:14-0300\n"
+"POT-Creation-Date: 2011-11-16 22:04-0300\n"
 "PO-Revision-Date: 2011-08-18 12:00+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -5112,17 +5112,17 @@ msgstr "Controles do Volume de Áudio"
 msgid "unknown"
 msgstr "desconhecido"
 
-#: src/effects-weed.c:2921
+#: src/effects-weed.c:2936
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Erro: plugin %s não tem a função weed_setup().\n"
 
-#: src/effects-weed.c:2935
+#: src/effects-weed.c:2950
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3013
+#: src/effects-weed.c:3028
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5131,32 +5131,32 @@ msgstr ""
 "Info: Impossível carregar plugin %s\n"
 "Erro: %s\n"
 
-#: src/effects-weed.c:3163
+#: src/effects-weed.c:3178
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Carregado %d filtros de Weed com sucesso\n"
 
-#: src/effects-weed.c:3868
+#: src/effects-weed.c:3883
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Falha ao iniciar instância %s, erro %d\n"
 
-#: src/effects-weed.c:3906
+#: src/effects-weed.c:3921
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Impossível iniciar gerador %s\n"
 
-#: src/effects-weed.c:4433
+#: src/effects-weed.c:4448
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Falha ao iniciar gerador %s\n"
 
-#: src/effects-weed.c:4493
+#: src/effects-weed.c:4508
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Falha ao iniciar gerador %s, erro %d\n"
 
-#: src/effects-weed.c:5535
+#: src/effects-weed.c:5550
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -5265,7 +5265,7 @@ msgstr ""
 msgid "Set as default"
 msgstr "Definir como padrão"
 
-#: src/paramwindow.c:905 src/rte_window.c:1316 src/omc-learn.c:1365
+#: src/paramwindow.c:905 src/rte_window.c:1351 src/omc-learn.c:1365
 msgid "Close _window"
 msgstr "Fechar janela [_W]"
 
@@ -7628,7 +7628,7 @@ msgstr "Desordenando frames"
 msgid "resampling error..."
 msgstr "erro de sampling..."
 
-#: src/rte_window.c:65 src/rte_window.c:727
+#: src/rte_window.c:65 src/rte_window.c:762
 #, c-format
 msgid "Type: %s"
 msgstr "Tipo: %s"
@@ -7761,12 +7761,12 @@ msgstr ""
 msgid "Loading generator default sizes from %s..."
 msgstr "Carregando tamanhos padrão no gerador de %s..."
 
-#: src/rte_window.c:419
+#: src/rte_window.c:438
 #, c-format
 msgid "Loading default keymap from %s..."
 msgstr "Carregando mapa de teclado padrão de %s..."
 
-#: src/rte_window.c:433
+#: src/rte_window.c:452
 #, c-format
 msgid ""
 "\n"
@@ -7781,27 +7781,27 @@ msgstr ""
 "%s\n"
 "Erro %d\n"
 
-#: src/rte_window.c:488
+#: src/rte_window.c:507
 #, c-format
 msgid "Invalid line %d in %s\n"
 msgstr "Linha inválida %d em %s\n"
 
-#: src/rte_window.c:568
+#: src/rte_window.c:587
 #, c-format
 msgid "Invalid key %d in %s\n"
 msgstr "Chave inválida %d em %s\n"
 
-#: src/rte_window.c:579
+#: src/rte_window.c:601
 #, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr "Efeito inválido %s em %s\n"
 
-#: src/rte_window.c:591
+#: src/rte_window.c:618
 #, c-format
 msgid "Unknown effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:601
+#: src/rte_window.c:633
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key "
@@ -7810,16 +7810,16 @@ msgstr ""
 "Esta versão de LiVES não pode misturar geradores/não-geradores na mesma "
 "tecla (%d) !\n"
 
-#: src/rte_window.c:606
+#: src/rte_window.c:643
 #, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr "Muitos efeitos ligados à tecla %d.\n"
 
-#: src/rte_window.c:637
+#: src/rte_window.c:672
 msgid "update required.\n"
 msgstr "atualização requerida.\n"
 
-#: src/rte_window.c:652
+#: src/rte_window.c:687
 msgid ""
 "\n"
 "\n"
@@ -7831,40 +7831,40 @@ msgstr ""
 "Alguns efeitos não puderam ser localizados.\n"
 "\n"
 
-#: src/rte_window.c:700
+#: src/rte_window.c:735
 msgid "No Description"
 msgstr "Sem descrição"
 
-#: src/rte_window.c:705
+#: src/rte_window.c:740
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr "LiVES: Informação para %s"
 
-#: src/rte_window.c:719
+#: src/rte_window.c:754
 #, c-format
 msgid "Effect name: %s"
 msgstr "Nome do efeito: %s"
 
-#: src/rte_window.c:735
+#: src/rte_window.c:770
 #, c-format
 msgid "Plugin name: %s"
 msgstr "Nome do plugin: %s"
 
-#: src/rte_window.c:743
+#: src/rte_window.c:778
 #, c-format
 msgid "Author: %s"
 msgstr "Autor: %s"
 
-#: src/rte_window.c:751
+#: src/rte_window.c:786
 #, c-format
 msgid "Version: %d"
 msgstr "Versão: %d"
 
-#: src/rte_window.c:763
+#: src/rte_window.c:798
 msgid "Description: "
 msgstr "Descrição: "
 
-#: src/rte_window.c:933
+#: src/rte_window.c:968
 msgid ""
 "\n"
 "\n"
@@ -7878,65 +7878,65 @@ msgstr ""
 "tecla.\n"
 "\n"
 
-#: src/rte_window.c:978
+#: src/rte_window.c:1013
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVES não pode localizar o efeito %s.\n"
 
-#: src/rte_window.c:1064
+#: src/rte_window.c:1099
 msgid "LiVES: Real time effect mapping"
 msgstr "LiVES: Mapeamento de Efeitos em Tempo-Real"
 
-#: src/rte_window.c:1073 src/rte_window.c:1131
+#: src/rte_window.c:1108 src/rte_window.c:1166
 msgid "Key grab"
 msgstr "Pegar tecla"
 
-#: src/rte_window.c:1088
+#: src/rte_window.c:1123
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:1097
+#: src/rte_window.c:1132
 msgid "Key active"
 msgstr "Tecla ativa"
 
-#: src/rte_window.c:1136
+#: src/rte_window.c:1171
 msgid "Grab keyboard for this effect key"
 msgstr "Trave o teclado para essa tecla de efeito"
 
-#: src/rte_window.c:1155
+#: src/rte_window.c:1190
 msgid "_Clear all effects"
 msgstr "Limpar todos efeitos [_C]"
 
-#: src/rte_window.c:1174
+#: src/rte_window.c:1209
 msgid "Mode active"
 msgstr "Modo ativo"
 
-#: src/rte_window.c:1200 src/multitrack.c:7367
+#: src/rte_window.c:1235 src/multitrack.c:7367
 msgid "Info"
 msgstr "Info"
 
-#: src/rte_window.c:1201
+#: src/rte_window.c:1236
 msgid "Set Parameters"
 msgstr "Atribuir parâmetros"
 
-#: src/rte_window.c:1202
+#: src/rte_window.c:1237
 msgid "Clear"
 msgstr "Limpar"
 
-#: src/rte_window.c:1211
+#: src/rte_window.c:1246
 msgid "Effect name:"
 msgstr "Nome do efeito:"
 
-#: src/rte_window.c:1306
+#: src/rte_window.c:1341
 msgid "_Save as default keymap"
 msgstr "_Salvar como mapa de teclado padrão"
 
-#: src/rte_window.c:1311
+#: src/rte_window.c:1346
 msgid "_Load default keymap"
 msgstr "Carregar mapa de teclado padrão [_L]"
 
-#: src/rte_window.c:1564
+#: src/rte_window.c:1599
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

@@ -1482,6 +1482,7 @@ void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint row
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)vsize/(double)prefs->nfx_threads,4);
@@ -1492,7 +1493,11 @@ void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint row
 	ccparams[i].hsize=hsize;
 	ccparams[i].dest=u+dheight*i*hsize/2;
 
-	if (dheight*(i+1)>(vsize-4)) dheight=vsize-(dheight*i);
+	if (dheight*(i+1)>(vsize-4)) {
+	  dheight=vsize-(dheight*i);
+	  useme=TRUE;
+	}
+
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -1502,13 +1507,16 @@ void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint row
 	ccparams[i].out_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_rgb_to_uyvy_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_rgb_to_uyvy_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_rgb_to_uyvy_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -1557,6 +1565,7 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)vsize/(double)prefs->nfx_threads,4);
@@ -1567,7 +1576,10 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 	ccparams[i].hsize=hsize;
 	ccparams[i].dest=u+dheight*i*hsize/2;
 
-	if (dheight*(i+1)>(vsize-4)) dheight=vsize-(dheight*i);
+	if (dheight*(i+1)>(vsize-4)) {
+	  dheight=vsize-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -1577,13 +1589,16 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 	ccparams[i].out_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_rgb_to_yuyv_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_rgb_to_yuyv_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_rgb_to_yuyv_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
     for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -1630,6 +1645,7 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
+    gboolean useme=FALSE;
     int dheight;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
@@ -1641,7 +1657,10 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
 	ccparams[i].hsize=hsize;
 	ccparams[i].dest=u+dheight*i*hsize/2;
 
-	if (dheight*(i+1)>(vsize-4)) dheight=vsize-(dheight*i);
+	if (dheight*(i+1)>(vsize-4)) {
+	  dheight=vsize-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -1651,13 +1670,16 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
 	ccparams[i].out_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_bgr_to_uyvy_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_bgr_to_uyvy_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_bgr_to_uyvy_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -1708,6 +1730,7 @@ static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
+    gboolean useme=FALSE;
     int dheight;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
@@ -1719,7 +1742,10 @@ static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 	ccparams[i].hsize=hsize;
 	ccparams[i].dest=u+dheight*i*hsize/2;
 
-	if (dheight*(i+1)>(vsize-4)) dheight=vsize-(dheight*i);
+	if (dheight*(i+1)>(vsize-4)) {
+	  dheight=vsize-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -1729,13 +1755,16 @@ static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 	ccparams[i].out_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_bgr_to_yuyv_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_bgr_to_yuyv_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_bgr_to_yuyv_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -1783,6 +1812,7 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)vsize/(double)prefs->nfx_threads,4);
@@ -1793,7 +1823,10 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 	ccparams[i].hsize=hsize;
 	ccparams[i].dest=u+dheight*i*hsize;
 
-	if (dheight*(i+1)>(vsize-4)) dheight=vsize-(dheight*i);
+	if (dheight*(i+1)>(vsize-4)) {
+	  dheight=vsize-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -1804,13 +1837,16 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 	ccparams[i].out_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_rgb_to_yuv_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_rgb_to_yuv_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_rgb_to_yuv_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -1891,6 +1927,7 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)vsize/(double)prefs->nfx_threads,4);
@@ -1901,7 +1938,10 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 	ccparams[i].hsize=hsize;
 	ccparams[i].dest=u+dheight*i*hsize;
 
-	if (dheight*(i+1)>(vsize-4)) dheight=vsize-(dheight*i);
+	if (dheight*(i+1)>(vsize-4)) {
+	  dheight=vsize-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -1912,13 +1952,16 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 	ccparams[i].out_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_bgr_to_yuv_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_bgr_to_yuv_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_bgr_to_yuv_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -2233,6 +2276,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -2243,7 +2287,10 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -2253,13 +2300,16 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
 	ccparams[i].in_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_uyvy_to_rgb_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_uyvy_to_rgb_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_uyvy_to_rgb_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -2306,6 +2356,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -2316,7 +2367,10 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -2326,13 +2380,16 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
 	ccparams[i].in_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_uyvy_to_bgr_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_uyvy_to_bgr_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_uyvy_to_bgr_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -2380,6 +2437,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -2390,7 +2448,10 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -2399,13 +2460,16 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
 	ccparams[i].in_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_yuyv_to_rgb_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_yuyv_to_rgb_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_yuyv_to_rgb_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -2452,6 +2516,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -2462,7 +2527,10 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -2472,13 +2540,16 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
 	ccparams[i].in_clamped=clamped;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_yuyv_to_bgr_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_yuyv_to_bgr_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_yuyv_to_bgr_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4210,6 +4281,7 @@ static void convert_swap3_frame (guchar *src, int width, int height, int irowstr
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4220,7 +4292,10 @@ static void convert_swap3_frame (guchar *src, int width, int height, int irowstr
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4229,13 +4304,16 @@ static void convert_swap3_frame (guchar *src, int width, int height, int irowstr
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swap3_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swap3_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swap3_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4285,6 +4363,7 @@ static void convert_swap4_frame (guchar *src, int width, int height, int irowstr
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4304,13 +4383,16 @@ static void convert_swap4_frame (guchar *src, int width, int height, int irowstr
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swap4_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swap4_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swap4_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4358,6 +4440,7 @@ static void convert_swap3addpost_frame(guchar *src, int width, int height, int i
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4368,7 +4451,10 @@ static void convert_swap3addpost_frame(guchar *src, int width, int height, int i
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4377,13 +4463,16 @@ static void convert_swap3addpost_frame(guchar *src, int width, int height, int i
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swap3addpost_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swap3addpost_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swap3addpost_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4432,6 +4521,7 @@ static void convert_swap3addpre_frame(guchar *src, int width, int height, int ir
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4442,7 +4532,10 @@ static void convert_swap3addpre_frame(guchar *src, int width, int height, int ir
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4451,13 +4544,16 @@ static void convert_swap3addpre_frame(guchar *src, int width, int height, int ir
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swap3addpre_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swap3addpre_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swap3addpre_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4504,6 +4600,7 @@ static void convert_swap3postalpha_frame(guchar *src, int width, int height, int
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4514,7 +4611,10 @@ static void convert_swap3postalpha_frame(guchar *src, int width, int height, int
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4523,13 +4623,16 @@ static void convert_swap3postalpha_frame(guchar *src, int width, int height, int
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swap3postalpha_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swap3postalpha_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swap3postalpha_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4577,6 +4680,7 @@ static void convert_addpost_frame(guchar *src, int width, int height, int irowst
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4587,7 +4691,10 @@ static void convert_addpost_frame(guchar *src, int width, int height, int irowst
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4596,13 +4703,16 @@ static void convert_addpost_frame(guchar *src, int width, int height, int irowst
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swap3addpost_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swap3addpost_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swap3addpost_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4654,6 +4764,7 @@ static void convert_addpre_frame(guchar *src, int width, int height, int irowstr
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4664,7 +4775,10 @@ static void convert_addpre_frame(guchar *src, int width, int height, int irowstr
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4673,13 +4787,16 @@ static void convert_addpre_frame(guchar *src, int width, int height, int irowstr
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_addpre_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_addpre_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_addpre_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4726,6 +4843,7 @@ static void convert_swap3delpost_frame(guchar *src,int width,int height, int iro
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4736,7 +4854,10 @@ static void convert_swap3delpost_frame(guchar *src,int width,int height, int iro
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4745,13 +4866,16 @@ static void convert_swap3delpost_frame(guchar *src,int width,int height, int iro
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swap3delpost_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swap3delpost_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swap3delpost_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4796,6 +4920,7 @@ static void convert_delpost_frame(guchar *src,int width,int height, int irowstri
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4806,7 +4931,10 @@ static void convert_delpost_frame(guchar *src,int width,int height, int irowstri
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4815,13 +4943,16 @@ static void convert_delpost_frame(guchar *src,int width,int height, int irowstri
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_delpost_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_delpost_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_delpost_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4868,6 +4999,7 @@ static void convert_delpre_frame(guchar *src,int width,int height, int irowstrid
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4878,7 +5010,10 @@ static void convert_delpre_frame(guchar *src,int width,int height, int irowstrid
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4887,13 +5022,16 @@ static void convert_delpre_frame(guchar *src,int width,int height, int irowstrid
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_delpre_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_delpre_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_delpre_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -4941,6 +5079,7 @@ static void convert_delpreswap3_frame(guchar *src, int width, int height, int ir
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -4951,7 +5090,10 @@ static void convert_delpreswap3_frame(guchar *src, int width, int height, int ir
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -4960,13 +5102,16 @@ static void convert_delpreswap3_frame(guchar *src, int width, int height, int ir
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_delpreswap3_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_delpreswap3_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_delpreswap3_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -5012,6 +5157,7 @@ static void convert_swapprepost_frame (guchar *src, int width, int height, int i
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -5022,7 +5168,10 @@ static void convert_swapprepost_frame (guchar *src, int width, int height, int i
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
@@ -5034,13 +5183,16 @@ static void convert_swapprepost_frame (guchar *src, int width, int height, int i
 
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swapprepost_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swapprepost_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swapprepost_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -5109,6 +5261,7 @@ static void convert_swab_frame(guchar *src, int width, int height, guchar *dest,
   if (thread_id==-1&&prefs->nfx_threads>1) {
     int nthreads=0;
     int dheight;
+    gboolean useme=FALSE;
     lives_cc_params *ccparams=g_malloc(prefs->nfx_threads*sizeof(lives_cc_params));
 
     dheight=CEIL((double)height/(double)prefs->nfx_threads,4);
@@ -5119,20 +5272,26 @@ static void convert_swab_frame(guchar *src, int width, int height, guchar *dest,
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*width4;
 
-	if (dheight*(i+1)>(height-4)) dheight=height-(dheight*i);
+	if (dheight*(i+1)>(height-4)) {
+	  dheight=height-(dheight*i);
+	  useme=TRUE;
+	}
 	if (dheight<4) break;
 
 	ccparams[i].vsize=dheight;
 
 	ccparams[i].thread_id=i;
 	
-	pthread_create(&cthreads[i],NULL,convert_swab_frame_thread,&ccparams[i]);
-	nthreads++;
+	if (useme) convert_swab_frame_thread(&ccparams[i]);
+	else {
+	  pthread_create(&cthreads[i],NULL,convert_swab_frame_thread,&ccparams[i]);
+	  nthreads++;
+	}
       }
     }
 
-    for (i=0;i<prefs->nfx_threads;i++) {
-      if (i<nthreads) pthread_join(cthreads[i],NULL);
+    for (i=0;i<nthreads;i++) {
+      pthread_join(cthreads[i],NULL);
     }
     free(ccparams);
     return;
@@ -7763,11 +7922,13 @@ static struct SwsContext *swscale_find_context(int iwidth, int iheight,
 	swscale_ctx[i].pixfmt==pixfmt &&
 	swscale_ctx[i].flags==flags) {
       // move to front
-      w_memcpy(&tmpctx,&swscale_ctx[i],sizeof(struct _swscale_ctx));
-      for (;i>0;i--) {
-	w_memcpy(&swscale_ctx[i],&swscale_ctx[i-1],sizeof(struct _swscale_ctx));
+      if (i>0) {
+	w_memcpy(&tmpctx,&swscale_ctx[i],sizeof(struct _swscale_ctx));
+	for (;i>0;i--) {
+	  w_memcpy(&swscale_ctx[i],&swscale_ctx[i-1],sizeof(struct _swscale_ctx));
+	}
+	w_memcpy(&swscale_ctx[0],&tmpctx,sizeof(struct _swscale_ctx));
       }
-      w_memcpy(&swscale_ctx[0],&tmpctx,sizeof(struct _swscale_ctx));
       return swscale_ctx[0].ctx;
     }
 
@@ -7781,12 +7942,12 @@ static void swscale_add_context(int iwidth, int iheight, int width, int height, 
   // add at head of list
   int i;
 
-  for (i=1;i<N_SWS_CTX;i++) {
+  for (i=N_SWS_CTX-1;i>0;i--) {
     // make space by shifting up
-    if (swscale_ctx[i-1].ctx==NULL) break;
+    if (swscale_ctx[i-1].ctx==NULL) continue;
 
     // free last in list
-    if (i==N_SWS_CTX-1 && swscale_ctx[i].ctx!=NULL) 
+    if (i==N_SWS_CTX-1) 
       sws_freeContext(swscale_ctx[i].ctx);
     
     // shift up

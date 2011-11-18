@@ -17268,7 +17268,7 @@ static void **remove_nulls_from_filter_map(void **init_events, int *num_events) 
 
   else new_init_events=g_malloc((*num_events)*sizeof(void *));
   
-  for (i=0;i<*num_events;i++) if (init_events[i]!=NULL) new_init_events[j++]=init_events[i];
+  for (i=0;i<*num_events+num_nulls;i++) if (init_events[i]!=NULL) new_init_events[j++]=init_events[i];
 
   g_free(init_events);
 

@@ -72,6 +72,11 @@
 #include <mach/mach_host.h>
 #endif
 
+#ifdef USE_LIBPNG
+#include <png.h>
+#include <setjmp.h>
+#endif
+
 
 ////////////////////////////////
 capability *capable;
@@ -2977,30 +2982,194 @@ void load_preview_image(gboolean update_always) {
 
 #ifndef NO_PROG_LOAD
 
+
+#ifdef USE_LIBPNG
+static void png_row_callback(png_structp png_ptr,
+			     png_uint_32 row, int pass) {
+  sched_yield();
+}
+
+#endif
+
 static void pbsize_set(GdkPixbufLoader *pbload, gint width, gint height, gpointer ptr) {
   if (xxwidth*xxheight>0) gdk_pixbuf_loader_set_size(pbload,xxwidth,xxheight);
 }
+
 
 #endif
 
 
 
-GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint height, const gchar *img_ext, GError **gerror) {
 
-  GdkPixbuf *pixbuf;
+#ifdef USE_LIBPNG
+
+gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
+  png_structp png_ptr;
+  png_infop info_ptr;
+
+  int width, height;
+  int color_type, bit_depth;
+  int rowstrides[1];
+
+  int i;
+
+  unsigned char buff[8];
+
+  unsigned char *mem,*ptr;
+  unsigned char **row_ptrs;
+
+  size_t bsize=fread(buff,1,8,fp);
+  gboolean is_png = !png_sig_cmp(buff, 0, bsize);
+
+  float screen_gamma=2.2;
+  double file_gamma;
+
+  if (!is_png) return FALSE;
+
+  png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, 
+				      (png_voidp)NULL, NULL, NULL);
+  
+  if (!png_ptr) return FALSE;
+  
+  info_ptr = png_create_info_struct(png_ptr);
+  
+  if (!info_ptr) {
+    png_destroy_read_struct(&png_ptr,
+			    (png_infopp)NULL, (png_infopp)NULL);
+    return FALSE;
+  }
+
+  
+  if (setjmp(png_jmpbuf(png_ptr)))
+    {
+      png_destroy_read_struct(&png_ptr, &info_ptr,
+			      (png_infopp)NULL);
+      return FALSE;
+    }
+  
+  png_init_io(png_ptr, fp);
+  png_set_sig_bytes(png_ptr, bsize);
+  
+  if (prog) png_set_read_status_fn(png_ptr, png_row_callback);
+
+#if PNG_LIBPNG_VER >= 10504
+  //png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);
+   png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
+#else
+   png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
+#endif
+  
+  png_read_info(png_ptr, info_ptr);
+
+  color_type = png_get_color_type(png_ptr, info_ptr);
+  bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+  
+  if (color_type == PNG_COLOR_TYPE_PALETTE)
+    png_set_palette_to_rgb(png_ptr);
+  
+  if (png_get_valid(png_ptr, info_ptr,
+		    PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
+  
+  if (color_type == PNG_COLOR_TYPE_GRAY &&
+      bit_depth < 8) png_set_expand_gray_1_2_4_to_8(png_ptr);
+ 
+  if (color_type == PNG_COLOR_TYPE_GRAY ||
+        color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+       png_set_gray_to_rgb(png_ptr);
+
+
+  if (bit_depth == 16)
+#if PNG_LIBPNG_VER >= 10504
+    png_set_scale_16(png_ptr);
+#else
+  png_set_strip_16(png_ptr);
+#endif
+
+  //png_set_expand_16();
+
+  if (color_type != PNG_COLOR_TYPE_RGB_ALPHA && 
+      color_type !=PNG_COLOR_TYPE_GRAY_ALPHA ) 
+    png_set_add_alpha(png_ptr, 255, PNG_FILLER_AFTER);
+
+  png_set_interlace_handling(png_ptr);
+
+  png_read_update_info(png_ptr, info_ptr);
+
+  width = png_get_image_width(png_ptr, info_ptr);
+  
+  height = png_get_image_height(png_ptr, info_ptr);
+  
+  *rowstrides = png_get_rowbytes(png_ptr, info_ptr);
+  
+  png_get_gAMA(png_ptr, info_ptr, &file_gamma);
+
+  mem=g_malloc(*rowstrides*height);
+  
+  ptr=mem;
+
+  row_ptrs=g_malloc(height*sizeof(unsigned char *));
+
+  for (i=0;i<height;i++) {
+    row_ptrs[i]=ptr;
+    ptr+=*rowstrides;
+  }
+
+  weed_set_int_value(layer,"width",width);
+  weed_set_int_value(layer,"height",height);
+  weed_set_int_value(layer,"rowstrides",*rowstrides);
+  weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
+
+  png_read_image(png_ptr, row_ptrs);
+
+  png_read_end(png_ptr, (png_infop)NULL);
+  
+  weed_set_voidptr_value(layer, "pixel_data", mem);
+
+  // do we need this ?
+  //if (file_gamma!=0.) {
+    //ungamma_layer(layer,file_gamma);
+  //}
+
+  g_free(row_ptrs);
+
+  png_destroy_read_struct(&png_ptr,
+			  (png_infopp)NULL, (png_infopp)NULL);
+  
+  return TRUE;
+}
+
+#endif
+
+
+static gboolean weed_layer_new_from_file_progressive(weed_plant_t *layer, 
+						     gchar *fname, gint width, 
+						     gint height, 
+						     const gchar *img_ext, 
+						     GError **gerror) {
+
+
+  GdkPixbuf *pixbuf=NULL;
+  gboolean do_not_free=TRUE;
 
 #ifndef NO_PROG_LOAD
   GdkPixbufLoader *pbload;
   guchar buff[IMG_BUFF_SIZE];
   size_t bsize;
-  int fd=open(fname,O_RDONLY);
-
-  if (fd==-1) return NULL;
+  FILE *fp=fopen(fname,"rb");
+  if (!fp) return FALSE;
 
   xxwidth=width;
   xxheight=height;
-  
-  if (!strcmp(img_ext,"png")) pbload=gdk_pixbuf_loader_new_with_type("png",gerror);
+
+  if (!strcmp(img_ext,"png")) {
+#ifdef USE_LIBPNG
+    gboolean ret=layer_from_png(fp,layer,TRUE);
+    fclose(fp);
+    return ret;
+#endif
+
+    pbload=gdk_pixbuf_loader_new_with_type("png",gerror);
+  }
   else if (!strcmp(img_ext,"jpg")) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
   else pbload=gdk_pixbuf_loader_new();
 
@@ -3009,11 +3178,11 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
                       NULL);
 
   while (1) {
-    if (!(bsize=read(fd,buff,IMG_BUFF_SIZE))) break;
+    if (!(bsize=fread(buff,1,IMG_BUFF_SIZE,fp))) break;
     sched_yield();
     if (!gdk_pixbuf_loader_write(pbload,buff,bsize,gerror)) {
-      close (fd);
-      return NULL;
+      fclose (fp);
+      return FALSE;
     }
     sched_yield();
 
@@ -3021,23 +3190,56 @@ GdkPixbuf *gdk_pixbuf_new_from_file_progressive(gchar *fname, gint width, gint h
 
   sched_yield();
 
-  close(fd);
+  fclose(fp);
 
-  if (!gdk_pixbuf_loader_close(pbload,gerror)) return NULL;
+  if (!gdk_pixbuf_loader_close(pbload,gerror)) return FALSE;
 
   pixbuf=g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
   g_object_unref(pbload);
 
 # else
 
+#ifdef USE_LIBPNG
+  {
+    gboolean ret;
+    FILE *fp=fopen(fname,"rb");
+    if (!fp) return FALSE;
+    ret=layer_from_png(fp,layer,FALSE);
+    fclose(fp);
+    return ret;
+  }
+#endif
+
   pixbuf=gdk_pixbuf_new_from_file_at_scale(fname,width,height,FALSE,gerror);
 
 #endif
 
-  /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to hence reset it back to opaque */
-  if (gdk_pixbuf_get_has_alpha(pixbuf)) gdk_pixbuf_set_opaque(pixbuf);
+  if (*gerror!=NULL) {
+    g_error_free(*gerror);
+    pixbuf=NULL;
+  }
 
-  return pixbuf;
+  if (pixbuf==NULL) return FALSE;
+
+  if (gdk_pixbuf_get_has_alpha(pixbuf)) {
+    /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to hence reset it back to opaque */
+    gdk_pixbuf_set_opaque(pixbuf);
+    weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
+  }
+  else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+
+
+  do_not_free=pixbuf_to_layer(layer,pixbuf);
+
+  if (do_not_free) {
+    mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf);
+    mainw->free_fn=lives_free_with_check;
+  }
+  g_object_unref(pixbuf);
+  mainw->do_not_free=NULL;
+  mainw->free_fn=free;
+
+  return TRUE;
 
 }
 
@@ -3106,11 +3308,11 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
   int frame=weed_get_int_value(layer,"frame",&error);
   int clip_type;
   int *rowstrides;
-  GdkPixbuf *pixbuf=NULL;
-  gboolean do_not_free=TRUE;
   weed_plant_t *vlayer;
   void **pixel_data;
   file *sfile=NULL;
+
+  weed_set_voidptr_value(layer,"pixel_data",NULL);
 
   mainw->osc_block=TRUE;
   if (clip<0&&frame==0) clip_type=CLIP_TYPE_DISK;
@@ -3215,24 +3417,18 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	return TRUE;
       }
       else {
+	gboolean ret;
 	gchar *fname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
 
 	if (height*width==0) {
-	  pixbuf=gdk_pixbuf_new_from_file_progressive(fname,0,0,image_ext,&gerror);
+	  ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext,&gerror);
 	}
 	else {
-	  pixbuf=gdk_pixbuf_new_from_file_progressive(fname,width,height,image_ext,&gerror);
+	  ret=weed_layer_new_from_file_progressive(layer,fname,width,height,image_ext,&gerror);
 	}
 	g_free(fname);
 	mainw->osc_block=FALSE;
-	if (gerror!=NULL) {
-	  g_error_free(gerror);
-	  pixbuf=NULL;
-	}
-	if (pixbuf!=NULL) {
-	  if (gdk_pixbuf_get_has_alpha(pixbuf)) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
-	  else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
-	}
+	if (ret==FALSE) return FALSE;
       }
     }
     break;
@@ -3269,17 +3465,6 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
   }
   mainw->osc_block=FALSE;
 
-  if (pixbuf==NULL) return FALSE;
-
-  do_not_free=pixbuf_to_layer(layer,pixbuf);
-
-  if (do_not_free) {
-    mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf);
-    mainw->free_fn=lives_free_with_check;
-  }
-  g_object_unref(pixbuf);
-  mainw->do_not_free=NULL;
-  mainw->free_fn=free;
 
   // render subtitles from file
   if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {

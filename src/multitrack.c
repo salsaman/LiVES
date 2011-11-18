@@ -2759,10 +2759,10 @@ static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, 
 
   switch(err) {
   case NB_ERROR_SEL:
-    mt->nb_label=gtk_label_new(_("\n\nPlease select a block\nin the timeline by\ndouble clicking on it.\n"));
+    mt->nb_label=gtk_label_new(_("\n\nPlease select a block\nin the timeline by\right clicking on it.\n"));
     break;
   case NB_ERROR_NOEFFECT:
-    mt->nb_label=gtk_label_new(_("\n\nNo effect selected.\n"));
+    mt->nb_label=gtk_label_new(_("\n\nNo effect selected.\nDouble click on an effect to select it.\n"));
     break;
   case NB_ERROR_NOCLIP:
     mt->nb_label=gtk_label_new(_("\n\nNo clips loaded.\n"));
@@ -2784,6 +2784,40 @@ static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, 
   gtk_widget_queue_resize(mt->nb_label);
 
 }
+
+
+static void fubar(lives_mt *mt) {
+  int npch,i,error;
+  int num_in_tracks;
+  int *in_tracks;
+  void **pchainx;
+  gchar *fhash;
+
+  mt->track_index=-1;
+
+  if ((num_in_tracks=weed_leaf_num_elements(mt->init_event,"in_tracks"))>0) {
+    in_tracks=weed_get_int_array(mt->init_event,"in_tracks",&error);
+    // set track_index (for special widgets)
+    for (i=0;i<num_in_tracks;i++) {
+      if (mt->current_track==in_tracks[i]) mt->track_index=i;
+    }
+    weed_free(in_tracks);
+  }
+
+  fhash=weed_get_string_value(mt->init_event,"filter",&error);
+  mt->current_fx=weed_get_idx_for_hashname(fhash,TRUE);
+  weed_free(fhash);
+  
+  if (weed_plant_has_leaf(mt->selected_init_event,"in_parameters")&&weed_get_voidptr_value(mt->selected_init_event,"in_parameters",&error)!=NULL) {
+    npch=weed_leaf_num_elements(mt->init_event,"in_parameters");
+    pchainx=weed_get_voidptr_array(mt->init_event,"in_parameters",&error);
+    pchain=g_malloc(npch*sizeof(void *)); // because we later g_free(), must use g_malloc and not weed_malloc (althought normally weed_malloc==g_malloc)
+    for (i=0;i<npch;i++) pchain[i]=pchainx[i];
+    weed_free(pchainx);
+  }
+ }
+
+
 
 
 
@@ -2827,6 +2861,10 @@ static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint tab, gp
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
   case POLY_EFFECTS:
+    if (mt->block_selected==NULL&&mt->poly_state!=POLY_EFFECTS) {
+      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_SEL,mt);
+      return FALSE;
+    }
     if (mt->poly_state!=POLY_EFFECTS) polymorph(mt,POLY_EFFECTS);
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
@@ -2847,11 +2885,14 @@ static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint tab, gp
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
   case POLY_PARAMS:
+    // TODO *** -- allow some way to select an effect and then tab to params
     if (mt->poly_state!=POLY_PARAMS) {
       notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOEFFECT,mt);
       return FALSE;
     }
     gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    //fubar(mt);
+    //polymorph(mt,POLY_PARAMS);
     break;
   }
 
@@ -3653,7 +3694,7 @@ void mouse_mode_context(lives_mt *mt) {
   if (mt->opts.mouse_mode==MOUSE_MODE_MOVE) {
     add_context_label (mt,(_("Single click on timeline")));
     add_context_label (mt,(_("to select a frame.")));
-    add_context_label (mt,(_("Double click on timeline")));
+    add_context_label (mt,(_("Double click or right click on timeline")));
     add_context_label (mt,(_("to select a block.")));
     add_context_label (mt,(_("Clips can be dragged")));
     add_context_label (mt,(_("onto the timeline.")));
@@ -8926,41 +8967,12 @@ void add_video_track_front (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-
+ 
 void on_mt_fx_edit_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  int npch,i,error;
-  int num_in_tracks;
-  int *in_tracks;
-  void **pchainx;
-  gchar *fhash;
-
   if (mt->selected_init_event==NULL) return;
-
   mt->init_event=mt->selected_init_event;
-
-  mt->track_index=-1;
-
-  if ((num_in_tracks=weed_leaf_num_elements(mt->init_event,"in_tracks"))>0) {
-    in_tracks=weed_get_int_array(mt->init_event,"in_tracks",&error);
-    // set track_index (for special widgets)
-    for (i=0;i<num_in_tracks;i++) {
-      if (mt->current_track==in_tracks[i]) mt->track_index=i;
-    }
-    weed_free(in_tracks);
-  }
-
-  fhash=weed_get_string_value(mt->init_event,"filter",&error);
-  mt->current_fx=weed_get_idx_for_hashname(fhash,TRUE);
-  weed_free(fhash);
-  
-  if (weed_plant_has_leaf(mt->selected_init_event,"in_parameters")&&weed_get_voidptr_value(mt->selected_init_event,"in_parameters",&error)!=NULL) {
-    npch=weed_leaf_num_elements(mt->init_event,"in_parameters");
-    pchainx=weed_get_voidptr_array(mt->init_event,"in_parameters",&error);
-    pchain=g_malloc(npch*sizeof(void *)); // because we later g_free(), must use g_malloc and not weed_malloc (althought normally weed_malloc==g_malloc)
-    for (i=0;i<npch;i++) pchain[i]=pchainx[i];
-    weed_free(pchainx);
-  }
+  fubar(mt);
   polymorph(mt,POLY_PARAMS);
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
 }
@@ -17254,7 +17266,7 @@ static void **remove_nulls_from_filter_map(void **init_events, int *num_events) 
 
   if (*num_events==0) new_init_events=NULL;
 
-  else new_init_events=g_malloc(((*num_events==0)?1:*num_events)*sizeof(void *));
+  else new_init_events=g_malloc((*num_events)*sizeof(void *));
   
   for (i=0;i<*num_events;i++) if (init_events[i]!=NULL) new_init_events[j++]=init_events[i];
 

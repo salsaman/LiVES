@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-16 22:04-0300\n"
+"POT-Creation-Date: 2011-11-17 17:26-0300\n"
 "PO-Revision-Date: 2011-08-18 11:57+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Arabic <ar@li.org>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "X-Launchpad-Export-Date: 2011-08-21 20:42+0000\n"
 "X-Generator: Launchpad (build 13697)\n"
 
-#: src/main.c:111
+#: src/main.c:116
 msgid ""
 "Attention Translators !\n"
 "This message is intended for you, so please do not translate it.\n"
@@ -28,7 +28,7 @@ msgid ""
 "http://lives.sourceforge.net/TRANS-README.txt"
 msgstr ""
 
-#: src/main.c:127
+#: src/main.c:132
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
@@ -42,7 +42,7 @@ msgstr ""
 "group_id=64341&atid=507139\n"
 "سيتم إنعاش البرنامج بعد إعادة تشغيله. وشكرا\n"
 
-#: src/main.c:128
+#: src/main.c:133
 msgid ""
 "\n"
 "\n"
@@ -54,7 +54,7 @@ msgstr ""
 "عند الإبلاغ عن العثرات ، يرجى ذِكر نظام التشغيل الخاص بك ، والتوزيعة ، "
 "وإصدارة البرنامج."
 
-#: src/main.c:131
+#: src/main.c:136
 msgid ""
 "and any information shown below:\n"
 "\n"
@@ -62,7 +62,7 @@ msgstr ""
 "وأية معلومات موضحة أدناه.\n"
 "\n"
 
-#: src/main.c:135
+#: src/main.c:140
 msgid ""
 "Please install gdb and then run LiVES with the -debug option to collect more "
 "information.\n"
@@ -72,55 +72,55 @@ msgstr ""
 "المعلومات.\n"
 "\n"
 
-#: src/main.c:143
+#: src/main.c:148
 msgid "Preserving set.\n"
 msgstr "الحفاظ على ضبط\n"
 
-#: src/main.c:493
+#: src/main.c:498
 msgid "Resizing"
 msgstr "غيّر حجم"
 
-#: src/main.c:500
+#: src/main.c:505
 msgid "_Resize All Frames"
 msgstr "غيّر حجم جميع الإطارات"
 
-#: src/main.c:761
+#: src/main.c:766
 msgid "Any"
 msgstr "أيّ"
 
-#: src/main.c:762
+#: src/main.c:767
 msgid "None"
 msgstr "بدون"
 
-#: src/main.c:763
+#: src/main.c:768
 msgid "recommended"
 msgstr "مستحسن"
 
-#: src/main.c:764
+#: src/main.c:769
 msgid "disabled !"
 msgstr "معطّل !"
 
-#: src/main.c:765
+#: src/main.c:770
 msgid "**The current layout**"
 msgstr "**التخطيط الحالي**"
 
-#: src/main.c:1215
+#: src/main.c:1220
 msgid "Loading realtime effect plugins..."
 msgstr "تحميل إضافات مؤثرات الوقت الحقيقي..."
 
-#: src/main.c:1268
+#: src/main.c:1273
 msgid "Starting jack audio server..."
 msgstr "بدء خادوم جاك الصوت..."
 
-#: src/main.c:1270
+#: src/main.c:1275
 msgid "Starting jack transport server..."
 msgstr "بدء خادوم نقل جاك"
 
-#: src/main.c:1271
+#: src/main.c:1276
 msgid "Connecting to jack transport server..."
 msgstr "يتصل بخادوم نقل جاك"
 
-#: src/main.c:1298
+#: src/main.c:1303
 msgid ""
 "\n"
 "\n"
@@ -131,95 +131,95 @@ msgid ""
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 msgstr ""
 
-#: src/main.c:1322
+#: src/main.c:1327
 msgid "Starting pulse audio server..."
 msgstr "بدء خادوم بالص-اوديو..."
 
-#: src/main.c:1385
+#: src/main.c:1390
 msgid "Checking optional dependencies:"
 msgstr "التحقق من إكتشاف التبعيات"
 
-#: src/main.c:1386
+#: src/main.c:1391
 msgid "mplayer...detected..."
 msgstr "تم العثور علي mplayer"
 
-#: src/main.c:1387
+#: src/main.c:1392
 msgid "mplayer...NOT DETECTED..."
 msgstr "لم يتم العثور علي mplayer"
 
-#: src/main.c:1388
+#: src/main.c:1393
 msgid "convert...detected..."
 msgstr "تم العثور علي convert"
 
-#: src/main.c:1389
+#: src/main.c:1394
 msgid "convert...NOT DETECTED..."
 msgstr "لم يتم العثور علي convert"
 
-#: src/main.c:1390
+#: src/main.c:1395
 msgid "composite...detected..."
 msgstr "تم العثور علي composite"
 
-#: src/main.c:1391
+#: src/main.c:1396
 msgid "composite...NOT DETECTED..."
 msgstr "لم يتم العثور علي composite"
 
-#: src/main.c:1392
+#: src/main.c:1397
 msgid "sox...detected\n"
 msgstr "تم العثور على .'sox'\n"
 
-#: src/main.c:1393
+#: src/main.c:1398
 msgid "sox...NOT DETECTED\n"
 msgstr "لم يتم العثور على .'sox'\n"
 
-#: src/main.c:1394
+#: src/main.c:1399
 msgid "cdda2wav...detected..."
 msgstr "إكتشاف...'cdda2wav'..."
 
-#: src/main.c:1395
+#: src/main.c:1400
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "عدم إكتشاف...'cdda2wav'..."
 
-#: src/main.c:1396
+#: src/main.c:1401
 msgid "jackd...detected..."
 msgstr "إكتشاف ...جاك..."
 
-#: src/main.c:1397
+#: src/main.c:1402
 msgid "jackd...NOT DETECTED..."
 msgstr "عدم إكتشاف ...جاك..."
 
-#: src/main.c:1398
+#: src/main.c:1403
 msgid "pulse audio...detected..."
 msgstr "إكتشاف ...'pulse audio'..."
 
-#: src/main.c:1399
+#: src/main.c:1404
 msgid "pulse audio...NOT DETECTED..."
 msgstr "عدم إكتشاف ...'pulse audio'..."
 
-#: src/main.c:1400
+#: src/main.c:1405
 msgid "python...detected..."
 msgstr "إكتشاف ...بايثون..."
 
-#: src/main.c:1401
+#: src/main.c:1406
 msgid "python...NOT DETECTED..."
 msgstr "عدم إكتشاف ...بايثون..."
 
-#: src/main.c:1402
+#: src/main.c:1407
 msgid "dvgrab...detected..."
 msgstr "إكتشاف ...'dvgrab'..."
 
-#: src/main.c:1403
+#: src/main.c:1408
 msgid "dvgrab...NOT DETECTED..."
 msgstr "عدم إكتشاف ...'dvgrab'..."
 
-#: src/main.c:1404
+#: src/main.c:1409
 msgid "xwininfo...detected..."
 msgstr "إكتشاف ... 'xwininfo'..."
 
-#: src/main.c:1405
+#: src/main.c:1410
 msgid "xwininfo...NOT DETECTED..."
 msgstr "عدم إكتشاف ... 'xwininfo'..."
 
-#: src/main.c:1408
+#: src/main.c:1413
 #, c-format
 msgid ""
 "\n"
@@ -230,22 +230,22 @@ msgstr ""
 "\n"
 "تقرير مدير النافذة كـ \"%s\"; "
 
-#: src/main.c:1411
+#: src/main.c:1416
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "إكتشاف عدد الشاشات %d\n"
 
-#: src/main.c:1414
+#: src/main.c:1419
 #, c-format
 msgid "Number of CPUs detected: %d\n"
 msgstr ""
 
-#: src/main.c:1417
+#: src/main.c:1422
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "مجلدات الملفات المؤقتة %s\n"
 
-#: src/main.c:1421
+#: src/main.c:1426
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -255,15 +255,15 @@ msgstr ""
 "توصيل جاك الصوت او 'pulse audio'\n"
 "العديد من ميزات الصوت لن تكون متوفرة\n"
 
-#: src/main.c:1424
+#: src/main.c:1429
 msgid "Compiled with jack support, good !\n"
 msgstr "التواصل مع جاك الصوت ، جيد !\n"
 
-#: src/main.c:1427
+#: src/main.c:1432
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "التواصل مع 'pulse audio' ، رائع !\n"
 
-#: src/main.c:1431
+#: src/main.c:1436
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -272,7 +272,7 @@ msgstr ""
 "مرحبا بك مع إصدار برنامج لايفز %s\n"
 "\n"
 
-#: src/main.c:1762
+#: src/main.c:1767
 #, c-format
 msgid ""
 "\n"
@@ -281,131 +281,131 @@ msgstr ""
 "\n"
 "جمل بدأ البرنامج: %s [المدخلات] [اسم الملف [وقت-البدأ] [الإطارات]\n"
 
-#: src/main.c:1763
+#: src/main.c:1768
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr "حيث: اسم الملف هو أسم ملف الميديا أو اسم ملف النسخ الاحتياطي\n"
 
-#: src/main.c:1764
+#: src/main.c:1769
 msgid "start_time : filename start time in seconds\n"
 msgstr "وقت-البدأ : تعريف وقت البدأ بوحدة الثانية\n"
 
-#: src/main.c:1765
+#: src/main.c:1770
 msgid "frames : maximum number of frames to open\n"
 msgstr "الإطارات : أكبر عدد ممكن لفتح الإطارات\n"
 
-#: src/main.c:1767
+#: src/main.c:1772
 msgid "opts can be:\n"
 msgstr "تستطيع الإختيار:\n"
 
-#: src/main.c:1768
+#: src/main.c:1773
 msgid "-help            : show this help text and exit\n"
 msgstr "-مساعدة : عرض مستند المساعدة وإغلاقه\n"
 
-#: src/main.c:1769
+#: src/main.c:1774
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 
-#: src/main.c:1770
+#: src/main.c:1775
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr "-المجموعة <اسم المجموعة> : تحميل تلقائى لإسم مجموعة المقاطع\n"
 
-#: src/main.c:1771
+#: src/main.c:1776
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-مجموعة غير متوفرة : عدم تحميل أى مجموعة عند البداية\n"
 
-#: src/main.c:1772
+#: src/main.c:1777
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-عدم إسترجاع : عدم إسترجاع المجموعة المعطوبة بالقوة\n"
 
-#: src/main.c:1773
+#: src/main.c:1778
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-إسترجاع : إسترجاع المجموعة المعطوبة بالقوة\n"
 
-#: src/main.c:1774
+#: src/main.c:1779
 msgid "-nothreaddialog  : avoid threaded dialogs\n"
 msgstr ""
 
-#: src/main.c:1775
+#: src/main.c:1780
 msgid "-nogui           : do not show the gui\n"
 msgstr "-عدم إستخدام الواجهة الرسومية : لا تستعرض الواجهة الرسومية\n"
 
-#: src/main.c:1776
+#: src/main.c:1781
 msgid "-nosplash        : do not show the splash window\n"
 msgstr ""
 
-#: src/main.c:1777
+#: src/main.c:1782
 msgid "-noplaywin       : do not show the play window\n"
 msgstr ""
 
-#: src/main.c:1778
+#: src/main.c:1783
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-إبدأ تشغيل محرر المقاطع : بداية تشغيل وضع محرر المقاطع\n"
 
-#: src/main.c:1779
+#: src/main.c:1784
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-إبدأ-تشغيل المسارات المتعددة : بداية تشغيل وضع المسارات المتعددة\n"
 
-#: src/main.c:1780
+#: src/main.c:1785
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
 
-#: src/main.c:1782
+#: src/main.c:1787
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr ""
 "إبدأ مكتب المنسق الخاص <منفذ> : ابدأ مكتب المنسق الخاص بالمستمع على منفذ "
 "'UDP'\n"
 
-#: src/main.c:1783
+#: src/main.c:1788
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "لا تبدأ مكتب المنسق الخاص : لا تبدأ مكتب المنسق الخاص بالمستمع\n"
 
-#: src/main.c:1785
+#: src/main.c:1790
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
 "-أوديو بلاير <ap> : إبدأ مع إختيار أوديو بلاير . <ap> يُمكن أن يكون إم بلاير "
 "'mplayer'"
 
-#: src/main.c:1787
+#: src/main.c:1792
 msgid ", pulse"
 msgstr ""
 
-#: src/main.c:1790
+#: src/main.c:1795
 msgid ", sox or jack\n"
 msgstr "، 'sox' أو جاك\n"
 
-#: src/main.c:1791
+#: src/main.c:1796
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
 
-#: src/main.c:1793
+#: src/main.c:1798
 msgid " or sox\n"
 msgstr " أو 'sox'\n"
 
-#: src/main.c:1795
+#: src/main.c:1800
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr "-مخطط الجهاز <إسم المخطط> : تحميل تلقائى لمخطط الجهاز\n"
 
-#: src/main.c:1796
+#: src/main.c:1801
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:1797
+#: src/main.c:1802
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr "- صَحّح : حاول تصحيح الأعطاب (يحتاج تثبيت 'gdb')\n"
 
-#: src/main.c:1814 src/gui.c:1062
+#: src/main.c:1819 src/gui.c:1062
 msgid "Starting GUI..."
 msgstr "بداية تشغيل الواجة الرسومية..."
 
-#: src/main.c:1824
+#: src/main.c:1829
 #, c-format
 msgid ""
 "\n"
@@ -423,7 +423,7 @@ msgstr ""
 "ربما كنت بحاجة إلى تغيير قيمة <prefix_dir> فى ملف لايفز فى مجلد الهوم الخاص "
 "بك  ~/.lives file)\n"
 
-#: src/main.c:1837
+#: src/main.c:1842
 msgid ""
 "\n"
 "LiVES was unable to write a small file to /tmp\n"
@@ -434,7 +434,7 @@ msgstr ""
 "من فضلك تأكد ان لديك تصريح الوصول للكتابة على مسار الملفات المؤقتة ثم أعد "
 "المحاولة.\n"
 
-#: src/main.c:1841
+#: src/main.c:1846
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -448,7 +448,7 @@ msgstr ""
 "من فضلك راجع ملف 'README' المرفق مع الحزمة\n"
 "قبل تشغيل برنامج لايفز.\n"
 
-#: src/main.c:1847
+#: src/main.c:1852
 #, c-format
 msgid ""
 "\n"
@@ -463,7 +463,7 @@ msgstr ""
 "\n"
 "يرجى التحقق من تصريحات هذا الملف والمجلد ثم إعادة المحاولة\n"
 
-#: src/main.c:1854
+#: src/main.c:1859
 #, c-format
 msgid ""
 "\n"
@@ -479,7 +479,7 @@ msgstr ""
 "\n"
 "يرجى التحقق من تصريحات هذا الملف والمجلد ثم إعادة المحاولة\n"
 
-#: src/main.c:1861
+#: src/main.c:1866
 #, c-format
 msgid ""
 "\n"
@@ -498,7 +498,7 @@ msgstr ""
 "%s/.lives\n"
 "ثم إعادة المحاولة\n"
 
-#: src/main.c:1868
+#: src/main.c:1873
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -516,7 +516,7 @@ msgstr ""
 "\n"
 "وشكرا\n"
 
-#: src/main.c:1872 src/dialogs.c:1263
+#: src/main.c:1877 src/dialogs.c:1263
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -526,7 +526,7 @@ msgstr ""
 "يحتاج برنامج لايفز اى من أدوات 'mplayer' أو 'sox' لآداء مهامه . يرجى تنصيب "
 "أحد هذه الأدوات ، ثم إعادة المحاولة\n"
 
-#: src/main.c:1881
+#: src/main.c:1886
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
@@ -536,7 +536,7 @@ msgstr ""
 "لم يستطيع برنامج لايفز الوصول الى الأداة 'mplayer' . ربما تحتاج تنصيب الأداة "
 "للحصول على أداء أفضل.\n"
 
-#: src/main.c:1884
+#: src/main.c:1889
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -546,7 +546,7 @@ msgstr ""
 "لم يستطيع برنامج لايفز الوصول الى الأداة 'convert' و 'image-magick' . ربما "
 "تحتاج تنصيب الأداتين للحصول على تأثيرات الإعادة.\n"
 
-#: src/main.c:1887
+#: src/main.c:1892
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -556,7 +556,7 @@ msgstr ""
 "لم يستطيع برنامج لايفز الوصول الى الأداة 'composite' و 'image-magick' . ربما "
 "تحتاج تنصيب الأداتين للحصول على تأثيرات الدمج 'merge function'\n"
 
-#: src/main.c:1890
+#: src/main.c:1895
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -566,7 +566,7 @@ msgstr ""
 "لم يستطيع برنامج لايفز الوصول الى الأداة 'sox' . بعض مميرات الصوت لن تعمل. "
 "يجب تنصيب الأداة 'sox'\n"
 
-#: src/main.c:1893
+#: src/main.c:1898
 #, c-format
 msgid ""
 "\n"
@@ -583,52 +583,52 @@ msgstr ""
 "لن تستطيع حفظ الملفات بدون هذه الأدوات\n"
 "ربما تحتاج الى تغيير القيمة <lib_dir> فى ~/.lives\n"
 
-#: src/main.c:1977
+#: src/main.c:1982
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "التحميل التلقائى للمجموعة %s..."
 
-#: src/main.c:2184
+#: src/main.c:2189
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "أوديو بلاير 'audio player' غير صالح %s\n"
 
-#: src/main.c:2291
+#: src/main.c:2296
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2295
+#: src/main.c:2300
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2298
+#: src/main.c:2303
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2304
+#: src/main.c:2309
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr ""
 
-#: src/main.c:3592
+#: src/main.c:3777
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3594
+#: src/main.c:3779
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:3812 src/main.c:3813 src/gui.c:2006 src/gui.c:2979
-#: src/saveplay.c:1747
+#: src/main.c:3997 src/main.c:3998 src/gui.c:2006 src/gui.c:2979
+#: src/saveplay.c:1746
 msgid "Play"
 msgstr "شغّل"
 
-#: src/main.c:4250
+#: src/main.c:4435
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -636,35 +636,35 @@ msgstr ""
 "لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
 "\n"
 
-#: src/main.c:4346
+#: src/main.c:4531
 #, c-format
 msgid "Closed file %s\n"
 msgstr "ملف مغلق %s\n"
 
-#: src/main.c:4512 src/gui.c:596 src/utils.c:2623 src/utils.c:2655
-#: src/saveplay.c:2708 src/multitrack.c:3828 src/multitrack.c:5339
+#: src/main.c:4697 src/gui.c:596 src/utils.c:2623 src/utils.c:2655
+#: src/saveplay.c:2707 src/multitrack.c:3828 src/multitrack.c:5339
 msgid "_Undo"
 msgstr "_تراجع"
 
-#: src/main.c:4513 src/gui.c:609 src/utils.c:2624 src/utils.c:2656
-#: src/saveplay.c:2709 src/multitrack.c:3849 src/multitrack.c:5362
+#: src/main.c:4698 src/gui.c:609 src/utils.c:2624 src/utils.c:2656
+#: src/saveplay.c:2708 src/multitrack.c:3849 src/multitrack.c:5362
 msgid "_Redo"
 msgstr "_كرّر"
 
-#: src/main.c:4539 src/interface.c:642 src/gui.c:2164 src/preferences.c:2381
+#: src/main.c:4724 src/interface.c:642 src/gui.c:2164 src/preferences.c:2381
 #: src/resample.c:1790
 msgid "Video"
 msgstr "فيديو"
 
-#: src/main.c:4540 src/interface.c:661 src/gui.c:2183
+#: src/main.c:4725 src/interface.c:661 src/gui.c:2183
 msgid "Left Audio"
 msgstr "الصوت الأيسر"
 
-#: src/main.c:4541 src/gui.c:2201
+#: src/main.c:4726 src/gui.c:2201
 msgid "Right Audio"
 msgstr "الصوت الأيمن"
 
-#: src/main.c:4586
+#: src/main.c:4771
 msgid ""
 "\n"
 "\n"
@@ -956,7 +956,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:190 src/callbacks.c:7763 src/gui.c:2982 src/gui.c:3523
-#: src/saveplay.c:1750 src/saveplay.c:2374 src/dialogs.c:847 src/dialogs.c:848
+#: src/saveplay.c:1749 src/saveplay.c:2373 src/dialogs.c:847 src/dialogs.c:848
 #: src/dialogs.c:1018 src/dialogs.c:1019 src/framedraw.c:189
 #: src/multitrack.c:6906
 msgid "Preview"
@@ -1683,8 +1683,8 @@ msgstr "الإعادة"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:1879 src/saveplay.c:1046 src/saveplay.c:1171
-#: src/saveplay.c:1233 src/saveplay.c:3051
+#: src/callbacks.c:1879 src/saveplay.c:1045 src/saveplay.c:1170
+#: src/saveplay.c:1232 src/saveplay.c:3050
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -2075,7 +2075,7 @@ msgstr ""
 msgid "Opening audio %s, type %s..."
 msgstr ""
 
-#: src/callbacks.c:5108 src/saveplay.c:346
+#: src/callbacks.c:5108 src/saveplay.c:345
 msgid "Opening audio"
 msgstr ""
 
@@ -2135,11 +2135,11 @@ msgstr ""
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:5906 src/gui.c:3744 src/saveplay.c:1889
+#: src/callbacks.c:5906 src/gui.c:3744 src/saveplay.c:1888
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:6040 src/gui.c:3505 src/saveplay.c:1890 src/plugins.c:1295
+#: src/callbacks.c:6040 src/gui.c:3505 src/saveplay.c:1889 src/plugins.c:1295
 msgid "LiVES: - Play Window"
 msgstr ""
 
@@ -2172,7 +2172,7 @@ msgstr ""
 msgid "Reversing clipboard"
 msgstr ""
 
-#: src/callbacks.c:6472 src/saveplay.c:704
+#: src/callbacks.c:6472 src/saveplay.c:703
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
@@ -3562,30 +3562,30 @@ msgstr ""
 msgid " frames ] ----------"
 msgstr ""
 
-#: src/saveplay.c:97
+#: src/saveplay.c:96
 msgid "Examining file header"
 msgstr ""
 
-#: src/saveplay.c:212 src/saveplay.c:561
+#: src/saveplay.c:211 src/saveplay.c:560
 #, c-format
 msgid "Opening %s"
 msgstr "فتح %s"
 
-#: src/saveplay.c:215
+#: src/saveplay.c:214
 #, c-format
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:223 src/saveplay.c:3039
+#: src/saveplay.c:222 src/saveplay.c:3038
 msgid " without sound"
 msgstr ""
 
-#: src/saveplay.c:281
+#: src/saveplay.c:280
 #, c-format
 msgid "Opening audio for %s"
 msgstr ""
 
-#: src/saveplay.c:441
+#: src/saveplay.c:440
 #, c-format
 msgid ""
 "\n"
@@ -3597,11 +3597,11 @@ msgid ""
 "Are you sure you wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:454
+#: src/saveplay.c:453
 msgid " - please be patient."
 msgstr ""
 
-#: src/saveplay.c:681
+#: src/saveplay.c:680
 msgid ""
 "\n"
 "\n"
@@ -3609,14 +3609,14 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/saveplay.c:684
+#: src/saveplay.c:683
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer to open this file.\n"
 msgstr ""
 
-#: src/saveplay.c:687
+#: src/saveplay.c:686
 msgid ""
 "\n"
 "\n"
@@ -3624,12 +3624,12 @@ msgid ""
 "Tools|Preferences|Decoding\n"
 msgstr ""
 
-#: src/saveplay.c:810
+#: src/saveplay.c:809
 #, c-format
 msgid "Subtitles were saved as %s\n"
 msgstr ""
 
-#: src/saveplay.c:984
+#: src/saveplay.c:983
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3637,70 +3637,70 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:1029
+#: src/saveplay.c:1028
 msgid "selection"
 msgstr "التحديد"
 
-#: src/saveplay.c:1093 src/saveplay.c:1202
+#: src/saveplay.c:1092 src/saveplay.c:1201
 msgid "Linking selection"
 msgstr ""
 
-#: src/saveplay.c:1250
+#: src/saveplay.c:1249
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:1258
+#: src/saveplay.c:1257
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1262
+#: src/saveplay.c:1261
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1391
+#: src/saveplay.c:1390
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1429
+#: src/saveplay.c:1428
 msgid "error.\n"
 msgstr ""
 
-#: src/saveplay.c:1490
+#: src/saveplay.c:1489
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1517
+#: src/saveplay.c:1516
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:1588
+#: src/saveplay.c:1587
 #, c-format
 msgid "File size was %.2fMB\n"
 msgstr ""
 
-#: src/saveplay.c:1675
+#: src/saveplay.c:1674
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1679
+#: src/saveplay.c:1678
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1682
+#: src/saveplay.c:1681
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:2515
+#: src/saveplay.c:2514
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:2521
+#: src/saveplay.c:2520
 msgid ""
 "\n"
 "\n"
@@ -3709,16 +3709,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2642
+#: src/saveplay.c:2641
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: src/saveplay.c:2737
+#: src/saveplay.c:2736
 #, c-format
 msgid "Untitled%d"
 msgstr "دون عنوان%d"
 
-#: src/saveplay.c:2854
+#: src/saveplay.c:2853
 #, c-format
 msgid ""
 "\n"
@@ -3726,68 +3726,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2866
+#: src/saveplay.c:2865
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2882
+#: src/saveplay.c:2881
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2886 src/saveplay.c:3505
+#: src/saveplay.c:2885 src/saveplay.c:3504
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2890 src/saveplay.c:3509
+#: src/saveplay.c:2889 src/saveplay.c:3508
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2893 src/saveplay.c:3512
+#: src/saveplay.c:2892 src/saveplay.c:3511
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2901
+#: src/saveplay.c:2900
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:2980
+#: src/saveplay.c:2979
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:3034
+#: src/saveplay.c:3033
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:3074
+#: src/saveplay.c:3073
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:3108
+#: src/saveplay.c:3107
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3416
+#: src/saveplay.c:3415
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3435
+#: src/saveplay.c:3434
 msgid "Restoring"
 msgstr "يسترجع"
 
-#: src/saveplay.c:3457
+#: src/saveplay.c:3456
 #, c-format
 msgid ""
 "\n"
@@ -3796,17 +3796,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3878
+#: src/saveplay.c:3877
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3882
+#: src/saveplay.c:3881
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3905
+#: src/saveplay.c:3904
 #, c-format
 msgid ""
 "\n"
@@ -3814,18 +3814,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:4022
+#: src/saveplay.c:4021
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:4035
+#: src/saveplay.c:4034
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:4037
+#: src/saveplay.c:4036
 msgid "Recovering files..."
 msgstr ""
 
@@ -4695,24 +4695,24 @@ msgstr ""
 msgid "unknown"
 msgstr "مجهول"
 
-#: src/effects-weed.c:2936
+#: src/effects-weed.c:2935
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:2950
+#: src/effects-weed.c:2949
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3028
+#: src/effects-weed.c:3027
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3178
+#: src/effects-weed.c:3177
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
@@ -4843,7 +4843,7 @@ msgstr ""
 msgid "Set as default"
 msgstr "تعينه كافتراضي"
 
-#: src/paramwindow.c:905 src/rte_window.c:1351 src/omc-learn.c:1365
+#: src/paramwindow.c:905 src/rte_window.c:1360 src/omc-learn.c:1365
 msgid "Close _window"
 msgstr "غغلق النافذة"
 
@@ -6964,7 +6964,7 @@ msgstr ""
 msgid "resampling error..."
 msgstr ""
 
-#: src/rte_window.c:65 src/rte_window.c:762
+#: src/rte_window.c:65 src/rte_window.c:771
 #, c-format
 msgid "Type: %s"
 msgstr ""
@@ -7062,12 +7062,12 @@ msgstr ""
 msgid "Loading generator default sizes from %s..."
 msgstr ""
 
-#: src/rte_window.c:438
+#: src/rte_window.c:443
 #, c-format
 msgid "Loading default keymap from %s..."
 msgstr ""
 
-#: src/rte_window.c:452
+#: src/rte_window.c:457
 #, c-format
 msgid ""
 "\n"
@@ -7077,43 +7077,43 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:507
+#: src/rte_window.c:512
 #, c-format
 msgid "Invalid line %d in %s\n"
 msgstr ""
 
-#: src/rte_window.c:587
+#: src/rte_window.c:592
 #, c-format
 msgid "Invalid key %d in %s\n"
 msgstr ""
 
-#: src/rte_window.c:601
+#: src/rte_window.c:607
 #, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:618
+#: src/rte_window.c:625
 #, c-format
 msgid "Unknown effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:633
+#: src/rte_window.c:641
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key "
 "(%d) !\n"
 msgstr ""
 
-#: src/rte_window.c:643
+#: src/rte_window.c:652
 #, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr ""
 
-#: src/rte_window.c:672
+#: src/rte_window.c:681
 msgid "update required.\n"
 msgstr ""
 
-#: src/rte_window.c:687
+#: src/rte_window.c:696
 msgid ""
 "\n"
 "\n"
@@ -7121,40 +7121,40 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:735
+#: src/rte_window.c:744
 msgid "No Description"
 msgstr "لا وصف"
 
-#: src/rte_window.c:740
+#: src/rte_window.c:749
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr ""
 
-#: src/rte_window.c:754
+#: src/rte_window.c:763
 #, c-format
 msgid "Effect name: %s"
 msgstr ""
 
-#: src/rte_window.c:770
+#: src/rte_window.c:779
 #, c-format
 msgid "Plugin name: %s"
 msgstr ""
 
-#: src/rte_window.c:778
+#: src/rte_window.c:787
 #, c-format
 msgid "Author: %s"
 msgstr ""
 
-#: src/rte_window.c:786
+#: src/rte_window.c:795
 #, c-format
 msgid "Version: %d"
 msgstr ""
 
-#: src/rte_window.c:798
+#: src/rte_window.c:807
 msgid "Description: "
 msgstr "الوصف: "
 
-#: src/rte_window.c:968
+#: src/rte_window.c:977
 msgid ""
 "\n"
 "\n"
@@ -7163,65 +7163,65 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:1013
+#: src/rte_window.c:1022
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr ""
 
-#: src/rte_window.c:1099
+#: src/rte_window.c:1108
 msgid "LiVES: Real time effect mapping"
 msgstr ""
 
-#: src/rte_window.c:1108 src/rte_window.c:1166
+#: src/rte_window.c:1117 src/rte_window.c:1175
 msgid "Key grab"
 msgstr ""
 
-#: src/rte_window.c:1123
+#: src/rte_window.c:1132
 #, c-format
 msgid "Ctrl-%d"
 msgstr ""
 
-#: src/rte_window.c:1132
+#: src/rte_window.c:1141
 msgid "Key active"
 msgstr ""
 
-#: src/rte_window.c:1171
+#: src/rte_window.c:1180
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1190
+#: src/rte_window.c:1199
 msgid "_Clear all effects"
 msgstr ""
 
-#: src/rte_window.c:1209
+#: src/rte_window.c:1218
 msgid "Mode active"
 msgstr ""
 
-#: src/rte_window.c:1235 src/multitrack.c:7367
+#: src/rte_window.c:1244 src/multitrack.c:7367
 msgid "Info"
 msgstr "معلومات"
 
-#: src/rte_window.c:1236
+#: src/rte_window.c:1245
 msgid "Set Parameters"
 msgstr ""
 
-#: src/rte_window.c:1237
+#: src/rte_window.c:1246
 msgid "Clear"
 msgstr "امح"
 
-#: src/rte_window.c:1246
+#: src/rte_window.c:1255
 msgid "Effect name:"
 msgstr ""
 
-#: src/rte_window.c:1341
+#: src/rte_window.c:1350
 msgid "_Save as default keymap"
 msgstr ""
 
-#: src/rte_window.c:1346
+#: src/rte_window.c:1355
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:1599
+#: src/rte_window.c:1608
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"
@@ -8552,11 +8552,11 @@ msgstr ""
 msgid "Started jack audio reader.\n"
 msgstr ""
 
-#: src/colourspace.c:945
+#: src/colourspace.c:959
 msgid "unclamped"
 msgstr ""
 
-#: src/colourspace.c:946
+#: src/colourspace.c:960
 msgid "clamped"
 msgstr ""
 

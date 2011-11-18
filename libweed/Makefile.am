@@ -51,7 +51,7 @@ libweed_utils_la_SOURCES = weed-utils.c
 libweed_plugin_utils_la_SOURCES = weed-plugin-utils.c
 
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
-	weed-plugin-utils.h
+	weed-plugin-utils.h weed-compat.h
 
 libweedincludedir = $(includedir)/weed
 

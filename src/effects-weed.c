@@ -1066,8 +1066,12 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   int nthreads=0;
   int error;
   gboolean got_invalid=FALSE;
+  gboolean useme=FALSE;
 
   int nchannels=weed_leaf_num_elements(inst,"out_channels");
+  int retval;
+  int minh;
+
 
   struct _procvals procvals[MAX_FX_THREADS];
   pthread_t dthreads[MAX_FX_THREADS];
@@ -1076,7 +1080,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   weed_plant_t **xchannels;
   weed_plant_t *ctmpl;
 
-  int minh;
+  void *tretval;
 
   register int i,j;
 
@@ -1105,9 +1109,12 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
       offset=dheight*j;
 
-      if ((height-offset-dheight)<dheight) dheight=height-offset;
+      if ((height-offset-dheight)<minh) {
+	dheight=height-offset;
+	useme=1;
+      }
       if ((height-offset)<minh) break;
-
+      
       weed_set_int_value(xchannels[i],"offset",offset);
       weed_set_int_value(xchannels[i],"height",dheight);
     }
@@ -1120,15 +1127,22 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     
     if (offset>=height) break;
     
-    // start a thread for processing
-    pthread_create(&dthreads[j],NULL,thread_process_func,&procvals[j]);
-    nthreads++; // actual number of threads used
+    if (!useme) {
+      // start a thread for processing
+      pthread_create(&dthreads[j],NULL,thread_process_func,&procvals[j]);
+      nthreads++; // actual number of threads used
+    }
+    else {
+      // use main thread
+      tretval=thread_process_func(&procvals[j]);
+      retval=GPOINTER_TO_INT((gpointer)tretval);
+      if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
+    }
   }
   
   // wait for threads to finish
   for (j=0;j<prefs->nfx_threads;j++) {
-    void *tretval;
-    int retval=WEED_NO_ERROR;
+    retval=WEED_NO_ERROR;
     
     if (j<nthreads) {
       pthread_join(dthreads[j],&tretval);

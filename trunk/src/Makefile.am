@@ -121,6 +121,16 @@ if HAVE_GTK_VERSION216
 gtk_def += -DHAVE_GTK_VERSION216=1
 endif
 
+if HAVE_LIBPNG
+png_LDADD=@PNG_LIBS@
+png_CFLAGS=@PNG_CFLAGS@ -DUSE_LIBPNG=1
+endif
+
+if HAVE_SWSCALE
+swscale_LDADD=@LIBSWSCALE_LIBS@
+swscale_CFLAGS=@LIBSWSCALE_CFLAGS@ -DUSE_SWSCALE=1
+endif
+
 
 if ENABLE_GIW
 giw_SOURCES=giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h
@@ -170,11 +180,11 @@ lives_exe_SOURCES = \
 	$(giw_SOURCES)
 
 lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) -lpthread $(libweed_LDADD) $(giw_LDADD) $(v4l1_LDADD) \
+	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) -lpthread $(libweed_LDADD) $(giw_LDADD) $(v4l1_LDADD) \
 	@UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) \
-	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) \
+	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 

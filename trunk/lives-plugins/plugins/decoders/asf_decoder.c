@@ -20,7 +20,14 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.0";
 #undef HAVE_AV_CONFIG_H
 #endif
 
-#include <libavcodec/avcodec.h>
+#define HAVE_AVCODEC
+
+#ifdef HAVE_SYSTEM_WEED
+#include "weed/weed-compat.h"
+#else
+#include "../../../libweed/weed-compat.h"
+#endif
+
 #include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
 
@@ -48,53 +55,6 @@ static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
 
 
 ////////////////////////////////////////////////////////////////////////////
-
-static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
- 
-  switch (pix_fmt) {
-  case PIX_FMT_RGB24:
-    return WEED_PALETTE_RGB24;
-  case PIX_FMT_BGR24:
-    return WEED_PALETTE_BGR24;
-  case PIX_FMT_RGBA:
-    return WEED_PALETTE_RGBA32;
-  case PIX_FMT_BGRA:
-    return WEED_PALETTE_BGRA32;
-  case PIX_FMT_ARGB:
-    return WEED_PALETTE_ARGB32;
-  case PIX_FMT_YUV444P:
-    return WEED_PALETTE_YUV444P;
-  case PIX_FMT_YUV422P:
-    return WEED_PALETTE_YUV422P;
-  case PIX_FMT_YUV420P:
-    return WEED_PALETTE_YUV420P;
-  case PIX_FMT_YUYV422:
-    return WEED_PALETTE_YUYV;
-  case PIX_FMT_UYVY422:
-    return WEED_PALETTE_UYVY;
-  case PIX_FMT_UYYVYY411:
-    return WEED_PALETTE_YUV411;
-  case PIX_FMT_GRAY8:
-  case PIX_FMT_Y400A:
-    return WEED_PALETTE_A8;
-  case PIX_FMT_MONOWHITE:
-  case PIX_FMT_MONOBLACK:
-    return WEED_PALETTE_A1;
-  case PIX_FMT_YUVJ422P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV422P;
-  case PIX_FMT_YUVJ444P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV444P;
-  case PIX_FMT_YUVJ420P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV420P;
-
-  default:
-    return WEED_PALETTE_END;
-  }
-}
-
 
 
 /* can enable this later to handle pix_fmt (35) - YUVA4204P */
@@ -2116,7 +2076,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   cdata->palettes=(int *)malloc(2*sizeof(int));
 
-  cdata->palettes[0]=pix_fmt_to_palette(ctx->pix_fmt,&cdata->YUV_clamping);
+  cdata->palettes[0]=avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
+						 &cdata->YUV_clamping);
   cdata->palettes[1]=WEED_PALETTE_END;
 
   if (cdata->palettes[0]==WEED_PALETTE_END) {

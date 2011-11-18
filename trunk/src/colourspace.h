@@ -133,3 +133,7 @@ const char *weed_yuv_clamping_get_name(int clamping);
 const char *weed_yuv_subspace_get_name(int subspace);
 gchar *weed_palette_get_name_full(int pal, int clamped, int subspace);
 
+
+#ifdef USE_SWSCALE
+void sws_free_context(void);
+#endif

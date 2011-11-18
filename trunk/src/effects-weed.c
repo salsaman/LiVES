@@ -1105,11 +1105,10 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
       offset=dheight*j;
 
+      if ((height-offset-dheight)<dheight) dheight=height-offset;
       if ((height-offset)<minh) break;
-      if ((height-offset-dheight)<minh) dheight=height-offset;
 
       weed_set_int_value(xchannels[i],"offset",offset);
-      if (j==prefs->nfx_threads-1) dheight=height-(dheight*j);
       weed_set_int_value(xchannels[i],"height",dheight);
     }
     
@@ -3283,8 +3282,6 @@ void weed_unload_all(void) {
 
   mainw->num_tr_applied=0;
   weed_deinit_all();
-
-
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     for (j=0;j<prefs->max_modes_per_key;j++) {

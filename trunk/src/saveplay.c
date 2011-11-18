@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <setjmp.h>
 
 #include "main.h"
 #include "callbacks.h"

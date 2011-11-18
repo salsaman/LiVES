@@ -357,6 +357,10 @@ lives_exit (void) {
 
   if (mainw->fonts_array!=NULL) g_strfreev(mainw->fonts_array);
 
+#ifdef USE_SWSCALE
+  sws_free_context();
+#endif
+
 #ifdef ENABLE_NLS
   if (trString!=NULL) g_free(trString);
 #endif

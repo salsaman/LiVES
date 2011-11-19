@@ -2682,6 +2682,7 @@ void load_start_image(gint frame) {
     weed_set_int_value(layer,"frame",frame);
 
     if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
+      int error;
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,width,height,interp);

@@ -91,7 +91,7 @@ lives_exit (void) {
       }
     }
     
-    // prevent crash in threaded dialog
+    // prevent crash in "threaded" dialog
     mainw->current_file=-1;
 
     if (!mainw->only_close) {
@@ -299,6 +299,12 @@ lives_exit (void) {
     }
 
     save_future_prefs();
+
+    // stop valgrind from complaining
+    if (mainw->preview_image!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL);
+    if (mainw->image272!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272), NULL);
+    if (mainw->image273!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273), NULL);
+
     if (mainw->sep_win&&(mainw->playing_file>-1||prefs->sepwin_type==1)) {
       threaded_dialog_spin();
       kill_play_window();
@@ -375,6 +381,7 @@ return_true                  (GtkWidget       *widget,
 			      GdkEvent        *event,
 		      	      gpointer         user_data)
 {
+  // event callback that just returns TRUE
   return TRUE;
 }
 

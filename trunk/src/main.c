@@ -2682,7 +2682,6 @@ void load_start_image(gint frame) {
     weed_set_int_value(layer,"frame",frame);
 
     if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
-      int error;
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,width,height,interp);
@@ -3019,7 +3018,7 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
   unsigned char *mem,*ptr;
   unsigned char **row_ptrs;
 
-  size_t bsize=fread(buff,1,8,fp);
+  size_t bsize=fread(buff,1,8,fp),framesize;
   gboolean is_png = !png_sig_cmp(buff, 0, bsize);
 
   float screen_gamma=2.2;
@@ -3043,6 +3042,7 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
   
   if (setjmp(png_jmpbuf(png_ptr)))
     {
+      // libpng will longjump to here on error
       png_destroy_read_struct(&png_ptr, &info_ptr,
 			      (png_infopp)NULL);
       return FALSE;
@@ -3051,17 +3051,20 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
   png_init_io(png_ptr, fp);
   png_set_sig_bytes(png_ptr, bsize);
   
+  // progressive read calls png_row_callback on each row
   if (prog) png_set_read_status_fn(png_ptr, png_row_callback);
 
 #if PNG_LIBPNG_VER >= 10504
   //png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);
-   png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
+  png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
 #else
-   png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
+  png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
 #endif
   
+  // read header info
   png_read_info(png_ptr, info_ptr);
 
+  // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
   
@@ -3094,47 +3097,52 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
 
   png_set_interlace_handling(png_ptr);
 
+
+  // read updated info with the new palette
   png_read_update_info(png_ptr, info_ptr);
 
   width = png_get_image_width(png_ptr, info_ptr);
-  
   height = png_get_image_height(png_ptr, info_ptr);
-  
   *rowstrides = png_get_rowbytes(png_ptr, info_ptr);
   
   png_get_gAMA(png_ptr, info_ptr, &file_gamma);
-
-  mem=g_malloc(*rowstrides*height);
-  
-  ptr=mem;
-
-  row_ptrs=g_malloc(height*sizeof(unsigned char *));
-
-  for (i=0;i<height;i++) {
-    row_ptrs[i]=ptr;
-    ptr+=*rowstrides;
-  }
 
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"height",height);
   weed_set_int_value(layer,"rowstrides",*rowstrides);
   weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
 
+  // here we allocate ourselves, instead of calling create_empty_pixel data - in case rowbytes is different
+
+  // some things, like swscale, expect all frames to be a multiple of 32 bytes
+  // so here we round up
+  framesize=CEIL(*rowstrides*height,32);
+
+  ptr=mem=g_malloc(framesize);
+  weed_set_voidptr_value(layer, "pixel_data", mem);
+  
+  // libpng needs pointers to each row
+  row_ptrs=g_malloc(height*sizeof(unsigned char *));
+  for (i=0;i<height;i++) {
+    row_ptrs[i]=ptr;
+    ptr+=*rowstrides;
+  }
+
+  // read in the image
   png_read_image(png_ptr, row_ptrs);
 
+  // end read
   png_read_end(png_ptr, (png_infop)NULL);
   
-  weed_set_voidptr_value(layer, "pixel_data", mem);
-
-  // do we need this ?
+  // do we need this ? maybe only when compositing
   //if (file_gamma!=0.) {
     //ungamma_layer(layer,file_gamma);
   //}
 
   g_free(row_ptrs);
 
-  png_destroy_read_struct(&png_ptr,
-			  (png_infopp)NULL, (png_infopp)NULL);
+  png_destroy_read_struct(&png_ptr, &info_ptr,
+			  (png_infopp)NULL);
   
   return TRUE;
 }

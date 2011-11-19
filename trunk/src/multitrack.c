@@ -4079,7 +4079,7 @@ static void add_aparam_menuitems(lives_mt *mt) {
   gtk_widget_show(mt->render_vid);
   gtk_widget_show(mt->render_sep);
 
-  gtk_widget_show(mt->aparam_separator);
+  //  gtk_widget_show(mt->aparam_separator);
   gtk_widget_show(mt->aparam_menuitem);
   gtk_widget_show(mt->aparam_submenu);
 
@@ -6107,20 +6107,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  menuitem = gtk_image_menu_item_new_with_mnemonic (_("_Preferences..."));
-  gtk_widget_show (menuitem);
-  gtk_container_add (GTK_CONTAINER (menuitem_menu), menuitem);
-  gtk_widget_add_accelerator (menuitem, "activate", mt->accel_group,
-                              GDK_p, GDK_CONTROL_MASK,
-                              GTK_ACCEL_VISIBLE);
-
-  image = gtk_image_new_from_stock ("gtk-preferences", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), image);
-
-  g_signal_connect (GTK_OBJECT (menuitem), "activate",
-                      G_CALLBACK (on_preferences_activate),
-                      NULL);
 
   mt->change_vals = gtk_image_menu_item_new_with_mnemonic (_("_Change width, height and audio values..."));
   gtk_widget_show (mt->change_vals);
@@ -6153,6 +6139,28 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   g_signal_connect (GTK_OBJECT (mt->capture), "activate",
                       G_CALLBACK (on_capture_activate),
                       NULL);
+
+
+  separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
+
+
+  menuitem = gtk_image_menu_item_new_with_mnemonic (_("_Preferences..."));
+  gtk_widget_show (menuitem);
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), menuitem);
+  gtk_widget_add_accelerator (menuitem, "activate", mt->accel_group,
+                              GDK_p, GDK_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
+
+  image = gtk_image_new_from_stock ("gtk-preferences", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), image);
+
+  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+                      G_CALLBACK (on_preferences_activate),
+                      NULL);
+
 
 
   // Render
@@ -6239,9 +6247,26 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
                               GDK_e, 0,
                               GTK_ACCEL_VISIBLE);
 
+  show_messages = gtk_image_menu_item_new_with_mnemonic (_("Show _Messages"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), show_messages);
+
   separator = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
   gtk_widget_set_sensitive (separator, FALSE);
+
+  mt->aparam_separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->aparam_separator);
+  gtk_widget_set_sensitive (mt->aparam_separator, FALSE);
+
+  mt->aparam_menuitem = gtk_menu_item_new_with_mnemonic (_("Audio parameters"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->aparam_menuitem);
+
+  mt->aparam_submenu=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->aparam_menuitem), mt->aparam_submenu);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(mt->aparam_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
 
   mt->view_audio = gtk_check_menu_item_new_with_mnemonic (_("Show backing _audio track"));
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->view_audio), mt->opts.show_audio);
@@ -6291,19 +6316,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
                               GDK_minus, GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  mt->aparam_separator = gtk_menu_item_new ();
-  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->aparam_separator);
-  gtk_widget_set_sensitive (mt->aparam_separator, FALSE);
-
-  mt->aparam_menuitem = gtk_menu_item_new_with_mnemonic (_("Audio parameters"));
-  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->aparam_menuitem);
-
-  mt->aparam_submenu=gtk_menu_new();
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->aparam_menuitem), mt->aparam_submenu);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mt->aparam_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
-  }
 
   separator = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
@@ -6311,9 +6323,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   view_mt_details = gtk_menu_item_new_with_mnemonic (_("Multitrack _details"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), view_mt_details);
-
-  show_messages = gtk_image_menu_item_new_with_mnemonic (_("Show _Messages"));
-  gtk_container_add (GTK_CONTAINER (menuitem_menu), show_messages);
 
 
   mt->show_layout_errors = gtk_image_menu_item_new_with_mnemonic (_("Show _Layout Errors"));
@@ -7958,6 +7967,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   g_signal_handler_block(mainw->sepwin,mainw->sepwin_cb_func);
   gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (mainw->full_screen),mainw->fs);
   gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (mainw->sepwin),mainw->sep_win);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sticky),TRUE);
   g_signal_handler_unblock(mainw->full_screen,mainw->fullscreen_cb_func);
   g_signal_handler_unblock(mainw->sepwin,mainw->sepwin_cb_func);
 
@@ -9589,6 +9599,9 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     }
     gtk_widget_hide (mainw->LiVES);
   }
+
+  gtk_widget_hide(multi->aparam_separator); // no longer used
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sticky),FALSE);
 
   if (cfile->achans==0) {
     gtk_widget_hide(multi->render_sep);

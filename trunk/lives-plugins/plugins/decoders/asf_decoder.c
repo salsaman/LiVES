@@ -22,7 +22,7 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.0";
 
 #define HAVE_AVCODEC
 
-#ifdef HAVE_SYSTEM_WEED
+#ifdef HAVE_SYSTEM_WEED_COMPAT
 #include "weed/weed-compat.h"
 #else
 #include "../../../libweed/weed-compat.h"

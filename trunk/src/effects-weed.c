@@ -1674,6 +1674,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
       set_channel_size(channel,opwidth/weed_palette_get_pixels_per_macropixel(palette),opheight,1,NULL);
 
+
       create_empty_pixel_data(channel,FALSE); // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
       // and update width and height if necessary
 

@@ -4,6 +4,8 @@ Optimise resizing for virtual clips.
 Implement letterbox mode for fullscreen playback.
 Playback start may now be triggered by joystick or MIDI.
 Implement threading for some palette conversions.
+Load pngs directly using libpng.
+Use libswscale for internal scaling if possible. 
 Fix bugs in append_audio (regression). *
 Fix undo/redo effect in multitrack (regression) *
 Set default back to "loop video to fit audio".

@@ -3925,7 +3925,7 @@ on_load_set_activate            (GtkMenuItem     *menuitem,
 
 gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   // user_data TRUE skips threaded dialog and allows use of
-  // return value to indicate error
+  // return value FALSE to indicate error
 
   gchar *com;
   gint last_file=-1,new_file=-1;
@@ -3952,17 +3952,15 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     renamew=NULL;
   }
   else {
-    gchar *setdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
-    if (!g_file_test(setdir,G_FILE_TEST_IS_DIR)) {
-      msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),mainw->set_name);
-      memset (mainw->set_name,0,1);
-      threaded_dialog_spin();
-    }
-    g_free(setdir);
     if (!check_for_lock_file(mainw->set_name,0)) {
       memset(mainw->set_name,0,1);
       d_print_failed();
       threaded_dialog_spin();
+      if (mainw->multitrack!=NULL) {
+	mainw->current_file=mainw->multitrack->render_file;
+	mt_sensitise(mainw->multitrack);
+	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+      }
       return TRUE;
     }
   }
@@ -4004,8 +4002,11 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  mainw->suppress_dprint=FALSE;
 	  too_many_files();
 	  if (mainw->multitrack!=NULL) {
+	    mainw->current_file=mainw->multitrack->render_file;
 	    polymorph(mainw->multitrack,POLY_NONE);
 	    polymorph(mainw->multitrack,POLY_CLIPS);
+	    mt_sensitise(mainw->multitrack);
+	    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 	  }
 	  return !skip_threaded_dialog;
 	}

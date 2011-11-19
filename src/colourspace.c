@@ -8035,7 +8035,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
       int flags,pixfmt;
 
       void **in_pixel_data,**out_pixel_data;
-      int irowstride,orowstride;
+      int *irowstrides,*orowstrides;
 
       gboolean store_ctx=FALSE;
 
@@ -8048,30 +8048,37 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
 
       pixfmt=weed_palette_to_avi_pix_fmt(palette,NULL);
 
-      in_pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-      irowstride=weed_get_int_value(layer,"rowstrides",&error);
+      in_pixel_data=g_malloc0(4*sizeof(void *));
+      in_pixel_data[0]=weed_get_voidptr_value(layer,"pixel_data",&error);
+      irowstrides=g_malloc0(4*sizint);
+      irowstrides[0]=weed_get_int_value(layer,"rowstrides",&error);
 
       weed_set_int_value(layer,"width",width);
       weed_set_int_value(layer,"height",height);
  
       create_empty_pixel_data(layer,FALSE);
 
-      out_pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-      orowstride=weed_get_int_value(layer,"rowstrides",&error);
+      out_pixel_data=g_malloc0(4*sizeof(void *));
+      out_pixel_data[0]=weed_get_voidptr_value(layer,"pixel_data",&error);
+      orowstrides=g_malloc0(4*sizint);
+      orowstrides[0]=weed_get_int_value(layer,"rowstrides",&error);
 
       if ((swscale=swscale_find_context(iwidth,iheight,width,height,pixfmt,flags))==NULL) {
 	swscale = sws_getContext(iwidth, iheight, pixfmt, width, height, pixfmt, flags, NULL, NULL, NULL );
 	store_ctx=TRUE;
       }
 
-      sws_scale(swscale, (const uint8_t * const*)in_pixel_data, &irowstride, 0, iheight, (uint8_t * const *)out_pixel_data, &orowstride);
+      sws_scale(swscale, (const uint8_t * const*)in_pixel_data, irowstrides, 0, iheight, (uint8_t * const *)out_pixel_data, orowstrides);
 
       if (store_ctx) swscale_add_context(iwidth,iheight,width,height,pixfmt,flags,swscale);
 
       g_free(*in_pixel_data);
-      weed_free(in_pixel_data);
+      g_free(in_pixel_data);
+      g_free(out_pixel_data);
 
-      weed_free(out_pixel_data);
+      g_free(orowstrides);
+      g_free(irowstrides);
+
       return;
     }
 #endif

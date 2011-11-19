@@ -2108,7 +2108,7 @@ void do_do_not_close_d (void) {
 
 
 void do_set_noclips_error(const char *setname) {
-  gchar *msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\n"),setname);
+  gchar *msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),setname);
   d_print (msg);
   g_free (msg);
 }

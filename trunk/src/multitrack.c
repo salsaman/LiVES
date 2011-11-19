@@ -386,28 +386,41 @@ void write_backup_layout_numbering(lives_mt *mt) {
 
 
 static void renumber_from_backup_layout_numbering(lives_mt *mt) {
-  int fd,count=1,vari,clipn,offs=0;
+  // this is used only for crash recovery
+
+  // layout_numbering simply maps our clip handles to clip numbers in the current layout
+  // we assume the order hasnt changed (it cant) and there are no gaps (we have just reloaded)
+
+  //but the numbering mayhave changed (for example we started last time in mt mode, this time in ce mode)
+
+  int fd,vari,clipn,offs;
   gdouble vard;
   gchar *aload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  gboolean isfirst=TRUE;
   char buf[256];
-
-  if (prefs->startup_interface==STARTUP_MT) count++;
 
   fd=open(aload_file,O_RDONLY);
 
   if (fd!=-1) {
     while (1) {
       if (read(fd,&clipn,sizint)==sizint) {
+	if (isfirst) offs=-clipn+1;
+	else isfirst=FALSE;
 	if (read(fd,&vard,sizdbl)==sizdbl) {
-	  lfps[count]=vard;
 
 	  if (read(fd,&vari,sizint)==sizint) {
 	    // compare the handle - assume clip ordering has not changed
-	    if (vari>256) vari=256;
+	    if (vari>255) vari=255;
 	    if (read(fd,buf,vari)==vari) {
-	      while (mainw->files[clipn+offs]!=NULL&&strcmp(mainw->files[clipn+offs]->handle,buf)) offs++;
+	      memset(buf+vari,0,1);
+	      while (mainw->files[clipn+offs]!=NULL&&strcmp(mainw->files[clipn+offs]->handle,buf)) {
+		offs++;
+	      }
 	      if (mainw->files[clipn+offs]==NULL) break;
-	      renumbered_clips[clipn+offs]=count;
+	      // got a match - index the current clip order -> clip order in layout
+	      renumbered_clips[clipn]=clipn+offs;
+	      // lfps contains the fps at the time of the crash
+	      lfps[clipn+offs]=vard;
 	    }
 	    else break;
 	  }
@@ -416,7 +429,6 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 	else break;
       }
       else break;
-      count++;
     }
 
     close(fd);
@@ -428,27 +440,19 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
 
 static void save_mt_autoback(lives_mt *mt) {
+  // auto backup of the current layout
+
+  // this is called from an idle funtion - if the specified amount of time has passed and
+  // the clip has been altered
+
   int fd;
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-  GtkWidget *dummyd;
+  // GtkWidget *dummyd;
   lives_mt_poly_state_t poly_state;
 
   mt_desensitise(mt);
 
   // flush any pending events
-  while (g_main_context_iteration(NULL,FALSE));
-
-  // create a dummy "modal" dialog -> the threaded window should be modal
-  // but it seems on some systems modality is per-thread !
-  dummyd = gtk_dialog_new ();
-  gtk_window_set_default_size(GTK_WINDOW(dummyd),0,0);
-  gtk_window_set_decorated(GTK_WINDOW(dummyd),FALSE);
-  gtk_window_set_modal (GTK_WINDOW (dummyd), TRUE);
-  gtk_window_set_keep_below (GTK_WINDOW (dummyd), TRUE);
-  gtk_window_set_transient_for (GTK_WINDOW (dummyd), GTK_WINDOW(mt->window));
-  gtk_widget_show(dummyd);
-
-  // show dummy window
   while (g_main_context_iteration(NULL,FALSE));
 
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
@@ -467,15 +471,14 @@ static void save_mt_autoback(lives_mt *mt) {
   mt_sensitise(mt);
   mt->poly_state=poly_state;
 
-  gtk_widget_destroy(dummyd);
+  mt->auto_changed=FALSE;
+  mt->auto_back_time=stime;
 
 }
 
 
 
 static gboolean mt_auto_backup(gpointer user_data) {
-  // can't use any gtk+ functions here, because of gtk+
-  // threading problems
 
   struct timeval otv;
   int64_t stime,diff;
@@ -502,8 +505,6 @@ static gboolean mt_auto_backup(gpointer user_data) {
   diff=stime-mt->auto_back_time;
   if (diff>=prefs->mt_auto_back) {
     save_mt_autoback(mt);
-    mt->auto_changed=FALSE;
-    mt->auto_back_time=stime;
   }
 
 
@@ -18188,7 +18189,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	new_clip_index=g_malloc(num_tracks*sizint);
 	new_frame_index=g_malloc(num_tracks*sizint);
 	last_valid_frame=0;
-	//#define DEBUG_MISSING_CLIPS
+	#define DEBUG_MISSING_CLIPS
 #ifdef DEBUG_MISSING_CLIPS
 	//g_print("pt zzz %d\n",num_tracks);
 #endif
@@ -18690,13 +18691,15 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     msg=g_strdup_printf(_("%d errors detected.\n"),elist_errors);
     d_print(msg);
     g_free(msg);
-
-    if (!mt->layout_prompt||do_mt_rect_prompt()) {
-      // resave with corrections/updates
-      fd=creat(eload_file,S_IRUSR|S_IWUSR);
-      save_event_list_inner(NULL,fd,event_list,NULL);
-      close(fd);
+    if (!mt->auto_reloading) {
+      if (!mt->layout_prompt||do_mt_rect_prompt()) {
+	// resave with corrections/updates
+	fd=creat(eload_file,S_IRUSR|S_IWUSR);
+	save_event_list_inner(NULL,fd,event_list,NULL);
+	close(fd);
+      }
     }
+    else d_print_failed();
   }
   else d_print_failed();
 

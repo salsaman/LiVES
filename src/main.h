@@ -731,6 +731,8 @@ void do_set_locked_warning (const gchar *setname);
 void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);
 void do_do_not_close_d (void);
+void do_set_noclips_error(const char *setname);
+
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *translated_text, gboolean has_cancel);

@@ -1878,6 +1878,11 @@ void play_file (void) {
 	  mainw->noswitch=FALSE;
 	  unblock_expose();
 	}
+	else {
+	  // this doesn't get called if we don't call resize_play_window()
+	  gtk_window_present (GTK_WINDOW (mainw->play_window));
+	  gdk_window_raise(mainw->play_window->window);
+	}
       }
     }
 

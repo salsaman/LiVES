@@ -478,7 +478,7 @@ int ripple_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   vp = sdata->vtable;
 
   /* draw refracted image. The vector table is stretched. */
-  for(y=0; y<height-1; y+=2) {
+  for(y=0; y<height-2; y+=2) {
     for(x=0; x<width; x+=2) {
       h = (int)vp[0];
       v = (int)vp[1];

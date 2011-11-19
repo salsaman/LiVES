@@ -1966,7 +1966,7 @@ static gboolean lives_startup(gpointer data) {
     prefs->startup_phase=0;
   }
 
-  if (strlen (start_file)) {
+  if (strlen (start_file)&&strcmp(start_file,"-")) {
     splash_end();
     deduce_file(start_file,start,end);
     got_files=TRUE;

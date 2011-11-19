@@ -3924,6 +3924,9 @@ on_load_set_activate            (GtkMenuItem     *menuitem,
 
 
 gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
+  // user_data TRUE skips threaded dialog and allows use of
+  // return value to indicate error
+
   gchar *com;
   gint last_file=-1,new_file=-1;
   gint current_file=mainw->current_file;
@@ -3991,34 +3994,36 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     if (orderfile==NULL) {
       // old style (pre 0.9.6)
       com=g_strdup_printf ("smogrify get_next_in_set %s %s %d",mainw->msg,mainw->set_name,getpid());
-      dummyvar=system (com);
+      system (com);
       g_free (com);
-      if ((new_file=mainw->first_free_file)==-1) {
-	if (!skip_threaded_dialog) end_threaded_dialog();
-	mainw->suppress_dprint=FALSE;
-	too_many_files();
-	polymorph(mainw->multitrack,POLY_NONE);
-	polymorph(mainw->multitrack,POLY_CLIPS);
-	return FALSE;
+
+      if (strlen (mainw->msg)>0&&(strncmp (mainw->msg,"none",4))) {
+
+	if ((new_file=mainw->first_free_file)==-1) {
+	  if (!skip_threaded_dialog) end_threaded_dialog();
+	  mainw->suppress_dprint=FALSE;
+	  too_many_files();
+	  if (mainw->multitrack!=NULL) {
+	    polymorph(mainw->multitrack,POLY_NONE);
+	    polymorph(mainw->multitrack,POLY_CLIPS);
+	  }
+	  return !skip_threaded_dialog;
+	}
+	mainw->current_file=new_file;
+	get_handle_from_info_file(new_file);
       }
-      mainw->current_file=new_file;
-      get_handle_from_info_file(new_file);
     }
     else {
       if (fgets(mainw->msg,512,orderfile)==NULL) clear_mainw_msg();
       else memset(mainw->msg+strlen(mainw->msg)-strlen("\n"),0,1);
     }
 
+
     if (strlen (mainw->msg)==0||(!strncmp (mainw->msg,"none",4))) {
       mainw->suppress_dprint=FALSE;
       if (!skip_threaded_dialog) end_threaded_dialog();
       if (orderfile!=NULL) fclose (orderfile);
-      else {
-	g_free (cfile);
-	cfile=NULL;
-	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
 
-      }
       mainw->current_file=current_file;
 
       if (last_file>0) {
@@ -4028,26 +4033,24 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       }
 
       if (clipnum==0) {
-	threaded_dialog_spin();
-	msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\n"),mainw->set_name);
+	do_set_noclips_error(mainw->set_name);
 	memset (mainw->set_name,0,1);
-	threaded_dialog_spin();
       }
       else {
 	reset_clip_menu();
 	gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
 	msg=g_strdup_printf (_ ("%d clips were recovered from set (%s).\n"),clipnum,mainw->set_name);
 	recover_layout_map(clipnum);
-	threaded_dialog_spin();
+	d_print (msg);
+	g_free (msg);
 
 #ifdef ENABLE_OSC
 	lives_osc_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED,mainw->set_name);
 #endif
 
       }
+    
       threaded_dialog_spin();
-      d_print (msg);
-      g_free (msg);
       if (mainw->multitrack==NULL) {
 	if (mainw->is_ready) {
 	  if (clipnum>0&&mainw->current_file>0) {
@@ -4103,7 +4106,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 	}
 
-	return FALSE;
+	return !skip_threaded_dialog;
       }
       mainw->current_file=new_file;
       cfile=(file *)(g_malloc(sizeof(file)));

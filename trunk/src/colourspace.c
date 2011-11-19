@@ -1491,7 +1491,7 @@ void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint row
 
 	ccparams[i].src=rgbdata+dheight*i*rowstride;
 	ccparams[i].hsize=hsize;
-	ccparams[i].dest=u+dheight*i*hsize/2;
+	ccparams[i].dest=u+dheight*i*(hsize>>1);
 
 	if (dheight*(i+1)>(vsize-4)) {
 	  dheight=vsize-(dheight*i);
@@ -1574,7 +1574,7 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
 	ccparams[i].src=rgbdata+dheight*i*rowstride;
 	ccparams[i].hsize=hsize;
-	ccparams[i].dest=u+dheight*i*hsize/2;
+	ccparams[i].dest=u+dheight*i*(hsize>>1);
 
 	if (dheight*(i+1)>(vsize-4)) {
 	  dheight=vsize-(dheight*i);
@@ -1655,7 +1655,7 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
 	ccparams[i].src=rgbdata+dheight*i*rowstride;
 	ccparams[i].hsize=hsize;
-	ccparams[i].dest=u+dheight*i*hsize/2;
+	ccparams[i].dest=u+dheight*i*(hsize>>1);
 
 	if (dheight*(i+1)>(vsize-4)) {
 	  dheight=vsize-(dheight*i);
@@ -1740,7 +1740,7 @@ static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 
 	ccparams[i].src=rgbdata+dheight*i*rowstride;
 	ccparams[i].hsize=hsize;
-	ccparams[i].dest=u+dheight*i*hsize/2;
+	ccparams[i].dest=u+dheight*i*(hsize>>1);
 
 	if (dheight*(i+1)>(vsize-4)) {
 	  dheight=vsize-(dheight*i);
@@ -2283,7 +2283,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
     for (i=0;i<prefs->nfx_threads;i++) {
       if ((dheight*i)<height) {
 
-	ccparams[i].src=src+dheight*i*width/2;
+	ccparams[i].src=src+dheight*i*(width>>1);
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
@@ -2363,7 +2363,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
     for (i=0;i<prefs->nfx_threads;i++) {
       if ((dheight*i)<height) {
 
-	ccparams[i].src=src+dheight*i*width/2;
+	ccparams[i].src=src+dheight*i*(width>>1);
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
@@ -2444,7 +2444,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
     for (i=0;i<prefs->nfx_threads;i++) {
       if ((dheight*i)<height) {
 
-	ccparams[i].src=src+dheight*i*width/2;
+	ccparams[i].src=src+dheight*i*(width>>1);
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
@@ -2523,7 +2523,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     for (i=0;i<prefs->nfx_threads;i++) {
       if ((dheight*i)<height) {
 
-	ccparams[i].src=src+dheight*i*width/2;
+	ccparams[i].src=src+dheight*i*(width>>1);
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 

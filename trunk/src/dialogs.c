@@ -2106,3 +2106,9 @@ void do_do_not_close_d (void) {
   gdk_window_raise (err_box->window);
 }
 
+
+void do_set_noclips_error(const char *setname) {
+  gchar *msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\n"),setname);
+  d_print (msg);
+  g_free (msg);
+}

@@ -1547,7 +1547,7 @@ void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, gint row
 void *convert_rgb_to_uyvy_frame_thread(void *data) {
   lives_cc_params *ccparams=(lives_cc_params *)data;
   convert_rgb_to_uyvy_frame(ccparams->src,ccparams->hsize,ccparams->vsize,ccparams->irowstrides[0],
-			    ccparams->dest,ccparams->in_alpha,ccparams->in_clamped,ccparams->thread_id);
+			    ccparams->dest,ccparams->in_alpha,ccparams->out_clamped,ccparams->thread_id);
   return NULL;
 }
 
@@ -1628,7 +1628,7 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 void *convert_rgb_to_yuyv_frame_thread(void *data) {
   lives_cc_params *ccparams=(lives_cc_params *)data;
   convert_rgb_to_yuyv_frame(ccparams->src,ccparams->hsize,ccparams->vsize,ccparams->irowstrides[0],
-			    ccparams->dest,ccparams->in_alpha,ccparams->in_clamped,ccparams->thread_id);
+			    ccparams->dest,ccparams->in_alpha,ccparams->out_clamped,ccparams->thread_id);
   return NULL;
 }
 
@@ -1709,7 +1709,7 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
 void *convert_bgr_to_uyvy_frame_thread(void *data) {
   lives_cc_params *ccparams=(lives_cc_params *)data;
   convert_bgr_to_uyvy_frame(ccparams->src,ccparams->hsize,ccparams->vsize,ccparams->irowstrides[0],
-			    ccparams->dest,ccparams->in_alpha,ccparams->in_clamped,ccparams->thread_id);
+			    ccparams->dest,ccparams->in_alpha,ccparams->out_clamped,ccparams->thread_id);
   return NULL;
 }
 
@@ -1795,7 +1795,7 @@ static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 void *convert_bgr_to_yuyv_frame_thread(void *data) {
   lives_cc_params *ccparams=(lives_cc_params *)data;
   convert_bgr_to_yuyv_frame(ccparams->src,ccparams->hsize,ccparams->vsize,ccparams->irowstrides[0],
-			    ccparams->dest,ccparams->in_alpha,ccparams->in_clamped,ccparams->thread_id);
+			    ccparams->dest,ccparams->in_alpha,ccparams->out_clamped,ccparams->thread_id);
   return NULL;
 }
 
@@ -1874,7 +1874,7 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 void *convert_rgb_to_yuv_frame_thread(void *data) {
   lives_cc_params *ccparams=(lives_cc_params *)data;
   convert_rgb_to_yuv_frame(ccparams->src,ccparams->hsize,ccparams->vsize,ccparams->irowstrides[0],
-			   ccparams->dest,ccparams->in_alpha,ccparams->out_alpha,ccparams->in_clamped,ccparams->thread_id);
+			   ccparams->dest,ccparams->in_alpha,ccparams->out_alpha,ccparams->out_clamped,ccparams->thread_id);
   return NULL;
 }
 
@@ -1989,7 +1989,7 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 void *convert_bgr_to_yuv_frame_thread(void *data) {
   lives_cc_params *ccparams=(lives_cc_params *)data;
   convert_bgr_to_yuv_frame(ccparams->src,ccparams->hsize,ccparams->vsize,ccparams->irowstrides[0],
-			   ccparams->dest,ccparams->in_alpha,ccparams->out_alpha,ccparams->in_clamped,ccparams->thread_id);
+			   ccparams->dest,ccparams->in_alpha,ccparams->out_alpha,ccparams->out_clamped,ccparams->thread_id);
   return NULL;
 }
 

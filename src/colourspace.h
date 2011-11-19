@@ -72,12 +72,13 @@ void *convert_swap3_frame_thread(void *data);
 void *convert_swap4_frame_thread(void *data);
 void *convert_swap3addpost_frame_thread(void *data);
 void *convert_swap3addpre_frame_thread(void *data);
-void *convert_swap3postalpha_frame_thread(void *data);
-void *convert_addpre_frame_thread(void *data);
 void *convert_swap3delpost_frame_thread(void *data);
-void *convert_delpost_frame_thread(void *data);
+void *convert_swap3delpre_frame_thread(void *data);
+void *convert_addpre_frame_thread(void *data);
+void *convert_addpost_frame_thread(void *data);
 void *convert_delpre_frame_thread(void *data);
-void *convert_delpreswap3_frame_thread(void *data);
+void *convert_delpost_frame_thread(void *data);
+void *convert_swap3postalpha_frame_thread(void *data);
 void *convert_swapprepost_frame_thread(void *data);
 
 void *convert_swab_frame_thread(void *data);

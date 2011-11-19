@@ -4703,9 +4703,9 @@ static void convert_addpost_frame(guchar *src, int width, int height, int irowst
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	if (useme) convert_swap3addpost_frame_thread(&ccparams[i]);
+	if (useme) convert_addpost_frame_thread(&ccparams[i]);
 	else {
-	  pthread_create(&cthreads[i],NULL,convert_swap3addpost_frame_thread,&ccparams[i]);
+	  pthread_create(&cthreads[i],NULL,convert_addpost_frame_thread,&ccparams[i]);
 	  nthreads++;
 	}
       }
@@ -5071,7 +5071,7 @@ void *convert_delpre_frame_thread(void *data) {
 }
 
 
-static void convert_delpreswap3_frame(guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest, int thread_id) {
+static void convert_swap3delpre_frame(guchar *src, int width, int height, int irowstride, int orowstride, guchar *dest, int thread_id) {
   // delete pre alpha, swap last 3
   guchar *end=src+height*irowstride;
   register int i;
@@ -5102,9 +5102,9 @@ static void convert_delpreswap3_frame(guchar *src, int width, int height, int ir
 	ccparams[i].orowstrides[0]=orowstride;
 	ccparams[i].thread_id=i;
 	
-	if (useme) convert_delpreswap3_frame_thread(&ccparams[i]);
+	if (useme) convert_swap3delpre_frame_thread(&ccparams[i]);
 	else {
-	  pthread_create(&cthreads[i],NULL,convert_delpreswap3_frame_thread,&ccparams[i]);
+	  pthread_create(&cthreads[i],NULL,convert_swap3delpre_frame_thread,&ccparams[i]);
 	  nthreads++;
 	}
       }
@@ -5140,9 +5140,9 @@ static void convert_delpreswap3_frame(guchar *src, int width, int height, int ir
 }
 
 
-void *convert_delpreswap3_frame_thread(void *data) {
+void *convert_swap3delpre_frame_thread(void *data) {
   lives_cc_params *ccparams=(lives_cc_params *)data;
-  convert_delpreswap3_frame(ccparams->src,ccparams->hsize,ccparams->vsize,ccparams->irowstrides[0],
+  convert_swap3delpre_frame(ccparams->src,ccparams->hsize,ccparams->vsize,ccparams->irowstrides[0],
 			    ccparams->orowstrides[0],ccparams->dest,ccparams->thread_id);
   return NULL;
 }
@@ -6702,7 +6702,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
       create_empty_pixel_data(layer,FALSE);
       orowstride=weed_get_int_value(layer,"rowstrides",&error);
       gudest=(guchar *)weed_get_voidptr_value(layer,"pixel_data",&error);
-      convert_delpreswap3_frame(gusrc,width,height,irowstride,orowstride,gudest,-USE_THREADS);
+      convert_swap3delpre_frame(gusrc,width,height,irowstride,orowstride,gudest,-USE_THREADS);
       break;
     case WEED_PALETTE_RGB24:
       weed_set_int_value(layer,"current_palette",outpl);

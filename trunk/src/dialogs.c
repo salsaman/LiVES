@@ -64,13 +64,6 @@ void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data)
 
 }
 
-static int progress_count;
-
-
-#define PROG_LOOP_VAL 50
-
-
-
 
 
 static void add_xlays_widget(GtkBox *box) {
@@ -447,6 +440,37 @@ static void disp_fraction(gint done, gint start, gint end, gdouble timesofar, pr
 }
 
 
+
+static int progress_count;
+
+#define PROG_LOOP_VAL 50
+
+static void progbar_pulse_or_fraction(file *sfile, int frames_done) {
+  gdouble timesofar;
+
+  if (progress_count++>=PROG_LOOP_VAL) {
+    if (frames_done<=sfile->progress_end&&sfile->progress_end>0&&!mainw->effects_paused&&
+	frames_done>0) {
+      
+      gettimeofday(&tv, NULL);
+      mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+      timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
+      
+      disp_fraction(frames_done,sfile->progress_start,sfile->progress_end,
+		    timesofar,sfile->proc_ptr);
+      progress_count=0;
+    }
+    else {
+      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(sfile->proc_ptr->progressbar));
+      progress_count=0;
+    }
+  }
+}
+
+
+
+
+
 gboolean process_one (gboolean visible) {
   gint64 new_ticks;
 
@@ -732,23 +756,7 @@ gboolean process_one (gboolean visible) {
       else {
 	if (visible&&cfile->proc_ptr->frames_done>=cfile->progress_start) {
 	  // display progress fraction or pulse bar
-	  if (cfile->proc_ptr->frames_done<=cfile->progress_end&&cfile->progress_end>0&&!mainw->effects_paused) {
-	    if (progress_count++>=PROG_LOOP_VAL) {
-	      
-	      gettimeofday(&tv, NULL);
-	      mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	      timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
-	      
-	      disp_fraction(cfile->proc_ptr->frames_done,cfile->progress_start,cfile->progress_end,timesofar,cfile->proc_ptr);
-	      progress_count=0;
-	    }
-	  }
-	  else {
-	    if (progress_count++>=PROG_LOOP_VAL) {
-	      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
-	      progress_count=0;
-	    }
-	  }
+	  progbar_pulse_or_fraction(cfile,cfile->proc_ptr->frames_done);
 	}
       }
     }
@@ -793,6 +801,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   FILE *infofile=NULL;
   gboolean finished=FALSE;
   gchar *mytext=g_strdup(text);
+
+  int frames_done;
 
   event_start=0;
   audio_start=mainw->play_start;
@@ -998,7 +1008,12 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     // else call realtime effect pass
     else {
       (*mainw->progress_fn)(FALSE);
-      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
+      // display progress fraction or pulse bar
+      if (mainw->msg!=NULL&&strlen(mainw->msg)>0&&(frames_done=atoi(mainw->msg))>0)
+	cfile->proc_ptr->frames_done=atoi(mainw->msg);
+      else
+	cfile->proc_ptr->frames_done=0;
+      progbar_pulse_or_fraction(cfile,cfile->proc_ptr->frames_done);
     }
 
 #ifdef DEBUG

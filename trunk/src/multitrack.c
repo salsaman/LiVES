@@ -430,7 +430,6 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
       }
       else break;
     }
-
     close(fd);
   }
 }
@@ -439,15 +438,16 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
 
 
-static void save_mt_autoback(lives_mt *mt) {
+static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   // auto backup of the current layout
 
   // this is called from an idle funtion - if the specified amount of time has passed and
   // the clip has been altered
 
+  struct timeval otv;
+
   int fd;
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-  // GtkWidget *dummyd;
   lives_mt_poly_state_t poly_state;
 
   mt_desensitise(mt);
@@ -472,6 +472,12 @@ static void save_mt_autoback(lives_mt *mt) {
   mt->poly_state=poly_state;
 
   mt->auto_changed=FALSE;
+
+  if (stime==0) {
+    gettimeofday(&otv, NULL);
+    stime=otv.tv_sec;
+  }
+
   mt->auto_back_time=stime;
 
 }
@@ -504,7 +510,7 @@ static gboolean mt_auto_backup(gpointer user_data) {
 
   diff=stime-mt->auto_back_time;
   if (diff>=prefs->mt_auto_back) {
-    save_mt_autoback(mt);
+    save_mt_autoback(mt,stime);
   }
 
 
@@ -565,7 +571,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
       g_free(aload_file);
       mt_init_tracks(mt,TRUE);
       remove_markers(mt->event_list);
-      save_mt_autoback(mt);
+      save_mt_autoback(mt,0);
     }
     else {
       // failed to load

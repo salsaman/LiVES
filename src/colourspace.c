@@ -34,8 +34,10 @@
 
 #ifdef USE_SWSCALE
 #include <libswscale/swscale.h>
+
+// for libweed-compat.h
 #define HAVE_AVCODEC
-#endif
+#endif // USE_SWSCALE
 
 #ifdef HAVE_SYSTEM_WEED
 #include "weed/weed.h"
@@ -44,17 +46,26 @@
 #include "weed/weed-host.h"
 
 #ifdef USE_SWSCALE
+
+#ifdef HAVE_SYSTEM_WEED_COMPAT
 #include "weed/weed-compat.h"
-#endif
 #else
+#include "../libweed/weed-compat.h"
+#endif // HAVE_SYSTEM_WEED_COMPAT
+
+#endif // USE_SWSCALE
+
+#else // HAVE_SYSTEM_WEED
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-host.h"
+
 #ifdef USE_SWSCALE
 #include "../libweed/weed-compat.h"
-#endif
-#endif
+#endif // USE_SWSCALE
+
+#endif // HAVE_SYSTEM_WEED
 
 #include "support.h"
 #include "main.h"
@@ -76,7 +87,7 @@ struct _swscale_ctx {
 
 static struct _swscale_ctx swscale_ctx[N_SWS_CTX];
 
-#endif
+#endif // USE_SWSCALE
 
 #define USE_THREADS 1
 

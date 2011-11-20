@@ -449,6 +449,10 @@ void
 on_open_activate                      (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
+
+  // OPEN A FILE
+
+
   GtkWidget *fileselection;
 
   if (mainw->multitrack!=NULL) {
@@ -4805,12 +4809,15 @@ void
 on_ok_button1_clicked                  (GtkButton       *button,
                                         gpointer         user_data)
 {
+  // FILE OPENING
+
+
+
+
   GtkWidget *filesel;
   gchar **fnames;
   int i=0;
   gchar *tmp;
-
-  // open a file
 
   if (user_data==NULL) {
     g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION((filesel=gtk_widget_get_toplevel(GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));

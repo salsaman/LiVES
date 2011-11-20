@@ -8044,6 +8044,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
   if (weed_palette_is_yuv_palette(palette)&&(palette!=WEED_PALETTE_YUV888&&palette!=WEED_PALETTE_YUVA8888)) {
     // we should always convert to unclamped values before resizing
     gint oclamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    iwidth*=weed_palette_get_pixels_per_macropixel(palette); // orig width is in macropixels
     width*=weed_palette_get_pixels_per_macropixel(palette); // desired width is in macropixels
 
     if (weed_palette_has_alpha_channel(palette)) {

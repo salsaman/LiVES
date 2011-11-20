@@ -4622,10 +4622,15 @@ render_details *create_render_details (gint type) {
 
   top_vbox = GTK_DIALOG(rdet->dialog)->vbox;
 
+
+
+
+
+
   frame = gtk_frame_new (NULL);
   gtk_widget_show (frame);
 
-  gtk_box_pack_start (GTK_BOX (top_vbox), frame, TRUE, TRUE, 0);
+  if (type!=1) gtk_box_pack_start (GTK_BOX (top_vbox), frame, TRUE, TRUE, 0);
   vbox = gtk_vbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (frame), vbox);
   

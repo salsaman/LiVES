@@ -2180,8 +2180,10 @@ if (defined($ARGV[0])) {
 		$name=&mkname($i);
 		if (-f "$curtmpdir/$name.mgk.2") {
 		    if (-f "$curtmpdir/$name$img_ext.2") {
+			unlink "$curtmpdir/$name$img_ext";
 			rename "$curtmpdir/$name.img_ext.2","$curtmpdir/$name$img_ext";
 		    }
+		    unlink "$curtmpdir/$name.mgk";
 		    rename "$curtmpdir/$name.mgk.2","$curtmpdir/$name.mgk";
 		}
 	    }
@@ -3572,6 +3574,8 @@ sub letterbox_frame {
     $xstart=int(($owidth-$iwidth)/2);
     $ystart=int(($oheight-$iheight)/2);
     
+    #must unlink first in case $to is a symlink (when saving selection)
+    unlink $to;
     system("$composite_command -compose plus -dissolve 100 -geometry $iwidth!x$iheight!+$xstart!+$ystart! $from blank.jpg $to >/dev/null 2>&1");
 
     unlink "blank.jpg";

@@ -71,11 +71,11 @@ if ($command eq "get_formats") {
    #  mp3, 2 - can encode using pcm, 3 - can encode using pcm and mp3
    # 4 - mp2, 8 - vorbis, 16 - AC3, 32 - AAC, 64 - AMR-NB, 128 - raw, 256 = wma2
 
+   print "flv|flv|1|arate=44100;22050;11025|flv|\n";
+   print "wmv2|wmv2/wma2/asf|256|arate=44100;22050;11025|wmv|\n";
    print "mjpeg|mjpg|2|none|avi|\n";
    print "ffv1|ffv1 (lossless)|2|none|avi|\n";
    print "kvcd|kvcd (experimental)|4|arate=32000;44100;48000,fps=24;25;30,aspect=352:240,hblock=16,vblock=16|mpg|\n";
-   print "flv|flv|1|arate=44100;22050;11025|flv|\n";
-   print "wmv2|wmv2/wma2/asf|256|arate=44100;22050;11025|wmv|\n";
    
    exit 0;
 }

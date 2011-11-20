@@ -2242,7 +2242,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
   }
 
   if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
-    if (!do_warning_dialog(_("\nChanging the speed will cause frames to shift some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
+    if (!do_warning_dialog(_("\nChanging the speed will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
       g_list_free_strings(mainw->xlays);
       g_list_free(mainw->xlays);
       mainw->xlays=NULL;
@@ -2256,7 +2256,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
   }
 
   if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
-    if (!do_warning_dialog(_("\nChanging the speed will cause audio to shift some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
+    if (!do_warning_dialog(_("\nChanging the speed will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
       g_list_free_strings(mainw->xlays);
       g_list_free(mainw->xlays);
       mainw->xlays=NULL;

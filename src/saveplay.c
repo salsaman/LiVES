@@ -1007,7 +1007,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
 
   if (!save_all&&!safe_symlinks) {
-    // we are saving a selection - make symlinks in tempdir
+    // we are saving a selection - make symlinks from a temporary clip
 
     if ((new_file=mainw->first_free_file)==-1) {
       too_many_files();
@@ -1113,6 +1113,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     aud_start=calc_time_from_frame (new_file,1)*nfile->arps/nfile->arate;
     aud_end=calc_time_from_frame (new_file,nfile->frames+1)*nfile->arps/nfile->arate;
     cfile->nopreview=FALSE;
+
   }
   else mainw->current_file=clip; // for encoder restns
 

@@ -2102,7 +2102,7 @@ if (defined($ARGV[0])) {
 	$resize_ext=".tmp";
 	chdir $curtmpdir;
 
-	unless ($leave_bak==1||$letterbox) {
+	unless ($leave_bak==1) {
 	    &clean_old;
 	}
 
@@ -2135,12 +2135,12 @@ if (defined($ARGV[0])) {
 			    if ($leave_bak) {
 				#letterboxing was done with resize
 				unless ($from eq $to) {
-				    `/bin/cp -f $from$img_ext $to$img_ext`;
-				    `/bin/cp -f $from.mgk $to.mgk`;
+				    `/bin/cp -f $from$img_ext $to$img_ext.2`;
+				    `/bin/cp -f $from.mgk $to.mgk.2`;
 				}
 			    }
 			    else {
-#				`/bin/cp -f $to$img_ext $to.bak`;
+				`/bin/cp -f $to$img_ext $to.bak`;
 				# make $to.mgk $to.img_ext
 				&letterbox_frame($to,abs($newwidth),abs($newheight),$owidth,$oheight);
 			    }
@@ -2164,10 +2164,31 @@ if (defined($ARGV[0])) {
 	$end=$count;
 
 	unless ($letterbox) {
+	    # mv mgk -> $img_ext
 	    &mv_mgk;
 	}
 
+	if ($letterbox&&$leave_back) {
+	    # because of potential ovewrite we made .mgk2 (resized/no letterbox) and $img_ext.2 (resized)
+	    # now copy these
+	    unless (!defined($statusfile)||$statusfile eq "") {
+		# don't want to get killed in this stage...
+		unlink $statusfile;
+	    }
+	    
+	    for ($i=$start;$i<=$end;$i++) {
+		$name=&mkname($i);
+		if (-f "$curtmpdir/$name.mgk.2") {
+		    if (-f "$curtmpdir/$name$img_ext.2") {
+			rename "$curtmpdir/$name.img_ext.2","$curtmpdir/$name$img_ext";
+		    }
+		    rename "$curtmpdir/$name.mgk.2","$curtmpdir/$name.mgk";
+		}
+	    }
+	}
+
 	if ($end<$old_end) {
+	    # remove excess frames
 	    for ($i=$end+1;$i<=$old_end;$i++) {
 		$name=&mkname($i);
 		if (-f "$curtmpdir/$name$img_ext") {

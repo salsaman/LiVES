@@ -1175,7 +1175,7 @@ get_play_times(void) {
   if (cfile->achans>0) {
     if (mainw->playing_file>-1) {
       offset_left=((mainw->playing_sel&&(prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?cfile->start-1.:mainw->audio_start-1.)/cfile->fps/cfile->total_time*allocwidth;
-      if (mainw->audio_end) {
+      if (mainw->audio_end&&!mainw->loop) {
 	offset_right=(((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?cfile->end:mainw->audio_end)/cfile->fps/cfile->total_time*allocwidth;
       }
       else {

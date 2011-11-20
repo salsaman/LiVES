@@ -1625,7 +1625,6 @@ void play_file (void) {
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
 
-  gboolean oloop=mainw->loop;
   gint current_file=mainw->current_file;
   gint audio_end=0;
 
@@ -2402,7 +2401,6 @@ void play_file (void) {
     gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
   }
 
-  mainw->loop=oloop;
   if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->mute=mute;
 
   if (!mainw->preview||!cfile->opening) {

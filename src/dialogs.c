@@ -368,6 +368,8 @@ void pump_io_chan(GIOChannel *iochan) {
   GtkTextMark *mark;
   GtkTextBuffer *optextbuf=gtk_text_view_get_buffer(mainw->optextview);
 
+  if (!iochan->is_readable) return;
+
   g_io_channel_read_to_end(iochan,&str_return,&retlen,&gerr);
 
   if (gerr!=NULL) g_error_free(gerr);

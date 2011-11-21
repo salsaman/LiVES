@@ -2033,24 +2033,30 @@ int main (int argc, char *argv[]) {
   textdomain (GETTEXT_PACKAGE);
 #endif
 
+  // force decimal point to be a "."
   putenv ("LC_NUMERIC=C");
 
   gtk_init (&argc, &argv);
 
-  //  g_log_set_always_fatal (0);
+  // don't crash on GTK+ fatals
+  g_log_set_always_fatal (0);
   theme_expected=pre_init();
 
+  // mainw->foreign is set if we are grabbing an external window
   mainw->foreign=FALSE;
   memset (start_file,0,1);
 
+  // what's my name ?
   capable->myname_full=g_find_program_in_path(argv[0]);
 
   if ((mynsize=readlink(capable->myname_full,fbuff,511))!=-1) {
+    // no. i mean, what's my real name ?
     memset(fbuff+mynsize,0,1);
     g_free(capable->myname_full);
     capable->myname_full=g_strdup(fbuff);
   }
 
+  // what's my short name (without the path) ?
   if ((myname=strrchr(capable->myname_full,'/'))==NULL) capable->myname=g_strdup(capable->myname_full);
   else capable->myname=g_strdup(++myname);
 
@@ -3634,10 +3640,13 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 
 void load_frame_image(gint frame) {
   // this is where we do the actual load/record of a playback frame
-  // it is called every 1/fps from do_processing_dialog() in dialogs.c
+  // it is called every 1/fps from do_progress_dialog() via process_one() in dialogs.c
 
   // for the multitrack window we set mainw->frame_image; this is used to display the
   // preview image
+
+
+
 
   // NOTE: we should be careful if load_frame_image() is called from anywhere inside load_frame_image()
   // e.g. by calling g_main_context_iteration() --> user presses sepwin button --> load_frame_image() is called
@@ -4136,19 +4145,37 @@ void load_frame_image(gint frame) {
       // 
       // if we want letterboxing we do this ourselves, later in code
 
-      convert_layer_palette(mainw->frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
+
+      weed_plant_t *frame_layer;
+
+      layer_palette=weed_layer_get_palette(mainw->frame_layer);
+
+      if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
+	  weed_palette_is_rgb_palette(layer_palette) && 
+	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) {
+	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
+	// so copy layer and convert, retaining original
+	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+      }
+      else frame_layer=mainw->frame_layer;
+
+      convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
       
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-      compact_rowstrides(mainw->frame_layer);
+      compact_rowstrides(frame_layer);
 
-      pd_array=weed_get_voidptr_array(mainw->frame_layer,"pixel_data",&weed_error);
+      pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error);
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 
-      if (!(*mainw->vpp->render_frame)(weed_get_int_value(mainw->frame_layer,"width",&weed_error),weed_get_int_value(mainw->frame_layer,"height",&weed_error),mainw->currticks-mainw->stream_ticks,pd_array,NULL)) {
+      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),weed_get_int_value(mainw->frame_layer,"height",&weed_error),mainw->currticks-mainw->stream_ticks,pd_array,NULL)) {
 	vid_playback_plugin_exit();
       }
       weed_free(pd_array);
+
+      if (frame_layer!=mainw->frame_layer) {
+	weed_layer_free(frame_layer);
+      }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {      
 	if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
@@ -4169,6 +4196,7 @@ void load_frame_image(gint frame) {
 	
 	return;
       }
+
     }
 
     if ((mainw->multitrack==NULL&&mainw->double_size&&(!prefs->ce_maxspect||mainw->sep_win))||
@@ -4220,7 +4248,8 @@ void load_frame_image(gint frame) {
       }
     }
 
-    if (mainw->ext_playback) {
+
+    if (mainw->ext_playback&&(!(mainw->vpp->capabilities&VPP_CAN_RESIZE)||lb_width!=0)) {
       // here we are playing through an external video playback plugin which cannot resize
       // we must resize to whatever width and height we set when we called init_screen() in the plugin
       // i.e. mainw->vpp->fwidth, mainw->vpp fheight
@@ -4228,29 +4257,37 @@ void load_frame_image(gint frame) {
       // both dimensions are in RGB(A) pixels, so we must adjust here and send 
       // macropixel size in the plugin's render_frame()
 
-      // - this is also used if we are letterboxing to fullscreen
+      // - this is also used if we are letterboxing to fullscreen with an external plugin
 
-      weed_plant_t *frame_layer;
+      weed_plant_t *frame_layer=NULL;
 
       layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
       interp=get_interp_value(prefs->pb_quality);
 
+      if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && mainw->vpp->fwidth>0 && mainw->vpp->fheight>0 && 
+	  ((mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette)<
+	   mainw->pwidth) || 
+	  (mainw->vpp->fheight/weed_palette_get_pixels_per_macropixel(layer_palette)<
+	   mainw->pheight))) {
+	// mainw->frame_layer will be downsized for the plugin but upsized for screen
+	// so copy layer and convert, retaining original
+	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+      }
+      else frame_layer=mainw->frame_layer;
+
       if ((mainw->vpp->fwidth>0&&mainw->vpp->fheight>0)&&lb_width==0) {
-	resize_layer(mainw->frame_layer,mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
+	resize_layer(frame_layer,mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
 		     mainw->vpp->fheight,interp);
       }
     
-      if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
+      if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
 	  weed_palette_is_rgb_palette(layer_palette) && 
 	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) {
 	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
 	// so copy layer and convert, retaining original
 	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
       }
-      else frame_layer=mainw->frame_layer;
-
-      convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
 
       pwidth=weed_get_int_value(frame_layer,"width",&weed_error)*
 	weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
@@ -4269,11 +4306,9 @@ void load_frame_image(gint frame) {
 			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
 			mainw->vpp->fheight);
 
-	
-
-
-	convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
       }
+
+      convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 

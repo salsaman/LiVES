@@ -2366,7 +2366,8 @@ void mt_show_current_frame(lives_mt *mt) {
 
     mainw->xwin=0;
 
-    while (g_main_context_iteration(NULL,FALSE));
+    if (mt->is_ready)
+      while (g_main_context_iteration(NULL,FALSE));
   
     mainw->sep_win=FALSE;
     add_to_playframe();
@@ -6415,7 +6416,11 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_show (about);
   gtk_container_add (GTK_CONTAINER (menuitem_menu), about);
 
-  menuitemsep = gtk_separator_menu_item_new();
+  // gtk dont like menu_item_separator in horizontal menus
+  menuitemsep = gtk_menu_item_new_with_label("|");
+
+
+
   gtk_container_add (GTK_CONTAINER(menubar), menuitemsep);
 
 
@@ -6451,7 +6456,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
 
-  menuitemsep = gtk_separator_menu_item_new();
+  menuitemsep = gtk_menu_item_new_with_label("|");
+  gtk_widget_set_sensitive(menuitemsep,FALSE);
   gtk_container_add (GTK_CONTAINER(menubar), menuitemsep);
 
 
@@ -6476,9 +6482,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
 
-  menuitemsep = gtk_separator_menu_item_new();
+  menuitemsep = gtk_menu_item_new_with_label("|");
+  gtk_widget_set_sensitive(menuitemsep,FALSE);
   gtk_container_add (GTK_CONTAINER(menubar), menuitemsep);
-
 
 
 
@@ -9593,6 +9599,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
 
   if (prefs->show_gui) {
     gtk_widget_show_all (multi->window);
+
     if (!prefs->show_recent) {
       gtk_widget_hide (multi->recent_menu);
     }
@@ -9676,8 +9683,9 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     gtk_window_maximize (GTK_WINDOW(multi->window));
   }
 
-  multi->is_ready=TRUE;
+  multi->is_ready=FALSE;
   mt_show_current_frame(multi);
+  multi->is_ready=TRUE;
 
   if (transfer_focus) gtk_window_present(GTK_WINDOW(multi->window));
 

@@ -140,7 +140,7 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
   while (nbytes>0) {
     if (nbytes<xbytes) xbytes=nbytes;
     buff=g_malloc0(xbytes);
-    audio_stream(buff,xbytes,pdriver->astream_fd);
+    if (pdriver->astream_fd!=-1) audio_stream(buff,xbytes,pdriver->astream_fd);
     pa_stream_write(pdriver->pstream,buff,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
     nbytes-=xbytes;
   }
@@ -460,14 +460,14 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     offs+=xbytes;
 	     needs_free=TRUE;
 	   }
-	   audio_stream(buffer,xbytes,pulsed->astream_fd);
+	   if (pulsed->astream_fd!=-1) audio_stream(buffer,xbytes,pulsed->astream_fd);
 	   pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:pulse_buff_free,0,PA_SEEK_RELATIVE);
 	 }
 	 else {
 	   if (pulsed->read_abuf>-1&&!pulsed->mute) {
 	     shortbuffer=g_malloc0(xbytes);
 	     sample_move_abuf_int16(shortbuffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
-	     audio_stream(shortbuffer,xbytes,pulsed->astream_fd);
+	     if (pulsed->astream_fd!=-1) audio_stream(shortbuffer,xbytes,pulsed->astream_fd);
 	     pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
 	   }
 	   else {

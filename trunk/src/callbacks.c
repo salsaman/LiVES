@@ -4003,7 +4003,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     if (orderfile==NULL) {
       // old style (pre 0.9.6)
       com=g_strdup_printf ("smogrify get_next_in_set %s %s %d",mainw->msg,mainw->set_name,getpid());
-      system (com);
+      dummyvar=system (com);
       g_free (com);
 
       if (strlen (mainw->msg)>0&&(strncmp (mainw->msg,"none",4))) {

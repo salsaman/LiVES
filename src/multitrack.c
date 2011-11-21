@@ -6418,9 +6418,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   // gtk dont like menu_item_separator in horizontal menus
   menuitemsep = gtk_menu_item_new_with_label("|");
-
-
-
+  gtk_widget_set_sensitive(menuitemsep,FALSE);
   gtk_container_add (GTK_CONTAINER(menubar), menuitemsep);
 
 
@@ -6479,13 +6477,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   mt->ins_normal_func=g_signal_connect (GTK_OBJECT (mt->ins_normal), "toggled",
 				      G_CALLBACK (on_insert_mode_changed),
 				      (gpointer)mt);
-
-
-
-  menuitemsep = gtk_menu_item_new_with_label("|");
-  gtk_widget_set_sensitive(menuitemsep,FALSE);
-  gtk_container_add (GTK_CONTAINER(menubar), menuitemsep);
-
 
 
 

@@ -1296,7 +1296,7 @@ int jack_audio_init(void) {
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
-    //jackd->astream_file=NULL;
+    jackd->astream_fd=-1;
     jackd->jackd_died=FALSE;
     gettimeofday(&jackd->last_reconnect_attempt, 0);
     jackd->num_output_channels=2;
@@ -1329,7 +1329,7 @@ int jack_audio_read_init(void) {
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
     jackd->num_calls=0;
-    //jackd->astream_file=NULL;
+    jackd->astream_fd=-1;
     jackd->jackd_died=FALSE;
     gettimeofday(&jackd->last_reconnect_attempt, 0);
     jackd->num_input_channels=2;

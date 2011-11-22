@@ -2801,6 +2801,8 @@ static void fubar(lives_mt *mt) {
   void **pchainx;
   gchar *fhash;
 
+  mt->init_event=mt->selected_init_event;
+
   mt->track_index=-1;
 
   if ((num_in_tracks=weed_leaf_num_elements(mt->init_event,"in_tracks"))>0) {
@@ -2894,13 +2896,15 @@ static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint tab, gp
     break;
   case POLY_PARAMS:
     // TODO *** -- allow some way to select an effect and then tab to params
-    if (mt->poly_state!=POLY_PARAMS) {
+    if (mt->poly_state!=POLY_PARAMS&&mt->selected_init_event==NULL) {
       notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOEFFECT,mt);
       return FALSE;
     }
     gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
-    //fubar(mt);
-    //polymorph(mt,POLY_PARAMS);
+    if (mt->selected_init_event!=NULL) {
+      fubar(mt);
+      polymorph(mt,POLY_PARAMS);
+    }
     break;
   }
 
@@ -8985,7 +8989,6 @@ void add_video_track_front (GtkMenuItem *menuitem, gpointer user_data) {
 void on_mt_fx_edit_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->selected_init_event==NULL) return;
-  mt->init_event=mt->selected_init_event;
   fubar(mt);
   polymorph(mt,POLY_PARAMS);
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);

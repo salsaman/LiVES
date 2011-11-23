@@ -432,7 +432,7 @@ on_filesel_simple_clicked (GtkButton *button, GtkEntry *entry) {
   gchar *dirname;
   gchar *fname=g_strdup(gtk_entry_get_text(entry));
   while (g_main_context_iteration(NULL,FALSE));
-  dirname=choose_file(fname,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,NULL);
+  dirname=choose_file(fname,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,NULL,NULL);
   if (dirname!=NULL) {
     g_snprintf(file_name,256,"%s",dirname);
     g_free(dirname);
@@ -873,7 +873,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
 {
   gchar *com;
   gchar *filt[]={"*.lv2",NULL};
-  gchar *proj_file=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
+  gchar *proj_file=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
   gchar *info_file;
   gchar *new_set;
   int info_fd;
@@ -1005,7 +1005,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
   }
 
   def_file=g_strdup_printf("%s.lv2",mainw->set_name);
-  proj_file=choose_file(NULL,def_file,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL);
+  proj_file=choose_file(NULL,def_file,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
   g_free(def_file);
 
   if (proj_file==NULL) return;
@@ -4930,33 +4930,6 @@ void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y,
 
 
 void
-ok_save_frame                  (GtkButton       *button,
-				gpointer         frame)
-{
-  gchar *tmp;
-
-  // save start frame
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
-  g_free(tmp);
-
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-
-  gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
-
-  if (!save_frame(mainw->current_file,GPOINTER_TO_INT (frame),file_name,-1,-1,FALSE)) return;
-
-  g_snprintf(mainw->image_dir,256,"%s",file_name);
-  get_dirname(mainw->image_dir);
-  if (prefs->save_directories) {
-    set_pref ("image_dir",(tmp=g_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
-    g_free(tmp);
-  }
-}
-
-
-
-void
 on_open_sel_ok_button_clicked                  (GtkButton       *button,
 						gpointer         user_data)
 {
@@ -5253,7 +5226,7 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_hide(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   while (g_main_context_iteration (NULL,FALSE));
 
-  save_file=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL);
+  save_file=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
 
   if (save_file==NULL) {
     gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -6434,16 +6407,20 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *subfname,*isubfname,*com,*tmp;
   lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
   gchar *lfile_name;
+  gchar *ttl;
 
   if (cfile->subt!=NULL) if (!do_existing_subs_warning()) return;
 
   // try to repaint the screen, as it may take a few seconds to get a directory listing
   while (g_main_context_iteration(NULL,FALSE));
 
+  ttl=g_strdup_printf (_("LiVES: Load subtitles from..."));
+
   if (strlen(mainw->vid_load_dir)) {
-    subfile=choose_file(mainw->vid_load_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
+    subfile=choose_file(mainw->vid_load_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,ttl,NULL);
   }
-  else subfile=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL);
+  else subfile=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,ttl,NULL);
+  g_free(ttl);
 
   if (subfile==NULL) return; // cancelled
 
@@ -6519,7 +6496,7 @@ void on_save_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_snprintf(xfname2,512,"%s",mainw->subt_save_file);
   get_basename(xfname2);
 
-  subfile=choose_file(xfname,xfname2,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL);
+  subfile=choose_file(xfname,xfname2,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
 
   if (subfile==NULL) return; // cancelled
 
@@ -8144,45 +8121,58 @@ on_hrule_set           (GtkWidget       *widget,
 }
 
 
-gboolean
-frame_context (GtkWidget *widget, GdkEventButton  *event, gpointer which) {
-  GtkWidget *fileselection;
-  gint frame;
-  gchar *compl=g_strdup_printf ("*.%s",prefs->image_ext);
-  gchar *compl_str=g_strdup_printf (_ ("Save Frame as %s..."),compl);
+
+gboolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which) {
+  //popup a context menu when we right click on a frame
+  int frame=0;
+
+  GtkWidget *save_frame_as;
+  GtkWidget *menu=gtk_menu_new();
 
   // check if a file is loaded
   if (mainw->current_file<=0) return FALSE;
 
+  if (mainw->multitrack!=NULL && mainw->multitrack->event_list!=NULL) return FALSE;
+
   // only accept right mouse clicks
+
   if (event->button!=3) return FALSE;
 
-  switch (GPOINTER_TO_INT (which)) {
-  case 1:
-    // start frame
-    frame=cfile->start;
-    break;
-  case 2:
-    // end frame
-    frame=cfile->end;
-    break;
-  default:
-    // preview frame
-    frame=mainw->preview_frame;
-    break;
+  if (mainw->multitrack==NULL) {
+    switch (GPOINTER_TO_INT (which)) {
+    case 1:
+      // start frame
+      frame=cfile->start;
+      break;
+    case 2:
+      // end frame
+      frame=cfile->end;
+      break;
+    default:
+      // preview frame
+      frame=mainw->preview_frame;
+      break;
+    }
+  }
+  
+  gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected frame"));
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  fileselection = create_fileselection (compl_str,0,NULL);
+  if (cfile->frames>0||mainw->multitrack!=NULL) {
+    save_frame_as = gtk_menu_item_new_with_mnemonic (_("_Save frame as..."));
+    g_signal_connect (GTK_OBJECT (save_frame_as), "activate",
+		      G_CALLBACK (save_frame),
+		      GINT_TO_POINTER(frame));
+    
+    gtk_container_add (GTK_CONTAINER (menu), save_frame_as);
 
-  if (strlen(mainw->image_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->image_dir);
   }
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), compl);
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (ok_save_frame),GINT_TO_POINTER (frame));
-  gtk_widget_show (fileselection);
 
-  g_free (compl);
-  g_free (compl_str);
+  gtk_widget_show_all (menu);
+  gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, event->time);
 
   return FALSE;
 }

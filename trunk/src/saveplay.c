@@ -841,6 +841,51 @@ get_handle_from_info_file(gint index) {
 
 
 
+
+void save_frame (GtkMenuItem *menuitem, gpointer user_data) {
+  int frame;
+  // save a single frame from a clip
+  gchar *filt[2];
+  gchar *ttl;
+  char *filename;
+
+  filt[0]=g_strdup_printf ("*.%s",cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+  filt[1]=NULL;
+
+  frame=GPOINTER_TO_INT(user_data);
+
+  if (frame>0)
+    ttl=g_strdup_printf (_("LiVES: Save Frame %d as..."),frame);
+
+  else
+    ttl=g_strdup (_("LiVES: Save Frame as..."));
+
+
+  filename=choose_file(strlen(mainw->image_dir)?mainw->image_dir:NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,ttl,NULL);
+
+  g_free (filt[0]);
+  g_free (ttl);
+
+  if (filename==NULL||!strlen(filename)) return;
+
+
+  if (!save_frame_inner(mainw->current_file,GPOINTER_TO_INT (frame),filename,-1,-1,FALSE)) return;
+
+  g_snprintf(mainw->image_dir,256,"%s",filename);
+  get_dirname(mainw->image_dir);
+  if (prefs->save_directories) {
+    gchar *tmp;
+    set_pref ("image_dir",(tmp=g_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
+    g_free(tmp);
+  }
+
+}
+
+
+
+
+
+
 void save_file (int clip, int start, int end, const char *filename) {
   // save clip from frame start to frame end
   file *sfile=mainw->files[clip],*nfile=NULL;
@@ -914,8 +959,9 @@ void save_file (int clip, int start, int end, const char *filename) {
   gtk_widget_show_all(hbox);
 
   if (filename==NULL) {
+    gchar *ttl=g_strdup_printf (_("LiVES: Save Clip as..."));
     do {
-      n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
+      n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,ttl,hbox);
       if (n_file_name==NULL) return;
     } while (!strlen(n_file_name));
     g_snprintf(mainw->vid_save_dir,256,"%s",n_file_name);
@@ -924,6 +970,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       set_pref ("vid_save_dir",(tmp=g_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
       g_free(tmp);
     }
+    g_free(ttl);
   }
   else n_file_name=filename;
 
@@ -980,7 +1027,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
   }
   else if (!mainw->osc_auto&&sfile->orig_file_name) {
-    gchar *warn=g_strdup(_ ("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
+    gchar *warn=g_strdup(_("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
     if (!do_warning_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
 	g_free(warn);
 	g_free(full_file_name);
@@ -1025,7 +1072,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
 
     // create new clip
-    if (!get_new_handle(new_file,g_strdup (_ ("selection")))) {
+    if (!get_new_handle(new_file,g_strdup (_("selection")))) {
       if (rdet!=NULL) {
 	g_free(rdet->encoder_name);
 	g_free(rdet);
@@ -1089,7 +1136,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->current_file=new_file;
 
     cfile->nopreview=TRUE;
-    if (!(do_progress_dialog(TRUE,TRUE,_ ("Linking selection")))) {
+    if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
       dummyvar=system (g_strdup_printf("smogrify close %s",cfile->handle));
       g_free (cfile);
       cfile=NULL;
@@ -1199,7 +1246,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->current_file=clip;
 
     cfile->nopreview=TRUE;
-    if (!(do_progress_dialog(TRUE,TRUE,_ ("Linking selection")))) {
+    if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
       com=g_strdup_printf("smogrify clear_symlinks %s",cfile->handle);
       dummyvar=system (com);
       g_free (com);
@@ -2963,7 +3010,7 @@ wait_for_stop (const gchar *stop_command) {
 }
 
 
-gboolean save_frame(gint clip, gint frame, const gchar *file_name, gint width, gint height, gboolean allow_over) {
+gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint width, gint height, gboolean allow_over) {
   // save 1 frame as an image (uses imagemagick to convert)
   // width==-1, height==-1 to use "natural" values
   gint result;

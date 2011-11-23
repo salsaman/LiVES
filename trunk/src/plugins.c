@@ -675,7 +675,7 @@ void on_vppa_save_clicked (GtkButton *button, gpointer user_data) {
   }
 
   // get filename
-  save_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL);
+  save_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
   if (save_file==NULL) return;
 
   // save

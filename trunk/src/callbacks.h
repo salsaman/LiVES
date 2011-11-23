@@ -462,12 +462,6 @@ gboolean
 frame_context           (GtkWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         which);
-
-void
-ok_save_frame                  (GtkButton       *button,
-				gpointer         frame);
-
-
 void
 on_fs_preview_clicked                  (GtkButton       *button,
                                         gpointer         user_data);

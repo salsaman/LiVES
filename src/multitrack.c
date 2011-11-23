@@ -2767,16 +2767,16 @@ static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, 
 
   switch(err) {
   case NB_ERROR_SEL:
-    mt->nb_label=gtk_label_new(_("\n\nPlease select a block\nin the timeline by\right clicking on it.\n"));
+    mt->nb_label=gtk_label_new(_("\n\nPlease select a block\nin the timeline by\nright or double clicking on it.\n"));
     break;
   case NB_ERROR_NOEFFECT:
-    mt->nb_label=gtk_label_new(_("\n\nNo effect selected.\nDouble click on an effect to select it.\n"));
+    mt->nb_label=gtk_label_new(_("\n\nNo effect selected.\nSelect an effect in FX stack first to view its parameters.\n"));
     break;
   case NB_ERROR_NOCLIP:
     mt->nb_label=gtk_label_new(_("\n\nNo clips loaded.\n"));
     break;
   case NB_ERROR_NOTRANS:
-    mt->nb_label=gtk_label_new(_("You must select two video tracks\nand a time region\nto apply transitions.\n\nAlternately, you can enable autotransitions from the Effects menu\nand create an overlap on two tracks."));
+    mt->nb_label=gtk_label_new(_("You must select two video tracks\nand a time region\nto apply transitions.\n\nAlternately, you can enable Autotransitions from the Effects menu\nbefore inserting clips into the timeline."));
     break;
   case NB_ERROR_NOCOMP:
     mt->nb_label=gtk_label_new(_("\n\nYou must select at least one video track\nand a time region\nto apply compositors.\n"));
@@ -17145,8 +17145,8 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gtk_widget_show_all(hbox);
 
-  if (!strlen(layout_name)) esave_file=choose_file(esave_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
-  else esave_file=choose_file(esave_dir,layout_name,filt,GTK_FILE_CHOOSER_ACTION_SAVE,hbox);
+  if (!strlen(layout_name)) esave_file=choose_file(esave_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,hbox);
+  else esave_file=choose_file(esave_dir,layout_name,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,hbox);
 
   ar_layout=prefs->ar_layout;
   prefs->ar_layout=orig_ar_layout;
@@ -18590,7 +18590,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     g_signal_connect (GTK_OBJECT (ar_checkbutton), "toggled",
                       G_CALLBACK (on_autoreload_toggled),
                       GINT_TO_POINTER(2));
-    eload_file=choose_file(startdir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,hbox);
+    eload_file=choose_file(startdir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,hbox);
   }
   else free_eload_file=FALSE;
   g_free(startdir);

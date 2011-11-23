@@ -8,6 +8,9 @@ Weed Audio Extension 1.1 final version.
 Version 1.1 - added "is_volume_master" to assist with host automation
 of audio
 
+22 Nov 2011 - clarified what kinds of channel patterns expected
+
+
 
 
 The Weed Audio Extension adds audio capabilities to the standard
@@ -15,10 +18,34 @@ WEED_PLANT_CHANNEL_TEMPLATE and WEED_PLANT_CHANNEL.
 
 
 
+
+Generally, the following rules should apply:
+- audio and video channels should not be mixed in a single filter: - the only time this should be done is 
+  for generators which are sources of both video and audio
+
+- generating video from audio or vice versa is best done by using two plugins - one to analyse the input and produce 
+  output parameters, the second to convert the parameters into audio or video data
+
+- plugins which deal with audio MUST be able to process small chunks of audio extremely fast 
+  (sub millisecond processing time - they may be called much more frequently than video effects, which is why mixing 
+  audio and video channels is not recommended); alternately the host may buffer one video frames-worth of audio and 
+  send this to the plugin
+
+  [except for audio generators which may generate audio more slowly - generally they will be called at the video frame rate 
+   and asked to return a frames-worth of audio each time
+
+
+
+
+
+
+
+
+
 == WEED_PLANT_CHANNEL_TEMPLATE ==
 
 For audio channels, the "palette_list" leaf should be
-ommited. The host should not set a "current_palette" or pass video
+omitted. The host should not set a "current_palette" or pass video
 data in such a channel.
 
 For example, this can be used to process a backing audio track.
@@ -35,8 +62,8 @@ channel is audio.
 
 
 Optional leaves:
-the plugin may define these to force them for the host, or it may
-leave them undefined.
+the plugin may define these to try to force them for the host, or it may
+leave them undefined. It is highly recommended that the plugin leave these values undefined.
 
 "audio_data_length" : WEED_SEED_INT : maximum length of audio_data in
 samples
@@ -58,7 +85,7 @@ audio_data : must be >=1 (mono), 2==stereo, etc.
 
 
 
-Mandatory leaves for CHANNELS with audio:
+Mandatory leaves for CHANNELS with audio - these values are set by the host:
 
 "audio_data" : WEED_SEED_VOIDPTR : stores a pointer to 32 bit signed float data for
 	       audio buffer. Values within the buffer are in the range -1.0 <=

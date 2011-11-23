@@ -280,7 +280,6 @@ static gboolean pre_init(void) {
   prefs->show_gui=TRUE;
   prefs->show_splash=TRUE;
   prefs->show_playwin=TRUE;
-  prefs->show_threaded_dialog=TRUE;
   prefs->sepwin_type=1;
   prefs->show_framecount=TRUE;
   prefs->audio_player=AUD_PLAYER_SOX;
@@ -1776,7 +1775,7 @@ void print_opthelp(void) {
   g_printerr("%s",_("-noset           : do not load any set on startup\n"));
   g_printerr("%s",_("-norecover       : force no-loading of crash recovery\n"));
   g_printerr("%s",_("-recover         : force loading of crash recovery\n"));
-  g_printerr("%s",_("-nothreaddialog  : avoid threaded dialogs\n"));
+  g_printerr("%s",_("-nothreaddialog  : doe nothing - retained for backwards compatibility\n"));
   g_printerr("%s",_("-nogui           : do not show the gui\n"));
   g_printerr("%s",_("-nosplash        : do not show the splash window\n"));
   g_printerr("%s",_("-noplaywin       : do not show the play window\n"));
@@ -2212,7 +2211,6 @@ int main (int argc, char *argv[]) {
 	}
 	if (!strcmp(charopt,"nothreaddialog")) {
 	  // disable threaded dialog (does nothing now)
-	  prefs->show_threaded_dialog=FALSE;
 	  continue;
 	}
 	if (!strcmp(charopt,"fxmodesmax")&&optarg!=NULL) {

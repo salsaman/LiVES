@@ -2185,7 +2185,7 @@ void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, 
   if (frame<1||frame>sfile->frames||(sfile->clip_type!=CLIP_TYPE_DISK&&sfile->clip_type!=CLIP_TYPE_FILE)) 
     return lives_osc_notify_failure();
 
-  retval=save_frame(clip,frame,fname,width,height,TRUE);
+  retval=save_frame_inner(clip,frame,fname,width,height,TRUE);
 
   if (retval) lives_osc_notify_success(NULL);
   else lives_osc_notify_failure();

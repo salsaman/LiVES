@@ -214,8 +214,6 @@ typedef struct {
 
   gboolean osc_start;
 
-  gboolean show_threaded_dialog;
-
   gboolean collate_images;
 
   gint virt_height; ///< n screens vert.

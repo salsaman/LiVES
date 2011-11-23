@@ -3229,7 +3229,8 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
 
 
-gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, GtkWidget *extra_widget) {
+gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, const char *title, 
+		   GtkWidget *extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding
@@ -3241,29 +3242,32 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   gchar *filename;
   int i;
   GtkResponseType response;
-  gchar *title;
+  gchar *mytitle;
   gchar *tmp;
 
-  if (act==GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
-    title=g_strdup(_("LiVES: choose a directory"));
+  if (title==NULL) {
+    if (act==GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
+      mytitle=g_strdup(_("LiVES: choose a directory"));
+    }
+    else {
+      mytitle=g_strdup(_("LiVES: choose a file"));
+    }
   }
-  else {
-    title=g_strdup(_("LiVES: choose a file"));
-  }
+  else mytitle=g_strdup(title);
 
   if (act!=GTK_FILE_CHOOSER_ACTION_SAVE) 
-    chooser=gtk_file_chooser_dialog_new(title,GTK_WINDOW(mainw->LiVES),act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+    chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 					NULL);
 
   else {
-    chooser=gtk_file_chooser_dialog_new(title,GTK_WINDOW(mainw->LiVES),act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+    chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 					NULL);
   }
 
 
-  g_free(title);
+  g_free(mytitle);
 
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(chooser),TRUE);
   if (dir!=NULL) {

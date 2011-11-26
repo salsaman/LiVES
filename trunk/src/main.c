@@ -2038,7 +2038,7 @@ int main (int argc, char *argv[]) {
   gtk_init (&argc, &argv);
 
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal (0);
+  //g_log_set_always_fatal (0);
   theme_expected=pre_init();
 
   // mainw->foreign is set if we are grabbing an external window
@@ -4489,6 +4489,8 @@ void load_frame_image(gint frame) {
 
 GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, GError **gerrorptr) {
   // TODO ** - check for disk space errors
+
+  // fname should be in local charset
 
   if (imgtype==IMG_TYPE_JPEG) {
     gchar *qstr=g_strdup_printf("%d",quality);

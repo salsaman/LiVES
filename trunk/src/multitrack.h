@@ -804,7 +804,7 @@ void rs_to_tc (GtkMenuItem *, gpointer mt);
 void re_to_tc (GtkMenuItem *, gpointer mt);
 gboolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
 void multitrack_clear_marks (GtkMenuItem *, gpointer mt);
-void mt_show_current_frame(lives_mt *);  ///< preview th current frame (non-effects mode)
+void mt_show_current_frame(lives_mt *, gboolean return_layer);  ///< preview the current frame
 void mt_clear_timeline(lives_mt *mt);
 
 

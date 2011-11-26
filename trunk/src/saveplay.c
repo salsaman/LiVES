@@ -3019,36 +3019,59 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
   file *sfile=mainw->files[clip];
 
   if (strrchr(file_name,'.')==NULL) {
-    g_snprintf(full_file_name,255,"%s.%s",file_name,prefs->image_ext);
-   }
+    g_snprintf(full_file_name,255,"%s.%s",file_name,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+  }
   else {
     g_snprintf(full_file_name,255,"%s",file_name);
   }
 
   if (!check_file(full_file_name,!allow_over)) return FALSE;
 
-  com=g_strdup_printf(_ ("Saving frame %d as %s..."),frame,full_file_name);
-  d_print(com);
-  g_free(com);
+  tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL);
 
-  if (sfile->clip_type==CLIP_TYPE_FILE) {
-    virtual_to_images(clip,frame,frame,FALSE);
+  if (mainw->multitrack==NULL) {
+    com=g_strdup_printf(_ ("Saving frame %d as %s..."),frame,full_file_name);
+    d_print(com);
+    g_free(com);
+    
+    if (sfile->clip_type==CLIP_TYPE_FILE) {
+      virtual_to_images(clip,frame,frame,FALSE);
+    }
+
+    com=g_strdup_printf("smogrify save_frame %s %d \"%s\" %d %d",sfile->handle,frame,tmp,width,height);
+    result=system(com);
+    g_free(com);
+    g_free(tmp);
+    
+    if (result==256) {
+      d_print_file_error_failed();
+      do_file_perm_error(full_file_name);
+      return FALSE;
+    }
+    if (result==0) {
+      d_print_done();
+      return TRUE;
+    }
+  }
+  else {
+    // multitrack mode
+    GError *gerr=NULL;
+    GdkPixbuf *pixbuf;
+
+    mt_show_current_frame(mainw->multitrack,TRUE);
+    convert_layer_palette(mainw->frame_layer,WEED_PALETTE_RGB24,0);
+    resize_layer(mainw->frame_layer,sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
+    pixbuf=layer_to_pixbuf(mainw->frame_layer);
+    weed_plant_free(mainw->frame_layer);
+    mainw->frame_layer=NULL;
+    if (sfile->img_type==IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, &gerr);
+    else if (sfile->img_type==IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, &gerr);
+    free(tmp);
+    gdk_pixbuf_unref(pixbuf);
+    if (gerr==NULL) return TRUE;
+    g_error_free(gerr);
   }
 
-  com=g_strdup_printf("smogrify save_frame %s %d \"%s\" %d %d",sfile->handle,frame,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)),width,height);
-  result=system(com);
-  g_free(com);
-  g_free(tmp);
-
-  if (result==256) {
-    d_print_file_error_failed();
-    do_file_perm_error(full_file_name);
-    return FALSE;
-  }
-  if (result==0) {
-    d_print_done();
-    return TRUE;
-  }
   // some other error condition
   return FALSE;
 }

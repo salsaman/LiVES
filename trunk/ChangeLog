@@ -1,18 +1,20 @@
-Version 1.4.8
--------------
+Version 1.4.8 (26 Nov 2011)
+---------------------------
 Optimise resizing for virtual clips.
 Implement letterbox mode for fullscreen playback.
+Implement letterbox mode for encoding.
 Playback start may now be triggered by joystick or MIDI.
 Implement threading for some palette conversions.
 Load pngs directly using libpng.
-Use libswscale for internal scaling if possible. 
+Use libswscale for internal scaling if possible.
 Fix bugs in append_audio (regression). *
 Fix undo/redo effect in multitrack (regression) *
 Set default back to "loop video to fit audio".
 Add new encoder formats flv and wmv2/wma to mencoder_encoder.
 Fix missing audio for kvcd encoding.
 Various minor fixes.
-
+Initial language support for Uyghur [Gheyret T. Kenji]
+Updated translations for Chinese (Simplified), Finnish, Japanese, Slovak, Spanish, Telugu, Ukranian and Uzbek.
 
 
 

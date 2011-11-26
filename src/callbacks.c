@@ -8127,12 +8127,12 @@ gboolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which
   int frame=0;
 
   GtkWidget *save_frame_as;
-  GtkWidget *menu=gtk_menu_new();
+  GtkWidget *menu;
 
   // check if a file is loaded
   if (mainw->current_file<=0) return FALSE;
 
-  if (mainw->multitrack!=NULL && mainw->multitrack->event_list!=NULL) return FALSE;
+  if (mainw->multitrack!=NULL && mainw->multitrack->event_list==NULL) return FALSE;
 
   // only accept right mouse clicks
 
@@ -8155,6 +8155,7 @@ gboolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which
     }
   }
   
+  menu=gtk_menu_new();
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected frame"));
 
   if (palette->style&STYLE_1) {

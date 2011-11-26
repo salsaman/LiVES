@@ -624,10 +624,15 @@ on_framedraw_leave (GtkWidget *widget, GdkEventCrossing *event, lives_special_fr
 gboolean
 on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw)
 {
-  // user clicked in the framedraw widget
-  //  if (event->button==1); etc
+  // user clicked in the framedraw widget (or multitrack playback widget)
 
   if (framedraw==NULL&&mainw->multitrack!=NULL) framedraw=mainw->multitrack->framedraw;
+
+  if (framedraw==NULL&&mainw->multitrack!=NULL&&event->button==3) {
+    // right click brings up context menu
+    frame_context(widget,event,GINT_TO_POINTER(0));
+  }
+
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 

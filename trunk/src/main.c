@@ -4278,6 +4278,9 @@ void load_frame_image(gint frame) {
 	resize_layer(frame_layer,mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
 		     mainw->vpp->fheight,interp);
       }
+
+      // resize_layer can change palette
+      layer_palette=weed_get_int_value(frame_layer,"current_palette",&weed_error);
     
       if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
 	  weed_palette_is_rgb_palette(layer_palette) && 
@@ -4288,9 +4291,8 @@ void load_frame_image(gint frame) {
       }
 
       pwidth=weed_get_int_value(frame_layer,"width",&weed_error)*
-	weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
-      pheight=weed_get_int_value(frame_layer,"height",&weed_error)*
-	weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
+	weed_palette_get_pixels_per_macropixel(layer_palette);
+      pheight=weed_get_int_value(frame_layer,"height",&weed_error);
 
       if (mainw->fs&&(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
 	mainw->vpp->fwidth=mainw->scr_width;
@@ -4298,10 +4300,18 @@ void load_frame_image(gint frame) {
       }
 
       if (mainw->vpp->fwidth!=pwidth||mainw->vpp->fheight!=pheight||lb_width!=0) {
+
+	if (lb_width==0) {
+	  lb_width=pwidth;
+	  lb_height=pheight;
+
+	  calc_maxspect(mainw->vpp->fwidth,mainw->vpp->fheight,&lb_width,&lb_height);
+	}
+
 	letterbox_layer(frame_layer,lb_width/
-			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
+			weed_palette_get_pixels_per_macropixel(layer_palette),
 			lb_height,mainw->vpp->fwidth/
-			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
+			weed_palette_get_pixels_per_macropixel(layer_palette),
 			mainw->vpp->fheight);
 
       }

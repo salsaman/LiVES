@@ -5817,6 +5817,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
   int clamping=WEED_YUV_CLAMPING_CLAMPED;
 
   guchar *pixel_data;
+  guchar *memblock;
   guchar **pd_array;
 
   unsigned char black[6]={0,0,0,255,255,255};
@@ -5827,6 +5828,11 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
   size_t framesize;
 
   register int i,j;
+
+
+  weed_set_voidptr_value(layer,"pixel_data", NULL);
+  if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")) 
+    weed_leaf_delete(layer,"host_pixel_data_contiguous");
 
   if (black_fill) {
     if (weed_plant_has_leaf(layer,"YUV_clamping")) clamping=weed_get_int_value(layer,"YUV_clamping",&error);
@@ -5851,7 +5857,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     else {
       black[0]=y_black;
       black[1]=black[2]=128;
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
@@ -5873,7 +5879,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     else {
       black[1]=black[3]=y_black;
       black[0]=black[2]=128;
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
@@ -5895,7 +5901,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     else {
       black[0]=black[2]=y_black;
       black[1]=black[3]=128;
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
@@ -5915,7 +5921,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
       pixel_data=(guchar *)calloc(framesize>>2,4);
     }
     else {
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
@@ -5935,7 +5941,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
       pixel_data=(guchar *)calloc(framesize>>2,4);
     }
     else {
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
@@ -5957,7 +5963,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     else {
       black[0]=255;
       black[3]=0;
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
@@ -5979,7 +5985,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     else {
       black[0]=y_black;
       black[1]=black[2]=128;
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
@@ -5999,27 +6005,29 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     weed_set_int_value(layer,"width",width);
     height=(height>>1)<<1;
     weed_set_int_value(layer,"height",height);
-    rowstrides=g_malloc(sizint*3);
+    rowstrides=g_try_malloc(sizint*3);
     rowstrides[0]=width;
     rowstrides[1]=rowstrides[2]=(width>>1);
     weed_set_int_array(layer,"rowstrides",3,rowstrides);
     g_free(rowstrides);
-    pd_array=g_malloc(3*sizeof(guchar *));
+    pd_array=g_try_malloc(3*sizeof(guchar *));
+    weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
 
     framesize=CEIL(width*height,32);
 
     if (!black_fill) {
-      pd_array[0]=(guchar *)calloc(framesize>>2,4);
-      pd_array[1]=(guchar *)calloc(framesize>>4,4);
-      pd_array[2]=(guchar *)calloc(framesize>>4,4);
+      memblock=calloc((framesize*3)>>3,4);
+      pd_array[0]=(guchar *)memblock;
+      pd_array[1]=(guchar *)(memblock+framesize);
+      pd_array[2]=(guchar *)(memblock+framesize*5/4);
     }
     else {
-      pd_array[0]=(guchar *)g_malloc(framesize);
+      memblock=g_try_malloc(framesize*3/2);
+      pd_array[0]=(guchar *)memblock;
       memset(pd_array[0],y_black,width*height);
-      pd_array[1]=(guchar *)g_malloc(framesize>>2);
-      memset(pd_array[1],128,width*height/4);
-      pd_array[2]=(guchar *)g_malloc(framesize>>2);
-      memset(pd_array[2],128,width*height/4);
+      pd_array[1]=(guchar *)(memblock+framesize);
+      memset(pd_array[1],128,width*height/2);
+      pd_array[2]=(guchar *)(memblock+framesize*5/4);
     }
 
     weed_set_voidptr_array(layer,"pixel_data",3,(void **)pd_array);
@@ -6029,81 +6037,91 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
   case WEED_PALETTE_YUV422P:
     width=(width>>1)<<1;
     weed_set_int_value(layer,"width",width);
-    rowstrides=g_malloc(sizint*3);
+    rowstrides=g_try_malloc(sizint*3);
     rowstrides[0]=width;
     rowstrides[1]=rowstrides[2]=width>>1;
     weed_set_int_array(layer,"rowstrides",3,rowstrides);
     g_free(rowstrides);
-    pd_array=g_malloc(3*sizeof(guchar *));
+    pd_array=g_try_malloc(3*sizeof(guchar *));
+    weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
 
     framesize=CEIL(width*height,32);
 
     if (!black_fill) {
-      pd_array[0]=(guchar *)calloc(framesize>>2,4);
-      pd_array[1]=(guchar *)calloc(framesize>>3,4);
-      pd_array[2]=(guchar *)calloc(framesize>>3,4);
+      memblock=calloc(framesize>>1,4);
+      pd_array[0]=(guchar *)memblock;
+      pd_array[1]=(guchar *)(memblock+framesize);
+      pd_array[2]=(guchar *)(memblock+3*framesize/2);
     }
     else {
-      pd_array[0]=(guchar *)g_malloc(framesize);
+      memblock=g_try_malloc(framesize*2);
+      pd_array[0]=(guchar *)memblock;
+      pd_array[1]=(guchar *)(memblock+framesize);
+      pd_array[2]=(guchar *)(memblock+3*framesize/2);
       memset(pd_array[0],y_black,width*height);
-      pd_array[1]=(guchar *)g_malloc(framesize>>1);
-      memset(pd_array[1],128,width*height/2);
-      pd_array[2]=(guchar *)g_malloc(framesize>>1);
-      memset(pd_array[2],128,width*height/2);
+      memset(pd_array[1],128,width*height);
     }
     weed_set_voidptr_array(layer,"pixel_data",3,(void **)pd_array);
     weed_free(pd_array);
     break;
 
   case WEED_PALETTE_YUV444P:
-    rowstrides=g_malloc(sizint*3);
+    rowstrides=g_try_malloc(sizint*3);
     rowstrides[0]=rowstrides[1]=rowstrides[2]=width;
     weed_set_int_array(layer,"rowstrides",3,rowstrides);
     g_free(rowstrides);
-    pd_array=g_malloc(3*sizeof(guchar *));
+    pd_array=g_try_malloc(3*sizeof(guchar *));
+    weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
 
     framesize=CEIL(width*height,32);
 
     if (!black_fill) {
-      pd_array[0]=(guchar *)calloc(framesize>>2,4);
-      pd_array[1]=(guchar *)calloc(framesize>>2,4);
-      pd_array[2]=(guchar *)calloc(framesize>>2,4);
+      memblock=calloc((framesize*3)>>2,4);
+      pd_array[0]=memblock;
+      pd_array[1]=memblock+framesize;
+      pd_array[2]=memblock+framesize*2;
+
     }
     else {
-      pd_array[0]=(guchar *)g_malloc(framesize);
+      memblock=calloc((framesize*3)>>2,4);
+      pd_array[0]=memblock;
       memset(pd_array[0],y_black,width*height);
-      pd_array[1]=(guchar *)g_malloc(framesize);
-      memset(pd_array[1],128,width*height);
-      pd_array[2]=(guchar *)g_malloc(framesize);
-      memset(pd_array[2],128,width*height);
+      pd_array[1]=memblock+framesize;
+      pd_array[2]=memblock+framesize*2;
+      memset(pd_array[1],128,width*height*2);
     }
     weed_set_voidptr_array(layer,"pixel_data",3,(void **)pd_array);
     weed_free(pd_array);
     break;
 
   case WEED_PALETTE_YUVA4444P:
-    rowstrides=g_malloc(sizint*4);
+    rowstrides=g_try_malloc(sizint*4);
     rowstrides[0]=rowstrides[1]=rowstrides[2]=rowstrides[3]=width;
     weed_set_int_array(layer,"rowstrides",4,rowstrides);
     g_free(rowstrides);
-    pd_array=g_malloc(4*sizeof(guchar *));
+    pd_array=g_try_malloc(4*sizeof(guchar *));
+    weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
 
     framesize=CEIL(width*height,32);
 
     if (!black_fill) {
-      pd_array[0]=(guchar *)calloc(framesize>>2,4);
-      pd_array[1]=(guchar *)calloc(framesize>>2,4);
-      pd_array[2]=(guchar *)calloc(framesize>>2,4);
-      pd_array[3]=(guchar *)calloc(framesize>>2,4);
+      memblock=calloc(framesize,4);
+      pd_array[0]=memblock;
+      pd_array[1]=memblock+framesize;
+      pd_array[2]=memblock+framesize*2;
+      pd_array[3]=memblock+framesize*3;
     }
     else {
-      pd_array[0]=(guchar *)g_malloc(framesize);
+      memblock=g_try_malloc(framesize*4);
+      pd_array[0]=memblock;
       memset(pd_array[0],y_black,width*height);
-      pd_array[1]=(guchar *)g_malloc(framesize);
-      memset(pd_array[1],128,width*height);
-      pd_array[2]=(guchar *)g_malloc(framesize);
-      memset(pd_array[2],128,width*height);
-      pd_array[3]=(guchar *)g_malloc(framesize);
+      pd_array[1]=memblock+framesize;
+      pd_array[2]=memblock+framesize*2;
+
+      memset(pd_array[1],128,width*height*2);
+
+      pd_array[3]=memblock+framesize*3;
+
       memset(pd_array[3],255,width*height);
     }
     weed_set_voidptr_array(layer,"pixel_data",4,(void **)pd_array);
@@ -6142,7 +6160,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     if (!black_fill) pixel_data=(guchar *)calloc(width*height*4,sizeof(float));
     else {
       size_t sizf=4*sizeof(float);
-      pixel_data=(guchar *)g_malloc(width*height*sizf);
+      pixel_data=(guchar *)g_try_malloc(width*height*sizf);
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
@@ -6160,7 +6178,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     if (!black_fill) pixel_data=(guchar *)calloc(width*height,sizeof(float));
     else {
       size_t sizf=sizeof(float);
-      pixel_data=(guchar *)g_malloc(width*height*sizf);
+      pixel_data=(guchar *)g_try_malloc(width*height*sizf);
       ptr=pixel_data;
       blackf[0]=1.;
       for (i=0;i<height;i++) {
@@ -6179,7 +6197,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     framesize=CEIL(width*height,32);
     if (!black_fill) pixel_data=(guchar *)calloc(framesize,1);
     else {
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       memset(pixel_data,255,width*height);
     }
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
@@ -6191,7 +6209,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill) {
     framesize=CEIL(rowstride*height,32);
     if (!black_fill) pixel_data=(guchar *)calloc(framesize,1);
     else {
-      pixel_data=(guchar *)g_malloc(framesize);
+      pixel_data=(guchar *)g_try_malloc(framesize);
       memset(pixel_data,255,rowstride*height);
     }
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
@@ -7904,32 +7922,76 @@ void compact_rowstrides(weed_plant_t *layer) {
   int xheight;
   int crow=width*weed_palette_get_bits_per_macropixel(pal)/8;
   int cxrow;
-  int nplanes=weed_palette_get_numplanes(pal);
+  int nplanes=weed_palette_get_numplanes(pal),mplanes;
   register int i,j;
 
-  size_t framesize;
+  size_t framesize=0;
 
-  void **pixel_data,*npixel_data;
+  void **pixel_data,**new_pixel_data,*npixel_data;
+
+  gboolean needs_change=FALSE;
+
+
+  pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
   for (i=0;i<nplanes;i++) {
     cxrow=crow*weed_palette_get_plane_ratio_horizontal(pal,i);
+    xheight=height*weed_palette_get_plane_ratio_vertical(pal,i);
+    framesize+=CEIL(cxrow*xheight,32);
     if (cxrow!=rowstrides[i]) {
       // nth plane has extra padding
-      pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-      xheight=height*weed_palette_get_plane_ratio_vertical(pal,i);
-      framesize=CEIL(cxrow*xheight,32);
-      npixel_data=g_try_malloc(framesize);
-      if (npixel_data==NULL) return;
-      for (j=0;j<xheight;j++) {
-	w_memcpy(npixel_data+j*cxrow,pixel_data[i]+j*rowstrides[i],cxrow);
-      }
-      g_free(pixel_data[i]);
-      pixel_data[i]=npixel_data;
-      weed_set_voidptr_array(layer,"pixel_data",nplanes,pixel_data);
-      weed_free(pixel_data);
+      needs_change=TRUE;
     }
   }
 
+  if (!needs_change) {
+    weed_free(pixel_data);
+    weed_free(rowstrides);
+    return;
+  }
+
+  npixel_data=g_try_malloc(framesize);
+  if (npixel_data==NULL) {
+    weed_free(pixel_data);
+    weed_free(rowstrides);
+    return;
+  }
+
+  new_pixel_data=g_malloc(nplanes*sizeof(void *));
+
+  for (i=0;i<nplanes;i++) {
+    cxrow=crow*weed_palette_get_plane_ratio_horizontal(pal,i);
+    xheight=height*weed_palette_get_plane_ratio_vertical(pal,i);
+
+    new_pixel_data[i]=npixel_data;
+
+    for (j=0;j<xheight;j++) {
+      w_memcpy(new_pixel_data[i]+j*cxrow,pixel_data[i]+j*rowstrides[i],cxrow);
+    }
+
+    framesize=CEIL(cxrow*xheight,32);
+    npixel_data+=framesize;
+
+    rowstrides[i]=cxrow;
+
+  }
+
+  if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
+      weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+    mplanes=1;
+  else mplanes=nplanes;
+
+  for (i=0;i<mplanes;i++) {
+    g_free(pixel_data[i]);
+  }
+
+  if (nplanes>1) 
+    weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
+
+  weed_set_voidptr_array(layer,"pixel_data",nplanes,new_pixel_data);
+  weed_set_int_array(layer,"rowstrides",nplanes,rowstrides);
+  weed_free(pixel_data);
+  weed_free(new_pixel_data);
   weed_free(rowstrides);
 }
 
@@ -8041,7 +8103,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
     return;
   }
 
-  if (weed_palette_is_yuv_palette(palette)&&(palette!=WEED_PALETTE_YUV888&&palette!=WEED_PALETTE_YUVA8888)) {
+  if (weed_palette_is_yuv_palette(palette)&&!weed_palette_is_resizable(palette)) {
     // we should always convert to unclamped values before resizing
     gint oclamping=WEED_YUV_CLAMPING_UNCLAMPED;
     iwidth*=weed_palette_get_pixels_per_macropixel(palette); // orig width is in macropixels
@@ -8426,7 +8488,12 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     break;
   }
 
-  for (i=0;i<nplanes;i++) if (pixel_data[i]!=NULL) free(pixel_data[i]);
+  if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") &&
+      weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+    nplanes=1;
+
+  for (i=0;i<nplanes;i++) if (pixel_data[i]!=NULL) g_free(pixel_data[i]);
+
   weed_free(pixel_data);
   weed_free(new_pixel_data);
   weed_free(irowstrides);
@@ -8476,8 +8543,10 @@ gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
 
   pixel_data=calloc(framesize>>2,4);
 
-  w_memcpy(pixel_data,in_pixel_data,rowstride*(height-1));
-  w_memcpy(pixel_data+rowstride*(height-1),in_pixel_data+rowstride*(height-1),gdk_last_rowstride_value(width,nchannels));
+  if (pixel_data!=NULL) {
+    w_memcpy(pixel_data,in_pixel_data,rowstride*(height-1));
+    w_memcpy(pixel_data+rowstride*(height-1),in_pixel_data+rowstride*(height-1),gdk_last_rowstride_value(width,nchannels));
+  }
 
   weed_set_voidptr_value(layer,"pixel_data",pixel_data);
   return FALSE;
@@ -8517,10 +8586,11 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
 
   int pd_elements,error;
   void **pd_array,**pixel_data;
+  void *npixel_data;
   int height,width,palette;
   int i,*rowstrides;
-  size_t size;
-  gboolean deep=FALSE;
+  size_t size,totsize=0;
+  gboolean deep=FALSE,contig;
 
   weed_plant_t *layer;
 
@@ -8537,14 +8607,32 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
   pd_elements=weed_leaf_num_elements(slayer,"pixel_data");
   pixel_data=weed_get_voidptr_array(slayer,"pixel_data",&error);
   rowstrides=weed_get_int_array(slayer,"rowstrides",&error);
+  contig=weed_get_boolean_value(slayer,"host_pixel_data_contiguous",&error);
+
+  weed_set_boolean_value(layer,"host_pixel_data_contiguous",contig);
+  weed_set_voidptr_value(layer,"pixel_data",NULL);
 
   if (deep) {
     pd_array=g_malloc(pd_elements*sizeof(void *));
+
     for (i=0;i<pd_elements;i++) {
       size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
-      pd_array[i]=g_malloc(size);
-      w_memcpy(pd_array[i],pixel_data[i],size);
+      totsize+=CEIL(size,32);
     }
+    
+    npixel_data=g_try_malloc(totsize);
+    if (npixel_data==NULL) return layer;
+    
+    for (i=0;i<pd_elements;i++) {
+      size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
+      pd_array[i]=npixel_data;
+      w_memcpy(pd_array[i],pixel_data[i],size);
+      npixel_data+=CEIL(size,32);
+    }
+    if (pd_elements>1)
+      weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
+    else if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")) 
+      weed_leaf_delete(layer,"host_pixel_data_contiguous");
   }
   else pd_array=pixel_data;
 
@@ -8577,9 +8665,16 @@ void weed_layer_free (weed_plant_t *layer) {
 
   if (weed_plant_has_leaf(layer,"pixel_data")) {
     pd_elements=weed_leaf_num_elements(layer,"pixel_data");
+    if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")&&
+	weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE) pd_elements=1;
     if (pd_elements>0) {
       pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
       if (pixel_data!=NULL) {
+
+	if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
+	    weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+	  pd_elements=1;
+
 	for (i=0;i<pd_elements;i++) {
 	  if (pixel_data[i]!=NULL) g_free(pixel_data[i]);
 	}

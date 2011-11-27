@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-26 09:19-0300\n"
+"POT-Creation-Date: 2011-11-27 15:55-0300\n"
 "PO-Revision-Date: 2011-11-24 01:44+0000\n"
 "Last-Translator: Takashi Sakamoto <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -5378,17 +5378,17 @@ msgstr "音声ボリュームコントローラー"
 msgid "unknown"
 msgstr "不明"
 
-#: src/effects-weed.c:2950
+#: src/effects-weed.c:3050
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "エラー: プラグイン %s に weed_setup() がありません。\n"
 
-#: src/effects-weed.c:2964
+#: src/effects-weed.c:3064
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr "プラグイン %s に使うことのできないフィルターが見つかりました\n"
 
-#: src/effects-weed.c:3042
+#: src/effects-weed.c:3142
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5397,32 +5397,32 @@ msgstr ""
 "情報: プラグイン %s を読み込みできませんでした。\n"
 "エラー: %s\n"
 
-#: src/effects-weed.c:3192
+#: src/effects-weed.c:3292
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "%d Weedフィルターの読み込みに成功しました\n"
 
-#: src/effects-weed.c:3898
+#: src/effects-weed.c:4004
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "インスタンス %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:3936
+#: src/effects-weed.c:4042
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "ジェネレーター%sを開始できません。\n"
 
-#: src/effects-weed.c:4463
+#: src/effects-weed.c:4575
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "ジェネレーター %s を開始できません。\n"
 
-#: src/effects-weed.c:4523
+#: src/effects-weed.c:4635
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "ジェネレーター %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:5565
+#: src/effects-weed.c:5677
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [不安定] (%s)"

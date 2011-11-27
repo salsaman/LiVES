@@ -877,24 +877,83 @@ static gboolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array) 
 }
 
 
-static gboolean align (void **pixel_data, size_t alignment, int numplanes, int height, int *rowstrides) {
+static gboolean align (void **pixel_data, size_t alignment, int numplanes, int height, int *rowstrides, 
+		       int *contiguous) {
   // returns TRUE on success
   int i;
+  int memerror;
+  gboolean needs_change=FALSE;
+  void *npixel_data;
+  void **new_pixel_data;
+  size_t size,totsize=0;
+
+#ifndef HAVE_POSIX_MEMALIGN
+  return FALSE;
+#endif
+
   for (i=0;i<numplanes;i++) {
     if (((gulong)(pixel_data[i]))%alignment==0) continue;
-#ifdef HAVE_POSIX_MEMALIGN
-    else {
-      int memerror;
-      void *new_pixel_data;
-      if ((memerror=posix_memalign(&new_pixel_data,alignment,height*rowstrides[i]))) return FALSE;
-      memcpy(new_pixel_data,pixel_data[i],height*rowstrides[i]);
-      g_free(pixel_data[i]);
-      pixel_data[i]=new_pixel_data;
-    }
-#else
-    return FALSE;
-#endif
+    needs_change=TRUE;
   }
+
+  if (!needs_change) return TRUE;
+
+  for (i=0;i<numplanes;i++) {
+    size=height*rowstrides[i];
+    totsize+=CEIL(size,32);
+  }
+
+  // try contiguous first
+  if ((memerror=posix_memalign(&npixel_data,alignment,totsize))) return FALSE;
+
+  new_pixel_data=g_malloc(numplanes*(sizeof(void *)));
+
+  // recheck
+  needs_change=FALSE;
+
+  for (i=0;i<numplanes;i++) {
+    if (((gulong)(pixel_data[i]))%alignment==0) continue;
+    needs_change=TRUE;
+  }
+
+  if (!needs_change) {
+    for (i=0;i<numplanes;i++) {
+      memcpy(npixel_data,pixel_data[i],height*rowstrides[i]);
+      new_pixel_data[i]=npixel_data;
+      size=height*rowstrides[i];
+      npixel_data+=CEIL(size,32);
+    }
+
+    for (i=0;i<numplanes;i++) {
+      if (i==0||!(*contiguous))
+	g_free(pixel_data[i]);
+      pixel_data[i]=new_pixel_data[i];
+    }
+
+    g_free(new_pixel_data);
+    if (numplanes>1) *contiguous=TRUE;
+    else *contiguous=FALSE;
+    return TRUE;
+  }
+
+  g_free(npixel_data);
+
+  // non-contiguous
+  for (i=0;i<numplanes;i++) {
+    if ((memerror=posix_memalign(&npixel_data,alignment,height*rowstrides[i]))) return FALSE;
+    memcpy(npixel_data,pixel_data[i],height*rowstrides[i]);
+    new_pixel_data[i]=npixel_data;
+  }
+
+  for (i=0;i<numplanes;i++) {
+    if (i==0||!(*contiguous))
+      g_free(pixel_data[i]);
+    pixel_data[i]=new_pixel_data[i];
+  }
+  
+  g_free(new_pixel_data);
+  *contiguous=FALSE;
+
   return TRUE;
 }
 
@@ -1545,17 +1604,29 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   
     weed_set_int64_value(channel,"timecode",tc);
     pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
- 
+
     // align memory if necessary
     if (weed_plant_has_leaf(chantmpl,"alignment")) {
       int alignment=weed_get_int_value(chantmpl,"alignment",&error);
-      align(pixel_data,alignment,numplanes,height,rowstrides);
+      gboolean contiguous=FALSE;
+      if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
+	  weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE) contiguous=TRUE;
+      align(pixel_data,alignment,numplanes,height,rowstrides,&contiguous);
       weed_set_voidptr_array(layer,"pixel_data",numplanes,pixel_data);
+      if (contiguous) weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
+      else if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")) 
+	weed_leaf_delete(layer,"host_pixel_data_contiguous");
     }
 
     weed_free(rowstrides);
     weed_set_voidptr_array(channel,"pixel_data",numplanes,pixel_data);
     weed_free(pixel_data);
+    if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")) 
+      weed_set_boolean_value(channel,"host_pixel_data_contiguous",
+			     weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error));
+    else if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous")) 
+      weed_leaf_delete(channel,"host_pixel_data_contiguous");
+
   }
 
   // we may need to disable some channels for the plugin
@@ -1622,6 +1693,11 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	  weed_free(pixel_data);
 	  weed_set_boolean_value(channel,"inplace",WEED_TRUE);
 	  inplace=TRUE;
+	  if (weed_plant_has_leaf(def_channel,"host_pixel_data_contiguous")) 
+	    weed_set_boolean_value(channel,"host_pixel_data_contiguous",
+				   weed_get_boolean_value(def_channel,"host_pixel_data_contiguous",&error));
+	  else if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous")) 
+	    weed_leaf_delete(channel,"host_pixel_data_contiguous");
 	}
 	weed_free(palettes);
       }
@@ -1683,11 +1759,21 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       // align memory if necessary
       if (weed_plant_has_leaf(chantmpl,"alignment")) {
 	int alignment=weed_get_int_value(chantmpl,"alignment",&error);
+	gboolean contiguous=FALSE;
+	if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous") && 
+	    weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error)==WEED_TRUE) contiguous=TRUE;
+
 	pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);
+
 	height=weed_get_int_value(channel,"height",&error);
-	align(pixel_data,alignment,numplanes,height,layer_rows);
+
+	align(pixel_data,alignment,numplanes,height,layer_rows,&contiguous);
+
 	weed_set_voidptr_array(channel,"pixel_data",numplanes,pixel_data);
 	weed_free(pixel_data);
+	if (contiguous) weed_set_boolean_value(channel,"host_pixel_data_contiguous",WEED_TRUE);
+	else if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous")) 
+	  weed_leaf_delete(channel,"host_pixel_data_contiguous");
       }
       weed_set_boolean_value(channel,"inplace",WEED_FALSE);
     }
@@ -1747,13 +1833,24 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     weed_set_int_array(layer,"rowstrides",numplanes,rowstrides);
     weed_free(rowstrides);
     numplanes=weed_leaf_num_elements(layer,"pixel_data");
+
     pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+    if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
+	weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+      numplanes=1;
+
     for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
     weed_free(pixel_data);
     numplanes=weed_leaf_num_elements(channel,"pixel_data");
     pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);
     weed_set_voidptr_array(layer,"pixel_data",numplanes,pixel_data);
     weed_free(pixel_data);
+
+    if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous")) 
+      weed_set_boolean_value(layer,"host_pixel_data_contiguous",
+			     weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error));
+    else if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")) 
+      weed_leaf_delete(layer,"host_pixel_data_contiguous");
 
     weed_set_int_value(layer,"current_palette",weed_get_int_value(channel,"current_palette",&error));
     weed_set_int_value(layer,"width",weed_get_int_value(channel,"width",&error));
@@ -2358,6 +2455,9 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	if (pixel_data!=NULL) {
 	  int j;
 	  int numplanes=weed_leaf_num_elements(layers[i],"pixel_data");
+	  if (weed_plant_has_leaf(layers[i],"host_pixel_data_contiguous") && 
+	      weed_get_boolean_value(layers[i],"host_pixel_data_contiguous",&error)==WEED_TRUE)
+	    numplanes=1;
 	  for (j=0;j<numplanes;j++) if (pixel_data[j]!=NULL) g_free(pixel_data[j]);
 	  weed_free(pixel_data);
 	}
@@ -3671,6 +3771,9 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       set_channel_size(channel,width,height,numplanes,rowstrides);
       weed_free(rowstrides);
       pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);
+      if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous") && 
+	  weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+	numplanes=1;
       for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
       weed_free(pixel_data);
     }
@@ -3710,6 +3813,9 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       set_channel_size(channel,width,height,numplanes,rowstrides);
       weed_free(rowstrides);
       pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);
+      if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous") && 
+	  weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+	numplanes=1;
       for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
       weed_free(pixel_data);
     }
@@ -4176,10 +4282,16 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
     int numplanes=weed_leaf_num_elements(channel,"pixel_data");
     int height=weed_get_int_value(channel,"height",&error);
     int *rowstrides=weed_get_int_array(channel,"rowstrides",&error);
-    align(pixel_data,alignment,numplanes,height,rowstrides);
+    gboolean contiguous=FALSE;
+    if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous") && 
+	weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error)==WEED_TRUE) contiguous=TRUE;
+    align(pixel_data,alignment,numplanes,height,rowstrides,&contiguous);
     weed_set_voidptr_array(channel,"pixel_data",numplanes,pixel_data);
     weed_free(pixel_data);
     weed_free(rowstrides);
+    if (contiguous) weed_set_boolean_value(channel,"host_pixel_data_contiguous",WEED_TRUE);
+    else if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous")) 
+      weed_leaf_delete(channel,"host_pixel_data_contiguous");
   }
 
   weed_set_double_value(inst,"fps",cfile->pb_fps);

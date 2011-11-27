@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-26 09:19-0300\n"
+"POT-Creation-Date: 2011-11-27 15:55-0300\n"
 "PO-Revision-Date: 2011-08-18 12:09+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -5086,49 +5086,49 @@ msgstr "Ovladače hlasitosti zvuku"
 msgid "unknown"
 msgstr "neznámý"
 
-#: src/effects-weed.c:2950
+#: src/effects-weed.c:3050
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Chyba: plugin %s nemá žádnou funkci weed_setup().\n"
 
-#: src/effects-weed.c:2964
+#: src/effects-weed.c:3064
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3042
+#: src/effects-weed.c:3142
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3192
+#: src/effects-weed.c:3292
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:3898
+#: src/effects-weed.c:4004
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Nelze spustit ukázku %s, chybový kód %d\n"
 
-#: src/effects-weed.c:3936
+#: src/effects-weed.c:4042
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nelze spustit generátor %s\n"
 
-#: src/effects-weed.c:4463
+#: src/effects-weed.c:4575
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Nepodařilo se spustit generátor %s\n"
 
-#: src/effects-weed.c:4523
+#: src/effects-weed.c:4635
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nepodařilo se spustit generátor %s, chyba %d\n"
 
-#: src/effects-weed.c:5565
+#: src/effects-weed.c:5677
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

@@ -817,6 +817,9 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	// ...free old pixel_data
 	int i,np=weed_leaf_num_elements(layer,"pixel_data");
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+	if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
+	    weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+	  np=1;
 	for (i=0;i<np;i++) {
 	  g_free(pixel_data[i]);
 	}

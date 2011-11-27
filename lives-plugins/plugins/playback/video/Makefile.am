@@ -56,14 +56,19 @@ icecast_output_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 SDL_la_CFLAGS = $(shared_cflags) $(CFLAGS_SDL) $(weed_cflags)
 SDL_la_LDFLAGS = $(shared_ldflags) $(LDFLAGS_SDL)
 
-if IS_LINUX_GNU
 if HAVE_LIBv4l1
 vloopback_libs = vloopback.la
 vloopback_la_CFLAGS = $(shared_cflags) $(weed_cflags) -Dv4l1_INCFILE=@v4l1_INCFILE@
 vloopback_la_LDFLAGS = $(shared_ldflags)
 endif
+
+
+if HAVE_LIBv4l2
+vloopback2_libs = vloopback2.la
+vloopback2_la_CFLAGS = $(shared_cflags) $(weed_cflags)
+vloopback2_la_LDFLAGS = $(shared_ldflags)
 endif
 
-videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) $(vjack_output_libs) lives2lives_stream.la $(vloopback_libs)
+videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) $(vjack_output_libs) lives2lives_stream.la $(vloopback_libs) $(vloopback2_libs)
 
 EXTRA_DIST = videoplugin.h

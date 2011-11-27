@@ -144,7 +144,7 @@ const char *module_check_init(void) {
   // get tempdir
   dummyvar=system("smogrify get_tempdir oggstream");
   rfd=open("/tmp/.smogrify.oggstream",O_RDONLY);
-  ret=read(rfd,(void *)buf,16384);
+  ret=read(rfd,(void *)buf,16383);
   memset(buf+ret,0,1);
 
   tmpdir=strdup(buf);

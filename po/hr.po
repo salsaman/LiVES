@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-11-27 15:55-0300\n"
+"POT-Creation-Date: 2011-11-27 19:40-0300\n"
 "PO-Revision-Date: 2011-08-18 11:59+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -561,7 +561,7 @@ msgstr "!rec %9d/%d"
 msgid "Play"
 msgstr "Reproduciraj"
 
-#: src/main.c:4477
+#: src/main.c:4487
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -569,35 +569,35 @@ msgstr ""
 "LiVES nije bio u mogućnosti to hvatanje ovu sliku\n"
 "\n"
 
-#: src/main.c:4575
+#: src/main.c:4585
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Zatvoreno datoteke %s\n"
 
-#: src/main.c:4741 src/gui.c:596 src/utils.c:2618 src/utils.c:2650
+#: src/main.c:4751 src/gui.c:596 src/utils.c:2618 src/utils.c:2650
 #: src/saveplay.c:2758 src/multitrack.c:3882 src/multitrack.c:5393
 msgid "_Undo"
 msgstr "_Poništi"
 
-#: src/main.c:4742 src/gui.c:609 src/utils.c:2619 src/utils.c:2651
+#: src/main.c:4752 src/gui.c:609 src/utils.c:2619 src/utils.c:2651
 #: src/saveplay.c:2759 src/multitrack.c:3903 src/multitrack.c:5416
 msgid "_Redo"
 msgstr "_Ponovi"
 
-#: src/main.c:4768 src/interface.c:642 src/gui.c:2164 src/preferences.c:2381
+#: src/main.c:4778 src/interface.c:642 src/gui.c:2164 src/preferences.c:2381
 #: src/resample.c:1790
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:4769 src/interface.c:661 src/gui.c:2183
+#: src/main.c:4779 src/interface.c:661 src/gui.c:2183
 msgid "Left Audio"
 msgstr ""
 
-#: src/main.c:4770 src/gui.c:2201
+#: src/main.c:4780 src/gui.c:2201
 msgid "Right Audio"
 msgstr ""
 
-#: src/main.c:4815
+#: src/main.c:4825
 msgid ""
 "\n"
 "\n"

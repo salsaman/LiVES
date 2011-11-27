@@ -34,6 +34,12 @@ static int vdevfd;
 
 static char *vdevname;
 
+static char *tmpdir;
+
+static char xfile[4096];
+
+static int aforms[2];
+
 //////////////////////////////////////////////
 
 
@@ -132,7 +138,13 @@ static char **get_vloopback2_devices(void) {
 
 const char *module_check_init(void) {
   char **vdevs = get_vloopback2_devices();
+
+  char buf[16384];
+
   int i=0;
+  int dummyvar,rfd;
+
+  size_t ret;
 
   if (vdevs[0]==NULL) {
     free(vdevs);
@@ -141,6 +153,17 @@ const char *module_check_init(void) {
   
   while (vdevs[i]!=NULL) free(vdevs[i++]);
   free( vdevs );
+
+  // get tempdir
+  dummyvar=system("smogrify get_tempdir oggstream");
+  rfd=open("/tmp/.smogrify.oggstream",O_RDONLY);
+  ret=read(rfd,(void *)buf,16383);
+  memset(buf+ret,0,1);
+
+  tmpdir=strdup(buf);
+
+  dummyvar=dummyvar; // keep compiler happy
+
 
   return NULL;
 }
@@ -155,6 +178,15 @@ const char *get_description (void) {
 
 uint64_t get_capabilities (int palette) {
   return 0;
+}
+
+
+const int *get_audio_fmts() {
+  // this is not yet documented, but is an optional function to get a list of audio formats. If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream, in one of the supported formats
+  aforms[0]=1; // pcm
+  aforms[1]=-1; // end
+
+  return aforms;
 }
 
 const char rfx[32768];
@@ -191,6 +223,7 @@ const char *get_rfx (void) {
 vdevname|Video _device|string_list|0|",
 	  devstr,
 	  "\\n\
+afname|Send _audio to|string|/tmp/audio.wav|1024|\\n\
 </params> \\n\
 <param_window> \\n\
 </param_window> \\n\
@@ -246,10 +279,23 @@ boolean set_yuv_palette_clamping(int clamping_type) {
   return TRUE;
 }
 
+static void make_path(const char *fname, int pid, const char *ext) {
+  snprintf(xfile,4096,"%s/%s-%d.%s",tmpdir,fname,pid,ext);
+}
 
 
 boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
   int i=0,idx=0,ret_code;
+  int afd,audio;
+
+  int mypid=getpid();
+
+  int dummyvar;
+
+  char cmd[8192];
+
+  char *audfile;
+
   char **vdevs;
 
   struct v4l2_capability vid_caps;
@@ -258,6 +304,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   vdevfd=-1;
 
   if (argc>0) idx=atoi(argv[0]);
+  if (argc>1) audfile=argv[1];
 
   vdevs = get_vloopback2_devices();
   if (vdevs[idx]!=NULL) {
@@ -322,7 +369,22 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   else vid_format.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
 
   ret_code = ioctl(vdevfd, VIDIOC_S_FMT, &vid_format);
-  
+
+  make_path("livesaudio",mypid,"stream");
+
+  afd=open(xfile,O_RDONLY|O_NONBLOCK);
+  if (afd!=-1) {
+    audio=1;
+    close(afd);
+  }
+  else audio=0;
+
+  if (audio) {
+    snprintf(cmd,8192,"/bin/cat %s > \"%s\" &",xfile,audfile);
+    dummyvar=system(cmd);
+  }
+  dummyvar=dummyvar; // keep compiler happy
+
   return TRUE;
 }
 

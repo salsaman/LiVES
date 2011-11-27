@@ -17,7 +17,7 @@ if ($command eq "get_formats") {
 
     # unlike encoders, this is sent as a string e.g. "1|3|8"
 
-    print "3";
+    print "1|3";
     exit 0;
 }
 
@@ -29,14 +29,22 @@ if ($command eq "check") {
 	#vorbis
 
 	if (&location("oggenc") eq "" && &location("sox") eq "") {
-
 	    print "\nFor audio encoding to the 'vorbis' format you need to have either\n'oggenc' or correctly configured 'sox' installed.\nPlease install either of these programs and try again.\n";
 	    exit 1;
 	}
 	exit 0;
     }
-}
+    if ($chkform == 1) {
+	if (&location("sox") eq "") {
+	    print "\nFor audio encoding to the 'wav' format you need to have correctly configured 'sox' installed.\nPlease check your installation of sox and try again.\n";
+	    exit 1;
+	}
+	exit 0;
+    }
 
+    print "\nUnknown audio format for streaming.\n";
+    exit 1;
+}
 
 
 
@@ -51,8 +59,8 @@ if ($command eq "play") {
 
     # TODO - channels, samps, signed, endian
 
-    #system("mkfifo $outfifo");
     #create outfifo; host should have already created infifo
+    system("mkfifo $outfifo");
 
     # do conversion
     # audio formats taken from lives/src/plugins.h
@@ -64,6 +72,10 @@ if ($command eq "play") {
 	else {
 	    system("sox -t raw -r $arate -s -L -b 16 -c 2 $infifo -t vorbis $outfifo");
 	}
+    }
+    elsif ($format==1) {
+	#pcm
+	system("sox -t raw -r $arate -s -L -b 16 -c 2 $infifo -t wav $outfifo 2>/dev/null");
     }
     else {
 	exit 2;

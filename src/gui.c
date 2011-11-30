@@ -254,6 +254,8 @@ create_LiVES (void)
 
   mainw->current_file=-1;
 
+  mainw->preview_image=NULL;
+
   mainw->sep_image = gtk_image_new_from_pixbuf (NULL);
   mainw->image272 = gtk_image_new_from_pixbuf (NULL);
   mainw->image273 = gtk_image_new_from_pixbuf (NULL);

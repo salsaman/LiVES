@@ -3356,7 +3356,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	if (image_ext==NULL||!strcmp(image_ext,"jpg")) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
 	else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
       }
-      create_empty_pixel_data(layer,TRUE);
+      create_empty_pixel_data(layer,TRUE,TRUE);
       return TRUE;
     }
     else if (clip==mainw->scrap_file) {
@@ -3394,7 +3394,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	  weed_set_int_value(layer,"YUV_clamping",dplug->cdata->YUV_clamping);
 	  weed_set_int_value(layer,"YUV_subspace",dplug->cdata->YUV_subspace);
 	}
-	create_empty_pixel_data(layer,FALSE);
+	create_empty_pixel_data(layer,FALSE,TRUE);
 
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 	rowstrides=weed_get_int_array(layer,"rowstrides",&error);
@@ -4149,8 +4149,9 @@ void load_frame_image(gint frame) {
       layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
       if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
-	  weed_palette_is_rgb_palette(layer_palette) && 
-	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) {
+	  ((weed_palette_is_rgb_palette(layer_palette) && 
+	    !(weed_palette_is_rgb_palette(mainw->vpp->palette))) || 
+	(weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
 	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
 	// so copy layer and convert, retaining original
 	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
@@ -4283,8 +4284,9 @@ void load_frame_image(gint frame) {
       layer_palette=weed_get_int_value(frame_layer,"current_palette",&weed_error);
     
       if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
-	  weed_palette_is_rgb_palette(layer_palette) && 
-	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) {
+	  ((weed_palette_is_rgb_palette(layer_palette) && 
+	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) || 
+	(weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
 	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
 	// so copy layer and convert, retaining original
 	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);

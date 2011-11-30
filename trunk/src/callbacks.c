@@ -301,7 +301,8 @@ lives_exit (void) {
     save_future_prefs();
 
     // stop valgrind from complaining
-    if (mainw->preview_image!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL);
+    if (mainw->preview_image!=NULL && GTK_IS_IMAGE(mainw->preview_image)) 
+      gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL);
     if (mainw->image272!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272), NULL);
     if (mainw->image273!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273), NULL);
 
@@ -5495,7 +5496,8 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
   if (mainw->playing_file>-1){
     if (mainw->fs) {
       // switch TO full screen during pb
-      if (mainw->multitrack==NULL&&(!mainw->sep_win||prefs->play_monitor==prefs->gui_monitor)&&!(mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))) {
+      if (mainw->multitrack==NULL&&(!mainw->sep_win||prefs->play_monitor==prefs->gui_monitor)&&
+	  !(mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->sep_win)) {
       if (!mainw->faded) {
 	fade_background();
       }

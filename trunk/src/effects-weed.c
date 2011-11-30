@@ -1751,7 +1751,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       set_channel_size(channel,opwidth/weed_palette_get_pixels_per_macropixel(palette),opheight,1,NULL);
 
 
-      create_empty_pixel_data(channel,FALSE); // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
+      // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
+      create_empty_pixel_data(channel,FALSE,TRUE);
       // and update width and height if necessary
 
       numplanes=weed_leaf_num_elements(channel,"rowstrides");
@@ -2469,7 +2470,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   if (output==-1) {
     // blank frame - e.g. for multitrack
     weed_plant_t *layer=weed_layer_new(opwidth>4?opwidth:4,opheight>4?opheight:4,NULL,WEED_PALETTE_RGB24);
-    create_empty_pixel_data(layer,TRUE);
+    create_empty_pixel_data(layer,TRUE,TRUE);
     return layer;
   }
 
@@ -2484,7 +2485,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 			 WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
       weed_set_int_value(layer,"width",opwidth);
       weed_set_int_value(layer,"height",opheight);
-      create_empty_pixel_data(layer,TRUE);
+      create_empty_pixel_data(layer,TRUE,TRUE);
       g_printerr("weed_apply_effects created empty pixel_data\n");
     }
   
@@ -3763,7 +3764,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       set_channel_size(channel,320,240,1,&def_rowstride);
       
       // create empty data for the palette and get the actual sizes
-      create_empty_pixel_data(channel,FALSE);
+      create_empty_pixel_data(channel,FALSE,TRUE);
       width=weed_get_int_value(channel,"width",&error);
       height=weed_get_int_value(channel,"height",&error);
       numplanes=weed_leaf_num_elements(channel,"rowstrides");
@@ -3805,7 +3806,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       set_channel_size(channel,width,height,1,&def_rowstride);
       
       // create empty data for the palette and get the actual sizes
-      create_empty_pixel_data(channel,FALSE);
+      create_empty_pixel_data(channel,FALSE,TRUE);
       width=weed_get_int_value(channel,"width",&error);
       height=weed_get_int_value(channel,"height",&error);
       numplanes=weed_leaf_num_elements(channel,"rowstrides");
@@ -4273,7 +4274,7 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   palette=weed_get_int_value(chantmpl,"current_palette",&error);
   weed_set_int_value(channel,"current_palette",palette);
 
-  create_empty_pixel_data(channel,FALSE);
+  create_empty_pixel_data(channel,FALSE,TRUE);
 
   // align memory if necessary
   if (weed_plant_has_leaf(chantmpl,"alignment")) {

@@ -94,7 +94,7 @@ gboolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma);
 void resize_layer (weed_plant_t *layer, int width, int height, int interp);
 void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, int nheight);
 void compact_rowstrides(weed_plant_t *layer);
-void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill);
+void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean may_contig);
 void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette);
 GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer);
 gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *);

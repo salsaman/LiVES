@@ -1090,4 +1090,4 @@ typedef struct {
 
 static int matroska_read_close(const lives_clip_data_t *cdata);
 
-static index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int pts);
+static index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint32_t pts);

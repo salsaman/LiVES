@@ -45,6 +45,13 @@
 #include "weed/weed-effects.h"
 #include "weed/weed-host.h"
 
+#else // HAVE_SYSTEM_WEED
+#include "../libweed/weed.h"
+#include "../libweed/weed-palettes.h"
+#include "../libweed/weed-effects.h"
+#include "../libweed/weed-host.h"
+#endif
+
 #ifdef USE_SWSCALE
 
 #ifdef HAVE_SYSTEM_WEED_COMPAT
@@ -54,18 +61,6 @@
 #endif // HAVE_SYSTEM_WEED_COMPAT
 
 #endif // USE_SWSCALE
-
-#else // HAVE_SYSTEM_WEED
-#include "../libweed/weed.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-host.h"
-
-#ifdef USE_SWSCALE
-#include "../libweed/weed-compat.h"
-#endif // USE_SWSCALE
-
-#endif // HAVE_SYSTEM_WEED
 
 #include "support.h"
 #include "main.h"

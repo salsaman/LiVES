@@ -39,6 +39,10 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.0";
 #undef HAVE_AV_CONFIG_H
 #endif
 
+#ifndef HAVE_SYSTEM_WEED
+#include "../../../libweed/weed-palettes.h"
+#endif
+
 #define HAVE_AVCODEC
 
 #ifdef HAVE_SYSTEM_WEED_COMPAT

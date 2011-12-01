@@ -398,13 +398,42 @@ HAVE_LIBPNG=false
 AC_ARG_ENABLE( libpng, [  --disable-libpng    Disable direct libpng support.] , disable_libpng=yes)
 if test "x$disable_libpng" != "xyes" ; then
 
-dnl check for mjpegtools
+dnl check for libpng
 PKG_CHECK_MODULES(PNG,libpng > 1.2.0,HAVE_LIBPNG=true,HAVE_LIBPNG=false)
 AC_SUBST(PNG_CFLAGS)
 AC_SUBST(PNG_LIBS)
 fi
 
 AM_CONDITIONAL(HAVE_LIBPNG,$HAVE_LIBPNG)
+
+
+
+HAVE_ZLIB=false
+AC_ARG_ENABLE( libz, [  --disable-libz    Disable libz support.] , disable_libz=yes)
+if test "x$disable_libz" != "xyes" ; then
+
+dnl check for libz
+PKG_CHECK_MODULES(LIBZ,zlib,HAVE_LIBZ=true,HAVE_LIBZ=false)
+AC_SUBST(LIBZ_CFLAGS)
+AC_SUBST(LIBZ_LIBS)
+fi
+
+AM_CONDITIONAL(CONFIG_ZLIB,$HAVE_LIBZ)
+
+
+HAVE_BZLIB=false
+AC_ARG_ENABLE( libbz, [  --disable-libbz    Disable libbz support.] , disable_libbz=yes)
+if test "x$disable_libbz" != "xyes" ; then
+
+dnl check for libz
+AC_CHECK_HEADERS(bzlib.h,HAVE_LIBBZ=true,HAVE_LIBBZ=false)
+
+if test "HAVE_LIBBZ" == "true" ; then
+LIBBZ_LIBS=-lbz
+fi
+fi
+
+AM_CONDITIONAL(CONFIG_BZLIB,$HAVE_LIBBZ)
 
 
 HAVE_UNICAP=false

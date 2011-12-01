@@ -198,8 +198,6 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t * data,
   total ^= 1 << ff_log2_tab[total];
 
 
-  printf("bread is %d\n",bread);
-
   while (n++ < bread) {
 
     if (data==NULL) {
@@ -851,7 +849,7 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
   EbmlList *seekhead_list = &matroska->seekhead;
   MatroskaSeekhead *seekhead = seekhead_list->elem;
   uint32_t level_up = matroska->level_up;
-  int64_t before_pos = avio_tell(matroska->ctx->pb);
+  int64_t before_pos = priv->input_position;
   uint32_t saved_id = matroska->current_id;
   MatroskaLevel level;
   int64_t offset;
@@ -908,6 +906,73 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
   return ret;
 }
 
+
+
+
+static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
+
+  lives_mkv_priv_t *priv=cdata->priv;
+  MatroskaDemuxContext *matroska=&priv->matroska;
+
+  EbmlList *index_list;
+  MatroskaIndex *index;
+  int index_scale = 1;
+  int i, j;
+
+  index_list = &matroska->index;
+  index = index_list->elem;
+  printf("adding indices %d\n",index_list->nb_elem);
+
+  if (index_list->nb_elem
+      && index[0].time > 1E14/matroska->time_scale) {
+    //av_log(matroska->ctx, AV_LOG_WARNING, "Working around broken index.\n");
+    index_scale = matroska->time_scale;
+  }
+
+  for (i = 0; i < index_list->nb_elem; i++) {
+    EbmlList *pos_list = &index[i].pos;
+    MatroskaIndexPos *pos = pos_list->elem;
+    for (j = 0; j < pos_list->nb_elem; j++) {
+      MatroskaTrack *track = matroska_find_track_by_num(matroska, pos[j].track);
+      if (track && track->stream && track->stream==priv->vidst) {
+	//lives_add_idx(cdata, pos[j].pos + matroska->segment_start, (uint64_t)(index[i].time/index_scale)*100000);
+
+	// TODO - ******
+	av_add_index_entry(track->stream, pos[j].pos + matroska->segment_start,
+			   index[i].time/index_scale, 0, 0, AVINDEX_KEYFRAME);
+
+
+
+	printf("ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time/index_scale);
+
+
+      }
+      
+      
+    }
+  }
+}
+
+
+static void matroska_parse_cues(const lives_clip_data_t *cdata) {
+  lives_mkv_priv_t *priv=cdata->priv;
+  MatroskaDemuxContext *matroska=&priv->matroska;
+
+  EbmlList *seekhead_list = &matroska->seekhead;
+  MatroskaSeekhead *seekhead = seekhead_list->elem;
+  int i;
+  
+  for (i = 0; i < seekhead_list->nb_elem; i++)
+    if (seekhead[i].id == MATROSKA_ID_CUES)
+      break;
+  //assert(i <= seekhead_list->nb_elem);
+  
+  matroska_parse_seekhead_entry(cdata, i);
+  matroska_add_index_entries(cdata);
+}
+
+
+
 static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
@@ -931,76 +996,12 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
       matroska->cues_parsing_deferred = 1;
       continue;
     }
-    
+
     if (matroska_parse_seekhead_entry(cdata, i) < 0)
       break;
   }
+
 }
-
-static void matroska_add_index_entries(MatroskaDemuxContext *matroska) {
-  EbmlList *index_list;
-  MatroskaIndex *index;
-  int index_scale = 1;
-  int i, j;
-
-  index_list = &matroska->index;
-  index = index_list->elem;
-  printf("adding indices %d\n",index_list->nb_elem);
-
-  if (index_list->nb_elem
-      && index[0].time > 1E14/matroska->time_scale) {
-    //av_log(matroska->ctx, AV_LOG_WARNING, "Working around broken index.\n");
-    index_scale = matroska->time_scale;
-  }
-
-  printf("44adding indices %d\n",index_list->nb_elem);
-
-  for (i = 0; i < index_list->nb_elem; i++) {
-    EbmlList *pos_list = &index[i].pos;
-    MatroskaIndexPos *pos = pos_list->elem;
-    printf("2adding indices\n");
-    for (j = 0; j < pos_list->nb_elem; j++) {
-      printf("3adding indices\n");
-      MatroskaTrack *track = matroska_find_track_by_num(matroska, pos[j].track);
-      if (track && track->stream) {
-	printf("3adding indices\n");
-
-	
-	// TODO - ******
-	av_add_index_entry(track->stream,
-			   pos[j].pos + matroska->segment_start,
-			   index[i].time/index_scale, 0, 0,
-			   AVINDEX_KEYFRAME);
-      }
-      
-      
-    }
-  }
-}
-
-
-static void matroska_parse_cues(const lives_clip_data_t *cdata) {
-  lives_mkv_priv_t *priv=cdata->priv;
-  MatroskaDemuxContext *matroska=&priv->matroska;
-
-  EbmlList *seekhead_list = &matroska->seekhead;
-  MatroskaSeekhead *seekhead = seekhead_list->elem;
-  int i;
-  
-  printf("cue1\n");
-
-  for (i = 0; i < seekhead_list->nb_elem; i++)
-    if (seekhead[i].id == MATROSKA_ID_CUES)
-      break;
-  //assert(i <= seekhead_list->nb_elem);
-  printf("cue2\n");
-
-  matroska_parse_seekhead_entry(cdata, i);
-  printf("cue3\n");
-
-  matroska_add_index_entries(matroska);
-}
-
 
 
 //////////////////////////////////////////////
@@ -1015,21 +1016,6 @@ static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
 
 
 //////////////////////////////////////////////////////////////////
-
-
-static boolean lives_mkv_parse_pack(const lives_clip_data_t *cdata, lives_mkv_pack_t *pack) {
-  // TODO ***
-  printf("abc13\n");
-
-  return TRUE;
-}
-
-
-static int32_t get_last_tagsize(const lives_clip_data_t *cdata) {
-  // TODO ***
-
-  return 0;
-}
 
 
 
@@ -1107,227 +1093,70 @@ static void index_free(index_entry *idx) {
 
 
 static index_entry *index_walk(index_entry *idx, int pts) {
-  while(idx!=NULL) {
-    if (pts>=idx->dts&&pts<=idx->dts_max) return idx;
-    idx=idx->next;
+  index_entry *xidx=idx;
+  while(xidx!=NULL) {
+    if (xidx->next==NULL || (pts>=xidx->dts && pts<idx->next->dts)) return xidx;
+    xidx=xidx->next;
   }
   /// oops. something went wrong
   return NULL; 
 }
 
 
-index_entry *index_upto(const lives_clip_data_t *cdata, int pts) {
+index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int pts) {
   lives_mkv_priv_t *priv=cdata->priv;
-  lives_mkv_pack_t pack;
-  index_entry *nidx=priv->idxht,*oldht=nidx;
-  int mid_dts=frame_to_dts(cdata,cdata->nframes-1)>>1;
+  index_entry *nidx=priv->idxht;
+  index_entry *nentry;
 
-  if (nidx==NULL) priv->input_position=priv->data_start;
-  else priv->input_position=nidx->offs;
+  nentry=malloc(sizeof(index_entry *));
 
-  while (1) {
-    if (!lives_mkv_parse_pack(cdata,&pack)) return NULL;
+  nentry->dts=pts;
+  nentry->offs=offset;
+  nentry->prev=nentry->next=NULL;
 
-    // TODO *** - for non-avc, may need to find next non-control video packet
-
-
-    if (pack.type==MKV_TAG_TYPE_VIDEO&&pack.size>0) {
-      if (is_keyframe(priv->fd)) {
-
-	if (pack.dts>mid_dts||(priv->idxth!=NULL&&pack.dts>=priv->idxth->dts)) {
-	  // handle case where we cross the mid point, or head and tail list have met
-	  if (priv->idxth!=NULL&&pack.dts>=priv->idxth->dts) {
-	    // two lists are now contiguous; swap pointers to indicate this; update old head-tail and return it
-	    
-	    // we found no keyframes between idxht and idxth, so therefore extend idxht
-	    priv->idxht->dts_max=priv->idxth->dts-1;
-	    priv->idxht->next=priv->idxth;
-	    nidx=priv->idxht; // this is the value we will return
-	    
-	    // cross the pointers
-	    priv->idxht=index_walk(priv->idxht,mid_dts*4/3);
-	    priv->idxth=index_walk(priv->idxhh,mid_dts*2/3);
-	    
-	    return nidx;
-	  }
-	  
-	  priv->idxht->dts_max=pack.dts-1;
-	  if (pack.dts>pts) return priv->idxht;
-
-	  // we crossed the mid point but head list is too short
-	  return index_downto(cdata,pts); // index from head of tail list down to pts
-	}
-
-	// add new keyframe
-	nidx=(index_entry *)malloc(sizeof(index_entry));
-	nidx->offs=priv->input_position-11;
-	nidx->dts=nidx->dts_max=pack.dts;
-	nidx->next=NULL;
-	if (priv->idxht!=NULL) {
-	  oldht=priv->idxht;
-	  oldht->dts_max=pack.dts-1;
-	  oldht->next=nidx;
-	}
-	else priv->idxhh=nidx;
-    
-	priv->idxht=nidx;
-      }
-
-      if (pack.dts==pts) {
-	// result is current keyframe
-	break;
-      }
-      if (pack.dts>pts) {
-	// result is previous keyframe
-	nidx=oldht;
-	break;
-      }
-
-    }
-
-    // get next packet
-    priv->input_position+=pack.size+4;
-
+  if (nidx==NULL) {
+    // first entry in list
+    priv->idxhh=priv->idxht=nentry;
+    return nentry;
   }
+
+  if (nidx->dts < pts) {
+    // last entry in list
+    nentry->prev=nidx;
+    nidx->next=nentry;
+    priv->idxht=nentry;
+    return nentry;
+  }
+
+  if (priv->idxhh->dts>pts) {
+    // before head
+    nentry->next=priv->idxhh;
+    priv->idxhh->prev=nentry;
+    priv->idxhh=nentry;
+    return nentry;
+  }
+
+  nidx=index_walk(priv->idxhh,pts);
+
+  // after nidx in list
+  nidx->next->prev=nentry;
+  nentry->prev=nidx;
+
+  nentry->next=nidx->next;
+  nidx->next=nentry;
 
   return nidx;
 }
-
-
-
-index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
-  int32_t tagsize;
-  lives_mkv_priv_t *priv=cdata->priv;
-  lives_mkv_pack_t pack;
-  int delta;
-  index_entry *nidx=priv->idxth;
-  int mid_dts=frame_to_dts(cdata,cdata->nframes-1)>>1;
-
-  if (nidx==NULL) priv->input_position=get_last_packet_pos(cdata);
-  else {
-    lseek(priv->fd,nidx->offs-4,SEEK_SET);
-    tagsize=get_last_tagsize(cdata);
-    priv->input_position=nidx->offs-4-tagsize;
-  }
-
-  while (1) {
-    if (!lives_mkv_parse_pack(cdata,&pack)) return NULL;
-
-    if (pack.size==0||pack.type!=MKV_TAG_TYPE_VIDEO||(pack.type==MKV_TAG_TYPE_VIDEO&&!is_keyframe(priv->fd))) {
-      // get previous packet
-      delta=-15;
-      if (pack.type==MKV_TAG_TYPE_VIDEO) delta-=2; // keyframe check uses 2 bytes
-      lseek(priv->fd,delta,SEEK_CUR);
-      tagsize=get_last_tagsize(cdata);
-      priv->input_position-=15+tagsize;
-      continue;
-    }
-
-
-    if (pack.dts<=mid_dts||(priv->idxht!=NULL&&pack.dts<=priv->idxht->dts_max)) {
-      // handle case where we cross the mid point, or head and tail list have met
-      if (priv->idxht!=NULL&&pack.dts<=priv->idxht->dts_max) {
-	// two lists are now contiguous; swap pointers to indicate this; update old head-tail and return it
-
-	// we found no keyframes between idxth (or last_dts) and idxht, so therefore extend idxht
-	if (priv->idxth!=NULL) {
-	  priv->idxht->dts_max=priv->idxth->dts-1;
-	  priv->idxht->next=priv->idxth;
-	}
-	else priv->idxht->dts_max=frame_to_dts(cdata,cdata->nframes)-1;
-	nidx=priv->idxht; // this is the value we will return
-
-	// cross the pointers
-	priv->idxht=index_walk(priv->idxht,mid_dts*4/3);
-	priv->idxth=index_walk(priv->idxhh,mid_dts*2/3);
-
-	return nidx;
-      }
-
-      // we crossed the mid point but head list is too short
-      return index_upto(cdata,pts); // index from tail of head list up to pts
-    }
-
-    // TODO *** - for non-avc, may need to find next non-control video packet
-
-    // add keyframe
-    nidx=(index_entry *)malloc(sizeof(index_entry));
-    nidx->offs=priv->input_position-11;
-    nidx->dts=pack.dts;
-    if (priv->idxth!=NULL) {
-      nidx->dts_max=priv->idxth->dts-1;
-      nidx->next=priv->idxth;
-    }
-    else {
-      nidx->dts_max=frame_to_dts(cdata,cdata->nframes)-1;
-      nidx->next=NULL;
-    }
-    
-    priv->idxth=nidx;
-    if (nidx->dts<=pts) break; // found what we were looking for
-
-    lseek(priv->fd,-17,SEEK_CUR);
-    tagsize=get_last_tagsize(cdata);
-    priv->input_position-=15+tagsize;
-
-  }
-
-  return nidx;
-}
-
 
 
 
 static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_mkv_priv_t *priv=cdata->priv;
-  int ldts;
-  index_entry *idxhh=priv->idxhh;
-  index_entry *idxth=priv->idxth;
-  index_entry *idxht=priv->idxht;
-
-  if (idxht!=NULL&&pts>=idxht->dts&&pts<=idxht->dts_max) return idxht;
-  if (idxth!=NULL&&pts>=idxth->dts&&pts<=idxth->dts_max) return idxth;
-  if (idxhh!=NULL&&pts<=idxhh->dts_max) return idxhh;
-
-  if (idxht!=NULL&&idxth!=NULL&&idxht->dts>idxth->dts) {
-    // list is complete, pointers are to 1/3 and 2/3 points (swapped to indicate complete)
-    if (pts<idxth->dts) return index_walk(idxhh->next,pts); // in first 1/3
-    if (pts<idxht->dts) return index_walk(idxth->next,pts); // in second 1/3
-    return index_walk(idxht->next,pts); // in last 1/3
-  }
-
-  ldts=frame_to_dts(cdata,cdata->nframes-1)>>1; // halfway dts
-
-  if (pts<=ldts) {
-    // in first half
-    if (idxhh!=NULL&&pts<idxht->dts) return index_walk(idxhh->next,pts); // somewhere in head list
-    return index_upto(cdata,pts); // index from tail of head list up to pts
-  }
-
-  // in second half
-  if (idxth!=NULL&&pts>idxth->dts_max) return index_walk(idxth->next,pts);
-  else return index_downto(cdata,pts);
-
-
+  return index_walk(priv->idxhh,pts);
 }
 
 
 //////////////////////////////////////////////
-
-
-static int mkv_get_extradata(lives_clip_data_t *cdata, int size) {
-  int dummy;
-  lives_mkv_priv_t *priv=cdata->priv;
-
-  av_free(priv->ctx->extradata);
-  priv->ctx->extradata = calloc(size + FF_INPUT_BUFFER_PADDING_SIZE,1);
-  if (priv->ctx->extradata==NULL) return AVERROR(ENOMEM);
-  priv->ctx->extradata_size = size;
-  dummy=read(priv->fd, priv->ctx->extradata, priv->ctx->extradata_size);
-  dummy=dummy; // keep compiler happy
-  return 0;
-}
-
 
 
 
@@ -1378,10 +1207,9 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pac
   priv->data_start=priv->input_position;
 
   /* The next thing is a segment. */
-  if ((res = ebml_parse(cdata, matroska_segments, matroska)) < 0)
+  if ((res = ebml_parse(cdata, matroska_segments, matroska)) < 0) {
     return res;
-
-
+  }
 
   matroska_execute_seekhead(cdata);
 
@@ -1535,12 +1363,15 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pac
 
     track->codec_priv.size -= extradata_offset;
 
-    if (codec_id == CODEC_ID_NONE)
-      //      av_log(matroska->ctx, AV_LOG_INFO,
-      //     "Unknown/unsupported CodecID %s.\n", track->codec_id);
+    if (codec_id == CODEC_ID_NONE) {
+	fprintf(stderr,
+		"mkv_decoder: Unknown video codec\n");
+	return -42;
+    }
 
     if (track->time_scale < 0.01)
       track->time_scale = 1.0;
+
     av_set_pts_info(st, 64, matroska->time_scale*track->time_scale, 1000*1000*1000); /* 64 bit pts in ns */
 
     st->codec->codec_id = codec_id;
@@ -1623,11 +1454,22 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pac
     }
   }
 
-
   if (priv->vidst==NULL) {
     fprintf(stderr,"mkv_decoder: no video stream found\n");
     return -5;
   }
+
+
+  /* Parse the CUES now since we need the index data to seek. */
+  if (priv->matroska.cues_parsing_deferred) {
+    matroska_parse_cues(cdata);
+  }
+
+  if (!priv->vidst->nb_index_entries) {
+    fprintf(stderr,"mkv_decoder: no seek info found\n");
+    return -6;
+  }
+
 
   switch (priv->vidst->codec->codec_id) {
   case CODEC_ID_VP8  : sprintf(cdata->video_name,"%s","vp8"); break;
@@ -1648,53 +1490,6 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pac
   default  : sprintf(cdata->video_name,"%s","unknown"); break;
   }
 
-
-
-
-
-
-
-    attachements = attachements_list->elem;
-    for (j=0; j<attachements_list->nb_elem; j++) {
-        if (!(attachements[j].filename && attachements[j].mime &&
-              attachements[j].bin.data && attachements[j].bin.size > 0)) {
-            av_log(matroska->ctx, AV_LOG_ERROR, "incomplete attachment\n");
-        } else {
-            AVStream *st = av_new_stream(s, 0);
-            if (st == NULL)
-                break;
-            av_dict_set(&st->metadata, "filename",attachements[j].filename, 0);
-            av_dict_set(&st->metadata, "mimetype", attachements[j].mime, 0);
-            st->codec->codec_id = CODEC_ID_NONE;
-            st->codec->codec_type = AVMEDIA_TYPE_ATTACHMENT;
-            st->codec->extradata  = malloc(attachements[j].bin.size);
-            if(st->codec->extradata == NULL)
-                break;
-            st->codec->extradata_size = attachements[j].bin.size;
-            memcpy(st->codec->extradata, attachements[j].bin.data, attachements[j].bin.size);
-
-            for (i=0; ff_mkv_mime_tags[i].id != CODEC_ID_NONE; i++) {
-                if (!strncmp(ff_mkv_mime_tags[i].str, attachements[j].mime,
-                             strlen(ff_mkv_mime_tags[i].str))) {
-                    st->codec->codec_id = ff_mkv_mime_tags[i].id;
-                    break;
-                }
-            }
-            attachements[j].stream = st;
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-  matroska_add_index_entries(matroska);
- 
   return 0;
 }
 
@@ -1707,6 +1502,8 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
   cdata->seek_flag=0;
 
+  if (priv->s) matroska_read_close(cdata);
+
   if (priv->ctx!=NULL) {
     avcodec_close(priv->ctx);
     av_free(priv->ctx);
@@ -1718,8 +1515,6 @@ static void detach_stream (lives_clip_data_t *cdata) {
   priv->codec=NULL;
   priv->picture=NULL;
 
-  if (priv->idxth!=NULL&&(priv->idxht==NULL||(priv->idxth->dts>priv->idxht->dts))) 
-    index_free(priv->idxth);
   if (priv->idxhh!=NULL) index_free(priv->idxhh);
 
   priv->idxhh=NULL;
@@ -1970,18 +1765,19 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->last_frame=-1;
 
-  //ldts=get_last_video_dts(cdata);
-  ldts=10000000;
-
+  /*ldts=get_last_video_dts(cdata);
+    
   if (ldts==-1) {
     fprintf(stderr, "mkv_decoder: could not read last dts\n");
     detach_stream(cdata);
     return FALSE;
   }
-
+  
   cdata->nframes=dts_to_frame(cdata,ldts)+1;
+  */
 
   cdata->nframes=5000;
+
 
 #ifdef DEBUG
   fprintf(stderr,"fps is %.4f %ld\n",cdata->fps,cdata->nframes);
@@ -2224,7 +2020,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
   
   unsigned char buffer[2];
 
-  printf("PARSING BLOCK\n");
+  //  printf("PARSING BLOCK\n");
 
   if ((n = matroska_ebmlnum_uint(cdata, data, size, &num)) < 0) {
     //av_log(matroska->ctx, AV_LOG_ERROR, "EBML block data error\n");
@@ -2251,15 +2047,8 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
   }
   if (!duration)
     duration = track->default_duration / matroska->time_scale;
-  
-  if (read(priv->fd,buffer,2)<2) {
-    fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
-    return -10; // EOF TODO **
-  }
 
-  priv->input_position+=2;
-
-  block_time = AV_RB16(buffer);
+  block_time = AV_RB16(data);
 
   data += 2;
   flags = *data++;
@@ -2274,10 +2063,10 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 	&& timecode < track->end_timecode)
       is_keyframe = 0;  /* overlapping subtitles are not key frame */
 
-    // TOD **** 
-    if (is_keyframe)
+    // TODO **** 
+    if (is_keyframe) {
       av_add_index_entry(st, cluster_pos, timecode, 0,0,AVINDEX_KEYFRAME);
-
+    }
 
     track->end_timecode = FFMAX(track->end_timecode, timecode+duration);
   }
@@ -2428,7 +2217,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 	else {
 	  av_dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
 	  matroska->prev_pkt = pkt;
-	  printf("DYNARRAY ADD %d\n",matroska->num_packets);
+	  //printf("DYNARRAY ADD %d\n",matroska->num_packets);
 	}
 
       }
@@ -2443,7 +2232,6 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
   free(lace_size);
   return res;
 }
-
 
 
 static int matroska_parse_cluster(const lives_clip_data_t *cdata)
@@ -2513,16 +2301,8 @@ static int matroska_read_seek(const lives_clip_data_t *cdata,
   AVStream *st = priv->vidst;
   int i, index, index_sub, index_min;
 
-  /* Parse the CUES now since we need the index data to seek. */
-  if (matroska->cues_parsing_deferred) {
-    printf("cue01\n");
-    matroska_parse_cues(cdata);
-    matroska->cues_parsing_deferred = 0;
-  }
 
   if (!st->nb_index_entries) return 0;
-
-  printf("ok here\n");
 
   timestamp = FFMAX(timestamp, st->index_entries[0].timestamp);
 
@@ -2541,29 +2321,11 @@ static int matroska_read_seek(const lives_clip_data_t *cdata,
   matroska_clear_queue(matroska);
   if (index < 0) return 0;
 
-
-
-
   index_min = index;
-  for (i=0; i < matroska->tracks.nb_elem; i++) {
-    tracks[i].audio.pkt_cnt = 0;
-    tracks[i].audio.sub_packet_cnt = 0;
-    tracks[i].audio.buf_timecode = AV_NOPTS_VALUE;
-        tracks[i].end_timecode = 0;
-        if (tracks[i].type == MATROSKA_TRACK_TYPE_SUBTITLE
-            && !tracks[i].stream->discard != AVDISCARD_ALL) {
-	  index_sub = av_index_search_timestamp(tracks[i].stream, st->index_entries[index].timestamp, AVSEEK_FLAG_BACKWARD);
-	  if (index_sub >= 0
-	      && st->index_entries[index_sub].pos < st->index_entries[index_min].pos
-	      && st->index_entries[index].timestamp - st->index_entries[index_sub].timestamp < 30000000000/matroska->time_scale)
-	    index_min = index_sub;
-        }
-  }
   
   priv->input_position=st->index_entries[index_min].pos;
   lseek(priv->fd,priv->input_position,SEEK_SET);
   printf("2seeking to %ld\n",priv->input_position);
-
 
   matroska->current_id = 0;
   matroska->skip_to_keyframe = !(flags & AVSEEK_FLAG_ANY);
@@ -2576,9 +2338,11 @@ static int matroska_read_seek(const lives_clip_data_t *cdata,
 
 
 
-static int matroska_read_close(AVFormatContext *s)
-{
-  MatroskaDemuxContext *matroska = s->priv_data;
+static int matroska_read_close(const lives_clip_data_t *cdata) {
+
+  lives_mkv_priv_t *priv=cdata->priv;
+  MatroskaDemuxContext *matroska=&priv->matroska;
+
   MatroskaTrack *tracks = matroska->tracks.elem;
   int n;
 
@@ -2596,14 +2360,14 @@ static int matroska_read_close(AVFormatContext *s)
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
 
-  int64_t target_pts=frame_to_dts(cdata,tframe)/1000;
+  int64_t target_pts=frame_to_dts(cdata,tframe);
   int64_t nextframe=0;
   lives_mkv_priv_t *priv=cdata->priv;
   lives_mkv_pack_t pack;
   int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
   int btop=cdata->offs_y,bbot=xheight-1-btop;
   int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
-  //int rescan_limit=16;  // pick some arbitrary value
+  int rescan_limit=16;  // pick some arbitrary value
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
   boolean got_picture=FALSE;
   unsigned char *dst,*src;//,flags;
@@ -2655,9 +2419,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (tframe!=priv->last_frame) {
 
-    /*    if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
+    if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
 
-      if ((idx=get_idx_for_pts(cdata,target_pts))!=NULL) {
+      matroska_read_seek(cdata,target_pts,0);
+      avcodec_flush_buffers (priv->ctx);
+
+      /*      if ((idx=get_idx_for_pts(cdata,target_pts))!=NULL) {
 	priv->input_position=idx->offs;
 	nextframe=dts_to_frame(cdata,idx->dts);
       }
@@ -2678,12 +2445,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
     priv->ctx->skip_frame=AVDISCARD_NONREF;
     */
-
+    }
     priv->last_frame=tframe;
 
-    avcodec_flush_buffers (priv->ctx);
-
-    matroska_read_seek(cdata,0,0);
     nextframe=tframe;
 
     // do this until we reach target frame //////////////
@@ -2695,20 +2459,15 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       while (!got_picture) {
 	int len;
 
-	matroska_read_packet(cdata,&priv->avpkt);
-
 #if LIBAVCODEC_VERSION_MAJOR >= 52
 	len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
 	len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
-	priv->avpkt.size-=len;
-	priv->avpkt.data+=len;
+	printf("len is %d\n",len);
 
-	if (!got_picture&&priv->avpkt.size<=0) {
-	  //free(pack.data);
-	  return FALSE;
-	}
+	matroska_read_packet(cdata,&priv->avpkt);
+
       }
 
       //free(pack.data);

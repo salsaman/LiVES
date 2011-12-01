@@ -36,7 +36,7 @@
 #define EBML_ID_DOCTYPE            0x4282
 #define EBML_ID_DOCTYPEVERSION     0x4287
 #define EBML_ID_DOCTYPEREADVERSION 0x4285
-
+\
 /* general EBML types */
 #define EBML_ID_VOID               0xEC
 #define EBML_ID_CRC32              0xBF
@@ -1032,6 +1032,7 @@ const AVCodecTag codec_movvideo_tags[] = {
 ///////////////////////////////////////////////
 
 
+// not used
 typedef struct {
   int type;
   int size;
@@ -1046,9 +1047,9 @@ typedef struct {
 typedef struct _index_entry index_entry;
 
 struct _index_entry {
+  index_entry *prev; ///< ptr to prev entry
   index_entry *next; ///< ptr to next entry
   int32_t dts; ///< dts of keyframe
-  int32_t dts_max;    ///< max dts for this keyframe
   uint64_t offs;  ///< offset in file
 };
 
@@ -1066,7 +1067,7 @@ typedef struct {
   boolean has_audio;
   int vididx;
   AVStream *vidst;
-  int pack_offset;
+  int pack_offset;   // not used
   int64_t input_position;
   int64_t data_start;
   off_t filesize;
@@ -1076,13 +1077,17 @@ typedef struct {
   AVCodecContext *ctx;
   AVFrame *picture;
   AVPacket avpkt;
-  AVStream *st;
+  AVStream *st;   // same as vidst ????
   int64_t last_frame; ///< last frame displayed
+
   index_entry *idxhh;  ///< head of head list (always first frame)
   index_entry *idxht; ///< tail of head list
+
+
+
   index_entry *idxth; ///< head of tail list
 } lives_mkv_priv_t;
 
-index_entry *index_upto(const lives_clip_data_t *, int pts);
-index_entry *index_downto(const lives_clip_data_t *, int pts);
+static int matroska_read_close(const lives_clip_data_t *cdata);
 
+static index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int pts);

@@ -1262,7 +1262,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pac
       if (!track->default_duration)
 	track->default_duration = 1000000000/track->video.frame_rate;
 
-      cdata->fps=track->video.frame_rate;
+      if (cdata->fps==0.) cdata->fps=track->video.frame_rate;
 
       if (!track->video.display_width)
 	track->video.display_width = track->video.pixel_width;
@@ -1434,7 +1434,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pac
       if (track->default_duration)
 	st->avg_frame_rate = av_d2q(1000000000.0/track->default_duration, INT_MAX);
 
-      cdata->fps=st->avg_frame_rate.num/st->avg_frame_rate.den;
+      if (cdata->fps==0.) cdata->fps=st->avg_frame_rate.num/st->avg_frame_rate.den;
 
       /*
       if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
@@ -1554,7 +1554,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   
   struct stat sb;
 
-
 #define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"\n");
@@ -1588,7 +1587,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  // skip version, read version
   priv->input_position=0;
   lseek(priv->fd,priv->input_position,SEEK_SET);
 
@@ -1604,10 +1602,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->idxht=NULL;
   priv->idxth=NULL;
 
-
   priv->s = avformat_alloc_context();
-
-
 
   memset(&priv->matroska,0,sizeof(priv->matroska));
   priv->s->priv_data = &priv->matroska;
@@ -1660,32 +1655,14 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->codec=codec;
 
   // re-scan with avcodec; priv->data_start holds video data start position
-  priv->input_position=priv->data_start;
-
-  //lives_mkv_parse_pack(cdata,&pack);
-  
-  //if (priv->pack_offset!=0) lseek(priv->fd,priv->pack_offset,SEEK_CUR);
-
-  //pack.data=malloc(pack.size-priv->pack_offset+FF_INPUT_BUFFER_PADDING_SIZE);
 
   av_init_packet(&priv->avpkt);
-
-  /*  priv->avpkt.size=read (priv->fd, pack.data, pack.size-priv->pack_offset);
-  memset(pack.data+priv->avpkt.size,0,FF_INPUT_BUFFER_PADDING_SIZE);
-  priv->input_position+=pack.size+4;
-  priv->avpkt.data = pack.data;
-  priv->avpkt.dts=priv->avpkt.pts=pack.dts;*/
 
   priv->picture = avcodec_alloc_frame();
 
   matroska_read_seek(cdata,0,0);
 
-  printf("seek done\n");
-
-
   matroska_read_packet(cdata,&priv->avpkt);
-
-  printf("size is %d\n",priv->avpkt.size);
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
   len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
@@ -1698,9 +1675,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     detach_stream(cdata);
     return FALSE;
   }
-
-  if (got_picture) printf("got a picture !\n");
-
 
   cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
   if (ctx->color_range==AVCOL_RANGE_MPEG) cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
@@ -1755,6 +1729,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     if (ctx->time_base.den==1) cdata->fps=12.;
   }
 
+
   if (cdata->fps==0.||cdata->fps==1000.) {
     fprintf(stderr, "mkv_decoder: invalid framerate %.4f (%d / %d)\n",cdata->fps,ctx->time_base.den,ctx->time_base.num);
     detach_stream(cdata);
@@ -1768,12 +1743,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 
   priv->last_frame=-1;
-  printf("laaaaaaaaaaaaaaast dts was %ld\n",1);
 
   ldts=get_last_video_dts(cdata);
     
-  printf("last dts was %ld\n",ldts);
-
   if (ldts==-1) {
     fprintf(stderr, "mkv_decoder: could not read last dts\n");
     detach_stream(cdata);
@@ -2076,7 +2048,6 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
   
   if (matroska->skip_to_keyframe && track->type != MATROSKA_TRACK_TYPE_SUBTITLE) {
     if (!is_keyframe || timecode < matroska->skip_to_timecode) {
-      printf("pt aaaa1111\n");
       return res;
     }
     matroska->skip_to_keyframe = 0;
@@ -2280,10 +2251,8 @@ static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pk
   MatroskaDemuxContext *matroska = &priv->matroska;
 
   while (matroska_deliver_packet(cdata, pkt)) {
-    printf("RP1\n");
     if (matroska->done||got_eof) return FALSE;
     matroska_parse_cluster(cdata);
-    printf("RP12\n");
   }
   
   return TRUE;

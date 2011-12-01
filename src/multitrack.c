@@ -2333,7 +2333,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
   gboolean is_rendering=mainw->is_rendering;
   weed_timecode_t curr_tc;
   gint actual_frame;
-  weed_plant_t *frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+  weed_plant_t *frame_layer=mainw->frame_layer;
   gboolean internal_messaging=mainw->internal_messaging;
   gboolean needs_idlefunc=FALSE;
 
@@ -2377,8 +2377,10 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
     }
   }
 
-  if (mainw->playing_file>-1) return;
+  if (mainw->playing_file>-1) {
 
+    return;
+  }
   // start "playback" at current pos, we just "play" one frame
   curr_tc=set_play_position(mt);
   actual_frame=(gint)((gdouble)(curr_tc/U_SECL)*cfile->fps+1.4999);

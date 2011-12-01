@@ -935,7 +935,7 @@ static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
     for (j = 0; j < pos_list->nb_elem; j++) {
       MatroskaTrack *track = matroska_find_track_by_num(matroska, pos[j].track);
       if (track && track->stream && track->stream==priv->vidst) {
-	//lives_add_idx(cdata, pos[j].pos + matroska->segment_start, (uint64_t)(index[i].time/index_scale)*100000);
+	lives_add_idx(cdata, pos[j].pos + matroska->segment_start, (uint32_t)(index[i].time/index_scale));
 
 	// TODO - ******
 	av_add_index_entry(track->stream, pos[j].pos + matroska->segment_start,
@@ -1038,6 +1038,8 @@ static int get_last_video_dts(const lives_clip_data_t *cdata) {
   unsigned char flags;
   off_t offs;
 
+  return priv->idxht->dts;
+
   priv->input_position=get_last_packet_pos(cdata);
 
   while (1) {
@@ -1103,12 +1105,12 @@ static index_entry *index_walk(index_entry *idx, int pts) {
 }
 
 
-index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int pts) {
+index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint32_t pts) {
   lives_mkv_priv_t *priv=cdata->priv;
   index_entry *nidx=priv->idxht;
   index_entry *nentry;
 
-  nentry=malloc(sizeof(index_entry *));
+  nentry=malloc(sizeof(index_entry));
 
   nentry->dts=pts;
   nentry->offs=offset;
@@ -1119,6 +1121,8 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int 
     priv->idxhh=priv->idxht=nentry;
     return nentry;
   }
+
+  printf("vl %ld cf %ld\n",nidx->dts,pts);
 
   if (nidx->dts < pts) {
     // last entry in list
@@ -1145,7 +1149,7 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int 
   nentry->next=nidx->next;
   nidx->next=nentry;
 
-  return nidx;
+  return nentry;
 }
 
 
@@ -1764,9 +1768,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 
   priv->last_frame=-1;
+  printf("laaaaaaaaaaaaaaast dts was %ld\n",1);
 
-  /*ldts=get_last_video_dts(cdata);
+  ldts=get_last_video_dts(cdata);
     
+  printf("last dts was %ld\n",ldts);
+
   if (ldts==-1) {
     fprintf(stderr, "mkv_decoder: could not read last dts\n");
     detach_stream(cdata);
@@ -1774,10 +1781,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
   
   cdata->nframes=dts_to_frame(cdata,ldts)+1;
-  */
-
-  cdata->nframes=5000;
-
 
 #ifdef DEBUG
   fprintf(stderr,"fps is %.4f %ld\n",cdata->fps,cdata->nframes);
@@ -2547,12 +2550,3 @@ void clip_data_free(lives_clip_data_t *cdata) {
 void module_unload(void) {
 
 }
-
-int main(void) {
-  // for testing
-  module_check_init();
-  get_clip_data("/home/gabriel/gaga.webm",NULL);
-  return 1;
-}
-
-

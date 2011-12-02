@@ -306,6 +306,8 @@ lives_exit (void) {
     if (mainw->image272!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272), NULL);
     if (mainw->image273!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273), NULL);
 
+    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
+
     if (mainw->sep_win&&(mainw->playing_file>-1||prefs->sepwin_type==1)) {
       threaded_dialog_spin();
       kill_play_window();

@@ -140,7 +140,6 @@ static int ebml_level_end(const lives_clip_data_t *cdata) {
     MatroskaLevel *level = &matroska->levels[matroska->num_levels - 1];
     if (pos - level->start >= level->length || matroska->current_id) {
       matroska->num_levels--;
-      printf("abc1\n");
       return 1;
     }
   }
@@ -170,7 +169,8 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t * data,
   
   if (data==NULL) {
     if (read (priv->fd, buffer, 1) < 1) {
-      fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
+      if (!priv->expect_eof)
+	fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
       got_eof=TRUE;
       return 0;
     }
@@ -202,7 +202,8 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t * data,
 
     if (data==NULL) {
       if (read (priv->fd, buffer, 1) < 1) {
-	fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
+	if (!priv->expect_eof)
+	  fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
 	got_eof=TRUE;
 	return 0;
       }
@@ -254,7 +255,8 @@ static int ebml_read_uint(const lives_clip_data_t *cdata, int size, uint64_t *nu
   *num = 0;
   while (n++ < size) {
     if (read (priv->fd, buffer, 1) < 1) {
-      fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
+      if (!priv->expect_eof)
+	fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
       got_eof=TRUE;
       return 0;
     }
@@ -290,9 +292,10 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
 
     priv->input_position+=4;
 
-    val32 = get_le32int(buffer);
+    val32 = AV_RB32(buffer);
 
     *num= av_int2flt(val32);
+
   } else if(size==8){
 
     if (read(priv->fd,buffer,8)<8) {
@@ -302,7 +305,7 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
 
     priv->input_position+=8;
 
-    val64 = get_le64int(buffer);
+    val64 = AV_RB64(buffer);
 
     *num= av_int2dbl(val64);
   } else
@@ -325,7 +328,8 @@ static int ebml_read_ascii(const lives_clip_data_t *cdata, int size, char **str)
     return -1;// TODO ** AVERROR(ENOMEM);
   
   if (read (priv->fd, (uint8_t *) *str, size) < size) {
-    fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
+    if (!priv->expect_eof)
+      fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
     av_freep(str);
     got_eof=TRUE;
     return 0;
@@ -356,7 +360,8 @@ static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin 
   bin->pos  = priv->input_position;
   
   if (read (priv->fd, bin->data, length) < length) {
-    fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
+    if (!priv->expect_eof)
+      fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
     av_freep(&bin->data);
     got_eof=TRUE;
     return 0;
@@ -459,7 +464,9 @@ static int ebml_parse(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
     
     matroska->current_id = id | 1 << 7*res;
 
-    printf("got id %08x\n",matroska->current_id);
+    if (matroska->current_id!=163) {
+      //printf("got id %08x\n",matroska->current_id);
+    }
 
   }
   res=ebml_parse_id(cdata, syntax, matroska->current_id, data);
@@ -921,7 +928,6 @@ static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
 
   index_list = &matroska->index;
   index = index_list->elem;
-  printf("adding indices %d\n",index_list->nb_elem);
 
   if (index_list->nb_elem
       && index[0].time > 1E14/matroska->time_scale) {
@@ -943,7 +949,7 @@ static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
 
 
 
-	printf("ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time/index_scale);
+	//printf("ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time/index_scale);
 
 
       }
@@ -1018,60 +1024,133 @@ static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
 //////////////////////////////////////////////////////////////////
 
 
-
-static off_t get_last_packet_pos(const lives_clip_data_t *cdata) {
+static int get_last_video_dts(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv=cdata->priv;
-  int32_t tagsize;
-  off_t offs=lseek(priv->fd,-4,SEEK_END);
+  uint32_t ldts;
+  uint64_t frames=0;
+  boolean got_picture=FALSE;
 
-  tagsize=get_last_tagsize(cdata);
+  if (priv->idxht==NULL) return 0;
 
-  return offs-tagsize;
-}
+  ldts=priv->idxht->dts;
 
+  // never trust the given duration in a video clip.
+  //
+  // seek to the last frame in our index, then keep reading frames until we reach eof.
+  // crude but it should work.
 
+  cdata->nframes=1000000000; // allow seeking to end
 
-static int get_last_video_dts(const lives_clip_data_t *cdata) {
-  lives_mkv_priv_t *priv=cdata->priv;
-  lives_mkv_pack_t pack;
-  int delta,tagsize;
-  unsigned char flags;
-  off_t offs;
+  matroska_read_seek(cdata,ldts);
 
-  return priv->idxht->dts;
+  frames=dts_to_frame(cdata,ldts);
 
-  priv->input_position=get_last_packet_pos(cdata);
+  av_log_set_level(AV_LOG_FATAL);
+
+  // stop error reporting EOF
+  priv->expect_eof=TRUE;
 
   while (1) {
-    if (!lives_mkv_parse_pack(cdata,&pack)) return -1;
-    delta=-15;
-    if (pack.type==MKV_TAG_TYPE_VIDEO) {
-      if (read (priv->fd, &flags, 1) < 1) return -1;
-      if (!((flags & 0xF0)==0x50)) break;
-      delta-=1;
+    //read frames until we hit the second seek frame
+
+    if (priv->avpkt.data!=NULL) {
+      free(priv->avpkt.data);
+      priv->avpkt.data=NULL;
+      priv->avpkt.size=0;
     }
-    // rewind to previous packet
-    offs=lseek(priv->fd,delta,SEEK_CUR);
-    if (offs<=0) return -1;
-    tagsize=get_last_tagsize(cdata);
-    priv->input_position-=15+tagsize;
+
+    matroska_read_packet(cdata,&priv->avpkt);
+    if (got_eof) {
+      got_eof=FALSE;
+      break;
+    }
+
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+    avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+    avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
+  
+    if (got_picture) {
+      frames++;
+    }
   }
-  return pack.dts;
+
+  priv->expect_eof=FALSE;
+
+  return frame_to_dts(cdata,frames);
+
 }
 
 
-static boolean is_keyframe(int fd) {
-  unsigned char data[2];
 
-  // read 6 bytes
-  if (read (fd, data, 2) < 2) return FALSE;
 
-  if ((data[0]&0xF0)==0x10) return TRUE;
+static uint32_t calc_dts_delta(const lives_clip_data_t *cdata) {
+  // try real hard to get the fps.
+  // if all else has failed,
+  // count the number of frames between the first two entries in our index
+  // then, since we know the dts of each we can work out the dts delta per frame
+  // from this we can calculate the fps
 
-  if ((data[0]&0xF0)==0x50 && data[1]==0) return TRUE; // TODO *** - h264 ? may need to seek to next video frame
+  lives_mkv_priv_t *priv=cdata->priv;
 
-  return FALSE;
+  uint32_t deltadts,origdts;
+  index_entry *idx;
+  int frames=0;
+  boolean got_picture=FALSE;
+
+  if (priv->idxhh==NULL) return 0;
+
+  // seek to 0
+
+  idx=matroska_read_seek(cdata,0);
+  origdts=idx->dts;
+
+  idx=idx->next;
+
+  if (idx==NULL) return 0;
+
+  got_eof=FALSE;
+
+  while (1) {
+    //read frames until we hit the second seek frame
+
+    if (priv->avpkt.data!=NULL) {
+      free(priv->avpkt.data);
+      priv->avpkt.data=NULL;
+      priv->avpkt.size=0;
+    }
+
+    matroska_read_packet(cdata,&priv->avpkt);
+    if (got_eof) {
+      got_eof=FALSE;
+      return 0;
+    }
+
+    if (priv->avpkt.pos>=idx->offs) break;
+
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+    avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+    avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
+  
+    if (got_picture) {
+      frames++;
+    }
+  }
+
+  // divide 2nd dts by nframes, this gives delta dts
+
+  deltadts=((double)(idx->dts-origdts)/(double)(frames)+.5);
+
+  return deltadts;
+
 }
+
+
+
+
 
 
 /////////////////////////////////////////////////////
@@ -1094,10 +1173,10 @@ static void index_free(index_entry *idx) {
 // we further assume that pts == dts for all frames
 
 
-static index_entry *index_walk(index_entry *idx, int pts) {
+static index_entry *index_walk(index_entry *idx, uint32_t pts) {
   index_entry *xidx=idx;
   while(xidx!=NULL) {
-    if (xidx->next==NULL || (pts>=xidx->dts && pts<idx->next->dts)) return xidx;
+    if (xidx->next==NULL || (pts>=xidx->dts && pts<xidx->next->dts)) return xidx;
     xidx=xidx->next;
   }
   /// oops. something went wrong
@@ -1114,7 +1193,7 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint
 
   nentry->dts=pts;
   nentry->offs=offset;
-  nentry->prev=nentry->next=NULL;
+  nentry->next=NULL;
 
   if (nidx==NULL) {
     // first entry in list
@@ -1122,11 +1201,8 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint
     return nentry;
   }
 
-  printf("vl %ld cf %ld\n",nidx->dts,pts);
-
   if (nidx->dts < pts) {
     // last entry in list
-    nentry->prev=nidx;
     nidx->next=nentry;
     priv->idxht=nentry;
     return nentry;
@@ -1135,7 +1211,6 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint
   if (priv->idxhh->dts>pts) {
     // before head
     nentry->next=priv->idxhh;
-    priv->idxhh->prev=nentry;
     priv->idxhh=nentry;
     return nentry;
   }
@@ -1143,8 +1218,6 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint
   nidx=index_walk(priv->idxhh,pts);
 
   // after nidx in list
-  nidx->next->prev=nentry;
-  nentry->prev=nidx;
 
   nentry->next=nidx->next;
   nidx->next=nentry;
@@ -1154,7 +1227,7 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint
 
 
 
-static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
+static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, uint32_t pts) {
   lives_mkv_priv_t *priv=cdata->priv;
   return index_walk(priv->idxhh,pts);
 }
@@ -1164,13 +1237,11 @@ static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts)
 
 
 
-static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pack) {
+static int lives_mkv_read_header(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv=cdata->priv;
   AVFormatContext *s=priv->s;
 
   MatroskaDemuxContext *matroska = s->priv_data;
-  EbmlList *attachements_list = &matroska->attachments;
-  MatroskaAttachement *attachements;
   //EbmlList *chapters_list = &matroska->chapters;
   //MatroskaChapter *chapters;
   MatroskaTrack *tracks;
@@ -1247,7 +1318,6 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pac
       continue;
 
     if (track->type == MATROSKA_TRACK_TYPE_VIDEO) {
-      printf("got a video track !\n");
 
       if (priv->has_video) {
 	fprintf(stderr,"mkv_decoder: duplicate video streams found\n");
@@ -1277,10 +1347,12 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata, lives_mkv_pack_t *pac
       if (track->video.color_space.size == 4)
 	fourcc = AV_RL32(track->video.color_space.data);
 
-
+      cdata->frame_width=track->video.display_width;
+      cdata->frame_height=track->video.display_height;
 
     } else if (track->type == MATROSKA_TRACK_TYPE_AUDIO) {
       priv->has_audio=TRUE;
+      sprintf(cdata->audio_name,"unknown");
     }
     if (encodings_list->nb_elem > 1) {
       fprintf(stderr,"mkv_decoder: Multiple combined encodings not supported\n");
@@ -1513,6 +1585,10 @@ static void detach_stream (lives_clip_data_t *cdata) {
     av_free(priv->ctx);
   }
 
+  if (priv->s!=NULL) {
+    av_free(priv->s);
+  }
+
   if (priv->picture!=NULL) av_free(priv->picture);
 
   priv->ctx=NULL;
@@ -1523,9 +1599,16 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
   priv->idxhh=NULL;
   priv->idxht=NULL;
-  priv->idxth=NULL;
 
   if (cdata->palettes!=NULL) free(cdata->palettes);
+
+  if (priv->avpkt.data!=NULL) {
+    free(priv->avpkt.data);
+    priv->avpkt.data=NULL;
+    priv->avpkt.size=0;
+  }
+
+  matroska_clear_queue(&priv->matroska);
 
   close(priv->fd);
 }
@@ -1539,22 +1622,18 @@ static void detach_stream (lives_clip_data_t *cdata) {
 static boolean attach_stream(lives_clip_data_t *cdata) {
   // open the file and get a handle
   lives_mkv_priv_t *priv=cdata->priv;
-  lives_mkv_pack_t pack;
   unsigned char header[MKV_PROBE_SIZE];
-  boolean got_astream;
-  int64_t ldts;
-  double fps;
+  int64_t ldts,dts,pts;
+  double fps,duration=0.;
 
   AVCodec *codec=NULL;
   AVCodecContext *ctx;
 
   boolean got_picture=FALSE;
 
-  int len;
-  
   struct stat sb;
 
-#define DEBUG
+  //#define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"\n");
 #endif
@@ -1600,7 +1679,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->idxhh=NULL;
   priv->idxht=NULL;
-  priv->idxth=NULL;
+
+  sprintf(cdata->audio_name,"none");
 
   priv->s = avformat_alloc_context();
 
@@ -1608,13 +1688,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->s->priv_data = &priv->matroska;
   av_init_packet(&priv->avpkt);
   priv->avpkt.data=NULL;
-  priv->st=NULL;
   priv->ctx=NULL;
 
   fstat(priv->fd,&sb);
   priv->filesize=sb.st_size;
 
-  if (lives_mkv_read_header(cdata,&pack)) {
+  if (lives_mkv_read_header(cdata)) {
     close(priv->fd);
     return FALSE;
   }
@@ -1626,11 +1705,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->data_start=priv->input_position;
 
-  if (!priv->has_audio) got_astream=TRUE;
+  if (priv->matroska.duration!=0. && priv->matroska.time_scale!=.0)
+    duration = priv->matroska.duration / priv->matroska.time_scale * 1000.;
 
-#define DEBUG
+  //#define DEBUG
 #ifdef DEBUG
-  fprintf(stderr,"video type is %s %d x %d (%d x %d +%d +%d)\n",cdata->video_name,
+  fprintf(stderr,"video type is %f %s %d x %d (%d x %d +%d +%d)\n",duration,cdata->video_name,
 	  cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y);
 #endif
 
@@ -1644,7 +1724,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 
   priv->ctx = ctx = avcodec_alloc_context();
-  sprintf(cdata->audio_name,"none");
 
   if (avcodec_open(ctx, codec) < 0) {
     fprintf(stderr, "mkv_decoder: Could not open avcodec context\n");
@@ -1660,14 +1739,14 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->picture = avcodec_alloc_frame();
 
-  matroska_read_seek(cdata,0,0);
+  matroska_read_seek(cdata,0);
 
   matroska_read_packet(cdata,&priv->avpkt);
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-  len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
+  avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-  len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+  avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
   
   if (!got_picture) {
@@ -1675,6 +1754,29 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     detach_stream(cdata);
     return FALSE;
   }
+
+  pts=priv->avpkt.pts;
+  dts=priv->avpkt.dts;
+
+  if (priv->avpkt.data!=NULL) {
+    free(priv->avpkt.data);
+    priv->avpkt.data=NULL;
+    priv->avpkt.size=0;
+  }
+
+  matroska_read_packet(cdata,&priv->avpkt);
+
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+  avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+  avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
+  
+  if (got_picture) {
+    pts=priv->avpkt.pts-pts;
+    dts=priv->avpkt.dts-dts;
+  }
+  else pts=dts=0;
 
   cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
   if (ctx->color_range==AVCOL_RANGE_MPEG) cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
@@ -1724,11 +1826,15 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     if (fps!=1000.) cdata->fps=fps;
   }
 
-  if (cdata->fps==0.&&ctx->time_base.num==0) {
-    // not sure about this
-    if (ctx->time_base.den==1) cdata->fps=12.;
+  if (cdata->fps==0.) {
+    if (pts!=0) cdata->fps=1000./(double)pts;
+    else if (dts!=0) cdata->fps=1000./(double)dts;
   }
 
+  if (cdata->fps==0.||cdata->fps==1000.) {
+    dts=calc_dts_delta(cdata);
+    if (dts!=0) cdata->fps=1000./(double)dts;
+  }
 
   if (cdata->fps==0.||cdata->fps==1000.) {
     fprintf(stderr, "mkv_decoder: invalid framerate %.4f (%d / %d)\n",cdata->fps,ctx->time_base.den,ctx->time_base.num);
@@ -1745,14 +1851,16 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->last_frame=-1;
 
   ldts=get_last_video_dts(cdata);
-    
+
+  if (ldts==0) ldts=duration*1000.;
+
   if (ldts==-1) {
     fprintf(stderr, "mkv_decoder: could not read last dts\n");
     detach_stream(cdata);
     return FALSE;
   }
   
-  cdata->nframes=dts_to_frame(cdata,ldts)+1;
+  cdata->nframes=dts_to_frame(cdata,ldts);
 
 #ifdef DEBUG
   fprintf(stderr,"fps is %.4f %ld\n",cdata->fps,cdata->nframes);
@@ -1771,6 +1879,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 const char *module_check_init(void) {
   avcodec_init();
   avcodec_register_all();
+  av_log_set_level(AV_LOG_ERROR);
   return NULL;
 }
 
@@ -1795,7 +1904,13 @@ static lives_clip_data_t *init_cdata (void) {
   priv->codec=NULL;
   priv->picture=NULL;
 
+  priv->expect_eof=FALSE;
+
   cdata->palettes=NULL;
+
+  cdata->interlace=LIVES_INTERLACE_NONE;
+
+  cdata->nframes=0;
 
   got_eof=FALSE;
   errval=0;
@@ -1821,6 +1936,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   lives_mkv_priv_t *priv;
 
+  got_eof=FALSE;
+  errval=0;
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -1857,13 +1974,21 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   // cdata->height was set when we attached the stream
 
-  cdata->interlace=LIVES_INTERLACE_NONE;
+  if (cdata->frame_width==0||cdata->frame_width<cdata->width) cdata->frame_width=cdata->width;
+  else {
+    cdata->offs_x=(cdata->frame_width-cdata->width)/2;
+  }
+
+  if (cdata->frame_height==0||cdata->frame_height<cdata->height) cdata->frame_height=cdata->height;
+  else {
+    cdata->offs_y=(cdata->frame_height-cdata->height)/2;
+  }
 
   cdata->frame_width=cdata->width+cdata->offs_x*2;
   cdata->frame_height=cdata->height+cdata->offs_y*2;
 
   priv=cdata->priv;
-  // TODO - check this = spec suggests we should cut right and bottom
+
   if (priv->ctx->width==cdata->frame_width) cdata->offs_x=0;
   if (priv->ctx->height==cdata->frame_height) cdata->offs_y=0;
 
@@ -1992,8 +2117,6 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
   uint32_t *lace_size = NULL;
   int n, flags, laces = 0;
   uint64_t num;
-  
-  unsigned char buffer[2];
 
   //  printf("PARSING BLOCK\n");
 
@@ -2034,6 +2157,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
   if (cluster_time != (uint64_t)-1
       && (block_time >= 0 || cluster_time >= -block_time)) {
     timecode = cluster_time + block_time;
+
     if (track->type == MATROSKA_TRACK_TYPE_SUBTITLE
 	&& timecode < track->end_timecode)
       is_keyframe = 0;  /* overlapping subtitles are not key frame */
@@ -2158,6 +2282,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 	}
 	if (offset)
 	  memcpy (pkt->data, encodings->compression.settings.data, offset);
+
 	memcpy (pkt->data+offset, pkt_data, pkt_size);
 
 	if (pkt_data != data)
@@ -2220,6 +2345,7 @@ static int matroska_parse_cluster(const lives_clip_data_t *cdata)
   int i, res;
 
   int64_t pos = priv->input_position;
+
   matroska->prev_pkt = NULL;
   if (matroska->current_id)
     pos -= 4;  /* sizeof the ID which was already read */
@@ -2261,51 +2387,45 @@ static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pk
 
 
 
-static int matroska_read_seek(const lives_clip_data_t *cdata,
-                              int64_t timestamp, int flags)
+static index_entry * matroska_read_seek(const lives_clip_data_t *cdata,
+					uint32_t timestamp)
 {
 
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
   AVFormatContext *s=priv->s;
 
-  MatroskaTrack *tracks = matroska->tracks.elem;
   AVStream *st = priv->vidst;
-  int i, index, index_sub, index_min;
 
+  index_entry *idx;
 
-  if (!st->nb_index_entries) return 0;
+  if (!priv->idxhh) return NULL;
 
-  timestamp = FFMAX(timestamp, st->index_entries[0].timestamp);
+  timestamp = FFMIN(timestamp, frame_to_dts(cdata,cdata->nframes));
+  timestamp = FFMAX(timestamp, priv->idxhh->dts);
 
-  if ((index = av_index_search_timestamp(st, timestamp, flags)) < 0) {
-    priv->input_position=st->index_entries[st->nb_index_entries-1].pos;
-    lseek(priv->fd,priv->input_position,SEEK_SET);
-    printf("seeking to %ld\n",priv->input_position);
-    matroska->current_id = 0;
-    while ((index = av_index_search_timestamp(st, timestamp, flags)) < 0) {
-      matroska_clear_queue(matroska);
-      if (matroska_parse_cluster(cdata) < 0)
-	break;
-    }
-  }
+  idx=get_idx_for_pts(cdata,timestamp);
 
   matroska_clear_queue(matroska);
-  if (index < 0) return 0;
-
-  index_min = index;
-  
-  priv->input_position=st->index_entries[index_min].pos;
+  priv->input_position=idx->offs;
   lseek(priv->fd,priv->input_position,SEEK_SET);
-  printf("2seeking to %ld\n",priv->input_position);
+
+  if (priv->avpkt.data!=NULL) {
+    free(priv->avpkt.data);
+    priv->avpkt.data=NULL;
+    priv->avpkt.size=0;
+  }
+
+  //printf("2seeking to %ld\n",priv->input_position);
 
   matroska->current_id = 0;
-  matroska->skip_to_keyframe = !(flags & AVSEEK_FLAG_ANY);
-  matroska->skip_to_timecode = st->index_entries[index].timestamp;
+  matroska->skip_to_keyframe = 1;
+  matroska->skip_to_timecode = idx->dts;
   matroska->done = 0;
-  ff_update_cur_dts(s, st, st->index_entries[index].timestamp);
 
-  return 0;
+  ff_update_cur_dts(s, st, idx->dts);
+
+  return idx;
 }
 
 
@@ -2335,7 +2455,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int64_t target_pts=frame_to_dts(cdata,tframe);
   int64_t nextframe=0;
   lives_mkv_priv_t *priv=cdata->priv;
-  lives_mkv_pack_t pack;
   int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
   int btop=cdata->offs_y,bbot=xheight-1-btop;
   int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
@@ -2344,8 +2463,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   boolean got_picture=FALSE;
   unsigned char *dst,*src;//,flags;
   unsigned char black[4]={0,0,0,255};
-  //index_entry *idx;
+  index_entry *idx;
   register int i,p;
+
+  got_eof=FALSE;
 
 #ifdef DEBUG_KFRAMES
   fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
@@ -2392,35 +2513,21 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   if (tframe!=priv->last_frame) {
 
     if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
-
-      matroska_read_seek(cdata,target_pts,0);
+      idx=matroska_read_seek(cdata,target_pts);
+      nextframe=dts_to_frame(cdata,idx->dts);
       avcodec_flush_buffers (priv->ctx);
-
-      /*      if ((idx=get_idx_for_pts(cdata,target_pts))!=NULL) {
-	priv->input_position=idx->offs;
-	nextframe=dts_to_frame(cdata,idx->dts);
-      }
-      else priv->input_position=priv->data_start;
-      
-      // we are now at the kframe before or at target - parse packets until we hit target
-      
 
 #ifdef DEBUG_KFRAMES
       if (idx!=NULL) printf("got kframe %ld for frame %ld\n",dts_to_frame(cdata,idx->dts),tframe);
 #endif
-
-
     }
     else {
       nextframe=priv->last_frame+1;
     }
 
-    priv->ctx->skip_frame=AVDISCARD_NONREF;
-    */
-    }
-    priv->last_frame=tframe;
+    //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
-    nextframe=tframe;
+    priv->last_frame=tframe;
 
     // do this until we reach target frame //////////////
 
@@ -2429,21 +2536,26 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       got_picture=FALSE;
 
       while (!got_picture) {
-	int len;
 
-#if LIBAVCODEC_VERSION_MAJOR >= 52
-	len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-	len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
-#endif
-	printf("len is %d\n",len);
+	if (priv->avpkt.data!=NULL) {
+	  free(priv->avpkt.data);
+	  priv->avpkt.data=NULL;
+	  priv->avpkt.size=0;
+	}
 
 	matroska_read_packet(cdata,&priv->avpkt);
 
+	if (got_eof) return FALSE;
+
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+	avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+	avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
       }
 
-      //free(pack.data);
       nextframe++;
+      if (nextframe>cdata->nframes) return FALSE;
     } while (nextframe<=tframe);
 
     /////////////////////////////////////////////////////

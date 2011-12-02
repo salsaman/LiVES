@@ -1032,14 +1032,6 @@ const AVCodecTag codec_movvideo_tags[] = {
 ///////////////////////////////////////////////
 
 
-// not used
-typedef struct {
-  int type;
-  int size;
-  int64_t dts;
-  unsigned char *data;
-} lives_mkv_pack_t;
-
 
 
 // TODO - this is a lazy implementation - for speed we should use bi-directional skip-lists
@@ -1047,19 +1039,11 @@ typedef struct {
 typedef struct _index_entry index_entry;
 
 struct _index_entry {
-  index_entry *prev; ///< ptr to prev entry
   index_entry *next; ///< ptr to next entry
   int32_t dts; ///< dts of keyframe
   uint64_t offs;  ///< offset in file
 };
 
-
-static int ebml_parse_elem(const lives_clip_data_t *cdata,  EbmlSyntax *syntax, void *data);
-
-static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pkt);
-
-static int matroska_read_seek(const lives_clip_data_t *cdata,
-                              int64_t timestamp, int flags);
 
 typedef struct {
   int fd;
@@ -1067,7 +1051,6 @@ typedef struct {
   boolean has_audio;
   int vididx;
   AVStream *vidst;
-  int pack_offset;   // not used
   int64_t input_position;
   int64_t data_start;
   off_t filesize;
@@ -1077,17 +1060,22 @@ typedef struct {
   AVCodecContext *ctx;
   AVFrame *picture;
   AVPacket avpkt;
-  AVStream *st;   // same as vidst ????
   int64_t last_frame; ///< last frame displayed
 
-  index_entry *idxhh;  ///< head of head list (always first frame)
+  index_entry *idxhh;  ///< head of head list
   index_entry *idxht; ///< tail of head list
 
-
-
-  index_entry *idxth; ///< head of tail list
+  boolean expect_eof;
 } lives_mkv_priv_t;
 
+static int ebml_parse_elem(const lives_clip_data_t *cdata,  EbmlSyntax *syntax, void *data);
+
+static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pkt);
+
+static index_entry *matroska_read_seek(const lives_clip_data_t *cdata, uint32_t timestamp);
+
 static int matroska_read_close(const lives_clip_data_t *cdata);
+
+static void matroska_clear_queue(MatroskaDemuxContext *matroska);
 
 static index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint32_t pts);

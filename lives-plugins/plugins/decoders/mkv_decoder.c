@@ -1321,8 +1321,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
       if (priv->has_video) {
 	fprintf(stderr,"mkv_decoder: duplicate video streams found\n");
-	continue;
-	return -6;
+	//continue;
       }
 
       priv->vididx=i;
@@ -1496,11 +1495,11 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       st->codec->codec_tag  = fourcc;
       st->codec->width  = track->video.pixel_width;
       st->codec->height = track->video.pixel_height;
-      /*av_reduce(&st->sample_aspect_ratio.num,
+      av_reduce(&st->sample_aspect_ratio.num,
 		&st->sample_aspect_ratio.den,
 		st->codec->height * track->video.display_width,
 		st->codec-> width * track->video.display_height,
-		255);*/
+		255);
       if (st->codec->codec_id != CODEC_ID_H264)
 	st->need_parsing = AVSTREAM_PARSE_HEADERS;
       if (track->default_duration)
@@ -1556,7 +1555,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
   case CODEC_ID_MPEG1VIDEO  : sprintf(cdata->video_name,"%s","mpeg1"); break;
   case CODEC_ID_MPEG2VIDEO  : sprintf(cdata->video_name,"%s","mpeg2"); break;
   case CODEC_ID_MPEG4  : sprintf(cdata->video_name,"%s","mpeg4"); break;
-  case CODEC_ID_H264  : sprintf(cdata->video_name,"%s","avc"); break;
+  case CODEC_ID_H264  : sprintf(cdata->video_name,"%s","h264"); break;
   case CODEC_ID_MSMPEG4V3  : sprintf(cdata->video_name,"%s","msmpeg4"); break;
   case CODEC_ID_RV10  : sprintf(cdata->video_name,"%s","rv10"); break;
   case CODEC_ID_RV20  : sprintf(cdata->video_name,"%s","rv20"); break;
@@ -1665,7 +1664,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     close(priv->fd);
     return FALSE;
   }
-
+  
   priv->input_position=0;
   lseek(priv->fd,priv->input_position,SEEK_SET);
 
@@ -1686,6 +1685,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   memset(&priv->matroska,0,sizeof(priv->matroska));
   priv->s->priv_data = &priv->matroska;
+
   av_init_packet(&priv->avpkt);
   priv->avpkt.data=NULL;
   priv->ctx=NULL;
@@ -1697,6 +1697,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     close(priv->fd);
     return FALSE;
   }
+
 
   cdata->seek_flag=LIVES_SEEK_FAST|LIVES_SEEK_NEEDS_CALCULATION;
 
@@ -1741,16 +1742,19 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   matroska_read_seek(cdata,0);
 
-  matroska_read_packet(cdata,&priv->avpkt);
 
+  while (!got_picture&&!got_eof) {
+    matroska_read_packet(cdata,&priv->avpkt);
+    
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-  avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
+    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-  avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
-  
+  }
+
   if (!got_picture) {
-    fprintf(stderr,"mkv_decoder: could not get picture.\n");
+    fprintf(stderr,"mkv_decoder: could not get picture.\n PLEASE SEND A PATCH FOR %s FORMAT.\n",cdata->video_name);
     detach_stream(cdata);
     return FALSE;
   }
@@ -1832,6 +1836,34 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 
   if (cdata->fps==0.||cdata->fps==1000.) {
+    // use mplayer to get fps if we can...it seems to have some magical way
+    char cmd[1024];
+    char tmpfname[32];
+    int ofd;
+
+    sprintf(tmpfname,"/tmp/mkvdec=XXXXXX");
+    ofd=mkstemp(tmpfname);
+    if (ofd!=-1) {
+      int res;
+      snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
+      
+      res=system(cmd);
+      
+      if (!res) {
+	char buffer[1024];
+	ssize_t bytes=read(ofd,buffer,1024);
+	memset(buffer+bytes,0,1);
+	if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
+	  cdata->fps=strtod (buffer+13,NULL);
+	}
+      }
+      close(ofd);
+      unlink(tmpfname);
+    }
+  }
+
+  if (cdata->fps==0.||cdata->fps==1000.) {
+    // if mplayer fails, count the frames between index entries
     dts=calc_dts_delta(cdata);
     if (dts!=0) cdata->fps=1000./(double)dts;
   }
@@ -1860,12 +1892,22 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
   
-  cdata->nframes=dts_to_frame(cdata,ldts);
+  cdata->nframes=dts_to_frame(cdata,ldts)+2;
+
+  // double check, sometimes we can be out by one or two frames
+  while (1) {
+    priv->expect_eof=TRUE;
+    got_eof=FALSE;
+    get_frame(cdata,cdata->nframes-1,NULL,0,NULL);
+    if (!got_eof) break;
+    cdata->nframes--;
+  }
+  priv->expect_eof=FALSE;
+
 
 #ifdef DEBUG
   fprintf(stderr,"fps is %.4f %ld\n",cdata->fps,cdata->nframes);
 #endif
-
 
   return TRUE;
 }
@@ -2474,40 +2516,41 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   // calc frame width and height, including any border
 
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
-    nplanes=3;
-    black[0]=y_black;
-    black[1]=black[2]=128;
+  if (pixel_data!=NULL) {
+    if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
+      nplanes=3;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+    }
+    else if (pal==WEED_PALETTE_YUVA4444P) {
+      nplanes=4;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+      black[3]=255;
+    }
+    
+    if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+    
+    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+    
+    if (pal==WEED_PALETTE_YUV411) psize=6;
+    
+    if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+    
+    dstwidth*=psize;
+    
+    if (cdata->frame_height > cdata->height && height == cdata->height) {
+      // host ignores vertical border
+      btop=0;
+      xheight=cdata->height;
+      bbot=xheight-1;
+    }
+    
+    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+      // host ignores horizontal border
+      bleft=bright=0;
+    }
   }
-  else if (pal==WEED_PALETTE_YUVA4444P) {
-    nplanes=4;
-    black[0]=y_black;
-    black[1]=black[2]=128;
-    black[3]=255;
-  }
-  
-  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
-
-  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
-
-  if (pal==WEED_PALETTE_YUV411) psize=6;
-
-  if (pal==WEED_PALETTE_A1) dstwidth>>=3;
-
-  dstwidth*=psize;
-
-  if (cdata->frame_height > cdata->height && height == cdata->height) {
-    // host ignores vertical border
-    btop=0;
-    xheight=cdata->height;
-    bbot=xheight-1;
-  }
-
-  if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
-    // host ignores horizontal border
-    bleft=bright=0;
-  }
-
   ////////////////////////////////////////////////////////////////////
 
   if (tframe!=priv->last_frame) {
@@ -2561,6 +2604,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     /////////////////////////////////////////////////////
 
   }
+
+  if (pixel_data==NULL) return TRUE;
   
   for (p=0;p<nplanes;p++) {
     dst=pixel_data[p];

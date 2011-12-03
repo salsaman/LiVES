@@ -1123,6 +1123,33 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     if (fps!=1000.) cdata->fps=fps;
   }
 
+  if (cdata->fps==0.||cdata->fps==1000.) {
+    // use mplayer to get fps if we can...it seems to have some magical way
+    char cmd[1024];
+    char tmpfname[32];
+    int ofd;
+
+    sprintf(tmpfname,"/tmp/mkvdec=XXXXXX");
+    ofd=mkstemp(tmpfname);
+    if (ofd!=-1) {
+      int res;
+      snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
+      
+      res=system(cmd);
+      
+      if (!res) {
+	char buffer[1024];
+	ssize_t bytes=read(ofd,buffer,1024);
+	memset(buffer+bytes,0,1);
+	if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
+	  cdata->fps=strtod (buffer+13,NULL);
+	}
+      }
+      close(ofd);
+      unlink(tmpfname);
+    }
+  }
+
   if (cdata->fps==0.&&ctx->time_base.num==0) {
     // not sure about this
     if (ctx->time_base.den==1) cdata->fps=12.;
@@ -1150,7 +1177,14 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  cdata->nframes=dts_to_frame(cdata,ldts)+1;
+  cdata->nframes=dts_to_frame(cdata,ldts)+2;
+
+  // double check, sometimes we can be out by one or two frames
+  while (1) {
+    if (get_frame(cdata,cdata->nframes-1,NULL,0,NULL)) break;
+    cdata->nframes--;
+  }
+
 
 #ifdef DEBUG
   fprintf(stderr,"fps is %.4f %ld\n",cdata->fps,cdata->nframes);
@@ -1341,40 +1375,43 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
 #endif
 
-  // calc frame width and height, including any border
-
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
-    nplanes=3;
-    black[0]=y_black;
-    black[1]=black[2]=128;
-  }
-  else if (pal==WEED_PALETTE_YUVA4444P) {
-    nplanes=4;
-    black[0]=y_black;
-    black[1]=black[2]=128;
-    black[3]=255;
-  }
-  
-  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
-
-  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
-
-  if (pal==WEED_PALETTE_YUV411) psize=6;
-
-  if (pal==WEED_PALETTE_A1) dstwidth>>=3;
-
-  dstwidth*=psize;
-
-  if (cdata->frame_height > cdata->height && height == cdata->height) {
-    // host ignores vertical border
-    btop=0;
-    xheight=cdata->height;
-    bbot=xheight-1;
-  }
-
-  if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
-    // host ignores horizontal border
-    bleft=bright=0;
+  if (pixel_data!=NULL) {
+    
+    // calc frame width and height, including any border
+    
+    if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
+      nplanes=3;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+    }
+    else if (pal==WEED_PALETTE_YUVA4444P) {
+      nplanes=4;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+      black[3]=255;
+    }
+    
+    if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+    
+    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+    
+    if (pal==WEED_PALETTE_YUV411) psize=6;
+    
+    if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+    
+    dstwidth*=psize;
+    
+    if (cdata->frame_height > cdata->height && height == cdata->height) {
+      // host ignores vertical border
+      btop=0;
+      xheight=cdata->height;
+      bbot=xheight-1;
+    }
+    
+    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+      // host ignores horizontal border
+      bleft=bright=0;
+    }
   }
 
   ////////////////////////////////////////////////////////////////////
@@ -1474,6 +1511,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     /////////////////////////////////////////////////////
 
   }
+
+  if (pixel_data==NULL) return TRUE;
   
   for (p=0;p<nplanes;p++) {
     dst=pixel_data[p];

@@ -60,24 +60,19 @@ asf_decoder_la_LDFLAGS = $(shared_ldflags) $(ASFDEC_LIBS)
 
 
 if HAVE_AVUTIL
-if TEST_MKV
 mkv_libs = mkv_decoder.la
 MKVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@ @ZLIB_LIBS@ @BZLIB_LIBS@
-MKVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ @ZLIB_CFLAGS@ @BZLIB_CFLAGS@ \ 
+MKVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ @ZLIB_CFLAGS@ @BZLIB_CFLAGS@ \
 	-Wno-deprecated-declarations
 mkv_decoder_la_SOURCES = mkv_decoder.c mkv_decoder.h
 mkv_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(MKVDEC_CFLAGS)
 mkv_decoder_la_LDFLAGS = $(shared_ldflags) $(MKVDEC_LIBS)
 endif
-endif
-
-
-
 
 
 #in progress
 
-#does not work - unable to parse video pckets (patch would be very nice...)
+#does not work - unable to parse video packets (patch would be very nice...)
 
 #avi_libs = avi_decoder.la
 #AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@

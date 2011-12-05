@@ -442,6 +442,7 @@ typedef struct {
     uint64_t pixel_height;
     EbmlBin color_space;
     uint64_t stereo_mode;
+    uint64_t flag_interlaced;
 } MatroskaTrackVideo;
 
 typedef struct {
@@ -635,12 +636,12 @@ static EbmlSyntax matroska_track_video[] = {
     { MATROSKA_ID_VIDEOPIXELHEIGHT,   EBML_UINT, 0, offsetof(MatroskaTrackVideo,pixel_height) },
     { MATROSKA_ID_VIDEOCOLORSPACE,    EBML_BIN,  0, offsetof(MatroskaTrackVideo,color_space) },
     { MATROSKA_ID_VIDEOSTEREOMODE,    EBML_UINT, 0, offsetof(MatroskaTrackVideo,stereo_mode) },
+    { MATROSKA_ID_VIDEOFLAGINTERLACED,EBML_UINT, 0, offsetof(MatroskaTrackVideo,flag_interlaced), {.u=0}  },
     { MATROSKA_ID_VIDEOPIXELCROPB,    EBML_NONE },
     { MATROSKA_ID_VIDEOPIXELCROPT,    EBML_NONE },
     { MATROSKA_ID_VIDEOPIXELCROPL,    EBML_NONE },
     { MATROSKA_ID_VIDEOPIXELCROPR,    EBML_NONE },
     { MATROSKA_ID_VIDEODISPLAYUNIT,   EBML_NONE },
-    { MATROSKA_ID_VIDEOFLAGINTERLACED,EBML_NONE },
     { MATROSKA_ID_VIDEOASPECTRATIO,   EBML_NONE },
     { 0 }
 };

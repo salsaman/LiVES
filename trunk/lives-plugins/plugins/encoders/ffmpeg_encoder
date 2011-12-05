@@ -76,14 +76,15 @@ if ($command eq "get_formats") {
     # - otherwise set it to 'none'
 
 
+    print "webmh|webm high quality|8|none|webm|\n";
+    print "webmm|webm medium quality|8|none|webm|\n";
+    print "webml|webm low (stream) quality|8|none|webm|\n";
     print "flv|flv|9|arate=44100;22050;11025|flv|\n";
     print "divx|divx (25 fps)|5|fps=25.00|avi|\n";
-    print "asf|asf|5|none|asf|\n";
     print "3gp_h263|3gp (h263)|96|size=176x144,arate=8000|3gp|\n";
     print "3gp_mp4|3gp (mp4)|96|size=176x144,arate=8000|3gp|\n";
     print "flv-youtube|flv (425x318, optimised for youtube)|33|arate=44100;22050;11025,size=425x318|flv|\n";
     print "flv-youtubex|flv (other sizes, optimised for youtube)|33|arate=44100;22050;11025,aspect=1.3333:1|flv|\n";
-    print "webm|webm (experimental)|8|none|webm|\n";
     exit 0;
 }
 
@@ -166,8 +167,14 @@ if ($command eq "encode") {
     elsif ($otype eq "flv"||$otype eq "flv-youtube"||$otype eq "flv-youtubex") {
 	$vcodec="-f flv";
     }
-    elsif ($otype eq "webm") {
-	$vcodec="-f webm";
+    elsif ($otype eq "webmh") {
+	$vcodec="-f webm -vcodec libvpx -g 60 -quality best -b 1G";
+    }
+    elsif ($otype eq "webmm") {
+	$vcodec="-f webm -vcodec libvpx -g 60 -quality good";
+    }
+    elsif ($otype eq "webml") {
+	$vcodec="-f webm -vcodec libvpx -g 60 -quality realtime";
     }
 
     if ($otype eq "flv-youtube"||$otype eq "flv-youtubex") {
@@ -199,6 +206,15 @@ if ($command eq "encode") {
 	}
 	elsif ($aq==3) {
 	    $audio_com.=" -acodec vorbis";
+	    if ($otype eq "webmh") {
+		$audio_com.=" -aq 10";
+	    }
+	    elsif ($otype eq "webmm") {
+		$audio_com.=" -aq 5";
+	    }
+	    elsif ($otype eq "webml") {
+		$audio_com.=" -aq 1";
+	    }
 	}
 	else {
 	    $audio_com.=" -acodec mp2";

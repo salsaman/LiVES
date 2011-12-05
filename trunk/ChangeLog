@@ -1,9 +1,10 @@
 Version 1.4.9
 -------------
 Add support for v4l2loopback output.
-Implement instant opening of webm / matroska clips (in progress).
+Implement instant opening of webm / matroska clips.
 Fix crash when showing preview frame in multitrack (regression).
 Optimise memory for multiplanar images.
+Fix compilation problem (not finding weed-palettes.h)
 
 
 

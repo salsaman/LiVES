@@ -224,7 +224,7 @@ if ($command eq "encode") {
     if ($otype eq "flv") {
 	$lavfopts="-of lavf -lavfopts format=flv";
     }
-    if ($otype eq "wmv3") {
+    if ($otype eq "wmv2") {
 	$lavfopts="-of lavf -lavfopts format=asf";
     }
 

@@ -1349,6 +1349,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       cdata->frame_width=track->video.display_width;
       cdata->frame_height=track->video.display_height;
 
+      if (track->video.flag_interlaced) cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
+
     } else if (track->type == MATROSKA_TRACK_TYPE_AUDIO) {
       priv->has_audio=TRUE;
       sprintf(cdata->audio_name,"unknown");

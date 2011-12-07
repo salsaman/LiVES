@@ -1974,7 +1974,7 @@ if (defined($ARGV[0])) {
 	}
 
 	unlink <*.tar>;
-	system ("tar -cf header.tar $audio header* extended* event.* subs.* 2>/dev/null");
+	system ("tar -cf header.tar $audio header* extended* event.* subs.* file* 2>/dev/null");
 
 	$img_ext=&get_img_ext($curtmpdir,$start);
 

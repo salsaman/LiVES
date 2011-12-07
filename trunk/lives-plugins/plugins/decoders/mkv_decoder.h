@@ -1069,6 +1069,13 @@ typedef struct {
   boolean expect_eof;
 } lives_mkv_priv_t;
 
+
+#define ERR_NOMEM         1
+#define ERR_INVALID_DATA  2
+#define ERR_MAX_DEPTH     3
+#define ERR_EOF           4
+
+
 static int ebml_parse_elem(const lives_clip_data_t *cdata,  EbmlSyntax *syntax, void *data);
 
 static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pkt);

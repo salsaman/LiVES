@@ -82,14 +82,14 @@ const char *plugin_version="LiVES mkv decoder version 1.0";
 
 
 const uint8_t ff_log2_tab[256]={
-        0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-        5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
+  0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+  5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+  6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+  6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
 };
 
 
@@ -119,6 +119,26 @@ int errval;
 
 static const char *matroska_doctypes[] = { "matroska", "webm" };
 
+
+
+
+static void lives_dynarray_add(void *tab_ptr, int *nb_ptr, void *elem) {
+  int nb, nb_alloc;
+  intptr_t *tab;
+  
+  nb = *nb_ptr;
+  tab = *(intptr_t**)tab_ptr;
+  if ((nb & (nb - 1)) == 0) {
+    if (nb == 0)
+      nb_alloc = 1;
+    else
+      nb_alloc = nb * 2;
+    tab = av_realloc(tab, nb_alloc * sizeof(intptr_t));
+    *(intptr_t**)tab_ptr = tab;
+  }
+  tab[nb++] = (intptr_t)elem;
+  *nb_ptr = nb;
+}
 
 
 static boolean check_eof(const lives_clip_data_t *cdata) {
@@ -247,8 +267,8 @@ static int ebml_read_uint(const lives_clip_data_t *cdata, int size, uint64_t *nu
   uint8_t buffer[1];
 
   if (size > 8) {
-    errval=-2; // TODO 
-    return 0;
+    errval=ERR_INVALID_DATA;
+    return -errval;
   }
 
   /* big-endian ordering; build up number */
@@ -258,7 +278,7 @@ static int ebml_read_uint(const lives_clip_data_t *cdata, int size, uint64_t *nu
       if (!priv->expect_eof)
 	fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
       got_eof=TRUE;
-      return 0;
+      return -ERR_EOF;
     }
     
     priv->input_position+=1;
@@ -286,8 +306,10 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
   } else if (size == 4) {
     
     if (read(priv->fd,buffer,4)<4) {
-      fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
-      return -10; // EOF TODO **
+      if (!priv->expect_eof)
+	fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
+      got_eof=TRUE;
+      return -ERR_EOF;
     }
 
     priv->input_position+=4;
@@ -299,8 +321,10 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
   } else if(size==8){
 
     if (read(priv->fd,buffer,8)<8) {
-      fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
-      return -10;
+      if (!priv->expect_eof)
+	fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
+      got_eof=TRUE;
+      return -ERR_EOF;
     }
 
     priv->input_position+=8;
@@ -308,8 +332,10 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
     val64 = AV_RB64(buffer);
 
     *num= av_int2dbl(val64);
-  } else
-    return -7;//AVERROR_INVALIDDATA; // TODO ***
+  } else {
+    errval=ERR_INVALID_DATA;
+    return -errval;
+  }
   
   return 0;
 }
@@ -324,15 +350,17 @@ static int ebml_read_ascii(const lives_clip_data_t *cdata, int size, char **str)
   free(*str);
   /* EBML strings are usually not 0-terminated, so we allocate one
    * byte more, read the string and NULL-terminate it ourselves. */
-  if (!(*str = malloc(size + 1)))
-    return -1;// TODO ** AVERROR(ENOMEM);
-  
+  if (!(*str = malloc(size + 1))) {
+    errval=ERR_NOMEM;
+    return -errval;
+  }
+
   if (read (priv->fd, (uint8_t *) *str, size) < size) {
     if (!priv->expect_eof)
       fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
     av_freep(str);
     got_eof=TRUE;
-    return 0;
+    return -ERR_EOF;
   }
   
   priv->input_position+=size;
@@ -352,8 +380,8 @@ static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin 
   free(bin->data);
 
   if (!(bin->data = malloc(length))) {
-    errval=-4; // TODO ***
-    return 0;
+    errval=ERR_NOMEM;
+    return -errval;
   }
   
   bin->size = length;
@@ -386,8 +414,8 @@ static int ebml_read_master(const lives_clip_data_t *cdata, uint64_t length) {
   if (matroska->num_levels >= EBML_MAX_DEPTH) {
     //av_log(matroska->ctx, AV_LOG_ERROR,
     //       "File moves beyond max. allowed depth (%d)\n", EBML_MAX_DEPTH);
-    errval=-3; // TODO **
-    return 0;
+    errval=ERR_MAX_DEPTH;
+    return -errval;
   }
   
   level = &matroska->levels[matroska->num_levels++];
@@ -441,7 +469,7 @@ static int ebml_parse_id(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
       matroska->levels[matroska->num_levels-1].length == 0xffffffffffffff)
     return 0;  // we reached the end of an unknown size cluster
   // if (!syntax[i].id && id != EBML_ID_VOID && id != EBML_ID_CRC32)
-    //av_log(matroska->ctx, AV_LOG_INFO, "Unknown entry 0x%X\n", id);
+  //av_log(matroska->ctx, AV_LOG_INFO, "Unknown entry 0x%X\n", id);
 
   reso=ebml_parse_elem(cdata, &syntax[i], data);
 
@@ -521,16 +549,16 @@ static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, v
   int res;
   void *newelem;
 
-  //printf("pt a11 %p %d %08x %08x\n",syntax,syntax->type,id,priv->input_position);
-
   data = (char *)data + syntax->data_offset;
-
 
   if (syntax->list_elem_size) {
     EbmlList *list = data;
     newelem = av_realloc(list->elem, (list->nb_elem+1)*syntax->list_elem_size);
-    if (!newelem)
-      return AVERROR(ENOMEM);
+    if (!newelem) {
+      fprintf(stderr,"mkv_decoder: out of memory !\n");
+      errval=ERR_NOMEM;
+      return -errval;
+    }
     list->elem = newelem;
     data = (char*)list->elem + list->nb_elem*syntax->list_elem_size;
     memset(data, 0, syntax->list_elem_size);
@@ -541,11 +569,9 @@ static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, v
     if ((res = ebml_read_length(cdata, &length)) < 0)
       return res;
     if (max_lengths[syntax->type] && length > max_lengths[syntax->type]) {
-      //av_log(matroska->ctx, AV_LOG_ERROR,
-      //       "Invalid length 0x%"PRIx64" > 0x%"PRIx64" for syntax element %i\n",
-      //       length, max_lengths[syntax->type], syntax->type);
-      errval=-4; // TODO **
-      return 0;//AVERROR_INVALIDDATA;
+      fprintf(stderr,"mkv_decoder: invalid data in clip\n");
+      errval=ERR_INVALID_DATA;
+      return -errval;
     }
   }
 
@@ -570,15 +596,14 @@ static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, v
     return res;
   }
 
-  if (res == -4) //AVERROR_INVALIDDATA)
-  //av_log(matroska->ctx, AV_LOG_ERROR, "Invalid element\n");
+  if (res == -ERR_INVALID_DATA) {
+    fprintf(stderr,"mkv_decoder: invalid data in clip\n");
     return res;
-  if (res == -999) //AVERROR(EIO))
-    //av_log(matroska->ctx, AV_LOG_ERROR, "Read error\n");
-    return res;
+  }
 
   return res;
 }
+
 
 static void ebml_free(EbmlSyntax *syntax, void *data)
 {
@@ -881,11 +906,9 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
   /* We don't want to lose our seekhead level, so we add
    * a dummy. This is a crude hack. */
   if (matroska->num_levels == EBML_MAX_DEPTH) {
-    //    av_log(matroska->ctx, AV_LOG_INFO,
-    //	   "Max EBML element depth (%d) reached, "
-    //	   "cannot parse further.\n", EBML_MAX_DEPTH);
+    fprintf(stderr,"mkv_decoder: max ebml depth breached in clip\n");
     errval=-11;
-    ret = 0; // TODO ** AVERROR_INVALIDDATA;
+    ret = 0;
   } else {
     level.start = 0;
     level.length = (uint64_t)-1;
@@ -942,19 +965,8 @@ static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
       MatroskaTrack *track = matroska_find_track_by_num(matroska, pos[j].track);
       if (track && track->stream && track->stream==priv->vidst) {
 	lives_add_idx(cdata, pos[j].pos + matroska->segment_start, (uint32_t)(index[i].time/index_scale));
-
-	// TODO - ******
-	av_add_index_entry(track->stream, pos[j].pos + matroska->segment_start,
-			   index[i].time/index_scale, 0, 0, AVINDEX_KEYFRAME);
-
-
-
 	//printf("ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time/index_scale);
-
-
       }
-      
-      
     }
   }
 }
@@ -1386,9 +1398,9 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 	  track->codec_priv.size = 0;
 
 
-	fprintf(stderr,
-		 "mkv_decoder: Failed to decode codec private data\n");
-	return -3;
+	  fprintf(stderr,
+		  "mkv_decoder: Failed to decode codec private data\n");
+	  return -3;
 
 
 	} else if (offset > 0) {
@@ -1414,9 +1426,9 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
     st = track->stream = av_new_stream(s, 0);
     if (st == NULL) {
-	fprintf(stderr,
-		"mkv_decoder: Out of memory\n");
-	return -4;
+      fprintf(stderr,
+	      "mkv_decoder: Out of memory\n");
+      return -4;
     }
 
 
@@ -1441,9 +1453,9 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     track->codec_priv.size -= extradata_offset;
 
     if (codec_id == CODEC_ID_NONE) {
-	fprintf(stderr,
-		"mkv_decoder: Unknown video codec\n");
-	return -42;
+      fprintf(stderr,
+	      "mkv_decoder: Unknown video codec\n");
+      return -42;
     }
 
     if (track->time_scale < 0.01)
@@ -1456,8 +1468,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
 
     /*    if (strcmp(track->language, "und"))
-      av_dict_set(&st->metadata, "language", track->language, 0);
-    av_dict_set(&st->metadata, "title", track->name, 0);
+	  av_dict_set(&st->metadata, "language", track->language, 0);
+	  av_dict_set(&st->metadata, "title", track->name, 0);
     */
 
     if (track->flag_default)
@@ -1510,7 +1522,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       if (cdata->fps==0.) cdata->fps=st->avg_frame_rate.num/st->avg_frame_rate.den;
 
       /*
-      if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
+	if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
 	av_dict_set(&st->metadata, "stereo_mode", matroska_video_stereo_mode[track->video.stereo_mode], 0);
       */
 
@@ -1542,7 +1554,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     matroska_parse_cues(cdata);
   }
 
-  if (!priv->vidst->nb_index_entries) {
+  if (priv->idxhh==NULL) {
     fprintf(stderr,"mkv_decoder: no seek info found\n");
     return -6;
   }
@@ -2206,11 +2218,6 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 	&& timecode < track->end_timecode)
       is_keyframe = 0;  /* overlapping subtitles are not key frame */
 
-    // TODO **** 
-    if (is_keyframe) {
-      av_add_index_entry(st, cluster_pos, timecode, 0,0,AVINDEX_KEYFRAME);
-    }
-
     track->end_timecode = FFMAX(track->end_timecode, timecode+duration);
   }
   
@@ -2358,9 +2365,8 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 	    st->codec->codec_id == CODEC_ID_SSA)
 	  matroska_merge_packets(matroska->prev_pkt, pkt);
 	else {
-	  av_dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
+	  lives_dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
 	  matroska->prev_pkt = pkt;
-	  //printf("DYNARRAY ADD %d\n",matroska->num_packets);
 	}
 
       }

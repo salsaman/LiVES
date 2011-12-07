@@ -6418,7 +6418,7 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // try to repaint the screen, as it may take a few seconds to get a directory listing
   while (g_main_context_iteration(NULL,FALSE));
 
-  ttl=g_strdup_printf (_("LiVES: Load subtitles from..."));
+  ttl=g_strdup (_("LiVES: Load subtitles from..."));
 
   if (strlen(mainw->vid_load_dir)) {
     subfile=choose_file(mainw->vid_load_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,ttl,NULL);

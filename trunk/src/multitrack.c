@@ -2904,7 +2904,7 @@ static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint tab, gp
       return FALSE;
     }
     gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
-    if (mt->selected_init_event!=NULL) {
+    if (mt->selected_init_event!=NULL&&mt->poly_state!=POLY_PARAMS) {
       fubar(mt);
       polymorph(mt,POLY_PARAMS);
     }
@@ -10931,10 +10931,13 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       g_free(mt->current_rfx);
     }
     mt->current_rfx=NULL;
-    gtk_widget_destroy(mt->fx_box);
-    mt->fx_box=NULL;
 
-    gtk_container_remove (GTK_CONTAINER(mt->poly_box),mt->fx_base_box);
+    if (mt->fx_box!=NULL) {
+      gtk_widget_destroy(mt->fx_box);
+      mt->fx_box=NULL;
+      
+      gtk_container_remove (GTK_CONTAINER(mt->poly_box),mt->fx_base_box);
+    }
 
     if (mt->mt_frame_preview) {
       // put blank back in preview window

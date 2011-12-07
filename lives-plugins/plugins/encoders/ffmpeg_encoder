@@ -14,7 +14,7 @@
 # v 2.4 allow encoding of .png images
 # v 2.5 add threading support and experimental webm encoding
 # v 2.6 made threading support optional because of instability problems; versioning string changed in ffmpeg
-
+# v 2.7 fixed webm encoding support, removed asf format
 #######################################################################
 
 if (!defined($standalone)) {
@@ -28,7 +28,7 @@ else {
 
 
 if ($command eq "version") {
-    print "ffmpeg encoder plugin v2.6\n";
+    print "ffmpeg encoder plugin v2.7\n";
     exit 0;
 }
 
@@ -94,7 +94,7 @@ if ($command eq "get_formats") {
 if ($command eq "get_rfx") {
     # nice example of how to give the user a choice of options
 
-    if ($otype eq "flv"||$otype eq "flv-youtube"||$otype eq "flv-youtubex"||$otype eq "divx"||$otype eq "asf") {
+    if ($otype eq "flv"||$otype eq "flv-youtube"||$otype eq "flv-youtubex"||$otype eq "divx") {
 	$aq=&rc_get("encoder_acodec");
 	if ($aq==0) {
 	    # mandatory section
@@ -239,12 +239,12 @@ if ($command eq "encode") {
     elsif ($otype eq "3gp") {
 	$passfile="passfile";
 	for $pass (1,2) {
-	    $syscom="$encoder_command -strict 1 -pass $pass -passfile $passfile -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
+	    $syscom="$encoder_command -strict 1 -pass $pass -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec \"$nfile\" $err";
 		if (defined($DEBUG_ENCODERS)) {
 		    print STDERR "ffmpeg_encoder command is: $syscom\n";
 		}
-		
-		system ($syscom);
+	    
+	    system ($syscom);
 	}
     }
     else {
@@ -255,19 +255,40 @@ if ($command eq "encode") {
 	    $threads="";
 	}
 
-	if ($ffver>=52) {
-	    $syscom="$encoder_command $threads -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
+	if ($otype eq "webmh") {
+	    for $pass (1,2) {
+		if ($ffver>=52) {
+		    $syscom="$encoder_command -pass $pass $threads -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec \"$nfile\" $err";
+		}
+		else {
+		    $syscom="$encoder_command -pass $pass $threads -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec \"$nfile\" $err";
+		}
+
+		if (defined($DEBUG_ENCODERS)) {
+		    print STDERR "ffmpeg_encoder command is: $syscom\n";
+		}
+
+		system ($syscom);
+	    }
 	}
 	else {
-	    $syscom="$encoder_command $threads -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -r $fps -t $vid_length $vcodec \"$nfile\" $err";
+	    if ($ffver>=52) {
+		$syscom="$encoder_command $threads -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec \"$nfile\" $err";
+	    }
+	    else {
+		$syscom="$encoder_command $threads -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec \"$nfile\" $err";
+	    }
+
+	    if (defined($DEBUG_ENCODERS)) {
+		print STDERR "ffmpeg_encoder command is: $syscom\n";
+	    }
+	    
+	    system ($syscom);
+
 	}
+
     }
 
-    if (defined($DEBUG_ENCODERS)) {
-	print STDERR "ffmpeg_encoder command is: $syscom\n";
-    }
-
-    system ($syscom);
 
     &sig_complete;
     exit 0;

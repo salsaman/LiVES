@@ -46,6 +46,7 @@ gboolean has_audio_chans_in(weed_plant_t *filter, gboolean count_opt);
 gboolean is_audio_channel_out(weed_plant_t *inst, int chnum);
 gboolean has_video_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean has_audio_chans_out(weed_plant_t *filter, gboolean count_opt);
+gboolean is_pure_audio(weed_plant_t *filter_or_instance, gboolean count_opt); ///< TRUE if audio in or out and no vid in/out
 
 gint weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
 gint weed_filter_subcategorise (weed_plant_t *pl, int category, gboolean count_opt);

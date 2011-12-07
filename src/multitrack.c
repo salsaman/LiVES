@@ -2424,7 +2424,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
       deinit_render_effects();
 
       // if we are previewing an effect we now need to deinit it
-      if (mainw->multitrack->current_rfx!=NULL&&mainw->multitrack->init_event!=NULL) {
+      if (mt->current_rfx!=NULL&&mt->init_event!=NULL) {
 	if (mt->current_rfx->source_type==LIVES_RFX_SOURCE_WEED&&mt->current_rfx->source!=NULL) {
 	  weed_plant_t *inst=(weed_plant_t *)mt->current_rfx->source;
 	  weed_call_deinit_func(inst);

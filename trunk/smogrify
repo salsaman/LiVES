@@ -1980,6 +1980,7 @@ if (defined($ARGV[0])) {
 
 	if ($start>0) {
 	    # we have to add frames 100 at a time, otherwise tar complains about 'too many parameters'
+	    # TODO - rewrite using xargs or pattern exclude (like projects)
 	    $oend=$end;
 	    $nexthundred=int($start/100)+1;
 	    if ($end>$nexthundred*100-1) {

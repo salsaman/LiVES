@@ -2330,7 +2330,11 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->open, TRUE);
   gtk_widget_set_sensitive (mainw->open_sel, TRUE);
   gtk_widget_set_sensitive (mainw->open_vcd_menu, TRUE);
+#ifdef HAVE_WEBM
+  gtk_widget_set_sensitive (mainw->open_loc_menu, TRUE);
+#else
   gtk_widget_set_sensitive (mainw->open_loc, TRUE);
+#endif
   gtk_widget_set_sensitive (mainw->open_device_menu, TRUE);
   gtk_widget_set_sensitive (mainw->restore, TRUE);
   gtk_widget_set_sensitive (mainw->recent_menu, TRUE);
@@ -2473,7 +2477,11 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->open, FALSE);
   gtk_widget_set_sensitive (mainw->open_sel, FALSE);
   gtk_widget_set_sensitive (mainw->open_vcd_menu, FALSE);
+#ifdef HAVE_WEBM
+  gtk_widget_set_sensitive (mainw->open_loc_menu, FALSE);
+#else
   gtk_widget_set_sensitive (mainw->open_loc, FALSE);
+#endif
   gtk_widget_set_sensitive (mainw->open_device_menu, FALSE);
 #ifdef HAVE_YUV4MPEG
   gtk_widget_set_sensitive (mainw->open_yuv4m, FALSE);
@@ -4563,7 +4571,11 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_set_sensitive (mainw->recaudio_submenu, TRUE);
     gtk_widget_set_sensitive (mainw->open_vcd_menu, TRUE);
     gtk_widget_set_sensitive (mainw->full_screen, TRUE);
+#ifdef HAVE_WEBM
+    gtk_widget_set_sensitive (mainw->open_loc_menu, TRUE);
+#else
     gtk_widget_set_sensitive (mainw->open_loc, TRUE);
+#endif
     gtk_widget_set_sensitive (mainw->open_device_menu, TRUE);
     gtk_widget_set_sensitive (mainw->recent_menu, TRUE);
     gtk_widget_set_sensitive (mainw->restore, TRUE);

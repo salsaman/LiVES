@@ -45,12 +45,14 @@ fileinfo* create_info_window (gint audio_channels, gboolean is_mt);
 typedef struct {
   GtkWidget *dialog;
   GtkWidget *entry;
+  GtkWidget *dir_entry;
+  GtkWidget *name_entry;
   GtkWidget *warn_checkbutton;
   GList *setlist;
 } _entryw;
 
 _entryw* create_rename_dialog (gint type);
-_entryw* create_location_dialog (void);
+_entryw* create_location_dialog (gint type);
 _entryw* create_cds_dialog (gint type);
 
 typedef struct __insertw {

@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2010 <salsaman@xs4all.nl>
+// (c) G. Finch 2005 - 2011 <salsaman@xs4all.nl>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -4870,6 +4870,12 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   GtkWidget *device_menu;
   GtkWidget *device_submenu;
 #endif
+
+#ifdef HAVE_WEBM
+  GtkWidget *open_loc_menu;
+  GtkWidget *open_loc_submenu;
+#endif
+
   GtkWidget *submenu_menu;
   GtkWidget *submenu_menu2;
   GtkWidget *submenu_menu3;
@@ -5167,9 +5173,34 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    NULL);
 
   if (capable->has_mplayer) {
+
+#ifdef HAVE_WEBM
+    open_loc_menu = gtk_menu_item_new_with_mnemonic (_("Open _Location/Stream..."));
+    gtk_container_add (GTK_CONTAINER (menuitem_menu2), open_loc_menu);
+
+    open_loc_submenu=gtk_menu_new();
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (open_loc_menu), open_loc_submenu);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_bg(open_loc_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    }
+
+    menuitem = gtk_menu_item_new_with_mnemonic (_("Open _Youtube Clip..."));
+    gtk_container_add (GTK_CONTAINER (open_loc_submenu), menuitem);
+
+    g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		      G_CALLBACK (on_open_utube_activate),
+		      NULL);
+
+    menuitem = gtk_menu_item_new_with_mnemonic (_("Open _Location/Stream..."));
+    gtk_container_add (GTK_CONTAINER (open_loc_submenu), menuitem);
+
+#else
+
     menuitem = gtk_menu_item_new_with_mnemonic (_("Open _Location/Stream..."));
     gtk_container_add (GTK_CONTAINER (menuitem_menu2), menuitem);
     
+#endif
+
     g_signal_connect (GTK_OBJECT (menuitem), "activate",
 		      G_CALLBACK (on_open_loc_activate),
 		      NULL);

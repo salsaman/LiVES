@@ -83,8 +83,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #define PREFIX PREFIX_DEFAULT
 #endif
 
-//#define HAVE_UNICAP 1
-
 #define DOC_DIR "/share/doc/lives-"
 
 #define THEME_DIR "/share/lives/themes/"

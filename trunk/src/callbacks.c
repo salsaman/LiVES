@@ -547,10 +547,31 @@ on_open_loc_activate                      (GtkMenuItem     *menuitem,
     gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  locw=create_location_dialog();
+  locw=create_location_dialog(1);
   gtk_widget_show(locw->dialog);
 
 }
+
+
+void
+on_open_utube_activate                      (GtkMenuItem     *menuitem,
+					     gpointer         user_data) {
+
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+    gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
+    gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
+  }
+
+  locw=create_location_dialog(2);
+  gtk_widget_show(locw->dialog);
+}
+
+
 
 
 void
@@ -649,6 +670,124 @@ on_location_select                   (GtkButton       *button,
   else mainw->file_open_params=g_strdup ("sendbandwidth");
   mainw->img_concat_clip=-1;
   open_file(file_name);
+
+  if (mainw->multitrack!=NULL) {
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
+
+}
+
+
+
+
+void on_utube_select (GtkButton *button, gpointer user_data) {
+  gchar *fname=ensure_extension(gtk_entry_get_text(GTK_ENTRY(locw->name_entry)),".webm");
+  gchar *url;
+  gchar *dirname;
+  gchar *dfile;
+  gchar *com;
+  gchar *msg;
+  gint current_file=mainw->current_file;
+
+  if (!strlen(fname)) {
+    do_blocking_error_dialog(_("Please enter the name of the file to save the clip as.\n"));
+    g_free(fname);
+    return;
+  }
+
+  url=g_strdup(gtk_entry_get_text(GTK_ENTRY(locw->entry)));
+
+  if (!strlen(url)) {
+    do_blocking_error_dialog(_("Please enter a valid URL for the download.\n"));
+    g_free(fname);
+    g_free(url);
+    return;
+  }
+
+  dirname=g_strdup(gtk_entry_get_text(GTK_ENTRY(locw->dir_entry)));
+
+  gtk_widget_destroy(locw->dialog);
+  while (g_main_context_iteration (NULL,FALSE));
+  g_free(locw);
+
+  dfile=g_build_filename(dirname,fname,NULL);
+
+  if (!check_file(dfile,TRUE)) {
+    g_free(dirname);
+    g_free(fname);
+    g_free(url);
+    g_free(dfile);
+    return;
+  }
+
+  mainw->error=FALSE;
+
+  msg=g_strdup_printf(_("Downloading %s to %s..."),url,dfile);
+  d_print(msg);
+  g_free(msg);
+
+  if (current_file==-1) {
+    if (!get_temp_handle(mainw->first_free_file,TRUE)) {
+      d_print_failed();
+      return;
+    }
+  }
+
+  mainw->no_switch_dprint=TRUE;
+
+  com=g_strdup_printf("smogrify download_clip %s \"%s\" \"%s\"",cfile->handle,url,dfile);
+  dummyvar=system(com);
+  g_free(com);
+
+  if (!do_progress_dialog(TRUE,TRUE,_("Downloading clip"))||mainw->error) {
+    // user cancelled or error
+
+    if (current_file==-1) {
+      com=g_strdup_printf("smogrify close %s",cfile->handle);
+      dummyvar=system(com);
+      g_free(com);
+      g_free(cfile);
+      cfile=NULL;
+      mainw->current_file=-1;
+    }
+
+    if (mainw->error) {
+      d_print_failed();
+      do_blocking_error_dialog(_("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \nthe latest youtube-dl installed.\n"));
+      mainw->error=FALSE;
+    }
+
+    unlink(dfile);
+
+    g_free(dirname);
+    g_free(fname);
+    g_free(url);
+    g_free(dfile);
+
+    sensitize();
+    mainw->no_switch_dprint=FALSE;
+    return;
+  }
+
+  if (current_file==-1) {
+    com=g_strdup_printf("smogrify close %s",cfile->handle);
+    dummyvar=system(com);
+    g_free(com);
+    g_free(cfile);
+    cfile=NULL;
+    mainw->current_file=-1;
+  }
+
+  g_free(dirname);
+  g_free(fname);
+  g_free(url);
+
+  mainw->no_switch_dprint=FALSE;
+  open_file(dfile);
+  g_free(dfile);
 
   if (mainw->multitrack!=NULL) {
     polymorph(mainw->multitrack,POLY_NONE);

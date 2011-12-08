@@ -1,6 +1,6 @@
 // callbacks.h
 // LiVES
-// (c) G. Finch <salsaman@xs4all.nl> 2003 - 2010
+// (c) G. Finch <salsaman@xs4all.nl> 2003 - 2011
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -27,6 +27,10 @@ on_open_sel_activate                      (GtkMenuItem     *menuitem,
 void
 on_open_loc_activate                      (GtkMenuItem     *menuitem,
 					   gpointer         user_data);
+
+void
+on_open_utube_activate                      (GtkMenuItem     *menuitem,
+					     gpointer         user_data);
 
 void
 on_stop_clicked                         (GtkMenuItem     *menuitem,
@@ -199,6 +203,10 @@ open_sel_range_activate                 (void);
 void
 on_location_select                   (GtkButton       *button,
 				      gpointer         user_data);
+
+void
+on_utube_select                   (GtkButton       *button,
+				   gpointer         user_data);
 
 void
 on_autoreload_toggled                (GtkToggleButton *togglebutton,

@@ -190,8 +190,6 @@ typedef struct {
 
 // see weed event spec. for more info
 
-
-
 /// need this for event_list_t *
 #include "events.h"
 

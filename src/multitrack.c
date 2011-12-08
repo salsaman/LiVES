@@ -18234,7 +18234,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	new_clip_index=g_malloc(num_tracks*sizint);
 	new_frame_index=g_malloc(num_tracks*sizint);
 	last_valid_frame=0;
-	#define DEBUG_MISSING_CLIPS
+	//	#define DEBUG_MISSING_CLIPS
 #ifdef DEBUG_MISSING_CLIPS
 	//g_print("pt zzz %d\n",num_tracks);
 #endif

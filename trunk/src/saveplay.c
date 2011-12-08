@@ -379,6 +379,8 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	}
       }
 
+      save_frame_index(mainw->current_file);
+
       if (tmp!=NULL) g_free(tmp);
       tmp=NULL;
     }
@@ -4234,6 +4236,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (mainw->current_file<1) continue;
 
       if (load_frame_index(mainw->current_file)) {
+
 	gboolean next=FALSE;
 	while (1) {
 	  threaded_dialog_spin();

@@ -1,6 +1,6 @@
 // ldvgrab.h
 // LiVES
-// (c) G. Finch 2006 <salsaman@xs4all.nl>
+// (c) G. Finch 2006 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 

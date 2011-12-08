@@ -1,6 +1,6 @@
 // framedraw.c
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl) 2002 - 2010
+// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2002 - 2010
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)

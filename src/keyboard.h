@@ -1,6 +1,6 @@
 // keyboard.h
 // LiVES
-// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl>
+// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl,salsaman@gmail.com>
 // see file ../COPYING for licensing details
 
 // repeating keys

@@ -1,6 +1,6 @@
 // effects-weed.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2011 (salsaman@xs4all.nl)
+// (c) G. Finch 2005 - 2011 (salsaman@xs4all.nl,salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 

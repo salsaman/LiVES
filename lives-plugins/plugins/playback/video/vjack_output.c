@@ -1,5 +1,5 @@
 // LiVES - vjack playback engine
-// (c) G. Finch 2006 - 2008 <salsaman@xs4all.nl>
+// (c) G. Finch 2006 - 2008 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 

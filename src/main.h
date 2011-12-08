@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl) 2003 - 2011
+// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2003 - 2011
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -97,7 +97,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #define LIVES_MANUAL_URL "http://lives.sourceforge.net/manual/"
 #define LIVES_MANUAL_FILENAME "LiVES_manual.html"
-#define LIVES_AUTHOR_EMAIL "mailto:salsaman@xs4all.nl"
+#define LIVES_AUTHOR_EMAIL "mailto:salsaman@xs4all.nl,salsaman@gmail.com"
 #define LIVES_DONATE_URL "https://sourceforge.net/donate/index.php?group_id=64341"
 #define LIVES_BUG_URL "http://sourceforge.net/tracker/?group_id=64341&atid=507139"
 #define LIVES_FEATURE_URL "http://sourceforge.net/tracker/?group_id=64341&atid=507142"

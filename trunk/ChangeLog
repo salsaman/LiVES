@@ -1,8 +1,9 @@
-Version 1.4.9
--------------
+Version 1.4.9 (8 December 2011)
+-------------------------------
 Add support for v4l2loopback output.
 Implement instant opening of webm / matroska clips.
-Implement a Yotube downloader.
+Implement a Youtube download tool.
+Fix crash recovery for virtual clips.
 Fix crash when showing preview frame in multitrack (regression).
 Optimise memory for multiplanar images.
 Fix compilation problem (not finding weed-palettes.h)

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-12-08 02:37-0300\n"
+"POT-Creation-Date: 2011-12-08 09:50-0300\n"
 "PO-Revision-Date: 2011-11-07 04:09+0000\n"
 "Last-Translator: Gheyret T.Kenji <Unknown>\n"
 "Language-Team: Uyghur <ug@li.org>\n"
@@ -535,7 +535,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:4021 src/main.c:4022 src/gui.c:2032 src/gui.c:3011
-#: src/saveplay.c:1793
+#: src/saveplay.c:1795
 msgid "Play"
 msgstr "قوي"
 
@@ -551,12 +551,12 @@ msgid "Closed file %s\n"
 msgstr ""
 
 #: src/main.c:4765 src/gui.c:622 src/utils.c:2618 src/utils.c:2650
-#: src/saveplay.c:2758 src/multitrack.c:3884 src/multitrack.c:5426
+#: src/saveplay.c:2760 src/multitrack.c:3884 src/multitrack.c:5426
 msgid "_Undo"
 msgstr "يېنىۋال(_U)"
 
 #: src/main.c:4766 src/gui.c:635 src/utils.c:2619 src/utils.c:2651
-#: src/saveplay.c:2759 src/multitrack.c:3905 src/multitrack.c:5449
+#: src/saveplay.c:2761 src/multitrack.c:3905 src/multitrack.c:5449
 msgid "_Redo"
 msgstr "قايتىلا(_R)"
 
@@ -863,7 +863,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:190 src/callbacks.c:7906 src/gui.c:3014 src/gui.c:3555
-#: src/saveplay.c:1796 src/saveplay.c:2425 src/dialogs.c:859 src/dialogs.c:860
+#: src/saveplay.c:1798 src/saveplay.c:2427 src/dialogs.c:859 src/dialogs.c:860
 #: src/dialogs.c:1035 src/dialogs.c:1036 src/framedraw.c:189
 #: src/multitrack.c:6998
 msgid "Preview"
@@ -1653,8 +1653,8 @@ msgstr ""
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:2036 src/saveplay.c:1092 src/saveplay.c:1218
-#: src/saveplay.c:1280 src/saveplay.c:3124
+#: src/callbacks.c:2036 src/saveplay.c:1094 src/saveplay.c:1220
+#: src/saveplay.c:1282 src/saveplay.c:3126
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -2083,11 +2083,11 @@ msgstr ""
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:6044 src/gui.c:3776 src/saveplay.c:1940
+#: src/callbacks.c:6044 src/gui.c:3776 src/saveplay.c:1942
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:6178 src/gui.c:3537 src/saveplay.c:1941 src/plugins.c:1295
+#: src/callbacks.c:6178 src/gui.c:3537 src/saveplay.c:1943 src/plugins.c:1295
 msgid "LiVES: - Play Window"
 msgstr ""
 
@@ -2124,7 +2124,7 @@ msgstr ""
 msgid "LiVES: Load subtitles from..."
 msgstr ""
 
-#: src/callbacks.c:6615 src/saveplay.c:703
+#: src/callbacks.c:6615 src/saveplay.c:705
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
@@ -3512,7 +3512,7 @@ msgstr ""
 msgid "Examining file header"
 msgstr ""
 
-#: src/saveplay.c:211 src/saveplay.c:560
+#: src/saveplay.c:211 src/saveplay.c:562
 #, c-format
 msgid "Opening %s"
 msgstr "%s نى ئېچىۋاتىدۇ"
@@ -3522,7 +3522,7 @@ msgstr "%s نى ئېچىۋاتىدۇ"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:222 src/saveplay.c:3112
+#: src/saveplay.c:222 src/saveplay.c:3114
 msgid " without sound"
 msgstr ""
 
@@ -3531,7 +3531,7 @@ msgstr ""
 msgid "Opening audio for %s"
 msgstr ""
 
-#: src/saveplay.c:440
+#: src/saveplay.c:442
 #, c-format
 msgid ""
 "\n"
@@ -3543,11 +3543,11 @@ msgid ""
 "Are you sure you wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:453
+#: src/saveplay.c:455
 msgid " - please be patient."
 msgstr ""
 
-#: src/saveplay.c:680
+#: src/saveplay.c:682
 msgid ""
 "\n"
 "\n"
@@ -3555,14 +3555,14 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/saveplay.c:683
+#: src/saveplay.c:685
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer to open this file.\n"
 msgstr ""
 
-#: src/saveplay.c:686
+#: src/saveplay.c:688
 msgid ""
 "\n"
 "\n"
@@ -3570,25 +3570,25 @@ msgid ""
 "Tools|Preferences|Decoding\n"
 msgstr ""
 
-#: src/saveplay.c:809
+#: src/saveplay.c:811
 #, c-format
 msgid "Subtitles were saved as %s\n"
 msgstr ""
 
-#: src/saveplay.c:858
+#: src/saveplay.c:860
 #, c-format
 msgid "LiVES: Save Frame %d as..."
 msgstr ""
 
-#: src/saveplay.c:861
+#: src/saveplay.c:863
 msgid "LiVES: Save Frame as..."
 msgstr ""
 
-#: src/saveplay.c:962
+#: src/saveplay.c:964
 msgid "LiVES: Save Clip as..."
 msgstr ""
 
-#: src/saveplay.c:1030
+#: src/saveplay.c:1032
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3596,70 +3596,70 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:1075
+#: src/saveplay.c:1077
 msgid "selection"
 msgstr ""
 
-#: src/saveplay.c:1139 src/saveplay.c:1249
+#: src/saveplay.c:1141 src/saveplay.c:1251
 msgid "Linking selection"
 msgstr ""
 
-#: src/saveplay.c:1297
+#: src/saveplay.c:1299
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:1305
+#: src/saveplay.c:1307
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1309
+#: src/saveplay.c:1311
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1438
+#: src/saveplay.c:1440
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1476
+#: src/saveplay.c:1478
 msgid "error.\n"
 msgstr ""
 
-#: src/saveplay.c:1537
+#: src/saveplay.c:1539
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1564
+#: src/saveplay.c:1566
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:1635
+#: src/saveplay.c:1637
 #, c-format
 msgid "File size was %.2fMB\n"
 msgstr ""
 
-#: src/saveplay.c:1721
+#: src/saveplay.c:1723
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:1725
+#: src/saveplay.c:1727
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:1728
+#: src/saveplay.c:1730
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:2565
+#: src/saveplay.c:2567
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:2571
+#: src/saveplay.c:2573
 msgid ""
 "\n"
 "\n"
@@ -3668,16 +3668,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:2692
+#: src/saveplay.c:2694
 msgid "Unknown"
 msgstr "نامەلۇم"
 
-#: src/saveplay.c:2787
+#: src/saveplay.c:2789
 #, c-format
 msgid "Untitled%d"
 msgstr ""
 
-#: src/saveplay.c:2904
+#: src/saveplay.c:2906
 #, c-format
 msgid ""
 "\n"
@@ -3685,68 +3685,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:2916
+#: src/saveplay.c:2918
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:2932
+#: src/saveplay.c:2934
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2936 src/saveplay.c:3578
+#: src/saveplay.c:2938 src/saveplay.c:3580
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:2940 src/saveplay.c:3582
+#: src/saveplay.c:2942 src/saveplay.c:3584
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:2943 src/saveplay.c:3585
+#: src/saveplay.c:2945 src/saveplay.c:3587
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:2951
+#: src/saveplay.c:2953
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3033
+#: src/saveplay.c:3035
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:3107
+#: src/saveplay.c:3109
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:3147
+#: src/saveplay.c:3149
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:3181
+#: src/saveplay.c:3183
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:3489
+#: src/saveplay.c:3491
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:3508
+#: src/saveplay.c:3510
 msgid "Restoring"
 msgstr ""
 
-#: src/saveplay.c:3530
+#: src/saveplay.c:3532
 #, c-format
 msgid ""
 "\n"
@@ -3755,17 +3755,17 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:3951
+#: src/saveplay.c:3953
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3955
+#: src/saveplay.c:3957
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:3978
+#: src/saveplay.c:3980
 #, c-format
 msgid ""
 "\n"
@@ -3773,18 +3773,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:4095
+#: src/saveplay.c:4097
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:4108
+#: src/saveplay.c:4110
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:4110
+#: src/saveplay.c:4112
 msgid "Recovering files..."
 msgstr ""
 
@@ -8891,8 +8891,9 @@ msgid "Adjusting contrast of"
 msgstr "ئاق-قارىلىقىنى تەڭشەش"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "Adjusting noise on"
-msgstr ""
+msgstr "ئاق-قارىلىقىنى تەڭشەش"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -8915,8 +8916,9 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "Blank _Colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
@@ -8928,12 +8930,14 @@ msgid "Blanking"
 msgstr "ئۆچۈرۈۋاتىدۇ"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Block _height"
-msgstr ""
+msgstr "كاندۇك چوڭلۇقى"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Block _width"
-msgstr ""
+msgstr "كاندۇك چوڭلۇقى"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
@@ -8945,8 +8949,9 @@ msgid "Bluring"
 msgstr "گۇڭگا"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Border _Colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Brightness _end"
@@ -9032,8 +9037,9 @@ msgid "Colour cycle"
 msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycling"
-msgstr ""
+msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
@@ -9041,20 +9047,23 @@ msgid "Colour filter"
 msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filtering"
-msgstr ""
+msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Colour replace"
-msgstr ""
+msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Cycle _Step"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
@@ -9125,8 +9134,9 @@ msgid "Enhancing"
 msgstr "كۈچەيتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _colour"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -9153,12 +9163,14 @@ msgid "Fade"
 msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fading video"
-msgstr ""
+msgstr "ياي"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Fading"
-msgstr ""
+msgstr "ياي"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -9166,8 +9178,9 @@ msgid "Fina_l frame"
 msgstr "بىرىنچى كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "Flash _colour"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
@@ -9179,12 +9192,14 @@ msgid "Flop horizontally"
 msgstr "تىك ئايلاندۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frame Calculator"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Frame _Colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -9205,52 +9220,64 @@ msgid "Frame _width"
 msgstr "كاندۇك چوڭلۇقى"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr ""
+msgstr " سېكۇنت  "
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _end"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _start"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma change"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#, fuzzy
 msgid "Generate blank frames"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generate clip from image"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generate coloured frames"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generate title frames"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#, fuzzy
 msgid "Generating blank frames"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generating clip from image"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generating coloured frames"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generating title frames"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -9261,8 +9288,9 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _end"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -9274,12 +9302,14 @@ msgid "Hue change"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue start"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Image overlay"
@@ -9306,8 +9336,9 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Keep _Centered"
-msgstr ""
+msgstr "باشقا(_O)"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Keep image aspect _ratio"
@@ -9323,8 +9354,9 @@ msgid "Making monochrome"
 msgstr "رەڭسىز"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -9336,8 +9368,9 @@ msgid "Monochrome"
 msgstr "رەڭسىز"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negate"
-msgstr ""
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
@@ -9377,12 +9410,14 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilating"
-msgstr ""
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
@@ -9433,32 +9468,38 @@ msgid "S_tart %"
 msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _end"
-msgstr ""
+msgstr "ئالماشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation _start"
-msgstr ""
+msgstr "ئالماشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "Saturation change"
-msgstr ""
+msgstr "ئالماشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation end"
-msgstr ""
+msgstr "ئالماشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Saturation start"
-msgstr ""
+msgstr "ئالماشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
 msgstr "رەڭ ئال"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#, fuzzy
 msgid "Shift horizontally"
-msgstr ""
+msgstr "تىك ئايلاندۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
@@ -9513,18 +9554,21 @@ msgid "Spreading"
 msgstr "ياي"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Step _Value"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "Step per _Frame"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl _start"
-msgstr ""
+msgstr "قاينام"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -9595,12 +9639,14 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Background Colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "_Background colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -9624,8 +9670,9 @@ msgid "_Cycle Start"
 msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "_Decrease Contrast"
-msgstr ""
+msgstr "ئاق-قارىلىقىنى تەڭشەش"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -9634,8 +9681,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "_End Colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size X:"
@@ -9646,23 +9694,27 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "_End amount"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "_Fade level"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Fade start"
-msgstr ""
+msgstr "رادىئۇس(_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "_Fill colour"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -9681,8 +9733,9 @@ msgstr "خەت نۇسخا(_F)"
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "_Frames per second"
-msgstr ""
+msgstr " سېكۇنت  "
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
@@ -9706,8 +9759,9 @@ msgid "_Image"
 msgstr "سۈرەت(_I)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "_Increase Contrast"
-msgstr ""
+msgstr "ئاق-قارىلىقىنى تەڭشەش"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size X:"
@@ -9739,8 +9793,9 @@ msgid "_Midtone"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "_Negate"
-msgstr ""
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
@@ -9811,8 +9866,9 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma end"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -9829,8 +9885,9 @@ msgid "_Skip"
 msgstr "ئۆتكۈزۈۋەت(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "_Source Colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_Splice"
@@ -9856,12 +9913,14 @@ msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "_Stroke colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "_Target Colour"
-msgstr ""
+msgstr "باشلا(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -9900,8 +9959,9 @@ msgid "_Wrap Around"
 msgstr "باشتىن باشلاپ ئىزدە(_W)"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_X Center"
-msgstr ""
+msgstr "باشقا(_O)"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
@@ -9918,8 +9978,9 @@ msgid "_X offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Y Center"
-msgstr ""
+msgstr "باشقا(_O)"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
@@ -9967,12 +10028,14 @@ msgid "colorize"
 msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "colour_filter"
-msgstr ""
+msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "رەڭلىك"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -10015,8 +10078,9 @@ msgid "every"
 msgstr "ھەر"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "سۇسلاشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -10035,20 +10099,23 @@ msgid "frame_calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "gamma_change"
-msgstr ""
+msgstr "ئالماشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#, fuzzy
 msgid "gen_blank_frames"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "gen_clip_from_image"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "gen_coloured_frames"
-msgstr ""
+msgstr "كاندۇك"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
@@ -10067,8 +10134,9 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "modulate"
-msgstr ""
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 #, fuzzy
@@ -10076,8 +10144,9 @@ msgid "monochrome"
 msgstr "رەڭسىز"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "negate"
-msgstr ""
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
@@ -10093,8 +10162,9 @@ msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "چۆرگىلىتىش"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -10114,8 +10184,9 @@ msgid "rotate"
 msgstr "چۆرگىلەت"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "saturation_change"
-msgstr ""
+msgstr "ئالماشتۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 #, fuzzy
@@ -10123,8 +10194,9 @@ msgid "sepia"
 msgstr "رەڭ ئال"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#, fuzzy
 msgid "shift_horizontal"
-msgstr ""
+msgstr "تىك ئايلاندۇر"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy

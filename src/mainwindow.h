@@ -488,6 +488,9 @@ typedef struct {
   GtkWidget *open_vcd;
   GtkWidget *open_dvd;
   GtkWidget *open_loc;
+  GtkWidget *open_utube;
+  GtkWidget *open_loc_menu;
+  GtkWidget *open_loc_submenu;
   GtkWidget *open_yuv4m;
   GtkWidget *open_lives2lives;
   GtkWidget *send_lives2lives;

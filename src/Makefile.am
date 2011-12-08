@@ -23,7 +23,6 @@ if IS_SOLARIS
 solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
-
 INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DLIVES_DIR=\""$(livesdir)"\" \
@@ -180,12 +179,22 @@ lives_exe_SOURCES = \
 	$(giw_SOURCES)
 
 lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) -lpthread $(libweed_LDADD) $(giw_LDADD) $(v4l1_LDADD) \
+	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) -lpthread $(libweed_LDADD) \
+	 $(giw_LDADD) $(v4l1_LDADD) $(lives_exe_LDFLAGS) \
 	@UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
+
+
+if HAVE_AVFORMAT
+if HAVE_AVCODEC
+if HAVE_AVUTIL
+AM_CFLAGS += -DHAVE_WEBM=1
+endif
+endif
+endif
 
 

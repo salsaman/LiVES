@@ -2734,6 +2734,42 @@ if (defined($ARGV[0])) {
     }
 
 
+    if ($command eq "download_clip") {
+	my $url=$ARGV[2];
+	my $dfile=$ARGV[3];
+
+	if ($url =~ /youtube/) {
+	    # youtube-dl
+
+	    if (-f $dfile) {
+		unlink $dfile;
+	    }
+
+	    if (-f $dfile) {
+		&sig_error;
+		exit 2;
+	    }
+
+	    $com="youtube-dl -o \"$dfile\" -f 43 -q --no-part \"$url\"";
+
+	    $res=system($com);
+	    if ($res || !(-f $dfile) || -z $dfile) {
+
+		if (-f $dfile) {
+		    unlink $dfile;
+		}
+
+		&sig_error;
+		exit 1;
+	    }
+	}
+
+	&sig_complete;
+	exit 0;
+    }
+
+
+
     if ($command eq "cdopen") {
 
 	$cdda2wav_command=&location("cdda2wav");

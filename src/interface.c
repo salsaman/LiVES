@@ -1655,27 +1655,31 @@ create_opensel_dialog (void)
 // TODO - move all prefs stuff into prefs.c
 
 
-_entryw*
-create_location_dialog (void)
-{
-  GtkWidget *dialog_vbox13;
-  GtkWidget *hbox19;
-  GtkWidget *label83;
-  GtkWidget *dialog_action_area13;
-  GtkWidget *cancelbutton11;
-  GtkWidget *okbutton10;
+_entryw* create_location_dialog (int type) {
+  // type 1 is open location
+  // type 2 is open youtube: - 3 fields:= URL, directory, file name
+
+  GtkWidget *dialog_vbox;
+  GtkWidget *dialog_action_area;
+  GtkWidget *cancelbutton;
+  GtkWidget *okbutton;
   GtkWidget *label;
   GtkWidget *checkbutton;
   GtkWidget *eventbox;
   GtkWidget *hbox;
+  GtkWidget *buttond;
 
   _entryw *locw=(_entryw*)(g_malloc(sizeof(_entryw)));
+
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
 
   locw->dialog = gtk_dialog_new ();
   if (palette->style&STYLE_1) {
     gtk_dialog_set_has_separator(GTK_DIALOG(locw->dialog),FALSE);
     gtk_widget_modify_bg (locw->dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
+
+  gtk_window_add_accel_group (GTK_WINDOW (locw->dialog), accel_group);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(locw->dialog),GTK_WINDOW(mainw->LiVES));
@@ -1685,98 +1689,214 @@ create_location_dialog (void)
   gtk_window_set_position (GTK_WINDOW (locw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (locw->dialog), TRUE);
 
-  gtk_window_set_default_size (GTK_WINDOW (locw->dialog), 300, 200);
+  if (type==1)
+    gtk_window_set_default_size (GTK_WINDOW (locw->dialog), 300, 200);
+  else
+    gtk_window_set_default_size (GTK_WINDOW (locw->dialog), 650, 450);
+
   
   gtk_container_set_border_width (GTK_CONTAINER (locw->dialog), 10);
-  gtk_window_set_title (GTK_WINDOW (locw->dialog), _("LiVES: - Open Location"));
 
-  dialog_vbox13 = GTK_DIALOG (locw->dialog)->vbox;
-  gtk_widget_show (dialog_vbox13);
 
-  label = gtk_label_new (_("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer.\nAlso make sure you have set your bandwidth in Preferences|Streaming\n\n"));
+  if (type==1) 
+    gtk_window_set_title (GTK_WINDOW (locw->dialog), _("LiVES: - Open Location"));
+  else 
+    gtk_window_set_title (GTK_WINDOW (locw->dialog), _("LiVES: - Open Youtube Clip"));
+
+  dialog_vbox = GTK_DIALOG (locw->dialog)->vbox;
+  gtk_widget_show (dialog_vbox);
+
+  if (type==1) {
+    label = gtk_label_new (_("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer.\nAlso make sure you have set your bandwidth in Preferences|Streaming\n\n"));
+  }
+  else { 
+    label = gtk_label_new (_("\n\nTo open a clip from Youtube, LiVES will first download it with youtube-dl.\nPlease make sure you have the latest version of that tool installed.\n\n"));
+
+    gtk_widget_show (label);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+    
+    label=gtk_label_new(_("Enter the URL of the clip below.\nE.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n\n"));
+
+  }
   gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox13), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  hbox19 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox19);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox13), hbox19, TRUE, TRUE, 0);
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
-  label83 = gtk_label_new (_ ("URL : "));
-  gtk_widget_show (label83);
-  gtk_box_pack_start (GTK_BOX (hbox19), label83, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label83), GTK_JUSTIFY_LEFT);
+  if (type==1)
+    label = gtk_label_new (_ ("URL : "));
+  else
+    label = gtk_label_new (_ ("Youtube URL : "));
+
+  gtk_widget_show (label);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label83, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   locw->entry = gtk_entry_new_with_max_length (32768);
   gtk_widget_show (locw->entry);
-  gtk_box_pack_start (GTK_BOX (hbox19), locw->entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), locw->entry, TRUE, TRUE, 0);
   gtk_entry_set_activates_default (GTK_ENTRY (locw->entry), TRUE);
 
-  hbox=gtk_hbox_new (FALSE, 0);
-  checkbutton = gtk_check_button_new ();
-  eventbox=gtk_event_box_new();
-  label=gtk_label_new_with_mnemonic (_("Do not send bandwidth information"));
-  gtk_tooltips_set_tip (mainw->tooltips, checkbutton,_("Try this setting if you are having problems getting a stream"), NULL);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),prefs->no_bandwidth);
 
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    checkbutton);
 
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  if (type==1) {
+    hbox=gtk_hbox_new (FALSE, 0);
+    checkbutton = gtk_check_button_new ();
+    eventbox=gtk_event_box_new();
+    label=gtk_label_new_with_mnemonic (_("Do not send bandwidth information"));
+    gtk_tooltips_set_tip (mainw->tooltips, checkbutton,_("Try this setting if you are having problems getting a stream"), NULL);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),prefs->no_bandwidth);
+    
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      checkbutton);
+    
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+    
+    gtk_box_pack_start (GTK_BOX(dialog_vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    
+    g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
+		      G_CALLBACK (on_boolean_toggled),
+		      &prefs->no_bandwidth);
+    
+    gtk_widget_show_all(hbox);
+    
+    add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
+
   }
-  
-  gtk_box_pack_start (GTK_BOX(dialog_vbox13), hbox, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
 
-  g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
-		    G_CALLBACK (on_boolean_toggled),
-		    &prefs->no_bandwidth);
+  if (type==2) {
+    hbox=gtk_hbox_new (FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,0);
 
-  gtk_widget_show_all(hbox);
+    locw->dir_entry = gtk_entry_new_with_max_length (32768);
 
-  add_deinterlace_checkbox(GTK_BOX(dialog_vbox13));
+    label=gtk_label_new_with_mnemonic (_("Download to _Directory : "));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),locw->dir_entry);
 
-  dialog_action_area13 = GTK_DIALOG (locw->dialog)->action_area;
-  gtk_widget_show (dialog_action_area13);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area13), GTK_BUTTONBOX_END);
+    gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
+    
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
 
-  cancelbutton11 = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton11);
-  gtk_dialog_add_action_widget (GTK_DIALOG (locw->dialog), cancelbutton11, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton11, GTK_CAN_DEFAULT);
+    gtk_widget_show (locw->dir_entry);
+    gtk_box_pack_start (GTK_BOX (hbox), locw->dir_entry, TRUE, TRUE, 10);
+    gtk_entry_set_activates_default (GTK_ENTRY (locw->dir_entry), TRUE);
 
-  okbutton10 = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton10);
-  gtk_dialog_add_action_widget (GTK_DIALOG (locw->dialog), okbutton10, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton10, GTK_CAN_DEFAULT);
-  gtk_widget_grab_default (okbutton10);
+    // add dir, with filechooser button
+    buttond = gtk_file_chooser_button_new(_("Download Directory..."),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),mainw->vid_save_dir);
+    gtk_box_pack_start(GTK_BOX(hbox),buttond,TRUE,FALSE,0);
+    gtk_widget_show (buttond);
+
+    add_fill_to_box (GTK_BOX (hbox));
+    gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
+    
+    g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),
+    		      (gpointer)locw->dir_entry);
 
 
-  g_signal_connect (GTK_OBJECT (cancelbutton11), "clicked",
+    gtk_widget_show_all (hbox);
+
+
+
+    hbox=gtk_hbox_new (FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,0);
+
+    locw->name_entry = gtk_entry_new_with_max_length (32768);
+
+
+    label=gtk_label_new_with_mnemonic (_("Download _File Name : "));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),locw->name_entry);
+
+    gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
+    
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+
+
+    gtk_box_pack_start (GTK_BOX (hbox), locw->name_entry, TRUE, TRUE, 0);
+    gtk_entry_set_activates_default (GTK_ENTRY (locw->name_entry), TRUE);
+
+
+    label=gtk_label_new (_(".webm"));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),locw->name_entry);
+
+    gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
+    
+    if (palette->style&STYLE_1) {
+      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    }
+
+    gtk_widget_show_all (hbox);
+
+
+  }
+
+
+
+  dialog_action_area = GTK_DIALOG (locw->dialog)->action_area;
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (locw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (locw->dialog), okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default (okbutton);
+
+
+  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		    G_CALLBACK (on_cancel_button1_clicked),
 		    locw);
 
-  g_signal_connect (GTK_OBJECT (okbutton10), "clicked",
-		    G_CALLBACK (on_location_select),
-		    NULL);
+  if (type==1) 
+    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+		      G_CALLBACK (on_location_select),
+		      NULL);
+
+  else if (type==2) 
+    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+		      G_CALLBACK (on_utube_select),
+		      NULL);
 
   g_signal_connect (GTK_OBJECT (locw->dialog), "delete_event",
                       G_CALLBACK (return_true),
                       NULL);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              GDK_Escape, 0, 0);
 
   return locw;
 }
@@ -1793,10 +1913,10 @@ _entryw* create_rename_dialog (gint type) {
   // type 6 = initial tempdir
 
 
-  GtkWidget *dialog_vbox13;
-  GtkWidget *hbox19;
+  GtkWidget *dialog_vbox;
+  GtkWidget *hbox;
   GtkWidget *label;
-  GtkWidget *dialog_action_area13;
+  GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
   GtkWidget *set_combo;
@@ -1805,9 +1925,12 @@ _entryw* create_rename_dialog (gint type) {
 
   _entryw *renamew=(_entryw*)(g_malloc(sizeof(_entryw)));
 
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
   renamew->setlist=NULL;
 
   renamew->dialog = gtk_dialog_new ();
+  gtk_window_add_accel_group (GTK_WINDOW (renamew->dialog), accel_group);
 
   gtk_window_set_position (GTK_WINDOW (renamew->dialog), GTK_WIN_POS_CENTER_ALWAYS);
 
@@ -1831,13 +1954,13 @@ _entryw* create_rename_dialog (gint type) {
 
   gtk_container_set_border_width (GTK_CONTAINER (renamew->dialog), 10);
 
-  dialog_vbox13 = GTK_DIALOG (renamew->dialog)->vbox;
-  gtk_widget_show (dialog_vbox13);
+  dialog_vbox = GTK_DIALOG (renamew->dialog)->vbox;
+  gtk_widget_show (dialog_vbox);
 
   if (type==4) {
     label = gtk_label_new (_("You need to enter a name for the current clip set.\nThis will allow you reload the layout with the same clips later.\nPlease enter the set name you wish to use.\nLiVES will remind you to save the clip set later when you try to exit.\n"));
     gtk_widget_show (label);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox13), label, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1847,7 +1970,7 @@ _entryw* create_rename_dialog (gint type) {
   if (type==5) {
     label = gtk_label_new (_("In order to export this project, you must enter a name for this clip set.\nThis will also be used for the project name.\n"));
     gtk_widget_show (label);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox13), label, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1858,14 +1981,14 @@ _entryw* create_rename_dialog (gint type) {
   if (type==6) {
     label = gtk_label_new (_("Welcome to LiVES !\nThis startup wizard will guide you through the\ninitial install so that you can get the most from this application.\n"));
     gtk_widget_show (label);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox13), label, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
     label = gtk_label_new (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\nNote, on many systems, /tmp is cleared on shutdown, so it may be inadvisable to create it in /tmp.\n"));
     gtk_widget_show (label);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox13), label, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1873,13 +1996,13 @@ _entryw* create_rename_dialog (gint type) {
   }
 
 
-  hbox19 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox19);
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
   if (type!=6) {
-    gtk_box_pack_start (GTK_BOX (dialog_vbox13), hbox19, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
   }
   else {
-    gtk_box_pack_start (GTK_BOX (dialog_vbox13), hbox19, TRUE, TRUE, 40);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 40);
   }
 
   if (type==1) {
@@ -1902,7 +2025,7 @@ _entryw* create_rename_dialog (gint type) {
     label = gtk_label_new ("");
   }
   gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox19), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1919,7 +2042,7 @@ _entryw* create_rename_dialog (gint type) {
     combo_set_popdown_strings(GTK_COMBO(set_combo),renamew->setlist);
     renamew->entry=(GTK_COMBO(set_combo))->entry;
     gtk_widget_show (set_combo);
-    gtk_box_pack_start (GTK_BOX (hbox19), set_combo, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox), set_combo, TRUE, TRUE, 0);
 
     xlist=renamew->setlist;
     store = gtk_list_store_new (1, G_TYPE_STRING);
@@ -1952,7 +2075,7 @@ _entryw* create_rename_dialog (gint type) {
       gtk_entry_set_text (GTK_ENTRY (renamew->entry),tmpdir);
       g_free(tmpdir);
     }
-    gtk_box_pack_start (GTK_BOX (hbox19), renamew->entry, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox), renamew->entry, TRUE, TRUE, 0);
     gtk_widget_show (renamew->entry);
   }
 
@@ -1966,7 +2089,7 @@ _entryw* create_rename_dialog (gint type) {
 
     gtk_container_add (GTK_CONTAINER (dirbutton1), dirimage1);
 
-    gtk_box_pack_start (GTK_BOX (hbox19), dirbutton1, FALSE, TRUE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), dirbutton1, FALSE, TRUE, 10);
     g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_complex_clicked),renamew->entry);
 
   }
@@ -1974,9 +2097,9 @@ _entryw* create_rename_dialog (gint type) {
 
   gtk_entry_set_activates_default (GTK_ENTRY (renamew->entry), TRUE);
 
-  dialog_action_area13 = GTK_DIALOG (renamew->dialog)->action_area;
-  gtk_widget_show (dialog_action_area13);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area13), GTK_BUTTONBOX_END);
+  dialog_action_area = GTK_DIALOG (renamew->dialog)->action_area;
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
@@ -2023,6 +2146,10 @@ _entryw* create_rename_dialog (gint type) {
   g_signal_connect (GTK_OBJECT (renamew->dialog), "delete_event",
                       G_CALLBACK (return_true),
                       NULL);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              GDK_Escape, 0, 0);
+
 
   return renamew;
 }

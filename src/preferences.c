@@ -4537,7 +4537,8 @@ _prefsw *create_prefs_dialog (void) {
    add_fill_to_box (GTK_BOX (vbox2));
    gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
 
-   g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)prefsw->cdplay_entry);
+   g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",
+		     G_CALLBACK (on_fileread_clicked),(gpointer)prefsw->cdplay_entry);
 
    if (capable->has_cdda2wav) {
      gtk_widget_show (prefsw->cdplay_entry);
@@ -5098,7 +5099,8 @@ _prefsw *create_prefs_dialog (void) {
    add_fill_to_box (GTK_BOX (vbox2));
    gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
    
-   g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)prefsw->omc_js_entry);
+   g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),
+		     (gpointer)prefsw->omc_js_entry);
 
 #endif
 
@@ -5109,7 +5111,8 @@ _prefsw *create_prefs_dialog (void) {
    label = gtk_label_new_with_mnemonic(_("_MIDI events"));
    gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_omc_midi);
    gtk_container_add(GTK_CONTAINER(eventbox), label);
-   g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_omc_midi);
+   g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
+		    prefsw->checkbutton_omc_midi);
    if (palette->style&STYLE_1) {
      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -5132,7 +5135,8 @@ _prefsw *create_prefs_dialog (void) {
 
    prefsw->alsa_midi = gtk_radio_button_new(alsa_midi_group);
    alsa_midi_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->alsa_midi));
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->alsa_midi, (_("Create an ALSA MIDI port which other MIDI devices can be connected to")), NULL);
+   gtk_tooltips_set_tip (mainw->tooltips, prefsw->alsa_midi, 
+			 (_("Create an ALSA MIDI port which other MIDI devices can be connected to")), NULL);
    label = gtk_label_new_with_mnemonic(_("Use _ALSA MIDI (recommended)"));
    gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->alsa_midi);
    eventbox = gtk_event_box_new();
@@ -5206,7 +5210,8 @@ _prefsw *create_prefs_dialog (void) {
    add_fill_to_box (GTK_BOX (vbox2));
    gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(prefsw->button_midid),16);
 
-   g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)prefsw->omc_midi_entry);
+   g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",
+		     G_CALLBACK (on_fileread_clicked),(gpointer)prefsw->omc_midi_entry);
 
    hseparator = gtk_hseparator_new ();
    gtk_widget_show (hseparator);

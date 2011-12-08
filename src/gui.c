@@ -344,11 +344,31 @@ create_LiVES (void)
 
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->open_sel);
 
+
+
   mainw->open_loc = gtk_menu_item_new_with_mnemonic (_("Open _Location/Stream..."));
+
+#ifdef HAVE_WEBM
+
+  mainw->open_loc_menu = gtk_menu_item_new_with_mnemonic (_("Open _Location/Stream..."));
+  gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->open_loc_menu);
+
+  mainw->open_loc_submenu=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->open_loc_menu), mainw->open_loc_submenu);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(mainw->open_loc_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+  mainw->open_utube = gtk_menu_item_new_with_mnemonic (_("Open _Youtube Clip..."));
+  gtk_container_add (GTK_CONTAINER (mainw->open_loc_submenu), mainw->open_utube);
+
+  gtk_container_add (GTK_CONTAINER (mainw->open_loc_submenu), mainw->open_loc);
+
+#else
+
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->open_loc);
-  gtk_widget_add_accelerator (mainw->open_loc, "activate", mainw->accel_group,
-                              GDK_l, GDK_CONTROL_MASK,
-                              GTK_ACCEL_VISIBLE);
+
+#endif
 
   mainw->open_vcd_menu = gtk_menu_item_new_with_mnemonic (_("Import from _dvd/vcd..."));
   gtk_container_add (GTK_CONTAINER (menuitem11_menu), mainw->open_vcd_menu);
@@ -394,7 +414,11 @@ create_LiVES (void)
     gtk_widget_show (mainw->open_dvd);
     gtk_widget_show (mainw->open_vcd);
 #endif
+#ifdef HAVE_WEBM
+    gtk_widget_show_all (mainw->open_loc_menu);
+#else
     gtk_widget_show (mainw->open_loc);
+#endif
   }
 
   mainw->add_live_menu = gtk_menu_item_new_with_mnemonic (_("_Add Webcam/TV card..."));
@@ -2343,6 +2367,12 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (mainw->open_loc), "activate",
 		    G_CALLBACK (on_open_loc_activate),
 		    NULL);
+#ifdef HAVE_WEBM
+  g_signal_connect (GTK_OBJECT (mainw->open_utube), "activate",
+		    G_CALLBACK (on_open_utube_activate),
+		    NULL);
+#endif
+
 #ifdef HAVE_LDVGRAB
   g_signal_connect (GTK_OBJECT (mainw->open_firewire), "activate",
 		    G_CALLBACK (on_open_fw_activate),

@@ -1,5 +1,5 @@
 /* Frei0r wrapper for Weed
-   author: Salsaman (G. Finch) <salsaman@xs4all.nl>
+   author: Salsaman (G. Finch) <salsaman@xs4all.nl,salsaman@gmail.com>
 
    Released under the Lesser Gnu Public License (LGPL) 3 or later
    See www.gnu.org for details

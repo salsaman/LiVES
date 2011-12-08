@@ -1,6 +1,6 @@
 // LiVES
 // framedraw.h
-// (c) G. Finch (salsaman@xs4all.nl)
+// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com)
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 #ifndef _HAS_FRAMEDRAW_H

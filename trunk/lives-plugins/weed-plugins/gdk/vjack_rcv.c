@@ -1,5 +1,5 @@
 /* videojack test plugin for Weed
-   authors: Salsaman (G. Finch) <salsaman@xs4all.nl>
+   authors: Salsaman (G. Finch) <salsaman@xs4all.nl,salsaman@gmail.com>
 
 // released under the GNU GPL 3 or higher
 // see file COPYING or www.gnu.org for details

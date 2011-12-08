@@ -10,7 +10,7 @@
  *      by sam lantinga slouken@devolution.com
  */
 
-/* ported to Weed by G. Finch (salsaman@xs4all.nl)
+/* ported to Weed by G. Finch (salsaman@xs4all.nl,salsaman@gmail.com)
    modifications (c) salsaman 2005
 */
 

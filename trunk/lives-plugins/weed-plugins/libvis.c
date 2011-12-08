@@ -1,5 +1,5 @@
 /* libvisual plugin for Weed
-   authors: Salsaman (G. Finch) <salsaman@xs4all.nl>
+   authors: Salsaman (G. Finch) <salsaman@xs4all.nl,salsaman@gmail.com>
             Dennis Smit  <synap@yourbase.nl>
             Duilio J. Protti <dprotti@users.sourceforge.net>
 

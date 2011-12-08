@@ -1,5 +1,5 @@
 // LiVES - asf decoder plugin
-// (c) G. Finch 2011 <salsaman@xs4all.nl>
+// (c) G. Finch 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
 
 /*
  * This file is free software; you can redistribute it and/or

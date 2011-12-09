@@ -738,6 +738,8 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
 
   mainw->no_switch_dprint=TRUE;
 
+  unlink(cfile->info_file);
+
   com=g_strdup_printf("smogrify download_clip %s \"%s\" \"%s\"",cfile->handle,url,dfile);
   dummyvar=system(com);
   g_free(com);

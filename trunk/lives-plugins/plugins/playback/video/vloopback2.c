@@ -148,7 +148,7 @@ const char *module_check_init(void) {
 
   if (vdevs[0]==NULL) {
     free(vdevs);
-    return "No vloopback2 devices were found\nInstall vloopback2 and then try: sudo modprobe webcamstudio\nAlso check the device permissions.\n";
+    return "No vloopback2 devices were found\nInstall vloopback2 and then try: sudo modprobe v4l2loopback\nAlso check the device permissions for /dev/video*.\n";
   }
   
   while (vdevs[i]!=NULL) free(vdevs[i++]);

@@ -51,6 +51,7 @@ EXTRA_DIST = \
 	COPYING \
 	INSTALL \
 	menu-entries/LiVES.desktop \
+	menu-entries/lives.png \
 	menu-entries/lives.xpm \
 	LiVES.doxygen \
 	$(doc_DATA)
@@ -86,7 +87,8 @@ endif
 	cp -f $(srcdir)/menu-entries/LiVES.desktop $(DESTDIR)$(sharedir)/applications/
 	mkdir -p $(DESTDIR)$(sharedir)/pixmaps/
 	cp -f $(srcdir)/menu-entries/lives.xpm $(DESTDIR)$(sharedir)/pixmaps/
-
+	mkdir -p $(DESTDIR)$(sharedir)/app-install/icons/
+	cp -f $(srcdir)/menu-entries/lives.png $(DESTDIR)$(sharedir)/app-install/icons/
 
 install-exec-local:
 	rm -rf $(DESTDIR)$(bindir)/lives

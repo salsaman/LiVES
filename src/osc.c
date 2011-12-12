@@ -351,9 +351,47 @@ void lives_osc_cb_test(void *context, int arglen, const void *vargs, OSCTimeTag 
 
 /* /video/play */
 void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  float ent, stt;
+  double entd,sttd;
+
   if (mainw->go_away) return lives_osc_notify_failure();
   mainw->osc_auto=TRUE; ///< request early notifiction of success
-  if (mainw->playing_file==-1&&mainw->current_file>0) on_playall_activate(NULL,NULL);
+
+  if (mainw->current_file<=0||mainw->playing_file!=-1) return lives_osc_notify_failure();
+
+  mainw->play_start=calc_frame_from_time(mainw->current_file,
+					 cfile->pointer_time);
+  mainw->play_end=cfile->frames;
+
+  if (!lives_osc_check_arguments (arglen,vargs,"ff",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"f",FALSE)) {
+      if (!lives_osc_check_arguments (arglen,vargs,"",FALSE)) {
+	return lives_osc_notify_failure();
+      }
+    }
+    else {
+      lives_osc_check_arguments (arglen,vargs,"f",TRUE);
+      lives_osc_parse_float_argument(vargs,&stt);
+      sttd=(gdouble)stt;
+      mainw->play_start=calc_frame_from_time(mainw->current_file,
+					     sttd);
+    }
+  }
+  else{
+    lives_osc_check_arguments (arglen,vargs,"ff",TRUE);
+    lives_osc_parse_float_argument(vargs,&stt);
+    lives_osc_parse_float_argument(vargs,&ent);
+    sttd=(gdouble)stt;
+    entd=(gdouble)ent;
+    mainw->play_end=calc_frame_from_time(mainw->current_file,
+					 entd);
+    mainw->play_start=calc_frame_from_time(mainw->current_file,
+					   sttd);
+
+
+  }
+
+  on_playall_activate(NULL,NULL);
   mainw->osc_auto=FALSE;
 }
 

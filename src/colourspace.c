@@ -757,7 +757,7 @@ static inline void yuv2rgb (guchar y, guchar u, guchar v, guchar *r, guchar *g, 
 static inline void uyvy2rgb (uyvy_macropixel *uyvy, guchar *r0, guchar *g0, guchar *b0, guchar *r1, guchar *g1, guchar *b1) {
   yuv2rgb(uyvy->y0,uyvy->u0,uyvy->v0,r0,g0,b0);
   yuv2rgb(uyvy->y1,uyvy->u0,uyvy->v0,r1,g1,b1);
-  if (uyvy->y0>240||uyvy->u0>240||uyvy->v0>240||uyvy->y1>240) g_printerr("got unclamped !\n");
+  //if (uyvy->y0>240||uyvy->u0>240||uyvy->v0>240||uyvy->y1>240) g_printerr("got unclamped !\n");
 }
 
 
@@ -2289,7 +2289,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
     for (i=0;i<prefs->nfx_threads;i++) {
       if ((dheight*i)<height) {
 
-	ccparams[i].src=src+dheight*i*(width>>1);
+	ccparams[i].src=src+dheight*i*width;
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
@@ -2369,7 +2369,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
     for (i=0;i<prefs->nfx_threads;i++) {
       if ((dheight*i)<height) {
 
-	ccparams[i].src=src+dheight*i*(width>>1);
+	ccparams[i].src=src+dheight*i*width;
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
@@ -2450,7 +2450,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
     for (i=0;i<prefs->nfx_threads;i++) {
       if ((dheight*i)<height) {
 
-	ccparams[i].src=src+dheight*i*(width>>1);
+	ccparams[i].src=src+dheight*i*width;
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 
@@ -2529,7 +2529,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     for (i=0;i<prefs->nfx_threads;i++) {
       if ((dheight*i)<height) {
 
-	ccparams[i].src=src+dheight*i*(width>>1);
+	ccparams[i].src=src+dheight*i*width;
 	ccparams[i].hsize=width;
 	ccparams[i].dest=dest+dheight*i*orowstride;
 

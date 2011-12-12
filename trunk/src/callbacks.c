@@ -3165,8 +3165,13 @@ on_playall_activate                    (GtkMenuItem     *menuitem,
       on_preview_clicked (GTK_BUTTON (cfile->proc_ptr->preview_button),NULL);
       return;
     }
-    mainw->play_start=calc_frame_from_time(mainw->current_file,cfile->pointer_time);
-    mainw->play_end=cfile->frames;
+
+    if (!mainw->osc_auto) {
+      mainw->play_start=calc_frame_from_time(mainw->current_file,
+					     cfile->pointer_time);
+      mainw->play_end=cfile->frames;
+    }
+
     mainw->playing_sel=FALSE;
     unlink(cfile->info_file);
 

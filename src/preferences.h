@@ -526,4 +526,12 @@ void prefsw_set_astream_settings(_vid_playback_plugin *);
 
 void apply_button_set_enabled(GtkWidget *widget, gpointer func_data);
 
+
+// permissions
+
+#define LIVES_PERM_OSC_PORTS 1
+
+gboolean lives_ask_permission(int what);
+
+
 #endif

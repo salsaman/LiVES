@@ -2400,6 +2400,9 @@ void play_file (void) {
     return;
   }
 
+  if (mainw->toy_type==LIVES_TOY_AUTOLIVES) {
+    on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+  }
 
   gtk_widget_hide(mainw->playarea);
 

@@ -35,6 +35,12 @@ void lives_free_with_check(gpointer ptr) {
   free(ptr);
 }
 
+
+LIVES_INLINE int lives_kill(pid_t pid, int sig) {
+  return kill(pid,sig);
+};
+
+
 LIVES_INLINE gint myround(gdouble n) {
   return (n>=0.)?(gint)(n + 0.5):(gint)(n - 0.5);
 }
@@ -3591,3 +3597,6 @@ gboolean string_lists_differ(GList *alist, GList *blist) {
 
   return FALSE;
 }
+
+
+

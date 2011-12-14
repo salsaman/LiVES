@@ -52,6 +52,10 @@ lives_exit (void) {
 
     threaded_dialog_spin();
 
+    if (mainw->toy_type!=LIVES_TOY_NONE) {
+      on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+    }
+
     if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
       stored_event_list_free_all(FALSE);
     }
@@ -7166,8 +7170,27 @@ on_rename_set_name                   (GtkButton       *button,
 
 
 void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
+  gchar string[256];
+  gchar *com;
 
   switch (mainw->toy_type) {
+    // old status
+  case LIVES_TOY_AUTOLIVES:
+    g_signal_handler_block (mainw->toy_autolives, mainw->toy_func_autolives);
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
+    g_signal_handler_unblock (mainw->toy_autolives, mainw->toy_func_autolives);
+
+    if (mainw->toy_alives_pid!=0) {
+      pid_t pgid=getpgid(mainw->toy_alives_pid);
+      lives_kill(-pgid,LIVES_SIGQUIT);
+    }
+    
+    // switch off rte so as not to cause alarm
+    if (mainw->autolives_reset_fx) 
+      rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(0));
+    mainw->autolives_reset_fx=FALSE;
+    break;
+
   case LIVES_TOY_MAD_FRAMES:
     g_signal_handler_block (mainw->toy_random_frames, mainw->toy_func_random_frames);
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_random_frames),FALSE);
@@ -7196,14 +7219,85 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
   mainw->toy_type=GPOINTER_TO_INT(user_data);
 
   switch (mainw->toy_type) {
+  case LIVES_TOY_NONE:
+    g_signal_handler_block (mainw->toy_none, mainw->toy_func_none);
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
+    g_signal_handler_unblock (mainw->toy_none, mainw->toy_func_none);
+    return;
+  case LIVES_TOY_AUTOLIVES:
+    if (mainw->current_file<1) {
+      do_autolives_needs_clips_error();
+      gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
+      return;
+    }
+
+    if ((mainw->current_file>-1&&cfile!=NULL&&(
+					       cfile->event_list!=NULL || 
+					       cfile->opening
+					       )) ||
+	mainw->multitrack!=NULL || 
+	mainw->is_processing ||
+	mainw->preview
+	) {
+      // ignore if doing something more important
+    
+      on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+      return;
+    }
+
+    // search for autolives.pl
+    if (!capable->has_autolives) {
+      get_location("autolives.pl",string,256);
+      if (strlen(string)) capable->has_autolives=TRUE;
+      else {
+	do_no_autolives_error();
+	on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+	return;
+      }
+    }
+    
+
+    // chek if osc is started; if not ask permission
+    if (!prefs->osc_udp_started) {
+      if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
+	// permission not given
+	on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+	return;
+      }
+
+      // try: start up osc
+      prefs->osc_udp_started=lives_osc_init(prefs->osc_udp_port);
+      if (!prefs->osc_udp_started) {
+	on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+	return;
+      }
+    }
+
+    if (mainw->rte==EFFECT_NONE)
+      mainw->autolives_reset_fx=TRUE;
+    
+    if (!(mainw->toy_alives_pid=fork())) {
+      // fork a process to run autolives
+      setsid(); // create new session id
+      com=g_strdup_printf("autolives.pl localhost %d %d >/dev/null 2>&1",prefs->osc_udp_port,prefs->osc_udp_port-1);
+      dummyvar=system(com);
+      g_free(com);
+      _exit(0);
+    }
+
+    break;
   case LIVES_TOY_MAD_FRAMES:
     break;
   case LIVES_TOY_TV:
+    // load in the lives TV clip
     deduce_file (LIVES_TV_CHANNEL1,0.,0);
+
+    // if we choose to discard it, discard it....otherwise keep it
     if (prefs->discard_tv) {
       close_current_file(0);
     }
     else {
+      // keep it
       gint current_file=mainw->current_file;
       gchar *com=g_strdup_printf("smogrify commit_audio %s",cfile->handle);
       cfile->start=1;
@@ -7220,6 +7314,8 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     }
     break;
   default:
+    // something happened that we don't know about
+    LIVES_WARN("Invalid toy");
     if (mainw->faded&&!mainw->foreign) {
       gtk_widget_show(mainw->image272);
       gtk_widget_show(mainw->image273);

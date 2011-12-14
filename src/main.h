@@ -527,6 +527,7 @@ typedef struct {
   gboolean has_xmms;
   gboolean has_dvgrab;
   gboolean has_sox;
+  gboolean has_autolives;
   gboolean has_mplayer;
   gboolean has_convert;
   gboolean has_composite;
@@ -658,7 +659,8 @@ void do_error_dialog_with_check(const gchar *text, gint warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
 void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking,gint warn_mask_number, 
 					  GtkWindow *transient);
-void add_warn_check (GtkBox *box, gint warn_mask_number);
+gboolean ask_permission_dialog(int what);
+void add_warn_check (GtkBox *box, gint wayrn_mask_number);
 void do_memory_error_dialog (void);
 void too_many_files(void);
 void tempdir_warning (void);
@@ -728,6 +730,8 @@ void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);
 void do_do_not_close_d (void);
 void do_set_noclips_error(const char *setname);
+void do_no_autolives_error(void);
+void do_autolives_needs_clips_error(void);
 
 
 gboolean process_one (gboolean visible);
@@ -855,6 +859,7 @@ int lives_10pow(int pow);
 int get_approx_ln(guint val);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
+int lives_kill(pid_t pid, int sig);
 LIVES_INLINE gint myround(gdouble n);
 void get_dirname(gchar *filename);
 void get_basename(gchar *filename);
@@ -990,6 +995,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window);
 gchar *text_view_get_text(GtkTextView *textview);
 void text_view_set_text(GtkTextView *textview, const gchar *text);
 
+
 // plugins.c
 GList *get_external_window_hints(lives_rfx_t *rfx);
 gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio, gboolean save_all);
@@ -1057,8 +1063,37 @@ char *dummychar;
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
 
-// round up to next multiple of b
+// round (double) a up to next (integer) multiple of (double) b
+// haha
 #define CEIL(a,b) ((int)(((double)a+(double)b-.000000001)/((double)b))*b)
 
 
+// should sprinkle some of these around
+
+#ifndef LIVES_WARN
+#ifndef LIVES_NO_WARN
+#define LIVES_WARN(x)      fprintf(stderr, "LiVES warning: " #x "\n")
+#else // LIVES_NO_WARN
+#define LIVES_WARN(x)      dummychar = #x
+#endif // LIVES_NO_WARN
+#endif // LIVES_WARN
+
+#ifndef LIVES_ERROR
+#ifndef LIVES_NO_ERROR
+#define LIVES_ERROR(x)      fprintf(stderr, "LiVES error: " #x "\n")
+#else // LIVES_NO_ERROR
+#define LIVES_ERROR(x)      dummychar = #x
+#endif // LIVES_NO_ERROR
+#endif // LIVES_ERROR
+
+#ifndef LIVES_FATAL
+#ifndef LIVES_NO_FATAL
+#define LIVES_FATAL(x)      fprintf(stderr, "LiVES fatal: " #x "\n")
+#else // LIVES_NO_FATAL
+#define LIVES_FATAL(x)      dummychar = #x
+#endif // LIVES_NO_FATAL
+#endif // LIVES_FATAL
+
+
 #endif // #ifndef HAS_MAIN_H
+

@@ -1,3 +1,20 @@
+Version 1.4.10 a.k.a 1.6.0
+--------------------------
+Allow setting of playback start and end times via OSC.
+Implement "autolives" toy.
+
+
+	
+
+
+
+
+
+
+
+
+
+
 Version 1.4.9 (8 December 2011)
 -------------------------------
 Add support for v4l2loopback output.

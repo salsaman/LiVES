@@ -2129,3 +2129,34 @@ void do_set_noclips_error(const char *setname) {
   d_print (msg);
   g_free (msg);
 }
+
+
+void do_no_autolives_error(void) {
+  do_error_dialog(_("\nYou must have autolives.pl installed and in your path to use this toy.\nConsult your package distributor.\n"));
+}
+
+void do_autolives_needs_clips_error(void) {
+  do_error_dialog(_("\nYou must have a minimum of one clip loaded to use this toy.\n"));
+}
+
+
+
+gboolean ask_permission_dialog(int what) {
+  gchar *msg;
+  gboolean ret;
+
+  if (!prefs->show_gui) return FALSE;
+
+  switch (what) {
+  case LIVES_PERM_OSC_PORTS:
+    msg=g_strdup_printf(_("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\nDo you wish to allow this (for this session only) ?\n"),prefs->osc_udp_port);
+    ret=do_yesno_dialog(msg);
+    g_free(msg);
+    return ret;
+  default:
+    break;
+  }
+
+  return FALSE;
+}
+

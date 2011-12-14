@@ -2149,7 +2149,7 @@ void stop_audio_stream(void) {
 #endif
     }
 
-    kill(-pgid,9);
+    lives_kill(-pgid,LIVES_SIGKILL);
     unlink(astream_name);
     g_free(astream_name);
 

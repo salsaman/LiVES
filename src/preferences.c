@@ -5701,3 +5701,13 @@ on_prefs_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 }
 
 
+gboolean lives_ask_permission(int what) {
+  switch (what) {
+  case LIVES_PERM_OSC_PORTS:
+    return ask_permission_dialog(what);
+  default:
+    LIVES_WARN("Unknown permission requested");
+  }
+return FALSE;
+}
+

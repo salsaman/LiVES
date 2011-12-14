@@ -1618,6 +1618,11 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (toys_menu), separator27);
   gtk_widget_set_sensitive (separator27, FALSE);
 
+  mainw->toy_autolives = gtk_check_menu_item_new_with_mnemonic (_("_Autolives"));
+  gtk_widget_show (mainw->toy_autolives);
+  gtk_container_add (GTK_CONTAINER (toys_menu), mainw->toy_autolives);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
+
   mainw->toy_random_frames = gtk_check_menu_item_new_with_mnemonic (_("_Mad Frames"));
   gtk_widget_show (mainw->toy_random_frames);
   gtk_container_add (GTK_CONTAINER (toys_menu), mainw->toy_random_frames);
@@ -2716,15 +2721,19 @@ create_LiVES (void)
 		    NULL);
 #endif
 
-  mainw->toy_func_none=g_signal_connect (GTK_OBJECT (mainw->toy_none), "activate",
+  mainw->toy_func_none=g_signal_connect_after (GTK_OBJECT (mainw->toy_none), "activate",
 					 G_CALLBACK (on_toy_activate),
 					 NULL);
 
-  mainw->toy_func_random_frames=g_signal_connect (GTK_OBJECT (mainw->toy_random_frames), "activate",
+  mainw->toy_func_autolives=g_signal_connect_after (GTK_OBJECT (mainw->toy_autolives), "activate",
+						  G_CALLBACK (on_toy_activate),
+						  GINT_TO_POINTER(LIVES_TOY_AUTOLIVES));
+
+  mainw->toy_func_random_frames=g_signal_connect_after (GTK_OBJECT (mainw->toy_random_frames), "activate",
 						  G_CALLBACK (on_toy_activate),
 						  GINT_TO_POINTER(LIVES_TOY_MAD_FRAMES));
 
-  mainw->toy_func_lives_tv=g_signal_connect (GTK_OBJECT (mainw->toy_tv), "activate",
+  mainw->toy_func_lives_tv=g_signal_connect_after (GTK_OBJECT (mainw->toy_tv), "activate",
 					     G_CALLBACK (on_toy_activate),
 					     GINT_TO_POINTER(LIVES_TOY_TV));
 

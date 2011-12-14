@@ -286,6 +286,8 @@ typedef struct {
   gint scr_width;
   gint scr_height;
   lives_toy_t toy_type;
+  pid_t toy_alives_pid; // 0, or thread for autolives toy
+  gboolean autolives_reset_fx;
 
   gboolean toy_go_wild;
 
@@ -441,6 +443,7 @@ typedef struct {
   gulong toy_func_none;
   gulong toy_func_random_frames;
   gulong toy_func_lives_tv;
+  gulong toy_func_autolives;
   gulong hnd_id;
   gulong loop_cont_func;
   gulong mute_audio_func;
@@ -589,6 +592,7 @@ typedef struct {
   GtkWidget *toy_none;
   GtkWidget *toy_random_frames;
   GtkWidget *toy_tv;
+  GtkWidget *toy_autolives;
   GtkWidget *show_file_info;
   GtkWidget *show_file_comments;
   GtkWidget *show_clipboard_info;
@@ -971,6 +975,9 @@ extern _merge_opts* merge_opts;
 /// note, we can only have two of these currently, one for rendered effects, one for real time effects
 extern GtkWidget *fx_dialog[2];
 
+
+#define LIVES_SIGKILL SIGKILL
+#define LIVES_SIGQUIT SIGQUIT
 
 
 #ifdef ENABLE_JACK

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-12-08 14:52-0300\n"
+"POT-Creation-Date: 2011-12-13 22:37-0300\n"
 "PO-Revision-Date: 2011-11-07 13:09+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -109,23 +109,23 @@ msgstr "вимкнено!"
 msgid "**The current layout**"
 msgstr "**Поточне компонування**"
 
-#: src/main.c:1219
+#: src/main.c:1221
 msgid "Loading realtime effect plugins..."
 msgstr "Завантаження додатків ефектів реального часу…"
 
-#: src/main.c:1272
+#: src/main.c:1274
 msgid "Starting jack audio server..."
 msgstr "Запуск звукового сервера jack…"
 
-#: src/main.c:1274
+#: src/main.c:1276
 msgid "Starting jack transport server..."
 msgstr "Запуск сервера передавання даних jack…"
 
-#: src/main.c:1275
+#: src/main.c:1277
 msgid "Connecting to jack transport server..."
 msgstr "Встановлення з’єднання з сервером передавання даних jack…"
 
-#: src/main.c:1302
+#: src/main.c:1304
 msgid ""
 "\n"
 "\n"
@@ -143,95 +143,95 @@ msgstr ""
 "\n"
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 
-#: src/main.c:1326
+#: src/main.c:1328
 msgid "Starting pulse audio server..."
 msgstr "Запуск звукового сервера PulseAudio…"
 
-#: src/main.c:1389
+#: src/main.c:1391
 msgid "Checking optional dependencies:"
 msgstr "Пошук додаткових залежностей:"
 
-#: src/main.c:1390
+#: src/main.c:1392
 msgid "mplayer...detected..."
 msgstr "mplayer… виявлено…"
 
-#: src/main.c:1391
+#: src/main.c:1393
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1392
+#: src/main.c:1394
 msgid "convert...detected..."
 msgstr "convert…виявлено…"
 
-#: src/main.c:1393
+#: src/main.c:1395
 msgid "convert...NOT DETECTED..."
 msgstr "convert...НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1394
+#: src/main.c:1396
 msgid "composite...detected..."
 msgstr "composite…виявлено…"
 
-#: src/main.c:1395
+#: src/main.c:1397
 msgid "composite...NOT DETECTED..."
 msgstr "composite…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1396
+#: src/main.c:1398
 msgid "sox...detected\n"
 msgstr "sox…виявлено\n"
 
-#: src/main.c:1397
+#: src/main.c:1399
 msgid "sox...NOT DETECTED\n"
 msgstr "sox…НЕ ВИЯВЛЕНО\n"
 
-#: src/main.c:1398
+#: src/main.c:1400
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...виявлено..."
 
-#: src/main.c:1399
+#: src/main.c:1401
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...НЕ ВИЯВЛЕНО..."
 
-#: src/main.c:1400
+#: src/main.c:1402
 msgid "jackd...detected..."
 msgstr "jackd…виявлено…"
 
-#: src/main.c:1401
+#: src/main.c:1403
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1402
+#: src/main.c:1404
 msgid "pulse audio...detected..."
 msgstr "pulse audio…виявлено…"
 
-#: src/main.c:1403
+#: src/main.c:1405
 msgid "pulse audio...NOT DETECTED..."
 msgstr "pulse audio…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1404
+#: src/main.c:1406
 msgid "python...detected..."
 msgstr "python…виявлено…"
 
-#: src/main.c:1405
+#: src/main.c:1407
 msgid "python...NOT DETECTED..."
 msgstr "python…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1406
+#: src/main.c:1408
 msgid "dvgrab...detected..."
 msgstr "dvgrab…виявлено…"
 
-#: src/main.c:1407
+#: src/main.c:1409
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1408
+#: src/main.c:1410
 msgid "xwininfo...detected..."
 msgstr "xwininfo…виявлено…"
 
-#: src/main.c:1409
+#: src/main.c:1411
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1412
+#: src/main.c:1414
 #, c-format
 msgid ""
 "\n"
@@ -242,22 +242,22 @@ msgstr ""
 "\n"
 "Інструмент керування вікнами — «%s»; "
 
-#: src/main.c:1415
+#: src/main.c:1417
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "виявлена кількість моніторів: %d\n"
 
-#: src/main.c:1418
+#: src/main.c:1420
 #, c-format
 msgid "Number of CPUs detected: %d\n"
 msgstr "Кількість виявлених процесорів: %d\n"
 
-#: src/main.c:1421
+#: src/main.c:1423
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Каталог тимчасових файлів — %s\n"
 
-#: src/main.c:1425
+#: src/main.c:1427
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -267,15 +267,15 @@ msgstr ""
 "jack або PulseAudio.\n"
 "Ви не зможете скористатися багатьма можливостями з обробки звуку.\n"
 
-#: src/main.c:1428
+#: src/main.c:1430
 msgid "Compiled with jack support, good !\n"
 msgstr "Зібрано з підтримкою jack, добре!\n"
 
-#: src/main.c:1431
+#: src/main.c:1433
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Зібрано з підтримкою PulseAudio, чудово!\n"
 
-#: src/main.c:1435
+#: src/main.c:1437
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -284,7 +284,7 @@ msgstr ""
 "Вітаємо у LiVES версії %s.\n"
 "\n"
 
-#: src/main.c:1766
+#: src/main.c:1769
 #, c-format
 msgid ""
 "\n"
@@ -294,81 +294,81 @@ msgstr ""
 "Синтаксис команди запуску: %s [параметри] [назва файла [початок_за_часом] "
 "[кількість кадрів]]\n"
 
-#: src/main.c:1767
+#: src/main.c:1770
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
 "де «назва файла» — назва файла мультимедійних даних або резервної копії.\n"
 
-#: src/main.c:1768
+#: src/main.c:1771
 msgid "start_time : filename start time in seconds\n"
 msgstr ""
 "початок_за_часом: початок за часом у файлі з вказаною назвою у секундах\n"
 
-#: src/main.c:1769
+#: src/main.c:1772
 msgid "frames : maximum number of frames to open\n"
 msgstr "кількість кадрів: максимальна кількість кадрів, які слід відкрити\n"
 
-#: src/main.c:1771
+#: src/main.c:1774
 msgid "opts can be:\n"
 msgstr "параметри можуть бути такими:\n"
 
-#: src/main.c:1772
+#: src/main.c:1775
 msgid "-help            : show this help text and exit\n"
 msgstr "-help               : показати текст цієї довідки і завершити роботу\n"
 
-#: src/main.c:1773
+#: src/main.c:1776
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 "-tmpdir <тимч. каталог>: використовувати інший робочий каталог (наприклад /"
 "var/ramdisk)\n"
 
-#: src/main.c:1774
+#: src/main.c:1777
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr ""
 "-set <назва_набору> : автоматично завантажити набір кліпів з вказаною "
 "назвою\n"
 
-#: src/main.c:1775
+#: src/main.c:1778
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset              : не завантажувати жодного набору після запуску\n"
 
-#: src/main.c:1776
+#: src/main.c:1779
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr ""
 "-norecover          : не завантажувати відновлені дані під час перезапуску "
 "після аварії\n"
 
-#: src/main.c:1777
+#: src/main.c:1780
 msgid "-recover         : force loading of crash recovery\n"
 msgstr ""
 "-recover            : завантажити відновлені дані під час перезапуску після "
 "аварії\n"
 
-#: src/main.c:1778
+#: src/main.c:1781
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
 msgstr ""
 
-#: src/main.c:1779
+#: src/main.c:1782
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui              : не показувати графічного інтерфейсу\n"
 
-#: src/main.c:1780
+#: src/main.c:1783
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nosplash        : не показувати вікна вітання\n"
 
-#: src/main.c:1781
+#: src/main.c:1784
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-noplaywin       : не показувати вікна відтворення\n"
 
-#: src/main.c:1782
+#: src/main.c:1785
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce      : запустити у режимі редактора кліпів\n"
 
-#: src/main.c:1783
+#: src/main.c:1786
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt      : запустити у режимі роботи з декількома доріжками\n"
 
-#: src/main.c:1784
+#: src/main.c:1787
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
@@ -376,32 +376,32 @@ msgstr ""
 "-fxmodesmax <n>  : надати змогу використовувати <n> режимів на клавішу "
 "ефекту (мінімальне значення — 1, типове — 8)\n"
 
-#: src/main.c:1786
+#: src/main.c:1789
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr ""
 "-oscstart <порт>    : запустити програму очікування на дані OSC на вказаному "
 "порті UDP\n"
 
-#: src/main.c:1787
+#: src/main.c:1790
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart         : не запускати програми очікування на дані OSC\n"
 
-#: src/main.c:1789
+#: src/main.c:1792
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
 "-aplayer <ap>       : запустити з вказаним програвачем звукових даних. "
 "Програвачем <ap> може бути, наприклад, mplayer"
 
-#: src/main.c:1791
+#: src/main.c:1794
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:1794
+#: src/main.c:1797
 msgid ", sox or jack\n"
 msgstr ", sox або jack\n"
 
-#: src/main.c:1795
+#: src/main.c:1798
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
@@ -412,16 +412,16 @@ msgstr ""
 "запуск сервера передавання даних jack, 8 = призупинка відтворення звуку, "
 "якщо призупинено відтворення відео, 16 = запуск звукового сервера jack] \n"
 
-#: src/main.c:1797
+#: src/main.c:1800
 msgid " or sox\n"
 msgstr " або sox\n"
 
-#: src/main.c:1799
+#: src/main.c:1802
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
 "-devicemap <назва карти>         : автоматично завантажити карту пристроїв\n"
 
-#: src/main.c:1800
+#: src/main.c:1803
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
@@ -430,17 +430,17 @@ msgstr ""
 "відтворення відео з  <файл>-а (Зауваження: встановлюються лише параметри, а "
 "не тип додатка)\n"
 
-#: src/main.c:1801
+#: src/main.c:1804
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 "-debug               : спробувати виконати діагностику аварії (доведеться "
 "встановити «gdb»)\n"
 
-#: src/main.c:1818 src/gui.c:1088
+#: src/main.c:1821 src/gui.c:1088
 msgid "Starting GUI..."
 msgstr "Запуск графічного інтерфейсу..."
 
-#: src/main.c:1828
+#: src/main.c:1831
 #, c-format
 msgid ""
 "\n"
@@ -458,7 +458,7 @@ msgstr ""
 "(Можливо, вам доведеться змінити значення параметра <prefix_dir> у вашому "
 "файлі ~/.lives)\n"
 
-#: src/main.c:1841
+#: src/main.c:1844
 msgid ""
 "\n"
 "LiVES was unable to write a small file to /tmp\n"
@@ -469,7 +469,7 @@ msgstr ""
 "Будь ласка, переконайтеся, що маєте права доступу на запис до /tmp і "
 "повторіть спробу.\n"
 
-#: src/main.c:1845
+#: src/main.c:1848
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -484,7 +484,7 @@ msgstr ""
 "Будь ласка, ознайомтеся з файлом README, який постачається\n"
 "разом з цим пакунком, перед запуском LiVES.\n"
 
-#: src/main.c:1851
+#: src/main.c:1854
 #, c-format
 msgid ""
 "\n"
@@ -499,7 +499,7 @@ msgstr ""
 "\n"
 "Будь ласка, перевірте права доступу до файла і повторіть спробу.\n"
 
-#: src/main.c:1858
+#: src/main.c:1861
 #, c-format
 msgid ""
 "\n"
@@ -516,7 +516,7 @@ msgstr ""
 "Будь ласка, перевірте права доступу на цей файл і каталог,\n"
 "а потім повторіть спробу.\n"
 
-#: src/main.c:1865
+#: src/main.c:1868
 #, c-format
 msgid ""
 "\n"
@@ -535,7 +535,7 @@ msgstr ""
 "%s/.lives\n"
 "і повторіть спробу.\n"
 
-#: src/main.c:1872
+#: src/main.c:1875
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -553,7 +553,7 @@ msgstr ""
 "\n"
 "Дякуємо.\n"
 
-#: src/main.c:1876 src/dialogs.c:1280
+#: src/main.c:1879 src/dialogs.c:1280
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -564,7 +564,7 @@ msgstr ""
 "програма «sox». Будь ласка, встановіть одну з цих програм і повторіть "
 "спробу.\n"
 
-#: src/main.c:1885
+#: src/main.c:1888
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
@@ -574,7 +574,7 @@ msgstr ""
 "LiVES не вдалося виявити програму «mplayer». Вам варто встановити mplayer, "
 "щоб скористатися усіма можливостями LiVES.\n"
 
-#: src/main.c:1888
+#: src/main.c:1891
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -584,7 +584,7 @@ msgstr ""
 "LiVES не вдалося виявити програми «convert». Якщо ви маєте намір "
 "користуватися ефектами показу, вам слід встановити convert і image-magick.\n"
 
-#: src/main.c:1891
+#: src/main.c:1894
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -595,7 +595,7 @@ msgstr ""
 "користуватися функціональними можливостями об’єднання, вам слід встановити "
 "composite і image-magick.\n"
 
-#: src/main.c:1894
+#: src/main.c:1897
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -606,7 +606,7 @@ msgstr ""
 "програму, програма не зможе виконувати деякі з функцій обробки звуку. Вам "
 "слід встановити «sox».\n"
 
-#: src/main.c:1897
+#: src/main.c:1900
 #, c-format
 msgid ""
 "\n"
@@ -623,52 +623,52 @@ msgstr ""
 "Без цих додатків ви не зможете скористатися пунктом «Зберегти».\n"
 "Можливо, вам слід змінити значення параметра <lib_dir> у ~/.lives\n"
 
-#: src/main.c:1981
+#: src/main.c:1984
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Автоматичне завантаження набору %s..."
 
-#: src/main.c:2194
+#: src/main.c:2197
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Помилковий аудіопрогравач %s\n"
 
-#: src/main.c:2300
+#: src/main.c:2303
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Untitled%d> %dx%d : %d кадрів %d бітів/пк %.3f кд/с"
 
-#: src/main.c:2304
+#: src/main.c:2307
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? кадрів ??? бітів/пк %.3f кд/с"
 
-#: src/main.c:2307
+#: src/main.c:2310
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d кадрів %d бітів/пк %.3f кд/с"
 
-#: src/main.c:2313
+#: src/main.c:2316
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <файла не вказано>"
 
-#: src/main.c:3801
+#: src/main.c:3808
 #, c-format
 msgid "rec %9d/%d"
 msgstr "зап %9d/%d"
 
-#: src/main.c:3803
+#: src/main.c:3810
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!зап %9d/%d"
 
-#: src/main.c:4021 src/main.c:4022 src/gui.c:2032 src/gui.c:3011
+#: src/main.c:4028 src/main.c:4029 src/gui.c:2037 src/gui.c:3020
 #: src/saveplay.c:1795
 msgid "Play"
 msgstr "Пуск"
 
-#: src/main.c:4497
+#: src/main.c:4504
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -676,35 +676,35 @@ msgstr ""
 "LiVES не вдалося захопити це зображення.\n"
 "\n"
 
-#: src/main.c:4599
+#: src/main.c:4607
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Закритий файл %s\n"
 
-#: src/main.c:4765 src/gui.c:622 src/utils.c:2618 src/utils.c:2650
-#: src/saveplay.c:2760 src/multitrack.c:3884 src/multitrack.c:5426
+#: src/main.c:4773 src/gui.c:622 src/utils.c:2621 src/utils.c:2653
+#: src/saveplay.c:2763 src/multitrack.c:3884 src/multitrack.c:5426
 msgid "_Undo"
 msgstr "В_ернути"
 
-#: src/main.c:4766 src/gui.c:635 src/utils.c:2619 src/utils.c:2651
-#: src/saveplay.c:2761 src/multitrack.c:3905 src/multitrack.c:5449
+#: src/main.c:4774 src/gui.c:635 src/utils.c:2622 src/utils.c:2654
+#: src/saveplay.c:2764 src/multitrack.c:3905 src/multitrack.c:5449
 msgid "_Redo"
 msgstr "Повт_орити"
 
-#: src/main.c:4792 src/interface.c:642 src/gui.c:2190 src/preferences.c:2381
+#: src/main.c:4800 src/interface.c:642 src/gui.c:2195 src/preferences.c:2381
 #: src/resample.c:1790
 msgid "Video"
 msgstr "Відео"
 
-#: src/main.c:4793 src/interface.c:661 src/gui.c:2209
+#: src/main.c:4801 src/interface.c:661 src/gui.c:2214
 msgid "Left Audio"
 msgstr "Лівий канал звуку"
 
-#: src/main.c:4794 src/gui.c:2227
+#: src/main.c:4802 src/gui.c:2232
 msgid "Right Audio"
 msgstr "Правий канал звуку"
 
-#: src/main.c:4839
+#: src/main.c:4847
 msgid ""
 "\n"
 "\n"
@@ -1064,8 +1064,8 @@ msgstr ""
 "Якщо позначити цей пункт, програма усуватиме черезрядковість з кадрів під "
 "час імпортування."
 
-#: src/interface.c:190 src/callbacks.c:7908 src/gui.c:3014 src/gui.c:3555
-#: src/saveplay.c:1798 src/saveplay.c:2427 src/dialogs.c:859 src/dialogs.c:860
+#: src/interface.c:190 src/callbacks.c:7989 src/gui.c:3023 src/gui.c:3564
+#: src/saveplay.c:1798 src/saveplay.c:2430 src/dialogs.c:859 src/dialogs.c:860
 #: src/dialogs.c:1035 src/dialogs.c:1036 src/framedraw.c:189
 #: src/multitrack.c:6998
 msgid "Preview"
@@ -1103,7 +1103,7 @@ msgstr ""
 "\n"
 "Не забудьте потім вимкнути ефекти (ctrl-0)!"
 
-#: src/interface.c:339 src/callbacks.c:7680 src/callbacks.c:7712
+#: src/interface.c:339 src/callbacks.c:7761 src/callbacks.c:7793
 #: src/dialogs.c:1846
 msgid ""
 "\n"
@@ -1128,7 +1128,7 @@ msgstr "П_ереглянути"
 msgid "Paus_e"
 msgstr "Приз_упинити"
 
-#: src/interface.c:409 src/callbacks.c:7709
+#: src/interface.c:409 src/callbacks.c:7790
 msgid "Pause/_Enough"
 msgstr "Призупинити/_Досить"
 
@@ -1741,34 +1741,34 @@ msgstr ""
 "LiVES було виявлено багатодоріжкове компонування з попереднього сеансу.\n"
 "Бажаєте, щоб програма спробувала його відновити?\n"
 
-#: src/callbacks.c:150
+#: src/callbacks.c:154
 #, c-format
 msgid "Saving as set %s..."
 msgstr "Зберігання набору %s…"
 
-#: src/callbacks.c:473 src/callbacks.c:503
+#: src/callbacks.c:477 src/callbacks.c:507
 msgid "Select File"
 msgstr "Вибрати файл"
 
-#: src/callbacks.c:696
+#: src/callbacks.c:700
 msgid "Please enter the name of the file to save the clip as.\n"
 msgstr ""
 
-#: src/callbacks.c:704
+#: src/callbacks.c:708
 msgid "Please enter a valid URL for the download.\n"
 msgstr ""
 
-#: src/callbacks.c:728
+#: src/callbacks.c:732
 #, fuzzy, c-format
 msgid "Downloading %s to %s..."
 msgstr "Автоматичне завантаження набору %s..."
 
-#: src/callbacks.c:747
+#: src/callbacks.c:751
 #, fuzzy
 msgid "Downloading clip"
 msgstr "Спорожнення кліпу"
 
-#: src/callbacks.c:761
+#: src/callbacks.c:765
 #, fuzzy
 msgid ""
 "\n"
@@ -1782,11 +1782,11 @@ msgstr ""
 "Будь ласка, перевірте, чи зберігається ця програма за шляхом зі змінної PATH "
 "та чи є її файл виконуваним.\n"
 
-#: src/callbacks.c:892 src/callbacks.c:926
+#: src/callbacks.c:896 src/callbacks.c:930
 msgid "This file"
 msgstr "Поточний файл"
 
-#: src/callbacks.c:893
+#: src/callbacks.c:897
 msgid ""
 ",\n"
 " - including the current layout - "
@@ -1794,7 +1794,7 @@ msgstr ""
 ",\n"
 " - разом з поточним компонуванням - "
 
-#: src/callbacks.c:895
+#: src/callbacks.c:899
 #, c-format
 msgid ""
 "\n"
@@ -1809,7 +1809,7 @@ msgstr ""
 "\n"
 "Ви справді бажаєте його закрити?"
 
-#: src/callbacks.c:896
+#: src/callbacks.c:900
 #, c-format
 msgid ""
 "\n"
@@ -1824,7 +1824,7 @@ msgstr ""
 "\n"
 "Ви справді бажаєте його закрити?"
 
-#: src/callbacks.c:927
+#: src/callbacks.c:931
 msgid ""
 "Changes made to this clip have not been saved or backed up.\n"
 "\n"
@@ -1835,7 +1835,7 @@ msgstr ""
 "\n"
 "Закрити кліп попри це?"
 
-#: src/callbacks.c:1045
+#: src/callbacks.c:1049
 msgid ""
 "\n"
 "Invalid project file.\n"
@@ -1843,7 +1843,7 @@ msgstr ""
 "\n"
 "Некоректний файл проекту.\n"
 
-#: src/callbacks.c:1056
+#: src/callbacks.c:1060
 #, c-format
 msgid ""
 "\n"
@@ -1866,33 +1866,33 @@ msgstr ""
 "нову назву або відкинути набір.\n"
 "Після завершення цих дій ви зможете імпортувати новий проект.\n"
 
-#: src/callbacks.c:1066
+#: src/callbacks.c:1070
 #, c-format
 msgid "Importing the project %s as set %s..."
 msgstr "Імпортування проекту %s як набору %s…"
 
-#: src/callbacks.c:1080
+#: src/callbacks.c:1084
 msgid "Importing project"
 msgstr "Імпортування проекту"
 
-#: src/callbacks.c:1165
+#: src/callbacks.c:1169
 #, c-format
 msgid "Exporting project %s..."
 msgstr "Експортування проекту %s…"
 
-#: src/callbacks.c:1172
+#: src/callbacks.c:1176
 msgid "Exporting project"
 msgstr "Експортування проекту"
 
-#: src/callbacks.c:1188
+#: src/callbacks.c:1192
 msgid "Restore .lv1 file"
 msgstr "Відновити файл .lv1"
 
-#: src/callbacks.c:1205
+#: src/callbacks.c:1209
 msgid "Backup as .lv1 file"
 msgstr "Створити резервну копію у файлі .lv1"
 
-#: src/callbacks.c:1381
+#: src/callbacks.c:1385
 msgid ""
 "\n"
 "\n"
@@ -1904,86 +1904,86 @@ msgstr ""
 "Набір буде вилучено з диска.\n"
 "Ви справді цього бажаєте?\n"
 
-#: src/callbacks.c:1437
+#: src/callbacks.c:1441
 msgid "Deleting set..."
 msgstr "Вилучення набору…"
 
-#: src/callbacks.c:1438
+#: src/callbacks.c:1442
 msgid "Deleting set"
 msgstr "Вилучення набору"
 
-#: src/callbacks.c:1444
+#: src/callbacks.c:1448
 #, c-format
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Набір %s було остаточно вилучено з диска.\n"
 
-#: src/callbacks.c:1492 src/callbacks.c:9825
+#: src/callbacks.c:1496 src/callbacks.c:9906
 msgid "Insert Silence"
 msgstr "Вставити тишу"
 
-#: src/callbacks.c:1532 src/callbacks.c:1582 src/callbacks.c:1708
+#: src/callbacks.c:1536 src/callbacks.c:1586 src/callbacks.c:1712
 msgid "Undoing"
 msgstr "Скасування"
 
-#: src/callbacks.c:1592 src/callbacks.c:1750
+#: src/callbacks.c:1596 src/callbacks.c:1754
 msgid "Restoring audio..."
 msgstr "Відновлення звуку…"
 
-#: src/callbacks.c:1603
+#: src/callbacks.c:1607
 msgid "Clearing frame images"
 msgstr "Спорожнення зображень кадрів"
 
-#: src/callbacks.c:1627
+#: src/callbacks.c:1631
 msgid "Deleting excess frames"
 msgstr "Вилучення зайвих кадрів"
 
-#: src/callbacks.c:1811
+#: src/callbacks.c:1815
 #, c-format
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr ""
 "Поточна тривалість відео — %d кадрів на швидкості %.3f кадрів на секунду.\n"
 
-#: src/callbacks.c:1815 src/resample.c:654 src/resample.c:2499
+#: src/callbacks.c:1819 src/resample.c:654 src/resample.c:2499
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "Вміст буфера обміну даних було розбито на %d кадрів.\n"
 
-#: src/callbacks.c:1963 src/callbacks.c:1977
+#: src/callbacks.c:1967 src/callbacks.c:1981
 msgid "Redoing"
 msgstr "Повторення"
 
-#: src/callbacks.c:2018
+#: src/callbacks.c:2022
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Копіювання кадрів з %d до %d%s до буфера даних…"
 
-#: src/callbacks.c:2038 src/saveplay.c:1094 src/saveplay.c:1220
-#: src/saveplay.c:1282 src/saveplay.c:3126
+#: src/callbacks.c:2042 src/saveplay.c:1094 src/saveplay.c:1220
+#: src/saveplay.c:1282 src/saveplay.c:3129
 msgid "Pulling frames from clip"
 msgstr "Отримання кадрів з кліпу"
 
-#: src/callbacks.c:2064
+#: src/callbacks.c:2068
 msgid "Copying to the clipboard"
 msgstr "Копіювання до буфера"
 
-#: src/callbacks.c:2125
+#: src/callbacks.c:2129
 msgid "Cut"
 msgstr "Вирізати"
 
-#: src/callbacks.c:2162
+#: src/callbacks.c:2166
 #, c-format
 msgid "Pasting %d frames to new clip %s..."
 msgstr "Вставлення %d кадрів до нового кліпу %s…"
 
-#: src/callbacks.c:2172
+#: src/callbacks.c:2176
 msgid "Pasting"
 msgstr "Вставка"
 
-#: src/callbacks.c:2188
+#: src/callbacks.c:2192
 msgid "...added audio..."
 msgstr "…додано звукові дані…"
 
-#: src/callbacks.c:2261
+#: src/callbacks.c:2265
 msgid ""
 "This operation requires resizing or converting of frames.\n"
 "Please install 'convert' from the Image-magick package, and then restart "
@@ -1993,7 +1993,7 @@ msgstr ""
 "Будь ласка, встановіть програму «convert» з пакунка Imagemagick, а потім "
 "перезапустіть LiVES.\n"
 
-#: src/callbacks.c:2278
+#: src/callbacks.c:2282
 msgid ""
 "\n"
 "\n"
@@ -2007,7 +2007,7 @@ msgstr ""
 "Спробуйте позначити всі кадри, а потім скористайтеся пунктом \n"
 "«Обрізати/Доповнити звукову доріжку» з меню «Звук»."
 
-#: src/callbacks.c:2298
+#: src/callbacks.c:2302
 msgid ""
 "LiVES cannot insert because the audio rates do not match.\n"
 "Please install 'sox', and try again."
@@ -2016,7 +2016,7 @@ msgstr ""
 "дискретизації.\n"
 "Будь ласка, встановіть «sox», а потім повторіть спробу."
 
-#: src/callbacks.c:2316
+#: src/callbacks.c:2320
 msgid ""
 "\n"
 "Insertion will cause frames to shift in some multitrack layouts.\n"
@@ -2027,7 +2027,7 @@ msgstr ""
 "компонувань.\n"
 "Ви саме цього і хотіли?\n"
 
-#: src/callbacks.c:2360 src/callbacks.c:9778
+#: src/callbacks.c:2364 src/callbacks.c:9859
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2038,11 +2038,11 @@ msgstr ""
 "компонувань.\n"
 "Ви саме цього і хотіли?\n"
 
-#: src/callbacks.c:2447 src/callbacks.c:2461
+#: src/callbacks.c:2451 src/callbacks.c:2465
 msgid "Resampling clipboard audio"
 msgstr "Повторна дискретизація звукових даних буфера"
 
-#: src/callbacks.c:2471
+#: src/callbacks.c:2475
 msgid ""
 "\n"
 "\n"
@@ -2054,7 +2054,7 @@ msgstr ""
 "LiVES не вдалося змінити частоту дискретизації звукових даних у буфері. \n"
 "Звукові дані у буфері вилучено.\n"
 
-#: src/callbacks.c:2484
+#: src/callbacks.c:2488
 msgid ""
 "\n"
 "\n"
@@ -2068,30 +2068,30 @@ msgstr ""
 "Бажаєте продовжувати процедуру вставлення \n"
 "на основі незмінених звукових даних?\n"
 
-#: src/callbacks.c:2528 src/callbacks.c:2660
+#: src/callbacks.c:2532 src/callbacks.c:2664
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr "Вставка %d%s кадрів з буфера обміну даними…"
 
-#: src/callbacks.c:2539 src/callbacks.c:2592 src/callbacks.c:2671
+#: src/callbacks.c:2543 src/callbacks.c:2596 src/callbacks.c:2675
 msgid "Inserting"
 msgstr "Вставлення"
 
-#: src/callbacks.c:2566
+#: src/callbacks.c:2570
 #, c-format
 msgid "Inserting %d times from the clipboard%s..."
 msgstr "Вставка %d копій даних з буфера%s…"
 
-#: src/callbacks.c:2572
+#: src/callbacks.c:2576
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "Вставка %d кадрів з буфера обміну даними%s…"
 
-#: src/callbacks.c:2738
+#: src/callbacks.c:2742
 msgid "Insert"
 msgstr "Вставити"
 
-#: src/callbacks.c:2800
+#: src/callbacks.c:2804
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
@@ -2101,7 +2101,7 @@ msgstr ""
 "Вилучення всіх кадрів призведе до закриття цього файла.\n"
 "Чи впевнені ви у своїх діях?"
 
-#: src/callbacks.c:2808
+#: src/callbacks.c:2812
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
@@ -2112,8 +2112,8 @@ msgstr ""
 "компонувань.\n"
 "Ви справді бажаєте продовжувати?\n"
 
-#: src/callbacks.c:2824 src/callbacks.c:9125 src/callbacks.c:9329
-#: src/callbacks.c:9389
+#: src/callbacks.c:2828 src/callbacks.c:9206 src/callbacks.c:9410
+#: src/callbacks.c:9470
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2124,7 +2124,7 @@ msgstr ""
 "компонувань.\n"
 "Ви справді бажаєте продовжувати?\n"
 
-#: src/callbacks.c:2840
+#: src/callbacks.c:2844
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
@@ -2134,7 +2134,7 @@ msgstr ""
 "Вилучення призведе до зсуву кадрів у деяких з багатодоріжкових компонувань.\n"
 "Ви справді бажаєте продовжувати?\n"
 
-#: src/callbacks.c:2856 src/callbacks.c:9373
+#: src/callbacks.c:2860 src/callbacks.c:9454
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2145,20 +2145,20 @@ msgstr ""
 "компонувань.\n"
 "Ви справді бажаєте продовжувати?\n"
 
-#: src/callbacks.c:2909
+#: src/callbacks.c:2913
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr "Вилучення кадрів від %d до %d%s…"
 
-#: src/callbacks.c:2923
+#: src/callbacks.c:2927
 msgid "Deleting"
 msgstr "Вилучення"
 
-#: src/callbacks.c:2998
+#: src/callbacks.c:3002
 msgid "Delete"
 msgstr "Вилучити"
 
-#: src/callbacks.c:3019
+#: src/callbacks.c:3023
 msgid ""
 "\n"
 "\n"
@@ -2168,7 +2168,7 @@ msgstr ""
 "\n"
 "Позначення заблоковано.\n"
 
-#: src/callbacks.c:3319
+#: src/callbacks.c:3328
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -2180,11 +2180,11 @@ msgstr ""
 "(Щоб скасувати запис, натисніть клавішу «r» або скористайтеся пунктом меню "
 "«Відтворення|Виконати запис» ще раз перед початком запису.)\n"
 
-#: src/callbacks.c:3324
+#: src/callbacks.c:3333
 msgid "Record cancelled.\n"
 msgstr "Запис скасовано.\n"
 
-#: src/callbacks.c:3465
+#: src/callbacks.c:3474
 #, c-format
 msgid ""
 "\n"
@@ -2197,7 +2197,7 @@ msgstr ""
 "Повідомлення додатка «%s»:\n"
 "%s\n"
 
-#: src/callbacks.c:3468
+#: src/callbacks.c:3477
 #, c-format
 msgid ""
 "\n"
@@ -2210,7 +2210,7 @@ msgstr ""
 "У додатку %s не вдалося виявити методу «init».\n"
 "Ймовірно, файли додатка пошкоджено або встановлено неналежним чином."
 
-#: src/callbacks.c:3832
+#: src/callbacks.c:3841
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk"
@@ -2223,22 +2223,22 @@ msgstr ""
 "\n"
 "Будь ласка, натисніть «Скасувати», якщо це суперечить вашим планам.\n"
 
-#: src/callbacks.c:3898
+#: src/callbacks.c:3907
 #, c-format
 msgid "Saving set %s"
 msgstr "Зберігання набору %s"
 
-#: src/callbacks.c:4125
+#: src/callbacks.c:4134
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "Завантаження кліпів з набору %s"
 
-#: src/callbacks.c:4198
+#: src/callbacks.c:4207
 #, c-format
 msgid "%d clips were recovered from set (%s).\n"
 msgstr "%d кліпів було відновлено з набору (%s).\n"
 
-#: src/callbacks.c:4414
+#: src/callbacks.c:4423
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -2250,24 +2250,24 @@ msgstr ""
 "запущено жодної іншої копії LiVES.\n"
 "Натисніть кнопку «Гаразд», щоб продовжити виконання дії.\n"
 
-#: src/callbacks.c:4416
+#: src/callbacks.c:4425
 msgid "Cleaning up disk space..."
 msgstr "Спорожнення простору на диску…"
 
-#: src/callbacks.c:4451
+#: src/callbacks.c:4460
 msgid "Clearing disk space"
 msgstr "Спорожнення місця на диску"
 
-#: src/callbacks.c:4486
+#: src/callbacks.c:4495
 #, c-format
 msgid "%d MB of disk space was recovered.\n"
 msgstr "На диску було спорожнено %d МБ простору.\n"
 
-#: src/callbacks.c:4507
+#: src/callbacks.c:4516
 msgid "Resetting frame rates and frame values..."
 msgstr "Відновлення частоти кадрів та параметрів кадрів…"
 
-#: src/callbacks.c:4552
+#: src/callbacks.c:4561
 #, c-format
 msgid ""
 "\n"
@@ -2278,12 +2278,12 @@ msgstr ""
 "Зовнішня: %s\n"
 "Внутрішня: %s (%d bpp)\n"
 
-#: src/callbacks.c:4552
+#: src/callbacks.c:4561
 msgid "buffered"
 msgstr "буферизовано"
 
-#: src/callbacks.c:4564 src/callbacks.c:4583 src/callbacks.c:4597
-#: src/callbacks.c:4631
+#: src/callbacks.c:4573 src/callbacks.c:4592 src/callbacks.c:4606
+#: src/callbacks.c:4640
 msgid ""
 "\n"
 "  Opening..."
@@ -2291,7 +2291,7 @@ msgstr ""
 "\n"
 "  Відкриття…"
 
-#: src/callbacks.c:4571
+#: src/callbacks.c:4580
 #, c-format
 msgid ""
 "\n"
@@ -2300,7 +2300,7 @@ msgstr ""
 "\n"
 "(%d віртуальних)"
 
-#: src/callbacks.c:4574
+#: src/callbacks.c:4583
 #, c-format
 msgid ""
 "\n"
@@ -2309,7 +2309,7 @@ msgstr ""
 "\n"
 "(%d декодовано)"
 
-#: src/callbacks.c:4586 src/callbacks.c:4600 src/callbacks.c:4634
+#: src/callbacks.c:4595 src/callbacks.c:4609 src/callbacks.c:4643
 #, c-format
 msgid ""
 "\n"
@@ -2318,7 +2318,7 @@ msgstr ""
 "\n"
 "  %.2f с"
 
-#: src/callbacks.c:4591
+#: src/callbacks.c:4600
 msgid ""
 "\n"
 "  Unknown"
@@ -2326,23 +2326,23 @@ msgstr ""
 "\n"
 "  Невідомо"
 
-#: src/callbacks.c:4604 src/callbacks.c:4618
+#: src/callbacks.c:4613 src/callbacks.c:4627
 msgid "unsigned"
 msgstr "unsigned"
 
-#: src/callbacks.c:4605 src/callbacks.c:4619
+#: src/callbacks.c:4614 src/callbacks.c:4628
 msgid "signed"
 msgstr "signed"
 
-#: src/callbacks.c:4607 src/callbacks.c:4621
+#: src/callbacks.c:4616 src/callbacks.c:4630
 msgid "big-endian"
 msgstr "big-endian"
 
-#: src/callbacks.c:4608 src/callbacks.c:4622
+#: src/callbacks.c:4617 src/callbacks.c:4631
 msgid "little-endian"
 msgstr "little-endian"
 
-#: src/callbacks.c:4610 src/callbacks.c:4624
+#: src/callbacks.c:4619 src/callbacks.c:4633
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
@@ -2351,7 +2351,7 @@ msgstr ""
 "  %d Гц %d бітів\n"
 "%s %s"
 
-#: src/callbacks.c:4694
+#: src/callbacks.c:4703
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -2382,11 +2382,11 @@ msgstr ""
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, "
 "USA\n"
 
-#: src/callbacks.c:4708
+#: src/callbacks.c:4717
 msgid "A video editor and VJ program."
 msgstr "Відеоредактор та програма для ві-джеїв."
 
-#: src/callbacks.c:4730
+#: src/callbacks.c:4739
 #, fuzzy, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -2410,7 +2410,7 @@ msgstr ""
 "salsaman@xs4all.nl\n"
 "Домашня сторінка: http://lives.sourceforge.net"
 
-#: src/callbacks.c:4897
+#: src/callbacks.c:4906
 msgid ""
 "\n"
 "\n"
@@ -2420,7 +2420,7 @@ msgstr ""
 "\n"
 "Вам слід встановити mplayer, щоб мати змогу переглянути цей файл.\n"
 
-#: src/callbacks.c:5149 src/callbacks.c:6753
+#: src/callbacks.c:5158 src/callbacks.c:6762
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -2433,175 +2433,175 @@ msgstr ""
 "Бажаєте продовжити завантаження?\n"
 "."
 
-#: src/callbacks.c:5230
+#: src/callbacks.c:5239
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "Відкриття звукових даних %s, тип %s…"
 
-#: src/callbacks.c:5247 src/saveplay.c:345
+#: src/callbacks.c:5256 src/saveplay.c:345
 msgid "Opening audio"
 msgstr "Відкриття звукових даних"
 
-#: src/callbacks.c:5252 src/callbacks.c:5283 src/callbacks.c:6823
-#: src/callbacks.c:6854 src/callbacks.c:6892 src/callbacks.c:9065
+#: src/callbacks.c:5261 src/callbacks.c:5292 src/callbacks.c:6832
+#: src/callbacks.c:6863 src/callbacks.c:6901 src/callbacks.c:9146
 msgid "Cancelling"
 msgstr "Скасування"
 
-#: src/callbacks.c:5302 src/callbacks.c:6927
+#: src/callbacks.c:5311 src/callbacks.c:6936
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr "Нові звукові дані: %d Гц %d каналів %d б/с\n"
 
-#: src/callbacks.c:5308 src/callbacks.c:6913 src/callbacks.c:9082
-#: src/callbacks.c:9697
+#: src/callbacks.c:5317 src/callbacks.c:6922 src/callbacks.c:9163
+#: src/callbacks.c:9778
 msgid "Committing audio"
 msgstr "Додавання звукових даних"
 
-#: src/callbacks.c:5315 src/callbacks.c:6934
+#: src/callbacks.c:5324 src/callbacks.c:6943
 msgid "New Audio"
 msgstr "Новий звук"
 
-#: src/callbacks.c:5530
+#: src/callbacks.c:5539
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "Достатньо %d кадрів!\n"
 
-#: src/callbacks.c:5598
+#: src/callbacks.c:5607
 msgid "LiVES: - Encoder debug output"
 msgstr "LiVES: - Дані зневаджування інструменту кодування"
 
-#: src/callbacks.c:5633 src/gui.c:1874
+#: src/callbacks.c:5642 src/gui.c:1879
 msgid "Fullscreen playback (f)"
 msgstr "Повноекранне відтворення (f)"
 
-#: src/callbacks.c:5635
+#: src/callbacks.c:5644
 msgid "Fullscreen playback off (f)"
 msgstr "Вимкнути повноекранне відтворення (f)"
 
-#: src/callbacks.c:5835 src/gui.c:1861
+#: src/callbacks.c:5844 src/gui.c:1866
 msgid "Double size (d)"
 msgstr "Подвійний розмір (d)"
 
-#: src/callbacks.c:5840
+#: src/callbacks.c:5849
 msgid "Single size (d)"
 msgstr "Одинарний розмір (d)"
 
-#: src/callbacks.c:5959 src/callbacks.c:5960
+#: src/callbacks.c:5968 src/callbacks.c:5969
 msgid "Hide the play window (s)"
 msgstr "Сховати вікно відтворення (s)"
 
-#: src/callbacks.c:5969 src/gui.c:1710
+#: src/callbacks.c:5978 src/gui.c:1715
 msgid "Show the play window (s)"
 msgstr "Показати вікно відтворення (s)"
 
-#: src/callbacks.c:5970 src/gui.c:1852
+#: src/callbacks.c:5979 src/gui.c:1857
 msgid "Play in separate window (s)"
 msgstr "Відтворити у окремому вікні (s)"
 
-#: src/callbacks.c:6046 src/gui.c:3776 src/saveplay.c:1942
+#: src/callbacks.c:6055 src/gui.c:3785 src/saveplay.c:1942
 msgid "LiVES: - Streaming"
 msgstr "LiVES — Обробка потокових даних"
 
-#: src/callbacks.c:6180 src/gui.c:3537 src/saveplay.c:1943 src/plugins.c:1295
+#: src/callbacks.c:6189 src/gui.c:3546 src/saveplay.c:1943 src/plugins.c:1295
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Вікно відтворення"
 
-#: src/callbacks.c:6266
+#: src/callbacks.c:6275
 msgid "Switch continuous looping off (o)"
 msgstr "Вимикання неперервного циклічного відтворення (o)"
 
-#: src/callbacks.c:6273 src/gui.c:1757
+#: src/callbacks.c:6282 src/gui.c:1762
 msgid "Switch continuous looping on (o)"
 msgstr "Вмикання неперервного циклічного відтворення (o)"
 
-#: src/callbacks.c:6341
+#: src/callbacks.c:6350
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Гучність (%.2f)"
 
-#: src/callbacks.c:6382 src/callbacks.c:6383 src/gui.c:3460
+#: src/callbacks.c:6391 src/callbacks.c:6392 src/gui.c:3469
 msgid "Unmute the audio (z)"
 msgstr "Увімкнути звук (z)"
 
-#: src/callbacks.c:6394 src/callbacks.c:6395 src/gui.c:1768 src/gui.c:3459
+#: src/callbacks.c:6403 src/callbacks.c:6404 src/gui.c:1773 src/gui.c:3468
 msgid "Mute the audio (z)"
 msgstr "Вимкнути звук (z)"
 
-#: src/callbacks.c:6528
+#: src/callbacks.c:6537
 msgid "Reversing clipboard..."
 msgstr "Обернення за часом даних з буфера…"
 
-#: src/callbacks.c:6537
+#: src/callbacks.c:6546
 msgid "Reversing clipboard"
 msgstr "Обернення за часом даних з буфера"
 
-#: src/callbacks.c:6562
+#: src/callbacks.c:6571
 #, fuzzy
 msgid "LiVES: Load subtitles from..."
 msgstr "Завантажити с_убтитри з файла…"
 
-#: src/callbacks.c:6617 src/saveplay.c:705
+#: src/callbacks.c:6626 src/saveplay.c:705
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Завантажений файл субтитрів: %s\n"
 
-#: src/callbacks.c:6686
+#: src/callbacks.c:6695
 msgid "Subtitles were erased.\n"
 msgstr "Субтитри було вилучено.\n"
 
-#: src/callbacks.c:6698 src/callbacks.c:6970
+#: src/callbacks.c:6707 src/callbacks.c:6979
 msgid "Select Audio File"
 msgstr "Вибір звукового файла"
 
-#: src/callbacks.c:6714
+#: src/callbacks.c:6723
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 "Будь ласка, вкажіть ваш пристрій відтворення КД у меню «Інструменти | "
 "Параметри | Інше»\n"
 
-#: src/callbacks.c:6782
+#: src/callbacks.c:6791
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "Відкриття доріжки КД №%d з %s…"
 
-#: src/callbacks.c:6787
+#: src/callbacks.c:6796
 #, c-format
 msgid "CD track %d"
 msgstr "Доріжка КД %d"
 
-#: src/callbacks.c:6816
+#: src/callbacks.c:6825
 msgid "Opening CD track..."
 msgstr "Відкриття доріжки КД…"
 
-#: src/callbacks.c:6846 src/callbacks.c:6887
+#: src/callbacks.c:6855 src/callbacks.c:6896
 msgid "Error loading CD track\n"
 msgstr "Помилка під час завантаження доріжки КД\n"
 
-#: src/callbacks.c:7022
+#: src/callbacks.c:7031
 msgid "Selecting tracks"
 msgstr "Вибір доріжок"
 
-#: src/callbacks.c:7078
+#: src/callbacks.c:7087
 msgid "layout errors"
 msgstr "помилки компонування"
 
-#: src/callbacks.c:7087
+#: src/callbacks.c:7096
 msgid "Close _Window"
 msgstr "Закрити в_ікно"
 
-#: src/callbacks.c:7098
+#: src/callbacks.c:7107
 msgid "Clear _Errors"
 msgstr "Вилучити записи про п_омилки"
 
-#: src/callbacks.c:7109
+#: src/callbacks.c:7118
 msgid "_Delete affected layouts"
 msgstr "Ви_лучити відповідні компонування"
 
-#: src/callbacks.c:7668 src/callbacks.c:7694
+#: src/callbacks.c:7749 src/callbacks.c:7775
 msgid "Resume"
 msgstr "Поновити"
 
-#: src/callbacks.c:7669
+#: src/callbacks.c:7750
 msgid ""
 "\n"
 "Paused\n"
@@ -2611,27 +2611,27 @@ msgstr ""
 "Призупинено\n"
 "(натисніть «Поновити», щоб продовжити обробку)"
 
-#: src/callbacks.c:7670 src/callbacks.c:7700
+#: src/callbacks.c:7751 src/callbacks.c:7781
 msgid "paused..."
 msgstr "призупинено…"
 
-#: src/callbacks.c:7679 src/callbacks.c:7710
+#: src/callbacks.c:7760 src/callbacks.c:7791
 msgid "Pause"
 msgstr "Призупинити"
 
-#: src/callbacks.c:7681 src/callbacks.c:7713
+#: src/callbacks.c:7762 src/callbacks.c:7794
 msgid "resumed..."
 msgstr "поновлено…"
 
-#: src/callbacks.c:7696
+#: src/callbacks.c:7777
 msgid "Keep"
 msgstr "Залишити"
 
-#: src/callbacks.c:7697
+#: src/callbacks.c:7778
 msgid "Enough"
 msgstr "Досить"
 
-#: src/callbacks.c:7698
+#: src/callbacks.c:7779
 msgid ""
 "\n"
 "Paused\n"
@@ -2643,26 +2643,26 @@ msgstr ""
 "(натисніть «Залишити», щоб зупинитися на поточному стані)\n"
 "(натисніть «Поновити», щоб продовжити обробку)"
 
-#: src/callbacks.c:7711
+#: src/callbacks.c:7792
 msgid "Cancel"
 msgstr "Скасувати"
 
-#: src/callbacks.c:8304 src/multitrack.c:11754
+#: src/callbacks.c:8385 src/multitrack.c:11754
 msgid "LiVES: Selected frame"
 msgstr "LiVES: позначений кадр"
 
-#: src/callbacks.c:8311
+#: src/callbacks.c:8392
 #, fuzzy
 msgid "_Save frame as..."
 msgstr "Зберегти кадр як %s…"
 
-#: src/callbacks.c:8549
+#: src/callbacks.c:8630
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 "Звук випереджає відео на %.4f секунд у кадрі %d, частота кадрів — %.4f\n"
 
-#: src/callbacks.c:8623
+#: src/callbacks.c:8704
 msgid ""
 "\n"
 "\n"
@@ -2675,7 +2675,7 @@ msgstr ""
 "програму «xwininfo».\n"
 "\n"
 
-#: src/callbacks.c:8694 src/callbacks.c:9615
+#: src/callbacks.c:8775 src/callbacks.c:9696
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2683,7 +2683,7 @@ msgstr ""
 "\n"
 "Час запису має бути більшим за 0.\n"
 
-#: src/callbacks.c:8705
+#: src/callbacks.c:8786
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2698,11 +2698,11 @@ msgstr ""
 "Натисніть «Скасувати», щоб скасувати дію.\n"
 "\n"
 
-#: src/callbacks.c:8710
+#: src/callbacks.c:8791
 msgid "External window was released.\n"
 msgstr "Зовнішнє вікно було закрито.\n"
 
-#: src/callbacks.c:8731
+#: src/callbacks.c:8812
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -2710,7 +2710,7 @@ msgstr ""
 "Клацніть кнопкою миші у вікні, щоб почати захоплення зображення.\n"
 "Натисніть клавішу «q», щоб припинити запис."
 
-#: src/callbacks.c:8751
+#: src/callbacks.c:8832
 #, c-format
 msgid ""
 "\n"
@@ -2726,19 +2726,19 @@ msgstr ""
 "Натисніть «Зупинити» або клавішу «q», щоб завершити захоплення.\n"
 "(Типово, буде використано швидкість захоплення у %.3f кадрів на секунду.)\n"
 
-#: src/callbacks.c:8773
+#: src/callbacks.c:8854
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES не вдалося захопити дані з цього вікна. Вибачте.\n"
 
-#: src/callbacks.c:8916
+#: src/callbacks.c:8997
 msgid "Export Selected Audio as..."
 msgstr "Експортувати позначені звукові дані як…"
 
-#: src/callbacks.c:8919
+#: src/callbacks.c:9000
 msgid "Export Audio as..."
 msgstr "Експортувати звукові дані як…"
 
-#: src/callbacks.c:8958
+#: src/callbacks.c:9039
 msgid ""
 "\n"
 "\n"
@@ -2752,81 +2752,81 @@ msgstr ""
 "Натисніть кнопку «Гаразд», щоб експорт було виконано на новій швидкості, або "
 "кнопку «Скасувати», щоб експортувати його з початковою швидкістю.\n"
 
-#: src/callbacks.c:8964
+#: src/callbacks.c:9045
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Експортування звуку кадрів від %d до %d як %s…"
 
-#: src/callbacks.c:8969
+#: src/callbacks.c:9050
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Експортування звуку як %s…"
 
-#: src/callbacks.c:8981
+#: src/callbacks.c:9062
 msgid "Exporting audio"
 msgstr "Експортування звукових даних"
 
-#: src/callbacks.c:9013
+#: src/callbacks.c:9094
 msgid "Append Audio File..."
 msgstr "Долучити звуковий файл…"
 
-#: src/callbacks.c:9052
+#: src/callbacks.c:9133
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "Долучення звукового файла %s…"
 
-#: src/callbacks.c:9059
+#: src/callbacks.c:9140
 msgid "Appending audio"
 msgstr "Долучення звукових даних"
 
-#: src/callbacks.c:9098
+#: src/callbacks.c:9179
 msgid "Append Audio"
 msgstr "Долучення звуку"
 
-#: src/callbacks.c:9153
+#: src/callbacks.c:9234
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Обрізання звукових даних від позиції %.2f с до позиції %.2f с…"
 
-#: src/callbacks.c:9160
+#: src/callbacks.c:9241
 msgid "Trimming/Padding audio"
 msgstr "Обрізання/Доповнення звукових даних"
 
-#: src/callbacks.c:9164
+#: src/callbacks.c:9245
 msgid "Trim/Pad Audio"
 msgstr "Обрізати/Доповнити звукові дані"
 
-#: src/callbacks.c:9238
+#: src/callbacks.c:9319
 msgid "Fading audio in"
 msgstr "Наростання звуку"
 
-#: src/callbacks.c:9239
+#: src/callbacks.c:9320
 msgid "Fade audio in"
 msgstr "Наростання звуку"
 
-#: src/callbacks.c:9244
+#: src/callbacks.c:9325
 msgid "Fading audio out"
 msgstr "Поступове зменшення гучності"
 
-#: src/callbacks.c:9245
+#: src/callbacks.c:9326
 msgid "Fade audio out"
 msgstr "Поступове зменшення гучності"
 
-#: src/callbacks.c:9266
+#: src/callbacks.c:9347
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s після %.1f секунд…"
 
-#: src/callbacks.c:9268
+#: src/callbacks.c:9349
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s від часу %.2f секунд до часу %.2f секунд…"
 
-#: src/callbacks.c:9275
+#: src/callbacks.c:9356
 msgid "Fading audio..."
 msgstr "Зміна гучності…"
 
-#: src/callbacks.c:9358
+#: src/callbacks.c:9439
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2836,37 +2836,37 @@ msgstr ""
 "Вилучення всіх звукових даних призведе до закриття цього файла.\n"
 "Ви бажаєте саме цього?"
 
-#: src/callbacks.c:9361
+#: src/callbacks.c:9442
 msgid "Deleting all audio..."
 msgstr "Вилучення всіх звукових даних…"
 
-#: src/callbacks.c:9367
+#: src/callbacks.c:9448
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Вилучення звукових даних від позиції %.2f с до позиції %.2f с…"
 
-#: src/callbacks.c:9438
+#: src/callbacks.c:9519
 msgid "Deleting Audio"
 msgstr "Вилучення звуку"
 
-#: src/callbacks.c:9441
+#: src/callbacks.c:9522
 msgid "Delete Audio"
 msgstr "Вилучити звук"
 
-#: src/callbacks.c:9725
+#: src/callbacks.c:9806
 msgid "Record new audio"
 msgstr "Запис нових звукових даних"
 
-#: src/callbacks.c:9806
+#: src/callbacks.c:9887
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Вставка тиші від позиції %.2f с до позиції %.2f с…"
 
-#: src/callbacks.c:9822
+#: src/callbacks.c:9903
 msgid "Inserting Silence"
 msgstr "Вставка тиші"
 
-#: src/callbacks.c:9912
+#: src/callbacks.c:9993
 #, c-format
 msgid ""
 "\n"
@@ -3545,102 +3545,106 @@ msgid "_None"
 msgstr "_Жодних"
 
 #: src/gui.c:1621
+msgid "_Autolives"
+msgstr ""
+
+#: src/gui.c:1626
 msgid "_Mad Frames"
 msgstr "_Шалені кадри"
 
-#: src/gui.c:1626
+#: src/gui.c:1631
 msgid "_LiVES TV (broadband)"
 msgstr "_ТБ LiVES (широкосмугове)"
 
-#: src/gui.c:1636 src/multitrack.c:6396
+#: src/gui.c:1641 src/multitrack.c:6396
 msgid "_Help"
 msgstr "_Довідка"
 
-#: src/gui.c:1647 src/multitrack.c:6415
+#: src/gui.c:1652 src/multitrack.c:6415
 msgid "_Manual (opens in browser)"
 msgstr "_Підручник (буде відкрито у переглядачі)"
 
-#: src/gui.c:1656 src/multitrack.c:6424
+#: src/gui.c:1661 src/multitrack.c:6424
 msgid "_Donate to the project !"
 msgstr "Підтримати проект _фінансово!"
 
-#: src/gui.c:1660 src/multitrack.c:6428
+#: src/gui.c:1665 src/multitrack.c:6428
 msgid "_Email the author"
 msgstr "_Надіслати електронного листа авторові"
 
-#: src/gui.c:1664 src/multitrack.c:6432
+#: src/gui.c:1669 src/multitrack.c:6432
 msgid "Report a _bug"
 msgstr "Повідомити про _ваду"
 
-#: src/gui.c:1668 src/multitrack.c:6436
+#: src/gui.c:1673 src/multitrack.c:6436
 msgid "Suggest a _feature"
 msgstr "Запропонувати _можливість"
 
-#: src/gui.c:1672 src/multitrack.c:6440
+#: src/gui.c:1677 src/multitrack.c:6440
 msgid "Assist with _translating"
 msgstr "Допомогти з п_ерекладом"
 
-#: src/gui.c:1681 src/multitrack.c:6449
+#: src/gui.c:1686 src/multitrack.c:6449
 msgid "_Troubleshoot"
 msgstr "_Усування вад"
 
-#: src/gui.c:1685 src/multitrack.c:6453
+#: src/gui.c:1690 src/multitrack.c:6453
 msgid "_About"
 msgstr "_Про програму"
 
-#: src/gui.c:1716
+#: src/gui.c:1721
 msgid "Rewind to start (w)"
 msgstr "Повернутися на початок (w)"
 
-#: src/gui.c:1724 src/multitrack.c:14817
+#: src/gui.c:1729 src/multitrack.c:14817
 msgid "Play all (p)"
 msgstr "Відтворити все (p)"
 
-#: src/gui.c:1734 src/gui.c:1835
+#: src/gui.c:1739 src/gui.c:1840
 msgid "Stop playback (q)"
 msgstr "Зупинити відтворення (q)"
 
-#: src/gui.c:1743
+#: src/gui.c:1748
 msgid "Play selection (y)"
 msgstr "Відтворити позначене (y)"
 
-#: src/gui.c:1784
+#: src/gui.c:1789
 msgid "Volume"
 msgstr "Гучність"
 
-#: src/gui.c:1812
+#: src/gui.c:1817
 msgid "Audio volume (1.00)"
 msgstr "Гучність звуку (1.00)"
 
-#: src/gui.c:1841
+#: src/gui.c:1846
 msgid "Unblank background (b)"
 msgstr "Показати тло (b)"
 
-#: src/gui.c:1881
+#: src/gui.c:1886
 msgid "Play slower (ctrl-down)"
 msgstr "Уповільнити відтворення (ctrl-вниз)"
 
-#: src/gui.c:1887
+#: src/gui.c:1892
 msgid "Play faster (ctrl-up)"
 msgstr "Пришвидшити відтворення (ctrl-вгору)"
 
-#: src/gui.c:1894
+#: src/gui.c:1899
 msgid "Skip back (ctrl-left)"
 msgstr "Повернутися назад (ctrl-ліворуч)"
 
-#: src/gui.c:1900
+#: src/gui.c:1905
 msgid "Skip forward (ctrl-right)"
 msgstr "Перейти вперед (ctrl-праворуч)"
 
-#: src/gui.c:1906
+#: src/gui.c:1911
 msgid "Show clip info (i)"
 msgstr "Показати відомості щодо кліпу (i)"
 
-#: src/gui.c:1912
+#: src/gui.c:1917
 msgid "Hide this toolbar"
 msgstr "Приховати цю панель інструментів"
 
-#: src/gui.c:1914
+#: src/gui.c:1919
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
@@ -3649,121 +3653,121 @@ msgstr ""
 "швидкодії, натискання «q» призведе до закриття вікна."
 
 #. TRANSLATORS: please keep the translated string the same length
-#: src/gui.c:1942
+#: src/gui.c:1947
 msgid "     Video playback speed (frames per second)        "
 msgstr "     Швидкість відтворення відео (у кадрах на секунду)        "
 
-#: src/gui.c:1961
+#: src/gui.c:1966
 msgid "Vary the video speed"
 msgstr "Змінювати швидкість відео"
 
-#: src/gui.c:1985
+#: src/gui.c:1990
 msgid "                                                            "
 msgstr "                                                            "
 
-#: src/gui.c:2016 src/gui.c:3009
+#: src/gui.c:2021 src/gui.c:3018
 msgid "First Frame"
 msgstr "Перший кадр"
 
-#: src/gui.c:2085 src/gui.c:3018
+#: src/gui.c:2090 src/gui.c:3027
 msgid "Last Frame"
 msgstr "Останній кадр"
 
-#: src/gui.c:2104
+#: src/gui.c:2109
 msgid "The first selected frame in this clip"
 msgstr "Перший позначений кадр цього кліпу"
 
-#: src/gui.c:2133
+#: src/gui.c:2138
 msgid "The last selected frame in this clip"
 msgstr "Останній позначений кадр цього кліпу"
 
-#: src/gui.c:2334
+#: src/gui.c:2339
 msgid "Starting...\n"
 msgstr "Запуск...\n"
 
-#: src/gui.c:2884
+#: src/gui.c:2893
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 "    Натисніть «q», щоб зупинити запис. НЕ ЗАКРИВАЙТЕ ВІКНО ВІДТВОРЕННЯ!   "
 
-#: src/gui.c:3261
+#: src/gui.c:3270
 msgid "Frame number to preview"
 msgstr "Кількість кадрів для перегляду"
 
-#: src/gui.c:3277
+#: src/gui.c:3286
 msgid "_Free"
 msgstr "Виві_льнити"
 
-#: src/gui.c:3282
+#: src/gui.c:3291
 msgid "Free choice of frame number"
 msgstr "Довільний вибір номера кадру"
 
-#: src/gui.c:3307
+#: src/gui.c:3316
 msgid "_Start"
 msgstr "П_очаток"
 
-#: src/gui.c:3312
+#: src/gui.c:3321
 msgid "Frame number is linked to start frame"
 msgstr "Кількість кадрів пов’язано з початковим кадром"
 
-#: src/gui.c:3338
+#: src/gui.c:3347
 msgid "_End"
 msgstr "_Кінець"
 
-#: src/gui.c:3343
+#: src/gui.c:3352
 msgid "Frame number is linked to end frame"
 msgstr "Кількість кадрів пов’язано з кінцевим кадром"
 
-#: src/gui.c:3369
+#: src/gui.c:3378
 msgid "_Pointer"
 msgstr "В_казівник"
 
-#: src/gui.c:3374
+#: src/gui.c:3383
 msgid "Frame number is linked to playback pointer"
 msgstr "Кількість кадрів пов’язано з позначкою позиції відтворення"
 
-#: src/gui.c:3407
+#: src/gui.c:3416
 msgid "Rewind"
 msgstr "Повний назад"
 
-#: src/gui.c:3418 src/dialogs.c:397 src/dialogs.c:399 src/dialogs.c:1092
+#: src/gui.c:3427 src/dialogs.c:397 src/dialogs.c:399 src/dialogs.c:1092
 #: src/dialogs.c:1094
 msgid "Play all"
 msgstr "Відтворити все"
 
-#: src/gui.c:3429
+#: src/gui.c:3438
 msgid "Play Selection"
 msgstr "Відтворити позначене"
 
-#: src/gui.c:3441
+#: src/gui.c:3450
 msgid "Loop On/Off"
 msgstr "Вмикання/Вимикання циклу"
 
-#: src/gui.c:3499
+#: src/gui.c:3508
 msgid "Start _recording"
 msgstr "Почати _запис"
 
-#: src/gui.c:3505
+#: src/gui.c:3514
 msgid "Stop _recording"
 msgstr "Зупинити _запис"
 
-#: src/gui.c:3511
+#: src/gui.c:3520
 msgid "_Record Performance"
 msgstr "_Виконати запис"
 
-#: src/gui.c:3583
+#: src/gui.c:3592
 msgid "Hide Play Window"
 msgstr "Приховати вікно відтворення"
 
-#: src/gui.c:3874
+#: src/gui.c:3883
 msgid "Show Play Window"
 msgstr "Показати вікно відтворення"
 
-#: src/utils.c:499
+#: src/utils.c:502
 msgid "Clearing the clipboard"
 msgstr "Спорожнення буфера обміну даними"
 
-#: src/utils.c:522
+#: src/utils.c:525
 #, c-format
 msgid ""
 "\n"
@@ -3774,7 +3778,7 @@ msgstr ""
 "==============================\n"
 "Перемкнуто на кліп %s\n"
 
-#: src/utils.c:526
+#: src/utils.c:529
 msgid ""
 "\n"
 "==============================\n"
@@ -3784,11 +3788,11 @@ msgstr ""
 "==============================\n"
 "Перемкнуто на порожній кліп\n"
 
-#: src/utils.c:561
+#: src/utils.c:564
 msgid "(blank)"
 msgstr "(порожній)"
 
-#: src/utils.c:563
+#: src/utils.c:566
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
@@ -3797,7 +3801,7 @@ msgstr ""
 "Назву набору було змінено з %s на %s. Виконано відповідне оновлення "
 "пов’язаних з ним компонувань.\n"
 
-#: src/utils.c:570
+#: src/utils.c:573
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
@@ -3806,7 +3810,7 @@ msgstr ""
 "У цьому наборі немає кліпу %s.\n"
 "Цей кліп потрібен для таких компонувань:\n"
 
-#: src/utils.c:574
+#: src/utils.c:577
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
@@ -3815,7 +3819,7 @@ msgstr ""
 "Кліп %s було закрито.\n"
 "Цей кліп потрібен для таких компонувань:\n"
 
-#: src/utils.c:579
+#: src/utils.c:582
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
@@ -3824,7 +3828,7 @@ msgstr ""
 "У кліпі %s було зсунуто кадри.\n"
 "Це вплинуло на такі компонування:\n"
 
-#: src/utils.c:584
+#: src/utils.c:587
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
@@ -3833,7 +3837,7 @@ msgstr ""
 "З кліпу %s було вилучено кадри.\n"
 "Це вплинуло на такі компонування:\n"
 
-#: src/utils.c:589
+#: src/utils.c:592
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
@@ -3842,7 +3846,7 @@ msgstr ""
 "З кліпу %s було вилучено звукові дані.\n"
 "Це вплинуло на такі компонування:\n"
 
-#: src/utils.c:594
+#: src/utils.c:597
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
@@ -3851,7 +3855,7 @@ msgstr ""
 "У кліпі %s було зсунуто звукові дані.\n"
 "Це вплинуло на такі компонування:\n"
 
-#: src/utils.c:599
+#: src/utils.c:602
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
@@ -3860,7 +3864,7 @@ msgstr ""
 "У кліпі %s було замінено звукові дані.\n"
 "Це вплинуло на такі компонування:\n"
 
-#: src/utils.c:604
+#: src/utils.c:607
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
@@ -3869,7 +3873,7 @@ msgstr ""
 "У кліпі %s було замінено кадри.\n"
 "Це вплинуло на такі компонування:\n"
 
-#: src/utils.c:759
+#: src/utils.c:762
 #, c-format
 msgid ""
 "Set %s\n"
@@ -3880,7 +3884,7 @@ msgstr ""
 "оскільки його вже використано\n"
 "іншою копією програми LiVES.\n"
 
-#: src/utils.c:765
+#: src/utils.c:768
 #, c-format
 msgid ""
 "\n"
@@ -3891,7 +3895,7 @@ msgstr ""
 "З набором %s зараз працює інша копія програми LiVES.\n"
 "Будь ласка, оберіть іншу назву набору.\n"
 
-#: src/utils.c:789
+#: src/utils.c:792
 msgid ""
 "\n"
 "Set names may not be blank.\n"
@@ -3899,7 +3903,7 @@ msgstr ""
 "\n"
 "Назви наборів не можуть бути порожніми.\n"
 
-#: src/utils.c:793
+#: src/utils.c:796
 #, c-format
 msgid ""
 "\n"
@@ -3908,7 +3912,7 @@ msgstr ""
 "\n"
 "У назвах наборів не повинно містити пробілів або символів%s.\n"
 
-#: src/utils.c:805
+#: src/utils.c:808
 #, c-format
 msgid ""
 "\n"
@@ -3919,68 +3923,68 @@ msgstr ""
 "Набір з назвою %s вже існує.\n"
 "Будь ласка, оберіть іншу назву набору.\n"
 
-#: src/utils.c:1025
+#: src/utils.c:1028
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "Вилучення компонування %s\n"
 
-#: src/utils.c:1398
+#: src/utils.c:1401
 msgid "Video [opening...]"
 msgstr "Відео [відкриття…]"
 
-#: src/utils.c:1402
+#: src/utils.c:1405
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Відео [%.2f с]"
 
-#: src/utils.c:1406
+#: src/utils.c:1409
 msgid "(Undefined)"
 msgstr "(Не визначено)"
 
-#: src/utils.c:1409
+#: src/utils.c:1412
 msgid "(No video)"
 msgstr "(Немає відео)"
 
-#: src/utils.c:1416
+#: src/utils.c:1419
 msgid "(No audio)"
 msgstr "(Немає звуку)"
 
-#: src/utils.c:1421
+#: src/utils.c:1424
 msgid "Mono  [opening...]"
 msgstr "Моно [відкриття…]"
 
-#: src/utils.c:1424
+#: src/utils.c:1427
 msgid "Left Audio [opening...]"
 msgstr "Лівий канал звуку [відкриття…]"
 
-#: src/utils.c:1429
+#: src/utils.c:1432
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Моно [%.2f с]"
 
-#: src/utils.c:1432
+#: src/utils.c:1435
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Лівий канал звуку [%.2f с]"
 
-#: src/utils.c:1440
+#: src/utils.c:1443
 msgid "Right Audio [opening...]"
 msgstr "Правий канал звуку [відкриття…]"
 
-#: src/utils.c:1443
+#: src/utils.c:1446
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Правий канал звуку [%.2f с]"
 
-#: src/utils.c:1902
+#: src/utils.c:1905
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVES не може перемикатися на mplayer під час завантаження кліпів."
 
-#: src/utils.c:2086
+#: src/utils.c:2089
 msgid "Cleaning up clip"
 msgstr "Спорожнення кліпу"
 
-#: src/utils.c:2216
+#: src/utils.c:2219
 #, c-format
 msgid ""
 "\n"
@@ -3995,25 +3999,25 @@ msgstr ""
 "\n"
 "Перезаписати?\n"
 
-#: src/utils.c:2611 src/utils.c:2643 src/multitrack.c:3877
+#: src/utils.c:2614 src/utils.c:2646 src/multitrack.c:3877
 #, c-format
 msgid "_Undo %s"
 msgstr "В_ернути %s"
 
-#: src/utils.c:2612 src/utils.c:2644 src/multitrack.c:3899
+#: src/utils.c:2615 src/utils.c:2647 src/multitrack.c:3899
 #, c-format
 msgid "_Redo %s"
 msgstr "П_овторити %s"
 
-#: src/utils.c:2669
+#: src/utils.c:2672
 msgid "-------------Selection------------"
 msgstr "-------------Позначене------------"
 
-#: src/utils.c:2674
+#: src/utils.c:2677
 msgid " sec ] ----------Selection---------- [ "
 msgstr " с ] ----------Позначене---------- [ "
 
-#: src/utils.c:2674
+#: src/utils.c:2677
 msgid " frames ] ----------"
 msgstr " кадрів ] ----------"
 
@@ -4031,7 +4035,7 @@ msgstr "Відкриття %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Відкриття %s час початку — %.2f с, %d кадрів"
 
-#: src/saveplay.c:222 src/saveplay.c:3114
+#: src/saveplay.c:222 src/saveplay.c:3117
 msgid " without sound"
 msgstr " без звуку"
 
@@ -4195,12 +4199,12 @@ msgstr "запис перервано відтворенням даних з б�
 msgid "Recording performance..."
 msgstr "Виконання запису…"
 
-#: src/saveplay.c:2567
+#: src/saveplay.c:2570
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Середня частота кадрів — %.4f\n"
 
-#: src/saveplay.c:2573
+#: src/saveplay.c:2576
 msgid ""
 "\n"
 "\n"
@@ -4215,16 +4219,16 @@ msgstr ""
 "кадрів»\n"
 "і змінити розміри всіх кадрів до поточного значення.\n"
 
-#: src/saveplay.c:2694
+#: src/saveplay.c:2697
 msgid "Unknown"
 msgstr "Невідомо"
 
-#: src/saveplay.c:2789
+#: src/saveplay.c:2792
 #, c-format
 msgid "Untitled%d"
 msgstr "Без_назви%d"
 
-#: src/saveplay.c:2906
+#: src/saveplay.c:2909
 #, c-format
 msgid ""
 "\n"
@@ -4237,14 +4241,14 @@ msgstr ""
 "Типову частоту кадрів можна встановити за допомогою пункту меню «Інструменти "
 "| Параметри | Інше».\n"
 
-#: src/saveplay.c:2918
+#: src/saveplay.c:2921
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Швидкість відтворення було скориговано до значення %.3f кадрів на секунду, "
 "щоб зберегти відповідність з звуковими даними.\n"
 
-#: src/saveplay.c:2934
+#: src/saveplay.c:2937
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4254,7 +4258,7 @@ msgstr ""
 "%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:2938 src/saveplay.c:3580
+#: src/saveplay.c:2941 src/saveplay.c:3583
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4263,49 +4267,49 @@ msgstr ""
 "Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:2942 src/saveplay.c:3584
+#: src/saveplay.c:2945 src/saveplay.c:3587
 #, c-format
 msgid "%s none\n"
 msgstr "%s немає\n"
 
-#: src/saveplay.c:2945 src/saveplay.c:3587
+#: src/saveplay.c:2948 src/saveplay.c:3590
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Гц %d каналів %d б/с\n"
 
-#: src/saveplay.c:2953
+#: src/saveplay.c:2956
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Коментар: %s\n"
 
-#: src/saveplay.c:3035
+#: src/saveplay.c:3038
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Збереження кадру %d як %s..."
 
-#: src/saveplay.c:3109
+#: src/saveplay.c:3112
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Створення резервної копії %s на %s"
 
-#: src/saveplay.c:3149
+#: src/saveplay.c:3152
 msgid "Backing up"
 msgstr "Створення резервної копії"
 
-#: src/saveplay.c:3183
+#: src/saveplay.c:3186
 msgid "performance data was backed up..."
 msgstr "було створено резервну копію записаних даних…"
 
-#: src/saveplay.c:3491
+#: src/saveplay.c:3494
 #, c-format
 msgid "Restoring %s..."
 msgstr "Відновлення %s…"
 
-#: src/saveplay.c:3510
+#: src/saveplay.c:3513
 msgid "Restoring"
 msgstr "Відновлення"
 
-#: src/saveplay.c:3532
+#: src/saveplay.c:3535
 #, c-format
 msgid ""
 "\n"
@@ -4318,17 +4322,17 @@ msgstr ""
 "Дані у файлі %s пошкоджено.\n"
 "LiVES не вдалося відновити їх.\n"
 
-#: src/saveplay.c:3953
+#: src/saveplay.c:3956
 #, c-format
 msgid "rec %.2f MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:3957
+#: src/saveplay.c:3960
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!зап %.2f МБ"
 
-#: src/saveplay.c:3980
+#: src/saveplay.c:3983
 #, c-format
 msgid ""
 "\n"
@@ -4341,7 +4345,7 @@ msgstr ""
 "Параметри призупинки запису можна встановити за допомогою діалогового вікна "
 "«Параметри».\n"
 
-#: src/saveplay.c:4097
+#: src/saveplay.c:4100
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4351,11 +4355,11 @@ msgstr ""
 "Було знайдено файли від попереднього запуску LiVES.\n"
 "Бажаєте, щоб програма спробувала їх відновити?\n"
 
-#: src/saveplay.c:4110
+#: src/saveplay.c:4113
 msgid "Recovering files"
 msgstr "Відновлення файлів"
 
-#: src/saveplay.c:4112
+#: src/saveplay.c:4115
 msgid "Recovering files..."
 msgstr "Відновлення файлів…"
 
@@ -5383,6 +5387,22 @@ msgstr ""
 "Не було відновлено жодного кліпу у наборі (%s).\n"
 "Будь ласка, перевірте, чи правильно вказано назву набору і повторіть "
 "спробу.\n"
+
+#: src/dialogs.c:2135
+msgid ""
+"\n"
+"You must have autolives.pl installed and in your path to use this toy.\n"
+"Consult your package distributor.\n"
+msgstr ""
+
+#: src/dialogs.c:2148
+#, c-format
+msgid ""
+"\n"
+"LiVES would like to open a local network connection (UDP port %d),\n"
+"to let other applications connect to it.\n"
+"Do you wish to allow this (for this session only) ?\n"
+msgstr ""
 
 #: src/effects.c:135
 #, c-format
@@ -7797,26 +7817,26 @@ msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 "Параметри Jack набудуть чинності лише під час наступного запуску LiVES."
 
-#: src/osc.c:2288
+#: src/osc.c:2326
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "Синхронізація зовнішньої частоти кадрів у %.8f кадрів на секунду.\n"
 
-#: src/osc.c:4590
+#: src/osc.c:4628
 msgid "Cannot initialize OSC receiver\n"
 msgstr "Не вдалося ініціалізувати отримувач даних OSC\n"
 
-#: src/osc.c:4614
+#: src/osc.c:4652
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "ПОПЕРЕДЖЕННЯ: Не вдалося запустити сервер OSC на порту UDP %d\n"
 
-#: src/osc.c:4619
+#: src/osc.c:4657
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "Запущено сервер OSC на порту UDP %d\n"
 
-#: src/osc.c:4732
+#: src/osc.c:4770
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Не вдалося запустити сервер OSC/UDP на порту %d \n"

@@ -870,6 +870,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->pw_exp_is_blocked=TRUE;
 
+  mainw->toy_alives_pid=0;
+  mainw->autolives_reset_fx=FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -1597,6 +1600,7 @@ capability *get_capabilities (void) {
   capable->has_xmms=FALSE;
   capable->has_dvgrab=FALSE;
   capable->has_cdda2wav=FALSE;
+  capable->has_autolives=FALSE;
   capable->has_jackd=FALSE;
   capable->has_gdb=FALSE;
   capable->has_pulse_audio=FALSE;
@@ -2424,6 +2428,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->vj_save_set, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->vj_load_set, !mainw->was_set);
   gtk_widget_set_sensitive (mainw->toy_tv, TRUE);
+  gtk_widget_set_sensitive (mainw->toy_autolives, TRUE);
   gtk_widget_set_sensitive (mainw->toy_random_frames, TRUE);
   gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
   gtk_widget_set_sensitive (mainw->gens_submenu, TRUE);
@@ -2535,6 +2540,7 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->paste_as_new, FALSE);
   gtk_widget_set_sensitive (mainw->capture, FALSE);
   gtk_widget_set_sensitive (mainw->toy_tv, FALSE);
+  gtk_widget_set_sensitive (mainw->toy_autolives, FALSE);
   gtk_widget_set_sensitive (mainw->vj_save_set, FALSE);
   gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
   gtk_widget_set_sensitive (mainw->export_proj, FALSE);
@@ -2578,6 +2584,7 @@ procw_desensitize(void) {
       // loading, restoring etc
       gtk_widget_set_sensitive (mainw->lock_selwidth, FALSE);
       gtk_widget_set_sensitive (mainw->show_file_comments, FALSE);
+      gtk_widget_set_sensitive (mainw->toy_autolives, FALSE);
       if (!cfile->opening_only_audio) {
 	gtk_widget_set_sensitive (mainw->toy_random_frames, FALSE);
       }
@@ -2602,6 +2609,7 @@ procw_desensitize(void) {
 
   gtk_widget_set_sensitive (mainw->select_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->toy_tv, FALSE);
+  gtk_widget_set_sensitive (mainw->toy_autolives, FALSE);
   gtk_widget_set_sensitive (mainw->trim_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->delaudio_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->load_cdtrack, FALSE);
@@ -4580,6 +4588,7 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_set_sensitive (mainw->recent_menu, TRUE);
     gtk_widget_set_sensitive (mainw->restore, TRUE);
     gtk_widget_set_sensitive (mainw->toy_tv, TRUE);
+    gtk_widget_set_sensitive (mainw->toy_autolives, TRUE);
     gtk_widget_set_sensitive (mainw->toy_random_frames, TRUE);
     gtk_widget_set_sensitive (mainw->vj_load_set, !mainw->was_set);
     gtk_widget_set_sensitive (mainw->clear_ds, TRUE);

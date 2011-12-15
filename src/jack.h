@@ -134,11 +134,13 @@ int jack_read_driver_activate (jack_driver_t *); ///< activate for host recordin
 
 void jack_close_device(jack_driver_t*);
 
+gboolean jack_try_reconnect(void);
+
 
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
 gint64 lives_jack_get_time(jack_driver_t *, gboolean absolute); ///< get time from jack, in 10^-8 seconds
-void jack_audio_seek_frame (jack_driver_t *, gint frame); ///< seek to (video) frame
+gboolean jack_audio_seek_frame (jack_driver_t *, gint frame); ///< seek to (video) frame
 long jack_audio_seek_bytes (jack_driver_t *, long bytes); ///< seek to byte position
 
 void jack_get_rec_avals(jack_driver_t *);
@@ -146,6 +148,7 @@ void jack_get_rec_avals(jack_driver_t *);
 gdouble jack_transport_get_time(void);
 
 gdouble lives_jack_get_pos(jack_driver_t *);
+
 
 #endif
 

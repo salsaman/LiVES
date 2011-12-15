@@ -1638,7 +1638,11 @@ gboolean resync_audio(gint frameno) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
     if (!mainw->is_rendering) {
-      jack_audio_seek_frame(mainw->jackd,frameno);
+
+      if (!jack_audio_seek_frame(mainw->jackd,frameno)) {
+	if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frameno);
+      }
+
       mainw->rec_aclip=mainw->current_file;
       mainw->rec_avel=cfile->pb_fps/cfile->fps;
       mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -1650,7 +1654,9 @@ gboolean resync_audio(gint frameno) {
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
     if (!mainw->is_rendering) {
-      pulse_audio_seek_frame(mainw->pulsed,frameno);
+      if (!pulse_audio_seek_frame(mainw->pulsed,frameno)) {
+	if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,frameno);
+      }
       mainw->rec_aclip=mainw->current_file;
       mainw->rec_avel=cfile->pb_fps/cfile->fps;
       mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);

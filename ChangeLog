@@ -2,9 +2,11 @@ Version 1.4.10 a.k.a 1.6.0
 --------------------------
 Allow setting of playback start and end times via OSC.
 Implement "autolives" toy.
+Handle reconnection to pulse / jack more robustly.
+Fix threaded palette conversion uyvy -> rgb. *
+Fix warning text in vloopback2 playback plugin. *
 
 
-	
 
 
 

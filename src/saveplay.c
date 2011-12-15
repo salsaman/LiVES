@@ -2011,6 +2011,9 @@ void play_file (void) {
 	}
 	else mainw->jackd->loop=AUDIO_LOOP_NONE;
 	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&(cfile->laudio_time>0.||cfile->opening||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&g_file_test((tmpfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle)),G_FILE_TEST_EXISTS)))) {
+	  gboolean timeout;
+	  int alarm_handle;
+
 	  if (tmpfilename!=NULL) g_free(tmpfilename);
 	  mainw->jackd->num_input_channels=cfile->achans;
 	  mainw->jackd->bytes_per_channel=cfile->asampsize/8;
@@ -2020,7 +2023,14 @@ void play_file (void) {
 	  
 	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd->reverse_endian=TRUE;
 	  else mainw->jackd->reverse_endian=FALSE;
-	  while (jack_get_msgq(mainw->jackd)!=NULL);
+
+	  alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+	  while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+	    sched_yield(); // wait for seek
+	  }
+	  if (timeout) jack_try_reconnect();
+	  lives_alarm_clear(alarm_handle);
+
 	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&(mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
 	    // tell jack server to open audio file and start playing it
 	    jack_message.command=ASERVER_CMD_FILE_OPEN;
@@ -2029,7 +2039,11 @@ void play_file (void) {
 	    // TODO ** - use chain messages
 	    jack_message.next=NULL;
 	    mainw->jackd->msgq=&jack_message;
-	    jack_audio_seek_frame(mainw->jackd,mainw->play_start);
+
+	    if (!jack_audio_seek_frame(mainw->jackd,mainw->play_start)) {
+	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
+	    }
+
 	    mainw->jackd->in_use=TRUE;
 	    mainw->rec_aclip=mainw->current_file;
 	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
@@ -2050,6 +2064,10 @@ void play_file (void) {
 	}
 	else mainw->pulsed->loop=AUDIO_LOOP_NONE;
 	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&(cfile->laudio_time>0.||cfile->opening||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&g_file_test((tmpfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle)),G_FILE_TEST_EXISTS)))) {
+
+	  gboolean timeout;
+	  int alarm_handle;
+
 	  if (tmpfilename!=NULL) g_free(tmpfilename);
 	  mainw->pulsed->in_achans=cfile->achans;
 	  mainw->pulsed->in_asamps=cfile->asampsize;
@@ -2061,14 +2079,27 @@ void play_file (void) {
 	  
 	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed->reverse_endian=TRUE;
 	  else mainw->pulsed->reverse_endian=FALSE;
-	  while (pulse_get_msgq(mainw->pulsed)!=NULL);
+
+	  alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+	  while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+	    sched_yield(); // wait for seek
+	  }
+	  
+	  if (timeout) pulse_try_reconnect();
+	  
+	  lives_alarm_clear(alarm_handle);
+
 	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering||cfile->opening)&&(mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
 	    // tell pulse server to open audio file and start playing it
 	    pulse_message.command=ASERVER_CMD_FILE_OPEN;
 	    pulse_message.data=g_strdup_printf("%d",mainw->current_file);
 	    pulse_message.next=NULL;
 	    mainw->pulsed->msgq=&pulse_message;
-	    pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+
+	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
+	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, mainw->play_start);
+	    }
+
 	    mainw->pulsed->in_use=TRUE;
 	    mainw->rec_aclip=mainw->current_file;
 	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
@@ -2296,7 +2327,14 @@ void play_file (void) {
 
     // tell jack client to close audio file
     if (mainw->jackd->playing_file>0) {
-      while (jack_get_msgq(mainw->jackd)!=NULL);
+      gboolean timeout;
+      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+	sched_yield(); // wait for seek
+      }
+      if (timeout) jack_try_reconnect();
+      lives_alarm_clear(alarm_handle);
+
       jack_message.command=ASERVER_CMD_FILE_CLOSE;
       jack_message.data=NULL;
       jack_message.next=NULL;
@@ -2318,7 +2356,14 @@ void play_file (void) {
 
     // tell pulse client to close audio file
     if (mainw->pulsed->fd>0) {
-      while (pulse_get_msgq(mainw->pulsed)!=NULL);
+      gboolean timeout;
+      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+	sched_yield(); // wait for seek
+      }
+      if (timeout) pulse_try_reconnect();
+      lives_alarm_clear(alarm_handle);
+
       pulse_message.command=ASERVER_CMD_FILE_CLOSE;
       pulse_message.data=NULL;
       pulse_message.next=NULL;
@@ -2592,7 +2637,15 @@ void play_file (void) {
 
 #ifdef ENABLE_JACK
   if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
-    while (jack_get_msgq(mainw->jackd)!=NULL);
+    gboolean timeout;
+    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+    while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+      sched_yield(); // wait for seek
+    }
+    if (timeout) jack_try_reconnect();
+    
+    lives_alarm_clear(alarm_handle);
+
     mainw->jackd->in_use=FALSE;
 
     if (has_audio_buffers) {
@@ -2605,7 +2658,16 @@ void play_file (void) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
-    while (pulse_get_msgq(mainw->pulsed)!=NULL);
+    gboolean timeout;
+    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+    while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+      sched_yield(); // wait for seek
+    }
+    
+    if (timeout) pulse_try_reconnect();
+    
+    lives_alarm_clear(alarm_handle);
+    
     mainw->pulsed->in_use=FALSE;
 
     if (has_audio_buffers) {

@@ -123,6 +123,8 @@ void pulse_flush_read_data(pulse_driver_t *, size_t rbytes, void *data);
 
 void pulse_driver_uncork(pulse_driver_t *);
 
+gboolean pulse_try_reconnect(void);
+
 // utils
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg from msgq, or return NULL
 
@@ -135,7 +137,7 @@ gdouble lives_pulse_get_pos(pulse_driver_t *);
 
 //////////////////////
 
-void pulse_audio_seek_frame (pulse_driver_t *, gint frame); ///< seek to (video) frame
+gboolean pulse_audio_seek_frame (pulse_driver_t *, gint frame); ///< seek to (video) frame
 
 void pulse_get_rec_avals(pulse_driver_t *);
 

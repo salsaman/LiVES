@@ -42,14 +42,13 @@ static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *user
 }
 
 // wait 5 seconds to startup
-#define PULSE_START_WAIT 5000000
+#define PULSE_START_WAIT 500000000
 
 
 gboolean lives_pulse_init (short startup_phase) {
   // startup pulse audio server
   gchar *msg,*msg2;
 
-  struct timeval otv;
   int64_t ntime=0,stime;
 
   pa_context_state_t pa_state;
@@ -63,15 +62,13 @@ gboolean lives_pulse_init (short startup_phase) {
 
   pa_state=pa_context_get_state(pcon);
 
-  gettimeofday(&otv, NULL);
-  stime=otv.tv_sec*1000000+otv.tv_usec;
+  stime=lives_get_current_ticks();
 
   while (pa_state!=PA_CONTEXT_READY&&ntime<PULSE_START_WAIT) {
     g_usleep(prefs->sleep_time);
     sched_yield();
     pa_state=pa_context_get_state(pcon);
-    gettimeofday(&otv, NULL);
-    ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
+    ntime=lives_get_current_ticks()-stime;
   }
 
   if (ntime>=PULSE_START_WAIT) {
@@ -705,6 +702,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
   if (pdriver->pstream!=NULL) return 0;
 
+  if (mainw->aplayer_broken) return 2;
+
   mypid=g_strdup_printf("%d",getpid());
 
   pdriver->pa_props=pa_proplist_new();
@@ -818,7 +817,7 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
   // force update - "volatile" doesn't seem to work...
   gchar *tmp=g_strdup_printf("%p %d",pulsed->msgq,pulsed->pulsed_died);
   g_free(tmp);
-  if (pulsed->pulsed_died) return NULL;
+  if (pulsed->pulsed_died||mainw->aplayer_broken) return NULL;
   return pulsed->msgq;
 }
 
@@ -829,9 +828,20 @@ gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
 
   volatile aserver_message_t *msg=pulsed->msgq;
   gdouble frames_written;
-  if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (pulse_get_msgq(pulsed)!=NULL); // wait for seek
+
   frames_written=pulsed->frames_written;
   if (frames_written<0.) frames_written=0.;
+
+  if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) {
+    gboolean timeout;
+    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+    while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(pulsed)!=NULL) {
+      sched_yield(); // wait for seek
+    }
+    if (timeout) return -1;
+    lives_alarm_clear(alarm_handle);
+  }
+
   if (pulsed->is_output) return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
   return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)afile->arate*U_SEC);
 
@@ -843,20 +853,31 @@ gdouble lives_pulse_get_pos(pulse_driver_t *pulsed) {
 }
 
 
-void pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
+
+gboolean pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
-
-  volatile aserver_message_t *pmsg;
-  if (frame<1) frame=1;
   long seekstart;
+  volatile aserver_message_t *pmsg;
+  int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+  gboolean timeout;
+
+  if (alarm_handle==-1) return FALSE;
+
+  if (frame<1) frame=1;
+
   do {
     pmsg=pulse_get_msgq(pulsed);
-  } while ((pmsg!=NULL)&&pmsg->command!=ASERVER_CMD_FILE_SEEK);
-  if (pulsed->playing_file==-1) return;
+  } while (!(timeout=lives_alarm_get(alarm_handle))&&pmsg!=NULL&&pmsg->command!=ASERVER_CMD_FILE_SEEK);
+  if (timeout||pulsed->playing_file==-1) {
+    lives_alarm_clear(alarm_handle);
+    return FALSE;
+  }
+  lives_alarm_clear(alarm_handle);
   if (frame>afile->frames) frame=afile->frames;
   seekstart=(long)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
   pulse_audio_seek_bytes(pulsed,seekstart);
+  return TRUE;
 }
 
 
@@ -867,11 +888,20 @@ long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
   // if the position is > size of file, we will seek to the end of the file
   volatile aserver_message_t *pmsg;
 
+  gboolean timeout;
+  int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+
   long seekstart;
   do {
     pmsg=pulse_get_msgq(pulsed);
-  } while ((pmsg!=NULL));
-  if (pulsed->playing_file==-1) return 0;
+  } while (!(timeout=lives_alarm_get(alarm_handle))&&pmsg!=NULL&&pmsg->command!=ASERVER_CMD_FILE_SEEK);
+
+  if (timeout||pulsed->playing_file==-1) {
+    lives_alarm_clear(alarm_handle);
+    return 0;
+  }
+  lives_alarm_clear(alarm_handle);
+
   seekstart=((long)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8);
 
   if (seekstart<0) seekstart=0;
@@ -883,6 +913,25 @@ long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
   return seekstart;
 }
 
+gboolean pulse_try_reconnect(void) {
+   mainw->pulsed=NULL;
+   pa_mloop=NULL;
+   if (!lives_pulse_init(9999)) goto err123; // init server
+   pulse_audio_init(); // reset vars
+   pulse_audio_read_init(); // reset vars
+   mainw->pulsed=pulse_get_driver(TRUE);
+   if (pulse_driver_activate(mainw->pulsed)) { // activate driver
+     goto err123;
+   }
+   d_print(_("\nConnection to pulse audio was reset.\n"));
+   return TRUE;
+   
+ err123:
+   mainw->aplayer_broken=TRUE;
+   mainw->pulsed=NULL;
+   do_pulse_lost_conn_error();
+   return FALSE;
+}
 
 #undef afile
 

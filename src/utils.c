@@ -67,6 +67,98 @@ LIVES_INLINE int get_approx_ln(guint x) {
 }
 
 
+/**  return current (wallclock) time in ticks (units of 10 nanoseconds)
+ */
+
+int64_t lives_get_current_ticks(void) {
+  gettimeofday(&tv, NULL);
+  return U_SECL*tv.tv_sec+tv.tv_usec*U_SEC_RATIO;
+}
+
+
+
+
+
+/** set alarm for now + delta ticks (10 nanosec)
+ * param ticks (10 nanoseconds) is the offset when we want our alarm to trigger 
+ * returns int handle or -1
+ * call lives_get_alarm(handle) to test if time arrived
+ */
+
+int lives_alarm_set(int64_t ticks) {
+  int i;
+  int64_t cticks;
+
+  // we will assign [this] next
+  int ret=mainw->next_free_alarm;
+
+  // no alarm slots left
+  if (mainw->next_free_alarm==-1) return -1;
+
+  // get current ticks
+  cticks=lives_get_current_ticks();
+
+  // set to now + offset
+  mainw->alarms[mainw->next_free_alarm]=cticks+ticks;
+
+  i=mainw->next_free_alarm+1;
+
+  // find free slot for next time
+  while (mainw->alarms[i]!=LIVES_NO_ALARM_TICKS&&i<LIVES_MAX_ALARMS) i++;
+  if (i==LIVES_MAX_ALARMS) {
+    // no slots left
+    mainw->next_free_alarm=-1;
+  }
+  // OK
+  else mainw->next_free_alarm=i;
+
+  // add offset of 1 for caller
+  return ret+1;
+}
+
+
+/*** check if alarm time passed yet, if so clear that alarm and return TRUE
+ * else return FALSE
+ */
+
+gboolean lives_alarm_get(int alarm_handle) {
+  int64_t cticks;
+
+  // invalid alarm number
+  if (alarm_handle<=0 || alarm_handle > LIVES_MAX_ALARMS) return FALSE;
+
+  // offset of 1 was added for caller
+  alarm_handle--;
+
+  // alarm time was never set !
+  if (mainw->alarms[alarm_handle]==LIVES_NO_ALARM_TICKS) return TRUE;
+
+  // get current ticks
+  cticks=lives_get_current_ticks();
+
+  if (cticks>mainw->alarms[alarm_handle]) {
+    // reached alarm time, free up this timer and return TRUE
+    mainw->alarms[alarm_handle]=LIVES_NO_ALARM_TICKS;
+
+    if (mainw->next_free_alarm==-1 || (alarm_handle<mainw->next_free_alarm)) {
+      mainw->next_free_alarm=alarm_handle;
+      mainw->alarms[alarm_handle]=LIVES_NO_ALARM_TICKS;
+      return TRUE;
+    }
+
+  }
+
+  // alarm time not reached yet
+  return FALSE;
+}
+
+
+
+void lives_alarm_clear(int alarm_handle) {
+  mainw->alarms[alarm_handle]=LIVES_NO_ALARM_TICKS;
+}
+
+
 
 LIVES_INLINE gchar *g_strappend (gchar *string, gint len, const gchar *new) {
   gchar *tmp=g_strconcat (string,new,NULL);
@@ -1769,6 +1861,7 @@ gboolean switch_aud_to_jack(void) {
       mainw->jackd->play_when_stopped=(prefs->jack_opts&JACK_OPTS_NOPLAY_WHEN_PAUSED)?FALSE:TRUE;
       jack_driver_activate(mainw->jackd);
     }
+    mainw->aplayer_broken=FALSE;
     gtk_widget_show(mainw->vol_toolitem);
     gtk_widget_show(mainw->vol_label);
     gtk_widget_show (mainw->recaudio_submenu);
@@ -1818,6 +1911,7 @@ gboolean switch_aud_to_pulse(void) {
 	mainw->pulsed->in_use=FALSE;
 	pulse_driver_activate(mainw->pulsed);
       }
+      mainw->aplayer_broken=FALSE;
       gtk_widget_show(mainw->vol_toolitem);
       gtk_widget_show(mainw->vol_label);
       gtk_widget_show (mainw->recaudio_submenu);

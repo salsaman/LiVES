@@ -873,6 +873,14 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->toy_alives_pid=0;
   mainw->autolives_reset_fx=FALSE;
 
+  for (i=0;i<LIVES_MAX_ALARMS;i++) {
+    mainw->alarms[i]=LIVES_NO_ALARM_TICKS;
+  }
+
+  mainw->next_free_alarm=0;
+
+  mainw->aplayer_broken=FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -3714,7 +3722,10 @@ void load_frame_image(gint frame) {
 	  frame=mainw->actual_frame;
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->jackd!=NULL&&cfile->achans>0) {
-	    jack_audio_seek_frame(mainw->jackd,frame);
+	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
+	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
+	    }
+
 	    mainw->rec_aclip=mainw->current_file;
 	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	    mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -3723,7 +3734,12 @@ void load_frame_image(gint frame) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->pulsed!=NULL&&cfile->achans>0) {
-	    pulse_audio_seek_frame(mainw->pulsed,frame);
+
+	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
+	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+	      else mainw->aplayer_broken=TRUE;
+	    }
+
 	    mainw->rec_aclip=mainw->current_file;
 	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	    mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -4107,12 +4123,30 @@ void load_frame_image(gint frame) {
 
     ////////////////////////
 #ifdef ENABLE_JACK
-    if (!mainw->foreign&&mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) 
-      while (jack_get_msgq(mainw->jackd)!=NULL);
+    if (!mainw->foreign&&mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
+      gboolean timeout;
+      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+	sched_yield(); // wait for seek
+      }
+      if (timeout) jack_try_reconnect();
+
+      lives_alarm_clear(alarm_handle);
+    }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (!mainw->foreign&&mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) 
-      while (pulse_get_msgq(mainw->pulsed)!=NULL);
+    if (!mainw->foreign&&mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) {
+      gboolean timeout;
+      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+	sched_yield(); // wait for seek
+      }
+
+      if (timeout) pulse_try_reconnect();
+
+      lives_alarm_clear(alarm_handle);
+    }
+
 #endif
 
     // save to scrap_file now if we have to
@@ -5100,18 +5134,32 @@ void do_quick_switch (gint new_file) {
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering) {
 #ifdef ENABLE_JACK
   if (mainw->jackd!=NULL) {
-      while (jack_get_msgq(mainw->jackd)!=NULL);
+      gboolean timeout;
+      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+	sched_yield(); // wait for seek
+      }
+      if (timeout) jack_try_reconnect();
+      lives_alarm_clear(alarm_handle);
+
       if (mainw->jackd->playing_file>0) {
-	  jack_message.command=ASERVER_CMD_FILE_CLOSE;
-          jack_message.data=NULL;
-	  jack_message.next=NULL;
-	  mainw->jackd->msgq=&jack_message;
-	  while (jack_get_msgq(mainw->jackd)!=NULL);
-     }
-
-     mainw->jackd->in_use=TRUE;
-
-     if (mainw->files[new_file]->achans>0) { 
+	jack_message.command=ASERVER_CMD_FILE_CLOSE;
+	jack_message.data=NULL;
+	jack_message.next=NULL;
+	mainw->jackd->msgq=&jack_message;
+	
+	lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+	while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+	  sched_yield(); // wait for seek
+	}
+	if (timeout) jack_try_reconnect();
+	lives_alarm_clear(alarm_handle);
+	
+      }
+      
+      mainw->jackd->in_use=TRUE;
+      
+      if (mainw->files[new_file]->achans>0) { 
         gint asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
         gint aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
         mainw->jackd->num_input_channels=mainw->files[new_file]->achans;
@@ -5165,18 +5213,31 @@ void do_quick_switch (gint new_file) {
   if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering) {
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed!=NULL) {
-      while (pulse_get_msgq(mainw->pulsed)!=NULL);
+      gboolean timeout;
+      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+	sched_yield(); // wait for seek
+      }
+      if (timeout) pulse_try_reconnect();
+      lives_alarm_clear(alarm_handle);
+
       if (mainw->pulsed->fd>0) {
-	  pulse_message.command=ASERVER_CMD_FILE_CLOSE;
-          pulse_message.data=NULL;
-	  pulse_message.next=NULL;
-	  mainw->pulsed->msgq=&pulse_message;
-	  while (pulse_get_msgq(mainw->pulsed)!=NULL);
-     }
+	pulse_message.command=ASERVER_CMD_FILE_CLOSE;
+	pulse_message.data=NULL;
+	pulse_message.next=NULL;
+	mainw->pulsed->msgq=&pulse_message;
 
-     mainw->pulsed->in_use=TRUE;
+	lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+	while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+	  sched_yield(); // wait for seek
+	}
+	if (timeout) pulse_try_reconnect();
+	lives_alarm_clear(alarm_handle);
+      }
 
-     if (mainw->files[new_file]->achans>0) { 
+      mainw->pulsed->in_use=TRUE;
+      
+      if (mainw->files[new_file]->achans>0) { 
         gint asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
         gint aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
         mainw->pulsed->in_achans=mainw->files[new_file]->achans;

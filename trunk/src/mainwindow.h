@@ -946,6 +946,14 @@ typedef struct {
 
   gboolean jack_trans_poll;
 
+#define LIVES_MAX_ALARMS 1024
+#define LIVES_NO_ALARM_TICKS -1
+
+  int64_t alarms[LIVES_MAX_ALARMS];
+  int next_free_alarm;
+
+  gboolean aplayer_broken;
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

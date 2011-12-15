@@ -6418,7 +6418,9 @@ on_mute_activate                (GtkMenuItem     *menuitem,
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->playing_file>-1&&mainw->jackd!=NULL) {
     mainw->jackd->mute=mainw->mute;
     if (mainw->jackd->playing_file==mainw->current_file&&cfile->achans>0&&!mainw->is_rendering) {
-      jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos);
+      if (!jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos)) {
+	if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos);
+      }
       mainw->jackd->in_use=TRUE;
     }
   }
@@ -6427,7 +6429,9 @@ on_mute_activate                (GtkMenuItem     *menuitem,
   if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->playing_file>-1&&mainw->pulsed!=NULL) {
     mainw->pulsed->mute=mainw->mute;
     if (mainw->pulsed->playing_file==mainw->current_file&&cfile->achans>0&&!mainw->is_rendering) {
-      pulse_audio_seek_bytes(mainw->pulsed,mainw->pulsed->seek_pos);
+      if (!pulse_audio_seek_bytes(mainw->pulsed, mainw->pulsed->seek_pos)) {
+	if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed,mainw->pulsed->seek_pos);
+      }
       mainw->pulsed->in_use=TRUE;
     }
   }

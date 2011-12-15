@@ -939,8 +939,11 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   // re-seek to new playback start
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) {
-    jack_audio_seek_frame(mainw->jackd,mainw->play_start);
-    while (jack_get_msgq(mainw->jackd)!=NULL);
+
+    if (!jack_audio_seek_frame(mainw->jackd,mainw->play_start)) {
+      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
+    }
+
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
@@ -956,8 +959,11 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (mainw->pulsed_read!=NULL) pulse_driver_uncork(mainw->pulsed_read);
 
   if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) {
-    pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
-    while (pulse_get_msgq(mainw->pulsed)!=NULL);
+
+    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
+      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+    }
+
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
@@ -2137,6 +2143,14 @@ void do_no_autolives_error(void) {
 
 void do_autolives_needs_clips_error(void) {
   do_error_dialog(_("\nYou must have a minimum of one clip loaded to use this toy.\n"));
+}
+
+void do_jack_lost_conn_error(void) {
+  do_error_dialog(_("\nLiVES lost its connection to jack and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
+}
+
+void do_pulse_lost_conn_error(void) {
+  do_error_dialog(_("\nLiVES lost its connection to pulseaudio and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
 }
 
 

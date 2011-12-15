@@ -818,11 +818,6 @@ void jack_shutdown(void* arg) {
   if (mainw->jackd->playing_file!=-1&&afile!=NULL) jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos); // at least re-seek to the right place
 }
 
-/* Return the difference between two timeval structures in terms of milliseconds */
-inline long TimeValDifference(struct timeval *start, struct timeval *end) {
-  return (long)((gdouble)(end->tv_sec-start->tv_sec)*(gdouble)1000.+(gdouble)(end->tv_usec-start->tv_usec)/(gdouble)1000.);
-}
-
 
 static void jack_reset_driver(jack_driver_t *jackd) {
   //g_printerr("resetting jackd->dev_idx(%d)\n", jackd->dev_idx);
@@ -864,7 +859,7 @@ static void jack_error_func(const char *desc) {
 
 
 // wait 5 seconds to startup
-#define JACK_START_WAIT 5000000
+#define JACK_START_WAIT 500000000
 
 
 // create a new client and connect it to jack, connect the ports
@@ -875,8 +870,9 @@ int jack_open_device(jack_driver_t *jackd) {
   jack_status_t status;
   int i;
   
-  struct timeval otv;
   int64_t ntime=0,stime;
+
+  if (mainw->aplayer_broken) return 2;
 
   jackd->is_active=FALSE;
 
@@ -884,16 +880,14 @@ int jack_open_device(jack_driver_t *jackd) {
   jack_set_error_function(jack_error_func);
   jackd->client=NULL;
 
-  gettimeofday(&otv, NULL);
-  stime=otv.tv_sec*1000000+otv.tv_usec;
+  stime=lives_get_current_ticks();
 
   while (jackd->client==NULL&&ntime<JACK_START_WAIT) {
     jackd->client = jack_client_open (client_name, options, &status, server_name);
     
     g_usleep(prefs->sleep_time);
 
-    gettimeofday(&otv, NULL);
-    ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
+    ntime=lives_get_current_ticks()-stime;
   }
 
 
@@ -1254,19 +1248,6 @@ jack_driver_t *jack_get_driver(gint dev_idx, gboolean is_output) {
   g_printerr("dev_idx is %d\n", dev_idx);
 #endif
   
-  /* should we try to restart the jack server? */
-  if (jackd->jackd_died&&jackd->client==NULL) {
-    struct timeval now;
-    gettimeofday(&now, 0);
-    
-    /* wait 250ms before trying again */
-    if(TimeValDifference(&jackd->last_reconnect_attempt, &now)>=250) {
-      if (is_output) jack_open_device(jackd);
-      else jack_open_device_read(jackd);
-      jackd->last_reconnect_attempt=now;
-    }
-  }
-  
   return jackd;
 }
 
@@ -1346,7 +1327,7 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
   // force update - "volatile" doesn't seem to work...
   gchar *tmp=g_strdup_printf("%p %d",jackd->msgq,jackd->jackd_died);
   g_free(tmp);
-  if (jackd->jackd_died) return NULL;
+  if (jackd->jackd_died||mainw->aplayer_broken) return NULL;
   return jackd->msgq;
 }
 
@@ -1355,10 +1336,17 @@ gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
 
   volatile aserver_message_t *msg=jackd->msgq;
   gdouble frames_written=jackd->frames_written;
-  if (frames_written<0.) frames_written=0.;
-  if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) while (jack_get_msgq(jackd)!=NULL)
-							sched_yield(); // wait for seek
 
+  if (frames_written<0.) frames_written=0.;
+  if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) {
+    gboolean timeout;
+    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+    while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(jackd)!=NULL) {
+      sched_yield(); // wait for seek
+    }
+    if (timeout) return -1;
+    lives_alarm_clear(alarm_handle);
+  }
   if (jackd->is_output) return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
   return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
 }
@@ -1371,20 +1359,31 @@ gdouble lives_jack_get_pos(jack_driver_t *jackd) {
 
 
 
-void jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
+gboolean jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
 
   volatile aserver_message_t *jmsg;
-  if (frame<1) frame=1;
   long seekstart;
+  int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+  gboolean timeout;
+
+  if (alarm_handle==-1) return FALSE;
+
+  if (frame<1) frame=1;
+
   do {
     jmsg=jack_get_msgq(jackd);
-  } while ((jmsg!=NULL)&&jmsg->command!=ASERVER_CMD_FILE_SEEK);
-  if (jackd->playing_file==-1) return;
+  } while (!(timeout=lives_alarm_get(alarm_handle))&&jmsg!=NULL&&jmsg->command!=ASERVER_CMD_FILE_SEEK);
+  if (timeout||jackd->playing_file==-1) {
+    lives_alarm_clear(alarm_handle);
+    return FALSE;
+  }
+  lives_alarm_clear(alarm_handle);
   if (frame>afile->frames) frame=afile->frames;
   seekstart=(long)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
   jack_audio_seek_bytes(jackd,seekstart);
+  return TRUE;
 }
 
 
@@ -1396,10 +1395,19 @@ long jack_audio_seek_bytes (jack_driver_t *jackd, long bytes) {
 
   volatile aserver_message_t *jmsg;
   long seekstart;
+
+  gboolean timeout;
+  int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+
   do {
     jmsg=jack_get_msgq(jackd);
-  } while ((jmsg!=NULL)&&jmsg->command!=ASERVER_CMD_FILE_SEEK);
-  if (jackd->playing_file==-1) return 0;
+  } while (!(timeout=lives_alarm_get(alarm_handle))&&jmsg!=NULL&&jmsg->command!=ASERVER_CMD_FILE_SEEK);
+  if (timeout||jackd->playing_file==-1) {
+    lives_alarm_clear(alarm_handle);
+    return 0;
+  }
+  lives_alarm_clear(alarm_handle);
+
   seekstart=((long)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8);
 
   if (seekstart<0) seekstart=0;
@@ -1409,6 +1417,27 @@ long jack_audio_seek_bytes (jack_driver_t *jackd, long bytes) {
   jack_message.data=g_strdup_printf("%ld",seekstart);
   jackd->msgq=&jack_message;
   return seekstart;
+}
+
+gboolean jack_try_reconnect(void) {
+
+  if (!lives_jack_init()) goto err123;
+
+  jack_audio_init();
+  jack_audio_read_init();
+
+  mainw->jackd=jack_get_driver(0,TRUE);
+
+  if (jack_open_device(mainw->jackd)) goto err123;
+
+  d_print(_("\nConnection to jack audio was reset.\n"));
+  return TRUE;
+
+ err123:
+  mainw->aplayer_broken=TRUE;
+  mainw->jackd=NULL;
+  do_jack_lost_conn_error();
+  return FALSE;
 }
 
 #undef afile

@@ -732,7 +732,8 @@ void do_do_not_close_d (void);
 void do_set_noclips_error(const char *setname);
 void do_no_autolives_error(void);
 void do_autolives_needs_clips_error(void);
-
+void do_pulse_lost_conn_error(void);
+void do_jack_lost_conn_error(void);
 
 gboolean process_one (gboolean visible);
 void do_threaded_dialog(gchar *translated_text, gboolean has_cancel);
@@ -860,6 +861,12 @@ int get_approx_ln(guint val);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
 int lives_kill(pid_t pid, int sig);
+int64_t lives_get_current_ticks(void);
+gboolean lives_alarm_get(int alarm_handle);
+int lives_alarm_set(int64_t ticks);
+void lives_alarm_clear(int alarm_handle);
+
+
 LIVES_INLINE gint myround(gdouble n);
 void get_dirname(gchar *filename);
 void get_basename(gchar *filename);

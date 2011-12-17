@@ -20,7 +20,6 @@ Requirements
 -------------------
 Linux 2.x or BSD or openMosix or IRIX or OSX/Darwin (other UNIX untested)
 
-
 mplayer 0.90rc1+ compiled with jpeg support
 ImageMagick 5
 perl 5+
@@ -29,12 +28,14 @@ libjpeg62
 gdk-pixbuf-loaders
 
 sox (highly recommended)
-transcode (recommended)
-mencoder (highly recommended)
 libmjpeg-tools (recommended)
 
-xmms (optional)
-cdda2wav (optional)
+*Highly* Recommended runtime dependencies include:
+theora-bin, mkvtoolnix, vorbis-tools, mencoder,
+libmatroska, ogmtools, dvgrab, x264, ffmpeg,
+libdv2-apps/libdv-bin, cdda2wav, lame, python, youtube-dl
+
+Optional -  libvisual-actors, frei0r-plugins
 
 
 
@@ -58,7 +59,7 @@ for more information.
 
 
 
-Installing from source (Dev/pre/subversion versions)
+INSTALLING FROM SOURCE
 ----------------------------------------------------
 If you got LiVES as a tar.gz or tar.bz2, at a terminal prompt, enter the following:
 
@@ -76,23 +77,11 @@ depending on which version you have. Then:
 
 
 
-For subversion checkouts, the above is not necessary, just do: cd <dir>
-(where <dir> is the directory where the code was downloded to.)
-
-For subversion checkouts, you will need to run:
-./autogen.sh
-before continuing. Note the "." before the "/" - this is important. If this fails for any reason, try:
-./autogen.sh --verbose
-which should give a clue as to what went wrong.
-
-
-
-
-
 now type:
 	./configure
 
-check the output of configure very carefully, following any advice it provides, and making any adjustments you may wish - such as installing optional libraries.
+check the output of configure very carefully, following any advice it provides, 
+and making any adjustments you may wish - such as installing optional libraries.
 
 If you are happy with the output from configure, then compile the source with:
 
@@ -134,6 +123,11 @@ You can then run lives either from a menu, or by typing in a terminal:
 
 
 
+
+
+
+
+
 Relocating:
 -----------
 The default location for everything is inside /usr; so executables go in /usr/bin, themes and scripts in /usr/share/lives/, and libraries and compiled plugins in /usr/lib.
@@ -149,6 +143,12 @@ The default location for everything is inside /usr; so executables go in /usr/bi
 
 
 However, if you do relocate, and this is not a fresh install, you will need to edit your .lives file in your home directory and adjust <prefix_dir> and <lib_dir> so that they point to the correct locations for scripts and plugins.
+
+NOTE: if the library directory is anything except /usr/lib, you should adjust the libraries in libweed pkg-config files:
+libweed/*.pk
+
+
+
 
 
 
@@ -171,16 +171,23 @@ in ~/.lives
 In case of any problems, check your ~/.lives file and make sure everything is 
 pointing to the right locations.
 
+You can also try deteleting your ~/.lives file. LiVES will recreate this with default settings 
+on the next start up.
+
+
 Make sure there is plenty of space available in the temporary directory
 (default is /tmp/livestmp).
-It is advisable to change the temp directory from Tools|Preferences|Directory.
+It is advisable to change the temp directory from Tools | Preferences | Directories
 
-Make sure you have a working copy of mplayer installed, and that it is 
-compiled with jpeg support.
+
+Run through Help -> Troubleshoot in the app and see if anything is missing.
+
 
 If you are having problems encoding, make sure you have everything you need 
 installed. The plugins are just interfaces, and you need to have the binaries 
-installed also. Some of the encoder formats have other dependencies, you may need to check online.
+installed also. Some of the encoder formats have other dependencies, the LiVES website has more details.
+
+
 
 
 Problems opening files
@@ -190,7 +197,8 @@ it first in the 'open file' dialogue. If you cannot preview it, it means mplayer
 compiled to open it. You may need to recompile mplayer for your system
 with extra libraries.
 
-Note that current versions of LiVES no longer require mplayer to open some file types. For example dv format can be opened with libdv and the dv_decoder plugin. Ogg/theora can be opened with libogg and libtheora.
+Note that current versions of LiVES no longer require mplayer to open some file types. For example dv format 
+can be opened with libdv and the dv_decoder plugin. Ogg/theora can be opened with libogg and libtheora.
 
 
 

@@ -205,7 +205,7 @@ if ($command eq "encode") {
 	    }
 	}
 	elsif ($aq==3) {
-	    $audio_com.=" -acodec vorbis";
+	    $audio_com.=" -acodec libvorbis";
 	    if ($otype eq "webmh") {
 		$audio_com.=" -aq 10";
 	    }

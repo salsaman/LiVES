@@ -862,7 +862,10 @@ gboolean pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
   gboolean timeout;
 
-  if (alarm_handle==-1) return FALSE;
+  if (alarm_handle==-1) {
+    LIVES_WARN("Invalid alarm handle");
+    return FALSE;
+  }
 
   if (frame<1) frame=1;
 
@@ -870,6 +873,7 @@ gboolean pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
     pmsg=pulse_get_msgq(pulsed);
   } while (!(timeout=lives_alarm_get(alarm_handle))&&pmsg!=NULL&&pmsg->command!=ASERVER_CMD_FILE_SEEK);
   if (timeout||pulsed->playing_file==-1) {
+    if (timeout) LIVES_WARN("PA connect timed out");
     lives_alarm_clear(alarm_handle);
     return FALSE;
   }

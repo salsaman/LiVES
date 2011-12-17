@@ -28,7 +28,7 @@
 # define DEFAULT_AUDIO_SIGNED16 !(AFORM_UNSIGNED)
 
 /// KO time before declaring audio server dead
-#define LIVES_ACONNECT_TIMEOUT (5 * U_SEC)
+#define LIVES_ACONNECT_TIMEOUT (10 * U_SEC)
 
 /// TODO ** - make configurable - audio buffer size for rendering
 #define MAX_AUDIO_MEM 8*1024*1024

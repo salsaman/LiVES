@@ -115,8 +115,10 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	    cfile->fx_frame_pump=1;
 	  }
 
-	  if (!prefs->enc_letterbox)
+	  if (!prefs->enc_letterbox) {
 	    com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+	    msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
+	  }
 	  else {
 	    int iwidth=cfile->hsize,iheight=cfile->vsize;
 	    calc_maxspect(width,height,&iwidth,&iheight);
@@ -128,6 +130,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
 	    reorder_leave_back=TRUE;
 	    com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s %d %d",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
+	    msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	  }
 
 	  cfile->progress_start=1;
@@ -136,8 +139,6 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  unlink(cfile->info_file);
 	  dummyvar=system(com);
 	  g_free (com);
-	  
-	  msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	  
 	  mainw->resizing=TRUE;
 	  rs_builtin=TRUE;
@@ -280,8 +281,10 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  cfile->fx_frame_pump=1;
 	}
 
-	if (!prefs->enc_letterbox)
+	if (!prefs->enc_letterbox) {
 	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+	  msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
+	}
 	else {
 	  int iwidth=cfile->hsize,iheight=cfile->vsize;
 	  calc_maxspect(width,height,&iwidth,&iheight);
@@ -292,6 +295,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  }
 
 	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s %d %d",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
+	  msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	}
 
 	cfile->progress_start=1;
@@ -305,8 +309,6 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	unlink(cfile->info_file);
 	dummyvar=system(com);
 	g_free (com);
-	
-	msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	
 	mainw->resizing=TRUE;
       }

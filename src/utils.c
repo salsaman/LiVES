@@ -93,7 +93,10 @@ int lives_alarm_set(int64_t ticks) {
   int ret=mainw->next_free_alarm;
 
   // no alarm slots left
-  if (mainw->next_free_alarm==-1) return -1;
+  if (mainw->next_free_alarm==-1) {
+    LIVES_WARN("No alarms left");
+    return -1;
+  }
 
   // get current ticks
   cticks=lives_get_current_ticks();
@@ -101,10 +104,12 @@ int lives_alarm_set(int64_t ticks) {
   // set to now + offset
   mainw->alarms[mainw->next_free_alarm]=cticks+ticks;
 
-  i=mainw->next_free_alarm+1;
+  i=++mainw->next_free_alarm;
 
   // find free slot for next time
-  while (mainw->alarms[i]!=LIVES_NO_ALARM_TICKS&&i<LIVES_MAX_ALARMS) i++;
+  while (mainw->alarms[i]!=LIVES_NO_ALARM_TICKS&&i<LIVES_MAX_ALARMS) {
+    i++;
+  }
   if (i==LIVES_MAX_ALARMS) {
     // no slots left
     mainw->next_free_alarm=-1;
@@ -112,7 +117,6 @@ int lives_alarm_set(int64_t ticks) {
   // OK
   else mainw->next_free_alarm=i;
 
-  // add offset of 1 for caller
   return ret+1;
 }
 
@@ -125,13 +129,19 @@ gboolean lives_alarm_get(int alarm_handle) {
   int64_t cticks;
 
   // invalid alarm number
-  if (alarm_handle<=0 || alarm_handle > LIVES_MAX_ALARMS) return FALSE;
+  if (alarm_handle<=0 || alarm_handle > LIVES_MAX_ALARMS) {
+    LIVES_WARN("Invalid get alarm handle");
+    return FALSE;
+  }
 
   // offset of 1 was added for caller
   alarm_handle--;
 
   // alarm time was never set !
-  if (mainw->alarms[alarm_handle]==LIVES_NO_ALARM_TICKS) return TRUE;
+  if (mainw->alarms[alarm_handle]==LIVES_NO_ALARM_TICKS) {
+    LIVES_WARN("Alarm time not set");
+    return TRUE;
+  }
 
   // get current ticks
   cticks=lives_get_current_ticks();
@@ -143,6 +153,7 @@ gboolean lives_alarm_get(int alarm_handle) {
     if (mainw->next_free_alarm==-1 || (alarm_handle<mainw->next_free_alarm)) {
       mainw->next_free_alarm=alarm_handle;
       mainw->alarms[alarm_handle]=LIVES_NO_ALARM_TICKS;
+      LIVES_WARN("Alarm reached");
       return TRUE;
     }
 
@@ -155,7 +166,16 @@ gboolean lives_alarm_get(int alarm_handle) {
 
 
 void lives_alarm_clear(int alarm_handle) {
+  if (alarm_handle<=0 || alarm_handle > LIVES_MAX_ALARMS) {
+    LIVES_WARN("Invalid clear alarm handle");
+    return;
+  }
+
+  alarm_handle--;
+
   mainw->alarms[alarm_handle]=LIVES_NO_ALARM_TICKS;
+  if (mainw->next_free_alarm==-1 || alarm_handle<mainw->next_free_alarm) 
+    mainw->next_free_alarm=alarm_handle;
 }
 
 

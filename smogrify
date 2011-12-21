@@ -2132,7 +2132,7 @@ if (defined($ARGV[0])) {
 			}
 
 #now resized are in .mgk
-y			if ($letterbox) {
+			if ($letterbox) {
 			    if ($leave_bak) {
 				#letterboxing was done with resize
 				unless ($from eq $to) {

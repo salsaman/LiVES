@@ -50,7 +50,7 @@ void on_camstop_clicked (GtkButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   gtk_widget_set_sensitive(dvgrabw->stop,FALSE);
   dvgrabw->playing=FALSE;
-  if (cam->format==CAM_FORMAT_DV) dummyvar=system("pkill -9 dvgrab 2>/dev/null");
+  if (cam->format==CAM_FORMAT_DV) lives_system("pkill -9 dvgrab 2>/dev/null",TRUE);
   dvgrab_set_cursor_style(LIVES_CURSOR_NORMAL);
   camstop(cam);
   gtk_button_set_label(GTK_BUTTON(dvgrabw->play),"gtk-media-play");

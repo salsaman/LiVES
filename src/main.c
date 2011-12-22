@@ -881,6 +881,12 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->aplayer_broken=FALSE;
 
+  mainw->com_failed=mainw->read_failed=mainw->write_failed=mainw->chdir_failed=FALSE;
+
+  mainw->read_failed_file=mainw->write_failed_file=NULL;
+
+  mainw->bad_aud_file=NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
@@ -1665,12 +1671,14 @@ capability *get_capabilities (void) {
     return capable;
   }
 
-  dummychar=fgets(buffer,8192,bootfile);
+  mainw->read_failed=FALSE;
+  lives_fgets(buffer,8192,bootfile);
   fclose(bootfile);
 
   unlink (safer_bfile);
   g_free(safer_bfile);
 
+  if (mainw->read_failed) return capable;
 
   // get backend version, tempdir, and any startup message
   numtok=get_token_count (buffer,'|');
@@ -4038,7 +4046,7 @@ void load_frame_image(gint frame) {
 	  // check effect to see if it finished yet
 	  if ((fd=fopen(info_file,"r"))) {
 	    clear_mainw_msg();
-	    dummychar=fgets(mainw->msg,512,fd);
+	    lives_fgets(mainw->msg,512,fd);
 	    fclose(fd);
 	    if (!strncmp(mainw->msg,"completed",9)||!strncmp(mainw->msg,"error",5)) {
 	      // effect completed whilst we were busy playing a preview
@@ -4676,7 +4684,7 @@ void close_current_file(gint file_to_switch_to) {
 
     if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
       com=g_strdup_printf("smogrify close %s",cfile->handle);
-      dummyvar=system(com);
+      lives_system(com,TRUE);
       g_free(com); 
 
       if (cfile->event_list_back!=NULL) event_list_free (cfile->event_list_back);

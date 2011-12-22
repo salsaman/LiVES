@@ -53,23 +53,29 @@ gboolean save_frame_index(gint fileno) {
   fd=open(fname,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
   g_free(fname);
 
-  if (fd<0) {
-    g_printerr("\n\nfailed to open file_index\n");
-    return FALSE;
+  if (fd<0) mainw->write_failed=TRUE;
+  else mainw->write_failed=FALSE;
+
+  if (!mainw->write_failed) {
+    for (i=0;i<sfile->frames;i++) {
+      lives_write(fd,&sfile->frame_index[i],sizint,TRUE);
+      if (mainw->write_failed) break;
+    }
+    
+    close(fd);
   }
 
-  for (i=0;i<sfile->frames;i++) {
-    dummyvar=write(fd,&sfile->frame_index[i],sizint);
+  if (mainw->write_failed) {
+    do_write_failed_error(0,0);
+    mainw->write_failed=FALSE;
   }
-
-  close(fd);
 
   return TRUE;
 }
 
 
 
-// save frame_index to disk
+// load frame_index from disk
 gboolean load_frame_index(gint fileno) {
   int fd,i;
   gchar *fname;
@@ -80,27 +86,44 @@ gboolean load_frame_index(gint fileno) {
   sfile->frame_index=NULL;
 
   fname=g_strdup_printf("%s/%s/file_index",prefs->tmpdir,sfile->handle);
-  fd=open(fname,O_RDONLY);
-  g_free(fname);
 
-  if (fd<0) {
+  if (!g_file_test(fname,G_FILE_TEST_EXISTS)) {
+    g_free(fname);
     return FALSE;
   }
 
+  fd=open(fname,O_RDONLY);
+
+  if (fd<0) {
+    do_write_failed_error_s(fname);
+    g_free(fname);
+    return FALSE;
+  }
+
+  g_free(fname);
+
   create_frame_index(fileno,FALSE,0,sfile->frames);
 
+  mainw->read_failed=FALSE;
   for (i=0;i<sfile->frames;i++) {
-    dummyvar=read(fd,&sfile->frame_index[i],sizint);
+    lives_read(fd,&sfile->frame_index[i],sizint,TRUE);
+    if (mainw->read_failed) break;
   }
 
   close(fd);
+
+  if (mainw->read_failed) {
+    mainw->read_failed=FALSE;
+    do_read_failed_error(0,0);
+  }
+
   return TRUE;
 }
 
 
 void del_frame_index(file *sfile) {
   gchar *com=g_strdup_printf("/bin/rm -f %s/%s/file_index",prefs->tmpdir,sfile->handle);
-  dummyvar=system(com);
+  lives_system(com,FALSE);
   g_free(com);
   if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
   sfile->frame_index=NULL;
@@ -142,6 +165,7 @@ gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
 gboolean check_if_non_virtual(gint fileno) {
   register int i;
   file *sfile=mainw->files[fileno];
+  gboolean bad_header=FALSE;
 
   if (sfile->frame_index!=NULL) {
     for (i=1;i<=sfile->frames;i++) {
@@ -155,6 +179,9 @@ gboolean check_if_non_virtual(gint fileno) {
   if (sfile->interlace!=LIVES_INTERLACE_NONE) {
     sfile->interlace=LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
     save_clip_value(fileno,CLIP_DETAILS_INTERLACE,&sfile->interlace);
+    if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+
+    if (bad_header) do_header_write_error(fileno);
   }
 
   return TRUE;
@@ -203,6 +230,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
       if (oname!=NULL) g_free(oname);
 
       if (error!=NULL) {
+	do_write_failed_error_s(oname);
 	g_printerr("err was %s\n",error->message);
 	g_error_free(error);
 	error=NULL;
@@ -353,7 +381,7 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
 	// ...
       //}
       com=g_strdup_printf("/bin/rm -f %s",iname);
-      dummyvar=system(com);
+      lives_system(com,FALSE);
       g_free(com);
     }
   }

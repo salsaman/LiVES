@@ -114,7 +114,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       cfile->frame_index_back=NULL;
     }
 
-    dummyvar=system(fxcommand);
+    lives_system(fxcommand,FALSE);
     g_free (fxcommand);
   }
   else {
@@ -295,9 +295,13 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     if (rfx->num_in_channels>0) {
       if (cfile->hsize==cfile->ohsize&&cfile->vsize==cfile->ovsize) cfile->undo_action=UNDO_EFFECT;
       else {
+	gboolean bad_header=FALSE;
 	save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 	save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 	cfile->undo_action=UNDO_RESIZABLE;
+	if (bad_header) do_header_write_error(mainw->current_file);
       }
     }
   }
@@ -307,7 +311,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
     gchar *com=g_strdup_printf("smogrify mv_pre %s %d %d %s",cfile->handle,cfile->progress_start,cfile->progress_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
-    dummyvar=system(com);
+    lives_system(com,FALSE);
     g_free(com);
     mainw->keep_pre=FALSE;
   }
@@ -393,7 +397,11 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	// gen to new file
 	cfile->is_loaded=TRUE;
 	add_to_winmenu();
-	save_clip_values(new_file);
+	if (!save_clip_values(new_file)) {
+	  close_current_file(current_file);
+	  return FALSE;
+	}
+
 	if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
 	if (mainw->multitrack!=NULL) {
@@ -444,6 +452,7 @@ gint realfx_progress (gboolean reset) {
   weed_plant_t *layer;
   int weed_error;
   int layer_palette;
+  static gboolean got_write_error;
 
   // this is called periodically from do_processing_dialog for internal effects
 
@@ -455,7 +464,7 @@ gint realfx_progress (gboolean reset) {
       if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
       cfile->frame_index_back=frame_index_copy(cfile->frame_index,cfile->frames);
     }
-
+    got_write_error=FALSE;
     return 1;
   }
 
@@ -499,6 +508,14 @@ gint realfx_progress (gboolean reset) {
 
   lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, &error);
 
+  if (error!=NULL) {
+    do_write_failed_error_s(oname);
+    g_printerr("err was %s\n",error->message);
+    g_error_free(error);
+    error=NULL;
+    got_write_error=TRUE;
+  }
+  
   gdk_pixbuf_unref (pixbuf);
   
 
@@ -508,15 +525,15 @@ gint realfx_progress (gboolean reset) {
   
   if (++i>cfile->end) {
     com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->start,cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
-    dummyvar=system (com);
+    lives_system (com,FALSE);
     g_free (com);
     mainw->internal_messaging=FALSE;
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       if (!check_if_non_virtual(mainw->current_file)) save_frame_index(mainw->current_file);
     }
-
   }
+  if (got_write_error) return 0;
   return 1;
 }
 

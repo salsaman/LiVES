@@ -256,7 +256,7 @@ gboolean rec(s_cam *cam) {
   if (cam->format==CAM_FORMAT_DV) {
     // dv format
     com=g_strdup_printf("dvgrab -format raw %s%s/%s >/dev/null 2>&1 &",splits,(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
-    dummyvar=system (com);
+    lives_system (com,FALSE);
     g_free(com);
     g_free(tmp2);
     g_free(tmp3);
@@ -266,7 +266,7 @@ gboolean rec(s_cam *cam) {
 
   // hdv format
   com=g_strdup_printf("dvgrab -format mpeg2 %s%s/%s >/dev/null 2>&1 &",splits,(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
-  dummyvar=system (com);
+  lives_system (com,FALSE);
   g_free(com);
   g_free(tmp2);
   g_free(tmp3);

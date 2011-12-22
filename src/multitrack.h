@@ -232,7 +232,7 @@ struct _mt {
   GtkWidget *mm_select;
   GtkWidget *ins_menuitem;
   GtkWidget *ins_normal;
-  GtkWidget *grav_menuitem;
+  GtkToolItem *grav_menuitem;
   GtkWidget *grav_normal;
   GtkWidget *grav_left;
   GtkWidget *grav_right;
@@ -889,7 +889,7 @@ void remove_current_from_affected_layouts(lives_mt *);
 guint mt_idle_add(lives_mt *);
 void recover_layout(GtkButton *, gpointer);
 void recover_layout_cancelled(GtkButton *, gpointer user_data);
-void write_backup_layout_numbering(lives_mt *);
+gboolean write_backup_layout_numbering(lives_mt *);
 
 
 // internal functions

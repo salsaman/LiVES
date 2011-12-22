@@ -107,7 +107,7 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
     if (!mainw->keep_pre) {
       gchar *com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
-      dummyvar=system(com);
+      lives_system(com,FALSE); // try to stop any current previews / processing
       g_free(com);
       do_rfx_cleanup(rfx);
     }
@@ -161,7 +161,7 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
   mainw->block_param_updates=TRUE;
   if (mainw->did_rfx_preview) {
     gchar *com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
-    dummyvar=system(com);
+    lives_system(com,FALSE); // try to stop processing
     g_free(com);
     mainw->did_rfx_preview=FALSE;
     mainw->show_procd=TRUE;

@@ -25,6 +25,148 @@
 static gboolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 
+char *filename_from_fd(char *val, int fd) {
+  // return filename from an open fd, freeing val first
+
+  // in case of error we return val
+
+
+  // call like: foo=filename_from_fd(foo,fd);
+
+  gchar *fdpath;
+  gchar *fidi;
+  char rfdpath[PATH_MAX];
+  struct stat stb0,stb1;
+
+  if (fstat(fd,&stb0)) return val;
+
+  fidi=g_strdup_printf("%d",fd);
+  fdpath=g_build_filename("proc","self","fd",fidi,NULL);
+  g_free(fidi);
+  if (readlink(fdpath,rfdpath,PATH_MAX)==-1) return val;
+  g_free(fdpath);
+
+  if (stat(rfdpath,&stb1)) return val;
+
+  if (stb0.st_dev!=stb1.st_dev) return val;
+  if (stb0.st_ino!=stb1.st_ino) return val;
+
+  if (val!=NULL) g_free(val);
+  return g_strdup(rfdpath);
+}
+
+
+
+// system calls
+
+int lives_system(const char *com, gboolean allow_error) {
+  int retval;
+
+  retval=system(com);
+
+  if (retval) {
+    mainw->com_failed=TRUE;
+    if (!allow_error) {
+      gchar *msg=g_strdup_printf("Command failed with code %d: %s\n",retval,com);
+      LIVES_ERROR(msg);
+      g_free(msg);
+      do_com_failed_error(com,retval);
+    }
+  }
+  return retval;
+}
+
+
+
+ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) {
+  ssize_t retval;
+  retval=write(fd, buf, count);
+
+  if (retval<count) {
+    mainw->write_failed=TRUE;
+    mainw->write_failed_file=filename_from_fd(mainw->write_failed_file,fd);
+    if (!allow_fail) {
+      gchar *msg=g_strdup_printf("Write failed %lu of %lu in: %s\n",(unsigned long)retval,
+				 (unsigned long)count,mainw->write_failed_file);
+      LIVES_ERROR(msg);
+      g_free(msg);
+      do_write_failed_error(retval, count);
+      close(fd);
+    }
+  }
+  return retval;
+}
+
+
+
+
+int lives_fputs(const char *s, FILE *stream) {
+  int retval;
+
+  retval=fputs(s,stream);
+
+  if (retval==EOF) {
+    mainw->write_failed=TRUE;
+    fclose(stream);
+  }
+  return retval;
+}
+
+
+char *lives_fgets(char *s, int size, FILE *stream) {
+  char *retval;
+
+  retval=fgets(s,size,stream);
+
+  if (retval==NULL) {
+    mainw->read_failed=TRUE;
+    fclose(stream);
+  }
+  return retval;
+}
+
+
+
+ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_fail) {
+  ssize_t retval=read(fd, buf, count);
+
+  if (retval<count) {
+    mainw->read_failed=TRUE;
+    mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
+    if (!allow_fail) {
+      gchar *msg=g_strdup_printf("Read failed %lu of %lu in: %s\n",(unsigned long)retval,
+				 (unsigned long)count,mainw->write_failed_file);
+      LIVES_ERROR(msg);
+      g_free(msg);
+      do_read_failed_error(retval, count);
+      close(fd);
+    }
+  }
+  return retval;
+}
+
+
+
+int lives_chdir(const char *path, gboolean allow_fail) {
+  int retval;
+
+  retval=chdir(path);
+
+  if (retval) {
+    mainw->chdir_failed=TRUE;
+    if (!allow_fail) {
+      gchar *msg=g_strdup_printf("Chdir failed to: %s\n",path);
+      LIVES_ERROR(msg);
+      g_free(msg);
+      do_chdir_failed_error(path);
+    }
+  }
+  return retval;
+}
+
+
+
+
 // special allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
 void lives_free(gpointer ptr) {
   (*mainw->free_fn)(ptr);
@@ -604,14 +746,21 @@ void init_clipboard(void) {
     // clear old clipboard
     // need to set current file to 0 before monitoring progress
     mainw->current_file=0;
+    mainw->com_failed=FALSE;
     com=g_strdup_printf("smogrify delete_all %s",clipboard->handle);
     unlink(clipboard->info_file);
-    dummyvar=system(com);
+    lives_system(com,FALSE);
+    g_free(com);
+
+    if (mainw->com_failed) {
+      mainw->current_file=current_file;
+      return;
+    }
+
     cfile->progress_start=cfile->start;
     cfile->progress_end=cfile->end;
     // show a progress dialog, not cancellable
     do_progress_dialog(TRUE,FALSE,_ ("Clearing the clipboard"));
-    g_free(com);
   }
 
   mainw->current_file=current_file;
@@ -857,12 +1006,15 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
 
   unlink(info_file);
   threaded_dialog_spin();
-  dummyvar=system(com);
+  mainw->com_failed=FALSE;
+  lives_system(com,FALSE);
   threaded_dialog_spin();
   g_free(com);
 
   clear_mainw_msg();
-  
+
+  if (mainw->com_failed) return FALSE;
+
   info_fd=open(info_file,O_RDONLY);
   if (info_fd>-1) {
     if ((bytes=read(info_fd,mainw->msg,256))>0) {
@@ -958,9 +1110,13 @@ void get_frame_count(gint idx) {
   size_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
   gchar *com=g_strdup_printf("smogrify count_frames %s %s >%s",mainw->files[idx]->handle,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);
-  dummyvar=system(com);
+
+  mainw->com_failed=FALSE;
+  lives_system(com,FALSE);
   g_free(com);
   
+  if (mainw->com_failed) return;
+
   info_fd=open(info_file,O_RDONLY);
 
   if ((bytes=read(info_fd,mainw->msg,256))>0) {
@@ -1142,23 +1298,23 @@ void remove_layout_files(GList *map) {
 
       if (!is_current) {
 	com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",fname);
-	dummyvar=system(com);
+	lives_system(com,TRUE);
 	g_free(com);
 	
 	if (!strncmp(fname,prefs->tmpdir,strlen(prefs->tmpdir))) {
 	  // is in tmpdir, safe to remove parents
 	  com=g_strdup_printf("touch %s/noremove >/dev/null 2>&1",prefs->tmpdir);
-	  dummyvar=system(com);
+	  lives_system(com,FALSE);
 	  g_free(com);
 	  
 	  fdir=g_path_get_dirname (fname);
 	  com=g_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
-	  dummyvar=system(com);
+	  lives_system(com,TRUE);
 	  g_free(com);
 	  g_free(fdir);
 	  
 	  com=g_strdup_printf("/bin/rm %s/noremove 2>/dev/null",prefs->tmpdir);
-	  dummyvar=system(com);
+	  lives_system(com,TRUE);
 	  g_free(com);
 	}
 	
@@ -2197,9 +2353,12 @@ after_foreign_play(void) {
 	  
 	  com=g_strdup_printf("smogrify fill_and_redo_frames %s %d %d %d %s %.4f %d %d %d %d %d",cfile->handle,cfile->frames,mainw->foreign_width,mainw->foreign_height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
 	  unlink(cfile->info_file);
-	  dummyvar=system(com);
+	  mainw->com_failed=FALSE;
+	  lives_system(com,FALSE);
+
+
 	  cfile->nopreview=TRUE;
-	  if (do_progress_dialog(TRUE,TRUE,_ ("Cleaning up clip"))) {
+	  if (!mainw->com_failed&&do_progress_dialog(TRUE,TRUE,_ ("Cleaning up clip"))) {
 	    get_next_free_file();
 	  }
 	  else {
@@ -2376,14 +2535,14 @@ check_dir_access (const gchar *dir) {
 
   if (!exists) {
     com=g_strdup_printf ("/bin/mkdir -p %s",dir);
-    dummyvar=system (com);
+    lives_system (com,TRUE);
     g_free (com);
   }
   if (!g_file_test(dir, G_FILE_TEST_IS_DIR)) return FALSE;
 
   testfile=g_strdup_printf ("%s/livestst.txt",dir);
   com=g_strdup_printf ("touch %s",testfile);
-  dummyvar=system (com);
+  lives_system (com,TRUE);
   g_free (com);
   if ((is_OK=g_file_test(testfile, G_FILE_TEST_EXISTS))) {
     unlink (testfile);
@@ -2391,7 +2550,7 @@ check_dir_access (const gchar *dir) {
   g_free (testfile);
   if (!exists) {
     com=g_strdup_printf ("/bin/rm -r %s",dir);
-    dummyvar=system (com);
+    lives_system (com,TRUE);
     g_free (com);
   }
   return is_OK;
@@ -2417,7 +2576,7 @@ void activate_url_inner(const gchar *link) {
 #else
   gchar *com = getenv("BROWSER");
   com = g_strdup_printf("%s '%s' &", com ? com : "gnome-open", link);
-  dummyvar=system(com);
+  lives_system(com,FALSE);
   g_free(com);
 #endif
 }
@@ -2471,6 +2630,7 @@ void reget_afilesize (int fileno) {
   // re-get the audio file size
   gchar *afile;
   file *sfile=mainw->files[fileno];
+  gboolean bad_header=FALSE;
 
   if (mainw->multitrack!=NULL) return; // otherwise achans gets set to 0...
 
@@ -2481,9 +2641,14 @@ void reget_afilesize (int fileno) {
       if (sfile->arate!=0||sfile->achans!=0||sfile->asampsize!=0||sfile->arps!=0) {
 	sfile->arate=sfile->achans=sfile->asampsize=sfile->arps=0;
 	save_clip_value(fileno,CLIP_DETAILS_ACHANS,&sfile->achans);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 	save_clip_value(fileno,CLIP_DETAILS_ARATE,&sfile->arps);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 	save_clip_value(fileno,CLIP_DETAILS_PB_ARATE,&sfile->arate);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 	save_clip_value(fileno,CLIP_DETAILS_ASAMPS,&sfile->asampsize);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+	if (bad_header) do_header_write_error(fileno);
       }
     }
   }
@@ -2901,6 +3066,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     }
   }
   //////////////////////////////////////////////////
+  mainw->read_failed=FALSE;
 
   switch (what) {
   case CLIP_DETAILS_HEADER_VERSION:
@@ -3005,7 +3171,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     memset(val,0,maxlen);
     
     threaded_dialog_spin();
-    if (system(com)) {
+    if (lives_system(com,TRUE)) {
       tempdir_warning();
       threaded_dialog_spin();
       g_free(com);
@@ -3033,12 +3199,16 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
       return FALSE;
     }
     else {
-      dummychar=fgets(val,maxlen-1,valfile);
+      lives_fgets(val,maxlen-1,valfile);
       fclose(valfile);
       unlink(vfile);
     }
     g_free(vfile);
     g_free(com);
+  }
+
+  if (mainw->read_failed) {
+    return FALSE;
   }
 
   switch (what) {
@@ -3111,9 +3281,11 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
   gchar *myval;
   gchar *key;
 
+  mainw->write_failed=mainw->com_failed=FALSE;
+
   if (which==0||which==mainw->scrap_file) return;
 
-  lives_header=g_strdup_printf("%s/%s/header.lives",prefs->tmpdir,mainw->files[which]->handle);
+  lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
     
   switch (what) {
   case CLIP_DETAILS_BPP:
@@ -3218,15 +3390,16 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
   if (mainw->clip_header!=NULL) {
     gchar *keystr_start=g_strdup_printf("<%s>\n",key);
     gchar *keystr_end=g_strdup_printf("\n</%s>\n",key);
-    fputs(keystr_start,mainw->clip_header);
-    fputs(myval,mainw->clip_header);
-    fputs(keystr_end,mainw->clip_header);
+    lives_fputs(keystr_start,mainw->clip_header);
+    lives_fputs(myval,mainw->clip_header);
+    lives_fputs(keystr_end,mainw->clip_header);
     g_free(keystr_start);
     g_free(keystr_end);
+
   }
   else {
     com=g_strdup_printf("smogrify set_clip_value %s %s \"%s\"",lives_header,key,myval);
-    dummyvar=system(com);
+    lives_system(com,FALSE);
     g_free(com);
   }
 
@@ -3602,7 +3775,7 @@ gulong get_fs_free(const gchar *dir) {
 
   if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
     com=g_strdup_printf("/bin/mkdir -p %s",dir);
-    dummyvar=system(com);
+    lives_system(com,TRUE);
     g_free(com);
     if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
       return 0;
@@ -3619,7 +3792,7 @@ gulong get_fs_free(const gchar *dir) {
 
   if (must_delete) {
     com=g_strdup_printf("/bin/rm -rf %s",dir);
-    dummyvar=system(com);
+    lives_system(com,TRUE);
     g_free(com);
   }
 

@@ -625,12 +625,14 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 
 //#define DEBUG_ARENDER
 
-static void pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int asamps, int aunsigned, gboolean big_endian) {
+static gboolean pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int asamps, int aunsigned, gboolean big_endian) {
   // fill to ins_pt with zeros (or 0x80.. for unsigned)
   guchar *zero_buff;
   size_t sblocksize=SILENCE_BLOCK_SIZE;
   gint sbytes=ins_size-oins_size;
   register int i;
+
+  gboolean retval=TRUE;
 
 #ifdef DEBUG_ARENDER
   g_print("sbytes is %d\n",sbytes);
@@ -657,13 +659,16 @@ static void pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int a
 
     for (i=0;i<sbytes;i+=SILENCE_BLOCK_SIZE) {
       if (sbytes-i<SILENCE_BLOCK_SIZE) sblocksize=sbytes-i;
-      dummyvar=write (out_fd,zero_buff,sblocksize);
+      mainw->write_failed=FALSE;
+      lives_write (out_fd,zero_buff,sblocksize,TRUE);
+      if (mainw->write_failed) retval=FALSE;
     }
     g_free(zero_buff);
   }
   else if (sbytes<=0) {
     lseek64(out_fd,oins_size+sbytes,SEEK_SET);
   }
+  return retval;
 }
 
 
@@ -766,7 +771,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   if (to_file>-1) {
     // prepare outfile stuff
-    outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
+    outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
 #ifdef DEBUG_ARENDER
     g_print("writing to %s\n",outfilename);
 #endif
@@ -778,7 +783,8 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     ins_pt*=out_achans*out_arate*out_asamps;
     ins_size=((long)(ins_pt/out_achans/out_asamps+.5))*out_achans*out_asamps;
 
-    if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) out_reverse_endian=TRUE;
+    if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+      out_reverse_endian=TRUE;
     else out_reverse_endian=FALSE;
     
     // fill to ins_pt with zeros
@@ -825,7 +831,8 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
     if (G_UNLIKELY(in_achans[track]==0)) is_silent[track]=TRUE;
     else {
-      if ((!in_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(in_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) in_reverse_endian[track]=TRUE;
+      if ((!in_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(in_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+	in_reverse_endian[track]=TRUE;
       else in_reverse_endian[track]=FALSE;
       
       seekstart[track]=(off64_t)(fromtime[track]*in_arate[track])*in_achans[track]*in_asamps[track];
@@ -956,7 +963,8 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
       zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate;
 
-      tbytes=(gint)((gdouble)xsamples*ABS(zavel)+((gdouble)fastrand()/(gdouble)G_MAXUINT32))*in_asamps[track]*in_achans[track];
+      tbytes=(gint)((gdouble)xsamples*ABS(zavel)+((gdouble)fastrand()/(gdouble)G_MAXUINT32))*
+	in_asamps[track]*in_achans[track];
 
       in_buff=g_malloc(tbytes);
 
@@ -981,13 +989,15 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 	sample_move_d8_d16 (holding_buff,(guchar *)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track],0);
       }
       else {
-	sample_move_d16_d16(holding_buff,(short*)in_buff,nframes,tbytes,zavel,out_achans,in_achans[track],in_reverse_endian[track]?SWAP_X_TO_L:0,0);
+	sample_move_d16_d16(holding_buff,(short*)in_buff,nframes,tbytes,zavel,out_achans,
+			    in_achans[track],in_reverse_endian[track]?SWAP_X_TO_L:0,0);
       }
 
       g_free(in_buff);
 
       for(c=0;c<out_achans;c++) {
-	sample_move_d16_float(float_buffer[c+track*out_achans],holding_buff+c,nframes,out_achans,in_unsigned[track],chvol[track]);
+	sample_move_d16_float(float_buffer[c+track*out_achans],holding_buff+c,nframes,
+			      out_achans,in_unsigned[track],chvol[track]);
       }
     }
 
@@ -1008,10 +1018,13 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       // apply audio filter(s)
       if (mainw->multitrack!=NULL) {
 	// we work out the "visibility" of each track at tc
-	gdouble *vis=get_track_visibility_at_tc(mainw->multitrack->event_list,nfiles,mainw->multitrack->opts.back_audio_tracks,tc,&shortcut,mainw->multitrack->opts.audio_bleedthru);
+	gdouble *vis=get_track_visibility_at_tc(mainw->multitrack->event_list,nfiles,
+						mainw->multitrack->opts.back_audio_tracks,tc,&shortcut,
+						mainw->multitrack->opts.audio_bleedthru);
 
 	// locate the master volume parameter, and multiply all values by vis[track]
-	weed_apply_audio_effects(mainw->filter_map,chunk_float_buffer,mainw->multitrack->opts.back_audio_tracks,out_achans,blocksize,out_arate,tc,vis);
+	weed_apply_audio_effects(mainw->filter_map,chunk_float_buffer,mainw->multitrack->opts.back_audio_tracks,
+				 out_achans,blocksize,out_arate,tc,vis);
 	
 	g_free(vis);
       }
@@ -1019,8 +1032,9 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (to_file>-1) {
 	// output to file
 	// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
-	frames_out=sample_move_float_int((void *)finish_buff,chunk_float_buffer,blocksize,1.,out_achans,out_asamps*8,out_unsigned,out_reverse_endian,opvol);
-	dummyvar=write (out_fd,finish_buff,frames_out*out_asamps*out_achans);
+	frames_out=sample_move_float_int((void *)finish_buff,chunk_float_buffer,blocksize,1.,out_achans,
+					 out_asamps*8,out_unsigned,out_reverse_endian,opvol);
+	lives_write (out_fd,finish_buff,frames_out*out_asamps*out_achans,TRUE);
 #ifdef DEBUG_ARENDER
 	g_print(".");
 #endif
@@ -1097,7 +1111,8 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   mainw->jackd_read->playing_file=fileno;
   mainw->jackd_read->frames_written=0;
 
-  if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd_read->reverse_endian=TRUE;
+  if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+    mainw->jackd_read->reverse_endian=TRUE;
   else mainw->jackd_read->reverse_endian=FALSE;
 
   // start jack recording
@@ -1159,7 +1174,8 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   mainw->pulsed_read->playing_file=fileno;
   mainw->pulsed_read->frames_written=0;
 
-  if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed_read->reverse_endian=TRUE;
+  if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+    mainw->pulsed_read->reverse_endian=TRUE;
   else mainw->pulsed_read->reverse_endian=FALSE;
 
   // start pulse recording
@@ -2092,7 +2108,7 @@ gboolean start_audio_stream(void) {
     
     // block here until killed
 
-    dummyvar=system(com);
+    lives_system(com,TRUE);
 
     _exit(0);                    
   }
@@ -2161,7 +2177,7 @@ void stop_audio_stream(void) {
 
     // astreamer should remove cooked stream
     com=g_strdup_printf("%s cleanup %d \"%s\"",astreamer,mainw->vpp->audio_codec,astream_name_out);
-    dummyvar=system(com);
+    lives_system(com,FALSE);
     g_free(astreamer);
     g_free(com);
     g_free(astream_name_out);
@@ -2190,7 +2206,7 @@ void clear_audio_stream(void) {
 
 LIVES_INLINE void audio_stream(void *buff, size_t nbytes, int fd) {
   if (fd!=-1) {
-    dummyvar=write(fd,buff,nbytes);
+    lives_write(fd,buff,nbytes,TRUE);
   }
 }
 

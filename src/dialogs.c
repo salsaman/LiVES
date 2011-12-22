@@ -1009,12 +1009,15 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       // background processing (e.g. rendered effects)
       if ((infofile=fopen(cfile->info_file,"r"))) {
 	// OK, now we might have some frames
-	dummychar=fgets(mainw->msg,512,infofile);
+	lives_fgets(mainw->msg,512,infofile);
 	fclose(infofile);
       }
     }
     // else call realtime effect pass
     else {
+
+      // TODO - check for return value of 0 (write error)
+
       (*mainw->progress_fn)(FALSE);
       // display progress fraction or pulse bar
       if (mainw->msg!=NULL&&strlen(mainw->msg)>0&&(frames_done=atoi(mainw->msg))>0)
@@ -1221,7 +1224,7 @@ void do_auto_dialog (const gchar *text, gint type) {
   
 
   if (type==0) {
-    dummychar=fgets(mainw->msg,512,infofile);
+    lives_fgets(mainw->msg,512,infofile);
     fclose(infofile);
     if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);
 
@@ -2034,6 +2037,80 @@ inline void d_print_done(void) {
 inline void d_print_file_error_failed(void) {
   d_print(_("error in file. Failed.\n"));
 }
+
+
+void do_com_failed_error(const char *com, int retval) {
+  gchar *msg;
+  gchar *bit;
+  if (retval>0) bit=g_strdup_printf(_("The error value was %d\n"),retval>>8);
+  else bit=g_strdup("");
+  msg=g_strdup_printf(_("\nLiVES failed to run the command\n%s\nPlease check your system for errors\n%s"),com,bit);
+  do_error_dialog(msg);
+}
+
+
+void do_write_failed_error_s(const char *s) {
+  gchar *msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n"),s);
+  do_blocking_error_dialog(msg);
+  g_free(msg);
+}
+
+
+void do_read_failed_error_s(const char *s) {
+  gchar *msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n"),s);
+  do_blocking_error_dialog(msg);
+  g_free(msg);
+}
+
+
+void do_write_failed_error(ssize_t wrote, size_t target) {
+  if (target>0&&wrote>=0) {
+    gchar *msg=g_strdup_printf(_("\nLiVES was unable to write %d bytes of %d to the file\n%s\nPlease check for possible error causes.\n"),wrote,target,mainw->write_failed_file);
+    do_blocking_error_dialog(msg);
+    g_free(msg);
+  }
+  else {
+    do_write_failed_error_s(mainw->write_failed_file);
+  }
+}
+
+
+void do_read_failed_error(ssize_t read, size_t target) {
+  if (target>0&&read>=0) {
+    gchar *msg=g_strdup_printf(_("\nLiVES could only read %d bytes of %d from the file\n%s\nPlease check for possible error causes.\n"),read,target,mainw->read_failed_file);
+    do_blocking_error_dialog(msg);
+    g_free(msg);
+  }
+  else {
+    do_read_failed_error_s(mainw->read_failed_file);
+  }
+}
+
+
+void do_header_read_error(int clip) {
+  gchar *hname;
+  if (mainw->files[clip]==NULL) return;
+  hname=g_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+  do_read_failed_error_s(hname);
+  g_free(hname);
+}
+
+
+void do_header_write_error(int clip) {
+  gchar *hname;
+  if (mainw->files[clip]==NULL) return;
+  hname=g_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+  do_write_failed_error_s(hname);
+  g_free(hname);
+}
+
+
+void do_chdir_failed_error(const char *dir) {
+  gchar *msg=g_strdup_printf(_("\nLiVES failed to change directory to\n%s\nPlease check your system for errors.\n"),dir);
+  do_error_dialog(msg);
+  g_free(msg);
+}
+
 
 
 void do_file_perm_error(const gchar *file_name) {

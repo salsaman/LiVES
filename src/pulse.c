@@ -542,7 +542,12 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
     mainw->rec_samples-=frames_out;
   }
 
-  dummyvar=write (mainw->aud_rec_fd,holding_buff,frames_out*(afile->asampsize/8)*afile->achans);
+  if (mainw->bad_aud_file==NULL) {
+    size_t target=frames_out*(afile->asampsize/8)*afile->achans,bytes;
+    // use write not lives_write - because of potential threading issues
+    bytes=write (mainw->aud_rec_fd,holding_buff,target);
+    if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
+  }
 
   g_free(holding_buff);
 

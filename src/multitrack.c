@@ -98,7 +98,7 @@ static LIVES_INLINE int get_track_for_block(track_rect *block) {
   return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));  
 }
 
-static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
+static gboolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
   weed_plant_t *event=get_first_event(event_list);
 
   threaded_dialog_spin();
@@ -136,16 +136,21 @@ static void save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list
     g_free(avols);
   }
 
-  if (mem==NULL&&fd<0) return;
+  if (mem==NULL&&fd<0) return TRUE;
 
   threaded_dialog_spin();
+
+  mainw->write_failed=FALSE;
   weed_plant_serialise(fd,event_list,mem);
-  while (event!=NULL) {
+  while (!mainw->write_failed&&event!=NULL) {
     if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_voidptr_value(event,"event_id",(void *)event);
     weed_plant_serialise(fd,event,mem);
     event=get_next_event(event);
     threaded_dialog_spin();
   }
+
+  if (mainw->write_failed) return FALSE;
+  return TRUE;
 
 }
 
@@ -339,7 +344,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 
 
 
-void write_backup_layout_numbering(lives_mt *mt) {
+gboolean write_backup_layout_numbering(lives_mt *mt) {
   // link clip numbers in the auto save event_list to actual clip numbers
 
   int fd,i,vali,hdlsize;
@@ -350,8 +355,10 @@ void write_backup_layout_numbering(lives_mt *mt) {
   fd=creat(asave_file,S_IRUSR|S_IWUSR);
   g_free(asave_file);
 
+  mainw->write_failed=FALSE;
+
   if (fd!=-1) {
-    while (clist!=NULL) {
+    while (mainw->write_failed&&clist!=NULL) {
       i=GPOINTER_TO_INT(clist->data);
       if (mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&mainw->files[i]->clip_type!=CLIP_TYPE_FILE) {
 	clist=clist->next;
@@ -359,22 +366,22 @@ void write_backup_layout_numbering(lives_mt *mt) {
 
       }
       if (mt!=NULL) {
-	dummyvar=write(fd,&i,sizint);
+	lives_write(fd,&i,sizint,TRUE);
 	vald=mainw->files[i]->fps;
-	dummyvar=write(fd,&vald,sizdbl);
+	lives_write(fd,&vald,sizdbl,TRUE);
 	hdlsize=strlen(mainw->files[i]->handle);
-	dummyvar=write (fd,&hdlsize,sizint);
-	dummyvar=write (fd,&mainw->files[i]->handle,hdlsize);
+	lives_write (fd,&hdlsize,sizint,TRUE);
+	lives_write (fd,&mainw->files[i]->handle,hdlsize,TRUE);
       }
       else {
 	vali=mainw->files[i]->stored_layout_idx;
 	if (vali!=-1) {
-	  dummyvar=write(fd,&vali,sizint);
+	  lives_write(fd,&vali,sizint,TRUE);
 	  vald=mainw->files[i]->fps;
-	  dummyvar=write(fd,&vald,sizdbl);
+	  lives_write(fd,&vald,sizdbl,TRUE);
 	  hdlsize=strlen(mainw->files[i]->handle);
-	  dummyvar=write (fd,&hdlsize,sizint);
-	  dummyvar=write (fd,&mainw->files[i]->handle,hdlsize);
+	  lives_write (fd,&hdlsize,sizint,TRUE);
+	  lives_write (fd,&mainw->files[i]->handle,hdlsize,TRUE);
 	}
       }
       clist=clist->next;
@@ -382,6 +389,10 @@ void write_backup_layout_numbering(lives_mt *mt) {
     
     close(fd);
   }
+
+  if (mainw->write_failed) return FALSE;
+  return TRUE;
+
 }
 
 
@@ -450,28 +461,36 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
   lives_mt_poly_state_t poly_state;
 
+  gboolean retval=TRUE;
+
   mt_desensitise(mt);
 
   // flush any pending events
   while (g_main_context_iteration(NULL,FALSE));
 
-  fd=creat(asave_file,S_IRUSR|S_IWUSR);
-  add_markers(mt,mt->event_list);
-  do_threaded_dialog(_("Auto backup"),FALSE);
-  save_event_list_inner(mt,fd,mt->event_list,NULL);
-  end_threaded_dialog();
-  write_backup_layout_numbering(mt);
-  remove_markers(mt->event_list);
-  close(fd);
+  mainw->write_failed=FALSE;
 
-  g_free(asave_file);
+  fd=creat(asave_file,S_IRUSR|S_IWUSR);
+  if (fd>=0) {
+    add_markers(mt,mt->event_list);
+    do_threaded_dialog(_("Auto backup"),FALSE);
+    retval=save_event_list_inner(mt,fd,mt->event_list,NULL);
+    end_threaded_dialog();
+
+    if (retval) retval=write_backup_layout_numbering(mt);
+
+    remove_markers(mt->event_list);
+    close(fd);
+  }
+  else mainw->write_failed=TRUE;
 
   poly_state=mt->poly_state;
   if (mt->poly_state!=POLY_IN_OUT) mt->poly_state=POLY_NONE;
   mt_sensitise(mt);
   mt->poly_state=poly_state;
 
-  mt->auto_changed=FALSE;
+  if (!mainw->write_failed) mt->auto_changed=FALSE;
+  else mainw->write_failed=FALSE;
 
   if (stime==0) {
     gettimeofday(&otv, NULL);
@@ -479,6 +498,13 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   }
 
   mt->auto_back_time=stime;
+
+  if (!retval||mainw->write_failed) {
+    do_write_failed_error_s(asave_file);
+  }
+
+  g_free(asave_file);
+
 
 }
 
@@ -579,15 +605,15 @@ static void mt_load_recovery_layout(lives_mt *mt) {
       gchar *com;
 
       com=g_strdup_printf("/bin/mkdir -p %s/unrecoverable_layouts/ 2>/dev/null",prefs->tmpdir);
-      dummyvar=system(com);
+      lives_system(com,TRUE);
       g_free(com);
 
       com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",eload_file,prefs->tmpdir);
-      dummyvar=system(com);
+      lives_system(com,TRUE);
       g_free(com);
 
       com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",aload_file,prefs->tmpdir);
-      dummyvar=system(com);
+      lives_system(com,TRUE);
       g_free(com);
 
       mt->fps=prefs->mt_def_fps;
@@ -656,7 +682,8 @@ static gint get_track_height(lives_mt *mt) {
 
   while (glist!=NULL) {
     eventbox=glist->data;
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))==0) return GTK_WIDGET(eventbox)->allocation.height;
+    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))==0) 
+      return GTK_WIDGET(eventbox)->allocation.height;
     glist=glist->next;
   }
 
@@ -2039,6 +2066,8 @@ static void renumber_clips(void) {
 
   GList *clist;
 
+  gboolean bad_header=FALSE;
+
   renumbered_clips[0]=0;
 
   // walk through files mainw->files[cclip]
@@ -2089,6 +2118,9 @@ static void renumber_clips(void) {
     if (mainw->files[cclip]!=NULL&&cclip!=mainw->scrap_file&&(mainw->files[cclip]->clip_type==CLIP_TYPE_DISK||mainw->files[cclip]->clip_type==CLIP_TYPE_FILE)&&mainw->files[cclip]->unique_id==0l) {
       mainw->files[cclip]->unique_id=random();
       save_clip_value(cclip,CLIP_DETAILS_UNIQUE_ID,&mainw->files[cclip]->unique_id);
+      if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+
+      if (bad_header) do_header_write_error(cclip);
     }
 
     for (;i<=MAX_FILES;i++) {
@@ -6904,7 +6936,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
 
-  mt->grav_menuitem = GTK_WIDGET(gtk_menu_tool_button_new (NULL,_("_Gravity: Normal")));
+  mt->grav_menuitem = gtk_menu_tool_button_new (NULL,_("_Gravity: Normal"));
   gtk_tool_button_set_use_underline (GTK_TOOL_BUTTON(mt->grav_menuitem),TRUE);
 
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mt->grav_menuitem),-1);
@@ -14052,7 +14084,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     had_audio=mt->has_audio_file;
     if (had_audio) {
       com=g_strdup_printf("smogrify backup_audio %s",cfile->handle);
-      dummyvar=system(com);
+      lives_system(com,FALSE);
       g_free(com);
     }
     mt->has_audio_file=TRUE;
@@ -14099,6 +14131,8 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt->is_rendering=FALSE;
     prefs->render_audio=TRUE;
     save_clip_values(orig_file);
+
+
     if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
     reset_clip_menu();
 
@@ -14149,14 +14183,14 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->event_list=NULL;
     if (mt->pr_audio) {
       com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
-      dummyvar=system(com);
+      lives_system(com,FALSE);
       g_free(com);
       mt->has_audio_file=had_audio;
     }
     else {
       do_threaded_dialog(_("Cleaning up..."),FALSE);
       com=g_strdup_printf("/bin/rm -rf %s/%s/*",prefs->tmpdir,cfile->handle);
-      dummyvar=system(com);
+      lives_system(com,TRUE);
       g_free(com);
       end_threaded_dialog();
     }
@@ -15660,19 +15694,24 @@ static float get_float_audio_val_at_time(gint fnum, gdouble secs, gint chnum, gi
     aofile=fnum;
   }
 
+  if (afd==-1) {
+    mainw->read_failed=TRUE;
+    return 0.;
+  }
+
   apos+=afile->asampsize/8*chnum;
 
   lseek(afd,apos,SEEK_SET);
 
   if (afile->asampsize==8) {
-    dummyvar=read(afd,&val8,1);
+    lives_read(afd,&val8,1,TRUE);
     if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val8>=128?val8-256:val8;
     else val=val8-127;
     val/=127.;
   }
   else {
-    dummyvar=read(afd,&val8,1);
-    dummyvar=read(afd,&val8b,1);
+    lives_read(afd,&val8,1,TRUE);
+    lives_read(afd,&val8b,1,TRUE);
     if (afile->signed_endian&AFORM_BIG_ENDIAN) val16=(uint16_t)(val8<<8)+val8b;
     else val16=(uint16_t)(val8b<<8)+val8;
     if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val16>=32768?val16-65536:val16;
@@ -15708,6 +15747,8 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
 
   aofile=-1;
   afd=-1;
+
+  mainw->read_failed=FALSE;
 
   while (block!=NULL) {
     event=block->start_event;
@@ -15762,6 +15803,10 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
     block=block->next;
   }
   if (afd!=-1) close(afd);
+
+  if (mainw->read_failed) {
+    do_read_failed_error(0,0);
+  }
 
 }
 
@@ -16929,10 +16974,13 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   fd=creat(map_name,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
 
   if (fd==-1) {
+    do_write_failed_error_s(map_name);
     g_free(ldir);
     g_free(map_name);
     return;
   }
+
+  mainw->write_failed=FALSE;
 
   for (i=1;i<=MAX_FILES;i++) {
     // add or update
@@ -16972,19 +17020,19 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
       if ((map=mainw->files[i]->layout_map)!=NULL) {
 	len=strlen(mainw->files[i]->handle);
-	dummyvar=write(fd,&len,sizint);
-	dummyvar=write(fd,mainw->files[i]->handle,len);
-	dummyvar=write(fd,&mainw->files[i]->unique_id,8);
+	lives_write(fd,&len,sizint,TRUE);
+	lives_write(fd,mainw->files[i]->handle,len,TRUE);
+	lives_write(fd,&mainw->files[i]->unique_id,8,TRUE);
 	len=strlen(mainw->files[i]->name);
-	dummyvar=write(fd,&len,sizint);
-	dummyvar=write(fd,mainw->files[i]->name,len);
+	lives_write(fd,&len,sizint,TRUE);
+	lives_write(fd,mainw->files[i]->name,len,TRUE);
 	len=g_list_length(map);
-	dummyvar=write(fd,&len,sizint);
+	lives_write(fd,&len,sizint,TRUE);
 	while (map!=NULL) {
 	  string=repl_tmpdir(map->data,TRUE); // allow relocation of tmpdir
 	  len=strlen(string);
-	  dummyvar=write(fd,&len,sizint);
-	  dummyvar=write(fd,string,len);
+	  lives_write(fd,&len,sizint,TRUE);
+	  lives_write(fd,string,len,TRUE);
 	  g_free(string);
 	  map=map->next;
 	}
@@ -16997,10 +17045,16 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   if (size==0) unlink(map_name);
 
   com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",ldir);
-  dummyvar=system(com);
+  lives_system(com,TRUE);
   g_free(com);
 
   g_free(ldir);
+
+  if (mainw->write_failed) {
+    do_write_failed_error_s(map_name);
+    mainw->write_failed=FALSE;
+  }
+
   g_free(map_name);
 }
 
@@ -17076,6 +17130,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *esave_file;
   gchar *msg;
   gboolean response;
+  gboolean retval=TRUE;
   gchar *filt[]={"*.lay",NULL};
   gboolean was_set=mainw->was_set;
   gchar *com;
@@ -17150,8 +17205,11 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   esave_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,mainw->set_name);
   com=g_strdup_printf ("/bin/mkdir -p %s",esave_dir);
-  dummyvar=system (com);
+  lives_system (com,FALSE);
   g_free (com);
+
+
+  
 
   ar_checkbutton = gtk_check_button_new ();
   eventbox=gtk_event_box_new();
@@ -17192,12 +17250,12 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (esave_file==NULL) {
     gchar *cdir;
     com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",esave_dir);
-    dummyvar=system(com);
+    lives_system(com,FALSE);
     g_free(com);
 
     cdir=g_strdup_printf("%s/%s/",prefs->tmpdir,mainw->set_name);
     com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",cdir);
-    dummyvar=system(com);
+    lives_system(com,FALSE);
     g_free(com);
 
     g_free(esave_file);
@@ -17223,9 +17281,16 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   fd=creat(esave_file,S_IRUSR|S_IWUSR);
 
-  save_event_list_inner(mt,fd,event_list,NULL);
+  if (fd>=0) {
+    retval=save_event_list_inner(mt,fd,event_list,NULL);
+    close(fd);
+  }
 
-  close(fd);
+  if (!retval||fd<0) {
+    do_write_failed_error_s(esave_file);
+    return;
+  }
+
   msg=g_strdup_printf(_("Saved layout to %s\n"),esave_file);
   d_print(msg);
   g_free(msg);
@@ -18568,15 +18633,23 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   int num_events=0;
   gboolean orig_ar_layout=prefs->ar_layout,ar_layout;
+  gboolean retval=TRUE;
 
   GtkWidget *ar_checkbutton;
   GtkWidget *eventbox;
   GtkWidget *label;
   GtkWidget *hbox;
 
+  mainw->com_failed=FALSE;
   com=g_strdup_printf ("/bin/mkdir -p %s",eload_dir);
-  dummyvar=system (com);
+  lives_system (com,FALSE);
   g_free (com);
+
+
+  if (mainw->com_failed) {
+    g_free(eload_dir);
+    return NULL;
+  }
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
@@ -18638,12 +18711,12 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   if (eload_file==NULL) {
     gchar *cdir;
     com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",eload_dir);
-    dummyvar=system(com);
+    lives_system(com,TRUE);
     g_free(com);
 
     cdir=g_strdup_printf("%s/%s/",prefs->tmpdir,mainw->set_name);
     com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",cdir);
-    dummyvar=system(com);
+    lives_system(com,TRUE);
     g_free(com);
 
     g_free(eload_dir);
@@ -18680,10 +18753,18 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   mt_desensitise(mt);
 
+  mainw->read_failed=FALSE;
+
   if ((event_list=load_event_list_inner(mt,fd,TRUE,&num_events,NULL,NULL))==NULL) {
     close(fd);
     if (mt->is_ready) mt_sensitise(mt);
     g_free(eload_dir);
+
+    if (mainw->read_failed) {
+      do_read_failed_error(0, 0);
+      mainw->read_failed=FALSE;
+    }
+
     return NULL;
   }
 
@@ -18740,8 +18821,14 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
       if (!mt->layout_prompt||do_mt_rect_prompt()) {
 	// resave with corrections/updates
 	fd=creat(eload_file,S_IRUSR|S_IWUSR);
-	save_event_list_inner(NULL,fd,event_list,NULL);
-	close(fd);
+	if (fd>=0) {
+	  retval=save_event_list_inner(NULL,fd,event_list,NULL);
+	  close(fd);
+	}
+      }
+      if (fd<0||!retval) {
+	do_write_failed_error_s(eload_file);
+	d_print_file_error_failed();
       }
     }
     else d_print_failed();
@@ -19037,6 +19124,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
   weed_plant_t *event_list;
   gchar *tmp;
   int i;
+  gboolean retval=TRUE;
 
   gchar *changefrom=NULL;
   size_t chlen;
@@ -19056,8 +19144,12 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	  weed_set_string_value(event_list,"needs_set",new_set_name);
 	  // save the event_list with the same name
 	  unlink(map->data);
-	  fd=creat(map->data,S_IRUSR|S_IWUSR);
-	  save_event_list_inner(NULL,fd,event_list,NULL);
+	  while (1) {
+	    fd=creat(map->data,S_IRUSR|S_IWUSR);
+	    if (fd>=0) retval=save_event_list_inner(NULL,fd,event_list,NULL);
+	    if (fd<0||!retval) do_write_failed_error_s(map->data);
+	    else break;
+	  }
 	  event_list_free(event_list);
 	}
 	close(fd);
@@ -19072,7 +19164,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	g_free(tmp);
 	tmp=g_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
 	com=g_strdup_printf("/bin/mv %s %s",(gchar *)map->data,tmp);
-	dummyvar=system(com);
+	lives_system(com,FALSE);
 	g_free(com);
       }
       g_free(map->data);

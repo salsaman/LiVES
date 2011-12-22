@@ -659,6 +659,18 @@ void do_error_dialog_with_check(const gchar *text, gint warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
 void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking,gint warn_mask_number, 
 					  GtkWindow *transient);
+
+
+void do_com_failed_error(const char *com, int retval);
+void do_write_failed_error_s(const char *filename);
+void do_read_failed_error_s(const char *filename);
+void do_write_failed_error(ssize_t wrote, size_t target);
+void do_read_failed_error(ssize_t read, size_t target);
+void do_header_write_error(int clip);
+void do_header_read_error(int clip);
+void do_chdir_failed_error(const char *dir);
+
+
 gboolean ask_permission_dialog(int what);
 void add_warn_check (GtkBox *box, gint wayrn_mask_number);
 void do_memory_error_dialog (void);
@@ -752,12 +764,14 @@ void d_print_failed(void);
 void d_print_done(void);
 void d_print_file_error_failed(void);
 
+void do_write_failed_error_s(const char *s);
+
 // general
 void do_text_window (const gchar *title, const gchar *text);
 
 // saveplay.c
 gboolean add_file_info(const gchar *check_handle, gboolean aud_only);
-void save_file_comments (int fileno);
+gboolean save_file_comments (int fileno);
 void reget_afilesize (int fileno);
 void deduce_file(const gchar *filename, gdouble start_time, gint end);
 void open_file (const gchar *filename);
@@ -772,7 +786,7 @@ void play_file (void);
 void save_frame (GtkMenuItem *menuitem, gpointer user_data);
 gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint width, gint height, gboolean auto_overwrite);
 void wait_for_stop (const gchar *stop_command);
-void save_clip_values(gint which_file);
+gboolean save_clip_values(gint which_file);
 void add_to_recovery_file (const gchar *handle);
 void rewrite_recovery_file(void);
 gboolean check_for_recovery_files (gboolean auto_recover);
@@ -782,7 +796,7 @@ const gchar *get_deinterlace_string(void);
 // saveplay.c backup
 void backup_file(int clip, int start, int end, const gchar *filename);
 gint save_event_frames(void);
-void write_headers (file *file);
+gboolean write_headers (file *file);
 
 // saveplay.c restore
 void restore_file(const gchar *filename);
@@ -854,6 +868,15 @@ void add_message_scroller(GtkWidget *conter);
 #ifdef IS_IRIX
 void setenv(const char *name, const char *val, int _xx);
 #endif
+
+int lives_system(const char *com, gboolean allow_error);
+ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail);
+ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_fail);
+int lives_chdir(const char *path, gboolean allow_fail);
+int lives_fputs(const char *s, FILE *stream);
+char *lives_fgets(char *s, int size, FILE *stream);
+
+char *filename_from_fd(char *val, int fd);
 
 LIVES_INLINE float LEFloat_to_BEFloat(float f);
 int lives_10pow(int pow);
@@ -1053,9 +1076,6 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 #define CAM_FORMAT_HDV 1
 
 #endif
-
-int dummyvar;
-char *dummychar;
 
 // inlines
 #define cfile mainw->files[mainw->current_file]

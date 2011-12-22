@@ -91,16 +91,19 @@ gboolean do_tempdir_query(void) {
   gtk_widget_destroy(tdentry->dialog);
   g_free(tdentry);
 
+  mainw->com_failed=FALSE;
+  com=g_strdup_printf ("/bin/mkdir -p %s 2>/dev/null",dirname);
+  lives_system (com,FALSE);
+  g_free (com);
+
+  if (mainw->com_failed) return FALSE;
+
   com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",prefs->tmpdir);
-  dummyvar=system(com);
+  lives_system(com,TRUE);
   g_free(com);
 
   g_snprintf(prefs->tmpdir,256,"%s",dirname);
   g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
-
-  com=g_strdup_printf ("/bin/mkdir -p %s 2>/dev/null",dirname);
-  dummyvar=system (com);
-  g_free (com);
 
   set_pref("tempdir",prefs->tmpdir);
   set_pref("session_tempdir",prefs->tmpdir);
@@ -639,35 +642,60 @@ gboolean do_startup_tests(gboolean tshoot) {
     // write 1 second of silence
     afile=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle);
     out_fd=open(afile,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
-    abuff=calloc(44100,4);
-    dummyvar=write (out_fd,abuff,176400);
-    close(out_fd);
-    g_free(afile);
-    g_free(abuff);
 
-    afile=g_strdup_printf("%s%s/testout.wav",prefs->tmpdir,cfile->handle);
-    
-    com=g_strdup_printf("smogrify export_audio %s 0. 0. 44100 2 16 0 22050 %s",cfile->handle,afile);
-    dummyvar=system(com);
-    g_free(com);
+    if (out_fd<0) mainw->write_failed=TRUE;
+    else mainw->write_failed=FALSE;
 
-    while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
-      g_usleep(prefs->sleep_time);
+    if (!mainw->write_failed) {
+      abuff=calloc(44100,4);
+      lives_write (out_fd,abuff,176400,TRUE);
+      close(out_fd);
+      g_free(abuff);
     }
 
-    if (info_fd!=-1) {
-      close(info_fd);
+    if (mainw->write_failed) {
+      tmp=g_strdup_printf(_("Unable to write to: %s"),afile);
+      fail_test(table,1,tmp);
+      g_free(tmp);
+    }
 
-      sync();
+    g_free(afile);
 
-      fsize=sget_file_size(afile);
-      g_free(afile);
-      
-      if (fsize==0) {
-	fail_test(table,1,_("You should install sox_fmt_all or similar"));
+
+    if (!mainw->write_failed) {
+      afile=g_strdup_printf("%s%s/testout.wav",prefs->tmpdir,cfile->handle);
+    
+      mainw->com_failed=FALSE;
+      com=g_strdup_printf("smogrify export_audio %s 0. 0. 44100 2 16 0 22050 %s",cfile->handle,afile);
+      lives_system(com,TRUE);
+      if (mainw->com_failed) {
+	tmp=g_strdup_printf(_("Command failed: %s"),com);
+	fail_test(table,1,tmp);
+	g_free(tmp);
       }
       
-      else pass_test(table,1);
+      g_free(com);
+      
+      if (!mainw->com_failed) {
+	while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
+	  g_usleep(prefs->sleep_time);
+	}
+	
+	if (info_fd!=-1) {
+	  close(info_fd);
+	  
+	  sync();
+	  
+	  fsize=sget_file_size(afile);
+	  g_free(afile);
+	  
+	  if (fsize==0) {
+	    fail_test(table,1,_("You should install sox_fmt_all or similar"));
+	  }
+	  
+	  else pass_test(table,1);
+	}
+      }
     }
   }
 
@@ -762,30 +790,39 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     com=g_strdup_printf("smogrify open_test %s \"%s\" 0 png",cfile->handle,(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
     g_free(tmp);
-    
-    dummyvar=system(com);
-    g_free(com);
     g_free(rname);
 
-    while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
-      g_usleep(prefs->sleep_time);
+    mainw->com_failed=FALSE;
+    lives_system(com,TRUE);
+    if (mainw->com_failed) {
+      tmp=g_strdup_printf(_("Command failed: %s"),com);
+      fail_test(table,4,tmp);
+      g_free(tmp);
     }
 
-    if (info_fd!=-1) {
-      close(info_fd);
+    g_free(com);
 
-      sync();
-
-      cfile->img_type=IMG_TYPE_PNG;
-      get_frame_count(mainw->current_file);
-      
-      if (cfile->frames==0) {
-	fail_test(table,4,_("You may wish to upgrade mplayer to a newer version"));
+    if (!mainw->com_failed) {
+      while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
+	g_usleep(prefs->sleep_time);
       }
       
-      else {
-	pass_test(table,4);
-	success3=TRUE;
+      if (info_fd!=-1) {
+	close(info_fd);
+	
+	sync();
+	
+	cfile->img_type=IMG_TYPE_PNG;
+	get_frame_count(mainw->current_file);
+	
+	if (cfile->frames==0) {
+	  fail_test(table,4,_("You may wish to upgrade mplayer to a newer version"));
+	}
+	
+	else {
+	  pass_test(table,4);
+	  success3=TRUE;
+	}
       }
     }
   }

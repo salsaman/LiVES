@@ -43,7 +43,7 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   while (g_main_context_iteration(NULL,FALSE));
 
   if (mainw->did_rfx_preview) {
-    dummyvar=system(com);
+    lives_system(com,FALSE); // try to stop any in-progress preview
     do_rfx_cleanup(rfx);
   }
 
@@ -435,9 +435,11 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   clear_mainw_msg();
 
+  // TODO - timeout
+
   while (!(infofile=fopen(cfile->info_file,"r"))) g_usleep(prefs->sleep_time); // wait until we get at least 1 frame
 
-  dummychar=fgets(mainw->msg,512,infofile);
+  lives_fgets(mainw->msg,512,infofile);
   fclose(infofile);
 
   if (strncmp(mainw->msg,"completed",9)) {
@@ -811,7 +813,7 @@ draw_rect_demask (GdkColor *col, gint x1, gint y1, gint x2, gint y2, gboolean fi
 
   gchar *com;
   com=g_strdup_printf ("/usr/X11R6/lib/xscreensaver/goop -window-id %lu 2>/dev/null&",GDK_WINDOW_XWINDOW (mainw->framedraw->window));
-  dummyvar=system (com);
+  lives_system (com);
   g_free (com);
 		       
 #endif

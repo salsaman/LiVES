@@ -954,6 +954,15 @@ typedef struct {
 
   gboolean aplayer_broken;
 
+  gboolean com_failed;
+  gboolean write_failed;
+  gboolean read_failed;
+  gboolean chdir_failed;
+
+  gchar *read_failed_file;
+  gchar *write_failed_file;
+  gchar *bad_aud_file;
+
 } mainwindow;
 
 GdkCursor *hidden_cursor;

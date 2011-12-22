@@ -3048,7 +3048,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 	  if (init_func!=NULL) {
 	    gchar *cwd=cd_to_plugin_dir(filter);
 	    (*init_func)(inst);
-	    dummyvar=chdir(cwd);
+	    lives_chdir(cwd,FALSE);
 	    g_free(cwd);
 	  }
 	  set_param_gui_readonly(inst);
@@ -3128,6 +3128,8 @@ gint render_events (gboolean reset) {
   static gint xaclips[65536];
   static gdouble xaseek[65536],xavel[65536],atime; // TODO **
   static gboolean has_audio;
+  static gboolean audio_write_failed;
+  static gboolean got_write_error;
 
   int track,mytrack;
 
@@ -3154,6 +3156,8 @@ gint render_events (gboolean reset) {
     }
     atime=(gdouble)(out_frame-1.)/cfile->fps;
     has_audio=FALSE;
+    audio_write_failed=FALSE;
+    got_write_error=FALSE;
     return 1;
   }
 
@@ -3169,7 +3173,8 @@ gint render_events (gboolean reset) {
     case WEED_EVENT_HINT_FRAME:
       tc=get_event_timecode (event);
 
-      if ((mainw->multitrack==NULL||(mainw->multitrack->render_vidp&&!mainw->multitrack->pr_audio))&&!(!mainw->clip_switched&&cfile->hsize*cfile->vsize==0)) {
+      if ((mainw->multitrack==NULL||(mainw->multitrack->render_vidp&&!mainw->multitrack->pr_audio))&&
+	  !(!mainw->clip_switched&&cfile->hsize*cfile->vsize==0)) {
 	gint scrap_track=-1;
 	  
 	num_tracks=weed_leaf_num_elements (event,"clips");
@@ -3247,7 +3252,14 @@ gint render_events (gboolean reset) {
 	    while (g_main_context_iteration(NULL,FALSE));
 	  }
 
-	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
+	  mainw->write_failed=FALSE;
+	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file,
+			       NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), 
+			       chvols, 1., 1., NULL);
+	  if (mainw->write_failed) {
+	    got_write_error=TRUE;
+	    audio_write_failed=TRUE;
+	  }
 
 	  if (cfile->proc_ptr!=NULL) {
 	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
@@ -3304,7 +3316,9 @@ gint render_events (gboolean reset) {
 		  while (g_main_context_iteration(NULL,FALSE));
 		}
 
-		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
+		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:
+				     mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), 
+				     q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
 
 		if (cfile->proc_ptr!=NULL) {
 		  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
@@ -3360,6 +3374,14 @@ gint render_events (gboolean reset) {
 	}
 	lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100-prefs->ocp, &error);
 
+	if (error!=NULL) {
+	  do_write_failed_error_s(oname);
+	  g_printerr("err was %s\n",error->message);
+	  g_error_free(error);
+	  error=NULL;
+	  got_write_error=TRUE;
+	}
+
 	cfile->undo_end=out_frame;
 	if (out_frame>cfile->frames) cfile->frames=out_frame;
 	if (out_frame>cfile->end) cfile->end=out_frame;
@@ -3411,7 +3433,9 @@ gint render_events (gboolean reset) {
 	if ((num_channels=weed_leaf_num_elements(filter,"out_channel_templates"))>0) {
 	  ctmpl=weed_get_plantptr_array(filter,"out_channel_templates",&weed_error);
 	  for (i=0;i<num_channels;i++) {
-	    if (!weed_plant_has_leaf(ctmpl[i],"disabled")||weed_get_boolean_value(ctmpl[i],"disabled",&weed_error)!=WEED_TRUE) weed_set_boolean_value(ctmpl[i],"disabled",WEED_FALSE);
+	    if (!weed_plant_has_leaf(ctmpl[i],"disabled")||
+		weed_get_boolean_value(ctmpl[i],"disabled",&weed_error)!=WEED_TRUE) 
+	      weed_set_boolean_value(ctmpl[i],"disabled",WEED_FALSE);
 	    else weed_set_boolean_value(ctmpl[i],"disabled",WEED_TRUE);
 	  }
 	  weed_free(ctmpl);
@@ -3428,7 +3452,8 @@ gint render_events (gboolean reset) {
 	source_params=(weed_plant_t **)weed_get_voidptr_array(event,"in_parameters",&weed_error);
 	in_params=weed_get_plantptr_array(inst,"in_parameters",&weed_error);
 	for (i=0;i<num_params;i++) {
-	  if (source_params[i]!=NULL&&is_init_pchange(event,source_params[i])) weed_leaf_copy(in_params[i],"value",source_params[i],"value");
+	  if (source_params[i]!=NULL&&is_init_pchange(event,source_params[i])) 
+	    weed_leaf_copy(in_params[i],"value",source_params[i],"value");
 	}
 	
 	if (weed_plant_has_leaf(filter,"init_func")) {
@@ -3441,7 +3466,7 @@ gint render_events (gboolean reset) {
 	  if (init_func!=NULL) {
 	    gchar *cwd=cd_to_plugin_dir(filter);
 	    (*init_func)(inst);
-	    dummyvar=chdir(cwd);
+	    lives_chdir(cwd,FALSE);
 	    g_free(cwd);
 	  }
 	  set_param_gui_readonly(inst);
@@ -3484,8 +3509,9 @@ gint render_events (gboolean reset) {
 
     if (cfile->old_frames==0) cfile->undo_start=cfile->undo_end=0;
     if (mainw->multitrack==NULL||!mainw->multitrack->pr_audio) {
-      com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->undo_start,cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
-      dummyvar=system (com);
+      com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->undo_start,
+			   cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+      lives_system (com,FALSE);
       g_free (com);
       mainw->is_rendering=mainw->internal_messaging=FALSE;
     }
@@ -3496,9 +3522,17 @@ gint render_events (gboolean reset) {
     reget_afilesize(mainw->current_file);
     mainw->multitrack=multi;
     mainw->filter_map=NULL;
+
+    if (audio_write_failed) {
+      int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
+      gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
+      do_write_failed_error_s(outfilename);
+    }
+
   }
 
   g_free(nlabel);
+  if (got_write_error) return 0;
   return 1;
 }
 
@@ -3738,13 +3772,13 @@ gboolean render_to_clip (gboolean new_clip) {
     if (prefs->rec_opts&REC_AUDIO) {
       do_threaded_dialog(_("Backing up audio..."),FALSE);
       com=g_strdup_printf("smogrify backup_audio %s",cfile->handle);
-      dummyvar=system(com);
+      lives_system(com,FALSE);
       g_free(com);
     }
     else {
       do_threaded_dialog(_("Clearing up clip..."),FALSE);
       com=g_strdup_printf("smogrify clear_tmp_files %s",cfile->handle);
-      dummyvar=system(com);
+      lives_system(com,FALSE);
       g_free(com);
     }
     end_threaded_dialog();
@@ -3770,12 +3804,20 @@ gboolean render_to_clip (gboolean new_clip) {
     mainw->event_list=NULL;
     if (new_clip) {
       gchar *tmp;
+      gint old_file=current_file;
       cfile->start=1;
       cfile->end=cfile->frames;
       set_undoable (NULL,FALSE);
       add_to_winmenu();
       current_file=mainw->current_file;
-      save_clip_values(current_file);
+      if (!save_clip_values(current_file)) {
+	close_current_file(old_file);
+	prefs->render_audio=TRUE;
+	mainw->effects_paused=FALSE;
+	deinit_render_effects();
+	audio_free_fnames();
+	return FALSE;
+      }
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
       switch_to_file ((mainw->current_file=0),current_file);
       d_print ((tmp=g_strdup_printf (_ ("rendered %d frames to new clip.\n"),cfile->frames)));
@@ -3785,7 +3827,10 @@ gboolean render_to_clip (gboolean new_clip) {
       lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 #endif
     }
-    else save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
+    else {
+      save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
+      if (mainw->com_failed||mainw->write_failed) do_header_write_error(mainw->current_file);
+    }
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);

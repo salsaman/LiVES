@@ -293,36 +293,36 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   g_printerr(_("Updating video playback plugin defaults in %s\n"),vpp_file);
 	     
   msg=g_strdup("LiVES vpp defaults file version 2\n");
-  dummyvar=write(fd,msg,strlen(msg));
+  if (!lives_write(fd,msg,strlen(msg),FALSE)) return;
   g_free(msg);
 
   len=strlen(mainw->vpp->name);
-  dummyvar=write(fd,&len,sizint);
-  dummyvar=write(fd,mainw->vpp->name,len);
+  if (!lives_write(fd,&len,sizint,FALSE)) return;
+  if (!lives_write(fd,mainw->vpp->name,len,FALSE)) return;
 
   version=(*mainw->vpp->version)();
   len=strlen(version);
-  dummyvar=write(fd,&len,sizint);
-  dummyvar=write(fd,version,len);
+  if (!lives_write(fd,&len,sizint,FALSE)) return;
+  if (!lives_write(fd,version,len,FALSE)) return;
 
-  dummyvar=write(fd,&(mainw->vpp->palette),sizint);
-  dummyvar=write(fd,&(mainw->vpp->YUV_sampling),sizint);
-  dummyvar=write(fd,&(mainw->vpp->YUV_clamping),sizint);
-  dummyvar=write(fd,&(mainw->vpp->YUV_subspace),sizint);
+  if (!lives_write(fd,&(mainw->vpp->palette),sizint,FALSE)) return;
+  if (!lives_write(fd,&(mainw->vpp->YUV_sampling),sizint,FALSE)) return;
+  if (!lives_write(fd,&(mainw->vpp->YUV_clamping),sizint,FALSE)) return;
+  if (!lives_write(fd,&(mainw->vpp->YUV_subspace),sizint,FALSE)) return;
 
-  dummyvar=write(fd,mainw->vpp->fwidth<=0?&intzero:&(mainw->vpp->fwidth),sizint);
-  dummyvar=write(fd,mainw->vpp->fheight<=0?&intzero:&(mainw->vpp->fheight),sizint);
+  if (!lives_write(fd,mainw->vpp->fwidth<=0?&intzero:&(mainw->vpp->fwidth),sizint,FALSE)) return;
+  if (!lives_write(fd,mainw->vpp->fheight<=0?&intzero:&(mainw->vpp->fheight),sizint,FALSE)) return;
 
-  dummyvar=write(fd,mainw->vpp->fixed_fpsd<=0.?&dblzero:&(mainw->vpp->fixed_fpsd),sizdbl);
-  dummyvar=write(fd,mainw->vpp->fixed_fps_numer<=0?&intzero:&(mainw->vpp->fixed_fps_numer),sizint);
-  dummyvar=write(fd,mainw->vpp->fixed_fps_denom<=0?&intzero:&(mainw->vpp->fixed_fps_denom),sizint);
+  if (!lives_write(fd,mainw->vpp->fixed_fpsd<=0.?&dblzero:&(mainw->vpp->fixed_fpsd),sizdbl,FALSE)) return;
+  if (!lives_write(fd,mainw->vpp->fixed_fps_numer<=0?&intzero:&(mainw->vpp->fixed_fps_numer),sizint,FALSE)) return;
+  if (!lives_write(fd,mainw->vpp->fixed_fps_denom<=0?&intzero:&(mainw->vpp->fixed_fps_denom),sizint,FALSE)) return;
 
-  dummyvar=write(fd,&(mainw->vpp->extra_argc),sizint);
+  if (!lives_write(fd,&(mainw->vpp->extra_argc),sizint,FALSE)) return;
 
   for (i=0;i<mainw->vpp->extra_argc;i++) {
     len=strlen(mainw->vpp->extra_argv[i]);
-    dummyvar=write(fd,&len,sizint);
-    dummyvar=write(fd,mainw->vpp->extra_argv[i],len);
+    if (!lives_write(fd,&len,sizint,FALSE)) return;
+    if (!lives_write(fd,mainw->vpp->extra_argv[i],len,FALSE)) return;
   }
 
   close(fd);
@@ -353,6 +353,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
     return;
   }
 
+  mainw->read_failed=FALSE;
   msg=g_strdup("LiVES vpp defaults file version 2\n");
   len=read(fd,buf,strlen(msg));
   memset(buf+len,0,1);
@@ -366,19 +367,33 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   g_free(msg);
 
   // plugin name
-  dummyvar=read(fd,&len,sizint);
-  dummyvar=read(fd,buf,len);
+  lives_read(fd,&len,sizint,TRUE);
+  lives_read(fd,buf,len,TRUE);
   memset(buf+len,0,1);
 
   if (strcmp(buf,mainw->vpp->name)) {
-    d_print_failed();
+    if (mainw->read_failed) {
+      mainw->read_failed=FALSE;
+      mainw->vpp=NULL;
+      do_read_failed_error(0, 0);
+      d_print_file_error_failed();
+    }
+    else d_print_failed();
     return;
   }
 
   // version string
   version=(*mainw->vpp->version)();
-  dummyvar=read(fd,&len,sizint);
-  dummyvar=read(fd,buf,len);
+  lives_read(fd,&len,sizint,TRUE);
+  lives_read(fd,buf,len,TRUE);
+
+  if (mainw->read_failed) {
+    mainw->read_failed=FALSE;
+    do_read_failed_error(0, 0);
+    d_print_file_error_failed();
+    return;
+  }
+
   memset(buf+len,0,1);
 
   if (strcmp(buf,version)) {
@@ -390,17 +405,17 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
     return;
   }
 
-  dummyvar=read(fd,&(mainw->vpp->palette),sizint);
-  dummyvar=read(fd,&(mainw->vpp->YUV_sampling),sizint);
-  dummyvar=read(fd,&(mainw->vpp->YUV_clamping),sizint);
-  dummyvar=read(fd,&(mainw->vpp->YUV_subspace),sizint);
-  dummyvar=read(fd,&(mainw->vpp->fwidth),sizint);
-  dummyvar=read(fd,&(mainw->vpp->fheight),sizint);
-  dummyvar=read(fd,&(mainw->vpp->fixed_fpsd),sizdbl);
-  dummyvar=read(fd,&(mainw->vpp->fixed_fps_numer),sizint);
-  dummyvar=read(fd,&(mainw->vpp->fixed_fps_denom),sizint);
+  lives_read(fd,&(mainw->vpp->palette),sizint,TRUE);
+  lives_read(fd,&(mainw->vpp->YUV_sampling),sizint,TRUE);
+  lives_read(fd,&(mainw->vpp->YUV_clamping),sizint,TRUE);
+  lives_read(fd,&(mainw->vpp->YUV_subspace),sizint,TRUE);
+  lives_read(fd,&(mainw->vpp->fwidth),sizint,TRUE);
+  lives_read(fd,&(mainw->vpp->fheight),sizint,TRUE);
+  lives_read(fd,&(mainw->vpp->fixed_fpsd),sizdbl,TRUE);
+  lives_read(fd,&(mainw->vpp->fixed_fps_numer),sizint,TRUE);
+  lives_read(fd,&(mainw->vpp->fixed_fps_denom),sizint,TRUE);
 
-  dummyvar=read(fd,&(mainw->vpp->extra_argc),sizint);
+  lives_read(fd,&(mainw->vpp->extra_argc),sizint,TRUE);
   
   if (vpp->extra_argv!=NULL) {
     for (i=0;vpp->extra_argv[i]!=NULL;i++) {
@@ -412,15 +427,24 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   mainw->vpp->extra_argv=g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
 
   for (i=0;i<mainw->vpp->extra_argc;i++) {
-    dummyvar=read(fd,&len,sizint);
+    lives_read(fd,&len,sizint,TRUE);
     mainw->vpp->extra_argv[i]=g_malloc(len+1);
-    dummyvar=read(fd,mainw->vpp->extra_argv[i],len);
+    lives_read(fd,mainw->vpp->extra_argv[i],len,TRUE);
     memset((mainw->vpp->extra_argv[i])+len,0,1);
   }
 
   mainw->vpp->extra_argv[i]=NULL;
 
   close(fd);
+
+  if (mainw->read_failed) {
+    mainw->read_failed=FALSE;
+    mainw->vpp=NULL;
+    d_print_file_error_failed();
+    do_read_failed_error(0, 0);
+    return;
+  }
+
   d_print_done();
 
 }
@@ -2405,7 +2429,9 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
     com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,cfile->start,cfile->end,capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST,mainw->rendered_fx->name);
     break;
   }
-  dummyvar=system(com);
+
+  // if the command fails we just give a warning
+  lives_system(com,FALSE);
   g_free(com);
 }
 
@@ -3341,16 +3367,21 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   gchar *com;
   gchar *res_string=NULL;
   gchar buff[32];
+  int retval;
 
   string=g_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);
   sfile=fopen(rfxfile,"w");
-  fputs(string,sfile);
+  lives_fputs(string,sfile);
   fclose(sfile);
   g_free(string);
 
   com=g_strdup_printf("%s >>%s",get_com,rfxfile);
-  dummyvar=system(com);
+  retval=lives_system(com,FALSE);
   g_free(com);
+
+  // command failed
+  if (retval) return NULL;
+
 
   // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
     
@@ -3377,15 +3408,23 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
     // get the delimiter
     rfxfile=g_strdup_printf("%ssmdef.%d",prefs->tmpdir,getpid());
     com=g_strdup_printf("%s%s get_define > %s",prefs->tmpdir,rfx_scrapname,rfxfile);
-    dummyvar=system(com);
+    retval=lives_system(com,FALSE);
     g_free(com);
 
+    // command to get_define failed
+    if (retval) return NULL;
+
     sfile=fopen(rfxfile,"r");
-    dummychar=fgets(buff,32,sfile);
+    if (!sfile) return NULL;
+    mainw->read_failed=FALSE;
+    lives_fgets(buff,32,sfile);
     fclose(sfile);
 
     unlink(rfxfile);
     g_free(rfxfile);
+
+    if (mainw->read_failed) return NULL;
+
 
     g_snprintf(rfx->delim,2,"%s",buff);
 

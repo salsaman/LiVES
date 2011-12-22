@@ -2365,46 +2365,55 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
   d_print(msg);
   g_free(msg);
 
-  g_free (save_file);
 
-  dummyvar=write(fd,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING));
+  mainw->write_failed=FALSE;
+
+  lives_write(fd,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING),TRUE);
 
   nnodes=g_slist_length(omc_node_list);
-  dummyvar=write(fd,&nnodes,sizint);
+  lives_write(fd,&nnodes,sizint,TRUE);
 
   while (slist!=NULL) {
     mnode=(lives_omc_match_node_t *)slist->data;
     srchlen=strlen(mnode->srch);
 
-    dummyvar=write(fd,&srchlen,sizint);
-    dummyvar=write(fd,mnode->srch,srchlen);
+    lives_write(fd,&srchlen,sizint,TRUE);
+    lives_write(fd,mnode->srch,srchlen,TRUE);
 
-    dummyvar=write(fd,&mnode->macro,sizint);
-    dummyvar=write(fd,&mnode->nvars,sizint);
+    lives_write(fd,&mnode->macro,sizint,TRUE);
+    lives_write(fd,&mnode->nvars,sizint,TRUE);
     
     for (i=0;i<mnode->nvars;i++) {
-      dummyvar=write(fd,&mnode->offs0[i],sizint);
-      dummyvar=write(fd,&mnode->scale[i],sizdbl);
-      dummyvar=write(fd,&mnode->offs1[i],sizint);
+      if (mainw->write_failed) break;
+      lives_write(fd,&mnode->offs0[i],sizint,TRUE);
+      lives_write(fd,&mnode->scale[i],sizdbl,TRUE);
+      lives_write(fd,&mnode->offs1[i],sizint,TRUE);
       
-      dummyvar=write(fd,&mnode->min[i],sizint);
-      dummyvar=write(fd,&mnode->max[i],sizint);
+      lives_write(fd,&mnode->min[i],sizint,TRUE);
+      lives_write(fd,&mnode->max[i],sizint,TRUE);
 
-      dummyvar=write(fd,&mnode->matchp[i],sizint);
-      dummyvar=write(fd,&mnode->matchi[i],sizint);
+      lives_write(fd,&mnode->matchp[i],sizint,TRUE);
+      lives_write(fd,&mnode->matchi[i],sizint,TRUE);
     }
 
     omacro=omc_macros[mnode->macro];
 
     for (i=0;i<omacro.nparams;i++) {
-      dummyvar=write(fd,&mnode->map[i],sizint);
-      dummyvar=write(fd,&mnode->fvali[i],sizint);
-      dummyvar=write(fd,&mnode->fvald[i],sizdbl);
+      lives_write(fd,&mnode->map[i],sizint,TRUE);
+      lives_write(fd,&mnode->fvali[i],sizint,TRUE);
+      lives_write(fd,&mnode->fvald[i],sizdbl,TRUE);
     }
     slist=slist->next;
   }
   close (fd);
-  d_print_done();
+
+  if (mainw->write_failed) {
+    do_write_failed_error_s(save_file);
+    d_print_file_error_failed();
+  }
+  else d_print_done();
+
+  g_free (save_file);
 
 }
 

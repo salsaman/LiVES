@@ -63,6 +63,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
   gboolean audio_resampled=FALSE;
   gboolean video_resampled=FALSE;
   gboolean video_resized=FALSE;
+  gboolean bad_header=FALSE;
+	  
   gint frames=cfile->frames;
 
   reorder_leave_back=FALSE;
@@ -137,9 +139,12 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  cfile->progress_end=cfile->frames;
 	  
 	  unlink(cfile->info_file);
-	  dummyvar=system(com);
+	  mainw->com_failed=FALSE;
+	  lives_system(com,FALSE);
 	  g_free (com);
 	  
+	  if (mainw->com_failed) return FALSE;
+
 	  mainw->resizing=TRUE;
 	  rs_builtin=TRUE;
 	}
@@ -148,7 +153,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  int error;
 	  weed_plant_t *first_out;
 	  weed_plant_t *ctmpl;
-	  
+
 	  rs_builtin=FALSE;
 	  resize_rfx=mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx;
 	  first_out=get_enabled_channel(resize_rfx->source,0,FALSE);
@@ -184,7 +189,10 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	cfile->vsize=height;
 	
 	save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 	save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+	if (bad_header) do_header_write_error(mainw->current_file);
 
 	cfile->undo1_dbl=fps;
 	cfile->undo_start=1;
@@ -236,7 +244,10 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  return FALSE;
 	}
 	save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 	save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
+	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+	if (bad_header) do_header_write_error(mainw->current_file);
 
        	video_resampled=TRUE;
 	video_resized=TRUE;
@@ -307,9 +318,12 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	cfile->undo1_dbl=cfile->fps;
 	
 	unlink(cfile->info_file);
-	dummyvar=system(com);
+	mainw->com_failed=FALSE;
+	lives_system(com,FALSE);
 	g_free (com);
 	
+	if (mainw->com_failed) return FALSE;
+
 	mainw->resizing=TRUE;
       }
       else {
@@ -351,7 +365,10 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
       cfile->fx_frame_pump=0;
 
       save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
+      if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
       save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
+      if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+      if (bad_header) do_header_write_error(mainw->current_file);
 
       if (audio_resampled) cfile->undo_action=UNDO_ATOMIC_RESAMPLE_RESIZE;
       else {
@@ -646,6 +663,7 @@ static void on_reorder_activate (int rwidth, int rheight) {
   cfile->next_event=NULL;
   
   save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
+  if (mainw->com_failed||mainw->write_failed) do_header_write_error(mainw->current_file);
 
   switch_to_file(mainw->current_file,mainw->current_file);
   if (mainw->current_file>0) {
@@ -758,7 +776,9 @@ on_resaudio_ok_clicked                      (GtkButton *button,
      // pb rate != real rate - stretch to pb rate and resample 
       unlink (cfile->info_file);
       com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d %.4f",cfile->handle,cfile->arps,cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,cfile->achans,cfile->asampsize,cur_signed,cur_endian,audio_stretch);
-      dummyvar=system (com);
+      mainw->com_failed=FALSE;
+      lives_system (com,FALSE);
+      if (mainw->com_failed) return;
       do_progress_dialog (TRUE,FALSE,_ ("Resampling audio")); // TODO - allow cancel ??
       g_free (com);
       cfile->arate=cfile->arps=arps;
@@ -766,7 +786,9 @@ on_resaudio_ok_clicked                      (GtkButton *button,
     else {
       unlink (cfile->info_file);
       com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d",cfile->handle,cfile->arps,cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,achans,asampsize,asigned,aendian);
-      dummyvar=system (com);
+      mainw->com_failed=FALSE;
+      lives_system (com,FALSE);
+      if (mainw->com_failed) return;
       do_progress_dialog (TRUE,FALSE,_ ("Resampling audio"));
       g_free (com);
     }
@@ -927,6 +949,7 @@ on_resample_vid_ok (GtkButton *button, GtkEntry *entry)
   weed_timecode_t in_time=0;
   gdouble old_fps=cfile->fps;
   gboolean ratio_fps;
+  gboolean bad_header=FALSE;
   weed_plant_t *real_back_list=NULL;
   weed_plant_t *new_event_list=NULL;
 
@@ -1036,7 +1059,10 @@ on_resample_vid_ok (GtkButton *button, GtkEntry *entry)
   set_undoable (_("Resample"),TRUE);
 
   save_clip_value(mainw->current_file,CLIP_DETAILS_FPS,&cfile->fps);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
   save_clip_value(mainw->current_file,CLIP_DETAILS_PB_FPS,&cfile->fps);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  if (bad_header) do_header_write_error(mainw->current_file);
 
   switch_to_file(mainw->current_file,mainw->current_file);
 
@@ -2197,6 +2223,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
   gdouble arate=cfile->arate/cfile->fps;
   gchar *msg;
   gboolean has_lmap_error=FALSE;
+  gboolean bad_header=FALSE;
 
   // change playback rate
   if (button!=NULL) {
@@ -2324,8 +2351,12 @@ on_change_speed_ok_clicked                (GtkButton *button,
   cfile->ratio_fps=FALSE;
 
   save_clip_value(mainw->current_file,CLIP_DETAILS_FPS,&cfile->fps);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
   save_clip_value(mainw->current_file,CLIP_DETAILS_PB_FPS,&cfile->fps);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
   save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  if (bad_header) do_header_write_error(mainw->current_file);
 
   switch_to_file(mainw->current_file,mainw->current_file);
 
@@ -2371,6 +2402,9 @@ gint reorder_frames(int rwidth, int rheight) {
 
   cfile->progress_start=1;
   cfile->progress_end=save_event_frames();  // we convert cfile->event_list to a block and save it
+
+  if (cfile->progress_end==-1) return -cur_frames; // save_event_frames failed
+
   if (cur_frames>cfile->progress_end) cfile->progress_end=cur_frames;
 
   cfile->next_event=NULL;
@@ -2382,7 +2416,12 @@ gint reorder_frames(int rwidth, int rheight) {
 
   unlink(cfile->info_file);
 
-  dummyvar=system(com);
+  mainw->com_failed=FALSE;
+  lives_system(com,FALSE);
+
+  if (mainw->com_failed) return -cur_frames;
+
+
   if (cfile->undo_action==UNDO_RESAMPLE) {
     if (mainw->current_file>0) {
       cfile->nopreview=cfile->nokeep=TRUE;
@@ -2450,7 +2489,10 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
   com=g_strdup_printf("smogrify deorder %s %d %d %d %s %d",cfile->handle,perf_start,cfile->frames,perf_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",leave_bak);
 
   unlink(cfile->info_file);
-  dummyvar=system(com);
+  mainw->com_failed=FALSE;
+  lives_system(com,TRUE);
+  if (mainw->com_failed) return cfile->frames;
+
   do_progress_dialog(TRUE,FALSE,_ ("Deordering frames"));
   g_free(com);
 
@@ -2487,7 +2529,15 @@ gboolean resample_clipboard(gdouble new_fps) {
     // copy .mgk to .img_ext and .img_ext to .bak (i.e redo the resample)
     com=g_strdup_printf("smogrify redo %s %d %d %s",cfile->handle,1,new_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     unlink(cfile->info_file);
-    dummyvar=system(com);
+    mainw->com_failed=FALSE;
+    lives_system(com,FALSE);
+
+    if (mainw->com_failed) {
+      mainw->no_switch_dprint=FALSE;
+      d_print_failed();
+      return FALSE;
+    }
+
     cfile->progress_start=1;
     cfile->progress_end=new_frames;
     cfile->old_frames=cfile->frames;
@@ -2509,7 +2559,7 @@ gboolean resample_clipboard(gdouble new_fps) {
       mainw->current_file=0;
       com=g_strdup_printf("smogrify undo %s %d %d %s",cfile->handle,old_frames+1,cfile->frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
       unlink(cfile->info_file);
-      dummyvar=system(com);
+      lives_system(com,FALSE);
       cfile->progress_start=old_frames+1;
       cfile->progress_end=cfile->frames;
       // show a progress dialog, not cancellable

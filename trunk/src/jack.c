@@ -72,10 +72,10 @@ gboolean lives_jack_init (void) {
 	com=g_strdup_printf("echo \"%s -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
 #endif
 #endif
-	dummyvar=system(com);
+	lives_system(com,FALSE);
 	g_free(com);
 	com=g_strdup_printf("/bin/chmod o+x %s",prefs->jack_aserver);
-	dummyvar=system(com);
+	lives_system(com,FALSE);
 	g_free(com);
       }
     }
@@ -780,7 +780,12 @@ static int audio_read (nframes_t nframes, void *arg) {
     mainw->rec_samples-=frames_out;
   }
 
-  dummyvar=write (mainw->aud_rec_fd,holding_buff,frames_out*(afile->asampsize/8)*afile->achans);
+  if (mainw->bad_aud_file==NULL) {
+    size_t target=frames_out*(afile->asampsize/8)*afile->achans,bytes;
+    // use write not lives_write - because of potential threading issues
+    bytes=write (mainw->aud_rec_fd,holding_buff,target);
+    if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
+  }
 
   free(holding_buff);
 

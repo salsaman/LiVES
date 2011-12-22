@@ -401,7 +401,8 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
     // temp kludge, symlink audiodump.pcm to wav file, then pretend we are playing
     // an opening preview . Doesn't work with fifo.
-    dummyvar=system ((tmp=g_strdup_printf ("/bin/ln -s %s/audiodump.pcm %s/%s/audiodump.pcm",prefs->tmpdir,prefs->tmpdir,cfile->handle)));
+    // and we dont really care if it doesnt work
+    lives_system ((tmp=g_strdup_printf ("/bin/ln -s %s/audiodump.pcm %s/%s/audiodump.pcm",prefs->tmpdir,prefs->tmpdir,cfile->handle)),FALSE);
     g_free(tmp);
     play_file();
     mainw->noswitch=FALSE;
@@ -434,7 +435,7 @@ lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *filename, g
   if (filename==NULL) filename=g_strdup_printf ("%s/streamout.yuv",prefs->tmpdir);
 
   // TODO - do_threaded_dialog
-  if (!(yuvout=creat (filename,O_CREAT))) {
+  if ((yuvout=creat (filename,O_CREAT))<0) {
     do_error_dialog (g_strdup_printf (_("Unable to open yuv4mpeg out stream %s\n"),filename));
     return FALSE;
   }
@@ -624,9 +625,19 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   gtk_widget_destroy(card_dialog);
   g_free(tvcardw);
 
-  dummyvar=system(com);
+  mainw->com_failed=FALSE;
+  lives_system(com,FALSE);
   g_free(com);
 
+  if (mainw->com_failed) {
+    mainw->com_failed=FALSE;
+    g_free(fname);
+    g_free(chanstr);
+    g_free(fifofile);
+    g_free(devstr);
+    return;
+  }
+			       
   if (!open_yuv4m_inner(fifofile,fname,new_file,YUV4_TYPE_TV,cardno)) {
     g_free(fname);
     g_free(chanstr);
@@ -704,8 +715,16 @@ on_live_fw_activate                      (GtkMenuItem     *menuitem,
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
   com=g_strdup_printf("smogrify open_fw_card %s %d %d %s",cfile->handle,cardno,cache,fifofile);
-  dummyvar=system(com);
+  mainw->com_failed=FALSE;
+  lives_system(com,FALSE);
   g_free(com);
+
+  if (mainw->com_failed) {
+    mainw->com_failed=FALSE;
+    g_free(fname);
+    g_free(fifofile);
+    return;
+  }
 
   if (!open_yuv4m_inner(fifofile,fname,new_file,YUV4_TYPE_FW,cardno)) {
     g_free(fname);

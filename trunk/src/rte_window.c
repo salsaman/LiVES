@@ -131,22 +131,30 @@ static void save_keymap2_file(gchar *kfname) {
     return;
   }
 
-  dummyvar=write(kfd,&version,sizint);
+  mainw->write_failed=FALSE;
+
+  lives_write(kfd,&version,sizint,TRUE);
 
   for (i=1;i<=prefs->rte_keys_virtual;i++) {
     for (j=0;j<modes;j++) {
       if (rte_keymode_valid(i,j,TRUE)) {
-	dummyvar=write(kfd,&i,sizint);
+	lives_write(kfd,&i,sizint,TRUE);
 	hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE));
 	slen=strlen(hashname);
-	dummyvar=write(kfd,&slen,sizint);
-	dummyvar=write(kfd,hashname,slen);
+	lives_write(kfd,&slen,sizint,TRUE);
+	lives_write(kfd,hashname,slen,TRUE);
 	g_free(hashname);
 	write_key_defaults(kfd,i-1,j);
       }
     }
   }
   close(kfd);
+
+  if (mainw->write_failed) {
+    do_write_failed_error(0, 0);
+    mainw->write_failed=FALSE;
+  }
+
 }
 
 
@@ -191,20 +199,20 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     return FALSE;
   }
 
-  fputs("LiVES keymap file version 4\n",kfile);
+  lives_fputs("LiVES keymap file version 4\n",kfile);
 
   if (!update) {
     for (i=1;i<=prefs->rte_keys_virtual;i++) {
       for (j=0;j<modes;j++) {
 	if (rte_keymode_valid(i,j,TRUE)) {
-	  fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)),kfile);
+	  lives_fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)),kfile);
 	}
       }
     }
   }
   else {
     for (i=0;i<g_list_length(list);i++) {
-      fputs(g_list_nth_data(list,i),kfile);
+      lives_fputs(g_list_nth_data(list,i),kfile);
     }
   }
 
@@ -254,7 +262,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   
   msg=g_strdup("LiVES filter defaults file version 1.1\n");
   
-  dummyvar=write(fd,msg,strlen(msg));
+  lives_write(fd,msg,strlen(msg),TRUE);
   g_free(msg);
 
   numfx=rte_get_numfilters();
@@ -264,21 +272,33 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   close(fd);
 
   if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
-    msg=g_strdup_printf (_("\n\nUnable to write default sizes file\n%s\nError code %d\n"),prefs->fxsizesfile,errno);
+    msg=g_strdup_printf (_("\n\nUnable to write filter defaults file\n%s\nError code %d\n"),prefs->fxsizesfile,errno);
     do_error_dialog (msg);
     g_free (msg);
-    d_print_failed();
+    d_print_file_error_failed();
     return;
   }
 
   msg=g_strdup("LiVES generator default sizes file version 2\n");
   
-  dummyvar=write(fd,msg,strlen(msg));
+  mainw->write_failed=FALSE;
+
+  lives_write(fd,msg,strlen(msg),TRUE);
   g_free(msg);
 
   for (i=0;i<numfx;i++) write_generator_sizes(fd,i);
 
   close(fd);
+
+
+  if (mainw->write_failed) {
+    msg=g_strdup_printf (_("\n\nUnable to write generator sizes file\n%s\nError code %d\n"),prefs->fxsizesfile,errno);
+    do_error_dialog (msg);
+    g_free (msg);
+    d_print_file_error_failed();
+    mainw->write_failed=FALSE;
+    return;
+  }
 
   d_print_done();
 
@@ -1600,7 +1620,7 @@ void load_default_keymap(void) {
   threaded_dialog_spin();
   if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
     com=g_strdup_printf("/bin/cp %s %s",keymap_template,keymap_file);
-    dummyvar=system(com);
+    lives_system(com,TRUE); // allow this to fail - we will check for errors below
     g_free(com);
   }
   if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {

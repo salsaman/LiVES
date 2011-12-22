@@ -75,9 +75,14 @@ get_pref(const gchar *key, gchar *val, gint maxlen) {
     tempdir_warning();
   }
   else {
-    dummychar=fgets(val,maxlen-1,valfile);
+    mainw->read_failed=FALSE;
+    lives_fgets(val,maxlen-1,valfile);
     fclose(valfile);
     unlink(vfile);
+    if (mainw->read_failed) {
+      tempdir_warning();
+      mainw->read_failed=FALSE;
+    }
   }
   g_free(vfile);
   g_free(com);
@@ -153,9 +158,14 @@ get_pref_default(const gchar *key, gchar *val, gint maxlen) {
     tempdir_warning();
   }
   else {
-    dummychar=fgets(val,maxlen,valfile);
+    mainw->read_failed=FALSE;
+    lives_fgets(val,maxlen,valfile);
     fclose(valfile);
     unlink(vfile);
+    if (mainw->read_failed) {
+      tempdir_warning();
+      mainw->read_failed=FALSE;
+    }
   }
   g_free(vfile);
   g_free(com);

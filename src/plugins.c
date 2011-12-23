@@ -63,7 +63,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
       gchar *msg2;
       g_free (com);
       if (mainw->is_ready) {
-	if ((outfile_fd=open(outfile,O_RDONLY))) {
+	if ((outfile_fd=open(outfile,O_RDONLY))>-1) {
 	  bytes=read (outfile_fd,&buffer,65535);
 	  close (outfile_fd);
 	  unlink (outfile);
@@ -1335,7 +1335,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
   FILE *rfile;
 
   if (vpp!=NULL&&vpp->get_audio_fmts!=NULL) {
-    fmts=(*vpp->get_audio_fmts)();
+    fmts=(*vpp->get_audio_fmts)(); // const, so do not free()
 
     // make audiostream plugin name
     astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
@@ -1345,15 +1345,22 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
     com=g_strdup_printf("%s get_formats",astreamer);
 
     rfile=popen(com,"r");
+    if (!rfile) {
+      // command failed
+      do_com_failed_error(com,0);
+      g_free(astreamer);
+      g_free(com);
+      return ret;
+    }
     rlen=fread(buf,1,1023,rfile);
     pclose(rfile);
     memset(buf+rlen,0,1);
     g_free(com);
-
+    
     nfmts=get_token_count(buf,'|');
     array=g_strsplit(buf,"|",nfmts);
     sfmts=g_malloc(nfmts*sizint);
-
+    
     for (i=0;i<nfmts;i++) {
       if (array[i]!=NULL&&strlen(array[i])>0) sfmts[j++]=atoi(array[i]);
     }
@@ -1368,6 +1375,14 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
 	com=g_strdup_printf("%s check %d",astreamer,fmts[i]);
 
 	rfile=popen(com,"r");
+	if (!rfile) {
+	  // command failed
+	  do_com_failed_error(com,0);
+	  g_free(astreamer);
+	  g_free(com);
+	  g_free(sfmts);
+	  return ret;
+	}
 	rlen=fread(buf,1,1023,rfile);
 	pclose(rfile);
 	memset(buf+rlen,0,1);
@@ -3371,9 +3386,21 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
 
   string=g_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);
   sfile=fopen(rfxfile,"w");
+  if (sfile==NULL) {
+    do_write_failed_error_s(rfxfile);
+    g_free(string);
+    return NULL;
+  }
+
+  mainw->write_failed=FALSE;
   lives_fputs(string,sfile);
   fclose(sfile);
   g_free(string);
+  if (mainw->write_failed) {
+    do_write_failed_error_s(rfxfile);
+    g_free(string);
+    return NULL;
+  }
 
   com=g_strdup_printf("%s >>%s",get_com,rfxfile);
   retval=lives_system(com,FALSE);
@@ -3415,7 +3442,10 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
     if (retval) return NULL;
 
     sfile=fopen(rfxfile,"r");
-    if (!sfile) return NULL;
+    if (!sfile) {
+      do_read_failed_error_s(rfxfile);
+      return NULL;
+    }
     mainw->read_failed=FALSE;
     lives_fgets(buff,32,sfile);
     fclose(sfile);

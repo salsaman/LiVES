@@ -3612,6 +3612,7 @@ void weed_generator_end (weed_plant_t *inst) {
   gboolean is_bg=FALSE;
   gint current_file=mainw->current_file,pre_src_file=mainw->pre_src_file;
   gboolean clip_switched=mainw->clip_switched;
+  gint wts=mainw->whentostop;
 
   if (inst==NULL) {
     g_printerr("  WARNING: inst was NULL !    ");
@@ -3671,8 +3672,6 @@ void weed_generator_end (weed_plant_t *inst) {
     return;
   }
 
-
-
   if (mainw->new_blend_file!=-1&&is_bg) {
     mainw->blend_file=mainw->new_blend_file;
     mainw->new_blend_file=-1;
@@ -3688,6 +3687,7 @@ void weed_generator_end (weed_plant_t *inst) {
   if (is_bg) {
     mainw->current_file=current_file;
     mainw->pre_src_file=pre_src_file;
+    mainw->whentostop=wts;
   }
 
   if (mainw->current_file==-1) mainw->cancelled=CANCEL_GENERATOR_END;

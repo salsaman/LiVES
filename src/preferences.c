@@ -1490,6 +1490,13 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
       g_free(astreamer);
       
       rfile=popen(com,"r");
+      if (!rfile) {
+	// command failed
+	do_com_failed_error(com,0);
+	g_free(com);
+	return;
+      }
+
       rlen=fread(buf,1,1023,rfile);
       pclose(rfile);
       memset(buf+rlen,0,1);

@@ -42,11 +42,12 @@ gboolean save_clip_values(gint which) {
 
   asigned=!(mainw->files[which]->signed_endian&AFORM_UNSIGNED);
   endian=mainw->files[which]->signed_endian&AFORM_BIG_ENDIAN;
-  lives_header=g_strdup_printf("%s/%s/header.lives",prefs->tmpdir,mainw->files[which]->handle);
+  lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
 
   mainw->clip_header=fopen(lives_header,"w");
 
   if (mainw->clip_header==NULL) {
+    do_write_failed_error_s(lives_header);
     g_free(lives_header);
     return FALSE;
   }
@@ -1475,17 +1476,23 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     new_stderr=open(new_stderr_name,O_CREAT|O_RDWR|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
     g_free(redir);
-    redir=g_strdup_printf("1>&2 2>%s",new_stderr_name);
 
-    mainw->iochan=g_io_channel_unix_new(new_stderr);
-    g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
-    g_io_channel_set_buffer_size(mainw->iochan,0);
-    g_io_channel_set_flags(mainw->iochan,G_IO_FLAG_NONBLOCK,&gerr);
-    if (gerr!=NULL) g_error_free(gerr);
-    gerr=NULL;
-
-    mainw->optextview=create_output_textview();
-
+    if (new_stderr<0) {
+      redir=g_strdup("1>&2");
+      do_write_failed_error_s(new_stderr_name);
+    }
+    else {
+      redir=g_strdup_printf("1>&2 2>%s",new_stderr_name);
+      
+      mainw->iochan=g_io_channel_unix_new(new_stderr);
+      g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
+      g_io_channel_set_buffer_size(mainw->iochan,0);
+      g_io_channel_set_flags(mainw->iochan,G_IO_FLAG_NONBLOCK,&gerr);
+      if (gerr!=NULL) g_error_free(gerr);
+      gerr=NULL;
+      
+      mainw->optextview=create_output_textview();
+    }
   }
   else {
     g_free(redir);
@@ -3746,7 +3753,7 @@ void open_set_file (const gchar *set_name, gint clipnum) {
 
   }
   else {
-    // pre 0.9.6
+    // pre 0.9.6 <- ancient code
     size_t nlen;
     int set_fd;
     int pb_fps;
@@ -4453,6 +4460,11 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   }
 
   rfile=fopen(recovery_file,"r");
+
+  if (!rfile) {
+    do_read_failed_error_s(recovery_file);
+    return FALSE;
+  }
 
   do_threaded_dialog(_("Recovering files"),FALSE);
 

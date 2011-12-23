@@ -4369,7 +4369,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   g_free(msg);
 
   ordfile=g_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
-  orderfile=fopen(ordfile,"r");
+  orderfile=fopen(ordfile,"r"); // no we can't assert this, because older sets did not have this file
   g_free(ordfile);
 
   mainw->suppress_dprint=TRUE;
@@ -5123,6 +5123,8 @@ on_fs_preview_clicked                  (GtkButton       *button,
     lives_system(com,FALSE);
     g_free(com);
  
+    // TODO - timeout
+
     while (!(ifile=fopen (info_file,"r"))) {
       g_usleep (prefs->sleep_time);
     }
@@ -5130,7 +5132,6 @@ on_fs_preview_clicked                  (GtkButton       *button,
     mainw->read_failed=FALSE;
     lives_fgets(mainw->msg,512,ifile);
     fclose (ifile);
-
 
     if (mainw->read_failed) {
       mainw->read_failed=FALSE;
@@ -5227,6 +5228,8 @@ on_fs_preview_clicked                  (GtkButton       *button,
       g_free(info_file);
       return;
     }
+
+    // TODO - timeout
 
     while ((!(ifile=fopen (info_file,"r")))&&mainw->in_fs_preview) {
       while (g_main_context_iteration (NULL,FALSE));

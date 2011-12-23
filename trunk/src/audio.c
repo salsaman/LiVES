@@ -778,6 +778,13 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     out_fd=open(outfilename,O_WRONLY|O_CREAT|O_SYNC,S_IRUSR|S_IWUSR);
     g_free(outfilename);
     
+    if (out_fd<0) {
+      if (mainw->write_failed_file!=NULL) g_free(mainw->write_failed_file);
+      mainw->write_failed_file=g_strdup(outfilename);
+      mainw->write_failed=TRUE;
+      return 0l;
+    }
+
     cur_size=get_file_size(out_fd);
 
     ins_pt*=out_achans*out_arate*out_asamps;
@@ -851,14 +858,19 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       else {
 	if (track<NSTOREDFDS&&storedfds[track]>-1) close(storedfds[track]);
 	in_fd[track]=open(infilename,O_RDONLY);
-	
+	if (in_fd[track]<0) {
+	  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+	  mainw->read_failed_file=g_strdup(infilename);
+	  mainw->read_failed=TRUE;
+	}
+
 	if (track<NSTOREDFDS) {
 	  storedfds[track]=in_fd[track];
 	  storedfnames[track]=g_strdup(infilename);
 	}
       }
 
-      lseek64(in_fd[track],seekstart[track],SEEK_SET);
+      if (in_fd[track]>-1) lseek64(in_fd[track],seekstart[track],SEEK_SET);
       
       g_free(infilename);
     }
@@ -968,9 +980,10 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
       in_buff=g_malloc(tbytes);
 
-      if (zavel<0.) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
+      if (zavel<0. && in_fd[track]>-1) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
 
-      bytes_read=read(in_fd[track],in_buff,tbytes);
+      bytes_read=0;
+      if (in_fd[track]>-1) bytes_read=read(in_fd[track],in_buff,tbytes);
 
       if (zavel<0.) seekstart[track]-=bytes_read;
 
@@ -1072,7 +1085,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
   // close files
   for (track=0;track<nfiles;track++) {
     if (!is_silent[track]) {
-      if (track>=NSTOREDFDS) close (in_fd[track]);
+      if (track>=NSTOREDFDS && in_fd[track]>-1) close (in_fd[track]);
     }
     for (c=0;c<out_achans;c++) {
       if (chunk_float_buffer[track*out_achans+c]!=NULL) g_free(chunk_float_buffer[track*out_achans+c]);
@@ -1105,6 +1118,12 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
 
   mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+  if (mainw->aud_rec_fd<0) {
+    do_write_failed_error_s(outfilename);
+    g_free(outfilename);
+    return;
+  }
+
   g_free(outfilename);
 
   mainw->jackd_read=jack_get_driver(0,FALSE);
@@ -1168,6 +1187,11 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
 
   mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+  if (mainw->aud_rec_fd<0) {
+    do_write_failed_error_s(outfilename);
+    g_free(outfilename);
+    return;
+  }
   g_free(outfilename);
 
   mainw->pulsed_read=pulse_get_driver(FALSE);
@@ -2112,6 +2136,8 @@ gboolean start_audio_stream(void) {
 
     _exit(0);                    
   }
+
+  // TODO - timeout
 
   while (1) {
     afd=open(astream_name,O_WRONLY|O_SYNC);

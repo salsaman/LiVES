@@ -1115,9 +1115,17 @@ void get_frame_count(gint idx) {
   lives_system(com,FALSE);
   g_free(com);
   
-  if (mainw->com_failed) return;
-
+  if (mainw->com_failed) {
+    g_free(info_file);
+    return;
+  }
   info_fd=open(info_file,O_RDONLY);
+
+  if (info_fd<0) {
+    do_read_failed_error_s(info_file);
+    g_free(info_file);
+    return;
+  }
 
   if ((bytes=read(info_fd,mainw->msg,256))>0) {
     memset(mainw->msg+bytes,0,1);
@@ -2496,17 +2504,20 @@ gboolean check_file(const gchar *file_name, gboolean check_existing) {
       }
       g_free (msg);
     }
-    check=open(lfile_name,O_RDWR);
+    check=open(lfile_name,O_WRONLY);
     exists=TRUE;
   }
   // if not, check if we can write to it
   else {
-    check=open(lfile_name,O_CREAT|O_EXCL|O_RDWR,S_IRUSR|S_IWUSR);
+    check=open(lfile_name,O_CREAT|O_EXCL|O_WRONLY,S_IRUSR|S_IWUSR);
   }
 
   if (check<0) {
-    if (errno==EACCES&&mainw!=NULL&&mainw->is_ready) {
-      do_file_perm_error(lfile_name);
+    if (mainw!=NULL&&mainw->is_ready) {
+      if (errno==EACCES)
+	do_file_perm_error(lfile_name);
+      else 
+	do_write_failed_error_s(lfile_name);
     }
     g_free(lfile_name);
     return FALSE;

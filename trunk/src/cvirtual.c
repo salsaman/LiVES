@@ -95,7 +95,7 @@ gboolean load_frame_index(gint fileno) {
   fd=open(fname,O_RDONLY);
 
   if (fd<0) {
-    do_write_failed_error_s(fname);
+    do_read_failed_error_s(fname);
     g_free(fname);
     return FALSE;
   }

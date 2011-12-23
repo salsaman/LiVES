@@ -194,6 +194,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	 else filename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,mainw->files[new_file]->handle);
 	 pulsed->fd=open(filename,O_RDONLY);
 	 if (pulsed->fd==-1) {
+	   // dont show gui errors - we are running in realtime thread
 	   g_printerr("pulsed: error opening %s\n",filename);
 	   pulsed->playing_file=-1;
 	 }

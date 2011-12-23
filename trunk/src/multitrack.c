@@ -402,7 +402,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   // layout_numbering simply maps our clip handles to clip numbers in the current layout
   // we assume the order hasnt changed (it cant) and there are no gaps (we have just reloaded)
 
-  //but the numbering mayhave changed (for example we started last time in mt mode, this time in ce mode)
+  //but the numbering may have changed (for example we started last time in mt mode, this time in ce mode)
 
   int fd,vari,clipn,offs;
   gdouble vard;
@@ -16831,7 +16831,7 @@ GList *load_layout_map(void) {
   // to files (clips)
 
   int fd;
-  gchar *lmap_name=g_strdup_printf("%s/%s/layouts/layout.map",prefs->tmpdir,mainw->set_name);
+  gchar *lmap_name=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
   GList *lmap=NULL;
   gchar *handle;
   gint64 unique_id;
@@ -16850,9 +16850,11 @@ GList *load_layout_map(void) {
   }
 
   fd=open(lmap_name,O_RDONLY);
-  g_free(lmap_name);
-
-  if (fd<0) return NULL;
+  if (fd<0) {
+    do_read_failed_error_s(lmap_name);
+    g_free(lmap_name);
+    return NULL;
+  }
 
   while (1) {
     bytes=read(fd,&len,sizint);
@@ -16917,6 +16919,11 @@ GList *load_layout_map(void) {
 
   close(fd);
 
+  if (err) {
+    do_read_failed_error_s(lmap_name);
+  }
+
+  g_free(lmap_name);
   return lmap;
 }
 

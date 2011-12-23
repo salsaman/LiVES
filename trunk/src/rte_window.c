@@ -166,6 +166,7 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   gchar *msg,*tmp;
   GList *list=NULL;
   gboolean update=FALSE;
+  gboolean got_err=FALSE;
 
   gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
   gchar *keymap_file2=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
@@ -199,10 +200,12 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     return FALSE;
   }
 
+  mainw->write_failed=FALSE;
   lives_fputs("LiVES keymap file version 4\n",kfile);
 
   if (!update) {
     for (i=1;i<=prefs->rte_keys_virtual;i++) {
+      if (mainw->write_failed) break;
       for (j=0;j<modes;j++) {
 	if (rte_keymode_valid(i,j,TRUE)) {
 	  lives_fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)),kfile);
@@ -218,6 +221,13 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   fclose (kfile);
 
+  if (mainw->write_failed) {
+    mainw->write_failed=FALSE;
+    do_write_failed_error_s(keymap_file);
+    got_err=FALSE;
+    d_print_file_error_failed();
+  }
+
   // if we have default values, save as newer style
   if (has_key_defaults()) {
     save_keymap2_file(keymap_file2);
@@ -227,7 +237,7 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   g_free(keymap_file2);
   g_free(keymap_file);
 
-  d_print_done();
+  if (!got_err) d_print_done();
 
   return FALSE;
 }

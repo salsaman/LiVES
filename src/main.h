@@ -668,7 +668,7 @@ void do_write_failed_error_s(const char *filename);
 void do_read_failed_error_s(const char *filename);
 void do_write_failed_error(ssize_t wrote, size_t target);
 void do_read_failed_error(ssize_t read, size_t target);
-void do_header_write_error(int clip);
+gboolean do_header_write_error(int clip);
 void do_header_read_error(int clip);
 void do_chdir_failed_error(const char *dir);
 

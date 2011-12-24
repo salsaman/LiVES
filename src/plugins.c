@@ -3382,25 +3382,31 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   gchar *com;
   gchar *res_string=NULL;
   gchar buff[32];
-  int retval;
+  int retval=0;
 
   string=g_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);
-  sfile=fopen(rfxfile,"w");
-  if (sfile==NULL) {
-    do_write_failed_error_s(rfxfile);
-    g_free(string);
-    return NULL;
-  }
 
-  mainw->write_failed=FALSE;
-  lives_fputs(string,sfile);
-  fclose(sfile);
-  g_free(string);
-  if (mainw->write_failed) {
-    do_write_failed_error_s(rfxfile);
-    g_free(string);
-    return NULL;
-  }
+  do {
+    sfile=fopen(rfxfile,"w");
+    if (sfile==NULL) {
+      retval=do_write_failed_error_s_with_retry(rfxfile,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) {
+	g_free(string);
+	return NULL;
+      }
+    }
+    else {
+      mainw->write_failed=FALSE;
+      lives_fputs(string,sfile);
+      fclose(sfile);
+      g_free(string);
+      if (mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(rfxfile,NULL,NULL);
+	if (retval==LIVES_CANCEL) return NULL;
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
 
   com=g_strdup_printf("%s >>%s",get_com,rfxfile);
   retval=lives_system(com,FALSE);

@@ -89,8 +89,32 @@ typedef enum {
 
 typedef enum {
   LIVES_DIALOG_WARN,
-  LIVES_DIALOG_YESNO
+  LIVES_DIALOG_YESNO,
+  LIVES_DIALOG_CANCEL_RETRY
 } lives_dialog_t;
+
+
+// return values from cancel/retry dialog - should add LIVES_YES and LIVES_NO
+enum {
+  LIVES_CANCEL=1,
+  LIVES_RETRY
+};
+
+
+typedef enum {
+  LIVES_RENDER_ERROR_NONE=0,
+  LIVES_RENDER_READY,
+  LIVES_RENDER_PROCESSING,
+  LIVES_RENDER_EFFECTS_PAUSED,
+  LIVES_RENDER_COMPLETE,
+  LIVES_RENDER_WARNING,
+  LIVES_RENDER_WARNING_READ_FRAME,
+  LIVES_RENDER_ERROR,
+  LIVES_RENDER_ERROR_WRITE_FRAME,
+  LIVES_RENDER_ERROR_WRITE_AUDIO
+} lives_render_error_t;
+
+
 
 /// set in set_palette_colours()
 typedef struct {
@@ -392,7 +416,7 @@ typedef struct {
 
   /// internal fx
   gboolean internal_messaging;
-  gint (*progress_fn) (gboolean reset);
+  lives_render_error_t (*progress_fn) (gboolean reset);
 
   volatile gboolean threaded_dialog;
 
@@ -962,6 +986,8 @@ typedef struct {
   gchar *read_failed_file;
   gchar *write_failed_file;
   gchar *bad_aud_file;
+
+  lives_render_error_t render_error;
 
 } mainwindow;
 

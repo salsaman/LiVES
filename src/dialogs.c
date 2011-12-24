@@ -164,6 +164,15 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_YES);
     break;
+  case LIVES_DIALOG_CANCEL_RETRY:
+    dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
+    gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - File Error"));
+    mainw->warning_label = gtk_label_new (_("File Error"));
+    warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, LIVES_CANCEL);
+    warning_okbutton = gtk_button_new_from_stock ("gtk-redo");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, LIVES_RETRY);
+    break;
   default:
     return NULL;
     break;
@@ -280,6 +289,36 @@ gboolean do_yesno_dialog(const gchar *text) {
   while (g_main_context_iteration(NULL,FALSE));
   return (response==GTK_RESPONSE_YES);
 }
+
+
+
+// returns LIVES_CANCEL or LIVES_RETRY
+int do_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
+  int response;
+  gchar *mytext;
+  GtkWidget *warning;
+
+  if (!prefs->show_gui) {
+    transient=NULL;
+  } else {
+    if (transient==NULL) {
+      if (mainw->multitrack==NULL) transient=GTK_WINDOW(mainw->LiVES);
+      else transient=GTK_WINDOW(mainw->multitrack->window);
+    }
+  }
+
+  mytext=g_strdup(text); // translation issues
+  warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_CANCEL_RETRY);
+  if (mytext!=NULL) g_free(mytext);
+
+  response=gtk_dialog_run (GTK_DIALOG (warning));
+  gtk_widget_destroy (warning);
+
+  while (g_main_context_iteration(NULL,FALSE));
+  return response;
+}
+
+
 
 
 
@@ -819,6 +858,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
   progress_count=0;
 
+  mainw->render_error=LIVES_RENDER_ERROR_NONE;
+
   if (!visible) {
     if (mainw->event_list!=NULL) {
       // get audio start time
@@ -855,7 +896,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
     else lives_set_cursor_style(LIVES_CURSOR_BUSY,GDK_WINDOW(cfile->proc_ptr->processing->window));
 
-    if (cfile->opening&&(capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
+    if (cfile->opening&&(capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
+			 (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
       if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Preview"), NULL);
       gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Preview"), NULL);
       gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, 0);
@@ -896,7 +938,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     // video playback
 
 #ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jack_can_stop&&mainw->multitrack==NULL&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES)&&cfile->next_event==NULL)) {
+    if (mainw->jack_can_stop&&mainw->multitrack==NULL&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&
+	!(mainw->record&&!(prefs->rec_opts&REC_FRAMES)&&cfile->next_event==NULL)) {
       // calculate the start position from jack transport
 
       gint64 ntc=jack_transport_get_time()*U_SEC;
@@ -926,19 +969,22 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     // WARNING: origticks could be negative
 
-    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-(mainw->offsetticks=get_event_timecode(mainw->multitrack->pb_start_event));
+    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-
+      (mainw->offsetticks=get_event_timecode(mainw->multitrack->pb_start_event));
     mainw->origsecs=origticks/U_SEC;
     mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
   }
 
-  if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(mainw->play_start-1.)/cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
+  if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(mainw->play_start-1.)/
+					     cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
 
 
 
   // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) {
+  if (prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&cfile->laudio_time>0.&&
+      !mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->jackd!=NULL&&mainw->jackd->playing_file>-1) {
 
     if (!jack_audio_seek_frame(mainw->jackd,mainw->play_start)) {
       if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
@@ -948,7 +994,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
   }
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering&&cfile->achans>0) {
+  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->multitrack!=NULL&&
+      !mainw->multitrack->is_rendering&&cfile->achans>0) {
     // have to set this here as we don't do a seek in multitrack
     mainw->jackd->audio_ticks=mainw->offsetticks;
     mainw->jackd->frames_written=0;
@@ -958,7 +1005,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
   if (mainw->pulsed_read!=NULL) pulse_driver_uncork(mainw->pulsed_read);
 
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&!mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&
+      !mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) {
 
     if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
       if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
@@ -968,7 +1016,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
   }
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering&&cfile->achans>0) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->multitrack!=NULL&&
+      !mainw->multitrack->is_rendering&&cfile->achans>0) {
     mainw->pulsed->audio_ticks=mainw->offsetticks;
     mainw->pulsed->frames_written=0;
   }
@@ -987,7 +1036,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   // from the mainw->progress_fn function
 
   do {
-    while (!mainw->internal_messaging&&((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))||!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
+    while (!mainw->internal_messaging&&((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
+						    prefs->audio_player==AUD_PLAYER_JACK||
+						    prefs->audio_player==AUD_PLAYER_PULSE))||
+					!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
 
       // just pulse the progress bar, or play video
       // returns FALSE if playback ended
@@ -1015,10 +1067,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
     // else call realtime effect pass
     else {
+      mainw->render_error=(*mainw->progress_fn)(FALSE);
 
-      // TODO - check for return value of 0 (write error)
+      if (mainw->render_error>=LIVES_RENDER_ERROR) return FALSE;
 
-      (*mainw->progress_fn)(FALSE);
       // display progress fraction or pulse bar
       if (mainw->msg!=NULL&&strlen(mainw->msg)>0&&(frames_done=atoi(mainw->msg))>0)
 	cfile->proc_ptr->frames_done=atoi(mainw->msg);
@@ -1035,7 +1087,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     // we got a message from the backend...
 
     if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&!cfile->nopreview) {
-      if (!cfile->opening||((capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1)) gtk_widget_show (cfile->proc_ptr->preview_button);
+      if (!cfile->opening||((capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
+			     (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&
+			    mainw->playing_file==-1)) gtk_widget_show (cfile->proc_ptr->preview_button);
       if (cfile->opening_loc) gtk_widget_show (cfile->proc_ptr->stop_button);
       else gtk_widget_show (cfile->proc_ptr->pause_button);
 
@@ -1049,7 +1103,11 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       }
     }
 
-    if (strncmp(mainw->msg,"completed",8)&&strncmp(mainw->msg,"error",5)&&strncmp(mainw->msg,"killed",6)&&(visible||((strncmp(mainw->msg,"video_ended",11)||mainw->whentostop!=STOP_ON_VID_END)&&(strncmp(mainw->msg,"audio_ended",11)||mainw->preview||mainw->whentostop!=STOP_ON_AUD_END)))) {
+    if (strncmp(mainw->msg,"completed",8)&&strncmp(mainw->msg,"error",5)&&
+	strncmp(mainw->msg,"killed",6)&&(visible||
+					 ((strncmp(mainw->msg,"video_ended",11)||mainw->whentostop!=STOP_ON_VID_END)
+					  &&(strncmp(mainw->msg,"audio_ended",11)||mainw->preview||
+					     mainw->whentostop!=STOP_ON_AUD_END)))) {
       // processing not yet completed...
       if (visible) {
 	// last frame processed ->> will go from cfile->start to cfile->end
@@ -1098,7 +1156,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (cfile->clip_type==CLIP_TYPE_DISK&&(mainw->cancelled!=CANCEL_NO_MORE_PREVIEW||!cfile->opening)) {
       unlink(cfile->info_file);
     }
-    if (mainw->preview_box!=NULL&&!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Play all"), NULL);
+    if (mainw->preview_box!=NULL&&!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,
+									 _("Play all"), NULL);
     if (accelerators_swapped) {
       if (!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Play all"), NULL);
       gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, 0);
@@ -1127,7 +1186,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (prefs->show_player_stats) {
       if (mainw->fps_measure>0.) {
 	gettimeofday(&tv, NULL);
-	mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
+	mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-
+				      mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
       }
     }
     mainw->is_processing=TRUE;
@@ -1276,7 +1336,8 @@ too_many_files(void) {
 
 void
 tempdir_warning (void) {
-  gchar *tmp,*com=g_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),(tmp=g_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
+  gchar *tmp,*com=g_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),
+				  (tmp=g_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
   g_free(tmp);
   if (mainw!=NULL&&mainw->is_ready) {
     do_error_dialog(com);
@@ -1326,10 +1387,14 @@ gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num
 
   mainw->fx1_bool=FALSE;
 
-  if (swap_endian||(asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)||(fps>0.&&fps!=rdet->fps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=rdet->fps)||(!anr&&(rdet->width!=width||rdet->height!=height)&&height*width>0)||(arate!=rdet->arate&&arate>0)) {
+  if (swap_endian||(asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)||
+      (fps>0.&&fps!=rdet->fps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=rdet->fps)||
+      (!anr&&(rdet->width!=width||rdet->height!=height)&&height*width>0)||
+      (arate!=rdet->arate&&arate>0)) {
     g_free (msg2);
     msg2=g_strdup (_ ("LiVES recommends the following settings:\n\n"));
-    if (swap_endian||(asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)||(arate>0&&arate!=rdet->arate)) {
+    if (swap_endian||(asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)
+	||(arate>0&&arate!=rdet->arate)) {
       gchar *sstring;
       gchar *estring;
 
@@ -1433,7 +1498,9 @@ do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, 
   }
 
 
-  if (swap_endian||asigned!=0||(arate>0&&arate!=carate)||(fps>0.&&fps!=cfps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=cfps)||(!anr&&(chsize!=width||cvsize!=height)&&height*width>0)) {
+  if (swap_endian||asigned!=0||(arate>0&&arate!=carate)||(fps>0.&&fps!=cfps)||
+      (fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=cfps)||(!anr&&
+							 (chsize!=width||cvsize!=height)&&height*width>0)) {
     g_free (msg2);
     msg2=g_strdup (_ ("LiVES must:\n"));
     if (swap_endian||asigned!=0||(arate>0&&arate!=carate)) {
@@ -2072,6 +2139,36 @@ void do_write_failed_error(ssize_t wrote, size_t target) {
   else {
     do_write_failed_error_s(mainw->write_failed_file);
   }
+}
+
+
+
+int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) {
+  // err can be errno from open/fopen etc.
+
+  // return same as do_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
+
+  int ret;
+  gchar *msg,*emsg;
+
+  if (errtext==NULL) {
+    emsg=g_strdup_printf("Unable to write to file %s",fname);
+    msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n"),fname);
+  }
+  else {
+    emsg=g_strdup_printf("Unable to write to file %s, error was %s",fname,errtext);
+    msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n"),fname,errtext);
+  }
+  
+  LIVES_ERROR(emsg);
+  g_free(emsg);
+
+  ret=do_cancel_retry_dialog(msg,transient);
+
+  g_free(msg);
+
+  return ret;
+
 }
 
 

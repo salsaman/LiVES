@@ -2341,6 +2341,11 @@ OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
 
 
 /////////////////////////////////////
+
+/** Save midi mapping to an external file
+ */
+
+
 void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *save_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
   int fd;
@@ -2350,68 +2355,75 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_omc_macro_t omacro;
   int nnodes;
   int i;
+  int retval=0;
   gchar *msg;
-
-  if ((fd=open(save_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))<0) {
-    msg=g_strdup_printf (_("\n\nUnable to open file\n%s\nError code %d\n"),save_file,errno);
-    do_blocking_error_dialog (msg);
-    g_free (msg);
-    g_free (save_file);
-    d_print_failed();
-    return;
-  }
 
   msg=g_strdup_printf(_("Saving device mapping to file %s..."),save_file);
   d_print(msg);
   g_free(msg);
 
-
-  mainw->write_failed=FALSE;
-
-  lives_write(fd,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING),TRUE);
-
-  nnodes=g_slist_length(omc_node_list);
-  lives_write(fd,&nnodes,sizint,TRUE);
-
-  while (slist!=NULL) {
-    mnode=(lives_omc_match_node_t *)slist->data;
-    srchlen=strlen(mnode->srch);
-
-    lives_write(fd,&srchlen,sizint,TRUE);
-    lives_write(fd,mnode->srch,srchlen,TRUE);
-
-    lives_write(fd,&mnode->macro,sizint,TRUE);
-    lives_write(fd,&mnode->nvars,sizint,TRUE);
+  do {
+    if ((fd=open(save_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))<0) {
+      retval=do_write_failed_error_s_with_retry (save_file,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) {
+	g_free (save_file);
+	d_print_failed();
+	return;
+      }
+    }
+    else {
+      mainw->write_failed=FALSE;
     
-    for (i=0;i<mnode->nvars;i++) {
-      if (mainw->write_failed) break;
-      lives_write(fd,&mnode->offs0[i],sizint,TRUE);
-      lives_write(fd,&mnode->scale[i],sizdbl,TRUE);
-      lives_write(fd,&mnode->offs1[i],sizint,TRUE);
+      lives_write(fd,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING),TRUE);
       
-      lives_write(fd,&mnode->min[i],sizint,TRUE);
-      lives_write(fd,&mnode->max[i],sizint,TRUE);
+      nnodes=g_slist_length(omc_node_list);
+      lives_write(fd,&nnodes,sizint,TRUE);
+      
+      while (slist!=NULL) {
+	if (mainw->write_failed) break;
+	mnode=(lives_omc_match_node_t *)slist->data;
+	srchlen=strlen(mnode->srch);
+	
+	lives_write(fd,&srchlen,sizint,TRUE);
+	lives_write(fd,mnode->srch,srchlen,TRUE);
+	
+	lives_write(fd,&mnode->macro,sizint,TRUE);
+	lives_write(fd,&mnode->nvars,sizint,TRUE);
+	
+	for (i=0;i<mnode->nvars;i++) {
+	  if (mainw->write_failed) break;
+	  lives_write(fd,&mnode->offs0[i],sizint,TRUE);
+	  lives_write(fd,&mnode->scale[i],sizdbl,TRUE);
+	  lives_write(fd,&mnode->offs1[i],sizint,TRUE);
+	  
+	  lives_write(fd,&mnode->min[i],sizint,TRUE);
+	  lives_write(fd,&mnode->max[i],sizint,TRUE);
+	  
+	  lives_write(fd,&mnode->matchp[i],sizint,TRUE);
+	  lives_write(fd,&mnode->matchi[i],sizint,TRUE);
+	}
+	
+	omacro=omc_macros[mnode->macro];
+	
+	for (i=0;i<omacro.nparams;i++) {
+	  if (mainw->write_failed) break;
+	  lives_write(fd,&mnode->map[i],sizint,TRUE);
+	  lives_write(fd,&mnode->fvali[i],sizint,TRUE);
+	  lives_write(fd,&mnode->fvald[i],sizdbl,TRUE);
+	}
+	slist=slist->next;
+      }
+      
+      close (fd);
 
-      lives_write(fd,&mnode->matchp[i],sizint,TRUE);
-      lives_write(fd,&mnode->matchi[i],sizint,TRUE);
+      if (mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(save_file,NULL,NULL);
+	if (retval==LIVES_CANCEL) d_print_file_error_failed();
+      }
     }
+  } while (retval==LIVES_RETRY);
 
-    omacro=omc_macros[mnode->macro];
-
-    for (i=0;i<omacro.nparams;i++) {
-      lives_write(fd,&mnode->map[i],sizint,TRUE);
-      lives_write(fd,&mnode->fvali[i],sizint,TRUE);
-      lives_write(fd,&mnode->fvald[i],sizdbl,TRUE);
-    }
-    slist=slist->next;
-  }
-  close (fd);
-
-  if (mainw->write_failed) {
-    do_write_failed_error_s(save_file);
-    d_print_file_error_failed();
-  }
-  else d_print_done();
+  if (retval!=LIVES_CANCEL) d_print_done();
 
   g_free (save_file);
 

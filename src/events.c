@@ -3087,7 +3087,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 }
 
 
-gint render_events (gboolean reset) {
+lives_render_error_t render_events (gboolean reset) {
   // this is called repeatedly when we are rendering effect changes and/or clip switches
   // if we have clip switches we will resize and build a new clip
   
@@ -3118,18 +3118,19 @@ gint render_events (gboolean reset) {
   weed_plant_t **ctmpl;
   int *in_count=NULL;
   int num_params;
+  int retval=0;
   weed_plant_t *inst;
   weed_plant_t **source_params,**in_params;
   int num_in_count=0;
   gboolean is_blank=TRUE;
   gboolean firstframe=TRUE;
+  gboolean completed=FALSE;
   gdouble chvols[65536];
 
   static gint xaclips[65536];
   static gdouble xaseek[65536],xavel[65536],atime; // TODO **
   static gboolean has_audio;
-  static gboolean audio_write_failed;
-  static gboolean got_write_error;
+  static lives_render_error_t write_error;
 
   int track,mytrack;
 
@@ -3156,12 +3157,11 @@ gint render_events (gboolean reset) {
     }
     atime=(gdouble)(out_frame-1.)/cfile->fps;
     has_audio=FALSE;
-    audio_write_failed=FALSE;
-    got_write_error=FALSE;
-    return 1;
+    write_error=LIVES_RENDER_ERROR_NONE;
+    return LIVES_RENDER_READY;
   }
 
-  if (mainw->effects_paused) return 1;
+  if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
   nlabel=g_strdup(_("Rendering audio..."));
 
@@ -3256,9 +3256,12 @@ gint render_events (gboolean reset) {
 	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file,
 			       NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), 
 			       chvols, 1., 1., NULL);
+	  
 	  if (mainw->write_failed) {
-	    got_write_error=TRUE;
-	    audio_write_failed=TRUE;
+	    int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
+	    gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
+	    do_write_failed_error_s(outfilename);
+	    write_error=LIVES_RENDER_ERROR_WRITE_AUDIO;
 	  }
 
 	  if (cfile->proc_ptr!=NULL) {
@@ -3372,15 +3375,17 @@ gint render_events (gboolean reset) {
 	else if (cfile->img_type==IMG_TYPE_PNG) {
 	  if (cfile->old_frames==0) g_snprintf(oname,256,"%s/%s/%08d.png",prefs->tmpdir,cfile->handle,out_frame);
 	}
-	lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100-prefs->ocp, &error);
 
-	if (error!=NULL) {
-	  do_write_failed_error_s(oname);
-	  g_printerr("err was %s\n",error->message);
-	  g_error_free(error);
-	  error=NULL;
-	  got_write_error=TRUE;
-	}
+	do {
+	  lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100-prefs->ocp, &error);
+
+	  if (error!=NULL) {
+	    retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
+	    g_error_free(error);
+	    error=NULL;
+	    if (retval!=LIVES_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+	  }
+	} while (retval==LIVES_RETRY);
 
 	cfile->undo_end=out_frame;
 	if (out_frame>cfile->frames) cfile->frames=out_frame;
@@ -3522,18 +3527,13 @@ gint render_events (gboolean reset) {
     reget_afilesize(mainw->current_file);
     mainw->multitrack=multi;
     mainw->filter_map=NULL;
-
-    if (audio_write_failed) {
-      int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
-      gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
-      do_write_failed_error_s(outfilename);
-    }
-
+    completed=TRUE;
   }
 
   g_free(nlabel);
-  if (got_write_error) return 0;
-  return 1;
+  if (write_error) return write_error;
+  if (completed) return LIVES_RENDER_COMPLETE;
+  return LIVES_RENDER_PROCESSING;
 }
 
 
@@ -3542,6 +3542,8 @@ gint render_events (gboolean reset) {
 gboolean start_render_effect_events (weed_plant_t *event_list) {
   // this is called to begin rendering effect events from an event_list into cfile
   // it will do a reorder/resample/resize/effect apply all in one pass
+
+  // return FALSE in case of serious error
 
   gdouble old_pb_fps=cfile->pb_fps;
   gint oundo_start=cfile->undo_start;
@@ -3566,14 +3568,18 @@ gboolean start_render_effect_events (weed_plant_t *event_list) {
 
   cfile->undo_action=UNDO_RENDER;
   // play back the file as fast as possible, each time calling render_events()
-  if ((!do_progress_dialog(TRUE,TRUE,"Rendering")&&mainw->cancelled!=CANCEL_KEEP)||mainw->error) {
+  if ((!do_progress_dialog(TRUE,TRUE,"Rendering")&&mainw->cancelled!=CANCEL_KEEP)||mainw->error||
+      mainw->render_error>=LIVES_RENDER_ERROR
+      ) {
     mainw->cancel_type=CANCEL_KILL;
     mainw->cancelled=CANCEL_NONE;
 
     if (mainw->error) {
       do_error_dialog (mainw->msg);
-      d_print_cancelled();
+      d_print_failed();
     }
+    else if (mainw->render_error>=LIVES_RENDER_ERROR) d_print_failed();
+    else d_print_cancelled();
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     cfile->pb_fps=old_pb_fps;
@@ -3828,6 +3834,7 @@ gboolean render_to_clip (gboolean new_clip) {
 #endif
     }
     else {
+      // rendered to same clip - update number of frames
       save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
       if (mainw->com_failed||mainw->write_failed) do_header_write_error(mainw->current_file);
     }
@@ -3859,7 +3866,7 @@ gboolean render_to_clip (gboolean new_clip) {
 
   }
   else {
-    retval=FALSE; // cancelled, so show the dialog again
+    retval=FALSE; // cancelled or error, so show the dialog again
     if (new_clip&&mainw->multitrack==NULL) {
       close_current_file(current_file);
     }

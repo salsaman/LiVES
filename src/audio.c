@@ -1116,13 +1116,18 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
   gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
+  int retval=0;
 
-  mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
-  if (mainw->aud_rec_fd<0) {
-    do_write_failed_error_s(outfilename);
-    g_free(outfilename);
-    return;
-  }
+  do {
+    mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+    if (mainw->aud_rec_fd<0) {
+      retval=do_write_failed_error_s_with_retry(outfilename,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) {
+	g_free(outfilename);
+	return;
+      }
+    }
+  } while (retval==LIVES_RETRY);
 
   g_free(outfilename);
 
@@ -1185,14 +1190,18 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
   gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
+  int retval=0;
 
-  mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
-  if (mainw->aud_rec_fd<0) {
-    do_write_failed_error_s(outfilename);
-    g_free(outfilename);
-    return;
-  }
-  g_free(outfilename);
+  do {
+    mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+    if (mainw->aud_rec_fd<0) {
+      retval=do_write_failed_error_s_with_retry(outfilename,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) {
+	g_free(outfilename);
+	return;
+      }
+    }
+  } while (retval==LIVES_RETRY);
 
   mainw->pulsed_read=pulse_get_driver(FALSE);
   mainw->pulsed_read->playing_file=fileno;

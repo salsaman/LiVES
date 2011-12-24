@@ -442,7 +442,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   
 
-gint realfx_progress (gboolean reset) {
+lives_render_error_t realfx_progress (gboolean reset) {
   static int i;
   GError *error=NULL;
   gchar oname[256];
@@ -452,7 +452,8 @@ gint realfx_progress (gboolean reset) {
   weed_plant_t *layer;
   int weed_error;
   int layer_palette;
-  static gboolean got_write_error;
+  int retval=0;
+  static int write_error;
 
   // this is called periodically from do_processing_dialog for internal effects
 
@@ -464,11 +465,11 @@ gint realfx_progress (gboolean reset) {
       if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
       cfile->frame_index_back=frame_index_copy(cfile->frame_index,cfile->frames);
     }
-    got_write_error=FALSE;
-    return 1;
+    write_error=0;
+    return LIVES_RENDER_READY;
   }
 
-  if (mainw->effects_paused) return 1;
+  if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
   // sig_progress...
   g_snprintf (mainw->msg,256,"%d",i);
@@ -480,7 +481,7 @@ gint realfx_progress (gboolean reset) {
       mainw->internal_messaging=FALSE;
       g_snprintf(mainw->msg,9,"completed");
     }
-    return 1;
+    return LIVES_RENDER_COMPLETE;
   }
 
   layer=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -490,8 +491,9 @@ gint realfx_progress (gboolean reset) {
   frameticks=(i-cfile->start+1.)/cfile->fps*U_SECL;
 
   if (!pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",frameticks)) {
+    // do_read_failed_error_s() cannot be used here as we dont know the filename
     g_snprintf (mainw->msg,256,"error|missing image %d",i);
-    return 1;
+    return LIVES_RENDER_WARNING_READ_FRAME;
   }
 
   layer=on_rte_apply (layer, 0, 0, (weed_timecode_t)frameticks);
@@ -506,25 +508,26 @@ gint realfx_progress (gboolean reset) {
 
   g_snprintf(oname,256,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
 
-  lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, &error);
+  do {
+    lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, &error);
 
-  if (error!=NULL) {
-    do_write_failed_error_s(oname);
-    g_printerr("err was %s\n",error->message);
-    g_error_free(error);
-    error=NULL;
-    got_write_error=TRUE;
-  }
+    if (error!=NULL) {
+      retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
+      g_error_free(error);
+      error=NULL;
+      if (retval!=LIVES_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+    }
+  } while (retval==LIVES_RETRY);
   
   gdk_pixbuf_unref (pixbuf);
-  
 
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     cfile->frame_index[i-1]=-1;
   }
   
   if (++i>cfile->end) {
-    com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->start,cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+    com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->start,
+			 cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     lives_system (com,FALSE);
     g_free (com);
     mainw->internal_messaging=FALSE;
@@ -532,9 +535,10 @@ gint realfx_progress (gboolean reset) {
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       if (!check_if_non_virtual(mainw->current_file)) save_frame_index(mainw->current_file);
     }
+    return LIVES_RENDER_COMPLETE;
   }
-  if (got_write_error) return 0;
-  return 1;
+  if (write_error) return write_error;
+  return LIVES_RENDER_PROCESSING;
 }
 
 

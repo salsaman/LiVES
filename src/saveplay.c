@@ -37,6 +37,7 @@ gboolean save_clip_values(gint which) {
   gint asigned;
   gint endian;
   gchar *lives_header;
+  int retval;
 
   if (which==0||which==mainw->scrap_file) return TRUE;
 
@@ -44,70 +45,79 @@ gboolean save_clip_values(gint which) {
   endian=mainw->files[which]->signed_endian&AFORM_BIG_ENDIAN;
   lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
 
-  mainw->clip_header=fopen(lives_header,"w");
-
-  if (mainw->clip_header==NULL) {
-    do_write_failed_error_s(lives_header);
-    g_free(lives_header);
-    return FALSE;
-  }
-
-  mainw->files[which]->header_version=LIVES_CLIP_HEADER_VERSION;
-
   do {
-    save_clip_value(which,CLIP_DETAILS_HEADER_VERSION,&mainw->files[which]->header_version);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_BPP,&mainw->files[which]->bpp);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_FPS,&mainw->files[which]->fps);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_PB_FPS,&mainw->files[which]->pb_fps);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_WIDTH,&mainw->files[which]->hsize);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_HEIGHT,&mainw->files[which]->vsize);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_INTERLACE,&mainw->files[which]->interlace);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_UNIQUE_ID,&mainw->files[which]->unique_id);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_ARATE,&mainw->files[which]->arps);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_PB_ARATE,&mainw->files[which]->arate);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_ACHANS,&mainw->files[which]->achans);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_ASIGNED,&asigned);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_AENDIAN,&endian);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_ASAMPS,&mainw->files[which]->asampsize);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_FRAMES,&mainw->files[which]->frames);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_TITLE,mainw->files[which]->title);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_AUTHOR,mainw->files[which]->author);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_COMMENT,mainw->files[which]->comment);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_PB_FRAMENO,&mainw->files[which]->frameno);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_CLIPNAME,&mainw->files[which]->name);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_FILENAME,&mainw->files[which]->file_name);
-    if (mainw->com_failed||mainw->write_failed) break;
-    save_clip_value(which,CLIP_DETAILS_KEYWORDS,mainw->files[which]->keywords);
-  } while (FALSE);
+    mainw->clip_header=fopen(lives_header,"w");
+    
+    if (mainw->clip_header==NULL) {
+      retval=do_write_failed_error_s_with_retry(lives_header,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) {
+	g_free(lives_header);
+	return FALSE;
+      }
+    }
 
-  if (mainw->com_failed||mainw->write_failed) {
-    do_write_failed_error_s(lives_header);
-  }
+    else {
+      mainw->files[which]->header_version=LIVES_CLIP_HEADER_VERSION;
+
+      do {
+	save_clip_value(which,CLIP_DETAILS_HEADER_VERSION,&mainw->files[which]->header_version);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_BPP,&mainw->files[which]->bpp);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_FPS,&mainw->files[which]->fps);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_PB_FPS,&mainw->files[which]->pb_fps);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_WIDTH,&mainw->files[which]->hsize);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_HEIGHT,&mainw->files[which]->vsize);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_INTERLACE,&mainw->files[which]->interlace);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_UNIQUE_ID,&mainw->files[which]->unique_id);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_ARATE,&mainw->files[which]->arps);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_PB_ARATE,&mainw->files[which]->arate);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_ACHANS,&mainw->files[which]->achans);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_ASIGNED,&asigned);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_AENDIAN,&endian);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_ASAMPS,&mainw->files[which]->asampsize);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_FRAMES,&mainw->files[which]->frames);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_TITLE,mainw->files[which]->title);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_AUTHOR,mainw->files[which]->author);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_COMMENT,mainw->files[which]->comment);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_PB_FRAMENO,&mainw->files[which]->frameno);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_CLIPNAME,&mainw->files[which]->name);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_FILENAME,&mainw->files[which]->file_name);
+	if (mainw->com_failed||mainw->write_failed) break;
+	save_clip_value(which,CLIP_DETAILS_KEYWORDS,mainw->files[which]->keywords);
+      } while (FALSE);
+      
+      if (mainw->com_failed||mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(lives_header,NULL,NULL);
+      }
+
+    }
+  } while (retval==LIVES_RETRY);
   
   g_free(lives_header);
 
   fclose(mainw->clip_header);
   mainw->clip_header=NULL;
+
+  if (retval==LIVES_CANCEL) return FALSE;
 
   return TRUE;
 }
@@ -956,6 +966,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   gchar *full_file_name=NULL;
 
   int new_stderr=-1;
+  int retval=0;
   gint startframe=1;
   gint current_file=mainw->current_file;
   gint asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
@@ -1473,26 +1484,27 @@ void save_file (int clip, int start, int end, const char *filename) {
     // open a file for stderr
 
     new_stderr_name=g_strdup_printf("%s%s/.debug_out",prefs->tmpdir,cfile->handle);
-
-    new_stderr=open(new_stderr_name,O_CREAT|O_RDWR|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
     g_free(redir);
 
-    if (new_stderr<0) {
-      redir=g_strdup("1>&2");
-      do_write_failed_error_s(new_stderr_name);
-    }
-    else {
-      redir=g_strdup_printf("1>&2 2>%s",new_stderr_name);
-      
-      mainw->iochan=g_io_channel_unix_new(new_stderr);
-      g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
-      g_io_channel_set_buffer_size(mainw->iochan,0);
-      g_io_channel_set_flags(mainw->iochan,G_IO_FLAG_NONBLOCK,&gerr);
-      if (gerr!=NULL) g_error_free(gerr);
-      gerr=NULL;
-      
-      mainw->optextview=create_output_textview();
-    }
+    do {
+      new_stderr=open(new_stderr_name,O_CREAT|O_RDWR|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
+      if (new_stderr<0) {
+	retval=do_write_failed_error_s_with_retry(new_stderr_name,strerror(errno),NULL);
+	if (retval==LIVES_CANCEL) redir=g_strdup("1>&2");
+      }
+      else {
+	redir=g_strdup_printf("1>&2 2>%s",new_stderr_name);
+	
+	mainw->iochan=g_io_channel_unix_new(new_stderr);
+	g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
+	g_io_channel_set_buffer_size(mainw->iochan,0);
+	g_io_channel_set_flags(mainw->iochan,G_IO_FLAG_NONBLOCK,&gerr);
+	if (gerr!=NULL) g_error_free(gerr);
+	gerr=NULL;
+	
+	mainw->optextview=create_output_textview();
+      }
+    } while (retval==LIVES_RETRY);
   }
   else {
     g_free(redir);
@@ -2796,6 +2808,13 @@ void play_file (void) {
   }
 #endif
 
+  if (mainw->bad_aud_file!=NULL) {
+    // we got an error recording audio
+    do_write_failed_error_s(mainw->bad_aud_file);
+    g_free(mainw->bad_aud_file);
+    mainw->bad_aud_file=NULL;
+  }
+
   // need to do this here, in case we want to preview a generator which will close to -1
   if (mainw->record) deal_with_render_choice(TRUE);
 
@@ -2812,13 +2831,6 @@ void play_file (void) {
   if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
 
   reset_clip_menu();
-
-  if (mainw->bad_aud_file!=NULL) {
-    do_write_failed_error_s(mainw->bad_aud_file);
-    g_free(mainw->bad_aud_file);
-    mainw->bad_aud_file=NULL;
-  }
-
 
 }
   
@@ -3151,32 +3163,40 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
 
 gboolean save_file_comments (int fileno) {
   // save the comments etc for smogrify
-  gboolean retval=TRUE;
+  int retval=0;
   int comment_fd;
   gchar *comment_file=g_strdup_printf ("%s/%s/.comment",prefs->tmpdir,cfile->handle);
   file *sfile=mainw->files[fileno];
 
   unlink (comment_file);
-  comment_fd=creat(comment_file,S_IRUSR|S_IWUSR);
-  if (comment_fd<0) mainw->write_failed=TRUE;
-  else mainw->write_failed=FALSE;
-  if (!mainw->write_failed) {
-    lives_write(comment_fd,sfile->title,strlen (sfile->title),TRUE);
-    lives_write(comment_fd,"||%",3,TRUE);
-    lives_write(comment_fd,sfile->author,strlen (sfile->author),TRUE);
-    lives_write(comment_fd,"||%",3,TRUE);
-    lives_write(comment_fd,sfile->comment,strlen (sfile->comment),TRUE);
-  }
-  close (comment_fd);
 
-  if (mainw->write_failed) {
-    do_write_failed_error_s(comment_file);
-    mainw->write_failed=FALSE;
-    retval=FALSE;
-  }
+  do {
+    comment_fd=creat(comment_file,S_IRUSR|S_IWUSR);
+    if (comment_fd<0) {
+      mainw->write_failed=TRUE;
+      retval=do_write_failed_error_s_with_retry(comment_file,strerror(errno),NULL);
+    }
+    else {
+      mainw->write_failed=FALSE;
+      lives_write(comment_fd,sfile->title,strlen (sfile->title),TRUE);
+      lives_write(comment_fd,"||%",3,TRUE);
+      lives_write(comment_fd,sfile->author,strlen (sfile->author),TRUE);
+      lives_write(comment_fd,"||%",3,TRUE);
+      lives_write(comment_fd,sfile->comment,strlen (sfile->comment),TRUE);
+      
+      close (comment_fd);
+      
+      if (mainw->write_failed) {
+	do_write_failed_error_s_with_retry(comment_file,NULL,NULL);
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
   g_free (comment_file);
 
-  return retval;
+  if (mainw->write_failed) return FALSE;
+
+  return TRUE;
 }
 
 
@@ -3262,6 +3282,7 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
     // multitrack mode
     GError *gerr=NULL;
     GdkPixbuf *pixbuf;
+    int retval=0;
 
     mt_show_current_frame(mainw->multitrack,TRUE);
     convert_layer_palette(mainw->frame_layer,WEED_PALETTE_RGB24,0);
@@ -3269,15 +3290,21 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
     pixbuf=layer_to_pixbuf(mainw->frame_layer);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer=NULL;
-    if (sfile->img_type==IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, &gerr);
-    else if (sfile->img_type==IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, &gerr);
+
+    do {
+      if (sfile->img_type==IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, &gerr);
+      else if (sfile->img_type==IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, &gerr);
+
+      if (gerr!=NULL) {
+	retval=do_write_failed_error_s_with_retry(full_file_name,gerr->message,NULL);
+	g_error_free(gerr);
+	gerr=NULL;
+      }
+
+    } while (retval==LIVES_RETRY);
+
     free(tmp);
     gdk_pixbuf_unref(pixbuf);
-    if (gerr==NULL) return TRUE;
-
-    do_write_failed_error_s(full_file_name);
-    g_printerr("err was %s\n",gerr->message);
-    g_error_free(gerr);
   }
 
   // some other error condition
@@ -3417,52 +3444,67 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
 
 
 gboolean write_headers (file *file) {
+  // this function is included only for backwards compatibility with ancient builds of LiVES
+  //
+
+  int retval=0;
   int header_fd;
   gchar *hdrfile;
 
   // save the file details
-  hdrfile=g_strdup_printf("%s/%s/header",prefs->tmpdir,file->handle);
-  header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
-  if (header_fd<0) mainw->write_failed=TRUE;
-  else mainw->write_failed=FALSE;
+  hdrfile=g_build_filename(prefs->tmpdir,file->handle,"header",NULL);
 
-  if (!mainw->write_failed) {
-    lives_write(header_fd,&cfile->bpp,sizint,TRUE);
-    lives_write(header_fd,&cfile->fps,sizdbl,TRUE);
-    lives_write(header_fd,&cfile->hsize,sizint,TRUE);
-    lives_write(header_fd,&cfile->vsize,sizint,TRUE);
-    lives_write(header_fd,&cfile->arps,sizint,TRUE);
-    lives_write(header_fd,&cfile->signed_endian,sizint,TRUE);
-    lives_write(header_fd,&cfile->arate,sizint,TRUE);
-    lives_write(header_fd,&cfile->unique_id,8,TRUE);
-    lives_write(header_fd,&cfile->achans,sizint,TRUE);
-    lives_write(header_fd,&cfile->asampsize,sizint,TRUE);
-    
-    lives_write(header_fd,LiVES_VERSION,strlen(LiVES_VERSION),TRUE);
-    close(header_fd);
-  }
+  do {
+    header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
+    if (header_fd<0) {
+      retval=do_write_failed_error_s_with_retry(hdrfile,strerror(errno),NULL);
+    }
+    else {
+      mainw->write_failed=FALSE;
+      
+      lives_write(header_fd,&cfile->bpp,sizint,TRUE);
+      lives_write(header_fd,&cfile->fps,sizdbl,TRUE);
+      lives_write(header_fd,&cfile->hsize,sizint,TRUE);
+      lives_write(header_fd,&cfile->vsize,sizint,TRUE);
+      lives_write(header_fd,&cfile->arps,sizint,TRUE);
+      lives_write(header_fd,&cfile->signed_endian,sizint,TRUE);
+      lives_write(header_fd,&cfile->arate,sizint,TRUE);
+      lives_write(header_fd,&cfile->unique_id,8,TRUE);
+      lives_write(header_fd,&cfile->achans,sizint,TRUE);
+      lives_write(header_fd,&cfile->asampsize,sizint,TRUE);
+      
+      lives_write(header_fd,LiVES_VERSION,strlen(LiVES_VERSION),TRUE);
+      close(header_fd);
+      
+      if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
+      
+    }
+  } while (retval==LIVES_RETRY);
 
-  if (mainw->write_failed) do_write_failed_error_s(hdrfile);
 
   g_free(hdrfile);
 
   if (!mainw->write_failed) {
     // more file details (since version 0.7.5)
-    hdrfile=g_strdup_printf("%s/%s/header2",prefs->tmpdir,file->handle);
-    header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
-    
-    if (header_fd<0) mainw->write_failed=TRUE;
-    else mainw->write_failed=FALSE;
-    
-    if (!mainw->write_failed) {
-      lives_write(header_fd,&file->frames,sizint,TRUE);
-      lives_write(header_fd,&file->title,256,TRUE);
-      lives_write(header_fd,&file->author,256,TRUE);
-      lives_write(header_fd,&file->comment,256,TRUE);
-      close(header_fd);
-    }
+    hdrfile=g_build_filename(prefs->tmpdir,file->handle,"header2",NULL);
 
-    if (mainw->write_failed) do_write_failed_error_s(hdrfile);
+    do {
+      header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
+    
+      if (header_fd<0) {
+	retval=do_write_failed_error_s_with_retry(hdrfile,strerror(errno),NULL);
+      }
+      else {
+	mainw->write_failed=FALSE;
+	lives_write(header_fd,&file->frames,sizint,TRUE);
+	lives_write(header_fd,&file->title,256,TRUE);
+	lives_write(header_fd,&file->author,256,TRUE);
+	lives_write(header_fd,&file->comment,256,TRUE);
+	close(header_fd);
+      }
+      
+      if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
+    } while (retval==LIVES_RETRY);
 
     g_free(hdrfile);
   }
@@ -3950,6 +3992,7 @@ gint save_event_frames(void) {
   // here we also update the frame_index for clips of type CLIP_TYPE_FILE
 
   int header_fd,i=0;
+  int retval=0;
   gchar *hdrfile=g_strdup_printf("%s/%s/event.frames",prefs->tmpdir,cfile->handle);
   gint perf_start,perf_end;
   
@@ -3983,26 +4026,35 @@ gint save_event_frames(void) {
     cfile->frames=xframes;
   }
 
-  header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
-  if (header_fd<0) mainw->write_failed=TRUE;
-  else mainw->write_failed=FALSE;
-
-  if (!mainw->write_failed) {
-    lives_write(header_fd,&perf_start,sizint,FALSE);
-  }
-  if (!mainw->write_failed) {
-    if (!(cfile->events[0]==NULL)) {
-      for (i=0;i<=perf_end-perf_start;i++) {
-	lives_write(header_fd,&((cfile->events[0]+i)->value),sizint,TRUE);
-      }
-      g_free (cfile->events[0]);
-      cfile->events[0]=NULL;
+  do {
+    header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
+    if (header_fd<0) {
+      do_write_failed_error_s_with_retry(hdrfile,strerror(errno),NULL);
     }
-  }
-  close(header_fd);
+    else {
+      mainw->write_failed=FALSE;
+      lives_write(header_fd,&perf_start,sizint,FALSE);
+      
+      if (!(cfile->events[0]==NULL)) {
+	for (i=0;i<=perf_end-perf_start;i++) {
+	  if (mainw->write_failed) break;
+	  lives_write(header_fd,&((cfile->events[0]+i)->value),sizint,TRUE);
+	}
+	g_free (cfile->events[0]);
+	cfile->events[0]=NULL;
+      }
+
+      if (mainw->write_failed) {
+	do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
+      }
+
+      close(header_fd);
+
+    }
+  } while (retval==LIVES_RETRY);
+
 
   if (mainw->write_failed) {
-    do_write_failed_error(0, 0);
     mainw->write_failed=FALSE;
     i=-1;
   }
@@ -4732,10 +4784,13 @@ void add_to_recovery_file (const gchar *handle) {
 }
 
 
+
 void rewrite_recovery_file(void) {
+  // part of the crash recovery system
   int i;
   gchar *recovery_entry;
   int recovery_fd=-1;
+  int retval=0;
   GList *clist=mainw->cliplist;
   gboolean opened=FALSE;
 
@@ -4744,30 +4799,33 @@ void rewrite_recovery_file(void) {
     return;
   }
 
-  mainw->write_failed=FALSE;
+  do {
+    mainw->write_failed=FALSE;
+    opened=FALSE;
+    recovery_fd=-1;
 
-  while (clist!=NULL) {
-    i=GPOINTER_TO_INT(clist->data);
-    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
-      if (i!=mainw->scrap_file) recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
-      else recovery_entry=g_strdup_printf("scrap|%s\n",mainw->files[i]->handle);
-      if (!opened) {
-	recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
-	if (recovery_fd>=0) opened=TRUE;
-	else mainw->write_failed=TRUE;
+    while (clist!=NULL) {
+      i=GPOINTER_TO_INT(clist->data);
+      if (mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
+	if (i!=mainw->scrap_file) recovery_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
+	else recovery_entry=g_strdup_printf("scrap|%s\n",mainw->files[i]->handle);
+
+	if (!opened) recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
+	if (recovery_fd<0) retval=do_write_failed_error_s_with_retry(mainw->recovery_file,strerror(errno),NULL);
+	else {
+	  opened=TRUE;
+	  lives_write(recovery_fd,recovery_entry,strlen(recovery_entry),TRUE);
+	  if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(mainw->recovery_file,NULL,NULL);
+	}
+	g_free(recovery_entry);
       }
-      if (recovery_fd>=0) lives_write(recovery_fd,recovery_entry,strlen(recovery_entry),TRUE);
-      g_free(recovery_entry);
+      if (mainw->write_failed) break;
+      clist=clist->next;
     }
-    clist=clist->next;
-  }
+  } while (retval==LIVES_RETRY);
 
   if (!opened) unlink(mainw->recovery_file);
   else if (recovery_fd>=0) close(recovery_fd);
-
-  if (mainw->write_failed) {
-    do_write_failed_error(0,0);
-  }
 
   if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) 
     write_backup_layout_numbering(mainw->multitrack);

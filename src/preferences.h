@@ -117,7 +117,7 @@ typedef struct {
   gboolean conserve_space;
   gboolean ins_resample;
   gboolean show_tool;
-  gshort sepwin_type;
+  gshort sepwin_type;   ///< 0 == non-sticky (show only when playing), 1 == sticky (show always)
   gboolean show_player_stats;
   gboolean show_framecount;
   gboolean show_subtitles;

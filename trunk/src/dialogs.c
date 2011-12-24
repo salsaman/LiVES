@@ -2130,18 +2130,6 @@ void do_read_failed_error_s(const char *s) {
 }
 
 
-void do_write_failed_error(ssize_t wrote, size_t target) {
-  if (target>0&&wrote>=0) {
-    gchar *msg=g_strdup_printf(_("\nLiVES was unable to write %d bytes of %d to the file\n%s\nPlease check for possible error causes.\n"),wrote,target,mainw->write_failed_file);
-    do_blocking_error_dialog(msg);
-    g_free(msg);
-  }
-  else {
-    do_write_failed_error_s(mainw->write_failed_file);
-  }
-}
-
-
 
 int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) {
   // err can be errno from open/fopen etc.
@@ -2193,12 +2181,20 @@ void do_header_read_error(int clip) {
 }
 
 
-void do_header_write_error(int clip) {
+gboolean do_header_write_error(int clip) {
+  // returns TRUE if we manage to clear the error
+
   gchar *hname;
-  if (mainw->files[clip]==NULL) return;
+  int retval;
+
+  if (mainw->files[clip]==NULL) return TRUE;
+
   hname=g_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
-  do_write_failed_error_s(hname);
+  retval=do_write_failed_error_s_with_retry(hname,NULL,NULL);
+  if (retval==LIVES_RETRY && save_clip_values(clip)) retval=0; // on retry try to save all values
   g_free(hname);
+
+  return (!retval);
 }
 
 

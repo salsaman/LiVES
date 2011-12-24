@@ -90,7 +90,6 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
     mainw->write_failed_file=filename_from_fd(mainw->write_failed_file,fd);
     if (!allow_fail) {
       LIVES_ERROR(msg);
-      do_write_failed_error(retval, count);
       close(fd);
     }
     else LIVES_WARN(msg);

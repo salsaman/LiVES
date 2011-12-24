@@ -114,46 +114,54 @@ gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-static void save_keymap2_file(gchar *kfname) {
+static gboolean save_keymap2_file(gchar *kfname) {
   int i,j;
   int slen;
   int version=1;
   int modes=rte_getmodespk();
-  int kfd=creat(kfname,S_IRUSR|S_IWUSR);
-  gchar *msg;
+  int kfd;
+  int retval=0;
   gchar *hashname;
 
-  if (kfd==-1) {
-    msg=g_strdup_printf (_("\n\nUnable to write keymap file\n%s\nError code %d\n"),kfname,errno);
-    do_error_dialog_with_check_transient (msg,FALSE,0,GTK_WINDOW(rte_window));
-    g_free (msg);
-    d_print_failed();
-    return;
-  }
-
-  mainw->write_failed=FALSE;
-
-  lives_write(kfd,&version,sizint,TRUE);
-
-  for (i=1;i<=prefs->rte_keys_virtual;i++) {
-    for (j=0;j<modes;j++) {
-      if (rte_keymode_valid(i,j,TRUE)) {
-	lives_write(kfd,&i,sizint,TRUE);
-	hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE));
-	slen=strlen(hashname);
-	lives_write(kfd,&slen,sizint,TRUE);
-	lives_write(kfd,hashname,slen,TRUE);
-	g_free(hashname);
-	write_key_defaults(kfd,i-1,j);
+  do {
+    kfd=creat(kfname,S_IRUSR|S_IWUSR);
+    if (kfd==-1) {
+      retval=do_write_failed_error_s_with_retry (kfname,strerror(errno),GTK_WINDOW(rte_window));
+      if (retval==LIVES_CANCEL) {
+	return FALSE;
       }
     }
-  }
-  close(kfd);
+    else {
 
-  if (mainw->write_failed) {
-    do_write_failed_error(0, 0);
-    mainw->write_failed=FALSE;
-  }
+      mainw->write_failed=FALSE;
+      
+      lives_write(kfd,&version,sizint,TRUE);
+      
+      for (i=1;i<=prefs->rte_keys_virtual;i++) {
+	if (mainw->write_failed) break;
+	for (j=0;j<modes;j++) {
+	  if (rte_keymode_valid(i,j,TRUE)) {
+	    lives_write(kfd,&i,sizint,TRUE);
+	    hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE));
+	    slen=strlen(hashname);
+	    lives_write(kfd,&slen,sizint,TRUE);
+	    lives_write(kfd,hashname,slen,TRUE);
+	    g_free(hashname);
+	    write_key_defaults(kfd,i-1,j);
+	  }
+	}
+      }
+      close(kfd);
+      
+      if (mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(kfname,NULL,GTK_WINDOW(rte_window));
+	mainw->write_failed=FALSE;
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
+  if (retval==LIVES_CANCEL) return FALSE;
+  return TRUE;
 
 }
 
@@ -230,7 +238,11 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   // if we have default values, save as newer style
   if (has_key_defaults()) {
-    save_keymap2_file(keymap_file2);
+    gboolean ret=save_keymap2_file(keymap_file2);
+    if (!ret) {
+      if (!got_err) d_print_file_error_failed();
+      got_err=TRUE;
+    }
   }
   else unlink(keymap_file2);
 
@@ -247,6 +259,7 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
 
 void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int fd,i;
+  int retval=0;
   gint numfx;
   gchar *msg;
 
@@ -262,49 +275,68 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   d_print(msg);
   g_free(msg);
 
-  if ((fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
-    msg=g_strdup_printf (_("\n\nUnable to write defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
-    do_error_dialog (msg);
-    g_free (msg);
-    d_print_failed();
-    return;
-  }
-  
-  msg=g_strdup("LiVES filter defaults file version 1.1\n");
-  
-  lives_write(fd,msg,strlen(msg),TRUE);
-  g_free(msg);
-
   numfx=rte_get_numfilters();
 
-  for (i=0;i<numfx;i++) write_filter_defaults(fd,i);
+  do {
+    if ((fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
+      msg=g_strdup_printf (_("\n\nUnable to write defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
+      retval=do_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
+      g_free (msg);
+    }
+    else {
+      msg=g_strdup("LiVES filter defaults file version 1.1\n");
+      mainw->write_failed=FALSE;
+      lives_write(fd,msg,strlen(msg),TRUE);
+      g_free(msg);
+
+      if (mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,GTK_WINDOW(rte_window));
+      }
+      else {
+	// break on file write error
+	for (i=0;i<numfx;i++) {
+	  if (!write_filter_defaults(fd,i)) {
+	    retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,GTK_WINDOW(rte_window));
+	    break;
+	  }
+	}
+      }
+    }
+  } while (retval==LIVES_RETRY);
 
   close(fd);
 
-  if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
-    msg=g_strdup_printf (_("\n\nUnable to write filter defaults file\n%s\nError code %d\n"),prefs->fxsizesfile,errno);
-    do_error_dialog (msg);
-    g_free (msg);
+  if (retval==LIVES_CANCEL) {
     d_print_file_error_failed();
-    return;
   }
-
-  msg=g_strdup("LiVES generator default sizes file version 2\n");
   
-  mainw->write_failed=FALSE;
-
-  lives_write(fd,msg,strlen(msg),TRUE);
-  g_free(msg);
-
-  for (i=0;i<numfx;i++) write_generator_sizes(fd,i);
+  do {
+    if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
+      retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,strerror(errno),GTK_WINDOW(rte_window));
+      g_free (msg);
+    }
+    else {
+      msg=g_strdup("LiVES generator default sizes file version 2\n");
+      mainw->write_failed=FALSE;
+      lives_write(fd,msg,strlen(msg),TRUE);
+      g_free(msg);
+      if (mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,GTK_WINDOW(rte_window));
+      }
+      else {
+	for (i=0;i<numfx;i++) {
+	  if (!write_generator_sizes(fd,i)) {
+	    retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,GTK_WINDOW(rte_window));
+	    break;
+	  }
+	}
+      }
+    }
+  } while (retval==LIVES_RETRY);
 
   close(fd);
-
 
   if (mainw->write_failed) {
-    msg=g_strdup_printf (_("\n\nUnable to write generator sizes file\n%s\nError code %d\n"),prefs->fxsizesfile,errno);
-    do_error_dialog (msg);
-    g_free (msg);
     d_print_file_error_failed();
     mainw->write_failed=FALSE;
     return;

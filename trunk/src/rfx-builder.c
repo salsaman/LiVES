@@ -3281,6 +3281,7 @@ gboolean perform_param_checks (rfx_build_window_t *rfxbuilder, gint index, gint 
 gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   FILE *sfile;
   int i,j;
+  int retval=0;
   gchar **array;
   lives_colRGB24_t rgb;
   guint32 props;
@@ -3293,8 +3294,6 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   gchar *buf;
   gchar *msg;
   gchar *tmp,*tmp2,*tmpx;
-
-  gboolean got_err=FALSE;
 
   if (rfxbuilder->mode!=RFX_BUILDER_MODE_EDIT) {
     if (!(new_name=prompt_for_script_name (script_name,RFX_STATUS_TEST))) return FALSE;
@@ -3327,268 +3326,276 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
     return FALSE;
   }
 
-  if (!(sfile=fopen(script_file,"w"))) {
-    msg=g_strdup_printf (_("\n\nUnable to write script file\n%s\nError code %d\n"),script_file,errno);
-    do_blocking_error_dialog (msg);
-    g_free (msg);
-    g_free (name);
-    g_free (script_file);
-    d_print_failed();
-    return FALSE;
-  }
+  do {
+    if (!(sfile=fopen(script_file,"w"))) {
+      retval=do_write_failed_error_s_with_retry(script_file,strerror(errno),GTK_WINDOW(rfxbuilder->dialog));
+      if (retval==LIVES_CANCEL) {
+	g_free (msg);
+	g_free (name);
+	g_free (script_file);
+	d_print_failed();
+	return FALSE;
+      }
+    }
+    else {
   
-  mainw->write_failed=FALSE;
+      mainw->write_failed=FALSE;
 
-  lives_fputs("Script file generated from LiVES\n\n",sfile);
-  lives_fputs("<define>\n",sfile);
-  lives_fputs(rfxbuilder->field_delim,sfile);
-  lives_fputs(rfxbuilder->rfx_version,sfile);
-  lives_fputs("\n</define>\n\n",sfile);
-  lives_fputs("<name>\n",sfile);
-  lives_fputs(name,sfile);
-  lives_fputs("\n</name>\n\n",sfile);
-  lives_fputs("<version>\n",sfile);
-  buf=g_strdup_printf ("%d",gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_version)));
-  lives_fputs (buf,sfile);
-  g_free (buf);
-  lives_fputs("\n</version>\n\n",sfile);
-  lives_fputs("<author>\n",sfile);
-  lives_fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->author_entry)),sfile);
-  lives_fputs(rfxbuilder->field_delim,sfile);
-  lives_fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->url_entry)),sfile);
-  lives_fputs("\n</author>\n\n",sfile);
-  lives_fputs("<description>\n",sfile);
-  lives_fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->menu_text_entry)),sfile);
-  lives_fputs(rfxbuilder->field_delim,sfile);
-  lives_fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->action_desc_entry)),sfile);
-  lives_fputs(rfxbuilder->field_delim,sfile);
-  if (rfxbuilder->type==RFX_BUILD_TYPE_UTILITY) {
-    buf=g_strdup ("-1");
-  }
-  else {
-    buf=g_strdup_printf ("%d",gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_min_frames)));
-  }
-  lives_fputs (buf,sfile);
-  g_free (buf);
-  lives_fputs(rfxbuilder->field_delim,sfile);
-  switch (rfxbuilder->type) {
-  case RFX_BUILD_TYPE_EFFECT2:
-    buf=g_strdup ("2");
-    break;
-  case RFX_BUILD_TYPE_EFFECT0:
-    buf=g_strdup ("0");
-    break;
-  default:
-    buf=g_strdup ("1");
-  }
-  lives_fputs (buf,sfile);
-  g_free (buf);
-  lives_fputs(rfxbuilder->field_delim,sfile);
-  lives_fputs("\n</description>\n\n",sfile);
-  lives_fputs("<requires>\n",sfile);
-  for (i=0;i<rfxbuilder->num_reqs;i++) {
-    lives_fputs(rfxbuilder->reqs[i],sfile);
-    if (i<rfxbuilder->num_reqs-1)
-      lives_fputs("\n",sfile);
-  }
-  lives_fputs("\n</requires>\n\n",sfile);
-  lives_fputs("<params>\n",sfile);
-  for (i=0;i<rfxbuilder->num_params;i++) {
-    lives_fputs(rfxbuilder->params[i].name,sfile);
-    lives_fputs(rfxbuilder->field_delim,sfile);
-    lives_fputs(rfxbuilder->params[i].label,sfile);
-    lives_fputs(rfxbuilder->field_delim,sfile);
-    switch (rfxbuilder->params[i].type) {
-    case LIVES_PARAM_NUM:
-      stepwrap=rfxbuilder->params[i].step_size;
-      if (rfxbuilder->params[i].wrap) stepwrap=-stepwrap;
-      lives_fputs ("num",sfile);
-      buf=g_strdup_printf ("%d",rfxbuilder->params[i].dp);
+      lives_fputs("Script file generated from LiVES\n\n",sfile);
+      lives_fputs("<define>\n",sfile);
+      lives_fputs(rfxbuilder->field_delim,sfile);
+      lives_fputs(rfxbuilder->rfx_version,sfile);
+      lives_fputs("\n</define>\n\n",sfile);
+      lives_fputs("<name>\n",sfile);
+      lives_fputs(name,sfile);
+      lives_fputs("\n</name>\n\n",sfile);
+      lives_fputs("<version>\n",sfile);
+      buf=g_strdup_printf ("%d",gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_version)));
       lives_fputs (buf,sfile);
       g_free (buf);
+      lives_fputs("\n</version>\n\n",sfile);
+      lives_fputs("<author>\n",sfile);
+      lives_fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->author_entry)),sfile);
       lives_fputs(rfxbuilder->field_delim,sfile);
-      if (!rfxbuilder->params[i].dp) {
-	buf=g_strdup_printf ("%d",get_int_param (rfxbuilder->params[i].def));
-	lives_fputs (buf,sfile);
-	g_free (buf);
-	lives_fputs(rfxbuilder->field_delim,sfile);
-	buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].min);
-	lives_fputs (buf,sfile);
-	g_free (buf);
-	lives_fputs(rfxbuilder->field_delim,sfile);
-	buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].max);
-	lives_fputs (buf,sfile);
-	g_free (buf);
-	lives_fputs(rfxbuilder->field_delim,sfile);
-	if (stepwrap!=1.) {
-	  buf=g_strdup_printf ("%d",(gint)stepwrap);
-	  lives_fputs (buf,sfile);
-	  g_free (buf);
-	  lives_fputs(rfxbuilder->field_delim,sfile);
-	}
+      lives_fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->url_entry)),sfile);
+      lives_fputs("\n</author>\n\n",sfile);
+      lives_fputs("<description>\n",sfile);
+      lives_fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->menu_text_entry)),sfile);
+      lives_fputs(rfxbuilder->field_delim,sfile);
+      lives_fputs(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->action_desc_entry)),sfile);
+      lives_fputs(rfxbuilder->field_delim,sfile);
+      if (rfxbuilder->type==RFX_BUILD_TYPE_UTILITY) {
+	buf=g_strdup ("-1");
       }
       else {
-	gchar *pattern=g_strdup_printf ("%%.%df",rfxbuilder->params[i].dp);
-	buf=g_strdup_printf (pattern,get_double_param (rfxbuilder->params[i].def));
-	lives_fputs (buf,sfile);
-	g_free (buf);
+	buf=g_strdup_printf ("%d",gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_min_frames)));
+      }
+      lives_fputs (buf,sfile);
+      g_free (buf);
+      lives_fputs(rfxbuilder->field_delim,sfile);
+      switch (rfxbuilder->type) {
+      case RFX_BUILD_TYPE_EFFECT2:
+	buf=g_strdup ("2");
+	break;
+      case RFX_BUILD_TYPE_EFFECT0:
+	buf=g_strdup ("0");
+	break;
+      default:
+	buf=g_strdup ("1");
+      }
+      lives_fputs (buf,sfile);
+      g_free (buf);
+      lives_fputs(rfxbuilder->field_delim,sfile);
+      lives_fputs("\n</description>\n\n",sfile);
+      lives_fputs("<requires>\n",sfile);
+      for (i=0;i<rfxbuilder->num_reqs;i++) {
+	lives_fputs(rfxbuilder->reqs[i],sfile);
+	if (i<rfxbuilder->num_reqs-1)
+	  lives_fputs("\n",sfile);
+      }
+      lives_fputs("\n</requires>\n\n",sfile);
+      lives_fputs("<params>\n",sfile);
+      for (i=0;i<rfxbuilder->num_params;i++) {
+	lives_fputs(rfxbuilder->params[i].name,sfile);
 	lives_fputs(rfxbuilder->field_delim,sfile);
-	buf=g_strdup_printf (pattern,rfxbuilder->params[i].min);
-	lives_fputs (buf,sfile);
-	g_free (buf);
+	lives_fputs(rfxbuilder->params[i].label,sfile);
 	lives_fputs(rfxbuilder->field_delim,sfile);
-	buf=g_strdup_printf (pattern,rfxbuilder->params[i].max);
-	lives_fputs (buf,sfile);
-	g_free (buf);
-	lives_fputs(rfxbuilder->field_delim,sfile);
-	if (stepwrap!=1.) {
-	  buf=g_strdup_printf (pattern,stepwrap);
+	switch (rfxbuilder->params[i].type) {
+	case LIVES_PARAM_NUM:
+	  stepwrap=rfxbuilder->params[i].step_size;
+	  if (rfxbuilder->params[i].wrap) stepwrap=-stepwrap;
+	  lives_fputs ("num",sfile);
+	  buf=g_strdup_printf ("%d",rfxbuilder->params[i].dp);
 	  lives_fputs (buf,sfile);
 	  g_free (buf);
 	  lives_fputs(rfxbuilder->field_delim,sfile);
-	}
-	g_free (pattern);
-      }
-      break;
-    case LIVES_PARAM_BOOL:
-      lives_fputs ("bool",sfile);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      buf=g_strdup_printf ("%d",get_bool_param (rfxbuilder->params[i].def));
-      lives_fputs (buf,sfile);
-      g_free (buf);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      if (rfxbuilder->params[i].group!=0) {
-	buf=g_strdup_printf ("%d",rfxbuilder->params[i].group);
-	lives_fputs (buf,sfile);
-	g_free (buf);
-	lives_fputs(rfxbuilder->field_delim,sfile);
-      }
-      break;
-    case LIVES_PARAM_COLRGB24:
-      lives_fputs ("colRGB24",sfile);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      get_colRGB24_param (rfxbuilder->params[i].def,&rgb);
-      buf=g_strdup_printf ("%d",rgb.red);
-      lives_fputs (buf,sfile);
-      g_free (buf);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      buf=g_strdup_printf ("%d",rgb.green);
-      lives_fputs (buf,sfile);
-      g_free (buf);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      buf=g_strdup_printf ("%d",rgb.blue);
-      lives_fputs (buf,sfile);
-      g_free (buf);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      break;
-    case LIVES_PARAM_STRING:
-      lives_fputs ("string",sfile);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      lives_fputs ((tmp=U82L (tmp2=subst (rfxbuilder->params[i].def,"\n","\\n"))),sfile);
-      g_free(tmp);
-      g_free(tmp2);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].max);
-      lives_fputs (buf,sfile);
-      g_free (buf);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      break;
-    case LIVES_PARAM_STRING_LIST:
-      lives_fputs ("string_list",sfile);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      if (rfxbuilder->params[i].def!=NULL) {
-	buf=g_strdup_printf ("%d",get_bool_param (rfxbuilder->params[i].def));
-	lives_fputs (buf,sfile);
-	g_free (buf);
-	lives_fputs(rfxbuilder->field_delim,sfile);
-	for (j=0;j<g_list_length (rfxbuilder->params[i].list);j++) {
-	  lives_fputs ((tmp=U82L (tmp2=subst (g_list_nth_data (rfxbuilder->params[i].list,j),"\n","\\n"))),sfile);
+	  if (!rfxbuilder->params[i].dp) {
+	    buf=g_strdup_printf ("%d",get_int_param (rfxbuilder->params[i].def));
+	    lives_fputs (buf,sfile);
+	    g_free (buf);
+	    lives_fputs(rfxbuilder->field_delim,sfile);
+	    buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].min);
+	    lives_fputs (buf,sfile);
+	    g_free (buf);
+	    lives_fputs(rfxbuilder->field_delim,sfile);
+	    buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].max);
+	    lives_fputs (buf,sfile);
+	    g_free (buf);
+	    lives_fputs(rfxbuilder->field_delim,sfile);
+	    if (stepwrap!=1.) {
+	      buf=g_strdup_printf ("%d",(gint)stepwrap);
+	      lives_fputs (buf,sfile);
+	      g_free (buf);
+	      lives_fputs(rfxbuilder->field_delim,sfile);
+	    }
+	  }
+	  else {
+	    gchar *pattern=g_strdup_printf ("%%.%df",rfxbuilder->params[i].dp);
+	    buf=g_strdup_printf (pattern,get_double_param (rfxbuilder->params[i].def));
+	    lives_fputs (buf,sfile);
+	    g_free (buf);
+	    lives_fputs(rfxbuilder->field_delim,sfile);
+	    buf=g_strdup_printf (pattern,rfxbuilder->params[i].min);
+	    lives_fputs (buf,sfile);
+	    g_free (buf);
+	    lives_fputs(rfxbuilder->field_delim,sfile);
+	    buf=g_strdup_printf (pattern,rfxbuilder->params[i].max);
+	    lives_fputs (buf,sfile);
+	    g_free (buf);
+	    lives_fputs(rfxbuilder->field_delim,sfile);
+	    if (stepwrap!=1.) {
+	      buf=g_strdup_printf (pattern,stepwrap);
+	      lives_fputs (buf,sfile);
+	      g_free (buf);
+	      lives_fputs(rfxbuilder->field_delim,sfile);
+	    }
+	    g_free (pattern);
+	  }
+	  break;
+	case LIVES_PARAM_BOOL:
+	  lives_fputs ("bool",sfile);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  buf=g_strdup_printf ("%d",get_bool_param (rfxbuilder->params[i].def));
+	  lives_fputs (buf,sfile);
+	  g_free (buf);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  if (rfxbuilder->params[i].group!=0) {
+	    buf=g_strdup_printf ("%d",rfxbuilder->params[i].group);
+	    lives_fputs (buf,sfile);
+	    g_free (buf);
+	    lives_fputs(rfxbuilder->field_delim,sfile);
+	  }
+	  break;
+	case LIVES_PARAM_COLRGB24:
+	  lives_fputs ("colRGB24",sfile);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  get_colRGB24_param (rfxbuilder->params[i].def,&rgb);
+	  buf=g_strdup_printf ("%d",rgb.red);
+	  lives_fputs (buf,sfile);
+	  g_free (buf);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  buf=g_strdup_printf ("%d",rgb.green);
+	  lives_fputs (buf,sfile);
+	  g_free (buf);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  buf=g_strdup_printf ("%d",rgb.blue);
+	  lives_fputs (buf,sfile);
+	  g_free (buf);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  break;
+	case LIVES_PARAM_STRING:
+	  lives_fputs ("string",sfile);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  lives_fputs ((tmp=U82L (tmp2=subst (rfxbuilder->params[i].def,"\n","\\n"))),sfile);
 	  g_free(tmp);
 	  g_free(tmp2);
 	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].max);
+	  lives_fputs (buf,sfile);
+	  g_free (buf);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  break;
+	case LIVES_PARAM_STRING_LIST:
+	  lives_fputs ("string_list",sfile);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  if (rfxbuilder->params[i].def!=NULL) {
+	    buf=g_strdup_printf ("%d",get_bool_param (rfxbuilder->params[i].def));
+	    lives_fputs (buf,sfile);
+	    g_free (buf);
+	    lives_fputs(rfxbuilder->field_delim,sfile);
+	    for (j=0;j<g_list_length (rfxbuilder->params[i].list);j++) {
+	      lives_fputs ((tmp=U82L (tmp2=subst (g_list_nth_data (rfxbuilder->params[i].list,j),"\n","\\n"))),sfile);
+	      g_free(tmp);
+	      g_free(tmp2);
+	      lives_fputs(rfxbuilder->field_delim,sfile);
+	    }
+	  }
+	  break;
+	default:
+	  break;
 	}
+	if (i<rfxbuilder->num_params-1)
+	  lives_fputs("\n",sfile);
       }
-      break;
-    default:
-      break;
-    }
-    if (i<rfxbuilder->num_params-1)
-      lives_fputs("\n",sfile);
-   }
-  lives_fputs("\n</params>\n\n",sfile);
-  lives_fputs("<param_window>\n",sfile);
-  for (i=0;i<rfxbuilder->num_paramw_hints;i++) {
-    lives_fputs(rfxbuilder->paramw_hints[i],sfile);
-    if (strlen (rfxbuilder->paramw_hints[i])>strlen (rfxbuilder->field_delim)&&
-	strcmp (rfxbuilder->paramw_hints[i]+strlen (rfxbuilder->paramw_hints[i])
-		-strlen (rfxbuilder->field_delim),rfxbuilder->field_delim)) 
-      lives_fputs(rfxbuilder->field_delim,sfile);
-    lives_fputs("\n",sfile);
-  }
-  lives_fputs("</param_window>\n\n",sfile);
-  lives_fputs("<properties>\n",sfile);
-  if (rfxbuilder->type==RFX_BUILD_TYPE_TOOL) props=rfxbuilder->props|RFX_PROPS_MAY_RESIZE;
-  else props=rfxbuilder->props;
-  
-  if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0&&(rfxbuilder->props&RFX_PROPS_BATCHG)) rfxbuilder->props^=RFX_PROPS_BATCHG;
-
-  buf=g_strdup_printf ("0x%04X",props);
-  lives_fputs (buf,sfile);
-  g_free (buf);
-  lives_fputs("\n</properties>\n\n",sfile);
-  lives_fputs("<language_code>\n",sfile);
-  array=g_strsplit(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->langc_entry))," ",-1);
-  lives_fputs (array[0],sfile);
-  g_strfreev (array);
-  lives_fputs("\n</language_code>\n\n",sfile);
-  lives_fputs("<pre>\n",sfile);
-  lives_fputs (rfxbuilder->pre_code,sfile);
-  if (strlen (rfxbuilder->pre_code)&&strcmp (rfxbuilder->pre_code+strlen (rfxbuilder->pre_code)-1,"\n")) 
-    lives_fputs ("\n",sfile);
-  lives_fputs("</pre>\n\n",sfile);
-  lives_fputs("<loop>\n",sfile);
-  lives_fputs (rfxbuilder->loop_code,sfile);
-  if (strlen (rfxbuilder->loop_code)&&strcmp (rfxbuilder->loop_code+strlen (rfxbuilder->loop_code)-1,"\n")) 
-    lives_fputs ("\n",sfile);
-  lives_fputs("</loop>\n\n",sfile);
-  lives_fputs("<post>\n",sfile);
-  lives_fputs (rfxbuilder->post_code,sfile);
-  if (strlen (rfxbuilder->post_code)&&strcmp (rfxbuilder->post_code+strlen (rfxbuilder->post_code)-1,"\n")) 
-    lives_fputs ("\n",sfile);
-  lives_fputs("</post>\n\n",sfile);
-  lives_fputs("<onchange>\n",sfile);
-  for (i=0;i<rfxbuilder->num_triggers;i++) {
-    int j;
-    gint numtok=get_token_count (rfxbuilder->triggers[i].code,'\n');
-
-    buf=rfxbuilder->triggers[i].when?g_strdup_printf ("%d",rfxbuilder->triggers[i].when-1):g_strdup ("init");
-    array=g_strsplit(rfxbuilder->triggers[i].code,"\n",-1);
-    for (j=0;j<numtok;j++) {
-      lives_fputs (buf,sfile);
-      lives_fputs(rfxbuilder->field_delim,sfile);
-      if (array[j]!=NULL) lives_fputs(array[j],sfile);
-      if (j<numtok-1)
+      lives_fputs("\n</params>\n\n",sfile);
+      lives_fputs("<param_window>\n",sfile);
+      for (i=0;i<rfxbuilder->num_paramw_hints;i++) {
+	lives_fputs(rfxbuilder->paramw_hints[i],sfile);
+	if (strlen (rfxbuilder->paramw_hints[i])>strlen (rfxbuilder->field_delim)&&
+	    strcmp (rfxbuilder->paramw_hints[i]+strlen (rfxbuilder->paramw_hints[i])
+		    -strlen (rfxbuilder->field_delim),rfxbuilder->field_delim)) 
+	  lives_fputs(rfxbuilder->field_delim,sfile);
 	lives_fputs("\n",sfile);
-    }
-    lives_fputs("\n",sfile);
-    g_free (buf);
-    g_strfreev (array);
-  }
-  lives_fputs("</onchange>\n\n",sfile);
-  fclose (sfile);
+      }
+      lives_fputs("</param_window>\n\n",sfile);
+      lives_fputs("<properties>\n",sfile);
+      if (rfxbuilder->type==RFX_BUILD_TYPE_TOOL) props=rfxbuilder->props|RFX_PROPS_MAY_RESIZE;
+      else props=rfxbuilder->props;
+  
+      if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0&&(rfxbuilder->props&RFX_PROPS_BATCHG)) rfxbuilder->props^=RFX_PROPS_BATCHG;
 
-  if (mainw->write_failed) {
-    mainw->write_failed=FALSE;
-    got_err=TRUE;
-    do_write_failed_error_s(script_file);
-    d_print_file_error_failed();
-  }
+      buf=g_strdup_printf ("0x%04X",props);
+      lives_fputs (buf,sfile);
+      g_free (buf);
+      lives_fputs("\n</properties>\n\n",sfile);
+      lives_fputs("<language_code>\n",sfile);
+      array=g_strsplit(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->langc_entry))," ",-1);
+      lives_fputs (array[0],sfile);
+      g_strfreev (array);
+      lives_fputs("\n</language_code>\n\n",sfile);
+      lives_fputs("<pre>\n",sfile);
+      lives_fputs (rfxbuilder->pre_code,sfile);
+      if (strlen (rfxbuilder->pre_code)&&strcmp (rfxbuilder->pre_code+strlen (rfxbuilder->pre_code)-1,"\n")) 
+	lives_fputs ("\n",sfile);
+      lives_fputs("</pre>\n\n",sfile);
+      lives_fputs("<loop>\n",sfile);
+      lives_fputs (rfxbuilder->loop_code,sfile);
+      if (strlen (rfxbuilder->loop_code)&&strcmp (rfxbuilder->loop_code+strlen (rfxbuilder->loop_code)-1,"\n")) 
+	lives_fputs ("\n",sfile);
+      lives_fputs("</loop>\n\n",sfile);
+      lives_fputs("<post>\n",sfile);
+      lives_fputs (rfxbuilder->post_code,sfile);
+      if (strlen (rfxbuilder->post_code)&&strcmp (rfxbuilder->post_code+strlen (rfxbuilder->post_code)-1,"\n")) 
+	lives_fputs ("\n",sfile);
+      lives_fputs("</post>\n\n",sfile);
+      lives_fputs("<onchange>\n",sfile);
+      for (i=0;i<rfxbuilder->num_triggers;i++) {
+	int j;
+	gint numtok=get_token_count (rfxbuilder->triggers[i].code,'\n');
+
+	buf=rfxbuilder->triggers[i].when?g_strdup_printf ("%d",rfxbuilder->triggers[i].when-1):g_strdup ("init");
+	array=g_strsplit(rfxbuilder->triggers[i].code,"\n",-1);
+	for (j=0;j<numtok;j++) {
+	  lives_fputs (buf,sfile);
+	  lives_fputs(rfxbuilder->field_delim,sfile);
+	  if (array[j]!=NULL) lives_fputs(array[j],sfile);
+	  if (j<numtok-1)
+	    lives_fputs("\n",sfile);
+	}
+	lives_fputs("\n",sfile);
+	g_free (buf);
+	g_strfreev (array);
+      }
+      lives_fputs("</onchange>\n\n",sfile);
+      fclose (sfile);
+
+      if (mainw->write_failed) {
+	mainw->write_failed=FALSE;
+	retval=do_write_failed_error_s_with_retry(script_file,NULL,GTK_WINDOW(rfxbuilder->dialog));
+	if (retval==LIVES_CANCEL) d_print_file_error_failed();
+      }
+
+    }
+  } while (retval==LIVES_RETRY);
 
   g_free(name);
   g_free(script_file);
 
-  if (!got_err) d_print_done();
-  return TRUE;
+  if (retval!=LIVES_CANCEL) {
+    d_print_done();
+    return TRUE;
+  }
+  return FALSE;
 }
 
 

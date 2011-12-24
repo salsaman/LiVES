@@ -4029,6 +4029,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   gchar *new_dir;
 
   int ord_fd;
+  int retval=0;
   gchar *ordfile;
   gchar *ord_entry;
   gchar new_set_name[256];
@@ -4141,82 +4142,95 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     return;
   }
 
-
   ordfile=g_strdup_printf("%s/%s/order",prefs->tmpdir,mainw->set_name);
-  if (!is_append) ord_fd=creat(ordfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
-  else ord_fd=open(ordfile,O_CREAT|O_WRONLY|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
 
-  if (ord_fd<0) {
-    end_threaded_dialog();
-    do_write_failed_error_s(ordfile);
-    g_free(ordfile);
-    return;
-  }
+  do {
+    if (!is_append) ord_fd=creat(ordfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+    else ord_fd=open(ordfile,O_CREAT|O_WRONLY|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
 
-  g_free(ordfile);
-
-  cliplist=mainw->cliplist;
-
-  while (cliplist!=NULL) {
-
-    threaded_dialog_spin();
-    while (g_main_context_iteration(NULL,FALSE));
-
-    i=GPOINTER_TO_INT(cliplist->data);
-    if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)) {
-      if ((tmp=strrchr(mainw->files[i]->handle,'/'))!=NULL) {
-	g_snprintf(new_handle,256,"%s/clips%s",mainw->set_name,tmp);
-      }
-      else {
-	g_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
-      }
-      if (strcmp(new_handle,mainw->files[i]->handle)) {
-	new_dir=g_strdup_printf("%s/%s",prefs->tmpdir,new_handle);
-	if (g_file_test(new_dir,G_FILE_TEST_IS_DIR)) {
-	  // get a new unique handle
-	  get_temp_handle(i,FALSE);
-	  g_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
-	}
-	g_free(new_dir);
-	
-	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
-	  // must do this before we move it
-	  close_decoder_plugin(mainw->files[i]->ext_src);
-	  mainw->files[i]->ext_src=NULL;
-	}
-	
-	mainw->com_failed=FALSE;
-	com=g_strdup_printf("/bin/mv %s/%s %s/%s",prefs->tmpdir,mainw->files[i]->handle,prefs->tmpdir,new_handle);
-	lives_system(com,FALSE);
-	g_free(com);
-	
-	if (mainw->com_failed) {
-	  end_threaded_dialog();
-	  return;
-	}
-
-	got_new_handle=TRUE;
-	
-	g_snprintf(mainw->files[i]->handle,256,"%s",new_handle);
-	g_snprintf(mainw->files[i]->info_file,256,"%s/%s/.status",prefs->tmpdir,mainw->files[i]->handle);
-      }
-
-      
-      ord_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
-      mainw->write_failed=FALSE;
-      lives_write(ord_fd,ord_entry,strlen(ord_entry),FALSE);
-      g_free(ord_entry);
-
-      if (mainw->write_failed) {
+    if (ord_fd<0) {
+      retval=do_write_failed_error_s_with_retry(ordfile,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) {
 	end_threaded_dialog();
+	g_free(ordfile);
 	return;
       }
     }
+    else {
+      mainw->write_failed=FALSE;
+      cliplist=mainw->cliplist;
 
-    cliplist=cliplist->next;
-  }
+      while (cliplist!=NULL) {
+	if (mainw->write_failed) break;
+	threaded_dialog_spin();
+	while (g_main_context_iteration(NULL,FALSE));
+
+	i=GPOINTER_TO_INT(cliplist->data);
+	if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_FILE||
+				    mainw->files[i]->clip_type==CLIP_TYPE_DISK)) {
+	  if ((tmp=strrchr(mainw->files[i]->handle,'/'))!=NULL) {
+	    g_snprintf(new_handle,256,"%s/clips%s",mainw->set_name,tmp);
+	  }
+	  else {
+	    g_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
+	  }
+	  if (strcmp(new_handle,mainw->files[i]->handle)) {
+	    new_dir=g_strdup_printf("%s/%s",prefs->tmpdir,new_handle);
+	    if (g_file_test(new_dir,G_FILE_TEST_IS_DIR)) {
+	      // get a new unique handle
+	      get_temp_handle(i,FALSE);
+	      g_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
+	    }
+	    g_free(new_dir);
+	
+	    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	      // must do this before we move it
+	      close_decoder_plugin(mainw->files[i]->ext_src);
+	      mainw->files[i]->ext_src=NULL;
+	    }
+	
+	    mainw->com_failed=FALSE;
+	    com=g_strdup_printf("/bin/mv \"%s/%s\" \"%s/%s\"",
+				prefs->tmpdir,mainw->files[i]->handle,prefs->tmpdir,new_handle);
+	    lives_system(com,FALSE);
+	    g_free(com);
+	
+	    if (mainw->com_failed) {
+	      end_threaded_dialog();
+	      g_free(ordfile);
+	      return;
+	    }
+
+	    got_new_handle=TRUE;
+	
+	    g_snprintf(mainw->files[i]->handle,256,"%s",new_handle);
+	    g_snprintf(mainw->files[i]->info_file,256,"%s/%s/.status",prefs->tmpdir,mainw->files[i]->handle);
+	  }
+      
+	  ord_entry=g_strdup_printf("%s\n",mainw->files[i]->handle);
+	  lives_write(ord_fd,ord_entry,strlen(ord_entry),FALSE);
+	  g_free(ord_entry);
+
+	}
+
+	cliplist=cliplist->next;
+      }
+
+      if (mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(ordfile,NULL,NULL);
+      }
+
+    }
+
+  } while (retval==LIVES_RETRY);
 
   close (ord_fd);
+  g_free(ordfile);
+
+  if (retval==LIVES_CANCEL) {
+    end_threaded_dialog();
+    return;
+  }
 
   if (got_new_handle) migrate_layouts(NULL,mainw->set_name);
 
@@ -4582,13 +4596,13 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     }
 
     if (prefs->autoload_subs) {
-      subfname=g_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
+      subfname=g_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
       if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
 	subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
       }
       else {
 	g_free(subfname);
-	subfname=g_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
+	subfname=g_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
 	if (g_file_test(subfname,G_FILE_TEST_EXISTS)) {
 	  subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);
 	}
@@ -4598,7 +4612,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     }
 
     get_total_time (cfile);
-    if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*cfile->asampsize/8);
+    if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/
+					       cfile->fps*cfile->arate*cfile->achans*cfile->asampsize/8);
 
     // add to clip menu
     threaded_dialog_spin();
@@ -4641,15 +4656,15 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
 
 
-void
-on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gint current_file=mainw->current_file;
   gchar *markerfile;
   gchar **array;
   int marker_fd;
-  gint bytes;
+  gint bytes=0;
   gchar *com;
   int i;
+  int retval=0;
 
   if (!do_warning_dialog (_ ("LiVES will attempt to recover some disk space.\nYou should ONLY run this if you have no other copies of LiVES running on this machine.\nClick OK to proceed.\n"))) return;
 
@@ -4671,78 +4686,61 @@ on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
   for (i=0;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
       markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"set.",NULL);
-      marker_fd=creat(markerfile,S_IRUSR|S_IWUSR);
-      if (marker_fd<0) {
-	d_print_failed();
-	do_write_failed_error_s(markerfile);
-	g_free(markerfile);
-	sensitize();
-	if (mainw->multitrack!=NULL) {
-	  mt_sensitise(mainw->multitrack);
-	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+      do {
+	marker_fd=creat(markerfile,S_IRUSR|S_IWUSR);
+	if (marker_fd<0) {
+	  retval=do_write_failed_error_s_with_retry(markerfile,strerror(errno),NULL);
 	}
-	return;
-      }
+      } while (retval==LIVES_RETRY);
 
       close(marker_fd);
       g_free(markerfile);
       if (mainw->files[i]->undo_action!=UNDO_NONE) {
-	markerfile=g_strdup_printf("%s/%s/noprune",prefs->tmpdir,mainw->files[i]->handle);
-	marker_fd=creat(markerfile,S_IRUSR|S_IWUSR);
-	if (marker_fd<0) {
-	  d_print_failed();
-	  do_write_failed_error_s(markerfile);
-	  g_free(markerfile);
-	  sensitize();
-	  if (mainw->multitrack!=NULL) {
-	    mt_sensitise(mainw->multitrack);
-	    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+	markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"noprune",NULL);
+	do {
+	  marker_fd=creat(markerfile,S_IRUSR|S_IWUSR);
+	  if (marker_fd<0) {
+	    retval=do_write_failed_error_s_with_retry(markerfile,strerror(errno),NULL);
 	  }
-	  return;
-	}
+	} while (retval==LIVES_RETRY);
 	close(marker_fd);
 	g_free(markerfile);
       }
     }
   }
 
-  mainw->com_failed=FALSE;
-  com=g_strdup_printf("smogrify bg_weed %s",cfile->handle);
-  lives_system(com,FALSE);
-  g_free(com);
-
-
-  if (mainw->com_failed) {
-    sensitize();
-    if (mainw->multitrack!=NULL) {
-      mt_sensitise(mainw->multitrack);
-      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  if (retval!=LIVES_CANCEL) {
+    mainw->com_failed=FALSE;
+    com=g_strdup_printf("smogrify bg_weed %s",cfile->handle);
+    lives_system(com,FALSE);
+    g_free(com);
+    
+    if (!mainw->com_failed) {
+      // show a progress dialog, not cancellable
+      do_progress_dialog(TRUE,FALSE,_("Clearing disk space"));
+      
+      array=g_strsplit(mainw->msg,"|",2);
+      bytes=atoi(array[1]);
+      g_strfreev(array);
+      
     }
-    d_print_failed();
-    return;
   }
-
-  // show a progress dialog, not cancellable
-  do_progress_dialog(TRUE,FALSE,_("Clearing disk space"));
-  
-  array=g_strsplit(mainw->msg,"|",2);
-  bytes=atoi(array[1]);
-  g_strfreev(array);
 
   com=g_strdup_printf("smogrify close %s",cfile->handle);
   lives_system(com,FALSE);
   g_free(com);
   g_free(cfile);
   cfile=NULL;
-  if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
-
+  if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
+    mainw->first_free_file=mainw->current_file;
+  
   for (i=0;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
-      markerfile=g_strdup_printf("%s/%s/set.",prefs->tmpdir,mainw->files[i]->handle);
+      markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"set.",NULL);
       unlink (markerfile);
       g_free(markerfile);
       if (mainw->files[i]->undo_action!=UNDO_NONE) {
-	markerfile=g_strdup_printf("%s/%s/noprune",prefs->tmpdir,mainw->files[i]->handle);
+	markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"noprune",NULL);
 	unlink (markerfile);
 	g_free(markerfile);
       }
@@ -4751,14 +4749,17 @@ on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   mainw->current_file=current_file;
   sensitize();
-  d_print_done();
 
   if (mainw->multitrack!=NULL) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
 
-  do_error_dialog(g_strdup_printf(_("%d MB of disk space was recovered.\n"),bytes));
+  if (retval!=LIVES_CANCEL&&!mainw->com_failed) {
+    d_print_done();
+    do_error_dialog(g_strdup_printf(_("%d MB of disk space was recovered.\n"),bytes));
+  }
+  else d_print_failed();
 
 }
 
@@ -6517,6 +6518,9 @@ void
 on_sticky_activate               (GtkMenuItem     *menuitem,
 				  gpointer         user_data)
 {
+  // type 1 is sticky (shown even when not playing)
+  // type 0 is non-sticky (shown only when playing)
+
   if (prefs->sepwin_type==0) {
     prefs->sepwin_type=1;
       if (mainw->sep_win) {

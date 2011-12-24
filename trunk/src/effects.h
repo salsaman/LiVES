@@ -17,7 +17,7 @@ void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx);
 void on_realfx_activate (GtkMenuItem *, gpointer rfx);
 gboolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx);
 
-gint  realfx_progress (gboolean reset);
+lives_render_error_t realfx_progress (gboolean reset);
 
 // key callbacks
 

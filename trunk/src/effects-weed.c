@@ -6882,7 +6882,8 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem) {
 
 
 
-void write_filter_defaults (int fd, int idx) {
+gboolean write_filter_defaults (int fd, int idx) {
+  // return FALSE on write error
   gchar *hashname;
   weed_plant_t *filter=weed_filters[idx],**ptmpls;
   int num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -6891,7 +6892,7 @@ void write_filter_defaults (int fd, int idx) {
   size_t vlen;
   int ntowrite=0;
 
-  if (num_params==0) return;
+  if (num_params==0) return TRUE;
   ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
 
   for (i=0;i<num_params;i++) {
@@ -6923,10 +6924,9 @@ void write_filter_defaults (int fd, int idx) {
   if (ptmpls!=NULL) weed_free(ptmpls);
 
   if (mainw->write_failed) {
-    do_write_failed_error(0, 0);
-    mainw->write_failed=FALSE;
+    return FALSE;
   }
-
+  return TRUE;
 }
 
 
@@ -7017,8 +7017,9 @@ void read_filter_defaults(int fd) {
 
 
 
-void write_generator_sizes (int fd, int idx) {
+gboolean write_generator_sizes (int fd, int idx) {
   // TODO - handle optional channels
+  // return FALSE on write error
   gchar *hashname;
   weed_plant_t *filter,**ctmpls;
   int num_channels;
@@ -7027,12 +7028,12 @@ void write_generator_sizes (int fd, int idx) {
   gboolean wrote_hashname=FALSE;
 
   num_channels=enabled_in_channels(weed_filters[idx],FALSE);
-  if (num_channels!=0) return;
+  if (num_channels!=0) return TRUE;
 
   filter=weed_filters[idx];
 
   num_channels=weed_leaf_num_elements(filter,"out_channel_templates");
-  if (num_channels==0) return;
+  if (num_channels==0) return TRUE;
 
   ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
 
@@ -7065,10 +7066,9 @@ void write_generator_sizes (int fd, int idx) {
   if (wrote_hashname) lives_write(fd,"\n",1,TRUE);
 
   if (mainw->write_failed) {
-    do_write_failed_error(0, 0);
-    mainw->write_failed=FALSE;
+    return FALSE;
   }
-
+  return TRUE;
 }
 
 
@@ -7302,10 +7302,11 @@ void apply_key_defaults(weed_plant_t *inst, gint key, gint mode) {
 
 void write_key_defaults(int fd, gint key, gint mode) {
   // save key/mode param defaults to file
+  // caller should check for write errors
+
   weed_plant_t *filter;
   weed_plant_t **key_defs;
   int i,nparams=0;
-
 
   if ((key_defs=key_defaults[key][mode])==NULL) {
     lives_write (fd,&nparams,sizint,TRUE);
@@ -7317,6 +7318,7 @@ void write_key_defaults(int fd, gint key, gint mode) {
   lives_write (fd,&nparams,sizint,TRUE);
 
   for (i=0;i<nparams;i++) {
+    if (mainw->write_failed) break;
     weed_leaf_serialise(fd,key_defs[i],"value",FALSE,NULL);
   }
 

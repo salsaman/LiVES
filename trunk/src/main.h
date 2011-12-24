@@ -654,6 +654,7 @@ gboolean do_warning_dialog(const gchar *text);
 gboolean do_warning_dialog_with_check(const gchar *text, gint warn_mask_number);
 gboolean do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number, GtkWindow *transient);
 gboolean do_yesno_dialog(const gchar *text);
+int do_cancel_retry_dialog(const gchar *text, GtkWindow *transient);
 void do_error_dialog(const gchar *text);
 void do_error_dialog_with_check(const gchar *text, gint warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
@@ -662,6 +663,7 @@ void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blockin
 
 
 void do_com_failed_error(const char *com, int retval);
+int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient);
 void do_write_failed_error_s(const char *filename);
 void do_read_failed_error_s(const char *filename);
 void do_write_failed_error(ssize_t wrote, size_t target);

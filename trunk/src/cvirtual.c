@@ -45,30 +45,34 @@ void create_frame_index(gint fileno, gboolean init, gint start_offset, gint nfra
 // save frame_index to disk
 gboolean save_frame_index(gint fileno) {
   int fd,i;
+  int retval=0;
   gchar *fname;
   file *sfile=mainw->files[fileno];
   if (sfile==NULL||sfile->frame_index==NULL) return FALSE;
 
-  fname=g_strdup_printf("%s/%s/file_index",prefs->tmpdir,sfile->handle);
-  fd=open(fname,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
-  g_free(fname);
+  fname=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
 
-  if (fd<0) mainw->write_failed=TRUE;
-  else mainw->write_failed=FALSE;
-
-  if (!mainw->write_failed) {
-    for (i=0;i<sfile->frames;i++) {
-      lives_write(fd,&sfile->frame_index[i],sizint,TRUE);
-      if (mainw->write_failed) break;
+  do {
+    fd=open(fname,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+    if (fd<0) {
+      retval=do_write_failed_error_s_with_retry(fname,strerror(errno),NULL);
     }
-    
-    close(fd);
-  }
+    else {
+      mainw->write_failed=FALSE;
+      for (i=0;i<sfile->frames;i++) {
+	lives_write(fd,&sfile->frame_index[i],sizint,TRUE);
+	if (mainw->write_failed) break;
+      }
+      
+      close(fd);
 
-  if (mainw->write_failed) {
-    do_write_failed_error(0,0);
-    mainw->write_failed=FALSE;
-  }
+      if (mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(fname,NULL,NULL);
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
+  g_free(fname);
 
   return TRUE;
 }
@@ -202,6 +206,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
   GdkPixbuf *pixbuf;
   GError *error=NULL;
   gchar *oname;
+  int retval=0;
 
   gint progress=1;
 
@@ -226,16 +231,16 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
 	oname=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i);
       }
 
-      lives_pixbuf_save (pixbuf, oname, sfile->img_type, 100-prefs->ocp, &error);
+      do {
+	lives_pixbuf_save (pixbuf, oname, sfile->img_type, 100-prefs->ocp, &error);
+	if (error!=NULL) {
+	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
+	  g_error_free(error);
+	  error=NULL;
+	}
+      } while (retval==LIVES_RETRY);
+
       if (oname!=NULL) g_free(oname);
-
-      if (error!=NULL) {
-	do_write_failed_error_s(oname);
-	g_printerr("err was %s\n",error->message);
-	g_error_free(error);
-	error=NULL;
-      }
-
       if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
       pixbuf=NULL;
 

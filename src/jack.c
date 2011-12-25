@@ -765,7 +765,7 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   frames_out=(long)((gdouble)nframes/out_scale+1.);
 
-  holding_buff=malloc(frames_out*afile->achans*afile->asampsize/8);
+  holding_buff=g_malloc(frames_out*afile->achans*afile->asampsize/8);
 
   for (i=0;i<jackd->num_input_channels;i++) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
@@ -787,7 +787,7 @@ static int audio_read (nframes_t nframes, void *arg) {
     if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
   }
 
-  free(holding_buff);
+  g_free(holding_buff);
 
   if (mainw->rec_samples==0&&mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_KEEP; // we wrote the required #
 

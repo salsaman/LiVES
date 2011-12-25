@@ -1061,6 +1061,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       // background processing (e.g. rendered effects)
       if ((infofile=fopen(cfile->info_file,"r"))) {
 	// OK, now we might have some frames
+	mainw->read_failed=FALSE;
 	lives_fgets(mainw->msg,512,infofile);
 	fclose(infofile);
       }
@@ -1284,6 +1285,7 @@ void do_auto_dialog (const gchar *text, gint type) {
   
 
   if (type==0) {
+    mainw->read_failed=FALSE;
     lives_fgets(mainw->msg,512,infofile);
     fclose(infofile);
     if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);

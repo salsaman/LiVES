@@ -4048,6 +4048,7 @@ void load_frame_image(gint frame) {
 	  // check effect to see if it finished yet
 	  if ((fd=fopen(info_file,"r"))) {
 	    clear_mainw_msg();
+	    mainw->read_failed=FALSE;
 	    lives_fgets(mainw->msg,512,fd);
 	    fclose(fd);
 	    if (!strncmp(mainw->msg,"completed",9)||!strncmp(mainw->msg,"error",5)) {

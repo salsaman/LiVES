@@ -108,8 +108,8 @@ int lives_fputs(const char *s, FILE *stream) {
 
   if (retval==EOF) {
     mainw->write_failed=TRUE;
-    fclose(stream);
   }
+
   return retval;
 }
 
@@ -119,10 +119,10 @@ char *lives_fgets(char *s, int size, FILE *stream) {
 
   retval=fgets(s,size,stream);
 
-  if (retval==NULL) {
+  if (retval==NULL&&ferror(stream)) {
     mainw->read_failed=TRUE;
-    fclose(stream);
   }
+
   return retval;
 }
 
@@ -3213,7 +3213,8 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
       return FALSE;
     }
     else {
-      lives_fgets(val,maxlen-1,valfile);
+      mainw->read_failed=FALSE;
+      lives_fgets(val,maxlen,valfile);
       fclose(valfile);
       unlink(vfile);
     }

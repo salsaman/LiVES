@@ -76,7 +76,7 @@ get_pref(const gchar *key, gchar *val, gint maxlen) {
   }
   else {
     mainw->read_failed=FALSE;
-    lives_fgets(val,maxlen-1,valfile);
+    lives_fgets(val,maxlen,valfile);
     fclose(valfile);
     unlink(vfile);
     if (mainw->read_failed) {

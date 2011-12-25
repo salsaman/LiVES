@@ -4387,6 +4387,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   g_free(ordfile);
 
   mainw->suppress_dprint=TRUE;
+  mainw->read_failed=FALSE;
 
   while (1) {
     if (!skip_threaded_dialog&&prefs->show_gui) {
@@ -4424,7 +4425,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       }
     }
     else {
-      if (fgets(mainw->msg,512,orderfile)==NULL) clear_mainw_msg();
+      if (lives_fgets(mainw->msg,512,orderfile)==NULL) clear_mainw_msg();
       else memset(mainw->msg+strlen(mainw->msg)-strlen("\n"),0,1);
     }
 
@@ -5883,6 +5884,7 @@ on_button3_clicked                     (GtkButton       *button,
     else {
       if (mainw->cancel_type!=CANCEL_SOFT) {
 	if ((infofile=fopen(cfile->info_file,"r"))>0) {
+	  mainw->read_failed=FALSE;
 	  lives_fgets(mainw->msg,511,infofile);
 	  fclose(infofile);
 	}

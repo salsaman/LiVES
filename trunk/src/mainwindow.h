@@ -176,13 +176,13 @@ typedef struct {
   gint current_file;
   gint first_free_file;
   file *files[MAX_FILES+1]; ///< +1 for the clipboard
-  gchar vid_load_dir[256];
-  gchar vid_save_dir[256];
-  gchar audio_dir[256];
-  gchar image_dir[256];
-  gchar proj_load_dir[256];
-  gchar proj_save_dir[256];
-  gchar xmms_dir[256];
+  gchar vid_load_dir[PATH_MAX];
+  gchar vid_save_dir[PATH_MAX];
+  gchar audio_dir[PATH_MAX];
+  gchar image_dir[PATH_MAX];
+  gchar proj_load_dir[PATH_MAX];
+  gchar proj_save_dir[PATH_MAX];
+  gchar xmms_dir[PATH_MAX];
   gint untitled_number;
   gint cap_number;
   gint clips_available;
@@ -237,7 +237,7 @@ typedef struct {
   weed_plant_t *stored_event_list; ///< stored mt -> clip editor
   gboolean stored_event_list_changed;
   gboolean stored_layout_save_all_vals;
-  gchar stored_layout_name[256];
+  gchar stored_layout_name[PATH_MAX];
 
   GList *stored_layout_undos;
   size_t sl_undo_buffer_used;
@@ -348,7 +348,7 @@ typedef struct {
   /////////////////////////////////////////////////
 
   // end of static-ish info
-  gchar first_info_file[256];
+  gchar first_info_file[PATH_MAX];
   gboolean leave_files;
   gboolean was_set;
 

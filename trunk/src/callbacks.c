@@ -4099,7 +4099,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     }
     else {
       g_free(new_clips_dir);
-      layout_map_file=g_strdup_printf("%s/%s/layouts/layout.map",prefs->tmpdir,mainw->set_name);
+      layout_map_file=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
       // if target has layouts dir but no clips, it means we have old layouts !
       if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) {
 	if (do_set_rename_old_layouts_warning(mainw->set_name)) {
@@ -4241,7 +4241,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   if (strlen(old_set)&&strcmp(old_set,mainw->set_name)) {
     layout_map_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,old_set);
-    layout_map_file=g_strdup_printf("%slayout.map",layout_map_dir);
+    layout_map_file=g_build_filename(layout_map_dir,"layout.map",NULL);
     // update details for layouts - needs_set, current_layout_map and affected_layout_map
     if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) {
       migrate_layouts(old_set,mainw->set_name);
@@ -4254,21 +4254,21 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
     if (is_append) {
       //append current layout.map to target one
-      com=g_strdup_printf("/bin/cat %s/%s/layouts/layout.map %s/%s/layouts/layout.map > %s/%s/layouts/layout.map 2>/dev/null",prefs->tmpdir,mainw->set_name,prefs->tmpdir,old_set,prefs->tmpdir,mainw->set_name);
+      com=g_strdup_printf("/bin/cat \"%s/%s/layouts/layout.map\" \"%s/%s/layouts/layout.map\" > \"%s/%s/layouts/layout.map\" 2>/dev/null",prefs->tmpdir,mainw->set_name,prefs->tmpdir,old_set,prefs->tmpdir,mainw->set_name);
       lives_system(com,TRUE);
       g_free(com);
-      com=g_strdup_printf("/bin/rm %s/%s/layouts/layout.map 2>/dev/null",prefs->tmpdir,mainw->set_name);
+      com=g_strdup_printf("/bin/rm \"%s/%s/layouts/layout.map\" 2>/dev/null",prefs->tmpdir,mainw->set_name);
       lives_system(com,TRUE);
       g_free(com);
     }
     
     // move any layouts from old set to new (including layout.map)
-    com=g_strdup_printf("/bin/cp -a %s/%s/layouts %s/%s/ 2>/dev/null",prefs->tmpdir,old_set,prefs->tmpdir,mainw->set_name);
+    com=g_strdup_printf("/bin/cp -a \"%s/%s/layouts\" \"%s/%s/\" 2>/dev/null",prefs->tmpdir,old_set,prefs->tmpdir,mainw->set_name);
     lives_system(com,TRUE);
     g_free(com);
 
     // remove old set dir
-    com=g_strdup_printf("/bin/rm -r %s/%s 2>/dev/null",prefs->tmpdir,old_set);
+    com=g_strdup_printf("/bin/rm -r \"%s/%s\" 2>/dev/null",prefs->tmpdir,old_set);
     lives_system(com,TRUE);
     g_free(com);
   }
@@ -4276,7 +4276,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   if (!mainw->was_set&&!strcmp(old_set,mainw->set_name)) {
     // set name was set by export or save layout, now we need to update our layout map
     layout_map_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,old_set);
-    layout_map_file=g_strdup_printf("%slayout.map",layout_map_dir);
+    layout_map_file=g_build_filename(layout_map_dir,"layout.map",NULL);
     if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) save_layout_map(NULL,NULL,NULL,layout_map_dir);
     mainw->was_set=TRUE;
     got_new_handle=FALSE;
@@ -4287,7 +4287,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   if (got_new_handle) {
     // new file(s) were added to an existing set
     layout_map_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,mainw->set_name);
-    layout_map_file=g_strdup_printf("%slayout.map",layout_map_dir);
+    layout_map_file=g_build_filename(layout_map_dir,"layout.map",NULL);
     save_layout_map(NULL,NULL,NULL,layout_map_dir);
     g_free(layout_map_file);
     g_free(layout_map_dir);
@@ -4348,6 +4348,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   gchar *msg;
   gchar *ordfile;
   gchar *subfname;
+  gchar vid_open_dir[PATH_MAX];
   FILE *orderfile;
   gboolean added_recovery=FALSE;
   gchar set_name[128];
@@ -4393,6 +4394,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
   mainw->suppress_dprint=TRUE;
   mainw->read_failed=FALSE;
+
+  g_snprintf(vid_open_dir,PATH_MAX,"%s",mainw->vid_load_dir);
 
   while (1) {
     if (!skip_threaded_dialog&&prefs->show_gui) {
@@ -4549,16 +4552,27 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (load_frame_index(mainw->current_file)) {
       gboolean next=FALSE;
+      gchar *orig_file_name=g_strdup(cfile->file_name);
+
       cfile->img_type=img_type; // ignore value from read_headers
+
       while (1) {
 	threaded_dialog_spin();
 	if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
 	  if (mainw->error) {
-	    if (do_original_lost_warning(cfile->file_name)) {
+	    if (do_original_lost_warning(orig_file_name)) {
+	      gchar *new_file_name=choose_file(vid_open_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
+	      g_snprintf(cfile->file_name,PATH_MAX,"%s",new_file_name);
+	      if (new_file_name!=NULL) {
+		g_snprintf(vid_open_dir,PATH_MAX,"%s",cfile->file_name);
+		get_dirname(vid_open_dir);
+	      }
+	      continue;
+	    }
+	    else {
 
 	      // TODO ** - show layout errors
 
-	      continue;
 	    }
 	  }
 	  else {
@@ -4569,6 +4583,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
 	break;
       }
+      g_free(orig_file_name);
+
       if (next) {
 	g_free(cfile);
 	mainw->first_free_file=mainw->current_file;

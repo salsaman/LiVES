@@ -1721,7 +1721,7 @@ gboolean do_layout_alter_audio_warning(void) {
 }
 
 gboolean do_original_lost_warning(const gchar *fname) {
-  gchar *msg=g_strdup_printf(_("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, please copy it back to its original location\nand click 'OK' to try again.\nOtherwise click cancel to skip loading this file.\n"),fname);
+  gchar *msg=g_strdup_printf(_("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\nOtherwise click Cancel to skip loading this file.\n"),fname);
   gboolean retcode=do_warning_dialog(msg);
   g_free(msg);
   return retcode;

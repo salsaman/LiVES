@@ -382,10 +382,10 @@ typedef struct {
   glong f_size;
   glong afilesize;
   gint old_frames; ///< for deordering, etc.
-  gchar file_name[256]; ///< input file
-  gchar info_file[256];
+  gchar file_name[PATH_MAX]; ///< input file
+  gchar info_file[PATH_MAX];
   gchar name[256];  ///< the display name
-  gchar save_file_name[256];
+  gchar save_file_name[PATH_MAX];
   gchar type[40];
   gint start;
   gint end;
@@ -539,7 +539,7 @@ typedef struct {
   gboolean has_gdb;
 
   /// home directory - default location for config file - locale encoding
-  gchar home_dir[256];
+  gchar home_dir[PATH_MAX];
 
   /// used for returning startup messages from the backend
   gchar startup_msg[256];

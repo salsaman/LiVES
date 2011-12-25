@@ -2586,7 +2586,6 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->paste_as_new, FALSE);
   gtk_widget_set_sensitive (mainw->capture, FALSE);
   gtk_widget_set_sensitive (mainw->toy_tv, FALSE);
-  gtk_widget_set_sensitive (mainw->toy_autolives, FALSE);
   gtk_widget_set_sensitive (mainw->vj_save_set, FALSE);
   gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
   gtk_widget_set_sensitive (mainw->export_proj, FALSE);
@@ -2630,7 +2629,6 @@ procw_desensitize(void) {
       // loading, restoring etc
       gtk_widget_set_sensitive (mainw->lock_selwidth, FALSE);
       gtk_widget_set_sensitive (mainw->show_file_comments, FALSE);
-      gtk_widget_set_sensitive (mainw->toy_autolives, FALSE);
       if (!cfile->opening_only_audio) {
 	gtk_widget_set_sensitive (mainw->toy_random_frames, FALSE);
       }
@@ -2683,7 +2681,7 @@ void load_start_image(gint frame) {
   if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
-      gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
+      gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
       mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
       if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
@@ -2717,6 +2715,7 @@ void load_start_image(gint frame) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,cfile->hsize,cfile->vsize,interp);
+      start_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
   
@@ -2799,7 +2798,7 @@ void load_end_image(gint frame) {
   if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
-      gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
+      gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
       mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
       if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
@@ -3868,7 +3867,8 @@ void load_frame_image(gint frame) {
       }
       else {
 	if (mainw->toy_type!=LIVES_TOY_NONE) {
-	  if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!mainw->fs&&cfile->clip_type==CLIP_TYPE_DISK) {
+	  if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!mainw->fs&&(cfile->clip_type==CLIP_TYPE_DISK||
+								  cfile->clip_type==CLIP_TYPE_FILE)) {
 	    gint current_file=mainw->current_file;
 	    if (mainw->toy_go_wild) {
 	      int i,other_file;

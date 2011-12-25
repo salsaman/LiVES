@@ -7655,6 +7655,11 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
   gchar string[256];
   gchar *com;
 
+  if (menuitem!=NULL&&mainw->toy_type==GPOINTER_TO_INT(user_data)) {
+    // switch is off
+    user_data=GINT_TO_POINTER(LIVES_TOY_NONE);
+  }
+
   switch (mainw->toy_type) {
     // old status
   case LIVES_TOY_AUTOLIVES:

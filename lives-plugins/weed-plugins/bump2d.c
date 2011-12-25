@@ -172,42 +172,47 @@ int bumpmap_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   BUMP bumpmap[width][height];
 
   /* create bump map */
-  for (x = 0; x < width - 1; x++)
-    {
-      for (y = 1; y < height - 1; y++)
-	{
-	  bumpmap[x][y].x = calc_luma(&src[y*irowstride+x*3+3])-calc_luma(&src[y*irowstride+x*3]);
-	  bumpmap[x][y].y = calc_luma(&src[y*irowstride+x*3])-calc_luma(&src[(y-1)*irowstride+x*3]);
-	}
+  for (x = 0; x < width - 1; x++) {
+    for (y = 1; y < height - 1; y++) {
+      bumpmap[x][y].x = calc_luma(&src[y*irowstride+x*3+3])-calc_luma(&src[y*irowstride+x*3]);
+      bumpmap[x][y].y = calc_luma(&src[y*irowstride+x*3])-calc_luma(&src[(y-1)*irowstride+x*3]);
     }
+  }
 
   lightx = aSin[sdata->sin_index];
   lighty = aSin[sdata->sin_index2];
   
-  s1 = dst + orowstride + 3;
+  weed_memset(dst,0,orowstride);
+  s1 = dst + orowstride;
   
-  for (y = 1; y < height - 1; ++y)
-    {    
-      temp = lighty - y;
-      for (x = 1; x < width - 1; x++)
-	{
-	  normalx = bumpmap[x][y].x + lightx - x;
-	  normaly = bumpmap[x][y].y + temp;
-	  
-	  if (normalx < 0)
-	    normalx = 0;
-	  else if (normalx > 255)
-	    normalx = 0;
-	  if (normaly < 0)
-	    normaly = 0;
-	  else if (normaly > 255)
-	    normaly = 0;	  
-	  
-	  weed_memset(s1,reflectionmap[normalx][normaly],3);
-	  s1+=3;
-	}
-      s1+=orowstride-width3+6;
+  orowstride-=width3-3;
+
+  for (y = 1; y < height - 1; ++y) {    
+    temp = lighty - y;
+    weed_memset(s1,0,3);
+    s1+=3;
+
+    for (x = 1; x < width - 1; x++) {
+      normalx = bumpmap[x][y].x + lightx - x;
+      normaly = bumpmap[x][y].y + temp;
+      
+      if (normalx < 0)
+	normalx = 0;
+      else if (normalx > 255)
+	normalx = 0;
+      if (normaly < 0)
+	normaly = 0;
+      else if (normaly > 255)
+	normaly = 0;	  
+      
+      weed_memset(s1,reflectionmap[normalx][normaly],3);
+      s1+=3;
     }
+    weed_memset(s1,0,3);
+    s1+=orowstride;
+  }
+
+  weed_memset(s1,0,orowstride+width3-3);
   
   sdata->sin_index += 3;
   sdata->sin_index &= 511;

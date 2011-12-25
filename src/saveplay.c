@@ -4092,7 +4092,7 @@ gint save_event_frames(void) {
     }
 
     cfile->frames=nevents;
-    if (!check_if_non_virtual(mainw->current_file)) save_frame_index(mainw->current_file);
+    if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
     cfile->frames=xframes;
   }
 

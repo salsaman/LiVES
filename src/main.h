@@ -665,9 +665,8 @@ void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blockin
 void do_com_failed_error(const char *com, int retval);
 int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient);
 void do_write_failed_error_s(const char *filename);
+int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient);
 void do_read_failed_error_s(const char *filename);
-void do_write_failed_error(ssize_t wrote, size_t target);
-void do_read_failed_error(ssize_t read, size_t target);
 gboolean do_header_write_error(int clip);
 void do_header_read_error(int clip);
 void do_chdir_failed_error(const char *dir);

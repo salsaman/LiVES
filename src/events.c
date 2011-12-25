@@ -3118,7 +3118,7 @@ lives_render_error_t render_events (gboolean reset) {
   weed_plant_t **ctmpl;
   int *in_count=NULL;
   int num_params;
-  int retval=0;
+  int retval;
   weed_plant_t *inst;
   weed_plant_t **source_params,**in_params;
   int num_in_count=0;
@@ -3130,7 +3130,7 @@ lives_render_error_t render_events (gboolean reset) {
   static gint xaclips[65536];
   static gdouble xaseek[65536],xavel[65536],atime; // TODO **
   static gboolean has_audio;
-  static lives_render_error_t write_error;
+  static lives_render_error_t read_write_error;
 
   int track,mytrack;
 
@@ -3157,7 +3157,7 @@ lives_render_error_t render_events (gboolean reset) {
     }
     atime=(gdouble)(out_frame-1.)/cfile->fps;
     has_audio=FALSE;
-    write_error=LIVES_RENDER_ERROR_NONE;
+    read_write_error=LIVES_RENDER_ERROR_NONE;
     return LIVES_RENDER_READY;
   }
 
@@ -3252,7 +3252,10 @@ lives_render_error_t render_events (gboolean reset) {
 	    while (g_main_context_iteration(NULL,FALSE));
 	  }
 
-	  mainw->write_failed=FALSE;
+	  mainw->read_failed=mainw->write_failed=FALSE;
+	  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+	  mainw->read_failed_file=NULL;
+
 	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file,
 			       NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), 
 			       chvols, 1., 1., NULL);
@@ -3261,7 +3264,12 @@ lives_render_error_t render_events (gboolean reset) {
 	    int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
 	    gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
 	    do_write_failed_error_s(outfilename);
-	    write_error=LIVES_RENDER_ERROR_WRITE_AUDIO;
+	    read_write_error=LIVES_RENDER_ERROR_WRITE_AUDIO;
+	  }
+
+	  if (mainw->read_failed) {
+	    do_read_failed_error_s(mainw->read_failed_file);
+	    read_write_error=LIVES_RENDER_ERROR_READ_AUDIO;
 	  }
 
 	  if (cfile->proc_ptr!=NULL) {
@@ -3319,9 +3327,26 @@ lives_render_error_t render_events (gboolean reset) {
 		  while (g_main_context_iteration(NULL,FALSE));
 		}
 
+		mainw->read_failed=mainw->write_failed=FALSE;
+		if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+		mainw->read_failed_file=NULL;
+
 		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:
 				     mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), 
 				     q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
+
+
+		if (mainw->write_failed) {
+		  int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
+		  gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
+		  do_write_failed_error_s(outfilename);
+		  read_write_error=LIVES_RENDER_ERROR_WRITE_AUDIO;
+		}
+		
+		if (mainw->read_failed) {
+		  do_read_failed_error_s(mainw->read_failed_file);
+		  read_write_error=LIVES_RENDER_ERROR_READ_AUDIO;
+		}
 
 		if (cfile->proc_ptr!=NULL) {
 		  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
@@ -3377,13 +3402,14 @@ lives_render_error_t render_events (gboolean reset) {
 	}
 
 	do {
+	  retval=0;
 	  lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100-prefs->ocp, &error);
 
 	  if (error!=NULL) {
 	    retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
 	    g_error_free(error);
 	    error=NULL;
-	    if (retval!=LIVES_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+	    if (retval!=LIVES_RETRY) read_write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
 	  }
 	} while (retval==LIVES_RETRY);
 
@@ -3531,7 +3557,7 @@ lives_render_error_t render_events (gboolean reset) {
   }
 
   g_free(nlabel);
-  if (write_error) return write_error;
+  if (read_write_error) return read_write_error;
   if (completed) return LIVES_RENDER_COMPLETE;
   return LIVES_RENDER_PROCESSING;
 }

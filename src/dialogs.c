@@ -2168,15 +2168,33 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 }
 
 
-void do_read_failed_error(ssize_t read, size_t target) {
-  if (target>0&&read>=0) {
-    gchar *msg=g_strdup_printf(_("\nLiVES could only read %d bytes of %d from the file\n%s\nPlease check for possible error causes.\n"),read,target,mainw->read_failed_file);
-    do_blocking_error_dialog(msg);
-    g_free(msg);
+
+int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) {
+  // err can be errno from open/fopen etc.
+
+  // return same as do_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
+
+  int ret;
+  gchar *msg,*emsg;
+
+  if (errtext==NULL) {
+    emsg=g_strdup_printf("Unable to read from file %s",fname);
+    msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n"),fname);
   }
   else {
-    do_read_failed_error_s(mainw->read_failed_file);
+    emsg=g_strdup_printf("Unable to read from file %s, error was %s",fname,errtext);
+    msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nThe error was\n%s.\n"),fname,errtext);
   }
+  
+  LIVES_ERROR(emsg);
+  g_free(emsg);
+
+  ret=do_cancel_retry_dialog(msg,transient);
+
+  g_free(msg);
+
+  return ret;
+
 }
 
 

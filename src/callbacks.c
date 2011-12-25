@@ -4033,7 +4033,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   gchar *new_dir;
 
   int ord_fd;
-  int retval=0;
+  int retval;
   gchar *ordfile;
   gchar *ord_entry;
   gchar new_set_name[256];
@@ -4149,6 +4149,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   ordfile=g_strdup_printf("%s/%s/order",prefs->tmpdir,mainw->set_name);
 
   do {
+    retval=0;
     if (!is_append) ord_fd=creat(ordfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
     else ord_fd=open(ordfile,O_CREAT|O_WRONLY|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
 
@@ -4692,6 +4693,7 @@ void on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
       markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"set.",NULL);
       do {
+	retval=0;
 	marker_fd=creat(markerfile,S_IRUSR|S_IWUSR);
 	if (marker_fd<0) {
 	  retval=do_write_failed_error_s_with_retry(markerfile,strerror(errno),NULL);
@@ -4703,6 +4705,7 @@ void on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
       if (mainw->files[i]->undo_action!=UNDO_NONE) {
 	markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"noprune",NULL);
 	do {
+	  retval=0;
 	  marker_fd=creat(markerfile,S_IRUSR|S_IWUSR);
 	  if (marker_fd<0) {
 	    retval=do_write_failed_error_s_with_retry(markerfile,strerror(errno),NULL);
@@ -10320,9 +10323,26 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
       g_free(com);
     }
 
-    render_audio_segment(1,&(mainw->current_file),old_file,&vel,&aud_start,ins_pt,ins_pt+(weed_timecode_t)((aud_end-aud_start)*U_SEC),&vol,vol,vol,NULL);
+    mainw->read_failed=mainw->write_failed=FALSE;
+    if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+    mainw->read_failed_file=NULL;
+
+    render_audio_segment(1,&(mainw->current_file),old_file,&vel,&aud_start,ins_pt,
+			 ins_pt+(weed_timecode_t)((aud_end-aud_start)*U_SEC),&vol,vol,vol,NULL);
+
     end_threaded_dialog();
     close_current_file(old_file);
+
+    if (mainw->write_failed) {
+      int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
+      gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
+      do_write_failed_error_s(outfilename);
+    }
+
+    if (mainw->read_failed) {
+      do_read_failed_error_s(mainw->read_failed_file);
+    }
+
   }
 
   mainw->suppress_dprint=FALSE;

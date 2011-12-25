@@ -983,7 +983,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (zavel<0. && in_fd[track]>-1) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
 
       bytes_read=0;
-      if (in_fd[track]>-1) bytes_read=read(in_fd[track],in_buff,tbytes);
+      if (in_fd[track]>-1) bytes_read=lives_read(in_fd[track],in_buff,tbytes,FALSE);
 
       if (zavel<0.) seekstart[track]-=bytes_read;
 
@@ -1105,7 +1105,20 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
 inline void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv) {
   gdouble vel=1.,vol=1.;
+
+  mainw->read_failed=mainw->write_failed=FALSE;
   render_audio_segment(1,&fileno,fileno,&vel,&startt,startt*U_SECL,endt*U_SECL,&vol,startv,endv,NULL);
+
+  if (mainw->write_failed) {
+    gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
+    do_write_failed_error_s(outfilename);
+  }
+  
+  if (mainw->read_failed) {
+    gchar *infilename=g_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
+    do_read_failed_error_s(infilename);
+  }
+
 }
 
 
@@ -1116,9 +1129,10 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
   gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
-  int retval=0;
-
+  int retval;
+  
   do {
+    retval=0;
     mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
     if (mainw->aud_rec_fd<0) {
       retval=do_write_failed_error_s_with_retry(outfilename,strerror(errno),NULL);
@@ -1190,9 +1204,10 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
   gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
-  int retval=0;
+  int retval;
 
   do {
+    retval=0;
     mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
     if (mainw->aud_rec_fd<0) {
       retval=do_write_failed_error_s_with_retry(outfilename,strerror(errno),NULL);
@@ -1526,7 +1541,15 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
       tc+=(U_SEC/cfile->fps*!is_blank_frame(event,FALSE));
 
+      mainw->read_failed=FALSE;
+      if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+      mainw->read_failed_file=NULL;
+
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
+
+      if (mainw->read_failed) {
+	do_read_failed_error_s(mainw->read_failed_file);
+      }
 
       for (i=0;i<nfiles;i++) {
 	// increase seek values
@@ -1556,6 +1579,11 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   
   if (last_tc<fill_tc) {
     // flush the rest of the audio
+
+    mainw->read_failed=FALSE;
+    if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+    mainw->read_failed_file=NULL;
+
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
     for (i=0;i<nfiles;i++) {
       // increase seek values
@@ -1563,6 +1591,9 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
   }
 
+  if (mainw->read_failed) {
+    do_read_failed_error_s(mainw->read_failed_file);
+  }
 
   mainw->write_abuf++;
   if (mainw->write_abuf>=prefs->num_rtaudiobufs) mainw->write_abuf=0;
@@ -1966,6 +1997,8 @@ static void *cache_my_audio(void *arg) {
     cbuffer->_cbytesize=read(cbuffer->_fd, cbuffer->_filebuffer, cbuffer->bytesize);
 
     if (cbuffer->_cbytesize<0) {
+      // there is not much we can do if we get a read error, since we are running in a realtime thread here
+      // just mark it as 0 channels, 0 bytes
       cbuffer->bytesize=cbuffer->_cbytesize=0;
       cbuffer->in_achans=0;
       cbuffer->is_ready=TRUE;

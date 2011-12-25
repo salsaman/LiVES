@@ -375,7 +375,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
     if (mainw->read_failed) {
       mainw->read_failed=FALSE;
       mainw->vpp=NULL;
-      do_read_failed_error(0, 0);
+      do_read_failed_error_s(vpp_file);
       d_print_file_error_failed();
     }
     else d_print_failed();
@@ -389,7 +389,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 
   if (mainw->read_failed) {
     mainw->read_failed=FALSE;
-    do_read_failed_error(0, 0);
+    do_read_failed_error_s(vpp_file);
     d_print_file_error_failed();
     return;
   }
@@ -441,7 +441,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
     mainw->read_failed=FALSE;
     mainw->vpp=NULL;
     d_print_file_error_failed();
-    do_read_failed_error(0, 0);
+    do_read_failed_error_s(vpp_file);
     return;
   }
 
@@ -3382,11 +3382,12 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   gchar *com;
   gchar *res_string=NULL;
   gchar buff[32];
-  int retval=0;
+  int retval;
 
   string=g_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);
 
   do {
+    retval=0;
     sfile=fopen(rfxfile,"w");
     if (sfile==NULL) {
       retval=do_write_failed_error_s_with_retry(rfxfile,strerror(errno),NULL);

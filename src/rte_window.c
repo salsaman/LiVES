@@ -120,10 +120,11 @@ static gboolean save_keymap2_file(gchar *kfname) {
   int version=1;
   int modes=rte_getmodespk();
   int kfd;
-  int retval=0;
+  int retval;
   gchar *hashname;
 
   do {
+    retval=0;
     kfd=creat(kfname,S_IRUSR|S_IWUSR);
     if (kfd==-1) {
       retval=do_write_failed_error_s_with_retry (kfname,strerror(errno),GTK_WINDOW(rte_window));

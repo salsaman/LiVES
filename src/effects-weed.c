@@ -6941,6 +6941,8 @@ void read_filter_defaults(int fd) {
   int ntoread;
 
   mainw->read_failed=FALSE;
+  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+  mainw->read_failed_file=NULL;
 
   while (1) {
     if (lives_read(fd,&vlen,sizeof(size_t),TRUE)<sizeof(size_t)) {
@@ -7008,7 +7010,7 @@ void read_filter_defaults(int fd) {
   }
 
   if (mainw->read_failed) {
-    do_read_failed_error(0, 0);
+    do_read_failed_error_s(mainw->read_failed_file);
     mainw->read_failed=FALSE;
   }
 
@@ -7085,6 +7087,8 @@ void read_generator_sizes(int fd) {
   gchar *tmp;
 
   mainw->read_failed=FALSE;
+  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+  mainw->read_failed_file=NULL;
 
   while (1) {
     bytes=lives_read(fd,&vlen,sizeof(size_t),TRUE);
@@ -7143,7 +7147,7 @@ void read_generator_sizes(int fd) {
   }
 
   if (mainw->read_failed) {
-    do_read_failed_error(0, 0);
+    do_read_failed_error_s(mainw->read_failed_file);
     mainw->read_failed=FALSE;
   }
 
@@ -7183,6 +7187,8 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   gboolean ret=FALSE;
 
   mainw->read_failed=FALSE;
+  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+  mainw->read_failed_file=NULL;
 
   if (key>=0) {
     idx=key_to_fx[key][mode];
@@ -7267,7 +7273,7 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   }
 
   if (mainw->read_failed) {
-    do_read_failed_error(0, 0);
+    do_read_failed_error_s(mainw->read_failed_file);
     mainw->read_failed=FALSE;
   }
   

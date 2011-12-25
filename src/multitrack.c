@@ -462,7 +462,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   lives_mt_poly_state_t poly_state;
 
   gboolean retval=TRUE;
-  int retval2=0;
+  int retval2;
 
   mt_desensitise(mt);
 
@@ -470,6 +470,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   while (g_main_context_iteration(NULL,FALSE));
 
   do {
+    retval2=0;
     mainw->write_failed=FALSE;
 
     fd=creat(asave_file,S_IRUSR|S_IWUSR);
@@ -15698,7 +15699,7 @@ static float get_float_audio_val_at_time(gint fnum, gdouble secs, gint chnum, gi
 
   if (fnum!=aofile) {
     if (afd!=-1) close(afd);
-    filename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,afile->handle);
+    filename=g_build_filename(prefs->tmpdir,afile->handle,"audio",NULL);
     afd=open(filename,O_RDONLY);
     aofile=fnum;
   }
@@ -15782,15 +15783,18 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
       block=block->next;
       continue;
     }
-
+  
     fnum=get_audio_frame_clip(block->start_event,track);
     seek=get_audio_frame_seek(block->start_event,track);
     vel=get_audio_frame_vel(block->start_event,track);
 
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_start,0,offset_start,ebox->allocation.height);
+    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_start,0,offset_start,
+		  ebox->allocation.height);
     gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_start,0,offset_end,0);
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_end,0,offset_end,ebox->allocation.height);
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_end,ebox->allocation.height-1,offset_start,ebox->allocation.height-1);
+    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_end,0,offset_end,
+		  ebox->allocation.height);
+    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_end,ebox->allocation.height-1,
+		  offset_start,ebox->allocation.height-1);
 
     set_fg_colour(128,128,128); // mid grey
     for (i=offset_start;i<=offset_end;i++) {
@@ -15810,12 +15814,16 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
 
     }
     block=block->next;
+
+    if (mainw->read_failed) {
+      gchar *filename=g_build_filename(prefs->tmpdir,mainw->files[fnum]->handle,"audio",NULL);
+      do_read_failed_error_s(filename);
+      g_free(filename);
+    }
   }
+
   if (afd!=-1) close(afd);
 
-  if (mainw->read_failed) {
-    do_read_failed_error(0,0);
-  }
 
 }
 
@@ -16973,7 +16981,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   gchar *map_name,*ldir;
   int fd;
   int len;
-  int retval=0;
+  int retval;
   gchar *string;
   guint size=0;
   gchar *com;
@@ -16989,6 +16997,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   map_name=g_build_filename(ldir,"layout.map",NULL);
 
   do {
+    retval=0;
     fd=creat(map_name,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
 
     if (fd==-1) {
@@ -17158,7 +17167,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gboolean was_set=mainw->was_set;
   gchar *com;
   int *layout_map;
-  int retval2=0;
+  int retval2;
   double *layout_map_audio;
   GtkWidget *ar_checkbutton;
   GtkWidget *eventbox;
@@ -17304,6 +17313,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mt!=NULL) add_markers(mt,mt->event_list);
 
   do {
+    retval2=0;
     fd=creat(esave_file,S_IRUSR|S_IWUSR);
 
     if (fd>=0) {
@@ -18659,7 +18669,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   weed_plant_t *event_list=NULL;
 
   int num_events=0;
-  int retval2=0;
+  int retval2;
   gboolean orig_ar_layout=prefs->ar_layout,ar_layout;
   gboolean retval=TRUE;
 
@@ -18777,7 +18787,6 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   d_print(msg);
   mainw->no_switch_dprint=FALSE;
   g_free(msg);
-  g_free(eload_name);
 
   mt_desensitise(mt);
 
@@ -18789,14 +18798,16 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     g_free(eload_dir);
 
     if (mainw->read_failed) {
-      do_read_failed_error(0, 0);
+      do_read_failed_error_s(eload_name);
       mainw->read_failed=FALSE;
     }
 
+    g_free(eload_name);
     return NULL;
   }
 
   close(fd);
+  g_free(eload_name);
 
   d_print_done();
 
@@ -18848,6 +18859,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
       if (!mt->layout_prompt||do_mt_rect_prompt()) {
 
 	do {
+	  retval2=0;
 	  // resave with corrections/updates
 	  fd=creat(eload_file,S_IRUSR|S_IWUSR);
 	  if (fd>=0) {

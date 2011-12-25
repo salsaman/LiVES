@@ -2355,7 +2355,7 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_omc_macro_t omacro;
   int nnodes;
   int i;
-  int retval=0;
+  int retval;
   gchar *msg;
 
   msg=g_strdup_printf(_("Saving device mapping to file %s..."),save_file);
@@ -2363,6 +2363,7 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_free(msg);
 
   do {
+    retval=0;
     if ((fd=open(save_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))<0) {
       retval=do_write_failed_error_s_with_retry (save_file,strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {

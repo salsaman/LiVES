@@ -2101,8 +2101,9 @@ gboolean start_audio_stream(void) {
   gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",getpid());
 
   int arate=0;
-
   int afd;
+  int alarm_handle;
+  gboolean timeout=FALSE;
 
   astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
   mkfifo(astream_name,S_IRUSR|S_IWUSR);
@@ -2134,7 +2135,7 @@ gboolean start_audio_stream(void) {
     // mkfifo and play until killed
     gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
     gchar *com=g_strdup_printf("%s play %d \"%s\" \"%s\" %d",astreamer,mainw->vpp->audio_codec,astream_name,astream_name_out,arate);
-    
+
     setsid(); // create new session id
 
     g_free(astreamer);
@@ -2146,14 +2147,16 @@ gboolean start_audio_stream(void) {
     _exit(0);                    
   }
 
-  // TODO - timeout
+  alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
 
-  while (1) {
+  do {
+    // wait for other thread to create stream (or timeout)
     afd=open(astream_name,O_WRONLY|O_SYNC);
     if (afd!=-1) break;
     g_usleep(prefs->sleep_time);
-  }
+  } while (!(timeout=lives_alarm_get(alarm_handle)));
 
+  lives_alarm_clear(alarm_handle);
 
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO

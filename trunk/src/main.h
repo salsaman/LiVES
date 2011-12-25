@@ -97,7 +97,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #define LIVES_MANUAL_URL "http://lives.sourceforge.net/manual/"
 #define LIVES_MANUAL_FILENAME "LiVES_manual.html"
-#define LIVES_AUTHOR_EMAIL "mailto:salsaman@xs4all.nl,salsaman@gmail.com"
+#define LIVES_AUTHOR_EMAIL "mailto:salsaman@gmail.com"
 #define LIVES_DONATE_URL "https://sourceforge.net/donate/index.php?group_id=64341"
 #define LIVES_BUG_URL "http://sourceforge.net/tracker/?group_id=64341&atid=507139"
 #define LIVES_FEATURE_URL "http://sourceforge.net/tracker/?group_id=64341&atid=507142"
@@ -781,7 +781,7 @@ void open_file_sel(const gchar *file_name,gdouble start_time, gint frames);
 void open_fw_device (void);
 gboolean get_new_handle(gint index, const gchar *name);
 gboolean get_temp_handle(gint index, gboolean create);
-void get_handle_from_info_file(gint index);
+gboolean get_handle_from_info_file(gint index);
 void create_cfile(void);
 void save_file (int clip, int start, int end, const char *filename);
 void play_file (void);
@@ -1098,6 +1098,14 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 
 
 // should sprinkle some of these around
+
+#ifndef LIVES_INFO
+#ifndef LIVES_NO_INFO
+#define LIVES_INFO(x)      fprintf(stderr, "LiVES info: " #x "\n")
+#else // LIVES_NO_INFO
+#define LIVES_INFO(x)      dummychar = #x
+#endif // LIVES_NO_INFO
+#endif // LIVES_INFO
 
 #ifndef LIVES_WARN
 #ifndef LIVES_NO_WARN

@@ -4830,7 +4830,10 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
   
   if (cfile->frames>0) {
     // type
-    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp)\n"),cfile->type,(tmp=g_strdup((cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):(cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp);
+    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp)\n"),cfile->type,
+	       (tmp=g_strdup((cfile->clip_type==CLIP_TYPE_YUV4MPEG||
+			      cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):
+			     (cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp);
     g_free(tmp);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview24)),buff, -1);
     // fps
@@ -4996,7 +4999,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 			 "name", "LiVES",
 			 "version", LiVES_VERSION,
 			 "comments",comments,
-			 "copyright", "(C) 2002-2011 salsaman <salsaman@xs4all.nl,salsaman@gmail.com> and others",
+			 "copyright", "(C) 2002-2011 salsaman <salsaman@gmail.com> and others",
 			 "website", "http://lives.sourceforge.net",
 			 //			 "authors", authors,
 			 "license", license,
@@ -5008,7 +5011,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 
 #else
 
-  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@xs4all.nl,salsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2011");
+  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2011");
   do_error_dialog(mesg);
   g_free(mesg);
 
@@ -5072,10 +5075,7 @@ donate_activate                     (GtkMenuItem     *menuitem,
 
 
 
-void
-on_fs_preview_clicked                  (GtkButton       *button,
-                                        gpointer         user_data)
-{
+void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   // file selector preview
   gchar *com;
   unsigned int xwin=0;
@@ -5103,7 +5103,10 @@ on_fs_preview_clicked                  (GtkButton       *button,
   else {
     // open file
     gchar *tmp;
-    g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+    g_snprintf(file_name,256,"%s",
+	       (tmp=g_filename_to_utf8(gtk_file_selection_get_filename
+				       (GTK_FILE_SELECTION(gtk_widget_get_toplevel
+							   (GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
     g_free(tmp);
   }
 
@@ -5113,26 +5116,39 @@ on_fs_preview_clicked                  (GtkButton       *button,
   if (preview_type==1) {
     gchar **array;
     gchar *tmp;
- 
+    int alarm_handle;
+    gboolean timeout=FALSE;
+
     preview_frames=1000000000;
 
     clear_mainw_msg();
     
     // make thumb from any image file
-    com=g_strdup_printf("smogrify make_thumb thm%d %d %d %s \"%s\"",pid,DEFAULT_FRAME_HSIZE,DEFAULT_FRAME_VSIZE,prefs->image_ext,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
+    com=g_strdup_printf("smogrify make_thumb thm%d %d %d %s \"%s\"",pid,DEFAULT_FRAME_HSIZE,
+			DEFAULT_FRAME_VSIZE,prefs->image_ext,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     g_free(tmp);
     lives_system(com,FALSE);
     g_free(com);
- 
-    // TODO - timeout
 
-    while (!(ifile=fopen (info_file,"r"))) {
+#define LIVES_FILE_READ_TIMEOUT  (120 * U_SEC) // 2 minute timeout
+
+    alarm_handle=lives_alarm_set(LIVES_FILE_READ_TIMEOUT);
+ 
+    while (!((ifile=fopen (info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
       g_usleep (prefs->sleep_time);
     }
 
-    mainw->read_failed=FALSE;
-    lives_fgets(mainw->msg,512,ifile);
-    fclose (ifile);
+    lives_alarm_clear(alarm_handle);
+
+    if (!timeout) {
+      mainw->read_failed=FALSE;
+      lives_fgets(mainw->msg,512,ifile);
+      fclose (ifile);
+    }
+    else {
+      mainw->read_failed=TRUE;
+      do_read_failed_error_s(info_file);
+    }
 
     if (mainw->read_failed) {
       mainw->read_failed=FALSE;
@@ -5162,7 +5178,8 @@ on_fs_preview_clicked                  (GtkButton       *button,
 
 	if (offs_x<0) offs_x=0;
 	if (offs_y<0) offs_y=0;
-	gdk_draw_pixbuf (GDK_DRAWABLE (mainw->fs_playarea->window),mainw->gc,pixbuf,0,0,offs_x,offs_y,-1,-1,GDK_RGB_DITHER_NONE,0,0);
+	gdk_draw_pixbuf (GDK_DRAWABLE (mainw->fs_playarea->window),mainw->gc,pixbuf,0,0,
+			 offs_x,offs_y,-1,-1,GDK_RGB_DITHER_NONE,0,0);
       }	
       else {
 	g_error_free(error);
@@ -5174,7 +5191,7 @@ on_fs_preview_clicked                  (GtkButton       *button,
     }
     g_free(info_file);
     info_file=g_strdup_printf ("%s/thm%d/",prefs->tmpdir,getpid());
-    com=g_strdup_printf("rm -rf %s",info_file);
+    com=g_strdup_printf("rm -rf \"%s\"",info_file);
     lives_system(com,TRUE);
     g_free(com);
     g_free(info_file);
@@ -5188,7 +5205,7 @@ on_fs_preview_clicked                  (GtkButton       *button,
       return;
     }
 
-    com=g_strdup_printf("/bin/mkdir -p %s/fsp%d/ 2>/dev/null",prefs->tmpdir,getpid());
+    com=g_strdup_printf("/bin/mkdir -p \"%s/fsp%d/\" 2>/dev/null",prefs->tmpdir,getpid());
     lives_system(com,TRUE);
     g_free(com);
 
@@ -5199,20 +5216,26 @@ on_fs_preview_clicked                  (GtkButton       *button,
     }
 
     if (prefs->audio_player==AUD_PLAYER_JACK) {
-      file_open_params=g_strdup_printf("%s %s -ao jack",mainw->file_open_params!=NULL?mainw->file_open_params:"",get_deinterlace_string());
+      file_open_params=g_strdup_printf("%s %s -ao jack",mainw->file_open_params!=NULL?
+				       mainw->file_open_params:"",get_deinterlace_string());
     }
     else if (prefs->audio_player==AUD_PLAYER_PULSE) {
-      file_open_params=g_strdup_printf("%s %s -ao pulse",mainw->file_open_params!=NULL?mainw->file_open_params:"",get_deinterlace_string());
+      file_open_params=g_strdup_printf("%s %s -ao pulse",mainw->file_open_params!=NULL?
+				       mainw->file_open_params:"",get_deinterlace_string());
     }
     else {
-      file_open_params=g_strdup_printf("%s %s",mainw->file_open_params!=NULL?mainw->file_open_params:"",get_deinterlace_string());
+      file_open_params=g_strdup_printf("%s %s",mainw->file_open_params!=NULL?
+				       mainw->file_open_params:"",get_deinterlace_string());
     }
 
     if (file_open_params!=NULL) {
-      com=g_strdup_printf("smogrify fs_preview fsp%d %u %d %d %.2f %d \"%s\" \"%s\"",getpid(),xwin,DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE,start_time,preview_frames,file_name,file_open_params);
+      com=g_strdup_printf("smogrify fs_preview fsp%d %u %d %d %.2f %d \"%s\" \"%s\"",getpid(),
+			  xwin,DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE,start_time,preview_frames,
+			  file_name,file_open_params);
     }
     else {
-      com=g_strdup_printf("smogrify fs_preview fsp%d %u %d %d %.2f %d \"%s\"",getpid(),xwin,DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE,start_time,preview_frames,file_name);
+      com=g_strdup_printf("smogrify fs_preview fsp%d %u %d %d %.2f %d \"%s\"",getpid(),
+			  xwin,DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE,start_time,preview_frames,file_name);
     }
 
     if (prefs->pause_xmms) lives_system("xmms -u",TRUE);
@@ -5230,7 +5253,7 @@ on_fs_preview_clicked                  (GtkButton       *button,
       return;
     }
 
-    // TODO - timeout
+    // loop here until preview has finished, or the user cancels
 
     while ((!(ifile=fopen (info_file,"r")))&&mainw->in_fs_preview) {
       while (g_main_context_iteration (NULL,FALSE));
@@ -5240,6 +5263,7 @@ on_fs_preview_clicked                  (GtkButton       *button,
     if (ifile!=NULL) {
       fclose(ifile);
     }
+
     end_fs_preview();
     g_free(info_file);
   }
@@ -5263,7 +5287,10 @@ on_ok_button1_clicked                  (GtkButton       *button,
   gchar *tmp;
 
   if (user_data==NULL) {
-    g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION((filesel=gtk_widget_get_toplevel(GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));
+    g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8
+				   (gtk_file_selection_get_filename(GTK_FILE_SELECTION
+								    ((filesel=gtk_widget_get_toplevel
+								      (GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));
     g_free(tmp);
 
     end_fs_preview();
@@ -5377,7 +5404,10 @@ on_open_sel_ok_button_clicked                  (GtkButton       *button,
 						gpointer         user_data)
 {
   gchar *tmp;
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8
+				 (gtk_file_selection_get_filename(GTK_FILE_SELECTION
+								  (gtk_widget_get_toplevel(GTK_WIDGET(button)))),
+				  -1,NULL,NULL,NULL)));
   g_free(tmp);
 
   g_snprintf(mainw->vid_load_dir,256,"%s",file_name);

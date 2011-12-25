@@ -71,7 +71,7 @@ int lives_system(const char *com, gboolean allow_error) {
       LIVES_ERROR(msg);
       do_com_failed_error(com,retval);
     }
-    else LIVES_INFO(msg);
+    else LIVES_DEBUG(msg);
     g_free(msg);
   }
   return retval;
@@ -93,7 +93,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
       LIVES_ERROR(msg);
       close(fd);
     }
-    else LIVES_INFO(msg);
+    else LIVES_DEBUG(msg);
     g_free(msg);
   }
   return retval;
@@ -142,7 +142,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_fail) {
       LIVES_ERROR(msg);
       close(fd);
     }
-    else LIVES_INFO(msg);
+    else LIVES_DEBUG(msg);
     g_free(msg);
   }
   return retval;
@@ -162,7 +162,7 @@ int lives_chdir(const char *path, gboolean allow_fail) {
       LIVES_ERROR(msg);
       do_chdir_failed_error(path);
     }
-    else LIVES_INFO(msg);
+    else LIVES_DEBUG(msg);
     g_free(msg);
   }
   return retval;
@@ -3041,9 +3041,105 @@ gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
   g_free(keystr_start);
   g_free(keystr_end);
 
+  if (!gotit) return NULL;
+
   if (strlen(buff)>0) memset(buff+strlen(buff)-1,0,1); // remove trailing newline
 
   return g_strdup(buff);
+}
+
+
+
+
+gchar *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
+  gchar *key=NULL;
+
+  switch (what) {
+  case CLIP_DETAILS_HEADER_VERSION:
+    key=g_strdup("header_version");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_BPP:
+    key=g_strdup("bpp");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_FPS:
+    key=g_strdup("fps");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_PB_FPS:
+    key=g_strdup("pb_fps");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_WIDTH:
+    key=g_strdup("width");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_HEIGHT:
+    key=g_strdup("height");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_UNIQUE_ID:
+    key=g_strdup("unique_id");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_ARATE:
+    key=g_strdup("audio_rate");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_PB_ARATE:
+    key=g_strdup("pb_audio_rate");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_ACHANS:
+    key=g_strdup("audio_channels");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_ASIGNED:
+    key=g_strdup("audio_signed");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_AENDIAN:
+    key=g_strdup("audio_endian");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_ASAMPS:
+    key=g_strdup("audio_sample_size");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_FRAMES:
+    key=g_strdup("frames");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_TITLE:
+    key=g_strdup("title");
+    break;
+  case CLIP_DETAILS_AUTHOR:
+    key=g_strdup("author");
+    break;
+  case CLIP_DETAILS_COMMENT:
+    key=g_strdup("comment");
+    break;
+  case CLIP_DETAILS_KEYWORDS:
+    key=g_strdup("keywords");
+    break;
+  case CLIP_DETAILS_PB_FRAMENO:
+    key=g_strdup("pb_frameno");
+    if (maxlenp!=NULL) *maxlenp=256;
+    break;
+  case CLIP_DETAILS_CLIPNAME:
+    key=g_strdup("clipname");
+    break;
+  case CLIP_DETAILS_FILENAME:
+    key=g_strdup("filename");
+    break;
+  case CLIP_DETAILS_INTERLACE:
+    key=g_strdup("interlace");
+    break;
+  default:
+    break;
+  }
+  return key;
 }
 
 
@@ -3063,8 +3159,8 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
 
   if (mainw->cached_list==NULL) {
     
-    lives_header=g_strdup_printf("%s/%s/header.lives",prefs->tmpdir,mainw->files[which]->handle);
-    old_header=g_strdup_printf("%s/%s/header",prefs->tmpdir,mainw->files[which]->handle);
+    lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
+    old_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header",NULL);
     
     // TODO - remove this some time before 2038
     if (!stat(old_header,&mystat)) old_time=mystat.st_mtime;
@@ -3077,100 +3173,21 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     }
   }
   //////////////////////////////////////////////////
-  mainw->read_failed=FALSE;
+  key=clip_detail_to_string(what,&maxlen);
 
-  switch (what) {
-  case CLIP_DETAILS_HEADER_VERSION:
-    key=g_strdup("header_version");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_BPP:
-    key=g_strdup("bpp");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_FPS:
-    key=g_strdup("fps");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_PB_FPS:
-    key=g_strdup("pb_fps");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_WIDTH:
-    key=g_strdup("width");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_HEIGHT:
-    key=g_strdup("height");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_UNIQUE_ID:
-    key=g_strdup("unique_id");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_ARATE:
-    key=g_strdup("audio_rate");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_PB_ARATE:
-    key=g_strdup("pb_audio_rate");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_ACHANS:
-    key=g_strdup("audio_channels");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_ASIGNED:
-    key=g_strdup("audio_signed");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_AENDIAN:
-    key=g_strdup("audio_endian");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_ASAMPS:
-    key=g_strdup("audio_sample_size");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_FRAMES:
-    key=g_strdup("frames");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_TITLE:
-    key=g_strdup("title");
-    break;
-  case CLIP_DETAILS_AUTHOR:
-    key=g_strdup("author");
-    break;
-  case CLIP_DETAILS_COMMENT:
-    key=g_strdup("comment");
-    break;
-  case CLIP_DETAILS_KEYWORDS:
-    key=g_strdup("keywords");
-    break;
-  case CLIP_DETAILS_PB_FRAMENO:
-    key=g_strdup("pb_frameno");
-    maxlen=256;
-    break;
-  case CLIP_DETAILS_CLIPNAME:
-    key=g_strdup("clipname");
-    break;
-  case CLIP_DETAILS_FILENAME:
-    key=g_strdup("filename");
-    break;
-  case CLIP_DETAILS_INTERLACE:
-    key=g_strdup("interlace");
-    break;
-  default:
-    g_printerr("invalid detail %d requested from file %s",which,lives_header);
-    if (lives_header!=NULL) g_free(lives_header);
-    if (mainw->debug)
-      assert(FALSE);
+  if (key==NULL) {
+    tmp=g_strdup_printf("Invalid detail %d requested from file %s",which,lives_header);
+    LIVES_ERROR(tmp);
+    g_free(tmp);
+    g_free(lives_header);
     return FALSE;
   }
 
+  mainw->read_failed=FALSE;
+
   if (mainw->cached_list!=NULL) {
     val=get_val_from_cached_list(key,maxlen);
+    if (val==NULL) return FALSE;
     g_free(key);
   }
   else {
@@ -3245,7 +3262,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     break;
   case CLIP_DETAILS_PB_ARATE:
     *(gint *)retval=atoi(val);
-    if (retval==0) *(gint *)retval=mainw->files[which]->arate;
+    if (retval==0) *(gint *)retval=mainw->files[which]->arps;
     break;
   case CLIP_DETAILS_INTERLACE:
     *(gint *)retval=atoi(val);
@@ -3289,7 +3306,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
 
 void save_clip_value(int which, lives_clip_details_t what, void *val) {
   gchar *lives_header;
-  gchar *com;
+  gchar *com,*tmp;
   gchar *myval;
   gchar *key;
 
@@ -3298,104 +3315,88 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
   if (which==0||which==mainw->scrap_file) return;
 
   lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
-    
+  key=clip_detail_to_string(what,NULL);
+
+  if (key==NULL) {
+    tmp=g_strdup_printf("Invalid detail %d added for file %s",which,lives_header);
+    LIVES_ERROR(tmp);
+    g_free(tmp);
+    g_free(lives_header);
+    return;
+  }
+
   switch (what) {
   case CLIP_DETAILS_BPP:
-    key=g_strdup("bpp");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_FPS:
-    key=g_strdup("fps");
     if (!mainw->files[which]->ratio_fps) myval=g_strdup_printf("%.3f",*(gdouble *)val);
     else myval=g_strdup_printf("%.8f",*(gdouble *)val);
     break;
   case CLIP_DETAILS_PB_FPS:
-    key=g_strdup("pb_fps");
-    if (mainw->files[which]->ratio_fps&&(mainw->files[which]->pb_fps==mainw->files[which]->fps)) myval=g_strdup_printf("%.8f",*(gdouble *)val);
+    if (mainw->files[which]->ratio_fps&&(mainw->files[which]->pb_fps==mainw->files[which]->fps)) 
+      myval=g_strdup_printf("%.8f",*(gdouble *)val);
     else myval=g_strdup_printf("%.3f",*(gdouble *)val);
     break;
   case CLIP_DETAILS_WIDTH:
-    key=g_strdup("width");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_HEIGHT:
-    key=g_strdup("height");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_UNIQUE_ID:
-    key=g_strdup("unique_id");
     myval=g_strdup_printf("%"PRId64,*(gint64 *)val);
     break;
   case CLIP_DETAILS_ARATE:
-    key=g_strdup("audio_rate");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_PB_ARATE:
-    key=g_strdup("pb_audio_rate");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_ACHANS:
-    key=g_strdup("audio_channels");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_ASIGNED:
-    key=g_strdup("audio_signed");
     if (*(gint *)val==1) myval=g_strdup("true");
     else myval=g_strdup("false");
     break;
   case CLIP_DETAILS_AENDIAN:
-    key=g_strdup("audio_endian");
     myval=g_strdup_printf("%d",*(gint *)val/2);
     break;
   case CLIP_DETAILS_ASAMPS:
-    key=g_strdup("audio_sample_size");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_FRAMES:
-    key=g_strdup("frames");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_INTERLACE:
-    key=g_strdup("interlace");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_TITLE:
-    key=g_strdup("title");
     myval=g_strdup(val);
     break;
   case CLIP_DETAILS_AUTHOR:
-    key=g_strdup("author");
     myval=g_strdup(val);
     break;
   case CLIP_DETAILS_COMMENT:
-    key=g_strdup("comment");
     myval=g_strdup(val);
     break;
   case CLIP_DETAILS_KEYWORDS:
-    key=g_strdup("keywords");
     myval=g_strdup(val);
     break;
   case CLIP_DETAILS_PB_FRAMENO:
-    key=g_strdup("pb_frameno");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_CLIPNAME:
-    key=g_strdup("clipname");
     myval=g_strdup(val);
     break;
   case CLIP_DETAILS_FILENAME:
-    key=g_strdup("filename");
     myval=g_filename_from_utf8(val,-1,NULL,NULL,NULL);
     break;
   case CLIP_DETAILS_HEADER_VERSION:
-    key=g_strdup("header_version");
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   default:
-    g_printerr("invalid detail %d set in file %s",which,lives_header);
-    g_free(lives_header);
-    if (mainw->debug)
-      assert(FALSE);
     return;
   }
 

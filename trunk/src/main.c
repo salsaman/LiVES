@@ -538,7 +538,10 @@ static void replace_with_delegates (void) {
 static void lives_init(_ign_opts *ign_opts) {
   // init mainwindow data
   int i;
+  int randfd;
+  ssize_t randres;
   gchar buff[256];
+  uint32_t rseed;
   GList *encoders=NULL;
   GList *encoder_capabilities=NULL;
   struct sigaction sact;
@@ -987,10 +990,34 @@ static void lives_init(_ign_opts *ign_opts) {
 
     if (!mainw->foreign) {
 
-      gettimeofday(&tv,NULL);
-      fastsrand(tv.tv_sec);
+      randres=-1;
 
-      srandom(tv.tv_sec);
+      // try to get randomness from /dev/urandom
+      randfd=open("/dev/urandom",O_RDONLY);
+      if (randfd>-1) {
+	randres=read(randfd,&rseed,sizint);
+	close(randfd);
+      }
+      if (randres!=sizint) {
+	gettimeofday(&tv,NULL);
+	rseed=tv.tv_sec+tv.tv_usec;
+      }
+
+      srandom(rseed);
+
+      randres=-1;
+
+      randfd=open("/dev/urandom",O_RDONLY);
+      if (randfd>-1) {
+	randres=read(randfd,&rseed,sizint);
+	close(randfd);
+      }
+      if (randres!=sizint) {
+	gettimeofday(&tv,NULL);
+	rseed=tv.tv_sec+tv.tv_usec;
+      }
+
+      fastsrand(rseed);
 
       prefs->midi_check_rate=get_int_pref("midi_check_rate");
       if (prefs->midi_check_rate==0) prefs->midi_check_rate=DEF_MIDI_CHECK_RATE;
@@ -1778,7 +1805,7 @@ capability *get_capabilities (void) {
 
 void print_notice() {
   g_printerr("\nLiVES %s\n",LiVES_VERSION);
-  g_printerr("Copyright 2002-2011 Gabriel Finch (salsaman@xs4all.nl,salsaman@gmail.com) and others.\n");
+  g_printerr("Copyright 2002-2011 Gabriel Finch (salsaman@gmail.com) and others.\n");
   g_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; see the file COPYING for details.\n\n");
 }
 

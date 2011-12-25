@@ -165,12 +165,13 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_YES);
     break;
   case LIVES_DIALOG_CANCEL_RETRY:
-    dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
+    dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - File Error"));
     mainw->warning_label = gtk_label_new (_("File Error"));
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, LIVES_CANCEL);
     warning_okbutton = gtk_button_new_from_stock ("gtk-redo");
+    gtk_button_set_label(GTK_BUTTON(warning_okbutton),_("_Retry"));
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, LIVES_RETRY);
     break;
   default:
@@ -2198,13 +2199,19 @@ int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, 
 }
 
 
-void do_header_read_error(int clip) {
+int do_header_read_error_with_retry(int clip) {
+  int ret;
   gchar *hname;
-  if (mainw->files[clip]==NULL) return;
+  if (mainw->files[clip]==NULL) return 0;
+
   hname=g_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
-  do_read_failed_error_s(hname);
+
+  ret=do_read_failed_error_s_with_retry(hname,NULL,NULL);
+
   g_free(hname);
+  return ret;
 }
+
 
 
 gboolean do_header_write_error(int clip) {
@@ -2222,6 +2229,35 @@ gboolean do_header_write_error(int clip) {
 
   return (!retval);
 }
+
+
+
+int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
+  int ret;
+  gchar *hname,*key,*msg;
+  if (mainw->files[clip]==NULL) return 0;
+
+  hname=g_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+
+  key=clip_detail_to_string(detail,NULL);
+
+  if (key==NULL) {
+    msg=g_strdup_printf("Invalid detail %d requested from file %s",detail,hname);
+    LIVES_ERROR(msg);
+    g_free(msg);
+    g_free(hname);
+    return 0;
+  }
+
+  msg=g_strdup_printf(_("Value for \"%s\" could not be read."),key);
+  ret=do_read_failed_error_s_with_retry(hname,msg,NULL);
+
+  g_free(msg);
+  g_free(key);
+  g_free(hname);
+  return ret;
+}
+
 
 
 void do_chdir_failed_error(const char *dir) {

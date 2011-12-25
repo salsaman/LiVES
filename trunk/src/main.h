@@ -668,7 +668,8 @@ void do_write_failed_error_s(const char *filename);
 int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient);
 void do_read_failed_error_s(const char *filename);
 gboolean do_header_write_error(int clip);
-void do_header_read_error(int clip);
+int do_header_read_error_with_retry(int clip);
+int do_header_missing_detail_error(int clip, lives_clip_details_t detail);
 void do_chdir_failed_error(const char *dir);
 
 
@@ -967,6 +968,7 @@ void clear_lmap_errors(void);
 gboolean prompt_remove_layout_files(void);
 gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes);
 gchar *repl_tmpdir(const gchar *entry, gboolean fwd);
+gchar *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 gboolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 void save_clip_value(int which, lives_clip_details_t, void *val);
 gboolean check_frame_count(gint idx);
@@ -1099,6 +1101,14 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 // should sprinkle some of these around
 
 gchar *dummychar;
+
+#ifndef LIVES_DEBUG
+#ifndef LIVES_NO_DEBUG
+#define LIVES_DEBUG(x)      fprintf(stderr, "LiVES debug: %s\n", x)
+#else // LIVES_NO_DEBUG
+#define LIVES_DEBUG(x)      dummychar = x
+#endif // LIVES_NO_DEBUG
+#endif // LIVES_DEBUG
 
 #ifndef LIVES_INFO
 #ifndef LIVES_NO_INFO

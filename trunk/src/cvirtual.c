@@ -203,6 +203,7 @@ gboolean check_if_non_virtual(gint fileno, gint start, gint end) {
 
   if (sfile->interlace!=LIVES_INTERLACE_NONE) {
     sfile->interlace=LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
+    sfile->deinterlace=FALSE;
     save_clip_value(fileno,CLIP_DETAILS_INTERLACE,&sfile->interlace);
     if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 

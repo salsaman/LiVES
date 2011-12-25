@@ -33,8 +33,7 @@ static void instopen_toggled (GtkToggleButton *t1, GtkWidget *button) {
 }
 
 
-void
-get_pref(const gchar *key, gchar *val, gint maxlen) {
+void get_pref(const gchar *key, gchar *val, gint maxlen) {
   FILE *valfile;
   gchar *vfile;
   gchar *com;
@@ -44,8 +43,10 @@ get_pref(const gchar *key, gchar *val, gint maxlen) {
 
   if (mainw->cached_list!=NULL) {
     gchar *prefval=get_val_from_cached_list(key,maxlen);
-    g_snprintf(val,maxlen,"%s",prefval);
-    g_free(prefval);
+    if (prefval!=NULL) {
+      g_snprintf(val,maxlen,"%s",prefval);
+      g_free(prefval);
+    }
     return;
   }
 

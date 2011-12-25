@@ -334,7 +334,7 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
 
   //check return value and take appropriate action
   if (ldev->handle==NULL) {
-    g_printerr ("vdev input: cannot open device\n");
+    LIVES_ERROR ("vdev input: cannot open device");
     g_free(ldev);
     return FALSE;
   }
@@ -344,7 +344,7 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
   format=lvdev_get_best_format(formats, ldev, WEED_PALETTE_END, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
   
   if(format==NULL) {
-    g_printerr("No useful formats found.\n");
+    LIVES_INFO("No useful formats found");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
     g_free(ldev);
@@ -374,7 +374,7 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
 #endif
 
   if (!SUCCESS (unicap_set_format (ldev->handle, format))) {
-    g_printerr("Error setting format.\n");
+    LIVES_ERROR("Unicap error setting format");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
     g_free(ldev);
@@ -474,7 +474,7 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
   for (i = 0; SUCCESS (status) && (dev_count < MAX_DEVICES); i++) {
     status = unicap_enumerate_devices (NULL, &devices[i], i);
     if (!SUCCESS (status)) {
-      if (i==0) g_printerr("Failed to get list of devices\n");
+      if (i==0) LIVES_INFO("Unicap failed to get any devices");
       break;
     }
   }

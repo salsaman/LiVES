@@ -3090,7 +3090,9 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
       lives_chdir(dir,TRUE);
       plugin_info=(*setup_fn)(bootstrap);
       if (plugin_info==NULL||(filters_in_plugin=check_weed_plugin_info(plugin_info))<1) {
-	g_printerr (_("No usable filters found in plugin %s\n"),plugin_path);
+	gchar *msg=g_strdup_printf(_("No usable filters found in plugin %s\n"),plugin_path);
+	LIVES_INFO(msg);
+	g_free(msg);
 	if (plugin_info!=NULL) weed_plant_free(plugin_info);
 	dlclose (handle);
 	lives_chdir(pwd,FALSE);

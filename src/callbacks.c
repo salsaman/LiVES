@@ -4553,6 +4553,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     if (load_frame_index(mainw->current_file)) {
       gboolean next=FALSE;
       gchar *orig_file_name=g_strdup(cfile->file_name);
+      gboolean needs_update=FALSE;
 
       cfile->img_type=img_type; // ignore value from read_headers
 
@@ -4562,10 +4563,11 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  if (mainw->error) {
 	    if (do_original_lost_warning(orig_file_name)) {
 	      gchar *new_file_name=choose_file(vid_open_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
-	      g_snprintf(cfile->file_name,PATH_MAX,"%s",new_file_name);
 	      if (new_file_name!=NULL) {
+		g_snprintf(cfile->file_name,PATH_MAX,"%s",new_file_name);
 		g_snprintf(vid_open_dir,PATH_MAX,"%s",cfile->file_name);
 		get_dirname(vid_open_dir);
+		needs_update=TRUE;
 	      }
 	      continue;
 	    }
@@ -4579,6 +4581,11 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	    do_no_decoder_error(cfile->file_name);
 	  }
 	  next=TRUE;
+	}
+
+	if (needs_update) {
+	  save_clip_value(mainw->current_file,CLIP_DETAILS_FILENAME,&cfile->file_name);
+	  if (mainw->com_failed||mainw->write_failed) do_header_write_error(mainw->current_file);
 	}
 
 	break;

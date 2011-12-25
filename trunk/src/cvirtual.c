@@ -166,16 +166,25 @@ gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
 
 
 
-gboolean check_if_non_virtual(gint fileno) {
+gboolean check_if_non_virtual(gint fileno, gint start, gint end) {
+  // check if there are no virtual frames from start to end inclusive in clip fileno
+
   register int i;
   file *sfile=mainw->files[fileno];
   gboolean bad_header=FALSE;
+
+  if (sfile->clip_type!=CLIP_TYPE_FILE) return TRUE;
 
   if (sfile->frame_index!=NULL) {
     for (i=1;i<=sfile->frames;i++) {
       if (sfile->frame_index[i-1]!=-1) return FALSE;
     }
   }
+
+  if (start>1 || end<sfile->frames) return TRUE;
+
+
+  // no virtual frames in entire clip - change to CLIP_TYPE_DISK
 
   sfile->clip_type=CLIP_TYPE_DISK;
   del_frame_index(sfile);
@@ -217,7 +226,6 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
 
     if (sfile->frame_index[i-1]>=0) {
       oname=NULL;
-
       threaded_dialog_spin();
 
       while (g_main_context_iteration(NULL,FALSE));
@@ -253,18 +261,17 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
 	g_snprintf (mainw->msg,256,"%d",progress++);
 	while (g_main_context_iteration(NULL,FALSE));
       }
-    }
-    threaded_dialog_spin();
 
-    sync();
+      threaded_dialog_spin();
 
-    if (mainw->cancelled!=CANCEL_NONE) {
-      if (!check_if_non_virtual(sfileno)) save_frame_index(sfileno);
-      return;
+      if (mainw->cancelled!=CANCEL_NONE) {
+	if (!check_if_non_virtual(sfileno,1,sfile->frames)) save_frame_index(sfileno);
+	return;
+      }
     }
   }
 
-  if (!check_if_non_virtual(sfileno)) save_frame_index(sfileno);
+  if (!check_if_non_virtual(sfileno,1,sfile->frames)) save_frame_index(sfileno);
 }
 
 

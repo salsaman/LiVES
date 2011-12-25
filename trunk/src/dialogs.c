@@ -540,7 +540,6 @@ gboolean process_one (gboolean visible) {
     // - otherwise, we take the time from soundcard by counting samples played (the normal case),    //   and we synch video with that
 
 
-
     time_source=LIVES_TIME_SOURCE_NONE;
 
 #ifdef ENABLE_JACK_TRANSPORT
@@ -752,6 +751,7 @@ gboolean process_one (gboolean visible) {
   }
 
   if (visible) {
+
     // fixes a problem with opening preview with bg generator
     if (cfile->proc_ptr==NULL) {
       if (mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_NO_PROPOGATE;
@@ -760,14 +760,18 @@ gboolean process_one (gboolean visible) {
       gdouble fraction_done,timesofar;
       gchar *prog_label;
 
-      if (GTK_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
+      if (GTK_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) 
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
       // set the progress bar %
 
-      if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&(cfile->hsize>0||cfile->vsize>0||cfile->frames>0)&&(!mainw->effects_paused||!shown_paused_frames)) {
+      if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&
+	  (cfile->hsize>0||cfile->vsize>0||cfile->frames>0)&&(!mainw->effects_paused||!shown_paused_frames)) {
 	guint apxl;
 	gettimeofday(&tv, NULL);
 	mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*((apxl=get_approx_ln((guint)mainw->opening_frames))<200?apxl:200)||(mainw->effects_paused&&!shown_paused_frames)) {
+	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*
+	    ((apxl=get_approx_ln((guint)mainw->opening_frames))<200?apxl:200)||
+	    (mainw->effects_paused&&!shown_paused_frames)) {
 	  // TODO -trigger after preview playback
 	  on_check_clicked();
 	  last_open_check_ticks=mainw->currticks;
@@ -780,7 +784,8 @@ gboolean process_one (gboolean visible) {
 		est_time=timesofar/fraction_done-timesofar;
 	      }
 	      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
-	      if (est_time!=-1.) prog_label=g_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),mainw->opening_frames-1,cfile->frames,(guint)(est_time+.5));
+	      if (est_time!=-1.) prog_label=g_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
+							    mainw->opening_frames-1,cfile->frames,(guint)(est_time+.5));
 	      else prog_label=g_strdup_printf(_("\n%d/%d frames opened.\n"),mainw->opening_frames-1,cfile->frames);
 	    }
 	    else {
@@ -913,7 +918,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
       }
     }
-
   }
 
   if (cfile->next_event!=NULL) event_start=get_event_timecode(cfile->next_event);
@@ -962,6 +966,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     // deltaticks is used for scratching (forwards and back)
     mainw->deltaticks=0;
   }
+
 
   if (mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering) {
     // playback start from middle of multitrack
@@ -1041,6 +1046,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 						    prefs->audio_player==AUD_PLAYER_PULSE))||
 					!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
 
+
       // just pulse the progress bar, or play video
       // returns FALSE if playback ended
       if (!process_one(visible)) {
@@ -1057,6 +1063,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       if (visible&&!mainw->internal_messaging) g_usleep(prefs->sleep_time);
 
     }
+
     if (!mainw->internal_messaging) {
       // background processing (e.g. rendered effects)
       if ((infofile=fopen(cfile->info_file,"r"))) {
@@ -1083,7 +1090,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 #ifdef DEBUG
     g_print("msg %s\n",mainw->msg);
 #endif
-
 
     // we got a message from the backend...
 

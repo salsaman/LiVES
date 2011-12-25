@@ -65,13 +65,13 @@ int lives_system(const char *com, gboolean allow_error) {
   retval=system(com);
 
   if (retval) {
-    gchar *msg=g_strdup_printf("Command failed with code %d: %s\n",retval,com);
+    gchar *msg=g_strdup_printf("Command failed with code %d: %s",retval,com);
     mainw->com_failed=TRUE;
     if (!allow_error) {
       LIVES_ERROR(msg);
       do_com_failed_error(com,retval);
     }
-    else LIVES_WARN(msg);
+    else LIVES_INFO(msg);
     g_free(msg);
   }
   return retval;
@@ -84,15 +84,16 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
   retval=write(fd, buf, count);
 
   if (retval<count) {
-    gchar *msg=g_strdup_printf("Write failed %lu of %lu in: %s\n",(unsigned long)retval,
-			       (unsigned long)count,mainw->write_failed_file);
+    gchar *msg;
     mainw->write_failed=TRUE;
     mainw->write_failed_file=filename_from_fd(mainw->write_failed_file,fd);
+    msg=g_strdup_printf("Write failed %lu of %lu in: %s",(unsigned long)retval,
+			(unsigned long)count,mainw->write_failed_file);
     if (!allow_fail) {
       LIVES_ERROR(msg);
       close(fd);
     }
-    else LIVES_WARN(msg);
+    else LIVES_INFO(msg);
     g_free(msg);
   }
   return retval;
@@ -132,16 +133,17 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_fail) {
   ssize_t retval=read(fd, buf, count);
 
   if (retval<count) {
-    gchar *msg=g_strdup_printf("Read failed %lu of %lu in: %s\n",(unsigned long)retval,
-			       (unsigned long)count,mainw->write_failed_file);
+    gchar *msg;
     mainw->read_failed=TRUE;
     mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
+    msg=g_strdup_printf("Read failed %lu of %lu in: %s",(unsigned long)retval,
+			       (unsigned long)count,mainw->read_failed_file);
     if (!allow_fail) {
       LIVES_ERROR(msg);
       do_read_failed_error(retval, count);
       close(fd);
     }
-    else LIVES_WARN(msg);
+    else LIVES_INFO(msg);
     g_free(msg);
   }
   return retval;
@@ -155,13 +157,13 @@ int lives_chdir(const char *path, gboolean allow_fail) {
   retval=chdir(path);
 
   if (retval) {
-    gchar *msg=g_strdup_printf("Chdir failed to: %s\n",path);
+    gchar *msg=g_strdup_printf("Chdir failed to: %s",path);
     mainw->chdir_failed=TRUE;
     if (!allow_fail) {
       LIVES_ERROR(msg);
       do_chdir_failed_error(path);
     }
-    else LIVES_WARN(msg);
+    else LIVES_INFO(msg);
     g_free(msg);
   }
   return retval;

@@ -2109,7 +2109,7 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
     cfile->frame_index=cfile->frame_index_back;
     cfile->frame_index_back=tmpindex;
     cfile->clip_type=CLIP_TYPE_FILE;
-    if (!check_if_non_virtual(mainw->current_file)) save_frame_index(mainw->current_file);
+    if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
   }
 
   if (cfile->undo_action==UNDO_RESIZABLE) {
@@ -2158,7 +2158,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   start=cfile->start;
   end=cfile->end;
 
-  if (cfile->clip_type==CLIP_TYPE_FILE) {
+  if (!check_if_non_virtual(mainw->current_file,start,end)) {
     mainw->cancelled=CANCEL_NONE;
     cfile->progress_start=1;
     cfile->progress_end=count_virtual_frames(cfile->frame_index,start,end);
@@ -2178,7 +2178,11 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
 
   clipboard->img_type=cfile->img_type;
 
-  com=g_strdup_printf("smogrify insert %s %s 0 %d %d %s %d 0 0 0 %.3f %d %d %d %d %d",clipboard->handle,clipboard->img_type==IMG_TYPE_JPEG?"jpg":"png",start,end,cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
+  com=g_strdup_printf("smogrify insert %s %s 0 %d %d %s %d 0 0 0 %.3f %d %d %d %d %d",
+		      clipboard->handle, clipboard->img_type==IMG_TYPE_JPEG?"jpg":"png",
+		      start, end, cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate, 
+		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
+		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
 
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);

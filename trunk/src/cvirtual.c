@@ -394,7 +394,7 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
 
 
 int *frame_index_copy(int *findex, gint nframes) {
-  int *findexc=(int *)malloc(sizint*nframes);
+  int *findexc=(int *)g_malloc(sizint*nframes);
   register int i;
 
   for (i=0;i<nframes;i++) findexc[i]=findex[i];

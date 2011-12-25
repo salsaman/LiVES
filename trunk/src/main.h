@@ -1099,35 +1099,37 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 
 // should sprinkle some of these around
 
+gchar *dummychar;
+
 #ifndef LIVES_INFO
 #ifndef LIVES_NO_INFO
-#define LIVES_INFO(x)      fprintf(stderr, "LiVES info: " #x "\n")
+#define LIVES_INFO(x)      fprintf(stderr, "LiVES info: %s\n", x)
 #else // LIVES_NO_INFO
-#define LIVES_INFO(x)      dummychar = #x
+#define LIVES_INFO(x)      dummychar = x
 #endif // LIVES_NO_INFO
 #endif // LIVES_INFO
 
 #ifndef LIVES_WARN
 #ifndef LIVES_NO_WARN
-#define LIVES_WARN(x)      fprintf(stderr, "LiVES warning: " #x "\n")
+#define LIVES_WARN(x)      fprintf(stderr, "LiVES warning: %s\n", x)
 #else // LIVES_NO_WARN
-#define LIVES_WARN(x)      dummychar = #x
+#define LIVES_WARN(x)      dummychar = x
 #endif // LIVES_NO_WARN
 #endif // LIVES_WARN
 
 #ifndef LIVES_ERROR
 #ifndef LIVES_NO_ERROR
-#define LIVES_ERROR(x)      fprintf(stderr, "LiVES error: " #x "\n")
+#define LIVES_ERROR(x)      fprintf(stderr, "LiVES error: %s\n", x)
 #else // LIVES_NO_ERROR
-#define LIVES_ERROR(x)      dummychar = #x
+#define LIVES_ERROR(x)      dummychar = x
 #endif // LIVES_NO_ERROR
 #endif // LIVES_ERROR
 
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL
-#define LIVES_FATAL(x)      fprintf(stderr, "LiVES fatal: " #x "\n")
+#define LIVES_FATAL(x)      fprintf(stderr, "LiVES fatal: %s\n", x)
 #else // LIVES_NO_FATAL
-#define LIVES_FATAL(x)      dummychar = #x
+#define LIVES_FATAL(x)      dummychar = x
 #endif // LIVES_NO_FATAL
 #endif // LIVES_FATAL
 

@@ -166,6 +166,7 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
   lives_alarm_clear(alarm_handle);
 
   if (!timeout) {
+    mainw->read_failed=FALSE;
     lives_fgets(mainw->msg,512,infofile);
     fclose(infofile);
   }
@@ -912,6 +913,7 @@ gboolean get_handle_from_info_file(gint index) {
   lives_alarm_clear(alarm_handle);
   
   if (!timeout) {
+    mainw->read_failed=FALSE;
     lives_fgets(mainw->msg,256,infofile);
     fclose(infofile);
   }
@@ -3626,6 +3628,7 @@ gboolean read_headers(const gchar *file_name) {
       lives_alarm_clear(alarm_handle);
 
       if (!timeout) {
+	mainw->read_failed=FALSE;
 	lives_fgets(buff,1024,infofile);
 	fclose(infofile);
       }
@@ -3791,6 +3794,7 @@ gboolean read_headers(const gchar *file_name) {
   lives_alarm_clear(alarm_handle);
   
   if (!timeout) {
+    mainw->read_failed=FALSE;
     lives_fgets(buff,1024,infofile);
     fclose(infofile);
   }

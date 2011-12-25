@@ -444,6 +444,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   }
 
   clear_mainw_msg();
+  mainw->write_failed=FALSE;
 
   while (!(infofile=fopen(cfile->info_file,"r"))&&!mainw->cancelled) {
     // wait until we get at least 1 frame
@@ -465,6 +466,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     return;
   }
 
+  mainw->read_failed=FALSE;
   lives_fgets(mainw->msg,512,infofile);
   fclose(infofile);
 

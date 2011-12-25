@@ -70,7 +70,8 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   if (rfx->num_in_channels==0&&!is_preview) current_file=mainw->pre_src_file;
 
   if (is_preview) {
-    cfile->progress_start=cfile->undo_start=cfile->start+(rfx->num_in_channels==0?1:0); // generators start at 1, even though they have no initial frames
+    // generators start at 1, even though they have no initial frames
+    cfile->progress_start=cfile->undo_start=cfile->start+(rfx->num_in_channels==0?1:0);
     cfile->progress_end=cfile->undo_end=cfile->end;
   }
   else if (rfx->num_in_channels!=2) {
@@ -82,15 +83,20 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     gchar *pdefault;
     gchar *plugin_name;
 
-    if (rfx->status==RFX_STATUS_BUILTIN) plugin_name=g_strdup_printf("%s%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name);
+    if (rfx->status==RFX_STATUS_BUILTIN) plugin_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,
+								      PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name,NULL);
     else plugin_name=g_strdup(rfx->name);
 
     if (rfx->num_in_channels==2) {
       // transition has a few extra bits
-      pdefault=g_strdup_printf ("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->start,prefs->tmpdir,clipboard->handle);
+      pdefault=g_strdup_printf ("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,
+				cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,
+				cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->img_type==IMG_TYPE_JPEG?
+				"jpg":"png",clipboard->start,prefs->tmpdir,clipboard->handle);
     }
     else {
-      pdefault=g_strdup_printf ("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+      pdefault=g_strdup_printf ("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,
+				cfile->progress_end,cfile->hsize,cfile->vsize,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     }
     // and append params
     if (is_preview) {
@@ -118,7 +124,8 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     g_free (fxcommand);
   }
   else {
-    if (mainw->num_tr_applied>0&&mainw->blend_file>0&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_GENERATOR) {
+    if (mainw->num_tr_applied>0&&mainw->blend_file>0&&mainw->files[mainw->blend_file]!=NULL&&
+	mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_GENERATOR) {
       mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->start-1;
     }
   }
@@ -310,7 +317,8 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
-    gchar *com=g_strdup_printf("smogrify mv_pre %s %d %d %s",cfile->handle,cfile->progress_start,cfile->progress_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+    gchar *com=g_strdup_printf("smogrify mv_pre %s %d %d %s",cfile->handle,cfile->progress_start,
+			       cfile->progress_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     lives_system(com,FALSE);
     g_free(com);
     mainw->keep_pre=FALSE;
@@ -499,8 +507,10 @@ lives_render_error_t realfx_progress (gboolean reset) {
   layer=on_rte_apply (layer, 0, 0, (weed_timecode_t)frameticks);
   layer_palette=weed_get_int_value(layer,"current_palette",&weed_error);
 
-  if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
-  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
+  if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) 
+    convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
+    convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
 
   if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
   pixbuf=layer_to_pixbuf(layer);
@@ -593,12 +603,16 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
 
   layers[0]=layer;
 
-  if (mainw->blend_file>-1&&mainw->num_tr_applied>0&&(mainw->files[mainw->blend_file]==NULL||(mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_DISK&&(!mainw->files[mainw->blend_file]->frames||!mainw->files[mainw->blend_file]->is_loaded)))) {
+  if (mainw->blend_file>-1&&mainw->num_tr_applied>0&&(mainw->files[mainw->blend_file]==NULL||
+						      (mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_DISK&&
+						       (!mainw->files[mainw->blend_file]->frames||
+							!mainw->files[mainw->blend_file]->is_loaded)))) {
     // invalid blend file
     mainw->blend_file=mainw->current_file;
   }
 
-  if (mainw->num_tr_applied&&mainw->blend_file!=mainw->current_file&&mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&resize_instance==NULL) {
+  if (mainw->num_tr_applied&&mainw->blend_file!=mainw->current_file&&
+      mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&resize_instance==NULL) {
     layers[1]=get_blend_layer(tc);
   }
   else layers[1]=NULL;
@@ -637,7 +651,8 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
 
   if (mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate==-1) return;
 
-  deint_idx=GPOINTER_TO_INT(g_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate));
+  deint_idx=GPOINTER_TO_INT(g_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
+					    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate));
 
   deint_filter=get_weed_filter(deint_idx);
 
@@ -814,7 +829,9 @@ gboolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
 gboolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   gint old_file=mainw->current_file;
 
-  if (mainw->playing_file<1||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||mainw->blend_file==mainw->current_file||mainw->files[mainw->blend_file]==NULL||mainw->preview||mainw->noswitch||(mainw->is_processing&&cfile->is_loaded)) {
+  if (mainw->playing_file<1||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||
+      mainw->blend_file==mainw->current_file||mainw->files[mainw->blend_file]==NULL||mainw->preview||
+      mainw->noswitch||(mainw->is_processing&&cfile->is_loaded)) {
     return TRUE;
   }
 

@@ -203,7 +203,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   pulsed->playing_file=new_file;
 	   pulsed->audio_ticks=mainw->currticks;
 	   pulsed->frames_written=0;
-	   pulsed->aPlayPtr->data=realloc(pulsed->aPlayPtr->data,nbytes*100);
+	   pulsed->aPlayPtr->data=g_realloc(pulsed->aPlayPtr->data,nbytes*100);
 	   memset(pulsed->aPlayPtr->data,0,nbytes*100);
 	   pulsed->aPlayPtr->size=nbytes*100;
 	 }
@@ -524,7 +524,7 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
 
   bytes_out=frames_out*afile->achans*(afile->asampsize>>3);
 
-  holding_buff=malloc(bytes_out);
+  holding_buff=g_malloc(bytes_out);
 
   if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
 

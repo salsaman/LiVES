@@ -1,6 +1,6 @@
 // startup.c
 // LiVES
-// (c) G. Finch 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2010 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -640,7 +640,7 @@ gboolean do_startup_tests(gboolean tshoot) {
     unlink(cfile->info_file);
 
     // write 1 second of silence
-    afile=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle);
+    afile=g_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
     out_fd=open(afile,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
 
     if (out_fd<0) mainw->write_failed=TRUE;
@@ -648,9 +648,16 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     if (!mainw->write_failed) {
       abuff=calloc(44100,4);
-      lives_write (out_fd,abuff,176400,TRUE);
-      close(out_fd);
-      g_free(abuff);
+      if (!abuff) {
+	tmp=g_strdup_printf(_("Unable to allocate 176400 bytes memory."));
+	fail_test(table,1,tmp);
+	g_free(tmp);
+      }
+      else {
+	lives_write (out_fd,abuff,176400,TRUE);
+	close(out_fd);
+	g_free(abuff);
+      }
     }
 
     if (mainw->write_failed) {
@@ -661,12 +668,11 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     g_free(afile);
 
-
     if (!mainw->write_failed) {
-      afile=g_strdup_printf("%s%s/testout.wav",prefs->tmpdir,cfile->handle);
+      afile=g_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
     
       mainw->com_failed=FALSE;
-      com=g_strdup_printf("smogrify export_audio %s 0. 0. 44100 2 16 0 22050 %s",cfile->handle,afile);
+      com=g_strdup_printf("smogrify export_audio %s 0. 0. 44100 2 16 0 22050 \"%s\"",cfile->handle,afile);
       lives_system(com,TRUE);
       if (mainw->com_failed) {
 	tmp=g_strdup_printf(_("Command failed: %s"),com);
@@ -677,8 +683,10 @@ gboolean do_startup_tests(gboolean tshoot) {
       g_free(com);
       
       if (!mainw->com_failed) {
+
 	while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
 	  g_usleep(prefs->sleep_time);
+	  while (g_main_context_iteration(NULL,FALSE));
 	}
 	
 	if (info_fd!=-1) {
@@ -788,7 +796,8 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     rname=get_resource("vidtest.avi");
 
-    com=g_strdup_printf("smogrify open_test %s \"%s\" 0 png",cfile->handle,(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
+    com=g_strdup_printf("smogrify open_test %s \"%s\" 0 png",cfile->handle,
+			(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
     g_free(tmp);
     g_free(rname);
 
@@ -862,15 +871,8 @@ gboolean do_startup_tests(gboolean tshoot) {
     }
   }
   
+  // TODO - check each enabled decoder plugin in turn
 
-
-  // check decode of ogg/theora
-  // if not, warn
-  //6
-
-  // check decode of dv
-  // if not, warn
-  //7
 
   // check for convert
 
@@ -879,7 +881,6 @@ gboolean do_startup_tests(gboolean tshoot) {
 
   if (!capable->has_convert) {
     success=fail_test(table,8,_("Install imageMagick to be able to use all of the rendered effects"));
-
   }
   else {
     success=pass_test(table,8);

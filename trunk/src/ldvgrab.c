@@ -101,7 +101,7 @@ void close_raw1394(raw1394handle_t handle) {
 
 void camdest(s_cam *cam) {
   raw1394_destroy_handle(cam->handle);
-  free(cam);
+  g_free(cam);
 }
 
 s_cam *camready (void) {
@@ -112,7 +112,7 @@ s_cam *camready (void) {
   int n_ports;
   struct raw1394_portinfo pinf[ 16 ];
 
-  s_cam *cam=(s_cam *)malloc(sizeof(s_cam));
+  s_cam *cam=(s_cam *)g_malloc(sizeof(s_cam));
 
   cam->device=-1;
 

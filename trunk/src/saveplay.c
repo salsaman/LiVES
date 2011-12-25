@@ -60,6 +60,7 @@ gboolean save_clip_values(gint which) {
       mainw->files[which]->header_version=LIVES_CLIP_HEADER_VERSION;
 
       do {
+	retval=0;
 	save_clip_value(which,CLIP_DETAILS_HEADER_VERSION,&mainw->files[which]->header_version);
 	if (mainw->com_failed||mainw->write_failed) break;
 	save_clip_value(which,CLIP_DETAILS_BPP,&mainw->files[which]->bpp);
@@ -1001,7 +1002,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   gchar *full_file_name=NULL;
 
   int new_stderr=-1;
-  int retval=0;
+  int retval;
   gint startframe=1;
   gint current_file=mainw->current_file;
   gint asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
@@ -1522,6 +1523,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     g_free(redir);
 
     do {
+      retval=0;
       new_stderr=open(new_stderr_name,O_CREAT|O_RDWR|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
       if (new_stderr<0) {
 	retval=do_write_failed_error_s_with_retry(new_stderr_name,strerror(errno),NULL);
@@ -3210,7 +3212,7 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
 
 gboolean save_file_comments (int fileno) {
   // save the comments etc for smogrify
-  int retval=0;
+  int retval;
   int comment_fd;
   gchar *comment_file=g_strdup_printf ("%s/%s/.comment",prefs->tmpdir,cfile->handle);
   file *sfile=mainw->files[fileno];
@@ -3218,6 +3220,7 @@ gboolean save_file_comments (int fileno) {
   unlink (comment_file);
 
   do {
+    retval=0;
     comment_fd=creat(comment_file,S_IRUSR|S_IWUSR);
     if (comment_fd<0) {
       mainw->write_failed=TRUE;
@@ -3329,7 +3332,7 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
     // multitrack mode
     GError *gerr=NULL;
     GdkPixbuf *pixbuf;
-    int retval=0;
+    int retval;
 
     mt_show_current_frame(mainw->multitrack,TRUE);
     convert_layer_palette(mainw->frame_layer,WEED_PALETTE_RGB24,0);
@@ -3339,6 +3342,7 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
     mainw->frame_layer=NULL;
 
     do {
+      retval=0;
       if (sfile->img_type==IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, &gerr);
       else if (sfile->img_type==IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, &gerr);
 
@@ -3494,7 +3498,7 @@ gboolean write_headers (file *file) {
   // this function is included only for backwards compatibility with ancient builds of LiVES
   //
 
-  int retval=0;
+  int retval;
   int header_fd;
   gchar *hdrfile;
 
@@ -3502,6 +3506,7 @@ gboolean write_headers (file *file) {
   hdrfile=g_build_filename(prefs->tmpdir,file->handle,"header",NULL);
 
   do {
+    retval=0;
     header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
     if (header_fd<0) {
       retval=do_write_failed_error_s_with_retry(hdrfile,strerror(errno),NULL);
@@ -3536,6 +3541,7 @@ gboolean write_headers (file *file) {
     hdrfile=g_build_filename(prefs->tmpdir,file->handle,"header2",NULL);
 
     do {
+      retval=0;
       header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
     
       if (header_fd<0) {
@@ -3756,13 +3762,15 @@ gboolean read_headers(const gchar *file_name) {
       }
     }
     close(header_fd);
-    g_free(old_hdrfile);
   }
 
   if (mainw->read_failed) {
-    do_read_failed_error(0,0);
+    do_read_failed_error_s(old_hdrfile);
+    g_free(old_hdrfile);
     return FALSE;
   }
+
+  g_free(old_hdrfile);
 
   // handle version changes
   version_hash=verhash(version);
@@ -3880,7 +3888,7 @@ void open_set_file (const gchar *set_name, gint clipnum) {
 	nlen=read(set_fd,name,256);
 
 	if (mainw->read_failed) {
-	  do_read_failed_error(0,0);
+	  do_read_failed_error_s(setfile);
 	}
 
       }
@@ -4062,7 +4070,7 @@ gint save_event_frames(void) {
   // here we also update the frame_index for clips of type CLIP_TYPE_FILE
 
   int header_fd,i=0;
-  int retval=0;
+  int retval;
   gchar *hdrfile=g_strdup_printf("%s/%s/event.frames",prefs->tmpdir,cfile->handle);
   gint perf_start,perf_end;
   
@@ -4097,6 +4105,7 @@ gint save_event_frames(void) {
   }
 
   do {
+    retval=0;
     header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
     if (header_fd<0) {
       do_write_failed_error_s_with_retry(hdrfile,strerror(errno),NULL);
@@ -4860,7 +4869,7 @@ void rewrite_recovery_file(void) {
   int i;
   gchar *recovery_entry;
   int recovery_fd=-1;
-  int retval=0;
+  int retval;
   GList *clist=mainw->cliplist;
   gboolean opened=FALSE;
 
@@ -4870,6 +4879,7 @@ void rewrite_recovery_file(void) {
   }
 
   do {
+    retval=0;
     mainw->write_failed=FALSE;
     opened=FALSE;
     recovery_fd=-1;

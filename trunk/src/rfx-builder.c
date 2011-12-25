@@ -3281,7 +3281,7 @@ gboolean perform_param_checks (rfx_build_window_t *rfxbuilder, gint index, gint 
 gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   FILE *sfile;
   int i,j;
-  int retval=0;
+  int retval;
   gchar **array;
   lives_colRGB24_t rgb;
   guint32 props;
@@ -3327,6 +3327,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   }
 
   do {
+    retval=0;
     if (!(sfile=fopen(script_file,"w"))) {
       retval=do_write_failed_error_s_with_retry(script_file,strerror(errno),GTK_WINDOW(rfxbuilder->dialog));
       if (retval==LIVES_CANCEL) {

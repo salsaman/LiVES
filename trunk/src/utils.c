@@ -140,7 +140,6 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_fail) {
 			       (unsigned long)count,mainw->read_failed_file);
     if (!allow_fail) {
       LIVES_ERROR(msg);
-      do_read_failed_error(retval, count);
       close(fd);
     }
     else LIVES_INFO(msg);

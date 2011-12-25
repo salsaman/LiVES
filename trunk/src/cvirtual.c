@@ -45,7 +45,7 @@ void create_frame_index(gint fileno, gboolean init, gint start_offset, gint nfra
 // save frame_index to disk
 gboolean save_frame_index(gint fileno) {
   int fd,i;
-  int retval=0;
+  int retval;
   gchar *fname;
   file *sfile=mainw->files[fileno];
   if (sfile==NULL||sfile->frame_index==NULL) return FALSE;
@@ -53,6 +53,7 @@ gboolean save_frame_index(gint fileno) {
   fname=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
 
   do {
+    retval=0;
     fd=open(fname,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
     if (fd<0) {
       retval=do_write_failed_error_s_with_retry(fname,strerror(errno),NULL);
@@ -82,44 +83,55 @@ gboolean save_frame_index(gint fileno) {
 // load frame_index from disk
 gboolean load_frame_index(gint fileno) {
   int fd,i;
+  int retval;
   gchar *fname;
   file *sfile=mainw->files[fileno];
+
   if (sfile==NULL||sfile->frame_index!=NULL) return FALSE;
 
   if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
   sfile->frame_index=NULL;
 
-  fname=g_strdup_printf("%s/%s/file_index",prefs->tmpdir,sfile->handle);
+  fname=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
 
   if (!g_file_test(fname,G_FILE_TEST_EXISTS)) {
     g_free(fname);
     return FALSE;
   }
 
-  fd=open(fname,O_RDONLY);
 
-  if (fd<0) {
-    do_read_failed_error_s(fname);
-    g_free(fname);
-    return FALSE;
-  }
+  do {
+    retval=0;
+
+    fd=open(fname,O_RDONLY);
+
+    if (fd<0) {
+      retval=do_read_failed_error_s_with_retry(fname,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) {
+	g_free(fname);
+	return FALSE;
+      }
+    }
+    else {
+      create_frame_index(fileno,FALSE,0,sfile->frames);
+
+      mainw->read_failed=FALSE;
+      for (i=0;i<sfile->frames;i++) {
+	lives_read(fd,&sfile->frame_index[i],sizint,TRUE);
+	if (mainw->read_failed) break;
+      }
+
+      close(fd);
+
+      if (mainw->read_failed) {
+	mainw->read_failed=FALSE;
+	retval=do_read_failed_error_s_with_retry(fname,NULL,NULL);
+      }
+
+    }
+  } while (retval==LIVES_RETRY);
 
   g_free(fname);
-
-  create_frame_index(fileno,FALSE,0,sfile->frames);
-
-  mainw->read_failed=FALSE;
-  for (i=0;i<sfile->frames;i++) {
-    lives_read(fd,&sfile->frame_index[i],sizint,TRUE);
-    if (mainw->read_failed) break;
-  }
-
-  close(fd);
-
-  if (mainw->read_failed) {
-    mainw->read_failed=FALSE;
-    do_read_failed_error(0,0);
-  }
 
   return TRUE;
 }
@@ -215,7 +227,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
   GdkPixbuf *pixbuf;
   GError *error=NULL;
   gchar *oname;
-  int retval=0;
+  int retval;
 
   gint progress=1;
 
@@ -240,6 +252,7 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
       }
 
       do {
+	retval=0;
 	lives_pixbuf_save (pixbuf, oname, sfile->img_type, 100-prefs->ocp, &error);
 	if (error!=NULL) {
 	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);

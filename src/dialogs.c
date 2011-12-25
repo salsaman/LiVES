@@ -2111,7 +2111,7 @@ void do_com_failed_error(const char *com, int retval) {
   gchar *bit;
   if (retval>0) bit=g_strdup_printf(_("The error value was %d\n"),retval>>8);
   else bit=g_strdup("");
-  msg=g_strdup_printf(_("\nLiVES failed to run the command\n%s\nPlease check your system for errors\n%s"),com,bit);
+  msg=g_strdup_printf(_("\nLiVES failed to run the command\n%s\nPlease check your system for errors.\n%s"),com,bit);
   do_error_dialog(msg);
 }
 

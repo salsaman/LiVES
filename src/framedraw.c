@@ -1,6 +1,6 @@
 // framedraw.c
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2002 - 2010
+// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2002 - 2011
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
@@ -58,8 +58,11 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   gtk_widget_set_sensitive(mainw->framedraw_spinbutton,TRUE);
   gtk_widget_set_sensitive(mainw->framedraw_scale,TRUE);
 
-  if (mainw->framedraw_frame>cfile->start&&!(cfile->start==0&&mainw->framedraw_frame==1)) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),cfile->start);
-  else load_rfx_preview(rfx);
+  if (mainw->framedraw_frame>cfile->start&&!(cfile->start==0&&mainw->framedraw_frame==1)) 
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),cfile->start);
+  else {
+    load_rfx_preview(rfx);
+  }
   mainw->did_rfx_preview=TRUE;
 }
 
@@ -111,7 +114,8 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, gint width, gi
 void framedraw_add_label(GtkVBox *box) {
   GtkWidget *label;
 
-  label=gtk_label_new(_("You can click in Preview to change these values"));  // translators - Preview refers to preview window; keep this phrase short
+  // TRANSLATORS - Preview refers to preview window; keep this phrase short
+  label=gtk_label_new(_("You can click in Preview to change these values"));
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
@@ -197,7 +201,8 @@ widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_preview_b
   mainw->framedraw=gtk_event_box_new();
   gtk_widget_set_size_request (mainw->framedraw, width, height);
   gtk_widget_modify_bg (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_widget_set_events (mainw->framedraw, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK| GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+  gtk_widget_set_events (mainw->framedraw, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
+			 GDK_BUTTON_PRESS_MASK| GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
 
   mainw->framedraw_frame=start;
 
@@ -292,8 +297,10 @@ framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean reload, G
 
   switch (framedraw->type) {
   case FD_RECT_DEMASK:
-    xstart=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_widget))*fdwidth/(gdouble)cfile->hsize+.4999);
-    ystart=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_widget))*fdheight/(gdouble)cfile->vsize+.4999);
+    xstart=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_widget))*
+		  fdwidth/(gdouble)cfile->hsize+.4999);
+    ystart=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_widget))*
+		  fdheight/(gdouble)cfile->vsize+.4999);
     xend=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_widget))*fdwidth/(gdouble)cfile->hsize+.4999);
     yend=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_widget))*fdheight/(gdouble)cfile->vsize+.4999);
 
@@ -415,9 +422,12 @@ framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean reload, G
 
 
 void load_rfx_preview(lives_rfx_t *rfx) {
+  // load a preview of an rfx (rendered effect) in clip editor
+
   GdkPixbuf *pixbuf;
-  FILE *infofile;
+  FILE *infofile=NULL;
   int max_frame=0,tot_frames=0;
+  int vend=cfile->start;
   gint current_file=mainw->current_file;
   weed_timecode_t tc;
   const gchar *img_ext;
@@ -428,16 +438,32 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     // pull some frames to get started
-    gint vend=mainw->framedraw_frame+FX_FRAME_PUMP_VAL;
+    vend=mainw->framedraw_frame+FX_FRAME_PUMP_VAL;
     if (vend>cfile->end) vend=cfile->end;
     virtual_to_images(mainw->current_file,mainw->framedraw_frame,vend,FALSE);
   }
 
   clear_mainw_msg();
 
-  // TODO - timeout
+  while (!(infofile=fopen(cfile->info_file,"r"))&&!mainw->cancelled) {
+    // wait until we get at least 1 frame
+    while (g_main_context_iteration(NULL,FALSE));
+    if (cfile->clip_type==CLIP_TYPE_FILE) {
+      // if we have a virtual clip (frames inside a video file)
+      // pull some frames to images to get us started
+      if (vend<=cfile->end)
+	virtual_to_images(mainw->current_file,mainw->framedraw_frame,vend++,FALSE);
+    }
+    else {
+      // otherwise wait
+      g_usleep(prefs->sleep_time);
+    }
+  }
 
-  while (!(infofile=fopen(cfile->info_file,"r"))) g_usleep(prefs->sleep_time); // wait until we get at least 1 frame
+  if (mainw->cancelled) {
+    if (infofile) fclose(infofile);
+    return;
+  }
 
   lives_fgets(mainw->msg,512,infofile);
   fclose(infofile);
@@ -483,7 +509,9 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   }
 
   tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
-  pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,(gchar *)img_ext,tc,(gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
+  pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,(gchar *)img_ext,
+				 tc,(gdouble)cfile->hsize/mainw->fd_scale,
+				 (gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
 
   gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->framedraw_image), pixbuf);
   gtk_widget_queue_draw (mainw->framedraw_image);
@@ -499,16 +527,20 @@ void
 after_framedraw_frame_spinbutton_changed (GtkSpinButton *spinbutton, lives_special_framedraw_rect_t *framedraw)
 {
   // update the single frame/framedraw preview
+  // after the "frame number" spinbutton has changed
   mainw->framedraw_frame=gtk_spin_button_get_value_as_int(spinbutton);
-  if (GTK_WIDGET_VISIBLE(mainw->framedraw_preview)) load_rfx_preview(framedraw->rfx);
+  if (GTK_WIDGET_VISIBLE(mainw->framedraw_preview)) {
+    if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
+    while (g_main_context_iteration(NULL,FALSE));
+    load_rfx_preview(framedraw->rfx);
+  }
   else framedraw_redraw(framedraw, TRUE, NULL);
 }
 
 
 
 
-void 
-load_framedraw_image(GdkPixbuf *pixbuf) {
+void load_framedraw_image(GdkPixbuf *pixbuf) {
   // this is for the single frame framedraw widget
   // it should be called whenever mainw->framedraw_bitmap changes
 
@@ -530,7 +562,9 @@ load_framedraw_image(GdkPixbuf *pixbuf) {
   if (pixbuf==NULL) {
     const gchar *img_ext=cfile->img_type==IMG_TYPE_JPEG?"jpg":"png";
     tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
-    pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,img_ext,tc,(gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
+    pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,img_ext,tc,
+				   (gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,
+				   GDK_INTERP_HYPER);
     needs_free=TRUE;
   }
 
@@ -581,7 +615,8 @@ on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_special_fr
 
   if (framedraw==NULL&&mainw->multitrack!=NULL) {
     framedraw=mainw->multitrack->framedraw;
-    if (framedraw==NULL&&mainw->multitrack->cursor_style==0) gdk_window_set_cursor (mainw->multitrack->play_box->window, NULL);
+    if (framedraw==NULL&&mainw->multitrack->cursor_style==0) gdk_window_set_cursor 
+							       (mainw->multitrack->play_box->window, NULL);
   }
 
   if (framedraw==NULL) return FALSE;
@@ -648,7 +683,8 @@ on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, lives_specia
 
     b1_held=TRUE;
 
-    if ((framedraw->type==FD_RECT_MULTRECT||framedraw->type==FD_RECT_DEMASK)&&(mainw->multitrack==NULL||mainw->multitrack->cursor_style==0)) {
+    if ((framedraw->type==FD_RECT_MULTRECT||framedraw->type==FD_RECT_DEMASK)&&
+	(mainw->multitrack==NULL||mainw->multitrack->cursor_style==0)) {
       GdkCursor *cursor;
       if (mainw->multitrack==NULL) {
 	cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_BOTTOM_RIGHT_CORNER);
@@ -665,8 +701,12 @@ on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, lives_specia
       gdouble offsy=(gdouble)ystart/(gdouble)widget->allocation.height;
 
       if (mainw->multitrack!=NULL) {
-	if (mainw->multitrack->play_width<mainw->multitrack->play_window_width) offsx=((gdouble)xstart-(gdouble)(mainw->multitrack->play_window_width-mainw->multitrack->play_width)/2.)/(gdouble)mainw->multitrack->play_width;
-	if (mainw->multitrack->play_height<mainw->multitrack->play_window_height) offsy=((gdouble)ystart-(gdouble)(mainw->multitrack->play_window_height-mainw->multitrack->play_height)/2.)/(gdouble)mainw->multitrack->play_height;
+	if (mainw->multitrack->play_width<mainw->multitrack->play_window_width) 
+	  offsx=((gdouble)xstart-(gdouble)(mainw->multitrack->play_window_width-
+					   mainw->multitrack->play_width)/2.)/(gdouble)mainw->multitrack->play_width;
+	if (mainw->multitrack->play_height<mainw->multitrack->play_window_height) 
+	  offsy=((gdouble)ystart-(gdouble)(mainw->multitrack->play_window_height-
+					   mainw->multitrack->play_height)/2.)/(gdouble)mainw->multitrack->play_height;
       }
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_widget),offsx);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_widget),offsy);
@@ -696,8 +736,10 @@ on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, lives_speci
       redraw_framedraw_image();
 
       // TODO - allow user selectable line colour
-      draw_rect_demask (&palette->light_yellow,xstart*fdwidth/cfile->hsize,ystart*fdheight/cfile->vsize,xcurrent,ycurrent,FALSE);
-      gtk_image_set_from_pixmap(GTK_IMAGE(mainw->framedraw_image), mainw->framedraw_copy_pixmap, mainw->framedraw_bitmap);
+      draw_rect_demask (&palette->light_yellow,xstart*fdwidth/cfile->hsize,
+			ystart*fdheight/cfile->vsize,xcurrent,ycurrent,FALSE);
+      gtk_image_set_from_pixmap(GTK_IMAGE(mainw->framedraw_image), mainw->framedraw_copy_pixmap, 
+				mainw->framedraw_bitmap);
     }
     break;
   case FD_RECT_MULTRECT:
@@ -767,8 +809,14 @@ on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, lives_specia
     offsy=(gdouble)yend/(gdouble)widget->allocation.height;
 
     if (mainw->multitrack!=NULL) {
-      if (mainw->multitrack->play_width<mainw->multitrack->play_window_width) offsx=(gint)(((gdouble)xend-(gdouble)(mainw->multitrack->play_window_width-mainw->multitrack->play_width)/2.)/(gdouble)mainw->multitrack->play_width+.4999);
-      if (mainw->multitrack->play_height<mainw->multitrack->play_window_height) offsy=(gint)(((gdouble)yend-(gdouble)(mainw->multitrack->play_window_height-mainw->multitrack->play_height)/2.)/(gdouble)mainw->multitrack->play_height+.4999);
+      if (mainw->multitrack->play_width<mainw->multitrack->play_window_width) 
+	offsx=(gint)(((gdouble)xend-(gdouble)(mainw->multitrack->play_window_width-
+					      mainw->multitrack->play_width)/2.)/
+		     (gdouble)mainw->multitrack->play_width+.4999);
+      if (mainw->multitrack->play_height<mainw->multitrack->play_window_height) 
+	offsy=(gint)(((gdouble)yend-(gdouble)(mainw->multitrack->play_window_height-
+					      mainw->multitrack->play_height)/2.)/
+		     (gdouble)mainw->multitrack->play_height+.4999);
     }
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_widget),offsx);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_widget),offsy);
@@ -799,31 +847,16 @@ after_framedraw_widget_changed (GtkWidget *widget, lives_special_framedraw_rect_
 
 // various drawing functions
 
-void 
-draw_rect_demask (GdkColor *col, gint x1, gint y1, gint x2, gint y2, gboolean filled)
+void draw_rect_demask (GdkColor *col, gint x1, gint y1, gint x2, gint y2, gboolean filled)
 {
   gdk_gc_set_rgb_fg_color (GDK_GC (mainw->framedraw_colourgc),col);
-  gdk_draw_rectangle (GDK_DRAWABLE (mainw->framedraw_copy_pixmap),GDK_GC (mainw->framedraw_colourgc), filled, MIN (x1,x2), MIN (y1,y2), ABS (x2-x1), ABS (y2-y1));
+  gdk_draw_rectangle (GDK_DRAWABLE (mainw->framedraw_copy_pixmap),GDK_GC (mainw->framedraw_colourgc), filled, 
+		      MIN (x1,x2), MIN (y1,y2), ABS (x2-x1), ABS (y2-y1));
 }
 
 
-#ifdef GOOP_TEST
 
-  // this will make a fun toy...
-
-  gchar *com;
-  com=g_strdup_printf ("/usr/X11R6/lib/xscreensaver/goop -window-id %lu 2>/dev/null&",GDK_WINDOW_XWINDOW (mainw->framedraw->window));
-  lives_system (com);
-  g_free (com);
-		       
-#endif
-
-
-
-
-
-void
-on_framedraw_reset_clicked (GtkButton *button, lives_special_framedraw_rect_t *framedraw)
+void on_framedraw_reset_clicked (GtkButton *button, lives_special_framedraw_rect_t *framedraw)
 {
   gdouble x_min,x_max,y_min,y_max;
   // TODO ** - set to defaults

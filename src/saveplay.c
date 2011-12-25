@@ -130,7 +130,11 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
   // therefore it is IMPORTANT to set it when loading new audio for an existing clip !
 
   FILE *infofile;
-  gchar *tmp,*com=g_strdup_printf("smogrify get_details %s \"%s\" %s %d %d",cfile->handle,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",mainw->opening_loc,is_audio);
+  int alarm_handle;
+  gboolean timeout=FALSE;
+  gchar *tmp,*com=g_strdup_printf("smogrify get_details %s \"%s\" %s %d %d",cfile->handle,
+				  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
+				  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",mainw->opening_loc,is_audio);
   g_free(tmp);
 
   mainw->com_failed=FALSE;
@@ -142,22 +146,29 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
     return FALSE;
   }
 
-  if (mainw->opening_loc) return do_progress_dialog(TRUE,TRUE,_ ("Examining file header"));
+  if (mainw->opening_loc) 
+    return do_progress_dialog(TRUE,TRUE,_ ("Examining file header"));
 
   threaded_dialog_spin();
   clear_mainw_msg();
   
-  // TODO - timeout
 
+#define LIVES_LONGER_TIMEOUT  (120 * U_SEC) // 2 minute timeout
 
-  while (!(infofile=fopen(cfile->info_file,"r"))) {
+  alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
+
+  while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
     while (g_main_context_iteration (NULL,FALSE));
     threaded_dialog_spin();
     g_usleep(prefs->sleep_time);
   }
-  
-  lives_fgets(mainw->msg,512,infofile);
-  fclose(infofile);
+
+  lives_alarm_clear(alarm_handle);
+
+  if (!timeout) {
+    lives_fgets(mainw->msg,512,infofile);
+    fclose(infofile);
+  }
 
   threaded_dialog_spin();
   return TRUE;
@@ -382,7 +393,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  
 	  if (mainw->com_failed) return;
 
-	  add_file_info (cfile->handle,TRUE);
+	  if (strlen(mainw->msg)>0) add_file_info (cfile->handle,TRUE);
 
 	  if (cfile->achans>0) {
 	    // plugin returned no audio, try with mplayer
@@ -878,22 +889,42 @@ static void save_subs_to_file(file *sfile, gchar *fname) {
 
 
 
-void
-get_handle_from_info_file(gint index) {
+gboolean get_handle_from_info_file(gint index) {
   // called from get_new_handle to get the 'real' file handle
   // because until we know the handle we can't use the normal info file yet
+
+  // return FALSE if we time out
+
   FILE *infofile;
+  int alarm_handle;
+  gboolean timeout=FALSE;
 
   clear_mainw_msg();
 
-  // TODO - timeout
+#define LIVES_MEDIUM_TIMEOUT  (60 * U_SEC) // 60 sec timeout
 
-  while (!(infofile=fopen(mainw->first_info_file,"r"))) {
+  alarm_handle=lives_alarm_set(LIVES_MEDIUM_TIMEOUT);
+
+  while (!((infofile=fopen(mainw->first_info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
     g_usleep(prefs->sleep_time);
   }
 
-  lives_fgets(mainw->msg,512,infofile);
-  fclose(infofile);
+  lives_alarm_clear(alarm_handle);
+  
+  if (!timeout) {
+    lives_fgets(mainw->msg,256,infofile);
+    fclose(infofile);
+  }
+  else {
+    mainw->read_failed=TRUE;
+    do_read_failed_error_s(mainw->first_info_file);
+  }
+  
+  if (mainw->read_failed) {
+    mainw->read_failed=FALSE;
+    return FALSE;
+  }
+
   unlink(mainw->first_info_file);
 
   if (mainw->files[index]==NULL) {
@@ -901,6 +932,8 @@ get_handle_from_info_file(gint index) {
     mainw->files[index]->clip_type=CLIP_TYPE_DISK; // the default
   }
   g_snprintf(mainw->files[index]->handle,256,"%s",mainw->msg);
+
+  return TRUE;
 }
 
 
@@ -2852,6 +2885,7 @@ get_temp_handle(gint index, gboolean create) {
   gchar *com;
   gint ret;
   gboolean is_unique;
+  gint current_file=mainw->current_file;
 
   if (index==-1) {
     too_many_files();
@@ -2859,6 +2893,8 @@ get_temp_handle(gint index, gboolean create) {
   }
 
   do {
+    mainw->current_file=current_file;
+
     is_unique=TRUE;
 
     com=g_strdup_printf("smogrify new %d",getpid());
@@ -2870,16 +2906,22 @@ get_temp_handle(gint index, gboolean create) {
       return FALSE;
     }
     
-    mainw->current_file=index;
-    
     //get handle from info file, we will also malloc a new "file" struct here
-    get_handle_from_info_file(index);
+    if (!get_handle_from_info_file(index)) {
+      // timed out
+      if (mainw->files[index]!=NULL) g_free(mainw->files[index]);
+      mainw->files[index]=NULL;
+      return FALSE;
+    }
+
+    mainw->current_file=index;
 
     if (strlen(mainw->set_name)>0) {
       gchar *setclipdir=g_strdup_printf("%s/%s/clips/%s",prefs->tmpdir,mainw->set_name,cfile->handle);
       if (g_file_test(setclipdir,G_FILE_TEST_IS_DIR)) is_unique=FALSE;
       g_free(setclipdir);
     }
+
   } while (!is_unique);
 
   if (create) create_cfile();
@@ -2888,8 +2930,7 @@ get_temp_handle(gint index, gboolean create) {
 
 
 
-void 
-create_cfile(void) {
+void create_cfile(void) {
   // any cfile (clip) initialisation goes in here
   cfile->menuentry=NULL;
   cfile->start=cfile->end=0;
@@ -3022,8 +3063,12 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
     // (this should never happen...)
     
     if (strcmp(check_handle,array[1])) {
-      g_printerr("Handle!=statusfile ! Bailing !\n");
-      g_signal_emit_by_name(mainw->LiVES,"delete_event");
+      LIVES_ERROR("Handle!=statusfile !");
+      mesg=g_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
+			   check_handle);
+      do_error_dialog(mesg);
+      g_free(mesg);
+      return FALSE;
     }
     
     if (!aud_only) {
@@ -3521,25 +3566,25 @@ gboolean write_headers (file *file) {
 gboolean read_headers(const gchar *file_name) {
   // file_name is only used to get the file size on the disk
   FILE *infofile;
-  gchar buff[1024];
-  gint pieces;
   gchar **array;
-  gchar *com,*tmp;
-  int header_fd;
+  gchar buff[1024];
   gchar version[32];
+  gchar *com,*tmp;
+  gchar *old_hdrfile=g_build_filename(prefs->tmpdir,cfile->handle,"header",NULL);
+  gchar *lives_header=g_build_filename(prefs->tmpdir,cfile->handle,"header.lives",NULL);
+
   gint header_size;
   gint version_hash;
+  gint pieces;
+  int header_fd;
+  int alarm_handle;
+  gboolean timeout=FALSE;
+  gboolean retval;
 
   size_t sizhead=8*sizint+sizdbl+8;
 
-  gchar *old_hdrfile=g_strdup_printf("%s/%s/header",prefs->tmpdir,cfile->handle);
-  gchar *lives_header=g_strdup_printf("%s/%s/header.lives",prefs->tmpdir,cfile->handle);
-
   time_t old_time=0,new_time=0;
   struct stat mystat;
-
-  gboolean retval;
-
 
   // TODO - remove this some time before 2038...
   if (!stat(old_hdrfile,&mystat)) old_time=mystat.st_mtime;
@@ -3550,12 +3595,15 @@ gboolean read_headers(const gchar *file_name) {
     if (get_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames,0)) {
       gint asigned,aendian;
       gchar *tmp;
+      int alarm_handle;
+      gboolean timeout=FALSE;
 
       // use new style header (LiVES 0.9.6+)
       g_free(old_hdrfile);
 
       // clean up and get file sizes
-      com=g_strdup_printf("smogrify restore_details %s \"%s\" %d",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
+      com=g_strdup_printf("smogrify restore_details %s \"%s\" %d",cfile->handle,
+			  (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
 
       mainw->com_failed=FALSE;
       lives_system(com,FALSE);
@@ -3567,17 +3615,26 @@ gboolean read_headers(const gchar *file_name) {
 	return FALSE;
       }
 
-      // TODO *** timeout
+#define LIVES_RESTORE_TIMEOUT  (120 * U_SEC) // 120 sec timeout
 
-      while (!(infofile=fopen(cfile->info_file,"r"))) {
+      alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
+
+      while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
 	g_usleep(prefs->sleep_time);
       }
-    
-      lives_fgets(buff,1024,infofile);
-      fclose(infofile);
-      
-      if (mainw->read_failed) {
+
+      lives_alarm_clear(alarm_handle);
+
+      if (!timeout) {
+	lives_fgets(buff,1024,infofile);
+	fclose(infofile);
+      }
+      else {
+	mainw->read_failed=TRUE;
 	do_read_failed_error_s(cfile->info_file);
+      }
+
+      if (mainw->read_failed) {
 	return FALSE;
       }
 
@@ -3711,7 +3768,8 @@ gboolean read_headers(const gchar *file_name) {
     cfile->signed_endian=mainw->endian;
   }
   
-  com=g_strdup_printf("smogrify restore_details %s \"%s\" %d",cfile->handle,(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
+  com=g_strdup_printf("smogrify restore_details %s \"%s\" %d",cfile->handle,
+		      (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   g_free(com);
@@ -3722,21 +3780,29 @@ gboolean read_headers(const gchar *file_name) {
     return FALSE;
   }
 
-  // TODO - timeout
+#define LIVES_RESTORE_TIMEOUT  (120 * U_SEC) // 120 sec timeout
 
-  while (!(infofile=fopen(cfile->info_file,"r"))) {
+  alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
+
+  while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
     g_usleep(prefs->sleep_time);
   }
+
+  lives_alarm_clear(alarm_handle);
   
-  mainw->read_failed=FALSE;
-  lives_fgets(buff,1024,infofile);
-  fclose(infofile);
+  if (!timeout) {
+    lives_fgets(buff,1024,infofile);
+    fclose(infofile);
+  }
+  else {
+    mainw->read_failed=TRUE;
+    do_read_failed_error_s(cfile->info_file);
+  }
   
   if (mainw->read_failed) {
-    do_read_failed_error_s(cfile->info_file);
+    mainw->read_failed=FALSE;
     return FALSE;
   }
-
 
   pieces=get_token_count (buff,'|');
   array=g_strsplit(buff,"|",pieces);

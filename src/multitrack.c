@@ -80,6 +80,9 @@ static gboolean mainw_was_ready;
 
 ///////////////////////////////////////////////////////////////////
 
+#define LIVES_AVOL_SCALE ((double)1000000.)
+
+
 static LIVES_INLINE gint mt_file_from_clip(lives_mt *mt, gint clip) {
   return clips_to_files[clip];
 }
@@ -97,6 +100,24 @@ static LIVES_INLINE gint mt_clip_from_file(lives_mt *mt, gint file) {
 static LIVES_INLINE int get_track_for_block(track_rect *block) {
   return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));  
 }
+
+
+
+static LIVES_INLINE gboolean is_empty_track(GObject *track) {
+  return (g_object_get_data(track, "blocks")==NULL);
+}
+
+gdouble get_mixer_track_vol(lives_mt *mt, int trackno) {
+  gdouble vol=(gdouble)(GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols,trackno)));
+  return vol/LIVES_AVOL_SCALE;
+}
+
+void set_mixer_track_vol(lives_mt *mt, int trackno, gdouble vol) {
+  int x=vol*LIVES_AVOL_SCALE;
+  g_list_nth(mt->audio_vols,trackno)->data=GINT_TO_POINTER(x);
+}
+
+
 
 static gboolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
   weed_plant_t *event=get_first_event(event_list);
@@ -130,7 +151,7 @@ static gboolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_
     
     avols=g_malloc(navols*sizeof(double));
     for (i=0;i<navols;i++) {
-      avols[i]=(gdouble)GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols,i))/1000000.;
+      avols[i]=get_mixer_track_vol(mt,i);
     }
     weed_set_double_array(event_list,"audio_volume_values",navols,avols);
     g_free(avols);
@@ -1984,7 +2005,8 @@ gboolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer u
   lives_mt *mt=(lives_mt *)user_data;
   gboolean expanded=!(g_object_get_data(G_OBJECT(eventbox),"expanded"));
 
-  if (mt->audio_draws==NULL||(!mt->opts.pertrack_audio&&(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data))) {
+  if (mt->audio_draws==NULL||(!mt->opts.pertrack_audio&&(mt->opts.back_audio_tracks==0||
+							 eventbox!=mt->audio_draws->data))) {
     track_ebox_pressed(eventbox,NULL,mt);
     return FALSE;
   }
@@ -2010,12 +2032,6 @@ gboolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer u
   gtk_widget_destroy(arrow);
 
   scroll_tracks(mt,mt->top_track);
-  if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
-  while (g_main_context_iteration(NULL,FALSE));
-  if (mt->idlefunc>0) {
-    mt->idlefunc=0;
-    mt->idlefunc=mt_idle_add(mt);
-  }
   track_select(mt);
   return FALSE;
 }
@@ -4112,6 +4128,7 @@ static void add_aparam_menuitems(lives_mt *mt) {
     gtk_widget_hide(mt->aparam_submenu);
 
     gtk_widget_hide(mt->render_aud);
+    gtk_widget_hide(mt->normalise_aud);
     gtk_widget_hide(mt->render_vid);
     gtk_widget_hide(mt->render_sep);
 
@@ -4127,6 +4144,7 @@ static void add_aparam_menuitems(lives_mt *mt) {
   }
 
   gtk_widget_show(mt->render_aud);
+  gtk_widget_show(mt->normalise_aud);
   gtk_widget_show(mt->render_vid);
   gtk_widget_show(mt->render_sep);
 
@@ -5089,7 +5107,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->exact_preview=0;
 
-  mt->render_vidp=mt->render_audp=TRUE;
+  mt->render_vidp=TRUE;
+  mt->render_audp=prefs->render_audio;
+  mt->normalise_audp=prefs->normalise_audio;
 
   mt->context_time=-1.;
   mt->use_context=FALSE;
@@ -6278,13 +6298,21 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->render_vid);
 
   mt->render_aud = gtk_check_menu_item_new_with_mnemonic (_("Render _audio"));
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->render_aud), TRUE);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->render_aud), mt->render_audp);
 
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->render_aud);
 
   sep = gtk_menu_item_new ();
-  //gtk_container_add (GTK_CONTAINER (menuitem_menu), sep);
+
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), sep);
   gtk_widget_set_sensitive (sep, FALSE);
+
+  mt->normalise_aud = gtk_check_menu_item_new_with_mnemonic (_("_Normalise rendered audio"));
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->normalise_aud), mt->normalise_audp);
+
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->normalise_aud);
+
+
 
   mt->prerender_aud = gtk_menu_item_new_with_mnemonic (_("_Pre-render audio"));
   gtk_widget_set_sensitive(mt->prerender_aud, FALSE);
@@ -6670,6 +6698,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
                       (gpointer)mt);
   g_signal_connect (GTK_OBJECT (mt->render_aud), "activate",
                       G_CALLBACK (mt_render_aud_toggled),
+                      (gpointer)mt);
+  g_signal_connect (GTK_OBJECT (mt->normalise_aud), "activate",
+                      G_CALLBACK (mt_norm_aud_toggled),
                       (gpointer)mt);
   g_signal_connect (GTK_OBJECT (ign_ins_sel), "activate",
                       G_CALLBACK (mt_ign_ins_sel_toggled),
@@ -8231,12 +8262,16 @@ static void locate_avol_init_event(lives_mt *mt, weed_plant_t *event_list, int a
 
 
 
-static track_rect *add_block_start_point (GtkWidget *eventbox, weed_timecode_t tc, gint filenum, weed_timecode_t offset_start, weed_plant_t *event, gboolean ordered) {
+static track_rect *add_block_start_point (GtkWidget *eventbox, weed_timecode_t tc, gint filenum, 
+					  weed_timecode_t offset_start, weed_plant_t *event, gboolean ordered) {
   // each mt->video_draw (eventbox) has a gulong data which points to a linked list of track_rect
-  // here we create a new linked list item and set the start timecode in the timeline, offset in the source file, and start event
+  // here we create a new linked list item and set the start timecode in the timeline, 
+  // offset in the source file, and start event
   // then append it to our list
 
-  // block_last points to the last block added - not the last block in the track !!
+  // "block_last" points to the last block added - not the last block in the track !!
+
+  // note: filenum is unused and may be removed in future
 
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
   track_rect *new_block=(track_rect *)g_malloc (sizeof(track_rect));
@@ -8280,10 +8315,11 @@ static track_rect *add_block_start_point (GtkWidget *eventbox, weed_timecode_t t
 }
 
 
-inline void add_block_end_point (GtkWidget *eventbox, weed_plant_t *event) {
+static track_rect *add_block_end_point (GtkWidget *eventbox, weed_plant_t *event) {
   // here we add the end point to our last track_rect
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"block_last");
-  block->end_event=event;
+  if (block!=NULL) block->end_event=event;
+  return block;
 }
 
 static gboolean
@@ -8452,7 +8488,7 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     int tracks[65536]; // TODO - use linked list
     double avels[65536]; // ditto
     int j,error;
-    weed_timecode_t tc;
+    weed_timecode_t tc,last_tc;
     gint last_valid_frame;
     weed_timecode_t offset_start;
     weed_timecode_t block_marker_tc=-1;
@@ -8471,6 +8507,8 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     GtkWidget *audio_draw;
     
     GList *slist;
+
+    track_rect *block;
 
     if (mt->avol_fx!=-1) locate_avol_init_event(mt,mt->event_list,mt->avol_fx);
 
@@ -8526,19 +8564,24 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 
 	for (j=0;j<num_tracks;j++) {
 	  // TODO - tracks should be linked list
-	  if (clip_index[j]>0&&frame_index[j]>-1&&renumbered_clips[clip_index[j]]>0&&frame_index[j]<=mainw->files[renumbered_clips[clip_index[j]]]->frames) {
+	  if (clip_index[j]>0&&frame_index[j]>-1&&renumbered_clips[clip_index[j]]>0&&frame_index[j]<=
+	      mainw->files[renumbered_clips[clip_index[j]]]->frames) {
 	    forced_end=FALSE;
-	    if (tc==block_marker_tc&&int_array_contains_value(block_marker_tracks,block_marker_num_tracks,j)) forced_end=TRUE;
+	    if (tc==block_marker_tc&&int_array_contains_value(block_marker_tracks,block_marker_num_tracks,j)) 
+	      forced_end=TRUE;
 	    if ((tracks[j]!=renumbered_clips[clip_index[j]])||forced_end) {
+	      // handling fro block end or split blocks
 	      if (tracks[j]>0) {
 		add_block_end_point (GTK_WIDGET(g_list_nth_data(mt->video_draws,j)),last_event); // end of previous rectangle
 	      }
 	      if (clip_index[j]>0) {
 		ordered=!mainw->unordered_blocks;
-		if (tc==block_marker_uo_tc&&int_array_contains_value(block_marker_uo_tracks,block_marker_uo_num_tracks,j)) ordered=FALSE;
+		if (tc==block_marker_uo_tc&&int_array_contains_value(block_marker_uo_tracks,block_marker_uo_num_tracks,j)) 
+		  ordered=FALSE;
 		// start a new rectangle
 		offset_start=calc_time_from_frame(renumbered_clips[clip_index[j]],frame_index[j])*U_SEC;
-		add_block_start_point (GTK_WIDGET(g_list_nth_data(mt->video_draws,j)),tc,renumbered_clips[clip_index[j]],offset_start,event,ordered);
+		add_block_start_point (GTK_WIDGET(g_list_nth_data(mt->video_draws,j)),tc,
+				       renumbered_clips[clip_index[j]],offset_start,event,ordered);
 	      }
 	      tracks[j]=renumbered_clips[clip_index[j]];
 	    }
@@ -8548,6 +8591,8 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	  }
 	  else {
 	    // clip has probably been closed, so we remove its frames
+
+	    // TODO - do similar check for audio
 	    new_clip_index[j]=-1;
 	    new_frame_index[j]=0;
 	    if (tracks[j]>0) {
@@ -8588,7 +8633,9 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	weed_free(frame_index);
 	g_free(new_frame_index);
 
+
 	if (weed_plant_has_leaf(event,"audio_clips")) {
+	  // audio starts or stops here
 	  num_aclips=weed_leaf_num_elements(event,"audio_clips");
 	  aclips=weed_get_int_array(event,"audio_clips",&error);
 	  aseeks=weed_get_double_array(event,"audio_seeks",&error);
@@ -8606,7 +8653,9 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 		if (avels[aclips[i]+1]!=0.) {
 		  add_block_end_point (audio_draw,event);
 		}
-		avels[aclips[i]+1]=aseeks[i+1];
+		//if (renumbered_clips[clip_index[aclips[i+1]]]>0) {
+		  avels[aclips[i]+1]=aseeks[i+1];
+		  //}
 		if (avels[aclips[i]+1]!=0.) {
 		  add_block_start_point (audio_draw,tc,renumbered_clips[aclips[i+1]],aseeks[i]*U_SEC,event,TRUE);
 		}
@@ -8617,6 +8666,24 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	  weed_set_int_array(event,"audio_clips",num_aclips,aclips);
 	  weed_free(aclips);
 	  weed_free(aseeks);
+	}
+
+	num_aclips=g_list_length(mt->audio_draws);
+	for (i=0;i<num_aclips;i++) {
+	  // handling for split blocks
+	  if (tc==block_marker_tc&&int_array_contains_value(block_marker_tracks,block_marker_num_tracks,-i-1)) {
+	    audio_draw=g_list_nth_data(mt->audio_draws,i+mt->opts.back_audio_tracks-1);
+	    if (avels[i]!=0.) {
+	      // end the current block and add a new one
+	      // note we only add markers here, when drawing the block audio events will be added
+	      block=add_block_end_point (audio_draw,event);
+	      if (block!=NULL) {
+		last_tc=get_event_timecode(block->start_event);
+		offset_start=block->offset_start+(weed_timecode_t)((double)(tc-last_tc)*avels[i]+.5);
+		add_block_start_point (audio_draw,tc,-1,offset_start,event,TRUE);
+	      }
+	    }
+	  }
 	}
 
 	next_frame_event=get_next_frame_event(event);
@@ -8804,18 +8871,18 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
     llen=g_list_length(mt->audio_draws);
     if (llen==0) {
       // set vol to 1.0
-      vol=1000000;
+      vol=LIVES_AVOL_SCALE;
     }
     else if (llen==1) {
       if (mt->opts.back_audio_tracks>0) {
-	vol=500000;
+	vol=LIVES_AVOL_SCALE/2.;
 	mt->audio_vols->data=GINT_TO_POINTER(vol);
       }
       else {
 	if (mt->opts.gang_audio) {
 	  vol=GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols,0));
 	}
-	else vol=1000000;
+	else vol=LIVES_AVOL_SCALE;
       }
     }
     else {
@@ -8824,10 +8891,10 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
       }
       else {
 	if (mt->opts.back_audio_tracks>0) {
-	  vol=500000;
+	  vol=LIVES_AVOL_SCALE/2.;
 	}
 	else {
-	  vol=1000000;
+	  vol=LIVES_AVOL_SCALE;
 	}
       }
     }
@@ -9691,6 +9758,7 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
     gtk_widget_hide(multi->render_sep);
     gtk_widget_hide(multi->render_vid);
     gtk_widget_hide(multi->render_aud);
+    gtk_widget_hide(multi->normalise_aud);
     gtk_widget_hide(multi->view_audio);
     gtk_widget_hide(multi->aparam_menuitem);
     gtk_widget_hide(multi->aparam_separator);
@@ -10601,7 +10669,9 @@ in_out_end_changed (GtkWidget *widget, gpointer user_data) {
     offset_end=q_gint64((offset_start=block->offset_start+new_end_tc-orig_end_tc)+(weed_timecode_t)((gdouble)(track>=0)*U_SEC/mt->fps)+(get_event_timecode(block->end_event)-get_event_timecode(block->start_event)),mt->fps);
 
     mt->opts.insert_mode=INSERT_MODE_OVERWRITE;
-    if (track>=0) insert_frames (filenum,offset_end,offset_start,tl_end+(weed_timecode_t)((gdouble)(track>=0&&!mt->aud_track_selected)*U_SEC/mt->fps),DIRECTION_NEGATIVE,block->eventbox,mt,block);
+    if (track>=0) insert_frames (filenum,offset_end,offset_start,tl_end+
+				 (weed_timecode_t)((gdouble)(track>=0&&!mt->aud_track_selected)*U_SEC/mt->fps),
+				 DIRECTION_NEGATIVE,block->eventbox,mt,block);
 
     block->offset_start=q_gint64(offset_start,mt->fps);
 
@@ -12572,6 +12642,16 @@ mt_render_aud_toggled                (GtkMenuItem     *menuitem,
   lives_mt *mt=(lives_mt *)user_data;
   mt->render_audp=!mt->render_audp;
   gtk_widget_set_sensitive(mt->render_vid,mt->render_audp);
+  gtk_widget_set_sensitive(mt->normalise_aud,mt->render_audp);
+}
+
+
+void
+mt_norm_aud_toggled                (GtkMenuItem     *menuitem,
+				    gpointer         user_data)
+{
+  lives_mt *mt=(lives_mt *)user_data;
+  mt->normalise_audp=!mt->normalise_audp;
 }
 
 
@@ -14081,8 +14161,11 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gint achans=cfile->achans;
   gint signed_endian=cfile->signed_endian;
   gint orig_file;
+  int i;
   gchar *com,*tmp;
   gboolean had_audio=FALSE;
+  gboolean post_reset_ba=FALSE;
+  gboolean post_reset_ca=FALSE;
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
@@ -14101,7 +14184,8 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else {
     mt->pr_audio=FALSE;
-    prefs->render_audio=!mt->render_audp;
+    prefs->render_audio=!mt->render_audp; // mt->render_audp sense is reversed
+    prefs->normalise_audio=mt->normalise_audp; // mt->normalised_audp sense is reversed
   }
 
   mt_desensitise(mt);
@@ -14111,10 +14195,100 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
   mt->is_rendering=TRUE; // use this to test for rendering from mt (not mainw->is_rendering)
   gtk_widget_set_sensitive(mt->render_vid,FALSE);
   gtk_widget_set_sensitive(mt->render_aud,FALSE);
+  gtk_widget_set_sensitive(mt->normalise_aud,FALSE);
 
   if (mt->poly_state==POLY_PARAMS) polymorph(mt,POLY_FX_STACK);
 
   mt->pb_start_event=get_first_event(mainw->event_list);
+
+  if (prefs->normalise_audio) {
+    // Normalise audio (preference)
+
+    // TODO - in future we could also check the pb volume levels and adjust to prevent clipping
+    // - although this would be time consuming when clicking or activating "render" in mt
+
+    // auto-adjust mixer levels:
+    gboolean has_backing_audio=FALSE;
+    gboolean has_channel_audio=FALSE;
+
+    // -> if we have either but not both: backing audio or channel audio
+
+    if (mt->opts.back_audio_tracks>=1) {
+      // check backing track(s) for audio blocks
+      for (i=0;i<mt->opts.back_audio_tracks;i++) {
+	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	  if (get_mixer_track_vol(mt,i)==0.5) {
+	    has_backing_audio=TRUE;
+	  }
+	}
+      }
+    }
+
+    for (i=mt->opts.back_audio_tracks;i<g_list_length(mt->audio_draws);i++) {
+      // check channel track(s) for audio blocks
+      if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	if (get_mixer_track_vol(mt,i)==0.5) {
+	  has_channel_audio=TRUE;
+	}
+      }
+    }
+
+
+    // first checks done ^
+
+    if (has_backing_audio&&!has_channel_audio) {
+      // backing but no channel audio
+
+      // ->
+      // if ALL backing levels are at 0.5, set them to 1.0
+
+      for (i=0;i<mt->opts.back_audio_tracks;i++) {
+	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	  if (get_mixer_track_vol(mt,i)!=0.5) {
+	    has_backing_audio=FALSE;
+	    break;
+	  }
+	}
+      }
+
+      if (has_backing_audio) {
+	post_reset_ba=TRUE; // reset levels after rendering
+	for (i=0;i<mt->opts.back_audio_tracks;i++) {
+	  if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	    set_mixer_track_vol(mt,i,1.0);
+	  }
+	}
+      }
+    }
+
+
+    if (!has_backing_audio&&has_channel_audio) {
+      // channel but no backing audio
+
+      // ->
+      // if ALL channel levels are at 0.5, set them all to 1.0
+      
+      for (i=mt->opts.back_audio_tracks;i<g_list_length(mt->audio_draws);i++) {
+	// check channel track(s) for audio blocks
+	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	  if (get_mixer_track_vol(mt,i)!=0.5) {
+	    has_channel_audio=FALSE;
+	  }
+	}
+      }
+      
+      if (has_channel_audio) {
+	post_reset_ca=TRUE;  // reset levels after rendering
+	for (i=mt->opts.back_audio_tracks;i<g_list_length(mt->audio_draws);i++) {
+	  if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	    // set to 1.0
+	    set_mixer_track_vol(mt,i,1.0);
+	  }
+	}
+      }
+    }
+  }
+
 
   if (render_to_clip(FALSE)) {
     if (mt->pr_audio) {
@@ -14122,6 +14296,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       d_print_done();
       gtk_widget_set_sensitive(mt->render_vid,TRUE);
       gtk_widget_set_sensitive(mt->render_aud,TRUE);
+      gtk_widget_set_sensitive(mt->normalise_aud,TRUE);
       mt->idlefunc=mt_idle_add(mt);
       return;
     }
@@ -14140,11 +14315,34 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (mainw->scrap_file!=-1) mt->changed=FALSE;
     mt->is_rendering=FALSE;
     prefs->render_audio=TRUE;
+    prefs->normalise_audio=TRUE;
     save_clip_values(orig_file);
-
 
     if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
     reset_clip_menu();
+
+    if (post_reset_ba) {
+      // reset after normalising backing audio
+      for (i=0;i<mt->opts.back_audio_tracks;i++) {
+	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	  if (get_mixer_track_vol(mt,i)==1.0) {
+	    set_mixer_track_vol(mt,i,0.5);
+	  }
+	}
+      }
+    }
+
+    if (post_reset_ca) {
+      // reset after normalising channel audio
+      for (i=mt->opts.back_audio_tracks;i<g_list_length(mt->audio_draws);i++) {
+	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	  if (get_mixer_track_vol(mt,i)==1.0) {
+	    set_mixer_track_vol(mt,i,0.5);
+	  }
+	}
+      }
+    }
+
 
     mainw->current_file=mainw->first_free_file;
     
@@ -14187,6 +14385,8 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt_clip_select(mt,TRUE);
   }
   else {
+    gboolean render_audio=prefs->render_audio;
+
     cfile->frames=cfile->start=cfile->end=0;
     mt->is_rendering=FALSE;
     prefs->render_audio=TRUE;
@@ -14204,9 +14404,12 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free(com);
       end_threaded_dialog();
     }
+
+    prefs->render_audio=render_audio;
   }
   gtk_widget_set_sensitive(mt->render_vid,TRUE);
   gtk_widget_set_sensitive(mt->render_aud,TRUE);
+  gtk_widget_set_sensitive(mt->normalise_aud,TRUE);
   mt_sensitise(mt);
 
   mt->idlefunc=mt_idle_add(mt);
@@ -14223,7 +14426,8 @@ void on_prerender_aud_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, int track, weed_timecode_t new_start_tc, int new_track) {
+void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, 
+			  int track, weed_timecode_t new_start_tc, int new_track) {
   // move/remove filter_inits param_change and filter_deinits after deleting/moving a block
   weed_plant_t *event,*event_next;
   gboolean was_moved;
@@ -14246,7 +14450,8 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 	continue;  // we move our audio volume effect using a separate mechanism
       }
       if (mt->opts.move_effects&&mt->moving_block) {
-	if (weed_plant_has_leaf(event,"deinit_event")&&weed_plant_has_leaf(event,"in_tracks")&&weed_leaf_num_elements(event,"in_tracks")==1&&weed_get_int_value(event,"in_tracks",&error)==track) {
+	if (weed_plant_has_leaf(event,"deinit_event")&&weed_plant_has_leaf(event,"in_tracks")&&
+	    weed_leaf_num_elements(event,"in_tracks")==1&&weed_get_int_value(event,"in_tracks",&error)==track) {
 	  deinit_event=weed_get_voidptr_value(event,"deinit_event",&error);
 	  if (get_event_timecode(deinit_event)<=end_tc) {
 	    if (g_list_index(moved_events,event)==-1) {
@@ -14266,12 +14471,14 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 	      // move to new position
 	      if (new_start_tc<start_tc) {
 		move_filter_init_event(mt->event_list,get_event_timecode(event)+new_start_tc-start_tc,event,mt->fps);
-		move_filter_deinit_event(mt->event_list,get_event_timecode(deinit_event)+new_start_tc-start_tc,deinit_event,mt->fps,TRUE);
+		move_filter_deinit_event(mt->event_list,get_event_timecode(deinit_event)+new_start_tc-start_tc,
+					 deinit_event,mt->fps,TRUE);
 		if (event==first_event) first_event=NULL;
 		was_moved=TRUE;
 	      }
 	      else if (new_start_tc>start_tc) {
-		move_filter_deinit_event(mt->event_list,get_event_timecode(deinit_event)+new_start_tc-start_tc,deinit_event,mt->fps,TRUE);
+		move_filter_deinit_event(mt->event_list,get_event_timecode(deinit_event)+new_start_tc-start_tc,
+					 deinit_event,mt->fps,TRUE);
 		move_filter_init_event(mt->event_list,get_event_timecode(event)+new_start_tc-start_tc,event,mt->fps);
 		if (event==first_event) first_event=NULL;
 		was_moved=TRUE;
@@ -14281,7 +14488,8 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 	  }
 	}
       }
-      if (g_list_index(moved_events,event)==-1&&event!=mt->avol_init_event&&!was_moved&&!move_event_right(mt->event_list,event,TRUE,mt->fps)) {
+      if (g_list_index(moved_events,event)==-1&&event!=mt->avol_init_event&&!was_moved&&
+	  !move_event_right(mt->event_list,event,TRUE,mt->fps)) {
 	was_moved=TRUE;
 	if (event==first_event) first_event=NULL;
       }
@@ -14292,7 +14500,10 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 	if (mt->opts.move_effects&&mt->moving_block) {
 	  if (weed_plant_has_leaf(event,"init_event")) {
 	    init_event=weed_get_voidptr_value(event,"init_event",&error);
-	    if (g_list_index(moved_events,init_event)==-1&&!(weed_plant_has_leaf(event,"in_tracks")&&weed_leaf_num_elements(event,"in_tracks")==1&&weed_get_int_value(event,"in_tracks",&error)==track)&&init_event!=mt->avol_init_event) {
+	    if (g_list_index(moved_events,init_event)==-1&&!(weed_plant_has_leaf(event,"in_tracks")&&
+							     weed_leaf_num_elements(event,"in_tracks")==1&&
+							     weed_get_int_value(event,"in_tracks",&error)==track)&&
+		init_event!=mt->avol_init_event) {
 	      leave_event=FALSE;
 	    }
 	  }
@@ -14743,7 +14954,8 @@ void mt_sensitise (lives_mt *mt) {
     gtk_widget_set_sensitive (mt->view_events,TRUE);
     gtk_widget_set_sensitive (mt->view_sel_events,mt->region_start!=mt->region_end);
     gtk_widget_set_sensitive (mt->render, TRUE);
-    if (mt->avol_init_event!=NULL&&mt->opts.pertrack_audio&&cfile->achans>0) gtk_widget_set_sensitive (mt->prerender_aud, TRUE);
+    if (mt->avol_init_event!=NULL&&mt->opts.pertrack_audio&&cfile->achans>0) 
+      gtk_widget_set_sensitive (mt->prerender_aud, TRUE);
     gtk_widget_set_sensitive (mt->save_event_list, TRUE);
   }
   else {
@@ -15705,6 +15917,7 @@ static float get_float_audio_val_at_time(gint fnum, gdouble secs, gint chnum, gi
   }
 
   if (afd==-1) {
+    // deal with read errors after drawing a whole block
     mainw->read_failed=TRUE;
     return 0.;
   }
@@ -15714,12 +15927,14 @@ static float get_float_audio_val_at_time(gint fnum, gdouble secs, gint chnum, gi
   lseek(afd,apos,SEEK_SET);
 
   if (afile->asampsize==8) {
+    // 8 bit sample size
     lives_read(afd,&val8,1,TRUE);
     if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val8>=128?val8-256:val8;
     else val=val8-127;
     val/=127.;
   }
   else {
+    // 16 bit sample size
     lives_read(afd,&val8,1,TRUE);
     lives_read(afd,&val8b,1,TRUE);
     if (afile->signed_endian&AFORM_BIG_ENDIAN) val16=(uint16_t)(val8<<8)+val8b;
@@ -17132,10 +17347,20 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
       while (blist!=NULL) {
 	block=blist->data;
 	if (block!=NULL) {
-	  if (block->prev!=NULL&&(get_event_timecode(block->prev->end_event)==q_gint64(tc-U_SEC/mt->fps,mt->fps))&&(tc==get_event_timecode(block->start_event))&&(get_frame_event_clip(block->prev->end_event,track)==get_frame_event_clip(block->start_event,track))) {
+	  if (block->prev!=NULL&&(get_event_timecode(block->prev->end_event)==
+				  q_gint64(tc-U_SEC/mt->fps,mt->fps))&&(tc==get_event_timecode(block->start_event))&&
+	      (get_frame_event_clip(block->prev->end_event,track)==get_frame_event_clip(block->start_event,track))) {
 	    insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_START,GINT_TO_POINTER(track));
+
+	    if (mt->audio_draws!=NULL&&g_list_length(mt->audio_draws)>=track+mt->opts.back_audio_tracks) {
+	      // insert in audio too
+	      insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_START,
+				     GINT_TO_POINTER(-track-mt->opts.back_audio_tracks-1));
+	    }
 	  }
-	  if (!block->ordered) insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_UNORDERED,GINT_TO_POINTER(track));
+	  if (!block->ordered)  {
+	    insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_UNORDERED,GINT_TO_POINTER(track));
+	  }
 	  if (event==block->end_event) blist->data=block->next;
 	}
 	track++;
@@ -18499,7 +18724,8 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
       }
       else {
 	marker_type=weed_get_int_value(event,"lives_type",&error);
-	if (marker_type!=EVENT_MARKER_BLOCK_START&&marker_type!=EVENT_MARKER_BLOCK_UNORDERED&&marker_type!=EVENT_MARKER_RECORD_END&&marker_type!=EVENT_MARKER_RECORD_START) {
+	if (marker_type!=EVENT_MARKER_BLOCK_START&&marker_type!=EVENT_MARKER_BLOCK_UNORDERED&&
+	    marker_type!=EVENT_MARKER_RECORD_END&&marker_type!=EVENT_MARKER_RECORD_START) {
 	  ebuf=rec_error_add(ebuf,"Unknown marker type",marker_type,tc);
 	  delete_event(event_list,event);
 	  was_deleted=TRUE;
@@ -19083,7 +19309,7 @@ static void set_audio_mixer_vols(lives_mt *mt, weed_plant_t *elist) {
       mt->opts.gang_audio=TRUE;
       xavol=navols-1;
     }
-    g_list_nth(mt->audio_vols,xtrack+mt->opts.back_audio_tracks)->data=GINT_TO_POINTER((gint)(avols[xavol]*1000000.));
+    set_mixer_track_vol(mt,xtrack+mt->opts.back_audio_tracks,avols[xavol]);
   }
 
   weed_free(atracks);
@@ -19478,6 +19704,7 @@ void mt_change_vals_activate (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_widget_hide(mt->render_sep);
     gtk_widget_hide(mt->render_vid);
     gtk_widget_hide(mt->render_aud);
+    gtk_widget_hide(mt->normalise_aud);
     gtk_widget_hide(mt->view_audio);
     delete_audio_tracks(mt,mt->audio_draws,FALSE);
     mt->audio_draws=NULL;
@@ -19491,6 +19718,7 @@ void mt_change_vals_activate (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_widget_show(mt->render_sep);
     gtk_widget_show(mt->render_vid);
     gtk_widget_show(mt->render_aud);
+    gtk_widget_show(mt->normalise_aud);
     gtk_widget_show(mt->view_audio);
   }
   scroll_tracks(mt,mt->top_track);
@@ -19562,7 +19790,7 @@ void on_amixer_close_clicked (GtkButton *button, lives_mt *mt) {
 #if ENABLE_GIW
     }
 #endif
-    (g_list_nth(mt->audio_vols,i))->data=GINT_TO_POINTER((gint)(val*1000000.));
+    set_mixer_track_vol(mt,i,val);
   }
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -19590,13 +19818,15 @@ static void on_amixer_reset_clicked (GtkButton *button, lives_mt *mt) {
 #if ENABLE_GIW
     if (prefs->lamp_buttons) {
       g_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
-      giw_vslider_set_value(GIW_VSLIDER(amixer->ch_sliders[i]),(gdouble)GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols_back,i))/1000000.);
+      giw_vslider_set_value(GIW_VSLIDER(amixer->ch_sliders[i]),(gdouble)GPOINTER_TO_INT
+			    (g_list_nth_data(mt->audio_vols_back,i))/LIVES_AVOL_SCALE);
       g_signal_handler_unblock(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
     }
     else {
 #endif
       g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
-      gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),(gdouble)GPOINTER_TO_INT(g_list_nth_data(mt->audio_vols_back,i))/1000000.);
+      gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),(gdouble)GPOINTER_TO_INT
+			  (g_list_nth_data(mt->audio_vols_back,i))/LIVES_AVOL_SCALE);
       g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
 #if ENABLE_GIW
     }
@@ -19705,7 +19935,7 @@ void on_amixer_slider_changed (GtkAdjustment *adj, lives_mt *mt) {
   }
 
   if (!mt->is_rendering) {
-    (g_list_nth(mt->audio_vols,layer))->data=GINT_TO_POINTER((gint)(val*1000000.));
+    set_mixer_track_vol(mt,layer,val);
   }
 
 }

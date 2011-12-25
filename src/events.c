@@ -3844,7 +3844,6 @@ gboolean render_to_clip (gboolean new_clip) {
       current_file=mainw->current_file;
       if (!save_clip_values(current_file)) {
 	close_current_file(old_file);
-	prefs->render_audio=TRUE;
 	mainw->effects_paused=FALSE;
 	deinit_render_effects();
 	audio_free_fnames();
@@ -3898,7 +3897,6 @@ gboolean render_to_clip (gboolean new_clip) {
     }
   }
 
-  prefs->render_audio=TRUE;
   mainw->effects_paused=FALSE;
   deinit_render_effects();
   audio_free_fnames();

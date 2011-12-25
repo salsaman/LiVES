@@ -1145,8 +1145,7 @@ void get_frame_count(gint idx) {
 
 
 
-void
-get_next_free_file(void) {
+void get_next_free_file(void) {
   // get next free file slot, or -1 if we are full
   while ((mainw->first_free_file!=-1)&&mainw->files[mainw->first_free_file]!=NULL) {
     mainw->first_free_file++;
@@ -1155,11 +1154,12 @@ get_next_free_file(void) {
 }
 
 
-void
-get_dirname(gchar *filename) {
+void get_dirname(gchar *filename) {
   gchar *tmp;
   // get directory name from a file
   //filename should point to gchar[256]
+  // TODO - use PATH_MAX
+
   g_snprintf (filename,256,"%s%s",(tmp=g_path_get_dirname (filename)),G_DIR_SEPARATOR_S);
   g_free(tmp);
 
@@ -1176,17 +1176,17 @@ get_dirname(gchar *filename) {
   }
 }
 
-void
-get_basename(gchar *filename) {
+
+void get_basename(gchar *filename) {
   // get basename from a file
+  // (filename without directory)
   //filename should point to gchar[256]
   gchar *tmp=g_path_get_basename(filename);
   g_snprintf (filename,256,"%s",tmp);
   g_free(tmp);
 }
 
-void
-get_filename(gchar *filename, gboolean strip_dir) {
+void get_filename(gchar *filename, gboolean strip_dir) {
   // get filename (part without extension) of a file
   //filename should point to gchar[256]
   gchar **array;
@@ -1206,9 +1206,6 @@ gchar *get_extension(const gchar *filename) {
   g_free(tmp);
   return ret;
 }
-
-
-
 
 
 gchar *ensure_extension(const gchar *fname, const gchar *ext) {
@@ -1237,8 +1234,7 @@ gboolean ensure_isdir(gchar *fname) {
 }
 
 
-void
-get_location(const gchar *exe, gchar *val, gint maxlen) {
+void get_location(const gchar *exe, gchar *val, gint maxlen) {
   gchar *loc;
   if ((loc=g_find_program_in_path (exe))!=NULL) {
     g_snprintf (val,maxlen,"%s",loc);

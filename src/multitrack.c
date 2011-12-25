@@ -16996,6 +16996,10 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   map_name=g_build_filename(ldir,"layout.map",NULL);
 
+  com=g_strdup_printf("/bin/mkdir -p \"%s\" 2>/dev/null",ldir);
+  lives_system(com,FALSE);
+  g_free(com);
+
   do {
     retval=0;
     fd=creat(map_name,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);

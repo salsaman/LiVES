@@ -221,6 +221,7 @@ typedef struct {
   gboolean concat_images;
 
   gboolean render_audio;
+  gboolean normalise_audio;
 
   gboolean instant_open;
   gboolean auto_deint;

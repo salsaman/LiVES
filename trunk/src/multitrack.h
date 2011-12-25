@@ -299,6 +299,7 @@ struct _mt {
   GtkWidget *render_sep;
   GtkWidget *render_vid;
   GtkWidget *render_aud;
+  GtkWidget *normalise_aud;
   GtkWidget *view_audio;
   GtkWidget *clear_marks;
   GtkWidget *fd_frame;
@@ -524,6 +525,7 @@ struct _mt {
 
   gboolean render_vidp;
   gboolean render_audp;
+  gboolean normalise_audp;
 
   gint exact_preview;
 
@@ -708,6 +710,7 @@ void mt_load_vals_toggled (GtkMenuItem *, gpointer mt);
 void mt_load_vals_toggled (GtkMenuItem *, gpointer mt);
 void mt_render_vid_toggled (GtkMenuItem *, gpointer mt);
 void mt_render_aud_toggled (GtkMenuItem *, gpointer mt);
+void mt_norm_aud_toggled (GtkMenuItem *, gpointer mt);
 void mt_fplay_toggled (GtkMenuItem *, gpointer mt);
 void mt_change_vals_activate (GtkMenuItem *, gpointer mt);
 void on_set_pvals_clicked  (GtkWidget *button, gpointer mt);

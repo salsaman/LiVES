@@ -15928,15 +15928,15 @@ static float get_float_audio_val_at_time(gint fnum, gdouble secs, gint chnum, gi
 
   if (afile->asampsize==8) {
     // 8 bit sample size
-    lives_read(afd,&val8,1,TRUE);
+    lives_read(afd,&val8,1,FALSE);
     if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val8>=128?val8-256:val8;
     else val=val8-127;
     val/=127.;
   }
   else {
     // 16 bit sample size
-    lives_read(afd,&val8,1,TRUE);
-    lives_read(afd,&val8b,1,TRUE);
+    lives_read(afd,&val8,1,FALSE);
+    lives_read(afd,&val8b,1,FALSE);
     if (afile->signed_endian&AFORM_BIG_ENDIAN) val16=(uint16_t)(val8<<8)+val8b;
     else val16=(uint16_t)(val8b<<8)+val8;
     if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val16>=32768?val16-65536:val16;
@@ -17062,18 +17062,22 @@ GList *load_layout_map(void) {
   // this is called from recover_layout_map() in saveplay.c, where the map entries are assigned
   // to files (clips)
 
-  int fd;
-  gchar *lmap_name=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
+  gchar **array;
   GList *lmap=NULL;
-  gchar *handle;
-  gint64 unique_id;
-  gchar *name;
   layout_map *lmap_entry;
+  gint64 unique_id;
   size_t bytes;
-  int len,nm,i;
+
+  gchar *lmap_name=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
+  gchar *handle;
   gchar *entry;
   gchar *string;
-  gchar **array;
+  gchar *name;
+
+  int len,nm,i;
+  int fd;
+  int retval;
+
   gboolean err=FALSE;
 
   if (!g_file_test(lmap_name,G_FILE_TEST_EXISTS)) {
@@ -17081,79 +17085,81 @@ GList *load_layout_map(void) {
     return NULL;
   }
 
-  fd=open(lmap_name,O_RDONLY);
-  if (fd<0) {
-    do_read_failed_error_s(lmap_name);
-    g_free(lmap_name);
-    return NULL;
-  }
-
-  while (1) {
-    bytes=read(fd,&len,sizint);
-    if (bytes<sizint) {
-      break;
+  do { 
+    retval=0;
+    fd=open(lmap_name,O_RDONLY);
+    if (fd<0) {
+      retval=do_read_failed_error_s_with_retry(lmap_name,NULL,NULL);
     }
-    handle=g_malloc(len+1);
-    bytes=read(fd,handle,len);
-    if (bytes<len) {
-      break;
-    }
-    memset(handle+len,0,1);
-    bytes=read(fd,&unique_id,8);
-    if (bytes<8) {
-      break;
-    }
-    bytes=read(fd,&len,sizint);
-    if (bytes<sizint) {
-      break;
-    }
-    name=g_malloc(len+1);
-    bytes=read(fd,name,len);
-    if (bytes<len) {
-      break;
-    }
-    memset(name+len,0,1);
-    bytes=read(fd,&nm,sizint);
-    if (bytes<sizint) {
-      break;
-    }
-
-    lmap_entry=(layout_map *)g_malloc(sizeof(layout_map));
-    lmap_entry->handle=handle;
-    lmap_entry->unique_id=unique_id;
-    lmap_entry->name=name;
-    lmap_entry->list=NULL;
-
-    for (i=0;i<nm;i++) {
-      bytes=read(fd,&len,sizint);
-      if (bytes<sizint) {
-	err=TRUE;
-	break;
+    else {
+      while (1) {
+	bytes=read(fd,&len,sizint);
+	if (bytes<sizint) {
+	  break;
+	}
+	handle=g_malloc(len+1);
+	bytes=read(fd,handle,len);
+	if (bytes<len) {
+	  break;
+	}
+	memset(handle+len,0,1);
+	bytes=read(fd,&unique_id,8);
+	if (bytes<8) {
+	  break;
+	}
+	bytes=read(fd,&len,sizint);
+	if (bytes<sizint) {
+	  break;
+	}
+	name=g_malloc(len+1);
+	bytes=read(fd,name,len);
+	if (bytes<len) {
+	  break;
+	}
+	memset(name+len,0,1);
+	bytes=read(fd,&nm,sizint);
+	if (bytes<sizint) {
+	  break;
+	}
+	
+	lmap_entry=(layout_map *)g_malloc(sizeof(layout_map));
+	lmap_entry->handle=handle;
+	lmap_entry->unique_id=unique_id;
+	lmap_entry->name=name;
+	lmap_entry->list=NULL;
+	
+	for (i=0;i<nm;i++) {
+	  bytes=read(fd,&len,sizint);
+	  if (bytes<sizint) {
+	    err=TRUE;
+	    break;
+	  }
+	  entry=g_malloc(len+1);
+	  bytes=read(fd,entry,len);
+	  if (bytes<len) {
+	    err=TRUE;
+	    break;
+	  }
+	  memset(entry+len,0,1);
+	  string=repl_tmpdir(entry,FALSE); // allow relocation of tmpdir
+	  lmap_entry->list=g_list_append(lmap_entry->list,g_strdup(string));
+	  array=g_strsplit(string,"|",-1);
+	  g_free(string);
+	  mainw->current_layouts_map=g_list_append_unique(mainw->current_layouts_map,array[0]);
+	  g_strfreev(array);
+	  g_free(entry);
+	}
+	if (err) break;
+	lmap=g_list_append(lmap,lmap_entry);
       }
-      entry=g_malloc(len+1);
-      bytes=read(fd,entry,len);
-      if (bytes<len) {
-	err=TRUE;
-	break;
-      }
-      memset(entry+len,0,1);
-      string=repl_tmpdir(entry,FALSE); // allow relocation of tmpdir
-      lmap_entry->list=g_list_append(lmap_entry->list,g_strdup(string));
-      array=g_strsplit(string,"|",-1);
-      g_free(string);
-      mainw->current_layouts_map=g_list_append_unique(mainw->current_layouts_map,array[0]);
-      g_strfreev(array);
-      g_free(entry);
     }
-    if (err) break;
-    lmap=g_list_append(lmap,lmap_entry);
-  }
 
-  close(fd);
+    if (fd>=0) close(fd);
 
-  if (err) {
-    do_read_failed_error_s(lmap_name);
-  }
+    if (err) {
+      retval=do_read_failed_error_s_with_retry(lmap_name,NULL,NULL);
+    }
+  } while (retval==LIVES_RETRY);
 
   g_free(lmap_name);
   return lmap;
@@ -17287,10 +17293,11 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 	if (mainw->write_failed) break;
       }
       if (mainw->write_failed) {
-	do_write_failed_error_s_with_retry(map_name,NULL,NULL);
+	retval=do_write_failed_error_s_with_retry(map_name,NULL,NULL);
 	mainw->write_failed=FALSE;
       }
     }
+    if (retval==LIVES_RETRY && fd>=0) close(fd);
   } while (retval==LIVES_RETRY);
 
   if (retval!=LIVES_CANCEL) {
@@ -17543,6 +17550,8 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   do {
     retval2=0;
+    retval=TRUE;
+
     fd=creat(esave_file,S_IRUSR|S_IWUSR);
 
     if (fd>=0) {
@@ -17670,7 +17679,8 @@ static void **remove_nulls_from_filter_map(void **init_events, int *num_events) 
 
 
 
-void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *ifrom, weed_plant_t *ito, gint track, gboolean after) {
+void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *ifrom, 
+			     weed_plant_t *ito, gint track, gboolean after) {
   int error,i,j;
   weed_plant_t *deinit_event=weed_get_voidptr_value(ifrom,"deinit_event",&error);
   void **events_before=NULL;
@@ -17764,14 +17774,22 @@ void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_
 
 
 gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack) {
-  // return TRUE if the maps match exactly; if ctrack is !=-1000000, then we only compare filter maps where ctrack is an in_track or out_track
+  // return TRUE if the maps match exactly; if ctrack is !=-1000000, 
+  // then we only compare filter maps where ctrack is an in_track or out_track
   int i1,i2,error,num_events1,num_events2;
   void **inits1,**inits2;
 
   if (!weed_plant_has_leaf(fm1,"init_events")&&!weed_plant_has_leaf(fm2,"init_events")) return TRUE;
-  if (ctrack==-1000000&&((!weed_plant_has_leaf(fm1,"init_events")&&weed_get_voidptr_value(fm2,"init_events",&error)!=NULL)||(!weed_plant_has_leaf(fm2,"init_events")&&weed_get_voidptr_value(fm1,"init_events",&error)!=NULL))) return FALSE;
+  if (ctrack==-1000000&&((!weed_plant_has_leaf(fm1,"init_events")&&
+			  weed_get_voidptr_value(fm2,"init_events",&error)!=NULL)||
+			 (!weed_plant_has_leaf(fm2,"init_events")&&
+			  weed_get_voidptr_value(fm1,"init_events",&error)!=NULL))) return FALSE;
 
-  if (ctrack==-1000000&&(weed_plant_has_leaf(fm1,"init_events"))&&weed_plant_has_leaf(fm2,"init_events")&&((weed_get_voidptr_value(fm1,"init_events",&error)==NULL&&weed_get_voidptr_value(fm2,"init_events",&error)!=NULL)||(weed_get_voidptr_value(fm1,"init_events",&error)!=NULL&&weed_get_voidptr_value(fm2,"init_events",&error)==NULL))) return FALSE;
+  if (ctrack==-1000000&&(weed_plant_has_leaf(fm1,"init_events"))&&weed_plant_has_leaf(fm2,"init_events")&&
+      ((weed_get_voidptr_value(fm1,"init_events",&error)==NULL&&
+	weed_get_voidptr_value(fm2,"init_events",&error)!=NULL)||
+       (weed_get_voidptr_value(fm1,"init_events",&error)!=NULL&&
+	weed_get_voidptr_value(fm2,"init_events",&error)==NULL))) return FALSE;
 
   num_events1=weed_leaf_num_elements(fm1,"init_events");
   num_events2=weed_leaf_num_elements(fm2,"init_events");
@@ -17866,7 +17884,8 @@ gboolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack) 
 
 
 
-static gchar *filter_map_check(ttable *trans_table,weed_plant_t *filter_map, weed_timecode_t deinit_tc, weed_timecode_t fm_tc, gchar *ebuf) {
+static gchar *filter_map_check(ttable *trans_table,weed_plant_t *filter_map, weed_timecode_t deinit_tc, 
+			       weed_timecode_t fm_tc, gchar *ebuf) {
   int num_init_events;
   void **init_events;
   void **copy_events;
@@ -17893,7 +17912,8 @@ static gchar *filter_map_check(ttable *trans_table,weed_plant_t *filter_map, wee
 }
 
 
-static gchar *add_filter_deinits(weed_plant_t *event_list, ttable *trans_table, void ***pchains, weed_timecode_t tc, gchar *ebuf) {
+static gchar *add_filter_deinits(weed_plant_t *event_list, ttable *trans_table, void ***pchains, 
+				 weed_timecode_t tc, gchar *ebuf) {
   // add filter deinit events for any remaining active filters
   int i,j,error,num_params;
   gchar *filter_hash;
@@ -18070,7 +18090,8 @@ static void add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gc
 gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
   // check and reassemble a newly loaded event_list
   // reassemply consists of matching init_event(s) to event_id's
-  // we also rebuild our param_change chains ("in_parameters" in filter_init and filter_deinit, and "next_change" and "prev_change" 
+  // we also rebuild our param_change chains ("in_parameters" in filter_init and filter_deinit, 
+  // and "next_change" and "prev_change" 
   // in other param_change events)
 
   // The checking done is quite sophisticated, and can correct many errors in badly-formed event_lists
@@ -18221,7 +18242,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		      was_deleted=TRUE;
 		    }
 		    else {
-		      if (thisct>1&&(!weed_plant_has_leaf(ctmpls[i],"max_repeats")||(weed_get_int_value(ctmpls[i],"max_repeats",&error)>0&&weed_get_int_value(ctmpls[i],"max_repeats",&error)<thisct))) {
+		      if (thisct>1&&(!weed_plant_has_leaf(ctmpls[i],"max_repeats")||
+				     (weed_get_int_value(ctmpls[i],"max_repeats",&error)>0&&
+				      weed_get_int_value(ctmpls[i],"max_repeats",&error)<thisct))) {
 			ebuf=rec_error_add(ebuf,"Filter_init has too many repeats of in channel",i,tc);
 			delete_event(event_list,event);
 			was_deleted=TRUE;
@@ -18251,7 +18274,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 			  was_deleted=TRUE;
 			}
 			else {
-			  if (thisct>1&&(!weed_plant_has_leaf(ctmpls[i],"max_repeats")||(weed_get_int_value(ctmpls[i],"max_repeats",&error)>0&&weed_get_int_value(ctmpls[i],"max_repeats",&error)<thisct))) {
+			  if (thisct>1&&(!weed_plant_has_leaf(ctmpls[i],"max_repeats")||
+					 (weed_get_int_value(ctmpls[i],"max_repeats",&error)>0&&
+					  weed_get_int_value(ctmpls[i],"max_repeats",&error)<thisct))) {
 			    ebuf=rec_error_add(ebuf,"Filter_init has too many repeats of out channel",i,tc);
 			    delete_event(event_list,event);
 			    was_deleted=TRUE;
@@ -18353,7 +18378,8 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 		pchains[idx][i]=event;
 		in_pchanges[i]=NULL;
 	      }
-	      weed_set_voidptr_array(event,"in_parameters",num_params,in_pchanges); // set all to NULL, we will re-fill as we go along
+	      // set all to NULL, we will re-fill as we go along
+	      weed_set_voidptr_array(event,"in_parameters",num_params,in_pchanges);
 	      g_free(in_pchanges);
 	    }
 	  }
@@ -18570,21 +18596,24 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	//g_print("pt zzz %d\n",num_tracks);
 #endif
 	for (i=0;i<num_tracks;i++) {
-	  if (clip_index[i]>0&&(clip_index[i]>MAX_FILES||renumbered_clips[clip_index[i]]<1||mainw->files[renumbered_clips[clip_index[i]]]==NULL)) {
+	  if (clip_index[i]>0&&(clip_index[i]>MAX_FILES||renumbered_clips[clip_index[i]]<1||
+				mainw->files[renumbered_clips[clip_index[i]]]==NULL)) {
 	    // clip has probably been closed, so we remove its frames
 	    new_clip_index[i]=-1;
 	    new_frame_index[i]=0;
 	    ebuf=rec_error_add(ebuf,"Invalid clip number",clip_index[i],tc);
 
 #ifdef DEBUG_MISSING_CLIPS
-	    g_print("found invalid clip number %d on track %d, renumbered_clips=%d\n",clip_index[i],i,renumbered_clips[clip_index[i]]);
+	    g_print("found invalid clip number %d on track %d, renumbered_clips=%d\n",clip_index[i],i,
+		    renumbered_clips[clip_index[i]]);
 #endif
 	    missing_clips=TRUE;
 	  }
 	  else {
 	    // take into account the fact that clip could have been resampled since layout was saved
 	    if (clip_index[i]>0&&frame_index[i]>0) {
-	      new_frame_index[i]=count_resampled_frames(frame_index[i],lfps[renumbered_clips[clip_index[i]]],mainw->files[renumbered_clips[clip_index[i]]]->fps);
+	      new_frame_index[i]=count_resampled_frames(frame_index[i],lfps[renumbered_clips[clip_index[i]]],
+							mainw->files[renumbered_clips[clip_index[i]]]->fps);
 	      if (new_frame_index[i]>mainw->files[renumbered_clips[clip_index[i]]]->frames) {
 		ebuf=rec_error_add(ebuf,"Invalid frame number",new_frame_index[i],tc);
 		new_clip_index[i]=-1;
@@ -18664,7 +18693,8 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	      j=0;
 	      for (i=0;i<num_atracks;i+=2) {
 		if (aclip_index[i+1]>0) {
-		  if ((aclip_index[i+1]>MAX_FILES||renumbered_clips[aclip_index[i+1]]<1||mainw->files[renumbered_clips[aclip_index[i+1]]]==NULL)&&aseek_index[i+1]!=0.) {
+		  if ((aclip_index[i+1]>MAX_FILES||renumbered_clips[aclip_index[i+1]]<1||
+		       mainw->files[renumbered_clips[aclip_index[i+1]]]==NULL)&&aseek_index[i+1]!=0.) {
 		    // clip has probably been closed, so we remove its frames
 		    ebuf=rec_error_add(ebuf,"Invalid audio clip number",aclip_index[i+1],tc);
 		    missing_clips=TRUE;
@@ -18861,7 +18891,8 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
       bit1=g_strdup(_("\nAuto reload layout.\n"));
       bit3=g_strdup_printf("\n%s",prefs->ar_layout_name);
     }
-    msg=g_strdup_printf(_("%s\nSome %s are missing from the layout%s\nTherefore it could not be loaded properly.\n"),bit1,bit2,bit3);
+    msg=g_strdup_printf(_("%s\nSome %s are missing from the layout%s\nTherefore it could not be loaded properly.\n"),
+			bit1,bit2,bit3);
     do_error_dialog_with_check_transient(msg,TRUE,0,GTK_WINDOW(transient));
     g_free(msg);
     g_free(bit2);
@@ -19022,21 +19053,26 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   mainw->read_failed=FALSE;
 
-  if ((event_list=load_event_list_inner(mt,fd,TRUE,&num_events,NULL,NULL))==NULL) {
-    close(fd);
-    if (mt->is_ready) mt_sensitise(mt);
-    g_free(eload_dir);
-
-    if (mainw->read_failed) {
-      do_read_failed_error_s(eload_name);
-      mainw->read_failed=FALSE;
+  do {
+    retval=0;
+    if ((event_list=load_event_list_inner(mt,fd,TRUE,&num_events,NULL,NULL))==NULL) {
+      close(fd);
+      
+      if (mainw->read_failed) {
+	retval=do_read_failed_error_s_with_retry(eload_name,NULL,NULL);
+	mainw->read_failed=FALSE;
+      }
+      
+      if (retval!=LIVES_RETRY) {
+	if (mt->is_ready) mt_sensitise(mt);
+	g_free(eload_dir);
+	g_free(eload_name);
+	return NULL;
+      }
     }
+    else close(fd);
+  } while (retval==LIVES_RETRY);
 
-    g_free(eload_name);
-    return NULL;
-  }
-
-  close(fd);
   g_free(eload_name);
 
   d_print_done();
@@ -19055,7 +19091,8 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   cfile->progress_start=1;
   cfile->progress_end=num_events;
 
-  // event list loaded, now we set the pointers for filter_map (init_events), param_change (init_events and param chains), filter_deinit (init_events)
+  // event list loaded, now we set the pointers for filter_map (init_events), param_change (init_events and param chains), 
+  // filter_deinit (init_events)
   do_threaded_dialog(_("Checking and rebuilding event list"),FALSE);
 
   elist_errors=0;
@@ -19090,6 +19127,8 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
 	do {
 	  retval2=0;
+	  retval=TRUE;
+
 	  // resave with corrections/updates
 	  fd=creat(eload_file,S_IRUSR|S_IWUSR);
 	  if (fd>=0) {
@@ -19111,7 +19150,8 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   if (mt->avol_fx==-1&&mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate!=-1) {
     // user (or system) has delegated an audio volume filter from the candidates
-    mt->avol_fx=GPOINTER_TO_INT(g_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].list,mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate));
+    mt->avol_fx=GPOINTER_TO_INT(g_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].list,
+						mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate));
   }
 
   if (mt->avol_fx!=old_avol_fx&&mt->aparam_view_list!=NULL) {
@@ -19259,7 +19299,8 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     // delete from disk
     GList *layout_map=NULL;
     gchar *lmap_file;
-    if (!do_warning_dialog_with_check_transient("\nLayout will be deleted from the disk.\nAre you sure ?\n",0,GTK_WINDOW(mt->window))) {
+    if (!do_warning_dialog_with_check_transient("\nLayout will be deleted from the disk.\nAre you sure ?\n",0,
+						GTK_WINDOW(mt->window))) {
       mt->idlefunc=mt_idle_add(mt);
       return;
     }
@@ -19411,39 +19452,46 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
   while (map!=NULL) {
     if (old_set_name!=NULL) {
 
-      if ((fd=open(map->data,O_RDONLY))>-1) {
-	if ((event_list=load_event_list_inner(NULL,fd,FALSE,NULL,NULL,NULL))!=NULL) {
-	  close (fd);
-	  // adjust the value of "needs_set" to new_set_name
-	  weed_set_string_value(event_list,"needs_set",new_set_name);
-	  // save the event_list with the same name
-	  unlink(map->data);
-	  
-	  do {
-	    fd=creat(map->data,S_IRUSR|S_IWUSR);
-	    if (fd>=0) retval=save_event_list_inner(NULL,fd,event_list,NULL);
-	    if (fd<0||!retval) retval2=do_write_failed_error_s_with_retry(map->data,(fd<0)?strerror(errno):NULL,NULL);
-	  } while (retval2==LIVES_RETRY);
-	  
-	  event_list_free(event_list);
+      do {
+	retval2=0;
+	if ((fd=open(map->data,O_RDONLY))>-1) {
+	  if ((event_list=load_event_list_inner(NULL,fd,FALSE,NULL,NULL,NULL))!=NULL) {
+	    close (fd);
+	    // adjust the value of "needs_set" to new_set_name
+	    weed_set_string_value(event_list,"needs_set",new_set_name);
+	    // save the event_list with the same name
+	    unlink(map->data);
+	    
+	    do {
+	      retval2=0;
+	      fd=creat(map->data,S_IRUSR|S_IWUSR);
+	      if (fd>=0) retval=save_event_list_inner(NULL,fd,event_list,NULL);
+	      if (fd<0||!retval) {
+		if (fd>0) close(fd);
+		retval2=do_write_failed_error_s_with_retry(map->data,(fd<0)?strerror(errno):NULL,NULL);
+	      }
+	    } while (retval2==LIVES_RETRY);
+	    
+	    event_list_free(event_list);
+	  }
+	  close(fd);
 	}
-	close(fd);
-      }
-      else {
-	do_read_failed_error_s(map->data);
-      }
-
+	else {
+	  retval2=do_read_failed_error_s_with_retry(map->data,NULL,NULL);
+	}
+	
+      } while (retval2==LIVES_RETRY);
     }
 
     if (old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen)) {
       // update mainw->current_layouts_map
-      tmp=g_strdup_printf("%s/%s/layouts/%s",prefs->tmpdir,new_set_name,(char *)map->data+chlen);
+      tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
       if (g_file_test(tmp,G_FILE_TEST_EXISTS)) {
 	gchar *com;
 	// prevent duplication of layouts
 	g_free(tmp);
 	tmp=g_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
-	com=g_strdup_printf("/bin/mv %s %s",(gchar *)map->data,tmp);
+	com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",(gchar *)map->data,tmp);
 	lives_system(com,FALSE);
 	g_free(com);
       }
@@ -19460,8 +19508,9 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	map=mainw->files[i]->layout_map;
 	while (map!=NULL) {
 	  if (map->data!=NULL) {
-	    if ((old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen))||(old_set_name==NULL&&(strstr(map->data,new_set_name)==NULL))) {
-	      tmp=g_strdup_printf("%s/%s/layouts/%s",prefs->tmpdir,new_set_name,(char *)map->data+chlen);
+	    if ((old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen))||
+		(old_set_name==NULL&&(strstr(map->data,new_set_name)==NULL))) {
+	      tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
 	      g_free(map->data);
 	      map->data=tmp;
 	    }
@@ -19475,9 +19524,10 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
   // update mainw->affected_layouts_map
   map=mainw->affected_layouts_map; 
   while (map!=NULL) {
-    if ((old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen))||(old_set_name==NULL&&(strstr(map->data,new_set_name)==NULL))) {
+    if ((old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen))||
+	(old_set_name==NULL&&(strstr(map->data,new_set_name)==NULL))) {
       if (strcmp(mainw->cl_string,(char *)map->data+chlen)) {
-	tmp=g_strdup_printf("%s/%s/layouts/%s",prefs->tmpdir,new_set_name,(char *)map->data+chlen);
+	tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
 	g_free(map->data);
 	map->data=tmp;
       }

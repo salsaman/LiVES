@@ -39,13 +39,17 @@ static gboolean list_plugins;
 
 
 static GList *get_plugin_result (const gchar *command, const gchar *delim, gboolean allow_blanks) {
+
+  GList *list=NULL;
   gchar **array;
   gint bytes=0,pieces;
   int outfile_fd,i;
-  gchar *msg,*buf;
+  int retval;
+  int alarm_handle;
   gint error;
-  GList *list=NULL;
-  gint count=30000000/prefs->sleep_time;  // timeout of 30 seconds
+  gboolean timeout;
+
+  gchar *msg,*buf;
 
   gchar *outfile;
   gchar *com;
@@ -93,23 +97,48 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   }
   threaded_dialog_spin();
 
-  while ((outfile_fd=open(outfile,O_RDONLY))==-1&&(count-->0||list_plugins)) {
-    g_usleep (prefs->sleep_time);
-  }
-  
-  if (!count) {
-    g_printerr (_("Plugin timed out on message %s\n"),command);
-    g_free (outfile);
+
+  do {
+    retval=0;
+    timeout=FALSE;
+
+#define LIVES_PLUGIN_TIMEOUT  (20 * U_SEC) // 20 sec
+
+    alarm_handle=lives_alarm_set(LIVES_PLUGIN_TIMEOUT);
+
+    while ((outfile_fd=open(outfile,O_RDONLY))==-1&&!(timeout=lives_alarm_get(alarm_handle))) {
+      g_usleep (prefs->sleep_time);
+    }
+
+    lives_alarm_clear(alarm_handle);
+
+    if (timeout) {
+      msg=g_strdup_printf(("Plugin timed out on message %s"),command);
+      LIVES_ERROR(msg);
+      g_free(msg);
+      retval=do_read_failed_error_s_with_retry(outfile,NULL,NULL);
+    }
+    else {
+      bytes=read (outfile_fd,&buffer,65535);
+      close (outfile_fd);
+      unlink (outfile);
+      if (bytes<0) {
+	retval=do_read_failed_error_s_with_retry(outfile,NULL,NULL);
+      }
+      else {
+	threaded_dialog_spin();
+	memset (buffer+bytes,0,1);
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
+  g_free (outfile);
+
+  if (retval==LIVES_CANCEL) {
     threaded_dialog_spin();
     return list;
   }
-  
-  bytes=read (outfile_fd,&buffer,65535);
-  close (outfile_fd);
-  unlink (outfile);
-  threaded_dialog_spin();
-  g_free (outfile);
-  memset (buffer+bytes,0,1);
+
 
 #ifdef DEBUG_PLUGINS
   g_print("plugin msg: %s %d\n",buffer,error);
@@ -336,6 +365,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   const gchar *version;
   gchar buf[512];
   int i;
+  int retval;
   gchar *msg;
 
   if (!g_file_test(vpp_file,G_FILE_TEST_EXISTS)) {
@@ -346,107 +376,118 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   d_print(msg);
   g_free(msg);
 
-  if ((fd=open(vpp_file,O_RDONLY))==-1) {
-    msg=g_strdup_printf (_("unable to read file\n%s\nError code %d\n"),vpp_file,errno);
-    d_print (msg);
-    g_free (msg);
-    return;
-  }
-
-  mainw->read_failed=FALSE;
-  msg=g_strdup("LiVES vpp defaults file version 2\n");
-  len=read(fd,buf,strlen(msg));
-  memset(buf+len,0,1);
-  
-  // identifier string
-  if (strcmp(msg,buf)) {
-    g_free(msg);
-    d_print_file_error_failed();
-    return;
-  }
-  g_free(msg);
-
-  // plugin name
-  lives_read(fd,&len,sizint,TRUE);
-  lives_read(fd,buf,len,TRUE);
-  memset(buf+len,0,1);
-
-  if (strcmp(buf,mainw->vpp->name)) {
-    if (mainw->read_failed) {
-      mainw->read_failed=FALSE;
-      mainw->vpp=NULL;
-      do_read_failed_error_s(vpp_file);
-      d_print_file_error_failed();
+  do {
+    retval=0;
+    if ((fd=open(vpp_file,O_RDONLY))==-1) {
+      retval=do_read_failed_error_s_with_retry(vpp_file,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) {
+	mainw->vpp=NULL;
+	return;
+      }
     }
-    else d_print_failed();
-    return;
-  }
-
-  // version string
-  version=(*mainw->vpp->version)();
-  lives_read(fd,&len,sizint,TRUE);
-  lives_read(fd,buf,len,TRUE);
-
-  if (mainw->read_failed) {
-    mainw->read_failed=FALSE;
-    do_read_failed_error_s(vpp_file);
-    d_print_file_error_failed();
-    return;
-  }
-
-  memset(buf+len,0,1);
-
-  if (strcmp(buf,version)) {
-    msg=g_strdup_printf(_("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),mainw->vpp->name);
-    do_error_dialog(msg);
-    g_free(msg);
-    unlink(vpp_file);
-    d_print_failed();
-    return;
-  }
-
-  lives_read(fd,&(mainw->vpp->palette),sizint,TRUE);
-  lives_read(fd,&(mainw->vpp->YUV_sampling),sizint,TRUE);
-  lives_read(fd,&(mainw->vpp->YUV_clamping),sizint,TRUE);
-  lives_read(fd,&(mainw->vpp->YUV_subspace),sizint,TRUE);
-  lives_read(fd,&(mainw->vpp->fwidth),sizint,TRUE);
-  lives_read(fd,&(mainw->vpp->fheight),sizint,TRUE);
-  lives_read(fd,&(mainw->vpp->fixed_fpsd),sizdbl,TRUE);
-  lives_read(fd,&(mainw->vpp->fixed_fps_numer),sizint,TRUE);
-  lives_read(fd,&(mainw->vpp->fixed_fps_denom),sizint,TRUE);
-
-  lives_read(fd,&(mainw->vpp->extra_argc),sizint,TRUE);
+    else {
+      do {
+	mainw->read_failed=FALSE;
+	msg=g_strdup("LiVES vpp defaults file version 2\n");
+	len=lives_read(fd,buf,strlen(msg),FALSE);
+	memset(buf+len,0,1);
   
-  if (vpp->extra_argv!=NULL) {
-    for (i=0;vpp->extra_argv[i]!=NULL;i++) {
-      g_free(vpp->extra_argv[i]);
+	if (mainw->read_failed) break;
+
+	// identifier string
+	if (strcmp(msg,buf)) {
+	  g_free(msg);
+	  d_print_file_error_failed();
+	  return;
+	}
+	g_free(msg);
+
+	// plugin name
+	lives_read(fd,&len,sizint,FALSE);
+	if (mainw->read_failed) break;
+	lives_read(fd,buf,len,FALSE);
+	memset(buf+len,0,1);
+	
+	if (mainw->read_failed) break;
+
+	if (strcmp(buf,mainw->vpp->name)) {
+	  d_print_file_error_failed();
+	  return;
+	}
+
+
+	// version string
+	version=(*mainw->vpp->version)();
+	lives_read(fd,&len,sizint,FALSE);
+	if (mainw->read_failed) break;
+	lives_read(fd,buf,len,FALSE);
+
+	if (mainw->read_failed) break;
+
+	memset(buf+len,0,1);
+
+	if (strcmp(buf,version)) {
+	  msg=g_strdup_printf(_("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),mainw->vpp->name);
+	  do_error_dialog(msg);
+	  g_free(msg);
+	  unlink(vpp_file);
+	  d_print_failed();
+	  return;
+	}
+
+	lives_read(fd,&(mainw->vpp->palette),sizint,FALSE);
+	lives_read(fd,&(mainw->vpp->YUV_sampling),sizint,FALSE);
+	lives_read(fd,&(mainw->vpp->YUV_clamping),sizint,FALSE);
+	lives_read(fd,&(mainw->vpp->YUV_subspace),sizint,FALSE);
+	lives_read(fd,&(mainw->vpp->fwidth),sizint,FALSE);
+	lives_read(fd,&(mainw->vpp->fheight),sizint,FALSE);
+	lives_read(fd,&(mainw->vpp->fixed_fpsd),sizdbl,FALSE);
+	lives_read(fd,&(mainw->vpp->fixed_fps_numer),sizint,FALSE);
+	lives_read(fd,&(mainw->vpp->fixed_fps_denom),sizint,FALSE);
+	
+	if (mainw->read_failed) break;
+
+	lives_read(fd,&(mainw->vpp->extra_argc),sizint,FALSE);
+	
+	if (mainw->read_failed) break;
+
+	if (vpp->extra_argv!=NULL) {
+	  for (i=0;vpp->extra_argv[i]!=NULL;i++) {
+	    g_free(vpp->extra_argv[i]);
+	  }
+	  g_free(vpp->extra_argv);
+	}
+	
+	mainw->vpp->extra_argv=g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
+	
+	for (i=0;i<mainw->vpp->extra_argc;i++) {
+	  lives_read(fd,&len,sizint,FALSE);
+	  if (mainw->read_failed) break;
+	  mainw->vpp->extra_argv[i]=g_malloc(len+1);
+	  lives_read(fd,mainw->vpp->extra_argv[i],len,FALSE);
+	  if (mainw->read_failed) break;
+	  memset((mainw->vpp->extra_argv[i])+len,0,1);
+	}
+	
+	mainw->vpp->extra_argv[i]=NULL;
+
+	close(fd);
+      } while (FALSE);
+
+      if (mainw->read_failed) {
+	retval=do_read_failed_error_s_with_retry(vpp_file,NULL,NULL);
+	if (retval==LIVES_CANCEL) {
+	  mainw->read_failed=FALSE;
+	  mainw->vpp=NULL;
+	  d_print_file_error_failed();
+	  return;
+	}
+      }
     }
-    g_free(vpp->extra_argv);
-  }
-
-  mainw->vpp->extra_argv=g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
-
-  for (i=0;i<mainw->vpp->extra_argc;i++) {
-    lives_read(fd,&len,sizint,TRUE);
-    mainw->vpp->extra_argv[i]=g_malloc(len+1);
-    lives_read(fd,mainw->vpp->extra_argv[i],len,TRUE);
-    memset((mainw->vpp->extra_argv[i])+len,0,1);
-  }
-
-  mainw->vpp->extra_argv[i]=NULL;
-
-  close(fd);
-
-  if (mainw->read_failed) {
-    mainw->read_failed=FALSE;
-    mainw->vpp=NULL;
-    d_print_file_error_failed();
-    do_read_failed_error_s(vpp_file);
-    return;
-  }
+  } while (retval==LIVES_RETRY);
 
   d_print_done();
-
+    
 }
 
 
@@ -3448,20 +3489,27 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
     // command to get_define failed
     if (retval) return NULL;
 
-    sfile=fopen(rfxfile,"r");
-    if (!sfile) {
-      do_read_failed_error_s(rfxfile);
-      return NULL;
-    }
-    mainw->read_failed=FALSE;
-    lives_fgets(buff,32,sfile);
-    fclose(sfile);
+    do {
+      retval=0;
+      sfile=fopen(rfxfile,"r");
+      if (!sfile) {
+	retval=do_read_failed_error_s_with_retry(rfxfile,strerror(errno),NULL);
+      }
+      else {
+	mainw->read_failed=FALSE;
+	lives_fgets(buff,32,sfile);
+	fclose(sfile);
+      }
+      if (mainw->read_failed) {
+	retval=do_read_failed_error_s_with_retry(rfxfile,NULL,NULL);
+      }
+
+    } while (retval==LIVES_RETRY);
 
     unlink(rfxfile);
     g_free(rfxfile);
 
-    if (mainw->read_failed) return NULL;
-
+    if (retval==LIVES_CANCEL) return NULL;
 
     g_snprintf(rfx->delim,2,"%s",buff);
 

@@ -428,6 +428,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   FILE *infofile=NULL;
   int max_frame=0,tot_frames=0;
   int vend=cfile->start;
+  int retval;
   gint current_file=mainw->current_file;
   weed_timecode_t tc;
   const gchar *img_ext;
@@ -446,6 +447,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   clear_mainw_msg();
   mainw->write_failed=FALSE;
 
+  // get message from back end processor
   while (!(infofile=fopen(cfile->info_file,"r"))&&!mainw->cancelled) {
     // wait until we get at least 1 frame
     while (g_main_context_iteration(NULL,FALSE));
@@ -466,9 +468,15 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     return;
   }
 
-  mainw->read_failed=FALSE;
-  lives_fgets(mainw->msg,512,infofile);
+  do {
+    retval=0;
+    mainw->read_failed=FALSE;
+    lives_fgets(mainw->msg,512,infofile);
+    if (mainw->read_failed) retval=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
+  } while (retval==LIVES_RETRY);
+
   fclose(infofile);
+
 
   if (strncmp(mainw->msg,"completed",9)) {
     if (rfx->num_in_channels>0) {

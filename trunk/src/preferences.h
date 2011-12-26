@@ -7,7 +7,7 @@
 #ifndef _HAS_PREFS_H
 #define _HAS_PREFS_H
 
-
+#define LIVES_PREFS_TIMEOUT  (10 * U_SEC) // 10 sec timeout
 
 typedef struct {
   gchar bgcolour[256];
@@ -35,19 +35,19 @@ typedef struct {
 #define Q_FILL 1
 #define Q_SMOOTH 1
 
-  gchar tmpdir[256];  ///< kept in locale encoding
+  gchar tmpdir[PATH_MAX];  ///< kept in locale encoding
 
   // TODO - also use cur_vid_load_dir, etc.
   // utf8 encoding
-  gchar def_vid_load_dir[256];
-  gchar def_vid_save_dir[256];
-  gchar def_audio_dir[256];
-  gchar def_image_dir[256];
-  gchar def_proj_dir[256];
+  gchar def_vid_load_dir[PATH_MAX];
+  gchar def_vid_save_dir[PATH_MAX];
+  gchar def_audio_dir[PATH_MAX];
+  gchar def_image_dir[PATH_MAX];
+  gchar def_proj_dir[PATH_MAX];
 
   // locale encoding
-  gchar prefix_dir[256];
-  gchar lib_dir[256];
+  gchar prefix_dir[PATH_MAX];
+  gchar lib_dir[PATH_MAX];
 
 
   gchar image_ext[16];
@@ -101,7 +101,7 @@ typedef struct {
   gchar effect_command[256];
   gchar video_open_command[256];
   gchar audio_play_command[256];
-  gchar cdplay_device[256];  ///< locale encoding
+  gchar cdplay_device[PATH_MAX];  ///< locale encoding
   gdouble default_fps;
   gint bar_height;
   gboolean pause_effect_during_preview;
@@ -240,8 +240,8 @@ typedef struct {
 #define OMC_DEV_FORCE_RAW_MIDI 1<<2
   guint omc_dev_opts;
 
-  gchar omc_js_fname[256];  ///< utf8
-  gchar omc_midi_fname[256]; ///< utf8
+  gchar omc_js_fname[PATH_MAX];  ///< utf8
+  gchar omc_midi_fname[PATH_MAX]; ///< utf8
   
   gboolean mouse_scroll_clips;
 
@@ -469,7 +469,7 @@ typedef struct {
 } _ign_opts;
 
 typedef struct {
-  gchar tmpdir[256];
+  gchar tmpdir[PATH_MAX];
   gchar theme[64];
   gchar vpp_name[64]; ///< new video playback plugin
   gint vpp_fixed_fps_numer;

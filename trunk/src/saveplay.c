@@ -107,6 +107,7 @@ gboolean save_clip_values(gint which) {
       } while (FALSE);
       
       if (mainw->com_failed||mainw->write_failed) {
+	fclose(mainw->clip_header);
 	retval=do_write_failed_error_s_with_retry(lives_header,NULL,NULL);
       }
 
@@ -132,7 +133,8 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
 
   FILE *infofile;
   int alarm_handle;
-  gboolean timeout=FALSE;
+  int retval;
+  gboolean timeout;
   gchar *tmp,*com=g_strdup_printf("smogrify get_details %s \"%s\" %s %d %d",cfile->handle,
 				  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
 				  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",mainw->opening_loc,is_audio);
@@ -150,27 +152,36 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
   if (mainw->opening_loc) 
     return do_progress_dialog(TRUE,TRUE,_ ("Examining file header"));
 
+
   threaded_dialog_spin();
-  clear_mainw_msg();
-  
+
+  do {
+    retval=0;
+    timeout=FALSE;
+    clear_mainw_msg();
 
 #define LIVES_LONGER_TIMEOUT  (120 * U_SEC) // 2 minute timeout
 
-  alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
+    
+    while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+      while (g_main_context_iteration (NULL,FALSE));
+      threaded_dialog_spin();
+      g_usleep(prefs->sleep_time);
+    }
+    
+    lives_alarm_clear(alarm_handle);
+    
+    if (!timeout) {
+      mainw->read_failed=FALSE;
+      lives_fgets(mainw->msg,512,infofile);
+      fclose(infofile);
+    }
 
-  while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-    while (g_main_context_iteration (NULL,FALSE));
-    threaded_dialog_spin();
-    g_usleep(prefs->sleep_time);
-  }
-
-  lives_alarm_clear(alarm_handle);
-
-  if (!timeout) {
-    mainw->read_failed=FALSE;
-    lives_fgets(mainw->msg,512,infofile);
-    fclose(infofile);
-  }
+    if (timeout||mainw->read_failed) {
+      retval=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
+    }
+  } while (retval==LIVES_RETRY);
 
   threaded_dialog_spin();
   return TRUE;
@@ -899,31 +910,36 @@ gboolean get_handle_from_info_file(gint index) {
 
   FILE *infofile;
   int alarm_handle;
-  gboolean timeout=FALSE;
+  int retval;
+  gboolean timeout;
 
-  clear_mainw_msg();
+  do {
+    retval=0;
+    timeout=FALSE;
+    clear_mainw_msg();
 
 #define LIVES_MEDIUM_TIMEOUT  (60 * U_SEC) // 60 sec timeout
 
-  alarm_handle=lives_alarm_set(LIVES_MEDIUM_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_MEDIUM_TIMEOUT);
 
-  while (!((infofile=fopen(mainw->first_info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-    g_usleep(prefs->sleep_time);
-  }
+    while (!((infofile=fopen(mainw->first_info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+      g_usleep(prefs->sleep_time);
+    }
 
-  lives_alarm_clear(alarm_handle);
+    lives_alarm_clear(alarm_handle);
   
-  if (!timeout) {
-    mainw->read_failed=FALSE;
-    lives_fgets(mainw->msg,256,infofile);
-    fclose(infofile);
-  }
-  else {
-    mainw->read_failed=TRUE;
-    do_read_failed_error_s(mainw->first_info_file);
-  }
+    if (!timeout) {
+      mainw->read_failed=FALSE;
+      lives_fgets(mainw->msg,256,infofile);
+      fclose(infofile);
+    }
+
+    if (timeout || mainw->read_failed) {
+      retval=do_read_failed_error_s_with_retry(mainw->first_info_file,NULL,NULL);
+    }
+  } while (retval==LIVES_RETRY);
   
-  if (mainw->read_failed) {
+  if (retval==LIVES_CANCEL) {
     mainw->read_failed=FALSE;
     return FALSE;
   }
@@ -2901,6 +2917,8 @@ get_temp_handle(gint index, gboolean create) {
 
     is_unique=TRUE;
 
+    // TODO - check for EOF
+
     com=g_strdup_printf("smogrify new %d",getpid());
     ret=system(com);
     g_free(com);
@@ -2921,7 +2939,7 @@ get_temp_handle(gint index, gboolean create) {
     mainw->current_file=index;
 
     if (strlen(mainw->set_name)>0) {
-      gchar *setclipdir=g_strdup_printf("%s/%s/clips/%s",prefs->tmpdir,mainw->set_name,cfile->handle);
+      gchar *setclipdir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",cfile->handle,NULL);
       if (g_file_test(setclipdir,G_FILE_TEST_IS_DIR)) is_unique=FALSE;
       g_free(setclipdir);
     }
@@ -3237,7 +3255,7 @@ gboolean save_file_comments (int fileno) {
       close (comment_fd);
       
       if (mainw->write_failed) {
-	do_write_failed_error_s_with_retry(comment_file,NULL,NULL);
+	retval=do_write_failed_error_s_with_retry(comment_file,NULL,NULL);
       }
     }
   } while (retval==LIVES_RETRY);
@@ -3590,7 +3608,7 @@ gboolean read_headers(const gchar *file_name) {
 
   lives_clip_details_t detail;
 
-  gboolean timeout=FALSE;
+  gboolean timeout;
   gboolean retval,retvala;
 
   size_t sizhead=8*sizint+sizdbl+8;
@@ -3612,7 +3630,6 @@ gboolean read_headers(const gchar *file_name) {
 	gint asigned,aendian;
 	gchar *tmp;
 	int alarm_handle;
-	gboolean timeout=FALSE;
 
 	// use new style header (LiVES 0.9.6+)
 	g_free(old_hdrfile);
@@ -3631,27 +3648,34 @@ gboolean read_headers(const gchar *file_name) {
 	  return FALSE;
 	}
 
-#define LIVES_RESTORE_TIMEOUT  (120 * U_SEC) // 120 sec timeout
 
-	alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
+	do {
+	  retval2=0;
+	  timeout=FALSE;
+	  memset(buff,0,1);
 
-	while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-	  g_usleep(prefs->sleep_time);
-	}
+#define LIVES_RESTORE_TIMEOUT  (30 * U_SEC) // 30 sec
 
-	lives_alarm_clear(alarm_handle);
+	  alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
 
-	if (!timeout) {
-	  mainw->read_failed=FALSE;
-	  lives_fgets(buff,1024,infofile);
-	  fclose(infofile);
-	}
-	else {
-	  mainw->read_failed=TRUE;
-	  do_read_failed_error_s(cfile->info_file);
-	}
+	  while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+	    g_usleep(prefs->sleep_time);
+	  }
+	  
+	  lives_alarm_clear(alarm_handle);
+	  
+	  if (!timeout) {
+	    mainw->read_failed=FALSE;
+	    lives_fgets(buff,1024,infofile);
+	    fclose(infofile);
+	  }
 
-	if (mainw->read_failed) {
+	  if (timeout || mainw->read_failed) {
+	    retval2=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
+	  }
+	} while (retval2==LIVES_RETRY);
+
+	if (retval2==LIVES_CANCEL) {
 	  return FALSE;
 	}
 
@@ -3669,7 +3693,13 @@ gboolean read_headers(const gchar *file_name) {
 
 	threaded_dialog_spin();
 
-	cache_file_contents(lives_header);
+	do {
+	  retval2=0;
+	  if (!cache_file_contents(lives_header)) {
+	    retval2=do_read_failed_error_s_with_retry(lives_header,NULL,NULL);
+	  }
+	} while (retval2==LIVES_RETRY);
+
 	g_free(lives_header);
 
 	threaded_dialog_spin();
@@ -3784,52 +3814,60 @@ gboolean read_headers(const gchar *file_name) {
 
   // old style headers (pre 0.9.6)
   g_free(lives_header);
-  memset (version,0,32);
-  memset (buff,0,1024);
-  
-  header_fd=open(old_hdrfile,O_RDONLY);
 
-  if (header_fd<0) mainw->read_failed=TRUE;
-  else mainw->read_failed=FALSE;
+  do {
+    retval=0;
+    memset (version,0,32);
+    memset (buff,0,1024);
+    
+    header_fd=open(old_hdrfile,O_RDONLY);
 
-  if (!mainw->read_failed) {
-    header_size=get_file_size(header_fd);
-  
-    if (header_size<sizhead) {
-      g_free(old_hdrfile);
-      return FALSE;
+    if (header_fd<0) {
+      retval=do_read_failed_error_s_with_retry(old_hdrfile,strerror(errno),NULL);
     }
     else {
-      lives_read(header_fd,&cfile->bpp,sizint,TRUE);
-      lives_read(header_fd,&cfile->fps,sizdbl,TRUE);
-      lives_read(header_fd,&cfile->hsize,sizint,TRUE);
-      lives_read(header_fd,&cfile->vsize,sizint,TRUE);
-      lives_read(header_fd,&cfile->arps,sizint,TRUE);
-      lives_read(header_fd,&cfile->signed_endian,sizint,TRUE);
-      lives_read(header_fd,&cfile->arate,sizint,TRUE);
-      lives_read(header_fd,&cfile->unique_id,8,TRUE);
-      lives_read(header_fd,&cfile->achans,sizint,TRUE);
-      lives_read(header_fd,&cfile->asampsize,sizint,TRUE);
+      mainw->read_failed=FALSE;
+      header_size=get_file_size(header_fd);
+  
+      if (header_size<sizhead) {
+	g_free(old_hdrfile);
+	close (header_fd);
+	return FALSE;
+      }
+      else {
+	lives_read(header_fd,&cfile->bpp,sizint,FALSE);
+	lives_read(header_fd,&cfile->fps,sizdbl,FALSE);
+	lives_read(header_fd,&cfile->hsize,sizint,FALSE);
+	lives_read(header_fd,&cfile->vsize,sizint,FALSE);
+	lives_read(header_fd,&cfile->arps,sizint,FALSE);
+	lives_read(header_fd,&cfile->signed_endian,sizint,FALSE);
+	lives_read(header_fd,&cfile->arate,sizint,FALSE);
+	lives_read(header_fd,&cfile->unique_id,8,FALSE);
+	lives_read(header_fd,&cfile->achans,sizint,FALSE);
+	lives_read(header_fd,&cfile->asampsize,sizint,FALSE);
       
-      if (header_size>sizhead) {
-	if (header_size-sizhead>31) {
-	  lives_read(header_fd,&version,31,TRUE);
-	  version[31]='\0';
-	}
-	else {
-	  lives_read(header_fd,&version,header_size-sizhead,TRUE);
-	  version[header_size-sizhead]='\0';
+	if (header_size>sizhead) {
+	  if (header_size-sizhead>31) {
+	    lives_read(header_fd,&version,31,FALSE);
+	    version[31]='\0';
+	  }
+	  else {
+	    lives_read(header_fd,&version,header_size-sizhead,FALSE);
+	    version[header_size-sizhead]='\0';
+	  }
 	}
       }
+      close(header_fd);
     }
-    close(header_fd);
-  }
 
-  if (mainw->read_failed) {
-    do_read_failed_error_s(old_hdrfile);
-    g_free(old_hdrfile);
-    return FALSE;
-  }
+    if (mainw->read_failed) {
+      retval=do_read_failed_error_s_with_retry(old_hdrfile,NULL,NULL);
+      if (retval==LIVES_CANCEL) {
+	g_free(old_hdrfile);
+	return FALSE;
+      }
+    }
+  } while (retval==LIVES_RETRY);
 
   g_free(old_hdrfile);
 
@@ -3852,27 +3890,33 @@ gboolean read_headers(const gchar *file_name) {
     return FALSE;
   }
 
-#define LIVES_RESTORE_TIMEOUT  (120 * U_SEC) // 120 sec timeout
+#define LIVES_RESTORE_TIMEOUT  (30 * U_SEC) // 120 sec timeout
 
-  alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
+  do {
+    retval2=0;
+    timeout=FALSE;
 
-  while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-    g_usleep(prefs->sleep_time);
-  }
+    alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
 
-  lives_alarm_clear(alarm_handle);
+    while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+      g_usleep(prefs->sleep_time);
+    }
+
+    lives_alarm_clear(alarm_handle);
   
-  if (!timeout) {
-    mainw->read_failed=FALSE;
-    lives_fgets(buff,1024,infofile);
-    fclose(infofile);
-  }
-  else {
-    mainw->read_failed=TRUE;
-    do_read_failed_error_s(cfile->info_file);
-  }
+    if (!timeout) {
+      mainw->read_failed=FALSE;
+      lives_fgets(buff,1024,infofile);
+      fclose(infofile);
+    }
+
+    if (timeout || mainw->read_failed) {
+      retval2=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
+    }
   
-  if (mainw->read_failed) {
+  } while (retval2==LIVES_RETRY);
+
+  if (retval2==LIVES_CANCEL) {
     mainw->read_failed=FALSE;
     return FALSE;
   }
@@ -3947,23 +3991,23 @@ void open_set_file (const gchar *set_name, gint clipnum) {
     size_t nlen;
     int set_fd;
     int pb_fps;
+    int retval;
     gchar *setfile=g_strdup_printf("%s/%s/set.%s",prefs->tmpdir,cfile->handle,set_name);
 
-    if ((set_fd=open(setfile,O_RDONLY))>-1) {
-      // get perf_start
-      if ((nlen=read(set_fd,&pb_fps,sizint))) {
-	cfile->pb_fps=pb_fps/1000.;
-	mainw->read_failed=FALSE;
-	lives_read(set_fd,&cfile->frameno,sizint,TRUE);
-	nlen=read(set_fd,name,256);
-
-	if (mainw->read_failed) {
-	  do_read_failed_error_s(setfile);
+    do {
+      retval=0;
+      if ((set_fd=open(setfile,O_RDONLY))>-1) {
+	// get perf_start
+	if ((nlen=lives_read(set_fd,&pb_fps,sizint,TRUE))) {
+	  cfile->pb_fps=pb_fps/1000.;
+	  lives_read(set_fd,&cfile->frameno,sizint,TRUE);
+	  lives_read(set_fd,name,256,TRUE);
 	}
-
+	close (set_fd);
       }
-      close (set_fd);
-    }
+      else retval=do_read_failed_error_s_with_retry(setfile,strerror(errno),NULL);
+    } while (retval==LIVES_RETRY);
+
     g_free (setfile);
     needs_update=TRUE;
   }
@@ -4177,7 +4221,7 @@ gint save_event_frames(void) {
     retval=0;
     header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
     if (header_fd<0) {
-      do_write_failed_error_s_with_retry(hdrfile,strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(hdrfile,strerror(errno),NULL);
     }
     else {
       mainw->write_failed=FALSE;
@@ -4193,7 +4237,7 @@ gint save_event_frames(void) {
       }
 
       if (mainw->write_failed) {
-	do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
+	retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
       }
 
       close(header_fd);
@@ -4628,13 +4672,16 @@ void recover_layout_map(numclips) {
 
 
 static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
+  FILE *rfile;
   gchar buff[256],*buffptr;
   gchar *clipdir;
+
+  int retval;
   gint new_file,clipnum=0;
-  FILE *rfile;
   gboolean last_was_normal_file=FALSE;
   gboolean is_scrap;
   gboolean did_set_check=FALSE;
+
   const lives_clip_data_t *cdata=NULL;
 
   splash_end();
@@ -4648,7 +4695,8 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   }
 
   if (!auto_recover) {
-    if (!do_warning_dialog(_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
+    if (!do_warning_dialog
+	(_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       unlink(recovery_file);
 
       if (mainw->multitrack!=NULL) {
@@ -4659,31 +4707,35 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
     }
   }
 
-  rfile=fopen(recovery_file,"r");
-
-  if (!rfile) {
-    do_read_failed_error_s(recovery_file);
-    return FALSE;
-  }
+  do {
+    retval=0;
+    rfile=fopen(recovery_file,"r");
+    if (!rfile) {
+      retval=do_read_failed_error_s_with_retry(recovery_file,strerror(errno),NULL);
+      if (retval==LIVES_CANCEL) return FALSE;
+    }
+  } while (retval==LIVES_RETRY);
 
   do_threaded_dialog(_("Recovering files"),FALSE);
 
   d_print(_("Recovering files..."));
   threaded_dialog_spin();
-
+  
   mainw->suppress_dprint=TRUE;
-
+  
   while (1) {
     threaded_dialog_spin();
     is_scrap=FALSE;
-
+    
     if (mainw->cached_list!=NULL) {
       g_list_free_strings(mainw->cached_list);
       g_list_free(mainw->cached_list);
       mainw->cached_list=NULL;
     }
 
-    if (fgets(buff,256,rfile)==NULL) {
+    mainw->read_failed=FALSE;
+    
+    if (lives_fgets(buff,256,rfile)==NULL) {
       gint current_file=mainw->current_file;
       if (last_was_normal_file&&mainw->multitrack==NULL) {
 	switch_to_file((mainw->current_file=0),current_file);
@@ -4691,9 +4743,12 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       reset_clip_menu();
       while (g_main_context_iteration(NULL,FALSE));
       threaded_dialog_spin();
+
+      if (mainw->read_failed) {
+	do_read_failed_error_s(recovery_file);
+      }
       break;
     }
-
 
     memset(buff+strlen(buff)-strlen("\n"),0,1);
 
@@ -4971,6 +5026,7 @@ void rewrite_recovery_file(void) {
       if (mainw->write_failed) break;
       clist=clist->next;
     }
+
   } while (retval==LIVES_RETRY);
 
   if (!opened) unlink(mainw->recovery_file);

@@ -271,13 +271,11 @@ gboolean do_yesno_dialog(const gchar *text) {
   GtkWidget *warning;
   gint response=1;
   gchar *mytext;
-  GtkWindow *transient;
+  GtkWindow *transient=NULL;
 
-  if (!prefs->show_gui) {
-    transient=NULL;
-  } else {
-    if (mainw->multitrack==NULL) transient=GTK_WINDOW(mainw->LiVES);
-    else transient=GTK_WINDOW(mainw->multitrack->window);
+  if (prefs->show_gui) {
+    if (mainw->multitrack==NULL&&mainw->is_ready) transient=GTK_WINDOW(mainw->LiVES);
+    else if (mainw->multitrack->is_ready) transient=GTK_WINDOW(mainw->multitrack->window);
   }
 
   mytext=g_strdup(text); // translation issues
@@ -303,8 +301,8 @@ int do_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
     transient=NULL;
   } else {
     if (transient==NULL) {
-      if (mainw->multitrack==NULL) transient=GTK_WINDOW(mainw->LiVES);
-      else transient=GTK_WINDOW(mainw->multitrack->window);
+      if (mainw->multitrack==NULL&&mainw->is_ready) transient=GTK_WINDOW(mainw->LiVES);
+      else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=GTK_WINDOW(mainw->multitrack->window);
     }
   }
 
@@ -2346,15 +2344,15 @@ void do_locked_in_vdevs_error(void) {
 void do_do_not_close_d (void) {
   gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
   GtkWidget *err_box=create_dialog3(msg,FALSE,0);
-  GtkWindow *transient;
+  GtkWindow *transient=NULL;
 
   g_free(msg);
-  if (!prefs->show_gui) {
-    transient=NULL;
-  } else {
-    if (mainw->multitrack==NULL) transient=GTK_WINDOW(mainw->LiVES);
-    else transient=GTK_WINDOW(mainw->multitrack->window);
+
+  if (prefs->show_gui) {
+    if (mainw->multitrack==NULL&&mainw->is_ready) transient=GTK_WINDOW(mainw->LiVES);
+    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=GTK_WINDOW(mainw->multitrack->window);
   }
+
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
   gtk_widget_show(err_box);
   gtk_window_present (GTK_WINDOW (err_box));

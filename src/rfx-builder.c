@@ -3941,8 +3941,8 @@ GList *get_script_section (const gchar *section, const gchar *file, gboolean str
   gchar *whole=g_strdup (""),*whole2;
   size_t linelen;
 
-  gchar *outfile=g_strdup_printf ("/tmp/rfxsec.%d",getpid());
-  gchar *com=g_strdup_printf ("%s -get %s %s >%s",RFX_BUILDER,section,file,outfile);
+  gchar *outfile=g_strdup_printf ("%s/rfxsec.%d",g_get_tmp_dir(),getpid());
+  gchar *com=g_strdup_printf ("%s -get \"%s\" \"%s\" > \"%s\"",RFX_BUILDER,section,file,outfile);
 
   mainw->com_failed=FALSE;
 

@@ -17,15 +17,14 @@
 #include "plugins.h"
 #include <dlfcn.h>
 
-#define PREFS_TIMEOUT 10000000 // 10 seconds
-
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
 #endif
 
 static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
   if (prefs->osc_udp_started) return;
-  gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,gtk_toggle_button_get_active (t1)||gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (t2)));
+  gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,gtk_toggle_button_get_active (t1)||
+			    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (t2)));
 }
 
 static void instopen_toggled (GtkToggleButton *t1, GtkWidget *button) {
@@ -37,7 +36,9 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
   FILE *valfile;
   gchar *vfile;
   gchar *com;
-  gint timeout;
+  int retval;
+  int alarm_handle;
+  gboolean timeout;
 
   memset(val,0,maxlen);
 
@@ -50,8 +51,7 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
     return;
   }
 
-  com=g_strdup_printf("smogrify get_pref %s %d %d",key,getuid(),getpid());
-  timeout=PREFS_TIMEOUT/prefs->sleep_time;
+  com=g_strdup_printf("smogrify get_pref \"%s\" %d %d",key,getuid(),getpid());
 
   if (system(com)) {
     tempdir_warning();
@@ -60,31 +60,45 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
   }
 
   vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getpid());
+
   do {
-    if (!(valfile=fopen(vfile,"r"))) {
-      if (!(mainw==NULL)) {
-	weed_plant_t *frame_layer=mainw->frame_layer;
-	mainw->frame_layer=NULL;
-	while (g_main_context_iteration(NULL,FALSE));
-	mainw->frame_layer=frame_layer;
-      }
-      g_usleep(prefs->sleep_time);
-      timeout--;
-    }
-  } while (!valfile&&timeout>0);
-  if (timeout<=0) {
-    tempdir_warning();
-  }
-  else {
+    retval=0;
+    timeout=FALSE;
     mainw->read_failed=FALSE;
-    lives_fgets(val,maxlen,valfile);
-    fclose(valfile);
-    unlink(vfile);
-    if (mainw->read_failed) {
-      tempdir_warning();
-      mainw->read_failed=FALSE;
+
+    alarm_handle=lives_alarm_set(LIVES_PREFS_TIMEOUT);
+
+    do {
+      if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+	if (!timeout) {
+	  if (!(mainw==NULL)) {
+	    weed_plant_t *frame_layer=mainw->frame_layer;
+	    mainw->frame_layer=NULL;
+	    while (g_main_context_iteration(NULL,FALSE));
+	    mainw->frame_layer=frame_layer;
+	  }
+	  g_usleep(prefs->sleep_time);
+	}
+	else break;
+      }
+    } while (!valfile);
+
+    lives_alarm_clear(alarm_handle);
+
+    if (timeout) {
+      retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
     }
-  }
+    else {
+      mainw->read_failed=FALSE;
+      lives_fgets(val,maxlen,valfile);
+      fclose(valfile);
+      unlink(vfile);
+      if (mainw->read_failed) {
+	retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
   g_free(vfile);
   g_free(com);
 }
@@ -128,12 +142,14 @@ GList *get_list_pref(const gchar *key) {
 
 
 
-void
-get_pref_default(const gchar *key, gchar *val, gint maxlen) {
+void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
   FILE *valfile;
   gchar *vfile;
-  gint timeout=PREFS_TIMEOUT/prefs->sleep_time;
-  gchar *com=g_strdup_printf("smogrify get_pref_default %s",key);
+  gchar *com=g_strdup_printf("smogrify get_pref_default \"%s\"",key);
+
+  int retval;
+  int alarm_handle;
+  gboolean timeout;
 
   memset(val,0,1);
 
@@ -142,32 +158,47 @@ get_pref_default(const gchar *key, gchar *val, gint maxlen) {
       g_free(com);
       return;
   }
-  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getgid());
+
+  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getpid());
+
   do {
-    if (!(valfile=fopen(vfile,"r"))) {
-      if (!(mainw==NULL)) {
-	weed_plant_t *frame_layer=mainw->frame_layer;
-	mainw->frame_layer=NULL;
-	while (g_main_context_iteration(NULL,FALSE));
-	mainw->frame_layer=frame_layer;
-      }
-      g_usleep(prefs->sleep_time);
-      timeout--;
-    }
-  } while (!valfile&&timeout>0);
-  if (timeout<=0) {
-    tempdir_warning();
-  }
-  else {
+    retval=0;
+    timeout=FALSE;
     mainw->read_failed=FALSE;
-    lives_fgets(val,maxlen,valfile);
-    fclose(valfile);
-    unlink(vfile);
-    if (mainw->read_failed) {
-      tempdir_warning();
-      mainw->read_failed=FALSE;
+
+    alarm_handle=lives_alarm_set(LIVES_PREFS_TIMEOUT);
+
+    do {
+      if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+	if (!timeout) {
+	  if (!(mainw==NULL)) {
+	    weed_plant_t *frame_layer=mainw->frame_layer;
+	    mainw->frame_layer=NULL;
+	    while (g_main_context_iteration(NULL,FALSE));
+	    mainw->frame_layer=frame_layer;
+	  }
+	  g_usleep(prefs->sleep_time);
+	}
+	else break;
+      }
+    } while (!valfile);
+
+    lives_alarm_clear(alarm_handle);
+
+    if (timeout) {
+      retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
     }
-  }
+    else {
+      mainw->read_failed=FALSE;
+      lives_fgets(val,maxlen,valfile);
+      fclose(valfile);
+      unlink(vfile);
+      if (mainw->read_failed) {
+	retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
   g_free(vfile);
   g_free(com);
 }
@@ -199,7 +230,7 @@ get_double_pref(const gchar *key) {
 
 void
 delete_pref(const gchar *key) {
-  gchar *com=g_strdup_printf("smogrify delete_pref %s",key);
+  gchar *com=g_strdup_printf("smogrify delete_pref \"%s\"",key);
   if (system(com)) {
     tempdir_warning();
   }
@@ -218,7 +249,7 @@ set_pref(const gchar *key, const gchar *value) {
 
 void
 set_int_pref(const gchar *key, gint value) {
-  gchar *com=g_strdup_printf("smogrify set_pref %s %d",key,value);
+  gchar *com=g_strdup_printf("smogrify set_pref \"%s\" %d",key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -227,7 +258,7 @@ set_int_pref(const gchar *key, gint value) {
 
 void
 set_double_pref(const gchar *key, gdouble value) {
-  gchar *com=g_strdup_printf("smogrify set_pref %s %.3f",key,value);
+  gchar *com=g_strdup_printf("smogrify set_pref \"%s\" %.3f",key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -240,10 +271,10 @@ set_boolean_pref(const gchar *key, gboolean value) {
   gchar *com;
 
   if (value) {
-    com=g_strdup_printf("smogrify set_pref %s %s",key,"true");
+    com=g_strdup_printf("smogrify set_pref \"%s\" true",key);
   }
   else {
-    com=g_strdup_printf("smogrify set_pref %s %s",key,"false");
+    com=g_strdup_printf("smogrify set_pref \"%s\" false",key);
   }
   if (system(com)) {
     tempdir_warning();
@@ -296,7 +327,10 @@ void set_vpp(gboolean set_in_prefs) {
 	mainw->vpp=vpp;
 	if (set_in_prefs) {
 	  set_pref ("vid_playback_plugin",mainw->vpp->name);
-	  if (!mainw->ext_playback) do_error_dialog_with_check_transient (_ ("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+	  if (!mainw->ext_playback) 
+	    do_error_dialog_with_check_transient 
+	      (_ ("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),
+	       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
 	}
       }
     }
@@ -367,7 +401,7 @@ apply_prefs(gboolean skip_warn) {
   const gchar *def_audio_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->audio_dir_entry));
   const gchar *def_image_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->image_dir_entry));
   const gchar *def_proj_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->proj_dir_entry));
-  gchar tmpdir[256];
+  gchar tmpdir[PATH_MAX];
   const gchar *theme = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->theme_combo) );
   const gchar *audp = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->audp_combo) );
   const gchar *audio_codec = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->acodec_combo) );
@@ -443,7 +477,8 @@ apply_prefs(gboolean skip_warn) {
   gint mt_def_arate=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
   gint mt_def_achans=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
   gint mt_def_asamps=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
-  gint mt_def_signed_endian=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))*AFORM_UNSIGNED+gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))*AFORM_BIG_ENDIAN;
+  gint mt_def_signed_endian=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))*
+    AFORM_UNSIGNED+gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))*AFORM_BIG_ENDIAN;
   gint mt_undo_buf=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_undo_buf));
   gboolean mt_exit_render=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render));
   gboolean mt_enable_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton));
@@ -467,7 +502,10 @@ apply_prefs(gboolean skip_warn) {
   gboolean jack_tb_start=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
   gboolean jack_tb_client=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
   gboolean jack_pwp=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
-  guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+JACK_OPTS_NOPLAY_WHEN_PAUSED*!jack_pwp+JACK_OPTS_TIMEBASE_START*jack_tb_start+JACK_OPTS_TIMEBASE_CLIENT*jack_tb_client);
+  guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+
+		   JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+
+		   JACK_OPTS_NOPLAY_WHEN_PAUSED*!jack_pwp+JACK_OPTS_TIMEBASE_START*jack_tb_start+
+		   JACK_OPTS_TIMEBASE_CLIENT*jack_tb_client);
 #endif
 
 #ifdef RT_AUDIO
@@ -526,7 +564,8 @@ apply_prefs(gboolean skip_warn) {
   if (idx==listlen) future_prefs->encoder.audio_codec=0;
   else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
 
-  g_snprintf (tmpdir,256,"%s",(tmp=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)),-1,NULL,NULL,NULL)));
+  g_snprintf (tmpdir,PATH_MAX,"%s",(tmp=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)),
+							     -1,NULL,NULL,NULL)));
   g_free(tmp);
 
   if (!strncmp(audp,"mplayer",7)) g_snprintf(audio_player,256,"mplayer");
@@ -540,7 +579,17 @@ apply_prefs(gboolean skip_warn) {
   }
 
 
-  warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*WARN_MASK_NO_ENCODERS+!warn_layout_missing_clips*WARN_MASK_LAYOUT_MISSING_CLIPS+!warn_duplicate_set*WARN_MASK_DUPLICATE_SET+!warn_layout_close*WARN_MASK_LAYOUT_CLOSE_FILE+!warn_layout_delete*WARN_MASK_LAYOUT_DELETE_FRAMES+!warn_layout_shift*WARN_MASK_LAYOUT_SHIFT_FRAMES+!warn_layout_alter*WARN_MASK_LAYOUT_ALTER_FRAMES+!warn_discard_layout*WARN_MASK_EXIT_MT+!warn_after_dvgrab*WARN_MASK_AFTER_DVGRAB+!warn_mt_achans*WARN_MASK_MT_ACHANS+!warn_mt_no_jack*WARN_MASK_MT_NO_JACK+!warn_layout_adel*WARN_MASK_LAYOUT_DELETE_AUDIO+!warn_layout_ashift*WARN_MASK_LAYOUT_SHIFT_AUDIO+!warn_layout_aalt*WARN_MASK_LAYOUT_ALTER_AUDIO+!warn_layout_popup*WARN_MASK_LAYOUT_POPUP+!warn_yuv4m_open*WARN_MASK_OPEN_YUV4M+!warn_mt_backup_space*WARN_MASK_MT_BACKUP_SPACE+!warn_after_crash*WARN_MASK_CLEAN_AFTER_CRASH+!warn_no_pulse*WARN_MASK_NO_PULSE_CONNECT;
+  warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*
+    WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*
+    WARN_MASK_NO_ENCODERS+!warn_layout_missing_clips*WARN_MASK_LAYOUT_MISSING_CLIPS+!warn_duplicate_set*
+    WARN_MASK_DUPLICATE_SET+!warn_layout_close*WARN_MASK_LAYOUT_CLOSE_FILE+!warn_layout_delete*
+    WARN_MASK_LAYOUT_DELETE_FRAMES+!warn_layout_shift*WARN_MASK_LAYOUT_SHIFT_FRAMES+!warn_layout_alter*
+    WARN_MASK_LAYOUT_ALTER_FRAMES+!warn_discard_layout*WARN_MASK_EXIT_MT+!warn_after_dvgrab*
+    WARN_MASK_AFTER_DVGRAB+!warn_mt_achans*WARN_MASK_MT_ACHANS+!warn_mt_no_jack*
+    WARN_MASK_MT_NO_JACK+!warn_layout_adel*WARN_MASK_LAYOUT_DELETE_AUDIO+!warn_layout_ashift*
+    WARN_MASK_LAYOUT_SHIFT_AUDIO+!warn_layout_aalt*WARN_MASK_LAYOUT_ALTER_AUDIO+!warn_layout_popup*
+    WARN_MASK_LAYOUT_POPUP+!warn_yuv4m_open*WARN_MASK_OPEN_YUV4M+!warn_mt_backup_space*
+    WARN_MASK_MT_BACKUP_SPACE+!warn_after_crash*WARN_MASK_CLEAN_AFTER_CRASH+!warn_no_pulse*WARN_MASK_NO_PULSE_CONNECT;
 
   if (warn_mask!=prefs->warning_mask) {
     prefs->warning_mask=warn_mask;
@@ -586,7 +635,9 @@ apply_prefs(gboolean skip_warn) {
   ensure_isdir(future_prefs->tmpdir);
 
   if (strcmp(prefs->tmpdir,tmpdir)||strcmp (future_prefs->tmpdir,tmpdir)) {
-    if (g_file_test (tmpdir, G_FILE_TEST_EXISTS)&&(strlen (tmpdir)<10||strncmp (tmpdir+strlen (tmpdir)-10,"/livestmp/",10))) g_strappend (tmpdir,256,"livestmp/");
+    if (g_file_test (tmpdir, G_FILE_TEST_EXISTS)&&(strlen (tmpdir)<10||
+						   strncmp (tmpdir+strlen (tmpdir)-10,"/livestmp/",10))) 
+      g_strappend (tmpdir,PATH_MAX,"livestmp/");
 
     if (strcmp(prefs->tmpdir,tmpdir)||strcmp (future_prefs->tmpdir,tmpdir)) {
       gchar *msg;
@@ -598,7 +649,7 @@ apply_prefs(gboolean skip_warn) {
 	do_blocking_error_dialog (msg);
       }
       else {
-	g_snprintf(future_prefs->tmpdir,256,"%s",tmpdir);
+	g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",tmpdir);
 	set_temp_label_text(GTK_LABEL(prefsw->temp_label));
 	gtk_widget_queue_draw(prefsw->temp_label);
 	while (g_main_context_iteration(NULL,FALSE)); // update prefs window before showing confirmation box
@@ -609,7 +660,7 @@ apply_prefs(gboolean skip_warn) {
 	  needs_restart=TRUE;
 	}
 	else {
-	  g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
+	  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
           gtk_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry), prefs->tmpdir);
 	}
       }
@@ -678,8 +729,10 @@ apply_prefs(gboolean skip_warn) {
 
       if (mainw->multitrack==NULL) {
 	if (prefs->gui_monitor!=0) {
-	  gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-mainw->LiVES->allocation.width)/2;
-	  gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-mainw->LiVES->allocation.height)/2;
+	  gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+							  mainw->LiVES->allocation.width)/2;
+	  gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+							  mainw->LiVES->allocation.height)/2;
 	  gtk_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
 	  
 	}
@@ -689,8 +742,10 @@ apply_prefs(gboolean skip_warn) {
       }
       else {
 	if (prefs->gui_monitor!=0) {
-	  gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-mainw->multitrack->window->allocation.width)/2;
-	  gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-mainw->multitrack->window->allocation.height)/2;
+	  gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+							  mainw->multitrack->window->allocation.width)/2;
+	  gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+							  mainw->multitrack->window->allocation.height)/2;
 	  gtk_window_move(GTK_WINDOW(mainw->multitrack->window),xcen,ycen);
 	}
 	
@@ -834,43 +889,43 @@ apply_prefs(gboolean skip_warn) {
 
   // default video load directory
   if (strcmp(prefs->def_vid_load_dir,def_vid_load_dir)) {
-      g_snprintf(prefs->def_vid_load_dir,256,"%s/",def_vid_load_dir);
+      g_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s/",def_vid_load_dir);
       get_dirname(prefs->def_vid_load_dir);
       set_pref("vid_load_dir",prefs->def_vid_load_dir);
-      g_snprintf(mainw->vid_load_dir,256,"%s",prefs->def_vid_load_dir);
+      g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",prefs->def_vid_load_dir);
   }
 
   // default video save directory
   if (strcmp(prefs->def_vid_save_dir,def_vid_save_dir)) {
-      g_snprintf(prefs->def_vid_save_dir,256,"%s/",def_vid_save_dir);
+      g_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s/",def_vid_save_dir);
       get_dirname(prefs->def_vid_save_dir);
       set_pref("vid_save_dir",prefs->def_vid_save_dir);
-      g_snprintf(mainw->vid_save_dir,256,"%s",prefs->def_vid_save_dir);
+      g_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",prefs->def_vid_save_dir);
   }
 
   // default audio directory
   if (strcmp(prefs->def_audio_dir,def_audio_dir)) {
-      g_snprintf(prefs->def_audio_dir,256,"%s/",def_audio_dir);
+      g_snprintf(prefs->def_audio_dir,PATH_MAX,"%s/",def_audio_dir);
       get_dirname(prefs->def_audio_dir);
       set_pref("audio_dir",prefs->def_audio_dir);
-      g_snprintf(mainw->audio_dir,256,"%s",prefs->def_audio_dir);
+      g_snprintf(mainw->audio_dir,PATH_MAX,"%s",prefs->def_audio_dir);
   }
 
   // default image directory
   if (strcmp(prefs->def_image_dir,def_image_dir)) {
-      g_snprintf(prefs->def_image_dir,256,"%s/",def_image_dir);
+      g_snprintf(prefs->def_image_dir,PATH_MAX,"%s/",def_image_dir);
       get_dirname(prefs->def_image_dir);
       set_pref("image_dir",prefs->def_image_dir);
-      g_snprintf(mainw->image_dir,256,"%s",prefs->def_image_dir);
+      g_snprintf(mainw->image_dir,PATH_MAX,"%s",prefs->def_image_dir);
   }
 
   // default project directory - for backup and restore
   if (strcmp(prefs->def_proj_dir,def_proj_dir)) {
-      g_snprintf(prefs->def_proj_dir,256,"%s/",def_proj_dir);
+      g_snprintf(prefs->def_proj_dir,PATH_MAX,"%s/",def_proj_dir);
       get_dirname(prefs->def_proj_dir);
       set_pref("proj_dir",prefs->def_proj_dir);
-      g_snprintf(mainw->proj_load_dir,256,"%s",prefs->def_proj_dir);
-      g_snprintf(mainw->proj_save_dir,256,"%s",prefs->def_proj_dir);
+      g_snprintf(mainw->proj_load_dir,PATH_MAX,"%s",prefs->def_proj_dir);
+      g_snprintf(mainw->proj_save_dir,PATH_MAX,"%s",prefs->def_proj_dir);
   }
 
   // the theme
@@ -974,11 +1029,15 @@ apply_prefs(gboolean skip_warn) {
 #endif
 
   if (prefs->audio_player==AUD_PLAYER_JACK&&!capable->has_jackd) {
-    do_error_dialog_with_check_transient(_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+    do_error_dialog_with_check_transient
+      (_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),
+       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
   }
   else {
     if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,"jack")) {
-      do_error_dialog_with_check_transient(_("\nSwitching audio players requires restart (jackd must not be running)\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+      do_error_dialog_with_check_transient
+	(_("\nSwitching audio players requires restart (jackd must not be running)\n"),
+	 TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
     }
 
     // switch to sox
@@ -1003,7 +1062,9 @@ apply_prefs(gboolean skip_warn) {
     // switch to pulse audio
     else if (!(strcmp (audio_player,"pulse"))&&prefs->audio_player!=AUD_PLAYER_PULSE) {
       if (!capable->has_pulse_audio) {
-	do_error_dialog_with_check_transient(_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+	do_error_dialog_with_check_transient
+	  (_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),
+	   TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
       }
       else {
 	if (!switch_aud_to_pulse()) {
@@ -1202,12 +1263,14 @@ apply_prefs(gboolean skip_warn) {
   if (startup_ce&&future_prefs->startup_interface!=STARTUP_CE) {
     future_prefs->startup_interface=STARTUP_CE;
     set_int_pref("startup_interface",STARTUP_CE);
-    if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) write_backup_layout_numbering(mainw->multitrack);
+    if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) 
+      write_backup_layout_numbering(mainw->multitrack);
   }
   else if (!startup_ce&&future_prefs->startup_interface!=STARTUP_MT) {
     future_prefs->startup_interface=STARTUP_MT;
     set_int_pref("startup_interface",STARTUP_MT);
-    if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) write_backup_layout_numbering(mainw->multitrack);
+    if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) 
+      write_backup_layout_numbering(mainw->multitrack);
   }
 
   return needs_restart;
@@ -1379,7 +1442,8 @@ static void after_jack_client_toggled(GtkToggleButton *tbutton, gpointer user_da
   }
   else {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_start,TRUE);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_start),(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_START)?TRUE:FALSE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_start),
+				  (future_prefs->jack_opts&JACK_OPTS_TIMEBASE_START)?TRUE:FALSE);
   }
 }
 
@@ -1391,7 +1455,8 @@ static void after_jack_tb_start_toggled(GtkToggleButton *tbutton, gpointer user_
   }
   else {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,TRUE);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?TRUE:FALSE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),
+				  (future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?TRUE:FALSE);
   }
 }
 #endif

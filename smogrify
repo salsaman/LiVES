@@ -251,11 +251,6 @@ if (defined($ARGV[0])) {
 	&rc_set_if_not_set("audio_effect","none");
 	&rc_set_if_not_set("default_image_format","png");
 	&rc_set_if_not_set("default_fps",25);
-	&rc_set_if_not_set("vid_load_dir","$home");
-	&rc_set_if_not_set("vid_save_dir","$home");
-	&rc_set_if_not_set("image_dir","$home");
-	&rc_set_if_not_set("proj_dir","$home");
-	&rc_set_if_not_set("audio_dir","$home");
 	&rc_set_if_not_set("save_directories","false");
 	&rc_set_if_not_set("stop_screensaver","true");
 	&rc_set_if_not_set("open_maximised","true");
@@ -655,6 +650,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	else {
+	    print "\n";
 	    exit 1;
 	}
 	print "$string\n";

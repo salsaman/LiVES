@@ -1035,11 +1035,11 @@ void set_param_gui_readwrite (weed_plant_t *inst) {
 ///
 /// returns copy of current directory (before directory change) which should be freed after use 
 gchar *cd_to_plugin_dir(weed_plant_t *filter) {
-  char cwd[PATH_MAX],*ret;
+  char *ret;
   int error;
   weed_plant_t *plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
   char *ppath=weed_get_string_value(plugin_info,"plugin_path",&error);
-  ret=g_strdup(getcwd(cwd,PATH_MAX));
+  ret=g_get_current_dir();
   // allow this to fail -it's not that important - it just means any plugin data files wont be found
   // besides, we dont want to show warnings at 50 fps
   lives_chdir(ppath,TRUE);
@@ -6933,7 +6933,7 @@ gboolean write_filter_defaults (int fd, int idx) {
 
 
 
-void read_filter_defaults(int fd) {
+gboolean read_filter_defaults(int fd) {
   void *buf;
   size_t vlen;
   int i,error,pnum;
@@ -6943,8 +6943,6 @@ void read_filter_defaults(int fd) {
   int ntoread;
 
   mainw->read_failed=FALSE;
-  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
-  mainw->read_failed_file=NULL;
 
   while (1) {
     if (lives_read(fd,&vlen,sizeof(size_t),TRUE)<sizeof(size_t)) {
@@ -7011,10 +7009,8 @@ void read_filter_defaults(int fd) {
 
   }
 
-  if (mainw->read_failed) {
-    do_read_failed_error_s(mainw->read_failed_file);
-    mainw->read_failed=FALSE;
-  }
+  if (mainw->read_failed) return FALSE;
+  return TRUE;
 
 }
 
@@ -7044,7 +7040,8 @@ gboolean write_generator_sizes (int fd, int idx) {
   mainw->write_failed=FALSE;
 
   for (i=0;i<num_channels;i++) {
-    if (weed_plant_has_leaf(ctmpls[i],"host_width")||weed_plant_has_leaf(ctmpls[i],"host_height")||(!wrote_hashname&&weed_plant_has_leaf(filter,"host_fps"))) {
+    if (weed_plant_has_leaf(ctmpls[i],"host_width")||weed_plant_has_leaf(ctmpls[i],"host_height")||
+	(!wrote_hashname&&weed_plant_has_leaf(filter,"host_fps"))) {
       if (!wrote_hashname) {
 	hashname=make_weed_hashname(idx,TRUE);
 	vlen=strlen(hashname);
@@ -7078,7 +7075,7 @@ gboolean write_generator_sizes (int fd, int idx) {
 
 
 
-void read_generator_sizes(int fd) {
+gboolean read_generator_sizes(int fd) {
   void *buf;
   size_t bytes;
   size_t vlen;
@@ -7089,8 +7086,6 @@ void read_generator_sizes(int fd) {
   gchar *tmp;
 
   mainw->read_failed=FALSE;
-  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
-  mainw->read_failed_file=NULL;
 
   while (1) {
     bytes=lives_read(fd,&vlen,sizeof(size_t),TRUE);
@@ -7130,8 +7125,10 @@ void read_generator_sizes(int fd) {
       if (cnum<num_chans&&cnum>=0) {
 	weed_leaf_deserialise(fd,ctmpls[cnum],"host_width",NULL);
 	weed_leaf_deserialise(fd,ctmpls[cnum],"host_height",NULL);
-	if (weed_get_int_value(ctmpls[cnum],"host_width",&error)==0) weed_set_int_value(ctmpls[cnum],"host_width",DEF_GEN_WIDTH);
-	if (weed_get_int_value(ctmpls[cnum],"host_height",&error)==0) weed_set_int_value(ctmpls[cnum],"host_height",DEF_GEN_HEIGHT);
+	if (weed_get_int_value(ctmpls[cnum],"host_width",&error)==0) 
+	  weed_set_int_value(ctmpls[cnum],"host_width",DEF_GEN_WIDTH);
+	if (weed_get_int_value(ctmpls[cnum],"host_height",&error)==0) 
+	  weed_set_int_value(ctmpls[cnum],"host_height",DEF_GEN_HEIGHT);
       }
       else if (cnum==-1) {
 	weed_leaf_deserialise(fd,filter,"host_fps",NULL);
@@ -7148,11 +7145,8 @@ void read_generator_sizes(int fd) {
     if (mainw->read_failed) break;
   }
 
-  if (mainw->read_failed) {
-    do_read_failed_error_s(mainw->read_failed_file);
-    mainw->read_failed=FALSE;
-  }
-
+  if (mainw->read_failed) return FALSE;
+  return TRUE;
 }
 
 
@@ -7189,8 +7183,6 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   gboolean ret=FALSE;
 
   mainw->read_failed=FALSE;
-  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
-  mainw->read_failed_file=NULL;
 
   if (key>=0) {
     idx=key_to_fx[key][mode];
@@ -7236,7 +7228,7 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
 
     if (ver>1) {
       for (j=0;j<nvals;j++) {
-	// for future - read timecodes
+ 	// for future - read timecodes
 	weed_plant_t *plant=weed_plant_new(WEED_PLANT_PARAMETER);
 	bytes=lives_read(fd,&tc,sizeof(weed_timecode_t),TRUE);
 	if (bytes<sizeof(weed_timecode_t)) {
@@ -7264,7 +7256,6 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   }
 
   if (key>=0) key_defaults[key][mode]=key_defs;
-  ret=TRUE;
 
  err123:
   if (key<0) {
@@ -7274,12 +7265,11 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
     g_free(key_defs);
   }
 
-  if (mainw->read_failed) {
-    do_read_failed_error_s(mainw->read_failed_file);
-    mainw->read_failed=FALSE;
+  if (ret<0||mainw->read_failed) {
+    return FALSE;
   }
   
-  return ret;
+  return TRUE;
 }
 
 

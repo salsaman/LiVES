@@ -117,7 +117,7 @@ gboolean load_frame_index(gint fileno) {
 
       mainw->read_failed=FALSE;
       for (i=0;i<sfile->frames;i++) {
-	lives_read(fd,&sfile->frame_index[i],sizint,TRUE);
+	lives_read(fd,&sfile->frame_index[i],sizint,FALSE);
 	if (mainw->read_failed) break;
       }
 

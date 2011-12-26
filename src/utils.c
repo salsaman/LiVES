@@ -41,14 +41,16 @@ char *filename_from_fd(char *val, int fd) {
   if (fstat(fd,&stb0)) return val;
 
   fidi=g_strdup_printf("%d",fd);
-  fdpath=g_build_filename("proc","self","fd",fidi,NULL);
+  fdpath=g_build_filename("/proc","self","fd",fidi,NULL);
   g_free(fidi);
+
   if (readlink(fdpath,rfdpath,PATH_MAX)==-1) return val;
   g_free(fdpath);
 
   if (stat(rfdpath,&stb1)) return val;
 
   if (stb0.st_dev!=stb1.st_dev) return val;
+
   if (stb0.st_ino!=stb1.st_ino) return val;
 
   if (val!=NULL) g_free(val);
@@ -65,14 +67,20 @@ int lives_system(const char *com, gboolean allow_error) {
   retval=system(com);
 
   if (retval) {
-    gchar *msg=g_strdup_printf("Command failed with code %d: %s",retval,com);
+    gchar *msg=NULL;
     mainw->com_failed=TRUE;
     if (!allow_error) {
+      msg=g_strdup_printf("lives_system failed with code %d: %s",retval,com);
       LIVES_ERROR(msg);
       do_com_failed_error(com,retval);
     }
-    else LIVES_DEBUG(msg);
-    g_free(msg);
+#ifndef LIVES_NO_DEBUG
+    else {
+      msg=g_strdup_printf("lives_system failed with code %d: %s (not an error)",retval,com);
+      LIVES_DEBUG(msg);
+    }
+#endif
+    if (msg!=NULL) g_free(msg);
   }
   return retval;
 }
@@ -84,7 +92,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
   retval=write(fd, buf, count);
 
   if (retval<count) {
-    gchar *msg;
+    gchar *msg=NULL;
     mainw->write_failed=TRUE;
     mainw->write_failed_file=filename_from_fd(mainw->write_failed_file,fd);
     msg=g_strdup_printf("Write failed %lu of %lu in: %s",(unsigned long)retval,
@@ -93,8 +101,16 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
       LIVES_ERROR(msg);
       close(fd);
     }
-    else LIVES_DEBUG(msg);
-    g_free(msg);
+#ifndef LIVES_NO_DEBUG
+    else {
+      gchar *ffile=filename_from_fd(NULL,fd);
+      msg=g_strdup_printf("Write failed %lu of %lu in: %s (not an error)",(unsigned long)retval,
+			  (unsigned long)count,ffile);
+      LIVES_DEBUG(msg);
+      g_free(ffile);
+    }
+#endif
+    if (msg!=NULL) g_free(msg);
   }
   return retval;
 }
@@ -129,21 +145,29 @@ char *lives_fgets(char *s, int size, FILE *stream) {
 
 
 
-ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_fail) {
+ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less) {
   ssize_t retval=read(fd, buf, count);
 
   if (retval<count) {
-    gchar *msg;
-    mainw->read_failed=TRUE;
-    mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
-    msg=g_strdup_printf("Read failed %lu of %lu in: %s",(unsigned long)retval,
-			       (unsigned long)count,mainw->read_failed_file);
-    if (!allow_fail) {
+    gchar *msg=NULL;
+    if (!allow_less||retval<0) {
+      mainw->read_failed=TRUE;
+      mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
+      msg=g_strdup_printf("Read failed %lu of %lu in: %s",(unsigned long)retval,
+			  (unsigned long)count,mainw->read_failed_file);
       LIVES_ERROR(msg);
       close(fd);
     }
-    else LIVES_DEBUG(msg);
-    g_free(msg);
+#ifndef LIVES_NO_DEBUG
+    else {
+      gchar *ffile=filename_from_fd(NULL,fd);
+      msg=g_strdup_printf("Read got %lu of %lu in: %s (not an error)",(unsigned long)retval,
+			  (unsigned long)count,ffile);
+      LIVES_DEBUG(msg);
+      g_free(ffile);
+    }
+#endif
+    if (msg!=NULL) g_free(msg);
   }
   return retval;
 }
@@ -1111,9 +1135,11 @@ gboolean check_frame_count(gint idx) {
 void get_frame_count(gint idx) {
   // sets mainw->files[idx]->frames with current framecount
   gint info_fd;
+  int retval;
   size_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("smogrify count_frames %s %s >%s",mainw->files[idx]->handle,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);
+  gchar *com=g_strdup_printf("smogrify count_frames %s %s > \"%s\"",mainw->files[idx]->handle,
+			     mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);
 
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -1123,19 +1149,27 @@ void get_frame_count(gint idx) {
     g_free(info_file);
     return;
   }
-  info_fd=open(info_file,O_RDONLY);
 
-  if (info_fd<0) {
-    do_read_failed_error_s(info_file);
-    g_free(info_file);
-    return;
-  }
+  do {
+    retval=0;
+    info_fd=open(info_file,O_RDONLY);
+    if (info_fd<0) {
+      retval=do_read_failed_error_s_with_retry(info_file,strerror(errno),NULL);
+    }
+    else {
+      if ((bytes=lives_read(info_fd,mainw->msg,256,TRUE))>0) {
+	if (bytes==0) {
+	  retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
+	}
+	else {
+	  memset(mainw->msg+bytes,0,1);
+	  mainw->files[idx]->frames=atoi(mainw->msg);
+	}
+      }
+      close(info_fd);
+    }
+  } while (retval==LIVES_RETRY);
 
-  if ((bytes=read(info_fd,mainw->msg,256))>0) {
-    memset(mainw->msg+bytes,0,1);
-    mainw->files[idx]->frames=atoi(mainw->msg);
-  }
-  close(info_fd);
   unlink(info_file);
   g_free(info_file);
 }
@@ -2990,7 +3024,7 @@ LIVES_INLINE void g_list_free_strings(GList *slist) {
 }
 
 
-void cache_file_contents(const gchar *filename) {
+gboolean cache_file_contents(const gchar *filename) {
   FILE *hfile;
   gchar buff[65536];
 
@@ -3000,12 +3034,13 @@ void cache_file_contents(const gchar *filename) {
     mainw->cached_list=NULL;
   }
 
-  if (!(hfile=fopen(filename,"r"))) return;
+  if (!(hfile=fopen(filename,"r"))) return FALSE;
   while (fgets(buff,65536,hfile)!=NULL) {
     mainw->cached_list=g_list_append(mainw->cached_list,g_strdup(buff));
     threaded_dialog_spin();
   }
   fclose(hfile);
+  return TRUE;
 }
 
 
@@ -3146,16 +3181,21 @@ gchar *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
 
 gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
   FILE *valfile;
+  time_t old_time=0,new_time=0;
+  struct stat mystat;
+
   gchar *vfile;
   gchar *lives_header=NULL;
   gchar *old_header;
   gchar *com;
-  gint timeout=PREFS_TIMEOUT/prefs->sleep_time;
   gchar *val;
   gchar *key;
-  time_t old_time=0,new_time=0;
-  struct stat mystat;
   gchar *tmp;
+
+  int alarm_handle;
+  int retval2=0;
+
+  gboolean timeout;
 
   if (mainw->cached_list==NULL) {
     
@@ -3187,11 +3227,11 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
 
   if (mainw->cached_list!=NULL) {
     val=get_val_from_cached_list(key,maxlen);
-    if (val==NULL) return FALSE;
     g_free(key);
+    if (val==NULL) return FALSE;
   }
   else {
-    com=g_strdup_printf("smogrify get_clip_value %s %d %d %s",key,getuid(),getpid(),lives_header);
+    com=g_strdup_printf("smogrify get_clip_value \"%s\" %d %d \"%s\"",key,getuid(),getpid(),lives_header);
     g_free(lives_header);
     g_free(key);
     
@@ -3199,6 +3239,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     memset(val,0,maxlen);
     
     threaded_dialog_spin();
+
     if (lives_system(com,TRUE)) {
       tempdir_warning();
       threaded_dialog_spin();
@@ -3209,34 +3250,48 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getpid());
 
     do {
-      if (!(valfile=fopen(vfile,"r"))) {
-	if (!(mainw==NULL)) {
-	  threaded_dialog_spin();
-	  while (g_main_context_iteration(NULL,FALSE));
-	}
-	g_usleep(prefs->sleep_time);
-	timeout--;
-      }
-    } while (!valfile&&timeout>0);
-    
-    if (timeout<=0) {
-      tempdir_warning();
-      g_free(val);
-      g_free(vfile);
-      g_free(com);
-      return FALSE;
-    }
-    else {
+      retval2=0;
+      timeout=FALSE;
       mainw->read_failed=FALSE;
-      lives_fgets(val,maxlen,valfile);
-      fclose(valfile);
-      unlink(vfile);
-    }
+      
+      alarm_handle=lives_alarm_set(LIVES_PREFS_TIMEOUT);
+      
+      do {
+	if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+	  if (!timeout) {
+	    if (!(mainw==NULL)) {
+	      weed_plant_t *frame_layer=mainw->frame_layer;
+	      mainw->frame_layer=NULL;
+	      while (g_main_context_iteration(NULL,FALSE));
+	      mainw->frame_layer=frame_layer;
+	    }
+	    g_usleep(prefs->sleep_time);
+	  }
+	  else break;
+	}
+      } while (!valfile);
+      
+      lives_alarm_clear(alarm_handle);
+      
+      if (timeout) {
+	retval2=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
+      }
+      else {
+	mainw->read_failed=FALSE;
+	lives_fgets(val,maxlen,valfile);
+	fclose(valfile);
+	unlink(vfile);
+	if (mainw->read_failed) {
+	  retval2=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
+	}
+      }
+    } while (retval2==LIVES_RETRY);
+    
     g_free(vfile);
     g_free(com);
   }
 
-  if (mainw->read_failed) {
+  if (retval2==LIVES_CANCEL) {
     return FALSE;
   }
 

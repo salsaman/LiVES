@@ -302,14 +302,12 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  }
 	}
       }
+      close (fd);
     }
   } while (retval==LIVES_RETRY);
 
-  close(fd);
 
-  if (retval==LIVES_CANCEL) {
-    d_print_file_error_failed();
-  }
+  if (retval==LIVES_CANCEL) d_print_file_error_failed();
   
   do {
     if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
@@ -332,10 +330,9 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  }
 	}
       }
+      close(fd);
     }
   } while (retval==LIVES_RETRY);
-
-  close(fd);
 
   if (mainw->write_failed) {
     d_print_file_error_failed();
@@ -352,75 +349,100 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void load_rte_defs (void) {
   int fd;
+  int retval;
   gchar *msg,*msg2;
   void *buf;
   ssize_t bytes;
 
   if (prefs->fxdefsfile==NULL) {
-    prefs->fxdefsfile=g_strdup_printf("%s/%sfxdefs",capable->home_dir,LIVES_CONFIG_DIR);
+    prefs->fxdefsfile=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"fxdefs",NULL);
   }
 
   if (g_file_test(prefs->fxdefsfile,G_FILE_TEST_EXISTS)) {
-    if ((fd=open(prefs->fxdefsfile,O_RDONLY))==-1) {
-      msg2=g_strdup_printf (_("Unable to read defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
-      do_error_dialog (msg2);
-      g_free (msg2);
-    }
-    else {
-      msg2=g_strdup_printf(_("Loading real time effect defaults from %s..."),prefs->fxdefsfile);
-      d_print(msg2);
-      g_free(msg2);
-      
-      msg=g_strdup("LiVES filter defaults file version 1.1\n");
-      buf=g_malloc(strlen(msg));
-      bytes=read(fd,buf,strlen(msg));
-      
-      if (bytes==strlen(msg)&&!strncmp(buf,msg,strlen(msg))) {
-	read_filter_defaults(fd);
-	d_print_done();
+
+    do {
+      retval=0;
+      if ((fd=open(prefs->fxdefsfile,O_RDONLY))==-1) {
+	retval=do_read_failed_error_s_with_retry(prefs->fxdefsfile,strerror(errno),NULL);
       }
-      else d_print_file_error_failed();
+      else {
+	mainw->read_failed=FALSE;
+	msg2=g_strdup_printf(_("Loading real time effect defaults from %s..."),prefs->fxdefsfile);
+	d_print(msg2);
+	g_free(msg2);
       
-      close(fd);
+	msg=g_strdup("LiVES filter defaults file version 1.1\n");
+	buf=g_malloc(strlen(msg));
+	bytes=read(fd,buf,strlen(msg));
       
-      g_free(buf);
-      g_free(msg);
-    }
+	if (bytes==strlen(msg)&&!strncmp(buf,msg,strlen(msg))) {
+	  if (read_filter_defaults(fd)) {
+	    d_print_done();
+	  }
+	  else {
+	    d_print_file_error_failed();
+	    retval=do_read_failed_error_s_with_retry(prefs->fxdefsfile,NULL,NULL);
+	  }
+	}
+	else {
+	  d_print_file_error_failed();
+	  if (bytes<strlen(msg)) {
+	    retval=do_read_failed_error_s_with_retry(prefs->fxdefsfile,NULL,NULL);
+	  }
+	}
+
+	close(fd);
+	
+	g_free(buf);
+	g_free(msg);
+      }
+    } while (retval==LIVES_RETRY);
   }
 
+
+
   if (prefs->fxsizesfile==NULL) {
-    prefs->fxsizesfile=g_strdup_printf("%s/%sfxsizes",capable->home_dir,LIVES_CONFIG_DIR);
+    prefs->fxsizesfile=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"fxsizes",NULL);
   }
 
   if (g_file_test(prefs->fxsizesfile,G_FILE_TEST_EXISTS)) {
-    if ((fd=open(prefs->fxsizesfile,O_RDONLY))==-1) {
-      msg=g_strdup_printf (_("\n\nUnable to read sizes file\n%s\nError code %d\n"),prefs->fxsizesfile,errno);
-      do_error_dialog (msg);
-      g_free (msg);
-      return;
-    }
-    
-    msg2=g_strdup_printf(_("Loading generator default sizes from %s..."),prefs->fxsizesfile);
-    d_print(msg2);
-    g_free(msg2);
-    
-    msg=g_strdup("LiVES generator default sizes file version 2\n");
-    buf=g_malloc(strlen(msg));
-    bytes=read(fd,buf,strlen(msg));
-    if (bytes==strlen(msg)&&!strncmp(buf,msg,strlen(msg))) {
-      if (bytes==strlen(msg)) {
-	read_generator_sizes(fd);
-	d_print_done();
+    do {
+      retval=0;
+      if ((fd=open(prefs->fxsizesfile,O_RDONLY))==-1) {
+	retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,strerror(errno),NULL);
+	if (retval==LIVES_CANCEL) return;
       }
-    }
-    else d_print_file_error_failed();
-    
-    close(fd);
-    
-    g_free(buf);
-    g_free(msg);
+      else {
+	msg2=g_strdup_printf(_("Loading generator default sizes from %s..."),prefs->fxsizesfile);
+	d_print(msg2);
+	g_free(msg2);
+	
+	msg=g_strdup("LiVES generator default sizes file version 2\n");
+	buf=g_malloc(strlen(msg));
+	bytes=read(fd,buf,strlen(msg));
+	if (bytes==strlen(msg)&&!strncmp(buf,msg,strlen(msg))) {
+	  if (read_generator_sizes(fd)) {
+	    d_print_done();
+	  }
+	  else {
+	    d_print_file_error_failed();
+	    retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,NULL,NULL);
+	  }
+	}
+	else {
+	  d_print_file_error_failed();
+	  if (bytes<strlen(msg)) {
+	    retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,NULL,NULL);
+	  }
+	}
+	close(fd);
+	
+	g_free(buf);
+	g_free(msg);
+      }
+    } while (retval==LIVES_RETRY);
   }
-
+  
   return;
 }
 
@@ -466,6 +488,7 @@ static gboolean read_perkey_defaults(int kfd, int key, int mode, int version) {
 
 
 gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
+  // show file errors at this level
   int modes=rte_getmodespk();
   int i;
   int kfd;
@@ -552,7 +575,8 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
     fclose (kfile);
 
-    if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 2")||!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
+    if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 2")||
+	!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
     if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 3")) update=2;
   }
   else {
@@ -578,15 +602,6 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       }
       
       array=g_strsplit (line,"|",-1);
-      
-      if (!strcmp(array[0],"defaults")) {
-	g_strfreev(array);
-	array=g_strsplit(line,"|",2);
-	if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
-	prefs->fxdefsfile=g_strdup(array[1]);
-	g_strfreev(array);
-	continue;
-      }
       
       if (!strcmp(array[0],"defaults")) {
 	g_strfreev(array);
@@ -659,7 +674,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free(hashname);
       if (keymap_file2!=NULL) {
 	// read param defaults
-	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break; // file read error
       }
       continue;
     }
@@ -674,7 +689,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free(hashname);
       if (keymap_file2!=NULL) {
 	// read param defaults
-	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break; // file read error
       }
       def_modes[key-1]--;
       continue;
@@ -692,7 +707,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free(hashname);
       if (keymap_file2!=NULL) {
 	// read param defaults
-	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break; // file read error
       }
       def_modes[key-1]--;
       continue;
@@ -706,7 +721,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free(tmp);
       if (keymap_file2!=NULL) {
 	// read param defaults
-	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break; // file read error
       }
       def_modes[key-1]--;
       continue;
@@ -717,7 +732,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free(tmp);
       if (keymap_file2!=NULL) {
 	// read param defaults
-	if (!read_perkey_defaults(kfd,-1,-1,version)) break;
+	if (!read_perkey_defaults(kfd,-1,-1,version)) break; // file read error
       }
       def_modes[key-1]--;
       continue;
@@ -730,7 +745,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (keymap_file2!=NULL) {
       // read param defaults
-      if (!read_perkey_defaults(kfd,key-1,def_modes[key-1],version)) break;
+      if (!read_perkey_defaults(kfd,key-1,def_modes[key-1],version)) break; // file read error
     }
   }
 
@@ -756,9 +771,10 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   if (mainw->is_ready) {
     check_clear_all_button();
-    if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),0,GTK_WINDOW(rte_window));
+    if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),
+							 0,GTK_WINDOW(rte_window));
   }
-  else load_rte_defs();
+  else load_rte_defs(); // file errors shown inside
   g_free(def_modes);
 
   return FALSE;

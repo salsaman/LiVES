@@ -89,7 +89,7 @@ mainwindow *mainw;
 
 static gboolean no_recover=FALSE,auto_recover=FALSE;
 static gboolean upgrade_error=FALSE;
-static gchar start_file[256];
+static gchar start_file[PATH_MAX];
 static gdouble start=0.;
 static gint end=0;
 
@@ -310,14 +310,14 @@ static gboolean pre_init(void) {
   // get some prefs we need to set menu options
   future_prefs->show_recent=prefs->show_recent=get_boolean_pref ("show_recent_files");
   
-  get_pref ("prefix_dir",prefs->prefix_dir,256);
+  get_pref ("prefix_dir",prefs->prefix_dir,PATH_MAX);
   
   if (!strlen (prefs->prefix_dir)) {
     if (strcmp (PREFIX,"NONE")) {
-      g_snprintf (prefs->prefix_dir,256,"%s",PREFIX);
+      g_snprintf (prefs->prefix_dir,PATH_MAX,"%s",PREFIX);
     }
     else {
-      g_snprintf (prefs->prefix_dir,256,"%s",PREFIX_DEFAULT);
+      g_snprintf (prefs->prefix_dir,PATH_MAX,"%s",PREFIX_DEFAULT);
     }
     needs_update=TRUE;
   }
@@ -327,10 +327,10 @@ static gboolean pre_init(void) {
   
   needs_update=FALSE;
   
-  get_pref ("lib_dir",prefs->lib_dir,256);
+  get_pref ("lib_dir",prefs->lib_dir,PATH_MAX);
   
   if (!strlen (prefs->lib_dir)) {
-    g_snprintf (prefs->lib_dir,256,"%s",LIVES_LIBDIR);
+    g_snprintf (prefs->lib_dir,PATH_MAX,"%s",LIVES_LIBDIR);
     needs_update=TRUE;
   }
   
@@ -1208,27 +1208,64 @@ static void lives_init(_ign_opts *ign_opts) {
 	}
       }
 
-      get_pref_utf8("vid_load_dir",prefs->def_vid_load_dir,256);
-      g_snprintf(mainw->vid_load_dir,256,"%s",prefs->def_vid_load_dir);
+      get_pref_utf8("vid_load_dir",prefs->def_vid_load_dir,PATH_MAX);
+      if (!strlen(prefs->def_vid_load_dir)) {
+#if GLIB_CHECK_VERSION(2,14,0)
+	g_snprintf(prefs->def_vid_load_dir,PATH_MAX,g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
+#else
+	g_snprintf(prefs->def_vid_load_dir,PATH_MAX,capable->home_dir);
+#endif
+	set_pref("vid_load_dir",prefs->def_vid_load_dir);
+      }
+      g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",prefs->def_vid_load_dir);
       ensure_isdir(mainw->vid_load_dir);
 
-      get_pref_utf8("vid_save_dir",prefs->def_vid_save_dir,256);
-      g_snprintf(mainw->vid_save_dir,256,"%s",prefs->def_vid_save_dir);
+      get_pref_utf8("vid_save_dir",prefs->def_vid_save_dir,PATH_MAX);
+      if (!strlen(prefs->def_vid_save_dir)) {
+#if GLIB_CHECK_VERSION(2,14,0)
+	g_snprintf(prefs->def_vid_save_dir,PATH_MAX,g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
+#else
+	g_snprintf(prefs->def_vid_save_dir,PATH_MAX,capable->home_dir);
+#endif
+	set_pref("vid_save_dir",prefs->def_vid_save_dir);
+      }
+      g_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",prefs->def_vid_save_dir);
       ensure_isdir(mainw->vid_save_dir);
+
       
-      get_pref_utf8("audio_dir",prefs->def_audio_dir,256);
-      g_snprintf(mainw->audio_dir,256,"%s",prefs->def_audio_dir);
+      get_pref_utf8("audio_dir",prefs->def_audio_dir,PATH_MAX);
+      if (!strlen(prefs->def_audio_dir)) {
+#if GLIB_CHECK_VERSION(2,14,0)
+	g_snprintf(prefs->def_audio_dir,PATH_MAX,g_get_user_special_dir(G_USER_DIRECTORY_MUSIC));
+#else
+	g_snprintf(prefs->def_audio_dir,PATH_MAX,capable->home_dir);
+#endif
+	set_pref("audio_dir",prefs->def_audio_dir);
+      }
+      g_snprintf(mainw->audio_dir,PATH_MAX,"%s",prefs->def_audio_dir);
       ensure_isdir(mainw->audio_dir);
-      g_snprintf(mainw->xmms_dir,256,"%s",mainw->audio_dir);
+      g_snprintf(mainw->xmms_dir,PATH_MAX,"%s",mainw->audio_dir);
       
-      get_pref_utf8("image_dir",prefs->def_image_dir,256);
-      g_snprintf(mainw->image_dir,256,"%s",prefs->def_image_dir);
+      get_pref_utf8("image_dir",prefs->def_image_dir,PATH_MAX);
+      if (!strlen(prefs->def_image_dir)) {
+#if GLIB_CHECK_VERSION(2,14,0)
+	g_snprintf(prefs->def_image_dir,PATH_MAX,g_get_user_special_dir(G_USER_DIRECTORY_PICTURES));
+#else
+	g_snprintf(prefs->def_image_dir,PATH_MAX,capable->home_dir);
+#endif
+	set_pref("image_dir",prefs->def_image_dir);
+      }
+      g_snprintf(mainw->image_dir,PATH_MAX,"%s",prefs->def_image_dir);
       ensure_isdir(mainw->image_dir);
-      
-      get_pref_utf8("proj_dir",prefs->def_proj_dir,256);
-      g_snprintf(mainw->proj_load_dir,256,"%s",prefs->def_proj_dir);
+
+      get_pref_utf8("proj_dir",prefs->def_proj_dir,PATH_MAX);
+      if (!strlen(prefs->def_proj_dir)) {
+	g_snprintf(prefs->def_proj_dir,PATH_MAX,capable->home_dir);
+	set_pref("proj_dir",prefs->def_proj_dir);
+      }
+      g_snprintf(mainw->proj_load_dir,PATH_MAX,"%s",prefs->def_proj_dir);
       ensure_isdir(mainw->proj_load_dir);
-      g_snprintf(mainw->proj_save_dir,256,"%s",mainw->proj_load_dir);
+      g_snprintf(mainw->proj_save_dir,PATH_MAX,"%s",mainw->proj_load_dir);
       
       prefs->show_player_stats=get_boolean_pref ("show_player_stats");
       
@@ -1632,7 +1669,7 @@ capability *get_capabilities (void) {
   capable->can_write_to_config=FALSE;
   capable->can_read_from_config=FALSE;
 
-  g_snprintf(capable->home_dir,256,"%s",g_get_home_dir());
+  g_snprintf(capable->home_dir,PATH_MAX,"%s",g_get_home_dir());
 
   memset(capable->startup_msg,0,1);
 
@@ -2058,9 +2095,8 @@ static gboolean lives_startup(gpointer data) {
 
 
 int main (int argc, char *argv[]) {
-  gchar *myname;
   ssize_t mynsize;
-  gchar fbuff[512];
+  gchar fbuff[PATH_MAX];
 
   ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_aplayer=ign_opts.ign_stmode=ign_opts.ign_vppdefs=FALSE;
 
@@ -2098,7 +2134,7 @@ int main (int argc, char *argv[]) {
   // what's my name ?
   capable->myname_full=g_find_program_in_path(argv[0]);
 
-  if ((mynsize=readlink(capable->myname_full,fbuff,511))!=-1) {
+  if ((mynsize=readlink(capable->myname_full,fbuff,PATH_MAX))!=-1) {
     // no. i mean, what's my real name ?
     memset(fbuff+mynsize,0,1);
     g_free(capable->myname_full);
@@ -2106,10 +2142,10 @@ int main (int argc, char *argv[]) {
   }
 
   // what's my short name (without the path) ?
-  if ((myname=strrchr(capable->myname_full,'/'))==NULL) capable->myname=g_strdup(capable->myname_full);
-  else capable->myname=g_strdup(++myname);
+  capable->myname=g_strdup(g_path_skip_root(capable->myname_full));
 
-  g_set_application_name("LiVES");
+  /* TRANSLATORS: localised name may be used here */
+  g_set_application_name(_("LiVES"));
 
 
   // format is:
@@ -2180,8 +2216,8 @@ int main (int argc, char *argv[]) {
 	}
 	if (!strcmp(charopt,"tmpdir")) {
 	  // override tempdir setting
-	  g_snprintf(prefs->tmpdir,256,"%s",optarg);
-	  g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
+	  g_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
+	  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 	  set_pref("session_tempdir",prefs->tmpdir);
 	  continue;
 	}
@@ -2309,7 +2345,7 @@ int main (int argc, char *argv[]) {
       }
       if (optind<argc) {
 	// remaining opts are filename [start_time] [end_frame]
-	g_snprintf(start_file,256,"%s",argv[optind++]); // filename
+	g_snprintf(start_file,PATH_MAX,"%s",argv[optind++]); // filename
 	if (optind<argc) start=g_strtod(argv[optind++],NULL); // start time (seconds)
 	if (optind<argc) end=atoi(argv[optind++]); // number of frames
       }}}
@@ -3717,6 +3753,7 @@ void load_frame_image(gint frame) {
   gboolean was_preview;
   gchar *fname_next=NULL,*info_file=NULL;
   int weed_error;
+  int retval;
   void **pd_array;
   int layer_palette,cpal;
   gchar *img_ext=NULL;
@@ -3754,11 +3791,13 @@ void load_frame_image(gint frame) {
       // normal play
 
       if (G_UNLIKELY(mainw->nervous)) {
-	if ((mainw->actual_frame+=(-10+(int) (21.*rand()/(RAND_MAX+1.0))))>cfile->frames||mainw->actual_frame<1) mainw->actual_frame=frame;
+	if ((mainw->actual_frame+=(-10+(int) (21.*rand()/(RAND_MAX+1.0))))>cfile->frames||
+	    mainw->actual_frame<1) mainw->actual_frame=frame;
 	else {
 	  frame=mainw->actual_frame;
 #ifdef ENABLE_JACK
-	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->jackd!=NULL&&cfile->achans>0) {
+	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
+	      mainw->jackd!=NULL&&cfile->achans>0) {
 	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
@@ -3770,7 +3809,8 @@ void load_frame_image(gint frame) {
 	  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&mainw->pulsed!=NULL&&cfile->achans>0) {
+	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
+	      mainw->pulsed!=NULL&&cfile->achans>0) {
 
 	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
 	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
@@ -3800,13 +3840,16 @@ void load_frame_image(gint frame) {
       if ((mainw->record&&!mainw->record_paused)||mainw->record_starting) {
 	gint fg_file=mainw->current_file;
 	gint fg_frame=mainw->actual_frame;
-	gint bg_file=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL?mainw->blend_file:-1;
+	gint bg_file=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file&&
+	  mainw->files[mainw->blend_file]!=NULL?mainw->blend_file:-1;
 	gint bg_frame=bg_file>0&&bg_file!=mainw->current_file?mainw->files[bg_file]->frameno:0;
 	int numframes;
 	int *clips,*frames;
 	weed_plant_t *event_list;
 
-	if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(prefs->rec_opts&REC_EFFECTS&&bg_file!=-1&&(mainw->files[bg_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[bg_file]->clip_type!=CLIP_TYPE_FILE))) {
+	if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
+	    (prefs->rec_opts&REC_EFFECTS&&bg_file!=-1&&(mainw->files[bg_file]->clip_type!=CLIP_TYPE_DISK&&
+							mainw->files[bg_file]->clip_type!=CLIP_TYPE_FILE))) {
 	  // TODO - handle non-opening of scrap_file
 	  if (mainw->scrap_file==-1) open_scrap_file();
 	  fg_file=mainw->scrap_file;
@@ -3831,7 +3874,8 @@ void load_frame_image(gint frame) {
 	  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&prefs->rec_opts&REC_AUDIO&&mainw->rec_aclip!=-1) {
+	  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
+	      prefs->rec_opts&REC_AUDIO&&mainw->rec_aclip!=-1) {
 	    // get current seek postion
 	    pulse_get_rec_avals(mainw->pulsed);
 	  }
@@ -3859,9 +3903,12 @@ void load_frame_image(gint frame) {
 	    insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
 	    mainw->rec_aclip=-1;
 	  }
-	  framecount=g_strdup_printf(_("rec %9d/%d"),mainw->actual_frame,cfile->frames>mainw->actual_frame?cfile->frames:mainw->actual_frame); // translators: rec(ord)
+	  /* TRANSLATORS: rec(ord) */
+	  framecount=g_strdup_printf(_("rec %9d/%d"),mainw->actual_frame,
+				     cfile->frames>mainw->actual_frame?cfile->frames:mainw->actual_frame);
 	}
-	else (framecount=g_strdup_printf(_("!rec %9d/%d"),mainw->actual_frame,cfile->frames)); // out of memory (translators: rec(ord))
+	/* TRANSLATORS: out of memory (rec(ord)) */
+	else (framecount=g_strdup_printf(_("!rec %9d/%d"),mainw->actual_frame,cfile->frames));
 	g_free(clips);
 	g_free(frames);
       }
@@ -3898,9 +3945,10 @@ void load_frame_image(gint frame) {
     }
 
     if (was_preview) {
-      info_file=g_strdup_printf("%s/%s/.status",prefs->tmpdir,cfile->handle);
+      info_file=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
       // preview
-      if (prefs->safer_preview&&cfile->proc_ptr!=NULL&&cfile->proc_ptr->frames_done>0&&frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start)) {
+      if (prefs->safer_preview&&cfile->proc_ptr!=NULL&&cfile->proc_ptr->frames_done>0&&
+	  frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start)) {
 	mainw->cancelled=CANCEL_PREVIEW_FINISHED;
 	mainw->noswitch=noswitch;
 	if (framecount!=NULL) g_free(framecount);
@@ -3957,7 +4005,8 @@ void load_frame_image(gint frame) {
     }
 
     // maybe the performance finished and we weren't looping
-    if ((mainw->actual_frame<1||mainw->actual_frame>cfile->frames)&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
+    if ((mainw->actual_frame<1||mainw->actual_frame>cfile->frames)&&
+	(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
       if (img_ext!=NULL) g_free(img_ext);
       mainw->noswitch=noswitch;
       if (framecount!=NULL) g_free(framecount);
@@ -3969,7 +4018,11 @@ void load_frame_image(gint frame) {
 
     // frame_layer will in any case be equal to or smaller than this depending on maximum source frame size 
 
-    if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)))) {
+    if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&
+	  ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
+	   (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&
+	    mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
+	    mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)))) {
       get_max_opsize(&opwidth,&opheight);
     }
 
@@ -4004,7 +4057,9 @@ void load_frame_image(gint frame) {
 	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
 	    weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
 	    weed_set_int_value(layers[i],"frame",mainw->frame_index[i]);
-	    weed_set_int_value(layers[i],"current_palette",(mainw->clip_index[i]==-1||mainw->files[mainw->clip_index[i]]->img_type==IMG_TYPE_JPEG)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
+	    weed_set_int_value(layers[i],"current_palette",(mainw->clip_index[i]==-1||
+							    mainw->files[mainw->clip_index[i]]->img_type==
+							    IMG_TYPE_JPEG)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
 	    weed_set_voidptr_value(layers[i],"pixel_data",NULL);
 	  }
 	  layers[i]=NULL;
@@ -4076,8 +4131,12 @@ void load_frame_image(gint frame) {
 	  // check effect to see if it finished yet
 	  if ((fd=fopen(info_file,"r"))) {
 	    clear_mainw_msg();
-	    mainw->read_failed=FALSE;
-	    lives_fgets(mainw->msg,512,fd);
+	    do {
+	      retval=0;
+	      mainw->read_failed=FALSE;
+	      lives_fgets(mainw->msg,512,fd);
+	      if (mainw->read_failed) retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
+	    } while (retval==LIVES_RETRY);
 	    fclose(fd);
 	    if (!strncmp(mainw->msg,"completed",9)||!strncmp(mainw->msg,"error",5)) {
 	      // effect completed whilst we were busy playing a preview
@@ -4099,7 +4158,8 @@ void load_frame_image(gint frame) {
 	  }
 	  
 	  // or we reached the end of the preview
-	  if ((!cfile->opening&&frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start))||(cfile->opening&&(mainw->toy_type==LIVES_TOY_TV||!mainw->preview||mainw->effects_paused))) {
+	  if ((!cfile->opening&&frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start))||
+	      (cfile->opening&&(mainw->toy_type==LIVES_TOY_TV||!mainw->preview||mainw->effects_paused))) {
 	    if (mainw->toy_type==LIVES_TOY_TV) {
 	      // force a loop (set mainw->cancelled to 100 to play selection again)
 	      mainw->cancelled=CANCEL_KEEP_LOOPING;
@@ -4138,9 +4198,12 @@ void load_frame_image(gint frame) {
       mainw->fps_measure++;
     }
 
-    // OK. Here is the deal now. We have a layer from the current file, current frame. We will pass this into the effects, and we will get back a layer.
-    // The palette of the effected layer could be any Weed palette. We will pass the layer to all playback plugins.
-    // Finally we may want to end up with a GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL and we are in full screen mode).
+    // OK. Here is the deal now. We have a layer from the current file, current frame. 
+    // We will pass this into the effects, and we will get back a layer.
+    // The palette of the effected layer could be any Weed palette. 
+    // We will pass the layer to all playback plugins.
+    // Finally we may want to end up with a GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL 
+    // and we are in full screen mode).
 
     if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&
 	!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
@@ -4256,7 +4319,9 @@ void load_frame_image(gint frame) {
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 
-      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),weed_get_int_value(mainw->frame_layer,"height",&weed_error),mainw->currticks-mainw->stream_ticks,pd_array,NULL)) {
+      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
+				       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+				       mainw->currticks-mainw->stream_ticks,pd_array,NULL)) {
 	vid_playback_plugin_exit();
       }
       weed_free(pd_array);
@@ -4270,7 +4335,8 @@ void load_frame_image(gint frame) {
 	mainw->frame_layer=NULL;
 	mainw->noswitch=noswitch;
 	
-	if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&mainw->current_file!=mainw->scrap_file) get_play_times();
+	if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
+	    mainw->current_file!=mainw->scrap_file) get_play_times();
 	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 	if (framecount!=NULL) g_free(framecount);
 	
@@ -4564,7 +4630,7 @@ void load_frame_image(gint frame) {
 					      mainw->playarea->allocation.width,
 					      mainw->playarea->allocation.height))!=NULL) {
       gchar fname[256];
-      g_snprintf(fname,256,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
+      g_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
       do {
 	if (gerror!=NULL) g_error_free(gerror);
 	if (!strcmp(prefs->image_ext,"jpg")) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, &gerror);
@@ -4589,7 +4655,7 @@ void load_frame_image(gint frame) {
 /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
 GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, GError **gerrorptr) {
-  // TODO ** - check for disk space errors
+  // CALLER should check for errors
 
   // fname should be in local charset
 
@@ -4677,7 +4743,8 @@ void close_current_file(gint file_to_switch_to) {
   if (mainw->current_file>-1) {
     int i;
     gchar *tmp;
-    if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&(mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
+    if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&
+	(mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
       d_print ((tmp=g_strdup_printf(_ ("Closed file %s\n"),cfile->file_name)));
       g_free(tmp);
 #ifdef ENABLE_OSC
@@ -4700,7 +4767,9 @@ void close_current_file(gint file_to_switch_to) {
       do {
 	if ((list_index=g_list_previous(list_index))==NULL) list_index=g_list_last (mainw->cliplist);
 	index=GPOINTER_TO_INT (list_index->data);
-      } while ((mainw->files[index]==NULL||mainw->files[index]->opening||mainw->files[index]->restoring||(index==mainw->scrap_file&&index>-1)||(!mainw->files[index]->frames&&mainw->playing_file>-1))&&index!=mainw->current_file);
+      } while ((mainw->files[index]==NULL||mainw->files[index]->opening||mainw->files[index]->restoring||
+		(index==mainw->scrap_file&&index>-1)||(!mainw->files[index]->frames&&mainw->playing_file>-1))&&
+	       index!=mainw->current_file);
       if (index==mainw->current_file) index=-1;
       if (mainw->current_file!=mainw->scrap_file) remove_from_winmenu();
     }
@@ -5166,7 +5235,11 @@ void do_quick_switch (gint new_file) {
   }
 
   // reset old info file
-  if (cfile!=NULL) g_snprintf(cfile->info_file,256,"%s/%s/.status",prefs->tmpdir,cfile->handle);
+  if (cfile!=NULL) {
+    gchar *tmp=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
+    g_snprintf(cfile->info_file,PATH_MAX,tmp);
+    g_free(tmp);
+  }
   osc_block=mainw->osc_block;
   mainw->osc_block=TRUE;
 

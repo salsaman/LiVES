@@ -187,10 +187,10 @@ weed_plant_t *add_filter_init_events (weed_plant_t *event_list, weed_timecode_t 
 void deinit_render_effects (void);
 
 gboolean write_filter_defaults (int fd, int idx);
-void read_filter_defaults(int fd);
+gboolean read_filter_defaults(int fd);
 
 gboolean write_generator_sizes (int fd, int idx);
-void read_generator_sizes(int fd);
+gboolean read_generator_sizes(int fd);
 
 gint step_val(gint val, gint step);
 

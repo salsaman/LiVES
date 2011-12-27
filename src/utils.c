@@ -797,41 +797,58 @@ void init_clipboard(void) {
 
 
 void d_print(const gchar *text) {
+  // print out output in the main message area (and info log)
+
+  
+
+  // there are several small tweaks for this:
+
+  // mainw->suppress_dprint :: TRUE - dont print anything, return (for silencing noisy message blocks)
+  // mainw->no_switch_dprint :: TRUE - disable printing of switch message when maine->current_file changes
+
+  // mainw->last_dprint_file :: clip number of last mainw->current_file;
+  gchar *switchtext,*tmp;
+
   GtkTextIter end_iter;
   GtkTextMark *mark;
+
+  GtkTextBuffer *tbuf=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
 
   if (!capable->smog_version_correct) return;
 
   if (mainw->suppress_dprint) return;
 
   if (GTK_IS_TEXT_VIEW (mainw->textview1)) {
-    gtk_text_buffer_get_end_iter(gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1)),&end_iter);
-    gtk_text_buffer_insert(gtk_text_view_get_buffer (GTK_TEXT_VIEW (mainw->textview1)),&end_iter,text,-1);
-    if (mainw->current_file!=mainw->last_dprint_file&&mainw->current_file!=0&&mainw->multitrack==NULL&&(mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&!mainw->no_switch_dprint) {
-      gchar *switchtext,*tmp;
+    gtk_text_buffer_get_end_iter(tbuf,&end_iter);
+    gtk_text_buffer_insert(tbuf,&end_iter,text,-1);
+    if (mainw->current_file!=mainw->last_dprint_file&&mainw->current_file!=0&&mainw->multitrack==NULL&&
+	(mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&!mainw->no_switch_dprint) {
       if (mainw->current_file>0) {
-	switchtext=g_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(cfile->name)):(tmp=g_strdup(cfile->name)));
+	switchtext=g_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),
+				    cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(cfile->name)):
+				    (tmp=g_strdup(cfile->name)));
 	g_free(tmp);
       }
       else {
 	switchtext=g_strdup (_ ("\n==============================\nSwitched to empty clip\n"));
       }
-      gtk_text_buffer_get_end_iter(gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1)),&end_iter);
-      gtk_text_buffer_insert(gtk_text_view_get_buffer (GTK_TEXT_VIEW (mainw->textview1)),&end_iter,switchtext,-1);
+      gtk_text_buffer_get_end_iter(tbuf,&end_iter);
+      gtk_text_buffer_insert(tbuf,&end_iter,switchtext,-1);
       g_free (switchtext);
     }
     if ((mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&
 	(!mainw->no_switch_dprint||mainw->current_file!=0)) mainw->last_dprint_file=mainw->current_file;
-    gtk_text_buffer_get_end_iter(gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1)),&end_iter);
-    mark=gtk_text_buffer_create_mark(gtk_text_view_get_buffer (GTK_TEXT_VIEW (mainw->textview1)),NULL,&end_iter,FALSE);
+    gtk_text_buffer_get_end_iter(tbuf,&end_iter);
+    mark=gtk_text_buffer_create_mark(tbuf,NULL,&end_iter,FALSE);
     gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW (mainw->textview1),mark);
-    gtk_text_buffer_delete_mark (gtk_text_view_get_buffer (GTK_TEXT_VIEW (mainw->textview1)),mark);
+    gtk_text_buffer_delete_mark (tbuf,mark);
   }
 }
 
 
 
-gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, gint clipno, gint frameno, gdouble atime, gboolean affects_current) {
+gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, gint clipno, 
+			gint frameno, gdouble atime, gboolean affects_current) {
   // potentially add a layout map error to the layout textbuffer
   GtkTextIter end_iter;
   gchar *text,*name2;
@@ -844,14 +861,18 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
   gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter);
 
   if (affects_current&&user_data==NULL) {
-    mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,(gpointer)gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
+    mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
+					       (gpointer)gtk_text_buffer_create_mark
+					       (GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
   }
 
   switch (lerror) {
   case LMAP_INFO_SETNAME_CHANGED:
     if (strlen(name)==0) name2=g_strdup(_("(blank)"));
     else name2=g_strdup(name);
-    text=g_strdup_printf(_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),name2,(gchar *)user_data);
+    text=g_strdup_printf
+      (_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),
+       name2,(gchar *)user_data);
     gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(name2);
     g_free(text);
@@ -899,7 +920,9 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
   }
 
   if (affects_current&&user_data!=NULL) {
-    mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,(gpointer)gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
+    mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
+					       (gpointer)gtk_text_buffer_create_mark
+					       (GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
   }
 
   switch (lerror) {
@@ -1025,6 +1048,12 @@ void clear_lmap_errors(void) {
 
 gboolean check_for_lock_file(const gchar *set_name, gint type) {
   // check for lock file
+  // do this via the back-end (smogrify)
+  // this allows for the locking scheme to be more flexible
+
+  // smogrify indicates a lock very simply by by writing >0 bytes to stdout
+  // we redirect the output to info_file and read it
+
   int info_fd;
   gchar *msg=NULL;
   size_t bytes;
@@ -1076,6 +1105,15 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
 
 
 gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
+  // check (clip) set names for validity
+  // - may not be of zero length
+  // - may not contain spaces or characters / \ * "
+  // - must NEVER be name of a set in use by another copy of LiVES (i.e. with a lock file)
+
+  // iff allow_dupes is FALSE then we disallow the name of any existing set (has a subdirectory in the working directory)
+
+
+
   gchar *msg;
   gchar *reject=" /\\*\"";
 
@@ -1090,10 +1128,12 @@ gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
     return FALSE;
   }
 
+  // check if this is a set in use by another copy of LiVES
   if (!check_for_lock_file(set_name,1)) return FALSE;
   
   if (!allow_dupes) {
-    gchar *set_dir=g_strdup_printf("%s/%s",prefs->tmpdir,set_name);
+    // check for duplicate set names
+    gchar *set_dir=g_build_filename(prefs->tmpdir,set_name,NULL);
     if (g_file_test(set_dir,G_FILE_TEST_IS_DIR)) {
       g_free(set_dir);
       msg=g_strdup_printf(_("\nThe set %s already exists.\nPlease choose another set name.\n"),set_name);
@@ -1108,9 +1148,20 @@ gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
 }
 
 
+
+
 gboolean check_frame_count(gint idx) {
   // check number of frames is correct
-  gchar *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
+  // for files of type CLIP_TYPE_DISK
+  // - check the image files (e.g. jpeg or png)
+
+  // use a "goldilocks" algorithm (just the right frames, not too few and not too many
+
+  // ingores gaps
+
+  // make sure nth frame is there...
+  gchar *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,
+			       mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
 
   if (!g_file_test(frame,G_FILE_TEST_EXISTS)) {
     // not enough frames
@@ -1119,7 +1170,9 @@ gboolean check_frame_count(gint idx) {
   }
   g_free(frame);
 
-  frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
+  // ...make sure n + 1 th frame is not
+  frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,
+			mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
   if (g_file_test(frame,G_FILE_TEST_EXISTS)) {
     // too many frames
     g_free(frame);
@@ -1127,6 +1180,7 @@ gboolean check_frame_count(gint idx) {
   }
   g_free(frame);
 
+  // just right
   return TRUE;
 }
 
@@ -1134,6 +1188,13 @@ gboolean check_frame_count(gint idx) {
 
 void get_frame_count(gint idx) {
   // sets mainw->files[idx]->frames with current framecount
+
+  // calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
+
+  // for CLIP_TYPE_DISK only
+
+  // (CLIP_TYPE_FILE should use the decoder plugin frame count)
+
   gint info_fd;
   int retval;
   size_t bytes;
@@ -1181,6 +1242,7 @@ void get_frame_count(gint idx) {
 
 void get_next_free_file(void) {
   // get next free file slot, or -1 if we are full
+  // can support MAX_FILES files (default 65536)
   while ((mainw->first_free_file!=-1)&&mainw->files[mainw->first_free_file]!=NULL) {
     mainw->first_free_file++;
     if (mainw->first_free_file>=MAX_FILES) mainw->first_free_file=-1;
@@ -1191,10 +1253,9 @@ void get_next_free_file(void) {
 void get_dirname(gchar *filename) {
   gchar *tmp;
   // get directory name from a file
-  //filename should point to gchar[256]
-  // TODO - use PATH_MAX
+  //filename should point to gchar[PATH_MAX]
 
-  g_snprintf (filename,256,"%s%s",(tmp=g_path_get_dirname (filename)),G_DIR_SEPARATOR_S);
+  g_snprintf (filename,PATH_MAX,"%s%s",(tmp=g_path_get_dirname (filename)),G_DIR_SEPARATOR_S);
   g_free(tmp);
 
   if (!strcmp(filename,"//")) {
@@ -1205,7 +1266,7 @@ void get_dirname(gchar *filename) {
   if (!strncmp(filename,"./",2)) {
     gchar *tmp1=g_get_current_dir(),*tmp=g_strdup_printf("%s/%s",tmp1,filename+2);
     g_free(tmp1);
-    g_snprintf(filename,256,"%s",tmp);
+    g_snprintf(filename,PATH_MAX,"%s",tmp);
     g_free(tmp);
   }
 }
@@ -1214,19 +1275,19 @@ void get_dirname(gchar *filename) {
 void get_basename(gchar *filename) {
   // get basename from a file
   // (filename without directory)
-  //filename should point to gchar[256]
+  //filename should point to gchar[PATH_MAX]
   gchar *tmp=g_path_get_basename(filename);
-  g_snprintf (filename,256,"%s",tmp);
+  g_snprintf (filename,PATH_MAX,"%s",tmp);
   g_free(tmp);
 }
 
 void get_filename(gchar *filename, gboolean strip_dir) {
   // get filename (part without extension) of a file
-  //filename should point to gchar[256]
+  //filename should point to gchar[PATH_MAX]
   gchar **array;
   if (strip_dir) get_basename(filename);
   array=g_strsplit(filename,".",-1);
-  g_snprintf(filename,256,"%s",array[0]);
+  g_snprintf(filename,PATH_MAX,"%s",array[0]);
   g_strfreev(array);
 }
 
@@ -1250,7 +1311,7 @@ gchar *ensure_extension(const gchar *fname, const gchar *ext) {
 
 gboolean ensure_isdir(gchar *fname) {
   // ensure dirname ends in a single dir separator
-  // fname should be gchar[256]
+  // fname should be gchar[PATH_MAX]
 
   // returns TRUE if fname was altered
 
@@ -1262,13 +1323,16 @@ gboolean ensure_isdir(gchar *fname) {
   if (offs==slen-2) return FALSE;
   memset(fname+offs+1,0,1);
   tmp=g_strdup_printf("%s%s",fname,G_DIR_SEPARATOR_S);
-  g_snprintf(fname,256,"%s",tmp);
+  g_snprintf(fname,PATH_MAX,"%s",tmp);
   g_free(tmp);
   return TRUE;
 }
 
 
 void get_location(const gchar *exe, gchar *val, gint maxlen) {
+  // find location of "exe" in path
+  // sets it in val which is a char array of maxlen bytes
+
   gchar *loc;
   if ((loc=g_find_program_in_path (exe))!=NULL) {
     g_snprintf (val,maxlen,"%s",loc);
@@ -1284,6 +1348,11 @@ gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
   // replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
   // used for layout.map file
   // return value should be g_free()'d
+
+  // fwd TRUE replaces "/tmp/foo" with "tmpdir"
+  // fwd FALSE replaces "tmpdir" with "/tmp/foo"
+
+
   gchar *string=g_strdup(entry);;
 
   if (fwd) {
@@ -1295,7 +1364,7 @@ gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
   else {
     if (!strncmp(entry,"tmpdir",6)) {
       g_free(string);
-      string=g_strdup_printf("%s%s",prefs->tmpdir,entry+6);
+      string=g_build_filename("%s%s",prefs->tmpdir,entry+6,NULL);
     }
   }
   return string;
@@ -1303,6 +1372,14 @@ gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
 
 
 void remove_layout_files(GList *map) {
+  // removes a GList of layouts from the set layout map
+
+  // removes from: - global layouts map
+  //               - disk
+  //               - clip layout maps
+
+  // called after, for example: a clip is removed or altered and the user opts to remove all associated layouts
+
   gchar *com,*msg;
   gchar *fname,*fdir;
   GList *lmap,*lmap_next,*cmap,*cmap_next,*map_next;
@@ -1334,6 +1411,8 @@ void remove_layout_files(GList *map) {
 	fname=repl_tmpdir(map->data,FALSE);
       }
 
+      // fname should now hold the layout name on disk
+
       msg=g_strdup_printf(_("Removing layout %s\n"),fname);
       d_print(msg);
       g_free(msg);
@@ -1343,23 +1422,39 @@ void remove_layout_files(GList *map) {
 	lives_system(com,TRUE);
 	g_free(com);
 	
+
+	// if no more layouts in parent dir, we can delete dir
+
+	// ensure that parent dir is below our own working dir
 	if (!strncmp(fname,prefs->tmpdir,strlen(prefs->tmpdir))) {
 	  // is in tmpdir, safe to remove parents
-	  com=g_strdup_printf("touch %s/noremove >/dev/null 2>&1",prefs->tmpdir);
+
+	  gchar *protect_file=g_build_filename(prefs->tmpdir,"noremove",NULL);
+
+	  mainw->com_failed=FALSE;
+	  // touch a file in tpmdir, so we cannot remove tmpdir itself
+	  com=g_strdup_printf("/bin/touch \"%s\" >/dev/null 2>&1",protect_file);
 	  lives_system(com,FALSE);
 	  g_free(com);
 	  
-	  fdir=g_path_get_dirname (fname);
-	  com=g_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
+	  if (!mainw->com_failed) {
+	    // ok, the "touch" worked
+	    // now we call rmdir -p : remove directory + any empty parents
+	    fdir=g_path_get_dirname (fname);
+	    com=g_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
+	    lives_system(com,TRUE);
+	    g_free(com);
+	    g_free(fdir);
+	  }
+
+	  // remove the file we touched to clean up
+	  com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",protect_file);
 	  lives_system(com,TRUE);
 	  g_free(com);
-	  g_free(fdir);
-	  
-	  com=g_strdup_printf("/bin/rm %s/noremove 2>/dev/null",prefs->tmpdir);
-	  lives_system(com,TRUE);
-	  g_free(com);
+	  g_free(protect_file);
 	}
 	
+
 	// remove from mainw->files[]->layout_map
 	for (i=1;i<=MAX_FILES;i++) {
 	  if (mainw->files[i]!=NULL) {
@@ -1383,11 +1478,16 @@ void remove_layout_files(GList *map) {
 	}
       }
       else {
+	// asked to remove the currently loaded layout
+
 	if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
+	  // we are in CE mode, so event_list is in storage
 	  stored_event_list_free_all(TRUE);
 	}
+	// in mt mode we need to do more
 	else remove_current_from_affected_layouts(mainw->multitrack);
 
+	// and we dont want to try reloading this next time
 	prefs->ar_layout=FALSE;
 	set_pref("ar_layout","");
 	memset(prefs->ar_layout_name,0,1);
@@ -2356,7 +2456,7 @@ after_foreign_play(void) {
 
   gchar *com;
   gchar **array;
-  gchar file_name[256];
+  gchar file_name[PATH_MAX];
 
   // assume for now we only get one clip passed back
   if ((capture_fd=open(capfile,O_RDONLY))>-1) {
@@ -2757,7 +2857,7 @@ gint lives_list_index (GList *list, const gchar *data) {
 
 void 
 add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *extra_params) {
-  gchar buff[256];
+  gchar buff[PATH_MAX];
   gchar *file,*tmp;
 
   if (frames>0) {

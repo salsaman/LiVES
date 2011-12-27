@@ -138,9 +138,30 @@ gboolean load_frame_index(gint fileno) {
 
 
 void del_frame_index(file *sfile) {
-  gchar *com=g_strdup_printf("/bin/rm -f %s/%s/file_index",prefs->tmpdir,sfile->handle);
+  // physically delete the frame_index for a clip
+  // only done once all
+
+  gchar *idxfile=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+  gchar *com=g_strdup_printf("/bin/rm -f \"%s\"",idxfile);
+
+  register int i;
+
+  // cannot call check_if_non_virtual() else we end up recursing
+
+  if (sfile->frame_index!=NULL) {
+    for (i=1;i<=sfile->frames;i++) {
+      if (sfile->frame_index[i-1]!=-1) {
+	LIVES_ERROR("deleting frame_index with virtual frames in it !");
+	g_free(com);
+	g_free(idxfile);
+	return;
+      }
+    }
+  }
+
   lives_system(com,FALSE);
   g_free(com);
+  g_free(idxfile);
   if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
   sfile->frame_index=NULL;
 }
@@ -150,29 +171,40 @@ void del_frame_index(file *sfile) {
 
 gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
   int i;
+  int empirical_img_type;
 
-  // check that cdata values match with sfile values
-  // also check sfile->frame_index to make sure all frames are present
+  // check clip integrity upon loading
+
+  // check that cached values match with sfile (on disk) values
+  // TODO: also check sfile->frame_index to make sure all frames are present
 
 
   // return FALSE if we find any omissions/inconsistencies
 
-  // TODO ***
 
-
-  // also check the image type
+  // check the image type
   for (i=0;i<sfile->frames;i++) {
     if (sfile->frame_index[i]==-1) {
+      // this is a non-virtual frame
       gchar *frame=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i+1);
-      if (g_file_test(frame,G_FILE_TEST_EXISTS)) sfile->img_type=IMG_TYPE_PNG;
-      else sfile->img_type=IMG_TYPE_JPEG;
+      if (g_file_test(frame,G_FILE_TEST_EXISTS)) empirical_img_type=IMG_TYPE_PNG;
+      else empirical_img_type=IMG_TYPE_JPEG;
       g_free(frame);
       break;
     }
   }
 
+
+  if (sfile->img_type==empirical_img_type);
+  // and all else are equal
+
   return TRUE;
 
+  // something mismatched - trust the disk version
+
+  sfile->img_type=empirical_img_type;
+
+  return FALSE;
 }
 
 
@@ -292,7 +324,13 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
 
 
 void insert_images_in_virtual (gint sfileno, gint where, gint frames) {
-  // insert (frames) images into sfile at position where [0 = before first frame]
+  // insert physical (frames) images into sfile at position where [0 = before first frame]
+  // this is the virtual (book-keeping) part
+
+  // need to update the frame_index
+
+  // this is for clip type CLIP_TYPE_FILE only
+
   register int i;
   file *sfile=mainw->files[sfileno];
   int nframes=sfile->frames;
@@ -322,6 +360,12 @@ void insert_images_in_virtual (gint sfileno, gint where, gint frames) {
 
 
 void delete_frames_from_virtual (gint sfileno, gint start, gint end) {
+  // delete (frames) images from sfile at position start to end
+  // this is the virtual (book-keeping) part
+
+  // need to update the frame_index
+
+  // this is for clip type CLIP_TYPE_FILE only
 
   register int i;
   file *sfile=mainw->files[sfileno];
@@ -353,6 +397,13 @@ void delete_frames_from_virtual (gint sfileno, gint start, gint end) {
 
 
 void restore_frame_index_back (gint sfileno) {
+  // undo an operation
+  // this is the virtual (book-keeping) part
+
+  // need to update the frame_index
+
+  // this is for clip type CLIP_TYPE_FILE only
+
   file *sfile=mainw->files[sfileno];
 
   if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
@@ -406,7 +457,7 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
       //      else {
 	// ...
       //}
-      com=g_strdup_printf("/bin/rm -f %s",iname);
+      com=g_strdup_printf("/bin/rm -f \"%s\"",iname);
       lives_system(com,FALSE);
       g_free(com);
     }
@@ -415,6 +466,8 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
 
 
 int *frame_index_copy(int *findex, gint nframes) {
+  // like it says on the label
+
   int *findexc=(int *)g_malloc(sizint*nframes);
   register int i;
 
@@ -425,6 +478,11 @@ int *frame_index_copy(int *findex, gint nframes) {
 
 
 gboolean is_virtual_frame(int sfileno, int frame) {
+  // frame is virtual if it is still inside a video clip (read only)
+  // once a frame is on disk as an image it is no longer virtual
+
+  // a CLIP_TYPE_FILE with no virtual frames becomes a CLIP_TYPE_DISK
+
   file *sfile=mainw->files[sfileno];
   if (sfile->frame_index==NULL) return FALSE;
   if (sfile->frame_index[frame-1]!=-1) return TRUE;

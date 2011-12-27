@@ -19,12 +19,18 @@ static jack_client_t *jack_transport_client;
 static unsigned char *zero_buff=NULL;
 static size_t zero_buff_count=0;
 
-static void check_zero_buff(size_t check_size) {
+static gboolean check_zero_buff(size_t check_size) {
   if (check_size>zero_buff_count) {
-    zero_buff=g_realloc(zero_buff,check_size);
-    memset(zero_buff+zero_buff_count,0,check_size-zero_buff_count);
-    zero_buff_count=check_size;
+    zero_buff=g_try_realloc(zero_buff,check_size);
+    if (zero_buff) {
+      memset(zero_buff+zero_buff_count,0,check_size-zero_buff_count);
+      zero_buff_count=check_size;
+      return TRUE;
+    }
+    zero_buff_count=0;
+    return FALSE;
   }
+  return TRUE;
 }
 
 gboolean lives_jack_init (void) {
@@ -41,25 +47,9 @@ gboolean lives_jack_init (void) {
 
     if (!g_file_test(prefs->jack_aserver,G_FILE_TEST_EXISTS)) {
       gchar *com;
-      gchar jackd_loc[512];
-      get_location("jackd",jackd_loc,512);
+      gchar jackd_loc[PATH_MAX];
+      get_location("jackd",jackd_loc,PATH_MAX);
       if (strlen(jackd_loc)) {
-	/*
-#ifndef IS_DARWIN
-	com=g_strdup_printf("echo \"%s -Z -r -d alsa\">%s",jackd_loc,prefs->jack_aserver);
-#else
-#ifdef IS_SOLARIS
-	// use OSS on Solaris
-	com=g_strdup_printf("echo \"%s -Z -d oss\">%s",jackd_loc,prefs->jack_aserver);
-#else
-	// use coreaudio on Darwin
-	com=g_strdup_printf("echo \"%s -Z -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
-#endif
-#endif
-	*/
-
-	// oops - jack removed the -Z option from jackd
-	// and broke backwards compatibility for existing apps...
 
 #ifndef IS_DARWIN
 	com=g_strdup_printf("echo \"%s -d alsa\">%s",jackd_loc,prefs->jack_aserver);
@@ -74,7 +64,7 @@ gboolean lives_jack_init (void) {
 #endif
 	lives_system(com,FALSE);
 	g_free(com);
-	com=g_strdup_printf("/bin/chmod o+x %s",prefs->jack_aserver);
+	com=g_strdup_printf("/bin/chmod o+x \"%s\"",prefs->jack_aserver);
 	lives_system(com,FALSE);
 	g_free(com);
       }
@@ -146,7 +136,8 @@ static void jack_transport_check_state (void) {
 
   jacktstate=jack_transport_query (jack_transport_client, &pos);
 
-  if (mainw->jack_can_start&&(jacktstate==JackTransportRolling||jacktstate==JackTransportStarting)&&mainw->playing_file==-1&&mainw->current_file>0&&!mainw->is_processing) {
+  if (mainw->jack_can_start&&(jacktstate==JackTransportRolling||jacktstate==JackTransportStarting)&&
+      mainw->playing_file==-1&&mainw->current_file>0&&!mainw->is_processing) {
     mainw->jack_can_start=FALSE;
     mainw->jack_can_stop=TRUE;
     on_playall_activate(NULL,NULL);
@@ -441,7 +432,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	    }
 	  }
 
-	  // TODO - why is this in the middle ?
+	  // TODO - look into refactoring
 	  if (jackd->mute) {
 	    if (shrink_factor>0.f) jackd->seek_pos+=in_bytes;
 	    if (jackd->seek_pos>=jackd->seek_end) {
@@ -528,7 +519,8 @@ static int audio_process (nframes_t nframes, void *arg) {
 	
 	inputFramesAvailable = cache_buffer->samp_space;
 #ifdef DEBUG_AJACK
-	g_printerr("%d inputFramesAvailable == %ld, %ld %ld,jackFramesAvailable == %ld\n", inputFramesAvailable, in_frames,jackd->sample_in_rate,jackd->sample_out_rate,jackFramesAvailable);
+	g_printerr("%d inputFramesAvailable == %ld, %ld %ld,jackFramesAvailable == %ld\n", inputFramesAvailable, 
+		   in_frames,jackd->sample_in_rate,jackd->sample_out_rate,jackFramesAvailable);
 #endif
 	
 	/* write as many bytes as we have space remaining, or as much as we have data to write */
@@ -549,10 +541,11 @@ static int audio_process (nframes_t nframes, void *arg) {
       vol=mainw->volume*mainw->volume; // TODO - we should really use a logarithmic scale
       
       if ( !from_memory && numFramesToWrite > 0 ) {
-	if (((gint)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
+	//	if (((gint)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
 	if (cache_buffer->bufferf!=NULL) {
 	  for (i=0;i<jackd->num_output_channels;i++) {
-	    sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite, jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, vol);
+	    sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite, 
+				  jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, vol);
 	  }
 
 	  if (jackd->astream_fd!=-1) {
@@ -564,8 +557,16 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      // need to remap channels to stereo (assumed for now)
 	      size_t bysize=4,tsize=0;
 	      unsigned char *inbuf=(unsigned char *)cache_buffer->buffer16[0];
-	      xbuf=g_malloc(nbytes);
-	      
+	      xbuf=g_try_malloc(nbytes);
+	      if (!xbuf) {
+		for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
+		
+		// external streaming
+		nbytes=numFramesToWrite*4;
+		if (check_zero_buff(nbytes))
+		  audio_stream(zero_buff,nbytes,jackd->astream_fd);
+		return 0;
+	      }
 	      if (jackd->num_output_channels==1) bysize=2;
 	      while (nbytes>0) {
 		memcpy(xbuf+tsize,inbuf,bysize);
@@ -612,8 +613,17 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      // need to remap channels to stereo (assumed for now)
 	      size_t bysize=4,tsize=0;
 	      unsigned char *inbuf=(unsigned char *)out_buffer;
-	      xbuf=g_malloc(nbytes);
-	      
+	      xbuf=g_try_malloc(nbytes);
+	      if (!xbuf) {
+		for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
+		
+		// external streaming
+		nbytes=numFramesToWrite*4;
+		if (check_zero_buff(nbytes))
+		  audio_stream(zero_buff,nbytes,jackd->astream_fd);
+		return 0;
+	      }
+
 	      if (jackd->num_output_channels==1) bysize=2;
 	      while (nbytes>0) {
 		memcpy(xbuf+tsize,inbuf,bysize);
@@ -664,7 +674,8 @@ static int audio_process (nframes_t nframes, void *arg) {
 #ifdef DEBUG_AJACK
       g_printerr("buffer underrun of %ld frames\n", jackFramesAvailable);
 #endif
-      for(i = 0 ; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i] + (nframes - jackFramesAvailable), jackFramesAvailable);
+      for(i = 0 ; i < jackd->num_output_channels; i++) 
+	sample_silence_dS(out_buffer[i] + (nframes - jackFramesAvailable), jackFramesAvailable);
 
       // external streaming
       nbytes=jackFramesAvailable*4;
@@ -673,7 +684,8 @@ static int audio_process (nframes_t nframes, void *arg) {
     }
 
   }
-  else if(jackd->state == JackTransportStarting || jackd->state == JackTransportStopped || jackd->state == JackTClosed || jackd->state == JackTReset) {
+  else if(jackd->state == JackTransportStarting || jackd->state == JackTransportStopped || 
+	  jackd->state == JackTClosed || jackd->state == JackTReset) {
 #ifdef DEBUG_AJACK
     g_printerr("PAUSED or STOPPED or CLOSED, outputting silence\n");
 #endif
@@ -765,13 +777,16 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   frames_out=(long)((gdouble)nframes/out_scale+1.);
 
-  holding_buff=g_malloc(frames_out*afile->achans*afile->asampsize/8);
+  holding_buff=g_try_malloc(frames_out*afile->achans*afile->asampsize/8);
+
+  if (!holding_buff) return 0;
 
   for (i=0;i<jackd->num_input_channels;i++) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
   }
 
-  frames_out=sample_move_float_int((void *)holding_buff,in_buffer,nframes,out_scale,afile->achans,afile->asampsize,out_unsigned,jackd->reverse_endian,1.);
+  frames_out=sample_move_float_int((void *)holding_buff,in_buffer,nframes,out_scale,afile->achans,
+				   afile->asampsize,out_unsigned,jackd->reverse_endian,1.);
 
   jackd->frames_written+=nframes;
 

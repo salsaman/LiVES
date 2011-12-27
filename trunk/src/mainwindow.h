@@ -1021,6 +1021,7 @@ extern GtkWidget *fx_dialog[2];
 
 
 #define LIVES_SIGKILL SIGKILL
+#define LIVES_SIGTERM SIGTERM
 #define LIVES_SIGQUIT SIGQUIT
 
 

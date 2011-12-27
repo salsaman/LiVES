@@ -250,13 +250,17 @@ gboolean rec(s_cam *cam) {
   gchar *tmp2,*tmp3,*com;
   gchar *splits;
 
+  if (cam->pgid!=0) return FALSE;
+
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dvgrabw->split))) splits=g_strdup("-autosplit ");
   else splits=g_strdup("");
 
   if (cam->format==CAM_FORMAT_DV) {
     // dv format
-    com=g_strdup_printf("dvgrab -format raw %s%s/%s >/dev/null 2>&1 &",splits,(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
-    lives_system (com,FALSE);
+    com=g_strdup_printf("dvgrab -format raw %s\"%s/%s\" >/dev/null 2>&1 &",splits,
+			(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+			(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+    cam->pgid=lives_fork (com);
     g_free(com);
     g_free(tmp2);
     g_free(tmp3);
@@ -265,8 +269,10 @@ gboolean rec(s_cam *cam) {
   }
 
   // hdv format
-  com=g_strdup_printf("dvgrab -format mpeg2 %s%s/%s >/dev/null 2>&1 &",splits,(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
-  lives_system (com,FALSE);
+  com=g_strdup_printf("dvgrab -format mpeg2 %s\"%s/%s\" >/dev/null 2>&1 &",splits,
+		      (tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+		      (tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+  cam->pgid=lives_fork (com);
   g_free(com);
   g_free(tmp2);
   g_free(tmp3);
@@ -309,6 +315,7 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
   dvgrabw->cursor=NULL;
   cam->format=type;
   cam->grabbed_clips=FALSE;
+  cam->pgid=0;
   gtk_widget_show (dvgrabw->window);
   dvgrabw->cam=cam;
 }

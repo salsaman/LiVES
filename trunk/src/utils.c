@@ -87,6 +87,25 @@ int lives_system(const char *com, gboolean allow_error) {
 
 
 
+pid_t lives_fork(const char *com) {
+  // returns a negative number which is the pgid to lives_kill
+  // to signal to sub process and all children
+  pid_t ret;
+
+  if (!(ret=fork())) {
+    setsid(); // create new session id
+    lives_system(com,TRUE);
+    _exit(0);
+  }
+  // wait a moment to get the child session id
+  g_usleep(prefs->sleep_time);
+  return -getpgid(ret);
+}
+
+
+
+
+
 ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) {
   ssize_t retval;
   retval=write(fd, buf, count);
@@ -1504,8 +1523,7 @@ void remove_layout_files(GList *map) {
 
 
 
-void
-get_play_times(void) {
+void get_play_times(void) {
   // update the on-screen timer bars,
   // and if we are not playing,
   // get play times for video, audio channels, and total (longest) time
@@ -1586,9 +1604,11 @@ get_play_times(void) {
   }
   if (cfile->achans>0) {
     if (mainw->playing_file>-1) {
-      offset_left=((mainw->playing_sel&&(prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?cfile->start-1.:mainw->audio_start-1.)/cfile->fps/cfile->total_time*allocwidth;
+      offset_left=((mainw->playing_sel&&(prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?
+		   cfile->start-1.:mainw->audio_start-1.)/cfile->fps/cfile->total_time*allocwidth;
       if (mainw->audio_end&&!mainw->loop) {
-	offset_right=(((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?cfile->end:mainw->audio_end)/cfile->fps/cfile->total_time*allocwidth;
+	offset_right=(((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?
+		      cfile->end:mainw->audio_end)/cfile->fps/cfile->total_time*allocwidth;
       }
       else {
 	offset_right=allocwidth*cfile->laudio_time/cfile->total_time;
@@ -1687,15 +1707,18 @@ get_play_times(void) {
       gtk_widget_queue_draw (mainw->hruler);
     }
     if (cfile->achans>0&&cfile->is_loaded) {
-      if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(mainw->event_list==NULL||!mainw->preview)) {
+      if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&
+	  (mainw->event_list==NULL||!mainw->preview)) {
 #ifdef ENABLE_JACK
 	if (mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
-	  offset=allocwidth*((gdouble)mainw->jackd->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8)/cfile->total_time;
+	  offset=allocwidth*((gdouble)mainw->jackd->seek_pos/cfile->arate/cfile->achans/
+			     cfile->asampsize*8)/cfile->total_time;
 	}
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	if (mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) {
-	  offset=allocwidth*((gdouble)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/cfile->asampsize*8)/cfile->total_time;
+	  offset=allocwidth*((gdouble)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/
+			     cfile->asampsize*8)/cfile->total_time;
 	}
 #endif
       }
@@ -1794,7 +1817,8 @@ get_play_times(void) {
 	  make_preview_box();
 	}
 	// and add it the play window
-	if (mainw->preview_box->parent==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
+	if (mainw->preview_box->parent==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||
+					       cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
 	  gtk_widget_queue_draw(mainw->play_window);
 	  gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
 	}
@@ -2044,7 +2068,8 @@ find_when_to_stop (void) {
   else if (cfile->opening_only_audio) mainw->whentostop=STOP_ON_AUD_END;
   else if (cfile->opening_audio) mainw->whentostop=STOP_ON_VID_END;
   else if (mainw->loop_cont&&!mainw->preview) mainw->whentostop=NEVER_STOP;
-  else if (cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)<MAX (cfile->laudio_time,cfile->raudio_time))) mainw->whentostop=STOP_ON_AUD_END;
+  else if (cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
+			      <MAX (cfile->laudio_time,cfile->raudio_time))) mainw->whentostop=STOP_ON_AUD_END;
   else mainw->whentostop=STOP_ON_VID_END; // tada...
 }
 
@@ -2736,7 +2761,8 @@ void show_manual_section (const gchar *lang, const gchar *section) {
   gchar *tmp=NULL,*tmp2=NULL;
   const gchar *link;
 
-  link=g_strdup_printf("%s%s%s%s",LIVES_MANUAL_URL,(lang==NULL?"":(tmp2=g_strdup_printf("//%s//",lang))),LIVES_MANUAL_FILENAME,(section==NULL?"":(tmp=g_strdup_printf("#%s",section))));
+  link=g_strdup_printf("%s%s%s%s",LIVES_MANUAL_URL,(lang==NULL?"":(tmp2=g_strdup_printf("//%s//",lang))),
+		       LIVES_MANUAL_FILENAME,(section==NULL?"":(tmp=g_strdup_printf("#%s",section))));
 
   activate_url_inner(link);
 
@@ -3095,9 +3121,12 @@ set_sel_label (GtkWidget *sel_label) {
     gtk_label_set_text(GTK_LABEL(sel_label),_ ("-------------Selection------------"));
   }
   else {
-    tstr=g_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-calc_time_from_frame (mainw->current_file,cfile->start));
+    tstr=g_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-
+			  calc_time_from_frame (mainw->current_file,cfile->start));
     frstr=g_strdup_printf ("%d",cfile->end-cfile->start+1);
-    gtk_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL))); // note to translators - try to keep the text of the middle part the same length, by deleing "-" if necessary
+
+    // TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
+    gtk_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL)));
     g_free(sy);
     g_free(sz);
 

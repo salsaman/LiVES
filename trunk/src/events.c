@@ -3545,6 +3545,9 @@ lives_render_error_t render_events (gboolean reset) {
       lives_system (com,FALSE);
       g_free (com);
       mainw->is_rendering=mainw->internal_messaging=FALSE;
+
+      // TODO - check for EOF
+
     }
     else g_snprintf(mainw->msg,512,"completed");
 
@@ -3806,6 +3809,9 @@ gboolean render_to_clip (gboolean new_clip) {
       com=g_strdup_printf("smogrify backup_audio %s",cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
+
+      // TODO - check for EOF
+
     }
     else {
       do_threaded_dialog(_("Clearing up clip..."),FALSE);

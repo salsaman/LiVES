@@ -1211,9 +1211,9 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref_utf8("vid_load_dir",prefs->def_vid_load_dir,PATH_MAX);
       if (!strlen(prefs->def_vid_load_dir)) {
 #if GLIB_CHECK_VERSION(2,14,0)
-	g_snprintf(prefs->def_vid_load_dir,PATH_MAX,g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
+	g_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
 #else
-	g_snprintf(prefs->def_vid_load_dir,PATH_MAX,capable->home_dir);
+	g_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 	set_pref("vid_load_dir",prefs->def_vid_load_dir);
       }
@@ -1223,9 +1223,9 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref_utf8("vid_save_dir",prefs->def_vid_save_dir,PATH_MAX);
       if (!strlen(prefs->def_vid_save_dir)) {
 #if GLIB_CHECK_VERSION(2,14,0)
-	g_snprintf(prefs->def_vid_save_dir,PATH_MAX,g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
+	g_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
 #else
-	g_snprintf(prefs->def_vid_save_dir,PATH_MAX,capable->home_dir);
+	g_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 	set_pref("vid_save_dir",prefs->def_vid_save_dir);
       }
@@ -1236,9 +1236,9 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref_utf8("audio_dir",prefs->def_audio_dir,PATH_MAX);
       if (!strlen(prefs->def_audio_dir)) {
 #if GLIB_CHECK_VERSION(2,14,0)
-	g_snprintf(prefs->def_audio_dir,PATH_MAX,g_get_user_special_dir(G_USER_DIRECTORY_MUSIC));
+	g_snprintf(prefs->def_audio_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_MUSIC));
 #else
-	g_snprintf(prefs->def_audio_dir,PATH_MAX,capable->home_dir);
+	g_snprintf(prefs->def_audio_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 	set_pref("audio_dir",prefs->def_audio_dir);
       }
@@ -1249,9 +1249,9 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref_utf8("image_dir",prefs->def_image_dir,PATH_MAX);
       if (!strlen(prefs->def_image_dir)) {
 #if GLIB_CHECK_VERSION(2,14,0)
-	g_snprintf(prefs->def_image_dir,PATH_MAX,g_get_user_special_dir(G_USER_DIRECTORY_PICTURES));
+	g_snprintf(prefs->def_image_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_PICTURES));
 #else
-	g_snprintf(prefs->def_image_dir,PATH_MAX,capable->home_dir);
+	g_snprintf(prefs->def_image_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 	set_pref("image_dir",prefs->def_image_dir);
       }
@@ -1260,7 +1260,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       get_pref_utf8("proj_dir",prefs->def_proj_dir,PATH_MAX);
       if (!strlen(prefs->def_proj_dir)) {
-	g_snprintf(prefs->def_proj_dir,PATH_MAX,capable->home_dir);
+	g_snprintf(prefs->def_proj_dir,PATH_MAX,"%s",capable->home_dir);
 	set_pref("proj_dir",prefs->def_proj_dir);
       }
       g_snprintf(mainw->proj_load_dir,PATH_MAX,"%s",prefs->def_proj_dir);
@@ -5237,7 +5237,7 @@ void do_quick_switch (gint new_file) {
   // reset old info file
   if (cfile!=NULL) {
     gchar *tmp=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
-    g_snprintf(cfile->info_file,PATH_MAX,tmp);
+    g_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
     g_free(tmp);
   }
   osc_block=mainw->osc_block;

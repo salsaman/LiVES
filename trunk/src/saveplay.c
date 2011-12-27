@@ -1076,7 +1076,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   gtk_widget_show_all(hbox);
 
   if (filename==NULL) {
-    gchar *ttl=g_strdup_printf (_("LiVES: Save Clip as..."));
+    gchar *ttl=g_strdup (_("LiVES: Save Clip as..."));
     do {
       n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,ttl,hbox);
       if (n_file_name==NULL) return;

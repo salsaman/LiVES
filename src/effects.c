@@ -216,6 +216,9 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   }
   else cfile->fx_frame_pump=0;
 
+
+  // TODO - check for EOF
+
   if (!do_progress_dialog(TRUE,TRUE,effectstring)||mainw->error) {
     mainw->last_dprint_file=ldfile;
     do_rfx_cleanup(rfx);
@@ -322,6 +325,9 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     lives_system(com,FALSE);
     g_free(com);
     mainw->keep_pre=FALSE;
+
+    // TODO - check for EOF
+
   }
 
   if (rfx->num_in_channels==0) {
@@ -541,6 +547,8 @@ lives_render_error_t realfx_progress (gboolean reset) {
     lives_system (com,FALSE);
     g_free (com);
     mainw->internal_messaging=FALSE;
+
+    // TODO - check for eof
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);

@@ -136,7 +136,8 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
   if (xbytes<=0) return;
   while (nbytes>0) {
     if (nbytes<xbytes) xbytes=nbytes;
-    buff=g_malloc0(xbytes);
+    buff=g_try_malloc0(xbytes);
+    if (!buff) return;
     if (pdriver->astream_fd!=-1) audio_stream(buff,xbytes,pdriver->astream_fd);
     pa_stream_write(pdriver->pstream,buff,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
     nbytes-=xbytes;
@@ -415,7 +416,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   pulsed->sound_buffer=buffer;
 	 }
 	 else {
-	   pulsed->sound_buffer=g_malloc0(pulsed->chunk_size);
+	   pulsed->sound_buffer=g_try_malloc0(pulsed->chunk_size);
+	   if (!pulsed->sound_buffer) return;
 
 	   if (pulsed->in_asamps==8) {
 	     sample_move_d8_d16 ((short *)(pulsed->sound_buffer),(guchar *)buffer, numFramesToWrite, in_bytes, shrink_factor, pulsed->out_achans, pulsed->in_achans, swap_sign?SWAP_U_TO_S:0);
@@ -453,7 +455,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     buffer=pulsed->sound_buffer;
 	   }
 	   else {
-	     buffer=g_malloc(xbytes);
+	     buffer=g_try_malloc(xbytes);
+	     if (!buffer) return;
 	     w_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
 	     offs+=xbytes;
 	     needs_free=TRUE;
@@ -463,7 +466,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	 }
 	 else {
 	   if (pulsed->read_abuf>-1&&!pulsed->mute) {
-	     shortbuffer=g_malloc0(xbytes);
+	     shortbuffer=g_try_malloc0(xbytes);
+	     if (!shortbuffer) return;
 	     sample_move_abuf_int16(shortbuffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
 	     if (pulsed->astream_fd!=-1) audio_stream(shortbuffer,xbytes,pulsed->astream_fd);
 	     pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
@@ -515,7 +519,9 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
 
   if (prb==0||mainw->rec_samples==0) return;
 
-  gbuf=(short *)g_malloc(prb);
+  gbuf=(short *)g_try_malloc(prb);
+
+  if (!gbuf) return;
 
   w_memcpy(gbuf,prbuf,prb-rbytes);
   if (rbytes>0) w_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
@@ -524,7 +530,9 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
 
   bytes_out=frames_out*afile->achans*(afile->asampsize>>3);
 
-  holding_buff=g_malloc(bytes_out);
+  holding_buff=g_try_malloc(bytes_out);
+
+  if (!holding_buff) return;
 
   if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
 

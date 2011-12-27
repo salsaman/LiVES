@@ -345,6 +345,8 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *filename;
   gchar *fname;
 
+  gchar *audio_real,*audio_fake;
+
   if (!do_yuv4m_open_warning()) return;
 
   fname=g_strdup(_("yuv4mpeg stream"));
@@ -399,20 +401,36 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
       mainw->pw_exp_is_blocked=TRUE;
     }
+
     // temp kludge, symlink audiodump.pcm to wav file, then pretend we are playing
     // an opening preview . Doesn't work with fifo.
     // and we dont really care if it doesnt work
-    lives_system ((tmp=g_strdup_printf ("/bin/ln -s %s/audiodump.pcm %s/%s/audiodump.pcm",prefs->tmpdir,prefs->tmpdir,cfile->handle)),FALSE);
+
+    audio_real=g_build_filename(prefs->tmpdir,"audiodump.pcm",NULL);
+    audio_fake=g_build_filename(prefs->tmpdir,cfile->handle,"audiodump.pcm",NULL);
+
+
+    // fake file will go away when we close the current clip
+    lives_system ((tmp=g_strdup_printf ("/bin/ln -s \"%s\" \"%s\" >/dev/null 2>&1",
+					audio_real,audio_fake)),TRUE);
+    g_free(audio_real);
+    g_free(audio_fake);
+
     g_free(tmp);
+
+    // start playing
     play_file();
+
     mainw->noswitch=FALSE;
   }
   // TODO - else...
   
-  if (mainw->current_file!=old_file&&mainw->current_file!=new_file) old_file=mainw->current_file; // we could have rendered to a new file
+  if (mainw->current_file!=old_file&&mainw->current_file!=new_file) 
+    old_file=mainw->current_file; // we could have rendered to a new file
 
   mainw->current_file=new_file;
 
+  // close this temporary clip
   close_current_file(old_file);
 
 }
@@ -617,7 +635,8 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     driver=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(tvcardw->combod))->entry)));
     outfmt=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(tvcardw->comboo))->entry)));
 
-    com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s %d %d %d %.3f %s %s",cfile->handle,chanstr,devstr,fifofile,input,width,height,fps,driver,outfmt);
+    com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s %d %d %d %.3f %s %s",cfile->handle,chanstr,
+			devstr,fifofile,input,width,height,fps,driver,outfmt);
     g_free(driver);
     g_free(outfmt);
 

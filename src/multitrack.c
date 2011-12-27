@@ -612,14 +612,13 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
 static void mt_load_recovery_layout(lives_mt *mt) {
     gchar *aload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
     gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+
     mt->auto_reloading=TRUE;
     mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
     mt->auto_reloading=FALSE;
     if (mt->event_list!=NULL) {
       unlink(eload_file);
       unlink(aload_file);
-      g_free(eload_file);
-      g_free(aload_file);
       mt_init_tracks(mt,TRUE);
       remove_markers(mt->event_list);
       save_mt_autoback(mt,0);
@@ -628,23 +627,27 @@ static void mt_load_recovery_layout(lives_mt *mt) {
       // failed to load
       // keep the faulty layout for forensic purposes
       gchar *com;
+      gchar *uldir=g_build_filename(prefs->tmpdir,"unrecoverable_layouts/",NULL);
 
-      com=g_strdup_printf("/bin/mkdir -p %s/unrecoverable_layouts/ 2>/dev/null",prefs->tmpdir);
+      com=g_strdup_printf("/bin/mkdir -p \"%s\" 2>/dev/null",uldir);
       lives_system(com,TRUE);
       g_free(com);
 
-      com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",eload_file,prefs->tmpdir);
+      com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",eload_file,uldir);
       lives_system(com,TRUE);
       g_free(com);
 
-      com=g_strdup_printf("/bin/mv %s %s/unrecoverable_layouts/",aload_file,prefs->tmpdir);
+      com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",aload_file,uldir);
       lives_system(com,TRUE);
       g_free(com);
 
       mt->fps=prefs->mt_def_fps;
-      g_free(eload_file);
-      g_free(aload_file);
+      g_free(uldir);
     }
+
+    g_free(eload_file);
+    g_free(aload_file);
+
 }
 
 
@@ -14179,6 +14182,9 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       com=g_strdup_printf("smogrify backup_audio %s",cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
+
+      // TODO - check for eof
+
     }
     mt->has_audio_file=TRUE;
   }
@@ -14291,6 +14297,9 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
   if (render_to_clip(FALSE)) {
+    // rendering was successful
+
+#if 0
     if (mt->pr_audio) {
       mt->pr_audio=FALSE;
       d_print_done();
@@ -14300,6 +14309,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       mt->idlefunc=mt_idle_add(mt);
       return;
     }
+#endif
 
     cfile->start=cfile->frames>0?1:0;
     cfile->end=cfile->frames;
@@ -14343,7 +14353,6 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       }
     }
 
-
     mainw->current_file=mainw->first_free_file;
     
     if (!get_new_handle(mainw->current_file,NULL)) {
@@ -14386,6 +14395,8 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else {
     gboolean render_audio=prefs->render_audio;
+    gchar *curtmpdir;
+    // rendering failed - clean up
 
     cfile->frames=cfile->start=cfile->end=0;
     mt->is_rendering=FALSE;
@@ -14398,8 +14409,10 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       mt->has_audio_file=had_audio;
     }
     else {
+      // remove subdir
       do_threaded_dialog(_("Cleaning up..."),FALSE);
-      com=g_strdup_printf("/bin/rm -rf %s/%s/*",prefs->tmpdir,cfile->handle);
+      curtmpdir=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+      com=g_strdup_printf("/bin/rm -rf \"%s/\"*",curtmpdir);
       lives_system(com,TRUE);
       g_free(com);
       end_threaded_dialog();
@@ -14407,6 +14420,8 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
     prefs->render_audio=render_audio;
   }
+
+  // enable GUI for next rendering
   gtk_widget_set_sensitive(mt->render_vid,TRUE);
   gtk_widget_set_sensitive(mt->render_aud,TRUE);
   gtk_widget_set_sensitive(mt->normalise_aud,TRUE);
@@ -17211,8 +17226,10 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   if (dir==NULL&&strlen(mainw->set_name)==0) return;
 
-  if (file!=NULL&&(mainw->current_layouts_map==NULL||!g_list_find(mainw->current_layouts_map,file))) mainw->current_layouts_map=g_list_append(mainw->current_layouts_map,g_strdup(file));
-  if (dir==NULL) ldir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,mainw->set_name);
+  if (file!=NULL&&(mainw->current_layouts_map==NULL||
+		   !g_list_find(mainw->current_layouts_map,file))) 
+    mainw->current_layouts_map=g_list_append(mainw->current_layouts_map,g_strdup(file));
+  if (dir==NULL) ldir=g_strdup_printf(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
   else ldir=g_strdup(dir);
 
   map_name=g_build_filename(ldir,"layout.map",NULL);
@@ -17307,12 +17324,11 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   if (size==0) unlink(map_name);
 
-  com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",ldir);
+  com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",ldir);
   lives_system(com,TRUE);
   g_free(com);
 
   g_free(ldir);
-
   g_free(map_name);
 }
 
@@ -17472,11 +17488,10 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     g_snprintf(mainw->set_name,256,"%s",new_set_name);
   }
 
-  esave_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,mainw->set_name);
-  com=g_strdup_printf ("/bin/mkdir -p %s",esave_dir);
+  esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
+  com=g_strdup_printf ("/bin/mkdir -p \"%s\"",esave_dir);
   lives_system (com,FALSE);
   g_free (com);
-
 
   
 
@@ -17518,12 +17533,12 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (esave_file==NULL) {
     gchar *cdir;
-    com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",esave_dir);
+    com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",esave_dir);
     lives_system(com,FALSE);
     g_free(com);
 
-    cdir=g_strdup_printf("%s/%s/",prefs->tmpdir,mainw->set_name);
-    com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",cdir);
+    cdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+    com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
     lives_system(com,FALSE);
     g_free(com);
 
@@ -18920,7 +18935,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   gchar *filt[]={"*.lay",NULL};
   gchar *startdir=NULL;
-  gchar *eload_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,mainw->set_name);
+  gchar *eload_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
   gchar *msg;
   gchar *com;
   gchar *eload_name;
@@ -18940,7 +18955,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   GtkWidget *hbox;
 
   mainw->com_failed=FALSE;
-  com=g_strdup_printf ("/bin/mkdir -p %s",eload_dir);
+  com=g_strdup_printf ("/bin/mkdir -p \"%s\"",eload_dir);
   lives_system (com,FALSE);
   g_free (com);
 
@@ -19009,12 +19024,12 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   if (eload_file==NULL) {
     gchar *cdir;
-    com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",eload_dir);
+    com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",eload_dir);
     lives_system(com,TRUE);
     g_free(com);
 
-    cdir=g_strdup_printf("%s/%s/",prefs->tmpdir,mainw->set_name);
-    com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",cdir);
+    cdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+    com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
     lives_system(com,TRUE);
     g_free(com);
 

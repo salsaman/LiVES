@@ -871,7 +871,9 @@ void add_message_scroller(GtkWidget *conter);
 void setenv(const char *name, const char *val, int _xx);
 #endif
 
+// system calls in utils.c
 int lives_system(const char *com, gboolean allow_error);
+pid_t lives_fork(const char *com);
 ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail);
 ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_fail);
 int lives_chdir(const char *path, gboolean allow_fail);
@@ -879,6 +881,7 @@ int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);
 
 char *filename_from_fd(char *val, int fd);
+
 
 LIVES_INLINE float LEFloat_to_BEFloat(float f);
 int lives_10pow(int pow);

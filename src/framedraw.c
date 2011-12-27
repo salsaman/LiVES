@@ -43,7 +43,7 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   while (g_main_context_iteration(NULL,FALSE));
 
   if (mainw->did_rfx_preview) {
-    lives_system(com,FALSE); // try to stop any in-progress preview
+    lives_system(com,TRUE); // try to stop any in-progress preview
     do_rfx_cleanup(rfx);
   }
 

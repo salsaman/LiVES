@@ -7852,7 +7852,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 
     if (mainw->toy_alives_pid!=0) {
       pid_t pgid=getpgid(mainw->toy_alives_pid);
-      lives_kill(-pgid,LIVES_SIGQUIT);
+      lives_kill(-pgid,LIVES_SIGTERM);
     }
     
     // switch off rte so as not to cause alarm

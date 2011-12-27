@@ -668,7 +668,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (key<1||key>prefs->rte_keys_virtual) {
       d_print((tmp=g_strdup_printf(_("Invalid key %d in %s\n"),key,keymap_file)));
-      g_printerr(tmp);
+      LIVES_ERROR(tmp);
       g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
@@ -683,7 +683,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (strncmp(hashname,"Weed",4)||strlen(hashname)<5) {
       d_print((tmp=g_strdup_printf(_("Invalid effect %s in %s\n"),hashname,keymap_file)));
-      g_printerr(tmp);
+      LIVES_ERROR(tmp);
       g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
@@ -701,7 +701,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if ((mode=weed_add_effectkey(key,whashname,TRUE))==-1) {
       // could not locate effect
       d_print((tmp=g_strdup_printf(_("Unknown effect %s in %s\n"),whashname,keymap_file)));
-      g_printerr(tmp);
+      LIVES_ERROR(tmp);
       g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
@@ -717,7 +717,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (mode==-2){
       d_print((tmp=g_strdup_printf(_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
-      g_printerr(tmp);
+      LIVES_ERROR(tmp);
       g_free(tmp);
       if (keymap_file2!=NULL) {
 	// read param defaults
@@ -728,7 +728,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
     if (mode==-3){
       d_print((tmp=g_strdup_printf(_("Too many effects bound to key %d.\n"),key)));
-      g_printerr(tmp);
+      LIVES_ERROR(tmp);
       g_free(tmp);
       if (keymap_file2!=NULL) {
 	// read param defaults

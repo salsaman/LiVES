@@ -537,7 +537,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   def_modes=(int *)g_malloc(prefs->rte_keys_virtual*sizint);
   for (i=0;i<prefs->rte_keys_virtual;i++) def_modes[i]=-1;
 
-  if (!g_file_test(keymap_file2,G_FILE_TEST_EXISTS)) {
+  if (g_file_test(keymap_file2,G_FILE_TEST_EXISTS)) {
     g_free(keymap_file);
     keymap_file=keymap_file2;
   }

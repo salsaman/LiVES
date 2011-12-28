@@ -1702,7 +1702,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->s = avformat_alloc_context();
 
   memset(&priv->matroska,0,sizeof(priv->matroska));
-  priv->matroska->current_id = 0;
+  priv->matroska.current_id = 0;
   priv->s->priv_data = &priv->matroska;
 
   av_init_packet(&priv->avpkt);

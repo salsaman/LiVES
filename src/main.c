@@ -468,6 +468,12 @@ static gboolean pre_init(void) {
   prefs->max_modes_per_key=0;
   mainw->debug=FALSE;
 
+  mainw->next_free_alarm=0;
+
+  for (i=0;i<LIVES_MAX_ALARMS;i++) {
+    mainw->alarms[i]=LIVES_NO_ALARM_TICKS;
+  }
+
   if (!strcasecmp(prefs->theme,"none")) return FALSE;
   return TRUE;
 
@@ -876,12 +882,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->toy_alives_pid=0;
   mainw->autolives_reset_fx=FALSE;
 
-  for (i=0;i<LIVES_MAX_ALARMS;i++) {
-    mainw->alarms[i]=LIVES_NO_ALARM_TICKS;
-  }
-
-  mainw->next_free_alarm=0;
-
   mainw->aplayer_broken=FALSE;
 
   mainw->com_failed=mainw->read_failed=mainw->write_failed=mainw->chdir_failed=FALSE;
@@ -891,6 +891,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->bad_aud_file=NULL;
 
   mainw->render_error=LIVES_RENDER_ERROR_NONE;
+  
+  mainw->is_exiting=FALSE;
   
   /////////////////////////////////////////////////// add new stuff just above here ^^
 

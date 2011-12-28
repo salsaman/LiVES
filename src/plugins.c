@@ -1022,7 +1022,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_show (vbox);
     gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
 
-    com=g_strdup_printf("echo -e \"%s\"",(*tmpvpp->get_rfx)());
+    com=g_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_rfx)());
 
     plugin_run_param_window(com,GTK_VBOX(vbox),&(vppa->rfx));
     g_free(com);
@@ -3444,6 +3444,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   gchar *rfxfile=g_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
   int res;
   gchar *com;
+  gchar *fnamex;
   gchar *res_string=NULL;
   gchar buff[32];
   int retval;
@@ -3473,7 +3474,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   } while (retval==LIVES_RETRY);
 
 
-  com=g_strdup_printf("\"%s\" >> \"%s\"", get_com, rfxfile);
+  com=g_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
   retval=lives_system(com,FALSE);
   g_free(com);
 
@@ -3512,7 +3513,9 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
 
     // get the delimiter
     rfxfile=g_strdup_printf("%ssmdef.%d",prefs->tmpdir,getpid());
-    com=g_strdup_printf("\"%s%s\" get_define > \"%s\"",prefs->tmpdir,rfx_scrapname,rfxfile);
+    fnamex=g_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
+    com=g_strdup_printf("\"%s\" get_define > \"%s\"",fnamex,rfxfile);
+    g_free(fnamex);
     retval=lives_system(com,FALSE);
     g_free(com);
 

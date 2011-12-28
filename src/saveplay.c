@@ -4708,7 +4708,7 @@ void recover_layout_map(numclips) {
 	      else lmap_entry->list=lmap_node_next;
 	      if (lmap_entry_list_next!=NULL) lmap_entry_list_next->prev=lmap_entry_list->prev;
 	      g_free(lmap_entry_list->data);
-	      g_free(lmap_entry_list);
+	      //g_free(lmap_entry_list);    // i don't know why, but this causes a segfault
 	    }
 	    g_strfreev(array);
 	    lmap_entry_list=lmap_entry_list_next;

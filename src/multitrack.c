@@ -17096,6 +17096,8 @@ GList *load_layout_map(void) {
 
   gboolean err=FALSE;
 
+  LIVES_DEBUG("a");
+
   if (!g_file_test(lmap_name,G_FILE_TEST_EXISTS)) {
     g_free(lmap_name);
     return NULL;

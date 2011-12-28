@@ -1469,11 +1469,8 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     }
   
     // check for layout maps
-    for (i=1;i<MAX_FILES;i++) {
-      if (mainw->files[i]!=NULL&&mainw->files[i]->layout_map!=NULL) {
+    if (mainw->current_layouts_map!=NULL) {
 	has_layout_map=TRUE;
-	break;
-      }
     }
 
     if (has_layout_map) {

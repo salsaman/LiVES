@@ -430,8 +430,11 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   int max_frame=0,tot_frames=0;
   int vend=cfile->start;
   int retval;
+  int alarm_handle;
   gint current_file=mainw->current_file;
+
   gboolean retb;
+  gboolean timeout;
 
   weed_timecode_t tc;
   const gchar *img_ext;
@@ -443,13 +446,36 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   clear_mainw_msg();
   mainw->write_failed=FALSE;
 
+
+#define LIVES_RFX_TIMEOUT 10*U_SEC
+
+  if (cfile->clip_type==CLIP_TYPE_FILE&&vend<=cfile->end) {
+    // pull some frames for 10 seconds
+    alarm_handle=lives_alarm_set(LIVES_RFX_TIMEOUT);
+    do {
+      while (g_main_context_iteration(NULL,FALSE));
+      if (is_virtual_frame(mainw->current_file,vend)) {
+	retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
+	if (!retb) return;
+      }
+      vend++;
+      timeout=lives_alarm_get(alarm_handle);
+    } while (vend<=cfile->end&&!timeout&&!mainw->cancelled);
+    lives_alarm_clear(alarm_handle);
+  }
+
+  if (mainw->cancelled) {
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    return;
+  }
+
   // get message from back end processor
   while (!(infofile=fopen(cfile->info_file,"r"))&&!mainw->cancelled) {
     // wait until we get at least 1 frame
     while (g_main_context_iteration(NULL,FALSE));
     if (cfile->clip_type==CLIP_TYPE_FILE&&vend<=cfile->end) {
       // if we have a virtual clip (frames inside a video file)
-      // pull some frames to images to get us started
+      // pull some more frames to images to get us started
       do {
 	retb=FALSE;
 	if (is_virtual_frame(mainw->current_file,vend)) {
@@ -470,6 +496,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   if (mainw->cancelled) {
     if (infofile) fclose(infofile);
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     return;
   }
 
@@ -503,6 +530,11 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       }
     }
   }
+  else {
+    max_frame=cfile->end;
+  }
+
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
   if (max_frame>0) {
     if (rfx->num_in_channels==0) {
@@ -533,7 +565,6 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   mainw->current_file=current_file;
   if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
 
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 
 

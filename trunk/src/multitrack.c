@@ -4345,14 +4345,15 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
   if (fd>0||mem!=NULL) event_list=weed_plant_deserialise(fd,mem);
   else event_list=mainw->stored_event_list;
 
-  mt->layout_set_properties=FALSE;
+  if (mt!=NULL) mt->layout_set_properties=FALSE;
 
   if (event_list==NULL||!WEED_PLANT_IS_EVENT_LIST(event_list)) {
     if (show_errors) d_print(_("invalid event list. Failed.\n"));
     return NULL;
   }
 
-  if (show_errors&&(!weed_plant_has_leaf(event_list,"fps")||(fps=weed_get_double_value(event_list,"fps",&error))<1.||fps>FPS_MAX)) {
+  if (show_errors&&(!weed_plant_has_leaf(event_list,"fps")||(fps=weed_get_double_value(event_list,"fps",&error))<1.||
+		    fps>FPS_MAX)) {
     d_print(_("event list has invalid fps. Failed.\n"));
     return NULL;
   }
@@ -4374,9 +4375,10 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
   }
   else if (!show_errors&&mem==NULL) return NULL; // no change needed
 
-  if (event_list==mainw->stored_event_list||!mt->ignore_load_vals) {
+  if (event_list==mainw->stored_event_list||(mt!=NULL&&!mt->ignore_load_vals)) {
     if (fps>-1) {
-      mt->fps=cfile->fps=cfile->pb_fps=fps;
+      cfile->fps=cfile->pb_fps=fps;
+      if (mt!=NULL) mt->fps=cfile->fps;
       cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
     }
 
@@ -4385,7 +4387,7 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
       gint width=weed_get_int_value(event_list,"width",&error);
       if (width>0) {
 	cfile->hsize=width;
-	mt->layout_set_properties=TRUE;
+	if (mt!=NULL) mt->layout_set_properties=TRUE;
       }
     }
     
@@ -4393,14 +4395,14 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
       gint height=weed_get_int_value(event_list,"height",&error);
       if (height>0) {
 	cfile->vsize=height;
-	mt->layout_set_properties=TRUE;
+	if (mt!=NULL) mt->layout_set_properties=TRUE;
       }
     }
     
     if (weed_plant_has_leaf(event_list,"audio_channels")) {
       gint achans=weed_get_int_value(event_list,"audio_channels",&error);
 
-      if (achans>=0) {
+      if (achans>=0&&mt!=NULL) {
 	if (achans>2) {
 	  gchar *err=g_strdup_printf(_("\nThis has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"),achans);
 	  d_print(err);
@@ -4417,7 +4419,7 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
       gint arate=weed_get_int_value(event_list,"audio_rate",&error);
       if (arate>0) {
 	cfile->arate=cfile->arps=arate;
-	mt->layout_set_properties=TRUE;
+	if (mt!=NULL) mt->layout_set_properties=TRUE;
       }
     }
     
@@ -4425,7 +4427,7 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
       gint asamps=weed_get_int_value(event_list,"audio_sample_size",&error);
       if (asamps==8||asamps==16) {
 	cfile->asampsize=asamps;
-	mt->layout_set_properties=TRUE;
+	if (mt!=NULL) mt->layout_set_properties=TRUE;
       }
       else if (cfile->achans>0) g_printerr("Layout has invalid sample size %d\n",asamps);
     }
@@ -4438,7 +4440,7 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
       else {
 	if (!(cfile->signed_endian&AFORM_UNSIGNED)) cfile->signed_endian|=AFORM_UNSIGNED;
       }
-      mt->layout_set_properties=TRUE;
+      if (mt!=NULL) mt->layout_set_properties=TRUE;
     }
     
     if (weed_plant_has_leaf(event_list,"audio_endian")) {
@@ -4449,17 +4451,17 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
       else {
 	if (!(cfile->signed_endian&AFORM_BIG_ENDIAN)) cfile->signed_endian|=AFORM_BIG_ENDIAN;
       }
-      mt->layout_set_properties=TRUE;
+      if (mt!=NULL) mt->layout_set_properties=TRUE;
     }
   }
   else {
     msg=set_values_from_defs(mt,FALSE);
     if (msg!=NULL) {
-      mt->layout_set_properties=TRUE;
+      if (mt!=NULL) mt->layout_set_properties=TRUE;
       g_free(msg);
     }
-
-    mt->fps=cfile->fps=cfile->pb_fps;
+    cfile->fps=cfile->pb_fps;
+    if (mt!=NULL) mt->fps=cfile->fps;
     cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
   }
 
@@ -5428,6 +5430,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->load_event_list = gtk_image_menu_item_new_with_mnemonic (_("_Load layout..."));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->load_event_list);
+  gtk_widget_set_sensitive (mt->load_event_list, strlen(mainw->set_name)>0);
 
   mt->clear_event_list = gtk_image_menu_item_new_with_mnemonic (_("_Wipe/Delete layout..."));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->clear_event_list);
@@ -15007,7 +15010,7 @@ void mt_sensitise (lives_mt *mt) {
     gtk_widget_set_sensitive(mt->avel_scale,TRUE);
   }
 
-  gtk_widget_set_sensitive (mt->load_event_list, TRUE);
+  gtk_widget_set_sensitive (mt->load_event_list, strlen(mainw->set_name)>0);
   gtk_widget_set_sensitive (mt->clipedit,TRUE);
   if (mt->file_selected>-1) {
     if (mainw->files[mt->file_selected]->frames>0) gtk_widget_set_sensitive (mt->insert,TRUE);
@@ -17430,6 +17433,8 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *layout_name;
   gchar xlayout_name[PATH_MAX];
 
+  mt_desensitise(mt);
+
   if (mt==NULL) {
     event_list=mainw->stored_event_list;
     layout_name=mainw->stored_layout_name;
@@ -17449,6 +17454,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     g_free(layout_map);
     g_free(layout_map_audio);
     mainw->cancelled=CANCEL_USER;
+    mt_sensitise(mt);
     return;
   }
 
@@ -17475,6 +17481,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  mt->idlefunc=0;
 	  mt->idlefunc=mt_idle_add(mt);
 	}
+	mt_sensitise(mt);
 	return;
       }
       g_snprintf(new_set_name,128,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
@@ -17493,8 +17500,6 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   com=g_strdup_printf ("/bin/mkdir -p \"%s\"",esave_dir);
   lives_system (com,FALSE);
   g_free (com);
-
-  
 
   ar_checkbutton = gtk_check_button_new ();
   eventbox=gtk_event_box_new();
@@ -17554,6 +17559,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (mt!=NULL) {
       mt->idlefunc=mt_idle_add(mt);
     }
+    mt_sensitise(mt);
     return;
   }
 
@@ -17577,7 +17583,10 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
     if (!retval||fd<0) {
       retval2=do_write_failed_error_s_with_retry(esave_file,(fd<0)?g_strerror(errno):NULL,NULL);
-      if (retval2==LIVES_CANCEL) return;
+      if (retval2==LIVES_CANCEL) {
+	mt_sensitise(mt);
+	return;
+      }
     }
   } while (retval2==LIVES_RETRY);
 
@@ -17613,6 +17622,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt->auto_changed=FALSE;
     mt->idlefunc=mt_idle_add(mt);
   }
+  mt_sensitise(mt);
 }
 
 

@@ -1795,8 +1795,8 @@ void do_mt_backup_space_error(lives_mt *mt, gint memreq_mb) {
 }
 
 gboolean do_set_rename_old_layouts_warning(const gchar *new_set) {
-  gchar *msg=g_strdup_printf(_("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nClick OK to delete them, Cancel to leave them on the disk.\n"),new_set);
-  gboolean retcode=do_warning_dialog(msg);
+  gchar *msg=g_strdup_printf(_("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),new_set);
+  gboolean retcode=do_yesno_dialog(msg);
   g_free(msg);
   return retcode;
 }

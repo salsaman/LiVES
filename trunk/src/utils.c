@@ -342,7 +342,7 @@ gboolean lives_alarm_get(int alarm_handle) {
     if (mainw->next_free_alarm==-1 || (alarm_handle<mainw->next_free_alarm)) {
       mainw->next_free_alarm=alarm_handle;
       mainw->alarms[alarm_handle]=LIVES_NO_ALARM_TICKS;
-      LIVES_WARN("Alarm reached");
+      LIVES_DEBUG("Alarm reached");
       return TRUE;
     }
 

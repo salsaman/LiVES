@@ -254,6 +254,7 @@ if (defined($ARGV[0])) {
 	&rc_set_if_not_set("save_directories","false");
 	&rc_set_if_not_set("stop_screensaver","true");
 	&rc_set_if_not_set("open_maximised","true");
+	&rc_set_if_not_set("filesel_maximised","true");
 	&rc_set_if_not_set("show_recent_files","true");
 	&rc_set_if_not_set("ce_maxspect","true");
 	&rc_set_if_not_set("lives_warning_mask",797696); # bits 19,18,13,11 and 10

@@ -955,7 +955,7 @@ void do_startup_interface_query(void) {
 
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
+  gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 200);
 
   if (palette->style&STYLE_1) {
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -1004,16 +1004,13 @@ void do_startup_interface_query(void) {
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
   radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
 
-  label=gtk_label_new(_("This is the best choice for simple editing tasks or for VJs\n"));
+  label=gtk_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
-
-
-
 
   radiobutton1 = gtk_radio_button_new(NULL);
 
@@ -1066,7 +1063,11 @@ void do_startup_interface_query(void) {
 
   gtk_widget_show_all(dialog);
 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radiobutton1))) future_prefs->startup_interface=prefs->startup_interface=STARTUP_MT;
+  gtk_dialog_run(GTK_DIALOG(dialog));
+
+
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radiobutton1))) 
+    future_prefs->startup_interface=prefs->startup_interface=STARTUP_MT;
   
   set_int_pref("startup_interface",prefs->startup_interface);
 

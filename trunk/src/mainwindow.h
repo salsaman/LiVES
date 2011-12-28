@@ -805,6 +805,7 @@ typedef struct {
   GtkWidget *resize_menuitem;
 
   gboolean only_close; ///< only close clips - do not exit
+  gboolean is_exiting; ///< set during shutdown (inverse of only_close then)
 
 #ifdef ENABLE_JACK
   jack_driver_t *jackd; ///< jack audio playback device

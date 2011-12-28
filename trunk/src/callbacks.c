@@ -46,6 +46,7 @@ on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
 
 void 
 lives_exit (void) {
+
   if (mainw->is_ready) {
     int i;
     gchar *com;
@@ -1398,6 +1399,8 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     stored_event_list_free_undos();
   }
   
+  // do not popu layout errors if the set name changes
+  if (!mainw->only_close) mainw->is_exiting=TRUE;
 
   if (mainw->scrap_file>-1) close_scrap_file();
 
@@ -4250,6 +4253,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
       // if target has layouts dir but no clips, it means we have old layouts !
       if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) {
 	if (do_set_rename_old_layouts_warning(mainw->set_name)) {
+	  // user answered "yes" - delete
 	  // clear old layout maps
 	  gchar *dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
 	  com=g_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null",dfile);
@@ -4462,7 +4466,9 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     g_free(layout_map_dir);
   }
 
-  if (mainw->current_layouts_map!=NULL&&strcmp(old_set,mainw->set_name)) {
+  if (mainw->current_layouts_map!=NULL&&strcmp(old_set,mainw->set_name)&&!mainw->is_exiting) {
+    // warn the user about layouts if the set name changed
+    // but, don't bother the user with errors if we are exiting
     add_lmap_error(LMAP_INFO_SETNAME_CHANGED,old_set,mainw->set_name,0,0,0.,FALSE);
     popup_lmap_errors(NULL,NULL);
   }

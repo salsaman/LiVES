@@ -239,7 +239,7 @@ delete_pref(const gchar *key) {
 
 void
 set_pref(const gchar *key, const gchar *value) {
-  gchar *com=g_strdup_printf("smogrify set_pref %s \"%s\"",key,value);
+  gchar *com=g_strdup_printf("smogrify set_pref \"%s\" \"%s\"",key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -1552,7 +1552,7 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
 
       gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
       
-      com=g_strdup_printf("%s check %d",astreamer,tmpvpp->audio_codec);
+      com=g_strdup_printf("\"%s\" check %d",astreamer,tmpvpp->audio_codec);
       g_free(astreamer);
       
       rfile=popen(com,"r");

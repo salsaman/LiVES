@@ -794,7 +794,7 @@ void init_clipboard(void) {
     // need to set current file to 0 before monitoring progress
     mainw->current_file=0;
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("smogrify delete_all %s",clipboard->handle);
+    com=g_strdup_printf("smogrify delete_all \"%s\"",clipboard->handle);
     unlink(clipboard->info_file);
     lives_system(com,FALSE);
     g_free(com);
@@ -1078,7 +1078,8 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
   size_t bytes;
 
   gchar *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("smogrify check_for_lock \"%s\" %s %d >%s",set_name,capable->myname,getpid(),info_file);
+  gchar *com=g_strdup_printf("smogrify check_for_lock \"%s\" \"%s\" %d >\"%s\"",set_name,capable->myname,
+			     getpid(),info_file);
 
   unlink(info_file);
   threaded_dialog_spin();
@@ -1104,7 +1105,8 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
 	threaded_dialog_spin();
       }
       else if (type==1) {
-	msg=g_strdup_printf(_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"),set_name);
+	msg=g_strdup_printf
+	  (_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"),set_name);
 	do_blocking_error_dialog(msg);
       }
       if (msg!=NULL) {
@@ -1218,7 +1220,7 @@ void get_frame_count(gint idx) {
   int retval;
   size_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("smogrify count_frames %s %s > \"%s\"",mainw->files[idx]->handle,
+  gchar *com=g_strdup_printf("smogrify count_frames \"%s\" \"%s\" > \"%s\"",mainw->files[idx]->handle,
 			     mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);
 
   mainw->com_failed=FALSE;
@@ -1234,7 +1236,7 @@ void get_frame_count(gint idx) {
     retval=0;
     info_fd=open(info_file,O_RDONLY);
     if (info_fd<0) {
-      retval=do_read_failed_error_s_with_retry(info_file,strerror(errno),NULL);
+      retval=do_read_failed_error_s_with_retry(info_file,g_strerror(errno),NULL);
     }
     else {
       if ((bytes=lives_read(info_fd,mainw->msg,256,TRUE))>0) {
@@ -2516,9 +2518,15 @@ after_foreign_play(void) {
 	    cfile->signed_endian=mainw->rec_signed_endian;
 	  }
 	  
-	  g_snprintf(file_name,256,"%s/%s/",prefs->tmpdir,cfile->handle);
+	  // TODO - dirsep
+
+	  g_snprintf(file_name,PATH_MAX,"%s/%s/",prefs->tmpdir,cfile->handle);
 	  
-	  com=g_strdup_printf("smogrify fill_and_redo_frames %s %d %d %d %s %.4f %d %d %d %d %d",cfile->handle,cfile->frames,mainw->foreign_width,mainw->foreign_height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),!(cfile->signed_endian&AFORM_BIG_ENDIAN));
+	  com=g_strdup_printf("smogrify fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
+			      cfile->handle,cfile->frames,mainw->foreign_width,mainw->foreign_height,
+			      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,
+			      cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),
+			      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
 	  unlink(cfile->info_file);
 	  mainw->com_failed=FALSE;
 	  lives_system(com,FALSE);
@@ -2704,14 +2712,14 @@ check_dir_access (const gchar *dir) {
   gboolean is_OK=FALSE;
 
   if (!exists) {
-    com=g_strdup_printf ("/bin/mkdir -p %s",dir);
+    com=g_strdup_printf ("/bin/mkdir -p \"%s\"",dir);
     lives_system (com,TRUE);
     g_free (com);
   }
   if (!g_file_test(dir, G_FILE_TEST_IS_DIR)) return FALSE;
 
-  testfile=g_strdup_printf ("%s/livestst.txt",dir);
-  com=g_strdup_printf ("touch %s",testfile);
+  testfile=g_build_filename (dir,"livestst.txt",NULL);
+  com=g_strdup_printf ("/bin/touch \"%s\"",testfile);
   lives_system (com,TRUE);
   g_free (com);
   if ((is_OK=g_file_test(testfile, G_FILE_TEST_EXISTS))) {
@@ -2719,7 +2727,7 @@ check_dir_access (const gchar *dir) {
   }
   g_free (testfile);
   if (!exists) {
-    com=g_strdup_printf ("/bin/rm -r %s",dir);
+    com=g_strdup_printf ("/bin/rm -r \"%s\"",dir);
     lives_system (com,TRUE);
     g_free (com);
   }
@@ -2745,7 +2753,7 @@ void activate_url_inner(const gchar *link) {
   gtk_show_uri(NULL,link,GDK_CURRENT_TIME,&err);
 #else
   gchar *com = getenv("BROWSER");
-  com = g_strdup_printf("%s '%s' &", com ? com : "gnome-open", link);
+  com = g_strdup_printf("\"%s\" '%s' &", com ? com : "gnome-open", link);
   lives_system(com,FALSE);
   g_free(com);
 #endif
@@ -3595,7 +3603,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   }
   else {
-    com=g_strdup_printf("smogrify set_clip_value %s %s \"%s\"",lives_header,key,myval);
+    com=g_strdup_printf("smogrify set_clip_value \"%s\" \"%s\" \"%s\"",lives_header,key,myval);
     lives_system(com,FALSE);
     g_free(com);
   }
@@ -3971,7 +3979,7 @@ gulong get_fs_free(const gchar *dir) {
   struct statvfs sbuf;
 
   if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
-    com=g_strdup_printf("/bin/mkdir -p %s",dir);
+    com=g_strdup_printf("/bin/mkdir -p \"%s\"",dir);
     lives_system(com,TRUE);
     g_free(com);
     if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
@@ -3988,7 +3996,7 @@ gulong get_fs_free(const gchar *dir) {
 
 
   if (must_delete) {
-    com=g_strdup_printf("/bin/rm -rf %s",dir);
+    com=g_strdup_printf("/bin/rm -rf \"%s\"",dir);
     lives_system(com,TRUE);
     g_free(com);
   }

@@ -203,8 +203,8 @@ typedef struct {
   gboolean ar_clipset;
   gboolean ar_layout;
 
-  gchar ar_clipset_name[128]; ///< utf8 (not converted)
-  gchar ar_layout_name[128];  ///< utf8 (not converted)
+  gchar ar_clipset_name[PATH_MAX]; ///< utf8 (not converted (to locale?))
+  gchar ar_layout_name[PATH_MAX];  ///< utf8 (not converted)
 
   gboolean rec_desktop_audio;
 

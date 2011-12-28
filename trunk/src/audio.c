@@ -1135,7 +1135,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
     retval=0;
     mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
     if (mainw->aud_rec_fd<0) {
-      retval=do_write_failed_error_s_with_retry(outfilename,strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	g_free(outfilename);
 	return;
@@ -1210,7 +1210,7 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
     retval=0;
     mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
     if (mainw->aud_rec_fd<0) {
-      retval=do_write_failed_error_s_with_retry(outfilename,strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	g_free(outfilename);
 	return;
@@ -2247,7 +2247,7 @@ void stop_audio_stream(void) {
     g_free(astream_name);
 
     // astreamer should remove cooked stream
-    com=g_strdup_printf("%s cleanup %d \"%s\"",astreamer,mainw->vpp->audio_codec,astream_name_out);
+    com=g_strdup_printf("\"%s\" cleanup %d \"%s\"",astreamer,mainw->vpp->audio_codec,astream_name_out);
     lives_system(com,FALSE);
     g_free(astreamer);
     g_free(com);

@@ -37,7 +37,7 @@ static gdouble calc_fd_scale(gint width, gint height) {
 
 static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   int i;
-  gchar *com=g_strdup_printf("smogrify stopsubsub %s 2>/dev/null",cfile->handle);
+  gchar *com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
 
   gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
   while (g_main_context_iteration(NULL,FALSE));
@@ -426,23 +426,19 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   GdkPixbuf *pixbuf;
   FILE *infofile=NULL;
+
   int max_frame=0,tot_frames=0;
   int vend=cfile->start;
   int retval;
   gint current_file=mainw->current_file;
+  gboolean retb;
+
   weed_timecode_t tc;
   const gchar *img_ext;
 
   if (mainw->framedraw_frame==0) mainw->framedraw_frame=1;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-
-  if (cfile->clip_type==CLIP_TYPE_FILE) {
-    // pull some frames to get started
-    vend=mainw->framedraw_frame+FX_FRAME_PUMP_VAL;
-    if (vend>cfile->end) vend=cfile->end;
-    virtual_to_images(mainw->current_file,mainw->framedraw_frame,vend,FALSE);
-  }
 
   clear_mainw_msg();
   mainw->write_failed=FALSE;
@@ -451,11 +447,20 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   while (!(infofile=fopen(cfile->info_file,"r"))&&!mainw->cancelled) {
     // wait until we get at least 1 frame
     while (g_main_context_iteration(NULL,FALSE));
-    if (cfile->clip_type==CLIP_TYPE_FILE) {
+    if (cfile->clip_type==CLIP_TYPE_FILE&&vend<=cfile->end) {
       // if we have a virtual clip (frames inside a video file)
       // pull some frames to images to get us started
-      if (vend<=cfile->end)
-	virtual_to_images(mainw->current_file,mainw->framedraw_frame,vend++,FALSE);
+      do {
+	retb=FALSE;
+	if (is_virtual_frame(mainw->current_file,vend)) {
+	  retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
+	  if (!retb) {
+	    fclose(infofile);
+	    return;
+	  }
+	}
+	vend++;
+      } while (vend<=cfile->end&&!retb);
     }
     else {
       // otherwise wait

@@ -233,6 +233,7 @@ create_LiVES (void)
   GdkPixbuf *pixbuf;
 
   gchar *tmp;
+  gchar *fnamex;
 
   stop_closure=NULL;
   fullscreen_closure=NULL;
@@ -1703,7 +1704,9 @@ create_LiVES (void)
   gtk_toolbar_set_icon_size (GTK_TOOLBAR(mainw->btoolbar),GTK_ICON_SIZE_MENU);
   
   if (capable->smog_version_correct) {
-    g_snprintf (buff,256,"%s%s/sepwin.png",prefs->prefix_dir,ICON_DIR);
+    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png");
+    g_snprintf (buff,PATH_MAX,"%s",fnamex);
+    g_free(fnamex);
     tmp_toolbar_icon=gtk_image_new_from_file (buff);
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(tmp_toolbar_icon));
@@ -1740,7 +1743,9 @@ create_LiVES (void)
     
     gtk_widget_set_sensitive(mainw->m_stopbutton,FALSE);
     
-    g_snprintf (buff,256,"%s%s/playsel.png",prefs->prefix_dir,ICON_DIR);
+    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"playsel.png");
+    g_snprintf (buff,PATH_MAX,"%s",fnamex);
+    g_free(fnamex);
     tmp_toolbar_icon=gtk_image_new_from_file (buff);
     
     mainw->m_playselbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
@@ -1750,7 +1755,9 @@ create_LiVES (void)
     gtk_widget_set_sensitive(mainw->m_playselbutton,FALSE);
 
 
-    g_snprintf (buff,256,"%s%s/loop.png",prefs->prefix_dir,ICON_DIR);
+    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"loop.png");
+    g_snprintf (buff,PATH_MAX,"%s",fnamex);
+    g_free(fnamex);
     tmp_toolbar_icon=gtk_image_new_from_file (buff);
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(tmp_toolbar_icon));
@@ -1761,7 +1768,9 @@ create_LiVES (void)
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),-1);
     gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_loopbutton),mainw->tooltips,_("Switch continuous looping on (o)"),"");
     
-    g_snprintf (buff,256,"%s%s/volume_mute.png",prefs->prefix_dir,ICON_DIR);
+    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"volume_mute.png");
+    g_snprintf (buff,PATH_MAX,"%s",fnamex);
+    g_free(fnamex);
     tmp_toolbar_icon=gtk_image_new_from_file (buff);
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(tmp_toolbar_icon));
@@ -1845,7 +1854,9 @@ create_LiVES (void)
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_bckground),1);
   gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_bckground),mainw->tooltips,_("Unblank background (b)"),"");
 
-  g_snprintf (buff,256,"%s%s/sepwin.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png");
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
   tmp_toolbar_icon=gtk_image_new_from_file (buff);
   if (g_file_test(buff,G_FILE_TEST_EXISTS)&&!mainw->sep_win) {
     pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(tmp_toolbar_icon));
@@ -1856,7 +1867,9 @@ create_LiVES (void)
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_sepwin),2);
   gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_sepwin),mainw->tooltips,_("Play in separate window (s)"),"");
 
-  g_snprintf (buff,256,"%s%s/zoom-in.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"zoom-in.png");
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
   tmp_toolbar_icon=gtk_image_new_from_file (buff);
   if (g_file_test(buff,G_FILE_TEST_EXISTS)&&!mainw->double_size) {
     pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(tmp_toolbar_icon));
@@ -1867,7 +1880,9 @@ create_LiVES (void)
 
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_double),3);
 
-  g_snprintf (buff,256,"%s%s/fullscreen.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"fullscreen.png");
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
   tmp_toolbar_icon=gtk_image_new_from_file (buff);
   if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
     pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(tmp_toolbar_icon));
@@ -3227,7 +3242,8 @@ make_preview_box (void) {
   GtkWidget *eventbox;
   GtkWidget *label;
 
-  gchar buff[256];
+  gchar buff[PATH_MAX];
+  gchar *fnamex;
 
   mainw->preview_box = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (mainw->preview_box);
@@ -3426,7 +3442,9 @@ make_preview_box (void) {
   gtk_widget_show (play_img);
   gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Play all"), NULL);
 
-  g_snprintf (buff,256,"%s%s/playsel.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"playsel.png");
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
   playsel_img=gtk_image_new_from_file (buff);
   mainw->p_playselbutton=gtk_button_new();
   gtk_widget_modify_bg (mainw->p_playselbutton, GTK_STATE_ACTIVE, &palette->menu_and_bars);
@@ -3438,7 +3456,9 @@ make_preview_box (void) {
   gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playselbutton,_ ("Play Selection"), NULL);
   gtk_widget_set_sensitive (mainw->p_playselbutton, cfile->frames>0);
 
-  g_snprintf (buff,256,"%s%s/loop.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"loop.png");
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
   loop_img=gtk_image_new_from_file (buff);
   mainw->p_loopbutton=gtk_button_new();
   gtk_widget_modify_bg (mainw->p_loopbutton, GTK_STATE_ACTIVE, &palette->menu_and_bars);
@@ -3450,7 +3470,9 @@ make_preview_box (void) {
   gtk_tooltips_set_tip (mainw->tooltips, mainw->p_loopbutton,_ ("Loop On/Off"), NULL);
   gtk_widget_set_sensitive (mainw->p_loopbutton, TRUE);
 
-  g_snprintf (buff,256,"%s%s/volume_mute.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"volume_mute.png");
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
   mainw->p_mute_img=gtk_image_new_from_file (buff);
   if (g_file_test(buff,G_FILE_TEST_EXISTS)&&!mainw->mute) {
     GdkPixbuf *pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(mainw->p_mute_img));

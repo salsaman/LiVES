@@ -812,7 +812,7 @@ gboolean process_one (gboolean visible) {
 	(cfile->progress_start+frames_done+FX_FRAME_PUMP_VAL>cfile->fx_frame_pump)) {
       gint vend=cfile->fx_frame_pump;
       gboolean retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
-      if (retb) cfile->fx_frame_pump=vend;
+      if (retb) cfile->fx_frame_pump=vend+1;
       else mainw->cancelled=CANCEL_ERROR;
       if (vend==cfile->end) cfile->fx_frame_pump=0; // all frames were realised
     }

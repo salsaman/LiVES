@@ -4237,7 +4237,7 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
     g_free(tmpx);
     g_free(tmp);
-    rfx_script_to=build_filename (rfx_dir_to,basename,NULL);
+    rfx_script_to=g_build_filename (rfx_dir_to,basename,NULL);
     g_free (rfx_dir_to);
     break;
   default :

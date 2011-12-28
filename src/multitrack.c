@@ -7684,9 +7684,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   mt->timeline_eb=NULL;
 
   if (prefs->ar_layout&&mt->event_list==NULL&&!mainw->recoverable_layout) {
-    gchar *tmp=g_strdup_printf("%s/%s/layouts/%s",prefs->tmpdir,mainw->set_name,prefs->ar_layout_name);
-    gchar *eload_file=subst(tmp,"//","/");
-    g_free(tmp);
+    gchar *eload_file=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",prefs->ar_layout_name,NULL);
     mt->auto_reloading=TRUE;
     set_pref("ar_layout",""); // in case we crash...
     mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
@@ -17226,6 +17224,8 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   if (dir==NULL&&strlen(mainw->set_name)==0) return;
 
+  // TODO - dirsep
+
   if (file!=NULL&&(mainw->current_layouts_map==NULL||
 		   !g_list_find(mainw->current_layouts_map,file))) 
     mainw->current_layouts_map=g_list_append(mainw->current_layouts_map,g_strdup(file));
@@ -17461,7 +17461,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     weed_set_string_value(event_list,"needs_set",mainw->set_name);
   }
   else {
-    gchar new_set_name[256];
+    gchar new_set_name[128];
     do {
       // prompt for a set name, advise user to save set
       renamew=create_rename_dialog(4);
@@ -17477,7 +17477,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	}
 	return;
       }
-      g_snprintf(new_set_name,256,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
+      g_snprintf(new_set_name,128,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
       if (mt!=NULL&&mt->idlefunc>0) g_source_remove(mt->idlefunc);
@@ -17486,7 +17486,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	mt->idlefunc=mt_idle_add(mt);
       }
     } while (!is_legal_set_name(new_set_name,FALSE));
-    g_snprintf(mainw->set_name,256,"%s",new_set_name);
+    g_snprintf(mainw->set_name,128,"%s",new_set_name);
   }
 
   esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
@@ -18930,13 +18930,11 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   // after loading we perform sophisticated checks on it to detect
   // and try to repair any errors in it
 
-  // following this we create
-
   int fd;
 
   gchar *filt[]={"*.lay",NULL};
   gchar *startdir=NULL;
-  gchar *eload_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
+  gchar *eload_dir;
   gchar *msg;
   gchar *com;
   gchar *eload_name;
@@ -18955,36 +18953,37 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   GtkWidget *label;
   GtkWidget *hbox;
 
-  mainw->com_failed=FALSE;
-  com=g_strdup_printf ("/bin/mkdir -p \"%s\"",eload_dir);
-  lives_system (com,FALSE);
-  g_free (com);
-
-
-  if (mainw->com_failed) {
-    g_free(eload_dir);
-    return NULL;
-  }
-
-  if (mt->idlefunc>0) {
-    g_source_remove(mt->idlefunc);
-    mt->idlefunc=0;
-  }
-
-  if (!mainw->recoverable_layout&&!g_file_test(eload_dir,G_FILE_TEST_IS_DIR)) {
-    g_free(eload_dir);
-    mt->idlefunc=mt_idle_add(mt);
-    return NULL;
-  }
-
-  if (mainw->was_set) startdir=g_strdup_printf("%s%s/",eload_dir,mainw->set_name);
-
-  if (!mainw->was_set||!g_file_test(startdir,G_FILE_TEST_IS_DIR)) {
-    if (startdir!=NULL) g_free(startdir);
-    startdir=g_strdup(eload_dir);
-  }
-
   if (eload_file==NULL) {
+    if (!strlen(mainw->set_name)) {
+      LIVES_ERROR("Loading event list for unknown set");
+      return NULL;
+    }
+
+    eload_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
+
+    mainw->com_failed=FALSE;
+    com=g_strdup_printf ("/bin/mkdir -p \"%s\"",eload_dir);
+    lives_system (com,FALSE);
+    g_free (com);
+    
+    if (mainw->com_failed) {
+      g_free(eload_dir);
+      return NULL;
+    }
+    
+    if (mt->idlefunc>0) {
+      g_source_remove(mt->idlefunc);
+      mt->idlefunc=0;
+    }
+    
+    if (!mainw->recoverable_layout&&!g_file_test(eload_dir,G_FILE_TEST_IS_DIR)) {
+      g_free(eload_dir);
+      mt->idlefunc=mt_idle_add(mt);
+      return NULL;
+    }
+
+    startdir=g_strdup(eload_dir);
+
     ar_checkbutton = gtk_check_button_new ();
     gtk_widget_show(ar_checkbutton);
     eventbox=gtk_event_box_new();
@@ -19006,24 +19005,28 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_widget_show(hbox);
-	
+    
     gtk_box_pack_start (GTK_BOX (hbox), ar_checkbutton, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
     GTK_WIDGET_SET_FLAGS (ar_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
     
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
     g_signal_connect (GTK_OBJECT (ar_checkbutton), "toggled",
-                      G_CALLBACK (on_autoreload_toggled),
-                      GINT_TO_POINTER(2));
+		      G_CALLBACK (on_autoreload_toggled),
+		      GINT_TO_POINTER(2));
     eload_file=choose_file(startdir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,hbox);
+
+    g_free(startdir);
   }
   else free_eload_file=FALSE;
-  g_free(startdir);
 
   ar_layout=prefs->ar_layout;
   prefs->ar_layout=orig_ar_layout;
 
   if (eload_file==NULL) {
+    // if the user cancelled see if we can clear the directories
+    // this will fail if there are any files in the directories
+
     gchar *cdir;
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",eload_dir);
     lives_system(com,TRUE);
@@ -19039,6 +19042,8 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     return NULL;
   }
 
+  if (free_eload_file) g_free(eload_dir);
+
   if (!mainw->recoverable_layout) eload_name=g_strdup(eload_file);
   else eload_name=g_strdup(_("auto backup"));
 
@@ -19046,7 +19051,6 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     msg=g_strdup_printf(_("\nUnable to load layout file %s\n"),eload_name);
     do_error_dialog_with_check_transient(msg,TRUE,0,GTK_WINDOW(mt->window));
     g_free(msg);
-    g_free(eload_dir);
     g_free(eload_name);
     return NULL;
   }
@@ -19081,7 +19085,6 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
       
       if (retval!=LIVES_RETRY) {
 	if (mt->is_ready) mt_sensitise(mt);
-	g_free(eload_dir);
 	g_free(eload_name);
 	return NULL;
       }
@@ -19096,7 +19099,6 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   msg=g_strdup_printf(_("Got %d events...processing..."),num_events);
   d_print(msg);
   g_free(msg);
-  g_free(eload_dir);
 
   mt->auto_changed=mt->changed=mainw->recoverable_layout;
 
@@ -19321,7 +19323,7 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
       return;
     }
 
-    lmap_file=g_strdup_printf("tmpdir/%s/layouts/%s",mainw->set_name,mt->layout_name);
+    lmap_file=g_build_filename("tmpdir",mainw->set_name,"layouts",mt->layout_name,NULL);
     layout_map=g_list_append(layout_map,lmap_file);
     remove_layout_files(layout_map);
     g_free(lmap_file);
@@ -19458,6 +19460,8 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 
   gchar *changefrom=NULL;
   size_t chlen;
+
+  // TODO - dirsep
 
   if (old_set_name!=NULL) {
     changefrom=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,old_set_name);

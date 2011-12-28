@@ -1097,7 +1097,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	else prefs->ar_clipset=FALSE;
       }
 
-      get_pref("ar_layout",prefs->ar_layout_name,128);
+      get_pref("ar_layout",prefs->ar_layout_name,PATH_MAX);
       if (strlen(prefs->ar_layout_name)) prefs->ar_layout=TRUE;
       else prefs->ar_layout=FALSE;
 

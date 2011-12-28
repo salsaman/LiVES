@@ -4832,8 +4832,9 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       // set to be opened
       memset(buff+strlen(buff)-2,0,1);
       last_was_normal_file=FALSE;
-      g_snprintf(mainw->set_name,256,"%s",buff);
-      if (!is_legal_set_name(mainw->set_name,TRUE)) continue;
+      if (!is_legal_set_name(buff,TRUE)) continue;
+      g_snprintf(mainw->set_name,128,"%s",buff);
+
       if (!on_load_set_ok(NULL,GINT_TO_POINTER(TRUE))) {
 	fclose(rfile);
 	end_threaded_dialog();
@@ -4895,7 +4896,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	threaded_dialog_spin();
 	array=g_strsplit(buffptr,"/clips/",-1);
 	mainw->was_set=TRUE;
-	g_snprintf(mainw->set_name,256,"%s",array[0]);
+	g_snprintf(mainw->set_name,128,"%s",array[0]);
 	g_strfreev(array);
 
 	if (!did_set_check&&!check_for_lock_file(mainw->set_name,0)) {

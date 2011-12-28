@@ -10,6 +10,8 @@ Fix audio encoding for webm format. *
 Fix encoding when up sampling with letterbox. *
 Fix remaining compilation issue in mkv_decoder.c *
 Robustness changes part 1. (check for read/write errors in front end)
+Robustness changes part 2. (check for system errors in front end)
+Major code cleanup for 1.6.0
 
 
 

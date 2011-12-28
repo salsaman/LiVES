@@ -161,7 +161,10 @@ lives_exit (void) {
 
     for (i=0;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {
-	if ((!mainw->leave_files&&!prefs->crash_recovery&&strlen(mainw->set_name)==0)||(!mainw->only_close&&(i==0||(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&mainw->files[i]->clip_type!=CLIP_TYPE_FILE)))||(i==mainw->scrap_file&&!mainw->leave_recovery)||(mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
+	if ((!mainw->leave_files&&!prefs->crash_recovery&&strlen(mainw->set_name)==0)||
+	    (!mainw->only_close&&(i==0||(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&
+					 mainw->files[i]->clip_type!=CLIP_TYPE_FILE)))||
+	    (i==mainw->scrap_file&&!mainw->leave_recovery)||(mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
 	  // close all open clips, except for ones we want to retain
 
 #ifdef HAVE_YUV4MPEG
@@ -1001,6 +1004,8 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     g_free(com);
     g_free(layout_map);
 
+    // TODO - dirsep
+
     cdir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips/",NULL);
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
     lives_system(com,TRUE);
@@ -1088,8 +1093,10 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
   unlink(info_file);
   g_free(info_file);
 
+  if (!is_legal_set_name(mainw->msg,TRUE)) return;
+
   new_set=g_strdup(mainw->msg);
-  set_dir=g_strdup_printf("%s/%s",prefs->tmpdir,new_set);
+  set_dir=g_build_filename(prefs->tmpdir,new_set,NULL);
 
   if (g_file_test(set_dir,G_FILE_TEST_IS_DIR)) {
     msg=g_strdup_printf(_("\nA set called %s already exists.\nIn order to import this project, you must rename or delete the existing set.\nYou can do this by File|Reload Set, and giving the set name\n%s\nthen File|Close/Save all Clips and provide a new set name or discard it.\nOnce you have done this, you will be able to import the new project.\n"),new_set,new_set);
@@ -4175,7 +4182,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   int retval;
   gchar *ordfile;
   gchar *ord_entry;
-  gchar new_set_name[256];
+  gchar new_set_name[128];
   gboolean response;
   gchar *msg,*extra;
   gchar *dfile,*osetn,*nsetn;
@@ -4213,26 +4220,26 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	g_free(renamew);
 	return;
       }
-      g_snprintf(new_set_name,256,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
+      g_snprintf(new_set_name,128,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
       while (g_main_context_iteration(NULL,FALSE));
     } while (!is_legal_set_name(new_set_name,TRUE));
   }
-  else g_snprintf(new_set_name,256,"%s",(gchar *)user_data);
+  else g_snprintf(new_set_name,128,"%s",(gchar *)user_data);
 
   gtk_widget_queue_draw (mainw->LiVES);
   while (g_main_context_iteration (NULL,FALSE));
 
-  g_snprintf(mainw->set_name,256,"%s",new_set_name);
+  g_snprintf(mainw->set_name,128,"%s",new_set_name);
 
   if (strcmp(mainw->set_name,old_set)) {
-    new_clips_dir=g_strdup_printf("%s/%s/clips/",prefs->tmpdir,mainw->set_name);
+    new_clips_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
     // check if target clips dir exists, ask if user wants to append files
     if (g_file_test(new_clips_dir,G_FILE_TEST_IS_DIR)) {
       g_free(new_clips_dir);
       if (!do_set_duplicate_warning(mainw->set_name)) {
-	g_snprintf(mainw->set_name,256,"%s",old_set);
+	g_snprintf(mainw->set_name,128,"%s",old_set);
 	return;
       }
       is_append=TRUE;
@@ -4313,6 +4320,8 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	if (mainw->write_failed) break;
 	threaded_dialog_spin();
 	while (g_main_context_iteration(NULL,FALSE));
+
+	// TODO - dirsep
 
 	i=GPOINTER_TO_INT(cliplist->data);
 	if (mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_FILE||

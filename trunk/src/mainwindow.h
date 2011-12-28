@@ -191,7 +191,7 @@ typedef struct {
   GList *cliplist;
 
   /// sets
-  gchar set_name[256];
+  gchar set_name[256];   // actually 128 is the limit now
 
   // playback
   gboolean faded;

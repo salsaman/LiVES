@@ -2064,7 +2064,7 @@ _entryw* create_rename_dialog (gint type) {
     gtk_entry_set_completion (GTK_ENTRY (renamew->entry), completion);
   }
   else {
-    renamew->entry = gtk_entry_new_with_max_length (type==6?255:128);
+    renamew->entry = gtk_entry_new_with_max_length (type==6?PATH_MAX:128);
     if (type==2&&strlen (mainw->set_name)) {
       gtk_entry_set_text (GTK_ENTRY (renamew->entry),mainw->set_name);
     }

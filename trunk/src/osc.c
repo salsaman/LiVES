@@ -4217,11 +4217,17 @@ void lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTimeT
   }
   lives_osc_parse_string_argument(vargs,setname);
 
-  g_snprintf(mainw->set_name,256,"%s",setname);
+  mainw->osc_auto=TRUE;
+  if (!is_legal_set_name(setname,TRUE)) {
+    mainw->osc_auto=FALSE;
+    return lives_osc_notify_failure();
+  }
+  mainw->osc_auto=FALSE;
+
+  g_snprintf(mainw->set_name,128,"%s",setname);
 
   on_load_set_ok(NULL,GINT_TO_POINTER((gint)FALSE));
   lives_osc_notify_success(NULL);
-
 
 }
 

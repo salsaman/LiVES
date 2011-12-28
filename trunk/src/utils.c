@@ -1107,7 +1107,7 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
       else if (type==1) {
 	msg=g_strdup_printf
 	  (_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"),set_name);
-	do_blocking_error_dialog(msg);
+	if (!mainw->osc_auto) do_blocking_error_dialog(msg);
       }
       if (msg!=NULL) {
 	g_free(msg);
@@ -1131,22 +1131,44 @@ gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
   // - may not contain spaces or characters / \ * "
   // - must NEVER be name of a set in use by another copy of LiVES (i.e. with a lock file)
 
+  // - as of 1.6.0:
+  // -  may not start with a .
+  // -  may not contain ..
+
+  // may not be longer than 128 chars
+
   // iff allow_dupes is FALSE then we disallow the name of any existing set (has a subdirectory in the working directory)
 
-
+  int i;
 
   gchar *msg;
   gchar *reject=" /\\*\"";
+  size_t slen=strlen(set_name);
 
-  if (!strlen(set_name)) {
-    do_blocking_error_dialog(_("\nSet names may not be blank.\n"));
+  if (slen==0) {
+    if (!mainw->osc_auto) do_blocking_error_dialog(_("\nSet names may not be blank.\n"));
     return FALSE;
   }
-  if (strcspn(set_name,reject)!=strlen(set_name)) {
+
+  if (slen>128) {
+    if (!mainw->osc_auto) do_blocking_error_dialog(_("\nSet names may not be longer than 128 characters.\n"));
+    return FALSE;
+  }
+
+  if (strcspn(set_name,reject)!=slen) {
     msg=g_strdup_printf(_("\nSet names may not contain spaces or the characters%s.\n"),reject);
-    do_blocking_error_dialog(msg);
+    if (!mainw->osc_auto) do_blocking_error_dialog(msg);
     g_free(msg);
     return FALSE;
+  }
+
+  for (i=0;i<slen;i+=2) {
+    if (set_name[i]=='.'&&((i==0||set_name[i-1]=='.')||(i<slen-1&&set_name[i+1]=='.'))) {
+      msg=g_strdup_printf(_("\nSet names may not start with a '.' or contain '..'\n"));
+      if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+      g_free(msg);
+      return FALSE;
+    }
   }
 
   // check if this is a set in use by another copy of LiVES

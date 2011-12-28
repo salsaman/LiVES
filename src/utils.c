@@ -1164,7 +1164,7 @@ gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
 
   for (i=0;i<slen;i+=2) {
     if (set_name[i]=='.'&&((i==0||set_name[i-1]=='.')||(i<slen-1&&set_name[i+1]=='.'))) {
-      msg=g_strdup_printf(_("\nSet names may not start with a '.' or contain '..'\n"));
+      msg=g_strdup(_("\nSet names may not start with a '.' or contain '..'\n"));
       if (!mainw->osc_auto) do_blocking_error_dialog(msg);
       g_free(msg);
       return FALSE;

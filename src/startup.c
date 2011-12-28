@@ -654,7 +654,7 @@ gboolean do_startup_tests(gboolean tshoot) {
     if (!mainw->write_failed) {
       abuff=calloc(44100,4);
       if (!abuff) {
-	tmp=g_strdup_printf(_("Unable to allocate 176400 bytes memory."));
+	tmp=g_strdup(_("Unable to allocate 176400 bytes memory."));
 	fail_test(table,1,tmp);
 	g_free(tmp);
       }

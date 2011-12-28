@@ -52,14 +52,14 @@ gboolean lives_jack_init (void) {
       if (strlen(jackd_loc)) {
 
 #ifndef IS_DARWIN
-	com=g_strdup_printf("echo \"%s -d alsa\">%s",jackd_loc,prefs->jack_aserver);
+	com=g_strdup_printf("echo \"%s -d alsa\">\"%s\"",jackd_loc,prefs->jack_aserver);
 #else
 #ifdef IS_SOLARIS
 	// use OSS on Solaris
-	com=g_strdup_printf("echo \"%s -d oss\">%s",jackd_loc,prefs->jack_aserver);
+	com=g_strdup_printf("echo \"%s -d oss\">\"%s\"",jackd_loc,prefs->jack_aserver);
 #else
 	// use coreaudio on Darwin
-	com=g_strdup_printf("echo \"%s -d coreaudio\">%s",jackd_loc,prefs->jack_aserver);
+	com=g_strdup_printf("echo \"%s -d coreaudio\">\"%s\"",jackd_loc,prefs->jack_aserver);
 #endif
 #endif
 	lives_system(com,FALSE);

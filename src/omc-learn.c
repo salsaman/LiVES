@@ -2365,7 +2365,7 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do {
     retval=0;
     if ((fd=open(save_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))<0) {
-      retval=do_write_failed_error_s_with_retry (save_file,strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry (save_file,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	g_free (save_file);
 	d_print_failed();

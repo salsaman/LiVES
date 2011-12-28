@@ -808,14 +808,13 @@ gboolean process_one (gboolean visible) {
 
     frames_done=cfile->proc_ptr->frames_done;
 
-    if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0&&cfile->progress_start+frames_done>=cfile->fx_frame_pump) {
-      gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
-      if (vend>cfile->progress_end) vend=cfile->progress_end;
-      if (vend>=cfile->fx_frame_pump) {
-	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend,FALSE);
-	cfile->fx_frame_pump=vend;
-      }
-      progress_count=PROG_LOOP_VAL;
+    if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0&&
+	(cfile->progress_start+frames_done+FRAME_PUMP_VAL>cfile->fx_frame_pump)) {
+      gint vend=cfile->fx_frame_pump;
+      gboolean retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
+      if (retb) cfile->fx_frame_pump=vend;
+      else mainw->cancelled=CANCEL_ERROR;
+      if (vend==cfile->end) cfile->fx_frame_pump=0; // all frames were realised
     }
 
   }
@@ -898,7 +897,38 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (cancellable) {
       gtk_widget_show (cfile->proc_ptr->cancel_button);
     }
-    else lives_set_cursor_style(LIVES_CURSOR_BUSY,GDK_WINDOW(cfile->proc_ptr->processing->window));
+    //else lives_set_cursor_style(LIVES_CURSOR_BUSY,GDK_WINDOW(cfile->proc_ptr->processing->window));
+
+
+
+
+
+    // if we have virtual frames make sure the first FRAME_PUMP_VAL are decoded for the backend
+    // as we are processing we will continue to decode 1 frame in time with the backend
+    // in this way we hope to stay ahead of the backend
+
+    // the backend can either restrict itself to processing in the range x -> x + (FRAME_PUMP_VAL) frames
+    // -> if it needs frames further in the range (like "jumble") it can check carefully and wait
+
+    // cfile->fx_frame_pump_val is currently only set for realtime effects and tools
+    // it is also used for resampling
+
+
+    // (encoding and copying have their own mechanism which realises all frames in the selection first) 
+
+    if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0) {
+      gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
+      if (vend>cfile->progress_end) vend=cfile->progress_end;
+      if (vend>=cfile->fx_frame_pump) {
+	for (i=cfile->fx_frame_pump;i<=vend;i++) {
+	  gboolean retb=virtual_to_images(mainw->current_file,i,i,FALSE);
+	  if (mainw->cancelled||!retb) return FALSE;
+	  while (g_main_context_iteration(NULL,FALSE));
+	}
+	cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
+      }
+    }
+
 
     if (cfile->opening&&(capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
 			 (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
@@ -909,14 +939,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       accelerators_swapped=TRUE;
     }
 
-    if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0) {
-      gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
-      if (vend>cfile->progress_end) vend=cfile->progress_end;
-      if (vend>=cfile->fx_frame_pump) {
-	virtual_to_images(mainw->current_file,cfile->fx_frame_pump,vend,FALSE);
-	cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
-      }
-    }
   }
 
   if (cfile->next_event!=NULL) event_start=get_event_timecode(cfile->next_event);

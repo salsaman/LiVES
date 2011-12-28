@@ -894,7 +894,9 @@ static void lives_init(_ign_opts *ign_opts) {
   
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
-  g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
+  // TODO - dirsep
+
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s/.info.%d",prefs->tmpdir,getpid());
   memset (mainw->set_name,0,1);
   mainw->clips_available=0;
 
@@ -1638,7 +1640,7 @@ capability *get_capabilities (void) {
   gchar *safer_bfile;
   gchar **array;
   
-  gchar buffer[8192];
+  gchar buffer[4096+PATH_MAX];
   FILE *bootfile;
   gchar string[256];
   int err;
@@ -1760,8 +1762,8 @@ capability *get_capabilities (void) {
 
   capable->smog_version_correct=TRUE;
 
-  g_snprintf(prefs->tmpdir,256,"%s",array[1]);
-  g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
+  g_snprintf(prefs->tmpdir,PATH_MAX,"%s",array[1]);
+  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 
   prefs->startup_phase=atoi (array[2]);
 
@@ -4629,7 +4631,7 @@ void load_frame_image(gint frame) {
 					      mainw->foreign_cmap,0,0,0,0,
 					      mainw->playarea->allocation.width,
 					      mainw->playarea->allocation.height))!=NULL) {
-      gchar fname[256];
+      gchar fname[PATH_MAX];
       g_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
       do {
 	if (gerror!=NULL) g_error_free(gerror);
@@ -4783,7 +4785,7 @@ void close_current_file(gint file_to_switch_to) {
     if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
 
     if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
-      com=g_strdup_printf("smogrify close %s",cfile->handle);
+      com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
       lives_system(com,TRUE);
       g_free(com); 
 

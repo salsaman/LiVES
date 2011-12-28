@@ -55,7 +55,8 @@ LIVES_INLINE gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdou
 
 /////////////////////////////////////////////////////
 
-gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, gint asigned, gboolean swap_endian) {
+gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, 
+			       gint asigned, gboolean swap_endian) {
   // do a block atomic: resample audio, then resample video/resize or joint resample/resize
 
   gchar *com,*msg=NULL;
@@ -118,7 +119,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  }
 
 	  if (!prefs->enc_letterbox) {
-	    com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+	    com=g_strdup_printf ("smogrify resize_all \"%s\" %d %d %d \"%s\"",cfile->handle,cfile->frames,width,height,
+				 cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	    msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	  }
 	  else {
@@ -131,7 +133,9 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	    }
 
 	    reorder_leave_back=TRUE;
-	    com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s %d %d",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
+	    com=g_strdup_printf ("smogrify resize_all \"%s\" %d %d %d \"%s\" %d %d",cfile->handle,
+				 cfile->frames,width,height,
+				 cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
 	    msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	  }
 
@@ -293,7 +297,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	}
 
 	if (!prefs->enc_letterbox) {
-	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+	  com=g_strdup_printf ("smogrify resize_all \"%s\" %d %d %d \"%s\"",cfile->handle,cfile->frames,width,height,
+			       cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	}
 	else {
@@ -305,7 +310,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	    iheight=-iheight;
 	  }
 
-	  com=g_strdup_printf ("smogrify resize_all %s %d %d %d %s %d %d",cfile->handle,cfile->frames,width,height,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
+	  com=g_strdup_printf ("smogrify resize_all \"%s\" %d %d %d \"%s\" %d %d",cfile->handle,cfile->frames,width,height,
+			       cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
 	  msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	}
 
@@ -746,14 +752,16 @@ on_resaudio_ok_clicked                      (GtkButton *button,
     aendian=!(cfile->undo1_uint&AFORM_BIG_ENDIAN);
   }
 
-  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))) {
+  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected
+							    (mainw->current_file,0.))) {
     if (!do_layout_alter_audio_warning()) {
       g_list_free_strings(mainw->xlays);
       g_list_free(mainw->xlays);
       mainw->xlays=NULL;
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
+		   cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
     g_list_free_strings(mainw->xlays);
     g_list_free(mainw->xlays);
@@ -770,12 +778,15 @@ on_resaudio_ok_clicked                      (GtkButton *button,
   cur_signed=!(cfile->signed_endian&AFORM_UNSIGNED);
   cur_endian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
 
-  if (!(arate==cfile->arate&&arps==cfile->arps&&achans==cfile->achans&&asampsize==cfile->asampsize&&asigned==cur_signed&&aendian==cur_endian)) {
+  if (!(arate==cfile->arate&&arps==cfile->arps&&achans==cfile->achans&&asampsize==cfile->asampsize&&
+	asigned==cur_signed&&aendian==cur_endian)) {
     if (cfile->arps!=cfile->arate) {
       gdouble audio_stretch=(gdouble)cfile->arps/(gdouble)cfile->arate;
      // pb rate != real rate - stretch to pb rate and resample 
       unlink (cfile->info_file);
-      com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d %.4f",cfile->handle,cfile->arps,cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,cfile->achans,cfile->asampsize,cur_signed,cur_endian,audio_stretch);
+      com=g_strdup_printf ("smogrify resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",cfile->handle,cfile->arps,
+			   cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,cfile->achans,cfile->asampsize,
+			   cur_signed,cur_endian,audio_stretch);
       mainw->com_failed=FALSE;
       lives_system (com,FALSE);
       if (mainw->com_failed) return;
@@ -785,12 +796,15 @@ on_resaudio_ok_clicked                      (GtkButton *button,
     }
     else {
       unlink (cfile->info_file);
-      com=g_strdup_printf ("smogrify resample_audio %s %d %d %d %d %d %d %d %d %d %d",cfile->handle,cfile->arps,cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,achans,asampsize,asigned,aendian);
+      com=g_strdup_printf ("smogrify resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",cfile->handle,cfile->arps,
+			   cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,achans,asampsize,asigned,aendian);
       mainw->com_failed=FALSE;
       lives_system (com,FALSE);
       if (mainw->com_failed) return;
       do_progress_dialog (TRUE,FALSE,_ ("Resampling audio"));
       g_free (com);
+
+      // TODO - check eof
     }
   }
 
@@ -2380,10 +2394,13 @@ gint reorder_frames(int rwidth, int rheight) {
   gchar **array;
   gchar *com;
 
-  if (rwidth*rheight==0) com=g_strdup_printf("smogrify reorder %s %s %d 0 0 %d %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,reorder_leave_back,cfile->frames);
+  if (rwidth*rheight==0) com=g_strdup_printf("smogrify reorder \"%s\" \"%s\" %d 0 0 %d %d",cfile->handle,
+					     cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,
+					     reorder_leave_back,cfile->frames);
   else {
     if (!prefs->enc_letterbox) {
-      com=g_strdup_printf("smogrify reorder %s %s %d %d %d 0 %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,cfile->frames);
+      com=g_strdup_printf("smogrify reorder \"%s\" \"%s\" %d %d %d 0 %d",cfile->handle,
+			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,cfile->frames);
     }
     else {
       int iwidth=cfile->hsize,iheight=cfile->vsize;
@@ -2394,7 +2411,9 @@ gint reorder_frames(int rwidth, int rheight) {
 	iheight=-iheight;
       }
   
-      com=g_strdup_printf("smogrify reorder %s %s %d %d %d %d %d %d %d",cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,reorder_leave_back,cfile->frames,iwidth,iheight);
+      com=g_strdup_printf("smogrify reorder \"%s\" \"%s\" %d %d %d %d %d %d %d",cfile->handle,
+			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,
+			  reorder_leave_back,cfile->frames,iwidth,iheight);
     }
   }
 
@@ -2444,6 +2463,8 @@ gint reorder_frames(int rwidth, int rheight) {
     cfile->nopreview=cfile->nokeep=FALSE;
   }
   g_free(com);
+
+  // chek for EOF TODO
   
   if (mainw->error) {
     do_error_dialog (_ ("\n\nLiVES was unable to reorder the frames."));
@@ -2486,7 +2507,8 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
     perf_start=(gint)(cfile->fps*(gdouble)time_start/U_SEC)+1;
     perf_end=perf_start+count_events (cfile->event_list,FALSE,0,0)-1;
   }
-  com=g_strdup_printf("smogrify deorder %s %d %d %d %s %d",cfile->handle,perf_start,cfile->frames,perf_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",leave_bak);
+  com=g_strdup_printf("smogrify deorder \"%s\" %d %d %d \"%s\" %d",cfile->handle,perf_start,cfile->frames,perf_end,
+		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",leave_bak);
 
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
@@ -2495,6 +2517,9 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
 
   do_progress_dialog(TRUE,FALSE,_ ("Deordering frames"));
   g_free(com);
+
+
+  // check for EOF
 
   if (cfile->frame_index_back!=NULL) {
     restore_frame_index_back(mainw->current_file);
@@ -2527,7 +2552,8 @@ gboolean resample_clipboard(gdouble new_fps) {
     mainw->current_file=0;
 
     // copy .mgk to .img_ext and .img_ext to .bak (i.e redo the resample)
-    com=g_strdup_printf("smogrify redo %s %d %d %s",cfile->handle,1,new_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+    com=g_strdup_printf("smogrify redo \"%s\" %d %d \"%s\"",cfile->handle,1,new_frames,
+			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     unlink(cfile->info_file);
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
@@ -2557,7 +2583,8 @@ gboolean resample_clipboard(gdouble new_fps) {
     if (clipboard->undo1_dbl<clipboard->fps) {
       gint old_frames=count_resampled_frames(clipboard->frames,clipboard->fps,clipboard->undo1_dbl);
       mainw->current_file=0;
-      com=g_strdup_printf("smogrify undo %s %d %d %s",cfile->handle,old_frames+1,cfile->frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+      com=g_strdup_printf("smogrify undo \"%s\" %d %d \"%s\"",cfile->handle,old_frames+1,cfile->frames,
+			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
       unlink(cfile->info_file);
       lives_system(com,FALSE);
       cfile->progress_start=old_frames+1;

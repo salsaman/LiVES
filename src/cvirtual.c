@@ -1,6 +1,6 @@
 // cvirtual.c
 // LiVES
-// (c) G. Finch 2008 - 2009 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -48,6 +48,7 @@ gboolean save_frame_index(gint fileno) {
   int retval;
   gchar *fname;
   file *sfile=mainw->files[fileno];
+
   if (sfile==NULL||sfile->frame_index==NULL) return FALSE;
 
   fname=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
@@ -56,7 +57,7 @@ gboolean save_frame_index(gint fileno) {
     retval=0;
     fd=open(fname,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
     if (fd<0) {
-      retval=do_write_failed_error_s_with_retry(fname,strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
     }
     else {
       mainw->write_failed=FALSE;
@@ -75,6 +76,8 @@ gboolean save_frame_index(gint fileno) {
 
   g_free(fname);
 
+  if (retval==LIVES_CANCEL) return FALSE;
+  
   return TRUE;
 }
 
@@ -106,7 +109,7 @@ gboolean load_frame_index(gint fileno) {
     fd=open(fname,O_RDONLY);
 
     if (fd<0) {
-      retval=do_read_failed_error_s_with_retry(fname,strerror(errno),NULL);
+      retval=do_read_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	g_free(fname);
 	return FALSE;
@@ -247,13 +250,15 @@ gboolean check_if_non_virtual(gint fileno, gint start, gint end) {
 
 
 
-void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_progress) {
+gboolean virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_progress) {
   // pull frames from a clip to images
   // from sframe to eframe inclusive (first frame is 1)
 
   // if update_progress, set mainw->msg with number of frames pulled
 
   // should be threadsafe apart from progress update
+
+  // return FALSE on write error
 
   register int i;
   file *sfile=mainw->files[sfileno];
@@ -298,6 +303,9 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
       if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
       pixbuf=NULL;
 
+      if (retval==LIVES_CANCEL) return FALSE;
+
+
       // another thread may have called check_if_non_virtual - TODO : use a mutex
       if (sfile->frame_index==NULL) break;
       sfile->frame_index[i-1]=-1;
@@ -312,12 +320,14 @@ void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_p
 
       if (mainw->cancelled!=CANCEL_NONE) {
 	if (!check_if_non_virtual(sfileno,1,sfile->frames)) save_frame_index(sfileno);
-	return;
+	return TRUE;
       }
     }
   }
 
-  if (!check_if_non_virtual(sfileno,1,sfile->frames)) save_frame_index(sfileno);
+  if (!check_if_non_virtual(sfileno,1,sfile->frames)) if (!save_frame_index(sfileno)) return FALSE;
+
+  return TRUE;
 }
 
 
@@ -467,6 +477,8 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
 
 int *frame_index_copy(int *findex, gint nframes) {
   // like it says on the label
+  // copy first nframes from findex and return them
+  // no checking is done to make sure nframes is in range
 
   int *findexc=(int *)g_malloc(sizint*nframes);
   register int i;
@@ -480,6 +492,8 @@ int *frame_index_copy(int *findex, gint nframes) {
 gboolean is_virtual_frame(int sfileno, int frame) {
   // frame is virtual if it is still inside a video clip (read only)
   // once a frame is on disk as an image it is no longer virtual
+
+  // frame starts at 1 here
 
   // a CLIP_TYPE_FILE with no virtual frames becomes a CLIP_TYPE_DISK
 

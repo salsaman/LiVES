@@ -485,7 +485,7 @@ typedef struct {
 
   gint fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
-#define FX_FRAME_PUMP_VAL 100 ///< how many frames at a time to pump to rfx
+#define FX_FRAME_PUMP_VAL 200 ///< how many frames to prime the pump for realtime effects and resampler
 
 #define IMG_BUFF_SIZE 4096 ///< chunk size for reading images
 

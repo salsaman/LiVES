@@ -618,7 +618,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
   if (!tvcardw->use_advanced) {
-    com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s",cfile->handle,chanstr,devstr,fifofile);
+    com=g_strdup_printf("smogrify open_tv_card \"%s\" \"%s\" \"%s\" \"%s\"",cfile->handle,chanstr,devstr,fifofile);
   }
   else {
     gdouble fps=0.;
@@ -635,7 +635,8 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     driver=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(tvcardw->combod))->entry)));
     outfmt=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(tvcardw->comboo))->entry)));
 
-    com=g_strdup_printf("smogrify open_tv_card %s \"%s\" %s %s %d %d %d %.3f %s %s",cfile->handle,chanstr,
+    com=g_strdup_printf("smogrify open_tv_card \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %.3f \"%s\" \"%s\"",
+			cfile->handle,chanstr,
 			devstr,fifofile,input,width,height,fps,driver,outfmt);
     g_free(driver);
     g_free(outfmt);
@@ -733,7 +734,7 @@ on_live_fw_activate                      (GtkMenuItem     *menuitem,
   unlink(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
-  com=g_strdup_printf("smogrify open_fw_card %s %d %d %s",cfile->handle,cardno,cache,fifofile);
+  com=g_strdup_printf("smogrify open_fw_card \"%s\" %d %d \"%s\"",cfile->handle,cardno,cache,fifofile);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   g_free(com);

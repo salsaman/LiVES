@@ -10,10 +10,10 @@
 
 void create_frame_index(gint fileno, gboolean init, gint start_offset, gint nframes);
 gboolean save_frame_index(gint fileno);
-gboolean load_frame_index(gint fileno);
+gboolean load_frame_index(gint fileno) WARN_UNUSED;
 gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata);
 
-void virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_progress);
+gboolean virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_progress) WARN_UNUSED;
 void delete_frames_from_virtual (gint sfileno, gint start, gint end);
 void insert_images_in_virtual (gint sfileno, gint where, gint frames);
 void del_frame_index(file *sfile);

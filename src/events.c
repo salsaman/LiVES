@@ -3096,7 +3096,7 @@ lives_render_error_t render_events (gboolean reset) {
   gint blend_file=mainw->blend_file;
   static gint frame;
   int hint;
-  gchar oname[256];
+  gchar oname[PATH_MAX];
   GError *error=NULL;
   weed_timecode_t tc;
   int key,idx;
@@ -3388,17 +3388,19 @@ lives_render_error_t render_events (gboolean reset) {
 	}
 	else if (next_out_tc>tc) break;
 
-	if (cfile->old_frames>0) g_snprintf(oname,256,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,out_frame);
+	// TODO - dirsep
+
+	if (cfile->old_frames>0) g_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,out_frame);
 	// sig_progress...
 	g_snprintf (mainw->msg,256,"%d",progress++);
 
 	if (prefs->ocp==-1) prefs->ocp=get_int_pref ("open_compression_percent");
 
 	if (cfile->img_type==IMG_TYPE_JPEG) {
-	  if (cfile->old_frames==0) g_snprintf(oname,256,"%s/%s/%08d.jpg",prefs->tmpdir,cfile->handle,out_frame);
+	  if (cfile->old_frames==0) g_snprintf(oname,PATH_MAX,"%s/%s/%08d.jpg",prefs->tmpdir,cfile->handle,out_frame);
 	}
 	else if (cfile->img_type==IMG_TYPE_PNG) {
-	  if (cfile->old_frames==0) g_snprintf(oname,256,"%s/%s/%08d.png",prefs->tmpdir,cfile->handle,out_frame);
+	  if (cfile->old_frames==0) g_snprintf(oname,PATH_MAX,"%s/%s/%08d.png",prefs->tmpdir,cfile->handle,out_frame);
 	}
 
 	do {
@@ -3540,7 +3542,7 @@ lives_render_error_t render_events (gboolean reset) {
 
     if (cfile->old_frames==0) cfile->undo_start=cfile->undo_end=0;
     if (mainw->multitrack==NULL||!mainw->multitrack->pr_audio) {
-      com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->undo_start,
+      com=g_strdup_printf ("smogrify mv_mgk \"%s\" %d %d \"%s\"",cfile->handle,cfile->undo_start,
 			   cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
       lives_system (com,FALSE);
       g_free (com);
@@ -3806,7 +3808,7 @@ gboolean render_to_clip (gboolean new_clip) {
     // back up audio to audio.back (in case we overwrite it)
     if (prefs->rec_opts&REC_AUDIO) {
       do_threaded_dialog(_("Backing up audio..."),FALSE);
-      com=g_strdup_printf("smogrify backup_audio %s",cfile->handle);
+      com=g_strdup_printf("smogrify backup_audio \"%s\"",cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
 
@@ -3815,7 +3817,7 @@ gboolean render_to_clip (gboolean new_clip) {
     }
     else {
       do_threaded_dialog(_("Clearing up clip..."),FALSE);
-      com=g_strdup_printf("smogrify clear_tmp_files %s",cfile->handle);
+      com=g_strdup_printf("smogrify clear_tmp_files \"%s\"",cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
     }

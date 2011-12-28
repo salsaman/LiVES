@@ -39,6 +39,8 @@ static gboolean list_plugins;
 
 
 static GList *get_plugin_result (const gchar *command, const gchar *delim, gboolean allow_blanks) {
+  // command must be suitably wrapped in quotes
+
 
   GList *list=NULL;
   gchar **array;
@@ -58,7 +60,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   threaded_dialog_spin();
 
   outfile=g_strdup_printf ("%s/.smogplugin.%d",prefs->tmpdir,getpid());
-  com=g_strconcat (command," >",outfile,NULL);
+  com=g_strconcat (command," > \"",outfile,"\"",NULL);
 
   mainw->error=FALSE;
 
@@ -96,7 +98,6 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
     return NULL;
   }
   threaded_dialog_spin();
-
 
   do {
     retval=0;
@@ -194,27 +195,32 @@ plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const
   // returns a GList of responses to -request, or NULL on error
   // by_line says whether we split on '\n' or on '|'
   GList *reslist=NULL;
-  gchar *com;
+  gchar *com,*comfile;
+
 
   if (plugin_type!=NULL) {
-    // some types live in home directory...
-    if (!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)) {
-      com=g_strdup_printf ("%s/%s%s/%s %s",capable->home_dir,LIVES_CONFIG_DIR,plugin_type,plugin_name,request);
-    }
-    else if (!strcmp(plugin_type,PLUGIN_RFX_SCRAP)) {
-      // scraps are in the tmpdir
-      com=g_strdup_printf("%s/%s %s",prefs->tmpdir,plugin_name,request);
-    }
-    else {
-#ifdef DEBUG_PLUGINS
-      com=g_strdup_printf ("%s%s%s/%s %s",prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,request);
-#else
-      com=g_strdup_printf ("%s%s%s/%s %s 2>/dev/null",prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,request);
-#endif
-    }
+
     if (plugin_name==NULL||!strlen(plugin_name)) {
       return reslist;
     }
+
+    // some types live in home directory...
+    if (!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)) {
+      comfile=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,plugin_type,plugin_name,NULL);
+    }
+    else if (!strcmp(plugin_type,PLUGIN_RFX_SCRAP)) {
+      // scraps are in the tmpdir
+      comfile=g_build_filename(prefs->tmpdir,plugin_name,NULL);
+    }
+    else {
+      comfile=g_build_filename (prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,NULL);
+    }
+#ifdef DEBUG_PLUGINS
+    com=g_strdup_printf ("\"%s\" \"%s\"",comfile,request);
+#else
+    com=g_strdup_printf ("\"%s\" \"%s\" 2>/dev/null",comfile,request);
+#endif
+    g_free(comfile);
   }
   else com=g_strdup (request);
   list_plugins=FALSE;
@@ -379,7 +385,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   do {
     retval=0;
     if ((fd=open(vpp_file,O_RDONLY))==-1) {
-      retval=do_read_failed_error_s_with_retry(vpp_file,strerror(errno),NULL);
+      retval=do_read_failed_error_s_with_retry(vpp_file,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	mainw->vpp=NULL;
 	return;
@@ -1383,7 +1389,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
 
     // create sfmts array and nfmts
 
-    com=g_strdup_printf("%s get_formats",astreamer);
+    com=g_strdup_printf("\"%s\" get_formats",astreamer);
 
     rfile=popen(com,"r");
     if (!rfile) {
@@ -1413,7 +1419,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
       // traverse video list and see if audiostreamer supports each one
       if (int_array_contains_value(sfmts,nfmts,fmts[i])) {
 
-	com=g_strdup_printf("%s check %d",astreamer,fmts[i]);
+	com=g_strdup_printf("\"%s\" check %d",astreamer,fmts[i]);
 
 	rfile=popen(com,"r");
 	if (!rfile) {
@@ -2473,18 +2479,27 @@ gboolean check_rfx_for_lives (lives_rfx_t *rfx) {
 
 void do_rfx_cleanup(lives_rfx_t *rfx) {
   gchar *com;
+  gchar *dir=NULL;
 
   switch (rfx->status) {
   case RFX_STATUS_BUILTIN:
-    com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,cfile->start,cfile->end,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,mainw->rendered_fx->name);
+    dir=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,NULL);
+    com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
+			PLUGIN_RENDERED_EFFECTS_BUILTIN,mainw->rendered_fx->name);
     break;
   case RFX_STATUS_CUSTOM:
-    com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,cfile->start,cfile->end,capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM,mainw->rendered_fx->name);
+    dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
+    com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
+			PLUGIN_RENDERED_EFFECTS_CUSTOM,mainw->rendered_fx->name);
     break;
   default:
-    com=g_strdup_printf("smogrify plugin_clear %s %d %d %s%s %s %s",cfile->handle,cfile->start,cfile->end,capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST,mainw->rendered_fx->name);
+    dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
+    com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
+			PLUGIN_RENDERED_EFFECTS_TEST,mainw->rendered_fx->name);
     break;
   }
+
+  if (dir!=NULL) g_free(dir);
 
   // if the command fails we just give a warning
   lives_system(com,FALSE);
@@ -3403,15 +3418,23 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
 
 gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx) {
 
-  // here we create an rfx script from some fixed values and values from the plugin; we will then compile the script to an rfx scrap and use the scrap to get info
+  // here we create an rfx script from some fixed values and values from the plugin; 
+  // we will then compile the script to an rfx scrap and use the scrap to get info
   // about additional parameters, and create the parameter window
   
-  // this is done like so to allow use of plugins written in any language; they need only output an RFX scriptlet on stdout when called from the commandline
+  // this is done like so to allow use of plugins written in any language; 
+  // they need only output an RFX scriptlet on stdout when called from the commandline
 
 
   // the param window is run, and the marshalled values are returned
 
   // if the user closes the window with Cancel, NULL is returned instead
+
+  // in parameters: get_com - command to be run to produce rfx output on stdout
+  //              : vbox - a vbox where we will display the parameters
+  // out parameters: ret_rfx - the value is set to point to an rfx_t effect
+
+  // the string which is returned is the marshalled values of the parameters
 
 
   FILE *sfile;
@@ -3431,7 +3454,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
     retval=0;
     sfile=fopen(rfxfile,"w");
     if (sfile==NULL) {
-      retval=do_write_failed_error_s_with_retry(rfxfile,strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(rfxfile,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	g_free(string);
 	return NULL;
@@ -3450,22 +3473,29 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   } while (retval==LIVES_RETRY);
 
 
-  com=g_strdup_printf("%s >>%s",get_com,rfxfile);
+  com=g_strdup_printf("\"%s\" >> \"%s\"", get_com, rfxfile);
   retval=lives_system(com,FALSE);
   g_free(com);
 
   // command failed
   if (retval) return NULL;
 
+  // TODO - check for EOF
+
 
   // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
     
-  com=g_strdup_printf("%s %s %s >/dev/null",RFX_BUILDER,rfxfile,prefs->tmpdir);
+  // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
+  com=g_strdup_printf("\"%s\" \"%s\" \"%s\" >/dev/null",RFX_BUILDER,rfxfile,prefs->tmpdir);
   res=system(com);
   g_free(com);
     
   unlink(rfxfile);
   g_free(rfxfile);
+
+
+  // TODO - check for EOF
+
 
   if (res==0) {
     // the script compiled correctly
@@ -3482,18 +3512,20 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
 
     // get the delimiter
     rfxfile=g_strdup_printf("%ssmdef.%d",prefs->tmpdir,getpid());
-    com=g_strdup_printf("%s%s get_define > %s",prefs->tmpdir,rfx_scrapname,rfxfile);
+    com=g_strdup_printf("\"%s%s\" get_define > \"%s\"",prefs->tmpdir,rfx_scrapname,rfxfile);
     retval=lives_system(com,FALSE);
     g_free(com);
 
     // command to get_define failed
     if (retval) return NULL;
 
+    // TODO - check eof
+
     do {
       retval=0;
       sfile=fopen(rfxfile,"r");
       if (!sfile) {
-	retval=do_read_failed_error_s_with_retry(rfxfile,strerror(errno),NULL);
+	retval=do_read_failed_error_s_with_retry(rfxfile,g_strerror(errno),NULL);
       }
       else {
 	mainw->read_failed=FALSE;
@@ -3513,6 +3545,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
 
     g_snprintf(rfx->delim,2,"%s",buff);
 
+    // ok, this might need adjusting afterwards
     rfx->menu_text=(vbox==NULL?g_strdup_printf(_("%s advanced settings"),prefs->encoder.of_desc):g_strdup(""));
     rfx->is_template=FALSE;
 
@@ -3540,7 +3573,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
       make_param_box(vbox,rfx);
     }
       
-    rfxfile=g_strdup_printf ("%s/%s",prefs->tmpdir,rfx_scrapname);
+    rfxfile=g_build_filename (prefs->tmpdir,rfx_scrapname,NULL);
     unlink(rfxfile);
     g_free(rfxfile);
 

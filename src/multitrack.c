@@ -9444,7 +9444,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
   GdkPixbuf *thumbnail;
   int i=1;
   gint width=CLIP_THUMB_WIDTH,height=CLIP_THUMB_HEIGHT;
-  gchar filename[256];
+  gchar filename[PATH_MAX];
   gchar *tmp;
   int count=g_list_length(mt->clip_labels)/2;
   GList *cliplist=mainw->cliplist;
@@ -9496,7 +9496,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 	gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
       }
 
-      g_snprintf (filename,256,"%s",(tmp=g_path_get_basename(mainw->files[i]->name)));
+      g_snprintf (filename,PATH_MAX,"%s",(tmp=g_path_get_basename(mainw->files[i]->name)));
       g_free(tmp);
       get_basename(filename);
       g_snprintf (clip_name,CLIP_LABEL_LENGTH,"  %s  ",filename);
@@ -14179,7 +14179,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt->pr_audio=TRUE;
     had_audio=mt->has_audio_file;
     if (had_audio) {
-      com=g_strdup_printf("smogrify backup_audio %s",cfile->handle);
+      com=g_strdup_printf("smogrify backup_audio \"%s\"",cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
 
@@ -14403,7 +14403,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     prefs->render_audio=TRUE;
     mainw->event_list=NULL;
     if (mt->pr_audio) {
-      com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
+      com=g_strdup_printf("smogrify undo_audio \"%s\"",cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
       mt->has_audio_file=had_audio;
@@ -17243,7 +17243,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
     fd=creat(map_name,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
 
     if (fd==-1) {
-      retval=do_write_failed_error_s_with_retry(map_name,strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(map_name,g_strerror(errno),NULL);
     }
     else {
       mainw->write_failed=FALSE;
@@ -17428,6 +17428,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gboolean orig_ar_layout=prefs->ar_layout,ar_layout;
   weed_plant_t *event_list;
   gchar *layout_name;
+  gchar xlayout_name[PATH_MAX];
 
   if (mt==NULL) {
     event_list=mainw->stored_event_list;
@@ -17558,8 +17559,8 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   esave_file=ensure_extension(esave_file,".lay");
 
-  g_snprintf(layout_name,256,"%s",esave_file);
-  get_basename(layout_name);
+  g_snprintf(xlayout_name,PATH_MAX,"%s",esave_file);
+  get_basename(xlayout_name);
 
   if (mt!=NULL) add_markers(mt,mt->event_list);
 
@@ -17575,7 +17576,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
 
     if (!retval||fd<0) {
-      retval2=do_write_failed_error_s_with_retry(esave_file,(fd<0)?strerror(errno):NULL,NULL);
+      retval2=do_write_failed_error_s_with_retry(esave_file,(fd<0)?g_strerror(errno):NULL,NULL);
       if (retval2==LIVES_CANCEL) return;
     }
   } while (retval2==LIVES_RETRY);
@@ -17598,7 +17599,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   else {
     prefs->ar_layout=TRUE;
     set_pref("ar_layout",layout_name);
-    g_snprintf(prefs->ar_layout_name,128,"%s",layout_name);
+    g_snprintf(prefs->ar_layout_name,PATH_MAX,"%s",xlayout_name);
   }
 
   g_free(esave_file);
@@ -19152,7 +19153,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 	  }
 
 	  if (fd<0||!retval) {
-	    retval2=do_write_failed_error_s_with_retry(eload_file,(fd<0)?strerror(errno):NULL,NULL);
+	    retval2=do_write_failed_error_s_with_retry(eload_file,(fd<0)?g_strerror(errno):NULL,NULL);
 	    if (retval2==LIVES_CANCEL) d_print_file_error_failed();
 	  }
 	} while (retval2==LIVES_RETRY);
@@ -19483,7 +19484,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	      if (fd>=0) retval=save_event_list_inner(NULL,fd,event_list,NULL);
 	      if (fd<0||!retval) {
 		if (fd>0) close(fd);
-		retval2=do_write_failed_error_s_with_retry(map->data,(fd<0)?strerror(errno):NULL,NULL);
+		retval2=do_write_failed_error_s_with_retry(map->data,(fd<0)?g_strerror(errno):NULL,NULL);
 	      }
 	    } while (retval2==LIVES_RETRY);
 	    

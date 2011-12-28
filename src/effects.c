@@ -320,7 +320,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
-    gchar *com=g_strdup_printf("smogrify mv_pre %s %d %d %s",cfile->handle,cfile->progress_start,
+    gchar *com=g_strdup_printf("smogrify mv_pre \"%s\" %d %d \"%s\"",cfile->handle,cfile->progress_start,
 			       cfile->progress_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     lives_system(com,FALSE);
     g_free(com);
@@ -345,7 +345,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	mainw->current_file=img_file;
 	
 	g_snprintf(mainw->files[new_file]->name,256,"%s",cfile->name);
-	g_snprintf(mainw->files[new_file]->file_name,256,"%s",cfile->file_name);
+	g_snprintf(mainw->files[new_file]->file_name,PATH_MAX,"%s",cfile->file_name);
 	set_menu_text(mainw->files[new_file]->menuentry,cfile->name,FALSE);
 	
 	mainw->files[new_file]->fps=mainw->files[new_file]->pb_fps=cfile->fps;
@@ -459,7 +459,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 lives_render_error_t realfx_progress (gboolean reset) {
   static int i;
   GError *error=NULL;
-  gchar oname[256];
+  gchar oname[PATH_MAX];
   GdkPixbuf *pixbuf;
   gchar *com;
   gint64 frameticks;
@@ -522,7 +522,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   pixbuf=layer_to_pixbuf(layer);
   weed_plant_free(layer);
 
-  g_snprintf(oname,256,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
+  g_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
 
   do {
     lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, &error);
@@ -542,7 +542,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   }
   
   if (++i>cfile->end) {
-    com=g_strdup_printf ("smogrify mv_mgk %s %d %d %s",cfile->handle,cfile->start,
+    com=g_strdup_printf ("smogrify mv_mgk \"%s\" %d %d \"%s\"",cfile->handle,cfile->start,
 			 cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     lives_system (com,FALSE);
     g_free (com);

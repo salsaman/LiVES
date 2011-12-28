@@ -39,9 +39,14 @@ static gboolean prompt_new_dir(gchar *dirname, gdouble freespace) {
 gboolean do_tempdir_query(void) {
   gint response;
   gboolean ok=FALSE;
-  _entryw *tdentry=create_rename_dialog(6);
+  _entryw *tdentry;
   gchar *com,*dirname;
   gdouble free_gb;
+
+
+ top:
+
+  tdentry=create_rename_dialog(6);
 
   while (!ok) {
     response=gtk_dialog_run(GTK_DIALOG(tdentry->dialog));
@@ -57,8 +62,7 @@ gboolean do_tempdir_query(void) {
       dirname=tmp;
     }
 
-    // TODO - use PATH_MAX from <limits.h> generally
-    if (strlen(dirname)>255) {
+    if (strlen(dirname)>(PATH_MAX-1)) {
       do_blocking_error_dialog(_("Directory name is too long !"));
       g_free(dirname);
       continue;
@@ -92,23 +96,24 @@ gboolean do_tempdir_query(void) {
   g_free(tdentry);
 
   mainw->com_failed=FALSE;
-  com=g_strdup_printf ("/bin/mkdir -p %s 2>/dev/null",dirname);
+  com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",dirname);
   lives_system (com,FALSE);
   g_free (com);
 
-  if (mainw->com_failed) return FALSE;
+  if (mainw->com_failed) goto top;
 
-  com=g_strdup_printf("/bin/rmdir %s 2>/dev/null",prefs->tmpdir);
+
+  com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",prefs->tmpdir);
   lives_system(com,TRUE);
   g_free(com);
 
-  g_snprintf(prefs->tmpdir,256,"%s",dirname);
-  g_snprintf(future_prefs->tmpdir,256,"%s",prefs->tmpdir);
+  g_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
+  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 
   set_pref("tempdir",prefs->tmpdir);
   set_pref("session_tempdir",prefs->tmpdir);
 
-  g_snprintf(mainw->first_info_file,255,"%s/.info.%d",prefs->tmpdir,getpid());
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s/.info.%d",prefs->tmpdir,getpid());
 
   g_free(dirname);
   return TRUE;
@@ -672,7 +677,7 @@ gboolean do_startup_tests(gboolean tshoot) {
       afile=g_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
     
       mainw->com_failed=FALSE;
-      com=g_strdup_printf("smogrify export_audio %s 0. 0. 44100 2 16 0 22050 \"%s\"",cfile->handle,afile);
+      com=g_strdup_printf("smogrify export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",cfile->handle,afile);
       lives_system(com,TRUE);
       if (mainw->com_failed) {
 	tmp=g_strdup_printf(_("Command failed: %s"),com);
@@ -796,7 +801,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     rname=get_resource("vidtest.avi");
 
-    com=g_strdup_printf("smogrify open_test %s \"%s\" 0 png",cfile->handle,
+    com=g_strdup_printf("smogrify open_test \"%s\" \"%s\" 0 png",cfile->handle,
 			(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
     g_free(tmp);
     g_free(rname);

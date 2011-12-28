@@ -53,6 +53,8 @@ static GList *name_list;
 static GList *name_type_list;
 
 
+static gboolean ca_canc;
+
 //////////////////////////////////////////////////////////////////////////////
 
 
@@ -89,11 +91,13 @@ gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
   int i,j;
 
-  mainw->error=FALSE;
+  ca_canc=FALSE;
 
   // prompt for "are you sure ?"
-  if (user_data!=NULL) if (!do_warning_dialog_with_check_transient((_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n")),0,GTK_WINDOW(rte_window))) {
-      mainw->error=TRUE;
+  if (user_data!=NULL) if (!do_warning_dialog_with_check_transient
+			   ((_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n")),
+			    0,GTK_WINDOW(rte_window))) {
+      ca_canc=TRUE;
       return FALSE;
     }
 
@@ -127,13 +131,9 @@ static gboolean save_keymap2_file(gchar *kfname) {
     retval=0;
     kfd=creat(kfname,S_IRUSR|S_IWUSR);
     if (kfd==-1) {
-      retval=do_write_failed_error_s_with_retry (kfname,strerror(errno),GTK_WINDOW(rte_window));
-      if (retval==LIVES_CANCEL) {
-	return FALSE;
-      }
+      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),GTK_WINDOW(rte_window));
     }
     else {
-
       mainw->write_failed=FALSE;
       
       lives_write(kfd,&version,sizint,TRUE);
@@ -142,10 +142,10 @@ static gboolean save_keymap2_file(gchar *kfname) {
 	if (mainw->write_failed) break;
 	for (j=0;j<modes;j++) {
 	  if (rte_keymode_valid(i,j,TRUE)) {
-	    lives_write(kfd,&i,sizint,TRUE);
+	    lives_write(kfd,&i,4,TRUE);
 	    hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE));
 	    slen=strlen(hashname);
-	    lives_write(kfd,&slen,sizint,TRUE);
+	    lives_write(kfd,&slen,4,TRUE);
 	    lives_write(kfd,hashname,slen,TRUE);
 	    g_free(hashname);
 	    write_key_defaults(kfd,i-1,j);
@@ -168,20 +168,36 @@ static gboolean save_keymap2_file(gchar *kfname) {
 
 
 gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
-  // quick and dirty implementation
+  // save as keymap type 1 file - to allow backwards compatibility with older versions of LiVES
+  // default.keymap
+
+  // format is text
+  // key|hashname
+
+
+
+  // if we have per key defaults, then we add an extra file:
+  // default.keymap2
+
+  // format is binary
+  // (4 bytes key) (4 bytes hlen) (hlen bytes hashname) then a dump of the weed plant default values
+
+
   int modes=rte_getmodespk();
   int i,j;
+  int retval;
+
   FILE *kfile;
   gchar *msg,*tmp;
   GList *list=NULL;
   gboolean update=FALSE;
-  gboolean got_err=FALSE;
 
   gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
   gchar *keymap_file2=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
-
+ 
   if (button!=NULL) {
-    if (!do_warning_dialog_with_check_transient((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,GTK_WINDOW(rte_window))) {
+    if (!do_warning_dialog_with_check_transient
+	((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,GTK_WINDOW(rte_window))) {
       g_free(keymap_file2);
       g_free(keymap_file);
       return FALSE;
@@ -197,52 +213,46 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     g_free(tmp);
   }
 
-  if (!(kfile=fopen(keymap_file,"w"))) {
-    if (!update) {
-      msg=g_strdup_printf (_("\n\nUnable to write keymap file\n%s\nError code %d\n"),keymap_file,errno);
-      do_error_dialog_with_check_transient (msg,FALSE,0,GTK_WINDOW(rte_window));
+  do {
+    retval=0;
+    if (!(kfile=fopen(keymap_file,"w"))) {
+      msg=g_strdup_printf (_("\n\nUnable to write keymap file\n%s\nError was %s\n"),keymap_file,g_strerror(errno));
+      retval=do_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
       g_free (msg);
-      d_print_failed();
     }
-    g_free(keymap_file2);
-    g_free(keymap_file);
-    return FALSE;
-  }
+    else {
+      mainw->write_failed=FALSE;
+      lives_fputs("LiVES keymap file version 4\n",kfile);
 
-  mainw->write_failed=FALSE;
-  lives_fputs("LiVES keymap file version 4\n",kfile);
-
-  if (!update) {
-    for (i=1;i<=prefs->rte_keys_virtual;i++) {
-      if (mainw->write_failed) break;
-      for (j=0;j<modes;j++) {
-	if (rte_keymode_valid(i,j,TRUE)) {
-	  lives_fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)),kfile);
+      if (!update) {
+	for (i=1;i<=prefs->rte_keys_virtual;i++) {
+	  for (j=0;j<modes;j++) {
+	    if (rte_keymode_valid(i,j,TRUE)) {
+	      lives_fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)),kfile);
+	    }
+	  }
 	}
       }
+      else {
+	for (i=0;i<g_list_length(list);i++) {
+	  lives_fputs(g_list_nth_data(list,i),kfile);
+	}
+      }
+      
+      fclose (kfile);
     }
-  }
-  else {
-    for (i=0;i<g_list_length(list);i++) {
-      lives_fputs(g_list_nth_data(list,i),kfile);
+
+    if (mainw->write_failed) {
+      retval=do_write_failed_error_s_with_retry(keymap_file,NULL,GTK_WINDOW(rte_window));
     }
-  }
+  } while (retval==LIVES_RETRY);
 
-  fclose (kfile);
 
-  if (mainw->write_failed) {
-    mainw->write_failed=FALSE;
-    do_write_failed_error_s(keymap_file);
-    got_err=FALSE;
-    d_print_file_error_failed();
-  }
-
-  // if we have default values, save as newer style
+  // if we have default values, save them
   if (has_key_defaults()) {
-    gboolean ret=save_keymap2_file(keymap_file2);
-    if (!ret) {
-      if (!got_err) d_print_file_error_failed();
-      got_err=TRUE;
+    if (!save_keymap2_file(keymap_file2)) {
+      unlink(keymap_file2);
+      retval=LIVES_CANCEL;
     }
   }
   else unlink(keymap_file2);
@@ -250,7 +260,8 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   g_free(keymap_file2);
   g_free(keymap_file);
 
-  if (!got_err) d_print_done();
+  if (retval==LIVES_CANCEL) d_print_file_error_failed();
+  else d_print_done();
 
   return FALSE;
 }
@@ -311,7 +322,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   
   do {
     if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
-      retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,strerror(errno),GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),GTK_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -363,7 +374,7 @@ void load_rte_defs (void) {
     do {
       retval=0;
       if ((fd=open(prefs->fxdefsfile,O_RDONLY))==-1) {
-	retval=do_read_failed_error_s_with_retry(prefs->fxdefsfile,strerror(errno),NULL);
+	retval=do_read_failed_error_s_with_retry(prefs->fxdefsfile,g_strerror(errno),NULL);
       }
       else {
 	mainw->read_failed=FALSE;
@@ -409,7 +420,7 @@ void load_rte_defs (void) {
     do {
       retval=0;
       if ((fd=open(prefs->fxsizesfile,O_RDONLY))==-1) {
-	retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,strerror(errno),NULL);
+	retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),NULL);
 	if (retval==LIVES_CANCEL) return;
       }
       else {
@@ -489,23 +500,17 @@ static gboolean read_perkey_defaults(int kfd, int key, int mode, int version) {
 
 gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   // show file errors at this level
-  int modes=rte_getmodespk();
-  int i;
-  int kfd;
-  int version;
-  int hlen;
   FILE *kfile=NULL;
-  gchar *msg,*tmp;
-  gint key,mode;
-  gchar buff[65536];
-  size_t linelen,bytes;
-  gchar *whole=g_strdup (""),*whole2;
+
   GList *list=NULL,*new_list=NULL;
+
+  size_t linelen,bytes;
+
+  gchar buff[65536];
+  gchar *msg,*tmp;
+  gchar *whole=g_strdup (""),*whole2;
   gchar *hashname,*hashname_new=NULL;
-  gboolean notfound=FALSE;
-  gboolean has_error=FALSE;
-  gboolean eof=FALSE;
-  gint update=0;
+
   gchar *line=NULL;
   gchar *whashname;
 
@@ -514,10 +519,25 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   int *def_modes;
 
+  int modes=rte_getmodespk();
+  int i;
+  int kfd=-1;
+  int version;
+  int hlen;
+  int retval;
+
+  gint key,mode;
+  gint update=0;
+
+  gboolean notfound=FALSE;
+  gboolean has_error=FALSE;
+  gboolean eof=FALSE;
+
+
   def_modes=(int *)g_malloc(prefs->rte_keys_virtual*sizint);
   for (i=0;i<prefs->rte_keys_virtual;i++) def_modes[i]=-1;
 
-  if ((kfd=open (keymap_file2,O_RDONLY))!=-1) {
+  if (!g_file_test(keymap_file2,G_FILE_TEST_EXISTS)) {
     g_free(keymap_file);
     keymap_file=keymap_file2;
   }
@@ -530,27 +550,36 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   d_print(msg);
   g_free(msg);
 
-  if (keymap_file2!=NULL) {
-    if ((kfd=open(keymap_file,O_RDONLY))==-1) has_error=TRUE;
-  }
-  else {
-    if (!(kfile=fopen (keymap_file,"r"))) {
-      has_error=TRUE;
-    }
-  }
+  do {
+    retval=0;
 
-  if (has_error) {
-    msg=g_strdup_printf (_("\n\nUnable to read from keymap file\n%s\nError code %d\n"),keymap_file,errno);
-    g_free(keymap_file);
-    do_error_dialog_with_check_transient (msg,FALSE,0,GTK_WINDOW(rte_window));
-    g_free (msg);
-    d_print_failed();
-    g_free(def_modes);
-    return FALSE;
-  }
+    if (keymap_file2!=NULL) {
+      if ((kfd=open(keymap_file,O_RDONLY))==-1) has_error=TRUE;
+    }
+    else {
+      if (!(kfile=fopen (keymap_file,"r"))) {
+	has_error=TRUE;
+      }
+    }
+
+    if (has_error) {
+      msg=g_strdup_printf (_("\n\nUnable to read from keymap file\n%s\nError code %d\n"),keymap_file,errno);
+      retval=do_cancel_retry_dialog(msg,GTK_WINDOW(rte_window));
+      g_free (msg);
+   
+      if (retval==LIVES_CANCEL) {
+	g_free(keymap_file);
+	d_print_file_error_failed();
+	g_free(def_modes);
+	return FALSE;
+      }
+    }
+  } while (retval==LIVES_RETRY);
 
   on_clear_all_clicked(NULL,user_data);
-  if (mainw->error) {
+
+  if (ca_canc) {
+    // user cancelled
     mainw->error=FALSE;
     d_print_cancelled();
     g_free(def_modes);
@@ -558,6 +587,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   }
 
   if (keymap_file2==NULL) {
+    // version 1 file
     while (fgets(buff,65536,kfile)) {
       if (buff!=NULL) {
 	line=(g_strchomp (g_strchug(buff)));
@@ -580,6 +610,8 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 3")) update=2;
   }
   else {
+    // newer style
+
     // read version
     bytes=read(kfd,&version,sizint);
     if (bytes<sizint) {
@@ -593,6 +625,8 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     gchar **array;
 
     if (keymap_file2==NULL) {
+      // old style
+
       line=(gchar *)g_list_nth_data(list,i);
     
       if (get_token_count(line,'|')<2) {
@@ -635,15 +669,20 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       }
     }
     else {
+      // newer style
+
+      // file format is: (4 bytes int)key(4 bytes int)hlen(hlen bytes)hashname
+      // TODO - ensure le format !
+
       //read key and hashname
-      bytes=read(kfd,&key,sizint);
-      if (bytes<sizint) {
+      bytes=read(kfd,&key,4);
+      if (bytes<4) {
 	eof=TRUE;
 	break;
       }
 
-      bytes=read(kfd,&hlen,sizint);
-      if (bytes<sizint) {
+      bytes=read(kfd,&hlen,4);
+      if (bytes<4) {
 	eof=TRUE;
 	break;
       }
@@ -716,7 +755,8 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     g_free(hashname);
 
     if (mode==-2){
-      d_print((tmp=g_strdup_printf(_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
+      d_print((tmp=g_strdup_printf
+	       (_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
       LIVES_ERROR(tmp);
       g_free(tmp);
       if (keymap_file2!=NULL) {
@@ -764,8 +804,9 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
     else d_print_done();
   }
+
   else {
-    close(kfd);
+    if (kfd!=-1) close(kfd);
     d_print_done();
   }
 
@@ -1351,7 +1392,12 @@ GtkWidget * create_rte_window (void) {
       while (list!=NULL) {
 	weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname(g_list_nth_data(hash_list,fx_idx),TRUE));
 	int filter_flags=weed_get_int_value(filter,"flags",&error);
-	if ((weed_plant_has_leaf(filter,"plugin_unstable")&&weed_get_boolean_value(filter,"plugin_unstable",&error)==WEED_TRUE&&!prefs->unstable_fx)||((enabled_in_channels(filter,FALSE)>1&&!has_video_chans_in(filter,FALSE))||(weed_plant_has_leaf(filter,"host_menu_hide")&&weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_TRUE)||(filter_flags&WEED_FILTER_IS_CONVERTER))) {
+	if ((weed_plant_has_leaf(filter,"plugin_unstable")&&weed_get_boolean_value(filter,"plugin_unstable",&error)==
+	     WEED_TRUE&&!prefs->unstable_fx)||((enabled_in_channels(filter,FALSE)>1&&
+						!has_video_chans_in(filter,FALSE))||
+					       (weed_plant_has_leaf(filter,"host_menu_hide")&&
+						weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_TRUE)
+					       ||(filter_flags&WEED_FILTER_IS_CONVERTER))) {
 	  list = list->next;
 	  fx_idx++;
 	  continue; // skip audio transitions and hidden entries
@@ -1471,8 +1517,10 @@ GtkWidget * create_rte_window (void) {
   gtk_widget_hide(dummy_radio);
 
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-rte_window->allocation.width)/2;
-    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-rte_window->allocation.height)/2;
+    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+						    rte_window->allocation.width)/2;
+    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						    rte_window->allocation.height)/2;
     gtk_window_set_screen(GTK_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
     gtk_window_move(GTK_WINDOW(rte_window),xcen,ycen);
   }
@@ -1672,26 +1720,43 @@ void rte_set_defs_cancel (GtkButton *button, lives_rfx_t *rfx) {
 
 void load_default_keymap(void) {
   // called on startup
-  gchar *keymap_file=g_strdup_printf("%s/%sdefault.keymap",capable->home_dir,LIVES_CONFIG_DIR);
-  gchar *keymap_template=g_strdup_printf("%s%sdefault.keymap",prefs->prefix_dir,DATA_DIR);
+  gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
+  gchar *keymap_template=g_build_filename(prefs->prefix_dir,DATA_DIR,"default.keymap",NULL);
   gchar *com,*tmp;
 
+  int retval;
+
   threaded_dialog_spin();
-  if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
-    com=g_strdup_printf("/bin/cp %s %s",keymap_template,keymap_file);
-    lives_system(com,TRUE); // allow this to fail - we will check for errors below
-    g_free(com);
-  }
-  if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
-    // give up
-    d_print((tmp=g_strdup_printf(_("Unable to create default keymap file: %s\nPlease make sure your home directory is writable.\n"),keymap_file)));
-    g_free(tmp);
-    g_free(keymap_file);
-    g_free(keymap_template);
-    threaded_dialog_spin();
-    return;
-  }
+
+  do {
+    retval=0;
+    if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
+      com=g_strdup_printf("/bin/cp \"%s\" \"%s\"",keymap_template,keymap_file);
+      lives_system(com,TRUE); // allow this to fail - we will check for errors below
+      g_free(com);
+    }
+    if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
+      // give up
+      d_print((tmp=g_strdup_printf
+	       (_("Unable to create default keymap file: %s\nPlease make sure your home directory is writable.\n"),
+		keymap_file)));
+
+      retval=do_cancel_retry_dialog(tmp,NULL);
+
+      g_free(tmp);
+
+      if (retval==LIVES_CANCEL) {
+	g_free(keymap_file);
+	g_free(keymap_template);
+      
+	threaded_dialog_spin();
+	return;
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
   on_load_keymap_clicked(NULL,NULL);
+
   g_free(keymap_file);
   g_free(keymap_template);
   threaded_dialog_spin();

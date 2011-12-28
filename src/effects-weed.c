@@ -4435,7 +4435,7 @@ gboolean weed_generator_start (weed_plant_t *inst) {
     
     filter_name=weed_get_string_value(filter,"name",&error);
     g_snprintf(cfile->type,40,"generator:%s",filter_name);
-    g_snprintf(cfile->file_name,256,"generator: %s",filter_name);
+    g_snprintf(cfile->file_name,PATH_MAX,"generator: %s",filter_name);
     g_snprintf(cfile->name,256,"generator: %s",filter_name);
     weed_free(filter_name);
     cfile->achans=0;
@@ -6520,7 +6520,7 @@ gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t 
   weed_plant_t *filter,*plugin_info;
   gchar *plugin_name,*filter_name,*filter_author,*filter_version,*hashname;
   int error,version;
-  gchar plugin_fname[256];
+  gchar plugin_fname[PATH_MAX];
 
   if (filter_idx<0||filter_idx>=num_weed_filters) return g_strdup("");
 
@@ -6532,7 +6532,7 @@ gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t 
 
   plugin_name=weed_get_string_value(plugin_info,"name",&error);
 
-  g_snprintf(plugin_fname,256,"%s",plugin_name);
+  g_snprintf(plugin_fname,PATH_MAX,"%s",plugin_name);
   weed_free(plugin_name);
   get_filename(plugin_fname,TRUE);
 

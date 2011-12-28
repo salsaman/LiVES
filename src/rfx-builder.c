@@ -3305,9 +3305,9 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 
   mainw->com_failed=FALSE;
 
-  script_file_dir=g_strdup_printf ("%s/%s%s/",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS);
+  script_file_dir=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
 
-  lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p %s",script_file_dir)),FALSE);
+  lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s/\"",script_file_dir)),FALSE);
   g_free(tmpx);
 
   if (mainw->com_failed) return FALSE;
@@ -3329,7 +3329,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   do {
     retval=0;
     if (!(sfile=fopen(script_file,"w"))) {
-      retval=do_write_failed_error_s_with_retry(script_file,strerror(errno),GTK_WINDOW(rfxbuilder->dialog));
+      retval=do_write_failed_error_s_with_retry(script_file,g_strerror(errno),GTK_WINDOW(rfxbuilder->dialog));
       if (retval==LIVES_CANCEL) {
 	g_free (msg);
 	g_free (name);
@@ -3942,7 +3942,7 @@ GList *get_script_section (const gchar *section, const gchar *file, gboolean str
   size_t linelen;
 
   gchar *outfile=g_strdup_printf ("%s/rfxsec.%d",g_get_tmp_dir(),getpid());
-  gchar *com=g_strdup_printf ("%s -get \"%s\" \"%s\" > \"%s\"",RFX_BUILDER,section,file,outfile);
+  gchar *com=g_strdup_printf ("\"%s\" -get \"%s\" \"%s\" > \"%s\"",RFX_BUILDER,section,file,outfile);
 
   mainw->com_failed=FALSE;
 
@@ -3991,7 +3991,8 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   d_print (_("Rebuilding all RFX scripts...builtin...")); 
   do_threaded_dialog(_("Rebuilding scripts"),FALSE);
-  com=g_strdup_printf("smogrify build_rfx_plugins builtinx %s%s%s %s%s%s %s/bin",prefs->prefix_dir,
+
+  com=g_strdup_printf("smogrify build_rfx_plugins builtinx \"%s%s%s\" \"%s%s%s\" \"%s/bin\"",prefs->prefix_dir,
 		      PLUGIN_SCRIPTS_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS,
 		      prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,prefs->prefix_dir);
   lives_system(com,TRUE);
@@ -4000,8 +4001,6 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_system("smogrify build_rfx_plugins custom",FALSE);
   d_print (_("test...")); 
   lives_system("smogrify build_rfx_plugins test",FALSE);
-
-  // we dont care if the system() fail - in fact the first is expected expected to if not run by root
 
 
   d_print(_("rebuilding dynamic menu entries..."));
@@ -4213,32 +4212,32 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
 				     (gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL);
   gchar *rfx_script_to,*rfx_dir_to;
   gchar *com,*msg,*tmp,*tmp2,*tmpx;
-  gchar basename[256];
+  gchar basename[PATH_MAX];
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 
-  g_snprintf (basename,256,"%s",filename);
+  g_snprintf (basename,PATH_MAX,"%s",filename);
   get_basename (basename);
 
   mainw->com_failed=FALSE;
 
   switch (status) {
   case RFX_STATUS_TEST :
-    rfx_dir_to=g_strdup_printf ("%s/%s%s/",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS);
+    rfx_dir_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
     lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
     g_free(tmp);
     g_free(tmpx);
-    rfx_script_to=g_strdup_printf ("%s%s",rfx_dir_to,basename);
+    rfx_script_to=g_build_filename(rfx_dir_to,basename,NULL);
     g_free (rfx_dir_to);
     break;
   case RFX_STATUS_CUSTOM :
-    rfx_dir_to=g_strdup_printf ("%s/%s%s/",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS);
+    rfx_dir_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,NULL);
     lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
     g_free(tmpx);
     g_free(tmp);
-    rfx_script_to=g_strdup_printf ("%s%s",rfx_dir_to,basename);
+    rfx_script_to=build_filename (rfx_dir_to,basename,NULL);
     g_free (rfx_dir_to);
     break;
   default :

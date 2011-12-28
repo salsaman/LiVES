@@ -133,7 +133,7 @@ s_cam *camready (void) {
   } 
 
   if ( ( n_ports = raw1394_get_port_info( cam->handle, pinf, 16 ) ) < 0 ) {
-      msg=g_strdup_printf(_("raw1394 - failed to get port info: %s.\n"), strerror( errno ));
+      msg=g_strdup_printf(_("raw1394 - failed to get port info: %s.\n"), g_strerror( errno ));
       raw1394_destroy_handle( cam->handle ); 
       return NULL;;
   }

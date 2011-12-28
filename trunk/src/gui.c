@@ -1704,7 +1704,7 @@ create_LiVES (void)
   gtk_toolbar_set_icon_size (GTK_TOOLBAR(mainw->btoolbar),GTK_ICON_SIZE_MENU);
   
   if (capable->smog_version_correct) {
-    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png");
+    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png",NULL);
     g_snprintf (buff,PATH_MAX,"%s",fnamex);
     g_free(fnamex);
     tmp_toolbar_icon=gtk_image_new_from_file (buff);
@@ -1743,7 +1743,7 @@ create_LiVES (void)
     
     gtk_widget_set_sensitive(mainw->m_stopbutton,FALSE);
     
-    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"playsel.png");
+    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"playsel.png",NULL);
     g_snprintf (buff,PATH_MAX,"%s",fnamex);
     g_free(fnamex);
     tmp_toolbar_icon=gtk_image_new_from_file (buff);
@@ -1755,7 +1755,7 @@ create_LiVES (void)
     gtk_widget_set_sensitive(mainw->m_playselbutton,FALSE);
 
 
-    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"loop.png");
+    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"loop.png",NULL);
     g_snprintf (buff,PATH_MAX,"%s",fnamex);
     g_free(fnamex);
     tmp_toolbar_icon=gtk_image_new_from_file (buff);
@@ -1768,7 +1768,7 @@ create_LiVES (void)
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),-1);
     gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_loopbutton),mainw->tooltips,_("Switch continuous looping on (o)"),"");
     
-    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"volume_mute.png");
+    fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"volume_mute.png",NULL);
     g_snprintf (buff,PATH_MAX,"%s",fnamex);
     g_free(fnamex);
     tmp_toolbar_icon=gtk_image_new_from_file (buff);
@@ -1854,7 +1854,7 @@ create_LiVES (void)
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_bckground),1);
   gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_bckground),mainw->tooltips,_("Unblank background (b)"),"");
 
-  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png");
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png",NULL);
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
   g_free(fnamex);
   tmp_toolbar_icon=gtk_image_new_from_file (buff);
@@ -1867,7 +1867,7 @@ create_LiVES (void)
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_sepwin),2);
   gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_sepwin),mainw->tooltips,_("Play in separate window (s)"),"");
 
-  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"zoom-in.png");
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"zoom-in.png",NULL);
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
   g_free(fnamex);
   tmp_toolbar_icon=gtk_image_new_from_file (buff);
@@ -1880,7 +1880,7 @@ create_LiVES (void)
 
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_double),3);
 
-  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"fullscreen.png");
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"fullscreen.png",NULL);
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
   g_free(fnamex);
   tmp_toolbar_icon=gtk_image_new_from_file (buff);
@@ -3442,7 +3442,7 @@ make_preview_box (void) {
   gtk_widget_show (play_img);
   gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Play all"), NULL);
 
-  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"playsel.png");
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"playsel.png",NULL);
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
   g_free(fnamex);
   playsel_img=gtk_image_new_from_file (buff);
@@ -3456,7 +3456,7 @@ make_preview_box (void) {
   gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playselbutton,_ ("Play Selection"), NULL);
   gtk_widget_set_sensitive (mainw->p_playselbutton, cfile->frames>0);
 
-  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"loop.png");
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"loop.png",NULL);
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
   g_free(fnamex);
   loop_img=gtk_image_new_from_file (buff);
@@ -3470,7 +3470,7 @@ make_preview_box (void) {
   gtk_tooltips_set_tip (mainw->tooltips, mainw->p_loopbutton,_ ("Loop On/Off"), NULL);
   gtk_widget_set_sensitive (mainw->p_loopbutton, TRUE);
 
-  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"volume_mute.png");
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"volume_mute.png",NULL);
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
   g_free(fnamex);
   mainw->p_mute_img=gtk_image_new_from_file (buff);

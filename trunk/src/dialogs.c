@@ -809,7 +809,7 @@ gboolean process_one (gboolean visible) {
     frames_done=cfile->proc_ptr->frames_done;
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0&&
-	(cfile->progress_start+frames_done+FRAME_PUMP_VAL>cfile->fx_frame_pump)) {
+	(cfile->progress_start+frames_done+FX_FRAME_PUMP_VAL>cfile->fx_frame_pump)) {
       gint vend=cfile->fx_frame_pump;
       gboolean retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
       if (retb) cfile->fx_frame_pump=vend;
@@ -903,16 +903,17 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
 
 
-    // if we have virtual frames make sure the first FRAME_PUMP_VAL are decoded for the backend
+    // if we have virtual frames make sure the first FX_FRAME_PUMP_VAL are decoded for the backend
     // as we are processing we will continue to decode 1 frame in time with the backend
     // in this way we hope to stay ahead of the backend
 
-    // the backend can either restrict itself to processing in the range x -> x + (FRAME_PUMP_VAL) frames
+    // the backend can either restrict itself to processing in the range x -> x + (FX_FRAME_PUMP_VAL) frames
     // -> if it needs frames further in the range (like "jumble") it can check carefully and wait
 
     // cfile->fx_frame_pump_val is currently only set for realtime effects and tools
     // it is also used for resampling
 
+    // default FX_FRAME_PUMP_VAL is 200
 
     // (encoding and copying have their own mechanism which realises all frames in the selection first) 
 
@@ -920,6 +921,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
       if (vend>cfile->progress_end) vend=cfile->progress_end;
       if (vend>=cfile->fx_frame_pump) {
+	register int i;
 	for (i=cfile->fx_frame_pump;i<=vend;i++) {
 	  gboolean retb=virtual_to_images(mainw->current_file,i,i,FALSE);
 	  if (mainw->cancelled||!retb) return FALSE;

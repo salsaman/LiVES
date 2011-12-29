@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-12-29 04:32-0300\n"
+"POT-Creation-Date: 2011-12-29 04:43-0300\n"
 "PO-Revision-Date: 2011-08-18 12:10+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -9608,6 +9608,56 @@ msgstr "הופעל קורא השמע של jack.\n"
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
+msgstr "מתחבר לשרת התעבורה של jack..."
+
+#: src/pulse.c:79
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server\n"
+msgstr "לא ניתן להתחבר לשרת השמע JACK\n"
+
+#: src/pulse.c:83
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to sox audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+"תצוגת שמע מקדימה במצב ריבוי רצועות זמינה רק עם\n"
+"נגן השמע \"jack\" או \"pulse audio\".\n"
+"באפשרותך לקבוע זאת בתפריט כלים|העדפות|נגינה."
+
+#: src/pulse.c:87
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to mplayer audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+"תצוגת שמע מקדימה במצב ריבוי רצועות זמינה רק עם\n"
+"נגן השמע \"jack\" או \"pulse audio\".\n"
+"באפשרותך לקבוע זאת בתפריט כלים|העדפות|נגינה."
+
+#: src/pulse.c:91
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+msgstr "לא ניתן להתחבר לשרת השמע JACK\n"
+
+#: src/pulse.c:96
+#, fuzzy
+msgid "LiVES will exit and you can choose another audio player.\n"
+msgstr "LiVES: - בחירת נגן שמע"
+
+#: src/pulse.c:944
+#, fuzzy
+msgid ""
+"\n"
+"Connection to pulse audio was reset.\n"
 msgstr "מתחבר לשרת התעבורה של jack..."
 
 #: src/colourspace.c:1002

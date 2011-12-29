@@ -2485,21 +2485,21 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
   case RFX_STATUS_BUILTIN:
     dir=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,NULL);
     com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
-			PLUGIN_RENDERED_EFFECTS_BUILTIN,mainw->rendered_fx->name);
+			PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name);
       LIVES_DEBUG("1com is");
       LIVES_DEBUG(com);
     break;
   case RFX_STATUS_CUSTOM:
     dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
     com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
-			PLUGIN_RENDERED_EFFECTS_CUSTOM,mainw->rendered_fx->name);
+			PLUGIN_RENDERED_EFFECTS_CUSTOM,rfx->name);
       LIVES_DEBUG("3com is");
       LIVES_DEBUG(com);
     break;
   default:
     dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
     com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
-			PLUGIN_RENDERED_EFFECTS_TEST,mainw->rendered_fx->name);
+			PLUGIN_RENDERED_EFFECTS_TEST,rfx->name);
       LIVES_DEBUG("6com is");
       LIVES_DEBUG(com);
     break;

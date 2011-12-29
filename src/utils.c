@@ -952,7 +952,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
       text=g_strdup_printf("%s\n",array[0]);
       gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
-      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
+      //mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
       g_strfreev(array);
       lmap=lmap->next;
     }

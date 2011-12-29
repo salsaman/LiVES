@@ -4414,7 +4414,7 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
 	  return NULL;
 	}
 	cfile->achans=achans;
-	mt->layout_set_properties=TRUE;
+	if (mt!=NULL) mt->layout_set_properties=TRUE;
       }
     }
     
@@ -4458,14 +4458,16 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
     }
   }
   else {
-    msg=set_values_from_defs(mt,FALSE);
-    if (msg!=NULL) {
-      if (mt!=NULL) mt->layout_set_properties=TRUE;
-      g_free(msg);
+    if (mt!=NULL) {
+      msg=set_values_from_defs(mt,FALSE);
+      if (msg!=NULL) {
+	if (mt!=NULL) mt->layout_set_properties=TRUE;
+	g_free(msg);
+      }
+      cfile->fps=cfile->pb_fps;
+      if (mt!=NULL) mt->fps=cfile->fps;
+      cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
     }
-    cfile->fps=cfile->pb_fps;
-    if (mt!=NULL) mt->fps=cfile->fps;
-    cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
   }
 
   if (event_list==mainw->stored_event_list) return event_list;
@@ -14981,7 +14983,7 @@ void mt_sensitise (lives_mt *mt) {
     gtk_widget_set_sensitive (mt->view_events,TRUE);
     gtk_widget_set_sensitive (mt->view_sel_events,mt->region_start!=mt->region_end);
     gtk_widget_set_sensitive (mt->render, TRUE);
-    if (mt->avol_init_event!=NULL&&mt->opts.pertrack_audio&&cfile->achans>0) 
+    if (mt->avol_init_event!=NULL&&mt->opts.pertrack_audio&&mainw->files[mt->render_file]->achans>0) 
       gtk_widget_set_sensitive (mt->prerender_aud, TRUE);
     gtk_widget_set_sensitive (mt->save_event_list, TRUE);
   }
@@ -17252,7 +17254,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   if (file!=NULL&&(mainw->current_layouts_map==NULL||
 		   !g_list_find(mainw->current_layouts_map,file))) 
     mainw->current_layouts_map=g_list_append(mainw->current_layouts_map,g_strdup(file));
-  if (dir==NULL) ldir=g_strdup_printf(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
+  if (dir==NULL) ldir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
   else ldir=g_strdup(dir);
 
   map_name=g_build_filename(ldir,"layout.map",NULL);
@@ -19507,7 +19509,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
   LIVES_DEBUG("migrate");
 
   if (old_set_name!=NULL) {
-    changefrom=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,old_set_name);
+    changefrom=g_build_filename(prefs->tmpdir,old_set_name,"layouts/",NULL);
     chlen=strlen(changefrom);
   }
   else chlen=0;
@@ -19549,6 +19551,8 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
     }
   LIVES_DEBUG("migrate4");
 
+  g_print("vals %s %s %s %d\n",old_set_name,map->data,changefrom,chlen);
+
     if (old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen)) {
       // update mainw->current_layouts_map
       g_print("old is %s\n",map->data);
@@ -19560,6 +19564,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	g_free(tmp);
 	tmp=g_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
 	com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",(gchar *)map->data,tmp);
+	g_print("vals 33 %s %s\n",map->data,tmp);
 	lives_system(com,FALSE);
 	g_free(com);
       }
@@ -19576,11 +19581,13 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	map=mainw->files[i]->layout_map;
 	while (map!=NULL) {
 	  if (map->data!=NULL) {
+	    g_print("vals2 %s %s %s %d\n",old_set_name,map->data,changefrom,chlen);
 	    if ((old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen))||
 		(old_set_name==NULL&&(strstr(map->data,new_set_name)==NULL))) {
 	      tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
 	      g_free(map->data);
 	      map->data=tmp;
+	      g_print("settin mapdata to %s\n",tmp);
 	    }
 	    map=map->next;
 	  }

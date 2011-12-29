@@ -2008,8 +2008,11 @@ _entryw* create_rename_dialog (gint type) {
   if (type==1) {
     gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Rename Clip"));
   }
-  else if (type==2||type==3||type==4||type==5) {
+  else if (type==2||type==4||type==5) {
     gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Enter Set Name"));
+  }
+  else if (type==3) {
+    gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Enter a Set Name to Reload"));
   }
   else if (type==6) {
     gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Choose a Working Directory"));
@@ -2041,6 +2044,12 @@ _entryw* create_rename_dialog (gint type) {
     renamew->setlist=get_set_list(prefs->tmpdir);
     combo_set_popdown_strings(GTK_COMBO(set_combo),renamew->setlist);
     renamew->entry=(GTK_COMBO(set_combo))->entry;
+
+    if (strlen(prefs->ar_clipset_name)) {
+      // set default to our auto-reload clipset
+      gtk_entry_set_text(GTK_ENTRY(renamew->entry),prefs->ar_clipset_name);
+    }
+
     gtk_widget_show (set_combo);
     gtk_box_pack_start (GTK_BOX (hbox), set_combo, TRUE, TRUE, 0);
 

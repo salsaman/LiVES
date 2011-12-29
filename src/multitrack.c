@@ -2291,6 +2291,9 @@ gboolean mt_nextclip (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModif
 
 static void set_time_scrollbar(lives_mt *mt) {
   gdouble page=mt->tl_max-mt->tl_min;
+  if (mt->end_secs==0.) mt->end_secs=DEF_TIME;
+  if (mt->end_secs>mt->tl_max) mt->tl_max=mt->end_secs;
+
   gtk_range_set_range(GTK_RANGE(mt->time_scrollbar),0.,mt->end_secs);
   gtk_range_set_increments(GTK_RANGE(mt->time_scrollbar),page/4.,page);
   GTK_ADJUSTMENT(mt->hadjustment)->value=mt->tl_min;
@@ -5428,6 +5431,10 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->save_event_list);
   gtk_widget_set_sensitive (mt->save_event_list, FALSE);
 
+  gtk_widget_add_accelerator (mt->save_event_list, "activate", mt->accel_group,
+                              GDK_s, GDK_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
+
   mt->load_event_list = gtk_image_menu_item_new_with_mnemonic (_("_Load layout..."));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->load_event_list);
   gtk_widget_set_sensitive (mt->load_event_list, strlen(mainw->set_name)>0);
@@ -5436,7 +5443,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->clear_event_list);
 
   gtk_widget_add_accelerator (mt->clear_event_list, "activate", mt->accel_group,
-                              GDK_Delete, GDK_CONTROL_MASK,
+                              GDK_d, GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   gtk_widget_set_sensitive(mt->clear_event_list,mt->event_list!=NULL);
@@ -8721,8 +8728,12 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     }
   }
 
-  if (mt->event_list!=NULL) mt->end_secs=event_list_get_end_secs(mt->event_list)*2.;
-  else mt->end_secs=DEF_TIME;
+  mt->end_secs=0.;
+  if (mt->event_list!=NULL) {
+    mt->end_secs=event_list_get_end_secs(mt->event_list)*2.;
+    if (mt->end_secs==0.) LIVES_WARN("got zero length event_list");
+  }
+  if (mt->end_secs==0.) mt->end_secs=DEF_TIME;
 
   if (set_min_max) {
     mt->tl_min=0.;
@@ -15005,7 +15016,9 @@ void mt_sensitise (lives_mt *mt) {
   if (mt->selected_init_event!=NULL) gtk_widget_set_sensitive(mt->fx_delete,TRUE);
   gtk_widget_set_sensitive (mt->checkbutton_avel_reverse,TRUE);
 
-  if (mt->block_selected!=NULL&&(!mt->block_selected->start_anchored||!mt->block_selected->end_anchored)&&!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mt->checkbutton_avel_reverse))) {
+  if (mt->block_selected!=NULL&&(!mt->block_selected->start_anchored||
+				 !mt->block_selected->end_anchored)&&!gtk_toggle_button_get_active
+      (GTK_TOGGLE_BUTTON(mt->checkbutton_avel_reverse))) {
     gtk_widget_set_sensitive (mt->spinbutton_avel,TRUE);
     gtk_widget_set_sensitive(mt->avel_scale,TRUE);
   }
@@ -15014,7 +15027,8 @@ void mt_sensitise (lives_mt *mt) {
   gtk_widget_set_sensitive (mt->clipedit,TRUE);
   if (mt->file_selected>-1) {
     if (mainw->files[mt->file_selected]->frames>0) gtk_widget_set_sensitive (mt->insert,TRUE);
-    if (mainw->files[mt->file_selected]->achans>0&&mainw->files[mt->file_selected]->laudio_time>0.) gtk_widget_set_sensitive (mt->audio_insert,TRUE);
+    if (mainw->files[mt->file_selected]->achans>0&&mainw->files[mt->file_selected]->laudio_time>0.) 
+      gtk_widget_set_sensitive (mt->audio_insert,TRUE);
     gtk_widget_set_sensitive (mt->save_set,TRUE);
     gtk_widget_set_sensitive (mt->close,TRUE);
     gtk_widget_set_sensitive (mt->adjust_start_end, TRUE);
@@ -15033,7 +15047,8 @@ void mt_sensitise (lives_mt *mt) {
   if (mt->block_selected) {
     gtk_widget_set_sensitive (mt->delblock, TRUE);
     if (mt->poly_state==POLY_IN_OUT&&mt->block_selected->ordered) {
-      weed_timecode_t offset_end=mt->block_selected->offset_start+(weed_timecode_t)(U_SEC/mt->fps)+(get_event_timecode(mt->block_selected->end_event)-get_event_timecode(mt->block_selected->start_event));
+      weed_timecode_t offset_end=mt->block_selected->offset_start+(weed_timecode_t)(U_SEC/mt->fps)+
+	(get_event_timecode(mt->block_selected->end_event)-get_event_timecode(mt->block_selected->start_event));
       
       g_signal_handler_block (mt->spinbutton_out,mt->spin_out_func);
       g_signal_handler_block (mt->spinbutton_in,mt->spin_in_func);
@@ -17096,8 +17111,6 @@ GList *load_layout_map(void) {
 
   gboolean err=FALSE;
 
-  LIVES_DEBUG("a");
-
   if (!g_file_test(lmap_name,G_FILE_TEST_EXISTS)) {
     g_free(lmap_name);
     return NULL;
@@ -17214,17 +17227,22 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   // where data is simply a text dump of the above memory format
 
-  int i;
   GList *map,*map_next;
+
   gchar *new_entry;
   gchar *map_name,*ldir;
+  gchar *string;
+  gchar *com;
+
+  int i;
   int fd;
   int len;
   int retval;
-  gchar *string;
-  guint size=0;
-  gchar *com;
   gint max_frame;
+  gboolean written=FALSE;
+
+  guint size=0;
+
   gdouble max_atime;
 
   if (dir==NULL&&strlen(mainw->set_name)==0) return;
@@ -17293,6 +17311,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 	  }
 
 	  if ((map=mainw->files[i]->layout_map)!=NULL) {
+	    written=TRUE;
 	    len=strlen(mainw->files[i]->handle);
 	    lives_write(fd,&len,sizint,TRUE);
 	    lives_write(fd,mainw->files[i]->handle,len,TRUE);
@@ -17318,6 +17337,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 	retval=do_write_failed_error_s_with_retry(map_name,NULL,NULL);
 	mainw->write_failed=FALSE;
       }
+
     }
     if (retval==LIVES_RETRY && fd>=0) close(fd);
   } while (retval==LIVES_RETRY);
@@ -17325,13 +17345,19 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   if (retval!=LIVES_CANCEL) {
     size=get_file_size(fd);
     close(fd);
+
+    if (size==0||!written) {
+      LIVES_DEBUG("Removing layout map file: ");
+      LIVES_DEBUG(map_name);
+      unlink(map_name);
+    }
+
+    LIVES_DEBUG("Removing layout dir: ");
+    LIVES_DEBUG(ldir);
+    com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",ldir);
+    lives_system(com,TRUE);
+    g_free(com);
   }
-
-  if (size==0) unlink(map_name);
-
-  com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",ldir);
-  lives_system(com,TRUE);
-  g_free(com);
 
   g_free(ldir);
   g_free(map_name);
@@ -19254,6 +19280,8 @@ void remove_markers(weed_plant_t *event_list) {
 
 void wipe_layout(lives_mt *mt) {
 
+  mt_desensitise(mt);
+
  if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
@@ -19277,6 +19305,8 @@ void wipe_layout(lives_mt *mt) {
   event_list_free_undos(mt);
 
   mt_clear_timeline(mt);
+
+  mt_sensitise(mt);
 
   mt->idlefunc=mt_idle_add(mt);
 }
@@ -19340,7 +19370,6 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     remove_layout_files(layout_map);
     g_free(lmap_file);
   }
-
 
   // wipe
   wipe_layout(mt);
@@ -19475,6 +19504,8 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 
   // TODO - dirsep
 
+  LIVES_DEBUG("migrate");
+
   if (old_set_name!=NULL) {
     changefrom=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,old_set_name);
     chlen=strlen(changefrom);
@@ -19482,6 +19513,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
   else chlen=0;
 
   while (map!=NULL) {
+  LIVES_DEBUG("migrate2");
     if (old_set_name!=NULL) {
 
       do {
@@ -19495,6 +19527,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	    unlink(map->data);
 	    
 	    do {
+	      LIVES_DEBUG("migrate3");
 	      retval2=0;
 	      fd=creat(map->data,S_IRUSR|S_IWUSR);
 	      if (fd>=0) retval=save_event_list_inner(NULL,fd,event_list,NULL);
@@ -19514,10 +19547,13 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	
       } while (retval2==LIVES_RETRY);
     }
+  LIVES_DEBUG("migrate4");
 
     if (old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen)) {
       // update mainw->current_layouts_map
+      g_print("old is %s\n",map->data);
       tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
+      g_print("new is %s\n",tmp);
       if (g_file_test(tmp,G_FILE_TEST_EXISTS)) {
 	gchar *com;
 	// prevent duplication of layouts

@@ -1056,7 +1056,6 @@ void save_file (int clip, int start, int end, const char *filename) {
   gboolean safe_symlinks=prefs->safe_symlinks;
   gboolean not_cancelled;
   gboolean output_exists=FALSE;
-  gboolean existing=FALSE;
   gboolean save_all=FALSE;
   gboolean resb;
 
@@ -1067,7 +1066,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   // symlinks are now created in /tmp (for dynebolic)
   // then encode the symlinked frames
 
-  if (!existing) {
+  if (filename==NULL) {
     // prompt for encoder type/output format
     if (prefs->show_rdet) {
       gint response;
@@ -1131,8 +1130,8 @@ void save_file (int clip, int start, int end, const char *filename) {
     full_file_name=g_strdup (n_file_name);
   }
 
-  if (!existing) {
-    if (!check_file(full_file_name,TRUE)) {
+  if (filename==NULL) {
+    if (!check_file(full_file_name,FALSE)) {
       g_free(full_file_name);
       if (rdet!=NULL) {
 	gtk_widget_destroy (rdet->dialog);
@@ -1669,6 +1668,9 @@ void save_file (int clip, int start, int end, const char *filename) {
       com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s%s\" \"%s\" \"%s\"",cfile->handle,1,
 			  cfile->frames,prefs->lib_dir,
 			  PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name);
+
+      LIVES_DEBUG("com is");
+      LIVES_DEBUG(com);
     }
     else {
       com=g_strdup_printf("\"%s\" plugin_clear \"%s\" %d %d \"\" %s \"\"", enc_exec_name,cfile->handle,
@@ -4688,21 +4690,27 @@ void recover_layout_map(numclips) {
   layout_map *lmap_entry;
   gchar **array;
   
+  if (numclips>MAX_FILES) numclips=MAX_FILES;
+
   if ((mlist=load_layout_map())!=NULL) {
     int i;
     // assign layout map to clips
     for (i=1;i<=numclips;i++) {
+      if (mainw->files[i]==NULL) continue;
       lmap_node=mlist;
       while (lmap_node!=NULL) {
 	lmap_node_next=lmap_node->next;
 	lmap_entry=lmap_node->data;
+	g_print("cf %d %s %s %ld %ld\n",i,mainw->files[i]->handle,lmap_entry->handle,(mainw->files[i]->unique_id),(lmap_entry->unique_id));
 	if (!strcmp(mainw->files[i]->handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
 	  // got a match, assign list to layout_map and delete this node
 	  lmap_entry_list=lmap_entry->list;
 	  while (lmap_entry_list!=NULL) {
 	    lmap_entry_list_next=lmap_entry_list->next;
 	    array=g_strsplit(lmap_entry_list->data,"|",-1);
+	    g_print("test %s\n",array[0]);
 	    if (!g_file_test(array[0],G_FILE_TEST_EXISTS)) {
+	      g_print("removing\n");
 	      // layout file has been deleted, remove this entry
 	      if (lmap_entry_list->prev!=NULL) lmap_entry_list->prev->next=lmap_entry_list_next;
 	      else lmap_entry->list=lmap_node_next;

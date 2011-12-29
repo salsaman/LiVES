@@ -2128,7 +2128,7 @@ int main (int argc, char *argv[]) {
   gtk_init (&argc, &argv);
 
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal (0);
+  //g_log_set_always_fatal (0);
   theme_expected=pre_init();
 
   // mainw->foreign is set if we are grabbing an external window
@@ -3044,7 +3044,8 @@ void load_preview_image(gboolean update_always) {
     switch (mainw->prv_link) {
     case PRV_PTR:
       //cf. hrule_reset
-      if ((GTK_RULER (mainw->hruler)->position=cfile->pointer_time=calc_time_from_frame(mainw->current_file,mainw->preview_frame))>0.) {
+      if ((GTK_RULER (mainw->hruler)->position=cfile->pointer_time=
+	   calc_time_from_frame(mainw->current_file,mainw->preview_frame))>0.) {
 	gtk_widget_set_sensitive (mainw->rewind, TRUE);
 	gtk_widget_set_sensitive (mainw->trim_to_pstart, cfile->achans>0);
 	gtk_widget_set_sensitive (mainw->m_rewindbutton, TRUE);
@@ -3058,7 +3059,6 @@ void load_preview_image(gboolean update_always) {
     case PRV_START:
       if (cfile->start!=mainw->preview_frame) {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->preview_frame);
-	gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),pixbuf);
 	get_play_times();
       }
       break;
@@ -3067,7 +3067,6 @@ void load_preview_image(gboolean update_always) {
     case PRV_END:
       if (cfile->end!=mainw->preview_frame) {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),mainw->preview_frame);
-	gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),pixbuf);
 	get_play_times();
       }
       break;

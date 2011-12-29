@@ -1131,7 +1131,11 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
 
   if (filename==NULL) {
-    if (!check_file(full_file_name,FALSE)) {
+#if GLIB_CHECK_VERSION(2,8,0)
+    if (!check_file(full_file_name,strcmp(full_file_name,n_file_name))) {
+#else
+    if (!check_file(full_file_name,TRUE)) {
+#endif
       g_free(full_file_name);
       if (rdet!=NULL) {
 	gtk_widget_destroy (rdet->dialog);

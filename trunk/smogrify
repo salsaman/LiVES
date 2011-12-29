@@ -45,6 +45,8 @@ $gid=~ s/\W.*//;
 
 $home=$ENV{"HOME"};
 
+$DEBUG_SMOGRIFY=1;
+
 
 ###################################################################
 
@@ -762,7 +764,7 @@ if (defined($ARGV[0])) {
 		return 1;
 	    }
 	    else {
-		smog_system("$plugin clear $start $end $img_ext");
+		smog_system("\"$plugin\" clear $start $end $img_ext");
 		&sig_complete;
 		exit 0;
 	    }
@@ -1368,6 +1370,8 @@ if (defined($ARGV[0])) {
 		&sig_progress(0);
 	    }
 
+	    # TODO *** - check for failure and return error code
+
 	    smog_system("$syscom2");
 	    
             if (!-f $curtmpfile) {
@@ -1768,6 +1772,8 @@ if (defined($ARGV[0])) {
 
 	    }
 
+	    # TODO - check for errors here
+
 
 	    unless ($plugin eq "") {
 		#non-perl
@@ -1812,7 +1818,7 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "link_frames") {
-	unlink "$curtmpdir/pause";
+	    unlink "$curtmpdir/pause";
 	    chdir $curtmpdir;
 
 	    $start=$ARGV[2];
@@ -1868,7 +1874,7 @@ if (defined($ARGV[0])) {
 	    $curtmpdir=$linksdir;
 
 	    &insert_audio($asamps,$achans,$asigned,$aendian,0);
-	
+
 	    $curtmpdir=$ocurtmpdir;
 	    $from_handle=$ofrom_handle;
 	    $start=$ostart;
@@ -1924,10 +1930,12 @@ if (defined($ARGV[0])) {
 
 	    &clean_old;
 
+	    # TODO - check for errors
+
 	    for ($i=1;$i<=$end;$i++) {
 		$name=&mkname($i);
 		
-		smog_system("/bin/cp -f \"$name$img_ext\" \"$name.bak\"");
+		smog_copy("$name$img_ext","$name.bak");
 
 		if ($iwidth>0 && $iheight>0) {
 		    &resize_frame($name,$iwidth,$iheight);
@@ -2127,7 +2135,7 @@ if (defined($ARGV[0])) {
 			}
 			else {
 			    unless (($from eq $to) || $letterbox) {
-				smog_system("/bin/cp -f $from$img_ext $to.mgk");
+				smog_copy("$from$img_ext", "$to.mgk");
 			    }
 			}
 
@@ -2136,12 +2144,12 @@ if (defined($ARGV[0])) {
 			    if ($leave_bak) {
 				#letterboxing was done with resize
 				unless ($from eq $to) {
-				    smog_system("/bin/cp -f $from$img_ext $to$img_ext.2");
-				    smog_system("/bin/cp -f $from.mgk $to.mgk.2");
+				    smog_copy("$from$img_ext", "$to$img_ext.2");
+				    smog_copy("$from.mgk", "$to.mgk.2");
 				}
 			    }
 			    else {
-				smog_system("/bin/cp -f $to$img_ext $to.bak");
+				smog_copy("$to$img_ext", "$to.bak");
 				# make $to.mgk $to.img_ext
 				&letterbox_frame($to,abs($newwidth),abs($newheight),$owidth,$oheight);
 			    }
@@ -2959,7 +2967,7 @@ if (defined($ARGV[0])) {
 		}
 
 		if (-f "audio") {
-		    smog_system("/bin/cp audio audio.bak");
+		    smog_copy("audio", "audio.bak");
 		    smog_system_sync();
 		}
 	    }
@@ -3295,6 +3303,7 @@ sub get_img_ext {
 
 
 
+# TODO - error checking
 sub mv_mgk {
     # pass in first param as 1 to show progress of frames
     # new files are .mgk files, back up old files to .bak
@@ -3329,7 +3338,7 @@ sub mv_mgk {
 
 
 
-
+# TODO - error checking
 sub mv_pre {
     # new files are .pre files, back up old files to .bak
     my ($i,$name);
@@ -3354,7 +3363,7 @@ sub mv_pre {
     smog_system_sync();
 }
 
-
+# TODO - error checking
 sub undo {
     # recover .bak files; if param==0 or undefined, move current files to .mgk files
     my ($param)=shift;
@@ -3375,7 +3384,7 @@ sub undo {
     }
 }
 
-
+# TODO - error checking
 sub undo_audio {
     if (-f "$curtmpdir/audio.orig") {
 	unlink "$curtmpdir/audio";
@@ -3391,13 +3400,13 @@ sub undo_audio {
 }
 
 
-
+# TODO - error checking
 sub backup_audio {
     &clean_old;
-    smog_system("/bin/cp -f $curtmpdir/audio $curtmpdir/audio.bak >/dev/null 2>&1");
+    smog_copy("$curtmpdir/audio", "$curtmpdir/audio.bak");
 }
 
-
+# TODO - error checking
 sub cut {
     my ($start,$end)=@_;
     my ($i,$name);
@@ -3413,28 +3422,28 @@ sub cut {
     for ($i=$end+1;$i<=$frames;$i++) {
 	$from=&mkname($i);
 	$to=&mkname($i-$frames_cut);
-	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to.$img_ext");
+	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
 	&sig_progress($i);
     }
 }
 
 
 
-
+# TODO - error checking
 sub reverse {
     for ($i=$start;$i<int(($start+$end)/2+.5);$i++) {
 	$from=&mkname($i);
 	$to=&mkname($end-$i+1);
-	smog_rename( "$curtmpdir/$from.$img_ext","$curtmpdir/.revtemp");
-	smog_rename( "$curtmpdir/$to.$img_ext","$curtmpdir/$from.$img_ext");
+	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$from.revtemp");
+	smog_rename( "$curtmpdir/$to$img_ext","$curtmpdir/$from$img_ext");
 	&sig_progress($start+($i-$start)*2);
-	smog_rename( "$curtmpdir/.revtemp","$curtmpdir/$to.$img_ext");
+	smog_rename( "$curtmpdir/$from.revtemp","$curtmpdir/$to$img_ext");
 	&sig_progress($start+($i-$start)*2+1);
     }
 }
 
 
-
+# TODO - error checking
 sub undo_insert {
     $frames_inserted=$end-$start+1;
 
@@ -3452,71 +3461,74 @@ sub undo_insert {
 
 
 sub smog_system_sync {
-    `sync; sync; sync;`;
+    smog_system("sync");
+    smog_system("sync");
+    smog_system("sync");
 }
 
 
 
 
 sub smog_system {
-    my ($command)=@_;
-    my $comret;
+    my ($smcommand)=@_;
+    my $smcomret;
 
-    $DEBUG_SMOGRIFY=1;
+    $smcomret=system($smcommand);
 
-    if ($DEBUG_SMOGRIFY) {
-	print STDERR "smogrify debug: $command\n";
+    if ($smcomret && $DEBUG_SMOGRIFY) {
+	print STDERR "smogrify debug: $smcommand\n";
+	print STDERR "smogrify debug - command failed: result was $smcomret\n";
     }
 
-    $comret=system($command);
-
-    if ($DEBUG_SMOGRIFY) {
-	print STDERR "smogrify debug: result was $comret\n";
-    }
-
-    $comret;
+    $smcomret;
 
 }
 
 
 sub smog_system_direct {
-    my ($command)=@_;
-    my $comret;
+    my ($smcommand)=@_;
+    my $smcomret;
 
-    $DEBUG_SMOGRIFY=1;
+    $smcomret=`$smcommand`;
 
-    if ($DEBUG_SMOGRIFY) {
-	print STDERR "smogrify debug: $command\n";
+    if ($DEBUG_SMOGRIFY && $? != 0) {
+	print STDERR "smogrify debug: command was $smcommand\n";
+	print STDERR "smogrify debug: result was $smcomret\n";
+	print STDERR "smogrify debug: error was $?\n";
     }
 
-    $comret=`$command`;
-
-    if ($DEBUG_SMOGRIFY) {
-	print STDERR "smogrify debug: result was $comret\n";
-    }
-
-    $comret;
+    $smcomret;
 }
 
 
 
 sub smog_rename {
    my ($smfrom,$smto)=@_;
-   my $comret;
+   my $smcomret=rename "$smfrom","$smto";
 
-    $DEBUG_SMOGRIFY=1;
-
-    if ($DEBUG_SMOGRIFY) {
-	print STDERR "smogrify debug - rename: $smfrom $smto\n";
+    if ($DEBUG_SMOGRIFY && $smcomret==0) {
+	print STDERR "smogrify debug - rename failed: $smfrom $smto\n";
     }
 
-    $comret=rename "$smfrom","$smto";
+    $smcomret;
 
-    if ($DEBUG_SMOGRIFY) {
-	print STDERR "smogrify debug: result was $comret\n";
-    }
+}
 
-    $comret;
+
+
+sub smog_copy {
+   my ($smfrom,$smto)=@_;
+
+   my $smcomret=system("/bin/cp -f \"$smfrom\" \"$smto\"");
+
+   if ($smcomret!=0 && -f $smfrom) {
+       if ($DEBUG_SMOGRIFY) {
+	   print STDERR "smogrify debug - copy failed: $smfrom $smto\n";
+       }
+       sig_write_error("$smto");
+   }
+
+    $smcomret;
 
 }
 
@@ -3526,7 +3538,7 @@ sub smog_rename {
 
 
 
-
+# TODO - error checking
 sub insert {
     my ($from,$to,$frames_to_move);
     $times_inserted=0;
@@ -3561,7 +3573,7 @@ sub insert {
 	$to=&mkname($i+$frames_to_move);
 	if ($i<=($num_frames-$frames_to_move)&&!$undo_cut&&-f "$curtmpdir/$from$img_ext") {
 	    # this frame will get overwritten, so back it up
-	    smog_system("/bin/cp -f $curtmpdir/$from$img_ext $curtmpdir/$from.bak");
+	    smog_copy("$curtmpdir/$from$img_ext", "$curtmpdir/$from.bak");
 	}
 	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
 	&sig_progress($num_frames-$i);
@@ -3607,7 +3619,7 @@ sub insert {
 		}
 
 		if ($quick_copy==1) {
-		    smog_system("/bin/cp -f \"$fromdir/$from$img_ext2\" \"$curtmpdir/$to$img_ext\" >/dev/null 2>&1");
+		    smog_copy("$fromdir/$from$img_ext2","$curtmpdir/$to$img_ext");
 		}
 		else {
 		    if ($antialias eq "false") {
@@ -3645,7 +3657,7 @@ sub insert {
 }
 
 
-
+# TODO - error checking
 sub resize_frame {
     my ($name,$width,$height)=@_;
 
@@ -3665,7 +3677,7 @@ sub resize_frame {
 }
 
 
-
+# TODO - error checking
 sub letterbox_frame {
     my ($name,$iwidth,$iheight,$owidth,$oheight)=@_;
 
@@ -3696,7 +3708,7 @@ sub letterbox_frame {
 
 }
 
-
+# TODO - error checking
 sub zoom_frame {
     my ($name,$centre_x,$centre_y,$width,$height,$rscale)=@_;
     # zoom into a frame
@@ -3756,7 +3768,7 @@ sub zoom_frame {
 
 
 
-
+# TODO - error checking
 sub trim_frame {
     my ($name,$width,$height,$x,$y,$nwidth,$nheight)=@_;
 
@@ -3775,7 +3787,7 @@ sub trim_frame {
 }
 
 
-
+# TODO - error checking
 sub trim_center {
     my ($name,$width,$height)=@_;
 
@@ -4030,6 +4042,8 @@ sub get_file_info {
 		$achans=$achans*1;
 	    }
 
+	    # grep may fail with error 256
+
 	    if (! -f $file_ident) {return;};
 	    $comment=smog_system_direct("grep Comments: \"$file_ident\" 2>/dev/null");
 	    @tmp=split(" ",$comment);
@@ -4150,7 +4164,7 @@ sub get_file_info {
 
 
 
-
+# TODO - error checking
 sub convert_audio_to_raw {
     &get_formats;
     if (!(&rc_get("audio_player") eq "mplayer")) {
@@ -4165,6 +4179,7 @@ sub convert_audio_to_raw {
 }
 
 
+# TODO - error checking
 sub convert_audio_to_wav {
     #WARNING - $asamps and $nasamps are in bits
     my ($aasamps)=$asamps/8;
@@ -4233,7 +4248,7 @@ sub convert_audio_to_wav {
 
 
 
-
+# TODO - error checking
 #clip (actually, trim) the audio from $start seconds to $end seconds
 sub clip_audio {
     my ($start,$end)=@_;
@@ -4278,7 +4293,7 @@ sub clip_audio {
     $audio_out;
 }
 
-
+# TODO - error checking
 sub resample_audio {
     #WARNING - $asamps and $nasamps are in bits
 
@@ -4349,7 +4364,7 @@ sub resample_audio {
 
 
 
-
+# TODO - error checking
 sub insert_audio {
 #what we are going to do:
 # 1) copy the end of the audio (after insertion) to a new file
@@ -4519,7 +4534,7 @@ sub insert_audio {
 }
 
 
-
+# TODO - error checking
 sub cut_audio {
 #what we are going to do:
     #1) copy up to $start to a new file
@@ -4618,7 +4633,7 @@ sub align {
     return $guess;
 }
 
-
+# TODO - error checking
 sub append_silence {
     #pad from end of file to byte $end-1 with zeros
     my ($offset,$end,$asamps,$achans,$asigned,$aendian,$audio_file)=@_;
@@ -4677,7 +4692,7 @@ sub append_silence {
 
 
 
-
+# TODO - error checking
 sub open_images {
     # set $file before calling this function
     # set $only_first to 1 to just open the first image in a directory
@@ -4757,7 +4772,7 @@ sub byfile {
 
 
 
-
+# TODO - error checking
 sub open_single_image {
     # set $hsize and $vsize to force the image size, set to 0 to autoresize
     #identify hangs if the file extension is ".avi" or ".mp4" or ".mpg"
@@ -4893,7 +4908,7 @@ sub get_image_size {
 
 
 
-
+# TODO - error checking
 sub fill_and_redo_frames {
     # resample and fill gaps in frames
 
@@ -4921,14 +4936,14 @@ sub fill_and_redo_frames {
 	}
 
 	unless ($fromname eq $name) {
-	    smog_system("/bin/cp -f \"$fromname$img_ext\" \"$name$img_ext\"");
+	    smog_copy("$fromname$img_ext","$name$img_ext");
 	}
 	&sig_progress($i);
     }
 
 }
 
-
+# TODO - error checking
 sub get_next_frame {
     my $j;
     my $xname;
@@ -4949,7 +4964,7 @@ sub get_next_frame {
 
 
 
-
+# TODO - error checking
 sub mp3_open {
     if (-f $audio_in) {
 	unlink "$audio_in";
@@ -5000,7 +5015,7 @@ sub mp3_open {
 
 }
 
-
+# TODO - error checking
 sub ogg_open {
     $f_size=0;
 
@@ -5046,7 +5061,7 @@ sub ogg_open {
 
 }
 
-
+# TODO - error checking
 sub wav_open {
     $mplay_command=&rc_get("video_open_command");
     $curtmpfile=$curtmpdir . "/.temp";
@@ -5055,7 +5070,7 @@ sub wav_open {
 	unlink "$audio_in";
     }
     
-    smog_system("/bin/cp \"$file\" \"$audio_in\"");
+    smog_copy("$file","$audio_in");
 
     $file=$audio_in;
     $is_audio=1;
@@ -5085,7 +5100,7 @@ sub wav_open {
 }
 
 
-
+# TODO - error checking
 sub othera_open {
     $arate=44100;
     $achans=2;
@@ -5226,7 +5241,7 @@ sub clean_old {
 }
 
 
-
+# TODO - error checking
 sub sig_complete {
     return if (! -d $curtmpdir);
     my($status)="completed";
@@ -5256,6 +5271,7 @@ sub sig_killed {
 }
 
 
+# TODO - error checking
 sub sig_complete_audio {
     return if (! -d $curtmpdir);
     my($status)="audio_ended|";
@@ -5296,6 +5312,88 @@ sub sig_error {
     smog_system_sync();
     exit 1;
 }
+
+
+sub sig_write_error {
+
+    return if (! -d $curtmpdir);
+
+    my($status)="error|write|";
+    my ($count)=0;
+    foreach (@_) {
+	$status.="|".$_;
+	$count++;
+    }
+
+    open OUT,"> $statusfile";
+    print OUT $status;
+    close OUT;
+    unlink "$pidfile";
+    smog_system_sync();
+    exit 1;
+}
+
+
+sub sig_write_error {
+
+    return if (! -d $curtmpdir);
+
+    my($status)="error|write|";
+    my ($count)=0;
+    foreach (@_) {
+	$status.="|".$_;
+	$count++;
+    }
+
+    open OUT,"> $statusfile";
+    print OUT $status;
+    close OUT;
+    unlink "$pidfile";
+    smog_system_sync();
+    exit 1;
+}
+
+
+sub sig_read_error {
+
+    return if (! -d $curtmpdir);
+
+    my($status)="error|read|";
+    my ($count)=0;
+    foreach (@_) {
+	$status.="|".$_;
+	$count++;
+    }
+
+    open OUT,"> $statusfile";
+    print OUT $status;
+    close OUT;
+    unlink "$pidfile";
+    smog_system_sync();
+    exit 1;
+}
+
+
+sub sig_system_error {
+
+    return if (! -d $curtmpdir);
+
+    my($status)="error|system|";
+    my ($count)=0;
+    foreach (@_) {
+	$status.="|".$_;
+	$count++;
+    }
+
+    open OUT,"> $statusfile";
+    print OUT $status;
+    close OUT;
+    unlink "$pidfile";
+    smog_system_sync();
+    exit 1;
+}
+
+
 
 
 sub sig_pid {
@@ -5357,7 +5455,7 @@ sub rc_delete {
 }
 
 
-
+# TODO - error checking
 sub rc_set {
     # set/mdoify/delete a value in the .rc file
     my ($key)=$_[0];
@@ -5517,10 +5615,12 @@ sub rc_get {
 }
 
 
+
 sub fast_dd {
     # copy size bytes from $fdd_in to $fdd_out - skip $skip bytes in input and $seek bytes in output
     # no truncation is done
     my ($size,$skip,$seek)=@_;
+    my ($smres);
 
     return if ($size<0);
 
@@ -5531,24 +5631,25 @@ sub fast_dd {
 
     my $data,$i;
 
-    open FFIN,"<$fdd_in";
-    seek FFIN,$skip,SEEK_START;
+    open FFIN,"<$fdd_in" or sig_read_error("$ffd_in");
+    seek FFIN,$skip,SEEK_START or sig_read_error("$ffd_in");
 
-    smog_system("/bin/touch $fdd_out");
+    $smres=smog_system("/bin/touch $fdd_out");
+    if ($smres!=0) {sig_write_error("$ffd_out")};
 
-    open FFOUT,"+<$fdd_out";
-    seek FFOUT,$seek,SEEK_START;
+    open FFOUT,"+<$fdd_out" or sig_write_error("$ffd_out");
+    seek FFOUT,$seek,SEEK_START or sig_write_error("$ffd_out");
 
     for ($i=0;$i<$fblocks;$i++) {
-	read FFIN,$data,$bs;
-	print FFOUT $data;
+	read FFIN,$data,$bs or sig_read_error("$ffd_in");
+	print FFOUT $data or sig_write_error("$ffd_out");
     }
 
     while ($rbytes>0) {
 	$bs/=2;
 	if ($rbytes>=$bs) {
-	    read FFIN,$data,$bs;
-	    print FFOUT $data;
+	    read FFIN,$data,$bs or sig_read_error("$ffd_in");
+	    print FFOUT $data or sig_write_error("$ffd_out");
 	    $rbytes-=$bs;
 	}
     }

@@ -1,6 +1,6 @@
 // plugins.c
 // LiVES
-// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -39,8 +39,6 @@ static gboolean list_plugins;
 
 
 static GList *get_plugin_result (const gchar *command, const gchar *delim, gboolean allow_blanks) {
-  // command must be suitably wrapped in quotes
-
 
   GList *list=NULL;
   gchar **array;
@@ -168,30 +166,27 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
 }
 
 
-GList *
-plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+GList * plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
   // allow blanks in a list
   return plugin_request_common(plugin_type, plugin_name, request, "|", TRUE);
 }
 
-GList *
-plugin_request (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+GList * plugin_request (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
   return plugin_request_common(plugin_type, plugin_name, request, "|", FALSE);
 }
 
-GList *
-plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+GList * plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
   return plugin_request_common(plugin_type, plugin_name, request, "\n", FALSE);
 }
-GList *
-plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+
+GList * plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
   return plugin_request_common(plugin_type, plugin_name, request, " ", FALSE);
 }
 
 
 
-GList *
-plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, gboolean allow_blanks) {
+GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, 
+			       const gchar *delim, gboolean allow_blanks) {
   // returns a GList of responses to -request, or NULL on error
   // by_line says whether we split on '\n' or on '|'
   GList *reslist=NULL;
@@ -251,23 +246,30 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
   if (!strcmp(plugin_type,PLUGIN_THEMES)) {
     com=g_strdup_printf ("smogrify list_plugins 0 1 \"%s%s\" \"\"",prefs->prefix_dir,THEME_DIR);
   }
-  else if (!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)) {
+  else if (!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS)||
+	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS)||
+	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)) {
     // look in home
-    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s/%s%s\" \"%s\"",allow_nonex,capable->home_dir,LIVES_CONFIG_DIR,plugin_type,ext);
+    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s/%s%s\" \"%s\"",allow_nonex,capable->home_dir,
+			 LIVES_CONFIG_DIR,plugin_type,ext);
   }
   else if (!strcmp(plugin_type,PLUGIN_EFFECTS_WEED)) {
-    com=g_strdup_printf ("smogrify list_plugins 1 1 \"%s\" \"%s\"",(tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
+    com=g_strdup_printf ("smogrify list_plugins 1 1 \"%s\" \"%s\"",
+			 (tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
     g_free(tmp);
   }
   else if (!strcmp(plugin_type,PLUGIN_DECODERS)) {
-    com=g_strdup_printf ("smogrify list_plugins 1 0 \"%s\" \"%s\"",(tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
+    com=g_strdup_printf ("smogrify list_plugins 1 0 \"%s\" \"%s\"",
+			 (tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
     g_free(tmp);
   }
   else if (!strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS)) {
-    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s%s%s\" \"%s\"",allow_nonex,prefs->prefix_dir,PLUGIN_SCRIPTS_DIR,plugin_type,ext);
+    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s%s%s\" \"%s\"",allow_nonex,prefs->prefix_dir,
+			 PLUGIN_SCRIPTS_DIR,plugin_type,ext);
   }
   else {
-    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s%s%s\" \"%s\"",allow_nonex,prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,ext);
+    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s%s%s\" \"%s\"",allow_nonex,prefs->lib_dir,
+			 PLUGIN_EXEC_DIR,plugin_type,ext);
   }
   list_plugins=TRUE;
   pluglist=get_plugin_result (com,"|",FALSE);
@@ -649,9 +651,11 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
     mainw->write_vpp_file=TRUE;
   }
   else {
-    if (vppw->spinbuttonw!=NULL) future_prefs->vpp_fwidth=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonw));
+    if (vppw->spinbuttonw!=NULL) 
+      future_prefs->vpp_fwidth=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonw));
     else future_prefs->vpp_fwidth=-1;
-    if (vppw->spinbuttonh!=NULL) future_prefs->vpp_fheight=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonh));
+    if (vppw->spinbuttonh!=NULL) 
+      future_prefs->vpp_fheight=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonh));
     else future_prefs->vpp_fheight=-1;
     if (vppw->fps_entry!=NULL) fixed_fps=gtk_entry_get_text(GTK_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry!=NULL) {
@@ -999,7 +1003,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
     if (tmpvpp->get_yuv_palette_clamping!=NULL&&weed_palette_is_yuv_palette(tmpvpp->palette)) {
       int *clampings=tmpvpp->get_yuv_palette_clamping(tmpvpp->palette);
-      if (clampings[0]!=-1) ctext=g_strdup_printf("%s (%s)",weed_palette_get_name(tmpvpp->palette),weed_yuv_clamping_get_name(tmpvpp->YUV_clamping));
+      if (clampings[0]!=-1) 
+	ctext=g_strdup_printf("%s (%s)",weed_palette_get_name(tmpvpp->palette),
+			      weed_yuv_clamping_get_name(tmpvpp->YUV_clamping));
     }
     if (ctext==NULL) ctext=g_strdup(weed_palette_get_name(tmpvpp->palette));
     gtk_entry_set_text(GTK_ENTRY(vppa->pal_entry),ctext);
@@ -1122,7 +1128,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
 
   if (handle==NULL) {
     gchar *msg=g_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
-    if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+    if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
+							   GTK_WINDOW(mainw->LiVES->window));
     else do_error_dialog(msg);
     g_free (msg);
     g_free(plugname);
@@ -1157,7 +1164,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
 
   if ((pl_error=(*vpp->module_check_init)())!=NULL) {
     msg=g_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"),pl_error);
-    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
+					 GTK_WINDOW(mainw->LiVES->window));
     g_free(msg);
     dlclose (handle);
     g_free (vpp);
@@ -1167,9 +1175,11 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   }
 
   if (!OK) {
-    gchar *msg=g_strdup_printf (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
+    gchar *msg=g_strdup_printf 
+      (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
     set_pref ("vid_playback_plugin","none");
-    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
+					 GTK_WINDOW(mainw->LiVES->window));
     g_free (msg);
     close_vid_playback_plugin(vpp);
     g_free(plugname);
@@ -1328,11 +1338,14 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
 
 
   if (vpp->send_keycodes==NULL&&vpp->capabilities&VPP_LOCAL_DISPLAY) {
-    d_print(_("\nWarning ! Video playback plugin will not send key presses. Keyboard may be disabled during plugin use !\n"));
+    d_print
+      (_("\nWarning ! Video playback plugin will not send key presses. Keyboard may be disabled during plugin use !\n"));
   }
 
   cached_key=cached_mod=0;
-  msg=g_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,vpp->palette,(tmp=weed_palette_get_name_full(vpp->palette,vpp->YUV_clamping,WEED_YUV_SUBSPACE_YCBCR)));
+  msg=g_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,
+		      vpp->palette,(tmp=weed_palette_get_name_full(vpp->palette,vpp->YUV_clamping,
+								   WEED_YUV_SUBSPACE_YCBCR)));
   g_free(tmp);
   d_print (msg);
   g_free (msg);
@@ -1603,7 +1616,9 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
   }
 
   // audio endianness check - what should we do for big-endian machines ?
-  if (((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
+  if (((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||
+					      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))
+      &&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
     if (rdet!=NULL&&!rdet->is_encoding) {
       if (mainw->endian!=AFORM_BIG_ENDIAN && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend)))) 
 	swap_endian=TRUE;
@@ -1668,7 +1683,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	      }
 	    }
 	  }
-	  else if ((best_fps_denom==0&&allowed_fps>best_fps)||(best_fps_denom>0&&allowed_fps>(best_fps_num*1.)/(best_fps_denom*1.))) {
+	  else if ((best_fps_denom==0&&allowed_fps>best_fps)||(best_fps_denom>0&&allowed_fps>(best_fps_num*1.)/
+							       (best_fps_denom*1.))) {
 	    best_fps_delta=fps-allowed_fps;
 	    if (mbest_denom>0) {
 	      best_fps_num=mbest_num;
@@ -1740,7 +1756,13 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       }
 
       
-      if (!strncmp (checks[r],"asigned=",8)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
+      if (!strncmp (checks[r],"asigned=",8)&&
+	  ((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||
+						  resaudw->aud_checkbutton==NULL||
+						  gtk_toggle_button_get_active
+						  (GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&
+	  prefs->encoder.audio_codec!=AUDIO_CODEC_NONE
+	  &&(arate*achans*asampsize)) {
 	array=g_strsplit(checks[r],"=",2);
 	if (!strcmp(array[1],"signed")) {
 	  asigned=1;
@@ -1761,7 +1783,12 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       }
       
       
-      if (!strncmp (checks[r],"arate=",6)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
+      if (!strncmp (checks[r],"arate=",6)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||
+										   resaudw->aud_checkbutton==NULL||
+										   gtk_toggle_button_get_active
+										   (GTK_TOGGLE_BUTTON
+										    (resaudw->aud_checkbutton))))&&
+	  prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
 	// we only perform this test if we are encoding with audio
 	// find next highest allowed rate from list,
 	// if none are higher, use the highest
@@ -1872,7 +1899,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 
 
 
-  if (((width!=owidth||height!=oheight)&&width*height>0)||(best_fps_delta>0.)||(best_arate_delta>0&&best_arate>0)||best_arate<0||asigned!=0||swap_endian) {
+  if (((width!=owidth||height!=oheight)&&width*height>0)||(best_fps_delta>0.)||(best_arate_delta>0&&best_arate>0)||
+      best_arate<0||asigned!=0||swap_endian) {
     gboolean ofx1_bool=mainw->fx1_bool;
     mainw->fx1_bool=FALSE;
     if ((width!=owidth||height!=oheight)&&width*height>0) {
@@ -1891,11 +1919,14 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       rdet->arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
       rdet->achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
       rdet->asamps=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
-      rdet->aendian=get_signed_endian(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned)),gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_littleend)));
+      rdet->aendian=get_signed_endian(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned)),
+				      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_littleend)));
 
-      if (swap_endian||width!=rdet->width||height!=rdet->height||best_fps_delta!=0.||best_arate!=rdet->arate||((asigned==1&&(rdet->aendian&AFORM_UNSIGNED))||(asigned==2&&!(rdet->aendian&AFORM_SIGNED)))) {
+      if (swap_endian||width!=rdet->width||height!=rdet->height||best_fps_delta!=0.||best_arate!=rdet->arate||
+	  ((asigned==1&&(rdet->aendian&AFORM_UNSIGNED))||(asigned==2&&!(rdet->aendian&AFORM_SIGNED)))) {
       
-	if (rdet_suggest_values(width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,swap_endian,allow_aspect_override,(best_fps_delta==0.))) {
+	if (rdet_suggest_values(width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,swap_endian,
+				allow_aspect_override,(best_fps_delta==0.))) {
 	  gchar *arate_string;
 	  rdet->width=width;
 	  rdet->height=height;
@@ -1932,7 +1963,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       return FALSE;
     }
 
-    if (mainw->osc_auto||do_encoder_restrict_dialog (width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,swap_endian,allow_aspect_override,save_all)) {
+    if (mainw->osc_auto||do_encoder_restrict_dialog (width,height,best_fps,best_fps_num,best_fps_denom,best_arate,
+						     asigned,swap_endian,allow_aspect_override,save_all)) {
       if (!mainw->fx1_bool&&mainw->osc_enc_width==0) {
 	width=owidth;
 	height=oheight;
@@ -2496,13 +2528,15 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
       LIVES_DEBUG("3com is");
       LIVES_DEBUG(com);
     break;
-  default:
+  case RFX_STATUS_TEST:
     dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
     com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_TEST,rfx->name);
       LIVES_DEBUG("6com is");
       LIVES_DEBUG(com);
     break;
+  default:
+    return;
   }
 
   if (dir!=NULL) g_free(dir);
@@ -2955,8 +2989,11 @@ void set_colRGBA32_param(void *value, gshort red, gshort green, gshort blue, gsh
 
 gint find_rfx_plugin_by_name (const gchar *name, gshort status) {
   int i;
-  for (i=1;i<mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) {
-    if (mainw->rendered_fx[i].name!=NULL&&!strcmp (mainw->rendered_fx[i].name,name)&&mainw->rendered_fx[i].status==status) return (gint)i;
+  for (i=1;i<mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
+	 mainw->num_rendered_effects_test;i++) {
+    if (mainw->rendered_fx[i].name!=NULL&&!strcmp (mainw->rendered_fx[i].name,name)
+	&&mainw->rendered_fx[i].status==status) 
+      return (gint)i;
   }
   return -1;
 }
@@ -3045,7 +3082,11 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 	  wtmpl2=weed_get_plantptr_value(wpars[copyto],"template",&error);
 	  if (weed_plant_has_leaf(wtmpl2,"flags")) flags2=weed_get_int_value(wtmpl2,"flags",&error);
 	  param_hint2=weed_get_int_value(wtmpl2,"hint",&error);
-	  if (param_hint==param_hint2&&((flags2&WEED_PARAMETER_VARIABLE_ELEMENTS)||(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL&&flags2&WEED_PARAMETER_ELEMENT_PER_CHANNEL)||weed_leaf_num_elements(wtmpl,"default")==weed_leaf_num_elements(wtmpl2,"default"))) rpar[i].copy_to=copyto;
+	  if (param_hint==param_hint2&&((flags2&WEED_PARAMETER_VARIABLE_ELEMENTS)||
+					(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL&&
+					 flags2&WEED_PARAMETER_ELEMENT_PER_CHANNEL)||
+					weed_leaf_num_elements(wtmpl,"default")==
+					weed_leaf_num_elements(wtmpl2,"default"))) rpar[i].copy_to=copyto;
 	}
       }
     }
@@ -3111,7 +3152,8 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 	  gtk_list=NULL;
 	  rpar[i].type=LIVES_PARAM_STRING_LIST;
 	}
-	else if (weed_plant_has_leaf(gui,"step_size")) rpar[i].step_size=(gdouble)weed_get_int_value(gui,"step_size",&error);
+	else if (weed_plant_has_leaf(gui,"step_size")) 
+	  rpar[i].step_size=(gdouble)weed_get_int_value(gui,"step_size",&error);
 	if (rpar[i].step_size==0.) rpar[i].step_size=1.;
       }
       break;
@@ -3299,7 +3341,8 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 	weed_free(string);
       }
       if (weed_plant_has_leaf(gui,"use_mnemonic")) rpar[i].use_mnemonic=weed_get_boolean_value(gui,"use_mnemonic",&error);
-      if (weed_plant_has_leaf(gui,"hidden")) rpar[i].hidden|=((weed_get_boolean_value(gui,"hidden",&error)==WEED_TRUE)*HIDDEN_GUI);
+      if (weed_plant_has_leaf(gui,"hidden")) 
+	rpar[i].hidden|=((weed_get_boolean_value(gui,"hidden",&error)==WEED_TRUE)*HIDDEN_GUI);
       if (weed_plant_has_leaf(gui,"display_func")) {
 	weed_display_f *display_func_ptr_ptr;
 	weed_display_f display_func;
@@ -3323,7 +3366,8 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
   }
 
   for (i=0;i<npar;i++) {
-    if (rpar[i].copy_to!=-1) weed_leaf_copy(weed_inst_in_param(plant,rpar[i].copy_to,FALSE),"value",weed_inst_in_param(plant,i,FALSE),"value");
+    if (rpar[i].copy_to!=-1) weed_leaf_copy(weed_inst_in_param(plant,rpar[i].copy_to,FALSE),"value",
+					    weed_inst_in_param(plant,i,FALSE),"value");
   }
 
   weed_free(wpars);
@@ -3361,7 +3405,8 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   rfx->status=RFX_STATUS_WEED;
   rfx->props=0;
   rfx->menuitem=NULL;
-  if (!weed_plant_has_leaf(filter,"in_parameter_templates")||weed_get_plantptr_value(filter,"in_parameter_templates",&error)==NULL) rfx->num_params=0;
+  if (!weed_plant_has_leaf(filter,"in_parameter_templates")||
+      weed_get_plantptr_value(filter,"in_parameter_templates",&error)==NULL) rfx->num_params=0;
   else rfx->num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
   if (rfx->num_params>0) rfx->params=weed_params_to_rfx(rfx->num_params,plant,show_reinits);
   else rfx->params=NULL;

@@ -3022,9 +3022,10 @@ void do_onchange (GObject *object, lives_rfx_t *rfx) {
       handle=cfile->handle;
     }
 
-    com=g_strdup_printf ("smogrify \"fxinit_%s\" \"%s\" \"%s\" %d %d \"%s\"",rfx->name,handle,plugdir,
+    com=g_strdup_printf ("smogrify \"fxinit_%s\" \"%s\" \"%s\" %d %d %s",rfx->name,handle,plugdir,
 			 width,height,(tmp=param_marshall (rfx,TRUE)));
     retvals=plugin_request_by_space (NULL,NULL,com);
+
     g_free(tmp);
     g_free(plugdir);
   }

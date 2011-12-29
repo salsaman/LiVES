@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-12-29 04:32-0300\n"
+"POT-Creation-Date: 2011-12-29 04:43-0300\n"
 "PO-Revision-Date: 2011-06-03 07:11+0000\n"
 "Last-Translator: Dominik Dehning <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -9148,6 +9148,47 @@ msgstr ""
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
+msgstr ""
+
+#: src/pulse.c:79
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server\n"
+msgstr "Starte PulseAudio Server"
+
+#: src/pulse.c:83
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to sox audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+
+#: src/pulse.c:87
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to mplayer audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+
+#: src/pulse.c:91
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+msgstr "Starte PulseAudio Server"
+
+#: src/pulse.c:96
+#, fuzzy
+msgid "LiVES will exit and you can choose another audio player.\n"
+msgstr "LiVES: - Wählen sie einen Audio Player"
+
+#: src/pulse.c:944
+msgid ""
+"\n"
+"Connection to pulse audio was reset.\n"
 msgstr ""
 
 #: src/colourspace.c:1002

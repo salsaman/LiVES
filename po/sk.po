@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-12-29 04:32-0300\n"
+"POT-Creation-Date: 2011-12-29 04:43-0300\n"
 "PO-Revision-Date: 2011-11-01 11:47+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -9593,6 +9593,55 @@ msgstr "Spustená čítačka jack audio.\n"
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
+msgstr ""
+
+#: src/pulse.c:79
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server\n"
+msgstr "Nepodarilo sa pripojiť na JACK server\n"
+
+#: src/pulse.c:83
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to sox audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+"Ukážka viacstopého zvuku je k dispozícii s\n"
+"\"jack\" alebo \"pulse audio\" prehrávačom.\n"
+"Môžete to nastaviť v Nástroje|Predvoľby|Prehrávanie."
+
+#: src/pulse.c:87
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to mplayer audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+"Ukážka viacstopého zvuku je k dispozícii s\n"
+"\"jack\" alebo \"pulse audio\" prehrávačom.\n"
+"Môžete to nastaviť v Nástroje|Predvoľby|Prehrávanie."
+
+#: src/pulse.c:91
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+msgstr "Nepodarilo sa pripojiť na JACK server\n"
+
+#: src/pulse.c:96
+#, fuzzy
+msgid "LiVES will exit and you can choose another audio player.\n"
+msgstr "LiVES: - Vybrať audio prehrávač"
+
+#: src/pulse.c:944
+msgid ""
+"\n"
+"Connection to pulse audio was reset.\n"
 msgstr ""
 
 #: src/colourspace.c:1002

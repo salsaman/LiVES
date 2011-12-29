@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-12-29 04:32-0300\n"
+"POT-Creation-Date: 2011-12-29 04:43-0300\n"
 "PO-Revision-Date: 2011-08-18 11:57+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Arabic <ar@li.org>\n"
@@ -8799,6 +8799,47 @@ msgstr ""
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
+msgstr "يتصل بخادوم نقل جاك"
+
+#: src/pulse.c:79
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server\n"
+msgstr "بدء خادوم بالص-اوديو..."
+
+#: src/pulse.c:83
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to sox audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+
+#: src/pulse.c:87
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to mplayer audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+
+#: src/pulse.c:91
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+msgstr "بدء خادوم بالص-اوديو..."
+
+#: src/pulse.c:96
+msgid "LiVES will exit and you can choose another audio player.\n"
+msgstr ""
+
+#: src/pulse.c:944
+#, fuzzy
+msgid ""
+"\n"
+"Connection to pulse audio was reset.\n"
 msgstr "يتصل بخادوم نقل جاك"
 
 #: src/colourspace.c:1002

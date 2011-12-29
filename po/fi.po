@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-12-29 04:32-0300\n"
+"POT-Creation-Date: 2011-12-29 04:43-0300\n"
 "PO-Revision-Date: 2011-10-18 16:25+0000\n"
 "Last-Translator: Juhani Numminen <juhaninumminen0@gmail.com>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -9093,6 +9093,48 @@ msgstr ""
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
+msgstr "Yhdistetään jack-välityspalvelimeen..."
+
+#: src/pulse.c:79
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server\n"
+msgstr "JACK-palvelimeen ei voitu muodostaa yhteyttä\n"
+
+#: src/pulse.c:83
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to sox audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+
+#: src/pulse.c:87
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to mplayer audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+
+#: src/pulse.c:91
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+msgstr "JACK-palvelimeen ei voitu muodostaa yhteyttä\n"
+
+#: src/pulse.c:96
+#, fuzzy
+msgid "LiVES will exit and you can choose another audio player.\n"
+msgstr "LiVES: - Valitse äänisoitin"
+
+#: src/pulse.c:944
+#, fuzzy
+msgid ""
+"\n"
+"Connection to pulse audio was reset.\n"
 msgstr "Yhdistetään jack-välityspalvelimeen..."
 
 #: src/colourspace.c:1002

@@ -25,6 +25,7 @@ src/rte_window.c
 src/lives-yuv4mpeg.c
 src/multitrack.c
 src/jack.c
+src/pulse.c
 src/colourspace.c
 src/cvirtual.c
 src/omc-learn.c

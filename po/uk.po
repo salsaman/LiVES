@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2011-12-29 04:32-0300\n"
+"POT-Creation-Date: 2011-12-29 04:43-0300\n"
 "PO-Revision-Date: 2011-11-07 13:09+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -9985,6 +9985,58 @@ msgstr "Запущено інструмент читання звуку Jack.\n"
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
+msgstr "Встановлення з’єднання з сервером передавання даних jack…"
+
+#: src/pulse.c:79
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server\n"
+msgstr "Не вдалося з’єднатися з сервером JACK\n"
+
+#: src/pulse.c:83
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to sox audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+"Попереднє прослуховування у режимі з декількома доріжками доступне лише\n"
+"за використання звукових програвачів «Jack» або «PulseAudio».\n"
+"Змінити програвач можна за допомогою вкладки Інструменти|Параметри|"
+"Відтворення."
+
+#: src/pulse.c:87
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+"Falling back to mplayer audio player.\n"
+"You can change this in Preferences/Playback.\n"
+msgstr ""
+"Попереднє прослуховування у режимі з декількома доріжками доступне лише\n"
+"за використання звукових програвачів «Jack» або «PulseAudio».\n"
+"Змінити програвач можна за допомогою вкладки Інструменти|Параметри|"
+"Відтворення."
+
+#: src/pulse.c:91
+#, fuzzy
+msgid ""
+"\n"
+"Unable to connect to pulse audio server.\n"
+msgstr "Не вдалося з’єднатися з сервером JACK\n"
+
+#: src/pulse.c:96
+#, fuzzy
+msgid "LiVES will exit and you can choose another audio player.\n"
+msgstr "LiVES: - Вибір звукового програвача"
+
+#: src/pulse.c:944
+#, fuzzy
+msgid ""
+"\n"
+"Connection to pulse audio was reset.\n"
 msgstr "Встановлення з’єднання з сервером передавання даних jack…"
 
 #: src/colourspace.c:1002

@@ -280,12 +280,9 @@ void
 on_mute_activate                (GtkMenuItem     *menuitem,
 				 gpointer         user_data);
 
-void
-on_info_ok_button_clicked            (GtkButton       *button,
-				      gpointer         user_data);
 
 void
-on_info_ok_button_clicked2            (GtkButton       *button,
+on_general_button_clicked            (GtkButton       *button,
 				      gpointer         user_data);
 
 void

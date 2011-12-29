@@ -1436,7 +1436,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     stored_event_list_free_undos();
   }
   
-  // do not popu layout errors if the set name changes
+  // do not popup layout errors if the set name changes
   if (!mainw->only_close) mainw->is_exiting=TRUE;
 
   if (mainw->scrap_file>-1) close_scrap_file();
@@ -1532,6 +1532,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (mainw->multitrack!=NULL&&!mainw->only_close) mt_memory_free();
+  else if (mainw->multitrack!=NULL) wipe_layout(mainw->multitrack);
 
   mainw->was_set=mainw->leave_files=mainw->leave_recovery=FALSE;
 
@@ -4356,7 +4357,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   current_clips_dir=g_build_filename(prefs->tmpdir,old_set,"clips/",NULL);
   if (strlen(old_set)&&strcmp(mainw->set_name,old_set)&&g_file_test(current_clips_dir,G_FILE_TEST_IS_DIR)) {
-
+    // set name was chenged for an existing set
 
     if (!is_append) {
       // create new dir, in case it doesn't already exist
@@ -4384,6 +4385,8 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     }
   }
   else {
+    // saving as same name (or as new set)
+
     dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
     com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
     mainw->com_failed=FALSE;
@@ -4410,6 +4413,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   ordfile=g_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
 
   do {
+    // create the orderfile which lists all the clips in order
     retval=0;
     if (!is_append) ord_fd=creat(ordfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
     else ord_fd=open(ordfile,O_CREAT|O_WRONLY|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
@@ -4443,7 +4447,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	    g_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
 	  }
 	  if (strcmp(new_handle,mainw->files[i]->handle)) {
-	    new_dir=g_strdup_printf("%s/%s",prefs->tmpdir,new_handle);
+	    new_dir=g_build_filename(prefs->tmpdir,new_handle,NULL);
 	    if (g_file_test(new_dir,G_FILE_TEST_IS_DIR)) {
 	      // get a new unique handle
 	      get_temp_handle(i,FALSE);
@@ -4506,7 +4510,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     return;
   }
 
-  if (got_new_handle) migrate_layouts(NULL,mainw->set_name);
+  if (got_new_handle&&!strlen(old_set)) migrate_layouts(NULL,mainw->set_name);
 
   if (strlen(old_set)&&strcmp(old_set,mainw->set_name)) {
     layout_map_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,old_set);
@@ -4593,6 +4597,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   if (!mainw->no_exit) {
     mainw->leave_files=TRUE;
     if (mainw->multitrack!=NULL&&!mainw->only_close) mt_memory_free();
+    else if (mainw->multitrack!=NULL) wipe_layout(mainw->multitrack);
     lives_exit();
   }
   else end_threaded_dialog();
@@ -6331,11 +6336,17 @@ on_button3_clicked                     (GtkButton       *button,
 
 
 void
-on_info_ok_button_clicked2            (GtkButton       *button,
-				       gpointer         user_data)
+on_general_button_clicked            (GtkButton       *button,
+				      gpointer         user_data)
 {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+
+  if (user_data!=NULL) {
+    g_free(user_data);
+  }
+
 }
+
 
 
 void
@@ -7935,7 +7946,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), button, GTK_RESPONSE_OK);
 
   g_signal_connect (GTK_OBJECT (button), "clicked",
-		    G_CALLBACK (on_cancel_button1_clicked),
+		    G_CALLBACK (on_general_button_clicked),
 		    textwindow);
 
   gtk_container_set_border_width (GTK_CONTAINER (button), 12);

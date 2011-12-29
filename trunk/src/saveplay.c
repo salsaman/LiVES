@@ -4685,7 +4685,7 @@ void close_scrap_file (void) {
 
 
 void recover_layout_map(numclips) {
-  // load layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
+  // load global layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
   GList *mlist,*lmap_node,*lmap_node_next,*lmap_entry_list,*lmap_entry_list_next;
   layout_map *lmap_entry;
   gchar **array;
@@ -4703,6 +4703,7 @@ void recover_layout_map(numclips) {
 	lmap_entry=lmap_node->data;
 	g_print("cf %d %s %s %ld %ld\n",i,mainw->files[i]->handle,lmap_entry->handle,(mainw->files[i]->unique_id),(lmap_entry->unique_id));
 	if (!strcmp(mainw->files[i]->handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
+	  // check handle and unique id match
 	  // got a match, assign list to layout_map and delete this node
 	  lmap_entry_list=lmap_entry->list;
 	  while (lmap_entry_list!=NULL) {

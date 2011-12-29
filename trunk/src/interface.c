@@ -1065,8 +1065,8 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
   }
 
   g_signal_connect (GTK_OBJECT (info_ok_button), "clicked",
-		    G_CALLBACK (on_info_ok_button_clicked2),
-		    GINT_TO_POINTER (mask));
+		    G_CALLBACK (on_general_button_clicked),
+		    NULL);
 
   return dialog3;
 }

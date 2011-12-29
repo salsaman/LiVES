@@ -1407,7 +1407,7 @@ gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
   else {
     if (!strncmp(entry,"tmpdir",6)) {
       g_free(string);
-      string=g_build_filename("%s%s",prefs->tmpdir,entry+6,NULL);
+      string=g_build_filename(prefs->tmpdir,entry+6,NULL);
     }
   }
   return string;
@@ -1425,6 +1425,7 @@ void remove_layout_files(GList *map) {
 
   gchar *com,*msg;
   gchar *fname,*fdir;
+  gchar **array;
   GList *lmap,*lmap_next,*cmap,*cmap_next,*map_next;
   size_t maplen;
   int i;
@@ -1451,7 +1452,10 @@ void remove_layout_files(GList *map) {
 	  }
 	  cmap=cmap_next;
 	}
-	fname=repl_tmpdir(map->data,FALSE);
+
+	array=g_strsplit(map->data,"|",-1);
+	fname=repl_tmpdir(array[0],FALSE);
+	g_strfreev(array);
       }
 
       // fname should now hold the layout name on disk

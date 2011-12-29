@@ -995,21 +995,46 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     if (mainw->multitrack->event_list!=NULL) only_current=FALSE;
   }
 
-  if (lmap_errors&&!only_current) popup_lmap_errors(NULL,NULL);
+  if (lmap_errors&&!only_current&&mainw->cliplist!=NULL) popup_lmap_errors(NULL,NULL);
 
-  if (mainw->current_file==-1&&strlen(mainw->set_name)>0) {
+  if (mainw->cliplist==NULL&&strlen(mainw->set_name)>0) {
     gchar *lfiles;
     gchar *ofile;
     gchar *sdir;
     gchar *cdir;
+    gchar *laydir;
+    gchar *com;
+
+    gboolean has_layout_map=FALSE;
+
+    int i;
+
 
     // TODO - combine this with lives_exit and make into a function
 
-    gchar *layout_map=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
-    gchar *com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",layout_map);
-    lives_system(com,TRUE);
-    g_free(com);
-    g_free(layout_map);
+    // check for layout maps
+    if (mainw->current_layouts_map!=NULL) {
+      has_layout_map=TRUE;
+    }
+
+    if (has_layout_map) {
+      if (prompt_remove_layout_files()) {
+	// delete layout files
+	for (i=1;i<MAX_FILES;i++) {
+	  if (!(mainw->files[i]==NULL)) {
+	    if (mainw->was_set&&mainw->files[i]->layout_map!=NULL) {
+	      remove_layout_files(mainw->files[i]->layout_map);
+	    }
+	  }
+	}
+	// delete layout directory
+	laydir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+	com=g_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null &",laydir);
+	lives_system(com,TRUE);
+	g_free(com);
+	g_free(laydir);
+      }
+    }
 
     // TODO - dirsep
 
@@ -1019,7 +1044,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     g_free(com);
     g_free(cdir);
 
-    lfiles=g_build_filename(prefs->tmpdir,mainw->set_name,"lock*",NULL);
+    lfiles=g_build_filename(prefs->tmpdir,mainw->set_name,"lock",NULL);
     com=g_strdup_printf("/bin/rm \"%s\"* 2>/dev/null",lfiles);
     lives_system(com,TRUE);
     g_free(com);
@@ -1439,6 +1464,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 	if ((legal_set_name=is_legal_set_name((set_name=g_strdup(gtk_entry_get_text(GTK_ENTRY(cdsw->entry)))),TRUE))) {
 	  gtk_widget_destroy(cdsw->dialog);
 	  g_free(cdsw);
+
 	  if (prefs->ar_clipset) set_pref("ar_clipset",set_name);
 	  else set_pref("ar_clipset","");
 	  mainw->no_exit=FALSE;
@@ -4204,6 +4230,16 @@ void
 on_save_set_activate            (GtkMenuItem     *menuitem,
 				 gpointer         user_data)
 {
+
+  // here is where we save clipsets
+
+  // SAVE CLIPSET FUNCTION
+
+  // also handles migration and merging of sets
+
+
+  // TODO - caller to do end_threaded_dialog()
+
   int i;
   gchar *old_set=g_strdup(mainw->set_name);
   gchar *layout_map_file,*layout_map_dir,*new_clips_dir,*current_clips_dir;
@@ -4226,6 +4262,8 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   GList *cliplist;
 
+
+  // warn the user what will happen
   if (!mainw->no_exit&&!mainw->only_close) extra=g_strdup(", and LiVES will exit");
   else extra=g_strdup("");
 
@@ -4240,11 +4278,14 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
 
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
+    // if we have a current layout, give the user the chance to change their mind
     if (!check_for_layout_del(NULL,FALSE)) return;
   }
 
 
   if (menuitem!=NULL) {
+    // this was called from the GUI
+
     do {
       // prompt for a set name, advise user to save set
       renamew=create_rename_dialog(2);
@@ -4269,6 +4310,13 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   g_snprintf(mainw->set_name,128,"%s",new_set_name);
 
   if (strcmp(mainw->set_name,old_set)) {
+    // THE USER CHANGED the set name
+
+    // we must migrate all physical files for the set
+
+
+    // and possibly merge with another set
+
     new_clips_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
     // check if target clips dir exists, ask if user wants to append files
     if (g_file_test(new_clips_dir,G_FILE_TEST_IS_DIR)) {
@@ -4286,7 +4334,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
       if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) {
 	if (do_set_rename_old_layouts_warning(mainw->set_name)) {
 	  // user answered "yes" - delete
-	  // clear old layout maps
+	  // clear _old_ layout maps
 	  gchar *dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
 	  com=g_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null",dfile);
 	  g_free(dfile);
@@ -4308,30 +4356,56 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   current_clips_dir=g_build_filename(prefs->tmpdir,old_set,"clips/",NULL);
   if (strlen(old_set)&&strcmp(mainw->set_name,old_set)&&g_file_test(current_clips_dir,G_FILE_TEST_IS_DIR)) {
-    // TODO - file perms ???
+
 
     if (!is_append) {
       // create new dir, in case it doesn't already exist
       dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
       com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
-      g_free(dfile);
+      mainw->com_failed=FALSE;
       lives_system(com,FALSE);
       g_free(com);
+
+      if (mainw->com_failed) {
+	if (!check_dir_access(dfile)) {
+	  // abort if we cannot create the new subdir
+	  LIVES_ERROR("Could not create directory");
+	  LIVES_ERROR(dfile);
+	  d_print_file_error_failed();
+	  g_snprintf(mainw->set_name,128,"%s",old_set);
+	  g_free(dfile);
+	  end_threaded_dialog();
+	  return;
+	}
+      }
+      g_free(dfile);
+
+
     }
   }
   else {
     dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
     com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
-    g_free(dfile);
+    mainw->com_failed=FALSE;
     lives_system(com,FALSE);
     g_free(com);
+
+
+    if (mainw->com_failed) {
+      if (!check_dir_access(dfile)) {
+	// abort if we cannot create the new subdir
+	LIVES_ERROR("Could not create directory");
+	LIVES_ERROR(dfile);
+	d_print_file_error_failed();
+	g_snprintf(mainw->set_name,128,"%s",old_set);
+	g_free(dfile);
+	end_threaded_dialog();
+	return;
+      }
+    }
+    g_free(dfile);
   }
   g_free(current_clips_dir);
-
-  if (mainw->com_failed) {
-    end_threaded_dialog();
-    return;
-  }
 
   ordfile=g_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
 
@@ -4377,8 +4451,12 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	    }
 	    g_free(new_dir);
 	
+	    // move the files
+
+
 	    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	      // must do this before we move it
+	      // otherwise decoder plugin will be pointing at wrong file
 	      close_decoder_plugin(mainw->files[i]->ext_src);
 	      mainw->files[i]->ext_src=NULL;
 	    }
@@ -4547,8 +4625,14 @@ on_load_set_activate            (GtkMenuItem     *menuitem,
 
 
 gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
-  // user_data TRUE skips threaded dialog and allows use of
-  // return value FALSE to indicate error
+  // this is the main clip set loader
+
+
+  // CLIP SET LOADER
+
+
+  // (user_data TRUE skips threaded dialog and allows use of
+  // return value FALSE to indicate error)
 
   gchar *com;
   gint last_file=-1,new_file=-1;
@@ -4567,15 +4651,31 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
   threaded_dialog_spin();
 
+
+  // renamew is create_rename_dialog(3);
+
+
   if (!strlen(mainw->set_name)) {
+    // get new set name from user
+
     g_snprintf(set_name,128,"%s",gtk_entry_get_text(GTK_ENTRY(renamew->entry)));
-    if (!is_legal_set_name(set_name,TRUE)) return TRUE;
+
+    // ensure name is valid
+    if (!is_legal_set_name(set_name,TRUE)) return !skip_threaded_dialog;
+
+    // set_name length is max 128
     g_snprintf(mainw->set_name,128,"%s",set_name);
+
+
+    // need to clean up renamew
     gtk_widget_destroy(renamew->dialog);
     g_free(renamew);
     renamew=NULL;
   }
   else {
+    // here if we already have a set_name
+
+    // check if set is locked
     if (!check_for_lock_file(mainw->set_name,0)) {
       memset(mainw->set_name,0,1);
       d_print_failed();
@@ -4585,7 +4685,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	mt_sensitise(mainw->multitrack);
 	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
-      return TRUE;
+      return !skip_threaded_dialog;
     }
   }
 
@@ -4625,6 +4725,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       if (strlen (mainw->msg)>0&&(strncmp (mainw->msg,"none",4))) {
 
 	if ((new_file=mainw->first_free_file)==-1) {
+	  recover_layout_map(MAX_FILES);
+
 	  if (!skip_threaded_dialog) end_threaded_dialog();
 	  mainw->suppress_dprint=FALSE;
 	  too_many_files();
@@ -4668,7 +4770,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	reset_clip_menu();
 	gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
 	msg=g_strdup_printf (_ ("%d clips were recovered from set (%s).\n"),clipnum,mainw->set_name);
-	recover_layout_map(clipnum);
 	d_print (msg);
 	g_free (msg);
 
@@ -4696,6 +4797,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
       threaded_dialog_spin();
+
+      recover_layout_map(MAX_FILES);
+
       if (!skip_threaded_dialog) end_threaded_dialog();
       return TRUE;
     }
@@ -4733,6 +4837,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  mt_sensitise(mainw->multitrack);
 	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 	}
+
+	recover_layout_map(MAX_FILES);
 
 	return !skip_threaded_dialog;
       }
@@ -4887,6 +4993,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
+
+  recover_layout_map(MAX_FILES);
 
   mainw->suppress_dprint=FALSE;
   return TRUE;
@@ -8131,9 +8239,8 @@ on_spinbutton_start_value_changed          (GtkSpinButton   *spinbutton,
     }
   }
 
-  if (cfile->end!=mainw->preview_frame||mainw->prv_link!=PRV_START) {
-    load_start_image(cfile->start);
-  }
+  load_start_image(cfile->start);
+
   if (cfile->start>cfile->end) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->start);
   }
@@ -8178,9 +8285,8 @@ on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
   }
 
 
-  if (cfile->end!=mainw->preview_frame||mainw->prv_link!=PRV_END) {
-    load_end_image(cfile->end);
-  }
+  load_end_image(cfile->end);
+
   if (cfile->end<cfile->start) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->end);
   }

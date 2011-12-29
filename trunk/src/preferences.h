@@ -335,6 +335,13 @@ typedef struct {
   GtkWidget *vbox_right_jack;
   GtkWidget *vbox_right_midi;
   GtkWidget *scrollw;
+  GtkWidget *scrollw_right_gui;
+  GtkWidget *scrollw_right_midi;
+  GtkWidget *scrollw_right_directories;
+  GtkWidget *scrollw_right_multitrack;
+  GtkWidget *scrollw_right_decoding;
+  GtkWidget *scrollw_right_jack;
+  GtkWidget *scrollw_right_playback;
   GtkWidget *right_shown;
   GtkWidget *cancelbutton;
   GtkWidget *applybutton;

@@ -1838,7 +1838,7 @@ void do_mt_no_jack_error(gint warn_mask) {
 }
 
 gboolean do_mt_rect_prompt(void) {
-  return do_warning_dialog(_("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\nShould I try to repair the disk copy of the layout ?\n"));
+  return do_yesno_dialog(_("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\nShould I try to repair the disk copy of the layout ?\n"));
 }
 
 void do_bad_layout_error(void) {
@@ -1852,7 +1852,7 @@ void do_audrate_error_dialog(void) {
 }
 
 gboolean do_event_list_warning(void) {
-  return do_warning_dialog(_("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
+  return do_yesno_dialog(_("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
 }
 
 

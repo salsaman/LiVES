@@ -114,7 +114,7 @@ if (defined($ARGV[0])) {
 	    }
 	    elsif ($command eq "stopsubsubs") {
 		# kill all subprocesses of target_pid, but not target_pid
-		`pgrep -P $target_pid > $tmpdir/.pids.$target_pid 2>/dev/null`;
+		smog_system("pgrep -P $target_pid > \"$tmpdir/.pids.$target_pid\" 2>/dev/null");
 		if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
 		    while (<IN>) {
 			$pid=$_;
@@ -129,10 +129,10 @@ if (defined($ARGV[0])) {
 	    else {
 		print "Attempting to stop process ".$target_pid." with $command\n";
 		if ($sig eq "KILL") {
-		    `kill -$sig $target_pid >/dev/null 2>&1`;
+		    smog_system("kill -$sig $target_pid >/dev/null 2>&1");
 		}
 		else {
-		    `pkill -$sig -P $target_pid`;# must not ! >/dev/null 2>&1`;
+		    smog_system("pkill -$sig -P $target_pid");# must not ! >/dev/null 2>&1");
 		}
 	    }
 	    
@@ -447,7 +447,7 @@ if (defined($ARGV[0])) {
 	if ($command eq "xmmsstop") {
 	$xmms_command=&location("xmms");
 	unless ($xmms_command eq "") {
-	    system("$xmms_command -s");
+	    smog_system("$xmms_command -s");
 	}
 	exit 0;
     }
@@ -455,13 +455,14 @@ if (defined($ARGV[0])) {
     if ($command eq "xmmsplay") {
 	$xmms_command=&location("xmms");
 	unless ($xmms_command eq "") {
-	    system("$xmms_command -p \"$ARGV[1]\" &");
+	    smog_system("$xmms_command -p \"$ARGV[1]\" &");
 	}
 	exit 0;
     }
 
     if ($command eq "pause") {
-	system("touch $tmpdir/$ARGV[1]/pause; chmod 600 $tmpdir/$ARGV[1]/pause");
+	smog_system("/bin/touch \"$tmpdir/$ARGV[1]/pause\"");
+	smog_system("/bin/chmod 600 \"$tmpdir/$ARGV[1]/pause\"");
 	exit 0;
     }
 
@@ -529,14 +530,14 @@ if (defined($ARGV[0])) {
 	umask 0111;
 
 	if ($hsize==-1||$vsize==-1) {
-	    system("$convert_command $curtmpdir/$name$img_ext \"$nfile\" >/dev/null 2>&1");
+	    smog_system("$convert_command \"$curtmpdir/$name$img_ext\" \"$nfile\" >/dev/null 2>&1");
 	}
 	else {
 	    if ($antialias eq "false") {
-		system("$convert_command +antialias $curtmpdir/$name$img_ext -scale $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1");
+		smog_system("$convert_command +antialias \"$curtmpdir/$name$img_ext\" -scale $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1");
 	    }
 	    else {
-		system("$convert_command -antialias $curtmpdir/$name$img_ext -resize $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1");
+		smog_system("$convert_command -antialias \"$curtmpdir/$name$img_ext\" -resize $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1");
 	    }
 	}
 
@@ -668,7 +669,7 @@ if (defined($ARGV[0])) {
 	    $type=$ARGV[1];
             $script_dir=$ARGV[2];
             $exec_dir=$ARGV[3];
-	    system("$rfx_builder_multi $type $script_dir $exec_dir");
+	    smog_system("$rfx_builder_multi \"$type\" \"$script_dir\" \"$exec_dir\"");
 	    exit 0;
 	}
 
@@ -701,10 +702,10 @@ if (defined($ARGV[0])) {
 	    $name=&mkname(1);
 	    
 	    if ($antialias eq "false") {
-		system("$convert_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
+		smog_system("$convert_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! \"$curtmpdir/$name$img_ext\" > /dev/null 2>&1");
 	    }
 	    else {
-		system("$convert_command -antialias \"$file\" -resize $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
+		smog_system("$convert_command -antialias \"$file\" -resize $hsize"."!x"."$vsize! \"$curtmpdir/$name$img_ext\" > /dev/null 2>&1");
 	    }
 	    &sig_complete($hsize,$vsize);
 	    exit 0;
@@ -741,7 +742,7 @@ if (defined($ARGV[0])) {
 
 		if (-f "audio.origbak") {
 		    unlink "audio";
-		    rename "audio.origbak","audio";
+		    smog_rename( "audio.origbak","audio");
 		}
 		$areq=&get_form_request($plugin);
 		if ($areq&1||$areq&2) {
@@ -761,7 +762,7 @@ if (defined($ARGV[0])) {
 		return 1;
 	    }
 	    else {
-		system("$plugin clear $start $end $img_ext");
+		smog_system("$plugin clear $start $end $img_ext");
 		&sig_complete;
 		exit 0;
 	    }
@@ -782,7 +783,7 @@ if (defined($ARGV[0])) {
 		    #found a lockfile
 		    my $proc=$1;
 		    unless ($proc eq $pid) {
-			my $exe=`readlink -n /proc/$proc/exe`;
+			my $exe=smog_system_direct("/bin/readlink -n /proc/$proc/exe");
 			my $short_exe=&my_basename($exe);
 			if ($short_exe eq $exename) {
 			    # and it's in use
@@ -813,10 +814,10 @@ if (defined($ARGV[0])) {
 	    while (my $file=readdir(DIR)) {
 		if ($file=~/^$filepart\.$uid\.$gid\.(.*)/) {
 		    if (-z $file) {
-			unlink $file;
+			unlink "$file";
 		    }
 		    else {
-			my $exe=`readlink -n /proc/$1/exe`;
+			my $exe=smog_system_direct("/bin/readlink -n /proc/$1/exe");
 			my $short_exe=&my_basename($exe);
 			
 			unless ($short_exe eq $exename) {
@@ -845,10 +846,10 @@ if (defined($ARGV[0])) {
 
 	    while (my $file=readdir(DIR)) {
 		if ($file=~/^recovery\.$uid\.$gid\.(.*)/ || $file=~/^layout\.$uid\.$gid\.(.*)/ || $file=~/^layout_numbering\.$uid\.$gid\.(.*)/) {
-		    my $exe=`readlink -n /proc/$1/exe`;
+		    my $exe=smog_system_direct("/bin/readlink -n /proc/$1/exe");
 		    my $short_exe=&my_basename($exe);
 		    unless ($short_exe eq $exename) {
-			`/bin/rm -f $file 2>/dev/null`;
+			unlink "$file";
 		    }
 		}
 	    }
@@ -887,7 +888,7 @@ if (defined($ARGV[0])) {
             }
 
             $infofile="$tmpdir/.info.$pid";
-            `sync;sync;sync`;
+            smog_system_sync();
 
             if (-d $tmpdir) {
                 open OUT,"> $infofile";
@@ -899,12 +900,11 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "cleanup"||$command eq "weed") {
-	    chdir $tmpdir or die "Couldn't cd to ".$tmpdir."\n";
+	    smog_chdir("$tmpdir");
 	    print "Cleaning up temporary space for $GUI_NAME.\n";
 	    if ($command eq "cleanup") {
-		`/bin/rm -f /tmp/.smogval*`;
-		`/bin/rm -rf *`;
-		`/bin/rm -f .*`;
+		unlink "/tmp/.smogval*";
+		unlink <* .*>;  # will not remove directories
 	    }
 	    else {
 		$new_temp=$ARGV[1];
@@ -955,7 +955,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "get_proj_set") {
 	    my $proj_file=$ARGV[1];
-	    my $out=`tar --exclude=*/* -tzf $proj_file`;
+	    my $out=smog_system_direct("tar --exclude=*/* -tzf $proj_file");
 	    unless ($out=~/\/$/) {
 		exit 1;
 	    }
@@ -1208,12 +1208,12 @@ if (defined($ARGV[0])) {
 	    }
 	    else {
 		$syscom3=$syscom2.">/dev/null 2>&1";
-		$retval=system($syscom3);
+		$retval=smog_system("$syscom3");
 		if ($retval>255) {
 		    unless ($showed_err) {
 			print STDERR "Error playing audio !\n";
 			print STDERR "Failed command was: $syscom2\n";
-			system($syscom2);
+			smog_system("$syscom2");
 			$showed_err=1;
 		    }
 		}
@@ -1316,7 +1316,7 @@ if (defined($ARGV[0])) {
 	}
 
 
-	$threads=`/bin/grep processor /proc/cpuinfo | wc -l`;
+	$threads=smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
 	$threads=int($threads);
 	if ($threads==0) {
 	    $threads=1;
@@ -1362,23 +1362,23 @@ if (defined($ARGV[0])) {
 		print STDERR "open command for $handle is: $syscom\n";
 	    }
 	    
-	    $syscom2=$syscom." >$curtmpfile 2>/dev/null";
+	    $syscom2=$syscom." >\"$curtmpfile\" 2>/dev/null";
 
 	    unless ($opentest==1) {
 		&sig_progress(0);
 	    }
 
-	    system($syscom2);
+	    smog_system("$syscom2");
 	    
             if (!-f $curtmpfile) {
               exit 1;
             }
 
 
-	    @info=split /  /, `grep VIDEO: $curtmpfile 2>/dev/null`;
-	    @info2=split / /, `grep AUDIO: $curtmpfile 2>/dev/null`;
+	    @info=split /  /, smog_system_direct("grep VIDEO: \"$curtmpfile\" 2>/dev/null");
+	    @info2=split / /, smog_system_direct("grep AUDIO: \"$curtmpfile\" 2>/dev/null");
 	    
-	    unlink $curtmpfile;
+	    unlink "$curtmpfile";
 	    #$type=$info[1];
 	    
 	    $size=$info[2];
@@ -1416,7 +1416,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if (-f $audio_in) {
-	    rename $audio_in,$audio_out;
+	    smog_rename( "$audio_in","$audio_out");
             $af_size = -s $audio_out; 
 	}
 
@@ -1471,7 +1471,7 @@ if (defined($ARGV[0])) {
 		for ($i=2;$i<=$count;$i++) {
 		    $from=&mkname($i);
 		    $to=&mkname($i-1);
-		    rename "$from$img_ext", "$to$img_ext";
+		    smog_rename( "$from$img_ext", "$to$img_ext");
 		}
 		$count--;
 	    }
@@ -1480,7 +1480,7 @@ if (defined($ARGV[0])) {
 	unless (!defined($MPLAYER_SEL_AUDIO_SYNCH_BUG)||$ss eq ""||$achans==0) {
 	    # try as best we can to sync sound and video for a selection
 	    $audio_out=&clip_audio(0.5,1000000.);
-	    rename $audio_out,"audio";
+	    smog_rename( "$audio_out","audio");
 	    $audio_out="audio";
 	}
 
@@ -1555,7 +1555,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-	    system("mplayer -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1 </dev/null");
+	    smog_system("mplayer -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1 </dev/null");
 	    exit 0;
 	}
 
@@ -1565,7 +1565,7 @@ if (defined($ARGV[0])) {
 	    $cardno=$ARGV[2];
 	    $cache=$ARGV[3];
 	    $fifofile=$ARGV[4];
-	    system("dvgrab -s 0 -noavc -card $cardno -o - 2>/dev/null | mplayer - -really-quiet -demuxer lavf -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1");
+	    smog_system("dvgrab -s 0 -noavc -card $cardno -o - 2>/dev/null | mplayer - -really-quiet -demuxer lavf -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1");
 	    exit 0;
 	}
 
@@ -1578,7 +1578,7 @@ if (defined($ARGV[0])) {
 	    if (defined(open IN,"< $pidfile")) {
 		close IN;
 		# cancel any processing
-		system("smogrify stopsubsub $handle");
+		smog_system("smogrify stopsubsub \"$handle\"");
 	    }
 	    
 	    if (chdir $curtmpdir) {
@@ -1709,12 +1709,12 @@ if (defined($ARGV[0])) {
 			
 			if ($aud_start!=0.&&!($areq&1)) {
 			    if (&rc_get("conserve_space") eq "true") {
-				`/bin/rm -f $origaudio`;
+				unlink "$origaudio";
 			    }
 			    else {
-				rename "$origaudio","$origaudio.origbak";
+				smog_rename( "$origaudio","$origaudio.origbak");
 			    }
-			    rename "$curtmpdir/$audiofile","$origaudio";
+			    smog_rename( "$curtmpdir/$audiofile","$origaudio");
 			    $audio_file=$audio_in=$origaudio;
 			}
 		    }
@@ -1722,7 +1722,7 @@ if (defined($ARGV[0])) {
 			# convert raw audio to wav
 			$audio_out=$curtmpdir . "/audiodump.wav";
 			&convert_audio_to_wav;
-			unlink $audio_in;
+			unlink "$audio_in";
 			$audiofile=$audio_out;
 		    }
 		}
@@ -1736,23 +1736,26 @@ if (defined($ARGV[0])) {
 			# (see above)
 
 			if (-d $linksdir) {
-			    system("/bin/rm -rf $linksdir");
+			    smog_system("/bin/rm -rf \"$linksdir\"");
 			}
 		    
-			system("/bin/mkdir -p $linksdir");
-			system ("/bin/chmod -R 777 $linksdir");
+			smog_system("/bin/mkdir -p $linksdir");
+			smog_system ("/bin/chmod -R 777 \"$linksdir\"");
+
+			# need to make hard links, as some encoders complain about symbolic links
+
 
 			for ($i=1;$i<=($end-$start+1);$i++) {
 			    $name=&mkname($i);
 			    $from=&mkname($i+$start-1);
 			    if (-f "$curtmpdir$from$img_ext") {
-				system ("/bin/ln $curtmpdir/$from$img_ext $linksdir$name$img_ext");
+				smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
 			    }
 			}
 			if (-f $audiofile) {
 			    my $xaudiofile=(split(/\//,$audiofile))[-1];
 			    if (! -f "$linksdir$xaudiofile") {
-				system("/bin/ln $audiofile $linksdir$xaudiofile");
+				smog_system("/bin/ln \"$audiofile\" \"$linksdir$xaudiofile\"");
 			    }
 			}
 			$is_linked=1;
@@ -1774,10 +1777,10 @@ if (defined($ARGV[0])) {
 		$fields.=" $arate $achans $asamps $ssigned";
 		if ($get_rfx==0) {
 		    $fields.=@ARGV[13..$#ARGV];
-		    system("$plugin encode $fields");
+		    smog_system("\"$plugin\" encode $fields");
 		}
 		else {
-		    system("$plugin get_rfx $fields");
+		    smog_system("\"$plugin\" get_rfx $fields");
 		}
 
 		&sig_complete;
@@ -1834,11 +1837,11 @@ if (defined($ARGV[0])) {
 		$linksdir="/tmp/lives-symlinks/$handle/";
 
 		if (-d $linksdir) {
-		    system("/bin/rm -rf $linksdir");
+		    smog_system("/bin/rm -rf \"$linksdir\"");
 		}
 
-		system("/bin/mkdir -p $linksdir");
-		system ("/bin/chmod -R 777 $linksdir");
+		smog_system("/bin/mkdir -p \"$linksdir\"");
+		smog_system ("/bin/chmod -R 777 \"$linksdir\"");
 	    }
 	    else {
 		$linksdir=$curtmpdir;
@@ -1879,7 +1882,7 @@ if (defined($ARGV[0])) {
 		$name=&mkname($i);
 		$from=&mkname($i+$start-1);
 		if (-f "$curtmpdir/$from$img_ext") {
-		    system ("/bin/ln $curtmpdir/$from$img_ext $linksdir/$name$img_ext");
+		    smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
 
 		}
 		&sig_progress($i);
@@ -1924,7 +1927,7 @@ if (defined($ARGV[0])) {
 	    for ($i=1;$i<=$end;$i++) {
 		$name=&mkname($i);
 		
-		`/bin/cp -f $name$img_ext $name.bak`;
+		smog_system("/bin/cp -f \"$name$img_ext\" \"$name.bak\"");
 
 		if ($iwidth>0 && $iheight>0) {
 		    &resize_frame($name,$iwidth,$iheight);
@@ -1971,7 +1974,7 @@ if (defined($ARGV[0])) {
 	}
 
 	unlink <*.tar>;
-	system ("tar -cf header.tar $audio header* extended* event.* subs.* file* 2>/dev/null");
+	smog_system ("tar -cf header.tar $audio header* extended* event.* subs.* file* 2>/dev/null");
 
 	$img_ext=&get_img_ext($curtmpdir,$start);
 
@@ -1989,7 +1992,7 @@ if (defined($ARGV[0])) {
 	    
 	    for ($i=$start;$i<=$end;$i++) {
 		$name=&mkname($i);
-		system("tar -rf $tarname $name$img_ext");
+		smog_system("tar -rf $tarname $name$img_ext");
 		&sig_progress(int($start+($i-$start)/4));
 	    }
 	    
@@ -1998,7 +2001,7 @@ if (defined($ARGV[0])) {
 		$len=length ($nexthundred);
 		$name=substr("000000",$len) . $nexthundred . "*";
 		$tarname=&mkname(++$tarcount).".tar";
-		system("tar -cf $tarname $name$img_ext");
+		smog_system("tar -cf $tarname $name$img_ext");
 		$nexthundred++;
 		&sig_progress(int($start+($end-$start)/4));
 	    }
@@ -2007,7 +2010,7 @@ if (defined($ARGV[0])) {
 	    
 	    for ($i=$end;$i<=$oend;$i++) {
 		$name=&mkname($i);
-		system("tar -rf $tarname $name$img_ext 2>.tar_err");
+		smog_system("tar -rf $tarname $name$img_ext 2>.tar_err");
 		if (-f ".tar_err") {
 		    open IN,"< .tar_err";
 		    read IN,$tarerr,255;
@@ -2021,7 +2024,7 @@ if (defined($ARGV[0])) {
 		&sig_progress($start+($i-$start));
 	    }
 	}
-	system ("tar -czf \"$nfile\" *.tar 2>.tar_err");
+	smog_system ("tar -czf \"$nfile\" *.tar 2>.tar_err");
 	unlink <header.tar 0*.tar>;
 	if (-f ".tar_err") {
 	    open IN,"< .tar_err";
@@ -2044,11 +2047,11 @@ if (defined($ARGV[0])) {
 	$nfile=$ARGV[2];
 	chdir $curtmpdir;
 
-	system("tar -zxf \"$nfile\" 2>/dev/null");
+	smog_system("tar -zxf \"$nfile\" 2>/dev/null");
 	unless (-f "header.tar"||-f "header"||-f "header.lives") {
 	    &sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
 	}
-	system("for i in *.tar; do tar -xf \$i 2>/dev/null; /bin/rm -f \$i; done");
+	smog_system("for i in *.tar; do tar -xf \$i 2>/dev/null; /bin/rm -f \$i; done");
 	&sig_complete;
 	exit 0;
     }
@@ -2120,11 +2123,11 @@ if (defined($ARGV[0])) {
 
 			if ($newwidth > 0 && $newheight > 0) {
 			    &resize_frame($from,$newwidth,$newheight);
-			    `/bin/mv -f $from$resize_ext $to.mgk`;
+			    smog_rename( "$from$resize_ext","$to.mgk");
 			}
 			else {
 			    unless (($from eq $to) || $letterbox) {
-				`/bin/cp -f $from$img_ext $to.mgk`;
+				smog_system("/bin/cp -f $from$img_ext $to.mgk");
 			    }
 			}
 
@@ -2133,12 +2136,12 @@ if (defined($ARGV[0])) {
 			    if ($leave_bak) {
 				#letterboxing was done with resize
 				unless ($from eq $to) {
-				    `/bin/cp -f $from$img_ext $to$img_ext.2`;
-				    `/bin/cp -f $from.mgk $to.mgk.2`;
+				    smog_system("/bin/cp -f $from$img_ext $to$img_ext.2");
+				    smog_system("/bin/cp -f $from.mgk $to.mgk.2");
 				}
 			    }
 			    else {
-				`/bin/cp -f $to$img_ext $to.bak`;
+				smog_system("/bin/cp -f $to$img_ext $to.bak");
 				# make $to.mgk $to.img_ext
 				&letterbox_frame($to,abs($newwidth),abs($newheight),$owidth,$oheight);
 			    }
@@ -2172,7 +2175,7 @@ if (defined($ARGV[0])) {
 	    # now copy these
 	    unless (!defined($statusfile)||$statusfile eq "") {
 		# don't want to get killed in this stage...
-		unlink $statusfile;
+		unlink "$statusfile";
 	    }
 	    
 	    for ($i=$start;$i<=$end;$i++) {
@@ -2180,10 +2183,10 @@ if (defined($ARGV[0])) {
 		if (-f "$curtmpdir/$name.mgk.2") {
 		    if (-f "$curtmpdir/$name$img_ext.2") {
 			unlink "$curtmpdir/$name$img_ext";
-			rename "$curtmpdir/$nameimg_ext.2","$curtmpdir/$name$img_ext";
+			smog_rename( "$curtmpdir/$nameimg_ext.2","$curtmpdir/$name$img_ext");
 			    }
 		    unlink "$curtmpdir/$name.mgk";
-		    rename "$curtmpdir/$name.mgk.2","$curtmpdir/$name.mgk";
+		    smog_rename( "$curtmpdir/$name.mgk.2","$curtmpdir/$name.mgk");
 		}
 	    }
 	}
@@ -2194,7 +2197,7 @@ if (defined($ARGV[0])) {
 		$name=&mkname($i);
 		if (-f "$curtmpdir/$name$img_ext") {
 		    unlink "$curtmpdir/$name.bak";
-		    rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak";
+		    smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak");
 		}
 	    }
 	    &sig_progress($i);
@@ -2236,7 +2239,7 @@ if (defined($ARGV[0])) {
 		    unlink "$curtmpdir/$name$img_ext";
 		}
 		else {
-		    rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk";
+		    smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk");
 		}
 	    }
 	}
@@ -2245,10 +2248,10 @@ if (defined($ARGV[0])) {
 	    for ($i=$end+1;$i<=$frames;$i++) {
 		$name=&mkname($i);
 		if (!$leave_bak) {
-		    rename "$curtmpdir/$name.bak","$curtmpdir/$name$img_ext";
+		    smog_rename( "$curtmpdir/$name.bak","$curtmpdir/$name$img_ext");
 		}
 		else {
-		    rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk";
+		    smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk");
 		}
 	    }
 	}
@@ -2354,7 +2357,7 @@ if (defined($ARGV[0])) {
 	$extra_params=$ARGV[8];
 	$mplayer_command=&location("mplayer");
 
-	system("$mplayer_command -quiet -x $hsize -y $vsize -wid $win -vo x11 -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >/dev/null 2>&1 </dev/null");
+	smog_system("$mplayer_command -quiet -x $hsize -y $vsize -wid $win -vo x11 -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >/dev/null 2>&1 </dev/null");
 	&sig_complete;
 	exit 0;
     }
@@ -2406,11 +2409,11 @@ if (defined($ARGV[0])) {
 	$audio_out=$curtmpdir . "/audiodump.wav";
 	&convert_audio_to_wav;
 	if ($audio_end>0.) {
-	    unlink $audio_in;
+	    unlink "$audio_in";
 	}
   
-	system("mv $audio_out \"$nfile\" >/dev/null 2>&1");
-	system("chmod 644 \"$nfile\" >/dev/null 2>&1");
+	smog_rename("$audio_out","$nfile");
+	smog_system("/bin/chmod 644 \"$nfile\" >/dev/null 2>&1");
 
 	&sig_complete;
 	exit 0;
@@ -2447,7 +2450,7 @@ if (defined($ARGV[0])) {
 	    &othera_open;
 	}
 
-	`sync;sync;sync`;
+	smog_system_sync();
 
 	unless (-f $audio_in) {
 	    &sig_error("$GUI_NAME was not able to open the file","$file");
@@ -2455,7 +2458,7 @@ if (defined($ARGV[0])) {
 	
 	$audio_out="audio.new";
 	&convert_audio_to_raw;
-	unlink $audio_in;
+	unlink "$audio_in";
 
 	$audio_bak="audio.bak";
 
@@ -2464,8 +2467,8 @@ if (defined($ARGV[0])) {
 	    $audio_in=$audio_out; #audio.new
 	    $audio_out=$audio_bak; #audio.bak
 	    &resample_audio; # audio.new -> audio.bak
-	    unlink $audio_in; #audio.new
-	    rename $audio_out,$audio_in;  #audio.bak -> audio.new
+	    unlink "$audio_in"; #audio.new
+	    smog_rename( "$audio_out","$audio_in");  #audio.bak -> audio.new
 	    $audio_out=$audio_in; #audio.new
 	}
 
@@ -2474,9 +2477,9 @@ if (defined($ARGV[0])) {
 	}
 
 	# cat audio audio.new -> audiodump
-	system("/bin/cat audio $audio_out > audiodump");
+	smog_system("/bin/cat audio \"$audio_out\" > audiodump");
 
-	unlink $audio_out; #audio.new
+	unlink "$audio_out"; #audio.new
 	$fsize=-s "audiodump";
 	&sig_complete($fsize);
 	exit 0;
@@ -2499,13 +2502,13 @@ if (defined($ARGV[0])) {
 
 	# $audio_from is the new clip
 	$audio_from=&clip_audio($audio_start,$audio_end);
-	unlink $audio_in;
+	unlink "$audio_in";
 	$where=$audio_start;
 	$end=$audio_end-$audio_start;
 	$start=0;
 	# insert_audio will insert silence at start
 	&insert_audio($asamps,$achans,$asigned,$aendian,1);
-	unlink $audio_out;
+	unlink "$audio_out";
 	&append_silence(0,&align($audio_end*$arate*$align),$asamps,$achans,$asigned,$aendian);
 
 	&sig_complete;
@@ -2547,15 +2550,15 @@ if (defined($ARGV[0])) {
 	    $audio_in="$curtmpdir/audio.orig";
 	}
 
-	unlink $audio_in;
-	rename $audio_out,$audio_in;
+	unlink "$audio_in";
+	smog_rename( "$audio_out","$audio_in");
 
-	`sync;sync;sync`;
+	smog_system_sync();
 
 	&resample_audio;
 
 	if (&rc_get("conserve_space") eq "true" && (-s $audio_out)) {
-	    unlink $audio_in;
+	    unlink "$audio_in";
 	}
 
 	&sig_complete;
@@ -2565,9 +2568,9 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "get_window_id") {
-	system("xwininfo > $curtmpdir/tmpinfo");
+	smog_system("xwininfo > \"$curtmpdir/tmpinfo\"");
 
-	system("grep \"Window id:\" $curtmpdir/tmpinfo > $curtmpdir/tmpinfo2");
+	smog_system("grep \"Window id:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
 	if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
 	    read IN,$win_id,128;
 	    close IN;
@@ -2576,7 +2579,7 @@ if (defined($ARGV[0])) {
 	$win_id=hex($wid[3]);
 	chomp($win_id);
 
-	system("grep \"Width:\" $curtmpdir/tmpinfo > $curtmpdir/tmpinfo2");
+	smog_system("grep \"Width:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
 	if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
 	    read IN,$width,128;
 	    close IN;
@@ -2585,7 +2588,7 @@ if (defined($ARGV[0])) {
 	$width=$widths[1];
 	chomp($width);
 
-	system("grep \"Height:\" $curtmpdir/tmpinfo > $curtmpdir/tmpinfo2");
+	smog_system("grep \"Height:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
 	if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
 	    read IN,$height,128;
 	    close IN;
@@ -2594,7 +2597,7 @@ if (defined($ARGV[0])) {
 	$height=$heights[1];
 	chomp($height);
 
-	system("grep \"Depth:\" $curtmpdir/tmpinfo > $curtmpdir/tmpinfo2");
+	smog_system("grep \"Depth:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
 	if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
 	    read IN,$bpp,128;
 	    close IN;
@@ -2638,15 +2641,15 @@ if (defined($ARGV[0])) {
 	    $audsize=-s $audio_in;
 	    if ($audsize > $aud_end) {
 		$audio_out=&clip_audio(0.,$end/$fps);
-		unlink $audio_in;
-		rename $audio_out,$audio_in;
+		unlink "$audio_in";
+		smog_rename( "$audio_out","$audio_in");
 	    }
 	    elsif ($audsize<$aud_end) {
 		$audio_out="$curtmpdir/audio.bak";
-		rename $audio_in,$audio_out;
+		smog_rename( "$audio_in","$audio_out");
 		&append_silence(0,$aud_end-$audsize,$asamps,$achans,$asigned,$aendian,$audio_in);
-		`/bin/cat $audio_out>>$audio_in`;
-		unlink $audio_out;
+		smog_system("/bin/cat \"$audio_out\">>\"$audio_in\"");
+		unlink "$audio_out";
 	    }
 	}
 
@@ -2669,14 +2672,14 @@ if (defined($ARGV[0])) {
 	if ($f_size>0) {
 	    # wav format
 	    if (&rc_get("conserve_space") eq "true") {
-		unlink $audio_out;
+		unlink "$audio_out";
 	    }
 	    else {
 		if (-f $audio_out) {
-		    rename $audio_out,$audio_bak;
+		    smog_rename( "$audio_out","$audio_bak");
 		}
 		else {
-		    `touch $audio_bak`;
+		    smog_system("/bin/touch \"$audio_bak\"");
 		}
 	    }
 	    $is_audio=TRUE;
@@ -2694,17 +2697,17 @@ if (defined($ARGV[0])) {
 	    if ($gotit || -f $audio_in) {
 		# raw format
 		if (&rc_get("conserve_space") eq "true") {
-		    unlink $audio_out;
+		    unlink "$audio_out";
 		}
 		else {
 		    if (-f $audio_out) {
-			rename $audio_out,$audio_bak;
+			smog_rename( "$audio_out","$audio_bak");
 		    }
 		    else {
-			`touch $audio_bak`;
+			smog_system("/bin/touch \"$audio_bak\"");
 		    }
 		}
-		rename $audio_in,$audio_out;
+		smog_rename( "$audio_in","$audio_out");
 		# dummy values, the GUI should know these
 		$arate=$achans=$asamps=0;
 		$signed=$endian=1;
@@ -2740,7 +2743,7 @@ if (defined($ARGV[0])) {
 	    # youtube-dl
 
 	    if (-f $dfile) {
-		unlink $dfile;
+		unlink "$dfile";
 	    }
 
 	    if (-f $dfile) {
@@ -2750,11 +2753,11 @@ if (defined($ARGV[0])) {
 
 	    $com="youtube-dl -o \"$dfile\" -f 43 -q --no-part \"$url\"";
 
-	    $res=system($com);
+	    $res=smog_system("$com");
 	    if ($res || !(-f $dfile) || -z $dfile) {
 
 		if (-f $dfile) {
-		    unlink $dfile;
+		    unlink "$dfile";
 		}
 
 		&sig_error;
@@ -2784,10 +2787,10 @@ if (defined($ARGV[0])) {
 
 	$audiofile=$curtmpdir."/audiodump.wav";
 	if (-f $audiofile) {
-	    unlink $audiofile;
+	    unlink "$audiofile";
 	}
 
-	system("$cdda2wav_command -q -x -D $cdplay_device -t $track $audiofile >/dev/null 2>&1");
+	smog_system("$cdda2wav_command -q -x -D \"$cdplay_device\" -t $track \"$audiofile\"| >/dev/null 2>&1");
 	$f_size=-s $audiofile;
 	# the '-x' option will force these
 	$arate=44100;
@@ -2868,11 +2871,11 @@ if (defined($ARGV[0])) {
 				$tracks++;
 				$giveup=200;
 				if ($first==1) {
-				    system("$xmms_command -p \"$dir$file\"");
+				    smog_system("$xmms_command -p \"$dir$file\"");
 				    $first=0;
 				}
 				else {
-				    system("$xmms_command -p -e \"$dir$file\"");
+				    smog_system("$xmms_command -p -e \"$dir$file\"");
 				}
 			    }
 			}
@@ -2956,8 +2959,8 @@ if (defined($ARGV[0])) {
 		}
 
 		if (-f "audio") {
-		    system("cp audio audio.bak");
-		    `sync;sync;sync`;
+		    smog_system("/bin/cp audio audio.bak");
+		    smog_system_sync();
 		}
 	    }
 	    else {
@@ -2988,7 +2991,7 @@ if (defined($ARGV[0])) {
 	    $img_ext=".".$ARGV[5];
 
 	    # move extra frames back to end
-	    `sync;sync;sync`;
+	    smog_system_sync();
 	    &undo_insert;
 
 	    $end=$frames;
@@ -3037,7 +3040,7 @@ if (defined($ARGV[0])) {
 	    else {
 		$plugin_name="$home/.lives-dir/plugins/effects/rendered/test/$command";
 	    }
-	    $fx_desc=`$plugin_name get_description`;
+	    $fx_desc=smog_system_direct("\"$plugin_name\" get_description");
 	    $num_in_channels=(split(/\|/,$fx_desc))[3];
 	    
 	    if ($num_in_channels==0) {
@@ -3059,7 +3062,7 @@ if (defined($ARGV[0])) {
 
 	    $fps=0;
 
-	    $fx_caps=`$plugin_name get_capabilities`;
+	    $fx_caps=smog_system_direct("\"$plugin_name\" get_capabilities");
 	    if ($fx_caps&0x8000) {
 		# is autogenerated
 		# we are so nice :-), we set: 
@@ -3104,13 +3107,13 @@ if (defined($ARGV[0])) {
 		my $err;
 
 		if ($num_in_channels==2) {
-		    $err=system "$plugin_name process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > $res_file";
+		    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
 		}
 		elsif ($num_in_channels==1) {
-		    $err=system "$plugin_name process \"$curtmpdir\" $img_ext $out_ext @ARGV > $res_file";
+		    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
 		}
 		else {
-		    $err=system "$plugin_name process \"$curtmpdir\" $out_ext @ARGV > $res_file";
+		    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $out_ext @ARGV > \"$res_file\"");
 		}
 		if (!$err) {
 		    if (defined(open IN,"< $res_file")) {
@@ -3143,7 +3146,7 @@ if (defined($ARGV[0])) {
 	    $proj_file=$ARGV[2];
 	    chdir $tmpdir;
 	    umask 0;
-	    `tar --no-same-owner -xzf \"$proj_file\"`;
+	    smog_system("tar --no-same-owner -xzf \"$proj_file\"");
 	    &sig_complete;
 	    exit 0;
 	}
@@ -3152,7 +3155,7 @@ if (defined($ARGV[0])) {
 	    my $set=$ARGV[2];
 	    my $proj_file=$ARGV[3];
 	    chdir $tmpdir;
-	    `tar --exclude=*.bak --exclude=.pid* --exclude .status* --exclude=lock.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -czf \"$proj_file\" $set`;
+	    smog_system("tar --exclude=*.bak --exclude=.pid* --exclude .status* --exclude=lock.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -czf \"$proj_file\" $set");
 	    &sig_complete;
 	    exit 0;
 	}
@@ -3181,6 +3184,7 @@ if (defined($ARGV[0])) {
     
 #subroutines
 
+
 sub usage {
     print STDERR "$command must have a parameter\n";
     print STDERR "show usage...\n";
@@ -3194,7 +3198,7 @@ sub mkname {
 
 sub check_for_pause {
     if (-f "$curtmpdir/pause") {
-	`sync;sync;sync`;
+	smog_system_sync();
     }
     while (-f "$curtmpdir/pause") {
 	sleep 1;
@@ -3214,7 +3218,7 @@ sub check_for_stop {
 
 sub get_pgid {
     #get process group for a given pid
-    my $pgidstr=`/bin/cat /proc/$target_pid/stat`;
+    my $pgidstr=smog_system_direct("/bin/cat /proc/$target_pid/stat");
     my $pgid=(split(" ",$pgidstr))[4];
     return $pgid;
 }
@@ -3222,13 +3226,13 @@ sub get_pgid {
 sub kill_child_pids {
     my ($target_pid,$sig)=@_;
     my $pid;
-    `pgrep -P $target_pid > $tmpdir/.pids.$target_pid 2>/dev/null`;
+    smog_system("pgrep -P $target_pid > \"$tmpdir/.pids.$target_pid\" 2>/dev/null");
 
     if ($sig eq "KILL") {
-	`kill -$sig $target_pid >/dev/null 2>&1`;
+	smog_system("kill -$sig $target_pid >/dev/null 2>&1");
     }
     else {
-	`pkill -$sig -P $target_pid`;# must not ! >/dev/null 2>&1`;
+	smog_system("pkill -$sig -P $target_pid");# must not ! >/dev/null 2>&1");
     }
 
     if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
@@ -3248,19 +3252,19 @@ sub is_writeable {
     # but do not actually create the file
     my $file=shift;
     if (! -s $nfile) {
-	unlink $nfile;
+	unlink "$nfile";
     }
     $exists=(-f "$nfile");
     if (!$exists) {
 	umask 0;
-	system("touch \"$nfile\"; chmod o+w \"$nfile\"");
+	smog_system("/bin/touch \"$nfile\"");
+	smog_system("/bin/chmod o+w \"$nfile\"");
 	umask $umask;
     }
-    `sync;sync;sync`;
+    smog_system_sync();
     $ret=(-w "$nfile");
     if (!$exists) {
 	unlink "$nfile";
-    `sync`;
     }
     return $ret;
 }
@@ -3300,7 +3304,7 @@ sub mv_mgk {
 
     unless (!defined($statusfile)||$statusfile eq "") {
 	# don't want to get killed in this stage...
-	unlink $statusfile;
+	unlink "$statusfile";
     }
 
     for ($i=$start;$i<=$end;$i++) {
@@ -3311,16 +3315,16 @@ sub mv_mgk {
 			unlink "$curtmpdir/$name$img_ext";
 		    }
 		    else {
-			rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak";
+			smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak");
 		    }
 		}
-		rename "$curtmpdir/$name.mgk","$curtmpdir/$name$img_ext";
+		smog_rename( "$curtmpdir/$name.mgk","$curtmpdir/$name$img_ext");
 	    }
 	if ($option==1) {
 	    &sig_progress($i);
 	}
     }
-    `sync;sync;sync`;
+    smog_system_sync();
 }
 
 
@@ -3331,7 +3335,7 @@ sub mv_pre {
     my ($i,$name);
     unless (!defined($statusfile)||$statusfile eq "") {
 	# don't want to get killed in this stage...
-	unlink $statusfile;
+	unlink "$statusfile";
     }
 
     chdir $curtmpdir;
@@ -3342,12 +3346,12 @@ sub mv_pre {
 	if (-f "$curtmpdir/$name.pre") {
 	    if (-f "$curtmpdir/$name$img_ext") {
 		unlink "$curtmpdir/$name.bak";
-		rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak";
+		smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak");
 	    }
-	    rename "$curtmpdir/$name.pre","$curtmpdir/$name$img_ext";
+	    smog_rename( "$curtmpdir/$name.pre","$curtmpdir/$name$img_ext");
 	}
     }
-    `sync;sync;sync`;
+    smog_system_sync();
 }
 
 
@@ -3363,9 +3367,9 @@ sub undo {
 	$name=&mkname($i);
 	if (-f "$curtmpdir/$name.bak") {
 	    if ($param==0) {
-		rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk";
+		smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk");
 	    }
-	    rename "$curtmpdir/$name.bak","$curtmpdir/$name$img_ext";
+	    smog_rename( "$curtmpdir/$name.bak","$curtmpdir/$name$img_ext");
 	}
 	&sig_progress($i);
     }
@@ -3375,14 +3379,14 @@ sub undo {
 sub undo_audio {
     if (-f "$curtmpdir/audio.orig") {
 	unlink "$curtmpdir/audio";
-	rename "$curtmpdir/audio.orig","$curtmpdir/audio";
+	smog_rename( "$curtmpdir/audio.orig","$curtmpdir/audio");
 	unlink "$curtmpdir/audio.bak";
     }
     else {
 	unlink "$curtmpdir/audio.new";
-	rename "$curtmpdir/audio","$curtmpdir/audio.new";
-	rename "$curtmpdir/audio.bak","$curtmpdir/audio";
-	rename "$curtmpdir/audio.new","$curtmpdir/audio.bak";
+	smog_rename( "$curtmpdir/audio","$curtmpdir/audio.new");
+	smog_rename( "$curtmpdir/audio.bak","$curtmpdir/audio");
+	smog_rename( "$curtmpdir/audio.new","$curtmpdir/audio.bak");
     }
 }
 
@@ -3390,7 +3394,7 @@ sub undo_audio {
 
 sub backup_audio {
     &clean_old;
-    `/bin/cp -f $curtmpdir/audio $curtmpdir/audio.bak >/dev/null 2>&1`;
+    smog_system("/bin/cp -f $curtmpdir/audio $curtmpdir/audio.bak >/dev/null 2>&1");
 }
 
 
@@ -3402,14 +3406,14 @@ sub cut {
 
     for ($i=$start;$i<=$end;$i++) {
 	$name=&mkname($i);
-	rename "$name$img_ext","$name.bak";
+	smog_rename( "$name$img_ext","$name.bak");
 	&sig_progress($i);
     }
 
     for ($i=$end+1;$i<=$frames;$i++) {
 	$from=&mkname($i);
 	$to=&mkname($i-$frames_cut);
-	rename $curtmpdir."/".$from.$img_ext,$curtmpdir."/".$to.$img_ext;
+	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to.$img_ext");
 	&sig_progress($i);
     }
 }
@@ -3421,10 +3425,10 @@ sub reverse {
     for ($i=$start;$i<int(($start+$end)/2+.5);$i++) {
 	$from=&mkname($i);
 	$to=&mkname($end-$i+1);
-	rename $curtmpdir."/".$from.$img_ext,$curtmpdir."/.revtemp";
-	rename $curtmpdir."/".$to.$img_ext,$curtmpdir."/".$from.$img_ext;
+	smog_rename( "$curtmpdir/$from.$img_ext","$curtmpdir/.revtemp");
+	smog_rename( "$curtmpdir/$to.$img_ext","$curtmpdir/$from.$img_ext");
 	&sig_progress($start+($i-$start)*2);
-	rename $curtmpdir."/.revtemp",$curtmpdir."/".$to.$img_ext;
+	smog_rename( "$curtmpdir/.revtemp","$curtmpdir/$to.$img_ext");
 	&sig_progress($start+($i-$start)*2+1);
     }
 }
@@ -3440,10 +3444,85 @@ sub undo_insert {
 	$to=&mkname($i-$frames_inserted);
 	if (-f "$curtmpdir/$name$img_ext") {
 	    unlink "$curtmpdir/$to$img_ext";
-	    rename "$curtmpdir/$name$img_ext","$curtmpdir/$to$img_ext";
+	    smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$to$img_ext");
 	}
     }
 }
+
+
+
+sub smog_system_sync {
+    `sync; sync; sync;`;
+}
+
+
+
+
+sub smog_system {
+    my ($command)=@_;
+    my $comret;
+
+    $DEBUG_SMOGRIFY=1;
+
+    if ($DEBUG_SMOGRIFY) {
+	print STDERR "smogrify debug: $command\n";
+    }
+
+    $comret=system($command);
+
+    if ($DEBUG_SMOGRIFY) {
+	print STDERR "smogrify debug: result was $comret\n";
+    }
+
+    $comret;
+
+}
+
+
+sub smog_system_direct {
+    my ($command)=@_;
+    my $comret;
+
+    $DEBUG_SMOGRIFY=1;
+
+    if ($DEBUG_SMOGRIFY) {
+	print STDERR "smogrify debug: $command\n";
+    }
+
+    $comret=`$command`;
+
+    if ($DEBUG_SMOGRIFY) {
+	print STDERR "smogrify debug: result was $comret\n";
+    }
+
+    $comret;
+}
+
+
+
+sub smog_rename {
+   my ($smfrom,$smto)=@_;
+   my $comret;
+
+    $DEBUG_SMOGRIFY=1;
+
+    if ($DEBUG_SMOGRIFY) {
+	print STDERR "smogrify debug - rename: $smfrom $smto\n";
+    }
+
+    $comret=rename "$smfrom","$smto";
+
+    if ($DEBUG_SMOGRIFY) {
+	print STDERR "smogrify debug: result was $comret\n";
+    }
+
+    $comret;
+
+}
+
+
+
+
 
 
 
@@ -3482,9 +3561,9 @@ sub insert {
 	$to=&mkname($i+$frames_to_move);
 	if ($i<=($num_frames-$frames_to_move)&&!$undo_cut&&-f "$curtmpdir/$from$img_ext") {
 	    # this frame will get overwritten, so back it up
-	    system("/bin/cp -f $curtmpdir/$from$img_ext $curtmpdir/$from.bak");
+	    smog_system("/bin/cp -f $curtmpdir/$from$img_ext $curtmpdir/$from.bak");
 	}
-	rename "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext";
+	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
 	&sig_progress($num_frames-$i);
     }
 
@@ -3502,13 +3581,13 @@ sub insert {
 	    $to=&mkname($nwhere+$i-$nstart+1);
 
 	    if ($undo_cut==1) {
-		rename "$fromdir/$from.bak","$curtmpdir/$to$img_ext";
+		smog_rename( "$fromdir/$from.bak","$curtmpdir/$to$img_ext");
 	    }
 	    else {
 		while (! -f "$fromdir/$from$img_ext2") {
 		    print STDERR "waiting on image $fromdir/$from$img_ext2\n";
 		    sleep 1;
-		    `sync`;
+		    smog_system_sync();
 		}
 
 		if ($quick_copy==-1) {
@@ -3528,14 +3607,14 @@ sub insert {
 		}
 
 		if ($quick_copy==1) {
-		    system("/bin/cp -f $fromdir/$from$img_ext2 $curtmpdir/$to$img_ext >/dev/null 2>&1");
+		    smog_system("/bin/cp -f \"$fromdir/$from$img_ext2\" \"$curtmpdir/$to$img_ext\" >/dev/null 2>&1");
 		}
 		else {
 		    if ($antialias eq "false") {
-			system("$conv_command +antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
+			smog_system("$conv_command +antialias -size $width"."x$height \"$fromdir/$from$img_ext2\" -scale $width!x$height! \"$curtmpdir/$to$img_ext\" >/dev/null 2>&1");
 		    }
 		    else {
-			system("$conv_command -antialias -size $width"."x$height $fromdir/$from$img_ext2 -scale $width!x$height! $curtmpdir/$to$img_ext >/dev/null 2>&1");
+			smog_system("$conv_command -antialias -size $width"."x$height \"$fromdir/$from$img_ext2\" -scale $width!x$height! \"$curtmpdir/$to$img_ext\" >/dev/null 2>&1");
 		    }
 		}
 		
@@ -3578,10 +3657,10 @@ sub resize_frame {
     }
 
     if ($antialias eq "false") {
-	system("$convert_command +antialias -size $width"."x$height $name$input_ext -scale $width!x$height! $name$resize_ext >/dev/null 2>&1");
+	smog_system("$convert_command +antialias -size $width"."x$height \"$name$input_ext\" -scale $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1");
     }
     else {
-	system("$convert_command -size $width"."x$height $name$input_ext -resize $width!x$height! $name$resize_ext >/dev/null 2>&1");
+	smog_system("$convert_command -size $width"."x$height \"$name$input_ext\" -resize $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1");
     }
 }
 
@@ -3602,7 +3681,7 @@ sub letterbox_frame {
 	$bgcolour="#000000";
     }
     
-    system("$convert_command -size $owidth!x$oheight! xc:$bgcolour blank.jpg >/dev/null 2>&1");
+    smog_system("$convert_command -size $owidth!x$oheight! xc:$bgcolour blank.jpg >/dev/null 2>&1");
 
 
     # overlay frame
@@ -3610,8 +3689,8 @@ sub letterbox_frame {
     $ystart=int(($oheight-$iheight)/2);
     
     #must unlink first in case $to is a symlink (when saving selection)
-    unlink $to;
-    system("$composite_command -compose plus -dissolve 100 -geometry $iwidth!x$iheight!+$xstart!+$ystart! $from blank.jpg $to >/dev/null 2>&1");
+    unlink "$to";
+    smog_system("$composite_command -compose plus -dissolve 100 -geometry $iwidth!x$iheight!+$xstart!+$ystart! \"$from\" blank.jpg \"$to\" >/dev/null 2>&1");
 
     unlink "blank.jpg";
 
@@ -3666,10 +3745,10 @@ sub zoom_frame {
     my ($nheight)=$bottom-$top+1;
     
     if ($antialias eq "false") {
-	system("$convert_command -antialias -size $width"."x$height $name$input_ext -crop $nwidth!x$nheight!+$left!+$top! -resize $width!x$height! $name$resize_ext >/dev/null 2>&1");
+	smog_system("$convert_command -antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$left!+$top! -resize $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1");
     }
     else {
-	system("$convert_command +antialias -size $width"."x$height $name$input_ext -crop $nwidth!x$nheight!+$left!+$top! -resize $width!x$height! $name$resize_ext >/dev/null 2>&1");
+	smog_system("$convert_command +antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$left!+$top! -resize $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1");
     }
     
 }
@@ -3688,10 +3767,10 @@ sub trim_frame {
 	$antialias="false";
     }
     if ($antialias eq "false") {
-	system("$convert_command +antialias -size $width"."x$height $name$input_ext -crop $nwidth!x$nheight!+$x+$y $name$resize_ext >/dev/null 2>&1");
+	smog_system("$convert_command +antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$x+$y \"$name$resize_ext\" >/dev/null 2>&1");
     }
     else {
-	system("$convert_command -antialias -size $width"."x$height $name$input_ext -crop $nwidth!x$nheight!+$x+$y $name$resize_ext >/dev/null 2>&1");
+	smog_system("$convert_command -antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$x+$y \"$name$resize_ext\" >/dev/null 2>&1");
     }
 }
 
@@ -3722,15 +3801,15 @@ sub trim_center {
 	    $bgcolour="#000000";
 	}
 
-	system("$convert_command -size $size!x$size! xc:$bgcolour blank.jpg >/dev/null 2>&1");
-	system("$composite_command -compose plus -dissolve 100 -geometry $hsize!x$vsize!+$xstart!+$ystart! $name$input_ext blank.jpg $name$input_ext >/dev/null 2>&1");
+	smog_system("$convert_command -size $size!x$size! xc:$bgcolour blank.jpg >/dev/null 2>&1");
+	smog_system("$composite_command -compose plus -dissolve 100 -geometry $hsize!x$vsize!+$xstart!+$ystart! \"$name$input_ext\" blank.jpg \"$name$input_ext\" >/dev/null 2>&1");
 	$hsize=$vsize=$size;
     }
 
     $x=int(($hsize-$width)/2);
     $y=int(($vsize-$height)/2);
 
-    system("$convert_command $name$input_ext -crop $width" . "!x" . $height . "!+" . $x . "+" . $y . " $name$resize_ext >/dev/null 2>&1");
+    smog_system("$convert_command \"$name$input_ext\" -crop $width" . "!x" . $height . "!+" . $x . "+" . $y . " \"$name$resize_ext\" >/dev/null 2>&1");
 
 }
 
@@ -3799,36 +3878,36 @@ sub get_file_info {
     unless ($mplay_command eq "") {
     if (defined($is_remote)&&($is_remote>0)) {
 	# remote files might be streams, so we need to cache a bit before we can identify them
-	system("$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\">$file_ident 2>/dev/null </dev/null");
+	smog_system("$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\">\"$file_ident\" 2>/dev/null </dev/null");
     }
     else {
-	system("$mplay_command -identify -vo null -ao null -frames 0 \"$file\">$file_ident 2>/dev/null </dev/null");
+	smog_system("$mplay_command -identify -vo null -ao null -frames 0 \"$file\">\"$file_ident\" 2>/dev/null </dev/null");
     }
 
     if (-f $file_ident) {
-        $id_vid_form=`grep ID_VIDEO_CODEC $file_ident 2>/dev/null`;
+        $id_vid_form=smog_system_direct("grep ID_VIDEO_CODEC \"$file_ident\" 2>/dev/null");
         $id_vid_form=(split("=",(split("\n",$id_vid_form))[0]))[1];
         chomp($id_vid_form);
 
 	if ($id_vid_form eq "") {
-	    $id_vid_form=`grep ID_VIDEO_FORMAT $file_ident 2>/dev/null`;
+	    $id_vid_form=smog_system_direct("grep ID_VIDEO_FORMAT \"$file_ident\" 2>/dev/null");
 	    $id_vid_form=(split("=",(split("\n",$id_vid_form))[0]))[1];
 	    chomp($id_vid_form);
 	}
 
 	if ($id_vid_form eq "") {
-	    $id_vid_form=`grep VIDEO: $file_ident 2>/dev/null`;
+	    $id_vid_form=smog_system_direct("grep VIDEO: \"$file_ident\" 2>/dev/null");
 	    $id_vid_form=(split("  ",(split("\n",$id_vid_form))[0]))[1];
 	    chomp($id_vid_form);
 	}
 	if (! -f $file_ident) {return;};
 
-	$id_aud_form=`grep ID_AUDIO_FORMAT $file_ident 2>/dev/null`;
+	$id_aud_form=smog_system_direct("grep ID_AUDIO_FORMAT \"$file_ident\" 2>/dev/null");
 	$id_aud_form=(split("=",(split("\n",$id_aud_form))[0]))[1];
 	chomp($id_aud_form);
 
 	if ($id_aud_form eq "") {
-	    $id_aud_form=`grep AUDIO: $file_ident 2>/dev/null`;
+	    $id_aud_form=smog_system_direct("grep AUDIO: \"$file_ident\" 2>/dev/null");
 	    $id_aud_form=(split("  ",(split("\n",$id_aud_form))[0]))[1];
 	    chomp($id_aud_form);
 	}
@@ -3845,7 +3924,7 @@ sub get_file_info {
 	    # this could probably be done better using regexp...
 	    $type=$id_vid_form;
 	    if (! -f $file_ident) {return;};
-	    $asamps=`grep AUDIO: $file_ident 2>/dev/null`;
+	    $asamps=smog_system_direct("grep AUDIO: \"$file_ident\" 2>/dev/null");
 	    $asamps=(split(" ",$asamps))[5];
 	    chomp($asamps);
 
@@ -3873,34 +3952,34 @@ sub get_file_info {
 	    }
 
 	    if (! -f $file_ident) {return;};
-	    $bpp=`grep VIDEO: $file_ident 2>/dev/null`;
+	    $bpp=smog_system_direct("grep VIDEO: \"$file_ident\" 2>/dev/null");
 	    $bpp=(split("bpp",(split("  ",$bpp))[3]))[0];
 	    chomp($bpp);
 
 	    if (! -f $file_ident) {return;};
 	    if ($bpp eq "") {
-		$bpp=`grep \"Image size:\" $file_ident 2>/dev/null`;
+		$bpp=smog_system_direct("grep \"Image size:\" \"$file_ident\" 2>/dev/null");
 		@tmp=split(" ",$bpp);
 		$bpp=substr($tmp[5],1,2);
 	    }
 
 	    if (! -f $file_ident) {return;};
-	    $hsize=`grep ID_VIDEO_WIDTH $file_ident 2>/dev/null`;
+	    $hsize=smog_system_direct("grep ID_VIDEO_WIDTH \"$file_ident\" 2>/dev/null");
 	    $hsize=(split("=",(split("\n",$hsize))[0]))[1];
 	    chomp($hsize);
 	    
 	    if (! -f $file_ident) {return;};
-	    $vsize=`grep ID_VIDEO_HEIGHT $file_ident 2>/dev/null`;
+	    $vsize=smog_system_direct("grep ID_VIDEO_HEIGHT \"$file_ident\" 2>/dev/null");
 	    $vsize=(split("=",(split("\n",$vsize))[0]))[1];
 	    chomp($vsize);
 	    
 	    if (! -f $file_ident) {return;};
-	    $fps=`grep ID_VIDEO_FPS $file_ident 2>/dev/null`;
+	    $fps=smog_system_direct("grep ID_VIDEO_FPS \"$file_ident\" 2>/dev/null");
 	    $fps=(split("=",(split("\n",$fps))[0]))[1];
 	    chomp($fps);
 
 	    if (! -f $file_ident) {return;};
-	    $arate=`grep ID_AUDIO_RATE $file_ident 2>/dev/null`;
+	    $arate=smog_system_direct("grep ID_AUDIO_RATE \"$file_ident\" 2>/dev/null");
 	    my @results=split("\n",$arate);
 	    foreach my $val (@results) {
 		$arate=(split("=",$val))[1];
@@ -3909,20 +3988,20 @@ sub get_file_info {
 	    }
 	    if (! -f $file_ident) {return;};
 	    if ($arate==0) {
-		$arate=`grep Samplerate $file_ident 2>/dev/null`;
+		$arate=smog_system_direct("grep Samplerate \"$file_ident\" 2>/dev/null");
 		$arate=(split(": ",(split("\n",$arate))[0]))[1];
 		chomp($arate);
 	    }
 
 	    
 	    if (! -f $file_ident) {return;};
-	    $achans=`grep ID_AUDIO_NCH $file_ident 2>/dev/null`;
+	    $achans=smog_system_direct("grep ID_AUDIO_NCH \"$file_ident\" 2>/dev/null");
 	    chomp($achans);
 	    $achans=(split("\n",$achans))[-1];
 	    $achans=(split("=",(split("\n",$achans))[0]))[1];
 
 	    if (! -f $file_ident) {return;};
-	    $abitrate=`grep ID_AUDIO_BITRATE $file_ident 2>/dev/null`;
+	    $abitrate=smog_system_direct("grep ID_AUDIO_BITRATE \"$file_ident\" 2>/dev/null");
 	    chomp($abitrate);
 	    $abitrate=(split("\n",$abitrate))[-1];
 	    $abitrate=(split("=",(split("\n",$abitrate))[0]))[1];
@@ -3930,7 +4009,7 @@ sub get_file_info {
 
 	    unless ($id_aud_form eq "" || $achans>0) {
 		# need to look deeper for $achans
-		$adets=`grep AO: $file_ident 2>/dev/null`;
+		$adets=smog_system_direct("grep AO: \"$file_ident\" 2>/dev/null");
 
 		$adets=(split("AO: ",$adets))[1];
 		chomp($adets);
@@ -3952,34 +4031,34 @@ sub get_file_info {
 	    }
 
 	    if (! -f $file_ident) {return;};
-	    $comment=`grep Comments: $file_ident 2>/dev/null`;
+	    $comment=smog_system_direct("grep Comments: \"$file_ident\" 2>/dev/null");
 	    @tmp=split(" ",$comment);
 	    shift(@tmp);
 	    $comment=join(" ",@tmp);
 	    chomp($comment);
 
 	    if (! -f $file_ident) {return;};
-	    $title=`grep Title: $file_ident 2>/dev/null`;
+	    $title=smog_system_direct("grep Title: \"$file_ident\" 2>/dev/null");
 	    @tmp=split(" ",$title);
 	    shift(@tmp);
 	    $title=join(" ",@tmp);
 	    chomp($title);
 
 	    if (! -f $file_ident) {return;};
-	    $title=`grep Author: $file_ident 2>/dev/null`;
+	    $title=smog_system_direct("grep Author: \"$file_ident\" 2>/dev/null");
 	    @tmp=split(" ",$author);
 	    shift(@tmp);
 	    $author=join(" ",@tmp);
 	    chomp($author);
 
 	    if (! -f $file_ident) {return;};
-	    $count=`grep \"frames  total\" $file_ident 2>/dev/null`;
+	    $count=smog_system_direct("grep \"frames  total\" \"$file_ident\" 2>/dev/null");
 	    @tmp=split(" ",$count);
 	    $count=$tmp[2];
 	    chomp($count);
 
             if ($count eq "") {
-                $length=`grep ID_LENGTH $file_ident 2>/dev/null`;
+                $length=smog_system_direct("grep ID_LENGTH \"$file_ident\" 2>/dev/null");
                 $length=(split("=",(split("\n",$length))[0]))[1];
                 chomp($length);
                 $count=int($fps*$length+.5);
@@ -3991,7 +4070,7 @@ sub get_file_info {
 	if ($asamps==0&&$arate*$achans>0) {
 	    $asamps=$abitrate/$arate/$achans;
 	}
-	unlink $file_ident;
+	unlink "$file_ident";
     }
    }
 
@@ -4017,7 +4096,7 @@ sub get_file_info {
 		}
 		else {
 		    unless ($file2 eq $audio_in) {
-			unlink $file2;
+			unlink "$file2";
 		    }
 		}
 	    }
@@ -4075,14 +4154,14 @@ sub get_file_info {
 sub convert_audio_to_raw {
     &get_formats;
     if (!(&rc_get("audio_player") eq "mplayer")) {
-	system("sox -t .wav $audio_in -t .raw $xsigned $audio_out > /dev/null 2>&1");
+	smog_system("sox -t .wav \"$audio_in\" -t .raw $xsigned \"$audio_out\" > /dev/null 2>&1");
     }
     else {
 	$format=&get_mplayer_format;
-	system(&rc_get("video_open_command") . " -quiet $audio_in -ao pcm:nowaveheader:file=$audio_out $format >/dev/null 2>&1");
+	smog_system(&rc_get("video_open_command") . " -quiet \"$audio_in\" -ao pcm:nowaveheader:file=\"$audio_out\" $format >/dev/null 2>&1");
     }
 
-    `sync;sync;sync`;
+    smog_system_sync();
 }
 
 
@@ -4093,7 +4172,7 @@ sub convert_audio_to_wav {
     chdir $curtmpdir;
     if (&rc_get("audio_player") eq "mplayer") {
 	$format=&get_mplayer_format;
-	system(&rc_get("video_open_command") . " -quiet -ao pcm -demuxer rawaudio -rawaudio rate=$arate:channels=$achans:samplesize=$aasamps -ao pcm:waveheader $format -vo null $audio_in >/dev/null 2>&1 </dev/null");
+	smog_system(&rc_get("video_open_command") . " -quiet -ao pcm -demuxer rawaudio -rawaudio rate=$arate:channels=$achans:samplesize=$aasamps -ao pcm:waveheader $format -vo null \"$audio_in\" >/dev/null 2>&1 </dev/null");
     }
     else {
 
@@ -4145,10 +4224,10 @@ sub convert_audio_to_wav {
 		$nsigned=$asigned;
 	    }
 	}
-	system("sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans $audio_in -t .wav -r $nrate -c $nchans $nsigned -$nasamps $curtmpdir/audiodump.wav >/dev/null 2>&1");
+	smog_system("sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans \"$audio_in\" -t .wav -r $nrate -c $nchans $nsigned -$nasamps \"$curtmpdir/audiodump.wav\" >/dev/null 2>&1");
     }
 
-    `sync;sync;sync`;
+    smog_system_sync();
 }
 
 
@@ -4166,8 +4245,9 @@ sub clip_audio {
     $audio_in=$curtmpdir."/audio";
     $audio_out=$curtmpdir."/audioclip";
 
-    unlink $audio_out;
-    `touch $audio_out; chmod 600 $audio_out`;
+    unlink "$audio_out";
+    smog_system("/bin/touch \"$audio_out\"");
+    smog_system("/bin/chmod 600 \"$audio_out\"");
 
     $align=$achans*$asamps/8;
 
@@ -4186,7 +4266,7 @@ sub clip_audio {
     my ($size)=($epos-$spos);
 
     if ($size>0) {
-	unlink $audio_out;
+	unlink "$audio_out";
 
 	$fdd_in=$audio_in;
 	$fdd_out=$audio_out;
@@ -4194,7 +4274,7 @@ sub clip_audio {
 	&fast_dd($size,$spos,0);
     }
 
-    `sync;sync;sync`;
+    smog_system_sync();
     $audio_out;
 }
 
@@ -4260,10 +4340,10 @@ sub resample_audio {
     }
     
     if (defined($stretch)) {
-	system("sox $nodither -t .raw -r $arate -c $achans -$osigned -$osamps $oendian $audio_in -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps $audio_out stretch $stretch>/dev/null 2>&1");
+	smog_system("sox $nodither -t .raw -r $arate -c $achans -$osigned -$osamps $oendian \"$audio_in\" -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps \"$audio_out\" stretch $stretch>/dev/null 2>&1");
     }
     else {
-	system("sox $nodither -t .raw -r $arate -c $achans -$osigned -$osamps $oendian $audio_in -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps $audio_out>/dev/null 2>&1");
+	smog_system("sox $nodither -t .raw -r $arate -c $achans -$osigned -$osamps $oendian \"$audio_in\" -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps \"$audio_out\">/dev/null 2>&1");
     }
 }
 
@@ -4306,8 +4386,9 @@ sub insert_audio {
     }
     my ($audio_temp)="$curtmpdir/audio.temp";
 
-    unlink $audio_temp;
-    `touch $audio_temp; chmod 600 $audio_temp`;
+    unlink "$audio_temp";
+    smog_system("/bin/touch \"$audio_temp\"");
+    smog_system("/bin/chmod 600 \"$audio_temp\"");
 
     $silence=0;
     if ($arate<0) {
@@ -4420,7 +4501,7 @@ sub insert_audio {
 	    &fast_dd($size,0,$nwpos);
 	}
 	
-	unlink $audio_temp;
+	unlink "$audio_temp";
     }
     else {
 	# copy from audio.bak to output
@@ -4434,7 +4515,7 @@ sub insert_audio {
 	}
     }
 
-    `sync;sync;sync`;
+    smog_system_sync();
 }
 
 
@@ -4455,15 +4536,16 @@ sub cut_audio {
     my ($audio_temp)="$curtmpdir/audio.temp";
     my ($audio_bak)="$curtmpdir/audio.bak";
 
-    unlink $audio_temp;
-    unlink $audio_bak;
+    unlink "$audio_temp";
+    unlink "$audio_bak";
 
     if ($end==0.) {
 	#delete all audio
-	rename ($audio_in,$audio_bak);
+	smog_rename("$audio_in","$audio_bak");
     }
     else {
-	`touch $audio_temp; chmod 600 $audio_temp`;
+	smog_system("/bin/touch \"$audio_temp\"");
+	smog_system("/bin/chmod 600 \"$audio_temp\"");
 	
 	$align=$achans*$asamps/8;
 	
@@ -4514,15 +4596,15 @@ sub cut_audio {
 	}
 	
 	# step 4
-	unlink $audio_in;
-	rename $audio_temp, $audio_in;
+	unlink "$audio_in";
+	smog_rename( "$audio_temp", "$audio_in");
     }
 
     if (-z $audio_in) {
-	unlink $audio_in;
+	unlink "$audio_in";
     }
 
-    `sync;sync;sync`;
+    smog_system_sync();
 }
 
 
@@ -4545,7 +4627,8 @@ sub append_silence {
     }
 
     unless (-f $audio_file) {
-	`touch $audio_file; chmod 600 $audio_file`;
+	smog_system("/bin/touch \"$audio_file\"");
+	smog_system("/bin/chmod 600 \"$audio_file\"");
     }
 
     my $fsize= -s $audio_file;
@@ -4560,7 +4643,7 @@ sub append_silence {
 	    &fast_dd($size,0,$fsize);
 	}
 	else {
-	    `touch $audio_file`;
+	    smog_system("/bin/touch \"$audio_file\"");
 	    open AUD,"+<$audio_file";
 	    seek AUD,-$offset,SEEK_END;
 	    if ($asamps==8) {
@@ -4701,17 +4784,17 @@ sub open_single_image {
 	&get_image_size($file);
     }
 
-    `sync;sync;sync`;
+    smog_system_sync();
 
     if ($img_ext eq ".png") {
 	$conv_command.=" -alpha on";
     }
 
     if ($antialias eq "false") {
-	system("$conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext > /dev/null 2>&1");
+	smog_system("$conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! \"$curtmpdir/$name$img_ext\" > /dev/null 2>&1");
     }
     else {
-	system("$conv_command \"$file\" -resize $hsize"."!x"."$vsize! $curtmpdir/$name$img_ext >/dev/null 2>&1");
+	smog_system("$conv_command \"$file\" -resize $hsize"."!x"."$vsize! \"$curtmpdir/$name$img_ext\" >/dev/null 2>&1");
     }
 
     #convert gives multiple frames for e.g. animated gif
@@ -4719,7 +4802,7 @@ sub open_single_image {
     for ($j=0;$found==1;$j++) {
 	if (-f "$curtmpdir/$name-$j$img_ext") {
 	    $newname=&mkname($i+$j);
-	    rename "$curtmpdir/$name-$j$img_ext","$curtmpdir/$newname$img_ext";
+	    smog_rename( "$curtmpdir/$name-$j$img_ext","$curtmpdir/$newname$img_ext");
 	    $nframes++;
 
 	}
@@ -4765,7 +4848,7 @@ sub get_image_size {
     my ($id_cmd)=&location("identify");
 
     unless ($id_cmd eq "") {
-	@info=split / /, `$id_cmd \"$file\" 2>/dev/null`;
+	@info=split / /, smog_system_direct("$id_cmd \"$file\" 2>/dev/null");
 
 
 	my ($file2)=$file;
@@ -4838,7 +4921,7 @@ sub fill_and_redo_frames {
 	}
 
 	unless ($fromname eq $name) {
-	    system("/bin/cp -f $fromname$img_ext $name$img_ext");
+	    smog_system("/bin/cp -f \"$fromname$img_ext\" \"$name$img_ext\"");
 	}
 	&sig_progress($i);
     }
@@ -4854,9 +4937,9 @@ sub get_next_frame {
 	$xname=&mkname($j);
 	if (-f "$xname$img_ext") {
 	    # found next frame, resize it
-	    system("$conv_command -crop $width" . "!x" . $height . "! $xname$img_ext $xname.mgk >/dev/null 2>&1");
+	    smog_system("$conv_command -crop $width" . "!x" . $height . "! \"$xname$img_ext\" \"$xname.mgk\" >/dev/null 2>&1");
 	    unlink "$xname$img_ext";
-	    rename "$xname.mgk","$xname$img_ext";
+	    smog_rename( "$xname.mgk","$xname$img_ext");
 	    return $j;
 	}
     }
@@ -4869,18 +4952,18 @@ sub get_next_frame {
 
 sub mp3_open {
     if (-f $audio_in) {
-	unlink $audio_in;
+	unlink "$audio_in";
     }
     $f_size=0;
 
     # prefer mpg321 if it's available
     unless (&location("mpg321") eq "") {
-	system("mpg321 -w $audio_in --rate 44100 --stereo \"$file\" >/dev/null 2>&1");
+	smog_system("mpg321 -w \"$audio_in\" --rate 44100 --stereo \"$file\" >/dev/null 2>&1");
 	$f_size=-s $audio_in;
     }
     if ($f_size==0) {
 	unless (&location("mpg123") eq "") {
-	    system("mpg123 -w $audio_in --rate 44100 --stereo \"$file\" >/dev/null 2>&1");
+	    smog_system("mpg123 -w \"$audio_in\" --rate 44100 --stereo \"$file\" >/dev/null 2>&1");
 	    $f_size=-s $audio_in;
 	}
     }
@@ -4922,11 +5005,11 @@ sub ogg_open {
     $f_size=0;
 
     if (-f $audio_in) {
-	unlink $audio_in;
+	unlink "$audio_in";
     }
     
     unless (&location("ogg123") eq "") {
-	system("ogg123 -d wav -f $audio_in \"$file\" >/dev/null 2>&1");
+	smog_system("ogg123 -d wav -f \"$audio_in\" \"$file\" >/dev/null 2>&1");
 	$f_size= -s $audiofile;
     }
 
@@ -4969,10 +5052,10 @@ sub wav_open {
     $curtmpfile=$curtmpdir . "/.temp";
 
     if (-f $audio_in) {
-	unlink $audio_in;
+	unlink "$audio_in";
     }
     
-    system("cp \"$file\" $audio_in");
+    smog_system("/bin/cp \"$file\" \"$audio_in\"");
 
     $file=$audio_in;
     $is_audio=1;
@@ -5011,7 +5094,7 @@ sub othera_open {
     $asigned=1;
     $format=&get_mplayer_format;
 
-    system(&rc_get("video_open_command") . " -quiet \"$file\" -ao pcm:waveheader:file=$audio_in $format >/dev/null 2>&1 </dev/null");
+    smog_system(&rc_get("video_open_command") . " -quiet \"$file\" -ao pcm:waveheader:file=\"$audio_in\" $format >/dev/null 2>&1 </dev/null");
 
     $file=$audio_in;
     $is_audio=1;
@@ -5139,7 +5222,7 @@ sub clean_old {
     return if (! -d "$tmpdir/$handle");
     chdir "$tmpdir/$handle";
     unlink <*.mgk *.bak *.pre *.tmp pause audio.* audiodump*>;
-    `sync;sync;sync`;
+    smog_system_sync();
 }
 
 
@@ -5150,13 +5233,13 @@ sub sig_complete {
     foreach (@_) {
 	$status.="|".$_;
     }
-    `sync;sync;sync`;
+    smog_system_sync();
 
     if (-d $curtmpdir) {
 	open OUT,"> $statusfile";
 	print OUT $status;
 	close OUT;
-	unlink $pidfile;
+	unlink "$pidfile";
     }
 }
 
@@ -5169,7 +5252,7 @@ sub sig_killed {
     open OUT,"> $statusfile";
     print OUT $status;
     close OUT;
-    unlink $pidfile;
+    unlink "$pidfile";
 }
 
 
@@ -5187,7 +5270,7 @@ sub sig_complete_audio {
     close OUT;
 
     unless ($opening_preview==1) {
-	unlink $pidfile;
+	unlink "$pidfile";
     }
 }
 
@@ -5209,8 +5292,8 @@ sub sig_error {
     open OUT,"> $statusfile";
     print OUT $status;
     close OUT;
-    unlink $pidfile;
-    `sync;sync;sync`;
+    unlink "$pidfile";
+    smog_system_sync();
     exit 1;
 }
 
@@ -5244,7 +5327,7 @@ sub sig_progress {
 
 sub sig_clear {
     &check_for_pause;
-    unlink $statusfile;
+    unlink "$statusfile";
 }
 
 
@@ -5252,7 +5335,7 @@ sub sig_clear {
 sub location {
     # return the location of an executable
     my ($command)=shift;
-    my ($location)=`which $command 2>/dev/null`;
+    my ($location)=smog_system_direct("which \"$command\" 2>/dev/null");
     chomp($location);
     $location;
 }
@@ -5388,7 +5471,7 @@ sub rc_set {
     }
     close IN;
     close OUT;
-    rename $rcfile.".new",$rcfile or exit 3;
+    smog_rename( "$rcfile.new","$rcfile") or exit 3;
     $delpref=0;
 }
 
@@ -5451,7 +5534,7 @@ sub fast_dd {
     open FFIN,"<$fdd_in";
     seek FFIN,$skip,SEEK_START;
 
-    `touch $fdd_out`;
+    smog_system("/bin/touch $fdd_out");
 
     open FFOUT,"+<$fdd_out";
     seek FFOUT,$seek,SEEK_START;
@@ -5519,7 +5602,7 @@ sub my_basename {
 
 sub write_bootstrap_file {
     #write our bootstrap file and make our tmpdir
-    unlink $gui_bootstrap_file;
+    unlink "$gui_bootstrap_file";
     unless (defined(open OUT,"> $gui_bootstrap_file")) {
 	exit 4;
     }
@@ -5649,13 +5732,13 @@ sub version_check_and_upgrade {
 	    $msg1="Default OSC port has been changed to 49999.";
 	}
 	unless ($old_version eq $version) {
-	    $current_keymap=`grep \"keymap file version 4\" $lives_home_dir$default_keymap 2>/dev/null`;
+	    $current_keymap=smog_system_direct("grep \"keymap file version 4\" \"$lives_home_dir$default_keymap\" 2>/dev/null");
 	    if ($current_keymap eq "") {
 		unlink "$lives_home_dir$default_keymap";
 	    }
 	    unless (&location("build-lives-plugin-multi") eq "") {
-		`build-lives-plugin-multi custom`;
-		`build-lives-plugin-multi test`;
+		smog_system("build-lives-plugin-multi custom");
+		smog_system("build-lives-plugin-multi test");
 	    }
 	}
     }
@@ -5692,14 +5775,14 @@ sub get_form_request {
 	return &get_format_request;
     }
     else {
-	return `$plugin get_format_request`;
+	return smog_system_direct("\"$plugin\" get_format_request");
     }
 }
 
 
 sub get_convert_version_hash {
     my $real_convert_command=(split(" ",$convert_command))[0];
-    my $convert_version=`$real_convert_command | grep -i version`;
+    my $convert_version=smog_system_direct("$real_convert_command | grep -i version");
     $convert_version=(split(" ",$convert_version))[2];
     return &version_hash($convert_version);
 }
@@ -5711,7 +5794,7 @@ sub weed {
 	print STDERR "Could not clean up, directory $tmpdir is not accessible\n";
 	return 0;
     }
-    my $start_total=(split / /, `du -sb -B 1048567 2>/dev/null`)[0];
+    my $start_total=(split / /, (smog_system_direct("du -sb -B 1048567 2>/dev/null")))[0];
 
     use File::Find;
     opendir DIR,$tmpdir;
@@ -5721,14 +5804,14 @@ sub weed {
 		if (&is_non_empty_dir("$tmpdir/$file/clips") || &is_non_empty_dir("$tmpdir/$file/layouts")) {
 		    # new style sets, for now only check /clips subdir
 		    unless (!defined($new_temp)||$new_temp eq "") {
-			system("/bin/mv $file $new_temp/");
+			smog_rename( "$file","$new_temp");
 		    }
 		}
 		else {
 		    $in_set=0;
 		    find (\&fndset,"$tmpdir/$file/");
 		    if (!$in_set) {
-			`/bin/rm -rf $file`;
+			unlink "$file";
 		    }
 		    else {
 			unless (-f "noprune") {
@@ -5737,7 +5820,7 @@ sub weed {
 			    chdir $tmpdir;
 			}
 			unless (!defined($new_temp)||$new_temp eq "") {
-			    system("/bin/mv $file $new_temp/");
+			    smog_rename( "$file","$new_temp");
 			}
 		    }
 		}
@@ -5745,7 +5828,7 @@ sub weed {
 	    else {
 		unless (!defined($new_temp)||$new_temp eq "") {
 		    if ($file =~ /^recovery/ || $file =~ /^layout/) {
-			system("/bin/mv $file $new_temp/");
+			smog_rename( "$file","$new_temp");
 		    }
 		}
 	    }
@@ -5754,18 +5837,15 @@ sub weed {
 
     closedir DIR;
 
-    `/bin/rm -f .* 2>/dev/null`;
-    `/bin/rm -f rfx.* 2>/dev/null`;
-    `/bin/rm -f /tmp/.smogval* 2>/dev/null`;
-    `/bin/rm -rf /tmp/lives-symlinks 2>/dev/null`;
-    my $end_total=(split / /, `du -sb -B 1048567 2>/dev/null`)[0];
+    unlink < .* rfx.* /tmp/.smogval* /tmp/lives-symlinks >;
+    my $end_total=(split / /, (smog_system_direct("du -sb -B 1048567 2>/dev/null")))[0];
 
     return $start_total-$end_total;
 }
 
 
 sub get_sox_version {
-    my $soxv=`sox -h 2>&1 | grep -i sox:`;
+    my $soxv=smog_system_direct("sox -h 2>&1 | grep -i sox:");
 
     my $soxvv=(split(/\./,(split(" ",$soxv))[2]))[0];
 
@@ -5798,14 +5878,14 @@ sub clear_symlinks {
     
     if (-d $linksdir) {
 	# remove directory + contents
-	system("/bin/rm -rf $linksdir");
+	smog_system("/bin/rm -rf \"$linksdir\"");
     }
     
     #create dir so next step works
-    system("/bin/mkdir -p $linksdir");
+    smog_system("/bin/mkdir -p \"$linksdir\"");
 
     # remove dir + any empty parents
-    system("/bin/rmdir -p $linksdir 2>/dev/null");
+    smog_system("/bin/rmdir -p \"$linksdir\" 2>/dev/null");
 }
 
 

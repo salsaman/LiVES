@@ -1508,19 +1508,23 @@ void save_file (int clip, int start, int end, const char *filename) {
     fps_string=g_strdup_printf ("%.8f",sfile->fps);
   }
 
+  // TODO - use enc_exec_name
+
+  enc_exec_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
+  
 
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-      com=g_strdup_printf("smogrify save get_rfx %s \"%s%s%s/%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
-			  sfile->handle,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,
+      com=g_strdup_printf("smogrify save get_rfx %s \"%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
+			  sfile->handle,enc_exec_name,
 			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
       g_free(tmp);
     }
     else {
-      com=g_strdup_printf("%s%s%s/%s save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->lib_dir,
-			  PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,sfile->handle,
+      com=g_strdup_printf("\"%s\" save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
+			  enc_exec_name,sfile->handle,
 			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
       g_free(tmp);
@@ -1603,8 +1607,6 @@ void save_file (int clip, int start, int end, const char *filename) {
   // for non-safe symlinks, cfile will be our new links file
   // for save_all, cfile will be sfile
 
-  enc_exec_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
-
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
     com=g_strdup_printf("smogrify save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",
 			cfile->handle,
@@ -1666,19 +1668,14 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->effects_paused=FALSE;
     cfile->nokeep=FALSE;
     
-    // TODO *** - concat parameters EOF
-
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-      com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s%s\" \"%s\" \"%s\"",cfile->handle,1,
-			  cfile->frames,prefs->lib_dir,
-			  PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name);
+      com=g_strdup_printf("smogrify plugin_clear \"%s\" 1 %d \"%s%s\" \"%s\" \"%s\"",cfile->handle,
+			  cfile->frames, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, prefs->encoder.name);
 
-      LIVES_DEBUG("com is");
-      LIVES_DEBUG(com);
     }
     else {
-      com=g_strdup_printf("\"%s\" plugin_clear \"%s\" %d %d \"\" %s \"\"", enc_exec_name,cfile->handle,
-			  1, cfile->frames, PLUGIN_ENCODERS);
+      com=g_strdup_printf("\"%s\" plugin_clear \"%s\" 1 %d \"%s\"", enc_exec_name,cfile->handle,
+			  cfile->frames, PLUGIN_ENCODERS);
     }
     
     lives_system(com,FALSE);
@@ -3607,16 +3604,16 @@ gboolean write_headers (file *file) {
     else {
       mainw->write_failed=FALSE;
       
-      lives_write(header_fd,&cfile->bpp,sizint,TRUE);
-      lives_write(header_fd,&cfile->fps,sizdbl,TRUE);
-      lives_write(header_fd,&cfile->hsize,sizint,TRUE);
-      lives_write(header_fd,&cfile->vsize,sizint,TRUE);
-      lives_write(header_fd,&cfile->arps,sizint,TRUE);
-      lives_write(header_fd,&cfile->signed_endian,sizint,TRUE);
-      lives_write(header_fd,&cfile->arate,sizint,TRUE);
-      lives_write(header_fd,&cfile->unique_id,8,TRUE);
-      lives_write(header_fd,&cfile->achans,sizint,TRUE);
-      lives_write(header_fd,&cfile->asampsize,sizint,TRUE);
+      lives_write_le(header_fd,&cfile->bpp,4,TRUE);
+      lives_write_le(header_fd,&cfile->fps,8,TRUE);
+      lives_write_le(header_fd,&cfile->hsize,4,TRUE);
+      lives_write_le(header_fd,&cfile->vsize,4,TRUE);
+      lives_write_le(header_fd,&cfile->arps,4,TRUE);
+      lives_write_le(header_fd,&cfile->signed_endian,4,TRUE);
+      lives_write_le(header_fd,&cfile->arate,4,TRUE);
+      lives_write_le(header_fd,&cfile->unique_id,8,TRUE);
+      lives_write_le(header_fd,&cfile->achans,4,TRUE);
+      lives_write_le(header_fd,&cfile->asampsize,4,TRUE);
       
       lives_write(header_fd,LiVES_VERSION,strlen(LiVES_VERSION),TRUE);
       close(header_fd);
@@ -3629,7 +3626,7 @@ gboolean write_headers (file *file) {
 
   g_free(hdrfile);
 
-  if (!mainw->write_failed) {
+  if (retval!=LIVES_CANCEL) {
     // more file details (since version 0.7.5)
     hdrfile=g_build_filename(prefs->tmpdir,file->handle,"header2",NULL);
 
@@ -3642,7 +3639,7 @@ gboolean write_headers (file *file) {
       }
       else {
 	mainw->write_failed=FALSE;
-	lives_write(header_fd,&file->frames,sizint,TRUE);
+	lives_write_le(header_fd,&file->frames,4,TRUE);
 	lives_write(header_fd,&file->title,256,TRUE);
 	lives_write(header_fd,&file->author,256,TRUE);
 	lives_write(header_fd,&file->comment,256,TRUE);
@@ -3655,7 +3652,7 @@ gboolean write_headers (file *file) {
     g_free(hdrfile);
   }
 
-  if (mainw->write_failed) {
+  if (retval==LIVES_CANCEL) {
     mainw->write_failed=FALSE;
     return FALSE;
   }
@@ -3686,7 +3683,7 @@ gboolean read_headers(const gchar *file_name) {
   gboolean timeout;
   gboolean retval,retvala;
 
-  size_t sizhead=8*sizint+sizdbl+8;
+  size_t sizhead=8*4+8+8;
 
   time_t old_time=0,new_time=0;
   struct stat mystat;
@@ -3894,6 +3891,7 @@ gboolean read_headers(const gchar *file_name) {
 
   do {
     retval=0;
+    mainw->read_failed=FALSE;
     memset (version,0,32);
     memset (buff,0,1024);
     
@@ -3912,24 +3910,36 @@ gboolean read_headers(const gchar *file_name) {
 	return FALSE;
       }
       else {
-	lives_read(header_fd,&cfile->bpp,sizint,FALSE);
-	lives_read(header_fd,&cfile->fps,sizdbl,FALSE);
-	lives_read(header_fd,&cfile->hsize,sizint,FALSE);
-	lives_read(header_fd,&cfile->vsize,sizint,FALSE);
-	lives_read(header_fd,&cfile->arps,sizint,FALSE);
-	lives_read(header_fd,&cfile->signed_endian,sizint,FALSE);
-	lives_read(header_fd,&cfile->arate,sizint,FALSE);
-	lives_read(header_fd,&cfile->unique_id,8,FALSE);
-	lives_read(header_fd,&cfile->achans,sizint,FALSE);
-	lives_read(header_fd,&cfile->asampsize,sizint,FALSE);
+	mainw->read_failed=FALSE;
+	lives_read_le(header_fd,&cfile->bpp,4,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->fps,8,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->hsize,4,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->vsize,4,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->arps,4,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->signed_endian,4,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->arate,4,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->unique_id,8,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->achans,4,FALSE);
+	if (!mainw->read_failed)
+	  lives_read_le(header_fd,&cfile->asampsize,4,FALSE);
       
 	if (header_size>sizhead) {
 	  if (header_size-sizhead>31) {
-	    lives_read(header_fd,&version,31,FALSE);
+	    if (!mainw->read_failed)
+	      lives_read(header_fd,&version,31,FALSE);
 	    version[31]='\0';
 	  }
 	  else {
-	    lives_read(header_fd,&version,header_size-sizhead,FALSE);
+	    if (!mainw->read_failed)
+	      lives_read(header_fd,&version,header_size-sizhead,FALSE);
 	    version[header_size-sizhead]='\0';
 	  }
 	}
@@ -4077,9 +4087,9 @@ void open_set_file (const gchar *set_name, gint clipnum) {
       retval=0;
       if ((set_fd=open(setfile,O_RDONLY))>-1) {
 	// get perf_start
-	if ((nlen=lives_read(set_fd,&pb_fps,sizint,TRUE))) {
+	if ((nlen=lives_read_le(set_fd,&pb_fps,4,TRUE))) {
 	  cfile->pb_fps=pb_fps/1000.;
-	  lives_read(set_fd,&cfile->frameno,sizint,TRUE);
+	  lives_read_le(set_fd,&cfile->frameno,4,TRUE);
 	  lives_read(set_fd,name,256,TRUE);
 	}
 	close (set_fd);
@@ -4306,13 +4316,15 @@ gint save_event_frames(void) {
       retval=do_write_failed_error_s_with_retry(hdrfile,g_strerror(errno),NULL);
     }
     else {
+      // use machine endian - TODO **
+
       mainw->write_failed=FALSE;
-      lives_write(header_fd,&perf_start,sizint,FALSE);
+      lives_write(header_fd,&perf_start,4,FALSE);
       
       if (!(cfile->events[0]==NULL)) {
 	for (i=0;i<=perf_end-perf_start;i++) {
 	  if (mainw->write_failed) break;
-	  lives_write(header_fd,&((cfile->events[0]+i)->value),sizint,TRUE);
+	  lives_write(header_fd,&((cfile->events[0]+i)->value),4,TRUE);
 	}
 	g_free (cfile->events[0]);
 	cfile->events[0]=NULL;
@@ -4328,8 +4340,7 @@ gint save_event_frames(void) {
   } while (retval==LIVES_RETRY);
 
 
-  if (mainw->write_failed) {
-    mainw->write_failed=FALSE;
+  if (retval==LIVES_CANCEL) {
     i=-1;
   }
 
@@ -4425,35 +4436,35 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   if (weed_palette_is_yuv_palette(palette)) {
 
-    bytes=read(fd,buf,sizint);
-    if (bytes<sizint) return FALSE;
+    bytes=lives_read_le(fd,buf,4,TRUE);
+    if (bytes<4) return FALSE;
     
     clamping=atoi(buf);
     weed_set_int_value(layer,"YUV_clamping",clamping);
 
-    bytes=read(fd,buf,sizint);
-    if (bytes<sizint) return FALSE;
+    bytes=lives_read_le(fd,buf,4,TRUE);
+    if (bytes<4) return FALSE;
     
     subspace=atoi(buf);
     weed_set_int_value(layer,"YUV_subspace",subspace);
 
-    bytes=read(fd,buf,sizint);
-    if (bytes<sizint) return FALSE;
+    bytes=lives_read_le(fd,buf,4,TRUE);
+    if (bytes<4) return FALSE;
     
     sampling=atoi(buf);
     weed_set_int_value(layer,"YUV_sampling",sampling);
   }
 
 
-  bytes=read(fd,buf,sizint);
-  if (bytes<sizint) return FALSE;
+  bytes=lives_read_le(fd,buf,4,TRUE);
+  if (bytes<4) return FALSE;
 
   width=atoi(buf);
   weed_set_int_value(layer,"width",width);
 
 
-  bytes=read(fd,buf,sizint);
-  if (bytes<sizint) return FALSE;
+  bytes=lives_read_le(fd,buf,4,TRUE);
+  if (bytes<4) return FALSE;
 
   height=atoi(buf);
   weed_set_int_value(layer,"height",height);
@@ -4464,8 +4475,8 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
   rowstrides=g_malloc(nplanes*sizint);
 
   for (i=0;i<nplanes;i++) {
-    bytes=read(fd,buf,sizint);
-    if (bytes<sizint) {
+    bytes=lives_read_le(fd,buf,4,TRUE);
+    if (bytes<4) {
       g_free(rowstrides);
       return FALSE;
     }
@@ -4509,7 +4520,7 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 gint save_to_scrap_file (weed_plant_t *layer) {
   // returns frame number
 
-  // dump the raw frame data to a file
+  // dump the raw frame data to a file (in machine endian format)
 
   // format is:
   // (int)palette,[(int)YUV_clamping,(int)YUV_subspace,(int)YUV_sampling,](int)rowstrides[],(int)height,(char *)pixel_data[]

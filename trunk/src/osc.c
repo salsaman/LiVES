@@ -47,7 +47,7 @@ static gboolean via_shortcut=FALSE;
 /* convert a big endian 32 bit string to an int for internal use */
 
 static int toInt(const char* b) {
-  if (G_BYTE_ORDER==G_LITTLE_ENDIAN) {
+  if (capable->byte_order==LIVES_LITTLE_ENDIAN) {
     return (( (int) b[3] ) & 0xff ) + ((((int) b[2]) & 0xff) << 8) + ((((int) b[1]) & 0xff) << 16) +
       ((((int) b[0] ) & 0xff) << 24);
   }

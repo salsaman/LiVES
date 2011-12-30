@@ -334,32 +334,32 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   g_free(msg);
 
   len=strlen(mainw->vpp->name);
-  if (!lives_write(fd,&len,sizint,FALSE)) return;
-  if (!lives_write(fd,mainw->vpp->name,len,FALSE)) return;
+  if (lives_write_le(fd,&len,4,FALSE)<4) return;
+  if (lives_write(fd,mainw->vpp->name,len,FALSE)<len) return;
 
   version=(*mainw->vpp->version)();
   len=strlen(version);
-  if (!lives_write(fd,&len,sizint,FALSE)) return;
-  if (!lives_write(fd,version,len,FALSE)) return;
+  if (lives_write_le(fd,&len,4,FALSE)<4) return;
+  if (lives_write(fd,version,len,FALSE)<len) return;
 
-  if (!lives_write(fd,&(mainw->vpp->palette),sizint,FALSE)) return;
-  if (!lives_write(fd,&(mainw->vpp->YUV_sampling),sizint,FALSE)) return;
-  if (!lives_write(fd,&(mainw->vpp->YUV_clamping),sizint,FALSE)) return;
-  if (!lives_write(fd,&(mainw->vpp->YUV_subspace),sizint,FALSE)) return;
+  if (lives_write_le(fd,&(mainw->vpp->palette),4,FALSE)<4) return;
+  if (lives_write_le(fd,&(mainw->vpp->YUV_sampling),4,FALSE)<4) return;
+  if (lives_write_le(fd,&(mainw->vpp->YUV_clamping),4,FALSE)<4) return;
+  if (lives_write_le(fd,&(mainw->vpp->YUV_subspace),4,FALSE)<4) return;
 
-  if (!lives_write(fd,mainw->vpp->fwidth<=0?&intzero:&(mainw->vpp->fwidth),sizint,FALSE)) return;
-  if (!lives_write(fd,mainw->vpp->fheight<=0?&intzero:&(mainw->vpp->fheight),sizint,FALSE)) return;
+  if (lives_write_le(fd,mainw->vpp->fwidth<=0?&intzero:&(mainw->vpp->fwidth),4,FALSE)<4) return;
+  if (lives_write_le(fd,mainw->vpp->fheight<=0?&intzero:&(mainw->vpp->fheight),4,FALSE)<4) return;
 
-  if (!lives_write(fd,mainw->vpp->fixed_fpsd<=0.?&dblzero:&(mainw->vpp->fixed_fpsd),sizdbl,FALSE)) return;
-  if (!lives_write(fd,mainw->vpp->fixed_fps_numer<=0?&intzero:&(mainw->vpp->fixed_fps_numer),sizint,FALSE)) return;
-  if (!lives_write(fd,mainw->vpp->fixed_fps_denom<=0?&intzero:&(mainw->vpp->fixed_fps_denom),sizint,FALSE)) return;
+  if (lives_write_le(fd,mainw->vpp->fixed_fpsd<=0.?&dblzero:&(mainw->vpp->fixed_fpsd),8,FALSE)<8) return;
+  if (lives_write_le(fd,mainw->vpp->fixed_fps_numer<=0?&intzero:&(mainw->vpp->fixed_fps_numer),4,FALSE)<4) return;
+  if (lives_write_le(fd,mainw->vpp->fixed_fps_denom<=0?&intzero:&(mainw->vpp->fixed_fps_denom),4,FALSE)<4) return;
 
-  if (!lives_write(fd,&(mainw->vpp->extra_argc),sizint,FALSE)) return;
+  if (lives_write_le(fd,&(mainw->vpp->extra_argc),4,FALSE)<4) return;
 
   for (i=0;i<mainw->vpp->extra_argc;i++) {
     len=strlen(mainw->vpp->extra_argv[i]);
-    if (!lives_write(fd,&len,sizint,FALSE)) return;
-    if (!lives_write(fd,mainw->vpp->extra_argv[i],len,FALSE)) return;
+    if (lives_write_le(fd,&len,4,FALSE)<4) return;
+    if (lives_write(fd,mainw->vpp->extra_argv[i],len,FALSE)<len) return;
   }
 
   close(fd);
@@ -411,7 +411,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	g_free(msg);
 
 	// plugin name
-	lives_read(fd,&len,sizint,FALSE);
+	lives_read_le(fd,&len,4,FALSE);
 	if (mainw->read_failed) break;
 	lives_read(fd,buf,len,FALSE);
 	memset(buf+len,0,1);
@@ -426,7 +426,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 
 	// version string
 	version=(*mainw->vpp->version)();
-	lives_read(fd,&len,sizint,FALSE);
+	lives_read_le(fd,&len,4,FALSE);
 	if (mainw->read_failed) break;
 	lives_read(fd,buf,len,FALSE);
 
@@ -443,19 +443,20 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	  return;
 	}
 
-	lives_read(fd,&(mainw->vpp->palette),sizint,FALSE);
-	lives_read(fd,&(mainw->vpp->YUV_sampling),sizint,FALSE);
-	lives_read(fd,&(mainw->vpp->YUV_clamping),sizint,FALSE);
-	lives_read(fd,&(mainw->vpp->YUV_subspace),sizint,FALSE);
-	lives_read(fd,&(mainw->vpp->fwidth),sizint,FALSE);
-	lives_read(fd,&(mainw->vpp->fheight),sizint,FALSE);
-	lives_read(fd,&(mainw->vpp->fixed_fpsd),sizdbl,FALSE);
-	lives_read(fd,&(mainw->vpp->fixed_fps_numer),sizint,FALSE);
-	lives_read(fd,&(mainw->vpp->fixed_fps_denom),sizint,FALSE);
+	
+	lives_read_le(fd,&(mainw->vpp->palette),4,FALSE);
+	lives_read_le(fd,&(mainw->vpp->YUV_sampling),4,FALSE);
+	lives_read_le(fd,&(mainw->vpp->YUV_clamping),4,FALSE);
+	lives_read_le(fd,&(mainw->vpp->YUV_subspace),4,FALSE);
+	lives_read_le(fd,&(mainw->vpp->fwidth),4,FALSE);
+	lives_read_le(fd,&(mainw->vpp->fheight),4,FALSE);
+	lives_read_le(fd,&(mainw->vpp->fixed_fpsd),8,FALSE);
+	lives_read_le(fd,&(mainw->vpp->fixed_fps_numer),4,FALSE);
+	lives_read_le(fd,&(mainw->vpp->fixed_fps_denom),4,FALSE);
 	
 	if (mainw->read_failed) break;
 
-	lives_read(fd,&(mainw->vpp->extra_argc),sizint,FALSE);
+	lives_read_le(fd,&(mainw->vpp->extra_argc),4,FALSE);
 	
 	if (mainw->read_failed) break;
 
@@ -469,7 +470,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	mainw->vpp->extra_argv=g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
 	
 	for (i=0;i<mainw->vpp->extra_argc;i++) {
-	  lives_read(fd,&len,sizint,FALSE);
+	  lives_read_le(fd,&len,4,FALSE);
 	  if (mainw->read_failed) break;
 	  mainw->vpp->extra_argv[i]=g_malloc(len+1);
 	  lives_read(fd,mainw->vpp->extra_argv[i],len,FALSE);
@@ -872,7 +873,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     add_fill_to_box(GTK_BOX(hbox));
 
-    gtk_tooltips_set_tip (mainw->tooltips, combo, _("Fixed framerate for plugin.\n"), NULL);
+    gtk_widget_set_tooltip_text( combo, _("Fixed framerate for plugin.\n"));
     
     label = gtk_label_new_with_mnemonic (_("_FPS"));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(combo)->entry);
@@ -966,7 +967,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     add_fill_to_box(GTK_BOX(hbox));
     
-    gtk_tooltips_set_tip (mainw->tooltips, combo, _("Colourspace input to the plugin.\n"), NULL);
+    gtk_widget_set_tooltip_text( combo, _("Colourspace input to the plugin.\n"));
     
     label = gtk_label_new_with_mnemonic (_("_Colourspace"));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(combo)->entry);
@@ -1053,7 +1054,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_show (savebutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), savebutton, 1);
   GTK_WIDGET_SET_FLAGS (savebutton, GTK_CAN_DEFAULT);
-  gtk_tooltips_set_tip (mainw->tooltips, savebutton, _("Save settings to an alternate file.\n"), NULL);
+  gtk_widget_set_tooltip_text( savebutton, _("Save settings to an alternate file.\n"));
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
@@ -2518,21 +2519,18 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
     dir=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,NULL);
     com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name);
-      LIVES_DEBUG("1com is");
       LIVES_DEBUG(com);
     break;
   case RFX_STATUS_CUSTOM:
     dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
     com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_CUSTOM,rfx->name);
-      LIVES_DEBUG("3com is");
       LIVES_DEBUG(com);
     break;
   case RFX_STATUS_TEST:
     dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
     com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_TEST,rfx->name);
-      LIVES_DEBUG("6com is");
       LIVES_DEBUG(com);
     break;
   default:
@@ -2920,7 +2918,7 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
 
 gboolean get_bool_param(void *value) {
   gboolean ret;
-  w_memcpy(&ret,value,sizint);
+  w_memcpy(&ret,value,4);
   return ret;
 }
 

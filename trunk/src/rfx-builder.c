@@ -252,7 +252,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->name_entry = gtk_entry_new ();
   gtk_widget_show (rfxbuilder->name_entry);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->name_entry, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->name_entry,(_ ("The name of the plugin. No spaces allowed.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->name_entry,(_ ("The name of the plugin. No spaces allowed.")));
 
   // version
 
@@ -273,7 +273,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   gtk_widget_show (rfxbuilder->spinbutton_version);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_version, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->spinbutton_version,(_ ("The script version.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_version,(_ ("The script version.")));
 
   // author
 
@@ -288,7 +288,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->author_entry = gtk_entry_new ();
   gtk_widget_show (rfxbuilder->author_entry);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->author_entry, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->author_entry,(_ ("The script author.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->author_entry,(_ ("The script author.")));
 
 
   // URL
@@ -308,7 +308,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->url_entry = gtk_entry_new ();
   gtk_widget_show (rfxbuilder->url_entry);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->url_entry, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->url_entry,(_ ("URL for the plugin maintainer.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->url_entry,(_ ("URL for the plugin maintainer.")));
 
 
   // menu entry
@@ -328,7 +328,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->menu_text_entry = gtk_entry_new ();
   gtk_widget_show (rfxbuilder->menu_text_entry);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->menu_text_entry, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->menu_text_entry,(_ ("The text to show in the menu.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->menu_text_entry,(_ ("The text to show in the menu.")));
 
 
   rfxbuilder->action_desc_hsep = gtk_hseparator_new ();
@@ -353,8 +353,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->action_desc_entry = gtk_entry_new ();
   gtk_widget_show (rfxbuilder->action_desc_entry);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->action_desc_entry, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->action_desc_entry,
-			(_ ("Describe what the plugin is doing. E.g. \"Edge detecting\"")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->action_desc_entry,
+			(_ ("Describe what the plugin is doing. E.g. \"Edge detecting\"")));
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
@@ -372,8 +372,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->spinbutton_min_frames = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (rfxbuilder->spinbutton_min_frames);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_min_frames, TRUE, FALSE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->spinbutton_min_frames,
-			(_ ("Minimum number of frames this effect/tool can be applied to. Normally 1.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_min_frames,
+			(_ ("Minimum number of frames this effect/tool can be applied to. Normally 1.")));
 
   // requirements
 
@@ -385,8 +385,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->requirements_button=gtk_button_new_with_mnemonic (_ ("_Requirements..."));
   gtk_widget_show (rfxbuilder->requirements_button);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->requirements_button, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->requirements_button,
-			(_ ("Enter any binaries required by the plugin.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->requirements_button,
+			(_ ("Enter any binaries required by the plugin.")));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -395,8 +395,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->properties_button=gtk_button_new_with_mnemonic (_ ("_Properties..."));
   gtk_widget_show (rfxbuilder->properties_button);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->properties_button, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->properties_button,
-			(_ ("Set properties for the plugin. Optional.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->properties_button,
+			(_ ("Set properties for the plugin. Optional.")));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -405,8 +405,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->params_button=gtk_button_new_with_mnemonic (_ ("_Parameters..."));
   gtk_widget_show (rfxbuilder->params_button);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->params_button, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->params_button,
-			(_ ("Set up parameters used in pre/loop/post/trigger code. Optional.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->params_button,
+			(_ ("Set up parameters used in pre/loop/post/trigger code. Optional.")));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -415,8 +415,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->param_window_button=gtk_button_new_with_mnemonic (_ ("Parameter _Window Hints..."));
   gtk_widget_show (rfxbuilder->param_window_button);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->param_window_button, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->param_window_button,
-			(_ ("Set hints about how to lay out the parameter window. Optional.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->param_window_button,
+			(_ ("Set hints about how to lay out the parameter window. Optional.")));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -444,8 +444,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->langc_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(langc_combo))->entry));
   gtk_editable_set_editable (GTK_EDITABLE(rfxbuilder->langc_entry),FALSE);
 
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->langc_entry,
-			(_ ("Language for pre/loop/post/triggers. Optional.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->langc_entry,
+			(_ ("Language for pre/loop/post/triggers. Optional.")));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -454,8 +454,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->pre_button=gtk_button_new_with_mnemonic (_ ("_Pre loop code..."));
   gtk_widget_show (rfxbuilder->pre_button);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->pre_button, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->pre_button,
-			(_ ("Code to be executed before the loop. Optional.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->pre_button,
+			(_ ("Code to be executed before the loop. Optional.")));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -464,8 +464,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->loop_button=gtk_button_new_with_mnemonic (_ ("_Loop code..."));
   gtk_widget_show (rfxbuilder->loop_button);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->loop_button, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->loop_button,
-			(_ ("Loop code to be applied to each frame.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->loop_button,
+			(_ ("Loop code to be applied to each frame.")));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -474,8 +474,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->post_button=gtk_button_new_with_mnemonic (_ ("_Post loop code..."));
   gtk_widget_show (rfxbuilder->post_button);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->post_button, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->post_button,
-			(_ ("Code to be executed after the loop. Optional.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->post_button,
+			(_ ("Code to be executed after the loop. Optional.")));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -484,8 +484,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->trigger_button=gtk_button_new_with_mnemonic (_ ("_Trigger code..."));
   gtk_widget_show (rfxbuilder->trigger_button);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->trigger_button, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->trigger_button,
-			(_ ("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->trigger_button,
+			(_ ("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")));
 
 
   dialog_action_area = GTK_DIALOG (rfxbuilder->dialog)->action_area;
@@ -1926,7 +1926,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   if (pnum>=0) {
     gtk_entry_set_text (GTK_ENTRY (rfxbuilder->param_name_entry),rfxbuilder->copy_params[pnum].name);
   }
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->param_name_entry,(_ ("Name of the parameter, must be unique in the plugin.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->param_name_entry,(_ ("Name of the parameter, must be unique in the plugin.")));
 
 
   // label
@@ -1951,7 +1951,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   if (pnum>=0) {
     gtk_entry_set_text (GTK_ENTRY (rfxbuilder->param_label_entry),rfxbuilder->copy_params[pnum].label);
   }
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->param_label_entry,(_ ("Label to be shown by the parameter. An underscore represents mnemonic accelerator.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->param_label_entry,(_ ("Label to be shown by the parameter. An underscore represents mnemonic accelerator.")));
 
   // group
 
@@ -1972,7 +1972,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   if (pnum>=0) {
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_group),(gdouble)rfxbuilder->copy_params[pnum].group);
   }
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->spinbutton_param_group,(_ ("A non-zero value can be used to group radio buttons.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_param_group,(_ ("A non-zero value can be used to group radio buttons.")));
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->bg_label),rfxbuilder->spinbutton_param_group);
 
   // type
@@ -2002,7 +2002,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->param_type_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(combo))->entry));
   gtk_editable_set_editable (GTK_EDITABLE(rfxbuilder->param_type_entry),FALSE);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),rfxbuilder->param_type_entry);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->param_type_entry,(_ ("Parameter type (select from list).")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->param_type_entry,(_ ("Parameter type (select from list).")));
 
   if (pnum>=0) {
     rfxbuilder->edit_param=pnum;
@@ -2184,7 +2184,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_widget_show (rfxbuilder->spinbutton_param_step);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_param_step, TRUE, FALSE, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_step_label),rfxbuilder->spinbutton_param_step);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->spinbutton_param_step,(_ ("How much the parameter is adjusted when the spinbutton arrows are pressed.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_param_step,(_ ("How much the parameter is adjusted when the spinbutton arrows are pressed.")));
 
   // wrap
 
@@ -2211,7 +2211,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_wrap_checkbutton, FALSE, FALSE, 10);
   gtk_widget_show (rfxbuilder->param_wrap_checkbutton);
   GTK_WIDGET_SET_FLAGS (rfxbuilder->param_wrap_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_tooltips_set_tip (mainw->tooltips, rfxbuilder->param_wrap_checkbutton,(_ ("Whether the value wraps max->min and min->max.")), NULL);
+  gtk_widget_set_tooltip_text( rfxbuilder->param_wrap_checkbutton,(_ ("Whether the value wraps max->min and min->max.")));
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_wrap_label),rfxbuilder->param_wrap_checkbutton);
 
   g_signal_connect (GTK_OBJECT (rfxbuilder->param_wrap_eventbox), "button_press_event",
@@ -4861,7 +4861,7 @@ void add_rfx_effects(void) {
   // prepend before mainw->rte_separator
   gtk_menu_shell_prepend (GTK_MENU_SHELL (mainw->effects_menu), menuitem);
   gtk_widget_set_sensitive (menuitem, FALSE);
-  gtk_tooltips_set_tip (mainw->tooltips, menuitem,_("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."), NULL);
+  gtk_widget_set_tooltip_text( menuitem,_("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
   
   gtk_widget_add_accelerator (menuitem, "activate", mainw->accel_group,
 			      GDK_e, GDK_CONTROL_MASK,

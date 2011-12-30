@@ -59,6 +59,15 @@ char *filename_from_fd(char *val, int fd) {
 
 
 
+static void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
+  register int i;
+  for (i=0;i<count;i++) {
+    out[i]=in[count-i-1];
+  }
+}
+
+
+
 // system calls
 
 int lives_system(const char *com, gboolean allow_error) {
@@ -137,6 +146,20 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
 
 
 
+ssize_t lives_write_le(int fd, const void *buf, size_t count, gboolean allow_fail) {
+  if (capable->byte_order==G_BIG_ENDIAN&&(prefs->bigendbug!=1)) {
+    uint8_t xbuf[count];
+    reverse_bytes(xbuf,buf,count);
+    return lives_write(fd,xbuf,count,allow_fail);
+  }
+  else {
+    return lives_write(fd,buf,count,allow_fail);
+  }
+
+}
+
+
+
 int lives_fputs(const char *s, FILE *stream) {
   int retval;
 
@@ -190,6 +213,23 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less) {
   }
   return retval;
 }
+
+
+
+ssize_t lives_read_le(int fd, void *buf, size_t count, gboolean allow_less) {
+  if (capable->byte_order==G_BIG_ENDIAN&&!prefs->bigendbug) {
+    uint8_t xbuf[count];
+    ssize_t retval=lives_read(fd,buf,count,allow_less);
+    if (retval<count) return retval;
+    reverse_bytes(buf,xbuf,count);
+    return retval;
+  }
+  else {
+    return lives_read(fd,buf,count,allow_less);
+  }
+
+}
+
 
 
 

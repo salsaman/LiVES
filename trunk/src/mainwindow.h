@@ -501,7 +501,6 @@ typedef struct {
 
   // Widgets  -- TODO - move into sub struct mainw->widgets->*
   GdkNativeWindow xwin;
-  GtkTooltips *tooltips;
   GtkWidget *frame1;
   GtkWidget *frame2;
   GtkWidget *playframe;

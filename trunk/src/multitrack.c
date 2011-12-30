@@ -387,21 +387,21 @@ gboolean write_backup_layout_numbering(lives_mt *mt) {
 
       }
       if (mt!=NULL) {
-	lives_write(fd,&i,sizint,TRUE);
+	lives_write_le(fd,&i,4,TRUE);
 	vald=mainw->files[i]->fps;
-	lives_write(fd,&vald,sizdbl,TRUE);
+	lives_write_le(fd,&vald,8,TRUE);
 	hdlsize=strlen(mainw->files[i]->handle);
-	lives_write (fd,&hdlsize,sizint,TRUE);
+	lives_write_le (fd,&hdlsize,4,TRUE);
 	lives_write (fd,&mainw->files[i]->handle,hdlsize,TRUE);
       }
       else {
 	vali=mainw->files[i]->stored_layout_idx;
 	if (vali!=-1) {
-	  lives_write(fd,&vali,sizint,TRUE);
+	  lives_write_le(fd,&vali,4,TRUE);
 	  vald=mainw->files[i]->fps;
-	  lives_write(fd,&vald,sizdbl,TRUE);
+	  lives_write_le(fd,&vald,8,TRUE);
 	  hdlsize=strlen(mainw->files[i]->handle);
-	  lives_write (fd,&hdlsize,sizint,TRUE);
+	  lives_write_le (fd,&hdlsize,4,TRUE);
 	  lives_write (fd,&mainw->files[i]->handle,hdlsize,TRUE);
 	}
       }
@@ -435,12 +435,12 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
   if (fd!=-1) {
     while (1) {
-      if (read(fd,&clipn,sizint)==sizint) {
+      if (lives_read_le(fd,&clipn,4,TRUE)==4) {
 	if (isfirst) offs=-clipn+1;
 	else isfirst=FALSE;
-	if (read(fd,&vard,sizdbl)==sizdbl) {
+	if (lives_read_le(fd,&vard,8,TRUE)==8) {
 
-	  if (read(fd,&vari,sizint)==sizint) {
+	  if (lives_read_le(fd,&vari,4,TRUE)==4) {
 	    // compare the handle - assume clip ordering has not changed
 	    if (vari>255) vari=255;
 	    if (read(fd,buf,vari)==vari) {
@@ -2394,6 +2394,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
   weed_plant_t *frame_layer=mainw->frame_layer;
   gboolean internal_messaging=mainw->internal_messaging;
   gboolean needs_idlefunc=FALSE;
+  cairo_t *cr;
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
@@ -2535,7 +2536,13 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
       mainw->pw_exp_is_blocked=FALSE;
 
       gtk_window_resize (GTK_WINDOW (mainw->play_window), mainw->pwidth, mainw->pheight);
-      gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (pixbuf),0,0,0,0,-1,-1,GDK_RGB_DITHER_NONE,0,0);
+
+      cr = gdk_cairo_create (mainw->play_window->window);
+
+      gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
+
       gtk_widget_queue_draw (mainw->play_window);
       gtk_widget_queue_resize (mainw->play_window);
       if (mt->framedraw==NULL||!mt_framedraw(mt,pixbuf)) {
@@ -2570,7 +2577,12 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
       mainw->pheight=gdk_pixbuf_get_height(mainw->imframe);
 
       gtk_window_resize (GTK_WINDOW (mainw->play_window), mainw->pwidth, mainw->pheight);
-      gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->imframe),0,0,0,0,-1,-1,GDK_RGB_DITHER_NONE,0,0);
+
+      cr = gdk_cairo_create (mainw->play_window->window);
+      gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->imframe), 0, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
+
       gtk_widget_queue_draw (mainw->play_window);
     }
 
@@ -6864,7 +6876,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_modify_text(mt->timecode, GTK_STATE_NORMAL, &palette->light_green);
 
 
-  gtk_tooltips_set_tip (mainw->tooltips, mt->insa_checkbutton, _("Select whether video clips are inserted and moved with their audio or not"), NULL);
+  gtk_widget_set_tooltip_text( mt->insa_checkbutton, _("Select whether video clips are inserted and moved with their audio or not"));
   hbox2 = gtk_hbox_new (FALSE, 0);
 
   gtk_tooltips_copy(mt->insa_eventbox,mt->insa_checkbutton);
@@ -6899,7 +6911,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   }
 
   mt->snapo_checkbutton = gtk_check_button_new ();
-  gtk_tooltips_set_tip (mainw->tooltips, mt->snapo_checkbutton, _("Select whether timeline selection snaps to overlap between selected tracks or not"), NULL);
+  gtk_widget_set_tooltip_text( mt->snapo_checkbutton, _("Select whether timeline selection snaps to overlap between selected tracks or not"));
   hbox2 = gtk_hbox_new (FALSE, 0);
 
   eventbox=gtk_event_box_new();
@@ -7407,7 +7419,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start(GTK_BOX(mt->in_hbox),mt->spinbutton_in,FALSE,FALSE,0);
 
   mt->checkbutton_start_anchored = gtk_check_button_new ();
-  gtk_tooltips_set_tip (mainw->tooltips, mt->checkbutton_start_anchored, _("Anchor the start point to the timeline"), NULL);
+  gtk_widget_set_tooltip_text( mt->checkbutton_start_anchored, _("Anchor the start point to the timeline"));
   mt->in_eventbox=gtk_event_box_new();
   gtk_tooltips_copy(mt->in_eventbox,mt->checkbutton_start_anchored);
   label=gtk_label_new_with_mnemonic (_("Anchor _start"));
@@ -7481,7 +7493,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start(GTK_BOX(mt->out_hbox),mt->spinbutton_out,FALSE,FALSE,0);
 
   mt->checkbutton_end_anchored = gtk_check_button_new ();
-  gtk_tooltips_set_tip (mainw->tooltips, mt->checkbutton_end_anchored, _("Anchor the end point to the timeline"), NULL);
+  gtk_widget_set_tooltip_text( mt->checkbutton_end_anchored, _("Anchor the end point to the timeline"));
   mt->out_eventbox=gtk_event_box_new();
   gtk_tooltips_copy(mt->out_eventbox,mt->checkbutton_end_anchored);
   label=gtk_label_new_with_mnemonic (_("Anchor _end"));
@@ -8849,7 +8861,7 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
   gtk_widget_ref(label);
 
   arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
-  gtk_tooltips_set_tip (mainw->tooltips, arrow, _("Show/hide audio details"), NULL);
+  gtk_widget_set_tooltip_text( arrow, _("Show/hide audio details"));
   gtk_widget_ref(arrow);
 
   if (palette->style&STYLE_1) {
@@ -9029,10 +9041,10 @@ void add_video_track (lives_mt *mt, gboolean behind) {
   }
 #endif
   gtk_widget_ref(checkbutton);
-  gtk_tooltips_set_tip (mainw->tooltips, checkbutton, _("Select track"), NULL);
+  gtk_widget_set_tooltip_text( checkbutton, _("Select track"));
 
   arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
-  gtk_tooltips_set_tip (mainw->tooltips, arrow, _("Show/hide audio"), NULL);
+  gtk_widget_set_tooltip_text( arrow, _("Show/hide audio"));
   gtk_widget_ref(arrow);
 
   eventbox=gtk_event_box_new();
@@ -15096,14 +15108,14 @@ void mt_swap_play_pause (lives_mt *mt, gboolean put_pause) {
   if (put_pause) {
     tmp_img = gtk_image_new_from_stock ("gtk-media-pause", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     set_menu_text(mt->playall,_("_Pause"),TRUE);
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_playbutton),mainw->tooltips,_("Pause (p)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_playbutton),_("Pause (p)"));
     gtk_widget_set_sensitive(mt->playall,TRUE);
     gtk_widget_set_sensitive(mainw->m_playbutton,TRUE);
   }
   else {
     tmp_img = gtk_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     set_menu_text(mt->playall,_("_Play from Timeline Position"),TRUE);
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_playbutton),mainw->tooltips,_("Play all (p)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_playbutton),_("Play all (p)"));
   }
   gtk_widget_show(tmp_img);
   gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->m_playbutton),tmp_img);
@@ -17126,8 +17138,8 @@ GList *load_layout_map(void) {
     }
     else {
       while (1) {
-	bytes=read(fd,&len,sizint);
-	if (bytes<sizint) {
+	bytes=lives_read_le(fd,&len,4,TRUE);
+	if (bytes<4) {
 	  break;
 	}
 	handle=g_malloc(len+1);
@@ -17136,12 +17148,12 @@ GList *load_layout_map(void) {
 	  break;
 	}
 	memset(handle+len,0,1);
-	bytes=read(fd,&unique_id,8);
+	bytes=lives_read_le(fd,&unique_id,8,TRUE);
 	if (bytes<8) {
 	  break;
 	}
-	bytes=read(fd,&len,sizint);
-	if (bytes<sizint) {
+	bytes=lives_read_le(fd,&len,4,TRUE);
+	if (bytes<4) {
 	  break;
 	}
 	name=g_malloc(len+1);
@@ -17150,8 +17162,8 @@ GList *load_layout_map(void) {
 	  break;
 	}
 	memset(name+len,0,1);
-	bytes=read(fd,&nm,sizint);
-	if (bytes<sizint) {
+	bytes=lives_read_le(fd,&nm,4,TRUE);
+	if (bytes<4) {
 	  break;
 	}
 	
@@ -17162,7 +17174,7 @@ GList *load_layout_map(void) {
 	lmap_entry->list=NULL;
 	
 	for (i=0;i<nm;i++) {
-	  bytes=read(fd,&len,sizint);
+	  bytes=lives_read_le(fd,&len,4,TRUE);
 	  if (bytes<sizint) {
 	    err=TRUE;
 	    break;
@@ -17315,18 +17327,18 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 	  if ((map=mainw->files[i]->layout_map)!=NULL) {
 	    written=TRUE;
 	    len=strlen(mainw->files[i]->handle);
-	    lives_write(fd,&len,sizint,TRUE);
+	    lives_write_le(fd,&len,4,TRUE);
 	    lives_write(fd,mainw->files[i]->handle,len,TRUE);
-	    lives_write(fd,&mainw->files[i]->unique_id,8,TRUE);
+	    lives_write_le(fd,&mainw->files[i]->unique_id,8,TRUE);
 	    len=strlen(mainw->files[i]->name);
-	    lives_write(fd,&len,sizint,TRUE);
+	    lives_write_le(fd,&len,4,TRUE);
 	    lives_write(fd,mainw->files[i]->name,len,TRUE);
 	    len=g_list_length(map);
-	    lives_write(fd,&len,sizint,TRUE);
+	    lives_write_le(fd,&len,4,TRUE);
 	    while (map!=NULL) {
 	      string=repl_tmpdir(map->data,TRUE); // allow relocation of tmpdir
 	      len=strlen(string);
-	      lives_write(fd,&len,sizint,TRUE);
+	      lives_write_le(fd,&len,4,TRUE);
 	      lives_write(fd,string,len,TRUE);
 	      g_free(string);
 	      map=map->next;
@@ -17620,10 +17632,11 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
   } while (retval2==LIVES_RETRY);
 
-
-  msg=g_strdup_printf(_("Saved layout to %s\n"),esave_file);
-  d_print(msg);
-  g_free(msg);
+  if (retval2!=LIVES_CANCEL) {
+    msg=g_strdup_printf(_("Saved layout to %s\n"),esave_file);
+    d_print(msg);
+    g_free(msg);
+  }
 
   // save layout map
   save_layout_map(layout_map,layout_map_audio,esave_file,esave_dir);
@@ -19492,6 +19505,20 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
+  // if we change the name of a set, we must also update the layouts - at the very least 2 things need to happen
+  // 1) the "needs_set" leaf in each layout must be updated
+  // 2) the layouts will be physically moved, so if appending we check for name collisions
+  // 3) the names of layouts in mainw->affected_layouts_map must be altered
+
+  // here we also update mainw->current_layouts_map and the layout_maps for each clip
+
+  // this last may not be necessary as we are probably closing the set
+
+
+  // on return from here we physically move the layouts, and we append the layout_map to the new one
+
+
+
   // load each event_list in mainw->layout_map_list
   GList *map=mainw->current_layouts_map;
   int fd;
@@ -19506,8 +19533,6 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 
   // TODO - dirsep
 
-  LIVES_DEBUG("migrate");
-
   if (old_set_name!=NULL) {
     changefrom=g_build_filename(prefs->tmpdir,old_set_name,"layouts/",NULL);
     chlen=strlen(changefrom);
@@ -19515,9 +19540,8 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
   else chlen=0;
 
   while (map!=NULL) {
-  LIVES_DEBUG("migrate2");
     if (old_set_name!=NULL) {
-
+      // load and save each layou, updating the "needs_set" leaf
       do {
 	retval2=0;
 	if ((fd=open(map->data,O_RDONLY))>-1) {
@@ -19529,7 +19553,6 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	    unlink(map->data);
 	    
 	    do {
-	      LIVES_DEBUG("migrate3");
 	      retval2=0;
 	      fd=creat(map->data,S_IRUSR|S_IWUSR);
 	      if (fd>=0) retval=save_event_list_inner(NULL,fd,event_list,NULL);
@@ -19549,22 +19572,16 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	
       } while (retval2==LIVES_RETRY);
     }
-  LIVES_DEBUG("migrate4");
-
-  g_print("vals %s %s %s %d\n",old_set_name,map->data,changefrom,chlen);
 
     if (old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen)) {
-      // update mainw->current_layouts_map
-      g_print("old is %s\n",map->data);
+      // update entries in mainw->current_layouts_map
       tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
-      g_print("new is %s\n",tmp);
       if (g_file_test(tmp,G_FILE_TEST_EXISTS)) {
 	gchar *com;
 	// prevent duplication of layouts
 	g_free(tmp);
 	tmp=g_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
 	com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",(gchar *)map->data,tmp);
-	g_print("vals 33 %s %s\n",map->data,tmp);
 	lives_system(com,FALSE);
 	g_free(com);
       }
@@ -19581,13 +19598,22 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	map=mainw->files[i]->layout_map;
 	while (map!=NULL) {
 	  if (map->data!=NULL) {
-	    g_print("vals2 %s %s %s %d\n",old_set_name,map->data,changefrom,chlen);
 	    if ((old_set_name!=NULL&&!strncmp(map->data,changefrom,chlen))||
 		(old_set_name==NULL&&(strstr(map->data,new_set_name)==NULL))) {
-	      tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
+
+	      gchar **array=g_strsplit((gchar *)map->data,"|",-1);
+	      size_t origlen=strlen(array[0]);
+	      gchar *tmp2=g_build_filename(prefs->tmpdir,new_set_name,"layouts",array[0]+chlen,NULL);
+	      if (g_file_test(tmp2,G_FILE_TEST_EXISTS)) {
+		tmp2=g_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,array[0]+chlen);
+	      }
+	      tmp=g_strdup_printf("%s%s",tmp2,(gchar *)map->data+origlen);
+	      g_free(tmp2);
+	      g_strfreev(array);
+
+
 	      g_free(map->data);
 	      map->data=tmp;
-	      g_print("settin mapdata to %s\n",tmp);
 	    }
 	    map=map->next;
 	  }
@@ -19603,6 +19629,10 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	(old_set_name==NULL&&(strstr(map->data,new_set_name)==NULL))) {
       if (strcmp(mainw->cl_string,(char *)map->data+chlen)) {
 	tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
+	if (g_file_test(tmp,G_FILE_TEST_EXISTS)) {
+	  g_free(tmp);
+	  tmp=g_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
+	}
 	g_free(map->data);
 	map->data=tmp;
       }
@@ -20285,7 +20315,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
     
-    gtk_tooltips_set_tip (mainw->tooltips, amixer->inv_checkbutton, _("Adjust backing and layer audio values so that they sum to 1.0"), NULL);
+    gtk_widget_set_tooltip_text( amixer->inv_checkbutton, _("Adjust backing and layer audio values so that they sum to 1.0"));
     eventbox=gtk_event_box_new();
     gtk_tooltips_copy(eventbox,amixer->inv_checkbutton);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),amixer->inv_checkbutton);
@@ -20330,7 +20360,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
 
-    gtk_tooltips_set_tip (mainw->tooltips, amixer->gang_checkbutton, _("Adjust all layer audio values to the same value"), NULL);
+    gtk_widget_set_tooltip_text( amixer->gang_checkbutton, _("Adjust all layer audio values to the same value"));
     eventbox=gtk_event_box_new();
     gtk_tooltips_copy(eventbox,amixer->gang_checkbutton);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),amixer->gang_checkbutton);

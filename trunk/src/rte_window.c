@@ -136,16 +136,16 @@ static gboolean save_keymap2_file(gchar *kfname) {
     else {
       mainw->write_failed=FALSE;
       
-      lives_write(kfd,&version,sizint,TRUE);
+      lives_write_le(kfd,&version,4,TRUE);
       
       for (i=1;i<=prefs->rte_keys_virtual;i++) {
 	if (mainw->write_failed) break;
 	for (j=0;j<modes;j++) {
 	  if (rte_keymode_valid(i,j,TRUE)) {
-	    lives_write(kfd,&i,4,TRUE);
+	    lives_write_le(kfd,&i,4,TRUE);
 	    hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE));
 	    slen=strlen(hashname);
-	    lives_write(kfd,&slen,4,TRUE);
+	    lives_write_le(kfd,&slen,4,TRUE);
 	    lives_write(kfd,hashname,slen,TRUE);
 	    g_free(hashname);
 	    write_key_defaults(kfd,i-1,j);
@@ -271,7 +271,7 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
 
 void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int fd,i;
-  int retval=0;
+  int retval;
   gint numfx;
   gchar *msg;
 
@@ -290,6 +290,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   numfx=rte_get_numfilters();
 
   do {
+    retval=0;
     if ((fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
       msg=g_strdup_printf (_("\n\nUnable to write defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
       retval=do_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
@@ -321,6 +322,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (retval==LIVES_CANCEL) d_print_file_error_failed();
   
   do {
+    retval=0;
     if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
       retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),GTK_WINDOW(rte_window));
       g_free (msg);
@@ -345,7 +347,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
   } while (retval==LIVES_RETRY);
 
-  if (mainw->write_failed) {
+  if (retval==LIVES_CANCEL) {
     d_print_file_error_failed();
     mainw->write_failed=FALSE;
     return;
@@ -478,7 +480,7 @@ static void check_clear_all_button (void) {
 static gboolean read_perkey_defaults(int kfd, int key, int mode, int version) {
   gboolean ret=TRUE;
   int nparams;
-  size_t bytes=read(kfd,&nparams,sizint);
+  size_t bytes=lives_read_le(kfd,&nparams,4,TRUE);
 
   if (nparams>65536) {
     g_printerr("Too many params, file is probably broken.\n");
@@ -613,7 +615,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     // newer style
 
     // read version
-    bytes=read(kfd,&version,sizint);
+    bytes=lives_read_le(kfd,&version,4,TRUE);
     if (bytes<sizint) {
       eof=TRUE;
     }
@@ -675,13 +677,13 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       // TODO - ensure le format !
 
       //read key and hashname
-      bytes=read(kfd,&key,4);
+      bytes=lives_read_le(kfd,&key,4,TRUE);
       if (bytes<4) {
 	eof=TRUE;
 	break;
       }
 
-      bytes=read(kfd,&hlen,4);
+      bytes=lives_read_le(kfd,&hlen,4,TRUE);
       if (bytes<4) {
 	eof=TRUE;
 	break;
@@ -1297,7 +1299,7 @@ GtkWidget * create_rte_window (void) {
 
     eventbox=gtk_event_box_new();
     gtk_container_add(GTK_CONTAINER(eventbox),label);
-    gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Grab keyboard for this effect key"), NULL);
+    gtk_widget_set_tooltip_text( eventbox, _("Grab keyboard for this effect key"));
     gtk_tooltips_copy(key_grabs[i],eventbox);
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),

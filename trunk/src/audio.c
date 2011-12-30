@@ -1,6 +1,6 @@
 // audio.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2010
+// (c) G. Finch 2005 - 2011
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -790,7 +790,8 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     ins_pt*=out_achans*out_arate*out_asamps;
     ins_size=((long)(ins_pt/out_achans/out_asamps+.5))*out_achans*out_asamps;
 
-    if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+    if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+	(out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
       out_reverse_endian=TRUE;
     else out_reverse_endian=FALSE;
     
@@ -838,7 +839,8 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
     if (G_UNLIKELY(in_achans[track]==0)) is_silent[track]=TRUE;
     else {
-      if ((!in_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(in_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+      if ((!in_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+	  (in_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
 	in_reverse_endian[track]=TRUE;
       else in_reverse_endian[track]=FALSE;
       
@@ -1149,7 +1151,8 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   mainw->jackd_read->playing_file=fileno;
   mainw->jackd_read->frames_written=0;
 
-  if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+  if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+      (out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
     mainw->jackd_read->reverse_endian=TRUE;
   else mainw->jackd_read->reverse_endian=FALSE;
 
@@ -1222,7 +1225,8 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   mainw->pulsed_read->playing_file=fileno;
   mainw->pulsed_read->frames_written=0;
 
-  if ((!out_bendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(out_bendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+  if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+      (out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
     mainw->pulsed_read->reverse_endian=TRUE;
   else mainw->pulsed_read->reverse_endian=FALSE;
 

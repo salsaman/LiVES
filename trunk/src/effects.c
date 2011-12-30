@@ -466,7 +466,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   weed_plant_t *layer;
   int weed_error;
   int layer_palette;
-  int retval=0;
+  int retval;
   static int write_error;
 
   // this is called periodically from do_processing_dialog for internal effects
@@ -525,6 +525,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   g_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
 
   do {
+    retval=0;
     lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, &error);
 
     if (error!=NULL) {

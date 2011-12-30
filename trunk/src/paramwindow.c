@@ -377,7 +377,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Transition in"), NULL);
+  gtk_widget_set_tooltip_text( eventbox, _("Transition in"));
   gtk_tooltips_copy(radiobutton_in,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
@@ -403,7 +403,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
     if (weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")&&weed_get_boolean_value(mainw->multitrack->init_event,"host_audio_transition",&error)==WEED_FALSE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
     else gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), TRUE);
 
-    gtk_tooltips_set_tip (mainw->tooltips, checkbutton, _("Check the box to make audio transition with the video"), NULL);
+    gtk_widget_set_tooltip_text( checkbutton, _("Check the box to make audio transition with the video"));
     eventbox=gtk_event_box_new();
     gtk_tooltips_copy(eventbox,checkbutton);
     label=gtk_label_new_with_mnemonic (_("Crossfade audio"));
@@ -445,7 +445,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Transition out"), NULL);
+  gtk_widget_set_tooltip_text( eventbox, _("Transition out"));
   gtk_tooltips_copy(radiobutton_out,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
@@ -662,7 +662,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
 
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Generate frames to the clipboard"), NULL);
+  gtk_widget_set_tooltip_text( eventbox, _("Generate frames to the clipboard"));
   gtk_tooltips_copy(radiobutton,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
@@ -683,7 +683,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
 
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Generate frames to a new clip"), NULL);
+  gtk_widget_set_tooltip_text( eventbox, _("Generate frames to a new clip"));
   gtk_tooltips_copy(radiobutton,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
@@ -1334,7 +1334,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
   case LIVES_PARAM_BOOL :
     if (!param->group) {
       checkbutton = gtk_check_button_new ();
-      if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, checkbutton, param->desc, NULL);
+      if (param->desc!=NULL) gtk_widget_set_tooltip_text( checkbutton, param->desc);
       eventbox=gtk_event_box_new();
       gtk_tooltips_copy(eventbox,checkbutton);
       if (use_mnemonic) {
@@ -1376,7 +1376,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
     else {
       radiobutton=set_groups(rfx,param);
-      if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, radiobutton, param->desc, NULL);
+      if (param->desc!=NULL) gtk_widget_set_tooltip_text( radiobutton, param->desc);
       if (rfx->status==RFX_STATUS_WEED) group=livesgrp_from_usrgrp (usrgrp_to_livesgrp[1], param->group);
       else group=livesgrp_from_usrgrp (usrgrp_to_livesgrp[0], param->group);
 
@@ -1415,7 +1415,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       eventbox=gtk_event_box_new();
       gtk_tooltips_copy(eventbox,radiobutton);
       gtk_container_add(GTK_CONTAINER(eventbox),label);
-      if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, eventbox, param->desc, NULL);
+      if (param->desc!=NULL) gtk_widget_set_tooltip_text( eventbox, param->desc);
       g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 			G_CALLBACK (label_act_toggle),
 			radiobutton);
@@ -1445,7 +1445,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
 
     spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, param->dp);
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, spinbutton, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( spinbutton, param->desc);
     gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton),TRUE);
     txt=g_strdup_printf ("%d",(int)param->max);
     maxlen=strlen (txt);
@@ -1465,7 +1465,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
     else label=gtk_label_new (_(name));
 
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, label, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( label, param->desc);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
@@ -1522,7 +1522,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	add_fill_to_box (GTK_BOX (hbox));
       }
 #endif
-      if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, scale, param->desc, NULL);
+      if (param->desc!=NULL) gtk_widget_set_tooltip_text( scale, param->desc);
     }
     break;
     
@@ -1536,9 +1536,9 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     spinbutton_blue_adj = gtk_adjustment_new (rgb.blue, 0, 255, 1, 1, 0.);
     spinbutton_blue = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_blue_adj), 1, 0);
     if (param->desc!=NULL) {
-      gtk_tooltips_set_tip (mainw->tooltips, spinbutton_red, param->desc, NULL);
-      gtk_tooltips_set_tip (mainw->tooltips, spinbutton_green, param->desc, NULL);
-      gtk_tooltips_set_tip (mainw->tooltips, spinbutton_blue, param->desc, NULL);
+      gtk_widget_set_tooltip_text( spinbutton_red, param->desc);
+      gtk_widget_set_tooltip_text( spinbutton_green, param->desc);
+      gtk_widget_set_tooltip_text( spinbutton_blue, param->desc);
     }
 
     gtk_entry_set_width_chars (GTK_ENTRY (spinbutton_red),4);
@@ -1571,15 +1571,15 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     gtk_color_button_set_title (GTK_COLOR_BUTTON(cbutton),_("LiVES: - Select Colour"));
 
     g_object_set_data (G_OBJECT (cbutton),"param_number",GINT_TO_POINTER (pnum));
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, cbutton, param->desc, NULL);
-    else gtk_tooltips_set_tip (mainw->tooltips, cbutton, (_("Click to set the colour")), NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( cbutton, param->desc);
+    else gtk_widget_set_tooltip_text( cbutton, (_("Click to set the colour")));
 
     if (use_mnemonic) {
       labelcname=gtk_label_new_with_mnemonic (_(name));
       gtk_label_set_mnemonic_widget (GTK_LABEL (labelcname),cbutton);
     }
     else labelcname=gtk_label_new (_(name));
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, labelcname, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( labelcname, param->desc);
 
     gtk_label_set_justify (GTK_LABEL (labelcname), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
@@ -1588,34 +1588,34 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, 10);
     
     label=gtk_label_new (_("Red"));
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, label, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( label, param->desc);
     gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox), spinbutton_red, FALSE, FALSE, 0);
-    gtk_tooltips_set_tip (mainw->tooltips, spinbutton_red, (_("The red value (0 - 255)")), NULL);
+    gtk_widget_set_tooltip_text( spinbutton_red, (_("The red value (0 - 255)")));
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton_red)->entry)), TRUE);
     
     label=gtk_label_new (_("Green"));
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, label, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( label, param->desc);
     gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_tooltips_set_tip (mainw->tooltips, spinbutton_green, (_("The green value (0 - 255)")), NULL);
+    gtk_widget_set_tooltip_text( spinbutton_green, (_("The green value (0 - 255)")));
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton_green)->entry)), TRUE);
     
     gtk_box_pack_start (GTK_BOX (hbox), spinbutton_green, FALSE, FALSE, 0);
     label=gtk_label_new (_("Blue"));
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, label, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( label, param->desc);
     gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
-    gtk_tooltips_set_tip (mainw->tooltips, spinbutton_blue, (_("The blue value (0 - 255)")), NULL);
+    gtk_widget_set_tooltip_text( spinbutton_blue, (_("The blue value (0 - 255)")));
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton_blue)->entry)), TRUE);
 
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
@@ -1678,7 +1678,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
       param->widgets[0] = textview = gtk_text_view_new ();
       if (param->hidden) gtk_widget_set_sensitive(textview,FALSE);
-      if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, textview, param->desc, NULL);
+      if (param->desc!=NULL) gtk_widget_set_tooltip_text( textview, param->desc);
       textbuffer=gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
       g_object_set_data(G_OBJECT(textview),"textbuffer",(gpointer)textbuffer);
 
@@ -1692,7 +1692,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     else {
       param->widgets[0]=entry=gtk_entry_new();
       if (param->hidden) gtk_widget_set_sensitive(entry,FALSE);
-      if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, entry, param->desc, NULL);
+      if (param->desc!=NULL) gtk_widget_set_tooltip_text( entry, param->desc);
       gtk_entry_set_text (GTK_ENTRY (entry),txt);
       gtk_entry_set_max_length(GTK_ENTRY (entry),(gint)param->max);
       gtk_entry_set_width_chars (GTK_ENTRY (entry),(gint)param->max);
@@ -1702,7 +1702,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
     if (use_mnemonic) label = gtk_label_new_with_mnemonic (_(name));
     else label = gtk_label_new (_(name));
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, label, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( label, param->desc);
 
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1762,14 +1762,14 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
     gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
     combo = gtk_combo_new ();
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, combo, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( combo, param->desc);
 
     if (use_mnemonic) {
       label = gtk_label_new_with_mnemonic (_(name));
       gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(combo)->entry);
     }
     else label = gtk_label_new (_(name));
-    if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, label, param->desc, NULL);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text( label, param->desc);
 
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);

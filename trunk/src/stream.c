@@ -1164,7 +1164,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
 
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Accept incoming LiVES streams from any connected host."), NULL);
+  gtk_widget_set_tooltip_text( eventbox, _("Accept incoming LiVES streams from any connected host."));
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    pandhw->rb_anyhost);
@@ -1191,7 +1191,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
 
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Accept LiVES streams from the specified host only."), NULL);
+  gtk_widget_set_tooltip_text( eventbox, _("Accept LiVES streams from the specified host only."));
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton);

@@ -9,6 +9,8 @@
 
 #define LIVES_PREFS_TIMEOUT  (10 * U_SEC) // 10 sec timeout
 
+#define PREFS_PANED_POS 200
+
 typedef struct {
   gchar bgcolour[256];
   gboolean stop_screensaver;
@@ -279,6 +281,10 @@ typedef struct {
   gboolean letterbox; ///< playback with letterbox
   gboolean enc_letterbox; ///< encode with letterbox
 
+  /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
+  gint bigendbug;
+
+
   GList *disabled_decoders;
 } _prefs;
 
@@ -328,20 +334,26 @@ typedef struct {
   GtkWidget *vbox_right_effects;
   GtkWidget *table_right_directories;
   GtkWidget *vbox_right_warnings;
-  GtkWidget *vbox_right_warnings_outer;
+  //  GtkWidget *vbox_right_warnings_outer;
   GtkWidget *vbox_right_misc;
   GtkWidget *vbox_right_themes;
   GtkWidget *vbox_right_net;
   GtkWidget *vbox_right_jack;
   GtkWidget *vbox_right_midi;
-  GtkWidget *scrollw;
   GtkWidget *scrollw_right_gui;
-  GtkWidget *scrollw_right_midi;
-  GtkWidget *scrollw_right_directories;
   GtkWidget *scrollw_right_multitrack;
   GtkWidget *scrollw_right_decoding;
-  GtkWidget *scrollw_right_jack;
   GtkWidget *scrollw_right_playback;
+  GtkWidget *scrollw_right_recording;
+  GtkWidget *scrollw_right_encoding;
+  GtkWidget *scrollw_right_effects;
+  GtkWidget *scrollw_right_directories;
+  GtkWidget *scrollw_right_warnings;
+  GtkWidget *scrollw_right_misc;
+  GtkWidget *scrollw_right_themes;
+  GtkWidget *scrollw_right_net;
+  GtkWidget *scrollw_right_jack;
+  GtkWidget *scrollw_right_midi;
   GtkWidget *right_shown;
   GtkWidget *cancelbutton;
   GtkWidget *applybutton;

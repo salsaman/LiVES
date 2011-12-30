@@ -634,7 +634,7 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 
   switch (isubspace) {
   case WEED_YUV_SUBSPACE_YUV:
-    g_warning("YUV subspace not specified, assuming Y'CbCr");
+    LIVES_WARN("YUV subspace not specified, assuming Y'CbCr");
   case WEED_YUV_SUBSPACE_YCBCR:
     switch (osubspace) {
     case WEED_YUV_SUBSPACE_YCBCR:
@@ -6477,10 +6477,13 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 				     (isamtype==WEED_YUV_SAMPLING_MPEG&&osamtype==WEED_YUV_SAMPLING_JPEG))) { 
       switch_yuv_sampling(layer);
     }
-    else
-      g_printerr("Switch sampling types (%d %d) or subspace(%d %d): (%d) conversion not yet written !\n",
-		 isamtype,osamtype,isubspace,osubspace,inpl);
-    return TRUE;
+    else {
+      gchar *tmp2=g_strdup_printf("Switch sampling types (%d %d) or subspace(%d %d): (%d) conversion not yet written !\n",
+				  isamtype,osamtype,isubspace,osubspace,inpl);
+      LIVES_DEBUG(tmp2);
+      g_free(tmp2);
+      return TRUE;
+    }
   }
 
   if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 

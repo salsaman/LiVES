@@ -97,6 +97,7 @@ typedef void *(*weed_memcpy_f) (void *dest, const void *src, size_t n);
 typedef struct weed_leaf weed_leaf_t;
 typedef struct weed_data weed_data_t;
 typedef weed_leaf_t weed_plant_t;
+typedef size_t weed_size_t; // may be set to uint32_t or uint64_t
 
   /* private data - these fields must NOT be accessed directly ! */
 struct weed_leaf {
@@ -109,7 +110,7 @@ struct weed_leaf {
 };
 
 struct weed_data {
-  size_t size;
+  weed_size_t size;
   void *value;
 };
 

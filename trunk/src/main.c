@@ -292,6 +292,7 @@ static gboolean pre_init(void) {
   prefs->show_subtitles=TRUE;
 
   prefs->letterbox=FALSE;
+  prefs->bigendbug=0;
 
   if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
     g_snprintf(prefs->theme,64,"none");
@@ -612,7 +613,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->switch_during_pb=FALSE;
   mainw->playing_sel=FALSE;
   mainw->aframeno=0;
-  if (G_BYTE_ORDER==G_LITTLE_ENDIAN) {
+  if (capable->byte_order==LIVES_LITTLE_ENDIAN) {
     mainw->endian=0;
   }
   else {
@@ -1664,6 +1665,8 @@ capability *get_capabilities (void) {
   capable->cpu_bits=32;
   if (sizeof(void *)==8) capable->cpu_bits=64;
 
+  capable->byte_order=G_BYTE_ORDER;
+
   capable->has_smogrify=FALSE;
   capable->smog_version_correct=FALSE;
 
@@ -2185,6 +2188,7 @@ int main (int argc, char *argv[]) {
 	{"startup-ce", 0, 0, 0},
 	{"startup-mt", 0, 0, 0},
 	{"debug", 0, 0, 0},
+	{"bigendbug", 1, 0, 0},
 	{"fxmodesmax", 1, 0, 0},
 #ifdef ENABLE_OSC
 	{"oscstart", 1, 0, 0},
@@ -2308,6 +2312,14 @@ int main (int argc, char *argv[]) {
 	  prefs->max_modes_per_key=atoi(optarg);
 	  if (prefs->max_modes_per_key<1) prefs->max_modes_per_key=1;
 	  ign_opts.ign_osc=TRUE;
+	  continue;
+	}
+	if (!strcmp(charopt,"bigendbug")) {
+	  if (optarg!=NULL) {
+	    // set bigendbug
+	    prefs->bigendbug=atoi(optarg);
+	  }
+	  else prefs->bigendbug=1;
 	  continue;
 	}
 #ifdef ENABLE_OSC
@@ -4143,8 +4155,8 @@ void load_frame_image(gint frame) {
 	    fclose(fd);
 	    if (!strncmp(mainw->msg,"completed",9)||!strncmp(mainw->msg,"error",5)) {
 	      // effect completed whilst we were busy playing a preview
-	      if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Play"), NULL);
-	      gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Play"), NULL);
+	      if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play"));
+	      gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play"));
 	      if (cfile->opening&&!cfile->is_loaded) {
 		if (mainw->toy_type==LIVES_TOY_TV) {
 		  on_toy_activate(NULL,GINT_TO_POINTER(LIVES_TOY_NONE));
@@ -4585,9 +4597,15 @@ void load_frame_image(gint frame) {
     // internal player, double size or fullscreen, or multitrack
 
     if (mainw->play_window!=NULL&&GDK_IS_WINDOW (mainw->play_window->window)) {
+      cairo_t *cr = gdk_cairo_create (mainw->play_window->window);
       block_expose();
-      gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (pixbuf),
-		       0,0,0,0,-1,-1,GDK_RGB_DITHER_NONE,0,0);
+
+      gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
+
+      //gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (pixbuf),
+      //	       0,0,0,0,-1,-1,GDK_RGB_DITHER_NONE,0,0);
       unblock_expose();
     }
     else gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),pixbuf);
@@ -5287,7 +5305,9 @@ void do_quick_switch (gint new_file) {
 	mainw->jackd->usigned=!asigned;
 	mainw->jackd->seek_end=mainw->files[new_file]->afilesize;
 
-	if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd->reverse_endian=TRUE;
+	if ((aendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+	    (!aendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
+	  mainw->jackd->reverse_endian=TRUE;
 	else mainw->jackd->reverse_endian=FALSE;
 
         if (mainw->ping_pong) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
@@ -5367,7 +5387,9 @@ void do_quick_switch (gint new_file) {
 	if (mainw->files[new_file]->opening) mainw->pulsed->is_opening=TRUE;
 	else mainw->pulsed->is_opening=FALSE;
 
-	if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed->reverse_endian=TRUE;
+	if ((aendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+	    (!aendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
+	  mainw->pulsed->reverse_endian=TRUE;
 	else mainw->pulsed->reverse_endian=FALSE;
 
         if (mainw->ping_pong) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;

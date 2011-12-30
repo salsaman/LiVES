@@ -27,8 +27,6 @@ James Scott Jr <skoona@users.sourceforge.net>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <gtk/gtkmain.h>
-#include <gtk/gtksignal.h>
 
 #include "giw/giwknob.h"
 

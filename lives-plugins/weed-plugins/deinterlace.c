@@ -77,14 +77,14 @@ int deinterlace_process (weed_plant_t *inst, weed_timecode_t tc) {
   unsigned char *val1c,*val2c,*val3c,*val4c;
   unsigned char *res1,*res2,*res3,*res4,*res5,*res6;
 
-  unsigned char *val1a_u=NULL,*val2a_u=NULL,*val3a_u=NULL,*val4a_u=NULL;
+  unsigned char *val2a_u=NULL,*val3a_u=NULL,*val4a_u=NULL;
   unsigned char *val2b_u=NULL,*val3b_u=NULL,*val4b_u=NULL;
-  unsigned char *val1c_u=NULL,*val2c_u=NULL,*val3c_u=NULL,*val4c_u=NULL;
+  unsigned char *val2c_u=NULL,*val3c_u=NULL,*val4c_u=NULL;
   unsigned char *res1_u=NULL,*res2_u=NULL,*res3_u=NULL,*res4_u=NULL,*res5_u=NULL,*res6_u=NULL;
 
-  unsigned char *val1a_v=NULL,*val2a_v=NULL,*val3a_v=NULL,*val4a_v=NULL;
+  unsigned char *val2a_v=NULL,*val3a_v=NULL,*val4a_v=NULL;
   unsigned char *val2b_v=NULL,*val3b_v=NULL,*val4b_v=NULL;
-  unsigned char *val1c_v=NULL,*val2c_v=NULL,*val3c_v=NULL,*val4c_v=NULL;
+  unsigned char *val2c_v=NULL,*val3c_v=NULL,*val4c_v=NULL;
   unsigned char *res1_v=NULL,*res2_v=NULL,*res3_v=NULL,*res4_v=NULL,*res5_v=NULL,*res6_v=NULL;
 
   int d1,d2;
@@ -146,14 +146,12 @@ int deinterlace_process (weed_plant_t *inst, weed_timecode_t tc) {
 
       if (palette==WEED_PALETTE_YUV444P||palette==WEED_PALETTE_YUVA4444P) {
 	// u and v planes
-	val1a_u = (src_array[1]-irowstride+x);
 	val2a_u = (src_array[1]+x);
 	val3a_u = (src_array[1]+irowstride+x);
 	val4a_u = (src_array[1]+irowstride2+x);
 	
 	val2b_u = (src_array[1]+x+psize);
 
-	val1c_u = (src_array[1]-irowstride+x+psize2);
 	val2c_u = (src_array[1]+x+psize2);
 	val3c_u = (src_array[1]+irowstride+x+psize2);
 	val4c_u = (src_array[1]+irowstride2+x+psize2);
@@ -163,14 +161,11 @@ int deinterlace_process (weed_plant_t *inst, weed_timecode_t tc) {
 	res5_u=val2c_u;
 	
 	
-	val1a_v = (src_array[2]-irowstride+x);
-	val2a_v = (src_array[2]+x);
 	val3a_v = (src_array[2]+irowstride+x);
 	val4a_v = (src_array[2]+irowstride2+x);
 	
 	val2b_v = (src_array[2]+x+psize);
 
-	val1c_v = (src_array[2]-irowstride+x+psize2);
 	val2c_v = (src_array[2]+x+psize2);
 	val3c_v = (src_array[2]+irowstride+x+psize2);
 	val4c_v = (src_array[2]+irowstride2+x+psize2);

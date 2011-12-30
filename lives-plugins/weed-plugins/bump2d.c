@@ -62,13 +62,6 @@ static int Y_R[256];
 static int Y_G[256];
 static int Y_B[256];
 
-static int Cb_R[256];
-static int Cb_G[256];
-static int Cb_B[256];
-static int Cr_R[256];
-static int Cr_G[256];
-static int Cr_B[256];
-
 
 static int myround(double n)
 {
@@ -102,23 +95,6 @@ static void init_RGB_to_YCbCr_tables(void)
 		     + (double)(1<<(FP_BITS-1))
 		     + (16.0 * (double)(1<<FP_BITS)));
 
-    Cb_R[i] = myround(-0.168736 * (double)i 
-		      * 224.0 / 255.0 * (double)(1<<FP_BITS));
-    Cb_G[i] = myround(-0.331264 * (double)i 
-		      * 224.0 / 255.0 * (double)(1<<FP_BITS));
-    Cb_B[i] = myround((0.500 * (double)i 
-		       * 224.0 / 255.0 * (double)(1<<FP_BITS))
-		      + (double)(1<<(FP_BITS-1))
-		      + (128.0 * (double)(1<<FP_BITS)));
-
-    Cr_R[i] = myround(0.500 * (double)i 
-		      * 224.0 / 255.0 * (double)(1<<FP_BITS));
-    Cr_G[i] = myround(-0.418688 * (double)i 
-		      * 224.0 / 255.0 * (double)(1<<FP_BITS));
-    Cr_B[i] = myround((-0.081312 * (double)i 
-		       * 224.0 / 255.0 * (double)(1<<FP_BITS))
-		      + (double)(1<<(FP_BITS-1))
-		      + (128.0 * (double)(1<<FP_BITS)));
   }
 }
 

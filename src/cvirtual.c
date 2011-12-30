@@ -62,7 +62,7 @@ gboolean save_frame_index(gint fileno) {
     else {
       mainw->write_failed=FALSE;
       for (i=0;i<sfile->frames;i++) {
-	lives_write(fd,&sfile->frame_index[i],sizint,TRUE);
+	lives_write_le(fd,&sfile->frame_index[i],4,TRUE);
 	if (mainw->write_failed) break;
       }
       
@@ -120,7 +120,7 @@ gboolean load_frame_index(gint fileno) {
 
       mainw->read_failed=FALSE;
       for (i=0;i<sfile->frames;i++) {
-	lives_read(fd,&sfile->frame_index[i],sizint,FALSE);
+	lives_read_le(fd,&sfile->frame_index[i],4,FALSE);
 	if (mainw->read_failed) break;
       }
 

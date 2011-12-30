@@ -365,6 +365,12 @@ Note: the "type" leaf should be serialised first, in order to assist
 reconstruction of the deserialised plant.
 
 
+Format shall be little endian for all types (except string).
+
+
+
+
+
 
 Addendum:
 == Timeline plugins ==

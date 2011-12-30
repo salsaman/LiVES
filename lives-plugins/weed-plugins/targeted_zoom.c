@@ -45,6 +45,8 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
+  int pal=weed_get_int_value(in_channel,"current_palette",&error);
+
   int width=weed_get_int_value(in_channel,"width",&error);
   int height=weed_get_int_value(in_channel,"height",&error);
 
@@ -62,7 +64,11 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 
   int offset=0,dheight=height;
 
+  int psize=4;
+
   register int x,y;
+
+  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_YUV888) psize=3;
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
@@ -93,7 +99,7 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 
     for (x=0;x<width;x++) {
       dx=(int)((double)x-offsx)/scale+offsx;
-      weed_memcpy(dst+dr+x*3,src+sy+dx*3,3);
+      weed_memcpy(dst+dr+x*psize,src+sy+dx*psize,psize);
     }
   }
 
@@ -105,7 +111,9 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_END};
+    // all planar palettes
+    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_RGBA32,WEED_PALETTE_ARGB32,WEED_PALETTE_BGRA32,WEED_PALETTE_UYVY,WEED_PALETTE_YUYV,WEED_PALETTE_END};
+
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
 

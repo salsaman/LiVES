@@ -1,14 +1,18 @@
 // interface.h
 // LiVES
-// (c) G. Finch 2003 - 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
 
+// a few GUI specific settings
 #define DEFAULT_FRAME_HSIZE 320
 #define DEFAULT_FRAME_VSIZE 200
 
-#define PROG_LABEL_WIDTH 540
+#define PROCW_STRETCHER "                                                                                                                            "
+
+#define ENC_DETAILS_WIN_H 200
+#define ENC_DETAILS_WIN_V 200
 
 void load_theme (void);
 

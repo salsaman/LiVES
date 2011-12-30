@@ -2378,39 +2378,39 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
       lives_write(fd,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING),TRUE);
       
       nnodes=g_slist_length(omc_node_list);
-      lives_write(fd,&nnodes,sizint,TRUE);
+      lives_write_le(fd,&nnodes,4,TRUE);
       
       while (slist!=NULL) {
 	if (mainw->write_failed) break;
 	mnode=(lives_omc_match_node_t *)slist->data;
 	srchlen=strlen(mnode->srch);
 	
-	lives_write(fd,&srchlen,sizint,TRUE);
+	lives_write_le(fd,&srchlen,4,TRUE);
 	lives_write(fd,mnode->srch,srchlen,TRUE);
 	
-	lives_write(fd,&mnode->macro,sizint,TRUE);
-	lives_write(fd,&mnode->nvars,sizint,TRUE);
+	lives_write_le(fd,&mnode->macro,4,TRUE);
+	lives_write_le(fd,&mnode->nvars,4,TRUE);
 	
 	for (i=0;i<mnode->nvars;i++) {
 	  if (mainw->write_failed) break;
-	  lives_write(fd,&mnode->offs0[i],sizint,TRUE);
-	  lives_write(fd,&mnode->scale[i],sizdbl,TRUE);
-	  lives_write(fd,&mnode->offs1[i],sizint,TRUE);
+	  lives_write_le(fd,&mnode->offs0[i],4,TRUE);
+	  lives_write_le(fd,&mnode->scale[i],8,TRUE);
+	  lives_write_le(fd,&mnode->offs1[i],4,TRUE);
 	  
-	  lives_write(fd,&mnode->min[i],sizint,TRUE);
-	  lives_write(fd,&mnode->max[i],sizint,TRUE);
+	  lives_write_le(fd,&mnode->min[i],4,TRUE);
+	  lives_write_le(fd,&mnode->max[i],4,TRUE);
 	  
-	  lives_write(fd,&mnode->matchp[i],sizint,TRUE);
-	  lives_write(fd,&mnode->matchi[i],sizint,TRUE);
+	  lives_write_le(fd,&mnode->matchp[i],4,TRUE);
+	  lives_write_le(fd,&mnode->matchi[i],4,TRUE);
 	}
 	
 	omacro=omc_macros[mnode->macro];
 	
 	for (i=0;i<omacro.nparams;i++) {
 	  if (mainw->write_failed) break;
-	  lives_write(fd,&mnode->map[i],sizint,TRUE);
-	  lives_write(fd,&mnode->fvali[i],sizint,TRUE);
-	  lives_write(fd,&mnode->fvald[i],sizdbl,TRUE);
+	  lives_write_le(fd,&mnode->map[i],4,TRUE);
+	  lives_write_le(fd,&mnode->fvali[i],4,TRUE);
+	  lives_write_le(fd,&mnode->fvald[i],8,TRUE);
 	}
 	slist=slist->next;
       }
@@ -2511,8 +2511,8 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
-  bytes=read(fd,&nnodes,sizint);
-  if (bytes<sizint) {
+  bytes=lives_read_le(fd,&nnodes,4,TRUE);
+  if (bytes<4) {
     do_midi_load_error(load_file);
     g_free (load_file);
     return;
@@ -2525,8 +2525,8 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   for (i=0;i<nnodes;i++) {
 
-    bytes=read(fd,&srchlen,sizint);
-    if (bytes<sizint) {
+    bytes=lives_read_le(fd,&srchlen,4,TRUE);
+    if (bytes<4) {
       do_midi_load_error(load_file);
       g_free (load_file);
       return;
@@ -2543,7 +2543,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
     memset(srch+srchlen,0,1);
 
-    bytes=read(fd,&macro,sizint);
+    bytes=lives_read_le(fd,&macro,4,TRUE);
     if (bytes<sizint) {
       do_midi_load_error(load_file);
       g_free (load_file);
@@ -2551,8 +2551,8 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       return;
     }
     
-    bytes=read(fd,&nvars,sizint);
-    if (bytes<sizint) {
+    bytes=lives_read_le(fd,&nvars,4,TRUE);
+    if (bytes<4) {
       do_midi_load_error(load_file);
       g_free (load_file);
       g_free(srch);
@@ -2593,45 +2593,45 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mnode->macro=macro;
 
     for (j=0;j<nvars;j++) {
-      bytes=read(fd,&mnode->offs0[j],sizint);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&mnode->offs0[j],4,TRUE);
+      if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;
       }
-      bytes=read(fd,&mnode->scale[j],sizdbl);
-      if (bytes<sizdbl) {
+      bytes=lives_read_le(fd,&mnode->scale[j],8,TRUE);
+      if (bytes<8) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;
       }
-      bytes=read(fd,&mnode->offs1[j],sizint);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&mnode->offs1[j],4,TRUE);
+      if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;
       }
       
-      bytes=read(fd,&mnode->min[j],sizint);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&mnode->min[j],4,TRUE);
+      if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;
       }
-      bytes=read(fd,&mnode->max[j],sizint);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&mnode->max[j],4,TRUE);
+      if (bytes<4) {
 	do_midi_load_error(load_file);
 	return;
       }
       
-      bytes=read(fd,&mnode->matchp[j],sizint);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&mnode->matchp[j],4,TRUE);
+      if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;
       }
-      bytes=read(fd,&mnode->matchi[j],sizint);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&mnode->matchi[j],4,TRUE);
+      if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;
@@ -2645,20 +2645,20 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mnode->fvald=(gdouble *)g_malloc(omacro.nparams*sizdbl);
 
     for (j=0;j<omacro.nparams;j++) {
-      bytes=read(fd,&mnode->map[j],sizint);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&mnode->map[j],4,TRUE);
+      if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;
       }
-      bytes=read(fd,&mnode->fvali[j],sizint);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&mnode->fvali[j],4,TRUE);
+      if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;
       }
-      bytes=read(fd,&mnode->fvald[j],sizdbl);
-      if (bytes<sizdbl) {
+      bytes=read(fd,&mnode->fvald[j],8);
+      if (bytes<8) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
 	return;

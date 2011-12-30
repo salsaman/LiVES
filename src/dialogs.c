@@ -432,9 +432,9 @@ void cancel_process(gboolean visible) {
     mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
   }
   if (visible) {
-    if (mainw->preview_box!=NULL&&!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Play all"), NULL);
+    if (mainw->preview_box!=NULL&&!mainw->preview) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play all"));
     if (accelerators_swapped) {
-      if (!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Play all"), NULL);
+      if (!mainw->preview) gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, 0);
       gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group,GDK_p, 0, GTK_ACCEL_VISIBLE);
     }
@@ -934,8 +934,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     if (cfile->opening&&(capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
 			 (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
-      if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Preview"), NULL);
-      gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Preview"), NULL);
+      if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
+      gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
       gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, 0);
       gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, GDK_p, 0, 0);
       accelerators_swapped=TRUE;
@@ -1125,8 +1125,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
       if (!cfile->opening) {
 	gtk_widget_grab_default (cfile->proc_ptr->preview_button);
-	if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,_ ("Preview"), NULL);
-	gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Preview"), NULL);
+	if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
+	gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
 	gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, 0);
 	gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, GDK_p, 0, 0);
 	accelerators_swapped=TRUE;
@@ -1186,10 +1186,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (cfile->clip_type==CLIP_TYPE_DISK&&(mainw->cancelled!=CANCEL_NO_MORE_PREVIEW||!cfile->opening)) {
       unlink(cfile->info_file);
     }
-    if (mainw->preview_box!=NULL&&!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,
-									 _("Play all"), NULL);
+    if (mainw->preview_box!=NULL&&!mainw->preview) gtk_widget_set_tooltip_text( mainw->p_playbutton,
+									 _("Play all"));
     if (accelerators_swapped) {
-      if (!mainw->preview) gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,_ ("Play all"), NULL);
+      if (!mainw->preview) gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, 0);
       gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, GDK_p, 0, GTK_ACCEL_VISIBLE);
       accelerators_swapped=FALSE;
@@ -1940,7 +1940,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   g_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = gtk_label_new (tmp_label);
   gtk_widget_show (procw->label);
-  gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
+  //gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label, FALSE, FALSE, 0);
   gtk_widget_modify_fg(procw->label, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_label_set_justify (GTK_LABEL (procw->label), GTK_JUSTIFY_LEFT);
@@ -1956,7 +1956,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   gtk_label_set_justify (GTK_LABEL (procw->label2), GTK_JUSTIFY_CENTER);
   gtk_widget_modify_fg(procw->label2, GTK_STATE_NORMAL, &palette->normal_fore);
 
-  procw->label3 = gtk_label_new (NULL);
+  procw->label3 = gtk_label_new (PROCW_STRETCHER);
   gtk_widget_show (procw->label3);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label3, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (procw->label3), GTK_JUSTIFY_CENTER);
@@ -2186,6 +2186,8 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 
   g_free(msg);
 
+  mainw->write_failed=FALSE; // reset this
+
   return ret;
 
 }
@@ -2215,6 +2217,9 @@ int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, 
   ret=do_cancel_retry_dialog(msg,transient);
 
   g_free(msg);
+
+
+  mainw->read_failed=FALSE; // reset this
 
   return ret;
 

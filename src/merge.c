@@ -87,7 +87,7 @@ void create_merge_dialog (void) {
   gtk_window_set_title (GTK_WINDOW (merge_opts->merge_dialog), _("LiVES: - Merge"));
   gtk_window_set_position (GTK_WINDOW (merge_opts->merge_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_modal (GTK_WINDOW (merge_opts->merge_dialog), TRUE);
-  gtk_widget_set_size_request (merge_opts->merge_dialog, 720, -1);
+  gtk_window_set_default_size (GTK_WINDOW(merge_opts->merge_dialog), 720, -1);
   gtk_dialog_set_has_separator(GTK_DIALOG(merge_opts->merge_dialog),FALSE);
 
   if (palette->style&STYLE_1) {

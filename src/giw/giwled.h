@@ -26,7 +26,7 @@ James Scott Jr <skoona@users.sourceforge.net>
 #define __GIW_LED_H__
 
 #include <gdk/gdk.h>
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 

@@ -552,8 +552,13 @@ apply_prefs(gboolean skip_warn) {
   unsigned char *new_undo_buf;
   GList *ulist;
 
-  gboolean needs_midi_restart=FALSE;
+ 
+#ifdef ENABLE_OSC
   gboolean set_omc_dev_opts=FALSE;
+#ifdef OMC_MIDI_IMPL
+  gboolean needs_midi_restart=FALSE;
+#endif
+#endif
 
   gchar *tmp;
 
@@ -1677,36 +1682,36 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
                 prefsw->right_shown = prefsw->scrollw_right_playback;
                 break;
             case LIST_ENTRY_RECORDING:
-                gtk_widget_show_all(prefsw->vbox_right_recording);
-                prefsw->right_shown = prefsw->vbox_right_recording;
+                gtk_widget_show_all(prefsw->scrollw_right_recording);
+                prefsw->right_shown = prefsw->scrollw_right_recording;
                 break;
             case LIST_ENTRY_ENCODING:
-                gtk_widget_show_all(prefsw->vbox_right_encoding);
-                prefsw->right_shown = prefsw->vbox_right_encoding;
+                gtk_widget_show_all(prefsw->scrollw_right_encoding);
+                prefsw->right_shown = prefsw->scrollw_right_encoding;
                 break;
             case LIST_ENTRY_EFFECTS:
-                gtk_widget_show_all(prefsw->vbox_right_effects);
-                prefsw->right_shown = prefsw->vbox_right_effects;
+                gtk_widget_show_all(prefsw->scrollw_right_effects);
+                prefsw->right_shown = prefsw->scrollw_right_effects;
                 break;
             case LIST_ENTRY_DIRECTORIES:
                 gtk_widget_show_all(prefsw->scrollw_right_directories);
                 prefsw->right_shown = prefsw->scrollw_right_directories;
                 break;
             case LIST_ENTRY_WARNINGS:
-                gtk_widget_show_all(prefsw->scrollw);
-                prefsw->right_shown = prefsw->scrollw;
+                gtk_widget_show_all(prefsw->scrollw_right_warnings);
+                prefsw->right_shown = prefsw->scrollw_right_warnings;
                 break;
             case LIST_ENTRY_MISC:
-                gtk_widget_show_all(prefsw->vbox_right_misc);
-                prefsw->right_shown = prefsw->vbox_right_misc;
+                gtk_widget_show_all(prefsw->scrollw_right_misc);
+                prefsw->right_shown = prefsw->scrollw_right_misc;
                 break;
             case LIST_ENTRY_THEMES:
-                gtk_widget_show_all(prefsw->vbox_right_themes);
-                prefsw->right_shown = prefsw->vbox_right_themes;
+                gtk_widget_show_all(prefsw->scrollw_right_themes);
+                prefsw->right_shown = prefsw->scrollw_right_themes;
                 break;
             case LIST_ENTRY_NET:
-                gtk_widget_show_all(prefsw->vbox_right_net);
-                prefsw->right_shown = prefsw->vbox_right_net;
+                gtk_widget_show_all(prefsw->scrollw_right_net);
+                prefsw->right_shown = prefsw->scrollw_right_net;
                 break;
             case LIST_ENTRY_JACK:
                 gtk_widget_show_all(prefsw->scrollw_right_jack);
@@ -1903,28 +1908,30 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *mt_enter_defs;
   GtkObject *spinbutton_ocp_adj;
   GtkWidget *advbutton;
+
+#ifdef ENABLE_OSC
+#ifdef OMC_MIDI_IMPL
   GtkWidget *raw_midi_button;
+#endif
+#endif
 
   GtkWidget *label;
   GtkWidget *eventbox;
-
-#ifdef ENABLE_OSC
+  GtkWidget *vbox2;
   GtkWidget *buttond;
-#ifdef OMC_JS_IMPL
-  GtkWidget *vbox2;
-#else
-#ifdef OMC_MIDI_IMPL
-  GtkWidget *vbox2;
-#endif
-#endif
-#endif
 
   // radio button groups
   //GSList *rb_group = NULL;
   GSList *jpeg_png = NULL;
   GSList *mt_enter_prompt = NULL;
   GSList *rb_group2 = NULL;
+
+#ifdef ENABLE_OSC
+#ifdef OMC_MIDI_IMPL
   GSList *alsa_midi_group = NULL;
+#endif
+#endif
+
   GSList *autoback_group = NULL;
   GSList *st_interface_group = NULL;
 
@@ -1986,6 +1993,8 @@ _prefsw *create_prefs_dialog (void) {
   // Create dialog horizontal panels
   dialog_hpaned = gtk_hpaned_new();
   gtk_widget_show (dialog_hpaned);
+  gtk_paned_set_position(GTK_PANED(dialog_hpaned),PREFS_PANED_POS);
+
 
   // Create dialog table for the right panel controls placement
   dialog_table = gtk_table_new(1, 1, FALSE);
@@ -1995,7 +2004,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->prefs_list = gtk_tree_view_new();
   gtk_widget_show(prefsw->prefs_list);
 
-  gtk_widget_set_size_request (prefsw->prefs_list, 200, 600);
+  //gtk_widget_set_size_request (prefsw->prefs_list, 200, 600);
 
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(prefsw->prefs_list), FALSE);
 
@@ -2355,7 +2364,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox7), hbox, FALSE, FALSE, 0);
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->forcesmon, (_("Force single monitor mode")), NULL);
+  gtk_widget_set_tooltip_text( prefsw->forcesmon, (_("Force single monitor mode")));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->forcesmon), prefs->force_single_monitor);
   // ---
   if (capable->nmonitors<=1) {
@@ -2760,8 +2769,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_decoding = gtk_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_decoding), 20);
 
-
-
   prefsw->scrollw_right_decoding = gtk_scrolled_window_new (NULL, NULL);
    
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_decoding), GTK_POLICY_AUTOMATIC, 
@@ -2796,7 +2803,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_instant_open, FALSE, FALSE, 5);
   gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_instant_open, (_("Enable instant opening of some file types using decoder plugins")), NULL);
+  gtk_widget_set_tooltip_text( prefsw->checkbutton_instant_open, (_("Enable instant opening of some file types using decoder plugins")));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_instant_open),prefs->instant_open);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
 
@@ -2939,7 +2946,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_auto_deint, FALSE, FALSE, 5);
   gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_auto_deint),prefs->auto_deint);
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_auto_deint, (_("Automatically deinterlace frames when a plugin suggests it")), NULL);
+  gtk_widget_set_tooltip_text( prefsw->checkbutton_auto_deint, (_("Automatically deinterlace frames when a plugin suggests it")));
   gtk_widget_show_all(hbox);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
 
@@ -2965,7 +2972,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_nobord, FALSE, FALSE, 5);
   gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_nobord),prefs->auto_nobord);
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_nobord, (_("Clip any blank borders from frames where possible")), NULL);
+  gtk_widget_set_tooltip_text( prefsw->checkbutton_nobord, (_("Clip any blank borders from frames where possible")));
   gtk_widget_show_all(hbox);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
 
@@ -3040,7 +3047,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_add (GTK_CONTAINER (vbox69), hbox);
 
   prefsw->pbq_combo = gtk_combo_box_new_text();
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->pbq_combo, (_("The preview quality for video playback - affects resizing")), NULL);
+  gtk_widget_set_tooltip_text( prefsw->pbq_combo, (_("The preview quality for video playback - affects resizing")));
   
   label = gtk_label_new_with_mnemonic (_("Preview _quality"));
   if (palette->style & STYLE_1) {
@@ -3163,7 +3170,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_stream_audio, FALSE, FALSE, 5);
   gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->checkbutton_stream_audio, (_("Stream audio to playback plugin")), NULL);
+  gtk_widget_set_tooltip_text( prefsw->checkbutton_stream_audio, (_("Stream audio to playback plugin")));
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
 
@@ -3372,6 +3379,20 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->vbox_right_recording = gtk_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_recording), 20);
+
+  prefsw->scrollw_right_recording = gtk_scrolled_window_new (NULL, NULL);
+   
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_recording), GTK_POLICY_AUTOMATIC, 
+				  GTK_POLICY_AUTOMATIC);
+  
+  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_recording), 
+					 prefsw->vbox_right_recording);
+  
+  // Apply theme background to scrolled window
+   if (palette->style&STYLE_1) {
+     gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_recording)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_recording)->child, GTK_STATE_NORMAL, &palette->normal_back);
+   }
 
   prefsw->rdesk_audio = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3596,8 +3617,9 @@ _prefsw *create_prefs_dialog (void) {
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_recording, _("Recording"), LIST_ENTRY_RECORDING);
-  gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_recording, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
-  
+  //gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_recording, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_recording);
+
   // ---------------,
   // encoding       |
   // ---------------'
@@ -3605,9 +3627,23 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_encoding = gtk_vbox_new (FALSE, 30);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_encoding), 20);
 
+  prefsw->scrollw_right_encoding = gtk_scrolled_window_new (NULL, NULL);
+   
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_encoding), GTK_POLICY_AUTOMATIC, 
+				  GTK_POLICY_AUTOMATIC);
+  
+  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_encoding), 
+					 prefsw->vbox_right_encoding);
+  
+  // Apply theme background to scrolled window
+   if (palette->style&STYLE_1) {
+     gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_encoding)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_encoding)->child, GTK_STATE_NORMAL, &palette->normal_back);
+   }
+
   hbox11 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox11);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox11, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox11, FALSE, FALSE, 20);
 
   label37 = gtk_label_new (_("      Encoder                  "));
   if (palette->style&STYLE_1) {
@@ -3640,10 +3676,10 @@ _prefsw *create_prefs_dialog (void) {
   if (palette->style&STYLE_1) {
       gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hseparator, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hseparator, FALSE, FALSE, 20);
 
   hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox, FALSE, FALSE, 20);
 
   label56 = gtk_label_new (_("Output format"));
   if (palette->style&STYLE_1) {
@@ -3690,7 +3726,7 @@ _prefsw *create_prefs_dialog (void) {
     set_acodec_list_from_allowed(prefsw, rdet);
 
     hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox, FALSE, FALSE, 20);
 
     label = gtk_label_new (_("Audio codec"));
     if (palette->style&STYLE_1) {
@@ -3709,8 +3745,9 @@ _prefsw *create_prefs_dialog (void) {
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_encoding, _("Encoding"), LIST_ENTRY_ENCODING);
-  gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_encoding, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
-  
+  //gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_encoding, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_encoding);
+
   // ---------------,
   // effects        |
   // ---------------'
@@ -3718,6 +3755,20 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_effects = gtk_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_effects), 20);
   
+  prefsw->scrollw_right_effects = gtk_scrolled_window_new (NULL, NULL);
+   
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_effects), GTK_POLICY_AUTOMATIC, 
+				  GTK_POLICY_AUTOMATIC);
+  
+  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_effects), 
+					 prefsw->vbox_right_effects);
+  
+  // Apply theme background to scrolled window
+   if (palette->style&STYLE_1) {
+     gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_effects)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_effects)->child, GTK_STATE_NORMAL, &palette->normal_back);
+   }
+
   prefsw->checkbutton_antialias = gtk_check_button_new();
   eventbox = gtk_event_box_new();
   label = gtk_label_new_with_mnemonic(_("Use _antialiasing when resizing"));
@@ -3754,7 +3805,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (prefsw->spinbutton_rte_keys);
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_rte_keys, FALSE, TRUE, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_rte_keys);
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->spinbutton_rte_keys, _("The number of \"virtual\" real time effect keys. They can be controlled through the real time effects window, or via network (OSC)."), NULL);
+  gtk_widget_set_tooltip_text( prefsw->spinbutton_rte_keys, _("The number of \"virtual\" real time effect keys. They can be controlled through the real time effects window, or via network (OSC)."));
 
 
 
@@ -3806,7 +3857,8 @@ _prefsw *create_prefs_dialog (void) {
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_effects, _("Effects"), LIST_ENTRY_EFFECTS);
-  gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_effects, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  //gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_effects, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_effects);
 
   // -------------------,
   // Directories        |
@@ -3904,7 +3956,7 @@ _prefsw *create_prefs_dialog (void) {
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->vid_load_dir_entry, _("The default directory for loading video clips from"), NULL);
+  gtk_widget_set_tooltip_text( prefsw->vid_load_dir_entry, _("The default directory for loading video clips from"));
 
 
 
@@ -3946,8 +3998,8 @@ _prefsw *create_prefs_dialog (void) {
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
   
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->vid_save_dir_entry, 
-			_("The default directory for saving encoded clips to"), NULL);
+  gtk_widget_set_tooltip_text( prefsw->vid_save_dir_entry, 
+			_("The default directory for saving encoded clips to"));
 
   // get from prefs
   gtk_entry_set_text(GTK_ENTRY(prefsw->vid_save_dir_entry),prefs->def_vid_save_dir);
@@ -3959,8 +4011,8 @@ _prefsw *create_prefs_dialog (void) {
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
   
-  gtk_tooltips_set_tip (mainw->tooltips, prefsw->audio_dir_entry, 
-			_("The default directory for loading and saving audio"), NULL);
+  gtk_widget_set_tooltip_text( prefsw->audio_dir_entry, 
+			_("The default directory for loading and saving audio"));
 
   // get from prefs
    gtk_entry_set_text(GTK_ENTRY(prefsw->audio_dir_entry),prefs->def_audio_dir);
@@ -3972,8 +4024,8 @@ _prefsw *create_prefs_dialog (void) {
 		     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		     (GtkAttachOptions) (0), 0, 0);
    
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->image_dir_entry, 
-			 _("The default directory for saving frameshots to"), NULL);
+   gtk_widget_set_tooltip_text( prefsw->image_dir_entry, 
+			 _("The default directory for saving frameshots to"));
 
    // get from prefs
    gtk_entry_set_text(GTK_ENTRY(prefsw->image_dir_entry),prefs->def_image_dir);
@@ -3985,8 +4037,8 @@ _prefsw *create_prefs_dialog (void) {
 		     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		     (GtkAttachOptions) (0), 0, 0);
    
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->proj_dir_entry, 
-			 _("The default directory for backing up/restoring single clips"), NULL);
+   gtk_widget_set_tooltip_text( prefsw->proj_dir_entry, 
+			 _("The default directory for backing up/restoring single clips"));
 
    // get from prefs
    gtk_entry_set_text(GTK_ENTRY(prefsw->proj_dir_entry),prefs->def_proj_dir);
@@ -3998,7 +4050,7 @@ _prefsw *create_prefs_dialog (void) {
 		     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		     (GtkAttachOptions) (0), 0, 0);
    
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->tmpdir_entry, _("LiVES working directory."), NULL);
+   gtk_widget_set_tooltip_text( prefsw->tmpdir_entry, _("LiVES working directory."));
 
    // get from prefs
    gtk_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry),(tmp=g_filename_to_utf8(future_prefs->tmpdir,-1,NULL,NULL,NULL)));
@@ -4087,16 +4139,18 @@ _prefsw *create_prefs_dialog (void) {
    prefsw->vbox_right_warnings = gtk_vbox_new (FALSE, 10);
    gtk_widget_show (prefsw->vbox_right_warnings);
 
-   prefsw->scrollw = gtk_scrolled_window_new (NULL, NULL);
+   prefsw->scrollw_right_warnings = gtk_scrolled_window_new (NULL, NULL);
    
-   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_warnings), GTK_POLICY_AUTOMATIC, 
+				   GTK_POLICY_AUTOMATIC);
 
-   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw), prefsw->vbox_right_warnings);
+   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_warnings), 
+					  prefsw->vbox_right_warnings);
 
    // Apply theme background to scrolled window
    if (palette->style&STYLE_1) {
-     gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw)->child, GTK_STATE_NORMAL, &palette->normal_back);
+     gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_warnings)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_warnings)->child, GTK_STATE_NORMAL, &palette->normal_back);
    }
 
    gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_warnings), 20);
@@ -4588,7 +4642,7 @@ _prefsw *create_prefs_dialog (void) {
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
-  gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw);
+  gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_warnings);
 
   // -----------,
   // Misc       |
@@ -4597,6 +4651,19 @@ _prefsw *create_prefs_dialog (void) {
    prefsw->vbox_right_misc = gtk_vbox_new (FALSE, 10);
    gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_misc), 20);
    
+   prefsw->scrollw_right_misc = gtk_scrolled_window_new (NULL, NULL);
+   
+   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_misc), GTK_POLICY_AUTOMATIC, 
+				   GTK_POLICY_AUTOMATIC);
+  
+   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_misc), prefsw->vbox_right_misc);
+  
+   // Apply theme background to scrolled window
+   if (palette->style&STYLE_1) {
+     gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_misc)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_misc)->child, GTK_STATE_NORMAL, &palette->normal_back);
+   }
+
    prefsw->check_midi = gtk_check_button_new();
    eventbox = gtk_event_box_new();
    label = gtk_label_new_with_mnemonic(_("Midi synch (requires the files midistart and midistop)"));
@@ -4729,7 +4796,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_entry_set_text(GTK_ENTRY(prefsw->cdplay_entry),(tmp=g_filename_to_utf8(prefs->cdplay_device,-1,NULL,NULL,NULL)));
    g_free(tmp);
    
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->cdplay_entry, _("LiVES can load audio tracks from this CD"), NULL);
+   gtk_widget_set_tooltip_text( prefsw->cdplay_entry, _("LiVES can load audio tracks from this CD"));
    
    hbox13 = gtk_hbox_new (FALSE, 0);
    gtk_widget_show (hbox13);
@@ -4748,7 +4815,7 @@ _prefsw *create_prefs_dialog (void) {
    prefsw->spinbutton_def_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_def_fps_adj), 1, 2);
    gtk_widget_show (prefsw->spinbutton_def_fps);
    gtk_box_pack_start (GTK_BOX (hbox13), prefsw->spinbutton_def_fps, FALSE, TRUE, 0);
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->spinbutton_def_fps, _("Frames per second to use when none is specified"), NULL);
+   gtk_widget_set_tooltip_text( prefsw->spinbutton_def_fps, _("Frames per second to use when none is specified"));
    
   icon = g_strdup_printf("%s%s/pref_misc.png", prefs->prefix_dir, ICON_DIR);
   pixbuf_misc = gdk_pixbuf_new_from_file(icon, NULL);
@@ -4756,7 +4823,8 @@ _prefsw *create_prefs_dialog (void) {
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
-  gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_misc, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  //gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_misc, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_misc);
 
   // -----------,
   // Themes     |
@@ -4765,16 +4833,29 @@ _prefsw *create_prefs_dialog (void) {
    prefsw->vbox_right_themes = gtk_vbox_new (FALSE, 10);
    gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_themes), 20);
    
+   prefsw->scrollw_right_themes = gtk_scrolled_window_new (NULL, NULL);
+   
+   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_themes), GTK_POLICY_AUTOMATIC, 
+				   GTK_POLICY_AUTOMATIC);
+   
+   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_themes), prefsw->vbox_right_themes);
+  
+  // Apply theme background to scrolled window
+   if (palette->style&STYLE_1) {
+     gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_themes)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_themes)->child, GTK_STATE_NORMAL, &palette->normal_back);
+   }
+
    hbox93 = gtk_hbox_new (FALSE, 0);
    gtk_widget_show (hbox93);
-   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_themes), hbox93, TRUE, TRUE, 0);
+   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_themes), hbox93, TRUE, FALSE, 0);
    
    label94 = gtk_label_new (_("New theme:           "));
    if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label94, GTK_STATE_NORMAL, &palette->normal_fore);
    }
    gtk_widget_show (label94);
-   gtk_box_pack_start (GTK_BOX (hbox93), label94, FALSE, FALSE, 0);
+   gtk_box_pack_start (GTK_BOX (hbox93), label94, FALSE, FALSE, 40);
    gtk_label_set_justify (GTK_LABEL (label94), GTK_JUSTIFY_LEFT);
    
    prefsw->theme_combo = gtk_combo_box_new_text();
@@ -4805,7 +4886,8 @@ _prefsw *create_prefs_dialog (void) {
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes"), LIST_ENTRY_THEMES);
-  gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_themes, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  //gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_themes, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_themes);
 
    // --------------------------,
    // streaming/networking      |
@@ -4813,10 +4895,23 @@ _prefsw *create_prefs_dialog (void) {
 
    prefsw->vbox_right_net = gtk_vbox_new (FALSE, 10);
    gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_net), 20);
+
+   prefsw->scrollw_right_net = gtk_scrolled_window_new (NULL, NULL);
    
+   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_net), GTK_POLICY_AUTOMATIC, 
+				   GTK_POLICY_AUTOMATIC);
+   
+   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_net), prefsw->vbox_right_net);
+  
+  // Apply theme background to scrolled window
+   if (palette->style&STYLE_1) {
+     gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_net)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_net)->child, GTK_STATE_NORMAL, &palette->normal_back);
+   }
+
    hbox94 = gtk_hbox_new (FALSE, 0);
    gtk_widget_show (hbox94);
-   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox94, TRUE, TRUE, 0);
+   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox94, FALSE, FALSE, 20);
    
    label88 = gtk_label_new (_("Download bandwidth (Kb/s)       "));
    if (palette->style&STYLE_1) {
@@ -4837,7 +4932,7 @@ _prefsw *create_prefs_dialog (void) {
    if (palette->style&STYLE_1) {
      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
    }
-   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hseparator, FALSE, TRUE, 0);
+   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hseparator, FALSE, FALSE, 20);
    
 #ifndef ENABLE_OSC
    label = gtk_label_new (_("LiVES must be compiled without \"configure --disable-OSC\" to use OMC"));
@@ -4850,7 +4945,7 @@ _prefsw *create_prefs_dialog (void) {
    
    hbox1 = gtk_hbox_new (FALSE, 0);
    gtk_widget_show (hbox1);
-   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox1, TRUE, TRUE, 0);
+   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox1, FALSE, FALSE, 20);
    
    prefsw->enable_OSC = gtk_check_button_new();
    eventbox = gtk_event_box_new();
@@ -4904,7 +4999,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
    gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
    gtk_widget_show_all(hbox);
-   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox, FALSE, FALSE, 0);
+   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox, FALSE, FALSE, 20);
    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->enable_OSC_start), future_prefs->osc_start);
    
 #ifndef ENABLE_OSC
@@ -4925,7 +5020,8 @@ _prefsw *create_prefs_dialog (void) {
 
   /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_net, _("Streaming/Networking"), LIST_ENTRY_NET);
-  gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_net, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  //gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_net, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+  gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_net);
 
    
    // ----------,
@@ -4990,7 +5086,7 @@ _prefsw *create_prefs_dialog (void) {
 
    gtk_widget_show (prefsw->jack_tserver_entry);
    gtk_box_pack_start (GTK_BOX (hbox1), prefsw->jack_tserver_entry, FALSE, FALSE, 0);
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->jack_tserver_entry, _("The name of the jack server which can control LiVES transport"), NULL);
+   gtk_widget_set_tooltip_text( prefsw->jack_tserver_entry, _("The name of the jack server which can control LiVES transport"));
 
    eventbox = gtk_event_box_new();
    label = gtk_label_new_with_mnemonic(_("Start _server on LiVES startup"));
@@ -5166,7 +5262,7 @@ _prefsw *create_prefs_dialog (void) {
 
    gtk_widget_show (prefsw->jack_aserver_entry);
    gtk_box_pack_start (GTK_BOX (hbox4), prefsw->jack_aserver_entry, FALSE, FALSE, 0);
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->jack_aserver_entry, _("The name of the jack server for audio"), NULL);
+   gtk_widget_set_tooltip_text( prefsw->jack_aserver_entry, _("The name of the jack server for audio"));
    // ---
    hbox5 = gtk_hbox_new (FALSE,0);
    gtk_widget_show (hbox5);
@@ -5294,7 +5390,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show (prefsw->omc_js_entry);
    if (strlen(prefs->omc_js_fname)!=0) gtk_entry_set_text (GTK_ENTRY (prefsw->omc_js_entry),prefs->omc_js_fname);
    
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->omc_js_entry, _("The joystick device, e.g. /dev/input/js0"), NULL);
+   gtk_widget_set_tooltip_text( prefsw->omc_js_entry, _("The joystick device, e.g. /dev/input/js0"));
 
    vbox2 = gtk_vbox_new (FALSE, 0);
    gtk_box_pack_start (GTK_BOX (hbox), vbox2, FALSE, TRUE, 0);
@@ -5344,8 +5440,8 @@ _prefsw *create_prefs_dialog (void) {
 
    prefsw->alsa_midi = gtk_radio_button_new(alsa_midi_group);
    alsa_midi_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->alsa_midi));
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->alsa_midi, 
-			 (_("Create an ALSA MIDI port which other MIDI devices can be connected to")), NULL);
+   gtk_widget_set_tooltip_text( prefsw->alsa_midi, 
+			 (_("Create an ALSA MIDI port which other MIDI devices can be connected to")));
    label = gtk_label_new_with_mnemonic(_("Use _ALSA MIDI (recommended)"));
    gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->alsa_midi);
    eventbox = gtk_event_box_new();
@@ -5378,7 +5474,7 @@ _prefsw *create_prefs_dialog (void) {
    hbox = gtk_hbox_new(FALSE, 0);
    gtk_box_pack_start(GTK_BOX(hbox), raw_midi_button, TRUE, TRUE, 10);
    gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 10);
-   gtk_tooltips_set_tip (mainw->tooltips, raw_midi_button, (_("Read directly from the MIDI device")), NULL);
+   gtk_widget_set_tooltip_text( raw_midi_button, (_("Read directly from the MIDI device")));
    gtk_widget_show_all(hbox);
    gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
    gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, TRUE, 0);
@@ -5405,7 +5501,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show (prefsw->omc_midi_entry);
    if (strlen(prefs->omc_midi_fname)!=0) gtk_entry_set_text (GTK_ENTRY (prefsw->omc_midi_entry),prefs->omc_midi_fname);
 
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->omc_midi_entry, _("The MIDI device, e.g. /dev/input/midi0"), NULL);
+   gtk_widget_set_tooltip_text( prefsw->omc_midi_entry, _("The MIDI device, e.g. /dev/input/midi0"));
 
    vbox2 = gtk_vbox_new (FALSE, 0);
    gtk_box_pack_start (GTK_BOX (hbox), vbox2, FALSE, TRUE, 0);
@@ -5453,7 +5549,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_widget_show (prefsw->spinbutton_midicr);
    gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_midicr, FALSE, TRUE, 0);
    gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_midicr);
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->spinbutton_midicr, _("Number of MIDI checks per keyboard tick. Increasing this may improve MIDI responsiveness, but may slow down playback."), NULL);
+   gtk_widget_set_tooltip_text( prefsw->spinbutton_midicr, _("Number of MIDI checks per keyboard tick. Increasing this may improve MIDI responsiveness, but may slow down playback."));
 
    label = gtk_label_new_with_mnemonic (_("MIDI repeat"));
    if (palette->style&STYLE_1) {
@@ -5468,7 +5564,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_box_pack_end (GTK_BOX (hbox), prefsw->spinbutton_midirpt, FALSE, TRUE, 0);
    gtk_box_pack_end (GTK_BOX (hbox), label, FALSE, FALSE, 10);
    gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_midirpt);
-   gtk_tooltips_set_tip (mainw->tooltips, prefsw->spinbutton_midirpt, _("Number of non-reads allowed between succesive reads."), NULL);
+   gtk_widget_set_tooltip_text( prefsw->spinbutton_midirpt, _("Number of non-reads allowed between succesive reads."));
    //
    hbox = gtk_hbox_new (FALSE,0);
    gtk_widget_show (hbox);

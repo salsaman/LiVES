@@ -172,7 +172,7 @@ The "seed type" denotes the type of the value field in a leaf. Weed offers the f
  * WEED_SEED_INT     : signed int32_t
  * WEED_SEED_DOUBLE  : corresponds to C type "double"
  * WEED_SEED_BOOLEAN : signed int32_t, constrained to take values WEED_FALSE or WEED_TRUE 
- * WEED_SEED_STRING  : array of char
+ * WEED_SEED_STRING  : array of char (max length is size_t max for whatever system)
  * WEED_SEED_INT64   : 64bit signed integer, used for sub-microsecond timecodes
 
 '''Note''': STRINGS are all utf-8 encoded in Weed, except leaf Keys, which are ASCII encoded.

@@ -155,7 +155,7 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			  G_CALLBACK (on_boolean_toggled),
 			  &mainw->open_deint);
-  gtk_tooltips_set_tip (mainw->tooltips, checkbutton,_("If this is set, frames will be deinterlaced as they are imported."), NULL);
+  gtk_widget_set_tooltip_text( checkbutton,_("If this is set, frames will be deinterlaced as they are imported."));
 
   gtk_widget_show_all(hbox);
 
@@ -290,6 +290,7 @@ process * create_processing (const gchar *text) {
   gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
 
   gtk_window_set_resizable (GTK_WINDOW (procw->processing), FALSE);
+
   
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
@@ -301,6 +302,7 @@ process * create_processing (const gchar *text) {
 
   dialog_vbox1 = GTK_DIALOG (procw->processing)->vbox;
   gtk_widget_show (dialog_vbox1);
+
 
   gtk_dialog_set_has_separator(GTK_DIALOG(procw->processing),FALSE);
 
@@ -315,7 +317,8 @@ process * create_processing (const gchar *text) {
   g_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = gtk_label_new (tmp_label);
   gtk_widget_show (procw->label);
-  gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
+
+  //gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
 
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label, TRUE, TRUE, 0);
   if (palette->style&STYLE_1) {
@@ -339,7 +342,7 @@ process * create_processing (const gchar *text) {
   else procw->label2=gtk_label_new (_("\nPlease Wait"));
 
   gtk_widget_show (procw->label2);
-  gtk_widget_set_size_request (procw->label2, PROG_LABEL_WIDTH, -1);
+  //gtk_widget_set_size_request (procw->label2, PROG_LABEL_WIDTH, -1);
 
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label2, FALSE, FALSE, 0);
 
@@ -348,10 +351,10 @@ process * create_processing (const gchar *text) {
     gtk_widget_modify_fg(procw->label2, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  procw->label3 = gtk_label_new (NULL);
+  procw->label3 = gtk_label_new (PROCW_STRETCHER);
   gtk_widget_show (procw->label3);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label3, FALSE, FALSE, 0);
-  gtk_widget_set_size_request (procw->label3, PROG_LABEL_WIDTH, -1);
+  //gtk_widget_set_size_request (procw->label3, PROG_LABEL_WIDTH, -1);
 
   gtk_label_set_justify (GTK_LABEL (procw->label3), GTK_JUSTIFY_CENTER);
   if (palette->style&STYLE_1) {
@@ -380,8 +383,8 @@ process * create_processing (const gchar *text) {
     g_object_set_data(G_OBJECT(details_arrow),"expanded",GINT_TO_POINTER(FALSE));
 
     label=gtk_label_new (_ ("Show details"));
-    gtk_box_pack_end (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_box_pack_end (GTK_BOX (hbox), details_arrow, FALSE, FALSE, 10);
+    gtk_box_pack_end (GTK_BOX (hbox), label, TRUE, FALSE, 10);
+    gtk_box_pack_end (GTK_BOX (hbox), details_arrow, TRUE, FALSE, 10);
 
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -392,7 +395,7 @@ process * create_processing (const gchar *text) {
     gtk_widget_show_all(ahbox);
 
     procw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-    gtk_widget_set_size_request (procw->scrolledwindow, PROG_LABEL_WIDTH, 200);
+    gtk_widget_set_size_request (procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
     gtk_box_pack_start (GTK_BOX (vbox3), procw->scrolledwindow, TRUE, TRUE, 0);
     gtk_container_add (GTK_CONTAINER (procw->scrolledwindow), (GtkWidget *)mainw->optextview);
   }
@@ -890,7 +893,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
 
   if (text2!=NULL&&(mainw->fx1_bool||opt_resize)) {
     checkbutton2 = gtk_check_button_new ();
-    gtk_tooltips_set_tip (mainw->tooltips, checkbutton2, _("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."), NULL);
+    gtk_widget_set_tooltip_text( checkbutton2, _("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."));
     eventbox=gtk_event_box_new();
     gtk_tooltips_copy(eventbox,checkbutton2);
     label=gtk_label_new_with_mnemonic (_("Use _letterboxing to maintain aspect ratio (optional)"));
@@ -1343,7 +1346,7 @@ create_insert_dialog (void)
 
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Insert clipboard before selected frames"), NULL);
+  gtk_widget_set_tooltip_text( eventbox, _("Insert clipboard before selected frames"));
   gtk_tooltips_copy(radiobutton1,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
@@ -1380,7 +1383,7 @@ create_insert_dialog (void)
 
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_tooltips_set_tip (mainw->tooltips, eventbox, _("Insert clipboard after selected frames"), NULL);
+  gtk_widget_set_tooltip_text( eventbox, _("Insert clipboard after selected frames"));
   gtk_tooltips_copy(radiobutton4,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
@@ -1757,7 +1760,7 @@ _entryw* create_location_dialog (int type) {
     checkbutton = gtk_check_button_new ();
     eventbox=gtk_event_box_new();
     label=gtk_label_new_with_mnemonic (_("Do not send bandwidth information"));
-    gtk_tooltips_set_tip (mainw->tooltips, checkbutton,_("Try this setting if you are having problems getting a stream"), NULL);
+    gtk_widget_set_tooltip_text( checkbutton,_("Try this setting if you are having problems getting a stream"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),prefs->no_bandwidth);
     
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
@@ -3265,7 +3268,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
 
     commentsw->subt_checkbutton = gtk_check_button_new ();
-    //if (param->desc!=NULL) gtk_tooltips_set_tip (mainw->tooltips, checkbutton, param->desc, NULL);
+    //if (param->desc!=NULL) gtk_widget_set_tooltip_text( checkbutton, param->desc, NULL);
     eventbox=gtk_event_box_new();
     //gtk_tooltips_copy(eventbox,checkbutton);
     label=gtk_label_new_with_mnemonic (_("Save _subtitles to file"));

@@ -1902,7 +1902,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
 
 
-static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, weed_timecode_t tc, int nbtracks) {
+static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst, weed_plant_t *init_event, 
+							     weed_plant_t **layers, weed_timecode_t tc, int nbtracks) {
   int num_in_tracks,num_out_tracks;
   int *in_tracks,*out_tracks;
   int error,i,j;
@@ -1925,7 +1926,8 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   int nsamps=0;
   void *adata=NULL;
 
-  if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) return FILTER_ERROR_NO_IN_CHANNELS;
+  if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
+    return FILTER_ERROR_NO_IN_CHANNELS;
 
   if (get_enabled_channel(inst,0,TRUE)==NULL) {
     // we process generators elsewhere
@@ -5825,12 +5827,12 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
       if (weed_leaf_seed_type(paramtmpl,"new_default")==WEED_SEED_INT) {
 	colsis=weed_get_int_array(param,"value",&error);
 	if (weed_leaf_num_elements(paramtmpl,"new_default")==1) {
-	  coli=weed_malloc(3*sizint);
+	  coli=weed_malloc(3*4);
 	  coli[0]=coli[1]=coli[2]=weed_get_int_value(paramtmpl,"new_default",&error);
 	}
 	else coli=weed_get_int_array(paramtmpl,"new_default",&error);
 	valis=weed_get_int_array(param,"value",&error);
-	nvalis=g_malloc((index+3)*sizint);
+	nvalis=g_malloc((index+3)*4);
 	for (i=0;i<=index;i+=3) {
 	  if (i<num_vals) {
 	    nvalis[i]=valis[i];
@@ -6202,7 +6204,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
   for (j=0;j<num_values;j++) {
     // must interpolate - we use linear interpolation
     if (lpc[j]==NULL&&npc[j]==NULL) continue;
-    if (lpc[j]!=NULL&&npc[j]!=NULL) tc_diff=weed_get_int64_value(npc[j],"timecode",&error)-weed_get_int64_value(lpc[j],"timecode",&error);
+    if (lpc[j]!=NULL&&npc[j]!=NULL) tc_diff=weed_get_int64_value(npc[j],"timecode",&error)-
+				      weed_get_int64_value(lpc[j],"timecode",&error);
     switch (hint) {
     case WEED_HINT_FLOAT:
       if (lpc[j]==NULL) {
@@ -6589,27 +6592,27 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, char *key, gboolea
 
   if (write_all) {
     if (mem==NULL) {
-      lives_write(fd,&i,sizint,TRUE);
+      lives_write_le(fd,&i,4,TRUE);
       lives_write(fd,key,(size_t)i,TRUE);
     }
     else {
-      w_memcpy(*mem,&i,sizint);
-      *mem+=sizint;
+      w_memcpy(*mem,&i,4);
+      *mem+=4;
       w_memcpy(*mem,key,(size_t)i);
       *mem+=i;
     }
   }
   st=weed_leaf_seed_type(plant,key);
-  if (mem==NULL) lives_write(fd,&st,sizint,TRUE);
+  if (mem==NULL) lives_write_le(fd,&st,4,TRUE);
   else {
-    w_memcpy(*mem,&st,sizint);
-    *mem+=sizint;
+    w_memcpy(*mem,&st,4);
+    *mem+=4;
   }
   ne=weed_leaf_num_elements(plant,key);
-  if (mem==NULL) lives_write(fd,&ne,sizint,TRUE);
+  if (mem==NULL) lives_write_le(fd,&ne,4,TRUE);
   else {
-    w_memcpy(*mem,&ne,sizint);
-    *mem+=sizint;
+    w_memcpy(*mem,&ne,4);
+    *mem+=4;
   }
 
   // write errors will be checked for by the calling function
@@ -6625,12 +6628,15 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, char *key, gboolea
       weed_leaf_get(plant,key,j,&value);
     }
     if (mem==NULL) {
-      lives_write(fd,&vlen,sizint,TRUE); // actually should be size_t
-      lives_write(fd,value,(size_t)vlen,TRUE);
+      lives_write_le(fd,&vlen,4,TRUE);
+      if (st!=WEED_SEED_STRING) {
+	lives_write_le(fd,value,(size_t)vlen,TRUE);
+      }
+      else lives_write(fd,value,(size_t)vlen,TRUE);
     }
     else {
-      w_memcpy(*mem,&vlen,sizint);  // actually should be size_t
-      *mem+=sizint;
+      w_memcpy(*mem,&vlen,4);
+      *mem+=4;
       w_memcpy(*mem,value,(size_t)vlen);
       *mem+=vlen;
     }
@@ -6652,10 +6658,10 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
   char *prop;
   for (prop=proplist[0];(prop=proplist[i])!=NULL;i++);
 
-  if (mem==NULL) lives_write(fd,&i,sizint,TRUE); // write number of leaves
+  if (mem==NULL) lives_write_le(fd,&i,4,TRUE); // write number of leaves
   else {
-    w_memcpy(*mem,&i,sizint);
-    *mem+=sizint;
+    w_memcpy(*mem,&i,4);
+    *mem+=4;
   }
 
   // write errors will be checked for by the calling function
@@ -6674,99 +6680,150 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 
 
 
-static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, gchar *key, unsigned char **mem) {
+ static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, gchar *key, unsigned char **mem, gboolean check_key) {
   // if plant is NULL, returns type
   // "host_default" sets key; otherwise NULL
-  size_t bytes;
-  guint32 len,vlen;
-  int st; // seed type
-  int ne; // num elems
+   // check_key set to TRUE - check that we read the correct key
+
   void **values;
-  int i,j;
+
+  size_t bytes;
 
   int *ints;
   double *dubs;
   gint64 *int64s;
-  
+
+  guint32 len,vlen;
+
+  gchar *mykey=NULL;
+
+  int st; // seed type
+  int ne; // num elems
+  int i,j;
   int type=0;
 
-  gboolean free_key=FALSE;
-
-  if (key==NULL) {
+  if (key==NULL || check_key) {
     if (mem==NULL) {
-      if (lives_read(fd,&len,sizint,TRUE)<sizint) return -4;
+      if (lives_read_le(fd,&len,4,TRUE)<4) return -4;
     }
     else {
-      w_memcpy(&len,*mem,sizint);
-      *mem+=sizint;
+      w_memcpy(&len,*mem,4);
+      *mem+=4;
     }
+
+    if (check_key&&len!=strlen(key)) return -9;
+
+    if (len>65535) return -10;
   
-    key=g_try_malloc((size_t)len+1);
-    if (key==NULL) return -5;
+    mykey=g_try_malloc((size_t)len+1);
+    if (mykey==NULL) return -5;
 
     if (mem==NULL) {
-      if (lives_read(fd,key,(size_t)len,TRUE)<len) {
+      if (lives_read(fd,mykey,(size_t)len,TRUE)<len) {
+	g_free(mykey);
 	return -4;
       }
     }
     else {
-      w_memcpy(key,*mem,(size_t)len);
+      w_memcpy(mykey,*mem,(size_t)len);
       *mem+=len;
     }
-    memset(key+(size_t)len,0,1);
-    free_key=TRUE;
-  }
-  if (mem==NULL) {
-    if (lives_read(fd,&st,sizint,TRUE)<sizint) {
-      if (free_key) g_free(key);
-      return -4;
+    memset(mykey+(size_t)len,0,1);
+
+    if (check_key&&strcmp(mykey,key)) {
+      g_free(mykey);
+      return -1;
     }
-  }
-  else {
-    w_memcpy(&st,*mem,sizint);
-    *mem+=sizint;
+
+    if (key==NULL) key=mykey;
+    else {
+      g_free(mykey);
+      mykey=NULL;
+    }
   }
 
+
   if (mem==NULL) {
-    if (lives_read(fd,&ne,sizint,TRUE)<sizint) {
-      if (free_key) g_free(key);
+    if (lives_read_le(fd,&st,4,TRUE)<4) {
+      if (mykey!=NULL) g_free(mykey);
       return -4;
     }
   }
   else {
-    w_memcpy(&ne,*mem,sizint);
-    *mem+=sizint;
+    w_memcpy(&st,*mem,4);
+    *mem+=4;
   }
+
+  if (st!=WEED_SEED_INT&&st!=WEED_SEED_BOOLEAN&&st!=WEED_SEED_DOUBLE&&st!=WEED_SEED_INT64&&
+      st!=WEED_SEED_STRING&&st!=WEED_SEED_VOIDPTR&&st!=WEED_SEED_PLANTPTR)
+    return -6;
+
+
+  if (check_key&&!strcmp(key,"type")) {
+    // for the "type" leaf perform some extra checks
+    if (st!=WEED_SEED_INT) {
+      return -2;
+    }
+  }
+
+
+  if (mem==NULL) {
+    if (lives_read_le(fd,&ne,4,TRUE)<4) {
+      if (mykey!=NULL) g_free(mykey);
+      return -4;
+    }
+  }
+  else {
+    w_memcpy(&ne,*mem,4);
+    *mem+=4;
+  }
+
+
 
   if (ne>0) values=g_malloc(ne*sizeof(void *));
   else values=NULL;
 
+  if (check_key&&!strcmp(key,"type")) {
+    // for the "type" leaf perform some extra checks
+    if (ne!=1) {
+      return -3;
+    }
+  }
+
   for (i=0;i<ne;i++) {
     if (mem==NULL) {
-      bytes=lives_read(fd,&vlen,sizint,TRUE);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&vlen,4,TRUE);
+      if (bytes<4) {
 	for (--i;i>=0;g_free(values[i--]));
 	g_free(values);
-	if (free_key) g_free(key);
+	if (mykey!=NULL) g_free(mykey);
 	return -4;
       }
     }
     else {
-      w_memcpy(&vlen,*mem,sizint);
-      *mem+=sizint;
+      w_memcpy(&vlen,*mem,4);
+      *mem+=4;
     }
       
     if (st==WEED_SEED_STRING) {
       values[i]=g_malloc((size_t)vlen+1);
     }
-    else values[i]=g_malloc((size_t)vlen);
+    else {
+      if (vlen<=8) {
+	values[i]=g_malloc((size_t)vlen);
+      }
+      else return -8;
+    }
 
     if (mem==NULL) {
-      bytes=lives_read(fd,values[i],vlen,TRUE);
+      if (st!=WEED_SEED_STRING)
+	bytes=lives_read_le(fd,values[i],vlen,TRUE);
+      else 
+	bytes=lives_read(fd,values[i],vlen,TRUE);
       if (bytes<vlen) {
 	for (--i;i>=0;g_free(values[i--]));
 	g_free(values);
-	if (free_key) g_free(key);
+	if (mykey!=NULL) g_free(mykey);
 	return -4;
       }
     }
@@ -6779,20 +6836,7 @@ static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, gchar *key, unsig
     }
   }
 
-  // if plant was NULL, we should return a single int "type"
-  if (plant==NULL) {
-    if (strcmp(key,"type")) {
-      if (free_key) g_free(key);
-      return -1;
-    }
-    if (st!=WEED_SEED_INT) {
-      if (free_key) g_free(key);
-      return -2;
-    }
-    if (ne!=1) {
-      if (free_key) g_free(key);
-      return -3;
-    }
+  if (plant==NULL&&!strcmp(key,"type")) {
     type=*(int*)(values[0]);
   }
   else {
@@ -6802,7 +6846,7 @@ static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, gchar *key, unsig
       case WEED_SEED_INT:
 	// fallthrough
       case WEED_SEED_BOOLEAN:
-	ints=g_malloc(ne*sizint);
+	ints=g_malloc(ne*4);
 	for (j=0;j<ne;j++) ints[j]=*(int *)values[j];
 	weed_leaf_set (plant, key, st, ne, (void *)ints);
 	g_free(ints);
@@ -6836,7 +6880,7 @@ static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, gchar *key, unsig
     for (i=0;i<ne;i++) g_free(values[i]);
     g_free(values);
   }
-  if (free_key) g_free(key);
+  if (mykey!=NULL) g_free(mykey);
   if (plant==NULL) return type;
   return 0;
 }
@@ -6850,25 +6894,32 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem) {
   size_t bytes;
   int err;
 
-
   // caller should clear and check mainw->read_failed
 
   if (mem==NULL) {
-    if ((bytes=lives_read(fd,&numleaves,sizint,TRUE))<sizint) {
+    if ((bytes=lives_read_le(fd,&numleaves,4,TRUE))<4) {
       mainw->read_failed=FALSE; // we are allowed to EOF here
       return NULL;
     }
   }
   else {
-    w_memcpy(&numleaves,*mem,sizint);
-    *mem+=sizint;
+    w_memcpy(&numleaves,*mem,4);
+    *mem+=4;
   }
 
   plant=weed_plant_new(WEED_PLANT_UNKNOWN);
   weed_leaf_set_flags (plant,"type",0);
 
+  if ((err=weed_leaf_deserialise(fd,plant,"type",mem,TRUE))) {
+    // check the "type" leaf first
+    weed_plant_free(plant);
+    return NULL;
+  }
+
+  numleaves--;
+
   while (numleaves--) {
-    if ((err=weed_leaf_deserialise(fd,plant,NULL,mem))) {
+    if ((err=weed_leaf_deserialise(fd,plant,NULL,mem,FALSE))) {
       weed_plant_free(plant);
       return NULL;
     }
@@ -6911,13 +6962,13 @@ gboolean write_filter_defaults (int fd, int idx) {
 	hashname=make_weed_hashname(idx,TRUE);
 	vlen=strlen(hashname);
 	
-	lives_write(fd,&vlen,sizeof(size_t),TRUE);
+	lives_write_le(fd,&vlen,4,TRUE);
 	lives_write(fd,hashname,vlen,TRUE);
 	g_free(hashname);
 	wrote_hashname=TRUE;
-	lives_write(fd,&ntowrite,sizint,TRUE);
+	lives_write_le(fd,&ntowrite,4,TRUE);
       }
-      lives_write(fd,&i,sizint,TRUE);
+      lives_write_le(fd,&i,4,TRUE);
       weed_leaf_serialise(fd,ptmpls[i],"host_default",FALSE,NULL);
     }
   }
@@ -6945,10 +6996,21 @@ gboolean read_filter_defaults(int fd) {
   mainw->read_failed=FALSE;
 
   while (1) {
-    if (lives_read(fd,&vlen,sizeof(size_t),TRUE)<sizeof(size_t)) {
+    if (lives_read_le(fd,&vlen,4,TRUE)<4) {
       // we are allowed to EOF here
       mainw->read_failed=FALSE;
       break;
+    }
+
+    if (vlen>65535) {
+      // some files erroneously used a vlen of 8
+      if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
+      if (lives_read_le(fd,&vlen,8,TRUE)<8) {
+	// we are allowed to EOF here
+	mainw->read_failed=FALSE;
+	break;
+      }
+      if (vlen>65535) return FALSE;
     }
 
     buf=g_malloc(vlen+1);
@@ -6974,23 +7036,23 @@ gboolean read_filter_defaults(int fd) {
     }
     else num_params=0;
 
-    if (lives_read(fd,&ntoread,sizint,TRUE)<sizint) {
+    if (lives_read_le(fd,&ntoread,4,TRUE)<4) {
       if (ptmpls!=NULL) weed_free(ptmpls);
       break;
     }
 
     for (i=0;i<ntoread;i++) {
-      if (lives_read(fd,&pnum,sizint,TRUE)<sizint) {
+      if (lives_read_le(fd,&pnum,4,TRUE)<4) {
 	if (ptmpls!=NULL) weed_free(ptmpls);
 	break;
       }
 
       if (pnum<num_params) {
-	weed_leaf_deserialise(fd,ptmpls[pnum],"host_default",NULL);
+	weed_leaf_deserialise(fd,ptmpls[pnum],"host_default",NULL,FALSE);
       }
       else {
 	weed_plant_t *dummyplant=weed_plant_new(WEED_PLANT_UNKNOWN);
-	weed_leaf_deserialise(fd,dummyplant,"host_default",NULL);
+	weed_leaf_deserialise(fd,dummyplant,"host_default",NULL,FALSE);
 	weed_plant_free(dummyplant);
       }
       if (mainw->read_failed) break;
@@ -7045,19 +7107,19 @@ gboolean write_generator_sizes (int fd, int idx) {
       if (!wrote_hashname) {
 	hashname=make_weed_hashname(idx,TRUE);
 	vlen=strlen(hashname);
-	lives_write(fd,&vlen,sizeof(size_t),TRUE);
+	lives_write_le(fd,&vlen,4,TRUE);
 	lives_write(fd,hashname,vlen,TRUE);
 	g_free(hashname);
 	wrote_hashname=TRUE;
 
 	if (weed_plant_has_leaf(filter,"host_fps")) {
 	  int j=-1;
-	  lives_write(fd,&j,sizint,TRUE);
+	  lives_write_le(fd,&j,4,TRUE);
 	  weed_leaf_serialise(fd,filter,"host_fps",FALSE,NULL);
 	}
       }
   
-      lives_write(fd,&i,sizint,TRUE);
+      lives_write_le(fd,&i,4,TRUE);
       if (weed_plant_has_leaf(ctmpls[i],"host_width")) weed_leaf_serialise(fd,ctmpls[i],"host_width",FALSE,NULL);
       else weed_leaf_serialise(fd,ctmpls[i],"width",FALSE,NULL);
       if (weed_plant_has_leaf(ctmpls[i],"host_height")) weed_leaf_serialise(fd,ctmpls[i],"host_height",FALSE,NULL);
@@ -7088,10 +7150,22 @@ gboolean read_generator_sizes(int fd) {
   mainw->read_failed=FALSE;
 
   while (1) {
-    bytes=lives_read(fd,&vlen,sizeof(size_t),TRUE);
-    if (bytes<sizeof(size_t)) {
+    bytes=lives_read_le(fd,&vlen,4,TRUE);
+    if (bytes<4) {
       mainw->read_failed=FALSE;
       break;
+    }
+
+
+    if (vlen>65535) {
+      // some files erroneously used a vlen of 8
+      if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
+      if (lives_read_le(fd,&vlen,8,TRUE)<8) {
+	// we are allowed to EOF here
+	mainw->read_failed=FALSE;
+	break;
+      }
+      if (vlen>65535) return FALSE;
     }
 
     buf=g_malloc(vlen+1);
@@ -7117,21 +7191,21 @@ gboolean read_generator_sizes(int fd) {
       num_chans=weed_leaf_num_elements(filter,"out_channel_templates");
       if (num_chans>0) ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
 
-      bytes=lives_read(fd,&cnum,sizint,TRUE);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&cnum,4,TRUE);
+      if (bytes<4) {
 	break;
       }
       
       if (cnum<num_chans&&cnum>=0) {
-	weed_leaf_deserialise(fd,ctmpls[cnum],"host_width",NULL);
-	weed_leaf_deserialise(fd,ctmpls[cnum],"host_height",NULL);
+	weed_leaf_deserialise(fd,ctmpls[cnum],"host_width",NULL,FALSE);
+	weed_leaf_deserialise(fd,ctmpls[cnum],"host_height",NULL,FALSE);
 	if (weed_get_int_value(ctmpls[cnum],"host_width",&error)==0) 
 	  weed_set_int_value(ctmpls[cnum],"host_width",DEF_GEN_WIDTH);
 	if (weed_get_int_value(ctmpls[cnum],"host_height",&error)==0) 
 	  weed_set_int_value(ctmpls[cnum],"host_height",DEF_GEN_HEIGHT);
       }
       else if (cnum==-1) {
-	weed_leaf_deserialise(fd,filter,"host_fps",NULL);
+	weed_leaf_deserialise(fd,filter,"host_fps",NULL,FALSE);
       }
     }
 
@@ -7201,56 +7275,59 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
     }
     if (ver>1) {
       // for future - read nvals
-      bytes=lives_read(fd,&nvals,sizint,TRUE);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&nvals,4,TRUE);
+      if (bytes<4) {
 	goto err123;
       }
-      bytes=lives_read(fd,&tc,sizeof(weed_timecode_t),TRUE);
+      bytes=lives_read_le(fd,&tc,8,TRUE);
       if (bytes<sizeof(weed_timecode_t)) {
 	goto err123;
       }
       // read n ints (booleans)
-      bytes=lives_read(fd,&nigns,sizint,TRUE);
-      if (bytes<sizint) {
+      bytes=lives_read_le(fd,&nigns,4,TRUE);
+      if (bytes<4) {
 	goto err123;
       }
       if (nigns>0) {
-	int *igns=g_malloc(nigns*sizint);
-	bytes=lives_read(fd,&igns,nigns*sizint,TRUE);
-	g_free(igns);
-	if (bytes<nigns*sizint) {
-	  goto err123;
+	int *igns=g_malloc(nigns*4);
+	for (j=0;j<nigns;j++) {
+	  bytes=lives_read_le(fd,&igns[j],4,TRUE);
+	  if (bytes<4) {
+	    goto err123;
+	  }
 	}
+	g_free(igns);
       }
     }
 
-    if (weed_leaf_deserialise(fd,key_defs[i],"value",NULL)<0) goto err123;
+    if (weed_leaf_deserialise(fd,key_defs[i],"value",NULL,FALSE)<0) goto err123;
 
     if (ver>1) {
       for (j=0;j<nvals;j++) {
  	// for future - read timecodes
 	weed_plant_t *plant=weed_plant_new(WEED_PLANT_PARAMETER);
-	bytes=lives_read(fd,&tc,sizeof(weed_timecode_t),TRUE);
-	if (bytes<sizeof(weed_timecode_t)) {
+	bytes=lives_read_le(fd,&tc,8,TRUE);
+	if (bytes<8) {
 	  goto err123;
 	}
 	// read n ints (booleans)
-	bytes=lives_read(fd,&nigns,sizint,TRUE);
-	if (bytes<sizint) {
+	bytes=lives_read_le(fd,&nigns,4,TRUE);
+	if (bytes<4) {
 	  goto err123;
 	}
 	if (nigns>0) {
-	  int *igns=g_malloc(nigns*sizint);
-	  bytes=lives_read(fd,&igns,nigns*sizint,TRUE);
-	  g_free(igns);
-	  if (bytes<nigns*sizint) {
-	    goto err123;
+	  int *igns=g_malloc(nigns*4);
+	  for (j=0;j<nigns;j++) {
+	    bytes=lives_read_le(fd,&igns[j],4,TRUE);
+	    if (bytes<4) {
+	      goto err123;
+	    }
 	  }
+	  // discard excess values
+	  ret=weed_leaf_deserialise(fd,plant,"value",NULL,FALSE);
+	  weed_plant_free(plant);
+	  if (ret<0) goto err123;
 	}
-	// discard excess values
-	ret=weed_leaf_deserialise(fd,plant,"value",NULL);
-	weed_plant_free(plant);
-	if (ret<0) goto err123;
       }
     }
   }
@@ -7307,13 +7384,13 @@ void write_key_defaults(int fd, gint key, gint mode) {
   int i,nparams=0;
 
   if ((key_defs=key_defaults[key][mode])==NULL) {
-    lives_write (fd,&nparams,sizint,TRUE);
+    lives_write (fd,&nparams,4,TRUE);
     return;
   }
 
   filter=weed_filters[key_to_fx[key][mode]];
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
-  lives_write (fd,&nparams,sizint,TRUE);
+  lives_write (fd,&nparams,4,TRUE);
 
   for (i=0;i<nparams;i++) {
     if (mainw->write_failed) break;

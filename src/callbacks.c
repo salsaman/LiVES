@@ -147,7 +147,7 @@ void lives_exit (void) {
 	lives_system (com,FALSE);
 	g_free (com);
       }
-      g_snprintf(prefs->tmpdir,256,"%s",future_prefs->tmpdir);
+      g_snprintf(prefs->tmpdir,PATH_MAX,"%s",future_prefs->tmpdir);
     }
     else if (!mainw->only_close) g_snprintf(future_prefs->tmpdir,256,"NULL");
 
@@ -446,11 +446,11 @@ on_filesel_complex_clicked                      (GtkButton *button,
   // TODO - dirsep
 
   if (strcmp(file_name+strlen(file_name)-1,"/")) {
-    g_strappend(file_name,256,"/");
+    g_strappend(file_name,PATH_MAX,"/");
   }
 
   if (strlen (file_name)<10||strncmp (file_name+strlen (file_name)-10,"/livestmp/",10)) 
-    g_strappend (file_name,256,"livestmp/");
+    g_strappend (file_name,PATH_MAX,"livestmp/");
   gtk_entry_set_text(entry,file_name);
 
 }
@@ -464,10 +464,10 @@ on_filesel_simple_clicked (GtkButton *button, GtkEntry *entry) {
   while (g_main_context_iteration(NULL,FALSE));
   dirname=choose_file(fname,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,NULL,NULL);
   if (dirname!=NULL) {
-    g_snprintf(file_name,256,"%s",dirname);
+    g_snprintf(file_name,PATH_MAX,"%s",dirname);
     g_free(dirname);
   }
-  else g_snprintf(file_name,256,"%s",fname);
+  else g_snprintf(file_name,PATH_MAX,"%s",fname);
   g_free(fname);
   if (button!=NULL) gtk_entry_set_text(entry,file_name);
 }
@@ -1182,7 +1182,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
 
   d_print_done();
 
-  g_snprintf(mainw->set_name,256,"%s",new_set);
+  g_snprintf(mainw->set_name,128,"%s",new_set);
   on_load_set_ok(NULL,GINT_TO_POINTER(FALSE));
   g_free(new_set);
 }
@@ -1201,7 +1201,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
 
   if (strlen(mainw->set_name)==0) {
     gint response;
-    gchar new_set_name[256];
+    gchar new_set_name[128];
     do {
       // prompt for a set name, advise user to save set
       renamew=create_rename_dialog(5);
@@ -1213,12 +1213,12 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
 	mainw->cancelled=CANCEL_USER;
 	return;
       }
-      g_snprintf(new_set_name,256,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
+      g_snprintf(new_set_name,128,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
       while (g_main_context_iteration(NULL,FALSE));
     } while (!is_legal_set_name(new_set_name,FALSE));
-    g_snprintf(mainw->set_name,256,"%s",new_set_name);
+    g_snprintf(mainw->set_name,128,"%s",new_set_name);
   }
 
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
@@ -1314,7 +1314,7 @@ on_backup_ok_clicked                  (GtkButton       *button,
 				       gpointer         user_data)
 {
   gchar *tmp;
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8
+  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8
 				 (gtk_file_selection_get_filename(GTK_FILE_SELECTION
 								  (gtk_widget_get_toplevel(GTK_WIDGET(button)))),
 				  -1,NULL,NULL,NULL)));
@@ -1326,7 +1326,7 @@ on_backup_ok_clicked                  (GtkButton       *button,
 
   backup_file(mainw->current_file,1,cfile->frames,file_name);
 
-  g_snprintf(mainw->proj_save_dir,256,"%s",file_name);
+  g_snprintf(mainw->proj_save_dir,PATH_MAX,"%s",file_name);
   get_dirname (mainw->proj_save_dir);
 }
 
@@ -1335,7 +1335,7 @@ on_restore_ok_clicked                  (GtkButton       *button,
                                         gpointer         user_data)
 {
   gchar *tmp;
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8
+  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8
 				 (gtk_file_selection_get_filename(GTK_FILE_SELECTION
 								  (gtk_widget_get_toplevel(GTK_WIDGET(button)))),
 				  -1,NULL,NULL,NULL)));
@@ -1347,7 +1347,7 @@ on_restore_ok_clicked                  (GtkButton       *button,
 
   restore_file(file_name);
 
-  g_snprintf(mainw->proj_load_dir,256,"%s",file_name);
+  g_snprintf(mainw->proj_load_dir,PATH_MAX,"%s",file_name);
   get_dirname (mainw->proj_load_dir);
 
 }
@@ -4519,7 +4519,9 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) {
       migrate_layouts(old_set,mainw->set_name);
       // save updated layout.map (with new handles), we will move it below
+
       save_layout_map(NULL,NULL,NULL,layout_map_dir);
+
       got_new_handle=FALSE;
     }
     g_free(layout_map_file);
@@ -4530,7 +4532,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
       nsetn=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
 
       //append current layout.map to target one
-      com=g_strdup_printf("/bin/cat \"%s\" \"%s\" > \"%s\" 2>/dev/null",nsetn,osetn,nsetn);
+      com=g_strdup_printf("/bin/cat \"%s\" >> \"%s\" 2>/dev/null",osetn,nsetn);
       lives_system(com,TRUE);
       g_free(com);
       com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",osetn);
@@ -4573,6 +4575,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     g_free(layout_map_file);
   }
 
+  /*
   if (got_new_handle) {
     // new file(s) were added to an existing set
     layout_map_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,mainw->set_name);
@@ -4581,6 +4584,8 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     g_free(layout_map_file);
     g_free(layout_map_dir);
   }
+  */
+
 
   if (mainw->current_layouts_map!=NULL&&strcmp(old_set,mainw->set_name)&&!mainw->is_exiting) {
     // warn the user about layouts if the set name changed
@@ -5456,7 +5461,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   else {
     // open file
     gchar *tmp;
-    g_snprintf(file_name,256,"%s",
+    g_snprintf(file_name,PATH_MAX,"%s",
 	       (tmp=g_filename_to_utf8(gtk_file_selection_get_filename
 				       (GTK_FILE_SELECTION(gtk_widget_get_toplevel
 							   (GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
@@ -5532,13 +5537,20 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 	gint offs_x=(fwidth-width)/2.;
 	gint offs_y=(fheight-height)/2.;
 	GdkPixbuf *blank=gdk_pixbuf_new_blank(fwidth,fheight,WEED_PALETTE_RGB24);
-	gdk_draw_pixbuf (GDK_DRAWABLE (mainw->fs_playarea->window),mainw->gc,blank,0,0,0,0,-1,-1,GDK_RGB_DITHER_NONE,0,0);
+	cairo_t *cr = gdk_cairo_create (mainw->fs_playarea->window);
+
+	gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
+	cairo_paint (cr);
+
+
 	gdk_pixbuf_unref(blank);
 
 	if (offs_x<0) offs_x=0;
 	if (offs_y<0) offs_y=0;
-	gdk_draw_pixbuf (GDK_DRAWABLE (mainw->fs_playarea->window),mainw->gc,pixbuf,0,0,
-			 offs_x,offs_y,-1,-1,GDK_RGB_DITHER_NONE,0,0);
+
+	gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
+	cairo_paint (cr);
+	cairo_destroy (cr);
       }	
       else {
 	g_error_free(error);
@@ -5646,7 +5658,7 @@ on_ok_button1_clicked                  (GtkButton       *button,
   gchar *tmp;
 
   if (user_data==NULL) {
-    g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8
+    g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8
 				   (gtk_file_selection_get_filename(GTK_FILE_SELECTION
 								    ((filesel=gtk_widget_get_toplevel
 								      (GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));
@@ -5654,7 +5666,7 @@ on_ok_button1_clicked                  (GtkButton       *button,
 
     end_fs_preview();
 				 
-    g_snprintf(mainw->vid_load_dir,256,"%s",file_name);
+    g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",file_name);
     get_dirname(mainw->vid_load_dir);
     fnames=gtk_file_selection_get_selections(GTK_FILE_SELECTION(filesel));
     gtk_widget_destroy(filesel);
@@ -5692,7 +5704,7 @@ on_ok_button1_clicked                  (GtkButton       *button,
   mainw->img_concat_clip=-1;
 
   while (fnames[i]!=NULL&&mainw->cancelled==CANCEL_NONE) {
-    g_snprintf(file_name,256,"%s",fnames[i]);
+    g_snprintf(file_name,PATH_MAX,"%s",fnames[i]);
     open_file(file_name);
     i++;
   }
@@ -5763,13 +5775,13 @@ on_open_sel_ok_button_clicked                  (GtkButton       *button,
 						gpointer         user_data)
 {
   gchar *tmp;
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8
-				 (gtk_file_selection_get_filename(GTK_FILE_SELECTION
-								  (gtk_widget_get_toplevel(GTK_WIDGET(button)))),
-				  -1,NULL,NULL,NULL)));
+  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8
+				      (gtk_file_selection_get_filename(GTK_FILE_SELECTION
+								       (gtk_widget_get_toplevel(GTK_WIDGET(button)))),
+				       -1,NULL,NULL,NULL)));
   g_free(tmp);
 
-  g_snprintf(mainw->vid_load_dir,256,"%s",file_name);
+  g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",file_name);
   get_dirname(mainw->vid_load_dir);
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 
@@ -5877,11 +5889,12 @@ on_ok_button4_clicked                  (GtkButton       *button,
   oundo_start=cfile->undo_start;
   oundo_end=cfile->undo_end;
 
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename
-							(GTK_FILE_SELECTION(gtk_widget_get_toplevel
-									    (GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
+  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename
+							     (GTK_FILE_SELECTION(gtk_widget_get_toplevel
+										 (GTK_WIDGET(button)))),
+							     -1,NULL,NULL,NULL)));
   g_free(tmp);
-  g_snprintf(mainw->audio_dir,256,"%s",file_name);
+  g_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
   get_dirname(mainw->audio_dir);
   end_fs_preview();
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -6374,8 +6387,9 @@ void
 on_full_screen_activate               (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
-  gchar buff[256];
+  gchar buff[PATH_MAX];
   GtkWidget *fs_img;
+  gchar *fnamex;
 
   if (mainw->current_file>-1&&!cfile->frames&&mainw->multitrack==NULL) return;
 
@@ -6385,7 +6399,10 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
 
   if (mainw->current_file==-1) return;
 
-  g_snprintf (buff,256,"%s%s/fullscreen.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"fullscreen.png",NULL);
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
+
   fs_img=gtk_image_new_from_file (buff);
   gtk_widget_show(fs_img);
   if (!mainw->fs) {
@@ -6393,9 +6410,9 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
       GdkPixbuf *pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(fs_img));
       gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_fullscreen),mainw->tooltips,_("Fullscreen playback (f)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_fullscreen),_("Fullscreen playback (f)"));
   }
-  else gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_fullscreen),mainw->tooltips,_("Fullscreen playback off (f)"),"");
+  else gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_fullscreen),_("Fullscreen playback off (f)"));
 
   gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->t_fullscreen),fs_img);
 
@@ -6582,8 +6599,9 @@ void
 on_double_size_activate               (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
-  gchar buff[256];
+  gchar buff[PATH_MAX];
   GtkWidget *sngl_img;
+  gchar *fnamex;
 
   if (mainw->multitrack!=NULL||(mainw->current_file>-1&&cfile->frames==0&&user_data==NULL)) return;
 
@@ -6596,14 +6614,18 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
   if (user_data!=NULL) {
     // change the blank window icons
     if (!mainw->double_size) {
-      g_snprintf (buff,256,"%s%s/zoom-in.png",prefs->prefix_dir,ICON_DIR);
+      fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"zoom-in.png",NULL);
+      g_snprintf (buff,PATH_MAX,"%s",fnamex);
+      g_free(fnamex);
       sngl_img=gtk_image_new_from_file (buff);
-      gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_double),mainw->tooltips,_("Double size (d)"),"");
+      gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_double),_("Double size (d)"));
     }
     else {
-      g_snprintf (buff,256,"%s%s/zoom-out.png",prefs->prefix_dir,ICON_DIR);
+      fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"zoom-out.png",NULL);
+      g_snprintf (buff,PATH_MAX,"%s",fnamex);
+      g_free(fnamex);
       sngl_img=gtk_image_new_from_file (buff);
-      gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_double),mainw->tooltips,_("Single size (d)"),"");
+      gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_double),_("Single size (d)"));
     }
     
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
@@ -6705,10 +6727,10 @@ void
 on_sepwin_activate               (GtkMenuItem     *menuitem,
 				  gpointer         user_data)
 {
-  gchar buff[256];
+  gchar buff[PATH_MAX];
   GtkWidget *sep_img;
   GtkWidget *sep_img2;
-
+  gchar *fnamex;
 
   mainw->sep_win=!mainw->sep_win;
 
@@ -6717,13 +6739,16 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
     mainw->multitrack->redraw_block=TRUE; // stop pb cursor from updating
   }
 
-  g_snprintf (buff,256,"%s%s/sepwin.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png",NULL);
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
+
   sep_img=gtk_image_new_from_file (buff);
   sep_img2=gtk_image_new_from_file (buff);
 
   if (mainw->sep_win) {
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_sepwinbutton),mainw->tooltips,_("Hide the play window (s)"),"");
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_sepwin),mainw->tooltips,_("Hide the play window (s)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_sepwinbutton),_("Hide the play window (s)"));
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_sepwin),_("Hide the play window (s)"));
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
@@ -6732,8 +6757,8 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
       pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(sep_img2));
       if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_sepwinbutton),mainw->tooltips,_("Show the play window (s)"),"");
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->t_sepwin),mainw->tooltips,_("Play in separate window (s)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_sepwinbutton),_("Show the play window (s)"));
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_sepwin),_("Play in separate window (s)"));
   }
 
   gtk_widget_show(sep_img);
@@ -7023,23 +7048,27 @@ void
 on_loop_cont_activate                (GtkMenuItem     *menuitem,
 				      gpointer         user_data)
 {
-  gchar buff[256];
+  gchar buff[PATH_MAX];
   GtkWidget *loop_img;
+  gchar *fnamex;
 
   mainw->loop_cont=!mainw->loop_cont;
 
-  g_snprintf (buff,256,"%s%s/loop.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"loop.png",NULL);
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
+
   loop_img=gtk_image_new_from_file (buff);
 
   if (mainw->loop_cont) {
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_loopbutton),mainw->tooltips,_("Switch continuous looping off (o)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_loopbutton),_("Switch continuous looping off (o)"));
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       GdkPixbuf *pixbuf=gtk_image_get_pixbuf(GTK_IMAGE(loop_img));
       if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_loopbutton),mainw->tooltips,_("Switch continuous looping on (o)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_loopbutton),_("Switch continuous looping on (o)"));
   }
 
   gtk_widget_show(loop_img);
@@ -7108,7 +7137,7 @@ on_volume_slider_value_changed           (GtkRange   *slider,
 
 #endif
   ttip=g_strdup_printf(_("Audio volume (%.2f)"),mainw->volume);
-  gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->vol_toolitem),mainw->tooltips,_(ttip),"");
+  gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->vol_toolitem),_(ttip));
   g_free(ttip);
 }
 
@@ -7137,19 +7166,23 @@ void
 on_mute_activate                (GtkMenuItem     *menuitem,
 				 gpointer         user_data)
 {
-  gchar buff[256];
+  gchar buff[PATH_MAX];
   GtkWidget *mute_img;
   GtkWidget *mute_img2=NULL;
+  gchar *fnamex;
 
   mainw->mute=!mainw->mute;
 
   // change the mute icon
-  g_snprintf (buff,256,"%s%s/volume_mute.png",prefs->prefix_dir,ICON_DIR);
+  fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"volume_mute.png",NULL);
+  g_snprintf (buff,PATH_MAX,"%s",fnamex);
+  g_free(fnamex);
+
   mute_img=gtk_image_new_from_file (buff);
   if (mainw->preview_box!=NULL) mute_img2=gtk_image_new_from_file (buff);
   if (mainw->mute) {
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_mutebutton),mainw->tooltips,_("Unmute the audio (z)"),"");
-    if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_mutebutton,_("Unmute the audio (z)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_mutebutton),_("Unmute the audio (z)"));
+    if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_mutebutton,_("Unmute the audio (z)"));
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
@@ -7160,8 +7193,8 @@ on_mute_activate                (GtkMenuItem     *menuitem,
 	if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
       }
     }
-    gtk_tool_item_set_tooltip(GTK_TOOL_ITEM(mainw->m_mutebutton),mainw->tooltips,_("Mute the audio (z)"),"");
-    if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_mutebutton,_("Mute the audio (z)"),"");
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_mutebutton),_("Mute the audio (z)"));
+    if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_mutebutton,_("Mute the audio (z)"));
   }
 
   gtk_widget_show(mute_img);
@@ -7798,12 +7831,12 @@ on_load_vcd_ok_clicked                (GtkButton     *button,
 {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   if (GPOINTER_TO_INT (user_data)==1) {
-    g_snprintf (file_name,256,"dvd://%d",(int)mainw->fx1_val);
+    g_snprintf (file_name,PATH_MAX,"dvd://%d",(int)mainw->fx1_val);
     if (mainw->file_open_params!=NULL) g_free(mainw->file_open_params);
     mainw->file_open_params=g_strdup_printf ("-chapter %d -aid %d",(int)mainw->fx2_val,(int)mainw->fx3_val);
   }
   else {
-    g_snprintf (file_name,256,"vcd://%d",(int)mainw->fx1_val);
+    g_snprintf (file_name,PATH_MAX,"vcd://%d",(int)mainw->fx1_val);
   }
   open_sel_range_activate();
 }
@@ -7827,7 +7860,7 @@ on_xmms_random_audio_activate                (GtkMenuItem     *menuitem,
 {
   xranw = create_rp_dialog();
   gtk_widget_show (xranw->rp_dialog);
-  g_snprintf(file_name,256,"%s",mainw->xmms_dir);
+  g_snprintf(file_name,PATH_MAX,"%s",mainw->xmms_dir);
 }
 
 
@@ -7910,7 +7943,7 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
 
   clear_mainw_msg();
 
-  g_snprintf(mainw->xmms_dir,256,"%s",file_name);
+  g_snprintf(mainw->xmms_dir,PATH_MAX,"%s",file_name);
 
 }
 
@@ -8022,7 +8055,7 @@ on_rename_set_name                   (GtkButton       *button,
 
 
 void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
-  gchar string[256];
+  gchar string[PATH_MAX];
   gchar *com;
 
   if (menuitem!=NULL&&mainw->toy_type==GPOINTER_TO_INT(user_data)) {
@@ -8104,7 +8137,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 
     // search for autolives.pl
     if (!capable->has_autolives) {
-      get_location("autolives.pl",string,256);
+      get_location("autolives.pl",string,PATH_MAX);
       if (strlen(string)) capable->has_autolives=TRUE;
       else {
 	do_no_autolives_error();
@@ -8364,6 +8397,7 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
                         mainw->video_draw->allocation.height
                         );
   }
+
   gdk_draw_pixmap(widget->window,
 		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
 		  mainw->video_drawable,
@@ -8545,6 +8579,7 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
 gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
   GdkRegion *reg;
   GdkRectangle rect;
+  cairo_t *cr;
 
   // only act on last event
   if (event->count>0) {
@@ -8578,12 +8613,17 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
 	if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
 	g_free(tmp);
       }
-      gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->camframe),
-		       rect.x,rect.y,rect.x,rect.y,rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
+      
+      cr = gdk_cairo_create (mainw->play_window->window);
+      gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->camframe), 0, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
     }
     else {
-      gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->imframe),
-		       rect.x,rect.y,rect.x,rect.y,rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
+      cr = gdk_cairo_create (mainw->play_window->window);
+      gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->imframe), 0, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
     }
 
     unblock_expose();
@@ -8600,9 +8640,10 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
     if (rect.height>gdk_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
       rect.height=gdk_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
     }
-    gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,
-		     GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf),rect.x,rect.y,rect.x,rect.y,
-		     rect.width,rect.height,GDK_RGB_DITHER_NONE,0,0);
+    cr = gdk_cairo_create (mainw->play_window->window);
+    gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->multitrack->sepwin_pixbuf), 0, 0);
+    cairo_paint (cr);
+    cairo_destroy (cr);
     unblock_expose();
     g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
     mainw->pw_exp_is_blocked=FALSE;
@@ -8815,7 +8856,7 @@ on_preview_clicked                     (GtkButton       *button,
       }
     }
 
-    if (button!=NULL) gtk_button_set_label(GTK_BUTTON(button),"Stop");
+    if (button!=NULL) gtk_button_set_label(GTK_BUTTON(button),_("Stop"));
     if (cfile->proc_ptr!=NULL) {
       gtk_widget_set_sensitive(cfile->proc_ptr->pause_button,FALSE);
       gtk_widget_set_sensitive(cfile->proc_ptr->cancel_button,FALSE);
@@ -8905,8 +8946,8 @@ on_preview_clicked                     (GtkButton       *button,
     }
   }
     
-  if (mainw->preview_box!=NULL) gtk_tooltips_set_tip (mainw->tooltips, mainw->p_playbutton,"Preview", NULL);
-  gtk_tooltips_set_tip (mainw->tooltips, mainw->m_playbutton,"Preview", NULL);
+  if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton, _("Preview"));
+  gtk_widget_set_tooltip_text( mainw->m_playbutton,_("Preview"));
 
   // redraw our bars for the clip 
   if (!mainw->merge) {
@@ -9970,10 +10011,10 @@ on_ok_export_audio_clicked                      (GtkButton *button,
 				      (GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL);
 
   if (strrchr(filename,'.')==NULL) {
-    g_snprintf(file_name,256,"%s.wav",filename);
+    g_snprintf(file_name,PATH_MAX,"%s.wav",filename);
   }
   else {
-    g_snprintf(file_name,256,"%s",filename);
+    g_snprintf(file_name,PATH_MAX,"%s",filename);
   }
   g_free (filename);
   
@@ -10030,7 +10071,7 @@ on_ok_export_audio_clicked                      (GtkButton *button,
   else {
     d_print_done();
     get_dirname (file_name);
-    g_snprintf (mainw->audio_dir,256,"%s",file_name);
+    g_snprintf (mainw->audio_dir,PATH_MAX,"%s",file_name);
   }
 }
 
@@ -10074,9 +10115,10 @@ on_ok_append_audio_clicked                      (GtkButton *button,
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
 
-  g_snprintf(file_name,256,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename
-							(GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),
-							-1,NULL,NULL,NULL)));
+  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename
+							     (GTK_FILE_SELECTION(gtk_widget_get_toplevel
+										 (GTK_WIDGET(button)))),
+							     -1,NULL,NULL,NULL)));
   g_free(tmp);
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -10151,7 +10193,7 @@ on_ok_append_audio_clicked                      (GtkButton *button,
     }
     else {
       get_dirname (file_name);
-      g_snprintf (mainw->audio_dir,256,"%s",file_name);
+      g_snprintf (mainw->audio_dir,PATH_MAX,"%s",file_name);
       reget_afilesize(mainw->current_file);
       cfile->changed=TRUE;
       get_play_times();

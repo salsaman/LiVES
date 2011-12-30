@@ -5019,7 +5019,7 @@ render_details *create_render_details (gint type) {
   eventbox=gtk_event_box_new();
 
   label=gtk_label_new_with_mnemonic (_("_Always use these values"));
-  gtk_tooltips_set_tip (mainw->tooltips, rdet->always_checkbutton, _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."), NULL);
+  gtk_widget_set_tooltip_text( rdet->always_checkbutton, _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."));
   gtk_tooltips_copy(eventbox,rdet->always_checkbutton);
   
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),rdet->always_checkbutton);

@@ -1,0 +1,4 @@
+mkfifo "$HOME/stream.yuv"
+mplayer "$1" -vo yuv4mpeg:file="$HOME/stream.yuv" &
+lives -noset -yuvin "$HOME/stream.yuv"
+rm "$HOME/stream.yuv"

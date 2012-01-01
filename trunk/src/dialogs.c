@@ -17,9 +17,7 @@
 #include "audio.h" // for fill_abuffer_from
 #include "resample.h"
 
-// for ping-pong loops
 
-//
 extern void reset_frame_and_clip_index (void);
 
 
@@ -144,6 +142,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   GtkWidget *dialog_action_area2;
   GtkWidget *warning_cancelbutton=NULL;
   GtkWidget *warning_okbutton=NULL;
+  GtkWidget *abortbutton=NULL;
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
@@ -164,10 +163,13 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_YES);
     break;
-  case LIVES_DIALOG_CANCEL_RETRY:
+  case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - File Error"));
     mainw->warning_label = gtk_label_new (_("File Error"));
+    abortbutton = gtk_button_new_from_stock ("gtk-quit");
+    gtk_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), abortbutton, LIVES_ABORT);
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, LIVES_CANCEL);
     warning_okbutton = gtk_button_new_from_stock ("gtk-redo");
@@ -292,7 +294,7 @@ gboolean do_yesno_dialog(const gchar *text) {
 
 
 // returns LIVES_CANCEL or LIVES_RETRY
-int do_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
+int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
   int response;
   gchar *mytext;
   GtkWidget *warning;
@@ -307,13 +309,22 @@ int do_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
   }
 
   mytext=g_strdup(text); // translation issues
-  warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_CANCEL_RETRY);
+
+  do {
+    warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_ABORT_CANCEL_RETRY);
+
+    response=gtk_dialog_run (GTK_DIALOG (warning));
+    gtk_widget_destroy (warning);
+
+    while (g_main_context_iteration(NULL,FALSE));
+
+    if (response==LIVES_ABORT) {
+      if (do_abort_check()) exit(1);
+    }
+
+  } while (response==LIVES_ABORT);
+
   if (mytext!=NULL) g_free(mytext);
-
-  response=gtk_dialog_run (GTK_DIALOG (warning));
-  gtk_widget_destroy (warning);
-
-  while (g_main_context_iteration(NULL,FALSE));
   return response;
 }
 
@@ -394,7 +405,78 @@ do_memory_error_dialog (void) {
 
 
 
+void handle_backend_errors(void) {
+  // handle error conditions returned from the back end
 
+  int i;
+  int pxstart=1;
+  gchar **array;
+  gint numtok;
+
+
+  if (mainw->cancelled) return; // if the user/system cancelled we can expect errors !
+
+
+  numtok=get_token_count (mainw->msg,'|');
+  
+  array=g_strsplit(mainw->msg,"|",numtok);
+  
+  if (numtok>2 && !strcmp(array[1],"read")) {
+    // got read error from backend
+    do_read_failed_error_s(array[2]);
+    pxstart=3;
+    mainw->read_failed=TRUE;
+    mainw->read_failed_file=g_strdup(array[2]);
+    mainw->cancelled=CANCEL_ERROR;
+  }
+  
+  else if (numtok>2 && !strcmp(array[1],"write")) {
+    // got write error from backend
+    do_write_failed_error_s(array[2]);
+    pxstart=3;
+    mainw->write_failed=TRUE;
+    mainw->write_failed_file=g_strdup(array[2]);
+    mainw->cancelled=CANCEL_ERROR;
+  }
+  
+  
+  else if (numtok>3 && !strcmp(array[1],"system")) {
+    // got (sub) system error from backend
+    do_system_failed_error(array[2],atoi(array[3]));
+    pxstart=3;
+    mainw->cancelled=CANCEL_ERROR;
+  }
+  
+  // for other types of errors...more info....
+  // set mainw->error but not mainw->cancelled
+  g_snprintf(mainw->msg,512,"\n\n");
+  for (i=pxstart;i<numtok;i++) {
+    g_strappend(mainw->msg,512,_(array[i]));
+    g_strappend(mainw->msg,512,"\n");
+  }
+  g_strfreev(array);
+  mainw->error=TRUE;
+
+}
+
+
+
+gboolean check_backend_return(file *sfile) {
+  // check return code after synchronous (foreground) backend commands
+
+  FILE *infofile;
+
+  (infofile=fopen(sfile->info_file,"r"));
+  if (!infofile) return FALSE;
+
+  mainw->read_failed=FALSE;
+  lives_fgets(mainw->msg,512,infofile);
+  fclose(infofile);
+
+  if (!strncmp(mainw->msg,"error",5)) handle_backend_errors();
+
+  return TRUE;
+}
 
 void pump_io_chan(GIOChannel *iochan) {
   // pump data from stdout to textbuffer
@@ -843,7 +925,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
 
   FILE *infofile=NULL;
-  gboolean finished=FALSE;
   gchar *mytext=g_strdup(text);
 
   int frames_done;
@@ -1063,7 +1144,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
 
-  do {
+  while (1) {
     while (!mainw->internal_messaging&&((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
 						    prefs->audio_player==AUD_PLAYER_JACK||
 						    prefs->audio_player==AUD_PLAYER_PULSE))||
@@ -1173,8 +1254,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
       g_usleep(prefs->sleep_time);
     }
-    else finished=TRUE;
-  } while (!finished);
+    else break;
+  }
 
 
 #ifdef DEBUG
@@ -1222,32 +1303,23 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
     mainw->is_processing=TRUE;
   }
+
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   
   // get error message (if any)
   if (!strncmp(mainw->msg,"error",5)) {
-    int i;
-    gchar **array;
-    gint numtok=get_token_count (mainw->msg,'|');
-    
-    array=g_strsplit(mainw->msg,"|",numtok);
-    g_snprintf(mainw->msg,512,"\n\n");
-    for (i=1;i<numtok;i++) {
-      g_strappend(mainw->msg,512,_(array[i]));
-      g_strappend(mainw->msg,512,"\n");
-    }
-    g_strfreev(array);
-    mainw->error=TRUE;
+    handle_backend_errors();
+    if (mainw->cancelled) return FALSE;
   }
 #ifdef DEBUG
   g_print("exiting progress dialogue\n");
 #endif
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   return TRUE;
 }
 
 
 
-void do_auto_dialog (const gchar *text, gint type) {
+gboolean do_auto_dialog (const gchar *text, gint type) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
@@ -1259,6 +1331,8 @@ void do_auto_dialog (const gchar *text, gint type) {
   gint time_rem,last_time_rem=10000000;
   process *proc_ptr;
   gchar *mytext=g_strdup(text);
+
+  mainw->error=FALSE;
 
   proc_ptr=create_processing (mytext);
   if (mytext!=NULL) g_free(mytext);
@@ -1344,15 +1418,13 @@ void do_auto_dialog (const gchar *text, gint type) {
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
-  if (type==1||type==2) return;
-
   // get error message (if any)
-  if (!strncmp(mainw->msg,"error",5)) {
-    gchar **array=g_strsplit(mainw->msg,"|",5);
-    g_snprintf(mainw->msg,512,"\n\n%s\n\n%s\n\n%s\n\n%s\n",array[1],array[2],array[3],array[4]);
-    g_strfreev(array);
-    mainw->error=TRUE;
+  if (type!=1 && !strncmp(mainw->msg,"error",5)) {
+    handle_backend_errors();
+    if (mainw->cancelled) return FALSE;
   }
+
+  return TRUE;
 }
 
 
@@ -2137,13 +2209,17 @@ inline void d_print_file_error_failed(void) {
 }
 
 
-void do_com_failed_error(const char *com, int retval) {
+void do_system_failed_error(const char *com, int retval) {
   gchar *msg;
   gchar *bit;
-  if (retval>0) bit=g_strdup_printf(_("The error value was %d\n"),retval>>8);
+  gchar *retstr=g_strdup_printf("%d",retval>>8);
+  if (retval>0) bit=g_strdup_printf(_("The error value was %d [%s]\n"),retval,(retval>255)?retstr:strerror(retval));
   else bit=g_strdup("");
-  msg=g_strdup_printf(_("\nLiVES failed to run the command\n%s\nPlease check your system for errors.\n%s"),com,bit);
+  msg=g_strdup_printf(_("\nLiVES failed to run the command:\n%s\nPlease check your system for errors.\n%s"),com,bit);
   do_error_dialog(msg);
+  g_free(msg);
+  g_free(bit);
+  g_free(retstr);
 }
 
 
@@ -2165,7 +2241,7 @@ void do_read_failed_error_s(const char *s) {
 int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) {
   // err can be errno from open/fopen etc.
 
-  // return same as do_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
+  // return same as do_abort_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
 
   int ret;
   gchar *msg,*emsg;
@@ -2182,7 +2258,7 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
   LIVES_ERROR(emsg);
   g_free(emsg);
 
-  ret=do_cancel_retry_dialog(msg,transient);
+  ret=do_abort_cancel_retry_dialog(msg,transient);
 
   g_free(msg);
 
@@ -2197,7 +2273,7 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) {
   // err can be errno from open/fopen etc.
 
-  // return same as do_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
+  // return same as do_abort_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
 
   int ret;
   gchar *msg,*emsg;
@@ -2214,7 +2290,7 @@ int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, 
   LIVES_ERROR(emsg);
   g_free(emsg);
 
-  ret=do_cancel_retry_dialog(msg,transient);
+  ret=do_abort_cancel_retry_dialog(msg,transient);
 
   g_free(msg);
 
@@ -2306,6 +2382,11 @@ void do_dir_perm_error(const gchar *dir_name) {
   gchar *msg=g_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),dir_name);
   do_blocking_error_dialog(msg);
   g_free(msg);
+}
+
+
+gboolean do_abort_check(void) {
+  return do_yesno_dialog(_("\nAbort and exit immediately from LiVES\nAre you sure ?\n"));
 }
 
 

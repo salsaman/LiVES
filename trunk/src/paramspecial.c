@@ -1,6 +1,6 @@
 // paramspecial.c
 // LiVES
-// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -8,9 +8,9 @@
 // special widgets
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"

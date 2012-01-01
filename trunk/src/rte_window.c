@@ -217,7 +217,7 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     retval=0;
     if (!(kfile=fopen(keymap_file,"w"))) {
       msg=g_strdup_printf (_("\n\nUnable to write keymap file\n%s\nError was %s\n"),keymap_file,g_strerror(errno));
-      retval=do_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -293,7 +293,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
     retval=0;
     if ((fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
       msg=g_strdup_printf (_("\n\nUnable to write defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
-      retval=do_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -566,7 +566,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (has_error) {
       msg=g_strdup_printf (_("\n\nUnable to read from keymap file\n%s\nError code %d\n"),keymap_file,errno);
-      retval=do_cancel_retry_dialog(msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog(msg,GTK_WINDOW(rte_window));
       g_free (msg);
    
       if (retval==LIVES_CANCEL) {
@@ -1743,7 +1743,7 @@ void load_default_keymap(void) {
 	       (_("Unable to create default keymap file: %s\nPlease make sure your home directory is writable.\n"),
 		keymap_file)));
 
-      retval=do_cancel_retry_dialog(tmp,NULL);
+      retval=do_abort_cancel_retry_dialog(tmp,NULL);
 
       g_free(tmp);
 

@@ -1,13 +1,13 @@
 // saveplay.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2011
+// (c) G. Finch 2003 - 2012
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-host.h"
-#include "weed/weed-palettes.h"
+#include <weed/weed.h>
+#include <weed/weed-host.h>
+#include <weed/weed-palettes.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
@@ -425,8 +425,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    // for some codecs this can be helpful since we can locate the last frame while audio is loading
 	    if (cfile->clip_type==CLIP_TYPE_FILE&&mainw->playing_file==-1) resize(1);
 
-	    // TODO - check for EOF
-
 	    msgstr=g_strdup_printf(_("Opening audio"),file_name);
 	    if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
 	      // user cancelled or switched to another clip
@@ -447,10 +445,14 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	      }
 	      
 	      // cancelled
-	      // clean up our temp files
-	      com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
-	      lives_system(com,TRUE);
-	      g_free(com);
+
+	      if (mainw->cancelled!=CANCEL_ERROR) {
+		// clean up our temp files
+		com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+		lives_system(com,TRUE);
+		g_free(com);
+	      }
+
 	      if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
 	      mainw->file_open_params=NULL;
 	      close_current_file(old_file);
@@ -632,11 +634,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	return;
       }
     }
-
-
-    // TODO - check for EOF
-
-
 
     //  loading:
 
@@ -826,9 +823,23 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 			  cfile->handle,mainw->files[mainw->img_concat_clip]->frames,
 			  mainw->files[mainw->img_concat_clip]->hsize,mainw->files[mainw->img_concat_clip]->vsize);
 
+      unlink (cfile->info_file);
+
+      mainw->cancelled=FALSE;
+      mainw->error=FALSE;
+      mainw->com_failed=FALSE;
+
       lives_system(com,FALSE);
       g_free(com);
+
+      do_auto_dialog(_("Adding image..."),2);
       close_current_file(mainw->img_concat_clip);
+
+      if (mainw->cancelled||mainw->error) {
+	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	return;
+      }
+
       cfile->frames++;
       cfile->end++;
 
@@ -836,16 +847,12 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
-      
-      
+       
       g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
       gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
       g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-
-      // TODO - check for EOF
-
 
       return;
     }
@@ -924,7 +931,7 @@ gboolean get_handle_from_info_file(gint index) {
   // called from get_new_handle to get the 'real' file handle
   // because until we know the handle we can't use the normal info file yet
 
-  // return FALSE if we time out
+  // return FALSE if we time out or get an error or the user cancels
 
   FILE *infofile;
   int alarm_handle;
@@ -963,6 +970,11 @@ gboolean get_handle_from_info_file(gint index) {
   }
 
   unlink(mainw->first_info_file);
+
+  if (!strncmp(mainw->msg,"error|",6)) {
+    handle_backend_errors();
+    return FALSE;
+  }
 
   if (mainw->files[index]==NULL) {
     mainw->files[index]=(file *)(g_malloc(sizeof(file)));
@@ -1298,7 +1310,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       return;
     }
 
-    // TODO - check for EOF
 
     cfile->nopreview=TRUE;
     if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
@@ -1308,7 +1319,8 @@ void save_file (int clip, int start, int end, const char *filename) {
       if (mainw->first_free_file==-1||mainw->first_free_file>new_file) 
 	mainw->first_free_file=new_file;
       switch_to_file(mainw->current_file,current_file);
-      d_print_cancelled();
+      if (mainw->error) d_print_failed();
+      else d_print_cancelled();
       if (rdet!=NULL) {
 	gtk_widget_destroy (rdet->dialog);
 	g_free(rdet->encoder_name);
@@ -1432,7 +1444,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       return;
     }
 
-    // TODO - check for EOF
 
     cfile->nopreview=TRUE;
     if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
@@ -1441,7 +1452,8 @@ void save_file (int clip, int start, int end, const char *filename) {
       g_free (com);
       cfile->nopreview=FALSE;
       switch_to_file(mainw->current_file,current_file);
-      d_print_cancelled();
+      if (mainw->error) d_print_failed();
+      else d_print_cancelled();
       if (rdet!=NULL) {
 	gtk_widget_destroy (rdet->dialog);
 	g_free(rdet->encoder_name);
@@ -1508,10 +1520,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     fps_string=g_strdup_printf ("%.8f",sfile->fps);
   }
 
-  // TODO - use enc_exec_name
-
   enc_exec_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
-  
 
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
@@ -1778,8 +1787,10 @@ void save_file (int clip, int start, int end, const char *filename) {
 
 	do_progress_dialog(TRUE,FALSE,_ ("Clearing letterbox"));
 
-    // TODO - check for EOF
-
+	if (mainw->error) {
+	  //	  cfile->may_be_damaged=TRUE;
+	  return;
+	}
 
 	calc_maxspect(sfile->hsize,sfile->vsize,&iwidth,&iheight);
 
@@ -2942,8 +2953,7 @@ void play_file (void) {
 }
   
 
-gboolean
-get_temp_handle(gint index, gboolean create) {
+gboolean get_temp_handle(gint index, gboolean create) {
   // we can call this to get a temp handle for returning info from the backend
   // this function is also called from get_new_handle to create a permanent handle
   // for an opened file
@@ -2957,7 +2967,6 @@ get_temp_handle(gint index, gboolean create) {
 
 
   gchar *com;
-  gint ret;
   gboolean is_unique;
   gint current_file=mainw->current_file;
 
@@ -2971,18 +2980,10 @@ get_temp_handle(gint index, gboolean create) {
 
     is_unique=TRUE;
 
-    // TODO - check for EOF
-
     com=g_strdup_printf("smogrify new %d",getpid());
-    ret=system(com);
+    lives_system(com,TRUE);
     g_free(com);
-    
-    if (ret) {
-      tempdir_warning();
-      return FALSE;
-    }
-    
-    // TODO - check for EOF
+    // ignore return value here, as it will be dealt with in get_handle_from_info_file()
 
     //get handle from info file, we will also malloc a new "file" struct here
     if (!get_handle_from_info_file(index)) {
@@ -3402,13 +3403,12 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
     g_free(com);
     g_free(tmp);
     
-    // TODO - check for EOF
-
     if (result==256) {
       d_print_file_error_failed();
       do_file_perm_error(full_file_name);
       return FALSE;
     }
+
     if (result==0) {
       d_print_done();
       return TRUE;
@@ -3526,8 +3526,6 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
     mainw->current_file=current_file;
     return;
   }
-
-  // TODO - check for EOF
 
   if (!(do_progress_dialog(TRUE,TRUE,_ ("Backing up")))||mainw->error) {
     if (mainw->error) {
@@ -3720,8 +3718,6 @@ gboolean read_headers(const gchar *file_name) {
 	  return FALSE;
 	}
 
-
-	// TODO - check for EOF
 
 	do {
 	  retval2=0;
@@ -3977,8 +3973,6 @@ gboolean read_headers(const gchar *file_name) {
     return FALSE;
   }
 
-  // TODO - check for EOF
-
 #define LIVES_RESTORE_TIMEOUT  (30 * U_SEC) // 120 sec timeout
 
   do {
@@ -4160,14 +4154,12 @@ void restore_file(const gchar *file_name) {
     return;
   }
 
-  // TODO - check for EOF
-
   cfile->restoring=TRUE;
   not_cancelled=do_progress_dialog(TRUE,TRUE,_ ("Restoring"));
   cfile->restoring=FALSE;
 
   if (mainw->error||!not_cancelled) {
-    if (mainw->error) {
+    if (mainw->error && mainw->cancelled!=CANCEL_ERROR) {
       do_blocking_error_dialog (mainw->msg);
     }
     close_current_file(old_file);
@@ -4316,7 +4308,8 @@ gint save_event_frames(void) {
       retval=do_write_failed_error_s_with_retry(hdrfile,g_strerror(errno),NULL);
     }
     else {
-      // use machine endian - TODO **
+      // use machine endian.
+      // When we call "smogrify reorder", we will pass the endianness as 3rd parameter
 
       mainw->write_failed=FALSE;
       lives_write(header_fd,&perf_start,4,FALSE);

@@ -1,6 +1,6 @@
 // effects.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2011
+// (c) G. Finch 2003 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -10,10 +10,10 @@
 #include <stdlib.h>
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"
@@ -216,16 +216,13 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   }
   else cfile->fx_frame_pump=0;
 
-
-  // TODO - check for EOF
-
   if (!do_progress_dialog(TRUE,TRUE,effectstring)||mainw->error) {
     mainw->last_dprint_file=ldfile;
     do_rfx_cleanup(rfx);
     mainw->show_procd=TRUE;
     mainw->keep_pre=FALSE;
     if (mainw->error) {
-      do_error_dialog (mainw->msg);
+      if (mainw->cancelled!=CANCEL_ERROR) do_error_dialog (mainw->msg);
       d_print_failed();
       mainw->last_dprint_file=ldfile;
     }
@@ -237,7 +234,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     cfile->nokeep=FALSE;
     cfile->fx_frame_pump=0;
 
-    if (rfx->num_in_channels==0) {
+    if (rfx->num_in_channels==0&&mainw->current_file!=current_file) {
       mainw->suppress_dprint=TRUE;
       close_current_file(current_file);
       mainw->suppress_dprint=FALSE;
@@ -317,17 +314,49 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   }
 
   mainw->cancelled=CANCEL_NONE;
+  mainw->error=FALSE;
 
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
     gchar *com=g_strdup_printf("smogrify mv_pre \"%s\" %d %d \"%s\"",cfile->handle,cfile->progress_start,
 			       cfile->progress_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+
+    unlink(cfile->info_file);
+    mainw->cancelled=CANCEL_NONE;
     lives_system(com,FALSE);
     g_free(com);
     mainw->keep_pre=FALSE;
 
-    // TODO - check for EOF
+    check_backend_return(cfile);
 
+    if (mainw->error) {
+      if (!mainw->cancelled) {
+	do_error_dialog(_("\nNo frames were generated.\n"));
+	d_print_failed();
+      }
+      if (mainw->cancelled==CANCEL_ERROR) d_print_failed();
+    }
+    else if (mainw->cancelled!=CANCEL_ERROR) d_print_cancelled();
+    else d_print_failed();
+    
+    if (rfx->num_in_channels==0) {
+      mainw->is_generating=FALSE;
+      
+      if (mainw->current_file!=current_file) {
+	mainw->suppress_dprint=TRUE;
+	close_current_file(current_file);
+	mainw->suppress_dprint=FALSE;
+      }
+      
+      mainw->current_file=current_file;
+      mainw->last_dprint_file=ldfile;
+      
+      if (mainw->multitrack!=NULL) {
+	mainw->current_file=mainw->multitrack->render_file;
+      }
+    }
+    mainw->no_switch_dprint=FALSE;
+    return FALSE;
   }
 
   if (rfx->num_in_channels==0) {
@@ -543,18 +572,24 @@ lives_render_error_t realfx_progress (gboolean reset) {
   }
   
   if (++i>cfile->end) {
+    mainw->error=FALSE;
+    mainw->cancelled=CANCEL_NONE;
     com=g_strdup_printf ("smogrify mv_mgk \"%s\" %d %d \"%s\"",cfile->handle,cfile->start,
 			 cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     lives_system (com,FALSE);
     g_free (com);
     mainw->internal_messaging=FALSE;
 
-    // TODO - check for eof
+    check_backend_return(cfile);
 
-    if (cfile->clip_type==CLIP_TYPE_FILE) {
-      if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
+    if (mainw->error) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+    //cfile->may_be_damaged=TRUE;
+    else {
+      if (cfile->clip_type==CLIP_TYPE_FILE) {
+	if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
+      }
+      return LIVES_RENDER_COMPLETE;
     }
-    return LIVES_RENDER_COMPLETE;
   }
   if (write_error) return write_error;
   return LIVES_RENDER_PROCESSING;

@@ -1,6 +1,6 @@
 // events.c
 // LiVES
-// (c) G. Finch 2005 - 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2005 - 2012 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -8,10 +8,10 @@
 // functions/structs for event_lists and events
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"
@@ -3544,12 +3544,19 @@ lives_render_error_t render_events (gboolean reset) {
     if (mainw->multitrack==NULL||!mainw->multitrack->pr_audio) {
       com=g_strdup_printf ("smogrify mv_mgk \"%s\" %d %d \"%s\"",cfile->handle,cfile->undo_start,
 			   cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+      unlink(cfile->info_file);
+      mainw->error=FALSE;
+      mainw->com_failed=FALSE;
+      mainw->cancelled=FALSE;
+
       lives_system (com,FALSE);
       g_free (com);
       mainw->is_rendering=mainw->internal_messaging=FALSE;
 
-      // TODO - check for EOF
-
+      if (mainw->com_failed) {
+	read_write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+	//	cfile->may_be_damaged=TRUE;
+      }
     }
     else g_snprintf(mainw->msg,512,"completed");
 
@@ -3809,10 +3816,13 @@ gboolean render_to_clip (gboolean new_clip) {
     if (prefs->rec_opts&REC_AUDIO) {
       do_threaded_dialog(_("Backing up audio..."),FALSE);
       com=g_strdup_printf("smogrify backup_audio \"%s\"",cfile->handle);
+      mainw->com_failed=FALSE;
+      mainw->error=FALSE;
+      mainw->cancelled=FALSE;
+      unlink (cfile->info_file);
       lives_system(com,FALSE);
       g_free(com);
-
-      // TODO - check for EOF
+      if (mainw->com_failed) return FALSE;
 
     }
     else {

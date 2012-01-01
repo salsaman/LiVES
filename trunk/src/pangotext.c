@@ -1,6 +1,7 @@
 // pangotext.c
 // text handling code
 // (c) A. Penkov 2010
+// (c) G. Finch 2010 - 2012
 // pieces of code taken and modified from scribbler.c
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -15,10 +16,10 @@
 #include "pangotext.h"
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"

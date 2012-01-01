@@ -1,6 +1,6 @@
 // main.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2011
+// (c) G. Finch 2003 - 2012
 
 /*  This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 3 or higher as published by
@@ -24,11 +24,11 @@
 #include <glib.h>
 
 #if HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-utils.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"
@@ -293,6 +293,10 @@ static gboolean pre_init(void) {
 
   prefs->letterbox=FALSE;
   prefs->bigendbug=0;
+
+#ifdef HAVE_YUV4MPEG
+  memset(prefs->yuvin,0,1);
+#endif
 
   if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
     g_snprintf(prefs->theme,64,"none");
@@ -1897,7 +1901,16 @@ void print_opthelp(void) {
   g_printerr("%s","\n");
 }
 
+//// things to do - on startup
 
+static gboolean open_yuv4m_startup(gpointer data) {
+  on_open_yuv4m_activate(NULL,data);
+  return FALSE;
+}
+
+
+
+/////////////////////////////////
 
 
 static gboolean lives_startup(gpointer data) {
@@ -2096,6 +2109,10 @@ static gboolean lives_startup(gpointer data) {
 
   gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
 
+#ifdef HAVE_YUV4MPEG
+  if (strlen(prefs->yuvin)>0) g_idle_add(open_yuv4m_startup,NULL);
+#endif
+
   return FALSE;
 }
 
@@ -2175,6 +2192,7 @@ int main (int argc, char *argv[]) {
       struct option longopts[] = {
 	{"aplayer", 1, 0, 0},
 	{"tmpdir", 1, 0, 0},
+	{"yuvin", 1, 0, 0},
 	{"set", 1, 0, 0},
 	{"noset", 0, 0, 0},
         {"devicemap", 1, 0, 0},
@@ -2227,6 +2245,16 @@ int main (int argc, char *argv[]) {
 	  g_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
 	  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 	  set_pref("session_tempdir",prefs->tmpdir);
+	  continue;
+	}
+	if (!strcmp(charopt,"yuvin")) {
+#ifdef HAVE_YUV4MPEG
+	  g_snprintf(prefs->yuvin,PATH_MAX,"%s",optarg);
+	  prefs->startup_interface=STARTUP_CE;
+	  ign_opts.ign_stmode=TRUE;
+#else
+	  LIVES_ERROR("Must have mjpegtools installed for yuvin to work");
+#endif
 	  continue;
 	}
 	if (!strcmp(charopt,"noset")) {
@@ -2347,14 +2375,18 @@ int main (int argc, char *argv[]) {
 #endif
 	if (!strcmp(charopt,"startup-ce")) {
 	  // force start in clip editor mode
-	  prefs->startup_interface=STARTUP_CE;
-	  ign_opts.ign_stmode=TRUE;
+	  if (!ign_opts.ign_stmode) {
+	    prefs->startup_interface=STARTUP_CE;
+	    ign_opts.ign_stmode=TRUE;
+	  }
 	  continue;
 	}
 	if (!strcmp(charopt,"startup-mt")) {
 	  // force start in multitrack mode
-	  prefs->startup_interface=STARTUP_MT;
-	  ign_opts.ign_stmode=TRUE;
+	  if (!ign_opts.ign_stmode) {
+	    prefs->startup_interface=STARTUP_MT;
+	    ign_opts.ign_stmode=TRUE;
+	  }
 	  continue;
 	}
 

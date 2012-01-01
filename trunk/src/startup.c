@@ -687,27 +687,24 @@ gboolean do_startup_tests(gboolean tshoot) {
       
       g_free(com);
       
-      if (!mainw->com_failed) {
-
-	while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
-	  g_usleep(prefs->sleep_time);
-	  while (g_main_context_iteration(NULL,FALSE));
+      while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
+	g_usleep(prefs->sleep_time);
+	while (g_main_context_iteration(NULL,FALSE));
+      }
+      
+      if (info_fd!=-1) {
+	close(info_fd);
+	
+	sync();
+	
+	fsize=sget_file_size(afile);
+	g_free(afile);
+	
+	if (fsize==0) {
+	  fail_test(table,1,_("You should install sox_fmt_all or similar"));
 	}
 	
-	if (info_fd!=-1) {
-	  close(info_fd);
-	  
-	  sync();
-	  
-	  fsize=sget_file_size(afile);
-	  g_free(afile);
-	  
-	  if (fsize==0) {
-	    fail_test(table,1,_("You should install sox_fmt_all or similar"));
-	  }
-	  
-	  else pass_test(table,1);
-	}
+	else pass_test(table,1);
       }
     }
   }
@@ -816,27 +813,25 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     g_free(com);
 
-    if (!mainw->com_failed) {
-      while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
-	g_usleep(prefs->sleep_time);
+    while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
+      g_usleep(prefs->sleep_time);
+    }
+    
+    if (info_fd!=-1) {
+      close(info_fd);
+      
+      sync();
+      
+      cfile->img_type=IMG_TYPE_PNG;
+      get_frame_count(mainw->current_file);
+      
+      if (cfile->frames==0) {
+	fail_test(table,4,_("You may wish to upgrade mplayer to a newer version"));
       }
       
-      if (info_fd!=-1) {
-	close(info_fd);
-	
-	sync();
-	
-	cfile->img_type=IMG_TYPE_PNG;
-	get_frame_count(mainw->current_file);
-	
-	if (cfile->frames==0) {
-	  fail_test(table,4,_("You may wish to upgrade mplayer to a newer version"));
-	}
-	
-	else {
-	  pass_test(table,4);
-	  success3=TRUE;
-	}
+      else {
+	pass_test(table,4);
+	success3=TRUE;
       }
     }
   }

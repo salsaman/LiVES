@@ -285,6 +285,10 @@ typedef struct {
   gint bigendbug;
 
 
+#ifdef HAVE_YUV4MPEG
+  gchar yuvin[PATH_MAX];
+#endif
+
   GList *disabled_decoders;
 } _prefs;
 

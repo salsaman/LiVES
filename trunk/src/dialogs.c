@@ -2213,12 +2213,14 @@ void do_system_failed_error(const char *com, int retval) {
   gchar *msg;
   gchar *bit;
   gchar *retstr=g_strdup_printf("%d",retval>>8);
-  if (retval>0) bit=g_strdup_printf(_("The error value was %d [%s]\n"),retval,(retval>255)?retstr:strerror(retval));
-  else bit=g_strdup("");
-  msg=g_strdup_printf(_("\nLiVES failed to run the command:\n%s\nPlease check your system for errors.\n%s"),com,bit);
+  gchar *bit2=(retval>255)?g_strdup(""):g_strdup_printf("[%s]",strerror(retval));
+  if (retval>0) bit=g_strdup_printf(_("The error value was %d%s\n"),retval,bit2);
+    else bit=g_strdup("");
+  msg=g_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s"),com,bit);
   do_error_dialog(msg);
   g_free(msg);
   g_free(bit);
+  g_free(bit2);
   g_free(retstr);
 }
 

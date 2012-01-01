@@ -81,7 +81,7 @@ int lives_system(const char *com, gboolean allow_error) {
     if (!allow_error) {
       msg=g_strdup_printf("lives_system failed with code %d: %s",retval,com);
       LIVES_ERROR(msg);
-      do_com_failed_error(com,retval);
+      do_system_failed_error(com,retval);
     }
 #ifndef LIVES_NO_DEBUG
     else {

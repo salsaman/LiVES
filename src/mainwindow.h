@@ -1,6 +1,6 @@
 // mainwindow.h
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@xs4all.nl,salsaman@gmail.com> 2003 - 2011
+// (c) G. Finch <salsaman@xs4all.nl,salsaman@gmail.com> 2003 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -90,14 +90,15 @@ typedef enum {
 typedef enum {
   LIVES_DIALOG_WARN,
   LIVES_DIALOG_YESNO,
-  LIVES_DIALOG_CANCEL_RETRY
+  LIVES_DIALOG_ABORT_CANCEL_RETRY
 } lives_dialog_t;
 
 
-// return values from cancel/retry dialog - should add LIVES_YES and LIVES_NO
+// return values from abort/cancel/retry dialog - TODO - add LIVES_YES and LIVES_NO
 enum {
   LIVES_CANCEL=1,
-  LIVES_RETRY
+  LIVES_RETRY,
+  LIVES_ABORT
 };
 
 

@@ -1,14 +1,14 @@
 // omc-learn.c
 // LiVES (lives-exe)
-// (c) G. Finch 2008 - 2009
+// (c) G. Finch 2008 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-host.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
+#include <weed/weed.h>
+#include <weed/weed-host.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"

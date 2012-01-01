@@ -1,13 +1,17 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2011
+// (c) G. Finch 2004 - 2012
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
 // functions dealing with getting/setting user preferences
 // TODO - use atom type system for prefs
 
+#ifdef HAVE_SYSTEM_WEED
+#include <weed/weed-palettes.h>
+#else
 #include "../libweed/weed-palettes.h"
+#endif
 
 #include "main.h"
 #include "paramwindow.h"
@@ -1563,7 +1567,7 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
       rfile=popen(com,"r");
       if (!rfile) {
 	// command failed
-	do_com_failed_error(com,0);
+	do_system_failed_error(com,0);
 	g_free(com);
 	return;
       }

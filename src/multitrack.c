@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2005 - 2012 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -25,10 +25,10 @@
 // and it would be nice to be able to read/write event lists in other formats than the default
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"
@@ -2968,7 +2968,6 @@ static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint tab, gp
     else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
     break;
   case POLY_PARAMS:
-    // TODO *** -- allow some way to select an effect and then tab to params
     if (mt->poly_state!=POLY_PARAMS&&mt->selected_init_event==NULL) {
       notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOEFFECT,mt);
       return FALSE;
@@ -14205,12 +14204,14 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt->pr_audio=TRUE;
     had_audio=mt->has_audio_file;
     if (had_audio) {
+      unlink(cfile->info_file);
+      mainw->error=FALSE;
+      mainw->cancelled=CANCEL_NONE;
       com=g_strdup_printf("smogrify backup_audio \"%s\"",cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
-
-      // TODO - check for eof
-
+      check_backend_return(cfile);
+      if (mainw->error) return;
     }
     mt->has_audio_file=TRUE;
   }

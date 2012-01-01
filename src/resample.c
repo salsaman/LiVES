@@ -799,12 +799,15 @@ on_resaudio_ok_clicked                      (GtkButton *button,
       com=g_strdup_printf ("smogrify resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",cfile->handle,cfile->arps,
 			   cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,achans,asampsize,asigned,aendian);
       mainw->com_failed=FALSE;
+      mainw->cancelled=CANCEL_NONE;
+      mainw->error=FALSE;
+      unlink(cfile->info_file);
       lives_system (com,FALSE);
+      check_backend_return(cfile);
       if (mainw->com_failed) return;
       do_progress_dialog (TRUE,FALSE,_ ("Resampling audio"));
       g_free (com);
 
-      // TODO - check eof
     }
   }
 
@@ -2434,12 +2437,10 @@ gint reorder_frames(int rwidth, int rheight) {
   }
 
   unlink(cfile->info_file);
-
+  mainw->error=FALSE;
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
-
   if (mainw->com_failed) return -cur_frames;
-
 
   if (cfile->undo_action==UNDO_RESAMPLE) {
     if (mainw->current_file>0) {
@@ -2463,11 +2464,9 @@ gint reorder_frames(int rwidth, int rheight) {
     cfile->nopreview=cfile->nokeep=FALSE;
   }
   g_free(com);
-
-  // chek for EOF TODO
   
   if (mainw->error) {
-    do_error_dialog (_ ("\n\nLiVES was unable to reorder the frames."));
+    if (mainw->cancelled!=CANCEL_ERROR) do_error_dialog (_ ("\n\nLiVES was unable to reorder the frames."));
     deorder_frames(new_frames,FALSE);
     new_frames=-new_frames;
   }

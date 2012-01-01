@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2003 - 2011
+// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2003 - 2012
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -661,7 +661,7 @@ gboolean do_warning_dialog(const gchar *text);
 gboolean do_warning_dialog_with_check(const gchar *text, gint warn_mask_number);
 gboolean do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number, GtkWindow *transient);
 gboolean do_yesno_dialog(const gchar *text) WARN_UNUSED;
-int do_cancel_retry_dialog(const gchar *text, GtkWindow *transient) WARN_UNUSED;
+int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) WARN_UNUSED;
 void do_error_dialog(const gchar *text);
 void do_error_dialog_with_check(const gchar *text, gint warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
@@ -669,7 +669,7 @@ void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blockin
 					  GtkWindow *transient);
 
 
-void do_com_failed_error(const char *com, int retval);
+void do_system_failed_error(const char *com, int retval);
 int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename);
 int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) WARN_UNUSED;
@@ -678,9 +678,12 @@ gboolean do_header_write_error(int clip);
 int do_header_read_error_with_retry(int clip) WARN_UNUSED;
 int do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
 void do_chdir_failed_error(const char *dir);
+void handle_backend_errors(void);
+gboolean check_backend_return(file *sfile);
 
 
 gboolean ask_permission_dialog(int what);
+gboolean do_abort_check(void);
 void add_warn_check (GtkBox *box, gint wayrn_mask_number);
 void do_memory_error_dialog (void);
 void too_many_files(void);
@@ -692,7 +695,7 @@ gboolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
 void do_dvgrab_error(void);
 gboolean do_comments_dialog (file *sfile, gchar *filename);
-void do_auto_dialog(const gchar *text, gint type);
+gboolean do_auto_dialog(const gchar *text, gint type);
 void do_encoder_acodec_error (void);
 void do_encoder_sox_error(void);
 gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, 

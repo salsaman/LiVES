@@ -4,7 +4,12 @@
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
+
+#ifdef HAVE_SYSTEM_WEED
+#include <weed/weed-palettes.h>
+#else
 #include "../libweed/weed-palettes.h"
+#endif
 
 #include "main.h"
 #include "callbacks.h"

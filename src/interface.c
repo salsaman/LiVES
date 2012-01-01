@@ -893,6 +893,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
 
   if (text2!=NULL&&(mainw->fx1_bool||opt_resize)) {
     checkbutton2 = gtk_check_button_new ();
+
     gtk_widget_set_tooltip_text( checkbutton2, _("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."));
     eventbox=gtk_event_box_new();
     gtk_tooltips_copy(eventbox,checkbutton2);
@@ -916,7 +917,10 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
     else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton2),prefs->enc_letterbox);
 
     hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+    if (capable->has_composite&&capable->has_convert) {
+      // only offer this if we have "composite" and "convert" - for now... TODO ****
+      gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+    }
     gtk_box_pack_start (GTK_BOX (hbox), checkbutton2, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
     gtk_widget_show_all (hbox);

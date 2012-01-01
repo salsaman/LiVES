@@ -1,13 +1,13 @@
 // yuv4mpeg.c
 // LiVES
-// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
 #ifdef HAVE_SYSTEM_WEED
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#include "../libweed/weed-palettes.h"
+#include <weed/weed.h>
+#include <weed/weed-host.h>
+#include <weed/weed-palettes.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
@@ -347,7 +347,7 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gchar *audio_real,*audio_fake;
 
-  if (!do_yuv4m_open_warning()) return;
+  if (menuitem && !do_yuv4m_open_warning()) return;
 
   fname=g_strdup(_("yuv4mpeg stream"));
 
@@ -358,7 +358,11 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   mainw->current_file=new_file;
 
-  filename=g_strdup_printf("%s/stream.yuv",prefs->tmpdir);
+  if (!strlen(prefs->yuvin))
+      filename=g_build_filename(prefs->tmpdir,"stream.yuv",NULL);
+  else
+    filename=g_strdup(prefs->yuvin);
+
   mkfifo(filename,S_IRUSR|S_IWUSR);
 
   if (!open_yuv4m_inner(filename,fname,new_file,YUV4_TYPE_GENERIC,0)) {
@@ -406,7 +410,14 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
     // an opening preview . Doesn't work with fifo.
     // and we dont really care if it doesnt work
 
+    // but what it means is, if we have an audio file or stream at 
+    // "prefs->tmpdir/audiodump.pcm" we will try to play it
+
+
+
+    // real is tmpdir/audiodump.pcm
     audio_real=g_build_filename(prefs->tmpdir,"audiodump.pcm",NULL);
+    // fake is tmpdir/handle/audiodump.pcm
     audio_fake=g_build_filename(prefs->tmpdir,cfile->handle,"audiodump.pcm",NULL);
 
 

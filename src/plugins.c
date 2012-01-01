@@ -1,6 +1,6 @@
 // plugins.c
 // LiVES
-// (c) G. Finch 2003 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -8,11 +8,11 @@
 #include <errno.h>
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-utils.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"
@@ -1408,7 +1408,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
     rfile=popen(com,"r");
     if (!rfile) {
       // command failed
-      do_com_failed_error(com,0);
+      do_system_failed_error(com,0);
       g_free(astreamer);
       g_free(com);
       return ret;
@@ -1438,7 +1438,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
 	rfile=popen(com,"r");
 	if (!rfile) {
 	  // command failed
-	  do_com_failed_error(com,0);
+	  do_system_failed_error(com,0);
 	  g_free(astreamer);
 	  g_free(com);
 	  g_free(sfmts);
@@ -2582,8 +2582,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
   rfx->params=g_malloc (rfx->num_params*sizeof(lives_param_t));
   
   for (param_idx=0;param_idx<rfx->num_params;param_idx++) {
-    // TODO - error check
-
+ 
     line=g_list_nth_data(parameter_list,param_idx);
 
     len=get_token_count (line,(unsigned int)rfx->delim[0]);
@@ -3523,15 +3522,13 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   } while (retval==LIVES_RETRY);
 
 
+
   com=g_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
   retval=lives_system(com,FALSE);
   g_free(com);
 
   // command failed
   if (retval) return NULL;
-
-  // TODO - check for EOF
-
 
   // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
     
@@ -3542,10 +3539,6 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
     
   unlink(rfxfile);
   g_free(rfxfile);
-
-
-  // TODO - check for EOF
-
 
   if (res==0) {
     // the script compiled correctly
@@ -3570,8 +3563,6 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
 
     // command to get_define failed
     if (retval) return NULL;
-
-    // TODO - check eof
 
     do {
       retval=0;

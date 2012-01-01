@@ -10,10 +10,10 @@
 #include <netinet/in.h>
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"

@@ -1408,7 +1408,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
     rfile=popen(com,"r");
     if (!rfile) {
       // command failed
-      do_system_failed_error(com,0);
+      do_system_failed_error(com,0,NULL);
       g_free(astreamer);
       g_free(com);
       return ret;
@@ -1438,7 +1438,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
 	rfile=popen(com,"r");
 	if (!rfile) {
 	  // command failed
-	  do_system_failed_error(com,0);
+	  do_system_failed_error(com,0,NULL);
 	  g_free(astreamer);
 	  g_free(com);
 	  g_free(sfmts);

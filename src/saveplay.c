@@ -1760,6 +1760,9 @@ void save_file (int clip, int start, int end, const char *filename) {
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       sensitize();
+
+      if (mainw->error) d_print_failed();
+
       return;
     }
     g_free(tmp);
@@ -1782,6 +1785,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
 	if (mainw->error) {
 	  //	  cfile->may_be_damaged=TRUE;
+	  d_print_failed();
 	  return;
 	}
 
@@ -2921,7 +2925,7 @@ void play_file (void) {
 
   if (mainw->bad_aud_file!=NULL) {
     // we got an error recording audio
-    do_write_failed_error_s(mainw->bad_aud_file);
+    do_write_failed_error_s(mainw->bad_aud_file,NULL);
     g_free(mainw->bad_aud_file);
     mainw->bad_aud_file=NULL;
   }
@@ -4831,7 +4835,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       threaded_dialog_spin();
 
       if (mainw->read_failed) {
-	do_read_failed_error_s(recovery_file);
+	do_read_failed_error_s(recovery_file,NULL);
       }
       break;
     }

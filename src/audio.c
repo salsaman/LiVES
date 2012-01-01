@@ -1113,12 +1113,12 @@ inline void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, 
 
   if (mainw->write_failed) {
     gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
-    do_write_failed_error_s(outfilename);
+    do_write_failed_error_s(outfilename,NULL);
   }
   
   if (mainw->read_failed) {
     gchar *infilename=g_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
-    do_read_failed_error_s(infilename);
+    do_read_failed_error_s(infilename,NULL);
   }
 
 }
@@ -1552,7 +1552,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
 
       if (mainw->read_failed) {
-	do_read_failed_error_s(mainw->read_failed_file);
+	do_read_failed_error_s(mainw->read_failed_file,NULL);
       }
 
       for (i=0;i<nfiles;i++) {
@@ -1596,7 +1596,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   }
 
   if (mainw->read_failed) {
-    do_read_failed_error_s(mainw->read_failed_file);
+    do_read_failed_error_s(mainw->read_failed_file,NULL);
   }
 
   mainw->write_abuf++;

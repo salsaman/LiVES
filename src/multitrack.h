@@ -188,6 +188,7 @@ struct _mt {
   GtkWidget *in_image;
   GtkWidget *out_image;
   GtkWidget *context_box;
+  GtkWidget *context_scroll;
   GtkWidget *sep_image;
   GtkWidget *timeline_table_header;
   GtkWidget *tl_eventbox;

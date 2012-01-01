@@ -669,11 +669,11 @@ void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blockin
 					  GtkWindow *transient);
 
 
-void do_system_failed_error(const char *com, int retval);
+void do_system_failed_error(const char *com, int retval, const char *addinfo);
 int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) WARN_UNUSED;
-void do_write_failed_error_s(const char *filename);
+void do_write_failed_error_s(const char *filename, const char *addinfo);
 int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) WARN_UNUSED;
-void do_read_failed_error_s(const char *filename);
+void do_read_failed_error_s(const char *filename, const char *addinfo);
 gboolean do_header_write_error(int clip);
 int do_header_read_error_with_retry(int clip) WARN_UNUSED;
 int do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
@@ -684,7 +684,7 @@ gboolean check_backend_return(file *sfile);
 
 gboolean ask_permission_dialog(int what);
 gboolean do_abort_check(void);
-void add_warn_check (GtkBox *box, gint wayrn_mask_number);
+void add_warn_check (GtkBox *box, gint warn_mask_number);
 void do_memory_error_dialog (void);
 void too_many_files(void);
 void tempdir_warning (void);
@@ -775,8 +775,6 @@ void d_print_cancelled(void);
 void d_print_failed(void);
 void d_print_done(void);
 void d_print_file_error_failed(void);
-
-void do_write_failed_error_s(const char *s);
 
 // general
 void do_text_window (const gchar *title, const gchar *text);

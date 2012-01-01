@@ -411,11 +411,10 @@ void handle_backend_errors(void) {
   int i;
   int pxstart=1;
   gchar **array;
+  gchar *addinfo;
   gint numtok;
 
-
   if (mainw->cancelled) return; // if the user/system cancelled we can expect errors !
-
 
   numtok=get_token_count (mainw->msg,'|');
   
@@ -423,7 +422,9 @@ void handle_backend_errors(void) {
   
   if (numtok>2 && !strcmp(array[1],"read")) {
     // got read error from backend
-    do_read_failed_error_s(array[2]);
+    if (numtok>3&&strlen(array[3])) addinfo=array[3];
+    else addinfo=NULL;
+    do_read_failed_error_s(array[2],addinfo);
     pxstart=3;
     mainw->read_failed=TRUE;
     mainw->read_failed_file=g_strdup(array[2]);
@@ -432,7 +433,9 @@ void handle_backend_errors(void) {
   
   else if (numtok>2 && !strcmp(array[1],"write")) {
     // got write error from backend
-    do_write_failed_error_s(array[2]);
+    if (numtok>3&&strlen(array[3])) addinfo=array[3];
+    else addinfo=NULL;
+    do_write_failed_error_s(array[2],addinfo);
     pxstart=3;
     mainw->write_failed=TRUE;
     mainw->write_failed_file=g_strdup(array[2]);
@@ -442,7 +445,9 @@ void handle_backend_errors(void) {
   
   else if (numtok>3 && !strcmp(array[1],"system")) {
     // got (sub) system error from backend
-    do_system_failed_error(array[2],atoi(array[3]));
+    if (numtok>4&&strlen(array[4])) addinfo=array[4];
+    else addinfo=NULL;
+    do_system_failed_error(array[2],atoi(array[3]),addinfo);
     pxstart=3;
     mainw->cancelled=CANCEL_ERROR;
   }
@@ -2209,33 +2214,58 @@ inline void d_print_file_error_failed(void) {
 }
 
 
-void do_system_failed_error(const char *com, int retval) {
+void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   gchar *msg;
   gchar *bit;
   gchar *retstr=g_strdup_printf("%d",retval>>8);
   gchar *bit2=(retval>255)?g_strdup(""):g_strdup_printf("[%s]",strerror(retval));
+  gchar *addbit;
+
+  if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
+  else addbit=g_strdup("");
+
   if (retval>0) bit=g_strdup_printf(_("The error value was %d%s\n"),retval,bit2);
     else bit=g_strdup("");
-  msg=g_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s"),com,bit);
+  msg=g_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s%s"),
+		      com,bit,addbit);
   do_error_dialog(msg);
   g_free(msg);
   g_free(bit);
   g_free(bit2);
+  g_free(addbit);
   g_free(retstr);
 }
 
 
-void do_write_failed_error_s(const char *s) {
-  gchar *msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n"),s);
+void do_write_failed_error_s(const char *s, const char *addinfo) {
+  gchar *msg;
+  gchar *addbit;
+
+  if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
+  else addbit=g_strdup("");
+
+  msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n%s"),
+		      s,addbit);
+
   do_blocking_error_dialog(msg);
+  g_free(addbit);
   g_free(msg);
 }
 
 
-void do_read_failed_error_s(const char *s) {
-  gchar *msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n"),s);
+void do_read_failed_error_s(const char *s, const char *addinfo) {
+  gchar *msg;
+  gchar *addbit;
+
+  if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
+  else addbit=g_strdup("");
+
+  msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n%s"),
+		      s,addbit);
+
   do_blocking_error_dialog(msg);
   g_free(msg);
+  g_free(addbit);
 }
 
 

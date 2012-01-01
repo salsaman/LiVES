@@ -81,7 +81,7 @@ int lives_system(const char *com, gboolean allow_error) {
     if (!allow_error) {
       msg=g_strdup_printf("lives_system failed with code %d: %s",retval,com);
       LIVES_ERROR(msg);
-      do_system_failed_error(com,retval);
+      do_system_failed_error(com,retval,NULL);
     }
 #ifndef LIVES_NO_DEBUG
     else {
@@ -2750,7 +2750,7 @@ gboolean check_file(const gchar *file_name, gboolean check_existing) {
       if (errno==EACCES)
 	do_file_perm_error(lfile_name);
       else 
-	do_write_failed_error_s(lfile_name);
+	do_write_failed_error_s(lfile_name,NULL);
     }
     g_free(lfile_name);
     return FALSE;

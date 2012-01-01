@@ -768,21 +768,14 @@ if (defined($ARGV[0])) {
 	    #need this again - something resets us
 	    chdir $curtmpdir;
 
-	    if ($plugin eq "") {
-		# let the plugin clean up any other temp files
-		$command="clear";
-		return 1;
+	    $com="\"$plugin\" clear $start $end $img_ext";
+	    $smerr=smog_system($com);
+	    if ($smerr) {
+		sig_system_error("Command failed: $com",$smerr); 
+		exit 1;
 	    }
-	    else {
-		$com="\"$plugin\" clear $start $end $img_ext";
-		$smerr=smog_system($com);
-		if ($smerr) {
-		    sig_system_error("Command failed: $com",$smerr); 
-		    exit 1;
-		}
-		&sig_complete;
-		exit 0;
-	    }
+	    &sig_complete;
+	    exit 0;
 	}
 
 
@@ -800,7 +793,7 @@ if (defined($ARGV[0])) {
 		    #found a lockfile
 		    my $proc=$1;
 		    unless ($proc eq $pid) {
-			my $exe=smog_system_direct("/bin/readlink -n /proc/$proc/exe");
+			my $exe=smog_system_direct("/bin/readlink -n /proc/$proc/exe");  #allowed to fail
 			my $short_exe=&my_basename($exe);
 			if ($short_exe eq $exename) {
 			    # and it's in use
@@ -834,7 +827,7 @@ if (defined($ARGV[0])) {
 			unlink "$file";
 		    }
 		    else {
-			my $exe=smog_system_direct("/bin/readlink -n /proc/$1/exe");
+			my $exe=smog_system_direct("/bin/readlink -n /proc/$1/exe");  #allowed to fail
 			my $short_exe=&my_basename($exe);
 			
 			unless ($short_exe eq $exename) {
@@ -863,7 +856,7 @@ if (defined($ARGV[0])) {
 
 	    while (my $file=readdir(DIR)) {
 		if ($file=~/^recovery\.$uid\.$gid\.(.*)/ || $file=~/^layout\.$uid\.$gid\.(.*)/ || $file=~/^layout_numbering\.$uid\.$gid\.(.*)/) {
-		    my $exe=smog_system_direct("/bin/readlink -n /proc/$1/exe");
+		    my $exe=smog_system_direct("/bin/readlink -n /proc/$1/exe"); #allowed to fail
 		    my $short_exe=&my_basename($exe);
 		    unless ($short_exe eq $exename) {
 			unlink "$file";
@@ -1616,6 +1609,26 @@ if (defined($ARGV[0])) {
 	}
     
 
+	if ($command eq "ext_save") {
+	    shift(@ARGV);
+	    $execname=$ARGV[1];
+	    shift(@ARGV);
+
+	    chdir "$curtmpdir";
+
+	    $com="\"$execname\" encode @ARGV";
+	    $smerr=smog_system($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    };
+	    &sig_complete;
+	    exit 0;
+
+	}
+
+
 	
 	if ($command eq "save") {
 	    $get_rfx=0;
@@ -1764,7 +1777,7 @@ if (defined($ARGV[0])) {
 			$audiofile=$audio_out;
 		    }
 		}
-		
+
 		if ($areq&4) {
 	
 		    if ($start>1) {
@@ -1837,7 +1850,6 @@ if (defined($ARGV[0])) {
 		&sig_complete;
 		exit 0;
 	    }
-
 
 	    if (-f ".comment") {
 		open IN,"< .comment";
@@ -3238,7 +3250,7 @@ if (defined($ARGV[0])) {
 	    $command=substr($command,1);
 	    $out_ext=".pre";
 	}
-# TODO - error check
+
 	if (substr($command,0,9) eq "fxrender_") {
 
 	    chdir $curtmpdir;
@@ -3348,6 +3360,8 @@ if (defined($ARGV[0])) {
 		my ($res_file)="$curtmpdir/.rfx_result";
 
 		my $err;
+
+		#img_ext is also in ARGV, but never mind
 
 		if ($num_in_channels==2) {
 		    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
@@ -5996,7 +6010,7 @@ sub fast_dd {
 
     my $data,$i;
 
-    if (!FFIN,"<$fdd_in") {
+    if (! open FFIN,"<$fdd_in") {
 	if (-f "$fdd_in") {
 	    $panic=sig_read_error("$ffd_in");
 	}

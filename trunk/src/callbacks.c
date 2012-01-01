@@ -10957,11 +10957,11 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
     if (mainw->write_failed) {
       int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
       gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
-      do_write_failed_error_s(outfilename);
+      do_write_failed_error_s(outfilename,NULL);
     }
 
     if (mainw->read_failed) {
-      do_read_failed_error_s(mainw->read_failed_file);
+      do_read_failed_error_s(mainw->read_failed_file,NULL);
     }
 
   }

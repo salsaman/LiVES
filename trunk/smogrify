@@ -4822,6 +4822,7 @@ sub insert_audio {
 	    else {
 		$fdd_in=$xaudio_from;
 		$fdd_out=$audio_to;
+
 		&fast_dd($size,$nspos,$nwpos);
 		return if ($panic);
 	    }
@@ -4890,6 +4891,7 @@ sub insert_audio {
 	if ($size>0) {
 	    $fdd_in=$audio_bak;
 	    $fdd_out=$audio_to;
+
 	    &fast_dd($size,$owpos,$nwpos);
 	    return if ($panic);
 	}
@@ -5721,10 +5723,16 @@ sub sig_write_error {
 
     # write to backend -> frontend $statusfile
 
+    # in params: 1 - filename, 2 - optional additional info (1 line)
+
     return 1 if (! -d $curtmpdir);
 
-    my ($smfile)=shift;
+    my ($smfile,$smaddinfo)=@_;
     my ($smstatus)="error|write|$smfile";
+
+    if ($smaddinfo ne "") {
+	$smstatus.="|$smaddinfo";
+    }
 
     open OUT,"> $statusfile";
     print OUT $smstatus;
@@ -5738,10 +5746,16 @@ sub sig_read_error {
 
     # write to backend -> frontend $statusfile
 
+    # in params: 1 - filename, 2 - optional additional info (1 line)
+
     return 1 if (! -d $curtmpdir);
-    my ($smfile)=shift;
+    my ($smfile,$smaddinfo)=@_;
     my ($smstatus)="error|read|$smfile";
 
+    if ($smaddinfo ne "") {
+	$smstatus.="|$smaddinfo";
+    }
+    
     open OUT,"> $statusfile";
     print OUT $smstatus;
     close OUT;
@@ -5758,10 +5772,18 @@ sub sig_system_error {
 
     # write to backend -> frontend $statusfile
 
+    #
+    # in params: 1 - command which failed or description of command, 2 - error value returned, 
+    # 3 - optional additional info (1 line)
+
     return 1 if (! -d $curtmpdir);
 
-    my ($smcom,$smerrno)=shift;
+    my ($smcom,$smerrno,$smaddinfo)=@_;
     my ($status)="error|system|$smcom|$smerrno";
+
+    if ($smaddinfo ne "") {
+	$smstatus.="|$smaddinfo";
+    }
 
     open OUT,"> $statusfile";
     print OUT $smstatus;
@@ -6012,38 +6034,38 @@ sub fast_dd {
 
     if (! open FFIN,"<$fdd_in") {
 	if (-f "$fdd_in") {
-	    $panic=sig_read_error("$ffd_in");
+	    $panic=sig_read_error("$fdd_in");
 	}
 	return;
     }
 
-    seek FFIN,$skip,SEEK_START or $panic=sig_read_error("$ffd_in");
+    seek FFIN,$skip,SEEK_START or $panic=sig_read_error("$fdd_in");
     return if $panic;
 
     $smres=smog_system("/bin/touch $fdd_out");
     if ($smres) {
-	$panic=sig_write_error("$ffd_out"); 
+	$panic=sig_write_error("$fdd_out"); 
 	return;
     }
 
-    open FFOUT,"+<$fdd_out" or $panic=sig_write_error("$ffd_out");
+    open FFOUT,"+<$fdd_out" or $panic=sig_write_error("$fdd_out");
     return if $panic;
-    seek FFOUT,$seek,SEEK_START or $panic=sig_write_error("$ffd_out");
+    seek FFOUT,$seek,SEEK_START or $panic=sig_write_error("$fdd_out");
     return if $panic;
 
     for ($i=0;$i<$fblocks;$i++) {
-	read FFIN,$data,$bs or $panic=sig_read_error("$ffd_in");
+	read FFIN,$data,$bs or $panic=sig_read_error("$fdd_in");
 	return if $panic;
-	print FFOUT $data or $panic=sig_write_error("$ffd_out");
+	print FFOUT $data or $panic=sig_write_error("$fdd_out");
 	return if $panic;
     }
 
     while ($rbytes>0) {
 	$bs/=2;
 	if ($rbytes>=$bs) {
-	    read FFIN,$data,$bs or $panic=sig_read_error("$ffd_in");
+	    read FFIN,$data,$bs or $panic=sig_read_error("$fdd_in");
 	    return if $panic;
-	    print FFOUT $data or $panic=sig_write_error("$ffd_out");
+	    print FFOUT $data or $panic=sig_write_error("$fdd_out");
 	    return if $panic;
 	    $rbytes-=$bs;
 	}

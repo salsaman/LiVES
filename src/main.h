@@ -237,49 +237,49 @@ typedef enum {
 /// cancel reason
 typedef enum {
   /// no cancel
-  CANCEL_NONE=0,
+  CANCEL_NONE=FALSE,
 
   /// user pressed stop
-  CANCEL_USER=1,
+  CANCEL_USER,
 
   /// cancel but keep opening
-  CANCEL_NO_PROPOGATE=2,
+  CANCEL_NO_PROPOGATE,
 
   /// effect processing finished during preview
-  CANCEL_PREVIEW_FINISHED=3,
+  CANCEL_PREVIEW_FINISHED,
 
   /// application quit
-  CANCEL_APP_QUIT=4,
+  CANCEL_APP_QUIT,
 
   /// ran out of preview frames
-  CANCEL_NO_MORE_PREVIEW=5,
+  CANCEL_NO_MORE_PREVIEW,
 
   /// image could not be captured
-  CANCEL_CAPTURE_ERROR=6,
+  CANCEL_CAPTURE_ERROR,
 
   /// event_list completed
-  CANCEL_EVENT_LIST_END=7,
+  CANCEL_EVENT_LIST_END,
 
   /// video playback completed
-  CANCEL_VID_END=8,
+  CANCEL_VID_END,
 
   /// generator was stopped
-  CANCEL_GENERATOR_END=9,
+  CANCEL_GENERATOR_END,
 
   /// user pressed 'Keep'
-  CANCEL_KEEP=10,
+  CANCEL_KEEP,
 
   /// video playback completed
-  CANCEL_AUD_END=11,
+  CANCEL_AUD_END,
 
   /// cancelled because of error
-  CANCEL_ERROR=12,
+  CANCEL_ERROR,
 
   /// cancelled and paused
-  CANCEL_USER_PAUSED=13,
+  CANCEL_USER_PAUSED,
 
   /// special cancel for TV toy
-  CANCEL_KEEP_LOOPING=100
+  CANCEL_KEEP_LOOPING=CANCEL_NONE+100
 
 } lives_cancel_t;
 

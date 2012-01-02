@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-01 21:12-0300\n"
+"POT-Creation-Date: 2012-01-01 23:32-0300\n"
 "PO-Revision-Date: 2011-08-18 12:01+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -637,7 +637,7 @@ msgid "!rec %9d/%d"
 msgstr "!rec %9d/%d"
 
 #: src/main.c:4190 src/main.c:4191 src/gui.c:2050 src/gui.c:3033
-#: src/saveplay.c:2025
+#: src/saveplay.c:2028
 msgid "Play"
 msgstr "Riproduci"
 
@@ -655,12 +655,12 @@ msgid "Closed file %s\n"
 msgstr "Chiuso il file %s\n"
 
 #: src/main.c:4969 src/gui.c:621 src/utils.c:3144 src/utils.c:3176
-#: src/saveplay.c:3082 src/multitrack.c:3975 src/multitrack.c:5530
+#: src/saveplay.c:3085 src/multitrack.c:3975 src/multitrack.c:5530
 msgid "_Undo"
 msgstr "_Annulla"
 
 #: src/main.c:4970 src/gui.c:634 src/utils.c:3145 src/utils.c:3177
-#: src/saveplay.c:3083 src/multitrack.c:3996 src/multitrack.c:5553
+#: src/saveplay.c:3086 src/multitrack.c:3996 src/multitrack.c:5553
 msgid "_Redo"
 msgstr "_Ripeti"
 
@@ -1021,8 +1021,8 @@ msgstr ""
 "vengono importati."
 
 #: src/interface.c:190 src/callbacks.c:8980 src/callbacks.c:9009
-#: src/callbacks.c:9010 src/gui.c:3036 src/gui.c:3584 src/saveplay.c:2028
-#: src/saveplay.c:2720 src/dialogs.c:1023 src/dialogs.c:1024
+#: src/callbacks.c:9010 src/gui.c:3036 src/gui.c:3584 src/saveplay.c:2031
+#: src/saveplay.c:2723 src/dialogs.c:1023 src/dialogs.c:1024
 #: src/dialogs.c:1214 src/dialogs.c:1215 src/framedraw.c:198
 #: src/multitrack.c:7113
 msgid "Preview"
@@ -1914,8 +1914,8 @@ msgstr "Rifacimento in corso"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Copia dei fotogrammi da %d a %d%s dagli appunti in corso..."
 
-#: src/callbacks.c:2295 src/saveplay.c:1244 src/saveplay.c:1395
-#: src/saveplay.c:1481 src/saveplay.c:3496
+#: src/callbacks.c:2295 src/saveplay.c:1247 src/saveplay.c:1398
+#: src/saveplay.c:1484 src/saveplay.c:3499
 msgid "Pulling frames from clip"
 msgstr "Togliendo i fotogrammi dal clip"
 
@@ -2445,11 +2445,11 @@ msgstr "Mostra la finestra di riproduzione (s)"
 msgid "Play in separate window (s)"
 msgstr "Riproduci in una finestra separata (s)"
 
-#: src/callbacks.c:6889 src/gui.c:3805 src/saveplay.c:2173
+#: src/callbacks.c:6889 src/gui.c:3805 src/saveplay.c:2176
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:7026 src/gui.c:3566 src/saveplay.c:2174 src/plugins.c:1380
+#: src/callbacks.c:7026 src/gui.c:3566 src/saveplay.c:2177 src/plugins.c:1380
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Finestra Di Riproduzione"
 
@@ -2595,7 +2595,7 @@ msgstr "Annulla"
 msgid "Stop"
 msgstr "_Interrompi"
 
-#: src/callbacks.c:9399 src/multitrack.c:11954
+#: src/callbacks.c:9399 src/multitrack.c:11950
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Fotogramma selezionato"
 
@@ -3548,7 +3548,7 @@ msgstr "_Riguardo A..."
 msgid "Rewind to start (w)"
 msgstr "Riavvolgi all'inizio (w)"
 
-#: src/gui.c:1730 src/multitrack.c:15179
+#: src/gui.c:1730 src/multitrack.c:15175
 msgid "Play all (p)"
 msgstr "Riproduci tutto (p)"
 
@@ -4005,7 +4005,7 @@ msgstr "Apertura di %s in corso"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Aprendo %s tempo di partenza %.2f secondi %d fotogrammi"
 
-#: src/saveplay.c:298 src/saveplay.c:3483
+#: src/saveplay.c:298 src/saveplay.c:3486
 msgid " without sound"
 msgstr " senza suono"
 
@@ -4076,27 +4076,27 @@ msgstr ""
 msgid "Adding image..."
 msgstr "Dissolvenza dell'audio in corso..."
 
-#: src/saveplay.c:920
+#: src/saveplay.c:922
 #, c-format
 msgid "Subtitles were saved as %s\n"
 msgstr ""
 
-#: src/saveplay.c:1004
+#: src/saveplay.c:1006
 #, fuzzy, c-format
 msgid "LiVES: Save Frame %d as..."
 msgstr "Salva Fotogramma come %s..."
 
-#: src/saveplay.c:1007
+#: src/saveplay.c:1009
 #, fuzzy
 msgid "LiVES: Save Frame as..."
 msgstr "Salva Fotogramma come %s..."
 
-#: src/saveplay.c:1110
+#: src/saveplay.c:1113
 #, fuzzy
 msgid "LiVES: Save Clip as..."
 msgstr "LiVES: - Rinomina Clip"
 
-#: src/saveplay.c:1182
+#: src/saveplay.c:1185
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -4108,37 +4108,37 @@ msgstr ""
 "\n"
 "Vuoi continuare ancora ?"
 
-#: src/saveplay.c:1227
+#: src/saveplay.c:1230
 msgid "selection"
 msgstr "selezione"
 
-#: src/saveplay.c:1315 src/saveplay.c:1449
+#: src/saveplay.c:1318 src/saveplay.c:1452
 msgid "Linking selection"
 msgstr "Collegando la selezione"
 
-#: src/saveplay.c:1499
+#: src/saveplay.c:1502
 msgid " (with no sound)\n"
 msgstr " (con nessun suono)\n"
 
-#: src/saveplay.c:1507
+#: src/saveplay.c:1510
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 "Salvando i fotogrammi da %d a %d%s come \"%s\" : codificatore = %s : formato "
 "= %s..."
 
-#: src/saveplay.c:1511
+#: src/saveplay.c:1514
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "Salvando i fotogrammi da 1 a %d%s come \"%s\" : codificatore = %s : formato "
 "= %s..."
 
-#: src/saveplay.c:1657
+#: src/saveplay.c:1660
 msgid "Saving [can take a long time]"
 msgstr "Salvataggio in corso [può impiegare molto tempo]"
 
-#: src/saveplay.c:1753
+#: src/saveplay.c:1756
 msgid ""
 "\n"
 "\n"
@@ -4148,34 +4148,34 @@ msgstr ""
 "\n"
 "Errore del codificatore - il file di output non è stato creato !\n"
 
-#: src/saveplay.c:1784
+#: src/saveplay.c:1787
 #, fuzzy
 msgid "Clearing letterbox"
 msgstr "Pulizia degli appunti"
 
-#: src/saveplay.c:1865
+#: src/saveplay.c:1868
 #, c-format
 msgid "File size was %.2fMB\n"
 msgstr ""
 
-#: src/saveplay.c:1952
+#: src/saveplay.c:1955
 msgid "recording aborted by preview.\n"
 msgstr "registrazione fermata dall'anteprima.\n"
 
-#: src/saveplay.c:1956
+#: src/saveplay.c:1959
 msgid "recording aborted by clipboard playback.\n"
 msgstr "registrazione fermata dalla riproduzione degli appunti.\n"
 
-#: src/saveplay.c:1959
+#: src/saveplay.c:1962
 msgid "Recording performance..."
 msgstr "Registrando l'esibizione..."
 
-#: src/saveplay.c:2860
+#: src/saveplay.c:2863
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Gli FPS medi sono stati %.4f\n"
 
-#: src/saveplay.c:2866
+#: src/saveplay.c:2869
 msgid ""
 "\n"
 "\n"
@@ -4189,16 +4189,16 @@ msgstr ""
 "Dovresti cliccare su Strumenti--->Ridimensiona Tutto\n"
 "e ridimensionare tutti i fotogrammi alla dimensione corrente.\n"
 
-#: src/saveplay.c:3016
+#: src/saveplay.c:3019
 msgid "Unknown"
 msgstr "Sconosciuto"
 
-#: src/saveplay.c:3113 src/saveplay.c:4053
+#: src/saveplay.c:3116 src/saveplay.c:4056
 #, c-format
 msgid "Untitled%d"
 msgstr "Senza titolo%d"
 
-#: src/saveplay.c:3147
+#: src/saveplay.c:3150
 #, c-format
 msgid ""
 "\n"
@@ -4206,7 +4206,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3234
+#: src/saveplay.c:3237
 #, c-format
 msgid ""
 "\n"
@@ -4218,14 +4218,14 @@ msgstr ""
 "predefinito di %.3f fps. \n"
 "Il predefinito può essere impostato in Strumenti | Preferenze | Miste.\n"
 
-#: src/saveplay.c:3246
+#: src/saveplay.c:3249
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "La velocità di riproduzione è stata regolata a %.3f fotogrammi al secondo "
 "per adattarsi all'audio.\n"
 
-#: src/saveplay.c:3262
+#: src/saveplay.c:3265
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4234,7 +4234,7 @@ msgstr ""
 "Fotogrammi=%d tipo=%s dimensione=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:3266 src/saveplay.c:4225
+#: src/saveplay.c:3269 src/saveplay.c:4228
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4243,49 +4243,49 @@ msgstr ""
 "Fotogrammi=%d tipo=%s dimensione=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:3270 src/saveplay.c:4229
+#: src/saveplay.c:3273 src/saveplay.c:4232
 #, c-format
 msgid "%s none\n"
 msgstr "%s niente\n"
 
-#: src/saveplay.c:3273 src/saveplay.c:4232
+#: src/saveplay.c:3276 src/saveplay.c:4235
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d canale/i %d bps\n"
 
-#: src/saveplay.c:3281
+#: src/saveplay.c:3284
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Commento: %s\n"
 
-#: src/saveplay.c:3386
+#: src/saveplay.c:3389
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Salvataggio del fotogramma %d come %s in corso..."
 
-#: src/saveplay.c:3478
+#: src/saveplay.c:3481
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Creando un backup da %s a %s"
 
-#: src/saveplay.c:3527
+#: src/saveplay.c:3530
 msgid "Backing up"
 msgstr "Creando un backup"
 
-#: src/saveplay.c:3560
+#: src/saveplay.c:3563
 msgid "performance data was backed up..."
 msgstr "i dati dell'esibizione hanno ricevuto un backup..."
 
-#: src/saveplay.c:4128
+#: src/saveplay.c:4131
 #, c-format
 msgid "Restoring %s..."
 msgstr "Ripristinando %s..."
 
-#: src/saveplay.c:4155
+#: src/saveplay.c:4158
 msgid "Restoring"
 msgstr "Ripristino in corso"
 
-#: src/saveplay.c:4177
+#: src/saveplay.c:4180
 #, c-format
 msgid ""
 "\n"
@@ -4298,17 +4298,17 @@ msgstr ""
 "Il file %s è corrotto.\n"
 "LiVES non è stato in grado di ripristinarlo.\n"
 
-#: src/saveplay.c:4634
+#: src/saveplay.c:4637
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:4638
+#: src/saveplay.c:4641
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:4661
+#: src/saveplay.c:4664
 #, c-format
 msgid ""
 "\n"
@@ -4316,7 +4316,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:4789
+#: src/saveplay.c:4792
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4326,11 +4326,11 @@ msgstr ""
 "Sono stati trovati dei file da un precedente avvio di LiVES.\n"
 "Vuoi provare a recuperarli?\n"
 
-#: src/saveplay.c:4809
+#: src/saveplay.c:4812
 msgid "Recovering files"
 msgstr "Recupero dei file in corso"
 
-#: src/saveplay.c:4811
+#: src/saveplay.c:4814
 msgid "Recovering files..."
 msgstr "Recupero dei file in corso..."
 
@@ -5584,7 +5584,7 @@ msgstr "solo video"
 msgid "Video only Transitions"
 msgstr "Transizioni solo Video"
 
-#: src/effects-weed.c:277 src/multitrack.c:9595
+#: src/effects-weed.c:277 src/multitrack.c:9578
 msgid "audio only"
 msgstr "solamente audio"
 
@@ -5592,7 +5592,7 @@ msgstr "solamente audio"
 msgid "Audio only Transitions"
 msgstr "Transizioni solo Audio"
 
-#: src/effects-weed.c:280 src/effects-weed.c:283 src/multitrack.c:17123
+#: src/effects-weed.c:280 src/effects-weed.c:283 src/multitrack.c:17120
 msgid "audio"
 msgstr "audio"
 
@@ -8855,7 +8855,7 @@ msgstr ""
 "Questo ha un numero non valido di canali audio (%d) per LiVES.\n"
 "Non può essere caricato.\n"
 
-#: src/multitrack.c:4773 src/multitrack.c:4781 src/multitrack.c:19366
+#: src/multitrack.c:4773 src/multitrack.c:4781 src/multitrack.c:19363
 msgid "Layout was wiped.\n"
 msgstr "Il layout è stato eliminato.\n"
 
@@ -8944,7 +8944,7 @@ msgstr "Pulisci _segni dalla linea del tempo"
 msgid "Ignore selection limits when inserting"
 msgstr "Ignora i limiti della selezione durante l'inserimento"
 
-#: src/multitrack.c:5677 src/multitrack.c:15178
+#: src/multitrack.c:5677 src/multitrack.c:15174
 msgid "_Play from Timeline Position"
 msgstr "_Riproduci dalla Posizione Sulla Linea Del Tempo"
 
@@ -9184,11 +9184,11 @@ msgstr ""
 msgid "Select _overlap"
 msgstr ""
 
-#: src/multitrack.c:6998 src/multitrack.c:12782
+#: src/multitrack.c:6998 src/multitrack.c:12778
 msgid "Expanded View (d)"
 msgstr "Visualizzazione Estesa (d)"
 
-#: src/multitrack.c:7000 src/multitrack.c:12789
+#: src/multitrack.c:7000 src/multitrack.c:12785
 msgid "Compact View (d)"
 msgstr "Visualizzazione Compatta (d)"
 
@@ -9272,11 +9272,11 @@ msgstr "_Fine ancora"
 msgid "End frame"
 msgstr "Fotogramma finale"
 
-#: src/multitrack.c:7724
+#: src/multitrack.c:7707
 msgid "Scroll"
 msgstr "Scorri"
 
-#: src/multitrack.c:8280
+#: src/multitrack.c:8263
 msgid ""
 "\n"
 "==============================\n"
@@ -9286,91 +9286,91 @@ msgstr ""
 "==============================\n"
 "Passato alla modalità Modifica Clip\n"
 
-#: src/multitrack.c:8449
+#: src/multitrack.c:8432
 msgid "Timeline (seconds)"
 msgstr "Linea del tempo (secondi)"
 
-#: src/multitrack.c:8889
+#: src/multitrack.c:8872
 msgid " Backing audio"
 msgstr " Audio di supporto"
 
-#: src/multitrack.c:8892
+#: src/multitrack.c:8875
 #, c-format
 msgid " Layer %d audio"
 msgstr " Audio livello %d"
 
-#: src/multitrack.c:8899
+#: src/multitrack.c:8882
 msgid "Show/hide audio details"
 msgstr "Mostra/nascondi i dettagli dell'audio"
 
-#: src/multitrack.c:8916 src/multitrack.c:9124
+#: src/multitrack.c:8899 src/multitrack.c:9107
 #, c-format
 msgid "Layer %d audio"
 msgstr "Audio livello %d"
 
-#: src/multitrack.c:9079
+#: src/multitrack.c:9062
 msgid "Select track"
 msgstr "Seleziona traccia"
 
-#: src/multitrack.c:9082
+#: src/multitrack.c:9065
 msgid "Show/hide audio"
 msgstr "Mostra/nascondi audio"
 
-#: src/multitrack.c:9088
+#: src/multitrack.c:9071
 #, c-format
 msgid "Video %d"
 msgstr "Video %d"
 
-#: src/multitrack.c:9116 src/multitrack.c:9152
+#: src/multitrack.c:9099 src/multitrack.c:9135
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s (livello %d)"
 
-#: src/multitrack.c:9125
+#: src/multitrack.c:9108
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:9218
+#: src/multitrack.c:9201
 msgid "LiVES: Selected effect"
 msgstr "LiVES: Effetto selezionato"
 
-#: src/multitrack.c:9225
+#: src/multitrack.c:9208
 msgid "_View/Edit this effect"
 msgstr "_Visualizza/Modifica questo effetto"
 
-#: src/multitrack.c:9228
+#: src/multitrack.c:9211
 msgid "_View this effect"
 msgstr "Vis_ualizza questo effetto"
 
-#: src/multitrack.c:9236
+#: src/multitrack.c:9219
 msgid "_Delete this effect"
 msgstr "_Elimina questo effetto"
 
-#: src/multitrack.c:9287
+#: src/multitrack.c:9270
 msgid "Cannot insert after this effect"
 msgstr "Non è possibile inserire dopo questo effetto"
 
-#: src/multitrack.c:9316
+#: src/multitrack.c:9299
 msgid "This effect cannot be moved"
 msgstr "Questo effetto non pù essere spostato"
 
-#: src/multitrack.c:9362
+#: src/multitrack.c:9345
 #, c-format
 msgid "  %d to %d selected  "
 msgstr "  selezionato da %d a %d  "
 
-#: src/multitrack.c:9365 src/multitrack.c:9601
+#: src/multitrack.c:9348 src/multitrack.c:9584
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f secondi."
 
-#: src/multitrack.c:9572
+#: src/multitrack.c:9555
 #, c-format
 msgid "%d frames"
 msgstr "%d fotogrammi"
 
-#: src/multitrack.c:9869
+#: src/multitrack.c:9852
 msgid ""
 "\n"
 "==============================\n"
@@ -9380,65 +9380,65 @@ msgstr ""
 "==============================\n"
 "Passato alla modalità Multi-traccia\n"
 
-#: src/multitrack.c:11453
+#: src/multitrack.c:11449
 msgid "Drag the time slider to where you"
 msgstr "Trascina il cursore del tempo dove"
 
-#: src/multitrack.c:11454
+#: src/multitrack.c:11450
 msgid "want to set effect parameters"
 msgstr "vuoi impostare i parametri degli effetti"
 
-#: src/multitrack.c:11455
+#: src/multitrack.c:11451
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr "Imposta i parametri, poi clicca \"Applica\"\n"
 
-#: src/multitrack.c:11456
+#: src/multitrack.c:11452
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
 "Nodes can be deleted."
 msgstr ""
 
-#: src/multitrack.c:11459
+#: src/multitrack.c:11455
 msgid "Effect has no parameters.\n"
 msgstr "L'effetto non ha parametri.\n"
 
-#: src/multitrack.c:11543
+#: src/multitrack.c:11539
 #, c-format
 msgid "%s output"
 msgstr "output %s"
 
-#: src/multitrack.c:11549
+#: src/multitrack.c:11545
 #, c-format
 msgid "layer %d"
 msgstr "livello %d"
 
-#: src/multitrack.c:11551
+#: src/multitrack.c:11547
 msgid "audio track"
 msgstr "traccia audio"
 
-#: src/multitrack.c:11552
+#: src/multitrack.c:11548
 #, c-format
 msgid "%s to %s"
 msgstr "da %s a %s"
 
-#: src/multitrack.c:11603
+#: src/multitrack.c:11599
 msgid "_Prev filter map"
 msgstr "Mappa dei filtri _precedente"
 
-#: src/multitrack.c:11613
+#: src/multitrack.c:11609
 msgid "Insert _before"
 msgstr "Inserisci pr_ima"
 
-#: src/multitrack.c:11621
+#: src/multitrack.c:11617
 msgid "Insert _after"
 msgstr "Inserisci _dopo"
 
-#: src/multitrack.c:11634
+#: src/multitrack.c:11630
 msgid "_Next filter map"
 msgstr "Mappa dei filtri _successiva"
 
-#: src/multitrack.c:11648
+#: src/multitrack.c:11644
 msgid ""
 "\n"
 "\n"
@@ -9450,7 +9450,7 @@ msgstr ""
 "Nessun effetto nella traccia corrente,\n"
 "tempo corrente.\n"
 
-#: src/multitrack.c:11660
+#: src/multitrack.c:11656
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
@@ -9460,7 +9460,7 @@ msgstr ""
 "sulla linea temporale\n"
 "per applicarlo alla regione selezionata."
 
-#: src/multitrack.c:11667
+#: src/multitrack.c:11663
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
@@ -9470,7 +9470,7 @@ msgstr ""
 "sulla linea temporale\n"
 "per applicarla alla regione selezionata."
 
-#: src/multitrack.c:11675
+#: src/multitrack.c:11671
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
@@ -9478,64 +9478,64 @@ msgstr ""
 "Gli effetti possono essere trascinati\n"
 "in blocchi sulla linea temporale."
 
-#: src/multitrack.c:11872
+#: src/multitrack.c:11868
 msgid "LiVES: Selected block/frame"
 msgstr "LiVES: Blocco/fotogramma selezionato"
 
-#: src/multitrack.c:11878
+#: src/multitrack.c:11874
 msgid "_Select this block"
 msgstr "_Seleziona questo blocco"
 
-#: src/multitrack.c:11888
+#: src/multitrack.c:11884
 msgid "_Split block here"
 msgstr "_Dividi il blocco qui"
 
-#: src/multitrack.c:11896
+#: src/multitrack.c:11892
 msgid "List _effects here"
 msgstr "Elenca gli _effetti qui"
 
-#: src/multitrack.c:11905 src/multitrack.c:11981
+#: src/multitrack.c:11901 src/multitrack.c:11977
 #, c-format
 msgid "_Adjust %s"
 msgstr "_Regola %s"
 
-#: src/multitrack.c:11920
+#: src/multitrack.c:11916
 msgid "_Delete this block"
 msgstr "_Elimina questo blocco"
 
-#: src/multitrack.c:11962
+#: src/multitrack.c:11958
 msgid "_Insert here"
 msgstr "_Inserisci qui"
 
-#: src/multitrack.c:11968
+#: src/multitrack.c:11964
 msgid "_Insert audio here"
 msgstr "In_serisci audio qui"
 
-#: src/multitrack.c:13383
+#: src/multitrack.c:13379
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr "Intervallo inserito nelle tracce selezionate dal tempo %.4f a %.4f\n"
 
-#: src/multitrack.c:13417
+#: src/multitrack.c:13413
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr "Intervallo inserito nella traccia %s dal tempo %.4f a %.4f\n"
 
-#: src/multitrack.c:13615
+#: src/multitrack.c:13611
 #, c-format
 msgid "Undid %s\n"
 msgstr "Annullato %s\n"
 
-#: src/multitrack.c:13811
+#: src/multitrack.c:13807
 #, c-format
 msgid "Redid %s\n"
 msgstr "Rifatto %s\n"
 
-#: src/multitrack.c:13837
+#: src/multitrack.c:13833
 msgid "Multitrack details"
 msgstr "Dettagli multi-traccia"
 
-#: src/multitrack.c:13849
+#: src/multitrack.c:13845
 msgid ""
 "\n"
 " (variable)"
@@ -9543,56 +9543,56 @@ msgstr ""
 "\n"
 " (variabile)"
 
-#: src/multitrack.c:14071 src/multitrack.c:17102 src/multitrack.c:17114
+#: src/multitrack.c:14067 src/multitrack.c:17099 src/multitrack.c:17111
 #, c-format
 msgid "track %s"
 msgstr "traccia %s"
 
-#: src/multitrack.c:14076 src/multitrack.c:17107
+#: src/multitrack.c:14072 src/multitrack.c:17104
 #, c-format
 msgid "tracks %s and %s"
 msgstr "tracce %s e %s"
 
-#: src/multitrack.c:14082 src/multitrack.c:17117
+#: src/multitrack.c:14078 src/multitrack.c:17114
 msgid "selected tracks"
 msgstr "tracce selezionate"
 
-#: src/multitrack.c:14086
+#: src/multitrack.c:14082
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr "Aggiunti %s %s a %s da %.4f a %.4f\n"
 
-#: src/multitrack.c:14115
+#: src/multitrack.c:14111
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr "Aggiunto l'effetto %s alla traccia %s da %.4f a %.4f\n"
 
-#: src/multitrack.c:14410
+#: src/multitrack.c:14406
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr "renderizzati %d fotogrammi nel nuovo clip.\n"
 
-#: src/multitrack.c:14500
+#: src/multitrack.c:14496
 msgid "Cleaning up..."
 msgstr "Pulizia in corso..."
 
-#: src/multitrack.c:15171
+#: src/multitrack.c:15167
 msgid "_Pause"
 msgstr "_Pausa"
 
-#: src/multitrack.c:15172
+#: src/multitrack.c:15168
 msgid "Pause (p)"
 msgstr "Pausa (p)"
 
-#: src/multitrack.c:15312
+#: src/multitrack.c:15309
 msgid "Press 'm' during playback"
 msgstr "Premi 'm' durante la riproduzione"
 
-#: src/multitrack.c:15313
+#: src/multitrack.c:15310
 msgid "to make a mark on the timeline"
 msgstr "per creare un segno sulla linea del tempo"
 
-#: src/multitrack.c:15603
+#: src/multitrack.c:15600
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
@@ -9601,7 +9601,7 @@ msgstr ""
 "Audio inserito da %.4f a %.4f dal clip %s nell'audio di supporto dal tempo "
 "%.4f a %.4f\n"
 
-#: src/multitrack.c:15850
+#: src/multitrack.c:15847
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
@@ -9609,7 +9609,7 @@ msgstr ""
 "Fotogrammi inseriti da %d a %d dal clip %s nella traccia %s dal tempo da "
 "%.4f a %.4f\n"
 
-#: src/multitrack.c:16386
+#: src/multitrack.c:16383
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
@@ -9618,7 +9618,7 @@ msgstr ""
 "Regione temporale da %.3f a %.3f\n"
 "selezionata\n"
 
-#: src/multitrack.c:16390
+#: src/multitrack.c:16387
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -9626,12 +9626,12 @@ msgstr ""
 "seleziona una o più tracce\n"
 "per creare una regione.\n"
 
-#: src/multitrack.c:16392
+#: src/multitrack.c:16389
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "%d tracce video selezionate.\n"
 
-#: src/multitrack.c:16394
+#: src/multitrack.c:16391
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -9639,7 +9639,7 @@ msgstr ""
 "Clicca due volte sulla linea temporale\n"
 "per deselezionare la regione temporale."
 
-#: src/multitrack.c:16401
+#: src/multitrack.c:16398
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -9647,7 +9647,7 @@ msgstr ""
 "Clicca una volta su un effetto\n"
 "per selezionarlo."
 
-#: src/multitrack.c:16402
+#: src/multitrack.c:16399
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -9655,7 +9655,7 @@ msgstr ""
 "Clicca due volte su un effetto\n"
 "per modificarlo"
 
-#: src/multitrack.c:16403
+#: src/multitrack.c:16400
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -9663,7 +9663,7 @@ msgstr ""
 "Clicca col tasto destro del mouse su un effetto\n"
 "per il menù del contesto.\n"
 
-#: src/multitrack.c:16405
+#: src/multitrack.c:16402
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
@@ -9671,17 +9671,17 @@ msgstr ""
 "L'ordine degli effetti può essere cambiato in\n"
 "MAPPE FILTRO"
 
-#: src/multitrack.c:16412
+#: src/multitrack.c:16409
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:16413
+#: src/multitrack.c:16410
 msgid "or INSERT AFTER buttons to move it."
 msgstr "o INSERISCI DOPO per spostarlo."
 
-#: src/multitrack.c:16449
+#: src/multitrack.c:16446
 msgid ""
 "You can click and drag\n"
 "below the timeline"
@@ -9689,15 +9689,15 @@ msgstr ""
 "Puoi cliccare e trascinare\n"
 "sotto la linea temporale"
 
-#: src/multitrack.c:16450
+#: src/multitrack.c:16447
 msgid "to select a time region.\n"
 msgstr "per selezionare una regione temporale.\n"
 
-#: src/multitrack.c:16684 src/multitrack.c:16697
+#: src/multitrack.c:16681 src/multitrack.c:16694
 msgid "Click on another effect,"
 msgstr "Clicca su un altro effetto,"
 
-#: src/multitrack.c:16685 src/multitrack.c:16698
+#: src/multitrack.c:16682 src/multitrack.c:16695
 msgid ""
 "and the selected one\n"
 "will be inserted"
@@ -9705,46 +9705,46 @@ msgstr ""
 "e quello selezionato\n"
 "sarà inserito"
 
-#: src/multitrack.c:16686
+#: src/multitrack.c:16683
 msgid "after it.\n"
 msgstr "dopo di esso.\n"
 
-#: src/multitrack.c:16699
+#: src/multitrack.c:16696
 msgid "before it.\n"
 msgstr "prima di esso.\n"
 
-#: src/multitrack.c:16929
+#: src/multitrack.c:16926
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "Rimossi i valori del parametro per l'effetto %s al tempo %.4f\n"
 
-#: src/multitrack.c:17125
+#: src/multitrack.c:17122
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "Imposta i valori del parametro per %s %s su %s al tempo %.4f\n"
 
-#: src/multitrack.c:17609 src/multitrack.c:19105
+#: src/multitrack.c:17606 src/multitrack.c:19102
 msgid "_Autoreload each time"
 msgstr "Ricarica _automaticamente ogni volta"
 
-#: src/multitrack.c:17697
+#: src/multitrack.c:17694
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "Salvato il layout in %s\n"
 
-#: src/multitrack.c:19004
+#: src/multitrack.c:19001
 msgid "clips and frames"
 msgstr "clip e fotogrammi"
 
-#: src/multitrack.c:19008
+#: src/multitrack.c:19005
 msgid "clips"
 msgstr "clip"
 
-#: src/multitrack.c:19011
+#: src/multitrack.c:19008
 msgid "frames"
 msgstr "fotogrammi"
 
-#: src/multitrack.c:19021
+#: src/multitrack.c:19018
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -9752,7 +9752,7 @@ msgstr ""
 "\n"
 "Ricarica automaticamente il layout.\n"
 
-#: src/multitrack.c:19024
+#: src/multitrack.c:19021
 #, c-format
 msgid ""
 "%s\n"
@@ -9763,11 +9763,11 @@ msgstr ""
 "Alcuni %s mancano nel layout%s\n"
 "Quindi non può venire caricato correttamente.\n"
 
-#: src/multitrack.c:19162
+#: src/multitrack.c:19159
 msgid "auto backup"
 msgstr "backup automatico"
 
-#: src/multitrack.c:19165
+#: src/multitrack.c:19162
 #, c-format
 msgid ""
 "\n"
@@ -9776,43 +9776,43 @@ msgstr ""
 "\n"
 "Impossibile caricare il file layout %s\n"
 
-#: src/multitrack.c:19180
+#: src/multitrack.c:19177
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "Caricamento del layout da %s in corso..."
 
-#: src/multitrack.c:19213
+#: src/multitrack.c:19210
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "Ottenuti %d eventi...processo in corso..."
 
-#: src/multitrack.c:19228
+#: src/multitrack.c:19225
 msgid "Checking and rebuilding event list"
 msgstr "Controllando e ricostruendo l'elenco degli eventi"
 
-#: src/multitrack.c:19254
+#: src/multitrack.c:19251
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "%d errori trovati.\n"
 
-#: src/multitrack.c:19302
+#: src/multitrack.c:19299
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr "Fps multi-traccia impostato a %.3f\n"
 
-#: src/multitrack.c:20290
+#: src/multitrack.c:20287
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: Mixer audio multi-traccia"
 
-#: src/multitrack.c:20327
+#: src/multitrack.c:20324
 msgid "_Reset values"
 msgstr "_Azzera valori"
 
-#: src/multitrack.c:20331
+#: src/multitrack.c:20328
 msgid "_Close mixer"
 msgstr "_Chiudi mixer"
 
-#: src/multitrack.c:20373
+#: src/multitrack.c:20370
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
@@ -9820,17 +9820,17 @@ msgstr ""
 "_Inverti l'audio di supporto\n"
 "e i volumi dei layer"
 
-#: src/multitrack.c:20379
+#: src/multitrack.c:20376
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 "Regola i valori dell'audio di sostegno e di livello in modo che la loro "
 "somma sia pari a 1.0"
 
-#: src/multitrack.c:20418
+#: src/multitrack.c:20415
 msgid "_Gang layer audio"
 msgstr "_Riunisci audio livello"
 
-#: src/multitrack.c:20424
+#: src/multitrack.c:20421
 msgid "Adjust all layer audio values to the same value"
 msgstr "Regola tutti i valori audio del layer allo stesso valore"
 

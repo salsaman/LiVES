@@ -906,11 +906,13 @@ static void save_subs_to_file(file *sfile, gchar *fname) {
   // TODO - use sfile->subt->save_fn
   switch (otype) {
     case SUBTITLE_TYPE_SUB:
-      save_sub_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,(double)(sfile->start-1)/sfile->fps,fname);
+      save_sub_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,
+			 (double)(sfile->start-1)/sfile->fps,fname);
       break;
 
     case SUBTITLE_TYPE_SRT:
-      save_srt_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,(double)(sfile->start-1)/sfile->fps,fname);
+      save_srt_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,
+			 (double)(sfile->start-1)/sfile->fps,fname);
       break;
       
     default:
@@ -1052,7 +1054,8 @@ void save_file (int clip, int start, int end, const char *filename) {
   int retval;
   gint startframe=1;
   gint current_file=mainw->current_file;
-  gint asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
+  gint asigned=!(sfile->signed_endian&AFORM_UNSIGNED); // 1 is signed (in backend)
+  gint aendian=(sfile->signed_endian&AFORM_BIG_ENDIAN); // 2 is bigend
   gint arate;
   gint new_file=-1;
 
@@ -1528,14 +1531,14 @@ void save_file (int clip, int start, int end, const char *filename) {
       com=g_strdup_printf("smogrify save get_rfx %s \"%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
 			  sfile->handle,enc_exec_name,
 			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
+			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
       g_free(tmp);
     }
     else {
       com=g_strdup_printf("\"%s\" save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
 			  enc_exec_name,sfile->handle,
 			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned,aud_start,aud_end);
+			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
       g_free(tmp);
     }
     extra_params=plugin_run_param_window(com,NULL,NULL);
@@ -1621,7 +1624,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 			cfile->handle,
 			enc_exec_name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
-			asigned,aud_start,aud_end,(extra_params==NULL)?"":extra_params,redir);
+			asigned|aendian,aud_start,aud_end,(extra_params==NULL)?"":extra_params,redir);
     g_free(tmp);
   }
   else {
@@ -1630,7 +1633,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 			cfile->handle, enc_exec_name,
 			fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
-			asigned,aud_start,aud_end,(extra_params==NULL?"":extra_params),redir);
+			asigned|aendian,aud_start,aud_end,(extra_params==NULL?"":extra_params),redir);
     g_free(tmp);
   }
   g_free (fps_string);
@@ -3396,7 +3399,7 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
     }
 
     com=g_strdup_printf("smogrify save_frame \"%s\" %d \"%s\" %d %d",sfile->handle,frame,tmp,width,height);
-    result=system(com);
+    result=lives_system(com,FALSE);
     g_free(com);
     g_free(tmp);
     

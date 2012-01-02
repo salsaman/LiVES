@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# smogrify - Copyright G. Finch 2003 - 2011
+# smogrify - Copyright G. Finch 2003 - 2012
 # Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
 
 
@@ -514,7 +514,6 @@ if (defined($ARGV[0])) {
 	exit 0;
     }
 
-#TODO - error check
 
     if ($command eq "save_frame") {
 	my $hsize=-1;
@@ -543,16 +542,22 @@ if (defined($ARGV[0])) {
 	umask 0111;
 
 	if ($hsize==-1||$vsize==-1) {
-	    smog_system("$convert_command \"$curtmpdir/$name$img_ext\" \"$nfile\" >/dev/null 2>&1");
+	    $com="$convert_command \"$curtmpdir/$name$img_ext\" \"$nfile\" >/dev/null 2>&1";
 	}
 	else {
 	    if ($antialias eq "false") {
-		smog_system("$convert_command +antialias \"$curtmpdir/$name$img_ext\" -scale $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1");
+		$com="$convert_command +antialias \"$curtmpdir/$name$img_ext\" -scale $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1";
 	    }
 	    else {
-		smog_system("$convert_command -antialias \"$curtmpdir/$name$img_ext\" -resize $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1");
+		$com="$convert_command -antialias \"$curtmpdir/$name$img_ext\" -resize $hsize"."!x"."$vsize! \"$nfile\" > /dev/null 2>&1";
 	    }
 	}
+
+	$smerr=smog_system($com);
+	if ($smerr) {
+	    sig_system_error("$com",$smerr);
+	    exit 1;
+	};
 
 	exit 0;
     }
@@ -704,6 +709,9 @@ if (defined($ARGV[0])) {
 
 	    $imresact="bound";
 	    &get_image_size("$file");
+	    if ($panic) {
+		exit 1;
+	    }
 	    if (!($vsize*$hsize)) {
 		&sig_complete(0,0);
 		exit 0;
@@ -1316,6 +1324,10 @@ if (defined($ARGV[0])) {
 	                 # quitting, thus we won't send full info
 	}
 	&get_file_info;
+	if ($panic) {
+	    unlink "$pidfile"; 
+	    exit 1;
+	}
 
 	$aformnew="";
 	if ($asamps==32) {
@@ -1382,9 +1394,7 @@ if (defined($ARGV[0])) {
 		&sig_progress(0);
 	    }
 
-	    # TODO *** - check for failure and return error code
-
-	    smog_system("$syscom2");
+	    smog_system("$syscom2"); # this may well fail...we just have to use what we get back
 	    
             if (!-f $curtmpfile) {
 		unlink $pidfile;
@@ -1430,6 +1440,10 @@ if (defined($ARGV[0])) {
 	    $name=&mkname(1);
 	    $imresact="none";
 	    &get_image_size("$name$img_ext");
+	    if ($panic) {
+		unlink $pidfile;
+		exit 1;
+	    }
 	}
 
 	if (-f $audio_in) {
@@ -1528,6 +1542,10 @@ if (defined($ARGV[0])) {
 	    $is_audio=$ARGV[5];
 	}
 	&get_file_info;
+	if ($panic) {
+	    unlink "$pidfile"; 
+	    exit 1;
+	}
 
 	if ($asamps==32) {
 	    # cant handle this yet, so we will resample on open
@@ -1574,7 +1592,13 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-	    smog_system("mplayer -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1 </dev/null");
+	    $com="mplayer -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1 </dev/null";
+	    $smerr=smog_system($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
 	    exit 0;
 	}
 
@@ -1584,7 +1608,13 @@ if (defined($ARGV[0])) {
 	    $cardno=$ARGV[2];
 	    $cache=$ARGV[3];
 	    $fifofile=$ARGV[4];
-	    smog_system("dvgrab -s 0 -noavc -card $cardno -o - 2>/dev/null | mplayer - -really-quiet -demuxer lavf -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1");
+	    $com="dvgrab -s 0 -noavc -card $cardno -o - 2>/dev/null | mplayer - -really-quiet -demuxer lavf -vo yuv4mpeg:file=$fifofile >/dev/null 2>&1";
+	    $smerr=smog_system("$com");
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
 	    exit 0;
 	}
 
@@ -1622,7 +1652,7 @@ if (defined($ARGV[0])) {
 		sig_system_error("$com",$smerr);
 		unlink "$pidfile"; 
 		exit 1;
-	    };
+	    }
 	    &sig_complete;
 	    exit 0;
 
@@ -1673,7 +1703,9 @@ if (defined($ARGV[0])) {
 	    $achans=$ARGV[8];
 	    $asamps=$ARGV[9];
 	    if (defined($ARGV[10])) {
-		$ssigned=$ARGV[10];
+		$ssigned=$ARGV[10]&1; #CAREFUL - this is reversed in LiVES (there unsigned==1, signed==0)
+		$aendian=$ARGV[10]&2; # value of 2 means bigendian
+		$aendian=!$aendian; #endian is revesed here (0 means bigend)
 	    }
 	    
 	    else {
@@ -1681,6 +1713,7 @@ if (defined($ARGV[0])) {
 		if ($asamps==8) {
 		    $ssigned=0;
 		}
+		$aendian=&get_endian;
 	    }
 	    if ($ssigned==1) {
 		$asigned="-s";
@@ -1689,9 +1722,6 @@ if (defined($ARGV[0])) {
 		$asigned="-u";
 	    }
 	    
-	    # assume endianness matches machine endianness
-	    $aendian=&get_endian;
-
 	    if (defined($ARGV[11])) {
 		$aud_start=$ARGV[11];
 	    }
@@ -1711,7 +1741,10 @@ if (defined($ARGV[0])) {
 	    $imresact="none";
 	    my $firstframe=&mkname($start);
 	    &get_image_size("$firstframe$img_ext");
-
+	    if ($panic) {
+		unlink $pidfile;
+		exit 1;
+	    }
 	    $otype=&rc_get("output_type");
 
 	    $encoder=&rc_get("encoder");
@@ -1808,13 +1841,23 @@ if (defined($ARGV[0])) {
 			    $name=&mkname($i);
 			    $from=&mkname($i+$start-1);
 			    if (-f "$curtmpdir$from$img_ext") {
-				smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
+				$smerr=smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
+				if ($smerr) {
+				    sig_system_error("Symlinking \"$curtmpdir/$from$img_ext\" from \"$linksdir$name$img_ext\"",$smerr);
+				    unlink "$pidfile"; 
+				    exit 1;
+				}
 			    }
 			}
 			if (-f $audiofile) {
 			    my $xaudiofile=(split(/\//,$audiofile))[-1];
 			    if (! -f "$linksdir$xaudiofile") {
-				smog_system("/bin/ln \"$audiofile\" \"$linksdir$xaudiofile\"");
+				$smerr=smog_system("/bin/ln \"$curtmpdir/$audiofile\" \"$linksdir$xaudiofile\"");
+				if ($smerr) {
+				    sig_system_error("Symlinking \"$curtmpdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
+				    unlink "$pidfile"; 
+				    exit 1;
+				}
 			    }
 			}
 			$is_linked=1;
@@ -1842,11 +1885,7 @@ if (defined($ARGV[0])) {
 		}
 
 		$smerr=smog_system("$com");
-		if ($smerr) {
-		    sig_system_error("Command failed: $com",$smerr); 
-		    unlink "$pidfile"; 
-		    exit 1;
-		}
+
 		&sig_complete;
 		exit 0;
 	    }
@@ -1956,8 +1995,12 @@ if (defined($ARGV[0])) {
 		$name=&mkname($i);
 		$from=&mkname($i+$start-1);
 		if (-f "$curtmpdir/$from$img_ext") {
-		    smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
-
+		    $smerr=smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+		    if ($smerr) {
+			sig_system_error("Linking \"$curtmpdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+			unlink "$pidfile"; 
+			exit 1;
+		    }
 		}
 		&sig_progress($i);
 	    }
@@ -2003,6 +2046,14 @@ if (defined($ARGV[0])) {
 		
 		smog_copy("$name$img_ext","$name.bak");
 		if ($panic) {
+		    if ($letterbox) {
+			try_to_recover($start,$i-1);
+		    }
+		    if ($DEBUG_SMOGRIFY) {
+			print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name$img_ext\",\"$curtmpdir/$name.bak\"";
+		    }
+		    sig_system_error("Renaming \"$curtmpdir/$name$img_ext\" to \"$curtmpdir/$name.bak\"");
+
 		    unlink "$pidfile"; 
 		    exit 1;
 		}
@@ -2012,11 +2063,22 @@ if (defined($ARGV[0])) {
 		    &resize_frame($name,$iwidth,$iheight);
 		}
 
+		if ($panic) {
+		    if ($letterbox) {
+			try_to_recover($start,$i);
+		    }
+		    unlink "$pidfile"; 
+		    exit 1;
+		}
+
 		if ($letterbox) {
 		    &letterbox_frame($name,abs($iwidth),abs($iheight),$owidth,$oheight);
 		}
 
 		if ($panic) {
+		    if ($letterbox) {
+			try_to_recover($start,$i);
+		    }
 		    unlink "$pidfile"; 
 		    exit 1;
 		}
@@ -2062,8 +2124,13 @@ if (defined($ARGV[0])) {
 	}
 
 	unlink <*.tar>;
-	smog_system ("tar -cf header.tar $audio header* extended* event.* subs.* file* 2>/dev/null");
-
+	$com="tar -cf header.tar \"$audio\" header* extended* event.* subs.* file* 2>/dev/null";
+	smog_system ($com);
+	if ($smerr) {
+	    sig_system_error("$com",$smerr);
+	    unlink "$pidfile"; 
+	    exit 1;
+	}
 	$img_ext=&get_img_ext($curtmpdir,$start);
 
 	if ($start>0) {
@@ -2080,7 +2147,13 @@ if (defined($ARGV[0])) {
 	    
 	    for ($i=$start;$i<=$end;$i++) {
 		$name=&mkname($i);
-		smog_system("tar -rf $tarname $name$img_ext");
+		$com="tar -rf \"$tarname\" \"$name$img_ext\"";
+		$smerr=smog_system ($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "$pidfile"; 
+		    exit 1;
+		}
 		&sig_progress(int($start+($i-$start)/4));
 	    }
 	    
@@ -2089,7 +2162,13 @@ if (defined($ARGV[0])) {
 		$len=length ($nexthundred);
 		$name=substr("000000",$len) . $nexthundred . "*";
 		$tarname=&mkname(++$tarcount).".tar";
-		smog_system("tar -cf $tarname $name$img_ext");
+		$com="tar -cf \"$tarname\" \"$name$img_ext\"";
+		$smerr=smog_system ($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "$pidfile"; 
+		    exit 1;
+		}
 		$nexthundred++;
 		&sig_progress(int($start+($end-$start)/4));
 	    }
@@ -2098,7 +2177,13 @@ if (defined($ARGV[0])) {
 	    
 	    for ($i=$end;$i<=$oend;$i++) {
 		$name=&mkname($i);
-		smog_system("tar -rf $tarname $name$img_ext 2>.tar_err");
+		$com="tar -rf $tarname $name$img_ext 2>.tar_err";
+		$smerr=smog_system ($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "$pidfile"; 
+		    exit 1;
+		}
 		if (-f ".tar_err") {
 		    open IN,"< .tar_err";
 		    read IN,$tarerr,255;
@@ -2113,7 +2198,13 @@ if (defined($ARGV[0])) {
 		&sig_progress($start+($i-$start));
 	    }
 	}
-	smog_system ("tar -czf \"$nfile\" *.tar 2>.tar_err");
+	$com="tar -czf \"$nfile\" *.tar 2>.tar_err";
+	$smerr=smog_system ($com);
+	if ($smerr) {
+	    sig_system_error("$com",$smerr);
+	    unlink "$pidfile"; 
+	    exit 1;
+	}
 	unlink <header.tar 0*.tar>;
 	if (-f ".tar_err") {
 	    open IN,"< .tar_err";
@@ -2137,7 +2228,13 @@ if (defined($ARGV[0])) {
 	$nfile=$ARGV[2];
 	smog_chdir("$curtmpdir");
 
-	smog_system("tar -zxf \"$nfile\" 2>/dev/null");
+	$com="tar -zxf \"$nfile\" 2>/dev/null";
+	smog_system ($com);
+	if ($smerr) {
+	    sig_system_error("$com",$smerr);
+	    unlink "$pidfile"; 
+	    exit 1;
+	}
 	unless (-f "header.tar"||-f "header"||-f "header.lives") {
 	    &sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
 	}
@@ -2214,14 +2311,26 @@ if (defined($ARGV[0])) {
 			if ($newwidth > 0 && $newheight > 0) {
 			    &resize_frame($from,$newwidth,$newheight);
 			    if ($panic) {
+				if ($letterbox) {
+				    try_to_recover($start,$i-1);
+				}
 				unlink "$pidfile"; 
 				exit 1;
 			    }
-			    smog_rename( "$from$resize_ext","$to.mgk");
+
+			    $smerr=rename "$curtmpdir/$from$resize_ext","$curtmpdir/$to.mgk";
+			    if (!$smerr) {
+				if ($letterbox) {
+				    try_to_recover($start,$i);
+				}
+				sig_system_error("Renaming \"$curtmpdir/$from$resize_ext\" to \"$curtmpdir/$to.mgk\"",$!);
+				unlink "$pidfile"; 
+				exit 1;
+			    }
 			}
 			else {
 			    unless (($from eq $to) || $letterbox) {
-				smog_copy("$from$img_ext", "$to.mgk");
+				smog_copy("$curtmpdir/$from$img_ext", "$curtmpdir/$to.mgk");
 				if ($panic) {
 				    unlink "$pidfile"; 
 				    exit 1;
@@ -2229,41 +2338,43 @@ if (defined($ARGV[0])) {
 			    }
 			}
 
-#now resized are in .mgk
+                        #now resized are in .mgk
 			if ($letterbox) {
 			    if ($leave_bak) {
 				#letterboxing was done with resize
 				unless ($from eq $to) {
-				    smog_copy("$from$img_ext", "$to$img_ext.2");
+				    smog_copy("$curtmpdir/$from$img_ext", "$curtmpdir/$to$img_ext.2");
 				    if ($panic) {
+					try_to_recover($start,$i);
 					unlink "$pidfile"; 
 					exit 1;
 				    }
-				    smog_copy("$from.mgk", "$to.mgk.2");
+				    smog_copy("$curtmpdir/$from.mgk", "$curtmpdir/$to.mgk.2");
 				    if ($panic) {
+					try_to_recover($start,$i);
 					unlink "$pidfile"; 
 					exit 1;
 				    }
 				}
 			    }
 			    else {
-				smog_copy("$to$img_ext", "$to.bak");
+				smog_copy("$curtmpdir/$to$img_ext", "$curtmpdir/$to.bak");
 				if ($panic) {
+				    try_to_recover($start,$i-1);
 				    unlink "$pidfile"; 
 				    exit 1;
 				}
 				# make $to.mgk $to.img_ext
 				&letterbox_frame($to,abs($newwidth),abs($newheight),$owidth,$oheight);
-
-
-			    ## TODO **** !!!!! handle case where we get a panic:
-
+				
+				if ($panic) {
+				    try_to_recover($start,$i-1);
+				    unlink "$pidfile"; 
+				    exit 1;
+				}
 
                                 #lb are in .img
 			    }
-
-
-
 
 			}
 
@@ -2310,10 +2421,28 @@ if (defined($ARGV[0])) {
 		if (-f "$curtmpdir/$name.mgk.2") {
 		    if (-f "$curtmpdir/$name$img_ext.2") {
 			unlink "$curtmpdir/$name$img_ext";
-			smog_rename( "$curtmpdir/$nameimg_ext.2","$curtmpdir/$name$img_ext");
+			$smerr=rename "$curtmpdir/$name$img_ext.2","$curtmpdir/$name$img_ext";
+			if (!$smerr) {
+			    if ($letterbox) {
+				try_to_recover($start,$end);
 			    }
+			    sig_system_error("Renaming \"$curtmpdir/$name$img_ext.2\" to \"$curtmpdir/$name$img_ext\"",$!);
+			    unlink "$pidfile"; 
+			    exit 1;
+			}
+
+		    }
 		    unlink "$curtmpdir/$name.mgk";
-		    smog_rename( "$curtmpdir/$name.mgk.2","$curtmpdir/$name.mgk");
+		    $smerr=rename "$curtmpdir/$name.mgk.2","$curtmpdir/$name.mgk";
+		    
+		    if (!$smerr) {
+			if ($letterbox) {
+			    try_to_recover($start,$end);
+			}
+			sig_system_error("Renaming \"$curtmpdir/$name.mgk.2\" to \"$curtmpdir/$name.mgk\"",$!);
+			unlink "$pidfile"; 
+			exit 1;
+		    }
 		}
 	    }
 	}
@@ -2829,6 +2958,11 @@ if (defined($ARGV[0])) {
 
 	&fill_and_redo_frames;
 	
+	if ($panic) {
+	    unlink $pidfile;
+	    exit 1;
+	}
+
 	if ($has_audio) {
 	    $aud_end=($end/$fps)*$achans*$arate*($asamps/8);
 	    $audio_in="$curtmpdir/audio";
@@ -2891,6 +3025,10 @@ if (defined($ARGV[0])) {
 	    }
 	    $is_audio=TRUE;
 	    &get_file_info;
+	    if ($panic) {
+		unlink "$pidfile"; 
+		exit 1;
+	    }
 	    &convert_audio_to_raw;
 	    if ($panic) {
 		unlink "$pidfile"; 
@@ -3493,13 +3631,6 @@ sub check_for_stop {
 
 
 
-sub get_pgid {
-    #get process group for a given pid
-    my $pgidstr=smog_system_direct("/bin/cat /proc/$target_pid/stat");
-    my $pgid=(split(" ",$pgidstr))[4];
-    return $pgid;
-}
-
 sub kill_child_pids {
     my ($target_pid,$sig)=@_;
     my $pid;
@@ -3572,6 +3703,28 @@ sub get_img_ext {
     
 
 
+sub try_to_recover {
+    #something failed badly during processing
+    # attempt to recover clip from backup images
+
+    my ($smstart,$smend)=@_;
+    if ($DEBUG_SMOGRIFY) {
+	print STDERR "Beginning clip recovery process for $curtmpdir\n";
+    }
+    for ($i=$smstart;$i<=$smend;$i++) {
+	$name&mkname($i);
+	smog_rename("$name.bak","$name$img_ext");
+    }
+    if ($DEBUG_SMOGRIFY) {
+	print STDERR "Clip recovery process succeeded for $curtmpdir\n";
+    }
+}
+
+
+
+
+
+
 
 sub mv_mgk {
     # pass in first param as 1 to show progress of frames
@@ -3585,27 +3738,44 @@ sub mv_mgk {
 	unlink "$pidfile";
     }
 
-    #pass 1
 
     for ($i=$start;$i<=$end;$i++) {
 	$name=&mkname($i);
 	if (-f "$curtmpdir/$name.mgk") {
-		if (-f "$curtmpdir/$name$img_ext") {
-		    if ($leave_bak==1&&-f "$curtmpdir/$name.bak") {
-			unlink "$curtmpdir/$name$img_ext";
-		    }
-		    else {
-			$smres=smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak");
+	    if (-f "$curtmpdir/$name$img_ext") {
+		if ($leave_bak==1&&-f "$curtmpdir/$name.bak") {
+		    unlink "$curtmpdir/$name$img_ext";
+		}
+		else {
+		    $smres=rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak";
+		    if (!$smres) {
+			try_to_recover($start,$i-1);
+			if ($DEBUG_SMOGRIFY) {
+			    print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name$img_ext\",\"$curtmpdir/$name.bak\"";
+			}
+			sig_system_error("Renaming \"$curtmpdir/$name$img_ext\" to \"$curtmpdir/$name.bak\"");
+			unlink $pidfile;
+			exit 1;
 		    }
 		}
-		$smerr=smog_rename( "$curtmpdir/$name.mgk","$curtmpdir/$name$img_ext");
+	    }
+	    $smerr=rename( "$curtmpdir/$name.mgk","$curtmpdir/$name$img_ext");
+	    if (!$smerr) {
+		try_to_recover($start,$i);
+		if ($DEBUG_SMOGRIFY) {
+		    print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name.mgk\",\"$curtmpdir/$name$img_ext\"";
+		}
+		sig_system_error("Renaming \"$curtmpdir/$name.mgk\" to \"$curtmpdir/$name$img_ext\"");
+		unlink $pidfile;
+		exit 1;
+	    }
 	}
 	if ($option==1) {
 	    &sig_progress($i);
 	}
     }
-
-     &sig_pid();
+    
+    &sig_pid();
     smog_system_sync();
 }
 
@@ -3628,9 +3798,28 @@ sub mv_pre {
 	if (-f "$curtmpdir/$name.pre") {
 	    if (-f "$curtmpdir/$name$img_ext") {
 		unlink "$curtmpdir/$name.bak";
-		smog_rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak");
+		$smerr=rename( "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak");
+		if (!$smerr) {
+		    try_to_recover($start,$i-1);
+		    if ($DEBUG_SMOGRIFY) {
+			print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name$img_ext\",\"$curtmpdir/$name.bak\"";
+		    }
+		    sig_system_error("Renaming \"$curtmpdir/$name$img_ext\" to \"$curtmpdir/$name.bak\"");
+		    unlink $pidfile;
+		    exit 1;
+		}
 	    }
-	    smog_rename( "$curtmpdir/$name.pre","$curtmpdir/$name$img_ext");
+	    $smerr=rename "$curtmpdir/$name.pre","$curtmpdir/$name$img_ext";
+	    if (!$smerr) {
+		try_to_recover($start,$i);
+
+	    }
+	    if ($DEBUG_SMOGRIFY) {
+		print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name.pre\",\"$curtmpdir/$name$img_ext\"";
+	    }
+	    sig_system_error("Renaming \"$curtmpdir/$name.pre\" to \"$curtmpdir/$name$img_ext\"");
+	    unlink $pidfile;
+	    exit 1;
 	}
     }
     &sig_pid();
@@ -3905,6 +4094,8 @@ sub insert {
 			else {
 			    $imresact="none";
 			    &get_image_size("$fromdir/$from$img_ext2");
+			    return if $panic;
+
 			    if ($hsize==$width&&$vsize==$height) {
 				$quick_copy=1;
 			    }
@@ -3979,19 +4170,14 @@ sub resize_frame {
 
     if ($antialias eq "false") {
 	$com="$convert_command +antialias -size $width"."x$height \"$name$input_ext\" -scale $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1";
-	$smerr=smog_system($com);
-	if ($smerr) {
-	    sig_system_error("$com",$smerr);
-	    $panic=1;
-	}
     }
     else {
 	$com="$convert_command -size $width"."x$height \"$name$input_ext\" -resize $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1";
-	$smerr=smog_system($com);
-	if ($smerr) {
-	    sig_system_error("$com",$smerr);
-	    $panic=1;
-	}
+    }
+    $smerr=smog_system($com);
+    if ($smerr) {
+	sig_system_error("$com",$smerr);
+	$panic=1;
     }
 }
 
@@ -4042,7 +4228,8 @@ sub letterbox_frame {
 
 }
 
-# TODO - error checking
+
+
 sub zoom_frame {
     my ($name,$centre_x,$centre_y,$width,$height,$rscale)=@_;
     # zoom into a frame
@@ -4091,18 +4278,23 @@ sub zoom_frame {
     my ($nheight)=$bottom-$top+1;
     
     if ($antialias eq "false") {
-	smog_system("$convert_command -antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$left!+$top! -resize $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1");
+	$com="$convert_command -antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$left!+$top! -resize $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1";
     }
     else {
-	smog_system("$convert_command +antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$left!+$top! -resize $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1");
+	$com="$convert_command +antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$left!+$top! -resize $width!x$height! \"$name$resize_ext\" >/dev/null 2>&1";
     }
+
+    $smerror=smog_system($com);
     
+    if ($smerror) {
+	sig_system_error("$com",$smerror);
+	$panic=1;
+    }
+
 }
 
 
 
-
-# TODO - error checking
 sub trim_frame {
     my ($name,$width,$height,$x,$y,$nwidth,$nheight)=@_;
 
@@ -4113,15 +4305,23 @@ sub trim_frame {
 	$antialias="false";
     }
     if ($antialias eq "false") {
-	smog_system("$convert_command +antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$x+$y \"$name$resize_ext\" >/dev/null 2>&1");
+	$com="$convert_command +antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$x+$y \"$name$resize_ext\" >/dev/null 2>&1";
     }
     else {
-	smog_system("$convert_command -antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$x+$y \"$name$resize_ext\" >/dev/null 2>&1");
+	$com="$convert_command -antialias -size $width"."x$height \"$name$input_ext\" -crop $nwidth!x$nheight!+$x+$y \"$name$resize_ext\" >/dev/null 2>&1";
     }
+
+    $smerror=smog_system($com);
+    
+    if ($smerror) {
+	sig_system_error("$com",$smerror);
+	$panic=1;
+    }
+
+
 }
 
 
-# TODO - error checking
 sub trim_center {
     my ($name,$width,$height)=@_;
 
@@ -4131,6 +4331,7 @@ sub trim_center {
 
     $imresact="none";
     &get_image_size("$name$input_ext");
+    return if $panic;
 
     unless ($hsize>=$width&&$vsize>=$height) {
 	#composite over a large enough frame
@@ -4147,15 +4348,41 @@ sub trim_center {
 	    $bgcolour="#000000";
 	}
 
-	smog_system("$convert_command -size $size!x$size! xc:$bgcolour blank.jpg >/dev/null 2>&1");
-	smog_system("$composite_command -compose plus -dissolve 100 -geometry $hsize!x$vsize!+$xstart!+$ystart! \"$name$input_ext\" blank.jpg \"$name$input_ext\" >/dev/null 2>&1");
+	$com="$convert_command -size $size!x$size! xc:$bgcolour blank.jpg >/dev/null 2>&1";
+
+	$smerror=smog_system($com);
+	
+	if ($smerror) {
+	    sig_system_error("$com",$smerror);
+	    $panic=1;
+	    return;
+	}
+
+	$com="$composite_command -compose plus -dissolve 100 -geometry $hsize!x$vsize!+$xstart!+$ystart! \"$name$input_ext\" blank.jpg \"$name$input_ext\" >/dev/null 2>&1";
+
+	$smerror=smog_system($com);
+	
+	if ($smerror) {
+	    sig_system_error("$com",$smerror);
+	    $panic=1;
+	    return;
+	}
+
 	$hsize=$vsize=$size;
     }
 
     $x=int(($hsize-$width)/2);
     $y=int(($vsize-$height)/2);
 
-    smog_system("$convert_command \"$name$input_ext\" -crop $width" . "!x" . $height . "!+" . $x . "+" . $y . " \"$name$resize_ext\" >/dev/null 2>&1");
+    $com="$convert_command \"$name$input_ext\" -crop $width" . "!x" . $height . "!+" . $x . "+" . $y . " \"$name$resize_ext\" >/dev/null 2>&1";
+    
+    $smerror=smog_system($com);
+    
+    if ($smerror) {
+	sig_system_error("$com",$smerror);
+	$panic=1;
+	return;
+    }
 
 }
 
@@ -4190,7 +4417,7 @@ sub get_formats {
 
 
 
-# TODO - error check
+
 sub get_file_info {
     $count=0;
     $bpp=24;  # default if none is found
@@ -4212,6 +4439,15 @@ sub get_file_info {
     $mplay_command.=&rc_get("video_open_command");
     $file_ident="$curtmpdir/file_info";
 
+    if ($mplay_command eq "") {
+	$mplay_command=&get_location("mplayer");
+    }
+
+    if ($mplay_command eq "") {
+	$panic=1;
+	return;
+    }
+
     $id_vid_form="";
 
     if ($is_audio) {
@@ -4222,16 +4458,25 @@ sub get_file_info {
     # the format changed for 1.0pre1 so now we use -vo null -ao null -frames 0
 
     unless ($mplay_command eq "") {
-    if (defined($is_remote)&&($is_remote>0)) {
-	# remote files might be streams, so we need to cache a bit before we can identify them
-	smog_system("$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\">\"$file_ident\" 2>/dev/null </dev/null");
-    }
-    else {
-	smog_system("$mplay_command -identify -vo null -ao null -frames 0 \"$file\">\"$file_ident\" 2>/dev/null </dev/null");
-    }
+	if (defined($is_remote)&&($is_remote>0)) {
+	    # remote files might be streams, so we need to cache a bit before we can identify them
+	    $com="$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\">\"$file_ident\" 2>/dev/null </dev/null";
+	    
+	}
+	else {
+	    $com="$mplay_command -identify -vo null -ao null -frames 0 \"$file\">\"$file_ident\" 2>/dev/null </dev/null";
+	}
 
-    if (-f $file_ident) {
-        $id_vid_form=smog_system_direct("grep ID_VIDEO_CODEC \"$file_ident\" 2>/dev/null");
+
+	$smerr=smog_system($com);
+	if ($smerr) {
+	    do_system_error("$com",$smerr);
+	    $panic=1;
+	    return;
+	}
+	
+	if (-f $file_ident) {
+	    $id_vid_form=smog_system_direct("grep ID_VIDEO_CODEC \"$file_ident\" 2>/dev/null");
         $id_vid_form=(split("=",(split("\n",$id_vid_form))[0]))[1];
         chomp($id_vid_form);
 
@@ -4420,7 +4665,8 @@ sub get_file_info {
 	}
 	unlink "$file_ident";
     }
-   }
+
+}
 
 
     if (($hsize*$vsize==0||$count eq "")&&!$is_audio) {
@@ -5097,7 +5343,6 @@ sub append_silence {
 
 
 
-# TODO - error checking
 sub open_images {
     # set $file before calling this function
     # set $only_first to 1 to just open the first image in a directory
@@ -5127,6 +5372,7 @@ sub open_images {
 	    $file="$dir/$_";
 	    unless ($_ =~ /^\./||(! -f $file)||(-z $file)) {
 		$nframes=&open_single_image($i);
+		return if $panic;
 		if (-s "$curtmpdir/$name$img_ext") {
 		    if ($only_first) {
 			$i++;
@@ -5144,6 +5390,7 @@ sub open_images {
     }
     else {
 	&open_single_image($i);
+	return if $panic;
 	unless (-s "$curtmpdir/$name$img_ext") {
 	    unlink "$curtmpdir/$name$img_ext";
 	}
@@ -5177,7 +5424,7 @@ sub byfile {
 
 
 
-# TODO - error checking
+
 sub open_single_image {
     # set $hsize and $vsize to force the image size, set to 0 to autoresize
     #identify hangs if the file extension is ".avi" or ".mp4" or ".mpg"
@@ -5202,6 +5449,7 @@ sub open_single_image {
 
     if ($hsize*$vsize==0) {
 	&get_image_size($file);
+	return if $panic;
     }
 
     smog_system_sync();
@@ -5211,11 +5459,21 @@ sub open_single_image {
     }
 
     if ($antialias eq "false") {
-	smog_system("$conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! \"$curtmpdir/$name$img_ext\" > /dev/null 2>&1");
+	$com="$conv_command +antialias \"$file\" -scale $hsize"."!x"."$vsize! \"$curtmpdir/$name$img_ext\" > /dev/null 2>&1";
     }
     else {
-	smog_system("$conv_command \"$file\" -resize $hsize"."!x"."$vsize! \"$curtmpdir/$name$img_ext\" >/dev/null 2>&1");
+	$com="$conv_command \"$file\" -resize $hsize"."!x"."$vsize! \"$curtmpdir/$name$img_ext\" >/dev/null 2>&1";
     }
+
+
+    $smerr=smog_system($com);
+
+    if ($smerr) {
+	sig_system_error("$com",$smerr);
+	$panic=1;
+	return;
+    }
+
 
     #convert gives multiple frames for e.g. animated gif
     $found=1;
@@ -5233,6 +5491,7 @@ sub open_single_image {
 
     if ($hsize*$vsize==0) {
 	&get_image_size("$curtmpdir/$name$img_ext");
+	return if $panic;
     }
 
     if ($hsize*$vsize>0&&$nframes==0) {
@@ -5268,8 +5527,14 @@ sub get_image_size {
     my ($id_cmd)=&location("identify");
 
     unless ($id_cmd eq "") {
-	@info=split / /, smog_system_direct("$id_cmd \"$file\" 2>/dev/null");
+	$com="$id_cmd \"$file\" 2>/dev/null";
+	@info=split / /, smog_system_direct($com);
 
+	if ($?) {
+	    smog_system_error("$com",$?);
+	    $panic=1;
+	    return;
+	}
 
 	my ($file2)=$file;
 	$space_count=($file2 =~ tr/ //);
@@ -5313,7 +5578,6 @@ sub get_image_size {
 
 
 
-# TODO - error checking
 sub fill_and_redo_frames {
     # resample and fill gaps in frames
 
@@ -5332,6 +5596,7 @@ sub fill_and_redo_frames {
 	if ($next<$i&&$next>-1) {
 	    $last=$next;
 	    $next=&get_next_frame;
+	    return if $panic;
 	}
 	if ($last>0&&($i-$last)<($next-$i)) {
 	    $fromname=&mkname($last);
@@ -5349,7 +5614,7 @@ sub fill_and_redo_frames {
 
 }
 
-# TODO - error checking
+
 sub get_next_frame {
     my $j;
     my $xname;
@@ -5358,7 +5623,13 @@ sub get_next_frame {
 	$xname=&mkname($j);
 	if (-f "$xname$img_ext") {
 	    # found next frame, resize it
-	    smog_system("$conv_command -crop $width" . "!x" . $height . "! \"$xname$img_ext\" \"$xname.mgk\" >/dev/null 2>&1");
+	    $com="$conv_command -crop $width" . "!x" . $height . "! \"$xname$img_ext\" \"$xname.mgk\" >/dev/null 2>&1";
+	    $smerr=smog_system($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		$panic=1;
+		return;
+	    }
 	    unlink "$xname$img_ext";
 	    smog_rename( "$xname.mgk","$xname$img_ext");
 	    return $j;
@@ -5397,6 +5668,7 @@ sub mp3_open {
     $is_audio=1;
 
     &get_file_info;
+    return if $panic;
 
     $asigned=$signed;
     $aendian=$endian;
@@ -5443,6 +5715,7 @@ sub ogg_open {
     $is_audio=1;
 
     &get_file_info;
+    return if $panic;
 
     $asigned=$signed;
     $aendian=$endian;
@@ -5482,6 +5755,7 @@ sub wav_open {
     $is_audio=1;
 
     &get_file_info;
+    return if $panic;
 
     $asigned=$signed;
     $aendian=$endian;
@@ -5529,6 +5803,7 @@ sub othera_open {
     $is_audio=1;
 
     &get_file_info;
+    return if $panic;
 
     $asigned=$signed;
     $aendian=$endian;
@@ -5871,7 +6146,7 @@ sub rc_delete {
 }
 
 
-# TODO - error checking
+
 sub rc_set {
     # set/mdoify/delete a value in the .rc file
     my ($key)=$_[0];
@@ -6161,6 +6436,8 @@ sub mktmpdir {
 
 
 sub fndset {
+    # check if a directory is in a set (old style)
+    # but useful for frontend marking the currently opened clips, so we do not prune them by accident
     /^set\./ or return;
     $in_set=1;
 }
@@ -6200,6 +6477,11 @@ sub rc_get_default {
 
 
 sub version_check_and_upgrade {
+    # various things that should happen on update
+
+    # mainly for very very old versions
+
+
     my $old_version=&rc_get("version");
     my $version_hash=&version_hash($old_version);
 
@@ -6286,6 +6568,11 @@ sub version_check_and_upgrade {
 
 
 sub version_hash {
+    # turn a version like
+    # a.b.c into an integer
+    # a * 1,000,000 plus b * 1,000 plus c
+    # eg. 1.4.6 becomes 10004006
+
     my ($string)=shift;
     if ($string eq "") {
 	return 0;
@@ -6297,12 +6584,16 @@ sub version_hash {
 
 
 sub RGB24_to_string {
+    # convert input like 255,255,255 to #FFFFFF
+
     my ($red,$green,$blue)=@_;
     sprintf("'#%02X%02X%02X'",int($red),int($green),int($blue));
 }
 
 
 sub get_form_request {
+    # get format request from a (encoder) plugin
+    # part of the encoding process
     my ($plugin)=shift;
     if ($plugin eq "") {
 	return &get_format_request;
@@ -6314,6 +6605,11 @@ sub get_form_request {
 
 
 sub get_convert_version_hash {
+    # turn a version like
+    # a.b.c into an integer
+    # a * 1,000,000 plus b * 1,000 plus c
+    # eg. 1.4.6 becomes 10004006
+
     my $real_convert_command=(split(" ",$convert_command))[0];
     my $convert_version=smog_system_direct("$real_convert_command | grep -i version");
     $convert_version=(split(" ",$convert_version))[2];
@@ -6322,6 +6618,10 @@ sub get_convert_version_hash {
 
 
 sub weed {
+    # here is where we clear up diskspace
+
+    #documentation coming
+
     my $file;
     smog_chdir("$tmpdir");
     my $start_total=(split / /, (smog_system_direct("du -sb -B 1048567 2>/dev/null")))[0];
@@ -6375,6 +6675,12 @@ sub weed {
 
 
 sub get_sox_version {
+    #try to get version of sox
+
+    # parse a line like "sox: SoX v14.3.2"
+    # which would return 14.3.2
+    # (take third word and strip leading v)
+
     my $soxv=smog_system_direct("sox -h 2>&1 | grep -i sox:");
 
     my $soxvv=(split(/\./,(split(" ",$soxv))[2]))[0];
@@ -6392,6 +6698,8 @@ sub get_sox_version {
 
 
 sub prune {
+    # docs coming
+
     $old_handle=$handle;
     $handle=$file;
     &clean_old;
@@ -6402,6 +6710,14 @@ sub prune {
 
 
 sub clear_symlinks {
+    # clear symlinks directory - called after encoding a selection (part of a clip which gets symlinked)
+
+    # this is for "safe" symlinks
+    # we say that symlinks may be created only within /tmp/lives-symlinks on whatever system
+
+    # this allows e.g dynebolic to use non-Linux disk as working directory
+
+
     my $linksdir="lives-symlinks/$handle/";
     
     smog_chdir("/tmp");
@@ -6420,6 +6736,11 @@ sub clear_symlinks {
 
 
 sub is_non_empty_dir {
+    #return 1 if "the parameter" is the name of a directory containing at least one non-dotted file
+
+    #uses opendir and readdir
+
+
     my $dirname=shift;
     my $xfile;
 

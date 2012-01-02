@@ -198,6 +198,7 @@ void lives_exit (void) {
 	  if (mainw->files[i]->frame_index!=NULL) {
 	    save_frame_index(i);
 	  }
+	  lives_freep((void**)&mainw->files[i]->op_dir);
 	}
 	if (!mainw->only_close) {
 	  if (mainw->files[i]->frame_index!=NULL) {
@@ -839,7 +840,7 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
 
 
 
-void on_check_clicked(void) {
+void count_opening_frames(void) {
   int cframes=cfile->frames;
   get_frame_count(mainw->current_file);
   mainw->opening_frames=cfile->frames;
@@ -1261,6 +1262,9 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
     d_print_failed();
     return;
   }
+
+  cfile->op_dir=g_filename_from_utf8((tmp=get_dir(proj_file)),-1,NULL,NULL,NULL);
+  g_free(tmp);
 
   do_progress_dialog(TRUE,FALSE,_("Exporting project"));
 
@@ -8719,10 +8723,7 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
 
 
 
-void
-on_effects_paused                     (GtkButton       *button,
-				       gpointer         user_data)
-{
+void on_effects_paused (GtkButton *button, gpointer user_data) {
   gchar *com;
   gint64 xticks;
 
@@ -10119,6 +10120,9 @@ on_ok_export_audio_clicked                      (GtkButton *button,
     d_print_failed();
     return;
   }
+
+  cfile->op_dir=g_filename_from_utf8((tmp=get_dir(file_name)),-1,NULL,NULL,NULL);
+  g_free(tmp);
 
   do_progress_dialog (TRUE, FALSE, _("Exporting audio"));
 

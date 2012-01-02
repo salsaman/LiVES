@@ -103,7 +103,8 @@ static void add_xlays_widget(GtkBox *box) {
 void add_warn_check (GtkBox *box, gint warn_mask_number) {
   GtkWidget *checkbutton = gtk_check_button_new ();
   GtkWidget *eventbox,*hbox;
-  GtkWidget *label=gtk_label_new_with_mnemonic (_("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"));
+  GtkWidget *label=gtk_label_new_with_mnemonic 
+    (_("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"));
 
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
 
@@ -159,9 +160,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Question"));
     mainw->warning_label = gtk_label_new (_("question"));
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-no");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, GTK_RESPONSE_NO);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, LIVES_NO);
     warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_YES);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
@@ -271,7 +272,7 @@ do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number,
 gboolean do_yesno_dialog(const gchar *text) {
   // show Yes/No, returns TRUE if Yes
   GtkWidget *warning;
-  gint response=1;
+  int response;
   gchar *mytext;
   GtkWindow *transient=NULL;
 
@@ -288,7 +289,7 @@ gboolean do_yesno_dialog(const gchar *text) {
   gtk_widget_destroy (warning);
 
   while (g_main_context_iteration(NULL,FALSE));
-  return (response==GTK_RESPONSE_YES);
+  return (response==LIVES_YES);
 }
 
 
@@ -338,7 +339,8 @@ do_error_dialog(const gchar *text) {
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,FALSE,0,NULL);
   } else {
-    if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) do_error_dialog_with_check_transient(text,FALSE,0,
+										       GTK_WINDOW(prefsw->prefs_dialog));
     else {
       if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
       else do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
@@ -394,8 +396,39 @@ do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking, gi
   }
 }
 
+
+gchar *ds_critical_msg(const gchar *dir, guint64 dsval) {
+  gchar *msg;
+  gchar *tmp;
+  gchar *dscr=lives_format_storage_space_string(prefs->ds_crit_level); ///< crit level
+  gchar *dscu=lives_format_storage_space_string(dsval); ///< current level
+  msg=g_strdup_printf(_("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\nCURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences.)"),
+		      (tmp=g_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscr,dscu);
+  g_free(tmp);
+  g_free(dscr);
+  g_free(dscu);
+  return msg;
+}
+
+
+gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn) {
+  gchar *msg;
+  gchar *tmp;
+  gchar *dscw=lives_format_storage_space_string(cwarn); ///< warn level
+  gchar *dscu=lives_format_storage_space_string(dsval); ///< current level
+  gchar *dscn=lives_format_storage_space_string(nwarn); ///< next warn level
+  msg=g_strdup_printf(_("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n(Next warning will be shown at %s. Disk warning levels can be configured in Preferences.)"),
+		      (tmp=g_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscw,dscu,dscn);
+  g_free(dscw);
+  g_free(dscu);
+  g_free(dscn);
+  return msg;
+}
+
+
 void do_aud_during_play_error(void) {
-  do_error_dialog_with_check_transient(_("Audio players cannot be switched during playback."),TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
+  do_error_dialog_with_check_transient(_("Audio players cannot be switched during playback."),
+				       TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
 }  
 
 void 
@@ -511,12 +544,135 @@ void pump_io_chan(GIOChannel *iochan) {
 }
 
 
+gboolean check_storage_space(file *sfile, gboolean do_pause) {
+  // check storage space in prefs->tmpdir, and if sfile!=NULL, in sfile->op_dir
+  guint64 dsval;
+  gchar *msg,*tmp;
+  int retval;
+  gboolean did_pause=FALSE;
+  lives_storage_status_t ds;
+  gchar *pausstr=g_strdup(_("Processing has been paused."));
+
+  do {
+    ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
+    if (ds==LIVES_STORAGE_STATUS_WARNING) {
+      guint64 curr_ds_warn=mainw->next_ds_warn_level;
+      mainw->next_ds_warn_level>>=1;
+      if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
+      if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
+      if (do_pause&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
+	  GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
+	on_effects_paused(NULL,NULL);
+	did_pause=TRUE;
+      }
+
+      tmp=ds_warning_msg(prefs->tmpdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
+      if (!did_pause)
+	msg=g_strdup_printf("\n%s\n",tmp);
+      else 
+	msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
+      g_free(tmp);
+      if (!do_warning_dialog(msg)) {
+	g_free(msg);
+	g_free(pausstr);
+	mainw->cancelled=CANCEL_USER;
+	return FALSE;
+      }
+      g_free(msg);
+    }
+    else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
+      if (do_pause&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
+	  GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
+	on_effects_paused(NULL,NULL);
+	did_pause=TRUE;
+      }
+      tmp=ds_critical_msg(prefs->tmpdir,dsval);
+      if (!did_pause)
+	msg=g_strdup_printf("\n%s\n",tmp);
+      else 
+	msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
+      g_free(tmp);
+        retval=do_abort_cancel_retry_dialog(msg,NULL);
+      g_free(msg);
+      if (retval==LIVES_CANCEL) {
+	mainw->cancelled=CANCEL_ERROR;
+	g_free(pausstr);
+	return FALSE;
+      }
+    }
+  } while (ds==LIVES_STORAGE_STATUS_CRITICAL);
+
+
+  if (sfile!=NULL&&sfile->op_dir!=NULL) {
+    do {
+      ds=get_storage_status(sfile->op_dir,sfile->op_ds_warn_level,&dsval);
+      if (ds==LIVES_STORAGE_STATUS_WARNING) {
+	guint64 curr_ds_warn=sfile->op_ds_warn_level;
+	sfile->op_ds_warn_level>>=1;
+	if (sfile->op_ds_warn_level>(dsval>>1)) sfile->op_ds_warn_level=dsval>>1;
+	if (sfile->op_ds_warn_level<prefs->ds_crit_level) sfile->op_ds_warn_level=prefs->ds_crit_level;
+	if (do_pause&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
+	    GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
+	  on_effects_paused(NULL,NULL);
+	  did_pause=TRUE;
+	}
+	tmp=ds_warning_msg(sfile->op_dir,dsval,curr_ds_warn,sfile->op_ds_warn_level);
+	if (!did_pause)
+	  msg=g_strdup_printf("\n%s\n",tmp);
+	else 
+	  msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
+	g_free(tmp);
+	if (!do_warning_dialog(msg)) {
+	  g_free(msg);
+	  g_free(pausstr);
+	  lives_freep((void**)&sfile->op_dir);
+	  mainw->cancelled=CANCEL_USER;
+	  return FALSE;
+	}
+	g_free(msg);
+      }
+      else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
+	if (do_pause&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
+	    GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
+	  on_effects_paused(NULL,NULL);
+	  did_pause=TRUE;
+	}
+	tmp=ds_critical_msg(sfile->op_dir,dsval);
+	if (!did_pause)
+	  msg=g_strdup_printf("\n%s\n",tmp);
+	else 
+	  msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
+	g_free(tmp);
+	retval=do_abort_cancel_retry_dialog(msg,NULL);
+	g_free(msg);
+	if (retval==LIVES_CANCEL) {
+	  mainw->cancelled=CANCEL_ERROR;
+	  lives_freep((void**)&sfile->op_dir);
+	  g_free(pausstr);
+	  return FALSE;
+	}
+      }
+    } while (ds==LIVES_STORAGE_STATUS_CRITICAL);
+  }
+
+  if (did_pause&&mainw->effects_paused) {
+    on_effects_paused(NULL,NULL);
+  }
+
+  g_free(pausstr);
+
+  return TRUE;
+}
+
+
+
 
 void cancel_process(gboolean visible) {
   if (prefs->show_player_stats&&!visible&&mainw->fps_measure>0.) {
     // statistics
     gettimeofday(&tv, NULL);
-    mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
+    mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*
+				  U_SEC_RATIO-mainw->offsetticks)/U_SEC;
   }
   if (visible) {
     if (mainw->preview_box!=NULL&&!mainw->preview) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play all"));
@@ -538,7 +694,8 @@ void cancel_process(gboolean visible) {
   else {
     mainw->is_processing=TRUE;
   }
-  if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_DISK&&((mainw->cancelled!=CANCEL_NO_MORE_PREVIEW&&mainw->cancelled!=CANCEL_USER)||!cfile->opening)) {
+  if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_DISK&&((mainw->cancelled!=CANCEL_NO_MORE_PREVIEW&&
+								  mainw->cancelled!=CANCEL_USER)||!cfile->opening)) {
     unlink(cfile->info_file);
   }
 }
@@ -623,7 +780,8 @@ gboolean process_one (gboolean visible) {
     // -  else if we have a fixed output framerate (e.g. we are streaming) we take our time from
     //         the system clock
     //  in these cases we adjust our audio rate slightly to keep in synch with video
-    // - otherwise, we take the time from soundcard by counting samples played (the normal case),    //   and we synch video with that
+    // - otherwise, we take the time from soundcard by counting samples played (the normal case),   
+    //   and we synch video with that
 
 
     time_source=LIVES_TIME_SOURCE_NONE;
@@ -652,7 +810,10 @@ gboolean process_one (gboolean visible) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-      if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
+      if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&
+	  cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&
+						   !cfile->opening&&!mainw->multitrack->is_rendering))&&
+	  ((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
 	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
 	  if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
 	  else mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
@@ -671,7 +832,10 @@ gboolean process_one (gboolean visible) {
     // adjust audio rate slightly if we are behind or ahead
     if (time_source!=LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))&&(mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_jack_get_time(mainw->jackd,TRUE))>mainw->offsetticks) {
+      if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
+	  cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))&&
+	  (mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_jack_get_time(mainw->jackd,TRUE))>
+	  mainw->offsetticks) {
 	if ((audio_stretch=(gdouble)(audio_ticks-mainw->offsetticks)/(gdouble)(mainw->currticks-mainw->offsetticks))<2.) {
 	  // if audio_stretch is > 1. it means that audio is playing too fast
 	  // < 1. it is playing too slow
@@ -695,9 +859,18 @@ gboolean process_one (gboolean visible) {
 
 
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))&&(mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_pulse_get_time(mainw->pulsed,TRUE))>mainw->offsetticks) {
+      if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
+	  cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))&&
+	  (mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_pulse_get_time(mainw->pulsed,TRUE))>
+	  mainw->offsetticks) {
 	// fps is synched to external source, so we adjust the audio rate to fit
 	if ((audio_stretch=(gdouble)(audio_ticks-mainw->offsetticks)/(gdouble)(mainw->currticks-mainw->offsetticks))<2.) {
+	  // if audio_stretch is > 1. it means that audio is playing too fast
+	  // < 1. it is playing too slow
+
+	  // if too fast we increase the apparent sample rate so that it gets downsampled more
+	  // if too slow we decrease the apparent sample rate so that it gets upsampled more
+
 	  if (mainw->multitrack==NULL) {
 	    if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 	      if (!cfile->play_paused) mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps*audio_stretch;
@@ -727,7 +900,8 @@ gboolean process_one (gboolean visible) {
       }
       else if (mainw->currticks>=event_start) {
 	// see if we are playing a selection and reached the end
-	if (mainw->multitrack!=NULL&&mainw->multitrack->playing_sel&&get_event_timecode(cfile->next_event)/U_SEC>=mainw->multitrack->region_end) mainw->cancelled=CANCEL_EVENT_LIST_END;
+	if (mainw->multitrack!=NULL&&mainw->multitrack->playing_sel&&get_event_timecode(cfile->next_event)/U_SEC>=
+	    mainw->multitrack->region_end) mainw->cancelled=CANCEL_EVENT_LIST_END;
 	else {
 	  cfile->next_event=process_events (cfile->next_event,mainw->currticks);
 	
@@ -858,8 +1032,7 @@ gboolean process_one (gboolean visible) {
 	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*
 	    ((apxl=get_approx_ln((guint)mainw->opening_frames))<200?apxl:200)||
 	    (mainw->effects_paused&&!shown_paused_frames)) {
-	  // TODO -trigger after preview playback
-	  on_check_clicked();
+	  count_opening_frames();
 	  last_open_check_ticks=mainw->currticks;
 	  if (mainw->opening_frames>1) {
 	    if (cfile->frames>0&&cfile->frames!=123456789) {
@@ -887,6 +1060,7 @@ gboolean process_one (gboolean visible) {
 
       else {
 	if (visible&&cfile->proc_ptr->frames_done>=cfile->progress_start) {
+	  if (progress_count==0) check_storage_space(cfile, TRUE);
 	  // display progress fraction or pulse bar
 	  progbar_pulse_or_fraction(cfile,cfile->proc_ptr->frames_done);
 	}
@@ -930,9 +1104,16 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
 
   FILE *infofile=NULL;
-  gchar *mytext=g_strdup(text);
+  gchar *mytext=NULL;
 
   int frames_done;
+  
+  // translation issues
+  if (visible&&text!=NULL) mytext=g_strdup(text);
+
+  if (visible) {
+    if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) return FALSE;
+  }
 
   event_start=0;
   audio_start=mainw->play_start;
@@ -1010,7 +1191,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	register int i;
 	for (i=cfile->fx_frame_pump;i<=vend;i++) {
 	  gboolean retb=virtual_to_images(mainw->current_file,i,i,FALSE);
-	  if (mainw->cancelled||!retb) return FALSE;
+	  if (mainw->cancelled||!retb) {
+	    lives_freep((void**)&cfile->op_dir);
+	    return FALSE;
+	  }
 	  while (g_main_context_iteration(NULL,FALSE));
 	}
 	cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
@@ -1160,6 +1344,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       // returns FALSE if playback ended
       if (!process_one(visible)) {
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	lives_freep((void**)&cfile->op_dir);
 	return FALSE;
       }
 
@@ -1186,13 +1371,17 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     else {
       mainw->render_error=(*mainw->progress_fn)(FALSE);
 
-      if (mainw->render_error>=LIVES_RENDER_ERROR) return FALSE;
+      if (mainw->render_error>=LIVES_RENDER_ERROR) {
+	lives_freep((void**)&cfile->op_dir);
+	return FALSE;
+      }
 
       // display progress fraction or pulse bar
       if (mainw->msg!=NULL&&strlen(mainw->msg)>0&&(frames_done=atoi(mainw->msg))>0)
 	cfile->proc_ptr->frames_done=atoi(mainw->msg);
       else
 	cfile->proc_ptr->frames_done=0;
+      if (progress_count==0) check_storage_space(cfile, TRUE);
       progbar_pulse_or_fraction(cfile,cfile->proc_ptr->frames_done);
     }
 
@@ -1249,6 +1438,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       }
       if (!process_one(visible)) {
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	lives_freep((void**)&cfile->op_dir);
 	return FALSE;
       }
 
@@ -1310,12 +1500,17 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  lives_freep((void**)&cfile->op_dir);
   
   // get error message (if any)
   if (!strncmp(mainw->msg,"error",5)) {
     handle_backend_errors();
     if (mainw->cancelled) return FALSE;
   }
+  else {
+    if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) return FALSE;
+  }
+
 #ifdef DEBUG
   g_print("exiting progress dialogue\n");
 #endif
@@ -1428,7 +1623,10 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
     handle_backend_errors();
     if (mainw->cancelled) return FALSE;
   }
-
+  else {
+    if (mainw->current_file>-1&&cfile!=NULL)
+      if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) return FALSE;
+  }
   return TRUE;
 }
 
@@ -2215,21 +2413,50 @@ inline void d_print_file_error_failed(void) {
 
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo) {
-  gchar *msg;
+  gchar *msg,*tmp,*emsg;
   gchar *bit;
   gchar *retstr=g_strdup_printf("%d",retval>>8);
   gchar *bit2=(retval>255)?g_strdup(""):g_strdup_printf("[%s]",strerror(retval));
   gchar *addbit;
+  gchar *dsmsg1=g_strdup("");
+  gchar *dsmsg2=g_strdup("");
+
+  guint64 dsval1,dsval2;
+
+  lives_storage_status_t ds1=get_storage_status(prefs->tmpdir,prefs->ds_crit_level,&dsval1),ds2;
+  if (cfile->op_dir!=NULL) {
+    ds2=get_storage_status(cfile->op_dir,prefs->ds_crit_level,&dsval2);
+    if (ds2==LIVES_STORAGE_STATUS_CRITICAL) {
+      g_free(dsmsg2);
+      tmp=ds_critical_msg(cfile->op_dir,dsval2);
+      dsmsg2=g_strdup_printf("%s\n",tmp);
+      g_free(tmp);
+    }
+  }
+
+  if (ds1==LIVES_STORAGE_STATUS_CRITICAL) {
+    g_free(dsmsg1);
+    tmp=ds_critical_msg(prefs->tmpdir,dsval1);
+    dsmsg1=g_strdup_printf("%s\n",tmp);
+    g_free(tmp);
+  }
 
   if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
   else addbit=g_strdup("");
 
   if (retval>0) bit=g_strdup_printf(_("The error value was %d%s\n"),retval,bit2);
     else bit=g_strdup("");
-  msg=g_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s%s"),
-		      com,bit,addbit);
+  msg=g_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s%s%s"),
+		      com,bit,addbit,dsmsg1,dsmsg2);
+
+  emsg=g_strdup_printf("Command failed doing\n%s%s%s",com,bit,addbit);
+  LIVES_ERROR(emsg);
+  g_free(emsg);
+
   do_error_dialog(msg);
   g_free(msg);
+  g_free(dsmsg1);
+  g_free(dsmsg2);
   g_free(bit);
   g_free(bit2);
   g_free(addbit);
@@ -2238,30 +2465,59 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
 
 
 void do_write_failed_error_s(const char *s, const char *addinfo) {
-  gchar *msg;
-  gchar *addbit;
+  gchar *msg,*emsg;
+  gchar *addbit,*tmp;
+  gchar *dsmsg=g_strdup("");
+
+  gchar dirname[PATH_MAX];
+
+  guint64 dsval;
+
+  lives_storage_status_t ds;
+
+  g_snprintf(dirname,PATH_MAX,"%s",s);
+  get_dirname(dirname);
+  ds=get_storage_status(dirname,prefs->ds_crit_level,&dsval);
+
+  if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
+    g_free(dsmsg);
+    tmp=ds_critical_msg(dirname,dsval);
+    dsmsg=g_strdup_printf("%s\n",tmp);
+    g_free(tmp);
+  }
 
   if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
   else addbit=g_strdup("");
 
   msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n%s"),
-		      s,addbit);
+		      s,addbit,dsmsg);
+  emsg=g_strdup_printf("Unable to write to file\n%s\n%s",s,addbit);
+
+  LIVES_ERROR(emsg);
+  g_free(emsg);
 
   do_blocking_error_dialog(msg);
   g_free(addbit);
+  g_free(dsmsg);
   g_free(msg);
 }
 
 
 void do_read_failed_error_s(const char *s, const char *addinfo) {
-  gchar *msg;
+  gchar *msg,*emsg;
   gchar *addbit;
+  gchar *sutf=g_filename_to_utf8(s,-1,NULL,NULL,NULL);
 
   if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
   else addbit=g_strdup("");
 
   msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n%s"),
-		      s,addbit);
+		      sutf,addbit);
+  emsg=g_strdup_printf("Unable to read from the file\n%s\n%s",s,addbit);
+
+  LIVES_ERROR(emsg);
+  g_free(emsg);
+  g_free(sutf);
 
   do_blocking_error_dialog(msg);
   g_free(msg);
@@ -2276,15 +2532,34 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
   // return same as do_abort_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
 
   int ret;
-  gchar *msg,*emsg;
+  gchar *msg,*emsg,*tmp;
+  gchar *sutf=g_filename_to_utf8(fname,-1,NULL,NULL,NULL);
+  gchar *dsmsg=g_strdup("");
+
+  gchar dirname[PATH_MAX];
+
+  guint64 dsval;
+
+  lives_storage_status_t ds;
+
+  g_snprintf(dirname,PATH_MAX,"%s",fname);
+  get_dirname(dirname);
+  ds=get_storage_status(dirname,prefs->ds_crit_level,&dsval);
+
+  if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
+    g_free(dsmsg);
+    tmp=ds_critical_msg(dirname,dsval);
+    dsmsg=g_strdup_printf("%s\n",tmp);
+    g_free(tmp);
+  }
 
   if (errtext==NULL) {
     emsg=g_strdup_printf("Unable to write to file %s",fname);
-    msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n"),fname);
+    msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n"),sutf);
   }
   else {
     emsg=g_strdup_printf("Unable to write to file %s, error was %s",fname,errtext);
-    msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n"),fname,errtext);
+    msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n"),sutf,errtext);
   }
   
   LIVES_ERROR(emsg);
@@ -2292,7 +2567,9 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 
   ret=do_abort_cancel_retry_dialog(msg,transient);
 
+  g_free(dsmsg);
   g_free(msg);
+  g_free(sutf);
 
   mainw->write_failed=FALSE; // reset this
 
@@ -2309,14 +2586,15 @@ int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, 
 
   int ret;
   gchar *msg,*emsg;
+  gchar *sutf=g_filename_to_utf8(fname,-1,NULL,NULL,NULL);
 
   if (errtext==NULL) {
     emsg=g_strdup_printf("Unable to read from file %s",fname);
-    msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n"),fname);
+    msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n"),sutf);
   }
   else {
     emsg=g_strdup_printf("Unable to read from file %s, error was %s",fname,errtext);
-    msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nThe error was\n%s.\n"),fname,errtext);
+    msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nThe error was\n%s.\n"),sutf,errtext);
   }
   
   LIVES_ERROR(emsg);
@@ -2325,7 +2603,7 @@ int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, 
   ret=do_abort_cancel_retry_dialog(msg,transient);
 
   g_free(msg);
-
+  g_free(sutf);
 
   mainw->read_failed=FALSE; // reset this
 
@@ -2396,9 +2674,16 @@ int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
 
 
 void do_chdir_failed_error(const char *dir) {
-  gchar *msg=g_strdup_printf(_("\nLiVES failed to change directory to\n%s\nPlease check your system for errors.\n"),dir);
+  gchar *msg;
+  gchar *dutf;
+  gchar *emsg=g_strdup_printf("Failed directory change to\n%s",dir);
+  LIVES_ERROR(emsg);
+  g_free(emsg);
+  dutf=g_filename_to_utf8(dir,-1,NULL,NULL,NULL);
+  msg=g_strdup_printf(_("\nLiVES failed to change directory to\n%s\nPlease check your system for errors.\n"),dutf);
   do_error_dialog(msg);
   g_free(msg);
+  g_free(dutf);
 }
 
 

@@ -17505,7 +17505,7 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
 void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   //  here we save a layout list (*.lay) file
 
-  // we dump (serialise the event_list plant, followed by all of its events)
+  // we dump (serialise) the event_list plant, followed by all of its events
   // serialisation method is described in the weed-docs/weedevents spec.
   // (serialising of event_lists)
 
@@ -17636,8 +17636,12 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   ar_layout=prefs->ar_layout;
   prefs->ar_layout=orig_ar_layout;
 
+  if (esave_file!=NULL) {
+    g_free(esave_dir);
+    esave_dir=get_dir(esave_file);
+  }
 
-  if (esave_file==NULL) {
+  if (esave_file==NULL||!check_storage_space(NULL,FALSE)) {
     gchar *cdir;
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",esave_dir);
     lives_system(com,FALSE);

@@ -2103,14 +2103,17 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     switch (rfxbuilder->copy_params[pnum].type) {
     case LIVES_PARAM_NUM:
       if (!rfxbuilder->copy_params[pnum].dp) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),(gdouble)get_int_param (rfxbuilder->copy_params[pnum].def));
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
+				   (gdouble)get_int_param (rfxbuilder->copy_params[pnum].def));
       }
       else {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),get_double_param (rfxbuilder->copy_params[pnum].def));
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
+				   get_double_param (rfxbuilder->copy_params[pnum].def));
       }
       break;
     case LIVES_PARAM_BOOL:
-      gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),(gdouble)get_bool_param (rfxbuilder->copy_params[pnum].def));
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
+				 (gdouble)get_bool_param (rfxbuilder->copy_params[pnum].def));
       break;
     case LIVES_PARAM_COLRGB24:
       get_colRGB24_param (rfxbuilder->copy_params[pnum].def,&rgb);
@@ -2184,7 +2187,8 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_widget_show (rfxbuilder->spinbutton_param_step);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_param_step, TRUE, FALSE, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_step_label),rfxbuilder->spinbutton_param_step);
-  gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_param_step,(_ ("How much the parameter is adjusted when the spinbutton arrows are pressed.")));
+  gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_param_step,
+			       (_ ("How much the parameter is adjusted when the spinbutton arrows are pressed.")));
 
   // wrap
 
@@ -2243,7 +2247,8 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 		    G_CALLBACK (on_code_clicked),
 		    (gpointer)rfxbuilder);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->param_type_entry),"changed",G_CALLBACK (on_param_type_changed),(gpointer)rfxbuilder);
+  g_signal_connect (GTK_OBJECT(rfxbuilder->param_type_entry),"changed",G_CALLBACK (on_param_type_changed),
+		    (gpointer)rfxbuilder);
 
   g_signal_connect_after (GTK_OBJECT (rfxbuilder->spinbutton_param_dp), "value_changed",
 			  G_CALLBACK (after_param_dp_changed),
@@ -2267,8 +2272,10 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     case LIVES_PARAM_NUM:
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),rfxbuilder->copy_params[pnum].min);
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),rfxbuilder->copy_params[pnum].max);
-      gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_step),rfxbuilder->copy_params[pnum].step_size);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rfxbuilder->param_wrap_checkbutton),rfxbuilder->copy_params[pnum].wrap);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_step),
+				 rfxbuilder->copy_params[pnum].step_size);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rfxbuilder->param_wrap_checkbutton),
+				   rfxbuilder->copy_params[pnum].wrap);
       break;
     case LIVES_PARAM_COLRGB24:
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(gdouble)rgb.green);
@@ -2295,11 +2302,15 @@ void after_param_dp_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   gtk_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_step),dp);
 
   if (dp>0) {
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1./lives_10pow(dp),gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1./(double)lives_10pow(dp),
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_step),MAXFLOATLEN+dp);
   }
   else {
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_step),MAXINTLEN);
   }
 }
@@ -2315,17 +2326,30 @@ void after_param_min_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   g_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
 
   if ((dp=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)))>0) {
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_def),MAXFLOATLEN+dp);
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),G_MAXFLOAT);
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1./lives_10pow(dp),gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),G_MAXFLOAT);
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),
+			      1./(double)lives_10pow(dp),gtk_spin_button_get_value 
+			      (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_step),MAXFLOATLEN+dp);
   }
   else {
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
+			      gtk_spin_button_get_value_as_int 
+			      (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_def),MAXINTLEN);
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),G_MAXINT);
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),
+			      G_MAXINT);
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_step),MAXINTLEN);
   }
 
@@ -2344,17 +2368,29 @@ void after_param_max_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   g_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
 
   if ((dp=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)))>0) {
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_def),MAXFLOATLEN+dp);
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXFLOAT,gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1./lives_10pow(dp),gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXFLOAT,
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),
+			      1./(double)lives_10pow(dp),
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
+			      gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_step),MAXFLOATLEN+dp);
   }
   else {
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
+			      gtk_spin_button_get_value_as_int 
+			      (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_def),MAXINTLEN);
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXINT,gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXINT,
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,
+			      gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))
+			      -gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
     gtk_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_step),MAXINTLEN);
   }
 

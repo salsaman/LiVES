@@ -776,11 +776,16 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->suppress_dprint=FALSE;
 
-  mainw->any_string=g_strdup(_("Any"));  // note to translators - text saying "Any", for encoder and output format
-  mainw->none_string=g_strdup(_("None"));  // note to translators - text saying "None", for playback plugin name
-  mainw->recommended_string=g_strdup(_("recommended"));  // note to translators - text saying "recommended", for playback plugin name
-  mainw->disabled_string=g_strdup(_("disabled !"));  // note to translators - text saying "disabled", for playback plugin name
-  mainw->cl_string=g_strdup(_("**The current layout**"));  // note to translators - text saying "**The current layout**", to warn users that the current layout is affected
+  // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
+  mainw->any_string=g_strdup(_("Any"));
+  // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
+  mainw->none_string=g_strdup(_("None"));
+  // TRANSLATORS: text saying "recommended", for plugin names, etc.
+  mainw->recommended_string=g_strdup(_("recommended"));
+  // TRANSLATORS: text saying "disabled", (as in "not enabled")
+  mainw->disabled_string=g_strdup(_("disabled !"));
+  // TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
+  mainw->cl_string=g_strdup(_("**The current layout**"));
 
   mainw->opening_frames=-1;
 
@@ -942,8 +947,10 @@ static void lives_init(_ign_opts *ign_opts) {
     future_prefs->vpp_argv=NULL;
 
     if (prefs->gui_monitor!=0) {
-      gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-mainw->LiVES->allocation.width)/2;
-      gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-mainw->LiVES->allocation.height)/2;
+      gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+						      mainw->LiVES->allocation.width)/2;
+      gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						      mainw->LiVES->allocation.height)/2;
       gtk_window_set_screen(GTK_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
       gtk_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
 
@@ -993,6 +1000,16 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->disabled_decoders=get_list_pref("disabled_decoders");
 
     prefs->enc_letterbox=FALSE;
+
+    get_pref("ds_warn_level",buff,256);
+    if (!strlen(buff)) prefs->ds_warn_level=DEF_DS_WARN_LEVEL;
+    else prefs->ds_warn_level=strtol(buff,NULL,10);
+
+    mainw->next_ds_warn_level=prefs->ds_warn_level;
+
+    get_pref("ds_crit_level",buff,256);
+    if (!strlen(buff)) prefs->ds_crit_level=DEF_DS_CRIT_LEVEL;
+    else prefs->ds_crit_level=strtol(buff,NULL,10);
 
     //////////////////////////////////////////////////////////////////
 
@@ -2006,8 +2023,33 @@ static gboolean lives_startup(gpointer data) {
 		      g_free(err);
 		      upgrade_error=TRUE;
 		    }
+
+		    if (mainw->next_ds_warn_level>0) {
+		      guint64 dsval;
+		      lives_storage_status_t ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
+		      if (ds==LIVES_STORAGE_STATUS_WARNING) {
+			gchar *err;
+			guint64 curr_ds_warn=mainw->next_ds_warn_level;
+			mainw->next_ds_warn_level>>=1;
+			if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
+			if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
+			tmp=ds_warning_msg(prefs->tmpdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
+			err=g_strdup_printf("\n%s\n",tmp);
+			g_free(tmp);
+			startup_message_nonfatal(err);
+			g_free(err);
+		      }
+		      else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
+			gchar *err;
+			tmp=ds_critical_msg(prefs->tmpdir,dsval);
+			err=g_strdup_printf("\n%s\n",tmp);
+			g_free(tmp);
+			startup_message_fatal(err);
+			g_free(err);
+		      }
+		    }
 		  }
-		    
+
 		  if (prefs->startup_interface!=STARTUP_MT) {
 		    if (prefs->show_gui) {
 		      gtk_widget_show (mainw->LiVES);
@@ -4834,6 +4876,8 @@ void close_current_file(gint file_to_switch_to) {
 
     if (cfile->frame_index!=NULL) g_free(cfile->frame_index);
     if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
+
+    if (cfile->op_dir!=NULL) g_free(cfile->op_dir);
 
     if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
       com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);

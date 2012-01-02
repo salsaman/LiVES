@@ -284,6 +284,14 @@ typedef struct {
   /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
   gint bigendbug;
 
+#define DEF_DS_WARN_LEVEL 2000000000000  // 200MiB
+#define DEF_DS_CRIT_LEVEL 2000000000000 // 20MiB
+  //#define DEF_DS_CRIT_LEVEL 20000000 // 20MiB
+
+  guint64 ds_warn_level; ///< diskspace warn level bytes
+  guint64 ds_crit_level; ///< diskspace critical level bytes
+
+
 
 #ifdef HAVE_YUV4MPEG
   gchar yuvin[PATH_MAX];

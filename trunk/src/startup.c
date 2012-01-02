@@ -1,6 +1,6 @@
 // startup.c
 // LiVES
-// (c) G. Finch 2010 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2010 - 2012 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -15,9 +15,21 @@
 
 
 
-static gboolean prompt_existing_dir(gchar *dirname, gdouble freespace) {
-  gchar *msg=g_strdup_printf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %.2f GB)\n"),dirname,freespace);
-  gboolean res=do_warning_dialog(msg);
+static gboolean prompt_existing_dir(gchar *dirname, guint64 freespace, gboolean wrtable) {
+  gchar *msg;
+  gboolean res=FALSE;
+
+  if (wrtable) {
+    gchar *fspstr=lives_format_storage_space_string(freespace);
+    msg=g_strdup_printf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),dirname,fspstr);
+    g_free(fspstr);
+    res=do_warning_dialog(msg);
+  }
+  else
+    {
+      msg=g_strdup_printf(_("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),dirname);
+      do_error_dialog(msg);
+    }
   g_free(msg);
   return res;
 }
@@ -26,9 +38,19 @@ static gboolean prompt_existing_dir(gchar *dirname, gdouble freespace) {
 
 
 
-static gboolean prompt_new_dir(gchar *dirname, gdouble freespace) {
-  gchar *msg=g_strdup_printf(_("Create the directory\n%s\n?\n\n(Free space = %.2f GB)"),dirname,freespace);
-  gboolean res=do_warning_dialog(msg);
+static gboolean prompt_new_dir(gchar *dirname, guint64 freespace, gboolean wrtable) {
+  gboolean res=FALSE;
+  gchar *msg;
+  if (wrtable) {
+    gchar *fspstr=lives_format_storage_space_string(freespace);
+    msg=g_strdup_printf(_("Create the directory\n%s\n?\n\n(Free space = %s)"),dirname,fspstr);
+    g_free(fspstr);
+    res=do_warning_dialog(msg);
+  }
+  else {
+    msg=g_strdup_printf(_("LiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n)"),dirname);
+    do_error_dialog(msg);
+  }
   g_free(msg);
   return res;
 }
@@ -41,7 +63,7 @@ gboolean do_tempdir_query(void) {
   gboolean ok=FALSE;
   _entryw *tdentry;
   gchar *com,*dirname;
-  gdouble free_gb;
+  guint64 freesp;
 
 
  top:
@@ -74,18 +96,37 @@ gboolean do_tempdir_query(void) {
       continue;
     }
 
-    free_gb=(gdouble)get_fs_free(dirname)/1000000000.;
 
     if (g_file_test(dirname,G_FILE_TEST_IS_DIR)) {
-      if (!prompt_existing_dir(dirname,free_gb)) {
-	g_free(dirname);
-	continue;
+      if (is_writeable_dir(dirname)) {
+	freesp=get_fs_free(dirname);
+	if (!prompt_existing_dir(dirname,freesp,TRUE)) {
+	  g_free(dirname);
+	  continue;
+	}
+      }
+      else {
+	if (!prompt_existing_dir(dirname,0,FALSE)) {
+	  g_free(dirname);
+	  continue;
+	}
       }
     }
     else {
-      if (!prompt_new_dir(dirname,free_gb)) {
-	g_free(dirname);
-	continue;
+      if (is_writeable_dir(dirname)) {
+	freesp=get_fs_free(dirname);
+	if (!prompt_new_dir(dirname,freesp,TRUE)) {
+	  rmdir(dirname);
+	  g_free(dirname);
+	  continue;
+	}
+      }
+      else {
+	if (!prompt_new_dir(dirname,0,FALSE)) {
+	  rmdir(dirname);
+	  g_free(dirname);
+	  continue;
+	}
       }
     }
 

@@ -7576,28 +7576,11 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_modify_fg (mt->context_frame, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_widget_modify_fg (gtk_frame_get_label_widget(GTK_FRAME(mt->context_frame)), GTK_STATE_NORMAL, &palette->normal_fore);
 
-  mt->context_box = gtk_vbox_new (FALSE, 10);
-
   gtk_paned_pack2 (GTK_PANED (mt->hpaned), mt->context_frame, TRUE, TRUE);
 
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mt->context_box, GTK_STATE_NORMAL, &palette->info_base);
-  }
+  mt->context_scroll=NULL;
 
-  mt->context_scroll=gtk_scrolled_window_new (NULL, NULL);
-  gtk_container_add (GTK_CONTAINER (mt->context_frame), mt->context_scroll);
-
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->context_scroll), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->context_scroll), mt->context_box);
-  
-  // Apply theme background to scrolled window
-   if (palette->style&STYLE_1) {
-     gtk_widget_modify_fg(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-     gtk_widget_modify_bg(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_back);
-   }
-
+  clear_context(mt);
 
   if (mainw->imsep==NULL) {
     mt->sep_image=NULL;
@@ -10136,16 +10119,29 @@ void unselect_all (lives_mt *mt) {
 
 
 void clear_context (lives_mt *mt) {
-  if (mt->context_box!=NULL) {
-    gtk_widget_destroy (mt->context_box);
+  if (mt->context_scroll!=NULL) {
+    gtk_widget_destroy (mt->context_scroll);
   }
 
+  mt->context_scroll=gtk_scrolled_window_new (NULL, NULL);
+
+  gtk_container_add (GTK_CONTAINER (mt->context_frame), mt->context_scroll);
+
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->context_scroll), GTK_POLICY_AUTOMATIC, 
+				  GTK_POLICY_AUTOMATIC);
+  
   mt->context_box = gtk_vbox_new (FALSE, 4);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mt->context_box, GTK_STATE_NORMAL, &palette->info_base);
   }
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->context_scroll), mt->context_box);
+
+  // Apply theme background to scrolled window
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_back);
+  }
 
   if (mt->opts.show_ctx) gtk_widget_show_all (mt->context_frame);
 }
@@ -15296,7 +15292,7 @@ void mt_post_playback(lives_mt *mt) {
 
 
 void multitrack_playall (lives_mt *mt) {
-  GtkWidget *old_context_box=mt->context_box;
+  GtkWidget *old_context_scroll=mt->context_scroll;
 
   if (mainw->current_file<1) return;
 
@@ -15305,8 +15301,9 @@ void multitrack_playall (lives_mt *mt) {
     mt->idlefunc=0;
   }
 
-  gtk_widget_ref(mt->context_box); // this allows us to get our old messages back
-
+  gtk_widget_ref(mt->context_scroll); // this allows us to get our old messages back
+  gtk_container_remove (GTK_CONTAINER (mt->context_frame), mt->context_scroll);
+  mt->context_scroll=NULL;
   clear_context(mt);
 
   add_context_label(mt,_("Press 'm' during playback"));
@@ -15349,14 +15346,14 @@ void multitrack_playall (lives_mt *mt) {
 
   mt_swap_play_pause(mt,FALSE);
 
-  gtk_container_remove (GTK_CONTAINER (mt->context_frame), mt->context_box);
+  gtk_container_remove (GTK_CONTAINER (mt->context_frame), mt->context_scroll);
 
-  mt->context_box=old_context_box;
-  gtk_container_add (GTK_CONTAINER (mt->context_frame), mt->context_box);
+  mt->context_scroll=old_context_scroll;
+  gtk_container_add (GTK_CONTAINER (mt->context_frame), mt->context_scroll);
 
   if (mt->opts.show_ctx) gtk_widget_show_all(mt->context_frame);
 
-  gtk_widget_unref(mt->context_box);
+  gtk_widget_unref(mt->context_scroll);
 
   if (!mt->is_rendering) mt_sensitise(mt);
   if (!pb_audio_needs_prerender) gtk_widget_set_sensitive(mt->prerender_aud,FALSE);

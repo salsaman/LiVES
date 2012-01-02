@@ -505,7 +505,7 @@ if (defined($ARGV[0])) {
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
 	$statusfile="$curtmpdir/.status";
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 	&backup_audio;
 	if ($panic) {
 	    exit 1;
@@ -566,7 +566,7 @@ if (defined($ARGV[0])) {
 	$curtmpdir="$tmpdir/$handle";
 	$statusfile="$curtmpdir/.status";
 
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 	$fsize= -s "$nfile";
 	$afsize = -s "audio";
 	unlink <*.tar>;
@@ -639,7 +639,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if (-d $plugindir) {
-	    chdir $plugindir;
+	    smog_chdir("$plugindir");
 	    opendir DIR,$plugindir;
 	    my @files=readdir(DIR);
 	    closedir DIR;
@@ -709,7 +709,7 @@ if (defined($ARGV[0])) {
 		exit 0;
 	    }
 
-	    chdir $curtmpdir;
+	    smog_chdir("$curtmpdir");
 
 	    $name=&mkname(1);
 	    
@@ -738,7 +738,7 @@ if (defined($ARGV[0])) {
 	    $handle=$ARGV[1];
 	    $curtmpdir="$tmpdir/$handle";
 	    $statusfile=$curtmpdir."/.status";
-	    chdir $curtmpdir;
+	    smog_chdir("$curtmpdir");
 	    $start=$ARGV[2];
 	    $end=$ARGV[3];
 	    $plugdir=$ARGV[4];
@@ -766,7 +766,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    #need this again - something resets us
-	    chdir $curtmpdir;
+	    smog_chdir("$curtmpdir");
 
 	    $com="\"$plugin\" clear $start $end $img_ext";
 	    $smerr=smog_system($com);
@@ -852,7 +852,7 @@ if (defined($ARGV[0])) {
 	    my $exename=$ARGV[3];
             opendir DIR,"$tmpdir";
 
-	    chdir $tmpdir;
+	    smog_chdir("$tmpdir");
 
 	    while (my $file=readdir(DIR)) {
 		if ($file=~/^recovery\.$uid\.$gid\.(.*)/ || $file=~/^layout\.$uid\.$gid\.(.*)/ || $file=~/^layout_numbering\.$uid\.$gid\.(.*)/) {
@@ -1287,7 +1287,7 @@ if (defined($ARGV[0])) {
 	    $compression=15;
 	}
 
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 
 	# let get_file_info set this
 	#$mplay_command=&rc_get("video_open_command");
@@ -1600,9 +1600,9 @@ if (defined($ARGV[0])) {
 		smog_system("smogrify stopsubsub \"$handle\"");
 	    }
 	    
-	    if (chdir $curtmpdir) {
+	    if (chdir("$curtmpdir")) {
 		unlink <* .*>;
-		chdir $tmpdir;
+		smog_chdir("$tmpdir");
 		rmdir $curtmpdir;
 	    }
 	    exit 0;
@@ -1614,7 +1614,7 @@ if (defined($ARGV[0])) {
 	    $execname=$ARGV[1];
 	    shift(@ARGV);
 
-	    chdir "$curtmpdir";
+	    smog_chdir("$curtmpdir");
 
 	    $com="\"$execname\" encode @ARGV";
 	    $smerr=smog_system($com);
@@ -1644,7 +1644,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    unlink "$curtmpdir/pause";
-	    chdir $curtmpdir;
+	    smog_chdir("$curtmpdir");
 
 	    $plugin=$ARGV[2];
 
@@ -1822,7 +1822,7 @@ if (defined($ARGV[0])) {
 		}
 		
 		if ($is_linked==1) {
-		    chdir $linksdir;
+		    smog_chdir("$linksdir");
 		}
 
 	    }
@@ -1876,7 +1876,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "link_frames") {
 	    unlink "$curtmpdir/pause";
-	    chdir $curtmpdir;
+	    smog_chdir("$curtmpdir");
 
 	    $start=$ARGV[2];
 	    $end=$ARGV[3];
@@ -1973,7 +1973,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "resize_all") {
 	    unlink "$curtmpdir/pause";
-	    chdir $curtmpdir;
+	    smog_chdir("$curtmpdir");
 	    $end=$ARGV[2];
 
 	    my $iwidth=$ARGV[3];
@@ -2054,7 +2054,7 @@ if (defined($ARGV[0])) {
 	$nfile=$ARGV[5];
 
 	unlink "$curtmpdir/pause";
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 
 	# check the file is writable
 	unless (&is_writeable($nfile)) {
@@ -2135,7 +2135,7 @@ if (defined($ARGV[0])) {
 
     if ($command eq "restore") {
 	$nfile=$ARGV[2];
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 
 	smog_system("tar -zxf \"$nfile\" 2>/dev/null");
 	unless (-f "header.tar"||-f "header"||-f "header.lives") {
@@ -2191,7 +2191,7 @@ if (defined($ARGV[0])) {
 	$newframe=-1;
 	$event_file="$curtmpdir/event.frames";
 	$resize_ext=".tmp";
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 
 	unless ($leave_bak==1) {
 	    &clean_old;
@@ -2348,7 +2348,7 @@ if (defined($ARGV[0])) {
 	    $leave_bak=0;
 	}
 
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 
 	$oend=$end;
 
@@ -2430,7 +2430,7 @@ if (defined($ARGV[0])) {
 		&sig_complete;
 		exit 1;
 	    }
-	    chdir $curtmpdir;
+	    smog_chdir("$curtmpdir");
 	    unlink <*>;
 	    if ($GUI_NAME eq "LiVES") {
 		# LiVES needs this to stop the progress dialog from flickering 
@@ -2581,7 +2581,7 @@ if (defined($ARGV[0])) {
 	$file=$ARGV[8];
 	$audio_in="$curtmpdir/audiodump.wav";
 
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 	$audiofile="$curtmpdir/audio";
 
 	if ($type eq "mp3") {
@@ -2862,7 +2862,7 @@ if (defined($ARGV[0])) {
 
     if ($command eq "commit_audio") {
 	# commit the audio file in either audiodump or audiodump.wav as new audio file
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 	$audio_out="audio";
 	$audio_bak="audio.bak";
 
@@ -2943,7 +2943,7 @@ if (defined($ARGV[0])) {
 	# remove the audio file in audiodump/audiodump.wav
 	# plus any audio.new files (e.g. from append audio)
 
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 	unlink <audiodump* audio.new>;
 
 	&sig_complete;
@@ -3142,7 +3142,7 @@ if (defined($ARGV[0])) {
 	$times=1;
 	$undo_cut=0;
 
-	chdir $curtmpdir;
+	smog_chdir("$curtmpdir");
 
 	if (defined ($ARGV[17])) {
 	    $times=$ARGV[17];
@@ -3253,7 +3253,7 @@ if (defined($ARGV[0])) {
 
 	if (substr($command,0,9) eq "fxrender_") {
 
-	    chdir $curtmpdir;
+	    smog_chdir("$curtmpdir");
 	    unlink "$curtmpdir/pause";
 	    $command=substr($command,9);
 	    $status=$ARGV[2];
@@ -3406,7 +3406,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "import_project") {
 	    $proj_file=$ARGV[2];
-	    chdir $tmpdir;
+	    smog_chdir("$tmpdir");
 	    umask 0;
 	    $com="tar --no-same-owner -xzf \"$proj_file\"";
 	    $smerr=smog_system($com);
@@ -3422,7 +3422,7 @@ if (defined($ARGV[0])) {
 	if ($command eq "export_project") {
 	    my $set=$ARGV[2];
 	    my $proj_file=$ARGV[3];
-	    chdir $tmpdir;
+	    smog_chdir("$tmpdir");
 	    $com="tar --exclude=*.bak --exclude=.pid* --exclude .status* --exclude=lock.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -czf \"$proj_file\" $set";
 	    $smerr=smog_system($com);
 	    if ($smerr) {
@@ -3620,7 +3620,7 @@ sub mv_pre {
 	unlink "$pidfile";
     }
 
-    chdir $curtmpdir;
+    smog_chdir("$curtmpdir");
     unlink <*.mgk>;
 
     for ($i=$start;$i<=$end;$i++) {
@@ -3683,7 +3683,7 @@ sub backup_audio {
 sub cut {
     my ($start,$end)=@_;
     my ($i,$name);
-    chdir $curtmpdir;
+    smog_chdir("$curtmpdir");
     $frames_cut=$end-$start+1;
 
     for ($i=$start;$i<=$end;$i++) {
@@ -3776,12 +3776,14 @@ sub smog_system_direct {
 
 
 sub smog_rename {
+    # CAUTION: return value of 0 is error here
+
    my ($smfrom,$smto)=@_;
    my $smcomret=rename "$smfrom","$smto";
 
    if ($smcomret==0) {
        if ($DEBUG_SMOGRIFY) {
-	   print STDERR "smogrify debug - rename failed: $smfrom $smto\n";
+	   print STDERR "smogrify debug - rename failed ($!): $smfrom $smto\n";
        }
        sig_system_error("Renaming \"$smfrom\" to \"$smto\"",$!);
        unlink $pidfile;
@@ -3801,7 +3803,7 @@ sub smog_copy {
 
    if ($smcomret!=0 && -f $smfrom) {
        if ($DEBUG_SMOGRIFY) {
-	   print STDERR "smogrify debug - copy failed: $smfrom $smto\n";
+	   print STDERR "smogrify debug - copy failed ($!): $smfrom $smto\n";
        }
        $panic=sig_system_error("Copying \"$smfrom\" to \"$smto\"",$!);
    }
@@ -3811,10 +3813,23 @@ sub smog_copy {
 }
 
 
+sub smog_chdir {
+    # CAUTION: return value of 0 is error here
 
+    my ($smdir)=shift;
 
+    $smcomret=chdir "$smdir";
 
+    if (!$smcomret) {
+	if ($DEBUG_SMOGRIFY) {
+	    print STDERR "smogrify debug - chdir failed ($!): $smdir\n";
+	}
 
+	sig_system_error("Changing to directory \"$smdir\"",$!);
+	unlink $pidfile;
+	exit 1;
+    }
+}
 
 sub insert {
     my ($from,$to,$frames_to_move);
@@ -4519,7 +4534,7 @@ sub convert_audio_to_wav {
 
 
 
-    chdir $curtmpdir;
+    smog_chdir("$curtmpdir");
     if (&rc_get("audio_player") eq "mplayer") {
 	$format=&get_mplayer_format;
 	$smcom=&rc_get("video_open_command") . " -quiet -ao pcm -demuxer rawaudio -rawaudio rate=$arate:channels=$achans:samplesize=$aasamps -ao pcm:waveheader $format -vo null \"$audio_in\" >/dev/null 2>&1 </dev/null";
@@ -5305,7 +5320,7 @@ sub fill_and_redo_frames {
     my $conv_command=$convert_command;
     my $next=0;
 
-    chdir $curtmpdir;
+    smog_chdir("$curtmpdir");
 
     if ($img_ext eq ".png") {
 	$conv_command.=" -alpha on";
@@ -5635,7 +5650,7 @@ sub get_mplayer_format {
 
 sub clean_old {
     return if (! -d "$tmpdir/$handle");
-    chdir "$tmpdir/$handle";
+    smog_chdir("$tmpdir/$handle");
     unlink <*.mgk *.bak *.pre *.tmp pause audio.* audiodump*>;
     smog_system_sync();
 }
@@ -6308,10 +6323,7 @@ sub get_convert_version_hash {
 
 sub weed {
     my $file;
-    if (!chdir $tmpdir) {
-	print STDERR "Could not clean up, directory $tmpdir is not accessible\n";
-	return 0;
-    }
+    smog_chdir("$tmpdir");
     my $start_total=(split / /, (smog_system_direct("du -sb -B 1048567 2>/dev/null")))[0];
 
     use File::Find;
@@ -6333,9 +6345,9 @@ sub weed {
 		    }
 		    else {
 			unless (-f "noprune") {
-			    chdir $file;
+			    smog_chdir("$file");
 			    &prune;
-			    chdir $tmpdir;
+			    smog_chdir("$tmpdir");
 			}
 			unless (!defined($new_temp)||$new_temp eq "") {
 			    smog_rename( "$file","$new_temp");
@@ -6392,7 +6404,7 @@ sub prune {
 sub clear_symlinks {
     my $linksdir="lives-symlinks/$handle/";
     
-    chdir "/tmp";
+    smog_chdir("/tmp");
     
     if (-d $linksdir) {
 	# remove directory + contents

@@ -381,9 +381,6 @@ gint
 expose_raud_event (GtkWidget *widget, GdkEventExpose *event);
 
 
-void
-on_effects_paused                     (GtkButton       *button,
-				       gpointer         user_data);
 
 void
 on_preview_clicked                     (GtkButton       *button,

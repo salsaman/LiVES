@@ -510,6 +510,9 @@ typedef struct {
 
   lives_subtitles_t *subt;
 
+  gchar *op_dir;
+  guint64 op_ds_warn_level; ///< current disk space warning level for any output directory
+
   // TODO - change to lives_clip_t
 } file;
 
@@ -680,6 +683,11 @@ int do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_U
 void do_chdir_failed_error(const char *dir);
 void handle_backend_errors(void);
 gboolean check_backend_return(file *sfile);
+
+/** warn about disk space */
+gchar *ds_critical_msg(const gchar *dir, guint64 dsval);
+gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn);
+gboolean check_storage_space(file *sfile, gboolean do_pause);
 
 
 gboolean ask_permission_dialog(int what);
@@ -894,8 +902,9 @@ char *filename_from_fd(char *val, int fd);
 
 
 LIVES_INLINE float LEFloat_to_BEFloat(float f);
-int lives_10pow(int pow);
+uint64_t lives_10pow(int pow);
 int get_approx_ln(guint val);
+LIVES_INLINE void lives_freep(void **ptr);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
 int lives_kill(pid_t pid, int sig);
@@ -903,10 +912,13 @@ int64_t lives_get_current_ticks(void);
 gboolean lives_alarm_get(int alarm_handle);
 int lives_alarm_set(int64_t ticks);
 void lives_alarm_clear(int alarm_handle);
+lives_storage_status_t get_storage_status(const char *dir, guint64 warn_level, guint64 *dsval);
+gchar *lives_format_storage_space_string(guint64 space);
 
 
 LIVES_INLINE gint myround(gdouble n);
 void get_dirname(gchar *filename);
+gchar *get_dir(const gchar *filename);
 void get_basename(gchar *filename);
 void get_filename(gchar *filename, gboolean strip_dir);
 gchar *get_extension(const gchar *filename);
@@ -955,7 +967,8 @@ gboolean check_file(const gchar *file_name, gboolean check_exists);  ///< check 
 gboolean check_dir_access (const gchar *dir);
 gulong get_file_size(int fd);
 gulong sget_file_size(const gchar *name);
-gulong get_fs_free(const gchar *dir);
+gulong get_fs_free(const char *dir);
+gboolean is_writeable_dir(const char *dir);
 gboolean ensure_isdir(gchar *fname);
 gchar *ensure_extension(const gchar *fname, const gchar *ext) WARN_UNUSED;
 gboolean check_dev_busy(gchar *devstr);
@@ -1048,9 +1061,10 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 
 //callbacks.c
 void lives_exit (void);
-void on_check_clicked(void);
-void on_fileread_clicked (GtkFileChooser *fch, gpointer widget);
+void count_opening_frames(void);
+void on_fileread_clicked (GtkFileChooser *, gpointer widget);
 gboolean dirchange_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+void on_effects_paused (GtkButton *, gpointer user_data);
 
 // paramspecial.c
 gboolean mt_framedraw(lives_mt *, GdkPixbuf *);

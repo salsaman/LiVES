@@ -415,10 +415,15 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 				(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),-1,
 				prefs->image_ext,start,frames,mainw->file_open_params);
 
+	    g_free(tmp);
+
+
+	    cfile->op_dir=g_filename_from_utf8((tmp=get_dir(file_name)),-1,NULL,NULL,NULL);
+	    g_free(tmp);
+
 	    unlink (cfile->info_file);
 	    lives_system(com,FALSE);
 	    g_free(com);
-	    g_free(tmp);
 	    tmp=NULL;
 	    
 	    // if we have a quick-opening file, display the first and last frames now
@@ -3058,6 +3063,8 @@ void create_cfile(void) {
   cfile->stored_layout_idx=-1;
   cfile->interlace=LIVES_INTERLACE_NONE;
   cfile->subt=NULL;
+  cfile->op_dir=NULL;
+  cfile->op_ds_warn_level=0;
 
   if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;
@@ -3526,6 +3533,9 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
     mainw->current_file=current_file;
     return;
   }
+
+  cfile->op_dir=g_filename_from_utf8((tmp=get_dir(full_file_name)),-1,NULL,NULL,NULL);
+  g_free(tmp);
 
   if (!(do_progress_dialog(TRUE,TRUE,_ ("Backing up")))||mainw->error) {
     if (mainw->error) {
@@ -4348,8 +4358,8 @@ gint save_event_frames(void) {
 ///  the scrap file is used during recording to dump any streamed (non-disk) clips to
 /// during render/preview we load frames from the scrap file, but only as necessary
 
-static gdouble scrap_mb;  // MiB written to file
-static gulong free_mb; // MiB free to write
+static gdouble scrap_mb;  // MB written to file
+static gulong free_mb; // MB free to write
 
 gboolean open_scrap_file (void) {
   // create a virtual clip
@@ -4375,8 +4385,8 @@ gboolean open_scrap_file (void) {
 
   g_free(scrap_handle);
 
-  dir=g_strdup_printf("%s/%s",prefs->tmpdir,cfile->handle);
-  free_mb=get_fs_free(dir)/1000000;
+  dir=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+  free_mb=(gdouble)get_fs_free(dir)/1000000.;
   g_free(dir);
 
   mainw->current_file=current_file;
@@ -4533,6 +4543,8 @@ gint save_to_scrap_file (weed_plant_t *layer) {
 
   int i;
 
+  gboolean wrtable=TRUE;
+
   void **pdata;
 
   gchar *oname=g_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,mainw->files[mainw->scrap_file]->frames+1);
@@ -4627,18 +4639,25 @@ gint save_to_scrap_file (weed_plant_t *layer) {
 
   // check free space every 1000 frames
   if (mainw->files[mainw->scrap_file]->frames%1000==0) {
-    gchar *dir=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle);
-    free_mb=get_fs_free(dir)/1000000;
+    gchar *dir=g_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
+    free_mb=(gdouble)get_fs_free(dir)/1000000.;
+    if (free_mb==0) wrtable=is_writeable_dir(dir);
     g_free(dir);
   }
 
   if ((!mainw->fs||prefs->play_monitor!=prefs->gui_monitor)&&prefs->show_framecount) {
     if (scrap_mb<(gdouble)free_mb*.75) {
-      framecount=g_strdup_printf(_("rec %.2f MB"),scrap_mb); // translators: rec(ord) %.2f M(ega)B(ytes)
+      // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
+      framecount=g_strdup_printf(_("rec %.2f MB"),scrap_mb);
     }
     else {
       // warn if scrap_file > 3/4 of free space
-      framecount=g_strdup_printf(_("!rec %.2f MB"),scrap_mb); // translators: rec(ord) %.2f M(ega)B(ytes)
+      // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
+      if (wrtable)
+	framecount=g_strdup_printf(_("!rec %.2f MB"),scrap_mb);
+      else
+	// TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
+	framecount=g_strdup(_("rec ?? MB"));
     }
     gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),framecount);
     g_free(framecount);
@@ -4655,20 +4674,23 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   // check if we have enough free space left on the volume
   if ((glong)(((gdouble)free_mb-scrap_mb)/1000.)<prefs->rec_stop_gb) {
     // check free space again
-    gchar *dir=g_strdup_printf("%s/%s",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle);
-    free_mb=get_fs_free(dir)/1000000;
-    g_free(dir);
+    gchar *dir=g_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
+    free_mb=(gdouble)get_fs_free(dir)/1000000.;
+    if (free_mb==0) wrtable=is_writeable_dir(dir);
+    else wrtable=TRUE;
 
-    if ((glong)(((gdouble)free_mb-scrap_mb)/1000.)<prefs->rec_stop_gb) {
-      if (mainw->record&&!mainw->record_paused) {
-	gchar *msg=g_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE IS BELOW %ld GB !\nRecord stop level can be set in Preferences.\n"),prefs->rec_stop_gb);
-	d_print(msg);
-	g_free(msg);
-	on_record_perf_activate(NULL,NULL);
+    if (wrtable) {
+      if ((glong)(((gdouble)free_mb-scrap_mb)/1000.)<prefs->rec_stop_gb) {
+	if (mainw->record&&!mainw->record_paused) {
+	  gchar *msg=g_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %ld GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
+	  d_print(msg);
+	  g_free(msg);
+	  on_record_perf_activate(NULL,NULL);
+	}
       }
+      g_free(dir);
     }
   }
-
   return ++mainw->files[mainw->scrap_file]->frames;
 
 }

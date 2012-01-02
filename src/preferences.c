@@ -374,13 +374,22 @@ void set_vpp(gboolean set_in_prefs) {
 
 
 static void set_temp_label_text(GtkLabel *label) {
-  gdouble free_gb=(gdouble)get_fs_free(future_prefs->tmpdir)/1000000000.;
+  gdouble free_gb;
   gchar *tmpx1,*tmpx2;
+  gchar *dir=future_prefs->tmpdir;
   char *markup;
 
-  // tranlsation string is auto-freed() 
+  // use g_strdup* since the translation string is auto-freed() 
+
+  if (!is_writeable_dir(dir)) {
+    tmpx2=g_strdup(_("\n\n\n(Free space = UNKNOWN)"));
+  }
+  else {
+    free_gb=(gdouble)get_fs_free(dir)/1000000000.;
+    tmpx2=g_strdup_printf(_("\n\n\n(Free space = %.2f GB)"),free_gb);
+  }
+
   tmpx1=g_strdup(_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n\nTip: avoid setting it inside /tmp, since frequently /tmp is cleared on system shutdown."));
-  tmpx2=g_strdup_printf(_("\n\n\n(Free space = %.2f GB)"),free_gb);
 
   markup = g_markup_printf_escaped ("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s",tmpx1,tmpx2);
   gtk_label_set_markup (GTK_LABEL (label), markup);
@@ -3996,7 +4005,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_entry_set_text(GTK_ENTRY(prefsw->vid_load_dir_entry),prefs->def_vid_load_dir);
   
   prefsw->vid_save_dir_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->vid_save_dir_entry),255);
+  gtk_entry_set_max_length(GTK_ENTRY(prefsw->vid_save_dir_entry),PATH_MAX);
   gtk_widget_show (prefsw->vid_save_dir_entry);
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->vid_save_dir_entry, 1, 2, 5, 6,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
@@ -4009,7 +4018,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_entry_set_text(GTK_ENTRY(prefsw->vid_save_dir_entry),prefs->def_vid_save_dir);
   
   prefsw->audio_dir_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->audio_dir_entry),255);
+  gtk_entry_set_max_length(GTK_ENTRY(prefsw->audio_dir_entry),PATH_MAX);
   gtk_widget_show (prefsw->audio_dir_entry);
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->audio_dir_entry, 1, 2, 6, 7,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
@@ -4022,7 +4031,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_entry_set_text(GTK_ENTRY(prefsw->audio_dir_entry),prefs->def_audio_dir);
    
    prefsw->image_dir_entry = gtk_entry_new ();
-   gtk_entry_set_max_length(GTK_ENTRY(prefsw->image_dir_entry),255);
+   gtk_entry_set_max_length(GTK_ENTRY(prefsw->image_dir_entry),PATH_MAX);
    gtk_widget_show (prefsw->image_dir_entry);
    gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->image_dir_entry, 1, 2, 7, 8,
 		     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
@@ -4035,7 +4044,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_entry_set_text(GTK_ENTRY(prefsw->image_dir_entry),prefs->def_image_dir);
    
    prefsw->proj_dir_entry = gtk_entry_new ();
-   gtk_entry_set_max_length(GTK_ENTRY(prefsw->proj_dir_entry),255);
+   gtk_entry_set_max_length(GTK_ENTRY(prefsw->proj_dir_entry),PATH_MAX);
    gtk_widget_show (prefsw->proj_dir_entry);
    gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->proj_dir_entry, 1, 2, 8, 9,
 		     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
@@ -4048,7 +4057,7 @@ _prefsw *create_prefs_dialog (void) {
    gtk_entry_set_text(GTK_ENTRY(prefsw->proj_dir_entry),prefs->def_proj_dir);
    
    prefsw->tmpdir_entry = gtk_entry_new ();
-   gtk_entry_set_max_length(GTK_ENTRY(prefsw->tmpdir_entry),255);
+   gtk_entry_set_max_length(GTK_ENTRY(prefsw->tmpdir_entry),PATH_MAX);
    gtk_widget_show (prefsw->tmpdir_entry);
    gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->tmpdir_entry, 1, 2, 3, 4,
 		     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),

@@ -232,6 +232,56 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, gboolean allow_less) {
 
 
 
+gchar *lives_format_storage_space_string(guint64 space) {
+  gchar *fmt;
+
+  if (space>lives_10pow(18)) {
+    // TRANSLATORS: Exabytes
+    fmt=g_strdup_printf(_("%.2f EB"),(gdouble)space/(gdouble)lives_10pow(18));
+  }
+  else if (space>lives_10pow(15)) {
+    // TRANSLATORS: Petabytes
+    fmt=g_strdup_printf(_("%.2f PB"),(gdouble)space/(gdouble)lives_10pow(15));
+  }
+  else if (space>lives_10pow(12)) {
+    // TRANSLATORS: Terabytes
+    fmt=g_strdup_printf(_("%.2f TB"),(gdouble)space/(gdouble)lives_10pow(12));
+  }
+  else if (space>lives_10pow(9)) {
+    // TRANSLATORS: Gigabytes
+    fmt=g_strdup_printf(_("%.2f GB"),(gdouble)space/(gdouble)lives_10pow(9));
+  }
+  else if (space>lives_10pow(6)) {
+    // TRANSLATORS: Megabytes
+    fmt=g_strdup_printf(_("%.2f MB"),(gdouble)space/(gdouble)lives_10pow(6));
+  }
+  else if (space>1024) {
+    // TRANSLATORS: Kilobytes (1024 bytes)
+    fmt=g_strdup_printf(_("%.2f KiB"),(gdouble)space/1024.);
+  }
+  else {
+    fmt=g_strdup_printf(_("%d bytes"),space);
+  }
+
+  return fmt;
+}
+
+
+
+
+lives_storage_status_t get_storage_status(const char *dir, guint64 warn_level, guint64 *dsval) {
+  guint64 ds;
+
+  if (!is_writeable_dir(dir)) return LIVES_STORAGE_STATUS_UNKNOWN;
+  ds=get_fs_free(dir);
+  if (dsval!=NULL) *dsval=ds;
+  if (ds<prefs->ds_crit_level) return LIVES_STORAGE_STATUS_CRITICAL;
+  if (ds<warn_level) return LIVES_STORAGE_STATUS_WARNING;
+  return LIVES_STORAGE_STATUS_NORMAL;
+}
+
+
+
 
 int lives_chdir(const char *path, gboolean allow_fail) {
   int retval;
@@ -253,16 +303,32 @@ int lives_chdir(const char *path, gboolean allow_fail) {
 
 
 
+LIVES_INLINE void lives_freep(void **ptr) {
+  // free a pointer and nullify it, only if it is non-null to start with
+  // pass the address of the pointer in
+  if (ptr!=NULL&&*ptr!=NULL) {
+    g_free(*ptr);
+    *ptr=NULL;
+  }
+}
 
-// special allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
+
+
+
+// special de-allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
+// do not use this directly in code (use g_free() or weed_free() as appropriate)
 void lives_free(gpointer ptr) {
   (*mainw->free_fn)(ptr);
 }
 
+// special de-allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
+// do not use this directly in code (use g_free() or weed_free() as appropriate)
 void lives_free_with_check(gpointer ptr) {
   if (ptr==mainw->do_not_free) return;
   free(ptr);
 }
+
+
 
 
 LIVES_INLINE int lives_kill(pid_t pid, int sig) {
@@ -279,8 +345,9 @@ LIVES_INLINE void clear_mainw_msg (void) {
 }
 
 
-LIVES_INLINE int lives_10pow(int pow) {
-  register int i,res=1;
+LIVES_INLINE uint64_t lives_10pow(int pow) {
+  register int i;
+  uint64_t res=1;
   for (i=0;i<pow;i++) res*=10;
   return res;
 }
@@ -1347,11 +1414,19 @@ void get_dirname(gchar *filename) {
   }
 
   if (!strncmp(filename,"./",2)) {
-    gchar *tmp1=g_get_current_dir(),*tmp=g_strdup_printf("%s/%s",tmp1,filename+2);
+    gchar *tmp1=g_get_current_dir(),*tmp=g_build_filename(tmp1,filename+2,NULL);
     g_free(tmp1);
     g_snprintf(filename,PATH_MAX,"%s",tmp);
     g_free(tmp);
   }
+}
+
+
+gchar *get_dir(const gchar *filename) {
+  gchar tmp[PATH_MAX];
+  g_snprintf(tmp,PATH_MAX,"%s",filename);
+  get_dirname(tmp);
+  return g_strdup(tmp);
 }
 
 
@@ -2765,12 +2840,14 @@ gboolean check_file(const gchar *file_name, gboolean check_existing) {
 }
 
 
-gboolean 
-check_dir_access (const gchar *dir) {
+
+gboolean check_dir_access (const gchar *dir) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
 
   // dir is in locale encoding
+
+  // see also is_writeable_dir() which uses statvfs
 
   gboolean exists=g_file_test (dir, G_FILE_TEST_EXISTS);
   gchar *com;
@@ -2778,7 +2855,7 @@ check_dir_access (const gchar *dir) {
   gboolean is_OK=FALSE;
 
   if (!exists) {
-    com=g_strdup_printf ("/bin/mkdir -p \"%s\"",dir);
+    com=g_strdup_printf ("/bin/mkdir -p %s",dir);
     lives_system (com,TRUE);
     g_free (com);
   }
@@ -2793,9 +2870,7 @@ check_dir_access (const gchar *dir) {
   }
   g_free (testfile);
   if (!exists) {
-    com=g_strdup_printf ("/bin/rm -r \"%s\"",dir);
-    lives_system (com,TRUE);
-    g_free (com);
+    rmdir(dir);
   }
   return is_OK;
 }
@@ -4031,17 +4106,13 @@ void adjustment_configure(GtkAdjustment *adjustment,
 }
 
 
-
-gulong get_fs_free(const gchar *dir) {
+gboolean is_writeable_dir(const gchar *dir) {
   // get free space in bytes for volume containing directory dir
   // return 0 if we cannot create/write to dir
 
-  gulong bytes;
-
-  gboolean must_delete=FALSE;
+  // dir should be in locale encoding
 
   gchar *com;
-
   struct statvfs sbuf;
 
   if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
@@ -4049,23 +4120,45 @@ gulong get_fs_free(const gchar *dir) {
     lives_system(com,TRUE);
     g_free(com);
     if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
-      return 0;
+      return FALSE;
     }
-    must_delete=TRUE;
   }
 
-  if (statvfs(dir,&sbuf)==-1) return 0;
+  // use statvfs to get fs details
+  if (statvfs(dir,&sbuf)==-1) return FALSE;
+  if (sbuf.f_flag&ST_RDONLY) return FALSE;
 
-  if (sbuf.f_flag&ST_RDONLY) return 0;
+  return TRUE;
+}
 
+
+
+
+gulong get_fs_free(const char *dir) {
+  // get free space in bytes for volume containing directory dir
+  // return 0 if we cannot create/write to dir
+
+  // caller should test with is_writeable_dir() first before calling this
+  // since 0 is a valid return value
+
+  // dir should be in locale encoding
+
+  gulong bytes=0;
+  gboolean must_delete=FALSE;
+  struct statvfs sbuf;
+
+  if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) must_delete=TRUE;
+  if (!is_writeable_dir(dir)) goto getfserr;
+
+  // use statvfs to get fs details
+  if (statvfs(dir,&sbuf)==-1) goto getfserr;
+  if (sbuf.f_flag&ST_RDONLY) goto getfserr;
+
+  // result is block size * blocks available
   bytes=sbuf.f_bsize*sbuf.f_bavail;
 
-
-  if (must_delete) {
-    com=g_strdup_printf("/bin/rm -rf \"%s\"",dir);
-    lives_system(com,TRUE);
-    g_free(com);
-  }
+getfserr:
+  if (must_delete) rmdir(dir);
 
   return bytes;
 }

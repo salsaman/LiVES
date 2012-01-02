@@ -94,14 +94,17 @@ typedef enum {
 } lives_dialog_t;
 
 
-// return values from abort/cancel/retry dialog - TODO - add LIVES_YES and LIVES_NO
+// return values from abort/cancel/retry dialog and yes/no dialog
 enum {
-  LIVES_CANCEL=1,
+  LIVES_NO=0,
+  LIVES_YES,
+  LIVES_CANCEL,
   LIVES_RETRY,
   LIVES_ABORT
 };
 
 
+// various return conditions from rendering (multitrack or after recording)
 typedef enum {
   LIVES_RENDER_ERROR_NONE=0,
   LIVES_RENDER_READY,
@@ -115,6 +118,16 @@ typedef enum {
   LIVES_RENDER_ERROR_WRITE_AUDIO,
   LIVES_RENDER_ERROR_WRITE_FRAME,
 } lives_render_error_t;
+
+
+// disk/storage status values
+typedef enum {
+  LIVES_STORAGE_STATUS_UNKNOWN=0,
+  LIVES_STORAGE_STATUS_NORMAL,
+  LIVES_STORAGE_STATUS_WARNING,
+  LIVES_STORAGE_STATUS_CRITICAL,
+  LIVES_STORAGE_STATUS_OFFLINE
+} lives_storage_status_t;
 
 
 
@@ -990,6 +1003,8 @@ typedef struct {
   gchar *bad_aud_file;
 
   lives_render_error_t render_error;
+
+  guint64 next_ds_warn_level; ///< current disk space warning level for the tempdir
 
 } mainwindow;
 

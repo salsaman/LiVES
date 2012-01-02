@@ -2647,7 +2647,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
       cparam->max=g_strtod (param_array[5],NULL);
       if (len>6) {
 	cparam->step_size=g_strtod(param_array[6],NULL);
-	if (cparam->step_size==0.) cparam->step_size=1./lives_10pow(cparam->dp);
+	if (cparam->step_size==0.) cparam->step_size=1./(double)lives_10pow(cparam->dp);
 	else if (cparam->step_size<0.) {
 	  cparam->step_size=-cparam->step_size;
 	  cparam->wrap=TRUE;
@@ -3176,7 +3176,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 	if (weed_plant_has_leaf(gui,"decimals")) rpar[i].dp=weed_get_int_value(gui,"decimals",&error);
       }
       if (rpar[i].dp==0) rpar[i].dp=2;
-      if (rpar[i].step_size==0.) rpar[i].step_size=1./lives_10pow(rpar[i].dp);
+      if (rpar[i].step_size==0.) rpar[i].step_size=1./(double)lives_10pow(rpar[i].dp);
       break;
     case WEED_HINT_TEXT:
       if (weed_plant_has_leaf(wtmpl,"default")&&weed_leaf_num_elements(wtmpl,"default")>1) {

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-03 20:15-0300\n"
+"POT-Creation-Date: 2012-01-03 20:25-0300\n"
 "PO-Revision-Date: 2011-11-24 01:44+0000\n"
 "Last-Translator: Takashi Sakamoto <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -4544,14 +4544,6 @@ msgstr ""
 
 #: src/dialogs.c:615
 msgid "Processing has been paused."
-msgstr ""
-
-#: src/dialogs.c:634 src/dialogs.c:659 src/dialogs.c:693 src/dialogs.c:719
-#, c-format
-msgid ""
-"\n"
-"%s\n"
-"%s\n"
 msgstr ""
 
 #: src/dialogs.c:797

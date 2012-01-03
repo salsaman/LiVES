@@ -631,7 +631,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
       if (!did_pause)
 	msg=g_strdup_printf("\n%s\n",tmp);
       else 
-	msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
+	msg=g_strdup_printf("\n%s\n%s\n",tmp,pausstr);
       g_free(tmp);
       mainw->add_clear_ds_button=TRUE; // gets reset by do_warning_dialog()
       if (!do_warning_dialog(msg)) {
@@ -656,7 +656,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
       if (!did_pause)
 	msg=g_strdup_printf("\n%s\n",tmp);
       else 
-	msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
+	msg=g_strdup_printf("\n%s\n%s\n",tmp,pausstr);
       g_free(tmp);
         retval=do_abort_cancel_retry_dialog(msg,NULL);
       g_free(msg);
@@ -690,7 +690,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
 	if (!did_pause)
 	  msg=g_strdup_printf("\n%s\n",tmp);
 	else 
-	  msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
+	  msg=g_strdup_printf("\n%s\n%s\n",tmp,pausstr);
 	g_free(tmp);
 	mainw->add_clear_ds_button=TRUE; // gets reset by do_warning_dialog()
 	if (!do_warning_dialog(msg)) {
@@ -716,7 +716,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
 	if (!did_pause)
 	  msg=g_strdup_printf("\n%s\n",tmp);
 	else 
-	  msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
+	  msg=g_strdup_printf("\n%s\n%s\n",tmp,pausstr);
 	g_free(tmp);
 	retval=do_abort_cancel_retry_dialog(msg,NULL);
 	g_free(msg);

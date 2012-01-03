@@ -846,7 +846,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     gtk_dialog_set_has_separator(GTK_DIALOG(fx_dialog[n]),FALSE);
   }
 
-  pbox = top_dialog_vbox = GTK_DIALOG (fx_dialog[n])->vbox;
+  pbox = top_dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(fx_dialog[n]));
 
   g_object_set_data(G_OBJECT(fx_dialog[n]),"rfx",rfx);
 

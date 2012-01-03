@@ -117,7 +117,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #define WARN_FILE_SIZE 500
 
 /// maximum fps we will allow (gdouble)
-/// TODO - make pref
 #define FPS_MAX 200.
 
 #define ENABLE_DVD_GRAB
@@ -1066,6 +1065,8 @@ void on_fileread_clicked (GtkFileChooser *, gpointer widget);
 gboolean dirchange_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 void on_effects_paused (GtkButton *, gpointer user_data);
 void on_cancel_keep_button_clicked (GtkButton *, gpointer user_data);
+void on_cleardisk_activate (GtkWidget *, gpointer user_data);
+void on_cleardisk_advanced_clicked (GtkWidget *, gpointer user_data);
 
 // paramspecial.c
 gboolean mt_framedraw(lives_mt *, GdkPixbuf *);

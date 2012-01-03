@@ -134,49 +134,89 @@ void add_warn_check (GtkBox *box, gint warn_mask_number) {
 }
 
 
+static void add_clear_ds_button(GtkDialog* dialog) {
+  GtkWidget *button = gtk_button_new_from_stock ("gtk-clear");
+
+  gtk_button_set_label(GTK_BUTTON(button),_("_Recover disk space"));
+  if (mainw->tried_ds_recover) gtk_widget_set_sensitive(button,FALSE);
+
+  g_signal_connect (GTK_OBJECT (button), "clicked",
+		    G_CALLBACK (on_cleardisk_activate),
+		    (gpointer)button);
+
+  gtk_widget_show(button);
+  gtk_dialog_add_action_widget (dialog, button, LIVES_RETRY);
+
+}
+
+
+static void add_clear_ds_adv(GtkBox *box) {
+  // add a button which opens up  Recover/Repair widget
+  GtkWidget *button = gtk_button_new_with_mnemonic(_(" _Advanced Settings >>"));
+  GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+
+  gtk_box_pack_start (GTK_BOX(hbox), button, FALSE, FALSE, 20);
+  gtk_box_pack_start (box, hbox, FALSE, FALSE, 10);
+
+  gtk_widget_show_all(hbox);
+
+  g_signal_connect (GTK_OBJECT (button), "clicked",
+		    G_CALLBACK (on_cleardisk_advanced_clicked),
+		    NULL);
+
+}
+
+
+
 
 
 //Warning or yes/no dialog
 static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transient, const gchar *text, lives_dialog_t diat) {
-  GtkWidget *dialog2;
-  GtkWidget *dialog_vbox2;
-  GtkWidget *dialog_action_area2;
+  GtkWidget *dialog;
+  GtkWidget *dialog_vbox;
+  GtkWidget *dialog_action_area;
   GtkWidget *warning_cancelbutton=NULL;
   GtkWidget *warning_okbutton=NULL;
   GtkWidget *abortbutton=NULL;
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
-    dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
-    gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Warning !"));
+    dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
+
+    if (mainw->add_clear_ds_button) {
+      mainw->add_clear_ds_button=FALSE;
+      add_clear_ds_button(GTK_DIALOG(dialog));
+    }
+
+    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Warning !"));
     mainw->warning_label = gtk_label_new (_("warning"));
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, GTK_RESPONSE_CANCEL);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
     warning_okbutton = gtk_button_new_from_stock ("gtk-ok");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, GTK_RESPONSE_OK);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
-    dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
-    gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - Question"));
+    dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
+    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Question"));
     mainw->warning_label = gtk_label_new (_("question"));
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-no");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, LIVES_NO);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
     warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, LIVES_YES);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
-    dialog2 = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
-    gtk_window_set_title (GTK_WINDOW (dialog2), _("LiVES: - File Error"));
+    dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
+    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - File Error"));
     mainw->warning_label = gtk_label_new (_("File Error"));
     abortbutton = gtk_button_new_from_stock ("gtk-quit");
     gtk_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), abortbutton, LIVES_ABORT);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), abortbutton, LIVES_ABORT);
     gtk_widget_show (abortbutton);
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, LIVES_CANCEL);
-    warning_okbutton = gtk_button_new_from_stock ("gtk-redo");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
+    warning_okbutton = gtk_button_new_from_stock ("gtk-refresh");
     gtk_button_set_label(GTK_BUTTON(warning_okbutton),_("_Retry"));
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_okbutton, LIVES_RETRY);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
     break;
   default:
     return NULL;
@@ -184,19 +224,19 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   }
 
   if (palette->style&STYLE_1) {
-    //gtk_dialog_set_has_separator(GTK_DIALOG(dialog2),FALSE);
-    gtk_widget_modify_bg(dialog2, GTK_STATE_NORMAL, &palette->normal_back);
+    //gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_deletable(GTK_WINDOW(dialog2), FALSE);
+  gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
 
   gtk_label_set_text(GTK_LABEL(mainw->warning_label),text);
 
-  dialog_vbox2 = GTK_DIALOG (dialog2)->vbox;
-  gtk_widget_show (dialog_vbox2);
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  gtk_widget_show (dialog_vbox);
 
   gtk_widget_show (mainw->warning_label);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox2), mainw->warning_label, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
   gtk_label_set_justify (GTK_LABEL (mainw->warning_label), GTK_JUSTIFY_CENTER);
   gtk_label_set_line_wrap (GTK_LABEL (mainw->warning_label), FALSE);
   gtk_label_set_selectable (GTK_LABEL (mainw->warning_label), TRUE);
@@ -205,17 +245,22 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_widget_modify_fg(mainw->warning_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
+  if (mainw->add_clear_ds_adv) {
+    mainw->add_clear_ds_adv=FALSE;
+    add_clear_ds_adv(GTK_BOX(dialog_vbox));
+  }
+
   if (warn_mask_number>0) {
-    add_warn_check(GTK_BOX(dialog_vbox2),warn_mask_number);
+    add_warn_check(GTK_BOX(dialog_vbox),warn_mask_number);
   }
 
   if (mainw->xlays!=NULL) {
-    add_xlays_widget(GTK_BOX(dialog_vbox2));
+    add_xlays_widget(GTK_BOX(dialog_vbox));
   }
 
-  dialog_action_area2 = GTK_DIALOG (dialog2)->action_area;
-  gtk_widget_show (dialog_action_area2);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area2), GTK_BUTTONBOX_END);
+  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   gtk_widget_show (warning_cancelbutton);
   GTK_WIDGET_SET_FLAGS (warning_cancelbutton, GTK_CAN_DEFAULT);
@@ -225,7 +270,8 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   GTK_WIDGET_SET_FLAGS (warning_okbutton, GTK_CAN_DEFAULT);
   gtk_widget_grab_default (warning_okbutton);
 
-  return dialog2;
+
+  return dialog;
 }
 
 
@@ -259,13 +305,17 @@ do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number,
   }
 
   mytext=g_strdup(text); // must copy this because of translation issues
-  warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_WARN);
-  if (mytext!=NULL) g_free(mytext);
 
-  response=gtk_dialog_run (GTK_DIALOG (warning));
-  gtk_widget_destroy (warning);
+  do {
+    warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_WARN);
+    gtk_widget_show(warning);
+    response=gtk_dialog_run (GTK_DIALOG (warning));
+    gtk_widget_destroy (warning);
+  } while (response==LIVES_RETRY);
 
   while (g_main_context_iteration(NULL,FALSE));
+  if (mytext!=NULL) g_free(mytext);
+
   return (response==GTK_RESPONSE_OK);
 }
 
@@ -583,6 +633,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
       else 
 	msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
       g_free(tmp);
+      mainw->add_clear_ds_button=TRUE; // gets reset by do_warning_dialog()
       if (!do_warning_dialog(msg)) {
 	g_free(msg);
 	g_free(pausstr);
@@ -641,6 +692,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
 	else 
 	  msg=g_strdup_printf(_("\n%s\n%s\n"),tmp,pausstr);
 	g_free(tmp);
+	mainw->add_clear_ds_button=TRUE; // gets reset by do_warning_dialog()
 	if (!do_warning_dialog(msg)) {
 	  g_free(msg);
 	  g_free(pausstr);
@@ -2233,7 +2285,8 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   gtk_window_set_modal (GTK_WINDOW (procw->processing), TRUE);
 
-  dialog_vbox1 = GTK_DIALOG (procw->processing)->vbox;
+  dialog_vbox1 = gtk_dialog_get_content_area(GTK_DIALOG(procw->processing));
+
   gtk_widget_show (dialog_vbox1);
 
   gtk_dialog_set_has_separator(GTK_DIALOG(procw->processing),FALSE);

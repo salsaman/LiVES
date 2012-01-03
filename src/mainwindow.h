@@ -998,6 +998,10 @@ typedef struct {
   gboolean read_failed;
   gboolean chdir_failed;
 
+  gboolean add_clear_ds_button;
+  gboolean add_clear_ds_adv;
+  gboolean tried_ds_recover;
+
   gchar *read_failed_file;
   gchar *write_failed_file;
   gchar *bad_aud_file;

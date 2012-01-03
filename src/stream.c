@@ -970,7 +970,8 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	if (framedataread<(lstream->hsize*lstream->vsize*6)>>2) {
 	  target_size=((lstream->hsize*lstream->vsize)>>2)-framedataread+((lstream->hsize*lstream->vsize*5)>>2);
 	  if (target_size>lstream->dsize) target_size=lstream->dsize;
-	  lives_stream_in_chunks(lstream,target_size,(guchar *)pixel_data[2]+framedataread-((lstream->hsize*lstream->vsize*5)>>2),0);
+	  lives_stream_in_chunks(lstream,target_size,(guchar *)pixel_data[2]+framedataread-
+				 ((lstream->hsize*lstream->vsize*5)>>2),0);
 	  lstream->dsize-=target_size;
 	  framedataread+=target_size;
 	}
@@ -1048,7 +1049,9 @@ void on_open_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (response==GTK_RESPONSE_OK) {
     if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pandh->rb_anyhost))) {
-      host=g_strdup_printf("%s.%s.%s.%s",gtk_entry_get_text(GTK_ENTRY(pandh->entry1)),gtk_entry_get_text(GTK_ENTRY(pandh->entry2)),gtk_entry_get_text(GTK_ENTRY(pandh->entry3)),gtk_entry_get_text(GTK_ENTRY(pandh->entry4)));
+      host=g_strdup_printf("%s.%s.%s.%s",gtk_entry_get_text(GTK_ENTRY(pandh->entry1)),
+			   gtk_entry_get_text(GTK_ENTRY(pandh->entry2)),
+			   gtk_entry_get_text(GTK_ENTRY(pandh->entry3)),gtk_entry_get_text(GTK_ENTRY(pandh->entry4)));
     }
     else host=g_strdup("INADDR_ANY");
     port=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pandh->port_spin));
@@ -1126,7 +1129,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   if (type==0)
     gtk_window_set_title (GTK_WINDOW (pandhw->dialog), _("LiVES: - Receive LiVES stream"));
 
-  dialog_vbox = GTK_DIALOG (pandhw->dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(pandhw->dialog));
 
   label=gtk_label_new(_("You can receive streams from another copy of LiVES."));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);

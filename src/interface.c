@@ -300,7 +300,7 @@ process * create_processing (const gchar *text) {
   else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER_ALWAYS);
 
-  dialog_vbox1 = GTK_DIALOG (procw->processing)->vbox;
+  dialog_vbox1 = gtk_dialog_get_content_area(GTK_DIALOG(procw->processing));
   gtk_widget_show (dialog_vbox1);
 
 
@@ -850,10 +850,11 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (dialog), 450, 300);
 
-  dialog_vbox = GTK_DIALOG (dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
   label = gtk_label_new (text1);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
+
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
   gtk_label_set_line_wrap (GTK_LABEL (label), FALSE);
   if (palette->style&STYLE_1) {
@@ -998,7 +999,7 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
     }
   }
 
-  dialog_vbox3 = GTK_DIALOG (dialog3)->vbox;
+  dialog_vbox3 = gtk_dialog_get_content_area(GTK_DIALOG(dialog3));
   gtk_widget_show (dialog_vbox3);
   
   form_text=g_strdup_printf("\n\n%s",text);
@@ -1110,7 +1111,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     gtk_dialog_set_has_separator(GTK_DIALOG(textwindow->dialog),FALSE);
   }
 
-  dialog_vbox = GTK_DIALOG (textwindow->dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
   gtk_widget_show (dialog_vbox);
 
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
@@ -1270,7 +1271,7 @@ create_insert_dialog (void)
     gtk_window_set_transient_for(GTK_WINDOW(insertw->insert_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox3 = GTK_DIALOG (insertw->insert_dialog)->vbox;
+  dialog_vbox3 = gtk_dialog_get_content_area(GTK_DIALOG(insertw->insert_dialog));
   gtk_widget_show (dialog_vbox3);
 
   hbox15 = gtk_hbox_new (FALSE, 0);
@@ -1574,7 +1575,7 @@ create_opensel_dialog (void)
   gtk_container_set_border_width (GTK_CONTAINER (opensel_dialog), 10);
   gtk_window_set_default_size (GTK_WINDOW (opensel_dialog), 300, 200);
 
-  dialog_vbox9 = GTK_DIALOG (opensel_dialog)->vbox;
+  dialog_vbox9 = gtk_dialog_get_content_area(GTK_DIALOG(opensel_dialog));
   gtk_widget_show (dialog_vbox9);
 
   vbox15 = gtk_vbox_new (FALSE, 0);
@@ -1710,7 +1711,7 @@ _entryw* create_location_dialog (int type) {
   else 
     gtk_window_set_title (GTK_WINDOW (locw->dialog), _("LiVES: - Open Youtube Clip"));
 
-  dialog_vbox = GTK_DIALOG (locw->dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(locw->dialog));
   gtk_widget_show (dialog_vbox);
 
   if (type==1) {
@@ -1961,7 +1962,7 @@ _entryw* create_rename_dialog (gint type) {
 
   gtk_container_set_border_width (GTK_CONTAINER (renamew->dialog), 10);
 
-  dialog_vbox = GTK_DIALOG (renamew->dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(renamew->dialog));
   gtk_widget_show (dialog_vbox);
 
   if (type==4) {
@@ -2260,7 +2261,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
     gtk_widget_modify_bg (combo_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = GTK_DIALOG (combo_dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(combo_dialog));
   gtk_widget_show (dialog_vbox);
 
   if (type==1) {
@@ -2397,7 +2398,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_widget_modify_bg (cd_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = GTK_DIALOG (cd_dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(cd_dialog));
   gtk_widget_show (dialog_vbox);
 
   hbox = gtk_hbox_new (FALSE, 50);
@@ -2847,7 +2848,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
     gtk_widget_modify_bg (audd->dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = GTK_DIALOG (audd->dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(audd->dialog));
   gtk_widget_show (dialog_vbox);
 
   hbox = gtk_hbox_new (FALSE, 50);
@@ -2990,7 +2991,7 @@ create_rp_dialog (void)
   xranw->rp_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (xranw->rp_dialog), _("LiVES: - Play Random Music"));
 
-  dialog_vbox14 = GTK_DIALOG (xranw->rp_dialog)->vbox;
+  dialog_vbox14 = gtk_dialog_get_content_area(GTK_DIALOG(xranw->rp_dialog));
   gtk_widget_show (dialog_vbox14);
 
   if (prefs->show_gui) {
@@ -3189,7 +3190,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
   gtk_window_set_default_size (GTK_WINDOW (commentsw->comments_dialog), 600, bheight);
 
-  dialog_vbox = GTK_DIALOG (commentsw->comments_dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(commentsw->comments_dialog));
   gtk_widget_show (dialog_vbox);
 
   table = gtk_table_new (4, 2, FALSE);
@@ -3505,7 +3506,7 @@ _entryw* create_cds_dialog (gint type) {
     else gtk_window_set_transient_for(GTK_WINDOW(cdsw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = GTK_DIALOG (cdsw->dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(cdsw->dialog));
   gtk_widget_show (dialog_vbox);
 
   if (type==0) {
@@ -3667,7 +3668,7 @@ void do_layout_recover_dialog(void) {
     gtk_widget_modify_bg(mdialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = GTK_DIALOG (mdialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(mdialog));
   
   label = gtk_label_new (_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"));
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
@@ -3699,6 +3700,164 @@ void do_layout_recover_dialog(void) {
 }
 
 
+static void flip_cdisk_bit (GtkToggleButton *t, gpointer user_data) {
+  guint32 bitmask=GPOINTER_TO_INT(user_data);
+  prefs->clear_disk_opts^=bitmask;
+}
+
+
+GtkWidget *create_cleardisk_advanced_dialog(void) {
+  GtkWidget *dialog;
+  GtkWidget *dialog_vbox;
+  GtkWidget *scrollw;
+  GtkWidget *vbox;
+  GtkWidget *hbox;
+  GtkWidget *label;
+  GtkWidget *checkbutton;
+  GtkWidget *okbutton;
+  GtkWidget *resetbutton;
+  GtkWidget *eventbox;
+
+
+    dialog = gtk_dialog_new ();
+    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Disk Recovery Options"));
+    if (palette->style&STYLE_1) {
+      gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+      gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+    
+    /*if (prefs->show_gui) {
+      gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+      }*/
+    
+    gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
+    gtk_window_set_default_size (GTK_WINDOW (dialog), 450, 300);
+
+
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+  scrollw = gtk_scrolled_window_new (NULL, NULL);
+
+  gtk_container_add (GTK_CONTAINER (dialog_vbox), scrollw);
+   
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollw), GTK_POLICY_AUTOMATIC, 
+				  GTK_POLICY_AUTOMATIC);
+
+
+  vbox = gtk_vbox_new (FALSE, 0);
+
+  gtk_container_set_border_width (GTK_CONTAINER (vbox), 20);
+
+  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollw), vbox);
+  
+  // Apply theme background to scrolled window
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+
+  // ---
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+
+  checkbutton = gtk_check_button_new();
+  eventbox = gtk_event_box_new();
+  label = gtk_label_new_with_mnemonic(_("Delete _Orphaned Clips"));
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), checkbutton);
+  gtk_container_add(GTK_CONTAINER(eventbox), label);
+  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), checkbutton);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  gtk_box_pack_start (GTK_BOX (hbox), eventbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), checkbutton, TRUE, TRUE, 0);
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS));
+
+  //----
+  g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
+			  G_CALLBACK (flip_cdisk_bit),
+			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
+
+  // ---
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+
+  checkbutton = gtk_check_button_new();
+  eventbox = gtk_event_box_new();
+  label = gtk_label_new_with_mnemonic(_("Clear _Backup Files from Closed Clips"));
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), checkbutton);
+  gtk_container_add(GTK_CONTAINER(eventbox), label);
+  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), checkbutton);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+
+  gtk_box_pack_start (GTK_BOX (hbox), eventbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), checkbutton, TRUE, TRUE, 0);
+
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES));
+
+  g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
+			  G_CALLBACK (flip_cdisk_bit),
+			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_BFILES));
+  //----
+
+
+  // ---
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+
+  checkbutton = gtk_check_button_new();
+  eventbox = gtk_event_box_new();
+  label = gtk_label_new_with_mnemonic(_("Remove Sets which have _Layouts but no Clips"));
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), checkbutton);
+  gtk_container_add(GTK_CONTAINER(eventbox), label);
+  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), checkbutton);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  gtk_box_pack_start (GTK_BOX (hbox), eventbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), checkbutton, TRUE, TRUE, 0);
+  //----
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton), 
+			       (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
+  
+  g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
+			  G_CALLBACK (flip_cdisk_bit),
+			  GINT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
+
+  resetbutton = gtk_button_new_from_stock ("gtk-refresh");
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), resetbutton, LIVES_RETRY);
+  gtk_button_set_label(GTK_BUTTON(resetbutton),_("_Reset to Defaults"));
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+
+  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default (okbutton);
+  gtk_button_set_label(GTK_BUTTON(okbutton),_("_Accept"));
+
+
+  return dialog;
+
+}
 
 
 GtkTextView *create_output_textview(void) {

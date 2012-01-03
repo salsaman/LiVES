@@ -703,7 +703,6 @@ void on_load_set_activate (GtkMenuItem *, gpointer user_data);
 
 gboolean on_load_set_ok (GtkButton *, gpointer skip_threaded_dialog);
 
-void on_cleardisk_activate (GtkMenuItem *, gpointer user_data);
 
 void
 on_open_vcd_activate                      (GtkMenuItem     *menuitem,

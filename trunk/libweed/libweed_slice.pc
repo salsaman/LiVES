@@ -7,6 +7,6 @@ Name: libweed
 Description: libweed for hosts (using faster memory slice implementation)
 Requires: 
 Requires.private: 
-Version: 0.5.0
+Version: 0.6.0
 Libs: -L${libdir} -lweed_slice
 Cflags: -I${includedir}

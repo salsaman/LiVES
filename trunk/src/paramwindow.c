@@ -737,6 +737,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   gboolean has_param;
 
+  if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) return;
 
   // TODO - remove this and check in rfx / realfx activate
 

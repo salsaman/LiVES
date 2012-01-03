@@ -872,9 +872,20 @@ on_stop_clicked (GtkMenuItem     *menuitem,
   com=g_strdup_printf("smogrify stopsubsubs \"%s\" 2>/dev/null",cfile->handle);
   lives_system(com,TRUE);
   g_free(com);
-  gtk_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
-  gtk_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
-  gtk_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
+
+  if (mainw->current_file>-1&&cfile!=NULL&&cfile->proc_ptr!=NULL) {
+    gtk_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
+    gtk_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
+    gtk_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
+  }
+
+  // resume for next time
+  if (mainw->effects_paused) {
+    com=g_strdup_printf("smogrify resume \"%s\"",cfile->handle);
+    lives_system(com,FALSE);
+    g_free(com);
+  }
+
 }
 
 
@@ -4814,6 +4825,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	threaded_dialog_spin();
       }
 
+
       if (clipnum==0) {
 	do_set_noclips_error(mainw->set_name);
 	memset (mainw->set_name,0,1);
@@ -4821,7 +4833,11 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       else {
 	reset_clip_menu();
 	gtk_widget_set_sensitive (mainw->vj_load_set, FALSE);
-	msg=g_strdup_printf (_ ("%d clips were recovered from set (%s).\n"),clipnum,mainw->set_name);
+
+	
+	recover_layout_map(MAX_FILES);
+
+	msg=g_strdup_printf (_ ("%d clips and %d layouts were recovered from set (%s).\n"),clipnum,g_list_length(mainw->current_layouts_map),mainw->set_name);
 	d_print (msg);
 	g_free (msg);
 
@@ -4849,8 +4865,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
       threaded_dialog_spin();
-
-      recover_layout_map(MAX_FILES);
 
       if (!skip_threaded_dialog) end_threaded_dialog();
       return TRUE;
@@ -6284,7 +6298,7 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
 
   clear_mainw_msg();
 
-  if (mainw->current_file>-1&&cfile->proc_ptr!=NULL) {
+  if (mainw->current_file>-1&&cfile!=NULL&&cfile->proc_ptr!=NULL) {
     gtk_widget_set_sensitive(cfile->proc_ptr->cancel_button,FALSE);
     gtk_widget_set_sensitive(cfile->proc_ptr->pause_button,FALSE);
     gtk_widget_set_sensitive(cfile->proc_ptr->stop_button,FALSE);

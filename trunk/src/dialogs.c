@@ -1,6 +1,6 @@
 // dialogs.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2011
+// (c) G. Finch 2003 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1415,7 +1415,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	cfile->proc_ptr->frames_done=atoi(mainw->msg);
       else
 	cfile->proc_ptr->frames_done=0;
-      prefs->ds_crit_level=5000000000000;
       if (progress_count==0) check_storage_space(cfile, TRUE);
       progbar_pulse_or_fraction(cfile,cfile->proc_ptr->frames_done);
     }

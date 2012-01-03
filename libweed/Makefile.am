@@ -24,7 +24,7 @@ docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
-WEED_SO_VERSION = 0:5:1
+WEED_SO_VERSION = 0:6:0
 
 LIBS =
 

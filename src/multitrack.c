@@ -17533,13 +17533,13 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *layout_name;
   gchar xlayout_name[PATH_MAX];
 
-  mt_desensitise(mt);
 
   if (mt==NULL) {
     event_list=mainw->stored_event_list;
     layout_name=mainw->stored_layout_name;
   }
   else {
+    mt_desensitise(mt);
     event_list=mt->event_list;
     layout_name=mt->layout_name;
   }
@@ -17554,7 +17554,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     g_free(layout_map);
     g_free(layout_map_audio);
     mainw->cancelled=CANCEL_USER;
-    mt_sensitise(mt);
+    if (mt!=NULL) mt_sensitise(mt);
     return;
   }
 
@@ -17580,22 +17580,18 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	if (mt!=NULL) {
 	  mt->idlefunc=0;
 	  mt->idlefunc=mt_idle_add(mt);
+	  mt_sensitise(mt);
 	}
-	mt_sensitise(mt);
 	return;
       }
       g_snprintf(new_set_name,128,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
-      if (mt!=NULL&&mt->idlefunc>0) g_source_remove(mt->idlefunc);
       while (g_main_context_iteration(NULL,FALSE));
-      if (mt!=NULL&&mt->idlefunc>0) {
-	mt->idlefunc=mt_idle_add(mt);
-      }
     } while (!is_legal_set_name(new_set_name,FALSE));
     g_snprintf(mainw->set_name,128,"%s",new_set_name);
   }
-
+  
   esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
   com=g_strdup_printf ("/bin/mkdir -p \"%s\"",esave_dir);
   lives_system (com,FALSE);
@@ -17644,12 +17640,12 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (esave_file==NULL||!check_storage_space(NULL,FALSE)) {
     gchar *cdir;
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",esave_dir);
-    lives_system(com,FALSE);
+    lives_system(com,TRUE);
     g_free(com);
 
     cdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
-    lives_system(com,FALSE);
+    lives_system(com,TRUE);
     g_free(com);
 
     g_free(esave_file);
@@ -17661,9 +17657,10 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->cancelled=CANCEL_USER;
 
     if (mt!=NULL) {
+      mt->idlefunc=0;
       mt->idlefunc=mt_idle_add(mt);
+      mt_sensitise(mt);
     }
-    mt_sensitise(mt);
     return;
   }
 
@@ -17688,7 +17685,11 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (!retval||fd<0) {
       retval2=do_write_failed_error_s_with_retry(esave_file,(fd<0)?g_strerror(errno):NULL,NULL);
       if (retval2==LIVES_CANCEL) {
-	mt_sensitise(mt);
+	if (mt!=NULL) {
+	  mt->idlefunc=0;
+	  mt->idlefunc=mt_idle_add(mt);
+	  mt_sensitise(mt);
+	}
 	return;
       }
     }
@@ -17725,11 +17726,11 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (mt!=NULL) {
     mt->auto_changed=FALSE;
+    mt->idlefunc=0;
     mt->idlefunc=mt_idle_add(mt);
+    mt_sensitise(mt);
   }
-  mt_sensitise(mt);
 }
-
 
 // next functions are mainly to do with event_list manipulation
 

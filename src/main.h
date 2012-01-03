@@ -687,7 +687,7 @@ gboolean check_backend_return(file *sfile);
 /** warn about disk space */
 gchar *ds_critical_msg(const gchar *dir, guint64 dsval);
 gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn);
-gboolean check_storage_space(file *sfile, gboolean do_pause);
+gboolean check_storage_space(file *sfile, gboolean is_processing);
 
 
 gboolean ask_permission_dialog(int what);
@@ -1065,6 +1065,7 @@ void count_opening_frames(void);
 void on_fileread_clicked (GtkFileChooser *, gpointer widget);
 gboolean dirchange_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 void on_effects_paused (GtkButton *, gpointer user_data);
+void on_cancel_keep_button_clicked (GtkButton *, gpointer user_data);
 
 // paramspecial.c
 gboolean mt_framedraw(lives_mt *, GdkPixbuf *);

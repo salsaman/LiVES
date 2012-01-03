@@ -6271,10 +6271,7 @@ on_cancel_opensel_clicked              (GtkButton       *button,
 
 
 
-void
-on_button3_clicked                     (GtkButton       *button,
-                                        gpointer         user_data)
-{
+void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
   // Cancel/Keep from progress dialog
   gchar *com=NULL;
   guint keep_frames=0;
@@ -6307,15 +6304,21 @@ on_button3_clicked                     (GtkButton       *button,
       // kill processes and subprocesses working on cfile
       com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
     }
+
     if (!cfile->opening&&!mainw->internal_messaging) {
       // if we are opening, this is 'stop' in the preview, so don't cancel
+      // otherwise, come here
+
+      // kill off the background process
       if (com!=NULL) lives_system(com,TRUE);
+
+      // resume for next time
       if (mainw->effects_paused) {
 	if (com!=NULL) g_free(com);
 	com=g_strdup_printf("smogrify resume \"%s\"",cfile->handle);
 	lives_system(com,FALSE);
-	g_free(com);
       }
+
     }
 
     mainw->cancelled=CANCEL_USER;
@@ -6325,15 +6328,21 @@ on_button3_clicked                     (GtkButton       *button,
       d_print_cancelled();
     }
     else {
+      // see if there was a message from backend
+
       if (mainw->cancel_type!=CANCEL_SOFT) {
 	if ((infofile=fopen(cfile->info_file,"r"))>0) {
 	  mainw->read_failed=FALSE;
-	  lives_fgets(mainw->msg,511,infofile);
+	  lives_fgets(mainw->msg,512,infofile);
 	  fclose(infofile);
 	}
 	
 	if (strncmp (mainw->msg,"completed",9)) {
 	  d_print_cancelled();
+	}
+	else {
+	  // processing finished before we could cancel
+	  mainw->cancelled=CANCEL_NONE;
 	}
       }
       else d_print_cancelled();
@@ -6388,7 +6397,7 @@ on_button3_clicked                     (GtkButton       *button,
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     }
     else {
-      // no frames there
+      // no frames there, nothing to keep
       d_print_cancelled();
       com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
       if (!mainw->internal_messaging&&!mainw->is_rendering) {
@@ -6400,7 +6409,8 @@ on_button3_clicked                     (GtkButton       *button,
       mainw->cancelled=CANCEL_USER;
     }
   }
-  g_free(com);
+
+  if (com!=NULL) g_free(com);
 }
 
 

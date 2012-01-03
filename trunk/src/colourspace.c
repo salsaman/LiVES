@@ -8299,6 +8299,11 @@ void resize_layer (weed_plant_t *layer, int width, int height, int interp) {
 
   // "current_palette" should therefore be checked on return
 
+
+  // don't forget also - layer "width" is in *macro-pixels* so it may not come back exactly as expected
+
+
+
   int error;
   GdkPixbuf *pixbuf=NULL;
   GdkPixbuf *new_pixbuf=NULL;
@@ -8727,6 +8732,21 @@ gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
   // memory may need aligning, layer palette may need changing, layer may need resizing
 
   // return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should not be free()d !
+  // see code example.
+
+
+  /* code example:
+
+  if (pixbuf!=NULL) {
+    if (pixbuf_to_layer(layer,pixbuf)) {
+      mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf);
+      mainw->free_fn=lives_free_with_check;
+    }
+    g_object_unref(pixbuf);
+    mainw->do_not_free=NULL;
+    mainw->free_fn=free;
+
+  */
 
   int rowstride=gdk_pixbuf_get_rowstride(pixbuf);
   int width=gdk_pixbuf_get_width(pixbuf);
@@ -8751,15 +8771,14 @@ gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
     return TRUE;
   }
 
-  // this part is needed because layers always have a memory size height*rowstride, whereas gdkpixbuf can have
-  // a shorter last row
-
   framesize=CEIL(rowstride*height,32);
 
   pixel_data=calloc(framesize>>2,4);
 
   if (pixel_data!=NULL) {
     w_memcpy(pixel_data,in_pixel_data,rowstride*(height-1));
+    // this part is needed because layers always have a memory size height*rowstride, whereas gdkpixbuf can have
+    // a shorter last row
     w_memcpy(pixel_data+rowstride*(height-1),in_pixel_data+rowstride*(height-1),gdk_last_rowstride_value(width,nchannels));
   }
 

@@ -29,6 +29,8 @@ gboolean do_audio_choice_dialog(short startup_phase);
 
 void do_layout_recover_dialog(void);
 
+GtkWidget *create_cleardisk_advanced_dialog(void);
+
 typedef struct _fileinfo {
   GtkWidget *info_window;
   GtkWidget *textview24;

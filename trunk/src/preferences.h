@@ -1,6 +1,6 @@
 // preferences.h
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2011
+// (c) G. Finch (salsaman@gmail.com) 2004 - 2012
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -284,13 +284,25 @@ typedef struct {
   /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
   gint bigendbug;
 
-#define DEF_DS_WARN_LEVEL 500000000  // 500MiB
-#define DEF_DS_CRIT_LEVEL 20000000 // 20MiB
 
+  // these are defualt values; actual values can be adjusted in Preferences
+#define DEF_DS_WARN_LEVEL 250000000  // 250MB
   guint64 ds_warn_level; ///< diskspace warn level bytes
+#define DEF_DS_CRIT_LEVEL 20000000 // 20MB
   guint64 ds_crit_level; ///< diskspace critical level bytes
 
 
+#define LIVES_CDISK_LEAVE_ORPHAN_SETS (1<<0)
+#define LIVES_CDISK_LEAVE_BFILES (1<<1)
+#define LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS (1<<2)
+#define LIVES_CDISK_LEAVE_MARKER_FILES (1<<3)
+#define LIVES_CDISK_LEAVE_MISC_FILES (1<<4)
+
+#define LIVES_CDISK_REMOVE_LOCK_FILES (1<<5) ///< not yet implemented - TODO
+#define LIVES_CDISK_REBUILD_ORDER_FILES (1<<6) ///< not yet implemented - TODO
+
+
+  guint clear_disk_opts;
 
 #ifdef HAVE_YUV4MPEG
   gchar yuvin[PATH_MAX];
@@ -327,6 +339,7 @@ enum {
 #define PREF_WIN_WIDTH 960
 #define PREF_WIN_HEIGHT 640
 
+#define DS_WARN_CRIT_MAX 1000000. ///< MB.
 
 /// prefs window
 typedef struct {
@@ -397,6 +410,8 @@ typedef struct {
   GtkWidget *encoder_combo;
   GtkWidget *checkbutton_antialias;
   GtkWidget *checkbutton_threads;
+  GtkWidget *spinbutton_warn_ds;
+  GtkWidget *spinbutton_crit_ds;
   GtkWidget *checkbutton_warn_fps;
   GtkWidget *checkbutton_warn_mplayer;
   GtkWidget *checkbutton_warn_save_set;

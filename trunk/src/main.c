@@ -904,6 +904,10 @@ static void lives_init(_ign_opts *ign_opts) {
   
   mainw->is_exiting=FALSE;
   
+  mainw->add_clear_ds_button=FALSE;
+  mainw->add_clear_ds_adv=FALSE;
+  mainw->tried_ds_recover=FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   // TODO - dirsep
@@ -1010,6 +1014,8 @@ static void lives_init(_ign_opts *ign_opts) {
     get_pref("ds_crit_level",buff,256);
     if (!strlen(buff)) prefs->ds_crit_level=DEF_DS_CRIT_LEVEL;
     else prefs->ds_crit_level=strtol(buff,NULL,10);
+
+    prefs->clear_disk_opts=get_int_pref("clear_disk_opts");
 
     //////////////////////////////////////////////////////////////////
 
@@ -2190,7 +2196,7 @@ int main (int argc, char *argv[]) {
   gtk_init (&argc, &argv);
 
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal (0);
+  g_log_set_always_fatal (0);
   theme_expected=pre_init();
 
   // mainw->foreign is set if we are grabbing an external window

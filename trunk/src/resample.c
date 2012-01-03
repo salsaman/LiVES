@@ -1218,7 +1218,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
       gtk_window_set_transient_for(GTK_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
     }
 
-    dialog_vbox = GTK_DIALOG (resaudw->dialog)->vbox;
+    dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(resaudw->dialog));
     gtk_widget_show (dialog_vbox);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_bg (resaudw->dialog, GTK_STATE_NORMAL, &palette->normal_back);
@@ -1228,7 +1228,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_widget_show (vbox21);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox21, TRUE, TRUE, 0);
   }
-  else if (type==3) vbox21=GTK_DIALOG(rdet->dialog)->vbox;
+  else if (type==3) vbox21 = gtk_dialog_get_content_area(GTK_DIALOG(rdet->dialog));
   else vbox21=top_vbox;
 
   frame6 = gtk_frame_new (NULL);
@@ -2084,7 +2084,7 @@ create_new_pb_speed (gshort type)
     gtk_dialog_set_has_separator(GTK_DIALOG(new_pb_speed),FALSE);
   }
 
-  dialog_vbox6 = GTK_DIALOG (new_pb_speed)->vbox;
+  dialog_vbox6 = gtk_dialog_get_content_area(GTK_DIALOG(new_pb_speed));
 
   vbox6 = gtk_vbox_new (FALSE, 10);
   gtk_box_pack_start (GTK_BOX (dialog_vbox6), vbox6, TRUE, TRUE, 20);

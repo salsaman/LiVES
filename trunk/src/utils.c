@@ -271,7 +271,6 @@ gchar *lives_format_storage_space_string(guint64 space) {
 
 lives_storage_status_t get_storage_status(const char *dir, guint64 warn_level, guint64 *dsval) {
   guint64 ds;
-
   if (!is_writeable_dir(dir)) return LIVES_STORAGE_STATUS_UNKNOWN;
   ds=get_fs_free(dir);
   if (dsval!=NULL) *dsval=ds;

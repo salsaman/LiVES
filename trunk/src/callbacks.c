@@ -79,6 +79,7 @@ void lives_exit (void) {
 	mainw->stream_ticks=-1;
       }
       
+      // tell non-realtime audio players (sox or mplayer) to stop
       if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE&&mainw->aud_file_to_kill>-1&&
 	  mainw->files[mainw->aud_file_to_kill]!=NULL) {
 	gchar *lsname=g_build_filename(prefs->tmpdir,mainw->files[mainw->aud_file_to_kill]->handle,NULL);
@@ -92,6 +93,7 @@ void lives_exit (void) {
       }
     }
 
+    // stop any background processing for the current clip
     if (mainw->current_file>-1) {
       if (cfile->handle!=NULL) {
 	com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
@@ -123,8 +125,7 @@ void lives_exit (void) {
     if (mainw->vpp!=NULL&&!mainw->only_close) {
       if (!mainw->leave_recovery) {
 	if (mainw->write_vpp_file) {
-	  gchar *vpp_file=g_strdup_printf("%s/%svpp_defaults",
-					  capable->home_dir,LIVES_CONFIG_DIR);
+	  gchar *vpp_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"vpp_defaults",NULL);
 	  save_vpp_defaults(mainw->vpp,vpp_file);
 	}
       }
@@ -146,6 +147,11 @@ void lives_exit (void) {
       if (do_move_tmpdir_dialog()) {
 	do_do_not_close_d();
 	while (g_main_context_iteration(NULL,FALSE));
+
+	// TODO *** - check for namespace collisions between sets in old dir and sets in new dir
+
+
+	// use backend to move the sets
 	com=g_strdup_printf("smogrify weed \"%s\" &",future_prefs->tmpdir);
 	lives_system (com,FALSE);
 	g_free (com);
@@ -5068,22 +5074,39 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
 
 
-void on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
+  // recover disk space
+
+
   gint current_file=mainw->current_file;
   gchar *markerfile;
   gchar **array;
   int marker_fd;
-  gint bytes=0;
+  guint64 bytes=0;
   gchar *com;
   int i;
   int retval=0;
 
-  if (!do_warning_dialog (_ ("LiVES will attempt to recover some disk space.\nYou should ONLY run this if you have no other copies of LiVES running on this machine.\nClick OK to proceed.\n"))) return;
+  gint64 ds_warn_level=mainw->next_ds_warn_level;
+
+  mainw->next_ds_warn_level=0; /// < avoid nested warnings
+
+  if (user_data!=NULL) gtk_widget_hide(gtk_widget_get_toplevel(GTK_WIDGET(user_data)));
+
+  mainw->tried_ds_recover=TRUE; ///< indicates we tried ds recovery already
+
+  mainw->add_clear_ds_adv=TRUE; ///< auto reset by do_warning_dialog()
+  if (!do_warning_dialog (_ ("LiVES will attempt to recover some disk space.\nYou should ONLY run this if you have no other copies of LiVES running on this machine.\nClick OK to proceed.\n"))) {
+    mainw->next_ds_warn_level=ds_warn_level;;
+    return;
+  }
 
   d_print(_ ("Cleaning up disk space..."));
 
+  // get a temporary clip for receiving data from backend
   if (!get_temp_handle(mainw->first_free_file,TRUE)) {
     d_print_failed();
+    mainw->next_ds_warn_level=ds_warn_level;;
     return;
   }
 
@@ -5096,6 +5119,9 @@ void on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   for (i=0;i<MAX_FILES;i++) {
+    // mark all free-floating files (directories) which we do not want to remove
+    // we do error checking here
+
     if (mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
       markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"set.",NULL);
       do {
@@ -5123,23 +5149,31 @@ void on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
   }
 
+
+  // call "smogrify bg_weed" to do the actual cleanup
+  // its parameters are the handle of a temp file, and opts mask
+
   if (retval!=LIVES_CANCEL) {
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("smogrify bg_weed \"%s\"",cfile->handle);
+    com=g_strdup_printf("smogrify bg_weed \"%s\" %d",cfile->handle,prefs->clear_disk_opts);
     lives_system(com,FALSE);
     g_free(com);
     
     if (!mainw->com_failed) {
+
       // show a progress dialog, not cancellable
-      do_progress_dialog(TRUE,FALSE,_("Clearing disk space"));
+      do_progress_dialog(TRUE,FALSE,_("Recovering disk space"));
       
       array=g_strsplit(mainw->msg,"|",2);
-      bytes=atoi(array[1]);
+      bytes=strtol(array[1],NULL,10);
+      if (bytes<0) bytes=0;
       g_strfreev(array);
       
     }
   }
 
+
+  // close the temporary clip
   com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
   lives_system(com,FALSE);
   g_free(com);
@@ -5147,7 +5181,8 @@ void on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
   cfile=NULL;
   if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
     mainw->first_free_file=mainw->current_file;
-  
+
+  // remove the protective markers
   for (i=0;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
       markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"set.",NULL);
@@ -5171,11 +5206,43 @@ void on_cleardisk_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (retval!=LIVES_CANCEL&&!mainw->com_failed) {
     d_print_done();
-    do_error_dialog(g_strdup_printf(_("%d MB of disk space was recovered.\n"),bytes));
+    do_error_dialog(g_strdup_printf(_("%s of disk space was recovered.\n"), 
+				    lives_format_storage_space_string((uint64_t)bytes)));
+    if (user_data!=NULL) gtk_widget_set_sensitive(gtk_widget_get_toplevel(GTK_WIDGET(user_data)),FALSE);
   }
   else d_print_failed();
 
+  mainw->next_ds_warn_level=ds_warn_level;;
+
 }
+
+
+
+
+
+void on_cleardisk_advanced_clicked (GtkWidget *widget, gpointer user_data) {
+  // make cleardisk adv window
+
+  // show various options and OK/Cancel button
+
+  // on OK set clear_disk opts
+  int response;
+  GtkWidget *dialog;
+  do {
+    dialog=create_cleardisk_advanced_dialog();
+    gtk_widget_show_all(dialog);
+    response=gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    if (response==LIVES_RETRY) prefs->clear_disk_opts=0;
+  } while (response==LIVES_RETRY);
+
+  set_int_pref("clear_disk_opts",prefs->clear_disk_opts);
+}
+
+
+
+
+
 
 
 
@@ -8068,7 +8135,8 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
 
-  vbox = GTK_DIALOG (textwindow->dialog)->vbox;
+  vbox = gtk_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
+
   add_warn_check(GTK_BOX(vbox),WARN_MASK_LAYOUT_POPUP);
 
   button = gtk_button_new_with_mnemonic (_("Close _Window"));

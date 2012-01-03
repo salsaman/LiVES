@@ -1,6 +1,6 @@
 // framedraw.c
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2002 - 2011
+// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2002 - 2012
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
@@ -68,6 +68,7 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   else {
     load_rfx_preview(rfx);
   }
+
   mainw->did_rfx_preview=TRUE;
 }
 
@@ -452,11 +453,11 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   mainw->write_failed=FALSE;
 
 
-#define LIVES_RFX_TIMEOUT 10*U_SEC
+#define LIVES_RFX_TIMER 10*U_SEC
 
   if (cfile->clip_type==CLIP_TYPE_FILE&&vend<=cfile->end) {
     // pull some frames for 10 seconds
-    alarm_handle=lives_alarm_set(LIVES_RFX_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_RFX_TIMER);
     do {
       while (g_main_context_iteration(NULL,FALSE));
       if (is_virtual_frame(mainw->current_file,vend)) {

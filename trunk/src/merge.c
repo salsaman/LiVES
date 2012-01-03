@@ -98,7 +98,7 @@ void create_merge_dialog (void) {
     gtk_window_set_transient_for(GTK_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = GTK_DIALOG (merge_opts->merge_dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(merge_opts->merge_dialog));
   gtk_widget_show (dialog_vbox);
 
   vbox = gtk_vbox_new (FALSE, 0);

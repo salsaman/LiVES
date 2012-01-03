@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# smogrify - Copyright G. Finch 2003 - 2012
+# smogrify - Copyright G. Finch (salsaman@gmail.com) 2003 - 2012
 # Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
 
 
@@ -937,7 +937,7 @@ if (defined($ARGV[0])) {
 		else {
 		    print "Smogrify: Leaving sets intact.\n";
 		}
-		&weed;
+		&weed(0);
 	    }
 	    exit 0;
 	}
@@ -3575,7 +3575,8 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "bg_weed") {
-	    my $bytes_cleaned=&weed;
+	    my $opts=$ARGV[2];
+	    my $bytes_cleaned=&weed($opts);
 	    &sig_complete($bytes_cleaned);
 	    exit 0;
 	}
@@ -5855,9 +5856,9 @@ sub get_current_date {
 
 
 sub getint {
-
+    # get an int from a file in $endian format
     my ($string)=shift;
-    my (@val)=unpack("CCCC",$string);
+    my (@val)=unpack("CCCC",$string); #unpack $string to 4 chars in @val array
 
     # TODO - this needs checking !
 
@@ -5924,6 +5925,7 @@ sub get_mplayer_format {
 
 
 sub clean_old {
+    # clear away any old backup files, etc.
     return if (! -d "$tmpdir/$handle");
     smog_chdir("$tmpdir/$handle");
     unlink <*.mgk *.bak *.pre *.tmp pause audio.* audiodump*>;
@@ -6620,18 +6622,31 @@ sub get_convert_version_hash {
 sub weed {
     # here is where we clear up diskspace
 
-    #documentation coming
+    my $opts=shift;
+
+    # opts: - if unset bit 0 (1)    delete clips not in any set and not marked as "in-use" (protected with set.* file)
+    #         if unset bit 1 (2)    prune (clean up) any non "in-use" clips (remove backup files etc.)
+    #	      if set   bit 2 (4)    remove any sets (directories) with layouts but no clips (subdirectories)
+    #         if unset bit 3 (8)    remove marker files
+    #         if unset bit 4 (16)   remove misc. files
+    #        
+
+    #
 
     my $file;
     smog_chdir("$tmpdir");
-    my $start_total=(split / /, (smog_system_direct("du -sb -B 1048567 2>/dev/null")))[0];
+
+    # get starting disk space
+    my $start_total=(split / /, (smog_system_direct("du -sb 2>/dev/null")))[0];
 
     use File::Find;
     opendir DIR,$tmpdir;
     while ($file=readdir(DIR)) {
 	unless ($file =~ /^\./) {
 	    if (-d "$tmpdir/$file") {
-		if (&is_non_empty_dir("$tmpdir/$file/clips") || &is_non_empty_dir("$tmpdir/$file/layouts")) {
+                # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
+          
+		if (&is_non_empty_dir("$tmpdir/$file/clips") || (&is_non_empty_dir("$tmpdir/$file/layouts") && !($opts & 0x04))) {
 		    # new style sets, for now only check /clips subdir
 		    unless (!defined($new_temp)||$new_temp eq "") {
 			smog_rename( "$file","$new_temp");
@@ -6640,25 +6655,33 @@ sub weed {
 		else {
 		    $in_set=0;
 		    find (\&fndset,"$tmpdir/$file/");
-		    if (!$in_set) {
-			unlink "$file";
+		    if (!$in_set && !($opts & 0x01)) {
+                       smog_system("/bin/rm -rf \"$tmpdir/$file\"");
 		    }
 		    else {
+                       unless ($opts & 0x02) {
 			unless (-f "noprune") {
-			    smog_chdir("$file");
+			    smog_chdir("$tmpdir/$file");
 			    &prune;
 			    smog_chdir("$tmpdir");
 			}
 			unless (!defined($new_temp)||$new_temp eq "") {
-			    smog_rename( "$file","$new_temp");
+			    smog_rename( "$tmpdir/$file","$new_temp/$file");
 			}
 		    }
+                  }
 		}
+              unless ($opts & 0x08) {
+                unlink "$tmpdir/$file/set.";
+                unlink "$tmpdir/$file/noprune";
+              }
 	    }
 	    else {
+                # tempdir was changed, so we move all sets (subdirs) from old tempdir to new 
+                # [TODO - check for set name collision !]
 		unless (!defined($new_temp)||$new_temp eq "") {
 		    if ($file =~ /^recovery/ || $file =~ /^layout/) {
-			smog_rename( "$file","$new_temp");
+			smog_rename( "$tmpdir/$file","$new_temp/$file");
 		    }
 		}
 	    }
@@ -6667,9 +6690,15 @@ sub weed {
 
     closedir DIR;
 
-    unlink < .* rfx.* /tmp/.smogval* /tmp/lives-symlinks >;
-    my $end_total=(split / /, (smog_system_direct("du -sb -B 1048567 2>/dev/null")))[0];
+    unless ($opts & 0x10) {
+      # clean up a few extra remnants
+      unlink < .* rfx.* /tmp/.smogval* /tmp/lives-symlinks >;
+    }
 
+    # total disk space at end
+    my $end_total=(split / /, (smog_system_direct("du -sb 2>/dev/null")))[0];
+
+    # return disk space gained (in bytes)
     return $start_total-$end_total;
 }
 
@@ -6698,7 +6727,8 @@ sub get_sox_version {
 
 
 sub prune {
-    # docs coming
+    # clean up old backup images etc in $tmpdir/$file
+    # part of the diskspace recovery process
 
     $old_handle=$handle;
     $handle=$file;

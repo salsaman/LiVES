@@ -844,7 +844,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   gtk_window_set_title (GTK_WINDOW (vppa->dialog), title);
   g_free(title);
 
-  dialog_vbox = GTK_DIALOG (vppa->dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(vppa->dialog));
   gtk_widget_show (dialog_vbox);
 
 
@@ -2409,7 +2409,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   gtk_window_set_title (GTK_WINDOW (dialog), title);
   g_free(title);
 
-  dialog_vbox = GTK_DIALOG (dialog)->vbox;
+  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);

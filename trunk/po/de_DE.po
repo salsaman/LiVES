@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-03 20:15-0300\n"
+"POT-Creation-Date: 2012-01-03 20:25-0300\n"
 "PO-Revision-Date: 2011-06-03 07:11+0000\n"
 "Last-Translator: Dominik Dehning <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -4454,14 +4454,6 @@ msgstr ""
 
 #: src/dialogs.c:615
 msgid "Processing has been paused."
-msgstr ""
-
-#: src/dialogs.c:634 src/dialogs.c:659 src/dialogs.c:693 src/dialogs.c:719
-#, c-format
-msgid ""
-"\n"
-"%s\n"
-"%s\n"
 msgstr ""
 
 #: src/dialogs.c:797

@@ -1,6 +1,6 @@
 // interface.c
 // LiVES
-// (c) G. Finch 2003 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -463,7 +463,7 @@ process * create_processing (const gchar *text) {
   }
 
   g_signal_connect (GTK_OBJECT (procw->cancel_button), "clicked",
-                      G_CALLBACK (on_button3_clicked),
+                      G_CALLBACK (on_cancel_keep_button_clicked),
                       NULL);
 
   g_signal_connect (GTK_OBJECT (procw->processing), "delete_event",

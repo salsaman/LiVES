@@ -1610,9 +1610,7 @@ void remove_layout_files(GList *map) {
 	  }
 
 	  // remove the file we touched to clean up
-	  com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",protect_file);
-	  lives_system(com,TRUE);
-	  g_free(com);
+	  unlink(protect_file);
 	  g_free(protect_file);
 	}
 	

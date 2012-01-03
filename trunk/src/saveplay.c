@@ -4731,7 +4731,6 @@ void recover_layout_map(numclips) {
       while (lmap_node!=NULL) {
 	lmap_node_next=lmap_node->next;
 	lmap_entry=lmap_node->data;
-	g_print("cf %d %s %s %ld %ld\n",i,mainw->files[i]->handle,lmap_entry->handle,(mainw->files[i]->unique_id),(lmap_entry->unique_id));
 	if (!strcmp(mainw->files[i]->handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
 	  // check handle and unique id match
 	  // got a match, assign list to layout_map and delete this node
@@ -4739,9 +4738,7 @@ void recover_layout_map(numclips) {
 	  while (lmap_entry_list!=NULL) {
 	    lmap_entry_list_next=lmap_entry_list->next;
 	    array=g_strsplit(lmap_entry_list->data,"|",-1);
-	    g_print("test %s\n",array[0]);
 	    if (!g_file_test(array[0],G_FILE_TEST_EXISTS)) {
-	      g_print("removing\n");
 	      // layout file has been deleted, remove this entry
 	      if (lmap_entry_list->prev!=NULL) lmap_entry_list->prev->next=lmap_entry_list_next;
 	      else lmap_entry->list=lmap_node_next;

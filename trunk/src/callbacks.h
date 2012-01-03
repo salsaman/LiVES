@@ -232,10 +232,6 @@ gboolean on_cancel_button1_clicked_del(GtkWidget *widget, GdkEvent *event, gpoin
 
 
 void
-on_button3_clicked                     (GtkButton       *button,
-                                        gpointer         user_data);
-
-void
 on_full_screen_pressed (GtkButton *button,
 			gpointer user_data);
 

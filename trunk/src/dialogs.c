@@ -171,6 +171,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     abortbutton = gtk_button_new_from_stock ("gtk-quit");
     gtk_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), abortbutton, LIVES_ABORT);
+    gtk_widget_show (abortbutton);
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog2), warning_cancelbutton, LIVES_CANCEL);
     warning_okbutton = gtk_button_new_from_stock ("gtk-redo");
@@ -320,7 +321,17 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
     while (g_main_context_iteration(NULL,FALSE));
 
     if (response==LIVES_ABORT) {
-      if (do_abort_check()) exit(1);
+      if (do_abort_check()) {
+	if (mainw->current_file>-1) {
+	  if (cfile->handle!=NULL) {
+	    // stop any processing processing
+	    gchar *com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+	    lives_system(com,TRUE);
+	    g_free(com);
+	  }
+	}
+	exit(1);
+      }
     }
 
   } while (response==LIVES_ABORT);
@@ -544,7 +555,7 @@ void pump_io_chan(GIOChannel *iochan) {
 }
 
 
-gboolean check_storage_space(file *sfile, gboolean do_pause) {
+gboolean check_storage_space(file *sfile, gboolean is_processing) {
   // check storage space in prefs->tmpdir, and if sfile!=NULL, in sfile->op_dir
   guint64 dsval;
   gchar *msg,*tmp;
@@ -560,9 +571,9 @@ gboolean check_storage_space(file *sfile, gboolean do_pause) {
       mainw->next_ds_warn_level>>=1;
       if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
       if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
-      if (do_pause&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
+      if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
 	  GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
-	on_effects_paused(NULL,NULL);
+	on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	did_pause=TRUE;
       }
 
@@ -576,14 +587,18 @@ gboolean check_storage_space(file *sfile, gboolean do_pause) {
 	g_free(msg);
 	g_free(pausstr);
 	mainw->cancelled=CANCEL_USER;
+	if (is_processing) {
+	  sfile->nokeep=TRUE;
+	  on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
+	}
 	return FALSE;
       }
       g_free(msg);
     }
     else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
-      if (do_pause&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
+      if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
 	  GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
-	on_effects_paused(NULL,NULL);
+	on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	did_pause=TRUE;
       }
       tmp=ds_critical_msg(prefs->tmpdir,dsval);
@@ -595,6 +610,10 @@ gboolean check_storage_space(file *sfile, gboolean do_pause) {
         retval=do_abort_cancel_retry_dialog(msg,NULL);
       g_free(msg);
       if (retval==LIVES_CANCEL) {
+	if (is_processing) {
+	  sfile->nokeep=TRUE;
+	  on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
+	}
 	mainw->cancelled=CANCEL_ERROR;
 	g_free(pausstr);
 	return FALSE;
@@ -611,9 +630,9 @@ gboolean check_storage_space(file *sfile, gboolean do_pause) {
 	sfile->op_ds_warn_level>>=1;
 	if (sfile->op_ds_warn_level>(dsval>>1)) sfile->op_ds_warn_level=dsval>>1;
 	if (sfile->op_ds_warn_level<prefs->ds_crit_level) sfile->op_ds_warn_level=prefs->ds_crit_level;
-	if (do_pause&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
+	if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
 	    GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
-	  on_effects_paused(NULL,NULL);
+	  on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	  did_pause=TRUE;
 	}
 	tmp=ds_warning_msg(sfile->op_dir,dsval,curr_ds_warn,sfile->op_ds_warn_level);
@@ -626,15 +645,19 @@ gboolean check_storage_space(file *sfile, gboolean do_pause) {
 	  g_free(msg);
 	  g_free(pausstr);
 	  lives_freep((void**)&sfile->op_dir);
+	  if (is_processing) {
+	    sfile->nokeep=TRUE;
+	    on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
+	  }
 	  mainw->cancelled=CANCEL_USER;
 	  return FALSE;
 	}
 	g_free(msg);
       }
       else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
-	if (do_pause&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
+	if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
 	    GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
-	  on_effects_paused(NULL,NULL);
+	  on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	  did_pause=TRUE;
 	}
 	tmp=ds_critical_msg(sfile->op_dir,dsval);
@@ -646,6 +669,10 @@ gboolean check_storage_space(file *sfile, gboolean do_pause) {
 	retval=do_abort_cancel_retry_dialog(msg,NULL);
 	g_free(msg);
 	if (retval==LIVES_CANCEL) {
+	  if (is_processing) {
+	    sfile->nokeep=TRUE;
+	    on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
+	  }
 	  mainw->cancelled=CANCEL_ERROR;
 	  lives_freep((void**)&sfile->op_dir);
 	  g_free(pausstr);
@@ -656,7 +683,7 @@ gboolean check_storage_space(file *sfile, gboolean do_pause) {
   }
 
   if (did_pause&&mainw->effects_paused) {
-    on_effects_paused(NULL,NULL);
+    on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
   }
 
   g_free(pausstr);
@@ -1112,7 +1139,14 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (visible&&text!=NULL) mytext=g_strdup(text);
 
   if (visible) {
-    if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) return FALSE;
+    // check we have sufficient storage space
+    if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) {
+      int cancelled=mainw->cancelled;
+      on_cancel_keep_button_clicked(NULL,NULL);
+      if (mainw->cancelled!=CANCEL_NONE) mainw->cancelled=cancelled;
+      d_print_cancelled();
+      return FALSE;
+    }
   }
 
   event_start=0;
@@ -1381,6 +1415,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	cfile->proc_ptr->frames_done=atoi(mainw->msg);
       else
 	cfile->proc_ptr->frames_done=0;
+      prefs->ds_crit_level=5000000000000;
       if (progress_count==0) check_storage_space(cfile, TRUE);
       progbar_pulse_or_fraction(cfile,cfile->proc_ptr->frames_done);
     }

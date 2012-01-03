@@ -42,6 +42,7 @@ EXTRA_DIST = \
 	tools/monitorlives.pl \
 	tools/set_shuffle.pl \
 	tools/lives-rte-test.pl \
+	tools/lives-play \
 	po/pxgettext \
 	po/make_rfx_builtin_list.pl \
 	po/update_with_plugins.sh \
@@ -96,6 +97,7 @@ install-exec-local:
 	cp -f $(srcdir)/midistart $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/midistart
 	cp -f $(srcdir)/midistop $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/midistop
 	cp -f $(srcdir)/tools/autolives.pl $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/autolives.pl
+	cp -f $(srcdir)/tools/lives-play $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/lives-play
 	cp -f $(srcdir)/build-lives-rfx-plugin $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/build-lives-rfx-plugin
 	cp -f $(srcdir)/build-lives-rfx-plugin-multi $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi
 	cp -f $(srcdir)/default.keymap $(DESTDIR)$(datadir)/$(PACKAGE)/

@@ -1555,7 +1555,13 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   mainw->was_set=mainw->leave_files=mainw->leave_recovery=FALSE;
 
   if (had_clips) {
-    d_print(_("Deleting set..."));
+    if (strlen(mainw->set_name))
+      msg=g_strdup_printf(_("Deleting set %s..."),mainw->set_name);
+    else
+      msg=g_strdup_printf(_("Deleting set..."),mainw->set_name);
+    d_print(msg);
+    g_free(msg);
+
     do_threaded_dialog(_("Deleting set"),FALSE);
   }
 

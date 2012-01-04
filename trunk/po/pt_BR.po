@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-03 22:22-0300\n"
+"POT-Creation-Date: 2012-01-03 23:46-0300\n"
 "PO-Revision-Date: 2011-08-18 12:03+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -1071,7 +1071,7 @@ msgstr ""
 #: src/interface.c:190 src/callbacks.c:9073 src/callbacks.c:9102
 #: src/callbacks.c:9103 src/gui.c:3036 src/gui.c:3584 src/saveplay.c:2041
 #: src/saveplay.c:2733 src/dialogs.c:1293 src/dialogs.c:1294
-#: src/dialogs.c:1489 src/dialogs.c:1490 src/framedraw.c:199
+#: src/dialogs.c:1489 src/dialogs.c:1490 src/framedraw.c:206
 #: src/multitrack.c:7113
 msgid "Preview"
 msgstr "Visualizar"
@@ -1124,7 +1124,7 @@ msgstr "Exibir Detalhes"
 msgid "_Enough"
 msgstr "Sufici_ente"
 
-#: src/interface.c:409 src/framedraw.c:258
+#: src/interface.c:409 src/framedraw.c:265
 msgid "_Preview"
 msgstr "_Visualizar"
 
@@ -5788,15 +5788,15 @@ msgstr "Falha ao iniciar gerador %s, erro %d\n"
 msgid "%s [unstable] (%s)"
 msgstr ""
 
-#: src/framedraw.c:124
+#: src/framedraw.c:131
 msgid "You can click in Preview to change these values"
 msgstr "Clique em 'Preview' para mudar estes valores"
 
-#: src/framedraw.c:141
+#: src/framedraw.c:148
 msgid "_Reset Values"
 msgstr "_Reiniciar Valores"
 
-#: src/framedraw.c:242
+#: src/framedraw.c:249
 msgid "    _Frame"
 msgstr "    _Frame"
 
@@ -6157,7 +6157,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Falhou em carregar %s, as transições podem não redimensionar.\n"
 
-#: src/plugins.c:3592
+#: src/plugins.c:3589
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s configurações avançadas"

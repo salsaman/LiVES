@@ -4765,7 +4765,7 @@ GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t im
 
   // if do_chmod, we try to set permissions to default
 
-  mode_t xumask;
+  mode_t xumask=0;
 
   if (do_chmod) {
     xumask=umask(DEF_FILE_UMASK);

@@ -54,10 +54,17 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
 
   g_free(com);
 
+  com=g_strdup_printf("smogrify clear_pre_files \"%s\" 2>/dev/null",cfile->handle);
+  lives_system(com,TRUE); // clear any .pre files from before
+
   for (i=0;i<rfx->num_params;i++) {
     rfx->params[i].changed=FALSE;
   }
 
+  mainw->cancelled=CANCEL_NONE;
+  mainw->error=FALSE;
+
+  // within do_effect() we check and if  
   do_effect(rfx,TRUE); // actually start effect processing in the background
 
   gtk_widget_set_sensitive(mainw->framedraw_spinbutton,TRUE);

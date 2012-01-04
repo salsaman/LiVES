@@ -112,6 +112,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #endif
 #endif
 
+#define DEF_FILE_PERMS S_IRUSR|S_IWUSR
+#define DEF_FILE_UMASK (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)^( DEF_FILE_PERMS )
+
 /// LiVES will show a warning if this (MBytes) is exceeded on load
 /// (can be overridden in prefs)
 #define WARN_FILE_SIZE 500
@@ -847,7 +850,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, 
 				   gint width, gint height, GdkInterpType interp);
 GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
-			   int quality, GError **gerrorptr);
+			   int quality, gboolean do_chmod, GError **gerrorptr);
 
 void load_frame_image(gint frame);
 void sensitize(void);

@@ -4474,8 +4474,8 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   do {
     // create the orderfile which lists all the clips in order
     retval=0;
-    if (!is_append) ord_fd=creat(ordfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
-    else ord_fd=open(ordfile,O_CREAT|O_WRONLY|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+    if (!is_append) ord_fd=creat(ordfile,DEF_FILE_PERMS);
+    else ord_fd=open(ordfile,O_CREAT|O_WRONLY|O_APPEND,DEF_FILE_PERMS);
 
     if (ord_fd<0) {
       retval=do_write_failed_error_s_with_retry(ordfile,g_strerror(errno),NULL);

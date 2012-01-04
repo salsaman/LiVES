@@ -2536,7 +2536,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   msg=g_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s%s%s"),
 		      com,bit,addbit,dsmsg1,dsmsg2);
 
-  emsg=g_strdup_printf("Command failed doing\n%s%s%s",com,bit,addbit);
+  emsg=g_strdup_printf("Command failed doing\n%s\n%s%s",com,bit,addbit);
   LIVES_ERROR(emsg);
   g_free(emsg);
 

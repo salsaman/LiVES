@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-03 22:22-0300\n"
+"POT-Creation-Date: 2012-01-03 23:46-0300\n"
 "PO-Revision-Date: 2011-11-07 16:24+0000\n"
 "Last-Translator: lhquark <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -1057,7 +1057,7 @@ msgstr "如果设置此项，视频在导入时将被反交错化。"
 #: src/interface.c:190 src/callbacks.c:9073 src/callbacks.c:9102
 #: src/callbacks.c:9103 src/gui.c:3036 src/gui.c:3584 src/saveplay.c:2041
 #: src/saveplay.c:2733 src/dialogs.c:1293 src/dialogs.c:1294
-#: src/dialogs.c:1489 src/dialogs.c:1490 src/framedraw.c:199
+#: src/dialogs.c:1489 src/dialogs.c:1490 src/framedraw.c:206
 #: src/multitrack.c:7113
 msgid "Preview"
 msgstr "预览"
@@ -1109,7 +1109,7 @@ msgstr "显示细节"
 msgid "_Enough"
 msgstr "可以了（_E）"
 
-#: src/interface.c:409 src/framedraw.c:258
+#: src/interface.c:409 src/framedraw.c:265
 msgid "_Preview"
 msgstr "预览(_P)"
 
@@ -5438,15 +5438,15 @@ msgstr ""
 msgid "%s [unstable] (%s)"
 msgstr ""
 
-#: src/framedraw.c:124
+#: src/framedraw.c:131
 msgid "You can click in Preview to change these values"
 msgstr ""
 
-#: src/framedraw.c:141
+#: src/framedraw.c:148
 msgid "_Reset Values"
 msgstr ""
 
-#: src/framedraw.c:242
+#: src/framedraw.c:249
 msgid "    _Frame"
 msgstr ""
 
@@ -5758,7 +5758,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:3592
+#: src/plugins.c:3589
 #, c-format
 msgid "%s advanced settings"
 msgstr ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-03 22:22-0300\n"
+"POT-Creation-Date: 2012-01-03 23:46-0300\n"
 "PO-Revision-Date: 2011-11-07 13:09+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -1118,7 +1118,7 @@ msgstr ""
 #: src/interface.c:190 src/callbacks.c:9073 src/callbacks.c:9102
 #: src/callbacks.c:9103 src/gui.c:3036 src/gui.c:3584 src/saveplay.c:2041
 #: src/saveplay.c:2733 src/dialogs.c:1293 src/dialogs.c:1294
-#: src/dialogs.c:1489 src/dialogs.c:1490 src/framedraw.c:199
+#: src/dialogs.c:1489 src/dialogs.c:1490 src/framedraw.c:206
 #: src/multitrack.c:7113
 msgid "Preview"
 msgstr "Перегляд"
@@ -1172,7 +1172,7 @@ msgstr "Показати подробиці"
 msgid "_Enough"
 msgstr "_Досить"
 
-#: src/interface.c:409 src/framedraw.c:258
+#: src/interface.c:409 src/framedraw.c:265
 msgid "_Preview"
 msgstr "П_ереглянути"
 
@@ -5994,17 +5994,17 @@ msgstr "Не вдалося запустити породжувач %s, поми
 msgid "%s [unstable] (%s)"
 msgstr "%s [нестабільний] (%s)"
 
-#: src/framedraw.c:124
+#: src/framedraw.c:131
 msgid "You can click in Preview to change these values"
 msgstr ""
 "Ви можете клацнути лівою кнопкою миші у області перегляду, щоб змінити ці "
 "значення"
 
-#: src/framedraw.c:141
+#: src/framedraw.c:148
 msgid "_Reset Values"
 msgstr "Від_новити значення"
 
-#: src/framedraw.c:242
+#: src/framedraw.c:249
 msgid "    _Frame"
 msgstr "    _Кадр"
 
@@ -6369,7 +6369,7 @@ msgstr "Увімкнені декодери відео (зніміть позн�
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Не вдалося завантажити %s, при переходах зміна розмірів неможлива.\n"
 
-#: src/plugins.c:3592
+#: src/plugins.c:3589
 #, c-format
 msgid "%s advanced settings"
 msgstr "Додаткові параметри %s"

@@ -3405,7 +3405,7 @@ lives_render_error_t render_events (gboolean reset) {
 
 	do {
 	  retval=0;
-	  lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100-prefs->ocp, &error);
+	  lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100-prefs->ocp, TRUE, &error);
 
 	  if (error!=NULL) {
 	    retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);

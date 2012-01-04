@@ -78,6 +78,8 @@
 #endif
 
 
+#include <sys/stat.h>
+
 ////////////////////////////////
 capability *capable;
 _palette *palette;
@@ -4734,9 +4736,9 @@ void load_frame_image(gint frame) {
       g_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
       do {
 	if (gerror!=NULL) g_error_free(gerror);
-	if (!strcmp(prefs->image_ext,"jpg")) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, &gerror);
+	if (!strcmp(prefs->image_ext,"jpg")) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, FALSE, &gerror);
 	else if (!strcmp(prefs->image_ext,"png")) 
-	  lives_pixbuf_save(pixbuf, fname, IMG_TYPE_PNG, 100, &gerror);
+	  lives_pixbuf_save(pixbuf, fname, IMG_TYPE_PNG, 100, FALSE, &gerror);
       } while (gerror!=NULL);
       gdk_pixbuf_unref(pixbuf);
       cfile->frames=frame;
@@ -4755,10 +4757,19 @@ void load_frame_image(gint frame) {
 
 /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
-GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, GError **gerrorptr) {
+GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, gboolean do_chmod, 
+			  GError **gerrorptr) {
   // CALLER should check for errors
 
   // fname should be in local charset
+
+  // if do_chmod, we try to set permissions to default
+
+  mode_t xumask;
+
+  if (do_chmod) {
+    xumask=umask(DEF_FILE_UMASK);
+  }
 
   if (imgtype==IMG_TYPE_JPEG) {
     gchar *qstr=g_strdup_printf("%d",quality);
@@ -4773,6 +4784,15 @@ GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t im
   else {
     //gdk_pixbuf_save_to_callback(...);
   }
+
+  /*  if (do_chmod) {
+    chmod(fname,DEF_FILE_PERMS);
+    }*/
+
+  if (do_chmod) {
+    umask(xumask);
+  }
+
   return *gerrorptr;
 }
 

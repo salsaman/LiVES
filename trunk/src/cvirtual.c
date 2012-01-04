@@ -55,7 +55,7 @@ gboolean save_frame_index(gint fileno) {
 
   do {
     retval=0;
-    fd=open(fname,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+    fd=open(fname,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
     if (fd<0) {
       retval=do_write_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
     }
@@ -291,7 +291,7 @@ gboolean virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean upda
 
       do {
 	retval=0;
-	lives_pixbuf_save (pixbuf, oname, sfile->img_type, 100-prefs->ocp, &error);
+	lives_pixbuf_save (pixbuf, oname, sfile->img_type, 100-prefs->ocp, TRUE, &error);
 	if (error!=NULL) {
 	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
 	  g_error_free(error);

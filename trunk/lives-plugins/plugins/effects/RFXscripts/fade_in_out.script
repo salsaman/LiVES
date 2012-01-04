@@ -70,7 +70,7 @@ $fval+=$fstep;
 </loop>
 
 <post>
-unlink <"fade$img_ext">;
+`rm -f fade$img_ext`;
 </post>
 
 <onchange>

@@ -373,7 +373,7 @@ gboolean write_backup_layout_numbering(lives_mt *mt) {
   gchar *asave_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
   GList *clist=mainw->cliplist;
 
-  fd=creat(asave_file,S_IRUSR|S_IWUSR);
+  fd=creat(asave_file,DEF_FILE_PERMS);
   g_free(asave_file);
 
   mainw->write_failed=FALSE;
@@ -494,7 +494,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
     retval2=0;
     mainw->write_failed=FALSE;
 
-    fd=creat(asave_file,S_IRUSR|S_IWUSR);
+    fd=creat(asave_file,DEF_FILE_PERMS);
     if (fd>=0) {
       add_markers(mt,mt->event_list);
       do_threaded_dialog(_("Auto backup"),FALSE);
@@ -17335,7 +17335,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   do {
     retval=0;
-    fd=creat(map_name,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+    fd=creat(map_name,DEF_FILE_PERMS);
 
     if (fd==-1) {
       retval=do_write_failed_error_s_with_retry(map_name,g_strerror(errno),NULL);
@@ -17675,7 +17675,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     retval2=0;
     retval=TRUE;
 
-    fd=creat(esave_file,S_IRUSR|S_IWUSR);
+    fd=creat(esave_file,DEF_FILE_PERMS);
 
     if (fd>=0) {
       retval=save_event_list_inner(mt,fd,event_list,NULL);
@@ -19264,7 +19264,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 	  retval=TRUE;
 
 	  // resave with corrections/updates
-	  fd=creat(eload_file,S_IRUSR|S_IWUSR);
+	  fd=creat(eload_file,DEF_FILE_PERMS);
 	  if (fd>=0) {
 	    retval=save_event_list_inner(NULL,fd,event_list,NULL);
 	    close(fd);
@@ -19617,7 +19617,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	    
 	    do {
 	      retval2=0;
-	      fd=creat(map->data,S_IRUSR|S_IWUSR);
+	      fd=creat(map->data,DEF_FILE_PERMS);
 	      if (fd>=0) retval=save_event_list_inner(NULL,fd,event_list,NULL);
 	      if (fd<0||!retval) {
 		if (fd>0) close(fd);

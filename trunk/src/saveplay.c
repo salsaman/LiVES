@@ -38,8 +38,11 @@ gboolean save_clip_values(gint which) {
   gint endian;
   gchar *lives_header;
   int retval;
+  mode_t xumask;
 
   if (which==0||which==mainw->scrap_file) return TRUE;
+
+  xumask=umask(DEF_FILE_UMASK);
 
   asigned=!(mainw->files[which]->signed_endian&AFORM_UNSIGNED);
   endian=mainw->files[which]->signed_endian&AFORM_BIG_ENDIAN;
@@ -47,11 +50,12 @@ gboolean save_clip_values(gint which) {
 
   do {
     mainw->clip_header=fopen(lives_header,"w");
-    
+
     if (mainw->clip_header==NULL) {
       retval=do_write_failed_error_s_with_retry(lives_header,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	g_free(lives_header);
+	umask(xumask);
 	return FALSE;
       }
     }
@@ -115,6 +119,7 @@ gboolean save_clip_values(gint which) {
   } while (retval==LIVES_RETRY);
   
   g_free(lives_header);
+  umask(xumask);
 
   fclose(mainw->clip_header);
   mainw->clip_header=NULL;
@@ -3436,8 +3441,8 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
 
     do {
       retval=0;
-      if (sfile->img_type==IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, &gerr);
-      else if (sfile->img_type==IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, &gerr);
+      if (sfile->img_type==IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, FALSE, &gerr);
+      else if (sfile->img_type==IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, FALSE, &gerr);
 
       if (gerr!=NULL) {
 	retval=do_write_failed_error_s_with_retry(full_file_name,gerr->message,NULL);

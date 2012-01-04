@@ -334,29 +334,28 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 	do_error_dialog(_("\nNo frames were generated.\n"));
 	d_print_failed();
       }
-      if (mainw->cancelled==CANCEL_ERROR) d_print_failed();
-    }
-    else if (mainw->cancelled!=CANCEL_ERROR) d_print_cancelled();
-    else d_print_failed();
+      else if (mainw->cancelled!=CANCEL_ERROR) d_print_cancelled();
+      else d_print_failed();
     
-    if (rfx->num_in_channels==0) {
-      mainw->is_generating=FALSE;
-      
-      if (mainw->current_file!=current_file) {
-	mainw->suppress_dprint=TRUE;
-	close_current_file(current_file);
-	mainw->suppress_dprint=FALSE;
+      if (rfx->num_in_channels==0) {
+	mainw->is_generating=FALSE;
+	
+	if (mainw->current_file!=current_file) {
+	  mainw->suppress_dprint=TRUE;
+	  close_current_file(current_file);
+	  mainw->suppress_dprint=FALSE;
+	}
+	
+	mainw->current_file=current_file;
+	mainw->last_dprint_file=ldfile;
+	
+	if (mainw->multitrack!=NULL) {
+	  mainw->current_file=mainw->multitrack->render_file;
+	}
       }
-      
-      mainw->current_file=current_file;
-      mainw->last_dprint_file=ldfile;
-      
-      if (mainw->multitrack!=NULL) {
-	mainw->current_file=mainw->multitrack->render_file;
-      }
+      mainw->no_switch_dprint=FALSE;
+      return FALSE;
     }
-    mainw->no_switch_dprint=FALSE;
-    return FALSE;
   }
 
   if (rfx->num_in_channels==0) {
@@ -555,7 +554,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
 
   do {
     retval=0;
-    lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, &error);
+    lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, TRUE, &error);
 
     if (error!=NULL) {
       retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);

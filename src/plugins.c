@@ -467,12 +467,12 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	  g_free(vpp->extra_argv);
 	}
 	
-	mainw->vpp->extra_argv=g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
+	mainw->vpp->extra_argv=(char **)g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
 	
 	for (i=0;i<mainw->vpp->extra_argc;i++) {
 	  lives_read_le(fd,&len,4,FALSE);
 	  if (mainw->read_failed) break;
-	  mainw->vpp->extra_argv[i]=g_malloc(len+1);
+	  mainw->vpp->extra_argv[i]=(gchar *)g_malloc(len+1);
 	  lives_read(fd,mainw->vpp->extra_argv[i],len,FALSE);
 	  if (mainw->read_failed) break;
 	  memset((mainw->vpp->extra_argv[i])+len,0,1);
@@ -844,7 +844,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   gtk_window_set_title (GTK_WINDOW (vppa->dialog), title);
   g_free(title);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(vppa->dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(vppa->dialog));
   gtk_widget_show (dialog_vbox);
 
 
@@ -1109,12 +1109,12 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
 }
 
 
-_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean using) {
+_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_use) {
   // this is called on startup or when the user selects a new playback plugin
 
-  // if using is TRUE, it is our active vpp
+  // if in_use is TRUE, it is our active vpp
 
-  // TODO - if using, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
+  // TODO - if in_use, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
 
   gchar *plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
   void *handle=dlopen(plugname,RTLD_LAZY);
@@ -1139,26 +1139,26 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
 
   vpp=(_vid_playback_plugin *) g_malloc (sizeof(_vid_playback_plugin));
 
-  if ((vpp->module_check_init=dlsym (handle,"module_check_init"))==NULL) {
+  if ((vpp->module_check_init=(const char* (*)())dlsym (handle,"module_check_init"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->version=dlsym (handle,"version"))==NULL) {
+  if ((vpp->version=(const char* (*)())dlsym (handle,"version"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_palette_list=dlsym (handle,"get_palette_list"))==NULL) {
+  if ((vpp->get_palette_list=(gint* (*)())dlsym (handle,"get_palette_list"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->set_palette=dlsym (handle,"set_palette"))==NULL) {
+  if ((vpp->set_palette=(gboolean (*)(int))dlsym (handle,"set_palette"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_capabilities=dlsym (handle,"get_capabilities"))==NULL) {
+  if ((vpp->get_capabilities=(guint64 (*)(int))dlsym (handle,"get_capabilities"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->render_frame=dlsym (handle,"render_frame"))==NULL) {
+  if ((vpp->render_frame=(gboolean (*)(int, int, int64_t, void*, void*))dlsym (handle,"render_frame"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_fps_list=dlsym (handle,"get_fps_list"))!=NULL) {
-    if ((vpp->set_fps=dlsym (handle,"set_fps"))==NULL) {
+  if ((vpp->get_fps_list=(const gchar* (*)(int))dlsym (handle,"get_fps_list"))!=NULL) {
+    if ((vpp->set_fps=(gboolean (*)(gdouble))dlsym (handle,"set_fps"))==NULL) {
       OK=FALSE;
     }
   }
@@ -1188,15 +1188,15 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   }
 
   // now check for optional functions
-  vpp->get_description=dlsym (handle,"get_description");
-  vpp->get_rfx=dlsym (handle,"get_rfx");
-  vpp->get_yuv_palette_clamping=dlsym (handle,"get_yuv_palette_clamping");
-  vpp->set_yuv_palette_clamping=dlsym (handle,"set_yuv_palette_clamping");
-  vpp->send_keycodes=dlsym (handle,"send_keycodes");
-  vpp->get_audio_fmts=dlsym (handle,"get_audio_fmts");
-  vpp->init_screen=dlsym (handle,"init_screen");
-  vpp->exit_screen=dlsym (handle,"exit_screen");
-  vpp->module_unload=dlsym (handle,"module_unload");
+  vpp->get_description=(const char* (*)())dlsym (handle,"get_description");
+  vpp->get_rfx=(const char* (*)())dlsym (handle,"get_rfx");
+  vpp->get_yuv_palette_clamping=(int* (*)(int))dlsym (handle,"get_yuv_palette_clamping");
+  vpp->set_yuv_palette_clamping=(int (*)(int))dlsym (handle,"set_yuv_palette_clamping");
+  vpp->send_keycodes=(gboolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
+  vpp->get_audio_fmts=(int* (*)())dlsym (handle,"get_audio_fmts");
+  vpp->init_screen=(gboolean (*)(int, int, gboolean, guint32, int, gchar**))dlsym (handle,"init_screen");
+  vpp->exit_screen=(void (*)(guint16, guint16))dlsym (handle,"exit_screen");
+  vpp->module_unload=(void (*)())dlsym (handle,"module_unload");
 
   vpp->YUV_sampling=0;
   vpp->YUV_subspace=0;
@@ -1208,7 +1208,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
     vpp->YUV_clamping=future_prefs->vpp_YUV_clamping;
   }
   else {
-    if (!using&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
+    if (!in_use&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
       vpp->palette=mainw->vpp->palette;
       vpp->YUV_clamping=mainw->vpp->YUV_clamping;
     }
@@ -1231,7 +1231,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
     vpp->fwidth=future_prefs->vpp_fwidth;
     vpp->fheight=future_prefs->vpp_fheight;
   }
-  else if (!using&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
+  else if (!in_use&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
     vpp->fwidth=mainw->vpp->fwidth;
     vpp->fheight=mainw->vpp->fheight;
   }
@@ -1244,7 +1244,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
     vpp->fixed_fps_numer=future_prefs->vpp_fixed_fps_numer;
     vpp->fixed_fps_denom=future_prefs->vpp_fixed_fps_denom;
   }
-  else if (!using&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
+  else if (!in_use&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
     vpp->fixed_fpsd=mainw->vpp->fixed_fpsd;
     vpp->fixed_fps_numer=mainw->vpp->fixed_fps_numer;
     vpp->fixed_fps_denom=mainw->vpp->fixed_fps_denom;
@@ -1255,13 +1255,13 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
 
   if (future_prefs->vpp_argv!=NULL) {
     vpp->extra_argc=future_prefs->vpp_argc;
-    vpp->extra_argv=g_malloc((vpp->extra_argc+1)*(sizeof(gchar *)));
+    vpp->extra_argv=(gchar **)g_malloc((vpp->extra_argc+1)*(sizeof(gchar *)));
     for (i=0;i<=vpp->extra_argc;i++) vpp->extra_argv[i]=g_strdup(future_prefs->vpp_argv[i]);
   }
   else {
-    if (!using&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
+    if (!in_use&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
     vpp->extra_argc=mainw->vpp->extra_argc;
-    vpp->extra_argv=g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
+    vpp->extra_argv=(gchar **)g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
     for (i=0;i<=vpp->extra_argc;i++) vpp->extra_argv[i]=g_strdup(mainw->vpp->extra_argv[i]);
     }
     else {
@@ -1305,7 +1305,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
   if (vpp->get_audio_fmts!=NULL&&mainw->is_ready) vpp->audio_codec=get_best_audio(vpp);
   if (prefsw!=NULL) prefsw_set_astream_settings(vpp);
 
-  if (!using) return vpp;
+  if (!in_use) return vpp;
 
   if (!mainw->is_ready) {
     double fixed_fpsd=vpp->fixed_fpsd;
@@ -1356,7 +1356,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean usin
     g_usleep(prefs->sleep_time);
   }
 
-  if (mainw->is_ready&&using&&mainw->vpp!=NULL) {
+  if (mainw->is_ready&&in_use&&mainw->vpp!=NULL) {
     close_vid_playback_plugin(mainw->vpp);
   }
   
@@ -1420,7 +1420,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
     
     nfmts=get_token_count(buf,'|');
     array=g_strsplit(buf,"|",nfmts);
-    sfmts=g_malloc(nfmts*sizint);
+    sfmts=(int *)g_malloc(nfmts*sizint);
     
     for (i=0;i<nfmts;i++) {
       if (array[i]!=NULL&&strlen(array[i])>0) sfmts[j++]=atoi(array[i]);
@@ -1562,8 +1562,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
   if (!((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))==NULL)) {
     // get any restrictions for the current format
     for (i=0;i<g_list_length(ofmt_all);i++) {
-      if ((numtok=get_token_count (g_list_nth_data (ofmt_all,i),'|'))>2) {
-	array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
+      if ((numtok=get_token_count ((gchar *)g_list_nth_data (ofmt_all,i),'|'))>2) {
+	array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,i),"|",-1);
 	if (!strcmp(array[0],prefs->encoder.of_name)) {
 	  if (numtok>4) {
 	    g_snprintf(prefs->encoder.of_def_ext,16,"%s",array[4]);
@@ -2004,7 +2004,7 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
     listnext=list->next;
 
     while (blacklist[i++]!=NULL) {
-      if (strlen(list->data)==strlen(blacklist[i])&&!strcmp(list->data,blacklist[i])) {
+      if (strlen((char *)list->data)==strlen(blacklist[i])&&!strcmp((char *)list->data,blacklist[i])) {
 	// skip blacklisted encoders
 	g_free(list->data);
 	encoders=g_list_delete_link(encoders,list);
@@ -2018,12 +2018,12 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
       continue;
     }
 
-    if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,list->data,"get_capabilities"))==NULL) {
+    if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,(gchar *)list->data,"get_capabilities"))==NULL) {
       g_free(list->data);
       encoders=g_list_delete_link(encoders,list);
     }
     else {
-      caps=atoi (g_list_nth_data (encoder_capabilities,0));
+      caps=atoi ((char *)g_list_nth_data (encoder_capabilities,0));
       
       if (!(caps&CAN_ENCODE_PNG)&&!strcmp(img_ext,"png")) {
 	g_free(list->data);
@@ -2152,7 +2152,7 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
   if (sfile->ext_src!=NULL) {
-    dplug=sfile->ext_src;
+    dplug=(lives_decoder_t *)sfile->ext_src;
     msg=g_strdup_printf(" :: using decoder plugin %s",(dplug->decoder->name));
     d_print(msg);
     g_free(msg);
@@ -2199,7 +2199,7 @@ void unload_decoder_plugins(void) {
   GList *dplugs=mainw->decoder_list;
 
   while (dplugs!=NULL) {
-    unload_decoder_plugin(dplugs->data);
+    unload_decoder_plugin((lives_decoder_sys_t *)dplugs->data);
     dplugs=dplugs->next;
   }
 
@@ -2238,16 +2238,18 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
     return NULL;
   }
 
-  if ((dplug->version=dlsym (dplug->handle,"version"))==NULL) {
+  if ((dplug->version=(const char* (*)())dlsym (dplug->handle,"version"))==NULL) {
     OK=FALSE;
   }
-  if ((dplug->get_clip_data=dlsym (dplug->handle,"get_clip_data"))==NULL) {
+  if ((dplug->get_clip_data=(lives_clip_data_t* (*)(char*, lives_clip_data_t*)) 
+       dlsym (dplug->handle,"get_clip_data"))==NULL) {
     OK=FALSE;
   }
-  if ((dplug->get_frame=dlsym (dplug->handle,"get_frame"))==NULL) {
+  if ((dplug->get_frame=(gboolean (*)(const lives_clip_data_t*, int64_t, int*, int, void**))
+       dlsym (dplug->handle,"get_frame"))==NULL) {
     OK=FALSE;
   }
-  if ((dplug->clip_data_free=dlsym (dplug->handle,"clip_data_free"))==NULL) {
+  if ((dplug->clip_data_free=(void (*)(lives_clip_data_t*))dlsym (dplug->handle,"clip_data_free"))==NULL) {
     OK=FALSE;
   }
 
@@ -2261,10 +2263,11 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
   }
 
   // optional
-  dplug->module_check_init=dlsym (dplug->handle,"module_check_init");
-  dplug->module_unload=dlsym (dplug->handle,"module_unload");
-  dplug->rip_audio=dlsym (dplug->handle,"rip_audio");
-  dplug->rip_audio_cleanup=dlsym (dplug->handle,"rip_audio_cleanup");
+  dplug->module_check_init=(const char* (*)())dlsym (dplug->handle,"module_check_init");
+  dplug->module_unload=(void (*)())dlsym (dplug->handle,"module_unload");
+  dplug->rip_audio=(int64_t (*)(const lives_clip_data_t*, const char*, int64_t, int64_t, unsigned char**))
+    dlsym (dplug->handle,"rip_audio");
+  dplug->rip_audio_cleanup=(void (*)(const lives_clip_data_t*))dlsym (dplug->handle,"rip_audio_cleanup");
 
   if (dplug->module_check_init!=NULL) {
     err=(*dplug->module_check_init)();
@@ -2409,7 +2412,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   gtk_window_set_title (GTK_WINDOW (dialog), title);
   g_free(title);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
@@ -2576,11 +2579,11 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
 
   threaded_dialog_spin();
   rfx->num_params=g_list_length (parameter_list);
-  rfx->params=g_malloc (rfx->num_params*sizeof(lives_param_t));
+  rfx->params=(lives_param_t *)g_malloc (rfx->num_params*sizeof(lives_param_t));
   
   for (param_idx=0;param_idx<rfx->num_params;param_idx++) {
  
-    line=g_list_nth_data(parameter_list,param_idx);
+    line=(gchar *)g_list_nth_data(parameter_list,param_idx);
 
     len=get_token_count (line,(unsigned int)rfx->delim[0]);
 
@@ -2846,7 +2849,7 @@ void rfx_free(lives_rfx_t *rfx) {
     free(rfx->extra);
   }
   if (rfx->source_type==LIVES_RFX_SOURCE_WEED&&rfx->source!=NULL) {
-    weed_instance_unref(rfx->source);
+    weed_instance_unref((weed_plant_t *)rfx->source);
   }
 }
 
@@ -2897,7 +2900,7 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
     w_memcpy (dest->def,src->def,sizeof(lives_colRGB24_t));
     break;
   case LIVES_PARAM_STRING:
-    dest->def=g_strdup (src->def);
+    dest->def=g_strdup ((gchar *)src->def);
     break;
   case LIVES_PARAM_STRING_LIST:
     dest->def=g_malloc (sizint);
@@ -2996,7 +2999,7 @@ gint find_rfx_plugin_by_name (const gchar *name, gshort status) {
 
 lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_reinits) {
   int i,j;
-  lives_param_t *rpar=g_malloc(npar*sizeof(lives_param_t));
+  lives_param_t *rpar=(lives_param_t *)g_malloc(npar*sizeof(lives_param_t));
   int param_hint;
   char **list;
   GList *gtk_list=NULL;
@@ -3267,7 +3270,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 	  if (colsd[0]>red_maxd) colsd[0]=red_maxd;
 	  if (colsd[1]>green_maxd) colsd[1]=green_maxd;
 	  if (colsd[2]>blue_maxd) colsd[2]=blue_maxd;
-	  cols=weed_malloc(3*sizshrt);
+	  cols=(int *)weed_malloc(3*sizshrt);
 	  cols[0]=(colsd[0]-red_mind)/(red_maxd-red_mind)*255.+.5;
 	  cols[1]=(colsd[1]-green_mind)/(green_maxd-green_mind)*255.+.5;
 	  cols[2]=(colsd[2]-blue_mind)/(blue_maxd-blue_mind)*255.+.5;
@@ -3341,15 +3344,15 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 	weed_display_f *display_func_ptr_ptr;
 	weed_display_f display_func;
 	weed_leaf_get(gui,"display_func",0,(void *)&display_func_ptr_ptr);
-	display_func=display_func_ptr_ptr[0];
-	rpar[i].display_func=display_func;
+	display_func=*display_func_ptr_ptr;
+	rpar[i].display_func=(fn_ptr)display_func;
       }
       if (weed_plant_has_leaf(gui,"interpolate_func")) {
 	weed_interpolate_f *interp_func_ptr_ptr;
 	weed_interpolate_f interp_func;
 	weed_leaf_get(gui,"interpolate_func",0,(void *)&interp_func_ptr_ptr);
-	interp_func=interp_func_ptr_ptr[0];
-	rpar[i].interp_func=interp_func;
+	interp_func=*interp_func_ptr_ptr;
+	rpar[i].interp_func=(fn_ptr)interp_func;
       }
     }
 
@@ -3377,7 +3380,7 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   weed_plant_t *filter;
 
   gchar *string;
-  lives_rfx_t *rfx=g_malloc(sizeof(lives_rfx_t));
+  lives_rfx_t *rfx=(lives_rfx_t *)g_malloc(sizeof(lives_rfx_t));
   rfx->is_template=FALSE;
   if (weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_INSTANCE) 
     filter=weed_get_plantptr_value(plant,"filter_class",&error);
@@ -3419,7 +3422,7 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
     int i,error;
     int num_hints;
     weed_plant_t *gui;
-    weed_plant_t *inst=rfx->source;
+    weed_plant_t *inst=(weed_plant_t *)rfx->source;
     weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
     char *string,**rfx_strings,*delim;
    
@@ -3544,7 +3547,8 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
       
     // first create a lives_rfx_t from the scrap
     rfx->name=g_strdup(rfx_scrapname);
-    rfx->action_desc=rfx->extra=NULL;
+    rfx->action_desc=NULL;
+    rfx->extra=NULL;
     rfx->status=RFX_STATUS_SCRAP;
 
     rfx->num_in_channels=0;

@@ -62,7 +62,7 @@ void weed_deinit_effect(int hotkey); ///< hotkey starts at 1
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
 void weed_instance_ref(weed_plant_t *inst);
 void weed_instance_unref(weed_plant_t *inst);
-gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first);
+lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first);
 void weed_reinit_all(void);
 
 int num_in_params(weed_plant_t *, gboolean count_reinits, gboolean count_variable);

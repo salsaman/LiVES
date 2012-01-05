@@ -2693,8 +2693,16 @@ void play_file (void) {
     g_object_ref(GTK_SOCKET(mainw->playarea)->plug_window);
     gdk_window_reparent(GTK_SOCKET(mainw->playarea)->plug_window,NULL,0,0);
 
+    // return external window to the window manager
+
+#ifdef USE_X11 
     XMapWindow (GDK_WINDOW_XDISPLAY (GTK_SOCKET(mainw->playarea)->plug_window),
 		  GDK_WINDOW_XID (GTK_SOCKET(mainw->playarea)->plug_window));
+
+#else
+    // need equivalent of XMapWindow on other platforms...
+#endif
+
 
     // TODO - figure out how to add back to toplevel windows...
 

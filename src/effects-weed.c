@@ -1,6 +1,6 @@
 // effects-weed.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2011 (salsaman@xs4all.nl,salsaman@gmail.com)
+// (c) G. Finch 2005 - 2012 (salsaman@xs4all.nl,salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -43,15 +43,17 @@ struct _procvals {
 #define OIL_MEMCPY_MAX_BYTES 1024 // this can be tuned to provide optimal performance
 
 #ifdef ENABLE_OIL
-inline void *w_memcpy  (void *dest, const void *src, size_t n) {
+LIVES_INLINE void *w_memcpy  (void *dest, const void *src, size_t n) {
+#ifndef __cplusplus
   if (n>=32&&n<=OIL_MEMCPY_MAX_BYTES) {
-    oil_memcpy(dest,src,n);
+    oil_memcpy((uint8_t *)dest,(const uint8_t *)src,n);
     return dest;
   }
+#endif
   return memcpy(dest,src,n);
 }
 #else
-inline void *w_memcpy  (void *dest, const void *src, size_t n) {return memcpy(dest,src,n);}
+LIVES_INLINE void *w_memcpy  (void *dest, const void *src, size_t n) {return memcpy(dest,src,n);}
 #endif
 
 G_GNUC_MALLOC void * lives_weed_malloc(size_t size) {
@@ -336,7 +338,7 @@ weed_plant_t ***key_defaults[FX_KEYS_MAX_VIRTUAL];
 
 /////////////////// LiVES event system /////////////////
 
-static void *init_events[FX_KEYS_MAX_VIRTUAL];
+static weed_plant_t *init_events[FX_KEYS_MAX_VIRTUAL];
 static void **pchains[FX_KEYS_MAX]; // parameter changes, used during recording (not for rendering)
 static void *filter_map[FX_KEYS_MAX+2];
 static int next_free_key;
@@ -717,7 +719,7 @@ weed_plant_t *add_filter_init_events (weed_plant_t *event_list, weed_timecode_t 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     if ((inst=key_to_instance[i][key_modes[i]])!=NULL&&enabled_in_channels (inst,FALSE)>0) {
       event_list=append_filter_init_event (event_list,tc,(fx_idx=key_to_fx[i][key_modes[i]]),-1);
-      init_events[i]=(void *)get_last_event(event_list);
+      init_events[i]=get_last_event(event_list);
       ntracks=weed_leaf_num_elements(init_events[i],"in_tracks");
       pchains[i]=filter_init_add_pchanges(event_list,inst,init_events[i],ntracks);
     }
@@ -917,7 +919,7 @@ static gboolean align (void **pixel_data, size_t alignment, int numplanes, int h
   // try contiguous first
   if ((memerror=posix_memalign(&npixel_data,alignment,totsize))) return FALSE;
 
-  new_pixel_data=g_malloc(numplanes*(sizeof(void *)));
+  new_pixel_data=(void **)g_malloc(numplanes*(sizeof(void *)));
 
   // recheck
   needs_change=FALSE;
@@ -1047,7 +1049,7 @@ gchar *cd_to_plugin_dir(weed_plant_t *filter) {
   return ret;
 }
 
-gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
+lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
   int error;
   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
   gchar *cwd;
@@ -1072,7 +1074,7 @@ gint weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
       set_param_gui_readonly(inst);
       if (fx_dialog[1]!=NULL) {
 	// redraw GUI if necessary
-	rfx=g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+	rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
 	if (rfx->source_type==LIVES_RFX_SOURCE_WEED&&rfx->source==inst) {
 	  gint keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
 	  gint modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
@@ -1164,7 +1166,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     // but note that "pixel_data" always points to the same memory buffer(s)
     
     xinst[j]=weed_plant_copy(inst);
-    xchannels=g_malloc(nchannels*sizeof(weed_plant_t *));
+    xchannels=(weed_plant_t **)g_malloc(nchannels*sizeof(weed_plant_t *));
     
     for (i=0;i<nchannels;i++) {
       xchannels[i]=weed_plant_copy(out_channels[i]);
@@ -1316,11 +1318,11 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   if (init_event==NULL) {
     num_in_tracks=enabled_in_channels(inst,FALSE);
-    in_tracks=weed_malloc(2*sizint);
+    in_tracks=(int *)weed_malloc(2*sizint);
     in_tracks[0]=0;
     in_tracks[1]=1;
     num_out_tracks=1;
-    out_tracks=weed_malloc(sizint);
+    out_tracks=(int *)weed_malloc(sizint);
     out_tracks[0]=0;
   }
   else {
@@ -1393,7 +1395,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   // ensure all chantmpls not marked "optional" have at least one corresponding enabled channel
   // e.g. we could have disabled all channels from a template with "max_repeats" that is not "optional"
   num_ctmpl=weed_leaf_num_elements(filter,"in_channel_templates");
-  mand=g_malloc(num_ctmpl*sizint);
+  mand=(int *)g_malloc(num_ctmpl*sizint);
   for (j=0;j<num_ctmpl;j++) mand[j]=0;
   in_ctmpls=weed_get_plantptr_array(filter,"in_channel_templates",&error);
   for (i=0;i<num_inc;i++) {
@@ -1915,7 +1917,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
   weed_plant_t *def_channel=NULL;
-  gint retval=FILTER_NO_ERROR;
+  lives_filter_error_t retval=FILTER_NO_ERROR;
   int *mand;
   int channel_flags;
 
@@ -1936,11 +1938,11 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
   if (init_event==NULL) {
     num_in_tracks=enabled_in_channels(inst,FALSE);
-    in_tracks=weed_malloc(2*sizint);
+    in_tracks=(int *)weed_malloc(2*sizint);
     in_tracks[0]=0;
     in_tracks[1]=1;
     num_out_tracks=1;
-    out_tracks=weed_malloc(sizint);
+    out_tracks=(int *)weed_malloc(sizint);
     out_tracks[0]=0;
   }
   else {
@@ -1993,7 +1995,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   // ensure all chantmpls not marked "optional" have at least one corresponding enabled channel
   // e.g. we could have disabled all channels from a template with "max_repeats" that is not "optional"
   num_ctmpl=weed_leaf_num_elements(filter,"in_channel_templates");
-  mand=g_malloc(num_ctmpl*sizint);
+  mand=(int *)g_malloc(num_ctmpl*sizint);
   for (j=0;j<num_ctmpl;j++) mand[j]=0;
   in_ctmpls=weed_get_plantptr_array(filter,"in_channel_templates",&error);
   for (i=0;i<num_inc;i++) {
@@ -2066,7 +2068,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     }
 
     if (!inplace) {
-      float *abuf=g_malloc0(nchans*nsamps*sizeof(float));
+      float *abuf=(float *)g_malloc0(nchans*nsamps*sizeof(float));
       weed_set_int_value(channel,"audio_data_length",nsamps);
       weed_set_voidptr_value(channel,"audio_data",abuf);
     }
@@ -2135,7 +2137,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   weed_plant_t *instance,*filter;
   size_t nsf=nsamps*sizeof(float);
   void **ev_pchains;
-  gint retval=FILTER_NO_ERROR;
+  lives_filter_error_t retval=FILTER_NO_ERROR;
   weed_plant_t *channel=NULL;
   int aint=WEED_FALSE;               // use non-interlaced - TODO
   gboolean can_reinit=TRUE;
@@ -2301,7 +2303,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     }
   }
 
-  layers=g_malloc((ntracks+1)*sizeof(weed_plant_t *));
+  layers=(weed_plant_t **)g_malloc((ntracks+1)*sizeof(weed_plant_t *));
 
   for (i=0;i<ntracks;i++) {
     layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -2372,7 +2374,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
   if ((num_inst=weed_leaf_num_elements(filter_map,"init_events"))>0) {
     init_events=weed_get_voidptr_array(filter_map,"init_events",&error);
     for (i=0;i<num_inst;i++) {
-      init_event=init_events[i];
+      init_event=(weed_plant_t *)init_events[i];
       if (mainw->playing_file==-1&&mainw->multitrack!=NULL&&mainw->multitrack->current_rfx!=NULL&&mainw->multitrack->init_event!=NULL) {
 	if (mainw->multitrack->current_rfx->source_type==LIVES_RFX_SOURCE_WEED&&
 	    mainw->multitrack->current_rfx->source!=NULL) {
@@ -2382,7 +2384,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	    // and display only the currently selected filter (unless it is a "process_last" effect (like audio mixer))
 	    // TODO - if current fx 
 	    void **pchain=mt_get_pchain();
-	    instance=mainw->multitrack->current_rfx->source;
+	    instance=(weed_plant_t *)mainw->multitrack->current_rfx->source;
 	    // interpolation can be switched of by setting mainw->no_interp
 	    if (!mainw->no_interp&&pchain!=NULL) {
 	      interpolate_params(instance,pchain,tc); // interpolate parameters for preview
@@ -2532,7 +2534,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
   if ((num_inst=weed_leaf_num_elements(filter_map,"init_events"))>0) {
     init_events=weed_get_voidptr_array(filter_map,"init_events",&error);
     for (i=0;i<num_inst;i++) {
-      init_event=init_events[i];
+      init_event=(weed_plant_t *)init_events[i];
       fhash=weed_get_string_value(init_event,"filter",&error);
       filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
       weed_free(fhash);
@@ -3077,7 +3079,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 #endif
     dlerror(); // clear existing errors
 
-    if ((setup_fn=dlsym(handle,"weed_setup"))==NULL) {
+    if ((setup_fn=(weed_setup_f)dlsym(handle,"weed_setup"))==NULL) {
       g_printerr(_("Error: plugin %s has no weed_setup() function.\n"),plugin_path);
     }
     else {
@@ -3222,15 +3224,16 @@ void weed_load_all (void) {
   bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
 
   for (i=0;i<FX_KEYS_MAX;i++) {
-    if (i<FX_KEYS_MAX_VIRTUAL) key_to_instance[i]=g_malloc(prefs->max_modes_per_key*sizeof(weed_plant_t *));
-    else key_to_instance[i]=g_malloc(sizeof(weed_plant_t *));
+    if (i<FX_KEYS_MAX_VIRTUAL) key_to_instance[i]=(weed_plant_t **) 
+				 g_malloc(prefs->max_modes_per_key*sizeof(weed_plant_t *));
+    else key_to_instance[i]=(weed_plant_t **)g_malloc(sizeof(weed_plant_t *));
 
-    key_to_instance_copy[i]=g_malloc(sizeof(weed_plant_t *));
+    key_to_instance_copy[i]=(weed_plant_t **)g_malloc(sizeof(weed_plant_t *));
 
-    if (i<FX_KEYS_MAX_VIRTUAL) key_to_fx[i]=g_malloc(prefs->max_modes_per_key*sizint);
-    else key_to_fx[i]=g_malloc(sizint);
+    if (i<FX_KEYS_MAX_VIRTUAL) key_to_fx[i]=(int *)g_malloc(prefs->max_modes_per_key*sizint);
+    else key_to_fx[i]=(int *)g_malloc(sizint);
 
-    if (i<FX_KEYS_MAX_VIRTUAL) key_defaults[i]=g_malloc(prefs->max_modes_per_key*sizeof(weed_plant_t **));
+    if (i<FX_KEYS_MAX_VIRTUAL) key_defaults[i]=(weed_plant_t ***)g_malloc(prefs->max_modes_per_key*sizeof(weed_plant_t **));
 
     key_modes[i]=0;  // current active mode of each key
     filter_map[i]=NULL; // maps effects in order of application for multitrack rendering
@@ -3281,7 +3284,7 @@ void weed_load_all (void) {
     // parse twice, first we get the plugins, then 1 level of subdirs
     for (plugin_idx=0;plugin_idx<listlen;plugin_idx++) {
       threaded_dialog_spin();
-      plugin_name=g_list_nth_data(weed_plugin_list,plugin_idx);
+      plugin_name=(gchar *)g_list_nth_data(weed_plugin_list,plugin_idx);
       if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3)) {
 	plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
 	load_weed_plugin(plugin_name,plugin_path,dirs[i]);
@@ -3298,8 +3301,8 @@ void weed_load_all (void) {
     // get 1 level of subdirs
     for (subdir_idx=0;subdir_idx<listlen;subdir_idx++) {
       threaded_dialog_spin();
-      subdir_name=g_list_nth_data(weed_plugin_list,subdir_idx);
-      subdir_path=g_strdup_printf("%s/%s",dirs[i],subdir_name);
+      subdir_name=(gchar *)g_list_nth_data(weed_plugin_list,subdir_idx);
+      subdir_path=g_build_filename(dirs[i],subdir_name,NULL);
       if (!g_file_test(subdir_path, G_FILE_TEST_IS_DIR)||!strcmp(subdir_name,"icons")||!strcmp(subdir_name,"data")) {
 	g_free(subdir_path);
 	continue;
@@ -3307,8 +3310,8 @@ void weed_load_all (void) {
       weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,"so");
       
       for (plugin_idx=0;plugin_idx<g_list_length(weed_plugin_sublist);plugin_idx++) {
-	plugin_name=g_list_nth_data(weed_plugin_sublist,plugin_idx);
-	plugin_path=g_strdup_printf("%s/%s",subdir_path,plugin_name);
+	plugin_name=(gchar *)g_list_nth_data(weed_plugin_sublist,plugin_idx);
+	plugin_path=g_build_filename(subdir_path,plugin_name,NULL);
 	load_weed_plugin(plugin_name,plugin_path,subdir_path);
 	g_free(plugin_path);
       }
@@ -3456,7 +3459,7 @@ void weed_unload_all(void) {
     handle=weed_get_voidptr_value(plugin_info,"handle",&error);
 
     if (handle!=NULL&&prefs->startup_phase==0) {
-      if ((desetup_fn=dlsym (handle,"weed_desetup"))!=NULL) {
+      if ((desetup_fn=(weed_desetup_f)dlsym (handle,"weed_desetup"))!=NULL) {
 	gchar *cwd=cd_to_plugin_dir(filter);
 	// call weed_desetup()
 	(*desetup_fn)();
@@ -3616,7 +3619,7 @@ void weed_generator_end (weed_plant_t *inst) {
   gboolean is_bg=FALSE;
   gint current_file=mainw->current_file,pre_src_file=mainw->pre_src_file;
   gboolean clip_switched=mainw->clip_switched;
-  gint wts=mainw->whentostop;
+  lives_whentostop_t wts=mainw->whentostop;
 
   if (inst==NULL) {
     g_printerr("  WARNING: inst was NULL !    ");
@@ -3717,7 +3720,7 @@ static weed_plant_t **weed_channels_create (weed_plant_t *filter, gboolean in) {
     else ccount+=1;
   }
 
-  channels=g_malloc((ccount+1)*sizeof(weed_plant_t *));
+  channels=(weed_plant_t **)g_malloc((ccount+1)*sizeof(weed_plant_t *));
 
   ccount=0;
 
@@ -3770,7 +3773,7 @@ weed_plant_t **weed_params_create (weed_plant_t *filter, gboolean in) {
   if (in) paramtmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
   else paramtmpls=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
 
-  params=g_malloc((num_params+1)*sizeof(weed_plant_t *));
+  params=(weed_plant_t **)g_malloc((num_params+1)*sizeof(weed_plant_t *));
 
   for (i=0;i<num_params;i++) {
     params[i]=weed_plant_new(WEED_PLANT_PARAMETER);
@@ -3969,7 +3972,7 @@ gboolean weed_init_effect(int hotkey) {
 
   if (inc_count==0&&hotkey!=fg_generator_key&&mainw->num_tr_applied>0&&mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR&&inc_count==0) {
     if (bg_gen_to_start==-1) {
-      weed_generator_end(mainw->files[mainw->blend_file]->ext_src);
+      weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
     }
     bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
     mainw->blend_file=-1;
@@ -3982,7 +3985,7 @@ gboolean weed_init_effect(int hotkey) {
     }
     else {
       if (inc_count==0&&mainw->whentostop==STOP_ON_VID_END) mainw->whentostop=NEVER_STOP;
-      weed_generator_end (cfile->ext_src);
+      weed_generator_end ((weed_plant_t *)cfile->ext_src);
       fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
       if (mainw->current_file>-1&&(cfile->achans==0||cfile->frames>0)) {
 	// in case we switched to bg clip, and bg clip was gen
@@ -4018,7 +4021,7 @@ gboolean weed_init_effect(int hotkey) {
   // if the param window is already open, use instance from there
   if (fx_dialog[1]!=NULL&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"key"))==hotkey&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"mode"))==key_modes[hotkey]) {
     lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
-    new_instance=rfx->source;
+    new_instance=(weed_plant_t *)rfx->source;
     weed_instance_ref(new_instance);
     redraw_pwindow(hotkey,key_modes[hotkey]);
   }
@@ -4122,7 +4125,7 @@ gboolean weed_init_effect(int hotkey) {
     // place this synchronous with the preceding frame
     event_list=append_filter_init_event (mainw->event_list,mainw->currticks,key_to_fx[hotkey][key_modes[hotkey]],-1);
     if (mainw->event_list==NULL) mainw->event_list=event_list;
-    init_events[hotkey]=(void *)get_last_event(mainw->event_list);
+    init_events[hotkey]=get_last_event(mainw->event_list);
     ntracks=weed_leaf_num_elements(init_events[hotkey],"in_tracks");
     pchains[hotkey]=filter_init_add_pchanges(mainw->event_list,new_instance,init_events[hotkey],ntracks);
     create_filter_map(); // we create filter_map event_t * array with ordered effects
@@ -4230,7 +4233,7 @@ void weed_deinit_effect(int hotkey) {
        if (bg_gen_to_start!=-1) bg_gen_to_start=-1;
       if (mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR) {
 	// all transitions off, so end the bg generator
-	weed_generator_end (mainw->files[mainw->blend_file]->ext_src);
+	weed_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
       }
       mainw->blend_file=-1;
     }
@@ -4405,7 +4408,7 @@ gboolean weed_generator_start (weed_plant_t *inst) {
   if (mainw->playing_file==-1) mainw->pre_src_file=mainw->current_file;
 
   if (old_file!=-1&&mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->num_tr_applied>0&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR) {
-    weed_generator_end(mainw->files[mainw->blend_file]->ext_src);
+    weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
     mainw->current_file=mainw->blend_file;
   }
 
@@ -4949,6 +4952,7 @@ char *get_weed_display_string (weed_plant_t *inst, int pnum) {
   weed_plant_t *param=weed_inst_in_param(inst,pnum,FALSE);
   weed_plant_t *ptmpl,*gui,*filter;
   int error;
+  weed_display_f *display_func_ptr;
   weed_display_f display_func;
   gchar *cwd;
 
@@ -4959,9 +4963,11 @@ char *get_weed_display_string (weed_plant_t *inst, int pnum) {
   gui=weed_get_plantptr_value(ptmpl,"gui",&error);
   if (!weed_plant_has_leaf(gui,"display_func")) return NULL;
 
-  display_func=weed_get_voidptr_value(gui,"display_func",&error);
+  display_func_ptr=(weed_display_f *)weed_get_voidptr_value(gui,"display_func",&error);
+  display_func=(weed_display_f)*display_func_ptr;
 
-  weed_leaf_set_flags(gui,"display_value",(weed_leaf_get_flags(gui,"display_value")|WEED_LEAF_READONLY_PLUGIN)^WEED_LEAF_READONLY_PLUGIN);
+  weed_leaf_set_flags(gui,"display_value",(weed_leaf_get_flags(gui,"display_value")|
+					   WEED_LEAF_READONLY_PLUGIN)^WEED_LEAF_READONLY_PLUGIN);
   filter=weed_get_plantptr_value(inst,"filter_class",&error);
   cwd=cd_to_plugin_dir(filter);
   (*display_func)(param);
@@ -5523,7 +5529,7 @@ gboolean rte_key_setmode (gint key, gint newmode) {
   weed_plant_t *inst;
   gint oldmode;
   gint blend_file;
-  gshort whentostop=mainw->whentostop;
+  lives_whentostop_t whentostop=mainw->whentostop;
   gboolean was_started=FALSE;
   gint real_key;
 
@@ -5764,7 +5770,7 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
   case WEED_HINT_INTEGER:
     new_defi=weed_get_int_value(paramtmpl,"new_default",&error);
     valis=weed_get_int_array(param,"value",&error);
-    nvalis=g_malloc((index+1)*sizint);
+    nvalis=(int *)g_malloc((index+1)*sizint);
     for (i=0;i<=index;i++) {
       if (i<num_vals) nvalis[i]=valis[i];
       else nvalis[i]=new_defi;
@@ -5776,7 +5782,7 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
   case WEED_HINT_FLOAT:
     new_defd=weed_get_double_value(paramtmpl,"new_default",&error);
     valds=weed_get_double_array(param,"value",&error);
-    nvalds=g_malloc((index+1)*sizdbl);
+    nvalds=(double *)g_malloc((index+1)*sizdbl);
     for (i=0;i<=index;i++) {
       if (i<num_vals) nvalds[i]=valds[i];
       else nvalds[i]=new_defd;
@@ -5789,7 +5795,7 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
   case WEED_HINT_SWITCH:
     new_defi=weed_get_boolean_value(paramtmpl,"new_default",&error);
     valis=weed_get_boolean_array(param,"value",&error);
-    nvalis=g_malloc((index+1)*sizint);
+    nvalis=(int *)g_malloc((index+1)*sizint);
     for (i=0;i<=index;i++) {
       if (i<num_vals) nvalis[i]=valis[i];
       else nvalis[i]=new_defi;
@@ -5801,7 +5807,7 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
   case WEED_HINT_TEXT:
     new_defs=weed_get_string_value(paramtmpl,"new_default",&error);
     valss=weed_get_string_array(param,"value",&error);
-    nvalss=g_malloc((index+1)*sizeof(gchar *));
+    nvalss=(gchar **)g_malloc((index+1)*sizeof(gchar *));
     for (i=0;i<=index;i++) {
       if (i<num_vals) {
 	nvalss[i]=g_strdup(valss[i]);
@@ -5827,12 +5833,12 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
       if (weed_leaf_seed_type(paramtmpl,"new_default")==WEED_SEED_INT) {
 	colsis=weed_get_int_array(param,"value",&error);
 	if (weed_leaf_num_elements(paramtmpl,"new_default")==1) {
-	  coli=weed_malloc(3*4);
+	  coli=(int *)weed_malloc(3*4);
 	  coli[0]=coli[1]=coli[2]=weed_get_int_value(paramtmpl,"new_default",&error);
 	}
 	else coli=weed_get_int_array(paramtmpl,"new_default",&error);
 	valis=weed_get_int_array(param,"value",&error);
-	nvalis=g_malloc((index+3)*4);
+	nvalis=(int *)g_malloc((index+3)*4);
 	for (i=0;i<=index;i+=3) {
 	  if (i<num_vals) {
 	    nvalis[i]=valis[i];
@@ -5853,12 +5859,12 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
       else {
 	colsds=weed_get_double_array(param,"value",&error);
 	if (weed_leaf_num_elements(paramtmpl,"new_default")==1) {
-	  cold=weed_malloc(3*sizdbl);
+	  cold=(double *)weed_malloc(3*sizdbl);
 	  cold[0]=cold[1]=cold[2]=weed_get_double_value(paramtmpl,"new_default",&error);
 	}
 	else cold=weed_get_double_array(paramtmpl,"new_default",&error);
 	valds=weed_get_double_array(param,"value",&error);
-	nvalds=g_malloc((index+3)*sizdbl);
+	nvalds=(double *)g_malloc((index+3)*sizdbl);
 	for (i=0;i<=index;i+=3) {
 	  if (i<num_vals) {
 	    nvalds[i]=valds[i];
@@ -5893,22 +5899,22 @@ static weed_plant_t **void_ptrs_to_plant_array(weed_plant_t *tmpl, void *pchain,
   if (num==-1) {
     // count pchain entries
     num=0;
-    pchange=pchain;
+    pchange=(weed_plant_t *)pchain;
     while (pchange!=NULL) {
-      pchange=weed_get_voidptr_value(pchange,"next_change",&error);
+      pchange=(weed_plant_t *)weed_get_voidptr_value(pchange,"next_change",&error);
       num++;
     }
   }
 
-  param_array=g_malloc((num+1)*sizeof(weed_plant_t *));
-  pchange=pchain;
+  param_array=(weed_plant_t **)g_malloc((num+1)*sizeof(weed_plant_t *));
+  pchange=(weed_plant_t *)pchain;
   while (pchange!=NULL) {
     param_array[i]=weed_plant_new(WEED_PLANT_PARAMETER);
     weed_set_plantptr_value(param_array[i],"template",tmpl);
     weed_leaf_copy(param_array[i],"timecode",pchange,"timecode");
     weed_leaf_copy(param_array[i],"value",pchange,"value");
     weed_add_plant_flags(param_array[i],WEED_LEAF_READONLY_PLUGIN);
-    pchange=weed_get_voidptr_value(pchange,"next_change",&error);
+    pchange=(weed_plant_t *)weed_get_voidptr_value(pchange,"next_change",&error);
     i++;
   }
   param_array[i]=NULL;
@@ -6026,7 +6032,7 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
   // return FALSE if param has no "value" - this can happen during realtime audio processing, if the effect is inited, but no "value" has been set yet
   weed_plant_t **param_array;
   int error,j;
-  weed_plant_t *pchange=pchain,*last_pchange=NULL;
+  weed_plant_t *pchange=(weed_plant_t *)pchain,*last_pchange=NULL;
   weed_plant_t *wtmpl;
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   weed_timecode_t tc_diff=0,tc_diff2;
@@ -6059,7 +6065,7 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 
   while (pchange!=NULL&&get_event_timecode(pchange)<=tc) {
     last_pchange=pchange;
-    pchange=weed_get_voidptr_value(pchange,"next_change",&error);
+    pchange=(weed_plant_t *)weed_get_voidptr_value(pchange,"next_change",&error);
   }
 
   // we need to single thread here, because it's possible to have a conflict - if the audio and video threads are
@@ -6071,9 +6077,11 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
   if (weed_plant_has_leaf(wtmpl,"interpolate_func")) {
     gboolean needs_more;
     gboolean more_available;
+    weed_interpolate_f *interpolate_func_ptr;
     weed_interpolate_f interpolate_func;
     weed_plant_t *calc_param=weed_plant_new(WEED_PLANT_PARAMETER),*filter;
     gchar *cwd;
+
 
     // setup our calc_param (return result)
     weed_set_plantptr_value(calc_param,"template",wtmpl);
@@ -6098,7 +6106,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
     }
     
     weed_add_plant_flags(calc_param,WEED_LEAF_READONLY_PLUGIN);
-    interpolate_func=weed_get_voidptr_value(wtmpl,"interpolate_func",&error);
+    interpolate_func_ptr=(weed_interpolate_f *)weed_get_voidptr_value(wtmpl,"interpolate_func",&error);
+    interpolate_func=(weed_interpolate_f)*interpolate_func_ptr;
     filter=weed_get_plantptr_value(inst,"filter_class",&error);
     cwd=cd_to_plugin_dir(filter);
     needs_more=(*interpolate_func)(param_array,calc_param);
@@ -6130,7 +6139,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 
   num_values=weed_leaf_num_elements(param,"value");
 
-  if ((num_pvals=weed_leaf_num_elements(pchain,"value"))>num_values) num_values=num_pvals; // init a multivalued param
+  if ((num_pvals=weed_leaf_num_elements((weed_plant_t *)pchain,"value"))>num_values) 
+    num_values=num_pvals; // init a multivalued param
 
   lpc=(void **)g_malloc(num_values*sizeof(void *));
   npc=(void **)g_malloc(num_values*sizeof(void *));
@@ -6140,7 +6150,7 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
     npc[0]=pchange;
   }
   else {
-    pchange=pchain;
+    pchange=(weed_plant_t *)pchain;
     
     for (j=0;j<num_values;j++) npc[j]=lpc[j]=NULL;
 
@@ -6168,7 +6178,7 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	  break;
 	}
       }
-      pchange=weed_get_voidptr_value(pchange,"next_change",&error);
+      pchange=(weed_plant_t *)weed_get_voidptr_value(pchange,"next_change",&error);
       if (ign!=NULL) weed_free(ign);
     }
   }
@@ -6177,7 +6187,7 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
   hint=weed_get_int_value(wtmpl,"hint",&error);
   switch (hint) {
   case WEED_HINT_FLOAT:
-    valds=g_malloc(num_values*(sizeof(double)));
+    valds=(double *)g_malloc(num_values*(sizeof(double)));
     break;
   case WEED_HINT_COLOR:
     cspace=weed_get_int_value(wtmpl,"colorspace",&error);
@@ -6185,17 +6195,17 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
     case WEED_COLORSPACE_RGB:
       if (num_values%3!=0) return TRUE;
       if (weed_leaf_seed_type(wtmpl,"default")==WEED_SEED_INT) {
-	valis=g_malloc(num_values*sizint);
+	valis=(int *)g_malloc(num_values*sizint);
       }
       else {
-	valds=g_malloc(num_values*(sizeof(double)));
+	valds=(double *)g_malloc(num_values*(sizeof(double)));
       }
       break;
     }
     break;
   case WEED_HINT_SWITCH:
   case WEED_HINT_INTEGER:
-    valis=g_malloc(num_values*sizint);
+    valis=(int *)g_malloc(num_values*sizint);
     break;
   }
 
@@ -6204,8 +6214,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
   for (j=0;j<num_values;j++) {
     // must interpolate - we use linear interpolation
     if (lpc[j]==NULL&&npc[j]==NULL) continue;
-    if (lpc[j]!=NULL&&npc[j]!=NULL) tc_diff=weed_get_int64_value(npc[j],"timecode",&error)-
-				      weed_get_int64_value(lpc[j],"timecode",&error);
+    if (lpc[j]!=NULL&&npc[j]!=NULL) tc_diff=weed_get_int64_value((weed_plant_t *)npc[j],"timecode",&error)-
+				      weed_get_int64_value((weed_plant_t *)lpc[j],"timecode",&error);
     switch (hint) {
     case WEED_HINT_FLOAT:
       if (lpc[j]==NULL) {
@@ -6215,9 +6225,9 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
       }
       if (npc[j]==NULL) {
 	// after last change
-	xnum=weed_leaf_num_elements(lpc[j],"value");
+	xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	if (xnum>j) {
-	  nvalds=weed_get_double_array(lpc[j],"value",&error);
+	  nvalds=weed_get_double_array((weed_plant_t *)lpc[j],"value",&error);
 	  valds[j]=nvalds[j];
 	  weed_free(nvalds);
 	}
@@ -6225,13 +6235,14 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	continue;
       }
           
-      next_valuesd=weed_get_double_array(npc[j],"value",&error);
-      last_valuesd=weed_get_double_array(lpc[j],"value",&error);
-      xnum=weed_leaf_num_elements(lpc[j],"value");
+      next_valuesd=weed_get_double_array((weed_plant_t *)npc[j],"value",&error);
+      last_valuesd=weed_get_double_array((weed_plant_t *)lpc[j],"value",&error);
+      xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
       if (xnum>j) last_valued=last_valuesd[j];
       else last_valued=get_default_element_double(param,j,1,0);
       
-      valds[j]=last_valued+(gdouble)(next_valuesd[j]-last_valued)/(gdouble)(tc_diff/U_SEC)*(gdouble)((tc-weed_get_int64_value(lpc[j],"timecode",&error))/U_SEC);
+      valds[j]=last_valued+(gdouble)(next_valuesd[j]-last_valued)/(gdouble)(tc_diff/U_SEC)*
+	(gdouble)((tc-weed_get_int64_value((weed_plant_t *)lpc[j],"timecode",&error))/U_SEC);
 
       weed_free(last_valuesd);
       weed_free(next_valuesd);
@@ -6253,9 +6264,9 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	  }
 	  if (npc[j]==NULL) {
 	    // after last change
-	    xnum=weed_leaf_num_elements(lpc[j],"value");
+	    xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	    if (xnum>k) {
-	      nvalis=weed_get_int_array(lpc[j],"value",&error);
+	      nvalis=weed_get_int_array((weed_plant_t *)lpc[j],"value",&error);
 	      valis[k]=nvalis[k];
 	      valis[k+1]=nvalis[k+1];
 	      valis[k+2]=nvalis[k+2];
@@ -6270,9 +6281,9 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	    continue;
 	  }
 	  
-	  next_valuesi=weed_get_int_array(npc[j],"value",&error);
-	  last_valuesi=weed_get_int_array(lpc[j],"value",&error);
-	  xnum=weed_leaf_num_elements(lpc[j],"value");
+	  next_valuesi=weed_get_int_array((weed_plant_t *)npc[j],"value",&error);
+	  last_valuesi=weed_get_int_array((weed_plant_t *)lpc[j],"value",&error);
+	  xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	  if (xnum>k) {
 	    last_valueir=last_valuesi[k];
 	    last_valueig=last_valuesi[k+1];
@@ -6286,7 +6297,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 
 	  if (next_valuesi==NULL) continue; // can happen if we recorded a param change
 
-	  valis[k]=last_valueir+(next_valuesi[k]-last_valueir)/(tc_diff/U_SEC)*((tc_diff2=(tc-weed_get_int64_value(lpc[j],"timecode",&error)))/U_SEC)+.5;
+	  valis[k]=last_valueir+(next_valuesi[k]-last_valueir)/(tc_diff/U_SEC)*
+	    ((tc_diff2=(tc-weed_get_int64_value((weed_plant_t *)lpc[j],"timecode",&error)))/U_SEC)+.5;
 	  valis[k+1]=last_valueig+(next_valuesi[k+1]-last_valueig)/(tc_diff/U_SEC)*(tc_diff2/U_SEC)+.5;
 	  valis[k+2]=last_valueib+(next_valuesi[k+2]-last_valueib)/(tc_diff/U_SEC)*(tc_diff2/U_SEC)+.5;
 	  
@@ -6304,9 +6316,9 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	  }
 	  if (npc[j]==NULL) {
 	    // after last change
-	    xnum=weed_leaf_num_elements(lpc[j],"value");
+	    xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	    if (xnum>k) {
-	      nvalds=weed_get_double_array(lpc[j],"value",&error);
+	      nvalds=weed_get_double_array((weed_plant_t *)lpc[j],"value",&error);
 	      valds[k]=nvalds[k];
 	      valds[k+1]=nvalds[k+1];
 	      valds[k+2]=nvalds[k+2];
@@ -6321,9 +6333,9 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	    continue;
 	  }
 	  
-	  next_valuesd=weed_get_double_array(npc[j],"value",&error);
-	  last_valuesd=weed_get_double_array(lpc[j],"value",&error);
-	  xnum=weed_leaf_num_elements(lpc[j],"value");
+	  next_valuesd=weed_get_double_array((weed_plant_t *)npc[j],"value",&error);
+	  last_valuesd=weed_get_double_array((weed_plant_t *)lpc[j],"value",&error);
+	  xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	  if (xnum>k) {
 	    last_valuedr=last_valuesd[k];
 	    last_valuedg=last_valuesd[k+1];
@@ -6334,7 +6346,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	    last_valuedg=get_default_element_double(param,j,3,1);
 	    last_valuedb=get_default_element_double(param,j,3,2);
 	  }
-	  valds[k]=last_valuedr+(next_valuesd[k]-last_valuedr)/(tc_diff/U_SEC)*((tc_diff2=(tc-weed_get_int64_value(lpc[j],"timecode",&error)))/U_SEC);
+	  valds[k]=last_valuedr+(next_valuesd[k]-last_valuedr)/(tc_diff/U_SEC)*
+	    ((tc_diff2=(tc-weed_get_int64_value((weed_plant_t *)lpc[j],"timecode",&error)))/U_SEC);
 	  valds[k+1]=last_valuedg+(next_valuesd[k+1]-last_valuedg)/(tc_diff/U_SEC)*(tc_diff2/U_SEC)+.5;
 	  valds[k+2]=last_valuedb+(next_valuesd[k+2]-last_valuedb)/(tc_diff/U_SEC)*(tc_diff2/U_SEC)+.5;
 
@@ -6351,17 +6364,17 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
       if (weed_plant_has_leaf(wtmpl,"gui")) gui=weed_get_plantptr_value(wtmpl,"gui",&error);
       if (gui!=NULL&&weed_plant_has_leaf(gui,"choices")) {
 	// no interpolation
-	if (npc[j]!=NULL&&get_event_timecode(npc[j])==tc) {
-	  nvalis=weed_get_int_array(npc[j],"value",&error);
+	if (npc[j]!=NULL&&get_event_timecode((weed_plant_t *)npc[j])==tc) {
+	  nvalis=weed_get_int_array((weed_plant_t *)npc[j],"value",&error);
 	  valis[j]=nvalis[j];
 	  weed_free(nvalis);
 	  continue;
 	}
 	else {
 	  // use last_pchange value
-	  xnum=weed_leaf_num_elements(lpc[j],"value");
+	  xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	  if (xnum>j) {
-	    nvalis=weed_get_int_array(lpc[j],"value",&error);
+	    nvalis=weed_get_int_array((weed_plant_t *)lpc[j],"value",&error);
 	    valis[j]=nvalis[j];
 	    weed_free(nvalis);
 	  }
@@ -6377,9 +6390,9 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	}
 	if (npc[j]==NULL) {
 	  // after last change
-	  xnum=weed_leaf_num_elements(lpc[j],"value");
+	  xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	  if (xnum>j) {
-	    nvalis=weed_get_int_array(lpc[j],"value",&error);
+	    nvalis=weed_get_int_array((weed_plant_t *)lpc[j],"value",&error);
 	    valis[j]=nvalis[j];
 	    weed_free(nvalis);
 	  }
@@ -6387,13 +6400,14 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	  continue;
 	}
 	
-	next_valuesi=weed_get_int_array(npc[j],"value",&error);
-	last_valuesi=weed_get_int_array(lpc[j],"value",&error);
-	xnum=weed_leaf_num_elements(lpc[j],"value");
+	next_valuesi=weed_get_int_array((weed_plant_t *)npc[j],"value",&error);
+	last_valuesi=weed_get_int_array((weed_plant_t *)lpc[j],"value",&error);
+	xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	if (xnum>j) last_valuei=last_valuesi[j];
 	else last_valuei=get_default_element_int(param,j,1,0);
 	
-	valis[j]=last_valuei+(next_valuesi[j]-last_valuei)/(tc_diff/U_SEC)*((tc-weed_get_int64_value(lpc[j],"timecode",&error))/U_SEC)+.5;
+	valis[j]=last_valuei+(next_valuesi[j]-last_valuei)/(tc_diff/U_SEC)*
+	  ((tc-weed_get_int64_value((weed_plant_t *)lpc[j],"timecode",&error))/U_SEC)+.5;
 
 	weed_free(last_valuesi);
 	weed_free(next_valuesi);
@@ -6401,17 +6415,17 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
       }
     case WEED_HINT_SWITCH:
       // no interpolation
-      if (npc[j]!=NULL&&get_event_timecode(npc[j])==tc) {
-	nvalis=weed_get_boolean_array(npc[j],"value",&error);
+      if (npc[j]!=NULL&&get_event_timecode((weed_plant_t *)npc[j])==tc) {
+	nvalis=weed_get_boolean_array((weed_plant_t *)npc[j],"value",&error);
 	valis[j]=nvalis[j];
 	weed_free(nvalis);
 	continue;
       }
       else {
 	// use last_pchange value
-	xnum=weed_leaf_num_elements(lpc[j],"value");
+	xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	if (xnum>j) {
-	  nvalis=weed_get_boolean_array(lpc[j],"value",&error);
+	  nvalis=weed_get_boolean_array((weed_plant_t *)lpc[j],"value",&error);
 	  valis[j]=nvalis[j];
 	  weed_free(nvalis);
 	}
@@ -6423,8 +6437,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
       // no interpolation
       valss=weed_get_string_array(param,"value",&error);
 
-      if (npc[j]!=NULL&&get_event_timecode(npc[j])==tc) {
-	nvalss=weed_get_string_array(npc[j],"value",&error);
+      if (npc[j]!=NULL&&get_event_timecode((weed_plant_t *)npc[j])==tc) {
+	nvalss=weed_get_string_array((weed_plant_t *)npc[j],"value",&error);
 	valss[j]=g_strdup(nvalss[j]);
 	for (k=0;k<num_values;k++) weed_free(nvalss[k]);
 	weed_free(nvalss);
@@ -6435,9 +6449,9 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
       }
       else {
 	// use last_pchange value
-	xnum=weed_leaf_num_elements(lpc[j],"value");
+	xnum=weed_leaf_num_elements((weed_plant_t *)lpc[j],"value");
 	if (xnum>j) {
-	  nvalss=weed_get_string_array(lpc[j],"value",&error);
+	  nvalss=weed_get_string_array((weed_plant_t *)lpc[j],"value",&error);
 	  valss[j]=g_strdup(nvalss[j]);
 	  for (k=0;k<num_values;k++) weed_free(nvalss[k]);
 	  weed_free(nvalss);
@@ -6581,7 +6595,7 @@ int weed_get_idx_for_hashname (const gchar *hashname, gboolean fullname) {
 
 
 
-static void weed_leaf_serialise (int fd, weed_plant_t *plant, char *key, gboolean write_all, unsigned char **mem) {
+static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, gboolean write_all, unsigned char **mem) {
   void *value;
   guint32 vlen;
   int st,ne;
@@ -6680,7 +6694,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 
 
 
- static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, gchar *key, unsigned char **mem, gboolean check_key) {
+ static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, unsigned char **mem, gboolean check_key) {
   // if plant is NULL, returns type
   // "host_default" sets key; otherwise NULL
    // check_key set to TRUE - check that we read the correct key
@@ -6715,7 +6729,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 
     if (len>65535) return -10;
   
-    mykey=g_try_malloc((size_t)len+1);
+    mykey=(gchar *)g_try_malloc((size_t)len+1);
     if (mykey==NULL) return -5;
 
     if (mem==NULL) {
@@ -6780,7 +6794,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 
 
 
-  if (ne>0) values=g_malloc(ne*sizeof(void *));
+  if (ne>0) values=(void **)g_malloc(ne*sizeof(void *));
   else values=NULL;
 
   if (check_key&&!strcmp(key,"type")) {
@@ -6846,19 +6860,19 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
       case WEED_SEED_INT:
 	// fallthrough
       case WEED_SEED_BOOLEAN:
-	ints=g_malloc(ne*4);
+	ints=(int *)g_malloc(ne*4);
 	for (j=0;j<ne;j++) ints[j]=*(int *)values[j];
 	weed_leaf_set (plant, key, st, ne, (void *)ints);
 	g_free(ints);
 	break;
       case WEED_SEED_DOUBLE:
-	dubs=g_malloc(ne*sizdbl);
+	dubs=(double *)g_malloc(ne*sizdbl);
 	for (j=0;j<ne;j++) dubs[j]=*(double *)values[j];
 	weed_leaf_set (plant, key, st, ne, (void *)dubs);
 	g_free(dubs);
 	break;
       case WEED_SEED_INT64:
-	int64s=g_malloc(ne*8);
+	int64s=(int64_t *)g_malloc(ne*8);
 	for (j=0;j<ne;j++) int64s[j]=*(int64_t *)values[j];
 	weed_leaf_set (plant, key, st, ne, (void *)int64s);
 	g_free(int64s);
@@ -6868,7 +6882,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 	break;
       default:
 	if (plant!=NULL) {
-	  void **voids=g_malloc(ne*sizeof(void *));
+	  void **voids=(void **)g_malloc(ne*sizeof(void *));
 	  for (j=0;j<ne;j++) voids[j]=*(void **)values[j];
 	  weed_leaf_set (plant, key, st, ne, (void *)voids);
 	  g_free(voids);
@@ -6986,7 +7000,7 @@ gboolean write_filter_defaults (int fd, int idx) {
 
 gboolean read_filter_defaults(int fd) {
   void *buf;
-  size_t vlen;
+  ssize_t vlen;
   int i,error,pnum;
   weed_plant_t *filter,**ptmpls;
   int num_params=0;
@@ -7018,7 +7032,7 @@ gboolean read_filter_defaults(int fd) {
 
     memset((char *)buf+vlen,0,1);
     for (i=0;i<num_weed_filters;i++) {
-      if (!strcmp(buf,(tmp=make_weed_hashname(i,TRUE)))) {
+      if (!strcmp((gchar *)buf,(tmp=make_weed_hashname(i,TRUE)))) {
 	g_free(tmp);
 	break;
       }
@@ -7138,7 +7152,7 @@ gboolean write_generator_sizes (int fd, int idx) {
 
 
 gboolean read_generator_sizes(int fd) {
-  void *buf;
+  gchar *buf;
   size_t bytes;
   size_t vlen;
   int i,error;
@@ -7168,7 +7182,7 @@ gboolean read_generator_sizes(int fd) {
       if (vlen>65535) return FALSE;
     }
 
-    buf=g_malloc(vlen+1);
+    buf=(gchar *)g_malloc(vlen+1);
     bytes=lives_read(fd,buf,vlen,TRUE);
     if (bytes<vlen) {
       break;
@@ -7212,7 +7226,7 @@ gboolean read_generator_sizes(int fd) {
     if (ctmpls!=NULL) weed_free(ctmpls);
 
     if (mainw->read_failed) break;
-    buf=g_malloc(strlen("\n"));
+    buf=(gchar *)g_malloc(strlen("\n"));
     lives_read(fd,buf,strlen("\n"),TRUE);
     g_free(buf);
 
@@ -7227,11 +7241,11 @@ gboolean read_generator_sizes(int fd) {
 
 void reset_frame_and_clip_index(void) {
   if (mainw->clip_index==NULL) {
-    mainw->clip_index=weed_malloc(sizint);
+    mainw->clip_index=(gint *)weed_malloc(sizint);
     mainw->clip_index[0]=-1;
     }
   if (mainw->frame_index==NULL) {
-    mainw->frame_index=weed_malloc(sizint);
+    mainw->frame_index=(gint *)weed_malloc(sizint);
     mainw->frame_index[0]=0;
   }
 }
@@ -7264,7 +7278,7 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
     xnparams=weed_leaf_num_elements(filter,"in_parameter_templates");
   }
 
-  key_defs=g_malloc(nparams*sizeof(weed_plant_t *));
+  key_defs=(weed_plant_t **)g_malloc(nparams*sizeof(weed_plant_t *));
   for (i=0;i<nparams;i++) {
     key_defs[i]=NULL;
   }
@@ -7289,7 +7303,7 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
 	goto err123;
       }
       if (nigns>0) {
-	int *igns=g_malloc(nigns*4);
+	int *igns=(int *)g_malloc(nigns*4);
 	for (j=0;j<nigns;j++) {
 	  bytes=lives_read_le(fd,&igns[j],4,TRUE);
 	  if (bytes<4) {
@@ -7316,7 +7330,7 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
 	  goto err123;
 	}
 	if (nigns>0) {
-	  int *igns=g_malloc(nigns*4);
+	  int *igns=(int *)g_malloc(nigns*4);
 	  for (j=0;j<nigns;j++) {
 	    bytes=lives_read_le(fd,&igns[j],4,TRUE);
 	    if (bytes<4) {
@@ -7439,7 +7453,7 @@ void set_key_defaults(weed_plant_t *inst, gint key, gint mode) {
 
   params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
-  key_defs=g_malloc(nparams*sizeof(weed_plant_t *));
+  key_defs=(weed_plant_t **)g_malloc(nparams*sizeof(weed_plant_t *));
 
   while (i<nparams) {
     key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);

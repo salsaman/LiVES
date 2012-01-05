@@ -2018,7 +2018,7 @@ _prefsw *create_prefs_dialog (void) {
     gtk_dialog_set_has_separator(GTK_DIALOG(prefsw->prefs_dialog), FALSE);
   }
   // Get dialog's vbox and show it
-  dialog_vbox_main = gtk_dialog_get_content_area(GTK_DIALOG(prefsw->prefs_dialog));
+  dialog_vbox_main = lives_dialog_get_content_area(GTK_DIALOG(prefsw->prefs_dialog));
   gtk_widget_show (dialog_vbox_main);
   // Set geometry hints for dialog's vbox
   // This prevents shrinking of dialog window in some cases

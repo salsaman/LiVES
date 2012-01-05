@@ -107,7 +107,7 @@ typedef struct {
 #define DEF_VPP_HSIZE 320.
 #define DEF_VPP_VSIZE 240.
 
-_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean using);
+_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_use);
 void vid_playback_plugin_exit (void);
 void close_vid_playback_plugin(_vid_playback_plugin *);
 gint64 get_best_audio(_vid_playback_plugin *);
@@ -278,7 +278,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname);
 void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
 
-LIVES_INLINE gboolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
+gboolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
 
 
 
@@ -342,8 +342,8 @@ typedef struct {
   gchar *label;
   gint flags;
   gboolean use_mnemonic;
-  gpointer interp_func;
-  gpointer display_func;
+  fn_ptr interp_func;
+  fn_ptr display_func;
   gint hidden;
 
   // reason(s) for hiding [bitmap]

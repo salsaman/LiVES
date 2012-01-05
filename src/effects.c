@@ -293,7 +293,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     }
     else {
       int error;
-      weed_plant_t *first_out=get_enabled_channel(rfx->source,0,FALSE);
+      weed_plant_t *first_out=get_enabled_channel((weed_plant_t *)rfx->source,0,FALSE);
       weed_plant_t *first_ot=weed_get_plantptr_value(first_out,"template",&error);
       cfile->hsize=weed_get_int_value(first_ot,"host_width",&error);
       cfile->vsize=weed_get_int_value(first_ot,"host_height",&error);
@@ -495,7 +495,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   int weed_error;
   int layer_palette;
   int retval;
-  static int write_error;
+  static lives_render_error_t write_error;
 
   // this is called periodically from do_processing_dialog for internal effects
 
@@ -507,7 +507,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
       if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
       cfile->frame_index_back=frame_index_copy(cfile->frame_index,cfile->frames);
     }
-    write_error=0;
+    write_error=LIVES_RENDER_ERROR_NONE;
     return LIVES_RENDER_READY;
   }
 
@@ -602,7 +602,7 @@ gboolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx) {
   // 1 - resize (using weed filter)
   gboolean retval;
 
-  if (type==1) resize_instance=rfx->source;
+  if (type==1) resize_instance=(weed_plant_t *)rfx->source;
   else resize_instance=NULL;
 
   mainw->internal_messaging=TRUE;
@@ -813,7 +813,7 @@ gboolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, 
 
 
 gboolean rte_on_off_callback_hook (GtkToggleButton *button, gpointer user_data) {
-  rte_on_off_callback (NULL, NULL, 0, 0, user_data);
+  rte_on_off_callback (NULL, NULL, 0, (GdkModifierType)0, user_data);
   return TRUE;
 }
 
@@ -843,7 +843,7 @@ gboolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 gboolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data) {
   if (!gtk_toggle_button_get_active(button)) return TRUE;
   mainw->last_grabable_effect=GPOINTER_TO_INT(user_data);
-  grabkeys_callback (NULL, NULL, 0, 0, user_data);
+  grabkeys_callback (NULL, NULL, 0, (GdkModifierType)0, user_data);
   return TRUE;
 }
 

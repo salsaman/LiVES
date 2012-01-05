@@ -1029,10 +1029,12 @@ static void lives_init(_ign_opts *ign_opts) {
 
       // try to get randomness from /dev/urandom
       randfd=open("/dev/urandom",O_RDONLY);
-      if (randfd>-1) {
+ 
+     if (randfd>-1) {
 	randres=read(randfd,&rseed,sizint);
 	close(randfd);
       }
+
       if (randres!=sizint) {
 	gettimeofday(&tv,NULL);
 	rseed=tv.tv_sec+tv.tv_usec;
@@ -1043,6 +1045,7 @@ static void lives_init(_ign_opts *ign_opts) {
       randres=-1;
 
       randfd=open("/dev/urandom",O_RDONLY);
+
       if (randfd>-1) {
 	randres=read(randfd,&rseed,sizint);
 	close(randfd);
@@ -1161,8 +1164,8 @@ static void lives_init(_ign_opts *ign_opts) {
 	  set_pref("encoder",prefs->encoder.name);
 
 	  for (i=0;i<g_list_length(ofmt_all);i++) {
-	    if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
-	      array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
+	    if (get_token_count ((gchar *)g_list_nth_data (ofmt_all,i),'|')>2) {
+	      array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,i),"|",-1);
 
 	      if (!strcmp(array[0],"hi-theora")) {
 		g_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
@@ -1218,14 +1221,14 @@ static void lives_init(_ign_opts *ign_opts) {
 	  g_list_free(dummy_list);
 	}
 	if (!((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"get_capabilities"))==NULL)) {
-	  prefs->encoder.capabilities=atoi (g_list_nth_data (encoder_capabilities,0));
+	  prefs->encoder.capabilities=atoi ((gchar *)g_list_nth_data (encoder_capabilities,0));
 	  g_list_free_strings (encoder_capabilities);
 	  g_list_free (encoder_capabilities);
 	  if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
 	    // get any restrictions for the current format
 	    for (i=0;i<g_list_length(ofmt_all);i++) {
-	      if ((numtok=get_token_count (g_list_nth_data (ofmt_all,i),'|'))>2) {
-		array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
+	      if ((numtok=get_token_count ((gchar *)g_list_nth_data (ofmt_all,i),'|'))>2) {
+		array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,i),"|",-1);
 		if (!strcmp(array[0],prefs->encoder.of_name)) {
 		  if (numtok>1) {
 		    g_snprintf(prefs->encoder.of_desc,128,"%s",array[1]);
@@ -1526,7 +1529,12 @@ void do_start_messages(void) {
   if (capable->has_xwininfo) d_print(_ ("xwininfo...detected..."));
   else d_print(_ ("xwininfo...NOT DETECTED..."));
 
-  prefs->wm=gdk_x11_screen_get_window_manager_name (gdk_screen_get_default());
+#ifdef USE_X11
+  prefs->wm=g_strdup(gdk_x11_screen_get_window_manager_name (gdk_screen_get_default()));
+#else
+  prefs->wm=g_strdup((_("UNKNOWN - please patch me !")));
+#endif
+
   g_snprintf(mainw->msg,512,_ ("\n\nWindow manager reports as \"%s\"; "),prefs->wm);
   d_print(mainw->msg);
 
@@ -2198,7 +2206,7 @@ int main (int argc, char *argv[]) {
   gtk_init (&argc, &argv);
 
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal (0);
+  g_log_set_always_fatal ((GLogLevelFlags)0);
   theme_expected=pre_init();
 
   // mainw->foreign is set if we are grabbing an external window
@@ -2534,7 +2542,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->paste_as_new, !(clipboard==NULL));
   gtk_widget_set_sensitive (mainw->insert, !(clipboard==NULL));
   gtk_widget_set_sensitive (mainw->merge,(clipboard!=NULL&&cfile->frames>0));
-  gtk_widget_set_sensitive (mainw->delete, mainw->current_file>0&&cfile->frames>0);
+  gtk_widget_set_sensitive (mainw->xdelete, mainw->current_file>0&&cfile->frames>0);
   gtk_widget_set_sensitive (mainw->playall, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->m_playbutton, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->m_playselbutton, mainw->current_file>0&&cfile->frames>0);
@@ -2686,7 +2694,7 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->rev_clipboard, FALSE);
   gtk_widget_set_sensitive (mainw->insert, FALSE);
   gtk_widget_set_sensitive (mainw->merge, FALSE);
-  gtk_widget_set_sensitive (mainw->delete, FALSE);
+  gtk_widget_set_sensitive (mainw->xdelete, FALSE);
   if (!prefs->pause_during_pb) {
     gtk_widget_set_sensitive (mainw->playall, FALSE);
   }
@@ -3316,11 +3324,11 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
   // so here we round up
   framesize=CEIL(*rowstrides*height,32);
 
-  ptr=mem=g_malloc(framesize);
+  ptr=mem=(unsigned char *)g_malloc(framesize);
   weed_set_voidptr_value(layer, "pixel_data", mem);
   
   // libpng needs pointers to each row
-  row_ptrs=g_malloc(height*sizeof(unsigned char *));
+  row_ptrs=(unsigned char **)g_malloc(height*sizeof(unsigned char *));
   for (i=0;i<height;i++) {
     row_ptrs[i]=ptr;
     ptr+=*rowstrides;
@@ -3401,7 +3409,7 @@ static gboolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
   if (!gdk_pixbuf_loader_close(pbload,gerror)) return FALSE;
 
-  pixbuf=g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
+  pixbuf=(GdkPixbuf *)g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
   g_object_unref(pbload);
 
 # else
@@ -3459,7 +3467,7 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
     // TODO - allow prefs settings for colours, fonts, size, alpha
 
     //char *sfont=mainw->font_list[prefs->sub_font];
-    char *sfont="Sans";
+    const char *sfont="Sans";
     lives_colRGBA32_t col_white,col_black_a;
     
     int error,size;
@@ -3654,7 +3662,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
     return TRUE;
 #endif
   case CLIP_TYPE_LIVES2LIVES:
-    weed_layer_set_from_lives2lives(layer,clip,sfile->ext_src);
+    weed_layer_set_from_lives2lives(layer,clip,(lives_vstream_t *)sfile->ext_src);
     mainw->osc_block=FALSE;
     return TRUE;
   case CLIP_TYPE_GENERATOR:
@@ -4149,7 +4157,7 @@ void load_frame_image(gint frame) {
 	else {
 	  int i;
 	  weed_plant_t **layers;
-	  layers=g_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
+	  layers=(weed_plant_t **)g_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
 	  for (i=0;i<mainw->num_tracks;i++) {
 	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
 	    weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
@@ -4896,7 +4904,7 @@ void close_current_file(gint file_to_switch_to) {
     }
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->ext_src!=NULL) {
-      close_decoder_plugin(cfile->ext_src);
+      close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
       cfile->ext_src=NULL;
     }
 
@@ -4924,14 +4932,14 @@ void close_current_file(gint file_to_switch_to) {
 
     if (cfile->clip_type==CLIP_TYPE_YUV4MPEG) {
 #ifdef HAVE_YUV4MPEG
-      lives_yuv_stream_stop_read(cfile->ext_src);
+      lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->ext_src);
       g_free (cfile->ext_src);
 #endif
     }
 
     if (cfile->clip_type==CLIP_TYPE_VIDEODEV) {
 #ifdef HAVE_UNICAP
-      lives_vdev_free(cfile->ext_src);
+      lives_vdev_free((lives_vdev_t *)cfile->ext_src);
       g_free (cfile->ext_src);
 #endif
     }
@@ -5048,7 +5056,8 @@ void close_current_file(gint file_to_switch_to) {
       mainw->preview_box=NULL;
     }
     if (mainw->play_window!=NULL&&!mainw->fs) {
-      g_signal_handlers_block_matched(mainw->play_window,G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED,0,0,0,(gpointer)expose_play_window,NULL);
+      g_signal_handlers_block_matched(mainw->play_window,(GSignalMatchType)(G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED),
+				      0,0,0,(gpointer)expose_play_window,NULL);
       g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
       mainw->pw_exp_is_blocked=FALSE;
       resize_play_window();
@@ -5537,7 +5546,7 @@ void do_quick_switch (gint new_file) {
 
     if (rte_window!=NULL) rtew_set_keych(rte_fg_gen_key(),FALSE);
     if (mainw->current_file==mainw->blend_file) mainw->new_blend_file=new_file;
-    weed_generator_end (cfile->ext_src);
+    weed_generator_end ((weed_plant_t *)cfile->ext_src);
     if (mainw->current_file==-1) {
       mainw->osc_block=osc_block;
       return;

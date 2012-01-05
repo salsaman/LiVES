@@ -3932,14 +3932,13 @@ void combo_set_popdown_strings (GtkCombo *combo, GList *list) {
 }
 
 
-void 
-get_border_size (GtkWidget *win, gint *bx, gint *by) {
+void get_border_size (GtkWidget *win, gint *bx, gint *by) {
   GdkRectangle rect;
   gint wx,wy;
   gdk_window_get_frame_extents (GDK_WINDOW (win->window),&rect);
   gdk_window_get_origin (GDK_WINDOW (win->window), &wx, &wy);
-  bx[0]=wx-rect.x;
-  by[0]=wy-rect.y;
+  *bx=wx-rect.x;
+  *by=wy-rect.y;
 }
 
 
@@ -4163,7 +4162,7 @@ getfserr:
 
 
 
-LIVES_INLINE gint get_interp_value(gshort quality) {
+LIVES_INLINE GdkInterpType get_interp_value(gshort quality) {
   if (quality==PB_QUALITY_HIGH) return GDK_INTERP_HYPER;
   else if (quality==PB_QUALITY_MED) return GDK_INTERP_BILINEAR;
   return GDK_INTERP_NEAREST;

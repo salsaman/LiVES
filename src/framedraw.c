@@ -260,7 +260,7 @@ widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_preview_b
   gtk_scale_set_draw_value(GTK_SCALE(mainw->framedraw_scale),FALSE);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label2),mainw->framedraw_scale);
 
-  rfx=g_object_get_data(G_OBJECT(gtk_widget_get_toplevel(GTK_WIDGET(box))),"rfx");
+  rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(gtk_widget_get_toplevel(GTK_WIDGET(box))),"rfx");
   mainw->framedraw_preview = gtk_button_new_from_stock ("gtk-refresh");
   gtk_button_set_label (GTK_BUTTON (mainw->framedraw_preview),_ ("_Preview"));
   gtk_button_set_use_underline (GTK_BUTTON (mainw->framedraw_preview), TRUE);

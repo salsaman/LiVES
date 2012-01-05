@@ -1129,7 +1129,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   if (type==0)
     gtk_window_set_title (GTK_WINDOW (pandhw->dialog), _("LiVES: - Receive LiVES stream"));
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(pandhw->dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(pandhw->dialog));
 
   label=gtk_label_new(_("You can receive streams from another copy of LiVES."));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);

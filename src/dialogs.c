@@ -232,7 +232,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
 
   gtk_label_set_text(GTK_LABEL(mainw->warning_label),text);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_widget_show (dialog_vbox);
 
   gtk_widget_show (mainw->warning_label);
@@ -2285,7 +2285,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   gtk_window_set_modal (GTK_WINDOW (procw->processing), TRUE);
 
-  dialog_vbox1 = gtk_dialog_get_content_area(GTK_DIALOG(procw->processing));
+  dialog_vbox1 = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
 
   gtk_widget_show (dialog_vbox1);
 

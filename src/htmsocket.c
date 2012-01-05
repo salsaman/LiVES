@@ -28,7 +28,11 @@ typedef struct {
   struct sockaddr_in serv_addr;
   int sockfd;
   int len;
+#ifdef __cplusplus
   sockaddr *addr;
+#else
+  void *addr;
+#endif
 } desc;
 
 
@@ -69,7 +73,11 @@ void *OpenHTMSocket(const char *host, int portnumber, gboolean sender) {
     o->serv_addr.sin_port = htons(0);
   }
 
+#ifdef __cplusplus
   o->addr = (sockaddr *)&(o->serv_addr);
+#else
+  o->addr = &(o->serv_addr);
+#endif
 
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0) {
     memset((char *)&cl_addr, 0, sizeof(cl_addr));
@@ -149,7 +157,11 @@ gboolean lives_stream_out(void *htmsendhandle, size_t length, void *buffer) {
 
 ssize_t lives_stream_in(void *htmrecvhandle, size_t length, void *buffer, int bfsize) {
   desc *o = (desc *)htmrecvhandle;
+#ifdef __cplusplus
   return getudp((sockaddr *)o->addr, o->sockfd, o->len, length, buffer, bfsize);
+#else
+  return getudp(o->addr, o->sockfd, o->len, length, buffer, bfsize);
+#endif
 }
 
 void CloseHTMSocket(void *htmsendhandle) {

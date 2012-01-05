@@ -835,7 +835,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
       unlink (cfile->info_file);
 
-      mainw->cancelled=FALSE;
+      mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
       mainw->com_failed=FALSE;
 
@@ -1139,7 +1139,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   if (!strlen (prefs->encoder.of_def_ext)) {
     // encoder adds its own extension
     if (strrchr(n_file_name,'.')!=NULL) {
-      memset (strrchr (n_file_name,'.'),0,1);
+      memset ((void *)strrchr (n_file_name,'.'),0,1);
     }
   }
   else {
@@ -1951,7 +1951,8 @@ void play_file (void) {
   if (mainw->pre_src_file==-2) mainw->pre_src_file=mainw->current_file;
 
   // enable the freeze button
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_BackSpace, GDK_CONTROL_MASK, 0, (freeze_closure=g_cclosure_new (G_CALLBACK (freeze_callback),NULL,NULL)));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_BackSpace, (GdkModifierType)GDK_CONTROL_MASK, 
+			   (GtkAccelFlags)0, (freeze_closure=g_cclosure_new (G_CALLBACK (freeze_callback),NULL,NULL)));
 
   if (mainw->multitrack!=NULL) {
     mainw->event_list=mainw->multitrack->event_list;
@@ -2857,7 +2858,7 @@ void play_file (void) {
 
   if (mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR) {
     gint xcurrent_file=mainw->current_file;
-    weed_bg_generator_end (mainw->files[mainw->blend_file]->ext_src);
+    weed_bg_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
     mainw->current_file=xcurrent_file;
   }
 
@@ -2956,7 +2957,7 @@ void play_file (void) {
 
   if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
     mainw->osc_block=TRUE;
-    weed_generator_end (cfile->ext_src);
+    weed_generator_end ((weed_plant_t *)cfile->ext_src);
     mainw->osc_block=FALSE;
     if (mainw->multitrack==NULL) {
       if (mainw->files[current_file]!=NULL) switch_to_file (mainw->current_file,current_file);
@@ -3704,7 +3705,7 @@ gboolean read_headers(const gchar *file_name) {
   gboolean timeout;
   gboolean retval,retvala;
 
-  size_t sizhead=8*4+8+8;
+  ssize_t sizhead=8*4+8+8;
 
   time_t old_time=0,new_time=0;
   struct stat mystat;
@@ -4433,7 +4434,7 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
   gchar buf[sizint+1];
 
   ssize_t bytes;
-  size_t tsize;
+  ssize_t tsize;
 
   void **pdata;
 
@@ -4448,8 +4449,6 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   palette=atoi(buf);
   weed_set_int_value(layer,"current_palette",palette);
-
-
 
   if (weed_palette_is_yuv_palette(palette)) {
 
@@ -4489,7 +4488,7 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   nplanes=weed_palette_get_numplanes(palette);
 
-  rowstrides=g_malloc(nplanes*sizint);
+  rowstrides=(int *)g_malloc(nplanes*sizint);
 
   for (i=0;i<nplanes;i++) {
     bytes=lives_read_le(fd,buf,4,TRUE);
@@ -4502,7 +4501,7 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   weed_set_int_array(layer,"rowstrides",nplanes,rowstrides);
 
-  pdata=g_malloc(nplanes*sizeof(void *));
+  pdata=(void **)g_malloc(nplanes*sizeof(void *));
 
   for (i=0;i<nplanes;i++) {
     pdata[i]=NULL;
@@ -4728,7 +4727,7 @@ void close_scrap_file (void) {
 
 
 
-void recover_layout_map(numclips) {
+void recover_layout_map(gint numclips) {
   // load global layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
   GList *mlist,*lmap_node,*lmap_node_next,*lmap_entry_list,*lmap_entry_list_next;
   layout_map *lmap_entry;
@@ -4744,14 +4743,14 @@ void recover_layout_map(numclips) {
       lmap_node=mlist;
       while (lmap_node!=NULL) {
 	lmap_node_next=lmap_node->next;
-	lmap_entry=lmap_node->data;
+	lmap_entry=(layout_map *)lmap_node->data;
 	if (!strcmp(mainw->files[i]->handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
 	  // check handle and unique id match
 	  // got a match, assign list to layout_map and delete this node
 	  lmap_entry_list=lmap_entry->list;
 	  while (lmap_entry_list!=NULL) {
 	    lmap_entry_list_next=lmap_entry_list->next;
-	    array=g_strsplit(lmap_entry_list->data,"|",-1);
+	    array=g_strsplit((gchar *)lmap_entry_list->data,"|",-1);
 	    if (!g_file_test(array[0],G_FILE_TEST_EXISTS)) {
 	      // layout file has been deleted, remove this entry
 	      if (lmap_entry_list->prev!=NULL) lmap_entry_list->prev->next=lmap_entry_list_next;
@@ -4778,7 +4777,7 @@ void recover_layout_map(numclips) {
   
     lmap_node=mlist;
     while (lmap_node!=NULL) {
-      lmap_entry=lmap_node->data;
+      lmap_entry=(layout_map *)lmap_node->data;
       if (lmap_entry->name!=NULL) g_free(lmap_entry->name);
       if (lmap_entry->handle!=NULL) g_free(lmap_entry->handle);
       if (lmap_entry->list!=NULL) {

@@ -115,7 +115,7 @@ static void remove_all_nodes(gboolean every, omclearn_w *omclw) {
 }
 
 
-static inline int js_index(const gchar *string) {
+static LIVES_INLINE int js_index(const gchar *string) {
   // js index, or midi channel number
   gchar **array=g_strsplit(string," ",-1);
   gint res=atoi(array[1]);
@@ -124,7 +124,7 @@ static inline int js_index(const gchar *string) {
 }
 
 
-static inline int midi_index(const gchar *string) {
+static LIVES_INLINE int midi_index(const gchar *string) {
   // midi controller number
   gchar **array;
   gint res;
@@ -233,7 +233,7 @@ gchar *js_mangle(void) {
 }
 
 
-static inline int js_msg_type(const gchar *string) {
+static LIVES_INLINE int js_msg_type(const gchar *string) {
   return atoi(string);
 }
 
@@ -523,7 +523,7 @@ gchar *midi_mangle(void) {
 
 
 
-static inline gchar *cut_string_elems(const gchar *string, gint nelems) {
+static LIVES_INLINE gchar *cut_string_elems(const gchar *string, gint nelems) {
   // remove elements after nelems
 
   gchar *retval=g_strdup(string);
@@ -1718,7 +1718,7 @@ static lives_omc_match_node_t *omc_match_sig(gint type, gint index, const gchar 
 
 
 
-inline static gint omclearn_get_fixed_elems(const gchar *string1, const gchar *string2) {
+static LIVES_INLINE gint omclearn_get_fixed_elems(const gchar *string1, const gchar *string2) {
   // count how many (non-space) elements match
   // e.g "a b c" and "a b d" returns 2
 
@@ -1740,7 +1740,7 @@ inline static gint omclearn_get_fixed_elems(const gchar *string1, const gchar *s
 
 
 
-static inline gint get_nth_elem(const gchar *string, gint idx) {
+static LIVES_INLINE gint get_nth_elem(const gchar *string, gint idx) {
   gchar **array=g_strsplit(string," ",-1);
   gint retval=atoi(array[idx]);
   g_strfreev(array);
@@ -2433,7 +2433,7 @@ void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 static void omc_node_list_free(GSList *slist) {
   while (slist!=NULL) {
-    omc_match_node_free(slist->data);
+    omc_match_node_free((lives_omc_match_node_t *)slist->data);
     slist=slist->next;
   }
   g_slist_free(slist);
@@ -2462,7 +2462,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *load_file=NULL;
   int fd;
   ssize_t bytes;
-  size_t srchlen;
+  ssize_t srchlen;
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
   gchar tstring[512];
@@ -2476,7 +2476,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #endif 
 
   if (user_data==NULL) load_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
-  else load_file=g_strdup(user_data);
+  else load_file=g_strdup((gchar *)user_data);
 
   if (load_file==NULL) return;
 
@@ -2533,7 +2533,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       return;
     }
     
-    srch=g_malloc(srchlen+1);
+    srch=(gchar *)g_malloc(srchlen+1);
 
     bytes=read(fd,srch,srchlen);
     if (bytes<srchlen) {

@@ -42,14 +42,14 @@ G_GNUC_PURE void ***get_event_pchains(void) {
 }
 
 
-inline weed_timecode_t get_event_timecode (weed_plant_t *plant) {
+LIVES_INLINE weed_timecode_t get_event_timecode (weed_plant_t *plant) {
   weed_timecode_t tc;
   int error;
   tc=weed_get_int64_value (plant,"timecode",&error);
   return tc;
 }
 
-inline int get_event_hint (weed_plant_t *plant) {
+LIVES_INLINE int get_event_hint (weed_plant_t *plant) {
   int hint;
   int error;
   hint=weed_get_int_value (plant,"hint",&error);
@@ -57,28 +57,28 @@ inline int get_event_hint (weed_plant_t *plant) {
 }
 
 
-inline weed_plant_t *get_prev_event(weed_plant_t *event) {
+LIVES_INLINE weed_plant_t *get_prev_event(weed_plant_t *event) {
   int error;
   if (!weed_plant_has_leaf(event,"previous")) return NULL;
-  return weed_get_voidptr_value(event,"previous",&error);
+  return (weed_plant_t *)weed_get_voidptr_value(event,"previous",&error);
 }
 
-inline weed_plant_t *get_next_event(weed_plant_t *event) {
+LIVES_INLINE weed_plant_t *get_next_event(weed_plant_t *event) {
   int error;
   if (!weed_plant_has_leaf(event,"next")) return NULL;
-  return weed_get_voidptr_value(event,"next",&error);
+  return (weed_plant_t *)weed_get_voidptr_value(event,"next",&error);
 }
 
-inline weed_plant_t *get_first_event(weed_plant_t *event_list) {
+LIVES_INLINE weed_plant_t *get_first_event(weed_plant_t *event_list) {
   int error;
   if (!weed_plant_has_leaf(event_list,"first")) return NULL;
-  return weed_get_voidptr_value(event_list,"first",&error);
+  return (weed_plant_t *)weed_get_voidptr_value(event_list,"first",&error);
 }
 
-inline weed_plant_t *get_last_event(weed_plant_t *event_list) {
+LIVES_INLINE weed_plant_t *get_last_event(weed_plant_t *event_list) {
   int error;
   if (!weed_plant_has_leaf(event_list,"last")) return NULL;
-  return weed_get_voidptr_value(event_list,"last",&error);
+  return (weed_plant_t *)weed_get_voidptr_value(event_list,"last",&error);
 }
 
 
@@ -387,7 +387,8 @@ weed_timecode_t get_next_paramchange(void **pchange_next,weed_timecode_t end_tc)
   weed_timecode_t min_tc=end_tc;
   int i=0;
   if (pchange_next==NULL) return end_tc;
-  for (;pchange_next[i]!=NULL;i++) if (get_event_timecode(pchange_next[i])<min_tc) min_tc=get_event_timecode(pchange_next[i]);
+  for (;pchange_next[i]!=NULL;i++) if (get_event_timecode((weed_plant_t *)pchange_next[i])<min_tc) 
+				     min_tc=get_event_timecode((weed_plant_t *)pchange_next[i]);
   return min_tc;
 }
 
@@ -396,7 +397,8 @@ weed_timecode_t get_prev_paramchange(void **pchange_prev,weed_timecode_t start_t
   weed_timecode_t min_tc=start_tc;
   int i=0;
   if (pchange_prev==NULL) return start_tc;
-  for (;pchange_prev[i]!=NULL;i++) if (get_event_timecode(pchange_prev[i])<min_tc) min_tc=get_event_timecode(pchange_prev[i]);
+  for (;pchange_prev[i]!=NULL;i++) if (get_event_timecode((weed_plant_t *)pchange_prev[i])<min_tc) 
+				     min_tc=get_event_timecode((weed_plant_t *)pchange_prev[i]);
   return min_tc;
 }
 
@@ -503,7 +505,7 @@ weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event
     if ((idx=weed_get_idx_for_hashname(filter_hash,TRUE))!=-1) {
       filter=get_weed_filter(idx);
       if ((num_params=num_in_params(filter,TRUE,TRUE))>0) {
-	in_pchanges=g_try_malloc(num_params*sizeof(void *));
+	in_pchanges=(void **)g_try_malloc(num_params*sizeof(void *));
 	if (in_pchanges==NULL) return NULL;
 	for (i=0;i<num_params;i++) in_pchanges[i]=NULL;
 	error=weed_set_voidptr_array(event,"in_parameters",num_params,in_pchanges); // set all to NULL, we will re-fill as we go along
@@ -521,7 +523,7 @@ weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event
     new_init_event=find_init_event_by_id(init_event,event);
     error=weed_set_voidptr_value (event,"init_event",new_init_event);
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    error=weed_set_voidptr_value (new_init_event,"event_id",(void *)new_init_event); // useful later for event_list_rectify
+    error=weed_set_voidptr_value ((weed_plant_t *)new_init_event,"event_id",(void *)new_init_event); // useful later for event_list_rectify
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     break;
   case WEED_EVENT_HINT_FILTER_MAP:
@@ -636,7 +638,7 @@ weed_plant_t *get_filter_map_after(weed_plant_t *event, gint ctrack) {
       }
       num_init_events=weed_leaf_num_elements(event,"init_events");
       for (i=0;i<num_init_events;i++) {
-	init_event=init_events[i];
+	init_event=(weed_plant_t *)init_events[i];
 
 	if (init_event_is_relevant(init_event,ctrack)) {
 	  weed_free(init_events);
@@ -723,7 +725,7 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack, weed_plant
       }
       num_init_events=weed_leaf_num_elements(event,"init_events");
       for (i=0;i<num_init_events;i++) {
-	init_event=init_events[i];
+	init_event=(weed_plant_t *)init_events[i];
 	if (init_event_is_relevant(init_event,ctrack)) {
 	  weed_free(init_events);
 	  return event;
@@ -744,12 +746,14 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gbo
 
   while (event!=NULL) {
     if (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP) {
-      if (weed_plant_has_leaf(event,"init_events")&&(init_events=weed_get_voidptr_array(event,"init_events",&error))!=NULL) {
+      if (weed_plant_has_leaf(event,"init_events")&&
+	  (init_events=weed_get_voidptr_array(event,"init_events",&error))!=NULL) {
 	num_init_events=weed_leaf_num_elements(event,"init_events");
-	if (add) new_init_events=g_malloc((num_init_events+2)*sizeof(void *));
-	else new_init_events=g_malloc((num_init_events+1)*sizeof(void *));
+	if (add) new_init_events=(void **)g_malloc((num_init_events+2)*sizeof(void *));
+	else new_init_events=(void **)g_malloc((num_init_events+1)*sizeof(void *));
 
-	for (i=0;i<num_init_events;i++) if ((add||(init_event!=NULL&&(init_events[i]!=(void *)init_event)))&&init_events[0]!=NULL) {
+	for (i=0;i<num_init_events;i++) if ((add||(init_event!=NULL&&(init_events[i]!=(void *)init_event)))&&
+					    init_events[0]!=NULL) {
 	  new_init_events[j++]=init_events[i];
 	  if (add&&init_events[i]==(void *)init_event) add=FALSE; // don't add twice
 	}
@@ -766,7 +770,7 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gbo
 	      // add before the audio mixer
 	      continue;
 	    }
-	    fhash=weed_get_string_value(init_events[k],"filter",&error);
+	    fhash=weed_get_string_value((weed_plant_t *)init_events[k],"filter",&error);
 	    filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
 	    weed_free(fhash);
 	    if (weed_plant_has_leaf(filter,"flags")) {
@@ -798,12 +802,12 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gbo
   }
   // no previous init_events found
   if (add) {
-    new_init_events=g_malloc(2*sizeof(void *));
+    new_init_events=(void **)g_malloc(2*sizeof(void *));
     new_init_events[0]=(void *)init_event;
     new_init_events[1]=NULL;
   }
   else {
-    new_init_events=g_malloc(sizeof(void *));
+    new_init_events=(void **)g_malloc(sizeof(void *));
     new_init_events[0]=NULL;
   }
   return new_init_events;
@@ -1069,8 +1073,8 @@ void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, gint t
       if (aclips[i]==track) {
 	if (clipnum<=0&&num_aclips>2) {
 	  // ignore - remove track altogether
-	  int *new_aclips=g_malloc((num_aclips-2)*sizint);
-	  double *new_aseeks=g_malloc((num_aclips-2)*sizdbl);
+	  int *new_aclips=(int *)g_malloc((num_aclips-2)*sizint);
+	  double *new_aseeks=(double *)g_malloc((num_aclips-2)*sizdbl);
 	  int j,k=0;
 	  for (j=0;j<num_aclips;j+=2) {
 	    if (j!=i) {
@@ -1107,12 +1111,12 @@ void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, gint t
     if (clipnum<=0) return;
 
     // append
-    new_aclips=g_malloc((num_aclips+2)*sizint);
+    new_aclips=(int *)g_malloc((num_aclips+2)*sizint);
     for (i=0;i<num_aclips;i++) new_aclips[i]=aclips[i];
     new_aclips[i++]=track;
     new_aclips[i]=clipnum;
 
-    new_aseeks=g_malloc((num_aclips+2)*sizdbl);
+    new_aseeks=(double *)g_malloc((num_aclips+2)*sizdbl);
     for (i=0;i<num_aclips;i++) new_aseeks[i]=aseeks[i];
     new_aseeks[i++]=seek;
     new_aseeks[i++]=arv;
@@ -1129,11 +1133,11 @@ void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, gint t
   }
   // create new values
 
-  new_aclips=g_malloc(2*sizint);
+  new_aclips=(int *)g_malloc(2*sizint);
   new_aclips[0]=track;
   new_aclips[1]=clipnum;
 
-  new_aseeks=g_malloc(2*sizdbl);
+  new_aseeks=(double *)g_malloc(2*sizdbl);
   new_aseeks[0]=seek;
   new_aseeks[1]=arv;
 
@@ -1154,8 +1158,8 @@ void remove_audio_for_track (weed_plant_t *event, int track) {
   int num_atracks=weed_leaf_num_elements (event,"audio_clips");
   int *aclip_index=weed_get_int_array(event,"audio_clips",&error);
   double *aseek_index=weed_get_double_array(event,"audio_seeks",&error);
-  int *new_aclip_index=g_malloc(num_atracks*sizint);
-  double *new_aseek_index=g_malloc(num_atracks*sizdbl);
+  int *new_aclip_index=(int *)g_malloc(num_atracks*sizint);
+  double *new_aseek_index=(double *)g_malloc(num_atracks*sizdbl);
 
   for (i=0;i<num_atracks;i+=2) {
     if (aclip_index[i]==track) continue;
@@ -1246,7 +1250,7 @@ void insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, in
 	// add to existing event
 	int num_tracks=weed_leaf_num_elements(at_event,"tracks");
 	int *tracks=weed_get_int_array(at_event,"tracks",&error);
-	int *new_tracks=g_malloc((num_tracks+1)*sizint);
+	int *new_tracks=(int *)g_malloc((num_tracks+1)*sizint);
 	for (i=0;i<num_tracks;i++) {
 	  new_tracks[i]=tracks[i];
 	}
@@ -1284,7 +1288,7 @@ weed_plant_t *insert_blank_frame_event_at (weed_plant_t *event_list, weed_timeco
 
 void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_event) {
   int error,i;
-  weed_plant_t *deinit_event=weed_get_voidptr_value(init_event,"deinit_event",&error);
+  weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value(init_event,"deinit_event",&error);
   weed_plant_t *event=init_event;
   weed_plant_t *filter_map=get_filter_map_before(init_event,-1000000,NULL);
   void **new_init_events;
@@ -1314,8 +1318,8 @@ void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_
     int num_params=weed_leaf_num_elements(init_event,"in_parameters");
     for (i=0;i<num_params;i++) {
       while (pchain[i]!=NULL) {
-	pchain_next=weed_get_voidptr_value(pchain[i],"next_change",&error);
-	delete_event(event_list,pchain[i]);
+	pchain_next=weed_get_voidptr_value((weed_plant_t *)pchain[i],"next_change",&error);
+	delete_event(event_list,(weed_plant_t *)pchain[i]);
 	pchain[i]=pchain_next;
       }
     }
@@ -1338,7 +1342,7 @@ static gboolean remove_event_from_filter_map(weed_plant_t *fmap, weed_plant_t *e
   int num_inits;
 
   num_inits=weed_leaf_num_elements(fmap,"init_events");
-  new_init_events=g_malloc(num_inits*sizeof(void *));
+  new_init_events=(void **)g_malloc(num_inits*sizeof(void *));
   for (i=0;i<num_inits;i++) {
     if (init_events[i]!=event) new_init_events[j++]=init_events[i];
   }
@@ -1351,7 +1355,7 @@ static gboolean remove_event_from_filter_map(weed_plant_t *fmap, weed_plant_t *e
   return (!(j==0||(j==1&&event==NULL)));
 }
 
-inline gboolean init_event_in_list(void **init_events, int num_inits, weed_plant_t *event) {
+LIVES_INLINE gboolean init_event_in_list(void **init_events, int num_inits, weed_plant_t *event) {
   int i;
   if (init_events==NULL||init_events[0]==NULL) return FALSE;
   for (i=0;i<num_inits;i++) {
@@ -1433,7 +1437,7 @@ void delete_param_changes_after_deinit(weed_plant_t *event_list, weed_plant_t *i
   int error,i;
   void **init_events;
   int num_inits;
-  weed_plant_t *deinit_event=weed_get_voidptr_value(init_event,"deinit_event",&error);
+  weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value(init_event,"deinit_event",&error);
   weed_timecode_t deinit_tc=get_event_timecode(deinit_event);
 
   weed_timecode_t pchain_tc;
@@ -1448,10 +1452,10 @@ void delete_param_changes_after_deinit(weed_plant_t *event_list, weed_plant_t *i
   for (i=0;i<num_inits;i++) {
     pchain=init_events[i];
     while (pchain!=NULL) {
-      pchain_tc=get_event_timecode(pchain);
-      if (!weed_plant_has_leaf(pchain,"next_change")) pchain_next=NULL;
-      else pchain_next=weed_get_voidptr_value(pchain,"next_change",&error);
-      if (pchain_tc>deinit_tc) delete_event(event_list,pchain);
+      pchain_tc=get_event_timecode((weed_plant_t *)pchain);
+      if (!weed_plant_has_leaf((weed_plant_t *)pchain,"next_change")) pchain_next=NULL;
+      else pchain_next=weed_get_voidptr_value((weed_plant_t *)pchain,"next_change",&error);
+      if (pchain_tc>deinit_tc) delete_event(event_list,(weed_plant_t *)pchain);
       pchain=pchain_next;
     }
   }
@@ -1460,7 +1464,8 @@ void delete_param_changes_after_deinit(weed_plant_t *event_list, weed_plant_t *i
 
 
 
-static void rescale_param_changes(weed_plant_t *event_list, weed_plant_t *init_event, weed_timecode_t new_init_tc, weed_plant_t *deinit_event, weed_timecode_t new_deinit_tc, gdouble fps) {
+static void rescale_param_changes(weed_plant_t *event_list, weed_plant_t *init_event, weed_timecode_t new_init_tc, 
+				  weed_plant_t *deinit_event, weed_timecode_t new_deinit_tc, gdouble fps) {
   // rescale parameter value changes along the time axis
   // this can be called when a FILTER_INIT or FILTER_DEINIT is moved
 
@@ -1484,15 +1489,16 @@ static void rescale_param_changes(weed_plant_t *event_list, weed_plant_t *init_e
   for (i=0;i<num_inits;i++) {
     pchain=init_events[i];
     while (pchain!=NULL) {
-      pchain_tc=get_event_timecode(pchain);
-      new_tc=(weed_timecode_t)((gdouble)(pchain_tc-old_init_tc)/(gdouble)(old_deinit_tc-old_init_tc)*(gdouble)(new_deinit_tc-new_init_tc))+new_init_tc;
+      pchain_tc=get_event_timecode((weed_plant_t *)pchain);
+      new_tc=(weed_timecode_t)((gdouble)(pchain_tc-old_init_tc)/(gdouble)(old_deinit_tc-old_init_tc)*
+			       (gdouble)(new_deinit_tc-new_init_tc))+new_init_tc;
       new_tc=q_gint64(new_tc,fps);
       if (new_tc==pchain_tc) {
-	if (!weed_plant_has_leaf(pchain,"next_change")) pchain=NULL;
-	else pchain=weed_get_voidptr_value(pchain,"next_change",&error);
+	if (!weed_plant_has_leaf((weed_plant_t *)pchain,"next_change")) pchain=NULL;
+	else pchain=weed_get_voidptr_value((weed_plant_t *)pchain,"next_change",&error);
 	continue;
       }
-      event=pchain;
+      event=(weed_plant_t *)pchain;
       if (new_tc<pchain_tc) {
 	while (event!=NULL&&get_event_timecode(event)>new_tc) event=get_prev_event(event);
       }
@@ -1501,12 +1507,12 @@ static void rescale_param_changes(weed_plant_t *event_list, weed_plant_t *init_e
       }
       
       if (event!=NULL) {
-	unlink_event(event_list,pchain);
-	insert_param_change_event_at(event_list,event,pchain);
+	unlink_event(event_list,(weed_plant_t *)pchain);
+	insert_param_change_event_at(event_list,event,(weed_plant_t *)pchain);
       }
       
-      if (!weed_plant_has_leaf(pchain,"next_change")) pchain=NULL;
-      else pchain=weed_get_voidptr_value(pchain,"next_change",&error);
+      if (!weed_plant_has_leaf((weed_plant_t *)pchain,"next_change")) pchain=NULL;
+      else pchain=weed_get_voidptr_value((weed_plant_t *)pchain,"next_change",&error);
     }
   }
 
@@ -1578,12 +1584,12 @@ void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void 
 
   if (init_event_is_process_last(event)) plast=TRUE;
 
-  new_init_events=g_malloc((num_inits+1)*sizeof(void *));
+  new_init_events=(void **)g_malloc((num_inits+1)*sizeof(void *));
 
   for (i=0;i<num_inits;i++) {
-    if (init_event_is_process_last(init_events[i])) mustadd=TRUE;
+    if (init_event_is_process_last((weed_plant_t *)init_events[i])) mustadd=TRUE;
 
-    if (mustadd||(!plast&&!added&&is_in_hints(init_events[i],hints))) {
+    if (mustadd||(!plast&&!added&&is_in_hints((weed_plant_t *)init_events[i],hints))) {
       new_init_events[j++]=event;
       added=TRUE;
     }
@@ -1604,7 +1610,7 @@ void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void 
 void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, weed_plant_t *init_event, gdouble fps) {
   int error,i,j=0;
   weed_timecode_t tc=get_event_timecode(init_event);
-  weed_plant_t *deinit_event=weed_get_voidptr_value(init_event,"deinit_event",&error);
+  weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value(init_event,"deinit_event",&error);
   weed_timecode_t deinit_tc=get_event_timecode(deinit_event);
   weed_plant_t *event=init_event,*event_next;
   weed_plant_t *filter_map,*copy_filter_map;
@@ -1652,7 +1658,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
 	  init_events=weed_get_voidptr_array(event,"init_events",&error);
 	  if (init_events[0]!=NULL) {
 	    num_inits=weed_leaf_num_elements(event,"init_events");
-	    event_hints=g_malloc((num_inits+1)*sizeof(void *));
+	    event_hints=(void **)g_malloc((num_inits+1)*sizeof(void *));
 	    for (i=0;i<num_inits;i++) {
 	      if (adding) event_hints[j++]=init_events[i];
 	      if (init_events[i]==init_event) adding=TRUE;
@@ -1682,7 +1688,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
 	filter_map=copy_filter_map;
       }
       else {
-	init_events=g_malloc(2*sizeof(void *));
+	init_events=(void **)g_malloc(2*sizeof(void *));
 	init_events[0]=init_event;
 	init_events[1]=NULL;
 	event_list=append_filter_map_event (event_list, new_tc, init_events);
@@ -1712,11 +1718,12 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
 
 
 
-void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, weed_plant_t *deinit_event, gdouble fps, gboolean rescale_pchanges) {
+void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, weed_plant_t *deinit_event, 
+			      gdouble fps, gboolean rescale_pchanges) {
   // move a filter_deinit from old pos to new pos, remove mention of it from filter maps, possibly add/update filter map before frame at new_tc, remove duplicate filter_maps, update param_change events
   int error,i,j=0;
   weed_timecode_t tc=get_event_timecode(deinit_event);
-  weed_plant_t *init_event=weed_get_voidptr_value(deinit_event,"init_event",&error);
+  weed_plant_t *init_event=(weed_plant_t *)weed_get_voidptr_value(deinit_event,"init_event",&error);
   weed_timecode_t init_tc=get_event_timecode(init_event);
   weed_plant_t *event=deinit_event,*event_next;
   weed_plant_t *filter_map,*copy_filter_map;
@@ -1784,7 +1791,7 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
     if (filter_map!=NULL&&filter_map_has_event(filter_map,init_event)) {
       init_events=weed_get_voidptr_array(filter_map,"init_events",&error);
       num_inits=weed_leaf_num_elements(filter_map,"init_events");
-      event_hints=g_malloc((num_inits+1)*sizeof(void *));
+      event_hints=(void **)g_malloc((num_inits+1)*sizeof(void *));
       for (i=0;i<num_inits;i++) {
 	if (adding) {
 	  event_hints[j++]=init_events[i];
@@ -1899,7 +1906,7 @@ gboolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, gboolea
   // now we have xevent, new_tc
 
   if (WEED_EVENT_IS_FILTER_INIT(event)) {
-    weed_plant_t *deinit_event=weed_get_voidptr_value(event,"deinit_event",&error);
+    weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
     if (xevent==NULL||get_event_timecode(deinit_event)<new_tc) {
       // if we are moving a filter_init past its deinit event, remove it, remove deinit, remove param_change events, remove from all filter_maps, and check for duplicate filter maps
       remove_filter_from_event_list(event_list,event);
@@ -1909,8 +1916,8 @@ gboolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, gboolea
   }
   else {
     // otherwise, for a param_change, just insert it at new_tc
-    weed_plant_t *init_event=weed_get_voidptr_value(event,"init_event",&error);
-    weed_plant_t *deinit_event=weed_get_voidptr_value(init_event,"deinit_event",&error);
+    weed_plant_t *init_event=(weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error);
+    weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value(init_event,"deinit_event",&error);
     if (xevent==NULL||get_event_timecode(deinit_event)<new_tc) {
       delete_event(event_list,event);
       return FALSE;
@@ -1936,7 +1943,7 @@ gboolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, gboolean
   gboolean all_ok=FALSE;
   int i;
 
-  if (WEED_EVENT_IS_FILTER_DEINIT(event)) init_event=weed_get_voidptr_value(event,"init_event",&error);
+  if (WEED_EVENT_IS_FILTER_DEINIT(event)) init_event=(weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error);
   else return TRUE;
 
   if (weed_plant_has_leaf(init_event,"in_tracks")) num_owners=weed_leaf_num_elements(init_event,"in_tracks");
@@ -2220,7 +2227,8 @@ GtkWidget *events_rec_dialog (void) {
 
   accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
   gtk_window_add_accel_group (GTK_WINDOW (e_rec_dialog), accel_group);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
@@ -2484,7 +2492,7 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
 
   num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
 
-  pchain=g_malloc(num_params*sizeof(void *));
+  pchain=(void **)g_malloc(num_params*sizeof(void *));
 
   if (!is_inst) in_params=weed_params_create(filter,TRUE);
   else in_params=weed_get_plantptr_array(plant,"in_parameters",&error);
@@ -2492,8 +2500,8 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
   for (i=num_params-1;i>=0;i--) {
     
     pchain[i]=weed_plant_new(WEED_PLANT_EVENT);
-    weed_set_int_value(pchain[i],"hint",WEED_EVENT_HINT_PARAM_CHANGE);
-    weed_set_int64_value(pchain[i],"timecode",tc);
+    weed_set_int_value((weed_plant_t *)pchain[i],"hint",WEED_EVENT_HINT_PARAM_CHANGE);
+    weed_set_int64_value((weed_plant_t *)pchain[i],"timecode",tc);
 
     if (is_perchannel_multiw(in_params[i])) {
       // if the parameter is element-per-channel, fill up to number of channels
@@ -2502,15 +2510,15 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
       fill_param_vals_to(ptmpl,in_params[i],i,phint,ntracks-1);
     }
 
-    weed_leaf_copy(pchain[i],"value",in_params[i],"value");
+    weed_leaf_copy((weed_plant_t *)pchain[i],"value",in_params[i],"value");
 
-    weed_set_int_value(pchain[i],"index",i);
-    weed_set_voidptr_value(pchain[i],"init_event",init_event);
-    weed_set_voidptr_value(pchain[i],"next_change",NULL);
-    weed_set_voidptr_value(pchain[i],"prev_change",NULL);
-    weed_add_plant_flags(pchain[i],WEED_LEAF_READONLY_PLUGIN);
+    weed_set_int_value((weed_plant_t *)pchain[i],"index",i);
+    weed_set_voidptr_value((weed_plant_t *)pchain[i],"init_event",init_event);
+    weed_set_voidptr_value((weed_plant_t *)pchain[i],"next_change",NULL);
+    weed_set_voidptr_value((weed_plant_t *)pchain[i],"prev_change",NULL);
+    weed_add_plant_flags((weed_plant_t *)pchain[i],WEED_LEAF_READONLY_PLUGIN);
 
-    insert_param_change_event_at(event_list,init_event,pchain[i]);
+    insert_param_change_event_at(event_list,init_event,(weed_plant_t *)pchain[i]);
 
   }
 
@@ -2608,7 +2616,7 @@ weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_
     weed_set_int_value (event,"in_tracks",0);
   }
   else {
-    int *tracks=g_malloc (2*sizint);
+    int *tracks=(int *)g_malloc (2*sizint);
     tracks[0]=0;
     tracks[1]=1;
     weed_set_int_array (event,"in_tracks",2,tracks);
@@ -2656,11 +2664,11 @@ weed_plant_t *append_filter_deinit_event (weed_plant_t *event_list, weed_timecod
   weed_set_int64_value (event,"timecode",tc);
   weed_set_int_value (event,"hint",WEED_EVENT_HINT_FILTER_DEINIT);
   weed_set_voidptr_value (event,"init_event",init_event);
-  weed_set_voidptr_value (init_event,"deinit_event",event);
+  weed_set_voidptr_value ((weed_plant_t *)init_event,"deinit_event",event);
 
   if (pchain!=NULL) {
     int error;
-    gchar *filter_hash=weed_get_string_value(init_event,"filter",&error);
+    gchar *filter_hash=weed_get_string_value((weed_plant_t *)init_event,"filter",&error);
     int idx=weed_get_idx_for_hashname(filter_hash,TRUE);
     weed_plant_t *filter=get_weed_filter(idx);
     int num_params=num_in_params(filter,TRUE,TRUE);
@@ -2708,8 +2716,9 @@ weed_plant_t *append_param_change_event (weed_plant_t *event_list, weed_timecode
   weed_set_int_value (event, "index", pnum);
   weed_leaf_copy (event,"value",param,"value");
 
-  last_pchange_event=pchain[pnum];
-  while ((xevent=weed_get_voidptr_value(last_pchange_event,"next_change",&error))!=NULL) last_pchange_event=xevent;
+  last_pchange_event=(weed_plant_t *)pchain[pnum];
+  while ((xevent=(weed_plant_t *)weed_get_voidptr_value(last_pchange_event,"next_change",&error))!=NULL) 
+    last_pchange_event=xevent;
 
   weed_set_voidptr_value(last_pchange_event,"next_change",event);
   weed_set_voidptr_value(event,"prev_change",last_pchange_event);
@@ -3059,9 +3068,9 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
     break;
       
   case WEED_EVENT_HINT_FILTER_DEINIT:
-    init_event=weed_get_voidptr_value (next_event,"init_event",&error);
-    if (weed_plant_has_leaf(init_event,"host_tag")) {
-      key_string=weed_get_string_value (init_event,"host_tag",&error);
+    init_event=weed_get_voidptr_value ((weed_plant_t *)next_event,"init_event",&error);
+    if (weed_plant_has_leaf((weed_plant_t *)init_event,"host_tag")) {
+      key_string=weed_get_string_value ((weed_plant_t *)init_event,"host_tag",&error);
       key=atoi (key_string);
       weed_free (key_string);
       if (rte_keymode_get_instance(key+1,0)!=NULL) {
@@ -3202,7 +3211,7 @@ lives_render_error_t render_events (gboolean reset) {
 	  }
 	}
 	else {
-	  layers=g_malloc((num_tracks+1)*sizeof(weed_plant_t *));
+	  layers=(weed_plant_t **)g_malloc((num_tracks+1)*sizeof(weed_plant_t *));
 	  for (i=0;i<num_tracks;i++) {
 	    if (clip_index[i]>0&&frame_index[i]>0) is_blank=FALSE;
 	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -3516,7 +3525,7 @@ lives_render_error_t render_events (gboolean reset) {
       break;
     case WEED_EVENT_HINT_FILTER_DEINIT:
       init_event=weed_get_voidptr_value (event,"init_event",&weed_error);
-      key_string=weed_get_string_value (init_event,"host_tag",&weed_error);
+      key_string=weed_get_string_value ((weed_plant_t *)init_event,"host_tag",&weed_error);
       key=atoi (key_string);
       weed_free (key_string);
       if (rte_keymode_get_instance(key+1,0)!=NULL) {
@@ -3547,7 +3556,7 @@ lives_render_error_t render_events (gboolean reset) {
       unlink(cfile->info_file);
       mainw->error=FALSE;
       mainw->com_failed=FALSE;
-      mainw->cancelled=FALSE;
+      mainw->cancelled=CANCEL_NONE;
 
       lives_system (com,FALSE);
       g_free (com);
@@ -3760,7 +3769,7 @@ gboolean render_to_clip (gboolean new_clip) {
     }
   
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
-      weed_generator_end (cfile->ext_src);
+      weed_generator_end ((weed_plant_t *)cfile->ext_src);
     }
 
     // create new file
@@ -3818,7 +3827,7 @@ gboolean render_to_clip (gboolean new_clip) {
       com=g_strdup_printf("smogrify backup_audio \"%s\"",cfile->handle);
       mainw->com_failed=FALSE;
       mainw->error=FALSE;
-      mainw->cancelled=FALSE;
+      mainw->cancelled=CANCEL_NONE;
       unlink (cfile->info_file);
       lives_system(com,FALSE);
       g_free(com);
@@ -3923,7 +3932,7 @@ gboolean render_to_clip (gboolean new_clip) {
 
 
 
-inline void dprint_recneg(void) {
+LIVES_INLINE void dprint_recneg(void) {
   d_print (_ ("nothing recorded.\n"));
 }
 
@@ -4045,7 +4054,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
 	stored_event_list_free_all(TRUE);
       }
       mainw->unordered_blocks=TRUE;
-      if (on_multitrack_activate (NULL, (gpointer)mainw->event_list)) {
+      if (on_multitrack_activate (NULL, (weed_plant_t *)mainw->event_list)) {
 	mainw->event_list=NULL;
 	new_clip=TRUE;
       }
@@ -4110,7 +4119,7 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
 
   nxtracks=weed_leaf_num_elements(frame_event,"clips");
 
-  vis=g_malloc(ntracks*sizeof(gdouble));
+  vis=(gdouble *)g_malloc(ntracks*sizeof(gdouble));
 
   if (bleedthru) {
     for (i=0;i<ntracks;i++) {
@@ -4472,7 +4481,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
      // timecode
      tc_secs=tc/U_SECL;
      tc-=tc_secs*U_SECL;
-     text=g_strdup_printf(("Timecode=%"PRId64".%"PRId64),tc_secs,tc);
+     text=g_strdup_printf(_("Timecode=%"PRId64".%"PRId64),tc_secs,tc);
      label = gtk_label_new (text);
      g_free(text);
      
@@ -4894,7 +4903,7 @@ render_details *create_render_details (gint type) {
     GList *encs=encoders=filter_encoders_by_img_ext(encoders,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     needs_new_encoder=TRUE;
     while (encs!=NULL) {
-      if (!strcmp(encs->data,prefs->encoder.name)) {
+      if (!strcmp((char *)encs->data,prefs->encoder.name)) {
 	needs_new_encoder=FALSE;
 	break;
       }
@@ -4955,8 +4964,8 @@ render_details *create_render_details (gint type) {
       // reqest formats from the encoder plugin
       if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
 	for (i=0;i<g_list_length(ofmt_all);i++) {
-	  if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
-	    array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
+	  if (get_token_count ((gchar *)g_list_nth_data (ofmt_all,i),'|')>2) {
+	    array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,i),"|",-1);
 	    if (!strcmp(array[0],prefs->encoder.of_name)) {
 	      prefs->encoder.of_allowed_acodecs=atoi(array[2]);
 	    }
@@ -5066,7 +5075,8 @@ render_details *create_render_details (gint type) {
 
 
   gtk_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
-			      GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
 
   gtk_widget_show_all (rdet->dialog);
   gtk_widget_hide(rdet->always_hbox);

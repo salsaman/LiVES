@@ -88,7 +88,7 @@ typedef struct {
 
   double arate;
 
-  size_t bytesize; // file in/out length in bytes [write by server in case of eof]
+  ssize_t bytesize; // file in/out length in bytes [write by server in case of eof]
 
   gboolean in_interleaf;
   gboolean out_interleaf;
@@ -207,6 +207,6 @@ lives_audio_buf_t *audio_cache_get_buffer(void);
 gboolean start_audio_stream(void);
 void stop_audio_stream(void);
 void clear_audio_stream(void);
-LIVES_INLINE void audio_stream(void *buff, size_t nbytes, int fd);
+void audio_stream(void *buff, size_t nbytes, int fd);
 
 #endif

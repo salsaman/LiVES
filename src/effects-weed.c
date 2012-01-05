@@ -369,7 +369,7 @@ void restore_weed_instances(void) {
 
 
 
-inline gint step_val(gint val, gint step) {
+LIVES_INLINE gint step_val(gint val, gint step) {
   gint ret=(gint)(val/step+.5)*step;
   return ret==0?step:ret;
 }
@@ -3438,7 +3438,7 @@ void weed_unload_all(void) {
   GList *pinfo=NULL,*xpinfo;
 
   mainw->num_tr_applied=0;
-  weed_deinit_all();
+  weed_deinit_all(TRUE);
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     for (j=0;j<prefs->max_modes_per_key;j++) {
@@ -3622,7 +3622,7 @@ void weed_generator_end (weed_plant_t *inst) {
   lives_whentostop_t wts=mainw->whentostop;
 
   if (inst==NULL) {
-    g_printerr("  WARNING: inst was NULL !    ");
+    LIVES_WARN("inst was NULL !");
     return;
   }
 
@@ -3885,7 +3885,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
   }
 }
 
-static inline int array_count(weed_plant_t **array, gboolean set_readonly) {
+static LIVES_INLINE int array_count(weed_plant_t **array, gboolean set_readonly) {
   int i=0;
   while (array[i]!=NULL) {
     if (set_readonly) weed_add_plant_flags(array[i],WEED_LEAF_READONLY_PLUGIN);
@@ -4263,9 +4263,12 @@ void deinit_render_effects (void) {
 }
 
 
-void weed_deinit_all(void) {
-  // deinit all except generators
+void weed_deinit_all(gboolean shutdown) {
+  // deinit all except generators *
   // this is called on ctrl-0 or on shutdown
+
+  // * background generators will be killed because their transition will be deinited
+
   int i;
   weed_plant_t *instance;
 
@@ -4283,11 +4286,11 @@ void weed_deinit_all(void) {
     }
     if ((mainw->rte&(GU641<<i))) {
       if ((instance=key_to_instance[i][key_modes[i]])!=NULL) {
-	if (enabled_in_channels(instance,FALSE)>0) {
+	if (shutdown||(enabled_in_channels(instance,FALSE)>0)) {
 	  weed_deinit_effect(i);
+	  mainw->rte^=(GU641<<i);
 	}
       }
-      mainw->rte^=(GU641<<i);
     }
   }
 

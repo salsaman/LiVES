@@ -639,9 +639,9 @@ static gboolean pad_with_silence(int out_fd, off64_t oins_size, long ins_size, i
 #endif
   if (sbytes>0) {
     lseek64(out_fd,oins_size,SEEK_SET);
-    if (!aunsigned) zero_buff=g_malloc0(SILENCE_BLOCK_SIZE);
+    if (!aunsigned) zero_buff=(guchar *)g_malloc0(SILENCE_BLOCK_SIZE);
     else {
-      zero_buff=g_malloc(SILENCE_BLOCK_SIZE);
+      zero_buff=(guchar *)g_malloc(SILENCE_BLOCK_SIZE);
       if (asamps==1) memset(zero_buff,0x80,SILENCE_BLOCK_SIZE);
       else {
 	for (i=0;i<SILENCE_BLOCK_SIZE;i+=2) {
@@ -944,14 +944,14 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
   holding_buff=(short *)g_malloc(xsamples*sizeof(short)*out_achans);
   
   for (i=0;i<out_achans*nfiles;i++) {
-    float_buffer[i]=g_malloc(xsamples*sizeof(float));
+    float_buffer[i]=(float *)g_malloc(xsamples*sizeof(float));
   }
 
   finish_buff=g_malloc(render_block_size*out_achans*out_asamps);
 
   for (i=0;i<nfiles;i++) {
     for (c=0;c<out_achans;c++) {
-      chunk_float_buffer[i*out_achans+c]=g_malloc(render_block_size*sizeof(float));
+      chunk_float_buffer[i*out_achans+c]=(float *)g_malloc(render_block_size*sizeof(float));
     }
   }
 
@@ -980,7 +980,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       tbytes=(gint)((gdouble)xsamples*ABS(zavel)+((gdouble)fastrand()/(gdouble)G_MAXUINT32))*
 	in_asamps[track]*in_achans[track];
 
-      in_buff=g_malloc(tbytes);
+      in_buff=(guchar *)g_malloc(tbytes);
 
       if (zavel<0. && in_fd[track]>-1) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
 
@@ -1105,7 +1105,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 }
 
 
-inline void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv) {
+LIVES_INLINE void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv) {
   gdouble vel=1.,vol=1.;
 
   mainw->read_failed=mainw->write_failed=FALSE;
@@ -1381,7 +1381,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       mainw->filter_map=event;
     }
     else if (WEED_EVENT_IS_FILTER_INIT(event)) {
-      deinit_event=weed_get_voidptr_value(event,"deinit_event",&error);
+      deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
       if (get_event_timecode(deinit_event)>=fill_tc) {
 	// this effect should be activated
 	process_events(event,get_event_timecode(event));
@@ -1628,9 +1628,9 @@ void init_jack_audio_buffers (gint achans, gint arate, gboolean exact) {
     mainw->jackd->abufs[i]->out_achans=achans;
     mainw->jackd->abufs[i]->arate=arate;
     mainw->jackd->abufs[i]->samp_space=XSAMPLES/prefs->num_rtaudiobufs;
-    mainw->jackd->abufs[i]->bufferf=g_malloc(achans*sizeof(float *));
+    mainw->jackd->abufs[i]->bufferf=(float **)g_malloc(achans*sizeof(float *));
     for (chan=0;chan<achans;chan++) {
-      mainw->jackd->abufs[i]->bufferf[chan]=g_malloc(XSAMPLES/prefs->num_rtaudiobufs*sizeof(float));
+      mainw->jackd->abufs[i]->bufferf[chan]=(float *)g_malloc(XSAMPLES/prefs->num_rtaudiobufs*sizeof(float));
     }
   }
 #endif
@@ -1650,8 +1650,8 @@ void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact) {
     mainw->pulsed->abufs[i]->out_achans=achans;
     mainw->pulsed->abufs[i]->arate=arate;
     mainw->pulsed->abufs[i]->samp_space=XSAMPLES/prefs->num_rtaudiobufs;  // samp_space here is in stereo samples
-    mainw->pulsed->abufs[i]->buffer16=g_malloc(sizeof(short *));
-    mainw->pulsed->abufs[i]->buffer16[0]=g_malloc(XSAMPLES/prefs->num_rtaudiobufs*achans*sizeof(short));
+    mainw->pulsed->abufs[i]->buffer16=(short **)g_malloc(sizeof(short *));
+    mainw->pulsed->abufs[i]->buffer16[0]=(short *)g_malloc(XSAMPLES/prefs->num_rtaudiobufs*achans*sizeof(short));
   }
 #endif
 }
@@ -1842,7 +1842,7 @@ static void *cache_my_audio(void *arg) {
 
 	if ( (cbuffer->out_interleaf?1:cbuffer->out_achans) > (cbuffer->_cout_interleaf?1:cbuffer->_cachans) ) {
 	  // ouput channels increased
-	  cbuffer->buffer16 = 
+	  cbuffer->buffer16 = (short **) 
 	    g_realloc(cbuffer->buffer16,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(short *));
 	  for (i=(cbuffer->_cout_interleaf?1:cbuffer->_cachans);i<cbuffer->out_achans;i++) {
 	    cbuffer->buffer16[i]=NULL;
@@ -1851,8 +1851,8 @@ static void *cache_my_audio(void *arg) {
 
 	for (i=0;i<(cbuffer->out_interleaf?1:cbuffer->out_achans);i++) {
 	  // realloc existing channels and add new ones
-	  cbuffer->buffer16[i]=g_realloc(cbuffer->buffer16[i], cbuffer->samp_space*sizeof(short)*
-					 (cbuffer->out_interleaf?cbuffer->out_achans:1));
+	  cbuffer->buffer16[i]=(short *)g_realloc(cbuffer->buffer16[i], cbuffer->samp_space*sizeof(short)*
+						  (cbuffer->out_interleaf?cbuffer->out_achans:1));
 	}
 
 	// free any excess channels
@@ -1863,7 +1863,7 @@ static void *cache_my_audio(void *arg) {
 
 	// output channels decreased
 
-	cbuffer->buffer16 = 
+	cbuffer->buffer16 = (short **)
 	  g_realloc(cbuffer->buffer16,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(short *));
 
       }
@@ -1881,7 +1881,7 @@ static void *cache_my_audio(void *arg) {
 
 	if ( (cbuffer->in_interleaf?1:cbuffer->out_achans) > (cbuffer->_cin_interleaf?1:cbuffer->_cachans) ) {
 	  // ouput channels increased
-	  cbuffer->buffer16 = 
+	  cbuffer->buffer16 = (short **) 
 	    g_realloc(cbuffer->buffer16,(cbuffer->in_interleaf?1:cbuffer->out_achans)*sizeof(short *));
 	  for (i=(cbuffer->_cin_interleaf?1:cbuffer->_cachans);i<cbuffer->out_achans;i++) {
 	    cbuffer->buffer16[i]=NULL;
@@ -1890,8 +1890,8 @@ static void *cache_my_audio(void *arg) {
 
 	for (i=0;i<(cbuffer->in_interleaf?1:cbuffer->out_achans);i++) {
 	  // realloc existing channels and add new ones
-	  cbuffer->buffer16[i]=g_realloc(cbuffer->buffer16[i], cbuffer->samp_space*sizeof(short)*
-					 (cbuffer->in_interleaf?cbuffer->out_achans:1));
+	  cbuffer->buffer16[i]=(short *)g_realloc(cbuffer->buffer16[i], cbuffer->samp_space*sizeof(short)*
+						  (cbuffer->in_interleaf?cbuffer->out_achans:1));
 	}
 
 	// free any excess channels
@@ -1902,7 +1902,7 @@ static void *cache_my_audio(void *arg) {
 
 	// output channels decreased
 
-	cbuffer->buffer16 = 
+	cbuffer->buffer16 = (short **)
 	  g_realloc(cbuffer->buffer16,(cbuffer->in_interleaf?1:cbuffer->out_achans)*sizeof(short *));
 
       }
@@ -1916,7 +1916,7 @@ static void *cache_my_audio(void *arg) {
 
 	if ( (cbuffer->out_interleaf?1:cbuffer->out_achans) > (cbuffer->_cout_interleaf?1:cbuffer->_cachans) ) {
 	  // ouput channels increased
-	  cbuffer->bufferf = 
+	  cbuffer->bufferf = (float **)
 	    g_realloc(cbuffer->bufferf,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(float *));
 	  for (i=(cbuffer->_cout_interleaf?1:cbuffer->_cachans);i<cbuffer->out_achans;i++) {
 	    cbuffer->bufferf[i]=NULL;
@@ -1925,8 +1925,8 @@ static void *cache_my_audio(void *arg) {
 
 	for (i=0;i<(cbuffer->out_interleaf?1:cbuffer->out_achans);i++) {
 	  // realloc existing channels and add new ones
-	  cbuffer->bufferf[i]=g_realloc(cbuffer->bufferf[i], cbuffer->samp_space*sizeof(float)*
-					(cbuffer->out_interleaf?cbuffer->out_achans:1));
+	  cbuffer->bufferf[i]=(float *)g_realloc(cbuffer->bufferf[i], cbuffer->samp_space*sizeof(float)*
+						 (cbuffer->out_interleaf?cbuffer->out_achans:1));
 	}
 
 	// free any excess channels
@@ -1937,7 +1937,7 @@ static void *cache_my_audio(void *arg) {
 
 	// output channels decreased
 
-	cbuffer->bufferf = 
+	cbuffer->bufferf = (float **)
 	  g_realloc(cbuffer->bufferf,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(float *));
 
       }
@@ -1986,7 +1986,7 @@ static void *cache_my_audio(void *arg) {
     // prepare file read buffer
 
     if (cbuffer->bytesize!=cbuffer->_cbytesize) {
-      cbuffer->_filebuffer=g_realloc(cbuffer->_filebuffer,cbuffer->bytesize);
+      cbuffer->_filebuffer=(uint8_t *)g_realloc(cbuffer->_filebuffer,cbuffer->bytesize);
 
       if (cbuffer->_filebuffer==NULL) {
 	cbuffer->_cbytesize=cbuffer->bytesize=0;

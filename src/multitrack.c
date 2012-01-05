@@ -682,7 +682,7 @@ void **mt_get_pchain(void) {
 }
 
 
-inline gchar *get_track_name(lives_mt *mt, int track_num, gboolean is_audio) {
+LIVES_INLINE gchar *get_track_name(lives_mt *mt, int track_num, gboolean is_audio) {
   GtkWidget *xeventbox;
   if (track_num<0) return g_strdup(_("Backing audio")); 
   if (!is_audio) xeventbox=g_list_nth_data(mt->video_draws,track_num);
@@ -691,7 +691,7 @@ inline gchar *get_track_name(lives_mt *mt, int track_num, gboolean is_audio) {
 }
 
 
-inline gdouble get_time_from_x(lives_mt *mt, gint x) {
+LIVES_INLINE gdouble get_time_from_x(lives_mt *mt, gint x) {
   gdouble time=(gdouble)x/(gdouble)mt->timeline->allocation.width*(mt->tl_max-mt->tl_min)+mt->tl_min;
   if (time<0.) time=0.;
   else if (time>mt->end_secs+1./mt->fps) time=mt->end_secs+1./mt->fps;
@@ -699,7 +699,7 @@ inline gdouble get_time_from_x(lives_mt *mt, gint x) {
 }
 
 
-inline void set_params_unchanged(lives_rfx_t *rfx) {
+LIVES_INLINE void set_params_unchanged(lives_rfx_t *rfx) {
   int i;
   for (i=0;i<rfx->num_params;i++) rfx->params[i].changed=FALSE;
 }

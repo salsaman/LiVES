@@ -22,15 +22,15 @@ typedef struct {
 } lives_subtitle_style_t;
 
 
-typedef struct lives_subtitle_t _lives_subtitle_t;
+typedef struct _lives_subtitle_t xlives_subtitle_t;
 
-typedef struct {
+typedef struct _lives_subtitle_t {
   double start_time;
   double end_time;
   lives_subtitle_style_t *style; ///< for future use
   long textpos;
-  _lives_subtitle_t *prev; ///< for future use
-  _lives_subtitle_t *next;
+  xlives_subtitle_t *prev; ///< for future use
+  xlives_subtitle_t *next;
 } lives_subtitle_t;
 
 

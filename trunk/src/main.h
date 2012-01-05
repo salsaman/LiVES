@@ -52,9 +52,40 @@ POSSIBILITY OF SUCH DAMAGES.
 #ifndef HAS_MAIN_H
 #define HAS_MAIN_H
 
+#define GUI_GTK
+
+#ifdef GUI_GTK
+
 #include <gtk/gtk.h>
-#include <gdk/gdkx.h>
 #include <gdk/gdkkeysyms.h>
+
+#ifdef IS_LINUX_GNU
+#define USE_X11
+#endif
+
+#ifdef IS_DARWIN
+#define USE_X11
+#endif
+
+#ifdef USE_X11
+
+// needed for GDK_WINDOW_XID - for fileselector preview
+
+// needed for XMapWindow, GDK_WINDOW_XDISPLAY, GDK_WINDOW_XID, GTK_SOCKET
+// for external window capture
+
+// needed for gdk_x11_screen_get_window_manager_name()
+
+#if GTK_CHECK_VERSION(3,0,0)
+#include <gtk/gtkx.h>
+#endif
+
+#include <gdk/gdkx.h>
+#endif
+
+#endif // GUI_GTK
+
+#include "widget-helper.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -155,6 +186,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #ifdef PRODUCE_LOG
 #define LIVES_LOG "lives.log"
 #endif
+
+typedef  void *(*fn_ptr) (void *ptr);
+
 
 /// this struct is used only when physically resampling frames on the disk
 /// we create an array of these and write them to the disk
@@ -903,10 +937,10 @@ char *lives_fgets(char *s, int size, FILE *stream);
 char *filename_from_fd(char *val, int fd);
 
 
-LIVES_INLINE float LEFloat_to_BEFloat(float f);
+float LEFloat_to_BEFloat(float f);
 uint64_t lives_10pow(int pow);
 int get_approx_ln(guint val);
-LIVES_INLINE void lives_freep(void **ptr);
+void lives_freep(void **ptr);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
 int lives_kill(pid_t pid, int sig);
@@ -918,7 +952,7 @@ lives_storage_status_t get_storage_status(const char *dir, guint64 warn_level, g
 gchar *lives_format_storage_space_string(guint64 space);
 
 
-LIVES_INLINE gint myround(gdouble n);
+gint myround(gdouble n);
 void get_dirname(gchar *filename);
 gchar *get_dir(const gchar *filename);
 void get_basename(gchar *filename);
@@ -978,10 +1012,10 @@ void activate_url_inner(const gchar *link);
 void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data);
 void show_manual_section (const gchar *lang, const gchar *section);
 
-LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame);
-LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time);  ///< nearest frame start
-LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time); ///< nearest frame end
-LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time); ///< nearest frame mid
+gdouble calc_time_from_frame (gint clip, gint frame);
+gint calc_frame_from_time (gint filenum, gdouble time);  ///< nearest frame start
+gint calc_frame_from_time2 (gint filenum, gdouble time); ///< nearest frame end
+gint calc_frame_from_time3 (gint filenum, gdouble time); ///< nearest frame mid
 
 gboolean check_for_ratio_fps (gdouble fps);
 gdouble get_ratio_fps(const gchar *string);
@@ -1021,13 +1055,13 @@ gint get_token_count (const gchar *string, int delim);
 GdkPixmap* gdk_pixmap_copy (GdkPixmap *pixmap);
 GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette);
 void get_border_size (GtkWidget *win, gint *bx, gint *by);
-gchar *g_strappend (gchar *string, gint len, const gchar *new);
+gchar *g_strappend (gchar *string, gint len, const gchar *newbit);
 GList *g_list_append_unique(GList *xlist, const gchar *add);
 void find_when_to_stop (void);
 gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
-LIVES_INLINE gint get_interp_value(gshort quality);
-LIVES_INLINE GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
+GdkInterpType get_interp_value(gshort quality);
+GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
 GList *g_list_delete_string(GList *, char *string) WARN_UNUSED;
 GList *g_list_copy_strings(GList *list);
 gboolean string_lists_differ(GList *, GList *);

@@ -376,6 +376,9 @@ void lives_exit (void) {
 
   if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
   if (prefs->fxsizesfile!=NULL) g_free(prefs->fxsizesfile);
+
+  g_free(prefs->wm);
+
   g_free(mainw->recovery_file);
 
   g_free(mainw->any_string);
@@ -5712,7 +5715,13 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     info_file=g_strdup_printf ("%s/fsp%d/.status",prefs->tmpdir,getpid());
 
     if (preview_type==1||preview_type==3) {
+#ifdef USE_X11
       xwin=(unsigned int)GDK_WINDOW_XID (mainw->fs_playarea->window);
+#else
+      // need equivalent to get XID of win on other platforms
+      do_blocking_error_dialog(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if youi know how to do this.\n"
+#endif
+
     }
 
     if (prefs->audio_player==AUD_PLAYER_JACK) {
@@ -7039,17 +7048,13 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
 	}
 	else {
-	  if (mainw->faded&&mainw->multitrack==NULL) {
-	    fade_background();
-	  }
 	  if (mainw->ext_playback) {
 	    vid_playback_plugin_exit();
 	  }
-	  
 	  if (mainw->multitrack==NULL) {
 	    gtk_widget_show(mainw->playframe);
 	    gtk_widget_hide(mainw->framebar);
-	    fade_background();
+	    if (!mainw->faded) fade_background();
 	    fullscreen_internal();
 	    while (g_main_context_iteration (NULL, FALSE));
 	  }
@@ -8141,7 +8146,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
 
-  vbox = gtk_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
+  vbox = lives_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
 
   add_warn_check(GTK_BOX(vbox),WARN_MASK_LAYOUT_POPUP);
 
@@ -9820,6 +9825,11 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   gchar **array;
   gint response;
   gdouble rec_end_time=-1.;
+
+#ifndef USE_X11
+  do_blocking_error_dialog(_("\n\nThis function will only work with X11.\nPlease send a patch to get it working on other platforms.\n\n"));
+  return;
+#endif
 
   if (!capable->has_xwininfo) {
     do_blocking_error_dialog(_("\n\nYou must install \"xwininfo\" before you can use this feature\n\n"));

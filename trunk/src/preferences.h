@@ -127,7 +127,7 @@ typedef struct {
   gboolean discard_tv;
   gboolean save_directories;
   gboolean safer_preview;
-  guint rec_opts;
+  gint rec_opts;
 #define REC_FRAMES (1<<0)
 #define REC_FPS (1<<1)
 #define REC_EFFECTS (1<<2)
@@ -142,7 +142,7 @@ typedef struct {
   gboolean omc_events; ///< send other events
 
   gshort startup_phase; ///< -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
-  const gchar *wm; ///<window manager name
+  gchar *wm; ///<window manager name
   gint ocp; ///< open_compression_percent : get/set in prefs
 
   gboolean antialias;
@@ -268,7 +268,7 @@ typedef struct {
 
   glong rec_stop_gb;
 
-  guint max_modes_per_key; ///< maximum effect modes per key
+  gint max_modes_per_key; ///< maximum effect modes per key
 
   // autotransitioning in mt
   gint atrans_fx;

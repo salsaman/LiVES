@@ -52,7 +52,7 @@ load_theme (void) {
   // load the theme images
   // TODO - set palette in here ?
   GError *error=NULL;
-  gchar *tmp=g_strdup_printf("%s/%s%s/main.jpg",prefs->prefix_dir,THEME_DIR,prefs->theme);
+  gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"main.jpg",NULL);
   mainw->imsep=gdk_pixbuf_new_from_file(tmp,&error);
   g_free(tmp);
   
@@ -63,7 +63,7 @@ load_theme (void) {
   }
   else {
     mainw->sep_image = gtk_image_new_from_pixbuf (mainw->imsep);
-    tmp=g_strdup_printf("%s/%s%s/frame.jpg",prefs->prefix_dir,THEME_DIR,prefs->theme);
+    tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"frame.jpg",NULL);
     mainw->imframe=gdk_pixbuf_new_from_file(tmp,&error);
     g_free(tmp);
     if (!(error==NULL)) {
@@ -71,6 +71,7 @@ load_theme (void) {
     }
   }
 }
+
 
 void add_message_scroller(GtkWidget *conter) {
   GtkTextBuffer *tbuff=NULL;
@@ -709,16 +710,16 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (menuitem12_menu), mainw->merge);
   gtk_widget_set_sensitive (mainw->merge, FALSE);
 
-  mainw->delete = gtk_image_menu_item_new_with_mnemonic(_("_Delete Selection"));
-  gtk_widget_show (mainw->delete);
-  gtk_container_add (GTK_CONTAINER (menuitem12_menu), mainw->delete);
-  gtk_widget_set_sensitive (mainw->delete, FALSE);
+  mainw->xdelete = gtk_image_menu_item_new_with_mnemonic(_("_Delete Selection"));
+  gtk_widget_show (mainw->xdelete);
+  gtk_container_add (GTK_CONTAINER (menuitem12_menu), mainw->xdelete);
+  gtk_widget_set_sensitive (mainw->xdelete, FALSE);
 
   image1334 = gtk_image_new_from_stock ("gtk-delete", GTK_ICON_SIZE_MENU);
   gtk_widget_show (image1334);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->delete), image1334);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->xdelete), image1334);
 
-  gtk_widget_add_accelerator (mainw->delete, "activate", mainw->accel_group,
+  gtk_widget_add_accelerator (mainw->xdelete, "activate", mainw->accel_group,
                               GDK_d, GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
@@ -2055,7 +2056,12 @@ create_LiVES (void)
     gtk_widget_modify_fg(pf_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
+#ifdef USE_X11
   mainw->playarea = gtk_socket_new ();
+#else
+  mainw->playarea = gtk_hbox_new (FALSE,0);
+#endif
+
   gtk_container_add (GTK_CONTAINER (mainw->playframe), mainw->playarea);
 
   gtk_widget_set_app_paintable(mainw->playarea,TRUE);
@@ -2189,7 +2195,8 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->eventbox5), mainw->hruler);
 
   gtk_widget_modify_bg (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_widget_add_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+  gtk_widget_add_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
+			 GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -2269,80 +2276,116 @@ create_LiVES (void)
   add_message_scroller(mainw->message_box);
 
   // accel keys
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Page_Up, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (prevclip_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Page_Up, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (prevclip_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Page_Down, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (nextclip_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Page_Down, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (nextclip_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Down, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (slower_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Down, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (slower_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Up, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (faster_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Up, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (faster_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Left, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (skip_back_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Left, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (skip_back_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Right, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (skip_forward_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Right, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (skip_forward_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_space, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (dirchange_callback),GINT_TO_POINTER(TRUE),NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_space, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (dirchange_callback),GINT_TO_POINTER(TRUE),NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Return, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (fps_reset_callback),GINT_TO_POINTER(TRUE),NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_Return, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (fps_reset_callback),GINT_TO_POINTER(TRUE),NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_k, 0, 0, g_cclosure_new (G_CALLBACK (grabkeys_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_k, 0, 0, 
+			   g_cclosure_new (G_CALLBACK (grabkeys_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_t, 0, 0, g_cclosure_new (G_CALLBACK (textparm_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_t, 0, 0, 
+			   g_cclosure_new (G_CALLBACK (textparm_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_m, 0, 0, g_cclosure_new (G_CALLBACK (rtemode_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_m, 0, 0, 
+			   g_cclosure_new (G_CALLBACK (rtemode_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_x, 0, 0, g_cclosure_new (G_CALLBACK (swap_fg_bg_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_x, 0, 0, 
+			   g_cclosure_new (G_CALLBACK (swap_fg_bg_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_n, 0, 0, g_cclosure_new (G_CALLBACK (nervous_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_n, 0, 0, 
+			   g_cclosure_new (G_CALLBACK (nervous_callback),NULL,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_w, 0, 0, g_cclosure_new (G_CALLBACK (show_sync_callback),NULL,NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_w, 0, 0, 
+			   g_cclosure_new (G_CALLBACK (show_sync_callback),NULL,NULL));
 
   if (FN_KEYS>0) {
-    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F1, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (1),NULL));
+    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F1, 0, 0, 
+			     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (1),NULL));
     if (FN_KEYS>1) {
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F2, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (2),NULL));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F2, 0, 0, 
+			       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (2),NULL));
       if (FN_KEYS>2) {
-	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F3, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (3),NULL));
+	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F3, 0, 0, 
+				 g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (3),NULL));
 	if (FN_KEYS>3) {
-	  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F4, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (4),NULL));
+	  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F4, 0, 0, 
+				   g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (4),NULL));
 	  if (FN_KEYS>4) {
-	    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F5, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (5),NULL));
+	    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F5, 0, 0, 
+				     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (5),NULL));
 	    if (FN_KEYS>5) {
-	      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F6, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (6),NULL));
+	      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F6, 0, 0, 
+				       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (6),NULL));
 	      if (FN_KEYS>6) {
-		gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F7, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (7),NULL));
+		gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F7, 0, 0, 
+					 g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (7),NULL));
 		if (FN_KEYS>7) {
-		  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F8, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (8),NULL));
+		  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F8, 0, 0, 
+					   g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (8),NULL));
 		  if (FN_KEYS>8) {
-		    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F9, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (9),NULL));
+		    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F9, 0, 0, 
+					     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (9),NULL));
 		    if (FN_KEYS>9) {
-		      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F10, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (10),NULL));
+		      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F10, 0, 0, 
+					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (10),NULL));
 		      if (FN_KEYS>10) {
-		      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F11, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (11),NULL));
+		      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F11, 0, 0, 
+					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (11),NULL));
 		      if (FN_KEYS>11) {
-		      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F12, 0, 0, g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (12),NULL));
+		      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_F12, 0, 0, 
+					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (12),NULL));
 		      // ad nauseum...
 		      }}}}}}}}}}}}
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_0, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (0),NULL));
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_0, GDK_CONTROL_MASK, 0, 
+			   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (0),NULL));
   if (FX_KEYS_PHYSICAL>0) {
-    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_1, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (1),NULL));
+    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_1, GDK_CONTROL_MASK, 0, 
+			     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (1),NULL));
     if (FX_KEYS_PHYSICAL>1) {
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_2, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (2),NULL));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_2, GDK_CONTROL_MASK, 0, 
+			       g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (2),NULL));
       if (FX_KEYS_PHYSICAL>2) {
-	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_3, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (3),NULL));
+	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_3, GDK_CONTROL_MASK, 0, 
+				 g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (3),NULL));
 	if (FX_KEYS_PHYSICAL>3) {
-	  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_4, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (4),NULL));
+	  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_4, GDK_CONTROL_MASK, 0, 
+				   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (4),NULL));
 	  if (FX_KEYS_PHYSICAL>4) {
-	    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_5, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (5),NULL));
+	    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_5, GDK_CONTROL_MASK, 0, 
+				     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (5),NULL));
 	    if (FX_KEYS_PHYSICAL>5) {
-	      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_6, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (6),NULL));
+	      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_6, GDK_CONTROL_MASK, 0, 
+				       g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (6),NULL));
 	      if (FX_KEYS_PHYSICAL>6) {
-		gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_7, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (7),NULL));
+		gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_7, GDK_CONTROL_MASK, 0, 
+					 g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (7),NULL));
 		if (FX_KEYS_PHYSICAL>7) {
-		  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_8, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (8),NULL));
+		  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_8, GDK_CONTROL_MASK, 0, 
+					   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (8),NULL));
 		  if (FX_KEYS_PHYSICAL>8) {
-		    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_9, GDK_CONTROL_MASK, 0, g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (9),NULL));
+		    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_9, GDK_CONTROL_MASK, 0, 
+					     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (9),NULL));
 		  }}}}}}}}}
 
 
@@ -2479,7 +2522,7 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (mainw->paste_as_new), "activate",
                       G_CALLBACK (on_paste_as_new_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->delete), "activate",
+  g_signal_connect (GTK_OBJECT (mainw->xdelete), "activate",
                       G_CALLBACK (on_delete_activate),
                       NULL);
   g_signal_connect (GTK_OBJECT (mainw->select_all), "activate",
@@ -2970,43 +3013,56 @@ fade_background(void) {
 
   if (stop_closure==NULL) {
     gtk_widget_remove_accelerator (mainw->stop, mainw->accel_group, GDK_q, 0);
-    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_q, 0, 0, (stop_closure=g_cclosure_new (G_CALLBACK (stop_callback),NULL,NULL)));
+    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_q, 0, 0, 
+			     (stop_closure=g_cclosure_new (G_CALLBACK (stop_callback),NULL,NULL)));
 
     if (!mainw->foreign) {
       // TODO - do these checks in the end functions
       if (gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf))) {
 	gtk_widget_remove_accelerator (mainw->record_perf, mainw->accel_group, GDK_r, 0);
       }
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_r, 0, 0, (rec_closure=g_cclosure_new (G_CALLBACK (rec_callback),NULL,NULL)));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_r, 0, 0, 
+			       (rec_closure=g_cclosure_new (G_CALLBACK (rec_callback),NULL,NULL)));
       
       gtk_widget_remove_accelerator (mainw->full_screen, mainw->accel_group, GDK_f, 0);
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_f, 0, 0, (fullscreen_closure=g_cclosure_new (G_CALLBACK (fullscreen_callback),NULL,NULL)));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_f, 0, 0, 
+			       (fullscreen_closure=g_cclosure_new (G_CALLBACK (fullscreen_callback),NULL,NULL)));
       
       gtk_widget_remove_accelerator (mainw->showfct, mainw->accel_group, GDK_h, 0);
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_h, 0, 0, (showfct_closure=g_cclosure_new (G_CALLBACK (showfct_callback),NULL,NULL)));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_h, 0, 0, 
+			       (showfct_closure=g_cclosure_new (G_CALLBACK (showfct_callback),NULL,NULL)));
       
       gtk_widget_remove_accelerator (mainw->showsubs, mainw->accel_group, GDK_v, 0);
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_v, 0, 0, (showsubs_closure=g_cclosure_new (G_CALLBACK (showsubs_callback),NULL,NULL)));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_v, 0, 0, 
+			       (showsubs_closure=g_cclosure_new (G_CALLBACK (showsubs_callback),NULL,NULL)));
       
       gtk_widget_remove_accelerator (mainw->sepwin, mainw->accel_group, GDK_s, 0);
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_s, 0, 0, (sepwin_closure=g_cclosure_new (G_CALLBACK (sepwin_callback),NULL,NULL)));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_s, 0, 0, 
+			       (sepwin_closure=g_cclosure_new (G_CALLBACK (sepwin_callback),NULL,NULL)));
 
-      if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) {
+      if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
+	  prefs->audio_player==AUD_PLAYER_PULSE) {
 	gtk_widget_remove_accelerator (mainw->loop_video, mainw->accel_group, GDK_l, 0);
-	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_l, 0, 0, (loop_closure=g_cclosure_new (G_CALLBACK (loop_callback),NULL,NULL)));
+	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_l, 0, 0, 
+				 (loop_closure=g_cclosure_new (G_CALLBACK (loop_callback),NULL,NULL)));
 	
 	gtk_widget_remove_accelerator (mainw->loop_continue, mainw->accel_group, GDK_o, 0);
-	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_o, 0, 0, (loop_cont_closure=g_cclosure_new (G_CALLBACK (loop_cont_callback),NULL,NULL)));
+	gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_o, 0, 0, 
+				 (loop_cont_closure=g_cclosure_new (G_CALLBACK (loop_cont_callback),NULL,NULL)));
 	
       }
       gtk_widget_remove_accelerator (mainw->loop_ping_pong, mainw->accel_group, GDK_g, 0);
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_g, 0, 0, (ping_pong_closure=g_cclosure_new (G_CALLBACK (ping_pong_callback),NULL,NULL)));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_g, 0, 0, 
+			       (ping_pong_closure=g_cclosure_new (G_CALLBACK (ping_pong_callback),NULL,NULL)));
       gtk_widget_remove_accelerator (mainw->mute_audio, mainw->accel_group, GDK_z, 0);
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_z, 0, 0, (mute_audio_closure=g_cclosure_new (G_CALLBACK (mute_audio_callback),NULL,NULL)));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_z, 0, 0, 
+			       (mute_audio_closure=g_cclosure_new (G_CALLBACK (mute_audio_callback),NULL,NULL)));
       gtk_widget_remove_accelerator (mainw->dsize, mainw->accel_group, GDK_d, 0);
-      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_d, 0, 0, (dblsize_closure=g_cclosure_new (G_CALLBACK (dblsize_callback),NULL,NULL)));
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_d, 0, 0, 
+			       (dblsize_closure=g_cclosure_new (G_CALLBACK (dblsize_callback),NULL,NULL)));
     gtk_widget_remove_accelerator (mainw->fade, mainw->accel_group, GDK_b, 0);
-    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_b, 0, 0, (fade_closure=g_cclosure_new (G_CALLBACK (fade_callback),NULL,NULL)));
+    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_b, 0, 0, 
+			     (fade_closure=g_cclosure_new (G_CALLBACK (fade_callback),NULL,NULL)));
     }
   }
 }
@@ -3018,6 +3074,10 @@ fade_background(void) {
 
 void
 unfade_background(void) {
+  if (prefs->open_maximised&&prefs->show_gui) {
+    gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
+  }
+
   if (palette->style==STYLE_PLAIN) {
     gtk_label_set_text(GTK_LABEL(mainw->banner),"   = <  L i V E S > =                            ");
   }
@@ -3115,7 +3175,8 @@ unfade_background(void) {
 				GDK_g, 0,
 				GTK_ACCEL_VISIBLE);
 
-    if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) {
+    if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
+	prefs->audio_player==AUD_PLAYER_PULSE) {
       gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), loop_closure);
       gtk_widget_add_accelerator (mainw->loop_video, "activate", mainw->accel_group,
 				  GDK_l, 0,
@@ -3153,12 +3214,14 @@ unfade_background(void) {
     stop_closure=NULL;
     
   }
-
+  resize(1);
 }
 
 
 void
 fullscreen_internal(void) {
+  int bx,by;
+
   // resize for full screen, internal player, no separate window
   
   if (mainw->multitrack==NULL) {
@@ -3184,7 +3247,11 @@ fullscreen_internal(void) {
 
     while (g_main_context_iteration(NULL,FALSE));
 
-    gtk_widget_set_size_request (mainw->playframe, mainw->eventbox->allocation.width, mainw->eventbox->allocation.height);
+    get_border_size(mainw->LiVES, &bx, &by);
+
+
+    gtk_widget_set_size_request (mainw->playframe, mainw->LiVES->allocation.width-bx, 
+				 mainw->LiVES->allocation.height);
 
   }
   else {
@@ -3605,8 +3672,12 @@ make_play_window(void) {
   resize_play_window();
   if (mainw->play_window==NULL) return;
 
-  if ((mainw->current_file==-1||(!cfile->is_loaded&&!mainw->preview)||(cfile->frames==0&&(mainw->multitrack==NULL||mainw->playing_file==-1)))&&mainw->imframe!=NULL) {
-    gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (mainw->imframe),0,0,0,0,-1,-1,GDK_RGB_DITHER_NONE,0,0);
+  if ((mainw->current_file==-1||(!cfile->is_loaded&&!mainw->preview)||
+       (cfile->frames==0&&(mainw->multitrack==NULL||mainw->playing_file==-1)))&&mainw->imframe!=NULL) {
+    cairo_t *cr = gdk_cairo_create (mainw->play_window->window);
+    gdk_cairo_set_source_pixbuf (cr, mainw->imframe, 0, 0);
+    cairo_paint (cr);
+    cairo_destroy (cr);
   }
 
   gtk_widget_set_tooltip_text( mainw->m_sepwinbutton,_ ("Hide Play Window"));
@@ -3651,7 +3722,9 @@ make_play_window(void) {
     mainw->noswitch=FALSE;
     if (mainw->play_window==NULL) return;
     
-    if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->play_window->allocation.width)/2, (mainw->scr_height-mainw->play_window->allocation.height)/2);
+    if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), 
+						 (mainw->scr_width-mainw->play_window->allocation.width)/2, 
+						 (mainw->scr_height-mainw->play_window->allocation.height)/2);
     gtk_widget_queue_draw(mainw->play_window);
   }
 
@@ -3681,7 +3754,9 @@ void resize_play_window (void) {
 
   if (mainw->play_window==NULL) return;
 
-  if ((mainw->current_file==-1||(cfile->frames==0&&mainw->multitrack==NULL)||(!cfile->is_loaded&&!mainw->preview&&cfile->clip_type!=CLIP_TYPE_GENERATOR))||(mainw->multitrack!=NULL&&mainw->playing_file<1&&!mainw->preview)) {
+  if ((mainw->current_file==-1||(cfile->frames==0&&mainw->multitrack==NULL)||
+       (!cfile->is_loaded&&!mainw->preview&&cfile->clip_type!=CLIP_TYPE_GENERATOR))||
+      (mainw->multitrack!=NULL&&mainw->playing_file<1&&!mainw->preview)) {
     if (mainw->imframe!=NULL) {
       mainw->pwidth=gdk_pixbuf_get_width (mainw->imframe);
       mainw->pheight=gdk_pixbuf_get_height (mainw->imframe);
@@ -3714,8 +3789,10 @@ void resize_play_window (void) {
 	if (mainw->pheight>mainw->scr_height-DSIZE_SAFETY_V) mainw->pheight=mainw->scr_height-DSIZE_SAFETY_V;
       }
       else {
-	if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H) mainw->pwidth=mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H;
-	if (mainw->pheight>mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V) mainw->pheight=mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V;
+	if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H) 
+	  mainw->pwidth=mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H;
+	if (mainw->pheight>mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V) 
+	  mainw->pheight=mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V;
       }
     }
 
@@ -3735,12 +3812,18 @@ void resize_play_window (void) {
 	  mainw->opwy=(mainw->scr_height-mainw->play_window->allocation.height)/2;
 	}
 	else {
-	  mainw->opwx=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->play_window->allocation.width)/2;
-	  mainw->opwy=mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-mainw->play_window->allocation.height)/2;
+	  mainw->opwx=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-
+						  mainw->play_window->allocation.width)/2;
+	  mainw->opwy=mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-
+						  mainw->play_window->allocation.height)/2;
 	}
       }
 
+#ifdef USE_X11
       mainw->xwin=GDK_WINDOW_XWINDOW (mainw->play_window->window);
+#else
+      mainw->xwin=0;
+#endif
 
       if (pmonitor==0) {
 	mainw->pwidth=mainw->scr_width;
@@ -3830,7 +3913,9 @@ void resize_play_window (void) {
 	}
 #endif
 
-	if ((mainw->vpp->init_screen==NULL)||((*mainw->vpp->init_screen)(mainw->pwidth,mainw->pheight*(fixed_size?1:prefs->virt_height),fullscreen,xwinid,mainw->vpp->extra_argc,mainw->vpp->extra_argv))) {
+	if ((mainw->vpp->init_screen==NULL)||((*mainw->vpp->init_screen)
+					      (mainw->pwidth,mainw->pheight*(fixed_size?1:prefs->virt_height),
+					       fullscreen,xwinid,mainw->vpp->extra_argc,mainw->vpp->extra_argv))) {
 	  mainw->ext_playback=TRUE;
 	  // the play window is still visible (in case it was 'always on top')
 	  // start key polling from ext plugin
@@ -3844,7 +3929,8 @@ void resize_play_window (void) {
 	mainw->pheight=clipboard->vsize;
 	mainw->pwidth=clipboard->hsize;
       }
-      if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, (mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+      if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
+					(mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
       else {
 	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
@@ -3863,7 +3949,8 @@ void resize_play_window (void) {
 	gtk_window_move (GTK_WINDOW (mainw->play_window), mainw->opwx, mainw->opwy);
       }
       else {
-	if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, (mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+	if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
+					  (mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
 	else {
 	  gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	  gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
@@ -3872,7 +3959,8 @@ void resize_play_window (void) {
       }
     }
     else {
-      if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, (mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+      if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
+					(mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
       else {
 	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
@@ -3911,7 +3999,10 @@ add_to_playframe (void) {
 
   gtk_widget_show(mainw->playarea);
 
+#ifdef USE_X11
   if (!mainw->xwin) mainw->xwin = gtk_socket_get_id(GTK_SOCKET(mainw->playarea));
+#endif
+
 
   ///////////////////////////////////////////////////
   //
@@ -3919,13 +4010,19 @@ add_to_playframe (void) {
   // plug source can be changed by changing prefs->video_player
   if (mainw->plug1==NULL) {
     if (!mainw->foreign&&(!mainw->sep_win||prefs->sepwin_type==0)) {
+#ifdef USE_X11
       // :-( just creating this stops anything else being shown in the socket
       mainw->plug1 = gtk_plug_new (mainw->xwin);
+#else
+      mainw->plug1 = gtk_hbox_new (FALSE,0);
+      gtk_container_add(mainw->playarea,mainw->plug1);
+#endif
       gtk_widget_modify_bg (mainw->plug1, GTK_STATE_NORMAL, &palette->normal_back);
       gtk_widget_show (mainw->plug1);
       gtk_container_add (GTK_CONTAINER (mainw->plug1), mainw->image274);
     }
   }
+
 }
 
 

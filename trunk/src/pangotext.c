@@ -469,10 +469,10 @@ gboolean get_srt_text(file *sfile, double xtime) {
           node->end_time = endtime;
           node->style = NULL;
           node->next = NULL;
-          node->prev = (_lives_subtitle_t *)index_prev;
+          node->prev = (lives_subtitle_t *)index_prev;
 	  node->textpos=ftell(pf);
           if(index_prev)
-            index_prev->next = (_lives_subtitle_t *)node;
+            index_prev->next = (lives_subtitle_t *)node;
           else
             sfile->subt->index = node;
           index_prev = (lives_subtitle_t *)node;
@@ -621,10 +621,10 @@ gboolean get_sub_text(file *sfile, double xtime) {
           node->end_time = endtime;
           node->style = NULL;
           node->next = NULL;
-          node->prev = (_lives_subtitle_t *)index_prev;
+          node->prev = (lives_subtitle_t *)index_prev;
 	  node->textpos=ftell(pf);
           if(index_prev)
-            index_prev->next = (_lives_subtitle_t *)node;
+            index_prev->next = (lives_subtitle_t *)node;
           else
             sfile->subt->index = node;
           index_prev = (lives_subtitle_t *)node;

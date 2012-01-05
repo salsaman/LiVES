@@ -271,7 +271,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
   label=gtk_label_new(msg);
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
@@ -618,7 +618,7 @@ gboolean do_startup_tests(gboolean tshoot) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   label=gtk_label_new(_("LiVES will now run some basic configuration tests\n"));
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
@@ -997,7 +997,7 @@ void do_startup_interface_query(void) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
   label=gtk_label_new(msg);
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);

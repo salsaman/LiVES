@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -143,7 +143,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   gtk_container_set_border_width (GTK_CONTAINER (rfxbuilder->dialog), 8);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(rfxbuilder->dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(rfxbuilder->dialog));
   gtk_box_set_spacing (GTK_BOX (dialog_vbox), 8);
   gtk_widget_show (dialog_vbox);
 
@@ -740,7 +740,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
@@ -1170,7 +1170,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
   gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
@@ -1900,7 +1900,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
   //gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
@@ -2659,7 +2659,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
@@ -2937,7 +2937,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
   //gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
@@ -3051,7 +3051,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
   //gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
@@ -4379,7 +4379,7 @@ gchar *prompt_for_script_name(const gchar *sname, gshort status) {
   gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 200);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
 
-  vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_widget_show (vbox);
 
   hbox = gtk_hbox_new (FALSE, 0);

@@ -300,7 +300,7 @@ process * create_processing (const gchar *text) {
   else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER_ALWAYS);
 
-  dialog_vbox1 = gtk_dialog_get_content_area(GTK_DIALOG(procw->processing));
+  dialog_vbox1 = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
   gtk_widget_show (dialog_vbox1);
 
 
@@ -850,7 +850,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (dialog), 450, 300);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   label = gtk_label_new (text1);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
@@ -999,7 +999,7 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
     }
   }
 
-  dialog_vbox3 = gtk_dialog_get_content_area(GTK_DIALOG(dialog3));
+  dialog_vbox3 = lives_dialog_get_content_area(GTK_DIALOG(dialog3));
   gtk_widget_show (dialog_vbox3);
   
   form_text=g_strdup_printf("\n\n%s",text);
@@ -1111,7 +1111,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     gtk_dialog_set_has_separator(GTK_DIALOG(textwindow->dialog),FALSE);
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
   gtk_widget_show (dialog_vbox);
 
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
@@ -1271,7 +1271,7 @@ create_insert_dialog (void)
     gtk_window_set_transient_for(GTK_WINDOW(insertw->insert_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox3 = gtk_dialog_get_content_area(GTK_DIALOG(insertw->insert_dialog));
+  dialog_vbox3 = lives_dialog_get_content_area(GTK_DIALOG(insertw->insert_dialog));
   gtk_widget_show (dialog_vbox3);
 
   hbox15 = gtk_hbox_new (FALSE, 0);
@@ -1575,7 +1575,7 @@ create_opensel_dialog (void)
   gtk_container_set_border_width (GTK_CONTAINER (opensel_dialog), 10);
   gtk_window_set_default_size (GTK_WINDOW (opensel_dialog), 300, 200);
 
-  dialog_vbox9 = gtk_dialog_get_content_area(GTK_DIALOG(opensel_dialog));
+  dialog_vbox9 = lives_dialog_get_content_area(GTK_DIALOG(opensel_dialog));
   gtk_widget_show (dialog_vbox9);
 
   vbox15 = gtk_vbox_new (FALSE, 0);
@@ -1711,7 +1711,7 @@ _entryw* create_location_dialog (int type) {
   else 
     gtk_window_set_title (GTK_WINDOW (locw->dialog), _("LiVES: - Open Youtube Clip"));
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(locw->dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(locw->dialog));
   gtk_widget_show (dialog_vbox);
 
   if (type==1) {
@@ -1962,7 +1962,7 @@ _entryw* create_rename_dialog (gint type) {
 
   gtk_container_set_border_width (GTK_CONTAINER (renamew->dialog), 10);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(renamew->dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(renamew->dialog));
   gtk_widget_show (dialog_vbox);
 
   if (type==4) {
@@ -2261,7 +2261,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
     gtk_widget_modify_bg (combo_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(combo_dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(combo_dialog));
   gtk_widget_show (dialog_vbox);
 
   if (type==1) {
@@ -2398,7 +2398,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_widget_modify_bg (cd_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(cd_dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(cd_dialog));
   gtk_widget_show (dialog_vbox);
 
   hbox = gtk_hbox_new (FALSE, 50);
@@ -2848,7 +2848,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
     gtk_widget_modify_bg (audd->dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(audd->dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(audd->dialog));
   gtk_widget_show (dialog_vbox);
 
   hbox = gtk_hbox_new (FALSE, 50);
@@ -2991,7 +2991,7 @@ create_rp_dialog (void)
   xranw->rp_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (xranw->rp_dialog), _("LiVES: - Play Random Music"));
 
-  dialog_vbox14 = gtk_dialog_get_content_area(GTK_DIALOG(xranw->rp_dialog));
+  dialog_vbox14 = lives_dialog_get_content_area(GTK_DIALOG(xranw->rp_dialog));
   gtk_widget_show (dialog_vbox14);
 
   if (prefs->show_gui) {
@@ -3190,7 +3190,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
   gtk_window_set_default_size (GTK_WINDOW (commentsw->comments_dialog), 600, bheight);
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(commentsw->comments_dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(commentsw->comments_dialog));
   gtk_widget_show (dialog_vbox);
 
   table = gtk_table_new (4, 2, FALSE);
@@ -3506,7 +3506,7 @@ _entryw* create_cds_dialog (gint type) {
     else gtk_window_set_transient_for(GTK_WINDOW(cdsw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(cdsw->dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(cdsw->dialog));
   gtk_widget_show (dialog_vbox);
 
   if (type==0) {
@@ -3668,7 +3668,7 @@ void do_layout_recover_dialog(void) {
     gtk_widget_modify_bg(mdialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(mdialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(mdialog));
   
   label = gtk_label_new (_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"));
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
@@ -3735,7 +3735,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
     gtk_window_set_default_size (GTK_WINDOW (dialog), 450, 300);
 
 
-  dialog_vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   scrollw = gtk_scrolled_window_new (NULL, NULL);
 

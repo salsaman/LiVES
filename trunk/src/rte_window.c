@@ -1594,7 +1594,7 @@ void redraw_pwindow (gint key, gint mode) {
     if (rfx->is_template||(key==keyw&&mode==modew)) {
       // rip out the contents
       if (mainw->invis==NULL) mainw->invis=gtk_vbox_new(FALSE,0);
-      child_list=gtk_container_get_children(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
+      child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
       for (i=0;i<g_list_length(child_list);i++) {
 	GtkWidget *widget=g_list_nth_data(child_list,i);
 	if (widget!=GTK_DIALOG (fx_dialog[1])->action_area) {
@@ -1614,8 +1614,8 @@ void redraw_pwindow (gint key, gint mode) {
 
 void restore_pwindow (lives_rfx_t *rfx) {
   if (fx_dialog[1]!=NULL) {
-    make_param_box(GTK_VBOX (gtk_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))),rfx);
-    gtk_widget_show_all (gtk_dialog_get_content_area(GTK_DIALOG(fx_dialog[1])));
+    make_param_box(GTK_VBOX (lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))),rfx);
+    gtk_widget_show_all (lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1])));
     gtk_widget_queue_draw(fx_dialog[1]);
   }
 }

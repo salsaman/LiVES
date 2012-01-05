@@ -1,6 +1,6 @@
 // osc.h
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2008
+// (c) G. Finch 2003 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -39,8 +39,16 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #define Boolean gboolean
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <libOSC/libosc.h>
 #include <libOSC/OSC-client.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 typedef struct osc_arg_t {
     int a;

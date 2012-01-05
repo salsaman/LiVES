@@ -308,7 +308,7 @@ typedef struct {
   guint64 rte; ///< current max for VJ mode == 64 effects on fg clip
 
   guint last_grabable_effect;
-  guint rte_keys; ///< which effect is bound to keyboard
+  gint rte_keys; ///< which effect is bound to keyboard
   gint num_tr_applied; ///< number of transitions active
   gdouble blend_factor; ///< keyboard control parameter
   
@@ -564,7 +564,7 @@ typedef struct {
   GtkWidget *insert;
   GtkWidget *paste_as_new;
   GtkWidget *merge;
-  GtkWidget *delete;
+  GtkWidget *xdelete;
   GtkWidget *select_submenu;
   GtkWidget *select_all;
   GtkWidget *select_new;

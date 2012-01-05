@@ -8,11 +8,11 @@
 #include <dlfcn.h>
 
 #if HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-utils.h"
-#include "weed/weed-host.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-palettes.h"
@@ -6701,7 +6701,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 
   void **values;
 
-  size_t bytes;
+  ssize_t bytes;
 
   int *ints;
   double *dubs;
@@ -6905,7 +6905,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem) {
   // deserialise a plant from file fd or mem
   weed_plant_t *plant;
   int numleaves;
-  size_t bytes;
+  ssize_t bytes;
   int err;
 
   // caller should clear and check mainw->read_failed
@@ -7153,7 +7153,7 @@ gboolean write_generator_sizes (int fd, int idx) {
 
 gboolean read_generator_sizes(int fd) {
   gchar *buf;
-  size_t bytes;
+  ssize_t bytes;
   size_t vlen;
   int i,error;
   weed_plant_t *filter,**ctmpls;

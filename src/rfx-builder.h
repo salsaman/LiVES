@@ -272,7 +272,7 @@ void on_import_rfx_ok (GtkButton *, gpointer status);
 void add_rfx_effects(void);
 
 // utility functions
-gchar *prompt_for_script_name (const gchar *sname, gshort status);
+gchar *prompt_for_script_name (const gchar *sname, lives_rfx_status_t status);
 gboolean check_builder_programs (void);
 GList *get_script_list (gshort status);
 

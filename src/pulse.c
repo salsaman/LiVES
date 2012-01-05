@@ -370,6 +370,13 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 		     }
 		   }
 		   else {
+		     if (pulsed->aPlayPtr->size<0) {
+		       // read error...output silence
+		       sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
+					    (pulsed->out_asamps>>3),xbytes);
+		       if (!pulsed->is_paused) pulsed->frames_written+=nframes;
+		       return;
+		     }
 		     if (shrink_factor<0.f) {
 		       // reverse play - rewind again by in_bytes
 		       lseek(pulsed->fd,pulsed->seek_pos,SEEK_SET);

@@ -1181,7 +1181,7 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
 
   int info_fd;
   gchar *msg=NULL;
-  size_t bytes;
+  ssize_t bytes;
 
   gchar *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,getpid());
   gchar *com=g_strdup_printf("smogrify check_for_lock \"%s\" \"%s\" %d >\"%s\"",set_name,capable->myname,
@@ -1346,7 +1346,7 @@ void get_frame_count(gint idx) {
 
   gint info_fd;
   int retval;
-  size_t bytes;
+  ssize_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
   gchar *com=g_strdup_printf("smogrify count_frames \"%s\" \"%s\" > \"%s\"",mainw->files[idx]->handle,
 			     mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);

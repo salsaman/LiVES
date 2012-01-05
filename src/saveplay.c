@@ -4094,7 +4094,7 @@ void open_set_file (const gchar *set_name, gint clipnum) {
   }
   else {
     // pre 0.9.6 <- ancient code
-    size_t nlen;
+    ssize_t nlen;
     int set_fd;
     int pb_fps;
     int retval;
@@ -4104,7 +4104,7 @@ void open_set_file (const gchar *set_name, gint clipnum) {
       retval=0;
       if ((set_fd=open(setfile,O_RDONLY))>-1) {
 	// get perf_start
-	if ((nlen=lives_read_le(set_fd,&pb_fps,4,TRUE))) {
+	if ((nlen=lives_read_le(set_fd,&pb_fps,4,TRUE))>0) {
 	  cfile->pb_fps=pb_fps/1000.;
 	  lives_read_le(set_fd,&cfile->frameno,4,TRUE);
 	  lives_read(set_fd,name,256,TRUE);
@@ -4432,7 +4432,8 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   gchar buf[sizint+1];
 
-  size_t bytes,tsize;
+  ssize_t bytes;
+  size_t tsize;
 
   void **pdata;
 
@@ -5170,7 +5171,7 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   gchar *recovery_file,*recovery_numbering_file;
   guint recpid=0;
 
-  size_t bytes;
+  ssize_t bytes;
   int info_fd;
   gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
   gchar *com=g_strdup_printf("smogrify get_recovery_file %d %d \"%s\" recovery> \"%s\"",getuid(),getgid(),

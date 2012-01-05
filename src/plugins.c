@@ -42,7 +42,8 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
 
   GList *list=NULL;
   gchar **array;
-  gint bytes=0,pieces;
+  ssize_t bytes=0;
+  gint pieces;
   int outfile_fd,i;
   int retval;
   int alarm_handle;
@@ -69,6 +70,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
       if (mainw->is_ready) {
 	if ((outfile_fd=open(outfile,O_RDONLY))>-1) {
 	  bytes=read (outfile_fd,&buffer,65535);
+	  if (bytes<0) bytes=0;
 	  close (outfile_fd);
 	  unlink (outfile);
 	  memset (buffer+bytes,0,1);
@@ -369,7 +371,7 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 
 void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   int fd;
-  gint32 len;
+  ssize_t len;
   const gchar *version;
   gchar buf[512];
   int i;
@@ -398,6 +400,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	mainw->read_failed=FALSE;
 	msg=g_strdup("LiVES vpp defaults file version 2\n");
 	len=lives_read(fd,buf,strlen(msg),FALSE);
+	if (len<0) len=0;
 	memset(buf+len,0,1);
   
 	if (mainw->read_failed) break;

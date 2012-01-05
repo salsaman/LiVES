@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2010
+// (c) G. Finch 2003 - 2012 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -54,7 +54,9 @@ void create_merge_dialog (void) {
   gint defstart=0;
 
   merge_opts=(_merge_opts*)(g_malloc(sizeof(_merge_opts)));
-  merge_opts->list_to_rfx_index=g_malloc (sizint*(mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test));
+  merge_opts->list_to_rfx_index=(int *)g_malloc (sizint*(mainw->num_rendered_effects_builtin+
+							 mainw->num_rendered_effects_custom+
+							 mainw->num_rendered_effects_test));
   merge_opts->trans_list=NULL;
 
   for (i=0;i<mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) {
@@ -272,7 +274,7 @@ void create_merge_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), transition_combo, TRUE, FALSE, 0);
   gtk_widget_show(transition_combo);
   merge_opts->trans_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(transition_combo))->entry));
-  gtk_entry_set_text (GTK_ENTRY (merge_opts->trans_entry),g_list_nth_data (merge_opts->trans_list,defstart));
+  gtk_entry_set_text (GTK_ENTRY (merge_opts->trans_entry),(gchar *)g_list_nth_data (merge_opts->trans_list,defstart));
   gtk_editable_set_editable (GTK_EDITABLE(merge_opts->trans_entry),FALSE);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),merge_opts->trans_entry);
 
@@ -352,7 +354,8 @@ void on_trans_method_changed (GtkWidget *entry, gpointer user_data) {
 
   if (!strlen (gtk_entry_get_text (GTK_ENTRY (entry)))) return;
 
-  for (idx=0;strcmp(g_list_nth_data (merge_opts->trans_list,idx),(char *)gtk_entry_get_text(GTK_ENTRY (entry)));idx++);
+  for (idx=0;strcmp((char *)g_list_nth_data (merge_opts->trans_list,idx),
+		    (char *)gtk_entry_get_text(GTK_ENTRY (entry)));idx++);
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[idx];
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];

@@ -723,7 +723,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
   int c,x;
   register int i,j;
-  size_t bytes_read;
+  ssize_t bytes_read;
   int in_fd[nfiles],out_fd=-1;
   gulong nframes;
   gboolean in_reverse_endian[nfiles],out_reverse_endian=FALSE;
@@ -989,7 +989,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
       if (zavel<0.) seekstart[track]-=bytes_read;
 
-      if (bytes_read<tbytes) {
+      if (bytes_read<tbytes&&bytes_read>=0) {
 	if (zavel>0) memset(in_buff+bytes_read,0,tbytes-bytes_read);
 	else {
 	  memmove(in_buff+tbytes-bytes_read,in_buff,bytes_read);

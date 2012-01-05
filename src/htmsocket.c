@@ -1,6 +1,6 @@
 // htmsocket.c
 // LiVES
-// (c) G. Finch 2008 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2012  <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <errno.h>
+
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
@@ -27,7 +28,7 @@ typedef struct {
   struct sockaddr_in serv_addr;
   int sockfd;
   int len;
-  void *addr;
+  sockaddr *addr;
 } desc;
 
 
@@ -68,7 +69,7 @@ void *OpenHTMSocket(const char *host, int portnumber, gboolean sender) {
     o->serv_addr.sin_port = htons(0);
   }
 
-  o->addr = &(o->serv_addr);
+  o->addr = (sockaddr *)&(o->serv_addr);
 
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0) {
     memset((char *)&cl_addr, 0, sizeof(cl_addr));
@@ -148,7 +149,7 @@ gboolean lives_stream_out(void *htmsendhandle, size_t length, void *buffer) {
 
 ssize_t lives_stream_in(void *htmrecvhandle, size_t length, void *buffer, int bfsize) {
   desc *o = (desc *)htmrecvhandle;
-  return getudp(o->addr, o->sockfd, o->len, length, buffer, bfsize);
+  return getudp((sockaddr *)o->addr, o->sockfd, o->len, length, buffer, bfsize);
 }
 
 void CloseHTMSocket(void *htmsendhandle) {

@@ -59,11 +59,14 @@ static void *y4header_thread (void *arg) {
 }
 
 
-static void fill_read(int fd, void *buf, size_t count) {
+static void fill_read(int fd, char *buf, size_t count) {
   size_t bytes=0;
+  ssize_t got;
 
   do {
-    bytes+=read(fd,buf+bytes,count-bytes);
+    got=read(fd,buf+bytes,count-bytes);
+    if (got<0) return;
+    bytes+=got;
   } while (bytes<count);
 
 }
@@ -71,11 +74,11 @@ static void fill_read(int fd, void *buf, size_t count) {
 
 static void *y4frame_thread (void *arg) {
   lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)arg;
-  gchar buff[5],bchar;
+  char buff[5],bchar;
   int i=Y4M_OK;
 
   // read 5 bytes FRAME
-  fill_read(yuv4mpeg->fd,&buff,5);
+  fill_read(yuv4mpeg->fd,buff,5);
 
   if (strncmp(buff,"FRAME",5)) {
     i=Y4M_ERR_MAGIC;
@@ -87,9 +90,9 @@ static void *y4frame_thread (void *arg) {
   } while (strncmp(&bchar,"\n",1));
 
   // read YUV420
-  fill_read(yuv4mpeg->fd,yuv4mpeg->pixel_data[0],yuv4mpeg->hsize*yuv4mpeg->vsize);
-  fill_read(yuv4mpeg->fd,yuv4mpeg->pixel_data[1],yuv4mpeg->hsize*yuv4mpeg->vsize/4);
-  fill_read(yuv4mpeg->fd,yuv4mpeg->pixel_data[2],yuv4mpeg->hsize*yuv4mpeg->vsize/4);
+  fill_read(yuv4mpeg->fd,(char *)yuv4mpeg->pixel_data[0],yuv4mpeg->hsize*yuv4mpeg->vsize);
+  fill_read(yuv4mpeg->fd,(char *)yuv4mpeg->pixel_data[1],yuv4mpeg->hsize*yuv4mpeg->vsize/4);
+  fill_read(yuv4mpeg->fd,(char *)yuv4mpeg->pixel_data[2],yuv4mpeg->hsize*yuv4mpeg->vsize/4);
 
   pthread_exit(GINT_TO_POINTER(i));
 }
@@ -107,7 +110,7 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
   int ovsize=sfile->vsize;
   gdouble ofps=sfile->fps;
 
-  lives_yuv4m_t *yuv4mpeg=sfile->ext_src;
+  lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)sfile->ext_src;
 
   gchar *filename=yuv4mpeg->filename,*tmp;
 
@@ -196,10 +199,12 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
   sfile->hsize = yuv4mpeg->hsize = y4m_si_get_width (&(yuv4mpeg->streaminfo));
   sfile->vsize = yuv4mpeg->vsize = y4m_si_get_height (&(yuv4mpeg->streaminfo));
 
-  sfile->fps=cfile->pb_fps=g_strtod (g_strdup_printf ("%.8f",Y4M_RATIO_DBL (y4m_si_get_framerate (&(yuv4mpeg->streaminfo)))),NULL);
+  sfile->fps=cfile->pb_fps=g_strtod (g_strdup_printf ("%.8f",Y4M_RATIO_DBL 
+						      (y4m_si_get_framerate (&(yuv4mpeg->streaminfo)))),NULL);
 
   if(!(sfile->hsize*sfile->vsize)){
-      do_error_dialog (g_strdup_printf (_("Video dimensions: %d x %d are invalid. Stream cannot be opened"),sfile->hsize,sfile->vsize));
+      do_error_dialog (g_strdup_printf (_("Video dimensions: %d x %d are invalid. Stream cannot be opened"), 
+					sfile->hsize,sfile->vsize));
       return FALSE;
   }
 
@@ -207,7 +212,8 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
     set_main_title(sfile->file_name,0);
   }
 
-  d_print ((tmp=g_strdup_printf(_ ("Reset clip values for %s: size=%dx%d fps=%.3f\n"),yuv4mpeg->name,cfile->hsize,yuv4mpeg->vsize,cfile->bpp,cfile->fps)));
+  d_print ((tmp=g_strdup_printf(_ ("Reset clip values for %s: size=%dx%d fps=%.3f\n"),yuv4mpeg->name,
+				cfile->hsize,yuv4mpeg->vsize,cfile->bpp,cfile->fps)));
   g_free(tmp);
 
   yuv4mpeg->ready=TRUE;
@@ -566,13 +572,13 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
 
   GtkWidget *card_dialog;
 
-  tvcardw_t *tvcardw;
+  lives_tvcardw_t *tvcardw;
 
   mainw->open_deint=FALSE;
 
   card_dialog=create_cdtrack_dialog(4,NULL);
 
-  tvcardw=g_object_get_data(G_OBJECT(card_dialog),"tvcard_data");
+  tvcardw=(lives_tvcardw_t *)g_object_get_data(G_OBJECT(card_dialog),"tvcard_data");
 
 
   response=gtk_dialog_run(GTK_DIALOG(card_dialog));

@@ -17169,7 +17169,7 @@ GList *load_layout_map(void) {
   GList *lmap=NULL;
   layout_map *lmap_entry;
   gint64 unique_id;
-  size_t bytes;
+  ssize_t bytes;
 
   gchar *lmap_name=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
   gchar *handle;
